@@ -12,8 +12,9 @@ import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.3.0';
+const VERSION = '1.3.1';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
+// 1.3.1: 깃털 그라데이션을 없앴다 — 색은 켜짐 색 하나, 보내는 것(전개 지시 · 항상 지시 · 켠 프롬프트) 수만큼 1 테두리 · 2 채움 · 3 채움 + 빛 (data-jj-level)
 // 1.3.0: 세 번째 쪽 「프롬프트」 — 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고 줄마다 켜고 끈다. 켠 것은 항상 지시 다음 · 전개 지시 앞에 같이 들어간다
 const KINDS = ['direction', 'always', 'prompts'];
 const TEXT_KINDS = ['direction', 'always'];   // 입력칸 하나짜리 쪽 (저장 · 최근 목록도 이 둘만)
@@ -152,6 +153,11 @@ function promptsActive() {
     return store.extensionEnabled && store.prompts.enabled && enabledPrompts().length > 0;
 }
 
+/** 1.3.1 깃털 켜짐 단계: 지금 보내는 것의 수 0~3 (전개 지시 · 항상 지시 · 켠 프롬프트 한 줄 이상) */
+function sendLevel() {
+    return [isActive(), alwaysActive(), promptsActive()].filter(Boolean).length;
+}
+
 function kindActive(kind) {
     return kind === 'always' ? alwaysActive() : kind === 'prompts' ? promptsActive() : isActive();
 }
@@ -227,68 +233,21 @@ function isDarkTheme(style = null) {
     return (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255 > 0.5;
 }
 
-// 1.1.5 항상 지시 그라데이션: 깃털이 켜졌을 때의 색 → 짝 색.
-// 블루 레몬에이드 테마가 켜져 있으면 깃털 켜짐 색은 나이트 = 두 번째 포인트, 화이트 = 포인트 (css/04-send-form.css --bl-jj-fg)
-function hexToHsl(hex) {
-    const value = Number.parseInt(hex.slice(1), 16);
-    const [r, g, b] = [value >> 16 & 255, value >> 8 & 255, value & 255].map(channel => channel / 255);
-    const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, d = max - min;
-    if (!d) return [0, 0, l];
-    const s = d / (1 - Math.abs(2 * l - 1));
-    const h = max === r ? ((g - b) / d + 6) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
-    return [h * 60, s, l];
-}
-
-function hslToHex(h, s, l) {
-    const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
-    const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
-    return `#${[r, g, b].map(channel => Math.round((channel + m) * 255).toString(16).padStart(2, '0')).join('')}`;
-}
-
-/** 색상을 45° 돌린 짝. 무채색(회색 테마)은 색상이 없어 밝기만 옮긴다 */
-function partnerColor(hex) {
-    const [h, s, l] = hexToHsl(hex);
-    if (s < 0.12) return hslToHex(h, s, l > 0.5 ? l - 0.28 : l + 0.28);
-    return hslToHex((h + 315) % 360, s, l);
-}
-
-function hueGap(a, b) {
-    const gap = Math.abs(hexToHsl(a)[0] - hexToHsl(b)[0]) % 360;
-    return Math.min(gap, 360 - gap);
-}
-
-function gradientColors(rootStyle = null) {
-    const onColor = settings().onColor;
-    if (onColor) return [onColor, partnerColor(onColor)];
-    if (document.body?.classList.contains('salty')) {
-        const style = rootStyle ?? getComputedStyle(document.documentElement);
-        const accent = parseColorCode(style.getPropertyValue('--salty-accent'));
-        const pop = parseColorCode(style.getPropertyValue('--salty-pop'));
-        if (document.body.classList.contains('salty-dark') && pop) {
-            // 블루 레몬에이드 나이트처럼 두 포인트가 다른 색이면 그 둘 (레몬 → 파랑)
-            return [pop, accent && accent !== pop && hueGap(pop, accent) > 40 ? accent : partnerColor(pop)];
-        }
-        if (accent) return [accent, partnerColor(accent)];
-    }
-    const base = effectiveOnColor(rootStyle);
-    return [base, partnerColor(base)];
-}
-
 // 5.6.4 (점검 RP-5): 예전엔 [:root 쓰기 → 계산 스타일 읽기]를 세 번 번갈아 해서 부팅 때 문서 전체 스타일 계산을 3~4번 강제했다 (폰 리그 4배 305~402 ms).
 // 읽을 값을 먼저 다 읽고(계산은 첫 읽기 한 번) 그다음에 쓴다 — 쓰는 --jj-* 변수는 읽는 테마 색에 쓰이지 않는다.
 // 읽은 값으로 syncOnColor 의 서명도 맞춰 둔다 — 부팅 1.5초 뒤의 첫 syncOnColor 가 같은 색이면 다시 칠하지 않게.
 function applyOnColor() {
     const style = getComputedStyle(document.documentElement);
     const onInk = contrastInk(effectiveOnColor(style)), base = isDarkTheme(style) ? '#141318' : '#fbf9f6';
-    const [from, to] = gradientColors(style);
     onColorSignature = colorSignature(style);
     const rootStyle = document.documentElement.style;
     if (settings().onColor) rootStyle.setProperty('--jj-on-color', settings().onColor);
     else rootStyle.removeProperty('--jj-on-color');
     rootStyle.setProperty('--jj-on-ink', onInk);
     rootStyle.setProperty('--jj-base', base);
-    rootStyle.setProperty('--jj-grad-a', from);
-    rootStyle.setProperty('--jj-grad-b', to);
+    rootStyle.setProperty('--jj-stroke', isDarkTheme(style) ? 'var(--jj-on)' : 'color-mix(in srgb, var(--jj-on) 80%, #b08000)');   // 1.3.1 테두리 단계 (밝은 테마는 조금 진하게)
+    rootStyle.removeProperty('--jj-grad-a');   // 1.3.1 그라데이션은 없앴다 (예전 판이 남긴 값 치우기)
+    rootStyle.removeProperty('--jj-grad-b');
 }
 const colorSignature = style => [settings().onColor, style.getPropertyValue('--SmartThemeQuoteColor').trim(), style.getPropertyValue('--SmartThemeBodyColor').trim(),
     style.getPropertyValue('--salty-pop').trim(), style.getPropertyValue('--salty-accent').trim(), document.body.classList.contains('salty-dark')].join('|');
@@ -427,10 +386,13 @@ function refreshButton() {
     const prompts = promptsActive() ? enabledPrompts() : [];
     const filled = hasContent();
     button.hidden = !settings().extensionEnabled;
-    button.classList.toggle('is-on', on);
-    button.classList.toggle('is-always', always || prompts.length > 0);   // 1.3.0 늘 같이 가는 글(항상 지시 · 프롬프트)이 있으면 그라데이션
+    // 1.3.1 켜짐 단계 = 보내는 것의 수 (전개 지시 · 항상 지시 · 켠 프롬프트 한 줄 이상). 전개 지시를 꺼도 다른 것을 보내는 중이면 켜짐 색으로 남는다
+    const level = sendLevel();
+    button.dataset.jjLevel = String(level);
+    button.classList.toggle('is-on', level > 0);
+    button.classList.remove('is-always');
     button.classList.toggle('has-content', filled);
-    button.setAttribute('aria-pressed', String(on || always || prompts.length > 0));
+    button.setAttribute('aria-pressed', String(level > 0));
     const lines = [!on
         ? '전개 지시 꺼짐'
         : filled ? `전개 지시 켜짐 · ${preview(settings().direction.content)}` : '전개 지시 켜짐 · 내용이 비어 있어 AI가 알아서 전개해요'];
@@ -552,7 +514,6 @@ function refreshPopup() {
     const store = settings();
     popup.dataset.page = page;
     popup.classList.toggle('is-on', kindActive(page));
-    popup.classList.toggle('is-always', page === 'always');
     const toggle = popup.querySelector('.jj-switch');
     toggle.setAttribute('aria-checked', String(store[page].enabled));
     toggle.setAttribute('aria-label', `${KIND_LABEL[page]} 켜기/끄기`);
@@ -565,6 +526,7 @@ function refreshPopup() {
     popup.querySelector('.jj-send').hidden = !sendButton();   // 1.2.3 보내기 단추가 숨은 동안(생성 중 · 스와이프 중 · 명령 실행 중)은 ▶ 도 숨긴다
     // 1.3.0 프롬프트 쪽에는 저장 · 최근 목록과 지우개가 없다 (줄마다 고치기 · 지우기)
     for (const act of ['list', 'clear']) popup.querySelector(`.jj-popup-head [data-act="${act}"]`).hidden = page === 'prompts';
+    popup.dataset.jjLevel = String(sendLevel());   // 1.3.1 창 제목 깃털도 입력창 깃털과 같은 단계 모양
     syncPagesHeight();
     if (listView) renderList();
 }
@@ -779,7 +741,7 @@ function promptEditor(item) {
     const title = makeEl('input', 'jj-ptitle-input');
     title.type = 'text';
     title.maxLength = PROMPT_TITLE_MAX;
-    title.placeholder = '제목 (예: 유저 편향 교정)';
+    title.placeholder = '제목 (예: 문체 다듬기)';
     title.setAttribute('aria-label', '프롬프트 제목');
     title.setAttribute('enterkeyhint', 'next');
     title.autocomplete = 'off';
@@ -1060,7 +1022,7 @@ function openPopup() {
                 <section class="jj-page jj-page-prompts" data-kind="prompts" aria-label="${KIND_LABEL.prompts}">
                     <div class="jj-prompts">
                         <ul class="jj-pitems" aria-label="프롬프트 목록"></ul>
-                        <p class="jj-pempty" hidden><b>자주 쓰는 프롬프트를 모아 두는 곳이에요.</b><span>줄마다 켜고 끄고, 켠 것은 지시와 같이 보내요. 예: 유저 편향 교정 · {{char}} 성격 교정</span></p>
+                        <p class="jj-pempty" hidden><b>자주 쓰는 프롬프트를 모아 두는 곳이에요.</b><span>줄마다 켜고 끄고, 켠 것은 지시와 같이 보내요. 예: 문체 다듬기 · 짧게 답하기</span></p>
                         <button type="button" class="jj-padd" data-pact="add"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>프롬프트 추가</span></button>
                     </div>
                 </section>` : `
@@ -1458,7 +1420,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
 }));
 
 export function showHelp() {
-    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;). 항상 지시가 켜져 있으면 깃털이 그라데이션으로 바뀌어요.</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 유저 편향 교정처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 항상 지시 다음, 전개 지시 앞에 같이 들어가요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
+    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;).</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 문체 다듬기처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 항상 지시 다음, 전개 지시 앞에 같이 들어가요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요.</p><p>깃털은 보내는 것이 있으면 켜짐 색이 돼요. 전개 지시 · 항상 지시 · 켠 프롬프트 중 하나면 은은하게, 둘이면 더, 셋 다면 가장 밝게 빛나요. 전개 지시를 꺼 둬도 다른 것을 보내는 중이면 켜짐 색으로 남아요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
 }
 let settingsDialog = null;
 export async function openPanel() {

@@ -14,7 +14,7 @@ globalThis.__directionTest = probe; globalThis.window = { matchMedia: () => ({ m
 const js = await read('src/addons/direction/index.js');
 const source = js.split('// ── 시작')[0].replace(/^import .*;$/gm, '');
 const prelude = 'const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>globalThis.__directionTest.model;const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
-const m = await import('data:text/javascript;base64,' + Buffer.from(prelude + source + '\nexport {initSettings,settings,injectDirection,trackGeneration,promptsActive,enabledPrompts,stateText,kindActive,KINDS,TEXT_KINDS,PROMPT_MAX};').toString('base64'));
+const m = await import('data:text/javascript;base64,' + Buffer.from(prelude + source + '\nexport {initSettings,settings,injectDirection,trackGeneration,promptsActive,sendLevel,enabledPrompts,stateText,kindActive,KINDS,TEXT_KINDS,PROMPT_MAX};').toString('base64'));
 
 let pass = 0, fail = 0;
 async function test(name, fn) {
@@ -50,8 +50,8 @@ await test('망가진 목록 다듬기: 객체만 · 제목 한 줄 60자 · 제
 
 await test('보내는 순서: 항상 지시 → 켠 프롬프트(목록 순서) → 전개 지시, 같은 자리 · system · 매크로는 항상 지시처럼', () => {
     const s = fresh({ always: { enabled: true, content: 'ALWAYS {{user}}' }, direction: { enabled: true, content: 'they meet' },
-        promptList: [{ id: 'p1', title: '유저 편향 교정', content: 'Fix bias toward {{user}}.', enabled: true }, { id: 'p2', title: 'off', content: 'OFF', enabled: false },
-            { id: 'p3', title: '{{char}} 성격 교정', content: 'Keep {{char}} in character.', enabled: true }, { id: 'p4', title: 'blank', content: '   ', enabled: true }] });
+        promptList: [{ id: 'p1', title: '문체 다듬기', content: 'Fix bias toward {{user}}.', enabled: true }, { id: 'p2', title: 'off', content: 'OFF', enabled: false },
+            { id: 'p3', title: '짧게 답하기', content: 'Keep {{char}} in character.', enabled: true }, { id: 'p4', title: 'blank', content: '   ', enabled: true }] });
     const chat = send();
     assert.deepEqual(chat.map(x => `${x.role}:${x.content}`), ['user:u1', 'system:ALWAYS Alice', 'system:Fix bias toward Alice.', 'system:Keep Robin in character.', 'system:D they meet', 'assistant:a1']);
     assert.equal(m.stateText('prompts'), '2개 켜짐'); assert.deepEqual(m.enabledPrompts().map(p => p.id), ['p1', 'p3']);
@@ -99,11 +99,40 @@ await test('화면 · 설정 카드 · 합치기 · CSS · CI', async () => {
     assert.match(js, /lines\.push\(`프롬프트 \$\{prompts\.length\}개 켜짐/, 'button tooltip line');
     assert.doesNotMatch(js, /promptList: \[\{/, 'no shipped example prompts');
     const css = await read('src/addons/direction/style.css');
-    assert.match(css, /--jj-css-version: "1\.3\.0";/); assert.match(js, /const VERSION = '1\.3\.0';/);
+    assert.match(css, /--jj-css-version: "1\.3\.1";/); assert.match(js, /const VERSION = '1\.3\.1';/);
     assert.match(css, /\.jj-pitem-head \{[^}]*min-height: 44px/, 'row is a 44px target');
     assert.match(css, /#jj-popup \.jj-padd \{[^}]*min-height: 44px/);
     assert.match(css, /@media \(pointer: coarse\) \{\s*#jj-popup \.jj-pbtn::after \{[^}]*width: max\(100%, 44px\); height: max\(100%, 44px\)/, '36px buttons get a 44px hit box on touch');
     assert.match(await read('.github/workflows/release-check.yml'), /node tools\/tests\/direction-prompts\.mjs \./, 'registered in CI');
+});
+
+await test('7.4.2 (1.3.1) 깃털 단계 = 보내는 것의 수 (테두리 · 채움 · 채움 + 빛) · 그라데이션 없음 · 켜짐 색 하나', async () => {
+    const on = { title: 't', content: 'P', enabled: true };
+    const level = over => { fresh({ direction: { enabled: false, content: '' }, always: { enabled: false, content: '' }, ...over }); return m.sendLevel(); };
+    assert.equal(level({}), 0);
+    assert.equal(level({ direction: { enabled: true, content: '' } }), 1, 'direction on (even empty) counts');
+    assert.equal(level({ always: { enabled: true, content: 'A' } }), 1, 'direction off but always sending: still lit');
+    assert.equal(level({ always: { enabled: true, content: '' } }), 0, 'empty always sends nothing');
+    assert.equal(level({ promptList: [on, { ...on }] }), 1, 'any number of prompt rows = one source');
+    assert.equal(level({ prompts: { enabled: false }, promptList: [on] }), 0);
+    assert.equal(level({ always: { enabled: true, content: 'A' }, promptList: [on] }), 2);
+    assert.equal(level({ direction: { enabled: true, content: 'd' }, always: { enabled: true, content: 'A' }, promptList: [on] }), 3);
+    assert.equal(level({ extensionEnabled: false, direction: { enabled: true, content: 'd' }, always: { enabled: true, content: 'A' }, promptList: [on] }), 0, 'feather button off');
+    assert.match(js, /button\.dataset\.jjLevel = String\(level\);\s*button\.classList\.toggle\('is-on', level > 0\);/);
+    assert.doesNotMatch(js, /partnerColor|gradientColors|setProperty\('--jj-grad-/, 'no gradient code');
+    const css = await read('src/addons/direction/style.css'), theme = await read('css/04-send-form.css');
+    for (const text of [css, theme]) assert.doesNotMatch(text, /--jj-grad-|is-always/, 'no gradient rules');
+    // 사용자 10-20 고른 모양: 1 테두리만(안은 12%) · 2 채움 · 3 채움 + 은은한 빛 — 테마 · 테마 없음 둘 다
+    for (const text of [css, theme]) {
+        assert.match(text, /\[data-jj-level="1"\][^{]*\{[^}]*color: color-mix\(in srgb, var\(--jj-on\) 12%, transparent\);[^}]*-webkit-text-stroke: 0\.13em var\(--jj-stroke[^}]*paint-order: stroke fill;/, 'level 1 = outline');
+        assert.match(text, /:is\(\[data-jj-level="2"\], \[data-jj-level="3"\]\)[^{]*\{[^}]*color: var\(--jj-on\);/, 'level 2+ = solid');
+        assert.match(text, /\[data-jj-level="3"\] \.jj-popup-title > i\) ?\{[^}]*filter: drop-shadow\(0 0 6px color-mix\(in srgb, var\(--jj-on\) 85%, transparent\)\);|#jj-popup\[data-jj-level="3"\] \.jj-popup-title > i \{ filter: drop-shadow\(0 0 6px color-mix\(in srgb, var\(--jj-on\) 85%, transparent\)\); \}/, 'level 3 = soft glow');
+    }
+    assert.match(theme, /body\.salty \{\s*--jj-stroke: color-mix\(in srgb, var\(--jj-on\) 80%, #b08000\);\s*\}\s*body\.salty\.salty-dark \{\s*--jj-stroke: var\(--jj-on\);/, 'light themes: darker stroke');
+    assert.match(theme, /body\.salty\.salty-icons-line :is\(#jj-button:not\(\[data-jj-level="0"\]\) > i, #jj-popup:not\(\[data-jj-level="0"\]\) \.jj-popup-title > i\)::before \{\s*content: "\\f56b" !important;/, 'line icons: lit levels use the fillable glyph');
+    assert.match(js, /popup\.dataset\.jjLevel = String\(sendLevel\(\)\);/, 'popup title icon follows the same level');
+    assert.match(theme, /body\.salty #jj-popup \.jj-dots b\.is-current \{\s*background: var\(--jj-on\);/, 'current-page dot: solid on-colour');
+    assert.doesNotMatch(js + css, /유저 편향|성격 교정/, 'no such examples in shipped text');
 });
 
 console.log(`direction-prompts: ${pass} passed, ${fail} failed`);

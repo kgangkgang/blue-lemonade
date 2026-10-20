@@ -9,7 +9,7 @@ const ext={};const probe={ext,insertInstructions,saves:0,subs:0,macro:null};
 probe.context={substituteParams(text){probe.subs++;if(probe.subFails)throw new Error('macro engine failed');let out=String(text).replace(/\{\{user\}\}|<USER>/gi,()=>'Alice').replace(/\{\{char\}\}/gi,()=>'Robin');if(probe.macro)out=out.replace(/\{\{direction\}\}/gi,()=>probe.macro());return out;}};globalThis.__directionTest=probe;globalThis.window={matchMedia:()=>({matches:false})};
 const source=(await fs.readFile(path.join(root,'src/addons/direction/index.js'),'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm,'');
 const prelude='const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const getChatCompletionModel=()=>globalThis.__directionTest.model||"example-model";const oai_settings={};';
-const m=await import('data:text/javascript;base64,'+Buffer.from(prelude+source+'\nexport {initSettings,settings,injectDirection,trackGeneration,remember,savePreset,isSaved,alwaysActive,partnerColor,directionMacroText,KINDS,HISTORY_MAX,PRESET_MAX};').toString('base64'));
+const m=await import('data:text/javascript;base64,'+Buffer.from(prelude+source+'\nexport {initSettings,settings,injectDirection,trackGeneration,remember,savePreset,isSaved,alwaysActive,directionMacroText,KINDS,HISTORY_MAX,PRESET_MAX};').toString('base64'));
 ext['Direction-Manager-Lite']={extensionEnabled:false,direction:{enabled:true,content:'literal $& direction'},directionPrompt:'Custom {{direction}}',promptDepth:3};
 m.initSettings();assert.equal(m.settings().extensionEnabled,false);assert.equal(m.settings().direction.content,'literal $& direction');assert.equal(m.settings().promptDepth,3);
 m.settings().onColor='#123456';m.initSettings();assert.equal(m.settings().onColor,'#123456');
@@ -73,9 +73,6 @@ for(let i=0;i<m.HISTORY_MAX+5;i++)m.remember('direction','n'+i);assert.equal(t.h
 t.presets=[];assert.equal(m.savePreset('always','  '),'empty');assert.equal(m.savePreset('always','<OOC>'),'saved');assert.equal(m.savePreset('always',' <OOC> '),'duplicate');assert.equal(m.savePreset('direction','<OOC>'),'saved','same text on the other page is a separate preset');
 assert.equal(m.isSaved('always','<OOC>'),true);assert.equal(m.isSaved('direction','nope'),false);
 for(let i=t.presets.length;i<m.PRESET_MAX;i++)t.presets.push({id:'p'+i,kind:'direction',content:'p'+i,at:0});assert.equal(m.savePreset('direction','one more'),'full');
-// 그라데이션 짝 색: 형식 · 회색은 밝기만
-for(const c of ['#e18a24','#93c9ff','#ffe873','#5c5c5c','#d6d6d6','#000000','#ffffff'])assert.match(m.partnerColor(c),/^#[0-9a-f]{6}$/);
-assert.notEqual(m.partnerColor('#5c5c5c'),'#5c5c5c');assert.notEqual(m.partnerColor('#e18a24'),'#e18a24');
 // 1.2.2 즐겨찾기 칩(6.2.8)은 뺐다: 칩으로 넣어 둔 글은 저장(전개 지시)으로 옮기고 칸은 지운다 · 같은 글은 한 번만 · 빈 칸 · 망가진 칸은 버림 · 화면엔 칩 · ☆ 없음
 {const before=structuredClone(m.settings());
 ext.jeongaejisi={...structuredClone(before),presets:[{id:'k1',kind:'direction',content:'이미 저장한 글',at:1},{id:'k2',kind:'always',content:'시간 건너뛰기',at:2}],favorites:[{text:' 다음 장면으로 '},'이미 저장한 글',{text:''},null,'시간 건너뛰기']};
