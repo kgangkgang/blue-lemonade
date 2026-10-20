@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.5.1";
+export const BUILD_VERSION = "7.5.2";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:0f7e74da:7d7b0908",
+  "manifest.json": "365:0db32dc3:983549c6",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -555,7 +555,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "295996:a74d91f7:08e5a71b",
+  "src/notice-data.js": "296286:af250a36:f4fa44a3",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -600,7 +600,7 @@ export const FILE_HASHES = {
   "src/scene-sound-ui.js": "13103:9cb07bb9:5ad7d4ba",
   "src/scene-sound.js": "20190:87220b7f:e2969cb1",
   "src/screen-modes.js": "3099:dac50dca:8134ca25",
-  "src/scripts/bundled/deus-qr.js": "49340:7e117d19:45a95638",
+  "src/scripts/bundled/deus-qr.js": "49415:cc2663f0:c6bc5e9d",
   "src/scripts/bundled/deus.js": "71720:ddbe5bc4:16add9c2",
   "src/scripts/bundled/fold.js": "14773:cf844e0a:169fb52a",
   "src/scripts/bundled/fruit-heart.js": "192916:6b4f9565:bd218137",
@@ -609,7 +609,7 @@ export const FILE_HASHES = {
   "src/scripts/bundled/helper.js": "104117:425b163a:31736cc4",
   "src/scripts/bundled/korean.js": "1029028:cc619cbc:619f91b4",
   "src/scripts/bundled/shajin.js": "22111:d00fa2db:4b6a0901",
-  "src/scripts/catalog.js": "8911:4dd1e05b:18a36ef0",
+  "src/scripts/catalog.js": "8911:7f81238a:498eab15",
   "src/scripts/deus-option-effects.js": "22048:e1ddb6cf:ee700bc4",
   "src/scripts/deus-option-help.js": "1944:103be572:ec8b5be5",
   "src/scripts/fruit-entry-icons.js": "5245:127887e9:f74d2464",
@@ -617,7 +617,7 @@ export const FILE_HASHES = {
   "src/scripts/fruit-option-effects.js": "115362:8d790430:ae33e023",
   "src/scripts/fruit-option-help.js": "12241:11cd7da9:5c349f4b",
   "src/scripts/fruit-status.js": "14223:7020141b:6cb4eea0",
-  "src/scripts/plain/deus-qr.js": "48132:f99616a7:1eaeedb2",
+  "src/scripts/plain/deus-qr.js": "48207:47919bf8:640a51c4",
   "src/scripts/plain/deus.js": "66897:632b8c3e:8adc7e2f",
   "src/scripts/plain/fold.js": "13815:b56ce78f:e3189530",
   "src/scripts/plain/fruit-heart.js": "179668:5169fd9d:b8f768ab",
@@ -685,5 +685,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1540568:69e06d46:268b229f"
+  "style.css": "1540568:21a20690:b31376ae"
 };

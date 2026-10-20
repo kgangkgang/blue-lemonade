@@ -1,5 +1,5 @@
 // 7.0.6 팝업 위를 누른 손가락 · 뒤로 가기가 아래 창을 닫지 않게 (팝업 전수조사 결과).
-//   ① DEUS 빠른 설정(deus-qr 1.0.5) · ② 이름 꾹 눌러 여는 목소리 상자(TTS 2.0.1 name-voice) — 「창 밖 누름」으로 닫을 때
+//   ① DEUS 빠른 설정(deus-qr 1.0.6) · ② 이름 꾹 눌러 여는 목소리 상자(TTS 2.0.1 name-voice) — 「창 밖 누름」으로 닫을 때
 //      테마 고르기 목록(.salty-pick-layer) · 테마 팝업([data-bl-popup]) 안을 누른 것은 창 밖이 아니다 (전엔 목록에서 고르면 창이 닫히고 고른 것이 날아갔다)
 //   ③ 테마 고르기 목록(selects.js)이 떠 있을 때 뒤로 가기는 목록만 닫는다 (CloseWatcher + 문서 캡처 cancel 지킴이)
 //   ④ TTS 재생 막대에 data-bl-popup="bar"
@@ -30,7 +30,7 @@ await t('① DEUS 빠른 설정: 테마 고르기 목록 · 테마 팝업 · dia
     assert.equal(press('pick'), 0, '목록 줄'); assert.equal(press('popup'), 0, '테마 팝업'); assert.equal(press('dialog'), 0, 'dialog'); assert.equal(press('plain'), 1, '바깥');
     const bundled = (await import(pathToFileURL(path.join(root, 'src/scripts/bundled/deus-qr.js')))).default;
     assert.ok(bundled.includes(line.trim()), 'bundled 에도 같은 줄');
-    assert.match(read('src/scripts/catalog.js'), /\{id:'deus-qr',name:'데우스 빠른 설정',version:'1\.0\.5'/);
+    assert.match(read('src/scripts/catalog.js'), /\{id:'deus-qr',name:'데우스 빠른 설정',version:'1\.0\.6'/);
 });
 
 await t('② 목소리 상자: 테마 고르기 목록 · 테마 팝업 안을 누르면 그대로, 정말 바깥이면 닫힘', () => {

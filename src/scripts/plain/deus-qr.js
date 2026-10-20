@@ -118,11 +118,11 @@ function createDeusQuickController(adapter) {
   syncName();
   const style = doc.createElement('style'); style.dataset.blDeusQuick = '1';
   style.textContent = `
-  #bl-deus-quick{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:var(--jj-icon-size,32px);height:var(--jj-icon-size,32px);padding:4px;border:1px solid var(--SmartThemeBorderColor,#8884);border-radius:8px;background:var(--bl-fill-control,var(--salty-fill-field,#8882));color:var(--SmartThemeBodyColor,#ddd);cursor:pointer}
+  #bl-deus-quick{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:var(--jj-icon-size,32px);height:var(--jj-icon-size,32px);padding:4px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--SmartThemeBodyColor,#ddd);cursor:pointer}
   #bl-deus-quick.dq-name-only svg{display:none}
   #bl-deus-quick svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round}#bl-deus-quick[aria-expanded=true]{color:var(--SmartThemeQuoteColor,#8dcfff)}
   #bl-deus-quick .dq-entry-label{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--salty-ui-size,var(--mainFontSize,16px));line-height:1.3}
-  body #bl-deus-quick.dq-has-name{width:auto;max-width:min(12em,45vw);flex:0 1 auto;gap:5px;padding:4px 8px;border-radius:8px}#bl-deus-quick.dq-has-name svg{flex:0 0 1.1em;width:1.1em;height:1.1em}
+  body #bl-deus-quick.dq-has-name{border-color:var(--SmartThemeBorderColor,#8884);background:var(--bl-fill-control,var(--salty-fill-field,#8882))}#bl-deus-quick.dq-has-name{width:auto;max-width:min(12em,45vw);flex:0 1 auto;gap:5px;padding:4px 8px;border-radius:8px}#bl-deus-quick.dq-has-name svg{flex:0 0 1.1em;width:1.1em;height:1.1em}
   #bl-deus-popover{position:fixed;inset:auto;margin:0;left:var(--dq-left);top:var(--dq-top);transform:translateY(-100%);width:var(--dq-width);max-width:calc(100vw - 16px);max-height:min(58dvh,500px,var(--dq-height));display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;z-index:31020;padding:0;border:1px solid var(--SmartThemeBorderColor,#59606b);border-radius:14px;background:var(--SmartThemeBlurTintColor,#25272d);color:var(--SmartThemeBodyColor,#eee);box-shadow:0 8px 30px #0005;font:inherit;backdrop-filter:none;text-align:start}
   #bl-deus-popover{container:bl-deus-quick/inline-size}
   #bl-deus-popover *{box-sizing:border-box;min-width:0}#bl-deus-popover button,#bl-deus-popover select{font:inherit;color:inherit;max-width:100%}#bl-deus-popover button{cursor:pointer}
@@ -335,7 +335,7 @@ function createDeusQuickController(adapter) {
     render(true); revealTab(); if (panel?.contains(x) && !stopped) x.focus({preventScroll:true}); return !!panel;
   }
   button.addEventListener('click',() => panel ? close() : void open());
-  const outside = event => { if (panel && !controller?.busy && !panel.contains(event.target) && !event.composedPath?.().includes(panel) && !button.contains(event.target) && !event.target.closest?.('dialog, .salty-pick-layer, [data-bl-popup]')) close(); };   // 1.0.5 테마 고르기 목록 · 테마 팝업 안을 누른 것은 바깥이 아님
+  const outside = event => { if (panel && !controller?.busy && !panel.contains(event.target) && !event.composedPath?.().includes(panel) && !button.contains(event.target) && !event.target.closest?.('dialog, .salty-pick-layer, [data-bl-popup]')) close(); };   // 1.0.6 테마 고르기 목록 · 테마 팝업 안을 누른 것은 바깥이 아님
   const keydown = event => { if (panel && event.key === 'Escape' && !event.defaultPrevented) { event.preventDefault(); if (helpOpen) toggleHelp(); else { close(); button.focus({preventScroll:true}); } } };
   doc.addEventListener('pointerdown',outside,true); doc.addEventListener('keydown',keydown);
   host.addEventListener('resize',position); host.visualViewport?.addEventListener('resize',position); host.visualViewport?.addEventListener('scroll',position);

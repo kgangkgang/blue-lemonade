@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.1/blue-lemonade-7.5.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.2/blue-lemonade-7.5.2.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.5.1 · 최신 업데이트</summary>
+<summary>7.5.2 · 최신 업데이트</summary>
+
+- 데우스 빠른 설정 1.0.6: 입력창 옆 단추가 아이콘만 보일 때는 옆 단추들처럼 바탕 · 테두리 없이 보여요. 「빠른 설정 이름」을 적어 두면 전처럼 이름이 붙은 칩 모양이에요.
+
+</details>
+
+<details>
+<summary>7.5.1 · 문단 캐시가 고침을 넘겨요</summary>
 
 - 번역 3.0.1: 번역이 끝난 답에서 대사 한 문단을 지우거나 그림 자리가 끼어들면 뒤 문단이 전부 캐시 없이 다시 번역되던 것을 고쳤어요. 보호 글(색 대사 · 그림 자리)의 번호가 메시지 전체에서 매겨져 앞이 바뀌면 뒤 문단의 캐시 열쇠가 모두 바뀌었어요. 이제 문단 안 차례로 매겨서, 바뀐 문단만 다시 보내요.
 
