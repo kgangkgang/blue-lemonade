@@ -1,8 +1,8 @@
 import {currentVersion} from './notice.js';
 import {getSettings} from './settings.js';
 const DOWNLOAD='https://kgangkgang.github.io/blue-lemonade/';
-const state={busy:false,stage:'idle',message:'버튼을 누르면 블루레몬에이드만 확인해요.'},views=new Set();
-export function updateMarkup(){return `<div class="bl-theme-update"><h3><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> 테마 업데이트</h3><p>현재 실행 버전 <b>${currentVersion()||'확인 중'}</b></p><dl class="bl-health-versions bl-installed-versions" data-installed-versions aria-label="설치된 판"></dl><p class="salty-note bl-installed-note">점선 칸은 꺼 둔 애드온이에요.</p><p class="salty-note">전체 확장 목록을 열지 않고 이 테마만 확인해요. ZIP 으로 깔았으면 업데이트할 때 GitHub 링크 설치로 바꿔요 (설정 · 대화는 그대로).</p><div class="bl-script-actions"><button type="button" class="salty-btn" data-theme-check>업데이트 확인</button><button type="button" class="salty-btn" data-theme-update hidden>업데이트</button><button type="button" class="salty-btn" data-theme-reload hidden>새로고침해서 적용</button></div><p data-theme-update-status role="status" aria-live="polite"></p><a href="${DOWNLOAD}" target="_blank" rel="noopener noreferrer">소개 페이지 · ZIP 다운로드</a></div>`;}
+const state={busy:false,stage:'idle',message:'버튼을 누르면 블루레몬에이드만 확인해요.',controller:null},views=new Set();   // 7.5.3 controller: 진행 중인 요청 (취소 단추)
+export function updateMarkup(){return `<div class="bl-theme-update"><h3><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> 테마 업데이트</h3><p>현재 실행 버전 <b>${currentVersion()||'확인 중'}</b></p><dl class="bl-health-versions bl-installed-versions" data-installed-versions aria-label="설치된 판"></dl><p class="salty-note bl-installed-note">점선 칸은 꺼 둔 애드온이에요.</p><p class="salty-note">전체 확장 목록을 열지 않고 이 테마만 확인해요. ZIP 으로 깔았으면 업데이트할 때 GitHub 링크 설치로 바꿔요 (설정 · 대화는 그대로).</p><div class="bl-script-actions"><button type="button" class="salty-btn" data-theme-check>업데이트 확인</button><button type="button" class="salty-btn" data-theme-cancel hidden>취소</button><button type="button" class="salty-btn" data-theme-update hidden>업데이트</button><button type="button" class="salty-btn" data-theme-reload hidden>새로고침해서 적용</button></div><p data-theme-update-status role="status" aria-live="polite"></p><a href="${DOWNLOAD}" target="_blank" rel="noopener noreferrer">소개 페이지 · ZIP 다운로드</a></div>`;}
 export function installationFrom(url,types){
     const parts=new URL(url).pathname.split('/').map(decodeURIComponent),index=parts.indexOf('third-party');
     const name=index>=0?parts[index+1]:null;
@@ -11,21 +11,23 @@ export function installationFrom(url,types){
     if(!['global','local'].includes(type))throw Error('설치 유형을 확인하지 못했어요. 새로고침 후 다시 확인해 주세요.');
     return {extensionName:name,global:type==='global'};
 }
-export async function requestThemeUpdate(action,installation,{fetcher=fetch,headers={},timeout=60000}={}){
+// 7.5.3 signal: 취소 단추 (확인은 20초, 업데이트는 60초까지 기다린다 — 전엔 둘 다 60초라 창을 나갔다 들어오면 그동안 단추가 잠겨 보였다)
+export async function requestThemeUpdate(action,installation,{fetcher=fetch,headers={},timeout=action==='version'?20000:60000,signal=null}={}){
     if(!['version','update'].includes(action))throw Error('지원하지 않는 작업이에요.');
-    const response=await fetcher(`/api/extensions/${action}`,{method:'POST',headers,body:JSON.stringify(installation),signal:AbortSignal.timeout(timeout)});
-    if(!response.ok){if(response.status===403)throw Error('업데이트 권한이 없어요. 공용 설치라면 관리자 계정에서 업데이트해 주세요.');throw Error('업데이트 서버 요청이 실패했어요. 연결 상태와 Git 설치 여부를 확인해 주세요.');}
+    const signals=[AbortSignal.timeout(timeout),...(signal?[signal]:[])];
+    const response=await fetcher(`/api/extensions/${action}`,{method:'POST',headers,body:JSON.stringify(installation),signal:typeof AbortSignal.any==='function'?AbortSignal.any(signals):signals[0]});
+    if(!response.ok){if(response.status===403)throw Error('업데이트 권한이 없어요. 공용 설치라면 관리자 계정에서 업데이트해 주세요.');throw Error('업데이트 서버 요청이 실패했어요. 이 기기의 실리태번이 git 을 쓸 수 없는 설치(폰 · Syncthing 으로 복사한 폴더 등)면 이 단추 대신 원본 쪽을 업데이트하면 따라와요. 그 밖엔 연결 상태와 Git 설치 여부를 확인해 주세요.');}
     const data=await response.json();
     if(typeof data.isUpToDate!=='boolean')throw Error('서버 응답을 확인하지 못했어요. 다시 확인해 주세요.');
     return data;
 }
-function paint(){for(const root of views){if(!root.isConnected){views.delete(root);continue;}root.querySelector('[data-theme-update-status]').textContent=state.message;const check=root.querySelector('[data-theme-check]'),update=root.querySelector('[data-theme-update]'),reload=root.querySelector('[data-theme-reload]');check.disabled=state.busy;update.disabled=state.busy;update.hidden=!['available','zipupdate'].includes(state.stage);reload.hidden=state.stage!=='done';}}
+function paint(){for(const root of views){if(!root.isConnected){views.delete(root);continue;}root.querySelector('[data-theme-update-status]').textContent=state.message;const check=root.querySelector('[data-theme-check]'),update=root.querySelector('[data-theme-update]'),reload=root.querySelector('[data-theme-reload]'),cancel=root.querySelector('[data-theme-cancel]');check.disabled=state.busy;update.disabled=state.busy;if(cancel)cancel.hidden=!state.busy;update.hidden=!['available','zipupdate'].includes(state.stage);reload.hidden=state.stage!=='done';}}
 async function run(action){
-    if(state.busy)return;state.busy=true;state.message=action==='version'?'테마 업데이트를 확인하는 중…':'테마 파일을 업데이트하는 중…';paint();
+    if(state.busy)return;state.busy=true;state.controller=typeof AbortController==='function'?new AbortController():null;state.message=action==='version'?'테마 업데이트를 확인하는 중… (취소로 멈출 수 있어요)':'테마 파일을 업데이트하는 중…';paint();
     try{
         const host=await import('../../../../extensions.js');
         const installation=installationFrom(import.meta.url,host.extensionTypes);
-        const data=await requestThemeUpdate(action,installation,{headers:SillyTavern.getContext().getRequestHeaders()});
+        const data=await requestThemeUpdate(action,installation,{headers:SillyTavern.getContext().getRequestHeaders(),signal:state.controller?.signal||null});
         if(action==='version'&&!data.remoteUrl){ // 5.4.0: 링크로 설치했는데 ZIP 만 권해 헷갈렸다 — 제보자는 Syncthing 으로 폰에 동기화한 폴더라 .git 이 없었다
             // 5.7.0: ZIP 설치도 GitHub 에서 새 버전을 확인하고, 있으면 업데이트 단추가 업데이트 창(GitHub 링크 설치로 바꾸기)을 연다
             const m=await import('./update-check.js');await m.checkForUpdate({force:true});
@@ -34,8 +36,14 @@ async function run(action){
         }
         else if(action==='version'){state.stage=data.isUpToDate?'current':'available';state.message=data.isUpToDate?'설치된 파일이 최신이에요.':'새 업데이트가 있어요. 업데이트 버튼으로 설치할 수 있어요.';}
         else{state.stage='done';state.message='확인·업데이트가 끝났어요. 새로고침하면 설치된 파일이 적용돼요.';}
-    }catch(error){state.stage='error';state.message=error.name==='TimeoutError'?'서버 응답을 기다리다 시간이 초과됐어요. 업데이트 중이었다면 서버 작업이 계속될 수 있으니 잠시 뒤 다시 확인해 주세요.':error.message;}
-    finally{state.busy=false;paint();}
+    }catch(error){
+        // 7.5.3 서버가 설치 상태를 못 돌려주면(폰 · ZIP 으로 깐 폴더 · git 없음) GitHub 릴리스로 새 판만 확인한다 — 전엔 「요청 실패」 로 끝나 폰에서는 늘 실패로 보였다
+        if(action==='version'&&error.name!=='AbortError'){try{const m=await import('./update-check.js');await m.checkForUpdate({force:true});
+            if(m.hasUpdate()){state.stage='zipupdate';state.message=`이 기기의 실리태번이 설치 상태를 돌려주지 못했어요(폰 · ZIP 으로 깐 폴더 등). GitHub 기준 새 버전 v${m.latestVersion()} 이 있어요 — 업데이트를 누르면 GitHub 링크 설치로 바꿔서 업데이트하고, 안 되면 ZIP 을 받아 덮어쓰면 돼요.`;}
+            else{state.stage='current';state.message='이 기기의 실리태번이 설치 상태를 돌려주지 못했지만(폰 · ZIP 으로 깐 폴더 등) GitHub 기준 지금이 최신이에요.';}
+            return;}catch{/* 아래 원래 오류 문구 */}}
+        state.stage='error';state.message=error.name==='AbortError'?'확인을 취소했어요.':error.name==='TimeoutError'?'서버 응답을 기다리다 시간이 초과됐어요. 업데이트 중이었다면 서버 작업이 계속될 수 있으니 잠시 뒤 다시 확인해 주세요.':error.message;}
+    finally{state.busy=false;state.controller=null;paint();}
 }
 // 6.6.9 설치된 판 한눈에: 테마 + 내장 애드온 (켠 것 먼저, 끈 것은 흐리게). 애드온 판은 이 탭을 처음 열 때 한 번 읽는다 (addon-versions.js)
 function paintInstalled(box){
@@ -46,4 +54,4 @@ function paintInstalled(box){
         list.replaceChildren(...cells.map(({label,version,on})=>{const cell=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');cell.className=on?'':'is-off';dt.textContent=label;dd.textContent=version?`v${version}`:'확인 못 함';if(!on)dd.setAttribute('aria-label',`${dd.textContent} 꺼짐`);cell.append(dt,dd);return cell;}));
     }).catch(()=>{});
 }
-export function bindThemeUpdate(root){import('./update-check.js').then(m=>m.paintUpdateLine(root)).catch(()=>{});const box=root.querySelector('.bl-theme-update');if(!box)return;paintInstalled(box);views.add(box);root._updateCleanup=()=>views.delete(box);box.querySelector('[data-theme-check]').onclick=()=>run('version');box.querySelector('[data-theme-update]').onclick=()=>state.stage==='zipupdate'?import('./update-check.js').then(m=>m.openUpdate()):run('update');box.querySelector('[data-theme-reload]').onclick=()=>location.reload();paint();}
+export function bindThemeUpdate(root){import('./update-check.js').then(m=>m.paintUpdateLine(root)).catch(()=>{});const box=root.querySelector('.bl-theme-update');if(!box)return;paintInstalled(box);views.add(box);root._updateCleanup=()=>views.delete(box);box.querySelector('[data-theme-check]').onclick=()=>run('version');const cancelBtn=box.querySelector('[data-theme-cancel]');if(cancelBtn)cancelBtn.onclick=()=>{state.controller?.abort();};box.querySelector('[data-theme-update]').onclick=()=>state.stage==='zipupdate'?import('./update-check.js').then(m=>m.openUpdate()):run('update');box.querySelector('[data-theme-reload]').onclick=()=>location.reload();paint();}

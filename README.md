@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.2/blue-lemonade-7.5.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.3/blue-lemonade-7.5.3.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.5.2 · 최신 업데이트</summary>
+<summary>7.5.3 · 최신 업데이트</summary>
+
+- 테마 업데이트 확인: 폰이나 ZIP 으로 깐 폴더처럼 실리태번이 설치 상태를 돌려주지 못하는 기기에서도 「요청 실패」 대신 GitHub 기준으로 새 판이 있는지 알려 줘요. 확인 중에는 「취소」 단추로 멈출 수 있고 20초 넘게 기다리지 않아요. 전엔 확인 중에 창을 나갔다 들어오면 단추가 잠긴 채로 보였어요.
+
+</details>
+
+<details>
+<summary>7.5.2 · 데우스 단추 상자 없애기</summary>
 
 - 데우스 빠른 설정 1.0.6: 입력창 옆 단추가 아이콘만 보일 때는 옆 단추들처럼 바탕 · 테두리 없이 보여요. 「빠른 설정 이름」을 적어 두면 전처럼 이름이 붙은 칩 모양이에요.
 

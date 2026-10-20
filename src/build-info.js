@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.5.2";
+export const BUILD_VERSION = "7.5.3";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:0db32dc3:983549c6",
+  "manifest.json": "365:c18a1644:3be0a48d",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -555,7 +555,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "296286:af250a36:f4fa44a3",
+  "src/notice-data.js": "296749:08d6dbac:e710524c",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -656,7 +656,7 @@ export const FILE_HASHES = {
   "src/sttheme.js": "21112:b0503cd0:8e5dcb5b",
   "src/styles.js": "16919:9d330ace:71a17d0c",
   "src/swipe-picker-translation.js": "17047:ff4fc95a:2ea5d437",
-  "src/theme-update.js": "6862:284efe11:6d65e75a",
+  "src/theme-update.js": "8995:944960da:1125b756",
   "src/tone.js": "6415:7ed9f3f6:a7e0d13d",
   "src/touch-sliders.js": "1826:c0645cac:6b4521ba",
   "src/typography.js": "23512:bef0bfc7:89dc59bb",
@@ -685,5 +685,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1540568:21a20690:b31376ae"
+  "style.css": "1540568:d55439e2:bb462eea"
 };
