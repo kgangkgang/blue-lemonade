@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.4.0";
+export const BUILD_VERSION = "7.4.1";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:3f2e77c6:911e4180",
+  "manifest.json": "365:ea616985:dc16d4e3",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -56,9 +56,9 @@ export const FILE_HASHES = {
   "src/addons/bookmarks/viewers.js": "19183:e60b9efd:36ec558a",
   "src/addons/customstyle/index.js": "28932:5bf5bdb4:b8552706",
   "src/addons/customstyle/style.css": "3793:a55698b3:63ca622a",
-  "src/addons/direction/index.js": "64156:a17dec0f:a3972ad0",
+  "src/addons/direction/index.js": "83715:b425dc1c:24c8b529",
   "src/addons/direction/prompt.js": "2559:fa1cf265:60dc13ab",
-  "src/addons/direction/style.css": "25243:8b52e8a3:492f1c42",
+  "src/addons/direction/style.css": "31282:899a1e3d:b3d2e787",
   "src/addons/list-sync.js": "4902:487dc198:b4d6512a",
   "src/addons/mermaid/index.js": "8963:2a351705:f617c845",
   "src/addons/mermaid/source/src/index.js": "394:f55b3e28:fa2de41b",
@@ -147,7 +147,7 @@ export const FILE_HASHES = {
   "src/addons/perf/attribution.js": "6837:2450c2fd:e03ddaff",
   "src/addons/perf/budget.js": "26960:724af434:2be5c134",
   "src/addons/perf/capture.js": "33692:e5136c9c:bf9240c4",
-  "src/addons/perf/emptyguard.js": "8510:6183d667:ebd6d4fc",
+  "src/addons/perf/emptyguard.js": "10226:943d5284:e7c17774",
   "src/addons/perf/entry-order.js": "323:a9c08dfd:fa4a0cbf",
   "src/addons/perf/help.js": "1828:97e5b6a4:bd588886",
   "src/addons/perf/hub.js": "9198:64280643:29092ec9",
@@ -171,12 +171,12 @@ export const FILE_HASHES = {
   "src/addons/perf/recovery.js": "12010:9e1a8ee7:7e289f7e",
   "src/addons/perf/requestlog.js": "6855:d95c4c36:813f0c46",
   "src/addons/perf/save-worker.js": "1467:0f9e73b9:bab6c212",
-  "src/addons/perf/savededupe.js": "46663:df523cbd:ce1e2def",
+  "src/addons/perf/savededupe.js": "46973:6f8aa4d5:cf42d284",
   "src/addons/perf/savesend.js": "13482:1ece8843:3be88d12",
   "src/addons/perf/start.js": "1008:4d5ee41e:764be632",
   "src/addons/perf/state.js": "8722:70838afc:9d5d41cf",
   "src/addons/perf/store.js": "13393:ebb09b1b:c768059e",
-  "src/addons/perf/style.css": "33095:045a390a:eaf5e051",
+  "src/addons/perf/style.css": "33095:927b4961:5fc96878",
   "src/addons/perf/styledup.js": "5939:e0393b84:d7513129",
   "src/addons/perf/switchcode.js": "4772:ff54f73b:6046c3ba",
   "src/addons/perf/switchflush.js": "16557:4ee725f3:e5e33f9f",
@@ -555,7 +555,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "289150:72ccc6b0:33259113",
+  "src/notice-data.js": "290416:2a03de30:f49d54c7",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -662,7 +662,7 @@ export const FILE_HASHES = {
   "src/typography.js": "23512:bef0bfc7:89dc59bb",
   "src/update-check.js": "20206:9f84bef6:a3c810f9",
   "src/usage-feed.js": "3182:70ae2063:357d8ea5",
-  "src/usage-ledger-core.js": "18530:a1b5abf7:4430c030",
+  "src/usage-ledger-core.js": "19295:6069f238:4a00cacf",
   "src/usage-ledger.js": "14148:1fb80487:ed5f1d74",
   "src/usage-mode.js": "1907:647d07aa:c3a04add",
   "src/vendor/gif-writer.js": "15523:55aa4c9a:308694e8",
@@ -685,5 +685,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1539362:e8e429ed:c3c9677c"
+  "style.css": "1539362:62adea3f:4d043dac"
 };

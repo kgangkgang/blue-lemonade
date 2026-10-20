@@ -6,7 +6,7 @@
 :root {
     --jj-on: var(--jj-on-color, var(--SmartThemeQuoteColor, #e18a24));
     /* index.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-    --jj-css-version: "1.2.9";
+    --jj-css-version: "1.3.0";
 }
 
 /* ── 입력창 버튼 ─────────────────────────────────────────── */
@@ -393,6 +393,163 @@
 
 .jj-popup-foot i { margin-top: 3px; }
 
+/* 1.3.0 프롬프트 쪽: 저장 목록 줄과 같은 오목한 칸, 제목 한 줄(44px) · 누르면 아래로 내용 · 줄 오른쪽 스위치.
+   테마 색은 블루 레몬에이드 변수(--bl-well 등)가 있으면 그것, 없으면(확장만 · 다른 테마) 실리태번 테마 색을 섞는다 */
+.jj-page-prompts { flex-direction: column; contain: size; }   /* 쪽 높이에 끼지 않는다 — 보는 동안 index.js syncPagesHeight 가 .jj-pages 높이를 잡는다 */
+.jj-pages { transition: min-height .18s ease; }
+.jj-prompts {
+    --jj-p-muted: var(--salty-muted, color-mix(in srgb, var(--SmartThemeBodyColor) 65%, transparent));
+    --jj-p-well: var(--bl-well, color-mix(in srgb, var(--SmartThemeBodyColor) 6%, transparent));
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+}
+.jj-pitems {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: min(40vh, 340px);
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    list-style: none;
+}
+.jj-pitems:empty { display: none; }
+.jj-pitem {
+    flex: 0 0 auto;
+    border-radius: 12px;
+    background: var(--jj-p-well);
+    box-shadow: var(--bl-well-in, none);
+}
+.jj-pitem.is-editing { box-shadow: var(--bl-well-in, none), inset 0 0 0 1.5px color-mix(in srgb, var(--jj-on) 55%, transparent); }
+.jj-pitem-head { display: flex; align-items: center; gap: 6px; min-height: 44px; padding-right: 10px; }
+#jj-popup .jj-pitem-toggle {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    padding: 0 6px 0 12px;
+    border: 0;
+    border-radius: 12px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: .9em;
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.jj-pitem-caret { flex: 0 0 auto; width: 1em; font-size: .72em; text-align: center; color: var(--jj-p-muted); transition: transform .2s; }
+.jj-pitem.is-open .jj-pitem-caret { transform: rotate(90deg); }
+.jj-pitem-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jj-pitem:not(.is-on) .jj-pitem-title { color: var(--jj-p-muted); }
+#jj-popup .jj-pitem .jj-switch { flex: 0 0 auto; }
+.jj-pitem-body { display: flex; flex-direction: column; gap: 8px; padding: 0 10px 10px 12px; }
+.jj-pitem-content {
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--SmartThemeBodyColor) 5%, transparent);
+    font-size: .86em;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.jj-pitem-content.is-empty { color: var(--jj-p-muted); }
+.jj-pitem-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.jj-pspacer { flex: 1 1 0; }
+#jj-popup .jj-pbtn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 36px;
+    min-height: 36px;
+    margin: 0;
+    padding: 0 12px;
+    border: 1px solid color-mix(in srgb, var(--SmartThemeBodyColor) 22%, transparent);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: .84em;
+    white-space: nowrap;
+    cursor: pointer;
+}
+#jj-popup .jj-pbtn.jj-pbtn-icon { width: 36px; padding: 0; }
+#jj-popup .jj-pbtn:disabled { opacity: .35; cursor: default; }
+#jj-popup .jj-pbtn.is-primary { border-color: transparent; background: var(--jj-on); color: var(--jj-on-ink, #fff); font-weight: 600; }
+#jj-popup .jj-pbtn.is-danger { color: #e5484d; }
+@media (hover: hover) {
+    #jj-popup .jj-pbtn:not(:disabled):not(.is-primary):hover { background: color-mix(in srgb, var(--SmartThemeBodyColor) 8%, transparent); }
+}
+/* 손가락 화면: 보이는 36px 단추의 눌리는 넓이를 44×44 로 (테마 86-touch-targets 와 같은 투명 상자) */
+@media (pointer: coarse) {
+    #jj-popup .jj-pbtn::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
+}
+.jj-pedit { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+#jj-popup :is(.jj-ptitle-input, .jj-pcontent-input) {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 8px 10px;
+    box-sizing: border-box;
+    border: 1px solid color-mix(in srgb, var(--SmartThemeBodyColor) 22%, transparent);
+    border-radius: 9px;
+    background-color: var(--salty-surface, rgba(0, 0, 0, .18));
+    color: inherit;
+    font: inherit;
+    font-size: max(16px, var(--mainFontSize, 1rem));
+    line-height: 1.45;
+    outline: none;
+}
+#jj-popup .jj-ptitle-input { min-height: 44px; font-weight: 600; }
+#jj-popup .jj-pcontent-input { min-height: calc(4lh + 18px); max-height: 30vh; resize: vertical; field-sizing: content; }
+#jj-popup :is(.jj-ptitle-input, .jj-pcontent-input):focus { border-color: color-mix(in srgb, var(--jj-on) 60%, transparent); }
+.jj-pempty {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 14px 10px 6px;
+    font-size: .84em;
+    line-height: 1.5;
+    text-align: center;
+    color: var(--jj-p-muted);
+}
+.jj-pempty b { font-weight: 600; color: var(--salty-text, var(--SmartThemeBodyColor)); }
+#jj-popup .jj-padd {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    margin: 0;
+    padding: 6px 10px;
+    border: 1px dashed color-mix(in srgb, var(--SmartThemeBodyColor) 30%, transparent);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--jj-p-muted);
+    font: inherit;
+    font-size: .86em;
+    cursor: pointer;
+}
+#jj-popup .jj-padd:disabled { opacity: .45; cursor: default; }
+/* 쪽 스위치가 꺼져 있으면 줄을 흐리게 (줄 스위치로 켜면 쪽 스위치도 같이 켜진다) */
+.jj-page-prompts.is-muted .jj-pitems { opacity: .62; }
+
 /* ── 설정 (확장 관리 화면) ───────────────────────────────── */
 
 /* 캐릭터 에셋 확장과 같은 카드 모양 (테마 글자색을 옅게 섞어 밝은/어두운 테마 모두 대비가 보이게) */
@@ -649,7 +806,7 @@ body.salty .jj-settings { --jj-muted: var(--salty-muted, color-mix(in srgb, var(
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #jj-button, #jj-button .jj-dot, #jj-popup, .jj-switch, .jj-switch span, .jj-dots b { transition: none; }
+    #jj-button, #jj-button .jj-dot, #jj-popup, .jj-switch, .jj-switch span, .jj-dots b, .jj-pitem-caret, .jj-pages { transition: none; }
 }
 
 .bl-direction-dialog {width:min(620px,94vw);max-height:90dvh;padding:16px;border:1px solid var(--SmartThemeBorderColor,#555);border-radius:16px;background:var(--salty-surface,var(--bl-opaque-tint,var(--SmartThemeBlurTintColor,#25262a)));color:var(--SmartThemeBodyColor,#eee);}

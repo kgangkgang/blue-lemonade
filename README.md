@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.4.0/blue-lemonade-7.4.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.4.1/blue-lemonade-7.4.1.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,17 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.4.0 · 최신 업데이트</summary>
+<summary>7.4.1 · 최신 업데이트</summary>
+
+- 전개 지시 깃털 창에 세 번째 쪽 「프롬프트」가 생겼어요. 항상 지시에서 한 번 더 넘기거나 제목을 누르면 나와요. 유저 편향 교정처럼 프리셋에 넣기는 애매하지만 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 아래로 내용이 펼쳐져요.
+- 줄 오른쪽 스위치로 켠 프롬프트만 지시와 같이 보내요. 자리는 항상 지시와 같고, 차례는 항상 지시 → 켠 프롬프트(목록 순서) → 전개 지시예요. {{char}} · {{user}} 도 이름으로 바뀌어 들어가요. 제목 옆에 켠 개수가 보이고, 펼친 줄에서 고치기 · 지우기(한 번 묻고) · 위아래로 옮기기를 해요.
+- 사용량 장부: 기록에 실제로 보낸 서버 주소가 있으면 결제 수단을 그 주소로 먼저 골라요. 공식 API 주소가 아니면 「중계」로 잡혀요(예: Claude 연결의 주소를 중계 서버로 바꿔 쓴 경우).
+- 빈 채팅 저장을 막았을 때 알림이 셋 겹치던 것을 하나로 줄였어요. 막은 직후의 실리태번 「채팅을 저장하지 못했어요」 알림만 숨기고, 다른 오류 알림은 그대로 보여요.
+
+</details>
+
+<details>
+<summary>7.4.0 · 사용량 장부 · 저장 공간 보고 · 북마크 발췌 가운데</summary>
 
 - 사용량 장부가 생겼어요. 확장마다 「무슨 기능이 얼마 썼나」를 이 기기에 90일 모아요(밖으로 보내지 않아요). 블루레몬에이드는 실리태번 본 생성(본 답 · 다시 생성 · 스와이프 · 이어 쓰기 · 사칭)과 자기 기능(번역 · 번역 다시(교정) · 다시 쓰기 · TTS 대사 분석 · TTS 음성 · 전개 지시)을 응답에 온 실제 토큰으로 적고, 다른 확장도 같은 장부에 적을 수 있어요(README 「확장 만드는 분께」).
 - 값은 요청이 실제로 나간 연결의 단가로, 기록한 날의 단가로 셈해요. 공식 API 는 공식 공개 단가(예: Gemini 4 Argon 은 12월 1일부터 $4 / $20 — Vertex 쪽은 확인 전이라 「≈ Vertex 미확인」), 중계는 중계 장부의 실제 과금(아직 못 맞추면 중계 단가표로 「≈」)이고, 공식과 중계를 한 줄에 섞지 않아요. 생각 토큰은 출력 안에 한 번만 세요.

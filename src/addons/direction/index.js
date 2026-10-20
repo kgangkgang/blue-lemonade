@@ -12,12 +12,16 @@ import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.2.9';
+const VERSION = '1.3.0';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
-const KINDS = ['direction', 'always'];
-const KIND_LABEL = { direction: '전개 지시', always: '항상 지시' };
+// 1.3.0: 세 번째 쪽 「프롬프트」 — 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고 줄마다 켜고 끈다. 켠 것은 항상 지시 다음 · 전개 지시 앞에 같이 들어간다
+const KINDS = ['direction', 'always', 'prompts'];
+const TEXT_KINDS = ['direction', 'always'];   // 입력칸 하나짜리 쪽 (저장 · 최근 목록도 이 둘만)
+const KIND_LABEL = { direction: '전개 지시', always: '항상 지시', prompts: '프롬프트' };
 const HISTORY_MAX = 30;   // 최근: 실제로 보낸 지시 (쪽마다)
 const PRESET_MAX = 100;   // 저장: 두 쪽 합쳐서
+const PROMPT_MAX = 50;    // 1.3.0 프롬프트 쪽 줄 수
+const PROMPT_TITLE_MAX = 60;
 
 // AI에게 보내는 글이라 원래 확장의 영어 프롬프트를 그대로 쓴다. (뜻은 설정 화면에 한국어로 적어 둠)
 const DEFAULT_PROMPT = `<direction>
@@ -37,6 +41,8 @@ const DEFAULTS = Object.freeze({
     onColor: '',                     // 켜짐 표시 색. 비우면 테마의 대사 색
     presets: [],                     // 1.1.5 저장한 지시 [{ id, kind, content, at }] (최근 저장이 앞)
     history: { direction: [], always: [] }, // 1.1.5 실제로 보낸 지시 [{ content, at }] (최근이 앞)
+    prompts: { enabled: true },      // 1.3.0 프롬프트 쪽 전체 스위치 (줄마다 켜고 끄는 것은 promptList 의 enabled)
+    promptList: [],                  // 1.3.0 [{ id, title, content, enabled, at, updated }] (보이는 순서 = 보내는 순서)
 });
 
 function settings() {
@@ -82,7 +88,7 @@ function initSettings() {
     store.presets = unique((Array.isArray(store.presets) ? store.presets : []).filter(item => listed(item) && KINDS.includes(item.kind)), item => `${item.kind}\n${item.content}`).slice(0, PRESET_MAX);
     for (const item of store.presets) if (typeof item.id !== 'string' || !item.id) item.id = newId();
     const history = store.history && typeof store.history === 'object' ? store.history : {};
-    store.history = Object.fromEntries(KINDS.map(kind => [kind, unique((Array.isArray(history[kind]) ? history[kind] : []).filter(listed), item => item.content).slice(0, HISTORY_MAX)]));
+    store.history = Object.fromEntries(TEXT_KINDS.map(kind => [kind, unique((Array.isArray(history[kind]) ? history[kind] : []).filter(listed), item => item.content).slice(0, HISTORY_MAX)]));
     // 1.2.2 즐겨찾기 칩(6.2.8)은 뺐다 — 사용자 10-13 「별 빼줘 · 위의 북마크 표시(저장)로 하는 게 나을듯」.
     //       칩으로 넣어 둔 글은 저장 목록의 전개 지시로 옮기고(같은 글은 한 번만 · 저장 상한 안에서 · 칩 순서대로 맨 위에) 칸은 지운다
     if (Array.isArray(store.favorites)) {
@@ -93,10 +99,26 @@ function initSettings() {
         }
     }
     delete store.favorites;
+    // 1.3.0 프롬프트 쪽 — 예전 설정에는 없으니 빈 목록 · 전체 스위치 켜짐으로 시작한다
+    store.prompts = { enabled: true, ...(store.prompts && typeof store.prompts === 'object' && !Array.isArray(store.prompts) ? store.prompts : {}) };
+    store.prompts.enabled = store.prompts.enabled !== false;
+    store.promptList = (Array.isArray(store.promptList) ? store.promptList : []).map(normalizePrompt).filter(Boolean).slice(0, PROMPT_MAX);
     if (typeof store.directionPrompt !== 'string') store.directionPrompt = DEFAULT_PROMPT;
     store.promptDepth = clampDepth(store.promptDepth);
     store.extensionEnabled = store.extensionEnabled !== false;
     store.onColor = parseColorCode(store.onColor) ?? '';
+}
+
+/** 프롬프트 한 줄 모양 다듬기. 제목도 글도 없으면 버린다 */
+function normalizePrompt(item) {
+    if (!item || typeof item !== 'object') return null;
+    const title = String(item.title ?? '').replace(/\s+/g, ' ').trim().slice(0, PROMPT_TITLE_MAX);
+    const content = String(item.content ?? '');
+    if (!title && !content.trim()) return null;
+    const at = Number(item.at) > 0 ? Number(item.at) : Date.now();
+    const out = { id: typeof item.id === 'string' && item.id ? item.id : newId(), title, content, enabled: item.enabled === true, at };
+    if (Number(item.updated) > 0) out.updated = Number(item.updated);
+    return out;
 }
 
 function newId() {
@@ -119,8 +141,19 @@ function alwaysActive() {
     return store.extensionEnabled && store.always.enabled && hasContent('always');
 }
 
+/** 1.3.0 켜 둔 프롬프트 (목록 순서, 글이 있는 것만) */
+function enabledPrompts() {
+    return settings().promptList.filter(item => item.enabled && item.content.trim() !== '');
+}
+
+/** 프롬프트 쪽은 항상 지시처럼: 입력창 버튼 + 쪽 스위치가 켜져 있고, 켠 줄이 하나라도 있어야 보낸다 */
+function promptsActive() {
+    const store = settings();
+    return store.extensionEnabled && store.prompts.enabled && enabledPrompts().length > 0;
+}
+
 function kindActive(kind) {
-    return kind === 'always' ? alwaysActive() : isActive();
+    return kind === 'always' ? alwaysActive() : kind === 'prompts' ? promptsActive() : isActive();
 }
 
 // ── 최근 · 저장 ─────────────────────────────────────────────
@@ -322,19 +355,22 @@ function injectDirection(eventData) {
     const dry = !!eventData?.dryRun;
     const type = dry ? 'normal' : generationType;
     if (!dry) generationType = null;
-    if (!(isActive() || alwaysActive()) || type === null || type === 'quiet' || type === 'impersonate') return;
+    if (!(isActive() || alwaysActive() || promptsActive()) || type === null || type === 'quiet' || type === 'impersonate') return;
     const store = settings();
     const template = store.directionPrompt;
     const messages = eventData?.chat;
     if (!Array.isArray(messages)) return;
     const direction = isActive() && !!template?.trim();
     const always = alwaysActive();
-    if (!direction && !always) return;
+    const prompts = promptsActive() ? enabledPrompts() : [];
+    if (!direction && !always && !prompts.length) return;
 
     // 항상 지시 먼저, 전개 지시가 끝 쪽 — 같은 자리(삽입 위치)에 system 메시지 둘
+    // 1.3.0 켠 프롬프트는 그 사이에 목록 순서대로 하나씩 (항상 지시 → 프롬프트 → 전개 지시). 매크로는 항상 지시와 같게 바꾼다
     const contents = [];
     // 틀의 {{direction}} 자리를 먼저 채운 뒤 글 전체의 매크로를 한 번에 바꾼다 (최근 목록에는 적은 그대로 남는다)
     if (always) contents.push(substituteMacros(store.always.content));
+    for (const item of prompts) contents.push(substituteMacros(item.content));
     if (direction) contents.push(substituteMacros(template.replace(/\{\{direction\}\}/gi, () => store.direction.content)));
     const prefill = type === 'impersonate' ? oai_settings.assistant_impersonation : oai_settings.assistant_prefill;
     insertInstructions(messages, contents, store.promptDepth, getChatCompletionModel(oai_settings), { type, prefill, appendUser: direction });
@@ -388,16 +424,18 @@ function refreshButton() {
     if (!button) return;
     const on = isActive();
     const always = alwaysActive();
+    const prompts = promptsActive() ? enabledPrompts() : [];
     const filled = hasContent();
     button.hidden = !settings().extensionEnabled;
     button.classList.toggle('is-on', on);
-    button.classList.toggle('is-always', always);
+    button.classList.toggle('is-always', always || prompts.length > 0);   // 1.3.0 늘 같이 가는 글(항상 지시 · 프롬프트)이 있으면 그라데이션
     button.classList.toggle('has-content', filled);
-    button.setAttribute('aria-pressed', String(on || always));
+    button.setAttribute('aria-pressed', String(on || always || prompts.length > 0));
     const lines = [!on
         ? '전개 지시 꺼짐'
         : filled ? `전개 지시 켜짐 · ${preview(settings().direction.content)}` : '전개 지시 켜짐 · 내용이 비어 있어 AI가 알아서 전개해요'];
     if (always) lines.push(`항상 지시 켜짐 · ${preview(settings().always.content)}`);
+    if (prompts.length) lines.push(`프롬프트 ${prompts.length}개 켜짐 · ${preview(prompts.map(promptTitle).join(' · '))}`);
     button.title = `${lines.join('\n')}\n눌러서 열기 · 길게 누르면 전개 지시 켜기/끄기`;
     if (popup) refreshPopup();
 }
@@ -484,6 +522,11 @@ function footText() {
     const store = settings();
     const depth = store.promptDepth;
     const where = depth === 0 ? '프롬프트 맨 끝' : `끝에서 ${depth}번째 메시지 앞`;
+    if (page === 'prompts') {
+        if (!store.extensionEnabled || !store.prompts.enabled) return '꺼져 있어서 보내지 않아요. 켜면 줄마다 켜 둔 프롬프트가 같이 들어가요.';
+        const count = enabledPrompts().length;
+        return count ? `켜 둔 ${count}개가 항상 지시 다음, 전개 지시 앞에 ${where}에 들어가요.` : '줄 오른쪽 스위치로 켠 프롬프트만 보내요.';
+    }
     if (page === 'always') {
         if (!store.extensionEnabled || !store.always.enabled) return '꺼져 있어서 보내지 않아요. 켜면 적은 글이 그대로 매번 들어가요.';
         return hasContent('always') ? `보낼 때마다 이 글이 그대로 ${where}에 들어가요.` : '비어 있어서 보내지 않아요.';
@@ -496,6 +539,11 @@ function footText() {
 
 function stateText(kind) {
     const store = settings();
+    if (kind === 'prompts') {
+        if (!store.extensionEnabled || !store.prompts.enabled) return '꺼짐';
+        const count = enabledPrompts().length;
+        return count ? `${count}개 켜짐` : store.promptList.length ? '켠 것 없음' : '비어 있음';
+    }
     if (kindActive(kind)) return '켜짐';
     return kind === 'always' && store.extensionEnabled && store.always.enabled ? '비어 있음' : '꺼짐';
 }
@@ -512,9 +560,25 @@ function refreshPopup() {
     popup.querySelector('.jj-state').textContent = stateText(page);
     popup.querySelectorAll('.jj-dots b').forEach((dot, index) => dot.classList.toggle('is-current', KINDS[index] === page));
     popup.querySelectorAll('.jj-page').forEach(section => section.classList.toggle('is-off', !kindActive(section.dataset.kind)));
+    popup.querySelector('.jj-page-prompts')?.classList.toggle('is-muted', !(store.extensionEnabled && store.prompts.enabled));   // 쪽 스위치가 꺼지면 줄을 흐리게 (줄 스위치는 그대로 보인다)
     popup.querySelector('.jj-foot-text').textContent = footText();
     popup.querySelector('.jj-send').hidden = !sendButton();   // 1.2.3 보내기 단추가 숨은 동안(생성 중 · 스와이프 중 · 명령 실행 중)은 ▶ 도 숨긴다
+    // 1.3.0 프롬프트 쪽에는 저장 · 최근 목록과 지우개가 없다 (줄마다 고치기 · 지우기)
+    for (const act of ['list', 'clear']) popup.querySelector(`.jj-popup-head [data-act="${act}"]`).hidden = page === 'prompts';
+    syncPagesHeight();
     if (listView) renderList();
+}
+
+// 1.3.0 쪽 높이: 글 두 쪽(전개 · 항상)은 예전처럼 둘 중 긴 쪽을 따르고, 프롬프트 쪽(style.css 에서 contain: size — 높이에 끼지 않음)은
+//       보는 동안만 그 목록 높이를 잡는다. 목록이 길어도 전개 지시 입력칸이 덩달아 늘어나지 않게
+let promptsResize = null;
+function syncPagesHeight() {
+    const pages = popup?.querySelector('.jj-pages');
+    const box = popup?.querySelector('.jj-prompts');
+    if (!pages || !box) return;
+    const pad = getComputedStyle(pages).boxSizing === 'border-box' ? 6 : 0;   // .jj-pages 위아래 3px (초점 테두리 자리)
+    const height = page === 'prompts' && !pages.hidden ? `${Math.ceil(box.offsetHeight) + pad}px` : '0px';
+    if (pages.style.minHeight !== height) pages.style.minHeight = height;
 }
 
 // 1.2.3 깃털 창 안 ▶ — 지시는 적는 대로 저장돼 있으니 창을 닫고 실리태번의 보내기 단추를 누른다. 빈 입력(이어 쓰기) · 생성 중 규칙은 실리태번 것 그대로
@@ -568,6 +632,7 @@ function pageOffset(kind) {
 function showPage(kind, { smooth = true } = {}) {
     page = KINDS.includes(kind) ? kind : 'direction';
     if (!popup) return;
+    if (page === 'prompts' && listView) setListView(null);   // 저장 · 최근 목록은 글 쪽에만 — 목록을 닫고 쪽을 보인다
     const pages = popup.querySelector('.jj-pages');
     if (!pages.hidden) {
         const left = pageOffset(page);
@@ -590,12 +655,13 @@ function onPagesScroll() {
         pageFrame = 0;
         const pages = popup?.querySelector('.jj-pages');
         if (!pages || pages.hidden) return;
-        const second = pageOffset('always');
+        const step = Math.abs(pageOffset('always'));   // 한 쪽 폭 (+ 사이)
         if (pageTarget) {
             if (Math.abs(pages.scrollLeft - pageOffset(pageTarget)) > 2) return;
             pageTarget = null;
         }
-        const kind = Math.abs(pages.scrollLeft) > Math.abs(second) / 2 ? 'always' : 'direction'; // 오른쪽에서 왼쪽으로 쓰는 화면은 값이 음수
+        // 가장 가까운 쪽 (오른쪽에서 왼쪽으로 쓰는 화면은 값이 음수)
+        const kind = step ? KINDS[Math.min(KINDS.length - 1, Math.round(Math.abs(pages.scrollLeft) / step))] : 'direction';
         if (kind === page) return;
         page = kind;
         refreshPopup();
@@ -673,8 +739,246 @@ function renderList() {
 }
 
 function setListView(view) {
-    listView = view === 'presets' || view === 'history' ? view : null;
+    listView = (view === 'presets' || view === 'history') && TEXT_KINDS.includes(page) ? view : null;
     renderList();
+}
+
+// ── 1.3.0 프롬프트 쪽: 제목 한 줄씩 · 누르면 아래로 내용 · 줄마다 켜기/끄기 ──
+
+let openPromptId = null;   // 펼친 줄 (한 번에 하나)
+let promptEdit = null;     // 고치는 중 { id: 줄 id | 'new', title, content } — 창을 닫았다 열어도 이어서 고친다 (이번 접속 동안)
+
+function promptTitle(item) {
+    return item.title || preview(item.content, 24) || '제목 없음';
+}
+
+function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+function makeEl(tag, className, text = null) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text !== null) element.textContent = text;
+    return element;
+}
+
+function promptButton(act, className, icon, label, { text = '', disabled = false } = {}) {
+    const element = makeEl('button', className);
+    element.type = 'button';
+    element.dataset.pact = act;
+    element.innerHTML = `<i class="${icon}" aria-hidden="true"></i>`;
+    if (text) element.append(makeEl('span', '', text));
+    else element.setAttribute('aria-label', label);
+    element.disabled = disabled;
+    return element;
+}
+
+function promptEditor(item) {
+    const box = makeEl('div', 'jj-pedit');
+    const title = makeEl('input', 'jj-ptitle-input');
+    title.type = 'text';
+    title.maxLength = PROMPT_TITLE_MAX;
+    title.placeholder = '제목 (예: 유저 편향 교정)';
+    title.setAttribute('aria-label', '프롬프트 제목');
+    title.setAttribute('enterkeyhint', 'next');
+    title.autocomplete = 'off';
+    title.spellcheck = false;
+    title.dataset.field = 'title';
+    title.value = promptEdit.title;
+    const content = makeEl('textarea', 'jj-pcontent-input');
+    content.rows = 4;
+    content.placeholder = '같이 보낼 글을 적어 주세요. {{char}} · {{user}} 도 이름으로 바뀌어 들어가요.';
+    content.setAttribute('aria-label', '프롬프트 내용');
+    content.spellcheck = false;
+    content.dataset.field = 'content';
+    content.value = promptEdit.content;
+    const actions = makeEl('div', 'jj-pitem-actions');
+    actions.append(makeEl('span', 'jj-pspacer'),
+        promptButton('cancel', 'jj-pbtn', 'fa-solid fa-xmark', '', { text: '취소' }),
+        promptButton('save', 'jj-pbtn is-primary', 'fa-solid fa-check', '', { text: item ? '저장' : '추가' }));
+    box.append(title, content, actions);
+    return box;
+}
+
+function promptRow(item, index, total) {
+    const row = makeEl('li', 'jj-pitem');
+    row.dataset.id = item.id;
+    row.classList.toggle('is-on', item.enabled);
+    if (promptEdit?.id === item.id) {
+        row.classList.add('is-editing');
+        row.append(promptEditor(item));
+        return row;
+    }
+    const open = openPromptId === item.id;
+    row.classList.toggle('is-open', open);
+    const head = makeEl('div', 'jj-pitem-head');
+    const toggle = makeEl('button', 'jj-pitem-toggle');
+    toggle.type = 'button';
+    toggle.dataset.pact = 'expand';
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.innerHTML = '<i class="fa-solid fa-chevron-right jj-pitem-caret" aria-hidden="true"></i>';
+    toggle.append(makeEl('span', 'jj-pitem-title', promptTitle(item)));
+    const toggleSwitch = makeEl('button', 'jj-switch jj-pswitch');
+    toggleSwitch.type = 'button';
+    toggleSwitch.dataset.pact = 'switch';
+    toggleSwitch.setAttribute('role', 'switch');
+    toggleSwitch.setAttribute('aria-checked', String(item.enabled));
+    toggleSwitch.setAttribute('aria-label', `${promptTitle(item)} 켜기/끄기`);
+    toggleSwitch.innerHTML = '<span></span>';
+    head.append(toggle, toggleSwitch);
+    row.append(head);
+    if (open) {
+        const body = makeEl('div', 'jj-pitem-body');
+        const empty = !item.content.trim();
+        body.append(makeEl('p', `jj-pitem-content${empty ? ' is-empty' : ''}`, empty ? '내용이 비어 있어 보내지 않아요. 고치기로 적어 주세요.' : item.content));
+        const actions = makeEl('div', 'jj-pitem-actions');
+        actions.append(
+            promptButton('up', 'jj-pbtn jj-pbtn-icon', 'fa-solid fa-arrow-up', '위로 옮기기', { disabled: index === 0 }),
+            promptButton('down', 'jj-pbtn jj-pbtn-icon', 'fa-solid fa-arrow-down', '아래로 옮기기', { disabled: index === total - 1 }),
+            makeEl('span', 'jj-pspacer'),
+            promptButton('edit', 'jj-pbtn', 'fa-solid fa-pen', '', { text: '고치기' }),
+            promptButton('delete', 'jj-pbtn is-danger', 'fa-regular fa-trash-can', '', { text: '지우기' }));
+        body.append(actions);
+        row.append(body);
+    }
+    return row;
+}
+
+/** 프롬프트 목록을 다시 그린다. 고치는 중인 글은 promptEdit 에 있어 다시 그려도 남는다. focus = 다시 그린 뒤 초점을 줄 칸 (선택자) */
+function renderPrompts(focus = null) {
+    const box = popup?.querySelector('.jj-prompts');
+    if (!box) return;
+    const list = settings().promptList;
+    if (openPromptId && !list.some(item => item.id === openPromptId)) openPromptId = null;
+    if (promptEdit && promptEdit.id !== 'new' && !list.some(item => item.id === promptEdit.id)) promptEdit = null;
+    const rows = list.map((item, index) => promptRow(item, index, list.length));
+    if (promptEdit?.id === 'new') {
+        const row = makeEl('li', 'jj-pitem is-editing is-new');
+        row.dataset.id = 'new';
+        row.append(promptEditor(null));
+        rows.push(row);
+    }
+    box.querySelector('.jj-pitems').replaceChildren(...rows);
+    box.querySelector('.jj-pempty').hidden = rows.length > 0;
+    const add = box.querySelector('[data-pact="add"]');
+    add.hidden = promptEdit?.id === 'new';
+    add.disabled = list.length >= PROMPT_MAX;
+    if (!focus) return;
+    const target = box.querySelector(focus);
+    target?.focus({ preventScroll: true });
+    target?.closest('.jj-pitem')?.scrollIntoView?.({ block: 'nearest' });
+}
+
+function savePromptEdit() {
+    const edit = promptEdit;
+    if (!edit) return;
+    const store = settings();
+    const title = edit.title.replace(/\s+/g, ' ').trim().slice(0, PROMPT_TITLE_MAX);
+    const content = edit.content.trim();
+    if (!content) {
+        toastr.warning('같이 보낼 글을 적어 주세요.', KIND_LABEL.prompts);
+        popup?.querySelector('.jj-pcontent-input')?.focus();
+        return;
+    }
+    const now = Date.now();
+    let id = edit.id;
+    if (id === 'new') {
+        if (store.promptList.length >= PROMPT_MAX) {
+            toastr.warning(`프롬프트는 ${PROMPT_MAX}개까지예요. 안 쓰는 것을 지워 주세요.`, KIND_LABEL.prompts);
+            return;
+        }
+        id = newId();
+        store.promptList.push({ id, title, content, enabled: false, at: now, updated: now });   // 새 줄은 꺼진 채로 — 스위치로 켠다
+    } else {
+        const item = store.promptList.find(entry => entry.id === id);
+        if (!item) { promptEdit = null; renderPrompts(); return; }
+        Object.assign(item, { title, content, updated: now });
+    }
+    promptEdit = null;
+    openPromptId = id;
+    save();
+    renderPrompts(`.jj-pitem[data-id="${id}"] [data-pact="expand"]`);
+    refreshButton();
+}
+
+function cancelPromptEdit() {
+    const was = promptEdit?.id;
+    promptEdit = null;
+    renderPrompts(was && was !== 'new' ? `.jj-pitem[data-id="${was}"] [data-pact="expand"]` : '[data-pact="add"]');
+}
+
+async function onPromptsClick(event) {
+    const target = event.target.closest('[data-pact]');
+    if (!target || !popup?.contains(target) || target.disabled) return;
+    const store = settings();
+    const list = store.promptList;
+    const act = target.dataset.pact;
+    if (act === 'add') {
+        if (list.length >= PROMPT_MAX) {
+            toastr.warning(`프롬프트는 ${PROMPT_MAX}개까지예요. 안 쓰는 것을 지워 주세요.`, KIND_LABEL.prompts);
+            return;
+        }
+        promptEdit = { id: 'new', title: '', content: '' };
+        openPromptId = null;
+        renderPrompts('.jj-pitem.is-new .jj-ptitle-input');
+        return;
+    }
+    if (act === 'cancel') return cancelPromptEdit();
+    if (act === 'save') return savePromptEdit();
+    const id = target.closest('.jj-pitem')?.dataset.id;
+    const index = list.findIndex(item => item.id === id);
+    const item = list[index];
+    if (!item) return;
+    if (act === 'expand') {
+        openPromptId = openPromptId === id ? null : id;   // 한 줄만 펼친다
+        renderPrompts(`.jj-pitem[data-id="${id}"] [data-pact="expand"]`);
+    } else if (act === 'switch') {
+        item.enabled = !item.enabled;
+        item.updated = Date.now();
+        if (item.enabled && !store.prompts.enabled) store.prompts.enabled = true;   // 쪽 스위치가 꺼져 있으면 줄을 켤 때 같이 켠다 (켰는데 안 가는 일이 없게)
+        target.setAttribute('aria-checked', String(item.enabled));
+        target.closest('.jj-pitem')?.classList.toggle('is-on', item.enabled);
+        save();
+        refreshButton();
+    } else if (act === 'up' || act === 'down') {
+        const to = index + (act === 'up' ? -1 : 1);
+        if (to < 0 || to >= list.length) return;
+        list.splice(index, 1);
+        list.splice(to, 0, item);
+        save();
+        const edge = to === 0 || to === list.length - 1;   // 끝에 닿아 그 단추가 꺼지면 반대쪽 단추에 초점
+        renderPrompts(`.jj-pitem[data-id="${id}"] [data-pact="${edge ? (act === 'up' ? 'down' : 'up') : act}"]`);
+        refreshButton();
+    } else if (act === 'edit') {
+        promptEdit = { id, title: item.title, content: item.content };
+        renderPrompts(`.jj-pitem[data-id="${id}"] .jj-pcontent-input`);
+    } else if (act === 'delete') {
+        const confirmed = await callGenericPopup(`「${escapeHtml(promptTitle(item))}」 프롬프트를 지울까요?`, POPUP_TYPE.CONFIRM);
+        if (!confirmed) return;
+        const at = list.indexOf(item);
+        if (at >= 0) {
+            list.splice(at, 1);
+            if (!store.promptListGone || typeof store.promptListGone !== 'object' || Array.isArray(store.promptListGone)) store.promptListGone = {};
+            store.promptListGone[item.id] = Date.now();   // 기기 간 합치기의 지운 기록 (저장 목록과 같게)
+        }
+        if (openPromptId === id) openPromptId = null;
+        save();
+        renderPrompts('[data-pact="add"]');
+        refreshButton();
+    }
+}
+
+function onPromptsInput(event) {
+    const field = event.target?.dataset?.field;
+    if (promptEdit && (field === 'title' || field === 'content')) promptEdit[field] = event.target.value;
+}
+
+function onPromptsKeydown(event) {
+    if (event.key === 'Enter' && !event.isComposing && event.target.matches?.('.jj-ptitle-input')) {
+        event.preventDefault();
+        event.target.closest('.jj-pedit')?.querySelector('.jj-pcontent-input')?.focus();
+    }
 }
 
 async function onListClick(event) {
@@ -732,6 +1036,7 @@ function onPopupKeydown(event) {
     event.preventDefault();
     event.stopPropagation();
     if (listView) setListView(null);
+    else if (promptEdit && event.target.closest?.('.jj-pedit')) cancelPromptEdit();   // 1.3.0 고치는 중이면 고치기만 그만둔다
     else closePopup();
 }
 
@@ -744,14 +1049,21 @@ function openPopup() {
     popup.innerHTML = `
         <div class="jj-popup-head">
             <button type="button" class="jj-switch" role="switch"><span></span></button>
-            <button type="button" class="jj-popup-title" aria-label="전개 지시 · 항상 지시 바꾸기"><i class="fa-solid fa-feather-pointed"></i><span class="jj-title-text"></span><span class="jj-state"></span><span class="jj-dots" aria-hidden="true"><b></b><b></b></span></button>
+            <button type="button" class="jj-popup-title" aria-label="전개 지시 · 항상 지시 · 프롬프트 바꾸기"><i class="fa-solid fa-feather-pointed"></i><span class="jj-title-text"></span><span class="jj-state"></span><span class="jj-dots" aria-hidden="true">${KINDS.map(() => '<b></b>').join('')}</span></button>
             <button type="button" class="jj-icon-btn" data-act="list" aria-label="저장 · 최근 지시" aria-expanded="false"><i class="fa-regular fa-bookmark"></i></button>
             <button type="button" class="jj-icon-btn" data-act="clear" aria-label="내용 지우기"><i class="fa-solid fa-eraser"></i></button>
             <button type="button" class="jj-icon-btn jj-send" data-act="send" aria-label="보내기"><i class="fa-solid fa-paper-plane"></i></button>
             <button type="button" class="jj-icon-btn" data-act="close" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="jj-popup-body">
-            <div class="jj-pages">${KINDS.map(kind => `
+            <div class="jj-pages">${KINDS.map(kind => kind === 'prompts' ? `
+                <section class="jj-page jj-page-prompts" data-kind="prompts" aria-label="${KIND_LABEL.prompts}">
+                    <div class="jj-prompts">
+                        <ul class="jj-pitems" aria-label="프롬프트 목록"></ul>
+                        <p class="jj-pempty" hidden><b>자주 쓰는 프롬프트를 모아 두는 곳이에요.</b><span>줄마다 켜고 끄고, 켠 것은 지시와 같이 보내요. 예: 유저 편향 교정 · {{char}} 성격 교정</span></p>
+                        <button type="button" class="jj-padd" data-pact="add"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>프롬프트 추가</span></button>
+                    </div>
+                </section>` : `
                 <section class="jj-page" data-kind="${kind}" aria-label="${KIND_LABEL[kind]}"><textarea class="jj-textarea" rows="3" spellcheck="false" placeholder="${PLACEHOLDER[kind]}"></textarea></section>`).join('')}
             </div>
             <div class="jj-list" hidden>
@@ -762,7 +1074,7 @@ function openPopup() {
             </div>
         </div>
         <div class="jj-popup-foot"><i class="fa-solid fa-circle-info"></i><span class="jj-foot-text"></span></div>`;
-    for (const kind of KINDS) {
+    for (const kind of TEXT_KINDS) {
         const textarea = pageTextarea(kind);
         textarea.value = store[kind].content;
         textarea.addEventListener('input', () => {
@@ -777,7 +1089,14 @@ function openPopup() {
         save();
         refreshButton();
     });
-    popup.querySelector('.jj-popup-title').addEventListener('click', () => showPage(page === 'direction' ? 'always' : 'direction')); // 목록을 보는 중이면 그 쪽 목록으로
+    popup.querySelector('.jj-popup-title').addEventListener('click', () => showPage(KINDS[(KINDS.indexOf(page) + 1) % KINDS.length])); // 다음 쪽 (끝이면 처음). 목록을 보는 중이면 그 쪽 목록으로
+    const promptsBox = popup.querySelector('.jj-prompts');
+    promptsResize?.disconnect();
+    promptsResize = typeof ResizeObserver === 'function' ? new ResizeObserver(() => syncPagesHeight()) : null;   // 펼치기 · 고치기 · 글이 늘 때
+    promptsResize?.observe(promptsBox);
+    promptsBox.addEventListener('click', onPromptsClick);
+    promptsBox.addEventListener('input', onPromptsInput);
+    promptsBox.addEventListener('keydown', onPromptsKeydown);
     const pages = popup.querySelector('.jj-pages');
     pages.addEventListener('scroll', onPagesScroll, { passive: true });
     pages.addEventListener('pointerdown', () => { pageTarget = null; }, { passive: true }); // 손으로 넘기기 시작하면 코드 목표는 버린다
@@ -788,6 +1107,7 @@ function openPopup() {
     popup.querySelector('[data-act="send"]').addEventListener('click', () => sendNow());   // 1.2.3 ▶ 창을 닫고 실리태번 보내기와 같은 길로
     popup.querySelector('[data-act="clear"]').addEventListener('click', async () => {
         const kind = page;
+        if (!TEXT_KINDS.includes(kind)) return;
         const slot = store[kind];
         if (!slot.content) return;
         const confirmed = await callGenericPopup(`${KIND_LABEL[kind]} 내용을 모두 지울까요?`, POPUP_TYPE.CONFIRM);
@@ -808,6 +1128,7 @@ function openPopup() {
     // 1.1.5: 테마 없이(확장만 · 실리태번 '빠른 UI')는 입력판이 위치 기준이 아니라서 창이 화면 위쪽 밖에 떴다 — 열려 있는 동안만 기준으로 삼는다
     if (getComputedStyle(host).position === 'static') host.classList.add('jj-popup-host');
     applyOnColor();
+    renderPrompts();
     showPage(page, { smooth: false });
     button.classList.add('has-popup');
     void popup.offsetWidth; // 애니메이션 시작점을 확정한다
@@ -830,6 +1151,8 @@ function closePopup() {
     document.removeEventListener('keydown', onPopupKeydown, true);
     sendWatch?.disconnect();
     sendWatch = null;
+    promptsResize?.disconnect();
+    promptsResize = null;
 }
 
 function togglePopup() {
@@ -854,6 +1177,15 @@ function depthMeaning(depth) {
 
 let settingsRoot = null;
 
+/** 1.3.0 상태 카드의 프롬프트 줄: 켠 것들의 제목 */
+function promptsStatusText() {
+    const store = settings();
+    if (!store.promptList.length) return '깃털 창을 두 번 넘기면 자주 쓰는 프롬프트를 모아 둘 수 있어요';
+    const on = enabledPrompts();
+    if (!on.length) return `${store.promptList.length}개 모아 둠 · 깃털 창에서 줄마다 켜요`;
+    return preview(on.map(promptTitle).join(' · '), 70);
+}
+
 /** 설정 맨 위 상태 카드 (전개 지시 · 항상 지시). 입력창에서 켜고 끄거나 내용을 고칠 때도 같이 바뀐다. */
 function refreshSettingsStatus() {
     if (!settingsRoot) return;
@@ -868,6 +1200,7 @@ function refreshSettingsStatus() {
             : `${KIND_LABEL[kind]} ${stateText(kind)}`;
         card.querySelector('.jj-status-text').textContent = !store.extensionEnabled
             ? (kind === 'direction' ? '아래 ‘입력창 버튼’을 켜면 쓸 수 있어요' : '입력창 버튼이 꺼져 있으면 보내지 않아요')
+            : kind === 'prompts' ? promptsStatusText()
             : hasContent(kind) ? preview(store[kind].content, 70)
                 : kind === 'always' ? '깃털 창을 옆으로 넘기거나 제목을 눌러 적어요'
                     : on ? '비어 있어요 · AI가 알아서 전개해요' : '입력창의 깃털 버튼으로 지시를 적어요';
@@ -909,6 +1242,14 @@ function buildSettings() {
                         <span class="jj-status-text"></span>
                     </div>
                     <button type="button" class="jj-switch" id="jj_always_switch" role="switch" aria-label="항상 지시 켜기/끄기"><span></span></button>
+                </div>
+                <div class="jj-status" data-kind="prompts">
+                    <span class="jj-status-dot" aria-hidden="true"></span>
+                    <div class="jj-status-main">
+                        <strong class="jj-status-title"></strong>
+                        <span class="jj-status-text"></span>
+                    </div>
+                    <button type="button" class="jj-switch" id="jj_prompts_switch" role="switch" aria-label="프롬프트 켜기/끄기"><span></span></button>
                 </div>
 
                 <div class="jj-card">
@@ -1109,7 +1450,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
 
     verifyAddonCss({ folder: 'direction', name: '--jj-css-version', version: VERSION, title: '전개 지시' });
     // 7.0.2 저장한 지시 목록 기기 간 합치기 — 지시는 고치지 않고 더하거나 지우기만 해서 저장 시각(at)이 곧 고친 시각
-    import('../list-sync.js').then(({ registerAddonMerge }) => registerAddonMerge('direction', { module: MODULE, store: () => extension_settings[MODULE], lists: [{ field: 'presets', gone: 'presetsGone', stamp: item => item?.updated || item?.at }], save: saveSettingsDebounced, onChange: () => { if (listView) renderList(); } }))
+    import('../list-sync.js').then(({ registerAddonMerge }) => registerAddonMerge('direction', { module: MODULE, store: () => extension_settings[MODULE], lists: [{ field: 'presets', gone: 'presetsGone', stamp: item => item?.updated || item?.at }, { field: 'promptList', gone: 'promptListGone', stamp: item => item?.updated || item?.at }], save: saveSettingsDebounced, onChange: () => { if (listView) renderList(); if (popup) renderPrompts(); refreshButton(); } }))
         .catch(error => console.warn('[전개 지시] 기기 간 합치기', error));
 
     resolve();
@@ -1117,12 +1458,13 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
 }));
 
 export function showHelp() {
-    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;). 항상 지시가 켜져 있으면 깃털이 그라데이션으로 바뀌어요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 두 지시 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
+    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;). 항상 지시가 켜져 있으면 깃털이 그라데이션으로 바뀌어요.</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 유저 편향 교정처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 항상 지시 다음, 전개 지시 앞에 같이 들어가요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
 }
 let settingsDialog = null;
 export async function openPanel() {
     await ready;
     if (!settingsRoot || settingsDialog?.open) return;
+    refreshSettingsStatus();   // 1.3.0 다른 기기에서 합쳐진 목록 등 — 창을 열 때 상태 카드를 지금 값으로
     const previous = document.activeElement, anchor = document.createComment('direction settings');
     settingsRoot.before(anchor);
     const body = settingsRoot.querySelector('.inline-drawer-content'), display = body.style.display;

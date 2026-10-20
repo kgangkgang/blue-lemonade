@@ -20,11 +20,11 @@ import { createPromptDefer } from './promptdefer.js';
 import { createSaveTimers, createSwitchFlush, matchSwitchEntry, SWITCH_ENTRIES } from './switchflush.js';
 import { createSwitchGuard, wrapCommands, DELETE_ENTRY, GUARD_COMMANDS } from './switchguard.js';
 import { createCodeGuard, isClickTrigger, CODE_SWITCH_KEYS } from './switchcode.js';
-import { createEmptyGuard, GUARD_STATUS, GUARD_ERROR } from './emptyguard.js';
+import { createEmptyGuard, GUARD_STATUS, GUARD_ERROR, createSaveFailMute } from './emptyguard.js';
 
 const MODULE = 'save_dedupe';
 const FOLDER = 'blue-lemonade'; // 2.0.0 성능 보조로 합침
-const VERSION = '1.1.6'; // 1.1.6 빈 채팅 덮어쓰기 막기 (style.css 의 --sv-css-version 도 함께)
+const VERSION = '1.1.7'; // 1.1.6 빈 채팅 덮어쓰기 막기 · 1.1.7 막은 뒤 실리태번의 저장 실패 알림은 숨김 (style.css 의 --sv-css-version 도 함께)
 const TITLE = '저장 정리';
 const SAVE_PATHS = ['/api/chats/save', '/api/chats/group/save'];
 
@@ -213,6 +213,7 @@ function installDedupe() {
 // ── [1.1.6] 빈 채팅 덮어쓰기 막기 ─────────────────────────────
 
 let emptyGuard = null;
+const saveFailMute = createSaveFailMute();   // 1.1.7 막은 직후 실리태번의 「Chat could not be saved」 알림은 BL 알림 하나로
 
 function guardResponse(result) {
     return new Response(JSON.stringify({ error: GUARD_ERROR, reason: result.reason, messages: result.messages, had: result.had }),
@@ -249,6 +250,8 @@ function installEmptyGuard() {
             console.warn(`[${TITLE}] 메시지가 있던 채팅을 빈 채팅으로 덮는 저장을 막았어요`, info);
             refreshStats();
             if (typeof toastr !== 'undefined') {
+                saveFailMute.wrap(toastr);
+                saveFailMute.arm();
                 toastr.warning('채팅이 비어 있는 채로 저장하려 해서 막았어요. 파일은 그대로예요. 페이지를 새로 고친 뒤 채팅을 다시 열어 주세요.', TITLE, { preventDuplicates: true, timeOut: 15000 });
             }
         },

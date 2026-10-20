@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(process.argv[2] || '.');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
-const { createEmptyGuard, messagesInBody, GUARD_STATUS, GUARD_ERROR } = await import(pathToFileURL(path.join(root, 'src/addons/perf/emptyguard.js')).href);
+const { createEmptyGuard, messagesInBody, GUARD_STATUS, GUARD_ERROR, createSaveFailMute } = await import(pathToFileURL(path.join(root, 'src/addons/perf/emptyguard.js')).href);
 let pass = 0, fail = 0;
 async function test(name, fn) {
     try { await fn(); pass++; console.log('  ok  ' + name); }
@@ -84,9 +84,10 @@ await test('끄면(설정) 막지 않는다', () => {
 });
 await test('연결: savededupe 1.1.6 의 fetch 감싸개가 저장마다 precheck → 막으면 409 · 기본 켬 · 설정 스위치 · CHAT_CHANGED 먼저 · MESSAGE_DELETED · 판(JS = CSS) · CI', () => {
     const src = read('src/addons/perf/savededupe.js');
-    assert.match(src, /import \{ createEmptyGuard, GUARD_STATUS, GUARD_ERROR \} from '\.\/emptyguard\.js';/);
-    assert.match(src, /const VERSION = '1\.1\.6';/);
-    assert.match(read('src/addons/perf/style.css'), /--sv-css-version: "1\.1\.6";/);
+    assert.match(src, /import \{ createEmptyGuard, GUARD_STATUS, GUARD_ERROR, createSaveFailMute \} from '\.\/emptyguard\.js';/);
+    assert.match(src, /const VERSION = '1\.1\.7';/);   // 7.4.1 저장 실패 알림 숨김
+    assert.match(read('src/addons/perf/style.css'), /--sv-css-version: "1\.1\.7";/);
+    assert.match(src, /saveFailMute\.wrap\(toastr\);\s*saveFailMute\.arm\(\);\s*toastr\.warning\(/, 'arm the mute before BL warns (ST toasts after the 409)');
     assert.match(src, /emptyGuard: true \}\);/);
     assert.match(src, /pre = emptyGuard \? emptyGuard\.precheck\(path, init\?\.body, bodyKey\(path, init\?\.body\)\) : null;/);
     assert.match(src, /result => \(result\?\.block \? guardResponse\(result\) : handleSave\(self, input, init, path\)\)/);
@@ -96,6 +97,25 @@ await test('연결: savededupe 1.1.6 의 fetch 감싸개가 저장마다 prechec
     assert.match(src, /bind\('#sv_empty', 'emptyGuard'\);/);
     assert.ok(src.includes('빈 채팅으로 덮어쓰는 저장 막기'));
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/empty-chat-guard-731\.mjs \./);
+});
+
+await test('7.4.1 (1.1.7) 막은 직후 실리태번의 저장 실패 알림(영 · 한 · 그룹)만 숨김 — 막기 전 · 6초 뒤 · 다른 오류는 그대로', () => {
+    let clock = 1000;
+    const shown = [];
+    const fake = { error(message, title) { shown.push(`${title}|${message}`); return 'toast'; } };
+    const mute = createSaveFailMute({ now: () => clock, windowMs: 6000 });
+    assert.equal(mute.wrap(fake), true); assert.equal(mute.wrap(fake), false, 'wraps once');
+    const EN = ['Check the server connection and reload the page to prevent data loss.', 'Chat could not be saved'];
+    const KO = ['데이터를 잃지 않게 서버 연결을 확인하고 페이지를 다시 불러오세요.', '채팅을 저장하지 못했어요'];
+    assert.equal(fake.error(...EN), 'toast', 'not armed: shown');
+    mute.arm();
+    assert.equal(fake.error(...EN), undefined); assert.equal(fake.error(...KO), undefined);
+    assert.equal(fake.error(EN[0], 'Group Chat could not be saved'), undefined, 'group chat too');
+    assert.equal(fake.error('Something else broke', 'Chat could not be saved'), 'toast', 'other text: shown');
+    assert.equal(fake.error(EN[0], 'Settings could not be saved'), 'toast', 'settings save failure is not ours: shown');
+    clock += 6001;
+    assert.equal(fake.error(...EN), 'toast', 'after the window: shown again');
+    assert.equal(mute.muted, 3); assert.equal(shown.length, 4);
 });
 
 console.log(`empty-chat-guard-731: ${pass} passed, ${fail} failed`);

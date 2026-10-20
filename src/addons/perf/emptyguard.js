@@ -157,3 +157,35 @@ export function createEmptyGuard(env) {
 
     return { check, precheck, onChatOpened, onMessageDeleted, stats, log, debug: { known, cleared, suspect } };
 }
+
+// 7.4.1 (저장 정리 1.1.7) 막은 저장은 409 로 돌아가 실리태번이 「Chat could not be saved」 알림(영 · 한)을 또 띄워
+// BL 의 「막았어요」 알림과 겹쳤다 (세 개). 막은 직후 잠깐(기본 6초) 그 저장 실패 알림만 숨긴다 — 다른 오류 알림 · 그 밖의 시간은 그대로.
+export const SAVE_FAIL_TITLE = /chat could not be saved|채팅을 저장하지 못했어요/i;   // 채팅 · 그룹 채팅 저장만 (설정 · 프리셋 저장 실패는 그대로)
+export const SAVE_FAIL_TEXT = /Check the server connection|서버 연결을 확인/i;
+
+export function createSaveFailMute({ now = () => Date.now(), windowMs = 6000 } = {}) {
+    let until = 0, muted = 0, wrapped = false;
+    const shouldMute = (message, title) => {
+        if (now() >= until) return false;
+        if (!SAVE_FAIL_TITLE.test(String(title ?? '')) || !SAVE_FAIL_TEXT.test(String(message ?? ''))) return false;
+        muted++;
+        return true;
+    };
+    return {
+        /** 막을 때마다 — 지금부터 windowMs 동안 */
+        arm() { until = now() + windowMs; },
+        shouldMute,
+        /** toastr.error 를 한 번만 감싼다 (막은 적이 없으면 감싸지도 않는다) */
+        wrap(target) {
+            if (wrapped || !target || typeof target.error !== 'function') return false;
+            const original = target.error;
+            target.error = function (message, title, ...rest) {
+                if (shouldMute(message, title)) return undefined;
+                return original.call(this, message, title, ...rest);
+            };
+            wrapped = true;
+            return true;
+        },
+        get muted() { return muted; },
+    };
+}

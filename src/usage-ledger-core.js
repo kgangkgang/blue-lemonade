@@ -88,6 +88,7 @@ export function dayStart(day) {
 /**
  * 요청이 나간 연결: { kind: 'official' | 'relay' | 'unknown', provider, origin, host }
  * origin 이 중계 주소 목록(relays — 예산 기능에 넣은 중계 서버)에 있으면 중계. origin 이 공식 API 주소면 그 제공처.
+ * 7.4.1 origin 이 공식 주소가 아닌데 기록이 공식 제공처(provider)를 말하면 그 API 를 다른 서버가 받은 것이라 중계 (origin 이 provider 보다 먼저).
  * origin 이 없으면 api(실리태번 연결 종류: vertexai · claude · makersuite …)로 공식 제공처를 고른다 — 'custom' 은 모름.
  */
 export function connectionOf(entry, relays = []) {
@@ -95,8 +96,13 @@ export function connectionOf(entry, relays = []) {
     const host = origin ? new URL(origin).host : '';
     if (origin && relays.includes(origin)) return { kind: 'relay', provider: 'other', origin, host };
     if (origin) {
-        const provider = entry.provider && entry.provider !== 'other' ? entry.provider : providerAt(origin);
-        return provider === 'other' ? { kind: 'unknown', provider, origin, host } : { kind: 'official', provider, origin, host };
+        // 7.4.1 origin(실제로 보낸 서버)을 provider 보다 먼저 본다: 공식 주소면 그 제공처, 아니면 기록이 말한 제공처의 API 를
+        //       다른 서버가 받은 것 = 중계 (예: claude 연결의 주소를 중계 서버로 돌린 저장 연결). 직접 운영 서버(local)는 그대로
+        const at = providerAt(origin);
+        if (at !== 'other') return { kind: 'official', provider: at, origin, host };
+        const named = entry.provider && entry.provider !== 'other' ? entry.provider : '';
+        if (named && named !== 'local' && PROVIDERS[named]?.hosts?.some(Boolean)) return { kind: 'relay', provider: 'other', origin, host };
+        return named ? { kind: 'official', provider: named, origin, host } : { kind: 'unknown', provider: 'other', origin, host };
     }
     const provider = entry.provider && entry.provider !== 'other' ? entry.provider : (CHAT_PROVIDER[entry.api] || (PROVIDERS[entry.api] ? entry.api : ''));
     return provider ? { kind: 'official', provider, origin: '', host: '' } : { kind: 'unknown', provider: 'other', origin: '', host: '' };

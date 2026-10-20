@@ -79,6 +79,19 @@ await test('결제 수단 기본값: Vertex · Anthropic 공식 = 크레딧, 중
     assert.deepEqual(L.PAY_METHODS, ['크레딧', '실제 결제', '중계']);
 });
 
+await test('7.4.1 origin 이 provider 보다 먼저: 공식 주소면 그 제공처 · 아니면 중계 (예산에 안 넣은 중계도) · 직접 운영 서버와 origin 없는 기록은 예전 그대로', () => {
+    const other = 'https://hub.example.test';   // 예산 기능에 없는 중계
+    const viaRelay = L.connectionOf(entry({ api: 'claude', provider: 'anthropic', origin: other, model: 'claude-opus-5-5' }), [RELAY]);
+    assert.deepEqual([viaRelay.kind, viaRelay.host], ['relay', 'hub.example.test']);
+    assert.equal(L.costOf(entry({ api: 'claude', provider: 'anthropic', origin: other, model: 'claude-opus-5-5' }), ctx()).payMethod, '중계', 'claude routed to a relay host is not 크레딧');
+    assert.equal(L.costOf(entry({ provider: 'anthropic', origin: 'https://api.anthropic.com', model: 'claude-opus-5-5' }), ctx()).payMethod, '크레딧', 'official host stays official');
+    const wrongName = L.connectionOf(entry({ provider: 'gemini', origin: 'https://aiplatform.googleapis.com' }), []);
+    assert.deepEqual([wrongName.kind, wrongName.provider], ['official', 'vertex'], 'origin decides the provider');
+    assert.deepEqual(['kind', 'provider'].map(k => L.connectionOf(entry({ provider: 'local', origin: 'http://127.0.0.1:5001' }), [])[k]), ['official', 'local'], 'own server stays local');
+    assert.equal(L.connectionOf(entry({ origin: other, api: 'custom' }), []).kind, 'unknown', 'no provider named: unknown as before');
+    assert.equal(L.connectionOf(entry({ api: 'claude', provider: 'anthropic' }), []).provider, 'anthropic', 'no origin: provider as before');
+});
+
 await test('중계: 중계 장부의 실제 과금(쿼터 → 달러)이 먼저, 못 맞추면 중계 단가표로 「≈」 · 원화는 설정 환율 가정을 밝힌다', () => {
     const e = entry({ api: 'custom', origin: RELAY, model: 'claude-opus-5-5', input: 8000, cachedInput: 0, output: 9000, thinking: 0, ext: '블루레몬에이드', feature: '번역' });
     const guess = L.costOf(e, ctx());
