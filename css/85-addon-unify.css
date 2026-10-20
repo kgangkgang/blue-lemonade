@@ -48,6 +48,9 @@ html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog
   border: 0 !important; background: none !important;
 }
 html body.salty #pt-panel > #pt-panel-header { min-height: 34px !important; }
+/* 7.2.9 창 안을 굴려도 머리가 붙어 있는(sticky) ZIP 설치 창: 위 「background: none」 이 머리 판을 투명하게 만들어
+   폰에서 굴리면 내용 글자가 머리 제목과 겹쳐 보였다. 머리 판은 창 판 그대로(불투명) · 내용 위에. 크기 · 자리는 그대로 */
+html body.salty dialog.blzi-dialog > header { background: inherit !important; z-index: 2 !important; }
 
 /* ---------- 머리: 제목 (아이콘 + 이름) ---------- */
 html body.salty :is(

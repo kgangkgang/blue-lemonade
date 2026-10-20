@@ -3,6 +3,7 @@ import { runtimeEnabled, assertRuntime, waitForRuntime } from './runtime.js';
 //
 // 저장 자리: chat[mesId].extra.lemon_voice.analysis = {
 //   hash, swipe?,    원문(mes.mes) 해시 · 스와이프 — 다르면 옛것 (getAnalysis 가 null)
+//   key?,            7.2.9 말로 읽는 글만의 해시 (speechKey — 그림 자리 표시 · 그림 태그를 뺀 글). hash 만 다르고 key 가 같으면 같은 분석으로 이어 쓴다 (followSpeech)
 //   langs: ['ja'],   완료한 번역 언어 (정렬) — 더 필요한 언어만 보충, 이미 받은 감정·화자·효과음은 유지
 //   model, at, profile,  분석 설정·프롬프트 해시 (키·주소는 저장하지 않음)
 //   segs: [ { i, h, emotion, speaker?, text: { ja: '…' } } ]   i = 원문 대화문 순번 · h = 정규화한 대사 해시 (번호가 어긋나도 찾게)
@@ -52,7 +53,7 @@ import * as ST from '../../../../../../../../script.js';
 import { chat, substituteParams, getRequestHeaders } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
 import { settings, addAnalysisUsage, USER_AUTO, sceneCharsOf } from './settings.js';
-import { segmentMessage, detectLang, parseRegexLines, speechDisplay, italicCandidates } from './text.js';
+import { segmentMessage, detectLang, parseRegexLines, speechDisplay, italicCandidates, SLOT_RE } from './text.js';
 import { resolveSpeaker, knownNames as learnedNames } from './speakers.js';
 import { allVoices, hasOwnVoice, noteExtras } from './voices.js';
 import { fetchJson } from './providers/_http.js';
@@ -560,6 +561,7 @@ function normalizeItalics(raw, built) {
 }
 /** 저장된 분석의 기울임 답 (같은 글 · 같은 스와이프일 때만, 통신 없음). 1.9.1 전 분석 · 기울임을 안 물은 분석이면 null */
 export function italicsOf(mes) {
+    if (slot(mes, false)?.analysis?.hash !== textHash(mes)) followSpeech(-1, mes);   // 7.2.9 그림 자리 표시만 바뀐 글
     const a = slot(mes, false)?.analysis;
     if (!isObj(a) || !Array.isArray(a.italics) || a.hash !== textHash(mes)) return null;   // 7.0.2 글이 같으면 스와이프 번호는 보지 않음 (스와이프 지우기로 번호가 당겨져도 — sameSwipe)
     return a.italics;
@@ -615,8 +617,8 @@ export function italicsToFill(mes, a) {
     const answered = new Map((Array.isArray(a.italics) ? a.italics : []).filter(isObj).map(x => [`${x.j}:${x.h}`, x]));
     const tried = new Set(Array.isArray(a.italicsTried) ? a.italicsTried : []);
     const out = [];
-    for (const g of italicCandidates(segs)) {
-        if (out.length >= ITALIC_MAX) break;
+    // 7.2.9 한 요청이 묻는 앞 40개(italicsToAsk 와 같은 창)만 — 그 뒤 조각까지 보면 40개가 넘는 긴 답은 다음 줄을 읽을 때마다 기울임 보충을 또 보냈다
+    for (const g of italicCandidates(segs).slice(0, ITALIC_MAX)) {
         const j = acts.indexOf(g), key = `${j}:${hash(normText(String(g.text).trim()))}`;
         if (tried.has(key)) continue;
         const got = answered.get(key);
@@ -1111,6 +1113,48 @@ function slot(mes, create) {
     return mes.extra.lemon_voice;
 }
 const textHash = (mes) => hash(String(mes?.mes ?? ''));
+/**
+ * 7.2.9 소리로 읽는 글만 (분석 열쇠용): 그림 자리 표시(text.js SLOT_RE) · <img> · 그림 요청 태그(<pic …>) · 마크다운 그림은 읽지 않으니 빼고,
+ * 그 자리에 남는 빈 줄 · 줄 끝 빈칸은 하나로. 그림 확장이 답이 끝난 뒤(재생 중에도) 자리 표시를 붙이거나 요청 태그를 그림으로 바꾸면
+ * mes.mes 해시가 바뀌어 다 받은 분석을 버렸고, 다음 대사를 누를 때 「분석 중…」으로 같은 답을 다시(유료) 물었다 (사용자 10-20).
+ */
+export function speechText(text) {
+    return String(text ?? '').replace(/\r\n?/g, '\n')
+        .replace(SLOT_RE, '')
+        .replace(/<img\b[^>]*>/gi, '')
+        .replace(/<pic\b[^>]*>/gi, '')
+        .replace(/!\[[^\]\n]*\]\([^)\n]*\)/g, '')
+        .replace(/[ \t]+$/gm, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+export const speechKey = (mes) => hash(speechText(mes?.mes));
+/** 진행 중인 요청(entry: hash · key)과 같은 글인가 — 원문이 같거나, 그림 자리 표시 · 그림 태그만 달라 소리로 읽는 글이 같으면 */
+const sameText = (mes, e) => textHash(mes) === e.hash || (typeof e.key === 'string' && speechKey(mes) === e.key);
+/**
+ * 7.2.9 글이 그림 자리 표시 · 그림 태그만 바뀌었으면(key 가 같음) 저장된 분석 · 손 효과음을 지금 글(hash)로 옮겨 단다 — 요청 · 저장 없음
+ * (메모리만 고친다. 다음 저장이 실어 가고, 새로고침 뒤에도 key 가 같으니 또 옮긴다). key 가 없는 분석(7.2.8 까지)은 글이 그대로일 때 key 를 적어 둔다.
+ * 옮겼으면 true
+ */
+function followSpeech(id, mes) {
+    const lv = slot(mes, false);
+    if (!lv) return false;
+    const h = textHash(mes);
+    let key = null, moved = false;
+    const k = () => (key ??= speechKey(mes));
+    const a = lv.analysis;
+    if (isObj(a) && Array.isArray(a.segs)) {
+        if (a.hash === h) { if (typeof a.key !== 'string') a.key = k(); }
+        else if (typeof a.key === 'string' && a.key === k() && (!Number.isInteger(a.swipe) || a.swipe === swipeOf(mes))) { lv.analysis = { ...a, hash: h }; moved = true; }
+    }
+    const m = lv.manual;
+    if (isObj(m) && Array.isArray(m.cues)) {
+        if (m.h === h) { if (typeof m.key !== 'string') m.key = k(); }
+        else if (typeof m.key === 'string' && m.key === k()) { lv.manual = { ...m, h }; moved = true; }
+    }
+    if (moved && id >= 0) { try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(id); } catch { /* 스와이프 정보 없음 */ } }
+    return moved;
+}
 const extrasOn = () => settings().extras !== 'off';
 // profile = 분석 때의 프롬프트 · 엔진 지문. 1.6.4 부터 저장된 분석을 꺼낼 때 이 지문을 더 맞춰 보지 않는다 (아래 getAnalysis) —
 //   목소리 · 효과음 보관함 · 우선 효과음 · 배운 이름 · 모델 · 지시문이 바뀔 때마다 들었던 문장을 또(유료) 분석했다. 옛 판이 읽을 수 있게 적기만 한다.
@@ -1368,7 +1412,7 @@ function followRewrite(id, mes) {
     if (a) {
         const r = moveAnalysis(a, lines, h);
         if (r) {
-            lv.analysis = r.analysis;
+            lv.analysis = { ...r.analysis, key: speechKey(mes) };   // 7.2.9
             responseFailures.delete(mes);
             moved = true;
             log('info', `대사 분석 이어 씀 #${id} (다시 쓰기) · 바뀐 줄 ${r.changed}/${lines.length}${r.refill.length ? ` · 그 줄만 다시 옮길 언어 ${r.refill.join(', ')}` : ''}`);
@@ -1379,7 +1423,7 @@ function followRewrite(id, mes) {
     }
     // 손 효과음: 넣을 때 적은 대화문 수(n)와 같을 때만 (분석 없이 대사 수가 바뀐 다시 쓰기에서 자리가 한 줄씩 밀리지 않게). n 이 없는 옛 목록은 분석이 함께 옮겨질 때만
     const sameCount = m && (Number.isInteger(m.n) ? m.n === lines.length : !!a && structure);
-    if (m && structure && sameCount && m.cues.every(c => !isObj(c) || !Number.isInteger(c.after) || c.after <= lines.length)) { lv.manual = { ...m, h, n: lines.length }; moved = true; }
+    if (m && structure && sameCount && m.cues.every(c => !isObj(c) || !Number.isInteger(c.after) || c.after <= lines.length)) { lv.manual = { ...m, h, key: speechKey(mes), n: lines.length }; moved = true; }
     if (!moved) { followTried.set(mes, pair); return false; }
     followTried.delete(mes);
     if (id >= 0) {
@@ -1393,7 +1437,7 @@ function followRewrite(id, mes) {
 
 // ---------- 1.6.3 손으로 넣은 효과음: 분석과 따로 mes.extra.lemon_voice.manual = { h, lib?, cues: [{ after, id }] } — 글(해시)이 바뀌면 버린다. 넓이 필터를 타지 않는다
 //   lib = 1.6.8 보관함 판 (없으면 1.6.8 전: 'footsteps' 는 그때의 발소리 → resolveSfxId 가 daily_footsteps 로 읽는다)
-const manualOf = (mes) => { const m = slot(mes, false)?.manual; return isObj(m) && Array.isArray(m.cues) && m.h === textHash(mes) ? m : null; };
+const manualOf = (mes) => { followSpeech(-1, mes); const m = slot(mes, false)?.manual; return isObj(m) && Array.isArray(m.cues) && m.h === textHash(mes) ? m : null; };   // 7.2.9 그림 자리 표시만 바뀐 글이면 옮겨 단다
 /** 저장된 손 효과음 → 재생 신호 모양 [{ after, id, strength: 1, manual: true, repeats: 1, durationMs: 0 }] */
 export function manualSfx(mesId) {
     const mes = msgOf(Number(mesId)); followRewrite(Number(mesId), mes); const m = manualOf(mes);
@@ -1408,7 +1452,8 @@ export function addManualSfx(mesId, after, id) {
     followRewrite(Number(mesId), mes);
     const lv = slot(mes, true); const h = textHash(mes);
     let n; try { n = dialogueLines(mes).length; } catch { n = undefined; }   // 1.7.0 대화문 수 (다시 쓰기 뒤 옮길 때 맞춰 봄)
-    if (!isObj(lv.manual) || lv.manual.h !== h || !Array.isArray(lv.manual.cues)) lv.manual = { h, lib: SFX_LIB, n, cues: [] };
+    followSpeech(Number(mesId), mes);   // 7.2.9
+    if (!isObj(lv.manual) || lv.manual.h !== h || !Array.isArray(lv.manual.cues)) lv.manual = { h, key: speechKey(mes), lib: SFX_LIB, n, cues: [] };
     // 1.6.8 전에 넣은 목록(lib 없음)에 더 넣을 때는 옛 ID 를 지금 보관함으로 옮겨 적고 판을 적는다 — 새로 넣는 군화 'footsteps' 와 섞이지 않게
     else if (!(Number(lv.manual.lib) >= SFX_LIB)) lv.manual = { h, lib: SFX_LIB, n, cues: lv.manual.cues.map(c => isObj(c) ? { ...c, id: resolveSfxId(c.id, lv.manual) } : c) };
     else if (!Number.isInteger(lv.manual.n) && Number.isInteger(n)) lv.manual = { ...lv.manual, n };   // 1.7.0 전 목록에 더 넣을 때 대화문 수를 적는다
@@ -1439,9 +1484,11 @@ export function getAnalysis(mesId) {
     if (a.hash !== textHash(mes)) {
         // 1.7.0 다시 쓰기가 고친 글이면 새 글로 옮겨 쓴다 (TTS 가 꺼져 있을 때 고쳤거나, 자동 다시 쓰기는 따로 알리지 않는다)
         followRewrite(Number(mesId), mes);
+        if (slot(mes, false)?.analysis?.hash !== textHash(mes)) followSpeech(Number(mesId), mes);   // 7.2.9 그림 자리 표시 · 그림 태그만 바뀐 글
         a = slot(mes, false)?.analysis;
         if (!isObj(a) || !Array.isArray(a.segs) || a.hash !== textHash(mes)) return null;
-    }
+    } else if (typeof a.key !== 'string') followSpeech(Number(mesId), mes);   // 7.2.9 옛 분석에 key 를 적어 둔다 (그 뒤 그림이 붙어도 이어 쓰게)
+    a = slot(mes, false)?.analysis;
     if (!sameSwipe(a, mes)) return null;
     const cfg = settings().analysis || {};
     if (cfg.emotion && a.segs.some(g => !EMOTION_SET.has(g?.emotion))) return null;
@@ -1520,14 +1567,14 @@ export function analyzeMessage(mesId, opts = {}) {
     }
     const inflight = running.get(id);
     // 1.6.4 같은 글의 진행 중인 분석이면 붙는다 — 프롬프트 지문이 그새 바뀌었어도 (앞 메시지의 분석이 엑스트라를 적어 목소리 표가 바뀌는 것만으로 다시 묻지 않게)
-    if (inflight && !inflight.ctrl.signal.aborted && inflight.mes === mes && inflight.hash === textHash(mes) && inflight.swipe === swipeOf(mes) && (!opts.force || inflight.force) && (inflight.via || '') === (opts.via || '')) {
+    if (inflight && !inflight.ctrl.signal.aborted && inflight.mes === mes && sameText(mes, inflight) && inflight.swipe === swipeOf(mes) && (!opts.force || inflight.force) && (inflight.via || '') === (opts.via || '')) {
         if (!inflight.started) inflight.langs = normLangs([...inflight.langs, ...langs]);
         if (covers(inflight.langs, langs)) return join(inflight, opts.signal);
-        return join(inflight, opts.signal).then(() => msgOf(id) === mes && inflight.hash === textHash(mes) && inflight.swipe === swipeOf(mes) ? analyzeMessage(id, opts) : null);
+        return join(inflight, opts.signal).then(() => msgOf(id) === mes && sameText(mes, inflight) && inflight.swipe === swipeOf(mes) ? analyzeMessage(id, opts) : null);
     }
     if (!engineReady(cfg)) return Promise.resolve(null);
 
-    const entry = { id, mes, hash: textHash(mes), swipe: swipeOf(mes), langs, force: !!opts.force, via: opts.via === 'fallback' ? 'fallback' : '', ctrl: new AbortController(), promise: null, users: 0, pinned: false, started: false, sent: false };
+    const entry = { id, mes, hash: textHash(mes), key: speechKey(mes), swipe: swipeOf(mes), langs, force: !!opts.force, via: opts.via === 'fallback' ? 'fallback' : '', ctrl: new AbortController(), promise: null, users: 0, pinned: false, started: false, sent: false };
     const run = () => doAnalyze(entry);
     entry.promise = chain.then(run, run).finally(() => { if (running.get(id) === entry) running.delete(id); keptRuns.delete(entry); });
     running.set(id, entry);
@@ -1543,7 +1590,8 @@ async function doAnalyze(entry) {
     const { id, mes, force, swipe } = entry;
     const signal = entry.ctrl.signal;
     if (aborted(signal)) throw abortErr(signal);
-    if (msgOf(id) !== mes || textHash(mes) !== entry.hash || swipeOf(mes) !== swipe) return null;
+    if (msgOf(id) !== mes || !sameText(mes, entry) || swipeOf(mes) !== swipe) return null;
+    if (textHash(mes) !== entry.hash) { entry.hash = textHash(mes); entry.key = speechKey(mes); }   // 7.2.9 줄 서는 사이 그림 자리 표시만 붙음 → 지금 글로
     const previous = force ? null : getAnalysis(id);
     // 7.2.6 이어 쓰기(continue): 글이 뒤로 늘기만 했으면(옛 분석의 모든 줄이 새 글의 앞줄과 순번 · 해시가 같음) 그 줄의 감정 · 화자 · 번역은 그대로 두고 새 줄만 묻는다 (tts-reanalysis P4)
     const prior = !previous && !force ? continuedFrom(mes) : null;
@@ -1562,7 +1610,7 @@ async function doAnalyze(entry) {
     const failedKey = failureKey(mes);
     const rejectResponse = (message) => {
         const error = koErr(`${message}. 요술봉의 재생성으로 다시 시도해 주세요`);
-        if (msgOf(id) === mes && textHash(mes) === entry.hash && swipeOf(mes) === swipe) { responseFailures.set(mes, { key: failedKey, error }); rememberFailure(id, mes, { hard: true, why: message }); }
+        if (msgOf(id) === mes && sameText(mes, entry) && swipeOf(mes) === swipe) { responseFailures.set(mes, { key: failedKey, error }); rememberFailure(id, mes, { hard: true, why: message }); }
         return error;
     };
     const h = entry.hash;
@@ -1571,7 +1619,7 @@ async function doAnalyze(entry) {
     // profile · baseProfile 은 옛 판(1.6.3 이하)이 읽을 수 있게 적을 뿐, 1.6.4 는 꺼낼 때 보지 않는다 (번역문 없는 키 = 1.6.0 규칙)
     const dt = mes?.extra?.display_text;
     const keyBuilt = typeof dt === 'string' && dt.trim() && dt !== mes.mes ? buildPrompt(mes, { ...promptOpts, display: false }) : built;
-    const base = { ...(previous || {}), hash: h, swipe, profile: profileOf(mes, cfg, langs, keyBuilt), langs, model, at: Date.now(), speaker: previous ? previous.speaker : cfg.speaker !== false, segs: built.lines.map(l => previous?.segs.find(g => g.i === l.i && g.h === l.h) || ({ i: l.i, h: l.h, emotion: '', text: {} })).map(g => reuseKnown(g, prior)) };   // 7.2.6 이어 쓰기 전 분석의 앞줄 재사용
+    const base = { ...(previous || {}), hash: h, key: entry.key, swipe, profile: profileOf(mes, cfg, langs, keyBuilt), langs, model, at: Date.now(), speaker: previous ? previous.speaker : cfg.speaker !== false, segs: built.lines.map(l => previous?.segs.find(g => g.i === l.i && g.h === l.h) || ({ i: l.i, h: l.h, emotion: '', text: {} })).map(g => reuseKnown(g, prior)) };   // 7.2.6 이어 쓰기 전 분석의 앞줄 재사용
     if (isObj(base.redo)) {   // 1.7.0 이번에 물은 언어의 다시 옮길 줄은 끝 (받으면 저장, 실패하면 base 는 버려진다)
         const redo = { ...base.redo };
         for (const l of requestLangs) delete redo[l];
@@ -1602,7 +1650,7 @@ async function doAnalyze(entry) {
             onUsed: (t) => { used = t; },
         });
     } catch (e) {
-        const here = !aborted(signal) && msgOf(id) === mes && textHash(mes) === entry.hash && swipeOf(mes) === swipe;
+        const here = !aborted(signal) && msgOf(id) === mes && sameText(mes, entry) && swipeOf(mes) === swipe;
         // 기억할 실패: 확실한 차단 · 맨 400(같은 요청은 또 400 — 사용자의 중계가 검열을 이 모양으로 줌) · 다른 모델도 거절.
         //   빈 답('Candidate text empty' — 생각 토큰이 한도를 먹은 것일 수도) · 다른 모델의 429 · 연결 실패는 예전처럼 다음에 다시
         const hard = e?.fallback ? e.fallback.blocked === true : isContentBlock(e) || bareBadRequest(e);
@@ -1621,7 +1669,7 @@ async function doAnalyze(entry) {
         log('err', `대사 분석 응답 해석 실패 #${id}${r.truncated ? ' (길이 한도)' : ''} · ${head ? '앞부분: ' + snip(scrub(head), 160) : '빈 답'}`);
         if (refusalReply(head)) {   // 6.1.8 거절 글 — 다른 모델이 없거나 같은 모델이라 그대로 왔다
             const error = Object.assign(koErr('모델이 이 내용의 분석을 거절했어요'), { blocked: true, noFallback: !target, fallbackSame });
-            if (msgOf(id) === mes && textHash(mes) === entry.hash && swipeOf(mes) === swipe) { blockedRuns.set(mes, { hash: entry.hash, swipe }); responseFailures.set(mes, { key: failedKey, error }); rememberFailure(id, mes, { hard: true, blocked: true, why: error.message }); }
+            if (msgOf(id) === mes && sameText(mes, entry) && swipeOf(mes) === swipe) { blockedRuns.set(mes, { hash: entry.hash, swipe }); responseFailures.set(mes, { key: failedKey, error }); rememberFailure(id, mes, { hard: true, blocked: true, why: error.message }); }
             throw error;
         }
         throw rejectResponse(r.truncated ? '대사 분석 응답이 길이 한도에 닿아 잘렸어요' : head ? '대사 분석 응답이 JSON 형식이 아니에요' : '대사 분석 응답이 비었어요');
@@ -1643,13 +1691,15 @@ async function doAnalyze(entry) {
     if (built.italics.length) analysis.italicsTried = [...new Set([...(Array.isArray(previous?.italicsTried) ? previous.italicsTried : []), ...built.italics.map(x => `${x.j}:${x.h}`)])];   // 1.9.2 물어본 조각 (다시 안 물음)
     if (built.sfx) analysis.sfx = normalizeSfx(parsed.sfx, built);
     // 1.6.4 받는 동안 설정이 바뀌어도 버리지 않는다 (값을 치른 답) — 글이 바뀌었을 때만
-    if (msgOf(id) !== mes || swipeOf(mes) !== swipe || (textHash(mes) !== h && !rewriteLinked(mes, h, textHash(mes)))) {
+    const speechSame = textHash(mes) !== h && speechKey(mes) === entry.key;   // 7.2.9 받는 사이 그림 자리 표시 · 그림 태그만 바뀜 → 지금 글의 분석으로
+    if (msgOf(id) !== mes || swipeOf(mes) !== swipe || (textHash(mes) !== h && !speechSame && !rewriteLinked(mes, h, textHash(mes)))) {
         if (id >= 0 && swipeOf(mes) === swipe && textHash(mes) === h) { keepAnalysis(mes, analysis, h); log('info', `대사 분석 보관 #${id} (채팅이 바뀜 — 돌아오면 요청 없이 씀)`); }   // 7.2.4
         else log('info', `대사 분석 버림 #${id} (글·스와이프가 바뀜)`);
         return null;
     }
     let result = analysis;
-    if (textHash(mes) !== h) {
+    if (speechSame) { result = { ...analysis, hash: textHash(mes) }; store(id, mes, result); }
+    else if (textHash(mes) !== h) {
         // 1.7.0 받는 사이 다시 쓰기가 글을 고쳤다 (onMessageChanged 가 보낸 요청은 끊지 않음) → 옛 글의 분석으로 두고 새 글로 옮긴다. 못 맞추면 지금처럼 버림
         slot(mes, true).analysis = analysis;
         followRewrite(id, mes);
@@ -1694,8 +1744,9 @@ export function onMessageChanged(mesId) {
     let keep = !!r && r.sent && r.mes === mes && r.swipe === swipeOf(mes) && r.hash !== h && rewriteLinked(mes, r.hash, h);
     if (keep) { try { keep = dialogueLines(mes).length === r.lines; } catch { keep = false; } }   // 대사 수가 달라졌으면 받아도 못 옮긴다 → 지금처럼 끊음
     if (keep) keptRuns.add(r);
-    if (r && !keep && (r.hash !== h || r.mes !== mes || r.swipe !== swipeOf(mes))) r.ctrl.abort(new DOMException('글이 바뀜', 'AbortError'));
+    if (r && !keep && (!sameText(mes, r) || r.mes !== mes || r.swipe !== swipeOf(mes))) r.ctrl.abort(new DOMException('글이 바뀜', 'AbortError'));   // 7.2.9 그림 자리 표시만 붙었으면 그대로 받는다
     followRewrite(id, mes);
+    followSpeech(id, mes);   // 7.2.9 그림 자리 표시 · 그림 태그만 바뀐 글: 분석 · 손 효과음을 지우지 않고 지금 글로
     const a = slot(mes, false)?.analysis;
     if (isObj(a) && a.hash !== h) drop(id, mes, true);   // 7.2.6 메모리에서만 지운다 — 다음 저장(새 답 · 새 분석)이 실어 간다 (api-audit #10: 스와이프마다 채팅 저장 1)
     const f = failedOf(mes);

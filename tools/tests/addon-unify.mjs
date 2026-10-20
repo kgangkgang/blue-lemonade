@@ -79,4 +79,28 @@ test('색 · 글꼴 · 자간은 안 바꿈 (font-family · letter-spacing · �
   assert.ok(!/letter-spacing/.test(css), '자간을 바꾸는 규칙이 있음');
   assert.ok(!/#[0-9a-f]{3,8}\b(?![^{]*\{)/i.test(css.replace(/content:\s*"[^"]*"/g, '').replace(/#[\w-]+(?=[\s,>:.{)\]])/g, '')), '새 색 값(#…)이 있음 — 테마 색 변수만');
 });
+test('7.2.9 붙어 다니는(sticky) 머리: 통일 규칙의 투명 머리 판을 창 판(불투명)으로 되돌림 · 내용 위', () => {
+  // 통일 머리 규칙은 「background: none」 — 애드온 style.css 가 머리를 sticky 로 두는 창은 굴릴 때 내용이 머리 글자와 겹쳐 보인다(ZIP 설치 창, 폰 · 어두움)
+  const none = rules.findIndex(r => r.sel.includes('dialog.blzi-dialog') && r.sel.endsWith('> header') && r.decl.includes('background: none !important'));
+  assert.ok(none >= 0, '통일 머리 규칙(background: none) 없음');
+  const addonDirs = fs.readdirSync(path.join(root, 'src/addons'));
+  const stickyHeads = [];
+  for (const dir of addonDirs) {
+    const file = path.join(root, 'src/addons', dir, 'style.css'); if (!fs.existsSync(file)) continue;
+    const text = fs.readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const m of text.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (!/position\s*:\s*sticky/.test(m[2])) continue;
+      for (const sel of m[1].split(',').map(s => s.replace(/\s+/g, ' ').trim())) {
+        const own = OWN.find(c => sel === `${c} > header`); if (own) stickyHeads.push(own);
+      }
+    }
+  }
+  assert.ok(stickyHeads.includes('.blzi-dialog'), 'ZIP 설치 창 머리가 sticky 가 아님 — 이 시험을 다시 볼 것');
+  for (const own of stickyHeads) {
+    const at = rules.findIndex(r => r.sel === `html body.salty dialog${own} > header` && r.decl.includes('background: inherit !important') && r.decl.includes('z-index: 2 !important'));
+    assert.ok(at > none, `${own}: sticky 머리인데 불투명 판 규칙(background: inherit · z-index 2)이 통일 규칙 뒤에 없음`);
+    assert.ok(!/(height|padding|margin|min-height|position)\s*:/.test(rules[at].decl), `${own}: 머리 판 규칙이 크기 · 자리를 바꿈 (굴릴 때 튐)`);
+  }
+  assert.ok(built.includes('html body.salty dialog.blzi-dialog > header { background: inherit !important; z-index: 2 !important; }'), 'style.css 다시 만들기 — node tools/build-css.cjs');
+});
 console.log(`PASS addon unify: ${passed} checks (15 windows' frame · header · tabs · picked · cards · width)`);

@@ -175,6 +175,7 @@ jobs:
           node tools/tests/people-cache-728.mjs .
           node tools/tests/phone-speed-728.mjs .
           node tools/tests/tts-usage-728.mjs .
+          node tools/tests/tts-picture-markers-729.mjs .
           node tools/tests/names-jp.mjs .
           node tools/tests/translator-speech.mjs .
           node tools/tests/bookmark-excerpts.mjs .

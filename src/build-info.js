@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.2.8";
+export const BUILD_VERSION = "7.2.9";
 export const FILE_HASHES = {
   "index.js": "22401:5fabd714:62be84ef",
-  "manifest.json": "365:30b06ea4:4de9fc83",
+  "manifest.json": "365:c61f6ca3:a7b0aa1e",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -372,7 +372,7 @@ export const FILE_HASHES = {
   "src/addons/tts/sfx/whoosh.mp3": "9295:2408f53b:568290c7",
   "src/addons/tts/sfx/wind.mp3": "36567:1a42a482:6c9fb235",
   "src/addons/tts/sfx/wood_crack.mp3": "12743:96f21e5f:d993bb8b",
-  "src/addons/tts/src/analysis.js": "131135:562ab2a5:2bd3d72e",
+  "src/addons/tts/src/analysis.js": "135530:756d16b6:bb009fb7",
   "src/addons/tts/src/balance.js": "4406:309bd610:27dd3fa3",
   "src/addons/tts/src/block-fallback.js": "10832:319e307e:b357a6a3",
   "src/addons/tts/src/cache.js": "19858:42f14d6b:8cb21695",
@@ -501,7 +501,7 @@ export const FILE_HASHES = {
   "src/edit-origin.js": "3547:2df8164c:611794f6",
   "src/extension-colors.js": "9262:b93831f6:c18337b9",
   "src/extension-folder.js": "1942:735f0044:a763d9ee",
-  "src/faq-data.js": "6407:5d4feedb:9e919146",
+  "src/faq-data.js": "10977:180f6515:5d3b7e6d",
   "src/features.js": "12665:fcacebc4:f4363fea",
   "src/file-fingerprint.js": "524:98923ac4:298a0ced",
   "src/first-run.js": "23534:c329eb33:40cd4012",
@@ -551,7 +551,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "280291:d4997cc0:89a0b54d",
+  "src/notice-data.js": "281848:da230714:a46cb694",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -677,5 +677,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1537809:dfed071b:a569ff72"
+  "style.css": "1538039:47cb9ed8:6385e4d1"
 };

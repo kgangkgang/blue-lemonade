@@ -58,6 +58,8 @@ t('상자를 다는 칸은 모두 기준점(position: relative, :where 로 다�
         assert.fail('기준점 없음: ' + key);
     }
     for (const must of ['.eh-guide summary', '.rl-msg summary']) assert.ok(relSet.has(must), must + ' 가 기준점 목록에 있음');
+    // 7.2.9 ZIP 설치 창의 일반 단추 (도우미가 연결되면 보이는 ZIP 고르기 · 설치된 확장 목록 · 백업 목록 보기 …) — 36px 로 남아 있었다
+    assert.ok(afterList.includes('.blzi button[data-action]') && relSet.has('.blzi button[data-action]'), 'ZIP 설치 단추 상자');
 });
 
 // 다른 CSS 가 같은 칸의 같은 가짜 요소로 모양을 그리면 상자가 그 모양을 덮어쓴다

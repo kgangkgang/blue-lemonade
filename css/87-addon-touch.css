@@ -7,6 +7,7 @@
    측정 · 사진: work/bl-724 디자인 전수조사 (outputs/bl-724/design-audit.md) · 시험: tools/tests/addon-touch-targets.mjs
    7.2.5 상자(::before/::after)를 다는 칸은 반드시 아래 기준점(position: relative) 목록에도 있어야 한다 — 확장 탭에 박힌 캐릭터 에셋 패널의 「사용법」 summary(.eh-guide summary)가
    기준점 없이 상자만 달려 서랍(#rm_extensions_block) 전체를 덮는 375×767 투명 상자가 되어 머리 단추(에셋 떼기 · 새로고침 · 압축 · 다시 그리기)가 폰에서 안 눌렸다 (제보 10-19).
+   7.2.9 ZIP 설치 창의 일반 단추(ZIP 고르기 · 설치된 확장 목록 · 백업 목록 보기 …, data-action)가 도우미가 연결된 화면에서 36px 로 남아 있었다 — 같은 상자를 단다.
    ===== */
 @media (pointer: coarse) {
   /* 기준점: :where 라 다른 모듈이 준 position(absolute 스위치 손잡이 등)이 이기고, static 인 칸만 relative 가 된다 */
@@ -19,7 +20,7 @@
     .jj-switch, .jj-small-btn, .bl-direction-dialog button[data-step], .jj-settings-body button[data-step],
     .lv-icon, .lv-help-btn, .lv-version,
     .rl-chip, .pa-hub .menu_button, .rl-root .menu_button, .rl-msg summary,
-    .blzi-help, .blpt-btn, .bwr_help, .bwr-version, .bwr_seg, .bwr_settings .menu_button,
+    .blzi-help, .blzi button[data-action], .blpt-btn, .bwr_help, .bwr-version, .bwr_seg, .bwr_settings .menu_button,
     .pt-ui-button, #pt-panel [data-help-group], .pt-help-dialog [data-help-group], #pt-panel-close,
     #model_register_settings .menu_button, #regex-link-settings .menu_button, .bl-translator-dialog .menu_button, .bl-ctsi-dialog .menu_button,
     .bl-fr-icon, .bl-mermaid-again, .salty-btn,
@@ -41,7 +42,7 @@
     .jj-small-btn, .bl-direction-dialog button[data-step], .jj-settings-body button[data-step],
     .lv-icon, .lv-help-btn, .lv-version,
     .rl-chip, .pa-hub .menu_button, .rl-root .menu_button, .rl-msg summary,
-    .blzi-help, .blpt-btn, .bwr_help, .bwr-version, .bwr_seg, .bwr_settings .menu_button,
+    .blzi-help, .blzi button[data-action], .blpt-btn, .bwr_help, .bwr-version, .bwr_seg, .bwr_settings .menu_button,
     .pt-ui-button, #pt-panel [data-help-group], .pt-help-dialog [data-help-group], #pt-panel-close,
     #model_register_settings .menu_button, #regex-link-settings .menu_button, .bl-translator-dialog .menu_button, .bl-ctsi-dialog .menu_button,
     .bl-fr-icon, .bl-mermaid-again, .salty-btn,
