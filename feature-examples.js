@@ -5,7 +5,7 @@
   const figures=[...root.querySelectorAll('.feature-example')],phone=matchMedia('(max-width:760px)');
   function show(figure,device){
     const variant=figure.dataset.variant||'';
-    const base=variant?'media/feature-20261010-'+device+'-'+variant:figure.dataset[device==='mobile'?'exampleMobile':'examplePc'];
+    const base=variant?'media/feature-20261020-'+device+'-'+variant:figure.dataset[device==='mobile'?'exampleMobile':'examplePc'];
     if(figure.dataset.device===device&&figure.dataset.activeBase===base)return;
     figure.dataset.device=device;figure.dataset.activeBase=base;
     figure.querySelectorAll('[data-example-device]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.exampleDevice===device)));
