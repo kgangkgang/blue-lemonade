@@ -23,10 +23,10 @@ test('일본어 원문(特注品)에서 와도 한글에 붙은 한자는 고른
     assert.deepEqual(leftoverHan('그 會議에 늦었다. 그 室은 넓었다.', '会議と室。'), [], '한자 뒤에 조사만 (6.4.2 그대로)');
 });
 test('2.9.9 한글 낱말 끝에 붙은 한 글자 한자(변顔 ← 変顔)도 고른다 — 원문 일본어 줄에 있던 것만', () => {
-    const JP = '「あはは、トレンド三位！？ザドの変顔バズりすぎじゃーん！」';
-    assert.deepEqual(leftoverHan('「아하하, 트렌드 3위!? 자드 변顔 너무 떡상한 거 아니야~!」', JP), ['顔']);
-    assert.deepEqual(leftoverHan('「자드 변顔, 대박」', JP), ['顔'], '뒤가 쉼표');
-    assert.equal(linesToFix('「아하하, 자드 변顔 너무 떡상했어」', JP).length, 1, '고칠 줄로 고른다');
+    const JP = '「あはは、あの変顔すごいね！」';
+    assert.deepEqual(leftoverHan('「아하하, 그 변顔 사진 너무 웃긴 거 아니야~!」', JP), ['顔']);
+    assert.deepEqual(leftoverHan('「그 변顔, 웃기다」', JP), ['顔'], '뒤가 쉼표');
+    assert.equal(linesToFix('「아하하, 그 변顔 너무 웃겼어」', JP).length, 1, '고칠 줄로 고른다');
     assert.deepEqual(leftoverHan('그는 변顔 했다.', 'He made a funny face.'), [], '원문에 없는 한자가 낱말 끝이면 예전처럼 둔다');
     assert.deepEqual(leftoverHan('그는 변顔 했다.', '그는 변顔 했다.'), [], '한국어 원문 줄에 그대로 있던 것');
     assert.deepEqual(leftoverHan('변顔(헨가오) 사진', JP), [], '한글 읽기 괄호');

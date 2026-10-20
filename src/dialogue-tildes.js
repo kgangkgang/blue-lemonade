@@ -10,9 +10,9 @@ const textLike = node => node?.nodeType === 3 || (node?.nodeType === 1 && INLINE
 export function isDialogueElongation(before, content, after, quoted = false) {
     if (!/[\p{L}\p{N}]$/u.test(before)) return false;
     // 7.4.7 GFM 규칙: 글자 바로 뒤의 ~~ 는 그 뒤가 문장 부호 · 기호(물결 셋 이상의 남은 ~ 포함)면 취소선을 열지 못한다 —
-    //   「음~~~, 냄새 좋아~~~!」 에서 Showdown 이 「~, 냄새 좋아」 를 del 로 만들어 글자가 흐려지던 것 (대사 안에서만 · 한 줄 안)
+    //   「응~~~, 그래~~~!」 에서 Showdown 이 「~, 그래」 를 del 로 만들어 글자가 흐려지던 것 (대사 안에서만 · 한 줄 안)
     if (quoted && /^[\p{P}\p{S}]/u.test(content) && !/^[!！?？]/u.test(content) && !/[\r\n]/.test(content) && /\S$/u.test(content)) return true;
-    // 7.5.0 대사 안에서 글자 사이에 낀 ~~…~~ — 여는 쪽도 닫는 쪽도 양옆이 모두 글자 · 숫자(「아~~앗♡♡ 대・박・낚・시~~잇!!」): 지우려고 쓴 글이 아니라 늘임표.
+    // 7.5.0 대사 안에서 글자 사이에 낀 ~~…~~ — 여는 쪽도 닫는 쪽도 양옆이 모두 글자 · 숫자(「아~~앗, 대・성・공~~이다!!」): 지우려고 쓴 글이 아니라 늘임표.
     //   띄어 쓰거나 따옴표 바로 뒤에서 여는 ~~지울 글~~ 은 그대로 취소선 (한 줄 안에서만)
     if (quoted && /^[\p{L}\p{N}]/u.test(content) && /[\p{L}\p{N}]$/u.test(content) && /^[\p{L}\p{N}]/u.test(after) && !/[\r\n]/.test(content)) return true;
     if (!/[\p{L}\p{N}]$/u.test(content)) return false;

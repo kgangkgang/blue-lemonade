@@ -64,7 +64,7 @@ export function leftoverHan(line, source, keep = []) {
     for (const m of s.matchAll(HAN_ANY)) {
         const run = m[0], from = m.index, to = m.index + run.length;
         if (!HANGUL.test(s[from - 1] ?? '')) continue;
-        // 2.9.9 한글 낱말 끝에 붙은 한자 (「자드 변顔 너무」 ← 変顔 — 뒤가 띄어쓰기 · 문장 부호): 원문의 일본어 · 중국어 줄에 그대로 있던 한자만 (낱말 안에 낀 것은 원문에 없어도)
+        // 2.9.9 한글 낱말 끝에 붙은 한자 (「그 변顔 사진」 ← 変顔 — 뒤가 띄어쓰기 · 문장 부호): 원문의 일본어 · 중국어 줄에 그대로 있던 한자만 (낱말 안에 낀 것은 원문에 없어도)
         if (!HANGUL.test(s[to] ?? '') && (!src.includes(run) || !fromForeign(run, src))) continue;
         if (runs.includes(run) || runs.some(r => r.includes(run))) continue;
         if (src.includes(run) && !fromForeign(run, src)) continue;
