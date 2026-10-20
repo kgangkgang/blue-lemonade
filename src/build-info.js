@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.4.6";
+export const BUILD_VERSION = "7.4.7";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:dd1030dc:1af911d1",
+  "manifest.json": "365:243088bb:6cef373b",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -499,7 +499,7 @@ export const FILE_HASHES = {
   "src/dialogue-lines.js": "5974:88feb08a:c0150028",
   "src/dialogue-only.js": "3645:295b9fce:fa2e1fb8",
   "src/dialogue-span.js": "19816:f5bae8d9:e78d725a",
-  "src/dialogue-tildes.js": "3182:dc741465:68f59003",
+  "src/dialogue-tildes.js": "3668:ee6df9e6:95b11ca2",
   "src/dialogue-view.js": "14341:5905487d:3d179324",
   "src/draft.js": "10237:f711f4b4:ba76e769",
   "src/edit-origin.js": "3547:2df8164c:611794f6",
@@ -555,7 +555,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "293611:7ae27140:6a23f605",
+  "src/notice-data.js": "294080:07cedc91:211198a0",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -685,5 +685,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1540568:90c9bc86:90d69b0b"
+  "style.css": "1540568:0e7fc955:291c958a"
 };
