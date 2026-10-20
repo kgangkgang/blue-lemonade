@@ -1,6 +1,21 @@
 import { checkpointKey } from './translation-resume.js';
 
-const memory = new Map(), LIMIT = 400, TTL = 30 * 86400000;
+// 7.3.1 문단 캐시 크기: 400문단은 70~90문단 답 4~5개뿐이라 조금 전 채팅도 밀려나 처음부터 다시 번역했다.
+//   저장소는 4000문단 · 글자 200만 자(어느 쪽이든 먼저 닿는 쪽) 안에서 최근에 쓴 것부터 남긴다(LRU — 꺼내 쓴 문단도 시각을 새로).
+//   메모리 사본은 1200문단까지. 정리는 쓴 문단 128개마다 한 번 (getAll 이 4000줄을 읽으니 자주 하지 않는다)
+const memory = new Map(), MEMORY_LIMIT = 1200, LIMIT = 4000, CHAR_BUDGET = 2000000, PRUNE_EVERY = 128, TTL = 30 * 86400000;
+export const SEGMENT_CACHE_LIMITS = Object.freeze({ paragraphs: LIMIT, chars: CHAR_BUDGET, memory: MEMORY_LIMIT, pruneEvery: PRUNE_EVERY, days: 30 });
+/** 7.3.1 남길 줄 고르기 (시험용으로 꺼냄): 최근 것부터 개수 · 글자 수 안에 드는 것만, 기한 지난 것은 뺀다 → 지울 key 목록 */
+export function pruneKeys(rows, now = Date.now(), { limit = LIMIT, chars = CHAR_BUDGET, ttl = TTL } = {}) {
+    const drop = [];
+    let kept = 0, used = 0;
+    for (const row of [...rows].sort((a, b) => b.time - a.time)) {
+        const size = String(row.text ?? '').length;
+        if (row.time < now - ttl || kept >= limit || used + size > chars) { drop.push(row.key); continue; }
+        kept++; used += size;
+    }
+    return drop;
+}
 // 2.9.0 이어 하기: 묶음이 끊기거나 실패하면(연결 끊김 · 중지 · 시간 초과 · 429 …) 그때까지 닫힌 문단을 같은 저장소에 'resume:' 열쇠로 하루만 둔다.
 //   30일 문단 캐시에는 넣지 않는다 — 끝나지 않은 답은 묶음 전체 검사(문단 수 · 1부터 다시 매긴 답)를 못 거쳤다. 검사는 캐시와 같은 cacheable
 const RESUME = 'resume:', RESUME_TTL = 86400000;
@@ -16,7 +31,7 @@ async function db() {
 // 메모리에 없는 키만 한 연결 · 한 읽기 트랜잭션으로 한꺼번에 읽는다 (예전엔 키마다 DB 를 열었다). 결과: key → text (TTL 지난 것은 뺌)
 async function readMany(keys, ttl = TTL) {
     const found = new Map(), missing = [];
-    for (const key of keys) { const value = memory.get(key); if (value) found.set(key, value); else missing.push(key); }
+    for (const key of keys) { const value = memory.get(key); if (value) { memory.delete(key); memory.set(key, value); found.set(key, value); } else missing.push(key); }   // 7.3.1 쓴 것은 맨 뒤로 (LRU)
     let handle;
     if (missing.length) try {
         handle = await db();
@@ -36,7 +51,7 @@ async function writeMany(rows, stamp) {
     const values = rows.filter(([, text]) => text.length <= 12000).map(([key, text]) => ({ key, text, time: Date.now() }));
     if (!values.length) return;
     for (const value of values) { memory.delete(value.key); memory.set(value.key, value); }
-    while (memory.size > LIMIT) memory.delete(memory.keys().next().value);
+    while (memory.size > MEMORY_LIMIT) memory.delete(memory.keys().next().value);
     let handle;
     try {
         handle = await db();
@@ -44,12 +59,10 @@ async function writeMany(rows, stamp) {
         await new Promise((resolve, reject) => {
             const tx = handle.transaction('parts', 'readwrite'), store = tx.objectStore('parts');
             for (const value of values) store.put(value);
-            const before = writes; writes += values.length; // 예전처럼 문단 16개마다 한 번 정리
-            if (Math.floor((before + 15) / 16) !== Math.floor((writes + 15) / 16)) {
+            const before = writes; writes += values.length; // 7.3.1 쓴 문단 128개마다 한 번 정리 (첫 쓰기 때도 — 예전 판이 남긴 줄을 바로 맞춘다)
+            if (Math.floor((before + PRUNE_EVERY - 1) / PRUNE_EVERY) !== Math.floor((writes + PRUNE_EVERY - 1) / PRUNE_EVERY)) {
                 const request = store.getAll();
-                request.onsuccess = () => request.result.sort((a, b) => b.time - a.time).forEach((row, i) => {
-                    if (i >= LIMIT || row.time < Date.now() - TTL) store.delete(row.key);
-                });
+                request.onsuccess = () => { for (const key of pruneKeys(request.result)) store.delete(key); };
             }
             tx.oncomplete = resolve; tx.onerror = tx.onabort = reject;
         });
@@ -91,6 +104,8 @@ export async function forgetSegments(parts, signature) {
     return keys.length;
 }
 
+/** 7.3.1 segmentParagraphs 가 나누는 조각 상한 (문단 + 구분자) — 401문단 */
+export const SEGMENT_PARTS_MAX = 801;
 export function segmentParagraphs(text) {
     // Never split structured HTML or code across separate model requests.
     if (/```|~~~|<\/?(?:div|details|table|pre|script|style|ul|ol|blockquote)\b/i.test(text)) return null;
@@ -107,7 +122,10 @@ export function segmentParagraphs(text) {
         }
         if (stack.length) return null;
     }
-    return parts.length <= 161 ? parts : null;
+    // 7.3.1 문단 수 상한: 161 조각(81문단)을 넘는 긴 답은 null(문단 캐시 없음)이 돼 통짜 한 요청으로 갔다 — 89·90문단 답은 원문 한 문장만
+    //   고쳐도 메시지 전체를 다시 보냈다(문단 캐시 · 이어 하기 모두 못 씀). 한 요청 크기는 batchGroups 가 글자 수(응답 길이 × 1.2)로 따로 나누니
+    //   여기 상한은 문단 키 계산 · ⟦n⟧ 표시가 터무니없이 많은 글만 막는다
+    return parts.length <= SEGMENT_PARTS_MAX ? parts : null;
 }
 
 // ── 6.1.8 보호 블록 (번역하지 않고 제자리에 한 번만 두는 블록 — 그림 자리 같은 것) ──
@@ -944,7 +962,8 @@ export function streamWatch({ done, settled, shape = text => text, frame = globa
 // 2.5.1 partial(text): 캐시에서 온 문단 · 끝난 묶음의 문단은 번역문, 나머지는 원문인 글 (끝난 문단부터 번역문으로 보여 주기용)
 export async function translateSegments({ parts, signature, request, check = () => {}, progress = () => {}, cacheable = () => true, blockedMarker, partial = null }) {
     const stamp = epoch, output = [...parts], total = Math.ceil(parts.length / 2), missing = new Map();
-    let reused = 0, translated = 0, blocked = 0;
+    let reused = 0, translated = 0, blocked = 0, resumedCount = 0;
+    const touched = [];   // 7.3.1 캐시에서 꺼내 쓴 문단 — 끝에 시각을 새로 써서 최근에 쓴 채팅이 밀려나지 않게 (LRU)
     // paragraph-v2: 서명이 준비된 프롬프트 전체가 아니라 짧은 요약(연결 · 프롬프트 · 용어집)이 됐다
     const keyed = [];
     for (let i = 0; i < parts.length; i += 2) {
@@ -959,15 +978,17 @@ export async function translateSegments({ parts, signature, request, check = () 
     for (const [i, body, key] of keyed) {
         // 5.4.1: 예전에 캐시에 들어간 원문 되풀이 답(원문+화살표+번역 · 망가진 ⟦n] 표시)은 없는 셈 치고 다시 요청한다
         // 6.4.2 v2 지금 규칙으로 캐시에 넣지 않을 문단(예: 6.4.1 이하가 넣은 원문 한자 남은 문단)은 다시 쓰지 않고 번역한다 — 서명은 그대로라 다른 문단 캐시는 산다
-        if (saved.has(key) && cleanParagraphEcho(saved.get(key), body) === saved.get(key).replace(/^\n+|\s+$/g, '') && cacheable(body, saved.get(key))) { output[i] = saved.get(key); reused++; continue; }
+        if (saved.has(key) && cleanParagraphEcho(saved.get(key), body) === saved.get(key).replace(/^\n+|\s+$/g, '') && cacheable(body, saved.get(key))) { output[i] = saved.get(key); reused++; touched.push([key, saved.get(key)]); continue; }
         const kept = resumed.get(RESUME + key);
-        if (kept && cleanParagraphEcho(kept, body) === kept.replace(/^\n+|\s+$/g, '') && cacheable(body, kept)) { output[i] = kept; reused++; continue; }   // 2.9.0 이어 하기
+        if (kept && cleanParagraphEcho(kept, body) === kept.replace(/^\n+|\s+$/g, '') && cacheable(body, kept)) { output[i] = kept; reused++; resumedCount++; continue; }   // 2.9.0 이어 하기 · 7.3.1 resumed = 그중 이어 하기로 온 수
         if (!missing.has(key)) missing.set(key, { key, body, indices: [] });
         missing.get(key).indices.push(i);
     }
     const pending = [...missing.values()];
     // 2.5.5 묶음 번역 진행: batch = 이번에 보낼 문단 수, finished = 그중 끝난 수 (묶음이 끝날 때마다 — 「수정 문단 17/74」)
-    progress({ stage: 'segments', done: reused, total, reused, translated, pending: pending.length, batch: pending.length, finished: 0 });
+    // 7.3.1 resumed: 캐시 중 이어 하기(끊긴 묶음)에서 온 문단 수 — 알림 · 진행 문구가 「바뀐 문단 n개만」과 「남은 문단 n개 이어서」를 가른다
+    progress({ stage: 'segments', done: reused, total, reused, resumed: resumedCount, translated, pending: pending.length, batch: pending.length, finished: 0 });
+    const touch = async () => { if (touched.length && epoch === stamp) { try { await writeMany(touched.splice(0), stamp); } catch { /* 시각 새로 쓰기는 번역을 막지 않는다 */ } } };
     const tell = list => {
         if (!partial) return;
         const view = [...output];
@@ -999,7 +1020,7 @@ export async function translateSegments({ parts, signature, request, check = () 
                 const finished = Math.min(count, pending.length);
                 // 2.9.0 · 2.9.2 받은 글만 더한다 — 실패한 묶음은 끝에 null 배열로 한 번 더 알리는데(index.js done(translated)), 그때 앞서 닫힌 문단을 지워 이어 하기가 비었다
                 if (Array.isArray(done)) done.slice(0, Math.min(safe, finished)).forEach((text, n) => { if (typeof text === 'string' && text.trim()) closedRows[n] = text; });
-                progress({ stage: 'segments', done: reused + finished, total, reused, translated, pending: pending.length, batch: pending.length, finished });
+                progress({ stage: 'segments', done: reused + finished, total, reused, resumed: resumedCount, translated, pending: pending.length, batch: pending.length, finished });
                 if (finished < pending.length) tell(done);
             });
         }
@@ -1033,13 +1054,14 @@ export async function translateSegments({ parts, signature, request, check = () 
                     if (epoch === stamp && cacheable(row.body, result)) rows.push([row.key, result]);
                     for (const i of row.indices) { output[i] = result; translated++; }
                 }
-            } finally { if (rows.length) await writeMany(rows, stamp); }
+            } finally { if (epoch === stamp) rows.push(...touched.splice(0)); if (rows.length) await writeMany(rows, stamp); }   // 7.3.1 꺼내 쓴 문단도 같은 트랜잭션으로
             if (results.some(text => text === null)) await keepClosed();   // 2.9.0 일부 묶음만 실패 — 결과는 그대로(그 문단은 차단 표시), 받은 문단만 이어 하기로
         } else if (!blocked) throw Error('빈 번역 응답은 저장하지 않았어요.');
     }
     check();
-    progress({ stage: 'segments', done: total, total, reused, translated, pending: 0 });
-    return { text: output.join(''), reused, translated, blocked, total };
+    await touch();
+    progress({ stage: 'segments', done: total, total, reused, resumed: resumedCount, translated, pending: 0 });
+    return { text: output.join(''), reused, resumed: resumedCount, translated, blocked, total };
 }
 
 // ── 6.2.1 태그 짝 지키기 ──

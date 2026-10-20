@@ -1,5 +1,7 @@
 import { panelVisible } from './panel-hidden.js';
 import {startMenuOrdering} from './menus.js';
+import { keyOf as panelKeyOf, legacyKeyOf, migrateKeys } from './panel-keys.js';   // 1.2.4 공용 틀 창은 바깥 칸 id 로 · 예전 이름표 옮기기
+import { getSettings as themeSettings, saveSettings as saveThemeSettings } from '../../settings.js';   // 1.2.4 확장 위 스위치(headSwitches)도 같은 이름표
 // 확장 순서 — 설정 창들을 찾아서 원하는 차례로 옮기는 부분
 //
 // 실리태번은 확장 설정을 두 칸(#extensions_settings, #extensions_settings2)에 나눠 붙인다.
@@ -10,7 +12,7 @@ import {startMenuOrdering} from './menus.js';
 // (폰에서는 두 칸이 100% 너비로 위아래에 쌓이기 때문에, 안 모으면 둘째 칸 창을 위로 올릴 수가 없다.)
 // 넓은 화면(1001px 이상)에서는 두 칸이 나란히 서므로, 설정(twoColumns)이 켜져 있고 고정한 창과 나머지가 둘 다 있으면
 // 왼쪽 칸 = 고정한 창, 오른쪽 칸 = 나머지 로 나눈다. 구분선은 한 줄일 때만 긋는다.
-import { settings } from './state.js';
+import { settings, saveSettings } from './state.js';
 
 const COLUMNS = ['extensions_settings', 'extensions_settings2'];
 const HOME = 'extensions_settings';
@@ -33,10 +35,9 @@ function isPanel(el) {
  * (번역 칸에는 실리태번 기본 '채팅 번역'과 우리 '번역'이 같이 들어 있는데,
  *  둘 다 translation_settings 를 갖고 있어서 class 를 전부 이어 붙여야 구별된다.)
  */
-export function keyOf(el) {
-    if (el.id) return `id:${el.id}`;
-    const cls = [...el.classList].filter(Boolean).sort().join('.');
-    return cls ? `cls:${cls}` : `tag:${el.tagName.toLowerCase()}`;
+// 1.2.4 공용 틀 class(inline-drawer …)뿐인 창은 바깥 칸(.extension_container)의 id 로 — panel-keys.js
+export function keyOf(el, box) {
+    return panelKeyOf(el, box);
 }
 
 /** 창 제목. 못 찾으면 이름표를 그대로 쓴다. */
@@ -58,7 +59,7 @@ export function labelOf(el) {
 
 /** 두 칸에 들어 있는 설정 창을 모두 찾는다. */
 export function scan() {
-    const used = new Set();
+    const used = new Set(), usedLegacy = new Set();
     const panels = [];
 
     const take = (el, box) => {
@@ -68,13 +69,23 @@ export function scan() {
         // 고정해 둔 것이 엉뚱한 창으로 옮겨 가 화면이 열 때마다 뒤집힌다.
         let key = el.dataset.poKey;
         if (!key || used.has(key)) {
-            const base = keyOf(el);
+            const base = keyOf(el, box ?? undefined);
             key = base;
             let nth = 1;
             while (used.has(key)) key = `${base}#${++nth}`;
             el.dataset.poKey = key;
         }
         used.add(key);
+        // 1.2.4 예전(1.2.3) 이름표도 같은 방식(처음 본 차례로 번호)으로 적어 둔다 — 저장된 예전 이름표를 지금 가리키는 창의 새 이름표로 옮길 때 쓴다
+        let legacy = el.dataset.poLegacy;
+        if (!legacy || usedLegacy.has(legacy)) {
+            const base = legacyKeyOf(el);
+            legacy = base;
+            let nth = 1;
+            while (usedLegacy.has(legacy)) legacy = `${base}#${++nth}`;
+            el.dataset.poLegacy = legacy;
+        }
+        usedLegacy.add(legacy);
         // 칸(.extension_container)에 이 창 하나뿐이면 창이 아니라 칸째로 옮긴다.
         // 정규식은 '#regex_container 안의 …' 로 자기 목록을 찾기 때문에, 칸에서 꺼내면
         // 일괄 편집(전체 선택·켜고 끄기·삭제·내보내기)이 아무 말 없이 죽는다.
@@ -82,7 +93,7 @@ export function scan() {
         // 같이 넣는 확장이 있어서, 그냥 세면 둘로 보여 창을 칸 밖으로 꺼내 버린다. 꺼내지면
         // 그 확장의 '#칸id 안의 …' 규칙이 통째로 안 걸려 제 색 변수가 사라진다(오토픽이 흰 글자로 남았음).
         const node = box && [...box.children].filter(isPanel).length === 1 ? box : el;
-        panels.push({ el, key, label: labelOf(el), node });
+        panels.push({ el, key, legacy, label: labelOf(el), node });
     };
 
     for (const colId of COLUMNS) {
@@ -217,6 +228,25 @@ function notifyPanels(panels) {
     for (const fn of panelListeners) { try { fn(); } catch (error) { console.warn('[Blue Lemonade] 확장 순서', error); } }
 }
 
+/**
+ * 1.2.4 저장된 예전 이름표(1.2.3: 'cls:inline-drawer#2' 같은 것)를 지금 그 이름표가 가리키는 창의 새 이름표로 한 번 옮긴다.
+ * 시작 때 창이 늦게 붙으니 줄 세울 때마다 보이는 창만큼 옮기고, 시작 뒤(4.5초) 마지막에 아무 창도 가리키지 않는 공용 틀 이름표를 빼고 끝낸다 (keyVersion 2).
+ */
+export function migrateLegacyKeys(panels, { finish = false } = {}) {
+    const store = settings();
+    if (!store || store.keyVersion >= 2) return 0;
+    const map = new Map(panels.map(panel => [panel.legacy, panel.key]));
+    const theme = themeSettings?.();
+    const switches = theme && theme.headSwitches && typeof theme.headSwitches === 'object' ? theme.headSwitches : null;
+    const before = switches ? JSON.stringify(switches) : '';
+    const changed = migrateKeys(map, [store.pinned, store.order, store.panelHidden], switches, { drop: finish });
+    if (finish) store.keyVersion = 2;
+    if (changed || finish) saveSettings();
+    if (switches && JSON.stringify(switches) !== before) saveThemeSettings();
+    if (changed) console.info(`[Blue Lemonade] 확장 순서: 예전 창 이름표 ${changed}개를 새 이름표로 옮겼어요`);
+    return changed;
+}
+
 /** 설정대로 창을 옮긴다. */
 export function apply() {
     if (applying) return;
@@ -225,6 +255,7 @@ export function apply() {
 
     const panels = scan();
     if (!panels.length) return;
+    migrateLegacyKeys(panels);   // 1.2.4
     notifyPanels(panels);
 
     const store = settings();
@@ -320,6 +351,7 @@ export function startEngine() {
     apply();
     startWatching();
     for (const delay of [400, 1500, 4000]) setTimeout(apply, delay);
+    setTimeout(() => { try { migrateLegacyKeys(scan(), { finish: true }); apply(); } catch (error) { console.warn('[Blue Lemonade] 확장 순서', error); } }, 4500);   // 1.2.4
     document.querySelector('#extensions-settings-button > .drawer-toggle')
         ?.addEventListener('click', () => schedule(50));
     // 창 폭이 1000px 을 넘나들면 한 줄 ↔ 두 칸을 다시 세운다

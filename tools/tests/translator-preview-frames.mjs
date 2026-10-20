@@ -116,7 +116,17 @@ await check('translateSegments reports finished/batch after every group; the lab
     const progressLabel = new Function(`return (${cut('progressLabel')});`)();
     const started = Date.now() - 17000;
     assert.equal(progressLabel({ stage: 'segments', reused: 0, pending: 74, batch: 74, finished: 0, translated: 0 }, started), '캐시 0개 · 수정 문단 0/74 묶음 번역 중 · 17초');
-    assert.equal(progressLabel({ stage: 'segments', reused: 3, pending: 74, batch: 74, finished: 17, translated: 0 }, started), '캐시 3개 · 수정 문단 17/74 묶음 번역 중 · 17초');
+    // 7.3.1 캐시가 일부를 채우고 나머지만 보낼 때(원문을 조금 고침): 「바뀐 문단 n개만 다시 번역」 · 끊긴 묶음을 이어 갈 때는 「남은 문단 n개 이어서 번역」
+    assert.equal(progressLabel({ stage: 'segments', reused: 3, pending: 74, batch: 74, finished: 17, translated: 0 }, started), '바뀐 문단 74개만 다시 번역 · 17/74 · 캐시 3개 · 17초');
+    assert.equal(progressLabel({ stage: 'segments', reused: 88, resumed: 0, pending: 1, batch: 1, finished: 0, translated: 0 }, started), '바뀐 문단 1개만 다시 번역 · 0/1 · 캐시 88개 · 17초');
+    assert.equal(progressLabel({ stage: 'segments', reused: 40, resumed: 40, pending: 49, batch: 49, finished: 2, translated: 0 }, started), '남은 문단 49개 이어서 번역 · 2/49 · 캐시 40개 · 17초');
+    const startNotice = new Function(`return (${cut('startNotice')});`)();
+    assert.equal(startNotice({ stage: 'segments', reused: 88, resumed: 0, pending: 1 }, 12), '바뀐 문단 1개만 다시 번역해요 #12');
+    assert.equal(startNotice({ stage: 'segments', reused: 40, resumed: 40, pending: 49 }, 12), '남은 문단 49개를 이어서 번역해요 #12');
+    assert.equal(startNotice({ stage: 'segments', reused: 0, pending: 89 }, 12), '번역을 시작합니다 #12', 'first translation keeps the old toast');
+    assert.equal(startNotice({ stage: 'segments', reused: 89, pending: 0 }, 12), null, 'nothing to send: no start toast (the cache toast follows)');
+    assert.equal(startNotice({ stage: 'whole' }, 12), '번역을 시작합니다 #12');
+    assert.equal(startNotice({ stage: 'chunks', done: 0, total: 3 }, 12), '번역을 시작합니다 #12');
     assert.equal(progressLabel({ stage: 'segments', reused: 3, pending: 0, translated: 74 }, started), '캐시 3개 · 새 번역 74개 · 17초');
     assert.equal(progressLabel({ stage: 'segments', reused: 0, pending: 5, translated: 0 }, started), '캐시 0개 · 수정 문단 0/5 묶음 번역 중 · 17초', 'older callers without batch');
 });

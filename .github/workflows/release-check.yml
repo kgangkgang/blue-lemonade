@@ -285,6 +285,10 @@ jobs:
           node tools/tests/first-run.mjs .
           node tools/tests/first-run-css.mjs .
           node tools/tests/faq.mjs .
+          node tools/tests/translator-segment-cap.mjs .
+          node tools/tests/bookmark-masonry-731.mjs .
+          node tools/tests/order-keys-731.mjs .
+          node tools/tests/empty-chat-guard-731.mjs .
           node tools/tests/call-trim-726.mjs .
           node tools/tests/tts-continue-reuse.mjs .
           node tools/tests/settings-search.mjs .

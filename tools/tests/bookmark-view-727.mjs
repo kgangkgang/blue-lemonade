@@ -137,8 +137,8 @@ await test('그림이 잘리지 않음: 카드 · 격자 모두 원래 비율(ob
     assert.match(block, /\.cg-root \.cg-image-open img \{[^}]*width: 100%; height: auto;[^}]*aspect-ratio: auto 2 \/ 3; object-fit: contain;/);
     assert.match(block, /\.cg-root \.cg-image\.is-loaded \.cg-image-open img \{ width: auto; max-width: 100%; aspect-ratio: auto; \}/);
     assert.match(block, /\.cg-root \.cg-tile-open img \{[^}]*width: 100%; height: auto; aspect-ratio: auto 2 \/ 3;/);
-    assert.match(block, /\.cg-root \.cg-tiles \{ columns: 2 140px;/);
-    assert.match(block, /\.cg-root \.cg-tile \{[^}]*break-inside: avoid;/);
+    assert.match(block, /\.cg-root \.cg-tiles \{ display: grid;/);   // 7.3.1 (1.7.1) CSS columns → 읽는 차례대로 쌓기 (bookmark-masonry-731.mjs)
+    assert.match(block, /\.cg-root \.cg-tiles\.is-masonry > \.cg-tile \{ position: absolute; \}/);
 });
 
 await test('lazy: 카드 · 격자의 그림은 loading=lazy · decoding=async, 다 받은 그림만 is-loaded (캐시는 바로)', () => {
@@ -198,9 +198,9 @@ await test('설정 저장: viewMode 기본 all, 모르는 값은 all 로, 고른
     assert.equal(S.initSettings().viewMode, 'all');
 });
 
-await test('판 · CI: 북마크 1.7.0 (JS = CSS) · 이 시험이 release-check.yml 에', () => {
-    assert.match(read('src/addons/bookmarks/state.js'), /export const VERSION = '1\.7\.0';/);
-    assert.match(read('src/addons/bookmarks/style.css'), /--cg-css-version: "1\.7\.0";/);
+await test('판 · CI: 북마크 1.7.1 (JS = CSS) · 이 시험이 release-check.yml 에', () => {
+    assert.match(read('src/addons/bookmarks/state.js'), /export const VERSION = '1\.7\.1';/);
+    assert.match(read('src/addons/bookmarks/style.css'), /--cg-css-version: "1\.7\.1";/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/bookmark-view-727\.mjs \./);
 });
 

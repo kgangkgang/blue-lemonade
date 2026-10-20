@@ -6,7 +6,7 @@ import { normalizeMenuPrefs } from './menu-plan.js';   // 6.3.3 요술봉 숨김
 
 export const MODULE = 'panel_order';
 export const FOLDER = 'blue-lemonade';
-export const VERSION = '1.2.3';
+export const VERSION = '1.2.4';
 export const TITLE = '확장 순서';
 
 /**
@@ -32,6 +32,8 @@ const DEFAULTS = Object.freeze({
     /** 테마가 보일지 정하는 요술봉 항목의 이름 (설정으로 꺼서 메뉴에서 빠져도 창에 줄을 남겨 다시 켤 수 있게) */
     menuSeen: { wand: {}, chat: {} },
     panelHidden: [],
+    /** 1.2.4 이름표 판: 2 = 공용 틀 창은 바깥 칸 id (order.js migrateLegacyKeys 가 예전 이름표를 옮긴 뒤 2) — 새로 켠 사람은 처음부터 2 */
+    keyVersion: 2,
 });
 
 export function settings() {

@@ -222,7 +222,7 @@ await test('detection: every transparent chat picture (other extensions too, laz
     assert.ok(assets.includes("if (!img.complete || !img.naturalWidth) { img.addEventListener('load', onEdgeLoad, { once: true }); return; }"), 'lazy pictures classify when they load');
     assert.ok(assets.includes("export const CUTOUT_ATTR = 'data-salty-cutout';"));
     assert.ok(assets.includes("const wanted = opt === 'auto' || opt === 'on' || known?.seen || img.matches(VIEW_IMG);"));
-    assert.ok(assets.includes("observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: [CUTOUT_ATTR] })"), 'dialogs appended to <body> and the attribute');
+    assert.ok(assets.includes("observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: [CUTOUT_ATTR, 'src'] })"), 'dialogs appended to <body>, the attribute and (7.3.1) src swaps');
     assert.ok(assets.includes("if (chat.contains(m.target)) continue;"), 'chat changes are not scanned twice');
     assert.ok(assets.includes("img.classList.toggle('salty-alpha-view', rec.cutout);"));
     assert.ok(!new RegExp('auto' + '-?' + 'pic', 'i').test(assets.slice(assets.indexOf('const EDGE_IMG'), assets.indexOf('const optOf'))), 'generic: no extension names in the new rules');
@@ -266,6 +266,94 @@ await test('CSS: every chat picture area, viewers, one filter with per-picture v
     const built = style.slice(style.indexOf('css/68-cutout-edge.css'));
     assert.ok(style.includes('css/68-cutout-edge.css') && built.includes('img.salty-alpha-view'), 'module is built into style.css');
     assert.ok(!/\uAC24/.test(css + read('src/cutedge.js')), 'no forbidden syllable (U+AC24)');
+});
+
+// 7.3.1 채팅 밖 그림의 주소가 바뀌면 다시 잰다 — 크게 보기가 <img> 하나의 src 만 바꿔(투명 → 불투명) 넘기면 .salty-alpha-view · 외곽선 필터가 남아
+//   흰 네모에 외곽선이 그려졌다. 작은 DOM 흉내로 실제 startAssetWatcher 의 body 관찰자를 돌린다 (선택자는 assets.js 가 쓰는 것만 흉내)
+await test('viewer src swap: transparent → opaque drops the outline, opaque → transparent adds it, on load too; avatars elsewhere are ignored', async () => {
+    const assetsSrc = read('src/assets.js');
+    const constOf = name => { const m = new RegExp(`const ${name} = '([^']*)';`).exec(assetsSrc); assert.ok(m, name); return m[1]; };
+    const VIEW_IMG = constOf('VIEW_IMG'), VIEW_SKIP = constOf('VIEW_SKIP'), CUT = '[data-salty-cutout]';
+    const observers = [];
+    class FakeEl {
+        constructor(name, { id = '', cls = [], attrs = {} } = {}) {
+            this.nodeName = name.toUpperCase(); this.nodeType = 1; this.id = id; this.parent = null; this.children = []; this.attrs = new Map(Object.entries(attrs)); this.listeners = [];
+            const set = this.cls = new Set(cls);
+            this.classList = { contains: c => set.has(c), add: c => set.add(c), remove: c => set.delete(c), toggle: (c, on) => { on = on ?? !set.has(c); if (on) set.add(c); else set.delete(c); return on; } };
+            const props = new Map();
+            this.style = { getPropertyValue: k => props.get(k) ?? '', setProperty: (k, v) => { if (v === '' || v == null) props.delete(k); else props.set(k, String(v)); }, removeProperty: k => props.delete(k), props };
+            this.complete = true; this.naturalWidth = 400; this.naturalHeight = 600; this.pixels = 'opaque'; this._src = '';
+        }
+        get isConnected() { return true; }
+        get src() { return this._src; } get currentSrc() { return this._src; }
+        append(...kids) { for (const k of kids) { k.parent = this; this.children.push(k); } return this; }
+        getAttribute(k) { return this.attrs.has(k) ? this.attrs.get(k) : null; }
+        hasAttribute(k) { return this.attrs.has(k); }
+        ancestors() { const out = []; for (let n = this; n; n = n.parent) out.push(n); return out; }
+        matches(sel) {
+            if (sel === 'img') return this.nodeName === 'IMG';
+            if (sel === CUT) return this.attrs.has('data-salty-cutout');
+            if (sel === '#chat') return this.id === 'chat';
+            if (sel === VIEW_IMG) return this.nodeName === 'IMG' && (this.cls.has('img_enlarged') || this.ancestors().slice(1).some(n => [...n.cls].some(c => /gallery|viewer|lightbox|zoom/.test(c)) || /gallery/.test(n.id)));
+            if (sel === VIEW_SKIP) return this.id === 'chat' || ['salty-panel', 'salty-preview', 'avatar'].some(c => this.cls.has(c)) || this.id === 'rm_print_characters_block' || this.nodeName === 'BUTTON';
+            return false;
+        }
+        closest(sel) { return this.ancestors().find(n => n.matches(sel)) ?? null; }
+        descendants() { return this.children.flatMap(k => [k, ...k.descendants()]); }
+        querySelectorAll(sel) { return this.descendants().filter(n => n.matches(sel)); }
+        querySelector(sel) { return this.querySelectorAll(sel)[0] ?? null; }
+        contains(node) { return node?.ancestors?.().includes(this) ?? false; }
+        addEventListener(type, fn) { if (!this.listeners.some(([t, f]) => t === type && f === fn)) this.listeners.push([type, fn]); }
+        fire(type) { const due = this.listeners.filter(([t]) => t === type); this.listeners = this.listeners.filter(([t]) => t !== type); for (const [, fn] of due) fn({ currentTarget: this }); }
+        // 주소 바꾸기: 아직 안 실린 그림(complete false)으로 두었다가 load
+        swap(src, pixels, { cached = false } = {}) {
+            this._src = src; this.pixels = pixels; this.complete = cached;
+            for (const o of observers) o.records.push({ type: 'attributes', attributeName: 'src', target: this, addedNodes: [] });
+        }
+        loaded() { this.complete = true; this.fire('load'); }
+    }
+    const body = new FakeEl('body'), chat = new FakeEl('div', { id: 'chat' });
+    const avatarImg = new FakeEl('img', { cls: ['avatar'] }); avatarImg._src = 'a.png';
+    const viewer = new FakeEl('div', { cls: ['bl-test-viewer'] }), view = new FakeEl('img');
+    const marked = new FakeEl('div', { attrs: { 'data-salty-cutout': 'auto' } }), markedImg = new FakeEl('img');
+    body.append(chat, avatarImg, viewer.append(view), marked.append(markedImg));
+    view._src = 'clear-1.png'; view.pixels = 'clear';
+    markedImg._src = 'clear-2.png'; markedImg.pixels = 'clear';
+    const G = 48;
+    const grid = mode => { const data = new Uint8ClampedArray(G * G * 4); for (let i = 0; i < G * G; i++) { const x = i % G, y = Math.floor(i / G); const edge = x < 6 || y < 6 || x >= G - 6 || y >= G - 6; data.set([200, 120, 90, mode === 'clear' && edge ? 0 : 255], i * 4); } return data; };
+    const saved = { document: globalThis.document, MutationObserver: globalThis.MutationObserver, requestAnimationFrame: globalThis.requestAnimationFrame };
+    globalThis.document = { body, getElementById: id => (id === 'chat' ? chat : null), querySelectorAll: sel => body.querySelectorAll(sel), createElement: () => ({ getContext: () => { let img; return { drawImage(i) { img = i; }, getImageData: () => ({ data: grid(img.pixels) }) }; } }) };
+    globalThis.MutationObserver = class { constructor(fn) { this.fn = fn; this.records = []; observers.push(this); } observe(target, opts) { this.target = target; this.opts = opts; } flush() { const r = this.records.splice(0); if (r.length) this.fn(r); } };
+    globalThis.requestAnimationFrame = fn => setTimeout(fn, 0);
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const settle = async () => { for (const o of observers) o.flush(); await wait(160); };
+    try {
+        const assets = await import(pathToFileURL(path.join(root, 'src/assets.js')) + '?view-swap');
+        assets.startAssetWatcher();
+        const bodyObserver = observers.find(o => o.target === body);
+        assert.ok(bodyObserver?.opts.attributeFilter.includes('src'), 'body observer watches src');
+        bodyObserver.records.push({ type: 'childList', target: body, addedNodes: [viewer] });   // 크게 보기 창이 열림
+        await settle();
+        const outlined = img => img.classList.contains('salty-alpha-view');
+        const filterVars = img => [...img.style.props.keys()].filter(k => k.startsWith('--salty-cutedge'));
+        assert.ok(outlined(view), 'transparent picture in a viewer gets the outline'); assert.ok(outlined(markedImg), 'data-salty-cutout="auto" picture too');
+        // 1) 아직 안 실린 불투명 그림으로: 실릴 때까지는 그대로, load 에서 다시 재 표시 · 필터 변수를 뗀다
+        view.swap('photo-1.jpg', 'opaque'); await settle();
+        view.loaded();
+        assert.ok(!outlined(view), 'opaque picture after the swap has no outline (was: outline on a white box)');
+        assert.deepEqual(filterVars(view), [], 'per-picture filter variables are cleared');
+        // 2) 이미 실린(캐시된) 투명 그림으로 돌아오면 바로 다시 외곽선
+        view.swap('clear-1.png', 'clear', { cached: true }); await settle();
+        assert.ok(outlined(view), 'back to a transparent picture: outline again');
+        // 3) data-salty-cutout 틀 안 그림도 같은 규칙, 작은 그림(아이콘)으로 바뀌면 뗀다
+        markedImg.swap('icon.png', 'clear', { cached: true }); markedImg.naturalWidth = 32; markedImg.naturalHeight = 32; await settle();
+        assert.ok(!outlined(markedImg), 'too small after the swap: outline removed');
+        // 4) 상관없는 그림(아바타)의 주소 바뀜은 지나간다 — 재지도, 듣지도 않는다
+        avatarImg.swap('b.png', 'clear', { cached: true }); await settle();
+        assert.ok(!outlined(avatarImg) && avatarImg.listeners.length === 0, 'avatars are not measured');
+    } finally {
+        Object.assign(globalThis, saved);
+    }
 });
 
 const failed = results.filter(r => !r.pass);

@@ -460,17 +460,16 @@ function classifyEdge(img) {
     paintCutEdge(img, rec);
 }
 function onViewLoad(event) { classifyView(event.currentTarget); }
+// 7.3.1 표시를 뗀다 — 크게 보기가 같은 <img> 의 주소만 바꿔(투명 → 불투명) 넘기면 옛 표시 · 외곽선 필터가 남아 흰 네모에 외곽선이 그려졌다
+function dropView(img) { if (img.classList.contains('salty-alpha-view')) { img.classList.remove('salty-alpha-view'); paintCutEdge(img, null); } }
 function classifyView(img) {
     const opt = optOf(img);
-    if (opt === 'off' || (!opt && img.closest(VIEW_SKIP))) {
-        if (img.classList.contains('salty-alpha-view')) { img.classList.remove('salty-alpha-view'); paintCutEdge(img, null); }
-        return;
-    }
+    if (opt === 'off' || (!opt && img.closest(VIEW_SKIP))) { dropView(img); return; }
     if (img.closest('#chat') && !img.closest(`[${CUTOUT_ATTR}]`)) return; // 채팅 안은 위 관찰자 몫
     if (!img.complete || !img.naturalWidth) { img.addEventListener('load', onViewLoad, { once: true }); return; }
     const known = probes.get(img.currentSrc || img.src);
     const wanted = opt === 'auto' || opt === 'on' || known?.seen || img.matches(VIEW_IMG);
-    if (!wanted || (opt !== 'on' && (img.naturalWidth < EDGE_MIN || img.naturalHeight < EDGE_MIN))) return;
+    if (!wanted || (opt !== 'on' && (img.naturalWidth < EDGE_MIN || img.naturalHeight < EDGE_MIN))) { dropView(img); return; }   // 7.3.1 새 그림이 대상이 아니면 옛 표시도 뗀다
     const rec = opt === 'on' ? { ...probe(img), cutout: true } : probe(img);
     img.classList.toggle('salty-alpha-view', rec.cutout);
     paintCutEdge(img, rec);
@@ -559,13 +558,24 @@ export function startAssetWatcher() {
     });
     observer.observe(chat, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
     // 7.3.0 채팅 밖(크게 보기 · 모아 보기 · 다른 확장의 <dialog>)에 붙는 그림과 data-salty-cutout 표시 — 채팅 안 변화는 위 관찰자 몫이라 건너뛴다
+    // 7.3.1 src 도 본다: 크게 보기 · 모아 보기가 <img> 하나의 주소만 바꿔 다음 그림을 보이면 그 그림을 다시 잰다 (실린 뒤에도 한 번 — 바뀐 주소가 아직
+    //   안 실렸으면 complete · naturalWidth 가 앞 그림을 가리킨다). [data-salty-cutout] 안 · VIEW_IMG · 이미 표시가 붙은 그림만 — 아바타 같은 다른 그림은 그냥 지나간다
     new MutationObserver((mutations) => {
         for (const m of mutations) {
-            if (m.type === 'attributes') { if (!chat.contains(m.target)) queueView(m.target); continue; }
+            if (m.type === 'attributes') {
+                if (chat.contains(m.target)) continue;
+                if (m.attributeName === 'src') {
+                    const img = m.target;
+                    if (img.nodeName !== 'IMG' || !(img.classList.contains('salty-alpha-view') || img.closest(`[${CUTOUT_ATTR}]`) || img.matches(VIEW_IMG))) continue;
+                    img.addEventListener('load', onViewLoad, { once: true });
+                }
+                queueView(m.target);
+                continue;
+            }
             if (chat.contains(m.target)) continue;
             m.addedNodes.forEach(scanViews);
         }
-    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: [CUTOUT_ATTR] });
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: [CUTOUT_ATTR, 'src'] });
     document.querySelectorAll(`[${CUTOUT_ATTR}]`).forEach(node => { if (!chat.contains(node)) queueView(node); });
     classifyAll();
 }

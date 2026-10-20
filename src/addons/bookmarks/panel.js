@@ -11,6 +11,7 @@ import { openExcerptEditor } from './excerpt-editor.js';
 import { confirmSheet } from './ui-kit.js';
 import { normalizeViewMode, filterForView, imageTiles, viewCount, countLabel } from './view-mode.js';   // 7.2.7 글만 · 글+그림 · 그림만
 import { openImageViewer } from './image-viewer.js';   // 7.2.7 그림 크게 보기 (원본 해상도까지 확대)
+import { tileLayouter } from './tile-masonry.js';   // 1.7.1 그림만 격자를 읽는 차례(왼쪽 → 오른쪽, 위 → 아래)대로
 import { openNoteEditor, openMessageEditor, openContextViewer, confirmDeleteBookmark, enterPreview, isPreviewing, openTranslationEditor, confirmClearTranslation } from './viewers.js';
 import { hasTranslator, hasTranslation, isShowingOriginal, translateMessage, restoreTranslation } from './translate.js';
 import { renderSettingsPage, disposeSettingsPage } from './settings-view.js';
@@ -109,6 +110,9 @@ function buildShell() {
     // 7.2.7 그림: 다 받으면 원래 비율 · 원래 크기(카드보다 작으면 그대로)로 — 받기 전에는 자리(2:3)만 잡아 두어 loading=lazy 가 화면 밖 그림을 미룬다
     root.addEventListener('load', event => markImage(event.target, 'is-loaded'), true);
     root.addEventListener('error', event => markImage(event.target, 'is-failed'), true);
+    // 1.7.1 그림만 격자: 그림이 실려 높이가 바뀌면 다음 프레임에 다시 놓는다
+    root.addEventListener('load', event => { if (event.target?.closest?.('.cg-tile')) tileLayout.schedule(); }, true);
+    root.addEventListener('error', event => { if (event.target?.closest?.('.cg-tile')) tileLayout.schedule(); }, true);
     root.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && (event.ctrlKey || event.altKey)) event.stopPropagation();
     });
@@ -607,7 +611,9 @@ function renderMain() {
 }
 
 // ── 그림만 보기 (7.2.7) ─────────────────────────────────────
-// 원래 비율 그대로 두세 줄 격자(CSS columns). 한 쪽에 북마크 한 쪽 수의 두 배(24 이상) — 그림은 loading=lazy 라 화면에 올 때 받는다.
+// 원래 비율 그대로 두세 줄 격자. 한 쪽에 북마크 한 쪽 수의 두 배(24 이상) — 그림은 loading=lazy 라 화면에 올 때 받는다.
+// 1.7.1 CSS columns(세로 먼저 참)를 버리고 tile-masonry.js 가 정렬 차례대로 가장 낮은 줄에 놓는다 — 읽는 차례 = 정렬 차례 = 크게 보기 넘기는 차례
+const tileLayout = tileLayouter();
 const indexText = index => (Number.isFinite(index) && index !== Number.MAX_SAFE_INTEGER ? `#${index}` : '#?');
 
 function tileLabel(record, { fav, index }) {
@@ -633,6 +639,7 @@ function renderTiles(record, tiles) {
     const list = $('.cg-list');
     list.innerHTML = `<div class="cg-tiles" role="list" aria-label="붙인 그림">${tiles.slice(first, first + perPage).map((tile, i) => renderTile(record, tile, first + i)).join('')}</div>`;
     markLoadedImages(list);
+    tileLayout.observe(list.querySelector('.cg-tiles'));   // 1.7.1
     renderPager(totalPages);
 }
 

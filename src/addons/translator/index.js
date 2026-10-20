@@ -2465,9 +2465,17 @@ function progressLabel(stage, started) {
     const sec = Math.round((Date.now() - started) / 1000);
     if (!stage || typeof stage !== 'object') return `번역 중 · ${sec}초`;
     if (stage.stage === 'chunks') return `${stage.resumed ? '이어 번역' : '번역 중'} · 문단 ${stage.done + 1}/${stage.total} · ${sec}초`;
+    // 7.3.1 원문을 조금 고쳐 일부 문단만 다시 보낼 때(캐시가 나머지를 채움): 「바뀐 문단 1개만 다시 번역 · 0/1 · 캐시 88개」 (끊긴 묶음을 이어 갈 때는 「남은 문단 …개 이어서 번역」)
+    if (stage.stage === 'segments' && stage.pending && stage.reused) { const all = stage.batch ?? stage.pending; return `${stage.resumed ? `남은 문단 ${all}개 이어서 번역` : `바뀐 문단 ${all}개만 다시 번역`} · ${stage.finished ?? 0}/${all} · 캐시 ${stage.reused}개 · ${sec}초`; }
     if (stage.stage === 'segments') return `캐시 ${stage.reused}개 · ${stage.pending ? `수정 문단 ${stage.finished ?? 0}/${stage.batch ?? stage.pending} 묶음 번역 중` : `새 번역 ${stage.translated}개`} · ${sec}초`;   // 2.5.5 n/전체
     if (stage.stage === 'kana') return `번역 중 · 마무리 · ${sec}초`;
     return `번역 중 · ${sec}초`;
+}
+/** 7.3.1 번역 시작 알림 문구 — 번역의 첫 진행 알림(stage)을 보고 고른다. null = 알리지 않음 (보낼 문단 없이 캐시로 끝남 — 뒤에 캐시 알림이 따로 뜬다) */
+function startNotice(stage, messageId) {
+    if (stage?.stage === 'segments' && !stage.pending) return null;
+    if (stage?.stage === 'segments' && stage.reused > 0) return stage.resumed ? `남은 문단 ${stage.pending}개를 이어서 번역해요 #${messageId}` : `바뀐 문단 ${stage.pending}개만 다시 번역해요 #${messageId}`;
+    return `번역을 시작합니다 #${messageId}`;
 }
 // 2.9.0 guard(번역 표의 것)를 주면 그것으로 대상을 찾는다 — 같은 채팅을 제자리에서 다시 불러오면(정규식 켜고 끔 · 캐릭터 이름 연동의 다시 그리기 …)
 //   메시지가 새 객체가 되어 chat.indexOf(옛 객체) 가 -1 → 표시를 떼고 다시 붙이지 않았다. 번역은 guard 로 새 객체에 옮겨 타 계속 돌아
@@ -3226,9 +3234,9 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             }
         }
 
-        if (showStartToast) {
-            toastr.info(`번역을 시작합니다 #${messageId}`);
-        }
+        // 7.3.1 시작 알림은 번역의 첫 진행 알림을 본 뒤에 고른다 (아래 translate 의 onProgress · startNotice) — 문단 캐시가 대부분을 채우면
+        //   「바뀐 문단 n개만 다시 번역해요」, 보낼 문단이 없으면 알리지 않는다. 번역문 캐시 · 번역하지 않는 길이거나 1.5초 안에 진행 알림이 없으면 예전 문구
+        let startToast = showStartToast ? (text = `번역을 시작합니다 #${messageId}`) => { startToast = null; if (text) toastr.info(text); } : null;
 
         // 강제 번역이거나 번역문이 없는 경우, 또는 자동 번역시 원문이 바뀐 경우
         // 5.3.4: 전체 번역은 실패 표시가 남은 메시지도 다시 보낸다 (된 문단은 문단 캐시에서, 실패한 문단만 요청)
@@ -3257,6 +3265,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             let translation = cachedTranslation;
 
             runToken.guard.assert();
+            if (cachedTranslation) startToast?.();
             if (!cachedTranslation) {
                 // 새로 번역
                 // [2.1.0] 메시지 위에 진행 표시 · 문단을 나눠 일부가 차단되면 캐시에 넣지 않는다 (다시 번역하면 다시 시도)
@@ -3265,11 +3274,13 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 const preview = runToken.preview = translationPreview(messageId, message, sourceMes, chatId, originalText, runToken.guard);   // 2.5.1 끝난 문단부터 번역문으로 (화면에만)
                 // 화살표 다시 번역이라도 차단 표시가 남은 글이면 문단 캐시를 쓴다 — 이미 된 문단은 다시 보내지 않고 차단된 문단만 다시 시도
                 const segmentCache = source !== 'handleTranslateButtonClick_retranslate' || String(message.extra.display_text || '').includes(MARK_TAIL);
+                const startTimer = startToast ? setTimeout(() => startToast?.(), 1500) : 0;
+                const onProgress = stage => { if (startToast) { clearTimeout(startTimer); startToast(startNotice(stage, messageId)); } badge.update(stage); };   // 7.3.1
                 try {
                     // 6.5.2 같은 채팅을 다시 불러오는 사이(배열이 빈 순간)는 「바뀜」이 아니다 — 가라앉은 뒤에 판단한다
-                    translation = await translate(originalText, { segmentCache, collectNames: true, auto: source === 'auto', assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onProgress: badge.update, onPreview: preview.show, report });
+                    translation = await translate(originalText, { segmentCache, collectNames: true, auto: source === 'auto', assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onProgress, onPreview: preview.show, report });
                 } finally {
-                    preview.stop(); badge.remove();
+                    clearTimeout(startTimer); startToast = null; preview.stop(); badge.remove();
                 }
                 translation = dropStrayWords(translation, originalText); // 6.2.4 원문에 없는 낱말 한 줄 — 캐시에도 걷은 글을
                 if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
@@ -3331,7 +3342,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             runToken.guard.assert();
             syncMesToSwipe(targetId);
             await context.saveChat();
-        }
+        } else startToast?.();
         if (message.extra?.original_text_hash === originalHashOf(originalText)) publishArchiveReady(message, sourceMes, chatId, 'translation');
     } catch (error) {
         runToken.error = error;

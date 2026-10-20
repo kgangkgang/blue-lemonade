@@ -233,10 +233,10 @@ await test('머리글 CSS: 아이콘 · 판 알약(data-bl-version) · 되돌리
 await test('확장 순서 1.2.2: 창 구성이 바뀌면(늦게 붙는 확장) 열린 목록을 다시 그린다', () => {
     const order = read('src/addons/order/order.js'), panel = read('src/addons/order/panel.js');
     assert.match(order, /export function onPanelsChange\(fn\)/);
-    assert.match(order, /const panels = scan\(\);\n\s+if \(!panels\.length\) return;\n\s+notifyPanels\(panels\);/);
+    assert.match(order, /const panels = scan\(\);\n\s+if \(!panels\.length\) return;\n\s+migrateLegacyKeys\(panels\);[^\n]*\n\s+notifyPanels\(panels\);/);
     assert.match(panel, /\nonPanelsChange\(renderList\);\n/);
-    assert.match(read('src/addons/order/state.js'), /export const VERSION = '1\.2\.3';/);
-    assert.match(read('src/addons/order/style.css'), /--po-css-version: "1\.2\.3";/);
+    assert.match(read('src/addons/order/state.js'), /export const VERSION = '1\.2\.4';/);
+    assert.match(read('src/addons/order/style.css'), /--po-css-version: "1\.2\.4";/);
 });
 
 await test('7.0.1 git 확인 실패: /version 이 500(오프라인 git fetch)이면 「모름」 → 설치 · 삭제 막고 한 줄 안내 · 도우미에 아무것도 안 보냄', async () => {

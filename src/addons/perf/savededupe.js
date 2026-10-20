@@ -20,14 +20,16 @@ import { createPromptDefer } from './promptdefer.js';
 import { createSaveTimers, createSwitchFlush, matchSwitchEntry, SWITCH_ENTRIES } from './switchflush.js';
 import { createSwitchGuard, wrapCommands, DELETE_ENTRY, GUARD_COMMANDS } from './switchguard.js';
 import { createCodeGuard, isClickTrigger, CODE_SWITCH_KEYS } from './switchcode.js';
+import { createEmptyGuard, GUARD_STATUS, GUARD_ERROR } from './emptyguard.js';
 
 const MODULE = 'save_dedupe';
 const FOLDER = 'blue-lemonade'; // 2.0.0 성능 보조로 합침
-const VERSION = '1.1.5';
+const VERSION = '1.1.6'; // 1.1.6 빈 채팅 덮어쓰기 막기 (style.css 의 --sv-css-version 도 함께)
 const TITLE = '저장 정리';
 const SAVE_PATHS = ['/api/chats/save', '/api/chats/group/save'];
 
-const DEFAULTS = Object.freeze({ enabled: true, recover: true, deferPromptRender: true, flushOnSwitch: true, guardGeneration: true });
+// [1.1.6] emptyGuard: 메시지가 있던 채팅 파일을 메시지 0개로 덮는 저장을 막는다 (emptyguard.js)
+const DEFAULTS = Object.freeze({ enabled: true, recover: true, deferPromptRender: true, flushOnSwitch: true, guardGeneration: true, emptyGuard: true });
 
 function settings() {
     return extensions.extension_settings[MODULE];
@@ -136,6 +138,27 @@ function installDedupe() {
             const method = String(init?.method ?? input?.method ?? 'GET').toUpperCase();
             const path = method === 'POST' ? pathOf(input) : '';
             if (SAVE_PATHS.includes(path)) {
+                // [1.1.6] 빈 채팅 덮어쓰기 막기 — 흔한 저장(지금 채팅에 메시지가 있음)은 동기로 그대로 지나간다
+                let pre = null;
+                try { pre = emptyGuard ? emptyGuard.precheck(path, init?.body, bodyKey(path, init?.body)) : null; } catch { pre = null; }
+                if (pre) {
+                    const self = this;
+                    return pre.then(
+                        result => (result?.block ? guardResponse(result) : handleSave(self, input, init, path)),
+                        () => handleSave(self, input, init, path),
+                    );
+                }
+                return handleSave(this, input, init, path);
+            }
+        } catch (error) {
+            console.warn(`[${TITLE}] 저장 요청을 살피지 못했어요`, error);
+        }
+        return nativeFetch.call(this, input, init);
+    };
+
+    function handleSave(self, input, init, path) {
+        try {
+            {
                 const body = init?.body;
                 let key = bodyKey(path, body);
                 // 2026-10-06: 요청 압축(gzip 바이트 본문)이면 키를 못 읽어 성공한 저장도 기록되지 않았다 → 바꾸기 전 저장이 늘 실패로 끝나
@@ -168,7 +191,7 @@ function installDedupe() {
                 // 나중에 그 전 내용으로 되돌린 저장(메시지 지우기 등)을 "지난번과 같다"며 건너뛰어, 지운 메시지가 서버 파일에 남았다.
                 if (!settings().enabled || typeof body !== 'string') {
                     last.delete(path);
-                    return send(this, input, init, path, token, false, key, start, credit);
+                    return send(self, input, init, path, token, false, key, start, credit);
                 }
                 if (!inflight.get(path) && last.get(path) === body) {
                     stats.skipped++;
@@ -178,13 +201,73 @@ function installDedupe() {
                     recovery?.onSaveResult(token, true, { skipped: true });
                     return Promise.resolve(fakeOk());
                 }
-                return send(this, input, init, path, token, true, key, start);
+                return send(self, input, init, path, token, true, key, start);
             }
         } catch (error) {
             console.warn(`[${TITLE}] 저장 요청을 살피지 못했어요`, error);
         }
-        return nativeFetch.call(this, input, init);
-    };
+        return nativeFetch.call(self, input, init);
+    }
+}
+
+// ── [1.1.6] 빈 채팅 덮어쓰기 막기 ─────────────────────────────
+
+let emptyGuard = null;
+
+function guardResponse(result) {
+    return new Response(JSON.stringify({ error: GUARD_ERROR, reason: result.reason, messages: result.messages, had: result.had }),
+        { status: GUARD_STATUS, headers: { 'Content-Type': 'application/json' } });
+}
+
+/** 서버 파일의 메시지 수 — /api/chats/recent 에 그 파일 하나만 (없으면 0, 모르면 null) */
+async function serverCount(key) {
+    const m = /^(c|g)\|(.*)$/.exec(String(key));
+    if (!m) return null;
+    let pin;
+    if (m[1] === 'g') pin = { file_name: `${m[2]}.jsonl`, group: groupChats.selected_group ?? undefined };
+    else {
+        const at = m[2].indexOf('|');
+        if (at < 0) return null;
+        pin = { avatar: m[2].slice(0, at), file_name: `${m[2].slice(at + 1)}.jsonl` };
+    }
+    const headers = typeof script.getRequestHeaders === 'function' ? script.getRequestHeaders() : { 'Content-Type': 'application/json' };
+    const r = await fetch('/api/chats/recent', { method: 'POST', headers, body: JSON.stringify({ max: 0, pinned: [pin], metadata: false }), signal: AbortSignal.timeout(10000) });
+    if (!r.ok) return null;
+    const list = await r.json();
+    const hit = Array.isArray(list) ? list.find(x => x?.file_name === pin.file_name && (pin.group ? x.group === pin.group : x.avatar === pin.avatar)) : null;
+    if (!hit) return 0;
+    const n = Number(hit.chat_items);
+    return Number.isFinite(n) ? n : null;
+}
+
+function installEmptyGuard() {
+    emptyGuard = createEmptyGuard({
+        live: quickLive,
+        serverCount,
+        enabled: () => settings().emptyGuard !== false,
+        onBlock: (info) => {
+            console.warn(`[${TITLE}] 메시지가 있던 채팅을 빈 채팅으로 덮는 저장을 막았어요`, info);
+            refreshStats();
+            if (typeof toastr !== 'undefined') {
+                toastr.warning('채팅이 비어 있는 채로 저장하려 해서 막았어요. 파일은 그대로예요. 페이지를 새로 고친 뒤 채팅을 다시 열어 주세요.', TITLE, { preventDuplicates: true, timeOut: 15000 });
+            }
+        },
+        onSuspect: (info) => {
+            console.warn(`[${TITLE}] 채팅을 열었는데 메시지가 없어요 (전에 ${info.had}개) — 다시 열 때까지 이 채팅 저장을 막아요`, info);
+            if (typeof toastr !== 'undefined') {
+                toastr.warning('채팅을 불러오지 못했어요. 지금 저장하면 내용이 사라질 수 있어 저장을 막아 둘게요. 페이지를 새로 고쳐 주세요.', TITLE, { preventDuplicates: true, timeOut: 0, extendedTimeOut: 0 });
+            }
+        },
+    });
+    try {
+        const types = script.event_types;
+        // makeFirst: 다른 확장의 CHAT_CHANGED 처리(채팅을 열 때 기록을 다시 맞춰 저장하는 확장 등)보다 먼저 「의심」을 판단한다
+        const on = (type, fn, first = false) => { if (!type) return; if (first && typeof script.eventSource?.makeFirst === 'function') script.eventSource.makeFirst(type, fn); else script.eventSource?.on?.(type, fn); };
+        on(types?.CHAT_CHANGED, () => emptyGuard.onChatOpened(), true);
+        on(types?.MESSAGE_DELETED, () => emptyGuard.onMessageDeleted());
+    } catch (error) {
+        console.info(`[${TITLE}] 빈 채팅 막기 이벤트를 걸지 못했어요`, error);
+    }
 }
 
 // ── 밀린 저장 되살리기 ───────────────────────────────────────
@@ -729,6 +812,7 @@ function refreshStats() {
     if (switchFlush?.stats.saved) parts.push(`바꾸기 전 저장 ${switchFlush.stats.saved}번`);
     if (switchGuard?.stats.blocked) parts.push(`바꾸기 막음 ${switchGuard.stats.blocked}번`);
     if (codeGuard?.stats.held) parts.push(`바꾸기 기다림 ${codeGuard.stats.held}번`);
+    if (emptyGuard?.stats.blocked) parts.push(`빈 채팅 저장 막음 ${emptyGuard.stats.blocked}번`);
     el.textContent = `이번 세션: ${parts.filter(Boolean).join(' · ')}`;
 }
 
@@ -756,6 +840,8 @@ function buildDrawer() {
                     <small class="sv-hint">수정·스와이프 직후 채팅을 바꾸면 사라지던 내용을 저장하고 넘어가요.</small>
                     <label class="checkbox_label sv-check" for="sv_guard"><input type="checkbox" id="sv_guard"><span>답을 받는 동안 채팅 바꾸기 막기</span></label>
                     <small class="sv-hint">받던 답이 사라지거나 다른 채팅에 섞이지 않게 해요.</small>
+                    <label class="checkbox_label sv-check" for="sv_empty"><input type="checkbox" id="sv_empty"><span>빈 채팅으로 덮어쓰는 저장 막기</span></label>
+                    <small class="sv-hint">채팅을 다시 불러오는 사이(정규식 켜고 끄기 · 새로 그리기)나 불러오기가 실패했을 때, 메시지가 있던 파일을 머리줄만 남긴 채 저장하지 않게 해요. 메시지를 직접 다 지운 것은 그대로 저장해요.</small>
                     <small class="sv-hint sv-stats"></small>
                 </div>
             </div>
@@ -774,6 +860,7 @@ function buildDrawer() {
     bind('#sv_defer', 'deferPromptRender');
     bind('#sv_flush', 'flushOnSwitch');
     bind('#sv_guard', 'guardGeneration');
+    bind('#sv_empty', 'emptyGuard');
     if (!switchFlush) drawer.querySelector('#sv_flush').disabled = true;
     if (!switchGuard) drawer.querySelector('#sv_guard').disabled = true;
     refreshStats();
@@ -785,6 +872,7 @@ function checkFilesMatch() {
 }
 
 initSettings();
+installEmptyGuard();
 installDedupe();
 hookDropWarning();
 const recoveryReady = installRecovery();
@@ -807,6 +895,7 @@ window.SaveDedupe = {
     get saveTimers() { return saveTimers; },
     get switchGuard() { return switchGuard; },
     get codeGuard() { return codeGuard; },
+    get emptyGuard() { return emptyGuard; },
     debug: { quickLive, liveChat: () => liveChatFrom(context()) },
 };
 

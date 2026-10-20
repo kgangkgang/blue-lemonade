@@ -5,7 +5,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --cg-css-version: "1.7.0"; }
+:root { --cg-css-version: "1.7.1"; }
 
 .cg-root {
     --cg-accent-fallback: #a98bd9;
@@ -2125,12 +2125,19 @@ body.salty .cg-root .cg-setting-text small {
     .cg-root .cg-view { height: 44px; }
 }
 
-/* ── 7.2.7 (1.7.0) 그림만: 원래 비율 그대로 쌓는 격자 (폰 두 줄 · 넓으면 서너 줄). 누르면 크게 보기 ── */
-.cg-root .cg-tiles { columns: 2 140px; column-gap: 10px; padding: 2px 0 6px; }
-@media (min-width: 761px) {
-    .cg-root .cg-tiles { columns: 4 180px; column-gap: 12px; }
+/* ── 7.2.7 (1.7.0) 그림만: 원래 비율 그대로 쌓는 격자 (폰 두 줄 · 넓으면 서너 줄). 누르면 크게 보기 ──
+   1.7.1 CSS columns 는 세로 먼저 차서 왼쪽 → 오른쪽으로 읽으면 차례가 뒤섞였다(#3 #14 / #7 #15). tile-masonry.js 가 정렬 차례대로
+   가장 낮은 줄에 놓는다(.is-masonry · 칸마다 left · top · width). 놓기 전 · 못 놓을 때는 행 먼저 채우는 격자 (차례는 같고 칸 높이만 줄마다 맞춤) */
+.cg-root .cg-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; align-items: start; padding: 2px 0 6px; }
+@media (max-width: 760px) {
+    .cg-root .cg-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-.cg-root .cg-tile { position: relative; margin: 0 0 10px; break-inside: avoid; }
+@media (min-width: 761px) {
+    .cg-root .cg-tiles { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+}
+.cg-root .cg-tiles.is-masonry { display: block; position: relative; }
+.cg-root .cg-tile { position: relative; margin: 0; }
+.cg-root .cg-tiles.is-masonry > .cg-tile { position: absolute; }
 .cg-root .cg-tile-open {
     display: block;
     width: 100%;
