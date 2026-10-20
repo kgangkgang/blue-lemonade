@@ -11,7 +11,7 @@ import { PALETTES, LEGACY, TOKEN_KEYS, paletteColors, parseColor, sameColor, onC
 import { buildComposite, slotStack, findFont } from './fonts.js';
 import { iconsCss } from './icons.js';
 import { classifyAll } from './assets.js';
-import { cutEdgeVars, cutEdgeClasses, syncCutEdge, imageFrameOn } from './cutedge.js';
+import { cutEdgeVars, cutEdgeClasses, syncCutEdge, imageFrameOn, darkBackground } from './cutedge.js';
 import { comparisonView } from './appearance-compare.js';
 import { weatherReadability } from './weather-readability.js';
 import { themeEnabled, addonsEnabled } from './usage-mode.js';
@@ -466,6 +466,8 @@ export function applyAll() {
     prepareDecor(s);
     const pal = paletteColors(s);
     const mode = (PALETTES[s.palette] || PALETTES.salt).mode;
+    // 7.3.0 투명 그림 외곽선 「자동」 · 네온: 채팅 바탕 밝기 · 테마 포인트 색 (cutedge.js resolveCutEdge)
+    const edgeTheme = { dark: /^#[0-9a-f]{6}$/i.test(String(pal.bg)) ? darkBackground(pal.bg) : mode === 'dark', accent: pal.accent }; // 바탕색을 못 읽으면 팔레트의 밝음/어두움
 
     const vars = markdownVariables(s.markdown);
     for (const key of TOKEN_KEYS) vars[`--salty-${key}`] = pal[key];
@@ -649,7 +651,7 @@ export function applyAll() {
         '--salty-side-left': s.image.edgeSideLeft ? '1' : '0',
         '--salty-side-all': edgeSidesAll ? '1' : '0',
         '--salty-side-part': edgeSidesAll ? '0' : '1',
-    }, imageHeight(s.image), imageShape(s.image), cutEdgeVars(s.image.cutEdge), frameVars(s.image, 'img', pal.accent), decorVars(s.image.decor, 'image', s.image.radius), profileVars(s.profile, pal), profileVars(s.userProfile, pal, true));
+    }, imageHeight(s.image), imageShape(s.image), cutEdgeVars(s.image.cutEdge, edgeTheme), frameVars(s.image, 'img', pal.accent), decorVars(s.image.decor, 'image', s.image.radius), profileVars(s.profile, pal), profileVars(s.userProfile, pal, true));
     Object.assign(vars,gradientFills(s,vars));
     // 테마를 끄면 토큰은 설정 창에만 — :root 에 두면 안 쓰는 변수가 문서 전체에 깔림 (설정 창은 꺼도 자기 색으로 보임)
     // 5.5.6: 설정 창 밖에 뜨는 테마 자체 창(캡처 미리보기 · 단어 치환/성능 도움말 · 출처)도 같이 — 확장만 모드에서 이 창들의 버튼 · 입력칸이
@@ -760,7 +762,7 @@ export function applyAll() {
         want.add(`salty-align-${s.type.align}`);
         if (mode === 'light' && s.image.blendWhite && !s.chat.bgImage) want.add('salty-blend');
         if (s.image.cutoutSame) want.add('salty-cutout-same'); // assets.js 가 이 클래스를 보고 .salty-cutout 을 안 붙임 → 컷도 보통 그림 규칙을 탐
-        for (const name of cutEdgeClasses(s.image.cutEdge, { frame: imageFrameOn(s.image) })) want.add(name); // 6.1.6 투명 그림 외곽선 · 그림자 (css/68-cutout-edge.css) — 둘 다 끄면 클래스가 없어 filter 를 아예 안 건다
+        for (const name of cutEdgeClasses(s.image.cutEdge, { frame: imageFrameOn(s.image), theme: edgeTheme })) want.add(name); // 6.1.6 투명 그림 외곽선 · 그림자 (css/68-cutout-edge.css) — 둘 다 끄면 클래스가 없어 filter 를 아예 안 건다
         // 자동 색: 테두리를 켰고 · 자동이고 · 테두리가 나오는 모양(네모 · 아치)일 때만.
         // 조건을 CSS 선택자(:is(.salty-shape-rect, .salty-shape-mirror))와 똑같이 맞춰, 클래스는 붙었는데 CSS 는 안 먹는 상태를 막는다.
         // assets.js 는 이 클래스와 무관하게 그림마다 --salty-pick-* 를 미리 칠해 두므로, 켜는 순간 다시 훑을 필요가 없다
@@ -771,7 +773,7 @@ export function applyAll() {
     syncProfileClip(s);
     syncDecor(s);
     syncFrameShadows(s);
-    syncCutEdge(s.image.cutEdge, !!s.enabled && !imageFrameOn(s.image)); // 외곽선 SVG 필터 정의 (값이 그대로면 손대지 않음)
+    syncCutEdge(s.image.cutEdge, !!s.enabled && !imageFrameOn(s.image), edgeTheme); // 외곽선 SVG 필터 정의 (값이 그대로면 손대지 않음)
     // 바뀐 클래스만 만지기 (전부 뗐다 붙이면 매번 화면 전체를 다시 그림)
     const cls = document.body.classList;
     const cutoutBefore = cls.contains('salty-cutout-same');

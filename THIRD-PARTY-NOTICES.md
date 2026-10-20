@@ -49,11 +49,11 @@ Character Assets는 원작자의 개인 수정본 공유 허락에 따라 포함
 
 2026-10-10 Blue Lemonade TTS 1.5.0: [JINSIN2/MultiCast-TTS](https://github.com/JINSIN2/MultiCast-TTS), Copyright (c) 2026 JINSIN2, MIT. 내장 효과음 목록·매칭과 대본 편집·효과음 배치 흐름을 기존 TTS에 연결했습니다. [MIT 전문](src/addons/tts/LICENSE-MultiCast.txt) · [반영 범위와 변경 고지](src/addons/tts/NOTICE.md) · [음원 47개별 원본 URL·해시](src/addons/tts/sfx/SOURCES.json). 원본 커밋은 `f48ebeef9b19d814bf8d4568af13613544007e63`입니다. 음원은 원본 저장소의 CC0 표기를 따르며, 개별 녹음의 최초 출처·라이선스를 독립적으로 확인한 것은 아닙니다.
 
-## 추가 효과음 42개 · 내장 효과음 총 89개
+## 추가 효과음 44개 · 내장 효과음 총 91개
 
 2026-10-10 TTS 1.5.1에서 생활 효과음 16개를 추가했고, 같은 날 TTS 1.5.3에서 휴대폰 진동·의자 끌기·펜 뚜껑·냉장고 문·전기주전자·양치질 6개를, 2026-10-11 TTS 1.5.7에서 찰싹 한 번(Slaps)·엉덩이 찰싹 연속(Spanking) 2개를, 같은 날 TTS 1.6.0에서 친밀한 장면 효과음 10개(freesound, CC0)를 더했습니다. 2026-10-11 심장박동·펜으로 쓰기·성냥 켜기·벽난로 장작 타기·배에서 꼬르륵·코르크 마개 따기 6개(freesound, CC0)를 추가했습니다. 2026-10-11 TTS 1.6.8에서 발소리(SpliceSound, freesound, CC0) 1개를, 2026-10-12 TTS 1.7.1에서 반복용 질척이는 리듬(MrFossy, freesound, CC0) 1개를 추가했습니다. 기존 MultiCast 음원 47개는 변경하지 않았습니다(MultiCast 발소리의 표시 이름만 「군화 발소리」로 바꿨습니다).
 
-- **BigSoundBank 20개**: Joseph SARDIN 19개, cecilegatina 1개(탁자 위 컵). 각 원본 페이지가 CC0를 표시하며 재배포를 허용합니다. [이용 조건](https://bigsoundbank.com/licenses.html) · [동봉 CC0 전문](src/addons/tts/sfx-extra/LICENSE-CC0.txt).
+- **BigSoundBank 22개**: Joseph SARDIN 20개, Pierre SIBANARCO 1개(우산 아래 빗소리), cecilegatina 1개(탁자 위 컵). 각 원본 페이지가 CC0를 표시하며 재배포를 허용합니다. [이용 조건](https://bigsoundbank.com/licenses.html) · [동봉 CC0 전문](src/addons/tts/sfx-extra/LICENSE-CC0.txt).
 - **공유마당 4개**: 한국저작권위원회, CC BY 4.0. 원본은 [가위질_천천히_짧게](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=100219&wrtSn=13263912), [과자_봉투_만지기_뜯기](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=100219&wrtSn=13263932), [국물_마시기](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=100219&wrtSn=13263933), [국자_나무탁자_내려놓기](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=100219&wrtSn=13263935). [동봉 CC BY 전문](src/addons/tts/sfx-extra/LICENSE-CC-BY.txt).
 - **freesound 18개**: SundayRecords(핥기 2개) · noahpardo(키스) · renrenrenrenren(키스 연속) · SoundDesignForYou(찔꺽) · tiddles451(찔꺽 연속) · cabusta9(침대 삐걱) · bmusic92(침대 삐걱 연속) · magnuswaker(꿀꺽) · aobowser(꿀꺽 연속) · Andy Jack / 업로드 JonasTisell(심장박동) · khenshom(펜으로 쓰기) · SamuelGremaud(성냥 켜기) · jmehlferber(벽난로 장작 타기) · XxBirdoxX(배에서 꼬르륵) · dr19(코르크 마개 따기) · SpliceSound(발소리) · MrFossy(질척이는 리듬). 각 소리 페이지가 Creative Commons 0을 표시합니다. 원본은 freesound가 공개한 고음질 미리듣기 MP3입니다. [동봉 CC0 전문](src/addons/tts/sfx-extra/LICENSE-CC0.txt).
 

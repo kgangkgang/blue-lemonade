@@ -35,7 +35,7 @@ import { applyAll, syncSamples } from './apply.js';
 import { getIssues } from './checks.js';
 import { applySillyTavernTheme, saveAsSillyTavernTheme, alreadyMatches, restoreState, offerRestore } from './sttheme.js';
 import { classifyAll } from './assets.js';
-import { CUT_EDGE_RANGES, cutEdgeDefaults, imageFrameOn } from './cutedge.js';
+import { CUT_EDGE_RANGES, CUT_EDGE_PRESETS, cutEdgeDefaults, imageFrameOn, resolveCutEdge, toCustom, ringFilterMarkup, baseInk, darkBackground, outlineVisible, shadowVisible } from './cutedge.js';
 import { openNotice, currentVersion, hasUnseenNotice } from './notice.js';
 import { COPYRIGHT_ICON } from './credits.js';
 import { customCssReport, otherCssReport, buildDiagnosis } from './diagnose.js';
@@ -108,9 +108,33 @@ function subOf(tab) {
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const getPath = (obj, path) => path.split('.').reduce((o, k) => o?.[k], obj);
 function setPath(obj, path, value) {
+    // 7.3.0 투명 그림 「자세히」의 외곽선 · 그림자 칸을 만지면 프리셋이 「직접」이 된다 — 지금 보이던 프리셋 값을 먼저 옮겨 적고 그 위에
+    if (/^image\.cutEdge\.(outline|shadow)\./.test(path) && obj?.image?.cutEdge && toCustom(obj.image, edgeThemeNow())) queueMicrotask(markCutEdgeCustom);
     const keys = path.split('.');
     const last = keys.pop();
     keys.reduce((o, k) => o[k], obj)[last] = value;
+}
+/** 7.3.0 슬라이더를 끄는 동안은 설정 창을 다시 그리지 않는다(손가락 아래 칸이 바뀌면 안 됨) — 카드만 「직접」으로 바꿔 단다. 「직접」 카드 그림은 지금 채팅 필터 그대로 */
+function markCutEdgeCustom() {
+    for (const box of document.querySelectorAll('.salty-panel .bl-cutedge-presets')) {
+        box.querySelectorAll('.bl-cutedge-card').forEach(card => card.setAttribute('aria-pressed', String(card.dataset.value === 'custom')));
+        if (box.querySelector('.bl-cutedge-card[data-value="custom"]')) continue;
+        const model = box.querySelector('.bl-cutedge-card');
+        if (!model) continue;
+        const card = model.cloneNode(true);
+        card.dataset.value = 'custom'; card.setAttribute('aria-pressed', 'true'); card.title = '자세히에서 고친 값';
+        card.querySelector('img')?.setAttribute('style', `filter:url(#salty-cutedge-ring)`);
+        card.querySelector('.bl-cutedge-name').textContent = '직접';
+        card.querySelector('small').textContent = '자세히에서 고친 값';
+        const tone = document.createElement('p'); tone.className = 'bl-cutedge-tone'; tone.textContent = '직접';
+        box.append(tone, card);
+    }
+}
+/** 7.3.0 지금 화면의 채팅 바탕 밝기 · 테마 포인트 색 (apply.js 가 :root 에 넣은 값) — 투명 그림 「자동」 · 네온이 쓰는 것과 같다 */
+function edgeThemeNow() {
+    const css = getComputedStyle(document.documentElement);
+    const hex = v => { const s = String(v || '').trim(); return /^#[0-9a-f]{6}$/i.test(s) ? s : ''; };
+    return { dark: darkBackground(hex(css.getPropertyValue('--salty-bg'))), accent: hex(css.getPropertyValue('--salty-accent')) || undefined };
 }
 const isNum = v => typeof v === 'number' && Number.isFinite(v);
 const isSet = v => !!v && typeof v === 'object'; // 글꼴 칸이 언어별 묶음인지 ('same' 이 아닌지)
@@ -1061,6 +1085,7 @@ async function faqAction(root, name) {
             break;
         case 'open-addons': faqRoute(root, 'extensions', ''); break;
         case 'open-update': faqRoute(root, 'theme', 'update'); break;
+        case 'open-cutedge': faqRoute(root, 'image', 'cutedge'); break; // 7.3.0 이미지 › 투명 그림 (프리셋 카드)
         case 'diag-copy': await copyDiagnosis(); break;
         default: console.warn('[Blue Lemonade] 모르는 FAQ 단추', name);
     }
@@ -1820,36 +1845,80 @@ async function readMaskImage(file) {
 }
 
 // 6.1.6 투명 그림 외곽선 · 그림자 (cutedge.js · css/68-cutout-edge.css) — 글자 › 그림자 · 외곽선과 같은 모양 · 말투. 끄면 아래 칸은 숨긴다
+// 7.3.0 프리셋 카드 (어두운 화면용 · 밝은 화면용 · 공통 · 자동) — 실제 투명 그림을 채팅 바탕색 위에 그 프리셋으로. 슬라이더는 「자세히」 안,
+//   만지면 「직접」 카드가 생긴다. 「자세히」의 칸은 지금 보이는 값(프리셋이면 그 프리셋 값)을 보여 준다
+const CUT_TONES = [['', '자동'], ['dark', '어두운 화면용'], ['light', '밝은 화면용'], ['common', '공통']];
+function cutEdgeSample() {
+    const own = document.querySelector('#chat .salty-alpha img, #chat img.salty-alpha');
+    return own?.currentSrc || own?.src || sampleCut();
+}
+function cutEdgeCards(s, theme) {
+    const e = s.image.cutEdge, sample = esc(cutEdgeSample());
+    const filters = [], cards = [];
+    const card = (id, label, note) => { // eslint-disable-line no-param-reassign
+        const r = id === 'custom' ? resolveCutEdge({ ...e, preset: 'custom' }, theme) : resolveCutEdge({ preset: id, overflow: false }, theme);
+        const on = outlineVisible(r) || shadowVisible(r);
+        const fid = id === 'custom' ? 'salty-cutedge-ring' : `salty-cutedge-card-${id}`; // 「직접」은 지금 채팅 필터 그대로 (슬라이더를 끄는 동안 같이 바뀜)
+        if (on && id !== 'custom') filters.push(ringFilterMarkup(fid, baseInk(r, theme.accent), r, 0));
+        if (id === 'auto') note = `지금 ${CUT_EDGE_PRESETS.find(p => p.id === r.preset)?.label || ''}`;
+        return `<button type="button" class="bl-cutedge-card" data-act="cutedge-preset" data-value="${id}" aria-pressed="${e.preset === id}" title="${esc(note)}">
+            <span class="bl-cutedge-thumb"><img src="${sample}" alt="" loading="lazy" decoding="async"${on ? ` style="filter:url(#${fid})"` : ''}></span>
+            <span class="bl-cutedge-name">${esc(label)}</span><small>${esc(note.split(' · ').pop())}</small></button>`;
+    };
+    for (const [tone, title] of CUT_TONES) {
+        const list = CUT_EDGE_PRESETS.filter(p => (tone === '' ? p.id === 'auto' : tone === 'common' ? p.tone === '' && p.id !== 'auto' : p.tone === tone));
+        if (!list.length) continue;
+        cards.push(`<p class="bl-cutedge-tone">${title}</p>`, ...list.map(p => card(p.id, p.label, p.note)));
+    }
+    if (e.preset === 'custom') cards.push('<p class="bl-cutedge-tone">직접</p>', card('custom', '직접', '자세히에서 고친 값'));
+    return `<div class="bl-cutedge-presets" role="group" aria-label="투명 그림 프리셋">
+        <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden"><defs>${filters.join('')}</defs></svg>
+        ${cards.join('')}</div>`;
+}
 function cutEdgeControls(s) {
-    const e = s.image.cutEdge, o = e.outline, d = e.shadow;
+    const e = s.image.cutEdge;
     const framed = imageFrameOn(s.image);
+    const theme = edgeThemeNow();
     const R = key => CUT_EDGE_RANGES[key];
     const color = (path, label, value) => `<div class="salty-row"><span>${label}</span><input type="color" data-color-path="${path}" value="${esc(value)}" aria-label="${esc(label)}"></div>`;
-    return `${cap('외곽선')}
+    // 「자세히」 칸은 지금 보이는 값 — 프리셋이면 그 값을 잠깐 얹어 그린다 (설정에는 안 남는다. 만지는 순간 setPath 가 「직접」으로 옮겨 적음)
+    const keep = { outline: e.outline, shadow: e.shadow };
+    if (e.preset !== 'custom') { const r = resolveCutEdge(e, theme); e.outline = r.outline; e.shadow = r.shadow; }
+    let more;
+    try {
+        const o = e.outline, d = e.shadow;
+        more = `${cap('외곽선')}
         <div class="salty-group">
             ${row('외곽선', toggle('image.cutEdge.outline.on', o.on), '배경이 투명한 그림의 실루엣을 따라 둘러요')}
-            ${o.on ? stack('색 고르기', seg('image.cutEdge.outline.colorMode', [['custom', '직접'], ['picture', '그림 가장자리 색']]), o.colorMode === 'picture' ? '그림마다 가장 바깥 테두리 색을 뽑아요' : '') : ''}
-            ${o.on ? color('image.cutEdge.outline.color', o.colorMode === 'picture' ? '색을 못 뽑을 때' : '색', o.color) : ''}
+            ${o.on ? stack('색 고르기', seg('image.cutEdge.outline.colorMode', [['custom', '직접'], ['picture', '그림 가장자리 색'], ['accent', '테마 포인트 색']]), o.colorMode === 'picture' ? '그림마다 가장 바깥 테두리 색을 뽑아요' : o.colorMode === 'accent' ? '테마의 포인트 색으로 둘러요' : '') : ''}
+            ${o.on && o.colorMode !== 'accent' ? color('image.cutEdge.outline.color', o.colorMode === 'picture' ? '색을 못 뽑을 때' : '색', o.color) : ''}
             ${o.on ? slider('image.cutEdge.outline.width', '두께', ...R('outline.width')) : ''}
             ${o.on ? slider('image.cutEdge.outline.alpha', '진하기', ...R('outline.alpha')) : ''}
             ${o.on ? slider('image.cutEdge.outline.blur', '퍼짐', ...R('outline.blur')) : ''}
         </div>
-        ${cap('그림자')}
+        ${cap('그림자 · 빛')}
         <div class="salty-group">
-            ${row('그림자', toggle('image.cutEdge.shadow.on', d.on), '실루엣 모양 그림자를 깔아요')}
-            ${d.on ? color('image.cutEdge.shadow.color', '색', d.color) : ''}
+            ${row('그림자 · 빛', toggle('image.cutEdge.shadow.on', d.on), '실루엣 모양 그림자를 깔아요 · 거리 0 이면 둘레에 번지는 빛')}
+            ${d.on ? stack('색 고르기', seg('image.cutEdge.shadow.colorMode', [['custom', '직접'], ['outline', '외곽선과 같은 색']])) : ''}
+            ${d.on && d.colorMode !== 'outline' ? color('image.cutEdge.shadow.color', '색', d.color) : ''}
             ${d.on ? slider('image.cutEdge.shadow.alpha', '투명도', ...R('shadow.alpha')) : ''}
             ${d.on ? slider('image.cutEdge.shadow.angle', '각도', ...R('shadow.angle')) : ''}
             ${d.on ? slider('image.cutEdge.shadow.distance', '거리', ...R('shadow.distance')) : ''}
             ${d.on ? slider('image.cutEdge.shadow.blur', '퍼짐', ...R('shadow.blur')) : ''}
-        </div>
+        </div>`;
+    } finally { e.outline = keep.outline; e.shadow = keep.shadow; }
+    return `${cap('프리셋', '누르면 바로 바뀌어요')}
+        ${cutEdgeCards(s, theme)}
+        <details class="bl-cutedge-more" data-md-fold="cutedge-more"><summary>자세히</summary>
+        ${more}
         ${cap('그리는 범위')}
         <div class="salty-group">
-            ${row('그림 칸 밖으로도 그리기', toggle('image.cutEdge.overflow', e.overflow), e.overflow ? '칸 밖까지 보여요 · 투명 그림의 흐림은 빠져요' : '그림 크기에 맞춰 잘라요')}
-            ${row('처음 값', '<button type="button" class="salty-btn" data-act="cutedge-reset" aria-label="외곽선 · 그림자 처음 값으로"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>')}
+            ${row('그림 칸 밖으로도 그리기', toggle('image.cutEdge.overflow', e.overflow), e.overflow ? '칸 밖까지 보여요 · 그림 칸에 잘린 면에는 안 그려요 · 투명 그림의 흐림은 빠져요' : '그림 크기에 맞춰 잘라요')}
+            ${row('처음 값', '<button type="button" class="salty-btn" data-act="cutedge-reset" aria-label="외곽선 · 그림자 처음 값으로"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>', '「자동」으로')}
         </div>
+        </details>
         ${framed ? '<p class="salty-note">이미지 › 테두리를 쓰는 동안은 테두리가 먼저라 외곽선 · 그림자가 쉬어요.</p>' : ''}
-        <p class="salty-note">배경이 투명한 그림(캐릭터 에셋 등)에만 걸려요. 각도 0 = 오른쪽, 90 = 아래. 퍼짐을 크게 올리면 폰에서 무거워져요.</p>`;
+        <p class="salty-note">배경이 투명한 그림(캐릭터 에셋 · 다른 확장이 넣은 그림 · 크게 보기)에만 걸려요. 각도 0 = 오른쪽, 90 = 아래. 퍼짐을 크게 올리면 폰에서 무거워져요.</p>`;
 }
 
 function tabImage(s, sub) {
@@ -2355,7 +2424,7 @@ function bind(root) {
                     }
                     const { path, value } = el.dataset;
                     const current = getPath(getSettings(), path);
-                    if (String(current) === value) break;
+                    if (String(current) === value && !(path.startsWith('image.cutEdge.') && getSettings().image.cutEdge.preset !== 'custom')) break; // 7.3.0 프리셋이 보여 준 값과 같아도 「직접」으로
                     update(st => setPath(st, path, typeof current === 'number' ? Number(value) : value));
                     break;
                 }
@@ -2382,8 +2451,11 @@ function bind(root) {
                     else { ui.weatherMix = true; ui.weatherSlot = 2; ui.weatherCat = ''; refreshPanels(); }
                     break;
                 }
-                case 'cutedge-reset': // 6.1.6 투명 그림 외곽선 · 그림자를 처음 값(사용자가 고른 시제품 값)으로
+                case 'cutedge-reset': // 6.1.6 투명 그림 외곽선 · 그림자를 처음 값으로 (7.3.0 「자동」)
                     update(st => { st.image.cutEdge = cutEdgeDefaults(); });
+                    break;
+                case 'cutedge-preset': // 7.3.0 프리셋 카드 — 「직접」 카드는 지금 값 그대로
+                    if (el.dataset.value && el.dataset.value !== getSettings().image.cutEdge.preset) update(st => { st.image.cutEdge.preset = el.dataset.value; });
                     break;
                 case 'pvkind': {
                     ui.previewKind = el.dataset.kind === 'cut' ? 'cut' : 'photo';
@@ -2860,7 +2932,9 @@ function bind(root) {
                 range.value = value;
                 range.style.setProperty('--fill', fill(Number(range.value), min, max)); // 칸 사이 값이면 슬라이드바는 가까운 칸에 섬 → 그 자리까지 채움
             }
-            if (value !== current) {
+            // 7.3.0 투명 그림 「자세히」는 프리셋이면 저장값이 아니라 그 프리셋 값을 보여 준다 — 같은 숫자를 다시 쳐도 「직접」으로
+            const shownPreset = /^image\.cutEdge\.(outline|shadow)\./.test(path) && getSettings().image.cutEdge.preset !== 'custom';
+            if (value !== current || shownPreset) {
                 update(st => {
                     setPath(st, path, value);
                     if (/^(image|profile|userProfile)\.decor\.(frameWidth|frameHeight)$/.test(path)) refreshPreset(st[path.split('.')[0]].decor);

@@ -159,22 +159,27 @@ function installFruitHeartKorean(BlueLemonade, data) {
     }
     if (found) popupRoots.add(root); else popupRoots.delete(root); return found;
   }
+  // BL 7.3.0 (폰 시작): flush 의 문서 훑기 다섯 번 · discover(1.5초마다)의 네 번을 querySelectorAll 한 번 + matches 로 (고르는 요소 · 차례는 같다)
+  const POPUPS = 'dialog.popup[open],.popup:not(dialog)', TOASTS = '#toast-container .toast-message';
+  const FLUSH_ALL = [rootsSelector, helperRootsSelector, POPUPS, TOASTS, watchSelector].join(',');
+  const DISCOVER_ALL = [rootsSelector, helperRootsSelector, watchSelector, POPUPS].join(',');
   function flush() {
     frame = 0; if (stopped) return;
     observer.disconnect();
     for (const node of texts.keys()) if (!node.isConnected) texts.delete(node);
     for (const node of attrs.keys()) if (!node.isConnected) attrs.delete(node);
     for (const node of popupRoots) if (!node.isConnected) popupRoots.delete(node);
-    const roots = [...doc.querySelectorAll(rootsSelector)];
+    const found = [...doc.querySelectorAll(FLUSH_ALL)];
+    const roots = found.filter(el => el.matches(rootsSelector));
     for (const root of roots) paint(root);
-    const helperRoots = [...doc.querySelectorAll(helperRootsSelector)];
+    const helperRoots = found.filter(el => el.matches(helperRootsSelector));
     for (const root of helperRoots) for (const label of root.querySelectorAll(helperLabelsSelector)) paintHelperName(label);
     if (doc.getElementById('fruit-heart-v6')) for (const option of doc.querySelectorAll('#reasoning_select option[value="果实之心"]')) paint(option);
-    for (const root of doc.querySelectorAll('dialog.popup[open],.popup:not(dialog)')) if (ownsPopup(root)) paint(root);
+    for (const root of found) if (root.matches(POPUPS) && ownsPopup(root)) paint(root);
     // Toasts are translated only shortly after a click in the Fruit panel, except toastAnytime messages:
     // those (e.g. the model-tag notice) appear when ST's own API or model selector changes, outside the panel.
     const fresh = Date.now() - recent < 15000, anytime = data.toastAnytime || [];
-    if (fresh || anytime.length) for (const root of doc.querySelectorAll('#toast-container .toast-message')) {
+    if (fresh || anytime.length) for (const root of found) if (root.matches(TOASTS)) {
       const walker = doc.createTreeWalker(root, 4); let known = false;
       while (walker.nextNode()) {
         const text = normalize(walker.currentNode.nodeValue);
@@ -185,7 +190,7 @@ function installFruitHeartKorean(BlueLemonade, data) {
     }
     observed.clear();
     const watch = root => { if (!root || observed.has(root)) return; observed.add(root); observer.observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: attributes.concat('open','class','data-profile') }); };
-    roots.forEach(watch); helperRoots.forEach(watch); doc.querySelectorAll(watchSelector).forEach(watch); popupRoots.forEach(watch);
+    roots.forEach(watch); helperRoots.forEach(watch); found.filter(el => el.matches(watchSelector)).forEach(watch); popupRoots.forEach(watch);
   }
   function schedule() { if (!stopped && !frame) frame = host.requestAnimationFrame(flush); }
   const observer = new host.MutationObserver(schedule);
@@ -230,9 +235,9 @@ function installFruitHeartKorean(BlueLemonade, data) {
   // Observed roots already repaint on their own changes; a full repaint every 1.5 s cost ~36 ms on a 4x-throttled phone.
   const fruitOption = '#reasoning_select option[value="果实之心"]';
   const discover = () => {
-    if (Date.now() - recent < 15000 || popupRoots.size || doc.querySelector('dialog.popup[open],.popup:not(dialog)')) return schedule();
+    if (Date.now() - recent < 15000 || popupRoots.size) return schedule();
     for (const node of observed) if (!node.isConnected) return schedule();
-    for (const selector of [rootsSelector, helperRootsSelector, watchSelector]) for (const root of doc.querySelectorAll(selector)) if (!observed.has(root)) return schedule();
+    for (const el of doc.querySelectorAll(DISCOVER_ALL)) if (el.matches(POPUPS) || !observed.has(el)) return schedule();
     if (doc.getElementById('fruit-heart-v6')) for (const option of doc.querySelectorAll(fruitOption)) if (!texts.has(option.firstChild) && /[\u4e00-\u9fff]/.test(option.textContent)) return schedule();
   };
   discovery = host.setInterval(discover, 1500);

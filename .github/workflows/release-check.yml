@@ -185,6 +185,7 @@ jobs:
           node tools/tests/websearch-mark.mjs .
           node tools/tests/wi-link.mjs .
           node tools/tests/cutout-edge.mjs .
+          node tools/tests/startup-730.mjs .
           node tools/tests/numcomma-fit.mjs .
           node tools/tests/ink-contrast.mjs .
           node tools/tests/style-break.mjs .
@@ -319,10 +320,13 @@ jobs:
       - name: Check that generated files match their sources
         # Regenerate in the throwaway checkout, then fail if anything changed:
         # css/43-user-profile.gen.css, css/23-preview.gen.css (check mode fails on new root declarations),
+        # src/scripts/bundled/korean.js (from tools/scripts-src/korean.js, precomputed dictionary checked against the source),
         # src/scripts/plain/*, style.css and src/lazy-panel.gen.css.
         run: |
           node tools/gen-user-profile.cjs
           node tools/gen-preview-css.js --quiet
+          node tools/build-korean-dict.mjs --check
+          node tools/build-korean-dict.mjs
           node tools/build-plain-scripts.mjs
           node tools/build-css.cjs
           git status --porcelain

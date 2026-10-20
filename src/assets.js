@@ -7,6 +7,20 @@
 import { paintCutEdge } from './cutedge.js';
 const ASSET_IMG = '.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id], .autopic-media-owner img.mes_img';
 const HOST = '.custom-cac-wrap, [class*="custom-imageWrapper"], .autopic-tag-img-wrapper, .autopic-media-owner .mes_img_container';
+// 7.3.0 투명 그림 외곽선은 채팅의 모든 그림에 — 다른 확장이 글 속 · 그림 칸에 넣은 그림도 (에셋 모양 · 배치는 입히지 않고 .salty-alpha 만).
+//   작은 그림(이모지 · 아이콘 · 버튼)과 아바타 · 메시지 단추 줄은 뺀다
+const EDGE_IMG = '.mes_text img, .mes_img_container img, .mes_media_wrapper img';
+const EDGE_SKIP = '.avatar, .mesAvatarWrapper, .mes_buttons, .extraMesButtons, .ch_name, .mes_block > .ch_name, button, [role="button"]';
+const EDGE_MIN = 96; // 원본이 이보다 작으면 그림이 아니라 아이콘
+// 7.3.0 크게 보기 · 모아 보기: 채팅 밖 겹창의 그림도 투명이면 같은 외곽선 (.salty-alpha-view). 실리태번 크게 보기(img.img_enlarged)와
+//   이름에 gallery · viewer · lightbox · zoom 이 든 틀 안의 그림, 또는 채팅에서 투명으로 본 것과 같은 주소의 그림
+const VIEW_IMG = 'img.img_enlarged, :is([class*="gallery"], [class*="viewer"], [class*="lightbox"], [class*="zoom"], [id*="gallery"]) img';
+const VIEW_SKIP = '#chat, .salty-panel, .salty-preview, .avatar, #rm_print_characters_block, button';
+// 7.3.0 다른 확장이 고르는 공개 표시 (README 「확장 만드는 분께」): 그림이나 그 틀에 data-salty-cutout —
+//   "auto" = 블루레몬에이드가 투명한지 재서 투명하면 외곽선 · "on" = 재지 않고 투명 그림으로 · "off" = 이 그림은 외곽선 없음.
+//   채팅 밖(겹창 · 모아 보기 · 크게 보기)에서도 그 표시가 있으면 건다. 확대(transform)는 그림과 같이 커진다
+export const CUTOUT_ATTR = 'data-salty-cutout';
+const optOf = (img) => img.closest?.(`[${CUTOUT_ATTR}]`)?.getAttribute(CUTOUT_ATTR)?.trim().toLowerCase() || '';
 
 // 투명 판정과 색 뽑기를 한 번의 drawImage + getImageData 로 끝냄 (둘을 따로 돌리면 비용이 두 배).
 // 48×48: 브라우저가 줄이면서 평균해 줘서 노이즈가 이미 죽는다. 96 으로 올리면 정확하지만 읽는 비용이 4배
@@ -433,6 +447,57 @@ function classify(img) {
     seedSize(img, host);
 }
 
+// 7.3.0 에셋이 아닌 채팅 그림: 투명이면 외곽선만 (.salty-alpha + 필터 변수). 에셋 그림(위 ASSET_IMG)은 위 classify 가 맡는다
+function onEdgeLoad(event) { classifyEdge(event.currentTarget); }
+function classifyEdge(img) {
+    if (img.matches(ASSET_IMG) || img.closest(EDGE_SKIP)) return;
+    if (optOf(img) === 'off') { if (img.classList.contains('salty-alpha')) { img.classList.remove('salty-alpha'); paintCutEdge(img, null); } return; }
+    if (!img.complete || !img.naturalWidth) { img.addEventListener('load', onEdgeLoad, { once: true }); return; }
+    if (img.naturalWidth < EDGE_MIN || img.naturalHeight < EDGE_MIN) { if (img.classList.contains('salty-alpha')) { img.classList.remove('salty-alpha'); paintCutEdge(img, null); } return; }
+    const rec = optOf(img) === 'on' ? { ...probe(img), cutout: true } : probe(img);
+    if (rec.cutout) rec.seen = true; // 채팅에서 투명으로 본 그림 — 크게 보기에서 같은 주소면 바로 외곽선
+    img.classList.toggle('salty-alpha', rec.cutout);
+    paintCutEdge(img, rec);
+}
+function onViewLoad(event) { classifyView(event.currentTarget); }
+function classifyView(img) {
+    const opt = optOf(img);
+    if (opt === 'off' || (!opt && img.closest(VIEW_SKIP))) {
+        if (img.classList.contains('salty-alpha-view')) { img.classList.remove('salty-alpha-view'); paintCutEdge(img, null); }
+        return;
+    }
+    if (img.closest('#chat') && !img.closest(`[${CUTOUT_ATTR}]`)) return; // 채팅 안은 위 관찰자 몫
+    if (!img.complete || !img.naturalWidth) { img.addEventListener('load', onViewLoad, { once: true }); return; }
+    const known = probes.get(img.currentSrc || img.src);
+    const wanted = opt === 'auto' || opt === 'on' || known?.seen || img.matches(VIEW_IMG);
+    if (!wanted || (opt !== 'on' && (img.naturalWidth < EDGE_MIN || img.naturalHeight < EDGE_MIN))) return;
+    const rec = opt === 'on' ? { ...probe(img), cutout: true } : probe(img);
+    img.classList.toggle('salty-alpha-view', rec.cutout);
+    paintCutEdge(img, rec);
+}
+// 채팅 밖에서 새로 붙은 것(겹창 · 모아 보기 · 크게 보기 · 다른 확장의 <dialog>)을 모아 한 번에 — 그림이 없는 노드는 그냥 지나간다
+const pendingViews = new Set();
+let viewTimer = 0;
+function flushViews() {
+    viewTimer = 0;
+    for (const node of pendingViews) {
+        if (!node.isConnected) continue;
+        if (node.matches('img')) classifyView(node);
+        else node.querySelectorAll('img').forEach(classifyView);
+    }
+    pendingViews.clear();
+}
+function queueView(node) {
+    pendingViews.add(node);
+    if (!viewTimer) viewTimer = setTimeout(flushViews, 120);
+}
+export function scanViews(node) {
+    if (node?.nodeType !== 1) return;
+    if (!node.matches('img') && !node.querySelector('img')) return;
+    queueView(node);
+    if (node.matches('dialog, [role="dialog"], .popup') || node.hasAttribute(CUTOUT_ATTR)) setTimeout(() => queueView(node), 1500); // 겹창은 그림을 조금 뒤에 넣기도 한다
+}
+
 // 문단 맨 앞의 줄바꿈(<br>) 지우기 — 프리셋 카드 뒤에 빈 두 줄이 생기는 것 방지.
 // CSS로는 "앞에 글자가 없는 br"을 가려낼 수 없어서 여기서 처리.
 function tidyLeadingBreaks(root) {
@@ -448,6 +513,7 @@ function tidyLeadingBreaks(root) {
 
 export function classifyAll(root = document.getElementById('chat')) {
     root?.querySelectorAll(ASSET_IMG).forEach(classify);
+    if (root?.id === 'chat') root.querySelectorAll(EDGE_IMG).forEach(classifyEdge); // 7.3.0
     tidyLeadingBreaks(root);
 }
 
@@ -468,6 +534,7 @@ export function startAssetWatcher() {
         const tidy = new Set();
         for (const m of mutations) {
             if (m.type === 'attributes') {
+                if (m.target.matches?.(EDGE_IMG) && !m.target.matches(ASSET_IMG)) { m.target.addEventListener('load', onEdgeLoad, { once: true }); classifyEdge(m.target); continue; } // 7.3.0
                 if (m.target.matches?.(ASSET_IMG)) {
                     const img = m.target;
                     // 바뀐 src 가 아직 안 실렸으면 complete · naturalWidth 가 앞 그림을 가리켜
@@ -481,6 +548,8 @@ export function startAssetWatcher() {
                 if (node.nodeType !== 1) return;
                 if (node.matches(ASSET_IMG)) classify(node);
                 else node.querySelectorAll?.(ASSET_IMG).forEach(classify);
+                if (node.matches(EDGE_IMG)) classifyEdge(node); // 7.3.0 다른 확장의 채팅 그림도 투명 외곽선
+                else if (node.matches('.mes, .mes_text, .mes_text *, .mes_block, .mes_img_container, .mes_media_wrapper') || node.querySelector?.('img')) node.querySelectorAll?.(EDGE_IMG).forEach(classifyEdge);
                 if (node.matches('.mes, .mes_text, .mes_text *')) tidy.add(node.closest('.mes') || node);
             });
         }
@@ -489,5 +558,14 @@ export function startAssetWatcher() {
         if (tidyLater.size && !tidyTimer) tidyTimer = setTimeout(tidyFlush, 500);
     });
     observer.observe(chat, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
+    // 7.3.0 채팅 밖(크게 보기 · 모아 보기 · 다른 확장의 <dialog>)에 붙는 그림과 data-salty-cutout 표시 — 채팅 안 변화는 위 관찰자 몫이라 건너뛴다
+    new MutationObserver((mutations) => {
+        for (const m of mutations) {
+            if (m.type === 'attributes') { if (!chat.contains(m.target)) queueView(m.target); continue; }
+            if (chat.contains(m.target)) continue;
+            m.addedNodes.forEach(scanViews);
+        }
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: [CUTOUT_ATTR] });
+    document.querySelectorAll(`[${CUTOUT_ATTR}]`).forEach(node => { if (!chat.contains(node)) queueView(node); });
     classifyAll();
 }
