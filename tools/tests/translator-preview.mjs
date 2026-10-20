@@ -234,7 +234,7 @@ await check('does not paint (or revert) when the target moved, is being edited, 
 await check('translateMessage wiring: preview made with the badge, stopped before the final render, reverted on failure', () => {
     assert(/const preview = runToken\.preview = translationPreview\(messageId, message, sourceMes, chatId, originalText, runToken\.guard\);/.test(source));   // 2.9.0 guard 로 대상
     assert(/onProgress, onPreview: preview\.show, report \}\);\n[^\n]*\} finally \{\n[^\n]*preview\.stop\(\); badge\.remove\(\);/.test(source));   // 7.3.1 onProgress = 시작 알림 고르기 + badge.update
-    assert(/const onProgress = stage => \{ if \(startToast\) \{ clearTimeout\(startTimer\); startToast\(startNotice\(stage, messageId\)\); \} badge\.update\(stage\); \};/.test(source));
+    assert(/const edited = Boolean\(message\.extra\.display_text\);[^\n]*\n[^\n]*const onProgress = stage => \{ const info = stage && typeof stage === 'object' \? \{ \.\.\.stage, edited \} : stage; if \(startToast\) \{ clearTimeout\(startTimer\); startToast\(startNotice\(info, messageId\)\); \} badge\.update\(info\); \};/.test(source));   // 3.0.0 edited 표시
     assert(/runToken\.error = error;\n[^\n]*runToken\.preview\?\.revert\(\);/.test(source));
 });
 

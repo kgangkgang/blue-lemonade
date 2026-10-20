@@ -49,3 +49,5 @@ Modified 2026-10-20 (Blue Lemonade 7.3.1): the paragraph cache now covers replie
 Modified 2026-10-20 (Blue Lemonade 7.4.0): requests now carry a usage purpose for the request log and the usage ledger: the arrow re-translation (correction) is tagged as a re-translation and outgoing-text translation as input translation, separately from chat translation. Nothing is sent anywhere new; the tags stay on this device.
 
 Modified 2026-10-20 (2.9.9): leftover-fix.js leftoverHan also picks a single Han character glued to the end of a Hangul word (「변顔」 from 変顔, followed by a space or punctuation) when that character came from a Japanese or Chinese source line, so the automatic leftover-line retranslation repairs it; characters absent from the source or present in a Korean source line are left as before.
+
+Modified 2026-10-20 (3.0.0): the progress badge and start toast say 「바뀐 문단 n개만 다시 번역」 only when the message already had a translation (the paragraph cache filling a few paragraphs of a brand-new reply, such as a repeated status line, now reads 「문단 n개 번역 · k/n · 캐시 r개」 and keeps the plain start toast); the retranslate button path always counts as edited.

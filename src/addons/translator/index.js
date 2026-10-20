@@ -2468,7 +2468,8 @@ function progressLabel(stage, started) {
     if (!stage || typeof stage !== 'object') return `번역 중 · ${sec}초`;
     if (stage.stage === 'chunks') return `${stage.resumed ? '이어 번역' : '번역 중'} · 문단 ${stage.done + 1}/${stage.total} · ${sec}초`;
     // 7.3.1 원문을 조금 고쳐 일부 문단만 다시 보낼 때(캐시가 나머지를 채움): 「바뀐 문단 1개만 다시 번역 · 0/1 · 캐시 88개」 (끊긴 묶음을 이어 갈 때는 「남은 문단 …개 이어서 번역」)
-    if (stage.stage === 'segments' && stage.pending && stage.reused) { const all = stage.batch ?? stage.pending; return `${stage.resumed ? `남은 문단 ${all}개 이어서 번역` : `바뀐 문단 ${all}개만 다시 번역`} · ${stage.finished ?? 0}/${all} · 캐시 ${stage.reused}개 · ${sec}초`; }
+    //   3.0.0 「바뀐 문단」 은 메시지에 번역문이 있었을 때(stage.edited — 원문이 바뀌어 다시 번역)만. 첫 번역에서 캐시가 한두 문단(반복되는 상태창 줄)을 채운 것은 「문단 n개 번역」
+    if (stage.stage === 'segments' && stage.pending && stage.reused) { const all = stage.batch ?? stage.pending; return `${stage.resumed ? `남은 문단 ${all}개 이어서 번역` : stage.edited ? `바뀐 문단 ${all}개만 다시 번역` : `문단 ${all}개 번역`} · ${stage.finished ?? 0}/${all} · 캐시 ${stage.reused}개 · ${sec}초`; }
     if (stage.stage === 'segments') return `캐시 ${stage.reused}개 · ${stage.pending ? `수정 문단 ${stage.finished ?? 0}/${stage.batch ?? stage.pending} 묶음 번역 중` : `새 번역 ${stage.translated}개`} · ${sec}초`;   // 2.5.5 n/전체
     if (stage.stage === 'kana') return `번역 중 · 마무리 · ${sec}초`;
     return `번역 중 · ${sec}초`;
@@ -2476,7 +2477,7 @@ function progressLabel(stage, started) {
 /** 7.3.1 번역 시작 알림 문구 — 번역의 첫 진행 알림(stage)을 보고 고른다. null = 알리지 않음 (보낼 문단 없이 캐시로 끝남 — 뒤에 캐시 알림이 따로 뜬다) */
 function startNotice(stage, messageId) {
     if (stage?.stage === 'segments' && !stage.pending) return null;
-    if (stage?.stage === 'segments' && stage.reused > 0) return stage.resumed ? `남은 문단 ${stage.pending}개를 이어서 번역해요 #${messageId}` : `바뀐 문단 ${stage.pending}개만 다시 번역해요 #${messageId}`;
+    if (stage?.stage === 'segments' && stage.reused > 0 && (stage.resumed || stage.edited)) return stage.resumed ? `남은 문단 ${stage.pending}개를 이어서 번역해요 #${messageId}` : `바뀐 문단 ${stage.pending}개만 다시 번역해요 #${messageId}`;   // 3.0.0 첫 번역은 아래 예전 문구
     return `번역을 시작합니다 #${messageId}`;
 }
 // 2.9.0 guard(번역 표의 것)를 주면 그것으로 대상을 찾는다 — 같은 채팅을 제자리에서 다시 불러오면(정규식 켜고 끔 · 캐릭터 이름 연동의 다시 그리기 …)
@@ -2817,7 +2818,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         const badge = progressBadge(messageId, message, sourceMes, chatId, runToken.guard);
         let retranslation;
         try {
-            retranslation = await translate(textToRetranslate, { ...options, checkSource: originalText, collectNames: true, assertValid: () => runToken.guard.assert(), onProgress: badge.update, report });
+            retranslation = await translate(textToRetranslate, { ...options, checkSource: originalText, collectNames: true, assertValid: () => runToken.guard.assert(), onProgress: stage => badge.update(stage && typeof stage === 'object' ? { ...stage, edited: true } : stage), report });   // 3.0.0 다시 번역 길은 늘 「바뀐 문단」
         } finally {
             badge.remove();
         }
@@ -3277,7 +3278,8 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 // 화살표 다시 번역이라도 차단 표시가 남은 글이면 문단 캐시를 쓴다 — 이미 된 문단은 다시 보내지 않고 차단된 문단만 다시 시도
                 const segmentCache = source !== 'handleTranslateButtonClick_retranslate' || String(message.extra.display_text || '').includes(MARK_TAIL);
                 const startTimer = startToast ? setTimeout(() => startToast?.(), 1500) : 0;
-                const onProgress = stage => { if (startToast) { clearTimeout(startTimer); startToast(startNotice(stage, messageId)); } badge.update(stage); };   // 7.3.1
+                const edited = Boolean(message.extra.display_text);   // 3.0.0 번역문이 있던 메시지 = 원문이 바뀌어 다시 번역 (진행 문구 「바뀐 문단」 은 이때만)
+                const onProgress = stage => { const info = stage && typeof stage === 'object' ? { ...stage, edited } : stage; if (startToast) { clearTimeout(startTimer); startToast(startNotice(info, messageId)); } badge.update(info); };   // 7.3.1
                 try {
                     // 6.5.2 같은 채팅을 다시 불러오는 사이(배열이 빈 순간)는 「바뀜」이 아니다 — 가라앉은 뒤에 판단한다
                     translation = await translate(originalText, { segmentCache, collectNames: true, auto: source === 'auto', assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onProgress, onPreview: preview.show, report });
