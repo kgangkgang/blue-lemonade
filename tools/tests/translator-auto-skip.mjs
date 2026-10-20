@@ -159,8 +159,8 @@ await test('배선: 다리 autoSkipReason(답장 자동 번역이 꺼져 있으�
     assert.match(src, /if\(id<0\|\|message\.is_user\|\|autoSkipReason\(message\)\)return;/);
     assert.match(cut(src, 'translateIncomingMessage'), /const skip = autoSkipReason\(message\);\s*if \(skip\) \{[\s\S]*?return hideStaleTranslation\(message\);\s*\}/);
     assert.doesNotMatch(cut(src, 'translateIncomingMessage').split('const skip')[1], /toastr/, '건너뛸 때 알림을 띄우지 않는다');
-    assert.match(read('src/addons/translator/manifest.json'), /"version": "2\.(?:7\.(?:[4-9]|\d{2})|(?:[89]|\d{2})\.\d+)"/, '2.7.4 이상');
-    assert.match(read('src/addons/translator/index.html'), /v2\.(?:7\.(?:[4-9]|\d{2})|(?:[89]|\d{2})\.\d+)</, '2.7.4 이상');
+    assert.match(read('src/addons/translator/manifest.json'), /"version": "(?:2\.(?:7\.(?:[4-9]|\d{2})|(?:[89]|\d{2})\.\d+)|[3-9]\.\d+\.\d+)"/, '2.7.4 이상');
+    assert.match(read('src/addons/translator/index.html'), /v(?:2\.(?:7\.(?:[4-9]|\d{2})|(?:[89]|\d{2})\.\d+)|[3-9]\.\d+\.\d+)</, '2.7.4 이상');
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/translator-auto-skip\.mjs \./);
 });
 

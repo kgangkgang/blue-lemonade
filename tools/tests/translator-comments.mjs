@@ -224,7 +224,7 @@ await check('2.5.1 wiring: comment rule after the 6.5.4 rules, hook registered a
     assert(rules.indexOf('<!--[\\s\\S]*?-->') > rules.findIndex(r => r.includes('scene_plan')));
     assert(/\n {4}hideBrokenCommentsOnRender\(\);/.test(source));
     const version = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')).version;
-    assert(/^2\.(?:5\.[1-9]|[6-9]\.)\d*$/.test(version), version);   // 2.6.0 번역 점검도 이 규칙 위
+    assert(/^(?:2\.(?:5\.[1-9]|[6-9]\.)\d*|[3-9]\.\d+\.\d+)$/.test(version), version);   // 2.6.0 번역 점검도 이 규칙 위 · 3.0.0 부터 3 이상도
     assert(fs.readFileSync(path.join(dir, 'index.html'), 'utf8').includes(`>v${version}<`));
 });
 
