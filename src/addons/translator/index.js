@@ -2005,7 +2005,7 @@ async function translate(text, options = {}) {
                 const bodies = parts.filter((part, i) => i % 2 === 0 && part.trim());
                 parts = options.forget.map(n => bodies[n]).filter(body => body !== undefined).flatMap(body => [body, '']);
             }
-            if (parts?.length) await forgetSegments(parts, glossarySegmentSignature(setupDigest));
+            if (parts?.length) await forgetSegments(parts, glossarySegmentSignature(setupDigest), n => protectedBlocks[n]);   // 3.0.1 번역할 때와 같은 열쇠(보호 글 포함)
             if (key && !Array.isArray(options.forget)) await clearCheckpoints(key);
             return '';
         }
@@ -2126,7 +2126,7 @@ async function translate(text, options = {}) {
             const failReasons = new Map(); // 5.2.9: 문단 본문 → 실패 원인
             const noCache = new Set(); // 5.3.4: 붙이긴 하되 캐시에 넣지 않을 문단 (1부터 다시 매긴 답 — 한 칸 밀린 답과 구별이 안 된다)
             const result = await translateSegments({ parts: paragraphParts,
-                signature: glossarySegmentSignature(setupDigest), check: watcher.check, progress, blockedMarker: (body, error) => failMarkOf(failReasons.get(body) ?? error), // 5.4.1: 원문 되풀이 = 형식 오류
+                signature: glossarySegmentSignature(setupDigest), protection: n => protectedBlocks[n], check: watcher.check, progress, blockedMarker: (body, error) => failMarkOf(failReasons.get(body) ?? error), // 5.4.1: 원문 되풀이 = 형식 오류 · 3.0.1 protection = 열쇠에 드는 보호 글
                 partial: showPreview,   // 2.5.1
                 cacheable: (body, out) => {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
