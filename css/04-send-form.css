@@ -311,8 +311,8 @@ body.salty #nonQRFormItems #jj-button:not(.is-on) {
 }
 /* 7.4.2 깃털 켜짐 단계 (전개 지시 1.3.1, 사용자 10-20 고른 모양): 보내는 것(전개 지시 · 항상 지시 · 켠 프롬프트 한 줄 이상)의 수
    0 = 흐린 색으로 채움 · 1 = 켜짐 색 테두리 · 안은 켜짐 색 12% · 2 = 안까지 채움 · 3 = 채움 + 은은한 빛. 색은 켜짐 색 하나(--jj-on), 그라데이션 없음.
-   7.4.4 모든 단계가 같은 깃털 글리프 — 꺼짐만 선 아이콘이라 모양이 바뀌던 것을 맞췄다. 테두리 두께는 글리프 크기 비례 .08em — 실제 크기(약 23px 글리프)를
-   3배로 찍어 시안(feather-steps-3)과 견주어 골랐다: 깃의 홈 · 줄기 선이 막히지 않고 바깥 선이 또렷한 굵기 (7.4.3 의 .13em 은 홈을 메워 덩어리로 보였다). 밝은 테마의 켜짐 테두리는 흰 바탕에서 또렷하게 조금 진한 색으로 */
+   7.4.4 모든 단계가 같은 깃털 글리프 — 꺼짐만 선 아이콘이라 모양이 바뀌던 것을 맞췄다. 테두리는 고정 1.3px — 입력줄의 선 아이콘(✨ 등)과 같은 굵기, 깃의 홈 · 줄기 선이 막히지 않는다.
+   7.4.5 em 비례(.08em)는 폰에서 아이콘이 커지면 같이 두꺼워져 옆 아이콘의 두 배가 됐다 (412×915 · DPR 2.625 에서 3배로 찍어 견줌). 밝은 테마의 켜짐 테두리는 흰 바탕에서 또렷하게 조금 진한 색으로 */
 body.salty {
   --jj-stroke: color-mix(in srgb, var(--jj-on) 80%, #b08000);
 }
@@ -326,7 +326,7 @@ body.salty :is(#jj-button[data-jj-level="0"] > i, #jj-popup[data-jj-level="0"] .
 }
 body.salty :is(#jj-button[data-jj-level="1"] > i, #jj-popup[data-jj-level="1"] .jj-popup-title > i) {
   color: color-mix(in srgb, var(--jj-on) 12%, transparent);
-  -webkit-text-stroke: 0.08em var(--jj-stroke);
+  -webkit-text-stroke: 1.3px var(--jj-stroke);
   paint-order: stroke fill;
   filter: none;
 }
@@ -355,9 +355,9 @@ body.salty.salty-icons-line :is(#jj-button[data-jj-level] > i, #jj-popup[data-jj
   mask-image: none;
   font-size: 0.8em; /* 선 아이콘(24 칸 안에 그린 깃털)과 같은 크기로 — 글리프는 1em 을 꽉 채운다 */
 }
-/* 줄인 글리프 크기에 맞춘 테두리 (em 은 글리프 크기 기준) */
+/* 줄인 글리프에도 같은 고정 굵기 */
 body.salty.salty-icons-line :is(#jj-button[data-jj-level="1"] > i, #jj-popup[data-jj-level="1"] .jj-popup-title > i)::before {
-  -webkit-text-stroke-width: 0.08em;
+  -webkit-text-stroke-width: 1.3px;
 }
 body.salty #nonQRFormItems #jj-button.is-on {
   background: transparent !important;

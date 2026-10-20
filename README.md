@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.4.4/blue-lemonade-7.4.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.4.5/blue-lemonade-7.4.5.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.4.4 · 최신 업데이트</summary>
+<summary>7.4.5 · 최신 업데이트</summary>
+
+- 깃털 테두리를 옆 아이콘 굵기에 맞췄어요.
+
+</details>
+
+<details>
+<summary>7.4.4 · 깃털 같은 모양 · 얇은 테두리 · 토큰 숫자</summary>
 
 - 전개 지시 깃털이 이제 꺼졌을 때도 같은 깃털 모양이에요. 꺼짐은 회색, 하나 보내면 얇은 테두리, 둘이면 채움, 셋이면 채움에 은은한 빛이라 상태가 바뀌어도 모양이 튀지 않아요.
 - 테두리 단계의 선이 너무 두꺼워 깃털의 홈이 메워지던 것을 고쳤어요. 옆 아이콘과 비슷한 굵기의 얇은 선이라 깃 모양이 또렷하게 보여요.
