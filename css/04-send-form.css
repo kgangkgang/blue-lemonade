@@ -329,8 +329,13 @@ body.salty :is(#jj-button:is([data-jj-level="2"], [data-jj-level="3"]) > i, #jj-
   -webkit-text-stroke: 0;
   filter: none;
 }
+/* 7.4.3 3단계 빛은 보내기 줄의 다른 단추(보내기 번역 켜짐)와 같은 세기 — 4px · 65%. 창 제목 깃털은 작아서 빛도 3px 로 */
+/* 특이도: 위 채움 규칙(:is(…) 안의 #jj-popup … = 1,3,2)과 같게 :is 로 묶어야 이긴다 — 단추만 떼어 쓰면(1,2,2) 채움 규칙의 filter: none 에 졌다 */
 body.salty :is(#jj-button[data-jj-level="3"] > i, #jj-popup[data-jj-level="3"] .jj-popup-title > i) {
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--jj-on) 85%, transparent));
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--jj-on) 65%, transparent));
+}
+body.salty #jj-popup[data-jj-level="3"] .jj-popup-title > i {
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--jj-on) 65%, transparent));
 }
 body.salty #jj-popup[data-jj-level="0"] .jj-popup-title > i {
   color: var(--salty-muted);

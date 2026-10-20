@@ -12,8 +12,9 @@ import { badgeTextHit } from '../../badge-hit.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.3.1';
+const VERSION = '1.3.2';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
+// 1.3.2: 3단계 빛을 보내기 줄의 다른 단추와 같은 세기로 (4px · 65%)
 // 1.3.1: 깃털 그라데이션을 없앴다 — 색은 켜짐 색 하나, 보내는 것(전개 지시 · 항상 지시 · 켠 프롬프트) 수만큼 1 테두리 · 2 채움 · 3 채움 + 빛 (data-jj-level)
 // 1.3.0: 세 번째 쪽 「프롬프트」 — 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고 줄마다 켜고 끈다. 켠 것은 항상 지시 다음 · 전개 지시 앞에 같이 들어간다
 const KINDS = ['direction', 'always', 'prompts'];
@@ -527,6 +528,8 @@ function refreshPopup() {
     // 1.3.0 프롬프트 쪽에는 저장 · 최근 목록과 지우개가 없다 (줄마다 고치기 · 지우기)
     for (const act of ['list', 'clear']) popup.querySelector(`.jj-popup-head [data-act="${act}"]`).hidden = page === 'prompts';
     popup.dataset.jjLevel = String(sendLevel());   // 1.3.1 창 제목 깃털도 입력창 깃털과 같은 단계 모양
+    if (page === 'prompts' && popup.dataset.tokPage !== 'prompts') void fillPromptTokens();   // 1.3.2 프롬프트 쪽으로 넘어올 때만 센다
+    popup.dataset.tokPage = page;
     syncPagesHeight();
     if (listView) renderList();
 }
@@ -756,7 +759,7 @@ function promptEditor(item) {
     content.dataset.field = 'content';
     content.value = promptEdit.content;
     const actions = makeEl('div', 'jj-pitem-actions');
-    actions.append(makeEl('span', 'jj-pspacer'),
+    actions.append(makeEl('span', 'jj-pspacer jj-pedit-tok'),   // 1.3.2 적는 글의 토큰 수
         promptButton('cancel', 'jj-pbtn', 'fa-solid fa-xmark', '', { text: '취소' }),
         promptButton('save', 'jj-pbtn is-primary', 'fa-solid fa-check', '', { text: item ? '저장' : '추가' }));
     box.append(title, content, actions);
@@ -788,7 +791,7 @@ function promptRow(item, index, total) {
     toggleSwitch.setAttribute('aria-checked', String(item.enabled));
     toggleSwitch.setAttribute('aria-label', `${promptTitle(item)} 켜기/끄기`);
     toggleSwitch.innerHTML = '<span></span>';
-    head.append(toggle, toggleSwitch);
+    head.append(toggle, makeEl('span', 'jj-ptok'), toggleSwitch);   // 1.3.2 토큰 수 (제목이 먼저 줄어든다)
     row.append(head);
     if (open) {
         const body = makeEl('div', 'jj-pitem-body');
@@ -826,6 +829,8 @@ function renderPrompts(focus = null) {
     const add = box.querySelector('[data-pact="add"]');
     add.hidden = promptEdit?.id === 'new';
     add.disabled = list.length >= PROMPT_MAX;
+    void fillPromptTokens();
+    if (promptEdit) scheduleEditTokens(0);
     if (!focus) return;
     const target = box.querySelector(focus);
     target?.focus({ preventScroll: true });
@@ -903,6 +908,7 @@ async function onPromptsClick(event) {
         target.closest('.jj-pitem')?.classList.toggle('is-on', item.enabled);
         save();
         refreshButton();
+        void fillPromptTokens();   // 켠 것 합계
     } else if (act === 'up' || act === 'down') {
         const to = index + (act === 'up' ? -1 : 1);
         if (to < 0 || to >= list.length) return;
@@ -931,9 +937,97 @@ async function onPromptsClick(event) {
     }
 }
 
+// ── 1.3.2 토큰 수 (실리태번 프롬프트 관리자처럼): 지금 모델의 토크나이저(getTokenCountAsync)로, 매크로를 바꾼 뒤의 글을 센다 ──
+// 프롬프트 쪽을 볼 때 · 고칠 때만 센다 (시작할 때는 세지 않는다). 같은 글은 다시 세지 않게 글 그대로를 열쇠로 기억한다.
+// 토크나이저를 못 쓰면 어림값(영문 4글자 ≈ 1, 그 밖 1글자 ≈ 1)에 「≈」를 붙인다.
+const TOKEN_CACHE_MAX = 300;
+const tokenCache = new Map();   // 매크로를 바꾼 글 → { n, approx }
+function roughTokens(text) {
+    let ascii = 0, other = 0;
+    for (const ch of text) { if (ch.charCodeAt(0) < 128) ascii++; else other++; }
+    return Math.ceil(ascii / 4 + other);
+}
+async function countTokens(raw) {
+    const text = substituteMacros(String(raw ?? ''));
+    if (!text.trim()) return { n: 0, approx: false };
+    const hit = tokenCache.get(text);
+    if (hit) return hit;
+    let out;
+    try {
+        const count = getContext().getTokenCountAsync;
+        if (typeof count !== 'function') throw new Error('no tokenizer');
+        const n = Number(await count(text));
+        if (!Number.isFinite(n) || n < 0) throw new Error('bad count');
+        out = { n: Math.round(n), approx: false };
+    } catch {
+        out = { n: roughTokens(text), approx: true };
+    }
+    tokenCache.set(text, out);
+    if (tokenCache.size > TOKEN_CACHE_MAX) tokenCache.delete(tokenCache.keys().next().value);
+    return out;
+}
+const tokenLabel = ({ n, approx }) => `${approx ? '≈' : ''}${n.toLocaleString('ko-KR')} 토큰`;
+/** 매크로 결과가 이름에 따라 달라지므로 열쇠에 지금 이름들을 붙인다 (같으면 다시 세지 않음) */
+function tokenKey(content) {
+    const context = (() => { try { return getContext(); } catch { return null; } })();
+    return `${context?.name1 ?? ''}\u0000${context?.name2 ?? ''}\u0000${content}`;
+}
+
+let promptTokenRun = 0;
+/** 보이는 줄의 토큰 수 · 켠 것 합계를 채운다 (프롬프트 쪽을 볼 때만) */
+async function fillPromptTokens() {
+    if (!popup || page !== 'prompts') return;
+    const box = popup.querySelector('.jj-prompts');
+    if (!box) return;
+    const run = ++promptTokenRun;
+    const list = settings().promptList;
+    let total = 0, approx = false, any = false;
+    for (const item of list) {
+        const span = box.querySelector(`.jj-pitem[data-id="${item.id}"] .jj-ptok`);
+        const key = tokenKey(item.content);
+        let value;
+        if (span?.dataset.key === key && span.dataset.n) value = { n: Number(span.dataset.n), approx: span.dataset.approx === '1' };
+        else {
+            value = await countTokens(item.content);
+            if (run !== promptTokenRun || !popup) return;   // 그사이 다시 그렸으면 새 차례에 맡긴다
+            const now = box.querySelector(`.jj-pitem[data-id="${item.id}"] .jj-ptok`);
+            if (now) { now.dataset.key = key; now.dataset.n = String(value.n); now.dataset.approx = value.approx ? '1' : ''; now.textContent = tokenLabel(value); }
+        }
+        if (item.enabled && item.content.trim()) { total += value.n; approx ||= value.approx; any = true; }
+    }
+    const sum = box.querySelector('.jj-ptotal');
+    if (sum) { sum.hidden = !any; sum.textContent = any ? `켜진 프롬프트 ${tokenLabel({ n: total, approx })}` : ''; }
+}
+
+let editTokenTimer = 0;
+/** 고치는 칸의 토큰 수 — 적는 동안은 잠깐 멈췄을 때 센다 */
+function scheduleEditTokens(delay = 350) {
+    clearTimeout(editTokenTimer);
+    editTokenTimer = setTimeout(async () => {
+        const span = popup?.querySelector('.jj-pedit .jj-pedit-tok');
+        if (!span || !promptEdit) return;
+        const content = promptEdit.content;
+        const value = await countTokens(content);
+        if (promptEdit?.content === content && span.isConnected) span.textContent = content.trim() ? tokenLabel(value) : '';
+    }, delay);
+}
+
+/** 점을 누르면 그 쪽으로 (제목의 나머지를 누르면 다음 쪽). 점은 작아서 가장 가까운 점을 고른다 */
+function onTitleClick(event) {
+    const dots = event.target.closest?.('.jj-dots');
+    if (dots && popup?.contains(dots)) {
+        const centers = [...dots.querySelectorAll('b')].map(dot => { const r = dot.getBoundingClientRect(); return r.left + r.width / 2; });
+        let best = 0;
+        centers.forEach((x, index) => { if (Math.abs(event.clientX - x) < Math.abs(event.clientX - centers[best])) best = index; });
+        if (centers.length && event.detail !== 0) return showPage(KINDS[best]);   // 키보드(Enter/Space, detail 0)는 다음 쪽
+    }
+    showPage(KINDS[(KINDS.indexOf(page) + 1) % KINDS.length]);
+}
+
 function onPromptsInput(event) {
     const field = event.target?.dataset?.field;
     if (promptEdit && (field === 'title' || field === 'content')) promptEdit[field] = event.target.value;
+    if (field === 'content') scheduleEditTokens();
 }
 
 function onPromptsKeydown(event) {
@@ -1023,6 +1117,7 @@ function openPopup() {
                     <div class="jj-prompts">
                         <ul class="jj-pitems" aria-label="프롬프트 목록"></ul>
                         <p class="jj-pempty" hidden><b>자주 쓰는 프롬프트를 모아 두는 곳이에요.</b><span>줄마다 켜고 끄고, 켠 것은 지시와 같이 보내요. 예: 문체 다듬기 · 짧게 답하기</span></p>
+                        <p class="jj-ptotal" hidden></p>
                         <button type="button" class="jj-padd" data-pact="add"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>프롬프트 추가</span></button>
                     </div>
                 </section>` : `
@@ -1051,7 +1146,7 @@ function openPopup() {
         save();
         refreshButton();
     });
-    popup.querySelector('.jj-popup-title').addEventListener('click', () => showPage(KINDS[(KINDS.indexOf(page) + 1) % KINDS.length])); // 다음 쪽 (끝이면 처음). 목록을 보는 중이면 그 쪽 목록으로
+    popup.querySelector('.jj-popup-title').addEventListener('click', onTitleClick); // 1.3.2 점을 누르면 그 쪽, 나머지는 다음 쪽 (끝이면 처음). 목록을 보는 중이면 그 쪽 목록으로
     const promptsBox = popup.querySelector('.jj-prompts');
     promptsResize?.disconnect();
     promptsResize = typeof ResizeObserver === 'function' ? new ResizeObserver(() => syncPagesHeight()) : null;   // 펼치기 · 고치기 · 글이 늘 때
@@ -1420,7 +1515,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
 }));
 
 export function showHelp() {
-    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;).</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 문체 다듬기처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 항상 지시 다음, 전개 지시 앞에 같이 들어가요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요.</p><p>깃털은 보내는 것이 있으면 켜짐 색이 돼요. 전개 지시 · 항상 지시 · 켠 프롬프트 중 하나면 은은하게, 둘이면 더, 셋 다면 가장 밝게 빛나요. 전개 지시를 꺼 둬도 다른 것을 보내는 중이면 켜짐 색으로 남아요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
+    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;).</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 문체 다듬기처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 항상 지시 다음, 전개 지시 앞에 같이 들어가요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요. 줄 옆 숫자는 지금 모델 기준 토큰 수예요. 제목 옆 점을 누르면 그 쪽으로 바로 가요.</p><p>깃털은 보내는 것이 있으면 켜짐 색이 돼요. 전개 지시 · 항상 지시 · 켠 프롬프트 중 하나면 은은하게, 둘이면 더, 셋 다면 가장 밝게 빛나요. 전개 지시를 꺼 둬도 다른 것을 보내는 중이면 켜짐 색으로 남아요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
 }
 let settingsDialog = null;
 export async function openPanel() {

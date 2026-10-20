@@ -99,7 +99,7 @@ await test('화면 · 설정 카드 · 합치기 · CSS · CI', async () => {
     assert.match(js, /lines\.push\(`프롬프트 \$\{prompts\.length\}개 켜짐/, 'button tooltip line');
     assert.doesNotMatch(js, /promptList: \[\{/, 'no shipped example prompts');
     const css = await read('src/addons/direction/style.css');
-    assert.match(css, /--jj-css-version: "1\.3\.1";/); assert.match(js, /const VERSION = '1\.3\.1';/);
+    assert.match(css, /--jj-css-version: "1\.3\.2";/); assert.match(js, /const VERSION = '1\.3\.2';/);
     assert.match(css, /\.jj-pitem-head \{[^}]*min-height: 44px/, 'row is a 44px target');
     assert.match(css, /#jj-popup \.jj-padd \{[^}]*min-height: 44px/);
     assert.match(css, /@media \(pointer: coarse\) \{\s*#jj-popup \.jj-pbtn::after \{[^}]*width: max\(100%, 44px\); height: max\(100%, 44px\)/, '36px buttons get a 44px hit box on touch');
@@ -126,13 +126,30 @@ await test('7.4.2 (1.3.1) 깃털 단계 = 보내는 것의 수 (테두리 · 채
     for (const text of [css, theme]) {
         assert.match(text, /\[data-jj-level="1"\][^{]*\{[^}]*color: color-mix\(in srgb, var\(--jj-on\) 12%, transparent\);[^}]*-webkit-text-stroke: 0\.13em var\(--jj-stroke[^}]*paint-order: stroke fill;/, 'level 1 = outline');
         assert.match(text, /:is\(\[data-jj-level="2"\], \[data-jj-level="3"\]\)[^{]*\{[^}]*color: var\(--jj-on\);/, 'level 2+ = solid');
-        assert.match(text, /\[data-jj-level="3"\] \.jj-popup-title > i\) ?\{[^}]*filter: drop-shadow\(0 0 6px color-mix\(in srgb, var\(--jj-on\) 85%, transparent\)\);|#jj-popup\[data-jj-level="3"\] \.jj-popup-title > i \{ filter: drop-shadow\(0 0 6px color-mix\(in srgb, var\(--jj-on\) 85%, transparent\)\); \}/, 'level 3 = soft glow');
+        // 7.4.3 3단계 빛은 보내기 줄의 다른 단추와 같은 세기 (4px · 65%), 작은 창 제목 깃털은 3px
+        assert.match(text, /#jj-button\[data-jj-level="3"\] > i(?:, #jj-popup\[data-jj-level="3"\] \.jj-popup-title > i\))? \{\s*filter: drop-shadow\(0 0 4px color-mix\(in srgb, var\(--jj-on\) 65%, transparent\)\);/, 'button level 3 glow = send-form glow');
+        assert.match(text, /#jj-popup\[data-jj-level="3"\] \.jj-popup-title > i \{\s*filter: drop-shadow\(0 0 3px color-mix\(in srgb, var\(--jj-on\) 65%, transparent\)\);/, 'popup title glow scaled to its size');
+        assert.doesNotMatch(text, /drop-shadow\(0 0 6px/, 'no wider 7.4.2 glow');
     }
     assert.match(theme, /body\.salty \{\s*--jj-stroke: color-mix\(in srgb, var\(--jj-on\) 80%, #b08000\);\s*\}\s*body\.salty\.salty-dark \{\s*--jj-stroke: var\(--jj-on\);/, 'light themes: darker stroke');
     assert.match(theme, /body\.salty\.salty-icons-line :is\(#jj-button:not\(\[data-jj-level="0"\]\) > i, #jj-popup:not\(\[data-jj-level="0"\]\) \.jj-popup-title > i\)::before \{\s*content: "\\f56b" !important;/, 'line icons: lit levels use the fillable glyph');
     assert.match(js, /popup\.dataset\.jjLevel = String\(sendLevel\(\)\);/, 'popup title icon follows the same level');
     assert.match(theme, /body\.salty #jj-popup \.jj-dots b\.is-current \{\s*background: var\(--jj-on\);/, 'current-page dot: solid on-colour');
     assert.doesNotMatch(js + css, /유저 편향|성격 교정/, 'no such examples in shipped text');
+});
+
+await test('7.4.3 (1.3.2) 프롬프트 쪽에서 옆으로 밀기 · 점 누르기 · 토큰 수', async () => {
+    const css = await read('src/addons/direction/style.css');
+    const list = css.match(/\.jj-pitems \{([^}]*)\}/)?.[1] ?? '';
+    assert.match(list, /overscroll-behavior-y: contain;/); assert.doesNotMatch(list, /overscroll-behavior: contain/, 'x must chain to the page scroller (stuck on the prompts page)');
+    assert.match(css, /\.jj-dots::before \{[^}]*height: 44px;/, 'dots: 44px tap height');
+    assert.match(js, /popup\.querySelector\('\.jj-popup-title'\)\.addEventListener\('click', onTitleClick\)/);
+    assert.match(js, /function onTitleClick\(event\) \{[\s\S]*?return showPage\(KINDS\[best\]\);[\s\S]*?showPage\(KINDS\[\(KINDS\.indexOf\(page\) \+ 1\) % KINDS\.length\]\);/, 'dot → that page, elsewhere → next (3 → 1)');
+    assert.match(js, /head\.append\(toggle, makeEl\('span', 'jj-ptok'\), toggleSwitch\);/, 'count between title and switch');
+    assert.match(css, /\.jj-ptok \{ flex: 0 0 auto; white-space: nowrap;/, 'title shrinks first');
+    assert.match(js, /if \(page === 'prompts' && popup\.dataset\.tokPage !== 'prompts'\) void fillPromptTokens\(\);/, 'count only when the page is shown');
+    assert.doesNotMatch(js.split('// ── 시작')[1] ?? '', /fillPromptTokens|countTokens/, 'never at startup');
+    assert.match(js, /`켜진 프롬프트 \$\{tokenLabel\(\{ n: total, approx \}\)\}`/);
 });
 
 console.log(`direction-prompts: ${pass} passed, ${fail} failed`);

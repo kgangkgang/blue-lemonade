@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.4.2/blue-lemonade-7.4.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.4.3/blue-lemonade-7.4.3.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.4.2 · 최신 업데이트</summary>
+<summary>7.4.3 · 최신 업데이트</summary>
+
+- 전개 지시 깃털의 가장 밝은 단계(셋 다 보낼 때) 빛을 줄였어요. 입력창 깃털은 보내기 줄의 다른 단추와 같은 세기로 맞췄고, 깃털 창 제목의 작은 깃털은 빛도 그만큼 작게 했어요. 테두리 · 채움 단계는 그대로예요.
+- 폰에서 프롬프트 쪽의 줄 위를 옆으로 밀어도 쪽이 넘어가지 않아 그 쪽에서 나갈 수 없던 것을 고쳤어요. 이제 줄 · 빈 곳 어디서 밀어도 항상 지시 · 전개 지시로 돌아가요. 제목 옆 점을 누르면 그 쪽으로 바로 가고, 제목을 누르면 다음 쪽(마지막에서는 처음)으로 가요.
+- 프롬프트 줄마다 토큰 수가 보여요. 실리태번 프롬프트 관리자처럼 지금 모델의 토크나이저로, {{char}} · {{user}} 를 이름으로 바꾼 뒤 세요. 켠 프롬프트의 합계는 목록 아래에 있고, 고치는 칸에서는 적는 대로 다시 세요. 토크나이저를 쓸 수 없으면 「≈」를 붙인 어림값이에요.
+
+</details>
+
+<details>
+<summary>7.4.2 · 깃털 켜짐 단계 · 프롬프트 예시 글</summary>
 
 - 전개 지시 깃털의 그라데이션을 없애고 켜짐 색 하나로 바꿨어요. 보내는 것(전개 지시 · 항상 지시 · 켠 프롬프트)이 하나면 테두리만, 둘이면 안까지 채움, 셋이면 채움에 은은한 빛까지 보여요. 깃털 창 제목의 깃털도 같은 모양이고, 지금 쪽 점도 켜짐 색이에요.
 - 전개 지시를 꺼 둬도 항상 지시나 프롬프트를 보내는 중이면 깃털이 켜진 모양으로 남아요. 무언가 같이 가고 있다는 걸 잊지 않게요.

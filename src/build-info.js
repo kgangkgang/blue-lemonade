@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.4.2";
+export const BUILD_VERSION = "7.4.3";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:8cd6c550:442c58f7",
+  "manifest.json": "365:f8ced77f:d15ba433",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -56,9 +56,9 @@ export const FILE_HASHES = {
   "src/addons/bookmarks/viewers.js": "19183:e60b9efd:36ec558a",
   "src/addons/customstyle/index.js": "28932:5bf5bdb4:b8552706",
   "src/addons/customstyle/style.css": "3793:a55698b3:63ca622a",
-  "src/addons/direction/index.js": "82354:a24cf350:553361e5",
+  "src/addons/direction/index.js": "87813:61fd8e49:e95b5f7c",
   "src/addons/direction/prompt.js": "2559:fa1cf265:60dc13ab",
-  "src/addons/direction/style.css": "31336:0941a4dd:aa6a48c9",
+  "src/addons/direction/style.css": "32590:4b094c66:90aa3ea1",
   "src/addons/list-sync.js": "4902:487dc198:b4d6512a",
   "src/addons/mermaid/index.js": "8963:2a351705:f617c845",
   "src/addons/mermaid/source/src/index.js": "394:f55b3e28:fa2de41b",
@@ -555,7 +555,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "291293:79ec4f23:1b7d0d60",
+  "src/notice-data.js": "292373:7edc3b83:8da5189f",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -685,5 +685,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1540333:61bc9109:c6954f9a"
+  "style.css": "1540479:1493bbc6:b48e44ff"
 };

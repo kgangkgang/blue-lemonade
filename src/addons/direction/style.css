@@ -6,7 +6,7 @@
 :root {
     --jj-on: var(--jj-on-color, var(--SmartThemeQuoteColor, #e18a24));
     /* index.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-    --jj-css-version: "1.3.1";
+    --jj-css-version: "1.3.2";
 }
 
 /* ── 입력창 버튼 ─────────────────────────────────────────── */
@@ -68,8 +68,9 @@
 }
 #jj-button:is([data-jj-level="2"], [data-jj-level="3"]) > i,
 #jj-popup:is([data-jj-level="2"], [data-jj-level="3"]) .jj-popup-title > i { color: var(--jj-on); }
-#jj-button[data-jj-level="3"] > i,
-#jj-popup[data-jj-level="3"] .jj-popup-title > i { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--jj-on) 85%, transparent)); }
+/* 1.3.2 3단계 빛은 보내기 줄의 다른 단추와 같은 세기 (4px · 65%). 창 제목 깃털은 작아서 3px */
+#jj-button[data-jj-level="3"] > i { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--jj-on) 65%, transparent)); }
+#jj-popup[data-jj-level="3"] .jj-popup-title > i { filter: drop-shadow(0 0 3px color-mix(in srgb, var(--jj-on) 65%, transparent)); }
 #jj-popup[data-jj-level="0"] .jj-popup-title > i { color: color-mix(in srgb, var(--SmartThemeBodyColor) 45%, transparent); }
 
 /* 켜져 있고 지시 내용도 있으면 오른쪽 위 점 */
@@ -159,7 +160,9 @@
 .jj-title-text { white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }   /* 6.3.6 모자랄 때만 「…」 — 상태 글이 접히지 않게 */
 
 /* 두 쪽 중 지금 쪽 */
-.jj-dots { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 4px; margin-left: 2px; }
+.jj-dots { position: relative; display: inline-flex; flex: 0 0 auto; align-items: center; gap: 4px; margin-left: 2px; padding: 0 6px; }
+/* 1.3.2 점을 누르면 그 쪽으로 — 점은 5px 이라 위아래 44px · 옆으로 넉넉한 투명 자리 (index.js onTitleClick 이 가장 가까운 점을 고른다) */
+.jj-dots::before { content: ''; position: absolute; left: -4px; right: -4px; top: 50%; height: 44px; transform: translateY(-50%); }
 .jj-dots b {
     width: 5px;
     height: 5px;
@@ -417,7 +420,7 @@
     margin: 0;
     padding: 0;
     overflow-y: auto;
-    overscroll-behavior: contain;
+    overscroll-behavior-y: contain;   /* 1.3.2 세로만 — 둘 다 막으면 줄 위에서 옆으로 민 손짓이 쪽 넘기기(.jj-pages)로 안 가 프롬프트 쪽에서 못 나갔다 */
     scrollbar-width: thin;
     list-style: none;
 }
@@ -454,6 +457,11 @@
 .jj-pitem-caret { flex: 0 0 auto; width: 1em; font-size: .72em; text-align: center; color: var(--jj-p-muted); transition: transform .2s; }
 .jj-pitem.is-open .jj-pitem-caret { transform: rotate(90deg); }
 .jj-pitem-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 1.3.2 토큰 수: 제목 옆 조용한 숫자 — 줄이 모자라면 제목이 먼저 「…」로 줄고 숫자는 남는다 */
+.jj-ptok { flex: 0 0 auto; white-space: nowrap; font-size: .76em; font-variant-numeric: tabular-nums; color: var(--jj-p-muted); }
+.jj-ptok:empty { display: none; }
+.jj-ptotal { margin: 0; font-size: .78em; text-align: right; font-variant-numeric: tabular-nums; color: var(--jj-p-muted); }
+.jj-pedit-tok { font-size: .78em; font-variant-numeric: tabular-nums; color: var(--jj-p-muted); white-space: nowrap; }
 .jj-pitem:not(.is-on) .jj-pitem-title { color: var(--jj-p-muted); }
 #jj-popup .jj-pitem .jj-switch { flex: 0 0 auto; }
 .jj-pitem-body { display: flex; flex-direction: column; gap: 8px; padding: 0 10px 10px 12px; }
