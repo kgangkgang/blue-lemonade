@@ -16,6 +16,18 @@ export function shapeKey(el) {
 }
 let stop = null;
 
+/** Keep connected roots whose ancestors are not already in this batch.
+ * Walking ancestors avoids comparing every pair of sibling additions. */
+export function compactRoots(nodes) {
+    const roots = new Set([...nodes].filter(node => node?.isConnected));
+    return [...roots].filter(node => {
+        for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+            if (roots.has(parent)) return false;
+        }
+        return true;
+    });
+}
+
 export function syncSquaredButtons(on) {
     if (!on) { stop?.(); stop = null; return; }
     if (!stop) stop = watchSquaredButtons(document, window);
@@ -86,30 +98,38 @@ export function watchSquaredButtons(doc, host) {
     }
     function flush() {
         frame = 0; timer = 0; if (stopped) return;
-        const list = roots.has(doc.body) ? [doc.body] : [...roots];
+        const list = roots.has(doc.body) ? [doc.body] : compactRoots(roots);
         roots.clear();
         const found = [];
         for (const root of list) scan(root, found);
         for (const el of found) { el.setAttribute(ATTR, ''); remember(el); }
     }
-    const queue = node => {
-        const el = node?.nodeType === 1 ? node : node?.parentElement;
-        if (!el || !el.isConnected || el.closest?.('style,script')) return;
-        // While a reply streams, the chat changes many times a second (text, reasoning header, timers, class toggles on every message):
-        // check those messages once when generation ends.
-        if (doc.body.dataset.generating && el.closest?.('#chat')) { waiting.add(el.closest('.mes') || el); return; }
-        // A closed drawer shows nothing; opening it changes its class, which re-checks the whole drawer.
-        if (el.closest?.('.drawer-content.closedDrawer')) return;
-        restamp(el);   // 7.5.4 아는 생김새는 그리기 전에 바로 (잰 적 없는 것은 아래 타이머 → 프레임에서)
-        roots.add(el);
-        if (!timer && !frame) timer = host.setTimeout(measure, 300);
+    const queueMany = nodes => {
+        const ready = new Set();
+        for (const node of nodes) {
+            const el = node?.nodeType === 1 ? node : node?.parentElement;
+            if (!el || !el.isConnected || el.closest?.('style,script')) continue;
+            // Streaming changes a message repeatedly; inspect it once generation ends.
+            if (doc.body.dataset.generating && el.closest?.('#chat')) { waiting.add(el.closest('.mes') || el); continue; }
+            // Opening a closed drawer re-checks that subtree.
+            if (el.closest?.('.drawer-content.closedDrawer')) continue;
+            ready.add(el);
+        }
+        for (const el of ready.has(doc.body) ? [doc.body] : compactRoots(ready)) {
+            restamp(el);   // Known shapes still update in the observer callback, before paint.
+            roots.add(el);
+        }
+        if (roots.size && !timer && !frame) timer = host.setTimeout(measure, 300);
     };
+    const queue = node => queueMany([node]);
     // Drawers and popups open by class/style changes, so attribute changes re-check that subtree.
     const observer = new host.MutationObserver(records => {
+        const pending = new Set();
         for (const r of records) {
-            if (r.attributeName === 'data-generating') { if (!doc.body.dataset.generating) { const held = [...waiting]; waiting.clear(); held.forEach(queue); } continue; }
-            if (r.type === 'childList') r.addedNodes.forEach(queue); else queue(r.target);
+            if (r.attributeName === 'data-generating') { if (!doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
+            if (r.type === 'childList') r.addedNodes.forEach(node => pending.add(node)); else pending.add(r.target);
         }
+        queueMany(pending);
     });
     observer.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'open', 'data-generating'] });
     const resize = () => queue(doc.body);

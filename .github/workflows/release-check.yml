@@ -34,6 +34,8 @@ jobs:
           node tools/tests/settings-render-layout.mjs .
           node tools/tests/bookmark-search-lifecycle.mjs .
           node tools/tests/prompt-persona.mjs .
+          node tools/tests/prompt-page-lifecycle.mjs .
+          node tools/tests/dom-work-batches.mjs .
           node tools/tests/fruit-content-gap.mjs .
           node tools/tests/wordmask.mjs .
           node tools/tests/promptbind.mjs .

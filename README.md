@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.5/blue-lemonade-7.5.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.6/blue-lemonade-7.5.6.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.5.5 · 최신 업데이트</summary>
+<summary>7.5.6 · 최신 업데이트</summary>
+
+- 한글화 패널에서 번역 중 창을 닫아도, 번역이 끝나면 숨은 항목과 이벤트를 정리해요. 다시 열면 선택·검색·스크롤과 번역 결과를 이어 볼 수 있어요.
+- 자료를 불러오는 동안 창을 닫으면 숨은 목록을 새로 그리지 않아요. 데이터는 보관하고 다시 열 때 표시해요.
+- 버튼 모양 검사에서 한꺼번에 바뀐 부모·자식 영역을 중복해서 훑지 않아요. 이미 확인한 모양은 전처럼 화면에 그리기 전에 바로 적용하고, 생성 중인 메시지는 끝난 뒤 검사해요.
+
+</details>
+
+<details>
+<summary>7.5.5 · 버튼 모양 유지</summary>
 
 - 둥근 단추를 각지게 바꾸는 처리(테마 모양)가 목록을 통째로 다시 그리는 확장에서 새 단추를 0.3초 늦게 잡아, 누를 때마다 탭 · 칩이 둥글었다 각졌다 하며 흔들려 보이던 것을 고쳤어요. 한 번 본 생김새의 단추는 그리기 전에 바로 맞춰요. 처음 보는 단추는 전처럼 다음 프레임에 재요.
 

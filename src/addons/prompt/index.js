@@ -632,8 +632,10 @@ function requestStop() {
 // after the panel had been used. Closing now drops the rendered rows; `items`
 // stays in JS memory so reopening re-renders without touching the source.
 const PAGE_HOOKS = [];
-function sleepPages() { for (const h of PAGE_HOOKS) { try { h.sleep(); } catch (e) { console.warn(`[${EXT}] page sleep failed`, e); } } }
-function wakePages()  { for (const h of PAGE_HOOKS) { try { h.wake();  } catch (e) { console.warn(`[${EXT}] page wake failed`, e); } } }
+let pagesAwake = false;
+function sleepPages() { pagesAwake = false; for (const h of PAGE_HOOKS) { try { h.sleep(); } catch (e) { console.warn(`[${EXT}] page sleep failed`, e); } } }
+function wakePages()  { pagesAwake = true; for (const h of PAGE_HOOKS) { try { h.wake();  } catch (e) { console.warn(`[${EXT}] page wake failed`, e); } } }
+function releaseIdlePages() { if (!isBusy && !pagesAwake) sleepPages(); }
 
 // ── Connection-profile plumbing ───────────────────────────────────────
 const usingStProfile = () => cfg().connectionMode === 'profile';
@@ -3759,9 +3761,17 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     // full reload).
     // 새로 그리기가 시작되면 앞의 조각 그리기는 멈춘다 (겹치면 행이 두 번 붙었다)
     let renderSeq = 0;
+    let lastScrollTop = 0, lastPageScrollTop = 0;
     const renderList = (snap) => {
         const token = ++renderSeq;
+        if (!snap) { lastScrollTop = 0; lastPageScrollTop = 0; }
         list.innerHTML = '';
+        // A pending load/import may finish after the panel closed. Keep its data,
+        // and build rows only when the panel becomes visible again.
+        if (!pagesAwake) {
+            dormant = snap || { selected: new Set(), search: '', scrollTop: 0 };
+            return;
+        }
         let i = 0;
         const renderChunk = () => {
             if (token !== renderSeq) return;
@@ -3787,7 +3797,12 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                 }
                 updateSelectedCount(page);
                 applyEyeMode();
-                if (snap?.scrollTop && scrollEl) scrollEl.scrollTop = snap.scrollTop;
+                if (snap) {
+                    lastScrollTop = snap.scrollTop || 0;
+                    lastPageScrollTop = snap.pageScrollTop || 0;
+                    if (lastScrollTop && scrollEl) scrollEl.scrollTop = lastScrollTop;
+                    if (lastPageScrollTop) page.scrollTop = lastPageScrollTop;
+                }
             }
         };
         renderChunk();
@@ -3797,6 +3812,14 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     // sleep() drops the rendered rows out of ST's document; wake() rebuilds
     // them from `items` and restores selection, search and scroll position.
     const scrollEl = page.querySelector('.pt-page-scroll');
+    // Hidden scroll containers report zero. Remember visible scroll events so
+    // finishing a background translation can release rows without losing place.
+    scrollEl?.addEventListener('scroll', () => {
+        if (pagesAwake && page.classList.contains('active')) lastScrollTop = scrollEl.scrollTop;
+    }, { passive: true });
+    page.addEventListener('scroll', () => {
+        if (pagesAwake && page.classList.contains('active')) lastPageScrollTop = page.scrollTop;
+    }, { passive: true });
     let dormant = null;   // snapshot while asleep, null while awake
     PAGE_HOOKS.push({
         sleep() {
@@ -3806,7 +3829,8 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
             dormant = {
                 selected: new Set([...list.querySelectorAll('.pt-block-item.selected')].map(el => el.dataset.id)),
                 search: searchEl?.value || '',
-                scrollTop: scrollEl?.scrollTop || 0,
+                scrollTop: lastScrollTop,
+                pageScrollTop: lastPageScrollTop,
             };
             clearTimeout(searchTimeout);
             renderSeq++;
@@ -3977,7 +4001,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
 
     // 이 탭의 번역이 도는 동안은 다른 소스를 불러오지 않는다 — 도는 번역이 같은 id 의 새 행에 결과를 써서 화면이 섞였다
     let pageRunning = false;
-    const runHere = async (job) => { pageRunning = true; try { return await job(); } finally { pageRunning = false; } };
+    const runHere = async (job) => { pageRunning = true; try { return await job(); } finally { pageRunning = false; releaseIdlePages(); } };
     let loadSeq = 0;
     page.querySelector(`#${idPfx}-load`).addEventListener('click', async () => {
         if (pageRunning) { if (typeof toastr !== 'undefined') toastr.info('번역이 끝나면 불러올 수 있어요', '', { preventDuplicates: true }); return; }
@@ -4991,7 +5015,7 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
     let regexOwnsRequest=false;
     installRegexPage({doc:PDOC,cfg,save:saveSettingsDebounced,
         list:async()=>{const module=await import(new URL('../../../../../../extensions/regex/engine.js',import.meta.url).href);return module.getRegexScripts({allowedOnly:false});},
-        translate:async(prompt)=>{if(isBusy)throw Error('다른 번역이 진행 중이에요. 완료 후 다시 시도해 주세요.');isBusy=true;regexOwnsRequest=true;stopReq=false;try{return await runCompletion([{role:'user',content:prompt}]);}finally{isBusy=false;regexOwnsRequest=false;}},
+        translate:async(prompt)=>{if(isBusy)throw Error('다른 번역이 진행 중이에요. 완료 후 다시 시도해 주세요.');isBusy=true;regexOwnsRequest=true;stopReq=false;try{return await runCompletion([{role:'user',content:prompt}]);}finally{isBusy=false;regexOwnsRequest=false;releaseIdlePages();}},
         cancel:()=>{if(regexOwnsRequest)requestStop();},
     });
     installGuide({doc:PDOC, cfg, save:saveSettingsDebounced, openPanel, closePanel});

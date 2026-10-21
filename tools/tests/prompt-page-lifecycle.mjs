@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const source=fs.readFileSync(path.resolve(process.argv[2]||'.','src/addons/prompt/index.js'),'utf8');
+function section(start,end){const a=source.indexOf(start),b=source.indexOf(end,a);assert.ok(a>=0&&b>a);return source.slice(a,b)}
+function setup(){
+ const frames=[],list={rows:[],get childElementCount(){return this.rows.length},set innerHTML(v){this.rows=[]},appendChild(f){this.rows.push(...f.rows)},querySelectorAll(selector){return selector.includes('.selected')?this.rows.filter(x=>x.classList.selected):this.rows}};
+ const scroll={scrollTop:77,addEventListener(k,fn){this.onScroll=fn}},search={value:'query'},context={console,Set,isBusy:false,pageRunning:false,searchTimeout:0,clearTimeout(){},items:Array.from({length:150},(_,i)=>({id:String(i)})),ns:'test',selectable:true,list,searchEl:search,page:{scrollTop:55,classList:{contains:()=>true},addEventListener(k,fn){this.onScroll=fn},querySelector:()=>scroll},PDOC:{createDocumentFragment:()=>({rows:[],appendChild(n){this.rows.push(n)}})},requestAnimationFrame:fn=>frames.push(fn),updateSelectedCount(){},applyEyeMode(){},applySearchFilter(q){context.filter=q},makeBlockItem:item=>({dataset:{id:item.id},classList:{add(){this.selected=true},contains(){return !!this.selected}},querySelector:()=>({checked:false})})};
+ vm.runInNewContext(section('const PAGE_HOOKS = [];','// ── Connection-profile plumbing')+'\n'+section('let renderSeq = 0;','    // ── Searchable dropdown')+'\n'+section('const runHere = async','    let loadSeq =')+'\nglobalThis.api={renderList,sleepPages,wakePages,releaseIdlePages,runHere};',context);
+ return{...context,context,api:context.api,flush(){while(frames.length)frames.shift()()}};
+}
+let passed=0;async function test(name,f){await f();passed++;console.log('ok',name)}
+await test('late load does not build hidden rows and renders data on reopening',()=>{const t=setup();t.api.renderList();t.flush();assert.equal(t.list.rows.length,0);t.api.wakePages();t.flush();assert.equal(t.list.rows.length,150)});
+await test('close during translation releases rows after completion and preserves selection',()=>{const t=setup();t.api.wakePages();t.api.renderList();t.flush();t.searchEl.value='query';t.page.querySelector().onScroll();t.page.onScroll();t.list.rows[1].classList.add('selected');t.context.isBusy=true;t.api.sleepPages();assert.equal(t.list.rows.length,150);t.context.isBusy=false;t.api.releaseIdlePages();assert.equal(t.list.rows.length,0);t.api.wakePages();t.flush();assert.equal(t.list.rows.length,150);assert.equal(t.list.rows[1].classList.selected,true);assert.equal(t.context.filter,'query');assert.equal(t.page.querySelector().scrollTop,77)});
+await test('reopening before translation completion keeps visible rows',()=>{const t=setup();t.api.wakePages();t.api.renderList();t.flush();t.context.isBusy=true;t.api.sleepPages();t.api.wakePages();t.context.isBusy=false;t.api.releaseIdlePages();assert.equal(t.list.rows.length,150)});
+await test('closing in the middle of chunked rendering cancels remaining frames',()=>{const t=setup();t.api.wakePages();t.api.renderList();assert.equal(t.list.rows.length,50);t.api.sleepPages();t.flush();assert.equal(t.list.rows.length,0);t.api.wakePages();t.flush();assert.equal(t.list.rows.length,150)});
+await test('a rejected job still releases idle hidden pages',async()=>{const t=setup();t.api.wakePages();t.api.renderList();t.flush();t.context.isBusy=true;t.api.sleepPages();await assert.rejects(t.api.runHere(async()=>{t.context.isBusy=false;throw Error('failure')}));assert.equal(t.context.pageRunning,false);assert.equal(t.list.rows.length,0)});
+await test('repeated open and close does not accumulate rows',()=>{const t=setup();t.api.renderList();for(let i=0;i<30;i++){t.api.wakePages();t.flush();assert.equal(t.list.rows.length,150);t.api.sleepPages();assert.equal(t.list.rows.length,0)}});
+console.log(`prompt page lifecycle: ${passed} passed`);
