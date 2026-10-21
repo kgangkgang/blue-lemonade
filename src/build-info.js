@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.5.4";
+export const BUILD_VERSION = "7.5.5";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:7fb16bad:d3e14ade",
+  "manifest.json": "365:c142090e:e42193e3",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -557,7 +557,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "298369:03443b28:9495d471",
+  "src/notice-data.js": "298809:3d6d0bbd:b9b5fd0b",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -650,7 +650,7 @@ export const FILE_HASHES = {
   "src/settings.js": "70977:dd9835f6:614d7984",
   "src/show-more-auto.js": "3516:57ba900f:9c30b70e",
   "src/splash.js": "19344:c97fc557:9dcea6a3",
-  "src/squared-buttons.js": "6272:84853370:f9e78d8d",
+  "src/squared-buttons.js": "7772:e1e4f767:7d850c73",
   "src/st-solid.js": "5312:22b0ac68:45060844",
   "src/storage-report.js": "8650:baf2c44a:a6ffc719",
   "src/stream-follow.js": "5049:55e57322:4b17c247",
@@ -687,5 +687,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1548417:3fef7a68:8f3719b4"
+  "style.css": "1548417:e71ba7a0:7d014b3f"
 };

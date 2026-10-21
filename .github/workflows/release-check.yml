@@ -147,6 +147,7 @@ jobs:
           node tools/tests/tts-extras.mjs .
           node tools/tests/tts-user-macro.mjs .
           node tools/tests/theme-update-753.mjs .
+          node tools/tests/squared-buttons-754.mjs .
           node tools/tests/tts-onboarding.mjs .
           node tools/tests/tts-paint.mjs .
           node tools/tests/tts-listen.mjs .

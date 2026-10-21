@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.4/blue-lemonade-7.5.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.5/blue-lemonade-7.5.5.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.5.4 · 최신 업데이트</summary>
+<summary>7.5.5 · 최신 업데이트</summary>
+
+- 둥근 단추를 각지게 바꾸는 처리(테마 모양)가 목록을 통째로 다시 그리는 확장에서 새 단추를 0.3초 늦게 잡아, 누를 때마다 탭 · 칩이 둥글었다 각졌다 하며 흔들려 보이던 것을 고쳤어요. 한 번 본 생김새의 단추는 그리기 전에 바로 맞춰요. 처음 보는 단추는 전처럼 다음 프레임에 재요.
+
+</details>
+
+<details>
+<summary>7.5.4 · 페르소나 번역 · 설정 화면 · 검색</summary>
 
 - 한글화 패널에 페르소나 탭을 더했어요. 이름·표시 제목·설명을 불러와 선택 번역하고, 복사·내보내기·원본 적용·되돌리기를 할 수 있어요. 원본 적용 전 백업과 저장 확인을 거치며 연결·주입 설정은 유지해요.
 - 설정의 입력칸과 선택 메뉴 글꼴·줄높이·높이·안쪽 여백을 맞췄어요. 빠른 설정 이름의 들여쓰기를 없애고, 손가락 화면에서는 입력칸 높이를 44px로 맞춰요.

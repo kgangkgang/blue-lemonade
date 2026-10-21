@@ -5,6 +5,15 @@ const ATTR = 'data-bl-squared';
 const CANDIDATES = 'button,a,summary,label,[role="button"],[role="tab"],[tabindex],.menu_button,.qr--button,[class*="btn"],[class*="chip"],[class*="tab"],[class*="pill"]';
 const SKIP_CLASS = /(switch|toggle|knob|dot|badge|spinner|progress|slider|avatar|thumb|count|indicator|scroll)/i;
 const SKIP_AREA = '#send_form,.mes_buttons,.swipe_left,.swipe_right,[data-bl-native-ext-colors]';
+// 7.5.4 상태를 나타내는 클래스는 생김새 열쇠에서 뺀다 (.on · .active · is-* 가 바뀌어도 같은 단추)
+const STATE_CLASS = /^(?:on|off|active|inactive|selected|current|open|closed|hidden|disabled|focus(?:ed)?|hover|pressed|checked|is-|has-|bl-)/;
+const SEEN_MAX = 400;
+/** 7.5.4 표시한 단추의 생김새 열쇠: 태그 + 상태 아닌 클래스(정렬). 같은 생김새의 새 요소는 재지 않고 바로 표시한다 */
+export function shapeKey(el) {
+    const cls = typeof el.className === 'string' ? el.className : '';
+    const tokens = cls.split(/\s+/).filter(t => t && !STATE_CLASS.test(t)).sort();
+    return `${el.tagName}|${tokens.join(' ')}`;
+}
 let stop = null;
 
 export function syncSquaredButtons(on) {
@@ -53,6 +62,14 @@ export function watchSquaredButtons(doc, host) {
     style.textContent = `[${ATTR}]{border-radius:var(--bl-r-btn,8px)!important}`;
     (doc.head || doc.documentElement).append(style);
     const roots = new Set(), waiting = new Set();
+    // 7.5.4 한 번 표시한 생김새 — 목록을 innerHTML 로 다시 그리는 확장(탭 · 칩이 새 요소가 됨)에서 새 요소가 0.3초 동안 둥글게 보였다가 네모가 되던 것을 막는다
+    const seen = new Map();
+    const remember = el => { if (seen.size >= SEEN_MAX) seen.clear(); seen.set(shapeKey(el), true); };
+    const restamp = el => {
+        if (!seen.size) return;
+        const list = el.matches?.(CANDIDATES) ? [el, ...el.querySelectorAll(CANDIDATES)] : el.querySelectorAll?.(CANDIDATES) || [];
+        for (const c of list) if (seen.has(shapeKey(c)) && !cheapSkip(c, host)) c.setAttribute(ATTR, '');
+    };
     let timer = 0, frame = 0, stopped = false;
     // Measure every candidate first, then mark: marking between reads re-dirtied style and forced one recalc per button.
     function scan(root, found) {
@@ -73,7 +90,7 @@ export function watchSquaredButtons(doc, host) {
         roots.clear();
         const found = [];
         for (const root of list) scan(root, found);
-        for (const el of found) el.setAttribute(ATTR, '');
+        for (const el of found) { el.setAttribute(ATTR, ''); remember(el); }
     }
     const queue = node => {
         const el = node?.nodeType === 1 ? node : node?.parentElement;
@@ -83,6 +100,7 @@ export function watchSquaredButtons(doc, host) {
         if (doc.body.dataset.generating && el.closest?.('#chat')) { waiting.add(el.closest('.mes') || el); return; }
         // A closed drawer shows nothing; opening it changes its class, which re-checks the whole drawer.
         if (el.closest?.('.drawer-content.closedDrawer')) return;
+        restamp(el);   // 7.5.4 아는 생김새는 그리기 전에 바로 (잰 적 없는 것은 아래 타이머 → 프레임에서)
         roots.add(el);
         if (!timer && !frame) timer = host.setTimeout(measure, 300);
     };
