@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.0/blue-lemonade-7.6.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.1/blue-lemonade-7.6.1.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.6.0 · 최신 업데이트</summary>
+<summary>7.6.1 · 최신 업데이트</summary>
+
+- 캐릭터 에셋 설정을 닫자마자 다시 열어도 새 창이 사라지지 않아요. 이전 창의 정리를 먼저 끝내고, 늦게 온 닫기 이벤트가 새 창을 건드리지 않게 했어요.
+- 에셋 창을 반복해서 열고 닫아도 설정 서랍과 입력 상태를 원래 자리로 돌려놓아요.
+
+</details>
+
+<details>
+<summary>7.6.0 · 메모와 모델 목록 조작</summary>
 
 - 메모 검색에서 카드마다 전체 목록을 반복 조회하던 처리를 줄였어요. 이름 별칭·태그·폴더 안 메모 검색은 그대로 유지해요.
 - 모델 목록의 위로·아래로·이름 고치기·지우기를 키보드로도 누를 수 있어요. 맨 위·맨 아래에서 이동할 수 없는 버튼은 비활성으로 표시해요. 모바일 버튼은 44px로 키우고 모델 이름 아래에 배치해요.

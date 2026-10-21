@@ -170,30 +170,36 @@ async function boot() {
 
 
 // One persistent settings drawer; returning it preserves controls and listeners.
-let dialog = null;
+let dialog = null, finishDialog = null;
 export async function openPanel() {
     await ready;
     await ensurePanel?.();
     if (!drawer || dialog?.open) return;
+    finishDialog?.();
     const previous = document.activeElement;
     const anchor = document.createComment('character assets settings');
     drawer.before(anchor);
     const content = drawer.querySelector('.inline-drawer-content');
     const display = content.style.display;
     content.style.display = 'block';
-    dialog = document.createElement('dialog');
+    const opened = dialog = document.createElement('dialog');
     dialog.className = 'bl-assets-dialog';
     dialog.setAttribute('aria-label', TITLE);
     dialog.innerHTML = `<header><b><i class="fa-solid fa-images" aria-hidden="true"></i> 캐릭터 에셋 <span class="ext-version">v${VERSION}</span></b><button type="button" aria-label="캐릭터 에셋 닫기">×</button></header><div class="bl-assets-body"></div>`;
     document.body.append(dialog);
     dialog.querySelector('.bl-assets-body').append(drawer);
-    dialog.querySelector('header button').onclick = () => dialog.close();
-    dialog.addEventListener('close', () => {
+    opened.querySelector('header button').onclick = () => opened.close();
+    let finished = false;
+    const finish = finishDialog = () => {
+        if (finished) return;
+        finished = true;
         content.style.display = display;
         anchor.replaceWith(drawer);
-        dialog.remove(); dialog = null;
+        opened.remove();
+        if (dialog === opened) { dialog = null; finishDialog = null; }
         if (previous?.isConnected) previous.focus();
-    }, {once:true});
+    };
+    opened.addEventListener('close', finish, {once:true});
     showThemeModal(dialog);
 }
 export function mountInline(host) {

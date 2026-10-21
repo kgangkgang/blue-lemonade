@@ -326,7 +326,7 @@ await test('판 · CI 등록', () => {
     const v = (rel, re) => (read(rel).match(re) || [])[1];
     assert.equal(v('src/addons/notes/version.js', /NOTES_VERSION = '([\d.]+)'/), '1.3.7');
     assert.equal(v('src/addons/translator/manifest.json', /"version": "([\d.]+)"/), '3.0.1');   // 7.5.1
-    assert.equal(v('src/addons/assets/state.js', /VERSION = '([\d.]+)'/), '1.7.4');   // 7.0.7
+    assert.equal(v('src/addons/assets/state.js', /VERSION = '([\d.]+)'/), '1.7.5');   // 7.0.7
     assert.equal(v('src/addons/prompt/manifest.json', /"version": "([\d.]+)"/), '1.3.5');   // 7.5.4 페르소나
     assert.equal(v('src/addons/rewrite/index.js', /const VERSION = '([\d.]+)'/), '2.1.8');   // 7.1.5
     assert.equal(v('src/addons/direction/index.js', /const VERSION = '([\d.]+)'/), '1.3.4');   // 7.4.5 깃털 테두리 고정 굵기

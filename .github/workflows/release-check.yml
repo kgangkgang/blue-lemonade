@@ -39,6 +39,7 @@ jobs:
           node tools/tests/prompt-memory-import.mjs .
           node tools/tests/models-add-race.mjs .
           node tools/tests/notes-search-index.mjs .
+          node tools/tests/assets-dialog-lifecycle.mjs .
           node tools/tests/dom-work-batches.mjs .
           node tools/tests/fruit-content-gap.mjs .
           node tools/tests/wordmask.mjs .
