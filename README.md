@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.5/blue-lemonade-7.6.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.6/blue-lemonade-7.6.6.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.6.5 · 최신 업데이트</summary>
+<summary>7.6.6 · 최신 업데이트</summary>
+
+- 날씨 칸의 밤비·봄비·가을비처럼 붙여 쓴 비 표현도 감지해요. 밤비를 밤으로만 읽어 별 효과만 나오던 문제를 수정했어요.
+- 비나 눈이 오는 밤에는 맑은 밤의 별 효과를 함께 켜지 않아요. 밤비행·비밀 같은 다른 단어를 비로 잘못 읽지 않는 검사도 유지했어요.
+
+</details>
+
+<details>
+<summary>7.6.5 · 용어·말투 안내와 과일 아이콘</summary>
 
 - 용어·말투를 가져와 저장하는 동안 채팅을 바꾸면, 완료 안내도 요청했던 채팅의 저장 결과로 표시해요. 새로 열린 채팅에 적용됐다고 안내하지 않아요.
 - 큰 용어·말투 목록은 화면에 보이는 항목의 표시 문구만 준비해요. 더 보기와 항목 선택은 그대로 유지하면서 보이지 않는 항목의 반복 계산을 줄였어요.

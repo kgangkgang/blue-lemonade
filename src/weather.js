@@ -22,7 +22,9 @@ const SNOW = /(?:^|[\s,·/(~→-])(?:눈(?!부|\s*이?\s*부[시신실셔셨심]
 // 6.8.7 「비」는 뒤가 끝 · 빈칸 · 문장부호 · 조사(가 · 는 · 를 · 와 · 에 · 로 · 마저 …) · 날씨 말(내리 · 오 · 바람 · 구름 · 방울 …)일 때만 비 —
 //       금지 목록(비밀 · 비행 …)으로는 「비스듬히 쏟아지는 햇살」 · 「창으로 비치는」 · 「비추는」 · 「비로소」 같은 말이 끝없이 비로 걸렸다 (사용자 10-16: 맑은 날 배경에 비)
 const KO_END = String.raw`(?:$|[\s,.;:·/)~!?\]」』…，。、])`;
-const RAIN = new RegExp(String.raw`(?:^|[\s,·/(~→-])(?:비(?=${KO_END}|(?:[가는도를와의에로만]|마저|까지|조차|처럼|보다|라도|랑|하고|뿐)(?:${KO_END}|내|오|와|쏟|퍼|그|올|온|흩|뿌|섞|젖|맞)|바람|구름|안개|냄새|소리|방울|줄기|내리|내린|내려|내림|오는|온다|옴|왔|와서|그치|그친|그침|그쳤|맞)|이슬비|가랑비|보슬비|안개비|장대비|여우비|소낙비|소[나]기|폭우|호우|장마|빗|폭풍우|뇌우)|rain|drizzl|shower|storm|thunder|downpour|monsoon|sun\s*shower|雨(?!刷|伞|傘|衣|靴)|雷|梅雨|夕立`, 'i');
+const KO_RAIN_END = String.raw`(?=${KO_END}|(?:[가는도를와의에로만]|마저|까지|조차|처럼|보다|라도|랑|하고|뿐)(?:${KO_END}|내|오|와|쏟|퍼|그|올|온|흩|뿌|섞|젖|맞)|바람|구름|안개|냄새|소리|방울|줄기|내리|내린|내려|내림|오는|온다|옴|왔|와서|그치|그친|그침|그쳤|맞)`;
+// Compound rain words need the same ending guard: 밤비 is rain, 밤비행 is not.
+const RAIN = new RegExp(String.raw`(?:^|[\s,·/(~→-])(?:(?:비|밤비|봄비|여름비|가을비|겨울비|찬비|단비|궂은비)${KO_RAIN_END}|이슬비|가랑비|보슬비|안개비|장대비|여우비|소낙비|소[나]기|폭우|호우|장마|빗|폭풍우|뇌우)|rain|drizzl|shower|storm|thunder|downpour|monsoon|sun\s*shower|雨(?!刷|伞|傘|衣|靴)|雷|梅雨|夕立`, 'i');
 // 영어의 rain · shower · storm 이 들어 있지만 비가 아닌 말 — 비를 보기 전에 지운다 (Rainbow · Snowstorm · snow showers · meteor shower · sandstorm)
 const NOT_RAIN = /rainbows?|snow\s*(?:storms?|showers?)|meteor\s*showers?|(?:sand|dust)\s*storms?/gi;
 // 바람: window · August 의 wind · gust 는 빼고 (crosswind · whirlwind 처럼 붙여 쓴 바람은 그대로)
@@ -51,7 +53,7 @@ export function detectWeatherAll(text) {
     const outdoors = !INDOOR.test(value) || /햇[살빛볕]|sunlight|sunshine|sunlit/i.test(value); // "창으로 드는 햇살"은 실내라도 켠다
     const dusk = DUSK.test(value);
     if (outdoors && !NIGHT.test(value) && !GLOOM.test(value) && (dusk || SUN.test(value) || /여우비|sun\s*shower/i.test(value))) found.push('sun');
-    if (outdoors && NIGHT.test(value) && !GLOOM.test(value)) found.push('star'); // 맑은 밤 · 밤 → 별
+    if (outdoors && NIGHT.test(value) && !GLOOM.test(value) && !found.includes('rain') && !found.includes('snow')) found.push('star'); // 비·눈이 오는 밤은 별 대신 강수를 표시한다.
     if (BREEZE.test(value.replace(NOT_BREEZE, ' '))) found.push('breeze');
     // all: 트래커 '제외할 날씨'는 자르기 전에 걸러야 셋째 효과가 빈자리를 채운다 (plan)
     return { modes: found.slice(0, 2), all: found, warm: dusk };

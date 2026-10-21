@@ -63,4 +63,17 @@ check('words that only start with 비 are not rain', () => {
         '날씨: 비구름이 낀 하늘', '날씨: 비에 젖은 거리', '날씨: 비가내리는 밤', '날씨: 비, 14℃', '날씨: 흐리고 비', '날씨: 비와 안개', '날씨: 빗방울', '날씨: 비오는 날'])
         assert.ok(modes(text).includes('rain'), text);
 });
+check('night and seasonal rain compounds are precipitation, not stars', () => {
+    for (const line of ['차가운 밤비가 내리기 시작한다, 11°C 바깥, 26°C 차 안.', '밤비', '봄비가 내린다', '여름비', '가을비는 내리고', '겨울비가 내림', '찬비가 쏟아짐', '단비가 내린다', '궂은비']) {
+        assert.deepEqual(modes('날씨: ' + line), ['rain'], line);
+    }
+});
+check('compound guards still exclude words that merely contain 비', () => {
+    for (const line of ['밤비행 중', '봄비타민', '단비율', '준비', '비밀', '비스듬한 햇살']) assert.ok(!modes('날씨: ' + line).includes('rain'), line);
+});
+check('night precipitation does not also select clear-sky stars', () => {
+    assert.deepEqual(modes('날씨: 비가 내리는 밤'), ['rain']);
+    assert.deepEqual(modes('날씨: 눈이 내리는 밤'), ['snow']);
+    assert.deepEqual(modes('날씨: 맑은 밤'), ['star']);
+});
 console.log(`weather-status: ${passed} passed, 0 failed`);
