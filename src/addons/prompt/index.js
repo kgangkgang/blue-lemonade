@@ -23,6 +23,7 @@ function controlsHelp(kind) {
 }
 import { installLocalizationPage } from './localization-ui.js';
 import { forEachLimited } from './cache-loading.js';
+import { validateTranslationMemory } from './translation-memory.js';
 import { createTranslationProgress, translationSummary, renderTranslationResult } from './translation-progress.js';
 import { isTransientFailure, responseError } from './request-errors.js';
 import { completionText } from './response-text.js';
@@ -3761,6 +3762,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     // full reload).
     // 새로 그리기가 시작되면 앞의 조각 그리기는 멈춘다 (겹치면 행이 두 번 붙었다)
     let renderSeq = 0;
+    const onItemEdited = () => { pageRevision++; applyEyeMode(); };
     let lastScrollTop = 0, lastPageScrollTop = 0;
     const renderList = (snap) => {
         const token = ++renderSeq;
@@ -3776,7 +3778,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         const renderChunk = () => {
             if (token !== renderSeq) return;
             const end = Math.min(i + 50, items.length), frag = PDOC.createDocumentFragment();
-            for (; i < end; i++) frag.appendChild(makeBlockItem(items[i], ns, selectable, applyEyeMode));
+            for (; i < end; i++) frag.appendChild(makeBlockItem(items[i], ns, selectable, onItemEdited));
             list.appendChild(frag);
             if (i < items.length) requestAnimationFrame(renderChunk);
             else {
@@ -4000,8 +4002,8 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     }
 
     // 이 탭의 번역이 도는 동안은 다른 소스를 불러오지 않는다 — 도는 번역이 같은 id 의 새 행에 결과를 써서 화면이 섞였다
-    let pageRunning = false;
-    const runHere = async (job) => { pageRunning = true; try { return await job(); } finally { pageRunning = false; releaseIdlePages(); } };
+    let pageRunning = false, pageRevision = 0;
+    const runHere = async (job) => { pageRevision++; pageRunning = true; try { return await job(); } finally { pageRunning = false; releaseIdlePages(); } };
     let loadSeq = 0;
     page.querySelector(`#${idPfx}-load`).addEventListener('click', async () => {
         if (pageRunning) { if (typeof toastr !== 'undefined') toastr.info('번역이 끝나면 불러올 수 있어요', '', { preventDuplicates: true }); return; }
@@ -4133,6 +4135,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         const targetIds = selectedIds.length ? selectedIds : items.map(i=>i.id);
         const scope = selectedIds.length ? `선택한 ${selectedIds.length}개 항목` : `로드된 전체 ${items.length}개 항목`;
         if(!await ask(`${scope}의 번역 캐시를 비울까요?`, { ok: '비우기', cancel: '취소', danger: true })) return;
+        pageRevision++;
         clearNS(ns, targetIds);
         applyEyeMode();
         updateCacheStatsUI();
@@ -4315,6 +4318,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     // (or the body already verified). A mismatch loses part of the import — it
     // never writes the wrong translation.
     const tmFileInput = page.querySelector(`#${idPfx}-tmfile`);
+    let tmImportSeq = 0;
     function importTM() {
         if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('먼저 데이터를 로드하세요'); return; }
         tmFileInput?.click();
@@ -4339,18 +4343,17 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         const file = ev.target.files?.[0];
         ev.target.value = ''; // allow re-selecting the same file later
         if (!file) return;
+        const mine = ++tmImportSeq;
+        if (pageRunning) { if (typeof toastr !== 'undefined') toastr.info('번역이 끝난 뒤 번역 메모리를 가져와 주세요.'); return; }
+        const target = { items, ns, loadSeq, pageRevision };
+        const current = () => mine === tmImportSeq && items === target.items && ns === target.ns && loadSeq === target.loadSeq && pageRevision === target.pageRevision;
         try {
             const text = await file.text();
-            const data = JSON.parse(text);
-            if (!data || data.type !== 'prompt-panel-tm' || !Array.isArray(data.entries)) {
-                throw new Error('번역 메모리 파일 형식이 아닙니다');
+            if (!current()) {
+                if (mine === tmImportSeq && typeof toastr !== 'undefined') toastr.info('불러온 자료나 번역 상태가 바뀌어 가져오기를 멈췄어요. 원하는 자료에서 다시 가져와 주세요.');
+                return;
             }
-            // A memory exported from a different source type can only ever
-            // mismatch here — say so instead of reporting "0개 매칭".
-            if (data.kind && data.kind !== kind) {
-                const nameOf = k => k === 'wi' ? '월드인포' : k === 'char' ? '봇카드' : k === 'persona' ? '페르소나' : '프리셋';
-                throw new Error(`${nameOf(data.kind)} 번역 메모리입니다 (지금 탭은 ${nameOf(kind)})`);
-            }
+            const data = validateTranslationMemory(JSON.parse(text), kind);
             const byId = new Map(), byContent = new Map(), byName = new Map();
             const dupContent = new Set(), dupName = new Set();
             for (const e of data.entries) {
@@ -4425,6 +4428,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                 else toastr.warning(`매칭되는 항목이 없습니다 (${skipped}개 미매칭)${staleNote}${dupNote}`);
             }
         } catch (err) {
+            if (!current()) return;
             console.error(`[${EXT}] TM import failed`, err);
             if (typeof toastr!=='undefined') toastr.error('번역 메모리 가져오기 실패: ' + (err?.message || err));
         }

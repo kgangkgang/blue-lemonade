@@ -232,7 +232,7 @@ async function onAdd() {
     const models = modelsOf(sourceId);
     if (models.includes(name)) return;
     save(sourceId, [...models, name]);
-    input.value = '';
+    if (currentId === sourceId && String(input.value ?? '').trim() === name) input.value = '';
     toast('success', `${name}을(를) 등록했어요.`);
 }
 

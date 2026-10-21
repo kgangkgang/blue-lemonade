@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.5.8";
+export const BUILD_VERSION = "7.5.9";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:b4734191:971030ce",
+  "manifest.json": "365:fc47bde2:b82a097e",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -114,10 +114,10 @@ export const FILE_HASHES = {
   "src/addons/models/inject.js": "20041:29f641a5:d8c53265",
   "src/addons/models/offer-core.js": "3406:577d4544:24bde209",
   "src/addons/models/offer.js": "6720:292ab2f5:b01ae449",
-  "src/addons/models/panel.js": "14814:77639787:590aabc1",
+  "src/addons/models/panel.js": "14887:804ac1b4:20e94136",
   "src/addons/models/sources.js": "5251:0e71e325:8b5932b3",
-  "src/addons/models/state.js": "5376:4ec328c0:1933adee",
-  "src/addons/models/style.css": "4698:b4070bc4:131e1771",
+  "src/addons/models/state.js": "5376:16a6fe71:4d6017a8",
+  "src/addons/models/style.css": "4698:88846b67:c1fb24bd",
   "src/addons/modelswitch/discover.js": "26591:c872021b:6ffcc803",
   "src/addons/modelswitch/fallback-field.css": "1425:c6854036:608bca6a",
   "src/addons/modelswitch/fallback-field.js": "9086:23c4e7a6:2f385891",
@@ -192,16 +192,17 @@ export const FILE_HASHES = {
   "src/addons/prompt/cache-loading.js": "384:766f047d:4f5c117c",
   "src/addons/prompt/connection.js": "11622:6c30609d:ea863f81",
   "src/addons/prompt/current-connection.js": "3055:67fc264b:5c2798bc",
-  "src/addons/prompt/guide.js": "24384:564d0cf6:4ffcadef",
-  "src/addons/prompt/index.js": "277323:5811c066:9f95beb4",
+  "src/addons/prompt/guide.js": "24384:2f539b75:9c789293",
+  "src/addons/prompt/index.js": "277650:10abbd98:ed662eac",
   "src/addons/prompt/localization-ui.js": "5295:e989b64d:b49f0195",
   "src/addons/prompt/persona-data.js": "4579:b96d5db9:3b8d8ae3",
   "src/addons/prompt/persona.js": "1743:3ad25141:4e82525d",
   "src/addons/prompt/regex-ui.js": "7093:a75326ea:abbcc7dd",
   "src/addons/prompt/request-errors.js": "1558:9bebebff:d7f4f644",
   "src/addons/prompt/response-text.js": "2596:b1382aa2:260a2b4b",
-  "src/addons/prompt/settings-ui.js": "8501:ab144eb5:64124bb8",
+  "src/addons/prompt/settings-ui.js": "8501:8fb07d92:c9a7cc4d",
   "src/addons/prompt/style.css": "73560:22e659da:43bc5535",
+  "src/addons/prompt/translation-memory.js": "1476:261fa1b4:97939765",
   "src/addons/prompt/translation-progress.js": "4714:8084427b:1653c2ea",
   "src/addons/regexlink/engine.js": "10242:ac39044e:37e62e6f",
   "src/addons/regexlink/index.js": "17731:6f6da0ec:3a93d356",
@@ -557,7 +558,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "300217:96cf653b:63862a80",
+  "src/notice-data.js": "300878:f93371a5:3498653a",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -687,5 +688,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1548417:3efede74:e94aa3b1"
+  "style.css": "1548417:951daf24:4f5924e8"
 };

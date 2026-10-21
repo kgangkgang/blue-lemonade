@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.8/blue-lemonade-7.5.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.9/blue-lemonade-7.5.9.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.5.8 · 최신 업데이트</summary>
+<summary>7.5.9 · 최신 업데이트</summary>
+
+- 번역 메모리 파일을 읽는 동안 자료를 바꾸거나 번역·직접 편집·캐시 비우기를 하면, 늦게 끝난 가져오기가 그 결과를 덮지 않아요. 파일을 연달아 가져올 때도 마지막에 고른 파일만 적용해요.
+- 번역 메모리 파일 전체의 형식을 확인한 뒤 캐시에 반영해요. 뒤쪽 항목이 잘못되어 실패했는데 앞쪽 번역만 저장되던 문제를 고쳤어요.
+- 모델 등록의 기본 목록 확인이 늦게 끝나도, 기다리는 동안 새로 쓴 이름이나 다른 공급자의 입력값을 지우지 않아요.
+
+</details>
+
+<details>
+<summary>7.5.8 · 진행 집계 최적화</summary>
 
 - 한글화 패널에서 캐시를 많이 다시 읽을 때 진행 표시가 매 항목마다 완료 내역을 전부 다시 세지 않아요. 성공·재사용·실패·중단 수를 한 번씩만 집계해 큰 프리셋·월드인포의 반복 계산을 줄였어요.
 - 실패한 이름과 이유, 실패 항목만 재시도, 중단 후 남은 항목 수와 이전 결과 보존은 그대로예요. 번역 요청 수나 캐시 내용은 바꾸지 않아요.
