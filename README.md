@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.6/blue-lemonade-7.5.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.7/blue-lemonade-7.5.7.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.5.6 · 최신 업데이트</summary>
+<summary>7.5.7 · 최신 업데이트</summary>
+
+- 업데이트 내역의 날짜를 실제 공개 시각(한국 시간) 기준으로 바로잡았어요. 7.5.2 · 7.5.3 · 7.5.5 는 10월 21일이에요. 기능 변화는 없어요.
+
+</details>
+
+<details>
+<summary>7.5.6 · 닫힌 패널 정리 · 버튼 검사 중복 제거</summary>
 
 - 한글화 패널에서 번역 중 창을 닫아도, 번역이 끝나면 숨은 항목과 이벤트를 정리해요. 다시 열면 선택·검색·스크롤과 번역 결과를 이어 볼 수 있어요.
 - 자료를 불러오는 동안 창을 닫으면 숨은 목록을 새로 그리지 않아요. 데이터는 보관하고 다시 열 때 표시해요.
