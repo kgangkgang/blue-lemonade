@@ -199,8 +199,8 @@ await test('설정 저장: viewMode 기본 all, 모르는 값은 all 로, 고른
 });
 
 await test('판 · CI: 북마크 1.7.1 (JS = CSS) · 이 시험이 release-check.yml 에', () => {
-    assert.match(read('src/addons/bookmarks/state.js'), /export const VERSION = '1\.7\.2';/);
-    assert.match(read('src/addons/bookmarks/style.css'), /--cg-css-version: "1\.7\.2";/);
+    assert.match(read('src/addons/bookmarks/state.js'), /export const VERSION = '1\.7\.3';/);
+    assert.match(read('src/addons/bookmarks/style.css'), /--cg-css-version: "1\.7\.3";/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/bookmark-view-727\.mjs \./);
 });
 

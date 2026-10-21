@@ -61,6 +61,27 @@ export function hasImage(fav, src, origin = '') {
     return !!key && imageList(fav).some(item => imagePathKey(item.src, origin) === key);
 }
 
+/** Read-only image membership for one synchronous render; build again after data changes. */
+export function createImageLookup(favorites, { origin = '', base = origin + '/', indices = null } = {}) {
+    const byMessage = new Map();
+    const wanted = Array.isArray(indices) ? new Set(indices.map(Number).filter(n => Number.isInteger(n) && n >= 0).map(String)) : null;
+    for (const fav of wanted?.size === 0 ? [] : Array.isArray(favorites) ? favorites : []) {
+        if (!fav || fav.blOrphaned) continue;
+        const id = String(fav.messageId);
+        if (wanted && !wanted.has(id)) continue;
+        // bookmarkAt selects the first non-orphaned match, including one without images.
+        if (!byMessage.has(id)) byMessage.set(id, new Set(imageList(fav).map(item => imagePathKey(item.src, origin))));
+    }
+    return Object.freeze({
+        hasImage(index, src) {
+            const number = Number(index);
+            if (!Number.isInteger(number) || number < 0) return false;
+            const key = imagePathKey(safeImageSrc(src, base) || src, origin);
+            return !!key && !!byMessage.get(String(number))?.has(key);
+        },
+    });
+}
+
 /**
  * 북마크에 그림 하나를 붙인다 (fav 를 그 자리에서 고친다).
  * - 같은 주소가 이미 있으면 붙이지 않는다 (duplicate) — prompt 가 비어 있던 것은 채우고 changed 로 알린다

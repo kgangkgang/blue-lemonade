@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.6.1";
+export const BUILD_VERSION = "7.6.2";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:6e85eb4f:412c47bb",
+  "manifest.json": "365:d28336d6:f07b293c",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -38,15 +38,15 @@ export const FILE_HASHES = {
   "src/addons/bookmarks/excerpts.js": "14342:54e0c466:a2c509dc",
   "src/addons/bookmarks/frame-fit.js": "1005:b6748dd1:e0b3858c",
   "src/addons/bookmarks/image-viewer.js": "7563:cba465f0:57d5f887",
-  "src/addons/bookmarks/images.js": "6370:4d7fdecd:e2bba6d3",
-  "src/addons/bookmarks/index.js": "25047:e8f13345:59c0f0c0",
+  "src/addons/bookmarks/images.js": "7527:36a8baf2:78634ad1",
+  "src/addons/bookmarks/index.js": "25321:eae19441:20c9bfa3",
   "src/addons/bookmarks/panel.js": "72075:ea18c7c5:b615cf82",
   "src/addons/bookmarks/preview-guard.js": "2019:a2379d1e:e5daa71e",
   "src/addons/bookmarks/render.js": "19129:db760ceb:baeeaca2",
   "src/addons/bookmarks/selection-chip.js": "11448:6245e6e2:de33a404",
   "src/addons/bookmarks/settings-view.js": "20162:44a3fa1c:4c009a00",
-  "src/addons/bookmarks/state.js": "12602:c137449d:6b395590",
-  "src/addons/bookmarks/style.css": "95666:b7471d6e:6139b8e1",
+  "src/addons/bookmarks/state.js": "12602:39a3ca12:8d542d4f",
+  "src/addons/bookmarks/style.css": "95666:6de9953f:e00567ae",
   "src/addons/bookmarks/text-match.js": "1928:91c477ac:e2d8e11d",
   "src/addons/bookmarks/tile-masonry.js": "5198:e49b70c9:8dc67528",
   "src/addons/bookmarks/tracker-spacing.js": "1970:01692c05:416c0ef4",
@@ -558,7 +558,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "301756:d87b8e8c:9e4b4ca5",
+  "src/notice-data.js": "302211:e7cd24df:ddac2f4e",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -688,5 +688,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1548856:fdc53e76:58d1832f"
+  "style.css": "1548856:542fd8f3:03dea47e"
 };

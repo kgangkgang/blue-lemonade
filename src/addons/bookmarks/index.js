@@ -10,7 +10,7 @@ import { currentRecord, bookmarkAt, addBookmark, removeBookmark, syncAnchors, ad
 import { openNoteEditor, previewRecord, isPreviewing, exitPreview, abandonPreviewForGeneration } from './viewers.js';
 import { confirmSheet, hasOpenSheet } from './ui-kit.js';
 import { excerptList } from './excerpts.js';
-import { imageList, hasImage } from './images.js';
+import { imageList, hasImage, createImageLookup } from './images.js';
 import { safeImageSrc } from './render.js';
 import { startSelectionChip, hideSelectionChip } from './selection-chip.js';
 
@@ -446,6 +446,11 @@ globalThis[BRIDGE_KEY] = Object.freeze({
     hasImage(index, src) {
         const fav = bridgeFav(index);
         return !!fav && hasImage(fav, safeImageSrc(src) || src, location.origin);
+    },
+    imageSnapshot(indices = null) {
+        if (!bridgeEnabled()) return null;
+        const record = targetRecord();
+        return record ? createImageLookup(record.favorites, { origin: location.origin, base: document.baseURI, indices }) : null;
     },
     async add(index) {
         const fav = await addBookmark(bridgeRecord(), bridgeIndex(index));

@@ -40,6 +40,7 @@ jobs:
           node tools/tests/models-add-race.mjs .
           node tools/tests/notes-search-index.mjs .
           node tools/tests/assets-dialog-lifecycle.mjs .
+          node tools/tests/bookmark-image-lookup.mjs .
           node tools/tests/dom-work-batches.mjs .
           node tools/tests/fruit-content-gap.mjs .
           node tools/tests/wordmask.mjs .

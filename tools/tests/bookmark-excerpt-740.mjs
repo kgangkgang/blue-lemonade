@@ -30,7 +30,7 @@ await test('CSS: 위아래 여백 = max(기본, (최소 높이 − 한 줄)/2) �
     assert.match(css, /\.cg-root \.cg-excerpts \.cg-excerpt \{ min-height: var\(--cg-ex-min, 40px\); \}/);
     assert.match(css, /@media \(pointer: coarse\) \{[\s\S]{0,400}\.cg-root \.cg-excerpt \{ --cg-ex-min: 48px; \}/);
     assert.match(css, /--cg-ex-lift: max\(calc\(2px - var\(--cg-ex-padv, 10px\)\), calc\(\(var\(--cg-ex-line\) - var\(--cg-ex-btn\)\) \/ 2\)\);/);
-    assert.match(css, /--cg-css-version: "1\.7\.2";/);
+    assert.match(css, /--cg-css-version: "1\.7\.3";/);
 });
 
 for (const [label, opts] of [['폰 375 · 100%', { size: 16, touch: true, phone: true }], ['폰 375 · 130%', { size: 20.8, touch: true, phone: true }], ['PC 1440 · 100%', { size: 16, touch: false, phone: false }], ['PC 1440 · 130%', { size: 20.8, touch: false, phone: false }], ['폰 작은 글씨 14px', { size: 14, touch: true, phone: true }]]) {
