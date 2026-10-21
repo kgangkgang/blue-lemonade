@@ -17,13 +17,14 @@ function environment({kind='fruit',pendingRuntime=false}={}){
   const inputs=['fruit-style','fruit-heart','fruit','deus-qr','deus'].map(id=>({dataset:{promptScript:id},checked:state.enabled[id]===true,disabled:false}));
   const button={dataset:{promptOpen:kind},disabled:false,closest:()=>button};
   const status={textContent:''},events=new Map();
-  const box={dataset:{promptTools:kind},isConnected:true,querySelector:s=>s==='[data-prompt-open]'?button:status,querySelectorAll:()=>inputs,addEventListener:(type,fn)=>events.set(type,fn),removeEventListener:(type,fn)=>{if(events.get(type)===fn)events.delete(type)}};
+  const choice={value:'yes',disabled:false,hasAttribute:s=>s==='data-prompt-deus-icon'};
+  const box={dataset:{promptTools:kind},isConnected:true,querySelector:s=>s==='[data-prompt-open]'?button:s==='[data-prompt-deus-icon]'?choice:status,querySelectorAll:()=>inputs,addEventListener:(type,fn)=>events.set(type,fn),removeEventListener:(type,fn)=>{if(events.get(type)===fn)events.delete(type)}};
   const nodes=new Map();
   const runtime={subscribeScripts:fn=>{subscribers.add(fn);return()=>subscribers.delete(fn)},syncScripts:async()=>{calls.push('sync')},scriptStatus:()=> '사용 중'};
   const context={scriptSettings:()=>state,persistScripts:()=>{calls.push('save');return save()},legacyConflicts:()=>conflict?[{}]:[],addonsEnabled:s=>s.addons,themeEnabled:s=>s.theme,getSettings:()=>settings,leaveSettingsDialog:()=>calls.push('leave'),promptLinkMarkup:()=>'',fruitTypographyMarkup:()=>'',bindFruitTypography:()=>()=>{},document:{getElementById:id=>nodes.get(id)},runtimeReady:pendingRuntime?runtimeGate.promise:Promise.resolve(runtime),cleanName};
   vm.runInNewContext(source+'\nglobalThis.api={bindPromptTools,promptToolsMarkup,fruitPromptMarkup};',context);
   const cleanup=context.api.bindPromptTools({querySelector:()=>box});
-  return{state,settings,calls,inputs,button,status,box,events,nodes,context,runtime,subscribers,cleanup,saveGate,runtimeGate,
+  return{state,settings,calls,inputs,button,status,choice,box,events,nodes,context,runtime,subscribers,cleanup,saveGate,runtimeGate,
     gateSave(){save=()=>saveGate.promise},failSave(){save=()=>Promise.reject(Error('save failed'))},setConflict(){conflict=true},
     change(id,value){const input=inputs.find(x=>x.dataset.promptScript===id);input.checked=value;return events.get('change')?.({target:input})},open:()=>events.get('click')?.({target:button})};
 }
@@ -89,5 +90,23 @@ await check('a committed name is cleaned, saved through the verified script stor
 });
 await check('a failed name save rolls back to the previous name',async()=>{
   const e=environment({kind:'deus'});e.state.names={deus:'이전'};e.failSave();await e.events.get('change')({target:{dataset:{promptName:'deus'},value:'새 이름'}});assert.equal(e.state.names.deus,'이전');assert.equal(e.status.textContent,'save failed');e.cleanup();
+});
+await check('name display stays disabled when addon mode or the quick tool is unavailable',async()=>{
+  const e=environment({kind:'deus'});e.settings.addons=false;e.choice.value='no';await e.events.get('change')({target:e.choice});
+  assert.equal(e.choice.disabled,true);assert.equal(e.choice.value,'yes');assert.deepEqual(e.calls,[]);
+  e.settings.addons=true;e.state.enabled['deus-qr']=false;e.choice.value='no';await e.events.get('change')({target:e.choice});assert.equal(e.choice.disabled,true);assert.deepEqual(e.calls,[]);e.cleanup();
+});
+await check('name display prevents a second write until the first verified save finishes',async()=>{
+  const e=environment({kind:'deus'});e.gateSave();e.choice.value='no';const first=e.events.get('change')({target:e.choice});
+  assert.equal(e.choice.disabled,true);assert.ok(e.inputs.every(i=>i.disabled));
+  e.choice.value='yes';await e.events.get('change')({target:e.choice});assert.deepEqual(e.calls,['save']);assert.equal(e.choice.value,'no');
+  e.saveGate.resolve();await first;assert.equal(e.choice.disabled,false);assert.equal(e.state.deusIconWithName,false);e.cleanup();
+});
+await check('failed name-display persistence restores both the saved value and the visible selection',async()=>{
+  const e=environment({kind:'deus'});e.state.deusIconWithName=true;e.failSave();e.choice.value='no';await e.events.get('change')({target:e.choice});
+  assert.equal(e.state.deusIconWithName,true);assert.equal(e.choice.value,'yes');assert.equal(e.choice.disabled,false);assert.equal(e.status.textContent,'save failed');e.cleanup();
+});
+await check('name-display selection follows updates from another open settings panel',async()=>{
+  const e=environment({kind:'deus'});await new Promise(setImmediate);e.state.deusIconWithName=false;for(const paint of e.subscribers)paint();assert.equal(e.choice.value,'no');e.cleanup();
 });
 console.log(`prompt-tools: ${passed} passed`);

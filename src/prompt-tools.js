@@ -43,6 +43,7 @@ export function bindPromptTools(root){
         const state=scriptSettings(),settings=getSettings(),available=addonsEnabled(settings);
         for(const input of box.querySelectorAll('[data-prompt-script]')){input.checked=state.enabled[input.dataset.promptScript]===true;input.disabled=busy||!available;}
         for(const row of box.querySelectorAll('[data-prompt-name-row]')){const key=row.dataset?.promptNameRow;if(!NAMES[key])continue;row.hidden=state.enabled[NAMES[key][0]]!==true;const input=row.querySelector('input');if(!input)continue;input.disabled=busy||!available;if(document.activeElement!==input)input.value=cleanName(state.names?.[key]);}
+        const choice=box.querySelector('[data-prompt-deus-icon]');if(choice){choice.disabled=busy||!available||state.enabled['deus-qr']!==true;choice.value=state.deusIconWithName!==false?'yes':'no';}
         const button=box.querySelector('[data-prompt-open]');button.disabled=busy||!available||(button.dataset.promptOpen==='deus'&&!state.enabled['deus-qr']);
         if(!available)say('테마 → 기타 설정 → 사용 모드에서 내장 확장을 함께 사용하면 켤 수 있어요.');
         else if(state.enabled['fruit-style']&&box.dataset.promptTools==='fruit'&&!themeEnabled(settings))say('꾸미기는 블루레몬에이드 테마를 켜면 적용돼요.');
@@ -60,7 +61,16 @@ export function bindPromptTools(root){
         finally{busy=false;repaint();globalThis.__blueLemonadeDeusQuick_v1?.refreshName?.();}
     }
     async function change(event){
-        if(event.target?.hasAttribute?.('data-prompt-deus-icon')){const state=scriptSettings(),before=state.deusIconWithName;state.deusIconWithName=event.target.value!=='no';try{await persistScripts();globalThis.__blueLemonadeDeusQuick_v1?.refreshName?.();say('버튼 표시를 저장했어요.');}catch(error){state.deusIconWithName=before;say(error.message);}return;}
+        if(event.target?.hasAttribute?.('data-prompt-deus-icon')){
+            const state=scriptSettings(),before=state.deusIconWithName,next=event.target.value!=='no';
+            if(busy||!addonsEnabled(getSettings())||state.enabled['deus-qr']!==true){paint();return;}
+            if(next===(before!==false)){paint();return;}
+            busy=true;state.deusIconWithName=next;repaint();say('저장하고 있어요…');
+            try{await persistScripts();globalThis.__blueLemonadeDeusQuick_v1?.refreshName?.();say('버튼 표시를 저장했어요.');}
+            catch(error){state.deusIconWithName=before;say(error.message||'버튼 표시를 저장하지 못했어요.');}
+            finally{busy=false;repaint();}
+            return;
+        }
         const input=event.target;
         if(input?.dataset?.promptName!==undefined){await rename(input);return;}
         const id=input?.dataset?.promptScript;

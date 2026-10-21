@@ -1,0 +1,96 @@
+/* ===== css/89-form-metrics.css =====
+   Shared field metrics for theme-owned settings and addon panels.
+   Native selects and text fields use their label's type scale instead of
+   falling back to the host page's larger font and shorter default height.
+   Number steppers, color wells, ranges and code editors keep their own roles.
+   ===== */
+:where(.salty-panel,.bl-ft-dialog,.bl-roomy-dialog,.bl-notes-dialog,.bl-assets-dialog,.bl-direction-dialog,.bl-ctsi-dialog,.bl-mermaid-dialog,.blpt-dialog,.blzi-dialog,.bl-translator-dialog,#cg-panel,#pt-panel,.rl-root,.pa-hub,.bwr_settings,#lv_settings,#model_register_settings,#model-switch-settings,.po-dialog,#regex-link-settings) {
+  --bl-form-height:36px;
+  --bl-form-radius:8px;
+}
+html body :is(.salty-panel,.bl-ft-dialog,.bl-roomy-dialog,.bl-notes-dialog,.bl-assets-dialog,.bl-direction-dialog,.bl-ctsi-dialog,.bl-mermaid-dialog,.blpt-dialog,.blzi-dialog,.bl-translator-dialog,#cg-panel,#pt-panel,.rl-root,.pa-hub,.bwr_settings,#lv_settings,#model_register_settings,#model-switch-settings,.po-dialog,#regex-link-settings)
+  :is(input:not([type]),input[type="text"],input[type="search"],input[type="url"],input[type="password"],input[type="email"],select:not([multiple])):not(.select2-search__field,.select2-hidden-accessible) {
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+  min-height:max(var(--bl-form-height),calc(1.5em + 12px)) !important;
+  height:auto !important;
+  font-family:inherit !important;
+  font-size:inherit !important;
+  font-weight:inherit !important;
+  line-height:1.5 !important;
+  letter-spacing:inherit;
+  border-radius:var(--bl-form-radius) !important;
+  padding-block:6px !important;
+  padding-inline:12px !important;
+}
+html body :is(.salty-panel,.bl-ft-dialog,.bl-roomy-dialog,.bl-notes-dialog,.bl-assets-dialog,.bl-direction-dialog,.bl-ctsi-dialog,.bl-mermaid-dialog,.blpt-dialog,.blzi-dialog,.bl-translator-dialog,#cg-panel,#pt-panel,.rl-root,.pa-hub,.bwr_settings,#lv_settings,#model_register_settings,#model-switch-settings,.po-dialog,#regex-link-settings)
+  select:not([multiple]):not(.select2-hidden-accessible) {
+  padding-inline-end:32px !important;
+}
+html body .salty-panel .bl-prompt-tools .bl-prompt-name-row {
+  padding-inline:0;
+  margin-block:0;
+}
+html body .salty-panel .bl-prompt-name-row > :is(input,select) {
+  margin:0;
+}
+/* Let larger type determine how many tabs fit, and keep regex instructions
+   reachable when the toolbar takes several rows. */
+html body.salty #pt-panel > #pt-tabs {
+  font-size:var(--bl-ts-meta,12.5px);
+  grid-auto-flow:row !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+}
+html body.salty #pt-panel > #pt-tabs > .pt-tab {
+  white-space:normal !important; word-break:normal; overflow-wrap:anywhere;
+}
+html body.salty dialog.bl-translator-dialog .llmt-tabs {
+  font-size:var(--bl-ts-meta,12.5px);
+  --bl-tab-flow:row;
+  --bl-tab-columns:repeat(auto-fit,minmax(min(100%,max(5em,calc((100% - 12px)/4))),1fr));
+  --bl-tab-whitespace:normal;
+}
+html body.salty dialog.bl-translator-dialog .llmt-tabs > .llmt-tab {
+  white-space:normal !important; overflow-wrap:anywhere;
+}
+html body.salty #pt-panel #pt-page-regex { overflow-y:auto; }
+html body.salty #pt-panel #pt-page-regex > p { flex-shrink:0; }
+html body.salty #pt-panel #pt-page-regex .pt-regex-list { min-height:8em; }
+html body.salty #pt-panel .pt-page:has(> .pt-page-fixed) { overflow-y:auto; }
+html body.salty #pt-panel .pt-page:has(> .pt-page-fixed) > .pt-page-scroll { min-height:8em; }
+@container (min-width:560px) {
+  html body.salty #pt-panel > #pt-tabs { grid-template-columns:repeat(7,minmax(0,1fr)) !important; }
+}
+@media (max-width:760px), (pointer:coarse) {
+  html body.salty dialog.popup .popup-controls > .menu_button,
+  html body.salty dialog.popup .popup-input { min-height:44px !important; }
+  :where(.salty-panel,.bl-ft-dialog,.bl-roomy-dialog,.bl-notes-dialog,.bl-assets-dialog,.bl-direction-dialog,.bl-ctsi-dialog,.bl-mermaid-dialog,.blpt-dialog,.blzi-dialog,.bl-translator-dialog,#cg-panel,#pt-panel,.rl-root,.pa-hub,.bwr_settings,#lv_settings,#model_register_settings,#model-switch-settings,.po-dialog,#regex-link-settings) {
+    --bl-form-height:44px;
+  }
+  html body .salty-panel :is(.salty-fontrow,.bl-ft-group-toggle),
+  html body #lv_settings button.menu_button,
+  html body .po-dialog .po-hide,
+  html body #pt-panel :is(.pt-btn,.pt-btn-icon,[data-setting-tab]) {
+    min-height:44px !important;
+  }
+  html body #pt-panel :is(#pt-panel-refresh,#pt-panel-close) {
+    min-width:44px; min-height:44px;
+  }
+  html body .po-dialog .po-hide { min-width:44px !important; }
+  /* This input intentionally fills a single shared search surface. Size its
+     label instead of adding a second padded field inside that surface. */
+  html body :is(.bl-assets-dialog,#char_assets_settings) .eh-search {
+    height:max(var(--bl-form-height,44px),calc(1.5em + 12px)) !important;
+    min-height:44px !important;
+  }
+  html body .bwr_settings .bwr_chip,
+  html body #model-switch-settings .ms-expand,
+  html body .bl-translator-dialog .llmt-gl-scope { min-height:44px !important; }
+  html body #model_register_settings .mr-handle,
+  html body .bl-translator-dialog :is(.llmt-gl-icon,[data-target-textarea],#llm_glossary_expand) {
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:44px !important; min-height:44px !important;
+    flex-shrink:0; box-sizing:border-box;
+  }
+}

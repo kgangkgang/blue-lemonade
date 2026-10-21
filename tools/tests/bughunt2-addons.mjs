@@ -327,7 +327,7 @@ await test('판 · CI 등록', () => {
     assert.equal(v('src/addons/notes/version.js', /NOTES_VERSION = '([\d.]+)'/), '1.3.6');
     assert.equal(v('src/addons/translator/manifest.json', /"version": "([\d.]+)"/), '3.0.1');   // 7.5.1
     assert.equal(v('src/addons/assets/state.js', /VERSION = '([\d.]+)'/), '1.7.4');   // 7.0.7
-    assert.equal(v('src/addons/prompt/manifest.json', /"version": "([\d.]+)"/), '1.3.1');   // 7.0.4
+    assert.equal(v('src/addons/prompt/manifest.json', /"version": "([\d.]+)"/), '1.3.2');   // 7.5.4 페르소나
     assert.equal(v('src/addons/rewrite/index.js', /const VERSION = '([\d.]+)'/), '2.1.8');   // 7.1.5
     assert.equal(v('src/addons/direction/index.js', /const VERSION = '([\d.]+)'/), '1.3.4');   // 7.4.5 깃털 테두리 고정 굵기
     assert.equal(v('src/addons/bookmarks/state.js', /VERSION = '([\d.]+)'/), '1.7.2');   // 7.2.7 그림 원본 비율 · 보기 고르기 · 생각 숨김 · 7.3.1 그림만 격자 읽는 차례

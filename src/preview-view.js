@@ -14,6 +14,9 @@ export function bindPreviewViews(root, section) {
         const bar = document.createElement('div'); bar.className = 'bl-view-tools';
         bar.innerHTML = '<button type="button" aria-label="미리보기 축소">−</button><output aria-label="미리보기 배율"></output><button type="button" aria-label="미리보기 확대">+</button><button type="button" class="bl-view-reset">원래 크기</button><small>드래그 · 두 손가락으로 조절</small>';
         const viewport = document.createElement('div'); viewport.className = 'bl-view-port'; viewport.tabIndex = 0;
+        // Reserve the last measured height while the new DOM is being built.
+        // Measuring here forces style/layout halfway through a settings render.
+        viewport.style.height = `${state.viewHeight || Math.min(window.innerHeight * .22, Number(box.dataset.pvMax) || 180)}px`;
         viewport.setAttribute('aria-label', '미리보기 · 방향키 또는 드래그로 이동');
         const scene = document.createElement('div'); scene.className = 'bl-view-scene';
         targets.forEach(e => scene.append(e)); viewport.append(scene); box.append(bar, viewport);
@@ -24,7 +27,7 @@ export function bindPreviewViews(root, section) {
         toolsToggle.onclick = () => { state.tools = !state.tools; syncTools(); measure(); };
         syncTools();
         const [minus, plus, reset] = bar.querySelectorAll('button'), output = bar.querySelector('output');
-        let width = 0, height = 0, viewHeight = 0, raf = 0;
+        let width = 0, height = 0, viewHeight = 0, raf = 0, measureFrame = 0, measureTimer = 0, disposed = false;
         const pointers = new Map();
         let resizeStart = null, grip;
         const sideBySide = () => getComputedStyle(root.querySelector('.bl-editor-workspace') || root).display === 'grid';
@@ -132,6 +135,9 @@ export function bindPreviewViews(root, section) {
         const syncQr = () => { if (qrSample && state.scale === 1) updateQrEdges(qrSample); };
         qrSample?.addEventListener?.('scroll', syncQr, {passive:true});
         const measure = () => {
+            if (disposed) return;
+            if (measureFrame) { cancelAnimationFrame(measureFrame); measureFrame = 0; }
+            if (measureTimer) { clearTimeout(measureTimer); measureTimer = 0; }
             if (!box.isConnected) { dispose(); return; }
             // Hidden drawers and folded previews have zero dimensions. Keep pan
             // until the same view becomes visible again instead of clamping to 0.
@@ -142,8 +148,10 @@ export function bindPreviewViews(root, section) {
             // A stacked preview leaves room for settings; an explicitly resized view keeps its height.
             viewHeight = Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, limit)) : Math.min(height, limit, sideBySide() && grip ? limit : Math.min(window.innerHeight * .22, Number(box.dataset.pvMax) || 180)); // data-pv-max: 설정 사이에 끼는 작은 미리보기(상태창 글자)
             const px = `${viewHeight}px`;
+            state.viewHeight = viewHeight;
             if (viewport.style.height !== px) viewport.style.height = px;
-            schedule();
+            if (raf) cancelAnimationFrame(raf);
+            paint();
             if (grip) {
                 const max = String(Math.round(limit)), now = String(Math.round(viewHeight));
                 if (grip.getAttribute('aria-valuemin') !== '48') grip.setAttribute('aria-valuemin', '48');
@@ -152,12 +160,19 @@ export function bindPreviewViews(root, section) {
             }
             syncQr();
         };
-        const resize = new ResizeObserver(measure);
-        const dispose = () => { qrSample?.removeEventListener?.('scroll',syncQr); resize.disconnect(); cancelAnimationFrame(raf); pointers.clear(); resizeStart = null; window.removeEventListener('resize', measure); root.removeEventListener('bl:preview-resize', measure); };
-        measure();
+        const requestMeasure = () => {
+            if (disposed || measureFrame || measureTimer) return;
+            // Hidden tabs do not receive animation frames. Keep the preview
+            // usable there as well, without retaining callbacks after close.
+            if (document.hidden) measureTimer = setTimeout(() => { measureTimer = 0; measure(); }, 0);
+            else measureFrame = requestAnimationFrame(() => { measureFrame = 0; measure(); });
+        };
+        const resize = new ResizeObserver(requestMeasure);
+        const dispose = () => { disposed = true; qrSample?.removeEventListener?.('scroll',syncQr); resize.disconnect(); cancelAnimationFrame(raf); cancelAnimationFrame(measureFrame); clearTimeout(measureTimer); pointers.clear(); resizeStart = null; window.removeEventListener('resize', requestMeasure); root.removeEventListener('bl:preview-resize', requestMeasure); };
+        requestMeasure();
         resize.observe(scene);
-        window.addEventListener('resize', measure, { passive: true });
-        root.addEventListener('bl:preview-resize', measure);
+        window.addEventListener('resize', requestMeasure, { passive: true });
+        root.addEventListener('bl:preview-resize', requestMeasure);
         root.addEventListener('bl:preview-resize',syncQr);
         cleanups.push(()=>root.removeEventListener('bl:preview-resize',syncQr));
         syncQr();

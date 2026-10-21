@@ -41,6 +41,11 @@ const view = {
 const $ = selector => view.root.querySelector(selector);
 let sourceId = 0;
 let notePointer = null;
+let searchTimer = null;
+function cancelSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = null;
+}
 
 // ── 뼈대 ────────────────────────────────────────────────────
 
@@ -117,11 +122,12 @@ function buildShell() {
         if (event.key === 'Enter' && (event.ctrlKey || event.altKey)) event.stopPropagation();
     });
     const input = $('.cg-searchbar input');
-    let searchTimer = null;
     input.addEventListener('input', () => {
         $('.cg-search-clear').hidden = !input.value;
-        clearTimeout(searchTimer);
+        cancelSearch();
         searchTimer = setTimeout(() => {
+            searchTimer = null;
+            if (!view.open || $('.cg-searchbar').hidden) return;
             view.query = input.value.trim();
             view.page = 1;
             renderMain();
@@ -160,6 +166,7 @@ export function isPanelOpen() {
 }
 
 export async function openPanel({ keepState = false } = {}) {
+    cancelSearch();
     hooks.hideSelectionChip?.(); // 채팅에서 글을 고른 채 창을 열면 고른 글 북마크 단추가 창 위에 남지 않게
     if (!holdingPreviewRules) { holdingPreviewRules = true; holdPreviewRules(); } // 카드 본문은 채팅 서식의 사본 규칙(.salty-preview)을 쓴다 — 테마가 시작 때 꺼 둔 것을 켠다 (닫으면 놓는다)
     if (!view.root) buildShell();
@@ -240,6 +247,7 @@ function unwatchBack() {
     try { watcher?.destroy(); } catch { /* 이미 닫힘 */ }
 }
 export function closePanel({ keepColors = false } = {}) {
+    cancelSearch();
     if (!view.open) return;
     view.open = false;
     unwatchBack();
@@ -481,6 +489,12 @@ function searchAllMessages(record, direction) {
     const cased = view.query !== query || view.query !== view.query.toUpperCase() || alts.some(a => a !== a.toUpperCase());
     const key = [query, ...alts].join('\u0001');
     const messages = record.messages ?? [];
+    // 같은 메시지의 첫 유효 북마크를 유지한다. 결과마다 전체 북마크를 다시 훑지 않는다.
+    const favoritesByMessage = new Map();
+    for (const fav of record.favorites) {
+        const key = String(fav.messageId);
+        if (!fav.blOrphaned && !favoritesByMessage.has(key)) favoritesByMessage.set(key, fav);
+    }
     const items = [];
     for (let index = 0; index < messages.length; index++) {
         const message = messages[index];
@@ -493,7 +507,7 @@ function searchAllMessages(record, direction) {
             allMessageMatches.set(message, match);
         }
         if (!match.found) continue;
-        items.push({ fav: bookmarkAt(record, index) ?? virtualFav(record, index), index });
+        items.push({ fav: favoritesByMessage.get(String(index)) ?? virtualFav(record, index), index });
     }
     if (direction < 0) items.reverse();
     return items;
@@ -1299,7 +1313,8 @@ function onClick(event) {
             bar.hidden = !bar.hidden;
             if (!bar.hidden) {
                 bar.querySelector('input').focus();
-            } else if (view.query || view.allMessages) {
+            } else {
+                cancelSearch();
                 bar.querySelector('input').value = '';
                 $('.cg-search-clear').hidden = true;
                 view.query = '';
@@ -1314,6 +1329,7 @@ function onClick(event) {
             return;
         case 'search-clear': {
             event.preventDefault();
+            cancelSearch();
             const input = $('.cg-searchbar input');
             input.value = '';
             $('.cg-search-clear').hidden = true;

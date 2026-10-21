@@ -1,7 +1,7 @@
 // Per-run display state. Only start() adds a request to the active list;
 // cache reads, completed requests and waiting between requests never appear there.
 export function translationKind(ns) {
-    return ns.startsWith('pt-wi::') ? '월드인포' : ns.startsWith('pt-char::') ? '봇카드' : ns === 'regex' ? '정규식' : '프리셋';
+    return ns.startsWith('pt-wi::') ? '월드인포' : ns.startsWith('pt-char::') ? '봇카드' : ns.startsWith('pt-persona::') ? '페르소나' : ns === 'regex' ? '정규식' : '프리셋';
 }
 
 function short(text, length) {

@@ -1,8 +1,9 @@
 import { showThemeModal } from '../../modal.js';
 import { openHelpSheet } from '../../help-sheet.js';
+import { listAllPersonas, readPersonaFields, personaBackup, personaUpdate, exportPersonaData, currentPersona, writePersonaUpdate } from './persona.js';
 // 6.1.5 작업 줄 단추 설명 (? 설명)
 function controlsHelp(kind) {
-    const what = kind === 'wi' ? '월드인포' : kind === 'char' ? '봇카드' : '프리셋';
+    const what = kind === 'wi' ? '월드인포' : kind === 'char' ? '봇카드' : kind === 'persona' ? '페르소나' : '프리셋';
     return {
         title: '작업 줄 단추',
         body: ['불러온 ' + what + '을(를) 번역하고 읽는 단추들이에요. 번역 결과는 번역 캐시에 저장되고, 「원본에 적용」을 누르기 전에는 원본 ' + what + ' 파일이 바뀌지 않아요.'],
@@ -3244,6 +3245,7 @@ async function exportCharacterJSON(charIdRaw, opts, selectedIds) {
 // 원본을 사용자 파일 영역(번역 캐시와 같은 /api/files/upload)에 자료마다 최근 1개 — 프리셋 · 월드인포 목록에 사본이 생기지 않는다.
 /** 지금 패널이 가리키는 자료의 진짜 이름 (프리셋 이름 · 월드인포 이름 · 봇카드 아바타 파일) */
 function backupTargetName(kind, srcVal) {
+    if (kind === 'persona') return srcVal || '';
     if (kind === 'preset') return srcVal === '__cur__' || !srcVal ? (oai_settings?.preset_settings_openai || '') : srcVal;
     if (kind === 'wi') return srcVal || '';
     const ctx = SillyTavern?.getContext?.() || getContext?.();
@@ -3263,6 +3265,8 @@ async function saveOriginalBackup(kind, srcVal, selectedIds, label) {
         const ctx = SillyTavern?.getContext?.() || getContext?.();
         const wi = await ctx?.loadWorldInfo?.(name);
         data = wi?.entries ? deepClone(wi) : null;
+    } else if (kind === 'persona') {
+        data = personaBackup(name);
     } else {
         const { char, update, applied } = await characterUpdate(srcVal, selectedIds);
         data = applied ? characterBackup(char, update) : null;
@@ -3290,6 +3294,8 @@ async function restoreOriginal(record) {
             }
         } else if (record.kind === 'wi') {
             await writeWorldInfo(record.name, deepClone(record.data));
+        } else if (record.kind === 'persona') {
+            await writePersonaUpdate(record.name, record.data);
         } else {
             const idx = findCharIndex(record.name);
             if (idx < 0 || !characters?.[idx]) throw new Error('캐릭터를 찾을 수 없어요');
@@ -3978,7 +3984,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         const val=kind==='preset' ? (sel.value || oai_settings?.preset_settings_openai || '') : sel.value;
         const loadedName=sel.options[sel.selectedIndex]?.textContent || val;
         // Character tab: require explicit selection (no implicit "current character" fallback)
-        if (kind === 'char' && !val) {
+        if ((kind === 'char' || kind === 'persona') && !val) {
             showEmpty('불러올 데이터가 없습니다.');
             return;
         }
@@ -4194,6 +4200,9 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                 // Character: partial field selection supported
                 const includeCB = await ask('캐릭터 카드에 임베디드 월드북(character_book)이 있으면 JSON 에 함께 넣을까요? (원문 그대로) \n\n※ 임베디드 월드북의 내용은 번역되지 않고 원문 그대로 저장됩니다.', { ok: '포함', cancel: '제외' });
                 result = await exportCharacterJSON(srcVal, { includeCharacterBook: includeCB }, checkedIds);
+            } else if (kind === 'persona') {
+                const update = personaUpdate(srcVal, checkedIds, field => getTranslatedBody(ns, field), items);
+                result = { data: exportPersonaData(srcVal, update.patch), filename: `${sanitizeFilename(getSourceName(kind, page, idPfx))}_persona.json` };
             }
             if (!result) return;
             const blob = new Blob([JSON.stringify(result.data, null, 2)], {type:'application/json;charset=utf-8'});
@@ -4315,7 +4324,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
             // A memory exported from a different source type can only ever
             // mismatch here — say so instead of reporting "0개 매칭".
             if (data.kind && data.kind !== kind) {
-                const nameOf = k => k === 'wi' ? '월드인포' : k === 'char' ? '봇카드' : '프리셋';
+                const nameOf = k => k === 'wi' ? '월드인포' : k === 'char' ? '봇카드' : k === 'persona' ? '페르소나' : '프리셋';
                 throw new Error(`${nameOf(data.kind)} 번역 메모리입니다 (지금 탭은 ${nameOf(kind)})`);
             }
             const byId = new Map(), byContent = new Map(), byName = new Map();
@@ -4401,7 +4410,31 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     // Preset  → the preset file (always the whole preset, to keep it intact)
     // WI      → the world-info book (selected entries only, if any selected)
     // 봇카드  → the character PNG   (selected fields only, if any selected)
+    let applying = false;
     page.querySelector(`#${idPfx}-apply`)?.addEventListener('click', async () => {
+        if (kind === 'persona') {
+            if (applying || pageRunning) return;
+            if (!items.length) { toastr.warning('먼저 페르소나를 불러오세요.'); return; }
+            applying = true;
+            const button=page.querySelector(`#${idPfx}-apply`);button.disabled=true;
+            const id=loadedVal, loaded=items.slice(), namespace=ns;
+            const selected=new Set([...list.querySelectorAll('.pt-block-item.selected')].map(el=>el.dataset.id));
+            try {
+                const update=personaUpdate(id,selected,field=>getTranslatedBody(namespace,field),loaded);
+                if(!update.applied){toastr.info('적용할 번역이 없어요. 먼저 본문을 번역해 주세요.');return;}
+                const names={name:'이름',title:'표시 제목',description:'설명'};
+                if(!await ask(`「${update.before.name}」 페르소나의 ${Object.keys(update.patch).map(k=>names[k]).join(' · ')}에 번역을 적용할까요?\n\n원본을 먼저 백업해요. 연결된 채팅·로어북·주입 위치와 깊이는 유지해요.`,{ok:'적용',cancel:'취소',danger:true}))return;
+                // Recheck after the confirmation, then again in the writer after backup I/O.
+                const fresh=personaUpdate(id,selected,field=>update.patch[field]??null,loaded);
+                const backup=await saveOriginalBackup(kind,id,selected,update.before.name);
+                const result=await writePersonaUpdate(id,update.patch,fresh.before);
+                const toast=toastr.success(`「${result.targetName}」 페르소나에 적용했어요 (${result.applied}개 필드).`,'',{timeOut:10000});
+                if(toast)attachUndo(toast,()=>restoreOriginal(backup),{label:'원본으로 되돌리기'});
+                await sel._ptRefill?.();
+            }catch(error){toastr.error(error?.message||String(error));}
+            finally{applying=false;button.disabled=false;}
+            return;
+        }
         if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('로드된 데이터가 없습니다'); return; }
         const srcSel = page.querySelector(`#${idPfx}-sel`);
         const srcVal = loadedVal;
@@ -4639,11 +4672,13 @@ function buildPanel() {
             <button class="pt-tab active" data-tab="preset">프리셋</button>
             <button class="pt-tab" data-tab="wi">월드인포</button>
             <button class="pt-tab" data-tab="char">봇카드</button>
+            <button class="pt-tab" data-tab="persona">페르소나</button>
         </div>
         <div id="pt-panel-content">
             <div class="pt-page active" id="pt-page-preset"></div>
             <div class="pt-page"        id="pt-page-wi"></div>
             <div class="pt-page"        id="pt-page-char"></div>
+            <div class="pt-page"        id="pt-page-persona"></div>
         </div>
         <div id="pt-statusbar">
             <div class="pt-status-content">
@@ -4676,7 +4711,7 @@ function buildPanel() {
             }
 
             // Same refill each page runs on build (keeps the selection, re-syncs the combo).
-            await Promise.all(['pt-preset', 'pt-wi', 'pt-char']
+            await Promise.all(['pt-preset', 'pt-wi', 'pt-char', 'pt-persona']
                 .map(idPfx => panel.querySelector(`#${idPfx}-sel`)?._ptRefill?.()));
             if (typeof toastr !== 'undefined') toastr.success('목록을 새로고침했습니다');
         } catch (e) {
@@ -4688,6 +4723,10 @@ function buildPanel() {
     buildPage({page:panel.querySelector('#pt-page-preset'),idPfx:'pt-preset',listFn:listAllPresets,loadFn:readPresetBlocks,selectable:true,icon:'',hint:'프리셋을 선택하고 로드하세요.',isAsync:false,kind:'preset'});
     buildPage({page:panel.querySelector('#pt-page-wi'),idPfx:'pt-wi',listFn:listAllWorldInfos,loadFn:readWorldInfo,selectable:true,icon:'',hint:'월드인포를 선택하고 로드하세요.',isAsync:true,kind:'wi'});
     buildPage({page:panel.querySelector('#pt-page-char'),idPfx:'pt-char',listFn:listAllCharacters,loadFn:readCharCard,selectable:true,icon:'',hint:'캐릭터를 선택하고 로드하세요.',isAsync:true,kind:'char'});
+    buildPage({page:panel.querySelector('#pt-page-persona'),idPfx:'pt-persona',listFn:listAllPersonas,loadFn:readPersonaFields,selectable:true,icon:'',hint:'페르소나를 고르고 불러오세요. 이름·표시 제목·설명을 선택해서 번역할 수 있어요.',isAsync:false,kind:'persona'});
+    const personaSelect=panel.querySelector('#pt-persona-sel');
+    personaSelect.value=currentPersona();
+    personaSelect.dispatchEvent(new Event('change'));
 
     try { const cur=getCurrentPresetName(); if(cur)panel.querySelector('#pt-preset-sel').value=cur; } catch(e){}
     try {

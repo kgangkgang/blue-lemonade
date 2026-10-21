@@ -1976,7 +1976,10 @@ function focusSnapshot(root) {
     try { index = Math.max(0, [...root.querySelectorAll(selector)].indexOf(el)); } catch { return null; }
     let caret = null;
     try { if (typeof el.selectionStart === 'number') caret = [el.selectionStart, el.selectionEnd, el.selectionDirection]; } catch { /* number · color 칸은 커서가 없다 */ }
-    return { selector, index, caret, scrollLeft: el.scrollLeft };
+    // Only text editors have a horizontal reading position to preserve.
+    // Reading scrollLeft on the navigation button can force layout for the
+    // entire document just before the panel is rebuilt.
+    return { selector, index, caret, scrollLeft: caret ? el.scrollLeft : 0 };
 }
 function restoreFocus(root, snap) {
     if (!snap || (document.activeElement && document.activeElement !== document.body && !root.contains(document.activeElement))) return;
@@ -1986,6 +1989,19 @@ function restoreFocus(root, snap) {
     el.focus({ preventScroll: true });
     if (snap.caret) try { el.setSelectionRange(...snap.caret); } catch { /* 형식이 바뀐 칸 */ }
     if (snap.scrollLeft) el.scrollLeft = snap.scrollLeft;
+}
+
+function restorePanelScroll(root) {
+    // These nodes were just created. Assigning even zero forces synchronous
+    // layout in Chromium; their default scroll position is already zero.
+    const scroll = root._editorScroll.get(root._editorRoute) || 0;
+    if (scroll) root.querySelector('.salty-sec').scrollTop = scroll;
+    const paneScroll = root._addonScroll.get(root._editorRoute) || [0, 0];
+    ['.bl-addon-main', '.bl-addon-config'].forEach((selector, i) => {
+        if (!paneScroll[i]) return;
+        const pane = root.querySelector(selector);
+        if (pane) pane.scrollTop = paneScroll[i];
+    });
 }
 
 function render(root) {
@@ -1999,6 +2015,7 @@ function render(root) {
     root._captureCleanup?.(); root._captureCleanup=null;
     root._addonCleanup?.(); root._addonCleanup=null;
     root._scriptsCleanup?.(); root._scriptsCleanup=null;
+    root._previewCleanup?.(); root._previewCleanup=null;
     root._healthCleanup?.();
     root._updateCleanup?.(); root._updateCleanup=null;
     const oldSection = root.querySelector('.salty-sec');
@@ -2066,13 +2083,12 @@ function render(root) {
     bindWordTools(root, refreshPanels);
     bindSceneSound(root, update, refreshPanels);   // 6.9.8 장면 소리: 들어 보기 · 내 파일 올리기 · 스위치를 켜면 아래 줄 그리기
     bindAddonLayout(root);
-    bindPreviewViews(root, `${ui.tab}/${sub}`);
     syncSamples(s); // 미리보기 문단 클래스 맞추기
     installSettingResets(root);
+    // Finish class and control writes before measuring the preview once.
+    bindPreviewViews(root, `${ui.tab}/${sub}`);
     // Preview sizing changes the available scroll height; restore after it is measured.
-    root.querySelector('.salty-sec').scrollTop = root._editorScroll.get(root._editorRoute) || 0;
-    const paneScroll = root._addonScroll.get(root._editorRoute) || [0, 0];
-    [".bl-addon-main", ".bl-addon-config"].forEach((selector, i) => { const pane = root.querySelector(selector); if (pane) pane.scrollTop = paneScroll[i]; });
+    restorePanelScroll(root);
     restoreFocus(root, focusSnap);
 
     // 색 고르기: 처음 그릴 때 나는 change 는 무시하고, 사용자가 만진 뒤부터 저장

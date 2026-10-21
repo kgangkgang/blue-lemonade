@@ -146,9 +146,9 @@ html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px so
 .bl-addon-credit { display:flex; flex-direction:column; align-items:center; gap:1px; margin:24px 0 0; padding:12px 8px 2px; border-top:1px dashed var(--salty-line); text-align:center; color:var(--salty-muted); font-size:10.5px; line-height:1.7; letter-spacing:.02em; overflow-wrap:anywhere; }
 .bl-addon-layout > .bl-addon-credit { margin-top:auto; }
 /* 글자는 작게 두고 누르는 영역만 넓힌다 (폰 오탭 방지) — 5.1.3 */
-.bl-addon-credit a { display:inline-block; padding:7px 6px; margin:-5px 0; color:inherit; text-decoration:underline dotted; text-underline-offset:3px; }
+.bl-addon-credit a { display:inline-block; padding:7px 6px; margin:0; color:inherit; text-decoration:underline dotted; text-underline-offset:3px; }
 .bl-addon-credit a:hover,.bl-addon-credit a:focus-visible { color:var(--salty-text); }
-html body .bl-addon-credit-all { display:inline-block; min-height:0; margin:-5px 0; padding:calc(7px + var(--bl-text-nudge, 0px)) 6px calc(7px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border:0; border-radius:0; box-shadow:none; background:transparent; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; }
+html body .bl-addon-credit-all { display:inline-block; min-height:0; margin:0; padding:calc(7px + var(--bl-text-nudge, 0px)) 6px calc(7px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border:0; border-radius:0; box-shadow:none; background:transparent; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; }
 html body .bl-addon-credit-all:hover,html body .bl-addon-credit-all:focus-visible { color:var(--salty-text); outline:none; }
 html body .bl-addon-credit-all:focus-visible { outline:2px solid var(--salty-accent); outline-offset:2px; border-radius:var(--bl-r-sm,8px); } /* 키보드 초점 표시 (마우스 hover 는 색만) */
 /* Desktop embeds the actual controls; mobile keeps the existing focused dialog. */

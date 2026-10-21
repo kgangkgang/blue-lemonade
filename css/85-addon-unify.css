@@ -136,7 +136,7 @@ html body.salty dialog.popup:not(.bl-settings-dialog) .rl-root > .rl-top { flex-
 html body.salty dialog.popup:not(.bl-settings-dialog) .rl-root > .rl-top > .rl-tabs { flex: 1 1 100% !important; }
 /* 탭 줄 · 탭 한 칸 */
 html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tabs, dialog.bl-translator-dialog .llmt-tabs, dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_tabs, dialog.popup:not(.bl-settings-dialog) .pa-hub > .pa-hub-tabs, dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tabs, #pt-panel > #pt-tabs) {
-  display: grid !important; grid-auto-flow: column !important; grid-auto-columns: minmax(0, 1fr) !important; grid-template-columns: none !important;
+  display: grid !important; grid-auto-flow: var(--bl-tab-flow,column) !important; grid-auto-columns: minmax(0, 1fr) !important; grid-template-columns: var(--bl-tab-columns,none) !important;
   gap: 4px !important; width: auto !important; margin: 0 0 10px !important; padding: 0 !important;
   background: none !important; border: 0 !important; border-radius: 0 !important;
 }
@@ -145,7 +145,7 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tab, 
   gap: 4px !important; min-width: 0 !important; min-height: 50px !important; height: auto !important; margin: 0 !important;
   padding: 9px 2px 5px !important; border: 0 !important; border-radius: 8px !important; opacity: 1 !important;
   background: var(--bl-hover) !important; color: var(--salty-muted) !important; box-shadow: none !important; outline-offset: -2px;
-  font-size: var(--bl-ts-meta) !important; font-weight: 400 !important; line-height: 1.35 !important; white-space: nowrap !important;
+  font-size: var(--bl-ts-meta) !important; font-weight: 400 !important; line-height: 1.35 !important; white-space: var(--bl-tab-whitespace,nowrap) !important;
 }
 html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tab, dialog.bl-translator-dialog .llmt-tab, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_tab, dialog.popup:not(.bl-settings-dialog) .pa-hub > .pa-hub-tabs > .pa-hub-tab, dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab, #pt-panel > #pt-tabs > .pt-tab) > i,
 html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button::before { margin: 0 !important; font-size: 1.1em !important; line-height: 1 !important; }

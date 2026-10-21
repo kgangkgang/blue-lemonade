@@ -3,7 +3,7 @@
 //   순수 함수만 — 파일 쓰기 · 실리태번 저장은 index.js (시험: tools/tests/prompt-backup.mjs).
 export const BACKUP_VERSION = 1;
 const PREFIX = 'pt-backup-';
-const KINDS = new Set(['preset', 'wi', 'char']);
+const KINDS = new Set(['preset', 'wi', 'char', 'persona']);
 
 /** FNV-1a 32 → 8자리 16진 (자료 이름에 쓸 수 없는 글자가 있어도 파일 이름이 안전하게) */
 function hash(text) {
