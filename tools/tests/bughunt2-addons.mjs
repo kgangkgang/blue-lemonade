@@ -325,7 +325,7 @@ await test('북마크: 다른 채팅 저장 본문이 실리태번 차례 → �
 await test('판 · CI 등록', () => {
     const v = (rel, re) => (read(rel).match(re) || [])[1];
     assert.equal(v('src/addons/notes/version.js', /NOTES_VERSION = '([\d.]+)'/), '1.3.7');
-    assert.equal(v('src/addons/translator/manifest.json', /"version": "([\d.]+)"/), '3.0.1');   // 7.5.1
+    assert.equal(v('src/addons/translator/manifest.json', /"version": "([\d.]+)"/), '3.0.2');   // 7.5.1
     assert.equal(v('src/addons/assets/state.js', /VERSION = '([\d.]+)'/), '1.7.5');   // 7.0.7
     assert.equal(v('src/addons/prompt/manifest.json', /"version": "([\d.]+)"/), '1.3.5');   // 7.5.4 페르소나
     assert.equal(v('src/addons/rewrite/index.js', /const VERSION = '([\d.]+)'/), '2.1.8');   // 7.1.5

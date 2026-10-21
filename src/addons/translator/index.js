@@ -4011,6 +4011,11 @@ export async function openCharacterSpeechPreferences() {
     const { openStyleProfileManager } = await import('./selection/style-profile-ui.js');
     return openStyleProfileManager();
 }
+export async function openTranslationBookTransfer() {
+    await syncSelection(true);
+    const { openBookTransfer } = await import('./selection/book-transfer-ui.js');
+    return openBookTransfer();
+}
 let selectionModule = null;
 function syncSelection(force = false) {
     if (!force && !selectionModule && extensionSettings.selection_retranslate !== true && extensionSettings.selection_delete === false) return;   // 6.4.4 고른 글 지우기도 이 모듈
@@ -5871,6 +5876,10 @@ function initializeEventHandlers() {
     if (!document.getElementById('llm_style_profiles')) {
         const anchor = document.getElementById('llm_translation_check')?.closest('label');
         if (anchor) { const button=document.createElement('button');button.id='llm_style_profiles';button.type='button';button.className='menu_button';button.textContent='인물별 말투·호칭';button.addEventListener('click',async()=>{try{await openCharacterSpeechPreferences();}catch(error){toastr.error(error.message);}});anchor.after(button); }
+    }
+    if (!document.getElementById('llm_book_transfer')) {
+        const anchor = document.getElementById('llm_style_profiles');
+        if (anchor) { const button=document.createElement('button');button.id='llm_book_transfer';button.type='button';button.className='menu_button';button.textContent='용어·말투 옮기기';button.addEventListener('click',()=>{void openTranslationBookTransfer().catch(error=>toastr.error(error.message));});anchor.after(button); }
     }
     // The board reuses cached checks; opening it never translates the chat.
     if (!document.getElementById('llm_check_board')) {

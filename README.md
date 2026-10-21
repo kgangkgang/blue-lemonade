@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.3/blue-lemonade-7.6.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.4/blue-lemonade-7.6.4.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.6.3 · 최신 업데이트</summary>
+<summary>7.6.4 · 최신 업데이트</summary>
+
+- 번역 설정의 「용어·말투 옮기기」에서 이 채팅에 적용되는 용어와 인물별 말투를 골라 파일로 내보내고, 다른 채팅에서 가져올 수 있어요. 대화 본문·연결·키·번역 캐시는 파일에 넣지 않아요.
+- 가져올 항목과 중복 처리(기존 내용 유지·파일 내용으로 갱신)를 고르면 추가·갱신·유지 개수를 먼저 보여요. 현재 채팅에만 적용하며 공용·캐릭터 용어집은 바꾸지 않아요.
+- 잘못된 파일이나 한도 초과는 일부만 저장하지 않아요. 파일을 읽는 중 채팅·목록이 바뀌면 적용을 멈추고, 저장 뒤 두 목록을 다시 읽어 확인해요.
+
+</details>
+
+<details>
+<summary>7.6.3 · 이전 메시지 미리 불러오기</summary>
 
 - 「이전 메시지 저절로 불러오기」가 위로 올리다 맨 위에 닿기 전(세 화면쯤 앞)에 미리 불러오고, 불러온 뒤에도 보던 자리를 그대로 지켜요. 전엔 맨 위에 닿은 뒤에야 불러와서, 방금 본 옛 메시지 쪽이 위로 밀려나고 최근 메시지로 튕긴 것처럼 보였어요(10월 21일 제보). 이 기능은 설정 › 채팅 › 화면에서 끌 수 있어요.
 

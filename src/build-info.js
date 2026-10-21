@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.6.3";
+export const BUILD_VERSION = "7.6.4";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:98eae9d5:96748e5d",
+  "manifest.json": "365:d90c77ec:bc86b5aa",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -227,6 +227,7 @@ export const FILE_HASHES = {
   "src/addons/rewrite/undo.js": "2633:931380a4:1ad3330f",
   "src/addons/rewrite/upgrades.js": "10155:2bf069d9:1358f7e9",
   "src/addons/translator/archive-bridge.js": "1842:85820c61:8fc7ab69",
+  "src/addons/translator/book-transfer-core.js": "5382:b520d2f4:a197eff2",
   "src/addons/translator/bridge.js": "3068:96060e92:357189f9",
   "src/addons/translator/buttons.html": "417:3bc7c8b0:1b53077b",
   "src/addons/translator/card-values.js": "11278:075fc5e4:9a93bd42",
@@ -242,8 +243,8 @@ export const FILE_HASHES = {
   "src/addons/translator/glossary-priority.js": "1166:e7040d4d:a088802d",
   "src/addons/translator/glossary-suggest.js": "37892:84fb105c:16cf3cc9",
   "src/addons/translator/glossary-sync.js": "4410:86799b24:8d1eafff",
-  "src/addons/translator/index.html": "57092:adbf8d4c:08904d3d",
-  "src/addons/translator/index.js": "545921:4104eb83:db3e55d3",
+  "src/addons/translator/index.html": "57092:3a876c5f:f8c98fa9",
+  "src/addons/translator/index.js": "546591:a739f40f:9115a533",
   "src/addons/translator/korean-keep.js": "3875:e48e9ac8:e1078d76",
   "src/addons/translator/leftover-fix.js": "20813:22ae0bba:9631adfc",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",
@@ -253,6 +254,8 @@ export const FILE_HASHES = {
   "src/addons/translator/preview-frames.js": "7898:a899ed6d:8ed88a7d",
   "src/addons/translator/reasoning-view.js": "8594:234e9b61:f50b69b7",
   "src/addons/translator/render-completion.js": "1746:5ddbaa71:016066f8",
+  "src/addons/translator/selection/book-transfer-state.js": "2493:8941a52e:d616d839",
+  "src/addons/translator/selection/book-transfer-ui.js": "10115:989d55dd:f04fd69c",
   "src/addons/translator/selection/comparison-ui.js": "3820:96405fc2:5338ebd4",
   "src/addons/translator/selection/comparison.js": "5323:ead95304:aa6b8623",
   "src/addons/translator/selection/core.js": "3166:ab12d4f1:daa0e53f",
@@ -262,9 +265,9 @@ export const FILE_HASHES = {
   "src/addons/translator/selection/state.js": "2178:2c6ec509:eb940081",
   "src/addons/translator/selection/style-profile-state.js": "2214:de995205:b3260935",
   "src/addons/translator/selection/style-profile-ui.js": "7915:2cd1121e:6d04f46e",
-  "src/addons/translator/selection/style.css": "10235:3defd3d8:8ac6b650",
+  "src/addons/translator/selection/style.css": "11290:3b5143ca:e56f11d0",
   "src/addons/translator/selection/term-memory.js": "7466:7af4be84:2061b7d4",
-  "src/addons/translator/selection/term-save.js": "2645:f5858384:4e5b2275",
+  "src/addons/translator/selection/term-save.js": "2983:f2593069:32a9e302",
   "src/addons/translator/selection/translation.js": "10452:07e2918c:640e6ce2",
   "src/addons/translator/selection/ui.js": "10682:d605a881:ab163345",
   "src/addons/translator/sendform.html": "145:1e8a2159:510ea96d",
@@ -558,7 +561,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "302698:ce618d08:983f773e",
+  "src/notice-data.js": "303452:51a28107:7573b4c6",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -688,5 +691,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1548856:f5591640:4560a4ec"
+  "style.css": "1548856:65345bba:caabc413"
 };
