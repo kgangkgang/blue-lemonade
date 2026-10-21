@@ -16,7 +16,14 @@ const DIALOGS = new Map([['确定要恢复所有默认设置吗？','모든 설�
 const SKIP = 'script,style,textarea,input,pre,code,[contenteditable="true"],.fate-raw,[data-f]';
 // The renderer lifts its night toggle 4px above the card, and its hover lift (sticky after a tap on phones) moves it
 // 1px further, so the frame edge clips it. Keep a small margin and no lift on touch screens. Day mode already sits inside.
-const FIXES = '.fate-status-wrapper.night-mode>.fate-theme-toggle{top:3px!important}@media (hover:none){.fate-status-wrapper>.fate-theme-toggle:hover{transform:none!important}}';
+const toggleMask = shape => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${shape}</svg>`)}")`;
+const sunMask = toggleMask('<circle cx="12" cy="12" r="4.5" fill="black" stroke="none"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>');
+const moonMask = toggleMask('<path d="M20.9 13.5A9 9 0 0 1 10.5 3.1 9 9 0 1 0 20.9 13.5Z"/>');
+const FIXES = `.fate-status-wrapper.night-mode>.fate-theme-toggle{top:3px!important}
+.fate-status-wrapper>.fate-theme-toggle{font-size:0!important;line-height:0!important;--bl-fruit-toggle-mask:${moonMask}}
+.fate-status-wrapper.night-mode>.fate-theme-toggle{--bl-fruit-toggle-mask:${sunMask}}
+.fate-status-wrapper>.fate-theme-toggle::before{content:"";position:absolute;inset:0;margin:auto;display:block;width:14px;height:14px;background:currentColor;-webkit-mask:var(--bl-fruit-toggle-mask) center/contain no-repeat;mask:var(--bl-fruit-toggle-mask) center/contain no-repeat;pointer-events:none}
+@media (hover:none){.fate-status-wrapper>.fate-theme-toggle:hover{transform:none!important}}`;
 
 export function installFruitStatusKorean(doc = document, host = window) {
     const texts = new Map(), attributes = new Map(), cards = new Map(), documents = new Map(), frames = new Map(), dialogChanges = new Map(), fixes = new Map();

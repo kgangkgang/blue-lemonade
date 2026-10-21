@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.4/blue-lemonade-7.6.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.5/blue-lemonade-7.6.5.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.6.4 · 최신 업데이트</summary>
+<summary>7.6.5 · 최신 업데이트</summary>
+
+- 용어·말투를 가져와 저장하는 동안 채팅을 바꾸면, 완료 안내도 요청했던 채팅의 저장 결과로 표시해요. 새로 열린 채팅에 적용됐다고 안내하지 않아요.
+- 큰 용어·말투 목록은 화면에 보이는 항목의 표시 문구만 준비해요. 더 보기와 항목 선택은 그대로 유지하면서 보이지 않는 항목의 반복 계산을 줄였어요.
+- 과일 상태창의 밝기 전환 버튼에서 해·달 기호를 원 가운데 맞췄어요. 글꼴 기준선에 따라 치우치던 부분을 고치고, 버튼 위치와 전환 동작은 유지했어요.
+
+</details>
+
+<details>
+<summary>7.6.4 · 용어와 말투 옮기기</summary>
 
 - 번역 설정의 「용어·말투 옮기기」에서 이 채팅에 적용되는 용어와 인물별 말투를 골라 파일로 내보내고, 다른 채팅에서 가져올 수 있어요. 대화 본문·연결·키·번역 캐시는 파일에 넣지 않아요.
 - 가져올 항목과 중복 처리(기존 내용 유지·파일 내용으로 갱신)를 고르면 추가·갱신·유지 개수를 먼저 보여요. 현재 채팅에만 적용하며 공용·캐릭터 용어집은 바꾸지 않아요.

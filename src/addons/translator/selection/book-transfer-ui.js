@@ -37,17 +37,20 @@ export function openBookTransfer() {
         }catch(error){$('[data-book-preview]').textContent=error.message;}
     }
     function render(){
-        const value=data(),rows=[];
+        const value=data(),rows=[];let total=0;
         $('[data-file]').hidden=mode!=='import';$('[data-reload]').hidden=mode!=='export';$('[data-download]').hidden=mode!=='export';$('[data-apply]').hidden=mode!=='import';$('.llmt-book-policy').hidden=mode!=='import';
         dialog.querySelectorAll('[data-mode]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mode===mode)));
         $('[data-book-help]').textContent=mode==='export'?'이 방에 적용되는 용어(공용·캐릭터 범위 포함)와 이 방의 말투를 보여요. 대화 본문·연결·키·번역 캐시는 파일에 넣지 않아요.':'가져올 항목을 고르고 아래 변경 개수를 확인하세요. 기존에 표시된 번역을 새 지침으로 바꾸려면 적용 뒤 해당 메시지를 재번역하세요.';
-        if(value)for(const key of ['terms','styles'])if($(`[data-kind="${key}"]`).checked)value[key].forEach((row,i)=>{
+        if(value)for(const key of ['terms','styles'])if($(`[data-kind="${key}"]`).checked){
+            total+=value[key].length;
+            for(let i=0;i<value[key].length&&rows.length<shown;i++){const row=value[key][i];
             const id=key+':'+i,label=key==='terms'?`${row.src} → ${row.dst}`:`${row.speaker}${row.listener?(row.mutual?' ↔ ':' → ')+row.listener:''} · ${row.mode==='polite'?'존댓말':row.mode==='casual'?'반말':row.note}`;
             rows.push(`<label class="llmt-book-row"><input type="checkbox" data-row="${id}" ${picked[mode].has(id)?'checked':''}><span><small>${key==='terms'?'용어':'말투'}</small>${esc(label)}${key==='styles'&&row.note&&row.mode!=='custom'?`<small>${esc(row.note)}</small>`:''}</span></label>`);
-        });
-        $('[data-book-rows]').innerHTML=rows.slice(0,shown).join('')||'<p>표시할 항목이 없어요.</p>';
-        $('[data-more]').hidden=rows.length<=shown;
-        $('[data-more]').textContent=`더 보기 · ${Math.min(shown,rows.length)}/${rows.length}`;
+            }
+        }
+        $('[data-book-rows]').innerHTML=rows.join('')||'<p>표시할 항목이 없어요.</p>';
+        $('[data-more]').hidden=total<=shown;
+        $('[data-more]').textContent=`더 보기 · ${Math.min(shown,total)}/${total}`;
         updatePreview();
     }
     function download(){
@@ -69,6 +72,7 @@ export function openBookTransfer() {
             else if(button.hasAttribute('data-apply')){
                 busy=true;dialog.querySelectorAll('button,input,select').forEach(el=>el.disabled=true);$('[data-close]').disabled=false;
                 const result=await applyBook(fileJob,selection(),{policy:$('[data-policy]').value});fileJob=result;
+                try{assertBookJob(result);}catch(error){say((result.saved?.confirmed?'요청했던 채팅의 저장은 확인했어요. ':'요청했던 채팅의 서버 저장을 확인하지 못했어요. ')+error.message);return;}
                 say(result.saved?.confirmed?'현재 채팅에 적용하고 저장을 확인했어요.':'현재 목록에는 적용했지만 서버 저장을 확인하지 못했어요. 연결을 확인하고 채팅을 저장해 주세요.');
                 if(!closed){job=prepareBookJob(()=>closed);render();}
             }

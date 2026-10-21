@@ -281,6 +281,7 @@ jobs:
           node tools/tests/capture-open.mjs
           node tools/tests/translator-style-profiles.mjs
           node --test tools/tests/translator-book-transfer.mjs
+          node --test tools/tests/translator-book-list.mjs
           node tools/tests/translator-access-tools.mjs
           node tools/tests/translator-review-board.mjs
           node tools/tests/capture-range.mjs

@@ -5,7 +5,7 @@ import {pathToFileURL} from 'node:url';
 const root = path.resolve(process.argv[2] || '.');
 const {installFruitStatusKorean} = await import(pathToFileURL(path.join(root,'src/scripts/fruit-status.js')));
 class Element {
-    constructor(doc, tag, attrs = {}, text = '') { this.ownerDocument=doc;this.tag=tag;this.nodeType=1;this.attrs={...attrs};this.children=[];this.listeners=new Map();if(text)this.appendText(text); }
+    constructor(doc, tag, attrs = {}, text = '') { this.ownerDocument=doc;this.tag=tag;this.nodeType=1;this.attrs={...attrs};this.dataset={};this.children=[];this.listeners=new Map();if(text)this.appendText(text); }
     appendText(text) {const node={nodeType:3,nodeValue:text,parentElement:this};this.children.push(node);return node;}
     append(node){node.parentElement=this;this.children.push(node);return node;}
     get isConnected(){return this===this.ownerDocument.body || !!this.parentElement?.isConnected;}
@@ -20,7 +20,7 @@ class Element {
 }
 function documentFixture(){
     const doc={querySelector(s){return this.body.querySelector(s);},createTreeWalker(el){const nodes=[];function visit(n){for(const c of n.children)if(c.nodeType===3)nodes.push(c);else visit(c);}visit(el);let i=0;return{nextNode(){this.currentNode=nodes[i++];return !!this.currentNode;}};}};
-    doc.body=new Element(doc,'body');return doc;
+    doc.body=new Element(doc,'body');doc.head=doc.body.append(new Element(doc,'head'));doc.createElement=tag=>new Element(doc,tag);return doc;
 }
 const doc=documentFixture(), chat=doc.body.append(new Element(doc,'div',{id:'chat'}));
 const frames=new Map(), timers=new Map(), observers=[];let next=1;
@@ -50,6 +50,10 @@ const prologue=add(innerDoc.body,'div',{class:'vintage-prologue'}), proButton=ad
 const choices=add(innerDoc.body,'div',{id:'meowFM-OptionCard'}), choice=add(choices,'div',{class:'corner-info corner-text'},'Choose · Sth.');
 const choiceValue=add(choices,'div',{class:'option-text'},'Choose · Sth.');
 const stop=installFruitStatusKorean(doc,host);
+assert.equal(doc.head.children.length,1);assert.equal(innerDoc.head.children.length,1);
+assert.match(doc.head.children[0].textContent,/inset:0;margin:auto/,'toggle icon is centered independently of font metrics');
+assert.match(doc.head.children[0].textContent,/font-size:0!important/,'original text remains in DOM but does not affect icon placement');
+assert.match(doc.head.children[0].textContent,/mask:var\(--bl-fruit-toggle-mask\)/);
 assert.equal(cp.text,'관계');assert.equal(at.text,'장소');assert.equal(novelValue.text,'CP');
 assert.equal(choice.text,'선택하기');assert.equal(choiceValue.text,'Choose · Sth.');assert.equal(proButton.getAttribute('aria-label'),'밝은/어두운 모드 전환');
 assert.equal(outer.label.text,'DATE');assert.equal(direct.label.text,'날짜');assert.equal(inner.label.text,'날짜');
@@ -63,6 +67,7 @@ const newDoc=documentFixture(), replaced=card(newDoc.body);iframe.contentDocumen
 const late=card(newDoc.body);mutate();assert.equal(late.label.text,'날짜');late.wrapper.remove();mutate();assert.equal(late.label.text,'DATE');
 const reused=direct.label;reused.remove();doc.body.append(reused);mutate();assert.equal(reused.text,'사용자 제목');
 stop();stop();assert.equal(timers.size,0);assert.equal(frames.size,0);assert(observers.every(o=>!o.node));assert.equal(iframe.listeners.size,0);assert.equal(foreign.listeners.size,0);
+assert.equal(doc.head.children.length,0);assert.equal(innerDoc.head.children.length,0);assert.equal(newDoc.head.children.length,0);
 assert.equal(replaced.label.text,'DATE');assert.equal(direct.footer.text,'사용자 문구');assert.equal(direct.chars.map(x=>x.text).join(''),'沉默不语，时光流淌');
 const stopAgain=installFruitStatusKorean(doc,host);assert.equal(replaced.label.text,'날짜');stopAgain();assert.equal(replaced.label.text,'DATE');
 console.log('Fruit status: scope, same-origin frames, foreign-frame isolation, fixed labels, field preservation, split quote, dynamic hints, reload, removal, external edits, OFF and ON passed');

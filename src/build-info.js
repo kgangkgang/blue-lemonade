@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.6.4";
+export const BUILD_VERSION = "7.6.5";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:d90c77ec:bc86b5aa",
+  "manifest.json": "365:cbe6b40b:bb954da4",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -243,7 +243,7 @@ export const FILE_HASHES = {
   "src/addons/translator/glossary-priority.js": "1166:e7040d4d:a088802d",
   "src/addons/translator/glossary-suggest.js": "37892:84fb105c:16cf3cc9",
   "src/addons/translator/glossary-sync.js": "4410:86799b24:8d1eafff",
-  "src/addons/translator/index.html": "57092:3a876c5f:f8c98fa9",
+  "src/addons/translator/index.html": "57092:25a399d6:b5060f70",
   "src/addons/translator/index.js": "546591:a739f40f:9115a533",
   "src/addons/translator/korean-keep.js": "3875:e48e9ac8:e1078d76",
   "src/addons/translator/leftover-fix.js": "20813:22ae0bba:9631adfc",
@@ -255,7 +255,7 @@ export const FILE_HASHES = {
   "src/addons/translator/reasoning-view.js": "8594:234e9b61:f50b69b7",
   "src/addons/translator/render-completion.js": "1746:5ddbaa71:016066f8",
   "src/addons/translator/selection/book-transfer-state.js": "2493:8941a52e:d616d839",
-  "src/addons/translator/selection/book-transfer-ui.js": "10115:989d55dd:f04fd69c",
+  "src/addons/translator/selection/book-transfer-ui.js": "10442:5623e732:1df3b921",
   "src/addons/translator/selection/comparison-ui.js": "3820:96405fc2:5338ebd4",
   "src/addons/translator/selection/comparison.js": "5323:ead95304:aa6b8623",
   "src/addons/translator/selection/core.js": "3166:ab12d4f1:daa0e53f",
@@ -561,7 +561,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "303452:51a28107:7573b4c6",
+  "src/notice-data.js": "304131:32196674:1e0c33bc",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -622,7 +622,7 @@ export const FILE_HASHES = {
   "src/scripts/fruit-entry.js": "14548:6281fab9:e1749cd4",
   "src/scripts/fruit-option-effects.js": "115362:8d790430:ae33e023",
   "src/scripts/fruit-option-help.js": "12241:11cd7da9:5c349f4b",
-  "src/scripts/fruit-status.js": "14223:7020141b:6cb4eea0",
+  "src/scripts/fruit-status.js": "15296:edd5ca3c:9aede4f2",
   "src/scripts/plain/deus-qr.js": "48207:47919bf8:640a51c4",
   "src/scripts/plain/deus.js": "66897:632b8c3e:8adc7e2f",
   "src/scripts/plain/fold.js": "13815:b56ce78f:e3189530",
@@ -691,5 +691,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1548856:65345bba:caabc413"
+  "style.css": "1548856:1ae338ba:6af15162"
 };
