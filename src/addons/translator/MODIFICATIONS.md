@@ -56,3 +56,5 @@ Modified 2026-10-20 (3.0.1): paragraph-cache keys no longer depend on the messag
 Modified 2026-10-21 (3.0.2): added an independently implemented file transfer for selected effective terminology and chat-scoped speech preferences. Imports preview conflicts, preserve or update matching rows, change only the current chat metadata, validate the whole file before mutation, guard navigation and concurrent edits, and verify both fields through the native serialized chat save lane. Exported files omit chat messages, API settings and translation caches.
 
 Modified 2026-10-21 (3.0.3): book transfer completion rechecks the captured chat and metadata after saving and reports the original target if navigation or another edit occurred. List markup is prepared only for visible rows while retaining complete selection and preview counts.
+
+Modified 2026-10-22 (3.0.4): preserve referenced translator annotations while keeping unreferenced work-note cleanup. Disambiguate footnote numbers from batch passage IDs, retain annotations across streaming/cache paths, and attach notes to their parent passage for combined display and quality checks. No third-party prompt text is bundled.

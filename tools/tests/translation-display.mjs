@@ -24,7 +24,7 @@ function cut(name) {
 const names = ['processTranslationText', 'applyIsolation', 'analyzeStructure', 'extractPureText', 'renderTranslation', 'renderAllInOne', 'renderInterleaved', 'createDetailsTag', 'restoreContent', 'runtimeRegexes', 'protectedBlockRegexes', 'isProtectedBlock'];
 const segments = pathToFileURL(path.join(dev, 'src/addons/translator/translation-segments.js')).href;
 const module = `import { withDisplayCardsProtected, displayCardBlocks } from ${JSON.stringify(pathToFileURL(path.join(dev, 'src/addons/translator/display-cards.js')).href)};
-import { splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, dropTokens } from ${JSON.stringify(segments)};
+import { maskTranslatorNotes, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, dropTokens } from ${JSON.stringify(segments)};
 const extensionSettings = { translation_display_mode: 'folded', force_sequential_matching: false };
 const window = {}, toastr = { error() {}, warning() {} };
 const correctBackticks = input => input, getCombinedRegexes = () => [], getNoFoldRegexes = () => [];
@@ -45,6 +45,15 @@ const D = (t, o, mode = 'folded') => mode === 'folded'
     : `<details class="llm-translator-details mode-original-first"><summary class="llm-translator-summary"><span class="original_text clickable-text-org">${o}</span></summary><span class="translated_text">${t}</span></details>`;
 const U = (t, o) => `<span class="translated_text mode-unfolded">${t}</span><br><span class="original_text mode-unfolded">${o}</span>`;
 const GAP = '<div class="llmt-para-gap"></div>';
+for (const mode of ['folded','original_first','unfolded']) {
+    const translated='그녀는 베이스를 연주했다.[1]\n\n역주:\n[1] 여기서 bass는 악기를 뜻한다.\n\n그는 고개를 끄덕였다.';
+    const shown=render('She played the bass.\n\nHe nodded.',translated,mode);
+    assert.ok(shown.includes('역주:<br>[1] 여기서 bass는 악기를 뜻한다.'),mode);
+    assert.ok(shown.indexOf('악기를 뜻한다.')<shown.indexOf('그는 고개를 끄덕였다.'),mode);
+    assert.ok(!/[\uE000-\uF8FF]/.test(shown),mode);
+    if(mode!=='unfolded')assert.equal((shown.match(/<details /g)||[]).length,2,mode);
+}
+console.log('PASS referenced footnotes stay under their passage in folded, original-first and unfolded views');
 const eq = (orig, trans, expected, mode = 'folded') => assert.equal(render(orig, trans, mode), expected.join('\n'), JSON.stringify(trans));
 
 // '사용 안 함'은 번역문 그대로

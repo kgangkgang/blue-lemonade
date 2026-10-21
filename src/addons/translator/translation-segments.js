@@ -1,3 +1,5 @@
+import { maskTranslatorNotes } from './translation-notes.js';
+export { maskTranslatorNotes } from './translation-notes.js';
 import { checkpointKey } from './translation-resume.js';
 
 // 7.3.1 문단 캐시 크기: 400문단은 70~90문단 답 4~5개뿐이라 조금 전 채팅도 밀려나 처음부터 다시 번역했다.
@@ -443,7 +445,7 @@ export function batchGroups(bodies, limit = 3600) {
 // 화살표 재번역(통짜 경로)은 되는데 자동 번역만 막히던 이유. 표시는 본문에 나올 일 없는 ⟦n⟧ 을 쓴다.
 const MARK_ALT = /^[ \t]*【\s*(\d+)\s*】[ \t]*[:：]?[ \t]*/; // 모델이 괄호를 바꿔 쓴 답 — 원래 표시가 하나도 없을 때만 (본문의 각주 【1】 과 헷갈리지 않게)
 const SQUARE_MARK = /^[ \t]*\[[ \t]*(\d+)[ \t]*\][ \t]*[:：]?[ \t]*/; // 5.4.1: [3] — ⟦ · 【 가 하나도 없을 때 (⟦ 답 안에서는 바로 다음 번호일 때만)
-export const BATCH_HEADER = '[Translate every numbered passage below using the translation instructions above. Each passage starts with a marker like ⟦3⟧. Keep every marker exactly as it is at the start of its translated passage, translate the passage after it completely, keep markup and placeholders, and do not merge, split, reorder, add or drop passages.]\n\n';
+export const BATCH_HEADER = '[Translate every numbered passage below using the translation instructions above. Each passage starts with a marker like ⟦3⟧. Keep every marker exactly as it is at the start of its translated passage, translate the passage after it completely, keep markup and placeholders, and do not merge, split, reorder, add or drop passages. If the translation instructions request annotations, put the references and notes inside their passage after its text. Footnote numbers like [1] or [^1] are not passage markers.]\n\n';
 export function batchPayload(bodies) {
     return BATCH_HEADER + bodies.map((text, id) => `⟦${id}⟧ ${text}`).join('\n\n');
 }
@@ -481,6 +483,8 @@ const noteLike = block => noteBlock(block) || block.split('\n').some(line => NOT
  *         원문에 없는 '분명한' 메모가 문단 수보다 더 붙었을 때만 걷는다. 원문이 없으면 ※ 줄은 번역 이야기일 때만 메모로 본다.
  *  첫 덩이는 건드리지 않는다. 마지막 덩이 안에서 본문 바로 밑에 붙은 "---\nNote: …" 도 (원문에 그런 꼴이 없을 때만) 걷는다. */
 export function stripTrailingNote(text, source) {
+    const protectedNotes = maskTranslatorNotes(text);
+    if (protectedNotes.changed) return protectedNotes.restore(stripTrailingNote(protectedNotes.text, source));
     const blocks = String(text ?? '').split(/(\n[\t ]*\n(?:[\t ]*\n)*)/);
     const src = source == null ? null : paragraphsOf(source);
     const srcTail = Boolean(src?.length) && noteLike(src.at(-1));
@@ -563,6 +567,8 @@ function planningNote(block, sourcePlan) {
 }
 /** 답에서 번역 모델의 작업 메모(계획 덩이 · 줄)를 걷는다. 걷을 게 없거나 걷으면 아무것도 안 남으면 같은 글 */
 export function stripPlanningNotes(text, source) {
+    const protectedNotes = maskTranslatorNotes(text);
+    if (protectedNotes.changed) return protectedNotes.restore(stripPlanningNotes(protectedNotes.text, source));
     const out = String(text ?? '');
     if (!PLAN_ARROW.test(out) && !/translat|keep|preserve|maintain|retain|leave|don'?t|do not|placeholder|플레이스|자리\s?표시자|VAR|span|마크업|markup|html/i.test(out)) return out;
     const sourcePlan = source != null && planLike(String(source));
@@ -591,6 +597,8 @@ export function stripPlanningNotes(text, source) {
 /** 평문 답: 앞의 "Here is the translation:" 같은 한 줄 머리말과 꼬리 메모를 걷는다 (머리말이 문단 하나로 세어져 자리가 밀리지 않게).
  *  5.3.6: source(보낸 원문)를 주면 견준다 — 원문 첫 문단이 같은 꼴이면 머리말로 보지 않고, 꼬리 메모는 stripTrailingNote 규칙대로. */
 export function stripReplyWrapping(text, source) {
+    const protectedNotes = maskTranslatorNotes(text);
+    if (protectedNotes.changed) return protectedNotes.restore(stripReplyWrapping(protectedNotes.text, source));
     let out = stripPlanningNotes(String(text ?? '').replace(/\r\n?/g, '\n').replace(/<think>[\s\S]*?<\/think>/gi, ''), source).trim();   // 6.5.3 작업 메모
     const first = /^([^\n]*)\n[\t ]*\n/.exec(out);
     const srcFirst = source == null ? '' : paragraphsOf(source)[0] ?? '';
@@ -664,6 +672,8 @@ function stripThinkBlocks(out, src) {
     return text;
 }
 export function stripDraftLeaks(text, source) {
+    const protectedNotes = maskTranslatorNotes(text);
+    if (protectedNotes.changed) return protectedNotes.restore(stripDraftLeaks(protectedNotes.text, source));
     let out = String(text ?? '');
     if (source == null || !out.trim()) return out;
     const src = String(source), srcKey = echoKey(src);
@@ -796,6 +806,8 @@ function cutEcho(block, keys, longest, sources) {
 /** 5.4.1: 답에서 원문 되풀이를 걷는다 — 줄머리의 모양 망가진 ⟦n …] 표시(원문에 ⟦ 가 없을 때), 원문 문단+화살표+번역의 앞 원문,
  *  원문 문단 그대로인 덩이+빈 줄+다른 글자의 번역 (답 덩이가 원문 문단보다 많을 때 넘친 수만큼만). 걷을 게 없으면 같은 글을 돌려준다. */
 export function removeSourceEcho(source, output) {
+    const protectedNotes = maskTranslatorNotes(output);
+    if (protectedNotes.changed) return protectedNotes.restore(removeSourceEcho(source, protectedNotes.text));
     const src = String(source ?? ''), out = String(output ?? '');
     if (!src.trim() || !out.trim()) return out;
     const paras = paragraphsOf(src), keys = new Set(paras.map(echoKey).filter(k => k.length >= 12)), sources = new Set(paras);
@@ -835,6 +847,8 @@ export function removeSourceEcho(source, output) {
 /** 5.4.1: 한 문단의 번역이 원문을 길게 베껴 품었나 — 원문 문장(12자 이상)들이 원문의 60% 이상 그대로 들어 있고,
  *  베낀 것을 뺀 나머지가 다른 글자(언어)로 넉넉히 있을 때. 짧은 원문(40자 미만) · 이름 · 짧은 인용 · 번역하지 않고 그대로 둔 문단은 해당 없음. */
 export function echoesSource(answer, source) {
+    const protectedNotes = maskTranslatorNotes(answer);
+    if (protectedNotes.changed) return echoesSource(protectedNotes.text, source);
     const sourceKey = echoKey(source);
     if (sourceKey.length < 40) return false;
     let rest = echoKey(answer), copied = 0;
@@ -852,6 +866,8 @@ export function cleanParagraphEcho(answer, source) {
 const FAIL_BLOCK = /^\[[^\n\]]*원문 그대로\]/;
 /** 5.4.1: 메시지 번역(캐시에 넣을 · 캐시에서 꺼낸 글)이 원문 되풀이를 품었나 — 걷을 게 있거나, 어느 덩이가 원문 문단을 길게 베꼈으면 참 */
 export function hasSourceEcho(source, output) {
+    const protectedNotes = maskTranslatorNotes(output);
+    if (protectedNotes.changed) return hasSourceEcho(source, protectedNotes.text);
     const out = String(output ?? '');
     if (!out.trim() || !String(source ?? '').trim()) return false;
     if (removeSourceEcho(source, out) !== out) return true;
@@ -864,6 +880,8 @@ export function hasSourceEcho(source, output) {
 /** meta.renumbered: 1부터 다시 매긴 답을 한 칸 내려 받았다 (문단 하나를 빼먹고 끝에 지어낸 답과 구별이 안 돼 캐시에 넣지 않는다)
  *  5.3.7: sources(보낸 원문 문단 배열)를 주면 꼬리 메모를 원문 문단과 견줘 걷는다 — 원문에 있는 상태창 · 메모 줄은 번역이다 */
 export function parseBatchResult(raw, count, meta = {}, sources) {
+    const protectedNotes = maskTranslatorNotes(raw);
+    if (protectedNotes.changed) return parseBatchResult(protectedNotes.text, count, meta, sources).map(value => protectedNotes.restore(value));
     // 앞의 <think>…</think> · 코드 펜스 · 표시 앞의 설명문은 걷어 낸다. 개수 · 번호 · 중복 · 빈 글 검사는 엄격하다.
     const text = String(raw).replace(/\r\n?/g, '\n').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/^\s*```[a-z]*[ \t]*\n|\n[ \t]*```\s*$/g, '').trim();
     // 5.4.1: ⟦ 가 있으면 모양이 망가진 표시(⟦1 Vere] · ⟦1] …)도 표시로 본다 — 전엔 그 줄이 앞 문단 답에 붙었다.
@@ -909,6 +927,8 @@ export function parseBatchResult(raw, count, meta = {}, sources) {
  *  번호는 0(또는 1부터 다시 매긴 답이면 1)부터 차례대로일 때까지만 센다. 걷어 내고 빈 문단 · 원문을 베낀 문단은 null (닫힘으로는 센다).
  *  from: 이미 본 문단 수 — 그 앞 문단은 걷어 내지 않고 undefined (조각마다 앞 문단을 다시 걷지 않게) */
 export function streamedPassages(raw, count, sources, from = 0) {
+    const protectedNotes = maskTranslatorNotes(raw);
+    if (protectedNotes.changed) return streamedPassages(protectedNotes.text, count, sources, from).map(value => value == null ? value : protectedNotes.restore(value));
     let text = String(raw ?? '').replace(/\r\n?/g, '\n').replace(/<think>[\s\S]*?<\/think>/gi, '');
     if (/<think>/i.test(text) || !text.includes('⟦')) return [];   // 아직 생각 중 · 표시 전
     text = text.replace(/^\s*```[a-z]*[ \t]*\n/, '');
@@ -1120,6 +1140,8 @@ function dropLines(lines, drop) {
     return out.join('\n');
 }
 export function dropStrayWords(text, source) {
+    const protectedNotes = maskTranslatorNotes(text);
+    if (protectedNotes.changed) return protectedNotes.restore(dropStrayWords(protectedNotes.text, source));
     let value = String(text ?? '');
     // 6.2.5 문단 번호 표시(⟦n⟧) 찌꺼기 — 번역 모델이 영어 혼잣말을 「… context-fitting title⟧ 번역문 …」처럼 줄 머리에 흘렸다
     //       (원문에는 없는 글귀). 원문에 ⟦ ⟧ 가 없을 때만:

@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.7/blue-lemonade-7.6.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.8/blue-lemonade-7.6.8.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.6.7 · 최신 업데이트</summary>
+<summary>7.6.8 · 최신 업데이트</summary>
+
+- 문단별 번역에서 본문의 번호와 연결된 역주·각주를 모델의 작업 메모로 지우지 않아요. 각주 [1]을 다음 번역 문단 번호로 오인하던 부분도 고쳤어요.
+- 각주는 해당 문단 아래에 남고 접기·원문 먼저·펼침에서도 문단 짝을 유지해요. 이미 각주가 빠진 번역은 번역 데이터를 지운 뒤 다시 번역해 주세요.
+
+</details>
+
+<details>
+<summary>7.6.7 · 번역 후 읽던 위치 유지</summary>
 
 - 번역문을 그린 직후 다른 화면 갱신이 채팅을 맨 아래로 내려도 읽던 문단을 유지하도록 보완했어요. 이미 맨 아래에서 읽고 있었다면 아래쪽을 계속 따라가요.
 - 직접 스크롤하거나 다른 메시지로 이동하면 위치 보호를 즉시 풀어요. 번역이 끝나기 전에 시작한 모바일 스크롤의 관성도 방해하지 않아요.

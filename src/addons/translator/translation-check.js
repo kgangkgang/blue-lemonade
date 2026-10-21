@@ -1,3 +1,4 @@
+import { translatorNoteRanges } from './translation-notes.js';
 // 2.6.0 번역 점검 (사용자 요청 10-15): 저장된 번역문을 원문과 문단마다 견줘, 오늘 실제로 난 문제(초안 · 혼잣말 누출 2.5.0, 숨김 주석 깨짐 ·
 //   번역 끊김 2.5.1, 대사 괄호 빠짐 2.5.2 …)가 남은 문단을 고른다. 새 판정을 만들지 않고 번역할 때 쓰는 검사 함수를 그대로 다시 쓴다 —
 //   번역 경로가 이미 고쳐 그리는 것(빠진 괄호 · 깨진 주석 가리기)은 고친 뒤에도 남는 것만 본다. 오탐이 적은 쪽으로:
@@ -19,7 +20,7 @@ const fenceOpen = text => (String(text).match(/```|~~~/g) || []).length % 2 === 
 const CLOSED_COMMENT = /<!--(?:(?!<!--)[\s\S])*?-->/g;
 /** 나누지 않을 자리 [시작, 끝) — 숨김 주석 · 코드 블록 · 보호 블록 (보호 규칙의 주석 규칙도 닫힌 것만) */
 function keptRanges(text, protect) {
-    const ranges = [];
+    const ranges = translatorNoteRanges(text).map(r => [Math.max(0,r.attachStart-1),r.end]);
     for (const re of [CLOSED_COMMENT, FENCES, ...(protect || []).map(rule => (rule instanceof RegExp && rule.source === HTML_COMMENT.source ? CLOSED_COMMENT : rule))]) {
         if (!(re instanceof RegExp)) continue;
         for (const m of text.matchAll(global(re))) if (m[0].length) ranges.push([m.index, m.index + m[0].length]);

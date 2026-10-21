@@ -31,7 +31,7 @@ const names = ['getCombinedRegexes', 'compileUserPattern', 'getNoFoldRegexes', '
     'resolveQueuedTarget', 'refreshMessageBlock', 'localOrDisplayedTranslation', 'originalHashOf',
     'processTranslationText', 'applyIsolation', 'analyzeStructure', 'extractPureText', 'renderTranslation', 'renderAllInOne', 'renderInterleaved', 'createDetailsTag', 'restoreContent'];
 const module = `import { withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure } from ${url('display-cards.js')};
-import { splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, dropTokens } from ${url('translation-segments.js')};
+import { maskTranslatorNotes, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, dropTokens } from ${url('translation-segments.js')};
 import { createGuards } from ${url('translation-guard.js')};
 export const extensionSettings = { translation_display_mode: 'disabled', force_sequential_matching: false, user_defined_regexes: [], user_no_fold_regexes: [] };
 export const T = { chat: [], chatId: 'chat-A', groupId: null, characterId: 1, rendered: [], events: [], editing: false, cached: null, notified: [] };

@@ -238,6 +238,7 @@ jobs:
           node tools/tests/diag-file.mjs .
           node tools/tests/translation-cache-loading.mjs .
           node tools/tests/translation-segments.mjs .
+          node tools/tests/translator-footnotes.mjs .
           node tools/tests/translation-display.mjs .
           node tools/tests/translation-source.mjs .
           node tools/tests/translation-source-trim.mjs .

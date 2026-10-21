@@ -1,3 +1,4 @@
+import { maskTranslatorNotes } from './translation-notes.js';
 // Modified 2026-09-24: Blue Lemonade bundled adapter; original settings and translation DB retained.
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
@@ -7802,6 +7803,7 @@ function emitTranslationUIUpdate(messageId, type) {
  */
 export function processTranslationText(originalText, translatedText, options = {}) {
     const displayMode = extensionSettings.translation_display_mode || 'disabled';
+    const fallbackTranslation = translatedText;
 
     // 0. 기본 모드 체크 (빠른 반환)
     if (displayMode === 'disabled') {
@@ -7816,6 +7818,8 @@ export function processTranslationText(originalText, translatedText, options = {
         // 원문 · 번역문에서 어긋나고(줄 수 불일치 → 통째 접기), 감싸개 밖에 둔 제목 표시 줄이 \r 에서 끊겨 접힌 글이 밖으로 샌다. 마크다운도 어차피 \n 으로 바꾼다
         originalText = String(originalText ?? '').replace(/\r\n?/g, '\n');
         translatedText = String(translatedText ?? '').replace(/\r\n?/g, '\n');
+        const originalNotes=maskTranslatorNotes(originalText,{attach:true,prefix:'\uE010'}),translatedNotes=maskTranslatorNotes(translatedText,{attach:true,prefix:'\uE020'});
+        originalText=originalNotes.text;translatedText=translatedNotes.text;
         // 2026-10-06: 줄을 넘는 *기울임* · **굵게** 는 줄마다 닫고 다시 연다 — 줄마다 따로 감싸면 짝이 감싸개 사이에서 끊겨 강조가 사라졌다 (줄 수는 그대로)
         originalText = withDisplayCardsProtected(originalText, splitCrossLineEmphasis);
         translatedText = withDisplayCardsProtected(translatedText, splitCrossLineEmphasis);
@@ -7855,7 +7859,8 @@ export function processTranslationText(originalText, translatedText, options = {
         // 격리해둔 마스킹 내용을 원래 자리로 되돌립니다. (교차 복원 포함)
         finalHtml = restoreContent(finalHtml, transData.map, origData.map);
 
-        return correctBackticks(finalHtml);
+        const showNote=note=>'<br><br>'+note.replace(/\r?\n/g,'<br>');
+        return correctBackticks(originalNotes.restore(translatedNotes.restore(finalHtml,showNote),showNote));
 
     } catch (error) {
         if (options.inspect) throw error;
@@ -7865,7 +7870,7 @@ export function processTranslationText(originalText, translatedText, options = {
             toastr.error('번역문 처리 중 오류가 발생했습니다.');
         }
         // 치명적 오류 발생 시 최소한 번역문이라도 보여줌 (안전장치)
-        return correctBackticks(translatedText || '');
+        return correctBackticks(fallbackTranslation || '');
     }
 }
 
