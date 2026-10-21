@@ -1530,7 +1530,7 @@ function tabChat(s, sub) {
             ${row('색 고르기 팝업', toggle('chat.colorPop', s.chat.colorPop !== false), '실리태번 색 칸도 테마 색 고르기로')}
             ${row('큰 숫자는 쉼표로', toggle('chat.numComma', s.chat.numComma !== false), '숫자 칸의 30000 을 30,000 으로 보여 줘요 · 누르면 원래대로, 값은 그대로')}
             ${row('설명 ? 단추', toggle('chat.helpMarks', s.chat.helpMarks !== false), '월드인포 설정 · 한글화 패널 칸 옆의 ? 를 보여요 · 끄면 숨겨요')}
-            ${row('이전 메시지 저절로 불러오기', toggle('chat.showMoreAuto', s.chat.showMoreAuto !== false), '채팅 맨 위 「이전 메시지 더 보기」가 화면에 다 들어오면 누르지 않아도 이어서 불러와요')}
+            ${row('이전 메시지 저절로 불러오기', toggle('chat.showMoreAuto', s.chat.showMoreAuto !== false), '위로 올리다 채팅 맨 위 「이전 메시지 더 보기」에 가까워지면 누르지 않아도 미리 불러와요. 불러온 뒤에도 보던 자리는 그대로예요')}
             ${row('새 답 첫 줄로 가는 단추', toggle('chat.replyTop', !!s.chat.replyTop), '긴 답이 끝나 첫 줄이 위로 지나가 있으면 ↑ 아이콘이 떠요 · 첫 줄이 보이면 사라져요')}
             ${row('토큰 수 누르면 내역', toggle('chat.sentTokens', s.chat.sentTokens !== false), '메시지 머리 토큰 수를 누르면 생각 · 본문 · 다음 프롬에 들어가는 양을 한 줄씩 보여 줘요')}
             ${row('웹 검색 · 출처 표시', toggle('chat.webSearchMarks', s.chat.webSearchMarks !== false), '웹 검색을 쓴 답에 지구 표시 · 답의 낱말을 꾹 누르면 어디서 왔는지 한 줄')}

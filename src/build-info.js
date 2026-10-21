@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.6.2";
+export const BUILD_VERSION = "7.6.3";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:d28336d6:f07b293c",
+  "manifest.json": "365:98eae9d5:96748e5d",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -558,14 +558,14 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "302211:e7cd24df:ddac2f4e",
+  "src/notice-data.js": "302698:ce618d08:983f773e",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
   "src/numcomma.js": "29447:948716a0:f48aa0f1",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
   "src/palettes.js": "33894:d739cf1f:f0700eaa",
-  "src/panel.js": "254222:99cd1434:9ced3d90",
+  "src/panel.js": "254279:ea6a493d:f8867c6a",
   "src/people.js": "9242:063fb4d2:64449992",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
   "src/preview-view.js": "13723:1503db9e:2771d54f",
@@ -649,7 +649,7 @@ export const FILE_HASHES = {
   "src/settings-search.js": "37390:95880e3e:100d6db5",
   "src/settings-sync.js": "6623:9fbae458:092efa56",
   "src/settings.js": "70977:dd9835f6:614d7984",
-  "src/show-more-auto.js": "3516:57ba900f:9c30b70e",
+  "src/show-more-auto.js": "5794:57822f0b:7a15ff2d",
   "src/splash.js": "19344:c97fc557:9dcea6a3",
   "src/squared-buttons.js": "8440:0f009cb3:8b7eb8aa",
   "src/st-solid.js": "5312:22b0ac68:45060844",
@@ -688,5 +688,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1548856:542fd8f3:03dea47e"
+  "style.css": "1548856:f5591640:4560a4ec"
 };

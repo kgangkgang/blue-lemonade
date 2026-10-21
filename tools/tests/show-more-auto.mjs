@@ -27,13 +27,13 @@ await sleep(300);
 t('with no button nothing is watched',()=>{assert.equal(sm._forTest.state().watched,null);});
 els.show_more_messages=button();
 emit('cc');await sleep(300);
-t('the button appears on chat change → watched by one observer on #chat with threshold 1',()=>{
-  const io=observers.at(-1);assert.equal(io.opts.threshold,1);assert.equal(io.opts.root,els.chat);assert.ok(io.targets.has(els.show_more_messages));
+t('the button appears on chat change → watched by one observer on #chat, 3 screens ahead (7.6.3: rootMargin 300% top, threshold 0)',()=>{
+  const io=observers.at(-1);assert.equal(io.opts.threshold,0);assert.equal(io.opts.rootMargin,sm.ROOT_MARGIN);assert.equal(sm.ROOT_MARGIN,'300% 0px 0px 0px');assert.equal(io.opts.root,els.chat);assert.ok(io.targets.has(els.show_more_messages));
 });
-t('fully visible → one click, then rest; a second report during the rest is ignored',()=>{
-  const io=observers.at(-1);io.fire(els.show_more_messages,1);assert.equal(clicks,1);
+t('entering the prefetch zone → one click, then rest; a second report during the rest is ignored; a non-intersecting report never counts',()=>{
+  const io=observers.at(-1);io.fire(els.show_more_messages,0.01);assert.equal(clicks,1);
   io.fire(els.show_more_messages,1);assert.equal(clicks,1,'resting');
-  io.fire(els.show_more_messages,0.6);assert.equal(clicks,1,'partly visible never counts');
+  io.fire(els.show_more_messages,0);assert.equal(clicks,1,'not intersecting never counts');
 });
 await sleep(200);
 t('after the rest the button is re-observed (initial report comes back) and may fire again',()=>{
@@ -44,6 +44,29 @@ t('when the button is gone (all loaded) the watch is dropped',()=>{delete els.sh
 await sleep(300);
 t('… and nothing is observed',()=>{assert.equal(sm._forTest.state().watched,null);});
 t('turning it off disconnects and unbinds',()=>{sm.syncShowMoreAuto(false);assert.ok(observers.at(-1).dead);assert.equal((listeners.cc||[]).length,0);});
+// ---- 7.6.3 보던 자리 지키기 (loadKeepingPlace): 실리태번 showMoreMessages() 는 클릭 안에서 동기로 끼워 넣고, 단추가 창 안이면 scrollTop 을 들어온 높이로 놓는다
+const fakeChat=(top,height,client=668)=>({scrollTop:top,scrollHeight:height,clientHeight:client});
+t('button on screen (ST sets scrollTop = inserted height) → corrected to the original place + inserted',()=>{
+  const c=fakeChat(40,10217);const b={click(){c.scrollHeight=15819;c.scrollTop=5602;}};
+  assert.deepEqual(sm.loadKeepingPlace(b,c),{inserted:5602,fixed:true});assert.equal(c.scrollTop,5642);
+});
+t('button off screen and the browser anchored already (scrollTop moved by the inserted height) → untouched',()=>{
+  const c=fakeChat(600,10217);const b={click(){c.scrollHeight=12170;c.scrollTop=2553;}};
+  assert.deepEqual(sm.loadKeepingPlace(b,c),{inserted:1953,fixed:false});assert.equal(c.scrollTop,2553);
+});
+t('button just above the screen, nobody compensated (scrollTop unchanged) → moved by the inserted height',()=>{
+  const c=fakeChat(60,10217);const b={click(){c.scrollHeight=12170;}};
+  assert.deepEqual(sm.loadKeepingPlace(b,c),{inserted:1953,fixed:true});assert.equal(c.scrollTop,2013);
+});
+t('nothing inserted (no messages left) or no chat element → click only',()=>{
+  const c=fakeChat(100,5000);const b={n:0,click(){this.n++;}};
+  assert.deepEqual(sm.loadKeepingPlace(b,c),{inserted:0,fixed:false});assert.equal(c.scrollTop,100);
+  assert.deepEqual(sm.loadKeepingPlace(b,null),{inserted:0,fixed:false});assert.equal(b.n,2);
+});
+t('the wanted place never exceeds the scroll range',()=>{
+  const c=fakeChat(300,900,668);const b={click(){c.scrollHeight=1000;}};
+  sm.loadKeepingPlace(b,c);assert.equal(c.scrollTop,332);
+});
 
 // ---- ↑ 새 답 첫 줄로
 const rt=await import(pathToFileURL(path.join(root,'src/reply-top.js')));
