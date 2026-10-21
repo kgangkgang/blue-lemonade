@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.5.7";
+export const BUILD_VERSION = "7.5.8";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:6bc9d2d8:d04f0872",
+  "manifest.json": "365:b4734191:971030ce",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -192,7 +192,7 @@ export const FILE_HASHES = {
   "src/addons/prompt/cache-loading.js": "384:766f047d:4f5c117c",
   "src/addons/prompt/connection.js": "11622:6c30609d:ea863f81",
   "src/addons/prompt/current-connection.js": "3055:67fc264b:5c2798bc",
-  "src/addons/prompt/guide.js": "24384:e0045937:d57223cb",
+  "src/addons/prompt/guide.js": "24384:564d0cf6:4ffcadef",
   "src/addons/prompt/index.js": "277323:5811c066:9f95beb4",
   "src/addons/prompt/localization-ui.js": "5295:e989b64d:b49f0195",
   "src/addons/prompt/persona-data.js": "4579:b96d5db9:3b8d8ae3",
@@ -200,9 +200,9 @@ export const FILE_HASHES = {
   "src/addons/prompt/regex-ui.js": "7093:a75326ea:abbcc7dd",
   "src/addons/prompt/request-errors.js": "1558:9bebebff:d7f4f644",
   "src/addons/prompt/response-text.js": "2596:b1382aa2:260a2b4b",
-  "src/addons/prompt/settings-ui.js": "8501:88a784f4:426c5018",
+  "src/addons/prompt/settings-ui.js": "8501:ab144eb5:64124bb8",
   "src/addons/prompt/style.css": "73560:22e659da:43bc5535",
-  "src/addons/prompt/translation-progress.js": "4554:29a24c67:30ffcfba",
+  "src/addons/prompt/translation-progress.js": "4714:8084427b:1653c2ea",
   "src/addons/regexlink/engine.js": "10242:ac39044e:37e62e6f",
   "src/addons/regexlink/index.js": "17731:6f6da0ec:3a93d356",
   "src/addons/regexlink/style.css": "2975:1179cb83:beef4ebd",
@@ -557,7 +557,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "299700:7ba41348:90fa8188",
+  "src/notice-data.js": "300217:96cf653b:63862a80",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -687,5 +687,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1548417:ca0a55ea:1aeb0368"
+  "style.css": "1548417:3efede74:e94aa3b1"
 };

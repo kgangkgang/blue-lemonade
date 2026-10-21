@@ -23,21 +23,21 @@ export function translationSummary(result) {
 }
 
 export function createTranslationProgress({ targets, ns, part, write, isStopped = () => false }) {
-    const active = new Map(), outcomes = new Map();
+    const active = new Map(), settled = new Set(), failures = new Map();
+    const counts = { total: targets.length, success: 0, cached: 0, failed: 0, stopped: 0, skipped: 0 };
     let closed = false;
+    // Cache hits can finish thousands of rows in one run. Count each outcome
+    // once instead of walking every completed row on every progress update.
     const snapshot = () => {
-        const result = { total: targets.length, success: 0, cached: 0, failed: 0, stopped: 0, skipped: 0, failures: [] };
-        for (const [row, outcome] of outcomes) {
-            result[outcome.state]++;
-            if (outcome.state === 'failed') result.failures.push({ id: row.id, name: row.name || '(이름 없음)', reason: outcome.reason });
-        }
+        const result = { ...counts, failures: [] };
+        for (const [row, reason] of failures) result.failures.push({ id: row.id, name: row.name || '(이름 없음)', reason });
         return result;
     };
     const paint = () => {
         if (closed) return;
         const result = snapshot();
         const done = result.success + result.cached + result.failed + result.skipped;
-        const rows = [...active.values()].flat().filter(row => !outcomes.has(row));
+        const rows = [...active.values()].flat().filter(row => !settled.has(row));
         write(isStopped() ? `${translationKind(ns)} · ${part} · 중단 중…` : activeTranslationText({ ns, part, rows, done, total: targets.length }), result);
     };
     paint();
@@ -45,13 +45,15 @@ export function createTranslationProgress({ targets, ns, part, write, isStopped 
         start(rows) { const token = Symbol(); active.set(token, rows); paint(); return token; },
         end(token) { active.delete(token); paint(); },
         settle(row, state, error) {
-            if (closed || outcomes.has(row)) return;
-            outcomes.set(row, { state, reason: short(error?.message || error || '번역 결과를 받지 못했어요.', 300) });
+            if (closed || settled.has(row)) return;
+            settled.add(row);
+            counts[state]++;
+            if (state === 'failed') failures.set(row, short(error?.message || error || '번역 결과를 받지 못했어요.', 300));
             paint();
         },
         stopping: paint,
         finish() {
-            for (const row of targets) if (!outcomes.has(row)) outcomes.set(row, { state: 'stopped' });
+            for (const row of targets) if (!settled.has(row)) { settled.add(row); counts.stopped++; }
             active.clear(); closed = true;
             const result = snapshot();
             const ending = result.stopped ? '중단' : result.failed ? '일부 실패' : '완료';
