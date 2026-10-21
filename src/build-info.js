@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.6.6";
+export const BUILD_VERSION = "7.6.7";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:2b8dd702:3b1e99e7",
+  "manifest.json": "365:ea078531:83e8b9d1",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -483,7 +483,7 @@ export const FILE_HASHES = {
   "src/chat-graph.js": "24751:669eb92b:176acf2b",
   "src/chat-library-data.js": "5043:6dfcb24b:504fa300",
   "src/chat-library.js": "16532:e0d618f2:dce0e37f",
-  "src/chat-reading-position.js": "6369:05d7499b:5b96c7b7",
+  "src/chat-reading-position.js": "7984:bdf2e461:9309fe45",
   "src/chat-sync.js": "24501:26a49faf:13b60fdb",
   "src/checks.js": "3042:368ec3ff:509f89cc",
   "src/colorpick.js": "29852:5b5d8858:3ec727e4",
@@ -561,7 +561,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "304539:174d2e9a:bfa958b4",
+  "src/notice-data.js": "305001:a8a8bba9:26e7ecb9",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -691,5 +691,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1548856:e0b9f91e:ce82594a"
+  "style.css": "1548856:54d67e67:417fa0db"
 };

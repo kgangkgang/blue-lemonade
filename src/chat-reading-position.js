@@ -2,6 +2,26 @@
 // Remember the visible paragraph before each paint, not when the model request starts.
 const pending = new WeakMap();
 const userUntil = new WeakMap();
+const gestureTrackers = new WeakMap();
+const navigationKey = event => /^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End|Enter| )$/.test(event.key);
+
+// Remember a gesture that starts while the model is still answering, before a
+// paint guard exists. Otherwise mobile momentum looks like a renderer scroll.
+export function watchChatReadingGestures(doc) {
+    if (!doc?.addEventListener) return () => {};
+    if (gestureTrackers.has(doc)) return gestureTrackers.get(doc);
+    const types = ['wheel', 'touchstart', 'touchmove', 'touchend', 'pointerdown', 'keydown'];
+    const track = event => {
+        if (event.type === 'keydown' && (!navigationKey(event) || event.target?.closest?.('input,textarea,select,[contenteditable]'))) return;
+        const chat = event.target?.closest?.('#chat');
+        if (chat) userUntil.set(chat, Date.now() + 1500);
+    };
+    for (const type of types) doc.addEventListener(type, track, { capture: true, passive: true });
+    const stop = () => { for (const type of types) doc.removeEventListener(type, track, true); gestureTrackers.delete(doc); };
+    gestureTrackers.set(doc, stop);
+    return stop;
+}
+watchChatReadingGestures(globalThis.document);
 
 export function keepChatReadingPosition(element, draw) {
     const doc = element?.ownerDocument;
@@ -38,9 +58,9 @@ export function keepChatReadingPosition(element, draw) {
     const messageRect = mes?.getBoundingClientRect();
     const messageFraction = messageRect?.height ? (viewportTop - messageRect.top) / messageRect.height : 0;
     let active = true, timer, frame, observer;
-    const events = ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'keydown'];
+    const events = ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'keydown', 'click'];
     function cancel(event) {
-        if (event?.type === 'keydown' && !/^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(event.key)) return;
+        if (event?.type === 'keydown' && !navigationKey(event)) return;
         if (event) userUntil.set(chat, Date.now() + 1500); // includes touch momentum between preview paints
         if (!active) return;
         active = false;
@@ -48,6 +68,7 @@ export function keepChatReadingPosition(element, draw) {
         if (frame !== undefined) win.cancelAnimationFrame?.(frame);
         observer?.disconnect();
         for (const type of events) doc.removeEventListener(type, cancel, true);
+        doc.removeEventListener('scroll', onScroll, true);
         if (pending.get(chat) === cancel) pending.delete(chat);
     }
     function restore() {
@@ -77,7 +98,14 @@ export function keepChatReadingPosition(element, draw) {
         const clamped = Math.max(0, Math.min(wanted, chat.scrollHeight - chat.clientHeight));
         if (Math.abs(chat.scrollTop - clamped) > 1) chat.scrollTop = clamped;
     }
+    // A later renderer may scroll without changing any element's dimensions.
+    // ResizeObserver and the two layout frames cannot see that case. Only guard
+    // this existing bounded settling window; any reader gesture ends it first.
+    function onScroll(event) {
+        if (event.target === chat && active) restore();
+    }
     for (const type of events) doc.addEventListener(type, cancel, { capture: true, passive: true });
+    doc.addEventListener('scroll', onScroll, { capture: true, passive: true });
     pending.set(chat, cancel);
     // Watch while an awaited renderer is running too, but a broken renderer must
     // not retain listeners forever. The normal settling window begins on return.

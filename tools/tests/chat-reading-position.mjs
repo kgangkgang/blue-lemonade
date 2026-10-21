@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-const { keepChatReadingPosition: keep } = await import(pathToFileURL(path.resolve(process.argv[2] || '.', 'src/chat-reading-position.js')));
+const { keepChatReadingPosition: keep, watchChatReadingGestures } = await import(pathToFileURL(path.resolve(process.argv[2] || '.', 'src/chat-reading-position.js')));
 
 function fixture() {
     let height = 100, top = 1500, key = 'a';
@@ -121,7 +121,7 @@ await check('a renderer that never settles releases listeners after its deadline
     try {
         let finish;
         const result = keep(f.body, () => new Promise(resolve => finish = resolve));
-        assert.equal(listeners, 5);
+        assert.equal(listeners, 7);
         const deadline = [...timers.values()].find(timer => timer.ms === 10000);
         assert.ok(deadline); deadline.fn();
         assert.equal(listeners, 0);
@@ -144,5 +144,35 @@ await check('an overlay does not hide the visible paragraph from hit testing', f
     f.doc.elementsFromPoint = () => [overlay, hit(), f.body, f.mes, f.chat];
     keep(f.body, () => f.replace(40));
     assert.equal(f.chat.scrollTop, 600);
+});
+function scrollEvent(f, target = f.chat) {
+    const event = new Event('scroll'); Object.defineProperty(event, 'target', { value: target }); f.doc.dispatchEvent(event);
+}
+await check('late renderer scroll after both layout frames keeps the reading paragraph', f => {
+    keep(f.body, () => f.replace(80)); f.flush(); f.flush();
+    f.chat.scrollTop = f.chat.scrollHeight; scrollEvent(f);
+    assert.equal(f.chat.scrollTop, 1200);
+});
+await check('late scrolling does not override a user touch', f => {
+    keep(f.body, () => f.replace(80)); f.stop('touchmove');
+    f.chat.scrollTop = 250; scrollEvent(f); f.flush(); assert.equal(f.chat.scrollTop, 250);
+});
+await check('keyboard activation of a navigation button cancels restoration', f => {
+    keep(f.body, () => f.replace(80));
+    const e = new Event('keydown'); Object.defineProperty(e, 'key', { value: 'Enter' }); f.doc.dispatchEvent(e);
+    f.chat.scrollTop = 250; f.flush(); scrollEvent(f); assert.equal(f.chat.scrollTop, 250);
+});
+await check('accessible click navigation cancels restoration without a pointer event', f => {
+    keep(f.body, () => f.replace(80)); f.stop('click'); f.chat.scrollTop = 250;
+    f.flush(); scrollEvent(f); assert.equal(f.chat.scrollTop, 250);
+});
+await check('gesture before the first paint leaves ongoing momentum free', f => {
+    const stop = watchChatReadingGestures(f.doc);
+    try {
+        const event = new Event('touchend'); Object.defineProperty(event, 'target', { value: f.body }); f.doc.dispatchEvent(event);
+        keep(f.body, () => f.replace(80));
+        f.chat.scrollTop = 250; scrollEvent(f); f.flush(); assert.equal(f.chat.scrollTop, 250);
+        assert.ok(f.observers.every(o => o.off));
+    } finally { stop(); }
 });
 console.log(`chat-reading-position: ${count} passed`);
