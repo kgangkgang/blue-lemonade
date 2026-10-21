@@ -127,10 +127,10 @@ export function render() {
                 <button type="button" class="mr-handle" title="끌어서 이동" tabindex="-1" aria-hidden="true">⠿</button>
                 <span class="mr-name"></span>
                 <span class="mr-item-buttons">
-                    <div class="menu_button fa-solid fa-arrow-up" data-act="up" title="위로"></div>
-                    <div class="menu_button fa-solid fa-arrow-down" data-act="down" title="아래로"></div>
-                    <div class="menu_button fa-solid fa-pen" data-act="rename" title="이름 고치기"></div>
-                    <div class="menu_button fa-solid fa-trash" data-act="delete" title="지우기"></div>
+                    <button type="button" class="menu_button fa-solid fa-arrow-up" data-act="up" title="위로" aria-label="위로"${index === 0 ? ' disabled' : ''}></button>
+                    <button type="button" class="menu_button fa-solid fa-arrow-down" data-act="down" title="아래로" aria-label="아래로"${index === models.length - 1 ? ' disabled' : ''}></button>
+                    <button type="button" class="menu_button fa-solid fa-pen" data-act="rename" title="이름 고치기" aria-label="이름 고치기"></button>
+                    <button type="button" class="menu_button fa-solid fa-trash" data-act="delete" title="지우기" aria-label="지우기"></button>
                 </span>`;
             row.querySelector('.mr-name').textContent = model;
             return row;

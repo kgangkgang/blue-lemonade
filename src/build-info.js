@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.5.9";
+export const BUILD_VERSION = "7.6.0";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:fc47bde2:b82a097e",
+  "manifest.json": "365:dfd66220:8a8c69cf",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -114,10 +114,10 @@ export const FILE_HASHES = {
   "src/addons/models/inject.js": "20041:29f641a5:d8c53265",
   "src/addons/models/offer-core.js": "3406:577d4544:24bde209",
   "src/addons/models/offer.js": "6720:292ab2f5:b01ae449",
-  "src/addons/models/panel.js": "14887:804ac1b4:20e94136",
+  "src/addons/models/panel.js": "15145:d0a8f409:d2ea81f8",
   "src/addons/models/sources.js": "5251:0e71e325:8b5932b3",
-  "src/addons/models/state.js": "5376:16a6fe71:4d6017a8",
-  "src/addons/models/style.css": "4698:88846b67:c1fb24bd",
+  "src/addons/models/state.js": "5376:e8c29bca:75afd1e1",
+  "src/addons/models/style.css": "4698:5acf2abe:3c8d4763",
   "src/addons/modelswitch/discover.js": "26591:c872021b:6ffcc803",
   "src/addons/modelswitch/fallback-field.css": "1425:c6854036:608bca6a",
   "src/addons/modelswitch/fallback-field.js": "9086:23c4e7a6:2f385891",
@@ -132,10 +132,10 @@ export const FILE_HASHES = {
   "src/addons/modelswitch/targets.js": "27029:8beaef84:4bbf29bd",
   "src/addons/notes/graph.js": "12020:1cdfe68f:2b39d83a",
   "src/addons/notes/guide.js": "13946:68b0c805:a82fe18e",
-  "src/addons/notes/index.js": "148860:13a15ff8:4dffb5ee",
-  "src/addons/notes/style.css": "81832:7175d198:a1741245",
+  "src/addons/notes/index.js": "148927:3d8734b1:23ee2c78",
+  "src/addons/notes/style.css": "81832:cc07720d:fc571d68",
   "src/addons/notes/sync.js": "4782:31c6c609:ed11f07b",
-  "src/addons/notes/version.js": "163:d2887e99:81975ce0",
+  "src/addons/notes/version.js": "163:4b97d19c:d5869185",
   "src/addons/order/menu-plan.js": "7682:efd58bf6:ac05679a",
   "src/addons/order/menus.js": "13384:e916f8dc:ef9dbb68",
   "src/addons/order/order.js": "18315:df105603:0dcfdafc",
@@ -558,7 +558,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "300878:f93371a5:3498653a",
+  "src/notice-data.js": "301376:70fa605b:38cc3da6",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -688,5 +688,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1548417:951daf24:4f5924e8"
+  "style.css": "1548856:5f459873:e59f914a"
 };

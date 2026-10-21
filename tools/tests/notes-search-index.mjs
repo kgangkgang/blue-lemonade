@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const source=fs.readFileSync(new URL('../../src/addons/notes/index.js',import.meta.url),'utf8');
+const code=source.slice(source.indexOf('function applyFind(root)'),source.indexOf('\nfunction setFind(',source.indexOf('function applyFind(root)')));
+function search(notes,query,cards,aliases=[]){const none={},tagButton={classList:{toggle(_k,v){this.on=v}}};const root={querySelector:s=>s==='.bl-notes-find input'?{value:query}:s==='.bl-notes-nohit'?none:tagButton,querySelectorAll:()=>cards};const context={notes:()=>notes,nameAliases:()=>aliases,tagName:x=>x==='fff'?'':x.toLowerCase(),tagsOf:x=>[...x.matchAll(/#([\w/]+)/g)].map(m=>m[1]),tagHit:(tags,x)=>tags.some(t=>t===x||t.startsWith(x+'/'))};vm.runInNewContext(code+';globalThis.run=applyFind',context);context.run(root);return{hidden:cards.map(c=>c.hidden),none:none.hidden,tag:tagButton.classList.on};}
+const card=id=>({dataset:{id}});
+test('text search keeps aliases, case folding and no-result state',()=>{const notes=[{id:'a',title:'Alpha',body:'hello'},{id:'b',title:'Beta',body:'world'}];assert.deepEqual(search(notes,'ALPHA',[card('a'),card('b')]).hidden,[false,true]);assert.deepEqual(search(notes,'알파',[card('a'),card('b')],['Alpha']).hidden,[false,true]);assert.equal(search(notes,'missing',[card('a')]).none,false);});
+test('tag search preserves descendant tags and folder row visibility',()=>{const rows=[{dataset:{note:'a'}},{dataset:{note:'b'}}],folder={dataset:{folder:'f'},querySelectorAll:()=>rows};const result=search([{id:'a',title:'',body:'#story/scene'},{id:'b',title:'',body:'other'}],'#story',[folder]);assert.equal(result.hidden[0],false);assert.deepEqual(rows.map(r=>r.hidden),[false,true]);assert.equal(result.tag,true);});
+test('empty search and duplicate IDs preserve first-match behavior',()=>{const notes=[{id:'a',title:'first',body:''},{id:'a',title:'last',body:''}];assert.equal(search(notes,'first',[card('a')]).hidden[0],false);assert.equal(search(notes,'last',[card('a')]).hidden[0],true);assert.equal(search(notes,'',[card('a')]).none,true);});
+test('large collection searches without repeated linear lookup',()=>{const notes=Array.from({length:5000},(_,i)=>({id:String(i),title:'note '+i,body:''}));notes.find=()=>{throw Error('repeated scan')};const result=search(notes,'note 4999',notes.map(n=>card(n.id)));assert.equal(result.hidden.filter(x=>!x).length,1);});

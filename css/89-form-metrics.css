@@ -88,9 +88,14 @@ html body.salty #pt-panel .pt-page:has(> .pt-page-fixed) > .pt-page-scroll { min
   html body #model-switch-settings .ms-expand,
   html body .bl-translator-dialog .llmt-gl-scope { min-height:44px !important; }
   html body #model_register_settings .mr-handle,
+  html body #model_register_settings .mr-item-buttons > .menu_button,
   html body .bl-translator-dialog :is(.llmt-gl-icon,[data-target-textarea],#llm_glossary_expand) {
     display:inline-flex; align-items:center; justify-content:center;
     min-width:44px !important; min-height:44px !important;
     flex-shrink:0; box-sizing:border-box;
   }
+  html body #model_register_settings .mr-item { display:grid; grid-template-columns:44px minmax(0,1fr); gap:4px 8px; }
+  html body #model_register_settings .mr-handle { grid-row:1 / 3; align-self:stretch; }
+  html body #model_register_settings .mr-name { grid-column:2; }
+  html body #model_register_settings .mr-item-buttons { grid-column:2; justify-content:flex-end; }
 }

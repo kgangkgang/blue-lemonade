@@ -940,14 +940,15 @@ function applyFind(root) {
     if (!root) return;
     const raw = (root.querySelector('.bl-notes-find input')?.value || '').trim(), q = raw.toLowerCase();
     const tag = /^#[^\s#]+$/.test(raw) ? tagName(raw.slice(1)) : ''; // 5.3.5: 색 값(#fff)은 태그가 아니라 글로 찾음 — tagsOf 와 같은 규칙
-    const all = notes();
+    const all = notes(), byId = new Map();
+    for (const note of all) if (!byId.has(note.id)) byId.set(note.id, note);
     const qs = q ? [q, ...nameAliases(raw).map(a => a.toLowerCase())] : [];
     const hitNote = note => !!note && (!q || (tag ? tagHit(tagsOf(note.body), tag) : (text => qs.some(x => text.includes(x)))(`${note.title}\n${note.body}`.toLowerCase())));
     let shown = 0;
     root.querySelectorAll('.bl-notes-list > .bl-note').forEach(el => {
         let hit;
-        if (el.dataset.folder) { hit = false; el.querySelectorAll('.bl-folder-row').forEach(row => { const h = hitNote(all.find(n => n.id === row.dataset.note)); row.hidden = !h; hit ||= h; }); }
-        else hit = hitNote(all.find(n => n.id === el.dataset.id));
+        if (el.dataset.folder) { hit = false; el.querySelectorAll('.bl-folder-row').forEach(row => { const h = hitNote(byId.get(row.dataset.note)); row.hidden = !h; hit ||= h; }); }
+        else hit = hitNote(byId.get(el.dataset.id));
         el.hidden = !hit; if (hit) shown++;
     });
     const none = root.querySelector('.bl-notes-nohit'); if (none) none.hidden = !q || shown > 0;

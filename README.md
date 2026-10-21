@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.5.9/blue-lemonade-7.5.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.0/blue-lemonade-7.6.0.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.5.9 · 최신 업데이트</summary>
+<summary>7.6.0 · 최신 업데이트</summary>
+
+- 메모 검색에서 카드마다 전체 목록을 반복 조회하던 처리를 줄였어요. 이름 별칭·태그·폴더 안 메모 검색은 그대로 유지해요.
+- 모델 목록의 위로·아래로·이름 고치기·지우기를 키보드로도 누를 수 있어요. 맨 위·맨 아래에서 이동할 수 없는 버튼은 비활성으로 표시해요. 모바일 버튼은 44px로 키우고 모델 이름 아래에 배치해요.
+
+</details>
+
+<details>
+<summary>7.5.9 · 가져오기와 입력 보존</summary>
 
 - 번역 메모리 파일을 읽는 동안 자료를 바꾸거나 번역·직접 편집·캐시 비우기를 하면, 늦게 끝난 가져오기가 그 결과를 덮지 않아요. 파일을 연달아 가져올 때도 마지막에 고른 파일만 적용해요.
 - 번역 메모리 파일 전체의 형식을 확인한 뒤 캐시에 반영해요. 뒤쪽 항목이 잘못되어 실패했는데 앞쪽 번역만 저장되던 문제를 고쳤어요.
