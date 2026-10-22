@@ -176,6 +176,40 @@ body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager
     grid-row:2;
   }
 }
+/* 7.7.0 컨테이너 쿼리를 모르는 브라우저(옛 삼성 인터넷 · 웹뷰, Chromium 105 이전)에서는 위 두 줄 배치가 안 걸려
+   좁은 화면의 이름 칸이 토큰 · 조작 칸에 밀려 한두 글자씩 세로로 쪼개졌다(제보 10-22) → 같은 배치를 화면 폭(24em ≈ 384px)으로 건다.
+   컨테이너 쿼리를 아는 브라우저는 이 묶음을 통째로 건너뛴다 */
+@supports not (container-type: inline-size) {
+  @media (max-width: 24em) {
+    body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt {
+      grid-template-columns:minmax(0,1fr) auto!important;
+      gap:8px 10px!important;
+    }
+    body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > .completion_prompt_manager_prompt_name {
+      grid-column:1 / -1;
+      grid-row:1;
+      flex-wrap:wrap;
+      gap:4px 10px;
+      overflow:visible!important;
+      white-space:normal!important;
+    }
+    body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name > :is(a.prompt-manager-inspect-action,span:not([class])) {
+      white-space:normal;
+      overflow-wrap:anywhere;
+      text-overflow:clip;
+    }
+    body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > .prompt_manager_prompt_tokens {
+      grid-column:1;
+      grid-row:2;
+      justify-self:start;
+      padding-left:var(--pm-icon);
+    }
+    body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > span:has(> .prompt_manager_prompt_controls) {
+      grid-column:2;
+      grid-row:2;
+    }
+  }
+}
 @container bl-generation (max-width:22em) {
   body.salty #completion_prompt_manager .completion_prompt_manager_footer {
     flex-wrap:wrap!important;

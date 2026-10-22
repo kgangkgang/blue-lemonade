@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.9/blue-lemonade-7.6.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.0/blue-lemonade-7.7.0.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.6.9 · 최신 업데이트</summary>
+<summary>7.7.0 · 최신 업데이트</summary>
+
+- 컨테이너 쿼리를 지원하지 않는 옛 브라우저(옛 삼성 인터넷·웹뷰)에서 좁은 화면의 프롬프트 목록 이름이 한두 글자씩 세로로 쪼개지던 것을 고쳤어요. 이름 한 줄, 토큰·버튼 한 줄의 좁은 화면 배치를 화면 폭 기준으로도 적용해요. 최신 브라우저의 표시는 그대로예요.
+
+</details>
+
+<details>
+<summary>7.6.9 · 묶음 번역 표시 오인 · 비 없음 감지 · 읽던 위치 보호</summary>
 
 - [n] 번호만으로 답한 묶음 번역에서 본문에 [1] 같은 참조가 있어도 다음 문단 표시를 각주로 오인해 형식 오류로 끝나지 않아요. 문단 첫머리의 참조 번호도 참조로 세고, 정의가 많은 답에서 각주 탐색이 느려지던 부분도 고쳤어요.
 - 날씨 칸의 「비 없음」·「비 예보」·「밤비 그침」처럼 비가 없다는 말은 비로 보지 않아 맑은 밤의 별 효과가 유지돼요. 「비가 그치지 않는」은 그대로 비예요.
