@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.2/blue-lemonade-7.7.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.3/blue-lemonade-7.7.3.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.7.2 · 최신 업데이트</summary>
+<summary>7.7.3 · 최신 업데이트</summary>
+
+- 프롬프트 연동 정규식: 캐릭터 이름 연동(여러 줄)이 맡은 정규식은 이제 연동 정규식이 따로 켜고 끄지 않아요. 두 기능이 같은 정규식을 서로 바꾸던 일이 생길 수 있던 것을 막았어요.
+- 애드온 버전: 프롬프트 연동 정규식 1.1.0
+
+</details>
+
+<details>
+<summary>7.7.2 · 중계 · 공식 가격 비교, 프롬프트 캐시, 안 쓰는 코드 정리</summary>
 
 - 사용량 장부에 「중계 · 공식 가격 비교」가 생겼어요. 성능 보조 › 요청 로그 › 사용량 장부에서 중계 주소를 고르고 「불러오기」를 누르면, new-api 계열 중계의 공개 가격표를 읽어 모델마다 공식 API 단가와 견주고 어디가 몇 % 싼지 보여 줘요. 지난 30일 장부에 기록이 있는 모델은 실제 사용량(입력 · 캐시 · 출력)으로, 없는 모델은 정한 가정으로 셈해요. 키는 쓰지 않고 누를 때만 요청해요.
 - 중계의 원화 환산을 중계마다 따로 기억해요. 예전에는 중계 비용을 원화로 바꿀 때 공식 API 와 같은 원/달러 환율로 셈해서, 충전 단위가 다른 중계는 금액이 크게 틀렸어요.

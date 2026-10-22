@@ -196,6 +196,25 @@ try {
         assert.equal(five.script('l1').disabled, false);
         assert.deepEqual(five.state(), { ...ORIGINAL, l1: false });
     });
+    const fiveRows = await boot({ enabled: ['weather'] });
+    await test('캐릭터 이름 연동(여러 줄 rows · 옛 꼴 name)이 맡은 정규식도 손대지 않는다 — 띄어쓰기 · 대소문자 무시', async () => {
+        assert.equal(fiveRows.script('l1').disabled, true); assert.equal(fiveRows.RL.store().origin.l1, false);
+        fiveRows.S.ext.salty.promptLink = { on: true, rows: [{ word: 'Some One', cards: [] }, { word: 'led ger', cards: ['x.png'] }] };
+        fiveRows.RL.sync();
+        assert.equal('l1' in fiveRows.RL.store().origin, false, 'rows 의 말(led ger)이 든 Ledger 정규식은 기록을 지운다');
+        assert.equal(fiveRows.RL.rows().some(r => r.id === 'l1' || r.id === 'g1'), false);
+        fiveRows.script('l1').disabled = false;   // 이름 연동이 켬
+        fiveRows.RL.sync();
+        assert.equal(fiveRows.script('l1').disabled, false, 'Ledger 프롬프트가 꺼져 있어도 이름 연동이 켠 값을 존중');
+        assert.equal(fiveRows.RL.rows().some(r => r.id === 'w1'), true, '말이 없는 정규식은 그대로 연동');
+        fiveRows.S.ext.salty.promptLink = { on: true, name: 'Weather' };   // 옛 꼴
+        fiveRows.RL.sync();
+        assert.equal(fiveRows.RL.rows().some(r => r.id === 'w1'), false, '옛 꼴 name 도 읽는다');
+        fiveRows.S.ext.salty.promptLink = { on: false, rows: [{ word: 'Weather', cards: [] }] };
+        fiveRows.RL.sync();
+        assert.equal(fiveRows.RL.rows().some(r => r.id === 'w1'), true, '이름 연동이 꺼져 있으면 다시 연동');
+        await fiveRows.RL.stop();
+    });
 
     // ── 5) 프롬프트 관리자 없음 · 짝 프롬프트 사라짐 ────────────────────
     const six = await boot({ enabled: ['ledger'] });

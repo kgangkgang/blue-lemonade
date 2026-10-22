@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.7.2";
+export const BUILD_VERSION = "7.7.3";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:b15fe3d9:cbb184ba",
+  "manifest.json": "365:fb4016ca:dc16e56c",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -206,8 +206,8 @@ export const FILE_HASHES = {
   "src/addons/prompt/translation-memory.js": "1476:261fa1b4:97939765",
   "src/addons/prompt/translation-progress.js": "4714:8084427b:1653c2ea",
   "src/addons/regexlink/engine.js": "10242:ac39044e:37e62e6f",
-  "src/addons/regexlink/index.js": "17731:6f6da0ec:3a93d356",
-  "src/addons/regexlink/style.css": "2975:1179cb83:beef4ebd",
+  "src/addons/regexlink/index.js": "18050:f1675453:df4398cc",
+  "src/addons/regexlink/style.css": "2975:92763a6f:c9d5d653",
   "src/addons/rewrite/ai-rules.js": "9929:11baae44:e5912a46",
   "src/addons/rewrite/colors.js": "1821:d7dd2b4d:f1469713",
   "src/addons/rewrite/core.js": "51759:b015f629:fc1ba886",
@@ -563,7 +563,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "308666:d17f7dbd:092d2e21",
+  "src/notice-data.js": "309027:38a1271a:67f40d4b",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -693,5 +693,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1548144:abea1ae5:e913fe8a"
+  "style.css": "1548144:fef70c49:ed23eaf8"
 };

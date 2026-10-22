@@ -13,7 +13,7 @@ import { oai_settings, promptManager } from '../../../../../../openai.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { plan, textHasModuleLow } from './engine.js';
 
-const VERSION = '1.0.9';
+const VERSION = '1.1.0';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const holder = document.createElement('div'); holder.hidden = true; document.body.append(holder);
 let root, inlineHost = null, opening = false, timer = 0, lastRows = [], lastNote = '', applied = new Map(), stopped = false;
@@ -78,10 +78,11 @@ function boundByPrompt(lists) {
     try {
         const binds = extension_settings.salty?.promptBinds;
         if (binds && typeof binds === 'object') for (const b of Object.values(binds)) for (const id of (Array.isArray(b?.regex) ? b.regex : [])) if (typeof id === 'string' && id) out.add(id);
+        // 1.1.0 이름 연동은 6.7.5 부터 여러 줄 { on, rows: [{ word, cards }] } — 옛 꼴 { on, name } 도 읽는다. promptbind.js 처럼 띄어쓰기까지 무시하고 견준다
         const link = extension_settings.salty?.promptLink;
-        const fold = s => String(s ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
-        const name = link?.on === true ? fold(link.name) : '';
-        if (name) for (const script of lists.flat()) if (script?.id && fold(script.scriptName).includes(name)) out.add(script.id);
+        const squash = s => String(s ?? '').normalize('NFKC').replace(/\s+/g, '').toLowerCase();
+        const words = link?.on === true ? (Array.isArray(link.rows) ? link.rows : [link.name]).map(r => squash(typeof r === 'string' ? r : r?.word)).filter(Boolean) : [];
+        if (words.length) for (const script of lists.flat()) if (script?.id && words.some(w => squash(script.scriptName).includes(w))) out.add(script.id);
     } catch { /* 설정 없음 */ }
     return out;
 }
