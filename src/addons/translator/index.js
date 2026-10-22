@@ -3,7 +3,7 @@ import { maskTranslatorNotes } from './translation-notes.js';
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
 import { observeEventCompletion } from './render-completion.js';
-import { keepChatReadingPosition } from '../../chat-reading-position.js';
+import { keepChatReadingPosition, readerRestsIn } from '../../chat-reading-position.js';   // 7.7.4 readerRestsIn: 손으로 굴리는 동안 미리 보기 그림을 미룬다
 import { notifyRerender, isRerenderNotify, canNotifyRerender } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) · 그 알림의 MESSAGE_UPDATED 는 건너뛴다 · 6.9.7 알림이 갈 환경인가
 import { paintPreview, previewShown, adoptPainted } from './preview-frames.js';   // 2.5.5 번역 중 미리 보기가 헬퍼가 그린 상태창(iframe)을 지우지 않게 · 6.9.6 바뀐 문단만 갈아 끼우기
 import { typesetRoot } from '../../typography.js';   // 6.9.6 미리 보기가 넣은 문단을 그 자리에서 조판
@@ -1434,7 +1434,9 @@ async function streamedReply({ body, source, onText, signal = null, timeoutMs = 
         if (!response.ok) {
             const text = await response.text();
             // 429 · 5xx 는 예전 요청의 오류처럼 읽는다 (다시 보내기는 늘 하던 대로 — 곧장 또 보내지 않는다). 나머지(400 등)는 예전 요청으로
-            if (response.status === 429 || response.status >= 500) return { replay: { ok: false, status: response.status, statusText: response.statusText, text: async () => text } };
+            // 7.7.4 키 · 권한 · 결제 오류(401 · 402 · 403, 실리태번은 401 을 400 으로 바꿔 넘긴다)도 — 흘려받기 없이 같은 요청을 또 보내도 같은 답이다
+            const authLike = [401, 402, 403].includes(response.status) || (response.status === 400 && /unauthori[sz]ed|authenticat|api.?key|permission|insufficient|quota|billing/i.test(text));
+            if (response.status === 429 || response.status >= 500 || authLike) return { replay: { ok: false, status: response.status, statusText: response.statusText, text: async () => text } };
             if ([404, 405, 415, 501].includes(response.status)) noStream.add(key);
             return null;
         }
@@ -1485,8 +1487,12 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
                 const body = typeof live.ChatCompletionService?.createRequestData === 'function' ? live.ChatCompletionService.createRequestData(payload) : payload;
                 const reply = await streamedReply({ body, source: body.chat_completion_source, onText: text => { touch?.(); return overrides.onStream(text); }, signal });
                 if (!reply) return null;
-                const json = reply.data ?? JSON.parse(await reply.replay.text());
-                if (reply.replay?.ok === false || json?.error) throw new Error(String(json?.error?.message || 'Response not OK'));
+                // 7.7.4 흘려받기가 받은 오류는 상태 코드를 문구 앞에 붙여 던진다 — current-connection 이 문구로 429 · 5xx 를 가려 한 번 더 보낸다.
+                //       전엔 공급자 문구만 남아(예: 429 의 'rate limited by upstream' 아닌 다른 말) 다시 안 보냈고, HTML 502 페이지는 SyntaxError 원문이 떴다
+                const status = reply.replay?.ok === false ? `${reply.replay.status} ${reply.replay.statusText || ''}`.trim() : '';
+                let json = reply.data ?? null;
+                if (!json) { const raw = await reply.replay.text(); try { json = JSON.parse(raw); } catch { if (status) throw new Error(`${status}: 서버가 JSON 이 아닌 답을 줬어요`); throw new Error('서버 응답을 읽을 수 없어요'); } }
+                if (reply.replay?.ok === false || json?.error) throw new Error([status, String(json?.error?.message || (status ? '' : 'Response not OK'))].filter(Boolean).join(': '));
                 return json;
             } : undefined,
         });
@@ -2163,9 +2169,13 @@ async function translate(text, options = {}) {
                         [/translat|번역/i, /translat|interpret|번역|통역|翻訳|翻译|翻譯|通訳|通译|訳し|訳す|訳せ/i],
                         [/guideline|polic(?:y|ies)|가이드라인|정책|지침|규정/i, /guideline|polic|rule|regulat|protocol|procedure|directive|instruction|가이드라인|정책|지침|규정|규칙|규율|법률|법규|規則|規定|方針|政策|ガイドライン|准则|準則|规定|规则/i],
                     ];
-                    const paragraphRefused = (source, out) => looksLikeRefusal(source, out)
-                        && (looksLikeInputBlock(out) || MODEL_VOICE.some(([said, cause]) => said.test(out) && !cause.test(source)));
-                    const translateGroup = async (group, layouts = PROMPT_LAYOUTS, retried = false, at = translated.length) => {   // 2.6.2 at = bodies 안 자리 (흘려받기 알림용)
+                    // 7.7.4 한국어로 옮기라 했는데 한글이 하나도 없는 짧은 영어 거절문(I'm sorry … request)이 온 문단도 거절 — 원문 대사에 부정어(never 등)가 있어
+                    //       looksLikeRefusal 이 비켜 가던 것. 한글이 한 자라도 있거나 원문이 이미 같은 글이면 예전대로 번역문
+                    const englishRefusal = (source, out) => KOREAN_TARGET.test(String(koreanTarget ?? '')) && typeof out === 'string' && out.trim().length <= 300 && !/[가-힣]/.test(out)
+                        && out.trim() !== String(source ?? '').trim() && REFUSAL_PATTERN.test(out) && REFUSAL_TOPIC.test(out);
+                    const paragraphRefused = (source, out) => englishRefusal(source, out) || (looksLikeRefusal(source, out)
+                        && (looksLikeInputBlock(out) || MODEL_VOICE.some(([said, cause]) => said.test(out) && !cause.test(source))));
+                    const translateGroup = async (group, layouts = PROMPT_LAYOUTS, retried = false, at = translated.length, lean = false) => {   // 7.7.4 lean = 앞 묶음이 통째로 막힌 뒤 — 거절이면 통짜 · 반 나누기 없이 그 묶음만 차단 표시   // 2.6.2 at = bodies 안 자리 (흘려받기 알림용)
                         watcher.check();
                         try {
                             const meta = {};
@@ -2189,13 +2199,13 @@ async function translate(text, options = {}) {
                             if (!retried && isTransientError(error)) {
                                 console.warn('[LLM Translator] 묶음 요청 오류 — 잠시 뒤 한 번 더 보내요:', error.message);
                                 await new Promise(resolve => setTimeout(resolve, 1500)); watcher.check();
-                                return translateGroup(group, layouts, true, at);
+                                return translateGroup(group, layouts, true, at, lean);
                             }
                             // 5.2.6: 답 형식이 안 맞으면(번호 표시를 빼먹음 · 문단을 합침) 거절이 아니다 — 번호 없이 통짜로 한 번 더 보낸다 (화살표 재번역과 같은 요청).
                             //        문단 수가 같으면 자리별로 붙이고 캐시에 넣는다. 전엔 '차단된 문단' 으로 남아 SFW 글이 검열된 것처럼 보였다.
                             // 5.3.0: 거절도 마찬가지로 통짜를 먼저 — 사용자가 화살표로 다시 번역하면 통과하던 것은 번호 표시 · 머리말이 없는 이 요청이다.
                             //        (Gemini 입력 필터는 글 내용보다 요청 모양에 반응한다 — looksLikeInputBlock 주석) 통짜도 막히면 그때 반으로 나눈다.
-                            if (error?.format || (error?.refused && group.length > 0)) {
+                            if (error?.format || (error?.refused && group.length > 0 && !lean)) {
                                 console.warn(`[LLM Translator] 묶음이 ${error.format ? '형식 오류' : '거절'}라 번호 없이 통짜로 다시 보내요:`, error.message);
                                 try {
                                     // 5.3.4: 머리말 · 꼬리 메모를 걷고, 줄 단위로 온 답은 빈 줄을 되살린 뒤 문단을 센다 (전엔 한 문단으로 보고 괜히 반으로 나눴다)
@@ -2213,7 +2223,7 @@ async function translate(text, options = {}) {
                                     if (error.format) error = Object.assign(Error(`통짜 답의 문단 수(${paras.length})가 원문(${group.length})과 달라요`), { format: true });
                                 } catch (again) { if (again?.cancelled) throw again; error = again; }
                             }
-                            if (group.length > 1 && error?.refused && splits < SPLIT_CAP) { // 형식 오류는 나눠도 안 낫고 요청만 는다 — 거절만
+                            if (group.length > 1 && error?.refused && splits < SPLIT_CAP && !lean) { // 형식 오류는 나눠도 안 낫고 요청만 는다 — 거절만
                                 splits++;
                                 console.warn(`[LLM Translator] 묶음(${group.length}문단)이 막혀 반으로 나눠 다시 보내요:`, error.message);
                                 const mid = Math.ceil(group.length / 2);
@@ -2231,12 +2241,22 @@ async function translate(text, options = {}) {
                             }
                             // 문단 하나까지 막힘 · 나누기 상한 · 그 밖의 오류: 그 문단들 자리만 null. 전부 실패하면 예전처럼 오류
                             failed ??= error;
+                            // 7.7.4 요청 자체가 실패(키 · 권한 · 한도 · 서버 · 연결 — 재시도까지 실패)하면 남은 묶음은 보내지 않는다.
+                            //       전엔 묶음마다 같은 실패를 다시 받았다 (묶음 6개 · 429 → 요청 12번). 거절 · 형식 · 끊김 · 시간 초과(큰 묶음 하나만 느릴 수 있음)는 묶음마다 다르니 계속
+                            if (!error?.refused && !error?.format && !error?.cut && !error?.timeout) requestDown ??= error;
                             for (const body of group) failReasons.set(body, error); // 5.2.9: 자리마다 원인 (표시 문구용)
                             return group.map(() => null);
                         }
                     };
+                    let requestDown = null, blockedOnce = false;   // 7.7.4 위 catch · 아래 묶음 돌기
                     try {
-                        for (const group of batchGroups(bodies, groupLimit)) { const out = await translateGroup(group); watch?.settle(); translated.push(...out); done?.(translated); }   // 2.5.1 묶음마다 미리 보기
+                        for (const group of batchGroups(bodies, groupLimit)) {
+                            if (requestDown) { for (const body of group) failReasons.set(body, requestDown); translated.push(...group.map(() => null)); continue; }
+                            // 7.7.4 앞 묶음 하나가 배치 바꾸기 · 통짜 · 반 나누기를 다 거치고도 통째로 막혔으면, 남은 묶음은 배치 하나로 한 번씩만 보낸다.
+                            //       전엔 묶음마다 같은 단계를 되풀이해 맨 400 · 안전 차단이면 4묶음 답 하나에 요청 40~60번이었다
+                            const out = await translateGroup(group, blockedOnce ? PROMPT_LAYOUTS.slice(0, 1) : PROMPT_LAYOUTS, false, translated.length, blockedOnce); watch?.settle(); translated.push(...out); done?.(translated);   // 2.5.1 묶음마다 미리 보기
+                            if (!blockedOnce && group.length && out.every(text => text === null) && group.every(body => failReasons.get(body)?.refused)) blockedOnce = true;
+                        }
                     } finally { watch?.close(); }   // 2.6.2 끝 · 멈춤 · 실패 뒤에는 밀린 알림을 버린다 (진행 표시가 다시 붙지 않게)
                     if (failed && !succeeded) throw failed;
                     if (failed) {
@@ -2507,6 +2527,7 @@ function progressBadge(messageId, message = null, sourceMes = message?.mes, chat
         const host = document.querySelector(`#chat .mes[mesid="${index}"] .mes_text`);
         if (!host) return;
         if (!el || !el.isConnected) { el = document.createElement('div'); el.className = 'llmt-progress'; host.prepend(el); }
+        else if (readerRestsIn(host) > 0) return;   // 7.7.4 손으로 굴리는 동안엔 글자(초 · 문단 수)를 바꾸지 않는다 — 바꿀 때마다 긴 답의 배치를 다시 해 scroll 이 버벅였다. 1초 뒤 다시
         el.textContent = text();
     };
     const timer = setInterval(paint, 1000);
@@ -2548,7 +2569,7 @@ function previewText(message) {
 }
 function translationPreview(messageId, message, sourceMes, chatId, originalText, guard = null) {   // 2.9.0 guard: 진행 표시와 같은 까닭
     const swipeId = message?.swipe_id ?? 0;
-    let latest = null, shown = false, stopped = false, timer = null, wait = 0, lastPaint = 0, display = null, adopted = false;
+    let latest = null, shown = false, stopped = false, timer = null, wait = 0, lastPaint = 0, display = null, adopted = false, cost = 0, lastEnd = 0;
     const target = () => {
         const index = guard ? guard.index() : resolveTranslationTarget(message, messageId, sourceMes, chatId);
         return index !== -1 && (getContext().chat?.[index]?.swipe_id ?? 0) === swipeId ? index : -1;
@@ -2573,6 +2594,11 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
         if (stopped || latest === null) return;
         const index = target(), host = index < 0 ? null : hostOf(index);
         if (!host) return;
+        // 7.7.4 손으로 굴리는 중(손가락 · 휠 · 관성 여유)이면 그리지 않고 멈춘 뒤에 — 긴 답을 다시 그리는 동안엔 화면이 손을 못 따라왔다
+        //       (헬퍼 · 실리태번의 막는 터치 듣기가 그 그림이 끝나길 기다린다). 끝 그림(refreshMessageBlock)은 미루지 않는다
+        const rest = readerRestsIn(host);
+        if (rest > 0) { wait = setTimeout(paint, rest + 30); return; }
+        const started = performance.now();
         let html, text;
         try { text = processTranslationText(originalText, latest); html = getContext().messageFormatting(text, message.name, message.is_system, message.is_user, index); }
         catch { return; }
@@ -2590,10 +2616,14 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
             shown = true;
             livePreviews.add(record);
         });
+        cost = performance.now() - started; lastEnd = Date.now();
     };
     const schedule = () => {
         if (wait) return;
-        const left = PREVIEW_GAP_MS - (Date.now() - lastPaint);
+        // 7.7.4 다음 그림은 앞 그림이 끝나고 그 그림에 든 시간의 두 배는 쉰 뒤에 — 긴 답(문단 60~80개)은 폰에서 한 번 그리는 데 250ms 를 넘겨
+        //       250ms 간격이면 쉬지 않고 이어 그려 화면이 손을 못 따라왔다. 그림이 빠르면(50ms 미만) 예전처럼 250ms
+        const now = Date.now();
+        const left = Math.max(PREVIEW_GAP_MS - (now - lastPaint), cost >= 50 ? cost * 2 - (now - lastEnd) : 0);
         if (left <= 0) paint(); else wait = setTimeout(paint, left);
     };
     const stop = () => { stopped = true; clearInterval(timer); timer = null; clearTimeout(wait); wait = 0; };
@@ -2718,6 +2748,20 @@ function refreshMessageBlock(messageId, message, { gently = false } = {}) {
 }
 
 // 재번역 함수 (교정 또는 문단 맞추기)
+// 7.7.4 교정 답이 거절문이거나 기존 번역보다 크게 짧게 중간에서 끊겼으면 붙이지도 캐시하지도 않는다 — 기존 번역을 지키고 오류로.
+//       전엔 HTTP 200 거절문(I'm sorry …) · 출력 한도에 잘린 답이 멀쩡한 번역 · 캐시 · 채팅 파일을 덮었다 (Claude · Gemini 는 끝 이유가 안 넘어옴)
+function assertRetranslationUsable(existingTranslation, originalText, retranslation) {
+    const out = String(retranslation ?? '').trim();
+    const refused = out.length <= 600 && REFUSAL_PATTERN.test(out.slice(0, 400)) && REFUSAL_TOPIC.test(out) && !REFUSAL_PATTERN.test(existingTranslation)
+        && (!/[가-힣]/.test(out) || looksLikeRefusal(originalText, out));
+    if (refused) throw refusalError(out);
+    // 짧은 번역은 looksCutShort 가 열린 따옴표 · 태그만 본다 — 기존보다 짧은데 문장 중간(마침표 · 닫는 따옴표 · 말끝 없이)에서 끝나도 잘림으로
+    const tail = out.replace(/<[^>]*>|\s+$/g, '').slice(-1);
+    const midSentence = !!tail && !/[.!?…。！？」』"”’)\]*~♡♥다요죠네까지야어아음함됨임]/.test(tail);
+    if (looksCutShort(existingTranslation, out) || (midSentence && out.length < String(existingTranslation).trim().length * 0.7))
+        throw Object.assign(cutError(), { message: '교정 답이 중간에 끊겨서 기존 번역을 그대로 뒀어요. 출력 길이를 늘린 뒤 다시 해 주세요.' });
+}
+
 async function retranslateMessage(messageId, promptType, forceRetranslate = false) {
     const context = getContext();
     const message = context.chat[messageId];
@@ -2836,6 +2880,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
 
         runToken.guard.assert();
         retranslation = dropStrayWords(retranslation, originalText); // 6.2.4 원문에 없는 낱말 한 줄 — 캐시에도 걷은 글을
+        if (existingTranslation) assertRetranslationUsable(existingTranslation, originalText, retranslation);   // 7.7.4
         // 결과 저장 및 UI 업데이트
         // [1.9.2] 지우고 넣지 않는다: 캐시에 없던 원문이면 지우기가 'no matching data' 로 실패해서 방금 받은 재번역을 버렸다.
         //         addTranslationToDB 가 이제 같은 원문의 줄을 고쳐 쓴다.

@@ -1,3 +1,4 @@
+import { booting, afterBoot } from './boot-gate.js';   // 7.7.4 시작 덮개 동안은 퀵 리플라이 줄을 재지 않는다
 // 원래 클릭 대상은 유지하고, 즐겨찾기 이름과 항목 도구 묶음만 보탠다.
 /**
  * 7.0.2 이 터치가 메시지 글 안의 「실제로 가로로 넘치는 스크롤 칸」(넓은 표 · pre · 상태창 한 줄 스크롤) 안에서 시작했나 — 그 칸 (없으면 null).
@@ -169,6 +170,7 @@ export function startCompactLayout() {
         if (qrEdgeFrame) return;
         qrEdgeFrame = requestAnimationFrame(() => {
             qrEdgeFrame = 0;
+            if (booting()) { afterBoot(scheduleQrEdges); return; }   // 7.7.4 시작 덮개 동안은 재지 않는다 (boot-gate.js)
             updateQrEdges(sendForm?.querySelector('#qr--bar'));
         });
     }

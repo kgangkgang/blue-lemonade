@@ -8,11 +8,15 @@
 @media (pointer: coarse) {
   /* 기준점: 원래 static 인 칸만 relative (이미 relative 인 스위치 · ↺ 는 그대로)
      「예시 접기」(높이 20)는 뺀다: 위는 미리보기 높이 손잡이(.bl-view-grip)라 덮으면 끌기 자리를 뺏고, 아래는 .bl-editor-stage 의 overflow:hidden 에 잘린다 */
-  /* 설정 창 · 서랍 머리 등 테마 자신의 칸은 테마가 꺼져 있어도(확장만) 같은 상자 — 실리태번 쪽 칸(#chat · 왼쪽 서랍)만 테마가 켜졌을 때 */
+  /* 설정 창 · 서랍 머리 등 테마 자신의 칸은 테마가 꺼져 있어도(확장만) 같은 상자 — 실리태번 쪽 칸(#chat · 왼쪽 서랍)만 테마가 켜졌을 때
+     7.7.4 ? 단추(.bl-word-help) · 미리보기 예시 단추의 relative 는 56 · 21 의 body.salty 아래에만 있었다 — 확장만 모드에서 static 이라
+     상자가 카드 · 미리보기 크기로 번져 성능 보조 「기능 켜기」를 덮었다(누르면 도움말만 뜸). 상자와 같은 범위에서 기준점을 준다 */
   html body :is(
     .salty-panel .salty-seg > button,
     .salty-panel .salty-btn,
     .salty-panel .bl-view-toggle,
+    .salty-panel .bl-word-help,
+    .salty-panel .bl-preview-samples > button,
     .salty-panel .bl-addon-ver,
     .salty-panel .bl-addon-credit-all,
     .salty-panel .bl-rule-swap,
@@ -28,6 +32,7 @@
     #chat .mes .mes_media_container .right_menu_button,
     #chat .mes .mes_buttons .mes_button,
     #left-nav-panel label.checkbox_label,
+    #left-nav-panel .editor_maximize,
     :is(#left-nav-panel, #rm_extensions_block) .menu_button
   ) {
     position: relative;
@@ -62,6 +67,7 @@
     #chat .mes .mes_media_enlarge,
     #chat .mes .mes_media_container .right_menu_button,
     #chat .mes .mes_buttons .mes_button,
+    #left-nav-panel .editor_maximize,
     :is(#left-nav-panel, #rm_extensions_block) .menu_button
   )::after {
     content: '';
@@ -92,8 +98,9 @@
     box-shadow: none;
   }
 
-  /* 왼쪽 서랍: 체크 줄의 상자가 위아래 이웃 줄의 링크 · 고르기 · 아이콘 단추를 덮지 않게 그것들을 한 층 위로 */
-  html body.salty #left-nav-panel :is(a, select, .menu_button):not(label *) {
+  /* 왼쪽 서랍: 체크 줄의 상자가 위아래 이웃 줄의 링크 · 고르기 · 아이콘 단추를 덮지 않게 그것들을 한 층 위로
+     「크게 보기」(.editor_maximize — 실리태번 1.19 의 빠른 프롬프트 편집 세 칸 · Claude 미리 채우기)의 상자는 글 칸 모서리에 걸쳐서 글 칸도 한 층 위로 */
+  html body.salty #left-nav-panel :is(a, select, textarea, .menu_button):not(label *) {
     position: relative;
     z-index: 1;
   }

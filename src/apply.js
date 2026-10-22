@@ -14,7 +14,7 @@ import { classifyAll } from './assets.js';
 import { cutEdgeVars, cutEdgeClasses, syncCutEdge, imageFrameOn, darkBackground } from './cutedge.js';
 import { comparisonView } from './appearance-compare.js';
 import { weatherReadability } from './weather-readability.js';
-import { themeEnabled, addonsEnabled } from './usage-mode.js';
+import { themeEnabled, addonsEnabled, puffyMode } from './usage-mode.js';
 import { syncFeatures } from './features.js';
 import { syncSplash, syncFavicon } from './splash.js';
 import { markdownClasses, markdownVariables } from './markdown.js';
@@ -783,6 +783,9 @@ export function applyAll() {
     // 조건은 body 의 salty · salty-bgimg 와 똑같이 (테마를 끄면 둘 다 빠지듯 이것도 빠짐)
     const htmlBg = want.has('salty') && !want.has('salty-bgimg');
     if (document.documentElement.classList.contains('salty-html-bg') !== htmlBg) document.documentElement.classList.toggle('salty-html-bg', htmlBg);
+    // 7.7.4 볼록 단추: 확장만 모드에서도 테마 자신의 단추(.salty-btn)에 — 값은 팔레트 밝기(두께 색), 테마를 끄면 속성을 뗀다 (css/90-puffy.css)
+    const puffy = puffyMode(getSettings(), mode);
+    if (document.documentElement.getAttribute('data-bl-puffy') !== puffy) { if (puffy) document.documentElement.setAttribute('data-bl-puffy', puffy); else document.documentElement.removeAttribute('data-bl-puffy'); }
     // 컷 취급이 바뀌면 이미 분류한 그림의 .salty-cutout 을 다시 정해야 한다 (스위치를 누른 순간 채팅에 바로 보이게)
     if (cutoutBefore !== cls.contains('salty-cutout-same')) classifyAll();
 

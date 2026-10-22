@@ -814,7 +814,9 @@ async function callCompat(cfg, system, user, signal, onSend) {
     { const why = blockedReasonOf(j); if (why) throw blockErr(why); }
     const text = contentOf(j);
     const u = isObj(j?.usage) ? j.usage : {};
-    return { text, usage: { in: Number(u.prompt_tokens) || 0, out: Number(u.completion_tokens) || 0 } };
+    // 7.7.4 finish_reason length = 출력 한도에 잘린 답 — 잘린 JSON 을 「형식 오류」(굳은 실패)로 기억하지 않게 표시만 넘긴다
+    const truncated = /^(?:length|max_tokens)$/i.test(String(j?.choices?.[0]?.finish_reason || ''));
+    return { text, truncated, usage: { in: Number(u.prompt_tokens) || 0, out: Number(u.completion_tokens) || 0 } };
 }
 
 /** 생성 중인지 (실리태번 본체 표시 · 스트리밍 처리기) */
@@ -873,6 +875,7 @@ const errText = (e) => (typeof e === 'string' ? e : String(e?.error?.message || 
  * onSend = 실제로 보내기 직전 (생성이 끝나기를 기다린 뒤)
  * → { text, usage: { in: 0, out: 0, calls } }  calls = 답을 받은 생성 수 (늘 1)
  */
+export const ST_CALL_MS = 180000;   // 7.7.4 callSt 생성 한 번 (공급자 길 120초 · 긴 답 · 생각하는 모델 여유)
 async function callSt(cfg, system, user, signal, onSend) {
     assertRuntime();
     let ctx = null;
@@ -881,12 +884,14 @@ async function callSt(cfg, system, user, signal, onSend) {
     await untilIdle(signal);
     if (aborted(signal)) throw abortErr(signal);
     const prompt = neutralMacros(user), systemPrompt = neutralMacros(system);
+    // 7.7.4 생성 한 번의 기다림 상한 — 넘으면 「시간 초과」(잠깐의 문제 · retry) 로 끝내 분석 줄을 푼다. 늦게 온 답은 버린다
+    const waitOpts = { timeoutMs: ST_CALL_MS, timeoutError: () => koErr(`실리태번 연결이 ${Math.round(ST_CALL_MS / 1000)}초 안에 답하지 않았어요 (시간 초과)`, { retry: true }) };
     const rawText = async () => {
         if (typeof ctx.generateRawData === 'function' && typeof ctx.extractMessageFromData === 'function') {
-            const data = await waitForRuntime(() => ctx.generateRawData({ prompt, systemPrompt }), signal);
+            const data = await waitForRuntime(() => ctx.generateRawData({ prompt, systemPrompt }), signal, waitOpts);
             return String(ctx.extractMessageFromData(data, ctx.mainApi) ?? '');
         }
-        const r = await waitForRuntime(() => ctx.generateRaw({ prompt, systemPrompt, trimNames: false }), signal);
+        const r = await waitForRuntime(() => ctx.generateRaw({ prompt, systemPrompt, trimNames: false }), signal, waitOpts);
         return typeof r === 'string' ? r : String(r ?? '');
     };
     const claude = String(ctx.chatCompletionSettings?.chat_completion_source || '').toLowerCase() === 'claude';
@@ -895,7 +900,7 @@ async function callSt(cfg, system, user, signal, onSend) {
     try {
         if (ctx.mainApi === 'openai' && !claude) {
             let r, schemaErr = null;
-            try { r = await waitForRuntime(() => ctx.generateRaw({ prompt, systemPrompt, jsonSchema: { ...SCHEMA, returnInvalid: true } }), signal); }
+            try { r = await waitForRuntime(() => ctx.generateRaw({ prompt, systemPrompt, jsonSchema: { ...SCHEMA, returnInvalid: true } }), signal, waitOpts); }
             catch (e) { if (aborted(signal)) throw e; schemaErr = e; }
             if (!schemaErr) text = typeof r === 'string' ? r : JSON.stringify(r ?? {});
             else if (TRANSIENT.test(errText(schemaErr))) throw schemaErr;
@@ -907,7 +912,8 @@ async function callSt(cfg, system, user, signal, onSend) {
         if (aborted(signal)) throw e;
         throw stError(e);
     }
-    return { text, usage: { in: 0, out: 0, calls: 1 } };
+    // 7.7.4 실리태번 연결은 끝 이유를 안 넘긴다 — 괄호 · 따옴표가 안 닫힌 JSON 이면 잘린 답으로 (굳은 「형식 오류」 대신 잠깐 실패)
+    return { text, truncated: looksCut(text), usage: { in: 0, out: 0, calls: 1 } };
 }
 
 // ---------- 실리태번 API 중 선택 (provider)
@@ -1584,7 +1590,10 @@ export function analyzeMessage(mesId, opts = {}) {
         }
     }
     if (aborted(opts.signal)) return Promise.reject(abortErr(opts.signal));
-    if (!opts.force && opts.via !== 'fallback' && hasResponseFailure(id)) {   // 6.1.8 「다른 모델로 다시」는 막힌 기억을 넘는다
+    // 7.7.4 opts.again = 재생기 · 미리 만들기가 잠깐의 실패(retry) 뒤 한 번 더 — 방금 남긴 잠깐 실패 기억(soft)에 막혀 보내지도 않고
+    //       「잠시 쉬는 중」으로 끝나던 것 (진짜 까닭 대신). 굳은 실패(hard)는 그대로 막는다
+    const softAgain = !!opts.again && !responseFailures.has(mes) && failureActive(mes)?.hard === false;
+    if (!opts.force && opts.via !== 'fallback' && !softAgain && hasResponseFailure(id)) {   // 6.1.8 「다른 모델로 다시」는 막힌 기억을 넘는다
         const f = failureActive(mes);
         return Promise.reject(responseFailures.get(mes)?.error || koErr(f?.hard ? `대사 분석 실패를 기억해 건너뜀 (${f.why}). 요술봉의 재생성으로 다시 시도해 주세요` : `대사 분석 실패 뒤 잠시 쉬는 중 (${f?.why || ''})`));
     }
@@ -1631,9 +1640,9 @@ async function doAnalyze(entry) {
     const built = buildPrompt(mes, promptOpts);
     entry.lines = built.lines.length;   // 1.7.0 받는 사이 다시 쓰기가 끼면 대화문 수가 같을 때만 끝까지 받는다 (onMessageChanged)
     const failedKey = failureKey(mes);
-    const rejectResponse = (message) => {
+    const rejectResponse = (message, hard = true) => {
         const error = koErr(`${message}. 요술봉의 재생성으로 다시 시도해 주세요`);
-        if (msgOf(id) === mes && sameText(mes, entry) && swipeOf(mes) === swipe) { responseFailures.set(mes, { key: failedKey, error }); rememberFailure(id, mes, { hard: true, why: message }); }
+        if (msgOf(id) === mes && sameText(mes, entry) && swipeOf(mes) === swipe) { if (hard) responseFailures.set(mes, { key: failedKey, error }); rememberFailure(id, mes, { hard, why: message }); }
         return error;
     };
     const h = entry.hash;
@@ -1695,7 +1704,8 @@ async function doAnalyze(entry) {
             if (msgOf(id) === mes && sameText(mes, entry) && swipeOf(mes) === swipe) { blockedRuns.set(mes, { hash: entry.hash, swipe }); responseFailures.set(mes, { key: failedKey, error }); rememberFailure(id, mes, { hard: true, blocked: true, why: error.message }); }
             throw error;
         }
-        throw rejectResponse(r.truncated ? '대사 분석 응답이 길이 한도에 닿아 잘렸어요' : head ? '대사 분석 응답이 JSON 형식이 아니에요' : '대사 분석 응답이 비었어요');
+        // 7.7.4 빈 답 · 길이 한도 잘림은 잠깐의 실패(식는 시간 뒤 다시) — 위 정책 주석대로. 전엔 굳은 실패라 글을 고치기 전엔 그 메시지 분석을 다시 안 했다
+        throw rejectResponse(r.truncated ? '대사 분석 응답이 길이 한도에 닿아 잘렸어요' : head ? '대사 분석 응답이 JSON 형식이 아니에요' : '대사 분석 응답이 비었어요', !r.truncated && !!head);
     }
     let segs = normalizeSegs(parsed, built, promptOpts.emotion).map(g => reuseKnown(g, prior));   // 7.2.6 묻지 않은 앞줄은 옛 분석 그대로
     if (promptOpts.emotion && segs.some(g => !EMOTION_SET.has(g.emotion))) {

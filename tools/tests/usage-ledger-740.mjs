@@ -181,12 +181,18 @@ await test('저장 공간 보고: 다리가 있으면 register, 없으면 대기
     assert.equal(R.approxBytes('abc'), 6); assert.equal(R.approxBytes({ a: 'xy' }), 2 + 4); assert.equal(R.approxBytes(new Uint8Array(10)), 10);
     const report = R.storageReport();
     assert.deepEqual([report.id, report.owner, report.label], ['blue-lemonade', 'blue-lemonade', 'Blue Lemonade']);
-    assert.deepEqual(report.clean.map(c => c.id), ['voice-cache', 'translation-cache', 'request-log']);
+    assert.deepEqual(report.clean.map(c => c.id), ['voice-cache', 'translation-cache', 'request-log', 'translation-cache-old', 'relay-prices']);
     for (const c of report.clean) assert.ok(typeof c.describe === 'function' && typeof c.run === 'function' && c.label);
     const src = read('src/storage-report.js');
     const describeBodies = [...src.matchAll(/describe: async \(\) => \(([^\n]*?)\), run:/g)].map(m => m[1]);
-    assert.equal(describeBodies.length, 3);
-    for (const body of describeBodies) assert.ok(!/clear/i.test(body), 'describe never clears: ' + body);
+    assert.equal(describeBodies.length, 5);
+    for (const body of describeBodies) assert.ok(!/clear|remove/i.test(body), 'describe never clears: ' + body);
+    // 오래된 번역 캐시: date 칸(한국 시각 ISO 글)과 같은 방식의 기준 — 60일 전, 그보다 앞선 글만 「오래됨」
+    const now = Date.parse('2026-10-22T03:00:00Z');
+    assert.equal(R.OLD_TRANSLATION_DAYS, 60);
+    assert.equal(R.translationCutoff(now), '2026-08-23T12:00:00.000Z');
+    const kst = t => new Date(t + 9 * 3600000).toISOString();   // 번역기가 적는 모양 (index.js addTranslationToDB)
+    assert.ok(kst(now - 61 * 86400000) < R.translationCutoff(now) && !(kst(now - 59 * 86400000) < R.translationCutoff(now)));
     for (const name of ['lemon-voice', 'lemon-voice-listen', 'LLMtranslatorDB', 'LLMtranslatorSegments', 'request_log', 'bl-official-prices-v1', 'bl_live_models_v1']) assert.ok(src.includes(`'${name}'`), name);
     delete globalThis[R.REPORT_BRIDGE]; delete globalThis[R.REPORT_PENDING];
     R.registerStorageReport();

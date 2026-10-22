@@ -80,4 +80,26 @@ await t('공식 단가: 이름 대소문자만 다른 공식 이름 하나면 �
     assert.doesNotMatch(view, /Authorization|api_key|apiKey/i, '키를 쓰지 않음');
     assert.match(fs.readFileSync(path.join(root, 'src/addons/perf/ledger-view.js'), 'utf8'), /import\('\.\/relay-compare-view\.js'\)/, '열 때만 불러옴');
 });
+await t('중계 가격표 캐시: 최근 6곳만 남고(오래된 것부터 비움), 몫이 차면 오래된 중계를 비우고 다시 써요 · 다른 localStorage 값은 그대로', async () => {
+    const store = new Map(); let quota = Infinity;
+    const used = () => [...store].reduce((s, [k, v]) => s + k.length + v.length, 0);
+    globalThis.localStorage = {
+        get length() { return store.size; }, key: i => [...store.keys()][i] ?? null, getItem: k => (store.has(k) ? store.get(k) : null), removeItem: k => { store.delete(k); },
+        setItem(k, v) { const before = store.get(k); store.set(k, String(v)); if (used() > quota) { if (before === undefined) store.delete(k); else store.set(k, before); throw new Error('QuotaExceededError'); } },
+    };
+    const V = await import(pathToFileURL(path.join(root, 'src/addons/perf/relay-compare-view.js')).href);
+    store.set('st-own-key', 'x'.repeat(100));
+    for (let i = 0; i < 9; i++) assert.equal(V.cachePut(`https://r${i}.example`, { at: 1000 + i, pricing: { models: [] } }), true);
+    const relays = () => [...store.keys()].filter(k => k.startsWith('bl-relay-pricing:')).sort();
+    assert.equal(V.RELAY_CACHE_MAX, 6);
+    assert.deepEqual(relays(), [3, 4, 5, 6, 7, 8].map(i => `bl-relay-pricing:https://r${i}.example`), '가장 최근 6곳');
+    V.cachePut('https://r4.example', { at: 2000, pricing: { models: [] } });
+    assert.equal(relays().length, 6, '같은 중계를 다시 불러오면 개수는 그대로');
+    quota = used() + 400;
+    assert.equal(V.cachePut('https://big.example', { at: 3000, pricing: { models: [], pad: 'y'.repeat(600) } }), true, '몫이 차면 오래된 중계를 비우고 씀');
+    assert.ok(store.has('bl-relay-pricing:https://big.example') && store.has('bl-relay-pricing:https://r4.example'), '새것 · 최근에 다시 받은 것은 남음');
+    assert.ok(!store.has('bl-relay-pricing:https://r3.example'), '가장 오래된 것부터 비움');
+    assert.equal(store.get('st-own-key'), 'x'.repeat(100), '다른 값은 건드리지 않음');
+    delete globalThis.localStorage;
+});
 console.log(`relay-compare: ${n} passed`);

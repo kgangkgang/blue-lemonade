@@ -197,8 +197,11 @@ await check('gesture before the first paint leaves ongoing momentum free', f => 
     try {
         const event = new Event('touchend'); Object.defineProperty(event, 'target', { value: f.body }); f.doc.dispatchEvent(event);
         keep(f.body, () => f.replace(80));
+        assert.equal(f.frames.length, 0);   // no absolute restore frames queued behind the momentum
         f.chat.scrollTop = 250; scrollEvent(f); f.flush(); assert.equal(f.chat.scrollTop, 250);
-        assert.ok(f.observers.every(o => o.off));
+        // 7.7.4 the observer stays for layout shifts only: a callback without a layout change leaves the reader alone
+        for (const o of f.observers) if (!o.off) o.fn();
+        assert.equal(f.chat.scrollTop, 250);
     } finally { stop(); }
 });
 console.log(`chat-reading-position: ${count} passed`);

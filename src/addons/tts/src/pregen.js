@@ -155,7 +155,7 @@ async function analyse(rec, awaitDisplay) {
     const need = player.analysisNeeds(rec.id, rec.mes, s, { awaitDisplay });
     for (let attempt = 0; ; attempt++) {
         try {
-            const r = await analysis.analyzeMessage(rec.id, { langs: need.langs, signal: rec.ctrl.signal });
+            const r = await analysis.analyzeMessage(rec.id, { langs: need.langs, signal: rec.ctrl.signal, again: attempt > 0 });
             if (!live(rec)) return false;
             if (r && Array.isArray(r.segs)) return true;
             fail(rec, '분석 없음');

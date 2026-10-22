@@ -72,6 +72,7 @@ jobs:
           node tools/tests/translator-preview-frames.mjs .
           node tools/tests/translator-preview-steady.mjs .
           node tools/tests/chat-reading-position.mjs .
+          node tools/tests/translate-scroll.mjs .
           node tools/tests/reading-resume.mjs
           node tools/tests/rewrite-reading-position.mjs .
           node tools/tests/translator-stream.mjs .
@@ -211,6 +212,8 @@ jobs:
           node tools/tests/param-dimensions.mjs .
           node tools/tests/touch-targets.mjs .
           node tools/tests/addon-touch-targets.mjs .
+          node tools/tests/puffy-rollback.mjs .
+          node tools/tests/perf-help-touch.mjs .
           node tools/tests/tts-reanalysis-guard.mjs .
           node tools/tests/addon-note-master-off.mjs .
           node tools/tests/popup-outside-close.mjs .
@@ -240,6 +243,8 @@ jobs:
           node tools/tests/diag-file.mjs .
           node tools/tests/translation-cache-loading.mjs .
           node tools/tests/translation-segments.mjs .
+          node tools/tests/translation-segments-edges.mjs .
+          node tools/tests/translation-segments-store.mjs .
           node tools/tests/translator-footnotes.mjs .
           node tools/tests/translation-display.mjs .
           node tools/tests/translation-source.mjs .
@@ -332,6 +337,7 @@ jobs:
           node tools/tests/fruit-localization.mjs
           node tools/tests/fruit-status.mjs .
           node tools/tests/long-chat-perf.mjs .
+          node tools/tests/fruit-watch-perf.mjs .
           node tools/tests/fruit-option-help.mjs .
           node tools/tests/fruit-typography.mjs .
           node tools/tests/prompt-tools.mjs
@@ -343,7 +349,24 @@ jobs:
           node tools/tests/fruit-style.mjs
           node tools/tests/fruit-entry-rows.mjs .
           node tools/tests/prompt-template.mjs .
+          node tools/tests/manifest-reuse.mjs .
+          node tools/tests/boot-gate.mjs .
           node tools/tests/prompt-template-card.mjs .
+          node tools/tests/usage-ledger-core-edges.mjs .
+          node tools/tests/usage-ledger-store.mjs .
+          node tools/tests/pricing-quote-edges.mjs .
+          node tools/tests/relay-prices-edges.mjs .
+          node tools/tests/addon-save-verify.mjs .
+          node tools/tests/settings-merge-edges.mjs .
+          node tools/tests/sent-tokens-edges.mjs .
+          node tools/tests/bookmarks-attach-edges.mjs .
+          node tools/tests/tts-pair-edges.mjs .
+          node tools/tests/tts-display-edges.mjs .
+          node tools/tests/fault-translator.mjs .
+          node tools/tests/fault-rewrite.mjs .
+          node tools/tests/fault-tts.mjs .
+          node tools/tests/fault-tts-player.mjs .
+          node tools/tests/fault-models.mjs .
           node tools/build-integrity.mjs . --check
       - name: Check that generated files match their sources
         # Regenerate in the throwaway checkout, then fail if anything changed:

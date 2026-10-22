@@ -163,8 +163,8 @@ await test('새로 켠 사람은 처음부터 새 이름표(keyVersion 2) — �
     settingsFrom(undefined);
     assert.equal(S.settings().keyVersion, 2);
     assert.equal(O.migrateLegacyKeys([]), 0);
-    assert.match(read('src/addons/order/state.js'), /export const VERSION = '1\.2\.4';/);
-    assert.match(read('src/addons/order/style.css'), /--po-css-version: "1\.2\.4";/);
+    assert.match(read('src/addons/order/state.js'), /export const VERSION = '1\.2\.5';/);
+    assert.match(read('src/addons/order/style.css'), /--po-css-version: "1\.2\.5";/);
     assert.match(read('src/addons/order/order.js'), /setTimeout\(\(\) => \{ try \{ migrateLegacyKeys\(scan\(\), \{ finish: true \}\); apply\(\); \}/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/order-keys-731\.mjs \./);
 });

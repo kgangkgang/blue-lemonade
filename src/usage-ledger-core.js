@@ -32,7 +32,7 @@ const str = (value, max) => {
     return SECRET.test(text) ? '' : text;
 };
 const int = value => { const n = Math.round(Number(value)); return Number.isFinite(n) && n > 0 ? Math.min(n, 1e10) : 0; };
-const money = value => { const n = Number(value); return Number.isFinite(n) && n >= 0 && n < 1e6 ? n : null; };
+const money = value => { const n = typeof value === 'number' || (typeof value === 'string' && value.trim()) ? Number(value) : NaN; return Number.isFinite(n) && n >= 0 && n < 1e6 ? n : null; };   // 7.7.2 test-gaps: null · '' · false · [] 를 0 달러(응답이 알려 준 비용)로 적지 않는다
 
 /** 주소에서 origin 만 (경로 · 검색어 · 계정 정보 · 키는 버린다). http(s) 가 아니면 '' */
 export function originOf(value) {

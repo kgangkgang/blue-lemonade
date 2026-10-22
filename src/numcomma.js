@@ -13,6 +13,7 @@
 //  · 그리기는 한 프레임에 몰아서, 모양(값 · 글꼴 · 색 · 크기)이 그대로면 다시 안 그린다. 스트리밍 글자는 #chat 안이라 넘어오지 않는다.
 import { groupedNumber, fitNumberText, scaledFont } from './numbers.js';
 import { tapPanelChanges, panelWatching } from './lite.js';
+import { booting, afterBoot } from './boot-gate.js';
 
 const CLS = 'bl-num-ghost';
 const WIDE = 'bl-num-wide';          // 스핀 단추 자리까지 써서 그린 칸
@@ -345,6 +346,7 @@ function render(text, L) {
 function flush() {
     frame = 0;
     if (!on) return;
+    if (booting()) { afterBoot(schedule); return; }   // 7.7.4 시작 덮개 동안은 재지 않는다 — 걷힐 때 모아 둔 칸을 한 번에 (boot-gate.js)
     if (pruneDue) prune();
     if (roots.size) scanRoots();
     // 두 번에 나눈다: 먼저 모든 칸을 재고 그리고(읽기), 그다음 한꺼번에 쓴다. 칸마다 재고 쓰기를 번갈아 하면 쓸 때마다 다음 칸의

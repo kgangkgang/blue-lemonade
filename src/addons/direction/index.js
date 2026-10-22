@@ -9,10 +9,12 @@ import { getChatCompletionModel, oai_settings } from '../../../../../../openai.j
 import { insertInstructions } from './prompt.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { badgeTextHit } from '../../badge-hit.js';
+// 7.7.4 시작 덮개 동안은 테마 색을 읽지 않는다
+import { afterBoot } from '../../boot-gate.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.3.4';
+const VERSION = '1.3.5';
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
 // 1.3.4: 테두리 단계 선을 고정 1.3px 로 — 옆 선 아이콘 굵기 (em 비례는 폰에서 두꺼워졌다)
 // 1.3.3: 깃털은 모든 단계가 같은 글리프(꺼짐은 흐린 색으로 채움), 테두리를 시안 굵기로 · 줄의 토큰 수는 숫자만
@@ -1472,7 +1474,7 @@ initSettings();
 
 export const ready = new Promise((resolve, reject) => jQuery(() => {
     try {
-    applyOnColor();
+    afterBoot(applyOnColor);   // 7.7.4 덮개가 걷힐 때(첫 화면 전) 한 번 — 시작 중 계산 스타일 읽기로 문서 전체를 다시 계산하지 않게
     registerDirectionMacro();
     buildSettings();
     ensureButton();

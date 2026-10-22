@@ -549,7 +549,7 @@ async function runAnalysis(mesId, mes, { signal, cancelled, force = false } = {}
     const langs = need.langs;
     for (let attempt = 0; ; attempt++) {
         try {
-            const r = await Promise.race([analysis.analyzeMessage(mesId, { langs, force, signal }), cancelled || new Promise(() => {})]);
+            const r = await Promise.race([analysis.analyzeMessage(mesId, { langs, force, signal, again: attempt > 0 }), cancelled || new Promise(() => {})]);
             return r && Array.isArray(r.segs) ? r : null;
         } catch (e) {
             if (signal?.aborted || isAbort(e)) return null;
@@ -1183,7 +1183,9 @@ async function synthRetry(job, cfg, signal, e = null) {
         } catch (err) {
             if (signal.aborted || isAbort(err)) throw abortError();
             if (isRate(err)) coolDown(job.provider.id);                // 탭이 받은 429 · 1002 도 미리 만들기 줄을 쉬게 (탭은 그대로)
-            if (!err?.retry || attempt >= RETRY_MS.length || (isRate(err) && coolingFor(job))) throw err;   // 6.4.2 다른 줄이 이미 쉬게 했으면 다시 안 보냄
+            // 7.7.4 미리 만들기(탭이 안 붙은 요청)의 잦은 요청(429 · 1002)은 여기서 다시 보내지 않는다 — pregen 이 쉬는 시간(COOL_MS)을 지켜 다시 한다.
+            //       전엔 줄마다 이 재시도 2번 × pregen 재시도 3번 = 9번까지 보냈다 (coolingFor 는 재생 쪽 쉬는 시간만 봐서 걸리지 않았다). 탭은 예전처럼 3번
+            if (!err?.retry || attempt >= RETRY_MS.length || (isRate(err) && (coolingFor(job) || e?.sentPre === true))) throw err;
             if (e && e.users <= 0) throw abortError();
             log('info', `다시 시도 ${attempt + 1}: ${String(err.message || '').slice(0, 40)}`);
             if (e) e.sent = false;
@@ -1306,6 +1308,7 @@ function startEntry(job, pre, prep = true) {
         if (res?.speak) return { speak: res.speak };
         const raw = res?.blob;
         if (!(raw instanceof Blob) || !raw.size) throw new Error('음성 데이터가 비어 있어요');
+        engineFails.delete(job.provider.id);   // 7.7.4 받았으니 이어진 실패 수를 지운다
         addUsage(res.usage?.chars ?? job.text.length, { pre: e.sentPre, model: res.usage?.model });
         recordVoice(job, res.usage?.chars ?? job.text.length, res.usage?.model);
         if (cache.takeEvicted?.(job.key)) noteRebuy();   // 6.4.2 한도로 지운 줄을 다시 삼
@@ -1712,6 +1715,10 @@ const coolingFor = (job) => !!job?.provider && (playCool.get(job.provider.id) ||
 // 6.4.2 v3 쉬는 엔진의 줄: 캐시 · 메모리 · 진행 중인 요청에 있으면 그대로 나고(탭 · 다시 듣기 포함), 새로 사야 하는 줄만 보내지 않는다 —
 //   startEntry 가 캐시를 본 뒤 이 오류를 던지고 fail 은 조용히 넘긴다 (알림은 처음 막힌 줄에서 한 번). 전엔 쉬는 동안 받아 둔 줄까지 소리 없이 건너뛰었다
 const coolingError = () => Object.assign(new Error('엔진이 요청을 잠시 막고 있어요 — 조금 뒤 다시 들어 보세요'), { status: 429, code: 429, cooling: true, retry: false });
+// 7.7.4 이번 읽기에서 엔진마다 이어진 실패 수 (키 문제가 아닌 5xx · 시간 초과 · 연결 · 이상한 답) — ENGINE_FAIL_MAX 번 이어지면 그 엔진 줄은 건너뛴다.
+//       전엔 업체 장애 동안 줄마다 재시도 3번 + 미리 받기까지 거듭 보냈다 (10줄 답 = 요청 약 60번 · 알림 줄마다)
+const engineFails = new Map();
+const ENGINE_FAIL_MAX = 3;
 function markDead(job) {
     const pid = job?.provider?.id;
     if (!pid) return;
@@ -1750,6 +1757,16 @@ function fail(e, job = null) {
     if (dead && e?.dead && !isPinned(job?.speaker)) { const other = twinEngineName(job); if (other) msg += ` · 목소리 탭 「엔진」에서 ${other}${ro(other)} 바꿀 수 있어요`; }   // 5.7.2 J4
     toastOnce(msg, 'error');
     log('err', msg.slice(0, 60));
+    if (!dead && job?.provider?.id) {
+        const n = (engineFails.get(job.provider.id) || 0) + 1;
+        engineFails.set(job.provider.id, n);
+        if (n >= ENGINE_FAIL_MAX) {   // 7.7.4 위 engineFails
+            markDead(job);
+            toastOnce(`${job.provider.name || job.provider.id} 엔진이 ${n}번 이어서 실패해 이번 읽기의 남은 줄은 건너뛰어요`, 'warning');
+            log('err', `${job.provider.name || job.provider.id} ${n}번 이어서 실패 · 이번 읽기에서 건너뜀`);
+        }
+        return;
+    }
     if (!dead) return;
     // 1.3.8 키 문제 · 꺼진 직접 입력 서버 = 이 엔진만 안 됨: 남은 이 엔진 줄은 기다리지 않고 건너뛰고 다른 엔진 줄은 읽는다.
     //   멈추지(stop) 않는다 — 스트리밍 읽기에선 멈추면 뒤에 들어올 다른 엔진 줄까지 버려졌다 (리뷰 p01). 엔진을 모르는 작업만 예전처럼 멈춤
@@ -1925,6 +1942,7 @@ function finishAll({ keepDead = false, keepFx = false } = {}) {
     sceneManual = false;
     current = null;
     deadEngines.clear();
+    engineFails.clear();   // 7.7.4
     // 1.3.8 스트리밍 중인 답장의 '안 되는 엔진'은 큐가 비어도 남긴다 (다음 조각이 append 로 새 큐를 만든다)
     if (!keepDead && streamDead && !(stream && stream.mesId === streamDead.mesId && !stream.muted)) streamDead = null;
     currentIr = null;

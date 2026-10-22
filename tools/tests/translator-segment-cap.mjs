@@ -85,6 +85,8 @@ await check('cache size: 4000 paragraphs and 2,000,000 characters, newest kept f
     assert.deepEqual(pruneKeys([{ key: 'old', text: 'a', time: now - 31 * day }, { key: 'new', text: 'a', time: now - day }], now), ['old']);
     // 순서는 시각 — 꺼내 쓴(시각을 새로 쓴) 줄은 뒤에 쓴 줄보다 오래 남는다
     assert.deepEqual(pruneKeys([{ key: 'a', text: 'a', time: now - 5 }, { key: 'b', text: 'a', time: now - 1 }, { key: 'c', text: 'a', time: now }], now, { limit: 2 }), ['a']);
+    // 이어 하기('resume:') 줄은 하루만 읽으니 하루가 지나면 지운다 (예전엔 30일 남아 문단 몫을 차지했다)
+    assert.deepEqual(pruneKeys([{ key: 'resume:old', text: 'a', time: now - 2 * day }, { key: 'resume:new', text: 'a', time: now - 3600000 }, { key: 'para', text: 'a', time: now - 2 * day }], now), ['resume:old']);
 });
 
 await check('LRU: a chat read again from the cache stays while newer chats push older ones out (memory copy 1200 paragraphs)', async () => {

@@ -1,5 +1,5 @@
 // Cartesia (api.cartesia.ai) — 브라우저에서 바로 호출, Bearer + Cartesia-Version
-import { safeMsg, timedFetch } from './_http.js';
+import { audioOrError, safeMsg, timedFetch } from './_http.js';
 import { modelOptions, resolveModel, keyModel, customField } from './_models.js';
 
 const ID = 'cartesia';
@@ -170,7 +170,7 @@ const provider = {
         const emo = (emotion && EMOTION_MAP[emotion]) || String(p.emotion || '');
         if (emo) body.generation_config.emotion = emo;
         const raw = await call('/tts/bytes', { method: 'POST', key: cfg.key, body, signal, as: 'blob', timeout: 120000 });
-        const blob = raw.type.startsWith('audio/') ? raw : new Blob([raw], { type: 'audio/mpeg' });
+        const blob = await audioOrError(raw, 'audio/mpeg');   // 7.7.4
         return { blob, mime: blob.type, usage: { chars: text.length } };
     },
 

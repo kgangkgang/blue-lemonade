@@ -549,7 +549,9 @@ export function refresh(source, opts = {}) {
             throw e;
         }
         const entries = modelEntries(src, j);
-        if (!entries.length && j && j.error) {
+        // 7.7.4 빈 목록이 왔는데 받아 둔 목록이 있으면 덮지 않고 실패로 — 중계가 200 으로 빈 본문 · {} · {"data":[]} 를 준 때 전엔
+        //       좋은 목록을 지워 모델 고르는 칸이 비었다 (TTS 분석 · 번역 · 다시 쓰기 · 모델 전환이 같은 목록)
+        if (!entries.length && ((j && j.error) || cached(key)?.ids?.length)) {
             noteFailure(key);
             throw Object.assign(new Error('목록을 받지 못했어요 (키·주소 확인)'), { status: 0, empty: true });
         }

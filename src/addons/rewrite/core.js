@@ -726,6 +726,7 @@ export async function rewriteText({ text, spans, exceptions, compiled, generate,
     const results = new Array(spans.length).fill(null);
     let pending = spans.map((span, i) => i);
     let error = null;
+    let blank = 0;   // 7.7.4 고친 문장(<sN>)이 하나도 없는 답이 이어진 횟수
 
     for (let attempt = 0; attempt < maxAttempts && pending.length > 0; attempt++) {
         const batch = pending.map(i => spans[i]);
@@ -738,6 +739,14 @@ export async function rewriteText({ text, spans, exceptions, compiled, generate,
         }
 
         const rewrites = parseRewrites(raw, batch.length);
+        // 7.7.4 빈 답 · 거절문 · 출력 한도에 잘린 답처럼 고친 문장이 하나도 없는 답이 두 번 이어지면 그만 보낸다 — 같은 요청은 같은 답이라
+        //       전엔 maxAttempts(기본 5)번을 다 보냈고, 알림엔 까닭이 없었다
+        if (rewrites.every(rewrite => rewrite === undefined)) {
+            if (++blank >= 2) {
+                error = new Error(String(raw ?? '').trim() ? '모델 답에 고친 문장이 없었어요 (거절했거나 답이 잘렸을 수 있어요).' : '모델이 빈 답을 줬어요.');
+                break;
+            }
+        } else blank = 0;
         const retry = [];
         batch.forEach((span, j) => {
             const verdict = checkRewrite(span, rewrites[j], compiled);
@@ -861,6 +870,19 @@ export function promptHasMarker(messages, compiled) {
     return (messages ?? []).some(message => testAny(messageText(message), compiled.regexes));
 }
 
+// 7.7.4 Kinds of reroll errors. 'permanent' = the same request gets the same answer (key, permission, quota, a bad
+// request, a safety block): sending it again only costs. 'busy' = rate limit or overload: wait before the next try.
+// SillyTavern's non-streaming route turns most provider errors into a 200 with only the reason phrase
+// ("Unauthorized", "Too Many Requests"), so the status code is read out of the words.
+export function rerollErrorKind(error) {
+    if (error?.name === 'AbortError') return 'timeout';
+    const text = String(error?.message ?? error ?? '').toLowerCase();
+    if (/premature close|socket hang up|econnreset|econnrefused|failed to fetch|network|unexpected token|unexpected end of json/.test(text)) return 'transient';
+    if (/rate.?limit|too many requests|resource.?exhausted|overloaded|(?<!(?:position|pos|line|column|col|offset|index|byte|length)[\s:#=]*)(?:^|\D)429(?!\d)/.test(text)) return 'busy';
+    if (/unauthori[sz]ed|forbidden|api.?key|permission|authenticat|insufficient|quota|billing|credit|balance|payment|bad request|invalid|not found|prohibited|safety|content.?filter|context.?length|maximum context|too long|too large|(?:status|code|http|error|^)\D{0,10}4(?:0[0-4]|13|22)(?!\d)/.test(text)) return 'permanent';
+    return 'transient';
+}
+
 /**
  * Calls generate until accept passes, at most maxAttempts times. A thrown error (API error, timeout) counts as a
  * failed attempt and is kept for reporting; only an error for which isFatal returns true ends the loop early.
@@ -870,11 +892,14 @@ export function promptHasMarker(messages, compiled) {
  * @param {(result: T) => boolean} options.accept
  * @param {number} [options.maxAttempts]
  * @param {(error: Error) => boolean} [options.isFatal] e.g. "the user pressed Stop"
+ * @param {(error: Error) => number} [options.delayAfter] ms to wait after a failed attempt before the next one
+ * @param {(ms: number) => Promise<void>} [options.sleep]
+ * @param {() => boolean} [options.stopped] checked after the wait (isFatal may count, so it is asked once per error)
  * @param {(attempt: number) => void} [options.onAttempt] Called before each attempt (1-based)
  * @param {(verdict: string, result?: T) => void} [options.log]
  * @returns {Promise<{result: T | null, attempts: number, error: Error | null}>}
  */
-export async function rerollUntil({ generate, accept, maxAttempts = 2, isFatal = () => false, onAttempt = () => {}, log = () => {} }) {
+export async function rerollUntil({ generate, accept, maxAttempts = 2, isFatal = () => false, delayAfter = () => 0, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)), stopped = () => false, onAttempt = () => {}, log = () => {} }) {
     let attempts = 0;
     let error = null;
     while (attempts < maxAttempts) {
@@ -887,6 +912,9 @@ export async function rerollUntil({ generate, accept, maxAttempts = 2, isFatal =
             error = caught;
             log('error', caught);
             if (isFatal(caught)) break;
+            const wait = attempts < maxAttempts ? delayAfter(caught) : 0;
+            if (wait > 0) await sleep(wait);
+            if (stopped()) break;   // Stop pressed while waiting
             continue;
         }
         if (accept(result)) {

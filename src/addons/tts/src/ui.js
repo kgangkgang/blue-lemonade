@@ -18,6 +18,7 @@ import { balanceParts, balanceLow, BALANCE_TTL } from './balance.js';   // 1.3.5
 import * as ttsModels from './providers/_models.js';   // 1.3.7 엔진 모델 목록 (늘 최신 — localStorage 12시간)
 import { koModelLabel } from './model-names.js';         // 1.3.7 모델 이름 한국어
 import { ttsCreditsHtml } from '../credits.js';
+import { booting } from '../../../boot-gate.js';   // 7.7.4 시작 덮개 동안엔 엔진 카드가 보일 수 없다 — 크기를 재지 않는다
 
 const TEST_LINE = { ko: '안녕, 잘 부탁해.', ja: 'こんにちは、よろしくね。', en: 'Hi there, nice to meet you.', zh: '你好，请多关照。' };
 const TAB_IDS = ['read', 'voices', 'engine', 'data'];   // 탭 버튼은 settings.html 에 고정
@@ -2210,7 +2211,7 @@ function autoModelsDue(p, now = Date.now()) {
 }
 function autoEngineModels() {
     const pane = q('#lv_pane_engine');
-    if (!pane || pane.hidden || !pane.offsetParent) return;   // 닫힌 서랍 · 숨은 탭 (페이지를 열 때 그리는 것 포함)
+    if (!pane || pane.hidden || booting() || !pane.offsetParent) return;   // 닫힌 서랍 · 숨은 탭 (페이지를 열 때 그리는 것 포함) · 7.7.4 시작 덮개 동안
     const p = curProvider();
     if (!autoModelsDue(p)) return;
     modelAuto.set(`${p.id}|${modelScopeOf(p, providerConfig(p.id, p.defaults))}`, Date.now());

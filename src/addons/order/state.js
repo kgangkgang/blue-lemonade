@@ -6,7 +6,7 @@ import { normalizeMenuPrefs } from './menu-plan.js';   // 6.3.3 요술봉 숨김
 
 export const MODULE = 'panel_order';
 export const FOLDER = 'blue-lemonade';
-export const VERSION = '1.2.4';
+export const VERSION = '1.2.5';
 export const TITLE = '확장 순서';
 
 /**

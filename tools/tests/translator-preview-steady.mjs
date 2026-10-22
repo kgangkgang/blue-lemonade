@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-globalThis.keepChatReadingPosition = (await import(pathToFileURL(path.resolve(process.argv[2] || '.', 'src/chat-reading-position.js')))).keepChatReadingPosition;
+({ keepChatReadingPosition: globalThis.keepChatReadingPosition, readerRestsIn: globalThis.readerRestsIn } = await import(pathToFileURL(path.resolve(process.argv[2] || '.', 'src/chat-reading-position.js'))));   // 7.7.4 readerRestsIn
 
 const root = path.resolve(process.argv[2] || '.'), dir = path.join(root, 'src/addons/translator');
 const source = fs.readFileSync(path.join(dir, 'index.js'), 'utf8');

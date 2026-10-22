@@ -235,8 +235,8 @@ await test('확장 순서 1.2.2: 창 구성이 바뀌면(늦게 붙는 확장) �
     assert.match(order, /export function onPanelsChange\(fn\)/);
     assert.match(order, /const panels = scan\(\);\n\s+if \(!panels\.length\) return;\n\s+migrateLegacyKeys\(panels\);[^\n]*\n\s+notifyPanels\(panels\);/);
     assert.match(panel, /\nonPanelsChange\(renderList\);\n/);
-    assert.match(read('src/addons/order/state.js'), /export const VERSION = '1\.2\.4';/);
-    assert.match(read('src/addons/order/style.css'), /--po-css-version: "1\.2\.4";/);
+    assert.match(read('src/addons/order/state.js'), /export const VERSION = '1\.2\.5';/);
+    assert.match(read('src/addons/order/style.css'), /--po-css-version: "1\.2\.5";/);
 });
 
 await test('7.0.1 git 확인 실패: /version 이 500(오프라인 git fetch)이면 「모름」 → 설치 · 삭제 막고 한 줄 안내 · 도우미에 아무것도 안 보냄', async () => {
@@ -306,9 +306,9 @@ await test('7.0.1 새 판 · 같은 판 재설치는 확인 창 뒤에만 · 옛
     assert.match(code, /async function confirmReplace\(installed\)[\s\S]*?ZIP 설치 창의 백업 목록[\s\S]*?callGenericPopup\(/);
 });
 await test('7.0.1 판: 애드온 1.0.1(JS = CSS) · perf 2.2.8(7.0.3 요청 로그 이름표 · hub.js SUITE_VERSION = --pa-hub-css-version)', () => {
-    assert.equal(mod.VERSION, '1.0.3');   // 7.0.5 설치 상태 카드 · <% %> 알림
-    assert.match(read('src/addons/perf/hub.js'), /export const SUITE_VERSION = '2\.3\.1';/);   // 7.7.1
-    assert.deepEqual([...read('src/addons/perf/style.css').matchAll(/--pa-hub-css-version:\s*"([^"]+)"/g)].map(m => m[1]), ['2.3.1']);
+    assert.equal(mod.VERSION, '1.0.4');   // 7.0.5 설치 상태 카드 · <% %> 알림
+    assert.match(read('src/addons/perf/hub.js'), /export const SUITE_VERSION = '2\.3\.2';/);   // 7.7.4
+    assert.deepEqual([...read('src/addons/perf/style.css').matchAll(/--pa-hub-css-version:\s*"([^"]+)"/g)].map(m => m[1]), ['2.3.2']);
 });
 await test('확장 순서 1.2.3: 다시 그리기 전 초점(줄 key · 동작) 기억 → 그린 뒤 같은 칸 · 꺼졌으면 같은 줄 첫 칸', () => {
     const panel = read('src/addons/order/panel.js');

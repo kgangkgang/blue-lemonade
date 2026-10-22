@@ -173,5 +173,19 @@ async function readBlob(r) {
     return { blob, mime: ct || blob.type || '' };
 }
 
+// 7.7.4 200 인데 소리 대신 글(JSON · HTML · 글)이 온 본문은 오류로 — 전엔 Cartesia · Typecast · Google 번역 · ElevenLabs 예비 길이
+//       받은 본문을 그대로 audio/mpeg 로 싸서 그 글이 캐시에 들어가, 누를 때마다 「재생할 수 없어요」였다 (사용량도 셈)
+export async function audioOrError(raw, mime = 'audio/mpeg') {
+    const ct = String(raw?.type || '').split(';')[0].trim().toLowerCase();
+    if (ct.includes('json') || ct.includes('html') || ct.startsWith('text/')) {
+        const text = typeof raw?.text === 'function' ? await raw.text().catch(() => '') : '';
+        const j = parse(text);
+        const e = koError(200, j !== undefined ? j : text);
+        e.retry = false;
+        throw e;
+    }
+    return ct.startsWith('audio/') ? raw : new Blob([raw], { type: mime });
+}
+
 export const fetchJson = (url, opts) => request(url, opts, readJson);
 export const fetchBlob = (url, opts) => request(url, opts, readBlob);

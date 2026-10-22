@@ -58,7 +58,7 @@ class El {
     after(n) { const p = this.parentElement; if (!p) return; n.parentElement = p; p.children.splice(p.children.indexOf(this) + 1, 0, n); }
     remove() { if (this.parentElement) this.parentElement.children = this.parentElement.children.filter(n => n !== this); this.parentElement = null; }
     get isConnected() { return this === this.ownerDocument.body || this === this.ownerDocument.head || !!this.parentElement?.isConnected; }
-    matches(sel) { return sel.split(',').some(s => { s = s.trim(); if (s === '*') return true; if (s.startsWith('#')) return this.attrs.id === s.slice(1); if (s.startsWith('.')) return s.slice(1).split('.').every(c => (this.attrs.class || '').split(' ').includes(c)); return this.tagName === s.toUpperCase(); }); }
+    matches(sel) { return sel.split(',').some(s => { s = s.trim(); if (s === '*') return true; if (s.startsWith('#')) { const [id, ...cls] = s.slice(1).split('.'); return this.attrs.id === id && cls.every(c => (this.attrs.class || '').split(' ').includes(c)); } if (s.startsWith('.')) return s.slice(1).split('.').every(c => (this.attrs.class || '').split(' ').includes(c)); return this.tagName === s.toUpperCase(); }); }
     closest(sel) { for (let n = this; n; n = n.parentElement) if (n.matches?.(sel)) return n; return null; }
     querySelectorAll(sel) { const out = []; const visit = n => { for (const c of n.children) { if (c.nodeType !== 1) continue; let ok = false; try { ok = c.matches(sel); } catch { ok = false; } if (ok) out.push(c); visit(c); } }; visit(this); return out; }
     querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
@@ -130,7 +130,9 @@ await test('바로가기 단추(fruit-type-shortcuts): 1.5초 타이머 — 그�
     for (let i = 0; i < 3; i++) { H.tick(); assert.equal(H.frames.size, 0, '그대로인 채팅을 다시 훑음'); }
     inner.body.append(new El(inner, 'div', { class: 'dem-status' }));   // iframe 안에 카드가 늦게 그려짐 (body 감시자는 못 봄)
     H.tick(); assert.equal(H.frames.size, 1, 'iframe 안 새 카드를 못 봄'); H.settle();
-    doc.body.append(new El(doc, 'div', { id: 'fruit-heart-v6' }));
+    const panel = doc.body.append(new El(doc, 'div', { id: 'fruit-heart-v6' }));   // 7.7.4 닫힌 과일 창 뿌리는 문서에 남는다
+    H.tick(); assert.equal(H.frames.size, 0, '닫힌 과일 창 뿌리만으로 다시 훑음');
+    panel.attrs.class = 'open';
     H.tick(); assert.equal(H.frames.size, 1, '과일 창이 열려 있으면 예전처럼 훑음'); H.settle();
     release(); assert.equal(H.timers.size, 0);
 });

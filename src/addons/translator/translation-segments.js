@@ -8,12 +8,14 @@ import { checkpointKey } from './translation-resume.js';
 const memory = new Map(), MEMORY_LIMIT = 1200, LIMIT = 4000, CHAR_BUDGET = 2000000, PRUNE_EVERY = 128, TTL = 30 * 86400000;
 export const SEGMENT_CACHE_LIMITS = Object.freeze({ paragraphs: LIMIT, chars: CHAR_BUDGET, memory: MEMORY_LIMIT, pruneEvery: PRUNE_EVERY, days: 30 });
 /** 7.3.1 남길 줄 고르기 (시험용으로 꺼냄): 최근 것부터 개수 · 글자 수 안에 드는 것만, 기한 지난 것은 뺀다 → 지울 key 목록 */
-export function pruneKeys(rows, now = Date.now(), { limit = LIMIT, chars = CHAR_BUDGET, ttl = TTL } = {}) {
+//   'resume:' 줄은 읽을 때 하루만 보니(readMany ttl) 지울 때도 하루 — 30일 동안 남아 4000문단 몫을 차지하지 않게
+export function pruneKeys(rows, now = Date.now(), { limit = LIMIT, chars = CHAR_BUDGET, ttl = TTL, resumeTtl = RESUME_TTL } = {}) {
     const drop = [];
     let kept = 0, used = 0;
     for (const row of [...rows].sort((a, b) => b.time - a.time)) {
         const size = String(row.text ?? '').length;
-        if (row.time < now - ttl || kept >= limit || used + size > chars) { drop.push(row.key); continue; }
+        const life = String(row.key ?? '').startsWith(RESUME) ? Math.min(ttl, resumeTtl) : ttl;
+        if (row.time < now - life || kept >= limit || used + size > chars) { drop.push(row.key); continue; }
         kept++; used += size;
     }
     return drop;
@@ -177,10 +179,12 @@ export function restoreDroppedPlaceholders(masked, output, placeholders) {
         return answer.replace(/\s+$/, '') + '\n\n' + items.join('\n\n');
     }
     for (const i of whole) out.splice(i, 0, { body: src[i].body, sep: src[i].sep }); // 원문의 뒤 구분자 그대로 (마지막 문단이면 없음 — 사이는 joinBlank 가 채운다)
-    for (const [ph, i] of inside) {
+    // 문단 머리 = 앞에 같이 빠진 자리표시자만 있는 것 (그림 두 장 …) — 머리 것은 뒤의 것부터 앞에 붙여 원문 차례대로 남긴다
+    const atHead = ([ph, i]) => !src[i].body.slice(0, src[i].body.indexOf(ph)).replace(PLACEHOLDER, m => (missing.includes(m) ? '' : m)).trim();
+    for (const [ph, i] of [...inside.filter(atHead).reverse(), ...inside.filter(item => !atHead(item))]) {
         const body = src[i].body, at = body.indexOf(ph), before = body.slice(0, at), after = body.slice(at + ph.length);
         const target = out[i];
-        if (!before.trim()) target.body = ph + gapOf(/^\s*/.exec(after)[0]) + target.body.replace(/^\s+/, '');
+        if (atHead([ph, i])) target.body = ph + gapOf(/^\s*/.exec(after)[0]) + target.body.replace(/^\s+/, '');
         else target.body = target.body.replace(/\s+$/, '') + gapOf(/\s*$/.exec(before)[0] || ' ') + ph;
     }
     return joinBlank(out);

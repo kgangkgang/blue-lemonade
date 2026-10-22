@@ -1,6 +1,8 @@
 // Theme look: text buttons that SillyTavern or other extensions draw as thick pills or circles become
 // slim rounded rectangles. Only a marker attribute is added; removing it restores the original shape.
 // Switches, dots, badges, progress bars, avatars and icon-only round buttons keep their shape.
+import { booting, afterBoot } from './boot-gate.js';
+
 const ATTR = 'data-bl-squared';
 const CANDIDATES = 'button,a,summary,label,[role="button"],[role="tab"],[tabindex],.menu_button,.qr--button,[class*="btn"],[class*="chip"],[class*="tab"],[class*="pill"]';
 const SKIP_CLASS = /(switch|toggle|knob|dot|badge|spinner|progress|slider|avatar|thumb|count|indicator|scroll)/i;
@@ -98,6 +100,7 @@ export function watchSquaredButtons(doc, host) {
     }
     function flush() {
         frame = 0; timer = 0; if (stopped) return;
+        if (booting(doc)) { afterBoot(measure); return; }   // 7.7.4 시작 덮개 동안은 재지 않는다 — 걷힐 때 모아 둔 자리를 한 번에 (boot-gate.js)
         const list = roots.has(doc.body) ? [doc.body] : compactRoots(roots);
         roots.clear();
         const found = [];

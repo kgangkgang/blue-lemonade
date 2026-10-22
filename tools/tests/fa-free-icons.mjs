@@ -38,8 +38,8 @@ t('테마 src · css · index.js 의 fa-* 이름이 모두 Free 에 있다', () 
 t('북마크 1.6.0~: 주소가 잘못된 그림 자리표는 link-slash · 판 JS = CSS · CI', () => {
     const render = read('src/addons/bookmarks/render.js');
     assert.match(render, /aria-label="주소가 잘못된 그림"><i class="fa-solid fa-link-slash" aria-hidden="true"><\/i>/);
-    assert.match(read('src/addons/bookmarks/state.js'), /export const VERSION = '1\.7\.3';/);   // 7.2.7 · 7.3.1 그림만 격자
-    assert.match(read('src/addons/bookmarks/style.css'), /--cg-css-version: "1\.7\.3";/);
+    assert.match(read('src/addons/bookmarks/state.js'), /export const VERSION = '1\.7\.4';/);   // 7.2.7 · 7.3.1 그림만 격자
+    assert.match(read('src/addons/bookmarks/style.css'), /--cg-css-version: "1\.7\.4";/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/fa-free-icons\.mjs \./);
 });
 

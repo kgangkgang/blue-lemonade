@@ -42,11 +42,17 @@ body[data-bl-fruit-entry] #send_form :is(#qr--bar,#nonQRFormItems)>[data-bl-frui
         for(const node of found)if(!node.hasAttribute('data-bl-fruit-entry-proxy')&&!nativeEntries.has(node)){nativeEntries.set(node,node.getAttribute('data-bl-fruit-native-entry'));node.setAttribute('data-bl-fruit-native-entry','');}
     }
     const schedule=()=>{if(!stopped&&!queued)queued=host.requestAnimationFrame(flush);};
+    // 7.7.4 1.5초 안전망은 값싼 서명(요소 정체 · 자식 수 · 클래스 · 설정)이 바뀌었을 때만 전부 다시 본다 — 바뀐 게 없어도 매번 문서 전체를 두 번 훑고
+    // QR 줄 계산 스타일을 읽었다 (폰 흉내 CPU 6배, 채팅 전환 10번에 1.3초). 서명이 못 보는 변화에 대비해 10번에 한 번은 그냥 다시 본다.
+    // 과일 창(<html> 아래라 body 감시 밖)이 열려 있는 동안은 예전처럼 매번 — 창 안의 입구 고르기 · 줄 숨기기가 늦지 않게.
+    const ids=new WeakMap();let nextId=1,ticks=0,lastSig='';const idOf=o=>{if(!o)return 0;let i=ids.get(o);if(!i)ids.set(o,i=nextId++);return i;};
+    const signature=()=>{const el=id=>doc.getElementById(id),qr=el('qr--bar'),s=getSettings();return [...['fruit-heart-v6','fruit-heart-v6-wand-entry','fruit-heart-v6-dock','qr--bar','quickReplies','nonQRFormItems','extensionsMenu','send_form','loader'].map(id=>idOf(el(id))),qr?.childElementCount,qr?.className,qr?.getAttribute('style'),el('nonQRFormItems')?.childElementCount,el('extensionsMenu')?.childElementCount,doc.body.childElementCount,doc.body.className,doc.documentElement.className,idOf(proxy?.parentElement),idOf(proxy?.nextElementSibling),!!chooser?.isConnected,s.fruitEntryMode,s.fruitEntryDisplay,s.fruitEntryIcon,host.SillyTavern?.getContext?.()?.extensionSettings?.blue_lemonade_scripts?.names?.fruit,typeof host.__FRUIT_HEART_MAIN__?.open].join('|');};
     function open(){
         const api=host.__FRUIT_HEART_MAIN__;
         if(typeof api?.open==='function')api.open();else doc.getElementById('fruit-heart-v6-wand-entry')?.click();
     }
-    function flush(){
+    function flush(){flushNow();if(!stopped)lastSig=signature();}
+    function flushNow(){
         queued=0;if(stopped)return;
         const native=doc.getElementById('fruit-heart-v6-wand-entry'),panel=doc.getElementById('fruit-heart-v6');
         const available=!!native||!!panel||typeof host.__FRUIT_HEART_MAIN__?.open==='function';
@@ -80,7 +86,11 @@ body[data-bl-fruit-entry] #send_form :is(#qr--bar,#nonQRFormItems)>[data-bl-frui
     }
     // Entries live in #send_form, the wand menu and body itself, never in the chat, a settings drawer or a <select>: skip message rendering,
     // streaming and drawer UI filling in after startup (each flush reads the QR bar's computed style). The 1.5 s timer stays as the safety net.
-    const observer=new host.MutationObserver(records=>{for(const r of records){const t=r.target.nodeType===1?r.target:r.target.parentElement;if(!t?.closest?.('#chat,.drawer-content,select')){schedule();return;}}});observer.observe(doc.body,{childList:true,subtree:true});const timer=host.setInterval(schedule,1500);flush();
+    // 7.7.4 입구가 생기거나 옮겨질 수 있는 곳(입력 줄 · 요술봉 메뉴 · 과일 창 · body 바로 아래)의 변화이거나, 넣고 뺀 요소가 입구 모양일 때만 —
+    // 알림 · 팝업 · 배경처럼 상관없는 곳이 바뀔 때마다 다시 보던 것 (부팅 · 채팅 전환에 수십 번)
+    const ENTRY='[data-fh-cat],.fh-synthetic-entry,[id^="fruit-heart-v6"],.qr--button,#qr--bar,#quickReplies,#extensionsMenu,#nonQRFormItems,#loader,[data-bl-fruit-entry-proxy]';
+    const touches=list=>{for(const n of list)if(n.nodeType===1&&(n.matches(ENTRY)||n.querySelector(ENTRY)))return true;return false;};
+    const observer=new host.MutationObserver(records=>{for(const r of records){const t=r.target.nodeType===1?r.target:r.target.parentElement;if(!t||t.closest?.('#chat,.drawer-content,select'))continue;if(t===doc.body||t.closest('#send_form,#extensionsMenu,#quickReplies,[id^="fruit-heart-v6"],[data-fh-cat]')||touches(r.addedNodes)||touches(r.removedNodes)){schedule();return;}}});observer.observe(doc.body,{childList:true,subtree:true});const timer=host.setInterval(()=>{if(++ticks%10===0||doc.getElementById('fruit-heart-v6')?.classList?.contains('open')||signature()!==lastSig)schedule();},1500);flush();
     if(doc.getElementById('loader'))try{const ctx=host.SillyTavern?.getContext?.();ctx?.eventSource?.once?.(ctx.event_types?.APP_READY,schedule);}catch{/* the 1.5 s timer corrects the place */}
     return()=>{if(stopped)return;stopped=true;picker?.close();observer.disconnect();host.clearInterval(timer);host.cancelAnimationFrame(queued);proxy?.remove();chooser?.remove();doc.body.removeAttribute('data-bl-fruit-entry');for(const [node,before]of nativeEntries){if(before===null)node.removeAttribute('data-bl-fruit-native-entry');else node.setAttribute('data-bl-fruit-native-entry',before);}nativeEntries.clear();for(const [row,before]of hiddenRows)if(row.style.display==='none')row.style.display=before;hiddenRows.clear();for(const [node,change]of hints)if(node.textContent===change.shown)node.textContent=change.original;hints.clear();style.remove();};
 }

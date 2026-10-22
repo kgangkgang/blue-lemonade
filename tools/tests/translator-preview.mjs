@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-globalThis.keepChatReadingPosition = (await import(pathToFileURL(path.resolve(process.argv[2] || '.', 'src/chat-reading-position.js')))).keepChatReadingPosition;
+({ keepChatReadingPosition: globalThis.keepChatReadingPosition, readerRestsIn: globalThis.readerRestsIn } = await import(pathToFileURL(path.resolve(process.argv[2] || '.', 'src/chat-reading-position.js'))));   // 7.7.4 readerRestsIn
 import { KOREAN_KEEP_ENV } from './korean-keep-env.mjs';   // 2.7.9 이미 한국어인 부분 판정 (korean-keep.js · KOREAN_TARGET)
 
 const root = path.resolve(process.argv[2] || '.'), dir = path.join(root, 'src/addons/translator');
@@ -196,6 +196,33 @@ await check('paints only the message text, keeps the progress badge, never touch
     assert.equal(textOf(host), '<p>번역된 앞부분\n\nOriginal tail.</p>', 'nothing after stop');
     preview.revert();
     assert.deepEqual(T.refreshed.map(([id]) => id), [1], 'revert re-renders from the saved data');
+});
+// 7.7.4 손으로 굴리는 동안엔 미리 보기를 그리지 않고 멈춘 뒤에 · 한 번 그리는 데 오래 걸리면(긴 답 · 폰) 그 두 배를 쉰 뒤에 다음 그림
+await check('waits while the reader scrolls by hand, and paces slow paints by their cost', () => {
+    const message = { mes: 'Original body.', name: 'Narrator', is_user: false, is_system: false, swipe_id: 0, extra: {} };
+    T.chat = [message];
+    const { host } = fakeMessageDom(0);
+    let clock = 10000, perf = 0, rests = 400, slow = 0;
+    const timers = [];
+    Object.assign(env, { Date: { now: () => clock }, performance: { now: () => (perf += slow) }, readerRestsIn: () => rests,
+        setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; }, clearTimeout: () => {}, setInterval: () => 1, clearInterval: () => {} });
+    try {
+        const preview = env.translationPreview(0, message, message.mes, 'chat-A', message.mes);
+        preview.show('번역 하나');
+        assert.equal(host.innerHTML, '<p>original</p>', 'not painted while the reader is moving');
+        assert.ok(timers.at(-1).ms >= 400, 'retried after the gesture rests');
+        rests = 0; slow = 300; timers.pop().fn();
+        assert.equal(textOf(host), '<p>번역 하나</p>', 'painted once the reader rests');
+        clock += 260; slow = 0;
+        preview.show('번역 둘');
+        assert.equal(textOf(host), '<p>번역 하나</p>', 'a 300 ms paint is not followed 260 ms later');
+        assert.ok(timers.at(-1).ms >= 300, `waits about twice the paint cost (${timers.at(-1).ms})`);
+        timers.pop().fn();
+        assert.equal(textOf(host), '<p>번역 둘</p>');
+        clock += 300; preview.show('번역 셋');   // 빠른 그림(0 ms) 뒤에는 예전처럼 250 ms 간격
+        assert.equal(textOf(host), '<p>번역 셋</p>');
+        preview.stop();
+    } finally { for (const key of ['Date', 'performance', 'readerRestsIn', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval']) delete env[key]; }
 });
 await check('does not paint (or revert) when the target moved, is being edited, is streaming, or holds helper code', () => {
     const message = { mes: 'Original body.', name: 'Narrator', swipe_id: 0, extra: {} };

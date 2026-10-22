@@ -13,6 +13,7 @@ import { excerptList } from './excerpts.js';
 import { imageList, hasImage, createImageLookup } from './images.js';
 import { safeImageSrc } from './render.js';
 import { startSelectionChip, hideSelectionChip } from './selection-chip.js';
+import { booting, afterBoot } from '../../boot-gate.js';
 
 // 4.5.4: 모아 보기 창(panel.js 47KB + 그것만 쓰는 settings-view.js 17.7KB)은 창을 열 때 읽는다.
 // 북마크 표시 · 메모 · 미리보기는 창 없이도 돌아가야 해서 index.js 는 그대로 시작할 때 읽힌다.
@@ -284,10 +285,16 @@ function scheduleIconRefresh(delay = 0) {
     }, delay);
 }
 
+// 7.7.4 시작 덮개 동안은 테마 색(계산 스타일)을 읽지 않는다 — 덮개가 걷힐 때(첫 화면 전) 그때 채팅의 색으로 한 번 (boot-gate.js)
+function applyChatColors() {
+    if (booting()) { afterBoot(applyChatColors); return; }
+    applyColors(colorsFor(currentChatKey()));
+}
+
 eventSource.on(event_types.CHAT_CHANGED, async () => {
     hideSelectionChip();
     if (isPreviewing()) await exitPreview({ reload: false });
-    applyColors(colorsFor(currentChatKey()));
+    applyChatColors();
     syncBookmarks({ settled: true });
     notifyChatChanged();
     scheduleIconRefresh(120);
@@ -338,6 +345,7 @@ let themeSignature = null;
 let themeTimer = null;
 let cheapSignature = null;
 function syncThemeColors() {
+    if (booting()) { afterBoot(syncThemeColors); return; }   // 7.7.4 시작 덮개 동안은 읽지 않는다 (boot-gate.js)
     // 4.7.8: head 는 시작할 때 수십 번 바뀐다(다른 확장의 <style> · 글꼴). 그때마다 getComputedStyle(:root) 를 읽으면 문서 전체 스타일을
     // 다시 계산한다(부팅 0.3~0.4s@4x). 테마가 실제로 쓰는 것 — 변수 <style> 글자 · body 의 salty 클래스 — 이 같으면 계산 없이 끝낸다.
     const vars = document.getElementById('salty-vars')?.textContent || '';
@@ -354,7 +362,7 @@ hooks.syncThemeColors = syncThemeColors;
 
 jQuery(() => {
     addWandButton();
-    applyColors(colorsFor(currentChatKey()));
+    applyChatColors();
     syncBookmarks();
     refreshMessageIcons();
     startSelectionChip({ enabled: selectionChipEnabled, iconName, onBookmark: bookmarkSelection });

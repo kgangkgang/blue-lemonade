@@ -3,6 +3,7 @@
 // 폰에서 단추를 누르면 그 순간 선택이 풀릴 수 있다 → 고를 때(selectionchange) 범위를 잡아 두고, 누르는 순간(pointerdown) 그 범위로 모양까지 떠 둔다.
 // 다시 쓰기의 빠른 금지 칩(250ms) · LLM 번역의 고른 글 도구와 같이 뜰 수 있어 겹치면 옆으로 비킨다.
 import { captureExcerpt } from './excerpt-capture.js';
+import { booting } from '../../boot-gate.js';   // 7.7.4 시작 덮개 동안엔 고른 글이 있을 수 없다 — Selection 을 읽지 않는다
 import { trimToRoot } from '../../selection-range.js';   // 6.4.4 세 번 클릭이 늘린 끝을 겹친 글자 · 메시지 글 안으로 줄인다 (고른 글 지우기와 같은 도우미)
 
 const DELAY = 300;
@@ -180,7 +181,7 @@ function schedule() {
 
 function check() {
     timer = 0;
-    if (pressing || busy) return;
+    if (pressing || busy || booting()) return;
     if (!options?.enabled?.()) { hideSelectionChip(); return; }
     const found = currentSelection();
     if (!found) { hideSelectionChip(); return; }

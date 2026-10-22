@@ -22,12 +22,13 @@ const listBefore = (pseudo) => {
 // 7.2.4: 기준점 규칙은 두 묶음 — html body :is(테마 자신의 칸), html body.salty :is(실리태번 쪽 칸)
 const relativeList = (() => { const m = /html body(?:\.salty)? :is\(([\s\S]*?)\n\s*\)(?:,\n\s*html body(?:\.salty)? :is\(([\s\S]*?)\n\s*\))? \{\n\s*position: relative;/.exec(body); return m ? [m[1], m[2] || ''].join(',\n').split(/,\s*\n/).map(s => s.trim()).filter(Boolean) : []; })();
 // 다른 모듈에서 이미 position 이 있는 칸 (그 선언을 실제로 확인한다)
+// 7.7.4 증거는 상자와 같은 범위여야 한다: 상자는 html body(테마가 꺼진 「확장만」 모드 포함)에 걸리는데 ? 단추(.bl-word-help) · 예시 단추의 relative 는
+//   56 의 body.salty 아래에만 있어 확장만 모드에서 static → 상자가 카드 크기로 번져 성능 보조 「기능 켜기」를 덮었다(누르면 도움말만 뜸, 커뮤니티 제보).
+//   그 둘은 86 기준점 목록으로 옮겼고, 남은 증거는 body.salty 없이 걸리는지까지 본다 (tools/tests/perf-help-touch.mjs 가 전체를 낱 선택자로 다시 확인).
 const ALREADY_POSITIONED = {
-    '.salty-panel .bl-word-help': /\.bl-word-help[^{]*\{[^}]*position:\s*relative/,
-    // 56-control-consistency.css 의 선 그림 단추 묶음(↺ · 미리보기 기본 높이 · 예시 단추)
-    '.salty-panel .bl-setting-reset': /bl-setting-reset[^{]*\{\s*position:relative/,
-    '.salty-panel .bl-preview-samples > button': /bl-preview-samples > button\) \{\s*position:relative/,
-    '.salty-panel .bl-view-resize > button:not(.bl-view-toggle)': /bl-view-resize > button:not\(\.bl-view-toggle\)[^{]*\{\s*position:relative/,
+    // 56-control-consistency.css 의 선 그림 단추 묶음(↺ · 미리보기 기본 높이) — html body · .salty-panel 범위라 확장만 모드에서도 relative
+    '.salty-panel .bl-setting-reset': /html body \.bl-editor \.bl-setting-reset[^{]*\{\s*position:relative/,
+    '.salty-panel .bl-view-resize > button:not(.bl-view-toggle)': /:is\(\.salty-panel, \.bl-ft-dialog\) \.bl-view-resize > button:not\(\.bl-view-toggle\)[^{]*\{\s*position:relative/,
 };
 // 다른 모듈 (23-preview.gen.css 는 86 의 #chat 규칙을 베낀 것이라 뺀다 · 87-addon-touch.css 는 같은 투명 상자를 애드온 창에 다는 짝 모듈이라 뺀다 — tools/tests/addon-touch-targets.mjs)
 const otherCss = fs.readdirSync(path.join(root, 'css')).filter(f => f.endsWith('.css') && f !== '86-touch-targets.css' && f !== '23-preview.gen.css' && f !== '87-addon-touch.css').map(f => read('css/' + f)).join('\n');
@@ -56,7 +57,9 @@ t('상자를 다는 칸은 모두 기준점이 있음 (여기서 relative 이거
         if (relativeList.includes(sel)) continue;
         const proof = ALREADY_POSITIONED[sel];
         assert.ok(proof, `기준점 없는 칸: ${sel}`);
-        assert.ok(proof.test(otherCss), `다른 모듈에서 position 을 못 찾음: ${sel}`);
+        const m = proof.exec(otherCss);
+        assert.ok(m, `다른 모듈에서 position 을 못 찾음: ${sel}`);
+        assert.ok(!/body\.salty(?![\w-])/.test(m[0].split(',')[0]), `증거가 body.salty 아래뿐: ${sel}`);
     }
     assert.ok(relativeList.length >= 15);
 });
@@ -111,10 +114,17 @@ t('보이는 속성은 안 바꿈 (글자 · 색 · 자간 · 칸 여백) — �
 t('확장 서랍 머리 스위치는 기존 ::before(위아래 7px)를 44×44 로 · 왼쪽 서랍의 링크 · 고르기 · 아이콘은 한 층 위 · style.css 에 들어감', () => {
     assert.match(otherCss, /\.bl-hs-switch::before \{ content:''; position:absolute; inset:-7px 0; \}/);
     assert.match(body, /\.bl-hs-switch::before \{\s*inset: auto;/);
-    assert.match(body, /#left-nav-panel :is\(a, select, \.menu_button\):not\(label \*\) \{\s*position: relative;\s*z-index: 1;/);
+    assert.match(body, /#left-nav-panel :is\(a, select, textarea, \.menu_button\):not\(label \*\) \{\s*position: relative;\s*z-index: 1;/);
     const built = read('style.css');
     assert.ok(built.includes('/* css/86-touch-targets.css */'), 'style.css 에 모듈');
     assert.ok(/width:\s*max\(100%,\s*44px\)/.test(built), 'style.css 에 상자');
+});
+
+t('실리태번 1.19 의 빠른 프롬프트 편집 「크게 보기」(왼쪽 서랍 .editor_maximize): 기준점 · ::after 상자 · 상자가 걸치는 글 칸은 한 층 위', () => {
+    assert.ok(relativeList.includes('#left-nav-panel .editor_maximize'), '기준점');
+    assert.ok(listBefore('after').includes('#left-nav-panel .editor_maximize'), '::after 상자');
+    // Font Awesome 아이콘은 ::before 로 그린다 — 다른 모듈이 ::after 를 모양으로 쓰지 않아야 상자로 쓸 수 있다
+    assert.ok(!/editor_maximize[^{,]*::after/.test(otherCss), '다른 모듈의 ::after 없음');
 });
 
 t('7.0.6 가로 넘침 없음: 줄 오른쪽 끝의 스위치는 상자를 오른쪽 끝에 맞춰 왼쪽으로만 넓힌다 · 굴리는 목록은 overflow-x 를 숨기지 않는다', () => {

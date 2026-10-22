@@ -7,15 +7,19 @@ export function installReadingResume({getContext,getAccount,isEnabled=()=>true,d
     const chat=doc.getElementById('chat'),ctx=getContext(),types=ctx?.eventTypes||ctx?.event_types;
     if(!chat||!types||!ctx.eventSource)return null;
     let entries={};try{entries=normalizeReadingEntries(JSON.parse(storage.getItem(STORAGE_KEY)||'{}'));}catch{/* unavailable browser storage */}
-    let key=null,pending=null,captureTimer=null,staged=null,generating=false,userScroll=false,disposed=false,lastFirst=null;
+    let key=null,pending=null,captureTimer=null,staged=null,generating=false,userScroll=false,disposed=false,lastFirst=null,lastCapture=0,trailing=null;
     const subscriptions=[],notified=new Set();
     const currentKey=()=>readingChatKey(getContext(),getAccount());
     const busy=()=>generating||getContext()?.streamingProcessor?.isFinished===false;
     const save=(entry,savedKey=key)=>{if(!savedKey||!entry)return;try{entries={...entries,...normalizeReadingEntries(JSON.parse(storage.getItem(STORAGE_KEY)||'{}'))};}catch{/* unavailable storage */}if((entries[savedKey]?.at||0)<=entry.at)entries[savedKey]=entry;entries=normalizeReadingEntries(entries);try{storage.setItem(STORAGE_KEY,JSON.stringify(entries));}catch{/* storage full/blocked */}};
-    function flush(){clearTimeout(captureTimer);captureTimer=null;if(staged){save(staged.entry,staged.key);staged=null;}}
+    function flush(){if(trailing){clearTimeout(trailing);capture();}clearTimeout(captureTimer);captureTimer=null;if(staged){save(staged.entry,staged.key);staged=null;}}
     function stop(){if(!pending)return;clearTimeout(pending.timer);pending.observer?.disconnect();pending=null;}
     function remember(){flush();if(disposed||pending||!isEnabled()||busy()||currentKey()!==key||getContext().chat?.[0]!==lastFirst)return;save(captureReadingAnchor(chat,getContext()));}
-    function scroll(){if(!userScroll||pending||busy()||!isEnabled()||currentKey()!==key||getContext().chat?.[0]!==lastFirst)return;const entry=captureReadingAnchor(chat,getContext());if(!entry)return;staged={key,entry};clearTimeout(captureTimer);captureTimer=setTimeout(flush,180);}
+    const reading=()=>userScroll&&!pending&&!busy()&&getContext().chat?.[0]===lastFirst&&currentKey()===key&&isEnabled();   // 7.7.4 싼 확인부터 (설정 읽기는 마지막)
+    function capture(){trailing=null;if(!reading())return;const entry=captureReadingAnchor(chat,getContext());lastCapture=Date.now();if(!entry)return;staged={key,entry};clearTimeout(captureTimer);captureTimer=setTimeout(flush,180);}
+    // 7.7.4 굴리는 동안 scroll 마다 재지 않는다 — 재기(문단 찾기 · 글 해시 · 배치 읽기)가 긴 답에선 scroll 마다 그 답 전체 배치를 강제했다(폰 4배 늦춤 리그 2.7초/90초).
+    //       첫 scroll 은 바로, 그 뒤는 200ms 에 한 번(마지막 자리는 꼬리로) · 채팅을 떠나기 전 flush 가 남은 꼬리를 그 자리에서 잰다 (채팅이 바뀌었으면 앞서 잰 것)
+    function scroll(){if(trailing)return;const wait=lastCapture+200-Date.now();if(wait>0){trailing=setTimeout(capture,wait);return;}capture();}
     function gesture(event){
         if(event.type==='keydown'&&(!/^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(event.key)||event.target?.closest?.('input,textarea,select,[contenteditable]')))return;
         if(event.type==='pointermove'&&!event.buttons)return;
@@ -67,7 +71,7 @@ export function installReadingResume({getContext,getAccount,isEnabled=()=>true,d
     const visibility=()=>{if(doc.visibilityState==='hidden')leave();};
     win.addEventListener('pagehide',leave);doc.addEventListener('visibilitychange',visibility);
     enter();
-    return {status:()=>({key,pending:!!pending,generating,entries:Object.keys(entries).length}),dispose(){disposed=true;stop();clearTimeout(captureTimer);for(const [name,fn]of subscriptions)ctx.eventSource.removeListener?.(name,fn);for(const name of events)doc.removeEventListener(name,gesture,true);chat.removeEventListener('scroll',scroll);win.removeEventListener('pagehide',leave);doc.removeEventListener('visibilitychange',visibility);}};
+    return {status:()=>({key,pending:!!pending,generating,entries:Object.keys(entries).length}),dispose(){disposed=true;stop();clearTimeout(captureTimer);clearTimeout(trailing);for(const [name,fn]of subscriptions)ctx.eventSource.removeListener?.(name,fn);for(const name of events)doc.removeEventListener(name,gesture,true);chat.removeEventListener('scroll',scroll);win.removeEventListener('pagehide',leave);doc.removeEventListener('visibilitychange',visibility);}};
 }
 
 export async function startReadingResume({isEnabled=()=>true}={}) {

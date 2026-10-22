@@ -65,7 +65,7 @@ class El extends EventTarget {
         });
     }
 }
-function makeDocument({ loader = false } = {}) {
+function makeDocument({ loader = false, head = false } = {}) {
     ids = new Map();
     const props = new Map();
     const doc = {
@@ -74,6 +74,12 @@ function makeDocument({ loader = false } = {}) {
         createElement: tag => new El(tag), getElementById: id => ids.get(id) ?? null, querySelector: () => null,
     };
     if (loader) ids.set('loader', new El('div', 'loader'));
+    // 7.7.4 <head> 의 사용자 CSS(<style>) 한 장 — 글은 지금 설정 변수(T.config)와 함께 바뀐다
+    if (head) {
+        const style = { tagName: 'STYLE', disabled: false, sheet: { cssRules: { length: 1 } }, getAttribute: () => null, get textContent() { return `:root{--custom-theme-style-inputs:${T.config}}`; } };
+        doc.head = { querySelectorAll: () => [style] };
+        doc.documentElement.getAttribute = () => null;
+    }
     return doc;
 }
 globalThis.getComputedStyle = () => ({ getPropertyValue: name => { T.reads++; return name === '--custom-theme-style-inputs' ? T.config : ''; } });
@@ -82,11 +88,11 @@ globalThis.confirm = message => { T.asked.push(message); return T.confirms.shift
 
 let caseNo = 0;
 /** 모듈을 새로 읽어 (새 관리자 · 새 문서) 부팅까지 돌린다 */
-async function boot({ ext = {}, config = CONFIG, loader = false, run = true } = {}) {
+async function boot({ ext = {}, config = CONFIG, loader = false, run = true, head = false } = {}) {
     pending.clear();
     Object.assign(T, { ext, saves: 0, handlers: {}, once: {}, reads: 0, toasts: [], confirms: [], asked: [], pickers: {} });
     setConfig(config);
-    globalThis.document = makeDocument({ loader });
+    globalThis.document = makeDocument({ loader, head });
     const mod = await import(`${indexUrl}?case=${++caseNo}`);
     if (run) flush();
     return { manager: mod.default, css: document.documentElement.style.props };
@@ -241,6 +247,19 @@ await test('망가진 CSS: JSON 아님 · 배열 아님 → 조절 칸 없음 �
     setConfig(CONFIG);
     emit('settings_updated'); flush();
     assert.equal(css.get('--bl-size'), '11', 'CSS 를 고치면 저장해 둔 값이 그대로 돌아온다');
+});
+
+await test('7.7.2 <head> 스타일 시트 · <html> 속성이 그대로면 SETTINGS_UPDATED 에 :root 계산 스타일을 다시 읽지 않음 · 시트 글이 바뀌면 읽고 다시 만듦', async () => {
+    await boot({ ext: { CTSI: { entries: {} } }, head: true });
+    const css = document.documentElement.style.props;
+    const reads = T.reads;
+    for (let i = 0; i < 5; i++) { emit('settings_updated'); flush(); }
+    assert.equal(T.reads, reads, '그대로인 CSS 를 다시 읽음');
+    setConfig([...CONFIG, { type: 'text', varId: 'bl-new', displayText: 'New', default: 'fresh' }]);   // 사용자 CSS 를 고침 (<style> 글이 바뀜)
+    emit('settings_updated'); flush();
+    assert.ok(T.reads > reads, '바뀐 CSS 를 안 읽음');
+    assert.equal(css.get('--bl-new'), 'fresh');
+    assert.equal(T.saves, 0);
 });
 
 // ---------- 5) 로딩 화면 · 부팅 전

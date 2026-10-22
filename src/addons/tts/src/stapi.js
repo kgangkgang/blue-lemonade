@@ -272,6 +272,8 @@ export async function fetchCompatModels(cfg, { signal } = {}) {
     const j = await fetchJson(`${base}/models`, { method: 'GET', headers, signal, timeout: LIST_TIMEOUT });
     const key = `compat:${base}`;
     const entries = LM.modelEntries(/^https?:\/\/api\.openai\.com(\/|$)/i.test(base) ? 'openai' : 'compat', j);
+    // 7.7.4 빈 목록(빈 본문 · {} · {"data":[]})이면 받아 둔 목록을 덮지 않는다 — 전엔 다음에 열면 모델 칸이 비었다
+    if (!entries.length) throw koErr(LM.cached(key)?.ids?.length ? '목록이 비어 왔어요 — 받아 둔 목록은 그대로 둬요' : '목록이 비어 있어요 (주소 · 키 확인)');
     LM.put(key, entries);
     const ids = entries.map(e => e.id);
     putModels(key, ids, LM.cached(key).at || Date.now());

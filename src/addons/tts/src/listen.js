@@ -178,7 +178,8 @@ async function dbGet(keys) {
     } catch { /* 메모리만 */ }
     return out;
 }
-let writes = 0;
+// 세션의 첫 쓰기에도 한 번 잰다 — 셈이 메모리에만 있어 새로고침마다 0 이면, 한 세션에 200줄을 못 채우는 사용자는 5000줄 상한이 영영 안 돌았다
+let writes = 200;
 async function dbPut(rows) {
     if (!rows.length) return;
     try {

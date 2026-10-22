@@ -1,6 +1,7 @@
 import { positionMessageMenu } from './menu-position.js';
 import { getSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
+import { booting, afterBoot } from './boot-gate.js';
 // 가볍게 (2.5.2): 테마 설정창 미리보기 전용 CSS 는 설정창을 열 때까지 빼 둔다.
 //
 // css/23-preview.gen.css (style.css 안의 미리보기 사본)는 #chat 규칙을 :is(#salty-nochat, .salty-preview) · .salty-sample 용으로 복사한 것이라
@@ -230,6 +231,7 @@ function syncPanelCss(inFrame = false) {
         if (!panelFrame) panelFrame = requestAnimationFrame(() => { panelFrame = 0; syncPanelCss(true); });
         return;
     }
+    if (!quick && !panelOn && booting()) { afterBoot(syncPanelCss); return; }   // 7.7.4 시작 덮개 동안 열린 옛 팝업은 없다 — 걷힐 때 한 번 본다
     const want = quick || legacyOpen();
     if (want) closedSeen = 0;
     if (want === panelOn) return;
@@ -456,7 +458,8 @@ export function startAnchorGate(tries = 25) {
     // 열고 닫을 때만 불린다 (display 가 바뀌는 순간) — getComputedStyle 은 그때 한 번.
     // 4.8.3: 여닫는 애니메이션 · 시작 때의 style/class 변화가 한 프레임에 여러 번 오면 그때마다 문서 스타일을 강제로 계산했다
     // (폰 리그 부팅 0.2s@4x) → 프레임 직전에 한 번만 (rAF 는 스타일 계산 전이라 앵커는 여전히 같은 프레임에 생긴다)
-    const sync = () => { frame = 0; form.classList.toggle('bl-send-menu-open', menus.some(el => el.isConnected && getComputedStyle(el).display !== 'none')); };
+    // 7.7.4 시작 덮개 동안은 메뉴가 닫혀 있다 — 재지 않고 걷힐 때 한 번 (boot-gate.js)
+    const sync = () => { frame = 0; if (booting()) { afterBoot(schedule); return; } form.classList.toggle('bl-send-menu-open', menus.some(el => el.isConnected && getComputedStyle(el).display !== 'none')); };
     let frame = 0;
     const schedule = () => { if (!frame) frame = requestAnimationFrame(sync); };
     sync();

@@ -10,7 +10,7 @@ import { verifyAddonCss } from '../../addon-files-check.js';
 import { leaveSettingsDialog } from '../../settings-dialog.js';
 import { sha256Hex } from './sha256.js';
 
-export const VERSION = '1.0.3';
+export const VERSION = '1.0.4';
 export const FOLDER = 'ST-Prompt-Template';
 export const BUNDLED = '1.17.9';   // 담긴 원본 판 (SOURCE.json 의 version — 시험이 같은지 본다)
 export const COMMIT = 'd6f520d149aba146305b0b781ddd691d449c28d2';   // 담긴 원본 커밋 (SOURCE.json 의 commit)

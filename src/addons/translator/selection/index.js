@@ -2,7 +2,11 @@ import { IDS, LABELS } from './core.js';
 import { context, enabled, configure, deleteEnabled } from './state.js';
 import { syncSelectionDelete } from './delete.js';   // 6.4.4 고른 글 지우기
 import { selectionSnapshot } from './translation.js';
-import { openTool, setSelection, clearSelection, closeTools } from './ui.js';
+// 7.7.4 고른 글 창(ui.js · 비교 · 용어 기억)은 글을 처음 고를 때 받는다 — 시작할 때는 아무도 부르지 않아 받기만 했다.
+//   받기 전에는 고른 글도 열린 창도 없으니 비우기 · 닫기는 할 일이 없다
+let ui = null, uiLoading = null;
+const loadUI = () => uiLoading ||= import('./ui.js').then(m => (ui = m), error => { uiLoading = null; throw error; });
+const openTool = id => loadUI().then(m => m.openTool(id));
 let listening = false, style = null, selectionTimer = 0;
 function positionToolbar() {
     const bar = document.getElementById('llmt-selection-selection');
@@ -15,11 +19,16 @@ function positionToolbar() {
 const ICONS = { retranslate: 'language' };
 function selectionChanged() {
     clearTimeout(selectionTimer);
-    selectionTimer = setTimeout(() => {
+    selectionTimer = setTimeout(async () => {
         if (!enabled()) return;
-        const snap = selectionSnapshot(), toolbar = document.getElementById('llmt-selection-selection');
-        if (!snap) { if (!document.querySelector('dialog.llmt-selection[open]')) toolbar?.remove(); return; }
-        setSelection(snap);
+        let snap = selectionSnapshot();
+        if (!snap) { if (!document.querySelector('dialog.llmt-selection[open]')) document.getElementById('llmt-selection-selection')?.remove(); return; }
+        if (!ui) {   // 처음 한 번만 받는다 — 받는 동안 고른 글 · 채팅이 바뀌었을 수 있어 지금 것으로 다시 본다
+            try { await loadUI(); } catch (error) { console.warn('[LLM 번역] 고른 글 도구', error); return; }
+            if (!enabled() || !(snap = selectionSnapshot())) return;
+        }
+        ui.setSelection(snap);
+        const toolbar = document.getElementById('llmt-selection-selection');
         if (toolbar) return;
         const bar = document.createElement('div'); bar.id = 'llmt-selection-selection'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', '선택한 글 도구');
         // ST transforms its zero-height html element; the top layer uses the viewport instead.
@@ -32,7 +41,7 @@ function selectionChanged() {
         if (bar.children.length) { document.body.append(bar); bar.showPopover?.(); positionToolbar(); }
     }, 180);
 }
-function chatChanged() { clearSelection(); document.getElementById('llmt-selection-selection')?.remove(); closeTools(); }
+function chatChanged() { ui?.clearSelection(); document.getElementById('llmt-selection-selection')?.remove(); ui?.closeTools(); }
 export function syncSelectionRetranslate(options) {
     if (options) configure(options);
     const any = IDS.some(enabled);
@@ -49,7 +58,7 @@ export function syncSelectionRetranslate(options) {
         window.visualViewport?.removeEventListener('resize', positionToolbar);
         window.visualViewport?.removeEventListener('scroll', positionToolbar);
         context().eventSource.removeListener(context().eventTypes.CHAT_CHANGED, chatChanged);
-        clearTimeout(selectionTimer); document.getElementById('llmt-selection-selection')?.remove(); closeTools(); listening = false;
+        clearTimeout(selectionTimer); document.getElementById('llmt-selection-selection')?.remove(); ui?.closeTools(); listening = false;
     }
     syncSelectionDelete();   // 6.4.4 고른 글 지우기 (같은 설정 묶음 · 따로 켜고 끈다)
 }

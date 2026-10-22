@@ -46,7 +46,9 @@ export function startPromptTemplateHost({ ctx = globalThis.SillyTavern?.getConte
     //   Enable · Context Menu 같은 일반 낱말이 다른 화면 번역까지 바꾼다. 한국어는 설정 블록 안에서만(applyKorean).
     const result = { korean, done: false, changed: 0, version: '' };
     let version = null;
-    const readVersion = () => version ??= Promise.resolve().then(() => fetcher(MANIFEST, { cache: 'no-cache' })).then(r => r.ok ? r.json() : null).then(m => String(m?.version || '')).catch(() => '');
+    // 7.7.4 실리태번이 시작할 때 읽어 둔 manifest(getExtensionManifest)에 판이 있으면 그것을 — 같은 파일을 한 번 더 받지 않는다. 없으면(옛 실리태번) 예전처럼 받는다
+    const knownVersion = () => { try { return String(ctx?.getExtensionManifest?.('ST-Prompt-Template')?.version || ''); } catch { return ''; } };
+    const readVersion = () => version ??= Promise.resolve().then(() => knownVersion() || fetcher(MANIFEST, { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(m => String(m?.version || ''))).catch(() => '');
     const attempt = async () => {
         if (result.done) return;
         const panel = doc.getElementById(PANEL);

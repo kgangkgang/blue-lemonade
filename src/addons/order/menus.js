@@ -1,6 +1,7 @@
 import {settings,saveSettings} from './state.js';
 import {getSettings as themeSettings,saveSettings as saveThemeSettings} from '../../settings.js';   // 테마가 보일지 정하는 요술봉 항목 (애드온 카드의 「요술봉에 … 표시」 · 성능 보조의 메뉴 표시)
 import {planWand,toggleIn,latentOrder,swapKeys,ownerOf,ownerShown,setOwner,HIDDEN_CLASS} from './menu-plan.js';   // 6.3.3 요술봉 항목 숨김 · 위로 고정 (순수 계획)
+import {booting,afterBoot} from '../../boot-gate.js';   // 7.7.4 시작 덮개 동안은 메뉴를 재지 않는다
 const targets={wand:['요술봉','#extensionsMenu'],chat:['채팅 메뉴','#options .options-content']};
 const initial=new Map();let watching=false,timer;
 function scan(kind){
@@ -18,7 +19,7 @@ const addonUI=()=>{const s=themeSettings();if(!s.addonUI||typeof s.addonUI!=='ob
 function rememberOwned(rows){const s=settings(),seen={...(s.menuSeen?.wand||{})};let changed=false;for(const row of rows)if(ownerOf(row.key)&&seen[row.key]!==row.label){seen[row.key]=row.label;changed=true;}if(changed){s.menuSeen={...(s.menuSeen||{}),wand:seen};saveSettings();}}
 // 6.3.4 에서 창의 눈으로 숨긴 테마 항목은 그 테마 설정으로 옮긴다 (한 번) — 이제 그 항목의 보임은 테마 설정 하나가 정한다
 function moveOwnedHidden(){const s=settings(),list=s.menuHidden?.wand||[],owned=list.filter(key=>ownerOf(key));if(!owned.length)return;const ui=addonUI();for(const key of owned)setOwner(ui,ownerOf(key),false);saveThemeSettings();s.menuHidden={...(s.menuHidden||{}),wand:list.filter(key=>!ownerOf(key))};saveSettings();void syncTheme();}
-export function applyMenuOrders(){for(const kind of Object.keys(targets)){
+export function applyMenuOrders(){if(booting()){afterBoot(applyMenuOrders);return;}for(const kind of Object.keys(targets)){
  const rows=scan(kind);if(!rows.length)continue;
  if(!initial.has(kind))initial.set(kind,rows.map(r=>r.key));else for(const row of rows)if(!initial.get(kind).includes(row.key))initial.get(kind).push(row.key);
  const requested=settings().menuOrders?.[kind];const order=requested?.length?requested:initial.get(kind);

@@ -91,4 +91,15 @@ deferred('dry-run and quiet generations queue no frame read',f=>{
 },false);
 deferred('idle seed waits at most 3 s (requestIdleCallback timeout)',f=>{assert.deepEqual({...f.idleOptions[0]},{timeout:3000});f.idle();send(f);f.grow();f.scroll();},true);
 deferred('without requestIdleCallback the seed falls back to a 1 s timer',f=>{assert.equal(f.idleOptions[0],1000);assert.equal(f.pending().idles,1);f.idle();send(f);f.grow();f.scroll();},true,'timeout');
+// 7.7.4 생성 밖(번역 미리 보기가 다시 그리는 중 손으로 굴림)의 scroll 은 배치를 읽지 않는다 — 읽으면 그때마다 긴 답 전체 배치를 강제했다
+{
+    const f=fixture({start:false});let reads=0;
+    Object.defineProperty(f.chat,'scrollHeight',{configurable:true,get(){reads++;return 1000;}});
+    Object.defineProperty(f.chat,'clientHeight',{configurable:true,get(){reads++;return 100;}});
+    for(let i=0;i<5;i++)f.emit('document','scroll',{target:f.chat});
+    assert.equal(reads,0,'scroll outside a generation reads no layout');
+    send(f);f.frame();const before=reads;f.emit('document','scroll',{target:f.chat});
+    assert.ok(reads>before,'during a generation the scroll is measured again');
+    results.push({name:'scroll outside a generation reads no layout',pass:true});
+}
 console.log(`${results.length}/${results.length} contracts passed`);

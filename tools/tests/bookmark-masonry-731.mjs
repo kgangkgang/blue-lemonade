@@ -75,8 +75,8 @@ await test('연결: panel.js 가 격자를 그린 뒤 놓고, 그림이 실리�
     assert.ok(!/(?:^|[\s;{])columns\s*:/.test(block) && !/break-inside/.test(block), 'no CSS columns');
     assert.match(block, /\.cg-root \.cg-tile-open img \{[^}]*width: 100%; height: auto; aspect-ratio: auto 2 \/ 3;/);
     assert.match(block, /\.cg-root \.cg-tiles\.is-masonry > \.cg-tile \{ position: absolute; \}/);
-    assert.match(read('src/addons/bookmarks/state.js'), /export const VERSION = '1\.7\.3';/);
-    assert.match(css, /--cg-css-version: "1\.7\.3";/);
+    assert.match(read('src/addons/bookmarks/state.js'), /export const VERSION = '1\.7\.4';/);
+    assert.match(css, /--cg-css-version: "1\.7\.4";/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/bookmark-masonry-731\.mjs \./);
 });
 

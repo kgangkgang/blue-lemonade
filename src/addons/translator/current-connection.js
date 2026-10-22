@@ -8,6 +8,15 @@ const TRANSIENT_CODE=new RegExp(String.raw`${CODE}(?:429|50[0-3]|529)\b(?![.,]\d
 const TRANSIENT_MESSAGE=new RegExp(String.raw`${CODE}(?:429|50[0-3]|529)\b(?![.,]\d)|too many requests|rate.?limit|resource.?exhausted|overloaded|unavailable|bad gateway|internal server error|failed to fetch|networkerror|network error|econnreset|socket hang up`,'i');
 const CLOUDFLARE_524=new RegExp(String.raw`${CODE}524\b(?![.,]\d)`);
 const PARSE_FAILURE=/unexpected token|not valid json|unexpected end of json|<!doctype|<html/i;
+// 7.7.4 실리태번이 넘긴 파서 · 연결 오류 원문(영어)을 알 수 있는 말로 — 다시 보내기 여부(isTransient)는 그대로
+const readable=reason=>CLOUDFLARE_524.test(reason)?'중계 서버가 기다리다 끊었어요 (524). 서버는 아직 처리 중일 수 있어 바로 다시 보내지 않았어요.'
+    :/<!doctype|<html|unexpected token '<'/i.test(reason)?'서버가 JSON 대신 오류 페이지(HTML)를 줬어요. 중계 서버 상태를 확인하거나 잠시 뒤 다시 해 주세요.'
+    :/unexpected end of json/i.test(reason)?'서버가 빈 답을 줬어요. 잠시 뒤 다시 해 주세요.'
+    :/unterminated string|not valid json|in json at position/i.test(reason)?'서버 답이 중간에 잘려 읽을 수 없어요. 잠시 뒤 다시 해 주세요.'
+    :/premature close|invalid response body/i.test(reason)?'답을 받는 도중 연결이 끊겼어요. 잠시 뒤 다시 해 주세요.'
+    :/^unknown$/i.test(String(reason).trim())?'서버가 오류 내용을 알려 주지 않았어요 (중계 서버 시간 초과일 수 있어요).'
+    :/^response not ok$/i.test(String(reason).trim())?'실리태번 서버가 「실패」만 알려 줬어요 (키 · 권한 · 주소 오류일 수 있어요 — 자세한 까닭은 실리태번 콘솔에 있어요).'
+    :reason;
 const isTransient=(error,reason)=>!CLOUDFLARE_524.test(reason)&&(error?.name==='SyntaxError'||PARSE_FAILURE.test(reason)?TRANSIENT_CODE.test(reason):TRANSIENT_MESSAGE.test(reason));
 export async function requestCurrentConnection({context,messages,overrides={},maxTokens=0,buildChat,buildText,log,preparePayload,stream}) {
     const ctx=context(), controller=new AbortController();
@@ -69,7 +78,7 @@ export async function requestCurrentConnection({context,messages,overrides={},ma
         const transient = isTransient(error,reason);
         const message = transient && /too many requests|rate.?limit|resource.?exhausted|\b429\b/i.test(reason) ? '요청 한도를 넘었어요. 잠시 뒤 다시 시도해 주세요.'
             : transient && /failed to fetch|networkerror|network error|econnreset|socket hang up/i.test(reason) ? '서버에 연결하지 못했어요. 연결 상태를 확인해 주세요.'
-            : transient ? '서버가 일시적으로 응답하지 못했어요. 잠시 뒤 다시 시도해 주세요.' : reason;
+            : transient ? '서버가 일시적으로 응답하지 못했어요. 잠시 뒤 다시 시도해 주세요.' : readable(reason);
         throw Object.assign(new Error(message),{transient});
     }finally{clearTimeout(timer);overrides.signal?.removeEventListener('abort',abort);release?.();}
 }

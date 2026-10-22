@@ -35,6 +35,7 @@ import {
     promptHasMarker,
     reanchorRewrite,
     rebaseSlotLines,
+    rerollErrorKind,
     rerollUntil,
     rewriteText,
     splitNames,
@@ -64,7 +65,7 @@ import { attachUndo } from '../../ask.js';
 import { touch, listGone, registerAddonMerge } from '../list-sync.js';   // 7.0.2 기기 간 합치기   // 7.0.1 알림 끝 ↶ 단추
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '2.1.8';
+const VERSION = '2.1.9';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -746,10 +747,12 @@ async function cleanMessage(messageId, manual, signal) {
         busy.delete(key);
         return;
     }
+    // 7.7.4 고칠 곳을 준비하다 오류가 나면 잡아 둔 busy 를 풀고 던진다 — 전엔 새로 고칠 때까지 「지금 고치는 중」으로 남았다
+    const releaseOnThrow = fn => { try { return fn(); } catch (error) { busy.delete(key); throw error; } };
     // 1.9.2 최근 답과 거의 같은 문장도 같은 길로 고친다
     if (settings.repeat.on) {
-        const repeats = findRepeats(visible, previousReplies(chat, messageId), repeatOptions());
-        if (repeats.length > 0) spans = mergeSpans(visible, spans, repeats);
+        const repeats = releaseOnThrow(() => findRepeats(visible, previousReplies(chat, messageId), repeatOptions()));
+        if (repeats.length > 0) spans = releaseOnThrow(() => mergeSpans(visible, spans, repeats));
     }
     if (spans.length === 0) {
         busy.delete(key);
@@ -758,7 +761,7 @@ async function cleanMessage(messageId, manual, signal) {
     }
 
     const exceptions = activeExceptions(recent);
-    prepareSpans(spans, exceptions);
+    releaseOnThrow(() => prepareSpans(spans, exceptions));
     if (settings.skipExemptOnly && spans.every(span => span.fullyExempt)) {
         busy.delete(key);
         if (manual) toastr.success('예외 캐릭터의 특징만 있어서 그대로 뒀어요.', TITLE);
@@ -957,13 +960,19 @@ async function ensureScenePlan(messageId, end, stopSignal) {
     const progress = settings.notify
         ? toastr.info(`${reason} 다시 생성하는 중…`, TITLE, { timeOut: 0, extendedTimeOut: 0 })
         : null;
+    let timeouts = 0;
     try {
         const outcome = await rerollUntil({
             maxAttempts: scene.maxAttempts,
             generate: () => withTimeout(signal => regenerateReply(request, signal), scene.timeoutSec, stopSignal),
             accept: result => checkReplyStart(result.text, startPattern) === 'ok',
-            // Only the Stop button ends the loop early; an API error or timeout just uses up one attempt.
-            isFatal: () => stopSignal.aborted,
+            // 7.7.4 Stop ends the loop, and so does an error the same request will get again (key · quota · bad request · block)
+            // or a second timeout in a row. A rate limit or overload waits before the next try; other errors 1.5 s.
+            // Before, every error used up one attempt at once: a wrong key sent the full chat request maxAttempts times in a row.
+            isFatal: error => stopSignal.aborted || rerollErrorKind(error) === 'permanent' || (rerollErrorKind(error) === 'timeout' && ++timeouts >= 2),
+            delayAfter: error => rerollErrorKind(error) === 'busy' ? 10000 : 1500,
+            stopped: () => stopSignal.aborted,
+            sleep: ms => new Promise(resolve => { const timer = setTimeout(done, ms); function done() { clearTimeout(timer); stopSignal.removeEventListener('abort', done); resolve(); } stopSignal.addEventListener('abort', done, { once: true }); }),
             onAttempt: attempt => setProgress(progress, `${reason} 다시 생성하는 중… (${attempt}/${scene.maxAttempts})`),
             log: (verdict, result) => console.debug(`[${TITLE}] 씬 플랜 리롤 ${verdict}:`, result?.text ?? result),
         });

@@ -1,5 +1,5 @@
 // Typecast (api.typecast.ai) — 브라우저에서 바로 호출, 헤더 X-API-KEY
-import { safeMsg, timedFetch } from './_http.js';
+import { audioOrError, safeMsg, timedFetch } from './_http.js';
 import { modelOptions, storeModels, resolveModel, keyModel, customField, shared, keySig } from './_models.js';
 
 const ID = 'typecast';
@@ -218,7 +218,7 @@ const provider = {
         if (prompt) body.prompt = prompt;
         const raw = await call('/v1/text-to-speech', { method: 'POST', key: cfg.key, body, signal, as: 'blob', timeout: 120000 });
         const mime = format === 'wav' ? 'audio/wav' : 'audio/mpeg';
-        const blob = raw.type.startsWith('audio/') ? raw : new Blob([raw], { type: mime });
+        const blob = await audioOrError(raw, mime);   // 7.7.4
         return { blob, mime: blob.type, usage: { chars: text.length } };
     },
 

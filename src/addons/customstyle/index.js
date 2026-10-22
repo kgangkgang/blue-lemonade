@@ -581,6 +581,7 @@ class CustomThemeSettingsManager {
             // Remember the config we built from, so the first SETTINGS_UPDATED
             // of the session does not rebuild the UI (and drop focus) for nothing.
             this.previousStyleValue = this._parseCSSConfig(CSS_THEME_STYLE_VAR);
+            headSeen = headSignature();
             this.buildUI();
             this.setupDelegation();
 
@@ -597,6 +598,11 @@ class CustomThemeSettingsManager {
         let settingsTimer = null, settingsFrame = 0, settingsLate = null;
         const checkConfig = () => {
             cancelAnimationFrame(settingsFrame); clearTimeout(settingsLate); settingsFrame = 0; settingsLate = null;
+            // 7.7.4 :root 의 설정 변수는 <head> 스타일 시트 · <html> 속성 · 화면 크기가 그대로면 바뀌지 않는다 — 그대로면 계산 스타일을 읽지 않는다.
+            //   설정 저장(채팅을 바꿀 때마다 온다)마다 읽어 그 사이 바뀐 문서 전체 스타일 계산을 앞당겼다 (폰 흉내 CPU 6배, 채팅 전환 한 번에 약 130 ms)
+            const seen = headSignature();
+            if (headSeen && seen === headSeen) return;
+            headSeen = seen;
             const currentConfig = this._parseCSSConfig(CSS_THEME_STYLE_VAR);
             // Simple deep compare to see if we need to rebuild inputs
             if (JSON.stringify(currentConfig) !== JSON.stringify(this.previousStyleValue)) {
@@ -632,6 +638,20 @@ class CustomThemeSettingsManager {
             }, 300);
         };
     }
+}
+
+// 7.7.4 :root 계산 스타일을 바꿀 수 있는 것만 모은 서명 — 메시지 속 <style> 은 실리태번이 .mes_text 범위로 묶어 :root 를 못 바꾼다 (<head> 만 본다)
+let headSeen = '';
+function headSignature() {
+    const html = document.documentElement;
+    if (typeof html?.getAttribute !== 'function' || typeof document.head?.querySelectorAll !== 'function') return '';   // 모르면 서명 없음 = 늘 읽는다
+    const out = [html.getAttribute('class'), html.getAttribute('style'), globalThis.innerWidth, globalThis.innerHeight, globalThis.devicePixelRatio];
+    for (const node of document.head.querySelectorAll('style, link[rel~="stylesheet"]')) {
+        let rules = -1;
+        try { rules = node.sheet?.cssRules.length ?? -1; } catch { /* 다른 출처 */ }
+        out.push(node.tagName, node.getAttribute('href') || '', node.getAttribute('media') || '', node.disabled || node.sheet?.disabled ? 1 : 0, rules, node.tagName === 'STYLE' ? node.textContent : '');
+    }
+    return JSON.stringify(out);
 }
 
 const holder=document.createElement('div');holder.id='bl-ctsi-holder';holder.hidden=true;document.body.append(holder);

@@ -59,7 +59,31 @@ async function readJson(url, signal) {
 }
 
 function cacheGet(origin) { try { const v = JSON.parse(localStorage.getItem(CACHE_PREFIX + origin) || 'null'); return v && v.pricing && v.at ? v : null; } catch { return null; } }
-function cachePut(origin, value) { try { localStorage.setItem(CACHE_PREFIX + origin, JSON.stringify(value)); } catch { /* 저장 공간 */ } }
+// 중계마다 가격표(최대 2MB)가 localStorage 에 쌓여 실리태번과 같이 쓰는 몫(약 5MB)을 채울 수 있었다 → 최근에 불러온 중계 RELAY_CACHE_MAX 곳만 둔다.
+//   다시 「불러오기」 하면 새로 받는 캐시라 오래된 것부터 비운다. 몫이 차서 못 쓰면 가장 오래된 것을 하나씩 비우고 다시 쓴다
+export const RELAY_CACHE_MAX = 6;
+function relayCacheKeys() {
+    const out = [];
+    try {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!key?.startsWith(CACHE_PREFIX)) continue;
+            let at = 0; try { at = Number(JSON.parse(localStorage.getItem(key) || 'null')?.at) || 0; } catch { /* 망가진 줄은 가장 오래된 것으로 */ }
+            out.push({ key, at });
+        }
+    } catch { /* 저장 공간 없음 */ }
+    return out.sort((a, b) => b.at - a.at);
+}
+export function cachePut(origin, value) {
+    const own = CACHE_PREFIX + origin, text = JSON.stringify(value);
+    const others = relayCacheKeys().filter(row => row.key !== own);
+    try { for (const row of others.slice(RELAY_CACHE_MAX - 1)) localStorage.removeItem(row.key); } catch { /* 그대로 */ }
+    let rest = others.slice(0, RELAY_CACHE_MAX - 1);
+    for (;;) {
+        try { localStorage.setItem(own, text); return true; }
+        catch { const oldest = rest.pop(); if (!oldest) return false; try { localStorage.removeItem(oldest.key); } catch { return false; } }
+    }
+}
 
 export function compareMarkup() {
     return `

@@ -42,8 +42,8 @@ await t('② 목소리 상자: 테마 고르기 목록 · 테마 팝업 안을 �
     const onDown = new Function('env', `with (env) { return (${body}); }`)(env);
     const press = kind => { closed = 0; env.box = { contains: () => false }; onDown({ target: target(KINDS[kind]), pointerType: 'touch', isPrimary: true }); return closed; };
     assert.equal(press('pick'), 0, '목록 줄'); assert.equal(press('popup'), 0, '테마 팝업'); assert.equal(press('plain'), 1, '바깥');
-    assert.equal(JSON.parse(read('src/addons/tts/manifest.json')).version, '2.0.3');
-    assert.match(read('src/addons/tts/version.js'), /TTS_VERSION = '2\.0\.3'/);
+    assert.equal(JSON.parse(read('src/addons/tts/manifest.json')).version, '2.0.4');
+    assert.match(read('src/addons/tts/version.js'), /TTS_VERSION = '2\.0\.4'/);
 });
 
 await t('③ 고르기 목록 + 뒤로: 열 때 CloseWatcher(목록만 닫기) · 문서 캡처 cancel 지킴이(그 창 · 목록이 떠 있을 때만), 닫을 때 둘 다 걷음', () => {

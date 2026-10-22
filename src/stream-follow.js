@@ -71,6 +71,10 @@ export function startStreamFollow() {
 
     document.addEventListener('scroll', event => {
         if (event.target !== chat) return;
+        // 7.7.4: 본채팅 생성(보내기 ~ 끝) 밖에서는 재지 않는다 — 번역 미리 보기가 긴 답을 다시 그리는 동안 손으로 굴리면
+        //   scroll 이벤트마다 scrollHeight 읽기가 그 답 전체의 배치를 그 자리에서 강제했다(폰 4배 늦춤 리그 4.8초/80초).
+        //   생성이 시작될 때(GENERATION_STARTED) 다음 프레임에 새로 읽는다. 그 전의 옛 값으로 따라가지 않게 고정만 푼다(처음 값 읽기도 건너뜀).
+        if (generationChat === null) { seeded = true; pinned = false; return; }
         const top = chat.scrollTop, height = chat.scrollHeight, viewport = chat.clientHeight;
         const gap = height - viewport - top;
         if (streaming && pinned && gap >= 5 && height > lastHeight && viewport === lastViewport

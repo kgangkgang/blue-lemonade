@@ -2,7 +2,7 @@
 // 1.3.7 모델 목록은 GET /v1/models (글자 안 씀) → _models.js 캐시. 모델 갈래는 id 의 버전으로 (eleven_v3 → 3, eleven_v4_turbo → 4):
 //   3 이상 = 오디오 태그 · 속도 없음(v4 는 속도를 무시 — 10-07 실측 1.2 배에 4.32초 vs 4.24초), 3 만 안정감 0 · 0.5 · 1.
 //   그래서 eleven_v5 같은 새 모델도 코드 고침 없이 최신 갈래처럼 읽는다
-import { koError, safeMsg, timedFetch } from './_http.js';
+import { audioOrError, koError, safeMsg, timedFetch } from './_http.js';
 import { modelOptions, storeModels, modelMeta, resolveModel, keyModel, customField, shared, keySig } from './_models.js';
 
 const ID = 'elevenlabs';
@@ -320,7 +320,7 @@ export default {
         }
         if (!blob) {
             const b = await call(`${path}?output_format=${OUTPUT}`, { key: cfg.key, method: 'POST', body, signal, as: 'blob', timeout: 120000 });
-            blob = b.type ? b : new Blob([b], { type: 'audio/mpeg' });
+            blob = b.type ? await audioOrError(b, 'audio/mpeg') : new Blob([b], { type: 'audio/mpeg' });   // 7.7.4
         }
         if (!blob.size) throw new Error('음성 데이터가 비어 있어요');
         return { blob, mime: 'audio/mpeg', usage: { chars: String(text || '').length }, ...(align ? { align } : {}) };

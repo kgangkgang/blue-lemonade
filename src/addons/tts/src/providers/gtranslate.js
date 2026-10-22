@@ -1,7 +1,7 @@
 // Google 번역 (무료) — 실리태번 서버 경로를 거침 (POST /api/google/list-voices · generate-voice), 키 없음
 import { getRequestHeaders } from '../../../../../../../../../script.js';
 import { splitRecursive } from '../../../../../../../../utils.js';
-import { safeMsg, timedFetch } from './_http.js';
+import { audioOrError, safeMsg, timedFetch } from './_http.js';
 
 // 글 언어 → 번역 음성 언어 코드 ('자동' 목소리용)
 const AUTO = { ko: 'ko', ja: 'ja', en: 'en', zh: 'zh-CN' };
@@ -71,7 +71,7 @@ const provider = {
         const id = String(voice?.voiceId || '').trim();
         const code = !id || id === 'auto' ? (AUTO[lang] || 'ko') : id;
         const raw = await post('/api/google/generate-voice', { text: splitRecursive(text, 200), voice: code }, { signal, as: 'blob' });
-        const blob = raw.type.startsWith('audio/') ? raw : new Blob([raw], { type: 'audio/mpeg' });
+        const blob = await audioOrError(raw, 'audio/mpeg');   // 7.7.4
         return { blob, mime: blob.type, usage: { chars: text.length } };
     },
 

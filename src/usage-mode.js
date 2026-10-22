@@ -1,6 +1,9 @@
 export const themeEnabled = s => s.enabled !== false && s.usageMode !== 'extensions';
 export const addonsEnabled = s => s.enabled !== false && s.usageMode !== 'theme';
 export const usageMode = s => ['both','theme','extensions'].includes(s.usageMode) ? s.usageMode : 'both';
+// 7.7.4 볼록 단추(css/90-puffy.css, 기본 모양 · 스위치 없음): 테마가 켜져 있으면(확장만 모드 포함) <html data-bl-puffy> 의 값 light | dark — 두께 색을 고르는 데만 쓴다.
+//   테마를 끄면 null(속성 없음 = 규칙 0). 되돌리기는 css/90-puffy.css 를 지우고 build-css (tools/tests/puffy-rollback.mjs). 예전에 저장된 puffyButtons 값은 읽지 않는다
+export const puffyMode = (s, mode) => s.enabled !== false ? (mode === 'dark' ? 'dark' : 'light') : null;
 
 // 7.2.4 바깥 확장(window.Salty.getSettings)이 읽는 설정 보기 — enabled 는 「테마가 화면에 켜져 있나」(사용 모드까지).
 // quiet-notes(일코 모드)는 enabled 만 보고 일코를 끌 때 body.salty 를 되돌리는데, 확장만 모드는 enabled=true 라

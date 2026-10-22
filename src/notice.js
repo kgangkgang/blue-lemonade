@@ -10,11 +10,25 @@ import { noticeActions, openNoticeAction } from './notice-actions.js';
 let version = '';
 let loading = null;
 
-/** manifest.json 의 버전 (한 번만 읽는다) */
+/** 실리태번이 시작할 때 읽어 둔 이 확장의 manifest 판 (getExtensionManifest 가 없는 옛 판 · 못 찾으면 '') */
+function knownVersion() {
+    try {
+        const folder = decodeURIComponent(new URL('..', import.meta.url).pathname.split('/').filter(Boolean).at(-1) || '');
+        return String(globalThis.SillyTavern?.getContext?.()?.getExtensionManifest?.(folder)?.version || '');
+    } catch { return ''; }
+}
+
+/** manifest.json 의 버전 (한 번만 읽는다). 7.7.4: 실리태번이 이미 읽어 둔 manifest 가 있으면 그 판 — 시작할 때 같은 파일을 한 번 더 받지 않는다 */
 export function loadVersion() {
-    loading ??= fetch(new URL('../manifest.json', import.meta.url), { cache: 'no-store' })
-        .then(res => { if (!res.ok) throw new Error('manifest unavailable'); return res.json(); })
-        .then((manifest) => { version = String(manifest?.version || ''); return version; })
+    const read = () => {
+        const known = knownVersion();
+        if (known) return Promise.resolve(known);
+        return fetch(new URL('../manifest.json', import.meta.url), { cache: 'no-store' })
+            .then(res => { if (!res.ok) throw new Error('manifest unavailable'); return res.json(); })
+            .then(manifest => String(manifest?.version || ''));
+    };
+    loading ??= read()
+        .then((v) => { version = v; return version; })
         .catch(() => { loading = null; return ''; });
     return loading;
 }
