@@ -14,7 +14,7 @@ import { classifyAll } from './assets.js';
 import { cutEdgeVars, cutEdgeClasses, syncCutEdge, imageFrameOn, darkBackground } from './cutedge.js';
 import { comparisonView } from './appearance-compare.js';
 import { weatherReadability } from './weather-readability.js';
-import { themeEnabled, addonsEnabled, puffyMode } from './usage-mode.js';
+import { themeEnabled, addonsEnabled, puffyMode, checkboxTokens } from './usage-mode.js';
 import { syncFeatures } from './features.js';
 import { syncSplash, syncFavicon } from './splash.js';
 import { markdownClasses, markdownVariables } from './markdown.js';
@@ -535,6 +535,7 @@ export function applyAll() {
         '--salty-accent-dlg': mix(pal.accent, pal.dialogue, 0.6),
         '--salty-bg-82': scaleAlpha(pal.bg, (s.chat.bgAlpha ?? 82) / 100), // 이름은 예전 고정값(82%)에서 — 4.1.3 부터 채팅 › 화면의 '바탕 농도'
         '--salty-text-90': scaleAlpha(pal.text, 0.9),
+        '--salty-palette-shadow': pal.shadow,
         '--salty-shadow-50': scaleAlpha(pal.shadow, 0.5),
         '--salty-surface-shade': mix(pal.text, pal.surface, 0.06),
         '--salty-toast-error': pal.surface,
@@ -657,6 +658,7 @@ export function applyAll() {
     // 5.5.6: 설정 창 밖에 뜨는 테마 자체 창(캡처 미리보기 · 단어 치환/성능 도움말 · 출처)도 같이 — 확장만 모드에서 이 창들의 버튼 · 입력칸이
     // 테마 변수를 못 찾아 바탕 · 테두리 없이 글자만 남았다. 제 바탕을 스스로 칠하는 창들이라 실리태번 화면에는 영향이 없다
     let css = `${s.enabled ? ':root' : '.salty-panel, .bl-capture-dialog, .bl-tool-dialog, .bl-credits-dialog'} {\n${declarations(vars)}\n}`;
+    if (rendered.enabled !== false) css += `\nhtml[data-bl-controls] {\n${declarations(checkboxTokens(vars, true))}\n}`;
     // 어두운 팔레트면 그 창들의 체크 칸 · 스크롤바 · 목록도 어둡게 (body.salty-dark 가 없는 상태라 style.css 의 어두운 쪽 규칙이 안 걸린다)
     if (!s.enabled) css += `\ndialog.bl-capture-dialog, dialog.bl-tool-dialog, dialog.bl-credits-dialog { color-scheme: ${mode === 'dark' ? 'dark' : 'light'}; }`;
 
@@ -784,6 +786,9 @@ export function applyAll() {
     const htmlBg = want.has('salty') && !want.has('salty-bgimg');
     if (document.documentElement.classList.contains('salty-html-bg') !== htmlBg) document.documentElement.classList.toggle('salty-html-bg', htmlBg);
     // 7.7.4 볼록 단추: 확장만 모드에서도 테마 자신의 단추(.salty-btn)에 — 값은 팔레트 밝기(두께 색), 테마를 끄면 속성을 뗀다 (css/90-puffy.css)
+    // Owned addon controls keep their appearance in extensions-only mode.
+    const controls = rendered.enabled !== false ? 'on' : null;
+    if (document.documentElement.getAttribute('data-bl-controls') !== controls) { if (controls) document.documentElement.setAttribute('data-bl-controls', controls); else document.documentElement.removeAttribute('data-bl-controls'); }
     const puffy = puffyMode(getSettings(), mode);
     if (document.documentElement.getAttribute('data-bl-puffy') !== puffy) { if (puffy) document.documentElement.setAttribute('data-bl-puffy', puffy); else document.documentElement.removeAttribute('data-bl-puffy'); }
     // 컷 취급이 바뀌면 이미 분류한 그림의 .salty-cutout 을 다시 정해야 한다 (스위치를 누른 순간 채팅에 바로 보이게)

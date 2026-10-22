@@ -135,7 +135,7 @@ body.salty .salty-panel .bl-preview-tools button { min-height: 30px; padding: ca
 body.salty .salty-panel .bl-preview-tools button[aria-pressed="true"] { background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent-ink, var(--salty-accent)); }
 body.salty .salty-panel .bl-preview-samples button { min-width: 28px; font-size: 21px; }
 body.salty .salty-panel .bl-preview-samples span { min-width: 30px; color: var(--salty-muted); text-align: center; font-size: 11px; }
-body.salty .salty-panel .salty-sec[data-tab="image"] .salty-group { padding-inline: 10px; }
+body.salty .salty-panel:not(.bl-editor) .salty-sec[data-tab="image"] .salty-group { padding-inline: 10px; }
 body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding: 0; background: transparent; }
 body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes button { border-radius: 9px; padding: 9px 3px; box-shadow: none; flex-direction: column; justify-content: center; gap: 5px; font-size: 11px; min-height: 62px; }
 /* 작은 트랙, 넉넉한 누름 영역 */
@@ -225,7 +225,7 @@ body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"
 body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]::before { width: 14px !important; height: 14px !important; box-shadow: none !important; }
 body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]:checked::before { transform: translateX(16px) !important; }
 body.salty #dialogue_del_mes { gap: 8px; padding: 7px 10px !important; }
-body.salty #dialogue_del_mes .menu_button { min-height: 36px !important; height: 36px !important; border-radius: 8px !important; box-shadow: none !important; font-size: 13px !important; font-weight: 500 !important; }
+body.salty #dialogue_del_mes .menu_button { min-height: var(--bl-h-btn, 36px) !important; height: var(--bl-h-btn, 36px) !important; border-radius: 8px !important; box-shadow: none !important; font-size: 13px !important; font-weight: 500 !important; }
 body.salty #dialogue_del_mes #dialogue_del_mes_ok { background: var(--salty-danger-soft) !important; color: var(--bl-danger) !important; }
 @media (max-width: 1000px) {
   body.salty #user-settings-block:not(#salty-none) { scrollbar-gutter: stable both-edges; padding-inline: 4px !important; }

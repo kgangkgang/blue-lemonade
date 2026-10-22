@@ -1,6 +1,6 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 85개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 934f3952c759) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 88개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 0fd048cf8179) */
 /* css/00-base.css */
-:root{--bl-release:"7.7.5";}
+:root{--bl-release:"7.7.6";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -349,7 +349,7 @@ border:0 !important;
 }
 /* css/02-controls.css */
 body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) {
-min-height:var(--bl-h-ctl);
+min-height:var(--bl-h-btn, var(--bl-h-ctl));
 gap:var(--bl-s2);
 padding:0 var(--bl-inset) !important;
 border:0 !important;
@@ -481,6 +481,9 @@ body.salty .list-group-item:focus-visible,
 body.salty .interactable:focus-visible {
   outline: none !important;
   box-shadow: var(--bl-ring), var(--bl-e2) !important;
+}
+body.salty :is(.text_pole, select, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"])) + .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) {
+  min-height: var(--bl-h-ctl);
 }
 body.salty .text_pole:is(bl-s, *):where(:not(#send_textarea, .select2-search__field, .salty-panel *, #nonQRFormItems *, ul, ol)),
 body.salty select:is(.bl-s, *):where(:not(#send_textarea, .select2-search__field, .salty-panel *, #nonQRFormItems *, ul, ol)),
@@ -4035,6 +4038,7 @@ body.salty {
   --bl-h-num: 32px;
   --bl-h-icon: 34px;
   --bl-h-ctl: 38px;
+  --bl-h-btn: 34px;
   --bl-h-lg: 44px;
   --bl-h-menu: 44px;
   --bl-h-row: 46px;
@@ -4246,6 +4250,7 @@ box-shadow:var(--bl-sheet) !important;
     --bl-inset: 12px;
     --bl-h-num: 30px;
     --bl-h-ctl: 36px;
+    --bl-h-btn: 36px;
     --bl-h-lg: 40px;
     --bl-h-row: 40px;
     --bl-h-menu: 36px;
@@ -4953,7 +4958,7 @@ body.salty #select_chat_popup :where(button.menu_button):is(#bl-s, *) {
   order: 2;
   flex: 1 1 auto;
   min-width: 0;
-  min-height: var(--bl-h-ctl) !important;
+  min-height: var(--bl-h-btn, var(--bl-h-ctl)) !important;
   gap: 6px !important;
   margin: 0 !important;
   padding: 0 10px !important;
@@ -9442,6 +9447,9 @@ body.salty #user-settings-block #account_controls {
   flex: 0 0 auto;
   gap: var(--bl-s2);
 }
+body.salty #user-settings-block #account_controls > .menu_button {
+  min-height: var(--bl-h-ctl);
+}
 body.salty #user-settings-block #settingsSearch {
 height:var(--bl-h-ctl) !important;
 min-height:var(--bl-h-ctl) !important;
@@ -12451,6 +12459,9 @@ html body.salty .ms-option:is(.bl-s, *),
 html body.salty :is(.mr-item-buttons .menu_button) {
   min-width:34px; min-height:34px; border-radius:var(--bl-r-sm,8px);
 }
+@media (pointer: coarse) {
+  html body.salty .ms-icon[data-act="pick"] > .fa-chevron-down { transform:translateY(-1px); }
+}
 html body.salty .mr-item { flex-wrap:wrap; column-gap:10px; row-gap:8px; }
 html body.salty .mr-name { flex:1 1 9em; }
 html body.salty .mr-item-buttons { flex-wrap:wrap; gap:8px 10px; margin-inline-start:auto; }
@@ -13801,6 +13812,7 @@ body.salty-dark .salty-shapes button.on {
 }
 .salty-btn.salty-btn-danger {
   color: var(--danger);
+  color: color-mix(in oklab, var(--danger) 80%, var(--salty-text));
 }
 .salty-btns {
   display: flex;
@@ -14085,7 +14097,7 @@ body.salty .salty-panel .bl-preview-tools button { min-height: 30px; padding: ca
 body.salty .salty-panel .bl-preview-tools button[aria-pressed="true"] { background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent-ink, var(--salty-accent)); }
 body.salty .salty-panel .bl-preview-samples button { min-width: 28px; font-size: 21px; }
 body.salty .salty-panel .bl-preview-samples span { min-width: 30px; color: var(--salty-muted); text-align: center; font-size: 11px; }
-body.salty .salty-panel .salty-sec[data-tab="image"] .salty-group { padding-inline: 10px; }
+body.salty .salty-panel:not(.bl-editor) .salty-sec[data-tab="image"] .salty-group { padding-inline: 10px; }
 body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding: 0; background: transparent; }
 body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes button { border-radius: 9px; padding: 9px 3px; box-shadow: none; flex-direction: column; justify-content: center; gap: 5px; font-size: 11px; min-height: 62px; }
 body.salty .salty-panel .salty-switch { width: 36px; height: 36px; }
@@ -14163,7 +14175,7 @@ body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"
 body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]::before { width: 14px !important; height: 14px !important; box-shadow: none !important; }
 body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]:checked::before { transform: translateX(16px) !important; }
 body.salty #dialogue_del_mes { gap: 8px; padding: 7px 10px !important; }
-body.salty #dialogue_del_mes .menu_button { min-height: 36px !important; height: 36px !important; border-radius: 8px !important; box-shadow: none !important; font-size: 13px !important; font-weight: 500 !important; }
+body.salty #dialogue_del_mes .menu_button { min-height: var(--bl-h-btn, 36px) !important; height: var(--bl-h-btn, 36px) !important; border-radius: 8px !important; box-shadow: none !important; font-size: 13px !important; font-weight: 500 !important; }
 body.salty #dialogue_del_mes #dialogue_del_mes_ok { background: var(--salty-danger-soft) !important; color: var(--bl-danger) !important; }
 @media (max-width: 1000px) {
   body.salty #user-settings-block:not(#salty-none) { scrollbar-gutter: stable both-edges; padding-inline: 4px !important; }
@@ -20626,7 +20638,7 @@ html body dialog.popup.bl-settings-fullscreen .popup-body { height:100%; min-hei
 html body dialog.popup.bl-settings-fullscreen .popup-content { flex:1; min-height:0; margin:0; padding:0 !important; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable !important; }
 html body dialog.popup.bl-settings-fullscreen .salty-panel.in-popup { --pp:8px; padding:8px 8px 24px !important; }
 /* css/47-settings-editor.css */
-html body .salty-panel.bl-editor { position:relative; display:flex; flex-direction:column; container:bl-editor / inline-size; height:min(780px,82dvh); min-height:320px; min-width:0; padding:0 !important; overflow:hidden; --pp:0px; --salty-navh:0px; --bl-editor-line:var(--salty-line); background:var(--bl-settings-cover); }
+html body .salty-panel.bl-editor { position:relative; display:flex; flex-direction:column; container:bl-editor / inline-size; height:min(780px,82dvh); min-height:320px; min-width:0; padding:0 !important; overflow:hidden; --pp:0px; --bl-editor-gutter:20px; --salty-navh:0px; --bl-editor-line:var(--salty-line); background:var(--bl-settings-cover); }
 html body dialog.popup.bl-settings-dialog:not(.bl-settings-fullscreen):has(.salty-panel.in-popup) { width:min(1120px,96vw) !important; max-width:96vw !important; height:min(880px,92dvh) !important; max-height:92dvh !important; padding:0 !important; }
 html body dialog.bl-settings-dialog .popup-body { height:100%; min-height:0; padding:0 !important; overflow:hidden; }
 html body dialog.bl-settings-dialog .popup-content { flex:1; height:100%; min-height:0; overflow:hidden !important; padding:0 !important; margin:0; scrollbar-gutter:auto !important; }
@@ -20644,13 +20656,13 @@ html body .bl-editor .bl-settings-toprow .bl-settings-expand { padding-top:calc(
 .bl-editor-choose span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:650; font-size:calc(14 * var(--sp)); }
 .bl-editor .bl-settings-toprow svg { width:16px; height:16px; flex:none; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
 .bl-editor .bl-editor-workspace { flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
-.bl-editor-stage { flex:none; min-width:0; padding:8px 10px 0; background:var(--salty-panel-surface,var(--salty-surface)); border-bottom:1px solid var(--bl-editor-line); overflow:hidden; }
+.bl-editor-stage { flex:none; min-width:0; padding:8px var(--bl-editor-gutter) 0; background:var(--salty-panel-surface,var(--salty-surface)); border-bottom:1px solid var(--bl-editor-line); overflow:hidden; }
 .bl-editor-caption { color:var(--salty-muted); font-size:calc(11 * var(--sp)); margin:0 0 6px; }
 .bl-editor .bl-editor-workspace:has(.salty-prevbox.folded) { display:flex !important; flex-direction:column; }
-.bl-editor .bl-editor-stage:has(.salty-prevbox.folded) { flex:none; padding:0 10px; border:0; border-bottom:1px solid var(--bl-editor-line); }
+.bl-editor .bl-editor-stage:has(.salty-prevbox.folded) { flex:none; padding:0 var(--bl-editor-gutter); border:0; border-bottom:1px solid var(--bl-editor-line); }
 .bl-editor-stage:has(.salty-prevbox.folded) .bl-editor-caption { display:none; }
 html body .bl-editor .bl-editor-stage .salty-prevbox { position:relative; inset:auto; width:100%; margin:0; padding:0 0 20px; box-shadow:none; background:transparent !important; }
-html body .bl-editor .salty-sec { flex:1; min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable both-edges; margin:0; padding:10px 10px 16px; text-align:left; }
+html body .bl-editor .salty-sec { flex:1; min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable both-edges; margin:0; padding:10px var(--bl-editor-gutter) 16px; text-align:left; }
 .bl-editor-group { border-top:1px solid var(--bl-editor-line); }
 html body .bl-editor-group-toggle { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; margin:0; padding:calc(6px + var(--bl-text-nudge, 0px)) 0 calc(6px - var(--bl-text-nudge, 0px)) ; min-height:38px; border:0; border-radius:0; background:transparent; color:var(--salty-text); font:inherit; font-size:calc(14 * var(--sp)); font-weight:600; text-align:left; box-shadow:none; }
 .bl-editor-group-toggle::after { content:'+'; color:var(--salty-muted); font-size:calc(18 * var(--sp)); font-weight:400; }
@@ -20682,10 +20694,14 @@ html body .bl-editor .bl-editor-group-body > .bl-prompt-tools > .salty-group { m
 .bl-editor-directory .salty-mark { width:24px; height:28px; }
 .bl-editor-directory .salty-title { font-size:calc(15 * var(--sp)); }
 .bl-editor-directory .salty-sub { display:none; }
+@container bl-editor (max-width:350px) {
+  .bl-editor-workspace { --bl-editor-gutter:16px; }
+}
 @container bl-editor (min-width:800px) {
+  .bl-editor-workspace { --bl-editor-gutter:24px; }
   .bl-editor .bl-editor-workspace:not(.bl-editor-no-preview) { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); }
-  .bl-editor .bl-editor-stage { display:flex; flex-direction:column; min-height:0; padding:12px 14px; border:0; border-right:1px solid var(--bl-editor-line); }
-  html body .bl-editor .salty-sec { padding:12px 14px 18px; }
+  .bl-editor .bl-editor-stage { display:flex; flex-direction:column; min-height:0; padding:12px var(--bl-editor-gutter); border:0; border-right:1px solid var(--bl-editor-line); }
+  html body .bl-editor .salty-sec { padding:12px var(--bl-editor-gutter) 18px; }
   .bl-editor .bl-editor-caption { margin-bottom:8px; }
   .bl-editor .bl-editor-stage .salty-prevbox { margin-block:auto; }
 }
@@ -21778,7 +21794,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-usage-mode summary strong { font-weight:600; }
 .salty-panel .bl-usage-mode-body { display:grid; gap:12px; padding-top:16px; }
 @supports (width: mod(3px, 2px)) and (width: round(1.5px, 1px)) and (width: 1lh) {
-  html body { --bl-text-nudge: round(calc(mod(calc((1lh - round(calc(var(--bl-font-asc) * 1em), 1px) - round(calc(var(--bl-font-desc) * 1em), 1px)) / 2), 1px) - (round(calc(var(--bl-font-asc) * 1em), 1px) - var(--bl-font-asc) * 1em - round(calc(var(--bl-font-desc) * 1em), 1px) + var(--bl-font-desc) * 1em) * var(--bl-ink-k) / 2), 0.015625px);
+  html body, .salty-panel, .bl-capture-dialog, .bl-tool-dialog, .bl-credits-dialog { --bl-text-nudge: round(calc(mod(calc((1lh - round(calc(var(--bl-font-asc) * 1em), 1px) - round(calc(var(--bl-font-desc) * 1em), 1px)) / 2), 1px) - (round(calc(var(--bl-font-asc) * 1em), 1px) - var(--bl-font-asc) * 1em - round(calc(var(--bl-font-desc) * 1em), 1px) + var(--bl-font-desc) * 1em) * var(--bl-ink-k) / 2), 0.015625px);
     --bl-text-nudge-frac: round(mod(calc((1lh - round(calc(var(--bl-font-asc) * 1em), 1px) - round(calc(var(--bl-font-desc) * 1em), 1px)) / 2), 1px), 0.015625px); }
 }
 html body.salty dialog.popup,
@@ -21971,11 +21987,11 @@ body.salty.salty-persona-tall #PersonaManagement #persona_description { min-heig
 body.salty.salty-persona-tall #PersonaManagement #persona_description:not([style*="height"]) { height:clamp(240px,36dvh,360px); }
 body.salty #PersonaManagement .persona_management_current_persona > .flex-container { column-gap:10px; row-gap:8px; }
 body.salty #PersonaManagement #persona_connections_buttons { flex-wrap:wrap!important; gap:8px 10px!important; }
-body.salty #PersonaManagement #persona_connections_buttons > .menu_button { flex:1 1 7em; height:auto; min-height:36px; padding:6px 8px!important; }
+body.salty #PersonaManagement #persona_connections_buttons > .menu_button { flex:1 1 7em; height:auto; min-height:var(--bl-h-btn, 36px); padding:6px 8px!important; }
 body.salty #PersonaManagement #persona_connections_buttons > .menu_button > div { white-space:normal; overflow:visible; }
 body.salty #right-nav-panel #avatar-and-name-block { border-radius:var(--bl-r-md); }
 body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block { gap:8px!important; }
-body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block > .menu_button { height:auto!important; min-height:36px!important; padding:6px!important; }
+body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block > .menu_button { height:auto!important; min-height:var(--bl-h-btn, 36px)!important; padding:6px!important; }
 body.salty #right-nav-panel #rm_button_selected_ch h2 { letter-spacing:var(--salty-ui-ls,normal); }
 body.salty #right-nav-panel .title_restorable { flex-wrap:wrap; column-gap:10px; row-gap:8px; }
 body.salty #character_popup #depth_prompt_div > div:last-child { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.5fr); gap:8px 14px; }
@@ -22023,7 +22039,7 @@ body.salty #rm_extensions_block #qr--settings #qr--editor { border-radius:var(--
   body.salty #rm_extensions_block #qr--settings .qr--visible { grid-column:2; justify-self:start; }
 }
 body.salty #regex_container .inline-drawer-content > .flex-container:first-child { grid-template-columns:repeat(auto-fit,minmax(min(100%,8em),1fr)); gap:8px!important; }
-body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button { min-height:36px; padding:6px 8px!important; gap:8px!important; }
+body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button { min-height:var(--bl-h-btn, 36px); padding:6px 8px!important; gap:8px!important; }
 body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button > small { font-size:var(--bl-fs-sub)!important; }
 body.salty #regex_container .regex-script-label { gap:10px!important; }
 body.salty #regex_container .regex-script-label > .flex-container { flex-wrap:wrap; gap:6px!important; }
@@ -24314,7 +24330,7 @@ body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row { pad
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row > span { min-width:0; overflow-wrap:anywhere; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before { content:''; position:absolute; inset:-7px 0; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch:focus-visible { outline:2px solid var(--salty-accent); outline-offset:3px; }
-body.salty .bl-pbind .menu_button { display:inline-flex; align-items:center; justify-content:center; min-height:36px; line-height:1.4; }
+body.salty .bl-pbind .menu_button { display:inline-flex; align-items:center; justify-content:center; min-height:var(--bl-h-btn, 36px); line-height:1.4; }
 body.salty .bl-pbind-x { position:relative; flex:none; }
 body.salty .bl-pbind-x::before { content:''; position:absolute; inset:-6px; }
 body.salty .bl-pbind-chip { min-width:0; overflow-wrap:anywhere; }
@@ -24335,7 +24351,7 @@ body.salty .bl-pbind-list { min-height:0; }
   height:calc(100dvh - 12px)!important; max-height:calc(100dvh - 12px)!important;
   margin:auto!important;
  }
- html body .salty-panel.bl-editor .salty-sec { padding-inline:10px; }
+ html body .salty-panel.bl-editor .salty-sec { padding-inline:var(--bl-editor-gutter,20px); }
  .salty-panel.bl-editor .salty-group { margin-block:10px; }
  .salty-panel.bl-editor .bl-editor-group-head { gap:6px; }
  body.salty .bl-pbind-dialog { width:calc(100vw - 20px); padding:10px; gap:8px; }
@@ -24353,7 +24369,7 @@ body.salty .bl-pbind-list { min-height:0; }
 .salty-panel .bl-md-choices { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,5.1em),1fr)); gap:5px; }
 .salty-panel .bl-md-choice { appearance:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-width:0; min-height:66px; padding:.4em .25em; border:1px solid var(--salty-text-20); border-radius:8px; background:transparent; color:var(--salty-text); font:inherit; font-size:.88em; line-height:1.4; cursor:pointer; white-space:normal; overflow-wrap:anywhere; }
 .salty-panel .bl-md-choice svg { display:block; width:100%; max-width:96px; height:30px; color:var(--bl-md-accent,var(--salty-accent-ink,var(--salty-accent))); }
-.salty-panel .bl-md-choice.on { border-color:var(--salty-accent-ink,var(--salty-accent)); background:var(--salty-fill-accent-10,var(--salty-accent-10)); box-shadow:inset 0 0 0 1px var(--salty-accent-ink,var(--salty-accent)); }
+.salty-panel .bl-md-choice.on { border-color:var(--salty-accent-ink,var(--salty-accent)); background:var(--salty-fill-accent-10,var(--salty-accent-10)); box-shadow:inset 0 2px 3px var(--salty-shade); }
 .salty-panel .bl-md-choice:focus-visible, .salty-panel .bl-md-group summary:focus-visible { outline:2px solid var(--salty-accent-ink,var(--salty-accent)); outline-offset:2px; }
 .salty-panel .bl-md-tuning { margin:.6em 0 0; border-top:1px solid var(--salty-text-20); }
 .salty-panel .bl-md-tuning > summary { cursor:pointer; padding:.6em .15em; line-height:1.4; font-size:.88em; color:var(--salty-muted); }
@@ -24394,7 +24410,7 @@ body.salty.salty-cutedge.salty-cutedge-out:not(.salty-shape-custom) :is(:is(#cha
 .salty-panel .bl-cutedge-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin: 0 0 6px; }
 .salty-panel .bl-cutedge-tone { grid-column: 1 / -1; margin: 6px 0 0; color: var(--salty-muted); font-size: var(--bl-fs-micro, 12px); }
 .salty-panel .bl-cutedge-card { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-height: 44px; margin: 0; padding: 6px; border: 1px solid var(--salty-line); border-radius: 12px; background: var(--salty-surface); color: var(--salty-text); font: inherit; text-align: center; cursor: pointer; }
-.salty-panel .bl-cutedge-card[aria-pressed="true"] { border-color: var(--salty-accent); box-shadow: inset 0 0 0 1px var(--salty-accent); }
+.salty-panel .bl-cutedge-card[aria-pressed="true"] { border-color: var(--salty-accent); box-shadow: inset 0 2px 3px var(--salty-shade); }
 .salty-panel .bl-cutedge-thumb { display: block; height: 104px; overflow: hidden; border-radius: 8px; background: var(--salty-bg); }
 .salty-panel .bl-cutedge-thumb img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; }
 .salty-panel .bl-cutedge-name { font-weight: 600; font-size: var(--bl-fs-ctl, 13.5px); line-height: 1.3; }
@@ -24621,7 +24637,7 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
   background: var(--fr-card); color: var(--salty-text, inherit);
   font: inherit; text-align: left; cursor: pointer;
 }
-.bl-first-run .bl-fr-card[aria-pressed="true"] { border-color: var(--fr-accent); box-shadow: 0 0 0 1px var(--fr-accent); }
+.bl-first-run .bl-fr-card[aria-pressed="true"] { border-color: var(--fr-accent); box-shadow: inset 0 2px 3px var(--fr-line); }
 .bl-first-run .bl-fr-name { display: flex; align-items: center; gap: .4em; min-width: 0; color: var(--salty-text, inherit); font-size: var(--bl-fs-sub, 13px); font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; word-break: keep-all; }
 .bl-first-run .bl-fr-card[aria-pressed="true"] .bl-fr-name::after { content: "\f00c"; margin-left: auto; color: var(--salty-accent-ink, var(--fr-accent)); font: var(--fa-font-solid, 900 1em/1 "Font Awesome 6 Free"); }
 .bl-first-run .bl-fr-page { position: relative; display: block; height: 3.4em; border: 1px solid var(--p-line, var(--fr-line)); border-radius: var(--bl-r-sm, 8px); background: var(--p-bg); overflow: hidden; }
@@ -24865,7 +24881,7 @@ body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .in
 }
 .salty-panel .bl-faq-status b { margin-right: .4em; color: var(--salty-accent-ink, var(--salty-accent)); font-weight: 700; }
 .salty-panel .bl-faq-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 0; }
-.salty-panel .bl-faq-actions .salty-btn { flex: 1 1 200px; min-height: 44px; }
+.salty-panel .bl-faq-actions .salty-btn { flex: 1 1 200px; min-height: var(--bl-h-ctl, 36px); }
 .salty-panel .salty-note + .bl-faq-actions { margin: 10px 4px 0; }
 .salty-panel .bl-faq-readme { align-self: flex-start; color: var(--salty-accent-ink, var(--salty-accent)); font-size: calc(12.5 * var(--sp)); line-height: 1.5; text-decoration: none; overflow-wrap: anywhere; }
 .salty-panel .bl-faq-readme:hover { text-decoration: underline; }
@@ -25163,6 +25179,7 @@ html body.salty #left-nav-panel .menu_button:not(label *) {
 :where(.eh-guide summary),
 :where(.cg-icon-btn),
 :where(.cg-chip),
+:where(.cg-view),
 :where(.jj-switch),
 :where(.jj-small-btn),
 :where(.bl-direction-dialog button[data-step]),
@@ -25170,6 +25187,7 @@ html body.salty #left-nav-panel .menu_button:not(label *) {
 :where(.lv-icon),
 :where(.lv-help-btn),
 :where(.lv-version),
+:where(#lv_settings button.menu_button:not(.lv-key *)),
 :where(.rl-chip),
 :where(.pa-hub .menu_button),
 :where(.rl-root .menu_button),
@@ -25208,69 +25226,71 @@ html body.salty #left-nav-panel .menu_button:not(label *) {
 :where(:is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings, .salty-panel) summary) {
     position: relative;
   }
-  .po-move:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.po-pin:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:where(.po-dialog .menu_button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.ms-icon:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.ms-pull:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.ms-chip:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.ms-name:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.ms-invert:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.ms-snap:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.ms-apply:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:is(#model-switch-settings .menu_button):is(bl-s, *):is(bl-s, *)::after,
-.bl-note-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.bl-notes-guidelink:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.eh-icon-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.eh-switch:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.eh-pchip:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.eh-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:where(.bl-assets-dialog .eh-size > button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:where(.bl-assets-dialog button[data-value]):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.cg-icon-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.cg-chip:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.jj-small-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:where(.bl-direction-dialog button[data-step]):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:where(.jj-settings-body button[data-step]):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.lv-icon:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.lv-help-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.lv-version:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.rl-chip:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:where(.pa-hub .menu_button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:where(.rl-root .menu_button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:is(.rl-msg summary):is(#bl-s, *):is(bl-s, *)::after,
-.blzi-help:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:where(.blzi button[data-action]):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.blpt-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.bwr_help:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.bwr-version:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.bwr_seg:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:where(.bwr_settings .menu_button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.pt-ui-button:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:is(#pt-panel [data-help-group]):is(bl-s, *):is(bl-s, *)::after,
-:where(.pt-help-dialog [data-help-group]):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-#pt-panel-close:is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:is(#model_register_settings .menu_button):is(bl-s, *):is(bl-s, *)::after,
-:is(#regex-link-settings .menu_button):is(bl-s, *):is(bl-s, *)::after,
-:where(.bl-translator-dialog .menu_button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:where(.bl-ctsi-dialog .menu_button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.bl-fr-icon:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.bl-mermaid-again:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.salty-btn:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.lv-tab:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.llmt-tab:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.bwr_tab:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.rl-tab:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.pa-hub-tab:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-.pt-tab:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:is(.po-menu-tabs > button):is(#bl-s, *):is(bl-s, *)::after,
-.pt-version:is(#bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-#pt-panel-refresh:is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:where(.salty-panel .bl-preview-kinds > button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:where(.salty-panel .bl-prompt-card-trigger):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:where(.salty-panel .salty-shapes button):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::after,
-:is(:is(.bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog) > header > button):is(#bl-s, *)::after,
-:is(:is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings) summary:not(.rl-msg summary, .eh-guide summary))::after,
+  .po-move:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.po-pin:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+:is(.po-dialog .menu_button):is(#bl-s, *):is(bl-s, *)::after,
+.ms-icon:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.ms-pull:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.ms-chip:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.ms-name:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.ms-invert:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.ms-snap:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.ms-apply:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+:is(#model-switch-settings .menu_button):is(.bl-s, *):is(bl-s, *)::after,
+.bl-note-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.bl-notes-guidelink:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.eh-icon-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.eh-switch:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.eh-pchip:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.eh-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+:is(.bl-assets-dialog .eh-size > button):is(#bl-s, *)::after,
+:is(.bl-assets-dialog button[data-value]):is(#bl-s, *)::after,
+.cg-icon-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.cg-chip:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.cg-view:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.jj-small-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+:is(.bl-direction-dialog button[data-step]):is(#bl-s, *)::after,
+:is(.jj-settings-body button[data-step]):is(#bl-s, *)::after,
+.lv-icon:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.lv-help-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.lv-version:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+:is(#lv_settings button.menu_button:not(.lv-key *))::after,
+.rl-chip:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+:is(.pa-hub .menu_button):is(#bl-s, *):is(bl-s, *)::after,
+:is(.rl-root .menu_button):is(#bl-s, *):is(bl-s, *)::after,
+:is(.rl-msg summary):is(#bl-s, *):is(.bl-s, *)::after,
+.blzi-help:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+:is(.blzi button[data-action]):is(#bl-s, *)::after,
+.blpt-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.bwr_help:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.bwr-version:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.bwr_seg:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+:is(.bwr_settings .menu_button):is(#bl-s, *):is(bl-s, *)::after,
+.pt-ui-button:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+:is(#pt-panel [data-help-group]):is(.bl-s, *):is(bl-s, *)::after,
+:is(.pt-help-dialog [data-help-group]):is(#bl-s, *):is(bl-s, *)::after,
+#pt-panel-close:is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+:is(#model_register_settings .menu_button):is(.bl-s, *):is(bl-s, *)::after,
+:is(#regex-link-settings .menu_button):is(.bl-s, *):is(bl-s, *)::after,
+:is(.bl-translator-dialog .menu_button):is(#bl-s, *):is(bl-s, *)::after,
+:is(.bl-ctsi-dialog .menu_button):is(#bl-s, *):is(bl-s, *)::after,
+.bl-fr-icon:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.bl-mermaid-again:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.salty-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.lv-tab:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.llmt-tab:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.bwr_tab:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.rl-tab:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.pa-hub-tab:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+.pt-tab:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+:is(.po-menu-tabs > button):is(#bl-s, *):is(.bl-s, *)::after,
+.pt-version:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+#pt-panel-refresh:is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+:is(.salty-panel .bl-preview-kinds > button):is(#bl-s, *)::after,
+:is(.salty-panel .bl-prompt-card-trigger):is(#bl-s, *):is(bl-s, *)::after,
+:is(.salty-panel .salty-shapes button):is(#bl-s, *)::after,
+:where(:is(.bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog) > header > button):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+:where(:is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings) summary:not(.rl-msg summary, .eh-guide summary)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .bl-notes-ver:is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
 .jj-switch:is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
 :is(.eh-guide summary):is(.bl-s, *):is(bl-s, *)::before,
@@ -25421,7 +25441,10 @@ html body.salty #pt-panel .pt-page:has(> .pt-page-fixed) > .pt-page-scroll { min
   html body.salty #pt-panel > #pt-tabs { grid-template-columns:repeat(7,minmax(0,1fr)) !important; }
 }
 @media (max-width:760px), (pointer:coarse) {
-  html body.salty dialog.popup .popup-controls > .menu_button,
+  html body.salty dialog.popup .popup-controls > .menu_button { min-height:var(--bl-h-lg, 40px) !important; position:relative; }
+  html body.salty dialog.popup .popup-controls > .popup-button-ok::after,
+html body.salty dialog.popup .popup-controls > .popup-button-cancel::after,
+html body.salty dialog.popup .popup-controls > .popup-button-custom::after { content:''; position:absolute; left:0; right:0; top:50%; height:max(100%, 44px); transform:translateY(-50%); }
   html body.salty dialog.popup .popup-input { min-height:44px !important; }
   :where(.salty-panel),
 :where(.bl-ft-dialog),
@@ -25448,7 +25471,7 @@ html body.salty #pt-panel .pt-page:has(> .pt-page-fixed) > .pt-page-scroll { min
   }
   html body .salty-panel .salty-fontrow,
 html body .salty-panel .bl-ft-group-toggle,
-html body #lv_settings button.menu_button,
+html body #lv_settings .lv-key button.menu_button,
 html body .po-dialog .po-hide,
 html body #pt-panel .pt-btn,
 html body #pt-panel .pt-btn-icon,
@@ -25537,6 +25560,65 @@ html[data-bl-puffy] body.salty .salty-panel .salty-switch span::after {
 html[data-bl-puffy] body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]::before {
   box-shadow: var(--bl-knob) !important;
 }
+/* css/92-checkboxes.css */
+:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *),
+:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))) {
+ appearance:none!important; -webkit-appearance:none!important;
+ place-content:center; box-sizing:border-box!important;
+ width:20px!important; height:20px!important; min-width:20px!important; min-height:20px!important; flex-shrink:0; flex-basis:20px;
+ padding:0!important; border:1px solid var(--salty-line, var(--bl-checkbox-line))!important; border-radius:5px!important;
+ background:var(--salty-control, var(--bl-checkbox-control))!important; color:var(--salty-on-accent, var(--bl-checkbox-ink))!important;
+ box-shadow:inset 0 1px 2px color-mix(in oklab,var(--salty-text, var(--bl-checkbox-text)) 16%,transparent)!important;
+ transform:none!important; filter:none!important; cursor:pointer;
+}
+:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *)::before,
+:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)))::before { content:none!important; display:none!important; }
+:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *)::after,
+:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)))::after {
+ content:''!important; display:block!important; position:static!important; inset:auto!important;
+ box-sizing:border-box!important; width:9px!important; height:5px!important; margin:0!important;
+ border:0!important; border-left:2px solid currentColor!important; border-bottom:2px solid currentColor!important;
+ border-radius:0!important; background:none!important; box-shadow:none!important; clip-path:none!important; mask:none!important;
+ transform:translateY(-1px) rotate(-45deg)!important; opacity:0!important; pointer-events:none!important; filter:none!important;
+}
+:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):is(:checked,:indeterminate),
+:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(:checked,:indeterminate) {
+ background:var(--salty-accent, var(--bl-checkbox-accent))!important; border-color:transparent!important;
+ box-shadow:inset 0 2px 2px color-mix(in oklab,var(--salty-bg, var(--bl-checkbox-bg)) 32%,transparent)!important;
+}
+:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):checked::after,
+:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):checked::after { opacity:1!important; filter:drop-shadow(0 1px 0 color-mix(in oklab,var(--salty-text, var(--bl-checkbox-text)) 28%,transparent))!important; }
+:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):indeterminate::after,
+:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):indeterminate::after { opacity:1!important; border-left:0!important; height:0!important; transform:none!important; }
+:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):disabled,
+:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):disabled { cursor:default; background:var(--salty-bg, var(--bl-checkbox-bg))!important; border-color:var(--salty-line, var(--bl-checkbox-line))!important; color:var(--salty-muted, var(--bl-checkbox-muted))!important; box-shadow:none!important; opacity:1!important; }
+:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):disabled:is(:checked,:indeterminate),
+:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):disabled:is(:checked,:indeterminate) { background:color-mix(in oklab,var(--salty-accent, var(--bl-checkbox-accent)) 18%,var(--salty-surface, var(--bl-checkbox-surface)))!important; }
+:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):focus-visible,
+:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):focus-visible { outline:2px solid var(--salty-accent, var(--bl-checkbox-accent))!important; outline-offset:3px!important; }
+:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):not(:focus-visible),
+:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):not(:focus-visible) { outline:none!important; }
+@media (forced-colors:active) {
+ :is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *),
+:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))) { forced-color-adjust:auto; border-color:ButtonText!important; background:Canvas!important; color:CanvasText!important; box-shadow:none!important; }
+ :is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):is(:checked,:indeterminate),
+:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(:checked,:indeterminate) { background:Highlight!important; color:HighlightText!important; }
+ :is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):focus-visible,
+:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):focus-visible { outline-color:Highlight!important; }
+}
+/* css/93-night-surfaces.css */
+html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]),
+html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,.welcomeShortcuts *,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]) {
+ --bl-puffy-edge:transparent; background:var(--salty-raised,var(--salty-control,var(--salty-surface)))!important; color:var(--salty-text)!important; border-color:transparent!important;
+ box-shadow:inset 0 1px 0 color-mix(in oklab,var(--salty-text) 28%,transparent),0 2px 0 var(--salty-bg),0 3px 3px color-mix(in oklab,var(--salty-palette-shadow) 25%,transparent)!important;
+}
+html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):active,
+html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,.welcomeShortcuts *,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):active { box-shadow:inset 0 1px 2px color-mix(in oklab,var(--salty-palette-shadow) 20%,transparent),0 1px 0 var(--salty-bg)!important; }
+html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):focus-visible,
+html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,.welcomeShortcuts *,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:3px!important; }
+html:root body .salty-panel :is(.salty-seg button).on:not(:disabled),
+html:root body .salty-panel :is(.salty-fonttags button).on:not(:disabled),
+html:root body .salty-panel :is(.salty-fontempty button).on:not(:disabled) { box-shadow:inset 0 0 0 1px var(--salty-accent),var(--bl-well-in)!important; }
 /* css/96-param-stack.css */
 body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, max(8.5em, 40%)), 1fr));
@@ -25810,6 +25892,156 @@ html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6 :is(.fh-row.bl-fruit-qr-na
   width: 100% !important;
   max-width: none !important;
 }
+/* css/98-tab-strips.css */
+html:not(#bl-tab-scroll-off) :is(#pt-panel > #pt-tabs),
+html:not(#bl-tab-scroll-off) :where(#pt-panel .pt-settings-nav):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(.pt-help-dialog > nav):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(.bl-notes-help > nav):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(#lv_settings .lv-tabs):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(.llmt-settings .llmt-tabs):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(.po-dialog > .po-menu-tabs):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(.bwr_settings .bwr_tabs):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(.pa-hub > .pa-hub-tabs):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(.rl-root .rl-tabs):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(.lvs-tabs):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(body.salty .bl-chat-view-tabs):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(body.salty .ui-tabs .ui-tabs-nav):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(.ppt-ta-tabs):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(.jj-seg[role="tablist"]):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-tab-scroll-off) :where(.dq-tabs):is(#bl-s, *):is(#bl-s, *) {
+  display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important;
+  min-width:0; max-width:100%; overflow-x:auto !important; overflow-y:hidden !important;
+  overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch;
+}
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > :where(button):is(.bl-s, *),
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > :where(a):is(.bl-s, *),
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > :where(li):is(.bl-s, *),
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > [role="tab"],
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > [role="button"] {
+  flex:1 0 auto !important; width:auto !important; min-width:max-content !important;
+  white-space:nowrap !important; overflow-wrap:normal !important;
+}
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > :is(button,a,li,[role="tab"],[role="button"]) > span,
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > :is(button,a,li,[role="tab"],[role="button"]) > a { white-space:nowrap !important; overflow-wrap:normal !important; }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}
 body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> label + select) > select { width: 100% !important; max-width: none !important; }

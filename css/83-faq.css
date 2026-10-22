@@ -53,7 +53,7 @@
 }
 .salty-panel .bl-faq-status b { margin-right: .4em; color: var(--salty-accent-ink, var(--salty-accent)); font-weight: 700; }
 .salty-panel .bl-faq-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 0; }
-.salty-panel .bl-faq-actions .salty-btn { flex: 1 1 200px; min-height: 44px; }
+.salty-panel .bl-faq-actions .salty-btn { flex: 1 1 200px; min-height: var(--bl-h-ctl, 36px); }   /* 7.7.6: 보통 단추 높이(누르는 칸 44 는 87-addon-touch 의 .salty-btn::after) */
 .salty-panel .salty-note + .bl-faq-actions { margin: 10px 4px 0; }
 .salty-panel .bl-faq-readme { align-self: flex-start; color: var(--salty-accent-ink, var(--salty-accent)); font-size: calc(12.5 * var(--sp)); line-height: 1.5; text-decoration: none; overflow-wrap: anywhere; }
 .salty-panel .bl-faq-readme:hover { text-decoration: underline; }

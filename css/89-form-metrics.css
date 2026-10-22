@@ -63,13 +63,15 @@ html body.salty #pt-panel .pt-page:has(> .pt-page-fixed) > .pt-page-scroll { min
   html body.salty #pt-panel > #pt-tabs { grid-template-columns:repeat(7,minmax(0,1fr)) !important; }
 }
 @media (max-width:760px), (pointer:coarse) {
-  html body.salty dialog.popup .popup-controls > .menu_button,
+  /* 7.7.6 단추 크기 하나로: 팝업 단추는 보이는 높이 = 팝업 단추 기준(--bl-h-lg, 폰 40), 누르는 칸 44 는 투명하게(단추 자신 기준). 글 칸은 44 그대로 */
+  html body.salty dialog.popup .popup-controls > .menu_button { min-height:var(--bl-h-lg, 40px) !important; position:relative; }
+  html body.salty dialog.popup .popup-controls > :is(.popup-button-ok, .popup-button-cancel, .popup-button-custom)::after { content:''; position:absolute; left:0; right:0; top:50%; height:max(100%, 44px); transform:translateY(-50%); }
   html body.salty dialog.popup .popup-input { min-height:44px !important; }
   :where(.salty-panel,.bl-ft-dialog,.bl-roomy-dialog,.bl-notes-dialog,.bl-assets-dialog,.bl-direction-dialog,.bl-ctsi-dialog,.bl-mermaid-dialog,.blpt-dialog,.blzi-dialog,.bl-translator-dialog,#cg-panel,#pt-panel,.rl-root,.pa-hub,.bwr_settings,#lv_settings,#model_register_settings,#model-switch-settings,.po-dialog,#regex-link-settings) {
     --bl-form-height:44px;
   }
   html body .salty-panel :is(.salty-fontrow,.bl-ft-group-toggle),
-  html body #lv_settings button.menu_button,
+  html body #lv_settings .lv-key button.menu_button,
   html body .po-dialog .po-hide,
   html body #pt-panel :is(.pt-btn,.pt-btn-icon,[data-setting-tab]) {
     min-height:44px !important;

@@ -222,7 +222,7 @@ await test('허브: Symbol.for(blue-lemonade.usage) 에 record · query · summa
 
 await test('연결: index.js 가 시작 때 허브를 건다 · 요청 로그가 BL 몫을 적는다 · 예산이 중계 장부를 맞춘다 · TTS 음성 · 대사 분석 · 번역 다시 표시 · README', () => {
     const index = read('index.js');
-    assert.match(index, /^import \{ startErrorLog \} from '\.\/src\/diag-errors\.js';\nimport \{ installUsageLedger \} from '\.\/src\/usage-ledger\.js';[^\n]*\ninstallUsageLedger\(\);/);
+    assert.match(index, /^(?:import '\.\/src\/tab-scroll-init\.js';\n)?import \{ startErrorLog \} from '\.\/src\/diag-errors\.js';\nimport \{ installUsageLedger \} from '\.\/src\/usage-ledger\.js';[^\n]*\ninstallUsageLedger\(\);/);
     assert.match(index, /import\('\.\/src\/storage-report\.js'\)\.then\(m => m\.registerStorageReport\(\)\)/);
     const rl = read('src/addons/perf/requestlog.js');
     assert.match(rl, /onEntry\(\(entry\) => \{\n\s+const raw = ledgerEntryFromLog\(entry\);/);

@@ -1,3 +1,4 @@
+import './src/tab-scroll-init.js';
 import { startErrorLog } from './src/diag-errors.js';
 import { installUsageLedger } from './src/usage-ledger.js';   // 7.4.0 사용량 장부 허브 — 다른 확장이 읽기 전에 (가볍다: 장부 · 가격표는 처음 쓸 때 연다)
 installUsageLedger();

@@ -6,9 +6,10 @@
 // 기능 쪽 코드가 자기 칸을 찾거나 고쳐 그리는 방식은 그대로다.
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { getSettings, saveSettings } from '../../settings.js';
+import { perfErrorText } from './start-error.js';
 
 export const SUITE_TITLE = '성능 보조';   // 7.0.3 창 제목이 「설정」이라 무슨 창인지 몰랐다 — 애드온 이름으로
-export const SUITE_VERSION = '2.3.2';
+export const SUITE_VERSION = '2.3.3';
 const BUTTON_ID = 'pa-hub-open';
 const TAB_KEY = 'pa_hub_tab';
 
@@ -107,7 +108,7 @@ root.addEventListener('change', (event) => {
 
 /** 기능을 불러오다 실패했을 때 */
 export function markBroken(id, error) {
-    note(id, `<i class="fa-solid fa-triangle-exclamation"></i> 이 기능을 켜지 못했어요: ${esc(error?.message ?? error)}`);
+    note(id, `<i class="fa-solid fa-triangle-exclamation"></i> 이 기능을 켜지 못했어요: ${esc(perfErrorText(error, 'TOOL'))}`);
 }
 
 // 4.5.3: 탭 내용은 허브가 처음 보일 때 만든다. 요청 로그의 설정 칸(panel.js 52KB)이
@@ -126,7 +127,7 @@ function runBuilders() {
     }
 }
 function runBuilder(id, build) {
-    const fail = error => { console.error('[Blue Lemonade]', error); markBroken(id, error); };
+    const fail = error => { const message=perfErrorText(error, 'PANEL'); console.error('[Blue Lemonade]', message); note(id, esc(message)); };
     try { const result = build(); if (result?.catch) result.catch(fail); } catch (error) { fail(error); }
 }
 

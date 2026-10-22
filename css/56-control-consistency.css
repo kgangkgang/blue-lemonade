@@ -192,8 +192,10 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
    값은 1/64px 단위로 맞춘다 — 크롬 배치 단위(1/64px)에서 위 · 아래 padding 이 따로 버림되어 상자마다 1/64px 씩 줄고, 긴 목록 아래쪽 글자가 한 칸씩 어긋났다.
    --bl-text-nudge-frac 는 버린 소수점만 — 높이가 정해진 flex 가운데 정렬 칸(좁은 폭 설정 고르기)은 반올림 차이까지 따르면 1px 넘게 내려가서 이것을 쓴다.
    mod() · round() · lh 를 모르는 브라우저도 0 → 예전 그대로. 크롬 계열(Edge · 안드로이드 Chrome)에서만 재 봤다 — Firefox · Safari 는 미검증 */
+/* 7.7.6 확장만 모드: 글꼴 비율 변수(--bl-font-asc …)는 :root 가 아니라 테마 창 뿌리(.salty-panel 등 — apply.js 가 테마를 끈 상태에서 변수를 다는 곳)에만 있어,
+   body 에서 계산한 보정이 무효(→ 0px)로 상속돼 설정 창 단추 글자가 0.5~1px 위에 떴다(리그 화면 사진 −1 ~ −2.3). 그 뿌리에서 한 번 더 선언해 그 자리 변수로 계산 */
 @supports (width: mod(3px, 2px)) and (width: round(1.5px, 1px)) and (width: 1lh) {
-  html body { --bl-text-nudge: round(calc(mod(calc((1lh - round(calc(var(--bl-font-asc) * 1em), 1px) - round(calc(var(--bl-font-desc) * 1em), 1px)) / 2), 1px) - (round(calc(var(--bl-font-asc) * 1em), 1px) - var(--bl-font-asc) * 1em - round(calc(var(--bl-font-desc) * 1em), 1px) + var(--bl-font-desc) * 1em) * var(--bl-ink-k) / 2), 0.015625px);
+  html body, .salty-panel, .bl-capture-dialog, .bl-tool-dialog, .bl-credits-dialog { --bl-text-nudge: round(calc(mod(calc((1lh - round(calc(var(--bl-font-asc) * 1em), 1px) - round(calc(var(--bl-font-desc) * 1em), 1px)) / 2), 1px) - (round(calc(var(--bl-font-asc) * 1em), 1px) - var(--bl-font-asc) * 1em - round(calc(var(--bl-font-desc) * 1em), 1px) + var(--bl-font-desc) * 1em) * var(--bl-ink-k) / 2), 0.015625px);
     --bl-text-nudge-frac: round(mod(calc((1lh - round(calc(var(--bl-font-asc) * 1em), 1px) - round(calc(var(--bl-font-desc) * 1em), 1px)) / 2), 1px), 0.015625px); }
 }
 /* 공통 조작부의 모양. 색 견본/스위치/사진에 사용자가 고른 모양은 별개다. */

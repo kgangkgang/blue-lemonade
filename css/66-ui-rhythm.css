@@ -15,7 +15,7 @@ body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row > spa
 /* 스위치 모양은 유지하며 실제 누르는 범위만 늘린다. */
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before { content:''; position:absolute; inset:-7px 0; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch:focus-visible { outline:2px solid var(--salty-accent); outline-offset:3px; }
-body.salty .bl-pbind .menu_button { display:inline-flex; align-items:center; justify-content:center; min-height:36px; line-height:1.4; }
+body.salty .bl-pbind .menu_button { display:inline-flex; align-items:center; justify-content:center; min-height:var(--bl-h-btn, 36px); line-height:1.4; }
 body.salty .bl-pbind-x { position:relative; flex:none; }
 body.salty .bl-pbind-x::before { content:''; position:absolute; inset:-6px; }
 body.salty .bl-pbind-chip { min-width:0; overflow-wrap:anywhere; }
@@ -37,7 +37,7 @@ body.salty .bl-pbind-list { min-height:0; }
   height:calc(100dvh - 12px)!important; max-height:calc(100dvh - 12px)!important;
   margin:auto!important;
  }
- html body .salty-panel.bl-editor .salty-sec { padding-inline:10px; }
+ html body .salty-panel.bl-editor .salty-sec { padding-inline:var(--bl-editor-gutter,20px); }
  .salty-panel.bl-editor .salty-group { margin-block:10px; }
  .salty-panel.bl-editor .bl-editor-group-head { gap:6px; }
  body.salty .bl-pbind-dialog { width:calc(100vw - 20px); padding:10px; gap:8px; }

@@ -28,3 +28,12 @@ export function forcedThemeGuard({ themeOn, now = () => Date.now(), warn = () =>
         return true;
     };
 }
+
+// Only owned checkbox colors are exposed outside the theme; host controls never use these names.
+export function checkboxTokens(vars, enabled) {
+    if (!enabled) return {};
+    return Object.fromEntries([
+        ['line', 'line'], ['control', 'control'], ['surface', 'surface'],
+        ['text', 'text'], ['muted', 'muted'], ['accent', 'accent'], ['ink', 'on-accent'], ['bg', 'bg'],
+    ].map(([name, source]) => [`--bl-checkbox-${name}`, vars[`--salty-${source}`]]));
+}

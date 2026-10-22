@@ -733,7 +733,7 @@
 }
 
 /* ===== 설정 톱니바퀴 (hub.js, 2.0.0) — 확장 서랍 맨 위 버튼 줄의 단추와 탭 창 ===== */
-:root { --pa-hub-css-version: "2.3.2"; }
+:root { --pa-hub-css-version: "2.3.3"; }
 
 .pa-hub-open {
     display: inline-flex;
@@ -798,7 +798,7 @@
 
 .pa-hub-tab.active {
     border-color: var(--pa-hub-accent);
-    box-shadow: inset 0 0 0 1px var(--pa-hub-accent);
+    box-shadow: inset 0 2px 3px var(--pa-hub-line);
     color: var(--salty-accent-ink, var(--pa-hub-accent));
 }
 

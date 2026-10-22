@@ -712,3 +712,27 @@ body.salty #pt-panel.pt-in-drawer #pt-statusbar { padding-inline:var(--bl-s2, 8p
 }
 /* 한글화 목록: 이름이 꺾일 때는 낱말 사이에서 (「실리태번 헬퍼 / 한글화」). 237px 에서는 상태 칩 자리 때문에 꺾임이 필요하다 */
 #pt-panel .pt-localization-list .pt-check > span { word-break: keep-all; }
+
+/* Top-level pages and settings topics stay in one horizontal strip. */
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav
+) {
+  display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important;
+  min-width:0; max-width:100%; overflow-x:auto !important; overflow-y:hidden !important;
+  overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch;
+}
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav
+) > :is(button,a,li,[role="tab"],[role="button"]) {
+  flex:1 0 auto !important; width:auto !important; min-width:max-content !important;
+  white-space:nowrap !important; overflow-wrap:normal !important;
+}
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav
+) > :is(button,a,li,[role="tab"],[role="button"]) > :is(span,a) { white-space:nowrap !important; overflow-wrap:normal !important; }

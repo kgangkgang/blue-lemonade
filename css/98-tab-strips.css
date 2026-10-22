@@ -1,0 +1,63 @@
+/* ===== css/98-tab-strips.css ===== */
+/* Navigation strips keep their existing typography and control heights. */
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) {
+  display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important;
+  min-width:0; max-width:100%; overflow-x:auto !important; overflow-y:hidden !important;
+  overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch;
+}
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > :is(button,a,li,[role="tab"],[role="button"]) {
+  flex:1 0 auto !important; width:auto !important; min-width:max-content !important;
+  white-space:nowrap !important; overflow-wrap:normal !important;
+}
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > :is(button,a,li,[role="tab"],[role="button"]) > :is(span,a) { white-space:nowrap !important; overflow-wrap:normal !important; }

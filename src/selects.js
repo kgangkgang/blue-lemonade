@@ -68,13 +68,39 @@ function place(box, sel) {
     const r = sel.getBoundingClientRect();
     const v = viewport();
     const gap = 6, edge = 8;
-    const width = Math.min(Math.max(r.width, 220), v.w - edge * 2);
+    // Size to the rendered labels, radio markers and padding, not the opener.
+    // max-content also measures optgroup headings and the optional search field.
+    box.style.minWidth = '0';
+    box.style.maxWidth = `${Math.max(0, v.w - edge * 2)}px`;
+    const labels = [...box.querySelectorAll('.salty-pick-rows > button > span')];
+    for (const label of labels) label.style.whiteSpace = 'nowrap';
+    box.style.width = 'max-content';
+    // Flex intrinsic sizing can omit the gap when a label is allowed to shrink.
+    // Measure the ink at its actual font size, then add the rendered row chrome.
+    const px = value => parseFloat(value) || 0;
+    const sides = el => {
+        const s = getComputedStyle(el);
+        return px(s.paddingLeft) + px(s.paddingRight) + px(s.borderLeftWidth) + px(s.borderRightWidth);
+    };
+    let needed = box.offsetWidth;
+    const rows = box.querySelector('.salty-pick-rows');
+    for (const label of labels) {
+        const row = label.parentElement, marker = row.querySelector('i');
+        const range = document.createRange();
+        range.selectNodeContents(label);
+        const s = getComputedStyle(row);
+        needed = Math.max(needed, range.getBoundingClientRect().width
+            + (marker?.getBoundingClientRect().width || 0) + px(s.columnGap)
+            + sides(row) + px(s.marginLeft) + px(s.marginRight) + sides(rows) + sides(box) + 2);
+    }
+    const width = Math.min(Math.ceil(needed), Math.max(0, v.w - edge * 2));
     const left = Math.min(Math.max(r.left, v.x + edge), v.x + v.w - width - edge);
     const below = (v.y + v.h) - r.bottom - gap - edge;
     const above = r.top - v.y - gap - edge;
     const up = below < 220 && above > below;
     const room = Math.max(120, up ? above : below);
     box.style.width = `${width}px`;
+    for (const label of labels) label.style.removeProperty('white-space');
     box.style.left = `${left}px`;
     box.style.bottom = 'auto';
     box.style.maxHeight = `${Math.min(room, v.h * 0.6)}px`;

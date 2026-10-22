@@ -28,7 +28,7 @@ export function installGuide({doc,cfg,save,openPanel,closePanel}) {
  const panel=doc.getElementById('pt-panel');if(!panel||panel.dataset.blGuide)return;
  panel.dataset.blGuide='true';panel.setAttribute('aria-label','한글화 패널');
  const header=panel.querySelector('#pt-panel-header'),tabs=panel.querySelector('#pt-tabs'),content=panel.querySelector('#pt-panel-content');
- const version=doc.createElement('button');version.type='button';version.className='pt-version';version.dataset.ptGuide='';version.textContent='v1.3.5';version.setAttribute('aria-label','한글화 패널 사용방법');header.querySelector('h3').append(version);
+ const version=doc.createElement('button');version.type='button';version.className='pt-version';version.dataset.ptGuide='';version.textContent='v1.3.6';version.setAttribute('aria-label','한글화 패널 사용방법');header.querySelector('h3').append(version);
  const settingsTab=doc.createElement('button');settingsTab.type='button';settingsTab.className='pt-tab';settingsTab.dataset.tab='settings';settingsTab.textContent='설정';tabs.append(settingsTab);
  const settingsPage=doc.createElement('div');settingsPage.id='pt-page-settings';settingsPage.className='pt-page';content.append(settingsPage);settingsPage.append(doc.getElementById('pt-settings-form'));
  const icons={localization:'language',preset:'sliders',wi:'book-open',char:'address-card',persona:'user',regex:'code',settings:'gear'};
@@ -39,7 +39,7 @@ export function installGuide({doc,cfg,save,openPanel,closePanel}) {
   for(const page of content.children){const on=page.id===`pt-page-${key}`;page.classList.toggle('active',on);page.setAttribute('role','tabpanel');page.setAttribute('aria-labelledby',`pt-main-tab-${page.id.replace('pt-page-','')}`);}
  }
  tabs.querySelectorAll('.pt-tab').forEach(tab=>tab.addEventListener('click',()=>activate(tab.dataset.tab)));
- const keyboardTabs=nav=>nav.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;const buttons=[...nav.querySelectorAll('[role="tab"]')];const current=buttons.indexOf(doc.activeElement);if(current<0)return;event.preventDefault();let next=event.key==='Home'?0:event.key==='End'?buttons.length-1:(current+(event.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;buttons[next].click();buttons[next].focus();});keyboardTabs(tabs);
+ const keyboardTabs=nav=>nav.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;const buttons=[...nav.querySelectorAll('[role="tab"]')];const current=buttons.indexOf(doc.activeElement);if(current<0)return;event.preventDefault();let next=event.key==='Home'?0:event.key==='End'?buttons.length-1:(current+(event.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;buttons[next].click();buttons[next].focus({preventScroll:true});});keyboardTabs(tabs);
  const settingsNav=doc.querySelector('.pt-settings-nav');keyboardTabs(settingsNav);
  settingsNav.querySelectorAll('button').forEach(button=>button.onclick=()=>{
   for(const tab of settingsNav.children){const on=tab===button;tab.setAttribute('aria-selected',String(on));tab.tabIndex=on?0:-1;}

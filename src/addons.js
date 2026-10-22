@@ -8,6 +8,7 @@ import { TTS_VERSION } from './addons/tts/version.js';
 import { ttsCreditsSummaryHtml } from './addons/tts/credits.js';
 import { restorePendingAddons, saveAddonsNow } from './addon-save.js';
 import { IDS as ASSIST_IDS, LABELS as ASSIST_LABELS, DUPLICATES } from './assist/core.js';
+import { perfErrorText } from './addons/perf/start-error.js';
 const running=new Set(),failed=new Map(),loading=new Set();
 let started=false,saving=0,saveError='',regexlinkStopped=false;
 // 단독 확장 폴더 후보는 assist/core.js 의 DUPLICATES 한 표만 쓴다 (첫 이름은 안내 문구용)
@@ -60,7 +61,7 @@ async function startOne(id){
         }else if(id==='translator'){
             module=await import('./addons/translator/bridge.js');await module.ready;
         }else if(id==='perf'){
-            module=await import('./addons/perf/start.js');
+            module=await import('./addons/perf/start.js');await module.ready;
             if(module.failures.length)failed.set(id,'일부 도구를 시작하지 못했어요. 세부 설정에서 확인해 주세요.');
         }else if(id==='modelswitch'){
             module=await import('./addons/modelswitch/index.js');
@@ -83,7 +84,10 @@ async function startOne(id){
         // 번역 설정 HTML 이 안 왔어도 번역 자체는 돈다 — 표시 맞추기 실패로 실패 처리하지 않는다
         if(id==='translator')try{module.syncVisibility();}catch(error){console.warn('[Blue Lemonade]',error);}
         running.add(id);
-    }catch(error){failed.set(id,'시작하지 못했어요. 새로고침 후 다시 확인해 주세요.');console.error('[Blue Lemonade]',error);}
+    }catch(error){
+        const message=id==='perf'?`시작하지 못했어요. ${perfErrorText(error)}. 새로고침 후에도 같으면 이 오류 코드를 알려 주세요.`:'시작하지 못했어요. 새로고침 후 다시 확인해 주세요.';
+        failed.set(id,message);console.error('[Blue Lemonade]',id==='perf'?message:error);
+    }
     finally{loading.delete(id);changed();}
 }
 export async function startAddons(){

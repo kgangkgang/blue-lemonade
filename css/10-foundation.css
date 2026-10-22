@@ -42,7 +42,8 @@ body.salty {
   /* 높이 */
   --bl-h-num: 32px;   /* 숫자칸 */
   --bl-h-icon: 34px;  /* 아이콘 버튼 · 거르기 칩 */
-  --bl-h-ctl: 38px;   /* 입력칸 · 글자 버튼 (같은 줄에서 높이가 맞게 하나로) */
+  --bl-h-ctl: 38px;   /* 입력칸 (입력칸 바로 옆 단추도 이 높이 — 같은 줄에서 높이가 맞게) */
+  --bl-h-btn: 34px;   /* 7.7.6 글자 버튼 (PC 34 · 폰 36, 설정 창 단추와 같은 값 — 확장 공용 단추 크기 표) */
   --bl-h-lg: 44px;    /* 팝업 버튼 · 팝업 입력칸 */
   --bl-h-menu: 44px;  /* 메뉴 항목 (폰은 한 단 낮게) */
   --bl-h-row: 46px;   /* 설정 줄 · 여닫는 줄 (설정 창 .salty-row 와 같음) */
@@ -262,6 +263,7 @@ body.salty .rm_tag_filter .tag.actionable.excluded::after {
     --bl-inset: 12px;
     --bl-h-num: 30px;
     --bl-h-ctl: 36px;
+    --bl-h-btn: 36px;
     --bl-h-lg: 40px;
     --bl-h-row: 40px;
     --bl-h-menu: 36px;

@@ -68,7 +68,7 @@
   background: var(--fr-card); color: var(--salty-text, inherit);
   font: inherit; text-align: left; cursor: pointer;
 }
-.bl-first-run .bl-fr-card[aria-pressed="true"] { border-color: var(--fr-accent); box-shadow: 0 0 0 1px var(--fr-accent); }
+.bl-first-run .bl-fr-card[aria-pressed="true"] { border-color: var(--fr-accent); box-shadow: inset 0 2px 3px var(--fr-line); }
 .bl-first-run .bl-fr-name { display: flex; align-items: center; gap: .4em; min-width: 0; color: var(--salty-text, inherit); font-size: var(--bl-fs-sub, 13px); font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; word-break: keep-all; }
 .bl-first-run .bl-fr-card[aria-pressed="true"] .bl-fr-name::after { content: "\f00c"; margin-left: auto; color: var(--salty-accent-ink, var(--fr-accent)); font: var(--fa-font-solid, 900 1em/1 "Font Awesome 6 Free"); }
 

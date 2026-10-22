@@ -47,13 +47,13 @@ body.salty.salty-persona-tall #PersonaManagement #persona_description { min-heig
 body.salty.salty-persona-tall #PersonaManagement #persona_description:not([style*="height"]) { height:clamp(240px,36dvh,360px); }
 body.salty #PersonaManagement .persona_management_current_persona > .flex-container { column-gap:10px; row-gap:8px; }
 body.salty #PersonaManagement #persona_connections_buttons { flex-wrap:wrap!important; gap:8px 10px!important; }
-body.salty #PersonaManagement #persona_connections_buttons > .menu_button { flex:1 1 7em; height:auto; min-height:36px; padding:6px 8px!important; }
+body.salty #PersonaManagement #persona_connections_buttons > .menu_button { flex:1 1 7em; height:auto; min-height:var(--bl-h-btn, 36px); padding:6px 8px!important; }
 body.salty #PersonaManagement #persona_connections_buttons > .menu_button > div { white-space:normal; overflow:visible; }
 
 /* 봇 편집: 프로필 도구의 반복 여백을 줄이고 제목/액션 사이 여유는 남긴다. */
 body.salty #right-nav-panel #avatar-and-name-block { border-radius:var(--bl-r-md); }
 body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block { gap:8px!important; }
-body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block > .menu_button { height:auto!important; min-height:36px!important; padding:6px!important; }
+body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block > .menu_button { height:auto!important; min-height:var(--bl-h-btn, 36px)!important; padding:6px!important; }
 body.salty #right-nav-panel #rm_button_selected_ch h2 { letter-spacing:var(--salty-ui-ls,normal); }
 body.salty #right-nav-panel .title_restorable { flex-wrap:wrap; column-gap:10px; row-gap:8px; }
 body.salty #character_popup #depth_prompt_div > div:last-child { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.5fr); gap:8px 14px; }
@@ -85,7 +85,7 @@ body.salty #rm_extensions_block #qr--settings :is(#qr--global,#qr--chat,#qr--cha
   body.salty #rm_extensions_block #qr--settings .qr--visible { grid-column:2; justify-self:start; }
 }
 body.salty #regex_container .inline-drawer-content > .flex-container:first-child { grid-template-columns:repeat(auto-fit,minmax(min(100%,8em),1fr)); gap:8px!important; }
-body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button { min-height:36px; padding:6px 8px!important; gap:8px!important; }
+body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button { min-height:var(--bl-h-btn, 36px); padding:6px 8px!important; gap:8px!important; }
 body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button > small { font-size:var(--bl-fs-sub)!important; }
 body.salty #regex_container .regex-script-label { gap:10px!important; }
 body.salty #regex_container .regex-script-label > .flex-container { flex-wrap:wrap; gap:6px!important; }

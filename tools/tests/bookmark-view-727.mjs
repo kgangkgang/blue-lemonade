@@ -185,7 +185,7 @@ await test('보기 고르기: 칩 세 개 · 고르면 애드온 설정(전체)�
     assert.match(panel, /const images = viewMode\(\) === 'text' \? '' : renderImagesHtml\(fav, \{ removable: !fav\.virtual \}\);/);
     assert.match(panel, /return view\.allMessages \? 'all' : normalizeViewMode\(settings\(\)\.viewMode\);/);
     const css = read('src/addons/bookmarks/style.css');
-    assert.match(css, /@media \(pointer: coarse\) \{\n    \.cg-root \.cg-view \{ height: 44px; \}\n\}/);
+    assert.match(css, /@media \(pointer: coarse\) \{\n    \.cg-root \.cg-view \{ height: var\(--bl-h-ctl, 36px\); /);   // 7.7.6 보통 단추 높이(누르는 칸 44 는 87-addon-touch)
     assert.match(css, /\.cg-root \.cg-view \{[^}]*flex: 1 1 0;[^}]*white-space: nowrap;/);
 });
 
@@ -199,8 +199,8 @@ await test('설정 저장: viewMode 기본 all, 모르는 값은 all 로, 고른
 });
 
 await test('판 · CI: 북마크 1.7.1 (JS = CSS) · 이 시험이 release-check.yml 에', () => {
-    assert.match(read('src/addons/bookmarks/state.js'), /export const VERSION = '1\.7\.4';/);
-    assert.match(read('src/addons/bookmarks/style.css'), /--cg-css-version: "1\.7\.4";/);
+    assert.match(read('src/addons/bookmarks/state.js'), /export const VERSION = '1\.7\.5';/);
+    assert.match(read('src/addons/bookmarks/style.css'), /--cg-css-version: "1\.7\.5";/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/bookmark-view-727\.mjs \./);
 });
 

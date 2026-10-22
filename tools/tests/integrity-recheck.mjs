@@ -73,7 +73,7 @@ await t('배선: preferences-safety 가 recheckInstalled 로 보고 · 낡으면
     assert.match(src, /const installed=await recheckInstalled\(\{hashes:FILE_HASHES,reloadHashes:\(\)=>readHashesFresh\(fs\.readFileSync\(new URL\('src\/build-info\.js',root\),'utf8'\)\),/);
     assert.ok(!src.includes('assert.equal(installed.failures.length,0)'), '바로 assert 하지 않는다 — 다른 검사도 돌고 까닭을 남긴다');
     assert.match(src, /if\(stale\)\{console\.error\(stale\);[^\n]*process\.exitCode=1;\}/);
-    const ci = fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8');
+    const ci = fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8').replace(/\r\n/g, '\n');
     assert.match(ci, /node tools\/tests\/integrity-recheck\.mjs \.\n\s+node tools\/tests\/preferences-safety\.mjs \./);
 });
 

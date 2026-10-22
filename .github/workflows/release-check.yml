@@ -51,6 +51,7 @@ jobs:
           node tools/tests/stream-follow.mjs .
           node tools/tests/stream-watchdog.mjs .
           node tools/tests/perf-bundle-645.mjs .
+          node tools/tests/perf-start.mjs .
           node tools/tests/style-dedupe.mjs .
           node tools/tests/translator-leak.mjs .
           node tools/tests/translator-comments.mjs .
@@ -214,6 +215,8 @@ jobs:
           node tools/tests/addon-touch-targets.mjs .
           node tools/tests/puffy-rollback.mjs .
           node tools/tests/perf-help-touch.mjs .
+          node tools/tests/align-check.mjs .
+          node tools/tests/tab-scroll.mjs .
           node tools/tests/tts-reanalysis-guard.mjs .
           node tools/tests/addon-note-master-off.mjs .
           node tools/tests/popup-outside-close.mjs .

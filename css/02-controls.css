@@ -4,7 +4,7 @@
 /* ---------- 버튼 · 입력칸 ---------- */
 /* 보조 버튼(기본): 떠 있는 칩(e2) — 누르면 가라앉음 */
 body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) {
-  min-height: var(--bl-h-ctl);
+  min-height: var(--bl-h-btn, var(--bl-h-ctl));   /* 7.7.6 글자 버튼 높이(PC 34 · 폰 36), 입력칸 바로 옆은 아래 규칙으로 입력칸 높이 */
   gap: var(--bl-s2);
   padding: 0 var(--bl-inset) !important;
   border: 0 !important;
@@ -109,6 +109,11 @@ body.salty .welcomePanel .welcomeShortcuts .menu_button {
 body.salty :is(.menu_button, .list-group-item, .interactable):focus-visible {
   outline: none !important;
   box-shadow: var(--bl-ring), var(--bl-e2) !important;
+}
+
+/* 7.7.6 입력칸 바로 뒤에 붙은 글자 단추는 입력칸과 같은 높이 — 같은 줄에서 단추만 낮아 보이지 않게 (:has 는 쓰지 않음 — 긴 채팅에서 다시 계산이 커짐) */
+body.salty :is(.text_pole, select, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"])) + .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) {
+  min-height: var(--bl-h-ctl);
 }
 
 /* 입력칸 — 시트 위: 흰 면이 살짝 떠 있음(e1) */

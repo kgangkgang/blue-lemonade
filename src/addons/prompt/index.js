@@ -1,3 +1,4 @@
+import { installTabScroll } from '../../tab-scroll.js';
 import { showThemeModal } from '../../modal.js';
 import { openHelpSheet } from '../../help-sheet.js';
 import { listAllPersonas, readPersonaFields, personaBackup, personaUpdate, exportPersonaData, currentPersona, writePersonaUpdate } from './persona.js';
@@ -4716,6 +4717,7 @@ function buildPanel() {
             </div>
         </div>`;
     PDOC.body.appendChild(panel);
+    installTabScroll(['#pt-tabs', '.pt-settings-nav', '.pt-help-dialog > nav'], PDOC);
 
     panel.querySelectorAll('.pt-tab').forEach(tab=>tab.addEventListener('click',()=>{
         panel.querySelectorAll('.pt-tab').forEach(t=>t.classList.remove('active'));

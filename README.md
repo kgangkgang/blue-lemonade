@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.5/blue-lemonade-7.7.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.6/blue-lemonade-7.7.6.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,20 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.7.5 · 최신 업데이트</summary>
+<summary>7.7.6 · 최신 업데이트</summary>
+
+- PC 글자 단추는 34px, 폰은 36px로 맞췄어요. 폰 팝업의 확인·취소 단추는 보이는 높이를 줄이고 누르는 영역은 유지해요.
+- 일반 체크박스의 체크가 겹치지 않도록 모양을 정리하고, 「확장만」 모드의 내장 도구에도 같은 모양을 적용해요. 나이트의 일반 단추는 윗면 빛과 얕은 그림자로 배경과 구분해요.
+- 스위치 손잡이는 밝기와 켜짐 상태에 관계없이 흰색으로 유지해요.
+- 고르기 목록은 글자와 선택 표시에 맞는 너비로 열려요. 짧은 항목의 불필요한 여백을 줄이고 긴 항목은 화면 안에서 읽을 수 있게 해요.
+- 설정 화면마다 달랐던 좌우 여백을 맞추고, 좁은 화면의 상단 메뉴는 한 줄에서 좌우로 이동할 수 있게 정리해요.
+- 모델 전환 창의 추가 단추가 닫기 단추와 겹치지 않게 하고, 설정 화면 일부 글자와 아이콘 정렬을 다듬었어요.
+- 성능 보조에서 일부 도구의 실패 표시 때문에 나머지 도구까지 시작하지 못하던 경로를 보완했어요. 시작 실패가 계속되면 원인을 좁힐 수 있도록 단계별 오류 코드를 표시해요.
+
+</details>
+
+<details>
+<summary>7.7.5 · 전개 지시 순서 바꾸기 · 스위치 손잡이 그림자</summary>
 
 - 전개 지시: 프롬프트 쪽에서 줄을 꾹 누른 채 위아래로 끌면 순서를 바꿀 수 있어요. 위에 있는 프롬프트부터 차례로 들어가요. PC 에서는 마우스로 끌거나 Alt+↑/↓ 로 옮겨요.
 - 스위치 손잡이: 켜기/끄기 스위치의 동그라미를 확장 켜기 스위치처럼 부드러운 그림자로 바꿨어요. 7.7.4 의 아래 두께는 걷었고, 글자 단추의 볼록 모양은 그대로예요.

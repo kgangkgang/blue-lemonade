@@ -1194,6 +1194,9 @@ body.salty-dark .salty-shapes button.on {
 /* 되돌릴 수 없는 것 (처음 설정으로) */
 .salty-btn.salty-btn-danger {
   color: var(--danger);
+  /* 7.7.6 단추 면(--bl-control) 위 빨간 글자가 나이트에서 4.26 : 1 (AA 4.5 아래, 리그 실측) → 같은 빨강에 본문 글자색을 20% 섞어 AA 위로.
+     나이트는 조금 밝게, 화이트는 조금 진하게 — 새 색을 만들지 않고 팔레트의 두 색만 섞음 */
+  color: color-mix(in oklab, var(--danger) 80%, var(--salty-text));
 }
 .salty-btns {
   display: flex;

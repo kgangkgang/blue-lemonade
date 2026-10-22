@@ -572,7 +572,7 @@ body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_b
   order: 2;
   flex: 1 1 auto;
   min-width: 0;
-  min-height: var(--bl-h-ctl) !important;
+  min-height: var(--bl-h-btn, var(--bl-h-ctl)) !important;
   gap: 6px !important;
   margin: 0 !important;
   padding: 0 10px !important;

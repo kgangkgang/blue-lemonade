@@ -217,6 +217,10 @@ body.salty #user-settings-block #account_controls {
   flex: 0 0 auto;
   gap: var(--bl-s2);
 }
+/* 7.7.6 계정 단추는 같은 줄 찾기 칸 바로 앞 — 입력칸 높이(--bl-h-ctl)로 */
+body.salty #user-settings-block #account_controls > .menu_button {
+  min-height: var(--bl-h-ctl);
+}
 /* 찾기 칸: 돋보기 + 한 줄 */
 body.salty #user-settings-block #settingsSearch {
   height: var(--bl-h-ctl) !important;

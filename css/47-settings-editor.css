@@ -1,5 +1,5 @@
 /* ===== css/47-settings-editor.css ===== */
-html body .salty-panel.bl-editor { position:relative; display:flex; flex-direction:column; container:bl-editor / inline-size; height:min(780px,82dvh); min-height:320px; min-width:0; padding:0 !important; overflow:hidden; --pp:0px; --salty-navh:0px; --bl-editor-line:var(--salty-line); background:var(--bl-settings-cover); }
+html body .salty-panel.bl-editor { position:relative; display:flex; flex-direction:column; container:bl-editor / inline-size; height:min(780px,82dvh); min-height:320px; min-width:0; padding:0 !important; overflow:hidden; --pp:0px; --bl-editor-gutter:20px; --salty-navh:0px; --bl-editor-line:var(--salty-line); background:var(--bl-settings-cover); }
 html body dialog.popup.bl-settings-dialog:not(.bl-settings-fullscreen):has(.salty-panel.in-popup) { width:min(1120px,96vw) !important; max-width:96vw !important; height:min(880px,92dvh) !important; max-height:92dvh !important; padding:0 !important; }
 html body dialog.bl-settings-dialog .popup-body { height:100%; min-height:0; padding:0 !important; overflow:hidden; }
 html body dialog.bl-settings-dialog .popup-content { flex:1; height:100%; min-height:0; overflow:hidden !important; padding:0 !important; margin:0; scrollbar-gutter:auto !important; }
@@ -16,13 +16,13 @@ html body .bl-editor .bl-settings-toprow :is([data-compare], .bl-settings-expand
 .bl-editor-choose span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:650; font-size:calc(14 * var(--sp)); }
 .bl-editor .bl-settings-toprow svg { width:16px; height:16px; flex:none; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
 .bl-editor .bl-editor-workspace { flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
-.bl-editor-stage { flex:none; min-width:0; padding:8px 10px 0; background:var(--salty-panel-surface,var(--salty-surface)); border-bottom:1px solid var(--bl-editor-line); overflow:hidden; }
+.bl-editor-stage { flex:none; min-width:0; padding:8px var(--bl-editor-gutter) 0; background:var(--salty-panel-surface,var(--salty-surface)); border-bottom:1px solid var(--bl-editor-line); overflow:hidden; }
 .bl-editor-caption { color:var(--salty-muted); font-size:calc(11 * var(--sp)); margin:0 0 6px; }
 .bl-editor .bl-editor-workspace:has(.salty-prevbox.folded) { display:flex !important; flex-direction:column; }
-.bl-editor .bl-editor-stage:has(.salty-prevbox.folded) { flex:none; padding:0 10px; border:0; border-bottom:1px solid var(--bl-editor-line); }
+.bl-editor .bl-editor-stage:has(.salty-prevbox.folded) { flex:none; padding:0 var(--bl-editor-gutter); border:0; border-bottom:1px solid var(--bl-editor-line); }
 .bl-editor-stage:has(.salty-prevbox.folded) .bl-editor-caption { display:none; }
 html body .bl-editor .bl-editor-stage .salty-prevbox { position:relative; inset:auto; width:100%; margin:0; padding:0 0 20px; box-shadow:none; background:transparent !important; } /* 5.6.4 아래 20px = 접기 꺾쇠 자리(css/28, 높이 20 · bottom:0). 12px 이면 꺾쇠가 확대 · 높이 · ↺ 줄 아래 8px 를 덮었다 — panel.js prevBox() 의 상자엔 꺾쇠가 늘 있다 */
-html body .bl-editor .salty-sec { flex:1; min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable both-edges; margin:0; padding:10px 10px 16px; text-align:left; }
+html body .bl-editor .salty-sec { flex:1; min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable both-edges; margin:0; padding:10px var(--bl-editor-gutter) 16px; text-align:left; }
 .bl-editor-group { border-top:1px solid var(--bl-editor-line); }
 html body .bl-editor-group-toggle { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; margin:0; padding:calc(6px + var(--bl-text-nudge, 0px)) 0 calc(6px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; min-height:38px; border:0; border-radius:0; background:transparent; color:var(--salty-text); font:inherit; font-size:calc(14 * var(--sp)); font-weight:600; text-align:left; box-shadow:none; }
 .bl-editor-group-toggle::after { content:'+'; color:var(--salty-muted); font-size:calc(18 * var(--sp)); font-weight:400; }
@@ -53,10 +53,14 @@ html body .bl-editor .bl-editor-group-body > .bl-prompt-tools > .salty-group { m
 .bl-editor-directory .salty-mark { width:24px; height:28px; }
 .bl-editor-directory .salty-title { font-size:calc(15 * var(--sp)); }
 .bl-editor-directory .salty-sub { display:none; }
+@container bl-editor (max-width:350px) {
+  .bl-editor-workspace { --bl-editor-gutter:16px; }
+}
 @container bl-editor (min-width:800px) {
+  .bl-editor-workspace { --bl-editor-gutter:24px; }
   .bl-editor .bl-editor-workspace:not(.bl-editor-no-preview) { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); }
-  .bl-editor .bl-editor-stage { display:flex; flex-direction:column; min-height:0; padding:12px 14px; border:0; border-right:1px solid var(--bl-editor-line); }
-  html body .bl-editor .salty-sec { padding:12px 14px 18px; }
+  .bl-editor .bl-editor-stage { display:flex; flex-direction:column; min-height:0; padding:12px var(--bl-editor-gutter); border:0; border-right:1px solid var(--bl-editor-line); }
+  html body .bl-editor .salty-sec { padding:12px var(--bl-editor-gutter) 18px; }
   .bl-editor .bl-editor-caption { margin-bottom:8px; }
   .bl-editor .bl-editor-stage .salty-prevbox { margin-block:auto; }
 }
