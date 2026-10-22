@@ -7,6 +7,7 @@ const root = path.resolve(process.argv[2] || '.'), dir = path.join(root, 'src/ad
 const source = fs.readFileSync(path.join(dir, 'index.js'), 'utf8');
 const auto = await import(pathToFileURL(path.join(dir, 'context-auto.js')));
 const { requestCurrentConnection } = await import(pathToFileURL(path.join(dir, 'current-connection.js')));
+const { withPromptCache } = await import(pathToFileURL(path.join(root, 'src/prompt-cache.js')));   // 7.7.2 callLLMAPI 가 부른다
 function cut(name) {
     const start = source.search(new RegExp(`\\n(?:async )?function ${name}\\(`)); assert(start >= 0, name);
     return source.slice(start + 1, source.indexOf('\n}', start + 1) + 2);
@@ -22,7 +23,7 @@ function fixture() {
             mes: `message-${i} ` + 'complete words '.repeat(12), extra: {} })), characters: [] };
     const sent = [], counted = [], logs = [], saved = [];
     const $ = () => ({ text(value) { logs.push(value); return this; }, val() { return this; }, toggle() { return this; }, prop() { return this; } });
-    const env = { ...auto, requestCurrentConnection, extensionSettings: settings, getContext: () => context, document: { getElementById: () => null }, $,
+    const env = { ...auto, requestCurrentConnection, withPromptCache, extensionSettings: settings, getContext: () => context, document: { getElementById: () => null }, $,
         getMaxPromptTokens: () => context.chatCompletionSettings.openai_max_context - context.chatCompletionSettings.openai_max_tokens,
         getMaxContextTokens: () => context.chatCompletionSettings.openai_max_context,
         autoRequestSignature: () => JSON.stringify([settings.connection_mode, settings.llm_provider, settings.llm_model, settings.parameters, settings.profile_max_tokens, context.mainApi, context.chatCompletionSettings]),

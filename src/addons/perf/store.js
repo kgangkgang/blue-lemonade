@@ -114,13 +114,6 @@ export async function listEntries({ limit = 50, before = null, inclusive = false
     });
 }
 
-export async function countEntries() {
-    const db = await openDb();
-    if (!db) return memory.entries.length;
-    const store = db.transaction(ENTRIES, 'readonly').objectStore(ENTRIES);
-    return requestToPromise(store.count());
-}
-
 /**
  * 오래된 기록을 정리한다: maxEntries를 넘는 것은 지우고, keepBodies보다 오래된 것은 본문(프롬프트·응답)을 비운다.
  * 날짜별 집계는 건드리지 않는다.
@@ -301,11 +294,4 @@ export async function putRelayDaily(rows) {
         transaction.onerror = () => reject(transaction.error);
         transaction.onabort = () => reject(transaction.error);
     });
-}
-
-export async function clearRelayDaily() {
-    const db = await openDb();
-    memory.relay.clear();
-    if (!db) return;
-    await tx(db, RELAY, 'readwrite', store => store.clear());
 }

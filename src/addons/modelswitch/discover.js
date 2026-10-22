@@ -110,7 +110,6 @@ export function findNodes(settings, sources) {
     return out;
 }
 
-const pathText = path => Array.isArray(path) ? path.join('.') : String(path);
 /** 스스로 등록한 확장이 settingsKey(+path)로 알린 자리는 뺀다 (path 는 'a.b' 또는 ['a','b']) */
 export function skipRegistered(nodes, key, registered) {
     // 6.7.2 스스로 등록한 확장은 자기 설정 칸을 스스로 책임진다 — 등록한 자리 밖의 칸도 자동 줄로 만들지 않는다

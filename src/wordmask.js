@@ -132,6 +132,5 @@ export function stopMask() {
     return chat ? unmaskIn(chat) : 0;
 }
 export const isMasking = () => active;
-export const maskWordsNow = () => words.slice();
 /** features.js syncFeatures: 테마를 끄면(enabled false) 가리기도 전부 뗀다 */
 export function syncWordMask(on) { if (!on && active) stopMask(); }

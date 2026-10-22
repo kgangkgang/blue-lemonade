@@ -20,7 +20,6 @@ let revision=0;
 const ALIVE_KEYS={korean:'__sillyTavernKoreanUI_v1',helper:'__tavernHelperKoreanUI_v1'}; // 내장 스크립트가 도는 동안 걸어 두는 표시
 const deaths=[],restarts=new Map();let wanted=false;
 const restartBlocked=id=>(restarts.get(id)||[]).filter(at=>Date.now()-at<600000).length>6;
-export const scriptDeaths=()=>deaths.slice(-6);
 function died(id,frame,why){
     const item=running.get(id);if(!item||item.frame!==frame)return; // stop() 이 닫은 것이거나 이미 새 틀로 바뀜
     deaths.push(`${id} ${why} ${new Date().toTimeString().slice(0,8)}`);if(deaths.length>20)deaths.shift();

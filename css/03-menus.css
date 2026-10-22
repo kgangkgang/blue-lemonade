@@ -200,8 +200,6 @@ body.salty .popup :focus:not(:focus-visible) {
    margin-bottom: 좌우 margin 은 그대로 — toastr 가운데 정렬(auto)
    opacity: !important 금지: 페이드 인라인 opacity 를 막지 않게 (toastr 의 .8 은 특이도로 이미 이김) */
 /* 상태 동그라미 · 띠 · 굵은 제목은 아래 surfaces:semantic 칸에서 그림 (예전 8px 호박 점은 지움) */
-/* 3.0.0: 여기 있던 규칙 'body.salty #toast-container .toast-title' 은 지움 — margin-bottom · font-weight → css/17-semantic.css (같은 선택자 규칙이 덮음) */
-/* 3.0.0: 여기 있던 규칙 'body.salty #toast-container > .toast-error .toast-title' 은 지움 — font-weight → css/17-semantic.css (같은 선택자 규칙이 덮음) */
 
 /* 풍선 도움말(jQuery UI): 뒤집힌 작은 칩 — 새로 만들지는 않음 */
 body.salty .ui-tooltip {

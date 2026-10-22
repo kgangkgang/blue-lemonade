@@ -23,7 +23,6 @@ import { createCodeGuard, isClickTrigger, CODE_SWITCH_KEYS } from './switchcode.
 import { createEmptyGuard, GUARD_STATUS, GUARD_ERROR, createSaveFailMute } from './emptyguard.js';
 
 const MODULE = 'save_dedupe';
-const FOLDER = 'blue-lemonade'; // 2.0.0 성능 보조로 합침
 const VERSION = '1.1.7'; // 1.1.6 빈 채팅 덮어쓰기 막기 · 1.1.7 막은 뒤 실리태번의 저장 실패 알림은 숨김 (style.css 의 --sv-css-version 도 함께)
 const TITLE = '저장 정리';
 const SAVE_PATHS = ['/api/chats/save', '/api/chats/group/save'];

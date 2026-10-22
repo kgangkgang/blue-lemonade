@@ -41,6 +41,7 @@ import { createTextGenGenerationData, getTextGenModel } from '../../../../../../
 import { matchingTranslation, translationFromDisplay } from './archive-bridge.js';
 import { rememberSource, recordedSource, forgetSource, pruneSource } from './translation-source.js';   // 6.9.5 번역 기기 간 공유 — 고칠 때 필요한 번역 글을 채팅 파일에도
 import * as LiveModels from '../../live-models.js'; // [2.2.8] 공용 모델 목록 · 모델별 요청 규칙
+import { withPromptCache, pureMacros } from '../../prompt-cache.js';   // 7.7.2 프롬프트 캐시 (Claude 직접 연결)
 import { whenMainChatIdle } from '../../main-chat-rules.js';   // 6.5.3 「생성 중」 = 본채팅 생성 · 테마의 붙잡음만 (조용한 생성 · 헬퍼 generate 는 기다리지 않음)
 import {
     eventSource,
@@ -179,6 +180,7 @@ const defaultSettings = {
     translation_autofix: false,  // 7.2.6 점검이 의심 문단을 자동으로 다시 번역(유료 요청 ≤3/메시지)할지 — 전에는 점검과 한 스위치였다 (api-audit #5). 끄면 표시 · 단추만
     reasoning_translate: true,   // 2.6.0 생각 블록 카드의 「번역해서 보기」
     keep_korean_source: true,    // 2.7.9 한국어로 옮길 때 이미 한국어인 문단 · 대사는 보내지 않고 그대로 (korean-keep.js)
+    prompt_cache: true,          // 7.7.2 채팅 번역은 지시문을 앞에 두고 Claude 직접 연결이면 그 앞부분을 캐시 (끄면 예전 요청 그대로)
     hide_delete_button: true,
     use_reverse_proxy: false,
     reverse_proxy_url: '',
@@ -540,6 +542,7 @@ function loadSettings() {
     $('#llm_translation_autofix').prop('checked', extensionSettings.translation_autofix === true);   // 7.2.6
     $('#llm_reasoning_translate').prop('checked', extensionSettings.reasoning_translate !== false);   // 2.6.0
     $('#llm_keep_korean').prop('checked', extensionSettings.keep_korean_source !== false);   // 2.7.9
+    $('#llm_prompt_cache').prop('checked', extensionSettings.prompt_cache !== false);   // 7.7.2
 
     // llmContext 설정 로드
     syncContextRangeUI();
@@ -1476,7 +1479,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
             // 2026-10-06: 텍스트 완성 설정엔 max_new_tokens 가 없어 늘 2048 이었다 — 실리태번 응답 길이(amount_gen)를 따르되 2048 아래로는 안 줄인다
             buildText: (settings, input, limit) => createTextGenGenerationData(settings, getTextGenModel(settings), createRawPrompt(input, 'textgenerationwebui', false, false, '', ''), limit || settings.max_new_tokens || textOutputLimit(), false, false, null, 'quiet'),
             log: globalThis[Symbol.for('st.request-log.v1')],
-            preparePayload: payload => prepareAutoTranslationPayload(payload, overrides, Number(getContext().chatCompletionSettings?.openai_max_context) || null),
+            preparePayload: async payload => withPromptCache(await prepareAutoTranslationPayload(payload, overrides, Number(getContext().chatCompletionSettings?.openai_max_context) || null), overrides.promptCache),   // 7.7.2
             // 2.6.2 묶음 번역 흘려받기 — 실리태번 ChatCompletionService 와 같은 본문 · 같은 오류 (null = 예전 요청 그대로)
             stream: typeof overrides.onStream === 'function' ? async (live, payload, signal, touch) => {   // 7.1.3 touch: 글이 올 때마다 현재 연결의 제한 시간을 다시 센다
                 const body = typeof live.ChatCompletionService?.createRequestData === 'function' ? live.ChatCompletionService.createRequestData(payload) : payload;
@@ -1602,7 +1605,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
         parameters.proxy_password = extensionSettings.reverse_proxy_password;
     }
 
-    const preparedParameters = await prepareAutoTranslationPayload(parameters, overrides);
+    const preparedParameters = withPromptCache(await prepareAutoTranslationPayload(parameters, overrides), overrides.promptCache);   // 7.7.2 고정 지시문 끝에 cache_control (Claude 직접 연결만)
     overrides.signal?.throwIfAborted?.();
     // [1.8.7] 호출별 제한 시간 (중계 서버 앞의 Cloudflare 는 100초에 524로 끊는다)
     // 7.1.2: 기본 제한 시간을 응답 길이에 맞춘다 — 7.0.9 부터 묶음이 응답 길이만큼 커져 큰 번역은 90초를 넘는 게 정상이다.
@@ -1834,6 +1837,7 @@ async function translate(text, options = {}) {
     const chatGuard = guards.capture();
     const connection = connectionSignature();
     let autoContextGuard = null;
+    const cacheHeads = new Map();   // 7.7.2 캐시 배치(1) 프롬프트 → 그 고정 앞부분 (치환 뒤) — buildFullPrompt 가 채우고 request 가 붙인다
     const watcher = watchGuard(() => {
         chatGuard.assert(); options.assertValid?.();
         if (JSON.stringify(chatGlossarySignature(getContext().chatMetadata)) !== chatTermStamp) throw Object.assign(Error('이 채팅의 표기가 바뀌어 번역을 멈췄어요. 다시 번역해 주세요.'), {cancelled:true});
@@ -1845,7 +1849,7 @@ async function translate(text, options = {}) {
         options.onRequest?.();
         // [BL 7.4.0] 요청 로그 · 사용량 장부의 용도: 화살표 다시 번역(교정)과 보낼 글 번역을 채팅 번역과 따로 센다
         const purpose = options.requestPurpose || (options.isRetranslation ? 'translation.retranslate' : options.isInputTranslation ? 'translation.input' : undefined);
-        const result = await callLLMAPI(prompt, { signal: watcher.signal, ...(purpose ? { requestPurpose: purpose } : {}), ...extra });
+        const result = await callLLMAPI(prompt, { signal: watcher.signal, ...(purpose ? { requestPurpose: purpose } : {}), ...(cacheHeads.has(prompt) ? { promptCache: cacheHeads.get(prompt) } : {}), ...extra });
         watcher.check(); autoContextGuard?.assert(); return result;
     };
     try {
@@ -1950,6 +1954,9 @@ async function translate(text, options = {}) {
         const paragraphParts = options.segmentCache && !isInputTranslation && !isRetranslation && !options.noChunks ? segmentParagraphs(maskedText) : null;
 
         // [2.0.4] 배치 0 = 예전 그대로. 1 · 2 는 입력 필터에 막혔을 때만 쓰는 다시 보내기용 (내용은 같고 순서 · 머리말만 다르다)
+        // 7.7.2 프롬프트 캐시(기본 켬): 채팅 번역은 배치 1(규칙 · 지시문이 맨 앞, 용어집 · 본문은 뒤)부터 — 묶음 · 메시지마다 같은 앞부분이라
+        //       Claude 직접 연결은 그 끝에 cache_control, Gemini · OpenAI 는 자동 캐시가 맞는다. 끄면 예전 순서 · 예전 본문 그대로
+        const cacheFirst = extensionSettings.prompt_cache !== false && !isInputTranslation && !isRetranslation && options.prompt === undefined && !options.requestPurpose;
         const buildFullPrompt = (layout, body = maskedText) => {
             let built = finalPrompt;
 
@@ -1959,6 +1966,7 @@ async function translate(text, options = {}) {
             }
 
             const terms = paragraphParts ? buildGlossaryBlock(body, { reverse: false }) : glossaryBlock;
+            const head = cacheFirst && (layout === 1 || (layout === 0 && !terms)) && pureMacros(built) ? built : null;   // 7.7.2 용어집이 없으면 배치 0 도 지시문이 맨 앞
             if (terms) {
                 built = layout === 1 ? `${built}\n\n${terms}` : `${terms}\n\n${built}`;
             }
@@ -1984,9 +1992,11 @@ async function translate(text, options = {}) {
 
             // 플레이스홀더 치환 (커스텀 먼저, 기본 매크로 다음)
             built = substituteCustomPlaceholders(built, isInputTranslation);
-            return substituteParams(built);
+            const full = substituteParams(built);
+            if (head !== null) { const fixed = substituteParams(substituteCustomPlaceholders(head, isInputTranslation)); if (full.startsWith(fixed)) cacheHeads.set(full, fixed); }
+            return full;
         };
-        const PROMPT_LAYOUTS = (paragraphParts || glossaryBlock) ? [0, 1, 2] : [0, 2];
+        const PROMPT_LAYOUTS = (paragraphParts || glossaryBlock) ? (cacheFirst ? [1, 0, 2] : [0, 1, 2]) : [0, 2];
         const chunks = !isInputTranslation && !isRetranslation && !options.noChunks ? splitForChunks(maskedText) : [];
         // 프롬프트는 처음 쓸 때 한 번만 만든다 (예전엔 모든 문단 × 3 배치를 캐시 조회 전에 미리 만들어 용어집 검색 · 매크로 치환이 수백 번 돌았다).
         // 채팅이 바뀐 뒤에는 만들지 않는다 (다른 채팅의 매크로가 들어가지 않게 watcher 가 먼저 멈춘다).
@@ -5903,6 +5913,11 @@ function initializeEventHandlers() {
     // 2.7.9 이미 한국어인 부분은 보내지 않기 — 다음 번역부터 (그려진 번역문은 그대로)
     $('#llm_keep_korean').on('change', function () {
         extensionSettings.keep_korean_source = $(this).is(':checked');
+        saveSettingsDebounced();
+    });
+    // 7.7.2 프롬프트 캐시 — 다음 번역부터 (문단 캐시 열쇠는 그대로라 저장한 번역도 그대로 쓴다)
+    $('#llm_prompt_cache').on('change', function () {
+        extensionSettings.prompt_cache = $(this).is(':checked');
         saveSettingsDebounced();
     });
     $('#force_sequential_matching').on('change', function () {

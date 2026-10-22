@@ -15,7 +15,6 @@ const SLOT_SOURCE = '<span class="bl-asset-slot" data-asset-slot="([\\w-]+)"></s
  *  (그림 확장이 같은 자리에 제 그림을 넣을 수 있게). 자리와 같은 꼴이라 번역기 · 다시 쓰기 · TTS 가 자리처럼 지킨다 */
 export const GONE_CLASS = 'bl-asset-gone';
 export const goneMarkup = id => `<span class="${GONE_CLASS}" data-asset-was="${id}"></span>`;
-export const GONE_RE = /<span class="bl-asset-gone" data-asset-was="[\w-]+"><\/span>/g;
 /** 번역기에 등록할 보호 규칙 (번역하지 않고 제자리에 한 번만) — 자리와 뗀 표시 둘 다 */
 export const PROTECT_RE = /<span class="bl-asset-(?:slot" data-asset-slot|gone" data-asset-was)="[\w-]+"><\/span>/g;
 const slotRe = () => new RegExp(SLOT_SOURCE, 'g');

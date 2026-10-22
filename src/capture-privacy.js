@@ -46,13 +46,6 @@ export function preparePrivacy(root,options={}) {
     if(options.redact)hidden+=hideNames(root,names);
     return {hidden,replaced};
 }
-export function maskRects(root) {
-    const origin=root.getBoundingClientRect();
-    return [...root.querySelectorAll('[data-bl-mask]')].flatMap(node=>{
-        const range=document.createRange();range.selectNodeContents(node);
-        return [...range.getClientRects()].filter(r=>r.width>0&&r.height>0).map(r=>({x:r.left-origin.left,y:r.top-origin.top,w:r.width,h:r.height}));
-    });
-}
 export function paintMasks(ctx,rects,style,dark,profile={}) {
     const cfg=normalizeMaskStyle(profile);
     const fallback=style==='white'?'#fafafa':style==='black'?'#111318':style==='tape'?(dark?'#b5cfe5':'#f7dc84'):(dark?'#111318':'#fafafa');

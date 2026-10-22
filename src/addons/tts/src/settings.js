@@ -37,6 +37,7 @@ export const ANALYSIS_DEFAULTS = Object.freeze({
     context_chars: 1200,       // 대사 주변 서술을 보내는 최대 글자 (메시지당)
     temperature: 0.2,
     when: 'auto',              // 'auto' (첫 읽기 직전에 분석) | 'manual' (버튼으로만)
+    prompt_cache: true,        // 7.7.2 효과음 목록 같은 고정 글을 앞에 두고 Claude 직접 연결이면 캐시 (끄면 예전 요청 그대로)
     fallback: FALLBACK_DEFAULTS,   // 6.1.8 검열되면 다른 모델로 { enabled, provider, model } (block-fallback.js)
 });
 
@@ -479,8 +480,6 @@ function noteUsage() { askUsageKey(); writeUsageCopy(); }
 export function flushUsage() { writeUsageCopy(); return false; }
 /** 저장을 기다리는 사용량이 있는지 — 7.2.8 부터 늘 false (설정 저장을 하지 않는다) */
 export const usageSavePending = () => false;
-/** 시험용: 계정 열쇠를 바로 정한다 (null = 모름) */
-export function _setUsageKeyForTest(key) { usageKey = key; }
 
 /** 엔진 설정 (기본값을 채워서) */
 export function providerConfig(id, defaults = {}) {

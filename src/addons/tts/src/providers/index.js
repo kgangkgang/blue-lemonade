@@ -21,16 +21,4 @@ export function listProviders() {
     return Object.values(PROVIDERS);
 }
 
-/** 엔진 기본값 ← 엔진 설정 ← 목소리별 값 (params 에 있는 키만, 있는 키만 덮어씀) */
-export function mergeParams(provider, cfg, voice) {
-    const out = {};
-    for (const f of (provider && provider.params) || []) {
-        let v = f.default;
-        if (cfg && cfg[f.key] !== undefined) v = cfg[f.key];
-        if (voice && voice.params && voice.params[f.key] !== undefined) v = voice.params[f.key];
-        out[f.key] = v;
-    }
-    return out;
-}
-
 export default PROVIDERS;

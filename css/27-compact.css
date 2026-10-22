@@ -127,23 +127,18 @@ body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-containe
   gap: 10px 12px; /* 2.0.15: 줄 사이 10 (6 은 숨 막힘 — 사용자) */
   align-items: center;
 }
-/* 3.0.0: 여기 있던 규칙 'body.salty #rm_api_block #openai_api > *, body.salty #rm_api_block #openai_api :is(form, d…' 은 css/99-lazy-panel.css 로 옮김 (서랍 · 팝업이 열렸을 때만 켜짐) */
-/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김 (이 규칙의 갈래 1개): #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > h4 */
 body.salty #rm_api_block #openai_api > h4 {
   grid-column: 1;
   padding: 0 !important;
   font-size: var(--bl-fs-sub) !important;
   line-height: 1.3;
 }
-/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김 (이 규칙의 갈래 1개): #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > :is(select, input.text_pole, .flex-c … */
 body.salty #rm_api_block #openai_api > :is(select, input.text_pole, .flex-container:has(> .text_pole), .flex-container:has(> select)) {
   grid-column: 2;
 }
-/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #rm_api_block #openai_api :is(form, div):has(> h4) > :is(div:has(> small:only-child), .neutral_warning) */
 body.salty #rm_api_block #openai_api > :is(.flex-container:has(> .api_button), .online_status) {
   grid-column: 1 / -1;
 }
-/* 3.0.0: 여기 있던 규칙 'body.salty #rm_api_block > #title_api' 은 지움 — margin-bottom → 이 파일 아래 (같은 선택자 규칙이 덮음) */
 
 
 /* ── 빠른 답변 편집(사용자: "완전 ppt같아 — 칸 정렬 맞추고 여백은 남기고 가독성"): 상자 속 상자를 걷어 내고 판판한 줄로.
@@ -319,7 +314,6 @@ body.salty .select2-results__options:not([aria-multiselectable="true"]) .select2
 
 /* ── 캐릭터 서랍 · 밝은 모드 (사용자: "즐겨찾기 카드 흰색이면 안 보이고 · 아이콘 그림자가 하단에 잘려 · 카드 왼쪽은 잘 안 보여") */
 /* 즐겨찾기 타일: 흰 카드가 흰 바탕에 묻힘 → 떠 있는 버튼과 같은 고리(11%) + 그림자 */
-/* 3.0.0: 여기 있던 규칙 'body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar' 은 지움 — box-shadow → 이 파일 아래 (같은 선택자 규칙이 덮음) */
 /* 거르기 동그라미 줄: 가로 스크롤 상자라 2.0.2 에서 커진 그림자(아래 3px + 번짐 10)가 잘림 → 아래 여백을 10 으로, 그만큼 바깥으로 되돌려 자리는 그대로 */
 body.salty #right-nav-panel .rm_tag_controls:not(#salty-none) {
   margin: 0 -3px -7px !important;
@@ -414,7 +408,6 @@ body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar {
   background: var(--salty-tint-12, var(--bl-card));
   box-shadow: var(--bl-e2);
 }
-/* 3.0.0: 여기 있던 규칙 'body.salty #right-nav-panel :is(.character_select, .group_select, .group_member)…' 은 지움 — top · right · width · height · font-size → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
 
 /* ── 챗 컴플리션 프리셋 카드 (사용자: "연결 표시랑 이름 블록 끝나는 부분 안 맞아서 불편"): 제목 줄 아이콘 넷과 고르기 줄 아이콘 셋의 열을 맞춤.
    3.5.3: 전에는 카드를 5열 표로 풀고(display:contents) 고르기는 "select 가 바로 그 자리"일 때만 1~2열에 놓았다. 다른 확장이 고르기를
@@ -441,13 +434,11 @@ body.salty #left-nav-panel #openai_api-presets > div:is(.bl-s, *) > :is(.standou
   flex: 1 1 auto;
   min-width: 0;
 }
-/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader > strong */
 body.salty #left-nav-panel #openai_api-presets > div:is(.bl-s, *) > .standoutHeader + .flex-container > :not(.flex-container) {
   width: auto !important;
   margin: 0 !important;
 }
 /* 확장이 감싼 고르기 · select2 칸도 칸 폭을 넘지 않게 */
-/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > :not(.f … */
 body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container {
   display: flex !important;
   flex: none;

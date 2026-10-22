@@ -1,7 +1,7 @@
 <div class="translation_settings llmt-settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header">
-            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v3.0.5</span></b>
+            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v3.0.6</span></b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
 
@@ -120,6 +120,10 @@
                             <input type="checkbox" id="llm_keep_korean"><span>이미 한국어인 부분은 보내지 않기</span>
                         </label>
                         <small class="llmt-desc">한국어로 옮길 때 이미 한국어인 문단과 큰따옴표(" ") · 「」 속 한국어 대사는 모델에 보내지 않고 그대로 둬요. 토큰이 줄고 잘 쓴 한국어가 바뀌지 않아요.</small>
+                        <label class="checkbox_label llmt-check" for="llm_prompt_cache">
+                            <input type="checkbox" id="llm_prompt_cache"><span>프롬프트 캐시</span>
+                        </label>
+                        <small class="llmt-desc">채팅 번역 요청에서 매번 같은 지시문을 맨 앞에 두고, Claude 직접 연결이면 그 부분을 5분 동안 캐시해요. 묶음 · 다음 메시지가 지시문을 싸게 다시 읽어요(Gemini · OpenAI 는 자동 캐시). 끄면 예전 요청 그대로예요.</small>
                     </div>
                 </section>
 

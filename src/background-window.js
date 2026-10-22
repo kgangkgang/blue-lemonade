@@ -162,7 +162,5 @@ export function syncBackgroundWindow(enabled, how = 'audio') {
     } catch { /* 이벤트를 못 걸면 창은 열리되 글자 수는 안 나온다 */ }
 }
 
-/** 설정 창: 이 브라우저에서 되는지 */
-export const backgroundWindowSupported = () => !!document.pictureInPictureEnabled;
 /** 시험용 */
 export const _forTest = { state, shouldClose, work, setLastSign: t => { lastSign = t; }, closeDelayAfterWork, onTap, translateTapAt: () => translateTapAt };

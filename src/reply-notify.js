@@ -105,5 +105,3 @@ export function syncReplyNotify(enabled) {
         });
     } catch { /* 이벤트를 못 걸면 알림도 없다 */ }
 }
-
-export const replyNotifySupported = () => 'Notification' in window;

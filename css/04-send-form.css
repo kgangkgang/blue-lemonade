@@ -201,7 +201,6 @@ body.salty.salty-icons-line :is(#leftSendForm, #rightSendForm) > :not(#options_b
    버리면 안 된다. 진짜 전개지시(Direction-Manager)의 .dm-compact--popup 이 바로 그런 창이라, 이 규칙에 걸려
    높이 34.5px + overflow:hidden 으로 글상자가 잘려 나가 '눌리긴 하는데 입력하려 하면 닫힘'이 됐다 (2026-09-12). */
 body.salty #nonQRFormItems > :where(:not(#leftSendForm, #rightSendForm, #send_textarea, #jj-button, #jj-popup, textarea, input, select, .autoComplete-wrap, [role="dialog"], [role="menu"], [popover])):where(.fa-solid, .fa-regular, .fa-brands, :empty, :has(> :is(i, svg, img):only-child)) {
-  /* 3.0.0: flex · width · min-width → 이 파일 아래 (같은 선택자 규칙이 덮음) */
   align-items: center;
   justify-content: center;
   height: var(--bottomFormBlockSize);
@@ -640,7 +639,6 @@ body.salty:not(.salty-icons-line) #mes_stop i::before {
    display 는 건드리지 않는다 — 실리태번이 inline style 로 block · none 을 번갈아 넣는다 */
 body.salty #dialogue_del_mes {
   margin: 0 !important;
-  /* 3.0.0: padding → css/21-witidy.css (같은 선택자 규칙이 덮음) */
   background: var(--salty-fill-surface, var(--salty-surface)) !important;
   border: 0 !important;
   border-radius: 22px !important;
@@ -650,7 +648,6 @@ body.salty #dialogue_del_mes {
 }
 body.salty #dialogue_del_mes .menu_button {
   display: inline-flex;
-  /* 3.0.0: height · border-radius · box-shadow · font-size · font-weight → css/21-witidy.css (같은 선택자 규칙이 덮음) */
   min-width: 108px;
   margin: 0 3px !important;
   padding: 0 18px !important;
@@ -666,7 +663,6 @@ body.salty #dialogue_del_mes .menu_button:hover {
   background: var(--bl-fill-control-hover, var(--bl-control-hover)) !important;
 }
 /* 삭제는 팔레트의 빨강 하나. 캐릭터·프롬프트 삭제와 동일하다. */
-/* 3.0.0: 여기 있던 규칙 'body.salty #dialogue_del_mes #dialogue_del_mes_ok' 은 지움 — background · color → css/21-witidy.css (같은 선택자 규칙이 덮음) */
 @media (hover: hover) {
   body.salty #dialogue_del_mes #dialogue_del_mes_ok:hover {
     background: var(--bl-danger) !important;

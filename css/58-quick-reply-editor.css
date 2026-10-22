@@ -34,7 +34,6 @@ body.salty .popup:has(#qr--modalEditor) .popup-content > #qr--modalEditor > #qr-
   align-items:flex-start;
   gap:10px max(10px,.6em);
 }
-/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: .popup:has(#qr--modalEditor) .popup-content > #qr--modalEditor > #qr--main > .qr--labels > :is(label, .label) */
 body.salty .popup:has(#qr--modalEditor) .popup-content > #qr--modalEditor > #qr--main > .qr--labels > .label {
   container:bl-qr-label / inline-size;
 }

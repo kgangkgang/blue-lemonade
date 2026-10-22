@@ -47,19 +47,3 @@ const BY_ID = new Map(SOURCES.map(source => [source.id, source]));
 export function sourceById(id) {
     return BY_ID.get(String(id ?? '')) ?? null;
 }
-
-/** 화면에 있는 컨트롤들. 없으면 빈 배열 (그 공급자 폼이 아직 안 열렸을 때) */
-export function controlsOf(source) {
-    const found = [];
-    for (const selector of [source.selector, source.datalist]) {
-        if (!selector) continue;
-        const element = document.querySelector(selector);
-        if (element) found.push(element);
-    }
-    return found;
-}
-
-/** 실리태번이 고른 모델을 저장하는 자리 (oai_settings의 키) */
-export function settingsKeyOf(source) {
-    return source.key;
-}

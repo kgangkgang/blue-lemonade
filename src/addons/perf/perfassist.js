@@ -18,7 +18,6 @@ import { createSaveSender } from './savesend.js';
 import { createStyleDedupe } from './styledup.js';
 
 const MODULE = 'perf_assist';
-const FOLDER = 'blue-lemonade';
 const VERSION = '1.0.2';
 const TITLE = '성능 보조';
 

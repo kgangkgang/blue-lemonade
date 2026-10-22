@@ -353,7 +353,6 @@ body.salty .range-block:has(> .range-block-title + .range-block-range-and-counte
   row-gap: var(--bl-param-row-gap);
   padding: var(--bl-param-pad) !important;
 }
-/* 3.0.0: 여기 있던 규칙 'body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > *' 은 css/99-lazy-panel.css 로 옮김 (서랍 · 팝업이 열렸을 때만 켜짐) */
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title {
   grid-column: 1;
   grid-row: 1;

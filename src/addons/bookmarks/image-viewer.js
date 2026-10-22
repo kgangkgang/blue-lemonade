@@ -8,10 +8,6 @@ import { attachZoom } from '../../image-zoom.js';
 
 let current = null; // { sheet, step }
 
-export function isImageViewerOpen() {
-    return current !== null;
-}
-
 /**
  * @param {{ src: string, prompt?: string, label?: string }[]} items 보여 줄 그림들 (붙인 차례)
  * @param {number} [start] 처음 보여 줄 칸
@@ -146,8 +142,3 @@ window.addEventListener('keydown', (event) => {
     event.preventDefault();
     current.step(event.key === 'ArrowLeft' ? -1 : 1);
 }, true);
-
-/** 지금 보이는 그림 칸들 → 크게 보기 목록 (패널의 카드 · 격자 공용) */
-export function viewerItemsFrom(entries) {
-    return entries.map(({ image, label }) => ({ src: image.src, prompt: image.prompt, label }));
-}

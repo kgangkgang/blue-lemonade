@@ -372,7 +372,6 @@ body.salty:not(.expandMessageActions) #chat .mes .extraMesButtons > .mes_delete_
   order: 2;
   margin: 0 !important;
   background: var(--bl-fill-well, var(--bl-well));
-  /* 3.0.0: color → css/17-semantic.css (같은 선택자 규칙이 덮음) */
 }
 @media (hover: hover) {
   body.salty:not(.expandMessageActions) #chat .mes .extraMesButtons > :hover {
@@ -724,7 +723,6 @@ body.salty.salty-icons-line #chat .mes_reasoning_actions .edit_button {
 body.salty.salty-icons-line #chat .mes_reasoning_details .mes_reasoning_arrow {
   font-size: 15px !important;
 }
-/* 3.0.0: 여기 있던 규칙 'body.salty #chat .mes_reasoning_actions .mes_reasoning_delete' 은 지움 — color → css/17-semantic.css (같은 선택자 규칙이 덮음) */
 body.salty #chat .mes_reasoning {
   margin: 0 !important;
   padding: 0 16px 14px !important;

@@ -443,13 +443,3 @@ function hookDrag() {
     window.addEventListener('pointerup', endDrag);
     window.addEventListener('pointercancel', endDrag);
 }
-
-/** 3.5.4 설정 창 미리보기 줄에 입력판 QR 줄과 같은 휠 · 끌기 · 흐림 · 스냅 */
-export function bindQrScroller(el) {
-    if (!el || el._blQr) return;
-    el._blQr = true;
-    el.addEventListener('wheel', event => qrWheel(event, el), { passive: false });
-    el.addEventListener('pointerdown', event => qrPointerDown(event, el));
-    el.addEventListener('scroll', () => updateQrEdges(el), { passive: true });
-    requestAnimationFrame(() => updateQrEdges(el));
-}

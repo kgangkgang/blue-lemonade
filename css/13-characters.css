@@ -29,11 +29,9 @@ body.salty :is(#right-nav-panel, #character_popup) textarea::-webkit-resizer {
 /* 목록 버튼 + 즐겨찾기 바로가기 */
 body.salty #right-nav-panel #CharListButtonAndHotSwaps {
   align-items: center !important;
-  /* 3.0.0: gap · padding → css/21-witidy.css (같은 선택자 규칙이 덮음) */
   min-height: 42px;
 }
 body.salty #right-nav-panel #CharListButtonAndHotSwaps > .flex-container {
-  /* 3.0.0: flex-flow → css/21-witidy.css (같은 선택자 규칙이 덮음) */
   align-items: center;
   gap: 0;
 }
@@ -74,7 +72,6 @@ body.salty #right-nav-panel :is(#rm_button_characters, #rm_button_search, #resul
 /* 즐겨찾기 바로가기: 빈 안내는 작고 흐리게, 아바타는 떠 있는 작은 사진 */
 body.salty #right-nav-panel #HotSwapWrapper {
   justify-content: flex-start !important;
-  /* 3.0.0: min-width → css/21-witidy.css (같은 선택자 규칙이 덮음) */
 }
 body.salty #right-nav-panel .hotswap {
   justify-content: flex-start !important;
@@ -116,7 +113,6 @@ body.salty #right-nav-panel .hotswap .avatar img {
   object-position: center 30%;
 }
 /* 바로가기 아바타가 있으면 큰 제목과 한 칸 더 띄움 (7 → 15) */
-/* 3.0.0: 여기 있던 규칙 'body.salty #right-nav-panel #CharListButtonAndHotSwaps:has(.hotswap .avatar)' 은 지움 — margin-bottom → css/26-rounds-1.7.css (같은 선택자 규칙이 덮음) */
 
 /* ---------- 제목 줄: 캐릭터 이름(편집 화면으로 가는 탭) + 토큰 수 ---------- */
 body.salty #right-nav-panel #rm_PinAndTabs {
@@ -150,7 +146,6 @@ body.salty #right-nav-panel #rm_button_selected_ch h2:not(:empty) {
   overflow-wrap: anywhere;
 }
 /* 목록 · 그룹 화면(토큰 정보가 숨은 때)에서는 안 켜진 탭이라 흐리게 */
-/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #right-nav-panel #right-nav-panel-tabs:has(> #result_info[style*="none"]) #rm_button_selected_ch h2 */
 @media (hover: hover) {
   body.salty #right-nav-panel #right-nav-panel-tabs #rm_button_selected_ch:hover h2 {
     color: var(--salty-text) !important;
@@ -208,7 +203,6 @@ body.salty #right-nav-panel #charListFixedTop {
      위아래를 같게 주고 좌우도 한 단 넓혀 숨통을 준다 */
   padding: var(--bl-s2) var(--bl-s2) var(--bl-s2) !important;
   border-radius: var(--bl-r-md);
-  /* 3.0.0: background · box-shadow → css/21-witidy.css (같은 선택자 규칙이 덮음) */
 }
 /* 폰에서 캐릭터 서랍은 좌우 여백을 줄여 폭을 더 쓴다 —
    서랍 padding 8 + 카드 margin 14 = 22px 씩 먹어서 360~390px 화면에서 답답했다 (사용자 지적) */
@@ -218,7 +212,6 @@ body.salty #right-nav-panel #charListFixedTop {
     /* 스크롤바 자리는 오른쪽 한 쪽만 (양쪽이면 왼쪽 6px 이 그냥 버려진다).
        그만큼 왼쪽에 여백을 주어 눈으로 보이는 좌우를 맞춘다 — 실측 카드 x=12 / 오른쪽 12 */
     scrollbar-gutter: stable;
-    /* 3.0.0: padding-left · padding-right → css/27-compact.css (같은 선택자 규칙이 덮음) */
     /* 기반 폭이 96% 라 12px 을 잃고 있었다 (실측: 293px 화면에서 281px) */
     width: 100% !important;
     max-width: none !important;
@@ -231,7 +224,6 @@ body.salty #right-nav-panel #charListFixedTop {
   body.salty #right-nav-panel:not(#salty-none) #form_create {
     /* 상세 화면도 자기가 스크롤한다 → 목록과 같은 방법으로 좌우를 맞춘다 (실측 12 / 12) */
     scrollbar-gutter: stable;
-    /* 3.0.0: padding-left · padding-right → css/27-compact.css (같은 선택자 규칙이 덮음) */
   }
   body.salty #right-nav-panel:not(#salty-none) :is(#avatar-and-name-block, #description_textarea, #firstmessage_textarea, #character_json_data) {
     padding-inline: var(--bl-s2) !important;
@@ -243,11 +235,9 @@ body.salty #right-nav-panel #charListFixedTop {
     /* 목록 자체도 스크롤한다 → 오른쪽 자리를 늘 잡아 두고(내용이 적을 때 카드가 튀지 않게)
        왼쪽에 같은 만큼 여백을 준다. 카드 좌우가 화면에서 12px 씩으로 같아진다 */
     scrollbar-gutter: stable;
-    /* 3.0.0: padding-left · padding-right → css/27-compact.css (같은 선택자 규칙이 덮음) */
     margin-inline: 0 !important;
   }
   /* 목록 위 거르기 · 정렬 머리띠는 카드와 왼쪽 끝을 맞춘다 (실측 둘 다 x=12) */
-  /* 3.0.0: 여기 있던 규칙 'body.salty #right-nav-panel #charListFixedTop' 은 지움 — margin-inline → css/27-compact.css (같은 선택자 규칙이 덮음) */
 }
 body.salty #right-nav-panel #rm_button_bar {
   gap: 0 !important;
@@ -310,7 +300,6 @@ body.salty #right-nav-panel .rm_tag_controls {
   column-gap: 5px !important;
   row-gap: 5px !important;
   /* 가로 스크롤 상자(overflow auto)라 안쪽 여백이 0 이면 동그라미의 고리 · 그림자가 잘림 → 3px 여백을 주고 그만큼 바깥으로 되돌려 자리는 그대로 */
-  /* 3.0.0: margin · padding → css/27-compact.css (같은 선택자 규칙이 덮음) */
 }
 /* 거르기 동그라미는 도구 막대 버튼(34)보다 한 단 작은 30 — 칩 줄이 한 줄을 통째로 먹지 않게
    (고름 · 뺌 상태의 면 · 테 · × 배지는 기반 규칙 그대로) */
@@ -636,7 +625,6 @@ body.salty #right-nav-panel #rm_print_characters_block .group_select > .avatar.a
 body.salty #right-nav-panel :is(.character_select, .group_select, .group_member).is_fav > .avatar::after {
   content: "\f005";
   position: absolute;
-  /* 3.0.0: top · right · width · height → css/27-compact.css (같은 선택자 규칙이 덮음), border-radius · background · box-shadow · color → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
   z-index: 1;
   display: flex;
   align-items: center;
@@ -644,7 +632,6 @@ body.salty #right-nav-panel :is(.character_select, .group_select, .group_member)
   font: 900 11px/1 "Font Awesome 6 Free";
 }
 /* 레몬에이드: 흰 카드 위 흰 동그라미 속 레몬 별은 잘 안 보여서 레몬으로 채우고 별은 흰색 */
-/* 3.0.0: 여기 있던 규칙 'body.salty:not(.salty-dark) #right-nav-panel :is(.character_select, .group_selec…' 은 지움 — background · color → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
 /* 이름 · 설명 · 태그 */
 body.salty #right-nav-panel :is(.character_select_container, .group_select_container) {
   row-gap: 3px !important;
@@ -840,7 +827,6 @@ body.salty.charListGrid #right-nav-panel #rm_print_characters_block .ch_name {
 }
 /* 격자 보기 배지: 사진이 카드 폭을 다 쓰기 때문에 모서리 밖(-6)에 두면 카드 밖으로 나가 잘림
    (측정: 별이 카드 오른쪽 위 꼭짓점에 0px — 반이 잘림) → 사진 안쪽 5px 로 */
-/* 3.0.0: 여기 있던 규칙 'body.salty.charListGrid #right-nav-panel #rm_print_characters_block :is(.charact…' 은 지움 — top · right → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
 body.salty.charListGrid #right-nav-panel #rm_print_characters_block .character_select.character_selected > .avatar::before {
   bottom: 5px;
   left: 5px;
@@ -897,7 +883,6 @@ body.salty #right-nav-panel #avatar_div:has(#favorite_button.fav_on) #avatar_div
 body.salty #right-nav-panel #avatar_div:has(#favorite_button.fav_on) #avatar_div_div::after {
   content: "\f005";
   position: absolute;
-  /* 3.0.0: top · right · width · height · border-radius · background · box-shadow · color → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
   z-index: 1;
   display: flex;
   align-items: center;
@@ -905,7 +890,6 @@ body.salty #right-nav-panel #avatar_div:has(#favorite_button.fav_on) #avatar_div
   font: 900 13px/1 "Font Awesome 6 Free";
   pointer-events: none;
 }
-/* 3.0.0: 여기 있던 규칙 'body.salty:not(.salty-dark) #right-nav-panel #avatar_div:has(#favorite_button.fa…' 은 지움 — background · color → css/28-late-fixes.css (같은 선택자 규칙이 덮음) */
 body.salty #right-nav-panel #avatar_controls {
   flex: 1 1 0;
   justify-content: space-between !important;
@@ -1005,7 +989,6 @@ body.salty #right-nav-panel :is(#tagList, #groupTagList) .tag_remove {
   height: 13px;
   margin: 0 -7px 0 -6px;
   padding: 7px;
-  /* 3.0.0: color → css/17-semantic.css (같은 선택자 규칙이 덮음) */
   font-size: 13px;
   line-height: 1;
   opacity: 1 !important;

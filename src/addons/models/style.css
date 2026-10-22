@@ -49,10 +49,6 @@
     line-height: 1.45;
 }
 
-.mr-warn {
-    color: var(--warning, #e5a50a);
-}
-
 .mr-list {
     display: flex;
     flex-direction: column;

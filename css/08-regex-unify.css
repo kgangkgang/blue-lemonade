@@ -225,7 +225,6 @@ body.salty .select2-search--inline .select2-search__field {
 body.salty .welcomePanel .welcomeHeaderLogo {
   content: var(--salty-logo);
   box-sizing: border-box;
-  /* 3.0.0: width · height · padding → css/11-chrome.css (같은 선택자 규칙이 덮음) */
   /* 뒤에 깔린 판 없이 레몬만 (판이 사라진 만큼 레몬을 크게) */
   background: transparent;
   object-fit: contain;

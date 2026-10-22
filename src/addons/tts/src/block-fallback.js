@@ -98,7 +98,6 @@ const reasonOf = (x) => (x ? msgOf(x).match(REASON)?.[0] || '' : '');
 const clip = (t, n) => (t.length > n ? `${t.slice(0, n - 1)}…` : t);
 
 export const NO_FALLBACK_MESSAGE = '내용 차단으로 보여요. 분석 설정의 「검열되면 다른 모델로」에서 모델을 고르면 그 모델로 다시 보내요';
-export const SAME_MODEL_MESSAGE = '분석 모델과 같은 모델이에요. 다른 공급자나 모델을 골라 주세요';
 
 /**
  * 다른 모델로도 안 됐을 때의 오류 — 짧은 한 줄 (토스트는 ' · ' 앞만 보이니 쓰지 않는다).

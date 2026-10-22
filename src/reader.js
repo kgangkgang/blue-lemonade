@@ -160,7 +160,6 @@ export function syncReader(on) {
 }
 
 /** Temporary screen mode; never replaces the saved reader preference. */
-export function overrideReader(value) { override=typeof value==='boolean'?value:null;sync();if(override===false)show(); }
 
 /** 시험 · 콘솔용 */
 export function readerState() {

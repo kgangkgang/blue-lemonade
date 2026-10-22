@@ -140,6 +140,7 @@ function partText(part) {
     if (part == null) return '';
     if (typeof part === 'string') return part;
     if (typeof part.text === 'string') return part.text;
+    if (part.type === 'tool_result' && typeof part.content === 'string') return part.content;   // 7.7.2 프롬프트 캐시 앞부분 (실리태번이 text 로 바꿔 보낸다)
     if (part.type === 'image_url' || part.inlineData || part.inline_data || part.source?.type === 'base64') return '[이미지]';
     if (part.type === 'input_audio') return '[오디오]';
     return '';

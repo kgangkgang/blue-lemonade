@@ -40,7 +40,7 @@ export function createAttribution() {
   // 맞춰 볼 줄이 없으면 프롬프트 전체 정리(수백 KB)를 건너뛴다
   const rows=[...active].filter(r=>r.user);
   if(rows.length){
-   const content=[...(Array.isArray(body.messages)?body.messages:[]).map(m=>typeof m.content==='string'?m.content:JSON.stringify(m.content)),body.prompt,...(body.contents||[]).flatMap(c=>(c.parts||[]).map(p=>p.text)),...(body.systemInstruction?.parts||[]).map(p=>p.text)].filter(Boolean).map(clean).join(' ');
+   const content=[...(Array.isArray(body.messages)?body.messages:[]).map(m=>typeof m.content==='string'?m.content:Array.isArray(m.content)&&m.content.every(p=>typeof p?.text==='string'||typeof p?.content==='string')?m.content.map(p=>typeof p.text==='string'?p.text:p.content).join(''):JSON.stringify(m.content)),body.prompt,...(body.contents||[]).flatMap(c=>(c.parts||[]).map(p=>p.text)),...(body.systemInstruction?.parts||[]).map(p=>p.text)].filter(Boolean).map(clean).join(' ');
    const matches=rows.filter(r=>content.includes(r.user)&&(!r.system||content.includes(r.system)));
    const keys=new Set(matches.map(r=>r.caller+'|'+r.purpose));
    const tags=new Set(matches.map(r=>r.label));   // 1.5.1 용도가 같아도 이름표가 서로 다르면 이름표는 뺀다

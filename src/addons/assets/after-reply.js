@@ -153,8 +153,6 @@ function retry(messageId, slotId) {
     void fill(messageId, message, ids, swipe);
 }
 
-export const pickBusy = () => busy > 0;
-
 // ── 6.5.3 메시지 ··· 메뉴 「캐릭터 에셋 다시 고르기」 (그림 확장의 그리기 단추처럼 — 사용자 10-15) ──
 
 /** 번역문(display_text)도 글과 같은 자리로 — 자리 없이(또는 옛 번호로) 번역된 답은 새 자리가 번역 화면에 안 보이니까. 넣을 경계가 모자라면 앞 자리만 */

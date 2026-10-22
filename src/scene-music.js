@@ -211,7 +211,6 @@ function paintMarks() {
     try { for (const el of doc?.querySelectorAll?.('[data-bl-music-now]') || []) { if (el.textContent !== text) el.textContent = text; el.dataset.mood = now?.mood || ''; } } catch { /* 화면 없음 */ }
     for (const fn of marks) { try { fn(now); } catch { /* 무시 */ } }
 }
-export function onMusicChange(fn) { if (typeof fn === 'function') marks.add(fn); return () => marks.delete(fn); }
 
 // ───────── scene-sound.js 와 잇기 ─────────
 export function attachMusic(e) { env = e; }

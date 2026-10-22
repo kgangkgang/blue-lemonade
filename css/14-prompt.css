@@ -159,7 +159,6 @@ body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > i
   row-gap: 0;
   padding: 7px 0 !important;
 }
-/* 3.0.0: 여기 있던 규칙 'body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type=…' 은 css/99-lazy-panel.css 로 옮김 (서랍 · 팝업이 열렸을 때만 켜짐) */
 body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title {
   grid-column: 1;
   grid-row: 1;
@@ -181,7 +180,6 @@ body.salty #left-nav-panel :is(#range_block_openai, #openai_settings) .range-blo
   grid-row: 2;
   margin: 2px 0 0 !important;
 }
-/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range- … */
 
 /* ---------- 한 줄 고르기(추론 강도 · 상세도 · 이미지 품질 등): 이름 왼쪽 · 값은 흐린 글자 + 꺾쇠 ---------- */
 body.salty #left-nav-panel #openai_settings .flex-container.flexFlowColumn:has(> .oneline-dropdown) {
@@ -319,7 +317,6 @@ body.salty #left-nav-panel #openai_settings #completion_prompt_manager > .range-
   --pm-x: var(--bl-gutter);        /* 줄 안 좌우 여백 */
   --pm-handle: 20px;               /* ☰ 칸 (폰) — 글자가 15px 이라 20 으로 줄이고 4 는 이름 칸에 보탬 */
   --pm-icon: 18px;                 /* 이름 앞 종류 아이콘 칸 (내어쓰기) */
-  /* 3.0.0: --pm-ctl → css/27-compact.css (같은 선택자 규칙이 덮음) */
   /* --pm-ctl: 실측: 빼기 34 + 틈 6 + 고치기 34 + 켜기 스위치 38 */
   --pm-tok: 46px;                  /* 실측: '12,345' 글자 37.5 + 좌우 여백 8 (44 는 다섯 자리에서 넘쳤음) */
   --pm-gap: 4px;                   /* 칸 사이 틈 — 토큰 왼쪽 여백 6 이 더 벌려 줌 */
@@ -382,12 +379,10 @@ body.salty #completion_prompt_manager .completion_prompt_manager_header > div:la
 }
 /* 도구줄: 넣을 프롬프트 고르기 + 조용한 아이콘 (좁으면 아이콘은 아랫줄 오른쪽) */
 body.salty #completion_prompt_manager .completion_prompt_manager_footer {
-  /* 3.0.0: flex-wrap · gap · padding → css/27-compact.css (같은 선택자 규칙이 덮음) */
   align-items: center;
   justify-content: flex-end;
   margin: 0 !important;
 }
-/* 3.0.0: 여기 있던 규칙 'body.salty #completion_prompt_manager .completion_prompt_manager_footer > select' 은 지움 — flex · min-width · margin → css/27-compact.css (같은 선택자 규칙이 덮음) */
 /* 시트 위 칸이라 떠 있는 입력칸 (카드 속 오목한 칸 규칙을 되돌림) */
 body.salty #left-nav-panel #openai_settings #completion_prompt_manager .completion_prompt_manager_footer > select {
   background-color: var(--bl-control) !important;
@@ -404,7 +399,6 @@ body.salty #completion_prompt_manager .completion_prompt_manager_footer > select
   margin-left: 6px !important;
 }
 /* 마지막 아이콘의 글자 끝을 기준선에 */
-/* 3.0.0: 여기 있던 규칙 'body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_…' 은 지움 — margin-right → css/27-compact.css (같은 선택자 규칙이 덮음) */
 /* 지우기 · 되돌리기: 평소엔 흐리게, 누를 때만 흐린 호박 (실리태번의 빨강 · 노랑 대신) */
 body.salty #completion_prompt_manager .completion_prompt_manager_footer > :is(.caution, #prompt-manager-reset-character) {
   color: var(--salty-muted) !important;
@@ -420,7 +414,6 @@ body.salty #completion_prompt_manager .completion_prompt_manager_footer > :is(.c
 
 /* 목록 띠: 서랍 양끝까지 닿는 카드 면, 톤으로만 나눔 — 카드 그림자(e1)의 윗면 빛 · 1px 그림자는 끝까지 닿으면 선으로 보여 뺌 */
 body.salty #completion_prompt_manager #completion_prompt_manager_list {
-  /* 3.0.0: width · margin → css/27-compact.css (같은 선택자 규칙이 덮음) */
   /* width: 실리태번 .text_pole 의 100% 를 넘어 서랍 양끝까지 */
   max-width: none !important;
   min-height: 0 !important;
@@ -510,11 +503,9 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list > li.compl
   background: var(--pm-group);
   box-shadow: var(--pm-top), var(--pm-bot);
 }
-/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_m … */
 body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)):has(+ li .prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
   --pm-bot: inset 0 0 transparent;
 }
-/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_m … */
 @media (hover: hover) {
   body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:hover {
     box-shadow: inset 0 0 0 100vmax var(--bl-hover);
@@ -622,7 +613,6 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list .completio
    버튼을 번호로 못 박아 둠 — 못 쓰는 버튼 자리(실리태번이 넣는 빈 span)가 있어도 칸이 밀리지 않음 */
 body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls {
   display: grid !important;
-  /* 3.0.0: grid-template-columns → css/27-compact.css (같은 선택자 규칙이 덮음) */
   column-gap: 0 !important;
   align-items: center !important;
   justify-items: start !important;
@@ -680,7 +670,6 @@ body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager
 /* 켜기: 글꼴 아이콘 대신 설정 스위치와 같은 색 · 그림자의 38×22 스위치 (줄이 많아 한 단 작게), 오른쪽 끝을 기준선에 */
 body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > .prompt-manager-toggle-action {
   grid-column: 3;
-  /* 3.0.0: width → css/27-compact.css (같은 선택자 규칙이 덮음) */
   color: transparent !important;
   font-size: 0 !important;
 }
@@ -688,18 +677,13 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list li.complet
   content: '' !important;
   position: absolute;
   top: 50%;
-  /* 3.0.0: left · width · height · margin-top · border-radius · background · box-shadow · transition → css/27-compact.css (같은 선택자 규칙이 덮음) */
 }
 /* 레몬에이드: 흰 줄 · 옅은 파랑 줄 어느 쪽에서도 꺼진 칸이 보이게 한 단 진하게 (켜짐 규칙이 뒤에 있어 켜진 색은 그대로) */
-/* 3.0.0: 여기 있던 규칙 'body.salty:not(.salty-dark) #completion_prompt_manager #completion_prompt_manage…' 은 지움 — background → css/27-compact.css (같은 선택자 규칙이 덮음) */
 body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::after {
   content: '';
   position: absolute;
   top: 50%;
-  /* 3.0.0: left · width · height · margin-top · border-radius · background · box-shadow · transition → css/27-compact.css (같은 선택자 규칙이 덮음) */
 }
-/* 3.0.0: 여기 있던 규칙 'body.salty #completion_prompt_manager #completion_prompt_manager_list li.complet…' 은 지움 — background · box-shadow → css/27-compact.css (같은 선택자 규칙이 덮음) */
-/* 3.0.0: 여기 있던 규칙 'body.salty #completion_prompt_manager #completion_prompt_manager_list li.complet…' 은 지움 — transform → css/27-compact.css (같은 선택자 규칙이 덮음) */
 /* 토큰 수: 이름과 조작 사이, 자리 맞춘 숫자 — 부족 경고는 흐린 호박 */
 body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_tokens {
   padding: 0 2px 0 6px;
@@ -798,7 +782,6 @@ body.salty #completion_prompt_manager_popup #completion_prompt_manager_forbid_ov
   font-size: var(--bl-fs-sub);
   color: var(--salty-muted);
 }
-/* 5.6.4 (점검 RP-2) → css/99-lazy-panel.css 로 옮김: #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(#completion_prompt_ma … */
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_source_block {
   justify-content: flex-start;
   flex-wrap: wrap;
@@ -867,7 +850,6 @@ body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_clo
 /* ---------- API 서랍 ---------- */
 /* API 제목: 연결 프로필 아래 칸 제목 — 위를 띄워 묶음을 나눔 */
 body.salty #rm_api_block > #title_api {
-  /* 3.0.0: margin → css/27-compact.css (같은 선택자 규칙이 덮음) */
   font-size: var(--bl-fs-head) !important;
 }
 body.salty #rm_api_block .notes-link .note-link-span {

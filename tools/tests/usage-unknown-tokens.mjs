@@ -40,6 +40,6 @@ await t('capture.js 가 settleTokens 로 토큰을 정한다 (예전 usageKnown 
     const src = fs.readFileSync(path.join(root, 'src/addons/perf/capture.js'), 'utf8');
     assert.match(src, /await settleTokens\(\{ usage: acc\.usage, promptText, replyText: acc\.text \+ acc\.reasoning,/);
     assert.doesNotMatch(src, /if \(!usageKnown && promptText && httpOk/);
-    assert.match(fs.readFileSync(path.join(root, 'src/addons/perf/hub.js'), 'utf8'), /SUITE_VERSION = '2\.3\.0'/);
+    assert.match(fs.readFileSync(path.join(root, 'src/addons/perf/hub.js'), 'utf8'), /SUITE_VERSION = '2\.3\.1'/);
 });
 console.log(`usage-unknown-tokens: ${n} passed`);

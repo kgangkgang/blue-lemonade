@@ -197,7 +197,6 @@ export const TOKEN_GROUPS = [
     ['글자', [['text', '본문'], ['dialogue', '대사'], ['em', '속마음 *기울임*'], ['strong', '강조 **굵게**'], ['muted', '보조'], ['faint', '흐림']]],
     ['포인트', [['accent', '포인트'], ['marker', '대사 형광펜'], ['gold', '강조 형광펜 **굵게**'], ['shadow', '그림자']]],
 ];
-export const TOKENS = TOKEN_GROUPS.flatMap(([, list]) => list);
 
 export function paletteColors(settings) {
     const base = PALETTES[settings.palette] || PALETTES.salt;

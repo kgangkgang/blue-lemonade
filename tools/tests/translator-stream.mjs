@@ -201,7 +201,7 @@ function directFixture({ provider = 'claude', serve }) {
     class FakeRequest { constructor(url, init) { Object.assign(this, init, { url }); } }
     const env = {
         extensionSettings: settings, document: { getElementById: () => null }, secret_state: new Proxy({}, { get: () => 'key' }), SECRET_KEYS: new Proxy({}, { get: (_, k) => String(k) }),
-        getProviderSpecificParams: () => ({}), LiveModels, prepareAutoTranslationPayload: async payload => payload, oai_settings: {}, getRequestHeaders: () => ({ 'X-CSRF-Token': 't' }),
+        getProviderSpecificParams: () => ({}), LiveModels, withPromptCache: KOREAN_KEEP_ENV.withPromptCache, prepareAutoTranslationPayload: async payload => payload, oai_settings: {}, getRequestHeaders: () => ({ 'X-CSRF-Token': 't' }),
         getCustomEndpointConfig: () => ({ url: 'http://relay.invalid/v1', inheritExtras: false }), getCustomModelName: () => 'test-model', substituteParams: x => x, Request: FakeRequest,
         streamParts: stream, noStream: new Set(), STREAM_IDLE_MS: 90000,   // 2.9.3 흘려받기 멈춤 시간 (index.js 맨 위 상수)
         console: { warn: (...a) => warnings.push(a.join(' ')), info() {}, debug() {}, error() {} },

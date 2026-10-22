@@ -12,7 +12,7 @@
 
 /* ---------- 공통 변수: 설정 창 · 편집 팝업 · 재생 막대 (ST 테마 색을 따르고, 블루 레몬에이드 변수는 있으면 씀) */
 .lv-settings, .lv-editor, .lv-bar, .lv-namevoice {
-  --lv-css-version: "2.0.2";
+  --lv-css-version: "2.0.3";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));
@@ -65,7 +65,6 @@
 .lv-body input[type=range], .lv-editor input[type=range] { width: 100%; margin: 0; }
 .lv-body input[type=search] { -webkit-appearance: none; appearance: none; }
 .lv-tagline { margin: 0; color: var(--lv-dim); font-size: .92em; }
-.lv-dim { color: var(--lv-dim); }
 .lv-desc { display: block; color: var(--lv-dim); font-size: .9em; line-height: 1.45; }
 .lv-empty { margin: 0; color: var(--lv-dim); font-size: .9em; }
 .lv-count { color: var(--lv-dim); font-size: .82em; font-variant-numeric: tabular-nums; }

@@ -129,6 +129,7 @@ jobs:
           node tools/tests/translator-after-work.mjs .
           node tools/tests/perf-request-label.mjs .
           node tools/tests/usage-unknown-tokens.mjs .
+          node tools/tests/prompt-cache.mjs .
           node tools/tests/tts-ambient-skip.mjs .
           node tools/tests/tts-color-rename.mjs .
           node tools/tests/tts-rain-levels.mjs .
@@ -310,6 +311,7 @@ jobs:
           node tools/tests/order-keys-731.mjs .
           node tools/tests/empty-chat-guard-731.mjs .
           node tools/tests/usage-ledger-740.mjs .
+          node tools/tests/relay-compare.mjs .
           node tools/tests/bookmark-excerpt-740.mjs .
           node tools/tests/call-trim-726.mjs .
           node tools/tests/tts-continue-reuse.mjs .

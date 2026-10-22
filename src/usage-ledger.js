@@ -24,6 +24,9 @@ export function ledgerSettings() {
     if (!s.krw || typeof s.krw !== 'object' || !(Number(s.krw.rate) > 0)) s.krw = { ...DEFAULT_KRW };
     if (!s.payMethods || typeof s.payMethods !== 'object' || Array.isArray(s.payMethods)) s.payMethods = {};
     for (const [key, value] of Object.entries(s.payMethods)) if (!PAY_METHODS.includes(value) || ['__proto__', 'constructor', 'prototype'].includes(key)) delete s.payMethods[key];
+    // 7.7.2 중계마다 「쿼터 1달러 = 몇 원」 (가격 비교에서 충전 단가 · 환율로 정한 것) { [origin]: { rate, source, date } }
+    if (!s.relayRates || typeof s.relayRates !== 'object' || Array.isArray(s.relayRates)) s.relayRates = {};
+    for (const [key, value] of Object.entries(s.relayRates)) if (!originOf(key) || originOf(key) !== key || !(Number(value?.rate) > 0 && Number(value.rate) < 1e6)) delete s.relayRates[key];
     return s;
 }
 export const ledgerEnabled = () => ledgerSettings().enabled !== false;
@@ -127,13 +130,11 @@ function relayContext() {
     return { relays: [...relays], relayPrices: prices, quotaPerUnit: Number(log.budget?.quotaPerUnit) || 500000 };
 }
 const relayOrigins = new Set();
-/** 예산 기능이 중계 주소를 알면 알려 준다 (본체 연결 주소를 물려받는 경우) */
-export function noteRelayOrigin(origin) { const o = originOf(origin); if (o) relayOrigins.add(o); }
 
 async function priceContext() {
     const modules = await pricingModules();
     const s = ledgerSettings();
-    return { lookup: lookupWith(modules), ...relayContext(), payMethods: s.payMethods, krw: s.krw };
+    return { lookup: lookupWith(modules), ...relayContext(), payMethods: s.payMethods, krw: s.krw, relayKrwByOrigin: s.relayRates };
 }
 
 export async function query({ from = 0, to = Date.now() } = {}) {
@@ -185,6 +186,25 @@ export function setKrwRate(rate, date = dayKey(Date.now()), source = '사용자 
     saveLedgerSettings(); emit();
     return true;
 }
+/** 7.7.2 중계 origin 의 「쿼터 1달러 = rate 원」 (null 이면 지움) — 장부의 중계 원화 환산이 그 중계 기준이 된다 */
+export function setRelayRate(origin, rate, source = '', date = dayKey(Date.now())) {
+    const o = originOf(origin), s = ledgerSettings();
+    if (!o) return false;
+    if (rate === null) delete s.relayRates[o];
+    else if (Number(rate) > 0 && Number(rate) < 1e6) s.relayRates[o] = { rate: Math.round(Number(rate) * 100) / 100, source: String(source).slice(0, 80), date: String(date).slice(0, 10) };
+    else return false;
+    relayOrigins.add(o); saveLedgerSettings(); emit();
+    return true;
+}
+/** 7.7.2 공식 단가 (가격 비교 화면) — 제공처 id · 모델 · 시각 → { rates, source, date, note?, approx? } | null */
+export async function officialPrice(provider, model, at = Date.now()) {
+    const modules = await pricingModules(), lookup = lookupWith(modules), p = String(provider || ''), id = String(model || '').replace(/^models\//, '');
+    const exact = officialRates(p, id, Number(at) || Date.now(), lookup);
+    if (exact) return exact;
+    // 중계는 이름을 소문자로 적기도 한다 (MiniMax-M3 → minimax-m3) — 대소문자만 다른 공식 이름이 하나뿐일 때만 그 이름으로
+    const keys = Object.keys(modules.live.priceSnapshot(p)?.models || {}).filter(key => key.toLowerCase() === id.toLowerCase());
+    return keys.length === 1 ? officialRates(p, keys[0], Number(at) || Date.now(), lookup) : null;
+}
 /** 연결 열쇠 (결제 수단 고르기 창이 줄마다 쓰는 것) — 공식 = 제공처, 중계 = relay:<host> */
 export function payKeyFor(entry) { return payKeyOf(connectionOf(entry, relayContext().relays)); }
 export function payMethodFor(entry) { const conn = connectionOf(entry, relayContext().relays); return payMethodOf(conn, ledgerSettings().payMethods); }
@@ -207,17 +227,6 @@ export async function applyRelayLogs(origin, logs) {
     } catch { return 0; }
     emit();
     return found.size;
-}
-
-/** 저장소 보고용: 기록 수 · 대략 바이트 */
-export async function ledgerStats() {
-    try {
-        return await tx('readonly', (store, done) => {
-            let count = 0, bytes = 0;
-            const req = store.openCursor();
-            req.onsuccess = () => { const c = req.result; if (!c) { done({ count, bytes }); return; } count++; bytes += JSON.stringify(c.value).length * 2; c.continue(); };
-        }) || { count: 0, bytes: 0 };
-    } catch { return { count: 0, bytes: 0 }; }
 }
 
 /** 허브를 건다 (BL 시작 때 — 가볍다: 장부 · 가격표는 처음 쓸 때 연다) */

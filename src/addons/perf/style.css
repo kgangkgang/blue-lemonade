@@ -655,6 +655,13 @@
 .rl-settings .rl-budget-adv summary { cursor: pointer; color: var(--rl-muted); font-size: .9em; }
 .rl-settings .rl-budget-adv[open] summary { margin-bottom: 6px; }
 .rl-settings .rl-budget-adv label { margin-bottom: 4px; }
+/* 7.7.2 중계 · 공식 가격 비교 (사용량 장부 아래 접기) — 예산 칸과 같은 줄 · 표 모양 */
+.rl-settings .rl-compare .rl-cmp-unit { flex: none; color: var(--rl-faint); }
+.rl-settings .rl-compare .rl-cmp-result { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.rl-settings .rl-compare .rl-cmp-table td small { display: block; margin: 2px 0 0; color: var(--rl-muted); font-size: .85em; white-space: normal; }
+.rl-settings .rl-compare .rl-cmp-table td { white-space: normal; overflow-wrap: anywhere; }
+.rl-settings .rl-compare .rl-cmp-win { color: var(--rl-text, inherit); }
+.rl-settings .rl-compare .rl-cmp-load { flex: none; min-height: 44px; }
 
 .rl-budget { display: flex; flex-direction: column; gap: 12px; }
 .rl-budget-top { display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-size: .82em; }
@@ -726,7 +733,7 @@
 }
 
 /* ===== 설정 톱니바퀴 (hub.js, 2.0.0) — 확장 서랍 맨 위 버튼 줄의 단추와 탭 창 ===== */
-:root { --pa-hub-css-version: "2.3.0"; }
+:root { --pa-hub-css-version: "2.3.1"; }
 
 .pa-hub-open {
     display: inline-flex;

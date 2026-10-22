@@ -821,11 +821,6 @@ function regexPreview() {
     return getSettings().enabled ? prevBox('data-pv="regex"') : '';
 }
 
-// 3.4.0 채팅 › 기타 표본: 모델이 색을 칠한 글자만 (데우스 카드는 프롬프트 탭으로)
-function colorPreview() {
-    return getSettings().enabled ? prevBox('data-pv="color"') : '';
-}
-
 function colorStage() {
     return `<div class="salty-preview" data-prev="color" aria-hidden="true" inert>
         ${prevMes('false', '에이드', '<p><font color="#e64553">붉게 칠한 글자</font>와 <span style="color:#40a02b">초록으로 칠한 글자</span>, <q>「그리고 대사.」</q></p><p><span style="color:#7c6cf0">보라색 혼잣말</span>이 <font color="#df8e1d">노랗게</font> 끝났다.</p>')}

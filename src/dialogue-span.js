@@ -284,9 +284,6 @@ export function wrapSpanningQuotes(root) {
     for (const q of created) if (!q.isConnected) created.delete(q);
 }
 
-/** 여러 줄 대사 조각인가 (섞인 따옴표 · 실리태번 q 는 아니다) */
-export const isSpanPiece = q => pieces.has(q);
-
 export function resetSpanningQuotes() {
     for (const q of created) if (q.isConnected) q.replaceWith(...q.childNodes);
     created.clear();

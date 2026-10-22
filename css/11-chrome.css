@@ -175,7 +175,6 @@ body.salty #chat .welcomePanel {
   font-family: var(--salty-font-ui);
 }
 body.salty .welcomePanel .welcomeHeaderTitle {
-  /* 3.0.0: gap → css/25-palette-maker.css (같은 선택자 규칙이 덮음) */
   min-height: 36px;
   padding: 0 0 0 6px;
 }
@@ -189,7 +188,6 @@ body.salty .welcomePanel .welcomeHeaderLogo {
 body.salty .welcomePanel .welcomeHeaderVersionDisplay {
   flex: 1 1 auto;
   min-width: 0;
-  /* 3.0.0: overflow · font-size · white-space → css/25-palette-maker.css (같은 선택자 규칙이 덮음) */
   color: var(--salty-muted);
   font-weight: 600;
   letter-spacing: -0.005em;
@@ -384,7 +382,6 @@ body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button.
     background: var(--bl-fill-hover, var(--bl-hover)) !important;
     color: var(--salty-text) !important;
   }
-  /* 3.0.0: 여기 있던 규칙 'body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button.…' 은 지움 — background · color → css/17-semantic.css (같은 선택자 규칙이 덮음) */
 }
 body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button:active {
   background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;

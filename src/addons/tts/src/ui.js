@@ -184,6 +184,7 @@ const READ_CARDS = {
         { key: 'analysis.speaker', label: '화자 찾기', type: 'toggle', desc: '색 · 이름표가 없는 대사는 누구 말인지 맥락으로 물어 그 캐릭터 목소리로' },
         { key: 'speaker_paint', label: '색 없는 대사에 화자 색', type: 'toggle', desc: paintNote },   // 6.2.3 (paint.js) — 화면에서만
         { key: 'analysis.when', label: '언제', type: 'select', options: [{ value: 'auto', label: '자동' }, { value: 'manual', label: '수동' }] },
+        { key: 'analysis.prompt_cache', label: '프롬프트 캐시', type: 'toggle', desc: '효과음 목록처럼 매번 같은 글을 앞에 두고, Claude 직접 연결이면 5분 동안 캐시해요 · 끄면 예전 요청 그대로', show: isProvider },   // 7.7.2
         // 6.1.8 검열되면 다른 모델로 (block-fallback.js)
         { key: 'analysis.fallback.enabled', label: '검열되면 다른 모델로', type: 'toggle',
             help: '내용 차단(검열)으로 분석이 실패하면 아래 모델로 한 번 더 보내요. 실리태번에 저장된 키를 써요. 요청이 잦음(429) · 키 · 연결 문제는 다시 보내지 않아요. 한 번 막힌 답장은 다음부터 이 모델로 바로 보내요. 꺼 둬도 실패 알림의 「다른 모델로 다시」는 써요.' },

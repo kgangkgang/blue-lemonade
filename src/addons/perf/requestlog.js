@@ -33,10 +33,6 @@ onEntry((entry) => {
     }, 1500);
 });
 
-function toast(kind, message, options = {}) {
-    if (typeof toastr !== 'undefined') toastr[kind](message, TITLE, options);
-}
-
 // 채팅 생성의 종류(보내기·스와이프·이어쓰기 …)를 기억해 두었다가 기록에 붙인다.
 eventSource.on(event_types.GENERATION_STARTED, (type, _params, dryRun) => { if (dryRun) return; setGenerationType(type); markSend('생성 시작'); });
 eventSource.on(event_types.GENERATION_AFTER_COMMANDS, () => markSend('명령 처리 끝'));

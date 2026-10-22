@@ -44,16 +44,6 @@ export function parseEntries(text) {
     return entries;
 }
 
-/**
- * `*` = any letters, space = any whitespace within the line, `-` = optional hyphen or space, `'` = optional apostrophe,
- * `…` (or `...`) = up to three words in between.
- * Latin words match whole words only; other scripts (Korean, Japanese) match anywhere so particles still match.
- */
-export function wordToPattern(word) {
-    const { behind, body, ahead } = wordParts(word);
-    return `${behind ? `(?<!${LETTER})` : ''}${body}${ahead ? `(?!${LETTER})` : ''}`;
-}
-
 function wordParts(word) {
     let source = '';
     for (const char of word.replace(/\s*(?:\.{3}|…)\s*/g, '…')) {
@@ -830,11 +820,6 @@ function testAny(text, regexes) {
         regex.lastIndex = 0;
         return regex.test(text);
     });
-}
-
-/** True when the reply, ignoring leading whitespace, starts with one of the compiled start patterns. */
-export function matchesStart(text, compiled) {
-    return testAny(String(text ?? '').replace(INVISIBLE_START, ''), compiled.regexes);
 }
 
 /**

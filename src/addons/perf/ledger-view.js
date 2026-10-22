@@ -16,6 +16,7 @@ export function ledgerMarkup() {
         </div>
         <div class="rl-ledger-pay"></div>
         <small class="rl-hint rl-ledger-today"></small>
+        <details class="rl-budget-adv rl-compare"></details>
         <small class="rl-hint">공식 API 는 공식 공개 단가, 중계는 중계 장부의 실제 과금(못 맞추면 중계 단가표 「≈」)으로 따로 셈해요. 결제 수단(크레딧 · 실제 결제 · 중계)은 다른 확장이 영수증 도장으로 써요. 키는 장부에 남지 않아요.</small>`;
 }
 
@@ -56,6 +57,17 @@ export function bindLedger(drawer) {
         const row = event.target.closest('[data-pay-key]');
         if (row) setPayMethod(row.dataset.payKey, event.target.value);
     });
+    // 7.7.2 중계 · 공식 가격 비교 — 처음 열 때만 불러온다
+    const compare = $('.rl-compare');
+    if (compare) {
+        compare.innerHTML = '<summary>중계 · 공식 가격 비교</summary>';
+        compare.addEventListener('toggle', () => {
+            if (!compare.open || compare.dataset.ready) return;
+            compare.dataset.ready = '1';
+            import('./relay-compare-view.js').then(m => { compare.innerHTML = m.compareMarkup(); compare.open = true; m.bindCompare(compare); })
+                .catch(error => { compare.dataset.ready = ''; console.warn('[요청 로그] 가격 비교', error); });
+        });
+    }
     const refresh = () => { renderPay($('.rl-ledger-pay')).catch(() => {}); renderToday($('.rl-ledger-today')).catch(() => {}); };
     refresh();
     let timer = 0;

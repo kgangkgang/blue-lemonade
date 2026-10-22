@@ -32,9 +32,6 @@ export const peopleMemoOn = () => memoOn;
 /** 시험용: 기억 끄고 켜기 */
 export function _setPeopleMemoForTest(on) { memoOn = !!on; invalidatePeople(); }
 
-/** 시험용: 전역 · 문서를 바꿔 끼운다 */
-export function _setPeopleHostForTest(next = globalThis, nextDoc = () => globalThis.document) { host = next; doc = nextDoc; listening = false; invalidatePeople(); }
-
 function bridge() {
     const api = host[NAMES_KEY];
     return api && typeof api === 'object' && api.version === 1 ? api : null;

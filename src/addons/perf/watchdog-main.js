@@ -10,7 +10,6 @@ import * as script from '../../../../../../../script.js';
 import { isStreamRequest, watchRequest, clampIdle, clampFirst, STALL_NAME } from './watchdog.js';
 
 const MODULE = 'stream_watchdog';
-const FOLDER = 'blue-lemonade'; // 2.0.0 성능 보조로 합침
 const VERSION = '1.1.4';
 const TITLE = '끊김 감시';
 

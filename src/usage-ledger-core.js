@@ -155,9 +155,10 @@ export function costOf(entry, ctx = {}) {
     const finish = (usd, extra = {}) => {
         const out = { ...base, ...extra };
         if (usd === null || !Number.isFinite(usd)) return out;
-        const rate = conn.kind === 'relay' && Number(ctx.relayKrw?.rate) > 0 ? Number(ctx.relayKrw.rate) : krwRate;
+        const relayKrw = conn.kind === 'relay' ? (ctx.relayKrwByOrigin?.[conn.origin] || ctx.relayKrw) : null;   // 7.7.2 중계마다 (가격 비교에서 읽은 충전 단가)
+        const rate = conn.kind === 'relay' && Number(relayKrw?.rate) > 0 ? Number(relayKrw.rate) : krwRate;
         return { ...out, usd, krw: Math.round(usd * rate), krwRate: rate,
-            krwNote: conn.kind === 'relay' ? (ctx.relayKrw?.rate > 0 ? `중계 환산 ${ctx.relayKrw.source || ''}`.trim() : `쿼터 달러 × 설정 환율 ${rate}원 (가정)`) : `설정 환율 ${rate}원 (${ctx.krw?.date || DEFAULT_KRW.date})` };
+            krwNote: conn.kind === 'relay' ? (relayKrw?.rate > 0 ? `중계 환산 ${relayKrw.source || ''}`.trim() : `쿼터 달러 × 설정 환율 ${rate}원 (가정)`) : `설정 환율 ${rate}원 (${ctx.krw?.date || DEFAULT_KRW.date})` };
     };
     if (conn.kind === 'relay') {
         const per = Number(ctx.quotaPerUnit) > 0 ? Number(ctx.quotaPerUnit) : 500000;

@@ -12,10 +12,14 @@ if (!target) throw new Error('KOREAN_TARGET not found in index.js');
 // existing path without replacing the policy with a permissive no-op stub.
 const chatTerms = await import(new URL('chat-glossary.js', dir));
 const speechProfiles = await import(new URL('style-profile.js', dir));
+// 7.7.2 프롬프트 캐시 (translate() · callLLMAPI 가 부른다 — 실제 모듈 그대로)
+const promptCache = await import(new URL('../../prompt-cache.js', dir));
 export const KOREAN_KEEP_ENV = {
     ...await import(new URL('korean-keep.js', dir)), KOREAN_TARGET: new Function(`return ${target};`)(),
     chatGlossarySignature: chatTerms.chatGlossarySignature,
     chatTermCachePolicy: chatTerms.createChatTermCachePolicy(),
     styleProfileBlock: speechProfiles.styleProfileBlock,
     styleProfileSignature: speechProfiles.styleProfileSignature,
+    withPromptCache: promptCache.withPromptCache,
+    pureMacros: promptCache.pureMacros,
 };
