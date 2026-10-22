@@ -307,8 +307,8 @@ await test('7.0.1 새 판 · 같은 판 재설치는 확인 창 뒤에만 · 옛
 });
 await test('7.0.1 판: 애드온 1.0.1(JS = CSS) · perf 2.2.8(7.0.3 요청 로그 이름표 · hub.js SUITE_VERSION = --pa-hub-css-version)', () => {
     assert.equal(mod.VERSION, '1.0.3');   // 7.0.5 설치 상태 카드 · <% %> 알림
-    assert.match(read('src/addons/perf/hub.js'), /export const SUITE_VERSION = '2\.2\.9';/);   // 7.0.5
-    assert.deepEqual([...read('src/addons/perf/style.css').matchAll(/--pa-hub-css-version:\s*"([^"]+)"/g)].map(m => m[1]), ['2.2.9']);
+    assert.match(read('src/addons/perf/hub.js'), /export const SUITE_VERSION = '2\.3\.0';/);   // 7.7.1
+    assert.deepEqual([...read('src/addons/perf/style.css').matchAll(/--pa-hub-css-version:\s*"([^"]+)"/g)].map(m => m[1]), ['2.3.0']);
 });
 await test('확장 순서 1.2.3: 다시 그리기 전 초점(줄 key · 동작) 기억 → 그린 뒤 같은 칸 · 꺼졌으면 같은 줄 첫 칸', () => {
     const panel = read('src/addons/order/panel.js');

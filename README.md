@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.0/blue-lemonade-7.7.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.1/blue-lemonade-7.7.1.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.7.0 · 최신 업데이트</summary>
+<summary>7.7.1 · 최신 업데이트</summary>
+
+- 사용량 장부와 요청 로그에서 응답의 입력·출력 토큰이 비어 있거나 0이면 그 칸만 글로 세어 추정(≈)으로 적어요. 예전에는 중계가 입력 토큰을 비워 보내면 입력 0을 실제 값처럼 기록해 비용이 낮게 보였어요. 성능 보조 2.3.0.
+
+</details>
+
+<details>
+<summary>7.7.0 · 옛 브라우저의 프롬프트 목록 배치</summary>
 
 - 컨테이너 쿼리를 지원하지 않는 옛 브라우저(옛 삼성 인터넷·웹뷰)에서 좁은 화면의 프롬프트 목록 이름이 한두 글자씩 세로로 쪼개지던 것을 고쳤어요. 이름 한 줄, 토큰·버튼 한 줄의 좁은 화면 배치를 화면 폭 기준으로도 적용해요. 최신 브라우저의 표시는 그대로예요.
 

@@ -74,6 +74,19 @@ export function connectionFor(input, body = {}, localOrigin = '') {
 
 const n = value => Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : 0;
 
+/**
+ * 7.7.1 응답 usage 에서 실제로 온 칸만 믿는다. 입력(또는 출력) 토큰이 없거나 0 이면(중계가 null 을 주거나 칸을 비운 응답) 그 칸만 글로 센다.
+ * 예전에는 usage 가 오기만 하면 입력 0 을 「실제 값」으로 적어 사용량 장부 · 비용에 정확한 0 으로 남았다. 요청에는 늘 입력이 있으니 0 은 모르는 값이다.
+ *   usage: mergeTokenUsage 결과 | null · count(text) → 토큰 수 · canPrompt / canCompletion: 셀 수 있는 요청인지(부르는 쪽 조건)
+ *   → { prompt, completion, estimated }
+ */
+export async function settleTokens({ usage = null, promptText = '', replyText = '', canPrompt = true, canCompletion = true, count }) {
+    let prompt = n(usage?.prompt), completion = n(usage?.completion), estimated = false;
+    if (!(prompt > 0) && promptText && canPrompt) { prompt = await count(promptText); estimated = true; }
+    if (!(completion > 0) && replyText && canCompletion) { completion = await count(replyText); estimated = true; }
+    return { prompt, completion, estimated };
+}
+
 /** Anthropic input_tokens excludes cache; OpenAI input_tokens already includes it. */
 export function mergeTokenUsage(previous, raw, anthropic = false) {
     const usage = { ...(previous || {}) };

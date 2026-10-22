@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.7.0";
+export const BUILD_VERSION = "7.7.1";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:e8904bf3:c46636e7",
+  "manifest.json": "365:5a8c62b4:61dcad21",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -146,11 +146,11 @@ export const FILE_HASHES = {
   "src/addons/order/style.css": "6864:46639e58:c638dd77",
   "src/addons/perf/attribution.js": "6837:2450c2fd:e03ddaff",
   "src/addons/perf/budget.js": "26960:724af434:2be5c134",
-  "src/addons/perf/capture.js": "33692:e5136c9c:bf9240c4",
+  "src/addons/perf/capture.js": "33630:d8c53b19:7dd90661",
   "src/addons/perf/emptyguard.js": "10226:943d5284:e7c17774",
   "src/addons/perf/entry-order.js": "323:a9c08dfd:fa4a0cbf",
   "src/addons/perf/help.js": "1828:97e5b6a4:bd588886",
-  "src/addons/perf/hub.js": "9198:64280643:29092ec9",
+  "src/addons/perf/hub.js": "9198:6b870ee7:72e686b6",
   "src/addons/perf/ledger-view.js": "4689:d2777362:e7336534",
   "src/addons/perf/loadtimer.js": "20065:885f7181:b23b3ac3",
   "src/addons/perf/menu.js": "1153:ca8762e5:b1e0e3dd",
@@ -165,7 +165,7 @@ export const FILE_HASHES = {
   "src/addons/perf/pricing-resolve.js": "8707:49eaeec2:822f677a",
   "src/addons/perf/pricing-sync.js": "5146:19fa9fc1:579f5947",
   "src/addons/perf/pricing-view.js": "6463:6afe52dd:e55a89ad",
-  "src/addons/perf/pricing.js": "13977:d3d3d711:9c4686b2",
+  "src/addons/perf/pricing.js": "15074:b7b70ceb:22b7c3ff",
   "src/addons/perf/promptdefer.js": "3946:f0555b6c:e2da4da3",
   "src/addons/perf/promptlist.js": "5073:52af5781:d6661691",
   "src/addons/perf/recovery.js": "12010:9e1a8ee7:7e289f7e",
@@ -176,7 +176,7 @@ export const FILE_HASHES = {
   "src/addons/perf/start.js": "1008:4d5ee41e:764be632",
   "src/addons/perf/state.js": "8722:70838afc:9d5d41cf",
   "src/addons/perf/store.js": "13393:ebb09b1b:c768059e",
-  "src/addons/perf/style.css": "33095:927b4961:5fc96878",
+  "src/addons/perf/style.css": "33095:b4839b35:be9bf6a2",
   "src/addons/perf/styledup.js": "5939:e0393b84:d7513129",
   "src/addons/perf/switchcode.js": "4772:ff54f73b:6046c3ba",
   "src/addons/perf/switchflush.js": "16557:4ee725f3:e5e33f9f",
@@ -562,7 +562,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "306685:d73bb33e:7bd04659",
+  "src/notice-data.js": "307045:139d0f9a:f5198de1",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -692,5 +692,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1550382:29bfc060:5b256bdf"
+  "style.css": "1550382:dc1ae804:297e68ec"
 };

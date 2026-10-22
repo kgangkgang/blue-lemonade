@@ -7,7 +7,7 @@ import { LOG_BRIDGE, createAttribution, requestKind, groupRecentReplies } from '
 const attribution=createAttribution();
 import { getCurrentChatId, name2 } from '../../../../../../../script.js';
 import { settings, priceFor } from './state.js';
-import { connectionFor, mergeTokenUsage, quoteRequest, manualPriceForConnection } from './pricing.js';
+import { connectionFor, mergeTokenUsage, quoteRequest, manualPriceForConnection, settleTokens } from './pricing.js';
 import { addEntry, bumpDaily, trimEntries, listEntries } from './store.js';
 import { ledgerEnabled } from '../../usage-ledger.js';   // 7.4.0 요청 로그를 꺼도 사용량 장부가 켜져 있으면 응답의 usage 는 읽는다 (저장은 안 함)
 import { webSearchEvidence } from '../../websearch-core.js';
@@ -371,11 +371,8 @@ async function finishEntry(context, response, acc, marks, failure) {
     const messages = context.messages;
     const promptText = messages ? messages.map(message => `${message.role}: ${message.content}`).join('\n') : (context.prompt ?? '');
 
-    let promptTokens = acc.usage?.prompt ?? 0;
-    let completionTokens = acc.usage?.completion ?? 0;
     const reasoningTokens = acc.usage?.reasoning ?? 0;
     const cachedTokens = acc.usage?.cached ?? 0;
-    let estimated = false;
     const tokenBased=['text','embedding'].includes(context.kind);
     const usageKnown=!!acc.usage;
     // HTTP 오류로 끝난 요청(429 등)은 토큰을 쓰지 않았으니 추정하지 않는다. 중간에 끊긴 스트림은 쓴 만큼 추정한다.
@@ -383,14 +380,9 @@ async function finishEntry(context, response, acc, marks, failure) {
     // (src/endpoints/backends/chat-completions.js). 글도 사용량도 없는 오류 응답은 과금되지 않았으니 이것도 추정하지 않는다.
     const httpOk = !!response?.ok;
     const errorOnly = !!acc.error && !acc.text && !acc.reasoning;
-    if (!usageKnown && promptText && httpOk && !errorOnly && tokenBased) {
-        promptTokens = await estimateTokens(promptText);
-        estimated = true;
-    }
-    if (!usageKnown && (acc.text || acc.reasoning) && context.kind==='text') {
-        completionTokens = await estimateTokens(acc.text + acc.reasoning);
-        estimated = true;
-    }
+    // 7.7.1 usage 가 와도 입력 · 출력이 비었거나 0 이면 그 칸만 센다 (pricing.js settleTokens)
+    const { prompt: promptTokens, completion: completionTokens, estimated } = await settleTokens({ usage: acc.usage, promptText, replyText: acc.text + acc.reasoning,
+        canPrompt: httpOk && !errorOnly && tokenBased, canCompletion: context.kind === 'text', count: estimateTokens });
 
     // 1.2.7: Claude 는 안전 분류기가 거절하면 HTTP 200 + 빈 글 + stop_reason 'refusal' 을 준다 — 실리태번은 빈 답으로만 보여 원인을 몰랐다
     if (acc.finish === 'refusal' && !acc.error && !acc.text) acc.error = `모델이 거절했어요${acc.stopDetail ? ` (${acc.stopDetail})` : ''}`;
