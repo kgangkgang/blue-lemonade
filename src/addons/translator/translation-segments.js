@@ -880,7 +880,8 @@ export function hasSourceEcho(source, output) {
 /** meta.renumbered: 1부터 다시 매긴 답을 한 칸 내려 받았다 (문단 하나를 빼먹고 끝에 지어낸 답과 구별이 안 돼 캐시에 넣지 않는다)
  *  5.3.7: sources(보낸 원문 문단 배열)를 주면 꼬리 메모를 원문 문단과 견줘 걷는다 — 원문에 있는 상태창 · 메모 줄은 번역이다 */
 export function parseBatchResult(raw, count, meta = {}, sources) {
-    const protectedNotes = maskTranslatorNotes(raw);
+    // 3.0.5: [n] 답(⟦ · 【 가 없는 답)에서는 [n]: 줄이 문단 표시다 — 머리말(역주:) 아래 정의와 [^x] 만 각주로 가린다
+    const protectedNotes = maskTranslatorNotes(raw, { headed: !/⟦|【\s*\d+\s*】/.test(String(raw ?? '')) });
     if (protectedNotes.changed) return parseBatchResult(protectedNotes.text, count, meta, sources).map(value => protectedNotes.restore(value));
     // 앞의 <think>…</think> · 코드 펜스 · 표시 앞의 설명문은 걷어 낸다. 개수 · 번호 · 중복 · 빈 글 검사는 엄격하다.
     const text = String(raw).replace(/\r\n?/g, '\n').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/^\s*```[a-z]*[ \t]*\n|\n[ \t]*```\s*$/g, '').trim();

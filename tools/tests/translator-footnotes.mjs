@@ -51,3 +51,25 @@ test('display failure falls back to the complete translation, never annotation p
  const fn=new Function('extensionSettings','maskTranslatorNotes','withDisplayCardsProtected','splitCrossLineEmphasis','correctBackticks','console','window',sourceCode.slice(start,end).replace('export ','')+';return processTranslationText;')({translation_display_mode:'folded'},S.maskTranslatorNotes,()=>{throw Error('render failure')},x=>x,x=>x,{error(){}},{});
  assert.equal(fn(source,output),output);
 });
+
+// 3.0.5: a [n]-labelled reply (no ⟦ or 【) keeps its passage labels even when a body cites [1]
+test('square passage labels after a literal citation are passages, not footnote definitions',()=>{
+ const raw='[0]: 첫 문단 참고 [1] 입니다.\n\n[1]: 둘째 문단이에요.\n\n[2]: 셋째 문단이에요.';
+ assert.deepEqual(S.parseBatchResult(raw,3,{},['First [1].','Second.','Third.']),['첫 문단 참고 [1] 입니다.','둘째 문단이에요.','셋째 문단이에요.']);
+ const headed='[0] '+output+'\n\n[1] 다음 문장.';
+ assert.deepEqual(S.parseBatchResult(headed,2,{},[source,'Next.']),[output,'다음 문장.']);
+ const markdown='[0]: 첫 문장.[^a]\n\n[^a]: 뜻풀이.\n\n[1]: 다음 문장.';
+ assert.deepEqual(S.parseBatchResult(markdown,2,{},['First.','Next.']),['첫 문장.[^a]\n\n[^a]: 뜻풀이.','다음 문장.']);
+});
+test('a reference at the start of a paragraph counts as a reference',()=>{
+ const text='[1] 문장 앞 참조\n\n[1]: 설명';
+ assert.equal(S.stripTrailingNote(text,'Text.'),text);
+ assert.equal(S.maskTranslatorNotes(text).changed,true);
+});
+test('many definitions with one stray label are scanned once',()=>{
+ const refs=Array.from({length:6000},(_,i)=>`[${i+1}]`).join(' ');
+ const defs=Array.from({length:6000},(_,i)=>`[${i+1}]: 설명 ${i+1}`).join('\n');
+ const text=`본문 ${refs}\n\n역주:\n${defs}\n[9999]: 참조 없는 정의`;
+ const started=performance.now();const ranges=S.maskTranslatorNotes(text);const elapsed=performance.now()-started;
+ assert.equal(ranges.changed,false);assert.ok(elapsed<800,`took ${elapsed}ms`);
+});

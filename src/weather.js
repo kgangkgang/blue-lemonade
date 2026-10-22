@@ -27,6 +27,8 @@ const KO_RAIN_END = String.raw`(?=${KO_END}|(?:[가는도를와의에로만]|마
 const RAIN = new RegExp(String.raw`(?:^|[\s,·/(~→-])(?:(?:비|밤비|봄비|여름비|가을비|겨울비|찬비|단비|궂은비)${KO_RAIN_END}|이슬비|가랑비|보슬비|안개비|장대비|여우비|소낙비|소[나]기|폭우|호우|장마|빗|폭풍우|뇌우)|rain|drizzl|shower|storm|thunder|downpour|monsoon|sun\s*shower|雨(?!刷|伞|傘|衣|靴)|雷|梅雨|夕立`, 'i');
 // 영어의 rain · shower · storm 이 들어 있지만 비가 아닌 말 — 비를 보기 전에 지운다 (Rainbow · Snowstorm · snow showers · meteor shower · sandstorm)
 const NOT_RAIN = /rainbows?|snow\s*(?:storms?|showers?)|meteor\s*showers?|(?:sand|dust)\s*storms?/gi;
+// 7.6.9 비가 없다 · 그쳤다 · 예보뿐이라는 말 — 비를 보기 전에 지운다 (「맑은 밤하늘, 비 예보」 · 「밤비 그침」 이 비로 잡혀 별까지 꺼졌다). 「그치지 않」 은 그대로 비
+const NOT_RAIN_KO = /(?:밤비|봄비|여름비|가을비|겨울비|찬비|단비|궂은비|이슬비|가랑비|보슬비|안개비|장대비|여우비|소낙비|소나기|비)\s*(?:[가는도이은]\s*)?(?:없|안\s*[오내와올온]|예보|그[치친침쳤](?!지)|멎|멈|끝)/g;
 // 바람: window · August 의 wind · gust 는 빼고 (crosswind · whirlwind 처럼 붙여 쓴 바람은 그대로)
 const BREEZE = /바람|산들|breez|wind(?!ow)|\bgust|微风|大风|狂风|风[和起吹]|[东西南北和清凉微]风|風/i;
 // 바람이 없다는 말 — 바람을 보기 전에 지운다 (상태창 「dry and windless」 · 「바람 한 점 없이 메마른」이 바람 효과로 잡혔다)
@@ -47,7 +49,7 @@ export function detectWeatherAll(text) {
     const value = String(text || '');
     const found = [];
     if (SNOW.test(value)) found.push('snow');
-    if (RAIN.test(value.replace(NOT_RAIN, ' ')) && !INDOOR.test(value)) found.push('rain'); // Retired glass effect: indoor rain stays clear.
+    if (RAIN.test(value.replace(NOT_RAIN, ' ').replace(NOT_RAIN_KO, ' ')) && !INDOOR.test(value)) found.push('rain'); // Retired glass effect: indoor rain stays clear.
     if (/무지개|rainbow/i.test(value)) found.push('rainbow');
     if (FOG.test(value) || HAZE.test(value)) found.push('fog');
     const outdoors = !INDOOR.test(value) || /햇[살빛볕]|sunlight|sunshine|sunlit/i.test(value); // "창으로 드는 햇살"은 실내라도 켠다

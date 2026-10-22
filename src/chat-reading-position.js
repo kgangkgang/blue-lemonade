@@ -4,15 +4,18 @@ const pending = new WeakMap();
 const userUntil = new WeakMap();
 const gestureTrackers = new WeakMap();
 const navigationKey = event => /^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End|Enter| )$/.test(event.key);
+const CONTROL = 'button,a,input,select,textarea,label,[role=button],.mes_button,.mes_buttons,.extraMesButtons,.swipe_left,.swipe_right';
 
 // Remember a gesture that starts while the model is still answering, before a
 // paint guard exists. Otherwise mobile momentum looks like a renderer scroll.
 export function watchChatReadingGestures(doc) {
     if (!doc?.addEventListener) return () => {};
     if (gestureTrackers.has(doc)) return gestureTrackers.get(doc);
-    const types = ['wheel', 'touchstart', 'touchmove', 'touchend', 'pointerdown', 'keydown'];
+    const types = ['wheel', 'touchstart', 'touchmove', 'touchend', 'pointerdown', 'mousedown', 'keydown'];
     const track = event => {
         if (event.type === 'keydown' && (!navigationKey(event) || event.target?.closest?.('input,textarea,select,[contenteditable]'))) return;
+        // 7.6.9: a tap on a message control is not a scroll gesture; the paint it triggers keeps the full guard
+        if (event.type !== 'wheel' && event.type !== 'touchmove' && event.type !== 'keydown' && event.target?.closest?.(CONTROL)) return;
         const chat = event.target?.closest?.('#chat');
         if (chat) userUntil.set(chat, Date.now() + 1500);
     };
@@ -58,9 +61,10 @@ export function keepChatReadingPosition(element, draw) {
     const messageRect = mes?.getBoundingClientRect();
     const messageFraction = messageRect?.height ? (viewportTop - messageRect.top) / messageRect.height : 0;
     let active = true, timer, frame, observer;
-    const events = ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'keydown', 'click'];
+    const events = ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'mousedown', 'keydown', 'click']; // 7.6.9 mousedown: a native scrollbar drag sends no pointerdown
     function cancel(event) {
         if (event?.type === 'keydown' && !navigationKey(event)) return;
+        if (event?.type === 'click' && event.isTrusted === false) return; // 7.6.9 a scripted click is not the reader moving
         if (event) userUntil.set(chat, Date.now() + 1500); // includes touch momentum between preview paints
         if (!active) return;
         active = false;

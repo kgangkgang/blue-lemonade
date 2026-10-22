@@ -76,4 +76,16 @@ check('night precipitation does not also select clear-sky stars', () => {
     assert.deepEqual(modes('날씨: 눈이 내리는 밤'), ['snow']);
     assert.deepEqual(modes('날씨: 맑은 밤'), ['star']);
 });
+// 7.6.9 no rain · rain stopped · rain only forecast: not rain, and a clear night keeps its stars
+check('absent, stopped or forecast rain is not rain', () => {
+    assert.deepEqual(modes('날씨: 맑은 밤하늘, 비 예보'), ['star']);
+    assert.deepEqual(modes('날씨: 밤, 비 없음'), ['star']);
+    assert.deepEqual(modes('날씨: 밤비 그침, 맑아지는 하늘'), ['star']);
+    assert.deepEqual(modes('날씨: 비가 그쳤다, 맑음'), ['sun']);
+    assert.ok(!modes('날씨: 비 안 와서 메마른 들판').includes('rain'));
+    // still raining
+    assert.deepEqual(modes('날씨: 비가 그치지 않는 밤'), ['rain']);
+    assert.deepEqual(modes('날씨: 비, 예보에 없던 소나기'), ['rain']);
+    assert.deepEqual(modes('날씨: 밤비가 내린다'), ['rain']);
+});
 console.log(`weather-status: ${passed} passed, 0 failed`);

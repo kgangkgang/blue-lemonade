@@ -58,3 +58,5 @@ Modified 2026-10-21 (3.0.2): added an independently implemented file transfer fo
 Modified 2026-10-21 (3.0.3): book transfer completion rechecks the captured chat and metadata after saving and reports the original target if navigation or another edit occurred. List markup is prepared only for visible rows while retaining complete selection and preview counts.
 
 Modified 2026-10-22 (3.0.4): preserve referenced translator annotations while keeping unreferenced work-note cleanup. Disambiguate footnote numbers from batch passage IDs, retain annotations across streaming/cache paths, and attach notes to their parent passage for combined display and quality checks. No third-party prompt text is bundled.
+
+Modified 2026-10-22 (3.0.5): in a batch reply that uses plain [n] passage labels (no ⟦n⟧ or 【n】), numbered note definitions are masked only under a note heading (Markdown [^x] definitions always), so a passage body containing a literal [1] no longer turns the next [1]: label into a footnote and fails the format check. A reference at the start of a paragraph is counted; an invalid definition block is skipped once instead of being rescanned per line.

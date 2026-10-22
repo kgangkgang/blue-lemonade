@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.6.8";
+export const BUILD_VERSION = "7.6.9";
 export const FILE_HASHES = {
   "index.js": "22928:1b0e75a7:fd80b8dd",
-  "manifest.json": "365:bf96abf8:84c0be82",
+  "manifest.json": "365:6fd48a87:5b8fb6b8",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -243,7 +243,7 @@ export const FILE_HASHES = {
   "src/addons/translator/glossary-priority.js": "1166:e7040d4d:a088802d",
   "src/addons/translator/glossary-suggest.js": "37892:84fb105c:16cf3cc9",
   "src/addons/translator/glossary-sync.js": "4410:86799b24:8d1eafff",
-  "src/addons/translator/index.html": "57092:7ebbce11:5296e398",
+  "src/addons/translator/index.html": "57092:f98b4ba8:540f53bc",
   "src/addons/translator/index.js": "547095:ca8c1fdb:7f2aa115",
   "src/addons/translator/korean-keep.js": "3875:e48e9ac8:e1078d76",
   "src/addons/translator/leftover-fix.js": "20813:22ae0bba:9631adfc",
@@ -276,9 +276,9 @@ export const FILE_HASHES = {
   "src/addons/translator/style.css": "31996:f8434d63:fdfc9420",
   "src/addons/translator/translation-check.js": "21636:b992a144:00885645",
   "src/addons/translator/translation-guard.js": "9950:b887474b:cc2358d4",
-  "src/addons/translator/translation-notes.js": "3750:6d13c5f6:ec9d15dd",
+  "src/addons/translator/translation-notes.js": "4170:857a3c57:060906cd",
   "src/addons/translator/translation-resume.js": "5921:1d9d6c8d:6c8c5b59",
-  "src/addons/translator/translation-segments.js": "113648:1dde9fa5:22c1309f",
+  "src/addons/translator/translation-segments.js": "113864:29362758:62d6da89",
   "src/addons/translator/translation-source.js": "7836:bf170ab0:93e8eb3d",
   "src/addons/translator/translation-stream.js": "9000:290adf3b:70902b1a",
   "src/addons/tts/LICENSE-MultiCast.txt": "1064:03c78d80:d84a0f1d",
@@ -484,7 +484,7 @@ export const FILE_HASHES = {
   "src/chat-graph.js": "24751:669eb92b:176acf2b",
   "src/chat-library-data.js": "5043:6dfcb24b:504fa300",
   "src/chat-library.js": "16532:e0d618f2:dce0e37f",
-  "src/chat-reading-position.js": "7984:bdf2e461:9309fe45",
+  "src/chat-reading-position.js": "8588:534f243a:d80da566",
   "src/chat-sync.js": "24501:26a49faf:13b60fdb",
   "src/checks.js": "3042:368ec3ff:509f89cc",
   "src/colorpick.js": "29852:5b5d8858:3ec727e4",
@@ -562,7 +562,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "305464:37cbd64f:28514f25",
+  "src/notice-data.js": "306266:f0850d6c:b65cabbf",
   "src/notice.js": "5647:427a7a6b:dcf06534",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -683,7 +683,7 @@ export const FILE_HASHES = {
   "src/weather-rest.js": "1885:72edcdd7:6cfbb747",
   "src/weather-scenes.js": "14501:514d19d0:3ddb51b3",
   "src/weather-worker.js": "1953:1834075b:9831021d",
-  "src/weather.js": "37436:2e929e42:c83764a7",
+  "src/weather.js": "37979:0afaf4e2:4ea3e132",
   "src/websearch-core.js": "17125:d18d37ff:114569c1",
   "src/websearch.js": "23413:6753586f:be03a4b1",
   "src/wi-help-data.js": "23093:a4cbce3e:822b4fbb",
@@ -692,5 +692,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8132:a3860c6b:bbcb0e39",
-  "style.css": "1548856:19b7a3ed:8da5fcf2"
+  "style.css": "1548856:7ba3fb42:3833ea97"
 };

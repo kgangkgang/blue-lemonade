@@ -15,7 +15,7 @@ function fixture() {
         get scrollHeight() { return height * 30; }, get scrollTop() { return top; }, set scrollTop(v) { top = Math.max(0, Math.min(v, this.scrollHeight - this.clientHeight)); },
         getBoundingClientRect() { return { top: 0, left: 0 }; },
     };
-    const mes = { ownerDocument: doc, isConnected: true, getAttribute: () => '0', closest: s => s === '#chat' ? chat : mes,
+    const mes = { ownerDocument: doc, isConnected: true, getAttribute: () => '0', closest: s => s === '#chat' ? chat : s === '.mes' ? mes : null,
         getBoundingClientRect: () => ({ top: -top, bottom: height * 30 - top, height: height * 30 }),
         querySelector: () => body,
     };
@@ -121,7 +121,7 @@ await check('a renderer that never settles releases listeners after its deadline
     try {
         let finish;
         const result = keep(f.body, () => new Promise(resolve => finish = resolve));
-        assert.equal(listeners, 7);
+        assert.equal(listeners, 8);
         const deadline = [...timers.values()].find(timer => timer.ms === 10000);
         assert.ok(deadline); deadline.fn();
         assert.equal(listeners, 0);
@@ -163,8 +163,34 @@ await check('keyboard activation of a navigation button cancels restoration', f 
     f.chat.scrollTop = 250; f.flush(); scrollEvent(f); assert.equal(f.chat.scrollTop, 250);
 });
 await check('accessible click navigation cancels restoration without a pointer event', f => {
-    keep(f.body, () => f.replace(80)); f.stop('click'); f.chat.scrollTop = 250;
-    f.flush(); scrollEvent(f); assert.equal(f.chat.scrollTop, 250);
+    keep(f.body, () => f.replace(80));
+    const click = new Event('click'); Object.defineProperty(click, 'isTrusted', { value: true }); f.doc.dispatchEvent(click);
+    f.chat.scrollTop = 250; f.flush(); scrollEvent(f); assert.equal(f.chat.scrollTop, 250);
+});
+// 7.6.9 a scripted click (jQuery trigger → element.click(), isTrusted false) is not the reader moving
+await check('a scripted click does not cancel restoration', f => {
+    keep(f.body, () => f.replace(80)); f.stop('click');
+    f.chat.scrollTop = f.chat.scrollHeight; scrollEvent(f); assert.equal(f.chat.scrollTop, 1200);
+});
+// 7.6.9 a native scrollbar drag sends mousedown without pointerdown
+await check('mousedown on the scrollbar cancels restoration', f => {
+    keep(f.body, () => f.replace(80)); f.stop('mousedown');
+    f.chat.scrollTop = 250; f.flush(); scrollEvent(f); assert.equal(f.chat.scrollTop, 250);
+});
+// 7.6.9 a tap on a message control is not a scroll gesture: the paint it triggers keeps the full guard
+await check('a tap on a message button before the paint does not shorten the guard', f => {
+    const stop = watchChatReadingGestures(f.doc);
+    try {
+        const button = { closest: s => s === '#chat' ? f.chat : s.includes('button') ? button : null };
+        for (const type of ['pointerdown', 'touchstart', 'touchend', 'mousedown']) {
+            const event = new Event(type); Object.defineProperty(event, 'target', { value: button }); f.doc.dispatchEvent(event);
+        }
+        keep(f.body, () => f.replace(80)); f.flush(); f.flush();
+        f.chat.scrollTop = f.chat.scrollHeight; scrollEvent(f); assert.equal(f.chat.scrollTop, 1200);
+        assert.ok(f.observers.some(o => !o.off));
+        const move = new Event('touchmove'); Object.defineProperty(move, 'target', { value: button }); f.doc.dispatchEvent(move);
+        f.chat.scrollTop = 250; scrollEvent(f); assert.equal(f.chat.scrollTop, 250);
+    } finally { stop(); }
 });
 await check('gesture before the first paint leaves ongoing momentum free', f => {
     const stop = watchChatReadingGestures(f.doc);

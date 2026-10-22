@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.8/blue-lemonade-7.6.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.6.9/blue-lemonade-7.6.9.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.6.8 · 최신 업데이트</summary>
+<summary>7.6.9 · 최신 업데이트</summary>
+
+- [n] 번호만으로 답한 묶음 번역에서 본문에 [1] 같은 참조가 있어도 다음 문단 표시를 각주로 오인해 형식 오류로 끝나지 않아요. 문단 첫머리의 참조 번호도 참조로 세고, 정의가 많은 답에서 각주 탐색이 느려지던 부분도 고쳤어요.
+- 날씨 칸의 「비 없음」·「비 예보」·「밤비 그침」처럼 비가 없다는 말은 비로 보지 않아 맑은 밤의 별 효과가 유지돼요. 「비가 그치지 않는」은 그대로 비예요.
+- 번역 뒤 읽던 위치 지키기에서 메시지 단추를 누른 직후의 그리기도 전체 보호를 받고, 코드가 보낸 클릭은 보호를 풀지 않으며, PC 스크롤바를 끌면 바로 풀려요.
+
+</details>
+
+<details>
+<summary>7.6.8 · 문단 번역의 참조 각주 보존</summary>
 
 - 문단별 번역에서 본문의 번호와 연결된 역주·각주를 모델의 작업 메모로 지우지 않아요. 각주 [1]을 다음 번역 문단 번호로 오인하던 부분도 고쳤어요.
 - 각주는 해당 문단 아래에 남고 접기·원문 먼저·펼침에서도 문단 짝을 유지해요. 이미 각주가 빠진 번역은 번역 데이터를 지운 뒤 다시 번역해 주세요.
