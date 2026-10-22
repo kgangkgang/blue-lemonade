@@ -20,7 +20,9 @@ const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const url = rel => pathToFileURL(path.join(root, rel)).href;
 const require = createRequire(import.meta.url);
 const lib = require(path.join(root, 'tools/css-lib.cjs'));
-const NAME = '90-puffy.css';
+const NAME = '90-puffy.css';   // 글자 단추 볼록
+const KNOB = '91-switch-knob.css';   // 7.7.5 스위치 손잡이 그림자 (따로 지울 수 있음)
+const MODS = [NAME, KNOB];
 const MOD = 'css/' + NAME;
 const css = read(MOD);
 let pass = 0, fail = 0;
@@ -36,33 +38,40 @@ const isKnob = r => lib.topSplit(r.selector).every(s => /::(before|after)\s*$/.t
 const knobRules = allRules.filter(isKnob);
 const rules = allRules.filter(r => !isKnob(r));
 const selectors = rules.flatMap(r => lib.topSplit(r.selector).map(s => s.trim()).filter(Boolean));
+const knobCss = read('css/' + KNOB);
+const knobTree = lib.parse(knobCss);
+const knobModRules = lib.flatRules(knobTree);
+const knobSelectors = knobModRules.flatMap(r => lib.topSplit(r.selector).map(s => s.trim()).filter(Boolean));
 const subject = sel => { const c = lib.compounds(sel); return c[c.length - 1]; };
 
 await test('모듈 머리 · 문법: 첫 줄 머리 주석, 파싱 문제 0, 규칙이 있음, style.css 에 이 모듈 칸', () => {
     assert.match(css, /^\/\* ===== css\/90-puffy\.css =====/);
     assert.deepEqual(tree.problems, []);
     assert.ok(rules.length >= 6, String(rules.length));
-    assert.ok(read('style.css').includes(`/* css/${NAME} */\n`));
+    for (const m of MODS) assert.ok(read('style.css').includes(`/* css/${m} */\n`), m);
 });
-await test('① rollback: 이 모듈만 빼고 다시 만든 style.css = 지금 style.css 에서 이 모듈 칸만 뺀 것 (머리 주석의 모듈 수 · 해시 말고 글자 하나까지)', () => {
+for (const drop of [[NAME], [KNOB], MODS]) await test(`① rollback: ${drop.join(' + ')} 만 빼고 다시 만든 style.css = 지금 style.css 에서 그 모듈 칸만 뺀 것 (머리 주석의 모듈 수 · 해시 말고 글자 하나까지)`, () => {
     const B = require(path.join(root, 'tools/build-css.cjs'));
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bl-puffy-rollback-'));
     try {
-        for (const f of fs.readdirSync(path.join(root, 'css'))) if (f !== NAME && f.endsWith('.css')) fs.copyFileSync(path.join(root, 'css', f), path.join(tmp, f));
+        for (const f of fs.readdirSync(path.join(root, 'css'))) if (!drop.includes(f) && f.endsWith('.css')) fs.copyFileSync(path.join(root, 'css', f), path.join(tmp, f));
         const without = B.build(tmp).text;
-        const now = read('style.css');
-        const a = now.indexOf(`/* css/${NAME} */\n`), b = now.indexOf('/* css/', a + 5);
-        assert.ok(a > 0 && b > a, '모듈 칸 경계');
-        const head = t => t.replace(/^\/\*[^\n]*\*\/\n/, '');
-        assert.equal(head(now.slice(0, a) + now.slice(b)), head(without));
-        assert.ok(!without.includes('data-bl-puffy'), '빼고 만든 style.css 에 볼록 규칙 0');
-        assert.equal(B.lazyTail(without), B.lazyTail(now), '게으른 칸(src/lazy-panel.gen.css)은 이 모듈과 무관');
+        let now = read('style.css');
+        for (const name of drop) {
+            const a = now.indexOf(`/* css/${name} */\n`), b = now.indexOf('/* css/', a + 5);
+            assert.ok(a > 0 && b > a, name + ' 모듈 칸 경계');
+            now = now.slice(0, a) + now.slice(b);
+        }
+        const head = s => s.replace(/^\/\*[^\n]*\*\/\n/, '');
+        assert.equal(head(now), head(without));
+        if (drop.length === 2) assert.ok(!without.includes('data-bl-puffy'), '둘 다 빼고 만든 style.css 에 볼록 규칙 0');
+        assert.equal(B.lazyTail(without), B.lazyTail(read('style.css')), '게으른 칸(src/lazy-panel.gen.css)은 이 모듈과 무관');
     } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 });
 await test('② 모듈을 빼면 규칙 0: 모든 선택자가 html[data-bl-puffy] 로 시작 · @media 는 움직임 줄이기 조건만 · 다른 모듈 · 런타임 CSS 는 이 속성을 안 씀', () => {
-    for (const s of allSelectors) assert.match(s, /^html\[data-bl-puffy(="dark")?\]/, s);
+    for (const s of [...allSelectors, ...knobSelectors]) assert.match(s, /^html\[data-bl-puffy(="dark")?\]/, s);
     for (const n of tree.children.filter(n => n.type === 'at')) assert.match(n.prelude, /^@media \(prefers-reduced-motion: (no-preference|reduce)\)$/, n.prelude);
-    for (const f of fs.readdirSync(path.join(root, 'css')).filter(f => f.endsWith('.css') && f !== NAME)) assert.ok(!read('css/' + f).includes('data-bl-puffy'), f);
+    for (const f of fs.readdirSync(path.join(root, 'css')).filter(f => f.endsWith('.css') && !MODS.includes(f))) assert.ok(!read('css/' + f).includes('data-bl-puffy'), f);
     const walk = d => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]);
     for (const f of walk(path.join(root, 'src')).filter(f => /\.(css|js)$/.test(f))) {
         const t = fs.readFileSync(f, 'utf8'); const rel = path.relative(root, f).replace(/\\/g, '/');
@@ -130,21 +139,23 @@ await test('③ 두께는 높이 안에: 크기 · 여백 속성 없음, 쉬는 
     assert.equal(press.decls.find(d => d.name === 'border-bottom-width').value, '0');
     for (const r of rules) for (const d of r.decls) assert.doesNotMatch(d.name, /^(height|min-height|width|padding|margin|font|letter-spacing|border-radius|color|background|background-color|box-shadow|top)$/, r.selector.slice(0, 60) + ' ' + d.name);
 });
-await test('⑥ 토글 손잡이(사용자 「A」): 길은 그대로 · 손잡이만 1px 위 · 1px 낮게 · 흐림 없는 3px 두께 — 폭 · 켬 위치 · 길 · 누르는 칸은 안 건드림', () => {
-    assert.ok(knobRules.length >= 3, String(knobRules.length));
-    const ks = knobRules.flatMap(r => lib.topSplit(r.selector).map(s => s.trim()));
-    for (const s of ks) assert.match(s, /(\.salty-switch span::after|label\.checkbox_label > input\[type="checkbox"\](:where\([^]*\))?::before)$/, s);
-    for (const r of knobRules) for (const d of r.decls) {
-        assert.match(d.name, /^(--bl-puffy-knob-edge|top|height|box-shadow)$/, d.name);
-        if (d.name === 'top') assert.equal(d.value, '2px', '원래 3px 에서 1px 위');
-        if (d.name === 'height') assert.match(d.value, /^(19|13)px$/, '원래 20 · 14px 에서 1px 낮게');
-        if (d.name === 'box-shadow') assert.equal(d.value, '0 3px 0 var(--bl-puffy-knob-edge)');
-        if (d.name === '--bl-puffy-knob-edge') assert.equal(d.value, 'color-mix(in oklab, var(--salty-muted) calc(100% - 0.65 * var(--bl-puffy-lt)), var(--salty-surface))');
-    }
-    // 원래 크기가 바뀌면 여기도 (20-panel 기본 20px · 21-witidy 설정 창 14px · 02-controls 체크 줄 14px, 모두 top 3px)
-    assert.match(read('css/20-panel.css'), /\.salty-switch span::after \{[^}]*top: 3px;[^}]*height: 20px;/);
-    assert.match(read('css/21-witidy.css'), /\.salty-panel \.salty-switch span::after \{ width: 14px; height: 14px;/);
-    assert.match(read('css/02-controls.css'), /::before \{\s*content: '' !important;\s*position: absolute !important;\s*top: 3px !important;\s*left: 3px !important;\s*width: 14px !important;\s*height: 14px !important;/);
+await test('⑥ 스위치 손잡이(7.7.5 「캐릭터 에셋처럼」): 토글 A(3px 딱딱한 두께)는 없음 · 손잡이 그림자를 빠져 있던 곳만 var(--bl-knob) 로 — 크기 · 위치 · 길 · 켬 색은 안 건드림', () => {
+    assert.match(knobCss, /^\/\* ===== css\/91-switch-knob\.css =====/);
+    assert.deepEqual(knobTree.problems, []);
+    assert.equal(knobRules.length, 0, '90-puffy 에 손잡이 규칙 없음(단추 몫만)');
+    assert.ok(!css.includes('--bl-puffy-knob-edge') && !knobCss.includes('--bl-puffy-knob-edge'), '토글 A 두께 색 변수 없음');
+    assert.equal(knobModRules.length, 2, String(knobModRules.length));
+    assert.ok(knobTree.children.every(n => n.type !== 'at'), '@media 없음');
+    for (const s of knobSelectors) assert.match(s, /^html\[data-bl-puffy\] body\.salty (\.salty-panel \.salty-switch span::after|#WorldInfo #wiCheckboxes label\.checkbox_label > input\[type="checkbox"\]::before)$/, s);
+    for (const r of knobModRules) for (const d of r.decls) { assert.equal(d.name, 'box-shadow'); assert.equal(d.value, 'var(--bl-knob)'); }
+    assert.doesNotMatch(knobCss.replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-fA-F]{3,8}\b|\b(rgba?|hsla?)\(/, '색 글자 0');
+    // 기준(확장 서랍 확장 켜기 스위치 · 실리태번 체크 줄 스위치)이 같은 토큰을 쓰는지, 덮는 대상(21-witidy 의 none)이 그대로인지 — 바뀌면 여기도
+    assert.match(read('css/64-headswitch.css'), /\.bl-hs-switch > span \{[^}]*box-shadow: var\(--bl-knob,/);
+    assert.match(read('css/02-controls.css'), /width: 14px !important;\s*height: 14px !important;\s*border-radius: 50% !important;\s*clip-path: none !important;\s*background: #fff !important;\s*box-shadow: var\(--bl-knob\) !important;/);
+    assert.match(read('css/21-witidy.css'), /body\.salty \.salty-panel \.salty-switch span::after \{ width: 14px; height: 14px; box-shadow: none; \}/);
+    assert.match(read('css/21-witidy.css'), /#wiCheckboxes label\.checkbox_label > input\[type="checkbox"\]::before \{ width: 14px !important; height: 14px !important; box-shadow: none !important; \}/);
+    assert.match(read('css/10-foundation.css'), /--bl-knob: var\(--salty-knob, 0 1px 2px rgba\(15, 34, 56, 0\.2\), 0 3px 8px -1px rgba\(15, 34, 56, 0\.2\)\);/);
+    assert.match(read('css/10-foundation.css'), /--bl-knob: var\(--salty-knob, 0 1px 2px rgba\(0, 6, 16, 0\.4\), 0 2px 6px -1px rgba\(0, 6, 16, 0\.35\)\);/);
 });
 await test('④ 색 글자 0: #hex · rgb() · hsl() · 색 이름 없음 — 두께 색은 테마 변수를 깊게 섞은 것', () => {
     const body = css.replace(/\/\*[\s\S]*?\*\//g, '');

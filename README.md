@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.4/blue-lemonade-7.7.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.5/blue-lemonade-7.7.5.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.7.4 · 최신 업데이트</summary>
+<summary>7.7.5 · 최신 업데이트</summary>
+
+- 전개 지시: 프롬프트 쪽에서 줄을 꾹 누른 채 위아래로 끌면 순서를 바꿀 수 있어요. 위에 있는 프롬프트부터 차례로 들어가요. PC 에서는 마우스로 끌거나 Alt+↑/↓ 로 옮겨요.
+- 스위치 손잡이: 켜기/끄기 스위치의 동그라미를 확장 켜기 스위치처럼 부드러운 그림자로 바꿨어요. 7.7.4 의 아래 두께는 걷었고, 글자 단추의 볼록 모양은 그대로예요.
+- 애드온 버전: 전개 지시 1.3.6
+
+</details>
+
+<details>
+<summary>7.7.4 · 번역 끝 읽던 위치 · API 실패 처리 · 저장 공간 정리 · 시작 속도 · 볼록 단추</summary>
 
 - 볼록 단추: 테마가 그리는 글자 단추와 스위치 손잡이에 살짝 입체감을 줬어요. 글자 단추는 얇은 두께(2px, 팝업은 3px)에 누르면 살짝 들어가고, 스위치는 손잡이만 도톰해요. 기본으로 켜져 있고 크기 · 색 · 자리는 그대로예요.
 - 번역이 끝날 때 읽던 문단이 아래로(맨 아래까지) 밀리던 것을 고쳤어요. 끝나기 직전에 화면을 만졌을 때, 상태창이 다시 그려지며 길이가 잠깐 바뀌는 사이 읽던 자리를 놓쳤어요.

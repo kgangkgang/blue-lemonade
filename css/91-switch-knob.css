@@ -1,0 +1,17 @@
+/* ===== css/91-switch-knob.css =====
+   7.7.5 스위치 손잡이 그림자 — 사용자(10-23): 「버튼 볼록은 그대로, 스위치만 캐릭터 에셋 확장 스위치처럼 그림자 있는 게 나은 듯」.
+   7.7.4 의 토글 「A」(손잡이 아래 3px 딱딱한 두께)는 걷었다(css/90-puffy.css 에서 뺌). 기준 모양 = 확장 서랍의 확장 켜기 스위치(.bl-hs-switch, 64-headswitch):
+   흰 손잡이에 부드럽게 퍼지는 그림자 var(--bl-knob) — 10-foundation 의 토큰(apply.js 가 팔레트 그림자색으로 --salty-knob 을 채움):
+     라이트 0 1px 2px <그림자 20%> , 0 3px 8px -1px <그림자 20%>  ·  나이트 0 1px 2px <그림자 40%> , 0 2px 6px -1px <그림자 35%>
+   테마 스위치 중 이 그림자가 빠져 있던 곳만 같은 토큰으로 맞춘다(길 · 폭 · 손잡이 크기 · 위치 · 켬 색 · 누르는 칸 그대로, 켬 · 끔 같은 그림자):
+   · 설정 창 스위치(.salty-switch, 21-witidy 가 box-shadow: none) · 월드 인포 체크 줄 스위치(#wiCheckboxes, 21-witidy 가 none !important).
+   실리태번 체크 줄 스위치(02-controls) · 확장 서랍 확장 켜기 스위치(64-headswitch)는 이미 var(--bl-knob) — 그대로.
+   테마가 꺼진 확장만 모드의 설정 창 스위치는 20-panel 의 기본 그림자(0 1px 3px)가 이미 부드럽다 — 그대로(--bl-knob 은 body.salty 에만 있다).
+   되돌리기(rollback): 이 파일만 지우고 node tools/build-css.cjs — 단추 볼록(90-puffy)과 따로 지울 수 있다(tools/tests/puffy-rollback.mjs).
+   ===== */
+html[data-bl-puffy] body.salty .salty-panel .salty-switch span::after {
+  box-shadow: var(--bl-knob);
+}
+html[data-bl-puffy] body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]::before {
+  box-shadow: var(--bl-knob) !important;
+}

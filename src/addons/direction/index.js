@@ -14,7 +14,8 @@ import { afterBoot } from '../../boot-gate.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.3.5';
+const VERSION = '1.3.6';
+// 1.3.6: 프롬프트 쪽 줄을 꾹 눌러(마우스는 끌기 · 키보드 Alt+↑/↓) 순서를 바꾼다 — 목록 순서 = 보내는 순서
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
 // 1.3.4: 테두리 단계 선을 고정 1.3px 로 — 옆 선 아이콘 굵기 (em 비례는 폰에서 두꺼워졌다)
 // 1.3.3: 깃털은 모든 단계가 같은 글리프(꺼짐은 흐린 색으로 채움), 테두리를 시안 굵기로 · 줄의 토큰 수는 숫자만
@@ -786,6 +787,7 @@ function promptRow(item, index, total) {
     toggle.type = 'button';
     toggle.dataset.pact = 'expand';
     toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-keyshortcuts', 'Alt+ArrowUp Alt+ArrowDown');   // 1.3.6 순서 옮기기
     toggle.innerHTML = '<i class="fa-solid fa-chevron-right jj-pitem-caret" aria-hidden="true"></i>';
     toggle.append(makeEl('span', 'jj-pitem-title', promptTitle(item)));
     const toggleSwitch = makeEl('button', 'jj-switch jj-pswitch');
@@ -818,6 +820,7 @@ function promptRow(item, index, total) {
 function renderPrompts(focus = null) {
     const box = popup?.querySelector('.jj-prompts');
     if (!box) return;
+    if (promptDrag) endPromptDrag(false);   // 1.3.6 끄는 중에 목록이 바뀌면(다른 기기 합치기 등) 끌기는 그만두고 새 목록을 그린다
     const list = settings().promptList;
     if (openPromptId && !list.some(item => item.id === openPromptId)) openPromptId = null;
     if (promptEdit && promptEdit.id !== 'new' && !list.some(item => item.id === promptEdit.id)) promptEdit = null;
@@ -915,9 +918,7 @@ async function onPromptsClick(event) {
         void fillPromptTokens();   // 켠 것 합계
     } else if (act === 'up' || act === 'down') {
         const to = index + (act === 'up' ? -1 : 1);
-        if (to < 0 || to >= list.length) return;
-        list.splice(index, 1);
-        list.splice(to, 0, item);
+        if (!movePrompt(list, index, to)) return;
         save();
         const edge = to === 0 || to === list.length - 1;   // 끝에 닿아 그 단추가 꺼지면 반대쪽 단추에 초점
         renderPrompts(`.jj-pitem[data-id="${id}"] [data-pact="${edge ? (act === 'up' ? 'down' : 'up') : act}"]`);
@@ -939,6 +940,216 @@ async function onPromptsClick(event) {
         renderPrompts('[data-pact="add"]');
         refreshButton();
     }
+}
+
+// ── 1.3.6 꾹 눌러 순서 바꾸기 (사용자 10-23 「꾹 눌러서 순서 바꿀 수 있게」) ──
+// 줄 머리(제목 · 토큰 수 · 스위치 자리)를 꾹 누르면(손가락 400ms, 거의 안 움직였을 때) 줄이 살짝 떠올라 집히고, 위아래로 끌면 다른 줄이 비켜 주고,
+// 놓으면 그 순서로 promptList 에 저장한다 — 이 목록 순서가 곧 보내는 순서다(injectDirection: 항상 지시 → 켠 프롬프트 목록 순서 → 전개 지시).
+// 꾹 누르기 전에 손가락이 움직이면 그냥 스크롤(브라우저가 pointercancel 을 보낸다) · 짧게 누르면 지금처럼 펼치기 · 스위치.
+// 마우스는 꾹 누르기 또는 끌기(6px), 키보드는 줄 안 단추에 초점을 두고 Alt+↑/↓. 펼친 줄의 ↑ ↓ 단추도 그대로 둔다.
+const HOLD_MS = 400;        // 손가락 꾹 누르기
+const HOLD_SLOP = 8;        // 이만큼 움직이면 꾹 누르기가 아니다 (스크롤)
+const MOUSE_DRAG = 6;       // 마우스는 이만큼 끌면 바로 집는다
+const EDGE_SCROLL = 40;     // 목록 위아래 끝에서 이 안으로 끌면 자동 스크롤
+
+/** 순수: list 의 from 자리 항목을 to 자리로 옮긴다. 옮겼으면 true */
+function movePrompt(list, from, to) {
+    if (!Array.isArray(list) || !Number.isInteger(from) || !Number.isInteger(to) || from === to) return false;
+    if (from < 0 || to < 0 || from >= list.length || to >= list.length) return false;
+    const [item] = list.splice(from, 1);
+    list.splice(to, 0, item);
+    return true;
+}
+
+/** 순수: 끄는 줄(from)이 dy 만큼 움직였을 때 들어갈 자리. slots = 줄마다 { top, height } (위에서부터) — 끄는 줄 가운데가 이웃 줄 가운데를 넘으면 그 자리 */
+function dropSlot(slots, from, dy) {
+    const me = slots?.[from];
+    if (!me) return from;
+    const center = me.top + me.height / 2 + dy;
+    let to = from;
+    for (let i = from + 1; i < slots.length && center > slots[i].top + slots[i].height / 2; i++) to = i;
+    if (to === from) for (let i = from - 1; i >= 0 && center < slots[i].top + slots[i].height / 2; i--) to = i;
+    return to;
+}
+
+let promptPress = null;   // 꾹 누르는 중 { pointerId, type, x, y, row, timer }
+let promptDrag = null;    // 끄는 중 { pointerId, type, row, rows, slots, from, to, gap, list, startY, startScroll, y, frame }
+let promptClickMute = 0;  // 끌기를 마친 손가락이 떨어질 때 따라오는 click 을 삼킬 때까지(시각)
+
+function onPromptsPointerDown(event) {
+    if (promptDrag || promptPress || !popup) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    const head = event.target.closest?.('.jj-pitem-head');
+    const row = head?.closest('.jj-pitem');
+    if (!row || row.classList.contains('is-editing') || !popup.contains(row)) return;
+    promptPress = { pointerId: event.pointerId, type: event.pointerType, x: event.clientX, y: event.clientY, row,
+        timer: setTimeout(() => startPromptDrag(), HOLD_MS) };
+    window.addEventListener('pointermove', onPromptsPointerMove, true);
+    window.addEventListener('pointerup', onPromptsPointerUp, true);
+    window.addEventListener('pointercancel', onPromptsPointerCancel, true);
+}
+
+function stopPromptPointerWatch() {
+    window.removeEventListener('pointermove', onPromptsPointerMove, true);
+    window.removeEventListener('pointerup', onPromptsPointerUp, true);
+    window.removeEventListener('pointercancel', onPromptsPointerCancel, true);
+}
+
+function cancelPromptPress() {
+    if (!promptPress) return;
+    clearTimeout(promptPress.timer);
+    promptPress = null;
+    if (!promptDrag) stopPromptPointerWatch();
+}
+
+function onPromptsPointerMove(event) {
+    if (promptDrag) {
+        if (event.pointerId !== promptDrag.pointerId) return;
+        promptDrag.y = event.clientY;
+        layoutPromptDrag();
+        return;
+    }
+    const press = promptPress;
+    if (!press || event.pointerId !== press.pointerId) return;
+    const dx = event.clientX - press.x, dy = event.clientY - press.y;
+    if (press.type === 'mouse') {
+        if (Math.abs(dy) >= MOUSE_DRAG && Math.abs(dy) >= Math.abs(dx)) startPromptDrag(event.clientY);   // 마우스는 끌면 바로 집는다
+        else if (Math.hypot(dx, dy) > HOLD_SLOP) cancelPromptPress();
+    } else if (Math.hypot(dx, dy) > HOLD_SLOP) {
+        cancelPromptPress();   // 꾹 누르기 전에 움직였다 — 스크롤 · 쪽 넘기기는 브라우저 몫
+    }
+}
+
+function onPromptsPointerUp(event) {
+    if (promptDrag && event.pointerId === promptDrag.pointerId) endPromptDrag(true);
+    else if (promptPress && event.pointerId === promptPress.pointerId) cancelPromptPress();
+}
+
+function onPromptsPointerCancel(event) {
+    if (promptDrag && event.pointerId === promptDrag.pointerId) endPromptDrag(false);
+    else if (promptPress && event.pointerId === promptPress.pointerId) cancelPromptPress();
+}
+
+/** 끌기 시작: 줄 자리들을 재 두고 집은 줄을 띄운다 */
+function startPromptDrag(y = null) {
+    const press = promptPress;
+    if (!press || !popup) return cancelPromptPress();
+    clearTimeout(press.timer);
+    promptPress = null;
+    const list = popup.querySelector('.jj-pitems');
+    const rows = list ? [...list.children].filter(row => row.dataset.id && row.dataset.id !== 'new') : [];
+    const from = rows.indexOf(press.row);
+    if (from < 0 || rows.length < 2 || !press.row.isConnected) { stopPromptPointerWatch(); return; }   // 한 줄뿐이면 옮길 곳이 없다 — 짧게 누른 것처럼 둔다
+    const box = list.getBoundingClientRect();
+    const slots = rows.map(row => { const rect = row.getBoundingClientRect(); return { top: rect.top - box.top + list.scrollTop, height: rect.height }; });
+    const gap = Number.parseFloat(getComputedStyle(list).rowGap) || 0;
+    promptDrag = { pointerId: press.pointerId, type: press.type, row: press.row, rows, slots, from, to: from, gap, list,
+        startY: press.y, startScroll: list.scrollTop, y: y ?? press.y, frame: 0 };
+    list.classList.add('is-sorting');
+    press.row.classList.add('is-dragging');
+    press.row.setAttribute('aria-grabbed', 'true');
+    if (press.type !== 'mouse') { try { navigator.vibrate?.(15); } catch { /* 진동을 못 쓰는 기기 */ } }
+    layoutPromptDrag();
+    promptDrag.frame = requestAnimationFrame(promptEdgeScroll);
+}
+
+/** 집은 줄은 손가락을 따라가고(목록 안에서만), 지나친 줄은 집은 줄 높이만큼 비켜 준다 */
+function layoutPromptDrag() {
+    const drag = promptDrag;
+    if (!drag) return;
+    const { slots, from, rows, list } = drag;
+    const me = slots[from], first = slots[0], last = slots[slots.length - 1];
+    const raw = drag.y - drag.startY + (list.scrollTop - drag.startScroll);
+    drag.to = dropSlot(slots, from, raw);   // 자리는 손가락 그대로 (목록 끝 너머로 끌면 첫 · 끝 자리)
+    const dy = Math.round(Math.min(last.top + last.height - (me.top + me.height), Math.max(first.top - me.top, raw)));   // 보이는 줄은 목록 안에서만
+    const shift = Math.round(me.height + drag.gap);
+    rows.forEach((row, index) => {
+        let offset = 0;
+        if (index === from) offset = dy;
+        else if (from < drag.to && index > from && index <= drag.to) offset = -shift;
+        else if (drag.to < from && index >= drag.to && index < from) offset = shift;
+        row.style.transform = offset ? `translate3d(0, ${offset}px, 0)` : '';
+    });
+}
+
+/** 목록이 패널보다 길 때 위아래 끝 가까이로 끌면 그쪽으로 스크롤 */
+function promptEdgeScroll() {
+    const drag = promptDrag;
+    if (!drag) return;
+    const { list } = drag;
+    const box = list.getBoundingClientRect();
+    const zone = Math.min(EDGE_SCROLL, box.height / 3);
+    let speed = 0;
+    if (drag.y < box.top + zone) speed = -Math.ceil(12 * Math.min(1, (box.top + zone - drag.y) / zone));
+    else if (drag.y > box.bottom - zone) speed = Math.ceil(12 * Math.min(1, (drag.y - (box.bottom - zone)) / zone));
+    if (speed) {
+        const before = list.scrollTop;
+        list.scrollTop = Math.max(0, Math.min(list.scrollHeight - list.clientHeight, before + speed));
+        if (list.scrollTop !== before) layoutPromptDrag();
+    }
+    drag.frame = requestAnimationFrame(promptEdgeScroll);
+}
+
+/** 끌기 끝: commit 이면 그 자리로 저장(보내는 순서도 같이 바뀐다), 아니면 제자리 */
+function endPromptDrag(commit) {
+    const drag = promptDrag;
+    if (!drag) return;
+    promptDrag = null;
+    cancelAnimationFrame(drag.frame);
+    stopPromptPointerWatch();
+    promptClickMute = Date.now() + 600;   // 놓을 때 따라오는 click 이 펼치기 · 스위치를 누르지 않게
+    const id = drag.row.dataset.id;
+    const before = drag.row.getBoundingClientRect().top;
+    for (const row of drag.rows) row.style.transform = '';
+    drag.row.classList.remove('is-dragging');
+    drag.row.removeAttribute('aria-grabbed');
+    drag.list.classList.remove('is-sorting');
+    if (!commit || drag.to === drag.from) return;
+    const list = settings().promptList;
+    const from = list.findIndex(item => item.id === id);
+    const to = list.findIndex(item => item.id === drag.rows[drag.to]?.dataset.id);
+    if (!movePrompt(list, from, to)) return;
+    save();
+    renderPrompts();
+    refreshButton();
+    announcePromptMove(list[to], to);
+    // 놓은 줄이 손가락 자리에서 새 자리로 미끄러져 들어간다 (움직임 줄이기면 바로)
+    const row = popup?.querySelector(`.jj-pitem[data-id="${CSS.escape(id)}"]`);
+    if (!row || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const delta = Math.round(before - row.getBoundingClientRect().top);
+    if (!delta) return;
+    row.style.transition = 'none';
+    row.style.transform = `translate3d(0, ${delta}px, 0)`;
+    void row.offsetWidth;
+    row.style.transition = '';
+    row.classList.add('is-settling');
+    row.style.transform = '';
+    setTimeout(() => row.classList.remove('is-settling'), 200);
+}
+
+/** 화면 읽기 프로그램에 옮긴 결과를 알린다 */
+function announcePromptMove(item, to) {
+    const live = popup?.querySelector('.jj-plive');
+    if (live && item) live.textContent = `${to + 1}번째로 옮겼어요: 「${promptTitle(item)}」`;   // 제목 끝 글자에 따라 조사가 달라 조사 없이
+}
+
+/** 키보드: 줄 안 단추에 초점이 있을 때 Alt+↑/↓ 로 한 칸씩 */
+function onPromptsReorderKey(event) {
+    if (!event.altKey || event.ctrlKey || event.metaKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return false;
+    if (event.target.matches?.('input, textarea, [contenteditable="true"]')) return false;
+    const row = event.target.closest?.('.jj-pitem');
+    if (!row || row.classList.contains('is-editing')) return false;
+    event.preventDefault();
+    const list = settings().promptList;
+    const from = list.findIndex(item => item.id === row.dataset.id);
+    const to = from + (event.key === 'ArrowUp' ? -1 : 1);
+    if (!movePrompt(list, from, to)) return true;
+    save();
+    const act = event.target.dataset?.pact;
+    renderPrompts(`.jj-pitem[data-id="${CSS.escape(row.dataset.id)}"] ${act && !['up', 'down'].includes(act) ? `[data-pact="${act}"]` : '[data-pact="expand"]'}`);
+    refreshButton();
+    announcePromptMove(list[to], to);
+    return true;
 }
 
 // ── 1.3.2 토큰 수 (실리태번 프롬프트 관리자처럼): 지금 모델의 토크나이저(getTokenCountAsync)로, 매크로를 바꾼 뒤의 글을 센다 ──
@@ -1036,6 +1247,7 @@ function onPromptsInput(event) {
 }
 
 function onPromptsKeydown(event) {
+    if (onPromptsReorderKey(event)) return;   // 1.3.6 Alt+↑/↓
     if (event.key === 'Enter' && !event.isComposing && event.target.matches?.('.jj-ptitle-input')) {
         event.preventDefault();
         event.target.closest('.jj-pedit')?.querySelector('.jj-pcontent-input')?.focus();
@@ -1096,7 +1308,8 @@ function onPopupKeydown(event) {
     if (event.key !== 'Escape' || !popup || event.target.closest?.('dialog')) return; // 확인 창의 Esc 는 그 창 몫
     event.preventDefault();
     event.stopPropagation();
-    if (listView) setListView(null);
+    if (promptDrag) endPromptDrag(false);   // 1.3.6 끄는 중이면 제자리로만
+    else if (listView) setListView(null);
     else if (promptEdit && event.target.closest?.('.jj-pedit')) cancelPromptEdit();   // 1.3.0 고치는 중이면 고치기만 그만둔다
     else closePopup();
 }
@@ -1124,6 +1337,7 @@ function openPopup() {
                         <p class="jj-pempty" hidden><b>자주 쓰는 프롬프트를 모아 두는 곳이에요.</b><span>줄마다 켜고 끄고, 켠 것은 지시와 같이 보내요. 예: 문체 다듬기 · 짧게 답하기</span></p>
                         <p class="jj-ptotal" hidden></p>
                         <button type="button" class="jj-padd" data-pact="add"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>프롬프트 추가</span></button>
+                        <p class="jj-plive" aria-live="polite"></p>
                     </div>
                 </section>` : `
                 <section class="jj-page" data-kind="${kind}" aria-label="${KIND_LABEL[kind]}"><textarea class="jj-textarea" rows="3" spellcheck="false" placeholder="${PLACEHOLDER[kind]}"></textarea></section>`).join('')}
@@ -1159,6 +1373,17 @@ function openPopup() {
     promptsBox.addEventListener('click', onPromptsClick);
     promptsBox.addEventListener('input', onPromptsInput);
     promptsBox.addEventListener('keydown', onPromptsKeydown);
+    // 1.3.6 꾹 눌러 순서 바꾸기: 누르기 · 끌기는 pointer, 끄는 동안 목록 스크롤 · 쪽 넘기기를 막는 것은 touchmove(passive 아님 — 목록 위에서만),
+    //       길게 누를 때 폰 메뉴 · 놓을 때 따라오는 click 은 삼킨다
+    promptsBox.addEventListener('pointerdown', onPromptsPointerDown);
+    promptsBox.querySelector('.jj-pitems').addEventListener('touchmove', event => { if (promptDrag && event.cancelable) event.preventDefault(); }, { passive: false });
+    promptsBox.addEventListener('contextmenu', event => { if ((promptPress && promptPress.type !== 'mouse') || promptDrag) event.preventDefault(); });
+    promptsBox.addEventListener('click', event => {
+        if (Date.now() > promptClickMute) return;
+        promptClickMute = 0;
+        event.preventDefault();
+        event.stopPropagation();
+    }, true);
     const pages = popup.querySelector('.jj-pages');
     pages.addEventListener('scroll', onPagesScroll, { passive: true });
     pages.addEventListener('pointerdown', () => { pageTarget = null; }, { passive: true }); // 손으로 넘기기 시작하면 코드 목표는 버린다
@@ -1202,6 +1427,8 @@ function openPopup() {
 
 function closePopup() {
     if (!popup) return;
+    endPromptDrag(false);   // 1.3.6
+    cancelPromptPress();
     const closing = popup;
     popup = null;
     listView = null;
@@ -1520,7 +1747,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
 }));
 
 export function showHelp() {
-    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;).</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 문체 다듬기처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 항상 지시 다음, 전개 지시 앞에 같이 들어가요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요. 줄 옆 숫자는 지금 모델 기준 토큰 수예요. 제목 옆 점을 누르면 그 쪽으로 바로 가요.</p><p>깃털 모양으로 지금 보내는 것을 알 수 있어요. 아무것도 안 보내면 회색, 전개 지시 · 항상 지시 · 켠 프롬프트 중 하나면 켜짐 색 테두리, 둘이면 안까지 채움, 셋 다면 채움에 은은한 빛이에요. 전개 지시를 꺼 둬도 다른 것을 보내는 중이면 켜진 모양으로 남아요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
+    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;).</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 문체 다듬기처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 항상 지시 다음, 전개 지시 앞에 같이 들어가요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요. 줄을 꾹 누른 채 위아래로 끌어도 순서가 바뀌어요(마우스는 끌기, 키보드는 Alt+↑/↓). 위에 있는 것부터 차례로 들어가요. 줄 옆 숫자는 지금 모델 기준 토큰 수예요. 제목 옆 점을 누르면 그 쪽으로 바로 가요.</p><p>깃털 모양으로 지금 보내는 것을 알 수 있어요. 아무것도 안 보내면 회색, 전개 지시 · 항상 지시 · 켠 프롬프트 중 하나면 켜짐 색 테두리, 둘이면 안까지 채움, 셋 다면 채움에 은은한 빛이에요. 전개 지시를 꺼 둬도 다른 것을 보내는 중이면 켜진 모양으로 남아요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
 }
 let settingsDialog = null;
 export async function openPanel() {

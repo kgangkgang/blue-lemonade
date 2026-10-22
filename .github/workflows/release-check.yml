@@ -277,6 +277,7 @@ jobs:
           node tools/tests/story-direction.mjs .
           node tools/tests/direction-send.mjs .
           node tools/tests/direction-prompts.mjs .
+          node tools/tests/direction-reorder.mjs .
           node tools/tests/mix-selection.mjs .
           node tools/tests/capture-motion.mjs .
           node tools/tests/capture-filter.mjs .

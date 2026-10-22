@@ -1,5 +1,5 @@
 /* ===== css/90-puffy.css =====
-   7.7.4 볼록 단추 (기본 모양 · 설정 스위치 없음) — 테마가 그리는 글자 단추 아래에 얇은 두께(2px, 팝업 확인 · 취소는 3px)를 넣고,
+   7.7.4 볼록 단추 (기본 모양 · 설정 스위치 없음) — 글자 단추 몫만(스위치 손잡이는 css/91-switch-knob.css, 따로 지울 수 있음). 테마가 그리는 글자 단추 아래에 얇은 두께(2px, 팝업 확인 · 취소는 3px)를 넣고,
    누르면 두께만큼 쑥 들어간다. apply.js 가 테마가 켜져 있으면 <html data-bl-puffy="light|dark"> 를 단다(usage-mode.js puffyMode — 값은 두께 색 고르기용).
    되돌리기(rollback): 이 파일을 지우고 node tools/build-css.cjs — 모든 규칙이 html[data-bl-puffy] 로 시작하고 이 모듈에만 있어서,
    지우면 style.css 가 이 모듈 전과 글자 하나까지 같다(tools/tests/puffy-rollback.mjs). 속성은 남아도 걸리는 규칙이 없다.
@@ -75,26 +75,4 @@ html[data-bl-puffy]:not(#bl-puffy-off) body .salty-panel .salty-btn.bl-tool-prim
   html[data-bl-puffy]:not(#bl-puffy-off) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, #movingUIreset, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])):active {
     transform: none !important;
   }
-}
-
-/* ---------- 토글 손잡이 (사용자 10-23 「A ㄱㄱ」): 길(트랙)은 그대로 납작, 손잡이 동그라미만 아래에 3px 두께 ----------
-   손잡이를 1px 위로 · 높이 1px 줄이고(가로 폭 · 길 · 누르는 칸 · 켬 위치 그대로) 흐림 없는 그림자 0 3px 0 — 밀면 손잡이와 같이 움직인다(transform 은 그대로).
-   두께 색: 흰 손잡이 아래의 회색 = --salty-muted 를 면(--salty-surface)에 섞은 것 — 라이트 35% · 나이트 100%(뿌리의 --bl-puffy-lt).
-   대상: 테마 스위치(.salty-switch, 설정 창 · 서랍 · 확장만 모드) · 테마가 스위치로 바꾼 실리태번 체크 줄(02-controls 와 같은 범위) · 월드 인포 · 프롬프트 설정의 같은 스위치. */
-html[data-bl-puffy]:not(#bl-puffy-off) body .salty-switch span::after {
-  --bl-puffy-knob-edge: color-mix(in oklab, var(--salty-muted) calc(100% - 0.65 * var(--bl-puffy-lt)), var(--salty-surface));
-  top: 2px;
-  height: 19px;
-  box-shadow: 0 3px 0 var(--bl-puffy-knob-edge);
-}
-html[data-bl-puffy]:not(#bl-puffy-off) body.salty .salty-panel .salty-switch span::after {
-  height: 13px;
-}
-html[data-bl-puffy]:not(#bl-puffy-off) body.salty :where(#user-settings-block, #left-nav-panel, #rm_api_block, #AdvancedFormatting, #PersonaManagement, #Backgrounds, #rm_extensions_block .extensions_block > .flex-container, .popup .popup-inputs) label.checkbox_label > input[type="checkbox"]:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *))::before,
-html[data-bl-puffy]:not(#bl-puffy-off) body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]::before,
-html[data-bl-puffy]:not(#bl-puffy-off) body.salty #left-nav-panel #range_block_openai > .range-block > label.checkbox_label > input[type="checkbox"]::before {
-  --bl-puffy-knob-edge: color-mix(in oklab, var(--salty-muted) calc(100% - 0.65 * var(--bl-puffy-lt)), var(--salty-surface));
-  top: 2px !important;
-  height: 13px !important;
-  box-shadow: 0 3px 0 var(--bl-puffy-knob-edge) !important;
 }
