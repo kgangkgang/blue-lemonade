@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.7/blue-lemonade-7.8.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.8/blue-lemonade-7.8.8.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.8.7 · 최신 업데이트</summary>
+<summary>7.8.8 · 최신 업데이트</summary>
+
+- Git 으로 설치한 곳에서 업데이트 받아 오기가 오래 걸려도 15분까지 기다리고, 기다린 시간을 보여 줘요.
+- 업데이트가 실패하거나 연결이 끊겨도 백업해 두고 GitHub 에서 새로 받아 깔아요. 지난번 실패로 남은 백업 복사본이 있으면 정리하고 다시 해요.
+
+</details>
+
+<details>
+<summary>7.8.7 · 과일의 마음 · 데우스 창 디자인 맞추기</summary>
 
 - 과일의 마음 창: 설정 줄을 작은 체크 + 이름 한 줄로, ? 는 둥근 원으로, 머리줄 단추의 상자를 없앴어요. 고르기 칸에 ▾ 를 넣고 하단 내비를 한 줄로 낮췄어요.
 - 데우스 빠른 설정: 체크 꺽쇠가 두 개 겹쳐 보이던 것을 고치고, 카드 테두리를 얇은 선 하나로 맞췄어요. 좁은 화면에서 긴 이름이 잘리던 것과 위 내비가 넘치던 것도 고쳤어요.
