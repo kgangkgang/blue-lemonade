@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.5/blue-lemonade-7.8.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.6/blue-lemonade-7.8.6.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.8.5 · 최신 업데이트</summary>
+<summary>7.8.6 · 최신 업데이트</summary>
+
+- 전개 지시 입력칸을 다른 입력칸처럼 한 단계 밝은 면 + 얇은 선으로 바꿨어요. 누르면 선만 포인트 색으로 바뀌어요.
+- 입력칸을 눌렀을 때 바깥에 번지던 두꺼운 파란 고리를 없애고, 포인트 색 얇은 선 하나만 보여요.
+
+</details>
+
+<details>
+<summary>7.8.5 · 고르기 칸 ▾ 되살림 · 업데이트 실패 때 새로 받아 깔기</summary>
 
 - 번역기 · 모델 등록 · 모델 전환 · 정규식 연결 · 성능 보조 창의 고르기 칸 오른쪽에 ▾ 표시가 다시 보여요. 칸 배경을 칠하면서 화살표까지 지우던 것을 고쳤어요.
 - Git 으로 설치한 곳에서 업데이트(받아 오기)가 실패하면, 지금 폴더를 백업해 두고 GitHub 에서 새로 받아 깔아요. 받지 못하면 백업을 원래대로 돌려 놔요. 설정 · 대화 · 그림은 그대로예요.
