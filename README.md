@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.9/blue-lemonade-7.7.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.0/blue-lemonade-7.8.0.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,20 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.7.9 · 최신 업데이트</summary>
+<summary>7.8.0 · 최신 업데이트</summary>
+
+- 7.7.9 에서 화면 규칙 일부(체크박스 · 입력칸 · 단추 묶음 · 스크롤바 숨김 · 탭 줄 페이드 · 애드온 창 정리 등)가 적용되지 않던 것을 바로잡았어요. 도움말 아이콘 규칙에 섞인 보이지 않는 문자 하나가 그 뒤 규칙을 막고 있었어요.
+- 공지 창을 테마 자체 창으로 바꿨어요. 실리태번 판과 관계없이 「닫기」 하나만 보이고, 닫기가 빨갛게 칠해지지 않아요.
+- 공지 창 제목의 위 · 왼쪽 여백을 같게 맞추고, 창 안 세로 스크롤바를 숨겼어요.
+- 설정 편집창에서 이름 옆 「기본값으로」 아이콘을 이름과 6px 간격, 세로 가운데에 맞췄어요(크기 · 굵기 · 자간 등).
+- 확장 목록 Blue Lemonade 줄의 ⓒ 아이콘과 판 알약 사이를 눈에 보이는 8px 로 맞췄어요.
+- 애드온 창의 실행 단추 줄(다시 쓰기 「세부 설정 · 새로고침해서 적용」 등)도 단추가 둘 이상이면 같은 폭 2열로 나란히 둬요.
+- 설정 창 머리 도구 줄의 닫기 × 를 비교 · 되돌리기 · 찾기 · 전체 화면 아이콘과 같은 크기로 줄였어요.
+
+</details>
+
+<details>
+<summary>7.7.9 · 체크박스 · 입력칸 · 단추 묶음 정리와 폰 스크롤 · 번역 중 화면 개선</summary>
 
 - 업데이트 안내 · 도움말 같은 안내 창은 실리태번 판과 관계없이 「닫기」 하나만 보여요.
 - 자주 쓰는 짧은 라벨 세 곳(요금 지금 확인 · 설치 다시 검사 · 채팅 목록 새로고침)을 아이콘 단추로 바꿨어요. 이름은 길게 누르면(또는 마우스를 올리면) 보여요.
