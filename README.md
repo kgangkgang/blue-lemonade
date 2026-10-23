@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.6/blue-lemonade-7.8.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.7/blue-lemonade-7.8.7.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.8.6 · 최신 업데이트</summary>
+<summary>7.8.7 · 최신 업데이트</summary>
+
+- 과일의 마음 창: 설정 줄을 작은 체크 + 이름 한 줄로, ? 는 둥근 원으로, 머리줄 단추의 상자를 없앴어요. 고르기 칸에 ▾ 를 넣고 하단 내비를 한 줄로 낮췄어요.
+- 데우스 빠른 설정: 체크 꺽쇠가 두 개 겹쳐 보이던 것을 고치고, 카드 테두리를 얇은 선 하나로 맞췄어요. 좁은 화면에서 긴 이름이 잘리던 것과 위 내비가 넘치던 것도 고쳤어요.
+
+</details>
+
+<details>
+<summary>7.8.6 · 전개 지시 입력칸 밝은 면 · 입력칸 포커스 얇은 선</summary>
 
 - 전개 지시 입력칸을 다른 입력칸처럼 한 단계 밝은 면 + 얇은 선으로 바꿨어요. 누르면 선만 포인트 색으로 바뀌어요.
 - 입력칸을 눌렀을 때 바깥에 번지던 두꺼운 파란 고리를 없애고, 포인트 색 얇은 선 하나만 보여요.
