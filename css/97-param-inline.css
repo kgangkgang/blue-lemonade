@@ -139,16 +139,16 @@ html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { vert
 @media (max-width: 760px), (pointer: coarse) {
   html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin-top: calc((var(--bl-name-lh) - 32px) / 2) !important; margin-bottom: calc((var(--bl-name-lh) - 32px) / 2) !important; }
 }
-html body .salty-panel.bl-editor .salty-row:has(> span > small) { align-items: flex-start; }
-html body .salty-panel.bl-editor .salty-row:has(> span > small) > :not(:has(> small)) { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
+html body .salty-panel.bl-editor .salty-row:has(> span > small):has(> .salty-switch, > .bl-ft-row-ctl > .salty-switch) { align-items: flex-start; }
+html body .salty-panel.bl-editor .salty-row:has(> span > small):has(> .salty-switch, > .bl-ft-row-ctl > .salty-switch) > :not(:has(> small)) { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); } /* 스위치 줄만(꺾이지 않는 줄) — 고르기 칸 · 색 칸처럼 좁으면 아래로 꺾이는 줄에 옮김을 주면 이름과 겹친다 */
 /* 같은 규칙을 애드온 창의 「이름 + 설명 · 스위치」 줄에도 — 캐릭터 에셋(.eh-setting) · 전개 지시(.jj-status · .jj-row).
    이 줄들은 이름 글자 크기 · 줄 높이가 줄(row)과 달라 1lh 를 못 쓰므로, 이름 줄 높이를 값으로 정해 이름과 컨트롤이 같은 값을 쓴다 */
 html body.salty .eh-setting:has(> .eh-setting-text > small) { --bl-name-lh: 22px; align-items: flex-start; }
 html body.salty .eh-setting:has(> .eh-setting-text > small) > .eh-setting-text > b { display: block; line-height: var(--bl-name-lh); }
-html body.salty :is(.jj-status:has(.jj-status-text), .jj-row:has(> .jj-row-label > small)) { --bl-name-lh: 20px; align-items: flex-start; }
+html body.salty :is(.jj-status:has(.jj-status-text), .jj-row:has(> .jj-row-label > small):has(> .jj-switch)) { --bl-name-lh: 20px; align-items: flex-start; }
 html body.salty .jj-status:has(.jj-status-text) .jj-status-title,
-html body.salty .jj-row:has(> .jj-row-label > small) > .jj-row-label > b { display: block; line-height: var(--bl-name-lh); }
-html body.salty :is(.eh-setting:has(> .eh-setting-text > small) > .eh-switch, .jj-status:has(.jj-status-text) > :is(.jj-switch, .jj-status-dot), .jj-row:has(> .jj-row-label > small) > :not(.jj-row-label)) { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
+html body.salty .jj-row:has(> .jj-row-label > small):has(> .jj-switch) > .jj-row-label > b { display: block; line-height: var(--bl-name-lh); }
+html body.salty :is(.eh-setting:has(> .eh-setting-text > small) > .eh-switch, .jj-status:has(.jj-status-text) > :is(.jj-switch, .jj-status-dot), .jj-row:has(> .jj-row-label > small):has(> .jj-switch) > .jj-switch) { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
 /* 채팅 캡처 · 단어 치환의 메시지 고르기 줄(체크 + 「#번호 이름」 + 미리보기 글): 체크를 「#번호 이름」 줄 가운데에 */
 html body.salty .bl-message-choice { --bl-name-lh: 20px; align-items: flex-start; }
 html body.salty .bl-message-choice b { line-height: var(--bl-name-lh); }

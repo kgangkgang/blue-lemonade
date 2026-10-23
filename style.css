@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build c1054d209f6c) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 1a14d4e126cb) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -26675,17 +26675,17 @@ html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { vert
 @media (max-width: 760px), (pointer: coarse) {
   html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin-top: calc((var(--bl-name-lh) - 32px) / 2) !important; margin-bottom: calc((var(--bl-name-lh) - 32px) / 2) !important; }
 }
-html body .salty-panel.bl-editor .salty-row:has(> span > small) { align-items: flex-start; }
-html body .salty-panel.bl-editor .salty-row:has(> span > small) > :not(:has(> small)) { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
+html body .salty-panel.bl-editor .salty-row:has(> span > small):has(> .salty-switch, > .bl-ft-row-ctl > .salty-switch) { align-items: flex-start; }
+html body .salty-panel.bl-editor .salty-row:has(> span > small):has(> .salty-switch, > .bl-ft-row-ctl > .salty-switch) > :not(:has(> small)) { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
 html body.salty .eh-setting:has(> .eh-setting-text > small) { --bl-name-lh: 22px; align-items: flex-start; }
 html body.salty .eh-setting:has(> .eh-setting-text > small) > .eh-setting-text > b { display: block; line-height: var(--bl-name-lh); }
-html body.salty .jj-status:has(.jj-status-text):is(bl-s, *),
-html body.salty .jj-row:has(> .jj-row-label > small) { --bl-name-lh: 20px; align-items: flex-start; }
+html body.salty .jj-status:has(.jj-status-text):is(.bl-s, *):is(bl-s, *),
+html body.salty .jj-row:has(> .jj-row-label > small):has(> .jj-switch) { --bl-name-lh: 20px; align-items: flex-start; }
 html body.salty .jj-status:has(.jj-status-text) .jj-status-title,
-html body.salty .jj-row:has(> .jj-row-label > small) > .jj-row-label > b { display: block; line-height: var(--bl-name-lh); }
-html body.salty :is(.eh-setting:has(> .eh-setting-text > small) > .eh-switch),
-html body.salty :is(.jj-status:has(.jj-status-text) > :is(.jj-switch, .jj-status-dot)):is(bl-s, *),
-html body.salty :is(.jj-row:has(> .jj-row-label > small) > :not(.jj-row-label)) { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
+html body.salty .jj-row:has(> .jj-row-label > small):has(> .jj-switch) > .jj-row-label > b { display: block; line-height: var(--bl-name-lh); }
+html body.salty :is(.eh-setting:has(> .eh-setting-text > small) > .eh-switch):is(.bl-s, *),
+html body.salty :is(.jj-status:has(.jj-status-text) > :is(.jj-switch, .jj-status-dot)):is(.bl-s, *):is(bl-s, *),
+html body.salty :is(.jj-row:has(> .jj-row-label > small):has(> .jj-switch) > .jj-switch) { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
 html body.salty .bl-message-choice { --bl-name-lh: 20px; align-items: flex-start; }
 html body.salty .bl-message-choice b { line-height: var(--bl-name-lh); }
 html body.salty .bl-message-choice > input { align-self: flex-start; margin-block: 0 !important; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
