@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.3/blue-lemonade-7.8.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.4/blue-lemonade-7.8.4.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.8.3 · 최신 업데이트</summary>
+<summary>7.8.4 · 최신 업데이트</summary>
+
+- 공개 글 · 안내 · 지난 공지에서 특정 봇의 예시 캐릭터 이름과 다른 확장 이름을 일반 표현으로 바꿨어요.
+- 다시 쓰기의 기본 예외 캐릭터 목록을 비웠어요. 특정 캐릭터 전용이던 「안경 색」 · 「뿔」 규칙은 기본으로 꺼 두고, 「이 캐릭터에게만」 칸에 이름을 넣어 쓰게 했어요. 이미 쓰던 설정은 그대로예요.
+- 모델 전환 · 성능 보조가 다른 확장을 알아볼 때 그 확장이 스스로 적은 이름을 보여 줘요.
+
+</details>
+
+<details>
+<summary>7.8.3 · 숫자칸 한 줄 · ZIP 도움말 · 안내 팝업 취소 숨김 작동</summary>
 
 - 번역 · 다시 쓰기 창의 숫자칸(최대 응답 토큰 · 전체 번역 딜레이 · 겹침 비교할 최근 답 수 등)이 이름 아래 따로 떨어져 있던 것을 이름 오른쪽 한 줄로 맞췄어요.
 - ZIP 설치 창의 도움말 ? 를 다른 창과 같은 동그란 모양으로 바꾸고, 절 제목 아이콘과 글자 사이를 띄웠어요. 모델 전환 「잠금」 아이콘 간격도 같이 맞췄어요.
