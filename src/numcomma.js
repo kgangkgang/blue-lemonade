@@ -218,6 +218,33 @@ function snapUnit(dpr) {
     return snapMode === 2 ? dpr : 1;
 }
 
+// 7.8.4: 기준선은 글꼴 표(fontBoundingBoxAscent 반올림)로 추정하지 않고 화면에서 잰다 — control-ink 7.8.2 와 같은 방식.
+// 안드로이드는 같은 글꼴 파일의 위 높이 · 아래 깊이를 윈도우와 다른 표에서 읽어, 추정 기준선이 1~1.5px 어긋나 폰에서만 쉼표 숫자가
+// 진짜 글자(누르면 보이는 값)보다 처져 보일 수 있었다. 한 줄 칸의 글자 줄은 내용 칸 가운데에 놓이므로, 같은 글꼴로 줄 높이 = 내용 칸 높이인
+// 숨은 블록을 만들고 그 안 글자 끝의 너비 0 막대 아래 끝(= 실제 기준선)을 잰다. 글꼴 · 칸 높이별로 한 번만 잰다(재면 화면 다시 계산이 한 번 생김)
+const baselines = new Map();
+function measuredBaseline(font, contentH) {
+    const key = `${font}|${Math.round(contentH * 64)}`;
+    if (baselines.has(key)) return baselines.get(key);
+    let base = null;
+    const box = document.createElement('div');
+    const probe = document.createElement('span');
+    box.style.cssText = `position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;contain:layout style;white-space:pre;margin:0;padding:0;border:0;-webkit-text-size-adjust:none;text-size-adjust:none;height:${contentH}px;line-height:${contentH}px`;
+    box.style.font = font;
+    box.style.lineHeight = `${contentH}px`;
+    probe.style.cssText = 'display:inline-block;width:0;height:0;margin:0;padding:0;border:0;overflow:hidden;vertical-align:baseline';
+    box.append('0', probe);
+    try {
+        document.body.append(box);
+        const y = probe.getBoundingClientRect().bottom - box.getBoundingClientRect().top;
+        if (Number.isFinite(y) && y > 0 && y <= contentH + 1) base = y;
+    } catch { base = null; }
+    finally { box.remove(); }
+    if (baselines.size > 200) baselines.clear();
+    baselines.set(key, base);
+    return base;
+}
+
 // 글꼴이 받아졌나: document.fonts.check 는 글꼴 면(유니코드 조각 수백 개)을 다 훑어 한 번에 10ms 가까이 걸렸다 — 글꼴마다 한 번만 묻고 기억한다
 // (받아진 글꼴은 안 사라진다. 숫자 · 쉼표 · 부호만 쓰니 견본 글자도 그것만)
 const SAMPLE = '0123456789,.-';
@@ -311,11 +338,15 @@ function render(text, L) {
     const room = wide && mid ? L.w - 2 * side : inner;
     const x = side + (mid ? (room - width) / 2 : /^(right|end)$/.test(L.align) ? inner - width : 0) + L.fx / L.unit;
     // 세로: 한 줄 칸은 줄 상자를 내용 칸 가운데에 둔다 → 기준선 = 내용 칸 가운데 + (위 높이 - 아래 깊이)/2 (줄 높이와 상관없음).
-    // 브라우저처럼 기기 픽셀로 반올림한 줄에 둔다
-    const m = ctx.measureText('0');
-    const ascent = Math.round(m.fontBoundingBoxAscent), descent = Math.round(m.fontBoundingBoxDescent);
+    // 7.8.4: 그 값을 화면에서 잰다(measuredBaseline). 재기에 실패하면 예전 글꼴 표 식으로. 브라우저처럼 기기 픽셀로 반올림한 줄에 둔다
     const contentH = L.h - L.pt - L.pb;
-    const y = Math.round(L.fy + (L.pt + (contentH - ascent - descent) / 2 + ascent) * L.unit) / L.unit;
+    let base = measuredBaseline(font, contentH);   // 줄여 그리는 칸이면 줄인 글꼴 기준(예전 식도 그 글꼴로 쟀다)
+    if (base === null) {
+        const m = ctx.measureText('0');
+        const ascent = Math.round(m.fontBoundingBoxAscent), descent = Math.round(m.fontBoundingBoxDescent);
+        base = (contentH - ascent - descent) / 2 + ascent;
+    }
+    const y = Math.round(L.fy + (L.pt + base) * L.unit) / L.unit;
     const imgKey = [text, font, L.tabular, L.ink, ls, L.kerning, x, y, L.w, L.h, L.dpr].join('|');
     let url = images.get(imgKey);
     if (url) return { url, wide, scale: fit.scale };

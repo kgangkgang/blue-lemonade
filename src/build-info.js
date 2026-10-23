@@ -572,7 +572,7 @@ export const FILE_HASHES = {
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/num-width.js": "2929:540aa26a:67ad53dc",
   "src/numbers.js": "2902:432db092:b638e9ce",
-  "src/numcomma.js": "29663:a7a60f92:7fe9fc6d",
+  "src/numcomma.js": "31859:4b995003:bdec99e6",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
   "src/palettes.js": "33830:51637840:34a73a09",
   "src/panel.js": "254265:4a8c9430:0101f67a",
