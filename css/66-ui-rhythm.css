@@ -37,7 +37,7 @@ body.salty .bl-pbind-list { min-height:0; }
   height:calc(100dvh - 12px)!important; max-height:calc(100dvh - 12px)!important;
   margin:auto!important;
  }
- html body .salty-panel.bl-editor .salty-sec { padding-inline:var(--bl-editor-gutter,20px); }
+ html body .salty-panel.bl-editor .salty-sec { padding-inline:var(--bl-editor-gutter,10px); }
  .salty-panel.bl-editor .salty-group { margin-block:10px; }
  .salty-panel.bl-editor .bl-editor-group-head { gap:6px; }
  body.salty .bl-pbind-dialog { width:calc(100vw - 20px); padding:10px; gap:8px; }

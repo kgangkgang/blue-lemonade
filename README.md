@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.6/blue-lemonade-7.7.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.7/blue-lemonade-7.7.7.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.7.6 · 최신 업데이트</summary>
+<summary>7.7.7 · 최신 업데이트</summary>
+
+- 좁은 화면에서 설정 내용이 안쪽으로 지나치게 들어가지 않도록 여백을 줄였어요. 미리보기와 설정 내용의 좌우 시작선은 같은 위치로 맞춰요.
+
+</details>
+
+<details>
+<summary>7.7.6 · 조작부 표시와 고르기 목록 개선</summary>
 
 - PC 글자 단추는 34px, 폰은 36px로 맞췄어요. 폰 팝업의 확인·취소 단추는 보이는 높이를 줄이고 누르는 영역은 유지해요.
 - 일반 체크박스의 체크가 겹치지 않도록 모양을 정리하고, 「확장만」 모드의 내장 도구에도 같은 모양을 적용해요. 나이트의 일반 단추는 윗면 빛과 얕은 그림자로 배경과 구분해요.

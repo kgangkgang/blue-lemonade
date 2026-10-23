@@ -1,5 +1,5 @@
 /* ===== css/47-settings-editor.css ===== */
-html body .salty-panel.bl-editor { position:relative; display:flex; flex-direction:column; container:bl-editor / inline-size; height:min(780px,82dvh); min-height:320px; min-width:0; padding:0 !important; overflow:hidden; --pp:0px; --bl-editor-gutter:20px; --salty-navh:0px; --bl-editor-line:var(--salty-line); background:var(--bl-settings-cover); }
+html body .salty-panel.bl-editor { position:relative; display:flex; flex-direction:column; container:bl-editor / inline-size; height:min(780px,82dvh); min-height:320px; min-width:0; padding:0 !important; overflow:hidden; --pp:0px; --bl-editor-gutter:10px; --salty-navh:0px; --bl-editor-line:var(--salty-line); background:var(--bl-settings-cover); }
 html body dialog.popup.bl-settings-dialog:not(.bl-settings-fullscreen):has(.salty-panel.in-popup) { width:min(1120px,96vw) !important; max-width:96vw !important; height:min(880px,92dvh) !important; max-height:92dvh !important; padding:0 !important; }
 html body dialog.bl-settings-dialog .popup-body { height:100%; min-height:0; padding:0 !important; overflow:hidden; }
 html body dialog.bl-settings-dialog .popup-content { flex:1; height:100%; min-height:0; overflow:hidden !important; padding:0 !important; margin:0; scrollbar-gutter:auto !important; }
@@ -53,11 +53,8 @@ html body .bl-editor .bl-editor-group-body > .bl-prompt-tools > .salty-group { m
 .bl-editor-directory .salty-mark { width:24px; height:28px; }
 .bl-editor-directory .salty-title { font-size:calc(15 * var(--sp)); }
 .bl-editor-directory .salty-sub { display:none; }
-@container bl-editor (max-width:350px) {
-  .bl-editor-workspace { --bl-editor-gutter:16px; }
-}
 @container bl-editor (min-width:800px) {
-  .bl-editor-workspace { --bl-editor-gutter:24px; }
+  .bl-editor-workspace { --bl-editor-gutter:14px; }
   .bl-editor .bl-editor-workspace:not(.bl-editor-no-preview) { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); }
   .bl-editor .bl-editor-stage { display:flex; flex-direction:column; min-height:0; padding:12px var(--bl-editor-gutter); border:0; border-right:1px solid var(--bl-editor-line); }
   html body .bl-editor .salty-sec { padding:12px var(--bl-editor-gutter) 18px; }
