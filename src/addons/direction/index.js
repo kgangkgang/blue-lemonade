@@ -364,9 +364,15 @@ function directionMacroText() {
     try { return substituteMacros(text); } finally { expandingMacro = false; }
 }
 
+// 새 매크로 엔진이 켜져 있으면(실리태번 1.19 기본) 새 등록 방식(context.macros.register)을 쓴다 — 예전 방식은
+// 「없어질 예정」 경고를 찍는다. 새 엔진이 꺼져 있거나 새 방식이 없는 옛 실리태번이면 예전 방식으로 (캐릭터 에셋과 같은 순서).
 function registerDirectionMacro() {
+    const description = '전개 지시에 적은 내용 (꺼져 있으면 빈칸)';
     try {
-        getContext().registerMacro?.('direction', directionMacroText, '전개 지시에 적은 내용 (꺼져 있으면 빈칸)');
+        const ctx = getContext();
+        const modern = ctx.powerUserSettings?.experimental_macro_engine && typeof ctx.macros?.register === 'function' ? ctx.macros : null;
+        if (modern) modern.register('direction', { category: 'extension', description, handler: () => directionMacroText() });
+        else ctx.registerMacro?.('direction', directionMacroText, description);
     } catch (error) {
         console.warn('[전개 지시] {{direction}} 매크로를 등록하지 못했습니다:', error);
     }

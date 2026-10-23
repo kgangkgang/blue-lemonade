@@ -56,7 +56,7 @@ export const FILE_HASHES = {
   "src/addons/bookmarks/viewers.js": "19183:e60b9efd:36ec558a",
   "src/addons/customstyle/index.js": "30539:aa5b201c:5fc7a582",
   "src/addons/customstyle/style.css": "3793:a55698b3:63ca622a",
-  "src/addons/direction/index.js": "110363:2548fa74:bb4add29",
+  "src/addons/direction/index.js": "111019:9d80f334:7fac01e2",
   "src/addons/direction/prompt.js": "2559:fa1cf265:60dc13ab",
   "src/addons/direction/style.css": "37988:69e03bef:07227b20",
   "src/addons/list-sync.js": "4902:487dc198:b4d6512a",
