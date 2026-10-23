@@ -88,6 +88,6 @@ html:not(#bl-pill-off):not(#bl-pill-off2) body.salty :is(.pa-hub .pa-hub-title, 
 }
 /* 7.8.1 (사용자 사진 10-23 · 화면 감사 PILLGAP · HEADROW): 설정 선택 목록 아래 「Blue Lemonade [판] ⓒ」 줄은 gap 8 에 알약 제 여백 8 이 더해져 16 이었다 → 알약 여백 0.
    애드온 창 머리(번역 창 dialog > header > b)는 아이콘 · 제목 · 알약 사이 6 → 8 */
-html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) > .salty-ver { margin: 0 !important; }
+html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) > .salty-ver { margin: 0 !important; top: 0 !important; } /* 7.8.2: 예전 top:-1px(20-panel)이 남아 ⓒ(여백 0) 보다 1px 위 · 이름 글자보다도 1px 위였다(폰 사진 1.2 · 리그 1.0) — 한 줄 flex 가운데 정렬에 맡김 */
 html:not(#bl-pill-off) body.salty dialog > header > b:has(> .ext-version, > i) { display: inline-flex; align-items: center; gap: 8px !important; min-width: 0; }
 html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b:has(> .ext-version, > i) > :is(i, .ext-version, [class*="-version"]) { margin: 0 !important; }

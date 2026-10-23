@@ -492,7 +492,7 @@ export const FILE_HASHES = {
   "src/checks.js": "3042:368ec3ff:509f89cc",
   "src/colorpick.js": "29852:5b5d8858:3ec727e4",
   "src/colorpop.js": "3885:d35d517b:d68f9617",
-  "src/control-ink.js": "8430:c1ab2666:0425e196",
+  "src/control-ink.js": "9965:08ca6542:2667433b",
   "src/credits.js": "8099:713e0ae9:6066aaa2",
   "src/current.js": "1590:9701d538:8863d506",
   "src/custompalette.js": "15962:9e82f872:d30152ba",
@@ -702,5 +702,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1650901:81f3d5d7:4a6e08b2"
+  "style.css": "1652744:6639e67c:81b1a202"
 };

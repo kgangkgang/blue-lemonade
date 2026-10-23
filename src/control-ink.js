@@ -37,6 +37,23 @@ function ink(text, style) {
     return result;
 }
 
+function baselineOf(node) {
+    // 글자 노드를 잠깐 인라인 묶음에 넣고 그 안 끝에 너비 0 막대를 붙인다 — 단추가 flex · grid 면 글자 옆에 바로 붙인 막대는
+    // 따로 블록이 되어 글자 줄과 어긋나므로(7.8.2 첫 시도에서 「원복」 단추 +3~4px), 글자와 같은 줄 상자 안에서 잰다.
+    const parent = node.parentNode;
+    if (!parent) return null;
+    const wrap = document.createElement('span');
+    const probe = document.createElement('span');
+    probe.style.cssText = 'display:inline-block;width:0;height:0;margin:0;padding:0;border:0;overflow:hidden;vertical-align:baseline';
+    try {
+        parent.insertBefore(wrap, node);
+        wrap.append(node, probe);
+        const y = probe.getBoundingClientRect().bottom;
+        return Number.isFinite(y) ? y : null;
+    } catch { return null; }
+    finally { try { if (wrap.parentNode) { wrap.parentNode.insertBefore(node, wrap); wrap.remove(); } } catch {} }
+}
+
 function restore(el) {
     const old = saved.get(el);
     if (!old) return;
@@ -72,7 +89,10 @@ function align(root) {
             line = rect.top;
             const measure = ink(node.textContent.replace(/\s+/g, ' '), getComputedStyle(node.parentElement));
             if (!measure) continue;
-            const base = Math.round(rect.top + measure.ascent);
+            // 7.8.2: 기준선은 글꼴 표(fontBoundingBoxAscent)로 추정하지 않고 화면에서 직접 잰다 — 안드로이드는 같은 글꼴 파일의
+            // ascent 를 윈도우와 다른 표에서 읽어, 추정 기준선이 1~1.5px 어긋나 폰에서만 글자가 아래로 처져 보였다(사용자 폰 사진 10-23).
+            // 너비 0 인라인 블록의 아래 끝 = 그 줄의 실제 기준선. 재고 바로 뗀다(관찰자는 꺼진 상태라 다시 맞추기를 부르지 않음).
+            const base = baselineOf(node) ?? Math.round(rect.top + measure.ascent);
             top = Math.min(top, base + measure.top); bottom = Math.max(bottom, base + measure.bottom);
         }
         if (multiline || !Number.isFinite(top)) continue;

@@ -148,6 +148,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 
 /* 점검의 실행 버튼과 결과는 별도 행으로 유지한다. */
 .salty-panel .bl-install-health { display:grid; gap:16px; padding:16px; margin:16px 0; border:1px solid var(--salty-line); border-radius:12px; background:var(--salty-panel-card,var(--salty-surface)); min-width:0; }
+.salty-panel .bl-install-health > [data-health-result]:empty { display:none; } /* 7.8.2: 결과가 없을 때 빈 줄 + 간격 16 이 칸을 키웠다(사용자 사진 「박스가 왤케 큼」) */
 .salty-panel .bl-health-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; }
 .salty-panel .bl-health-head > div { flex:1 1 180px; min-width:0; }
 .salty-panel .bl-health-head h3 { margin:0 0 4px; font-size:calc(15 * var(--sp)); line-height:1.5; }

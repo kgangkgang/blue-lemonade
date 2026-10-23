@@ -4,13 +4,13 @@
    시트 위(02) · 팝업 안(02 오목한 칸) · 애드온 창(19 --salty-field: 나이트에서 카드 색과 거의 같아 칸이 안 보였다) · 테마 설정 창 · 한글화 패널 을 한 규칙으로.
    높이는 같은 줄 단추와 같게(--bl-h-ctl, 02 그대로). 끄기: html#bl-i2-off */
 html:not(#bl-i2-off) body.salty :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"], [type="tel"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, #nonQRFormItems *, ul, ol, [data-bl-native-ext-colors] *, .salty-switch input, [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"])) {
-  background-color: var(--bl-control) !important;
+  background-color: var(--bl-field-face, var(--bl-control)) !important;
   box-shadow: inset 0 0 0 1px var(--salty-line) !important;
   border: 0 !important;
   color: var(--salty-text) !important;
 }
 html:not(#bl-i2-off) body.salty :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"], [type="tel"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, #nonQRFormItems *, ul, ol, [data-bl-native-ext-colors] *, .salty-switch input, [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"])):focus {
-  background-color: var(--bl-control) !important;
+  background-color: var(--bl-field-face, var(--bl-control)) !important;
   box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-ring) !important;
 }
 html:not(#bl-i2-off) body.salty :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"], [type="tel"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, #nonQRFormItems *, ul, ol, [data-bl-native-ext-colors] *, .salty-switch input, [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"])):disabled {
@@ -18,7 +18,7 @@ html:not(#bl-i2-off) body.salty :is(.text_pole, select, textarea, input:is([type
 }
 /* 테마 설정 창(.salty-panel)의 글자 · 검색 · 선택칸도 같은 면 (숫자칸 .salty-num 은 97 의 유동 폭 그대로, 면만) */
 html:not(#bl-i2-off) body.salty .salty-panel :is(input:is([type="text"], [type="search"], [type="number"], [type="url"], [type="password"]), select, textarea):where(:not(.salty-switch input, .salty-reset-pick input, [type="color"], [type="range"])) {
-  background-color: var(--bl-control) !important;
+  background-color: var(--bl-field-face, var(--bl-control)) !important;
   box-shadow: inset 0 0 0 1px var(--salty-line) !important;
   border: 0 !important;
 }
@@ -63,6 +63,8 @@ html:not(#bl-num-off) body.salty #pt-panel .pt-field:has(> input[type="number"])
 /* 정규식 연동: 최근 메시지 개수 칸 */
 html:not(#bl-num-off) body.salty #regex-link-settings .rlk-keep { grid-template-columns: auto minmax(0, 1fr) auto !important; }
 /* 7.8.1 검색칸 두 겹 상자(사용자 사진 10-23 · 화면 감사 NESTED): 바깥 .bl-search-field 가 I2 칸(밝은 면 + 1px 선)이고 안의 입력은 투명 — 입력에도 I2 가 입혀져 상자가 두 겹이었다 */
-html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field { background: var(--bl-control) !important; border: 0 !important; box-shadow: inset 0 0 0 1px var(--salty-line) !important; }
+html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field { background: var(--bl-field-face, var(--bl-control)) !important; border: 0 !important; box-shadow: inset 0 0 0 1px var(--salty-line) !important; }
 html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field:focus-within { box-shadow: inset 0 0 0 1px var(--salty-accent) !important; }
 html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field input:is([type="search"], [type="text"]) { background: transparent !important; box-shadow: none !important; border: 0 !important; outline: none !important; }
+/* 7.8.2 입력칸 면 반 단계(사용자 10-23 「전개 지시 입력칸 너무 밝아 — 줄여」): I2 면(--bl-control)과 담는 카드 면의 가운데. 한 곳에서 바꾸기: --bl-field-face */
+html:not(#bl-i2-off) body.salty { --bl-field-face: color-mix(in srgb, var(--bl-control) 50%, var(--bl-card, var(--salty-surface))); }

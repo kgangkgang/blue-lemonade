@@ -246,3 +246,14 @@ body.salty .popup:has(#qr--modalEditor) .popup-content > #qr--modalEditor :is(#q
     flex:0 0 auto;
   }
 }
+/* 7.8.2 빠른 답장 설정(확장 서랍) — 사용자 사진 10-23
+   ① 세트 줄: 세트 고르기 + 아이콘 6개(이름 바꾸기 · 새 세트 · 가져오기 · 내보내기 · 복제 · 지우기)를 한 줄에 — 고르기가 줄어들고 아이콘 사이 4, 줄바꿈 없음(휴지통만 아래로 떨어지던 것)
+   ② 항목: ☰ 손잡이(31px)가 14px 칸을 넘어 이름 칸에 붙어 보였다 → 손잡이 칸 20 · 안쪽 여백 0 · 이름 칸과 8
+   ③ 내용 입력칸 · 아래 단추 줄은 손잡이 열부터 오른쪽 끝까지 전체 폭, 항목 좌우 안쪽 여백 0 */
+html body.salty #rm_extensions_block #qr--settings #qr--editor > .qr--head > .qr--actions { flex-wrap: nowrap !important; column-gap: 4px !important; }
+html body.salty #rm_extensions_block #qr--settings #qr--editor > .qr--head > .qr--actions > select#qr--set { flex: 1 1 0 !important; min-width: 72px !important; width: auto !important; }
+html body.salty #rm_extensions_block #qr--settings #qr--editor > .qr--head > .qr--actions > :is(.menu_button, [id^="qr--set-"]):not(select, input) { flex: none !important; margin: 0 !important; }
+html body.salty #rm_extensions_block #qr--settings .qr--set-item > .qr--content { grid-template-columns: 20px minmax(0, 1fr) 30px !important; column-gap: 8px !important; padding-inline: 0 !important; }
+html body.salty #rm_extensions_block #qr--settings .qr--set-item > .qr--content > .drag-handle { box-sizing: border-box !important; width: 20px !important; min-width: 0 !important; padding: 0 !important; margin: 0 !important; justify-self: center; align-self: center; text-align: center; }
+html body.salty #rm_extensions_block #qr--settings .qr--set-item > .qr--content > :is(.qr--set-itemMessage, .qr--actions) { grid-column: 1 / -1 !important; }
+html body.salty #rm_extensions_block #qr--settings .qr--set-item > .qr--content > .qr--set-itemMessage { width: 100% !important; box-sizing: border-box; }
