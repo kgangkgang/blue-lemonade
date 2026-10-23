@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 7f7f4aefed0d) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build c1054d209f6c) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -14042,10 +14042,9 @@ body.salty #WorldInfo .world_entry textarea[name="comment"] {
   padding: 6px 4px !important; font-size: var(--bl-fs-ctl) !important;
 }
 body.salty #WorldInfo .world_entry select[name="entryStateSelector"] {
-  width: max(36px, 2em) !important; height: auto !important;
+  width: max(52px, 2em) !important; height: auto !important;
   min-height: max(34px, calc(1.4em + 8px)) !important;
-  padding: 4px 12px 4px 2px !important; font-size: var(--bl-fs-ctl) !important; line-height: 1.4;
-  background-position: right 1px center !important;
+  padding: 4px 30px 4px 6px !important; font-size: var(--bl-fs-ctl) !important; line-height: 1.4;
 }
 body.salty #WorldInfo .world_entry .inline-drawer-header .killSwitch { margin: 0 !important;  }
 body.salty #WorldInfo .world_entry .inline-drawer-header .inline-drawer-toggle { height: 34px;  }
@@ -22006,6 +22005,28 @@ body.salty .salty-panel .bl-preview-samples > button {
 }
 body.salty .salty-panel .bl-preview-samples > button[data-step="1"] {
   --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7.5 5l5 5-5 5'/%3E%3C/svg%3E");
+}
+html body.salty #WorldInfo .bl-wi-actions > summary {
+position:relative;
+}
+html body.salty #WorldInfo .bl-wi-actions > summary:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+-webkit-text-fill-color:transparent;
+}
+html body.salty #WorldInfo .bl-wi-actions > summary::before {
+content:'';
+position:absolute;
+inset:0;
+margin:auto;
+width:16px;
+height:16px;
+}
+html body.salty #WorldInfo .bl-wi-actions > summary:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+background:currentColor;
+}
+html body.salty #WorldInfo .bl-wi-actions > summary::before {
+-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='black'%3E%3Ccircle cx='4' cy='10' r='1.7'/%3E%3Ccircle cx='10' cy='10' r='1.7'/%3E%3Ccircle cx='16' cy='10' r='1.7'/%3E%3C/svg%3E") center / contain no-repeat;
+mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='black'%3E%3Ccircle cx='4' cy='10' r='1.7'/%3E%3Ccircle cx='10' cy='10' r='1.7'/%3E%3Ccircle cx='16' cy='10' r='1.7'/%3E%3C/svg%3E") center / contain no-repeat;
+pointer-events:none;
 }
 /* css/57-native-ux.css */
 body.salty #PersonaManagement,

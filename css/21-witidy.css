@@ -18,10 +18,9 @@ body.salty #WorldInfo .world_entry textarea[name="comment"] {
   padding: 6px 4px !important; font-size: var(--bl-fs-ctl) !important;
 }
 body.salty #WorldInfo .world_entry select[name="entryStateSelector"] {
-  width: max(36px, 2em) !important; height: auto !important;
+  width: max(52px, 2em) !important; height: auto !important; /* 7.8.x: 36 → 52 — ▾ 를 기준 자리(오른쪽 10 · 15px)에 두고도 🟢 가 안 잘리게(이름 칸에서 16px 양보) */
   min-height: max(34px, calc(1.4em + 8px)) !important;
-  padding: 4px 12px 4px 2px !important; font-size: var(--bl-fs-ctl) !important; line-height: 1.4;
-  background-position: right 1px center !important;
+  padding: 4px 30px 4px 6px !important; font-size: var(--bl-fs-ctl) !important; line-height: 1.4;
 }
 body.salty #WorldInfo .world_entry .inline-drawer-header .killSwitch { margin: 0 !important; /* 3.0.0: grid-area → 이 파일 아래 (같은 선택자 규칙이 덮음) */ }
 body.salty #WorldInfo .world_entry .inline-drawer-header .inline-drawer-toggle { height: 34px; /* 3.0.0: grid-area · width → 이 파일 아래 (같은 선택자 규칙이 덮음) */ }
