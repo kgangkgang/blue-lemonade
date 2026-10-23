@@ -151,6 +151,23 @@ await test('runUpdate (Git 설치): version 에 remoteUrl → update → done ·
     await assert.rejects(U.runUpdate({ inst, fetcher: v.fetcher }), /설치 정보를 못 읽었어요/);
 });
 
+await test('runUpdate (Git 설치 · 받아 오기 실패 500): 새로 받아 깔기(백업 → 설치 → 백업 지움) · 못 받으면 되돌림 · 공용은 실패 안내', async () => {
+    const git = { status: 200, body: { remoteUrl: 'https://github.com/kgangkgang/blue-lemonade', isUpToDate: false } };
+    let s = server({ version: git, update: { status: 500 }, move: { status: 204 }, install: { status: 200, body: { folderName: 'blue-lemonade' } }, delete: { status: 200 } });
+    const msgs = [];
+    assert.equal(await U.runUpdate({ inst, fetcher: s.fetcher, status: m => msgs.push(m) }), 'done');
+    assert.deepEqual(s.calls.map(c => c.path), ['/api/extensions/version', '/api/extensions/update', '/api/extensions/move', '/api/extensions/install', '/api/extensions/delete']);
+    assert.deepEqual(s.calls[2].body, { extensionName: 'blue-lemonade', source: 'local', destination: 'global' });
+    assert.deepEqual(s.calls[4].body, { extensionName: 'blue-lemonade', global: true }, '지우는 건 전역 백업만');
+    assert.ok(msgs.some(m => /새로 받아요/.test(m)));
+    s = server({ version: git, update: { status: 500 }, move: { status: 204 }, install: { status: 500 } });
+    await assert.rejects(U.runUpdate({ inst, fetcher: s.fetcher }), /원래대로 돌려 놨어요/);
+    assert.deepEqual(s.calls.at(-1).body, { extensionName: 'blue-lemonade', source: 'global', destination: 'local' }, '백업을 제자리로');
+    s = server({ version: git, update: { status: 500 } });
+    await assert.rejects(U.runUpdate({ inst: { extensionName: 'blue-lemonade', global: true }, fetcher: s.fetcher }), /업데이트가 실패했어요/);
+    assert.deepEqual(s.calls.map(c => c.path), ['/api/extensions/version', '/api/extensions/update']);
+});
+
 await test('runUpdate (ZIP 설치): 백업(local→global) → GitHub 설치(local) → 백업 지움 · 순서와 본문', async () => {
     const s = server({ version: { status: 200, body: { remoteUrl: '' } }, move: { status: 204 }, install: { status: 200, body: { folderName: 'blue-lemonade' } }, delete: { status: 200 } });
     assert.equal(await U.runUpdate({ inst, fetcher: s.fetcher }), 'done');

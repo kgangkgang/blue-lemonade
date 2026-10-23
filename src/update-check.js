@@ -8,6 +8,7 @@
 // 누르면: 업데이트 창 — 지금 → 새 버전, 그 사이 버전들의 공지 (release-notes.json 은 창을 열 때만 받음 · 152 KB).
 // 업데이트:
 //   Git 으로 깐 곳 → 실리태번 업데이트 (/api/extensions/update — 확장 관리의 업데이트 단추와 같음)
+//     7.8.5 그게 실패하면 (저장소 기록이 다시 쓰여 받아 오기가 막힌 경우 등) 아래 ZIP 길로 새로 받아 깐다.
 //   ZIP 으로 깐 곳 (.git 없음 — 폰 · Syncthing 사본 · 손으로 푼 ZIP) → GitHub 링크 설치로 바꾼다:
 //     지금 폴더를 전역으로 옮겨 백업 (/move) → GitHub 에서 설치 (/install) → 백업 지움 (/delete global).
 //     설치가 안 되면 백업을 제자리로 되돌린다. 설정 · 대화 · 그림은 설치 폴더 밖(settings.json · chats · user)이라 그대로.
@@ -194,8 +195,11 @@ export async function runUpdate({ inst, headers = {}, fetcher = fetch, repo = RE
         status('업데이트하는 중…');
         r = await post('/api/extensions/update', inst, 180000);
         if (r.status === 403) throw new Error('업데이트 권한이 없어요. 공용 설치라면 관리자 계정에서 업데이트해 주세요.');
-        if (!r.ok) throw new Error('업데이트가 실패했어요. 연결 상태를 확인하고 다시 해 주세요.');
-        return 'done';
+        if (r.ok) return 'done';
+        // 7.8.5 받아 오기(git pull)가 막히면 — 저장소 기록이 다시 쓰였거나 폴더 안 파일이 손으로 바뀐 경우 — 아래 ZIP 설치와 같은 길로 새로 받아 깐다
+        //   (백업 → GitHub 설치 → 백업 지움 · 못 받으면 백업을 되돌림). 공용(전역) 설치는 백업 자리가 없어 그대로 실패 안내.
+        if (inst.global) throw new Error('업데이트가 실패했어요. 연결 상태를 확인하고 다시 해 주세요.');
+        status('업데이트가 안 돼서 GitHub 에서 새로 받아요…');
     }
     if (inst.global) return 'zip';   // 공용(전역) ZIP 설치는 백업을 둘 자리가 없다
     status('GitHub 링크 설치로 바꾸는 중… 지금 폴더를 백업해요');
