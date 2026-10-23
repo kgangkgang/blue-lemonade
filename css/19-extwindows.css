@@ -171,7 +171,8 @@ html body.salty #model-switch-settings .ms-actions .ms-apply { border-radius:var
 .bl-copyright .bl-copyright-icon{display:block;flex:none;width:18px;height:18px;margin:0;overflow:visible}
 /* 설정 창 제목의 버전 알약은 굵은 제목에 맞춰 1px 올라가 있다(20-panel.css .salty-panel .salty-ver top:-1px) → ⓒ 도 같은 높이로.
    위아래 padding 합(4px)은 그대로라 버튼 크기 · 누르는 곳 · 초점 테두리는 안 바뀐다 (실측 5.5.3: 1440 · 412 모두 알약 가운데와 1px 차이 → 0) */
-.salty-panel .salty-title .bl-copyright{padding-top:1px;padding-bottom:3px}
+/* 7.8.6: 위 알약 top:-1px 이 확장만 모드에만 남아 이 보정도 그 모드에만 (테마 화면은 75 가 ⓒ padding-block 0) */
+:where(body:not(.salty)) .salty-panel .salty-title .bl-copyright{padding-top:1px;padding-bottom:3px}
 .bl-copyright:focus-visible{outline:2px solid var(--salty-accent,#3975b8)}
 /* 6.8.9 테마를 끈 채 서랍만 쓸 때 (커뮤니티 제보): 다른 CSS 가 제목 글자 칸을 좁히면 ⓒ 가 다음 줄로 넘어가 제목 줄이 두 줄이 되고 접기 화살표가 글자보다 아래로 내려갔다 ·
    서랍을 카드로 그리는 테마에서 제목 위 틈이 없었다 → 글자 칸은 한 줄(ⓒ 는 버전 옆), 제목 줄 위아래 8px. 테마를 켠 화면은 그대로 */

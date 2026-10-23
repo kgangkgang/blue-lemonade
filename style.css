@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 464adbf8a553) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 2cb714c8ffe4) */
 /* css/00-base.css */
 :root{--bl-release:"7.8.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -12270,7 +12270,7 @@ color:var(--bl-pop-ink, var(--salty-em)) !important;
 html body.salty #model-switch-settings .ms-actions .ms-apply { border-radius:var(--bl-r-sm,8px)!important; }
 .bl-copyright{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:30px;min-height:30px;padding:2px;border:0;border-radius:50%;font:500 20px/1 system-ui;background:transparent;color:var(--salty-muted,#64748b);cursor:pointer}
 .bl-copyright .bl-copyright-icon{display:block;flex:none;width:18px;height:18px;margin:0;overflow:visible}
-.salty-panel .salty-title .bl-copyright{padding-top:1px;padding-bottom:3px}
+:where(body:not(.salty)) .salty-panel .salty-title .bl-copyright{padding-top:1px;padding-bottom:3px}
 .bl-copyright:focus-visible{outline:2px solid var(--salty-accent,#3975b8)}
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header{align-items:center!important;padding-top:8px!important;padding-bottom:8px!important}
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b{display:inline-flex!important;align-items:center;flex-wrap:nowrap!important;gap:6px;white-space:nowrap!important;max-width:none!important;min-width:0}
@@ -12794,7 +12794,7 @@ body.salty-dark .salty-panel {
   vertical-align: middle;
   cursor: pointer;
 }
-.salty-panel .salty-ver {
+:where(body:not(.salty)) .salty-panel .salty-ver {
   top: -1px;
   padding: 1px 7px 0;
   font-size: calc(10.5 * var(--sp));

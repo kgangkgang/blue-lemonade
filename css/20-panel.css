@@ -117,7 +117,9 @@ body.salty-dark .salty-panel {
 }
 /* 3.0.2: 설정 창 제목 옆 알약이 제목 글자 크기(16.8px · 굵기 800)로 커졌다 (사용자: "알약 너무 큼").
    .salty-panel button { font: inherit } 가 .salty-ver 의 글자 크기 · 굵기를 이겼음 → 한 단계 무겁게 다시 */
-.salty-panel .salty-ver {
+/* 7.8.6: 테마를 켠 화면(body.salty)의 제목 알약은 75-version-pill 한 규칙이 정한다(글자 12 · 높이 20 · 세로 중심) — 아래 옛 값은 테마를 끈
+   확장만 모드에서만 걸리게 좁혔다. 예전에는 75 가 특이도로 누르기만 해서, ⓒ 없는 제목이면 top:-1px 이 되살아났다(7.8.2 알약 1px 위 사고의 뿌리). :where 라 특이도 그대로 */
+:where(body:not(.salty)) .salty-panel .salty-ver {
   top: -1px;
   padding: 1px 7px 0; /* 5.6.6 알약 글자가 1px 위 (390 기본 글꼴 실측 +1.01 · 사용자 글꼴 +1.1) → 고친 뒤 −0.64 */
   font-size: calc(10.5 * var(--sp));
