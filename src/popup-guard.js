@@ -5,7 +5,7 @@
 // (2) 전역 감시: 새로 뜬 dialog.popup 의 확인 글자가 「닫기」인데 취소가 보이면(입력칸 없음) 같은 처리 — 호출 경로를 못 고친 판에서도 「닫기」 하나.
 // (3) 확인 단추에는 bl-info-ok 를 붙여 03-menus 가 테마 포인트 색을 !important 로 고정한다(실리태번 기본 crimson 이 안 보이게).
 // 또 시작 때 실리태번 판(/version)을 콘솔에 한 번 남겨 다음에 사용자 폰 ST 판을 알 수 있게 한다.
-const INFO_OK = /^(닫기|확인|close|ok|okay)$/i;
+const INFO_OK = /^(닫기|close)$/i;   // 7.8.3: 「확인 · OK」 까지 잡으면 남의 확장 확인 창의 취소까지 숨길 수 있어 「닫기」 만
 let observer = null, logged = false;
 
 function visible(el) { return !!el && el.style.display !== 'none' && !el.hidden && el.getClientRects().length > 0; }
@@ -31,7 +31,8 @@ function check(dlg, tries = 0) {
     const ok = dlg.querySelector('.popup-button-ok'), cancel = dlg.querySelector('.popup-button-cancel');
     if (!ok || !cancel || !visible(cancel)) return;
     if (!INFO_OK.test((ok.textContent || '').trim())) return;
-    if (dlg.querySelector('.popup-input:not([style*="display: none"]), textarea, input[type="text"], input[type="checkbox"], input[type="radio"], select')) return; // 묻는 창은 그대로
+    // 7.8.3: 실리태번 1.19 팝업에는 늘 숨은 textarea.popup-input 이 있어 「묻는 창」 으로 보고 매번 지나쳤다(감시가 한 번도 안 걸림) — 보이는 입력만 본다
+    if ([...dlg.querySelectorAll('.popup-input, textarea, input[type="text"], input[type="checkbox"], input[type="radio"], select')].some(visible)) return; // 묻는 창은 그대로
     hardenInfoPopup(dlg);
 }
 

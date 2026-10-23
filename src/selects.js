@@ -304,7 +304,7 @@ export function startSelectPop() {
         // 실리태번 문서 click 이 서랍을 닫거나 뒤 단추가 눌리지 않게. 목록 줄 자체는 통과
         const phantom = (layer && Date.now() - openedAt < GRACE && !e.target.closest('.salty-pick-rows button'))
             || (!layer && Date.now() - closedAt < 400);
-        if (phantom) { e.preventDefault(); e.stopPropagation(); }
+        if (phantom && e.isTrusted) { e.preventDefault(); e.stopPropagation(); }   // 7.8.3: 코드가 부르는 click(.click())은 삼키지 않는다(부록 F)
     }, true);
     document.addEventListener('keydown', (e) => {
         if (layer && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
