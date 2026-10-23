@@ -492,7 +492,7 @@ export const FILE_HASHES = {
   "src/checks.js": "3042:368ec3ff:509f89cc",
   "src/colorpick.js": "29852:5b5d8858:3ec727e4",
   "src/colorpop.js": "3885:d35d517b:d68f9617",
-  "src/control-ink.js": "10641:da789b68:f42e4343",
+  "src/control-ink.js": "16347:603e7504:68a759c1",
   "src/credits.js": "8099:713e0ae9:6066aaa2",
   "src/current.js": "1590:9701d538:8863d506",
   "src/custompalette.js": "15962:9e82f872:d30152ba",
