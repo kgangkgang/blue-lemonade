@@ -168,7 +168,7 @@ await test('runUpdate (Git 설치 · 받아 오기 실패 500): 새로 받아 �
     assert.deepEqual(s.calls.map(c => c.path), ['/api/extensions/version', '/api/extensions/update']);
 });
 
-// 7.8.7 기록이 다시 쓰인 뒤 얕은 설치: 서버의 git fetch 가 새 기록 전체를 받느라 몇 분 — 기다림을 짧게 끊으면 재설치로 못 넘어감
+// 7.8.8 기록이 다시 쓰인 뒤 얕은 설치: 서버의 git fetch 가 새 기록 전체를 받느라 몇 분 — 기다림을 짧게 끊으면 재설치로 못 넘어감
 const later = (ms, value) => (body, calls) => {
     const signal = calls.at(-1).signal;
     return new Promise((resolve, reject) => {
@@ -190,7 +190,7 @@ function slowServer(plan) {   // server() 와 같고, 응답이 Promise 면 기�
 }
 const gitInfo = { status: 200, body: { remoteUrl: 'https://github.com/kgangkgang/blue-lemonade', isUpToDate: false } };
 
-await test('runUpdate 7.8.7: /version 기다림은 waitMs(기본 10분 이상) — 60초에 끊지 않음 · 기다린 시간 표시 · 끝까지 넘으면 「몇 분 뒤 다시」', async () => {
+await test('runUpdate 7.8.8: /version 기다림은 waitMs(기본 10분 이상) — 60초에 끊지 않음 · 기다린 시간 표시 · 끝까지 넘으면 「몇 분 뒤 다시」', async () => {
     assert.ok(U.SLOW_GIT_MS >= 10 * 60 * 1000, '기본 기다림 10분 이상');
     let s = slowServer({ version: later(120, gitInfo), update: { status: 500 }, move: { status: 204 }, install: { status: 200 }, delete: { status: 200 } });
     const msgs = [];
@@ -204,7 +204,7 @@ await test('runUpdate 7.8.7: /version 기다림은 waitMs(기본 10분 이상) �
     await assert.rejects(U.runUpdate({ inst, fetcher: s.fetcher }), /서버에 연결하지 못했어요/);
 });
 
-await test('runUpdate 7.8.7: /update 가 던져도(연결 끊김 · 시간 넘음) 500 과 같이 재설치 · 폴더가 아직 쓰이면 옮기기 실패로 그대로 멈춤 · 403 은 그대로', async () => {
+await test('runUpdate 7.8.8: /update 가 던져도(연결 끊김 · 시간 넘음) 500 과 같이 재설치 · 폴더가 아직 쓰이면 옮기기 실패로 그대로 멈춤 · 403 은 그대로', async () => {
     let s = slowServer({ version: gitInfo, update: new TypeError('Failed to fetch'), move: { status: 204 }, install: { status: 200 }, delete: { status: 200 } });
     assert.equal(await U.runUpdate({ inst, fetcher: s.fetcher }), 'done');
     assert.deepEqual(s.calls.map(c => c.path.replace('/api/extensions/', '')), ['version', 'update', 'move', 'install', 'delete']);

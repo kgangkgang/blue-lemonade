@@ -9,7 +9,7 @@
 // 업데이트:
 //   Git 으로 깐 곳 → 실리태번 업데이트 (/api/extensions/update — 확장 관리의 업데이트 단추와 같음)
 //     7.8.5 그게 실패하면 (저장소 기록이 다시 쓰여 받아 오기가 막힌 경우 등) 아래 ZIP 길로 새로 받아 깐다.
-//     7.8.7 기록이 다시 쓰인 뒤 얕은 설치는 서버의 첫 git fetch 가 새 기록 전체를 받느라 몇 분 걸린다 → /version · /update 를 15분까지 기다리고
+//     7.8.8 기록이 다시 쓰인 뒤 얕은 설치는 서버의 첫 git fetch 가 새 기록 전체를 받느라 몇 분 걸린다 → /version · /update 를 15분까지 기다리고
 //           기다린 시간을 보여 준다. /update 가 끊기거나 시간이 넘어도(던짐) 500 과 같이 새로 받아 깔기로 넘어간다.
 //   ZIP 으로 깐 곳 (.git 없음 — 폰 · Syncthing 사본 · 손으로 푼 ZIP) → GitHub 링크 설치로 바꾼다:
 //     지금 폴더를 전역으로 옮겨 백업 (/move) → GitHub 에서 설치 (/install) → 백업 지움 (/delete global).
@@ -27,7 +27,7 @@ const SITE = 'https://kgangkgang.github.io/blue-lemonade/';
 const STORE = 'bl_update_check';
 export const EVERY = 6 * 60 * 60 * 1000;
 const VER = /^\d+\.\d+\.\d+$/;
-export const SLOW_GIT_MS = 15 * 60 * 1000;   // 7.8.7 /version · /update 기다림 — 기록이 바뀐 뒤 첫 git fetch 는 새 기록 전체를 받아 몇 분 걸림
+export const SLOW_GIT_MS = 15 * 60 * 1000;   // 7.8.8 /version · /update 기다림 — 기록이 바뀐 뒤 첫 git fetch 는 새 기록 전체를 받아 몇 분 걸림
 
 let latest = '';
 let checking = null;
@@ -190,7 +190,7 @@ export async function runUpdate({ inst, headers = {}, fetcher = fetch, repo = RE
     const post = (path, body, timeout = 60000) => fetcher(path, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body), signal: AbortSignal.timeout(timeout) });
     const name = inst?.extensionName;
     if (!name) throw new Error('설치 폴더를 확인하지 못했어요. 새로고침한 뒤 다시 해 주세요.');
-    // 7.8.7 /version · /update 는 서버에서 git fetch 를 돌린다. 저장소 기록이 다시 쓰인 뒤 얕은 설치(--depth 1)는 이 fetch 가
+    // 7.8.8 /version · /update 는 서버에서 git fetch 를 돌린다. 저장소 기록이 다시 쓰인 뒤 얕은 설치(--depth 1)는 이 fetch 가
     //   새 기록 전체(수백 MB)를 한 번 받느라 몇 분 걸린다 — 60초에 끊으면 재설치로 못 넘어가고, 다시 누르면 처음부터 또 받는다.
     //   그래서 기다림을 길게 두고(기본 15분) 몇 초마다 기다린 시간을 보여 준다.
     const patient = async (path, body, label) => {
@@ -216,7 +216,7 @@ export async function runUpdate({ inst, headers = {}, fetcher = fetch, repo = RE
             ok = r.ok;
         } catch (error) {
             if (/권한이 없어요/.test(error?.message || '')) throw error;
-            ok = false;   // 7.8.7 연결이 끊기거나 시간이 넘어도(던짐) 500 과 같이 새로 받아 깔기로 — 폴더가 아직 쓰이는 중이면 옮기기가 실패해 그대로 멈춘다(아무것도 안 바뀜)
+            ok = false;   // 7.8.8 연결이 끊기거나 시간이 넘어도(던짐) 500 과 같이 새로 받아 깔기로 — 폴더가 아직 쓰이는 중이면 옮기기가 실패해 그대로 멈춘다(아무것도 안 바뀜)
         }
         if (ok) return 'done';
         // 7.8.5 받아 오기(git pull)가 막히면 — 저장소 기록이 다시 쓰였거나 폴더 안 파일이 손으로 바뀐 경우 — 아래 ZIP 설치와 같은 길로 새로 받아 깐다
