@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.0/blue-lemonade-7.8.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.1/blue-lemonade-7.8.1.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,19 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.8.0 · 최신 업데이트</summary>
+<summary>7.8.1 · 최신 업데이트</summary>
+
+- 설정을 많이 바꿔 이름 옆 「기본값으로」 아이콘이 보일 때, 설명이 긴 항목(화면 · 문단 · 모양 · 투명 그림 등)이 화면 밖으로 밀리던 것을 고쳤어요. 폭 320~430 폰에서 모두 화면 안에 들어와요.
+- 설정 선택 창의 검색칸이 상자 두 겹으로 보이던 것을 한 겹으로 정리했어요.
+- 설정 선택 창 아래 Blue Lemonade 줄에서 이름과 판 알약 사이를 8px 로 맞췄어요.
+- 체크박스 줄은 어디서나 체크박스와 글자 사이 8px · 그 창의 글자 크기로 맞췄어요(성능 보조 「이 도구 불러오기」 · 한글화 패널 「보조 설명 표시」 · 요청 로그 「가격 자동 갱신」 · 번역 모델 목록 등).
+- 번역 · 성능 보조 · ZIP 설치 등 애드온 창 머리의 아이콘 · 제목 · 판 알약 사이를 8px 로 맞추고, 메모 창 머리는 판 알약이 다음 줄로 떨어지지 않게 했어요.
+- 테마 설정 색 묶음의 「혼합하기」 단추 글자를 다른 글자 단추와 같은 크기로 맞췄어요.
+
+</details>
+
+<details>
+<summary>7.8.0 · 7.7.9 에서 꺼졌던 화면 규칙 복구 · 공지 창 닫기 하나</summary>
 
 - 7.7.9 에서 화면 규칙 일부(체크박스 · 입력칸 · 단추 묶음 · 스크롤바 숨김 · 탭 줄 페이드 · 애드온 창 정리 등)가 적용되지 않던 것을 바로잡았어요. 도움말 아이콘 규칙에 섞인 보이지 않는 문자 하나가 그 뒤 규칙을 막고 있었어요.
 - 공지 창을 테마 자체 창으로 바꿨어요. 실리태번 판과 관계없이 「닫기」 하나만 보이고, 닫기가 빨갛게 칠해지지 않아요.
