@@ -211,7 +211,7 @@ html body.salty :is(.llmt-settings,.llmt-gl-expanded,.llmt-gl-pick,.mr-settings,
   min-width:0;
   max-width:100%;
   box-sizing:border-box;
-  background:var(--salty-fill-field,var(--salty-field))!important;
+  background-color:var(--salty-fill-field,var(--salty-field))!important;   /* 7.8.5 배경 색만 — 통째로(background) 칠하면 고르기 칸 ▾ 화살표(02-controls)까지 지워졌음 */
   color:var(--salty-text)!important;
   border-radius:var(--bl-r-sm,8px)!important;
   font-family:inherit;

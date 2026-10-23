@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f1a970588d77) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build be5caf451852) */
 /* css/00-base.css */
 :root{--bl-release:"7.8.4";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -12353,7 +12353,7 @@ html body.salty :is(.llmt-settings, .llmt-gl-expanded, .llmt-gl-pick, .mr-settin
 html body.salty :is(.llmt-settings, .llmt-gl-expanded, .llmt-gl-pick, .mr-settings, #model-switch-settings, #regex-link-settings, .pa-hub, .bl-ctsi-dialog) input[type=url]:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :is(.llmt-settings, .llmt-gl-expanded, .llmt-gl-pick, .mr-settings, #model-switch-settings, #regex-link-settings, .pa-hub, .bl-ctsi-dialog) textarea:is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :is(.llmt-settings, .llmt-gl-expanded, .llmt-gl-pick, .mr-settings, #model-switch-settings, #regex-link-settings, .pa-hub, .bl-ctsi-dialog) select:is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-background:var(--salty-fill-field,var(--salty-field)) !important;
+background-color:var(--salty-fill-field,var(--salty-field)) !important;
 color:var(--salty-text) !important;
 }
 html body.salty :is(.llmt-settings, .llmt-gl-expanded, .llmt-gl-pick, .mr-settings, #model-switch-settings, #regex-link-settings, .pa-hub, .bl-ctsi-dialog) input[type=text],
