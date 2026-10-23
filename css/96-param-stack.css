@@ -27,7 +27,7 @@ body.salty #user-settings-block #user-settings-block-content { container: bl-use
   body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="FontBlurChatWidthBlock"], [name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > * { grid-column: 1 / -1 !important; }
 }
 
-/* 7.8.x 사용자 설정 스위치 묶음(테마 · 캐릭터 처리 · 기타 · 채팅 메시지 처리): 이름을 본문 크기(사용자 글꼴 크기)로 키우자 폰 두 칸에서는 이름이 두세 줄로 꺾였다
+/* 7.9.1 사용자 설정 스위치 묶음(테마 · 캐릭터 처리 · 기타 · 채팅 메시지 처리): 이름을 본문 크기(사용자 글꼴 크기)로 키우자 폰 두 칸에서는 이름이 두세 줄로 꺾였다
    (철칙 §5 「라벨이 꺾이면 그 묶음만 1열」) — 묶음 폭이 34em 아래면 한 열. 넓은 화면은 두 칸 그대로 */
 @container bl-user-settings (width < 34em) {
   body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) { grid-template-columns: minmax(0, 1fr) !important; }

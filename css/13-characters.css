@@ -47,7 +47,7 @@ body.salty #right-nav-panel :is(#rm_button_characters, #rm_button_search, #resul
   border-radius: var(--bl-r-sm);
   font-size: 17px !important;
 }
-/* 7.8.x: 목록 머리 줄(만들기 · 가져오기 · URL · 그룹 · 정렬 · 검색)에서는 검색만 17 이라 커 보였다 — 같은 줄 아이콘(15)과 한 크기 */
+/* 7.9.1: 목록 머리 줄(만들기 · 가져오기 · URL · 그룹 · 정렬 · 검색)에서는 검색만 17 이라 커 보였다 — 같은 줄 아이콘(15)과 한 크기 */
 body.salty #right-nav-panel #rm_button_bar #rm_button_search { font-size: 15px !important; }
 body.salty #right-nav-panel :is(#rm_button_characters, #rm_button_search, #result_info .right_menu_button, #rm_button_panel_pin_div .right_menu_button) {
   color: var(--salty-muted) !important;

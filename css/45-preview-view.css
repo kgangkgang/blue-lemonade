@@ -20,7 +20,7 @@ body.salty :is(#salty-nochat,.salty-preview):not(.cg-chatlike,.bl-notes-view,.bl
 .bl-view-tools[hidden] { display:none !important; }
 .salty-panel .bl-view-toggle { width:32px; height:28px; min-height:0; padding:0; margin:0; border:0; border-radius:8px; background:transparent; color:var(--salty-muted); font-size:13px; cursor:pointer; }
 .salty-panel .bl-view-toggle[aria-expanded="true"] { color:var(--salty-accent); }
-.salty-panel .bl-view-resize > .bl-view-toggle { grid-column:1; grid-row:1; font-size:12.5px; } /* 7.8.x: 줄의 다른 단추 글꼴(18px)을 받아 돋보기만 커 보였다 — 도구 아이콘 한 규격(FA 12.5 ≙ 마스크 16) */
+.salty-panel .bl-view-resize > .bl-view-toggle { grid-column:1; grid-row:1; font-size:12.5px; } /* 7.9.1: 줄의 다른 단추 글꼴(18px)을 받아 돋보기만 커 보였다 — 도구 아이콘 한 규격(FA 12.5 ≙ 마스크 16) */
 .bl-view-float { position:relative; }
 /* 5.6.3 top 4px -> 2px: 412px 설정 팝업에서 미리보기 첫 메시지 연필과 2px 겹쳤다 */
 .salty-panel .bl-view-float > .bl-view-toggle { position:absolute; top:2px; right:4px; z-index:2; background:var(--salty-fill-surface, var(--salty-surface)); opacity:.85; }

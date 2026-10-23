@@ -26,7 +26,7 @@ html body .bl-tool-heading { display:flex; align-items:center; justify-content:s
 .bl-tool-grid input[type=checkbox] { flex:none; margin:0; width:17px; height:17px; accent-color:var(--salty-accent); }
 .bl-tool-field { display:grid; grid-template-columns:minmax(0,1fr); gap:6px; min-width:0; font-size:12px; line-height:1.45; }
 .bl-tool-field small { font-size:10px; color:var(--salty-muted); }
-:is(.salty-panel,.bl-capture-dialog) .bl-tool-field :is(input[type=number],select) { display:block; width:100%; min-width:0; max-width:100%; min-height:36px; margin:0; padding:7px 9px; box-sizing:border-box; border:1px solid var(--salty-line)!important; border-radius:8px; background-color:var(--bl-fill-field,var(--salty-field))!important; color:var(--salty-text)!important; font:inherit; } /* 7.8.x: background 통째 → background-color — 고르기 칸 ▾(02)를 지우지 않게 */
+:is(.salty-panel,.bl-capture-dialog) .bl-tool-field :is(input[type=number],select) { display:block; width:100%; min-width:0; max-width:100%; min-height:36px; margin:0; padding:7px 9px; box-sizing:border-box; border:1px solid var(--salty-line)!important; border-radius:8px; background-color:var(--bl-fill-field,var(--salty-field))!important; color:var(--salty-text)!important; font:inherit; } /* 7.9.1: background 통째 → background-color — 고르기 칸 ▾(02)를 지우지 않게 */
 .bl-extension-page,.bl-capture-dialog { color-scheme:light; }
 body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; }
 .bl-tool-caption { display:block; margin:8px 0; font-size:12px; font-weight:600; }

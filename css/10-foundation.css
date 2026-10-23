@@ -5,7 +5,7 @@
 /* 블루 레몬에이드 디자인 기반 — 토큰(--bl-*) + 공용 부품 몇 가지. 부품 대부분은 위 상단 바 · 서랍 · 버튼 · 메뉴 칸에 있음
    · 면 3단: page(bg) < card(surface) < overlay(메뉴 · 알림, 어두운 테마는 tint-12)
    · 그림자 5단: e1 쉬는 카드 · 시트 위 입력칸 / e2 버튼 · 칩 / e3 떠 있는 바 · 펼친 줄 / e4 메뉴 · 드롭다운 · 알림 / e5 팝업 · 서랍
-     눌림 · 오목함은 안쪽 그림자(--bl-press · --bl-well-in · --bl-track), 포커스는 포인트 색 1px 선(7.8.x: 번진 고리 --bl-ring 은 안 씀 — 철칙 「누르면 포인트색 1px」)
+     눌림 · 오목함은 안쪽 그림자(--bl-press · --bl-well-in · --bl-track), 포커스는 포인트 색 1px 선(7.9.1: 번진 고리 --bl-ring 은 안 씀 — 철칙 「누르면 포인트색 1px」)
    · 특이도: 공용 규칙은 body.salty + 클래스(제외 조건은 :where 로 0점), 화면별 규칙(surfaces:*)은 서랍 id 를 붙여 항상 이김
    · 실리태번이 숨기는 것(메뉴 항목 · 체크박스 · 팝업 닫기 · 슬라이더 칸)에는 display !important 금지
    · 마우스 올림 효과는 (hover: hover) 안에서만 — 폰에서 눌린 색이 남지 않게 */
@@ -256,7 +256,7 @@ body.salty .rm_tag_filter .tag.actionable.excluded::after {
     --bl-fs-cap: calc(var(--mainFontSize, 15px) * 0.8);     /* 12 */
     --bl-fs-sub: calc(var(--mainFontSize, 15px) * 0.833);   /* 12.5 */
     --bl-fs-ctl: calc(var(--mainFontSize, 15px) * 0.9);     /* 13.5 */
-    --bl-fs-body: var(--mainFontSize, 15px);                /* 7.8.x: 폰에서도 본문 = 사용자 글꼴 크기(기본 15.5) 그대로 — ×0.933(14.46)이라 실리태번 기본 줄(체크 줄 · 메뉴)만 테마 창 · 애드온(15.5)보다 작았다(사용자 10-24) */
+    --bl-fs-body: var(--mainFontSize, 15px);                /* 7.9.1: 폰에서도 본문 = 사용자 글꼴 크기(기본 15.5) 그대로 — ×0.933(14.46)이라 실리태번 기본 줄(체크 줄 · 메뉴)만 테마 창 · 애드온(15.5)보다 작았다(사용자 10-24) */
     --bl-fs-head: calc(var(--mainFontSize, 15px) * 1.133);  /* 17 */
     --bl-fs-title: calc(var(--mainFontSize, 15px) * 1.333); /* 20 */
     --bl-gutter: 14px;

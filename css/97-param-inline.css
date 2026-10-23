@@ -127,7 +127,7 @@ html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { marg
 @media (max-width: 760px), (pointer: coarse) {
   html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin: 0 0 0 calc(6px - 10.36px - 0.7px) !important; }
 }
-/* 7.8.x 전수조사 · 줄 이름표 세로 중심 (사용자 폰 「이름 글자가 줄 가운데보다 위로 뜬다」 · 감사 ROWCENTER):
+/* 7.9.1 전수조사 · 줄 이름표 세로 중심 (사용자 폰 「이름 글자가 줄 가운데보다 위로 뜬다」 · 감사 ROWCENTER):
    ① ↺ 가 이름 줄 상자를 키우지 않게 — 누름 칸(28 · 폰 32)은 그대로, 위 · 아래 바깥 여백을 빼서 차지하는 높이를 이름 줄 높이(1lh)와 같게.
       vertical-align: middle 이던 때는 ↺ 가 기준선 위 x-높이 반에 놓여 줄 상자가 아래로 1px 남짓 커지고, 그만큼 이름 글자가 줄 가운데보다 위로 갔다.
    ② 이름 + 설명(<small>) 두 줄 줄은 컨트롤을 「이름 첫 줄」 가운데에 — 전에는 두 줄 덩어리 가운데라 이름이 컨트롤보다 10 · 20px 위였다.

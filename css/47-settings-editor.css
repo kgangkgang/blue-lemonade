@@ -1,7 +1,7 @@
 /* ===== css/47-settings-editor.css ===== */
 html body .salty-panel.bl-editor { position:relative; display:flex; flex-direction:column; container:bl-editor / inline-size; height:min(780px,82dvh); min-height:320px; min-width:0; padding:0 !important; overflow:hidden; --pp:0px; --bl-editor-gutter:10px; --salty-navh:0px; --bl-editor-line:var(--salty-line); background:var(--bl-settings-cover); }
 html body dialog.popup.bl-settings-dialog:not(.bl-settings-fullscreen):has(.salty-panel.in-popup) { width:min(1120px,96vw) !important; max-width:96vw !important; height:min(880px,92dvh) !important; max-height:92dvh !important; padding:0 !important; }
-html body dialog.bl-settings-dialog .popup-body { height:100%; min-height:0; max-height:none !important; flex:1 1 auto; padding:0 !important; overflow:hidden; border-radius:inherit; } /* 7.8.x: 실리태번 팝업 몸통 최대 높이(100dvh − …)가 창보다 28px 낮아, 창 아래에 빈 띠가 생기고 그 띠가 맨 아래 줄(Blue Lemonade · 판 · 스위치)을 반쯤 가렸다 · 안쪽 몸통 모서리가 바깥 창 모서리 위에 한 번 더 꺾였다(사용자 폰 10-24) */ /* 7.7.8: 모서리 0 인 설정 창이 둥근 팝업 모서리 밖으로 뾰족하게 비어져 나왔다(사용자 제보 10-23) → 팝업 모서리로 자름 */
+html body dialog.bl-settings-dialog .popup-body { height:100%; min-height:0; max-height:none !important; flex:1 1 auto; padding:0 !important; overflow:hidden; border-radius:inherit; } /* 7.9.1: 실리태번 팝업 몸통 최대 높이(100dvh − …)가 창보다 28px 낮아, 창 아래에 빈 띠가 생기고 그 띠가 맨 아래 줄(Blue Lemonade · 판 · 스위치)을 반쯤 가렸다 · 안쪽 몸통 모서리가 바깥 창 모서리 위에 한 번 더 꺾였다(사용자 폰 10-24) */ /* 7.7.8: 모서리 0 인 설정 창이 둥근 팝업 모서리 밖으로 뾰족하게 비어져 나왔다(사용자 제보 10-23) → 팝업 모서리로 자름 */
 html body dialog.bl-settings-dialog .popup-content { flex:1; height:100%; min-height:0; overflow:hidden !important; padding:0 !important; margin:0; scrollbar-gutter:auto !important; }
 html body dialog.bl-settings-dialog .popup-content > div { height:100%; min-height:0; }
 html body dialog.bl-settings-dialog .salty-panel.bl-editor.in-popup { height:100%; min-height:0; padding:0 !important; }
@@ -50,7 +50,7 @@ html body .bl-editor .bl-editor-group-body > .bl-prompt-tools > .salty-group { m
 .bl-editor-category h4 { margin:14px 0 6px; padding:7px 8px; border-left:3px solid var(--salty-accent); border-bottom:1px solid var(--bl-editor-line); border-radius:4px; background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-text); font-size:calc(15 * var(--sp)); font-weight:750; line-height:1.4; }
 .bl-editor-category button { display:block; width:100%; margin:2px 0; padding:calc(10px + var(--bl-text-nudge, 0px)) 12px calc(10px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border:0; border-radius:8px; text-align:left; background:transparent; color:var(--salty-text); font:inherit; font-size:calc(14 * var(--sp)); }
 .bl-editor-category button:is(:hover,[aria-current="page"]) { background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-accent); }
-.bl-editor-directory .salty-head { margin-top:20px; margin-bottom:0; border-top:1px solid var(--bl-editor-line); padding-top:18px; } /* 7.8.x: 머리줄 공용 아래 여백(8)이 목록 창 맨 아래에 남아 빈 띠가 됐다 — 창 안쪽 여백(10)만 */
+.bl-editor-directory .salty-head { margin-top:20px; margin-bottom:0; border-top:1px solid var(--bl-editor-line); padding-top:18px; } /* 7.9.1: 머리줄 공용 아래 여백(8)이 목록 창 맨 아래에 남아 빈 띠가 됐다 — 창 안쪽 여백(10)만 */
 .bl-editor-directory .salty-mark { width:24px; height:28px; }
 .bl-editor-directory .salty-title { font-size:calc(15 * var(--sp)); }
 .bl-editor-directory .salty-sub { display:none; }
