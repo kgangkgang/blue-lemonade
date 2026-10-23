@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f43f31ab59b7) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 464adbf8a553) */
 /* css/00-base.css */
 :root{--bl-release:"7.8.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -26028,41 +26028,13 @@ html body .bl-translator-dialog #llm_glossary_expand {
   html body #model_register_settings .mr-name { grid-column:2; }
   html body #model_register_settings .mr-item-buttons { grid-column:2; justify-content:flex-end; }
 }
-/* css/90-puffy.css */
-html[data-bl-puffy] {
-  --bl-puffy-d: 2px;
-  --bl-puffy-lt: 100%;
-}
-html[data-bl-puffy="dark"] {
-  --bl-puffy-lt: 0%;
-}
-html[data-bl-puffy]:not(#bl-puffy-off) body .salty-btn:not(.on, .active, [aria-pressed="true"]),
-html[data-bl-puffy]:not(#bl-puffy-off) body.salty .popup .popup-controls .menu_button,
-html[data-bl-puffy]:not(#bl-puffy-off) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .popup-controls *, .welcomePanel *, #rm_buttons_container *, .toggleEnabled, .active, .toggled, #movingUIreset, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])) {
-  --bl-puffy-deep: color-mix(in oklab, var(--salty-text) var(--bl-puffy-lt), var(--salty-bg));
-  --bl-puffy-edge: color-mix(in oklab, var(--bl-puffy-deep) 22%, transparent);
-  border-bottom: var(--bl-puffy-d) solid var(--bl-puffy-edge) !important;
-}
-html[data-bl-puffy]:not(#bl-puffy-off) body.salty .popup .popup-controls .menu_button {
-  --bl-puffy-d: 3px;
-}
-html[data-bl-puffy]:not(#bl-puffy-off) body.salty .salty-panel .salty-btn.bl-tool-primary {
-  --bl-puffy-d: 3px;
-}
-html[data-bl-puffy]:not(#bl-puffy-off) body .salty-panel .salty-btn.bl-tool-primary {
-  --bl-puffy-edge: color-mix(in oklab, color-mix(in srgb, var(--salty-accent) 50%, transparent) 78%, var(--bl-puffy-deep));
-}
+/* css/90-press.css */
 @media (prefers-reduced-motion: no-preference) {
   html[data-bl-puffy]:not(#bl-puffy-off) body .salty-btn:not(.on, .active, [aria-pressed="true"], :disabled, [aria-disabled="true"]):active,
   html[data-bl-puffy]:not(#bl-puffy-off) body.salty .popup .popup-controls .menu_button:not(.disabled, [aria-disabled="true"]):active,
   html[data-bl-puffy]:not(#bl-puffy-off) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .popup-controls *, .welcomePanel *, #rm_buttons_container *, .toggleEnabled, .active, .toggled, #movingUIreset, .disabled, :disabled, [aria-disabled="true"], :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])):active {
-    border-top: var(--bl-puffy-d) solid transparent !important;
-    border-bottom-width: 0 !important;
     background-clip: padding-box !important;
     transform: none !important;
-  }
-  html[data-bl-puffy]:not(#bl-puffy-off) body .salty-panel .salty-btn.bl-tool-primary:not(:disabled, [aria-disabled="true"]):active {
-    border-bottom: 1px solid color-mix(in srgb, var(--salty-accent) 50%, transparent) !important;
   }
   html[data-bl-puffy]:not(#bl-puffy-off) body .salty-btn:not(.on, .active, [aria-pressed="true"]) {
     transition: background-color 0.15s ease, border-top-width 0.15s ease-out, border-bottom-width 0.15s ease-out;
@@ -26140,7 +26112,7 @@ html:not(#bl-checkrow-off) body.salty .pt-help-dialog .pt-check > input[type="ch
 /* css/93-night-surfaces.css */
 html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]),
 html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,:has(> i:only-child),:has(> svg:only-child),.menu_button_icon:has(> i):not(:has(> span,> b,> strong,> small)),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]) {
- --bl-puffy-edge:transparent; background:var(--salty-raised,var(--salty-control,var(--salty-surface)))!important; color:var(--salty-text)!important; border-color:transparent!important;
+ background:var(--salty-raised,var(--salty-control,var(--salty-surface)))!important; color:var(--salty-text)!important; border-color:transparent!important;
  box-shadow:inset 0 1px 0 color-mix(in oklab,var(--salty-text) 28%,transparent),0 2px 0 var(--salty-bg),0 3px 3px color-mix(in oklab,var(--salty-palette-shadow) 25%,transparent)!important;
 }
 html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):active,
@@ -26154,7 +26126,6 @@ html:root body .salty-panel :is(.salty-fontempty button).on:not(:disabled) { box
 html:not(#bl-density-off):not(#bl-density-off2) body .salty-btn,
 html:not(#bl-density-off):not(#bl-density-off2) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *, #Backgrounds #bg-header-fixed *, #Backgrounds #bg_tabs *, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])),
 html:not(#bl-density-off):not(#bl-density-off2) body.salty .popup .popup-controls .menu_button {
-  --bl-puffy-d: 0px;
   border: 1px solid var(--salty-line) !important;
   box-shadow: none !important;
 }

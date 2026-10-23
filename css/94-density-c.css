@@ -5,7 +5,6 @@
 html:not(#bl-density-off):not(#bl-density-off2) body .salty-btn,
 html:not(#bl-density-off):not(#bl-density-off2) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *, #Backgrounds #bg-header-fixed *, #Backgrounds #bg_tabs *, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])),
 html:not(#bl-density-off):not(#bl-density-off2) body.salty .popup .popup-controls .menu_button {
-  --bl-puffy-d: 0px;
   border: 1px solid var(--salty-line) !important;
   box-shadow: none !important;
 }

@@ -1,0 +1,33 @@
+/* ===== css/90-press.css =====
+   7.8.6 누름 · 전환 — 탈락한 시안 A(볼록, 옛 css/90-puffy.css)에서 아직 화면에 걸리던 몫만 남겼다.
+   옛 모듈은 늘 켜져 있고 시안 C(94-density-c, 평평)가 아이디 특이도로 덮는 구조였다: 94 의 긴 목록에서 빠진 단추가 생기면
+   볼록 두께가 되살아날 수 있었다(85 머리줄 · 20 알약 top:-1 과 같은 유형). 리그(384×3.75 · 사용자 설정 · 화면 52개)에서
+   옛 모듈을 뺀 전후 계산 스타일을 견주니 쉬는 모양의 차이는 --bl-puffy-* 변수와 transition 뿐이었다 — 테두리 · 면 · 크기 · 자리 0.
+   그래서 지운 것: 두께(아래 테두리) · 두께 색 · 누를 때 위 테두리 · 테두리 단추 두께 — 모두 94 가 덮어 걸리지 않던 값.
+   남긴 것(뜻 · 선택자 · 특이도 그대로 — 지우면 바뀌는 값):
+   · 전환: 면 색 · 그림자 · 글자색 · 눌림 움직임 시간(테두리 두께 몫은 계산값이 같도록 글자 그대로).
+   · 누름: 02-controls 의 눌림 translateY(1px) 를 쉬고(transform: none), 배경은 테두리 안쪽까지(background-clip: padding-box).
+   html[data-bl-puffy] 는 apply.js 가 테마가 켜져 있으면 다는 표식(91-switch-knob 도 씀). :not(#bl-puffy-off) 는 특이도만 — 옛 규칙과 같은 무게.
+   ===== */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-bl-puffy]:not(#bl-puffy-off) body .salty-btn:not(.on, .active, [aria-pressed="true"], :disabled, [aria-disabled="true"]):active,
+  html[data-bl-puffy]:not(#bl-puffy-off) body.salty .popup .popup-controls .menu_button:not(.disabled, [aria-disabled="true"]):active,
+  html[data-bl-puffy]:not(#bl-puffy-off) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .popup-controls *, .welcomePanel *, #rm_buttons_container *, .toggleEnabled, .active, .toggled, #movingUIreset, .disabled, :disabled, [aria-disabled="true"], :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])):active {
+    background-clip: padding-box !important;
+    transform: none !important;
+  }
+  html[data-bl-puffy]:not(#bl-puffy-off) body .salty-btn:not(.on, .active, [aria-pressed="true"]) {
+    transition: background-color 0.15s ease, border-top-width 0.15s ease-out, border-bottom-width 0.15s ease-out;
+  }
+  html[data-bl-puffy]:not(#bl-puffy-off) body.salty .popup .popup-controls .menu_button,
+  html[data-bl-puffy]:not(#bl-puffy-off) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .popup-controls *, .welcomePanel *, #rm_buttons_container *, .toggleEnabled, .active, .toggled, #movingUIreset, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])) {
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, transform 0.1s ease, border-top-width 0.15s ease-out, border-bottom-width 0.15s ease-out;
+  }
+}
+/* 움직임 줄이기: 02-controls 의 눌림 translateY(1px) 도 쉼 */
+@media (prefers-reduced-motion: reduce) {
+  html[data-bl-puffy]:not(#bl-puffy-off) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .popup-controls *, .welcomePanel *, #rm_buttons_container *, .toggleEnabled, .active, .toggled, #movingUIreset, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])):active {
+    transform: none !important;
+  }
+}
+/* ===== /90-press ===== */

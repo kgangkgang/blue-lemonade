@@ -568,13 +568,15 @@
 .jj-pitems.is-sorting { overflow-anchor: none; }
 .jj-pitems.is-sorting > .jj-pitem:not(.is-dragging), .jj-pitem.is-settling { transition: transform .16s ease; }
 .jj-pitem.is-dragging {
-    --jj-lift-deep: color-mix(in oklab, var(--salty-text, var(--SmartThemeBodyColor)) var(--bl-puffy-lt, 100%), var(--salty-bg, var(--SmartThemeBlurTintColor)));
+    --jj-lift-deep: color-mix(in oklab, var(--salty-text, var(--SmartThemeBodyColor)) 100%, var(--salty-bg, var(--SmartThemeBlurTintColor)));
     position: relative;
     z-index: 1;
     background: var(--salty-surface, var(--SmartThemeBlurTintColor));   /* 밝은 테마: 오목한 칸 위로 흰 면 (불투명 — 겹친 줄이 비치지 않게) */
     box-shadow: 0 2px 0 color-mix(in oklab, var(--jj-lift-deep) 22%, transparent), var(--bl-e3, 0 6px 16px -6px var(--SmartThemeShadowColor, transparent));
     cursor: grabbing;
 }
+/* 테마 7.8.6: 볼록 단추의 밝기 변수가 없어져 밝기 몫을 여기 직접 — 어두운 팔레트는 깊은 색 = 바탕(전과 같은 값) */
+html[data-bl-puffy="dark"] .jj-pitem.is-dragging { --jj-lift-deep: color-mix(in oklab, var(--salty-text, var(--SmartThemeBodyColor)) 0%, var(--salty-bg, var(--SmartThemeBlurTintColor))); }
 body.salty-dark .jj-pitem.is-dragging { background: var(--bl-control, var(--salty-raised)); }   /* 어두운 테마: 테마 단추 면(한 톤 밝게, 불투명) */
 .jj-pitems.is-sorting, .jj-pitems.is-sorting * { cursor: grabbing; }
 /* 화면 읽기 프로그램에만: 옮긴 결과 알림 */

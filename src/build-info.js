@@ -58,7 +58,7 @@ export const FILE_HASHES = {
   "src/addons/customstyle/style.css": "3793:a55698b3:63ca622a",
   "src/addons/direction/index.js": "111019:9d80f334:7fac01e2",
   "src/addons/direction/prompt.js": "2559:fa1cf265:60dc13ab",
-  "src/addons/direction/style.css": "37988:69e03bef:07227b20",
+  "src/addons/direction/style.css": "38315:eb34a465:2b75013b",
   "src/addons/list-sync.js": "4902:487dc198:b4d6512a",
   "src/addons/mermaid/index.js": "8963:2a351705:f617c845",
   "src/addons/mermaid/source/src/index.js": "394:f55b3e28:fa2de41b",
@@ -448,7 +448,7 @@ export const FILE_HASHES = {
   "src/after-work.js": "4051:6ad4ecc2:7c929fed",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
   "src/appearance-compare.js": "3140:831ffdf1:a1f78cb0",
-  "src/apply.js": "62474:5f95736d:e986bd7b",
+  "src/apply.js": "62543:cb67bad9:8e221ae6",
   "src/ask.js": "3222:02049ce8:69a2b062",
   "src/assets.js": "35468:789b2815:728dfddd",
   "src/assist/core.js": "1927:14e3f07b:8a781a61",
@@ -681,7 +681,7 @@ export const FILE_HASHES = {
   "src/usage-feed.js": "3182:70ae2063:357d8ea5",
   "src/usage-ledger-core.js": "19648:688531bf:862ce5a8",
   "src/usage-ledger.js": "15430:dc35f469:b69d7667",
-  "src/usage-mode.js": "2938:c1013d37:9f133f10",
+  "src/usage-mode.js": "2974:2f0601cc:139da00e",
   "src/vendor/gif-writer.js": "15523:55aa4c9a:308694e8",
   "src/vendor/image-q.js": "105671:f2e1c3b1:86833578",
   "src/weather-art.js": "7489:a3f43922:db097649",
@@ -702,5 +702,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1665404:8d7c4362:7e7818c1"
+  "style.css": "1663625:9edaeb8e:4eb1bb38"
 };

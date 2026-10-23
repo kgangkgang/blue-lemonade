@@ -786,7 +786,7 @@ export function applyAll() {
     // 조건은 body 의 salty · salty-bgimg 와 똑같이 (테마를 끄면 둘 다 빠지듯 이것도 빠짐)
     const htmlBg = want.has('salty') && !want.has('salty-bgimg');
     if (document.documentElement.classList.contains('salty-html-bg') !== htmlBg) document.documentElement.classList.toggle('salty-html-bg', htmlBg);
-    // 7.7.4 볼록 단추: 확장만 모드에서도 테마 자신의 단추(.salty-btn)에 — 값은 팔레트 밝기(두께 색), 테마를 끄면 속성을 뗀다 (css/90-puffy.css)
+    // 7.7.4 볼록 단추: 확장만 모드에서도 테마 자신의 단추(.salty-btn)에 — 값은 팔레트 밝기(두께 색), 테마를 끄면 속성을 뗀다 (css/90-press.css 누름 · 전환 · 91-switch-knob · 전개 지시 끌기 그림자)
     // Owned addon controls keep their appearance in extensions-only mode.
     const controls = rendered.enabled !== false ? 'on' : null;
     if (document.documentElement.getAttribute('data-bl-controls') !== controls) { if (controls) document.documentElement.setAttribute('data-bl-controls', controls); else document.documentElement.removeAttribute('data-bl-controls'); }
