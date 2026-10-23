@@ -24,8 +24,10 @@ export function hardenInfoPopup(popup) {
     return dlg;
 }
 
-function check(dlg) {
+function check(dlg, tries = 0) {
     if (!(dlg instanceof Element) || !dlg.matches('dialog.popup') || dlg.classList.contains('bl-info-dialog')) return;
+    // 7.8.0: 실리태번은 dialog 를 붙인 뒤 showModal 한다 — 붙는 순간엔 단추 상자가 없어 「안 보임」으로 보고 지나치던 것. 열릴 때까지 몇 프레임 기다린다
+    if (!dlg.open) { if (tries < 30) requestAnimationFrame(() => check(dlg, tries + 1)); return; }
     const ok = dlg.querySelector('.popup-button-ok'), cancel = dlg.querySelector('.popup-button-cancel');
     if (!ok || !cancel || !visible(cancel)) return;
     if (!INFO_OK.test((ok.textContent || '').trim())) return;

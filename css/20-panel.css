@@ -216,6 +216,26 @@ body.salty.salty-light { --bl-update-ink: #8a6400; --bl-update-glow: #ffc400; }
   color: var(--salty-muted);
   font-size: 0.85em;
 }
+/* 7.8.0 공지 창(테마 자체 dialog, notice.js): 실리태번 팝업 단추를 안 쓰니 「닫기」 하나뿐.
+   여백: 제목 글자 위 · 왼쪽이 같게(창 안쪽 16, 제목 줄 높이 1.2 로 위 반여백을 줄임). 본문만 굴러가고 스크롤바는 77 이 숨김. 단추는 팝업 크기표 40/44 · 포인트 면 */
+body.salty dialog.bl-notice-dialog {
+  box-sizing: border-box; width: min(560px, calc(100dvw - 12px)); max-width: none; max-height: calc(100dvh - 24px);
+  margin: auto; padding: 0; border: 1px solid var(--salty-line); border-radius: 18px;
+  background: var(--salty-surface); color: var(--salty-text); overflow: hidden;
+}
+body.salty dialog.bl-notice-dialog[open] { display: flex; flex-direction: column; }
+body.salty dialog.bl-notice-dialog::backdrop { background: var(--bl-scrim, var(--salty-scrim, #0009)); }
+body.salty dialog.bl-notice-dialog .bl-notice-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; touch-action: pan-y; padding: 16px 16px 4px; }
+body.salty dialog.bl-notice-dialog .salty-notice-head { margin: 0 0 12px; line-height: 1.2; }
+body.salty dialog.bl-notice-dialog .bl-notice-foot { flex: none; display: flex; justify-content: center; padding: 8px 16px 16px; }
+body.salty dialog.bl-notice-dialog .bl-notice-close {
+  min-width: 112px; min-height: 40px; padding: 0 24px; margin: 0; border: 0; border-radius: 12px;
+  background: var(--salty-fill-accent, var(--salty-accent)); color: var(--salty-on-accent); box-shadow: none;
+  font: inherit; font-weight: 650; line-height: 1; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+@media (pointer: coarse) { body.salty dialog.bl-notice-dialog .bl-notice-close { min-height: 44px; } }
+body.salty dialog.bl-notice-dialog .bl-notice-close:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
+body.salty dialog.bl-notice-dialog .bl-notice-close:not(:focus-visible) { outline: none; }
 .salty-notice-item {
   margin-bottom: 8px;
   border-radius: 12px;

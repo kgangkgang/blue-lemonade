@@ -568,7 +568,7 @@ export const FILE_HASHES = {
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
   "src/notice-data.js": "320237:a74e336e:6bbd4277",
-  "src/notice.js": "6757:1eaf7363:2194e750",
+  "src/notice.js": "7015:67a9b734:b55e9315",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/num-width.js": "2929:540aa26a:67ad53dc",
   "src/numbers.js": "2902:432db092:b638e9ce",
@@ -577,7 +577,7 @@ export const FILE_HASHES = {
   "src/palettes.js": "33830:51637840:34a73a09",
   "src/panel.js": "254248:92f9ae55:b7b9b2d9",
   "src/people.js": "9021:76aa8129:14633595",
-  "src/popup-guard.js": "4135:a57ddef9:19b99188",
+  "src/popup-guard.js": "4451:582cbc31:bcea0e81",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
   "src/preview-view.js": "13723:1503db9e:2771d54f",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
@@ -702,5 +702,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1644925:233d7aa6:0646bb76"
+  "style.css": "1647123:5febf690:bfd0838d"
 };

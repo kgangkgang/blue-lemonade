@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d2c003d5f6a2) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6946d283edd8) */
 /* css/00-base.css */
 :root{--bl-release:"7.7.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -12896,6 +12896,24 @@ body.salty.salty-light { --bl-update-ink: #8a6400; --bl-update-glow: #ffc400; }
   color: var(--salty-muted);
   font-size: 0.85em;
 }
+body.salty dialog.bl-notice-dialog {
+  box-sizing: border-box; width: min(560px, calc(100dvw - 12px)); max-width: none; max-height: calc(100dvh - 24px);
+  margin: auto; padding: 0; border: 1px solid var(--salty-line); border-radius: 18px;
+  background: var(--salty-surface); color: var(--salty-text); overflow: hidden;
+}
+body.salty dialog.bl-notice-dialog[open] { display: flex; flex-direction: column; }
+body.salty dialog.bl-notice-dialog::backdrop { background: var(--bl-scrim, var(--salty-scrim, #0009)); }
+body.salty dialog.bl-notice-dialog .bl-notice-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; touch-action: pan-y; padding: 16px 16px 4px; }
+body.salty dialog.bl-notice-dialog .salty-notice-head { margin: 0 0 12px; line-height: 1.2; }
+body.salty dialog.bl-notice-dialog .bl-notice-foot { flex: none; display: flex; justify-content: center; padding: 8px 16px 16px; }
+body.salty dialog.bl-notice-dialog .bl-notice-close {
+  min-width: 112px; min-height: 40px; padding: 0 24px; margin: 0; border: 0; border-radius: 12px;
+  background: var(--salty-fill-accent, var(--salty-accent)); color: var(--salty-on-accent); box-shadow: none;
+  font: inherit; font-weight: 650; line-height: 1; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+@media (pointer: coarse) { body.salty dialog.bl-notice-dialog .bl-notice-close { min-height: 44px; } }
+body.salty dialog.bl-notice-dialog .bl-notice-close:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
+body.salty dialog.bl-notice-dialog .bl-notice-close:not(:focus-visible) { outline: none; }
 .salty-notice-item {
   margin-bottom: 8px;
   border-radius: 12px;
@@ -24675,7 +24693,7 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.eh-guide-note > .fa-circle-info) {
   border: 0 !important; border-radius: 50% !important; background: var(--bl-control) !important; color: var(--salty-muted) !important; box-shadow: none !important;
   font-size: 12px !important; line-height: 1 !important; vertical-align: middle !important; align-self: center;
 }
-html body.salty:not(#bl-h1):not(#bl-h2) .eh-guide-note > .fa-circle-info::before { content: "129" !important; }
+html body.salty:not(#bl-h1):not(#bl-h2) .eh-guide-note > .fa-circle-info::before { content: "\f129" !important; }
 html body.salty:not(#bl-h1):not(#bl-h2) .bl-info > i { font-size: 12px !important; line-height: 1 !important; display: block !important; }
 /* css/77-scrollbars.css */
 html:not(#bl-scrollbars-on) body.salty :not(:is(#chat,.bl-chat-like)) {
@@ -26457,6 +26475,11 @@ html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(
 html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.salty-sizes, .bl-control-grid, .bl-setting-locks) > :is(:not(.salty-slider, .salty-sizeopt) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider + .salty-slider + .salty-slider:not(:has(+ .salty-slider)) {
     grid-column: 1 / -1;
   }
+}
+html body .salty-panel.bl-editor :is(.salty-row, .salty-stack, .salty-slider > header) > span:has(> .bl-setting-reset) { display: inline-flex; align-items: center; flex: none; min-width: max-content; column-gap: 0 !important; }
+html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin: 0 0 0 calc(6px - 8.36px - 0.7px) !important; align-self: center; vertical-align: middle; }
+@media (max-width: 760px), (pointer: coarse) {
+  html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin: 0 0 0 calc(6px - 10.36px - 0.7px) !important; }
 }
 /* css/98-tab-strips.css */
 html:not(#bl-tab-scroll-off) :is(#pt-panel > #pt-tabs),

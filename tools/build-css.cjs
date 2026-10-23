@@ -126,6 +126,10 @@ function build(dir = CSS_DIR, { bucket = true } = {}) {
     for (const name of names) {
         let text = fs.readFileSync(path.join(dir, name), 'utf8').replace(/\r\n/g, '\n');
         if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+        { // control-char guard (7.8.0): CSS 문자열 안 폼피드(0x0C) 하나가 뒤 모듈(77 스크롤바)을 통째로 지우던 사고(10-23). 탭·줄바꿈 말고는 금지
+            const bad = /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.exec(text);
+            if (bad) { const line = text.slice(0, bad.index).split('\n').length; throw new Error(`[build-css] ${name}:${line} control char 0x${bad[0].charCodeAt(0).toString(16).padStart(2, '0')} - CSS string breaks here and later rules vanish; write the escape instead.`); }
+        }
         if (name === LAZY && !text.includes(`${LAZY_SENTINEL} {}`)) throw new Error(`${LAZY} 에 시작 표시 규칙 '${LAZY_SENTINEL} {}' 가 없음`);
         // 모듈마다 머리 주석이 있어야 한다 (모듈의 설명 · 넣을 규칙)
         if (!text.startsWith(`/* ===== css/${name} =====`)) throw new Error(`${name} 이 머리 주석 '/* ===== css/${name} =====' 으로 시작하지 않음`);

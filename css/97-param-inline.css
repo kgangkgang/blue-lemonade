@@ -119,3 +119,10 @@ html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .s
   }
 }
 /* ===== /97-param-inline ===== */
+/* 7.8.0 글자 옆 아이콘(↺ 기본값으로) 간격 · 세로 중심 (철칙 §6 · 사용자 10-23 「자간 옆 되돌리기」): 라벨 잉크 끝 → 아이콘 잉크 6px(도움말 ? 와 같은 값), 세로 중심 ±1.
+   누름 칸(28 · 폰 32)은 그대로 두고 칸 안의 보이지 않는 여백만큼 당긴다. ↺ 잉크 왼쪽 = 칸 왼쪽 + (칸 − 16)/2 + 2.36 → 칸 28 이면 8.36, 32 면 10.36, 라벨 글자 끝 여백(실측 기 1.9 · 간 0.7)의 가운데 0.7 을 더 당김. 라벨 · 아이콘 사이 flex gap 은 0. 라벨 줄은 가운데 정렬로 세로 중심을 맞춘다 */
+html body .salty-panel.bl-editor :is(.salty-row, .salty-stack, .salty-slider > header) > span:has(> .bl-setting-reset) { display: inline-flex; align-items: center; flex: none; min-width: max-content; column-gap: 0 !important; }
+html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin: 0 0 0 calc(6px - 8.36px - 0.7px) !important; align-self: center; vertical-align: middle; }
+@media (max-width: 760px), (pointer: coarse) {
+  html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin: 0 0 0 calc(6px - 10.36px - 0.7px) !important; }
+}

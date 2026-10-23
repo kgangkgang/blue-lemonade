@@ -54,5 +54,5 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-info, .eh-guide-note > .fa-circl
   border: 0 !important; border-radius: 50% !important; background: var(--bl-control) !important; color: var(--salty-muted) !important; box-shadow: none !important;
   font-size: 12px !important; line-height: 1 !important; vertical-align: middle !important; align-self: center;
 }
-html body.salty:not(#bl-h1):not(#bl-h2) .eh-guide-note > .fa-circle-info::before { content: "129" !important; }   /* fa-info */
+html body.salty:not(#bl-h1):not(#bl-h2) .eh-guide-note > .fa-circle-info::before { content: "\f129" !important; }   /* fa-info */
 html body.salty:not(#bl-h1):not(#bl-h2) .bl-info > i { font-size: 12px !important; line-height: 1 !important; display: block !important; }

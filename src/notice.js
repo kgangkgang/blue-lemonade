@@ -68,7 +68,6 @@ function groupByDate(list) {
     return groups.map(g => ({ date: g.date, items: g.items, actions:noticeActions(g.actions), version: g.count > 1 ? `${g.first} ~ v${g.version}` : g.version, note: g.count > 1 ? ` · 업데이트 ${g.count}번` : '' }));
 }
 
-// 7.7.9: 폰에 깔린 다른 실리태번 판이 TEXT 창에도 「취소」를 그려 닫기 · 취소가 같이 떴다(사용자 사진 10-23) → 옵션 말고 직접 숨김(popup-guard.js 가 전역 BlueLemonadeHardenPopup 으로 내놓음 — 시험 VM 에서는 없어도 됨)
 async function noticeHtml() {
     const { NOTICES } = await import('./notice-data.js');
     const rows = groupByDate(NOTICES).map((notice, i) => `
@@ -88,9 +87,12 @@ async function noticeHtml() {
 }
 
 /**
- * 공지사항 팝업. 여는 순간 지금 버전을 본 것으로 적고 onSeen 을 부른다 (알약들을 보통 모양으로 돌리게).
+ * 공지사항 창. 여는 순간 지금 버전을 본 것으로 적고 onSeen 을 부른다 (알약들을 보통 모양으로 돌리게).
+ * 7.8.0: 실리태번 팝업(callGenericPopup) 대신 테마 자체 <dialog class="bl-notice-dialog"> — 폰에 깔린 실리태번 판에 따라
+ * 「취소」가 끼고 「닫기」가 빨갛게 칠해지던 것(7.7.8 · 7.7.9 사용자 사진 10-23)이 판과 상관없이 생길 수 없게. 단추는 「닫기」 하나.
  * @param {() => void} [onSeen]
  */
+let openDlg = null;
 export async function openNotice(onSeen) {
     await loadVersion();
     const html = await noticeHtml();
@@ -100,14 +102,16 @@ export async function openNotice(onSeen) {
         saveSettings();
     }
     onSeen?.();
-    const ctx = SillyTavern.getContext();
-    const wrap = document.createElement('div');
-    let pending='',resolvePopup;
-    const popupReady=new Promise(resolve=>{resolvePopup=resolve;});
-    wrap.innerHTML = html;
-    wrap.addEventListener('click', (event) => {
-        const action=event.target.closest('[data-notice-action]')?.dataset.noticeAction;
-        if(action&&!pending){pending=action;void popupReady.then(popup=>popup?.completeAffirmative()).catch(error=>{pending='';globalThis.toastr?.error(error.message);});return;}
+    try { openDlg?.close(); } catch {}
+    const dlg = document.createElement('dialog');
+    dlg.className = 'bl-notice-dialog';
+    dlg.setAttribute('aria-label', '공지사항');
+    dlg.innerHTML = `<div class="bl-notice-body">${html}</div><footer class="bl-notice-foot"><button type="button" class="bl-notice-close" data-notice-close>닫기</button></footer>`;
+    let pending = '';
+    dlg.addEventListener('click', (event) => {
+        if (event.target === dlg || event.target.closest('[data-notice-close]')) { dlg.close(); return; } // 바깥(배경) · 닫기
+        const action = event.target.closest('[data-notice-action]')?.dataset.noticeAction;
+        if (action && !pending) { pending = action; dlg.close(); return; }
         const toggle = event.target.closest('.salty-notice-toggle');
         if (!toggle) return;
         const item = toggle.parentElement;
@@ -115,7 +119,11 @@ export async function openNotice(onSeen) {
         item.classList.toggle('open', open);
         toggle.setAttribute('aria-expanded', String(open));
     });
-    try { await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.TEXT, '', { allowVerticalScrolling: true, okButton: '닫기', cancelButton: false, onOpen: opened => {resolvePopup(opened);opened?.dlg?.classList.add('bl-roomy-dialog');try{globalThis.BlueLemonadeHardenPopup?.(opened);}catch{}} }); }
-    finally { resolvePopup(null); }
-    if(pending)try{await openNoticeAction(pending);}catch(error){globalThis.toastr?.error(error.message||'기능을 열지 못했어요.','Blue Lemonade');}
+    const closed = new Promise(resolve => dlg.addEventListener('close', () => { dlg.remove(); if (openDlg === dlg) openDlg = null; resolve(); }, { once: true }));
+    document.body.append(dlg);
+    openDlg = dlg;
+    dlg.showModal();
+    dlg.querySelector('.bl-notice-body')?.scrollTo?.(0, 0);
+    await closed;
+    if (pending) try { await openNoticeAction(pending); } catch (error) { globalThis.toastr?.error(error.message || '기능을 열지 못했어요.', 'Blue Lemonade'); }
 }
