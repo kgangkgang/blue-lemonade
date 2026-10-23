@@ -159,13 +159,15 @@ export function costOf(model, promptTokens, completionTokens) {
     return (input * price.input + output * price.output) / 1_000_000;
 }
 
+/** 7.8.4: 표에 없는 확장은 그 확장 manifest 의 표시 이름(공개 글에 개인 확장 이름을 두지 않음) */
+function manifestLabel(folder) { try { return String(globalThis.SillyTavern?.getContext?.()?.getExtensionManifest?.(folder)?.display_name || '').trim() || null; } catch { return null; } }
+
 /** 부르는 쪽(폴더 이름)을 사람이 읽는 이름으로 */
 const CALLER_LABELS = {
     chat: '채팅',
     'llm-translator-custom': '번역',
     'llm-translator': '번역',
     'ban-word-rewrite': '다시 쓰기',
-    'long-memory': '장기 기억',
     'chat-bookmarks': '북마크',
     'story-direction': '전개 지시',
     'JS-Slash-Runner': '헬퍼',
@@ -177,7 +179,7 @@ const CALLER_LABELS = {
 };
 
 export function callerLabel(caller) {
-    return CALLER_LABELS[caller] ?? CALLER_LABELS[folderBase(caller)] ?? String(caller ?? 'unknown');
+    return CALLER_LABELS[caller] ?? CALLER_LABELS[folderBase(caller)] ?? manifestLabel(caller) ?? String(caller ?? 'unknown');
 }
 
 /** 채팅 요청의 종류 */

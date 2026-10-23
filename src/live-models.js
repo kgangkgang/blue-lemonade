@@ -384,7 +384,7 @@ export function put(key, list, { at = Date.now() } = {}) {
     emit(k);
 }
 
-// 옛 캐시 (읽기만, 지우지 않음): TTS localStorage · 번역기 · 다시 쓰기 · 한글화 패널 · 장기 기억 · 모델 전환의 Custom 주소별 목록 (settings.json)
+// 옛 캐시 (읽기만, 지우지 않음): TTS localStorage · 번역기 · 다시 쓰기 · 한글화 패널 · 기억 요약 확장 · 모델 전환의 Custom 주소별 목록 (settings.json)
 const legacyMemo = new WeakMap();
 function legacyIds(src, raw) {
     if (!Array.isArray(raw)) return [];

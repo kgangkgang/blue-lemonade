@@ -17,7 +17,7 @@ import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(process.argv[2] || '.');
 // 기록 확장의 설치 폴더 이름은 targets.js 의 그 대상에서 읽는다 (시험 글에 이름을 적지 않는다)
-const MEMORY_FOLDER = /id: 'memory', name: '[^']*', folder: '([^']+)'/.exec(fs.readFileSync(path.join(root, 'src/addons/modelswitch/targets.js'), 'utf8'))?.[1] || '';
+const MEMORY_FOLDER = 'mem-ext';   // 7.8.4: 기억 확장 폴더는 해시로 찾고, 시험은 setMemoryFolderForTest 로 지어낸 이름
 const srcDir = path.join(root, 'src');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const url = rel => pathToFileURL(path.join(srcDir, rel)).href;
@@ -93,7 +93,8 @@ try {
 import { extension_settings } from ${JSON.stringify(ST['extensions.js'])};
 import { saveSettingsDebounced } from ${JSON.stringify(ST['script.js'])};
 import { SOURCES } from ${JSON.stringify(url('addons/models/sources.js'))};
-import { listTargets, shownTargets, linkable, supports, discoverTargets } from ${JSON.stringify(url('addons/modelswitch/targets.js'))};
+import { listTargets, shownTargets, linkable, supports, discoverTargets, setMemoryFolderForTest } from ${JSON.stringify(url('addons/modelswitch/targets.js'))};
+setMemoryFolderForTest('mem-ext');   // 7.8.4: 기억 확장 폴더는 해시로 찾으므로 시험은 지어낸 이름
 import { setLocks, withoutLock } from ${JSON.stringify(url('addons/modelswitch/lock.js'))};
 import { MAX_STATES, entryOf, captureState, changedSince, planRestore, isCurrent, runRestore, limited, summary, keepStates } from ${JSON.stringify(url('addons/modelswitch/state.js'))};
 import { toggleGroup, groupOn, fallbackOnly, rowActive, isFallbackRow, displayGroups } from ${JSON.stringify(url('addons/modelswitch/rows.js'))};

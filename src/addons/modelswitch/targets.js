@@ -96,8 +96,16 @@ const rewrite = {
     },
 };
 
+/** 7.8.4: 기억 요약 확장 폴더(설치 폴더의 본래 이름 해시 c0692505)와 표시 이름 */
+const fnv = text => { let h = 0x811c9dc5; for (const c of new TextEncoder().encode(String(text ?? ''))) { h ^= c; h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
+let memoryFolderForTest = null;
+/** 시험 전용: 시험은 확장 목록을 비워 두고 「다 깔려 있음」 으로 흉내 내므로 지어낸 폴더 이름을 넣는다 */
+export function setMemoryFolderForTest(name) { memoryFolderForTest = name; }
+function memoryFolder() { if (memoryFolderForTest !== null) return memoryFolderForTest; for (const n of extensionNames) { if (!n.startsWith('third-party/')) continue; const base = folderBase(n.slice(12)); if (fnv(base) === 'c0692505') return base; } return ''; }
+function memoryName() { const f = memoryFolder(); try { const real = installedFolder(f, extensionNames, extension_settings.disabledExtensions) || f; return String(globalThis.SillyTavern?.getContext?.()?.getExtensionManifest?.(real)?.display_name || '').trim() || '기억 요약'; } catch { return '기억 요약'; } }
+
 const memory = {
-    id: 'memory', name: '장기 기억', folder: 'long-memory', sources: null,
+    id: 'memory', get name() { return memoryName(); }, get folder() { return memoryFolder(); }, sources: null,   // 7.8.4: 폴더 이름은 해시로 찾고 이름은 그 확장 manifest 에서(공개 글에 개인 확장 이름을 두지 않음)
     settings: () => extension_settings.memoria,
     read() {
         const s = this.settings();
@@ -112,7 +120,7 @@ const memory = {
         d.source = source;
         ownObject(d, 'models', {})[source] = model;
         if (source === 'custom' && url) d.customUrl = url;
-        // 장기 기억의 설정 창은 열려 있을 때만 그려진다. 같은 모듈을 불러 다시 그리게 하고, 안 되면 다음에 열 때 반영된다.
+        // 기억 요약 확장의 설정 창은 열려 있을 때만 그려진다. 같은 모듈을 불러 다시 그리게 하고, 안 되면 다음에 열 때 반영된다.
         // 1.5.1+ 는 창을 panel-loader 로 늦게 받는다 — 그쪽 refreshPanel 은 창이 없으면 아무것도 안 한다.
         // panel.js 를 바로 부르면 안 쓸 화면 코드(~230KB)를 받으니, panel-loader 가 없는 1.5.0 이하만 panel.js 로.
         const lm = file => new URL(`../../../../${folderOf(memory.folder) || memory.folder}/${file}`, import.meta.url).href;   // 6.4.2 실제 설치 폴더

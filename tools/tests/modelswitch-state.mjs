@@ -62,6 +62,7 @@ globalThis.jQuery = (sel) => ({
 
 const S = await import(pathToFileURL(path.join(srcDir, 'addons/modelswitch/state.js')).href);
 const MS = await import(pathToFileURL(path.join(srcDir, 'addons/modelswitch/targets.js')).href);
+MS.setMemoryFolderForTest('mem-ext');   // 7.8.4: 기억 확장 폴더는 해시로 찾으므로 시험은 지어낸 이름
 const menu = await import(pathToFileURL(path.join(srcDir, 'addons/modelswitch/menu.js')).href);
 
 let pass = 0, fail = 0;

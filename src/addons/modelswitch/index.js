@@ -1,7 +1,7 @@
 import { syncModelSwitchMenu } from './menu.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { getSettings } from '../../settings.js';
-// 모델 전환 — 번역 · 장기 기억 · 다시 쓰기처럼 제 모델을 따로 고르는 확장들의 공급자 · 모델을 한 번에 바꾼다.
+// 모델 전환 — 번역 · 기억 요약 확장 · 다시 쓰기처럼 제 모델을 따로 고르는 확장들의 공급자 · 모델을 한 번에 바꾼다.
 // 중계 서버가 안 될 때 공식 API 로, 되면 다시 중계로: 조합을 저장해 두고 눌러서 바꾼다.
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { extension_settings } from '../../../../../../extensions.js';
@@ -64,7 +64,7 @@ async function pickFallbacks() {
 // 1.1.1 상태 칩에 담는 대상: 체크와 상관없이 전부 (번역만 따로 두는 식의 섞인 상태가 이 칩의 뜻) — 다만 자동으로 찾은 확장 · 처음엔 꺼 두는 확장은 직접 켰을 때만
 const inState = target => !(target.auto || target.defaultOff) || store().targets[target.id] === true;
 
-// 잠금: 체크한 확장 중 우리가 화면까지 아는 것(번역 · 장기 기억 · 다시 쓰기)만 그 확장 화면에서 못 바꾸게 한다
+// 잠금: 체크한 확장 중 우리가 화면까지 아는 것(번역 · 기억 요약 확장 · 다시 쓰기)만 그 확장 화면에서 못 바꾸게 한다
 function syncLocks() {
     const ids = store().lock ? listTargets().filter(target => !target.auto && !target.external && isOn(target)).map(target => target.id) : [];
     setLocks(ids, () => openPanel());

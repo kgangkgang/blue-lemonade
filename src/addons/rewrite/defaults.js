@@ -120,8 +120,9 @@ export const DEFAULT_SETTINGS = {
                 String.raw`/(?:金|银|銀|铜|銅|棕|褐|红|紅|蓝|藍|绿|綠|紫|粉|黄|黃|灰|透明|玳瑁)(?:色|边|邊|丝|絲|框)?(?:的)?\s*(?:眼镜|眼鏡|镜框|鏡框|镜片|鏡片|镜架|鏡架)/`,
                 String.raw`/(?:眼镜|眼鏡|镜框|鏡框|镜架|鏡架|镜片|鏡片)(?:是|为|為|呈)\s*(?:金|银|銀|铜|銅|棕|褐|红|紅|蓝|藍|绿|綠|紫|粉|白|黄|黃|灰|透明|玳瑁)(?:色)?/`,
             ].join('\n'),
-            // Only Belford wears glasses at all (the 안경 rule bans them on everyone else), so the colour check is his.
-            onlyFor: 'Belford Beelzebub, Belford, Beelzebub, Bel, 벨포드, 벨, 벨제부브, 베엘제붑, ベルフォード・ベルゼブブ, ベルフォード, ベルゼブブ',
+            // 7.8.4: 특정 캐릭터에게만 쓰던 규칙 — 기본은 꺼 두고 「이 캐릭터에게만」 칸에 이름을 넣어 쓰세요.
+            onlyFor: '',
+            enabled: false,
         },
         {
             id: 'beard',
@@ -187,13 +188,12 @@ export const DEFAULT_SETTINGS = {
         {
             id: 'horns',
             name: '뿔',
-            enabled: true,
+            enabled: false,
             description: 'horns of any kind (horns, a horn nub, antlers)',
             words: 'horn, horns, horned, horn-like, antler, antlers',
-            onlyFor: 'Satan, Satanael, 사탄, 사타나엘, サタン',
+            onlyFor: '',   // 7.8.4: 특정 캐릭터 전용 규칙 — 기본은 꺼 둠
         },
         {
-            // 1.9.3 — only Michael, Lucifer, Uriel and Zadkiel wear gloves (the exceptions below); everyone else's hands are bare.
             id: 'gloves',
             name: '장갑',
             enabled: true,
@@ -233,49 +233,12 @@ export const DEFAULT_SETTINGS = {
     ],
     // Default rule ids already offered to this install; newer ones get added once on load (see loadSettings).
     offeredRules: ['glasses', 'glasses_color', 'beard', 'tan', 'cane', 'pocket_watch', 'ears', 'gray_nails', 'horns', 'gloves', 'user_colors', 'fufu', 'chest_hair'],
-    exceptions: [
-        {
-            id: 'belford',
-            enabled: true,
-            names: 'Belford Beelzebub, Belford, Beelzebub, Bel, 벨포드, 벨, 벨제부브, 베엘제붑, ベルフォード・ベルゼブブ, ベルフォード, ベルゼブブ',
-            allow: ['glasses', 'gray_nails'],
-        },
-        {
-            id: 'adelstein',
-            enabled: true,
-            names: 'Adelstein, Adel, 아델스타인, 아델, アデルシュタイン, アデル',
-            allow: ['ears', 'gray_nails'],
-        },
-        // 1.9.3 — the glove wearers: Michael (black), Lucifer (white), Uriel (fingerless tactical), Zadkiel (white).
-        {
-            id: 'michael',
-            enabled: true,
-            names: 'Michael, 미카엘, ミカエル',
-            allow: ['gloves'],
-        },
-        {
-            id: 'lucifer',
-            enabled: true,
-            names: 'Lucifer, Lucifel, 루시퍼, 루시펠, ルシファー, ルシフェル',
-            allow: ['gloves'],
-        },
-        {
-            id: 'uriel',
-            enabled: true,
-            names: 'Uriel, 우리엘, ウリエル',
-            allow: ['gloves'],
-        },
-        {
-            id: 'zadkiel',
-            enabled: true,
-            names: 'Zadkiel, Zad, 자드키엘, 자드, ザドキエル, ザド',
-            allow: ['gloves'],
-        },
-    ],
+    // 7.8.4: 기본 예외는 비어 있어요(예전 기본 예외는 특정 봇의 캐릭터였음). 이미 쓰던 설정에는 그대로 남아요.
+    exceptions: [],
     // Default exception ids already offered; newer ones get added once on load, a deleted one stays deleted.
-    offeredExceptions: ['belford', 'adelstein', 'michael', 'lucifer', 'uriel', 'zadkiel'],
+    offeredExceptions: [],
     // One-off setting upgrades already applied (see upgrades.js); a fresh install needs none of them.
-    appliedUpgrades: ['words-1.7', 'belford-nails-1.7', 'multilingual-1.7.7', 'two-colors-1.7.9', 'gloves-armor', 'painted-nails-1.9.9'],
+    appliedUpgrades: ['words-1.7', 'exception-nails-1.7', 'multilingual-1.7.7', 'two-colors-1.7.9', 'gloves-armor', 'painted-nails-1.9.9'],
 };
 
 for (const rule of DEFAULT_SETTINGS.rules) {

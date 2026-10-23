@@ -70,7 +70,7 @@ const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
 // Same for exceptions before offeredExceptions existed (v1.7.0).
-const FIRST_EXCEPTION_IDS = ['belford'];
+const FIRST_EXCEPTION_IDS = [];   // 7.8.4: 기본 예외가 비어 있어요
 const TRANSLATOR_MODULE = 'llm-translator-custom';
 // Template path relative to scripts/extensions, taken from where this file is served so a renamed folder still works.
 const EXTENSION_PATH = decodeURIComponent(new URL('.', import.meta.url).pathname)
@@ -1352,7 +1352,7 @@ function renderRuleEditor() {
         </div>
         <label class="bwr_field"><span>단어</span><textarea class="text_pole bwr_words" rows="3" placeholder="glasses, spectacles, monocle*"></textarea></label>
         <label class="bwr_field"><span>AI에게 줄 설명 (선택, 영어 권장)</span><input type="text" class="text_pole bwr_desc" placeholder="eyewear such as glasses"></label>
-        <label class="bwr_field"><span>이 캐릭터에게만 (선택, 쉼표로 구분)</span><input type="text" class="text_pole bwr_only" placeholder="비우면 모두 · Satan, 사탄 · {{user}}"></label>
+        <label class="bwr_field"><span>이 캐릭터에게만 (선택, 쉼표로 구분)</span><input type="text" class="text_pole bwr_only" placeholder="비우면 모두 · Rex, 렉스 · {{user}}"></label>
         <label class="bwr_field"><span>이 말의 것일 때만 (선택)</span><input type="text" class="text_pole bwr_near" placeholder="비우면 항상 · her, she, {{user}}"></label>
         <small class="bwr_error"></small>`);
 
@@ -1564,7 +1564,7 @@ function renderExceptionEditor() {
             <label class="bwr_switch_row bwr_compact"><span>사용</span><input type="checkbox" class="bwr_enabled"><span class="bwr_switch" aria-hidden="true"></span></label>
             <div class="menu_button menu_button_icon bwr_delete" title="삭제"><i class="fa-solid fa-trash-can"></i></div>
         </div>
-        <label class="bwr_field"><span>이름 (쉼표로 구분, 본문에 나오는 호칭 모두)</span><textarea class="text_pole bwr_names" rows="2" placeholder="Belford, 벨포드, 벨"></textarea></label>
+        <label class="bwr_field"><span>이름 (쉼표로 구분, 본문에 나오는 호칭 모두)</span><textarea class="text_pole bwr_names" rows="2" placeholder="Leon, 레온, 레오"></textarea></label>
         <div class="bwr_field"><span>허용할 묘사</span><div class="bwr_chips bwr_allow"></div></div>`);
 
     const refresh = () => {

@@ -548,7 +548,7 @@ await test('캐시: localStorage bl_live_models_v1 · created 함께 · 최근 1
     LM.put('groq', ['llama-3.3-70b-versatile']);
     assert.deepEqual(LM.cached('groq').ids, ['llama-3.3-70b-versatile']);
 });
-await test('옛 캐시 읽기 (지우지 않음): TTS lemon_voice_model_lists · 번역기 · 다시 쓰기 · 한글화 패널 · 장기 기억 · 모델 전환 — 가장 최근 것', () => {
+await test('옛 캐시 읽기 (지우지 않음): TTS lemon_voice_model_lists · 번역기 · 다시 쓰기 · 한글화 패널 · 기억 요약 확장 · 모델 전환 — 가장 최근 것', () => {
     const now = Date.now();
     const legacy = { openrouter: { models: ['anthropic/claude-x', 'z-ai/glm', 'a/b:batch'], at: now - 1000 }, 'custom:https://relay.test/v1': { models: ['tts-old'], at: now - 5 * DAY } };
     const ext = {

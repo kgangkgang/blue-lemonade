@@ -405,7 +405,7 @@ body.salty.salty-user-table #chat .mes[is_user="true"].selected::before { backgr
    · 말풍선: 글 문단 <p> · 목록(ul/ol 통째) · 번역기 접기 · 원문 먼저 보기의 줄(<details> 하나가 문단 하나)
      — 문단 수가 달라 통째로 접힌 번역(summary 안에 <p> 여럿)은 details 대신 안쪽 문단마다.
      — 눈 길게 누르기로 접은 글(제목 없는 <details> 틀, mes-fold.js) 안에서도 같다.
-   · 그대로: 그림이 든 문단(에셋 · 오토픽 · 마크다운 그림 · 오토픽 대기 칸), 제목 · 가로줄 · 인용 · 코드 · 표 · 카드 · 상태창 <details>,
+   · 그대로: 그림이 든 문단(에셋 · 그림 생성 확장 · 마크다운 그림 · 그림 생성 확장 대기 칸), 제목 · 가로줄 · 인용 · 코드 · 표 · 카드 · 상태창 <details>,
      내 메시지, 실리태번 안내(.smallSysMes) · 해설(/sys, type=narrator) · 도움말 같은 시스템 글(is_system 이면서 type 이 있는 것).
      숨긴 메시지(눈 끔 — is_system 이지만 type 은 빈 값)는 말풍선 그대로 흐려진다 (05-chat 숨긴 메시지 흐리게).
    · 첫 말풍선만 왼쪽 위 모서리가 작다(꼬리 자리) — 앞에 말풍선 문단이 있으면 --bl-cb-tail 로 보통 둥글기.

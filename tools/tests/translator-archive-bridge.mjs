@@ -1,4 +1,4 @@
-// 번역기 → 장기 기억 번역 재사용 (archive-bridge.js matchingTranslation)
+// 번역기 → 기억 요약 확장 번역 재사용 (archive-bridge.js matchingTranslation)
 // 메시지 통째로 맞은 경우와 문단 하나가 맞은 경우가 같은 기준으로 받는다: 한글이 있고 가나가 남지 않은 번역만.
 // 실행: node tools/tests/translator-archive-bridge.mjs salty-ext
 import assert from 'node:assert/strict';

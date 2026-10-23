@@ -9,7 +9,7 @@
 // 프리셋 수정 · 삭제가 통째로 불가능해진다 — 잠금이 다스릴 일이 아니다. 프리셋으로 공급자가 바뀌는
 // 것은 남는 구멍이지만, 모델 전환 창을 다시 열면 원래대로 돌아온다.
 // #bwr_reset 은 일부러 두지 않는다 (확인창까지 눌러 되돌리는 길까지 막으면 빠져나올 방법이 없어진다).
-// 1.0.3: 장기 기억은 모델 전환이 쓰는 칸(연결 방식 · 공급자 · 모델 · 주소)만 — 'direct.' 전체를 잡아
+// 1.0.3: 기억 요약 확장은 모델 전환이 쓰는 칸(연결 방식 · 공급자 · 모델 · 주소)만 — 'direct.' 전체를 잡아
 // 온도 · 리버스 프록시까지 막혔는데, 모델 전환 창엔 그 칸이 없어 고칠 길이 없었다. style.css 와 같은 목록.
 const CONTROLS = {
     prompt: '#pt-connection-mode, #pt-provider, #pt-model-select, #pt-model-custom, #pt-custom-url, #pt-fetch-models, #pt-import-llm',

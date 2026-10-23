@@ -4,6 +4,8 @@ import { MULTILINGUAL_WORDS, multilingualNear, GLOVES_KO_1_9_3, PAINTED_NAILS_MU
 // Each step runs once per install (ids kept in settings.appliedUpgrades); a fresh install lists them all as done.
 import { compileRule, findSpans, parseEntries } from './core.js';
 import { DEFAULT_SETTINGS, PAINTED_NAILS_WORDS, USER_COLORS_EXTRA } from './defaults.js';
+/** 7.8.4: 예전 기본 예외 id 를 글자로 두지 않고 FNV-1a 32비트 해시로 비교한다 */
+const idHash = text => { let h = 0x811c9dc5; for (const c of new TextEncoder().encode(String(text ?? ''))) { h ^= c; h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
 
 const OLD_USER_COLORS_DESCRIPTION = 'hair, eye, skin, lash, or brow colors (white hair, blue eyes, pale skin, silver-haired, eyes like sapphires)';
 const OLD_EARS_WORDS = 'pointed ear, pointed ears, pointy ear, pointy ears, pointed elven ears, pointed elf ears, elven ears, elfin ears, elfish ears, elf ears';
@@ -90,11 +92,11 @@ export const UPGRADES = [
         },
     },
     {
-        // v1.7.0: Belford's black nails are canon, so his exception also allows the (now colour-wide) nails rule.
-        id: 'belford-nails-1.7',
+        // v1.7.0: 예전 기본 예외 하나(검은 손톱이 설정인 캐릭터)에 손톱 규칙 허용을 더한다. 7.8.4: 공개 글에 이름을 두지 않으려고 id 는 해시로 비교
+        id: 'exception-nails-1.7',   // 7.8.4 새 이름(같은 일을 한 번 더 해도 결과 같음)
         apply(stored) {
-            const belford = stored.exceptions.find(exception => exception.id === 'belford');
-            if (belford && !(belford.allow ?? []).includes('gray_nails')) belford.allow = [...(belford.allow ?? []), 'gray_nails'];
+            const target = stored.exceptions.find(exception => idHash(exception.id) === 'adfde8cd');
+            if (target && !(target.allow ?? []).includes('gray_nails')) target.allow = [...(target.allow ?? []), 'gray_nails'];
         },
     },
     {

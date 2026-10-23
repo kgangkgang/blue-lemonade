@@ -304,15 +304,15 @@ class GateTests(unittest.TestCase):
     def test_zip_is_deterministic_and_no_overwrite(self):
         with tempfile.TemporaryDirectory() as d:
             a=Path(d)/'a.zip';b=Path(d)/'b.zip';f=self.fixture()
-            gate.build_zip(a,f,'long-memory');gate.build_zip(b,f,'long-memory')
-            self.assertEqual(a.read_bytes(),b.read_bytes());gate.compare(f,gate.read_zip(a,'long-memory'),'ZIP')
-            with self.assertRaisesRegex(gate.GateError,'overwrite'):gate.build_zip(a,f,'long-memory')
+            gate.build_zip(a,f,'sample-ext');gate.build_zip(b,f,'sample-ext')
+            self.assertEqual(a.read_bytes(),b.read_bytes());gate.compare(f,gate.read_zip(a,'sample-ext'),'ZIP')
+            with self.assertRaisesRegex(gate.GateError,'overwrite'):gate.build_zip(a,f,'sample-ext')
     def test_unsafe_zip_blocks(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'bad.zip'
-            for entry in ['../secrets','long-memory/../../secrets','wrong/index.js','long-memory/../secrets']:
+            for entry in ['../secrets','sample-ext/../../secrets','wrong/index.js','sample-ext/../secrets']:
                 with zipfile.ZipFile(p,'w') as z:z.writestr(entry,b'x')
-                with self.assertRaises(gate.GateError):gate.read_zip(p,'long-memory')
+                with self.assertRaises(gate.GateError):gate.read_zip(p,'sample-ext')
     def scene_music_fixture(self):
         files=self.fixture('theme');prefix='src/scene-music/'
         files[gate.SCENE_MUSIC_MODULE]=b'// Synthetic scene music module'

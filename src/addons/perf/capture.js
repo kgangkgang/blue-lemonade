@@ -377,7 +377,7 @@ async function finishEntry(context, response, acc, marks, failure) {
     const tokenBased=['text','embedding'].includes(context.kind);
     const usageKnown=!!acc.usage;
     // HTTP 오류로 끝난 요청(429 등)은 토큰을 쓰지 않았으니 추정하지 않는다. 중간에 끊긴 스트림은 쓴 만큼 추정한다.
-    // [1.2.3] 실리태번 서버는 스트리밍이 아닌 요청(번역 · 다시 쓰기 · 장기 기억)의 중계 오류를 HTTP 200 + {"error":…} 로 넘긴다
+    // [1.2.3] 실리태번 서버는 스트리밍이 아닌 요청(번역 · 다시 쓰기 · 기억 요약 확장)의 중계 오류를 HTTP 200 + {"error":…} 로 넘긴다
     // (src/endpoints/backends/chat-completions.js). 글도 사용량도 없는 오류 응답은 과금되지 않았으니 이것도 추정하지 않는다.
     const httpOk = !!response?.ok;
     const errorOnly = !!acc.error && !acc.text && !acc.reasoning;

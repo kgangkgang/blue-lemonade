@@ -99,8 +99,8 @@ await test('6.4.5 pairFallbacks: 별칭이 다른 대상의 id 와 겹치면 id 
 
 await test('6.4.5 listTargets: 아는 대상 memory 의 folder 로 스스로 등록한 「(검열되면)」 은 memory 바로 다음 줄', () => {
     const src = read('src/addons/modelswitch/targets.js');
-    const folder = src.match(/const memory = \{\n    id: 'memory', name: '[^']+', folder: '([^']+)'/)?.[1];
-    assert.ok(folder, 'memory 대상의 folder');
+    assert.match(src, /get folder\(\) \{ return memoryFolder\(\); \}/, 'memory 대상의 folder 는 설치 목록에서 해시로 찾는다(7.8.4)');
+    const folder = 'mem-ext';   // 지어낸 폴더 이름
     const list = [{ id: 'translator', folder: 'x' }, { id: 'memory', folder }, { id: 'rewrite', folder: 'y' }, { id: 'ext:picture-prompt', external: true }, { id: `ext:${folder}-fallback`, external: true }];
     assert.deepEqual(F.pairFallbacks(list).map(x => x.id), ['translator', 'memory', `ext:${folder}-fallback`, 'rewrite', 'ext:picture-prompt']);
 });

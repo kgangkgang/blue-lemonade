@@ -613,6 +613,7 @@ def build_zip(path, files, prefix):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--kind', choices=['theme', 'memory'], required=True)
+    parser.add_argument('--prefix', default='extension', help='kind=memory 일 때 ZIP 맨 위 폴더 이름')
     parser.add_argument('--source', type=Path, required=True)
     parser.add_argument('--mirror', type=Path, action='append', default=[])
     parser.add_argument('--zip', type=Path, action='append', default=[])
@@ -621,7 +622,7 @@ def main():
     try:
         files = inventory(args.source, args.kind)
         version = validate(files, args.kind)
-        prefix = 'blue-lemonade' if args.kind == 'theme' else 'long-memory'
+        prefix = 'blue-lemonade' if args.kind == 'theme' else args.prefix
         for root in args.mirror:
             other = inventory(root, args.kind)
             validate(other, args.kind)

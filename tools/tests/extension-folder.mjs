@@ -42,7 +42,7 @@ await test('모델 전환: 아는 확장은 본래 폴더 이름으로 찾고(�
 await test('성능 보조: 부르는 쪽 이름표도 판 번호 붙은 폴더를 본래 이름으로', () => {
     const p = read('src/addons/perf/state.js');
     assert.match(p, /import \{ folderBase \} from '\.\.\/\.\.\/extension-folder\.js';/);
-    assert.match(p, /return CALLER_LABELS\[caller\] \?\? CALLER_LABELS\[folderBase\(caller\)\] \?\? String\(caller \?\? 'unknown'\);/);
+    assert.match(p, /return CALLER_LABELS\[caller\] \?\? CALLER_LABELS\[folderBase\(caller\)\] \?\? manifestLabel\(caller\) \?\? String\(caller \?\? 'unknown'\);/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/extension-folder\.mjs \./);
 });
 

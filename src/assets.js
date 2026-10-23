@@ -1,8 +1,8 @@
 // 에셋 이미지: 가장자리가 투명한 PNG면 .salty-cutout (캐릭터 컷) 표시 + 테두리 자동 색(--salty-pick-*) 뽑기.
 // img.eh-img = 캐릭터 에셋 확장(esetham)이 정규식 없이 {{img::…}}를 바꾼 그림
-// 5.6.5 img[data-autopic-id] = 오토픽(AutoPic · 원본과 개조판 모두)이 글 사이에 넣은 그림 — 에셋 그림과 같은 배치 · 모양 · 액자 · 크기 · 흐림을 탄다.
-//       틀(.autopic-tag-img-wrapper)은 오토픽이 그린 뒤 감싸므로 처음엔 그림 자신이 host, 감싼 뒤 다시 분류돼 틀이 host 가 된다 (css/07 의 .salty-asset img 규칙)
-// 5.6.6 메시지 아래 그림 칸 모드(실리태번 기본 mes_img — 오토픽이 .autopic-media-owner 를 단 메시지만)도 같은 규칙
+// 5.6.5 img[data-autopic-id] = 그림 생성 확장(원본과 개조판 모두)이 글 사이에 넣은 그림 — 에셋 그림과 같은 배치 · 모양 · 액자 · 크기 · 흐림을 탄다.
+//       틀(.autopic-tag-img-wrapper)은 그림 생성 확장이 그린 뒤 감싸므로 처음엔 그림 자신이 host, 감싼 뒤 다시 분류돼 틀이 host 가 된다 (css/07 의 .salty-asset img 규칙)
+// 5.6.6 메시지 아래 그림 칸 모드(실리태번 기본 mes_img — 그림 생성 확장이 .autopic-media-owner 를 단 메시지만)도 같은 규칙
 // 6.1.6 투명 판정은 '투명 그림도 똑같이'와 상관없이 .salty-alpha 로도 남긴다 — 외곽선 · 그림자(cutedge.js)는 두 경우 다 건다
 import { paintCutEdge } from './cutedge.js';
 const ASSET_IMG = '.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id], .autopic-media-owner img.mes_img';
@@ -402,7 +402,7 @@ const sized = typeof ResizeObserver === 'function' ? new ResizeObserver((entries
         }
         const host = img.closest(HOST) || img;
         if (seed) {
-            if (seed.host !== host) unseed(img); // 크기를 받기 전에 틀이 바뀜 (오토픽이 감쌈) → 옛 틀은 예전처럼 변수 없음
+            if (seed.host !== host) unseed(img); // 크기를 받기 전에 틀이 바뀜 (그림 생성 확장이 감쌈) → 옛 틀은 예전처럼 변수 없음
             else seeded.delete(img);
         }
         writeSize(host, width, height);

@@ -4566,7 +4566,7 @@ function cutByWatchdog(message) {
     return Number.isFinite(message.extra.stream_cut) && message.extra.stream_cut === length;
 }
 /**
- * [2.1.3] 장기 기억 브리지(wait) · afterGeneration 재시도가 자동 번역을 시작하기 전에 보는 끊김 확인. 표시를 지우지 않는다 —
+ * [2.1.3] 기억 요약 확장 브리지(wait) · afterGeneration 재시도가 자동 번역을 시작하기 전에 보는 끊김 확인. 표시를 지우지 않는다 —
  * 지우고 stream_cut 을 적고 알림을 띄우는 건 translateIncomingMessage(cutByWatchdog) 몫. 예전엔 이 둘이 확인 없이 번역을 시작해
  * 끊긴 반쪽 답을 번역하고 '건너뛰었어요' 알림이 뒤따랐다. 방금 끊긴 표시는 마지막 AI 메시지에만 믿는다 (색인 중 옛 메시지는 stream_cut 으로만).
  */
@@ -7383,7 +7383,7 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
         }
 
         // 5. 화면(UI)에서도 번역문 제거 (선택적이지만 권장)
-        // [2.1.3] 치워 둔 번역문(원문 보기 백업)도 함께 지운다 — 남으면 장기 기억 브리지가 지운 번역을 다시 읽었다 (편집 창 삭제와 같게)
+        // [2.1.3] 치워 둔 번역문(원문 보기 백업)도 함께 지운다 — 남으면 기억 요약 확장 브리지가 지운 번역을 다시 읽었다 (편집 창 삭제와 같게)
         const hadDisplay = !!message.extra?.display_text;
         if (hadDisplay || message.extra?.original_translation_backup) {
             logDebug(`Removing display_text from message ${messageId} extra data.`);

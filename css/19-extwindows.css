@@ -128,7 +128,7 @@ html body.salty .rl-owner.on { color:var(--salty-text); background:var(--salty-t
 html body.salty .mr-item.is-picked { box-shadow:inset 0 0 0 2px var(--salty-accent); }
 html body.salty .mr-empty { padding:18px 14px; border-radius:14px; color:var(--salty-muted); background:var(--salty-surface); opacity:1; }
 
-/* ---------- 오토픽(AutoPic): 제 팔레트(--ap-*)가 테마와 따로 놀아 라이트에서 글자가 안 보였음 ---------- */
+/* ---------- 그림 생성 확장: 제 팔레트(--ap-*)가 테마와 따로 놀아 라이트에서 글자가 안 보였음 ---------- */
 /* 확장 안의 '테마 설정'(다크 · 라이트 · 벚꽃) 이 무엇이든, 또 아직 아무 것도 안 골랐을 때도 테마 색을 앞세운다
    — 로그 발췌(--ui-*) · 북마크(--cg-*) 와 같은 방식.
    확장의 #autopic_settings_container.theme-dark 보다 한 점 무겁게 잡아야 덮인다 (html body.salty …).

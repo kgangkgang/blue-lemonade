@@ -25,7 +25,7 @@ python tools/release_gate.py --kind theme --source salty-ext --mirror . --zip "O
 장기기억도 같은 검사기를 사용합니다. manifest, defs.js의 VERSION, CSS의 --lm-css-version을 모두 비교하여 과거 CSS 표기 누락을 차단합니다:
 
 ~~~powershell
-python tools/release_gate.py --kind memory --source "MEMORY_EXTENSION_DIRECTORY" --zip "OUTPUT_DIRECTORY/long-memory-VERSION.zip"
+python tools/release_gate.py --kind memory --source "MEMORY_EXTENSION_DIRECTORY" --prefix EXTENSION_FOLDER --zip "OUTPUT_DIRECTORY/EXTENSION_FOLDER-VERSION.zip"
 ~~~
 
 GitHub Actions는 커밋된 런타임으로 ZIP 을 만들어 검사하고, 그 판의 릴리스가 있으면 릴리스 자산과 한 바이트씩 비교합니다 (릴리스가 공개될 때는 태그의 트리로 다시 비교). 푸시 뒤 CI는 사후 검증입니다. 배포 전 차단은 위 로컬 명령이 담당하므로 이를 생략하지 않습니다. 브랜치 보호나 필수 체크를 자동 설정하지는 않습니다.

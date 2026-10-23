@@ -75,7 +75,7 @@ assert.deepEqual(t.read(),{source:'claude',model:'claude-x',url:''});
 assert.throws(()=>t.apply({source:'groq',model:'x'}),/못 씀/,'a provider the extension never names is refused');
 console.log('PASS TTS analysis: engine provider/st/compat, only provider · provider_models · custom_url · engine written');
 
-// ---------- 2) 장기 기억 꼴 (연결 방식은 부모, 공급자별 모델 · 'custom' 표시 → customModels)
+// ---------- 2) 기억 요약 확장 꼴 (연결 방식은 부모, 공급자별 모델 · 'custom' 표시 → customModels)
 const memTexts=[`if (s.apiMode !== 'direct') return; const mode = s.apiMode === 'custom' ? 1 : s.apiMode === 'profile' ? 2 : 0; extension_settings.memo_like = extension_settings.memo_like || {};
 const S = ['openai','custom','claude','makersuite'];`];
 const mem={memo_like:{enabled:true,apiMode:'profile',profileId:'',direct:{source:'custom',models:{custom:'custom',openai:'gpt-4o'},customModels:{custom:'my-relay'},customUrl:'http://a/v1',temperature:0.3},
