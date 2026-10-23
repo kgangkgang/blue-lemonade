@@ -19,6 +19,7 @@ import { syncFeatures } from './features.js';
 import { syncSplash, syncFavicon } from './splash.js';
 import { markdownClasses, markdownVariables } from './markdown.js';
 import { syncExtensionColors } from './extension-colors.js';
+import { syncControlInk } from './control-ink.js';
 
 function profileVars(p, pal, user = false) {
     const vars = Object.assign(frameVars(p, 'profile', pal.accent), decorVars(p.decor, 'profile', p.radius), {
@@ -800,5 +801,6 @@ export function applyAll() {
     syncFavicon(!!s.enabled);   // 5.5.0 탭 아이콘 레몬 (끄면 실리태번 아이콘)
 
     applyFonts(s);
+    syncControlInk(!!s.enabled, JSON.stringify([s.fonts, s.type, s.ui]));
     syncFeatures(s, addonsEnabled(getSettings())); // 3.1.0 켤 때만 불러오는 기능 (features.js)
 }

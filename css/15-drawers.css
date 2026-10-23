@@ -770,6 +770,15 @@ body.salty #Backgrounds #bg_tabs .bg_tabs_list {
   border-radius: 0 !important;
   background: transparent !important;
 }
+/* 7.7.8 「전역」 탭 윗부분 잘림(사용자 제보 10-23): #bg_tabs 는 실리태번이 세로 flex(height: 100% · overflow-y: hidden)로 두고, 탭 줄은
+   98-tab-strips 가 가로 스크롤 칸(overflow-x: auto)으로 만들어 flex 최소 높이가 0 이 된다 → 배경 목록이 길면(전역) 탭 줄이 눌려 위가 잘리고,
+   비어 있으면(채팅) 제 높이. 탭 줄은 줄어들지 않고 제 높이, 고른 탭의 그림자도 잘리지 않게 넘침을 보임 (두 탭뿐이라 가로 스크롤은 필요 없다) */
+html:not(#bl-tab-scroll-off) body.salty #Backgrounds #bg_tabs .bg_tabs_list {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
 body.salty #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button {
   flex: 0 0 auto;
   min-width: 0 !important;

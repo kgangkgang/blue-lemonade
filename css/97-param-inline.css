@@ -1,0 +1,121 @@
+/* ===== css/97-param-inline.css =====
+   7.7.8 글자 편집창(테마 설정 창)의 숫자 매개변수 칸 — 사용자 제보(10-23) 「크기 · 굵기 · px 다 한 줄에 넣어도 되는데 왜 2줄 처리?」
+   「선 굵기 · 흐리기 왜 세로 2열 아니야」 「다 합쳐, 왜 저렇게 여백 많이 가져가냐」 「입력창도 글자 크기 맞춰서 유동적인 크기로」.
+   · 칸 안: 윗줄 = 이름 + ↺ + 숫자칸 + 단위 한 줄(이름 왼쪽, 숫자칸 오른쪽 끝), 아랫줄 = 슬라이더. 33-panel-columns 의 22~44em 「이름 줄 / 숫자 줄」 쌓기를 걷는다.
+     자리가 정말 모자라면(큰 글씨 · 긴 값 + ↺) 숫자칸만 다음 줄로 흐른다(flex-wrap) — 글자는 줄이지 않는다.
+   · 칸 묶음(.salty-sizes · 슬라이더/크기 고르기가 든 .salty-group)은 19em 부터 세로 2열. 스위치 · 색 · 고르기 줄은 한 줄 전체, 홀수로 남는 마지막 칸만 전체 폭.
+     320px(설정 칸 ≈ 288px = 21.3em)도 2열 — 큰 글씨로 19em 아래면 한 열(param-two-columns: 위 끝이 있는 컨테이너 쿼리 안에서만).
+   · 숫자칸 폭 = 값 글자 수(--num-ch, panel.js) + 양옆 6px — 「2」 · 「55」는 좁게, 「-0.025」는 그만큼만. 빈 단위 칸은 자리를 차지하지 않는다.
+   · 크기 고르기(.salty-sizeopt — 본문과 같게 / 직접): 윗줄 이름 | 숫자칸, 그 아래 고르기 가로 꽉, 그 아래 슬라이더 — 같게 · 직접 어느 쪽이든 같은 모양.
+   · 치수는 10-foundation 토큰만(--bl-param-row-gap · --bl-param-col-gap · --bl-param-pad). :not(#bl-param-off) 는 특이도만 올린다(그런 id 는 없다).
+   ===== */
+
+/* ---------- 1. 칸 안: 이름 · ↺ · 숫자 · 단위 한 줄, 슬라이더 아래 ---------- */
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-slider > header {
+  display: flex !important;
+  flex-wrap: wrap;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between;
+  grid-template-columns: none;
+  grid-template-rows: none;
+  gap: 2px var(--bl-param-col-gap) !important;
+  margin: 0 0 var(--bl-param-row-gap) !important;
+  min-height: 0;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-slider > header > span:first-child {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  word-break: keep-all;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-slider > header > .salty-num {
+  flex: none;
+  margin-inline-start: auto;
+  align-self: center;
+  justify-self: auto;
+}
+/* 칸 위아래 여백: 이름 줄 ↔ 슬라이더 ↔ 다음 칸 (슬라이더 자체는 86-touch 가 44 높이 · 음수 여백으로 자리를 지킨다) */
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-slider {
+  padding: var(--bl-param-pad) !important;
+  margin: 0 !important;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt > .salty-slider.salty-slider-wide {
+  padding: 0 0 4px !important;
+}
+/* 숫자칸: 값 길이만큼 (panel.js --num-ch), 글자 크기는 그대로. 단위는 숫자칸 바로 오른쪽, 없으면 자리도 없음 */
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-num input[type="number"][data-num] {
+  width: calc(var(--num-ch, 3) * (1ch + max(0px, var(--bl-settings-tracking, 0px))) + 12px) !important;
+  min-width: 2.2em !important;
+  max-width: 8em;
+  padding: 0 6px !important;
+  text-align: center;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-num { gap: 4px; }
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-num i.salty-unit { width: auto; min-width: 0; }
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-num i.salty-unit:empty { display: none; }
+/* ↺ 는 이름 옆 작은 원 — 줄 높이를 키우지 않게 */
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-slider > header > span > .bl-setting-reset,
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sizeopt > .salty-row > span > .bl-setting-reset { margin: 0 0 0 4px; }
+
+/* ---------- 2. 크기 고르기 칸(본문과 같게 / 직접): 이름 | 숫자 · 고르기 한 줄 · 슬라이더 ---------- */
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt {
+  padding: var(--bl-param-pad);
+  min-width: 0;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt > .salty-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: var(--bl-param-row-gap) var(--bl-param-col-gap) !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt > .salty-row > span:first-child {
+  grid-column: 1; grid-row: 1; min-width: 0; display: inline-flex; align-items: center; gap: 4px; word-break: keep-all;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt > .salty-row > .salty-seg.salty-mini,
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt > .salty-row > .salty-sizeopt-ctl > .salty-seg {
+  grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; max-width: none !important; margin: 0 !important;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt > .salty-row > .salty-sizeopt-ctl > .salty-num { grid-column: 2; grid-row: 1; }
+/* 고르기 단추는 글자 길이만큼(「본문과 같게」가 반 칸에서 두 줄로 꺾이지 않게) — 남는 폭은 둘이 나눠 가짐 */
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt .salty-seg.salty-mini > button { flex: 1 1 auto !important; min-width: max-content !important; white-space: nowrap; }
+
+/* ---------- 3. 매개변수 묶음은 세로 2열 (19em 부터) ---------- */
+@container bl-controls (width >= 19em) {
+  html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    column-gap: var(--bl-s3);
+    row-gap: 0;
+    align-items: start;
+  }
+  /* 슬라이더 · 크기 고르기 칸만 반 칸, 나머지 줄(스위치 · 색 · 고르기 · 설명)은 한 줄 전체 */
+  /* 오른쪽 끝은 구체적인 줄 종류로(check-has: :has() 왼쪽 + 아무 요소 금지) */
+  html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > :is(.salty-row, .salty-stack, .bl-color-field, .salty-note, .salty-btns, .bl-gradient-control, .salty-label, .salty-chips, .salty-hint) {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+  html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > :is(.salty-slider, .salty-sizeopt) {
+    grid-column: auto;
+    min-width: 0;
+  }
+  /* 큰 글씨 · 320px(22em 아래)에서는 크기 고르기 칸(「본문과 같게 | 직접」)이 반 칸에 안 들어가 한 줄 전체 — 슬라이더는 그대로 반 칸,
+     앞뒤에 반 칸 짝이 없는 슬라이더도 전체 폭 */
+  @container bl-controls (width < 22em) {
+    html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .salty-sizeopt,
+    html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .salty-slider:not(.salty-slider + .salty-slider):not(:has(+ .salty-slider)) { grid-column: 1 / -1; }
+  }
+  /* 홀수로 남는 마지막 칸(짝이 없는 칸)은 전체 폭 — 매개변수만 든 묶음(.salty-sizes), 또는 앞뒤에 반 칸이 없는 칸 */
+  html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group.salty-sizes > :is(.salty-slider, .salty-sizeopt):nth-child(odd):last-child,
+  html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.salty-sizes, .bl-control-grid, .bl-setting-locks) > :is(.salty-slider, .salty-sizeopt):not(:is(.salty-slider, .salty-sizeopt) + *):not(:has(+ :is(.salty-slider, .salty-sizeopt))),
+  /* 스위치 줄 뒤에 슬라이더가 셋 · 다섯 이어지면 마지막 하나(문단 탭 「PC에서 본문 최대 폭」) — 20-panel 의 같은 규칙을 이 격자에서도 */
+  html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.salty-sizes, .bl-control-grid, .bl-setting-locks) > :is(:not(.salty-slider, .salty-sizeopt) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider:not(:has(+ .salty-slider)),
+  html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.salty-sizes, .bl-control-grid, .bl-setting-locks) > :is(:not(.salty-slider, .salty-sizeopt) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider + .salty-slider + .salty-slider:not(:has(+ .salty-slider)) {
+    grid-column: 1 / -1;
+  }
+}
+/* ===== /97-param-inline ===== */

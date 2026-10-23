@@ -104,6 +104,9 @@ body.salty #left-nav-panel .oneline-dropdown:has(> label + select):not([hidden])
   align-items: stretch !important;
   gap: var(--bl-s1) !important;
 }
+/* 7.7.8 서식 서랍 「Position:」 줄: 실리태번의 justifySpaceBetween 이 세로 쌓기에서 위아래로 벌어지고 선택칸이 flex:1 로 190px 까지 늘어났다 → 위에 붙이고 선택칸은 제 높이 */
+body.salty #AdvancedFormatting #context_story_string_position_block#context_story_string_position_block { justify-content: flex-start !important; height: auto !important; min-height: 0 !important; }
+body.salty:not(#bl-param-off) #AdvancedFormatting #context_story_string_position_block#context_story_string_position_block > select { flex: 0 0 auto !important; height: auto !important; } /* :not(#…) 는 특이도만 — 99-lazy-panel 의 :is(… #instructSettingsBlock div:has(> #instruct_names_behavior)) select 보다 앞서려고 */
 body.salty #user-settings-block :is(#UI-language-block, .alignItemsFlexEnd > label, [name="CharacterHandlingToggles"] > .alignitemscenter, [name="ChatMessageHandlingToggles"] > .alignitemscenter, [name="AvatarAndChatDisplay"] > .flex-container) :is(select, .flex-container:has(> select)),
 body.salty #AdvancedFormatting :is(#context_story_string_position, #instruct_names_behavior),
 body.salty #left-nav-panel .oneline-dropdown > select,

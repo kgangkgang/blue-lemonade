@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.7.7";
+export const BUILD_VERSION = "7.7.8";
 export const FILE_HASHES = {
   "index.js": "22963:4ad9f126:6261bd32",
-  "manifest.json": "365:6ed5cf7e:82549b77",
+  "manifest.json": "365:be362f5b:f76aa6ff",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -448,7 +448,7 @@ export const FILE_HASHES = {
   "src/after-work.js": "4051:6ad4ecc2:7c929fed",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
   "src/appearance-compare.js": "3140:831ffdf1:a1f78cb0",
-  "src/apply.js": "62349:968dfb74:5351d49f",
+  "src/apply.js": "62474:5f95736d:e986bd7b",
   "src/ask.js": "3222:02049ce8:69a2b062",
   "src/assets.js": "35435:44dc45d7:303c867e",
   "src/assist/core.js": "1927:14e3f07b:8a781a61",
@@ -492,6 +492,7 @@ export const FILE_HASHES = {
   "src/checks.js": "3042:368ec3ff:509f89cc",
   "src/colorpick.js": "29852:5b5d8858:3ec727e4",
   "src/colorpop.js": "3885:d35d517b:d68f9617",
+  "src/control-ink.js": "8430:c1ab2666:0425e196",
   "src/credits.js": "8099:713e0ae9:6066aaa2",
   "src/current.js": "1590:9701d538:8863d506",
   "src/custompalette.js": "15962:9e82f872:d30152ba",
@@ -565,14 +566,14 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "315364:9e03c849:0866c191",
-  "src/notice.js": "6394:295647bc:477f1416",
+  "src/notice-data.js": "317129:af676813:724ec7a4",
+  "src/notice.js": "6415:c0814aa1:fc3a20ac",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/numbers.js": "2902:432db092:b638e9ce",
   "src/numcomma.js": "29663:a7a60f92:7fe9fc6d",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
   "src/palettes.js": "33830:51637840:34a73a09",
-  "src/panel.js": "254068:6c2870b5:afd62556",
+  "src/panel.js": "254248:92f9ae55:b7b9b2d9",
   "src/people.js": "9021:76aa8129:14633595",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
   "src/preview-view.js": "13723:1503db9e:2771d54f",
@@ -697,5 +698,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40459:a17944bd:beb7384d",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1588157:4a778ea3:7a8d77d7"
+  "style.css": "1607706:51faa0d5:2bf4fb31"
 };

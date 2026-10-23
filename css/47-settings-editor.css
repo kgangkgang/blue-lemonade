@@ -1,7 +1,7 @@
 /* ===== css/47-settings-editor.css ===== */
 html body .salty-panel.bl-editor { position:relative; display:flex; flex-direction:column; container:bl-editor / inline-size; height:min(780px,82dvh); min-height:320px; min-width:0; padding:0 !important; overflow:hidden; --pp:0px; --bl-editor-gutter:10px; --salty-navh:0px; --bl-editor-line:var(--salty-line); background:var(--bl-settings-cover); }
 html body dialog.popup.bl-settings-dialog:not(.bl-settings-fullscreen):has(.salty-panel.in-popup) { width:min(1120px,96vw) !important; max-width:96vw !important; height:min(880px,92dvh) !important; max-height:92dvh !important; padding:0 !important; }
-html body dialog.bl-settings-dialog .popup-body { height:100%; min-height:0; padding:0 !important; overflow:hidden; }
+html body dialog.bl-settings-dialog .popup-body { height:100%; min-height:0; padding:0 !important; overflow:hidden; border-radius:inherit; } /* 7.7.8: 모서리 0 인 설정 창이 둥근 팝업 모서리 밖으로 뾰족하게 비어져 나왔다(사용자 제보 10-23) → 팝업 모서리로 자름 */
 html body dialog.bl-settings-dialog .popup-content { flex:1; height:100%; min-height:0; overflow:hidden !important; padding:0 !important; margin:0; scrollbar-gutter:auto !important; }
 html body dialog.bl-settings-dialog .popup-content > div { height:100%; min-height:0; }
 html body dialog.bl-settings-dialog .salty-panel.bl-editor.in-popup { height:100%; min-height:0; padding:0 !important; }
@@ -14,6 +14,7 @@ html body .bl-editor .bl-settings-toprow .bl-settings-close { font:24px/1 sans-s
 html body .bl-editor .bl-settings-toprow :is([data-compare], .bl-settings-expand) { padding-top:calc(6px + var(--bl-text-nudge, 0px)); padding-bottom:calc(6px - var(--bl-text-nudge, 0px)); } /* 5.5.3 세로 중앙: 글자 단추만 (아이콘 단추는 그대로) */
 .bl-editor-choose { display:flex; align-items:center; gap:10px; min-width:0; text-align:left; }
 .bl-editor-choose span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:650; font-size:calc(14 * var(--sp)); }
+html body .bl-editor .bl-settings-toprow .bl-editor-choose > span { white-space:nowrap; } /* 7.7.8 긴 이름(데우스 엑스 마키나)이 머리줄에서 두 줄로 꺾였다(56 의 white-space:normal) → 한 줄 · 말줄임 */
 .bl-editor .bl-settings-toprow svg { width:16px; height:16px; flex:none; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
 .bl-editor .bl-editor-workspace { flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
 .bl-editor-stage { flex:none; min-width:0; padding:8px var(--bl-editor-gutter) 0; background:var(--salty-panel-surface,var(--salty-surface)); border-bottom:1px solid var(--bl-editor-line); overflow:hidden; }

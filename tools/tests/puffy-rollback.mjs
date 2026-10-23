@@ -102,18 +102,18 @@ await test('③ 대상 단추에만: 마지막 칸은 .salty-btn · .menu_button
     }
 });
 await test('③ 빼는 단추: 글자 .menu_button 규칙은 아이콘만(02-controls 와 같은 조건) · 켜진 단추 · 설정 창 · 입력줄 · 면을 지운 #movingUIreset 을 빼고, .salty-btn 은 켜진(.on · .active · aria-pressed) 것을 뺌', () => {
-    const icon = ':is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])';
+    const icon = ':is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])'; // 7.7.8: svg 하나짜리도 아이콘만
     const mb = selectors.filter(s => /body\.salty \.menu_button:not\(/.test(s));
     assert.ok(mb.length >= 3, String(mb.length));
     for (const s of mb) {
         assert.ok(s.includes(icon), '아이콘만 빼기: ' + s);
-        for (const x of ['.salty-panel *', '#nonQRFormItems *', '.popup-controls *', '.toggleEnabled', '.active', '.toggled', '#movingUIreset']) assert.ok(s.includes(x), x + ' 빼기: ' + s);
+        for (const x of ['.salty-panel *', '#nonQRFormItems *', '.popup-controls *', '.welcomePanel *', '#rm_buttons_container *', '.toggleEnabled', '.active', '.toggled', '#movingUIreset']) assert.ok(s.includes(x), x + ' 빼기: ' + s);
     }
     const sb = selectors.filter(s => /body \.salty-btn/.test(s));
     assert.ok(sb.length >= 3, String(sb.length));
     for (const s of sb) assert.ok(s.includes('.salty-btn:not(.on, .active, [aria-pressed="true"]'), s);
     // 02-controls 의 아이콘 조건과 글자 그대로 같아야 함(바뀌면 여기도)
-    assert.ok(read('css/02-controls.css').includes(':is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small)))'));
+    assert.ok(read('css/02-controls.css').includes(':is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small)))'));
 });
 const ALLOWED = /^(--bl-puffy-(d|lt|deep|edge)|border-bottom|border-top|border-bottom-width|background-clip|transform|transition)$/;
 await test('③ 바꾸는 속성: 두께 · 누를 때 테두리 · 배경 자르기 · transform: none · 전환 · 변수뿐 (면 색 · 글자 · 크기 · 간격 · 모서리 · 자간은 안 건드림)', () => {

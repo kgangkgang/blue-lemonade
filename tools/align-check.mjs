@@ -748,6 +748,15 @@ export async function pageAlignCheck(rootSel, opts, M) {
     const withV = targets.filter(T => T.t.v.length).map(T => T.t), rest = targets.filter(T => !T.t.v.length).map(T => T.t);
     out.items = [...withV, ...rest.slice(0, Math.max(0, O.maxItems - withV.length))];
     window.__alignCheckEls = targets.map(T => T.el);   // zoomCrops 가 같은 요소를 다시 찾는다(DOM 은 바꾸지 않음)
+    // A CSS family name alone does not prove that its downloadable face rendered.
+    // Keep this with the native screenshot: fallback and loaded fonts are different runs.
+    out.renderContext = {
+        userAgent: navigator.userAgent,
+        fontStatus: document.fonts?.status,
+        fontFaces: document.fonts ? [...document.fonts].map(f => ({ family: f.family, weight: f.weight, status: f.status })) : [],
+        visualScale: window.visualViewport?.scale || 1,
+        inkDeltaMeaning: 'top gap minus bottom gap; center offset is half this value',
+    };
     return out;
 }
 
@@ -827,7 +836,10 @@ export async function pixelTruth(page, r, { which = null, limit = 120, scale = 4
             const th = Math.max(24, maxd * 0.35);
             const hit = fgs.length ? (i => isInk(d[i], d[i + 1], d[i + 2])) : (i => Math.abs(d[i] - bg[0]) + Math.abs(d[i + 1] - bg[1]) + Math.abs(d[i + 2] - bg[2]) >= th);
             let x0 = W, y0 = H, x1 = -1, y1 = -1;
-            for (let y = fr; y < H - fr; y++) for (let xx = fr; xx < W - fr; xx++) { const i = (y * W + xx) * 4; if (hit(i) && inside(xx, y)) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+            // A selection outline can share the label color. Keep plain-label scans
+            // near the calculated ink so that an inset outline is not counted as text.
+            const roi = ${JSON.stringify(it.ink && !/tile|switch/.test(it.kind) ? { top: Math.max(0, it.ink.top - 3), bottom: Math.max(0, it.ink.bottom - 3), left: Math.max(0, it.ink.left - 3), right: Math.max(0, it.ink.right - 3) } : null)};
+            for (let y = fr; y < H - fr; y++) for (let xx = fr; xx < W - fr; xx++) { if (roi && (y < roi.top * k || y >= H - roi.bottom * k || xx < roi.left * k || xx >= W - roi.right * k)) continue; const i = (y * W + xx) * 4; if (hit(i) && inside(xx, y)) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
             if (x1 < 0) return null;
             const top = y0 / k, bottom = (H - y1 - 1) / k, left = x0 / k, right = (W - x1 - 1) / k;
             return { dv: Math.round((top - bottom) * 100) / 100, dh: Math.round((left - right) * 100) / 100, top, bottom, left, right };

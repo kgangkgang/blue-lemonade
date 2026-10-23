@@ -118,9 +118,40 @@ html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settin
 }
 html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-button-close::before { content: "×" !important; font: inherit !important; }
 /* 머리가 없는 요청 로그 창: × 자리만큼 위 줄을 비운다 */
-html body.salty dialog.popup > .popup-body > .popup-content > .rl-root > .rl-top { padding-right: 40px !important; }
+html body.salty dialog.popup > .popup-body > .popup-content > .rl-root > .rl-top { padding-right: 52px !important; }
+/* 7.7.8 탭 알약 윗부분 잘림(사용자 제보 10-23): 요청 로그 창은 머리가 없어 첫 줄 탭이 스크롤 칸(.popup-content, overflow auto) 위 가장자리에 딱 붙었고 글꼴 · 보정에 따라 몇 px 위로 올라가 둥근 모서리가 잘렸다
+   → 뿌리 위에 4px 여백, × 는 탭 줄과 같은 세로 중심(팝업 위 12 + 여백 4 + 탭 36/2 − 34/2 = 17) */
+html body.salty dialog.popup > .popup-body > .popup-content > .rl-root { padding-top: 4px !important; }
+html body.salty:not(#bl-rl-off) dialog.popup:has(> .popup-body > .popup-content > .rl-root) > .popup-button-close { top: 17px !important; } /* :not(#…) 는 특이도만(위 :is(#lv_settings …) 규칙보다 앞서려고) */
+/* 7.7.8 ×는 내용 스크롤바 홈(오른쪽 끝 ≈ 16px)보다 안쪽 — 폰에서 스크롤 손잡이가 × 오른쪽 반을 덮었다(사용자 제보 10-23). 위 줄과 같은 수평선(탭 줄 높이 가운데) */
+html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-button-close { right: 26px !important; top: 9px !important; } /* 탭 줄(36, 내용 위 8px)과 같은 세로 중심: 12+8+18-17 = 9 (4배 확대 확인 10-23) */
+html body.salty dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab > .rl-tab-sub { display: inline !important; margin-left: 2px; font-size: .8em !important; opacity: .85; }
+html body.salty dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab > .rl-tab-sub:empty { display: none !important; }
 
-/* ---------- 탭: 머리 바로 아래 · 한 줄 · 아이콘 위 글자 아래 ---------- */
+/* ---------- 선택칸 + 아이콘 단추 N개 한 줄 (7.7.8, 사용자 제보 10-23 「위랑 아래랑 같은 버튼 배열인데 왜 다르냐」) ----------
+   번역 창 「설정 프리셋」(선택 + 갱신 · 저장 · 삭제) · 「프롬프트 선택」(선택 + 저장 · 추가 · 삭제) · 한글화 패널 고르기 줄: 선택칸 높이 = 아이콘 단추 높이 = --bl-h-ctl(폰 36 · PC 34),
+   같은 모서리 8, 사이 8, 선택칸이 남은 폭 전부, 단추는 정사각. :not(#bl-row-off) 는 특이도만(87 · 89 의 :is(#pt-panel …) 아이디 무게를 넘으려고). 손가락 화면의 입력칸 44(87-addon-touch)는 이 줄에서만 36 — 단추의 누르는 칸 44 는 투명 ::after 그대로 */
+html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-settings .prompt-select-container, #pt-panel .pt-select-row) {
+  display: flex !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: flex-start !important;
+  gap: 8px !important; width: 100% !important; min-width: 0; margin: 0 0 8px !important; padding: 0 !important;
+}
+html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-settings .prompt-select-container, #pt-panel .pt-select-row) > select {
+  flex: 1 1 0 !important; width: auto !important; min-width: 0 !important; max-width: none !important; margin: 0 !important;
+  height: var(--bl-h-ctl, 36px) !important; min-height: var(--bl-h-ctl, 36px) !important; padding-block: 0 !important; border-radius: var(--bl-r-sm, 8px) !important;
+}
+html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-settings .prompt-select-container, #pt-panel .pt-select-row) > :is(button, .menu_button, .small-button) {
+  position: relative; flex: none !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  width: var(--bl-h-ctl, 36px) !important; height: var(--bl-h-ctl, 36px) !important; min-width: 0 !important; min-height: 0 !important;
+  margin: 0 !important; padding: 0 !important; border-radius: var(--bl-r-sm, 8px) !important; font-size: var(--bl-ic, 15px) !important; line-height: 1 !important;
+}
+html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-settings .prompt-select-container, #pt-panel .pt-select-row) > :is(button, .menu_button, .small-button) > i { font-size: inherit !important; line-height: 1 !important; }
+/* 번역 창의 두 카드(설정 프리셋 · 프롬프트)는 같은 테두리 — 프리셋만 파란 테두리 · 빛이었다 */
+html body.salty .llmt-settings .llmt-card--accent { border-color: var(--llmt-border, var(--salty-line)) !important; box-shadow: none !important; }
+
+/* ---------- 탭: 머리 바로 아래 · 한 줄 · 아이콘 + 글자 가로 ----------
+   7.7.8: 아이콘 위 · 글자 아래로 쌓인 50px 블록(사용자 제보 10-23 「요청 로그에 로그 집계 예산은 또 버튼 왜 이리 커」)을 걷고
+   글자 탭 기준(기준표 폰 36 · PC 34 = --bl-h-ctl)의 한 줄 아이콘 + 글자로. 누르는 칸 44 는 87-addon-touch 의 투명 ::after 그대로.
+   예산 금액(.rl-tab-sub)은 탭 안 글자 옆 작은 글자 */
 /* TTS · 번역: 탭을 맨 위로, 「확장 탭에 보이기」 줄은 탭 바로 아래 — 나머지 차례는 그대로 */
 html body.salty dialog.popup:not(.bl-settings-dialog) #lv_settings > .inline-drawer > .inline-drawer-content,
 html body.salty dialog.bl-translator-dialog .llmt-settings .inline-drawer-content { display: flex !important; flex-direction: column !important; }
@@ -141,9 +172,9 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tabs,
   background: none !important; border: 0 !important; border-radius: 0 !important;
 }
 html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tab, dialog.bl-translator-dialog .llmt-tab, dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_tab, dialog.popup:not(.bl-settings-dialog) .pa-hub > .pa-hub-tabs > .pa-hub-tab, dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab, #pt-panel > #pt-tabs > .pt-tab) {
-  position: relative; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important;
-  gap: 4px !important; min-width: 0 !important; min-height: 50px !important; height: auto !important; margin: 0 !important;
-  padding: 9px 2px 5px !important; border: 0 !important; border-radius: 8px !important; opacity: 1 !important;
+  position: relative; display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important;
+  gap: 6px !important; min-width: 0 !important; min-height: var(--bl-h-ctl, 36px) !important; height: auto !important; margin: 0 !important;
+  padding: 0 8px !important; border: 0 !important; border-radius: 8px !important; opacity: 1 !important;
   background: var(--bl-hover) !important; color: var(--salty-muted) !important; box-shadow: none !important; outline-offset: -2px;
   font-size: var(--bl-ts-meta) !important; font-weight: 400 !important; line-height: 1.35 !important; white-space: var(--bl-tab-whitespace,nowrap) !important;
 }
@@ -173,3 +204,21 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-card,
 html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settings .mr-item:not(.is-picked), dialog.popup:not(.bl-settings-dialog) #regex-link-settings .rl-module, dialog.popup:not(.bl-settings-dialog) .po-dialog .po-item) {
   border-color: var(--salty-line) !important;
 }
+
+/* ---------- 데우스 빠른 설정 창(#bl-deus-popover, 번들 스크립트가 그림 — 스타일만 여기서) 7.7.8 ----------
+   사용자 기준(10-15 · 10-23): 분위기 · 개별 설정 카드는 「체크박스 + 이름 한 줄」, 「켜짐/꺼짐」 문구 없음, 2열 유지, 체크박스 A(20 · 모서리 5 · 오목 면), 판 표시는 알약,
+   선택칸은 입력칸 높이(--bl-h-ctl). 스크립트의 <style> 은 style.css 뒤에 붙으므로 html body 로 무게를 올린다 */
+html body.salty #bl-deus-popover .dq-version { border-radius: 999px !important; padding: 0 8px !important; min-height: 18px; line-height: 18px; font-size: .75em !important; }
+html body.salty #bl-deus-popover .dq-toggle { flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 8px !important; min-height: var(--bl-h-ctl, 36px) !important; padding: 0 10px !important; }
+html body.salty #bl-deus-popover .dq-toggle-control { order: 1; flex: none !important; display: inline-flex !important; align-items: center; }
+html body.salty #bl-deus-popover .dq-toggle-label { order: 2; flex: 1 1 auto !important; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; word-break: keep-all; }
+html body.salty #bl-deus-popover .dq-toggle-state { display: none !important; }
+html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"] {
+  appearance: none !important; display: grid !important; place-content: center; box-sizing: border-box; width: 20px !important; height: 20px !important; margin: 0 !important; padding: 0 !important;
+  border: 1px solid var(--salty-line) !important; border-radius: 5px !important; background: var(--salty-control) !important; color: var(--salty-on-accent, #fff);
+  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--salty-text) 16%, transparent) !important; cursor: pointer;
+}
+html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]::after { content: ''; display: block; width: 9px; height: 5px; border: 0; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-1px) rotate(-45deg); opacity: 0; }
+html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked { background: var(--salty-accent) !important; border-color: transparent !important; box-shadow: inset 0 2px 2px color-mix(in oklab, var(--salty-bg) 32%, transparent) !important; }
+html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked::after { opacity: 1; }
+html body.salty #bl-deus-popover .dq-row select { height: var(--bl-h-ctl, 36px) !important; min-height: var(--bl-h-ctl, 36px) !important; padding-block: 0 !important; }

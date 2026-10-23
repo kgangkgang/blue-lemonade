@@ -216,6 +216,7 @@ jobs:
           node tools/tests/puffy-rollback.mjs .
           node tools/tests/perf-help-touch.mjs .
           node tools/tests/align-check.mjs .
+          node tools/tests/control-ink.mjs .
           node tools/tests/tab-scroll.mjs .
           node tools/tests/tts-reanalysis-guard.mjs .
           node tools/tests/addon-note-master-off.mjs .

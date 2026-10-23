@@ -643,7 +643,7 @@ const NUM = {
 for (const {key,unit} of MARKDOWN_TUNING) NUM[`markdown.${key}`] = {unit};
 const numText = (path, v) => String(Number((Number(v) / (NUM[path]?.scale || 1)).toFixed(4)));
 // 숫자칸 폭 = 값 글자 수 (3.3.0 — 자간 -0.0075 같은 긴 값이 잘리지 않게). CSS 가 1ch 단위로 폭을 잡는다
-const numChars = text => Math.max(3, String(text).length);
+const numChars = text => Math.max(2, String(text).length); // 7.7.8: 「2」 · 「55」는 두 칸 — 숫자칸 폭이 값 길이를 따라간다 (css/97-param-inline)
 const fitNum = (input) => input.style.setProperty('--num-ch', numChars(input.value));
 
 /** 숫자 칸 · 슬라이드바 부품 (설정에 값이 아직 없으면 def) */
@@ -1355,8 +1355,10 @@ function tabText(s, sub) {
                 ${row('선 긋기', toggle('strike.line', st.line !== false), '끄면 선 없이 흐리게만')}
                 ${st.line !== false ? row('선 색 따로 정하기', toggle('strike.own', st.own), '끄면 글자 색으로 그어요') : ''}
                 ${st.line !== false && st.own ? `<div class="salty-row"><span>선 색</span><input type="color" data-color-path="strike.color" value="${esc(st.color)}" aria-label="취소선 색"></div>` : ''}
-                ${st.line !== false ? slider('strike.thickness', '선 굵기', 1, 4, 0.5) : ''}
                 ${row('기울이기', toggle('strike.italic', st.italic), '지워진 글자를 기울여 써요')}
+            </div>
+            <div class="salty-group salty-sizes">
+                ${st.line !== false ? slider('strike.thickness', '선 굵기', 1, 4, 0.5) : ''}
                 ${slider('strike.fade', '흐리기', 20, 100, 5)}
             </div>
             <p class="salty-note">흐리기는 지워진 글자를 얼마나 남길지예요. 100이면 그대로, 낮을수록 옅어져요. 선은 글자 가운데에 곧게 그어져 글꼴이 달라도 보여요.</p>`;

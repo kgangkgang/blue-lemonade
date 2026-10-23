@@ -1,0 +1,33 @@
+/* ===== css/94-density-c.css =====
+   시안 C (7.7.8 후보) — 전부 평평: 모든 단추 · 탭 · 칩은 지금 면 색 + 1px 선(--salty-line), 아래 두께 · 윗면 빛 · 그림자 없음(주요 단추 · 팝업 확인 포함).
+   주요 단추는 포인트 면 색은 그대로, 들림 그림자만 없음. 고른 상태는 면 색 + 글자 굵기. 색 · 크기 · 모서리 · 글자 크기는 그대로. :not(#bl-density-off):not(#bl-density-off2) 는 특이도만(아이디 둘 — 93-night-surfaces 의 html:root:not(#…) 보다 앞서려고).
+   ===== */
+html:not(#bl-density-off):not(#bl-density-off2) body .salty-btn,
+html:not(#bl-density-off):not(#bl-density-off2) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *, #Backgrounds #bg-header-fixed *, #Backgrounds #bg_tabs *, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])),
+html:not(#bl-density-off):not(#bl-density-off2) body.salty .popup .popup-controls .menu_button {
+  --bl-puffy-d: 0px;
+  border: 1px solid var(--salty-line) !important;
+  box-shadow: none !important;
+}
+html:not(#bl-density-off):not(#bl-density-off2) body .salty-btn.primary,
+html:not(#bl-density-off):not(#bl-density-off2) body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG) {
+  border-color: transparent !important;
+}
+html:not(#bl-density-off):not(#bl-density-off2) body .salty-panel .salty-btn.bl-tool-primary { border: 1px solid color-mix(in srgb, var(--salty-accent) 50%, transparent) !important; }
+html:not(#bl-density-off):not(#bl-density-off2) body .salty-btn:active,
+html:not(#bl-density-off):not(#bl-density-off2) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *):active,
+html:not(#bl-density-off):not(#bl-density-off2) body.salty .popup .popup-controls .menu_button:active {
+  border-top-width: 1px !important; border-bottom-width: 1px !important;
+  box-shadow: none !important;
+}
+/* 나이트 면(93-night-surfaces) 없음 */
+html:not(#bl-density-off):not(#bl-density-off2) body.salty.salty-dark :is(.salty-panel .salty-btn, .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *, #Backgrounds #bg-header-fixed *, #Backgrounds #bg_tabs *, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text]))) {
+  box-shadow: none !important;
+  border: 1px solid var(--salty-line) !important;
+}
+/* 칩 · 고르기 · 탭: 고른 상태는 면 색 + 굵기 */
+html:not(#bl-density-off):not(#bl-density-off2) body .salty-panel :is(.salty-seg button, .salty-fonttags button, .salty-fontempty button) { box-shadow: none !important; }
+html:not(#bl-density-off):not(#bl-density-off2) body .salty-panel :is(.salty-seg button, .salty-fonttags button, .salty-fontempty button).on { font-weight: 650 !important; }
+html:not(#bl-density-off):not(#bl-density-off2) body.salty :is(.rl-tab, .rl-chip, .lv-tab, .llmt-tab, .bwr_tab, .pa-hub-tab, .pt-tab) { box-shadow: none !important; border: 1px solid var(--salty-line) !important; }
+html:not(#bl-density-off):not(#bl-density-off2) body.salty :is(.rl-tab, .rl-chip, .lv-tab, .llmt-tab, .bwr_tab, .pa-hub-tab, .pt-tab):is(.active, [aria-pressed="true"], [aria-selected="true"]) { border-color: transparent !important; font-weight: 650 !important; }
+/* ===== /94-density-c ===== */

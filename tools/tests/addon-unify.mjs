@@ -59,9 +59,9 @@ test('직접 만든 창 머리 마크업: 아이콘 + 이름 + 판(.ext-version)
     assert.ok(/<button[^>]*>×<\/button><\/header>/.test(head), `${f}: × 단추 없음(✕ 말고 ×)`);
   }
 });
-test('탭: 기본 한 줄과 확대 배치 설정 · 아이콘 위 글자 아래 · 고른 탭 포인트 13%', () => {
+test('탭: 기본 한 줄과 확대 배치 설정 · 아이콘 + 글자 가로 한 줄(7.7.8, 글자 탭 높이 --bl-h-ctl) · 고른 탭 포인트 13%', () => {
   const box = find(['.lv-tabs', '.llmt-tabs', '.po-menu-tabs', '.bwr_tabs', '.pa-hub-tabs', '.rl-tabs', '#pt-tabs'], ['grid-auto-flow: var(--bl-tab-flow,column)', 'grid-auto-columns: minmax(0, 1fr)', 'grid-template-columns: var(--bl-tab-columns,none)']);
-  const tab = find(['.lv-tab', '.llmt-tab', '.po-menu-tabs > button', '.bwr_tab', '.pa-hub-tab', '.rl-tab', '.pt-tab'], ['flex-direction: column', 'min-height: 50px', 'border-radius: 8px']);
+  const tab = find(['.lv-tab', '.llmt-tab', '.po-menu-tabs > button', '.bwr_tab', '.pa-hub-tab', '.rl-tab', '.pt-tab'], ['flex-direction: row', 'min-height: var(--bl-h-ctl, 36px)', 'border-radius: 8px']);
   const on = find(['.lv-tab', '.pt-tab', ':is(.active, [aria-pressed="true"], [aria-selected="true"])'], ['color-mix(in srgb, var(--salty-accent) 13%, transparent)', 'color: var(--salty-accent)']);
   assert.ok(box && tab && on, '탭 규칙 없음');
   assert.ok(find(['.lv-tabs', '.llmt-tabs'], ['order: -2']), 'TTS · 번역 탭이 맨 위로 안 감');

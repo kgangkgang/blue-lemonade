@@ -114,7 +114,7 @@ export async function openNotice(onSeen) {
         item.classList.toggle('open', open);
         toggle.setAttribute('aria-expanded', String(open));
     });
-    try { await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.TEXT, '', { allowVerticalScrolling: true, okButton: '닫기', onOpen: opened => {resolvePopup(opened);opened?.dlg?.classList.add('bl-roomy-dialog');} }); }
+    try { await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.TEXT, '', { allowVerticalScrolling: true, okButton: '닫기', cancelButton: false, onOpen: opened => {resolvePopup(opened);opened?.dlg?.classList.add('bl-roomy-dialog');} }); }
     finally { resolvePopup(null); }
     if(pending)try{await openNoticeAction(pending);}catch(error){globalThis.toastr?.error(error.message||'기능을 열지 못했어요.','Blue Lemonade');}
 }

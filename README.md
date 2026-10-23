@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.7/blue-lemonade-7.7.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.7.8/blue-lemonade-7.7.8.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,23 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.7.7 · 최신 업데이트</summary>
+<summary>7.7.8 · 최신 업데이트</summary>
+
+- 시작 화면의 최근 채팅 고정 · 이름 바꾸기 · 지우기 아이콘과 머리줄 바로가기, 캐릭터 단추 줄의 아이콘 단추는 라이트 · 나이트 모두 아이콘만 보여요.
+- 공지 창은 「닫기」 하나만 보여요.
+- 배경 서랍에서 「전역」 탭 줄 윗부분이 잘리고 「채팅」과 줄 높이가 달랐던 것을 고쳤어요.
+- 테마 설정 창 위쪽 모서리가 둥근 창 밖으로 뾰족하게 비어져 나오던 것을 고쳤어요.
+- 글자 편집창의 크기 · 굵기 · 자간 · 줄 간격 같은 숫자 조절칸은 이름 · 되돌리기 · 숫자 · 단위를 한 줄에 두고 슬라이더를 바로 아래에 둬요. 세로 2열로 놓고(320px 폰 포함) 숫자칸 폭은 값 길이만큼이에요. 취소선의 선 굵기 · 흐리기, 강조 · 속마음 · 메뉴 글자의 크기 · 굵기 · 자간도 같은 배치예요.
+- 요청 로그 · TTS · LLM 번역 · 다시 쓰기 같은 애드온 창의 위 탭은 아이콘과 글자를 한 줄(폰 36px)로 줄였고, 요청 로그의 × 단추가 스크롤바와 겹치지 않아요.
+- LLM 번역 창의 「설정 프리셋」 · 「프롬프트 선택」 줄은 선택칸과 아이콘 단추의 높이 · 모서리 · 간격을 같게 맞췄어요.
+- 단추 안 짧은 글자의 위아래 정렬을 실제 글꼴 모양 기준으로 보정했어요.
+- 서식 서랍의 「Position」 선택칸이 아래로 밀려 빈 칸이 생기던 것과, 설정 창 머리줄의 긴 이름이 두 줄로 꺾이던 것을 고쳤어요.
+- 단추 · 탭 · 칩을 모두 평평한 면과 얇은 선으로 정리하고, 고른 상태는 면 색과 글자 굵기로 보여 줘요.
+
+</details>
+
+<details>
+<summary>7.7.7 · 좁은 화면 설정 내용 폭과 좌우 정렬 개선</summary>
 
 - 좁은 화면에서 설정 내용이 안쪽으로 지나치게 들어가지 않도록 여백을 줄였어요. 미리보기와 설정 내용의 좌우 시작선은 같은 위치로 맞춰요.
 

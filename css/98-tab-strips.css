@@ -19,6 +19,7 @@ html:not(#bl-tab-scroll-off) :is(
   .dq-tabs
 ) {
   display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important;
+  flex-shrink:0; /* 7.7.8: 스크롤 칸은 flex 최소 높이가 0 이라 세로 flex 부모 안에서 눌려 위아래가 잘렸다(배경 서랍 「전역」) */
   min-width:0; max-width:100%; overflow-x:auto !important; overflow-y:hidden !important;
   overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch;
 }
