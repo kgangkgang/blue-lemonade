@@ -14,7 +14,7 @@ import { afterBoot } from '../../boot-gate.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.3.6';
+const VERSION = '1.3.7';
 // 1.3.6: 프롬프트 쪽 줄을 꾹 눌러(마우스는 끌기 · 키보드 Alt+↑/↓) 순서를 바꾼다 — 목록 순서 = 보내는 순서
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
 // 1.3.4: 테두리 단계 선을 고정 1.3px 로 — 옆 선 아이콘 굵기 (em 비례는 폰에서 두꺼워졌다)
