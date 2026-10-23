@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.8/blue-lemonade-7.8.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.9/blue-lemonade-7.8.9.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.8.8 · 최신 업데이트</summary>
+<summary>7.8.9 · 최신 업데이트</summary>
+
+- 전개 지시 창의 프롬프트 줄과 설정의 「전개 지시 프롬프트」 칸에 번역 단추가 생겼어요. 누르면 칸 위에 번역본, 아래에 원문이 보이고 다시 누르면 접혀요. 한글화 패널의 번역을 그대로 써서, 같은 글은 바로 보여요.
+
+</details>
+
+<details>
+<summary>7.8.8 · 업데이트가 오래 걸리거나 끊겨도 새로 받아 깔기</summary>
 
 - Git 으로 설치한 곳에서 업데이트 받아 오기가 오래 걸려도 15분까지 기다리고, 기다린 시간을 보여 줘요.
 - 업데이트가 실패하거나 연결이 끊겨도 백업해 두고 GitHub 에서 새로 받아 깔아요. 지난번 실패로 남은 백업 복사본이 있으면 정리하고 다시 해요.
