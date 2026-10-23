@@ -168,6 +168,55 @@ await test('runUpdate (Git 설치 · 받아 오기 실패 500): 새로 받아 �
     assert.deepEqual(s.calls.map(c => c.path), ['/api/extensions/version', '/api/extensions/update']);
 });
 
+// 7.8.7 기록이 다시 쓰인 뒤 얕은 설치: 서버의 git fetch 가 새 기록 전체를 받느라 몇 분 — 기다림을 짧게 끊으면 재설치로 못 넘어감
+const later = (ms, value) => (body, calls) => {
+    const signal = calls.at(-1).signal;
+    return new Promise((resolve, reject) => {
+        const t = setTimeout(() => resolve(value), ms);
+        signal?.addEventListener('abort', () => { clearTimeout(t); reject(signal.reason); }, { once: true });
+    });
+};
+function slowServer(plan) {   // server() 와 같고, 응답이 Promise 면 기다리고 요청의 signal 도 넘겨 줌
+    const calls = [];
+    const fetcher = async (u, init) => {
+        calls.push({ path: String(u), body: JSON.parse(init.body), signal: init.signal });
+        const step = plan[String(u).replace('/api/extensions/', '')];
+        const r = await (typeof step === 'function' ? step(JSON.parse(init.body), calls) : step);
+        if (r instanceof Error) throw r;
+        if (!r) throw new Error('예상 밖 요청 ' + u);
+        return { ok: r.status >= 200 && r.status < 300, status: r.status, json: async () => r.body || {} };
+    };
+    return { fetcher, calls };
+}
+const gitInfo = { status: 200, body: { remoteUrl: 'https://github.com/kgangkgang/blue-lemonade', isUpToDate: false } };
+
+await test('runUpdate 7.8.7: /version 기다림은 waitMs(기본 10분 이상) — 60초에 끊지 않음 · 기다린 시간 표시 · 끝까지 넘으면 「몇 분 뒤 다시」', async () => {
+    assert.ok(U.SLOW_GIT_MS >= 10 * 60 * 1000, '기본 기다림 10분 이상');
+    let s = slowServer({ version: later(120, gitInfo), update: { status: 500 }, move: { status: 204 }, install: { status: 200 }, delete: { status: 200 } });
+    const msgs = [];
+    assert.equal(await U.runUpdate({ inst, fetcher: s.fetcher, status: m => msgs.push(m), waitMs: 2000, tickMs: 20 }), 'done');
+    assert.ok(msgs.some(m => /GitHub 에서 받아 오는 중… \(\d+초\)/.test(m)), '기다린 시간');
+    assert.deepEqual(s.calls.map(c => c.path.replace('/api/extensions/', '')), ['version', 'update', 'move', 'install', 'delete'], '느린 fetch 뒤 pull 실패(500) → 재설치');
+    s = slowServer({ version: later(500, gitInfo) });
+    await assert.rejects(U.runUpdate({ inst, fetcher: s.fetcher, waitMs: 50, tickMs: 20 }), /몇 분 뒤 다시 눌러 주세요 \(아무것도 안 바뀌었어요\)/);
+    assert.deepEqual(s.calls.map(c => c.path.replace('/api/extensions/', '')), ['version'], '시간이 넘으면 옮기지 않음');
+    s = slowServer({ version: new TypeError('Failed to fetch') });
+    await assert.rejects(U.runUpdate({ inst, fetcher: s.fetcher }), /서버에 연결하지 못했어요/);
+});
+
+await test('runUpdate 7.8.7: /update 가 던져도(연결 끊김 · 시간 넘음) 500 과 같이 재설치 · 폴더가 아직 쓰이면 옮기기 실패로 그대로 멈춤 · 403 은 그대로', async () => {
+    let s = slowServer({ version: gitInfo, update: new TypeError('Failed to fetch'), move: { status: 204 }, install: { status: 200 }, delete: { status: 200 } });
+    assert.equal(await U.runUpdate({ inst, fetcher: s.fetcher }), 'done');
+    assert.deepEqual(s.calls.map(c => c.path.replace('/api/extensions/', '')), ['version', 'update', 'move', 'install', 'delete']);
+    s = slowServer({ version: gitInfo, update: later(500, { status: 200 }), move: { status: 500 } });
+    await assert.rejects(U.runUpdate({ inst, fetcher: s.fetcher, waitMs: 50 }), /백업하지 못해 멈췄어요 \(아무것도 안 바뀌었어요\)/);
+    s = slowServer({ version: gitInfo, update: { status: 403 } });
+    await assert.rejects(U.runUpdate({ inst, fetcher: s.fetcher }), /권한이 없어요/);
+    assert.deepEqual(s.calls.map(c => c.path.replace('/api/extensions/', '')), ['version', 'update']);
+    s = slowServer({ version: gitInfo, update: new TypeError('Failed to fetch') });
+    await assert.rejects(U.runUpdate({ inst: { extensionName: 'blue-lemonade', global: true }, fetcher: s.fetcher }), /업데이트가 실패했어요/);
+});
+
 await test('runUpdate (ZIP 설치): 백업(local→global) → GitHub 설치(local) → 백업 지움 · 순서와 본문', async () => {
     const s = server({ version: { status: 200, body: { remoteUrl: '' } }, move: { status: 204 }, install: { status: 200, body: { folderName: 'blue-lemonade' } }, delete: { status: 200 } });
     assert.equal(await U.runUpdate({ inst, fetcher: s.fetcher }), 'done');
