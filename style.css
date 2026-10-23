@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 23230d0f09c1) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f43f31ab59b7) */
 /* css/00-base.css */
 :root{--bl-release:"7.8.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -2670,7 +2670,7 @@ body.salty .mes_text .bl-quote-lead,
 :is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) .bl-cjk {
   word-break: normal;
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text),
+body.salty :is(#chat,.bl-chat-like) .mes .mes_text,
 .salty-sample:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   font-family: var(--salty-font-text) !important;
   font-size: var(--salty-size) !important;
@@ -2683,13 +2683,13 @@ body.salty .mes_text .bl-quote-lead,
   overflow-wrap: anywhere;
   text-wrap: pretty;
 }
-:is(body.salty.salty-align-justify-word :is(#chat,.bl-chat-like) .mes .mes_text),
+body.salty.salty-align-justify-word :is(#chat,.bl-chat-like) .mes .mes_text,
 .salty-sample.salty-align-justify-word:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-:is(body.salty.salty-align-justify-break :is(#chat,.bl-chat-like) .mes .mes_text),
+body.salty.salty-align-justify-break :is(#chat,.bl-chat-like) .mes .mes_text,
 .salty-sample.salty-align-justify-break:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   text-align: justify;
 }
-:is(body.salty.salty-align-justify-break :is(#chat,.bl-chat-like) .mes .mes_text),
+body.salty.salty-align-justify-break :is(#chat,.bl-chat-like) .mes .mes_text,
 .salty-sample.salty-align-justify-break:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   word-break: normal;
   hyphens: auto;
@@ -12809,7 +12809,7 @@ body.salty-dark .salty-panel {
   box-shadow: var(--ring);
 }
 .salty-ver:is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *).is-new,
-:is(body.salty #rm_extensions_block #salty-drawer .bl-version).is-new {
+body.salty #rm_extensions_block #salty-drawer .bl-version.is-new {
   position: relative;
   border-color: color-mix(in srgb, var(--salty-accent) 70%, transparent);
   background: color-mix(in srgb, var(--salty-accent) 16%, transparent);
@@ -12817,7 +12817,7 @@ body.salty-dark .salty-panel {
   font-weight: 600;
 }
 .salty-ver:is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *).is-new::after,
-:is(body.salty #rm_extensions_block #salty-drawer .bl-version).is-new::after {
+body.salty #rm_extensions_block #salty-drawer .bl-version.is-new::after {
   content: '';
   position: absolute;
   inset: -1px;
@@ -12833,7 +12833,7 @@ body.salty-dark .salty-panel {
 }
 @media (prefers-reduced-motion: reduce) {
   .salty-ver:is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *).is-new::after,
-:is(body.salty #rm_extensions_block #salty-drawer .bl-version).is-new::after {
+body.salty #rm_extensions_block #salty-drawer .bl-version.is-new::after {
     animation: none;
     opacity: 0.7;
   }
@@ -12841,8 +12841,8 @@ body.salty-dark .salty-panel {
 :root { --bl-update-ink: #ffd84a; --bl-update-glow: #ffd84a; }
 body.salty.salty-light { --bl-update-ink: #8a6400; --bl-update-glow: #ffc400; }
 .salty-ver:is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *).has-update,
-:is(#rm_extensions_block #salty-drawer .bl-version):is(.bl-s, *):is(bl-s, *).has-update,
-:is(body.salty #rm_extensions_block #salty-drawer .bl-version).has-update {
+#rm_extensions_block #salty-drawer .bl-version:is(.bl-s, *):is(bl-s, *).has-update,
+body.salty #rm_extensions_block #salty-drawer .bl-version.has-update {
   position: relative;
   border-color: color-mix(in srgb, var(--bl-update-glow) 75%, transparent);
   background: color-mix(in srgb, var(--bl-update-glow) 18%, transparent);
@@ -12851,8 +12851,8 @@ body.salty.salty-light { --bl-update-ink: #8a6400; --bl-update-glow: #ffc400; }
   text-shadow: 0 0 6px color-mix(in srgb, var(--bl-update-glow) 55%, transparent);
 }
 .salty-ver:is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *).has-update::after,
-:is(#rm_extensions_block #salty-drawer .bl-version):is(.bl-s, *):is(bl-s, *).has-update::after,
-:is(body.salty #rm_extensions_block #salty-drawer .bl-version).has-update::after {
+#rm_extensions_block #salty-drawer .bl-version:is(.bl-s, *):is(bl-s, *).has-update::after,
+body.salty #rm_extensions_block #salty-drawer .bl-version.has-update::after {
   content: '';
   position: absolute;
   inset: -1px;
@@ -12864,8 +12864,8 @@ body.salty.salty-light { --bl-update-ink: #8a6400; --bl-update-glow: #ffc400; }
 }
 @media (prefers-reduced-motion: reduce) {
   .salty-ver:is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *).has-update::after,
-:is(#rm_extensions_block #salty-drawer .bl-version):is(.bl-s, *):is(bl-s, *).has-update::after,
-:is(body.salty #rm_extensions_block #salty-drawer .bl-version).has-update::after {
+#rm_extensions_block #salty-drawer .bl-version:is(.bl-s, *):is(bl-s, *).has-update::after,
+body.salty #rm_extensions_block #salty-drawer .bl-version.has-update::after {
     animation: none;
     opacity: 0.8;
   }
@@ -14799,7 +14799,7 @@ body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text pre {
 :is(body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample) .bl-cjk {
   word-break: normal;
 }
-:is(body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text),
+body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text,
 .salty-sample:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   font-family: var(--salty-font-text) !important;
   font-size: var(--salty-size) !important;
@@ -14812,13 +14812,13 @@ body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text pre {
   overflow-wrap: anywhere;
   text-wrap: pretty;
 }
-:is(body.salty.salty-align-justify-word :is(#salty-nochat, .salty-preview) .mes .mes_text),
+body.salty.salty-align-justify-word :is(#salty-nochat, .salty-preview) .mes .mes_text,
 .salty-sample.salty-align-justify-word:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-:is(body.salty.salty-align-justify-break :is(#salty-nochat, .salty-preview) .mes .mes_text),
+body.salty.salty-align-justify-break :is(#salty-nochat, .salty-preview) .mes .mes_text,
 .salty-sample.salty-align-justify-break:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   text-align: justify;
 }
-:is(body.salty.salty-align-justify-break :is(#salty-nochat, .salty-preview) .mes .mes_text),
+body.salty.salty-align-justify-break :is(#salty-nochat, .salty-preview) .mes .mes_text,
 .salty-sample.salty-align-justify-break:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   word-break: normal;
   hyphens: auto;
@@ -21902,34 +21902,34 @@ html body.salty toolcool-color-picker {
   --tool-cool-color-picker-btn-border-radius-inner:50%;
   border-radius:50%;
 }
-:is(html body .bl-editor .bl-setting-reset):is(.bl-s, *),
-:is(:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle)):is(bl-s, *),
-:is(.salty-panel .bl-settings-close):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
-:is(.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"]):is(bl-s, *):is(bl-s, *),
-:is(.salty-panel .bl-search-field > [data-settings-clear]):is(bl-s, *):is(bl-s, *),
-:is(.bl-credits-dialog > header > button):is(.bl-s, *):is(.bl-s, *),
-:is(.pt-help-dialog > header > button):is(.bl-s, *):is(.bl-s, *),
-:is(body.salty .salty-panel .bl-preview-samples > button) {
+html body .bl-editor .bl-setting-reset:is(.bl-s, *),
+:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle):is(bl-s, *),
+.salty-panel .bl-settings-close:is(.bl-s, *):is(bl-s, *):is(bl-s, *),
+.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"]:is(bl-s, *):is(bl-s, *),
+.salty-panel .bl-search-field > [data-settings-clear]:is(bl-s, *):is(bl-s, *),
+.bl-credits-dialog > header > button:is(.bl-s, *):is(.bl-s, *),
+.pt-help-dialog > header > button:is(.bl-s, *):is(.bl-s, *),
+body.salty .salty-panel .bl-preview-samples > button {
 position:relative;
 }
-:is(html body .bl-editor .bl-setting-reset):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-:is(:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle)):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-:is(.salty-panel .bl-settings-close):is(.bl-s, *):is(bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-:is(.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"]):is(bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-:is(.salty-panel .bl-search-field > [data-settings-clear]):is(bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-:is(.bl-credits-dialog > header > button):is(.bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-:is(.pt-help-dialog > header > button):is(.bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-:is(body.salty .salty-panel .bl-preview-samples > button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+html body .bl-editor .bl-setting-reset:is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+.salty-panel .bl-settings-close:is(.bl-s, *):is(bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"]:is(bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+.salty-panel .bl-search-field > [data-settings-clear]:is(bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+.bl-credits-dialog > header > button:is(.bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+.pt-help-dialog > header > button:is(.bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty .salty-panel .bl-preview-samples > button:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 -webkit-text-fill-color:transparent;
 }
-:is(html body .bl-editor .bl-setting-reset):is(.bl-s, *)::before,
-:is(:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle)):is(bl-s, *)::before,
-:is(.salty-panel .bl-settings-close):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-:is(.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"]):is(bl-s, *):is(bl-s, *)::before,
-:is(.salty-panel .bl-search-field > [data-settings-clear]):is(bl-s, *):is(bl-s, *)::before,
-:is(.bl-credits-dialog > header > button):is(.bl-s, *):is(.bl-s, *)::before,
-:is(.pt-help-dialog > header > button):is(.bl-s, *):is(.bl-s, *)::before,
-:is(body.salty .salty-panel .bl-preview-samples > button)::before {
+html body .bl-editor .bl-setting-reset:is(.bl-s, *)::before,
+:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle):is(bl-s, *)::before,
+.salty-panel .bl-settings-close:is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
+.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"]:is(bl-s, *):is(bl-s, *)::before,
+.salty-panel .bl-search-field > [data-settings-clear]:is(bl-s, *):is(bl-s, *)::before,
+.bl-credits-dialog > header > button:is(.bl-s, *):is(.bl-s, *)::before,
+.pt-help-dialog > header > button:is(.bl-s, *):is(.bl-s, *)::before,
+body.salty .salty-panel .bl-preview-samples > button::before {
 content:'';
 position:absolute;
 inset:0;
@@ -21937,36 +21937,36 @@ margin:auto;
 width:var(--bl-glyph-size, 16px);
 height:var(--bl-glyph-size, 16px);
 }
-:is(html body .bl-editor .bl-setting-reset):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-:is(:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle)):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-:is(.salty-panel .bl-settings-close):is(.bl-s, *):is(bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-:is(.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"]):is(bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-:is(.salty-panel .bl-search-field > [data-settings-clear]):is(bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-:is(.bl-credits-dialog > header > button):is(.bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-:is(.pt-help-dialog > header > button):is(.bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-:is(body.salty .salty-panel .bl-preview-samples > button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+html body .bl-editor .bl-setting-reset:is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+.salty-panel .bl-settings-close:is(.bl-s, *):is(bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"]:is(bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+.salty-panel .bl-search-field > [data-settings-clear]:is(bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+.bl-credits-dialog > header > button:is(.bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+.pt-help-dialog > header > button:is(.bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+body.salty .salty-panel .bl-preview-samples > button:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
 background:currentColor;
 }
-:is(html body .bl-editor .bl-setting-reset):is(.bl-s, *)::before,
-:is(:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle)):is(bl-s, *)::before,
-:is(.salty-panel .bl-settings-close):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-:is(.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"]):is(bl-s, *):is(bl-s, *)::before,
-:is(.salty-panel .bl-search-field > [data-settings-clear]):is(bl-s, *):is(bl-s, *)::before,
-:is(.bl-credits-dialog > header > button):is(.bl-s, *):is(.bl-s, *)::before,
-:is(.pt-help-dialog > header > button):is(.bl-s, *):is(.bl-s, *)::before,
-:is(body.salty .salty-panel .bl-preview-samples > button)::before {
+html body .bl-editor .bl-setting-reset:is(.bl-s, *)::before,
+:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle):is(bl-s, *)::before,
+.salty-panel .bl-settings-close:is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
+.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"]:is(bl-s, *):is(bl-s, *)::before,
+.salty-panel .bl-search-field > [data-settings-clear]:is(bl-s, *):is(bl-s, *)::before,
+.bl-credits-dialog > header > button:is(.bl-s, *):is(.bl-s, *)::before,
+.pt-help-dialog > header > button:is(.bl-s, *):is(.bl-s, *)::before,
+body.salty .salty-panel .bl-preview-samples > button::before {
 -webkit-mask:var(--bl-glyph) center / contain no-repeat;
 mask:var(--bl-glyph) center / contain no-repeat;
 pointer-events:none;
 }
 :where(html body .bl-editor .bl-setting-reset):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-:is(:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle)) {
+:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle) {
   --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8.4 5H10A6.2 6.2 0 1 1 5.62 6.82M10.9 2.5 8.4 5l2.5 2.5'/%3E%3C/svg%3E");
 }
 :is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle) { --bl-glyph-size:14px; }
-:is(.salty-panel .bl-settings-close):is(.bl-s, *),
-:is(.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"]),
-:is(.salty-panel .bl-search-field > [data-settings-clear]),
+.salty-panel .bl-settings-close:is(.bl-s, *),
+.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"],
+.salty-panel .bl-search-field > [data-settings-clear],
 :where(.bl-credits-dialog > header > button):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *),
 :where(.pt-help-dialog > header > button):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *) {
   --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M3 3l14 14M17 3 3 17'/%3E%3C/svg%3E");
@@ -25752,7 +25752,7 @@ html body.salty #left-nav-panel .menu_button:not(label *) {
   }
   .po-move:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .po-pin:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-:is(.po-dialog .menu_button):is(#bl-s, *):is(bl-s, *)::after,
+.po-dialog .menu_button:is(#bl-s, *):is(bl-s, *)::after,
 .ms-icon:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .ms-pull:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .ms-chip:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
@@ -25760,44 +25760,44 @@ html body.salty #left-nav-panel .menu_button:not(label *) {
 .ms-invert:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .ms-snap:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .ms-apply:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-:is(#model-switch-settings .menu_button):is(.bl-s, *):is(bl-s, *)::after,
+#model-switch-settings .menu_button:is(.bl-s, *):is(bl-s, *)::after,
 .bl-note-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .bl-notes-guidelink:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .eh-icon-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .eh-switch:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .eh-pchip:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .eh-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-:is(.bl-assets-dialog .eh-size > button):is(#bl-s, *)::after,
-:is(.bl-assets-dialog button[data-value]):is(#bl-s, *)::after,
+.bl-assets-dialog .eh-size > button:is(#bl-s, *)::after,
+.bl-assets-dialog button[data-value]:is(#bl-s, *)::after,
 .cg-icon-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .cg-chip:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .cg-view:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .jj-small-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-:is(.bl-direction-dialog button[data-step]):is(#bl-s, *)::after,
-:is(.jj-settings-body button[data-step]):is(#bl-s, *)::after,
+.bl-direction-dialog button[data-step]:is(#bl-s, *)::after,
+.jj-settings-body button[data-step]:is(#bl-s, *)::after,
 .lv-icon:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .lv-help-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .lv-version:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-:is(#lv_settings button.menu_button:not(.lv-key *))::after,
+#lv_settings button.menu_button:not(.lv-key *)::after,
 .rl-chip:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-:is(.pa-hub .menu_button):is(#bl-s, *):is(bl-s, *)::after,
-:is(.rl-root .menu_button):is(#bl-s, *):is(bl-s, *)::after,
-:is(.rl-msg summary):is(#bl-s, *):is(.bl-s, *)::after,
+.pa-hub .menu_button:is(#bl-s, *):is(bl-s, *)::after,
+.rl-root .menu_button:is(#bl-s, *):is(bl-s, *)::after,
+.rl-msg summary:is(#bl-s, *):is(.bl-s, *)::after,
 .blzi-help:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-:is(.blzi button[data-action]):is(#bl-s, *)::after,
+.blzi button[data-action]:is(#bl-s, *)::after,
 .blpt-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .bwr_help:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .bwr-version:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .bwr_seg:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-:is(.bwr_settings .menu_button):is(#bl-s, *):is(bl-s, *)::after,
+.bwr_settings .menu_button:is(#bl-s, *):is(bl-s, *)::after,
 .pt-ui-button:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-:is(#pt-panel [data-help-group]):is(.bl-s, *):is(bl-s, *)::after,
-:is(.pt-help-dialog [data-help-group]):is(#bl-s, *):is(bl-s, *)::after,
+#pt-panel [data-help-group]:is(.bl-s, *):is(bl-s, *)::after,
+.pt-help-dialog [data-help-group]:is(#bl-s, *):is(bl-s, *)::after,
 #pt-panel-close:is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-:is(#model_register_settings .menu_button):is(.bl-s, *):is(bl-s, *)::after,
-:is(#regex-link-settings .menu_button):is(.bl-s, *):is(bl-s, *)::after,
-:is(.bl-translator-dialog .menu_button):is(#bl-s, *):is(bl-s, *)::after,
-:is(.bl-ctsi-dialog .menu_button):is(#bl-s, *):is(bl-s, *)::after,
+#model_register_settings .menu_button:is(.bl-s, *):is(bl-s, *)::after,
+#regex-link-settings .menu_button:is(.bl-s, *):is(bl-s, *)::after,
+.bl-translator-dialog .menu_button:is(#bl-s, *):is(bl-s, *)::after,
+.bl-ctsi-dialog .menu_button:is(#bl-s, *):is(bl-s, *)::after,
 .bl-fr-icon:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .bl-mermaid-again:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .salty-btn:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
@@ -25807,20 +25807,20 @@ html body.salty #left-nav-panel .menu_button:not(label *) {
 .rl-tab:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .pa-hub-tab:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .pt-tab:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-:is(.po-menu-tabs > button):is(#bl-s, *):is(.bl-s, *)::after,
+.po-menu-tabs > button:is(#bl-s, *):is(.bl-s, *)::after,
 .pt-version:is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 #pt-panel-refresh:is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-:is(.salty-panel .bl-preview-kinds > button):is(#bl-s, *)::after,
-:is(.salty-panel .bl-prompt-card-trigger):is(#bl-s, *):is(bl-s, *)::after,
-:is(.salty-panel .salty-shapes button):is(#bl-s, *)::after,
+.salty-panel .bl-preview-kinds > button:is(#bl-s, *)::after,
+.salty-panel .bl-prompt-card-trigger:is(#bl-s, *):is(bl-s, *)::after,
+.salty-panel .salty-shapes button:is(#bl-s, *)::after,
 :where(:is(.bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog) > header > button):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 :where(:is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings) summary:not(.rl-msg summary, .eh-guide summary)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 .bl-notes-ver:is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
 .jj-switch:is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-:is(.eh-guide summary):is(.bl-s, *):is(bl-s, *)::before,
-:is(.salty-panel .bl-md-group > summary):is(bl-s, *)::before,
-:is(.salty-panel .bl-usage-mode > summary):is(bl-s, *)::before,
-:is(.salty-panel details:not(.rl-msg) > summary)::before {
+.eh-guide summary:is(.bl-s, *):is(bl-s, *)::before,
+.salty-panel .bl-md-group > summary:is(bl-s, *)::before,
+.salty-panel .bl-usage-mode > summary:is(bl-s, *)::before,
+.salty-panel details:not(.rl-msg) > summary::before {
     content: '';
     position: absolute;
     left: 50%;
@@ -26085,8 +26085,8 @@ html[data-bl-puffy] body.salty #WorldInfo #wiCheckboxes label.checkbox_label > i
   box-shadow: var(--bl-knob) !important;
 }
 /* css/92-checkboxes.css */
-:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *),
-:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))) {
+html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *),
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)) {
  appearance:none!important; -webkit-appearance:none!important;
  place-content:center; box-sizing:border-box!important;
  width:20px!important; height:20px!important; min-width:20px!important; min-height:20px!important; flex-shrink:0; flex-basis:20px;
@@ -26095,38 +26095,38 @@ html[data-bl-puffy] body.salty #WorldInfo #wiCheckboxes label.checkbox_label > i
  box-shadow:none!important;
  transform:none!important; filter:none!important; cursor:pointer;
 }
-:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *)::before,
-:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)))::before { content:none!important; display:none!important; }
-:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *)::after,
-:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)))::after {
+html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *)::before,
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))::before { content:none!important; display:none!important; }
+html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *)::after,
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))::after {
  content:''!important; display:block!important; position:static!important; inset:auto!important;
  box-sizing:border-box!important; width:9px!important; height:5px!important; margin:0!important;
  border:0!important; border-left:2px solid currentColor!important; border-bottom:2px solid currentColor!important;
  border-radius:0!important; background:none!important; box-shadow:none!important; clip-path:none!important; mask:none!important;
  transform:translateY(-1px) rotate(-45deg)!important; opacity:0!important; pointer-events:none!important; filter:none!important;
 }
-:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):is(:checked,:indeterminate),
-:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(:checked,:indeterminate) {
+html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *):is(:checked,:indeterminate),
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(:checked,:indeterminate) {
  background:var(--salty-accent, var(--bl-checkbox-accent))!important; border-color:transparent!important;
  box-shadow:none!important;
 }
-:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):checked::after,
-:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):checked::after { opacity:1!important; filter:none!important; }
-:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):indeterminate::after,
-:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):indeterminate::after { opacity:1!important; border-left:0!important; height:0!important; transform:none!important; }
-:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):disabled,
-:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):disabled { cursor:default; box-shadow:none!important; opacity:.5!important; }
-:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):focus-visible,
-:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):focus-visible { outline:2px solid var(--salty-accent, var(--bl-checkbox-accent))!important; outline-offset:3px!important; }
-:is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):not(:focus-visible),
-:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):not(:focus-visible) { outline:none!important; }
+html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *):checked::after,
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):checked::after { opacity:1!important; filter:none!important; }
+html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *):indeterminate::after,
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):indeterminate::after { opacity:1!important; border-left:0!important; height:0!important; transform:none!important; }
+html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *):disabled,
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):disabled { cursor:default; box-shadow:none!important; opacity:.5!important; }
+html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *):focus-visible,
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):focus-visible { outline:2px solid var(--salty-accent, var(--bl-checkbox-accent))!important; outline-offset:3px!important; }
+html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *):not(:focus-visible),
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):not(:focus-visible) { outline:none!important; }
 @media (forced-colors:active) {
- :is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *),
-:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))) { forced-color-adjust:auto; border-color:ButtonText!important; background:Canvas!important; color:CanvasText!important; box-shadow:none!important; }
- :is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):is(:checked,:indeterminate),
-:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(:checked,:indeterminate) { background:Highlight!important; color:HighlightText!important; }
- :is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):focus-visible,
-:is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):focus-visible { outline-color:Highlight!important; }
+ html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *),
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)) { forced-color-adjust:auto; border-color:ButtonText!important; background:Canvas!important; color:CanvasText!important; box-shadow:none!important; }
+ html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *):is(:checked,:indeterminate),
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(:checked,:indeterminate) { background:Highlight!important; color:HighlightText!important; }
+ html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *):focus-visible,
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):focus-visible { outline-color:Highlight!important; }
 }
 html:not(#bl-checkrow-off) body.salty { --bl-check-gap: 8px; }
 html:not(#bl-checkrow-off) body.salty :is(dialog, .salty-panel, .pa-hub, #pt-panel, .lv-settings, .llmt-settings) label:has(> input[type="checkbox"]):not(.salty-switch, [class*="switch"], [role=switch], .menu_button, .po-visible-toggle) { column-gap: var(--bl-check-gap) !important; }

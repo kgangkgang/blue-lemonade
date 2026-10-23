@@ -383,9 +383,10 @@ function moreLines(stage, on) {
 }
 const SEE_THROUGH = ['--salty-raised', '--salty-card', '--salty-shade'];
 function seeThrough(stage, on) {
-    const root = getComputedStyle(document.documentElement);
-    for (const name of SEE_THROUGH) {
-        const value = root.getPropertyValue(name).trim();
+    // 7.8.5: 세 값을 먼저 다 읽고 나서 쓴다 — 읽기 사이에 표본 style 을 쓰면 다음 읽기마다 화면 다시 계산이 강제로 났다(설정 창 열 때 3번)
+    const root = on ? getComputedStyle(document.documentElement) : null;
+    const values = SEE_THROUGH.map(name => [name, root ? root.getPropertyValue(name).trim() : '']);
+    for (const [name, value] of values) {
         const faint = /rgba\([^)]*,\s*(0?\.\d+|0)\s*\)/.test(value); // 이미 비치는 색(날씨 중 내 메시지 농도)은 한 번 더 낮추지 않는다
         if (on && value && !faint) stage.style.setProperty(name, `color-mix(in srgb, ${value} 72%, transparent)`);
         else stage.style.removeProperty(name);

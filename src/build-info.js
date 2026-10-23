@@ -195,7 +195,7 @@ export const FILE_HASHES = {
   "src/addons/prompt/connection.js": "11622:6c30609d:ea863f81",
   "src/addons/prompt/current-connection.js": "3055:67fc264b:5c2798bc",
   "src/addons/prompt/guide.js": "24404:3fede947:6951ecf7",
-  "src/addons/prompt/index.js": "279506:807fcbf1:7e0484d6",
+  "src/addons/prompt/index.js": "280103:87d0b9cf:25bab305",
   "src/addons/prompt/localization-ui.js": "5295:e989b64d:b49f0195",
   "src/addons/prompt/persona-data.js": "4579:b96d5db9:3b8d8ae3",
   "src/addons/prompt/persona.js": "1743:3ad25141:4e82525d",
@@ -663,7 +663,7 @@ export const FILE_HASHES = {
   "src/show-more-auto.js": "5794:57822f0b:7a15ff2d",
   "src/show-more-watch.js": "1968:1131245b:7389446a",
   "src/splash.js": "19344:c97fc557:9dcea6a3",
-  "src/squared-buttons.js": "8666:d7dc7017:03bafbe3",
+  "src/squared-buttons.js": "9877:8e69d189:1e010b3d",
   "src/st-solid.js": "5312:22b0ac68:45060844",
   "src/storage-report.js": "12921:e870a096:2f44b56c",
   "src/stream-follow.js": "5639:70759422:927bc111",
@@ -693,7 +693,7 @@ export const FILE_HASHES = {
   "src/weather-rest.js": "1885:72edcdd7:6cfbb747",
   "src/weather-scenes.js": "14501:514d19d0:3ddb51b3",
   "src/weather-worker.js": "1953:1834075b:9831021d",
-  "src/weather.js": "37979:0afaf4e2:4ea3e132",
+  "src/weather.js": "38225:230abd38:8086206a",
   "src/websearch-core.js": "17125:d18d37ff:114569c1",
   "src/websearch.js": "23413:6753586f:be03a4b1",
   "src/wi-help-data.js": "23093:a4cbce3e:822b4fbb",
@@ -702,5 +702,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1665959:024f6783:7cc7c74e"
+  "style.css": "1665404:8d7c4362:7e7818c1"
 };

@@ -66,6 +66,12 @@ function expandOne(sel, stats, depth = 0) {
     const close = lib.endParen(last, open);
     const args = lib.topSplit(last.slice(open + 1, close));
     const tail = last.slice(close + 1);
+    // 7.8.5: 선택자 맨 앞이 한 갈래 :is( 결합자 있는 선택자 )면 껍데기를 벗긴다 — `:is(A B).c` 는 `A B.c` 와 뜻 · 특이도가 같다(앞에 붙은 것이 없을 때만).
+    // 크롬은 맨 오른쪽 칸이 :is( A B ) 처럼 안에 결합자가 있으면 어느 묶음에도 못 넣어 모든 요소와 견줬다(92-checkboxes 가 문서 전체 다시 계산의 4분의 1 남짓)
+    if (args.length === 1 && head === '' && m[1].toLowerCase() === 'is' && hasCombinator(args[0]) && !risky(args[0]) && !/^\s*[>+~]/.test(args[0])) {
+        stats.unwrapped = (stats.unwrapped || 0) + 1;
+        return depth < 3 ? expandOne(`${args[0].trim()}${tail}`, stats, depth + 1) : [`${args[0].trim()}${tail}`];
+    }
     if (args.length < 2) return [sel];
     if (args.some(risky)) { stats.skipRisky++; return [sel]; }
     let out;
@@ -81,7 +87,7 @@ function expandOne(sel, stats, depth = 0) {
             // 모자람만 있으면 갈래 + 보정. 넘치는 자리가 있으면(#a 와 .b.c) 갈래를 :where 로 0 으로 만든 뒤 최대치만큼 보정
             // 갈래에 결합자가 있으면 한 갈래 :is( … ) 로 감싼다 (뜻 · 특이도 그대로, 크롬은 한 갈래 :is 를 안쪽 오른쪽 칸으로 묶음)
             if (hasCombinator(a)) stats.wrapped++;
-            const branch = hasCombinator(a) ? `:is(${a})` : a;
+            const branch = hasCombinator(a) && head !== '' ? `:is(${a})` : a;   // 7.8.5 맨 앞이면 감싸지 않음(뜻 · 특이도 같음)
             if (d.every(x => x >= 0)) return `${head}${branch}${pad(d)}${tail}`;
             stats.whereWrapped++;
             return `${head}:where(${a})${pad(max)}${tail}`;

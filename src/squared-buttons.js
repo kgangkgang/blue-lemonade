@@ -70,6 +70,26 @@ export function isRoundTextButton(el, view = el.ownerDocument.defaultView) {
     return clickable;
 }
 
+// 7.8.5: 인라인 style 에서 padding 위 · 아래만 바뀐 것(control-ink 의 글자 세로 맞춤)은 모양 · 보임이 안 바뀐다 — 다시 재지 않는다.
+// 예전에는 그 쓰기마다 이 감시가 다시 재기를 걸어, 확장 서랍을 열 때 화면 전체 다시 계산이 10번 남짓 났다(리그 CPU 4배)
+const PADDING_ONLY = /^padding-(top|bottom)$/;
+function styleMap(text) {
+    const map = new Map();
+    for (const part of String(text || '').split(';')) { const i = part.indexOf(':'); if (i > 0) map.set(part.slice(0, i).trim().toLowerCase(), part.slice(i + 1).trim()); }
+    return map;
+}
+export function paddingOnly(record) {
+    if (record.type !== 'attributes' || record.attributeName !== 'style' || typeof record.target?.getAttribute !== 'function') return false;
+    const before = styleMap(record.oldValue), after = styleMap(record.target.getAttribute('style'));
+    let changed = false;
+    for (const key of new Set([...before.keys(), ...after.keys()])) {
+        if (before.get(key) === after.get(key)) continue;
+        if (!PADDING_ONLY.test(key)) return false;
+        changed = true;
+    }
+    return changed;
+}
+
 export function watchSquaredButtons(doc, host) {
     const style = doc.createElement('style');
     style.dataset.blSquaredStyle = '';
@@ -130,11 +150,11 @@ export function watchSquaredButtons(doc, host) {
         const pending = new Set();
         for (const r of records) {
             if (r.attributeName === 'data-generating') { if (!doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
-            if (r.type === 'childList') r.addedNodes.forEach(node => pending.add(node)); else pending.add(r.target);
+            if (r.type === 'childList') r.addedNodes.forEach(node => pending.add(node)); else if (!paddingOnly(r)) pending.add(r.target);
         }
         queueMany(pending);
     });
-    observer.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'open', 'data-generating'] });
+    observer.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['class', 'style', 'hidden', 'open', 'data-generating'] });
     const resize = () => queue(doc.body);
     host.addEventListener('resize', resize);
     queue(doc.body);

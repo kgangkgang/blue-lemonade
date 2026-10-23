@@ -5076,7 +5076,11 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
     // Watch only the local drawer and ST extension drawer boundaries;
     // watching every ancestor up to <html>
     // made each body class toggle (streaming etc.) flush layout via getClientRects.
-    const drawerObserver = new MutationObserver(syncDrawerPages);
+    // 7.8.5: 서랍이 열리고 닫힐 때 class · style 이 여러 번 바뀐다 — 바뀔 때마다 그 자리에서 getClientRects 로 재면 그때마다
+    // 화면 전체 다시 계산이 강제로 났다(확장 서랍 열기 2번 · 리그 CPU 4배 1.2초). 다음 프레임 처음에 한 번만 잰다(그 프레임이 어차피 하는 계산, 칠하기 전이라 보이는 결과는 같다)
+    let drawerSyncFrame = 0;
+    const scheduleDrawerSync = () => { if (!drawerSyncFrame) drawerSyncFrame = requestAnimationFrame(() => { drawerSyncFrame = 0; syncDrawerPages(); }); };
+    const drawerObserver = new MutationObserver(scheduleDrawerSync);
     const drawerWatch = new Set([drawerContent, drawerContent.closest('.inline-drawer'), PDOC.getElementById('extensions_settings'), PDOC.getElementById('rm_extensions_block')]);
     for (const el of drawerWatch) {
         if (!el) continue;
@@ -5084,7 +5088,7 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
         // ST can transition display with allow-discrete. The initial style
         // mutation still has a layout box; release rows once it is really hidden.
         const afterTransition = event => {
-            if (event.target === el && ['display', 'height'].includes(event.propertyName)) syncDrawerPages();
+            if (event.target === el && ['display', 'height'].includes(event.propertyName)) scheduleDrawerSync();
         };
         el.addEventListener('transitionend', afterTransition);
         el.addEventListener('transitioncancel', afterTransition);
