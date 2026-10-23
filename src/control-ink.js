@@ -1,6 +1,7 @@
 // Center short control labels using the font that actually rendered, including fallback fonts.
 // Only padding is redistributed: the face, hit area, font and spacing retain their sizes.
-const ROOTS = '.salty-panel, .bl-roomy-dialog, .bl-tool-dialog, .bl-credits-dialog, .bl-ft-dialog, .bl-assets-dialog, .bl-notes-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, #regex-link-settings, .po-dialog, .pa-hub, .rl-root, #cg-panel, #pt-panel, .popup-controls';
+const ROOTS = '.salty-panel, .bl-roomy-dialog, .bl-tool-dialog, .bl-credits-dialog, .bl-ft-dialog, .bl-assets-dialog, .bl-notes-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, #regex-link-settings, .po-dialog, .pa-hub, .rl-root, #cg-panel, #pt-panel, .popup-controls, .pt-help-dialog, .llmt-settings, .cg-root';
+// 7.8.6: 한글화 패널 사용법 창 · LLM 번역 서랍 설정 · 북마크 창도 — 그 단추들은 윈도우에서 잰 글꼴 표(--bl-text-nudge)만 따라가고 있었다
 const BUTTONS = 'button, .menu_button, [role="button"]';
 const saved = new WeakMap();
 const metrics = new Map();
