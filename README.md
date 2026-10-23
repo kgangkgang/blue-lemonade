@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.2/blue-lemonade-7.8.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.3/blue-lemonade-7.8.3.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,18 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.8.2 · 최신 업데이트</summary>
+<summary>7.8.3 · 최신 업데이트</summary>
+
+- 번역 · 다시 쓰기 창의 숫자칸(최대 응답 토큰 · 전체 번역 딜레이 · 겹침 비교할 최근 답 수 등)이 이름 아래 따로 떨어져 있던 것을 이름 오른쪽 한 줄로 맞췄어요.
+- ZIP 설치 창의 도움말 ? 를 다른 창과 같은 동그란 모양으로 바꾸고, 절 제목 아이콘과 글자 사이를 띄웠어요. 모델 전환 「잠금」 아이콘 간격도 같이 맞췄어요.
+- 안내만 하는 팝업에 「닫기」 와 함께 「취소」 가 뜨던 것을 숨기는 장치가 실제로 작동하게 고쳤어요. 묻는 창(확인 · 취소)은 그대로예요.
+- 목록을 닫은 직후 잠깐 동안 화면 단추가 대신 눌러 주는 동작까지 막히던 것을 고쳤어요.
+- 폰에서 글자 위치를 맞출 때의 측정을 글꼴별로 한 번만 하도록 줄여 창을 여는 부담을 덜었어요.
+
+</details>
+
+<details>
+<summary>7.8.2 · 폰 글자 처짐 · 빠른 답장 편집 한 줄 · 입력칸 면 반 단계</summary>
 
 - 폰에서 단추 · 목록 칸 글자가 1~1.5px 아래로 처져 보이던 것을 고쳤어요. 글자 위치를 맞출 때 글꼴 표 대신 그 기기 화면에서 기준선을 직접 재요(안드로이드와 PC 가 같은 글꼴을 다르게 읽던 차이).
 - 빠른 답장 편집: 세트 고르기와 아이콘 6개(이름 바꾸기 · 새 세트 · 가져오기 · 내보내기 · 복제 · 지우기)가 한 줄에 들어가요. 항목의 ☰ 손잡이와 이름 칸 사이를 띄우고, 내용 입력칸은 좌우 끝까지 넓혔어요.

@@ -68,7 +68,7 @@ html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-f
 html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field input:is([type="search"], [type="text"]) { background: transparent !important; box-shadow: none !important; border: 0 !important; outline: none !important; }
 /* 7.8.2 입력칸 면 반 단계(사용자 10-23 「전개 지시 입력칸 너무 밝아 — 줄여」): I2 면(--bl-control)과 담는 카드 면의 가운데. 한 곳에서 바꾸기: --bl-field-face */
 html:not(#bl-i2-off) body.salty { --bl-field-face: color-mix(in srgb, var(--bl-control) 50%, var(--bl-card, var(--salty-surface))); }
-/* 7.8.3 숫자칸 한 줄(사용자 오토픽 「최대 토큰」 제보 · layout-audit PARAMSTACK): 다시 쓰기 .bwr_field 의 숫자칸을 이름 오른쪽에(번역 .llmt-field 는 위 55~58 규칙에서) */
+/* 7.8.3 숫자칸 한 줄(사용자 제보 「숫자칸이 이름 아래 혼자 가운데」 · layout-audit PARAMSTACK): 다시 쓰기 .bwr_field 의 숫자칸을 이름 오른쪽에(번역 .llmt-field 는 위 55~58 규칙에서) */
 html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field:has(> input[type="number"]) { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; }
 html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field:has(> input[type="number"]) > span { flex: 1 1 auto; min-width: 0; }
 html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field:has(> input[type="number"]) > input[type="number"] { flex: 0 0 auto; margin: 0 !important; }
