@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build e6c61f48e3a1) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 21618570c9e3) */
 /* css/00-base.css */
 :root{--bl-release:"7.8.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -25442,6 +25442,8 @@ html body.salty #lv_settings .lv-grid > .lv-field > input[type="range"] { width:
 html body.salty #lv_settings .lv-extras > summary { display: flex; align-items: center; gap: 8px; }
 html body.salty #lv_settings .lv-extras > summary > .lv-extras-clear { margin-left: auto; min-height: 28px !important; padding: 0 10px !important; font-size: var(--bl-ts-meta, 12.5px) !important; }
 html body.salty dialog.bl-notes-dialog > header > b { flex-wrap: nowrap !important; min-width: 0; white-space: nowrap; }
+html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 34px !important; font-size: 13px !important; }
+@media (max-width: 760px), (pointer: coarse) { html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 32px !important; } }
 /* css/86-touch-targets.css */
 @media (pointer: coarse) {
   html body :is(.salty-panel .salty-seg > button):is(.bl-s, *):is(bl-s, *),
@@ -25704,8 +25706,6 @@ html body.salty #left-nav-panel .menu_button:not(label *) {
   html body .salty-panel, html body .salty-panel.bl-editor { --num-h: max(44px, calc(1.5em + 12px)); }
   html body :is(.bl-direction-dialog, .jj-settings-body, #jj-settings) #jj_depth { min-width: 44px; }
 }
-html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 34px !important; font-size: 13px !important; }
-@media (max-width: 760px), (pointer: coarse) { html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 32px !important; } }
 /* css/88-theme-off.css */
 html body:not(.salty) .salty-panel button,
 html body:not(.salty) .salty-panel small { color: inherit; }

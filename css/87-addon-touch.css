@@ -78,6 +78,3 @@
   /* 전개 지시 창의 「깊이」 숫자 칸(폭 35) */
   html body :is(.bl-direction-dialog, .jj-settings-body, #jj-settings) #jj_depth { min-width: 44px; }
 }
-/* 7.8.1 캐릭터 에셋 S · M · L 세그먼트: 높이 30 · 글자 12.4 로 크기표(세그먼트 34 · 폰 32 · 글자 13)보다 작았다(role-audit) */
-html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 34px !important; font-size: 13px !important; }
-@media (max-width: 760px), (pointer: coarse) { html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 32px !important; } }
