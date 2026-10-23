@@ -11,7 +11,7 @@ html:not(#bl-i2-off) body.salty :is(.text_pole, select, textarea, input:is([type
 }
 html:not(#bl-i2-off) body.salty :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"], [type="tel"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, #nonQRFormItems *, ul, ol, [data-bl-native-ext-colors] *, .salty-switch input, [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"])):focus {
   background-color: var(--bl-field-face, var(--bl-control)) !important;
-  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;   /* 7.8.6 누르면 포인트색 1px 만 — 바깥 3px 번진 고리(--bl-ring)는 두껍고 흐려 보였음 (디자인 철칙 §4 · 사용자 10-23 전개 지시 시안 C) */
 }
 html:not(#bl-i2-off) body.salty :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"], [type="tel"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, #nonQRFormItems *, ul, ol, [data-bl-native-ext-colors] *, .salty-switch input, [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"])):disabled {
   opacity: .55 !important;
@@ -23,7 +23,7 @@ html:not(#bl-i2-off) body.salty .salty-panel :is(input:is([type="text"], [type="
   border: 0 !important;
 }
 html:not(#bl-i2-off) body.salty .salty-panel :is(input:is([type="text"], [type="search"], [type="number"], [type="url"], [type="password"]), select, textarea):where(:not(.salty-switch input, .salty-reset-pick input, [type="color"], [type="range"])):focus-visible {
-  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;   /* 7.8.6 누르면 포인트색 1px 만 — 바깥 3px 번진 고리(--bl-ring)는 두껍고 흐려 보였음 (디자인 철칙 §4 · 사용자 10-23 전개 지시 시안 C) */
 }
 
 /* ---- 숫자칸 유동 폭(제보 14 · 22 보충): 애드온 창 · 팝업의 숫자 입력칸은 값 길이만큼(최소 3자) + 안쪽 여백, 단위는 바로 옆.

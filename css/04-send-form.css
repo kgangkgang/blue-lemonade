@@ -471,17 +471,18 @@ body.salty #jj-popup .jj-switch[aria-checked="true"] span {
   background: #fff; /* 5.5.6 손잡이는 켜져도 흰색 (사용자: 검은 손잡이가 어색하다) — 설정 창의 스위치와 같은 모양 */
   box-shadow: var(--bl-knob);
 }
-/* 지시 입력칸: 회색 반투명 대신 오목한 칸 (꺼지면 확장이 흐리게 — 그대로) */
+/* 지시 입력칸 — 7.8.6 시안 C(사용자 10-23 「C가 마음에 듦」): 입력칸 I2 와 같게 한 단계 밝은 면 + 1px 선, 누르면 선만 포인트색 1px
+   (예전: 오목한 칸 + 번진 1.5px 파란 고리 — 두껍고 흐려 보였음). 꺼지면 확장이 흐리게 — 그대로 */
 body.salty #jj-popup .jj-textarea {
   resize: none; /* 글 양에 맞춰 늘어남 */
   border: 0 !important;
   border-radius: 12px;
-  background-color: var(--bl-well) !important;
-  box-shadow: var(--bl-well-in) !important;
+  background-color: var(--bl-field-face, var(--bl-control)) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-line) !important;
   color: var(--salty-text) !important;
 }
 body.salty #jj-popup .jj-textarea:focus {
-  box-shadow: var(--bl-well-in), 0 0 0 1.5px var(--salty-accent-40) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 /* 창 제목 깃털: 제목 글자보다 튀지 않게 같은 크기 */
 body.salty.salty-icons-line #jj-popup .jj-popup-title i {
