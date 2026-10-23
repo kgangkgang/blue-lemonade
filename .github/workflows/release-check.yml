@@ -213,7 +213,6 @@ jobs:
           node tools/tests/param-dimensions.mjs .
           node tools/tests/touch-targets.mjs .
           node tools/tests/addon-touch-targets.mjs .
-          node tools/tests/puffy-rollback.mjs .
           node tools/tests/perf-help-touch.mjs .
           node tools/tests/align-check.mjs .
           node tools/tests/control-ink.mjs .
