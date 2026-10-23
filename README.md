@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.1/blue-lemonade-7.8.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.8.2/blue-lemonade-7.8.2.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,18 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.8.1 · 최신 업데이트</summary>
+<summary>7.8.2 · 최신 업데이트</summary>
+
+- 폰에서 단추 · 목록 칸 글자가 1~1.5px 아래로 처져 보이던 것을 고쳤어요. 글자 위치를 맞출 때 글꼴 표 대신 그 기기 화면에서 기준선을 직접 재요(안드로이드와 PC 가 같은 글꼴을 다르게 읽던 차이).
+- 빠른 답장 편집: 세트 고르기와 아이콘 6개(이름 바꾸기 · 새 세트 · 가져오기 · 내보내기 · 복제 · 지우기)가 한 줄에 들어가요. 항목의 ☰ 손잡이와 이름 칸 사이를 띄우고, 내용 입력칸은 좌우 끝까지 넓혔어요.
+- 입력칸 면을 담는 칸보다 반 단계만 밝게 줄였어요.
+- 업데이트의 설치 · 충돌 점검 칸이 검사 전에도 빈 줄만큼 커 보이던 것을 고쳤어요.
+- 설정 선택 창 아래 Blue Lemonade 줄에서 판 알약이 ⓒ · 이름보다 1px 위에 있던 것을 맞췄어요.
+
+</details>
+
+<details>
+<summary>7.8.1 · 화면 밖 글자 · 검색칸 두 겹 · 머리줄과 체크박스 줄 규격 통일</summary>
 
 - 설정을 많이 바꿔 이름 옆 「기본값으로」 아이콘이 보일 때, 설명이 긴 항목(화면 · 문단 · 모양 · 투명 그림 등)이 화면 밖으로 밀리던 것을 고쳤어요. 폭 320~430 폰에서 모두 화면 안에 들어와요.
 - 설정 선택 창의 검색칸이 상자 두 겹으로 보이던 것을 한 겹으로 정리했어요.
