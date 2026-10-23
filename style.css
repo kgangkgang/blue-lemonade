@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 5a6b2411cbfd) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 1b8e9e58bb23) */
 /* css/00-base.css */
 :root{--bl-release:"7.8.6";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -25413,20 +25413,146 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #regex-link-settings .
 html body.salty :is(dialog.popup:not(.bl-settings-dialog) .po-dialog .po-item):is(#bl-s, *) {
   border-color: var(--salty-line) !important;
 }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-theme,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-fullscreen,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-close {
+  width: 34px; height: 34px; min-width: 34px; min-height: 34px;
+  border: 0; background: transparent; box-shadow: none; color: var(--ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-theme:hover,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-fullscreen:hover,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-close:hover { background: var(--fill); }
+}
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .bl-fruit-help-button {
+  width: 24px; height: 24px; min-width: 24px; min-height: 24px; margin: 0 0 0 6px;
+  border: 0; border-radius: 50%; background: var(--fill); color: var(--ink2); box-shadow: none;
+  font-size: 12px; line-height: 1;
+}
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .bl-fruit-help-button > svg { display: none; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .bl-fruit-help-button::before {
+  content: "\f128"; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 12px; line-height: 1; display: block;
+}
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw {
+  position: relative; flex: none;
+  width: 20px; height: 20px; min-width: 20px; min-height: 20px; margin: 0; padding: 0;
+  border: 1px solid var(--line); border-radius: 5px; background: transparent; box-shadow: none; transition: none;
+}
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw::after {
+  content: ""; position: absolute; top: 50%; left: 50%; width: 9px; height: 5px;
+  border: 0; border-left: 2px solid var(--on-acc, var(--salty-on-accent, #fff)); border-bottom: 2px solid var(--on-acc, var(--salty-on-accent, #fff)); border-radius: 0;
+  background: none; box-shadow: none; transform: translate(-50%, -65%) rotate(-45deg); opacity: 0; transition: none;
+}
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw.on { background: var(--acc); border-color: var(--acc); }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw.on::after { left: 50%; opacity: 1; background: none; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw[disabled] { opacity: .5; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-cv, .fh-row) .fh-sw { margin-left: 0; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-cell:has(> .fh-cv > .fh-sw:only-child) {
+  position: relative; overflow: hidden; justify-content: flex-start; flex-wrap: nowrap; gap: 8px;
+}
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-cell:has(> .fh-cv > .fh-sw:only-child) > .fh-cv { order: -1; flex: none; margin: 0; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-cell:has(> .fh-cv > .fh-sw:only-child) > .fh-ck { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-cell > .fh-cv > .fh-sw:only-child::before {
+  content: ""; position: absolute; top: -12px; bottom: -12px; left: -12px; right: -400px;
+}
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-toggle { grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-toggle > .fh-sw { grid-column: 1; grid-row: 1; align-self: center; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-toggle > span > small { grid-column: 2; grid-row: 2; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-sortrow, .fh-ch) > .fh-sw { align-self: center; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-seg { border: 1px solid var(--line); padding: 2px; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-seg button { border: 1px solid transparent; box-shadow: none; padding-left: 9px; padding-right: 9px; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-seg button.on { border-color: var(--acc); box-shadow: none; font-weight: 650; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-btn,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-chip,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-tag,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sel { border: 1px solid var(--line); box-shadow: none; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-btn.primary,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-btn.solid { border-color: var(--acc); }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-btn.on,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-chip.on,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sel.on { border-color: var(--acc); }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=text],
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=search],
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=number],
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 textarea:is(.bl-s, *),
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 select:is(.bl-s, *) { border: 1px solid var(--line); box-shadow: none; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=text]:focus,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=search]:focus,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=number]:focus,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 textarea:is(.bl-s, *):focus,
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 select:is(.bl-s, *):focus { border-color: var(--acc); outline: none; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 select:not([multiple]) {
+  -webkit-appearance: none; appearance: none; padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6.5 9.5 5.5 5.5 5.5-5.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; background-size: 15px 15px;
+}
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=checkbox] {
+  -webkit-appearance: none; appearance: none; display: inline-grid; place-content: center; flex: none; box-sizing: border-box;
+  width: 20px; height: 20px; min-width: 20px; min-height: 20px; margin: 0; padding: 0;
+  border: 1px solid var(--line); border-radius: 5px; background: transparent; box-shadow: none; color: var(--on-acc, #fff); cursor: pointer; vertical-align: middle;
+}
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=checkbox]::after {
+  content: ""; display: block; width: 9px; height: 5px; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: translateY(-1px) rotate(-45deg); opacity: 0;
+}
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=checkbox]:checked { background: var(--acc); border-color: var(--acc); }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=checkbox]:checked::after { opacity: 1; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 label:has(> input[type=checkbox]) { display: inline-flex; align-items: center; gap: 8px; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-bottom-nav { padding: 6px 10px; gap: 6px; }
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-nav-item {
+  min-height: 36px; height: 36px; padding: 0 4px; gap: 6px; border: 1px solid var(--line); box-shadow: none; line-height: 1.2;
+}
+html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-nav-item.on { border-color: var(--acc); font-weight: 650; }
+html body.salty #bl-deus-popover .dq-head { grid-template-columns: minmax(0, max-content) auto minmax(0, 1fr) auto; column-gap: 8px; }
+html body.salty #bl-deus-popover .dq-head > strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body.salty #bl-deus-popover .dq-close { grid-column: 4; justify-self: end; width: 34px; height: 34px; min-width: 34px; min-height: 34px; padding: 0; border: 0; background: transparent; box-shadow: none; }
 html body.salty #bl-deus-popover .dq-version { border-radius: 999px !important; padding: 0 8px !important; min-height: 18px; line-height: 18px; font-size: .75em !important; }
-html body.salty #bl-deus-popover .dq-toggle { flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 8px !important; min-height: var(--bl-h-ctl, 36px) !important; padding: 0 10px !important; }
-html body.salty #bl-deus-popover .dq-toggle-control { order: 1; flex: none !important; display: inline-flex !important; align-items: center; }
+html body.salty #bl-deus-popover .dq-help-button {
+  width: 24px; height: 24px; min-width: 24px; min-height: 24px; padding: 0; margin: 0;
+  border: 0; border-radius: 50%; background: var(--bl-control, var(--salty-shade)); color: var(--salty-muted); box-shadow: none;
+}
+html body.salty #bl-deus-popover .dq-help-glyph { width: auto; height: auto; border: 0; border-radius: 0; font-size: 0; }
+html body.salty #bl-deus-popover .dq-help-glyph::before { content: "\f128"; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 12px; line-height: 1; display: block; }
+html body.salty #bl-deus-popover .dq-tabs { gap: 4px; }
+html body.salty #bl-deus-popover .dq-tabs button { min-height: 36px; height: 36px; padding: 2px 6px 0; gap: 6px; border: 1px solid var(--salty-line); box-shadow: none; line-height: 1.2; }
+html body.salty #bl-deus-popover .dq-tabs [aria-pressed=true] { border-color: var(--salty-accent); font-weight: 650; }
+@container bl-deus-quick (max-width: 330px) { html body.salty #bl-deus-popover .dq-tabs button > i { display: none; } }
+html body.salty #bl-deus-popover summary::after { content: "\f078"; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 12px; line-height: 1; color: var(--salty-muted); }
+html body.salty #bl-deus-popover details[open] > summary::after { content: "\f077"; }
+html body.salty #bl-deus-popover .dq-card-body { padding: 8px; gap: 8px; }
+html body.salty #bl-deus-popover .dq-checks { gap: 8px; }
+@container bl-deus-quick (max-width: 350px) { html body.salty #bl-deus-popover .dq-checks:not(:has(> .dq-toggle-compact)) { grid-template-columns: minmax(0, 1fr); } }
+html body.salty #bl-deus-popover .dq-toggle {
+  flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 8px !important;
+  min-height: var(--bl-h-ctl, 36px) !important; padding: 0 8px !important;
+  border: 1px solid var(--salty-line) !important; background: var(--salty-shade); box-shadow: none !important;
+}
+html body.salty #bl-deus-popover .dq-toggle:has(input:checked) { background: var(--salty-accent-13, var(--salty-shade)); border-color: var(--salty-line) !important; }
+html body.salty #bl-deus-popover .dq-toggle-control { order: 1; flex: none !important; display: inline-flex !important; align-items: center; min-height: 0; }
 html body.salty #bl-deus-popover .dq-toggle-label { order: 2; flex: 1 1 auto !important; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; word-break: keep-all; }
 html body.salty #bl-deus-popover .dq-toggle-state { display: none !important; }
-html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"] {
-  appearance: none !important; display: grid !important; place-content: center; box-sizing: border-box; width: 20px !important; height: 20px !important; margin: 0 !important; padding: 0 !important;
-  border: 1px solid var(--salty-line) !important; border-radius: 5px !important; background: var(--salty-control) !important; color: var(--salty-on-accent, #fff);
-  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--salty-text) 16%, transparent) !important; cursor: pointer;
+html body.salty #bl-deus-popover .dq-toggle > .dq-toggle-control > input[type="checkbox"],
+html body.salty #bl-deus-popover .dq-toggle > input[type="checkbox"] {
+  appearance: none !important; -webkit-appearance: none !important; display: grid !important; place-content: center; box-sizing: border-box;
+  width: 20px !important; height: 20px !important; min-width: 20px !important; min-height: 20px !important; margin: 0 !important; padding: 0 !important;
+  border: 1px solid var(--salty-line) !important; border-radius: 5px !important; background: transparent !important; background-image: none !important;
+  color: var(--salty-on-accent, #fff) !important; box-shadow: none !important; filter: none !important; cursor: pointer;
 }
-html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]::after { content: ''; display: block; width: 9px; height: 5px; border: 0; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-1px) rotate(-45deg); opacity: 0; }
-html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked { background: var(--salty-accent) !important; border-color: transparent !important; box-shadow: inset 0 2px 2px color-mix(in oklab, var(--salty-bg) 32%, transparent) !important; }
-html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked::after { opacity: 1; }
-html body.salty #bl-deus-popover .dq-row select { height: var(--bl-h-ctl, 36px) !important; min-height: var(--bl-h-ctl, 36px) !important; padding-block: 0 !important; }
+html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]::before { content: none !important; display: none !important; }
+html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]::after {
+  content: "" !important; display: block !important; position: static !important; width: 9px !important; height: 5px !important; margin: 0 !important;
+  border: 0 !important; border-left: 2px solid currentColor !important; border-bottom: 2px solid currentColor !important; border-radius: 0 !important;
+  background: none !important; box-shadow: none !important; transform: translateY(-1px) rotate(-45deg) !important; opacity: 0 !important;
+}
+html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked { background: var(--salty-accent) !important; border-color: var(--salty-accent) !important; }
+html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked::after { opacity: 1 !important; }
+html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:disabled { opacity: .5 !important; }
+html body.salty #bl-deus-popover .dq-row select { height: var(--bl-h-ctl, 36px) !important; min-height: var(--bl-h-ctl, 36px) !important; padding-top: 2px !important; padding-bottom: 0 !important; }
+html body.salty #bl-deus-popover .dq-row select,
+html body.salty #bl-deus-popover .dq-row input { border: 1px solid var(--salty-line) !important; box-shadow: none !important; }
+html body.salty #bl-deus-popover .dq-row select:focus,
+html body.salty #bl-deus-popover .dq-row input:focus { border-color: var(--salty-accent) !important; }
+html body.salty #bl-deus-popover .dq-fields > .bl-ft-shortcut { align-self: end; justify-self: stretch; min-height: var(--bl-h-ctl, 36px) !important; border: 1px solid var(--salty-line) !important; box-shadow: none !important; }
 html body.salty .rl-chip.rl-chip-icon:is(.bl-s, *),
 html body.salty .salty-btn.salty-btn-icon[data-health-check],
 html body.salty :is(.bl-library-tools .bl-icon-btn):is(.bl-s, *) {
