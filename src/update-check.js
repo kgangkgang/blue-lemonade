@@ -226,8 +226,17 @@ export async function runUpdate({ inst, headers = {}, fetcher = fetch, repo = RE
     }
     if (inst.global) return 'zip';   // 공용(전역) ZIP 설치는 백업을 둘 자리가 없다
     status('GitHub 링크 설치로 바꾸는 중… 지금 폴더를 백업해요');
+    const fromGit = !!info?.remoteUrl;   // 여기까지 왔으면 Git 설치인데 받아 오기가 실패한 경우
     r = await post('/api/extensions/move', { extensionName: name, source: 'local', destination: 'global' });
+    if (r.status === 409 && fromGit) {
+        // 7.8.8 실리태번의 옮기기는 「복사 → 원본 지우기」라, 서버가 아직 그 폴더에서 받아 오는 중이면 지우기만 실패하고 전역에 복사본이 남는다
+        //   (예전 판은 그 뒤로 「예전 백업 폴더가 남아 있어」에서 계속 멈춤). Git 설치의 복구 길에서는 그 복사본이 우리가 남긴 백업이니 지우고 한 번 더.
+        status('지난번에 남은 백업을 지우고 다시 백업해요…');
+        await post('/api/extensions/delete', { extensionName: name, global: true }).catch(() => null);
+        r = await post('/api/extensions/move', { extensionName: name, source: 'local', destination: 'global' });
+    }
     if (r.status === 403) return 'zip';
+    if (!r.ok && fromGit && r.status !== 409) throw new Error('서버가 아직 GitHub 에서 받아 오는 중이라 폴더를 옮기지 못했어요. 몇 분 뒤 다시 눌러 주세요.');
     if (r.status === 409) throw new Error('예전 백업 폴더가 남아 있어 멈췄어요 (아무것도 안 바뀌었어요). 확장 관리에서 공용으로 깔린 Blue Lemonade 를 지운 뒤 다시 해 주세요.');
     if (!r.ok) throw new Error('지금 폴더를 백업하지 못해 멈췄어요 (아무것도 안 바뀌었어요).');
     status('GitHub 에서 새 버전을 받는 중… (1분쯤 걸릴 수 있어요)');

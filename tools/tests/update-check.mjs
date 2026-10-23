@@ -209,12 +209,29 @@ await test('runUpdate 7.8.8: /update 가 던져도(연결 끊김 · 시간 넘�
     assert.equal(await U.runUpdate({ inst, fetcher: s.fetcher }), 'done');
     assert.deepEqual(s.calls.map(c => c.path.replace('/api/extensions/', '')), ['version', 'update', 'move', 'install', 'delete']);
     s = slowServer({ version: gitInfo, update: later(500, { status: 200 }), move: { status: 500 } });
-    await assert.rejects(U.runUpdate({ inst, fetcher: s.fetcher, waitMs: 50 }), /백업하지 못해 멈췄어요 \(아무것도 안 바뀌었어요\)/);
+    await assert.rejects(U.runUpdate({ inst, fetcher: s.fetcher, waitMs: 50 }), /아직 GitHub 에서 받아 오는 중이라 폴더를 옮기지 못했어요/);
+    assert.ok(!s.calls.some(c => /install|delete/.test(c.path)), '옮기기 실패면 설치 · 지우기 안 함');
     s = slowServer({ version: gitInfo, update: { status: 403 } });
     await assert.rejects(U.runUpdate({ inst, fetcher: s.fetcher }), /권한이 없어요/);
     assert.deepEqual(s.calls.map(c => c.path.replace('/api/extensions/', '')), ['version', 'update']);
     s = slowServer({ version: gitInfo, update: new TypeError('Failed to fetch') });
     await assert.rejects(U.runUpdate({ inst: { extensionName: 'blue-lemonade', global: true }, fetcher: s.fetcher }), /업데이트가 실패했어요/);
+});
+
+await test('runUpdate 7.8.8: Git 복구 길에서 지난번에 남은 전역 복사본(409)은 지우고 한 번 더 옮김 · 그래도 409 면 멈춤 · ZIP 설치의 409 는 예전처럼 멈춤', async () => {
+    let moves = 0;
+    let s = slowServer({ version: gitInfo, update: { status: 500 }, move: () => (++moves === 1 ? { status: 409 } : { status: 204 }), install: { status: 200 }, delete: { status: 200 } });
+    const msgs = [];
+    assert.equal(await U.runUpdate({ inst, fetcher: s.fetcher, status: m => msgs.push(m) }), 'done');
+    assert.deepEqual(s.calls.map(c => c.path.replace('/api/extensions/', '')), ['version', 'update', 'move', 'delete', 'move', 'install', 'delete']);
+    assert.deepEqual(s.calls[3].body, { extensionName: 'blue-lemonade', global: true }, '지우는 건 전역 복사본');
+    assert.ok(msgs.some(m => /남은 백업을 지우고/.test(m)));
+    s = slowServer({ version: gitInfo, update: { status: 500 }, move: { status: 409 }, delete: { status: 200 } });
+    await assert.rejects(U.runUpdate({ inst, fetcher: s.fetcher }), /예전 백업 폴더가 남아 있어/);
+    assert.ok(!s.calls.some(c => /install/.test(c.path)));
+    s = slowServer({ version: { status: 200, body: {} }, move: { status: 409 } });
+    await assert.rejects(U.runUpdate({ inst, fetcher: s.fetcher }), /예전 백업 폴더가 남아 있어/);
+    assert.deepEqual(s.calls.map(c => c.path.replace('/api/extensions/', '')), ['version', 'move'], 'ZIP 설치는 지우지 않음');
 });
 
 await test('runUpdate (ZIP 설치): 백업(local→global) → GitHub 설치(local) → 백업 지움 · 순서와 본문', async () => {
