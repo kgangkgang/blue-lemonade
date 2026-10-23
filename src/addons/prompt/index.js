@@ -4640,6 +4640,32 @@ export function translatedPromptTitle(identifier, presetName = '') {
     try { return getTranslatedTitle(presetNs(presetName), String(identifier)) || null; } catch { return null; }
 }
 
+// 다른 애드온(전개 지시의 번역 단추)이 칸 하나의 글을 이 패널과 같은 번역(translateText) · 같은 캐시로 보는 길.
+// 캐시 열쇠는 글 자체(해시 + 길이) · 본문 언어라서, 같은 글이면 요청 없이 캐시에서 바로 돌려준다. 제목은 보내지 않는다.
+// 패널의 번역이 도는 중이면 겹쳐 보내지 않고 알린다(정규식 쪽과 같은 규칙). 따로 설치한 패널이 돌고 있으면(duplicate) 캐시 파일이 그쪽 것이라 쓰지 않는다.
+const SHARED_TEXT_NS = 'pt-ext::text';
+const sharedTextId = text => `${hashNS(text)}-${text.length.toString(36)}`;
+export function cachedTextTranslation(text) {
+    const source = String(text ?? '').trim();
+    if (!source || duplicate) return null;
+    return getCached(SHARED_TEXT_NS, sharedTextId(source));
+}
+export async function translatePlainText(text) {
+    const source = String(text ?? '').trim();
+    if (!source) return '';
+    if (duplicate) throw Object.assign(new Error('따로 설치한 한글화 패널이 켜져 있어 여기서는 번역할 수 없어요.'), { userMessage: true });
+    const hit = cachedTextTranslation(source);
+    if (hit) return hit;
+    if (isBusy) throw Object.assign(new Error('한글화 패널에서 다른 번역이 진행 중이에요. 끝난 뒤 다시 눌러 주세요.'), { userMessage: true });
+    isBusy = true; stopReq = false;
+    try {
+        const result = await translateText('', source, null, { includeTitle: false });
+        if (!result.trim()) throw new Error('빈 번역');
+        setCache(SHARED_TEXT_NS, sharedTextId(source), result);
+        return result;
+    } finally { isBusy = false; releaseIdlePages(); }
+}
+
 export function openPanel() {
     const panel = PDOC.getElementById('pt-panel');
     if (!panel) return;

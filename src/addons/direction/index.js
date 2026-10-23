@@ -744,6 +744,135 @@ function promptButton(act, className, icon, label, { text = '', disabled = false
     return element;
 }
 
+// ── 번역 보기 (사용자 「무슨 프롬프트인지 헷갈릴 때 바로 번역본 보면 좋잖아 · 한글화 패널처럼 번역본이 위에, 원문이 아래로」) ──
+// 프롬프트가 든 칸(프롬프트 쪽 줄 · 고치는 칸, 설정의 전개 지시 프롬프트) 위에 번역본(읽기 전용 면), 아래에 원문 — 한글화 패널 항목의 「번역 · 원문」 차례 그대로.
+// 번역 엔진 · 캐시는 한글화 패널(prompt 애드온)의 translatePlainText · cachedTextTranslation 을 그대로 부른다(새 번역 길 없음).
+// 요청은 사람이 단추를 눌렀을 때만 · 같은 글은 캐시에서 바로(이번 접속의 표 → 패널의 파일 캐시). 원문은 그대로 고칠 수 있고, 번역한 글과 달라지면 「원문이 바뀌었어요 · 다시 번역」.
+// 칸마다 상태 하나(trStates — 'p:<줄 id>' · 'p:new' · 's:prompt'): 펼침 · 번역한 원문 · 번역문 · 진행 · 실패. 목록을 다시 그려도(펼치기 · 고치기) 남는다.
+const TR_ICON = 'fa-solid fa-language';   // 한글화 패널 「번역」 단추와 같은 아이콘
+const TR_FAIL = '번역하지 못했어요. 번역 연결을 확인해 주세요.';
+const TR_MEMO_MAX = 50;
+const trStates = new Map();
+const trMemo = new Map();   // 원문 → 번역문 (이번 접속)
+let trEngine = null;        // { cached(text), translate(text) } — 처음 누를 때 한글화 패널에서 가져온다
+
+/** 시험 · 화면 확인에서 가짜 번역으로 바꿔 끼운다 (실제 요청을 보내지 않게). 평소에는 부르지 않는다 */
+export function useTranslateEngine(engine) { trEngine = engine; }
+
+async function translateEngine() {
+    if (trEngine) return trEngine;
+    if (!extension_settings?.salty?.addons?.prompt) throw Object.assign(new Error('한글화 패널 애드온을 켜면 번역을 볼 수 있어요.'), { userMessage: true });
+    const panel = await import('../prompt/index.js');
+    await panel.ready;
+    if (typeof panel.translatePlainText !== 'function') throw new Error('한글화 패널에 translatePlainText 가 없어요');
+    trEngine = { cached: text => panel.cachedTextTranslation(text), translate: text => panel.translatePlainText(text) };
+    return trEngine;
+}
+
+const trNorm = text => String(text ?? '').trim();
+function trState(key) {
+    if (!trStates.has(key)) trStates.set(key, { open: false, source: '', text: '', busy: false, error: '' });
+    return trStates.get(key);
+}
+/** 그 칸의 지금 원문: 고치는 중이면 고치는 글 */
+function trSourceOf(key) {
+    if (key === 's:prompt') return settings().directionPrompt;
+    const id = key.slice(2);
+    if (promptEdit?.id === id) return promptEdit.content;
+    return settings().promptList.find(item => item.id === id)?.content ?? '';
+}
+const trRoot = key => (key === 's:prompt' ? settingsRoot : popup);
+
+function trBoxInner(redoClass) {
+    return `<div class="jj-tr-head"><span class="jj-tr-label">번역</span><span class="jj-tr-stale" hidden>원문이 바뀌었어요</span><button type="button" class="${redoClass} jj-tr-redo" data-pact="translate-redo" hidden><span>다시 번역</span></button></div>`
+        + '<div class="jj-tr-text" aria-live="polite"></div><div class="jj-tr-label jj-tr-orig">원문</div>';
+}
+function translateBox(key) {
+    const box = makeEl('div', 'jj-tr');
+    box.dataset.tr = key;
+    box.hidden = true;
+    box.innerHTML = trBoxInner('jj-pbtn');
+    return box;
+}
+function translateButton(key) {
+    const button = promptButton('translate', 'jj-tr-btn', TR_ICON, '번역 보기');
+    button.dataset.tr = key;
+    button.setAttribute('aria-expanded', 'false');
+    return button;
+}
+
+/** 상태대로 번역 단추 · 번역본 상자를 칠한다. root 를 주면 그 안(막 만든 줄)만 */
+function paintTranslation(key, root = trRoot(key)) {
+    if (!root?.querySelectorAll) return;
+    const state = trState(key);
+    for (const button of root.querySelectorAll('.jj-tr-btn')) {
+        if (button.dataset.tr !== key) continue;
+        const label = state.open ? '번역 접기' : '번역 보기';
+        button.setAttribute('aria-label', label);
+        button.title = label;
+        button.setAttribute('aria-expanded', String(state.open));
+        button.setAttribute('aria-busy', String(state.busy));
+        button.innerHTML = `<i class="${state.busy ? 'fa-solid fa-spinner fa-spin' : TR_ICON}" aria-hidden="true"></i>`;
+    }
+    for (const box of root.querySelectorAll('.jj-tr')) {
+        if (box.dataset.tr !== key) continue;
+        box.hidden = !state.open;
+        if (!state.open) continue;
+        const stale = !state.busy && !state.error && !!state.source && trNorm(trSourceOf(key)) !== state.source;
+        box.classList.toggle('is-stale', stale);
+        box.querySelector('.jj-tr-stale').hidden = !stale;
+        const redo = box.querySelector('.jj-tr-redo');
+        redo.hidden = state.busy || !(stale || state.error);
+        redo.querySelector('span').textContent = state.error ? '다시 시도' : '다시 번역';
+        const text = box.querySelector('.jj-tr-text');
+        text.classList.toggle('is-muted', state.busy || !!state.error || !state.text);
+        text.textContent = state.busy ? '번역하는 중…' : state.error || state.text || '번역할 글이 없어요.';
+    }
+}
+
+async function runTranslation(key) {
+    const state = trState(key);
+    if (state.busy) return;
+    const source = trNorm(trSourceOf(key));
+    Object.assign(state, { source, error: '', text: '' });
+    const memo = source && trMemo.get(source);
+    if (!source || memo) {
+        state.text = memo || '';
+        paintTranslation(key);
+        return;
+    }
+    state.busy = true;
+    paintTranslation(key);
+    try {
+        const engine = await translateEngine();
+        const text = engine.cached?.(source) || await engine.translate(source);
+        if (!trNorm(text)) throw new Error('빈 번역');
+        if (trMemo.size >= TR_MEMO_MAX) trMemo.delete(trMemo.keys().next().value);
+        trMemo.set(source, text);
+        state.text = text;
+    } catch (error) {
+        console.warn('[전개 지시] 번역', error);
+        state.error = error?.userMessage ? error.message : TR_FAIL;
+    } finally {
+        state.busy = false;
+        paintTranslation(key);
+    }
+}
+
+/** 번역 단추: 펼치면 그 칸의 지금 원문을 번역(캐시에 있으면 바로) · 다시 누르면 접는다 */
+function toggleTranslation(key) {
+    const state = trState(key);
+    state.open = !state.open;
+    if (state.open && !state.busy && (!state.source || trNorm(trSourceOf(key)) !== state.source || state.error)) return runTranslation(key);
+    paintTranslation(key);
+}
+
+function onTranslateAct(act, key) {
+    if (!key) return;
+    if (act === 'translate') return toggleTranslation(key);
+    if (act === 'translate-redo' && trState(key).open) return runTranslation(key);
+}
+
 function promptEditor(item) {
     const box = makeEl('div', 'jj-pedit');
     const title = makeEl('input', 'jj-ptitle-input');
@@ -763,11 +892,14 @@ function promptEditor(item) {
     content.spellcheck = false;
     content.dataset.field = 'content';
     content.value = promptEdit.content;
+    const key = `p:${item ? item.id : 'new'}`;   // 번역 보기: 고치는 칸 위에 번역본 (펼친 줄과 같은 상태)
     const actions = makeEl('div', 'jj-pitem-actions');
-    actions.append(makeEl('span', 'jj-pspacer jj-pedit-tok'),   // 1.3.2 적는 글의 토큰 수
+    actions.append(translateButton(key),
+        makeEl('span', 'jj-pspacer jj-pedit-tok'),   // 1.3.2 적는 글의 토큰 수
         promptButton('cancel', 'jj-pbtn', 'fa-solid fa-xmark', '', { text: '취소' }),
         promptButton('save', 'jj-pbtn is-primary', 'fa-solid fa-check', '', { text: item ? '저장' : '추가' }));
-    box.append(title, content, actions);
+    box.append(title, translateBox(key), content, actions);
+    paintTranslation(key, box);
     return box;
 }
 
@@ -802,16 +934,19 @@ function promptRow(item, index, total) {
     if (open) {
         const body = makeEl('div', 'jj-pitem-body');
         const empty = !item.content.trim();
-        body.append(makeEl('p', `jj-pitem-content${empty ? ' is-empty' : ''}`, empty ? '내용이 비어 있어 보내지 않아요. 고치기로 적어 주세요.' : item.content));
+        const key = `p:${item.id}`;   // 번역 보기: 내용 위에 번역본, 아래에 원문
+        body.append(translateBox(key), makeEl('p', `jj-pitem-content${empty ? ' is-empty' : ''}`, empty ? '내용이 비어 있어 보내지 않아요. 고치기로 적어 주세요.' : item.content));
         const actions = makeEl('div', 'jj-pitem-actions');
         actions.append(
             promptButton('up', 'jj-pbtn jj-pbtn-icon', 'fa-solid fa-arrow-up', '위로 옮기기', { disabled: index === 0 }),
             promptButton('down', 'jj-pbtn jj-pbtn-icon', 'fa-solid fa-arrow-down', '아래로 옮기기', { disabled: index === total - 1 }),
+            translateButton(key),
             makeEl('span', 'jj-pspacer'),
             promptButton('edit', 'jj-pbtn', 'fa-solid fa-pen', '', { text: '고치기' }),
             promptButton('delete', 'jj-pbtn is-danger', 'fa-regular fa-trash-can', '', { text: '지우기' }));
         body.append(actions);
         row.append(body);
+        paintTranslation(key, body);
     }
     return row;
 }
@@ -864,6 +999,7 @@ function savePromptEdit() {
         }
         id = newId();
         store.promptList.push({ id, title, content, enabled: false, at: now, updated: now });   // 새 줄은 꺼진 채로 — 스위치로 켠다
+        if (trStates.has('p:new')) { trStates.set(`p:${id}`, trStates.get('p:new')); trStates.delete('p:new'); }   // 적는 동안 펼친 번역은 새 줄로
     } else {
         const item = store.promptList.find(entry => entry.id === id);
         if (!item) { promptEdit = null; renderPrompts(); return; }
@@ -879,6 +1015,7 @@ function savePromptEdit() {
 function cancelPromptEdit() {
     const was = promptEdit?.id;
     promptEdit = null;
+    if (was === 'new') trStates.delete('p:new');
     renderPrompts(was && was !== 'new' ? `.jj-pitem[data-id="${was}"] [data-pact="expand"]` : '[data-pact="add"]');
 }
 
@@ -900,6 +1037,7 @@ async function onPromptsClick(event) {
     }
     if (act === 'cancel') return cancelPromptEdit();
     if (act === 'save') return savePromptEdit();
+    if (act === 'translate' || act === 'translate-redo') return onTranslateAct(act, target.closest('[data-tr]')?.dataset.tr);
     const id = target.closest('.jj-pitem')?.dataset.id;
     const index = list.findIndex(item => item.id === id);
     const item = list[index];
@@ -936,6 +1074,7 @@ async function onPromptsClick(event) {
             store.promptListGone[item.id] = Date.now();   // 기기 간 합치기의 지운 기록 (저장 목록과 같게)
         }
         if (openPromptId === id) openPromptId = null;
+        trStates.delete(`p:${id}`);
         save();
         renderPrompts('[data-pact="add"]');
         refreshButton();
@@ -1244,6 +1383,7 @@ function onPromptsInput(event) {
     const field = event.target?.dataset?.field;
     if (promptEdit && (field === 'title' || field === 'content')) promptEdit[field] = event.target.value;
     if (field === 'content') scheduleEditTokens();
+    if (field === 'content' && promptEdit) paintTranslation(`p:${promptEdit.id}`);   // 번역한 글과 달라지면 「원문이 바뀌었어요」
 }
 
 function onPromptsKeydown(event) {
@@ -1577,8 +1717,10 @@ function buildSettings() {
                             <summary>뜻 보기</summary>
                             <ul>${PROMPT_MEANING.map(line => `<li>${line}</li>`).join('')}</ul>
                         </details>
+                        <div class="jj-tr" data-tr="s:prompt" hidden>${trBoxInner('menu_button jj-small-btn')}</div>
                         <textarea id="jj_prompt" class="text_pole" rows="7" placeholder="전개 지시 프롬프트"></textarea>
                         <div class="jj-prompt-actions">
+                            <button type="button" class="jj-tr-btn" data-pact="translate" data-tr="s:prompt" aria-label="번역 보기" title="번역 보기" aria-expanded="false"><i class="${TR_ICON}" aria-hidden="true"></i></button>
                             <button type="button" id="jj_reset" class="menu_button jj-small-btn"><i class="fa-solid fa-rotate-left"></i><span>기본값으로</span></button>
                         </div>
                     </div>
@@ -1682,6 +1824,12 @@ function buildSettings() {
         store.directionPrompt = prompt.value;
         showPromptState();
         save();
+        paintTranslation('s:prompt');
+    });
+    // 번역 보기: 프롬프트 칸 위에 번역본 (단추 · 「다시 번역」)
+    wrapper.querySelector('.jj-prompt-body').addEventListener('click', event => {
+        const target = event.target.closest?.('[data-pact^="translate"]');
+        if (target) onTranslateAct(target.dataset.pact, 's:prompt');
     });
     wrapper.querySelector('#jj_reset').addEventListener('click', async () => {
         const confirmed = await callGenericPopup('전개 지시 프롬프트를 기본값으로 되돌릴까요?', POPUP_TYPE.CONFIRM);
@@ -1690,6 +1838,7 @@ function buildSettings() {
         prompt.value = DEFAULT_PROMPT;
         showPromptState();
         save();
+        paintTranslation('s:prompt');
     });
 
     fill();
