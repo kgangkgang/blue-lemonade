@@ -10,7 +10,7 @@ const state = { connection: null, busy: false, message: '', plan: null, preview:
 let dialog;
 const esc = text => String(text ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const mb = n => Number(n || 0) < 1024 ? `${n || 0} B` : Number(n) < 1024 ** 2 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1024 ** 2).toFixed(2)} MB`;
-const help = (id, title) => `<button type="button" class="blzi-help" data-help="${id}" aria-label="${title} 도움말">?</button>`;
+const help = (id, title) => `<button type="button" class="blzi-help" data-help="${id}" aria-label="${title} 도움말"><i class="fa-solid fa-question" aria-hidden="true"></i></button>`;   // 7.8.3: 공용 H3 모양(글자 ? 대신 아이콘 — 공용 규칙이 i::before 로 그림)
 const explanations = {
     start: ['ZIP 설치', '제작자에게 받은 ZIP을 고르면 새 확장을 설치하거나 기존 확장을 업데이트해요. ZIP 안에 폴더가 한 겹 더 있어도 괜찮아요. ZIP 여러 개나 확장 여러 개를 묶은 ZIP도 한 번에 설치할 수 있어요. 압축은 서버에서 풀고, 설치할 이름·버전·폴더를 보여줘요. 믿을 수 있는 제작자의 확장만 골라 주세요.'],
     setup: ['처음 한 번 준비', '웹 화면만으로는 서버 폴더에 파일을 쓸 수 없어 서버용 도우미가 필요해요. 서버를 실행하는 PC나 Termux에서 안내 명령을 한 번 실행하고 실리태번 서버를 다시 켜 주세요. 이후에는 PC·모바일 파일 선택기로 설치할 수 있어요. 서버 관리자 계정에서만 사용할 수 있어요.'],

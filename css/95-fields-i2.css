@@ -52,8 +52,8 @@ html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budge
    폭만 값 길이만큼(위 공통 규칙), 왼쪽 맞춤 */
 html:not(#bl-num-off) body.salty #lv_settings .lv-grid > .lv-field > input[type="number"] { align-self: flex-start !important; }
 /* 번역 창 .llmt-field 숫자칸(이름 · 설명 · 칸 순서라 설명을 맨 아래로) */
-html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 8px !important; }
-html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) > .llmt-label { flex: 1 1 auto !important; min-width: 0 !important; margin: 0 !important; }
+html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 8px !important; }
+html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) > .llmt-label { flex: 1 1 0 !important; width: auto !important; max-width: none !important; min-width: 0 !important; margin: 0 !important; } /* 7.8.3: width 100% 가 남아 이름이 한 줄을 다 먹고 숫자칸이 아래로(layout-audit PARAMSTACK · 이름↔칸 4px) */
 html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) > input[type="number"] { order: 1; }
 html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) > .llmt-desc { order: 2; flex: 1 1 100% !important; }
 /* 한글화 패널 .pt-field 숫자칸: 이름 · 값 한 줄, 도움말 아래 */
@@ -68,3 +68,7 @@ html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-f
 html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field input:is([type="search"], [type="text"]) { background: transparent !important; box-shadow: none !important; border: 0 !important; outline: none !important; }
 /* 7.8.2 입력칸 면 반 단계(사용자 10-23 「전개 지시 입력칸 너무 밝아 — 줄여」): I2 면(--bl-control)과 담는 카드 면의 가운데. 한 곳에서 바꾸기: --bl-field-face */
 html:not(#bl-i2-off) body.salty { --bl-field-face: color-mix(in srgb, var(--bl-control) 50%, var(--bl-card, var(--salty-surface))); }
+/* 7.8.3 숫자칸 한 줄(사용자 오토픽 「최대 토큰」 제보 · layout-audit PARAMSTACK): 다시 쓰기 .bwr_field 의 숫자칸을 이름 오른쪽에(번역 .llmt-field 는 위 55~58 규칙에서) */
+html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field:has(> input[type="number"]) { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; }
+html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field:has(> input[type="number"]) > span { flex: 1 1 auto; min-width: 0; }
+html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field:has(> input[type="number"]) > input[type="number"] { flex: 0 0 auto; margin: 0 !important; }

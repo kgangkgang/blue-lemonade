@@ -4,6 +4,7 @@ const ROOTS = '.salty-panel, .bl-roomy-dialog, .bl-tool-dialog, .bl-credits-dial
 const BUTTONS = 'button, .menu_button, [role="button"]';
 const saved = new WeakMap();
 const metrics = new Map();
+const baselineCache = new Map();   // 7.8.2: 글꼴 · 크기 · 줄 높이별 줄 위 → 기준선 거리
 let canvas, observer, frame = 0, enabled = false;
 let appearanceKey = null;
 const pending = new Set();
@@ -92,7 +93,12 @@ function align(root) {
             // 7.8.2: 기준선은 글꼴 표(fontBoundingBoxAscent)로 추정하지 않고 화면에서 직접 잰다 — 안드로이드는 같은 글꼴 파일의
             // ascent 를 윈도우와 다른 표에서 읽어, 추정 기준선이 1~1.5px 어긋나 폰에서만 글자가 아래로 처져 보였다(사용자 폰 사진 10-23).
             // 너비 0 인라인 블록의 아래 끝 = 그 줄의 실제 기준선. 재고 바로 뗀다(관찰자는 꺼진 상태라 다시 맞추기를 부르지 않음).
-            const base = baselineOf(node) ?? Math.round(rect.top + measure.ascent);
+            // 같은 글꼴 · 크기 · 줄 높이면 줄 위 → 기준선 거리가 같으니 한 번만 잰다(단추마다 재면 화면 다시 계산이 쌓여 느려짐)
+            const ps = getComputedStyle(node.parentElement);
+            const bkey = `${ps.fontStyle} ${ps.fontWeight} ${ps.fontSize} ${ps.fontFamily}|${ps.lineHeight}`;
+            let off = baselineCache.get(bkey);
+            if (off === undefined) { const y = baselineOf(node); off = y === null ? null : y - rect.top; baselineCache.set(bkey, off); }
+            const base = off === null ? Math.round(rect.top + measure.ascent) : rect.top + off;
             top = Math.min(top, base + measure.top); bottom = Math.max(bottom, base + measure.bottom);
         }
         if (multiline || !Number.isFinite(top)) continue;
@@ -149,7 +155,7 @@ export function syncControlInk(active, key = '') {
                 }
             }
         });
-        document.fonts?.addEventListener('loadingdone', () => { metrics.clear(); document.querySelectorAll(ROOTS).forEach(queue); });
+        document.fonts?.addEventListener('loadingdone', () => { metrics.clear(); baselineCache.clear(); document.querySelectorAll(ROOTS).forEach(queue); });
         window.addEventListener('resize', () => document.querySelectorAll(ROOTS).forEach(queue), { passive: true });
         watch();
     }
