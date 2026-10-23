@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a85540e13331) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build e6c61f48e3a1) */
 /* css/00-base.css */
 :root{--bl-release:"7.8.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -24384,7 +24384,7 @@ body.salty .bl-pbind-list { min-height:0; }
 }
 .salty-panel .bl-mix .bl-mix-heading > span { flex:0 1 auto; width:auto; }
 .salty-panel .bl-mix .bl-mix-heading > .salty-btn {
-  flex:none; width:auto; margin:0; align-self:center; min-height:34px; padding:7px 10px 5px; font-size:.85em; line-height:1.4;
+  flex:none; width:auto; margin:0; align-self:center; min-height:34px; padding:7px 10px 5px; font-size:var(--bl-fs-ctl, inherit); line-height:1.4;
 }
 .salty-panel .bl-mix .bl-mix-description { margin:4px 0 0; font-size:.85em; line-height:1.5; }
 @media(max-width:760px) {
@@ -24628,6 +24628,11 @@ html body.salty dialog.bl-notes-dialog > header > b > .bl-notes-ver { display: n
   html body.salty dialog.bl-notes-dialog > header > b { flex: 0 0 auto !important; }
   html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools { flex: 0 1 auto !important; min-width: 0 !important; overflow: hidden !important; }
 }
+html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) > .salty-ver { margin: 0 !important; }
+html:not(#bl-pill-off) body.salty dialog > header > b:has(> .ext-version, > i) { display: inline-flex; align-items: center; gap: 8px !important; min-width: 0; }
+html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b:has(> .ext-version, > i) > :where(i):is(.bl-s, *),
+html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b:has(> .ext-version, > i) > .ext-version,
+html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b:has(> .ext-version, > i) > [class*="-version"] { margin: 0 !important; }
 /* css/76-help-button.css */
 html body.salty:not(#bl-h1):not(#bl-h2) .bl-help-btn:is(.bl-s, *),
 html body.salty:not(#bl-h1):not(#bl-h2) .lv-help-btn:is(.bl-s, *),
@@ -25232,7 +25237,7 @@ html body.salty :where(dialog.popup > .popup-body > .popup-content > .pa-hub > .
 html body.salty :where(dialog:is(.bl-translator-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .bl-direction-dialog, .blzi-dialog, .bl-mermaid-dialog, .blpt-dialog) > header > b):is(#bl-s, *):is(#bl-s, *):is(bl-s, *),
 html body.salty :where(dialog.bl-notes-dialog > header > b):is(#bl-s, *):is(#bl-s, *):is(bl-s, *),
 html body.salty :is(#pt-panel > #pt-panel-header > h3) {
-  display: inline-flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 0 6px !important;
+  display: inline-flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 0 8px !important;
   flex: 1 1 auto !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important;
   color: var(--salty-text) !important; font-size: var(--bl-ts-ui, 14.5px) !important; font-weight: 600 !important; line-height: 1.55 !important;
   text-align: left !important;
@@ -25436,6 +25441,7 @@ html body.salty #lv_settings .lv-grid > .lv-field > input[type="range"] { width:
 }
 html body.salty #lv_settings .lv-extras > summary { display: flex; align-items: center; gap: 8px; }
 html body.salty #lv_settings .lv-extras > summary > .lv-extras-clear { margin-left: auto; min-height: 28px !important; padding: 0 10px !important; font-size: var(--bl-ts-meta, 12.5px) !important; }
+html body.salty dialog.bl-notes-dialog > header > b { flex-wrap: nowrap !important; min-width: 0; white-space: nowrap; }
 /* css/86-touch-targets.css */
 @media (pointer: coarse) {
   html body :is(.salty-panel .salty-seg > button):is(.bl-s, *):is(bl-s, *),
@@ -25698,6 +25704,8 @@ html body.salty #left-nav-panel .menu_button:not(label *) {
   html body .salty-panel, html body .salty-panel.bl-editor { --num-h: max(44px, calc(1.5em + 12px)); }
   html body :is(.bl-direction-dialog, .jj-settings-body, #jj-settings) #jj_depth { min-width: 44px; }
 }
+html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 34px !important; font-size: 13px !important; }
+@media (max-width: 760px), (pointer: coarse) { html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 32px !important; } }
 /* css/88-theme-off.css */
 html body:not(.salty) .salty-panel button,
 html body:not(.salty) .salty-panel small { color: inherit; }
@@ -25978,6 +25986,15 @@ html[data-bl-puffy] body.salty #WorldInfo #wiCheckboxes label.checkbox_label > i
  :is(html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):is(bl-s, *):focus-visible,
 :is(html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone))):focus-visible { outline-color:Highlight!important; }
 }
+html:not(#bl-checkrow-off) body.salty { --bl-check-gap: 8px; }
+html:not(#bl-checkrow-off) body.salty :is(dialog, .salty-panel, .pa-hub, #pt-panel, .lv-settings, .llmt-settings) label:has(> input[type="checkbox"]):not(.salty-switch, [class*="switch"], [role=switch], .menu_button, .po-visible-toggle) { column-gap: var(--bl-check-gap) !important; }
+html:not(#bl-checkrow-off) body.salty :is(dialog, .salty-panel, .pa-hub, #pt-panel, .lv-settings, .llmt-settings) label:has(> input[type="checkbox"]):not(.salty-switch, [class*="switch"], [role=switch], .menu_button, .po-visible-toggle) > input[type="checkbox"] { margin-inline: 0 !important; }
+html:not(#bl-checkrow-off) body.salty :is(.pa-hub .pa-hub-load):is(bl-s, *):is(bl-s, *),
+html:not(#bl-checkrow-off) body.salty :is(.pt-help-dialog .pt-check):is(bl-s, *):is(bl-s, *),
+html:not(#bl-checkrow-off) body.salty :is(.pa-hub label:has(> input[data-act="auto-pricing"])),
+html:not(#bl-checkrow-off) body.salty :where(dialog label:has(> input[data-act="auto-pricing"])):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *) { font-size: inherit !important; opacity: 1 !important; }
+html:not(#bl-checkrow-off) body.salty :is(.pa-hub .pa-hub-load, .pt-help-dialog .pt-check) > span { font-size: inherit !important; }
+html:not(#bl-checkrow-off) body.salty .pt-help-dialog .pt-check > input[type="checkbox"] { width: 20px !important; height: 20px !important; flex: 0 0 20px !important; }
 /* css/93-night-surfaces.css */
 html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]),
 html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,:has(> i:only-child),:has(> svg:only-child),.menu_button_icon:has(> i):not(:has(> span,> b,> strong,> small)),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]) {
@@ -26105,6 +26122,9 @@ html:not(#bl-num-off) body.salty #pt-panel .pt-field:has(> input[type="number"])
 html:not(#bl-num-off) body.salty #pt-panel .pt-field:has(> input[type="number"]) > label { flex: 1 1 auto !important; min-width: 0 !important; }
 html:not(#bl-num-off) body.salty #pt-panel .pt-field:has(> input[type="number"]) > .pt-bl-help { flex: 1 1 100% !important; margin: 0 !important; }
 html:not(#bl-num-off) body.salty #regex-link-settings .rlk-keep { grid-template-columns: auto minmax(0, 1fr) auto !important; }
+html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field { background: var(--bl-control) !important; border: 0 !important; box-shadow: inset 0 0 0 1px var(--salty-line) !important; }
+html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field:focus-within { box-shadow: inset 0 0 0 1px var(--salty-accent) !important; }
+html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field input:is([type="search"], [type="text"]) { background: transparent !important; box-shadow: none !important; border: 0 !important; outline: none !important; }
 /* css/96-param-stack.css */
 body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, max(8.5em, 40%)), 1fr));
@@ -26478,7 +26498,7 @@ html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(
     grid-column: 1 / -1;
   }
 }
-html body .salty-panel.bl-editor :is(.salty-row, .salty-stack, .salty-slider > header) > span:has(> .bl-setting-reset) { display: inline-flex; align-items: center; flex: none; min-width: max-content; column-gap: 0 !important; }
+html body .salty-panel.bl-editor :is(.salty-row, .salty-stack, .salty-slider > header) > span:has(> .bl-setting-reset):not(:has(> :not(.bl-setting-reset))) { display: inline-flex; align-items: center; flex: none; min-width: max-content; column-gap: 0 !important; }
 html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin: 0 0 0 calc(6px - 8.36px - 0.7px) !important; align-self: center; vertical-align: middle; }
 @media (max-width: 760px), (pointer: coarse) {
   html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin: 0 0 0 calc(6px - 10.36px - 0.7px) !important; }
