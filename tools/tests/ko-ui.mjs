@@ -156,6 +156,11 @@ test('알림 감싸기: 네 종류를 한 번만, 제목 · 옵션은 그대로 
     assert.equal(ui.wrapToasts(undefined, localize), false);
 });
 
+test('시작: 브라우저 언어가 ko 인 폰도 한국어로 본다 (isKoreanLocale)', () => {
+    assert.equal(ui.isKoreanLocale('ko'), true); assert.equal(ui.isKoreanLocale('ko-kr'), true); assert.equal(ui.isKoreanLocale('ko_KR'), true);
+    assert.equal(ui.isKoreanLocale('en'), false); assert.equal(ui.isKoreanLocale('kok'), false); assert.equal(ui.isKoreanLocale(undefined), false);
+});
+
 test('시작: ko-kr 이 아니면 아무것도 안 한다', () => {
     const ctx = { getCurrentLocale: () => 'en', addLocaleData() { throw new Error('불리면 안 돼요'); } };
     assert.equal(ui.startKoreanUi(ctx), null);
@@ -193,12 +198,12 @@ test('시작: 공식 addLocaleData 로 더하고, 있는 키는 표에서 고치
     assert.equal(ui.startKoreanUi(ctx), null, '두 번 시작하지 않는다');
 });
 
-test('가벼움: 감시자 · 반복 타이머 없음, ko-kr 일 때만 불러온다 (다른 언어는 파일도 안 받음)', () => {
+test('가벼움: 이 파일엔 감시자 · 반복 타이머 없음(더 보기 단추 감시는 show-more-watch.js 가 #chat 자식만), ko-kr 일 때만 불러온다 (다른 언어는 파일도 안 받음)', () => {
     const code = read('src/ko-ui.js').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''); // 주석은 빼고 본다
     assert.ok(!/MutationObserver|setInterval|ResizeObserver|IntersectionObserver/.test(code));
     assert.ok(!/addEventListener\(['"](scroll|wheel|touchmove|pointermove)/.test(code));
     const index = read('index.js');
-    assert.match(index, /getCurrentLocale\?\.\(\) === 'ko-kr'\) import\('\.\/src\/ko-ui\.js'\)/);
+    assert.match(index, /\/\^ko\(\?:\[-_\]\|\$\)\/i\.test\(String\(SillyTavern\.getContext\(\)\.getCurrentLocale\?\.\(\) \?\? ''\)\)\) import\('\.\/src\/ko-ui\.js'\)/, '한국어(ko · ko-kr)일 때만 파일을 받는다');
     assert.ok(!/^import .*ko-ui/m.test(index), '처음부터 불러오지 않는다');
     const bytes = fs.statSync(path.join(root, 'src/ko-ui-data.js')).size;
     assert.ok(bytes < 280_000, `표가 너무 커요: ${bytes}B`);

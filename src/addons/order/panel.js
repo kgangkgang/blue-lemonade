@@ -51,6 +51,7 @@ function buildContent() {
         <h3 class="po-title"><i class="fa-solid fa-arrow-down-short-wide"></i> ${TITLE} <span class="po-version ext-version">v${VERSION}</span></h3>
         <p class="po-hint">표시 체크를 끄면 설정 탭의 블록만 숨깁니다. 확장 기능은 유지되고, 이 목록에서 다시 켤 수 있어요. 압정은 위쪽 고정입니다.</p>
 
+        <div class="bl-check-grid">
         <label class="checkbox_label po-opt" for="po_auto">
             <input type="checkbox" id="po_auto">
             <span>가나다순으로 자동 정렬</span>
@@ -59,6 +60,7 @@ function buildContent() {
             <input type="checkbox" id="po_divider">
             <span>고정한 확장 아래에 줄 긋기</span>
         </label>
+        </div>
         <label class="checkbox_label po-opt" for="po_two">
             <input type="checkbox" id="po_two">
             <span>넓은 화면에서 두 칸 (왼쪽 고정 · 오른쪽 나머지)</span>

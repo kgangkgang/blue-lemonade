@@ -68,6 +68,7 @@ function groupByDate(list) {
     return groups.map(g => ({ date: g.date, items: g.items, actions:noticeActions(g.actions), version: g.count > 1 ? `${g.first} ~ v${g.version}` : g.version, note: g.count > 1 ? ` · 업데이트 ${g.count}번` : '' }));
 }
 
+// 7.7.9: 폰에 깔린 다른 실리태번 판이 TEXT 창에도 「취소」를 그려 닫기 · 취소가 같이 떴다(사용자 사진 10-23) → 옵션 말고 직접 숨김(popup-guard.js 가 전역 BlueLemonadeHardenPopup 으로 내놓음 — 시험 VM 에서는 없어도 됨)
 async function noticeHtml() {
     const { NOTICES } = await import('./notice-data.js');
     const rows = groupByDate(NOTICES).map((notice, i) => `
@@ -114,7 +115,7 @@ export async function openNotice(onSeen) {
         item.classList.toggle('open', open);
         toggle.setAttribute('aria-expanded', String(open));
     });
-    try { await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.TEXT, '', { allowVerticalScrolling: true, okButton: '닫기', cancelButton: false, onOpen: opened => {resolvePopup(opened);opened?.dlg?.classList.add('bl-roomy-dialog');} }); }
+    try { await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.TEXT, '', { allowVerticalScrolling: true, okButton: '닫기', cancelButton: false, onOpen: opened => {resolvePopup(opened);opened?.dlg?.classList.add('bl-roomy-dialog');try{globalThis.BlueLemonadeHardenPopup?.(opened);}catch{}} }); }
     finally { resolvePopup(null); }
     if(pending)try{await openNoticeAction(pending);}catch(error){globalThis.toastr?.error(error.message||'기능을 열지 못했어요.','Blue Lemonade');}
 }

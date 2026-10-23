@@ -31,8 +31,9 @@ function arm(ev) {
 function markNew(dlg) {
     if (Date.now() - armedAt > OPEN_MS) return;
     // 묻는 창(취소 버튼이 있는 창)만 — 그냥 알려 주는 창은 빨갛게 하지 않음
+    if (dlg.classList.contains('bl-info-dialog') || dlg.querySelector('.salty-notice')) return; // 7.7.9 안내 창(공지 · 도움말)은 묻는 창이 아님
     const cancel = dlg.querySelector('.popup-button-cancel');
-    if (!cancel || cancel.style.display === 'none') return;
+    if (!cancel || cancel.style.display === 'none' || cancel.hidden) return;
     for (const old of document.querySelectorAll(`dialog.${MARK}`)) old.classList.remove(MARK);
     dlg.classList.add(MARK);
     armedAt = 0; // 한 번 누름 = 한 창

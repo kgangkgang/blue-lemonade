@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 const root = path.resolve(process.argv[2] || '.');
-const { revealTab, installTabScroll } = await import(pathToFileURL(path.join(root, 'src/tab-scroll.js')));
+const { revealTab, installTabScroll, fadeState, applyFade } = await import(pathToFileURL(path.join(root, 'src/tab-scroll.js')));
 let pass = 0;
 const test = (name, fn) => { fn(); pass++; console.log('PASS ' + name); };
 const strip = (extra = {}) => ({ clientWidth: 100, scrollWidth: 300, clientLeft: 2, scrollLeft: 40,
@@ -19,5 +19,23 @@ test('navigation CSS does not change font, control height, or form grids', () =>
     const css = fs.readFileSync(path.join(root, 'css/98-tab-strips.css'), 'utf8');
     assert.doesNotMatch(css, /(?:font(?:-size|-family|-weight)?|(?:min-)?height)\s*:/);
     assert.doesNotMatch(css, /bwr_segment|pt-params-wrap|eh-preset-chips|llmt-gl-scopes|bl-look-fonttags/);
+});
+// 7.7.9 edge fades: only when overflowing, only the side that hides more
+test('fade state names the overflowing side only', () => {
+    assert.equal(fadeState(strip({ scrollLeft: 0 })), 'right');
+    assert.equal(fadeState(strip({ scrollLeft: 40 })), 'both');
+    assert.equal(fadeState(strip({ scrollLeft: 200 })), 'left');
+    assert.equal(fadeState(strip({ scrollWidth: 100 })), '');
+    assert.equal(fadeState(strip({ clientWidth: 0 })), '');
+    assert.equal(fadeState(null), '');
+});
+test('applyFade writes data-bl-fade and removes it when the strip fits', () => {
+    const b = strip({ scrollLeft: 0, dataset: {} }); assert.equal(applyFade(b), 'right'); assert.equal(b.dataset.blFade, 'right');
+    b.scrollWidth = 100; assert.equal(applyFade(b), ''); assert.equal('blFade' in b.dataset, false);
+});
+test('fade CSS only masks edges by data attribute', () => {
+    const css = fs.readFileSync(path.join(root, 'css/98-tab-strips.css'), 'utf8');
+    for (const side of ['left', 'right', 'both']) assert.ok(css.includes(`[data-bl-fade="${side}"]`), side);
+    assert.match(css, /mask-image: linear-gradient/);
 });
 console.log(`tab-scroll: ${pass} passed`);

@@ -62,3 +62,10 @@ html:not(#bl-tab-scroll-off) :is(
   .jj-seg[role="tablist"],
   .dq-tabs
 ) > :is(button,a,li,[role="tab"],[role="button"]) > :is(span,a) { white-space:nowrap !important; overflow-wrap:normal !important; }
+
+/* 7.7.9 넘치는 탭 줄의 가장자리 페이드(제보 18): src/tab-scroll.js 가 scroll · resize 때 넘친 쪽만 data-bl-fade="left|right|both" 를 붙인다.
+   스크롤바(77 에서 숨김) 대신 「더 있음」을 보여 준다. 고른 탭은 revealTab 이 늘 안쪽에 둔다. */
+html:not(#bl-tab-scroll-off) [data-bl-fade] { --bl-fade: 28px; }
+html:not(#bl-tab-scroll-off) [data-bl-fade="right"] { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--bl-fade)), transparent); mask-image: linear-gradient(to right, #000 calc(100% - var(--bl-fade)), transparent); }
+html:not(#bl-tab-scroll-off) [data-bl-fade="left"] { -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--bl-fade)); mask-image: linear-gradient(to right, transparent, #000 var(--bl-fade)); }
+html:not(#bl-tab-scroll-off) [data-bl-fade="both"] { -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--bl-fade), #000 calc(100% - var(--bl-fade)), transparent); mask-image: linear-gradient(to right, transparent, #000 var(--bl-fade), #000 calc(100% - var(--bl-fade)), transparent); }

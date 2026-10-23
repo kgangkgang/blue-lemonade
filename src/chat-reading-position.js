@@ -3,6 +3,27 @@
 const pending = new WeakMap();
 const userUntil = new WeakMap();
 const gestureTrackers = new WeakMap();
+const selfScrollAt = new WeakMap();      // chat → the guard's own last scrollTop write (its scroll event is not the reader)
+const foreignScrollAt = new WeakMap();   // chat → last scroll event the guard did not cause
+/** 7.7.9 A scroll event the guard did not cause, arriving in a run (two within 200 ms) away from the bottom, is the reader
+ *  (finger, wheel or momentum). A touch that starts inside a helper iframe (status card) never reaches this document as
+ *  touchmove, so the gesture trackers above cannot see it; the chat still scrolls, and that run is all we get.
+ *  ST's own auto-scroll while streaming is a run too, but it sits at the bottom, so it is left out. */
+/** the scroll event of the guard's own scrollTop write: just written and still at that value (a renderer's jump differs) */
+function ownScroll(chat, now = Date.now()) {
+    const own = selfScrollAt.get(chat);
+    return !!own && now - own.at < 60 && Math.abs(chat.scrollTop - own.value) <= 1;
+}
+function readerScrollRun(chat, now = Date.now()) {
+    if (ownScroll(chat, now)) return false;
+    const last = foreignScrollAt.get(chat) ?? 0;
+    foreignScrollAt.set(chat, now);
+    if (now - last > 200) return false;
+    if (chat.scrollHeight - chat.clientHeight - chat.scrollTop < 5) return false;
+    userUntil.set(chat, now + 1500);
+    return true;
+}
+function writeScrollTop(chat, value) { chat.scrollTop = value; selfScrollAt.set(chat, { at: Date.now(), value: chat.scrollTop }); }
 const navigationKey = event => /^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End|Enter| )$/.test(event.key);
 const CONTROL = 'button,a,input,select,textarea,label,[role=button],.mes_button,.mes_buttons,.extraMesButtons,.swipe_left,.swipe_right';
 
@@ -11,8 +32,9 @@ const CONTROL = 'button,a,input,select,textarea,label,[role=button],.mes_button,
 export function watchChatReadingGestures(doc) {
     if (!doc?.addEventListener) return () => {};
     if (gestureTrackers.has(doc)) return gestureTrackers.get(doc);
-    const types = ['wheel', 'touchstart', 'touchmove', 'touchend', 'pointerdown', 'mousedown', 'keydown'];
+    const types = ['wheel', 'touchstart', 'touchmove', 'touchend', 'pointerdown', 'mousedown', 'keydown', 'scroll'];
     const track = event => {
+        if (event.type === 'scroll') { const chat = event.target; if (chat?.id === 'chat' && chat.scrollHeight !== undefined) readerScrollRun(chat); return; }   // 7.7.9 iframe 안에서 시작한 손가락
         if (event.type === 'keydown' && (!navigationKey(event) || event.target?.closest?.('input,textarea,select,[contenteditable]'))) return;
         // 7.6.9: a tap on a message control is not a scroll gesture; the paint it triggers keeps the full guard
         if (event.type !== 'wheel' && event.type !== 'touchmove' && event.type !== 'keydown' && event.target?.closest?.(CONTROL)) return;
@@ -130,6 +152,13 @@ export function keepChatReadingPosition(element, draw) {
         const currentBlocks = children(currentMes.querySelector('.mes_text'));
         return replacement(currentBlocks) ?? mes;
     }
+    // The reader scrolled (no layout change): remember where they put the paragraph. Never writes scrollTop.
+    function track() {
+        if (!active) return;
+        const node = current();
+        if (!node) return;
+        lastPos = layoutTop(node); lastView = lastPos - chat.scrollTop;
+    }
     function hold() {
         if (!active) return;
         if (!valid()) { stop(); return; }
@@ -137,13 +166,15 @@ export function keepChatReadingPosition(element, draw) {
         if (!node) return;
         const pos = layoutTop(node);
         // Only the reader scrolled (no layout change): remember where they put the paragraph.
-        if (lastPos === null || Math.abs(pos - lastPos) <= 1) { lastPos = pos; lastView = pos - chat.scrollTop; return; }
+        // 7.7.9 2 px, not 1: on a DPR-4 phone a fractional scroll offset makes rect.top and scrollTop disagree by more than a
+        // pixel between two scroll events, which looked like a layout shift and snapped the reader back every event (지지직).
+        if (lastPos === null || Math.abs(pos - lastPos) <= 2) { lastPos = pos; lastView = pos - chat.scrollTop; return; }
         // The paragraph moved in the content. Put it back where the reader last had it on screen;
         // this also undoes a bottom clamp and is a no-op when native anchoring already kept it.
         // A paragraph the reader left below the screen has nothing above it that they can see.
         if (lastView <= chat.clientHeight) {
             const wanted = Math.max(0, Math.min(pos - lastView, chat.scrollHeight - chat.clientHeight));
-            if (Math.abs(chat.scrollTop - wanted) > 1) chat.scrollTop = wanted;
+            if (Math.abs(chat.scrollTop - wanted) > 1) writeScrollTop(chat, wanted);
         }
         lastPos = pos; lastView = pos - chat.scrollTop;
     }
@@ -170,14 +201,19 @@ export function keepChatReadingPosition(element, draw) {
             }
         }
         const clamped = Math.max(0, Math.min(wanted, chat.scrollHeight - chat.clientHeight));
-        if (Math.abs(chat.scrollTop - clamped) > 1) chat.scrollTop = clamped;
+        if (Math.abs(chat.scrollTop - clamped) > 1) writeScrollTop(chat, clamped);
     }
     // A later renderer may scroll without changing any element's dimensions.
     // ResizeObserver and the two layout frames cannot see that case. Only guard
     // this existing bounded settling window; any reader gesture ends absolute
     // restoring first (soft mode then only undoes layout shifts, never the reader's scroll).
     function onScroll(event) {
-        if (event.target === chat && active) step();
+        if (event.target !== chat || !active) return;
+        if (ownScroll(chat)) return;   // our own restore
+        // 7.7.9 a run of scroll events the guard did not cause is the reader (a finger inside a helper iframe sends no touchmove
+        // here): absolute restoring would fight every one of them, so stop it the way a gesture does
+        if (readerScrollRun(chat)) { if (soft) track(); else soften(); return; }
+        if (soft) track(); else restore();
     }
     for (const type of events) doc.addEventListener(type, cancel, { capture: true, passive: true });
     doc.addEventListener('scroll', onScroll, { capture: true, passive: true });

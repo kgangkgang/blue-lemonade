@@ -373,11 +373,17 @@ const isOff = (f) => (typeof f.disabled === 'function' ? !!f.disabled(settings()
 // ---------- 1.3.8 '?' 도움말: 항목에 help 가 있으면 이름 바로 뒤 작은 ? — 누르면 아래에 한두 줄 (말풍선 없음 · '!' 와 같은 펼침).
 //   도움말이 있는 칸은 겉을 label 이 아닌 div 로 (펼친 글을 눌러도 선택칸이 열리지 않게) · 고르는 칸엔 aria-label 로 이름
 const helpOf = (f) => (f && f.help ? String(typeof f.help === 'function' ? f.help(settings()) : f.help) : '');
-const helpBtn = (f) => (helpOf(f) ? '<button type="button" class="lv-help-btn" data-lv-act="help" aria-label="도움말" aria-expanded="false"><i class="fa-solid fa-circle-question" aria-hidden="true"></i></button>' : '');
+const helpBtn = (f) => (helpOf(f) ? '<button type="button" class="lv-help-btn" data-lv-act="help" aria-label="도움말" aria-expanded="false"><i class="fa-solid fa-question" aria-hidden="true"></i></button>' : '');
 const helpNote = (f) => { const h = helpOf(f); return h ? `<span class="lv-help-note" hidden>${esc(h)}</span>` : ''; };
+// 7.7.9 항목마다 붙던 ? 는 떼고 절(카드 · 편집 팝업) 제목 옆 하나로 (사용자 규칙 「설정 항목마다 붙은 도움말 ? 는 전부 떼고 절 제목 옆에 하나만」).
+//   항목을 그리는 동안 「이름: 설명」을 모아 두면 card() · editorHtml() 이 제목 ? 밑 한 묶음으로 보여 준다. 항목 아래 설명 줄(desc)은 그대로.
+export const HELP_LINES = [];
+const collectHelp = (f) => { const h = helpOf(f); if (h) HELP_LINES.push(`${f.label}: ${h}`); return h; };
+const takeHelp = () => [...new Set(HELP_LINES.splice(0))];
 /** ? 를 눌렀을 때: 같은 칸(data-lv-help)의 도움말 글을 펴고 접는다 (설정 창 · 목소리 편집 팝업 같이) */
 function toggleHelp(b) {
-    const note = (b.closest('[data-lv-help]') || b.closest('.lv-card'))?.querySelector('.lv-help-note');   // 1.4.0 카드 제목 옆 ? 는 그 카드의 첫 설명
+    const scope = b.closest('[data-lv-help]') || b.closest('.lv-card') || b.closest('.lv-ed-head')?.parentElement;   // 1.4.0 카드 제목 옆 ? 는 그 카드의 첫 설명 · 7.7.9 편집 팝업 머리 ?
+    const note = scope?.querySelector('.lv-help-note');
     if (!note) return;
     note.hidden = !note.hidden;
     b.setAttribute('aria-expanded', String(!note.hidden));
@@ -398,11 +404,10 @@ function control(f, path, value, cfg = null) {
     const desc = d ? `<span class="lv-desc">${esc(d)}</span>` : '';
     // 주소·모델 ID·자유 입력은 길어질 수 있어 전체 폭, 짧은 수치·선택·스위치는 두 칸을 쓴다.
     const wide = f.wide || ['textarea', 'text', 'tags'].includes(f.type) || /(?:^|\.)(?:host|model|model_from|provider|engine)$/.test(path) ? ' lv-wide' : '';
-    const help = helpBtn(f), hnote = helpNote(f);
-    const box = hnote ? 'div' : 'label';                                   // 1.3.8 도움말이 있으면 겉은 div
-    const hattr = hnote ? ' data-lv-help' : '';                             // 겉 div 의 표시 (칸 이름은 고르는 칸의 aria-label)
-    const named = hnote ? `${attr} aria-label="${esc(f.label)}"` : attr;
-    const label = hnote ? `<span class="lv-label lv-label-warn">${esc(f.label)}${help}</span>` : `<span class="lv-label">${esc(f.label)}</span>`;
+    collectHelp(f);                                                        // 7.7.9 항목 ? 없음 — 카드 제목 ? 로 모은다
+    const help = '', hnote = '';
+    const box = 'label', hattr = '', named = attr;
+    const label = `<span class="lv-label">${esc(f.label)}</span>`;
     switch (f.type) {
         case 'toggle': {
             const off = isOff(f);
@@ -461,13 +466,13 @@ function visibleChanged(cardName, list, base = '', cfg = null) {
     const now = [...cardEl.querySelectorAll('[data-lv-path], [data-lv-slot]')].map(e => e.dataset.lvPath || e.dataset.lvSlot);
     return now.length !== want.length || now.some((p, i) => p !== want[i]);
 }
-function card(name, icon, title, inner, cls = '', note = '', help = null) {
+export function card(name, icon, title, inner, cls = '', note = '', help = null) {
     const n = note ? `<span class="lv-card-note">${esc(note)}</span>` : '';
-    // 1.4.0 카드 제목 옆 ? — 누르면 제목 밑에 설명 (항목 ? 와 같은 펼침 · 줄마다 <br>)
-    const lines = Array.isArray(help) ? help.filter(Boolean) : [];
-    const hb = lines.length ? '<button type="button" class="lv-help-btn" data-lv-act="help" aria-label="도움말" aria-expanded="false"><i class="fa-solid fa-circle-question" aria-hidden="true"></i></button>' : '';
+    // 1.4.0 카드 제목 옆 ? — 누르면 제목 밑에 설명 (줄마다 <br>) · 7.7.9 이 카드 항목들의 도움말(「이름: 설명」)도 여기 한 묶음으로
+    const lines = [...new Set([...(Array.isArray(help) ? help.filter(Boolean) : []), ...takeHelp()])];
+    const hb = lines.length ? '<button type="button" class="lv-help-btn" data-lv-act="help" aria-label="도움말" aria-expanded="false"><i class="fa-solid fa-question" aria-hidden="true"></i></button>' : '';
     const hn = lines.length ? `<div class="lv-help-note lv-card-help" hidden>${lines.map(esc).join('<br>')}</div>` : '';
-    return `<section class="lv-card${cls ? ' ' + cls : ''}" data-lv-card="${esc(name)}"><div class="lv-card-head"><i class="fa-solid ${esc(icon)}"></i><span>${esc(title)}</span>${hb}${n}</div>${hn}${inner}</section>`;
+    return `<section class="lv-card${cls ? ' ' + cls : ''}" data-lv-card="${esc(name)}"><div class="lv-card-head"><i class="fa-solid ${esc(icon)}"></i><span>${esc(title)}${hb}</span>${n}</div>${hn}${inner}</section>`;
 }
 /** 1.4.0 줄 옆 감정 세기 칸 설명 (캐릭터별 목소리 · 대화 색 ? 가 같이 씀) */
 const STRENGTH_HELP = [
@@ -816,7 +821,24 @@ const ACTIONS = {
     },
     'engine-pull': () => { const p = curProvider(); if (p) return pullVoices(p); },
     'engine-models': () => { const p = curProvider(); if (p) return refreshEngineModels(p, { quiet: false }); },   // 1.3.7 ↻ 모델 목록
-    'extra-forget': (b) => { if (voices.forgetExtra(b.dataset.name || '')) renderMap(); },   // 1.3.7 엑스트라 한 명 빼기 (다음 분석에서 다시 고름)
+    'extra-forget': (b) => {   // 1.3.7 엑스트라 한 명 빼기 (다음 분석에서 다시 고름) · 7.7.9 그 줄만 지우고 절은 펼친 채(연타 가능), 다 비면 다시 그림
+        if (!voices.forgetExtra(b.dataset.name || '')) return;
+        const box = b.closest('.lv-extras'), row = b.closest('.lv-extra');
+        if (!box || !row) { renderMap(); return; }
+        row.remove();
+        const left = box.querySelectorAll('.lv-extra').length;
+        if (!left) { renderMap(); return; }
+        const sum = box.querySelector('summary > .lv-extras-count'); if (sum) sum.textContent = `엑스트라 ${fmtNum(left)}명`;
+        box.querySelector('.lv-extra button[data-lv-act="extra-forget"]')?.focus({ preventScroll: true });
+    },
+    'extra-forget-all': async (b) => {   // 7.7.9 절 머리줄 「모두 지우기」 — [지우기 | 취소]
+        const names = Object.keys(settings().extra_map || {});
+        if (!names.length) return;
+        const r = await callGenericPopup(`엑스트라 ${fmtNum(names.length)}명을 모두 지울까요? 다음 분석에서 다시 고를 수 있어요.`, POPUP_TYPE.CONFIRM, '', { okButton: '지우기', cancelButton: '취소' });
+        if (r !== POPUP_RESULT.AFFIRMATIVE) return;
+        for (const name of names) voices.forgetExtra(name);
+        renderMap();
+    },
     'gone-clear': async () => {   // 1.3.7 계정에 없는 목소리 지우기 (연결된 것은 남김)
         const n = voices.hiddenCounts().gone;
         if (!n || !(await confirm(`계정에 없는 목소리 ${n}개를 목록에서 지울까요? 캐릭터에 연결된 것은 남겨요.`))) return;
@@ -1290,7 +1312,7 @@ function extrasHtml(s) {
         const opts = voiceOptions('').replace('<option value="">(없음)</option>', `<option value="" selected>${esc(auto)}</option>`);
         return `<div class="lv-row lv-extra"><span class="lv-row-label">${esc(name)}${g ? `<small class="lv-row-via">${g}</small>` : ''}</span><select class="text_pole" data-lv-extra="${esc(name)}" aria-label="${esc(name)} 목소리">${opts}</select><button type="button" class="lv-x" data-lv-act="extra-forget" data-name="${esc(name)}" aria-label="빼기"><i class="fa-solid fa-xmark"></i></button></div>`;
     });
-    return h + `<details class="lv-extras"><summary>엑스트라 ${fmtNum(entries.length)}명</summary><div class="lv-rows">${rows.join('')}</div></details>`;
+    return h + `<details class="lv-extras"><summary><span class="lv-extras-count">엑스트라 ${fmtNum(entries.length)}명</span><button type="button" class="menu_button lv-extras-clear" data-lv-act="extra-forget-all" title="엑스트라 모두 지우기">모두 지우기</button></summary><div class="lv-rows">${rows.join('')}</div></details>`;
 }
 /** 엔진 자동 맞춤 바꾸기 → 바뀐 캐릭터 수를 알려 준다 */
 function setPreferProvider(id, { quiet = false } = {}) {
@@ -1552,7 +1574,15 @@ function listCardHtml() {
 }
 function replaceCard(name, html) {
     const old = q(`[data-lv-card="${name}"]`);
-    if (old) old.outerHTML = html;
+    if (!old) return;
+    // 7.7.9 다시 그려도 접힘 상태 · 스크롤 자리 유지 (엑스트라 ✕ 를 누르면 절이 접히고 화면이 튀었다 — 사용자 제보 15)
+    const open = new Set(Array.from(old.querySelectorAll('details[open]')).map(d => d.className + '|' + (d.querySelector('summary')?.textContent || '').replace(/\d+/g, '#').trim()));
+    const scroller = old.closest('.popup-content, .lv-body, .drawer-content, .inline-drawer-content') || null;
+    const top = scroller ? scroller.scrollTop : null;
+    old.outerHTML = html;
+    const fresh = q(`[data-lv-card="${name}"]`);
+    if (fresh && open.size) for (const d of fresh.querySelectorAll('details')) { const key = d.className + '|' + (d.querySelector('summary')?.textContent || '').replace(/\d+/g, '#').trim(); if (open.has(key)) d.open = true; }
+    if (scroller && top != null) scroller.scrollTop = top;
 }
 export function renderVoices() {
     const pane = q('#lv_pane_voices');
@@ -1869,9 +1899,9 @@ function edParam(f, params, cfg, voice) {
     EDF.set(f.key, f);
     const has = Object.prototype.hasOwnProperty.call(params, f.key);
     const val = has ? params[f.key] : (cfg[f.key] ?? f.default);
-    const help = helpBtn(f);   // 1.3.8 '?' 도움말 (이 팝업의 클릭은 bindEditor 가)
-    const name = help ? `<span class="lv-name">${esc(f.label)}${help}</span>` : esc(f.label);
-    return `<div class="lv-field lv-param${f.type === 'textarea' || f.type === 'tags' ? ' lv-wide' : ''}" data-key="${esc(f.key)}"${help ? ' data-lv-help' : ''}><span class="lv-label">${name}<label class="lv-def"><input type="checkbox" class="lv-def-chk"${has ? '' : ' checked'}><span>기본값</span></label></span>${edControl(f, val, !has, cfg, voice)}${helpNote(f)}</div>`;
+    collectHelp(f);   // 7.7.9 항목 ? 없음 — 편집 팝업 머리 ? 로 모은다 (클릭은 bindEditor 가)
+    const name = esc(f.label);
+    return `<div class="lv-field lv-param${f.type === 'textarea' || f.type === 'tags' ? ' lv-wide' : ''}" data-key="${esc(f.key)}"><span class="lv-label">${name}<label class="lv-def"><input type="checkbox" class="lv-def-chk"${has ? '' : ' checked'}><span>기본값</span></label></span>${edControl(f, val, !has, cfg, voice)}</div>`;
 }
 function mixRowHtml(m, opts) {
     return `<div class="lv-mix-row"><select class="text_pole lv-mix-voice"><option value="">목소리</option>${opts.map(o => `<option value="${esc(o.voiceId)}"${o.voiceId === m.voiceId ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}</select><input type="number" class="text_pole lv-mix-w" min="1" max="100" step="1" value="${esc(m.weight)}"><button type="button" class="lv-icon lv-mix-del" aria-label="빼기"><i class="fa-solid fa-xmark"></i></button></div>`;
@@ -1920,6 +1950,9 @@ function editorHtml(v, p, o) {
     if (params.length) h += `<div class="lv-sub"><span>조절</span><span class="lv-desc">기본값을 끄면 이 목소리만 다르게</span></div><div class="lv-grid">${params.map(f => edParam(f, v.params, cfg, v)).join('')}</div>`;
     if (p.caps && p.caps.instructions) h += `<label class="lv-field lv-wide"><span class="lv-label">말투 지시</span><textarea class="text_pole" name="instructions" rows="3">${esc(v.instructions)}</textarea></label>`;
     if (o.isMix) h += mixHtml(v);
+    // 7.7.9 조절 항목 도움말은 머리 옆 ? 하나로 모아서
+    const helpLines = takeHelp();
+    if (helpLines.length) h = h.replace('</span><span class="lv-chip">', '<button type="button" class="lv-help-btn" data-lv-act="help" aria-label="도움말" aria-expanded="false"><i class="fa-solid fa-question" aria-hidden="true"></i></button></span><span class="lv-chip">').replace('</div>', '</div>' + `<div class="lv-help-note lv-card-help" hidden>${helpLines.map(esc).join('<br>')}</div>`);   // 제목 글자 바로 옆(span 안) · 설명은 머리 밑
     return h;
 }
 function bindEditor(el) {
@@ -2511,7 +2544,7 @@ export const _forTest = {
     // 1.3.7 엔진 모델 목록 (tools/tests/tts-models.mjs)
     control, canListModels, listingProvider, autoModelsDue, autoEngineModels, refreshEngineModels, keyTest,
     // 1.3.8 (tools/tests/tts-onboarding.mjs): 계정 맞춤 · 바꿀까요 · 불러오기 · 도움말 · 말투 칩 · 「나」 자동 · 엔진 고정
-    autoSyncAccounts, offerPrefer, flushPendingOffer, pullVoices, afterKeyJob: () => afterKeyJob, toggleHelp, tagChipsHtml, edParam, voiceRowHtml,
+    autoSyncAccounts, offerPrefer, flushPendingOffer, pullVoices, afterKeyJob: () => afterKeyJob, toggleHelp, tagChipsHtml, edParam, voiceRowHtml, HELP_LINES, card,   // 7.7.9 카드 제목 ? 로 모은 도움말
     voiceOptions, mapCardHtml, colorsCardHtml, setCharVoice, unpinChar, keySave, loadBalance, balanceCache: () => balanceCache,
 };
 

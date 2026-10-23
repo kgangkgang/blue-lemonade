@@ -3,12 +3,16 @@
 // ② 어색한 기존 번역: addLocaleData 는 있는 키를 덮지 않으므로(i18n.js — Object.hasOwn 이면 건너뜀)
 //    translate() 가 읽는 바로 그 표를 한 번 찾아 값만 바꾼다. 못 찾으면 ②만 건너뛴다.
 // ③ 이미 그려진 data-i18n 요소 중 바뀐 키만 한 번 다시 적는다 (실리태번 translateElement 와 같은 규칙) — 보이는 곳은 바로, 닫힌 서랍은 쉬는 틈에.
-// ④ i18n 없이 뜨는 글: 알림(toastr)은 띄울 때 같은 표에서 한 번 찾고, 채팅 맨 위 「Show more messages」는 채팅이 바뀔 때 한 번,
+// ④ i18n 없이 뜨는 글: 알림(toastr)은 띄울 때 같은 표에서 한 번 찾고, 채팅 맨 위 「Show more messages」는 실리태번이 단추를 다시 만들 때마다(#chat 자식 감시자 · 이벤트),
 //    ✦ 메뉴에서 표보다 먼저 만들어진 항목은 시작 · APP_READY 때 한 번.
-// 감시자(MutationObserver) · 반복 타이머 없음. 새로 그려지는 data-i18n 요소는 실리태번 자기 감시자가 고친 표로 번역한다.
+// 감시자는 #chat 바로 아래 자식만 보는 것 하나(7.7.9) · 반복 타이머 없음. 새로 그려지는 data-i18n 요소는 실리태번 자기 감시자가 고친 표로 번역한다.
 import { ADD, FIX, TOASTS } from './ko-ui-data.js';
+import { onShowMoreButton } from './show-more-watch.js';
 
 export const LOCALE = 'ko-kr';
+/** 7.7.9 한국어 화면인가: 실리태번은 언어를 고르지 않으면 브라우저 언어(navigator.language → 'ko' 또는 'ko-kr')를 그대로 쓰고,
+ *  addLocaleData 는 그 값과 똑같은 id 만 받는다 — 'ko-kr' 만 보면 'ko' 인 폰(삼성 · 크롬 일부)에서 이 파일이 통째로 꺼져 「Show more messages」가 영어였다 */
+export const isKoreanLocale = locale => /^ko(?:[-_]|$)/i.test(String(locale ?? ''));
 const PROBE = '\u0000bl-ko-ui-probe';
 // data-i18n 없이 글이 박힌 곳 중 자주 보는 몇 군데만 (✦ 메뉴 · API 설명 · Claude 프리필 경고). 문서 전체는 훑지 않는다
 const RELABEL = '#extensionsMenu, #claude_function_prefill_warning, #koboldcpp_hint, strong.toggle-description';
@@ -134,12 +138,13 @@ let started = false, state = null;
 export const koUiState = () => state;
 /** index.js 가 ko-kr 일 때 한 번 부른다. 시간을 재서 돌려준다(진단용) */
 export function startKoreanUi(ctx = SillyTavern.getContext()) {
-    if (started || ctx?.getCurrentLocale?.() !== LOCALE) return null;
+    const locale = ctx?.getCurrentLocale?.();
+    if (started || !isKoreanLocale(locale)) return null;
     const { translate, addLocaleData, eventSource, event_types } = ctx;
     if (typeof translate !== 'function' || typeof addLocaleData !== 'function') return null; // 언어 표 함수가 없는 옛 실리태번
     started = true;
     const t0 = performance.now();
-    addLocaleData(LOCALE, ADD);
+    addLocaleData(locale, ADD);   // 실리태번은 지금 언어 id(ko · ko-kr)와 같은 것만 받는다
     const map = findLocaleMap(translate);
     if (map) Object.assign(map, FIX);
     else console.warn('[Blue Lemonade] 한국어 표를 찾지 못해 기존 번역 고치기는 건너뛰어요');
@@ -162,13 +167,18 @@ export function startKoreanUi(ctx = SillyTavern.getContext()) {
     let templates = null;
     const localize = text => localizeToastText(text, translate, () => (templates ??= compileTemplates(TOASTS, translate)));
     wrapToasts(window.toastr, localize);
-    // 채팅 맨 위 「Show more messages」: script.js printMessages 가 i18n 없이 만든다 — 채팅이 바뀔 때 한 번만 고친다
+    // 채팅 맨 위 「Show more messages」: script.js printMessages 가 i18n 없이 만든다. 7.7.9 — 채팅이 바뀔 때 한 번만 고치니
+    // 실리태번이 단추를 다시 만들 때(메시지 추가 · 스와이프 · 더 보기 뒤 · 번역 뒤 다시 그리기)마다 영어로 돌아왔다(사용자 사진, 번역 9/62 진행 중).
+    // → #chat 의 바로 아래 자식만 보는 감시자 하나(subtree 없음, 메시지 본문은 보지 않음) + 단추가 다시 생기는 실리태번 이벤트에서 같은 함수.
     const showMore = () => {
         const el = document.getElementById('show_more_messages');
         if (el && el.textContent === 'Show more messages') el.textContent = translate('Show more messages');
     };
     showMore();
-    eventSource?.on?.(event_types?.CHAT_CHANGED, showMore);
+    for (const name of ['CHAT_CHANGED', 'MORE_MESSAGES_LOADED', 'MESSAGE_RECEIVED', 'MESSAGE_SENT', 'MESSAGE_SWIPED', 'MESSAGE_DELETED', 'MESSAGE_UPDATED', 'CHARACTER_MESSAGE_RENDERED', 'USER_MESSAGE_RENDERED']) {
+        if (event_types?.[name]) eventSource?.on?.(event_types[name], showMore);
+    }
+    onShowMoreButton(showMore);   // #chat 자식 감시자(show-more-watch.js) — 단추가 다시 생길 때마다
     // 이 모듈보다 늦게 불러온 확장이 표가 들어오기 전에 ✦ 메뉴에 단 항목: 앱 준비가 끝날 때 한 번 더
     if (document.getElementById('loader')) eventSource?.once?.(event_types?.APP_READY, menu);
     state = result;

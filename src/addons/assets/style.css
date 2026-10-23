@@ -337,14 +337,21 @@
 .eh-grid {
     display: grid;
     gap: 8px;
-    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    /* 1.7.6 S/M/L 은 열 수 · 타일 폭 · 라벨 크기를 한 세트로 (폰 360: S 4열 · M 3열 · L 2열, 넓으면 6 · 4 · 3) —
+       예전 auto-fill(minmax 74/104/150) 은 폰 폭에서 M · L 이 둘 다 2열로 떨어져 글자만 커졌다 (사용자 제보) */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     max-height: 62vh;
     overflow-y: auto; /* 끝에 닿으면 서랍 스크롤로 이어지게 overscroll-behavior는 두지 않는다 (폰에서 손가락이 갇힌다) */
     padding: 2px;
 }
 
-.eh-grid[data-size="s"] { grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); gap: 6px; }
-.eh-grid[data-size="l"] { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.eh-grid[data-size="s"] { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.eh-grid[data-size="l"] { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 700px) {
+    .eh-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .eh-grid[data-size="s"] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .eh-grid[data-size="l"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 
 .eh-tile {
     position: relative;
@@ -389,8 +396,9 @@
     color: var(--eh-muted);
 }
 
-.eh-grid[data-size="s"] .eh-tile-name { font-size: .68rem; }
-.eh-grid[data-size="l"] .eh-tile-name { font-size: .8rem; }
+.eh-grid .eh-tile-name { font-size: 14px; }
+.eh-grid[data-size="s"] .eh-tile-name { font-size: 13px; }
+.eh-grid[data-size="l"] .eh-tile-name { font-size: 16px; }
 
 .eh-tile-badge {
     position: absolute;

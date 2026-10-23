@@ -274,13 +274,7 @@ body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-bu
 /* 가격표 머리줄: 넓은 화면에서 제목 · 설명 · 단위 칸이 한 줄이라 설명이 9px 로 눌렸음 → 단위 칸은 다음 줄 전체 */
 body.salty .rl-settings .rl-price-head { flex-wrap: wrap !important; }
 body.salty .rl-settings .rl-price-head > .rl-unit { flex: 1 1 100% !important; }
-body.salty .sw-settings .sw-row:has(> .sw-num):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) !important;
-  gap: var(--bl-s1) !important;
-}
-body.salty .sw-settings .sw-row > .sw-num { width: 100% !important; }
-body.salty .sw-settings .sw-row > .sw-num > input { flex: 1 1 auto !important; width: auto !important; }
+/* 7.7.9 끊김 감시 숫자줄(.sw-row)은 95-fields-i2 가 이름 · 값 · 단위 한 줄로 (제보 22 보충) */
 /* 기능 목록(.rl-modules) · 번역 체크 격자 · TTS 대본 편집기 칸 · TTS 넓은 화면 두 칸 카드 · 한글화 패널 값 · 메모 모양 설정 ·
    다시 쓰기 값 격자는 원래 모듈의 두 칸(넓으면 그 이상) 그대로 */
 /* 한글화 패널 값 · 메모 모양 설정은 두 칸 고정이라 큰 글씨로 칸이 좁아지면(이름이 낱말 가운데서 꺾임) 한 칸 */

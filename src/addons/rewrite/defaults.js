@@ -145,6 +145,14 @@ export const DEFAULT_SETTINGS = {
             words: 'cane, canes, walking stick*',
         },
         {
+            // 7.7.9 소품 클리셰 (사용자: "요새 애들이 자꾸 회중시계 들고 나오는데") — loadSettings 가 offeredRules 로 기존 설정에 한 번 붙인다
+            id: 'pocket_watch',
+            name: '회중시계',
+            enabled: true,
+            description: 'a pocket watch as a prop (pulled out, checked, snapped shut, on a chain) — keep the beat, drop the watch',
+            words: 'pocket watch, pocket watches, pocketwatch, pocketwatches, pocket-watch, fob watch, fob watches, 회중시계, 회중 시계, 懐中時計, 怀表, 懷錶',
+        },
+        {
             id: 'ears',
             name: '뾰족귀',
             enabled: true,
@@ -224,7 +232,7 @@ export const DEFAULT_SETTINGS = {
         },
     ],
     // Default rule ids already offered to this install; newer ones get added once on load (see loadSettings).
-    offeredRules: ['glasses', 'glasses_color', 'beard', 'tan', 'cane', 'ears', 'gray_nails', 'horns', 'gloves', 'user_colors', 'fufu', 'chest_hair'],
+    offeredRules: ['glasses', 'glasses_color', 'beard', 'tan', 'cane', 'pocket_watch', 'ears', 'gray_nails', 'horns', 'gloves', 'user_colors', 'fufu', 'chest_hair'],
     exceptions: [
         {
             id: 'belford',

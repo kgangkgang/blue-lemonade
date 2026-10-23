@@ -415,7 +415,7 @@ function buildDialog() {
             <div class="rl-current-pricing">${currentPriceCard()}</div>
             <div class="rl-price-sync-controls">
                 <label><input type="checkbox" data-act="auto-pricing" ${settings().priceAutoRefresh !== false ? 'checked' : ''}> 가격 자동 갱신</label>
-                <button type="button" class="rl-chip" data-act="refresh-pricing">지금 확인</button>
+                <button type="button" class="rl-chip rl-chip-icon" data-act="refresh-pricing" title="지금 확인" aria-label="지금 확인"><i class="fa-solid fa-rotate" aria-hidden="true"></i></button>
                 <span class="rl-price-sync-status" role="status">${syncStatusText()}</span>
             </div>
             ${providerCoverage()}

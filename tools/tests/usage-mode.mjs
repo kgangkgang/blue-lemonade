@@ -19,10 +19,8 @@ const { checkboxTokens } = await import(new URL('src/usage-mode.js', root));
 const palette = Object.fromEntries(['line','control','surface','text','muted','accent','on-accent','bg'].map(k=>['--salty-'+k,'existing-'+k]));
 assert.deepEqual(checkboxTokens(palette, false), {});
 assert.deepEqual(checkboxTokens(palette, true), {
-    '--bl-checkbox-line':'existing-line','--bl-checkbox-control':'existing-control',
-    '--bl-checkbox-surface':'existing-surface','--bl-checkbox-text':'existing-text',
-    '--bl-checkbox-muted':'existing-muted','--bl-checkbox-accent':'existing-accent','--bl-checkbox-ink':'existing-on-accent','--bl-checkbox-bg':'existing-bg',
-});
+    '--bl-checkbox-line':'existing-line','--bl-checkbox-accent':'existing-accent','--bl-checkbox-ink':'existing-on-accent',
+});   // 7.7.9 A3: 선 · 포인트 면 · 꺽쇠 세 색만
 console.log('PASS owned checkbox tokens reuse the palette and stay absent when disabled');
 
 const checkboxCss = fs.readFileSync(new URL('css/92-checkboxes.css', root), 'utf8');

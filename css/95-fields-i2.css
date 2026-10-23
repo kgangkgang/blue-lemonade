@@ -1,0 +1,64 @@
+/* ===== css/95-fields-i2.css ===== */
+/* 7.7.9 입력칸 I2 (사용자 확정 · 제보 22): 면은 배경보다 한 단계 밝은 면(--bl-control: 라이트 surface · 나이트 raised) + 1px --salty-line 선, 그림자 없음.
+   포커스는 포인트 색 선 + 고리. 비활성은 면 · 글자만 흐리게. 텍스트 · 숫자 · 선택칸 · 텍스트영역 · 검색칸 전부, 라이트 · 나이트 공통 —
+   시트 위(02) · 팝업 안(02 오목한 칸) · 애드온 창(19 --salty-field: 나이트에서 카드 색과 거의 같아 칸이 안 보였다) · 테마 설정 창 · 한글화 패널 을 한 규칙으로.
+   높이는 같은 줄 단추와 같게(--bl-h-ctl, 02 그대로). 끄기: html#bl-i2-off */
+html:not(#bl-i2-off) body.salty :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"], [type="tel"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, #nonQRFormItems *, ul, ol, [data-bl-native-ext-colors] *, .salty-switch input, [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"])) {
+  background-color: var(--bl-control) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-line) !important;
+  border: 0 !important;
+  color: var(--salty-text) !important;
+}
+html:not(#bl-i2-off) body.salty :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"], [type="tel"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, #nonQRFormItems *, ul, ol, [data-bl-native-ext-colors] *, .salty-switch input, [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"])):focus {
+  background-color: var(--bl-control) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-ring) !important;
+}
+html:not(#bl-i2-off) body.salty :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"], [type="tel"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, #nonQRFormItems *, ul, ol, [data-bl-native-ext-colors] *, .salty-switch input, [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"])):disabled {
+  opacity: .55 !important;
+}
+/* 테마 설정 창(.salty-panel)의 글자 · 검색 · 선택칸도 같은 면 (숫자칸 .salty-num 은 97 의 유동 폭 그대로, 면만) */
+html:not(#bl-i2-off) body.salty .salty-panel :is(input:is([type="text"], [type="search"], [type="number"], [type="url"], [type="password"]), select, textarea):where(:not(.salty-switch input, .salty-reset-pick input, [type="color"], [type="range"])) {
+  background-color: var(--bl-control) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-line) !important;
+  border: 0 !important;
+}
+html:not(#bl-i2-off) body.salty .salty-panel :is(input:is([type="text"], [type="search"], [type="number"], [type="url"], [type="password"]), select, textarea):where(:not(.salty-switch input, .salty-reset-pick input, [type="color"], [type="range"])):focus-visible {
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-ring) !important;
+}
+
+/* ---- 숫자칸 유동 폭(제보 14 · 22 보충): 애드온 창 · 팝업의 숫자 입력칸은 값 길이만큼(최소 3자) + 안쪽 여백, 단위는 바로 옆.
+   src/num-width.js 가 값이 바뀔 때 --bl-num-ch 를 넣는다. 슬라이더 짝(.neo-range-input) · 스텝퍼 · 테마 설정 창(.salty-num, 97) · 섞기 비율은 제 규칙. 끄기: html#bl-num-off */
+html:not(#bl-num-off) body.salty :is(dialog.popup, .pa-hub, .rl-root, .sw-settings, #lv_settings, .llmt-settings, #regex-link-settings, .jj-settings, #pt-panel, .cg-root, .bl-notes-dialog, #extensions_settings, #extensions_settings2) input[type="number"]:where(:not(.neo-range-input, .lv-mix-w, .pt-param-num, .jj-stepper input, .cg-stepper input, .salty-num input, .bl-look-val input, [data-bl-num-wide], [data-bl-native-ext-colors] *)) {
+  width: calc(var(--bl-num-ch, 3) * 1ch + 28px) !important;
+  min-width: calc(3ch + 28px) !important;
+  max-width: 100% !important;
+  flex: 0 0 auto !important;
+  text-align: right !important;
+  padding-inline: 12px !important;
+  -moz-appearance: textfield;
+}
+html:not(#bl-num-off) body.salty :is(dialog.popup, .pa-hub, .rl-root, .sw-settings, #lv_settings, .llmt-settings, #regex-link-settings, .jj-settings, #pt-panel, .cg-root, .bl-notes-dialog, #extensions_settings, #extensions_settings2) input[type="number"]:where(:not(.neo-range-input, .lv-mix-w, .pt-param-num, .jj-stepper input, .cg-stepper input, .salty-num input, .bl-look-val input, [data-bl-num-wide], [data-bl-native-ext-colors] *))::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+/* 줄 모양: 이름 · 값 · 단위 한 줄, 설명은 아래 작은 글자 */
+/* 성능 보조 끊김 감시 .sw-row (96 의 세로 격자 대신) */
+html:not(#bl-num-off) body.salty .sw-settings .sw-row:has(> .sw-num) { display: flex !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; }
+html:not(#bl-num-off) body.salty .sw-settings .sw-row > .sw-num { width: auto !important; margin-inline-start: auto !important; flex: 0 0 auto !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; }
+html:not(#bl-num-off) body.salty .sw-settings .sw-row > .sw-num > i { font-style: normal; color: var(--salty-muted); }
+/* 요청 로그 설정 · 예산 · 장부 · 중계 비교: <label><span>이름</span><input><span>단위</span></label> */
+html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit, .rl-ledger label, .rl-cmp label):has(> input[type="number"]) { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 8px !important; width: 100% !important; }
+html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit, .rl-ledger label, .rl-cmp label):has(> input[type="number"]) > span:first-child { flex: 1 1 auto !important; min-width: 0 !important; grid-column: auto !important; }
+html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit, .rl-ledger label, .rl-cmp label):has(> input[type="number"]) > input[type="number"] { grid-column: auto !important; }
+html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit, .rl-ledger label, .rl-cmp label):has(> input[type="number"]) > span:not(:first-child) { flex: 0 0 auto !important; color: var(--salty-muted); }
+/* TTS .lv-field 숫자칸: 2열 격자 안이라 이웃 칸(선택칸 · 글자칸)과 같은 세로 배치(이름 위 · 칸 아래)를 지킨다 — 한 줄 규칙은 격자 밖 줄에만(제보 26: 줄 맞춤 우선).
+   폭만 값 길이만큼(위 공통 규칙), 왼쪽 맞춤 */
+html:not(#bl-num-off) body.salty #lv_settings .lv-grid > .lv-field > input[type="number"] { align-self: flex-start !important; }
+/* 번역 창 .llmt-field 숫자칸(이름 · 설명 · 칸 순서라 설명을 맨 아래로) */
+html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 8px !important; }
+html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) > .llmt-label { flex: 1 1 auto !important; min-width: 0 !important; margin: 0 !important; }
+html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) > input[type="number"] { order: 1; }
+html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) > .llmt-desc { order: 2; flex: 1 1 100% !important; }
+/* 한글화 패널 .pt-field 숫자칸: 이름 · 값 한 줄, 도움말 아래 */
+html:not(#bl-num-off) body.salty #pt-panel .pt-field:has(> input[type="number"]) { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 8px !important; }
+html:not(#bl-num-off) body.salty #pt-panel .pt-field:has(> input[type="number"]) > label { flex: 1 1 auto !important; min-width: 0 !important; }
+html:not(#bl-num-off) body.salty #pt-panel .pt-field:has(> input[type="number"]) > .pt-bl-help { flex: 1 1 100% !important; margin: 0 !important; }
+/* 정규식 연동: 최근 메시지 개수 칸 */
+html:not(#bl-num-off) body.salty #regex-link-settings .rlk-keep { grid-template-columns: auto minmax(0, 1fr) auto !important; }

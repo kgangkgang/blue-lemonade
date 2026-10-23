@@ -617,24 +617,28 @@ await test('목록 카드: 「계정에 새로 만든 목소리는 저절로 들
 });
 
 // ================= 3. 새 기능
-await test("'?' 도움말: 도움말이 있는 칸은 이름 뒤 ? (aria-expanded) + 숨은 글 · 겉은 div (글을 눌러도 선택칸이 안 열림) · 없는 칸은 1.3.7 그대로", () => {
+await test("'?' 도움말(7.7.9): 항목마다 ? 를 붙이지 않고 카드 제목 옆 ? 하나에 「이름: 설명」으로 모은다 · 편집 팝업도 머리 ? 하나", () => {
     reset();
     const el = PR.getProvider('elevenlabs');
     const cfg = S.providerConfig('elevenlabs', el.defaults);
     const stab = el.params.find(f => f.key === 'stability');
+    F.HELP_LINES.splice(0);
     const h = F.control(stab, 'providers.elevenlabs.stability', 0.5, cfg);
-    assert.match(h, /^<div class="lv-field lv-range[^"]*" data-lv-help>/);
-    assert.match(h, /class="lv-help-btn" data-lv-act="help" aria-label="도움말" aria-expanded="false"/);
-    assert.match(h, /<span class="lv-help-note" hidden>보통 0\.5 에서/);
-    assert.match(h, /aria-label="안정감"/, '고르는 칸에 이름');
+    assert.match(h, /^<label class="lv-field lv-range/, '겉은 다시 label');
+    assert.doesNotMatch(h, /lv-help/, '항목 옆 ? 없음');
+    const c = F.card('engine', 'fa-plug', 'E', h);
+    assert.equal((c.match(/lv-help-btn/g) || []).length, 1, '카드 제목 옆 ? 하나');
+    assert.match(c, /<div class="lv-help-note lv-card-help" hidden>안정감: 보통 0\.5 에서/);
+    assert.equal(F.HELP_LINES.length, 0, '카드가 모은 줄을 비운다');
     const seedNo = F.control({ key: 'x', label: '아무거나', type: 'select', options: [{ value: 'a', label: 'A' }] }, 'providers.elevenlabs.x', 'a', cfg);
     assert.match(seedNo, /^<label class="lv-field"><span class="lv-label">아무거나<\/span><select class="text_pole" data-lv-path/);
-    assert.doesNotMatch(seedNo, /lv-help/);
+    assert.doesNotMatch(F.card('x', 'fa-x', 'X', seedNo), /lv-help/, '도움말 없는 카드엔 ? 없음');
     const tg = F.control({ key: 't', label: '켬', type: 'toggle', help: '설명' }, 't', true);
-    assert.match(tg, /^<div class="lv-togglebox" data-lv-help><label class="checkbox_label lv-toggle">/);
+    assert.match(tg, /^<label class="checkbox_label lv-toggle">/);
+    assert.deepEqual(F.HELP_LINES.splice(0), ['켬: 설명']);
     const ed = F.edParam(stab, {}, cfg, { params: {} });
-    assert.match(ed, /data-lv-help/);
-    assert.match(ed, /lv-help-btn/);
+    assert.doesNotMatch(ed, /lv-help/);
+    assert.ok(F.HELP_LINES.splice(0).length === 1, '편집 팝업 머리로 모을 줄');
     const note = { hidden: true };
     const attrs = {};
     const btn = { closest: (q) => (q === '[data-lv-help]' ? { querySelector: () => note } : null), setAttribute: (k, v) => { attrs[k] = v; } };
@@ -649,10 +653,14 @@ await test("'?' 도움말: 도움말이 있는 칸은 이름 뒤 ? (aria-expande
 await test('감정 세기 칸의 ? 에 ElevenLabs 에서 하는 일', () => {
     reset();
     const f = F.readFields('analysis').find(x => x.key === 'emotion_strength');
+    F.HELP_LINES.splice(0);
     const html = F.control(f, 'emotion_strength', 'normal');
-    assert.match(html, /lv-help-btn/);
-    assert.match(html, /ElevenLabs 는 안정감 1/);
-    assert.match(html, /안정감을 0\.3 낮춰/);
+    assert.doesNotMatch(html, /lv-help-btn/, '7.7.9 항목 옆 ? 없음');
+    const line = F.HELP_LINES.join(' | ');   // 카드 제목 ? 밑에 「감정 세기: …」
+    assert.match(line, /^감정 세기: /);
+    assert.match(line, /ElevenLabs 는 안정감 1/);
+    assert.match(line, /안정감을 0\.3 낮춰/);
+    F.HELP_LINES.splice(0);
 });
 await test('말투 칩 (엔진 카드): 한국어 이름만 · 누르면 엔진 기본 말투에 넣고 빼기 · 4개까지 · v3 · v4 모델에서만 보임', async () => {
     reset();

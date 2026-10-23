@@ -1,0 +1,15 @@
+/* ===== css/77-scrollbars.css ===== */
+/* 7.7.9 스크롤바 숨김 (제보 18, 사용자 확정): 테마가 그리는 창 · 패널 · 목록 · 텍스트영역의 가로 · 세로 스크롤바를 모두 숨긴다 — 내용은 손가락 · 휠로 그대로 굴러간다.
+   예외는 채팅 본문(#chat) 하나: 실리태번 설정을 따른다(폰에선 07-images 가 숨기고 PC 는 마우스로 끌 자리로 남긴다).
+   가로로 넘치는 탭 줄은 98-tab-strips 의 가장자리 페이드가 「더 있음」을 보여 준다(스크롤바 대신). 끄기: html#bl-scrollbars-on */
+html:not(#bl-scrollbars-on) body.salty :not(#chat) {
+  scrollbar-width: none;
+  scrollbar-gutter: auto;
+}
+html:not(#bl-scrollbars-on) body.salty :not(#chat)::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+/* 스크롤바 홈만큼 띄우던 여백(--bl-sbw, 09)은 홈이 없으니 0 — #chat 은 제 규칙 */
+html:not(#bl-scrollbars-on) body.salty { --bl-sbw: 0px; }

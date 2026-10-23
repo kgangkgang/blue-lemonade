@@ -30,12 +30,12 @@ export async function checkInstallation(full=false){
     paint();
     try{return await pending;}finally{pending=null;paint();}
 }
-export function healthMarkup(){return `<section class="bl-install-health" aria-label="설치 및 충돌 점검"><header class="bl-health-head"><div><h3>설치 · 충돌 점검</h3><p>파일 상태와 알려진 충돌을 확인해요.</p></div><button type="button" class="salty-btn" data-health-check>다시 검사</button></header><div data-health-result role="status" aria-live="polite"></div></section>`;}
+export function healthMarkup(){return `<section class="bl-install-health" aria-label="설치 및 충돌 점검"><header class="bl-health-head"><div><h3>설치 · 충돌 점검</h3><p>파일 상태와 알려진 충돌을 확인해요.</p></div><button type="button" class="salty-btn salty-btn-icon" data-health-check title="다시 검사" aria-label="다시 검사"><i class="fa-solid fa-rotate" aria-hidden="true"></i></button></header><div data-health-result role="status" aria-live="polite"></div></section>`;}
 function paint(){
     for(const box of views){
         if(!box.isConnected){views.delete(box);continue;}
         const check=box.querySelector('[data-health-check]');
-        check.disabled=!!pending;check.textContent=pending?'확인 중…':'다시 검사';
+        check.disabled=!!pending;const checkLabel=pending?'확인 중…':'다시 검사';check.title=checkLabel;check.setAttribute('aria-label',checkLabel);check.querySelector('i')?.classList.toggle('fa-spin',!!pending);
         const out=box.querySelector('[data-health-result]');
         const wasOpen=out.querySelector('details')?.open;
         out.replaceChildren();out.setAttribute('aria-busy',String(!!pending));

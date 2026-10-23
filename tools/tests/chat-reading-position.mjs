@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-const { keepChatReadingPosition: keep, watchChatReadingGestures } = await import(pathToFileURL(path.resolve(process.argv[2] || '.', 'src/chat-reading-position.js')));
+const { keepChatReadingPosition: keep, watchChatReadingGestures, readerRestsIn } = await import(pathToFileURL(path.resolve(process.argv[2] || '.', 'src/chat-reading-position.js')));
 
 function fixture() {
-    let height = 100, top = 1500, key = 'a';
+    let height = 100, top = 1500, key = 'a', drift = 0;
     const frames = [], observers = [];
     const doc = new EventTarget();
     const win = doc.defaultView = {
@@ -16,13 +16,13 @@ function fixture() {
         getBoundingClientRect() { return { top: 0, left: 0 }; },
     };
     const mes = { ownerDocument: doc, isConnected: true, getAttribute: () => '0', closest: s => s === '#chat' ? chat : s === '.mes' ? mes : null,
-        getBoundingClientRect: () => ({ top: -top, bottom: height * 30 - top, height: height * 30 }),
+        getBoundingClientRect: () => ({ top: -top + drift, bottom: height * 30 - top + drift, height: height * 30 }),
         querySelector: () => body,
     };
     const body = { ownerDocument: doc, parentElement: mes, closest: mes.closest, children: [] };
     function fill() { body.children.forEach(n => n.isConnected = false); body.children = Array.from({ length: 30 }, (_, i) => ({
         isConnected: true, parentElement: body, classList: { contains: () => false }, closest: mes.closest,
-        getBoundingClientRect: () => ({ top: i * height - top, bottom: (i + 1) * height - top, height }),
+        getBoundingClientRect: () => ({ top: i * height - top + drift, bottom: (i + 1) * height - top + drift, height }),
     })); }
     fill();
     doc.elementFromPoint = () => body.children[Math.min(29, Math.floor((top + 2) / height))];
@@ -35,6 +35,7 @@ function fixture() {
         flush() { frames.splice(0).forEach(fn => fn()); },
         switchChat() { key = 'b'; },
         stop(type = 'wheel') { doc.dispatchEvent(new Event(type)); },
+        drift(v) { drift = v; },
     };
 }
 
@@ -202,6 +203,33 @@ await check('gesture before the first paint leaves ongoing momentum free', f => 
         // 7.7.4 the observer stays for layout shifts only: a callback without a layout change leaves the reader alone
         for (const o of f.observers) if (!o.off) o.fn();
         assert.equal(f.chat.scrollTop, 250);
+    } finally { stop(); }
+});
+// 7.7.9 (제보 24) a finger that starts inside a helper iframe never sends touchmove to this document; the chat still scrolls.
+// Two scroll events the guard did not cause within 200 ms are the reader: absolute restoring stops, like a gesture.
+await check('a run of reader scroll events the guard cannot see as a gesture softens it', f => {
+    keep(f.body, () => f.replace(80)); f.flush(); f.flush();
+    f.chat.scrollTop = 1240; scrollEvent(f);            // first foreign event: still restored (a renderer jump looks the same)
+    assert.equal(f.chat.scrollTop, 1200);
+    f.chat.scrollTop = 1260; scrollEvent(f); f.chat.scrollTop = 1300; scrollEvent(f);   // a run = the reader
+    assert.equal(f.chat.scrollTop, 1300);
+    assert.ok(readerRestsIn(f.chat) > 0, '그 동안 미리 보기 그림은 미룬다');
+    f.resize(100);                                       // a layout shift keeps the paragraph where the reader put it, not the old top
+    assert.notEqual(f.chat.scrollTop, 1200);
+});
+await check('subpixel drift between two scroll events is not a layout shift (no snap back)', f => {
+    keep(f.body, () => f.replace(80)); f.stop('touchmove');
+    f.chat.scrollTop = 400; scrollEvent(f);
+    f.drift(1.5); f.chat.scrollTop = 420; scrollEvent(f);
+    assert.equal(f.chat.scrollTop, 420);
+    f.drift(-1.5); f.chat.scrollTop = 440; scrollEvent(f);
+    assert.equal(f.chat.scrollTop, 440);
+});
+await check('a scroll run that sits at the bottom (ST auto-scroll while streaming) is not the reader', f => {
+    const stop = watchChatReadingGestures(f.doc);
+    try {
+        f.chat.scrollTop = f.chat.scrollHeight; scrollEvent(f); scrollEvent(f); scrollEvent(f);
+        assert.equal(readerRestsIn(f.chat), 0);
     } finally { stop(); }
 });
 console.log(`chat-reading-position: ${count} passed`);

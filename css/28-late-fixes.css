@@ -507,3 +507,20 @@ body.salty.salty-fade-off :is(#chat, #salty-nochat, .salty-preview) .mes_text :i
 @keyframes bl-fade-in {
   from { opacity: 0; }
 }
+
+/* ---------- 7.7.9 과일 상태창(.fate-status-wrapper) 위 4칸(날짜 · 시간 · 장소 · 날씨) — 제보 25(b) ----------
+   정규식 CSS 가 값에 word-break:break-all 을 주어 영어가 글자 한가운데서 끊겼다("Wednesda / y", "Headquart / ers").
+   낱말 단위로만 줄을 바꾸고(break-word · keep-all · hyphens 없음), 폰 폭에선 4칸이 낱말 하나도 못 담을 만큼 좁아 2×2 격자로. */
+body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text .fate-top-grid .fate-grid-value {
+  overflow-wrap: break-word !important;
+  word-break: keep-all !important;
+  hyphens: none !important;
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text .fate-top-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px 10px !important;
+  }
+  body.salty :is(#chat, .cg-root, #salty-nochat, .salty-preview) .mes_text .fate-top-grid > .fate-grid-item { min-width: 0; }
+}

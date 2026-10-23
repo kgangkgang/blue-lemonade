@@ -20,6 +20,9 @@ import { startAssetWatcher, classifyAll } from './src/assets.js';
 import { startPromptList } from './src/promptlist.js';
 import { startCurrentMark } from './src/current.js';
 import { startDangerMark } from './src/danger.js';
+import { startPopupGuard } from './src/popup-guard.js';
+import { startNumberWidth } from './src/num-width.js';
+import { startGroupGrid } from './src/group-grid.js';
 import { startIconTextMark } from './src/icon-text.js';
 import { startCompactLayout } from './src/layout.js';
 import { startNameMarquee } from './src/marquee.js';
@@ -165,9 +168,9 @@ setFeatureHooks({ applyAll, refreshPanels }); // 켤 때만 불러오는 기능�
 startThemeSettingsSync({ getSalty: () => SillyTavern.getContext().extensionSettings?.salty, save: saveSettings, after: () => { applyAll(); refreshPanels(); } });
 const settings = getSettings();
 if (dropStaleOverrides(settings)) saveSettings();
-// 6.9.0 실리태번 한국어 화면 다듬기 (ko-ui.js) — 언어가 ko-kr 일 때만 표를 받는다. 끄기: 설정 koUi=false
+// 6.9.0 실리태번 한국어 화면 다듬기 (ko-ui.js) — 언어가 한국어(ko · ko-kr, 7.7.9: 브라우저 언어가 'ko' 인 폰도)일 때만 표를 받는다. 끄기: 설정 koUi=false
 try {
-    if (settings.koUi !== false && SillyTavern.getContext().getCurrentLocale?.() === 'ko-kr') import('./src/ko-ui.js').then(m => m.startKoreanUi()).catch(error => console.warn('[Blue Lemonade] 한국어 화면', error));
+    if (settings.koUi !== false && /^ko(?:[-_]|$)/i.test(String(SillyTavern.getContext().getCurrentLocale?.() ?? ''))) import('./src/ko-ui.js').then(m => m.startKoreanUi()).catch(error => console.warn('[Blue Lemonade] 한국어 화면', error));
 } catch { /* 언어를 못 읽으면 그대로 */ }
 // 6.9.9 프롬프트 템플릿(ST-Prompt-Template) 설정 블록: 한국어 표(ko-kr · koUi) · 머리글 판 알약 — 블록이 없으면 몇 번 찾고 끝 (src/addons/prompt-template/host.js)
 import('./src/addons/prompt-template/host.js').then(m => m.startPromptTemplateHost({ koUi: settings.koUi })).catch(error => console.warn('[Blue Lemonade] 프롬프트 템플릿', error));
@@ -205,6 +208,9 @@ jQuery(() => {
     startPromptList(); // 검사 창 프롬프트 목록 줄을 세 조각으로 쪼갬 (CSS 로는 순서를 못 바꿈)
     startCurrentMark();
     startDangerMark();
+    startPopupGuard(); // 7.7.9 안내 창 「닫기」 하나 보장 + 실리태번 판 로그
+    startNumberWidth(); // 7.7.9 애드온 창 · 팝업 숫자칸 유동 폭(--bl-num-ch)
+    startGroupGrid(); // 7.7.9 단추 묶음 · 짧은 체크 묶음 2열 격자, 안 들어가면 그 묶음만 1열
     startIconTextMark(); // 아이콘 + 맨 글자 .menu_button 은 아이콘 버튼 규칙에서 뺀다 (CSS 는 글자 노드를 못 봄)
     startCompactLayout();
     startNameMarquee(); // 헬퍼 스크립트 이름: 눌러서 긴 이름 끝까지 보기

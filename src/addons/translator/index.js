@@ -5929,18 +5929,26 @@ function initializeEventHandlers() {
         saveSettingsDebounced();
     });
 
-    if (!document.getElementById('llm_style_profiles')) {
+    // 7.7.9 번역 점검 아래 보조 단추 3개는 한 묶음(.llmt-btn-group) — 테마가 2열 격자로 그린다 (세로 3줄 금지, 제보 19)
+    const checkGroup = () => {
         const anchor = document.getElementById('llm_translation_check')?.closest('label');
-        if (anchor) { const button=document.createElement('button');button.id='llm_style_profiles';button.type='button';button.className='menu_button';button.textContent='인물별 말투·호칭';button.addEventListener('click',async()=>{try{await openCharacterSpeechPreferences();}catch(error){toastr.error(error.message);}});anchor.after(button); }
-    }
-    if (!document.getElementById('llm_book_transfer')) {
-        const anchor = document.getElementById('llm_style_profiles');
-        if (anchor) { const button=document.createElement('button');button.id='llm_book_transfer';button.type='button';button.className='menu_button';button.textContent='용어·말투 옮기기';button.addEventListener('click',()=>{void openTranslationBookTransfer().catch(error=>toastr.error(error.message));});anchor.after(button); }
-    }
+        if (!anchor) return null;
+        let group = document.getElementById('llm_check_tools');
+        if (!group) { group = document.createElement('div'); group.id = 'llm_check_tools'; group.className = 'llmt-btn-group bl-btn-grid'; anchor.after(group); }
+        return group;
+    };
     // The board reuses cached checks; opening it never translates the chat.
     if (!document.getElementById('llm_check_board')) {
-        const anchor = document.getElementById('llm_translation_check')?.closest('label');
-        if (anchor) { const button = document.createElement('button'); button.id = 'llm_check_board'; button.type = 'button'; button.className = 'menu_button'; button.textContent = '의심 번역 모아보기'; button.addEventListener('click', () => { void openTranslationCheckBoard().catch(error => toastr.error(error.message, '번역 점검')); }); anchor.after(button); }
+        const group = checkGroup();
+        if (group) { const button = document.createElement('button'); button.id = 'llm_check_board'; button.type = 'button'; button.className = 'menu_button'; button.textContent = '의심 번역 모아보기'; button.addEventListener('click', () => { void openTranslationCheckBoard().catch(error => toastr.error(error.message, '번역 점검')); }); group.append(button); }
+    }
+    if (!document.getElementById('llm_style_profiles')) {
+        const group = checkGroup();
+        if (group) { const button=document.createElement('button');button.id='llm_style_profiles';button.type='button';button.className='menu_button';button.textContent='인물별 말투·호칭';button.addEventListener('click',async()=>{try{await openCharacterSpeechPreferences();}catch(error){toastr.error(error.message);}});group.append(button); }
+    }
+    if (!document.getElementById('llm_book_transfer')) {
+        const group = checkGroup();
+        if (group) { const button=document.createElement('button');button.id='llm_book_transfer';button.type='button';button.className='menu_button';button.textContent='용어·말투 옮기기';button.addEventListener('click',()=>{void openTranslationBookTransfer().catch(error=>toastr.error(error.message));});group.append(button); }
     }
     // 2.6.0 번역 점검 표시 · 생각 블록 번역 단추 — 바꾸면 그려진 메시지를 다시 그린다 (표시 · 단추를 달거나 뗀다)
     $('#llm_translation_autofix').on('change', function () { extensionSettings.translation_autofix = $(this).is(':checked'); saveSettingsDebounced(); });   // 7.2.6 표시는 그대로라 다시 그리지 않는다

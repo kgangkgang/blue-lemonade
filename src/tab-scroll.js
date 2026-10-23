@@ -11,6 +11,19 @@ export function revealTab(bar, tab) {
     if (Math.abs(delta) > 0.5) bar.scrollLeft += delta;
 }
 
+/** 7.7.9 (제보 18) which edges hide more tabs: '' (fits or at both ends), 'left', 'right', 'both'. CSS (98-tab-strips) fades those edges. */
+export function fadeState(bar) {
+    if (!bar || !bar.clientWidth || bar.scrollWidth <= bar.clientWidth + 1) return '';
+    const left = bar.scrollLeft > 1, right = bar.scrollLeft + bar.clientWidth < bar.scrollWidth - 1;
+    return left && right ? 'both' : left ? 'left' : right ? 'right' : '';
+}
+export function applyFade(bar) {
+    const state = fadeState(bar);
+    if (state) { if (bar.dataset.blFade !== state) bar.dataset.blFade = state; }
+    else if ('blFade' in bar.dataset) delete bar.dataset.blFade;
+    return state;
+}
+
 export function installTabScroll(selectors, doc = globalThis.document) {
     if (!doc?.documentElement || !selectors?.length) return;
     if (doc[KEY]) { doc[KEY].add(selectors); return; }
@@ -27,6 +40,7 @@ export function installTabScroll(selectors, doc = globalThis.document) {
                 if (!row.isConnected) continue;
                 const active = selected(row);
                 if (active) revealTab(row, active);
+                applyFade(row);
             }
             pending.clear();
         });
@@ -46,6 +60,7 @@ export function installTabScroll(selectors, doc = globalThis.document) {
             if (tab) revealTab(bar, tab);
         }, { signal });
         bar.addEventListener('click', () => schedule(bar), { signal });
+        bar.addEventListener('scroll', () => applyFade(bar), { signal, passive: true });   // 7.7.9 넘친 쪽만 흐리게 (스크롤 자리는 건드리지 않는다)
         bar.addEventListener('wheel', e => {
             if (e.ctrlKey || e.metaKey || e.shiftKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY) || bar.scrollWidth <= bar.clientWidth + 1) return;
             const before = bar.scrollLeft;

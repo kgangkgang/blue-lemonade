@@ -32,8 +32,8 @@ export function forcedThemeGuard({ themeOn, now = () => Date.now(), warn = () =>
 // Only owned checkbox colors are exposed outside the theme; host controls never use these names.
 export function checkboxTokens(vars, enabled) {
     if (!enabled) return {};
+    // 7.7.9 체크박스 A3 는 선(line) · 포인트 면(accent) · 꺽쇠(ink) 세 색만 쓴다 (면 · 그림자 · 비활성 면 없음)
     return Object.fromEntries([
-        ['line', 'line'], ['control', 'control'], ['surface', 'surface'],
-        ['text', 'text'], ['muted', 'muted'], ['accent', 'accent'], ['ink', 'on-accent'], ['bg', 'bg'],
+        ['line', 'line'], ['accent', 'accent'], ['ink', 'on-accent'],
     ].map(([name, source]) => [`--bl-checkbox-${name}`, vars[`--salty-${source}`]]));
 }

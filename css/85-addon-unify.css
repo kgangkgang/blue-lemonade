@@ -222,3 +222,27 @@ html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]::after { cont
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked { background: var(--salty-accent) !important; border-color: transparent !important; box-shadow: inset 0 2px 2px color-mix(in oklab, var(--salty-bg) 32%, transparent) !important; }
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked::after { opacity: 1; }
 html body.salty #bl-deus-popover .dq-row select { height: var(--bl-h-ctl, 36px) !important; min-height: var(--bl-h-ctl, 36px) !important; padding-block: 0 !important; }
+
+/* ---------- 7.7.8 아이콘 대체: 툴바 · 칩의 짧은 글자 라벨(지금 확인 · 다시 검사 · 새로고침)은 실리태번이 같은 뜻에 쓰는 fa-rotate 하나로 — 글자는 title · aria-label 에 남김 ----------
+   정사각 34(아이콘 단추 기준표), 글자 크기 · 색 · 면은 그 단추 종류 그대로 */
+html body.salty :is(.rl-chip.rl-chip-icon, .salty-btn.salty-btn-icon[data-health-check], .bl-library-tools .bl-icon-btn) {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  width: var(--bl-h-icon, 34px) !important; min-width: var(--bl-h-icon, 34px) !important; height: var(--bl-h-icon, 34px) !important; min-height: var(--bl-h-icon, 34px) !important;
+  padding: 0 !important; font-size: var(--bl-ic, 15px) !important; line-height: 1 !important;
+}
+html body.salty :is(.rl-chip.rl-chip-icon, .salty-btn.salty-btn-icon[data-health-check], .bl-library-tools .bl-icon-btn) > i { font-size: inherit !important; line-height: 1 !important; }
+
+/* ---------- 7.7.9 TTS 설정 창 칸 묶음(.lv-grid): 짧은 항목은 세로 2열 (사용자 제보 14 · 17: 「안정감 · 원음 유사도도 세로 2열」 「체크 항목도 다 세로 2열」) ----------
+   애드온 style.css 의 「한 줄 폭이 반 칸에 들어가면 반 칸」 flex 를 격자로: 체크 · 스위치 · 슬라이더 · 선택 · 숫자 = 반 칸(설명은 그 칸 안 작은 글자),
+   긴 입력(글 · 암호 · 주소 · 찾기) · 글 영역 · 모델 줄 · 단추 줄 · 안내 · 태그 칩 = 한 줄 전체. 18em 아래 좁은 카드(320 큰 글씨)는 애드온 규칙대로 한 칸 */
+@container lvcard (min-width: 18em) {
+  html body.salty #lv_settings .lv-grid { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: var(--bl-s2, 8px) var(--bl-s3, 12px) !important; align-items: start !important; }
+  html body.salty #lv_settings .lv-grid > * { min-width: 0 !important; max-width: none !important; width: auto !important; flex: none !important; }
+  html body.salty #lv_settings .lv-grid > :is(.lv-wide, .lv-modelrow, .lv-actions, .lv-help-note, .lv-warn-note, .lv-field:has(> textarea), .lv-field:has(> input[type="text"]), .lv-field:has(> input[type="password"]), .lv-field:has(> input[type="url"]), .lv-field:has(> input[type="search"]), .lv-field:has(> .lv-tags), .lv-togglebox:has(textarea)) { grid-column: 1 / -1 !important; }
+  html body.salty #lv_settings .lv-grid > .lv-field > :is(.text_pole, input[type="range"]) { width: 100% !important; min-width: 0 !important; }
+  html body.salty #lv_settings .lv-grid .lv-toggle > span:not(.lv-desc) { word-break: keep-all; }
+  html body.salty #lv_settings .lv-grid .lv-label { word-break: keep-all; }
+}
+/* 엑스트라 절 머리줄의 「모두 지우기」(7.7.9 제보 15) — summary 안 작은 글자 단추 */
+html body.salty #lv_settings .lv-extras > summary { display: flex; align-items: center; gap: 8px; }
+html body.salty #lv_settings .lv-extras > summary > .lv-extras-clear { margin-left: auto; min-height: 28px !important; padding: 0 10px !important; font-size: var(--bl-ts-meta, 12.5px) !important; }

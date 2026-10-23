@@ -77,7 +77,7 @@ t('성능 보조 카드: 「기능 켜기」 label 안은 글자 · 체크칸만
     assert.match(power, /<span>기능 켜기<\/span><input type="checkbox" data-addon-toggle=/);
     assert.ok(!/<button|data-perf-help/.test(power), 'label 안에 단추 없음');
     const perf = /const perf=id==='perf'\?`([\s\S]*?)`:'';/.exec(addons)?.[1] || '';
-    assert.match(perf, /^<div class="bl-tool-label"><b>별 두 개 메뉴<\/b><button type="button" class="bl-word-help" data-perf-help/);
+    assert.match(perf, /^<div class="bl-tool-label"><b>별 두 개 메뉴<button type="button" class="bl-word-help bl-help-btn" data-perf-help/);   // 7.7.9 ? 는 제목 글자 바로 옆(<b> 안)
     assert.ok(!/<label[^>]*>(?:(?!<\/label>)[\s\S])*data-perf-help/.test(perf), '? 단추를 감싼 label 없음');
 });
 

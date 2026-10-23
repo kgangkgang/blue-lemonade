@@ -249,11 +249,11 @@ html body.salty toolcool-color-picker {
   --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8.4 5H10A6.2 6.2 0 1 1 5.62 6.82M10.9 2.5 8.4 5l2.5 2.5'/%3E%3C/svg%3E");
 }
 :is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle) { --bl-glyph-size:14px; }
-/* × 닫기 · 지우기 (예전 글자 잉크 크기에 맞춤: 머리 · 목록 16px, 검색 14.5px, 출처 창 11px) */
+/* × 닫기 · 지우기 — 7.7.9 도구 줄 아이콘은 잉크 크기 하나(≈12.5 CSS px: FA 12.2px · 마스크 상자 16px). 닫기 ×만 16px 잉크로 커서(상자 20) 눈에 띄어 같은 크기로(머티리얼 · 애플 지침 모두 도구 줄 아이콘 한 규격, 닫기도 예외 아님). 검색 지우기는 입력칸 안이라 18 상자(≈14) 유지. 공용: design-system/components/icon-button.css */
 :is(.salty-panel .bl-settings-close, .salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"], .salty-panel .bl-search-field > [data-settings-clear], .bl-credits-dialog > header > button, .pt-help-dialog > header > button) {
   --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M3 3l14 14M17 3 3 17'/%3E%3C/svg%3E");
 }
-.salty-panel .bl-settings-close, .salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"] { --bl-glyph-size:20px; }
+.salty-panel .bl-settings-close, .salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"] { --bl-glyph-size:16px; }
 .salty-panel .bl-search-field > [data-settings-clear] { --bl-glyph-size:18px; }
 .bl-credits-dialog > header > button, .pt-help-dialog > header > button { --bl-glyph-size:14px; } /* 한글화 패널 사용방법 창 × 도 출처 창과 같은 규칙(26px system-ui) */
 /* ‹ › 미리보기 표본 넘기기 */

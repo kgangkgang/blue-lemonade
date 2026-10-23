@@ -180,12 +180,13 @@ body.salty:not(#salty-none) .eh-search:not(#salty-none) input:not(#salty-none) {
 body.salty .eh-steps li::before {
   font-size: var(--bl-ts-cap) !important;
 }
-body.salty :is(.eh-tile-name, .eh-tile-badge, .eh-tile-off, .eh-tile-check, .eh-version-foot) {
+body.salty :is(.eh-tile-badge, .eh-tile-off, .eh-tile-check, .eh-version-foot) {
   font-size: var(--bl-ts-micro) !important;
 }
-body.salty .eh-grid[data-size="l"] .eh-tile-name {
-  font-size: var(--bl-ts-cap) !important;
-}
+/* 7.7.9 S/M/L 은 열 수 · 타일 폭 · 라벨 크기가 한 세트(제보 28): 라벨 13 · 14 · 16 (철칙 §14 글자 단계) */
+body.salty .eh-grid .eh-tile-name { font-size: 14px !important; }
+body.salty .eh-grid[data-size="s"] .eh-tile-name { font-size: 13px !important; }
+body.salty .eh-grid[data-size="l"] .eh-tile-name { font-size: 16px !important; }
 /* 그림 이름은 산문이 아니라 파일 이름 — 한 줄이면 뒤가 잘려 옆 타일과 구별이 안 됨. 두 줄까지 보여 주고
    타일 높이는 이름이 짧아도 같게 (격자가 들쭉날쭉해지지 않게) */
 body.salty .eh-tile-name {

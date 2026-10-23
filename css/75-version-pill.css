@@ -1,0 +1,88 @@
+/* ===== css/75-version-pill.css ===== */
+/* 7.7.9 판 알약 하나로 (사용자: 「알약이 유독 크다」 — 확장마다 글자 · 높이 · 여백이 달랐다):
+   확장 서랍 머리줄 · 애드온 창 머리 · 한글화 패널 · 테마 설정 창 제목의 판 알약을 한 규칙으로 — 글자 12px · 높이 20 · padding 0 8 · 1px 선 · 모서리 10 · 보조 글자색 · 자간 0,
+   제목 글자 세로 중심에 맞춤, 제목과 8px. 공용 조각 ext-design/version-pill.css 와 같은 값(개인 확장도 같은 파일) — 값을 바꿀 땐 두 파일만.
+   검사: work/public-ui-778/pills.mjs(확장 서랍 알약 전부 computed 같음 · 세로 중심 ±1). 끄기: html#bl-pill-off */
+html:not(#bl-pill-off) body.salty :is(
+  #rm_extensions_block :is(.ext-version, .jj-version, .eh-version, .wr-version, .mr-version, .bwr-version, .llmt-version, .bl-version, .pt-drawer-version, .sw-version, .rl-version, .pa-version, .lv-version, .po-version, .lt-version, .sv-version),
+  dialog.popup :is(.ext-version, .pt-version, .bl-notes-ver, .pa-hub-version, .lv-version, .bwr-version, .mr-version, .po-version, .rl-version),
+  #pt-panel :is(.pt-version, .ext-version),
+  .salty-panel .salty-title > .salty-ver,
+  .dq-version
+):not([hidden]) {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: none !important;
+  width: auto !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  min-width: 0 !important;
+  margin: 0 0 0 8px !important;
+  padding: 0 8px !important;
+  border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent) !important;
+  border-radius: 10px !important;
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  transform: none !important;
+}
+/* 한글화 패널(확장 서랍 머리글 <b> 의 data-bl-version ::after 알약)도 같은 값 */
+html:not(#bl-pill-off) body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .inline-drawer-header > b[data-bl-version]::after {
+  box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; height: 20px !important; margin: 0 0 0 8px !important; padding: 0 8px !important;
+  border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent) !important; border-radius: 10px !important;
+  font-size: 12px !important; font-weight: 400 !important; line-height: 1 !important; letter-spacing: 0 !important; vertical-align: middle !important;
+}
+/* 머리줄 제목(<b>)이 flex 면 알약을 글자와 같은 줄 중심에 — 서랍 머리줄은 아이콘 · 이름 · 알약 순 */
+html:not(#bl-pill-off) body.salty :is(#rm_extensions_block, dialog.popup) .inline-drawer-header > :is(b, strong) { display: inline-flex; align-items: center; flex-wrap: wrap; min-width: 0; }
+html:not(#bl-pill-off) body.salty :is(#rm_extensions_block, dialog.popup) .inline-drawer-header > :is(b, strong) > :is(.ext-version, [class*="-version"]) { margin-inline: 8px 0 !important; }
+/* 테마 설정 창 제목의 알약은 상태 색(새 공지 · 새 판)만 제 색을 지킨다 */
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title > .salty-ver.is-new { color: var(--salty-accent) !important; border-color: var(--salty-accent) !important; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title > .salty-ver.has-update { color: var(--salty-accent) !important; }
+/* 머리줄 간격 규칙(철칙 §7 · 제보 27): [아이콘] 8 [제목] 8 [판 알약] 8 [부가 아이콘] — <b> 를 flex 로 두고 gap 8, 아이콘 · 알약 · ⓒ 의 제 여백은 0 (공백 글자는 flex 에서 사라진다) */
+html:not(#bl-pill-off) body.salty :is(#rm_extensions_block, dialog.popup) .inline-drawer-header > :is(b, strong) { gap: 8px !important; }
+html:not(#bl-pill-off) body.salty :is(#rm_extensions_block, dialog.popup) .inline-drawer-header > :is(b, strong) > :is(i, svg, .ext-version, [class*="-version"], [data-bl-credits], .bl-copyright-icon, button, span) { margin: 0 !important; }
+html:not(#bl-pill-off) body.salty #rm_extensions_block .inline-drawer-header > :is(b, strong) > [data-bl-credits] { display: inline-flex !important; align-items: center !important; padding: 0 !important; }
+/* 7.7.9 © 단추는 30px 누름 영역 안에 18px 원 — 눈에 보이는 원 테두리와 알약 사이가 8 이 되게 안 보이는 6px 만큼 당긴다(누름 영역은 그대로) */
+html:not(#bl-pill-off) body.salty #rm_extensions_block .inline-drawer-header > :is(b, strong) > .bl-copyright { margin-inline-start: calc((18px - 30px) / 2) !important; }
+/* 테마 설정 창 제목도 같은 규칙: [Blue Lemonade] 8 [판 알약] 8 [© 원] */
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) > .salty-ver { margin: 0 !important; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) > .bl-copyright { margin: 0 0 0 calc((18px - 30px) / 2) !important; padding-block: 0 !important; }
+/* 애드온 카드 머리줄도 같은 8 (철칙 §7): 번역 용어집 카드 [아이콘] 8 [제목] … [크게 보기] 8 [체크] 8 [사용] */
+html body.salty .llmt-settings .llmt-card-head { gap: 8px !important; }
+html body.salty .llmt-settings .llmt-card-head > :is(i, span, label) { margin: 0 !important; }
+html body.salty .llmt-settings .llmt-card-head > .llmt-head-action { margin-left: auto !important; }
+html body.salty .llmt-settings .llmt-card-head > .llmt-gl-enable { display: inline-flex !important; align-items: center !important; gap: 8px !important; }
+html body.salty .llmt-settings .llmt-card-head > .llmt-gl-enable > input { margin: 0 !important; }
+/* 애드온 창 머리(번역 · 에셋 … header, 성능 보조 h3.pa-hub-title, 한글화 패널 머리): [아이콘] 8 [제목] 8 [판 알약] … [×] */
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog) > header { display: flex !important; align-items: center !important; gap: 8px !important; }
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog) > header > :is(i, b, span, h2, h3) { margin: 0 !important; }
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog) > header > button:last-child { margin-left: auto !important; }
+html body.salty .pa-hub .pa-hub-title, html body.salty .po-dialog .po-title, html body.salty #pt-panel #pt-panel-header h3 { display: flex !important; align-items: center !important; gap: 8px !important; }
+html body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-panel-header h3) > :is(i, span, .ext-version, [class*="-version"]) { margin: 0 !important; }
+/* 카드 머리 아이콘(TTS .lv-card-head · 다시 쓰기 .bwr_card_title): 글자 중심보다 1.6px 아래로 재져 보정 */
+html body.salty :is(#lv_settings .lv-card-head, .bwr_settings .bwr_card_title) > i:first-child { transform: translateY(-0.75px); }   /* 측정: 보정 전 +1.6 · -1.5 보정 뒤 -1.3 → 중간값 */
+html body.salty :is(#lv_settings .lv-card-head, .bwr_settings .bwr_card_title) { gap: 8px !important; }
+html body.salty :is(#lv_settings .lv-card-head, .bwr_settings .bwr_card_title) > :is(i, span) { margin: 0 !important; }
+/* 창 머리의 제목 묶음(<b>: 아이콘 · 이름 · 알약)과 도구 줄도 8 — 번역 · ZIP 설치 · 메모 창 header > b, 메모 머리 도구 줄 */
+html body.salty dialog > header > b, html body.salty dialog.popup .inline-drawer-header > b { display: inline-flex !important; align-items: center !important; gap: 8px !important; min-width: 0; }
+html body.salty dialog > header > b > :is(i, svg, span, .ext-version, [class*="-version"], button) { margin: 0 !important; }
+html body.salty dialog.bl-notes-dialog > header { flex-wrap: nowrap !important; }
+html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools { display: inline-flex !important; align-items: center !important; gap: 8px !important; margin-left: auto !important; }
+html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools > * { margin: 0 !important; }
+/* flex 머리 안의 알약은 gap 이 간격을 맡는다 — 알약 자신의 왼쪽 여백 8 은 0 (위 기본 규칙보다 특이도 높게) */
+html:not(#bl-pill-off):not(#bl-pill-off2) body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-panel-header h3, dialog > header > b, .inline-drawer-header > b, #lv_settings .lv-card-head, .bwr_card_title) > :is(.ext-version, [class*="-version"], .bl-notes-ver) { margin: 0 !important; }
+/* 메모 창 머리(360 폭): 제목 묶음과 도구 줄이 겹쳤다 → 좁으면 부제(개수) · 판 알약 순으로 양보(철칙 §5), 제목 글자는 지킨다 */
+@media (max-width: 480px) {
+  html body.salty dialog.bl-notes-dialog > header > b > :is(.bl-notes-count, .bl-notes-ver) { display: none !important; }
+  html body.salty dialog.bl-notes-dialog > header > b { flex: 0 0 auto !important; }
+  html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools { flex: 0 1 auto !important; min-width: 0 !important; overflow: hidden !important; }
+}
