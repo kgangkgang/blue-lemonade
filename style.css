@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6946d283edd8) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 348b9b8a93e0) */
 /* css/00-base.css */
 :root{--bl-release:"7.7.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -25114,7 +25114,8 @@ html:not(#bl-groups-off) body.salty .llmt-btn-group:is(#bl-s, *):not([data-bl-co
 html:not(#bl-groups-off) body.salty .llmt-gl-actions:is(#bl-s, *):not([data-bl-cols="1"]),
 html:not(#bl-groups-off) body.salty .llmt-check-actions:is(#bl-s, *):not([data-bl-cols="1"]),
 html:not(#bl-groups-off) body.salty :is(#lv_settings .lv-actions):not([data-bl-cols="1"]),
-html:not(#bl-groups-off) body.salty .ms-fallback-actions:is(#bl-s, *):not([data-bl-cols="1"]) {
+html:not(#bl-groups-off) body.salty .ms-fallback-actions:is(#bl-s, *):not([data-bl-cols="1"]),
+html:not(#bl-groups-off) body.salty :where(.bl-addon-actions:has(> button + button)):is(#bl-s, *):is(.bl-s, *):not([data-bl-cols="1"]) {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: var(--bl-s2, 8px) !important;
@@ -25128,14 +25129,15 @@ html:not(#bl-groups-off) body.salty .llmt-btn-group:is(#bl-s, *)[data-bl-cols="1
 html:not(#bl-groups-off) body.salty .llmt-gl-actions:is(#bl-s, *)[data-bl-cols="1"],
 html:not(#bl-groups-off) body.salty .llmt-check-actions:is(#bl-s, *)[data-bl-cols="1"],
 html:not(#bl-groups-off) body.salty :is(#lv_settings .lv-actions)[data-bl-cols="1"],
-html:not(#bl-groups-off) body.salty .ms-fallback-actions:is(#bl-s, *)[data-bl-cols="1"] {
+html:not(#bl-groups-off) body.salty .ms-fallback-actions:is(#bl-s, *)[data-bl-cols="1"],
+html:not(#bl-groups-off) body.salty :where(.bl-addon-actions:has(> button + button)):is(#bl-s, *):is(.bl-s, *)[data-bl-cols="1"] {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) !important;
   gap: var(--bl-s2, 8px) !important;
 }
-html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions) > .menu_button:is(bl-s, *),
-html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions) > button:is(.bl-s, *),
-html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions) > label.menu_button {
+html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button)) > .menu_button:is(bl-s, *),
+html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button)) > button:is(.bl-s, *),
+html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button)) > label.menu_button {
   box-sizing: border-box !important;
   width: 100% !important;
   min-width: 0 !important;
@@ -25155,11 +25157,11 @@ html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-ba
   line-height: 1.3 !important;
   text-align: center !important;
 }
-html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions) > :is(.menu_button, button, label.menu_button) > i,
-html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions) > :is(.menu_button, button, label.menu_button) > span { flex: 0 0 auto; white-space: nowrap; }
-html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions)[data-bl-cols="1"] > .menu_button:is(bl-s, *),
-html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions)[data-bl-cols="1"] > button:is(.bl-s, *),
-html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions)[data-bl-cols="1"] > label.menu_button { white-space: normal !important; }
+html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button)) > :is(.menu_button, button, label.menu_button) > i,
+html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button)) > :is(.menu_button, button, label.menu_button) > span { flex: 0 0 auto; white-space: nowrap; }
+html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button))[data-bl-cols="1"] > .menu_button:is(bl-s, *),
+html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button))[data-bl-cols="1"] > button:is(.bl-s, *),
+html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button))[data-bl-cols="1"] > label.menu_button { white-space: normal !important; }
 html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons) > input[type="file"] { display: none !important; }
 html:not(#bl-groups-off) body.salty .bl-check-grid:is(.bl-s, *):not([data-bl-cols="1"]),
 html:not(#bl-groups-off) body.salty :is(.llmt-settings .llmt-checks--grid):not([data-bl-cols="1"]) {

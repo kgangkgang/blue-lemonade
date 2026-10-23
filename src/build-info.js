@@ -537,7 +537,7 @@ export const FILE_HASHES = {
   "src/generation-state.js": "6956:ff69362b:15d46250",
   "src/gradient-ui.js": "5326:12fabd1e:586f428a",
   "src/gradients.js": "10746:1b5ebec2:b7fb0a19",
-  "src/group-grid.js": "3579:a304ea2f:b24e3060",
+  "src/group-grid.js": "3621:e2d00cf2:463513f7",
   "src/gutter.js": "4022:49ae5ff0:c0bcc337",
   "src/headswitch.js": "11852:99136461:6fc7bbb6",
   "src/help-sheet.js": "1792:a3fd85eb:90971bc7",
@@ -702,5 +702,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1647123:5febf690:bfd0838d"
+  "style.css": "1647725:bf302cd7:ea366e38"
 };
