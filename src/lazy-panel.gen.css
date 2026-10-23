@@ -142,7 +142,7 @@ field-sizing:content;
 }
 body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select:focus-visible,
 body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select:focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label {
   grid-column: 1;

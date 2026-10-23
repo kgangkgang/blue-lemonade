@@ -156,7 +156,7 @@ body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG
   box-shadow: var(--bl-press) !important;
 }
 body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG):focus-visible {
-  box-shadow: var(--bl-ring), var(--bl-accent-lift) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-accent-lift) !important;
 }
 /* 7.7.9 안내 창(.bl-info-dialog, popup-guard.js): 취소 없음 · 닫기는 테마 포인트 색 — :has 를 모르는 옛 브라우저와 다른 실리태번 판에서도(사용자 폰 10-23) */
 html body dialog.popup.bl-info-dialog .popup-controls .popup-button-cancel { display: none !important; }
@@ -173,7 +173,7 @@ body.salty .popup .popup-controls .menu_button.popup-button-cancel {
 }
 /* 키보드 포커스: 취소(아니요)도 링 — 위 box-shadow: none !important 가 02-controls 의 :focus-visible 링을 덮고 있었다 */
 body.salty .popup .popup-controls .menu_button.popup-button-cancel:focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty .popup .popup-controls .menu_button:is(:hover, :focus, :focus-visible) {
   filter: none !important;

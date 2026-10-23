@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 3e8d439bc89d) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 7f7f4aefed0d) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -480,7 +480,7 @@ body.salty .menu_button:focus-visible,
 body.salty .list-group-item:focus-visible,
 body.salty .interactable:focus-visible {
   outline: none !important;
-  box-shadow: var(--bl-ring), var(--bl-e2) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e2) !important;
 }
 body.salty :is(.text_pole, select, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"])) + .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) {
   min-height: var(--bl-h-ctl);
@@ -532,7 +532,7 @@ body.salty select:is(.bl-s, *):where(:not(#send_textarea, .select2-search__field
 body.salty textarea:is(.bl-s, *):where(:not(#send_textarea, .select2-search__field, .salty-panel *, #nonQRFormItems *, ul, ol)):focus,
 body.salty input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"]):where(:not(#send_textarea, .select2-search__field, .salty-panel *, #nonQRFormItems *, ul, ol)):focus,
 body.salty .neo-range-input:is(bl-s, *):where(:not(#send_textarea, .select2-search__field, .salty-panel *, #nonQRFormItems *, ul, ol)):focus {
-box-shadow:var(--bl-ring), var(--bl-e1) !important;
+box-shadow:inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty .text_pole:is(bl-s, *):where(:not(textarea, select, #send_textarea, .select2-search__field, .salty-panel *, #nonQRFormItems *, ul, ol)),
 body.salty input:is([type="text"], [type="search"], [type="password"], [type="url"], [type="email"]):where(:not(textarea, select, #send_textarea, .select2-search__field, .salty-panel *, #nonQRFormItems *, ul, ol)) {
@@ -548,6 +548,9 @@ color:var(--salty-muted) !important;
 body.salty ::placeholder {
 opacity:1 !important;
 }
+body.salty {
+  --bl-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6.5 9.5 5.5 5.5 5.5-5.5'/%3E%3C/svg%3E");
+}
 body.salty select:not([multiple]) {
 -webkit-appearance:none !important;
 appearance:none !important;
@@ -555,11 +558,33 @@ padding-left:var(--bl-s3) !important;
 padding-right:30px !important;
 }
 body.salty select:not([multiple]):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6.5 9.5 5.5 5.5 5.5-5.5'/%3E%3C/svg%3E") !important;
+background-image:var(--bl-select-arrow) !important;
 background-repeat:no-repeat !important;
 background-position:right 10px center !important;
 background-size:15px 15px !important;
 }
+html body.salty select:not([multiple], [size]:not([size="1"]), .select2-hidden-accessible):not(#bl-arrow-a):not(#bl-arrow-b):not(#bl-arrow-c):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+background-image:var(--bl-select-arrow) !important;
+background-repeat:no-repeat !important;
+background-position:right 10px center !important;
+background-size:15px 15px !important;
+}
+html body.salty select:not([multiple], [size]:not([size="1"]), .select2-hidden-accessible):not(#bl-arrow-a):not(#bl-arrow-b):not(#bl-arrow-c) {
+padding-right:30px !important;
+}
+html body.salty .pt-combo-input:not(#bl-arrow-a):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty .bl-prompt-card-trigger:not(#bl-arrow-a):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+background-image:var(--bl-select-arrow) !important;
+background-repeat:no-repeat !important;
+background-position:right 10px center !important;
+background-size:15px 15px !important;
+}
+html body.salty .pt-combo-input:not(#bl-arrow-a),
+html body.salty .bl-prompt-card-trigger:not(#bl-arrow-a) {
+padding-right:30px !important;
+}
+html body.salty .pt-combo-caret:is(bl-s, *),
+html body.salty :is(.bl-prompt-card-trigger > i) { display: none !important; }
 body.salty select option:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--salty-fill-surface, var(--salty-surface));
 color:var(--salty-text);
@@ -715,7 +740,7 @@ body.salty :where(#user-settings-block, #left-nav-panel, #rm_api_block, #Advance
   opacity: 0.4 !important;
 }
 body.salty :where(#user-settings-block, #left-nav-panel, #rm_api_block, #AdvancedFormatting, #PersonaManagement, #Backgrounds, #rm_extensions_block .extensions_block > .flex-container, .popup .popup-inputs) label.checkbox_label > input[type="checkbox"]:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)):focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 .salty-switch > input {
   width: 100% !important;
@@ -867,7 +892,7 @@ box-shadow:var(--bl-well-in) !important;
 body.salty .select2-container--default:is(.select2-container--focus, .select2-container--open) .select2-selection--multiple:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 body.salty .select2-container--default:is(.select2-container--focus, .select2-container--open) .select2-selection--single:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--salty-fill-surface, var(--salty-surface)) !important;
-box-shadow:var(--bl-ring), var(--bl-e1) !important;
+box-shadow:inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty .select2-container--default .select2-selection--single {
   height: var(--bl-h-ctl) !important;
@@ -897,7 +922,7 @@ height:15px !important;
 margin-top:-7.5px;
 }
 body.salty .select2-container--default .select2-selection--single .select2-selection__arrow:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6.5 9.5 5.5 5.5 5.5-5.5'/%3E%3C/svg%3E") no-repeat center / 15px 15px;
+background:var(--bl-select-arrow) no-repeat center / 15px 15px;
 }
 body.salty .select2-container--default .select2-selection--single .select2-selection__arrow b {
   border: 0 !important;
@@ -993,7 +1018,7 @@ box-shadow:none !important;
 body.salty .world_entry .inline-drawer-content:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:transparent !important;
 }
-html body.salty .menu_button.menu_button:focus-visible { box-shadow: var(--bl-ring), var(--bl-e2) !important; }
+html body.salty .menu_button.menu_button:focus-visible { box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e2) !important; }
 body.salty code:where(:not(pre *, .mes *, .bl-notes-view *)) { padding-bottom: .12em; }
 /* css/03-menus.css */
 body.salty #options,
@@ -1194,7 +1219,7 @@ background:var(--salty-fill-accent-press, var(--salty-accent-press)) !important;
 box-shadow:var(--bl-press) !important;
 }
 body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG):focus-visible {
-  box-shadow: var(--bl-ring), var(--bl-accent-lift) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-accent-lift) !important;
 }
 html body dialog.popup.bl-info-dialog .popup-controls .popup-button-cancel { display: none !important; }
 html body dialog.popup .popup-controls .menu_button.popup-button-ok.bl-info-ok {
@@ -1209,7 +1234,7 @@ box-shadow:none !important;
 color:var(--salty-text) !important;
 }
 body.salty .popup .popup-controls .menu_button.popup-button-cancel:focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty .popup .popup-controls .menu_button:is(:hover, :focus, :focus-visible) {
   filter: none !important;
@@ -1296,7 +1321,7 @@ body.salty #send_form:focus-within {
   outline: none !important;
 }
 body.salty #send_form:has(#send_textarea:focus) {
-  box-shadow: var(--bl-ring), var(--bl-e3) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e3) !important;
 }
 @media (max-width: 1000px) {
   body.salty #send_form:has(#send_textarea:focus) {
@@ -1305,7 +1330,7 @@ body.salty #send_form:has(#send_textarea:focus) {
 }
 @supports not selector(:has(a)) {
   body.salty #send_form:focus-within {
-    box-shadow: var(--bl-ring), var(--bl-e3) !important;
+    box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e3) !important;
   }
   @media (max-width: 1000px) {
     body.salty #send_form:focus-within {
@@ -2181,7 +2206,7 @@ body.salty :is(#chat,.bl-chat-like) .mes :is(.mes_buttons, .mes_reasoning_action
 body.salty :is(#chat,.bl-chat-like) .mes :is(.mes_buttons, .mes_reasoning_actions, .extraMesButtons) .mes_button:focus-visible,
 body.salty :is(#chat,.bl-chat-like) .mes :is(.mes_buttons, .mes_reasoning_actions, .extraMesButtons) .interactable:focus-visible {
   outline: none;
-  box-shadow: var(--bl-ring);
+  box-shadow: inset 0 0 0 1px var(--salty-accent);
 }
 body.salty:not(.expandMessageActions) :is(#chat,.bl-chat-like) .mes .extraMesButtons {
   position: absolute;
@@ -2493,7 +2518,7 @@ body.salty :is(#chat,.bl-chat-like) :where(.reasoning_edit_textarea):is(#bl-s, *
   border-radius: var(--bl-r-md) !important;
   outline: none !important;
   background: var(--bl-fill-card, var(--bl-card)) !important;
-  box-shadow: var(--bl-ring), var(--bl-e2) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e2) !important;
   color: var(--salty-text) !important;
   caret-color: var(--salty-accent);
   font-family: var(--salty-font-text) !important;
@@ -2630,7 +2655,7 @@ body.salty #sheld > .bl-reply-top {
   cursor: pointer;
 }
 body.salty #sheld > .bl-reply-top[hidden] { display: none; }
-body.salty #sheld > .bl-reply-top:focus-visible { outline: none; box-shadow: var(--bl-ring), var(--bl-e3); }
+body.salty #sheld > .bl-reply-top:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e3); }
 body.salty #sheld > .bl-reply-top:active { box-shadow: var(--bl-press); }
 /* css/06-chat-text.css */
 body.salty :is(#chat,.bl-chat-like) .mes .mes_text {
@@ -5016,7 +5041,7 @@ body.salty #select_chat_search {
 }
 body.salty #select_chat_search:focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #select_chat_popup .chatBackupsList {
   flex: none;
@@ -5497,7 +5522,7 @@ body.salty :is(#WorldInfo, #PersonaManagement) :where(.paginationjs-size-changer
 body.salty :is(#WorldInfo, #PersonaManagement) #world_info_sort_order:focus-visible,
 body.salty :is(#WorldInfo, #PersonaManagement) #persona_sort_order:focus-visible,
 body.salty :is(#WorldInfo, #PersonaManagement) #persona-management-dropdown:focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) {
   gap: 2px !important;
@@ -5759,7 +5784,7 @@ body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"
   box-shadow: none !important;
 }
 body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]:focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty #WorldInfo #world_popup {
   margin: 0 !important;
@@ -5813,7 +5838,7 @@ body.salty #WorldInfo #world_popup #world_info_search {
 body.salty #WorldInfo #world_popup #world_editor_select:focus,
 body.salty #WorldInfo #world_popup #world_info_search:focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #WorldInfo #world_popup .select2-container--default .select2-selection--single {
   height: auto !important;
@@ -6272,7 +6297,7 @@ body.salty #WorldInfo .world_entry_edit select[name="entryLogicType"]:is(.bl-s, 
 }
 body.salty #WorldInfo .world_entry_edit :is([name="perEntryOverridesBlock"] > .world_entry_form_control > select):focus-visible,
 body.salty #WorldInfo .world_entry_edit select[name="entryLogicType"]:is(.bl-s, *):focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty #WorldInfo .world_entry_edit [name="contentAndCharFilterBlock"] {
   flex: 1 1 100% !important;
@@ -6524,7 +6549,7 @@ body.salty #PersonaManagement #persona_search_bar {
 }
 body.salty #PersonaManagement #persona_search_bar:focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #PersonaManagement #persona_sort_order {
   max-width: 30% !important;
@@ -6607,7 +6632,7 @@ body.salty #PersonaManagement #user_avatar_block .avatar-container.selected:acti
   box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-press) !important;
 }
 body.salty #PersonaManagement #user_avatar_block .avatar-container:focus-visible {
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #PersonaManagement #user_avatar_block .avatar-container > .avatar {
   position: relative;
@@ -7091,6 +7116,7 @@ body.salty #right-nav-panel :is(#result_info .right_menu_button) {
   border-radius: var(--bl-r-sm);
   font-size: 17px !important;
 }
+body.salty #right-nav-panel #rm_button_bar #rm_button_search { font-size: 15px !important; }
 body.salty #right-nav-panel #rm_button_characters:is(.bl-s, *),
 body.salty #right-nav-panel #rm_button_search:is(.bl-s, *),
 body.salty #right-nav-panel :is(#result_info .right_menu_button),
@@ -7304,7 +7330,7 @@ body.salty #right-nav-panel :where(.paginationjs-size-changer select):is(#bl-s, 
 }
 body.salty #right-nav-panel #character_sort_order:focus-visible,
 body.salty #right-nav-panel :where(.paginationjs-size-changer select):is(#bl-s, *):focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty #right-nav-panel #form_character_search_form {
   padding: 2px 0 var(--bl-s1);
@@ -7319,7 +7345,7 @@ body.salty #right-nav-panel #character_search_bar {
 }
 body.salty #right-nav-panel #character_search_bar:focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #right-nav-panel .rm_tag_controls {
   column-gap: 5px !important;
@@ -7569,7 +7595,7 @@ body.salty #right-nav-panel #rm_print_characters_block .group_select.salty-curre
 body.salty #right-nav-panel #rm_print_characters_block .character_select:focus-visible,
 body.salty #right-nav-panel #rm_print_characters_block .group_select:focus-visible,
 body.salty #right-nav-panel #rm_print_characters_block .bogus_folder_select:focus-visible {
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #right-nav-panel #rm_print_characters_block.group_overlay_mode_select .character_select.salty-current:not(.character_selected),
 body.salty #right-nav-panel #rm_print_characters_block.group_overlay_mode_select .group_select.salty-current:not(.character_selected) {
@@ -7946,7 +7972,7 @@ body.salty #right-nav-panel #avatar-and-name-block #character_name_pole:focus,
 body.salty #right-nav-panel #avatar-and-name-block #char-management-dropdown:focus,
 body.salty #right-nav-panel #avatar-and-name-block #tagInput:focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #right-nav-panel #favorite_button.fav_on,
 body.salty #right-nav-panel #group_favorite_button.fav_on {
@@ -8084,7 +8110,7 @@ body.salty #right-nav-panel #rm_group_chats_block input[type="search"]:not(.sele
 body.salty #right-nav-panel #rm_group_chats_block input[type="text"]:not(.select2-search__field, .J-paginationjs-size-select):focus,
 body.salty #right-nav-panel #rm_group_chats_block input[type="number"]:not(.select2-search__field, .J-paginationjs-size-select):focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #right-nav-panel #rm_group_chats_block #group-metadata-controls {
   display: flex;
@@ -8281,7 +8307,7 @@ body.salty #character_popup > .inline-drawer select:is(.bl-s, *):focus,
 body.salty #character_popup > .inline-drawer textarea:is(.bl-s, *):focus,
 body.salty #character_popup > .inline-drawer input[type="number"]:focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #character_popup hr {
   margin: var(--bl-s2) 0 !important;
@@ -8382,7 +8408,7 @@ body.salty #left-nav-panel :is(#respective-presets-block, #range_block_openai, #
 body.salty #left-nav-panel :is(#respective-presets-block, #range_block_openai, #openai_settings) textarea:is(.bl-s, *):where(:not(ul, ol, .oneline-dropdown > select)):focus,
 body.salty #left-nav-panel :is(#respective-presets-block, #range_block_openai, #openai_settings) input:is([type="text"], [type="number"], [type="search"]):where(:not(ul, ol, .oneline-dropdown > select)):focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #left-nav-panel :is(#range_block_openai, #openai_settings) .range-block {
   margin: 0 !important;
@@ -8526,7 +8552,7 @@ body.salty #left-nav-panel #openai_settings .oneline-dropdown > select {
   }
 }
 body.salty #left-nav-panel #openai_settings .oneline-dropdown > select:focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty #left-nav-panel #openai_settings .oneline-dropdown > .toggle-description,
 body.salty #left-nav-panel #openai_settings .oneline-dropdown > :where(strong):is(.bl-s, *) {
@@ -8672,7 +8698,7 @@ body.salty #left-nav-panel #openai_settings #completion_prompt_manager .completi
 }
 body.salty #left-nav-panel #openai_settings #completion_prompt_manager .completion_prompt_manager_footer > select:focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_button {
   margin: 0 !important;
@@ -9243,7 +9269,7 @@ body.salty :is(#user-settings-block-content, #AdvancedFormatting) select:is(.bl-
 body.salty :is(#user-settings-block-content, #AdvancedFormatting) textarea:is(.bl-s, *):where(:not(#send_textarea, .select2-search__field, .salty-panel *, ul, ol)):focus,
 body.salty :is(#user-settings-block-content, #AdvancedFormatting) input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"]):where(:not(#send_textarea, .select2-search__field, .salty-panel *, ul, ol)):focus,
 body.salty :is(#user-settings-block-content, #AdvancedFormatting) .neo-range-input:is(bl-s, *):where(:not(#send_textarea, .select2-search__field, .salty-panel *, ul, ol)):focus {
-box-shadow:var(--bl-ring) !important;
+box-shadow:inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty :is(#user-settings-block #UI-presets-block, #user-settings-block #UI-Customization > div[name], #user-settings-block #power-user-option-checkboxes > div[name], #AdvancedFormatting #ContextSettings > div, #AdvancedFormatting #InstructSettingsColumn, #AdvancedFormatting #SystemPromptColumn > div:not([id]), #AdvancedFormatting [name="tokenizerSelectorBlock"]) > h4:first-child {
   min-height: var(--bl-h-icon);
@@ -9349,7 +9375,7 @@ text-overflow:ellipsis;
 field-sizing:content;
 }
 body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] select:focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container:has(> .flex1 select) {
   flex-direction: column;
@@ -9430,7 +9456,7 @@ field-sizing:content;
 max-width:210px;
 }
 body.salty #user-settings-block #ui_language_select:focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty #user-settings-block #version_display {
 flex:1 1 100%;
@@ -10536,7 +10562,7 @@ body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type=
   transform: translateX(18px);
 }
 body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"]:focus-visible + label {
-  box-shadow: var(--bl-ring);
+  box-shadow: inset 0 0 0 1px var(--salty-accent);
 }
 body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"]:disabled + label {
   opacity: 0.4;
@@ -11335,7 +11361,7 @@ background:var(--bl-fill-well, var(--bl-well));
 box-shadow:var(--bl-well-in);
 }
 body.salty:not(#salty-none) .eh-search:not(#salty-none):focus-within {
-  box-shadow: var(--bl-well-in), var(--bl-ring);
+  box-shadow: var(--bl-well-in), inset 0 0 0 1px var(--salty-accent);
 }
 body.salty:not(#salty-none) .eh-search:not(#salty-none) input:not(#salty-none) {
 height:100% !important;
@@ -12699,7 +12725,7 @@ overflow-wrap:anywhere;
   --r-lg: 18px;
   --shade: var(--salty-shade);
   --shade-2: var(--salty-shade-2);
-  --ring: var(--salty-ring);
+  --ring: inset 0 0 0 1px var(--salty-accent);
   --sp: max(0.86px, calc(0.5px + var(--salty-ui-size, var(--mainFontSize, 15px)) / 30));
   --fs: calc(13.5 * var(--sp));
   --fs-tab: calc(13 * var(--sp));
@@ -13340,7 +13366,7 @@ body.salty-dark .salty-shapes button.on {
   margin: 0;
 }
 .salty-num input[type="number"]:focus {
-  box-shadow: var(--salty-ring), var(--salty-well-in) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--salty-well-in) !important;
 }
 .salty-slider input[type="range"] {
   -webkit-appearance: none !important;
@@ -13902,7 +13928,7 @@ body.salty-dark .salty-shapes button.on {
   box-shadow: var(--bl-press) !important;
 }
 .popup:has(.salty-panel.in-popup) .popup-controls .menu_button.popup-button-ok:not(.redWarningBG):focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 @media screen and (max-width: 1000px) {
   .salty-panel {
@@ -14129,7 +14155,7 @@ body.salty .salty-panel .bl-preview-samples button { min-width: 28px; font-size:
 body.salty .salty-panel .bl-preview-samples span { min-width: 30px; color: var(--salty-muted); text-align: center; font-size: 11px; }
 body.salty .salty-panel:not(.bl-editor) .salty-sec[data-tab="image"] .salty-group { padding-inline: 10px; }
 body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding: 0; background: transparent; }
-body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes button { border-radius: 9px; padding: 9px 3px; box-shadow: none; flex-direction: column; justify-content: center; gap: 5px; font-size: 11px; min-height: 62px; }
+body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes button { border-radius: 9px; padding: 8px 3px 10px;  box-shadow: none; flex-direction: column; justify-content: center; gap: 5px; font-size: 11px; min-height: 62px; }
 body.salty .salty-panel .salty-switch { width: 36px; height: 36px; }
 body.salty .salty-panel .salty-switch span { inset: 8px 0; }
 body.salty .salty-panel .salty-switch span::after { width: 14px; height: 14px; box-shadow: none; }
@@ -14646,7 +14672,7 @@ body.salty :is(#salty-nochat, .salty-preview) .mes :is(.mes_buttons, .mes_reason
 body.salty :is(#salty-nochat, .salty-preview) .mes :is(.mes_buttons, .mes_reasoning_actions, .extraMesButtons) .mes_button:focus-visible,
 body.salty :is(#salty-nochat, .salty-preview) .mes :is(.mes_buttons, .mes_reasoning_actions, .extraMesButtons) .interactable:focus-visible {
   outline: none;
-  box-shadow: var(--bl-ring);
+  box-shadow: inset 0 0 0 1px var(--salty-accent);
 }
 body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview) .mes.bl-menu-open {
   z-index: 45;
@@ -18466,7 +18492,7 @@ body.salty #bl-onehand .bl-onehand-btn:active {
 }
 body.salty #bl-onehand .bl-onehand-btn:focus-visible {
   outline: none;
-  box-shadow: var(--bl-ring), var(--bl-e2);
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e2);
 }
 body.salty #bl-onehand.is-busy .bl-onehand-btn {
   opacity: 0.45;
@@ -20651,7 +20677,7 @@ body.salty :where(.salty-preview):is(#bl-s, *):not(.cg-chatlike,.bl-notes-view,.
 .bl-view-tools[hidden] { display:none !important; }
 .salty-panel .bl-view-toggle { width:32px; height:28px; min-height:0; padding:0; margin:0; border:0; border-radius:8px; background:transparent; color:var(--salty-muted); font-size:13px; cursor:pointer; }
 .salty-panel .bl-view-toggle[aria-expanded="true"] { color:var(--salty-accent); }
-.salty-panel .bl-view-resize > .bl-view-toggle { grid-column:1; grid-row:1; }
+.salty-panel .bl-view-resize > .bl-view-toggle { grid-column:1; grid-row:1; font-size:12.5px; }
 .bl-view-float { position:relative; }
 .salty-panel .bl-view-float > .bl-view-toggle { position:absolute; top:2px; right:4px; z-index:2; background:var(--salty-fill-surface, var(--salty-surface)); opacity:.85; }
 /* css/46-settings-window.css */
@@ -20684,7 +20710,7 @@ html body dialog.popup.bl-settings-fullscreen .salty-panel.in-popup { --pp:8px; 
 /* css/47-settings-editor.css */
 html body .salty-panel.bl-editor { position:relative; display:flex; flex-direction:column; container:bl-editor / inline-size; height:min(780px,82dvh); min-height:320px; min-width:0; padding:0 !important; overflow:hidden; --pp:0px; --bl-editor-gutter:10px; --salty-navh:0px; --bl-editor-line:var(--salty-line); background:var(--bl-settings-cover); }
 html body dialog.popup.bl-settings-dialog:not(.bl-settings-fullscreen):has(.salty-panel.in-popup) { width:min(1120px,96vw) !important; max-width:96vw !important; height:min(880px,92dvh) !important; max-height:92dvh !important; padding:0 !important; }
-html body dialog.bl-settings-dialog .popup-body { height:100%; min-height:0; padding:0 !important; overflow:hidden; border-radius:inherit; }
+html body dialog.bl-settings-dialog .popup-body { height:100%; min-height:0; max-height:none !important; flex:1 1 auto; padding:0 !important; overflow:hidden; border-radius:inherit; }
 html body dialog.bl-settings-dialog .popup-content { flex:1; height:100%; min-height:0; overflow:hidden !important; padding:0 !important; margin:0; scrollbar-gutter:auto !important; }
 html body dialog.bl-settings-dialog .popup-content > div { height:100%; min-height:0; }
 html body dialog.bl-settings-dialog .salty-panel.bl-editor.in-popup { height:100%; min-height:0; padding:0 !important; }
@@ -20735,7 +20761,7 @@ html body .bl-editor .bl-editor-group-body > .bl-prompt-tools > .salty-group { m
 .bl-editor-category h4 { margin:14px 0 6px; padding:7px 8px; border-left:3px solid var(--salty-accent); border-bottom:1px solid var(--bl-editor-line); border-radius:4px; background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-text); font-size:calc(15 * var(--sp)); font-weight:750; line-height:1.4; }
 .bl-editor-category button { display:block; width:100%; margin:2px 0; padding:calc(10px + var(--bl-text-nudge, 0px)) 12px calc(10px - var(--bl-text-nudge, 0px)) ; border:0; border-radius:8px; text-align:left; background:transparent; color:var(--salty-text); font:inherit; font-size:calc(14 * var(--sp)); }
 .bl-editor-category button:is(:hover,[aria-current="page"]) { background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-accent); }
-.bl-editor-directory .salty-head { margin-top:20px; border-top:1px solid var(--bl-editor-line); padding-top:18px; }
+.bl-editor-directory .salty-head { margin-top:20px; margin-bottom:0; border-top:1px solid var(--bl-editor-line); padding-top:18px; }
 .bl-editor-directory .salty-mark { width:24px; height:28px; }
 .bl-editor-directory .salty-title { font-size:calc(15 * var(--sp)); }
 .bl-editor-directory .salty-sub { display:none; }
@@ -20981,7 +21007,7 @@ html body .bl-tool-heading { display:flex; align-items:center; justify-content:s
 .bl-tool-field { display:grid; grid-template-columns:minmax(0,1fr); gap:6px; min-width:0; font-size:12px; line-height:1.45; }
 .bl-tool-field small { font-size:10px; color:var(--salty-muted); }
 :is(.salty-panel,.bl-capture-dialog) .bl-tool-field input[type=number],
-:is(.salty-panel,.bl-capture-dialog) .bl-tool-field select:is(.bl-s, *) { display:block; width:100%; min-width:0; max-width:100%; min-height:36px; margin:0; padding:7px 9px; box-sizing:border-box; border:1px solid var(--salty-line)!important; border-radius:8px; background:var(--bl-fill-field,var(--salty-field))!important; color:var(--salty-text)!important; font:inherit; }
+:is(.salty-panel,.bl-capture-dialog) .bl-tool-field select:is(.bl-s, *) { display:block; width:100%; min-width:0; max-width:100%; min-height:36px; margin:0; padding:7px 9px; box-sizing:border-box; border:1px solid var(--salty-line)!important; border-radius:8px; background-color:var(--bl-fill-field,var(--salty-field))!important; color:var(--salty-text)!important; font:inherit; }
 .bl-extension-page,.bl-capture-dialog { color-scheme:light; }
 body.salty-dark .bl-extension-page,
 body.salty-dark .bl-capture-dialog { color-scheme:dark; }
@@ -21278,7 +21304,7 @@ body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .bl-pinned:is(.mes_leg
   mask: var(--salty-mi) center / contain no-repeat;
 }
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .bl-pinned {
-  font-size: 18px !important;
+  font-size: 16px !important;
 }
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .bl-pinned.mes_legacy_translate { --salty-mi: var(--salty-mi-brain); }
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .bl-pinned.mes_llm_translate { --salty-mi: var(--salty-mi-swap); }
@@ -21963,7 +21989,7 @@ pointer-events:none;
 :is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle) {
   --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8.4 5H10A6.2 6.2 0 1 1 5.62 6.82M10.9 2.5 8.4 5l2.5 2.5'/%3E%3C/svg%3E");
 }
-:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle) { --bl-glyph-size:14px; }
+:is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle) { --bl-glyph-size:16px; }
 .salty-panel .bl-settings-close:is(.bl-s, *),
 .salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"],
 .salty-panel .bl-search-field > [data-settings-clear],
@@ -24348,7 +24374,7 @@ body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch[ar
   box-shadow: none;
 }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch[aria-checked="true"] > span { transform: translateX(18px); }
-body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch:focus-visible { outline: none; box-shadow: var(--bl-ring, 0 0 0 2px var(--salty-accent, #3975b8)); }
+body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--salty-accent); }
 body.salty #rm_extensions_block .inline-drawer-header > .bl-hs-head { margin-left: auto; margin-right: 10px; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row {
   display: flex;
@@ -24811,7 +24837,7 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 .bl-ft-dialog .bl-view-tools button{min-width:36px;min-height:32px;margin:0;padding:4px 9px;border:0;border-radius:8px;background:var(--salty-fill-shade,var(--salty-shade,#8882));color:var(--salty-text,inherit);font:inherit;font-size:13px;cursor:pointer}
 .bl-ft-dialog .bl-view-tools button:disabled{opacity:.4;cursor:default}
 .bl-ft-dialog .bl-view-resize>button{width:32px;height:28px;min-height:0;margin:0;padding:0;border:0;border-radius:8px;background:transparent;color:var(--salty-muted,inherit);font:13px/1 sans-serif;cursor:pointer}
-.bl-ft-dialog .bl-view-resize>.bl-view-toggle{grid-column:1;grid-row:1}
+.bl-ft-dialog .bl-view-resize>.bl-view-toggle{grid-column:1;grid-row:1;font-size:12.5px}
 .bl-ft-dialog .bl-view-toggle[aria-expanded="true"]{color:var(--salty-accent,currentColor)}
 .bl-ft-dialog small{opacity:1}
 .bl-ft-shortcut{font:inherit!important;font-size:.8em!important;min-height:32px!important;padding:4px 10px!important;border-radius:8px!important;white-space:normal!important;overflow-wrap:anywhere!important;max-width:100%!important}
@@ -26620,6 +26646,31 @@ html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { marg
 @media (max-width: 760px), (pointer: coarse) {
   html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin: 0 0 0 calc(6px - 10.36px - 0.7px) !important; }
 }
+@property --bl-name-lh { syntax: '<length>'; inherits: true; initial-value: 20px; }
+html body .salty-panel.bl-editor .salty-row:is(bl-s, *),
+html body .salty-panel.bl-editor .salty-stack:is(bl-s, *),
+html body .salty-panel.bl-editor :is(.salty-slider > header) { --bl-name-lh: 1lh; }
+html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { vertical-align: top; margin-top: calc((var(--bl-name-lh) - 28px) / 2) !important; margin-bottom: calc((var(--bl-name-lh) - 28px) / 2) !important; }
+@media (max-width: 760px), (pointer: coarse) {
+  html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin-top: calc((var(--bl-name-lh) - 32px) / 2) !important; margin-bottom: calc((var(--bl-name-lh) - 32px) / 2) !important; }
+}
+html body .salty-panel.bl-editor .salty-row:has(> span > small) { align-items: flex-start; }
+html body .salty-panel.bl-editor .salty-row:has(> span > small) > :not(:has(> small)) { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
+html body.salty .eh-setting:has(> .eh-setting-text > small) { --bl-name-lh: 22px; align-items: flex-start; }
+html body.salty .eh-setting:has(> .eh-setting-text > small) > .eh-setting-text > b { display: block; line-height: var(--bl-name-lh); }
+html body.salty .jj-status:has(.jj-status-text):is(bl-s, *),
+html body.salty .jj-row:has(> .jj-row-label > small) { --bl-name-lh: 20px; align-items: flex-start; }
+html body.salty .jj-status:has(.jj-status-text) .jj-status-title,
+html body.salty .jj-row:has(> .jj-row-label > small) > .jj-row-label > b { display: block; line-height: var(--bl-name-lh); }
+html body.salty :is(.eh-setting:has(> .eh-setting-text > small) > .eh-switch),
+html body.salty :is(.jj-status:has(.jj-status-text) > :is(.jj-switch, .jj-status-dot)):is(bl-s, *),
+html body.salty :is(.jj-row:has(> .jj-row-label > small) > :not(.jj-row-label)) { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
+html body.salty .bl-message-choice { --bl-name-lh: 20px; align-items: flex-start; }
+html body.salty .bl-message-choice b { line-height: var(--bl-name-lh); }
+html body.salty .bl-message-choice > input { align-self: flex-start; margin-block: 0 !important; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
+html body.salty .eh-prompt-placement > select { margin-block: 0 !important; align-self: center; }
+html body.salty #qr--settings label.flex-container:has(> input[type="checkbox"]):has(> span > small) { --bl-name-lh: 1lh; align-items: flex-start; }
+html body.salty #qr--settings label.flex-container:has(> input[type="checkbox"]):has(> span > small) > input[type="checkbox"] { align-self: flex-start; margin-block: 0 !important; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
 /* css/98-tab-strips.css */
 html:not(#bl-tab-scroll-off) :is(#pt-panel > #pt-tabs),
 html:not(#bl-tab-scroll-off) :where(#pt-panel .pt-settings-nav):is(#bl-s, *):is(#bl-s, *),
@@ -26920,7 +26971,7 @@ field-sizing:content;
 }
 body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select:focus-visible,
 body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select:focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label {
   grid-column: 1;

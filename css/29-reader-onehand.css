@@ -120,7 +120,7 @@ body.salty #bl-onehand .bl-onehand-btn:active {
 }
 body.salty #bl-onehand .bl-onehand-btn:focus-visible {
   outline: none;
-  box-shadow: var(--bl-ring), var(--bl-e2);
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e2);
 }
 body.salty #bl-onehand.is-busy .bl-onehand-btn {
   opacity: 0.45;

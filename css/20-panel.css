@@ -12,7 +12,7 @@
   --r-lg: 18px;
   --shade: var(--salty-shade);
   --shade-2: var(--salty-shade-2);
-  --ring: var(--salty-ring);
+  --ring: inset 0 0 0 1px var(--salty-accent);
   /* 메뉴 글자 크기 1px 어치 (테마의 메뉴 크기 → 없으면 실리태번 글자 크기).
      메뉴 크기를 따라가되 절반만, 그리고 0.86 아래로는 안 내려감 → 메뉴를 아주 작게 해도 이 창은 읽을 수 있음 */
   --sp: max(0.86px, calc(0.5px + var(--salty-ui-size, var(--mainFontSize, 15px)) / 30));
@@ -692,7 +692,7 @@ body.salty-dark .salty-shapes button.on {
   margin: 0;
 }
 .salty-num input[type="number"]:focus {
-  box-shadow: var(--salty-ring), var(--salty-well-in) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--salty-well-in) !important;
 }
 .salty-slider input[type="range"] {
   -webkit-appearance: none !important;
@@ -1284,7 +1284,7 @@ body.salty-dark .salty-shapes button.on {
   box-shadow: var(--bl-press) !important;
 }
 .popup:has(.salty-panel.in-popup) .popup-controls .menu_button.popup-button-ok:not(.redWarningBG):focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 
 /* ---------- 폰: 한 단계 촘촘하게 (손가락 닿는 칸은 36px 이상 유지) ---------- */

@@ -46,7 +46,7 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 .bl-ft-dialog .bl-view-tools button{min-width:36px;min-height:32px;margin:0;padding:4px 9px;border:0;border-radius:8px;background:var(--salty-fill-shade,var(--salty-shade,#8882));color:var(--salty-text,inherit);font:inherit;font-size:13px;cursor:pointer}
 .bl-ft-dialog .bl-view-tools button:disabled{opacity:.4;cursor:default}
 .bl-ft-dialog .bl-view-resize>button{width:32px;height:28px;min-height:0;margin:0;padding:0;border:0;border-radius:8px;background:transparent;color:var(--salty-muted,inherit);font:13px/1 sans-serif;cursor:pointer}
-.bl-ft-dialog .bl-view-resize>.bl-view-toggle{grid-column:1;grid-row:1}
+.bl-ft-dialog .bl-view-resize>.bl-view-toggle{grid-column:1;grid-row:1;font-size:12.5px}
 .bl-ft-dialog .bl-view-toggle[aria-expanded="true"]{color:var(--salty-accent,currentColor)}
 /* 실리태번 small{opacity:.7} 이 옅은 글자색과 겹쳐 라이트에서 대비 2.9 였다 — 설정 창(19-extwindows 5.3.7)처럼 대화상자에서도 1 (미리보기는 iframe 이라 안 닿음) */
 .bl-ft-dialog small{opacity:1}

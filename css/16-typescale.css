@@ -166,7 +166,7 @@ body.salty:not(#salty-none) .eh-search:not(#salty-none) {
   box-shadow: var(--bl-well-in);
 }
 body.salty:not(#salty-none) .eh-search:not(#salty-none):focus-within {
-  box-shadow: var(--bl-well-in), var(--bl-ring);
+  box-shadow: var(--bl-well-in), inset 0 0 0 1px var(--salty-accent);
 }
 body.salty:not(#salty-none) .eh-search:not(#salty-none) input:not(#salty-none) {
   height: 100% !important;

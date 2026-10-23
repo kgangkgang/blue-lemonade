@@ -38,7 +38,7 @@ body.salty :is(#user-settings-block-content, #AdvancedFormatting) :is(.text_pole
 }
 body.salty :is(#user-settings-block-content, #AdvancedFormatting) :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, .salty-panel *, ul, ol)):focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 /* 카드 첫 줄 묶음 이름: 위 여백은 카드 안쪽으로 */
 body.salty :is(#user-settings-block #UI-presets-block, #user-settings-block #UI-Customization > div[name], #user-settings-block #power-user-option-checkboxes > div[name], #AdvancedFormatting #ContextSettings > div, #AdvancedFormatting #InstructSettingsColumn, #AdvancedFormatting #SystemPromptColumn > div:not([id]), #AdvancedFormatting [name="tokenizerSelectorBlock"]) > h4:first-child {
@@ -120,7 +120,7 @@ body.salty #user-settings-block-content #MovingUI-presets-block label[for="movin
   field-sizing: content;
 }
 body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] select:focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container:has(> .flex1 select) {
   flex-direction: column;
@@ -197,7 +197,7 @@ body.salty #user-settings-block #ui_language_select {
   max-width: 210px;
 }
 body.salty #user-settings-block #ui_language_select:focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty #user-settings-block #version_display {
   flex: 1 1 100%;
@@ -1214,7 +1214,7 @@ body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type=
   transform: translateX(18px);
 }
 body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"]:focus-visible + label {
-  box-shadow: var(--bl-ring);
+  box-shadow: inset 0 0 0 1px var(--salty-accent);
 }
 body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"]:disabled + label {
   opacity: 0.4;

@@ -119,7 +119,7 @@ body.salty :is(#WorldInfo, #PersonaManagement) :is(.paginationjs-size-changer se
   }
 }
 body.salty :is(#WorldInfo, #PersonaManagement) :is(.paginationjs-size-changer select, #world_info_sort_order, #persona_sort_order, #persona-management-dropdown):focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 
 /* ---------- 월드 인포: 제목 줄 (잠금 · 제목) ---------- */
@@ -394,7 +394,7 @@ body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"
   box-shadow: none !important;
 }
 body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]:focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 
 /* ---------- 월드 인포: 편집 도구 — 로어북 카드 / 항목 카드 ---------- */
@@ -451,7 +451,7 @@ body.salty #WorldInfo #world_popup :is(#world_editor_select, #world_info_search)
 }
 body.salty #WorldInfo #world_popup :is(#world_editor_select, #world_info_search):focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #WorldInfo #world_popup .select2-container--default .select2-selection--single {
   height: auto !important;
@@ -938,7 +938,7 @@ body.salty #WorldInfo .world_entry_edit :is([name="perEntryOverridesBlock"] > .w
   field-sizing: content;
 }
 body.salty #WorldInfo .world_entry_edit :is([name="perEntryOverridesBlock"] > .world_entry_form_control > select, select[name="entryLogicType"]):focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 /* 콘텐츠: 이름 · 토큰 수 / 체크 네 개(두 칸) / 글 칸 */
 body.salty #WorldInfo .world_entry_edit [name="contentAndCharFilterBlock"] {
@@ -1199,7 +1199,7 @@ body.salty #PersonaManagement #persona_search_bar {
 }
 body.salty #PersonaManagement #persona_search_bar:focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #PersonaManagement #persona_sort_order {
   max-width: 30% !important;
@@ -1278,7 +1278,7 @@ body.salty #PersonaManagement #user_avatar_block .avatar-container.selected:acti
   box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-press) !important;
 }
 body.salty #PersonaManagement #user_avatar_block .avatar-container:focus-visible {
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #PersonaManagement #user_avatar_block .avatar-container > .avatar {
   position: relative;

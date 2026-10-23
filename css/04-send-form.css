@@ -49,7 +49,7 @@ body.salty #send_form:focus-within {
   outline: none !important;
 }
 body.salty #send_form:has(#send_textarea:focus) {
-  box-shadow: var(--bl-ring), var(--bl-e3) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e3) !important;
 }
 @media (max-width: 1000px) {
   body.salty #send_form:has(#send_textarea:focus) {
@@ -58,7 +58,7 @@ body.salty #send_form:has(#send_textarea:focus) {
 }
 @supports not selector(:has(a)) {
   body.salty #send_form:focus-within {
-    box-shadow: var(--bl-ring), var(--bl-e3) !important;
+    box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e3) !important;
   }
   @media (max-width: 1000px) {
     body.salty #send_form:focus-within {

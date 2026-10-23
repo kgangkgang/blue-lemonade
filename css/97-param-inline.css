@@ -127,3 +127,34 @@ html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { marg
 @media (max-width: 760px), (pointer: coarse) {
   html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin: 0 0 0 calc(6px - 10.36px - 0.7px) !important; }
 }
+/* 7.8.x 전수조사 · 줄 이름표 세로 중심 (사용자 폰 「이름 글자가 줄 가운데보다 위로 뜬다」 · 감사 ROWCENTER):
+   ① ↺ 가 이름 줄 상자를 키우지 않게 — 누름 칸(28 · 폰 32)은 그대로, 위 · 아래 바깥 여백을 빼서 차지하는 높이를 이름 줄 높이(1lh)와 같게.
+      vertical-align: middle 이던 때는 ↺ 가 기준선 위 x-높이 반에 놓여 줄 상자가 아래로 1px 남짓 커지고, 그만큼 이름 글자가 줄 가운데보다 위로 갔다.
+   ② 이름 + 설명(<small>) 두 줄 줄은 컨트롤을 「이름 첫 줄」 가운데에 — 전에는 두 줄 덩어리 가운데라 이름이 컨트롤보다 10 · 20px 위였다.
+      컨트롤 높이(스위치 36 · 색 칸 · 숫자칸)를 적어 두지 않고, 위에 붙인 뒤 「이름 줄 반 − 제 높이 반」 만큼 옮긴다(translate 는 배치를 안 바꿈).
+   --bl-name-lh 는 길이로 등록해 줄(row)의 줄 높이로 한 번 계산되고 그 값 그대로 ↺ · 컨트롤에 물려 간다 */
+@property --bl-name-lh { syntax: '<length>'; inherits: true; initial-value: 20px; }
+html body .salty-panel.bl-editor :is(.salty-row, .salty-stack, .salty-slider > header) { --bl-name-lh: 1lh; }
+html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { vertical-align: top; margin-top: calc((var(--bl-name-lh) - 28px) / 2) !important; margin-bottom: calc((var(--bl-name-lh) - 28px) / 2) !important; }
+@media (max-width: 760px), (pointer: coarse) {
+  html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin-top: calc((var(--bl-name-lh) - 32px) / 2) !important; margin-bottom: calc((var(--bl-name-lh) - 32px) / 2) !important; }
+}
+html body .salty-panel.bl-editor .salty-row:has(> span > small) { align-items: flex-start; }
+html body .salty-panel.bl-editor .salty-row:has(> span > small) > :not(:has(> small)) { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
+/* 같은 규칙을 애드온 창의 「이름 + 설명 · 스위치」 줄에도 — 캐릭터 에셋(.eh-setting) · 전개 지시(.jj-status · .jj-row).
+   이 줄들은 이름 글자 크기 · 줄 높이가 줄(row)과 달라 1lh 를 못 쓰므로, 이름 줄 높이를 값으로 정해 이름과 컨트롤이 같은 값을 쓴다 */
+html body.salty .eh-setting:has(> .eh-setting-text > small) { --bl-name-lh: 22px; align-items: flex-start; }
+html body.salty .eh-setting:has(> .eh-setting-text > small) > .eh-setting-text > b { display: block; line-height: var(--bl-name-lh); }
+html body.salty :is(.jj-status:has(.jj-status-text), .jj-row:has(> .jj-row-label > small)) { --bl-name-lh: 20px; align-items: flex-start; }
+html body.salty .jj-status:has(.jj-status-text) .jj-status-title,
+html body.salty .jj-row:has(> .jj-row-label > small) > .jj-row-label > b { display: block; line-height: var(--bl-name-lh); }
+html body.salty :is(.eh-setting:has(> .eh-setting-text > small) > .eh-switch, .jj-status:has(.jj-status-text) > :is(.jj-switch, .jj-status-dot), .jj-row:has(> .jj-row-label > small) > :not(.jj-row-label)) { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
+/* 채팅 캡처 · 단어 치환의 메시지 고르기 줄(체크 + 「#번호 이름」 + 미리보기 글): 체크를 「#번호 이름」 줄 가운데에 */
+html body.salty .bl-message-choice { --bl-name-lh: 20px; align-items: flex-start; }
+html body.salty .bl-message-choice b { line-height: var(--bl-name-lh); }
+html body.salty .bl-message-choice > input { align-self: flex-start; margin-block: 0 !important; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
+/* 캐릭터 에셋 「프롬프트 배치」: 실리태번 select 의 아래 바깥 여백(5px)이 줄 높이에만 들어가 이름 글자가 칸보다 2px 아래였다 */
+html body.salty .eh-prompt-placement > select { margin-block: 0 !important; align-self: center; }
+/* 빠른 답장 세트 설정(실리태번 · 확장 서랍) 「이름 + 작은 설명」 체크 줄도 체크를 이름 첫 줄 가운데에 */
+html body.salty #qr--settings label.flex-container:has(> input[type="checkbox"]):has(> span > small) { --bl-name-lh: 1lh; align-items: flex-start; }
+html body.salty #qr--settings label.flex-container:has(> input[type="checkbox"]):has(> span > small) > input[type="checkbox"] { align-self: flex-start; margin-block: 0 !important; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }

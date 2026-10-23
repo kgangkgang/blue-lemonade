@@ -137,7 +137,7 @@ body.salty .salty-panel .bl-preview-samples button { min-width: 28px; font-size:
 body.salty .salty-panel .bl-preview-samples span { min-width: 30px; color: var(--salty-muted); text-align: center; font-size: 11px; }
 body.salty .salty-panel:not(.bl-editor) .salty-sec[data-tab="image"] .salty-group { padding-inline: 10px; }
 body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding: 0; background: transparent; }
-body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes button { border-radius: 9px; padding: 9px 3px; box-shadow: none; flex-direction: column; justify-content: center; gap: 5px; font-size: 11px; min-height: 62px; }
+body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes button { border-radius: 9px; padding: 8px 3px 10px; /* 7.8.x: 그림(위 여백 큼) + 글자 덩어리의 잉크 가운데가 칸 가운데보다 1.4px 아래였다 — 위 1 · 아래 1 옮김 */ box-shadow: none; flex-direction: column; justify-content: center; gap: 5px; font-size: 11px; min-height: 62px; }
 /* 작은 트랙, 넉넉한 누름 영역 */
 body.salty .salty-panel .salty-switch { width: 36px; height: 36px; }
 body.salty .salty-panel .salty-switch span { inset: 8px 0; }

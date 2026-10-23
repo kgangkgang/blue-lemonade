@@ -270,7 +270,7 @@ body.salty :is(#salty-nochat, .salty-preview) .mes :is(.mes_buttons, .mes_reason
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes :is(.mes_buttons, .mes_reasoning_actions, .extraMesButtons) :is(.mes_button, .interactable):focus-visible {
   outline: none;
-  box-shadow: var(--bl-ring);
+  box-shadow: inset 0 0 0 1px var(--salty-accent);
 }
 body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview) .mes.bl-menu-open {
   z-index: 45;

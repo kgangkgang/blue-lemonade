@@ -320,7 +320,7 @@ body.salty #chat .mes :is(.mes_buttons, .mes_reasoning_actions) .mes_button:acti
 }
 body.salty #chat .mes :is(.mes_buttons, .mes_reasoning_actions, .extraMesButtons) :is(.mes_button, .interactable):focus-visible {
   outline: none;
-  box-shadow: var(--bl-ring);
+  box-shadow: inset 0 0 0 1px var(--salty-accent);
 }
 
 /* ⋯ 를 누르면: 버튼 칸 바로 밑에 붙는 떠 있는 메뉴(e4) — 44px 칸 6개씩 고른 격자, 오른쪽 끝은 글 · 카드 끝에 맞춤
@@ -657,7 +657,7 @@ body.salty #chat :is(#curEditTextarea, .edit_textarea, .reasoning_edit_textarea)
   border-radius: var(--bl-r-md) !important;
   outline: none !important;
   background: var(--bl-fill-card, var(--bl-card)) !important;
-  box-shadow: var(--bl-ring), var(--bl-e2) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e2) !important;
   color: var(--salty-text) !important;
   caret-color: var(--salty-accent);
   font-family: var(--salty-font-text) !important;
@@ -811,5 +811,5 @@ body.salty #sheld > .bl-reply-top {
   cursor: pointer;
 }
 body.salty #sheld > .bl-reply-top[hidden] { display: none; }
-body.salty #sheld > .bl-reply-top:focus-visible { outline: none; box-shadow: var(--bl-ring), var(--bl-e3); }
+body.salty #sheld > .bl-reply-top:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e3); }
 body.salty #sheld > .bl-reply-top:active { box-shadow: var(--bl-press); }

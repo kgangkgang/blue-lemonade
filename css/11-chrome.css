@@ -619,7 +619,7 @@ body.salty #select_chat_search {
 }
 body.salty #select_chat_search:focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 /* 백업 목록: 종이색 오목한 칸 안의 줄 (테두리 없음) */
 body.salty #select_chat_popup .chatBackupsList {

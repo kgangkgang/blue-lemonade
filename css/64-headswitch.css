@@ -30,7 +30,7 @@ body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch[ar
   box-shadow: none;
 }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch[aria-checked="true"] > span { transform: translateX(18px); }
-body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch:focus-visible { outline: none; box-shadow: var(--bl-ring, 0 0 0 2px var(--salty-accent, #3975b8)); }
+body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--salty-accent); }
 /* 제목 줄: 이름 … [스위치] [접기 화살표] */
 body.salty #rm_extensions_block .inline-drawer-header > .bl-hs-head { margin-left: auto; margin-right: 10px; }
 /* 창 안 맨 위 줄: 오른쪽 정렬 · 작은 글 */

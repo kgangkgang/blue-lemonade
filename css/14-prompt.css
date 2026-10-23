@@ -73,7 +73,7 @@ body.salty #left-nav-panel :is(#respective-presets-block, #range_block_openai, #
 }
 body.salty #left-nav-panel :is(#respective-presets-block, #range_block_openai, #openai_settings) :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"])):where(:not(ul, ol, .oneline-dropdown > select)):focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 
 /* ---------- 카드 속 줄 리듬 ---------- */
@@ -231,7 +231,7 @@ body.salty #left-nav-panel #openai_settings .oneline-dropdown > select {
   }
 }
 body.salty #left-nav-panel #openai_settings .oneline-dropdown > select:focus-visible {
-  box-shadow: var(--bl-ring) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty #left-nav-panel #openai_settings .oneline-dropdown > :is(.toggle-description, strong) {
   flex: 1 1 100%;
@@ -390,7 +390,7 @@ body.salty #left-nav-panel #openai_settings #completion_prompt_manager .completi
 }
 body.salty #left-nav-panel #openai_settings #completion_prompt_manager .completion_prompt_manager_footer > select:focus {
   background-color: var(--salty-surface) !important;
-  box-shadow: var(--bl-ring), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_button {
   margin: 0 !important;

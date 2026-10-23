@@ -48,7 +48,7 @@ body.salty.salty-icons-line #chat .mes .bl-pinned:is(.mes_legacy_translate, .mes
   mask: var(--salty-mi) center / contain no-repeat;
 }
 body.salty.salty-icons-line #chat .mes .bl-pinned {
-  font-size: 18px !important;
+  font-size: 16px !important; /* 7.8.x: 18 → 16 — 이름 줄 다른 아이콘(FA 12.5)과 같은 글리프 칸(선 그림 마스크 16). 18 이라 꺼낸 🧠 · 🔍 만 커 보였다 */
 }
 body.salty.salty-icons-line #chat .mes .bl-pinned.mes_legacy_translate { --salty-mi: var(--salty-mi-brain); }
 body.salty.salty-icons-line #chat .mes .bl-pinned.mes_llm_translate { --salty-mi: var(--salty-mi-swap); }
