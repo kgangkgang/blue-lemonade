@@ -795,7 +795,7 @@ function translateBox(key) {
     return box;
 }
 function translateButton(key) {
-    const button = promptButton('translate', 'jj-tr-btn', TR_ICON, '번역 보기');
+    const button = promptButton('translate', 'jj-pbtn jj-pbtn-icon jj-tr-btn', TR_ICON, '번역 보기');   // 같은 줄 ↑ ↓ 와 같은 모양(같은 역할 같은 크기)
     button.dataset.tr = key;
     button.setAttribute('aria-expanded', 'false');
     return button;

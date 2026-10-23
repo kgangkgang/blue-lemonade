@@ -319,7 +319,8 @@ await test('엔진 재사용 · 아이콘 · 모양(아이콘 단추 규격 · 1
     assert.match(js, /const TR_ICON = 'fa-solid fa-language';/, 'same icon');
     const css = await read('src/addons/direction/style.css');
     const rule = sel => { const at = css.indexOf(`${sel} {`); assert.ok(at >= 0, sel); return css.slice(at, css.indexOf('}', at)); };
-    const btn = rule(':is(#jj-popup, #jj-settings) .jj-tr-btn');
+    const btn = rule(':is(#jj-popup, #jj-settings) .jj-tr-btn:not(.jj-pbtn)');   // 깃털 창 줄 안에서는 옆 ↑ ↓ 와 같은 jj-pbtn 모양
+    assert.match(js, /promptButton\('translate', 'jj-pbtn jj-pbtn-icon jj-tr-btn'/, '줄 안 번역 단추 = ↑ ↓ 와 같은 모양');
     for (const decl of ['width: 32px;', 'height: 40px;', 'border: 0;', 'background: none;', 'box-shadow: none;', 'color: inherit;', 'font-size: 12.5px;']) assert.ok(btn.includes(decl), decl);
     const face = rule('.jj-tr-text');
     for (const decl of ['border: 1px solid var(--salty-line, var(--SmartThemeBorderColor));', 'background: transparent;', 'box-shadow: none;', 'scrollbar-width: none;']) assert.ok(face.includes(decl), decl);
