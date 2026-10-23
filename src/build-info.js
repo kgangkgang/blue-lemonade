@@ -443,7 +443,7 @@ export const FILE_HASHES = {
   "src/addons/tts/style.css": "47354:dbb3e361:4309ebab",
   "src/addons/tts/version.js": "36:6693ff6a:dffe9a18",
   "src/addons/zipinstall/batch.js": "7625:9730c8a2:060dd7dd",
-  "src/addons/zipinstall/index.js": "27655:6cc3834d:0c4df8c6",
+  "src/addons/zipinstall/index.js": "27807:d8992042:1260ef77",
   "src/addons/zipinstall/style.css": "6209:a473af9c:0d8e5af6",
   "src/after-work.js": "4051:6ad4ecc2:7c929fed",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
@@ -492,7 +492,7 @@ export const FILE_HASHES = {
   "src/checks.js": "3042:368ec3ff:509f89cc",
   "src/colorpick.js": "29852:5b5d8858:3ec727e4",
   "src/colorpop.js": "3885:d35d517b:d68f9617",
-  "src/control-ink.js": "9965:08ca6542:2667433b",
+  "src/control-ink.js": "10641:da789b68:f42e4343",
   "src/credits.js": "8099:713e0ae9:6066aaa2",
   "src/current.js": "1590:9701d538:8863d506",
   "src/custompalette.js": "15962:9e82f872:d30152ba",
@@ -702,5 +702,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1652744:efa8cab6:1be60ba1"
+  "style.css": "1653929:c95f60fa:02b7c84a"
 };
