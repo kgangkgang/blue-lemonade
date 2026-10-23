@@ -256,7 +256,7 @@ body.salty .rm_tag_filter .tag.actionable.excluded::after {
     --bl-fs-cap: calc(var(--mainFontSize, 15px) * 0.8);     /* 12 */
     --bl-fs-sub: calc(var(--mainFontSize, 15px) * 0.833);   /* 12.5 */
     --bl-fs-ctl: calc(var(--mainFontSize, 15px) * 0.9);     /* 13.5 */
-    --bl-fs-body: calc(var(--mainFontSize, 15px) * 0.933);  /* 14 */
+    --bl-fs-body: var(--mainFontSize, 15px);                /* 7.8.x: 폰에서도 본문 = 사용자 글꼴 크기(기본 15.5) 그대로 — ×0.933(14.46)이라 실리태번 기본 줄(체크 줄 · 메뉴)만 테마 창 · 애드온(15.5)보다 작았다(사용자 10-24) */
     --bl-fs-head: calc(var(--mainFontSize, 15px) * 1.133);  /* 17 */
     --bl-fs-title: calc(var(--mainFontSize, 15px) * 1.333); /* 20 */
     --bl-gutter: 14px;

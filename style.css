@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 1a14d4e126cb) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ffba6a34bcbb) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -4275,7 +4275,7 @@ box-shadow:var(--bl-sheet) !important;
     --bl-fs-cap: calc(var(--mainFontSize, 15px) * 0.8);
     --bl-fs-sub: calc(var(--mainFontSize, 15px) * 0.833);
     --bl-fs-ctl: calc(var(--mainFontSize, 15px) * 0.9);
-    --bl-fs-body: calc(var(--mainFontSize, 15px) * 0.933);
+    --bl-fs-body: var(--mainFontSize, 15px);
     --bl-fs-head: calc(var(--mainFontSize, 15px) * 1.133);
     --bl-fs-title: calc(var(--mainFontSize, 15px) * 1.333);
     --bl-gutter: 14px;
@@ -17358,7 +17358,7 @@ body.salty #user-settings-block :is([name="CharacterHandlingToggles"], [name="Mi
     width: 100%; min-width: 0; min-height: 38px; margin: 0 !important; padding: 3px 0 !important; gap: 7px !important;
   }
   body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label > span,
-body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label > small { font-size: 11px !important; line-height: 1.45; overflow-wrap: anywhere; }
+body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label > small { font-size: var(--bl-fs-body) !important; line-height: 1.35; overflow-wrap: anywhere; }
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container { padding-inline: 0 !important; gap: var(--bl-param-row-gap) var(--bl-param-col-gap) !important; }
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-input { width: var(--bl-num-w) !important; min-width: 0 !important; font-size: var(--bl-fs-ctl); }
 }
@@ -26302,6 +26302,13 @@ body.salty #user-settings-block [name="CharacterHandlingToggles"],
 body.salty #user-settings-block [name="MiscellaneousToggles"],
 body.salty #user-settings-block [name="ChatMessageHandlingToggles"] { grid-template-columns: minmax(0, 1fr) !important; }
   body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="FontBlurChatWidthBlock"], [name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > * { grid-column: 1 / -1 !important; }
+}
+@container bl-user-settings (width < 34em) {
+  body.salty #user-settings-block [name="themeToggles"],
+body.salty #user-settings-block [name="CharacterHandlingToggles"],
+body.salty #user-settings-block [name="MiscellaneousToggles"],
+body.salty #user-settings-block [name="ChatMessageHandlingToggles"] { grid-template-columns: minmax(0, 1fr) !important; }
+  body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > * { grid-column: 1 / -1 !important; }
 }
 .salty-panel .salty-row:has(> .salty-seg:not(.salty-mini), > select, > input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="color"])):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
 .salty-panel .salty-stack:has(> .salty-seg):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),

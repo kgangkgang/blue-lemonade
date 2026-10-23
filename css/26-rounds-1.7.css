@@ -103,7 +103,7 @@ body.salty #regex_container :is(.delete_regex, #regex_preset_delete) { color: va
   body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label {
     width: 100%; min-width: 0; min-height: 38px; margin: 0 !important; padding: 3px 0 !important; gap: 7px !important;
   }
-  body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label > :is(span,small) { font-size: 11px !important; line-height: 1.45; overflow-wrap: anywhere; }
+  body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label > :is(span,small) { font-size: var(--bl-fs-body) !important; line-height: 1.35; overflow-wrap: anywhere; } /* 7.8.x: 11px → 본문(사용자 글꼴 크기) — 사용자 10-24 「15.5」 통일. 두 칸에 안 들어가는 폭에서는 96 이 한 열로 */
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container { padding-inline: 0 !important; gap: var(--bl-param-row-gap) var(--bl-param-col-gap) !important; }
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-input { width: var(--bl-num-w) !important; min-width: 0 !important; font-size: var(--bl-fs-ctl); } /* 6.9.8: 46px · 11px → 공통 숫자칸 */
 }
