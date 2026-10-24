@@ -20,6 +20,7 @@ import { syncSplash, syncFavicon } from './splash.js';
 import { markdownClasses, markdownVariables } from './markdown.js';
 import { syncExtensionColors } from './extension-colors.js';
 import { syncControlInk } from './control-ink.js';
+import { syncTagInk } from './tag-ink.js';
 
 function profileVars(p, pal, user = false) {
     const vars = Object.assign(frameVars(p, 'profile', pal.accent), decorVars(p.decor, 'profile', p.radius), {
@@ -802,5 +803,6 @@ export function applyAll() {
 
     applyFonts(s);
     syncControlInk(!!s.enabled, JSON.stringify([s.fonts, s.type, s.ui]));
+    syncTagInk(!!s.enabled);   // 7.9.1 바탕색만 정한 태그의 글자색 (tag-ink.js)
     syncFeatures(s, addonsEnabled(getSettings())); // 3.1.0 켤 때만 불러오는 기능 (features.js)
 }
