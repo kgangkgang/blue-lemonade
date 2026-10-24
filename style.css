@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d1668a417671) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build eb9dfd683a53) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -22056,8 +22056,8 @@ mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='
 pointer-events:none;
 }
 html body.salty:not(#bl-pt-a):not(#bl-pt-b) #pt-panel .pt-page-fixed .pt-select-row { padding: 0 0 8px !important; margin-bottom: 8px !important; gap: 8px !important; align-items: center !important; }
-html body.salty:not(#bl-pt-a):not(#bl-pt-b) #pt-panel .pt-page-fixed .pt-select-row:has(> .pt-checkbox) { padding-left: 15px !important; }
-html body.salty #pt-panel .pt-page-fixed .pt-select-row > .pt-checkbox { margin: 0 !important; flex: none; }
+html body.salty:not(#bl-pt-a):not(#bl-pt-b) #pt-panel .pt-page-fixed .pt-select-row:has(> .pt-checkbox) { padding-left: 11px !important; }
+html body.salty #pt-panel .pt-page-fixed .pt-select-row > .pt-checkbox { margin-top: 0 !important; margin-right: 0 !important; margin-bottom: 0 !important; flex: none; }
 /* css/57-native-ux.css */
 body.salty #PersonaManagement,
 body.salty #right-nav-panel,
