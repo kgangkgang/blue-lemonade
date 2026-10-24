@@ -60,16 +60,24 @@ test('palette rules apply only while the window skin is 블루레몬에이드; l
   assert.ok(!/--font:[^;]*!important/.test(css), 'the window font stays overridable by the window\'s own picker');
 });
 test('body 안과 html 직속에 붙는 창을 모두 꾸미고 같은 특이도를 지켜요', () => {
-  const root = '#fruit-heart-v6#fruit-heart-v6';
+  const rootPath = root;
+  const anchor = '#fruit-heart-v6#fruit-heart-v6';
   let rest = css;
   for (const body of ['body.salty', 'body.salty.salty-dark']) {
     // 두 갈래의 ID·클래스·태그 수는 이전 html:has(> body.salty) 범위와 같아요.
-    const scope = `:is(html > ${body} ${root}, html > ${body} ~ ${root})`;
+    const scope = `:is(html > ${body} ${anchor}, html > ${body} ~ ${anchor})`;
     assert.ok(rest.includes(scope), `${body}: 두 위치를 지원해야 해요`);
     rest = rest.split(scope).join('');
   }
   assert.ok(!rest.includes('html > body.salty'), '창 안의 규칙도 body 한 위치에만 묶지 않아요');
   assert.ok(!css.includes('html:has('), '문서 전체를 다시 검사하는 선택자는 쓰지 않아요');
+  for (const [file,repeat] of [['css/85-addon-unify.css',3],['css/96-param-stack.css',2]]) {
+    const source=fs.readFileSync(path.join(rootPath,file),'utf8');
+    const id='#fruit-heart-v6'.repeat(repeat);
+    const scope=`:is(html > body.salty ${id}, html > body.salty ~ ${id})`;
+    assert.ok(source.includes(scope), `${file}: 공통 조작부도 두 위치를 지원해요`);
+    assert.ok(!source.split(scope).join('').includes('html > body.salty'), `${file}: body 안에만 묶인 규칙이 없어요`);
+  }
 });
 
 test('switches share one thin geometry and switch rows keep title, switch and note on one grid', () => {
