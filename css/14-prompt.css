@@ -824,7 +824,7 @@ body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_ent
   min-width: 88px !important;
   background: var(--salty-fill-accent, var(--salty-accent)) !important;
   box-shadow: var(--bl-accent-lift) !important;
-  color: var(--salty-on-accent, #fff) !important;
+  color: var(--salty-on-accent, var(--bl-fb-fff)) !important;
 }
 @media (hover: hover) {
   body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_save:hover {

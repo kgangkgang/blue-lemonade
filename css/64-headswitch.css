@@ -9,7 +9,7 @@ body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch {
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: var(--bl-check-off, color-mix(in srgb, var(--SmartThemeBodyColor, #888) 24%, transparent));
+  background: var(--bl-check-off, color-mix(in srgb, var(--SmartThemeBodyColor, var(--bl-fb-888)) 24%, transparent));
   box-shadow: var(--bl-track, none);
   cursor: pointer;
   transition: background-color .18s ease;
@@ -26,7 +26,7 @@ body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch > 
   transition: transform .18s ease;
 }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch[aria-checked="true"] {
-  background: var(--salty-accent, var(--SmartThemeQuoteColor, #3975b8));
+  background: var(--salty-accent, var(--SmartThemeQuoteColor, var(--bl-fb-3975b8)));
   box-shadow: none;
 }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch[aria-checked="true"] > span { transform: translateX(18px); }
@@ -41,7 +41,7 @@ body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row {
   gap: 8px;
   padding: 6px 0 2px;
   font-size: var(--bl-fs-body, 15px);
-  color: var(--salty-muted, color-mix(in srgb, var(--SmartThemeBodyColor, #888) 62%, transparent));
+  color: var(--salty-muted, color-mix(in srgb, var(--SmartThemeBodyColor, var(--bl-fb-888)) 62%, transparent));
 }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row .bl-hs-opt { width: 34px; height: 20px; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row .bl-hs-opt > span { width: 14px; height: 14px; }

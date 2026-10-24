@@ -144,7 +144,7 @@ body.salty .popup .popup-controls .menu_button {
 body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG) {
   background: var(--salty-fill-accent, var(--salty-accent)) !important;
   box-shadow: var(--bl-accent-lift) !important;
-  color: var(--salty-on-accent, #fff) !important;
+  color: var(--salty-on-accent, var(--bl-fb-fff)) !important;
 }
 @media (hover: hover) {
   body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG):hover {
@@ -161,9 +161,9 @@ body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG
 /* 7.7.9 안내 창(.bl-info-dialog, popup-guard.js): 취소 없음 · 닫기는 테마 포인트 색 — :has 를 모르는 옛 브라우저와 다른 실리태번 판에서도(사용자 폰 10-23) */
 html body dialog.popup.bl-info-dialog .popup-controls .popup-button-cancel { display: none !important; }
 html body dialog.popup .popup-controls .menu_button.popup-button-ok.bl-info-ok {
-  background: var(--salty-fill-accent, var(--salty-accent, #2477d3)) !important;
+  background: var(--salty-fill-accent, var(--salty-accent, var(--bl-fb-2477d3))) !important;
   box-shadow: var(--bl-accent-lift, none) !important;
-  color: var(--salty-on-accent, #fff) !important;
+  color: var(--salty-on-accent, var(--bl-fb-fff)) !important;
   border-color: transparent !important;
 }
 body.salty .popup .popup-controls .menu_button.popup-button-cancel {

@@ -9,9 +9,9 @@
   gap: 10px;
   margin: 4px var(--bl-fh-pad, 10px);
   padding: 6px 6px 6px 12px;
-  border: 1px solid color-mix(in srgb, var(--bl-update-glow, #ffd84a) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bl-update-glow, var(--bl-fb-ffd84a)) 55%, transparent);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--bl-update-glow, #ffd84a) 14%, var(--salty-surface, var(--SmartThemeBlurTintColor, #222)));
+  background: color-mix(in srgb, var(--bl-update-glow, var(--bl-fb-ffd84a)) 14%, var(--salty-surface, var(--SmartThemeBlurTintColor, var(--bl-fb-222))));
   color: var(--salty-text, var(--SmartThemeBodyColor, inherit));
   font-size: calc(var(--mainFontSize, 15px) * 0.9);
   line-height: 1.4;
@@ -23,8 +23,8 @@
   padding: 0 12px;
   border: 0;
   border-radius: 8px;
-  background: var(--salty-fill-accent, var(--salty-accent, var(--SmartThemeQuoteColor, #4a90d9)));
-  color: var(--salty-on-accent, #fff);
+  background: var(--salty-fill-accent, var(--salty-accent, var(--SmartThemeQuoteColor, var(--bl-fb-4a90d9))));
+  color: var(--salty-on-accent, var(--bl-fb-fff));
   font: inherit;
   font-weight: 600;
   cursor: pointer;

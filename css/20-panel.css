@@ -194,10 +194,10 @@ body.salty.salty-light { --bl-update-ink: #8a6400; --bl-update-glow: #ffc400; }
 .bl-update .bl-update-ask { margin: 4px 0 10px; font-weight: 700; }
 .bl-update .bl-update-vers { margin-left: 6px; font-weight: 400; color: var(--salty-muted, inherit); font-variant-numeric: tabular-nums; }
 .bl-update .bl-update-vers b { color: var(--bl-update-ink); font-weight: 700; }
-.bl-update .bl-update-status { margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--salty-text, #888) 8%, transparent); line-height: 1.5; }
+.bl-update .bl-update-status { margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--salty-text, var(--bl-fb-888)) 8%, transparent); line-height: 1.5; }
 .bl-update .bl-update-status[hidden] { display: none; }
 .bl-update .bl-update-status.is-ok { color: var(--salty-accent-ink, var(--salty-accent, inherit)); }
-.bl-update .bl-update-status.is-bad { color: var(--bl-danger, #e0665f); }
+.bl-update .bl-update-status.is-bad { color: var(--bl-danger, var(--bl-fb-e0665f)); }
 .bl-update .bl-update-status.is-warn { color: var(--bl-update-ink); }
 /* 공지사항 팝업 (실리태번 팝업 안): 버전마다 한 칸, 맨 위만 펼침. <details> 대신 단추 — ▲ 접기 스크립트가 details 에 단추를 붙임 */
 .salty-notice {
@@ -226,7 +226,7 @@ body.salty dialog.bl-notice-dialog {
   background: var(--salty-surface); color: var(--salty-text); overflow: hidden;
 }
 body.salty dialog.bl-notice-dialog[open] { display: flex; flex-direction: column; }
-body.salty dialog.bl-notice-dialog::backdrop { background: var(--bl-scrim, var(--salty-scrim, #0009)); }
+body.salty dialog.bl-notice-dialog::backdrop { background: var(--bl-scrim, var(--salty-scrim, var(--bl-fb-0009))); }
 body.salty dialog.bl-notice-dialog .bl-notice-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; touch-action: pan-y; padding: 16px 16px 4px; }
 body.salty dialog.bl-notice-dialog .salty-notice-head { margin: 0 0 12px; line-height: 1.2; }
 body.salty dialog.bl-notice-dialog .bl-notice-foot { flex: none; display: flex; justify-content: center; padding: 8px 16px 16px; }
@@ -241,7 +241,7 @@ body.salty dialog.bl-notice-dialog .bl-notice-close:not(:focus-visible) { outlin
 .salty-notice-item {
   margin-bottom: 8px;
   border-radius: 12px;
-  background: var(--salty-fill-shade, var(--salty-shade, rgba(127, 127, 127, 0.12))); /* 5.5.6 테마가 빠진 상태(확장만)의 실리태번 팝업 안에서도 칸이 보이게 */
+  background: var(--salty-fill-shade, var(--salty-shade, var(--bl-fb-rgb-127-127-127-0p12))); /* 5.5.6 테마가 빠진 상태(확장만)의 실리태번 팝업 안에서도 칸이 보이게 */
 }
 .salty-notice-toggle {
   display: flex;
@@ -1211,7 +1211,7 @@ body.salty-dark .salty-shapes button.on {
 }
 .salty-btn.primary {
   background: var(--salty-fill-accent, var(--salty-accent));
-  color: var(--salty-on-accent, #fff);
+  color: var(--salty-on-accent, var(--bl-fb-fff));
 }
 /* 되돌릴 수 없는 것 (처음 설정으로) */
 .salty-btn.salty-btn-danger {

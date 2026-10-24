@@ -861,7 +861,7 @@ body.salty #Backgrounds .bg_example.locked-background::after {
 body.salty #Backgrounds .bg_example:is(.selected-background, .folder-group-selected)::before {
   top: 6px !important;
   background: var(--salty-fill-accent, var(--salty-accent));
-  color: var(--salty-on-accent, #fff) !important;
+  color: var(--salty-on-accent, var(--bl-fb-fff)) !important;
 }
 body.salty #Backgrounds .bg_example:is(.selected-background, .folder-group-selected)::before {
   right: auto !important;

@@ -8,7 +8,7 @@
   padding: 8px 10px;
   border-radius: 12px;
   background: var(--salty-fill-surface, var(--salty-surface));
-  box-shadow: inset 0 0 0 1px var(--salty-shade-2, rgba(0, 0, 0, 0.08));
+  box-shadow: inset 0 0 0 1px var(--salty-shade-2, var(--bl-fb-rgb-0-0-0-0p08));
 }
 .salty-panel .bl-qr-sample {
   display: flex;
@@ -43,7 +43,7 @@
   min-height: 30px;
   padding: 4px 9px;
   border-radius: 7px;
-  background: var(--bl-hover, rgba(127, 127, 127, 0.1));
+  background: var(--bl-hover, var(--bl-fb-rgb-127-127-127-0p1));
   color: var(--salty-text);
   font-size: 11px;
   white-space: nowrap;
@@ -62,7 +62,7 @@
   min-height: 30px;
   padding: 0 8px;
   border-radius: 7px;
-  background: linear-gradient(var(--bl-hover, rgba(127, 127, 127, 0.1)), var(--bl-hover, rgba(127, 127, 127, 0.1))), var(--salty-surface);
+  background: linear-gradient(var(--bl-hover, var(--bl-fb-rgb-127-127-127-0p1)), var(--bl-hover, var(--bl-fb-rgb-127-127-127-0p1))), var(--salty-surface);
   box-shadow: 0 0 0 4px var(--salty-surface);
   color: var(--salty-muted);
   font-size: 12px;
@@ -240,7 +240,7 @@ body.salty .ctx-blocker .ctx-sub-menu {
   max-height: none;
   overflow: visible;
   margin-top: 4px !important;
-  box-shadow: inset 2px 0 0 var(--bl-line, rgba(127, 127, 127, 0.2));
+  box-shadow: inset 2px 0 0 var(--bl-line, var(--bl-fb-rgb-127-127-127-0p2));
 }
 /* :not(#salty-none) — 일반 메뉴 규칙(css/03-menus.css '.list-group > .list-group-item', :is(#options …) 때문에 아이디 무게)이
    min-height · padding 을 이겨 칸이 PC 44px · 폰 36px 로 남았다 */
@@ -302,7 +302,7 @@ body.salty:not(#salty-none) .ctx-blocker .ctx-menu > .list-group-item.ctx-header
 }
 body.salty .ctx-blocker .ctx-menu > .ctx-item + .ctx-header {
   margin-top: 4px !important;
-  border-top: 1px solid var(--bl-line, rgba(127, 127, 127, 0.2)) !important;
+  border-top: 1px solid var(--bl-line, var(--bl-fb-rgb-127-127-127-0p2)) !important;
 }
 /* Keep the sticky background mask while showing keyboard focus. */
 html body.salty #send_form #qr--bar :is(#bl-qr-find, #qr--popoutTrigger):focus-visible {

@@ -56,7 +56,7 @@ test('palette rules apply only while the window skin is 블루레몬에이드; l
     assert.ok(rules.length, part);
     assert.ok(rules.every(rule => !rule.includes(lemon)), part + ' must not depend on the skin');
   }
-  assert.ok(css.includes('html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6 {'));
+  assert.ok(css.includes('html > body.salty #fruit-heart-v6#fruit-heart-v6 {'));
   assert.ok(!/--font:[^;]*!important/.test(css), 'the window font stays overridable by the window\'s own picker');
 });
 test('switches share one thin geometry and switch rows keep title, switch and note on one grid', () => {

@@ -255,7 +255,7 @@ body.salty input[type="checkbox"]:where(:not(.salty-switch > input, .salty-panel
   box-shadow: var(--bl-accent-lift) !important;
 }
 body.salty input[type="checkbox"]:where(:not(.salty-switch > input, .salty-panel *))::before {
-  box-shadow: inset 1em 1em var(--salty-on-accent, #fff) !important;
+  box-shadow: inset 1em 1em var(--salty-on-accent, var(--bl-fb-fff)) !important;
 }
 body.salty input[type="checkbox"]:where(:not(.salty-switch > input, .salty-panel *)):disabled {
   opacity: 0.45;

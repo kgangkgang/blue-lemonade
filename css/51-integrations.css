@@ -38,11 +38,11 @@
 .bl-mask-sample[data-mask=black], body.salty-dark .bl-mask-sample[data-mask=auto] { background:#111318; }
 .bl-mask-sample[data-mask=mosaic] { background:conic-gradient(#555b65 25%,#c3c8d1 0 50%,#8f99a8 0 75%,#e4e7eb 0) 0 0/9px 9px; }
 .bl-mask-sample[data-mask=tape] { background:#f7dc84; transform:rotate(-5deg); clip-path:polygon(0 8%,100% 0,96% 35%,100% 80%,97% 100%,2% 100%,4% 60%); }
-.bl-capture-dialog, .bl-tool-dialog { border:1px solid var(--salty-line,#777); border-radius:var(--bl-r-lg,16px); padding:14px; background:var(--salty-bg,#fff); color:var(--salty-text,#222); max-width:calc(100vw - 24px); max-height:calc(100dvh - 24px); box-sizing:border-box; font-family:var(--salty-font-ui,inherit); font-size:var(--salty-ui-size,var(--mainFontSize,15px)); font-weight:var(--salty-ui-weight,normal); letter-spacing:var(--bl-settings-tracking,normal); }
+.bl-capture-dialog, .bl-tool-dialog { border:1px solid var(--salty-line, var(--bl-fb-777)); border-radius:var(--bl-r-lg,16px); padding:14px; background:var(--salty-bg, var(--bl-fb-fff)); color:var(--salty-text, var(--bl-fb-222)); max-width:calc(100vw - 24px); max-height:calc(100dvh - 24px); box-sizing:border-box; font-family:var(--salty-font-ui,inherit); font-size:var(--salty-ui-size,var(--mainFontSize,15px)); font-weight:var(--salty-ui-weight,normal); letter-spacing:var(--bl-settings-tracking,normal); }
 .bl-capture-dialog { width:1050px; }
 .bl-tool-dialog { width:520px; }
 .bl-tool-dialog p { line-height:1.7; }
-.bl-capture-dialog::backdrop, .bl-tool-dialog::backdrop { background:var(--bl-scrim,#0009); }
+.bl-capture-dialog::backdrop, .bl-tool-dialog::backdrop { background:var(--bl-scrim, var(--bl-fb-0009)); }
 .bl-capture-dialog header, .bl-capture-dialog footer { display:flex; align-items:center; justify-content:space-between; gap:14px; }
 .bl-capture-dialog h3 { margin:0; min-width:0; font-size:1.1em; font-weight:inherit; overflow-wrap:anywhere; }
 .bl-capture-dialog header button { font-size:24px; background:none; border:0; color:inherit; }
@@ -50,7 +50,7 @@
 .bl-capture-preview { min-width:0; }
 .bl-capture-preview img, .bl-capture-preview canvas, .bl-capture-preview video { display:block; max-width:100%; height:auto; border-radius:10px; }
 .bl-capture-dialog [hidden] { display:none!important; }
-.bl-capture-dialog footer { position:sticky; bottom:-14px; padding:10px 0; background:var(--salty-bg,#fff); }
+.bl-capture-dialog footer { position:sticky; bottom:-14px; padding:10px 0; background:var(--salty-bg, var(--bl-fb-fff)); }
 .bl-capture-dialog .salty-btn, .bl-tool-dialog .salty-btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:36px; height:auto; max-width:100%; padding:7px 10px; border:1px solid var(--salty-line); border-radius:var(--bl-r-sm,8px); color:var(--salty-text); background:var(--salty-shade); font:inherit; line-height:1.45; white-space:normal; cursor:pointer; text-decoration:none; }
 .bl-capture-dialog input[type=text], .bl-tool-dialog input[type=number], .bl-word-presets input[type=text], .bl-name-row input { border:1px solid var(--salty-line); border-radius:8px; padding:8px; color:var(--salty-text); background:var(--salty-field); }
 @media(max-width:640px){.bl-capture-layout{grid-template-columns:minmax(0,1fr)}.bl-capture-dialog{padding:14px}.bl-capture-dialog footer{bottom:-14px}}
@@ -113,7 +113,7 @@ body.bl-hide-perf-timer #lt-wand-button, body.bl-hide-perf-log #rl-wand-button {
 .bl-capture-editor footer { position:sticky; bottom:-20px; background:var(--salty-bg); padding:12px 0; }
 
 .bl-capture-editor .bl-word-actions {display:flex;flex-wrap:wrap;gap:8px;}
-body.salty .bl-capture-options select,body.salty .bl-capture-options input[type=number]{max-width:100%;box-sizing:border-box;color:var(--salty-text,#222);background:var(--salty-field,var(--salty-surface,#f4f6fa));border:1px solid var(--salty-line,#b8c3cc);border-radius:8px;padding:8px;color-scheme:light;}
+body.salty .bl-capture-options select,body.salty .bl-capture-options input[type=number]{max-width:100%;box-sizing:border-box;color:var(--salty-text, var(--bl-fb-222));background:var(--salty-field,var(--salty-surface, var(--bl-fb-f4f6fa)));border:1px solid var(--salty-line, var(--bl-fb-b8c3cc));border-radius:8px;padding:8px;color-scheme:light;}
 body.salty-dark .bl-capture-options select,body.salty-dark .bl-capture-options input[type=number]{color-scheme:dark;}
 
 /* 6.1.5 월드인포 ? 도움말 (src/wi-help.js) — 칸 이름 옆 작은 동그라미, 누름 영역은 ::before 로 넓힌다. 테마가 꺼져 있으면 숨김 */
@@ -129,12 +129,12 @@ body.salty-help-off #pt-panel .pt-page-fixed .pt-act-row { grid-template-columns
 .bl-wi-help-list { display:grid; grid-template-columns:max-content minmax(0, 1fr); gap:6px 12px; margin:0 0 12px; line-height:1.6; }
 .bl-wi-help-list dt { font-weight:700; white-space:nowrap; }
 .bl-wi-help-list dd { margin:0; }
-.bl-wi-help-rec { padding:9px 11px; border-radius:var(--bl-r-md, 10px); background:color-mix(in srgb, var(--salty-accent, #888) 12%, transparent); }
+.bl-wi-help-rec { padding:9px 11px; border-radius:var(--bl-r-md, 10px); background:color-mix(in srgb, var(--salty-accent, var(--bl-fb-888)) 12%, transparent); }
 .bl-wi-help-rec b { margin-right:8px; color:var(--salty-accent, inherit); }
 .bl-wi-help-actions { display:flex; justify-content:flex-end; margin-top:4px; }
 /* 2026-10-13 캐릭터 로어북 연결이 빠지면 위쪽 책 아이콘에 빨간 점 하나 (src/wi-link.js — 글자 · 팝업 없음, 고치면 사라짐). 테마가 꺼져 있으면 숨김 */
 body.salty #WIDrawerIcon.bl-wi-unlinked { position:relative; }
-body.salty #WIDrawerIcon.bl-wi-unlinked::after { content:''; position:absolute; top:0; right:0; width:7px; height:7px; border-radius:50%; background:var(--bl-danger, #e5484d); box-shadow:0 0 0 1.5px var(--salty-fill-surface, var(--salty-surface, transparent)); pointer-events:none; }
+body.salty #WIDrawerIcon.bl-wi-unlinked::after { content:''; position:absolute; top:0; right:0; width:7px; height:7px; border-radius:50%; background:var(--bl-danger, var(--bl-fb-e5484d)); box-shadow:0 0 0 1.5px var(--salty-fill-surface, var(--salty-surface, transparent)); pointer-events:none; }
 @media (max-width: 520px) {
   .bl-wi-help-list { grid-template-columns:minmax(0, 1fr); gap:2px; }
   .bl-wi-help-list dd { margin-bottom:6px; }

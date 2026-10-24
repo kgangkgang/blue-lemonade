@@ -44,7 +44,7 @@ body.salty #chat .mes .bl-art-frame[data-bl-frame] > .bl-art-photo > img {
 .bl-frame-editor {
   width: min(620px, 94vw); max-height: 90dvh; overflow: auto; box-sizing: border-box;
   padding: 20px; border: 1px solid var(--salty-line); border-radius: 18px;
-  background: var(--salty-bg, #202936); color: var(--salty-text, #e3e9f0); font-family: var(--salty-font-ui, sans-serif);
+  background: var(--salty-bg, var(--bl-fb-202936)); color: var(--salty-text, var(--bl-fb-e3e9f0)); font-family: var(--salty-font-ui, sans-serif);
 }
 .bl-frame-editor::backdrop { background: #0008; }
 .bl-frame-editor header, .bl-frame-editor footer { display: flex; gap: 12px; align-items: center; justify-content: space-between; }

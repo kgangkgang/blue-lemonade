@@ -398,11 +398,11 @@ body.salty #jj-popup {
   background: var(--bl-fill-overlay, var(--bl-overlay)) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  box-shadow: 0 -1px 5px -2px color-mix(in srgb, var(--salty-shadow, rgba(15, 34, 56, 0.14)) 60%, transparent), 0 -8px 24px -12px var(--salty-shadow, rgba(15, 34, 56, 0.14)), 0 -18px 48px -24px var(--salty-shadow, rgba(15, 34, 56, 0.14)) !important;
+  box-shadow: 0 -1px 5px -2px color-mix(in srgb, var(--salty-shadow, var(--bl-fb-rgb-15-34-56-0p14)) 60%, transparent), 0 -8px 24px -12px var(--salty-shadow, var(--bl-fb-rgb-15-34-56-0p14)), 0 -18px 48px -24px var(--salty-shadow, var(--bl-fb-rgb-15-34-56-0p14)) !important;
   color: var(--salty-text) !important;
 }
 body.salty.salty-dark #jj-popup {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 -1px 6px -2px color-mix(in srgb, var(--salty-shadow, rgba(1, 8, 16, 0.72)) 55%, transparent), 0 -10px 30px -14px var(--salty-shadow, rgba(1, 8, 16, 0.72)), 0 -22px 56px -28px var(--salty-shadow, rgba(1, 8, 16, 0.72)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 -1px 6px -2px color-mix(in srgb, var(--salty-shadow, var(--bl-fb-rgb-1-8-16-0p72)) 55%, transparent), 0 -10px 30px -14px var(--salty-shadow, var(--bl-fb-rgb-1-8-16-0p72)), 0 -22px 56px -28px var(--salty-shadow, var(--bl-fb-rgb-1-8-16-0p72)) !important;
 }
 body.salty #jj-popup .jj-popup-head {
   border: 0 !important;
@@ -566,7 +566,7 @@ body.salty #rightSendForm > #mes_stop {
   padding: 0 !important;
   border-radius: 50%;
   background: var(--salty-fill-accent, var(--salty-accent)) !important;
-  color: var(--salty-on-accent, #fff) !important;
+  color: var(--salty-on-accent, var(--bl-fb-fff)) !important;
   box-shadow: var(--bl-accent-lift);
   align-items: center;
   justify-content: center;

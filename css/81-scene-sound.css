@@ -90,7 +90,7 @@
 /* 들어 보는 동안 */
 .salty-panel .bl-ss-btn[aria-pressed="true"] {
   background: var(--salty-fill-accent, var(--salty-accent));
-  color: var(--salty-on-accent, #fff);
+  color: var(--salty-on-accent, var(--bl-fb-fff));
 }
 .salty-panel .bl-ss-btn:focus-visible {
   outline: 2px solid var(--salty-accent);

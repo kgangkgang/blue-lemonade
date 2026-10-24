@@ -166,25 +166,25 @@ html body.salty #autopic_settings_container [style*="#ff9f43"] { color: var(--bl
 
 html body.salty #model-switch-settings .ms-actions .ms-apply { border-radius:var(--bl-r-sm,8px)!important; }
 /* Source and license notices: one click from the theme version. */
-.bl-copyright{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:30px;min-height:30px;padding:2px;border:0;border-radius:50%;font:500 20px/1 system-ui;background:transparent;color:var(--salty-muted,#64748b);cursor:pointer}
+.bl-copyright{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:30px;min-height:30px;padding:2px;border:0;border-radius:50%;font:500 20px/1 system-ui;background:transparent;color:var(--salty-muted, var(--bl-fb-64748b));cursor:pointer}
 /* 5.5.3 ⓒ 는 글자 대신 SVG(credits.js COPYRIGHT_ICON) — 글자 ⓒ 의 잉크가 글꼴마다 em 상자 아래로 처져 이름 · 알약보다 낮아 보였다. 원 가운데 = 상자 가운데 */
 .bl-copyright .bl-copyright-icon{display:block;flex:none;width:18px;height:18px;margin:0;overflow:visible}
 /* 설정 창 제목의 버전 알약은 굵은 제목에 맞춰 1px 올라가 있다(20-panel.css .salty-panel .salty-ver top:-1px) → ⓒ 도 같은 높이로.
    위아래 padding 합(4px)은 그대로라 버튼 크기 · 누르는 곳 · 초점 테두리는 안 바뀐다 (실측 5.5.3: 1440 · 412 모두 알약 가운데와 1px 차이 → 0) */
 /* 7.8.6: 위 알약 top:-1px 이 확장만 모드에만 남아 이 보정도 그 모드에만 (테마 화면은 75 가 ⓒ padding-block 0) */
 :where(body:not(.salty)) .salty-panel .salty-title .bl-copyright{padding-top:1px;padding-bottom:3px}
-.bl-copyright:focus-visible{outline:2px solid var(--salty-accent,#3975b8)}
+.bl-copyright:focus-visible{outline:2px solid var(--salty-accent, var(--bl-fb-3975b8))}
 /* 6.8.9 테마를 끈 채 서랍만 쓸 때 (커뮤니티 제보): 다른 CSS 가 제목 글자 칸을 좁히면 ⓒ 가 다음 줄로 넘어가 제목 줄이 두 줄이 되고 접기 화살표가 글자보다 아래로 내려갔다 ·
    서랍을 카드로 그리는 테마에서 제목 위 틈이 없었다 → 글자 칸은 한 줄(ⓒ 는 버전 옆), 제목 줄 위아래 8px. 테마를 켠 화면은 그대로 */
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header{align-items:center!important;padding-top:8px!important;padding-bottom:8px!important}
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b{display:inline-flex!important;align-items:center;flex-wrap:nowrap!important;gap:6px;white-space:nowrap!important;max-width:none!important;min-width:0}
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b > :is(i,.bl-version,.bl-copyright){flex:none;margin-block:0}
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b > .bl-version[hidden]{display:none}
-.bl-credits-dialog{margin:auto;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--salty-line,#cdd9e8);border-radius:18px;background:var(--salty-surface,#fff);color:var(--salty-text,#24354c);overflow:hidden}
+.bl-credits-dialog{margin:auto;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--salty-line, var(--bl-fb-cdd9e8));border-radius:18px;background:var(--salty-surface, var(--bl-fb-fff));color:var(--salty-text, var(--bl-fb-24354c));overflow:hidden}
 .bl-credits-dialog[open]{display:flex;flex-direction:column}.bl-credits-dialog::backdrop{background:#07152999}
-.bl-credits-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;flex:none;border-bottom:1px solid var(--salty-line,#cdd9e8)}
+.bl-credits-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;flex:none;border-bottom:1px solid var(--salty-line, var(--bl-fb-cdd9e8))}
 .bl-credits-dialog h2{font-size:18px;margin:0}.bl-credits-dialog header button{width:40px;height:40px;border:0;background:transparent;color:inherit;font:400 26px/1 system-ui;cursor:pointer}
-.bl-credits-body{overflow:auto;min-height:0;padding:4px 18px 18px;font-size:13px;line-height:1.8;word-break:keep-all;overflow-wrap:anywhere}.bl-credits-body section{padding:10px 0;border-bottom:1px solid var(--salty-line,#cdd9e8)}.bl-credits-body h3{font-size:15px;margin:8px 0}.bl-credits-body a{color:var(--salty-accent,#3975b8);text-decoration:underline}
+.bl-credits-body{overflow:auto;min-height:0;padding:4px 18px 18px;font-size:13px;line-height:1.8;word-break:keep-all;overflow-wrap:anywhere}.bl-credits-body section{padding:10px 0;border-bottom:1px solid var(--salty-line, var(--bl-fb-cdd9e8))}.bl-credits-body h3{font-size:15px;margin:8px 0}.bl-credits-body a{color:var(--salty-accent, var(--bl-fb-3975b8));text-decoration:underline}
 
 /* Embedded tools also open outside the editor. Keep their controls on the same
    palette and let text size determine when rows need another line. */

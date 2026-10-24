@@ -28,7 +28,7 @@ dialog.bl-prompt-card-picker {
     font: var(--salty-ui-weight, 500) var(--salty-ui-size, 16px)/1.5 var(--salty-font-ui, sans-serif);
 }
 dialog.bl-prompt-card-picker[open] { display: flex; flex-direction: column; gap: 12px; }
-dialog.bl-prompt-card-picker::backdrop { background: var(--salty-scrim, rgb(0 0 0 / .45)); }
+dialog.bl-prompt-card-picker::backdrop { background: var(--salty-scrim, var(--bl-fb-rgb-0-0-0-ap45)); }
 .bl-prompt-card-picker header,.bl-prompt-card-picker footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none; }
 .bl-prompt-card-picker h3 { font: inherit; font-weight: 700; margin: 0; }
 .bl-prompt-card-picker [data-card-search] { width: 100%; min-width: 0; margin: 0; flex: none; padding: 8px 12px; box-sizing: border-box; font: inherit; }
@@ -44,7 +44,7 @@ dialog.bl-prompt-card-picker::backdrop { background: var(--salty-scrim, rgb(0 0 
 .bl-prompt-card-picker [hidden] { display: none !important; }
 .bl-prompt-card-picker footer small { color: var(--salty-muted); }
 .bl-prompt-card-actions { display: flex; gap: 8px; flex: none; }
-.bl-prompt-card-picker [data-card-done] { border: 0; border-radius: var(--bl-r-sm, 8px); min-height: 36px; padding: 6px 14px; background: var(--salty-fill-accent, var(--salty-accent)); color: var(--salty-on-accent, #fff); font: inherit; font-weight: 600; cursor: pointer; }
+.bl-prompt-card-picker [data-card-done] { border: 0; border-radius: var(--bl-r-sm, 8px); min-height: 36px; padding: 6px 14px; background: var(--salty-fill-accent, var(--salty-accent)); color: var(--salty-on-accent, var(--bl-fb-fff)); font: inherit; font-weight: 600; cursor: pointer; }
 .bl-prompt-card-picker [data-card-clear],.bl-prompt-card-more { border: 0; border-radius: var(--bl-r-sm, 8px); min-height: 36px; padding: 6px 12px; background: var(--salty-raised); color: var(--salty-text); font: inherit; cursor: pointer; }
 .bl-prompt-card-picker button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: -2px; }
 @media (hover:hover) { .bl-prompt-card-choice:hover { background: var(--salty-raised); } }

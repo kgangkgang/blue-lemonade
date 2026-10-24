@@ -16,13 +16,13 @@
 .bl-ft-row-ctl{display:flex;align-items:center;gap:10px;flex:none}
 .bl-fruit-type-editor .salty-btn,.bl-ft-dialog-head .salty-btn{min-height:32px;height:auto;padding:5px 12px;border-radius:8px;line-height:1.4;white-space:nowrap}
 /* 미리보기: 테마 미리보기 칸 그대로(따라옴 · 접기 · 높이 · 확대). 보이는 높이는 data-pv-max 로 작게 */
-.bl-ft-prevbox{margin-top:4px;background:var(--salty-fill-surface,var(--salty-surface,var(--SmartThemeBlurTintColor,#222)))}
-.bl-ft-prevbox .bl-ft-preview{display:block;width:100%;max-width:100%;min-width:0;border:1px solid var(--salty-line,var(--SmartThemeBorderColor,#8885));border-radius:8px;background:var(--salty-bg,#fff)}
+.bl-ft-prevbox{margin-top:4px;background:var(--salty-fill-surface,var(--salty-surface,var(--SmartThemeBlurTintColor, var(--bl-fb-222))))}
+.bl-ft-prevbox .bl-ft-preview{display:block;width:100%;max-width:100%;min-width:0;border:1px solid var(--salty-line,var(--SmartThemeBorderColor, var(--bl-fb-8885)));border-radius:8px;background:var(--salty-bg, var(--bl-fb-fff))}
 .bl-fruit-type-editor .bl-ft-font-note{margin:2px 0 4px;display:block;-webkit-line-clamp:none;line-clamp:none;cursor:default}
 /* 영역별 설정: 테마 설정 묶음과 같은 접기 줄 (위 구분선 · 이름 · 지금 상태 · +/−) */
 .bl-ft-groups{margin-top:6px}
-.bl-ft-group{border-top:1px solid var(--bl-editor-line,var(--salty-line,#8884))}
-.bl-ft-group:last-child{border-bottom:1px solid var(--bl-editor-line,var(--salty-line,#8884))}
+.bl-ft-group{border-top:1px solid var(--bl-editor-line,var(--salty-line, var(--bl-fb-8884)))}
+.bl-ft-group:last-child{border-bottom:1px solid var(--bl-editor-line,var(--salty-line, var(--bl-fb-8884)))}
 html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100%;min-height:42px;margin:0;padding:9px 0;border:0;border-radius:0;background:transparent;color:var(--salty-text,inherit);font:inherit;font-weight:600;text-align:left;cursor:pointer;box-shadow:none}
 .bl-ft-group-toggle>span{flex:0 1 auto;min-width:0;overflow-wrap:anywhere}
 .bl-ft-group-summary{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;font-size:.85em;font-weight:500;color:var(--salty-muted,inherit)}
@@ -37,13 +37,13 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 /* 데우스 페이지: 상태창 글자 묶음을 펼친 동안 위 카드 미리보기는 쉰다 — 폰에서 미리보기 두 개가 화면을 덮지 않게 (나란히 놓는 넓은 화면은 그대로) */
 @container bl-editor (max-width:799px){.bl-editor-workspace:has(> .salty-sec .bl-editor-group-body:not([hidden]) > .bl-fruit-type-editor) > .bl-editor-stage{display:none}}
 /* 과일 창 바로가기 → 대화상자 */
-.bl-ft-dialog{box-sizing:border-box;width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:0 16px 16px;border:1px solid var(--salty-line,var(--SmartThemeBorderColor,#8885));border-radius:12px;background:var(--salty-bg,var(--SmartThemeBlurTintColor,#222));color:var(--salty-text,var(--SmartThemeBodyColor,#ddd));font:inherit;text-align:left}
+.bl-ft-dialog{box-sizing:border-box;width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:0 16px 16px;border:1px solid var(--salty-line,var(--SmartThemeBorderColor, var(--bl-fb-8885)));border-radius:12px;background:var(--salty-bg,var(--SmartThemeBlurTintColor, var(--bl-fb-222)));color:var(--salty-text,var(--SmartThemeBodyColor, var(--bl-fb-ddd)));font:inherit;text-align:left}
 .bl-ft-dialog::backdrop{background:#0008}
-.bl-ft-dialog-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;margin:0 -16px 4px;padding:8px 16px;background:inherit;border-bottom:1px solid var(--salty-line,#8884)}
+.bl-ft-dialog-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;margin:0 -16px 4px;padding:8px 16px;background:inherit;border-bottom:1px solid var(--salty-line, var(--bl-fb-8884))}
 .bl-ft-dialog .salty-prevbox{top:52px}
 /* 대화상자는 설정 창(.salty-panel) 밖이라 미리보기 도구 단추(돋보기 · ↺ · 확대 · 축소)가 브라우저 기본 흰 네모였다(나이트 대비 1.14) — 설정 창(45-preview-view)과 같은 모양.
    ↺ 선 그림은 56-control-consistency 의 같은 규칙이 :is(.salty-panel, .bl-ft-dialog) 로 받는다 */
-.bl-ft-dialog .bl-view-tools button{min-width:36px;min-height:32px;margin:0;padding:4px 9px;border:0;border-radius:8px;background:var(--salty-fill-shade,var(--salty-shade,#8882));color:var(--salty-text,inherit);font:inherit;font-size:13px;cursor:pointer}
+.bl-ft-dialog .bl-view-tools button{min-width:36px;min-height:32px;margin:0;padding:4px 9px;border:0;border-radius:8px;background:var(--salty-fill-shade,var(--salty-shade, var(--bl-fb-8882)));color:var(--salty-text,inherit);font:inherit;font-size:13px;cursor:pointer}
 .bl-ft-dialog .bl-view-tools button:disabled{opacity:.4;cursor:default}
 .bl-ft-dialog .bl-view-resize>button{width:32px;height:28px;min-height:0;margin:0;padding:0;border:0;border-radius:8px;background:transparent;color:var(--salty-muted,inherit);font:13px/1 sans-serif;cursor:pointer}
 .bl-ft-dialog .bl-view-resize>.bl-view-toggle{grid-column:1;grid-row:1;font-size:12.5px}

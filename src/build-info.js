@@ -619,7 +619,7 @@ export const FILE_HASHES = {
   "src/scripts/bundled/deus.js": "71720:ddbe5bc4:16add9c2",
   "src/scripts/bundled/fold.js": "14773:cf844e0a:169fb52a",
   "src/scripts/bundled/fruit-heart.js": "192916:6b4f9565:bd218137",
-  "src/scripts/bundled/fruit-style.js": "82010:113129c3:31d4552d",
+  "src/scripts/bundled/fruit-style.js": "80945:156159dc:eee2f68a",
   "src/scripts/bundled/fruit.js": "46008:de94fe1b:cec2bbd8",
   "src/scripts/bundled/helper.js": "104117:425b163a:31736cc4",
   "src/scripts/bundled/korean.js": "1029028:cc619cbc:619f91b4",
@@ -636,7 +636,7 @@ export const FILE_HASHES = {
   "src/scripts/plain/deus.js": "66897:632b8c3e:8adc7e2f",
   "src/scripts/plain/fold.js": "13815:b56ce78f:e3189530",
   "src/scripts/plain/fruit-heart.js": "179668:5169fd9d:b8f768ab",
-  "src/scripts/plain/fruit-style.js": "80718:5c511dfc:5e06dce6",
+  "src/scripts/plain/fruit-style.js": "79653:e0257825:0a2014d7",
   "src/scripts/plain/fruit.js": "42166:03605a28:1d7895a0",
   "src/scripts/plain/helper.js": "97691:f11398d4:3144a19b",
   "src/scripts/plain/korean.js": "958704:01befe38:eef1e6a9",
@@ -703,5 +703,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1675599:7e2bd545:f527b11d"
+  "style.css": "1677816:74e84bf2:e2dac98c"
 };

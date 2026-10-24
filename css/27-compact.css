@@ -101,7 +101,7 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list li.complet
   border-radius: 0;
   background: none;
   box-shadow: none;
-  border: solid var(--salty-on-accent, #fff);
+  border: solid var(--salty-on-accent, var(--bl-fb-fff));
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
   opacity: 0;
@@ -294,7 +294,7 @@ body.salty .select2-results__options[aria-multiselectable="true"] .select2-resul
 }
 body.salty .select2-results__options[aria-multiselectable="true"] .select2-results__option--selected::before {
   content: '\2713';
-  color: var(--salty-on-accent, #fff);
+  color: var(--salty-on-accent, var(--bl-fb-fff));
   background-color: var(--salty-accent);
   box-shadow: none;
 }

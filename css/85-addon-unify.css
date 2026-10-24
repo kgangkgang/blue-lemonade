@@ -193,7 +193,7 @@ html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs
 html body.salty dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_segment > .bwr_seg.active,
 html body.salty dialog.bl-notes-look .bl-look-seg > .bl-look-segbtn.on,
 html body.salty dialog[open] .bl-look-seg > .bl-look-segbtn.on {
-  background: var(--salty-accent) !important; color: var(--salty-on-accent, #fff) !important; box-shadow: none !important; font-weight: 700 !important;
+  background: var(--salty-accent) !important; color: var(--salty-on-accent, var(--bl-fb-fff)) !important; box-shadow: none !important; font-weight: 700 !important;
 }
 
 /* ---------- 카드: 모서리 12 · 1px 테 ---------- */
@@ -217,98 +217,98 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settin
 /* ---------- 과일의 마음 ---------- */
 
 /* 머리줄 아이콘만 단추(밝기 · 전체 화면 · 닫기): 면 · 선 없음, 누르는 칸 34 정사각 */
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-theme, .fh-fullscreen, .fh-close) {
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-theme, .fh-fullscreen, .fh-close) {
   width: 34px; height: 34px; min-width: 34px; min-height: 34px;
   border: 0; background: transparent; box-shadow: none; color: var(--ink);
 }
 @media (hover: hover) and (pointer: fine) {
-  html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-theme, .fh-fullscreen, .fh-close):hover { background: var(--fill); }
+  html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-theme, .fh-fullscreen, .fh-close):hover { background: var(--fill); }
 }
 
 /* ? 도움말: H3 — 평평 면 원 24, 선 없음, Font Awesome fa-question 12, 보조 글자색. 제목 끝에서 6px */
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .bl-fruit-help-button {
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .bl-fruit-help-button {
   width: 24px; height: 24px; min-width: 24px; min-height: 24px; margin: 0 0 0 6px;
   border: 0; border-radius: 50%; background: var(--fill); color: var(--ink2); box-shadow: none;
   font-size: 12px; line-height: 1;
 }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .bl-fruit-help-button > svg { display: none; }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .bl-fruit-help-button::before {
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .bl-fruit-help-button > svg { display: none; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .bl-fruit-help-button::before {
   content: "\f128"; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 12px; line-height: 1; display: block;
 }
 
 /* 스위치 → 작은 체크박스(A3). 원작 단추(role=switch · .on)는 그대로 두고 모양만: 손잡이 자리에 꺽쇠 하나 */
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw {
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw {
   position: relative; flex: none;
   width: 20px; height: 20px; min-width: 20px; min-height: 20px; margin: 0; padding: 0;
   border: 1px solid var(--line); border-radius: 5px; background: transparent; box-shadow: none; transition: none;
 }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw::after {
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw::after {
   content: ""; position: absolute; top: 50%; left: 50%; width: 9px; height: 5px;
-  border: 0; border-left: 2px solid var(--on-acc, var(--salty-on-accent, #fff)); border-bottom: 2px solid var(--on-acc, var(--salty-on-accent, #fff)); border-radius: 0;
+  border: 0; border-left: 2px solid var(--on-acc, var(--salty-on-accent, var(--bl-fb-fff))); border-bottom: 2px solid var(--on-acc, var(--salty-on-accent, var(--bl-fb-fff))); border-radius: 0;
   background: none; box-shadow: none; transform: translate(-50%, -65%) rotate(-45deg); opacity: 0; transition: none;
 }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw.on { background: var(--acc); border-color: var(--acc); }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw.on::after { left: 50%; opacity: 1; background: none; }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw[disabled] { opacity: .5; }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-cv, .fh-row) .fh-sw { margin-left: 0; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw.on { background: var(--acc); border-color: var(--acc); }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw.on::after { left: 50%; opacity: 1; background: none; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-sw[disabled] { opacity: .5; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-cv, .fh-row) .fh-sw { margin-left: 0; }
 
 /* 홈 「일반 설정」 칸: [체크박스] 8 [이름] 한 줄. 이름을 눌러도 켜지게 체크박스의 누르는 칸을 칸 전체로(보이는 모양은 그대로) */
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-cell:has(> .fh-cv > .fh-sw:only-child) {
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-cell:has(> .fh-cv > .fh-sw:only-child) {
   position: relative; overflow: hidden; justify-content: flex-start; flex-wrap: nowrap; gap: 8px;
 }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-cell:has(> .fh-cv > .fh-sw:only-child) > .fh-cv { order: -1; flex: none; margin: 0; }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-cell:has(> .fh-cv > .fh-sw:only-child) > .fh-ck { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-cell > .fh-cv > .fh-sw:only-child::before {
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-cell:has(> .fh-cv > .fh-sw:only-child) > .fh-cv { order: -1; flex: none; margin: 0; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-cell:has(> .fh-cv > .fh-sw:only-child) > .fh-ck { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-cell > .fh-cv > .fh-sw:only-child::before {
   content: ""; position: absolute; top: -12px; bottom: -12px; left: -12px; right: -400px;
 }
 
 /* 설정 탭 줄(label.fh-toggle): [체크박스] 8 [이름] / 설명은 이름 아래(체크박스 열은 비움) */
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-toggle { grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-toggle > .fh-sw { grid-column: 1; grid-row: 1; align-self: center; }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-toggle > span > small { grid-column: 2; grid-row: 2; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-toggle { grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-toggle > .fh-sw { grid-column: 1; grid-row: 1; align-self: center; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-toggle > span > small { grid-column: 2; grid-row: 2; }
 
 /* 순서 목록 · 묶음 머리의 체크박스는 제자리(줄 끝) — 끌기 손잡이 · 접기 화살표와 같은 줄 */
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-sortrow, .fh-ch) > .fh-sw { align-self: center; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-sortrow, .fh-ch) > .fh-sw { align-self: center; }
 
 /* 고르기 묶음(세그먼트): 고른 칸 = 면 + 진짜 1px 선 + 굵기 650 (안쪽 선 그림자 금지) */
 /* 선 1px 만큼 안쪽 여백을 줄여 전체 폭은 그대로(이름 옆 한 줄에 들어가던 묶음이 아래 줄로 떨어지지 않게) */
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-seg { border: 1px solid var(--line); padding: 2px; }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-seg button { border: 1px solid transparent; box-shadow: none; padding-left: 9px; padding-right: 9px; }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-seg button.on { border-color: var(--acc); box-shadow: none; font-weight: 650; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-seg { border: 1px solid var(--line); padding: 2px; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-seg button { border: 1px solid transparent; box-shadow: none; padding-left: 9px; padding-right: 9px; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-seg button.on { border-color: var(--acc); box-shadow: none; font-weight: 650; }
 
 /* 단추 · 칩 · 고르기 단추: 면 + 1px 선(평평 C). 입력칸: 담는 면보다 밝은 면 + 1px 선, 그림자 없음(I2) */
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-btn, .fh-chip, .fh-tag, .fh-sel) { border: 1px solid var(--line); box-shadow: none; }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-btn.primary, .fh-btn.solid) { border-color: var(--acc); }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-btn.on, .fh-chip.on, .fh-sel.on) { border-color: var(--acc); }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(input[type=text], input[type=search], input[type=number], textarea, select) { border: 1px solid var(--line); box-shadow: none; }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(input[type=text], input[type=search], input[type=number], textarea, select):focus { border-color: var(--acc); outline: none; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-btn, .fh-chip, .fh-tag, .fh-sel) { border: 1px solid var(--line); box-shadow: none; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-btn.primary, .fh-btn.solid) { border-color: var(--acc); }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(.fh-btn.on, .fh-chip.on, .fh-sel.on) { border-color: var(--acc); }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(input[type=text], input[type=search], input[type=number], textarea, select) { border: 1px solid var(--line); box-shadow: none; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 :is(input[type=text], input[type=search], input[type=number], textarea, select):focus { border-color: var(--acc); outline: none; }
 /* 고르기 칸은 테마와 같은 ▾ (창이 body 밖이라 02-controls 의 select 규칙이 닿지 않는다 — 같은 그림을 그대로) */
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 select:not([multiple]) {
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 select:not([multiple]) {
   -webkit-appearance: none; appearance: none; padding-right: 30px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6.5 9.5 5.5 5.5 5.5-5.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 10px center; background-size: 15px 15px;
 }
 
 /* 체크박스 입력(항목 탭 「켜진 항목만 보기」 등): A3 */
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=checkbox] {
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=checkbox] {
   -webkit-appearance: none; appearance: none; display: inline-grid; place-content: center; flex: none; box-sizing: border-box;
   width: 20px; height: 20px; min-width: 20px; min-height: 20px; margin: 0; padding: 0;
-  border: 1px solid var(--line); border-radius: 5px; background: transparent; box-shadow: none; color: var(--on-acc, #fff); cursor: pointer; vertical-align: middle;
+  border: 1px solid var(--line); border-radius: 5px; background: transparent; box-shadow: none; color: var(--on-acc, var(--bl-fb-fff)); cursor: pointer; vertical-align: middle;
 }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=checkbox]::after {
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=checkbox]::after {
   content: ""; display: block; width: 9px; height: 5px; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor;
   transform: translateY(-1px) rotate(-45deg); opacity: 0;
 }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=checkbox]:checked { background: var(--acc); border-color: var(--acc); }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=checkbox]:checked::after { opacity: 1; }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 label:has(> input[type=checkbox]) { display: inline-flex; align-items: center; gap: 8px; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=checkbox]:checked { background: var(--acc); border-color: var(--acc); }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 input[type=checkbox]:checked::after { opacity: 1; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 label:has(> input[type=checkbox]) { display: inline-flex; align-items: center; gap: 8px; }
 
 /* 하단 내비: 아이콘 + 이름 한 줄, 글자 탭 높이 36, 면 + 1px 선(고른 칸 = 포인트 면 + 650) */
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-bottom-nav { padding: 6px 10px; gap: 6px; }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-nav-item {
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-bottom-nav { padding: 6px 10px; gap: 6px; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-nav-item {
   min-height: 36px; height: 36px; padding: 0 4px; gap: 6px; border: 1px solid var(--line); box-shadow: none; line-height: 1.2;
 }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-nav-item.on { border-color: var(--acc); font-weight: 650; }
+html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6 .fh-nav-item.on { border-color: var(--acc); font-weight: 650; }
 
 /* ---------- 데우스 빠른 설정 ---------- */
 
@@ -361,7 +361,7 @@ html body.salty #bl-deus-popover .dq-toggle > input[type="checkbox"] {
   appearance: none !important; -webkit-appearance: none !important; display: grid !important; place-content: center; box-sizing: border-box;
   width: 20px !important; height: 20px !important; min-width: 20px !important; min-height: 20px !important; margin: 0 !important; padding: 0 !important;
   border: 1px solid var(--salty-line) !important; border-radius: 5px !important; background: transparent !important; background-image: none !important;
-  color: var(--salty-on-accent, #fff) !important; box-shadow: none !important; filter: none !important; cursor: pointer;
+  color: var(--salty-on-accent, var(--bl-fb-fff)) !important; box-shadow: none !important; filter: none !important; cursor: pointer;
 }
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]::before { content: none !important; display: none !important; }
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]::after {

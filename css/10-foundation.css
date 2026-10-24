@@ -425,3 +425,47 @@ body.salty .autoComplete > .item.macro-ac-item > .macro-source.isThirdParty {
   color: var(--bl-pop-ink);
 }
 /* ===== /surfaces:foundation ===== */
+
+/* 대체값 색(var(--x, 색) 의 뒤쪽)을 한 곳에 — 팔레트 변수가 아직 없을 때(첫 그림 · 확장만 모드)만 쓰인다 */
+:root {
+  --bl-fb-0009: #0009;
+  --bl-fb-071c2e: #071c2e;
+  --bl-fb-202936: #202936;
+  --bl-fb-222: #222;
+  --bl-fb-24354c: #24354c;
+  --bl-fb-2477d3: #2477d3;
+  --bl-fb-2c2e32: #2c2e32;
+  --bl-fb-3975b8: #3975b8;
+  --bl-fb-4a90d9: #4a90d9;
+  --bl-fb-64748b: #64748b;
+  --bl-fb-6ab3ff: #6ab3ff;
+  --bl-fb-777: #777;
+  --bl-fb-888: #888;
+  --bl-fb-8882: #8882;
+  --bl-fb-8884: #8884;
+  --bl-fb-8885: #8885;
+  --bl-fb-b8c3cc: #b8c3cc;
+  --bl-fb-cdd9e8: #cdd9e8;
+  --bl-fb-ddd: #ddd;
+  --bl-fb-e0665f: #e0665f;
+  --bl-fb-e3e9f0: #e3e9f0;
+  --bl-fb-e5484d: #e5484d;
+  --bl-fb-e9be00: #e9be00;
+  --bl-fb-eee: #eee;
+  --bl-fb-f1f8fd: #f1f8fd;
+  --bl-fb-f4f6fa: #f4f6fa;
+  --bl-fb-ffd84a: #ffd84a;
+  --bl-fb-fff: #fff;
+  --bl-fb-rgb-0-0-0-0p08: rgba(0, 0, 0, 0.08);
+  --bl-fb-rgb-0-0-0-ap45: rgb(0 0 0 / .45);
+  --bl-fb-rgb-1-8-16-0p72: rgba(1, 8, 16, 0.72);
+  --bl-fb-rgb-127-127-127-0p1: rgba(127, 127, 127, 0.1);
+  --bl-fb-rgb-127-127-127-0p12: rgba(127, 127, 127, 0.12);
+  --bl-fb-rgb-127-127-127-0p2: rgba(127, 127, 127, 0.2);
+  --bl-fb-rgb-128-128-128-p35: rgba(128,128,128,.35);
+  --bl-fb-rgb-15-34-56-0p14: rgba(15, 34, 56, 0.14);
+  --bl-fb-rgb-20-24-32-p92: rgba(20, 24, 32, .92);
+  --bl-fb-rgb-255-255-255-p08: rgba(255, 255, 255, .08);
+  --bl-fb-rgb-255-255-255-p14: rgba(255, 255, 255, .14);
+  --bl-fb-rgb-96-156-206-p28: rgba(96, 156, 206, .28);
+}

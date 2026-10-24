@@ -187,7 +187,7 @@ html body .bl-addon-credit-all:focus-visible { outline:2px solid var(--salty-acc
 /* 4.1.2 가독성: 설정 창 안 확장 화면의 체크박스 — 실리태번 기본(꺼져도 짙은 네모)이 그대로 나와 켜짐/꺼짐이 헷갈렸다. 서랍의 테마 체크박스와 같은 모양으로 */
 .salty-panel .bl-extension-page input[type="checkbox"]:where(:not(.bl-capture-options *)) { width:18px !important; height:18px !important; border:0 !important; border-radius:var(--bl-r-xs, 5px) !important; outline:none !important; background-color:var(--bl-check-off, var(--salty-shade-2)) !important; box-shadow:var(--bl-track, inset 0 0 0 1.5px var(--salty-faint)) !important; transform:none !important; filter:none !important; }
 .salty-panel .bl-extension-page input[type="checkbox"]:where(:not(.bl-capture-options *)):checked { background-color:var(--salty-accent) !important; box-shadow:none !important; }
-.salty-panel .bl-extension-page input[type="checkbox"]:where(:not(.bl-capture-options *))::before { box-shadow:inset 1em 1em var(--salty-on-accent, #fff) !important; }
+.salty-panel .bl-extension-page input[type="checkbox"]:where(:not(.bl-capture-options *))::before { box-shadow:inset 1em 1em var(--salty-on-accent, var(--bl-fb-fff)) !important; }
 /* 4.1.2: 폰에서 확장 · 공지 팝업을 넓게 — 실리태번 기본(폭 90% · 안쪽 여백 · 양쪽 스크롤바 자리 두 겹)이면 412px 화면에서 내용이 315px 만 썼다. 우리 팝업에만 붙는 클래스. */
 @media (max-width: 760px) {
 dialog.popup.bl-roomy-dialog { width:calc(100dvw - 12px) !important; max-width:calc(100dvw - 12px) !important; margin-left:auto !important; margin-right:auto !important; padding:12px 8px 10px !important; }
@@ -209,7 +209,7 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .salty-panel .bl-spot-row{display:flex;gap:14px;align-items:flex-start;}
 .salty-panel .bl-spot-pad{position:relative;flex:none;width:min(42%,150px);border-radius:14px;background:var(--salty-shade);box-shadow:inset 0 0 0 1px var(--salty-line);touch-action:none;overflow:visible;}
 .salty-panel .bl-spot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;padding:0;border:0;border-radius:50%;background:var(--salty-raised);color:var(--salty-text);font-size:12px;font-weight:700;box-shadow:0 0 0 2px var(--salty-muted),0 2px 8px rgba(0,0,0,.3);touch-action:none;cursor:grab;}
-.salty-panel .bl-spot.on{background:var(--salty-accent);color:var(--salty-on-accent,#fff);box-shadow:0 0 0 2px var(--salty-accent),0 2px 8px rgba(0,0,0,.3);}
+.salty-panel .bl-spot.on{background:var(--salty-accent);color:var(--salty-on-accent, var(--bl-fb-fff));box-shadow:0 0 0 2px var(--salty-accent),0 2px 8px rgba(0,0,0,.3);}
 .salty-panel .bl-spot-side{min-width:0;flex:1;display:grid;gap:8px;}
 
 /* Group related tools without changing their saved settings. */

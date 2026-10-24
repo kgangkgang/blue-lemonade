@@ -90,7 +90,7 @@ body.salty .drawer-content:not(#salty-none) > .scrollableInner {
      공통 클래스가 빠진 판을 위한 방어용
      (북마크 .cg-version 과 .eh-version-foot 은 알약이 아니라 창 아래 한 줄 글이라 그대로) */
 body.salty #rm_extensions_block #salty-drawer > .inline-drawer-header > b > .fa-lemon {
-  color: var(--salty-lemon, #E9BE00); /* 상표 레몬은 팔레트의 brand (없으면 레몬색) — 상태색 --bl-lemon 과 따로 (4.1.2) */
+  color: var(--salty-lemon, var(--bl-fb-e9be00)); /* 상표 레몬은 팔레트의 brand (없으면 레몬색) — 상태색 --bl-lemon 과 따로 (4.1.2) */
 }
 /* 확장 제목 옆 아이콘: 확장마다 크기가 제각각이라 줄이 들쭉날쭉했음 → 글자 크기에 맞춤.
    색은 각 확장이 정한 것을 그대로 둠 (레몬만 위에서 레몬색) */
@@ -141,12 +141,12 @@ body.salty .popup:has(#loader.splash-screen) {
 }
 /* 팝업 뒤 막도 같은 바탕색 (어두운 막이 겹치면 두 겹으로 보임) */
 body.salty.salty-light .popup:has(#loader.splash-screen)::backdrop {
-  background: var(--salty-bg, #F1F8FD) !important;
+  background: var(--salty-bg, var(--bl-fb-f1f8fd)) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
 body.salty.salty-dark .popup:has(#loader.splash-screen)::backdrop {
-  background: var(--salty-bg, #071C2E) !important;
+  background: var(--salty-bg, var(--bl-fb-071c2e)) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }

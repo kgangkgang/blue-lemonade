@@ -80,8 +80,8 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
   max-width: calc(100% - 24px);
   padding: 8px 10px 8px 14px;
   border-radius: 999px;
-  background: var(--salty-raised, #2c2e32);
-  color: var(--salty-text, #fff);
+  background: var(--salty-raised, var(--bl-fb-2c2e32));
+  color: var(--salty-text, var(--bl-fb-fff));
   font-size: 13px;
   white-space: nowrap;
   box-shadow: 0 6px 24px rgba(0, 0, 0, .35);
@@ -95,13 +95,13 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
   border: 0;
   border-radius: 999px;
   padding: 7px 12px;
-  background: var(--salty-shade, rgba(255, 255, 255, .08));
+  background: var(--salty-shade, var(--bl-fb-rgb-255-255-255-p08));
   color: inherit;
   font: inherit;
 }
 #bl-weather-place .bl-weather-place-bar button[data-place="done"] {
-  background: var(--salty-accent, #6ab3ff);
-  color: var(--salty-on-accent, #fff);
+  background: var(--salty-accent, var(--bl-fb-6ab3ff));
+  color: var(--salty-on-accent, var(--bl-fb-fff));
   font-weight: 700;
 }
 #bl-weather-place .bl-weather-place-dot {
@@ -112,8 +112,8 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: var(--salty-accent, #6ab3ff);
-  color: var(--salty-on-accent, #fff);
+  background: var(--salty-accent, var(--bl-fb-6ab3ff));
+  color: var(--salty-on-accent, var(--bl-fb-fff));
   font-weight: 700;
   box-shadow: 0 0 0 3px rgba(255, 255, 255, .85), 0 4px 14px rgba(0, 0, 0, .4);
   touch-action: none;

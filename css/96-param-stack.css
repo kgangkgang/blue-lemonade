@@ -308,13 +308,13 @@ body.salty .jj-card .jj-row > .jj-stepper > input { flex: 1 1 auto !important; w
 body.salty .jj-card .jj-row > .jj-color-row { width: 100% !important; }
 body.salty .jj-card .jj-row > .jj-color-row > input { flex: 1 1 auto !important; width: auto !important; min-width: 0 !important; }
 /* 과일의 마음 창(body 밖): QR 표시 · 이름 */
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6 :is(.bl-fruit-qr-display > label:has(select), .fh-row.bl-fruit-qr-name):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+html > body.salty #fruit-heart-v6#fruit-heart-v6 :is(.bl-fruit-qr-display > label:has(select), .fh-row.bl-fruit-qr-name):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
   gap: 4px !important;
 }
-html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6 :is(.bl-fruit-qr-display > label > select, .fh-row.bl-fruit-qr-name > input, .fh-row.bl-fruit-qr-name > .fh-v, .fh-row.bl-fruit-qr-name > .fh-v > input) {
+html > body.salty #fruit-heart-v6#fruit-heart-v6 :is(.bl-fruit-qr-display > label > select, .fh-row.bl-fruit-qr-name > input, .fh-row.bl-fruit-qr-name > .fh-v, .fh-row.bl-fruit-qr-name > .fh-v > input) {
   margin-left: 0 !important;
   width: 100% !important;
   max-width: none !important;
