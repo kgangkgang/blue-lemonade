@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6af0a10a1cf8) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 328a2f8d273b) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.2";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -21201,6 +21201,8 @@ html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height
  grid-template-columns:repeat(auto-fit,minmax(min(100%,max(10em,calc((100% - 10px)/2))),1fr)); gap:8px 10px;
 }
 .bl-capture-options .bl-mask-options label { font-size:var(--bl-fs-body); gap:10px; min-height:36px; }
+.bl-capture-options .bl-mask-options label { flex-wrap:nowrap; }
+.bl-capture-options .bl-mask-options label > span { min-width:0; word-break:keep-all; overflow-wrap:anywhere; line-height:1.3; }
 .bl-mask-customize .bl-mask-number { font-size:var(--bl-fs-body); gap:8px; }
 .bl-mask-customize .bl-mask-number-head { flex-wrap:wrap; gap:8px 10px; }
 .bl-mask-customize .bl-mask-number input[type=number] { flex:0 1 5em; width:5em; height:auto; font:inherit; letter-spacing:inherit; }

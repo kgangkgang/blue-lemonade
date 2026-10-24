@@ -244,6 +244,9 @@ html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height
  grid-template-columns:repeat(auto-fit,minmax(min(100%,max(10em,calc((100% - 10px)/2))),1fr)); gap:8px 10px;
 }
 .bl-capture-options .bl-mask-options label { font-size:var(--bl-fs-body); gap:10px; min-height:36px; }
+/* 7.9.3: 이름이 본문 크기가 되자 반 칸에서 이름 전체가 동그라미 · 견본 아래로 떨어졌다 → 한 줄에 두고 이름 글자만 낱말째 꺾음 */
+.bl-capture-options .bl-mask-options label { flex-wrap:nowrap; }
+.bl-capture-options .bl-mask-options label > span { min-width:0; word-break:keep-all; overflow-wrap:anywhere; line-height:1.3; }
 .bl-mask-customize .bl-mask-number { font-size:var(--bl-fs-body); gap:8px; }
 .bl-mask-customize .bl-mask-number-head { flex-wrap:wrap; gap:8px 10px; }
 .bl-mask-customize .bl-mask-number input[type=number] { flex:0 1 5em; width:5em; height:auto; font:inherit; letter-spacing:inherit; }
