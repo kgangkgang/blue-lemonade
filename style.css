@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build e14257e3419d) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 64f3cc621c9a) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.1";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -17362,8 +17362,7 @@ body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandl
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container { padding-inline: 0 !important; gap: var(--bl-param-row-gap) var(--bl-param-col-gap) !important; }
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-input { width: var(--bl-num-w) !important; min-width: 0 !important; font-size: var(--bl-fs-ctl); }
 }
-body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container:is(bl-s, *):is(bl-s, *),
-body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(h4 + div.flex-container) { display: contents; }
+body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container { display: contents; }
 @media not all and (max-width: 1000px) {
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(max(260px, 45%), 1fr)); column-gap: 28px;
@@ -17380,11 +17379,11 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :where(div
     width: 100%; min-width: 0; min-height: 38px; margin: 0 !important; padding: 3px 0 !important; gap: 7px !important;
   }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label > span,
-body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label > small { font-size: 11px !important; line-height: 1.45; overflow-wrap: anywhere; }
+body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label > small { font-size: var(--bl-fs-body) !important; line-height: 1.35; overflow-wrap: anywhere; }
   body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) {
     flex-flow: column nowrap !important; align-items: stretch !important; justify-content: center !important; gap: 1px !important; min-height: 38px; padding-block: 2px !important;
   }
-  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div > small:first-child > span { font-size: 11px !important; font-weight: 400 !important; }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div > small:first-child > span { font-size: var(--bl-fs-body) !important; font-weight: 400 !important; }
 }
 body.salty #WorldInfo #wiSliders { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bl-param-gap) !important; }
 body.salty #WorldInfo #wiSliders > .flex-container { flex: none !important; width: auto; min-width: 0; }
@@ -26594,6 +26593,45 @@ html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6 :is(.fh-row.bl-fruit-qr-na
   width: 100% !important;
   max-width: none !important;
 }
+html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-column: 1 / -1 !important;
+  gap: var(--bl-param-gap) !important;
+  align-items: start !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div:has(> .neo-range-slider) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  row-gap: var(--bl-param-row-gap) !important;
+  align-items: center !important;
+  justify-items: start !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div > small:first-child { grid-area: 1 / 1 !important; width: auto !important; font-size: var(--bl-fs-body) !important; line-height: 1.35 !important; }
+html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div > .neo-range-input { grid-area: 2 / 1 !important; justify-self: start !important; margin: 0 !important; }
+html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div > .neo-range-slider { grid-area: 3 / 1 !important; justify-self: stretch !important; width: 100% !important; margin: calc(var(--bl-knob-size) / 2) 0 !important; }
+html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div > small:not(:first-child) { grid-area: 4 / 1 !important; font-size: var(--bl-fs-sub) !important; line-height: 1.35 !important; }
+@container bl-user-settings (width < 18em) {
+  html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container { grid-template-columns: minmax(0, 1fr) !important; }
+}
+@container bl-user-settings (width < 22em) {
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+    grid-row: auto !important;
+    grid-template-rows: none !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    justify-items: start !important;
+  }
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-area: 1 / 1 !important; width: auto !important; }
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-area: 2 / 1 !important; justify-self: start !important; }
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-area: 3 / 1 !important; justify-self: stretch !important; width: 100% !important; margin: calc(var(--bl-knob-size) / 2) 0 !important; }
+}
 /* css/97-param-inline.css */
 html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-slider > header {
   display: flex !important;
@@ -27132,12 +27170,12 @@ body.salty #user-settings-block #user-settings-block-content .flex-container:has
 body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > small,
 body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > span,
 body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > label {
-    width: 100%; flex: none !important; min-width: 0; max-width: none; text-align: left; font-size: 11px !important;
+    width: 100%; flex: none !important; min-width: 0; max-width: none; text-align: left; font-size: var(--bl-fs-body) !important;
   }
-body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > select { width: 100%; min-width: 0; max-width: none !important; flex: none !important; margin: 0; font-size: 12px; }
+body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > select { width: 100%; min-width: 0; max-width: none !important; flex: none !important; margin: 0; font-size: var(--bl-fs-body); }
 body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > small,
 body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > span,
-body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px !important; line-height: 1.3 !important; }
+body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--bl-fs-body) !important; line-height: 1.3 !important; }
 body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > select { height: 30px !important; min-height: 30px !important; }
 }
 @media not all and (max-width: 1000px) {
@@ -27148,22 +27186,18 @@ body.salty #user-settings-block #user-settings-block-content [name="ChatMessageH
 body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > small,
 body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > label,
 body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > label small {
-    max-width: none; font-size: 11px !important; font-weight: 400 !important; line-height: 1.35;
+    max-width: none; font-size: var(--bl-fs-body) !important; font-weight: 400 !important; line-height: 1.35;
   }
 body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) select {
 flex:none !important;
 width:100% !important;
-height:26px !important;
-min-height:26px !important;
-padding:0 22px 0 0 !important;
-}
-body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-background-position:right 2px center !important;
-}
-body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) select {
-font-size:13px !important;
+height:auto !important;
+min-height:var(--bl-h-ctl) !important;
+font-size:var(--bl-fs-body) !important;
 text-align:left;
 text-align-last:left;
+background-color:var(--bl-control) !important;
+border-radius:8px !important;
 }
 }
 body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-column: 1 / -1; grid-row: 1;  }

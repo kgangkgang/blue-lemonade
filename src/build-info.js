@@ -203,7 +203,7 @@ export const FILE_HASHES = {
   "src/addons/prompt/request-errors.js": "1558:9bebebff:d7f4f644",
   "src/addons/prompt/response-text.js": "2596:b1382aa2:260a2b4b",
   "src/addons/prompt/settings-ui.js": "8501:7d896161:0b43b919",
-  "src/addons/prompt/style.css": "74555:57b640c7:a79f5498",
+  "src/addons/prompt/style.css": "75021:c7bbafcd:69683340",
   "src/addons/prompt/translation-memory.js": "1476:261fa1b4:97939765",
   "src/addons/prompt/translation-progress.js": "4714:8084427b:1653c2ea",
   "src/addons/regexlink/engine.js": "10242:ac39044e:37e62e6f",
@@ -551,7 +551,7 @@ export const FILE_HASHES = {
   "src/ko-ui-data.js": "245627:2edc8c16:04ee0d73",
   "src/ko-ui.js": "11890:da455ebe:0274d99f",
   "src/layout.js": "28003:97909b23:91eb4546",
-  "src/lazy-panel.gen.css": "32670:f68e7fc9:875d1f53",
+  "src/lazy-panel.gen.css": "32416:e95df111:36b7b23c",
   "src/lite.js": "35527:f6339213:d001bfc3",
   "src/live-models.js": "44020:f8a5fa62:a3f1cbaf",
   "src/main-chat-finish.js": "14829:d34f07a5:c8c0a173",
@@ -703,5 +703,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1672294:135bb3cb:80ded22e"
+  "style.css": "1675289:f72055f4:c6344c41"
 };

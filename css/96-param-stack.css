@@ -320,3 +320,48 @@ html:has(> body.salty) #fruit-heart-v6#fruit-heart-v6 :is(.bl-fruit-qr-display >
   max-width: none !important;
 }
 /* ===== /96-param-stack ===== */
+
+/* 7.9.2 사용자 설정 「채팅/메시지 처리」: 슬라이더 둘(불러올 메시지 수 · 스트리밍 FPS)을 2열로 (사용자 10-24 「메세지수랑 fps 세로 2열」)
+   각 열은 이름 / 숫자 칸 / 슬라이더 / 설명을 세로로 — 이름이 본문 크기라 반 칸(384 폭에서 165px)에 「이름 | 숫자 칸」 한 줄은 안 들어간다(이름 120 + 숫자 칸 60).
+   칸 폭이 18em 밑이면(이름이 반 칸에서 꺾이는 폭) 1열. 넓은 화면(1001px~)도 같은 2열 */
+html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-column: 1 / -1 !important;
+  gap: var(--bl-param-gap) !important;   /* 위 「채팅창 폭 · 글꼴 크기」 2열과 같은 칸 사이 */
+  align-items: start !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div:has(> .neo-range-slider) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  row-gap: var(--bl-param-row-gap) !important;
+  align-items: center !important;
+  justify-items: start !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div > small:first-child { grid-area: 1 / 1 !important; width: auto !important; font-size: var(--bl-fs-body) !important; line-height: 1.35 !important; }
+html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div > .neo-range-input { grid-area: 2 / 1 !important; justify-self: start !important; margin: 0 !important; }
+html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div > .neo-range-slider { grid-area: 3 / 1 !important; justify-self: stretch !important; width: 100% !important; margin: calc(var(--bl-knob-size) / 2) 0 !important; } /* 손잡이가 숫자 칸 · 설명에 겹치지 않게 반지름만큼 띄움 */
+html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div > small:not(:first-child) { grid-area: 4 / 1 !important; font-size: var(--bl-fs-sub) !important; line-height: 1.35 !important; }
+@container bl-user-settings (width < 18em) {
+  html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container { grid-template-columns: minmax(0, 1fr) !important; }
+}
+/* 7.9.2 같은 창 「채팅창 폭 · 글꼴 크기 · 흐림 강도 · 그림자 너비」: 좁은 폭(칸 22em 밑, 폰 360 이하)에서는 반 칸에 「이름 | 숫자 칸」이 안 들어가
+   이름 옆 아이콘이 다음 줄로 꺾였다 → 위 「채팅/메시지 처리」와 같은 세로 쌓기(이름 / 숫자 칸 / 슬라이더). 넓으면 한 줄 그대로 */
+@container bl-user-settings (width < 22em) {
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+    grid-row: auto !important;
+    grid-template-rows: none !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    justify-items: start !important;
+  }
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-area: 1 / 1 !important; width: auto !important; }
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-area: 2 / 1 !important; justify-self: start !important; }
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-area: 3 / 1 !important; justify-self: stretch !important; width: 100% !important; margin: calc(var(--bl-knob-size) / 2) 0 !important; }
+}
