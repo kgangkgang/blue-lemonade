@@ -33,14 +33,14 @@ body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch[ar
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--salty-accent); }
 /* 제목 줄: 이름 … [스위치] [접기 화살표] */
 body.salty #rm_extensions_block .inline-drawer-header > .bl-hs-head { margin-left: auto; margin-right: 10px; }
-/* 창 안 맨 위 줄: 오른쪽 정렬 · 작은 글 */
+/* 창 안 맨 위 줄: 오른쪽 정렬 — 7.9.3: 작은 글(12.4) → 본문 크기(같은 칸 다른 이름표와 같게) */
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
   padding: 6px 0 2px;
-  font-size: var(--bl-fs-cap, 12.5px);
+  font-size: var(--bl-fs-body, 15px);
   color: var(--salty-muted, color-mix(in srgb, var(--SmartThemeBodyColor, #888) 62%, transparent));
 }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row .bl-hs-opt { width: 34px; height: 20px; }
@@ -49,3 +49,6 @@ body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row .bl-h
 /* 7.0.3 애드온 창(dialog)으로 옮겨진 설정 — 「확장 탭에 보이기」 줄은 위 모양 그대로(전엔 전개 지시 창에서 16×6 막대),
    제목 줄 스위치는 확장 탭 몫이라 창 안에선 숨김(창 안 「사용」 칸과 겹치고, TTS 창 머리에 막대로 보였다) */
 body.salty dialog .bl-hs-switch.bl-hs-head { display: none; }
+
+/* 7.9.3 번역 · TTS 애드온 창은 제 스타일 파일이 같은 줄을 12.4 로 다시 그린다 — 테마 쪽에서 한 번에 본문 크기 */
+html body.salty .bl-hs-row { font-size: var(--bl-fs-body, 15px) !important; }

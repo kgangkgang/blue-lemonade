@@ -358,10 +358,9 @@ body.salty #completion_prompt_manager .completion_prompt_manager_header > div {
 }
 body.salty #completion_prompt_manager .completion_prompt_manager_header > .completion_prompt_manager_header_advanced {
   margin: 0 !important;
-  font-size: var(--bl-fs-cap);
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  color: var(--salty-muted);
+  font-size: var(--bl-fs-body); /* 7.9.3: 12.4/650 흐림 → 서랍 칸 제목과 같게 */
+  font-weight: 600;
+  color: var(--salty-text);
 }
 body.salty #completion_prompt_manager .completion_prompt_manager_header_advanced span {
   margin: 0 !important;

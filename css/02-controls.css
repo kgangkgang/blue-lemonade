@@ -425,7 +425,7 @@ body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-ra
   grid-row: 1;
   min-width: 0;
   text-align: left;
-  font-size: var(--bl-fs-sub) !important;
+  font-size: var(--bl-fs-body) !important; /* 7.9.3: 실리태번 슬라이더 이름(이미지 생성 · 월드 인포 등) 13 → 본문 — 같은 칸 스위치 이름과 같게 */
   font-weight: 600;
   color: var(--salty-text) !important;
 }

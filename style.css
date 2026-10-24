@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a1cd78da8a67) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6af0a10a1cf8) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.2";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -190,13 +190,12 @@ box-shadow:none !important;
 body.salty :is(.drawer-content, :where(#character_popup)) :where(h4):is(.bl-s, *):is(.bl-s, *):not(.salty-panel *),
 body.salty :is(.drawer-content, :where(#character_popup)) .standoutHeader:not(.inline-drawer-header):not(.salty-panel *) {
 filter:none !important;
-font-size:var(--bl-fs-cap) !important;
-font-weight:650 !important;
-letter-spacing:0.01em;
+font-size:var(--bl-fs-body) !important;
+font-weight:600 !important;
 }
 body.salty :is(.drawer-content, :where(#character_popup)) :where(h4):is(.bl-s, *):is(.bl-s, *):not(.salty-panel *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 body.salty :is(.drawer-content, :where(#character_popup)) .standoutHeader:not(.inline-drawer-header):not(.salty-panel *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-color:var(--salty-muted) !important;
+color:var(--salty-text) !important;
 }
 body.salty :is(.drawer-content, :where(#character_popup)) :is(h4, .standoutHeader:not(.inline-drawer-header)):not(.salty-panel *) b,
 body.salty :is(.drawer-content, :where(#character_popup)) :is(h4, .standoutHeader:not(.inline-drawer-header)):not(.salty-panel *) strong {
@@ -849,7 +848,7 @@ grid-column:1;
 grid-row:1;
 min-width:0;
 text-align:left;
-font-size:var(--bl-fs-sub) !important;
+font-size:var(--bl-fs-body) !important;
 font-weight:600;
 }
 body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
@@ -8668,10 +8667,9 @@ body.salty #completion_prompt_manager .completion_prompt_manager_header > div {
 }
 body.salty #completion_prompt_manager .completion_prompt_manager_header > .completion_prompt_manager_header_advanced {
   margin: 0 !important;
-  font-size: var(--bl-fs-cap);
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  color: var(--salty-muted);
+  font-size: var(--bl-fs-body);
+  font-weight: 600;
+  color: var(--salty-text);
 }
 body.salty #completion_prompt_manager .completion_prompt_manager_header_advanced span {
   margin: 0 !important;
@@ -14000,7 +13998,7 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .bl-addon-inline-content input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"]):not(textarea, .neo-range-input) { min-height: var(--bl-h-ctl, 36px); }
 .salty-panel .bl-addon-inline-content .text_pole:is(bl-s, *):not(textarea, select),
 .salty-panel .bl-addon-inline-content input:is([type="text"], [type="search"], [type="password"], [type="url"], [type="email"]):not(textarea, select) { padding-inline: var(--bl-s3, 12px); }
-.salty-panel .bl-addon-inline-content .bl-hs-row { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 6px 0 2px; font-size: var(--bl-fs-cap, 12.5px); color: var(--salty-muted); }
+.salty-panel .bl-addon-inline-content .bl-hs-row { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 6px 0 2px; font-size: var(--bl-fs-body, 15px); color: var(--salty-muted); }
 .salty-panel .bl-addon-inline-content .bl-hs-switch { position: relative; flex: 0 0 auto; width: 34px; height: 20px; margin: 0; padding: 0; border: 0; border-radius: 999px; background: var(--bl-check-off, color-mix(in srgb, var(--salty-text) 24%, transparent)); box-shadow: var(--bl-track, none); cursor: pointer; transition: background-color .18s ease; }
 .salty-panel .bl-addon-inline-content .bl-hs-switch > span { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: var(--bl-knob, 0 1px 2px rgba(0, 0, 0, .25)); transition: transform .18s ease; }
 .salty-panel .bl-addon-inline-content .bl-hs-switch[aria-checked="true"] { background: var(--salty-accent); box-shadow: none; }
@@ -20985,7 +20983,7 @@ body.salty #WIDrawerIcon.bl-wi-unlinked::after { content:''; position:absolute; 
 .bl-addon-header .bl-addon-ver:hover, .bl-addon-header .bl-addon-ver:focus-visible { background:color-mix(in srgb, var(--salty-accent) 22%, transparent); outline:none; }
 .bl-addon-header .bl-addon-status { margin:3px 0 0; color:var(--salty-muted); font-size:11px; line-height:1.4; }
 .bl-addon-header .bl-addon-status.is-on { color:var(--salty-accent-ink, var(--salty-accent)); }
-.bl-addon-power { display:flex; align-items:center; gap:8px; min-height:36px; flex:none; font-size:12px; }
+.bl-addon-power { display:flex; align-items:center; gap:8px; min-height:36px; flex:none; font-size:var(--bl-fs-body); }
 .bl-addon-power input { accent-color:var(--salty-accent); width:19px; height:19px; margin:0; }
 .bl-addon-layout { display:flex; flex-direction:column; gap:10px; min-width:0; min-height:0; }
 .bl-addon-main,.bl-addon-config { display:flex; flex-direction:column; gap:10px; min-width:0; }
@@ -21178,17 +21176,17 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .bl-addon-group-tool .salty-note { margin:6px 0 14px; }
 .bl-word-rule button.bl-rule-swap, .bl-extension-page .bl-word-rule button.bl-rule-swap { min-width:0; min-height:0; width:100%; padding:0; border:0; background:none; color:inherit; font:inherit; align-self:stretch; cursor:pointer; }
 .bl-addon-header { flex-wrap:wrap; gap:8px 10px; }
-.bl-addon-power { margin-inline-start:auto; font-size:.85em; gap:10px; }
+.bl-addon-power { margin-inline-start:auto; font-size:var(--bl-fs-body); gap:10px; }
 .bl-addon-header .bl-addon-ver,
 .bl-addon-header .bl-addon-status { font-size:.8em; font-weight:inherit; }
 html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height:1.45; }
 .bl-tool-heading small,.bl-tool-field small,.bl-mask-heading small { font-size:var(--bl-ts-meta,var(--bl-fs-sub)); font-weight:inherit; line-height:1.5; color:var(--salty-muted); opacity:1; }
 .bl-tool-body .salty-note { font-size:.85em; }
-.bl-tool-grid .bl-addon-toggle,.bl-tool-grid.bl-word-options label { min-height:36px; gap:10px; font-size:.9em; }
+.bl-tool-grid .bl-addon-toggle,.bl-tool-grid.bl-word-options label { min-height:36px; gap:10px; font-size:var(--bl-fs-body); }
 .bl-tool-field { gap:8px; font-size:.9em; }
 .bl-tool-caption { font-size:.9em; font-weight:inherit; }
 .bl-tool-label,.bl-mask-heading { flex-wrap:wrap; gap:8px 10px; }
-.bl-extension-page .bl-message-choice { font-size:.9em; }
+.bl-extension-page .bl-message-choice { font-size:var(--bl-fs-body); }
 .bl-extension-page .bl-message-choice small { font-size:var(--bl-ts-meta,var(--bl-fs-sub)); opacity:1; }
 .bl-extension-page .bl-message-actions,
 .bl-extension-page .bl-word-actions,
@@ -21202,8 +21200,8 @@ html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height
 .bl-capture-options .bl-mask-options {
  grid-template-columns:repeat(auto-fit,minmax(min(100%,max(10em,calc((100% - 10px)/2))),1fr)); gap:8px 10px;
 }
-.bl-capture-options .bl-mask-options label { font-size:.85em; gap:10px; min-height:36px; }
-.bl-mask-customize .bl-mask-number { font-size:.85em; gap:8px; }
+.bl-capture-options .bl-mask-options label { font-size:var(--bl-fs-body); gap:10px; min-height:36px; }
+.bl-mask-customize .bl-mask-number { font-size:var(--bl-fs-body); gap:8px; }
 .bl-mask-customize .bl-mask-number-head { flex-wrap:wrap; gap:8px 10px; }
 .bl-mask-customize .bl-mask-number input[type=number] { flex:0 1 5em; width:5em; height:auto; font:inherit; letter-spacing:inherit; }
 .bl-capture-dialog .salty-btn,
@@ -21230,7 +21228,7 @@ html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height
 [data-capture-range] > * { min-width:0; margin:0; }
 [data-capture-range] > .salty-btn,[data-capture-range] [data-capture-range-apply] { justify-self:start; margin:0; }
 [data-capture-range] > details { display:block; }
-[data-capture-range] > details > summary { display:flex; align-items:center; gap:8px; min-height:36px; box-sizing:border-box; padding:0; list-style:none; cursor:pointer; color:var(--salty-text); font:inherit; font-size:.9em; line-height:1.45; }
+[data-capture-range] > details > summary { display:flex; align-items:center; gap:8px; min-height:36px; box-sizing:border-box; padding:0; list-style:none; cursor:pointer; color:var(--salty-text); font:inherit; font-size:var(--bl-fs-body); line-height:1.45; }
 [data-capture-range] > details > summary::-webkit-details-marker { display:none; }
 [data-capture-range] > details > summary::after { content:'⌄'; flex:none; margin-left:auto; padding:0 2px; opacity:.6; line-height:1; transform:translateY(-.2em); transition:transform .15s; }
 [data-capture-range] > details:not([open]) > summary::after { transform:rotate(-90deg); }
@@ -24432,13 +24430,14 @@ body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row {
   justify-content: flex-end;
   gap: 8px;
   padding: 6px 0 2px;
-  font-size: var(--bl-fs-cap, 12.5px);
+  font-size: var(--bl-fs-body, 15px);
   color: var(--salty-muted, color-mix(in srgb, var(--SmartThemeBodyColor, #888) 62%, transparent));
 }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row .bl-hs-opt { width: 34px; height: 20px; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row .bl-hs-opt > span { width: 14px; height: 14px; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row .bl-hs-opt[aria-checked="true"] > span { transform: translateX(14px); }
 body.salty dialog .bl-hs-switch.bl-hs-head { display: none; }
+html body.salty .bl-hs-row { font-size: var(--bl-fs-body, 15px) !important; }
 /* css/65-wordmask.css */
 .bl-wmask { letter-spacing: .08em; opacity: .85; }
 body.salty .bl-mask-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap; }

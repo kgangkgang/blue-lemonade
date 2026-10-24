@@ -7,7 +7,7 @@
 .bl-addon-header .bl-addon-ver:hover, .bl-addon-header .bl-addon-ver:focus-visible { background:color-mix(in srgb, var(--salty-accent) 22%, transparent); outline:none; }
 .bl-addon-header .bl-addon-status { margin:3px 0 0; color:var(--salty-muted); font-size:11px; line-height:1.4; }
 .bl-addon-header .bl-addon-status.is-on { color:var(--salty-accent-ink, var(--salty-accent)); }
-.bl-addon-power { display:flex; align-items:center; gap:8px; min-height:36px; flex:none; font-size:12px; }
+.bl-addon-power { display:flex; align-items:center; gap:8px; min-height:36px; flex:none; font-size:var(--bl-fs-body); } /* 7.9.3: 「기능 켜기」 12 → 본문 */
 .bl-addon-power input { accent-color:var(--salty-accent); width:19px; height:19px; margin:0; }
 .bl-addon-layout { display:flex; flex-direction:column; gap:10px; min-width:0; min-height:0; }
 .bl-addon-main,.bl-addon-config { display:flex; flex-direction:column; gap:10px; min-width:0; }
@@ -223,16 +223,16 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 
 /* Tool labels scale with user UI text; controls grow when a label wraps. */
 .bl-addon-header { flex-wrap:wrap; gap:8px 10px; }
-.bl-addon-power { margin-inline-start:auto; font-size:.85em; gap:10px; }
+.bl-addon-power { margin-inline-start:auto; font-size:var(--bl-fs-body); gap:10px; }
 .bl-addon-header :is(.bl-addon-ver,.bl-addon-status) { font-size:.8em; font-weight:inherit; }
 html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height:1.45; }
 .bl-tool-heading small,.bl-tool-field small,.bl-mask-heading small { font-size:var(--bl-ts-meta,var(--bl-fs-sub)); font-weight:inherit; line-height:1.5; color:var(--salty-muted); opacity:1; }
 .bl-tool-body .salty-note { font-size:.85em; }
-.bl-tool-grid .bl-addon-toggle,.bl-tool-grid.bl-word-options label { min-height:36px; gap:10px; font-size:.9em; }
+.bl-tool-grid .bl-addon-toggle,.bl-tool-grid.bl-word-options label { min-height:36px; gap:10px; font-size:var(--bl-fs-body); } /* 7.9.3: 채팅 캡처 · 단어 치환 이름표 .9em(13.95) → 본문 */
 .bl-tool-field { gap:8px; font-size:.9em; }
 .bl-tool-caption { font-size:.9em; font-weight:inherit; }
 .bl-tool-label,.bl-mask-heading { flex-wrap:wrap; gap:8px 10px; }
-.bl-extension-page .bl-message-choice { font-size:.9em; }
+.bl-extension-page .bl-message-choice { font-size:var(--bl-fs-body); } /* 7.9.3: 메시지 고르기 줄 이름(#번호 이름)도 같은 칸 스위치 이름과 같은 본문 */
 .bl-extension-page .bl-message-choice small { font-size:var(--bl-ts-meta,var(--bl-fs-sub)); opacity:1; }
 .bl-extension-page :is(.bl-message-actions,.bl-word-actions,.bl-addon-actions) { gap:8px 10px; }
 .salty-panel .bl-extension-page :is(.bl-word-actions,.bl-addon-actions) > button:where(:not(.bl-word-help)) {
@@ -243,8 +243,8 @@ html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height
 .bl-capture-options .bl-mask-options {
  grid-template-columns:repeat(auto-fit,minmax(min(100%,max(10em,calc((100% - 10px)/2))),1fr)); gap:8px 10px;
 }
-.bl-capture-options .bl-mask-options label { font-size:.85em; gap:10px; min-height:36px; }
-.bl-mask-customize .bl-mask-number { font-size:.85em; gap:8px; }
+.bl-capture-options .bl-mask-options label { font-size:var(--bl-fs-body); gap:10px; min-height:36px; }
+.bl-mask-customize .bl-mask-number { font-size:var(--bl-fs-body); gap:8px; }
 .bl-mask-customize .bl-mask-number-head { flex-wrap:wrap; gap:8px 10px; }
 .bl-mask-customize .bl-mask-number input[type=number] { flex:0 1 5em; width:5em; height:auto; font:inherit; letter-spacing:inherit; }
 /* Keep capture controls at the existing large touch target size, including
@@ -274,7 +274,7 @@ html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height
 [data-capture-range] > * { min-width:0; margin:0; }
 [data-capture-range] > .salty-btn,[data-capture-range] [data-capture-range-apply] { justify-self:start; margin:0; }
 [data-capture-range] > details { display:block; }
-[data-capture-range] > details > summary { display:flex; align-items:center; gap:8px; min-height:36px; box-sizing:border-box; padding:0; list-style:none; cursor:pointer; color:var(--salty-text); font:inherit; font-size:.9em; line-height:1.45; }
+[data-capture-range] > details > summary { display:flex; align-items:center; gap:8px; min-height:36px; box-sizing:border-box; padding:0; list-style:none; cursor:pointer; color:var(--salty-text); font:inherit; font-size:var(--bl-fs-body); line-height:1.45; }
 [data-capture-range] > details > summary::-webkit-details-marker { display:none; }
 [data-capture-range] > details > summary::after { content:'⌄'; flex:none; margin-left:auto; padding:0 2px; opacity:.6; line-height:1; transform:translateY(-.2em); transition:transform .15s; }
 [data-capture-range] > details:not([open]) > summary::after { transform:rotate(-90deg); }

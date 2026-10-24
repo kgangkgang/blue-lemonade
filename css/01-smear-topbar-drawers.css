@@ -107,7 +107,8 @@ body.salty .drawer-content h3:where(:not(.salty-panel *, .inline-drawer-content 
   letter-spacing: -0.02em;
   line-height: 1.25;
 }
-/* 묶음 이름(h4 · 강조 머리줄): 띠 없이 작고 흐린 이름, 오른쪽 버튼은 조용한 아이콘 */
+/* 묶음 이름(h4 · 강조 머리줄): 띠 없이, 오른쪽 버튼은 조용한 아이콘
+   7.9.3: 작고 흐린 12.4/650 → 같은 서랍의 접는 칸 제목(.inline-drawer-header b)과 같은 본문 크기 · 600 · 글자색 — 사용자 설정 「UI 테마 · 기타 · 채팅/메시지 처리」, 서식 「컨텍스트 템플릿」, AI 응답 「채팅 완성 프리셋」 */
 body.salty :is(.drawer-content, :where(#character_popup)) :is(h4, .standoutHeader:not(.inline-drawer-header)):not(.salty-panel *) {
   margin: var(--bl-s4) 0 var(--bl-s2) !important;
   padding: 0 2px !important;
@@ -117,10 +118,9 @@ body.salty :is(.drawer-content, :where(#character_popup)) :is(h4, .standoutHeade
   border-radius: 0 !important;
   box-shadow: none !important;
   filter: none !important;
-  font-size: var(--bl-fs-cap) !important;
-  font-weight: 650 !important;
-  letter-spacing: 0.01em;
-  color: var(--salty-muted) !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 600 !important;
+  color: var(--salty-text) !important;
 }
 body.salty :is(.drawer-content, :where(#character_popup)) :is(h4, .standoutHeader:not(.inline-drawer-header)):not(.salty-panel *) :is(b, strong) {
   font-weight: inherit;
