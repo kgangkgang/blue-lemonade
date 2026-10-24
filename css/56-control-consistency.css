@@ -27,10 +27,14 @@ html body.salty.salty-help-off .bl-wi-help { display:none!important; }
 html body.salty :is(.lv-help-btn) > i { width:1em!important; height:1em!important; font-size:1em!important; line-height:1!important; }
 html body.salty :is(.bl-word-help,.bl-wi-help,.blzi-help,.bwr_help,.lv-help-btn,.lvs-help-button):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:2px!important; }
 html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark {
-  position:relative; width:1em; height:1em; min-width:1em; flex:none; border:0;
-  background:var(--salty-accent,currentColor); mask:var(--salty-mi-help) center/contain no-repeat;
-  font:inherit; color:transparent;
+  position:relative; display:block; width:15px; height:15px; min-width:15px; flex:none; border:0; border-radius:0; background:none;   /* 7.9.1: 옆 작업 단추 아이콘(FA 15px)과 같은 크기 · 같은 글자색 — 1em(11px) · 포인트 색 · 선 아이콘 설정일 때만 그려지던 것 */
+  font-size:0; line-height:1; color:inherit;
 }
+html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark::before { content:"\f059"; display:block; font:900 15px/1 "Font Awesome 6 Free"; color:inherit; }
+html body.salty.salty-icons-line #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark { background:currentColor; -webkit-mask:var(--salty-mi-help) center/contain no-repeat; mask:var(--salty-mi-help) center/contain no-repeat; }
+html body.salty.salty-icons-line #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark::before { content:none; }
+/* 7.9.1 「? 설명」도 줄의 다른 작업 단추(번역본 · 제목)와 같은 면 · 1px 선 · 글자색 */
+html body.salty #pt-panel .pt-page-fixed .pt-act-row > .pt-qhelp.pt-act { background:var(--pt-bg-item) !important; color:var(--pt-text) !important; border:1px solid var(--pt-border) !important; }
 .salty-panel {
   --bl-settings-control: 34px;
   --bl-settings-chip: 32px;
@@ -279,3 +283,9 @@ html body.salty #WorldInfo .bl-wi-actions > summary::before {
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='black'%3E%3Ccircle cx='4' cy='10' r='1.7'/%3E%3Ccircle cx='10' cy='10' r='1.7'/%3E%3Ccircle cx='16' cy='10' r='1.7'/%3E%3C/svg%3E") center / contain no-repeat;
   pointer-events: none;
 }
+/* 7.9.1 한글화 패널 선택 줄(전체 선택 체크 · 「N개 · 토큰」 칩 · 검색) — 사용자 폰 10-24 「검색 밑 줄이랑 붙음 · 체크표시랑 20개 나오는 거 여백 안 맞음」:
+   검색칸이 줄 높이를 꽉 채워 바로 밑 구분선에 붙었다 → 아래 안쪽 여백 8. 체크 ↔ 칩 간격이 바깥 여백(3) + 간격(8) = 11 로 칩 ↔ 검색(8)과 달랐다 → 체크 바깥 여백 0, 간격 8 하나.
+   체크 왼쪽 선은 아래 목록 행의 체크와 같은 선(행 테두리 1 + 머리 안쪽 여백 10 + 체크 바깥 여백 4 = 15) */
+html body.salty #pt-panel .pt-page-fixed .pt-select-row { padding: 0 0 8px; margin-bottom: 8px; gap: 8px; align-items: center; }
+html body.salty #pt-panel .pt-page-fixed .pt-select-row:has(> .pt-checkbox) { padding-left: 15px; }
+html body.salty #pt-panel .pt-page-fixed .pt-select-row > .pt-checkbox { margin: 0 !important; flex: none; }

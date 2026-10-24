@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ffba6a34bcbb) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 502bbfe7459e) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -21684,21 +21684,48 @@ outline-offset:2px !important;
 }
 html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark {
 position:relative;
-width:1em;
-height:1em;
-min-width:1em;
+display:block;
+width:15px;
+height:15px;
+min-width:15px;
 flex:none;
 border:0;
+border-radius:0;
 }
 html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-background:var(--salty-accent,currentColor);
+background:none;
 }
 html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark {
-mask:var(--salty-mi-help) center/contain no-repeat;
-font:inherit;
+font-size:0;
+line-height:1;
 }
 html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-color:transparent;
+color:inherit;
+}
+html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark::before {
+content:"\f059";
+display:block;
+font:900 15px/1 "Font Awesome 6 Free";
+}
+html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+color:inherit;
+}
+html body.salty.salty-icons-line #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+background:currentColor;
+}
+html body.salty.salty-icons-line #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark {
+-webkit-mask:var(--salty-mi-help) center/contain no-repeat;
+mask:var(--salty-mi-help) center/contain no-repeat;
+}
+html body.salty.salty-icons-line #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark::before { content:none; }
+html body.salty #pt-panel .pt-page-fixed .pt-act-row > .pt-qhelp.pt-act:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+background:var(--pt-bg-item) !important;
+color:var(--pt-text) !important;
+border:1px solid var(--pt-border) !important;
+}
+html body.salty #pt-panel .pt-page-fixed .pt-act-row > .pt-qhelp.pt-act:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *) {
+border-width:1px !important;
+border-style:solid !important;
 }
 .salty-panel {
   --bl-settings-control: 34px;
@@ -22028,6 +22055,9 @@ html body.salty #WorldInfo .bl-wi-actions > summary::before {
 mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='black'%3E%3Ccircle cx='4' cy='10' r='1.7'/%3E%3Ccircle cx='10' cy='10' r='1.7'/%3E%3Ccircle cx='16' cy='10' r='1.7'/%3E%3C/svg%3E") center / contain no-repeat;
 pointer-events:none;
 }
+html body.salty #pt-panel .pt-page-fixed .pt-select-row { padding: 0 0 8px; margin-bottom: 8px; gap: 8px; align-items: center; }
+html body.salty #pt-panel .pt-page-fixed .pt-select-row:has(> .pt-checkbox) { padding-left: 15px; }
+html body.salty #pt-panel .pt-page-fixed .pt-select-row > .pt-checkbox { margin: 0 !important; flex: none; }
 /* css/57-native-ux.css */
 body.salty #PersonaManagement,
 body.salty #right-nav-panel,
@@ -24695,7 +24725,7 @@ html body.salty:not(#bl-h1):not(#bl-h2) .bl-help-btn:is(.bl-s, *),
 html body.salty:not(#bl-h1):not(#bl-h2) .lv-help-btn:is(.bl-s, *),
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bwr_settings .bwr_help),
 html body.salty:not(#bl-h1):not(#bl-h2) .bl-word-help:is(.bl-s, *),
-html body.salty:not(#bl-h1):not(#bl-h2) .pt-qhelp:is(.bl-s, *),
+html body.salty:not(#bl-h1):not(#bl-h2) .pt-qhelp:not(.pt-act),
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.blzi .blzi-help) {
   box-sizing: border-box !important;
   display: inline-flex !important;
@@ -24722,30 +24752,30 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.blzi .blzi-help) {
   align-self: center;
   transform: translateY(-1.5px);
 }
-html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp, .blzi .blzi-help) > i {
+html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help) > i {
   font-size: 12px !important; line-height: 1 !important; display: block !important; color: inherit !important;
 }
-html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp, .blzi .blzi-help) > i::before { content: "\f128" !important; }
-html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp, .blzi .blzi-help) > span { display: none !important; }
+html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help) > i::before { content: "\f128" !important; }
+html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help) > span { display: none !important; }
 @media (hover: hover) {
   html body.salty:not(#bl-h1):not(#bl-h2) .bl-help-btn:is(.bl-s, *):hover,
 html body.salty:not(#bl-h1):not(#bl-h2) .lv-help-btn:is(.bl-s, *):hover,
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bwr_settings .bwr_help):hover,
 html body.salty:not(#bl-h1):not(#bl-h2) .bl-word-help:is(.bl-s, *):hover,
-html body.salty:not(#bl-h1):not(#bl-h2) .pt-qhelp:is(.bl-s, *):hover,
+html body.salty:not(#bl-h1):not(#bl-h2) .pt-qhelp:not(.pt-act):hover,
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.blzi .blzi-help):hover { background: var(--bl-control-hover) !important; color: var(--salty-text) !important; }
 }
 html body.salty:not(#bl-h1):not(#bl-h2) .bl-help-btn:is(.bl-s, *):is([aria-expanded="true"], :active),
 html body.salty:not(#bl-h1):not(#bl-h2) .lv-help-btn:is(.bl-s, *):is([aria-expanded="true"], :active),
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bwr_settings .bwr_help):is([aria-expanded="true"], :active),
 html body.salty:not(#bl-h1):not(#bl-h2) .bl-word-help:is(.bl-s, *):is([aria-expanded="true"], :active),
-html body.salty:not(#bl-h1):not(#bl-h2) .pt-qhelp:is(.bl-s, *):is([aria-expanded="true"], :active),
+html body.salty:not(#bl-h1):not(#bl-h2) .pt-qhelp:not(.pt-act):is([aria-expanded="true"], :active),
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.blzi .blzi-help):is([aria-expanded="true"], :active) { background: var(--bl-control-hover) !important; color: var(--salty-text) !important; }
 html body.salty:not(#bl-h1):not(#bl-h2) .bl-help-btn:is(.bl-s, *):focus-visible,
 html body.salty:not(#bl-h1):not(#bl-h2) .lv-help-btn:is(.bl-s, *):focus-visible,
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bwr_settings .bwr_help):focus-visible,
 html body.salty:not(#bl-h1):not(#bl-h2) .bl-word-help:is(.bl-s, *):focus-visible,
-html body.salty:not(#bl-h1):not(#bl-h2) .pt-qhelp:is(.bl-s, *):focus-visible,
+html body.salty:not(#bl-h1):not(#bl-h2) .pt-qhelp:not(.pt-act):focus-visible,
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.blzi .blzi-help):focus-visible { outline: 2px solid var(--salty-accent) !important; outline-offset: 2px !important; }
 html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > .bl-help-btn,
 html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > .lv-help-btn,

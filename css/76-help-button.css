@@ -3,8 +3,9 @@
    절(카드 · 섹션) 제목 옆에 하나만 두는 그 ? 는 모두 같은 모양(사용자 확정 H3) — 평평한 면 원 24px(--bl-control, 선 없음) + Font Awesome fa-question 12px, 보조 글자색, 누르면 면만 조금 진하게.
    자리: 늘 절 제목 글자 바로 옆, 제목 글자 끝에서 6px, 세로 중심은 제목 글자 중심과 같게(제목이 flex 면 ? 를 제목 요소 안에 inline 으로 둔다). 글꼴 설정과 무관(글자 ? 가 아니라 아이콘).
    항목 라벨 옆 ? 는 7.7.9 에 뗐다(TTS · 다시 쓰기). 대상: TTS .lv-help-btn · 다시 쓰기 .bwr_help · 낱말 가림 · 성능 보조 .bl-word-help · 한글화 .pt-qhelp 와 공통 클래스 .bl-help-btn.
-   공용 조각 ext-design/help-button.css 와 같은 값(시안 density/help/H3.css). */
-html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp, .blzi .blzi-help) {
+   공용 조각 ext-design/help-button.css 와 같은 값(시안 density/help/H3.css).
+   7.9.1: 한글화 패널 작업 줄의 「? 설명」(.pt-qhelp.pt-act)은 절 제목 옆 ? 가 아니라 줄의 작업 단추라 빼 둔다 — 이 규칙이 글자를 숨기고 <i> 가 없어 폰에서 빈 회색 원만 보였다(사용자 10-24) */
+html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help) {
   box-sizing: border-box !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -31,18 +32,18 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_set
   transform: translateY(-1.5px);   /* 제목 글자 중심에 맞춤 (측정: 보정 전 +1.6px 아래) */
 }
 /* 아이콘: 자식 <i> 로만 그린다 */
-html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp, .blzi .blzi-help) > i {
+html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help) > i {
   font-size: 12px !important; line-height: 1 !important; display: block !important; color: inherit !important;   /* TTS 는 아이콘에 포인트 색을 줬었다 — 보조 글자색 하나로 */
 }
-html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp, .blzi .blzi-help) > i::before { content: "\f128" !important; }
+html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help) > i::before { content: "\f128" !important; }
 /* 글자 ? 만 있던 단추는 전부 <i class="fa-solid fa-question"> 를 품게 바꿨다 — ::before 는 86-touch-targets 의 44px 누르는 칸 몫이라 여기선 쓰지 않는다 */
-html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp, .blzi .blzi-help) > span { display: none !important; }
+html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help) > span { display: none !important; }
 /* 누르는 칸 44(폰)는 87-addon-touch 의 ::after 가 이미 그린다(.lv-help-btn · .bwr_help · .bl-word-help …) */
 @media (hover: hover) {
-  html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp, .blzi .blzi-help):hover { background: var(--bl-control-hover) !important; color: var(--salty-text) !important; }
+  html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help):hover { background: var(--bl-control-hover) !important; color: var(--salty-text) !important; }
 }
-html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp, .blzi .blzi-help):is([aria-expanded="true"], :active) { background: var(--bl-control-hover) !important; color: var(--salty-text) !important; }
-html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp, .blzi .blzi-help):focus-visible { outline: 2px solid var(--salty-accent) !important; outline-offset: 2px !important; }
+html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help):is([aria-expanded="true"], :active) { background: var(--bl-control-hover) !important; color: var(--salty-text) !important; }
+html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help):focus-visible { outline: 2px solid var(--salty-accent) !important; outline-offset: 2px !important; }
 /* 제목 요소 안 inline ? : 제목 글자와 같은 줄, 글자 끝 6px */
 html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > :is(.bl-help-btn, .lv-help-btn, .bwr_help, .bl-word-help) { margin-left: 6px !important; }
 /* 2열 격자의 라벨 줄: 아이콘 단추(? · 되돌리기) 유무와 무관하게 줄 높이를 같게 — 옆 칸 입력칸 윗선이 어긋나지 않게(제보 26) */

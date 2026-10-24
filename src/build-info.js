@@ -195,7 +195,7 @@ export const FILE_HASHES = {
   "src/addons/prompt/connection.js": "11622:6c30609d:ea863f81",
   "src/addons/prompt/current-connection.js": "3055:67fc264b:5c2798bc",
   "src/addons/prompt/guide.js": "24404:e749f8f8:c1b561ab",
-  "src/addons/prompt/index.js": "280103:87d0b9cf:25bab305",
+  "src/addons/prompt/index.js": "280314:05cfd9dd:3f954c8e",
   "src/addons/prompt/localization-ui.js": "5295:e989b64d:b49f0195",
   "src/addons/prompt/persona-data.js": "4579:b96d5db9:3b8d8ae3",
   "src/addons/prompt/persona.js": "1743:3ad25141:4e82525d",
@@ -702,5 +702,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1670367:3114fc2c:48b82f93"
+  "style.css": "1671991:f30b4180:064bc757"
 };

@@ -1533,7 +1533,7 @@ function makeBlockItem(block, ns, selectable, onEdited) {
             ${statusBadge}
             <span class="pt-block-name" tabindex="0" role="button" aria-expanded="false" title="${esc(block.name)}">${esc(block.name)}</span>
             ${clipBadge}${regexBadge}${groupBadge}${runnerBadge}
-            <span class="pt-token-count">${tokens}</span>
+            <span class="pt-token-count" data-tokens="${esc(tokens)}">${Number.isFinite(Number(tokens)) && tokens !== '' ? Number(tokens).toLocaleString('en-US') : esc(tokens)}</span>
             <span class="pt-block-chevron">▶</span>
         </div>
         <div class="pt-block-body">
@@ -1669,7 +1669,7 @@ function updateSelectedCount(page) {
         // 토큰 합계 계산
         const totalTkn = selectedItems.reduce((s, item) => {
             const tkEl = item.querySelector('.pt-token-count');
-            return s + (parseInt(tkEl?.textContent || '0') || 0);
+            return s + (parseInt(tkEl?.dataset.tokens ?? String(tkEl?.textContent || '0').replace(/,/g, '')) || 0);   // 보이는 값은 1,000 쉼표
         }, 0);
         el.textContent = `선택: ${count}개  ${totalTkn.toLocaleString()} tkn`;
         el.style.display = '';
