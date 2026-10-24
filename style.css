@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 657296db9928) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 899f88a3cbbb) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -24670,17 +24670,18 @@ html:not(#bl-pill-off) body.salty .dq-version:is(#bl-s, *):not([hidden]) {
   justify-content: center !important;
   flex: none !important;
   width: auto !important;
-  height: 20px !important;
-  min-height: 20px !important;
+  height: calc(var(--mainFontSize, 15px) * 20 / 15) !important;
+  min-height: calc(var(--mainFontSize, 15px) * 20 / 15) !important;
   min-width: 0 !important;
   margin: 0 0 0 8px !important;
-  padding: 0 8px !important;
+  padding: 0 calc(var(--mainFontSize, 15px) * 8 / 15) !important;
   border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent) !important;
-  border-radius: 10px !important;
+  border-radius: calc(var(--mainFontSize, 15px) * 10 / 15) !important;
   background: var(--bl-fill-hover, var(--bl-hover)) !important;
   box-shadow: none !important;
   color: var(--salty-muted) !important;
-  font-size: 12px !important;
+  font-family: inherit !important;
+  font-size: calc(var(--mainFontSize, 15px) * 12 / 15) !important;
   font-weight: 400 !important;
   line-height: 1 !important;
   letter-spacing: 0 !important;
@@ -24689,9 +24690,10 @@ html:not(#bl-pill-off) body.salty .dq-version:is(#bl-s, *):not([hidden]) {
   transform: none !important;
 }
 html:not(#bl-pill-off) body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .inline-drawer-header > b[data-bl-version]::after {
-  box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; height: 20px !important; margin: 0 0 0 8px !important; padding: 0 8px !important;
-  border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent) !important; border-radius: 10px !important;
-  font-size: 12px !important; font-weight: 400 !important; line-height: 1 !important; letter-spacing: 0 !important; vertical-align: middle !important;
+  box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; height: calc(var(--mainFontSize, 15px) * 20 / 15) !important; margin: 0 0 0 8px !important; padding: 0 calc(var(--mainFontSize, 15px) * 8 / 15) !important;
+  border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent) !important; border-radius: calc(var(--mainFontSize, 15px) * 10 / 15) !important;
+  font-family: inherit !important;
+  font-size: calc(var(--mainFontSize, 15px) * 12 / 15) !important; font-weight: 400 !important; line-height: 1 !important; letter-spacing: 0 !important; vertical-align: middle !important;
 }
 html:not(#bl-pill-off) body.salty :is(#rm_extensions_block, dialog.popup) .inline-drawer-header > b,
 html:not(#bl-pill-off) body.salty :is(#rm_extensions_block, dialog.popup) .inline-drawer-header > strong { display: inline-flex; align-items: center; flex-wrap: wrap; min-width: 0; }
