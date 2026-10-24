@@ -73,7 +73,8 @@ export function roleIconsMarkup(s, { cap, row }) {
     const rows = ROLES.map((role) => {
         const value = map[role.id];
         const open = pick.role === role.id;
-        const reset = `<button type="button" class="bl-setting-reset" data-act="role-icon-reset" data-role="${role.id}" title="${esc(role.label)} · 처음 값으로" aria-label="${esc(role.label)} · 처음 값으로"${value ? '' : ' hidden'}>↺</button>`;
+        // ↺ 는 다른 설정의 ↺ 와 같은 단추 · 같은 길(panel.js 'setting-reset' → resetSetting · 알림 · 되돌리기 기록 · 보일지 말지 syncSettingResets)
+        const reset = `<button type="button" class="bl-setting-reset" data-act="setting-reset" data-setting="roleIcons.${role.id}" title="${esc(role.label)} · 기본값으로" aria-label="${esc(role.label)} · 기본값으로"${value ? '' : ' hidden'}>↺</button>`;
         const control = `<span class="bl-roleicon-control">${preview(role)}<button type="button" class="salty-btn bl-roleicon-change${open ? ' on' : ''}" data-act="role-icon-open" data-role="${role.id}" aria-expanded="${open}" aria-label="${esc(role.label)} 아이콘 바꾸기">바꾸기</button></span>`;
         // 줄 모양은 panel.js row() 와 같다 (이름 · ↺ · 설명 / 조작) — ↺ 는 다른 설정처럼 이름 바로 옆
         const line = `<div class="salty-row"><span>${esc(role.label)}${reset}${value ? `<small>${esc(describe(value))}</small>` : ''}</span>${control}</div>`;
@@ -111,7 +112,6 @@ export function filterRoleIcons(root) {
 
 // ───────── 동작 ─────────
 const setRole = (st, role, value) => { st.roleIcons = { ...(st.roleIcons || {}), [role]: value }; };
-const dropRole = (st, role) => { const next = { ...(st.roleIcons || {}) }; delete next[role]; st.roleIcons = next; };
 
 /**
  * 설정 창 클릭. 처리했으면 true. ctx = { root, update, refresh, ask, toast }
@@ -153,12 +153,6 @@ export async function roleIconAction(act, el, ctx) {
             pick.role = null;
             ctx.update(st => setRole(st, role, value));
             ctx.toast(`${roleLabel(role)} 아이콘을 바꿨어요`);
-            return true;
-        }
-        case 'role-icon-reset': {
-            const role = el.dataset.role;
-            ctx.update(st => dropRole(st, role));
-            ctx.toast(`${roleLabel(role)} 아이콘을 처음 값으로 돌렸어요`);
             return true;
         }
         case 'role-icon-reset-all':
