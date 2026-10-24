@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.0/blue-lemonade-7.9.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.1/blue-lemonade-7.9.1.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,17 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.9.0 · 최신 업데이트</summary>
+<summary>7.9.1 · 최신 업데이트</summary>
+
+- 설정 창 · 확장 서랍 · 애드온 창을 전부 다시 살펴서 글자와 아이콘의 세로 위치, 고르기 칸 ▾ 모양, 아이콘 크기를 하나로 맞췄어요. 테마 설정 창 아래쪽 띠와 누를 때 테두리도 정리했어요.
+- 폰 화면 본문 글자가 사용자가 고른 글꼴 크기(기본 15.5px)를 그대로 따라요.
+- 한글화 패널 1.3.8: 작업 줄 「? 설명」 단추가 빈 원으로만 보이던 것, 검색칸 아래 여백과 선택 줄 간격, 목록 토큰 수의 세 자리 쉼표를 고쳤어요.
+- 바탕색만 정한 태그는 바탕 밝기를 재서 글자색을 더 잘 보이는 쪽으로 자동으로 골라요. 월드인포 항목 머리(상태 고르기 · ⋯) 정렬도 맞췄어요.
+
+</details>
+
+<details>
+<summary>7.9.0 · 서랍 · 창 여는 속도 · 옛 볼록 단추 정리</summary>
 
 - 확장 서랍 · 빠른 답장 · 테마 설정 창을 열 때 화면을 여러 번 다시 계산하던 것을 묶어서 더 빨리 열려요(같은 조건 측정에서 확장 서랍 약 19%, 테마 설정 창 약 30% 줄었어요).
 - 글꼴을 다 불러온 뒤 단추 글자 위치를 다시 맞추는 일을 크게 줄였어요. 한글화 패널 사용법 창 · LLM 번역 서랍 설정 · 북마크 창의 글자 세로 위치도 같은 방식으로 맞춰요.
