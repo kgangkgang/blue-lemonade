@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "7.9.1";
+export const BUILD_VERSION = "7.9.2";
 export const FILE_HASHES = {
   "index.js": "23521:7036a309:e81b0ed5",
-  "manifest.json": "365:6d0ee8ae:838b6371",
+  "manifest.json": "365:4ce14887:6303ccc5",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -194,7 +194,7 @@ export const FILE_HASHES = {
   "src/addons/prompt/cache-loading.js": "384:766f047d:4f5c117c",
   "src/addons/prompt/connection.js": "11622:6c30609d:ea863f81",
   "src/addons/prompt/current-connection.js": "3055:67fc264b:5c2798bc",
-  "src/addons/prompt/guide.js": "24404:e92d03f5:3b8f3e1f",
+  "src/addons/prompt/guide.js": "24404:7977e126:709acee2",
   "src/addons/prompt/index.js": "280314:05cfd9dd:3f954c8e",
   "src/addons/prompt/localization-ui.js": "5295:e989b64d:b49f0195",
   "src/addons/prompt/persona-data.js": "4579:b96d5db9:3b8d8ae3",
@@ -202,7 +202,7 @@ export const FILE_HASHES = {
   "src/addons/prompt/regex-ui.js": "7093:a75326ea:abbcc7dd",
   "src/addons/prompt/request-errors.js": "1558:9bebebff:d7f4f644",
   "src/addons/prompt/response-text.js": "2596:b1382aa2:260a2b4b",
-  "src/addons/prompt/settings-ui.js": "8501:7d896161:0b43b919",
+  "src/addons/prompt/settings-ui.js": "8501:1d8691fe:94dab982",
   "src/addons/prompt/style.css": "75021:c7bbafcd:69683340",
   "src/addons/prompt/translation-memory.js": "1476:261fa1b4:97939765",
   "src/addons/prompt/translation-progress.js": "4714:8084427b:1653c2ea",
@@ -567,7 +567,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "328145:c19bcb25:287bbe77",
+  "src/notice-data.js": "328808:d281e07b:6a629988",
   "src/notice.js": "7015:67a9b734:b55e9315",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/num-width.js": "2929:540aa26a:67ad53dc",
@@ -703,5 +703,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1675289:f72055f4:c6344c41"
+  "style.css": "1675289:71504987:9592c802"
 };

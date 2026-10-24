@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.1/blue-lemonade-7.9.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.2/blue-lemonade-7.9.2.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.9.1 · 최신 업데이트</summary>
+<summary>7.9.2 · 최신 업데이트</summary>
+
+- 사용자 설정 「채팅/메시지 처리」: 작게 나오던 이름표와 고르기 값을 본문 글자 크기로 맞추고, 「불러올 메시지 수」 · 「스트리밍 FPS」를 나란히 2열로 놓았어요. 아바타 · 채팅 스타일 · 미디어 보기 · 알림 위치 이름표도 같은 크기예요.
+- 「채팅창 폭 · 글꼴 크기」 묶음이 좁은 폰에서 이름 옆 아이콘이 다음 줄로 꺾이던 것을 고쳤어요.
+- 한글화 패널 1.3.9: 좁은 폭(320)에서 작업 줄 「재번역 · 비우기 · 번역본」 글자 끝이 잘리던 것을 고쳤어요.
+
+</details>
+
+<details>
+<summary>7.9.1 · 화면 정렬 전수조사 · 한글화 패널 · 태그 글자색</summary>
 
 - 설정 창 · 확장 서랍 · 애드온 창을 전부 다시 살펴서 글자와 아이콘의 세로 위치, 고르기 칸 ▾ 모양, 아이콘 크기를 하나로 맞췄어요. 테마 설정 창 아래쪽 띠와 누를 때 테두리도 정리했어요.
 - 폰 화면 본문 글자가 사용자가 고른 글꼴 크기(기본 15.5px)를 그대로 따라요.
