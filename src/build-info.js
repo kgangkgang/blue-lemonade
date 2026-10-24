@@ -611,7 +611,7 @@ export const FILE_HASHES = {
   "src/rerender-notify.js": "9554:f5d2ac94:bc712cfb",
   "src/role-icons-core.js": "24933:918e148b:bfda06b5",
   "src/role-icons-fa.gen.js": "40164:8f55d310:6a6410ef",
-  "src/role-icons-ui.js": "11096:0e8ca9af:f89240db",
+  "src/role-icons-ui.js": "11176:06262ebc:3f9822fa",
   "src/role-icons.js": "1270:65650b0e:9b221571",
   "src/scene-music-rules.js": "16233:2c35ac80:d739dbf4",
   "src/scene-music.js": "13526:5f5cac3b:d04e37ad",

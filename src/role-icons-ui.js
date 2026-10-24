@@ -77,8 +77,8 @@ export function roleIconsMarkup(s, { cap, row }) {
         const reset = `<button type="button" class="bl-setting-reset" data-act="setting-reset" data-setting="roleIcons.${role.id}" title="${esc(role.label)} · 기본값으로" aria-label="${esc(role.label)} · 기본값으로"${value ? '' : ' hidden'}>↺</button>`;
         const control = `<span class="bl-roleicon-control">${preview(role)}<button type="button" class="salty-btn bl-roleicon-change${open ? ' on' : ''}" data-act="role-icon-open" data-role="${role.id}" aria-expanded="${open}" aria-label="${esc(role.label)} 아이콘 바꾸기">바꾸기</button></span>`;
         // 줄 모양은 panel.js row() 와 같다 (이름 · ↺ · 설명 / 조작) — ↺ 는 다른 설정처럼 이름 바로 옆
-        const line = `<div class="salty-row"><span>${esc(role.label)}${reset}${value ? `<small>${esc(describe(value))}</small>` : ''}</span>${control}</div>`;
-        return `<div class="bl-roleicon-row${open ? ' open' : ''}" data-role="${role.id}">${line}${open ? pickerMarkup(role, value) : ''}</div>`;
+        const line = `<div class="salty-row bl-roleicon-row${open ? ' open' : ''}" data-role="${role.id}"><span>${esc(role.label)}${reset}${value ? `<small>${esc(describe(value))}</small>` : ''}</span>${control}</div>`;
+        return `${line}${open ? pickerMarkup(role, value) : ''}`;   // 줄은 묶음(.salty-group) 바로 아래 — 다른 설정 줄과 같은 규칙을 받는다
     }).join('');
     return `<div class="salty-group bl-roleicons" data-search-anchor="단추 아이콘">${cap('단추 아이콘')}
         <p class="salty-note">역할마다 아이콘 하나예요. 바꾸면 테마 곳곳의 같은 단추가 함께 바뀌어요.</p>
