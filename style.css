@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build eb9dfd683a53) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 2f2ad0320af6) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -26713,7 +26713,8 @@ html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { vert
   html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin-top: calc((var(--bl-name-lh) - 32px) / 2) !important; margin-bottom: calc((var(--bl-name-lh) - 32px) / 2) !important; }
 }
 html body .salty-panel.bl-editor .salty-row:has(> span > small):has(> .salty-switch, > .bl-ft-row-ctl > .salty-switch) { align-items: flex-start; }
-html body .salty-panel.bl-editor .salty-row:has(> span > small):has(> .salty-switch, > .bl-ft-row-ctl > .salty-switch) > :not(:has(> small)) { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
+html body .salty-panel.bl-editor .salty-row:has(> span > small):has(> .salty-switch, > .bl-ft-row-ctl > .salty-switch) > .salty-switch,
+html body .salty-panel.bl-editor .salty-row:has(> span > small):has(> .salty-switch, > .bl-ft-row-ctl > .salty-switch) > .bl-ft-row-ctl { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }
 html body.salty .eh-setting:has(> .eh-setting-text > small) { --bl-name-lh: 22px; align-items: flex-start; }
 html body.salty .eh-setting:has(> .eh-setting-text > small) > .eh-setting-text > b { display: block; line-height: var(--bl-name-lh); }
 html body.salty .jj-status:has(.jj-status-text):is(.bl-s, *):is(bl-s, *),
