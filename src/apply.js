@@ -21,6 +21,7 @@ import { markdownClasses, markdownVariables } from './markdown.js';
 import { syncExtensionColors } from './extension-colors.js';
 import { syncControlInk } from './control-ink.js';
 import { syncTagInk } from './tag-ink.js';
+import { syncRoleIcons } from './role-icons.js';
 
 function profileVars(p, pal, user = false) {
     const vars = Object.assign(frameVars(p, 'profile', pal.accent), decorVars(p.decor, 'profile', p.radius), {
@@ -706,6 +707,8 @@ export function applyAll() {
     const icons = s.enabled ? styleTag('salty-icons') : document.getElementById('salty-icons');
     const iconText = s.enabled ? iconsCss() : '';
     if (icons && icons.textContent !== iconText) icons.textContent = iconText;
+    // 7.9.3 단추 아이콘 바꾸기: 테마를 꺼도(확장만) 테마 창의 단추는 그대로 테마 것이라 켬/끔과 상관없이. 바꾼 역할이 없으면 <style> 도 없다
+    syncRoleIcons(s.roleIcons ?? getSettings().roleIcons);
 
     const want = new Set();
     if (s.enabled) {

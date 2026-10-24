@@ -368,6 +368,7 @@ jobs:
           node tools/tests/deus-qr.mjs
           node tools/tests/fruit-style.mjs
           node tools/tests/fruit-skin-contrast.mjs .
+          node tools/tests/role-icons.mjs .
           node tools/tests/fruit-entry-rows.mjs .
           node tools/tests/prompt-template.mjs .
           node tools/tests/manifest-reuse.mjs .

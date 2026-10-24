@@ -53,6 +53,8 @@ import { MARKDOWN_CONTROLS, MARKDOWN_TUNING } from './markdown.js';
 import { markdownControls } from './markdown-ui.js';
 import { sceneSoundMarkup, bindSceneSound } from './scene-sound-ui.js';   // 6.9.8 장면 소리 (채팅 › 화면 › 날씨)
 import { ask as askConfirm } from './ask.js';   // 7.0.1 테마 확인 창 (이 파일의 ask 는 입력 창)
+import { roleIconsMarkup, roleIconAction, roleIconFile, filterRoleIcons, roleIconHistoryValue, pick as rolePick } from './role-icons-ui.js';   // 7.9.3 단추 아이콘
+import { roleLabel } from './role-icons-core.js';
 
 // 브랜드 레몬 — ✦ 메뉴 · 확장 서랍 · 스플래시와 같은 속찬 레몬(폰트어썸 fa-lemon U+F094) 윤곽 그대로
 export const MARK = '<svg viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path transform="translate(0 448) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/></svg>';
@@ -62,7 +64,7 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 // 2.7.0: 글꼴 탭을 글자 탭에 합침 — 역할(본문 · 대사 · 메뉴 · 속마음 · 강조 · 코드)마다 한 화면에서 글꼴 · 크기 · 굵기 · 자간을 다 만짐
 const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지'], ['prompt', '프롬프트'], ['extensions', '확장']];
 const SUBS = {
-    theme: [['palette', '색'], ['colors', '색 고치기'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['update', '업데이트'], ['etc', '기타 설정'], ['faq', '자주 묻는 질문']],
+    theme: [['palette', '색'], ['colors', '색 고치기'], ['icons', '단추 아이콘'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['update', '업데이트'], ['etc', '기타 설정'], ['faq', '자주 묻는 질문']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strike', '취소선'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['markdown', '마크다운'], ['shadow', '그림자 · 외곽선']],
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['fade', '흐림'], ['cutedge', '투명 그림']],
@@ -168,6 +170,7 @@ function historyLabel(path) {
         return `${PALETTES[path.split('.')[2]]?.label || '테마'} · 그라데이션 · ${label}`;
     }
     const scope = ({'type.dialogueSize':'대사','type.uiSize':'메뉴','type.codeSize':'코드'})[path] ?? { markdown:'마크다운', ui:'메뉴', code:'코드', profile: '캐릭터 프로필', userProfile: '내 프로필', image: '에셋 이미지', type: '본문', dialogue: '대사', em: '속마음', strong: '강조', chat: '채팅' }[path.split('.')[0]];
+    if (path.startsWith('roleIcons.')) return `단추 아이콘 · ${roleLabel(path.split('.')[1])}`;
     if (path.startsWith('colorOverrides.')) {
         const [, palette, token] = path.split('.');
         return `${PALETTES[palette]?.label || '테마'} · ${TOKEN_GROUPS.flatMap(([,list]) => list).find(([key]) => key === token)?.[1] || token}`;
@@ -177,6 +180,7 @@ function historyLabel(path) {
 function historyValue(value, path) {
     if(/^gradients\.(light|dark)\.families$/.test(path)&&Array.isArray(value))return value.map(k=>PALETTE_FAMILIES[k]?.label||k).join(' + ');
     if(path.startsWith('gradients.')&&Array.isArray(value))return value.join(' : ');
+    if (path.startsWith('roleIcons.')) return roleIconHistoryValue(value);
     if (value == null) return '기본값';
     if (typeof value === 'boolean') return value ? '켜짐' : '꺼짐';
     if (path === 'palette') return PALETTES[value]?.label || String(value);
@@ -1099,6 +1103,7 @@ function tabTheme(s, sub) {
     if (sub === 'faq') return faqMarkup(s);   // 7.2.6
     if(sub==='update')return `<div class="salty-group">${row('새 버전 자동 확인', toggle('updateCheck', s.updateCheck !== false), '6시간에 한 번 · 새 버전이면 버전 표시가 노랗게 빛나요')}</div>`+updateMarkup()+healthMarkup();
     if (sub === 'changes') return settingsChanges(s);
+    if (sub === 'icons') return roleIconsMarkup(s, { cap, row });   // 7.9.3 단추 아이콘 (role-icons-ui.js)
     if (sub === 'custom') return customBuilder(s);
     if (sub === 'backup') return tabBackup();
     if (sub === 'styles') return tabStyles(s);
@@ -2156,6 +2161,7 @@ function render(root) {
         list.querySelectorAll('[data-preview]').forEach(el => io.observe(el));
         filterFonts(root);
     }
+    if (root.querySelector('.bl-iconlist')) filterRoleIcons(root);   // 7.9.3 단추 아이콘 고르기: 묶음 · 찾기 · 숫자
 }
 
 // 검색어 + 태그로 거르기. 태그 숫자는 검색어에 맞는 개수, 한 묶음만 볼 땐 묶음 제목 숨김
@@ -2305,6 +2311,16 @@ function pickFont(font) {
     toastr.success(`${font.label} 글꼴을 쓸게요`, 'Blue Lemonade');
 }
 
+// 7.9.3 단추 아이콘 고르기(role-icons-ui.js)가 쓰는 설정 창 길 — 고치기 · 다시 그리기 · 입력 창 · 알림
+function roleIconContext(root) {
+    return {
+        root, settings: getSettings, ask,
+        update: mutator => update(mutator),
+        refresh: () => { refreshPanels(); for (const panel of panels) filterRoleIcons(panel); },
+        toast: (text, kind = 'success') => toastr[kind](text, 'Blue Lemonade'),
+    };
+}
+
 function bind(root) {
     root.addEventListener('change', () => queueMicrotask(() => { history.flush(getSettings()); syncHistoryButtons(); }));
     root.addEventListener('click', async (event) => {
@@ -2314,6 +2330,7 @@ function bind(root) {
         event.stopPropagation();
         const { act } = el.dataset;
         try {
+            if (act.startsWith('role-icon-')) { await roleIconAction(act, el, roleIconContext(root)); return; }   // 7.9.3 단추 아이콘
             switch (act) {
                 case 'readability-fix':
                     update(st=>{if(!rememberAppearance(st,'가독성 보정 전'))toastr.info('그림 데이터가 커서 복구함에 담지 못했어요. 테마 설정 파일로 보관해 주세요.');fixReadability(st,el.dataset.key);});
@@ -2904,6 +2921,8 @@ function bind(root) {
     });
 
     root.addEventListener('input', (event) => {
+        const iconSearch = event.target.closest('input[data-search="role-icon"]');
+        if (iconSearch) { rolePick.query = iconSearch.value; if (iconSearch.value.trim()) rolePick.tag = 'all'; filterRoleIcons(root); return; }   // 7.9.3 찾기 시작하면 모든 묶음에서
         const search = event.target.closest('input[data-search="font"]');
         if (search) {
             if (!ui.query.trim() && search.value.trim()) ui.fontTag = 'all'; // 찾기 시작하면 모든 묶음에서
@@ -3097,6 +3116,12 @@ function bind(root) {
                 if (selected) {update(st=>{if(!rememberAppearance(st,'프리셋 불러오기 전'))toastr.info('그림 데이터가 커서 복구함에 담지 못했어요.');applyPreset(st,incoming,selected);});toastr.success('선택한 프리셋을 불러왔어요','Blue Lemonade');}
             } catch (error) {toastr.error(error.message || String(error),'Blue Lemonade');}
             target.value='';return;
+        }
+        if (target.matches('input[data-file="role-icon"]') && target.files?.[0]) {   // 7.9.3 단추 아이콘 › 내 그림
+            try { await roleIconFile(target.files[0], roleIconContext(root)); }
+            catch (error) { toastr.error(error.message || String(error), 'Blue Lemonade'); }
+            target.value = '';
+            return;
         }
         if (target.matches('input[data-file="settings"]') && target.files?.[0]) {
             try {

@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build c318dea84f9e) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 4128eba1d0ac) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -20960,6 +20960,90 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-editor-actions .bl-sett
  .salty-panel .bl-favorite-toggle > .fa-star { width: 18px; line-height: 1; font-size: 17px; pointer-events: none; }
 .salty-panel .bl-favorite-toggle:hover { background: var(--salty-fill-accent-10, var(--salty-accent-10)); }
 .salty-panel .bl-favorite-toggle:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 1px; }
+/* css/49-role-icons.css */
+.salty-panel .bl-roleicon-control {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+.salty-panel .bl-roleicon-preview {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  color: var(--salty-text);
+}
+.salty-panel .bl-roleicon-preview::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  -webkit-mask: var(--bl-ri-glyph) center / contain no-repeat;
+  mask: var(--bl-ri-glyph) center / contain no-repeat;
+  pointer-events: none;
+}
+.salty-panel .bl-icongrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 4px;
+  padding: 4px 8px 8px;
+}
+.salty-panel .bl-icontile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--salty-text);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  content-visibility: auto;
+  contain-intrinsic-size: 44px 44px;
+}
+.salty-panel .bl-icontile[hidden] {
+  display: none !important;
+}
+.salty-panel .bl-icontile:active {
+  background: var(--salty-fill-shade, var(--salty-shade));
+}
+.salty-panel .bl-icontile.on {
+  background: var(--salty-fill-accent-10, var(--salty-accent-10));
+  color: var(--salty-accent-ink, var(--salty-accent));
+}
+.salty-panel .bl-icontile:focus-visible {
+  outline: 2px solid var(--salty-accent);
+  outline-offset: -2px;
+}
+.salty-panel .bl-iconempty {
+  margin: 0;
+  padding: 16px 12px;
+  text-align: center;
+}
+.salty-panel .bl-iconempty[hidden] {
+  display: none !important;
+}
+.salty-panel .salty-fontadd.bl-iconadd {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.salty-panel .bl-iconadd > .salty-btn {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
 /* css/50-gradients.css */
 .bl-gradient-control { padding: 0 0 14px; margin: 0 0 12px; border-bottom: 1px solid var(--salty-line); }
 .bl-gradient-control .salty-seg { margin: 8px 0 12px; }

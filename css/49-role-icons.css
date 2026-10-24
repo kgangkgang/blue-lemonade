@@ -1,0 +1,94 @@
+/* ===== css/49-role-icons.css =====
+   7.9.3 설정 › 테마 › 단추 아이콘 — 역할 목록 줄과 아이콘 고르기 창(src/role-icons-ui.js).
+   여기에는 이 칸의 새 클래스(.bl-roleicon-* · .bl-icon*)만 있다 — 다른 화면은 1px 도 안 바뀐다.
+   역할 단추를 실제로 바꾸는 규칙은 바꾼 역할이 있을 때만 src/role-icons.js 가 <style id="bl-role-icons"> 로 만든다(role-icons-core.js buildRoleCss).
+   고르기 창의 찾기 칸 · 묶음 태그 · 목록 상자 · 아래 「+ 추가」 줄은 글꼴 고르기 창의 .salty-font* 규칙(20-panel)을 그대로 쓴다.
+   색은 팔레트 변수만(새 색 · 혼색 없음), 아이콘은 글자색(currentColor), 올린 그림은 원래 색.
+   ===== */
+.salty-panel .bl-roleicon-control {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+/* 지금 아이콘 미리보기: 아이콘만 단추와 같은 규격(칸 34 · 선 그림 상자 16 = 잉크 ≈12.5), 상자 · 면 · 선 없음.
+   기본 선 그림은 줄마다 style="--bl-ri-glyph:…"(role-icons-core.js ROLES 의 glyph — 디자인 시스템 .ds-tool[data-role] 와 같은 그림) */
+.salty-panel .bl-roleicon-preview {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  color: var(--salty-text);
+}
+.salty-panel .bl-roleicon-preview::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  -webkit-mask: var(--bl-ri-glyph) center / contain no-repeat;
+  mask: var(--bl-ri-glyph) center / contain no-repeat;
+  pointer-events: none;
+}
+/* 고르기 창 목록: 아이콘 칸 격자 (칸 44 = 누르는 칸) */
+.salty-panel .bl-icongrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 4px;
+  padding: 4px 8px 8px;
+}
+.salty-panel .bl-icontile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--salty-text);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  content-visibility: auto;      /* 1,800개 남짓 — 화면 밖 칸은 그리지 않는다 */
+  contain-intrinsic-size: 44px 44px;
+}
+.salty-panel .bl-icontile[hidden] {
+  display: none !important;
+}
+.salty-panel .bl-icontile:active {
+  background: var(--salty-fill-shade, var(--salty-shade));
+}
+.salty-panel .bl-icontile.on {
+  background: var(--salty-fill-accent-10, var(--salty-accent-10));
+  color: var(--salty-accent-ink, var(--salty-accent));
+}
+.salty-panel .bl-icontile:focus-visible {
+  outline: 2px solid var(--salty-accent);
+  outline-offset: -2px;
+}
+.salty-panel .bl-iconempty {
+  margin: 0;
+  padding: 16px 12px;
+  text-align: center;
+}
+.salty-panel .bl-iconempty[hidden] {
+  display: none !important;
+}
+/* 아래 「+ 내 그림 · + 글자 · 이모지」: 같은 폭 2열 한 줄 (철칙 §5 단추 묶음) */
+.salty-panel .salty-fontadd.bl-iconadd {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.salty-panel .bl-iconadd > .salty-btn {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}

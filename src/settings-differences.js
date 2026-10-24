@@ -3,6 +3,7 @@ import { PALETTES, paletteColors } from './palettes.js';
 import { presetColors } from './frame-presets.js';
 import { GRADIENT_KEYS } from './gradients.js';
 import { FILTER_KEYS } from './capture-style.js';
+import { ROLE_IDS } from './role-icons-core.js';
 const read = (obj, path) => path.split('.').reduce((v, k) => v != null && Object.hasOwn(v,k) ? v[k] : undefined, obj);
 const equal = (a, b) => a === b || (!!a && !!b && typeof a === 'object' && typeof b === 'object' && Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(k => equal(a[k], b[k])));
 const omitted = new Set(['appearanceHistory','version','noticeSeen','frameLibrary','customFonts','styles','charStyles','promptBinds','headSwitches','activeStyle','baseStyle','weatherImages','customPalettes','activeCustomPalette','wordTools','multiAvatar']);
@@ -13,6 +14,10 @@ export function settingDefault(settings, path) {
     if (path === 'gradients.overrides' || path.startsWith('gradients.overrides.')) {
         const [, , palette, token, extra] = path.split('.');
         return {allowed: !extra && !!PALETTES[palette] && GRADIENT_KEYS.includes(token), value:undefined};
+    }
+    if (path === 'roleIcons' || path.startsWith('roleIcons.')) { // 7.9.3 단추 아이콘: 역할 하나가 한 칸, 처음 값 = 칸이 없음
+        const [, role, extra] = path.split('.');
+        return { allowed: !extra && ROLE_IDS.includes(role), value: undefined };
     }
     if (path.startsWith('colorOverrides.')) {
         const [, palette, token, extra] = path.split('.');
@@ -64,6 +69,7 @@ export function changedSettings(settings) {
         for (const key of Object.keys(defaults)) visit(defaults[key], value?.[key], path ? `${path}.${key}` : key);
     }
     for (const key of Object.keys(DEFAULTS)) if (key !== 'colorOverrides') visit(DEFAULTS[key], settings[key], key);
+    for (const role of ROLE_IDS) if (typeof settings.roleIcons?.[role] === 'string') result.push({ path: `roleIcons.${role}`, before: undefined, value: settings.roleIcons[role] });
     for (const [palette, colors] of Object.entries(settings.colorOverrides || {})) for (const [token, value] of Object.entries(colors || {})) {
         const path = `colorOverrides.${palette}.${token}`;
         if (settingDefault(settings, path).allowed) result.push({ path, before: paletteColors({ ...settings, palette, colorOverrides: {} })[token], value });
@@ -77,6 +83,7 @@ export function settingRoute(path) {
     if (scope === 'addonUI') return {tab:'extensions',sub:/^modelswitch/.test(key) ? 'models' : /^perf/.test(key) ? 'perf' : /^words/.test(key) ? 'words' : /^capture/.test(key) ? 'capture' : /^translator/.test(key) ? 'translator' : /^tts/.test(key) ? 'tts' : /^notes/.test(key) ? 'notes' : /^zipinstall/.test(key) ? 'zipinstall' : 'order'};
     if (scope === 'gradients') return {tab:'theme',sub:key!=='overrides'?'palette':'colors'};
     if (scope === 'colorOverrides') return { tab:'theme', sub:'colors' };
+    if (scope === 'roleIcons') return { tab:'theme', sub:'icons' };
     if (['palette','lightTint','nightTint','auto','enabled','customName'].includes(scope)) return {tab:'theme',sub:'palette'};
     if (scope === 'fonts') return key === 'name' || key === 'userName' ? {tab:'chat',sub:key === 'name' ? 'name' : 'user-name'} : {tab:'text',sub:key === 'hanja' ? 'text' : key};
     if (path === 'userProfile.metaSide') return {tab:'chat',sub:'user-profile'}; // 번호 · 시간 줄 위치는 작은 사진 옆이라 내 프로필에

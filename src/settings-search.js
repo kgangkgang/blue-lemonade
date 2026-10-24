@@ -30,6 +30,7 @@ const rows = [
  ['theme','colors','글자·형광펜 그라데이션','본문 대사 속마음 강조 글자 형광펜 그라데이션 단색 색 비중 방향 각도'],
  ['theme','changes','변경한 설정·항목별 복원','변경 내역 기본값 다른 바꾼 설정 목록 초기화 원래대로 항목 하나만 되돌리기 복원 실수'],
  ['theme','palette','테마 색과 밝기','배경 진하기 테마색 농도 차콜 색감 퍼센트 0.5% 1% 20% 팔레트 화이트 나이트 밝은 어두운 다크모드 라이트모드 블루 레몬 피치 복숭아 자몽 라벤더 딸기 민트 오렌지 우드 갈색 수박 초록 빨강 커스텀 테마 선택 자동 기준 기기 다크 모드 나이트 시작 화이트 시작'],
+ ['theme','icons','단추 아이콘','아이콘 단추 바꾸기 닫기 엑스 되돌리기 다시 실행 찾기 검색 돋보기 전체 화면 작은 창 목록 더 보기 추가 확인 이전 다음 뒤로 처음 값 내 그림 PNG SVG WebP 이모지 글자 Font Awesome 폰트어썸'],
  ['theme','colors','테마 세부 색','바탕 배경 종이 카드 포인트 강조 형광펜 글자색 색깔 변경 색상 투명 색 고치기'],
  ['theme','custom','직접 테마 만들기','커스텀 테마 만들기 새 팔레트 내 색 이름 저장 자동 색 조합'],
  ['theme','styles','스타일 저장·공유','프리셋 스타일 저장 불러오기 삭제 이름 변경 공유 코드 내보내기 가져오기 캐릭터별 연결 자동 적용 소설책 메신저 되돌리기'],
@@ -128,7 +129,7 @@ for (const { key, label, options } of MARKDOWN_CONTROLS) rows.push(['text','mark
 for (const {key,label,group} of MARKDOWN_TUNING) rows.push(['text','markdown',`마크다운 · ${MARKDOWN_CONTROLS.find(c=>c.key===group).label} · ${label}`,`마크다운 꾸미기 ${markdownAliases[group]} ${label}`,'',`markdown.${key}`]);
 rows.push(['text','markdown','마크다운 · 장식 색 직접 고르기','마크다운 꾸미기 색 색상 포인트 직접 선택','','markdown.accentOwn'],['text','markdown','마크다운 · 장식 색','마크다운 꾸미기 색 색상 포인트','','markdown.accentColor']);
 const tabs={extensions:'확장',theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
-const subs={mermaid:'Mermaid 도표',cutedge:'투명 그림',zipinstall:'ZIP 설치',tts:'TTS',notes:'메모',strike:'취소선',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',conflicts:'확장 충돌 진단',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',fruit:'과일',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
+const subs={mermaid:'Mermaid 도표',cutedge:'투명 그림',zipinstall:'ZIP 설치',tts:'TTS',notes:'메모',strike:'취소선',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',conflicts:'확장 충돌 진단',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',icons:'단추 아이콘',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',fruit:'과일',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
 subs.markdown = '마크다운';
 subs.faq = '자주 묻는 질문';
 for (const item of FAQ) rows.push(['theme','faq',item.q,`자주 묻는 질문 FAQ 질문 ${item.search||''}`,item.q]);

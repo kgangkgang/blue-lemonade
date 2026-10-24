@@ -29,6 +29,7 @@ Character Assets는 원작자의 개인 수정본 공유 허락에 따라 포함
 
 - [omggif](https://github.com/deanm/omggif) 1.0.10의 GIF writer, Dean McNamee, MIT. 전문: [gif-writer.js](src/vendor/gif-writer.js).
 - [image-q](https://github.com/ibezkrovnyi/image-quantization) 4.0.0, Igor Bezkrovny 및 기여자, MIT. 포함된 NeuQuant·RgbQuant 등 구성요소의 고지도 [image-q.js](src/vendor/image-q.js)에 보존합니다.
+- [Font Awesome Free](https://fontawesome.com/license/free) 6.5.2의 아이콘 이름 · 글자 번호 목록, Fonticons, Inc., 아이콘 CC BY 4.0 · 글꼴 SIL OFL 1.1 · 코드 MIT. 단추 아이콘 고르기 창이 쓰는 목록만 [role-icons-fa.gen.js](src/role-icons-fa.gen.js)에 담고, 글꼴은 SillyTavern이 싣는 것을 그대로 씁니다.
 
 ## 대응 소스와 빌드
 
