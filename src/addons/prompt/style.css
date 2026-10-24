@@ -740,7 +740,7 @@ html:not(#bl-tab-scroll-off) :is(
 ) > :is(button,a,li,[role="tab"],[role="button"]) > :is(span,a) { white-space:nowrap !important; overflow-wrap:normal !important; }
 
 /* 탭·불러오기·작업 줄의 간격은 안쪽 동작 묶음까지 8px로 맞춰요. */
-body.salty #pt-panel #pt-tabs,
+html body.salty #pt-panel #pt-tabs,
 body.salty #pt-panel .pt-page-fixed .pt-act-row,
 body.salty #pt-panel .pt-page-fixed .pt-toolbar,
 body.salty #pt-panel .pt-page-fixed .pt-toolbar > .pt-export-group { gap:8px!important; }

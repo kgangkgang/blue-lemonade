@@ -94,3 +94,13 @@ html:not(#bl-pill-off):not(#bl-pill-off2) body.salty :is(.pa-hub .pa-hub-title, 
 html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) > .salty-ver { margin: 0 !important; top: 0 !important; } /* 7.8.2: 예전 top:-1px(20-panel)이 남아 ⓒ(여백 0) 보다 1px 위 · 이름 글자보다도 1px 위였다(폰 사진 1.2 · 리그 1.0) — 한 줄 flex 가운데 정렬에 맡김 */
 html:not(#bl-pill-off) body.salty dialog > header > b:has(> .ext-version, > i) { display: inline-flex; align-items: center; gap: 8px !important; min-width: 0; }
 html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b:has(> .ext-version, > i) > :is(i, .ext-version, [class*="-version"]) { margin: 0 !important; }
+
+/* 별도 대화창의 버전 표시도 같은 비율을 쓰되, 그 창의 팔레트와 바깥 간격은 유지해요. */
+html:not(#bl-pill-off) body.salty :is(dialog,[role="dialog"]) > header :is([class$="-version"],[class*="-version "],[class$="-ver"],[class*="-ver "]):not([hidden]) {
+  height:calc(var(--mainFontSize,15px) * 20 / 15)!important;
+  min-height:calc(var(--mainFontSize,15px) * 20 / 15)!important;
+  padding:0 calc(var(--mainFontSize,15px) * 8 / 15)!important;
+  border-radius:calc(var(--mainFontSize,15px) * 10 / 15)!important;
+  font-family:inherit!important;
+  font-size:calc(var(--mainFontSize,15px) * 12 / 15)!important;
+}
