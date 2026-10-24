@@ -58,6 +58,43 @@ export function voiceTagsOf(v) {
 /** 목록 줄 · 칩에 보일 한국어 이름들 */
 export const voiceTagLabels = (v) => voiceTagsOf(v).map(t => VOICE_TAGS.find(x => `[${x.value}]` === t)?.label).filter(Boolean);
 
+// 직접 입력은 오디오 태그로만 만들어요. 괄호 밖 대사가 섞이면 요청 전에 멈춰요.
+export const CUSTOM_TAG_LIMITS = Object.freeze({ text: 400, tags: 8, tag: 80 });
+export function customVoiceTagsOf(value) {
+    if (value == null || value === '') return [];
+    if (typeof value !== 'string') throw new Error('말투 직접 입력은 글자로 적어 주세요.');
+    if (value.length > CUSTOM_TAG_LIMITS.text) throw new Error('말투 직접 입력은 400자까지 적어 주세요.');
+    if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(value)) throw new Error('말투 직접 입력에 보이지 않는 제어 문자가 있어요. 다시 적어 주세요.');
+    const raw = value.trim();
+    if (!raw) return [];
+    let items;
+    if (/[\[\]]/u.test(raw)) {
+        items = []; let at = 0;
+        while (at < raw.length) {
+            while (at < raw.length && /[\s,]/u.test(raw[at])) at++;
+            if (at === raw.length) break;
+            if (raw[at] !== '[') throw new Error('괄호 태그와 일반 글을 섞지 말아 주세요. [low] [male]처럼 태그만 적어요.');
+            const end = raw.indexOf(']', at + 1);
+            if (end < 0 || raw.slice(at + 1, end).includes('[')) throw new Error('말투 태그의 대괄호를 확인해 주세요. [low, gravelly voice]처럼 한 쌍으로 닫아요.');
+            items.push(raw.slice(at + 1, end)); at = end + 1;
+        }
+    } else items = raw.split(/[,\r\n]+/u);
+    const out = [], seen = new Set();
+    for (const item of items) {
+        const tag = item.trim().replace(/\s+/gu, ' ');
+        if (!tag) throw new Error('빈 말투 태그는 지워 주세요. 태그 사이에만 쉼표나 줄바꿈을 넣어요.');
+        if (tag.length > CUSTOM_TAG_LIMITS.tag) throw new Error('말투 태그 하나는 80자까지 적어 주세요.');
+        const key = tag.toLowerCase();
+        if (!seen.has(key)) { seen.add(key); out.push(`[${tag}]`); }
+    }
+    if (out.length > CUSTOM_TAG_LIMITS.tags) throw new Error('직접 입력한 말투 태그는 8개까지 함께 쓸 수 있어요.');
+    return out;
+}
+export const customVoiceTagText = value => customVoiceTagsOf(value).join(' ') || undefined;
+export function validateCustomVoiceTags(value) {
+    try { customVoiceTagsOf(value); return ''; } catch (error) { return error.message; }
+}
+
 // 1.4.0 감정 세기 '약하게' + v3 · v4: 안정감만으로는 안 차분해진다 (ElevenLabs 안내: 안정감은 '일정함'이고 감정은 글에서 읽는다 · v4 는 복제 원본의 말투를 그대로 따른다).
 //   2026-10-08 한 목소리로 들어 보고 재 본 것: 느낌표를 순하게 하면 음높이 흔들림이 6.2 → 5.1~5.5, 말투 태그가 하나라도 있으면 없는 것보다 덜 들뜨고,
 //   사용자는 그중 [flatly](덤덤하게)를 골랐다. 그래서 약하게면 글의 느낌표 · 물결 · 음표를 순하게, 말투를 안 고른 목소리엔 덤덤하게를 붙인다
@@ -137,6 +174,11 @@ const params = [
     ] },
     // 1.3.8 말투 (오디오 태그 · 여러 개): 기본값 없음 — 안 고르면 요청 · 캐시 키가 1.3.7 과 같다. 태그를 받는 모델(v3 · v4)에서만 보이고 요청 · 키에 들어간다 (when)
     { key: 'voice_tags', label: '말투', type: 'tags', options: VOICE_TAGS, voice: true, show: (cfg) => usesTags(modelOf(cfg)), when: (cfg) => usesTags(modelOf(cfg)) },
+    { key: 'voice_tags_custom', label: '말투 직접 입력', type: 'textarea', voice: true, voiceOnly: true,
+        placeholder: 'low, male 또는 [low, gravelly voice]', maxLength: CUSTOM_TAG_LIMITS.text,
+        voiceHint: '태그만 적어요. 쉼표나 줄바꿈으로 나누고, 쉼표까지 한 지시로 묶으려면 [low, gravelly voice]처럼 써요.',
+        show: (cfg) => usesTags(modelOf(cfg)), when: (cfg) => usesTags(modelOf(cfg)),
+        validate: validateCustomVoiceTags, normalize: customVoiceTagText },
 ];
 
 // 1.3.8 '?' 도움말: 설정 창 · 목소리 편집에서 이름 옆 ? 를 누르면 아래에 펼쳐진다 (ui.js control · edParam)
@@ -152,6 +194,7 @@ const HELP = {
     seed: "숫자를 적으면 같은 글 · 설정에서 거의 같은 소리가 나요(완전히 같진 않아요). 비우면 매번 조금씩 달라요",
     apply_text_normalization: "숫자 · 기호를 말로 풀어 읽을지 정해요. 플래시 v2.5 는 기본으로 안 풀고, v2.5 모델의 '항상'은 기업용 요금제만 돼요",
     voice_tags: "고른 말투를 줄마다 맨 앞에 붙여 읽어요 (v3 · v4 만). 두세 개까지가 자연스러워요. 대사 분석이 찾은 감정은 그 뒤에 붙어요",
+    voice_tags_custom: "이 목소리에만 붙일 오디오 태그예요. low, male처럼 적으면 각각 [low] [male]로 보내요. [low, gravelly voice]는 괄호 안 쉼표를 그대로 지켜요. 괄호를 쓰면 [low] [male]처럼 모든 항목을 괄호로 묶고 대사는 넣지 않아요. 최대 8개, 항목마다 80자, 전체 400자예요. 선택한 말투 뒤·감정 앞에 붙고, 빈칸이면 기존대로 읽어요. v3 · v4에서만 보내며, 목소리와 모델에 따라 반영 정도가 달라요.",
 };
 for (const f of [...fields, ...params]) if (HELP[f.key]) f.help = HELP[f.key];
 
@@ -255,6 +298,10 @@ export default {
 
     /** 1.3.8 말투 태그의 한국어 이름 (목소리 목록 줄의 칩) */
     tagLabels: voiceTagLabels,
+    customTagLabels(value) {
+        try { const n = customVoiceTagsOf(value).length; return n ? [`직접 입력 ${n}개`] : []; }
+        catch { return ['직접 입력 확인 필요']; }
+    },
 
     /**
      * 1.3.8 감정 세기 (player.fitStrength 가 묻는다): 이 줄의 요청을 실제로 바꾸는 세기 → params.emotion_strength 에 (그 줄만 캐시 키가 갈림).
@@ -277,7 +324,10 @@ export default {
         const tagged = usesTags(model);
         const tag = tagged ? V3_TAGS[emotion] : '';
         // 1.3.8 목소리 말투 태그 → 감정 태그 → 글 (같은 태그는 한 번만). 말투를 안 고르면 1.3.7 과 같은 글
-        let lead = tagged ? voiceTagsOf(p.voice_tags).filter(t => t !== tag) : [];
+        const seenTags = new Set(tag ? [tag.toLowerCase()] : []);
+        let lead = tagged ? [...voiceTagsOf(p.voice_tags), ...customVoiceTagsOf(p.voice_tags_custom)].filter(t => {
+            const key = t.toLowerCase(); if (seenTags.has(key)) return false; seenTags.add(key); return true;
+        }) : [];
         // 1.4.0 약하게: 글을 순하게 + 말투도 감정 태그(속삭임)도 없는 줄엔 덤덤하게
         if (tagged && p.emotion_strength === 'weak') {
             input = calmText(input);

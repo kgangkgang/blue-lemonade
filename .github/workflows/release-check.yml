@@ -32,6 +32,7 @@ jobs:
           node tools/pricing/test-client.mjs
           node tools/tests/settings-upgrade.mjs .
           node tools/tests/settings-render-layout.mjs .
+          node tools/tests/tts-custom-tags.mjs .
           node tools/tests/bookmark-search-lifecycle.mjs .
           node tools/tests/prompt-persona.mjs .
           node tools/tests/prompt-page-lifecycle.mjs .

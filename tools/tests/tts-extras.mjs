@@ -598,7 +598,7 @@ if (P && PR && TX && EL && typeof EL.strengthFor === 'function') {
     });
 }
 if (PR) {
-    await test("'?' 도움말: 엔진 항목에 한국어 도움말 (61 + 말투) · ElevenLabs 긴 설명은 ? 뒤로 (안정감 설명만 1.3.7 그대로)", () => {
+    await test("'?' 도움말: 엔진 항목에 한국어 도움말 (61 + 말투 + 직접 입력) · ElevenLabs 긴 설명은 ? 뒤로 (안정감 설명만 1.3.7 그대로)", () => {
         let n = 0;
         for (const p of PR.listProviders()) for (const f of [...(p.fields || []), ...(p.params || [])]) {
             if (!f.help) continue;
@@ -608,7 +608,7 @@ if (PR) {
             if (f.key !== 'model_custom' && !(p.id === 'openai_compat' && f.key === 'model')) assert.doesNotMatch(f.help, /eleven_|speech-\d|sonic-|ssfm-|gpt-4o|tts-1|google\//, `${p.id}.${f.key}: 직접 적는 칸이 아니면 모델 id 대신 한국어 이름`);
         }
         if (n === 0) return;   // 1.3.7 (도움말 없음)
-        assert.equal(n, 62);
+        assert.equal(n, 63);
         const el = PR.getProvider('elevenlabs');
         const desc = (k) => el.params.find(x => x.key === k)?.desc;
         assert.equal(desc('stability'), 'v3는 0 · 0.5 · 1 중 가까운 값으로 보내요');

@@ -892,13 +892,16 @@ function paramsFor(provider, voice) {
         let v = provider.defaults?.[k];
         if (cfg[k] !== undefined) v = cfg[k];
         const pv = voice.params?.[k];
-        if (pv !== undefined && pv !== null && pv !== '') v = pv;
+        if (f.voiceOnly) v = pv;
+        else if (pv !== undefined && pv !== null && pv !== '') v = pv;
         if (v === undefined) continue;
         if (Array.isArray(v) && !v.length) continue;
         if (typeof f.when === 'function') {
             if (!vcfg) vcfg = voiceCfg(provider, voice, cfg);
             if (!f.when(vcfg)) continue;
         }
+        if (typeof f.normalize === 'function') v = f.normalize(v);
+        if (v === undefined) continue;
         out[k] = v;
     }
     return out;

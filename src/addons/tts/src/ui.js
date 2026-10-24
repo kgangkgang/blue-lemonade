@@ -450,7 +450,7 @@ function control(f, path, value, cfg = null) {
 /** 지금 보여야 할 항목 (키 칸은 따로, show 조건은 엔진 설정 또는 전체 설정으로 판정) */
 function visibleFields(list, cfg = null) {
     const s = settings();
-    return list.filter(f => f.type !== 'password' && (!f.show || f.show(cfg || s)));
+    return list.filter(f => !f.voiceOnly && f.type !== 'password' && (!f.show || f.show(cfg || s)));
 }
 function fieldsHtml(list, base = '', cfg = null) {
     const s = settings();
@@ -1516,11 +1516,15 @@ function tagChipText(v) {
     let p = null;
     try { p = getProvider(v.provider); } catch { p = null; }
     const pv = v.params && v.params.voice_tags;
-    if (!p || typeof p.tagLabels !== 'function' || !Array.isArray(pv) || !pv.length) return '';
+    if (!p || typeof p.tagLabels !== 'function') return '';
     // 1.3.8 리뷰 p09: 그 목소리가 실제로 쓰는 모델(목소리 모델 포함)이 말투를 안 받으면 칩도 없음 (요청 · 키와 같은 판단 — paramsFor 의 when)
     const f = (p.params || []).find(x => x.key === 'voice_tags');
     try { if (f && typeof f.when === 'function' && !f.when(player.voiceCfg(p, v))) return ''; } catch { return ''; }
-    try { return p.tagLabels(pv).join(' · '); } catch { return ''; }
+    try {
+        const picked = Array.isArray(pv) && pv.length ? p.tagLabels(pv) : [];
+        const custom = typeof p.customTagLabels === 'function' ? p.customTagLabels(v.params?.voice_tags_custom) : [];
+        return [...picked, ...custom].join(' · ');
+    } catch { return ''; }
 }
 /** 목록 한 줄: 한글 이름만 (언어·엔진·id 는 편집 팝업과 ▶ 들어보기에서) · 1.3.7 목소리 모델 · 1.3.8 말투 이름표 */
 const STRENGTH_KO = { weak: '약하게', normal: '보통', strong: '강하게' };   // 1.4.0 목소리 줄의 감정 세기 칩
@@ -1889,7 +1893,7 @@ function edControl(f, val, disabled, cfg, voice) {
         case 'number':
             return `<input type="number" class="text_pole lv-param-in"${numAttrs(f)} value="${esc(val)}"${dis}>`;
         case 'textarea':
-            return `<textarea class="text_pole lv-param-in" rows="2"${dis}>${esc(val ?? '')}</textarea>`;
+            return `<textarea class="text_pole lv-param-in" rows="2" aria-label="${esc(f.label)}"${f.placeholder ? ` placeholder="${esc(f.placeholder)}"` : ''}${Number.isInteger(f.maxLength) && f.maxLength > 0 ? ` maxlength="${f.maxLength}"` : ''}${dis}>${esc(val ?? '')}</textarea>`;
         default:
             return `<input type="text" class="text_pole lv-param-in" value="${esc(val ?? '')}"${dis} autocomplete="off">`;
     }
@@ -1901,7 +1905,7 @@ function edParam(f, params, cfg, voice) {
     const val = has ? params[f.key] : (cfg[f.key] ?? f.default);
     collectHelp(f);   // 7.7.9 항목 ? 없음 — 편집 팝업 머리 ? 로 모은다 (클릭은 bindEditor 가)
     const name = esc(f.label);
-    return `<div class="lv-field lv-param${f.type === 'textarea' || f.type === 'tags' ? ' lv-wide' : ''}" data-key="${esc(f.key)}"><span class="lv-label">${name}<label class="lv-def"><input type="checkbox" class="lv-def-chk"${has ? '' : ' checked'}><span>기본값</span></label></span>${edControl(f, val, !has, cfg, voice)}</div>`;
+    return `<div class="lv-field lv-param${f.type === 'textarea' || f.type === 'tags' ? ' lv-wide' : ''}" data-key="${esc(f.key)}"><span class="lv-label">${name}<label class="lv-def"><input type="checkbox" class="lv-def-chk"${has ? '' : ' checked'}><span>기본값</span></label></span>${edControl(f, val, !has, cfg, voice)}${f.voiceHint ? `<span class="lv-desc">${esc(f.voiceHint)}</span>` : ''}</div>`;
 }
 function mixRowHtml(m, opts) {
     return `<div class="lv-mix-row"><select class="text_pole lv-mix-voice"><option value="">목소리</option>${opts.map(o => `<option value="${esc(o.voiceId)}"${o.voiceId === m.voiceId ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}</select><input type="number" class="text_pole lv-mix-w" min="1" max="100" step="1" value="${esc(m.weight)}"><button type="button" class="lv-icon lv-mix-del" aria-label="빼기"><i class="fa-solid fa-xmark"></i></button></div>`;
@@ -2017,6 +2021,12 @@ function validateEditor(el, o) {
     }
     if (o.isNew && !val('voiceId')) return 'voiceId를 넣어요';
     if (!val('name') && !val('voiceId')) return '이름을 넣어요';
+    for (const box of el.querySelectorAll('.lv-param')) {
+        const f = EDF.get(box.dataset.key), inp = box.querySelector('.lv-param-in');
+        if (!inp || box.querySelector('.lv-def-chk')?.checked || typeof f?.validate !== 'function') continue;
+        const error = f.validate(coerce(f, inp));
+        if (error) return error;
+    }
     return null;
 }
 function readEditor(el, v, p, o) {
