@@ -516,6 +516,8 @@ body.salty #pt-panel .pt-page-fixed .pt-select-row { flex-wrap:nowrap; gap:8px; 
 @media (max-width:360px) { #pt-panel .pt-page-fixed .pt-act-row > .pt-act { font-size:10px; letter-spacing:-.04em; } }
 /* 6.1.5 (2) 이름 줄바꿈 막기 · 같은 높이 · 눈 단추 중립색 · 불러오기 줄에 적용 · 더보기 · 폰에서 탭 한 줄 */
 #pt-panel .pt-page-fixed .pt-act-row > .pt-act { align-self:stretch; padding:5px 1px; }
+/* 위 「body.salty #pt-panel :is(.pt-btn, … #pt-panel-refresh …)」 의 :is 안 아이디가 특이도를 올려 작업 단추 좌우 여백을 10px 로 되돌렸다 — 320 폭에서 칸 37px 중 글자 자리가 15px 만 남아 「재번역 · 비우기 · 번역본」 끝이 잘림. :not(#…) 로 같은 무게를 맞춰 좌우 1px */
+body.salty #pt-panel .pt-page-fixed .pt-act-row > .pt-act:not(#pt-act-row-gap) { padding-left:1px; padding-right:1px; }
 #pt-panel .pt-page-fixed .pt-act-row > .pt-act > span:not(.pt-qhelp-mark) { white-space:nowrap; word-break:keep-all; overflow-wrap:normal; font-size:10.5px; letter-spacing:-.04em; }
 #pt-panel .pt-page-fixed .pt-act-row > .pt-btn-eye { background:var(--pt-bg-item); color:var(--pt-text); border:1px solid var(--pt-border); box-shadow:none; }
 #pt-panel .pt-page-fixed .pt-act-row > .pt-btn-danger { background:transparent; color:var(--pt-danger, #e5484d); border-color:color-mix(in srgb, var(--pt-danger, #e5484d) 45%, transparent); }
