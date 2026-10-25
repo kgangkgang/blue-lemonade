@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 36aeb21824e3) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build dbfa71a82f24) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.6";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -19965,6 +19965,8 @@ body.salty .bl-cp.pic-loading .bl-cp-drop[data-act="pic"] i {
   scroll-snap-align: start;
   user-select: none;
 }
+body.salty :is(#send_form #qr--bar, #qr--popout > .qr--body) > .qr--buttons.qr--color { background-color: color-mix(in srgb, var(--qr--color) 16%, transparent); }
+body.salty :is(#send_form #qr--bar, #qr--popout > .qr--body) > .qr--buttons.qr--color.bl-qr-color-none { background-color: transparent; }
 .salty-panel .bl-qr-sample .qr--button.qr--hasCtx { padding-right: 0; }
 .salty-panel .bl-qr-sample .qr--button.qr--hasCtx > .qr--button-expander {
   display: grid; place-items: center; align-self: stretch; flex: none; max-width: 14ch; margin: -4px 0 -4px 8px; padding: 0 9px;

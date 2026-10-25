@@ -145,6 +145,11 @@ export function startCompactLayout() {
         scheduleQrEdges();
     }
     function syncQrTitles(enabled = document.body.classList.contains('salty')) {
+        // 7.9.7 세트 색이 검정(색 고르기 기본값이 그대로 저장된 경우가 대부분)이면 테마는 칠하지 않는다 — 묶음 뒤가 새까만 띠로 보였다(제보 · css/35-qr-bar.css)
+        for (const group of document.querySelectorAll('#qr--bar > .qr--buttons.qr--color, #qr--popout .qr--buttons.qr--color')) {
+            const color = group.style.getPropertyValue('--qr--color').replace(/\s+/g, '').toLowerCase();
+            group.classList.toggle('bl-qr-color-none', /^(#000(000)?(ff)?|rgba?\(0,0,0(,1(\.0+)?)?\)|black)$/.test(color));
+        }
         const settings = globalThis.quickReplyApi?.settings;
         if (!settings) return;
         const links = [settings.config, settings.chatConfig, settings.charConfig].flatMap(config => config?.setList || []);
