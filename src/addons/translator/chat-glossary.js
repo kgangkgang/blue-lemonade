@@ -11,7 +11,7 @@ export function chatGlossaryEntries(metadata) {
     return entries.slice(0, CHAT_GLOSSARY_LIMIT).filter(e => e && term(e.src) && term(e.dst) && glossaryAlternatives(e.src).length === 1)
         .map(e => ({ id: String(e.id ?? e.src), scope: 'chat', src: e.src, dst: e.dst }));
 }
-export function chatGlossarySignature(metadata) { const terms=chatGlossaryEntries(metadata).map(({src,dst})=>[src,dst]),styles=styleProfileSignature(metadata);return styles.length?[...terms,['speech-preferences-v1',styles]]:terms; }
+export function chatGlossarySignature(metadata) { const terms=chatGlossaryEntries(metadata).map(({src,dst})=>[src,dst]),styles=styleProfileSignature(metadata);return styles.length?[...terms,['speech-preferences-v2',styles]]:terms; }
 // Once a loaded chat starts a scoped translation, later rule deletion cannot
 // make its in-flight result eligible for the legacy source-only global cache.
 // Weak ownership has no persistent setting or unbounded source-text collection.

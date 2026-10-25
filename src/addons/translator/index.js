@@ -1897,7 +1897,7 @@ async function translate(text, options = {}) {
         //       기억 범위 = 채팅 번역 프롬프트 · 용어집(문단 캐시 서명과 같은 재료). 재번역은 기억을 읽지 않고 새 결과로 고친다.
         const cardChat = getContext(), chatPrompt = String(extensionSettings.llm_prompt_chat ?? '');
         const cardLocal = !options.isInputTranslation && /korean|한국어|한국말/i.test(String(options.prompt ?? chatPrompt)) ? cardValues({
-            scope: String(getStringHash(JSON.stringify([chatPrompt, ...(styleProfileSignature(cardChat?.chatMetadata).length ? ['speech-v1',styleProfileSignature(cardChat?.chatMetadata)] : []), extensionSettings.glossary_enabled === false ? null
+            scope: String(getStringHash(JSON.stringify([chatPrompt, ...(styleProfileSignature(cardChat?.chatMetadata).length ? ['speech-alias-v2',styleProfileSignature(cardChat?.chatMetadata)] : []), extensionSettings.glossary_enabled === false ? null
                 : [cardChat?.groupId ?? null, cardChat?.characters?.[cardChat?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries), ...chatGlossarySignature(cardChat?.chatMetadata)]]))),   // 2.7.5 updated 는 서명에서 뺀다
             remember: options.isRetranslation !== true,
         }) : null;
@@ -1978,7 +1978,7 @@ async function translate(text, options = {}) {
             }
             if (layout === 2) built = `[Fiction translation request]\n\n${built}`;
 
-            const speechPreferences = !isInputTranslation ? styleProfileBlock(getContext().chatMetadata, options.checkSource ?? body) : '';
+            const speechPreferences = !isInputTranslation ? styleProfileBlock(getContext().chatMetadata, options.checkSource ?? body, { entries: extensionSettings.glossary_enabled === false || !styleProfileSignature(getContext().chatMetadata).length ? [] : activeGlossaryEntries() }) : '';
             if (speechPreferences) built += `\n\n${speechPreferences}`;
 
             // 추가 지침(가이던스) 추가
@@ -2010,7 +2010,7 @@ async function translate(text, options = {}) {
         const prepared = { get(body) { if (!built.has(body)) { watcher.check(); built.set(body, PROMPT_LAYOUTS.map(layout => buildFullPrompt(layout, body))); } return built.get(body); } };
         // 문단 캐시 · 이어하기 키의 서명: 준비된 프롬프트 전체 대신 연결 · 프롬프트 · 지침 · 용어집(범위 + 항목) 요약 하나 (paragraph-v2)
         const chatCtx = getContext();
-        const setupDigest = await checkpointKey(JSON.stringify([connection, finalPrompt, rulePrompt, additionalGuidance, ...(styleProfileSignature(chatCtx?.chatMetadata).length ? ['speech-v1',styleProfileSignature(chatCtx?.chatMetadata)] : []), extensionSettings.glossary_enabled === false ? null
+        const setupDigest = await checkpointKey(JSON.stringify([connection, finalPrompt, rulePrompt, additionalGuidance, ...(styleProfileSignature(chatCtx?.chatMetadata).length ? ['speech-alias-v2',styleProfileSignature(chatCtx?.chatMetadata)] : []), extensionSettings.glossary_enabled === false ? null
             : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries), ...chatGlossarySignature(chatCtx?.chatMetadata)], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : []), ...(keptKorean.size ? ['korean-keep-v1'] : [])]));
         const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([setupDigest, text, ...(/<!--[\s\S]*?-->/.test(text) ? ['comments-v1'] : [])])) : '';   // 2.5.1 주석을 보호하기 전 덩이로 이어 쓰지 않게
         watcher.check();

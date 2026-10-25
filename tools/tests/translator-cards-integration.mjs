@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import { KOREAN_KEEP_ENV } from './korean-keep-env.mjs';   // 2.7.9 이미 한국어인 부분 판정 (korean-keep.js · KOREAN_TARGET)
+import { glossarySignature } from '../../src/addons/translator/glossary-sync.js';
+import { enforceGlossaryNames,prepareGlossaryNames } from '../../src/addons/translator/glossary-match.js';
 const root=path.resolve(process.argv[2]||'.'), dir=path.join(root,'src/addons/translator');
 const source=fs.readFileSync(process.argv[3]?path.resolve(process.argv[3]):path.join(dir,'index.js'),'utf8');
 const card=await import(pathToFileURL(path.join(dir,'display-cards.js')));
@@ -135,10 +137,24 @@ await test('actual translate applies explicit chat speech preferences only to ma
     try{
         events.length=0;await env.translate('Mina said hello to Rex.',{noChunks:true});
         assert(events.some(p=>p.includes('[Character speech preferences]')&&p.includes('both directions')&&p.includes('반말')));
-        assert(signatures.some(s=>s.includes('speech-v1')),'style preferences are part of the cache signature with glossary off');
+        assert(signatures.some(s=>s.includes('speech-alias-v2')),'style preferences are part of the cache signature with glossary off');
         events.length=0;await env.translate('Another person waved.',{noChunks:true});assert(events.every(p=>!p.includes('[Character speech preferences]')));
         events.length=0;await env.translate('Mina said hello to Rex.',{noChunks:true,isInputTranslation:true});assert(events.every(p=>!p.includes('[Character speech preferences]')));
         ctx.chatMetadata={};events.length=0;await env.translate('Mina said hello to Rex.',{noChunks:true});assert(events.every(p=>!p.includes('[Character speech preferences]')));
     }finally{ctx.chatMetadata=savedMetadata;reply=savedReply;env.checkpointKey=savedCheckpoint;}
+});
+await test('실제 번역 경로가 다국어 별칭의 말투와 호칭을 가짜 API로 전송해요',async()=>{
+    const savedMetadata=ctx.chatMetadata,savedReply=reply,savedEnabled=S.glossary_enabled;
+    const terms=[{src:'Lindel, リンデル',dst:'린델, 린'},{src:'Rovel, ロベル',dst:'로벨'}];
+    ctx.chatMetadata={llmt_style_profiles_v1:[{id:'synthetic-pair',speaker:'린, 린델',listener:'로벨',mutual:false,mode:'polite',note:'선배라고 부르기'}]};
+    S.glossary_enabled=true;S.glossary_entries=terms;env.activeGlossaryEntries=()=>terms;env.glossarySignature=glossarySignature;
+    env.tidyContext={entries:terms,names:[],prepared:prepareGlossaryNames(terms,[])};env.enforceGlossaryNames=enforceGlossaryNames;
+    reply=()=> '린델이 로벨에게 인사했어요.';
+    try{
+        events.length=0;await env.translate('Lindel said hello to Rovel.',{noChunks:true});
+        assert(events.some(p=>p.includes('[Character speech preferences]')&&p.includes('speaker to listener only')&&p.includes('존댓말')&&p.includes('선배라고 부르기')));
+        events.length=0;await env.translate('リンデルがロベルに挨拶した。',{noChunks:true});
+        assert(events.some(p=>p.includes('[Character speech preferences]')&&p.includes('リンデル')));
+    }finally{ctx.chatMetadata=savedMetadata;reply=savedReply;S.glossary_enabled=savedEnabled;delete S.glossary_entries;delete env.activeGlossaryEntries;delete env.glossarySignature;delete env.tidyContext;delete env.enforceGlossaryNames;}
 });
 console.log(`${checks} translator card integration checks passed`);
