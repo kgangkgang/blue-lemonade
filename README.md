@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.4/blue-lemonade-7.9.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.5/blue-lemonade-7.9.5.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.9.4 · 최신 업데이트</summary>
+<summary>7.9.5 · 최신 업데이트</summary>
+
+- 보내기 종이비행기를 옆 도구 아이콘과 같은 실제 크기로 맞추고, 입력 번역 말풍선과의 간격도 왼쪽 도구 사이 간격과 같게 했어요. 원 배경은 없고 누름 영역은 그대로 넉넉해요.
+- 월드인포 항목 머리를 다시 두 줄로 줄였어요. 첫 줄은 제목·상태·스위치, 둘째 줄은 위치·순서·확률이에요. 숫자칸은 값 길이만큼만 차지하고 확률은 값 뒤에 %를 붙여요. 아주 좁은 화면에서 글자가 클 때만 확률이 다음 줄로 넘어가요.
+- 번역 3.0.9: 실리태번 1.16에서 번역기가 켜지지 않던 문제를 고쳤어요. 번역 중이나 번역이 끝난 뒤 그림 확장이 그림 표시만 바꾸면 다시 번역하지 않고 번역문의 그림 표시만 바꿔요.
+
+</details>
+
+<details>
+<summary>7.9.4 · 실제 미리보기와 입력·목록 조작부를 다듬어요</summary>
 
 - 상태창 글자 설정의 미리보기를 현재 대화에 표시된 상태창의 글자와 배치로 보여 줘요. 글자 설정을 바꾸거나 원복하면 실제 표시와 함께 갱신해요. 상태창이 없거나 외부 그림을 복제할 수 없으면 그 이유를 알려 줘요.
 - 월드인포의 이름표와 입력 글자를 본문 크기로 맞추고, 값 줄을 같은 폭 두 칸과 8px 간격으로 정리했어요. 큰 글자 때문에 좁아지는 경우에는 한 칸으로 바뀌어요.
