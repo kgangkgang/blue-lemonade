@@ -54,7 +54,9 @@ html:not(#bl-pill-off) body.salty :is(#rm_extensions_block, dialog.popup) .inlin
 html:not(#bl-pill-off) body.salty :is(#rm_extensions_block, dialog.popup) .inline-drawer-header > :is(b, strong) > :is(i, svg, .ext-version, [class*="-version"], [data-bl-credits], .bl-copyright-icon, button, span) { margin: 0 !important; }
 html:not(#bl-pill-off) body.salty #rm_extensions_block .inline-drawer-header > :is(b, strong) > [data-bl-credits] { display: inline-flex !important; align-items: center !important; padding: 0 !important; }
 /* 7.7.9 © 단추는 30px 누름 영역 안에 18px 원 — 눈에 보이는 원 테두리와 알약 사이가 8 이 되게 안 보이는 6px 만큼 당긴다(누름 영역은 그대로) */
-html:not(#bl-pill-off) body.salty #rm_extensions_block .inline-drawer-header > :is(b, strong) > .bl-copyright { margin-inline-start: calc((18px - 30px) / 2) !important; }
+/* 7.9.7: 상자를 18px 원에 딱 맞추고(상자 간격 = 눈에 보이는 간격 = 8, 머리줄 간격 규칙), 누름 영역 44 는 투명 상자로 */
+html:not(#bl-pill-off) body.salty #rm_extensions_block .inline-drawer-header > :is(b, strong) > .bl-copyright { position: relative; width: 18px; min-width: 18px; min-height: 18px; padding: 0 !important; margin-inline-start: 0 !important; }
+html:not(#bl-pill-off) body.salty #rm_extensions_block .inline-drawer-header > :is(b, strong) > .bl-copyright::after { content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
 /* 테마 설정 창 제목도 같은 규칙: [Blue Lemonade] 8 [판 알약] 8 [© 원] */
 html:not(#bl-pill-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 html:not(#bl-pill-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) > .salty-ver { margin: 0 !important; }
@@ -84,10 +86,17 @@ html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools > * { mar
 /* flex 머리 안의 알약은 gap 이 간격을 맡는다 — 알약 자신의 왼쪽 여백 8 은 0 (위 기본 규칙보다 특이도 높게) */
 html:not(#bl-pill-off):not(#bl-pill-off2) body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-panel-header h3, dialog > header > b, .inline-drawer-header > b, #lv_settings .lv-card-head, .bwr_card_title) > :is(.ext-version, [class*="-version"], .bl-notes-ver) { margin: 0 !important; }
 /* 메모 창 머리(360 폭): 제목 묶음과 도구 줄이 겹쳤다 → 좁으면 부제(개수) · 판 알약 순으로 양보(철칙 §5), 제목 글자는 지킨다 */
+/* 7.9.7: 위 양보 규칙은 알약 공통 규칙(:not(#…) 두 개라 더 셈)에 져서 판 알약이 둘째 줄로 꺾였고, 도구 줄 overflow hidden 이 오른쪽 도구(설정 · 새 메모 · 닫기)를 잘라 숨겼다
+   → 폰은 두 줄: 첫 줄 [아이콘 · 메모 · 판 알약 … 닫기], 둘째 줄 도구 6개(오른쪽 맞춤 · 34). 부제(개수)만 양보 */
 @media (max-width: 480px) {
-  html body.salty dialog.bl-notes-dialog > header > b > :is(.bl-notes-count, .bl-notes-ver) { display: none !important; }
-  html body.salty dialog.bl-notes-dialog > header > b { flex: 0 0 auto !important; }
-  html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools { flex: 0 1 auto !important; min-width: 0 !important; overflow: hidden !important; }
+  html body.salty dialog.bl-notes-dialog > header { flex-wrap: wrap !important; column-gap: 8px !important; row-gap: 6px !important; }
+  html body.salty dialog.bl-notes-dialog > header > b > .bl-notes-count { display: none !important; }
+  html body.salty dialog.bl-notes-dialog > header > b { flex: 1 1 auto !important; order: 0; }
+  html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools { display: contents !important; }
+  html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools > [data-act="close"] { order: 1; }
+  html body.salty dialog.bl-notes-dialog > header::after { content: ''; order: 2; flex: 0 0 100%; height: 0; }
+  html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools > :not([data-act="close"]) { order: 3; }
+  html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools > :not([data-act="close"]):first-child { margin-left: auto !important; }
 }
 /* 7.8.1 (사용자 사진 10-23 · 화면 감사 PILLGAP · HEADROW): 설정 선택 목록 아래 「Blue Lemonade [판] ⓒ」 줄은 gap 8 에 알약 제 여백 8 이 더해져 16 이었다 → 알약 여백 0.
    애드온 창 머리(번역 창 dialog > header > b)는 아이콘 · 제목 · 알약 사이 6 → 8 */

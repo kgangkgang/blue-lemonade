@@ -62,7 +62,7 @@ html body.salty #pt-panel .pt-page-fixed .pt-act-row > .pt-qhelp.pt-act { backgr
 .salty-panel .salty-seg.salty-mini button { min-height: var(--bl-settings-chip); padding:calc(4px + var(--bl-text-nudge, 0px)) 9px calc(4px - var(--bl-text-nudge, 0px)); } /* 5.5.3 세로 중앙 */
 /* 5.6.6 폰(390)에서는 작은 고르기 글자가 1px 아래였다 (사용자 글꼴 실측 −1.03 → −0.03) → 위 1 줄임 */
 @media (pointer: coarse) {
-  .salty-panel .salty-seg.salty-mini button { padding-top:calc(3px + var(--bl-text-nudge, 0px)); padding-bottom:calc(5px - var(--bl-text-nudge, 0px)); }
+  .salty-panel .salty-seg.salty-mini button { padding-top:calc(3.5px + var(--bl-text-nudge, 0px)); padding-bottom:calc(4.5px - var(--bl-text-nudge, 0px)); } /* 7.9.7 1px 올림은 「직접」(ㅈ 위 잉크)이 −1.05 로 넘쳐 → 반 픽셀: 「직접」 ≈ −0.55 · 다른 글자 ≈ +0.5 */
 }
 .salty-panel :is(.salty-fonttags button,.salty-fontempty button) { height:auto; }
 .salty-panel :is(.salty-btns, .bl-palette-actions) { gap: var(--bl-settings-gap); }

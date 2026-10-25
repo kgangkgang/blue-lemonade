@@ -110,7 +110,9 @@ body.salty .bl-eye-pick .salty-pick-rows > button {
   text-align: center;
 }
 .salty-panel .bl-mespins button > span {
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; /* 7.9.7 두 줄로 꺾이던 이름(「프롬프트에서 메시지 제외」)만 칸이 43 — 한 줄로 두고, 안 들어가면 src/group-grid.js 가 1열로 */
   font-size: 13px;
   line-height: 1.35;
 }
@@ -123,6 +125,7 @@ body.salty .bl-eye-pick .salty-pick-rows > button {
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
+html body .salty-panel .bl-mespins[data-bl-cols="1"] { grid-template-columns: minmax(0, 1fr); } /* 7.9.7 이름이 칸보다 길면 1열 (33 의 넓은 창 3 · 4열보다 뒤 · 세게) */
 .salty-panel .bl-mespins button.on::after {
   border-color: var(--salty-accent);
 }

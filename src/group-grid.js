@@ -1,6 +1,6 @@
 // 7.7.9 단추 묶음 · 짧은 체크 항목 묶음의 2열 격자 자동 1열 — css/84-button-groups.css 가 2열로 그리는 묶음에서
 // 라벨이 한 줄에 안 들어가면(320 폭 등) 그 묶음에만 data-bl-cols="1" 을 붙여 1열로 떨어뜨린다. 창이 열리거나 크기가 바뀔 때 다시 잰다.
-const GROUPS = '.bl-btn-grid, .bl-check-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button), .llmt-settings .llmt-checks--grid, .salty-panel :is(.salty-group, .bl-editor-group-body, .bl-tool-body, .bl-addon-config, .salty-sec) > .salty-btns, .salty-panel .bl-word-options';
+const GROUPS = '.bl-btn-grid, .bl-check-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button), .salty-panel .bl-mespins, .llmt-settings .llmt-checks--grid, .salty-panel :is(.salty-group, .bl-editor-group-body, .bl-tool-body, .bl-addon-config, .salty-sec) > .salty-btns, .salty-panel .bl-word-options';
 const ITEMS = ':scope > .menu_button, :scope > button, :scope > label, :scope > .salty-btn';
 let bodyObserver = null, resizeObserver = null;
 const watched = new WeakSet();
@@ -13,7 +13,7 @@ export function fitGroup(group) {
     let overflow = false;
     for (const item of group.querySelectorAll(ITEMS)) {
         if (!item.getClientRects().length) continue;
-        const inner = item.matches('label') ? (item.querySelector(':scope > span') || item) : item;
+        const inner = item.querySelector(':scope > span') || item;   // 7.9.7 단추도 한 줄 이름 칸(span)이 넘치면 (메시지 버튼 고르기)
         if (inner.scrollWidth > inner.clientWidth + 1 || item.scrollWidth > item.clientWidth + 1) { overflow = true; break; }
     }
     if (overflow) group.setAttribute('data-bl-cols', '1');
