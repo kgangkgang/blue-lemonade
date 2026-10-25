@@ -224,6 +224,7 @@ jobs:
           node tools/tests/assets-strip-chat.mjs .
           node tools/tests/after-work.mjs .
           node tools/tests/show-more-auto.mjs .
+          node tools/tests/prompt-choice.mjs .
           node tools/tests/bughunt2-core.mjs .
           node tools/tests/dem-expressive-nest.mjs .
           node tools/tests/main-chat-rules.mjs .

@@ -54,6 +54,7 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     const on = !!s.enabled;
     if (['conflicts'].some(id=>s.addons?.[id]) || modules.assist) load('assist','./assist/index.js').then(m=>m?.syncAssist());
     syncTypography(on);
+    if (on || modules.promptchoices) load('promptchoices', './prompt-choice.js').then(m => m?.syncPromptChoices(on));
     // 7.0.4 글꼴 설정과 상관없이 테마가 켜져 있으면 — 채팅 iframe 과일 상태창의 낱말 꺾임 막기 (fruit-type-runtime wrapCss)
     if((on&&s.usageMode!=='extensions')||modules.fruittype)load('fruittype','./fruit-type-runtime.js').then(m=>m?.syncFruitTypography(s.fruitTypography,on && s.usageMode!=='extensions'));
     // 6.6.5 다른 확장 · 실리태번의 두꺼운 알약 · 동그라미 글자 버튼을 얇은 둥근 네모로 (사용자: "큰 알약 싫어")
