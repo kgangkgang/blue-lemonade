@@ -72,13 +72,15 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
         const s=current(),type=FRUIT_TYPES.find(t=>t.id===s.kind),frame=box.querySelector('iframe'),d=frame?.contentDocument;
         if(!d?.querySelector('[data-bl-fruit-preview]'))return;
         const source=findFruitPreviewSource(document,type.root),note=box.querySelector('[data-ft-font-status]');
-        if(!source){d.querySelector('[data-bl-fruit-preview]').replaceChildren();note.textContent='대화에 표시된 이 종류의 상태창이 없어 실제 미리보기를 읽을 수 없어요. 설정은 저장돼요.';frame.style.height='48px';previewKind='';return;}
+        if(!source){d.querySelector('[data-bl-fruit-preview]').replaceChildren();note.textContent='대화에 표시된 이 종류의 상태창이 없어 실제 미리보기를 읽을 수 없어요. 설정은 저장돼요.';frame.style.height='48px';previewKind='';previewSignature='';return;}
         const sourceStyle=getComputedStyle(source),rect=source.getBoundingClientRect(),backdrop=fruitPreviewBackground(source);
-        const signature=[s.kind,source.outerHTML,JSON.stringify(s),sourceStyle.color,sourceStyle.backgroundColor,backdrop,sourceStyle.fontFamily,sourceStyle.fontSize,rect.width,rect.height,source.ownerDocument.fonts?.size].join('|');
+        const imageState=[...source.querySelectorAll('img')].map(i=>[i.currentSrc,i.complete,i.naturalWidth,i.naturalHeight].join(':')).join('|');
+        const signature=[s.kind,source.outerHTML,imageState,JSON.stringify(s),sourceStyle.color,sourceStyle.backgroundColor,backdrop,sourceStyle.fontFamily,sourceStyle.fontSize,rect.width,rect.height,[...source.ownerDocument.fonts||[]].filter(f=>f.status==='loaded').length].join('|');
         if(signature===previewSignature)return;
-        if(!copyFruitPreview(source,d)){d.querySelector('[data-bl-fruit-preview]').replaceChildren();note.textContent='상태창이 너무 복잡해 미리보기를 만들 수 없어요. 설정은 저장돼요.';return;}previewKind=s.kind;previewSignature=signature;
+        if(!copyFruitPreview(source,d)){d.querySelector('[data-bl-fruit-preview]').replaceChildren();note.textContent='상태창이 너무 복잡해 미리보기를 만들 수 없어요. 설정은 저장돼요.';previewKind='';previewSignature='';return;}previewKind=s.kind;previewSignature=signature;
         const previewHost=d.querySelector('[data-bl-fruit-preview]'),unavailable=Number(previewHost.getAttribute('data-bl-preview-unavailable-images')||0)+Number(previewHost.getAttribute('data-bl-preview-unavailable-art')||0);
-        note.textContent='현재 대화 상태창의 글자와 배치예요. 설정 변경도 함께 보여요.'+(unavailable?' 외부 그림·배경 '+unavailable+'곳은 다시 요청하지 않고 같은 크기의 자리로 보여요.':'');
+        const unavailableFonts=Number(previewHost.getAttribute('data-bl-preview-unavailable-fonts')||0);
+        note.textContent='현재 대화 상태창을 너비에 맞춰 보여요.'+(unavailable?' 그림·배경 '+unavailable+'곳은 다시 요청하지 않고 같은 크기의 자리로 보여요.':'')+(unavailableFonts?' 브라우저에서 공유하지 못한 글꼴 '+unavailableFonts+'종은 대체 글꼴로 보여요.':'');
         d.body.style.backgroundColor=backdrop;
         const scene=box.querySelector('.bl-view-scene'),port=box.querySelector('.bl-view-port'),view=box._previewViews?.get('fruit-type');
         if(scene)scene.style.width=(Math.ceil(rect.width)+2)+'px';

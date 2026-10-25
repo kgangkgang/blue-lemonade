@@ -31,7 +31,7 @@ export function findFruitPreviewSource(doc, selector) {
     visit(doc,doc.querySelector('#chat'),0);return found.at(-1)||null;
 }
 export function copyFruitPreview(source, target) {
-    const view=source.ownerDocument.defaultView, rules=[];let count=0,unavailableImages=0,unavailableArt=0;
+    const view=source.ownerDocument.defaultView, rules=[],usedFamilies=new Set();let count=0,unavailableImages=0,unavailableArt=0;
     function imageSource(node) {
         const src=node.currentSrc||node.getAttribute('src')||'';
         if(src.startsWith('data:image/')&&safePreviewStyleValue(`url("${src}")`))return src;
@@ -49,6 +49,7 @@ export function copyFruitPreview(source, target) {
         const style=view.getComputedStyle(el,pseudo),out=[];
         for(const key of style) {
             const value=style.getPropertyValue(key);
+            if(key==='font-family')for(const family of value.split(','))usedFamilies.add(family.trim().replace(/^["']|["']$/g,'').toLowerCase());
             if(key==='background-image'&&/url\s*\(/i.test(value)&&!safePreviewStyleValue(value))unavailableArt++;
             if(key.startsWith('--')||!safePreviewStyleValue(value)||/^(animation|transition|cursor|pointer-events|content-visibility)/.test(key))continue;
             out.push(`${key}:${value}`);
@@ -85,7 +86,11 @@ export function copyFruitPreview(source, target) {
     host.setAttribute('data-bl-preview-unavailable-images',String(unavailableImages));
     host.setAttribute('data-bl-preview-unavailable-art',String(unavailableArt));
     const style=target.getElementById('snapshot-pseudo');if(style)style.textContent=rules.join('\n');
-    for(const face of source.ownerDocument.fonts||[])if(!target.fonts.has(face))target.fonts.add(face);
+    const unavailableFonts=new Set();
+    for(const face of source.ownerDocument.fonts||[])if(face.status==='loaded'&&usedFamilies.has(face.family.replace(/^["']|["']$/g,'').toLowerCase())&&!target.fonts.has(face)){
+        try{target.fonts.add(face);}catch{unavailableFonts.add(face.family);}
+    }
+    host.setAttribute('data-bl-preview-unavailable-fonts',String(unavailableFonts.size));
     return true;
 }
 export function fruitPreviewBackground(source) {

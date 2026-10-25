@@ -41,3 +41,8 @@ const input=element('input',{onchange:'danger()'});input.type='range';input.valu
 const password=element('input');password.type='password';password.value='복제하지 않는 검사값';own(password);source.childNodes.push(password);
 copyFruitPreview(source,target);const controls=host.childNodes[0].childNodes.filter(n=>n.tagName==='INPUT');
 assert.equal(controls[0].value,'25');assert.equal(controls[0].disabled,false);assert.equal(controls[0].inert,true);assert.equal(controls[0].getAttribute('onchange'),undefined);assert.equal(controls[1].value,undefined);assert.equal(controls[1].getAttribute('type'),'password');
+
+const beforeStyle=doc.defaultView.getComputedStyle;
+doc.defaultView.getComputedStyle=(...args)=>{const original=beforeStyle(...args),next=[...original,'font-family'];next.content=original.content;next.getPropertyValue=k=>k==='font-family'?'가상글꼴':original.getPropertyValue(k);return next;};
+doc.fonts.add({status:'loaded',family:'가상글꼴'});target.fonts.add=()=>{throw new DOMException('CSS로 연결된 글꼴 검사','InvalidModificationError');};
+assert(copyFruitPreview(source,target));assert.equal(host.getAttribute('data-bl-preview-unavailable-fonts'),'1');
