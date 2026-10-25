@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.6/blue-lemonade-7.9.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.7/blue-lemonade-7.9.7.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,18 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.9.6 · 최신 업데이트</summary>
+<summary>7.9.7 · 최신 업데이트</summary>
+
+- 퀵 리플라이: 하위 세트를 묶은 단추는 기본으로 ⋮ 표시만 보여서 이름이 두 번 나오지 않아요. 세트 이름을 보고 싶으면 설정의 「하위 목록 단추에 세트 이름」을 켜요. 설정의 미리보기도 실제 줄과 같게 보여요.
+- 퀵 리플라이 세트 색을 옅게 섞어 칠하고, 색을 고르지 않아 검정으로 저장된 세트는 칠하지 않아요. 묶음 뒤가 새까만 띠로 보이던 문제예요.
+- 메모 창 머리줄을 폰에서 두 줄로 나눠 닫기와 새 메모 단추가 가려지지 않아요.
+- 설정 창과 애드온 창의 단추·고르기 칸 크기를 크기표에 맞췄어요. 같은 역할의 단추가 창마다 크거나 작던 것(번역 용어집, TTS, 캐릭터 에셋, 색 혼합하기 등)을 정리했어요.
+- 확장 서랍의 ⓒ 표시 간격과 메시지 고정 칸의 긴 이름 줄임을 정리했어요.
+
+</details>
+
+<details>
+<summary>7.9.6 · 번역 그림 요청 블록</summary>
 
 - 번역 3.1.0: 그림 생성 확장의 기본 그림 요청 블록(<autopic> … </autopic>)도 그림 표시로 알아봐요. 블록 안 장면·인물 태그는 번역 요청에 보내지 않고, 그림이 들어오면 다시 번역하지 않고 번역문의 그 자리만 그림으로 바꿔요.
 
