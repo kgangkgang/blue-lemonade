@@ -558,8 +558,7 @@ body.salty #jj-popup .jj-empty {
   color: var(--salty-faint);
 }
 
-/* 보내기 · 생성 멈춤: 같은 자리 같은 포인트색 동그라미 (밝은 테마는 포인트색 그림자, 어두운 테마는 빛 대신 중립 그림자) */
-body.salty #send_but,
+/* 생성 멈춤은 기존 포인트색 동그라미를 유지해요. */
 body.salty #rightSendForm > #mes_stop {
   width: 34px !important;
   height: 34px !important;
@@ -573,16 +572,33 @@ body.salty #rightSendForm > #mes_stop {
   font-size: 19px !important;
   opacity: 1 !important;
 }
-body.salty.salty-dark #send_but,
 body.salty.salty-dark #rightSendForm > #mes_stop {
   box-shadow: var(--bl-e2);
 }
 body.salty #rightSendForm > :is(.stscript_btn, #mes_stop, #mes_continue, #mes_impersonate) {
   filter: none !important; /* 실리태번 hover 밝기 필터: 폰에선 누른 뒤에도 남음 */
 }
+/* 보내기는 옆 도구와 같은 크기의 비행기만 보여요. 누르는 칸은 44px예요. */
 body.salty #send_but {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  color: var(--salty-accent) !important;
+  font-size: 20px !important;
+  opacity: 1 !important;
 }
+body.salty #send_but:focus-visible { outline: 1px solid currentColor; outline-offset: -3px; }
+body.salty #nonQRFormItems > #rightSendForm { min-height: 44px; }
+
 /* 보내기 쪽 버튼 묶음: 다른 버튼과 같은 세로 중심 (2.7.9 — 전엔 2px 위로 옮겨 놓아 💬 · 보내기가 ≡ · ✦ 보다 떠 보였음, 사용자 지적) */
 body.salty #nonQRFormItems > #rightSendForm {
   transform: none;

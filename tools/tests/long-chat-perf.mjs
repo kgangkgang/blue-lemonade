@@ -145,6 +145,26 @@ await test('상태창 한국어(fruit-status): 1.5초 타이머 — 그대로면
     for (let i = 0; i < 3; i++) { H.tick(); assert.equal(H.frames.size, 0, '그대로인 채팅을 다시 훑음'); }
     stop(); assert.equal(H.timers.size, 0);
 });
+await test('상태창 글자: 일반 문장 교체는 다시 훑지 않고 새 iframe은 바로 찾아요', async () => {
+    const { watchFruitTypography } = await imp('src/fruit-type-runtime.js');
+    const doc=fakeDoc(),H=fakeHost(),{chat}=chatFixture(doc);
+    const stop=watchFruitTypography(doc,H.host,()=>({on:true}),()=> '');H.settle();
+    const observer=H.observers.find(o=>o.node===chat),text=new El(doc,'span');
+    for(let i=0;i<100;i++)observer.fn([{target:chat.children[0],addedNodes:[text],removedNodes:[]}]);
+    assert.equal(H.frames.size,0,'상태창과 관계없는 문장 교체를 다시 훑었어요');
+    observer.fn([{target:chat,addedNodes:[new El(doc,'iframe')],removedNodes:[]}]);
+    assert.equal(H.frames.size,1,'새 iframe을 놓쳤어요');stop();
+});
+await test('상태창 바로가기: 알림 100회에는 재탐색하지 않고 새 카드와 창에는 반응해요', async () => {
+    const { installFruitTypeShortcuts } = await imp('src/fruit-type-shortcuts.js');
+    const doc=fakeDoc(),H=fakeHost();chatFixture(doc);
+    const stop=installFruitTypeShortcuts(doc,H.host);H.settle();
+    const observer=H.observers.find(o=>o.node===doc.body),toast=new El(doc,'div',{class:'toast'});
+    for(let i=0;i<100;i++)observer.fn([{target:doc.body,addedNodes:[toast],removedNodes:[]}]);
+    assert.equal(H.frames.size,0,'알림 변경을 상태창 탐색으로 처리했어요');
+    observer.fn([{target:doc.body,addedNodes:[new El(doc,'section',{class:'dem-status'})],removedNodes:[]}]);
+    assert.equal(H.frames.size,1,'새 상태창을 놓쳤어요');stop();
+});
 await test('CI 등록', () => {
     assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/long-chat-perf\.mjs \./);
 });

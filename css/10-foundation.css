@@ -372,12 +372,13 @@ body.salty.salty-dark #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button.ui-tabs
 body.salty.salty-dark :is(.salty-seg, .salty-shapes) button.on {
   color: var(--bl-pop); /* 모양 고르기는 이름 · 그림 둘 다 */
 }
-/* 채팅 보내기 · 생성 멈춤: 레몬 동그라미 + 남색 아이콘 (그림자는 입력창 칸의 중립 e2 그대로) */
-body.salty.salty-dark #send_but,
+/* 생성 멈춤은 레몬 동그라미와 기존 그림자를 유지해요. */
 body.salty.salty-dark #rightSendForm > #mes_stop {
   background: var(--bl-fill-pop, var(--bl-pop)) !important;
   color: var(--bl-on-pop) !important;
 }
+
+body.salty.salty-dark #send_but { color: var(--bl-pop) !important; }
 
 /* ---------- --SmartThemeQuoteColor = 포인트색 (apply.js) ----------
    실리태번 · 확장은 이 변수를 포인트로 씀 (링크 · 자동완성 · 잠금 표시 · 타번 헬퍼 스위치 · 전개지시 등).

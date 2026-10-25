@@ -1,3 +1,4 @@
+import {fruitStructureChanged} from './fruit-type-mutations.js';
 import {FRUIT_TYPES,tidyFruitType,fruitTypeCss} from './fruit-type-schema.js';
 import {findFont,fontStack,loadFont} from './fonts.js';
 let stop=null, latest={on:false};
@@ -29,7 +30,7 @@ export function watchFruitTypography(doc,host,getConfig,fontFamily=()=> ''){
         const fonts=new Set();for(const t of Object.values(config.types))for(const r of Object.values(t.regions))if(r.on&&r.font!=='original'){const f=findFont(r.font);if(f&&!f.unusable)fonts.add(String(f.family).replace(/^['"]|['"]$/g,''));}
         function visit(d,scope){
             if(!scope||docs.has(d))return;docs.add(d);
-            const old=scopes.get(d);if(old?.root!==scope){old?.observer.disconnect();const observer=new host.MutationObserver(schedule);observer.observe(scope,{childList:true,subtree:true});scopes.set(d,{root:scope,observer});}
+            const old=scopes.get(d);if(old?.root!==scope){old?.observer.disconnect();const observer=new host.MutationObserver(records=>{if(fruitStructureChanged(records,rootSelector+',iframe'))schedule();});observer.observe(scope,{childList:true,subtree:true});scopes.set(d,{root:scope,observer});}
             const hasRoot=(css||d!==doc)&&!!scope.querySelector(rootSelector);
             if(d!==doc&&hasRoot){let wrap=wraps.get(d);if(!wrap?.isConnected){wrap=d.createElement('style');wrap.dataset.blFruitWrap='';wrap.textContent=WRAP;(d.head||d.documentElement).append(wrap);wraps.set(d,wrap);}}else unwrap(d);
             if(css&&hasRoot){

@@ -2,11 +2,11 @@ import {themeEnabled} from './usage-mode.js';
 import {getSettings,saveSettings} from './settings.js';
 import {allFonts,findFont,fontStack,loadFont} from './fonts.js';
 import {FRUIT_TYPES,FRUIT_UNSUPPORTED,REGION_DEFAULT,tidyFruitType,fruitTypeCss,typeOwner,ownerEnabled,layoutChoices} from './fruit-type-schema.js';
-import {fruitTypePreview,FRUIT_PREVIEW_BASE} from './fruit-type-preview.js';
+import {findFruitPreviewSource,copyFruitPreview,FRUIT_SNAPSHOT_DOCUMENT} from './fruit-type-snapshot.js';
 import {syncFruitTypography} from './fruit-type-runtime.js';
 import {bindTouchSliders} from './touch-sliders.js';
 import {bindPreviewViews} from './preview-view.js';
-import {originalPreview,originalFontFamilies,compactPreviewStyle} from './fruit-type-original.js';
+
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const current=()=>tidyFruitType(getSettings().fruitTypography);
 const family=id=>{const f=findFont(id);if(!f||f.unusable)return '';loadFont(f);return fontStack(f);};
@@ -18,7 +18,7 @@ export function bindFruitTypography(root){
     const box=root.matches?.('[data-fruit-type-editor]')?root:root.querySelector('[data-fruit-type-editor]');if(!box)return()=>{};
     const owner=box.dataset.fruitTypeEditor==='deus'?'deus':'fruit',types=FRUIT_TYPES.filter(t=>typeOwner(t)===owner);
     const current=()=>{const s=tidyFruitType(getSettings().fruitTypography);s.kind=s.ownerKinds[owner];return s;};
-    let alive=true;
+    let alive=true, previewTimer=0, previewFrame=0, previewKind='', previewSignature='';
     // Folding follows this editor only; the theme previews keep their own fold state.
     const folded=()=>{try{return localStorage.getItem('bl_ft_pvfold')==='1';}catch{return false;}};
     // 파라미터는 모두 세로 2줄: 윗줄 이름(슬라이더는 오른쪽에 현재 값), 아랫줄 조절칸 가로 꽉. 한 줄에 하나만.
@@ -45,20 +45,17 @@ ${field(key,'wrap','줄바꿈',`<select>${[['original','원작 그대로'],['wor
         const footer=type.regions.footer?`${type.id==='status'?'하단 반복 문구':type.regions.footer[0]} 숨기기`:'';
         box.innerHTML=`${choice('data-ft-kind','상태창 종류',types.map(t=>[t.id,t.name]),s.kind)}
 ${switchRow(`${ownerName} 글자 설정 사용`,'끄면 원작 표시로 돌아가요','data-ft-all-reset','이 상태창 전체 원복',toggle('data-ft-on',`${ownerName} 글자 설정 사용`,ownerEnabled(s,owner)))}
-<div class="salty-prevbox bl-ft-prevbox${folded()?' folded':''}" data-pv-max="120"><button type="button" class="salty-pvfold" data-ft-pvfold aria-expanded="${!folded()}" aria-label="${folded()?'미리보기 펼치기':'미리보기 접기'}"><i aria-hidden="true"></i></button><iframe class="bl-ft-preview" title="가상 상태창 미리보기" sandbox="allow-same-origin"></iframe></div>
+<div class="salty-prevbox bl-ft-prevbox${folded()?' folded':''}" data-pv-max="120"><button type="button" class="salty-pvfold" data-ft-pvfold aria-expanded="${!folded()}" aria-label="${folded()?'미리보기 펼치기':'미리보기 접기'}"><i aria-hidden="true"></i></button><iframe class="bl-ft-preview" title="실제 상태창 미리보기" sandbox="allow-same-origin"></iframe></div>
 <p class="salty-note bl-ft-font-note" data-ft-font-status role="status"></p>
-${type.id==='compact'?choice('data-ft-preview-style','미리보기 예시',[['present','현대'],['olden','고전'],['scifi','SF']],compactPreviewStyle(config.previewStyle)):''}
+
 ${type.layout?choice('data-ft-layout','정보 배치',layoutChoices(type),layoutChoices(type).some(([value])=>value===config.layout)?config.layout:'original'):''}
 ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-ft-hide',footer,config.hideFooter)}</div>`:''}
 <div class="bl-ft-groups">${regions}${unsupported}</div>`;
-        const frame=box.querySelector('iframe'),original=originalPreview(s.kind,config.previewStyle),fontNote=box.querySelector('[data-ft-font-status]');
-        // 짧게: 가상 예시라는 것과 글꼴 상태만
-        const say=text=>{fontNote.textContent=`가상 예시 · ${text}`;};
-        say(original.links.length?'원작 글꼴을 불러오는 중이에요':'대화 기본 글꼴로 보여요');
-        lastCss=lastLook='';
-        frame.addEventListener('load',()=>{updatePreview();const d=frame.contentDocument;if(!d?.getElementById('custom'))return;d.fonts.ready.then(()=>{if(!alive||!frame.isConnected)return;const families=new Set([...d.fonts].map(f=>f.family.replace(/^['"]|['"]$/g,'')));const missing=originalFontFamilies(s.kind,config.previewStyle).some(f=>!families.has(f))||[...d.querySelectorAll('link')].some(l=>!l.sheet)||[...d.fonts].some(f=>f.status==='error');say(missing?'일부 원작 글꼴 대신 대체 글꼴로 보여요':original.links.length?'원작 글꼴로 보여요':'대화 기본 글꼴로 보여요');updatePreview();});});
+        const frame=box.querySelector('iframe');
+        lastCss='';previewKind='';previewSignature='';
+        frame.addEventListener('load',()=>capturePreview());
         bindPreviewViews(box,'fruit-type');
-        frame.srcdoc=`<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${original.links.map(url=>`<link rel="stylesheet" href="${esc(url)}">`).join('')}<style>${FRUIT_PREVIEW_BASE}\n${original.css}</style><style id="custom"></style><body>${fruitTypePreview(s.kind)}</body></html>`;
+        frame.srcdoc=FRUIT_SNAPSHOT_DOCUMENT;
     }
     // 미리보기 칸은 작게 두고, 펼치거나 고친 영역이 보이게 칸 안을 옮긴다 (확대 배율 · 사용자가 옮긴 가로 위치는 그대로)
     function reveal(key){
@@ -69,27 +66,39 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
     }
     // 값이 바뀐 뒤 영역 머리 요약만 고친다 (다시 그리지 않음)
     function summarize(s){const config=s.types[s.kind];for(const out of box.querySelectorAll('[data-ft-group-box]')){const r=config.regions[out.dataset.ftGroupBox];if(r)out.querySelector('.bl-ft-group-summary').textContent=regionSummary(r);}}
-    // 1.5초마다 불리므로 바뀐 것만 쓴다 (같은 값이면 iframe 다시 계산 없음)
-    let lastCss='',lastLook='';
-    function updatePreview(){
-        if(!alive)return;const frame=box.querySelector('iframe'),d=frame?.contentDocument;if(!d?.getElementById('custom'))return;
-        const css=fruitTypeCss(current(),family);if(css!==lastCss){d.getElementById('custom').textContent=css;lastCss=css;}
-        const host=getComputedStyle(box),chatStyle=getComputedStyle(document.querySelector('#chat .mes_text')||document.querySelector('#chat')||document.body);
-        const look=[host.getPropertyValue('--salty-bg').trim()||'#faf8f3',host.getPropertyValue('--salty-text').trim()||'#333',chatStyle.fontFamily,chatStyle.fontSize];
-        if(look.join('|')!==lastLook){d.body.style.setProperty('--preview-bg',look[0]);d.body.style.setProperty('--preview-text',look[1]);d.body.style.setProperty('--mainFontFamily',look[2]);d.body.style.fontSize=look[3];lastLook=look.join('|');}
-        document.fonts?.forEach(f=>{if(!d.fonts.has(f))d.fonts.add(f);});
-        // Share only font resources already loaded by actual same-origin renderers.
-        // No message text, character data or preset bodies enter the preview.
-        const families=new Set(originalFontFamilies(current().kind,current().types[current().kind].previewStyle));
-        for(const native of document.querySelectorAll('#chat iframe'))try{native.contentDocument?.fonts?.forEach(f=>{if(families.has(f.family.replace(/^['"]|['"]$/g,''))&&!d.fonts.has(f))d.fonts.add(f);});}catch{/* Cross-origin renderers remain isolated. */}
-        // 내용 높이에 맞춘다 — 빈 바닥을 남기지 않게. 문서 높이는 iframe 높이 밑으로 줄지 않아 body 를 잰다 (보이는 높이는 미리보기 칸이 정한다)
-        const px=Math.min(520,Math.max(48,Math.ceil(d.body.getBoundingClientRect().height)))+'px';if(frame.style.height!==px)frame.style.height=px;
+    let lastCss='';
+    function capturePreview(){
+        previewFrame=0;if(!alive||!box.isConnected)return;
+        const s=current(),type=FRUIT_TYPES.find(t=>t.id===s.kind),frame=box.querySelector('iframe'),d=frame?.contentDocument;
+        if(!d?.querySelector('[data-bl-fruit-preview]'))return;
+        const source=findFruitPreviewSource(document,type.root),note=box.querySelector('[data-ft-font-status]');
+        if(!source){d.querySelector('[data-bl-fruit-preview]').replaceChildren();note.textContent='대화에 표시된 이 종류의 상태창이 없어 실제 미리보기를 읽을 수 없어요. 설정은 저장돼요.';frame.style.height='48px';previewKind='';return;}
+        const sourceStyle=getComputedStyle(source),rect=source.getBoundingClientRect();
+        const signature=[s.kind,source.outerHTML,JSON.stringify(s),sourceStyle.color,sourceStyle.backgroundColor,sourceStyle.fontFamily,sourceStyle.fontSize,rect.width,rect.height,source.ownerDocument.fonts?.size].join('|');
+        if(signature===previewSignature)return;
+        copyFruitPreview(source,d);previewKind=s.kind;previewSignature=signature;
+        note.textContent='현재 대화의 실제 상태창이에요. 글자 설정 변경도 함께 보여요.';
+        frame.style.width=Math.ceil(rect.width)+'px';frame.style.maxWidth='none';
+        d.body.style.colorScheme=getComputedStyle(source).colorScheme;
+        frame.style.height=Math.max(48,Math.ceil(rect.height+(parseFloat(sourceStyle.marginTop)||0)+(parseFloat(sourceStyle.marginBottom)||0)))+'px';
+        // 이미 적용된 실제 결과를 복제했으므로 설정 CSS를 다시 덧씌우지 않아요.
+        d.getElementById('custom').textContent='';lastCss='';
+        box.dispatchEvent(new Event('bl:preview-resize'));
     }
-    function commit(s){s.ownerKinds[owner]=s.kind;getSettings().fruitTypography=tidyFruitType(s);saveSettings();syncFruitTypography(s,themeEnabled(getSettings()));summarize(s);updatePreview();}
+    function schedulePreview(){
+        clearTimeout(previewTimer);
+        previewTimer=setTimeout(()=>{cancelAnimationFrame(previewFrame);previewFrame=requestAnimationFrame(capturePreview);},80);
+    }
+    function updatePreview(){
+        if(!alive)return;const frame=box.querySelector('iframe'),d=frame?.contentDocument;
+        if(!d?.getElementById('custom')||previewKind!==current().kind)return;
+        const css=fruitTypeCss(current(),family);
+        if(css!==lastCss){d.getElementById('custom').textContent=css;lastCss=css;}
+    }
+    function commit(s){s.ownerKinds[owner]=s.kind;getSettings().fruitTypography=tidyFruitType(s);saveSettings();syncFruitTypography(s,themeEnabled(getSettings()));summarize(s);updatePreview();schedulePreview();}
     function change(e){
         const el=e.target,s=current(),type=s.types[s.kind];
         if(el.hasAttribute('data-ft-kind')){if(!types.some(t=>t.id===el.value))return;s.kind=el.value;commit(s);paint();return;}
-        if(el.hasAttribute('data-ft-preview-style')){type.previewStyle=compactPreviewStyle(el.value);commit(s);paint();return;}
         if(el.hasAttribute('data-ft-on'))s.ownerOn[owner]=el.checked;
         else if(el.hasAttribute('data-ft-layout'))type.layout=el.value;
         else if(el.hasAttribute('data-ft-hide'))type.hideFooter=el.checked;
@@ -114,8 +123,8 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
         const fold=e.target.closest('[data-ft-pvfold]');
         if(fold){const shut=!fold.parentElement.classList.contains('folded');fold.parentElement.classList.toggle('folded',shut);fold.setAttribute('aria-expanded',String(!shut));fold.setAttribute('aria-label',shut?'미리보기 펼치기':'미리보기 접기');try{localStorage.setItem('bl_ft_pvfold',shut?'1':'0');}catch{}box.dispatchEvent(new Event('bl:preview-resize'));return;}if(e.target.closest('[data-ft-all-reset]')){const s=current();s.types[s.kind]=tidyFruitType({}).types[s.kind];commit(s);paint();return;}const el=e.target.closest('[data-ft-reset]');if(!el)return;const s=current();s.types[s.kind].regions[el.dataset.ftReset]={...REGION_DEFAULT};commit(s);paint();}
     box.addEventListener('change',change);box.addEventListener('input',input);box.addEventListener('click',click);paint();
-    const timer=setInterval(updatePreview,1500);
-    return()=>{alive=false;clearInterval(timer);box._previewCleanup?.();box.removeEventListener('change',change);box.removeEventListener('input',input);box.removeEventListener('click',click);};
+    const timer=setInterval(()=>{if(box.isConnected&&box.getClientRects().length&&!folded())schedulePreview();},1500);
+    return()=>{alive=false;clearInterval(timer);clearTimeout(previewTimer);cancelAnimationFrame(previewFrame);box._previewCleanup?.();box.removeEventListener('change',change);box.removeEventListener('input',input);box.removeEventListener('click',click);};
 }
 export async function openFruitTypography(kind){
     const s=current();if(FRUIT_TYPES.some(t=>t.id===kind)){s.kind=kind;s.ownerKinds[typeOwner(FRUIT_TYPES.find(t=>t.id===kind))]=kind;getSettings().fruitTypography=s;saveSettings();}

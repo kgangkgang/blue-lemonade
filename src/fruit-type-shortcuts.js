@@ -1,3 +1,4 @@
+import {fruitStructureChanged} from './fruit-type-mutations.js';
 import {FRUIT_TYPES} from './fruit-type-schema.js';
 import {optionFamily} from './scripts/fruit-option-help.js';
 import {openFruitTypography} from './fruit-type-ui.js';
@@ -39,7 +40,7 @@ function startShortcuts(doc,host){
     //   데우스 빠른 설정 창(#bl-deus-popover)은 닫으면 빠지므로 그대로.
     // While a reply streams, skip its text changes and look once when generation ends (body[data-generating] is removed).
     // Settings drawers and <select> lists never hold these cards or rows.
-    const observer=new host.MutationObserver(records=>{const streaming=!!doc.body.dataset.generating;for(const r of records){if(r.attributeName==='data-generating'){if(!streaming)schedule();continue;}if(r.target.closest?.('.drawer-content,select'))continue;if(!streaming||!r.target.closest?.('.mes_text')){schedule();return;}}});
-    observer.observe(doc.body,{childList:true,subtree:true});observer.observe(doc.body,{attributes:true,attributeFilter:['data-generating']});const timer=host.setInterval(()=>{if(doc.querySelector('#fruit-heart-v6.open,#bl-deus-popover')||frameSig(true)!==lastSig)schedule();},1500);flush();
+    const observer=new host.MutationObserver(records=>{const streaming=!!doc.body.dataset.generating;for(const r of records){if(r.attributeName==='data-generating'){if(!streaming)schedule();continue;}if(r.target.closest?.('.drawer-content,select'))continue;if((!streaming||!r.target.closest?.('.mes_text'))&&fruitStructureChanged([r],DEUS_ROOT+',iframe,#chat,#fruit-heart-v6,#bl-deus-popover','#fruit-heart-v6,#bl-deus-popover')){schedule();return;}}});
+    observer.observe(doc.documentElement||doc.body,{childList:true,subtree:true});observer.observe(doc.body,{attributes:true,attributeFilter:['data-generating']});const timer=host.setInterval(()=>{if(doc.querySelector('#fruit-heart-v6.open,#bl-deus-popover')||frameSig(true)!==lastSig)schedule();},1500);flush();
     return()=>{stopped=true;host.clearInterval(timer);doc.removeEventListener('click',click,true);observer.disconnect();host.cancelAnimationFrame(frame);for(const b of buttons.values())b.remove();buttons.clear();};
 }

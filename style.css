@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 2ee8dc0a912e) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 638a93f79de7) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -1778,7 +1778,6 @@ body.salty #jj-popup .jj-item-text {
 body.salty #jj-popup .jj-empty {
   color: var(--salty-faint);
 }
-body.salty #send_but,
 body.salty #rightSendForm > #mes_stop {
   width: 34px !important;
   height: 34px !important;
@@ -1792,7 +1791,6 @@ body.salty #rightSendForm > #mes_stop {
   font-size: 19px !important;
   opacity: 1 !important;
 }
-body.salty.salty-dark #send_but,
 body.salty.salty-dark #rightSendForm > #mes_stop {
   box-shadow: var(--bl-e2);
 }
@@ -1804,7 +1802,23 @@ body.salty #rightSendForm > #mes_impersonate {
 }
 body.salty #send_but {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  color: var(--salty-accent) !important;
+  font-size: 20px !important;
+  opacity: 1 !important;
 }
+body.salty #send_but:focus-visible { outline: 1px solid currentColor; outline-offset: -3px; }
+body.salty #nonQRFormItems > #rightSendForm { min-height: 44px; }
 body.salty #nonQRFormItems > #rightSendForm {
   transform: none;
 }
@@ -4386,10 +4400,12 @@ color:var(--bl-pop) !important;
 body.salty.salty-dark :is(.salty-seg, .salty-shapes) button.on:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--bl-pop);
 }
-body.salty.salty-dark #send_but:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 body.salty.salty-dark #rightSendForm > #mes_stop:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-fill-pop, var(--bl-pop)) !important;
 color:var(--bl-on-pop) !important;
+}
+body.salty.salty-dark #send_but:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+color:var(--bl-pop) !important;
 }
 body.salty :is(#chat,.bl-chat-like) .mes_reasoning q:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 body.salty :is(#chat,.bl-chat-like) .mes_reasoning q i:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),

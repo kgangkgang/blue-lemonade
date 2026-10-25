@@ -7,7 +7,8 @@ const dialogObservers = new WeakMap();
 export function fitNumberInput(el) {
     if (!(el instanceof HTMLInputElement) || el.type !== 'number') return;
     const len = String(el.value ?? '').length || String(el.placeholder ?? '').length;
-    el.style.setProperty('--bl-num-ch', String(Math.max(3, Math.min(len, 12))));
+    const width=String(Math.max(3, Math.min(len, 12)));
+    if(el.style.getPropertyValue('--bl-num-ch')!==width)el.style.setProperty('--bl-num-ch',width);
 }
 function fitIn(root) {
     if (!root?.querySelectorAll) return;
@@ -16,12 +17,20 @@ function fitIn(root) {
 function watchDialog(dlg) {
     if (!(dlg instanceof Element) || dialogObservers.has(dlg)) return;
     fitIn(dlg);
-    let t = 0;
-    const ob = new MutationObserver(() => { clearTimeout(t); t = setTimeout(() => fitIn(dlg), 30); });
+    let t = 0;const pending=new Set();
+    const ob = new MutationObserver(records => {
+        for(const record of records)for(const node of record.addedNodes){
+            if(!(node instanceof Element))continue;
+            if(node.matches('input[type="number"]'))pending.add(node);
+            for(const input of node.querySelectorAll('input[type="number"]'))pending.add(input);
+        }
+        if(!pending.size||t)return;
+        t=setTimeout(()=>{t=0;for(const input of pending)if(input.isConnected)fitNumberInput(input);pending.clear();},30);
+    });
     ob.observe(dlg, { childList: true, subtree: true });
     dialogObservers.set(dlg, ob);
     // 닫혀서 떨어져 나가면 그만
-    const done = new MutationObserver(() => { if (!dlg.isConnected) { ob.disconnect(); done.disconnect(); dialogObservers.delete(dlg); } });
+    const done = new MutationObserver(() => { if (!dlg.isConnected) { clearTimeout(t);pending.clear();ob.disconnect(); done.disconnect(); dialogObservers.delete(dlg); } });
     done.observe(document.body, { childList: true });
 }
 

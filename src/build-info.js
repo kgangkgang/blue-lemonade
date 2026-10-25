@@ -528,12 +528,14 @@ export const FILE_HASHES = {
   "src/frame-region.js": "2601:25867715:d0be67de",
   "src/frame-shadow.js": "2264:08ca1158:c82a6999",
   "src/frames.js": "3203:c491625f:dd410ff3",
+  "src/fruit-type-mutations.js": "646:5ca06ee0:166b6d7a",
   "src/fruit-type-original.js": "2554:2a40e2e5:78808f11",
   "src/fruit-type-preview.js": "4622:0c7c562c:e318a4ce",
-  "src/fruit-type-runtime.js": "5486:27bca491:e10470b1",
+  "src/fruit-type-runtime.js": "5622:5a4c4bc7:2cd6dc45",
   "src/fruit-type-schema.js": "10698:ab41c297:50691fb0",
-  "src/fruit-type-shortcuts.js": "6562:839a996d:4c7e1560",
-  "src/fruit-type-ui.js": "17036:f8e47e19:ad637db0",
+  "src/fruit-type-shortcuts.js": "6772:4bfbf966:e44abb7d",
+  "src/fruit-type-snapshot.js": "4064:9825b26d:9a200a32",
+  "src/fruit-type-ui.js": "16036:a292813f:07dd43b3",
   "src/generation-state.js": "6956:ff69362b:15d46250",
   "src/gradient-ui.js": "5326:12fabd1e:586f428a",
   "src/gradients.js": "10746:1b5ebec2:b7fb0a19",
@@ -570,7 +572,7 @@ export const FILE_HASHES = {
   "src/notice-data.js": "329310:de300245:72c114f5",
   "src/notice.js": "7015:67a9b734:b55e9315",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
-  "src/num-width.js": "2929:540aa26a:67ad53dc",
+  "src/num-width.js": "3476:eb9197b8:21327eac",
   "src/numbers.js": "2902:432db092:b638e9ce",
   "src/numcomma.js": "31859:4b995003:bdec99e6",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
@@ -703,5 +705,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1683224:6bbe0e47:7a093653"
+  "style.css": "1683757:7c10bed5:eeb6ae93"
 };
