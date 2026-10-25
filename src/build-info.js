@@ -531,7 +531,7 @@ export const FILE_HASHES = {
   "src/frames.js": "3203:c491625f:dd410ff3",
   "src/fruit-type-mutations.js": "646:5ca06ee0:166b6d7a",
   "src/fruit-type-original.js": "2554:2a40e2e5:78808f11",
-  "src/fruit-type-preview.js": "6163:55ce1a15:867c77c6",
+  "src/fruit-type-preview.js": "4623:87430754:67fca652",
   "src/fruit-type-runtime.js": "5622:5a4c4bc7:2cd6dc45",
   "src/fruit-type-schema.js": "11926:9c6a84a0:1366fec0",
   "src/fruit-type-shortcuts.js": "6830:061e663c:a7dc27a1",

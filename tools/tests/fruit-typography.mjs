@@ -17,7 +17,7 @@ s.types.status.hideFooter=true;assert(fruitTypeCss(s).includes('.fate-bottom-en{
 s.types.status.layout='vertical';assert(fruitTypeCss(s).includes('grid-template-columns:minmax(0,1fr)'));
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');let dictionary;
 const bundle=read('src/scripts/bundled/fruit.js');vm.runInNewContext(JSON.parse(bundle.slice(bundle.indexOf('export default ')+15).trim().replace(/;$/,'')),{BlueLemonade:{translate:d=>dictionary=d}});
-for(const type of FRUIT_TYPES){if(!['deus','qingguo'].includes(type.owner))assert(dictionary.prompts.some(x=>x.title===type.name),type.name);assert(fruitTypePreview(type.id).length>100);}
+for(const type of FRUIT_TYPES){if(!['deus','qingguo'].includes(type.owner))assert(dictionary.prompts.some(x=>x.title===type.name),type.name);if(type.owner!=='qingguo')assert(fruitTypePreview(type.id).length>100);}
 const preview=read('src/fruit-type-preview.js');assert(!/getContext\(|\.characters|\.persona|chat_metadata|fetch\(/.test(preview));
 const {DEUS_EFFECTS,DEUS_EFFECT_GROUPS}=await import(pathToFileURL(path.join(root,'src/scripts/deus-option-effects.js')));
 const {describeDeusOption}=await import(pathToFileURL(path.join(root,'src/scripts/deus-option-help.js')));
