@@ -5,7 +5,7 @@
 .salty-panel .salty-palette-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 5px 1px 12px; min-height: 38px; }
 .salty-panel .salty-palette-toolbar > span { font-size: 12px; color: var(--salty-muted); }
 .salty-panel .salty-mode-switch { display: flex; flex: none; gap: 3px; padding: 3px; border-radius: 12px; background: var(--salty-fill-shade, var(--salty-shade)); }
-.salty-panel .salty-mode-switch button { display: grid; place-items: center; width: 38px; height: 32px; border: 0; border-radius: 9px; background: transparent; color: var(--salty-muted); font-size: 17px; cursor: pointer; }
+.salty-panel .salty-mode-switch button { display: grid; place-items: center; width: 38px; height: 34px; border: 0; border-radius: 9px; background: transparent; color: var(--salty-muted); font-size: 17px; cursor: pointer; }
 .salty-panel .salty-mode-switch button[aria-pressed="true"] { background: var(--salty-fill-surface, var(--salty-surface)); color: var(--salty-accent); box-shadow: 0 0 0 1px var(--salty-shade); }
 .salty-panel .salty-mode-switch button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
 .salty-panel .salty-pal { min-width: 0; gap: 7px; padding: 8px; transition: box-shadow .15s ease; }

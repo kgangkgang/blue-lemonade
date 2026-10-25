@@ -156,7 +156,8 @@ export function startCompactLayout() {
             if (!expander || !qr.hasContext) continue;
             const names = [...new Set((qr.contextList || []).map(c => c.set?.name).filter(Boolean))];
             const title = names.join(' · ');
-            const text = enabled && title ? title : '⋮';
+            // 7.9.7 세트 이름은 설정에서 켰을 때만(body.salty-qr-ctx-names) — 기본은 실리태번처럼 ⋮ 하나, 이름은 title 로
+            const text = enabled && title && document.body.classList.contains('salty-qr-ctx-names') ? title : '⋮';
             if (expander.textContent !== text) expander.textContent = text;
             const tooltip = title ? `${title} 목록 열기` : '목록 열기';
             if (expander.title !== tooltip) expander.title = tooltip;
@@ -292,6 +293,7 @@ export function startCompactLayout() {
     let wasQrTop = document.body.classList.contains('salty-qr-top');
     let wasQrVertical = document.body.classList.contains('salty-qr-y');
     let wasFindOff = document.body.classList.contains('salty-qr-find-off');
+    let wasCtxNames = document.body.classList.contains('salty-qr-ctx-names');
     new MutationObserver(() => {
         const enabled = document.body.classList.contains('salty');
         const qrTop = document.body.classList.contains('salty-qr-top');
@@ -300,7 +302,9 @@ export function startCompactLayout() {
         const themeChanged = enabled !== wasEnabled;
         if (themeChanged || qrTop !== wasQrTop || qrVertical !== wasQrVertical || findOff !== wasFindOff) placeQuickReplies();
         if (themeChanged) { refreshWorld(); refreshPersonaTitle(); }
-        wasEnabled = enabled; wasQrTop = qrTop; wasQrVertical = qrVertical; wasFindOff = findOff;
+        const ctxNames = document.body.classList.contains('salty-qr-ctx-names');
+        if (ctxNames !== wasCtxNames) syncQrTitles();   // 7.9.7
+        wasEnabled = enabled; wasQrTop = qrTop; wasQrVertical = qrVertical; wasFindOff = findOff; wasCtxNames = ctxNames;
     }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     mobile.addEventListener('change', placeQuickReplies);
     document.addEventListener('change', event => { if (event.target?.id === 'qr--isEnabled') placeQuickReplies(); });

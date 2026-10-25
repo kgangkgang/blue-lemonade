@@ -27,7 +27,7 @@ body.salty .bl-pbind-list { min-height:0; }
 }
 .salty-panel .bl-mix .bl-mix-heading > span { flex:0 1 auto; width:auto; }
 .salty-panel .bl-mix .bl-mix-heading > .salty-btn {
-  flex:none; width:auto; margin:0; align-self:center; min-height:34px; padding:7px 10px 5px; font-size:var(--bl-fs-ctl, inherit); line-height:1.4; /* 7.8.1: .85em 이라 다른 글자 단추(13)보다 작던 것 — 단추 글자 한 크기 */
+  flex:none; width:auto; margin:0; align-self:center; min-height:var(--bl-settings-control, 34px); padding:7px 10px 5px; font-size:var(--bl-fs-ctl, inherit); line-height:1.4; /* 7.8.1: .85em 이라 다른 글자 단추(13)보다 작던 것 — 단추 글자 한 크기 */
 }
 .salty-panel .bl-mix .bl-mix-description { margin:4px 0 0; font-size:.85em; line-height:1.5; }
 /* PC의 읽는 폭과 간격을 유지하고, 폰은 창 밖 빈 공간을 작업 영역으로 돌린다. */

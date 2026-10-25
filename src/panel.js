@@ -536,7 +536,7 @@ function faviconRow() {
 }
 
 // 3.5.4 퀵 리플라이 줄 미리보기: 내 QR 이름(보이는 세트 세 개, 열 개씩)으로, 없으면 예시 이름. 입력판 줄과 같은 규칙 · 휠 · 끌기 · 스냅
-function qrSample(showFind = true) {
+function qrSample(showFind = true, ctxNames = false) {
     const MAX = 24;
     const EXAMPLES = ['인사', '상황 정리', '다음 장면', '요약해 줘', '속마음', '시간 흐름', '비 오는 밤', '카페', '회상', '전화', '편지 쓰기', '잠들기 전', '산책', '싸움', '화해', '고백'];
     const settings = globalThis.quickReplyApi?.settings;
@@ -545,14 +545,18 @@ function qrSample(showFind = true) {
     // 내 QR: 보이는 세트 차례대로 모두 모아 24개까지 (세트 하나에 한두 개뿐이어도 넘길 거리가 되게)
     for (const link of settings ? [settings.config, settings.chatConfig, settings.charConfig].flatMap(c => c?.setList || []) : []) {
         if (count >= MAX || !link?.isVisible || !link.set) continue;
-        const labels = (link.set.qrList || []).filter(q => !q.isHidden).map(q => q.label || '').filter(Boolean).slice(0, MAX - count);
+        // 7.9.7 하위 세트를 묶은 QR 은 실제 줄처럼 오른쪽 칸(⋮ 또는 세트 이름)까지 — 미리보기와 실제가 달라 보이던 것
+        const labels = (link.set.qrList || []).filter(q => !q.isHidden && q.label).slice(0, MAX - count).map(q => {
+            const names = [...new Set((q.hasContext ? q.contextList || [] : []).map(c => c.set?.name).filter(Boolean))];
+            return names.length ? { label: q.label, ctx: ctxNames ? names.join(' · ') : '⋮' } : { label: q.label };
+        });
         if (labels.length) { groups.push(labels); count += labels.length; }
     }
     // 모자라면 예시 이름으로 채움 — 줄이 넘쳐야 가로 · 세로 넘기기가 보임
-    if (count < 16) groups.push(EXAMPLES.slice(0, 16 - count));
+    if (count < 16) groups.push(EXAMPLES.slice(0, 16 - count).map(label => ({ label })));
     // 3.7.1 입력창 모형을 같이 그린다 — '자리'(입력창 아래 · 위)가 미리보기에서 바로 보이게. 모형은 body.salty-qr-top 에 따라 순서가 바뀐다 (css/36-qr-place.css)
     const inputMock = '<div class="bl-qr-inputmock" aria-hidden="true"><span class="bl-qr-inputmock-box">메시지를 입력하세요…</span><span class="bl-qr-inputmock-btn"><i class="fa-solid fa-paper-plane"></i></span></div>';
-    return `<div class="bl-qr-sample-wrap"><div class="bl-qr-sample" data-qr-sample tabindex="0" aria-label="퀵 리플라이 미리보기">${showFind ? '<span class="bl-qr-find-sample" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>' : ''}${groups.map(g => `<div class="qr--buttons" inert aria-hidden="true">${g.map(label => `<div class="qr--button"><div class="qr--button-label">${esc(label)}</div></div>`).join('')}</div>`).join('')}</div>${inputMock}</div>`;
+    return `<div class="bl-qr-sample-wrap"><div class="bl-qr-sample" data-qr-sample tabindex="0" aria-label="퀵 리플라이 미리보기">${showFind ? '<span class="bl-qr-find-sample" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>' : ''}${groups.map(g => `<div class="qr--buttons" inert aria-hidden="true">${g.map(q => `<div class="qr--button${q.ctx ? ' qr--hasCtx' : ''}"><div class="qr--button-label">${esc(q.label)}</div>${q.ctx ? `<div class="qr--button-expander">${esc(q.ctx)}</div>` : ''}</div>`).join('')}</div>`).join('')}</div>${inputMock}</div>`;
 }
 
 function row(label, control, note = '') {
@@ -1090,7 +1094,7 @@ async function faqAction(root, name) {
 function tabTheme(s, sub) {
     if(sub==='etc')return `<div class="bl-etc-grid"><details class="bl-usage-mode"><summary>사용 모드: <strong>${({both:'테마 + 확장',theme:'테마만',extensions:'확장만'})[usageMode(s)]}</strong></summary><div class="bl-usage-mode-body"><label>사용 모드<select data-usage-mode aria-label="사용 모드">${[['both','테마 + 확장'],['theme','테마만'],['extensions','확장만']].map(([v,label])=>`<option value="${v}" ${usageMode(s)===v?'selected':''}>${label}</option>`).join('')}</select></label><p>선택한 모드만 실행해요. 기존 설정은 보관해요.</p><button type="button" class="salty-btn" data-usage-apply>저장하고 새로고침</button><span role="status" data-usage-status></span></div></details>
         <div class="salty-group bl-ext-colors">${row('다른 확장 색 유지', toggle('compat.preserveExtensionColors', !!s.compat?.preserveExtensionColors), '확장 설정창과 지원되는 팝업이 원래 색을 써요')}${s.compat?.preserveExtensionColors ? extColorList(s) : ''}</div>
-        <div class="salty-group bl-first-run-row" data-search-anchor="처음 설정 다시 보기">${row('처음 설정 다시 보기', '<button type="button" class="salty-btn" data-act="first-run" aria-label="처음 설정 다시 보기"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></button>', '팔레트 · 글꼴 · 읽기 방식')}</div></div>`;
+        <div class="salty-group bl-first-run-row" data-search-anchor="처음 설정 다시 보기">${row('처음 설정 다시 보기', '<button type="button" class="salty-btn salty-btn-icon" data-act="first-run" aria-label="처음 설정 다시 보기"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></button>', '팔레트 · 글꼴 · 읽기 방식')}</div></div>`;
     if (sub === 'faq') return faqMarkup(s);   // 7.2.6
     if(sub==='update')return `<div class="salty-group">${row('새 버전 자동 확인', toggle('updateCheck', s.updateCheck !== false), '6시간에 한 번 · 새 버전이면 버전 표시가 노랗게 빛나요')}</div>`+updateMarkup()+healthMarkup();
     if (sub === 'changes') return settingsChanges(s);
@@ -1510,8 +1514,8 @@ function tabChat(s, sub) {
             ${row('다른 기기 변경 알림', toggle('syncWatch', s.syncWatch !== false), '이 채팅이 다른 기기에서 바뀌면 위에 띠를 띄우고, 덮어쓰기 전에 물어요')}
         </div>
         ${cap('진단', '제보할 때 붙여 넣는 한 덩어리')}<div class="salty-group">
-            ${row('진단 복사', '<button class="salty-btn" data-act="diag-copy" aria-label="진단 복사"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>', '버전 · 화면 · 표시 옵션 · 커스텀 CSS · 확장 · 최근 오류(번역 중단 이유)를 글로 복사해요. 댓글에 붙여 넣으면 돼요')}
-            ${row('진단 파일 만들기', '<button class="salty-btn" data-act="diag-file" aria-label="진단 파일 만들기"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i></button>', '판 · 켜진 기능 · 최근 오류 · 메시지 하나의 번역 검사를 JSON 파일 하나로')}
+            ${row('진단 복사', '<button class="salty-btn salty-btn-icon" data-act="diag-copy" aria-label="진단 복사"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>', '버전 · 화면 · 표시 옵션 · 커스텀 CSS · 확장 · 최근 오류(번역 중단 이유)를 글로 복사해요. 댓글에 붙여 넣으면 돼요')}
+            ${row('진단 파일 만들기', '<button class="salty-btn salty-btn-icon" data-act="diag-file" aria-label="진단 파일 만들기"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i></button>', '판 · 켜진 기능 · 최근 오류 · 메시지 하나의 번역 검사를 JSON 파일 하나로')}
         </div>`;
         return `${customCss}`;
     }
@@ -1546,7 +1550,8 @@ function tabChat(s, sub) {
             ${mesPinPicker(s)}
         </div>
         ${cap('퀵 리플라이')}<div class="salty-group bl-control-grid bl-qr-controls">
-            <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false && globalThis.quickReplyApi?.settings?.isEnabled === true)}</div>
+            <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false && globalThis.quickReplyApi?.settings?.isEnabled === true, s.chat.qrCtxNames === true)}</div>
+            ${row('하위 목록 단추에 세트 이름', toggle('chat.qrCtxNames', s.chat.qrCtxNames === true), '하위 세트를 묶은 QR 은 오른쪽 ⋮ 를 누르면 목록이 열려요. 켜면 ⋮ 대신 그 세트 이름을 보여요')}
             ${row('QR 검색 버튼', toggle('chat.qrFind', s.chat.qrFind !== false), '실리태번의 QR 사용하기를 켰을 때만 보여요. 과일·데우스 빠른 설정은 이 조건에 포함하지 않아요')}
             ${stack('자리', seg('chat.qrPlace', [['bottom', '입력창 아래'], ['top', '입력창 위']], 'bottom'), '입력창 옆에 아이콘이 많으면 위가 넓어요')}
             ${stack('넘기기', seg('chat.qrScroll', [['x', '가로 스크롤'], ['y', '세로 스크롤']]))}
@@ -1911,7 +1916,7 @@ function cutEdgeControls(s) {
         ${cap('그리는 범위')}
         <div class="salty-group">
             ${row('그림 칸 밖으로도 그리기', toggle('image.cutEdge.overflow', e.overflow), e.overflow ? '칸 밖까지 보여요 · 그림 칸에 잘린 면에는 안 그려요 · 투명 그림의 흐림은 빠져요' : '그림 크기에 맞춰 잘라요')}
-            ${row('처음 값', '<button type="button" class="salty-btn" data-act="cutedge-reset" aria-label="외곽선 · 그림자 처음 값으로"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>', '「자동」으로')}
+            ${row('처음 값', '<button type="button" class="salty-btn salty-btn-icon" data-act="cutedge-reset" aria-label="외곽선 · 그림자 처음 값으로"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>', '「자동」으로')}
         </div>
         </details>
         ${framed ? '<p class="salty-note">이미지 › 테두리를 쓰는 동안은 테두리가 먼저라 외곽선 · 그림자가 쉬어요.</p>' : ''}
@@ -2996,7 +3001,7 @@ function bind(root) {
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
-            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'image.cutEdge.outline.on', 'image.cutEdge.shadow.on', 'image.cutEdge.overflow', 'chat.streamFade', 'chat.hiddenFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors'].includes(path));
+            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.qrCtxNames', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'image.cutEdge.outline.on', 'image.cutEdge.shadow.on', 'image.cutEdge.overflow', 'chat.streamFade', 'chat.hiddenFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors'].includes(path));
             await syncChangedAddons([path]);
             if (path === 'updateCheck') { if (target.checked) void checkForUpdate({ force: true }); else clearUpdate(); }   // 5.7.0
             // 5.5.6: 테마를 끄는 순간에도 '맞추기' 값이 남아 있으면 되돌릴지 묻는다

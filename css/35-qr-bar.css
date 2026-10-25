@@ -50,6 +50,12 @@
   scroll-snap-align: start;
   user-select: none;
 }
+/* 7.9.7 하위 세트를 묶은 QR: 실제 줄처럼 오른쪽에 ⋮(또는 세트 이름) 칸 */
+.salty-panel .bl-qr-sample .qr--button.qr--hasCtx { padding-right: 0; }
+.salty-panel .bl-qr-sample .qr--button.qr--hasCtx > .qr--button-expander {
+  display: grid; place-items: center; align-self: stretch; flex: none; max-width: 14ch; margin: -4px 0 -4px 8px; padding: 0 9px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+}
 .salty-panel .bl-qr-sample .bl-qr-find-sample {
   position: sticky;
   left: 0;

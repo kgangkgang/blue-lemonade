@@ -714,6 +714,7 @@ export function applyAll() {
         shadowClasses(s).forEach(c => want.add(c)); // 글자 그림자 대상별 클래스 (style.css 끝 규칙)
         if (s.chat.bgImage) want.add('salty-bgimg');
         if (s.chat.qrFind === false) want.add('salty-qr-find-off');
+        if (s.chat.qrCtxNames === true) want.add('salty-qr-ctx-names');   // 7.9.7 QR ⋮ 자리에 하위 세트 이름 (layout.js syncQrTitles)
         if (s.chat.personaTall) want.add('salty-persona-tall');
         if (s.chat.helpMarks === false) want.add('salty-help-off'); // 6.1.5 설명 ? 단추 숨기기
         if (s.chat.webSearchMarks === false) want.add('salty-websearch-off'); // 6.2.6 웹 검색 · 출처 표시 끄기 (지구 아이콘 숨김 · 칩은 JS 가 안 띄움)

@@ -716,7 +716,7 @@ body.salty .bwr_settings .bwr_tab {
 body.salty .bwr_settings .bwr_tab i { font-size: 1.1em; }
 body.salty .bwr_settings .bwr_tab > span:not(.bwr_badge) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 body.salty .bwr_settings .bwr_tab .bwr_badge { position: absolute; top: 3px; right: 3px; min-width: 15px; padding: 0 4px; font-size: .8em; line-height: 1.5; }
-body.salty .bwr_settings .bwr_seg { min-height: var(--bl-h-ctl, 36px); padding: 4px 6px; font-size: var(--bl-ts-meta, 12.5px); line-height: 1.35; }
+body.salty .bwr_settings .bwr_seg { min-height: 34px; padding: 4px 6px; font-size: var(--bl-ts-meta, 12.5px); line-height: 1.35; }
 /* 2026-10-12 화면 다듬기: 40em(테마 설정 창 601px)에서 가로 탭이 되면 「금지 묘사 + 개수」가 칸 97 에 안 들어가 「금지 …」로 잘렸다 → 가로 탭은 50em 부터 */
 @container (min-width: 50em) {
     body.salty .bwr_settings .bwr_tab { flex-direction: row; gap: 8px; min-height: var(--bl-h-ctl, 36px); padding-block: 4px; }

@@ -19,7 +19,7 @@
 .salty-panel .bl-prompt-link .bl-link-hint[hidden] { display: none; }
 .salty-panel .bl-prompt-link .bl-link-actions { display: flex; padding: 10px 0 8px; border-top: 1px solid var(--salty-line); }
 /* 줄 추가 · 지우기: 설정 창 단추(salty-btn)의 작은 판 — 32px · 8px 모서리 */
-.salty-panel .bl-prompt-link .bl-link-mini { flex: none; min-height: 32px; padding: 4px 12px; }
+.salty-panel .bl-prompt-link .bl-link-mini { flex: none; min-height: var(--bl-settings-control, 34px); padding: 4px 12px; } /* 7.9.7 32 → 글자 단추 높이 */
 dialog.bl-prompt-card-picker {
     width: min(32rem, calc(100vw - 24px)); max-width: calc(100vw - 24px);
     max-height: min(80dvh, 720px); box-sizing: border-box; padding: 16px; margin: auto;

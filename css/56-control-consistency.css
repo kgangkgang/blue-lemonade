@@ -105,7 +105,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 }
 @media (max-width: 760px), (pointer: coarse) {
   .salty-panel { --bl-settings-control: 36px; --bl-settings-chip: 34px; }
-  html body .salty-panel.bl-editor .bl-settings-toprow button { min-height:40px; }
+  html body .salty-panel.bl-editor .bl-settings-toprow button { min-height:var(--bl-settings-control, 36px); } /* 7.9.7 40 → 크기표 글자 단추 36 (공용 측정 offstd 49곳) */
   html body .salty-panel.bl-editor .bl-setting-reset {
     width: 32px;
     min-width: 32px;
@@ -114,7 +114,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
     border: 0;
     border-radius: var(--bl-settings-radius);
   }
-  .salty-panel .bl-editor-directory-head button { width: 44px; height: 44px; }
+  .salty-panel .bl-editor-directory-head button { width: 34px; height: 34px; } /* 7.9.7 44 → 아이콘 도구 34 (닫기 × 도 같은 규격) */
   /* 큰 카테고리의 면과 포인트 선은 PC와 같은 규칙을 사용한다. */
   .salty-panel .salty-group .salty-group {
     padding-inline: 0;

@@ -465,6 +465,7 @@ function tidyFlags(s) {
         // 3.5.4 퀵 리플라이 줄: x 가로 스크롤 · y 세로 스크롤(보이는 줄 1~4)
         if (!['x', 'y'].includes(s.chat.qrScroll)) s.chat.qrScroll = 'x';
         s.chat.qrFind = flag(s.chat.qrFind, true);
+        s.chat.qrCtxNames = flag(s.chat.qrCtxNames, false);   // 7.9.7 하위 세트를 묶은 QR 의 ⋮ 자리에 세트 이름 (기본 ⋮ 만 — 제보: 미리보기와 달리 세트 이름이 이중으로 보였다)
         s.chat.personaTall = flag(s.chat.personaTall, false);
         s.chat.reasoningFollow = flag(s.chat.reasoningFollow, true); // 5.7.5 추론 요청을 끄면 지난 추론도 숨기기 (apply.js stReasoningOff)
         range('qrRows', 1, 4, 2);
@@ -758,7 +759,7 @@ export function resetSettings(groups = { look: true }) {
         next.deviceLayouts = { on: old.deviceLayouts?.on === true, pc: {}, mobile: {} };
         // 5.2.3: chat 안의 동작 값과 고정 메시지(데이터)도 모습이 아니다 — 남긴다 (styles.js CHAT_BEHAVIOR 와 같은 목록 + QR 배치 · 고정)
         if (old.chat && typeof old.chat === 'object') {
-            for (const key of ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'qrFind', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins']) {
+            for (const key of ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'qrFind', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins']) {
                 if (key in old.chat) next.chat[key] = structuredClone(old.chat[key]);
             }
         }
