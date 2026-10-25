@@ -274,7 +274,7 @@ export const FILE_HASHES = {
   "src/addons/translator/selection/ui.js": "10682:d605a881:ab163345",
   "src/addons/translator/sendform.html": "145:1e8a2159:510ea96d",
   "src/addons/translator/speech-translate.js": "8510:7d4794ab:3ac91d9f",
-  "src/addons/translator/style-profile.js": "8295:ae04ad3b:cd7ddd00",
+  "src/addons/translator/style-profile.js": "10454:81161082:0db4e115",
   "src/addons/translator/style.css": "31996:f8434d63:fdfc9420",
   "src/addons/translator/translation-check.js": "21636:b992a144:00885645",
   "src/addons/translator/translation-guard.js": "9950:b887474b:cc2358d4",
@@ -707,5 +707,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1688264:1e595435:ea27b951"
+  "style.css": "1688264:dba95093:39776a87"
 };

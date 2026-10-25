@@ -274,5 +274,5 @@ body.salty:not(#salty-none) #WorldInfo .world_entry_edit > .flex-container.flexG
 }
 
 body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) { display:flex!important; flex-wrap:nowrap; gap:8px; }
-body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) > small { width:auto!important; flex:1 1 auto; padding:0!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control > small:has(+ select[name="entryLogicType"]) { width:auto!important; flex:1 1 auto; padding:0!important; }
 body.salty:not(#salty-none) #WorldInfo .world_entry_edit select[name="entryLogicType"] { flex:0 1 auto!important; max-width:60%!important; }
