@@ -276,3 +276,18 @@ body.salty:not(#salty-none) #WorldInfo .world_entry_edit > .flex-container.flexG
 body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) { display:flex!important; flex-wrap:nowrap; gap:8px; }
 body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control > small:has(+ select[name="entryLogicType"]) { width:auto!important; flex:1 1 auto; padding:0!important; }
 body.salty:not(#salty-none) #WorldInfo .world_entry_edit select[name="entryLogicType"] { flex:0 1 auto!important; max-width:60%!important; }
+
+/* 항목 머리는 제목 줄과 값 줄, 전체 두 줄이에요. 펼친 설정의 두 칸 배치와 구분해요.
+   값 줄은 한 줄로 흘리고, 칸이 정말 모자랄 때만 확률을 다음 줄로 넘겨요(글자를 자르지 않아요). */
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEntryTitleAndStatus { flex-wrap:nowrap!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEntryTitleAndStatus > .flex-container { flex:1 1 0!important; min-width:0!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header > .world_entry_thin_controls > .flex-container > .WIEnteryHeaderControls { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls > .world_entry_form_control { flex:0 0 auto; flex-wrap:nowrap; gap:4px!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls > [name="PositionBlock"] { flex:1 1 auto; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls select[name="position"] { flex:1 1 auto; min-width:max-content!important; padding:0 20px 0 6px!important; background-position:right 6px center!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls :is([name="PositionBlock"] > label,label[for="depth"]) { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls input[type="number"] { flex:0 0 auto!important; field-sizing:content; width:auto!important; min-width:calc(1ch + 10px)!important; max-width:none!important; padding-inline:4px!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls > .probabilityContainer { gap:2px!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls .probabilityContainer > label { order:1; font-size:0!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls .probabilityContainer > label::before { content:'%'; font-size:var(--bl-fs-body); }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls .probabilityContainer > .bl-wi-help { order:2; margin-left:4px; }

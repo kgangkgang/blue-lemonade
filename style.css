@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 3b366a89f2ef) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a3680af28596) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.4";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -1805,9 +1805,9 @@ body.salty #send_but {
   align-items: center;
   justify-content: center;
   position: relative;
-  flex: 0 0 44px;
-  width: 44px !important;
-  height: 34px !important;
+  flex: 0 0 var(--bottomFormBlockSize);
+  width: var(--bottomFormBlockSize) !important;
+  height: var(--bottomFormBlockSize) !important;
   padding: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -1815,11 +1815,12 @@ body.salty #send_but {
   box-shadow: none !important;
   filter: none !important;
   color: var(--salty-accent) !important;
-  font-size: 20px !important;
+  font-size: calc(var(--bottomFormIconSize) * .95) !important;
   opacity: 1 !important;
 }
 body.salty #send_but:focus-visible { outline: 1px solid currentColor; outline-offset: -3px; }
-body.salty #send_but::after { content: ""; position: absolute; inset: -5px 0; }
+body.salty #send_but::after { content: ""; position: absolute; left:0; right:min(0px,100% - 44px); top:min(0px,(100% - 44px)/2); bottom:min(0px,(100% - 44px)/2); }
+body.salty.salty-icons-line #llm_translate_input_button { font-size:calc(var(--bottomFormIconSize) * .75)!important; }
 body.salty #nonQRFormItems > #rightSendForm {
   transform: none;
 }
@@ -14342,6 +14343,19 @@ body.salty:not(#salty-none) #WorldInfo .world_entry_edit > .flex-container.flexG
 body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) { display:flex!important; flex-wrap:nowrap; gap:8px; }
 body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control > small:has(+ select[name="entryLogicType"]) { width:auto!important; flex:1 1 auto; padding:0!important; }
 body.salty:not(#salty-none) #WorldInfo .world_entry_edit select[name="entryLogicType"] { flex:0 1 auto!important; max-width:60%!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEntryTitleAndStatus { flex-wrap:nowrap!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEntryTitleAndStatus > .flex-container { flex:1 1 0!important; min-width:0!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header > .world_entry_thin_controls > .flex-container > .WIEnteryHeaderControls { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls > .world_entry_form_control { flex:0 0 auto; flex-wrap:nowrap; gap:4px!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls > [name="PositionBlock"] { flex:1 1 auto; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls select[name="position"] { flex:1 1 auto; min-width:max-content!important; padding:0 20px 0 6px!important; background-position:right 6px center!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls :is([name="PositionBlock"] > label),
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls label[for="depth"] { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls input[type="number"] { flex:0 0 auto!important; field-sizing:content; width:auto!important; min-width:calc(1ch + 10px)!important; max-width:none!important; padding-inline:4px!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls > .probabilityContainer { gap:2px!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls .probabilityContainer > label { order:1; font-size:0!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls .probabilityContainer > label::before { content:'%'; font-size:var(--bl-fs-body); }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls .probabilityContainer > .bl-wi-help { order:2; margin-left:4px; }
 /* css/22-promptlist.css */
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list {
   margin: var(--bl-s3) calc(var(--bl-gutter, 12px) * -1) 0 !important;
