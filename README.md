@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.7/blue-lemonade-7.9.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.8/blue-lemonade-7.9.8.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.9.7 · 최신 업데이트</summary>
+<summary>7.9.8 · 최신 업데이트</summary>
+
+- 전개 지시 1.4.0: 전개 지시 · 항상 지시 · 프롬프트 줄마다 넣는 곳과 역할을 따로 골라요. 넣는 곳은 프롬프트 맨 처음 · 메인 프롬프트(스토리 문자열) 앞 · 메인 프롬프트 뒤 · 채팅 안 @깊이 · 프롬프트 맨 끝(프리필처럼 맨 끝에 붙는 자리) 가운데 하나, 역할은 시스템 · 사용자 · AI 어시스턴트 가운데 하나예요. 전개 지시 · 항상 지시는 확장 설정 카드에서, 프롬프트는 줄마다 고치기에서 바꿔요. 예전 설정은 쓰던 깊이 · 시스템 역할 그대로 옮겨져서 보내는 내용이 바뀌지 않아요. 메인 프롬프트 앞 · 뒤 자리는 채팅 완성(Chat Completion) API 에서만 들어가요.
+
+</details>
+
+<details>
+<summary>7.9.7 · 퀵 리플라이 하위 목록 · 단추 크기 맞춤</summary>
 
 - 퀵 리플라이: 하위 세트를 묶은 단추는 기본으로 ⋮ 표시만 보여서 이름이 두 번 나오지 않아요. 세트 이름을 보고 싶으면 설정의 「하위 목록 단추에 세트 이름」을 켜요. 설정의 미리보기도 실제 줄과 같게 보여요.
 - 퀵 리플라이 세트 색을 옅게 섞어 칠하고, 색을 고르지 않아 검정으로 저장된 세트는 칠하지 않아요. 묶음 뒤가 새까만 띠로 보이던 문제예요.
