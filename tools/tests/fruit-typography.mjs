@@ -17,7 +17,7 @@ s.types.status.hideFooter=true;assert(fruitTypeCss(s).includes('.fate-bottom-en{
 s.types.status.layout='vertical';assert(fruitTypeCss(s).includes('grid-template-columns:minmax(0,1fr)'));
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');let dictionary;
 const bundle=read('src/scripts/bundled/fruit.js');vm.runInNewContext(JSON.parse(bundle.slice(bundle.indexOf('export default ')+15).trim().replace(/;$/,'')),{BlueLemonade:{translate:d=>dictionary=d}});
-for(const type of FRUIT_TYPES){if(type.owner!=='deus')assert(dictionary.prompts.some(x=>x.title===type.name),type.name);assert(fruitTypePreview(type.id).length>100);}
+for(const type of FRUIT_TYPES){if(!['deus','qingguo'].includes(type.owner))assert(dictionary.prompts.some(x=>x.title===type.name),type.name);assert(fruitTypePreview(type.id).length>100);}
 const preview=read('src/fruit-type-preview.js');assert(!/getContext\(|\.characters|\.persona|chat_metadata|fetch\(/.test(preview));
 const {DEUS_EFFECTS,DEUS_EFFECT_GROUPS}=await import(pathToFileURL(path.join(root,'src/scripts/deus-option-effects.js')));
 const {describeDeusOption}=await import(pathToFileURL(path.join(root,'src/scripts/deus-option-help.js')));
@@ -38,7 +38,7 @@ assert.equal(separated.ownerKinds.fruit,'status');assert.equal(separated.ownerKi
 assert(!ownerEnabled(separated,'fruit'));assert(ownerEnabled(separated,'deus'));
 separated.types.status.regions.quote.on=true;separated.types['deus-status'].regions.info.on=true;
 assert(!fruitTypeCss(separated).includes('.fate-status-wrapper'));assert(fruitTypeCss(separated).includes('.dem-status'));
-assert.equal(FRUIT_TYPES.filter(t=>typeOwner(t)==='fruit').length,5);assert.equal(FRUIT_TYPES.filter(t=>typeOwner(t)==='deus').length,7);
+assert.equal(FRUIT_TYPES.filter(t=>typeOwner(t)==='fruit').length,8);assert.equal(FRUIT_TYPES.filter(t=>typeOwner(t)==='deus').length,7);
 for(const t of FRUIT_TYPES.filter(t=>t.layout))assert.equal(layoutChoices(t).length,2,'Only distinct layouts');
 const {originalPreview}=await import(pathToFileURL(path.join(root,'src/fruit-type-original.js')));
 assert(originalPreview('status').css.includes('LXGW WenKai'));assert(originalPreview('status').css.includes('SiyinSong'));

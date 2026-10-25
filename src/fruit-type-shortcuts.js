@@ -7,10 +7,10 @@ export function installFruitTypeShortcuts(doc=document,host=window){
     let lease=leases.get(doc);if(!lease){lease={count:0,stop:startShortcuts(doc,host)};leases.set(doc,lease);}lease.count++;let released=false;return()=>{if(released)return;released=true;if(--lease.count===0){lease.stop();leases.delete(doc);}};
 }
 function startShortcuts(doc,host){
-    const buttons=new Map(),types=new Map(FRUIT_TYPES.map(t=>[t.prompt,t]));let stopped=false,frame=0,pickerGroup='',lastSig='';
+    const buttons=new Map(),types=new Map(FRUIT_TYPES.flatMap(t=>[t.prompt,...(t.aliases||[])].map(id=>[id,t])));let stopped=false,frame=0,pickerGroup='',lastSig='';
     // 7.0.3 긴 채팅: 데우스 카드는 선택자 하나로 한 번만 훑고(종류마다 채팅 전체를 7번 훑었다), 1.5초 타이머는 과일 · 데우스 창이 열려 있거나
     // 채팅 뿌리 · iframe 문서(와 그 안 요소 수)가 바뀌었을 때만 훑는다 — iframe 안은 body 감시자가 못 보므로 요소 수까지 본다
-    const DEUS=FRUIT_TYPES.filter(t=>t.owner==='deus'),DEUS_ROOT=DEUS.map(t=>t.root).join(',');
+    const DEUS=FRUIT_TYPES.filter(t=>t.owner==='deus'||t.owner==='qingguo'),DEUS_ROOT=DEUS.map(t=>t.root).join(',');
     const ids=new WeakMap();let nextId=1;const idOf=o=>{if(!o)return 0;let i=ids.get(o);if(!i)ids.set(o,i=nextId++);return i;};
     const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of scope.querySelectorAll('iframe')){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
     const schedule=()=>{if(!stopped&&!frame)frame=host.requestAnimationFrame(flush);};
