@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 const root=path.resolve(process.argv[2]||'.');
-const {copyFruitPreview,findFruitPreviewSource,FRUIT_SNAPSHOT_DOCUMENT}=await import(pathToFileURL(path.join(root,'src/fruit-type-snapshot.js')));
+const {copyFruitPreview,findFruitPreviewSource,safePreviewStyleValue,FRUIT_SNAPSHOT_DOCUMENT}=await import(pathToFileURL(path.join(root,'src/fruit-type-snapshot.js')));
 function element(tag,attrs={},children=[]) {
     const values=new Map(Object.entries(attrs));
     const el={nodeType:1,tagName:tag.toUpperCase(),localName:tag,namespaceURI:'http://www.w3.org/1999/xhtml',childNodes:children,style:{},
@@ -19,9 +19,9 @@ const doc={defaultView:{getComputedStyle:()=>css},fonts:new Set()};
 const own=n=>{n.ownerDocument=doc;for(const c of n.childNodes||[])own(c);};own(source);
 assert(copyFruitPreview(source,target));
 const copied=host.childNodes[0];
-assert.deepEqual(copied.childNodes.map(n=>n.tagName),['A','SPAN']);
-assert.equal(copied.getAttribute('onclick'),undefined);assert.equal(copied.childNodes[0].getAttribute('href'),undefined);
-assert.equal(copied.childNodes[1].getAttribute('data-private-url'),undefined);
+assert.deepEqual(copied.childNodes.map(n=>n.tagName),['IMG','A','SPAN']);
+assert.equal(copied.getAttribute('onclick'),undefined);assert.equal(copied.childNodes[1].getAttribute('href'),undefined);
+assert.equal(copied.childNodes[2].getAttribute('data-private-url'),undefined);
 assert(copied.style.cssText.includes('font-size:18px'));assert(!copied.style.cssText.includes('url('));assert(!copied.style.cssText.includes('!important'));
 assert(FRUIT_SNAPSHOT_DOCUMENT.includes("default-src 'none'"));assert(!FRUIT_SNAPSHOT_DOCUMENT.includes('<script'));
 const cross=element('iframe');Object.defineProperty(cross,'contentDocument',{get(){throw Error('다른 출처');}});
@@ -29,3 +29,10 @@ const scope={querySelectorAll:q=>q==='iframe'?[cross]:[source]};
 assert.equal(findFruitPreviewSource({querySelector:()=>scope},'#statusBar'),source);
 source.getClientRects=()=>[];assert.equal(findFruitPreviewSource({querySelector:()=>scope},'#statusBar'),null);
 console.log('상태창 복제의 실행·외부주소 차단, 설정 덮어쓰기, 종류·출처·표시 경계를 확인했어요.');
+
+assert(safePreviewStyleValue('url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M0%200%20L1%201%22%2F%3E%3C%2Fsvg%3E")'));
+assert(!safePreviewStyleValue('url("data:image/svg+xml,%3Csvg%20onload%3D%22alert(1)%22%3E%3C%2Fsvg%3E")'));
+assert(!safePreviewStyleValue('url("https://invalid.invalid/x")'));
+
+assert(copied.childNodes[0].getAttribute('src').startsWith('data:image/svg+xml,'));
+assert.equal(host.getAttribute('data-bl-preview-unavailable-images'),'1');

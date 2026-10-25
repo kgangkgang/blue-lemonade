@@ -746,3 +746,10 @@ body.salty #pt-panel .pt-page-fixed .pt-toolbar,
 body.salty #pt-panel .pt-page-fixed .pt-toolbar > .pt-export-group { gap:8px!important; }
 body.salty #pt-panel .pt-page-fixed .pt-toolbar > :is(.pt-combo,.pt-btn,.pt-export-group),
 body.salty #pt-panel .pt-page-fixed .pt-toolbar > .pt-export-group > :is(.pt-btn-icon,.pt-more-actions) { margin:0!important; }
+
+/* 월드인포 목록은 이름·보조정보의 글자 단계와 줄 간격을 일정하게 맞춰요. */
+body.salty #pt-panel #pt-page-wi .pt-block-header { align-items:center; gap:8px; }
+body.salty #pt-panel #pt-page-wi .pt-block-name { flex:1 1 8em; min-width:0; font-size:inherit; line-height:1.45; word-break:keep-all; }
+body.salty #pt-panel #pt-page-wi :is(.pt-block-meta,.pt-token-count,.pt-status-badge) { font-size:13px; line-height:1.4; }
+body.salty #pt-panel #pt-page-wi .pt-block-meta { gap:8px; margin-bottom:8px; }
+body.salty #pt-panel #pt-page-wi .pt-meta-sep { margin:0; }

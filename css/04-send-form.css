@@ -583,9 +583,10 @@ body.salty #send_but {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
   flex: 0 0 44px;
   width: 44px !important;
-  height: 44px !important;
+  height: 34px !important;
   padding: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -597,7 +598,7 @@ body.salty #send_but {
   opacity: 1 !important;
 }
 body.salty #send_but:focus-visible { outline: 1px solid currentColor; outline-offset: -3px; }
-body.salty #nonQRFormItems > #rightSendForm { min-height: 44px; }
+body.salty #send_but::after { content: ""; position: absolute; inset: -5px 0; }
 
 /* 보내기 쪽 버튼 묶음: 다른 버튼과 같은 세로 중심 (2.7.9 — 전엔 2px 위로 옮겨 놓아 💬 · 보내기가 ≡ · ✦ 보다 떠 보였음, 사용자 지적) */
 body.salty #nonQRFormItems > #rightSendForm {

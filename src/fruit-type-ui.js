@@ -2,7 +2,7 @@ import {themeEnabled} from './usage-mode.js';
 import {getSettings,saveSettings} from './settings.js';
 import {allFonts,findFont,fontStack,loadFont} from './fonts.js';
 import {FRUIT_TYPES,FRUIT_UNSUPPORTED,REGION_DEFAULT,tidyFruitType,fruitTypeCss,typeOwner,ownerEnabled,layoutChoices} from './fruit-type-schema.js';
-import {findFruitPreviewSource,copyFruitPreview,FRUIT_SNAPSHOT_DOCUMENT} from './fruit-type-snapshot.js';
+import {findFruitPreviewSource,copyFruitPreview,fruitPreviewBackground,FRUIT_SNAPSHOT_DOCUMENT} from './fruit-type-snapshot.js';
 import {syncFruitTypography} from './fruit-type-runtime.js';
 import {bindTouchSliders} from './touch-sliders.js';
 import {bindPreviewViews} from './preview-view.js';
@@ -18,7 +18,7 @@ export function bindFruitTypography(root){
     const box=root.matches?.('[data-fruit-type-editor]')?root:root.querySelector('[data-fruit-type-editor]');if(!box)return()=>{};
     const owner=box.dataset.fruitTypeEditor==='deus'?'deus':'fruit',types=FRUIT_TYPES.filter(t=>typeOwner(t)===owner);
     const current=()=>{const s=tidyFruitType(getSettings().fruitTypography);s.kind=s.ownerKinds[owner];return s;};
-    let alive=true, previewTimer=0, previewFrame=0, previewKind='', previewSignature='';
+    let alive=true, previewTimer=0, previewFrame=0, previewKind='', previewSignature='', autoPreviewScale=null;
     // Folding follows this editor only; the theme previews keep their own fold state.
     const folded=()=>{try{return localStorage.getItem('bl_ft_pvfold')==='1';}catch{return false;}};
     // 파라미터는 모두 세로 2줄: 윗줄 이름(슬라이더는 오른쪽에 현재 값), 아랫줄 조절칸 가로 꽉. 한 줄에 하나만.
@@ -52,7 +52,7 @@ ${type.layout?choice('data-ft-layout','정보 배치',layoutChoices(type),layout
 ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-ft-hide',footer,config.hideFooter)}</div>`:''}
 <div class="bl-ft-groups">${regions}${unsupported}</div>`;
         const frame=box.querySelector('iframe');
-        lastCss='';previewKind='';previewSignature='';
+        lastCss='';previewKind='';previewSignature='';autoPreviewScale=null;
         frame.addEventListener('load',()=>capturePreview());
         bindPreviewViews(box,'fruit-type');
         frame.srcdoc=FRUIT_SNAPSHOT_DOCUMENT;
@@ -73,11 +73,16 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
         if(!d?.querySelector('[data-bl-fruit-preview]'))return;
         const source=findFruitPreviewSource(document,type.root),note=box.querySelector('[data-ft-font-status]');
         if(!source){d.querySelector('[data-bl-fruit-preview]').replaceChildren();note.textContent='대화에 표시된 이 종류의 상태창이 없어 실제 미리보기를 읽을 수 없어요. 설정은 저장돼요.';frame.style.height='48px';previewKind='';return;}
-        const sourceStyle=getComputedStyle(source),rect=source.getBoundingClientRect();
-        const signature=[s.kind,source.outerHTML,JSON.stringify(s),sourceStyle.color,sourceStyle.backgroundColor,sourceStyle.fontFamily,sourceStyle.fontSize,rect.width,rect.height,source.ownerDocument.fonts?.size].join('|');
+        const sourceStyle=getComputedStyle(source),rect=source.getBoundingClientRect(),backdrop=fruitPreviewBackground(source);
+        const signature=[s.kind,source.outerHTML,JSON.stringify(s),sourceStyle.color,sourceStyle.backgroundColor,backdrop,sourceStyle.fontFamily,sourceStyle.fontSize,rect.width,rect.height,source.ownerDocument.fonts?.size].join('|');
         if(signature===previewSignature)return;
-        copyFruitPreview(source,d);previewKind=s.kind;previewSignature=signature;
-        note.textContent='현재 대화의 실제 상태창이에요. 글자 설정 변경도 함께 보여요.';
+        if(!copyFruitPreview(source,d)){d.querySelector('[data-bl-fruit-preview]').replaceChildren();note.textContent='상태창이 너무 복잡해 미리보기를 만들 수 없어요. 설정은 저장돼요.';return;}previewKind=s.kind;previewSignature=signature;
+        const previewHost=d.querySelector('[data-bl-fruit-preview]'),unavailable=Number(previewHost.getAttribute('data-bl-preview-unavailable-images')||0)+Number(previewHost.getAttribute('data-bl-preview-unavailable-art')||0);
+        note.textContent='현재 대화 상태창의 글자와 배치예요. 설정 변경도 함께 보여요.'+(unavailable?' 외부 그림·배경 '+unavailable+'곳은 다시 요청하지 않고 같은 크기의 자리로 보여요.':'');
+        d.body.style.backgroundColor=backdrop;
+        const scene=box.querySelector('.bl-view-scene'),port=box.querySelector('.bl-view-port'),view=box._previewViews?.get('fruit-type');
+        if(scene)scene.style.width=(Math.ceil(rect.width)+2)+'px';
+        if(view&&port&&(autoPreviewScale===null||Math.abs(view.scale-autoPreviewScale)<.001)){autoPreviewScale=Math.min(1,port.clientWidth/(Math.ceil(rect.width)+2));view.scale=autoPreviewScale;view.x=0;}
         frame.style.width=Math.ceil(rect.width)+'px';frame.style.maxWidth='none';
         d.body.style.colorScheme=getComputedStyle(source).colorScheme;
         frame.style.height=Math.max(48,Math.ceil(rect.height+(parseFloat(sourceStyle.marginTop)||0)+(parseFloat(sourceStyle.marginBottom)||0)))+'px';
@@ -85,9 +90,9 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
         d.getElementById('custom').textContent='';lastCss='';
         box.dispatchEvent(new Event('bl:preview-resize'));
     }
-    function schedulePreview(){
+    function schedulePreview(force=false){
         clearTimeout(previewTimer);
-        previewTimer=setTimeout(()=>{cancelAnimationFrame(previewFrame);previewFrame=requestAnimationFrame(capturePreview);},80);
+        previewTimer=setTimeout(()=>{if(force)previewSignature='';cancelAnimationFrame(previewFrame);previewFrame=requestAnimationFrame(capturePreview);},80);
     }
     function updatePreview(){
         if(!alive)return;const frame=box.querySelector('iframe'),d=frame?.contentDocument;
@@ -95,7 +100,7 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
         const css=fruitTypeCss(current(),family);
         if(css!==lastCss){d.getElementById('custom').textContent=css;lastCss=css;}
     }
-    function commit(s){s.ownerKinds[owner]=s.kind;getSettings().fruitTypography=tidyFruitType(s);saveSettings();syncFruitTypography(s,themeEnabled(getSettings()));summarize(s);updatePreview();schedulePreview();}
+    function commit(s){s.ownerKinds[owner]=s.kind;getSettings().fruitTypography=tidyFruitType(s);saveSettings();syncFruitTypography(s,themeEnabled(getSettings()));summarize(s);updatePreview();schedulePreview(true);}
     function change(e){
         const el=e.target,s=current(),type=s.types[s.kind];
         if(el.hasAttribute('data-ft-kind')){if(!types.some(t=>t.id===el.value))return;s.kind=el.value;commit(s);paint();return;}

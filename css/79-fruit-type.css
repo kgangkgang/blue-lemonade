@@ -53,3 +53,14 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 /* 과일 창 · 데우스 빠른 설정 안 바로가기 단추: 8px 얇은 네모 */
 .bl-ft-shortcut{font:inherit!important;font-size:.8em!important;min-height:32px!important;padding:4px 10px!important;border-radius:8px!important;white-space:normal!important;overflow-wrap:anywhere!important;max-width:100%!important}
 @media(max-width:360px){.bl-ft-dialog{padding:0 12px 12px}.bl-ft-dialog-head{margin:0 -12px 4px;padding:8px 12px}}
+
+/* 원본의 8px 문자 꺾쇠 대신 공통 고르기 화살표를 같은 크기로 보여요. */
+:is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel > i {
+  display:inline-block; flex:0 0 15px!important; width:15px!important; height:15px!important;
+  font-size:0!important; transform:none!important;
+  background:var(--bl-select-arrow) no-repeat center / 15px 15px;
+}
+:is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel[data-pick-group] { position:relative; overflow:visible; }
+:is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel[data-pick-group]::after {
+  content:""; position:absolute; inset-inline:0; top:min(0px, (100% - 44px) / 2); bottom:min(0px, (100% - 44px) / 2);
+}

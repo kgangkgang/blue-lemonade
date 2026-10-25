@@ -56,10 +56,10 @@ export function bindPreviewViews(root, section) {
         let painted = '';
         function paint() {
             raf = 0;
-            const extraX = Math.max(0, width * (state.scale - 1));
+            const extraX = Math.max(0, width * state.scale - viewport.clientWidth);
             state.x = Math.max(-extraX / 2, Math.min(extraX / 2, state.x));
             state.y = Math.max(Math.min(0, viewHeight - height * state.scale), Math.min(0, state.y));
-            const transform = `translate(${(width - width * state.scale) / 2 + state.x}px,${state.y}px) scale(${state.scale})`;
+            const transform = `translate(${(viewport.clientWidth - width * state.scale) / 2 + state.x}px,${state.y}px) scale(${state.scale})`;
             if (transform === painted && scene.style.transform === transform) return;
             painted = transform;
             scene.style.transform = transform;
@@ -79,7 +79,7 @@ export function bindPreviewViews(root, section) {
                 else qr.scrollTop += dy;
                 if (qr.scrollLeft === x && qr.scrollTop === y) return;
             } else {
-                const maxX = Math.max(0, width * (state.scale - 1)) / 2;
+                const maxX = Math.max(0, width * state.scale - viewport.clientWidth) / 2;
                 const x = Math.max(-maxX, Math.min(maxX, state.x - dx));
                 const y = Math.max(Math.min(0, viewHeight - height * state.scale), Math.min(0, state.y - dy));
                 if (x === state.x && y === state.y) return;
@@ -88,9 +88,9 @@ export function bindPreviewViews(root, section) {
             e.preventDefault(); e.stopPropagation();
         };
         viewport.addEventListener('wheel', wheel, { passive: false });
-        function zoom(value, center = { x: width / 2, y: viewHeight / 2 }) {
+        function zoom(value, center = { x: viewport.clientWidth / 2, y: viewHeight / 2 }) {
             const next = Math.max(.5, Math.min(3, value)), ratio = next / state.scale;
-            state.x = (state.x - (center.x - width / 2)) * ratio + center.x - width / 2;
+            state.x = (state.x - (center.x - viewport.clientWidth / 2)) * ratio + center.x - viewport.clientWidth / 2;
             state.y = (state.y - center.y) * ratio + center.y;
             state.scale = next; schedule();
         }

@@ -242,3 +242,33 @@ body.salty:not(#salty-none) #WorldInfo .world_entry .inline-drawer-header:has(> 
 body.salty:not(#salty-none) #WorldInfo .world_entry .inline-drawer-header:has(> .drag-handle) .WIEntryTitleAndStatus { grid-area: 1 / 3; }
 body.salty:not(#salty-none) #WorldInfo .world_entry .inline-drawer-header:has(> .drag-handle) .killSwitch { grid-area: 1 / 4; }
 body.salty:not(#salty-none) #WorldInfo .world_entry .inline-drawer-header:has(> .drag-handle) .bl-wi-actions { grid-area: 1 / 5; }
+
+/* 월드인포 값 줄은 같은 폭 두 칸과 8px 간격을 사용해요. 글자가 커져 좁아질 때만 한 칸으로 바꿔요. */
+body.salty:not(#salty-none) #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header { gap:8px!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEntryTitleAndStatus { gap:8px!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls {
+  grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; align-items:stretch;
+}
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls > .world_entry_form_control {
+  flex-wrap:nowrap; align-items:center; gap:8px!important; min-height:var(--bl-h-ctl,36px);
+}
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls .WIEntryHeaderTitleMobile {
+  font-size:var(--bl-fs-body)!important; flex:0 1 auto; line-height:1.4;
+}
+body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls .world_entry_form_control > :is(input,select) {
+  min-width:0!important; flex:1 1 3.5em; min-height:max(var(--bl-h-ctl,36px),calc(1.4em + 8px))!important;
+  font-size:var(--bl-fs-body)!important;
+}
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit :is(.world_entry_form_control > small,small.textAlignCenter,.justifySpaceBetween > small,label.checkbox,label.checkbox_label) {
+  font-size:var(--bl-fs-body)!important; line-height:1.4; gap:8px!important;
+}
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit :is(input[type="text"],input[type="number"],select,textarea) { font-size:var(--bl-fs-body)!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit :is([name="perEntryOverridesBlock"],.flex-container.flexGap10) { gap:8px!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] { grid-template-columns:repeat(2,minmax(0,1fr)); }
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit > .flex-container.flexGap10 > div { flex-basis:calc(50% - 4px)!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit > .flex-container.flexGap10 > .flex4 { flex-basis:100%!important; }
+@container bl-wi-entry (max-width:18em) {
+  body.salty:not(#salty-none) #WorldInfo .world_entry .WIEnteryHeaderControls,
+  body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] { grid-template-columns:minmax(0,1fr); }
+  body.salty:not(#salty-none) #WorldInfo .world_entry_edit > .flex-container.flexGap10 > div { flex-basis:100%!important; }
+}
