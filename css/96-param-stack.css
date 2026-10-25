@@ -296,15 +296,19 @@ body.salty .cg-setting:has(.cg-stepper, .cg-segmented, select, input[type="numbe
 body.salty .cg-setting > :is(.cg-stepper, .cg-segmented) { width: 100% !important; max-width: none !important; align-self: stretch !important; }
 body.salty .cg-setting .cg-stepper > input[type="number"] { flex: 1 1 auto !important; width: auto !important; }
 /* 전개 지시 서랍: 이름 왼쪽 + 숫자 단추 */
-body.salty .jj-card .jj-row:has(> .jj-stepper, > .jj-color-row) {
+body.salty .jj-card .jj-row:has(> .jj-stepper, > .jj-color-row, > .jj-place) {
   flex-direction: column !important;
   align-items: stretch !important;
   gap: var(--bl-s2) !important;
 }
 /* 7.0.3 세로로 쌓으면 이름 칸의 flex 기준(8em)이 높이가 되어 이름 아래 빈 칸 90px 가 생겼다 → 이름 칸은 글 높이만 */
-body.salty .jj-card .jj-row:has(> .jj-stepper, > .jj-color-row) > .jj-row-label { flex: 0 0 auto !important; }
+body.salty .jj-card .jj-row:has(> .jj-stepper, > .jj-color-row, > .jj-place) > .jj-row-label { flex: 0 0 auto !important; }
 body.salty .jj-card .jj-row > .jj-stepper:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) { display: flex !important; width: 100% !important; }
 body.salty .jj-card .jj-row > .jj-stepper > input { flex: 1 1 auto !important; width: auto !important; }
+/* 7.9.8 넣는 곳(전개 지시 1.4.0): 고르기 둘은 반씩, 깊이 − 숫자 + 는 예전 깊이 줄처럼 한 줄 가득 */
+body.salty .jj-card .jj-row > .jj-place { width: 100% !important; }
+body.salty .jj-card .jj-row > .jj-place > .jj-stepper:not([hidden]) { display: flex !important; flex: 1 1 100% !important; }
+body.salty .jj-card .jj-row > .jj-place > .jj-stepper > input { flex: 1 1 auto !important; width: auto !important; }
 body.salty .jj-card .jj-row > .jj-color-row { width: 100% !important; }
 body.salty .jj-card .jj-row > .jj-color-row > input { flex: 1 1 auto !important; width: auto !important; min-width: 0 !important; }
 /* 과일의 마음 창(body 밖): QR 표시 · 이름 */

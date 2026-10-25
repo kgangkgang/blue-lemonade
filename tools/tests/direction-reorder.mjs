@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 const root = path.resolve(process.argv[2] || '.'), url = pathToFileURL(root + '/');
 const read = rel => fs.readFile(path.join(root, rel), 'utf8');
 const { insertInstructions } = await import(new URL('src/addons/direction/prompt.js', url));
+globalThis.__dirPlace=(await import(new URL('src/addons/direction/prompt.js', url))).placeInstructions;   // 1.4.0 넣는 곳마다
 const { mergeLists } = await import(new URL('src/addons/list-sync.js', url));
 const ext = {};
 const probe = { ext, insertInstructions, saves: 0, model: 'example-model', context: { substituteParams: text => String(text) } };
@@ -14,7 +15,7 @@ globalThis.__directionTest = probe; globalThis.window = { matchMedia: () => ({ m
 globalThis.CSS ??= { escape: value => String(value) };
 const js = await read('src/addons/direction/index.js');
 const source = js.split('// ── 시작')[0].replace(/^import .*;$/gm, '');
-const prelude = 'const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>globalThis.__directionTest.model;const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
+const prelude = 'const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>globalThis.__directionTest.model;const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
 const m = await import('data:text/javascript;base64,' + Buffer.from(prelude + source + '\nexport {initSettings,settings,injectDirection,trackGeneration,movePrompt,dropSlot,onPromptsReorderKey,onPromptsClick,HOLD_MS,HOLD_SLOP};').toString('base64'));
 
 let pass = 0, fail = 0;
@@ -79,7 +80,8 @@ await test('저장되는 곳 = promptList 순서 = 보내는 순서 (항상 지�
 await test('예전 설정(7.7.4): 새 칸 없이 그대로 읽고 순서 · 값이 바뀌지 않음 (두 번 읽어도 같음)', () => {
     const s = fresh();
     assert.deepEqual(ids(), ['pa', 'pb', 'pc', 'pd']);
-    assert.deepEqual(Object.keys(s.promptList[0]).sort(), ['at', 'content', 'enabled', 'id', 'title']);
+    assert.deepEqual(Object.keys(s.promptList[0]).sort(), ['at', 'content', 'enabled', 'id', 'place', 'title']);   // 1.4.0 넣는 곳은 예전 깊이 · 시스템으로 채움
+    assert.deepEqual(s.promptList[0].place, { at: 'depth', role: 'system', depth: s.promptDepth });
     const once = structuredClone(s); m.initSettings(); assert.deepEqual(m.settings(), once);
     assert.equal('promptOrder' in s, false, 'order lives in the list itself, no extra field');
 });

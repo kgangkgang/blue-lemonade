@@ -15,11 +15,12 @@ import { pathToFileURL } from 'node:url';
 const root = path.resolve(process.argv[2] || '.');
 const src = rel => path.join(root, rel);
 const { insertInstructions } = await import(pathToFileURL(src('src/addons/direction/prompt.js')).href);
+globalThis.__dirPlace=(await import(pathToFileURL(src('src/addons/direction/prompt.js')).href)).placeInstructions;   // 1.4.0 넣는 곳마다
 const ext = {};
 const P = globalThis.__directionMigrateTest = { ext, insertInstructions, saves: 0, context: { substituteParams: text => String(text) } };
 globalThis.window = { matchMedia: () => ({ matches: false, addEventListener() {} }) };
 const source = (await fs.readFile(src('src/addons/direction/index.js'), 'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm, '');
-const prelude = 'const P = globalThis.__directionMigrateTest; const extension_settings = P.ext; const insertInstructions = P.insertInstructions;'
+const prelude = 'const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const P = globalThis.__directionMigrateTest; const extension_settings = P.ext; const insertInstructions = P.insertInstructions;'
     + 'const getContext = () => P.context; const saveSettingsDebounced = () => { P.saves++; }; const eventSource = { on() {}, once() {} }; const event_types = {};'
     + 'const POPUP_TYPE = { TEXT: 1, CONFIRM: 2 }; const callGenericPopup = async () => true; const oai_settings = {}; const getChatCompletionModel = () => "";'
     + 'const verifyAddonCss = () => {}; const badgeTextHit = () => true; const showThemeModal = () => {};';
@@ -42,17 +43,19 @@ function load({ store, old } = {}) {
     return m.settings();
 }
 const EMPTY_LISTS = { presets: [], history: { direction: [], always: [] } };
+/** 1.4.0 넣는 곳(place)은 따로 본다 */
+const bare = ({ place, ...rest } = {}) => rest;
 
 await test('예전 단독 확장에서 처음 옮김: 켜짐 · 적은 지시 · 프롬프트 · 깊이 · 옮긴 표시 · 저장 한 번 · 예전 설정은 그대로 남김', () => {
     const old = { extensionEnabled: false, direction: { enabled: 1, content: 42 }, directionPrompt: 'Old frame: {{direction}}', promptDepth: 4, someOldKey: 'kept' };
     const before = structuredClone(old);
     const s = load({ old });
     assert.equal(s.extensionEnabled, false, '꺼 둔 입력창 버튼은 꺼진 채');
-    assert.deepEqual(s.direction, { enabled: true, content: '42' }, '켜짐은 불리언으로 · 지시는 글로');
+    assert.deepEqual(bare(s.direction), { enabled: true, content: '42' }, '켜짐은 불리언으로 · 지시는 글로');
     assert.equal(s.directionPrompt, 'Old frame: {{direction}}');
     assert.equal(s.promptDepth, 4);
     assert.equal(s.migratedFrom, OLD_MODULE, '어디서 옮겼는지 적음');
-    assert.deepEqual(s.always, { enabled: false, content: '' });
+    assert.deepEqual(bare(s.always), { enabled: false, content: '' });
     assert.deepEqual({ presets: s.presets, history: s.history }, EMPTY_LISTS);
     assert.equal(s.onColor, '');
     assert.equal('someOldKey' in s, false, '예전 확장의 모르는 칸은 가져오지 않음');
@@ -63,7 +66,7 @@ await test('예전 단독 확장에서 처음 옮김: 켜짐 · 적은 지시 ·
 await test('예전 값이 이상하면 그 칸만 기본값 · 큰 깊이는 100 · 음수는 0 · 빈 지시 글은 빈 칸', () => {
     let s = load({ old: { extensionEnabled: 'yes', direction: 'not an object', directionPrompt: '   ', promptDepth: 2.5 } });
     assert.equal(s.extensionEnabled, true, '불리언이 아니면 기본(켜짐)');
-    assert.deepEqual(s.direction, { enabled: false, content: '' }, '객체가 아닌 지시는 기본');
+    assert.deepEqual(bare(s.direction), { enabled: false, content: '' }, '객체가 아닌 지시는 기본');
     assert.equal(s.directionPrompt, DEFAULT_PROMPT, '빈 프롬프트는 기본 프롬프트');
     assert.equal(s.promptDepth, 1, '정수가 아닌 깊이는 기본');
     assert.equal(s.migratedFrom, OLD_MODULE);
@@ -71,14 +74,14 @@ await test('예전 값이 이상하면 그 칸만 기본값 · 큰 깊이는 100
     assert.equal(load({ old: { promptDepth: -3 } }).promptDepth, 0);
     assert.equal(load({ old: { promptDepth: 0 } }).promptDepth, 0, '0(맨 끝)도 옮김');
     s = load({ old: { direction: { enabled: false, content: null } } });
-    assert.deepEqual(s.direction, { enabled: false, content: '' });
+    assert.deepEqual(bare(s.direction), { enabled: false, content: '' });
 });
 
 await test('예전 설정이 객체가 아니면 옮기지 않음 · 예전 설정이 없어도 새 기본값으로 저장 한 번', () => {
     for (const old of ['broken', null, 7, undefined]) {
         const s = load({ old });
         assert.equal(s.migratedFrom, undefined, `옮긴 표시 없음: ${JSON.stringify(old)}`);
-        assert.equal(s.extensionEnabled, true); assert.deepEqual(s.direction, { enabled: false, content: '' });
+        assert.equal(s.extensionEnabled, true); assert.deepEqual(bare(s.direction), { enabled: false, content: '' });
         assert.equal(s.directionPrompt, DEFAULT_PROMPT); assert.equal(s.promptDepth, 1);
         assert.equal(P.saves, 1);
     }
@@ -89,7 +92,7 @@ await test('이미 옮긴 뒤에는 예전 설정을 다시 안 읽음 · 불러
         directionPrompt: 'Mine {{direction}}', promptDepth: 2, onColor: '#123456', ...EMPTY_LISTS, migratedFrom: OLD_MODULE };
     const s = load({ store, old: { extensionEnabled: false, direction: { enabled: false, content: 'old text' }, promptDepth: 9 } });
     assert.equal(s, store, '같은 객체를 고쳐 씀');
-    assert.deepEqual(s.direction, { enabled: true, content: 'The ferry is late tonight.' }, '예전 지시로 덮지 않음');
+    assert.deepEqual(bare(s.direction), { enabled: true, content: 'The ferry is late tonight.' }, '예전 지시로 덮지 않음');
     assert.equal(s.extensionEnabled, true); assert.equal(s.promptDepth, 2); assert.equal(s.directionPrompt, 'Mine {{direction}}');
     assert.equal(P.saves, 0, '고를 것이 없으면 저장 안 함');
     const once = structuredClone(s);
@@ -101,7 +104,7 @@ await test('이미 옮긴 뒤에는 예전 설정을 다시 안 읽음 · 불러
 await test('새 설정이 망가졌으면(객체가 아님) 예전 설정에서 다시 옮김', () => {
     for (const broken of ['oops', null, 3]) {
         const s = load({ store: broken, old: { direction: { enabled: true, content: 'old text' } } });
-        assert.deepEqual(s.direction, { enabled: true, content: 'old text' }, JSON.stringify(broken));
+        assert.deepEqual(bare(s.direction), { enabled: true, content: 'old text' }, JSON.stringify(broken));
         assert.equal(s.migratedFrom, OLD_MODULE); assert.equal(P.saves, 1);
     }
 });
@@ -120,14 +123,28 @@ await test('저장된 값 고르기: 깊이 · 켜짐 색 · 켜짐 스위치 ·
     assert.equal(load({ store: { ...base(), directionPrompt: null } }).directionPrompt, DEFAULT_PROMPT, '글이 아니면 기본 프롬프트');
     assert.equal(load({ store: { ...base(), directionPrompt: '' } }).directionPrompt, '', '사용자가 비운 프롬프트는 그대로');
     let s = load({ store: { ...base(), direction: { content: 5 } } });
-    assert.deepEqual(s.direction, { enabled: false, content: '5' }, '켜짐이 없으면 꺼짐 · 글로');
+    assert.deepEqual(bare(s.direction), { enabled: false, content: '5' }, '켜짐이 없으면 꺼짐 · 글로');
     s = load({ store: { ...base(), direction: undefined, always: { enabled: 'yes', content: 9 } } });
-    assert.deepEqual(s.direction, { enabled: false, content: '' });
-    assert.deepEqual(s.always, { enabled: true, content: '9' }, '항상 지시도 불리언 · 글로');
+    assert.deepEqual(bare(s.direction), { enabled: false, content: '' });
+    assert.deepEqual(bare(s.always), { enabled: true, content: '9' }, '항상 지시도 불리언 · 글로');
     s = load({ store: { ...base(), futureKey: { keep: [1, 2] }, migratedFrom: OLD_MODULE } });
     assert.deepEqual(s.futureKey, { keep: [1, 2] }, '모르는 칸은 그대로');
     assert.equal(s.migratedFrom, OLD_MODULE);
     assert.equal(P.saves, 0);
+});
+
+await test('1.4.0 넣는 곳: 예전 설정은 셋 다 그 깊이 · 시스템 · 고른 값은 그대로 · 이상한 값은 그 칸만 기본', () => {
+    let s = load({ old: { promptDepth: 4 } });
+    assert.deepEqual(s.direction.place, { at: 'depth', role: 'system', depth: 4 }, '예전 깊이 그대로');
+    assert.deepEqual(s.always.place, { at: 'depth', role: 'system', depth: 4 });
+    s = load({ store: { extensionEnabled: true, directionPrompt: 'D {{direction}}', promptDepth: 2, onColor: '', ...structuredClone(EMPTY_LISTS),
+        direction: { enabled: true, content: 'x', place: { at: 'end', role: 'assistant', depth: 7 } },
+        always: { enabled: false, content: '', place: { at: 'nowhere', role: 'narrator', depth: '300' } },
+        promptList: [{ id: 'a', title: 't', content: 'c', enabled: true, at: 1 }, { id: 'b', title: 'u', content: 'd', enabled: false, at: 2, place: { at: 'before-main', role: 'user' } }] } });
+    assert.deepEqual(s.direction.place, { at: 'end', role: 'assistant', depth: 7 }, '고른 값은 그대로');
+    assert.deepEqual(s.always.place, { at: 'depth', role: 'system', depth: 100 }, '모르는 자리 · 역할은 기본, 큰 깊이는 100');
+    assert.deepEqual(s.promptList.map(item => item.place), [{ at: 'depth', role: 'system', depth: 2 }, { at: 'before-main', role: 'user', depth: 2 }], '프롬프트 줄마다');
+    assert.equal(P.saves, 0, '불러오기만으로는 저장 안 함');
 });
 
 await test('저장 · 최근 목록 상한: 저장 100 · 최근은 쪽마다 30 · 앞(최근)부터 남김 · 망가진 쪽은 빈 목록', () => {

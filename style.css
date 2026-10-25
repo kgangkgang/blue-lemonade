@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build bfc95c497927) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f3b1af6fab8a) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.7";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -26074,7 +26074,7 @@ html body.salty #left-nav-panel .menu_button:not(label *) {
     box-sizing: border-box;
   }
   html body .salty-panel, html body .salty-panel.bl-editor { --num-h: max(44px, calc(1.5em + 12px)); }
-  html body :is(.bl-direction-dialog, .jj-settings-body, #jj-settings) #jj_depth { min-width: 44px; }
+  html body :is(.bl-direction-dialog, .jj-settings-body, #jj-settings) .jj-stepper input[data-field="depth"] { min-width: 44px; }
 }
 /* css/88-theme-off.css */
 html body:not(.salty) .salty-panel button,
@@ -26737,14 +26737,17 @@ body.salty .cg-setting:has(.cg-stepper, .cg-segmented, select, input[type="numbe
 body.salty .cg-setting > .cg-stepper,
 body.salty .cg-setting > .cg-segmented { width: 100% !important; max-width: none !important; align-self: stretch !important; }
 body.salty .cg-setting .cg-stepper > input[type="number"] { flex: 1 1 auto !important; width: auto !important; }
-body.salty .jj-card .jj-row:has(> .jj-stepper, > .jj-color-row) {
+body.salty .jj-card .jj-row:has(> .jj-stepper, > .jj-color-row, > .jj-place) {
   flex-direction: column !important;
   align-items: stretch !important;
   gap: var(--bl-s2) !important;
 }
-body.salty .jj-card .jj-row:has(> .jj-stepper, > .jj-color-row) > .jj-row-label { flex: 0 0 auto !important; }
+body.salty .jj-card .jj-row:has(> .jj-stepper, > .jj-color-row, > .jj-place) > .jj-row-label { flex: 0 0 auto !important; }
 body.salty .jj-card .jj-row > .jj-stepper:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) { display: flex !important; width: 100% !important; }
 body.salty .jj-card .jj-row > .jj-stepper > input { flex: 1 1 auto !important; width: auto !important; }
+body.salty .jj-card .jj-row > .jj-place { width: 100% !important; }
+body.salty .jj-card .jj-row > .jj-place > .jj-stepper:not([hidden]) { display: flex !important; flex: 1 1 100% !important; }
+body.salty .jj-card .jj-row > .jj-place > .jj-stepper > input { flex: 1 1 auto !important; width: auto !important; }
 body.salty .jj-card .jj-row > .jj-color-row { width: 100% !important; }
 body.salty .jj-card .jj-row > .jj-color-row > input { flex: 1 1 auto !important; width: auto !important; min-width: 0 !important; }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) :where(.bl-fruit-qr-display > label:has(select)):is(.bl-s, *):is(.bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),

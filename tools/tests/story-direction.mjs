@@ -4,11 +4,12 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 const root=path.resolve(process.argv[2]||'.'), url=pathToFileURL(root+'/');
 const prompt=await import(new URL('src/addons/direction/prompt.js',url));
+globalThis.__dirPlace=(await import(new URL('src/addons/direction/prompt.js',url))).placeInstructions;   // 1.4.0 넣는 곳마다
 const {insertDirection,insertInstructions,CONTINUE_DIRECTION}=prompt;
 const ext={};const probe={ext,insertInstructions,saves:0,subs:0,macro:null};
 probe.context={substituteParams(text){probe.subs++;if(probe.subFails)throw new Error('macro engine failed');let out=String(text).replace(/\{\{user\}\}|<USER>/gi,()=>'Alice').replace(/\{\{char\}\}/gi,()=>'Robin');if(probe.macro)out=out.replace(/\{\{direction\}\}/gi,()=>probe.macro());return out;}};globalThis.__directionTest=probe;globalThis.window={matchMedia:()=>({matches:false})};
 const source=(await fs.readFile(path.join(root,'src/addons/direction/index.js'),'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm,'');
-const prelude='const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const getChatCompletionModel=()=>globalThis.__directionTest.model||"example-model";const oai_settings={};';
+const prelude='const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const getChatCompletionModel=()=>globalThis.__directionTest.model||"example-model";const oai_settings={};';
 const m=await import('data:text/javascript;base64,'+Buffer.from(prelude+source+'\nexport {initSettings,settings,injectDirection,trackGeneration,remember,savePreset,isSaved,alwaysActive,directionMacroText,KINDS,HISTORY_MAX,PRESET_MAX};').toString('base64'));
 ext['Direction-Manager-Lite']={extensionEnabled:false,direction:{enabled:true,content:'literal $& direction'},directionPrompt:'Custom {{direction}}',promptDepth:3};
 m.initSettings();assert.equal(m.settings().extensionEnabled,false);assert.equal(m.settings().direction.content,'literal $& direction');assert.equal(m.settings().promptDepth,3);
@@ -22,10 +23,10 @@ const answer={role:'assistant',content:'original answer'};chat=[answer];insertDi
 chat=[{...answer,tool_calls:[{id:'tool'}]}];insertDirection(chat,'{{direction}}','next',1,'gemini-2.5-pro');assert.equal(chat.length,2);assert.equal(chat.at(-1).role,'assistant');
 // 1.1.5 항상 지시 · 저장 · 최근
 const s=m.settings();
-assert.deepEqual(s.always,{enabled:false,content:''});assert.deepEqual(s.presets,[]);assert.deepEqual(s.history.always,[]);assert.deepEqual(s.history.direction.map(x=>x.content),['literal $& direction'],'a sent direction is remembered');
+assert.deepEqual(s.always,{enabled:false,content:'',place:{at:'depth',role:'system',depth:3}},'1.4.0 넣는 곳은 예전 깊이 · 시스템');assert.deepEqual(s.presets,[]);assert.deepEqual(s.history.always,[]);assert.deepEqual(s.history.direction.map(x=>x.content),['literal $& direction'],'a sent direction is remembered');
 ext.jeongaejisi={...structuredClone(s),always:'bad',presets:[{kind:'always',content:' keep '},{kind:'always',content:'keep'},{kind:'direction',content:'keep'},{kind:'other',content:'x'},{kind:'direction',content:'  '},null],history:{direction:[{content:'a'},{content:' a '},{content:''},7],always:'bad'}};
 m.initSettings();const t=m.settings();
-assert.deepEqual(t.always,{enabled:false,content:''});assert.deepEqual(t.presets.map(p=>p.kind+':'+p.content),['always:keep','direction:keep'],'trimmed, one per page');assert.equal(typeof t.presets[0].id,'string');assert.ok(t.presets[0].id);assert.deepEqual(t.history.always,[]);assert.deepEqual(t.history.direction.map(h=>h.content),['a']);assert.equal(m.isSaved('always','keep'),true);
+assert.deepEqual(t.always,{enabled:false,content:'',place:{at:'depth',role:'system',depth:3}});assert.deepEqual(t.presets.map(p=>p.kind+':'+p.content),['always:keep','direction:keep'],'trimmed, one per page');assert.equal(typeof t.presets[0].id,'string');assert.ok(t.presets[0].id);assert.deepEqual(t.history.always,[]);assert.deepEqual(t.history.direction.map(h=>h.content),['a']);assert.equal(m.isSaved('always','keep'),true);
 t.history={direction:[],always:[]};t.presets=[];
 t.extensionEnabled=true;t.direction.enabled=false;t.promptDepth=1;t.directionPrompt='D {{direction}}';
 t.always={enabled:true,content:''};assert.equal(m.alwaysActive(),false);chat=[{role:'user',content:'u'}];m.trackGeneration('normal');m.injectDirection({chat});assert.equal(chat.length,1,'empty always sends nothing');

@@ -7,13 +7,14 @@ import { pathToFileURL } from 'node:url';
 const root = path.resolve(process.argv[2] || '.'), url = pathToFileURL(root + '/');
 const read = rel => fs.readFile(path.join(root, rel), 'utf8');
 const { insertInstructions } = await import(new URL('src/addons/direction/prompt.js', url));
+globalThis.__dirPlace=(await import(new URL('src/addons/direction/prompt.js', url))).placeInstructions;   // 1.4.0 넣는 곳마다
 const ext = {};
 const probe = { ext, insertInstructions, saves: 0, model: 'example-model',
     context: { substituteParams: text => String(text).replace(/\{\{user\}\}/gi, () => 'Alice').replace(/\{\{char\}\}/gi, () => 'Robin') } };
 globalThis.__directionTest = probe; globalThis.window = { matchMedia: () => ({ matches: false }) };
 const js = await read('src/addons/direction/index.js');
 const source = js.split('// ── 시작')[0].replace(/^import .*;$/gm, '');
-const prelude = 'const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>globalThis.__directionTest.model;const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
+const prelude = 'const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>globalThis.__directionTest.model;const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
 const m = await import('data:text/javascript;base64,' + Buffer.from(prelude + source + '\nexport {initSettings,settings,injectDirection,trackGeneration,promptsActive,sendLevel,enabledPrompts,stateText,kindActive,KINDS,TEXT_KINDS,PROMPT_MAX};').toString('base64'));
 
 let pass = 0, fail = 0;
@@ -85,7 +86,7 @@ await test('프롬프트만 켜져 있어도 간다 (항상 지시처럼) · 조
     const tail = send('normal', [{ role: 'user', content: 'u1' }, { role: 'assistant', content: 'a1' }]);
     assert.equal(tail.at(-1).role, 'assistant', 'prompts alone do not append a user turn (like always)');
     probe.model = 'example-model';
-    m.settings().promptDepth = 0;
+    for (const item of m.settings().promptList) item.place = { at: 'depth', role: 'system', depth: 0 };   // 1.4.0 넣는 곳은 줄마다
     assert.deepEqual(send().map(x => x.content), ['u1', 'a1', 'P Robin'], 'depth 0 = end');
     probe.saves = 0; send(); assert.equal(probe.saves, 0, 'sending prompts does not save settings (no history for this page)');
 });
@@ -99,7 +100,7 @@ await test('화면 · 설정 카드 · 합치기 · CSS · CI', async () => {
     assert.match(js, /lines\.push\(`프롬프트 \$\{prompts\.length\}개 켜짐/, 'button tooltip line');
     assert.doesNotMatch(js, /promptList: \[\{/, 'no shipped example prompts');
     const css = await read('src/addons/direction/style.css');
-    assert.match(css, /--jj-css-version: "1\.3\.7";/); assert.match(js, /const VERSION = '1\.3\.7';/);
+    assert.match(css, /--jj-css-version: "1\.4\.0";/); assert.match(js, /const VERSION = '1\.4\.0';/);
     assert.match(css, /\.jj-pitem-head \{[^}]*min-height: 44px/, 'row is a 44px target');
     assert.match(css, /#jj-popup \.jj-padd \{[^}]*min-height: 44px/);
     assert.match(css, /@media \(pointer: coarse\) \{\s*#jj-popup \.jj-pbtn::after \{[^}]*width: max\(100%, 44px\); height: max\(100%, 44px\)/, '36px buttons get a 44px hit box on touch');

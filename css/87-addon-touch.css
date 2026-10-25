@@ -76,5 +76,5 @@
   /* 설정 창 슬라이더의 숫자 칸: 20-panel.css 가 height: var(--num-h) !important 로 그리므로 변수 자체를 44 로 (56-control-consistency.css 의 max(34px, 1.5em + 12px) 뒤) */
   html body .salty-panel, html body .salty-panel.bl-editor { --num-h: max(44px, calc(1.5em + 12px)); }
   /* 전개 지시 창의 「깊이」 숫자 칸(폭 35) */
-  html body :is(.bl-direction-dialog, .jj-settings-body, #jj-settings) #jj_depth { min-width: 44px; }
+  html body :is(.bl-direction-dialog, .jj-settings-body, #jj-settings) .jj-stepper input[data-field="depth"] { min-width: 44px; }
 }

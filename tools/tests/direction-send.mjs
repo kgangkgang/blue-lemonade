@@ -6,11 +6,12 @@ import {pathToFileURL} from 'node:url';
 const root=path.resolve(process.argv[2]||'.'), url=pathToFileURL(root+'/');
 const read=rel=>fs.readFile(path.join(root,rel),'utf8');
 const {insertInstructions}=await import(new URL('src/addons/direction/prompt.js',url));
+globalThis.__dirPlace=(await import(new URL('src/addons/direction/prompt.js',url))).placeInstructions;   // 1.4.0 넣는 곳마다
 const ext={};const probe={ext,insertInstructions,saves:0,context:{substituteParams:text=>String(text)}};
 globalThis.__directionTest=probe;globalThis.window={matchMedia:()=>({matches:false})};
 const js=await read('src/addons/direction/index.js');
 const source=js.split('// ── 시작')[0].replace(/^import .*;$/gm,'');
-const prelude='const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>"";const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
+const prelude='const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>"";const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
 const m=await import('data:text/javascript;base64,'+Buffer.from(prelude+source+'\nexport {initSettings,settings,injectDirection,trackGeneration,alwaysActive,isActive,stateText,sendButton,sendNow};').toString('base64'));
 m.initSettings();
 

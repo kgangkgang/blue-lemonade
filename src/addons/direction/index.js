@@ -2,11 +2,11 @@ import { showThemeModal } from '../../modal.js';
 // 전개 지시 — 다음 전개를 적어 두면 보낼 때마다 프롬프트에 끼워 넣는다.
 // Direction-Manager-Lite를 한국어로 새로 만든 확장. 입력창 버튼 색으로 켜짐/꺼짐을 바로 알 수 있다.
 import { extension_settings, getContext } from '../../../../../../extensions.js';
-import { saveSettingsDebounced, eventSource, event_types } from '../../../../../../../script.js';
+import { saveSettingsDebounced, eventSource, event_types, setExtensionPrompt, extension_prompt_types, extension_prompt_roles } from '../../../../../../../script.js';
 import { POPUP_TYPE, callGenericPopup } from '../../../../../../popup.js';
 
 import { getChatCompletionModel, oai_settings } from '../../../../../../openai.js';
-import { insertInstructions } from './prompt.js';
+import { placeInstructions } from './prompt.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { badgeTextHit } from '../../badge-hit.js';
 // 7.7.4 시작 덮개 동안은 테마 색을 읽지 않는다
@@ -14,7 +14,8 @@ import { afterBoot } from '../../boot-gate.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.3.7';
+const VERSION = '1.4.0';
+// 1.4.0: 전개 지시 · 항상 지시 · 프롬프트 줄마다 넣는 곳(프롬프트 맨 처음 · 메인 프롬프트 앞/뒤 · 채팅 안 @깊이 · 프롬프트 맨 끝)과 역할(시스템 · 사용자 · AI 어시스턴트)을 따로 고른다
 // 1.3.6: 프롬프트 쪽 줄을 꾹 눌러(마우스는 끌기 · 키보드 Alt+↑/↓) 순서를 바꾼다 — 목록 순서 = 보내는 순서
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
 // 1.3.4: 테두리 단계 선을 고정 1.3px 로 — 옆 선 아이콘 굵기 (em 비례는 폰에서 두꺼워졌다)
@@ -65,6 +66,42 @@ function clampDepth(value) {
     return Number.isFinite(number) ? Math.min(100, Math.max(0, number)) : 1;
 }
 
+// 1.4.0 넣는 곳 · 역할 (지시마다 따로). 메인 프롬프트 앞 · 뒤는 실리태번 확장 프롬프트로, 나머지는 보내기 직전 메시지 목록에 넣는다
+const PLACES = ['start', 'before-main', 'after-main', 'depth', 'end'];
+const PLACE_LABEL = { start: '프롬프트 맨 처음', 'before-main': '메인 프롬프트 앞', 'after-main': '메인 프롬프트 뒤', depth: '채팅 안 @깊이', end: '프롬프트 맨 끝' };
+const MAIN_PLACES = new Set(['before-main', 'after-main']);
+const PLACE_ROLES = ['system', 'user', 'assistant'];
+const ROLE_LABEL = { system: '시스템', user: '사용자', assistant: 'AI 어시스턴트' };
+
+/** 넣는 곳 모양 다듬기. 예전 설정(1.3.x)은 셋 다 같은 깊이(promptDepth) · 시스템이었다 — 없으면 그대로 */
+function normalizePlace(place, depth = 1) {
+    const value = place && typeof place === 'object' ? place : {};
+    return {
+        at: PLACES.includes(value.at) ? value.at : 'depth',
+        role: PLACE_ROLES.includes(value.role) ? value.role : 'system',
+        depth: clampDepth(value.depth ?? depth),
+    };
+}
+
+function depthMeaning(depth) {
+    if (depth === 0) return '채팅 맨 끝';
+    if (depth === 1) return '마지막 메시지 앞';
+    return `끝에서 ${depth}번째 메시지 앞`;
+}
+
+/** 「마지막 메시지 앞 · 시스템」 */
+function placeText(place) {
+    const value = normalizePlace(place);
+    return `${value.at === 'depth' ? depthMeaning(value.depth) : PLACE_LABEL[value.at]} · ${ROLE_LABEL[value.role]}`;
+}
+
+/** 안내 문장용: 「마지막 메시지 앞에」 · 「프롬프트 맨 끝에 사용자 역할로」 */
+function placePhrase(place) {
+    const value = normalizePlace(place);
+    const where = value.at === 'depth' ? depthMeaning(value.depth) : PLACE_LABEL[value.at];
+    return value.role === 'system' ? `${where}에` : `${where}에 ${ROLE_LABEL[value.role]} 역할로`;
+}
+
 function initSettings() {
     if (!extension_settings[MODULE] || typeof extension_settings[MODULE] !== 'object') {
         const store = structuredClone(DEFAULTS);
@@ -112,6 +149,8 @@ function initSettings() {
     store.promptList = (Array.isArray(store.promptList) ? store.promptList : []).map(normalizePrompt).filter(Boolean).slice(0, PROMPT_MAX);
     if (typeof store.directionPrompt !== 'string') store.directionPrompt = DEFAULT_PROMPT;
     store.promptDepth = clampDepth(store.promptDepth);
+    for (const kind of TEXT_KINDS) store[kind].place = normalizePlace(store[kind].place, store.promptDepth);
+    for (const item of store.promptList) item.place = normalizePlace(item.place, store.promptDepth);
     store.extensionEnabled = store.extensionEnabled !== false;
     store.onColor = parseColorCode(store.onColor) ?? '';
 }
@@ -124,6 +163,7 @@ function normalizePrompt(item) {
     if (!title && !content.trim()) return null;
     const at = Number(item.at) > 0 ? Number(item.at) : Date.now();
     const out = { id: typeof item.id === 'string' && item.id ? item.id : newId(), title, content, enabled: item.enabled === true, at };
+    if (item.place && typeof item.place === 'object') out.place = item.place;   // 1.4.0 (다듬기는 initSettings)
     if (Number(item.updated) > 0) out.updated = Number(item.updated);
     return out;
 }
@@ -311,8 +351,45 @@ let generationType = null;
 // 2026-10-06 dry run(프롬프트 관리자 토큰 계산 = Generate('normal', {}, true))은 이 값을 쓰지도 비우지도 않는다 —
 // 겹치면 dry run 이 본 요청의 종류를 먼저 비워 실제 요청에서 지시가 빠졌다. generateRaw 도 본 요청의 값을 비우지 않는다.
 function trackGeneration(type, _params, dryRun) {
+    syncMainPrompts(dryRun ? 'normal' : type);
     if (dryRun) return;
     generationType = typeof type === 'string' ? type : null;
+}
+
+/** 1.4.0 보낼 지시 — 항상 지시 → 켠 프롬프트(목록 순서) → 전개 지시. 같은 자리 안에서는 이 순서로 들어간다. 매크로는 여기서 바꾼다 */
+function instructionParts() {
+    const store = settings();
+    const parts = [];
+    const template = store.directionPrompt;
+    // 틀의 {{direction}} 자리를 먼저 채운 뒤 글 전체의 매크로를 한 번에 바꾼다 (최근 목록에는 적은 그대로 남는다)
+    if (alwaysActive()) parts.push({ kind: 'always', content: substituteMacros(store.always.content), ...normalizePlace(store.always.place, store.promptDepth) });
+    if (promptsActive()) for (const item of enabledPrompts()) parts.push({ kind: 'prompt', content: substituteMacros(item.content), ...normalizePlace(item.place, store.promptDepth) });
+    if (isActive() && template?.trim()) parts.push({ kind: 'direction', content: substituteMacros(template.replace(/\{\{direction\}\}/gi, () => store.direction.content)), ...normalizePlace(store.direction.place, store.promptDepth) });
+    return parts.filter(part => typeof part.content === 'string' && part.content.trim());
+}
+
+const MAIN_KEY = 'bl_direction_main_';
+const mainKey = index => `${MAIN_KEY}${String(index).padStart(2, '0')}`;
+let mainKeys = 0;   // 지난번에 채운 칸 수 — 남는 칸은 비운다
+/**
+ * 1.4.0 메인 프롬프트(스토리 문자열) 앞 · 뒤 자리. 보내기 직전 메시지 목록에서는 어느 것이 메인 프롬프트인지 알 수 없어서
+ * 실리태번 확장 프롬프트(BEFORE_PROMPT = 메인 앞, IN_PROMPT = 메인 뒤)로 넣는다 — 프롬프트를 만들기 전(GENERATION_STARTED)에 채운다.
+ * 채팅 완성(openai)에만: 글 완성에서는 스토리 문자열에 섞이므로 비운다. 조용한 생성 · 대신 쓰기에도 비운다.
+ * 거르기(filter, 실리태번 1.16+)로 만드는 순간에도 한 번 더 본다: 다른 확장이 따로 보내는 요청(generateRaw)에는 넣지 않는다
+ */
+function syncMainPrompts(type) {
+    let parts = [];
+    try {
+        if (type !== 'quiet' && type !== 'impersonate' && getContext().mainApi === 'openai') parts = instructionParts().filter(part => MAIN_PLACES.has(part.at));
+    } catch (error) {
+        console.warn('[전개 지시] 메인 프롬프트 앞 · 뒤 지시를 준비하지 못했어요:', error);
+    }
+    const roles = { system: extension_prompt_roles.SYSTEM, user: extension_prompt_roles.USER, assistant: extension_prompt_roles.ASSISTANT };
+    const filter = () => getContext().mainApi === 'openai' && !isRawGeneration();
+    parts.forEach((part, index) => setExtensionPrompt(mainKey(index), part.content,
+        part.at === 'before-main' ? extension_prompt_types.BEFORE_PROMPT : extension_prompt_types.IN_PROMPT, 0, false, roles[part.role] ?? extension_prompt_roles.SYSTEM, filter));
+    for (let index = parts.length; index < mainKeys; index++) setExtensionPrompt(mainKey(index), '', extension_prompt_types.NONE, 0);
+    mainKeys = parts.length;
 }
 
 function injectDirection(eventData) {
@@ -327,18 +404,15 @@ function injectDirection(eventData) {
     if (!Array.isArray(messages)) return;
     const direction = isActive() && !!template?.trim();
     const always = alwaysActive();
-    const prompts = promptsActive() ? enabledPrompts() : [];
-    if (!direction && !always && !prompts.length) return;
+    const parts = instructionParts();
+    if (!parts.length) return;
 
-    // 항상 지시 먼저, 전개 지시가 끝 쪽 — 같은 자리(삽입 위치)에 system 메시지 둘
-    // 1.3.0 켠 프롬프트는 그 사이에 목록 순서대로 하나씩 (항상 지시 → 프롬프트 → 전개 지시). 매크로는 항상 지시와 같게 바꾼다
-    const contents = [];
-    // 틀의 {{direction}} 자리를 먼저 채운 뒤 글 전체의 매크로를 한 번에 바꾼다 (최근 목록에는 적은 그대로 남는다)
-    if (always) contents.push(substituteMacros(store.always.content));
-    for (const item of prompts) contents.push(substituteMacros(item.content));
-    if (direction) contents.push(substituteMacros(template.replace(/\{\{direction\}\}/gi, () => store.direction.content)));
+    // 1.4.0 지시마다 정한 자리에 정한 역할로 (항상 지시 → 프롬프트 → 전개 지시 순서는 같은 자리 안에서 지킨다).
+    // 메인 프롬프트 앞 · 뒤는 이미 확장 프롬프트로 들어갔다 (syncMainPrompts). 제미니의 「지시대로 이어 가라」 user 턴은 전개 지시가 갈 때만 —
+    // 프롬프트 맨 끝에 AI 어시스턴트 역할 글(프리필처럼 쓰는 것)이 있으면 그 뒤에 user 턴을 붙이지 않는다
     const prefill = type === 'impersonate' ? oai_settings.assistant_impersonation : oai_settings.assistant_prefill;
-    insertInstructions(messages, contents, store.promptDepth, getChatCompletionModel(oai_settings), { type, prefill, appendUser: direction });
+    const appendUser = parts.some(part => part.kind === 'direction') && !parts.some(part => part.at === 'end' && part.role === 'assistant');
+    placeInstructions(messages, parts.filter(part => !MAIN_PLACES.has(part.at)), getChatCompletionModel(oai_settings), { type, prefill, appendUser });
 
     // 최근: 실제로 보낸 지시만. 이미 맨 앞이면 설정을 저장하지 않는다.
     // 프롬프트 관리자의 토큰 계산(dry run — 답을 받거나 메시지를 고칠 때마다 돈다)은 보낸 것이 아니다: 적다 만 글이 최근에 쌓였다
@@ -494,21 +568,55 @@ const PLACEHOLDER = {
 
 function footText() {
     const store = settings();
-    const depth = store.promptDepth;
-    const where = depth === 0 ? '프롬프트 맨 끝' : `끝에서 ${depth}번째 메시지 앞`;
     if (page === 'prompts') {
         if (!store.extensionEnabled || !store.prompts.enabled) return '꺼져 있어서 보내지 않아요. 켜면 줄마다 켜 둔 프롬프트가 같이 들어가요.';
         const count = enabledPrompts().length;
-        return count ? `켜 둔 ${count}개가 항상 지시 다음, 전개 지시 앞에 ${where}에 들어가요.` : '줄 오른쪽 스위치로 켠 프롬프트만 보내요.';
+        return count ? `켜 둔 ${count}개가 줄마다 정한 자리에 들어가요. 넣는 곳은 고치기에서 바꿔요.` : '줄 오른쪽 스위치로 켠 프롬프트만 보내요.';
     }
     if (page === 'always') {
         if (!store.extensionEnabled || !store.always.enabled) return '꺼져 있어서 보내지 않아요. 켜면 적은 글이 그대로 매번 들어가요.';
-        return hasContent('always') ? `보낼 때마다 이 글이 그대로 ${where}에 들어가요.` : '비어 있어서 보내지 않아요.';
+        return hasContent('always') ? `보낼 때마다 이 글이 그대로 ${placePhrase(store.always.place)} 들어가요.` : '비어 있어서 보내지 않아요.';
     }
     if (!isActive()) return '꺼져 있어서 보내지 않아요. 켜면 적어 둔 내용이 들어가요.';
+    const where = placePhrase(store.direction.place);
     return hasContent()
-        ? `보낼 때마다 이 지시가 ${where}에 들어가요.`
-        : `비워 두면 'AI가 알아서 전개'로 ${where}에 들어가요.`;
+        ? `보낼 때마다 이 지시가 ${where} 들어가요.`
+        : `비워 두면 'AI가 알아서 전개'로 ${where} 들어가요.`;
+}
+
+/** 1.4.0 넣는 곳 고르기: 위치 · 역할 · (채팅 안일 때만) 깊이. 설정 카드와 프롬프트 고치기 칸이 같이 쓴다 */
+function placeBox(place) {
+    const box = makeEl('div', 'jj-place');
+    const at = makeEl('select', 'text_pole jj-place-at');
+    at.dataset.field = 'at';
+    at.setAttribute('aria-label', '넣는 곳');
+    for (const value of PLACES) at.append(placeOption(value, PLACE_LABEL[value]));
+    const role = makeEl('select', 'text_pole jj-place-role');
+    role.dataset.field = 'role';
+    role.setAttribute('aria-label', '역할');
+    for (const value of PLACE_ROLES) role.append(placeOption(value, ROLE_LABEL[value]));
+    const stepper = makeEl('div', 'jj-stepper jj-place-depth');
+    stepper.innerHTML = '<button type="button" data-pact="depth" data-step="-1" aria-label="깊이 줄이기"><i class="fa-solid fa-minus"></i></button>'
+        + '<input type="number" data-field="depth" min="0" max="100" inputmode="numeric" aria-label="깊이">'
+        + '<button type="button" data-pact="depth" data-step="1" aria-label="깊이 늘리기"><i class="fa-solid fa-plus"></i></button>';
+    box.append(at, role, stepper);
+    fillPlaceBox(box, place);
+    return box;
+}
+
+function placeOption(value, label) {
+    const option = makeEl('option', null, label);
+    option.value = value;
+    return option;
+}
+
+function fillPlaceBox(box, place, { keepDepth = false } = {}) {
+    if (!box) return;
+    const value = normalizePlace(place);
+    box.querySelector('[data-field="at"]').value = value.at;
+    box.querySelector('[data-field="role"]').value = value.role;
+    if (!keepDepth) box.querySelector('[data-field="depth"]').value = String(value.depth);
+    box.querySelector('.jj-place-depth').hidden = value.at !== 'depth';
 }
 
 function stateText(kind) {
@@ -904,7 +1012,7 @@ function promptEditor(item) {
         makeEl('span', 'jj-pspacer jj-pedit-tok'),   // 1.3.2 적는 글의 토큰 수
         promptButton('cancel', 'jj-pbtn', 'fa-solid fa-xmark', '', { text: '취소' }),
         promptButton('save', 'jj-pbtn is-primary', 'fa-solid fa-check', '', { text: item ? '저장' : '추가' }));
-    box.append(title, translateBox(key), content, actions);
+    box.append(title, translateBox(key), content, placeBox(promptEdit.place), actions);   // 1.4.0 넣는 곳
     paintTranslation(key, box);
     return box;
 }
@@ -941,7 +1049,8 @@ function promptRow(item, index, total) {
         const body = makeEl('div', 'jj-pitem-body');
         const empty = !item.content.trim();
         const key = `p:${item.id}`;   // 번역 보기: 내용 위에 번역본, 아래에 원문
-        body.append(translateBox(key), makeEl('p', `jj-pitem-content${empty ? ' is-empty' : ''}`, empty ? '내용이 비어 있어 보내지 않아요. 고치기로 적어 주세요.' : item.content));
+        body.append(translateBox(key), makeEl('p', `jj-pitem-content${empty ? ' is-empty' : ''}`, empty ? '내용이 비어 있어 보내지 않아요. 고치기로 적어 주세요.' : item.content),
+            makeEl('p', 'jj-pitem-place', `넣는 곳: ${placeText(item.place)}`));   // 1.4.0
         const actions = makeEl('div', 'jj-pitem-actions');
         actions.append(
             promptButton('up', 'jj-pbtn jj-pbtn-icon', 'fa-solid fa-arrow-up', '위로 옮기기', { disabled: index === 0 }),
@@ -1004,12 +1113,12 @@ function savePromptEdit() {
             return;
         }
         id = newId();
-        store.promptList.push({ id, title, content, enabled: false, at: now, updated: now });   // 새 줄은 꺼진 채로 — 스위치로 켠다
+        store.promptList.push({ id, title, content, enabled: false, at: now, updated: now, place: normalizePlace(edit.place, store.promptDepth) });   // 새 줄은 꺼진 채로 — 스위치로 켠다
         if (trStates.has('p:new')) { trStates.set(`p:${id}`, trStates.get('p:new')); trStates.delete('p:new'); }   // 적는 동안 펼친 번역은 새 줄로
     } else {
         const item = store.promptList.find(entry => entry.id === id);
         if (!item) { promptEdit = null; renderPrompts(); return; }
-        Object.assign(item, { title, content, updated: now });
+        Object.assign(item, { title, content, place: normalizePlace(edit.place, store.promptDepth), updated: now });
     }
     promptEdit = null;
     openPromptId = id;
@@ -1036,13 +1145,19 @@ async function onPromptsClick(event) {
             toastr.warning(`프롬프트는 ${PROMPT_MAX}개까지예요. 안 쓰는 것을 지워 주세요.`, KIND_LABEL.prompts);
             return;
         }
-        promptEdit = { id: 'new', title: '', content: '' };
+        promptEdit = { id: 'new', title: '', content: '', place: normalizePlace(null, store.promptDepth) };
         openPromptId = null;
         renderPrompts('.jj-pitem.is-new .jj-ptitle-input');
         return;
     }
     if (act === 'cancel') return cancelPromptEdit();
     if (act === 'save') return savePromptEdit();
+    if (act === 'depth') {   // 1.4.0 고치는 칸의 깊이 − +
+        if (!promptEdit) return;
+        promptEdit.place = normalizePlace({ ...promptEdit.place, depth: normalizePlace(promptEdit.place).depth + Number(target.dataset.step) });
+        fillPlaceBox(target.closest('.jj-place'), promptEdit.place);
+        return;
+    }
     if (act === 'translate' || act === 'translate-redo') return onTranslateAct(act, target.closest('[data-tr]')?.dataset.tr);
     const id = target.closest('.jj-pitem')?.dataset.id;
     const index = list.findIndex(item => item.id === id);
@@ -1068,7 +1183,7 @@ async function onPromptsClick(event) {
         renderPrompts(`.jj-pitem[data-id="${id}"] [data-pact="${edge ? (act === 'up' ? 'down' : 'up') : act}"]`);
         refreshButton();
     } else if (act === 'edit') {
-        promptEdit = { id, title: item.title, content: item.content };
+        promptEdit = { id, title: item.title, content: item.content, place: normalizePlace(item.place, store.promptDepth) };
         renderPrompts(`.jj-pitem[data-id="${id}"] .jj-pcontent-input`);
     } else if (act === 'delete') {
         const confirmed = await callGenericPopup(`「${escapeHtml(promptTitle(item))}」 프롬프트를 지울까요?`, POPUP_TYPE.CONFIRM);
@@ -1388,6 +1503,10 @@ function onTitleClick(event) {
 function onPromptsInput(event) {
     const field = event.target?.dataset?.field;
     if (promptEdit && (field === 'title' || field === 'content')) promptEdit[field] = event.target.value;
+    if (promptEdit && (field === 'at' || field === 'role' || field === 'depth')) {   // 1.4.0 넣는 곳 (숫자를 적는 동안에는 칸을 다시 쓰지 않는다)
+        promptEdit.place = normalizePlace({ ...promptEdit.place, [field]: event.target.value });
+        fillPlaceBox(event.target.closest('.jj-place'), promptEdit.place, { keepDepth: field === 'depth' });
+    }
     if (field === 'content') scheduleEditTokens();
     if (field === 'content' && promptEdit) paintTranslation(`p:${promptEdit.id}`);   // 번역한 글과 달라지면 「원문이 바뀌었어요」
 }
@@ -1604,12 +1723,6 @@ const PROMPT_MEANING = [
     '[전개 지시 (비어 있으면 알아서 전개): {{direction}}]',
 ];
 
-function depthMeaning(depth) {
-    if (depth === 0) return '프롬프트 맨 끝';
-    if (depth === 1) return '마지막 메시지 앞';
-    return `끝에서 ${depth}번째 메시지 앞`;
-}
-
 let settingsRoot = null;
 
 /** 1.3.0 상태 카드의 프롬프트 줄: 켠 것들의 제목 */
@@ -1702,13 +1815,11 @@ function buildSettings() {
                             <button type="button" id="jj_on_color_reset" class="menu_button jj-small-btn" title="테마 색으로 되돌리기">테마</button>
                         </div>
                     </div>
-                    <div class="jj-row">
-                        <div class="jj-row-label"><b>삽입 위치</b><small class="jj-depth-meaning"></small></div>
-                        <div class="jj-stepper">
-                            <button type="button" data-step="-1" aria-label="깊이 줄이기"><i class="fa-solid fa-minus"></i></button>
-                            <input type="number" id="jj_depth" min="0" max="100" inputmode="numeric" aria-label="깊이">
-                            <button type="button" data-step="1" aria-label="깊이 늘리기"><i class="fa-solid fa-plus"></i></button>
-                        </div>
+                    <div class="jj-row jj-place-row" data-kind="direction">
+                        <div class="jj-row-label"><b>전개 지시 넣는 곳</b><small class="jj-place-meaning"></small></div>
+                    </div>
+                    <div class="jj-row jj-place-row" data-kind="always">
+                        <div class="jj-row-label"><b>항상 지시 넣는 곳</b><small class="jj-place-meaning"></small></div>
                     </div>
                 </div>
 
@@ -1740,14 +1851,21 @@ function buildSettings() {
 
     const colorCode = wrapper.querySelector('#jj_on_color');
     const swatch = wrapper.querySelector('#jj_on_color_swatch');
-    const depth = wrapper.querySelector('#jj_depth');
-    const depthMeaningText = wrapper.querySelector('.jj-depth-meaning');
     const prompt = wrapper.querySelector('#jj_prompt');
     const promptState = wrapper.querySelector('.jj-prompt-state');
 
-    const showDepth = () => {
-        depth.value = String(store.promptDepth);
-        depthMeaningText.textContent = depthMeaning(store.promptDepth);
+    // 1.4.0 넣는 곳: 전개 지시 · 항상 지시 따로 (프롬프트는 줄마다 고치기에서)
+    const placeRows = Object.fromEntries(TEXT_KINDS.map(kind => {
+        const row = wrapper.querySelector(`.jj-place-row[data-kind="${kind}"]`);
+        const box = placeBox(store[kind].place);
+        row.append(box);
+        return [kind, { row, box }];
+    }));
+    const showPlaces = () => {
+        for (const kind of TEXT_KINDS) {
+            fillPlaceBox(placeRows[kind].box, store[kind].place);
+            placeRows[kind].row.querySelector('.jj-place-meaning').textContent = placeText(store[kind].place);
+        }
     };
     const showPromptState = () => {
         promptState.textContent = store.directionPrompt === DEFAULT_PROMPT ? '기본값' : '직접 고침';
@@ -1756,7 +1874,7 @@ function buildSettings() {
         colorCode.value = store.onColor;
         colorCode.classList.remove('is-invalid');
         swatch.value = effectiveOnColor();
-        showDepth();
+        showPlaces();
         prompt.value = store.directionPrompt;
         showPromptState();
         refreshSettingsStatus();
@@ -1810,21 +1928,28 @@ function buildSettings() {
         setColor('');
     });
 
-    const setDepth = (value) => {
-        store.promptDepth = clampDepth(value);
-        showDepth();
-        save();
-        if (popup) refreshPopup();
-    };
-    depth.addEventListener('change', () => setDepth(depth.value));
-    depth.addEventListener('keydown', (event) => {
-        if (event.key !== 'Enter') return;
-        event.preventDefault();
-        depth.blur();
-    });
-    wrapper.querySelectorAll('.jj-stepper [data-step]').forEach((stepButton) => {
-        stepButton.addEventListener('click', () => setDepth(store.promptDepth + Number(stepButton.dataset.step)));
-    });
+    for (const kind of TEXT_KINDS) {
+        const { box } = placeRows[kind];
+        const setPlace = (patch) => {
+            store[kind].place = normalizePlace({ ...store[kind].place, ...patch });
+            showPlaces();
+            save();
+            if (popup) refreshPopup();
+        };
+        box.addEventListener('change', (event) => {
+            const field = event.target.dataset.field;
+            if (field) setPlace({ [field]: event.target.value });
+        });
+        box.addEventListener('click', (event) => {
+            const step = event.target.closest('[data-step]');
+            if (step) setPlace({ depth: normalizePlace(store[kind].place).depth + Number(step.dataset.step) });
+        });
+        box.querySelector('[data-field="depth"]').addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            event.target.blur();
+        });
+    }
 
     prompt.addEventListener('input', () => {
         store.directionPrompt = prompt.value;
@@ -1902,7 +2027,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
 }));
 
 export function showHelp() {
-    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;).</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 문체 다듬기처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 항상 지시 다음, 전개 지시 앞에 같이 들어가요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요. 줄을 꾹 누른 채 위아래로 끌어도 순서가 바뀌어요(마우스는 끌기, 키보드는 Alt+↑/↓). 위에 있는 것부터 차례로 들어가요. 줄 옆 숫자는 지금 모델 기준 토큰 수예요. 제목 옆 점을 누르면 그 쪽으로 바로 가요.</p><p>깃털 모양으로 지금 보내는 것을 알 수 있어요. 아무것도 안 보내면 회색, 전개 지시 · 항상 지시 · 켠 프롬프트 중 하나면 켜짐 색 테두리, 둘이면 안까지 채움, 셋 다면 채움에 은은한 빛이에요. 전개 지시를 꺼 둬도 다른 것을 보내는 중이면 켜진 모양으로 남아요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
+    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;).</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 문체 다듬기처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 같이 들어가요. 같은 자리에서는 항상 지시 다음, 전개 지시 앞이에요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요. 줄을 꾹 누른 채 위아래로 끌어도 순서가 바뀌어요(마우스는 끌기, 키보드는 Alt+↑/↓). 위에 있는 것부터 차례로 들어가요. 줄 옆 숫자는 지금 모델 기준 토큰 수예요. 제목 옆 점을 누르면 그 쪽으로 바로 가요.</p><p><b>넣는 곳</b>: 전개 지시 · 항상 지시는 확장 설정 카드에서, 프롬프트는 줄마다 고치기에서 따로 골라요. 프롬프트 맨 처음 · 메인 프롬프트(스토리 문자열) 앞 · 메인 프롬프트 뒤 · 채팅 안 @깊이(0이면 채팅 맨 끝, 1이면 마지막 메시지 앞) · 프롬프트 맨 끝(프리필처럼 맨 끝에 붙는 자리) 가운데 하나예요. 역할은 시스템 · 사용자 · AI 어시스턴트 가운데 골라요. 메인 프롬프트 앞 · 뒤는 채팅 완성(Chat Completion) API에서만 들어가요.</p><p>깃털 모양으로 지금 보내는 것을 알 수 있어요. 아무것도 안 보내면 회색, 전개 지시 · 항상 지시 · 켠 프롬프트 중 하나면 켜짐 색 테두리, 둘이면 안까지 채움, 셋 다면 채움에 은은한 빛이에요. 전개 지시를 꺼 둬도 다른 것을 보내는 중이면 켜진 모양으로 남아요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
 }
 let settingsDialog = null;
 export async function openPanel() {

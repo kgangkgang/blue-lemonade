@@ -7,7 +7,7 @@
 //   2) 저장 목록: 그 쪽 것만 보임 · 누르면 입력칸에 불러옴 — 덮어쓰는 글이 저장에도 최근에도 없으면 최근에 남김 (되찾기) · 저장된 글이면 안 남김
 //   3) 저장 지우기는 확인을 받아서만 (걸러 보인 목록의 그 항목을) · 최근 지우기는 바로 · 최근에서 저장 · 지금 내용 저장 · 같은 글 두 번 · 가득 차면 알림만
 //   4) 지우개: 확인을 받아야 지움 · 지운 글은 최근에 남김 · 빈 칸이면 묻지도 않음 · 항상 지시 쪽도 같음
-//   5) 설정 카드: 깊이 0~100 (단추 · 직접 입력) · 켜짐 색은 맞는 코드만 · 프롬프트 직접 고침 · 기본값으로는 확인 뒤에만 · 입력창 버튼 끄면 창도 닫힘
+//   5) 설정 카드: 넣는 곳(1.4.0 위치 · 역할 · 깊이 0~100 단추 · 직접 입력, 전개 지시 · 항상 지시 따로) · 켜짐 색은 맞는 코드만 · 프롬프트 직접 고침 · 기본값으로는 확인 뒤에만 · 입력창 버튼 끄면 창도 닫힘
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -73,10 +73,11 @@ globalThis.toastr = Object.fromEntries(['info', 'success', 'warning', 'error'].m
 
 // ---------- index.js 앞부분 (story-direction.mjs 와 같은 떼어 내기)
 const { insertInstructions } = await import(pathToFileURL(src('src/addons/direction/prompt.js')).href);
+globalThis.__dirPlace=(await import(pathToFileURL(src('src/addons/direction/prompt.js')).href)).placeInstructions;   // 1.4.0 넣는 곳마다
 const ext = {};
 const P = globalThis.__directionListTest = { ext, insertInstructions, saves: 0, confirm: true, popups: [], context: { substituteParams: text => String(text) } };
 const source = (await fs.readFile(src('src/addons/direction/index.js'), 'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm, '');
-const prelude = 'const P = globalThis.__directionListTest; const extension_settings = P.ext; const insertInstructions = P.insertInstructions;'
+const prelude = 'const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const P = globalThis.__directionListTest; const extension_settings = P.ext; const insertInstructions = P.insertInstructions;'
     + 'const getContext = () => P.context; const saveSettingsDebounced = () => { P.saves++; }; const eventSource = { on() {}, once() {} }; const event_types = {};'
     + 'const POPUP_TYPE = { TEXT: 1, CONFIRM: 2 }; const callGenericPopup = async (...args) => { P.popups.push(args); return P.confirm; };'
     + 'const oai_settings = {}; const getChatCompletionModel = () => ""; const verifyAddonCss = () => {}; const badgeTextHit = () => true; const showThemeModal = () => {};';
@@ -226,17 +227,32 @@ await test('설정 카드: 깊이 0~100 · 켜짐 색은 맞는 코드만 · 프
     m.buildSettings();
     const card = byId.extensions_settings.children[0];
     assert.equal(card?.id, 'jj-settings');
-    const depth = card.querySelector('#jj_depth');
-    assert.equal(depth.value, String(S.promptDepth));
+    // 1.4.0 넣는 곳: 전개 지시 · 항상 지시 줄마다 위치 · 역할 · (채팅 안일 때만) 깊이
+    const row = card.querySelector('.jj-place-row[data-kind="direction"]');
+    const box = row.children.at(-1);
+    assert.equal(box.className, 'jj-place', '줄 끝에 넣는 곳 상자');
+    const depth = box.querySelector('[data-field="depth"]');
+    assert.equal(depth.value, String(S.direction.place.depth));
+    const always = structuredClone(S.always.place);
     for (const [typed, want] of [['250', 100], ['-4', 0], ['x', 1], ['3', 3]]) {
-        depth.value = typed; await depth.fire('change');
-        assert.equal(S.promptDepth, want, `깊이 ${typed}`); assert.equal(depth.value, String(want), '칸에도 고른 값');
+        depth.value = typed; await box.fire('change', { target: depth });
+        assert.equal(S.direction.place.depth, want, `깊이 ${typed}`); assert.equal(depth.value, String(want), '칸에도 고른 값');
     }
-    const [minus, plus] = card.querySelectorAll('.jj-stepper [data-step]');
-    depth.value = '0'; await depth.fire('change');
-    await minus.fire('click'); assert.equal(S.promptDepth, 0, '0 아래로 안 내려감');
-    await plus.fire('click'); assert.equal(S.promptDepth, 1);
-    depth.value = '100'; await depth.fire('change'); await plus.fire('click'); assert.equal(S.promptDepth, 100, '100 위로 안 올라감');
+    const step = n => ({ dataset: {}, closest: sel => sel === '[data-step]' ? { dataset: { step: String(n) } } : null });
+    depth.value = '0'; await box.fire('change', { target: depth });
+    await box.fire('click', { target: step(-1) }); assert.equal(S.direction.place.depth, 0, '0 아래로 안 내려감');
+    await box.fire('click', { target: step(1) }); assert.equal(S.direction.place.depth, 1);
+    depth.value = '100'; await box.fire('change', { target: depth }); await box.fire('click', { target: step(1) }); assert.equal(S.direction.place.depth, 100, '100 위로 안 올라감');
+    assert.equal(row.querySelector('.jj-place-meaning').textContent, '끝에서 100번째 메시지 앞 · 시스템');
+    assert.equal(box.querySelector('.jj-place-depth').hidden, false, '채팅 안이면 깊이 칸이 보임');
+    const at = box.querySelector('[data-field="at"]'), role = box.querySelector('[data-field="role"]');
+    at.value = 'end'; await box.fire('change', { target: at });
+    role.value = 'assistant'; await box.fire('change', { target: role });
+    assert.deepEqual(S.direction.place, { at: 'end', role: 'assistant', depth: 100 }, '깊이는 남겨 둠 (채팅 안으로 돌아오면 그대로)');
+    assert.equal(box.querySelector('.jj-place-depth').hidden, true, '채팅 안이 아니면 깊이 칸은 숨김');
+    assert.equal(row.querySelector('.jj-place-meaning').textContent, '프롬프트 맨 끝 · AI 어시스턴트');
+    at.value = 'nowhere'; await box.fire('change', { target: at }); assert.equal(S.direction.place.at, 'depth', '모르는 자리는 채팅 안');
+    assert.deepEqual(S.always.place, always, '항상 지시 넣는 곳은 따로');
     // 켜짐 색
     const color = card.querySelector('#jj_on_color');
     color.value = 'ABC'; await color.fire('input');

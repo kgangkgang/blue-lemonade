@@ -87,11 +87,12 @@ console.warn = (...args) => { if (String(args[0]).includes('전개 지시')) war
 
 // ---------- index.js 앞부분
 const { insertInstructions } = await import(new URL('src/addons/direction/prompt.js', url));
+globalThis.__dirPlace=(await import(new URL('src/addons/direction/prompt.js', url))).placeInstructions;   // 1.4.0 넣는 곳마다
 const ext = { salty: { addons: { prompt: true } } };
 globalThis.__directionTest = { ext, insertInstructions, saves: 0, context: { substituteParams: text => String(text) } };
 const js = await read('src/addons/direction/index.js');
 const source = js.split('// ── 시작')[0].replace(/^import .*;$/gm, '');
-const prelude = 'const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>"example-model";const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
+const prelude = 'const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>"example-model";const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
 const hooks = '\nexport function __state(p,e,o,s){popup=p;promptEdit=e;openPromptId=o;settingsRoot=s;}\nexport {initSettings,settings,promptRow,promptEditor,onPromptsInput,onTranslateAct,trStates,trMemo,TR_FAIL};';
 const m = await import('data:text/javascript;base64,' + Buffer.from(prelude + source + hooks).toString('base64'));
 
@@ -144,7 +145,7 @@ await test('펼친 줄: 번역본 상자가 내용 위 · 원문 라벨은 상�
     fresh();
     const { row, box, button } = openRow('pa');
     const body = row.querySelector('.jj-pitem-body');
-    assert.deepEqual(body.elements.map(el => el.className), ['jj-tr', 'jj-pitem-content', 'jj-pitem-actions'], 'translation above the original');
+    assert.deepEqual(body.elements.map(el => el.className), ['jj-tr', 'jj-pitem-content', 'jj-pitem-place', 'jj-pitem-actions'], 'translation above the original (1.4.0 넣는 곳 줄은 원문 아래)');
     assert.deepEqual(box().elements.map(el => el.className), ['jj-tr-head', 'jj-tr-text', 'jj-tr-label jj-tr-orig']);
     assert.equal(box().querySelector('.jj-tr-orig').textContent, '원문');
     assert.equal(box().hidden, true, 'closed at first');
@@ -204,12 +205,12 @@ await test('고치는 칸: 제목 → 번역본 → 원문 칸 → 단추 줄 ·
     openRow('pa');
     m.onTranslateAct('translate', 'p:pa'); await tick(); await tick();
     const item = m.settings().promptList[0];
-    const edit = { id: 'pa', title: item.title, content: item.content };
+    const edit = { id: 'pa', title: item.title, content: item.content, place: item.place };
     const popup = new El('div');
     m.__state(popup, edit, 'pa', null);
     const editor = m.promptEditor(item);
     popup.append(editor);
-    assert.deepEqual(editor.elements.map(el => el.className), ['jj-ptitle-input', 'jj-tr', 'jj-pcontent-input', 'jj-pitem-actions']);
+    assert.deepEqual(editor.elements.map(el => el.className), ['jj-ptitle-input', 'jj-tr', 'jj-pcontent-input', 'jj-place', 'jj-pitem-actions']);   // 1.4.0 넣는 곳은 원문 칸 아래
     assert.equal(editor.querySelector('.jj-pitem-actions').elements[0].dataset.pact, 'translate', 'button first in the edit row');
     const box = editor.querySelector('.jj-tr');
     assert.equal(box.hidden, false, 'still open while editing');
