@@ -1,8 +1,11 @@
 // 7.9.5 그림 생성 확장이 답의 그림 표시만 바꾼 경우 (그림 요청 <pic …> → <img …> · 요청 지움 · 그림 자리 · 끝에 그림 덧붙임).
 //   예전에는 글이 바뀐 것으로 쳐서 번역 중이면 요청을 끊고 처음부터, 번역이 끝났으면 통째로 다시 번역했다 (제보: 답 → 번역 → 그림 완료 → 다시 번역).
 //   그림 표시를 뺀 글이 같으면 번역은 그대로 두고 번역문 속 그림 표시만 지금 글의 것으로 바꾼다. 자리를 확실히 모르면 null — 부르는 쪽이 예전처럼 다시 번역한다.
+// 7.9.6 원본 그림 생성 확장의 기본 요청은 여러 줄 블록 <autopic><scene>…</scene><apchar …>…</apchar></autopic> 이다 (제보: 7.9.5 에서도 다시 번역 —
+//   <pic …> 만 알아봐서 블록이 번역 요청에 섞여 번역문에서 모양이 바뀌었고, 그림이 들어온 뒤 자리를 못 찾았다). 블록 통째로 그림 표시 · 가릴 글
 const ATTRS = `(?:[^>"']|"[^"]*"|'[^']*')*`;
 const MARK_SOURCES = [
+    `<autopic\\b${ATTRS}>[\\s\\S]*?<\\/autopic\\s*>`,
     `<pic\\b${ATTRS}>(?:\\s*<\\/pic>)?`,
     `<img\\b${ATTRS}>`,
     `<span\\b[^>]*\\b(?:data-autopic-slot="[^"]*"|class="[^"]*\\bautopic-image-slot\\b[^"]*")[^>]*>[^<]*<\\/span>`,
@@ -11,6 +14,7 @@ const MARK_SOURCES = [
 const markRe = () => new RegExp(MARK_SOURCES.join('|'), 'gi');
 /** 번역 요청에서 가릴 그림 요청 태그 — 프롬프트(영어 그림 설명)를 모델에 보내지 않는다 */
 export const PIC_REQUEST = new RegExp(`<pic\\b${ATTRS}>(?:\\s*<\\/pic>)?`, 'gi');
+export const AUTOPIC_REQUEST = new RegExp(`<autopic\\b${ATTRS}>[\\s\\S]*?<\\/autopic\\s*>`, 'gi');
 
 const squash = text => text.replace(/\s+/g, ' ').trim();
 

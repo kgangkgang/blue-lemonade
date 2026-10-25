@@ -5,7 +5,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 const root = path.resolve(process.argv[2] || '.');
 const dir = path.join(root, 'src/addons/translator');
-const { splitPictures, picturesOnlyChanged, swapPictures, PIC_REQUEST } = await import(pathToFileURL(path.join(dir, 'picture-swap.js')));
+const { splitPictures, picturesOnlyChanged, swapPictures, PIC_REQUEST, AUTOPIC_REQUEST } = await import(pathToFileURL(path.join(dir, 'picture-swap.js')));
 const { createGuards } = await import(pathToFileURL(path.join(dir, 'translation-guard.js')));
 const source = fs.readFileSync(path.join(dir, 'index.js'), 'utf8');
 let passed = 0;
@@ -29,6 +29,27 @@ check('글 끝에 덧붙인 그림: 같은 줄바꿈으로 끝에 붙인다', ()
     const plain = 'Rin looked up.', plainTr = '린이 고개를 들었다.';
     assert.equal(swapPictures(plainTr, plain, `${plain}\n\n${img}`), `${plainTr}\n\n${img}`);
     assert.equal(swapPictures(plainTr, plain, `${img}\n${plain}`), `${img}\n${plainTr}`);
+});
+// 7.9.6 원본 그림 생성 확장의 기본 요청 블록 (여러 줄 · 안에 장면 · 인물 태그 · 속성에 > 가 든 ref)
+const block = '<autopic>\n<scene>cafe, window seat, afternoon light</scene>\n<apchar ref="Rin">smiling, holding cup</apchar>\n<uc>blurry</uc>\n</autopic>';
+const blockSrc = `Rin looked up.\n\n"Hello," she said.\n\n${block}`;
+const blockTr = `린이 고개를 들었다.\n\n"안녕," 그녀가 말했다.\n\n${block}`;
+check('<autopic> 블록 → 그림(REPLACE): 블록 자리만 바꾼다', () => {
+    const after = blockSrc.replace(block, img);
+    assert.equal(picturesOnlyChanged(blockSrc, after), true);
+    assert.equal(swapPictures(blockTr, blockSrc, after), blockTr.replace(block, img));
+});
+check('<autopic> 블록 지움(INLINE, 그림은 메시지 아래): 번역문에서도 지운다', () => {
+    const after = blockSrc.replace(block, '').trim();
+    assert.equal(swapPictures(blockTr, blockSrc, after), blockTr.replace(block, ''));
+});
+check('<autopic> 블록은 번역 요청에서 통째로 가린다 (번역기 내장 규칙 = AUTOPIC_REQUEST)', () => {
+    assert.deepEqual([...blockSrc.matchAll(new RegExp(AUTOPIC_REQUEST))].map(m => m[0]), [block]);
+    const builtIn = source.split('\n').find(line => line.includes('picture-swap.js AUTOPIC_REQUEST 와 같은 꼴'));
+    assert.ok(builtIn, '내장 보호 규칙에 그림 요청 블록');
+    assert.equal(builtIn.trim().split(/\s+\/\/ /)[0].replace(/,$/, ''), `/${AUTOPIC_REQUEST.source}/gi`);
+    // 블록 안 글이 바뀌면(번역됨) 그림 변경이 아니다 → 예전처럼 다시 번역
+    assert.equal(swapPictures(blockTr.replace('cafe', '카페'), blockSrc, blockSrc.replace(block, img)), null);
 });
 check('그림 자리 span · {{img::}} 도 그림 표시', () => {
     const slot = '<span class="autopic-image-slot" data-autopic-slot="s1">[AutoPic 이미지]</span>';
@@ -57,7 +78,7 @@ check('그림 요청 태그 가리기: 따옴표 안 > 까지 한 덩이', () =>
     assert.equal(splitPictures(before).marks.length, 1);
     const builtIn = source.split('\n').find(line => line.includes('picture-swap.js PIC_REQUEST 와 같은 꼴'));
     assert.ok(builtIn, '내장 보호 규칙에 그림 요청 태그');
-    assert.equal(builtIn.trim().split(/\s+\/\/ /)[0], `/${PIC_REQUEST.source}/gi`);
+    assert.equal(builtIn.trim().split(/\s+\/\/ /)[0].replace(/,$/, ''), `/${PIC_REQUEST.source}/gi`);
 });
 
 check('감시: sameText 를 준 것만 그림 변경을 같은 글로 본다', () => {
