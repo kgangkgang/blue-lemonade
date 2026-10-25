@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.5/blue-lemonade-7.9.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.6/blue-lemonade-7.9.6.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.9.5 · 최신 업데이트</summary>
+<summary>7.9.6 · 최신 업데이트</summary>
+
+- 번역 3.1.0: 그림 생성 확장의 기본 그림 요청 블록(<autopic> … </autopic>)도 그림 표시로 알아봐요. 블록 안 장면·인물 태그는 번역 요청에 보내지 않고, 그림이 들어오면 다시 번역하지 않고 번역문의 그 자리만 그림으로 바꿔요.
+
+</details>
+
+<details>
+<summary>7.9.5 · 보내기 아이콘 · 월드인포 머리 두 줄 · 번역 1.16 호환</summary>
 
 - 보내기 종이비행기를 옆 도구 아이콘과 같은 실제 크기로 맞추고, 입력 번역 말풍선과의 간격도 왼쪽 도구 사이 간격과 같게 했어요. 원 배경은 없고 누름 영역은 그대로 넉넉해요.
 - 월드인포 항목 머리를 다시 두 줄로 줄였어요. 첫 줄은 제목·상태·스위치, 둘째 줄은 위치·순서·확률이에요. 숫자칸은 값 길이만큼만 차지하고 확률은 값 뒤에 %를 붙여요. 아주 좁은 화면에서 글자가 클 때만 확률이 다음 줄로 넘어가요.
