@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 1eb1779283e6) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 2111da965540) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.6";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -26265,8 +26265,9 @@ html body .bl-translator-dialog #llm_glossary_expand {
   html body.salty .bl-word-rule > button { height: 34px; min-height: 34px; }
   html body.salty .bl-translator-dialog .llmt-gl-scope,
 html body.salty .bl-translator-dialog .llmt-gl-sort { position: relative; min-height: 36px; }
+  html body.salty .bl-translator-dialog #llm_glossary_sort.llmt-gl-sort { min-width: 36px !important; min-height: 36px !important; }
   html body.salty .bl-translator-dialog .llmt-gl-scope::after,
-html body.salty .bl-translator-dialog .llmt-gl-sort::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: max(100%, 44px); transform: translateY(-50%); }
+html body.salty .bl-translator-dialog .llmt-gl-sort::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
   html body.salty .bl-translator-dialog .llmt-gl-extract,
 html body.salty .bl-translator-dialog .llmt-gl-sort { font-size: 13px; }
   html body.salty #char_assets_settings .eh-icon-btn--labeled { height: var(--bl-h-ctl, 36px); font-size: var(--bl-ts-ctl); }
