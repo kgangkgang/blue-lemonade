@@ -11,7 +11,7 @@ const root = path.resolve(process.argv[2] || '.');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const src = read('src/addons/translator/index.js');
 const fnOf = head => { const at = src.indexOf(head); assert.ok(at >= 0, head); return src.slice(at, src.indexOf('\n}\n', at) + 3); };
-const begin = fnOf('function beginTranslation(messageId, message) {');
+const begin = fnOf('function beginTranslation(messageId, message, guardOptions = {}) {');
 const end = fnOf('function endTranslation(messageId, token) {');
 let n = 0;
 const t = async (name, run) => { await run(); n++; console.log(`  PASS  ${name}`); };
@@ -24,7 +24,7 @@ await t('beginTranslation 이 다리 begin(translate) 의 끝 함수를 표에 �
 });
 
 await t('번역 표를 여는 세 길(번역 · 재번역 · 문단 다시 번역)이 모두 finally 에서 endTranslation — 성공 · 실패 · 취소 모두 뒷일 끝', () => {
-    const opens = [...src.matchAll(/const runToken = beginTranslation\((\w+), message\);/g)];
+    const opens = [...src.matchAll(/const runToken = beginTranslation\((\w+), message(?:, \{[^}]*\})?\);/g)];   // 7.9.5 번역은 감시 옵션(그림 표시만 바뀐 글)을 준다
     assert.equal(opens.length, 3);
     for (const m of opens) {
         const body = src.slice(m.index, src.indexOf('\n}\n', m.index));

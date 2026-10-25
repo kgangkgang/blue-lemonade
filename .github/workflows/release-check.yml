@@ -256,6 +256,7 @@ jobs:
           node tools/tests/translation-source-trim.mjs .
           node tools/tests/translator-protect.mjs .
           node tools/tests/translator-auto-render.mjs .
+          node tools/tests/translator-picture-swap.mjs .
           node tools/tests/translation-guard-reload.mjs .
           node tools/tests/rerender-notify.mjs .
           node tools/tests/translation-cards.mjs .

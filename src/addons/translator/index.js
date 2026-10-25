@@ -54,10 +54,18 @@ import {
     syncMesToSwipe,
     callPopup,
     createRawPrompt,
-    getMaxPromptTokens,
-    getMaxContextTokens,
     amount_gen, // 2026-10-06: 텍스트 완성 응답 길이 (현재 연결 번역 출력 한도)
 } from '../../../../../../../script.js';
+// 7.9.5 실리태번 1.16 에는 getMaxPromptTokens · getMaxContextTokens 가 없다(1.17 에서 생김) — 이름으로 가져오면 모듈을 못 읽어 번역기가 통째로 안 켜졌다 (제보).
+//       있으면 그것, 없으면 1.16 의 getMaxContextSize(전체 문맥 − 응답 길이)로 같은 값을 만든다
+import * as stHost from '../../../../../../../script.js';
+import { picturesOnlyChanged, swapPictures } from './picture-swap.js';   // 7.9.5 그림 확장이 그림 표시만 바꾼 답은 다시 번역하지 않는다
+function getMaxPromptTokens(overrideResponseLength = null) {
+    return typeof stHost.getMaxPromptTokens === 'function' ? stHost.getMaxPromptTokens(overrideResponseLength) : stHost.getMaxContextSize(overrideResponseLength);
+}
+function getMaxContextTokens() {
+    return typeof stHost.getMaxContextTokens === 'function' ? stHost.getMaxContextTokens() : stHost.getMaxContextSize(1) + 1;   // 응답 길이 1 을 빼고 되돌린 값 = 전체 문맥
+}
 
 import { extension_settings, getContext, saveMetadataDebounced } from '../../../../../../extensions.js';
 import { getStringHash } from '../../../../../../utils.js';               // [1.7.1] 원문 해시 (원문 사본 대신)
@@ -2656,8 +2664,8 @@ async function settleGuard(guard, maxMs = 8000) {
 }
 const autoRetries = new WeakMap();   // 6.5.2 끊긴 자동 번역을 메시지마다 몇 번 다시 걸었나 (2번까지)
 const afterWorkEnds = new WeakMap();   // 2.7.4 번역 표 → 뒷일 다리의 끝 함수 (번역 · 재번역(교정) · 문단 다시 번역 모두 여기를 지난다)
-function beginTranslation(messageId, message) {
-    const token = { guard: guards.capture(message), chatGuard: guards.capture(), source: message.mes, swipe: message.swipe_id, started: Date.now() };   // 2.9.0 started: 「몇 초째」
+function beginTranslation(messageId, message, guardOptions = {}) {
+    const token = { guard: guards.capture(message, guardOptions), chatGuard: guards.capture(), source: message.mes, swipe: message.swipe_id, started: Date.now() };   // 2.9.0 started: 「몇 초째」
     let done;
     Object.defineProperties(token,{finished:{value:new Promise(r=>done=r)},resolve:{value:error=>done(error)}});
     // [1.9.5] 표에 메시지를 달아 둔다 (디버그 출력에 메시지 전체가 찍히지 않게 열거되지 않는 속성으로)
@@ -3263,12 +3271,14 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         return;
     }
 
-    const runToken = beginTranslation(messageId, message); // [1.9.2] · [1.9.5] 메시지를 단다 · 6.9.8 뒷일 다리 begin 도 여기서
+    // 7.9.5 번역하는 동안 그림 확장이 그림 표시만 바꿔도(그림 요청 → 그림) 멈추지 않는다 — 끝날 때 번역문의 그림 표시만 지금 글의 것으로 바꾼다
+    const runToken = beginTranslation(messageId, message, { sameText: picturesOnlyChanged }); // [1.9.2] · [1.9.5] 메시지를 단다 · 6.9.8 뒷일 다리 begin 도 여기서
 
     try {
         const sourceMes = message.mes;          // [1.9.2] 끝났을 때 같은 글인지 보려고
         const chatId = context.chatId;
         const originalText = substituteParams(message.mes, context.name1, message.name);
+        let shownOriginal = originalText, shownSource = sourceMes;   // 7.9.5 붙인 번역의 원문 (번역 중 그림만 바뀌었으면 지금 글)
         await hideStaleTranslation(message, () => runToken.guard.acceptDisplay());
         runToken.guard.assert();
 
@@ -3322,6 +3332,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             // 캐시된 번역 확인
             const cachedTranslation = await readCachedTranslation(originalText);
             let translation = cachedTranslation;
+            let cacheReport = null;   // 7.9.5 새 번역을 캐시에 넣었으면 그 report (그림을 바꾼 글도 같은 조건으로 넣는다)
 
             runToken.guard.assert();
             if (cachedTranslation) startToast?.();
@@ -3344,7 +3355,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 }
                 translation = dropStrayWords(translation, originalText); // 6.2.4 원문에 없는 낱말 한 줄 — 캐시에도 걷은 글을
                 if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
-                else if (!report.restoredBlocks) await storeTranslationQuietly(originalText, translation, report); // 6.1.8 빠진 보호 블록을 되돌린 답은 캐시하지 않는다
+                else if (!report.restoredBlocks) { await storeTranslationQuietly(originalText, translation, report); cacheReport = report; } // 6.1.8 빠진 보호 블록을 되돌린 답은 캐시하지 않는다
                 // 5.4.2: 문단이 모두 캐시에서 왔으면(요청 0) 알린다 — 전엔 '번역을 시작합니다' 뒤 같은 글만 조용히 다시 붙었다
                 if (source !== 'auto' && source !== 'batch' && !report.partial && report.reusedParagraphs > 0 && !report.translatedParagraphs) toastr.info('IndexedDB에서 번역문을 가져왔습니다.');
             }
@@ -3362,18 +3373,29 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             if (cachedTranslation && !editedByHand) translation = tidyGlossaryOutput(originalText, dropStrayWords(translation, originalText));   // 6.4.0 용어집 이름 · 홀로 남은 「 도
             if (cachedTranslation && !editedByHand) translation = restoreDialogueBrackets(originalText, translation);   // 2.5.2 캐시에서 온 옛 번역의 빠진 대사 괄호
             if (!cachedTranslation) delete target.extra.translation_edited;
-            target.extra.display_text = processTranslationText(originalText, translation);
+            // 7.9.5 번역하는 동안 그림 표시만 바뀐 글(감시가 같은 글로 쳤다): 번역문의 그림 표시를 지금 글의 것으로. 자리를 모르면 전처럼 멈추고 다시 번역(된 문단은 캐시에서)
+            const nowOriginal = substituteParams(target.mes, context.name1, target.name);
+            if (nowOriginal !== originalText) {
+                const swapped = swapPictures(translation, originalText, nowOriginal);
+                if (swapped === null) throw Object.assign(guards.cancelled(), { reason: { what: 'picture' } });
+                translation = swapped; shownOriginal = nowOriginal; shownSource = target.mes;
+                if (editedByHand) target.extra.translation_edited = originalHashOf(nowOriginal);
+                if (cacheReport) await storeTranslationQuietly(nowOriginal, swapped, cacheReport);
+                runToken.guard.assert();
+            }
+            target.extra.display_text = processTranslationText(shownOriginal, translation);
             runToken.guard.acceptDisplay();
             if (cachedTranslation && source !== 'auto') {
                 toastr.info('IndexedDB에서 번역문을 가져왔습니다.');
             }
 
             // 현재 원문의 해시를 저장 (메시지 수정 감지용, 1.7.1)
-            markTranslatedOriginal(target, originalText);
+            markTranslatedOriginal(target, shownOriginal);
 
             // 원문 표시 백업 초기화 (새로 번역했으므로)
             delete target.extra.original_translation_backup;
-            rememberTranslation(target, originalText, translation); // 6.9.5
+            rememberTranslation(target, shownOriginal, translation); // 6.9.5
+            shownTranslations.set(target, { original: shownOriginal, translation, display: target.extra.display_text });   // 7.9.5 뒤에 그림만 바뀌면 이 번역으로
 
             refreshMessageBlock(targetId, target, { gently: !!runToken.preview });   // 6.9.6 미리 보기를 그렸으면 바뀐 문단만
             runToken.preview?.done();
@@ -3381,8 +3403,8 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             // 번역 완료 이벤트 발생
             eventSource.emit('EXTENSION_LLM_TRANSLATE_DONE', {
                 messageId: targetId,
-            message: target, sourceText: sourceMes, chatId: getContext().chatId,
-                originalText: originalText,
+            message: target, sourceText: shownSource, chatId: getContext().chatId,
+                originalText: shownOriginal,
                 translatedText: target.extra.display_text,
                 type: 'translation'
             });
@@ -3403,7 +3425,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             syncMesToSwipe(targetId);
             await context.saveChat();
         } else startToast?.();
-        if (message.extra?.original_text_hash === originalHashOf(originalText)) publishArchiveReady(message, sourceMes, chatId, 'translation');
+        if (message.extra?.original_text_hash === originalHashOf(shownOriginal)) publishArchiveReady(message, shownSource, chatId, 'translation');
     } catch (error) {
         runToken.error = error;
         runToken.preview?.revert();   // 2.5.1 멈춤 · 실패: 미리 보기를 지우고 지금 데이터대로 (원문 · 예전 번역)
@@ -5620,6 +5642,28 @@ async function pickAndAddGlossaryProposals(proposals, scope, { note = '이미 �
 }
 
 // [수정] 메시지 수정 시 번역문 정리 및 재번역 로직
+// 7.9.5 메시지 → 마지막으로 붙인 번역 { original, translation, display } (메모리만 — 채팅을 다시 열면 없고, 그땐 전처럼 다시 번역)
+const shownTranslations = new WeakMap();
+/** 붙인 번역이 그대로이고 지금 글이 그 원문과 그림 표시만 다르면 번역문의 그림 표시를 바꿔 붙인다 → true. 아니면 아무것도 안 하고 false */
+async function swapShownPictures(messageId, message, currentOriginal) {
+    const last = shownTranslations.get(message), extra = message?.extra;
+    if (!last || !extra || extra.display_text !== last.display || extra.original_translation_backup !== undefined) return false;
+    if (extra.original_text_hash !== originalHashOf(last.original) || isTranslationInProgress(messageId)) return false;
+    const translation = swapPictures(last.translation, last.original, currentOriginal);
+    if (translation === null) return false;
+    const editedByHand = extra.translation_edited === originalHashOf(last.original);
+    extra.display_text = processTranslationText(currentOriginal, translation);
+    if (editedByHand) extra.translation_edited = originalHashOf(currentOriginal);
+    markTranslatedOriginal(message, currentOriginal);
+    rememberTranslation(message, currentOriginal, translation);
+    shownTranslations.set(message, { original: currentOriginal, translation, display: extra.display_text });
+    refreshMessageBlock(messageId, message);
+    emitTranslationUIUpdate(messageId, 'translation');
+    syncMesToSwipe(messageId);
+    await getContext().saveChat();
+    return true;
+}
+
 async function handleMessageEdit(messageId) {
     // 6.5.2 테마가 본문을 다시 그린 뒤 헬퍼에 알리는 MESSAGE_UPDATED (src/rerender-notify.js) — 글은 그대로고 표시만 다시 그렸으니 번역 데이터를 손대지 않는다.
     //       (안 막으면 아래 '해시 같음' 가지가 또 그리고 → 또 알리고 … 돈다)
@@ -5639,6 +5683,8 @@ async function handleMessageEdit(messageId) {
         const previousHash = typeof previousOriginalText === 'string' ? originalHashOf(previousOriginalText) : message.extra.original_text_hash;
         const changed = previousHash ? previousHash !== originalHashOf(currentOriginalText) : false;
 
+        // 7.9.5 그림 확장이 그림 표시만 바꿨으면(그림 요청 → 그림 · 요청 지움 · 끝에 그림) 다시 번역하지 않고 번역문의 그림 표시만 바꾼다
+        if (changed && await swapShownPictures(messageId, message, currentOriginalText)) return;
         if (changed) {
             // 실제로 원문이 변경된 경우에만 이전 원문의 번역 삭제 (예전 사본이 남아 있을 때만 지울 수 있다 — 해시만 있으면 캐시 항목은 그대로 둔다)
             if (typeof previousOriginalText === 'string') {
@@ -7722,7 +7768,9 @@ function getCombinedRegexes() {
         //   위 규칙들 뒤라 주석이 없는 답의 [[__VAR_n__]] 번호 · 문단 캐시 키는 그대로다
         /<!--[\s\S]*?-->/g,
         // 7.2.4 <img …> 태그는 번역할 글이 없다(alt 는 두지 않음) — data: 그림이 든 답에서 수천 자를 안 보낸다. 내장 규칙 맨 뒤라 앞 규칙의 [[__VAR_n__]] 번호 · 문단 캐시 키는 그대로 (token-audit)
-        /<img\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi
+        /<img\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi,
+        // 7.9.5 그림 요청 태그(<pic prompt="…">)도 — 영어 그림 설명을 번역 요청에 보내지 않고, 번역문에 원문 그대로 남아 그림이 들어오면 그 자리만 바꾼다 (picture-swap.js). 맨 뒤라 앞 번호 · 캐시 키는 그대로
+        /<pic\b(?:[^>"']|"[^"]*"|'[^']*')*>(?:\s*<\/pic>)?/gi   // picture-swap.js PIC_REQUEST 와 같은 꼴 (시험이 견준다)
     ];
 
 

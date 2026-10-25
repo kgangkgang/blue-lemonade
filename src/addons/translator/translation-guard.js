@@ -33,7 +33,8 @@ export function createGuards(getContext) {
         return JSON.stringify([group, group === null ? c.characterId ?? null : null, c.getCurrentChatId?.() ?? c.chatId ?? null]);
     };
     const cancelled = () => Object.assign(new Error('채팅이나 글이 바뀌어 번역을 멈췄어요. 현재 글은 그대로 유지했어요.'), { cancelled: true });
-    function capture(message = null) {
+    // 7.9.5 sameText(before, after): 글이 달라도 같은 글로 칠 때 (번역 중 그림 확장이 그림 표시만 바꾼 것 — picture-swap.js). 안 주면 전처럼 글자 그대로 견준다
+    function capture(message = null, { sameText = null } = {}) {
         const stamp = epoch, chat = key();
         if (lastKey === null) lastKey = chat;   // 번역기가 채팅이 열린 뒤에 켜졌으면 지금 열쇠를 '본 적 있는' 것으로 — 같은 채팅의 첫 CHAT_CHANGED 가 세대를 올리지 않게
         let target = message, revision = message ? revisions.get(message) : null;
@@ -41,6 +42,7 @@ export function createGuards(getContext) {
         let display = message?.extra?.display_text;
         let index = message ? (getContext().chat?.indexOf(message) ?? -1) : -1;
         // 같은 자리의 메시지가 같은 메시지인가 (다시 불러온 사본): 보낸 시각 · 이름 · 사용자 여부 · 스와이프 · 번역 표시가 같다
+        const same = (now, was) => now === was || (!!sameText && sameText(was, now));
         const sameIdentity = again => !!again && again !== target && again.send_date === sent && again.name === who && again.is_user === user && again.swipe_id === swipe && again.extra?.display_text === display;
         // 채팅 배열이 바뀌었으면 같은 자리의 같은 메시지로 옮겨 탄다 → true. 자리가 비었거나(다시 불러오는 중) 다른 글이면 false
         const relocate = () => {
@@ -49,7 +51,7 @@ export function createGuards(getContext) {
             if (list.includes(target)) { index = list.indexOf(target); return true; }
             if (index < 0) return false;
             const again = list[index];
-            if (!sameIdentity(again) || again.mes !== source) return false;
+            if (!sameIdentity(again) || !same(again.mes, source)) return false;
             target = again; revision = revisions.get(again);
             return true;
         };
@@ -58,7 +60,7 @@ export function createGuards(getContext) {
             valid() {
                 return sameChat() && (!message ||
                     (relocate() && revisions.get(target) === revision &&
-                    target.mes === source && target.swipe_id === swipe && target.extra?.display_text === display));
+                    same(target.mes, source) && target.swipe_id === swipe && target.extra?.display_text === display));
             },
             // 6.5.2 지금 판단해도 되나: 같은 채팅인데 메시지가 없고 배열이 비어 있거나 그 자리까지 안 찼으면 다시 불러오는 중일 수 있다 → false
             settled() {
@@ -76,7 +78,7 @@ export function createGuards(getContext) {
                 if (!message) return null;
                 if (!relocate()) { const list = getContext().chat; return { what: 'gone', index, length: Array.isArray(list) ? list.length : -1 }; }
                 if (revisions.get(target) !== revision) return { what: 'edited', ...(edits.get(target) || {}) };
-                if (target.mes !== source) {
+                if (!same(target.mes, source)) {
                     const now = String(target.mes ?? ''), was = String(source ?? '');
                     let same = 0; while (same < was.length && same < now.length && was[same] === now[same]) same++;
                     return { what: 'text', before: was.length, after: now.length, samePrefix: same };
