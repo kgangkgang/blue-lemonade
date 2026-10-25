@@ -20,7 +20,7 @@ html:not(#bl-pill-off) body.salty :is(
   min-height: calc(var(--mainFontSize, 15px) * 20 / 15) !important;
   min-width: 0 !important;
   margin: 0 0 0 8px !important;
-  padding: 0 calc(var(--mainFontSize, 15px) * 8 / 15) !important;
+  padding: var(--bl-pill-nudge, 0.5px) calc(var(--mainFontSize, 15px) * 8 / 15) 0 !important;
   border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent) !important;
   border-radius: calc(var(--mainFontSize, 15px) * 10 / 15) !important;
   background: var(--bl-fill-hover, var(--bl-hover)) !important;
@@ -36,9 +36,12 @@ html:not(#bl-pill-off) body.salty :is(
   transform: none !important;
 }
 /* 7.9.4: UI 글자 크기에 글자·높이·안쪽 여백·모서리를 비례시켜요. 제목과의 공통 8px 간격은 유지해요. */
+/* 7.9.9: 알약 글자 잉크가 알약 세로 중심보다 위에 있었어요(리그 사진 픽셀 실측 — 폰 360×4 −0.23 · 384×3.75 −0.19 · PC 1280×1 −1.11, 음수 = 위. 숫자 글자는 내림획이 없어 줄 상자 가운데보다 위에 놓여요).
+   위쪽 안쪽 여백(--bl-pill-nudge, 기본 0.5px)만큼 글자 줄을 내려요 — 가운데 정렬이라 글자 상자는 그 절반만 내려가고, 브라우저는 글자를 CSS 1px 단위로 붙여 그려서 잉크는 1px 씩만 뛰어요(여백 0~1.5px 같은 자리 · 2px 부터 +0.8).
+   그래서 PC 는 0.5px 로 −1.11 → −0.11 이 되고, 폰은 −0.2 가 가능한 가장 가운데(다음 칸은 +0.8)라 그대로예요. 높이 · 가로 여백 · 선 · 글자 크기는 그대로예요. */
 /* 한글화 패널(확장 서랍 머리글 <b> 의 data-bl-version ::after 알약)도 같은 값 */
 html:not(#bl-pill-off) body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .inline-drawer-header > b[data-bl-version]::after {
-  box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; height: calc(var(--mainFontSize, 15px) * 20 / 15) !important; margin: 0 0 0 8px !important; padding: 0 calc(var(--mainFontSize, 15px) * 8 / 15) !important;
+  box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; height: calc(var(--mainFontSize, 15px) * 20 / 15) !important; margin: 0 0 0 8px !important; padding: var(--bl-pill-nudge, 0.5px) calc(var(--mainFontSize, 15px) * 8 / 15) 0 !important;
   border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent) !important; border-radius: calc(var(--mainFontSize, 15px) * 10 / 15) !important;
   font-family: inherit !important;
   font-size: calc(var(--mainFontSize, 15px) * 12 / 15) !important; font-weight: 400 !important; line-height: 1 !important; letter-spacing: 0 !important; vertical-align: middle !important;
@@ -108,7 +111,7 @@ html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b:has(
 html:not(#bl-pill-off) body.salty :is(dialog,[role="dialog"]) > header :is([class$="-version"],[class*="-version "],[class$="-ver"],[class*="-ver "]):not([hidden]) {
   height:calc(var(--mainFontSize,15px) * 20 / 15)!important;
   min-height:calc(var(--mainFontSize,15px) * 20 / 15)!important;
-  padding:0 calc(var(--mainFontSize,15px) * 8 / 15)!important;
+  padding:var(--bl-pill-nudge, 0.5px) calc(var(--mainFontSize,15px) * 8 / 15) 0!important;
   border-radius:calc(var(--mainFontSize,15px) * 10 / 15)!important;
   font-family:inherit!important;
   font-size:calc(var(--mainFontSize,15px) * 12 / 15)!important;

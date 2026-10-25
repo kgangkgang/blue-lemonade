@@ -56,9 +56,9 @@ export const FILE_HASHES = {
   "src/addons/bookmarks/viewers.js": "19183:e60b9efd:36ec558a",
   "src/addons/customstyle/index.js": "30539:aa5b201c:5fc7a582",
   "src/addons/customstyle/style.css": "3793:a55698b3:63ca622a",
-  "src/addons/direction/index.js": "120236:1db07136:62b1f44a",
+  "src/addons/direction/index.js": "120568:c8c54200:b796361b",
   "src/addons/direction/prompt.js": "5256:eef9fef1:3471148f",
-  "src/addons/direction/style.css": "39845:49c7a07d:8fe2c1e8",
+  "src/addons/direction/style.css": "39845:a2c66688:f3fbbf68",
   "src/addons/list-sync.js": "4902:487dc198:b4d6512a",
   "src/addons/mermaid/index.js": "8963:2a351705:f617c845",
   "src/addons/mermaid/source/src/index.js": "394:f55b3e28:fa2de41b",
@@ -708,5 +708,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1695001:b39c0aa6:e957b3ca"
+  "style.css": "1695293:6244de52:a6d711e3"
 };

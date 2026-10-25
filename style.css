@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a044d5adadce) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 9369dc68de3d) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.8";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -14096,9 +14096,12 @@ body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-head
 body.salty #WorldInfo .world_entry .inline-drawer-header > .drag-handle { grid-area: 1 / 1; width: 14px; margin: 0; }
 body.salty #WorldInfo .world_entry textarea[name="comment"] {
   min-height: max(34px, calc(1.45em + 14px)) !important; height: auto !important;
-  max-height: max(68px, calc(2.9em + 14px));
+  max-height: calc(2.9em + 12px);
   padding: 6px 4px !important; font-size: var(--bl-fs-body) !important;
+  line-height: 1.45 !important;
+  overflow: clip; overflow-clip-margin: content-box; scrollbar-width: none;
 }
+body.salty #WorldInfo .world_entry textarea[name="comment"]:focus { overflow: auto; overflow-clip-margin: 0; }
 body.salty #WorldInfo .world_entry select[name="entryStateSelector"] {
   width: max(56px, calc(1.4em + 36px)) !important; height: auto !important;
   min-height: max(34px, calc(1.4em + 8px)) !important;
@@ -24755,7 +24758,7 @@ html:not(#bl-pill-off) body.salty .dq-version:is(#bl-s, *):not([hidden]) {
   min-height: calc(var(--mainFontSize, 15px) * 20 / 15) !important;
   min-width: 0 !important;
   margin: 0 0 0 8px !important;
-  padding: 0 calc(var(--mainFontSize, 15px) * 8 / 15) !important;
+  padding: var(--bl-pill-nudge, 0.5px) calc(var(--mainFontSize, 15px) * 8 / 15) 0 !important;
   border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent) !important;
   border-radius: calc(var(--mainFontSize, 15px) * 10 / 15) !important;
   background: var(--bl-fill-hover, var(--bl-hover)) !important;
@@ -24771,7 +24774,7 @@ html:not(#bl-pill-off) body.salty .dq-version:is(#bl-s, *):not([hidden]) {
   transform: none !important;
 }
 html:not(#bl-pill-off) body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .inline-drawer-header > b[data-bl-version]::after {
-  box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; height: calc(var(--mainFontSize, 15px) * 20 / 15) !important; margin: 0 0 0 8px !important; padding: 0 calc(var(--mainFontSize, 15px) * 8 / 15) !important;
+  box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; height: calc(var(--mainFontSize, 15px) * 20 / 15) !important; margin: 0 0 0 8px !important; padding: var(--bl-pill-nudge, 0.5px) calc(var(--mainFontSize, 15px) * 8 / 15) 0 !important;
   border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent) !important; border-radius: calc(var(--mainFontSize, 15px) * 10 / 15) !important;
   font-family: inherit !important;
   font-size: calc(var(--mainFontSize, 15px) * 12 / 15) !important; font-weight: 400 !important; line-height: 1 !important; letter-spacing: 0 !important; vertical-align: middle !important;
@@ -24856,7 +24859,7 @@ html:not(#bl-pill-off) body.salty :is(dialog,[role="dialog"]) > header [class$="
 html:not(#bl-pill-off) body.salty :is(dialog,[role="dialog"]) > header [class*="-ver "]:not([hidden]) {
   height:calc(var(--mainFontSize,15px) * 20 / 15)!important;
   min-height:calc(var(--mainFontSize,15px) * 20 / 15)!important;
-  padding:0 calc(var(--mainFontSize,15px) * 8 / 15)!important;
+  padding:var(--bl-pill-nudge, 0.5px) calc(var(--mainFontSize,15px) * 8 / 15) 0!important;
   border-radius:calc(var(--mainFontSize,15px) * 10 / 15)!important;
   font-family:inherit!important;
   font-size:calc(var(--mainFontSize,15px) * 12 / 15)!important;

@@ -14,9 +14,12 @@ body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-head
 body.salty #WorldInfo .world_entry .inline-drawer-header > .drag-handle { grid-area: 1 / 1; width: 14px; margin: 0; }
 body.salty #WorldInfo .world_entry textarea[name="comment"] {
   min-height: max(34px, calc(1.45em + 14px)) !important; height: auto !important;
-  max-height: max(68px, calc(2.9em + 14px));
+  max-height: calc(2.9em + 12px);   /* 7.9.9: 제목은 두 줄까지만 — 전에는 max(68px, …) 이라 15.5px 글자(두 줄 = 57px)에서 셋째 줄이 11px 비쳐 보였어요(리그 320~430 실측 2.49줄). 두 줄 = 줄높이 1.45 × 2 + 안쪽 여백 12(선은 0 · 테는 안쪽 그림자) */
   padding: 6px 4px !important; font-size: var(--bl-fs-body) !important;
+  line-height: 1.45 !important;
+  overflow: clip; overflow-clip-margin: content-box; scrollbar-width: none;   /* 안쪽 여백 자리에 셋째 줄 글자 윗부분이 비치지 않게 글 영역에서 바로 잘라요 */
 }
+body.salty #WorldInfo .world_entry textarea[name="comment"]:focus { overflow: auto; overflow-clip-margin: 0; }   /* 고치는 동안만 칸 안에서 밀어 봐요(커서를 따라가게) */
 body.salty #WorldInfo .world_entry select[name="entryStateSelector"] {
   width: max(56px, calc(1.4em + 36px)) !important; height: auto !important; /* 7.9.1: 36 → 52 — ▾ 를 기준 자리(오른쪽 10 · 15px)에 두고도 🟢 가 안 잘리게(이름 칸에서 16px 양보) */
   min-height: max(34px, calc(1.4em + 8px)) !important;

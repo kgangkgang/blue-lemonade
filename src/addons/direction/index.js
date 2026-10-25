@@ -14,7 +14,7 @@ import { afterBoot } from '../../boot-gate.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.4.0';
+const VERSION = '1.4.1';
 // 1.4.0: 전개 지시 · 항상 지시 · 프롬프트 줄마다 넣는 곳(프롬프트 맨 처음 · 메인 프롬프트 앞/뒤 · 채팅 안 @깊이 · 프롬프트 맨 끝)과 역할(시스템 · 사용자 · AI 어시스턴트)을 따로 고른다
 // 1.3.6: 프롬프트 쪽 줄을 꾹 눌러(마우스는 끌기 · 키보드 Alt+↑/↓) 순서를 바꾼다 — 목록 순서 = 보내는 순서
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
@@ -1565,7 +1565,9 @@ async function onListClick(event) {
 
 function onOutsidePointer(event) {
     // 지우기 확인 창(실리태번 dialog)을 누를 때는 닫지 않는다.
-    if (event.target.closest?.('#jj-popup, #jj-button, dialog')) return;
+    // 1.4.1 테마의 고르기 목록(넣는 곳 · 역할 select 를 누르면 body 에 뜨는 .salty-pick-layer, 공용 표시 [data-bl-popup])도 창 밖이 아니다 —
+    //       폰에서 항목을 고르는 손가락이 닿는 순간 이 창이 닫혀 고치기가 끊겼다(리그 터치 재현 10-26)
+    if (event.target.closest?.('#jj-popup, #jj-button, dialog, [data-bl-popup]')) return;
     closePopup();
 }
 
