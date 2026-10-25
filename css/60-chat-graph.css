@@ -28,7 +28,9 @@ body.salty .bl-chat-library:not([hidden]) { display:flex;flex-direction:column;g
 .bl-library-source-names { margin:8px 0;overflow-wrap:anywhere; }
 .bl-library-source-names summary { min-height:36px;display:list-item;padding-block:8px; }
 @media(max-width:600px){.bl-library-tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.bl-library-compare-row > div{gap:5px}.bl-library-compare-row section{padding:5px}}
-@media(pointer:coarse){.bl-chat-library{--bl-h-ctl:44px}.bl-chat-library :is(button,select,input[type=search]),body.salty .bl-chat-view-tabs[role=tablist] button{min-height:44px}.bl-library-row>label{min-height:44px}.bl-library-source-names summary{min-height:44px}}
+/* 7.9.9 공용 측정 크기표: 손가락 화면에서도 보이는 높이는 글자 단추 · 탭 36 (글 칸 · 고르기 44 는 그대로), 누르는 칸 44 는 86/87 과 같은 투명 상자
+   (::after — 이 단추들은 가짜 요소를 모양에 쓰지 않는다 · 기준점 relative). 탭 줄은 98 이 overflow 를 잘라 상자가 위아래로는 안 번진다 */
+@media(pointer:coarse){.bl-chat-library{--bl-h-ctl:44px}.bl-chat-library :is(select,input[type=search]){min-height:44px}body.salty .bl-chat-library button,body.salty .bl-chat-view-tabs[role=tablist] button{position:relative;min-height:36px}body.salty .bl-chat-library button::after,body.salty .bl-chat-view-tabs[role=tablist] button::after{content:'';position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}.bl-library-row>label{min-height:44px}.bl-library-source-names summary{min-height:44px}}
 .bl-chat-view-tabs, .bl-chat-graph { display: none; }
 body.salty .bl-chat-view-tabs { display: flex; flex: none; flex-wrap: wrap; gap: 4px; width: fit-content; max-width: 100%; padding: 4px; border-radius: 12px; background: var(--salty-fill-shade,var(--salty-shade)); }
 body.salty .bl-chat-view-tabs button { display: flex; align-items: center; justify-content: center; flex: 1 0 auto; gap: 8px; min-height: 34px; padding: 5px 14px; border: 0; border-radius: 8px; background: transparent; color: var(--salty-muted); font: inherit; white-space: nowrap; cursor: pointer; }

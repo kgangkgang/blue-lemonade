@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d3c293b07042) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build c1214781fd2c) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -23021,10 +23021,8 @@ body.salty .bl-chat-library:not([hidden]) { display:flex;flex-direction:column;g
 .bl-library-source-names { margin:8px 0;overflow-wrap:anywhere; }
 .bl-library-source-names summary { min-height:36px;display:list-item;padding-block:8px; }
 @media(max-width:600px){.bl-library-tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.bl-library-compare-row > div{gap:5px}.bl-library-compare-row section{padding:5px}}
-@media(pointer:coarse){.bl-chat-library{--bl-h-ctl:44px}.bl-chat-library button:is(.bl-s, *),
-.bl-chat-library select:is(.bl-s, *),
-.bl-chat-library input[type=search],
-body.salty .bl-chat-view-tabs[role=tablist] button {min-height:44px}.bl-library-row>label{min-height:44px}.bl-library-source-names summary{min-height:44px}}
+@media(pointer:coarse){.bl-chat-library{--bl-h-ctl:44px}.bl-chat-library select:is(.bl-s, *),
+.bl-chat-library input[type=search] {min-height:44px}body.salty .bl-chat-library button,body.salty .bl-chat-view-tabs[role=tablist] button{position:relative;min-height:36px}body.salty .bl-chat-library button::after,body.salty .bl-chat-view-tabs[role=tablist] button::after{content:'';position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}.bl-library-row>label{min-height:44px}.bl-library-source-names summary{min-height:44px}}
 .bl-chat-view-tabs, .bl-chat-graph { display: none; }
 body.salty .bl-chat-view-tabs { display: flex; flex: none; flex-wrap: wrap; gap: 4px; width: fit-content; max-width: 100%; padding: 4px; border-radius: 12px; background: var(--salty-fill-shade,var(--salty-shade)); }
 body.salty .bl-chat-view-tabs button { display: flex; align-items: center; justify-content: center; flex: 1 0 auto; gap: 8px; min-height: 34px; padding: 5px 14px; border: 0; border-radius: 8px; background: transparent; color: var(--salty-muted); font: inherit; white-space: nowrap; cursor: pointer; }
@@ -26299,6 +26297,7 @@ html body .bl-translator-dialog #llm_glossary_expand {
   html body.salty #jj_reset { height: 34px; min-height: 34px; }
   html body.salty .eh-pchip { height: 36px; }
   html body.salty .bl-word-rule > button { height: 34px; min-height: 34px; }
+  html body.salty .bl-extension-page .bl-word-rule > button { height: 34px; min-height: 34px; }
   html body.salty .bl-translator-dialog .llmt-gl-scope,
 html body.salty .bl-translator-dialog .llmt-gl-sort { position: relative; min-height: 36px; }
   html body.salty .bl-translator-dialog #llm_glossary_sort.llmt-gl-sort { min-width: 36px !important; min-height: 36px !important; }
