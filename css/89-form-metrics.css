@@ -120,8 +120,8 @@ html body.salty #pt-panel .pt-page:has(> .pt-page-fixed) > .pt-page-scroll { min
   /* 낱말 바꾸기 규칙 줄의 지우기(아이콘만) 36 → 34 */
   html body.salty .bl-word-rule > button { height: 34px; min-height: 34px; }
   /* 번역 창 용어집 범위(이 캐릭터 · 전체) 44 → 글자 단추 36 · 누르는 칸 44 는 투명 상자, 같은 창 단추 글자 13(뽑기 · 정렬 「가」) */
-  html body.salty .bl-translator-dialog .llmt-gl-scope { position: relative; min-height: 36px; }
-  html body.salty .bl-translator-dialog .llmt-gl-scope::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: max(100%, 44px); transform: translateY(-50%); }
+  html body.salty .bl-translator-dialog :is(.llmt-gl-scope, .llmt-gl-sort) { position: relative; min-height: 36px; }
+  html body.salty .bl-translator-dialog :is(.llmt-gl-scope, .llmt-gl-sort)::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: max(100%, 44px); transform: translateY(-50%); }
   html body.salty .bl-translator-dialog :is(.llmt-gl-extract, .llmt-gl-sort) { font-size: 13px; }
   /* 캐릭터 에셋 「에셋 떼기」(글자 붙은 아이콘 단추) 34 · 15.5 → 같은 창 글자 단추 36 · 글자 */
   html body.salty #char_assets_settings .eh-icon-btn--labeled { height: var(--bl-h-ctl, 36px); font-size: var(--bl-ts-ctl); }
