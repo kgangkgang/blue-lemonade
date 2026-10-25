@@ -1,5 +1,5 @@
 // 표시된 상태창만 메모리에서 복제해요. 채팅·프리셋을 저장하거나 밖으로 보내지 않아요.
-const OMIT = new Set(['SCRIPT','STYLE','LINK','META','BASE','IFRAME','OBJECT','EMBED','FORM','INPUT','TEXTAREA','SELECT','AUDIO','VIDEO','SOURCE']);
+const OMIT = new Set(['SCRIPT','STYLE','LINK','META','BASE','IFRAME','OBJECT','EMBED','AUDIO','VIDEO','SOURCE']);
 const ATTRS = new Set(['id','class','title','alt','role','dir','lang','hidden','colspan','rowspan','viewBox','d','fill','stroke','stroke-width','width','height','open','x','y','x1','x2','y1','y2','cx','cy','r','rx','ry','points','preserveAspectRatio']);
 export function safePreviewStyleValue(value) {
     if(/expression\s*\(|-moz-binding|@import/i.test(value))return false;
@@ -64,11 +64,19 @@ export function copyFruitPreview(source, target) {
         const key=String(count);el.setAttribute('data-bl-preview-node',key);
         el.style.cssText=declarations(node).text;el.style.pointerEvents='none';
         if(node.tagName==='IMG')el.setAttribute('src',imageSource(node));
+        if(node.tagName==='INPUT'){
+            el.setAttribute('type',node.type||'text');el.disabled=!!node.disabled;el.inert=true;el.tabIndex=-1;
+            if(!['file','password'].includes(node.type))el.value=node.value;
+            el.checked=!!node.checked;
+        }
+        if(node.tagName==='BUTTON')el.setAttribute('type','button');
+        if(node.tagName==='TEXTAREA'){el.value=node.value;el.disabled=!!node.disabled;el.inert=true;el.tabIndex=-1;}
         for(const pseudo of ['::before','::after']) {
             const data=declarations(node,pseudo);
             if(!['none','normal',''].includes(data.style.content))rules.push(`[data-bl-preview-node="${key}"]${pseudo}{${data.text}}`);
         }
         for(const child of node.childNodes){const copy=clone(child);if(copy)el.append(copy);}
+        if(node.tagName==='SELECT'){el.selectedIndex=node.selectedIndex;el.disabled=!!node.disabled;el.inert=true;el.tabIndex=-1;}
         return el;
     }
     const result=clone(source),host=target.querySelector('[data-bl-fruit-preview]');

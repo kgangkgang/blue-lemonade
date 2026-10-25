@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f1fa27380cb6) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 45e4701b218c) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -14096,12 +14096,12 @@ body.salty #WorldInfo .world_entry .inline-drawer-header > .drag-handle { grid-a
 body.salty #WorldInfo .world_entry textarea[name="comment"] {
   min-height: max(34px, calc(1.45em + 14px)) !important; height: auto !important;
   max-height: max(68px, calc(2.9em + 14px));
-  padding: 6px 4px !important; font-size: var(--bl-fs-ctl) !important;
+  padding: 6px 4px !important; font-size: var(--bl-fs-body) !important;
 }
 body.salty #WorldInfo .world_entry select[name="entryStateSelector"] {
   width: max(52px, 2em) !important; height: auto !important;
   min-height: max(34px, calc(1.4em + 8px)) !important;
-  padding: 4px 30px 4px 6px !important; font-size: var(--bl-fs-ctl) !important; line-height: 1.4;
+  padding: 4px 30px 4px 6px !important; font-size: var(--bl-fs-body) !important; line-height: 1.4;
 }
 body.salty #WorldInfo .world_entry .inline-drawer-header .killSwitch { margin: 0 !important;  }
 body.salty #WorldInfo .world_entry .inline-drawer-header .inline-drawer-toggle { height: 34px;  }
@@ -14122,7 +14122,7 @@ body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .world_entry_form_con
 body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .world_entry_form_control > select {
   flex: 1 1 4.5em; width: 0 !important; max-width: 100% !important; min-width: min(100%, 4.5em) !important;
   height: auto !important; min-height: max(30px, calc(1.4em + 8px)) !important; margin: 0 !important;
-  padding-block: 3px !important; padding-left: 7px !important; font-size: var(--bl-fs-ctl) !important; line-height: 1.4;
+  padding-block: 3px !important; padding-left: 7px !important; font-size: var(--bl-fs-body) !important; line-height: 1.4;
 }
 body.salty #WorldInfo .world_entry .WIEntryTitleAndStatus { flex-wrap: wrap !important; }
 body.salty #WorldInfo .world_entry .WIEntryTitleAndStatus > .flex-container { flex: 1 1 8em !important; }

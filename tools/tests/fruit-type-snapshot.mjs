@@ -36,3 +36,8 @@ assert(!safePreviewStyleValue('url("https://invalid.invalid/x")'));
 
 assert(copied.childNodes[0].getAttribute('src').startsWith('data:image/svg+xml,'));
 assert.equal(host.getAttribute('data-bl-preview-unavailable-images'),'1');
+
+const input=element('input',{onchange:'danger()'});input.type='range';input.value='25';input.checked=false;own(input);source.childNodes.push(input);
+const password=element('input');password.type='password';password.value='복제하지 않는 검사값';own(password);source.childNodes.push(password);
+copyFruitPreview(source,target);const controls=host.childNodes[0].childNodes.filter(n=>n.tagName==='INPUT');
+assert.equal(controls[0].value,'25');assert.equal(controls[0].disabled,false);assert.equal(controls[0].inert,true);assert.equal(controls[0].getAttribute('onchange'),undefined);assert.equal(controls[1].value,undefined);assert.equal(controls[1].getAttribute('type'),'password');

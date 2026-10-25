@@ -245,7 +245,7 @@ export const FILE_HASHES = {
   "src/addons/translator/glossary-priority.js": "1166:e7040d4d:a088802d",
   "src/addons/translator/glossary-suggest.js": "37892:84fb105c:16cf3cc9",
   "src/addons/translator/glossary-sync.js": "4410:86799b24:8d1eafff",
-  "src/addons/translator/index.html": "57699:4af4ed21:73066ce5",
+  "src/addons/translator/index.html": "57699:21955500:8220ed99",
   "src/addons/translator/index.js": "556300:47dd25ff:24021384",
   "src/addons/translator/korean-keep.js": "3875:e48e9ac8:e1078d76",
   "src/addons/translator/leftover-fix.js": "20813:22ae0bba:9631adfc",
@@ -517,7 +517,7 @@ export const FILE_HASHES = {
   "src/extension-colors.js": "9262:b93831f6:c18337b9",
   "src/extension-folder.js": "1942:735f0044:a763d9ee",
   "src/faq-data.js": "14484:d699149a:17afe56d",
-  "src/features.js": "12665:fcacebc4:f4363fea",
+  "src/features.js": "12783:896b9c5d:d2b6501b",
   "src/file-fingerprint.js": "524:98923ac4:298a0ced",
   "src/first-run.js": "23534:c329eb33:40cd4012",
   "src/fold.js": "14815:8543a1b6:6775b6de",
@@ -534,7 +534,7 @@ export const FILE_HASHES = {
   "src/fruit-type-runtime.js": "5622:5a4c4bc7:2cd6dc45",
   "src/fruit-type-schema.js": "10698:ab41c297:50691fb0",
   "src/fruit-type-shortcuts.js": "6772:4bfbf966:e44abb7d",
-  "src/fruit-type-snapshot.js": "6697:c1d83cbf:c567257b",
+  "src/fruit-type-snapshot.js": "7253:81d0664e:1a53ad3c",
   "src/fruit-type-ui.js": "17196:d6e0e3ec:658ef700",
   "src/generation-state.js": "6956:ff69362b:15d46250",
   "src/gradient-ui.js": "5326:12fabd1e:586f428a",
@@ -586,6 +586,8 @@ export const FILE_HASHES = {
   "src/profile.js": "6026:34f89f44:fc6757bf",
   "src/prompt-cache.js": "4499:ec84e809:50ec9d1a",
   "src/prompt-card-picker.js": "6956:c7ead0af:d78c5ca6",
+  "src/prompt-choice-core.js": "2005:d2e6bbe8:59e8ffc0",
+  "src/prompt-choice.js": "1627:c79c5046:269fb8d9",
   "src/prompt-history-label.js": "12929:cfd8025a:2a844a88",
   "src/prompt-link.js": "10963:3a265882:ccf06d8a",
   "src/prompt-tools.js": "10328:88d89f4c:71c8affc",
@@ -705,5 +707,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1687439:c8aa28c5:e75875b5"
+  "style.css": "1687442:99818aab:88e2c936"
 };
