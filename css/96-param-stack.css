@@ -138,18 +138,18 @@ body.salty #rm_api_block #openai_api h4 { word-break: keep-all; overflow-wrap: b
 /* 정규식 편집기: 매크로 치환 선택칸 (최소 · 최대 깊이 두 칸 · 「적용 대상」 · 「그 밖의 옵션」 두 칸은 원래대로 나란히) */
 body.salty .regex_editor label.checkbox:has(> select[name="substitute_regex"]) { flex-direction: column !important; align-items: stretch !important; width: 100% !important; align-self: stretch !important; }
 body.salty .regex_editor select[name="substitute_regex"] { width: 100% !important; max-width: none !important; }
-/* 월드 인포 항목 편집기: 논리 구조 줄은 이름 위 · 칸 아래 (머리줄의 위치 · 순서 · 확률과 숫자칸 줄은 원래대로 나란히) */
+/* 월드 인포 항목 편집기: 논리 구조는 공간이 허락하는 한 이름과 값을 한 줄에 두어요 (머리줄의 위치 · 순서 · 확률과 숫자칸 줄은 원래대로 나란히) */
 body.salty #WorldInfo#WorldInfo .world_entry_form_control:has(> select[name="entryLogicType"]):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) !important;
-  align-content: start !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
   align-self: flex-start !important;
   height: auto !important;
-  gap: var(--bl-s1) !important;
+  gap: 8px !important;
   width: 100% !important;
 }
 /* ↳ 아래 규칙은 css/99-lazy-panel.css 로 옮김 (서랍 전용 · :has() 오른쪽 끝이 태그) */
-body.salty #WorldInfo#WorldInfo .world_entry_form_control > select[name="entryLogicType"] { width: 100% !important; max-width: none !important; text-align: left !important; }
+body.salty #WorldInfo#WorldInfo .world_entry_form_control > select[name="entryLogicType"] { width: auto !important; max-width: 60% !important; text-align: right !important; }
 
 /* ---------- 3. 슬라이더 + 숫자칸: 이름 | 숫자(현재 값) / 슬라이더 가로 꽉 ---------- */
 /* 실리태번 생성 설정 (range-block: 이름 · 슬라이더 · 숫자칸, 02-controls · 26-rounds) */

@@ -55,9 +55,10 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 @media(max-width:360px){.bl-ft-dialog{padding:0 12px 12px}.bl-ft-dialog-head{margin:0 -12px 4px;padding:8px 12px}}
 
 /* 원본의 8px 문자 꺾쇠 대신 공통 고르기 화살표를 같은 크기로 보여요. */
+:is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel { position:relative; padding-right:30px!important; }
 :is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel > i {
   display:inline-block; flex:0 0 15px!important; width:15px!important; height:15px!important;
-  font-size:0!important; transform:none!important;
+  font-size:0!important; position:absolute!important; top:50%!important; right:10px!important; left:auto!important; bottom:auto!important; transform:translateY(-50%)!important;
   background:var(--bl-select-arrow) no-repeat center / 15px 15px;
 }
 :is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel[data-pick-group] { position:relative; overflow:visible; }

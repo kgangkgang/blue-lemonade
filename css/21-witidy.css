@@ -18,7 +18,7 @@ body.salty #WorldInfo .world_entry textarea[name="comment"] {
   padding: 6px 4px !important; font-size: var(--bl-fs-body) !important;
 }
 body.salty #WorldInfo .world_entry select[name="entryStateSelector"] {
-  width: max(52px, 2em) !important; height: auto !important; /* 7.9.1: 36 → 52 — ▾ 를 기준 자리(오른쪽 10 · 15px)에 두고도 🟢 가 안 잘리게(이름 칸에서 16px 양보) */
+  width: max(56px, calc(1.4em + 36px)) !important; height: auto !important; /* 7.9.1: 36 → 52 — ▾ 를 기준 자리(오른쪽 10 · 15px)에 두고도 🟢 가 안 잘리게(이름 칸에서 16px 양보) */
   min-height: max(34px, calc(1.4em + 8px)) !important;
   padding: 4px 30px 4px 6px !important; font-size: var(--bl-fs-body) !important; line-height: 1.4;
 }
@@ -272,3 +272,7 @@ body.salty:not(#salty-none) #WorldInfo .world_entry_edit > .flex-container.flexG
   body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] { grid-template-columns:minmax(0,1fr); }
   body.salty:not(#salty-none) #WorldInfo .world_entry_edit > .flex-container.flexGap10 > div { flex-basis:100%!important; }
 }
+
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) { display:flex!important; flex-wrap:nowrap; gap:8px; }
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) > small { width:auto!important; flex:1 1 auto; padding:0!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit select[name="entryLogicType"] { flex:0 1 auto!important; max-width:60%!important; }

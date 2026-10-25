@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 45e4701b218c) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 2057dfe905b3) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -14099,7 +14099,7 @@ body.salty #WorldInfo .world_entry textarea[name="comment"] {
   padding: 6px 4px !important; font-size: var(--bl-fs-body) !important;
 }
 body.salty #WorldInfo .world_entry select[name="entryStateSelector"] {
-  width: max(52px, 2em) !important; height: auto !important;
+  width: max(56px, calc(1.4em + 36px)) !important; height: auto !important;
   min-height: max(34px, calc(1.4em + 8px)) !important;
   padding: 4px 30px 4px 6px !important; font-size: var(--bl-fs-body) !important; line-height: 1.4;
 }
@@ -14339,6 +14339,9 @@ body.salty:not(#salty-none) #WorldInfo .world_entry_edit > .flex-container.flexG
   body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] { grid-template-columns:minmax(0,1fr); }
   body.salty:not(#salty-none) #WorldInfo .world_entry_edit > .flex-container.flexGap10 > div { flex-basis:100%!important; }
 }
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) { display:flex!important; flex-wrap:nowrap; gap:8px; }
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) > small { width:auto!important; flex:1 1 auto; padding:0!important; }
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit select[name="entryLogicType"] { flex:0 1 auto!important; max-width:60%!important; }
 /* css/22-promptlist.css */
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list {
   margin: var(--bl-s3) calc(var(--bl-gutter, 12px) * -1) 0 !important;
@@ -25002,9 +25005,10 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 .bl-ft-dialog small{opacity:1}
 .bl-ft-shortcut{font:inherit!important;font-size:.8em!important;min-height:32px!important;padding:4px 10px!important;border-radius:8px!important;white-space:normal!important;overflow-wrap:anywhere!important;max-width:100%!important}
 @media(max-width:360px){.bl-ft-dialog{padding:0 12px 12px}.bl-ft-dialog-head{margin:0 -12px 4px;padding:8px 12px}}
+:is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel { position:relative; padding-right:30px!important; }
 :is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel > i {
   display:inline-block; flex:0 0 15px!important; width:15px!important; height:15px!important;
-  font-size:0!important; transform:none!important;
+  font-size:0!important; position:absolute!important; top:50%!important; right:10px!important; left:auto!important; bottom:auto!important; transform:translateY(-50%)!important;
   background:var(--bl-select-arrow) no-repeat center / 15px 15px;
 }
 :is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel[data-pick-group] { position:relative; overflow:visible; }
@@ -26552,15 +26556,15 @@ body.salty #rm_api_block #openai_api h4 { word-break: keep-all; overflow-wrap: b
 body.salty .regex_editor label.checkbox:has(> select[name="substitute_regex"]) { flex-direction: column !important; align-items: stretch !important; width: 100% !important; align-self: stretch !important; }
 body.salty .regex_editor select[name="substitute_regex"] { width: 100% !important; max-width: none !important; }
 body.salty #WorldInfo#WorldInfo .world_entry_form_control:has(> select[name="entryLogicType"]):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) !important;
-  align-content: start !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
   align-self: flex-start !important;
   height: auto !important;
-  gap: var(--bl-s1) !important;
+  gap: 8px !important;
   width: 100% !important;
 }
-body.salty #WorldInfo#WorldInfo .world_entry_form_control > select[name="entryLogicType"] { width: 100% !important; max-width: none !important; text-align: left !important; }
+body.salty #WorldInfo#WorldInfo .world_entry_form_control > select[name="entryLogicType"] { width: auto !important; max-width: 60% !important; text-align: right !important; }
 body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
