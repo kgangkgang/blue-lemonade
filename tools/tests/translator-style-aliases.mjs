@@ -29,6 +29,12 @@ await test('두 인물이 공유하는 짧은 별칭만으로 화자를 고르�
 await test('영문으로 저장한 인물도 용어집의 한글 표기를 역으로 찾아요',()=>{assert.match(styleProfileBlock(meta(rule('Lindel')),'린델이 말했다.',{entries:terms}),/존댓말/);});
 await test('이름 없는 대사는 화자를 만들어 지침을 적용하지 않아요',()=>{assert.equal(styleProfileBlock(meta(rule('Lindel')),'"Hello, everyone."',{entries:terms}),'');});
 
+await test('같은 표준 이름의 언어별 용어집 행을 한 인물로 연결해요',()=>{const entries=[{src:'Lindel',dst:'린델'},{src:'リンデル',dst:'린델'}],m=meta(rule('린델'));for(const text of ['Lindel said hello.','リンデルは「こんにちは」と言った。','린델은 인사했다.'])assert.match(styleProfileBlock(m,text,{entries}),/존댓말/);});
+await test('언어별 행을 합쳐도 반대 방향의 이름으로 찾을 수 있어요',()=>{const entries=[{src:'Lindel',dst:'린델'},{src:'リンデル',dst:'린델'}];assert.match(styleProfileBlock(meta(rule('Lindel')),'リンデルが言った。',{entries}),/존댓말/);});
+await test('같은 언어 이름은 명시한 별칭일 때만 함께 읽어요',()=>{const entries=[{src:'Lindel',dst:'린'},{src:'Rindel',dst:'린'}],m=meta(rule('Lindel, Rindel, 린'));assert.match(styleProfileBlock(m,'Rindel said hello.',{entries}),/존댓말/);});
+await test('표준 이름의 대소문자와 전각 중복을 정리해요',()=>{const entries=[{src:'Lindel',dst:'린델'},{src:'リンデル',dst:' 린델 '},{src:'ＬＩＮＤＥＬ',dst:'린델'}];assert.match(styleProfileBlock(meta(rule('린델')),'リンデルが言った。',{entries}),/존댓말/);});
+await test('사용자가 별도 인물로 적은 지침은 문자권이 달라도 합치지 않아요',()=>{const entries=[{src:'Lindel',dst:'린'},{src:'リンデル',dst:'린'}],m=meta(rule('Lindel'));m[KEY]=planStyleProfile(m,{...rule('リンデル'),mode:'casual'});const a=styleProfileBlock(m,'Lindel said hello.',{entries}),b=styleProfileBlock(m,'リンデルが言った。',{entries});assert.match(a,/존댓말/);assert.doesNotMatch(a,/반말/);assert.match(b,/반말/);assert.doesNotMatch(b,/존댓말/);});
+await test('다국어 연결이 상대 호칭과 저장 원문을 보존해요',()=>{const entries=[{src:'Lindel',dst:'린델'},{src:'リンデル',dst:'린델'},{src:'Rovel',dst:'로벨'},{src:'ロベル',dst:'로벨'}],m=meta(rule('린델','로벨')),before=JSON.stringify([m,entries]);assert.match(styleProfileBlock(m,'リンデルはロベルに話した。',{entries}),/선배/);assert.equal(JSON.stringify([m,entries]),before);});
 const source=fs.readFileSync(new URL('../../src/addons/translator/index.js',import.meta.url),'utf8');
 const start=source.indexOf('const buildFullPrompt = '),end=source.indexOf('const PROMPT_LAYOUTS',start);
 function promptFixture({enabled=true,input=false,checkSource}={}){

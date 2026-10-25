@@ -26,6 +26,39 @@ function resolvedNames(value, glossaryOwners) {
     }
     return styleProfileNames(result.join(','));
 }
+// 같은 번역명에 언어별 사전 행이 붙어도 서로 다른 인물로 오해하지 않아요.
+// 같은 문자권의 다른 이름끼리는 사용자가 한 인물의 별칭으로 명시했을 때만 묶어요.
+function glossaryNameGroups(entries, declared) {
+    const buckets=new Map();
+    const kinds=names=>new Set(names.flatMap(name=>[
+        /\p{Script=Latin}/u.test(name)?'latin':'',/[가-힣]/.test(name)?'hangul':'',
+        /[ぁ-ゖァ-ヺー]/.test(name)?'kana':'',/\p{Script=Han}/u.test(name)?'han':'',
+    ].filter(Boolean)));
+    for(const entry of entries||[]){
+        if(!entry?.src||!entry?.dst)continue;
+        const src=styleProfileNames(entry.src),dst=styleProfileNames(entry.dst);
+        if(!src.length||!dst.length)continue;
+        const key=dst.map(styleFold).sort().join(',');
+        if(!buckets.has(key))buckets.set(key,[]);
+        buckets.get(key).push({src,dst,kinds:kinds(src)});
+    }
+    const out=[];
+    for(const rows of buckets.values()){
+        let compatible=true;
+        for(let i=0;i<rows.length&&compatible;i++)for(let j=i+1;j<rows.length;j++){
+            const a=rows[i],b=rows[j];
+            const overlap=a.src.some(name=>b.src.some(other=>styleFold(name)===styleFold(other)));
+            const explicit=declared.some(group=>[...a.src,...b.src].every(name=>group.some(other=>styleFold(name)===styleFold(other))));
+            const owners=names=>declared.filter(group=>names.some(name=>group.some(other=>styleFold(name)===styleFold(other))));
+            const separatelyDeclared=owners(a.src).some(left=>owners(b.src).some(right=>left!==right));
+            const differentLanguage=!separatelyDeclared&&a.kinds.size&&b.kinds.size&&![...a.kinds].some(kind=>b.kinds.has(kind));
+            if(!overlap&&!explicit&&!differentLanguage){compatible=false;break;}
+        }
+        if(compatible)out.push(styleProfileNames(rows.flatMap(row=>[...row.src,...row.dst]).join(',')));
+        else out.push(...rows.map(row=>styleProfileNames([...row.src,...row.dst].join(','))));
+    }
+    return out;
+}
 // 한국어 조사는 허용하되 더 긴 이름·낱말의 일부는 화자 이름으로 보지 않아요.
 function nameOccursIn(plain, name) {
     const probe=styleFold(name);if(!probe)return false;
@@ -85,8 +118,10 @@ export function planStyleProfile(metadata, value) {
 }
 export function styleProfileBlock(metadata, source, { entries=[] } = {}) {
     const plain=styleFold(String(source??'').replace(/<!--[\s\S]*?-->|<\/?[A-Za-z][^<>]*>/g,' '));
-    const glossaryGroups=(entries||[]).filter(e=>e?.src&&e?.dst).map(e=>styleProfileNames(e.src+','+e.dst)),glossaryOwners=nameOwners(glossaryGroups);
-    const profiles=styleProfiles(metadata).map(e=>({...e,speakerNames:resolvedNames(e.speaker,glossaryOwners),listenerNames:resolvedNames(e.listener,glossaryOwners)}));
+    const savedProfiles=styleProfiles(metadata);
+    const declared=savedProfiles.flatMap(e=>[styleProfileNames(e.speaker),styleProfileNames(e.listener)]);
+    const glossaryGroups=glossaryNameGroups(entries,declared),glossaryOwners=nameOwners(glossaryGroups);
+    const profiles=savedProfiles.map(e=>({...e,speakerNames:resolvedNames(e.speaker,glossaryOwners),listenerNames:resolvedNames(e.listener,glossaryOwners)}));
     const ambiguous=ambiguousNames([...profiles.flatMap(e=>[e.speakerNames,e.listenerNames]),...glossaryGroups]);
     const hits=profiles.map(e=>({...e,speakerNames:e.speakerNames.filter(n=>!ambiguous.has(styleFold(n))),listenerNames:e.listenerNames.filter(n=>!ambiguous.has(styleFold(n)))})).filter(e=>e.speakerNames.some(name=>nameOccursIn(plain,name))&&(!e.listener||e.listenerNames.some(name=>nameOccursIn(plain,name))));
     if(!hits.length)return '';
