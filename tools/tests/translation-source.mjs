@@ -110,8 +110,8 @@ await test('수정 창: 이 기기 IndexedDB 에 옛 번역이 남아 있어도 
     assert.equal(await L.localOrDisplayedTranslation(messageWith(RAW, false), ORIGINAL), '옛 번역');
 });
 
-await test('기록을 적는 자리: 새 번역 · 다시 번역 · 점검 저장 · 수정 저장 · 고른 글 지우기 · 고른 글 다시 번역 · 북마크 · 지울 때 함께 지움', () => {
-    assert.equal((source.match(/rememberTranslation\((?:target|message), (?:originalText|state\.source|originalTextForDbKey), (?:retranslation|next|translation|newText)\)/g) || []).length, 4);
+await test('기록을 적는 자리: 새 번역 · 그림 교체 · 다시 번역 · 점검 저장 · 수정 저장 · 고른 글 지우기 · 고른 글 다시 번역 · 북마크 · 지울 때 함께 지움', () => {
+    assert.equal((source.match(/rememberTranslation\((?:target|message), (?:originalText|shownOriginal|currentOriginal|state\.source|originalTextForDbKey), (?:retranslation|next|translation|newText)\)/g) || []).length, 5);   // 7.9.5 그림 표시만 바꾼 번역 (swapShownPictures)
     assert.equal((source.match(/forgetSource\(/g) || []).length, 8);   // 6.9.6 표시를 지우는 길 넷 더 (translation-source-trim.mjs)
     assert.match(source, /remember: \(extra, source, raw, display\) => rememberSource\(extra, \{ original: source, raw, display, hash: getStringHash \}\)/);
     assert.match(read('src/addons/translator/selection/delete.js'), /hooks\.remember\?\.\(extra, key, newTrans, display\)/);
