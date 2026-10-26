@@ -59,10 +59,14 @@ await t('옛 2.5 전용 항목(로맨틱 · 로맨틱 코미디 · 옛 모멘텀
     assert.equal(engine.title('prompts', 'x', '「Romantic Comedy」'), '「 로맨틱 코미디 」');
     assert.ok(engine.title('regex', 'd74c0001-0000-4000-8000-000000000002', 'DEM - Convert legacy @Momentum Engine Primary #1'));
 });
-await t('사용자가 V3 에 얹는 추가 항목(언어 넷 · 초장편 · 민속 공포)도 한글로 보여요 · 초장편 설명은 판 공통이에요', () => {
+await t('사용자가 V3 에 얹는 추가 항목(언어 넷 · 초장편 · 대장편 · 민속 공포)도 한글로 보여요 · 초장편 설명은 판 공통이에요', () => {
     for (const name of ['한국어"한국어"', 'English"한국어"', 'English「日本語」', '日本語「日本語」']) assert.ok(engine.title('prompts', 'new-id', name), name);
     assert.equal(engine.title('prompts', 'bl-deus-length-ultra-long', '「 Ultra Long 」'), '「 초장편 」');
-    assert.ok(!dict.prompts.find(e => e.id === 'bl-deus-length-ultra-long').desc.includes('두 배'));
+    const ultra = dict.prompts.find(e => e.id === 'bl-deus-length-ultra-long').desc;
+    assert.ok(!/\d,?\d{3}/.test(ultra), '초장편은 2.5(2000~3200) · V3(1400~2000) 사용자본 단어 수가 달라 숫자를 적지 않아요');
+    assert.equal(engine.title('prompts', 'bl-deus-length-epic', '「 Epic 」'), '「 대장편 」', '길이 「 Epic 」은 id 로 대장편');
+    assert.equal(engine.title('prompts', 'f9c4d8b1-6e20-4a75-917f-3250ba8d4c69', '「 Epic 」'), '「 서사시 」', '분위기 「 Epic 」은 서사시');
+    assert.equal(engine.title('prompts', 'unknown-copy', '「 Epic 」'), '「 서사시 」', 'id 를 모르면 원작 분위기 쪽');
     assert.equal(engine.title('prompts', '6f3c2a91-4d7e-4b58-9a1c-e2f05b8d7c34', '「 Folk Horror 」'), '「 일상 민속 공포 · 기묘한 미스터리 」');
 });
 console.log(`Deus dictionary: ${n} passed`);

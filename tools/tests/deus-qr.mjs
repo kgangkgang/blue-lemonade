@@ -44,7 +44,7 @@ await test('초장편과 민속 공포의 한글 이름·도움말을 번역 사
  const code=(await import(pathToFileURL(path.join(root,'src/scripts/bundled/deus.js')))).default;
  let dictionary;new Function('BlueLemonade',code)({translate:value=>{dictionary=value;}});
  const ultra=dictionary.prompts.find(x=>x.id==='bl-deus-length-ultra-long');
- assert.equal(ultra.title,'「 초장편 」');assert.ok(ultra.desc.includes('2,000~3,200'));
+ assert.equal(ultra.title,'「 초장편 」');assert.ok(ultra.desc.includes('본문 첫 줄'),'판마다 단어 수가 달라 숫자 대신 본문을 보게 해요');assert.ok(!/\d,?\d{3}/.test(ultra.desc));
  const horror=dictionary.prompts.find(x=>x.id==='6f3c2a91-4d7e-4b58-9a1c-e2f05b8d7c34');
  assert.equal(horror.title,'「 일상 민속 공포 · 기묘한 미스터리 」');
  assert.ok(toggles.some(x=>x.id===horror.id&&x.tab==='문체'));
