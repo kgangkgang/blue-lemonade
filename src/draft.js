@@ -74,6 +74,19 @@ function flush() {
     if (el) write(currentId, el.value);
 }
 
+// 당겨 새로고침하기 직전에는 마지막 입력까지 저장하고 실제 저장값을 대조해요.
+// 저장 공간이 막혔거나 온전하게 보관할 수 없으면 새로고침을 취소해요.
+export function preserveDraftForReload() {
+    const el = box();
+    if (!el?.value) return true;
+    const id = currentId || chatKey();
+    if (!id || el.value.length > MAX) return false;
+    if (timer) { clearTimeout(timer); timer = null; }
+    write(id, el.value);
+    try { return JSON.parse(localStorage.getItem(KEY) || '{}')[id]?.t === el.value; }
+    catch { return false; }
+}
+
 function onInput() {
     if (!quiet) orphan = '';    // 직접 고쳐 쓰거나 실리태번이 보내고 비우면 더는 태워 보낼 글이 아니다
     const el = box();

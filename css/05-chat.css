@@ -5,6 +5,36 @@
 body.salty #sheld {
   background: transparent !important;
 }
+/* 설치형 터치 화면에서만 기본 당김과 중복되지 않게 해요. 가로 탐색은 그대로예요. */
+html[data-bl-pull-refresh] { overscroll-behavior-y: contain; }
+html[data-bl-pull-refresh] body.salty #chat { overscroll-behavior-y: contain; }
+body.salty .bl-pull-refresh[hidden] { display: none; }
+body.salty .bl-pull-refresh {
+  position: fixed;
+  z-index: 31000;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  left: 50%;
+  transform: translate(-50%, var(--bl-pull-distance, 0px));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 14px;
+  border: 1px solid var(--salty-line);
+  border-radius: 24px;
+  background: var(--salty-surface);
+  color: var(--salty-text);
+  font: 500 14px/1.4 var(--salty-ui-font, sans-serif);
+  pointer-events: none;
+  transition: transform 90ms ease-out;
+}
+body.salty .bl-pull-refresh.is-ready { border-color: var(--salty-accent); }
+body.salty .bl-pull-refresh-icon { font-size: 22px; line-height: 1; flex: none; }
+@media (prefers-reduced-motion: reduce) {
+  body.salty .bl-pull-refresh { transition: none; }
+  body.salty .bl-pull-refresh-icon { transform: none !important; }
+}
+
 body.salty #chat {
   background: var(--salty-fill-bg, var(--salty-bg)) !important;
   padding: 8px 0 16px !important;

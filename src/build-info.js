@@ -1,7 +1,7 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
 export const BUILD_VERSION = "8.0.2";
 export const FILE_HASHES = {
-  "index.js": "23521:7036a309:e81b0ed5",
+  "index.js": "23802:0f4aee9a:9b6f4079",
   "manifest.json": "365:43850b5d:19213e41",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
@@ -514,7 +514,7 @@ export const FILE_HASHES = {
   "src/dialogue-span.js": "19679:3d1e8c9c:3f0aacee",
   "src/dialogue-tildes.js": "4392:01070682:e63ab692",
   "src/dialogue-view.js": "14341:5905487d:3d179324",
-  "src/draft.js": "10237:f711f4b4:ba76e769",
+  "src/draft.js": "10834:37edf1aa:54879c10",
   "src/edit-origin.js": "3547:2df8164c:611794f6",
   "src/extension-colors.js": "9262:b93831f6:c18337b9",
   "src/extension-folder.js": "1942:735f0044:a763d9ee",
@@ -600,6 +600,7 @@ export const FILE_HASHES = {
   "src/prompt-tools.js": "10645:4c0a45d7:a6b7b68c",
   "src/promptbind.js": "43235:33a51505:e18d2b34",
   "src/promptlist.js": "9042:9a46e84f:5803940a",
+  "src/pull-to-refresh.js": "10981:d283a1aa:a15dbd6f",
   "src/qrfind.js": "13470:e1b028e2:75206d84",
   "src/readability.js": "4402:c34b7d47:0d00993d",
   "src/reader.js": "8767:c13e8292:8043ac72",
@@ -721,5 +722,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1702181:66ae8773:6c6d9dca"
+  "style.css": "1703261:c6c338f2:713e49fa"
 };

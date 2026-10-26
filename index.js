@@ -28,6 +28,7 @@ import { startCompactLayout } from './src/layout.js';
 import { startNameMarquee } from './src/marquee.js';
 import { startGutterWatch } from './src/gutter.js';
 import { startDraftKeep } from './src/draft.js';
+import { startPullToRefresh } from './src/pull-to-refresh.js';
 import { startCardInk } from './src/cardink.js';
 import { startSelectPop } from './src/selects.js';
 import { startColorPop } from './src/colorpop.js';
@@ -216,6 +217,7 @@ jQuery(() => {
     startNameMarquee(); // 헬퍼 스크립트 이름: 눌러서 긴 이름 끝까지 보기
     startGutterWatch(); // 스크롤하는 칸에만 양쪽 스크롤바 홈 (PC)
     startDraftKeep(); // 입력칸에 쓰다 만 글은 새로고침해도 남는다 (채팅마다 따로)
+    startPullToRefresh({ isEnabled: () => themeEnabled(getSettings()) && document.body.classList.contains('salty') }).catch(error => console.warn('[Blue Lemonade] 당겨 새로고침 준비를 못 했어요', error));
     startNaturalSlash({ isEnabled: () => themeEnabled(getSettings()) });
     startWorldInfoHelp(); // 6.1.5 월드인포 설정 · 항목 칸 옆 ? 도움말 (테마가 꺼져 있으면 CSS 로 숨김)
     startWebSearchMarks(); // 6.2.6 웹 검색을 쓴 답에 지구 표시 · 낱말 꾹 눌러 출처 (websearch.js — 흔적은 성능 보조 요청 로그가 알린다)
