@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 437207acd76b) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build c0c6e994f425) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -26294,7 +26294,8 @@ html body .bl-translator-dialog #llm_glossary_expand {
   html body.salty .salty-panel .bl-editor-category button { min-height: 36px; padding-block: calc(7px + var(--bl-text-nudge, 0px)) calc(7px - var(--bl-text-nudge, 0px)); }
   html body.salty .salty-panel .bl-preview-kinds > button { min-height: 36px; }
   html body.salty .bl-name-row > button { flex: 0 0 34px; width: 34px; min-width: 34px; height: 34px; min-height: 34px; padding: 0; }
-  html body.salty #jj_reset { height: 34px; min-height: 34px; }
+  html body.salty #jj_reset { height: 36px; min-height: 36px; }
+  html body.salty :is(.bl-assets-dialog, #char_assets_settings) .eh-btn--small { height: 36px; min-height: 36px; }
   html body.salty .eh-pchip { height: 36px; }
   html body.salty .bl-word-rule > button { height: 34px; min-height: 34px; }
   html body.salty .bl-extension-page .bl-word-rule > button { height: 34px; min-height: 34px; }
