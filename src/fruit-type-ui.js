@@ -109,7 +109,8 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
     function shareFonts(d,css){if(!d?.fonts||!css)return;for(const face of document.fonts||[]){if(face.status!=='loaded')continue;const name=face.family.replace(/^["']|["']$/g,'');if(css.includes(name)&&!d.fonts.has(face))try{d.fonts.add(face);}catch{/* 공유 못 하는 글꼴은 대체 글꼴 */}}}
     // 대화에 이 종류의 상태창이 없을 때: 원작 정규식으로 만든 표본(없으면 기본 표본)에 지금 글자 설정을 바로 입혀요.
     async function showSample(type,frame,note){
-        const message=lastMessage(),messageWidth=message?.getBoundingClientRect().width||0,width=Math.round(messageWidth>120?messageWidth:Math.min(innerWidth-32,640));
+        // 표본 폭 = 채팅 메시지 본문 폭, 단 미리보기 칸보다 넓지 않게(넓으면 칸이 가로로 넘쳐요 · 배율을 줄여도 바깥 폭은 그대로)
+        const message=lastMessage(),messageWidth=message?.getBoundingClientRect().width||0,portWidth=box.querySelector('.bl-view-port')?.clientWidth||0,base=messageWidth>120?messageWidth:Math.min(innerWidth-32,640),width=Math.round(portWidth>120?Math.min(base,portWidth-2):base);
         const vars=sampleVars(),backdrop=message?fruitPreviewBackground(message.firstElementChild||message):getComputedStyle(document.body).backgroundColor;
         const key=[type.id,width,vars,backdrop,(()=>{try{return scriptEnabled(scriptSettings(),'fruit-family');}catch{return false;}})()].join('|');
         if(docMode==='sample'&&key===sampleKey&&previewKind===type.id){if(!fragHost)fitSample();refit();return;}
