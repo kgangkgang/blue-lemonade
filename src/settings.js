@@ -8,6 +8,7 @@ import { tidyPins } from './mes-pins.js';
 import { syncWeatherProfile } from './weather-profiles.js';
 import { tidySceneSound } from './scene-sound-rules.js';   // 6.9.8 장면 소리 설정 정리 (순수 모듈)
 import { tidyFrameLibrary } from './frame-library.js';
+import { tidyMultiAvatar } from './multi-avatar/pick.js';   // 7.9.9 프로필 여러 개 (순수)
 import { DECOR_DEFAULTS, tidyDecor, slimDecor } from './decor.js';
 import { FRAME_DEFAULTS, FRAME_RANGE, tidyFrame } from './frames.js';
 import { cutEdgeDefaults, tidyCutEdge } from './cutedge.js';
@@ -102,6 +103,8 @@ export const DEFAULTS = {
     auto: { on: false, by: 'system', night: '20:00', day: '07:00' },
     // 3.3.1 날씨 효과의 내 그림 목록 [{ id, name, data }] — 스타일에는 안 담김 (고른 그림만 chat.weatherImage)
     weatherImages: [],
+    // 7.9.9 프로필 여러 개: 캐릭터 아바타 사진을 여러 장 등록해 두고 채팅방을 열 때마다 하나를 고른다 (multi-avatar/). 파일은 서버 user/images, 여기엔 경로 · 고정만
+    multiAvatar: { on: true, when: 'chat', includeCard: true, chars: {} },
     customPalettes: [],
     activeCustomPalette: '',
     addons: { zipinstall: false, tts: false, direction: false, assets: false, order: false, perf: false, words: false, capture: false, models: false, modelorder: false, modelswitch: false, regexlink: false, rewrite: false, bookmarks: false, notes: false, translator: false, prompt: false, customstyle: false, mermaid: false, 'prompt-template': false, conflicts: false },
@@ -397,6 +400,7 @@ function tidyStyles(s) {
     const okImage = x => isObj(x) && typeof x.id === 'string' && /^[\w-]{1,40}$/.test(x.id) && validOwnedImage(x, x.data); // id 는 data-id 속성에, 그림은 style 속성에 들어간다
     if (!Array.isArray(s.weatherImages)) s.weatherImages = [];
     else if (s.weatherImages.length > 12 || !s.weatherImages.every(okImage)) s.weatherImages = s.weatherImages.filter(okImage).slice(0, 12);
+    s.multiAvatar = tidyMultiAvatar(s.multiAvatar, DEFAULTS.multiAvatar);   // 7.9.9
 }
 
 /** 3.1.0 켜고 끄는 값: 가져온 파일의 "false" 문자열 · 깨진 값 거르기 */

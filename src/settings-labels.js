@@ -7,11 +7,13 @@ Object.assign(SETTING_LABELS, {'addons.conflicts':'확장: 충돌 진단',
     'addons.direction':'확장: 전개 지시','addons.assets':'확장: 캐릭터 에셋','addons.notes':'확장: 메모','addons.translator':'확장: LLM 번역','addons.prompt':'확장: 한글화 패널','addons.customstyle':'확장: 커스텀 CSS 조절','addons.mermaid':'확장: Mermaid 도표','addons.prompt-template':'확장: 프롬프트 템플릿',
     'headSwitchRows':'「확장 탭에 보이기」 줄','koUi':'실리태번 한국어 다듬기','addonUI.translatorDrawer':'실리태번 확장 탭에 번역 설정 표시','addonUI.modelswitchMenu':'요술봉에 모델 전환 표시','addonUI.zipinstallMenu':'요술봉에 ZIP 설치 표시','addonUI.notesMenu':'요술봉에 메모 표시','addonUI.notesBarMenu':'입력창 위에 메모 줄 표시',
     'usageMode':'사용 모드','userProfile.metaSide':'번호 · 시간 줄 위치',
+    'multiAvatar.on':'프로필 여러 개','multiAvatar.when':'프로필 여러 개 · 적용 시점','multiAvatar.includeCard':'프로필 여러 개 · 원본 카드도 섞기',   // 7.9.9
     'profile.nameRowAlign':'정보 정렬 (작은 프로필 · 없음)','userProfile.nameRowAlign':'정보 정렬 (작은 프로필 · 없음)', // 5.8.3
     'profile.nameAlign':'정보 정렬 (큰 프로필)','userProfile.nameAlign':'정보 정렬 (큰 프로필)',
     'strike.line':'취소선 · 선 긋기','strike.own':'취소선 · 선 색 따로 정하기','strike.color':'취소선 · 선 색','strike.thickness':'취소선 · 선 굵기','strike.fade':'취소선 · 흐리기','strike.italic':'취소선 · 기울이기',
     'chat.weatherMotion':'날씨 움직임','chat.weatherSway':'날씨 흔들림','chat.weatherSpin':'날씨 회전','chat.weatherCurvature':'유성우 곡률','chat.weatherOrbitSize':'유성우 원 크기','chat.weatherOrbitDirection':'유성우 도는 방향',
     'chat.markerTone.light.s':'화이트 형광펜 채도','chat.markerTone.light.l':'화이트 형광펜 밝기','chat.markerTone.dark.s':'나이트 형광펜 채도','chat.markerTone.dark.l':'나이트 형광펜 밝기'});
+Object.assign(SETTING_VALUES, {'multiAvatar.when:chat':'채팅방 열 때마다','multiAvatar.when:list':'캐릭터 목록 열 때마다','multiAvatar.when:daily':'하루에 한 번','multiAvatar.when:off':'끔'});   // 7.9.9
 Object.assign(SETTING_VALUES, {'usageMode:both':'테마 + 확장','usageMode:theme':'테마만','usageMode:extensions':'확장만',
     'userProfile.metaSide:auto':'사진 따라','userProfile.metaSide:left':'왼쪽','userProfile.metaSide:right':'오른쪽',
     'profile.nameRowAlign:left':'왼쪽','profile.nameRowAlign:center':'가운데','profile.nameRowAlign:right':'오른쪽','userProfile.nameRowAlign:left':'왼쪽','userProfile.nameRowAlign:center':'가운데','userProfile.nameRowAlign:right':'오른쪽',

@@ -137,6 +137,24 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 6.8.8 「확장 탭에 보이기」 줄을 끄고(설정) 꺼내 둔 스위치도 없으면 모듈을 아예 쉬게 한다 (확장 칸 관찰 · 2초 맞추기 없음)
     const headSwitchWanted = on && (s.headSwitchRows !== false || Object.keys(s.headSwitches || {}).length > 0);
     if (headSwitchWanted || modules.headswitch) load('headswitch', './headswitch.js').then(m => m?.syncHeadSwitch(headSwitchWanted));
+    // 7.9.9 프로필 여러 개: 켜져 있고 등록한 캐릭터가 있을 때만 모듈을 받는다 (이벤트 · 훑기 없음). 캐릭터 편집 화면의 단추는 등록이 없어도 보여야 하니 여기서 바로 붙인다
+    const multi = on && s.multiAvatar?.on !== false && Object.keys(s.multiAvatar?.chars || {}).length > 0;
+    if (multi || modules.multiavatar) load('multiavatar', './multi-avatar/index.js').then(m => m?.syncMultiAvatar(multi, s.multiAvatar));
+    syncMultiAvatarButton(on && s.multiAvatar?.on !== false);
+}
+function syncMultiAvatarButton(show) {
+    const existing = document.getElementById('bl-mav-button');
+    if (!show) { existing?.remove(); return; }
+    if (existing) return;
+    const row = document.querySelector('#avatar_controls .form_create_bottom_buttons_block');
+    const anchor = row?.querySelector('#advanced_div');
+    if (!row || !anchor) return;
+    const button = document.createElement('div');
+    button.id = 'bl-mav-button'; button.className = 'menu_button fa-solid fa-images'; button.title = '프로필 여러 개 — 아바타 사진을 여러 장 등록하고 채팅방을 열 때마다 바꿔요'; button.setAttribute('role', 'button'); button.tabIndex = 0; button.setAttribute('aria-label', '프로필 여러 개');
+    const open = () => load('multiavatarDialog', './multi-avatar/dialog.js').then(m => m?.openForCurrent());
+    button.addEventListener('click', open);
+    button.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); } });
+    anchor.after(button);
 }
 
 /** 설정 창이 캐릭터 연결을 바꾼 뒤: 모듈을 불러와 지금 채팅에 맞춤 */

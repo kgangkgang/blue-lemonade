@@ -71,6 +71,7 @@ const SUBS = {
 };
 
 const panels = new Set();
+globalThis.window?.addEventListener('bl:multi-avatar-changed', () => refreshPanels());   // 7.9.9 관리 창이 사진 · 고정을 바꾸면 등록 목록을 다시 그린다
 const stored = (key, fallback) => { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } };
 const store = (key, value) => { try { localStorage.setItem(key, value); } catch { /* 무시 */ } };
 
@@ -1465,10 +1466,29 @@ function frameControls(prefix, o) {
             + range('edgeShadowBlur', '번짐') + range('edgeShadowSpread', '확장') : ''}
     </div>`;
 }
+// 7.9.9 프로필 여러 개 (multi-avatar/) — 채팅 › 캐릭터 프로필 맨 위. 켬 · 적용 시점 · 원본 섞기는 패널 공통 손잡이(되돌리기 · 저장 규약), 등록 목록 · 정리는 관리 창으로
+function multiAvatarSection(s) {
+    const m = s.multiAvatar || { on: true, when: 'chat', includeCard: true, chars: {} };
+    const chars = SillyTavern.getContext().characters || [];
+    const entries = Object.entries(m.chars || {}).map(([avatar, rec]) => {
+        const ch = chars.find(c => c?.avatar === avatar);
+        const pin = rec.pinned === 'card' ? '원본 고정' : rec.pinned ? `${rec.files.indexOf(rec.pinned) + 1}번 고정` : '';
+        return `<li><img src="/thumbnail?type=avatar&file=${encodeURIComponent(avatar)}" alt="" loading="lazy"><span class="bl-mav-list-name"><b>${esc(ch?.name || avatar)}${ch ? '' : ' <small>(지운 캐릭터)</small>'}</b><small>${rec.files.length}장${pin ? ` · ${pin}` : ''}</small></span><button type="button" class="salty-btn" data-act="mav-open" data-avatar="${esc(avatar)}">열기</button></li>`;
+    }).join('');
+    const ctx = SillyTavern.getContext(), current = !ctx.groupId && ctx.characters?.[ctx.characterId]?.avatar;
+    return `${cap('프로필 여러 개', '시작 인사말처럼 사진도 여러 장')}<div class="salty-group">
+        ${row('프로필 여러 개', toggle('multiAvatar.on', m.on !== false), '캐릭터 선택창 · 채팅 아바타에 등록한 사진 중 하나가 떠요. 카드 PNG 는 그대로예요')}
+        ${m.on !== false ? `${stack('적용 시점', seg('multiAvatar.when', [['chat', '채팅방 열 때마다'], ['list', '캐릭터 목록 열 때마다'], ['daily', '하루에 한 번'], ['off', '끔']]), '한 채팅 안에서는 같은 그림을 유지해요. 「끔」은 랜덤만 멈추고 고정한 그림은 그대로 써요')}
+        ${row('원본 카드 그림도 섞기', toggle('multiAvatar.includeCard', m.includeCard !== false), '끄면 등록한 사진 중에서만 골라요')}
+        ${entries ? `<div class="salty-label">등록한 캐릭터 (${Object.keys(m.chars).length})</div><ul class="bl-mav-list">${entries}</ul>` : '<p class="salty-note">아직 등록한 캐릭터가 없어요. 캐릭터 편집 화면의 <i class="fa-solid fa-images" aria-hidden="true"></i> 단추나 아래 단추로 사진을 더해요.</p>'}
+        <div class="bl-mav-actions"><button type="button" class="salty-btn bl-tool-primary" data-act="mav-current" ${current ? '' : 'disabled'}>${current ? '지금 캐릭터의 프로필 관리' : '캐릭터 채팅을 열면 관리할 수 있어요'}</button><button type="button" class="salty-btn" data-act="mav-cleanup">남은 파일 정리</button></div>
+        <p class="salty-note">캐릭터를 지워도 사진은 자동으로 지우지 않아요. 「남은 파일 정리」가 지운 캐릭터의 사진과 어디에도 안 적힌 파일을 보여 주고, 확인한 뒤에만 지워요.</p>` : ''}
+    </div>`;
+}
 function profileControls(s, prefix = 'profile') {
     const p = s[prefix];
     const range = (key, label, step = 1) => slider(`${prefix}.${key}`, label, ...PROFILE_RANGE[key], step);
-    return `${chatPreview()}<div class="salty-group">
+    return `${chatPreview()}${prefix === 'profile' ? multiAvatarSection(s) : ''}<div class="salty-group">
         ${stack(prefix === 'userProfile' ? '내 프로필' : '캐릭터 프로필', seg(`${prefix}.mode`, [['none', '프로필 없음'], ['small', '작은 프로필'], ['banner', '상단 큰 프로필']]), prefix === 'userProfile' ? '내가 보낸 메시지의 사진만 바꿔요.' : '캐릭터 메시지마다 사진이 위에, 글이 아래에 놓여요')}
     ${prefix === 'userProfile' && p.mode === 'small' ? stack('작은 사진 위치', seg(`${prefix}.side`, [['auto', '자동'], ['left', '왼쪽'], ['right', '오른쪽']], 'auto'), '자동은 말풍선이면 오른쪽, 나머지 모양은 왼쪽이에요') : ''}
     ${prefix === 'userProfile' && p.mode === 'small' ? stack('번호 · 시간 줄 위치', seg(`${prefix}.metaSide`, [['auto', '사진 따라'], ['left', '왼쪽'], ['right', '오른쪽']], 'auto'), '메시지 위의 #번호 · 걸린 시간 · 토큰 줄이에요') : ''}
@@ -2662,6 +2682,9 @@ function bind(root) {
                     refreshPanels();
                     break;
                 }
+                case 'mav-open': (await import('./multi-avatar/dialog.js')).openDialog(el.dataset.avatar); break;   // 7.9.9 프로필 여러 개
+                case 'mav-current': (await import('./multi-avatar/dialog.js')).openForCurrent(); break;
+                case 'mav-cleanup': await (await import('./multi-avatar/dialog.js')).openCleanup(); break;
                 case 'wimg-pick':
                     weatherReplaceId = '';
                     root.querySelector('input[data-file="weather"]')?.click();

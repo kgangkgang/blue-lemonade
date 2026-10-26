@@ -49,6 +49,7 @@ jobs:
           node tools/tests/headswitch.mjs .
           node tools/tests/usage-mode.mjs .
           node tools/tests/forced-theme-class.mjs .
+          node tools/tests/multi-avatar-pick.mjs .
           node tools/tests/stream-follow.mjs .
           node tools/tests/stream-watchdog.mjs .
           node tools/tests/perf-bundle-645.mjs .
