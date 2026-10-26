@@ -63,7 +63,7 @@ html:not(#bl-pill-off) body.salty #rm_extensions_block .inline-drawer-header > :
 /* 테마 설정 창 제목도 같은 규칙: [Blue Lemonade] 8 [판 알약] 8 [© 원] */
 html:not(#bl-pill-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 html:not(#bl-pill-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] > .salty-ver { margin: 0 !important; }
-html:not(#bl-pill-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] > .bl-copyright { margin: 0 0 0 calc((18px - 30px) / 2) !important; padding-block: 0 !important; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] > .bl-copyright { margin: 0 0 0 calc((18px - var(--bl-h-icon, 34px)) / 2) !important; padding-block: 0 !important; }
 /* 애드온 카드 머리줄도 같은 8 (철칙 §7): 번역 용어집 카드 [아이콘] 8 [제목] … [크게 보기] 8 [체크] 8 [사용] */
 html body.salty .llmt-settings .llmt-card-head { gap: 8px !important; }
 html body.salty .llmt-settings .llmt-card-head > :is(i, span, label) { margin: 0 !important; }

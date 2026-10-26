@@ -123,9 +123,9 @@ html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .s
    누름 칸(28 · 폰 32)은 그대로 두고 칸 안의 보이지 않는 여백만큼 당긴다. ↺ 잉크 왼쪽 = 칸 왼쪽 + (칸 − 16)/2 + 2.36 → 칸 28 이면 8.36, 32 면 10.36, 라벨 글자 끝 여백(실측 기 1.9 · 간 0.7)의 가운데 0.7 을 더 당김. 라벨 · 아이콘 사이 flex gap 은 0.
    7.8.1 사고: 설명(<small>)이 든 이름 칸까지 한 줄 고정(max-content)으로 잡아 설명이 화면 밖으로 밀렸다(사용자 폰, 바뀐 설정이 많아 ↺ 가 보일 때). 이름 글자 + ↺ 만 있는 칸에만 적용. 라벨 줄은 가운데 정렬로 세로 중심을 맞춘다 */
 html body .salty-panel.bl-editor :is(.salty-row, .salty-stack, .salty-slider > header) > span:has(> .bl-setting-reset):not(:has(> :not(.bl-setting-reset))) { display: inline-flex; align-items: center; flex: none; min-width: max-content; column-gap: 0 !important; }
-html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin: 0 0 0 calc(6px - 8.36px - 0.7px) !important; align-self: center; vertical-align: middle; }
+html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { --bl-reset-optical-a: calc(6px - 8.36px - 0.7px); margin: 0 0 0 var(--bl-reset-optical-a) !important; align-self: center; vertical-align: middle; }
 @media (max-width: 760px), (pointer: coarse) {
-  html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin: 0 0 0 calc(6px - 10.36px - 0.7px) !important; }
+  html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { --bl-reset-optical-b: calc(6px - 10.36px - 0.7px); margin: 0 0 0 var(--bl-reset-optical-b) !important; }
 }
 /* 7.9.1 전수조사 · 줄 이름표 세로 중심 (사용자 폰 「이름 글자가 줄 가운데보다 위로 뜬다」 · 감사 ROWCENTER):
    ① ↺ 가 이름 줄 상자를 키우지 않게 — 누름 칸(28 · 폰 32)은 그대로, 위 · 아래 바깥 여백을 빼서 차지하는 높이를 이름 줄 높이(1lh)와 같게.

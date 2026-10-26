@@ -179,8 +179,8 @@ body.salty .welcomePanel .welcomeHeaderTitle {
   padding: 0 0 0 6px;
 }
 body.salty .welcomePanel .welcomeHeaderLogo {
-  width: 30px;
-  height: 30px;
+  width: var(--bl-deco-welcome-logo);
+  height: var(--bl-deco-welcome-logo);
   /* 뒤에 판이 없으니 안쪽 여백 · 모서리도 필요 없음 — 레몬이 칸을 꽉 채움 */
   padding: 0;
   border-radius: 0;
@@ -335,7 +335,7 @@ body.salty .welcomeRecent .recentChatList .recentChat .recentChatInfo {
 body.salty .welcomeRecent .recentChatList .recentChat .chatNameContainer {
   align-items: center;
   gap: 8px;
-  min-height: 30px;
+  min-height: 34px;
 }
 body.salty .welcomeRecent .recentChatList .recentChat .chatNameContainer .chatName {
   color: var(--salty-muted);
@@ -361,10 +361,10 @@ body.salty .welcomeRecent .recentChatList .recentChat .chatActions {
   gap: 0;
 }
 body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button {
-  width: 30px;
-  min-width: 30px;
-  height: 30px;
-  min-height: 30px;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
   margin: 0 !important;
   padding: 0 !important;
   border-radius: 8px !important;
@@ -546,7 +546,7 @@ body.salty #selectChatPopupHeaderText > a {
   justify-content: center;
   width: 32px;
   height: 32px;
-  margin: -8px -7px;
+  margin: -8px;
   border-radius: var(--bl-r-xs);
   vertical-align: middle;
 }
@@ -661,8 +661,8 @@ body.salty #select_chat_popup .chatBackupsListItemActions .right_menu_button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   border-radius: var(--bl-r-xs);
   color: inherit;

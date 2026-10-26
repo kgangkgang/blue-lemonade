@@ -64,7 +64,7 @@ body.salty #chat .mes .bl-art-frame[data-bl-frame] > .bl-art-photo > img {
 body.salty.salty-profile-banner.salty-profile-sizing-ratio #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar.bl-art-frame { width: min(var(--bl-profile-width), calc(var(--bl-profile-max-height) * var(--bl-decor-ratio))) !important; }
 body.salty.salty-profile-banner.salty-profile-layout-bleed #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar.bl-art-frame { width: min(calc(100% + var(--salty-gutter) * 2), calc(var(--bl-profile-max-height) * var(--bl-decor-ratio))) !important; }
 
-.salty-panel .salty-group.bl-decor-controls { padding: 18px var(--pad); gap: 16px; }
+.salty-panel .salty-group.bl-decor-controls { padding: 16px var(--pad); gap: 16px; }
 .bl-frame-upload-row, .bl-frame-save-row, .bl-frame-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-width: 0; }
 .bl-frame-upload-row > .bl-decor-upload { min-height: 44px; max-width: 100%; margin: 0; line-height: 1.4; white-space: normal; }
 .bl-frame-save-row > input { flex: 1 1 140px; min-width: 0; width: 100%; box-sizing: border-box; min-height: var(--bl-h-ctl, 36px); margin: 0; padding: 0 12px; border: 0; border-radius: 8px; background: var(--bl-fill-field, var(--salty-field)); color: var(--salty-text); font: inherit; } /* The frame-name field was a bare browser input: white box, grey inset border, light ST text at 1.3 : 1 on night palettes. */

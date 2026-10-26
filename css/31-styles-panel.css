@@ -10,7 +10,7 @@
 .salty-preset {
   display: grid;
   gap: 2px;
-  min-height: 58px;
+  min-height: 56px;
   padding: 10px 12px;
   border: 0;
   border-radius: var(--r-md);
@@ -183,8 +183,8 @@
   position: relative;
   flex: none;
   align-self: center;
-  width: 22px;
-  height: 22px;
+  width: var(--bl-deco-swatch);
+  height: var(--bl-deco-swatch);
   border-radius: 50%;
   background: var(--sw-bg);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sw-text) 22%, transparent);
@@ -266,7 +266,7 @@
   overflow: hidden;
 }
 .salty-phonemock .pm-scroll {
-  padding: 28px 10px 70px;
+  padding: 28px 10px 68px;
 }
 .salty-phonemock .pm-scroll p {
   display: grid;

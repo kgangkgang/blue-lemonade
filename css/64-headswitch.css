@@ -4,7 +4,7 @@ body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch {
   position: relative;
   flex: 0 0 auto;
   width: 40px;
-  height: 22px;
+  height: 24px;
   margin: 0;
   padding: 0;
   border: 0;

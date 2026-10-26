@@ -78,7 +78,7 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
   align-items: center;
   gap: 8px;
   max-width: calc(100% - 24px);
-  padding: 8px 10px 8px 14px;
+  padding: 8px 10px 8px 12px;
   border-radius: 999px;
   background: var(--salty-raised, var(--bl-fb-2c2e32));
   color: var(--salty-text, var(--bl-fb-fff));
@@ -108,7 +108,8 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
   position: absolute;
   width: 44px;
   height: 44px;
-  margin: -22px 0 0 -22px;
+  margin: 0;
+  translate: -50% -50%; /* B7: 반 크기 음수 여백(-22px) 대신 이동 — 같은 자리 */
   padding: 0;
   border: 0;
   border-radius: 50%;

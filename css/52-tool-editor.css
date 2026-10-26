@@ -3,7 +3,7 @@
 .bl-extension-page { --bl-tool-gap:10px; font-size:var(--salty-ui-size,var(--mainFontSize,15px)); font-weight:var(--salty-ui-weight,normal); letter-spacing:var(--bl-settings-tracking,normal); }
 .bl-addon-header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 2px 6px; margin-bottom:0; border-bottom:1px solid var(--salty-line); }
 .bl-addon-header h3 { margin:0; min-width:0; font-size:1em; line-height:1.4; color:var(--salty-text); overflow-wrap:anywhere; }
-.bl-addon-header .bl-addon-ver { margin-left:8px; padding:2.5px 10px 1.5px; /* 5.6.6 알약 글자가 사용자 글꼴 +0.8 · 기본 글꼴 0 → 0.5px 만 내림 (1px 은 기본 글꼴을 −0.98 로 보냈다) */ border:1px solid var(--salty-line); border-radius:999px; background:color-mix(in srgb, var(--salty-accent) 12%, transparent); color:var(--salty-accent-ink, var(--salty-accent)); font:inherit; font-size:12px; font-weight:600; line-height:1.5; vertical-align:.12em; cursor:pointer; }
+.bl-addon-header .bl-addon-ver { margin-left:8px; padding:calc(2px + var(--bl-addon-pill-ink-nudge, .5px)) 10px calc(2px - var(--bl-addon-pill-ink-nudge, .5px)); /* 5.6.6 알약 글자가 사용자 글꼴 +0.8 · 기본 글꼴 0 → 0.5px 만 내림 (1px 은 기본 글꼴을 −0.98 로 보냈다) */ border:1px solid var(--salty-line); border-radius:999px; background:color-mix(in srgb, var(--salty-accent) 12%, transparent); color:var(--salty-accent-ink, var(--salty-accent)); font:inherit; font-size:12px; font-weight:600; line-height:1.5; vertical-align:.12em; cursor:pointer; }
 .bl-addon-header .bl-addon-ver:hover, .bl-addon-header .bl-addon-ver:focus-visible { background:color-mix(in srgb, var(--salty-accent) 22%, transparent); outline:none; }
 .bl-addon-header .bl-addon-status { margin:4px 0 0; color:var(--salty-muted); font-size:11px; line-height:1.4; }
 .bl-addon-header .bl-addon-status.is-on { color:var(--salty-accent-ink, var(--salty-accent)); }
@@ -92,7 +92,7 @@ body.salty-dark .bl-capture-options input:is([type=checkbox],[type=radio]) { col
 .bl-tool-section[data-tool-section="filter"] { container:bl-capture-filter / inline-size; }
 .bl-capture-filter { grid-template-columns:minmax(0,1fr); }
 @container bl-capture-filter (min-width:17em) {
-  .bl-capture-filter { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 14px; }
+  .bl-capture-filter { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 16px; }
 }
 /* 5.5.4 필터 미리보기: 한 열 화면에서 필터 칸 맨 위에 붙어 다닌다(sticky) — 슬라이더를 끄는 동안 바로 보인다. 두 열 화면(미리보기가 옆)은 숨김, 단 만든 파일을 보여 주는 중이거나 키가 낮은 가로 폰이면 켠다 */
 .bl-capture-filter-live { position:sticky; top:0; z-index:2; max-width:none; margin:0 -10px; padding:6px 10px 8px; overflow:hidden; border-bottom:1px solid var(--salty-line); background:var(--bl-fill-card,var(--salty-surface)); }
@@ -122,7 +122,7 @@ html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px so
 @container bl-editor (min-width:720px) {
   html body .bl-editor .bl-extension-page { display:flex; flex-direction:column; overflow:hidden; padding:10px; }
   .bl-extension-page .bl-addon-header { flex:none; margin:0; }
-  .bl-extension-page .bl-addon-layout { flex:1; display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:14px; min-height:0; }
+  .bl-extension-page .bl-addon-layout { flex:1; display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:16px; min-height:0; }
   .bl-addon-main,.bl-addon-config { overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; padding-right:4px; padding-bottom:12px; }
   .bl-addon-config { border-left:1px solid var(--salty-line); padding-left:12px; }
   .bl-extension-page [data-word-draft] { min-height:220px; }
@@ -206,9 +206,9 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .salty-panel .bl-weather-skip-fold{margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;}
 .salty-panel .bl-weather-skip{margin-top:6px;}
 /* 4.2.8 날씨 자리: 화면을 줄인 네모와 끌어 옮기는 점 */
-.salty-panel .bl-spot-row{display:flex;gap:14px;align-items:flex-start;}
+.salty-panel .bl-spot-row{display:flex;gap:16px;align-items:flex-start;}
 .salty-panel .bl-spot-pad{position:relative;flex:none;width:min(42%,150px);border-radius:14px;background:var(--salty-shade);box-shadow:inset 0 0 0 1px var(--salty-line);touch-action:none;overflow:visible;}
-.salty-panel .bl-spot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;padding:0;border:0;border-radius:50%;background:var(--salty-raised);color:var(--salty-text);font-size:12px;font-weight:700;box-shadow:inset 0 0 0 1px var(--salty-muted), var(--bl-e2);touch-action:none;cursor:grab;}
+.salty-panel .bl-spot{position:absolute;width:32px;height:32px;margin:-16px 0 0 -16px;padding:0;border:0;border-radius:50%;background:var(--salty-raised);color:var(--salty-text);font-size:12px;font-weight:700;box-shadow:inset 0 0 0 1px var(--salty-muted), var(--bl-e2);touch-action:none;cursor:grab;}
 .salty-panel .bl-spot.on{background:var(--salty-accent);color:var(--salty-on-accent, var(--bl-fb-fff));box-shadow:inset 0 0 0 1px var(--salty-accent), var(--bl-e2);}
 .salty-panel .bl-spot-side{min-width:0;flex:1;display:grid;gap:8px;}
 
@@ -216,7 +216,7 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .bl-addon-group { display:flex; flex-direction:column; gap:12px; min-width:0; }
 .bl-addon-group-tool { padding:12px; border:0; border-radius:var(--bl-r-md,12px); background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:var(--bl-e1); }
 .bl-addon-group-tool .bl-addon-header { border:0; margin-bottom:10px; }
-.bl-addon-group-tool .salty-note { margin:6px 0 14px; }
+.bl-addon-group-tool .salty-note { margin:6px 0 16px; }
 
 /* 5.3.9: 치환 규칙 가운데 → 는 누르면 찾을 말 ↔ 바꿀 말을 바꾸는 단추 — 모양은 예전 글자 화살표 그대로 (칸 폭 · 상자 없음) */
 .bl-word-rule button.bl-rule-swap, .bl-extension-page .bl-word-rule button.bl-rule-swap { min-width:0; min-height:0; width:100%; padding:0; border:0; background:none; color:inherit; font:inherit; align-self:stretch; cursor:pointer; }

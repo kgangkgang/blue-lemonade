@@ -65,7 +65,7 @@ body.salty #toast-container > :is(.toast-error, .toast-warning, .toast-success, 
   width: min(340px, calc(100vw - 24px)) !important;
   min-height: 56px;
   margin: 0 auto var(--bl-s2) !important;
-  padding: 13px var(--bl-s4) 13px 48px !important;
+  padding: 12px var(--bl-s4) 12px 48px !important;
   overflow: hidden; /* 진행 띠가 둥근 모서리 밖으로 안 나가게 */
   border: 0 !important;
   border-radius: var(--bl-r-md) !important;
@@ -106,8 +106,8 @@ body.salty #toast-container > div::before {
   position: absolute;
   left: 14px;
   top: 50%; /* 고정 14px 이면 한 줄 알림에서 3px 위로 떠 보였음 (실측 65 vs 68) */
-  width: 22px;
-  height: 22px;
+  width: var(--bl-deco-toast-icon);
+  height: var(--bl-deco-toast-icon);
   transform: translateY(-50%);
   border-radius: 50%;
   background: var(--bl-tone);
@@ -118,8 +118,8 @@ body.salty #toast-container > div::after {
   position: absolute;
   left: 14px;
   top: 50%;
-  width: 22px;
-  height: 22px;
+  width: var(--bl-deco-toast-icon);
+  height: var(--bl-deco-toast-icon);
   transform: translateY(-50%);
   background-color: var(--bl-tone-ink);
   -webkit-mask: var(--bl-tone-glyph) center / 20px 20px no-repeat;
@@ -154,8 +154,8 @@ body.salty #toast-container .toast-close-button {
   position: relative;
   top: -2px;
   right: -4px;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   margin-left: var(--bl-s2);
   padding: 0 !important;
   border-radius: 50%;

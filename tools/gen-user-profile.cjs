@@ -48,7 +48,7 @@ ${metaRightSide} > .mesAvatarWrapper > .mes_timer { grid-area: 1 / 3 !important;
 ${metaRightSide} > .mesAvatarWrapper > .tokenCounterDisplay { grid-area: 1 / 4 !important; }
 `;
 generated += `
-body.salty:is(.salty-user-bubble, .salty-user-card).salty-user-profile-custom #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mes_block { padding: 12px 16px 14px !important; }
+body.salty:is(.salty-user-bubble, .salty-user-card).salty-user-profile-custom #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mes_block { padding: 12px 16px 12px !important; }
 body.salty:is(.salty-user-bubble, .salty-user-card).salty-user-profile-mode-none #chat .mes[is_user="true"]:not([is_system="true"]) > .mes_block { padding-left: 16px !important; }
 body.salty.salty-user-card.salty-user-profile-mode-none #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) { --salty-meta-inset: 16px; }
 body.salty.salty-user-card.salty-user-profile-mode-none #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mes_block { margin-left: 0 !important; }

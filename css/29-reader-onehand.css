@@ -27,7 +27,7 @@
     right: 0;
     bottom: 0;
     margin: 0 !important;
-    padding-top: 14px !important;
+    padding-top: 12px !important;
     /* 입력판 · 한 손 버튼 줄 사이로 글이 비치지 않게: 위쪽 14px 만 바탕색으로 녹이고 나머지는 바탕색 */
     background: linear-gradient(to top, var(--salty-bg) calc(100% - 14px), transparent) !important;
     transition: transform 0.24s ease;

@@ -560,7 +560,7 @@ export const FILE_HASHES = {
   "src/ko-ui-data.js": "245627:2edc8c16:04ee0d73",
   "src/ko-ui.js": "11890:da455ebe:0274d99f",
   "src/layout.js": "29049:12ea2783:eb2dd73e",
-  "src/lazy-panel.gen.css": "33350:43489f4d:18657e69",
+  "src/lazy-panel.gen.css": "33350:3212ceae:2821b6d6",
   "src/lite.js": "35527:f6339213:d001bfc3",
   "src/live-models.js": "44020:f8a5fa62:a3f1cbaf",
   "src/main-chat-finish.js": "14829:d34f07a5:c8c0a173",
@@ -727,5 +727,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1718647:6192706c:80f7d411"
+  "style.css": "1720321:f22a339b:5be54ee6"
 };

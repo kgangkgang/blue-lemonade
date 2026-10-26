@@ -124,7 +124,7 @@ max-width:none !important;
 height:var(--bl-h-icon) !important;
 min-height:var(--bl-h-icon) !important;
 margin:0 !important;
-padding:0 26px 0 8px !important;
+padding:0 24px 0 8px !important;
 }
 body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
@@ -223,7 +223,7 @@ body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2)
 }
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:has(> input[type="checkbox"] + span + small:last-child) > small {
   flex: 1 1 100%;
-  padding-left: 43px;
+  padding-left: 44px;
 }
 body.salty #user-settings-block-content .flex-container:has(> #blur_strength) > small:first-child::after, body.salty #user-settings-block-content .flex-container:has(> #shadow_width) > small:first-child::after {
 content:"테마가 끔";
@@ -250,7 +250,7 @@ body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="Charac
 body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:where([data-bl-row~="sel"]):is(bl-s, *) > small,
 body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:where([data-bl-row~="sel"]):is(bl-s, *) > span,
 body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:where([data-bl-row~="sel"]):is(bl-s, *) > label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--bl-fs-body) !important; line-height: 1.3 !important; }
-body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:where([data-bl-row~="sel"]):is(bl-s, *) > select { height: 30px !important; min-height: 30px !important; }
+body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:where([data-bl-row~="sel"]):is(bl-s, *) > select { height: 34px !important; min-height: 34px !important; }
 }
 @media not all and (max-width: 1000px) {
 body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) > select { min-width: 0; max-width: 60%; }

@@ -33,7 +33,7 @@
 .bl-first-run .bl-fr-sheet { display: flex; flex-direction: column; min-height: 0; max-height: inherit; }
 
 /* 머리: 단계 이름 · 점 셋 · 건너뛰기 */
-.bl-first-run .bl-fr-head { display: flex; flex: none; align-items: center; gap: 10px; padding: 12px 12px 8px 18px; }
+.bl-first-run .bl-fr-head { display: flex; flex: none; align-items: center; gap: 10px; padding: 12px 12px 8px 16px; }
 .bl-first-run .bl-fr-head h2 { display: flex; flex: 1 1 auto; align-items: center; gap: .5em; min-width: 0; margin: 0; color: inherit; font-size: var(--bl-fs-head, 18px); font-weight: 700; line-height: 1.35; }
 .bl-first-run .bl-fr-head h2 i { flex: none; color: var(--salty-accent-ink, var(--fr-accent)); font-size: .9em; }
 .bl-first-run .bl-fr-dots { display: flex; flex: none; gap: 6px; margin: 0; padding: 0; list-style: none; }
@@ -57,7 +57,7 @@
 }
 
 /* 본문 */
-.bl-first-run .bl-fr-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 4px 18px 14px; }
+.bl-first-run .bl-fr-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 4px 16px 12px; }
 .bl-first-run .bl-fr-modes { display: flex; justify-content: flex-end; gap: 6px; margin: 0 0 10px; }
 .bl-first-run .bl-fr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9em), 1fr)); gap: 8px; }
 .bl-first-run .bl-fr-fonts, .bl-first-run .bl-fr-readings { grid-template-columns: repeat(auto-fill, minmax(min(100%, 12em), 1fr)); }
@@ -103,7 +103,7 @@
 .bl-first-run .bl-fr-css-choices { display: flex; flex-direction: column; gap: 8px; }
 .bl-first-run .bl-fr-choice {
   display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
-  width: 100%; min-height: 44px; margin: 0; padding: 12px 14px;
+  width: 100%; min-height: 44px; margin: 0; padding: 12px 12px;
   border: 1px solid var(--fr-line); border-radius: var(--bl-r-md, 12px); background: var(--fr-card); color: var(--salty-text, inherit);
   font: inherit; text-align: left; cursor: pointer; appearance: none; -webkit-appearance: none; box-shadow: none;
 }
@@ -120,14 +120,14 @@
 .bl-first-run[data-step="css"] .bl-fr-body { padding-bottom: 16px; }
 
 /* 바닥: 이전 · 다음/완료 */
-.bl-first-run .bl-fr-foot { display: flex; flex: none; align-items: center; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--fr-line); }
+.bl-first-run .bl-fr-foot { display: flex; flex: none; align-items: center; justify-content: flex-end; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--fr-line); }
 .bl-first-run .bl-fr-foot [data-fr="back"] { margin-right: auto; }
 
 @media (max-width: 760px), (pointer: coarse) {
   .bl-first-run { width: calc(100vw - 16px); max-width: calc(100vw - 16px); max-height: calc(100dvh - 16px); }
   .bl-first-run .bl-fr-icon { min-width: 36px; min-height: 36px; }
   .bl-first-run .bl-fr-primary { min-width: 48px; }
-  .bl-first-run .bl-fr-head { padding: 10px 10px 6px 14px; }
+  .bl-first-run .bl-fr-head { padding: 10px 10px 6px 12px; }
   .bl-first-run .bl-fr-body { padding: 4px 12px 12px; }
   .bl-first-run .bl-fr-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 8em), 1fr)); }
   .bl-first-run .bl-fr-fonts, .bl-first-run .bl-fr-readings { grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5em), 1fr)); }

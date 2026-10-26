@@ -61,8 +61,8 @@ body.salty #completion_prompt_manager .completion_prompt_manager_footer > select
   margin: 0 4px 0 0 !important;
 }
 body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_button {
-  width: 30px !important;
-  height: 30px !important;
+  width: 34px !important;
+  height: 34px !important;
   min-width: 0 !important;
   padding: 0 !important;
   font-size: 13px !important;
@@ -82,9 +82,9 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list li.complet
 }
 body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::before {
   left: 4px;
-  width: 22px;
-  height: 22px;
-  margin-top: -11px;
+  width: var(--bl-deco-pm-toggle);
+  height: var(--bl-deco-pm-toggle);
+  margin-top: calc(var(--bl-deco-pm-toggle) / -2);
   border-radius: 50%;
   background: transparent;
   box-shadow: inset 0 0 0 1px var(--salty-faint);
@@ -97,7 +97,7 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list li.complet
   left: 11px;
   width: 5px;
   height: 9px;
-  margin-top: -7px;
+  margin-top: -8px;
   border-radius: 0;
   background: none;
   box-shadow: none;
@@ -202,8 +202,8 @@ body.salty #rm_extensions_block #qr--settings #qr--set-settings > .flex-containe
   font-size: var(--bl-fs-body);
 }
 body.salty #rm_extensions_block #qr--settings #qr--set-settings > .flex-container.alignItemsCenter > #qr--colorClear {
-  height: 30px;
-  min-height: 30px;
+  height: 34px;
+  min-height: 34px;
   margin: 0;
   padding: 0 12px;
   font-size: var(--bl-fs-sub);
@@ -277,7 +277,7 @@ body.salty.salty-light {
    상자를 테마 모양(고리 · 켜짐은 포인트색 + 체크)으로, 단일 선택 목록은 상자를 뺀다 */
 body.salty .select2-results__options[aria-multiselectable="true"] .select2-results__option {
   position: relative;
-  padding-left: 34px !important;
+  padding-left: 32px !important;
 }
 body.salty .select2-results__options[aria-multiselectable="true"] .select2-results__option::before {
   left: 10px;
@@ -316,7 +316,7 @@ body.salty .select2-results__options:not([aria-multiselectable="true"]) .select2
 /* 즐겨찾기 타일: 흰 카드가 흰 바탕에 묻힘 → 떠 있는 버튼과 같은 고리(11%) + 그림자 */
 /* 거르기 동그라미 줄: 가로 스크롤 상자라 2.0.2 에서 커진 그림자(아래 3px + 번짐 10)가 잘림 → 아래 여백을 10 으로, 그만큼 바깥으로 되돌려 자리는 그대로 */
 body.salty #right-nav-panel .rm_tag_controls:not(#salty-none) {
-  margin: 0 -3px -7px !important;
+  margin: 0 -4px -8px !important;
   padding: 4px 4px 10px !important;
 }
 /* 캐릭터 카드: 왼쪽이 투명해지는 그라데이션이 흰 바탕과 붙어 왼쪽 가장자리가 사라짐 → 밝은 모드는 판판한 카드 면 + 11% 고리 (지금 채팅 중 카드의 포인트 테두리는 그대로) */
@@ -376,7 +376,7 @@ body.salty #rm_api_block.openDrawer:not(.closedDrawer):not([style*="display: non
   display: grid !important;
   grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
   gap: 10px 12px;
-  padding: 14px var(--bl-gutter, 14px) 18px !important; /* 2.0.15: 그리드로 바꾸며 사라졌던 서랍 안쪽 여백 */
+  padding: 12px var(--bl-gutter, 12px) 16px !important; /* 2.0.15: 그리드로 바꾸며 사라졌던 서랍 안쪽 여백 */
   align-content: start;
   align-items: center;
 }

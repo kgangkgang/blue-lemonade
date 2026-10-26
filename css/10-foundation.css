@@ -42,7 +42,7 @@ body.salty {
   /* 높이 */
   --bl-h-num: 32px;   /* 숫자칸 */
   --bl-h-icon: 34px;  /* 아이콘 버튼 · 거르기 칩 */
-  --bl-h-ctl: 38px;   /* 입력칸 (입력칸 바로 옆 단추도 이 높이 — 같은 줄에서 높이가 맞게) */
+  --bl-h-ctl: 36px;   /* 입력칸 (입력칸 바로 옆 단추도 이 높이 — 같은 줄에서 높이가 맞게). B7: PC 38 → 크기표 36(애드온 · 설정 창 입력칸 --bl-form-height 36 과 같게, 폰 36 그대로) */
   --bl-h-btn: 34px;   /* 7.7.6 글자 버튼 (PC 34 · 폰 36, 설정 창 단추와 같은 값 — 확장 공용 단추 크기 표) */
   --bl-h-lg: 44px;    /* 팝업 버튼 · 팝업 입력칸 */
   --bl-h-menu: 44px;  /* 메뉴 항목 (폰은 한 단 낮게) */
@@ -518,4 +518,22 @@ body.salty .autoComplete > .item.macro-ac-item > .macro-source.isThirdParty {
   --bl-dem-sky: #89dceb;
   --bl-dem-mauve: #cba6f7;
   --bl-demfx-flow: linear-gradient(90deg, #ff6b6b, #ffd166, #7ee787, #70d6ff, #c77dff, #ff8acb); /* 데우스 표현 흐름 띠 */
+}
+
+/* 장식 그림 크기(로고 · 견본 · 그림 · 의사 요소 표시) — 조작부 크기표(§1) 밖이라 검사에서 빼요(2026-10-26 사용자 결정 ②). 조작부에는 쓰지 않아요 */
+:root {
+  --bl-deco-cp-compare: 38px;
+  --bl-deco-create-icon: 38px;
+  --bl-deco-dem-card-icon: 26px;
+  --bl-deco-draft-dot: 23px;
+  --bl-deco-mark: 30px;
+  --bl-deco-mark-sm: 26px;
+  --bl-deco-md-choice: 30px;
+  --bl-deco-mes-extra-pad: 26px;
+  --bl-deco-pbind-mark: 22px;
+  --bl-deco-pick-badge: 22px;
+  --bl-deco-pm-toggle: 22px;
+  --bl-deco-swatch: 22px;
+  --bl-deco-toast-icon: 22px;
+  --bl-deco-welcome-logo: 30px;
 }

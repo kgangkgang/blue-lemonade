@@ -389,7 +389,7 @@ body.salty #jj-popup {
   right: -6px !important;
   width: auto !important;
   max-width: none !important;
-  margin-bottom: 14px !important; /* 판 윗면과 10px 틈 */
+  margin-bottom: 16px !important; /* 판 윗면과 10px 틈 */
   font-size: 15px;
   white-space: normal;
   /* 뜬 층: 확장의 검은 그림자 · 흐림 · 테두리 대신. 그림자는 위 · 옆으로만 — 아래 끝(y + 퍼짐 + 흐림)이 창 밑 6px 을 안 넘게 해서 입력판 윗면이 얼룩지지 않게 */
@@ -432,7 +432,7 @@ body.salty #jj-popup .jj-icon-btn:active {
    제목은 한 단 가볍게, 입력칸의 두꺼운 3px 고리는 얇은 포인트색 선으로 */
 body.salty #jj-popup .jj-popup-head {
   gap: 10px;
-  padding: 10px 8px 8px 14px;
+  padding: 10px 8px 8px 12px;
   align-items: center;
 }
 body.salty #jj-popup .jj-popup-title {
@@ -508,8 +508,8 @@ body.salty #jj-popup.is-on .jj-state {
 }
 /* 지우기 · 닫기는 한 단 작게 */
 body.salty #jj-popup .jj-icon-btn {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   font-size: 14px;
 }
 /* 두 쪽 점 · 저장/최근 목록: 테마의 알약 · 오목한 칸 모양 */
@@ -669,7 +669,7 @@ body.salty #dialogue_del_mes .menu_button {
   display: inline-flex;
   min-width: 108px;
   margin: 0 4px !important;
-  padding: 0 18px !important;
+  padding: 0 16px !important;
   border: 0 !important;
   background: var(--bl-fill-control, var(--bl-control)) !important;
   color: var(--salty-text) !important;

@@ -284,7 +284,7 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settin
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(input[type=text], input[type=search], input[type=number], textarea, select):focus { border-color: var(--acc); outline: none; }
 /* 고르기 칸은 테마와 같은 ▾ (창이 body 밖이라 02-controls 의 select 규칙이 닿지 않는다 — 같은 그림을 그대로) */
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) select:not([multiple]) {
-  -webkit-appearance: none; appearance: none; padding-right: 30px;
+  -webkit-appearance: none; appearance: none; padding-right: 28px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6.5 9.5 5.5 5.5 5.5-5.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 10px center; background-size: 15px 15px;
 }

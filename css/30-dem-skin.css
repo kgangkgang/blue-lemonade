@@ -54,7 +54,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details
   align-items: center !important;
   gap: 8px !important;
   min-height: 40px;
-  padding: 8px 12px 8px 14px !important;
+  padding: 8px 12px 8px 12px !important;
   background: transparent !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-card[open] > summary:where(:not(.custom-dem-modules *)) {
@@ -104,7 +104,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
 
 /* ---------- 카드 본문 칸 ---------- */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-scene-plan__body, .custom-dem-status__body, .custom-dem-status__offscene, .custom-dem-threads__body, .custom-dem-psychological-states__body, .custom-dem-momentum-engine__body, .custom-dem-card__body):where(:not(.custom-dem-modules *)) {
-  padding: 8px 14px 12px !important;
+  padding: 8px 12px 12px !important;
   border: 0 !important;
   background: transparent !important;
   color: var(--salty-text) !important;
@@ -114,7 +114,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
 
 /* 장면 계획: 번호는 네모 없이 옅은 숫자, 세로 줄 없음, 칸 이름은 모듈 색 · 내용은 본문 색 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__phase:where(:not(.custom-dem-modules *)) {
-  margin: 14px 0 2px !important;
+  margin: 16px 0 2px !important;
   padding: 0 !important;
   color: color-mix(in srgb, var(--dem-phase-accent, var(--dem-accent)) var(--bl-dem-ink), var(--salty-text)) !important;
   font-size: 0.68em !important;
@@ -195,7 +195,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   box-shadow: inset 0 1px 0 var(--salty-shade-2) !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status__more > summary:where(:not(.custom-dem-modules *)) {
-  padding: 8px 14px !important;
+  padding: 8px 12px !important;
   color: var(--salty-muted) !important;
   font-size: 0.72em !important;
   letter-spacing: 0.04em;
@@ -246,8 +246,8 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
 
 /* ---------- 트래커: 한 판 안에 시간 · 날짜 · 날씨 · 장소 ---------- */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):where(:not(:has(> .custom-dem-track__grid))) {
-  gap: 2px 14px !important;
-  padding: 8px 14px !important;
+  gap: 2px 16px !important;
+  padding: 8px 12px !important;
   font-size: 0.86em !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track__item, .custom-dem-track-recovery__item):where(:not(.custom-dem-track__grid *)) {

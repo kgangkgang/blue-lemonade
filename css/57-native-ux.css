@@ -15,11 +15,11 @@ body.salty .regex_editor > hr { margin-block:6px; }
 body.salty .regex_editor > .flexFlowColumn { gap:10px; }
 body.salty .regex_editor .title_restorable { margin-block:4px; }
 body.salty .regex_editor :is(input.text_pole,textarea.text_pole) { margin-block:4px; min-width:0; border-radius:var(--bl-r-sm); }
-body.salty .regex_editor > .flex-container:not(.flexFlowColumn) { gap:12px 18px; flex-wrap:wrap; }
+body.salty .regex_editor > .flex-container:not(.flexFlowColumn) { gap:12px 16px; flex-wrap:wrap; }
 body.salty .regex_editor > .flex-container > .flex1 { min-width:min(100%,12em); }
 body.salty .regex_editor label.checkbox { column-gap:10px; row-gap:8px; align-items:center; }
 @container bl-regex (min-width:38em) {
-  body.salty .regex_editor > .flexFlowColumn { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:18px; }
+  body.salty .regex_editor > .flexFlowColumn { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:16px; }
 }
 
 /* 페르소나 이름과 여섯 아이콘은 분리, 추가 선택칸은 남은 폭이 충분할 때만 옆에. */
@@ -56,7 +56,7 @@ body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block {
 body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block > .menu_button { height:auto!important; min-height:var(--bl-h-btn, 36px)!important; padding:6px!important; }
 body.salty #right-nav-panel #rm_button_selected_ch h2 { letter-spacing:var(--salty-ui-ls,normal); }
 body.salty #right-nav-panel .title_restorable { flex-wrap:wrap; column-gap:10px; row-gap:8px; }
-body.salty #character_popup #depth_prompt_div > div:last-child { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.5fr); gap:8px 14px; }
+body.salty #character_popup #depth_prompt_div > div:last-child { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.5fr); gap:8px 16px; }
 body.salty #character_popup #depth_prompt_div > div:last-child > h4 { margin:0!important; }
 body.salty #character_popup #depth_prompt_div > div:last-child > h4:nth-of-type(2) { grid-column:2; grid-row:1; }
 body.salty #character_popup #depth_prompt_div > div:last-child > :is(input,select) { width:100%; min-width:0; grid-row:2; }

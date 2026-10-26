@@ -35,7 +35,7 @@ body.salty #PersonaManagement h3 > a {
   justify-content: center;
   width: 32px;
   height: 32px;
-  margin: -8px -7px !important;
+  margin: -8px !important;
   border-radius: var(--bl-r-xs);
 }
 
@@ -261,7 +261,7 @@ body.salty #WorldInfo #wiTopBlock > .range-block[data-bl-row~="idr"] > .range-bl
   align-self: stretch;
   align-items: center;
   min-height: var(--bl-h-row);
-  padding: 10px 34px 10px 2px !important;
+  padding: 10px 32px 10px 2px !important;
   color: var(--salty-text) !important;
   font-size: var(--bl-fs-body) !important;
   font-weight: 600;
@@ -340,7 +340,7 @@ body.salty #WorldInfo #world_info_character_strategy {
   height: auto !important;
   min-height: max(var(--bl-h-icon), calc(1.4em + 10px)) !important;
   margin: 0 !important;
-  padding: 4px 26px 4px 8px !important;
+  padding: 4px 24px 4px 8px !important;
   line-height: 1.4;
   background-color: transparent !important;
   background-position: right 6px center !important;
@@ -930,7 +930,7 @@ body.salty #WorldInfo .world_entry_edit :is([name="perEntryOverridesBlock"] > .w
   height: auto !important;
   min-height: max(var(--bl-h-icon), calc(1.4em + 10px)) !important;
   margin: 0 !important;
-  padding: 4px 26px 4px 8px !important;
+  padding: 4px 24px 4px 8px !important;
   line-height: 1.4;
   background-color: transparent !important;
   background-position: right 6px center !important;
@@ -1248,9 +1248,9 @@ body.salty #PersonaManagement #user_avatar_block {
 body.salty #PersonaManagement #user_avatar_block .avatar-container {
   flex-wrap: nowrap !important;
   align-items: center !important;
-  gap: 18px !important;
+  gap: 16px !important;
   margin: 0 !important;
-  padding: 12px 14px 12px 12px !important;
+  padding: 12px 12px 12px 12px !important;
   border: 0 !important;
   border-radius: 16px !important;
   outline: 0 !important;
@@ -1526,7 +1526,7 @@ body.salty #PersonaManagement .persona_management_current_persona > h4.standoutH
 body.salty #PersonaManagement #persona_controls {
   flex-wrap: wrap !important;
   align-items: center !important;
-  margin: -30px 0 0 !important;
+  margin: -32px 0 0 !important;
   border-radius: var(--bl-r-md);
   background: var(--bl-fill-card, var(--bl-card));
   box-shadow: var(--bl-e1);
@@ -1592,7 +1592,7 @@ body.salty #PersonaManagement .persona_management_current_persona > h4 .editor_m
 }
 body.salty #PersonaManagement #persona_description {
   min-height: 168px;
-  padding: 12px 14px !important;
+  padding: 12px 12px !important;
   border-radius: var(--bl-r-md) !important;
   line-height: 1.55;
 }

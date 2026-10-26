@@ -9,7 +9,7 @@
   .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 14px;
+    column-gap: 16px;
   }
   /* 4.1.2: '혼자 떨어진 칸은 전체 폭' 규칙은 css/99-lazy-panel.css 로 (오른쪽 끝 :not() + 왼쪽 :has()) */
   .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider header {

@@ -133,3 +133,6 @@ html body.salty #pt-panel .pt-page:has(> .pt-page-fixed) > .pt-page-scroll { min
   /* 메모 창 머리 도구(정렬 · 태그 · 새 메모 · 닫기) 25 → 아이콘 34 */
   html body.salty .bl-notes-dialog > header .bl-notes-head-tools .bl-note-btn { height: 34px; min-height: 34px; min-width: 34px; }
 }
+
+/* B7 캐릭터 에셋 창: 「에셋 떼기」(글자 붙은 아이콘 단추) · 「기본값」「완성본 복사」(작은 단추)도 같은 창 글자 단추(이미지 · ZIP · 선택)와 같은 높이 — 폰에서만 맞추던 것을 PC 에도 */
+html body.salty #char_assets_settings :is(.eh-icon-btn--labeled, .eh-btn--small) { height: var(--bl-h-ctl, 36px); }

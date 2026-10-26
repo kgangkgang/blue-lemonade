@@ -108,7 +108,7 @@ body.salty #user-settings-block-content #MovingUI-presets-block label[for="movin
   height: var(--bl-h-icon) !important;
   min-height: var(--bl-h-icon) !important;
   margin: 0 !important;
-  padding: 0 26px 0 8px !important;
+  padding: 0 24px 0 8px !important;
   background-color: transparent !important;
   background-position: right 6px center !important;
   box-shadow: none !important;
@@ -187,7 +187,7 @@ body.salty #user-settings-block #ui_language_select {
   width: auto !important;
   height: var(--bl-h-icon) !important;
   min-height: var(--bl-h-icon) !important;
-  padding: 0 26px 0 6px !important;
+  padding: 0 24px 0 6px !important;
   background-color: transparent !important;
   background-position: right 6px center !important;
   box-shadow: none !important;
@@ -265,14 +265,14 @@ body.salty:not(#salty-none) #user-settings-block #UI-presets-block:not(#salty-no
   gap: 4px !important;
 }
 body.salty:not(#salty-none) #user-settings-block #UI-presets-block:not(#salty-none) > h4:first-child {
-  min-height: 30px !important;
+  min-height: 34px !important;
   margin: 0 !important;
   padding: 0 2px !important;
   align-items: center !important;
 }
 body.salty:not(#salty-none) #user-settings-block #UI-presets-block:not(#salty-none) > h4:first-child .menu_button {
-  height: 30px !important;
-  min-height: 30px !important;
+  height: 34px !important;
+  min-height: 34px !important;
 }
 body.salty:not(#salty-none) #user-settings-block #UI-presets-block:not(#salty-none) > .flex-container > :is(#themes, .menu_button) {
   height: 32px !important;
@@ -645,8 +645,8 @@ body.salty #AdvancedFormatting details > summary {
   display: flex;
   align-items: center;
   gap: var(--bl-s2);
-  min-height: 42px;
-  padding: 0 26px 0 2px;
+  min-height: 40px;
+  padding: 0 24px 0 2px;
   list-style: none;
   cursor: pointer;
   font-size: var(--bl-fs-body) !important;
@@ -890,8 +890,8 @@ body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) :is(.mobile-only-menu-
 body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) .mobile-only-menu-toggle {
   top: 6px !important;
   right: 6px !important;
-  width: 26px !important;
-  height: 26px !important;
+  width: 24px !important;
+  height: 24px !important;
   border-radius: 8px !important;
   background-color: var(--bl-media-scrim-45) !important;
   font-size: 13px;
@@ -1186,7 +1186,7 @@ body.salty .TH-custom-tailwind [class~="border-t"].border-\(--grey5050a\) {
 body.salty .TH-custom-tailwind .relative.inline-block[data-bl-row~="peer"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *) {
   flex: 0 0 auto;
   width: 44px;
-  height: 26px;
+  height: 24px;
 }
 body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"] + label {
   overflow: visible;
@@ -1317,8 +1317,8 @@ body.salty .TH-custom-tailwind :is([data-type="script"], [data-type="folder"]) {
   background: var(--bl-fill-hover, var(--bl-hover));
 }
 body.salty .TH-custom-tailwind :is([data-type="script"], [data-type="folder"]) .menu_button.interactable {
-  min-width: 30px;
-  min-height: 30px;
+  min-width: 34px;
+  min-height: 34px;
   margin-right: 0;
 }
 /* 오디오 재생 줄 · 음량 막대: 테 없이 톤만 */
@@ -1335,7 +1335,7 @@ body.salty .TH-custom-tailwind .rounded-full.border[class~="bg-(--black30a)"] {
 /* 이름 끝 ? 아이콘: 이름 마지막 글자 바로 뒤 — 아이콘 칸 폭은 0(글리프는 오른쪽 여백으로 넘쳐 그려짐)이라 홀로 다음 줄로 떨어지지 않음 */
 body.salty .TH-custom-tailwind .TH-Item--title:has(> .note-link-span) {
   display: block;
-  padding-right: 22px;
+  padding-right: 20px;
 }
 body.salty .TH-custom-tailwind .TH-Item--title > .note-link-span {
   display: inline-block;
@@ -1683,7 +1683,7 @@ body.salty #rm_extensions_block label[for="sd_source"] {
 }
 /* 너비 · 높이 바꾸기 ⇄: 두 이름 위 가운데 제자리 줄 (높이 이름에 붙지 않게) */
 body.salty #rm_extensions_block #sd_dimensions_block {
-  padding-top: 18px;
+  padding-top: 16px;
 }
 body.salty #rm_extensions_block #sd_swap_dimensions {
   top: -4px;

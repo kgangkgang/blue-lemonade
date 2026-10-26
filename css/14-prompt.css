@@ -215,7 +215,7 @@ body.salty #left-nav-panel #openai_settings .oneline-dropdown > select {
   height: var(--bl-h-icon);
   min-height: var(--bl-h-icon);
   margin: 0 !important;
-  padding: 0 26px 0 10px !important;
+  padding: 0 24px 0 10px !important;
   background-color: transparent !important;
   background-position: right 6px center !important;
   box-shadow: none !important;
@@ -457,7 +457,7 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list > li > :is
 /* 이름 · 토큰 머리: 띠 맨 위의 작은 이름표 (이름 글자 · 토큰 숫자와 같은 칸) */
 body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_list_head {
   min-height: 34px;
-  padding: 5px var(--pm-x) 5px calc(var(--pm-x) + var(--pm-icon)) !important;
+  padding: 4px var(--pm-x) 4px calc(var(--pm-x) + var(--pm-icon)) !important;
   font-size: var(--bl-fs-cap);
   font-weight: 650;
   letter-spacing: 0.01em;
@@ -538,7 +538,7 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list .completio
   display: flex;
   align-items: center;
   min-width: 0;
-  padding: 5px 0 5px var(--pm-icon);
+  padding: 4px 0 4px var(--pm-icon);
   overflow: hidden !important;
   white-space: nowrap !important;
   font-size: var(--bl-fs-body);

@@ -73,7 +73,7 @@ html body.salty #pt-panel .pt-page-fixed .pt-act-row > .pt-qhelp.pt-act { backgr
   min-height: var(--bl-settings-chip);
   padding-block: calc(4px + var(--bl-text-nudge, 0px)) calc(4px - var(--bl-text-nudge, 0px)); /* 5.5.3 세로 중앙 */
 }
-.salty-panel .salty-seg.salty-mini button { min-height: var(--bl-settings-chip); padding:calc(4px + var(--bl-text-nudge, 0px)) 9px calc(4px - var(--bl-text-nudge, 0px)); } /* 5.5.3 세로 중앙 */
+.salty-panel .salty-seg.salty-mini button { min-height: var(--bl-settings-chip); padding:calc(4px + var(--bl-text-nudge, 0px)) 8px calc(4px - var(--bl-text-nudge, 0px)); } /* 5.5.3 세로 중앙 */
 /* 5.6.6 폰(390)에서는 작은 고르기 글자가 1px 아래였다 (사용자 글꼴 실측 −1.03 → −0.03) → 위 1 줄임 */
 @media (pointer: coarse) {
   .salty-panel .salty-seg.salty-mini button { padding-top:calc(3.5px + var(--bl-text-nudge, 0px)); padding-bottom:calc(4.5px - var(--bl-text-nudge, 0px)); } /* 7.9.7 1px 올림은 「직접」(ㅈ 위 잉크)이 −1.05 로 넘쳐 → 반 픽셀: 「직접」 ≈ −0.55 · 다른 글자 ≈ +0.5 */
@@ -90,7 +90,7 @@ html body .salty-panel :is(.salty-seg button, .salty-fonttags button, .salty-fon
   font-weight: bolder;
 }
 html body .salty-panel.bl-editor .bl-settings-toprow button {
-  min-height: 38px;
+  min-height: 40px;
   border-radius: var(--bl-settings-radius);
 }
 html body .salty-panel.bl-editor .bl-editor-actions button { display:inline-flex; align-items:center; justify-content:center; }
@@ -158,7 +158,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel.bl-editor .salty-stack { row-gap:max(8px,.4em); }
 /* Labels keep their size; reduce the repeated space around controls instead. */
 .salty-panel .bl-editor-group-summary { color:var(--salty-muted); }
-.salty-panel .salty-fontrow { min-height:38px; padding-block:6px; }
+.salty-panel .salty-fontrow { min-height:36px; padding-block:6px; }
 /* Short preservation switches fit side by side without squeezing their labels. */
 .salty-panel .salty-group.bl-setting-locks { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(9em,calc((100% - 20px) / 2))),1fr)); column-gap:20px; }
 .salty-panel .bl-setting-locks > :not(.salty-row) { grid-column:1 / -1; }
@@ -174,7 +174,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-health-head p { color:var(--salty-muted); font-size:calc(12 * var(--sp)); }
 .salty-panel .bl-install-health .salty-btn { flex:none; width:auto; margin:0; white-space:normal; word-break:keep-all; }
 .salty-panel [data-health-result] { display:grid; gap:12px; min-width:0; font-size:calc(13 * var(--sp)); }
-.salty-panel .bl-health-summary { display:grid; gap:4px; padding:12px 14px; border-radius:9px; background:var(--salty-fill-accent-10,var(--salty-accent-10)); border-left:3px solid var(--salty-accent); }
+.salty-panel .bl-health-summary { display:grid; gap:4px; padding:12px 12px; border-radius:9px; background:var(--salty-fill-accent-10,var(--salty-accent-10)); border-left:3px solid var(--salty-accent); }
 .salty-panel .bl-health-summary strong { font-size:calc(14 * var(--sp)); line-height:1.5; }
 .salty-panel .bl-health-summary span { color:var(--salty-muted); line-height:1.6; }
 .salty-panel .bl-health-summary[data-state="attention"] { border-left-style:double; border-left-width:5px; }
@@ -190,14 +190,14 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-health-versions dt { font-size:calc(12 * var(--sp)); color:var(--salty-muted); }
 .salty-panel .bl-health-versions dd { margin:0; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
 
-.salty-panel .bl-usage-mode { display:block; padding:12px; margin:0 0 14px; border:1px solid var(--salty-line); border-radius:10px; }
+.salty-panel .bl-usage-mode { display:block; padding:12px; margin:0 0 16px; border:1px solid var(--salty-line); border-radius:10px; }
 .salty-panel .bl-usage-mode label { display:grid; gap:8px; font-weight:600; }
 .salty-panel .bl-usage-mode select { width:100%; min-width:0; min-height:44px; font:inherit; }
 .salty-panel .bl-usage-mode p { margin:0; color:var(--salty-muted); font-size:calc(12 * var(--sp)); line-height:1.6; }
 .salty-panel .bl-usage-mode button { margin:0; }
 .salty-panel .bl-usage-mode [role="status"]:empty { display:none; }
 
-.salty-panel .bl-prompt-source { margin:4px 0 14px; color:var(--salty-muted); font-size:calc(12 * var(--sp)); line-height:1.7; }
+.salty-panel .bl-prompt-source { margin:4px 0 16px; color:var(--salty-muted); font-size:calc(12 * var(--sp)); line-height:1.7; }
 .salty-panel .bl-prompt-source a { color:var(--salty-accent); text-underline-offset:3px; }
 
 /* 5.5.3 세로 중앙: 줄 높이(1.7)보다 min-height 32px 가 커서 글자가 위에 붙던 것 → 남는 높이를 위아래로 나눔 (글자가 커서 남는 높이가 없으면 0 · 보정도 그 안에서만) */

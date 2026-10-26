@@ -156,7 +156,7 @@ body.salty select:not([multiple]) {
   -webkit-appearance: none !important;
   appearance: none !important;
   padding-left: var(--bl-s3) !important;
-  padding-right: 30px !important;
+  padding-right: 28px !important;
   background-image: var(--bl-select-arrow) !important;
   background-repeat: no-repeat !important;
   background-position: right 10px center !important;
@@ -170,7 +170,7 @@ html body.salty select:not([multiple], [size]:not([size="1"]), .select2-hidden-a
   background-repeat: no-repeat !important;
   background-position: right 10px center !important;
   background-size: 15px 15px !important;
-  padding-right: 30px !important;
+  padding-right: 28px !important;
 }
 /* 직접 만든 고르기 칸: 한글화 패널 콤보(▾ 글자 대신) · 과일 연동 카드 고르기(카드 아이콘 대신) — 누르면 목록이 뜨는 칸은 같은 ▾ */
 html body.salty :is(.pt-combo-input, .bl-prompt-card-trigger):not(#bl-arrow-a) {
@@ -178,7 +178,7 @@ html body.salty :is(.pt-combo-input, .bl-prompt-card-trigger):not(#bl-arrow-a) {
   background-repeat: no-repeat !important;
   background-position: right 10px center !important;
   background-size: 15px 15px !important;
-  padding-right: 30px !important;
+  padding-right: 28px !important;
 }
 html body.salty :is(.pt-combo-caret, .bl-prompt-card-trigger > i) { display: none !important; }
 body.salty select option {
@@ -471,7 +471,7 @@ body.salty .select2-container--default .select2-selection--single {
 body.salty .select2-container--default .select2-selection--single .select2-selection__rendered {
   width: 100%;
   min-width: 0;
-  padding: 0 30px 0 var(--bl-s3) !important;
+  padding: 0 28px 0 var(--bl-s3) !important;
   color: var(--salty-text) !important;
   font-size: var(--bl-fs-body);
   line-height: var(--bl-h-ctl) !important;
@@ -484,7 +484,8 @@ body.salty .select2-container--default .select2-selection--single .select2-selec
   right: 10px !important;
   width: 15px !important;
   height: 15px !important;
-  margin-top: -7.5px;
+  margin-top: 0;
+  translate: 0 -50%; /* B7: 반 높이 음수 여백(-7.5px) 대신 이동 — 같은 자리 */
   background: var(--bl-select-arrow) no-repeat center / 15px 15px;
 }
 body.salty .select2-container--default .select2-selection--single .select2-selection__arrow b {

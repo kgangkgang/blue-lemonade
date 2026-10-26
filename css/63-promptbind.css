@@ -22,7 +22,7 @@ body.salty .bl-pbind-title {
 body.salty .bl-pbind .menu_button {
   margin: 0;
   padding: 4px 10px;
-  min-height: 30px;
+  min-height: 34px;
   flex: 0 0 auto;
   white-space: nowrap;   /* 6.0.5: 폰에서 「+ 지금 캐릭터」가 세 줄로 꺾였다 */
 }
@@ -52,8 +52,8 @@ body.salty .bl-pbind-chip.is-chat {
 body.salty .bl-pbind-x {
   all: unset;
   cursor: pointer;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   display: inline-grid;
   place-items: center;
@@ -74,7 +74,7 @@ body.salty .bl-pbind-hint {
 body.salty .bl-pbind-dialog {
   width: min(92vw, 520px);
   max-height: 80dvh;
-  padding: 14px;
+  padding: 12px;
   border: 1px solid var(--SmartThemeBorderColor, var(--bl-fb-rgb-128-128-128-p35));
   border-radius: 14px;
   background: var(--SmartThemeBlurTintColor, var(--bl-fb-222));
@@ -156,8 +156,8 @@ body.salty .bl-pbind-list.is-regex .bl-pbind-item span:last-child {
   line-height: 1.35;
 }
 body.salty .bl-pbind-noimg.is-regex {
-  width: 22px;
-  height: 22px;
+  width: var(--bl-deco-pbind-mark);
+  height: var(--bl-deco-pbind-mark);
   display: inline-grid;
   place-items: center;
   font-size: .75em;

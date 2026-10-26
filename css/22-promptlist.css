@@ -23,7 +23,7 @@ body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_ent
 }
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .completion_prompt_manager_prompt > .inline-drawer-header {
   min-height: 44px;
-  padding: 8px 14px !important;
+  padding: 8px 12px !important;
   gap: 12px !important;
   align-items: center;
   border: 0 !important;
@@ -99,7 +99,7 @@ body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_ent
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .inline-drawer-icon.up::before { content: '\f077'; }
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .completion_prompt_manager_prompt > .inline-drawer-content {
   margin: 0 12px 12px !important;
-  padding: 14px 16px !important;
+  padding: 12px 16px !important;
   border: 0 !important;
   border-radius: 12px !important;
   background: var(--salty-fill-surface, var(--salty-surface)) !important;

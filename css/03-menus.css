@@ -47,7 +47,7 @@ body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #e
 html body.salty #extensionsMenu#extensionsMenu .list-group-item,
 html body.salty #extensionsMenu#extensionsMenu > .extension_container > div,
 html body.salty #extensionsMenu#extensionsMenu > div:not(.extension_container) {
-  padding-right: 18px !important;
+  padding-right: 16px !important;
 }
 body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container)) :is(i, .fa-solid, .extensionsMenuExtensionButton) {
   width: var(--bl-ic-box) !important;
@@ -181,8 +181,8 @@ body.salty .popup .popup-controls .menu_button:is(:hover, :focus, :focus-visible
 body.salty .popup .popup-button-close {
   top: 12px !important;
   right: 12px !important;
-  width: 30px !important;
-  height: 30px !important;
+  width: 34px !important;
+  height: 34px !important;
   align-items: center;
   justify-content: center;
   padding: 0 !important;

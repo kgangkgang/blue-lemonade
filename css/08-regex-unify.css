@@ -75,8 +75,8 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: var(--bl-deco-dem-card-icon);
+  height: var(--bl-deco-dem-card-icon);
   border-radius: 6px;
   flex: 0 0 26px;
   background: color-mix(in srgb, var(--dem-accent) 14%, transparent);

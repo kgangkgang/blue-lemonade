@@ -82,7 +82,7 @@ await test('6.8.8 줄 끄기: headSwitchRows 기본 켬 · 끄면 그대로 · �
     assert.match(read('src/headswitch.js'), /if \(!rowsOn\) row\?\.remove\(\);/);
     assert.match(read('src/features.js'), /const headSwitchWanted = on && \(s\.headSwitchRows !== false \|\| Object\.keys\(s\.headSwitches \|\| \{\}\)\.length > 0\);/);
     assert.match(read('src/panel.js'), /toggle\('headSwitchRows', s\.headSwitchRows !== false\)/);
-    assert.match(read('css/03-menus.css'), /#extensionsMenu#extensionsMenu > div:not\(\.extension_container\) \{\s*padding-right: 18px !important;/);
+    assert.match(read('css/03-menus.css'), /#extensionsMenu#extensionsMenu > div:not\(\.extension_container\) \{\s*padding-right: 16px !important;/);
 });
 await test('6.8.9 테마를 끈 서랍 제목 줄: 한 줄(ⓒ 는 버전 옆) · 위아래 틈 — 테마를 켠 화면은 그대로', async () => {
     const fs = await import('node:fs');
