@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.8/blue-lemonade-7.9.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v7.9.9/blue-lemonade-7.9.9.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>7.9.8 · 최신 업데이트</summary>
+<summary>7.9.9 · 최신 업데이트</summary>
+
+- 판 알약의 글자가 알약 세로 가운데보다 위에 있던 것을 내렸어요. PC(배율 1)에서 1.1px 위였던 글자가 0.1px 안으로 들어와요. 폰은 브라우저가 글자를 1px 단위로만 놓아서 이미 가장 가운데 자리라 그대로예요. 알약 높이 · 가로 여백 · 선은 바뀌지 않아요.
+- 월드인포 항목 머리의 제목 칸은 두 줄까지만 보여요. 긴 제목에서 셋째 줄 윗부분이 반쯤 비쳐 보이던 것을 글 영역에서 바로 잘라요. 머리는 그대로 전체 두 줄(첫 줄 제목 · 상태 · 스위치, 둘째 줄 위치 · 순서 · 확률)이고, 제목을 고칠 때는 칸 안에서 밀어 볼 수 있어요.
+- 전개 지시 1.4.1: 프롬프트 줄 고치기와 설정 카드에서 넣는 곳 · 역할을 고를 때 테마 고르기 목록의 항목을 누르면 전개 지시 창이 닫히던 것을 고쳤어요. 폰에서 손가락으로 항목을 고르면 그대로 값이 바뀌고 저장돼요.
+
+</details>
+
+<details>
+<summary>7.9.8 · 전개 지시 넣는 곳 · 역할</summary>
 
 - 전개 지시 1.4.0: 전개 지시 · 항상 지시 · 프롬프트 줄마다 넣는 곳과 역할을 따로 골라요. 넣는 곳은 프롬프트 맨 처음 · 메인 프롬프트(스토리 문자열) 앞 · 메인 프롬프트 뒤 · 채팅 안 @깊이 · 프롬프트 맨 끝(프리필처럼 맨 끝에 붙는 자리) 가운데 하나, 역할은 시스템 · 사용자 · AI 어시스턴트 가운데 하나예요. 전개 지시 · 항상 지시는 확장 설정 카드에서, 프롬프트는 줄마다 고치기에서 바꿔요. 예전 설정은 쓰던 깊이 · 시스템 역할 그대로 옮겨져서 보내는 내용이 바뀌지 않아요. 메인 프롬프트 앞 · 뒤 자리는 채팅 완성(Chat Completion) API 에서만 들어가요.
 
