@@ -46,7 +46,7 @@ export const FILE_HASHES = {
   "src/addons/bookmarks/selection-chip.js": "11609:7cd66aa7:a6cf537e",
   "src/addons/bookmarks/settings-view.js": "20162:44a3fa1c:4c009a00",
   "src/addons/bookmarks/state.js": "12602:d41a37d4:135d9a29",
-  "src/addons/bookmarks/style.css": "95774:3b77e8b9:4c39fa4d",
+  "src/addons/bookmarks/style.css": "95837:35a5bc8e:82e9b051",
   "src/addons/bookmarks/text-match.js": "1928:91c477ac:e2d8e11d",
   "src/addons/bookmarks/tile-masonry.js": "5198:e49b70c9:8dc67528",
   "src/addons/bookmarks/tracker-spacing.js": "1970:01692c05:416c0ef4",
@@ -563,7 +563,7 @@ export const FILE_HASHES = {
   "src/ko-ui-data.js": "245627:2edc8c16:04ee0d73",
   "src/ko-ui.js": "11890:da455ebe:0274d99f",
   "src/layout.js": "29049:12ea2783:eb2dd73e",
-  "src/lazy-panel.gen.css": "33349:d9ea3522:571fb305",
+  "src/lazy-panel.gen.css": "34768:8aa24fbf:b31f1504",
   "src/lite.js": "35527:f6339213:d001bfc3",
   "src/live-models.js": "44020:f8a5fa62:a3f1cbaf",
   "src/main-chat-finish.js": "14829:d34f07a5:c8c0a173",
@@ -645,7 +645,7 @@ export const FILE_HASHES = {
   "src/scripts/bundled/deus.js": "129040:af7e5082:31393646",
   "src/scripts/bundled/fold.js": "14773:cf844e0a:169fb52a",
   "src/scripts/bundled/fruit-heart.js": "212010:bcce7120:5a4d27d3",
-  "src/scripts/bundled/fruit-style.js": "114666:1cc0f3a3:ceba1d8c",
+  "src/scripts/bundled/fruit-style.js": "95499:be51e9d0:83cdb6b9",
   "src/scripts/bundled/fruit.js": "143499:f9cb8a7f:2ce1c45b",
   "src/scripts/bundled/helper.js": "104117:425b163a:31736cc4",
   "src/scripts/bundled/korean.js": "1029028:cc619cbc:619f91b4",
@@ -663,7 +663,7 @@ export const FILE_HASHES = {
   "src/scripts/plain/deus.js": "121049:78209b16:53e5a9a6",
   "src/scripts/plain/fold.js": "13815:b56ce78f:e3189530",
   "src/scripts/plain/fruit-heart.js": "197442:b6478842:dde07635",
-  "src/scripts/plain/fruit-style.js": "112854:7d3894ca:650a301f",
+  "src/scripts/plain/fruit-style.js": "93803:7f33e961:22b6102d",
   "src/scripts/plain/fruit.js": "133839:82507c20:4072f8d5",
   "src/scripts/plain/helper.js": "97691:f11398d4:3144a19b",
   "src/scripts/plain/korean.js": "958704:01befe38:eef1e6a9",
@@ -733,5 +733,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1761710:f41386d7:a440b3a2"
+  "style.css": "1763634:224ef348:ef1beac4"
 };

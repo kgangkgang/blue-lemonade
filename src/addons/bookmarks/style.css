@@ -2315,5 +2315,5 @@ body.salty .cg-root .cg-segmented button { min-height: 32px; padding-block: calc
 body.salty .cg-root .cg-setting:has(> .cg-setting-text > small) { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 10px; row-gap: 2px; }
 body.salty .cg-root .cg-setting:has(> .cg-setting-text > small) > .cg-setting-text { display: contents; }
 body.salty .cg-root .cg-setting:has(> .cg-setting-text > small) > .cg-setting-text > b { flex: 1 1 auto; min-width: 0; }
-body.salty .cg-root .cg-setting:has(> .cg-setting-text > small) > :not(.cg-setting-text) { order: 1; flex: 0 1 auto; margin-left: auto; }
+body.salty .cg-root .cg-setting > :where(.cg-setting > *):not(.cg-setting-text):is(:has(~ .cg-setting-text > small), .cg-setting-text:has(> small) ~ *) { order: 1; flex: 0 1 auto; margin-left: auto; }
 body.salty .cg-root .cg-setting:has(> .cg-setting-text > small) > .cg-setting-text > small { order: 2; flex: 1 1 100%; min-width: 0; }

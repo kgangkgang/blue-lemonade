@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ba098b2f6770) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 3b194db9f4c4) */
 /* css/00-base.css */
 :root{--bl-release:"8.0.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -14184,7 +14184,7 @@ body.salty-dark .salty-shapes button.on {
 }
 .salty-panel .salty-row:has(> .salty-switch),
 .salty-panel.bl-editor .salty-row:has(> .salty-switch) { flex-wrap: nowrap; }
-.salty-panel .salty-row:has(> .salty-switch) > span { flex: 1 1 auto; min-width: 0; }
+.salty-panel .salty-row > span:where(.salty-row > *):is(.salty-switch, .salty-switch ~ *, :has(~ .salty-switch)) { flex: 1 1 auto; min-width: 0; }
 .salty-panel .salty-row > .salty-switch { flex: none; }
 .salty-panel .bl-tool-chevron { display: inline-grid; place-items: center; width: 14px; height: 14px; font-size: 0; line-height: 1; }
 .salty-panel .bl-tool-chevron::before { content: "\f078"; font: 900 11px/1 "Font Awesome 6 Free"; }
@@ -25419,9 +25419,9 @@ html:not(#bl-pill-off):not(#bl-pill-off2) body.salty :is(.pa-hub .pa-hub-title, 
 }
 html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] > .salty-ver { margin: 0 !important; top: 0 !important; }
 html:not(#bl-pill-off) body.salty dialog > header > b:has(> .ext-version, > i) { display: inline-flex; align-items: center; gap: 8px !important; min-width: 0; }
-html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b:has(> .ext-version, > i) > :where(i):is(.bl-s, *),
-html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b:has(> .ext-version, > i) > .ext-version,
-html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b:has(> .ext-version, > i) > [class*="-version"] { margin: 0 !important; }
+html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b > :where(i):is(.bl-s, *):where(header > b > *):is(.ext-version, i, .ext-version ~ *, i ~ *, :has(~ .ext-version), :has(~ i)),
+html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b > .ext-version:where(header > b > *):is(.ext-version, i, .ext-version ~ *, i ~ *, :has(~ .ext-version), :has(~ i)),
+html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b > [class*="-version"]:where(header > b > *):is(.ext-version, i, .ext-version ~ *, i ~ *, :has(~ .ext-version), :has(~ i)) { margin: 0 !important; }
 html:not(#bl-pill-off) body.salty :is(dialog,[role="dialog"]) > header [class$="-version"]:not([hidden]),
 html:not(#bl-pill-off) body.salty :is(dialog,[role="dialog"]) > header [class*="-version "]:not([hidden]),
 html:not(#bl-pill-off) body.salty :is(dialog,[role="dialog"]) > header [class$="-ver"]:not([hidden]),
@@ -25991,8 +25991,8 @@ html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-ba
   line-height: 1.3 !important;
   text-align: center !important;
 }
-html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button)) > :is(.menu_button, button, label.menu_button) > i,
-html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button)) > :is(.menu_button, button, label.menu_button) > span { flex: 0 0 auto; white-space: nowrap; }
+html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions) > :is(.menu_button, button, label.menu_button) > i,
+html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions) > :is(.menu_button, button, label.menu_button) > span { flex: 0 0 auto; white-space: nowrap; }
 html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button))[data-bl-cols="1"] > .menu_button:is(bl-s, *),
 html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button))[data-bl-cols="1"] > button:is(.bl-s, *),
 html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button))[data-bl-cols="1"] > label.menu_button { white-space: normal !important; }
@@ -27116,8 +27116,8 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] { grid-templ
   justify-content: flex-start !important;
   gap: var(--bl-s2) !important;
 }
-.salty-panel .salty-row:has(> .salty-seg:not(.salty-mini), > select, > input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="color"])):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) > span,
-.salty-panel .salty-stack:has(> .salty-seg):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) > span,
+.salty-panel .salty-row:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) > span:where(.salty-row > *):is(.salty-seg:not(.salty-mini), .salty-seg:not(.salty-mini) ~ *, :has(~ .salty-seg:not(.salty-mini)), select ~ *, :has(~ select), input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="color"]) ~ *, :has(~ input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="color"]))),
+.salty-panel .salty-stack:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) > span:where(.salty-stack > *):is(.salty-seg, .salty-seg ~ *, :has(~ .salty-seg)),
 .bl-editor .bl-control-grid > .salty-stack:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) > span {
   flex: 0 0 auto !important;
 }
@@ -27720,7 +27720,7 @@ body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 {
   white-space: normal;
   line-height: 1.4;
 }
-body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 > span {
+body.salty #WorldInfo > .flex-container > #WI_panel_pin_div ~ h3 > span {
   min-width: 0;
   max-width: 100%;
   word-break: normal;
@@ -27769,9 +27769,14 @@ body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="
 body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) + li:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
   --pm-top: inset 0 0 transparent;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) .completion_prompt_manager_prompt_name .prompt-manager-inspect-action:is(bl-s, *),
-body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) .completion_prompt_manager_prompt_name span:not(.fa-solid) {
-  font-weight: 650;
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
+  --bl-pm-group-name: 1;
+}
+@container style(--bl-pm-group-name: 1) {
+  body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:not(.bl-x.bl-x.bl-x) .completion_prompt_manager_prompt_name .prompt-manager-inspect-action:is(bl-s, *),
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:not(.bl-x.bl-x.bl-x) .completion_prompt_manager_prompt_name span:not(.fa-solid) {
+    font-weight: 650;
+  }
 }
 body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(#completion_prompt_manager_popup_entry_form_prompt:disabled) > div:first-child::after {
   flex-basis: 100%;
@@ -27915,7 +27920,7 @@ body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instru
   flex: 0 1 auto !important;
   max-width: 60%;
 }
-body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:has(> input[type="checkbox"] + span + small:last-child) > span {
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label > span:where(label.checkbox_label > *):is(input[type="checkbox"] + span:has(+ small:last-child), :has(~ input[type="checkbox"] + span + small:last-child)) {
   flex: 1 1 0%;
   min-width: 0;
 }
@@ -28055,10 +28060,18 @@ body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > * {
 body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > * {
   grid-column: 1 / -1;
 }
-body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#InstructSettingsColumn, #SystemPromptColumn > h4, #SystemPromptBlock, [name="tokenizerSettingsBlock"])[data-cc-null] > * {
-  opacity: 0.5;
+body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting #InstructSettingsColumn:is(bl-s, *)[data-cc-null],
+body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#SystemPromptColumn > h4)[data-cc-null],
+body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting #SystemPromptBlock:is(bl-s, *)[data-cc-null],
+body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :where([name="tokenizerSettingsBlock"]):is(#bl-s, *):is(bl-s, *)[data-cc-null] {
+  --bl-cc-null-dim: 1;
 }
-body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > * {
+@container style(--bl-cc-null-dim: 1) {
+  body.salty:not(bl-x#bl-x#bl-x.bl-x.bl-x) #AdvancedFormatting :is(#InstructSettingsColumn, #SystemPromptColumn > h4, #SystemPromptBlock, [name="tokenizerSettingsBlock"])[data-cc-null] > * {
+    opacity: 0.5;
+  }
+}
+body.salty #AdvancedFormatting .flex-container > :where(.flex-container > *):is(label[for^="reasoning_"], label[for^="reasoning_"] ~ *, :has(~ label[for^="reasoning_"])) {
   flex: 1 1 100% !important;
 }
 body.salty #rm_api_block #openai_api > *,
@@ -28074,7 +28087,7 @@ body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):i
   }
 }
 @media not all and (max-width: 1000px) {
-  .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > :not(.salty-row, .salty-slider),
+  .salty-panel.in-popup .salty-group > :where(.salty-group > *):not(.salty-row, .salty-slider):is(:has(~ :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)), :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider) ~ *),
 .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-row:not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))),
 .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-slider:not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))) {
     grid-column: 1 / -1;
@@ -28083,7 +28096,7 @@ body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):i
 .bl-editor-actions [data-compare]{touch-action:none;user-select:none;white-space:nowrap;}
 .bl-editor-actions [data-compare][aria-pressed="true"]{background:var(--salty-accent);color:var(--salty-on-accent);}
 @container bl-controls (width < 41em) {
-  .salty-panel.in-popup .salty-group:not(.bl-setting-locks):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)):has(> .salty-row > span > small, > .salty-row > .salty-seg) > :not(.salty-slider),
+  .salty-panel.in-popup .salty-group:not(.bl-setting-locks) > :where(.salty-group > *):not(.salty-slider):is(:is(.salty-row, .salty-slider):has(+ :is(.salty-row, .salty-slider)), :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider), :has(~ :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)), :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider) ~ *):where(.salty-row:has(> span > small, > .salty-seg), :has(~ .salty-row > span > small, ~ .salty-row > .salty-seg), .salty-row:has(> span > small, > .salty-seg) ~ *):not(.bl-x.bl-x),
 .salty-panel.in-popup .salty-group:not(.bl-setting-locks):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)):has(> .salty-row > span > small, > .salty-row > .salty-seg) > .salty-slider:not(.salty-slider + *):not(:has(+ .salty-slider)),
 .salty-panel.in-popup .salty-group:not(.bl-setting-locks):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)):has(> .salty-row > span > small, > .salty-row > .salty-seg) > :where(.salty-slider):is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider:not(:has(+ .salty-slider)) {
     grid-column: 1 / -1;

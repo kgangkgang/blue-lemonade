@@ -49,8 +49,8 @@ body.salty #user-settings-block #user-settings-block-content { container: bl-use
    글자 그림자 · 외곽선 · 투명 그림 그림자의 「색」이 화면 폭 검은 타원(346×34)이 됐다 */
 /* 7.0.3 세로로 쌓은 줄의 이름 칸: 가로일 때 쓰던 flex 기준(33-panel-columns 의 1 1 80px)이 높이가 되어
    「캐릭터 메시지」 · 「이름 줄」 · 「자리」 · 「넘기기」 아래 빈 칸 50px 안팎이 생겼다 → 이름 칸은 글 높이만 */
-.salty-panel .salty-row:has(> .salty-seg:not(.salty-mini), > select, > input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="color"])):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) > span,
-.salty-panel .salty-stack:has(> .salty-seg):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) > span,
+.salty-panel .salty-row:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) > span:where(.salty-row > *):is(.salty-seg:not(.salty-mini), .salty-seg:not(.salty-mini) ~ *, :has(~ .salty-seg:not(.salty-mini)), select ~ *, :has(~ select), input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="color"]) ~ *, :has(~ input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="color"]))),
+.salty-panel .salty-stack:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) > span:where(.salty-stack > *):is(.salty-seg, .salty-seg ~ *, :has(~ .salty-seg)),
 .bl-editor .bl-control-grid > .salty-stack:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) > span {
   flex: 0 0 auto !important;
 }

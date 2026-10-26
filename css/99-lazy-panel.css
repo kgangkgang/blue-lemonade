@@ -39,7 +39,7 @@ body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 {
   white-space: normal;
   line-height: 1.4;
 }
-body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 > span {
+body.salty #WorldInfo > .flex-container > #WI_panel_pin_div ~ h3 > span {
   min-width: 0;
   max-width: 100%;
   word-break: normal;
@@ -90,8 +90,13 @@ body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="
 body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) + li:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
   --pm-top: inset 0 0 transparent;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) .completion_prompt_manager_prompt_name :is(.prompt-manager-inspect-action, span:not(.fa-solid)) {
-  font-weight: 650;
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
+  --bl-pm-group-name: 1;
+}
+@container style(--bl-pm-group-name: 1) {
+  body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:not(.bl-x.bl-x.bl-x) .completion_prompt_manager_prompt_name :is(.prompt-manager-inspect-action, span:not(.fa-solid)) {
+    font-weight: 650;
+  }
 }
 body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(#completion_prompt_manager_popup_entry_form_prompt:disabled) > div:first-child::after {
   flex-basis: 100%;
@@ -214,7 +219,7 @@ body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instru
   flex: 0 1 auto !important;
   max-width: 60%;
 }
-body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:has(> input[type="checkbox"] + span + small:last-child) > span {
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label > span:where(label.checkbox_label > *):is(input[type="checkbox"] + span:has(+ small:last-child), :has(~ input[type="checkbox"] + span + small:last-child)) {
   flex: 1 1 0%;
   min-width: 0;
 }
@@ -354,11 +359,16 @@ body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="
   grid-column: 1 / -1;
 }
 /* 원래 css/15-drawers.css */
-body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#InstructSettingsColumn, #SystemPromptColumn > h4, #SystemPromptBlock, [name="tokenizerSettingsBlock"])[data-cc-null] > * {
-  opacity: 0.5;
+body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#InstructSettingsColumn, #SystemPromptColumn > h4, #SystemPromptBlock, [name="tokenizerSettingsBlock"])[data-cc-null] {
+  --bl-cc-null-dim: 1;
+}
+@container style(--bl-cc-null-dim: 1) {
+  body.salty:not(bl-x#bl-x#bl-x.bl-x.bl-x) #AdvancedFormatting :is(#InstructSettingsColumn, #SystemPromptColumn > h4, #SystemPromptBlock, [name="tokenizerSettingsBlock"])[data-cc-null] > * {
+    opacity: 0.5;
+  }
 }
 /* 원래 css/15-drawers.css */
-body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > * {
+body.salty #AdvancedFormatting .flex-container > :where(.flex-container > *):is(label[for^="reasoning_"], label[for^="reasoning_"] ~ *, :has(~ label[for^="reasoning_"])) {
   flex: 1 1 100% !important;
 }
 /* 원래 css/27-compact.css */
@@ -376,7 +386,7 @@ body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):i
   }
 }
 @media not all and (max-width: 1000px) { /* 5.3.4: 1001px 이면 1000~1001px(배율 · 소수 폭)에서 폰 · PC 규칙 둘 다 빠졌다 — max-width: 1000px 의 정확한 반대 */
-  .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > :not(.salty-row, .salty-slider),
+  .salty-panel.in-popup .salty-group > :where(.salty-group > *):not(.salty-row, .salty-slider):is(:has(~ :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)), :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider) ~ *),
   .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > :is(.salty-row, .salty-slider):not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))) {
     grid-column: 1 / -1;
   }
@@ -388,7 +398,7 @@ body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):i
 /* 원래 css/20-panel.css (2026-10-12 쓸데없는 줄바꿈): PC 팝업인데 설정 칸이 좁을 때 설명 · 고르기가 있는 묶음은 한 열.
    오른쪽 끝이 :not(.salty-slider) 이고 왼쪽에 :has() 라 늘 켜 두면 채팅을 느리게 한다(check-has) → 팝업이 열려 있을 때만 켜지는 이곳으로 (세션 1, 10-13) */
 @container bl-controls (width < 41em) {
-  .salty-panel.in-popup .salty-group:not(.bl-setting-locks):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)):has(> .salty-row > span > small, > .salty-row > .salty-seg) > :not(.salty-slider),
+  .salty-panel.in-popup .salty-group:not(.bl-setting-locks) > :where(.salty-group > *):not(.salty-slider):is(:is(.salty-row, .salty-slider):has(+ :is(.salty-row, .salty-slider)), :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider), :has(~ :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)), :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider) ~ *):where(.salty-row:has(> span > small, > .salty-seg), :has(~ .salty-row > span > small, ~ .salty-row > .salty-seg), .salty-row:has(> span > small, > .salty-seg) ~ *):not(.bl-x.bl-x),
   .salty-panel.in-popup .salty-group:not(.bl-setting-locks):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)):has(> .salty-row > span > small, > .salty-row > .salty-seg) > .salty-slider:not(.salty-slider + *):not(:has(+ .salty-slider)),
   .salty-panel.in-popup .salty-group:not(.bl-setting-locks):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)):has(> .salty-row > span > small, > .salty-row > .salty-seg) > :is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider:not(:has(+ .salty-slider)) {
     grid-column: 1 / -1;

@@ -1364,7 +1364,7 @@ body.salty-dark .salty-shapes button.on {
    · 확장 카드 접기 머리의 꺾쇠 '⌄' 가 기기 글꼴에 따라 글자 'v' 로 보였다 → 글자는 숨기고 아이콘 글꼴 꺾쇠를 그린다 (회전 · 크기 그대로) */
 .salty-panel .salty-row:has(> .salty-switch),
 .salty-panel.bl-editor .salty-row:has(> .salty-switch) { flex-wrap: nowrap; }
-.salty-panel .salty-row:has(> .salty-switch) > span { flex: 1 1 auto; min-width: 0; }
+.salty-panel .salty-row > span:where(.salty-row > *):is(.salty-switch, .salty-switch ~ *, :has(~ .salty-switch)) { flex: 1 1 auto; min-width: 0; } /* 8.0.5: :has 를 고를 칸 쪽으로(뜻 · 특이도 같음) — 아래 css/99-lazy-panel.css 머리 설명 */
 .salty-panel .salty-row > .salty-switch { flex: none; }
 .salty-panel .bl-tool-chevron { display: inline-grid; place-items: center; width: 14px; height: 14px; font-size: 0; line-height: 1; }
 .salty-panel .bl-tool-chevron::before { content: "\f078"; font: 900 11px/1 "Font Awesome 6 Free"; }

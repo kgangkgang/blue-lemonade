@@ -39,7 +39,7 @@ html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-ba
   line-height: 1.3 !important;
   text-align: center !important;
 }
-html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button)) > :is(.menu_button, button, label.menu_button) > :is(i, span) { flex: 0 0 auto; white-space: nowrap; }
+html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions) > :is(.menu_button, button, label.menu_button) > :is(i, span) { flex: 0 0 auto; white-space: nowrap; } /* 8.0.5: 애드온 단추는 글자만이라(i · span 없음) :has 조건을 뺐다 — 화면 같음 */
 /* 1열로 떨어지면 글자는 다시 줄바꿈 허용 */
 html:not(#bl-groups-off) body.salty :is(.bl-btn-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button))[data-bl-cols="1"] > :is(.menu_button, button, label.menu_button) { white-space: normal !important; }
 /* 숨긴 파일 입력(번역DB 복원 · 설정 가져오기)은 격자 칸을 차지하지 않게 */
