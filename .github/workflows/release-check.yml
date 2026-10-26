@@ -371,6 +371,7 @@ jobs:
           node tools/tests/fruit-cards-removed.mjs .
           node tools/tests/settings-dialog.mjs
           node tools/tests/deus-qr.mjs
+          node tools/tests/deus-dictionary.mjs .
           node tools/tests/fruit-style.mjs
           node tools/tests/fruit-skin-contrast.mjs .
           node tools/tests/role-icons.mjs .

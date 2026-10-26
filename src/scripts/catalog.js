@@ -2,7 +2,7 @@
 export const SCRIPT_CATALOG = [
   {id:'korean',name:'실리태번 한글화',version:'1.4.8',icon:'fa-language',description:'남아 있는 영어 메뉴와 기본 안내를 한글로 보여요. 대화와 입력한 값은 그대로예요.',match:['__sillyTavernKoreanUI_v1'],file:'korean'},
   {id:'helper',name:'실리태번 헬퍼 한글화',version:'1.3.9',icon:'fa-puzzle-piece',description:'헬퍼 메뉴·도움말·공지와 스크립트 관리 화면을 한글로 보여요.',match:['__tavernHelperKoreanUI_v1'],file:'helper'},
-  {id:'deus',name:'데우스 프롬프트 번역',version:'2.5',icon:'fa-book-open',description:'데우스 2.5 프롬프트·정규식 제목과 편집 힌트를 번역해요. 저장되는 이름과 본문은 바꾸지 않아요.',match:['Prompt Name Translator','데우스'],file:'deus'},
+  {id:'deus',name:'데우스 프롬프트 번역',version:'3.0',icon:'fa-book-open',description:'데우스 V3 · 2.5 프롬프트·정규식 제목과 편집 힌트를 번역해요. 저장되는 이름과 본문은 바꾸지 않아요.',match:['Prompt Name Translator','데우스'],file:'deus'},
   {id:'shajin',name:'샤진 프롬프트 번역',version:'3.9',icon:'fa-book',description:'거문고자리·물고기자리 프롬프트와 정규식 제목, 편집 힌트를 번역해요.',match:['Prompt Name Translator','거문고자리'],file:'shajin'},
   // 과일 계열(과일 · 야한과일 · 청과)은 한글화 토글 하나(SCRIPT_FAMILIES)로 함께 켜고 꺼요. 아래 세 칸은 실행 단위예요.
   {id:'fruit',family:'fruit-family',name:'과일 계열 프롬프트 이름 한글화',version:'2.0.0',icon:'fa-leaf',description:'과일 6.4 · 야한과일 2.0 · 청과 1.75X2 · 청과 2.0XV3 의 프롬프트·정규식 이름을 한 사전(공통 + 프리셋별 추가)으로 한글로 보여요. 저장된 이름과 본문은 그대로예요.',match:['BlueLemonade.translate','果实之心控制配置'],file:'fruit'},
