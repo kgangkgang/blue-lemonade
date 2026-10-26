@@ -1,7 +1,7 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
 export const BUILD_VERSION = "8.0.6";
 export const FILE_HASHES = {
-  "index.js": "24151:069721e5:62021741",
+  "index.js": "24151:babbbec4:032b552d",
   "manifest.json": "365:3b8cc599:a0574824",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
@@ -56,7 +56,7 @@ export const FILE_HASHES = {
   "src/addons/bookmarks/viewers.js": "19183:e60b9efd:36ec558a",
   "src/addons/customstyle/index.js": "30539:aa5b201c:5fc7a582",
   "src/addons/customstyle/style.css": "3793:a55698b3:63ca622a",
-  "src/addons/direction/index.js": "122876:b1459efb:cd5d8da9",
+  "src/addons/direction/index.js": "122876:5fab2654:972e905e",
   "src/addons/direction/prompt.js": "5256:eef9fef1:3471148f",
   "src/addons/direction/style.css": "39845:50555bd7:c261721c",
   "src/addons/list-sync.js": "4902:487dc198:b4d6512a",
@@ -451,7 +451,7 @@ export const FILE_HASHES = {
   "src/addons/zipinstall/index.js": "27807:d8992042:1260ef77",
   "src/addons/zipinstall/style.css": "6209:a473af9c:0d8e5af6",
   "src/after-work.js": "4051:6ad4ecc2:7c929fed",
-  "src/an-anchor.js": "8725:3236b8b7:bf240d33",
+  "src/an-anchor.js": "8725:129d45a6:42c7a2b2",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
   "src/appearance-compare.js": "3140:831ffdf1:a1f78cb0",
   "src/apply.js": "63124:d89a0d87:b78f4c26",
@@ -597,8 +597,8 @@ export const FILE_HASHES = {
   "src/preview-view.js": "13817:6b4a7592:e76ae6a5",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
   "src/profile.js": "6026:34f89f44:fc6757bf",
-  "src/prompt-anchors-core.js": "10232:69159f0e:73ea1155",
-  "src/prompt-anchors.js": "2971:82b93ebe:96caf169",
+  "src/prompt-anchors-core.js": "10232:1faf43c9:64063146",
+  "src/prompt-anchors.js": "2971:13da08ff:4d79bafb",
   "src/prompt-cache.js": "4499:ec84e809:50ec9d1a",
   "src/prompt-card-picker.js": "6956:c7ead0af:d78c5ca6",
   "src/prompt-choice-core.js": "5193:e3a30290:1eb58aca",

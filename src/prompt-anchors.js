@@ -1,4 +1,4 @@
-// 8.0.6 프롬프트 자리 맞추기 — 실리태번 연결부. 규칙 · 순서는 prompt-anchors-core.js 에 있다.
+// 8.0.7 프롬프트 자리 맞추기 — 실리태번 연결부. 규칙 · 순서는 prompt-anchors-core.js 에 있다.
 // 작가 노트(an-anchor.js)와 전개 지시(addons/direction)가 registerAnchorSource 로 글을 내고, 여기서 한 번만 본체에 끼어든다.
 import { eventSource, event_types } from '../../../../../script.js';
 import { Message, ChatCompletion, promptManager } from '../../../../openai.js';

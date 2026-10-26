@@ -11,7 +11,7 @@ import { verifyAddonCss } from '../../addon-files-check.js';
 import { badgeTextHit } from '../../badge-hit.js';
 // 7.7.4 시작 덮개 동안은 테마 색을 읽지 않는다
 import { afterBoot } from '../../boot-gate.js';
-// 8.0.6 페르소나 위치 · 캐릭터 설명 위치 — 작가 노트와 같은 공용 틀
+// 8.0.7 페르소나 위치 · 캐릭터 설명 위치 — 작가 노트와 같은 공용 틀
 import { registerAnchorSource, anchorAvailable } from '../../prompt-anchors.js';
 
 const MODULE = 'jeongaejisi';

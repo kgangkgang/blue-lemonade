@@ -1,4 +1,4 @@
-// 8.0.6 프롬프트 자리 맞추기 — 작가 노트 · 전개 지시 줄을 페르소나 설명 / 캐릭터 설명 바로 위에
+// 8.0.7 프롬프트 자리 맞추기 — 작가 노트 · 전개 지시 줄을 페르소나 설명 / 캐릭터 설명 바로 위에
 //   node tools/tests/prompt-anchors.mjs <테마 루트>   (공개 저장소는 '.')
 // 실리태번 본체(1.19)의 조립 순서를 작게 옮긴 가짜 위에서 prompt-anchors-core.js · prompt-anchors.js · an-anchor.js(가져오기 줄만 떼고)를 그대로 돌린다.
 //   채팅 완성: preparePromptsForChatCompletion(확장 프롬프트 → authorsNote 시스템 프롬프트 · 표식 바꿔치기) → populateChatCompletion(addToChatCompletion 순서,

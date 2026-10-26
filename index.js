@@ -195,7 +195,7 @@ jQuery(() => {
     startMenuOpenMark(); // ··· 메뉴가 열린 메시지에 bl-menu-open (style.css 의 :has() 대신, lite.js)
     startAnchorGate();   // ≡ · ✦ 메뉴가 열려 있을 때만 입력판에 앵커 이름 (2.9.4, lite.js)
     mountDrawer();
-    // 8.0.6 작가 노트 「페르소나 위치」 · 「캐릭터 설명 위치」 — 테마 화면 켜짐과 따로(확장만 모드에서도), 테마를 끄면 본체 위치로 (an-anchor.js)
+    // 8.0.7 작가 노트 「페르소나 위치」 · 「캐릭터 설명 위치」 — 테마 화면 켜짐과 따로(확장만 모드에서도), 테마를 끄면 본체 위치로 (an-anchor.js)
     import('./src/an-anchor.js').then(m => m.startNoteAnchor()).catch(error => console.warn('[Blue Lemonade] 작가 노트 자리 맞추기', error));
     // 확장 서랍 · ✦ 메뉴를 여는 순간 설정 창 코드를 미리 받아 둔다 (테마 줄을 누를 때 기다리지 않게)
     for (const id of ['extensions-settings-button', 'extensionsMenuButton']) document.getElementById(id)?.addEventListener('pointerdown', () => { loadPanel().catch(() => {}); }, { capture: true, passive: true });
