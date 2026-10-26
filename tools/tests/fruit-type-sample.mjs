@@ -112,9 +112,16 @@ check('채팅 안 데우스 카드 아래에는 바로가기 단추를 새로 �
     const shortcuts=read('src/fruit-type-shortcuts.js');
     assert(shortcuts.includes("const DEUS=FRUIT_TYPES.filter(t=>t.owner==='qingguo')"));
 });
-check('데우스 V3 트래커도 테마 카드 스킨(한 판 · 장면 빼기 · 폰 한 줄)을 받아요',()=>{
+check('데우스 2.5 스킨은 그대로, V3 는 원작 모양을 살리고 가볍게만 손질해요',()=>{
     const skin=read('css/30-dem-skin.css');
-    for(const name of ['.custom-dem-track > .custom-dem-track__grid','.custom-dem-track__scene','.custom-dem-track > .custom-dem-track__rule','.custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__grid'])assert(skin.includes(name),name);
-    assert(skin.includes(':where(body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text) .custom-dem-track__clock'),'시각 글자는 꾸미기가 이기게 무게를 낮춰요');
+    const CARD=':where(:not(.custom-dem-modules *))',TRACK=':where(:not(:has(> .custom-dem-track__grid)))',ITEM=':where(:not(.custom-dem-track__grid *))';
+    assert(skin.includes(`.mes_text details.custom-dem-card${CARD},`)&&skin.includes(`:is(.custom-dem-track, .custom-dem-track-recovery)${TRACK}`)&&skin.includes(ITEM),'2.5 규칙은 무게 0 의 덧붙임으로만 V3 를 빼요');
+    const bare=skin.replace(/\/\*[\s\S]*?\*\//g,'');
+    for(const rule of bare.split('}')){const head=rule.slice(0,rule.lastIndexOf('{'));if(!/custom-dem-/.test(head)||/8\.0\.6|custom-dem-modules details|custom-dem-track > \.custom-dem-track__grid|custom-dem-track:has/.test(rule))continue;
+        for(const sel of head.split(/,(?![^(]*\))/))if(/custom-dem-/.test(sel)&&!/:where\(:not\(/.test(sel))assert.fail('V3 에 닿을 수 있는 2.5 규칙: '+sel.trim().slice(-80));}
+    const v3=skin.slice(skin.indexOf('8.0.6 데우스 V3'),skin.indexOf('/* ---------- 폰 접기'));
+    assert(!/display:\s*none/.test(v3)&&!/background:\s*transparent/.test(v3),'V3 의 그림 · 종이 · 장면은 지우지 않아요');
+    assert(v3.includes('border-radius: 14px !important')&&v3.includes('--dem-ink: var(--salty-text)')&&v3.includes('body.salty.salty-light.salty-dem-skin'),'모서리 · 밝은 팔레트 색 변수만');
+    assert(!skin.includes('custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__grid'),'V3 트래커는 폰에서도 원작 배치(한 줄 접기 없음)');
 });
 console.log(`fruit-type-sample: ${passed} passed`);
