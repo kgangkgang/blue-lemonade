@@ -1,9 +1,11 @@
 // 자동 생성 (tools/build-plain-scripts.mjs) — 고치려면 bundled/deus-qr.js 을 고치고 다시 만든다
 export default function blueLemonadeScript(BlueLemonade) {
 /*BL-SCRIPT-START*/
-// Opt-in controls for known DEUS 2.5 prompt switches. No prompt bodies are bundled.
+// Opt-in controls for known DEUS 2.5 and V3 prompt switches. No prompt bodies are bundled.
 const DEUS_QUICK_GROUPS = [{"key":"agency","tab":"진행","label":"주도권","header":"35de6384-3978-4b0d-8f0b-cabb5f0060fe","end":"c9e2d1f7-4a6b-4e8e-9b3d-5f7a1c2e9d40","options":[{"id":"a3c64aa2-de6f-4ace-987d-1eca5c4ffdb7","label":"내 캐릭터 직접 조종"},{"id":"1c352c54-a636-454f-a058-712ddc3983cf","label":"입력 다듬기"},{"id":"16b32808-e943-45ad-b65e-1de52f2efc3c","label":"선택지 목록"},{"id":"30d2dd79-5144-4b66-9d49-3b8a0fe61a3a","label":"연출가 모드"}]},{"key":"pacing","tab":"진행","label":"진행 속도","header":"c9e2d1f7-4a6b-4e8e-9b3d-5f7a1c2e9d40","end":"0d5603cc-0ce7-4244-9f2b-909d4f281dac","options":[{"id":"f6c1a7d4-2b8e-4f90-a3d5-6e1b9c7d2048","label":"적응형"},{"id":"a4e8c2f1-7d9b-46b3-8f0a-5c1e2d6b9a74","label":"급박하게"},{"id":"b7d3f9a2-6c1e-48b5-9d0f-4a7e2c8b1f63","label":"느긋하게"}]},{"key":"length","tab":"진행","label":"답변 길이","header":"0d5603cc-0ce7-4244-9f2b-909d4f281dac","end":"3b203f18-4ec8-4b75-9aca-1b7c1f2b008e","options":[{"id":"b7e4eab4-3fc3-4f7c-a9aa-17b8b32b8f61","label":"유동적"},{"id":"c8150e42-0cc3-4728-a95d-024f608895e3","label":"짧게"},{"id":"52a66809-c36a-4893-87ee-228b93f24e77","label":"보통"},{"id":"c66c7b02-93ab-44ca-b908-0b49fe626280","label":"길게"},{"id":"1bbb1b67-520c-4730-96d7-9674f794538b","label":"아주 길게"},{"id":"bl-deus-length-ultra-long","label":"초장편"}]},{"key":"world","tab":"진행","label":"세계관","header":"a7c1d2e3-f4b5-46a7-8901-b2c3d4e5f607","end":"c0a4b8e1-7d2f-4b6c-9a30-5e1f2d8c7b64","options":[{"id":"b8d2e3f4-a5c6-47b8-9012-c3d4e5f60718","label":"카드 기본 (세계관)"},{"id":"c9e3f4a5-b6d7-48c9-0123-d4e5f6071829","label":"카드 충실"},{"id":"d0f4a5b6-c7e8-49d0-1234-e5f60718293a","label":"확장"}]},{"key":"combat","tab":"진행","label":"전투 묘사","header":"c0a4b8e1-7d2f-4b6c-9a30-5e1f2d8c7b64","end":"4fb5d6d6-b652-45a7-8558-c2b5eef6dd3b","options":[{"id":"d1b5c9f2-8e30-4c7d-a941-6f2e3a9d8c75","label":"역동적"},{"id":"e2c6d0a3-9f41-4d8e-b052-7a3f4b0e9d86","label":"빠르게"},{"id":"f3d7e1b4-a052-4e9f-8c63-8b4c5a1f0e97","label":"길게 이어서"}]},{"key":"narration","tab":"문체","label":"서술","header":"bbd6e522-4e23-45d8-9f61-4b89996b4dc5","end":"88f5ab8f-682f-4450-92f6-1b7c8b4d7536","options":[{"id":"d6e649df-213d-49bc-81fe-cc17c8e73491","label":"영화적"},{"id":"d72af435-6568-454e-9ed5-aeeb079a55bb","label":"문학적"},{"id":"0908e4f6-a475-4ec6-be3c-1640225c690a","label":"건조하게"},{"id":"7c8ce8f6-46c2-4035-89b0-6beac7ac5c6c","label":"라이트"}]},{"key":"dialogue","tab":"문체","label":"대화","header":"88f5ab8f-682f-4450-92f6-1b7c8b4d7536","end":"1fa7c9ad-5872-45fb-969e-8298aa26461b","options":[{"id":"02f90aa5-83a7-4799-b7f6-4de37111c69f","label":"자연스럽게"},{"id":"353d0187-4c2b-4104-a2bb-c1920e4e174d","label":"절제되게"},{"id":"d2c6ab81-6ae3-4880-8d50-43b2bc9326c6","label":"생동감 있게"}]},{"key":"character","tab":"시점","label":"캐릭터 시점","header":"b6d10f84-5786-4453-9330-5a4248b5acd0","end":"cf4338d3-1098-47f2-9be9-64c7899f173b","options":[{"id":"7805eb87-f271-4308-96e5-1343f9a2d1ba","label":"3인칭 (캐릭터)"},{"id":"5a8d0204-d0df-4773-b501-23f0a2552769","label":"1인칭 (캐릭터)"}]},{"key":"user","tab":"시점","label":"내 시점","header":"cf4338d3-1098-47f2-9be9-64c7899f173b","end":"66943461-0379-47f4-b827-5b0702093fbe","options":[{"id":"c4311841-0509-4578-8864-9ebd0c1e7236","label":"2인칭 (내 캐릭터)"},{"id":"7ee86bcd-2311-496c-ae0c-2ef13e5d5dc7","label":"3인칭 (내 캐릭터)"},{"id":"49c0c04e-ef52-4817-8430-f08644d7c382","label":"1인칭 (내 캐릭터)"}]},{"key":"tense","tab":"시점","label":"시제","header":"66943461-0379-47f4-b827-5b0702093fbe","end":"b2e7f4a1-0c93-4d6e-8f25-7193ab4c6d80","options":[{"id":"1975aa43-f0ba-402b-b12f-e708c40d931d","label":"현재형"},{"id":"7c8282df-eb71-4803-a43c-962363942a88","label":"과거형"}]},{"key":"thoughts","tab":"시점","label":"속마음","header":"f04a8c26-3123-4c37-bdfb-25d2eb80279d","end":"465594f9-c78d-4eae-b6e6-77488f88bb9b","options":[{"id":"34c55900-90a8-4770-a8a3-6f535579f6cd","label":"숨김"},{"id":"b3b14ca1-4c8c-4539-a9c3-a2fcb2771c40","label":"보이기"}]},{"key":"asterisks","tab":"표현","label":"별표","header":"338c942b-8ec5-4e64-8a60-a31128892474","end":"f04a8c26-3123-4c37-bdfb-25d2eb80279d","options":[{"id":"16879fbb-850b-4c0a-b25a-30c6911e3f9f","label":"별표 없이"},{"id":"3307748d-b371-4b03-9cf3-d3cac99b8c7c","label":"별표로 감싸기"}]},{"key":"explicit","tab":"표현","label":"성인 표현","header":"1fa7c9ad-5872-45fb-969e-8298aa26461b","end":"a7c1d2e3-f4b5-46a7-8901-b2c3d4e5f607","options":[{"id":"6537edf0-8331-4e7e-841a-86655f5a5a9c","label":"현실적인 수위"},{"id":"1d816ec2-2c8f-4e92-81d1-18021dbfedd0","label":"최고 수위"},{"id":"668ed810-9070-44cd-830b-3f295fb58c03","label":"노골적 묘사 없음"}]},{"key":"tracker","tab":"추가","label":"시간 표시","header":"3cd3a7aa-9264-45ad-be9e-8e53ff38ce32","end":"70180865-8275-483a-980a-7c4e404f6723","options":[{"id":"4e6b48fe-f9f6-41e7-b910-dc6f13d15cfd","label":"정확한 시각"},{"id":"9056ce79-fcf0-443e-aa6f-ae6b8929ece2","label":"대략적인 시간대"}]},{"key":"tension","tab":"추가","label":"전개 긴장감","header":"70180865-8275-483a-980a-7c4e404f6723","end":"f669c1c5-0127-4a4c-9328-4bb68bcd7544","options":[{"id":"e0ffb643-674b-42a1-bb0b-076e4b7ad3d7","label":"모멘텀 엔진"},{"id":"fff18557-018d-4856-9497-2f47a6ef2b2a","label":"갈등 블록"}]},{"key":"reasoning","tab":"추가","label":"추론","header":"a9b7c6d5-e4f3-4210-9abc-76543210fedc","end":"d8a18c74-1f53-4d63-b0e1-81e8d9cf5004","options":[{"id":"f355912c-d2a8-4823-85e9-cbb01820af83","label":"장면 계획"},{"id":"86373739-207c-44d9-8af4-147312c4724a","label":"생각하기 ! (대체용)"},{"id":"7f5495fd-d06b-41be-ab28-5962a64456b1","label":"과도한 생각 방지 ! (대체용)"}]}];
 const DEUS_QUICK_TOGGLES = [{"id":"0c01676d-4a2e-439c-a5ac-27c128d5a533","label":"캐릭터","tab":"진행"},{"id":"8e8f0b40-c695-47b8-90d6-3720e4c79437","label":"플롯 가이드","tab":"진행"},{"id":"c4a8e2f7-1b65-4d90-9c31-7285be6a0f42","label":"카드 기본 (분위기)","tab":"문체"},{"id":"d6f1a9c3-8b47-4e20-a562-9371cd5f8a04","label":"코믹","tab":"문체"},{"id":"ddaac217-1380-4152-9bcd-d1092c5deadf","label":"로맨틱 코미디","tab":"문체"},{"id":"f155f1d8-34be-4ef3-98e3-c63fbd8cec48","label":"로맨틱","tab":"문체"},{"id":"e8b3c7a2-5d19-4f64-806e-2149af7c3b58","label":"드라마틱","tab":"문체"},{"id":"f9c4d8b1-6e20-4a75-917f-3250ba8d4c69","label":"서사시","tab":"문체"},{"id":"a1d5e9c2-7f34-4b86-9280-4361cb9e5d70","label":"고딕","tab":"문체"},{"id":"b3e6f0d4-8a25-4c97-0391-5472dc0f6e81","label":"몽환적","tab":"문체"},{"id":"c5f7a1e6-9b36-4d08-1402-6583ed1a7f92","label":"초현실","tab":"문체"},{"id":"5415c972-4ec8-46de-8d29-1e3bce1881d7","label":"기괴한","tab":"문체"},{"id":"6f3c2a91-4d7e-4b58-9a1c-e2f05b8d7c34","label":"일상 민속 공포","tab":"문체"},{"id":"d7a2b8f0-3c47-4e19-2513-7694fe2b8a05","label":"그림다크","tab":"문체"},{"id":"e9c3d9a1-4f58-4026-3624-8705af3c9b16","label":"밝고 경쾌","tab":"문체"},{"id":"745db607-a083-45d7-b216-f3c69e4d8c31","label":"대사 색상","tab":"표현"},{"id":"e7b4c2d1-9f86-4a53-b7c0-2d1e8f9a6b41","label":"감정이 드러나는 대사","tab":"표현"},{"id":"c32a9d07-bbcc-4456-adaa-ed1642d47db9","label":"시각적 연출 (HTML)","tab":"표현"},{"id":"838e2a5f-0e74-4abd-98a4-0fee33a22a14","label":"캐릭터 현실성","tab":"표현"},{"id":"4371b70a-8f15-46ec-90fb-6ea572c77cde","label":"전지적 시점 방지","tab":"표현"},{"id":"d3a52caa-ed44-454b-ba62-a40101d4949d","label":"긍정 편향 방지","tab":"표현"},{"id":"3f6ef275-2ecb-45ca-8ceb-f77ad11e012a","label":"반복 방지","tab":"표현"},{"id":"8ffe0557-5f8a-45bd-ab43-ebc580510827","label":"금지어 목록","tab":"표현"},{"id":"403539e4-e530-43a1-be30-5d5bd33d4d5e","label":"상태창","tab":"추가"},{"id":"ab70a374-f6f5-4e5c-a1c6-1596a4397806","label":"스토리 떡밥","tab":"추가"},{"id":"7eb033d6-2036-4c5a-9b3a-d22d1d6da7b8","label":"심리 상태","tab":"추가"},{"id":"9f4e7a1c-2b63-4d80-a5e7-91c3f6b8d204","label":"줄거리 흐름","tab":"추가"},{"id":"a3210be7-945f-4ebc-b3fe-3433d51e7479","label":"모멘텀 엔진 라우터","tab":"추가"}];
+const DEUS_QUICK_GROUPS_V3 = [{"key":"agency","tab":"진행","label":"주도권","header":"35de6384-3978-4b0d-8f0b-cabb5f0060fe","end":"c9e2d1f7-4a6b-4e8e-9b3d-5f7a1c2e9d40","options":[{"id":"a3c64aa2-de6f-4ace-987d-1eca5c4ffdb7","label":"내 캐릭터 직접 조종"},{"id":"1c352c54-a636-454f-a058-712ddc3983cf","label":"입력 다듬기"},{"id":"16b32808-e943-45ad-b65e-1de52f2efc3c","label":"선택지 목록"},{"id":"30d2dd79-5144-4b66-9d49-3b8a0fe61a3a","label":"연출가 모드"}]},{"key":"pacing","tab":"진행","label":"진행 속도","header":"c9e2d1f7-4a6b-4e8e-9b3d-5f7a1c2e9d40","end":"0d5603cc-0ce7-4244-9f2b-909d4f281dac","options":[{"id":"f6c1a7d4-2b8e-4f90-a3d5-6e1b9c7d2048","label":"적응형"},{"id":"a4e8c2f1-7d9b-46b3-8f0a-5c1e2d6b9a74","label":"급박하게"},{"id":"b7d3f9a2-6c1e-48b5-9d0f-4a7e2c8b1f63","label":"느긋하게"}]},{"key":"length","tab":"진행","label":"답변 길이","header":"0d5603cc-0ce7-4244-9f2b-909d4f281dac","end":"3b203f18-4ec8-4b75-9aca-1b7c1f2b008e","options":[{"id":"b7e4eab4-3fc3-4f7c-a9aa-17b8b32b8f61","label":"유동적"},{"id":"c8150e42-0cc3-4728-a95d-024f608895e3","label":"짧게"},{"id":"52a66809-c36a-4893-87ee-228b93f24e77","label":"보통"},{"id":"c66c7b02-93ab-44ca-b908-0b49fe626280","label":"길게"},{"id":"3d498f27-126a-41fc-baf2-369c90a9c50f","label":"아주 길게"},{"id":"bl-deus-length-ultra-long","label":"초장편"},{"id":"bl-deus-length-epic","label":"대장편"}]},{"key":"world","tab":"진행","label":"세계관","header":"a7c1d2e3-f4b5-46a7-8901-b2c3d4e5f607","end":"c0a4b8e1-7d2f-4b6c-9a30-5e1f2d8c7b64","options":[{"id":"b8d2e3f4-a5c6-47b8-9012-c3d4e5f60718","label":"카드 기본 (세계관)"},{"id":"c9e3f4a5-b6d7-48c9-0123-d4e5f6071829","label":"카드 충실"},{"id":"d0f4a5b6-c7e8-49d0-1234-e5f60718293a","label":"확장"}]},{"key":"combat","tab":"진행","label":"전투 묘사","header":"c0a4b8e1-7d2f-4b6c-9a30-5e1f2d8c7b64","end":"4fb5d6d6-b652-45a7-8558-c2b5eef6dd3b","options":[{"id":"d1b5c9f2-8e30-4c7d-a941-6f2e3a9d8c75","label":"역동적"},{"id":"e2c6d0a3-9f41-4d8e-b052-7a3f4b0e9d86","label":"빠르게"},{"id":"f3d7e1b4-a052-4e9f-8c63-8b4c5a1f0e97","label":"길게 이어서"}]},{"key":"narration","tab":"문체","label":"서술","header":"bbd6e522-4e23-45d8-9f61-4b89996b4dc5","end":"279618e4-d961-489f-9d2b-56503e0d6067","options":[{"id":"d6e649df-213d-49bc-81fe-cc17c8e73491","label":"영화적"},{"id":"d72af435-6568-454e-9ed5-aeeb079a55bb","label":"문학적"},{"id":"0908e4f6-a475-4ec6-be3c-1640225c690a","label":"건조하게"},{"id":"7c8ce8f6-46c2-4035-89b0-6beac7ac5c6c","label":"라이트"},{"id":"e2f653f7-fbd0-4565-9ad1-ee2ef67a2bce","label":"파이의 이야기꾼 서술"}]},{"key":"dialogue","tab":"문체","label":"대화","header":"88f5ab8f-682f-4450-92f6-1b7c8b4d7536","end":"1fa7c9ad-5872-45fb-969e-8298aa26461b","options":[{"id":"02f90aa5-83a7-4799-b7f6-4de37111c69f","label":"자연스럽게"},{"id":"353d0187-4c2b-4104-a2bb-c1920e4e174d","label":"절제되게"},{"id":"d2c6ab81-6ae3-4880-8d50-43b2bc9326c6","label":"연극적으로"},{"id":"b9a5f748-bd71-41d5-bbb3-432ecb23a1f8","label":"애니메이션처럼"}]},{"key":"relationships","tab":"문체","label":"관계","header":"cb1fa811-516f-4a61-aa93-092bb94d5ba3","end":"a7c1d2e3-f4b5-46a7-8901-b2c3d4e5f607","options":[{"id":"ef8c52ca-4c07-423d-8bc7-7600ca364cd0","label":"우정"},{"id":"ce6efb5d-fe0f-4dbf-9a9c-4402c4132170","label":"현실 로맨스"},{"id":"ad03f5c8-49fe-41fa-9fb3-6edd272bbce2","label":"달달한 로맨스"},{"id":"2b07f8a7-a4c8-45fd-952c-839353905dea","label":"다크 로맨스"}]},{"key":"character","tab":"시점","label":"캐릭터 시점","header":"b6d10f84-5786-4453-9330-5a4248b5acd0","end":"cf4338d3-1098-47f2-9be9-64c7899f173b","options":[{"id":"7805eb87-f271-4308-96e5-1343f9a2d1ba","label":"3인칭 (캐릭터)"},{"id":"5a8d0204-d0df-4773-b501-23f0a2552769","label":"1인칭 (캐릭터)"}]},{"key":"user","tab":"시점","label":"내 시점","header":"cf4338d3-1098-47f2-9be9-64c7899f173b","end":"66943461-0379-47f4-b827-5b0702093fbe","options":[{"id":"c4311841-0509-4578-8864-9ebd0c1e7236","label":"2인칭 (내 캐릭터)"},{"id":"7ee86bcd-2311-496c-ae0c-2ef13e5d5dc7","label":"3인칭 (내 캐릭터)"},{"id":"49c0c04e-ef52-4817-8430-f08644d7c382","label":"1인칭 (내 캐릭터)"}]},{"key":"tense","tab":"시점","label":"시제","header":"66943461-0379-47f4-b827-5b0702093fbe","end":"b2e7f4a1-0c93-4d6e-8f25-7193ab4c6d80","options":[{"id":"1975aa43-f0ba-402b-b12f-e708c40d931d","label":"현재형"},{"id":"7c8282df-eb71-4803-a43c-962363942a88","label":"과거형"}]},{"key":"thoughts","tab":"시점","label":"속마음","header":"f04a8c26-3123-4c37-bdfb-25d2eb80279d","end":"465594f9-c78d-4eae-b6e6-77488f88bb9b","options":[{"id":"34c55900-90a8-4770-a8a3-6f535579f6cd","label":"숨김"},{"id":"b3b14ca1-4c8c-4539-a9c3-a2fcb2771c40","label":"보이기"}]},{"key":"asterisks","tab":"표현","label":"별표","header":"338c942b-8ec5-4e64-8a60-a31128892474","end":"f04a8c26-3123-4c37-bdfb-25d2eb80279d","options":[{"id":"16879fbb-850b-4c0a-b25a-30c6911e3f9f","label":"별표 없이"},{"id":"3307748d-b371-4b03-9cf3-d3cac99b8c7c","label":"별표로 감싸기"}]},{"key":"explicit","tab":"표현","label":"성인 표현","header":"1fa7c9ad-5872-45fb-969e-8298aa26461b","end":"cb1fa811-516f-4a61-aa93-092bb94d5ba3","options":[{"id":"6537edf0-8331-4e7e-841a-86655f5a5a9c","label":"현실적인 수위"},{"id":"1d816ec2-2c8f-4e92-81d1-18021dbfedd0","label":"최고 수위"},{"id":"668ed810-9070-44cd-830b-3f295fb58c03","label":"노골적 묘사 없음"}]},{"key":"tracker","tab":"추가","label":"시간 표시","header":"3cd3a7aa-9264-45ad-be9e-8e53ff38ce32","end":"70180865-8275-483a-980a-7c4e404f6723","options":[{"id":"4e6b48fe-f9f6-41e7-b910-dc6f13d15cfd","label":"정확한 시각"},{"id":"9056ce79-fcf0-443e-aa6f-ae6b8929ece2","label":"대략적인 시간대"}]},{"key":"tension","tab":"추가","label":"전개 긴장감","header":"70180865-8275-483a-980a-7c4e404f6723","end":"0f47d870-2bb8-4c25-b6fe-c3d4c9b4e626","options":[{"id":"c858bd65-2e20-4b39-b481-9c8d54fe1dc9","label":"물밑 흐름"},{"id":"e0ffb643-674b-42a1-bb0b-076e4b7ad3d7","label":"모멘텀 엔진"},{"id":"fff18557-018d-4856-9497-2f47a6ef2b2a","label":"갈등 블록"}]},{"key":"status","tab":"추가","label":"상태창 범위","header":"0f47d870-2bb8-4c25-b6fe-c3d4c9b4e626","end":"f669c1c5-0127-4a4c-9328-4bb68bcd7544","options":[{"id":"bf1386b1-1257-41c6-96b6-efb46e2db8ad","label":"모든 캐릭터"},{"id":"f2a63bb5-7bf4-4a2d-9767-293fe609ef60","label":"장면에 있는 캐릭터만"}]},{"key":"reasoning","tab":"추가","label":"추론","header":"a9b7c6d5-e4f3-4210-9abc-76543210fedc","end":"d8a18c74-1f53-4d63-b0e1-81e8d9cf5004","options":[{"id":"f355912c-d2a8-4823-85e9-cbb01820af83","label":"장면 계획"},{"id":"86373739-207c-44d9-8af4-147312c4724a","label":"생각하기 ! (대체용)"},{"id":"7f5495fd-d06b-41be-ab28-5962a64456b1","label":"과도한 생각 방지 ! (대체용)"}]},{"key":"companions","tab":"친구들","label":"친구들 반응 방식","header":"8b648af7-db80-4402-9536-58a5d82a6fe2","end":"0db3dc96-c2ad-48a7-a8ec-c637346e5963","options":[{"id":"ee9417ca-55ce-42c8-a582-63f1ce5b46c6","label":"감상 메모"},{"id":"35e32cf4-0331-4146-8ffb-fe3b1b1347a5","label":"단체 대화"}]}];
+const DEUS_QUICK_TOGGLES_V3 = [{"id":"0c01676d-4a2e-439c-a5ac-27c128d5a533","label":"캐릭터","tab":"진행"},{"id":"8e8f0b40-c695-47b8-90d6-3720e4c79437","label":"플롯 가이드","tab":"진행"},{"id":"c4a8e2f7-1b65-4d90-9c31-7285be6a0f42","label":"카드 기본 (분위기)","tab":"문체"},{"id":"d6f1a9c3-8b47-4e20-a562-9371cd5f8a04","label":"코믹","tab":"문체"},{"id":"e8b3c7a2-5d19-4f64-806e-2149af7c3b58","label":"드라마틱","tab":"문체"},{"id":"f9c4d8b1-6e20-4a75-917f-3250ba8d4c69","label":"서사시","tab":"문체"},{"id":"a1d5e9c2-7f34-4b86-9280-4361cb9e5d70","label":"고딕","tab":"문체"},{"id":"b3e6f0d4-8a25-4c97-0391-5472dc0f6e81","label":"몽환적","tab":"문체"},{"id":"c5f7a1e6-9b36-4d08-1402-6583ed1a7f92","label":"초현실","tab":"문체"},{"id":"5415c972-4ec8-46de-8d29-1e3bce1881d7","label":"기괴한","tab":"문체"},{"id":"b33b45dc-abb3-4313-a260-7011f7552117","label":"서스펜스","tab":"문체"},{"id":"6f3c2a91-4d7e-4b58-9a1c-e2f05b8d7c34","label":"일상 민속 공포","tab":"문체"},{"id":"d7a2b8f0-3c47-4e19-2513-7694fe2b8a05","label":"그림다크","tab":"문체"},{"id":"e9c3d9a1-4f58-4026-3624-8705af3c9b16","label":"밝고 경쾌","tab":"문체"},{"id":"bf50a051-c194-4964-9ff8-dd6f299c0c17","label":"쓸쓸한","tab":"문체"},{"id":"81f1ca27-ae2a-4812-8312-46ff1c70ad9d","label":"친밀한","tab":"문체"},{"id":"9a3f546c-c791-4df7-83e2-6fa281b39391","label":"말끝 늘이기","tab":"문체","card":"대사 소리"},{"id":"a8829752-6472-47d6-882b-1f51edd580de","label":"말 더듬기","tab":"문체","card":"대사 소리"},{"id":"957810fa-2f9d-4f8e-bf71-1d63a2d90b61","label":"외침은 대문자로","tab":"문체","card":"대사 소리"},{"id":"9cff52a3-ffb4-4717-bb61-c376e21f0372","label":"감탄사·소리","tab":"문체","card":"대사 소리"},{"id":"745db607-a083-45d7-b216-f3c69e4d8c31","label":"대사 색상","tab":"표현"},{"id":"e7b4c2d1-9f86-4a53-b7c0-2d1e8f9a6b41","label":"감정이 드러나는 대사","tab":"표현"},{"id":"c32a9d07-bbcc-4456-adaa-ed1642d47db9","label":"시각적 연출 (HTML)","tab":"표현"},{"id":"838e2a5f-0e74-4abd-98a4-0fee33a22a14","label":"캐릭터 현실성","tab":"표현"},{"id":"4371b70a-8f15-46ec-90fb-6ea572c77cde","label":"전지적 시점 방지","tab":"표현"},{"id":"d3a52caa-ed44-454b-ba62-a40101d4949d","label":"긍정 편향 방지","tab":"표현"},{"id":"3f6ef275-2ecb-45ca-8ceb-f77ad11e012a","label":"반복 방지","tab":"표현"},{"id":"8ffe0557-5f8a-45bd-ab43-ebc580510827","label":"금지어 목록","tab":"표현"},{"id":"88859954-b3a5-4eb1-b2d3-f56daa08cb6c","label":"파이의 퇴고 메모","tab":"표현"},{"id":"403539e4-e530-43a1-be30-5d5bd33d4d5e","label":"상태창","tab":"추가"},{"id":"ab70a374-f6f5-4e5c-a1c6-1596a4397806","label":"스토리 떡밥","tab":"추가"},{"id":"7eb033d6-2036-4c5a-9b3a-d22d1d6da7b8","label":"심리 상태","tab":"추가"},{"id":"d152123a-0eb9-4231-81a6-148d33c95d49","label":"한편","tab":"추가"},{"id":"7e22cd21-5634-4bd7-b967-ff298c17c096","label":"숨은 진실","tab":"추가"},{"id":"9f4e7a1c-2b63-4d80-a5e7-91c3f6b8d204","label":"줄거리 흐름","tab":"추가"},{"id":"a3210be7-945f-4ebc-b3fe-3433d51e7479","label":"모멘텀 엔진 라우터","tab":"추가"},{"id":"ac8baf99-31c7-4aa6-a1fa-65c0061175c8","label":"치 (가장 친한 친구)","tab":"친구들"},{"id":"3b27fb81-988f-46d2-9b15-11e2fdd5faac","label":"루 (탐정)","tab":"친구들"},{"id":"001d91d3-32a4-44b0-a40d-d43bc5c1dd7b","label":"샘 (게이머)","tab":"친구들"},{"id":"ede70f86-56c1-4fb0-8f3b-cd56d82f0b91","label":"그레이스 (시나리오 작가)","tab":"친구들"},{"id":"87ab753f-c7e8-4787-9bbf-ea9bad6f49f0","label":"레일라 (애니 덕후)","tab":"친구들"},{"id":"7b41c7cf-6076-4e41-b829-04dee6e4c5ff","label":"파이 (이야기 진행자)","tab":"친구들"},{"id":"f42ef524-bb38-4804-a7b5-b9762214bcd5","label":"솔라 (열정 가득)","tab":"친구들"}];
 const DEUS_QUICK_MARKER = 'fb7942e3-d99b-48a6-a195-bf2a1811ae50';
 const deusQuickName = value => typeof value === 'string' ? Array.from(value.replace(/\s+/g, ' ').trim()).slice(0, 40).join('').trim() : '';
 const deusStable = value => JSON.stringify(value, (_key, item) => item && !Array.isArray(item) && typeof item === 'object' ? Object.fromEntries(Object.keys(item).sort().map(key => [key, item[key]])) : item);
@@ -13,16 +15,29 @@ function deusOrder(preset) {
   const order = lists[0].order;
   return new Set(order.map(x => x.identifier)).size === order.length ? order : null;
 }
-function deusMatches(preset) {
+// 판 판별(V3 대응): 프리셋·시작 표시 이름이 아니라 판마다 있는 묶음 id 로 골라요. 이름을 바꾼 파일도 구조가 같으면 알아봐요.
+// V3 표지 = 관계 택1 · 상태창 범위 택1 · 대사 소리 · 친구들 택1 (둘 이상 있으면 V3). 2.5 지원은 그대로 남겨요.
+const DEUS_QUICK_V3_SIGNS = ['cb1fa811-516f-4a61-aa93-092bb94d5ba3','0f47d870-2bb8-4c25-b6fe-c3d4c9b4e626','279618e4-d961-489f-9d2b-56503e0d6067','8b648af7-db80-4402-9536-58a5d82a6fe2'];
+const DEUS_QUICK_VARIANTS = [
+  { key:'v3', label:'V3', groups:DEUS_QUICK_GROUPS_V3, toggles:DEUS_QUICK_TOGGLES_V3, version: v => /^3(?:\.\d+)?$/.test(v) },
+  { key:'2.5', label:'2.5', groups:DEUS_QUICK_GROUPS, toggles:DEUS_QUICK_TOGGLES, version: v => v === '2.5' }
+];
+// 시작 표시에 판 번호(V2.3 · V2.50 · V4 …)가 적혀 있으면 아는 판일 때만 받아요. 번호가 없으면 구조로만 판단해요.
+const deusNamedVersion = name => (String(name || '').match(/(?:^|[^A-Za-z])V\s?(\d+(?:\.\d+)*)(?![\d.])/i) || [])[1] || '';
+function deusVariant(preset) {
   const prompts = preset?.prompts;
-  if (!Array.isArray(prompts) || new Set(prompts.map(x => x.identifier)).size !== prompts.length) return false;
-  const marker = prompts.find(x => x.identifier === DEUS_QUICK_MARKER);
-  return /(?:DEUS|데우스).*?(?:V\s*)?2\.5(?:\D|$)/iu.test(marker?.name || '') &&
-    ['agency','length','character'].every(key => prompts.some(x => x.identifier === DEUS_QUICK_GROUPS.find(g => g.key === key).header)) && !!deusOrder(preset);
+  if (!Array.isArray(prompts) || new Set(prompts.map(x => x.identifier)).size !== prompts.length || !deusOrder(preset)) return null;
+  const ids = new Set(prompts.map(x => x.identifier));
+  if (!ids.has(DEUS_QUICK_MARKER) || !['agency','length','character'].every(key => ids.has(DEUS_QUICK_GROUPS.find(g => g.key === key).header))) return null;
+  const named = deusNamedVersion(prompts.find(x => x.identifier === DEUS_QUICK_MARKER)?.name);
+  if (named && !DEUS_QUICK_VARIANTS.some(v => v.version(named))) return null;
+  return DEUS_QUICK_VARIANTS[DEUS_QUICK_V3_SIGNS.filter(id => ids.has(id)).length >= 2 ? 0 : 1];
 }
+const deusMatches = preset => !!deusVariant(preset);
 function deusQuickAvailable(state) {
-  return !!(state && state.api === 'openai' && state.name && state.name === state.live?.preset_settings_openai &&
-    (!state.strategy || state.strategy === 'global') && deusMatches(state.saved) && deusMatches(state.live));
+  if (!(state && state.api === 'openai' && state.name && state.name === state.live?.preset_settings_openai && (!state.strategy || state.strategy === 'global'))) return false;
+  const variant = deusVariant(state.saved);
+  return !!variant && variant === deusVariant(state.live);
 }
 function deusGroupIssue(group, order) {
   const start = order.findIndex(x => x.identifier === group.header), end = order.findIndex(x => x.identifier === group.end);
@@ -36,8 +51,9 @@ function createDeusQuickController(adapter) {
   let busy = false, stopped = false, lastDirty = true, lastOrder = '', lastRefs = [], pendingTarget = null;
   function read(checkDirty = true) {
     const state = adapter.read();
-    if (!state || state.api !== 'openai' || !state.name || !state.saved || !state.live || state.name !== state.live.preset_settings_openai) throw Error('채팅 완성에서 데우스 2.5 프리셋을 선택해 주세요.');
-    if (!deusMatches(state.saved) || !deusMatches(state.live)) throw Error('데우스 2.5의 원래 설정 항목을 찾을 수 없어요. 다른 프리셋은 변경하지 않아요.');
+    if (!state || state.api !== 'openai' || !state.name || !state.saved || !state.live || state.name !== state.live.preset_settings_openai) throw Error('채팅 완성에서 데우스 프리셋(V3 · 2.5)을 선택해 주세요.');
+    const variant = deusVariant(state.saved);
+    if (!variant || variant !== deusVariant(state.live)) throw Error('데우스 V3 · 2.5의 원래 설정 항목을 찾을 수 없어요. 다른 프리셋은 변경하지 않아요.');
     if (state.strategy && state.strategy !== 'global') throw Error('현재 프롬프트 순서 방식은 지원하지 않아요. 본체에서 설정해 주세요.');
     const savedOrder = deusOrder(state.saved), liveOrder = deusOrder(state.live);
     const savedIds = new Set(state.saved.prompts.map(x => x.identifier)), savedRows = new Map(savedOrder.map(x => [x.identifier,x]));
@@ -49,14 +65,14 @@ function createDeusQuickController(adapter) {
       lastDirty = deusStable(state.saved.prompts) !== deusStable(state.live.prompts) || deusStable(state.saved.prompt_order) !== deusStable(state.live.prompt_order);
       lastRefs = refs; lastOrder = orders;
     }
-    const groupIssues = new Map(DEUS_QUICK_GROUPS.map(group => [group.key,deusGroupIssue(group,liveOrder) || deusGroupIssue(group,savedOrder)]));
-    return { ...state, savedOrder, liveOrder, available, groupIssues, dirty:lastDirty, states: new Map(liveOrder.map(x => [x.identifier, x.enabled])) };
+    const groupIssues = new Map(variant.groups.map(group => [group.key,deusGroupIssue(group,liveOrder) || deusGroupIssue(group,savedOrder)]));
+    return { ...state, variant, savedOrder, liveOrder, available, groupIssues, dirty:lastDirty, states: new Map(liveOrder.map(x => [x.identifier, x.enabled])) };
   }
   async function change(key, value) {
     if (busy || stopped) throw Error('저장이 끝난 뒤 다시 눌러 주세요.');
     const before = read();
     if (before.dirty) throw Error('본체에 미저장 프롬프트 변경이 있어요. 프리셋을 먼저 저장한 뒤 다시 눌러 주세요.');
-    const group = DEUS_QUICK_GROUPS.find(x => x.key === key), toggle = DEUS_QUICK_TOGGLES.find(x => x.id === key);
+    const group = before.variant.groups.find(x => x.key === key), toggle = before.variant.toggles.find(x => x.id === key);
     const changes = new Map();
     if (group) {
       if (before.groupIssues.get(group.key)) throw Error(before.groupIssues.get(group.key));
@@ -79,7 +95,7 @@ function createDeusQuickController(adapter) {
       // Allow pending preset/input events to settle, then take the last snapshot immediately before writing.
       await Promise.resolve();
       const latest = read();
-      if (stopped || latest.name !== before.name || latest.saved !== before.saved || latest.live !== before.live || deusStable(latest.saved) !== savedSignature || deusStable({ prompts: latest.live.prompts, prompt_order: latest.live.prompt_order }) !== liveSignature) throw Error('설정이 바뀌어 저장하지 않았어요. 현재 상태를 확인하고 다시 눌러 주세요.');
+      if (stopped || latest.name !== before.name || latest.variant !== before.variant || latest.saved !== before.saved || latest.live !== before.live || deusStable(latest.saved) !== savedSignature || deusStable({ prompts: latest.live.prompts, prompt_order: latest.live.prompt_order }) !== liveSignature) throw Error('설정이 바뀌어 저장하지 않았어요. 현재 상태를 확인하고 다시 눌러 주세요.');
       await adapter.save(before.name, payload);
       // Native skipUpdate saves the exact raw preset without selecting it or updating its cache.
       // Never replace whole objects: keep unknown fields, regex, prompt bodies and unrelated edits.
@@ -132,7 +148,7 @@ function createDeusQuickController(adapter) {
   #bl-deus-popover{position:fixed;inset:auto;margin:0;left:var(--dq-left);top:var(--dq-top);transform:translateY(-100%);width:var(--dq-width);max-width:calc(100vw - 16px);max-height:min(58dvh,500px,var(--dq-height));display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;z-index:31020;padding:0;border:1px solid var(--SmartThemeBorderColor,#59606b);border-radius:14px;background:var(--SmartThemeBlurTintColor,#25272d);color:var(--SmartThemeBodyColor,#eee);box-shadow:0 8px 30px #0005;font:inherit;backdrop-filter:none;text-align:start}
   #bl-deus-popover{container:bl-deus-quick/inline-size}
   #bl-deus-popover *{box-sizing:border-box;min-width:0}#bl-deus-popover button,#bl-deus-popover select{font:inherit;color:inherit;max-width:100%}#bl-deus-popover button{cursor:pointer}
-  #bl-deus-popover .dq-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:10px 12px;flex:none}#bl-deus-popover .dq-head strong{white-space:normal;word-break:keep-all;overflow-wrap:anywhere;line-height:1.35}#bl-deus-popover .dq-version{display:inline-block;vertical-align:middle;margin-inline-start:6px;font-size:.75em;font-weight:normal;background:#ffffff0a;border-radius:6px;padding:1px 5px}#bl-deus-popover .dq-close{border:0;background:transparent;min-width:36px;min-height:36px;border-radius:8px;font-size:1.2em;line-height:1;padding:4px}
+  #bl-deus-popover .dq-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:10px 12px;flex:none}#bl-deus-popover .dq-head strong{white-space:normal;word-break:keep-all;overflow-wrap:anywhere;line-height:1.35}#bl-deus-popover .dq-version[hidden]{display:none}#bl-deus-popover .dq-version{display:inline-block;vertical-align:middle;margin-inline-start:6px;font-size:.75em;font-weight:normal;background:#ffffff0a;border-radius:6px;padding:1px 5px}#bl-deus-popover .dq-close{border:0;background:transparent;min-width:36px;min-height:36px;border-radius:8px;font-size:1.2em;line-height:1;padding:4px}
   #bl-deus-popover .dq-help-button{display:inline-flex;align-items:center;justify-content:center;width:max(28px,1em);height:max(28px,1em);padding:0;border:0;background:transparent;color:var(--salty-accent-ink,var(--SmartThemeQuoteColor,#8dcfff));font-size:inherit;line-height:1}#bl-deus-popover .dq-help-glyph{display:inline-flex;align-items:center;justify-content:center;width:1em;height:1em;border:1px solid currentColor;border-radius:50%;font:inherit;line-height:1}
   #bl-deus-popover .dq-help{padding:10px;line-height:1.6;overflow-wrap:anywhere}#bl-deus-popover .dq-help h3{font:inherit;font-weight:600;line-height:1.5;margin:0 0 6px}#bl-deus-popover .dq-help p{font:inherit;line-height:inherit;margin:0 0 8px}#bl-deus-popover .dq-help small{display:block;font-size:.85em;line-height:1.5;opacity:.8;margin:0 0 8px}#bl-deus-popover .dq-help summary{display:flex;gap:8px;align-items:center;min-height:36px;padding:6px 0;line-height:1.5}#bl-deus-popover .dq-help details{border-top:1px solid var(--SmartThemeBorderColor,#59606b);padding-top:4px}#bl-deus-popover .dq-help-links{display:flex;flex-wrap:wrap;gap:8px 12px;font-size:.85em;line-height:1.5}#bl-deus-popover .dq-help a{color:var(--salty-accent-ink,var(--SmartThemeQuoteColor,#8dcfff));text-decoration:underline;text-underline-offset:2px}
   #bl-deus-popover .dq-tabs{display:flex;flex-wrap:nowrap;gap:6px;padding:0 10px 8px;flex:none;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scroll-padding-inline:10px;scrollbar-width:thin}
@@ -185,7 +201,11 @@ function createDeusQuickController(adapter) {
   }
   function close() { tabObserver?.disconnect(); tabObserver = null; if (!panel) return; panel.remove(); panel = null; signature = ''; helpOpen = false; pendingFocus = null; host.clearInterval(tick); tick = 0; button.setAttribute('aria-expanded','false'); }
   function node(tag, text, className) { const element = doc.createElement(tag); if (text != null) element.textContent = text; if (className) element.className = className; return element; }
-  const tabIcons = {'진행':'route','문체':'pen-nib','시점':'eye','표현':'palette','추가':'sliders'};
+  const tabIcons = {'진행':'route','문체':'pen-nib','시점':'eye','표현':'palette','추가':'sliders','친구들':'user-group'};
+  const baseTabs = ['진행','문체','시점','표현','추가'];
+  let variant = null;
+  // 판에 따라 탭이 달라요: V3 에만 있는 「친구들」은 그 판에 항목이 있을 때만 보여요.
+  const tabsOf = current => [...baseTabs, ...['친구들'].filter(name => current?.variant?.groups.some(x => x.tab === name) || current?.variant?.toggles.some(x => x.tab === name))];
   function icon(name) { const element=node('i',null,`fa-solid fa-${name}`);element.setAttribute('aria-hidden','true');return element; }
   // Short Korean summaries of the original author's README. Preset prompt text is not included.
   const helpCopy = {
@@ -195,11 +215,17 @@ function createDeusQuickController(adapter) {
     '표현': ['대사 색상은 인물마다 색을, 감정이 드러나는 대사는 일부 대사에 움직임·밝기 같은 효과를 줘요. 시각적 연출은 장면에 맞는 HTML 요소를 만들어요.', '반복·긍정 편향·전지적 시점 방지 등은 AI의 습관을 줄이도록 돕는 옵션이에요.'],
     '추가': ['상태창은 인물의 상태를, 스토리 떡밥은 이어질 사건을 기록해요. 심리 상태와 줄거리 흐름도 더할 수 있어요.', '모멘텀 엔진은 다음 전개를 이끌고 라우터와 함께 작동해요. 갈등 블록은 그 대안이에요. 장면 계획은 켠 항목에 맞춰 장면을 준비해요.']
   };
+  // V3 에서 달라진 탭만 덮어써요. 나머지는 2.5 와 같은 설명이에요.
+  const helpCopyV3 = {
+    '문체': ['서술은 문장의 질감, 대화는 말의 밀도와 강도를 바꿔요. 관계는 우정·로맨스 중 이야기에서 따라갈 관계를 하나 골라요.', '분위기와 대사 소리는 여러 개 함께 켤 수 있어요. 캐릭터나 사건을 바꾸기보다 이야기를 보여 주는 느낌을 조절해요.'],
+    '추가': ['상태창은 인물의 상태를, 스토리 떡밥은 이어질 사건을 기록해요. 한편·숨은 진실·심리 상태·줄거리 흐름도 더할 수 있고, 상태창 범위로 적을 인물을 골라요.', '전개 긴장감의 기본은 물밑 흐름이에요. 모멘텀 엔진은 라우터와 함께 작동하고, 갈등 블록은 본문만으로 방향을 잡아요. 장면 계획은 켠 항목에 맞춰 장면을 준비해요.'],
+    '친구들': ['파이와 친구들이 이야기를 읽고 본문 아래에 감상을 남기거나 단체 대화처럼 이야기해요.', '반응 방식을 하나 고르고 함께할 친구를 켜요. OOC로 @이름을 쓰면 그 친구에게 말을 걸 수 있어요.']
+  };
   function helpCard(expanded) {
     const card = node('section',null,'dq-card dq-help'); card.id = 'bl-deus-help'; card.setAttribute('aria-labelledby','bl-deus-help-title');
     const title = node('h3',`${tab} 도움말`); title.id = 'bl-deus-help-title'; title.tabIndex = -1;
     card.append(title,node('small','원작 안내 요약 · lsennn'));
-    for (const text of helpCopy[tab]) card.append(node('p',text));
+    for (const text of (variant?.key === 'v3' && helpCopyV3[tab]) || helpCopy[tab] || []) card.append(node('p',text));
     const details = node('details'); details.dataset.section = 'help-basics'; details.open = expanded.has('help-basics');
     details.append(node('summary','빠른 설정 쓰는 법'),node('small','블루레몬에이드 동작 안내'),node('p','선택하면 현재 데우스 프리셋에 바로 저장돼요. 선택 목록은 하나만, 개별 설정은 여러 개 켤 수 있어요.'),node('p','본문을 수정한 채 저장하지 않았다면 먼저 본체에서 프리셋을 저장해 주세요. 이 창은 API 연결이나 모델을 바꾸지 않아요.'));
     const links = node('div',null,'dq-help-links');
@@ -221,6 +247,15 @@ function createDeusQuickController(adapter) {
     if (inner.left < outer.left + edge) rail.scrollLeft += inner.left - outer.left - edge;
     else if (inner.right > outer.right - edge) rail.scrollLeft += inner.right - outer.right + edge;
   }
+  function syncTabs(current) {
+    const rail = panel?.querySelector('.dq-tabs'); if (!rail) return;
+    const names = tabsOf(current);
+    if (!names.includes(tab)) tab = '진행';
+    const badge = panel.querySelector('.dq-version'), label = current?.variant?.label || '';
+    if (badge && badge.textContent !== label) { badge.textContent = label; badge.hidden = !label; }
+    if ([...rail.children].map(x => x.dataset.tab).join('|') === names.join('|')) return;
+    rail.replaceChildren(...names.map(name => { const b = node('button'); b.append(icon(tabIcons[name]),node('span',name)); b.type = 'button'; b.dataset.tab = name; b.setAttribute('aria-pressed',String(name === tab)); b.addEventListener('click',() => { tab = name; status = ''; render(true); revealTab(); }); tabObserver?.observe(b); return b; }));
+  }
   function render(force = false) {
     if (!panel || stopped) return;
     // Keep native pickers and focused controls attached until our save finishes.
@@ -231,7 +266,9 @@ function createDeusQuickController(adapter) {
     }
     let current, error = '';
     try { current = controller?.read(force); } catch (e) { error = e.message; }
-    const next = JSON.stringify([tab, helpOpen, current?.name, current?.dirty, current && [...current.states], current && [...current.available], current && [...current.groupIssues], controller?.busy, status, error]);
+    variant = current?.variant || null;
+    syncTabs(current);
+    const next = JSON.stringify([tab, helpOpen, variant?.key, current?.name, current?.dirty, current && [...current.states], current && [...current.available], current && [...current.groupIssues], controller?.busy, status, error]);
     if (!force && next === signature) return; signature = next;
     const body = panel.querySelector('.dq-body'), scroll = body.scrollTop, focused = pendingFocus || doc.activeElement?.dataset?.dqFocus;
     const expanded = new Set([...body.querySelectorAll('details[open]')].map(x => x.dataset.section));
@@ -244,7 +281,7 @@ function createDeusQuickController(adapter) {
     else {
       const card=node('section',null,'dq-card'),cardHead=node('header',null,'dq-card-head'),cardBody=node('div',null,'dq-card-body dq-fields');
       cardHead.append(icon(tabIcons[tab]),node('span',`${tab} 설정`));card.append(cardHead,cardBody);
-      for (const group of DEUS_QUICK_GROUPS.filter(x => x.tab === tab && current.available.has(x.header))) {
+      for (const group of current.variant.groups.filter(x => x.tab === tab && current.available.has(x.header))) {
         const options = group.options.filter(x => current.available.has(x.id)); if (!options.length) continue;
         const row = node('label',null,'dq-row'), label = node('span',group.label), select = node('select'); select.dataset.dqFocus = group.key; select.setAttribute('aria-label',group.label); select.disabled = disabled || !!current.groupIssues.get(group.key);
         const active = options.filter(x => current.states.get(x.id));
@@ -256,12 +293,15 @@ function createDeusQuickController(adapter) {
         if (current.groupIssues.get(group.key)) cardBody.append(node('p',current.groupIssues.get(group.key),'dq-note'));
       }
       if(cardBody.childElementCount)body.append(card);
-      const toggles = DEUS_QUICK_TOGGLES.filter(x => x.tab === tab && current.available.has(x.id));
-      if (toggles.length) {
-        const details = node('details',null,'dq-card'); details.dataset.section = tab; details.open = expanded.has(tab) || (tab === '진행');
+      const tabToggles = current.variant.toggles.filter(x => x.tab === tab && current.available.has(x.id));
+      // V3 의 「대사 소리」처럼 card 가 있는 항목은 같은 탭 안에서 따로 접는 묶음으로 보여요.
+      for (const cardName of [...new Set(tabToggles.map(x => x.card || ''))]) {
+        const toggles = tabToggles.filter(x => (x.card || '') === cardName), section = cardName ? `${tab}:${cardName}` : tab;
+        const details = node('details',null,'dq-card'); details.dataset.section = section; details.open = expanded.has(section) || (!cardName && (tab === '진행' || tab === '친구들'));
         const summary=node('summary',null,'dq-card-head'),checks=node('div',null,'dq-card-body dq-checks');
-        if (tab === '문체') summary.setAttribute('aria-label','분위기 · 여러 개 선택');
-        summary.append(icon(tab === '문체' ? 'masks-theater' : 'toggle-on'),node('span',tab === '문체' ? '분위기' : '개별 설정'));details.append(summary,checks);
+        const title = cardName || (tab === '문체' ? '분위기' : tab === '친구들' ? '함께할 친구' : '개별 설정');
+        if (tab === '문체') summary.setAttribute('aria-label',`${title} · 여러 개 선택`);
+        summary.append(icon(cardName ? 'comment-dots' : tab === '문체' ? 'masks-theater' : tab === '친구들' ? 'user-group' : 'toggle-on'),node('span',title));details.append(summary,checks);
         for (const item of toggles) {
           const label = node('label',null,'dq-toggle'), input = node('input'); input.type = 'checkbox'; input.checked = current.states.get(item.id) === true; input.disabled = disabled; input.dataset.dqFocus = item.id;
           label.tabIndex=0;label.title='길게 누르거나 Alt+Enter로 옵션 효과 보기';
@@ -275,6 +315,7 @@ function createDeusQuickController(adapter) {
       }
       if (tab === '추가') body.append(node('p','모멘텀 엔진을 쓰려면 모멘텀 엔진 라우터도 켜 주세요.','dq-note'));
       if (tab === '시점') body.append(node('p','내 1인칭 시점은 선택지 목록 또는 연출가 모드와 함께 사용해요.','dq-note'));
+      if (tab === '친구들') body.append(node('p','반응 방식을 하나 고르고 함께할 친구를 켜 주세요.','dq-note'));
       if (current.dirty) body.append(node('p','미저장 프롬프트가 있어요. 본체에서 프리셋을 저장하면 여기서 바꿀 수 있어요.','dq-note'));
     }
     const entrySettings=node('details',null,'dq-card');entrySettings.dataset.section='entry-settings';entrySettings.open=expanded.has('entry-settings');entrySettings.append(node('summary','빠른 설정 버튼','dq-card-head'));
@@ -325,10 +366,10 @@ function createDeusQuickController(adapter) {
     if (stopped) return false;
     if (panel) { render(); revealTab(); return true; }
     panel = node('section'); panel.id = 'bl-deus-popover'; panel.setAttribute('role','dialog'); panel.setAttribute('aria-modal','false'); panel.setAttribute('aria-label','데우스 엑스 마키나 빠른 설정');
-    const head = node('div',null,'dq-head'), x = node('button','×','dq-close'); x.type = 'button'; x.setAttribute('aria-label','닫기'); x.addEventListener('click',close); const help = node('button',null,'dq-help-button'); help.append(node('span','?','dq-help-glyph'));  help.type = 'button'; help.setAttribute('aria-label','데우스 엑스 마키나 도움말'); help.setAttribute('aria-expanded','false'); help.setAttribute('aria-controls','bl-deus-help'); help.addEventListener('click',toggleHelp); const title = node('strong','데우스 엑스 마키나'); title.append(node('span','2.5','dq-version')); head.append(title,help,x);
+    const head = node('div',null,'dq-head'), x = node('button','×','dq-close'); x.type = 'button'; x.setAttribute('aria-label','닫기'); x.addEventListener('click',close); const help = node('button',null,'dq-help-button'); help.append(node('span','?','dq-help-glyph'));  help.type = 'button'; help.setAttribute('aria-label','데우스 엑스 마키나 도움말'); help.setAttribute('aria-expanded','false'); help.setAttribute('aria-controls','bl-deus-help'); help.addEventListener('click',toggleHelp); const title = node('strong','데우스 엑스 마키나'), badge = node('span','','dq-version'); badge.hidden = true; title.append(badge); head.append(title,help,x);
     const tabs = node('nav',null,'dq-tabs'); tabs.setAttribute('aria-label','설정 분류');
     tabs.addEventListener('focusin', event => revealTab(event.target));
-    for (const name of ['진행','문체','시점','표현','추가']) { const b = node('button'); b.append(icon(tabIcons[name]),node('span',name)); b.type = 'button'; b.dataset.tab = name; b.setAttribute('aria-pressed',String(name === tab)); b.addEventListener('click',() => { tab = name; status = ''; render(true); revealTab(); }); tabs.append(b); }
+    // 탭 단추는 판을 확인한 뒤 syncTabs 가 만들어요(V3 는 「친구들」 탭이 더 있어요).
     const body = node('div',null,'dq-body'), footer = node('div',null,'dq-status'); footer.setAttribute('role','status'); footer.setAttribute('aria-live','polite');
     panel.append(head,tabs,body,footer); doc.body.append(panel); button.setAttribute('aria-expanded','true'); render();
     if (typeof host.ResizeObserver === 'function') {

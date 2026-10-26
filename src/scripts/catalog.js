@@ -9,7 +9,7 @@ export const SCRIPT_CATALOG = [
   {id:'qingguo',family:'fruit-family',name:'과일 계열 화면 보조 한글화',version:'2.0.0',icon:'fa-leaf',description:'과일의 마음 창 항목 이름과 청과 문장 점검 화면을 한글로 보여요. 원본과 선택은 그대로예요.',match:['__blueLemonadeQingguoKorean_v1'],file:'qingguo'},
   {id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1.0.8',icon:'fa-heart',description:'과일의 마음 메뉴와 상태창의 고정 문구·버튼 설명을 한글로 보여요. 프리셋·대화·입력값·켜짐 상태는 그대로예요.',match:['__blueLemonadeFruitHeartKorean_v1'],file:'fruit-heart'},
   {id:'fruit-style',name:'과일의 마음 꾸미기',version:'1.0.7',kind:'tool',icon:'fa-palette',description:'과일 창의 색·글꼴·버튼을 블루레몬에이드에 맞추고, 빠른 답장 이름 바꾸기와 ? 도움말을 더해요. 프롬프트 → 과일에서 켤 수 있어요.',match:['__blueLemonadeFruitStyle_v1'],file:'fruit-style'},
-  {id:'deus-qr',name:'데우스 빠른 설정',version:'1.0.7',kind:'tool',icon:'fa-sliders',description:'데우스 2.5 프리셋의 옵션을 입력창 옆에서 바로 골라요. 프롬프트 → 데우스 엑스 마키나에서 켤 수 있어요.',match:['__blueLemonadeDeusQuick_v1'],file:'deus-qr'},
+  {id:'deus-qr',name:'데우스 빠른 설정',version:'1.0.8',kind:'tool',icon:'fa-sliders',description:'데우스 V3 · 2.5 프리셋의 옵션을 입력창 옆에서 바로 골라요. 프롬프트 → 데우스 엑스 마키나에서 켤 수 있어요.',match:['__blueLemonadeDeusQuick_v1'],file:'deus-qr'},
 ];
 // 한 토글로 여러 실행 단위를 켜는 묶음. 저장은 enabled['fruit-family'] 하나를 기준으로 하고, 실행 단위 값은 그 값을 따라가요.
 export const SCRIPT_FAMILIES = [

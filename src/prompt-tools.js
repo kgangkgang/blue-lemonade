@@ -6,7 +6,7 @@ import {promptLinkMarkup} from './prompt-link.js';
 import {fruitTypographyMarkup,bindFruitTypography} from './fruit-type-ui.js';
 
 const GROUPS={
-    deus:[['deus-qr','빠른 설정','입력창에서 데우스 2.5 옵션을 바로 골라요.'],['deus','프롬프트 이름 한글화','프롬프트와 정규식의 이름을 한글로 보여요.']],
+    deus:[['deus-qr','빠른 설정','입력창에서 데우스 V3 · 2.5 옵션을 바로 골라요.'],['deus','프롬프트 이름 한글화','프롬프트와 정규식의 이름을 한글로 보여요.']],
     // 8.0.1 과일 계열(과일 · 야한과일 · 청과)의 한글화는 토글 하나 — 과일의 마음 창 · 프롬프트·정규식 이름 · 청과 문장 점검 화면이 함께 켜져요
     fruit:[['fruit-style','과일의 마음 꾸미기','글꼴·색·QR 카드와 버튼을 블루레몬에이드에 맞춰요.'],['fruit-family','과일 계열 한글화','과일 · 야한과일 · 청과의 프롬프트·정규식 이름과 과일의 마음 창을 한 번에 한글로 보여요.']],
 };

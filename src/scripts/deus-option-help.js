@@ -1,13 +1,19 @@
 import {installFruitOptionHelp} from './fruit-option-help.js';
 import {localPromptHash} from './prompt-fingerprint.js';
 import {DEUS_EFFECTS,DEUS_EFFECT_GROUPS} from './deus-option-effects.js';
+// V3 표지(빠른 설정 deus-qr 와 같은 id): 관계 택1 · 상태창 범위 택1 · 대사 소리 · 친구들 택1 중 둘 이상.
+const DEUS_V3_SIGNS=['cb1fa811-516f-4a61-aa93-092bb94d5ba3','0f47d870-2bb8-4c25-b6fe-c3d4c9b4e626','279618e4-d961-489f-9d2b-56503e0d6067','8b648af7-db80-4402-9536-58a5d82a6fe2'];
+export const isDeusV3Preset=preset=>DEUS_V3_SIGNS.filter(id=>preset?.prompts?.some?.(p=>(p.identifier||p.id)===id)).length>=2;
 export function describeDeusOption(key, preset) {
     const group=DEUS_EFFECT_GROUPS[key];
-    const ids=group?group.ids:[key], rows=[];let changed=false;
+    const ids=group?group.ids:[key], rows=[];let changed=false;const v3=isDeusV3Preset(preset);
     for(const id of ids){
-        const data=DEUS_EFFECTS[id],prompt=preset?.prompts?.find(p=>(p.identifier||p.id)===id);
-        if(!data||!prompt)continue;
-        const same=localPromptHash(String(prompt.content||'').replace(/\r\n?/g,'\n').trim())===data.hash;
+        const base=DEUS_EFFECTS[id],prompt=preset?.prompts?.find(p=>(p.identifier||p.id)===id);
+        if(!base||!prompt)continue;
+        // 같은 id 라도 V3 원문이면 V3 설명(v3 덧칠)을, 2.5 원문이면 2.5 설명을 보여요. 원문이 둘 다 아니면 프리셋 판을 따라요.
+        const hash=localPromptHash(String(prompt.content||'').replace(/\r\n?/g,'\n').trim());
+        const data=base.v3&&(hash===base.v3.hash||(hash!==base.hash&&v3))?{...base,...base.v3}:base;
+        const same=hash===data.hash;
         changed ||= !same;
         rows.push({data,prompt,same});
     }

@@ -8,7 +8,7 @@ const bundled = (await import(pathToFileURL(path.join(root,'src/scripts/bundled/
 const plain = fs.readFileSync(path.join(root,'src/scripts/plain/deus-qr.js'),'utf8');
 assert.equal(plain.split('/*BL-SCRIPT-START*/\n')[1].split('\n/*BL-SCRIPT-END*/')[0],bundled);
 new Function('BlueLemonade',bundled);
-const { groups, toggles, marker, create, matches, quickName } = new Function(bundled.split('// INSTALL')[0]+'\nreturn { groups:DEUS_QUICK_GROUPS,toggles:DEUS_QUICK_TOGGLES,marker:DEUS_QUICK_MARKER,create:createDeusQuickController,matches:deusMatches,quickName:deusQuickName };')();
+const { groups, toggles, groupsV3, togglesV3, variant, marker, create, matches, quickName } = new Function(bundled.split('// INSTALL')[0]+'\nreturn { groups:DEUS_QUICK_GROUPS,toggles:DEUS_QUICK_TOGGLES,groupsV3:DEUS_QUICK_GROUPS_V3,togglesV3:DEUS_QUICK_TOGGLES_V3,variant:deusVariant,marker:DEUS_QUICK_MARKER,create:createDeusQuickController,matches:deusMatches,quickName:deusQuickName };')();
 let passed=0;
 async function test(name, fn) { await fn(); console.log('PASS',name); passed++; }
 function fixture() {
@@ -107,5 +107,100 @@ await test('8.0.1 a quick toggle inside a choice group turns its lit peers off i
   assert.equal(order(f.live).find(x=>x.identifier==='bl-auto').enabled,false,'live settings follow');
   const g=fixture();await g.controller.change(toggles.find(x=>x.label==='반복 방지').id,true);assert.equal(order(g.writes[0][1]).filter(x=>x.enabled).length,order(g.saved).filter(x=>x.enabled).length,'toggles outside any group change only themselves');
  }finally{delete globalThis.BlueLemonade;}
+});
+// ── V3 · 2.5 둘 다(2026-10-27): 실제 사용자 저장본 두 개의 구조(본문 · 이름 없음, tools/tests/deus-qr-presets.json)로 시험해요.
+const presets=JSON.parse(fs.readFileSync(path.join(root,'tools/tests/deus-qr-presets.json'),'utf8'));
+function realFixture(kind,{marker}={}){
+ const src=presets[kind];
+ const prompts=src.order.map(([identifier])=>({identifier,name:identifier===DEUS_MARKER?(marker??src.marker):'synthetic',content:'synthetic fixture only',role:'system'}));
+ const saved={prompts,prompt_order:[{character_id:100001,order:src.order.map(([identifier,on])=>({identifier,enabled:on===1}))}],extensions:{regex_scripts:[{findRegex:'synthetic'}]},temperature:1};
+ const live={...structuredClone(saved),preset_settings_openai:'내 데우스'};
+ const writes=[];let name='내 데우스';const cache=new Map([[name,saved]]);
+ const adapter={read(){return {name,api:'openai',saved:cache.get(name),live,strategy:'global'};},cached:n=>cache.get(n),async save(n,p){writes.push([n,structuredClone(p)]);},publish(){}};
+ return {saved,live,writes,controller:create(adapter)};
+}
+const DEUS_MARKER=marker;
+const lit=(f,g)=>g.options.filter(o=>f.controller.read().states.get(o.id)===true).map(o=>o.label);
+await test('V3 · 실제 V3 사용자 저장본 구조는 V3, 2.5 저장본 구조는 2.5 로 알아봐요(파일 · 프리셋 이름과 무관)',()=>{
+ assert.equal(variant(realFixture('v3').saved).key,'v3');assert.equal(variant(realFixture('2.5').saved).key,'2.5');
+ assert.equal(realFixture('v3').controller.read().variant.label,'V3');assert.equal(realFixture('2.5').controller.read().variant.label,'2.5');
+ assert.equal(realFixture('v3').controller.isAvailable(),true);assert.equal(realFixture('2.5').controller.isAvailable(),true);
+});
+await test('V3 · 시작 표시 이름을 바꾸거나 판 번호를 지워도 구조로 판별하고, 모르는 판 번호(V2.3 · V2.50 · V4)는 받지 않아요',()=>{
+ for(const name of ['🔹나의 데우스🔹','DEUS','','데우스 3','🔹DEUS EX MACHINA V3.1🔹'])assert.equal(variant(realFixture('v3',{marker:name}).saved)?.key,'v3',name);
+ for(const name of ['🔹나의 데우스🔹','DEUS EX MACHINA V2.5 (내 설정)'])assert.equal(variant(realFixture('2.5',{marker:name}).saved)?.key,'2.5',name);
+ for(const name of ['DEUS V2.3','DEUS V2.50','DEUS EX MACHINA V4'])assert.equal(variant(realFixture('v3',{marker:name}).saved),null,name);
+ assert.equal(variant(realFixture('v3',{marker:'🔹DEUS EX MACHINA V2.5🔹'}).saved).key,'v3','이름보다 구조가 우선이에요');
+});
+await test('V3 · 저장본과 현재 설정의 판이 다르면 열지도 저장하지도 않아요',async()=>{
+ const f=realFixture('v3'),other=realFixture('2.5');f.live.prompts=other.live.prompts;f.live.prompt_order=other.live.prompt_order;
+ assert.equal(f.controller.isAvailable(),false);await assert.rejects(f.controller.change('length','c66c7b02-93ab-44ca-b908-0b49fe626280'));assert.equal(f.writes.length,0);
+});
+await test('V3 · 표의 모든 id 가 V3 저장본에 있고, 2.5 표는 그대로(16묶음)이며 2.5 저장본에서도 모두 쓸 수 있어요',()=>{
+ const ids=kind=>new Set(presets[kind].order.map(([id])=>id));
+ for(const g of groupsV3)for(const id of [g.header,g.end,...g.options.map(o=>o.id)])assert.ok(ids('v3').has(id),`${g.key} ${id}`);
+ for(const t of togglesV3)assert.ok(ids('v3').has(t.id),t.label);
+ assert.equal(groups.length,16);assert.equal(groupsV3.length,19);
+ for(const g of groups)for(const id of [g.header,g.end,...g.options.filter(o=>o.id!=='bl-deus-length-ultra-long').map(o=>o.id)])assert.ok(ids('2.5').has(id),`${g.key} ${id}`);
+ assert.ok(!togglesV3.some(t=>['f155f1d8-34be-4ef3-98e3-c63fbd8cec48','ddaac217-1380-4152-9bcd-d1092c5deadf'].includes(t.id)),'V3 에 없는 로맨틱 · 로맨틱 코미디는 V3 표에 없어요');
+ assert.ok(toggles.some(t=>t.id==='f155f1d8-34be-4ef3-98e3-c63fbd8cec48'),'2.5 표의 로맨틱은 남아 있어요');
+});
+await test('V3 · 실제 저장본의 모든 택1 묶음이 막힘 없이 열리고 지금 켜진 값을 그대로 보여요',()=>{
+ const f=realFixture('v3'),r=f.controller.read();
+ for(const g of groupsV3)assert.equal(r.groupIssues.get(g.key),'',g.key);
+ const by=k=>lit(f,groupsV3.find(g=>g.key===k));
+ assert.deepEqual(by('length'),['초장편']);assert.deepEqual(by('dialogue'),['연극적으로']);assert.deepEqual(by('narration'),['라이트']);
+ assert.deepEqual(by('relationships'),[]);assert.deepEqual(by('status'),['모든 캐릭터']);assert.deepEqual(by('tension'),[]);assert.deepEqual(by('companions'),[]);
+ assert.deepEqual(by('reasoning'),['생각하기 ! (대체용)']);assert.deepEqual(by('explicit'),['최고 수위']);
+ const g=realFixture('2.5'),r2=g.controller.read();for(const x of groups)assert.equal(r2.groupIssues.get(x.key),'',`2.5 ${x.key}`);
+ assert.deepEqual(lit(g,groups.find(x=>x.key==='length')),['초장편']);assert.deepEqual(lit(g,groups.find(x=>x.key==='dialogue')),['생동감 있게']);
+});
+await test('V3 · 답변 길이는 새 「아주 길게」(3d498f27) · 초장편 · 대장편 중 하나만 켜고, 2.5 의 옛 「아주 길게」 id 는 V3 에서 받지 않아요',async()=>{
+ const f=realFixture('v3'),g=groupsV3.find(x=>x.key==='length');
+ assert.deepEqual(g.options.map(o=>o.label),['유동적','짧게','보통','길게','아주 길게','초장편','대장편']);
+ assert.equal((await f.controller.change('length','bl-deus-length-epic')).state,'saved');assert.deepEqual(lit(f,g),['대장편']);
+ await f.controller.change('length','3d498f27-126a-41fc-baf2-369c90a9c50f');assert.deepEqual(lit(f,g),['아주 길게']);
+ await assert.rejects(f.controller.change('length','1bbb1b67-520c-4730-96d7-9674f794538b'));assert.equal(f.writes.length,2);
+});
+await test('V3 · 새 택1(관계 · 상태창 범위 · 친구들 반응 방식)은 그 묶음 안의 켜진 것만 바꾸고 머리 표시는 건드리지 않아요',async()=>{
+ for(const [key,pick] of [['relationships','ce6efb5d-fe0f-4dbf-9a9c-4402c4132170'],['status','f2a63bb5-7bf4-4a2d-9767-293fe609ef60'],['companions','35e32cf4-0331-4146-8ffb-fe3b1b1347a5'],['tension','c858bd65-2e20-4b39-b481-9c8d54fe1dc9'],['narration','e2f653f7-fbd0-4565-9ad1-ee2ef67a2bce'],['dialogue','b9a5f748-bd71-41d5-bbb3-432ecb23a1f8']]){
+  const f=realFixture('v3'),before=structuredClone(f.saved),g=groupsV3.find(x=>x.key===key);
+  assert.equal((await f.controller.change(key,pick)).state,'saved',key);
+  const diff=changed(before,f.saved);assert.ok(diff.includes(pick),key);assert.ok(diff.every(id=>g.options.some(o=>o.id===id)),`${key} 바깥을 건드렸어요 ${diff}`);
+  assert.equal(order(f.saved).find(x=>x.identifier===g.header).enabled,order(before).find(x=>x.identifier===g.header).enabled);
+  assert.deepEqual(lit(f,g),[g.options.find(o=>o.id===pick).label]);
+ }
+});
+await test('V3 · 켜진 「대사 소리」 머리 표시가 서술 묶음을 막지 않고, 대사 소리 · 친구 · 새 분위기는 하나씩 따로 켜고 꺼요',async()=>{
+ const f=realFixture('v3');assert.equal(order(f.saved).find(x=>x.identifier==='279618e4-d961-489f-9d2b-56503e0d6067').enabled,true);
+ assert.equal(f.controller.read().groupIssues.get('narration'),'');
+ for(const label of ['말 더듬기','레일라 (애니 덕후)','서스펜스','한편','파이의 퇴고 메모']){
+  const t=togglesV3.find(x=>x.label===label),before=structuredClone(f.saved);
+  assert.equal((await f.controller.change(t.id,true)).state,'saved',label);assert.deepEqual(changed(before,f.saved),[t.id],label);
+  assert.equal((await f.controller.change(t.id,false)).state,'saved',label);
+ }
+ assert.deepEqual([...new Set(togglesV3.filter(t=>t.card).map(t=>t.card))],['대사 소리']);
+ assert.deepEqual(togglesV3.filter(t=>t.tab==='친구들').length,7);
+});
+await test('V3 · 2.5 저장본에서는 2.5 표 그대로 동작해요(생동감 있게 · 옛 아주 길게 · 로맨틱)',async()=>{
+ const f=realFixture('2.5'),g=groups.find(x=>x.key==='length');
+ await f.controller.change('length','1bbb1b67-520c-4730-96d7-9674f794538b');assert.deepEqual(lit(f,g),['아주 길게']);
+ await assert.rejects(f.controller.change('relationships','ce6efb5d-fe0f-4dbf-9a9c-4402c4132170'));
+ const romantic='f155f1d8-34be-4ef3-98e3-c63fbd8cec48',before=structuredClone(f.saved);await f.controller.change(romantic,true);assert.deepEqual(changed(before,f.saved),[romantic]);
+});
+await test('V3 · 옵션 설명은 같은 id 라도 V3 원문이면 V3 설명, 2.5 원문이면 2.5 설명을 보여요',async()=>{
+ const {describeDeusOption,isDeusV3Preset}=await import(pathToFileURL(path.join(root,'src/scripts/deus-option-help.js')));
+ const {DEUS_EFFECTS}=await import(pathToFileURL(path.join(root,'src/scripts/deus-option-effects.js')));
+ const v3=realFixture('v3').saved,v25=realFixture('2.5').saved;assert.equal(isDeusV3Preset(v3),true);assert.equal(isDeusV3Preset(v25),false);
+ const id='d2c6ab81-6ae3-4880-8d50-43b2bc9326c6';
+ assert.match(describeDeusOption('dialogue',v3).text,/연극적으로/);assert.match(describeDeusOption('dialogue',v25).text,/생동감 있게/);
+ for(const g of groupsV3)assert.ok(!describeDeusOption(g.key,v3).text.includes('찾지 못했어요'),g.key);
+ for(const t of togglesV3)assert.ok(DEUS_EFFECTS[t.id],`설명 없음 ${t.label}`);
+ for(const g of groupsV3)for(const o of g.options)assert.ok(DEUS_EFFECTS[o.id],`설명 없음 ${g.key} ${o.label}`);
+ assert.ok(DEUS_EFFECTS[id].v3?.hash&&DEUS_EFFECTS[id].hash!==DEUS_EFFECTS[id].v3.hash);
+});
+await test('V3 · 화면: 판 표시는 판별 결과를 따르고 「친구들」 탭은 그 판에 항목이 있을 때만 생겨요',()=>{
+ assert.ok(bundled.includes("const tabsOf = current =>"));assert.ok(bundled.includes("current?.variant?.label"));assert.ok(!bundled.includes("node('span','2.5','dq-version')"));
+ assert.ok(bundled.includes("'친구들':'user-group'"));assert.ok(bundled.includes('.dq-version[hidden]{display:none}'));
 });
 console.log(`Deus quick settings: ${passed} passed`);

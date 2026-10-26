@@ -21,7 +21,7 @@ for(const type of FRUIT_TYPES){if(!['deus','qingguo'].includes(type.owner))asser
 const preview=read('src/fruit-type-preview.js');assert(!/getContext\(|\.characters|\.persona|chat_metadata|fetch\(/.test(preview));
 const {DEUS_EFFECTS,DEUS_EFFECT_GROUPS}=await import(pathToFileURL(path.join(root,'src/scripts/deus-option-effects.js')));
 const {describeDeusOption}=await import(pathToFileURL(path.join(root,'src/scripts/deus-option-help.js')));
-assert.equal(Object.keys(DEUS_EFFECTS).length,73);
+assert.equal(Object.keys(DEUS_EFFECTS).length,105); // 2.5 73 + V3 · 테마가 더한 길이 · 공포 32
 for(const group of Object.values(DEUS_EFFECT_GROUPS))for(const id of group.ids)assert(DEUS_EFFECTS[id]);
 const id=Object.keys(DEUS_EFFECTS)[0];const d=describeDeusOption(id,{prompts:[{identifier:id,content:'changed'}]});assert(d.baseline);assert(d.text.length>10);
 const group=Object.keys(DEUS_EFFECT_GROUPS)[0];const desc=describeDeusOption(group,{prompts:DEUS_EFFECT_GROUPS[group].ids.map(identifier=>({identifier,content:'modified'}))});assert(desc.text.includes('\n\n'));assert(desc.baseline);
@@ -56,4 +56,4 @@ assert(/\.bl-ft-dialog \.bl-view-resize>button\{[^}]*border-radius:8px[^}]*backg
 assert.equal((read('css/56-control-consistency.css').match(/:is\(\.salty-panel, \.bl-ft-dialog\) \.bl-view-resize > button:not\(\.bl-view-toggle\)/g)||[]).length,4,'Reset glyph (line icon) also in the dialog');
 assert(/\.bl-ft-dialog small\{opacity:1\}/.test(editorCss),'Dialog small text is not dimmed by SillyTavern small{opacity:.7} (light contrast 2.9)');
 assert(read('src/prompt-tools.js').includes('export function fruitTypographyGroup'));assert.equal((read('src/panel.js').match(/fruitTypographyGroup\('deus'\)/g)||[]).length,2,'Deus page places the editor group in both states');
-console.log('Fruit typography: five known names, independent regions, limits, OFF/reset, synthetic previews; Deus 73 effects/group descriptions passed');
+console.log('Fruit typography: five known names, independent regions, limits, OFF/reset, synthetic previews; Deus 105 effects (2.5 · V3)/group descriptions passed');
