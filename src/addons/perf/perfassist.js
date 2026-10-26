@@ -14,6 +14,7 @@ import * as powerUser from '../../../../../../power-user.js';
 import { morphdom } from '../../../../../../../lib.js';
 import { createStreamMorph, SELF_TEST_STEPS } from './morph.js';
 import { createPromptListDefer } from './promptlist.js';
+import { listShown } from './shown.js';
 import { createSaveSender } from './savesend.js';
 import { createStyleDedupe } from './styledup.js';
 
@@ -83,13 +84,9 @@ function installMorph() {
 // ── 2. 닫힌 프롬프트 목록은 열 때 그리기 ─────────────────────
 
 function isShown(el) {
-    if (!el?.isConnected) return false;
-    // 4.2.2: checkVisibility() 는 밀린 스타일 계산을 그 자리에서 돌린다 — 답이 오는 동안 프롬프트 관리자가 다시 그리려 할 때마다
-    // 문서 전체(1만 6천 요소)를 계산했다 (폰 리그 한 턴 0.36초). 서랍이 닫혀 있으면(실리태번이 .openDrawer 를 뗀다) 물어볼 것도 없다.
-    const drawer = el.closest('.drawer-content');
-    if (drawer && !drawer.classList.contains('openDrawer')) return false;
-    if (typeof el.checkVisibility === 'function') return el.checkVisibility();
-    return el.getClientRects().length > 0;
+    // 4.2.2: 닫힌 서랍이면 물어볼 것도 없다. 8.0.5: 열린 서랍에서도 checkVisibility() 대신 조상의 class · 인라인 style 만 본다(shown.js) —
+    // 프리셋을 바꾸는 동안 부를 때마다 서랍 전체 스타일 계산을 강제했다 (PC 약 50ms · 폰 흉내 약 200ms × 4번 남짓)
+    return listShown(el);
 }
 
 /** 목록이 보이기 시작할 수 있을 때: 조상(서랍 · 설정 블록)의 class · style · hidden 이 바뀔 때, 화면에 들어올 때 */

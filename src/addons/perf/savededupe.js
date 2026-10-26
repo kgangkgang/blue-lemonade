@@ -17,6 +17,7 @@ import * as openai from '../../../../../../openai.js';
 import * as groupChats from '../../../../../../group-chats.js';
 import { createRecovery, asyncStacksWork, stackHas, bodyKey, liveChatFrom, MARKER, DROP_MESSAGE } from './recovery.js';
 import { createPromptDefer } from './promptdefer.js';
+import { listShown } from './shown.js';
 import { createSaveTimers, createSwitchFlush, matchSwitchEntry, SWITCH_ENTRIES } from './switchflush.js';
 import { createSwitchGuard, wrapCommands, DELETE_ENTRY, GUARD_COMMANDS } from './switchguard.js';
 import { createCodeGuard, isClickTrigger, CODE_SWITCH_KEYS } from './switchcode.js';
@@ -336,13 +337,9 @@ async function installRecovery() {
 
 /** 목록이 그려지는지 (닫힌 서랍 · display:none 조상이면 false) */
 function isShown(el) {
-    if (!el?.isConnected) return false;
-    // 4.2.2: checkVisibility() 는 밀린 스타일 계산을 그 자리에서 돌린다 — 답이 오는 동안 프롬프트 관리자가 다시 그리려 할 때마다
-    // 문서 전체(1만 6천 요소)를 계산했다 (폰 리그 한 턴 0.36초). 서랍이 닫혀 있으면(실리태번이 .openDrawer 를 뗀다) 물어볼 것도 없다.
-    const drawer = el.closest('.drawer-content');
-    if (drawer && !drawer.classList.contains('openDrawer')) return false;
-    if (typeof el.checkVisibility === 'function') return el.checkVisibility();
-    return el.getClientRects().length > 0;
+    // 4.2.2: 닫힌 서랍이면 물어볼 것도 없다. 8.0.5: 열린 서랍에서도 checkVisibility() 대신 조상의 class · 인라인 style 만 본다(shown.js) —
+    // 프리셋을 바꾸는 동안 부를 때마다 서랍 전체 스타일 계산을 강제했다 (PC 약 50ms · 폰 흉내 약 200ms × 4번 남짓)
+    return listShown(el);
 }
 
 /**
