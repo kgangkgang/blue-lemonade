@@ -25,8 +25,7 @@
 .bl-mav .bl-mav-danger { color:color-mix(in oklab, var(--danger, #d33) 80%, var(--salty-text)); }
 .bl-mav .salty-btn:disabled { opacity:.45; cursor:default; }
 .bl-mav-foot { display:grid; gap:8px; padding:10px 14px 14px; border-top:1px solid var(--salty-line); }
-.bl-mav-foot .salty-btn { position:relative; min-height:36px; }
-.bl-mav-foot .salty-btn::before { content:''; position:absolute; inset:-4px 0; }   /* 글자 단추 36 · 누르는 자리 44 */
+.bl-mav-foot .salty-btn { position:relative; min-height:36px; }   /* 글자 단추 36 · 손가락 화면의 누르는 자리 44 는 87-addon-touch 의 공통 .salty-btn::after 가 줘요(86 의 ::before 와 겹치지 않게 여기선 가상 요소를 안 써요) */
 .bl-mav-foot .salty-note { margin:0; line-height:1.55; font-size:12px; color:var(--salty-muted); }
 .bl-mav-foot code { font-family:var(--salty-font-code, monospace); font-size:.95em; }
 /* 큰 그림 보기 — 어디를 눌러도 닫힘 */

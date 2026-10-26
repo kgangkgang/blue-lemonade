@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6164815ad6bc) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build c318dea84f9e) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -24758,7 +24758,6 @@ body.salty .popup .bl-diag-file input[data-diag-index]:focus { background-color:
 .bl-mav .salty-btn:disabled { opacity:.45; cursor:default; }
 .bl-mav-foot { display:grid; gap:8px; padding:10px 14px 14px; border-top:1px solid var(--salty-line); }
 .bl-mav-foot .salty-btn { position:relative; min-height:36px; }
-.bl-mav-foot .salty-btn::before { content:''; position:absolute; inset:-4px 0; }
 .bl-mav-foot .salty-note { margin:0; line-height:1.55; font-size:12px; color:var(--salty-muted); }
 .bl-mav-foot code { font-family:var(--salty-font-code, monospace); font-size:.95em; }
 dialog.bl-mav-viewer { padding:0; border:0; background:transparent; max-width:100vw; max-height:100dvh; overflow:visible; }
