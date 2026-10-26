@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ab56bb1c2cce) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d3c293b07042) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -24912,7 +24912,7 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.blzi .blzi-help) {
   height: 1.3em !important;
   min-width: 1.3em !important;
   min-height: 1.3em !important;
-  margin: 0 0 0 0.35em !important;
+  margin: 0 0 0 clamp(5px, 0.35em, 6.8px) !important;
   vertical-align: middle !important;
   padding: 0 !important;
   border: 0 !important;
@@ -24956,7 +24956,7 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.blzi .blzi-help):focus-visible { ou
 html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > .bl-help-btn,
 html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > .lv-help-btn,
 html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > .bwr_help,
-html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > .bl-word-help { margin-left: 0.35em !important; }
+html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > .bl-word-help { margin-left: clamp(5px, 0.35em, 6.8px) !important; }
 html body.salty #lv_settings .lv-grid > .lv-field > .lv-label { min-height: 24px; align-items: center; }
 html body.salty:not(#bl-h1):not(#bl-h2) .bl-info:is(.bl-s, *),
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.eh-guide-note > .fa-circle-info) {
