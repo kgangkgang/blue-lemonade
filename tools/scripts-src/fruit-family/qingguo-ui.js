@@ -69,8 +69,19 @@ function installQingguoKorean(BlueLemonade, data) {
     for (const node of attrs.keys()) if (!node.isConnected) attrs.delete(node);
   }
   const schedule=()=>{if(!stopped&&!frame)frame=host.requestAnimationFrame(flush);};
-  const relevant=node=>node?.nodeType===1&&(node.matches(roots+',#tavern_helper')||node.closest(roots+',#tavern_helper')||node.querySelector(roots+',#tavern_helper'));
+  // 8.0.4 속도: 바뀐 요소마다 그 아래 전체를 querySelector 로 훑으면(채팅 300개를 그릴 때 #chat 통째로) 과일 계열을 켠 모든 사용자의 화면 변화가 느려져요.
+  // 뿌리 요소(아이디 넷)를 문서에서 한 번 찾고, 바뀐 요소가 그 조상·자손·자신인지만 봐요 — 같은 판정이에요. 문서에 붙지 않은 요소·그림자 트리는 예전 방식 그대로예요.
+  const rootIds=['qg-prose-pruner-backdrop','qg-prose-pruner-ball','fruit-heart-v6','tavern_helper'];
+  const slowRelevant=node=>node.matches(roots+',#tavern_helper')||node.closest(roots+',#tavern_helper')||node.querySelector(roots+',#tavern_helper');
+  const relevantTo=present=>node=>{
+    if(node?.nodeType!==1)return false;
+    if(node.getRootNode()!==doc)return !!slowRelevant(node);
+    for(const el of present)if(el===node||el.contains(node)||node.contains(el))return true;
+    return false;
+  };
   const observer=new host.MutationObserver(records=>{
+    const present=[];for(const id of rootIds)for(const el of doc.querySelectorAll('#'+id))present.push(el);
+    const relevant=relevantTo(present);
     if(records.some(record=>relevant(record.target.nodeType===3?record.target.parentElement:record.target)||[...record.addedNodes].some(relevant)))schedule();
   });
   observer.observe(doc.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']});
