@@ -102,7 +102,7 @@ for(const re of [/#range_block_openai$/,/#wiSliders$/,/#wiCheckboxes$/,/\[name="
   assert.ok(twoCols(re),'두 칸 격자가 있어야 함: '+re);
 
 // 생성 설정 칸 안: 윗줄 이름 | 숫자칸, 아랫줄 슬라이더 칸 너비 꽉
-const cell=(tail,want)=>items.some(({sel,r})=>sel.startsWith('body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter)')&&sel.endsWith(tail)&&Object.entries(want).every(([k,v])=>(decl(r.decls,k)||'').replace(/\s+/g,' ').startsWith(v)));
+const cell=(tail,want)=>items.some(({sel,r})=>sel.startsWith('body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]')&&sel.endsWith(tail)&&Object.entries(want).every(([k,v])=>(decl(r.decls,k)||'').replace(/\s+/g,' ').startsWith(v)));
 assert.ok(cell('> .range-block-title',{'grid-column':'1 !important','grid-row':'1 !important'}),'이름은 윗줄 왼쪽');
 assert.ok(cell('.range-block-counter',{'grid-column':'2 !important','grid-row':'1 !important'}),'숫자칸은 윗줄 오른쪽');
 assert.ok(cell('.range-block-range',{'grid-column':'1 / -1 !important','grid-row':'2 !important','width':'100% !important'}),'슬라이더는 아랫줄 칸 너비 꽉');

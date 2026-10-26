@@ -145,7 +145,7 @@ body.salty #left-nav-panel label[for="bind_preset_to_connection"]:has(input:chec
 }
 
 /* 슬라이더 이름: 숫자칸과 세로 가운데 맞춤 */
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title {
+body.salty #left-nav-panel .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-title {
   display: flex;
   align-items: center;
 }

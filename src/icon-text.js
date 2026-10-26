@@ -13,11 +13,15 @@
 //      data-bl-editing="deep text"  deep = 안에 .edit_textarea 가 있음(`:has(.edit_textarea)`) · text = `> .mes_block > .mes_text > .edit_textarea`
 //      data-bl-meta="id timer tok"  `> .mesAvatarWrapper > .mesIDDisplay|.mes_timer|.tokenCounterDisplay:not(:empty)` (주석만 있는 칸은 :empty 와 같이 빈 것으로)
 //      data-bl-reasoning-editing    .mes_reasoning_details 안에 .reasoning_edit_textarea 가 있음
+// 5) 서랍 줄 표식 (7.9.9, 속도 P3 일부) — 실리태번 서랍의 정적 모양을 :has 로 감지하던 것
+//      data-bl-row="neo"    .flex-container 의 요소 자식이 small(첫째) + .neo-range-slider + .neo-range-input 순 (`:has(> small:first-child + .neo-range-slider + .neo-range-input)`)
+//      data-bl-row="range"  .range-block 안에 .range-block-title 바로 다음 형제가 .range-block-range-and-counter (`:has(> .range-block-title + .range-block-range-and-counter)`)
 // 관찰자 콜백은 그리기 전에 돈다 — 새로 붙은 요소가 한 프레임도 다른 모양으로 보이지 않는다.
 const MARK = 'data-bl-icon-text';
 const ICON_ONLY = 'data-bl-icon-only';
 const ROW_CHECK = 'data-bl-row-check';
 const EDITING = 'data-bl-editing', META = 'data-bl-meta', R_EDIT = 'data-bl-reasoning-editing';
+const ROW = 'data-bl-row';
 const TEXTISH = new Set(['span', 'b', 'strong', 'small']);
 
 // 공백이 아닌 글자 노드가 바로 아래에 있나 (span 같은 요소 속 글자는 CSS 가 이미 가린다)
@@ -111,6 +115,16 @@ export function metaTokens(mes) {
     }
     return [id && 'id', timer && 'timer', tok && 'tok'].filter(Boolean).join(' ');
 }
+export function rowTokens(el) {
+    const tokens = [];
+    const c = el.children;
+    if (el.classList.contains('flex-container') && c.length >= 3 && c[0].localName === 'small' && c[1].classList.contains('neo-range-slider') && c[2].classList.contains('neo-range-input')) tokens.push('neo');
+    if (el.classList.contains('range-block')) {
+        for (let k = 0; k + 1 < c.length; k++) if (c[k].classList.contains('range-block-title') && c[k + 1].classList.contains('range-block-range-and-counter')) { tokens.push('range'); break; }
+    }
+    return tokens.join(' ');
+}
+function checkRow(el) { setAttr(el, ROW, rowTokens(el)); }
 function checkMes(mes) { setAttr(mes, EDITING, editingTokens(mes)); setAttr(mes, META, metaTokens(mes)); }
 function checkReasoning(details) {
     const want = details.getElementsByClassName('reasoning_edit_textarea').length > 0;
@@ -122,11 +136,14 @@ function scan(node) {
     else if (node.localName === 'label') checkLabel(node);
     if (node.classList?.contains('mes')) checkMes(node);
     if (node.classList?.contains('mes_reasoning_details')) checkReasoning(node);
+    if (node.classList && (node.classList.contains('flex-container') || node.classList.contains('range-block'))) checkRow(node);
     if (!node.firstElementChild) return;
     for (const el of node.getElementsByClassName('menu_button')) check(el);
     for (const el of node.getElementsByTagName('label')) checkLabel(el);
     for (const el of node.getElementsByClassName('mes')) checkMes(el);
     for (const el of node.getElementsByClassName('mes_reasoning_details')) checkReasoning(el);
+    for (const el of node.getElementsByClassName('flex-container')) checkRow(el);
+    for (const el of node.getElementsByClassName('range-block')) checkRow(el);
 }
 
 // 바뀐 요소 하나 — .menu_button 이면 단추 표식, label 이면 체크 줄 표식, input 이 바뀌었으면 그 부모 label
@@ -137,6 +154,9 @@ function touched(el) {
     // 메시지 안이 바뀌면(편집칸 넣고 빼기 · 타이머 · 토큰 글자) 그 메시지 표식을 다시
     const mes = el.closest('.mes'); if (mes) checkMes(mes);
     const details = el.closest('.mes_reasoning_details'); if (details) checkReasoning(details);
+    // 자식 줄이 바뀐 .flex-container · .range-block 과, 클래스가 바뀐 자식의 부모
+    if (el.classList.contains('flex-container') || el.classList.contains('range-block')) checkRow(el);
+    const p = el.parentElement; if (p && (p.classList.contains('flex-container') || p.classList.contains('range-block'))) checkRow(p);
 }
 
 let started = false;

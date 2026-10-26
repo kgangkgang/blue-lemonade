@@ -153,17 +153,17 @@ body.salty #WorldInfo#WorldInfo .world_entry_form_control > select[name="entryLo
 
 /* ---------- 3. 슬라이더 + 숫자칸: 이름 | 숫자(현재 값) / 슬라이더 가로 꽉 ---------- */
 /* 실리태번 생성 설정 (range-block: 이름 · 슬라이더 · 숫자칸, 02-controls · 26-rounds) */
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
   column-gap: var(--bl-param-col-gap) !important;
   row-gap: var(--bl-param-row-gap) !important;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-range-and-counter:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) { display: contents !important; }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-range-and-counter:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) { display: contents !important; }
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
 /* 테마가 슬라이더 · 숫자칸 상자를 display: contents 로 풀어 두기도 해서, 상자와 그 안 입력칸 둘 다에 자리를 줌 (격자 칸이 된 쪽만 적용됨) */
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-counter, .range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-range, .range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) :is(.range-block-counter, .range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) :is(.range-block-range, .range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
 /* 생성 설정(#range_block_openai)은 26-rounds 가 두 열 격자에 놓고, 칸 안은 아이디 둘 + !important 로
    숫자칸을 슬라이더 옆(2행 2열)에 두므로 같은 무게로 덮음 → 칸마다 윗줄 이름 | 숫자칸, 아랫줄 슬라이더 칸 너비 꽉.
    칸 자리(왼쪽 · 오른쪽 · 순서)는 26-rounds 그대로 — 여기서 grid-column 을 칸 전체로 펴지 않는다.
@@ -181,17 +181,17 @@ body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block
   body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title) { grid-row: auto; align-self: baseline; }
 }
 /* 월드 인포 활성화 · 사용자 설정(글꼴 · 흐림 · 채팅 폭)의 두 칸 격자도 같은 줄 공유 — ? · ⓘ 아이콘이 다음 줄로 흘러 한쪽 이름만 두 줄일 때 슬라이더가 4~9px 어긋났다 */
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input),
-body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   grid-row: span 2;
   grid-template-rows: subgrid;
   row-gap: var(--bl-param-row-gap);
 }
 /* 반 칸 이름은 한국어 낱말째 줄바꿈 (왼쪽 패널은 keep-all 밖이라 「(토큰)」이 「(토 / 큰)」으로 꺾였다) — 낱말 하나가 칸보다 길 때만 59 의 anywhere */
 body.salty #left-nav-panel #range_block_openai :is(.range-block-title, label.checkbox_label > span) { word-break: keep-all; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-counter, .range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-range, .range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) :is(.range-block-counter, .range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) :is(.range-block-range, .range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: auto !important; min-width: var(--bl-num-w); }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child):not(:has(> #bl-response-range)) > .wide100p { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
@@ -223,14 +223,14 @@ body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-input
 body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
 /* 두 칸 격자 안에서 윗줄 이름 옆 숫자칸은 공통 숫자칸 폭(--bl-num-w, 10-foundation) — 6.9.5 는 화면마다 4.6ch · 5ch · 5.5ch · 60px 로 달랐다 (치수 맞추기 ①).
    값은 길어야 1.00 · 65536, 높이 · 글자도 토큰 하나(--bl-h-ctl · --bl-fs-ctl) */
-body.salty #user-settings-block #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty #user-settings-block #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   width: var(--bl-num-w) !important;
   min-width: 0 !important;
   height: auto !important;
   min-height: max(var(--bl-h-ctl), calc(1.45em + 8px)) !important;
   font-size: var(--bl-fs-ctl) !important;
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   width: var(--bl-num-w) !important;
 }
 /* ↳ 아래 규칙은 css/99-lazy-panel.css 로 옮김 (서랍 전용 · :has() 오른쪽 끝이 태그) */
@@ -359,13 +359,13 @@ html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandl
 /* 7.9.2 같은 창 「채팅창 폭 · 글꼴 크기 · 흐림 강도 · 그림자 너비」: 좁은 폭(칸 22em 밑, 폰 360 이하)에서는 반 칸에 「이름 | 숫자 칸」이 안 들어가
    이름 옆 아이콘이 다음 줄로 꺾였다 → 위 「채팅/메시지 처리」와 같은 세로 쌓기(이름 / 숫자 칸 / 슬라이더). 넓으면 한 줄 그대로 */
 @container bl-user-settings (width < 22em) {
-  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
     grid-row: auto !important;
     grid-template-rows: none !important;
     grid-template-columns: minmax(0, 1fr) !important;
     justify-items: start !important;
   }
-  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-area: 1 / 1 !important; width: auto !important; }
-  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-area: 2 / 1 !important; justify-self: start !important; }
-  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-area: 3 / 1 !important; justify-self: stretch !important; width: 100% !important; margin: calc(var(--bl-knob-size) / 2) 0 !important; }
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { grid-area: 1 / 1 !important; width: auto !important; }
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input { grid-area: 2 / 1 !important; justify-self: start !important; }
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider { grid-area: 3 / 1 !important; justify-self: stretch !important; width: 100% !important; margin: calc(var(--bl-knob-size) / 2) 0 !important; }
 }

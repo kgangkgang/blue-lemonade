@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 9899a22f1c99) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6164815ad6bc) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -797,7 +797,7 @@ box-shadow:var(--bl-knob) !important;
 body.salty .range-block-title:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-text) !important;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -805,7 +805,7 @@ body.salty .range-block:has(> .range-block-title + .range-block-range-and-counte
   row-gap: var(--bl-param-row-gap);
   padding: var(--bl-param-pad) !important;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-title {
   grid-column: 1;
   grid-row: 1;
   width: auto !important;
@@ -815,26 +815,26 @@ body.salty .range-block:has(> .range-block-title + .range-block-range-and-counte
   font-size: var(--bl-fs-body) !important;
   font-weight: 500;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-range-and-counter {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-range-and-counter {
   display: contents;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter {
   grid-column: 2;
   grid-row: 1;
   flex: none !important;
   margin: 0 !important;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter input {
   width: var(--bl-num-w) !important;
   margin: 0 !important;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-range {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-range {
   grid-column: 1 / -1;
   grid-row: 2;
   width: 100% !important;
   margin: 0 !important;
 }
-body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-content: start;
@@ -843,7 +843,7 @@ body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-ra
   row-gap: var(--bl-param-row-gap);
   padding: var(--bl-param-pad);
 }
-body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child {
 grid-column:1;
 grid-row:1;
 min-width:0;
@@ -851,25 +851,25 @@ text-align:left;
 font-size:var(--bl-fs-body) !important;
 font-weight:600;
 }
-body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-text) !important;
 }
-body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   grid-column: 2;
   grid-row: 1;
   width: var(--bl-num-w) !important;
   margin: 0 !important;
 }
-body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider {
+body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider {
   grid-column: 1 / -1;
   grid-row: 2;
   width: 100% !important;
 }
-body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:not(:first-child) {
+body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:not(:first-child) {
 grid-column:1 / -1;
 grid-row:3;
 }
-body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:not(:first-child):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:not(:first-child):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-faint);
 }
 body.salty .select2-container--default .select2-selection--multiple,
@@ -5748,17 +5748,17 @@ body.salty #WorldInfo #wiActivationSettings small { opacity: 1; }
 body.salty #WorldInfo #wiSliders {
   flex-wrap: wrap !important;
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   gap: var(--bl-param-row-gap) var(--bl-param-col-gap);
   padding: var(--bl-param-pad);
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid {
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid {
   margin: 0 !important;
   font-size: var(--bl-fs-sub);
   color: var(--salty-muted) !important;
   opacity: 1 !important;
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   width: var(--bl-num-w) !important;
   max-width: 100% !important;
   height: auto !important;
@@ -8530,7 +8530,7 @@ body.salty #left-nav-panel label[for="bind_preset_to_connection"]:has(input:chec
   background: var(--salty-fill-accent-10, var(--salty-accent-10)) !important;
   color: var(--salty-accent) !important;
 }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title {
+body.salty #left-nav-panel .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-title {
   display: flex;
   align-items: center;
 }
@@ -9627,11 +9627,11 @@ body.salty #user-settings-block [name="FontBlurChatWidthBlock"] {
   gap: 0 !important;
   padding-block: var(--bl-s2) !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   flex: 1 1 100% !important;
   padding: var(--bl-param-pad) !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   width: var(--bl-num-w) !important;
 }
 body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .inline-drawer {
@@ -14237,7 +14237,7 @@ body.salty .PastChat_cross {
 body.salty .popup:has(.salty-panel.in-popup) .popup-content { padding-inline: 0 !important; scrollbar-gutter: auto !important; }
   body.salty .popup:has(.salty-panel.in-popup) .popup-content { scrollbar-gutter: stable both-edges !important; }
   body.salty .popup .salty-panel.in-popup { --pp: 2px; --pad: 10px; padding: 2px 2px 6px !important; }
-  body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+  body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
     display: grid !important; grid-template-columns: minmax(0, 1fr) auto; width: 100%; gap: 4px 10px;
   }
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-slider { width: 100%; min-width: 0; grid-area: 2 / 1 !important; }
@@ -17505,9 +17505,9 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-
 }
 body.salty #WorldInfo #wiSliders { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bl-param-gap) !important; }
 body.salty #WorldInfo #wiSliders > .flex-container { flex: none !important; width: auto; min-width: 0; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) { grid-template-columns: minmax(0, 1fr) auto;  }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-area: 2 / 1 !important; width: 100%; min-width: 0; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-area: 2 / 2 !important; min-width: 0 !important; font-size: var(--bl-fs-ctl);  }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) { grid-template-columns: minmax(0, 1fr) auto;  }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider { grid-area: 2 / 1 !important; width: 100%; min-width: 0; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input { grid-area: 2 / 2 !important; min-width: 0 !important; font-size: var(--bl-fs-ctl);  }
 body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) { grid-column: 1 / -1; }
 body.salty #WorldInfo #wiCheckboxes { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px !important; }
 body.salty #WorldInfo #wiCheckboxes label.checkbox_label { min-width: 0; }
@@ -17518,10 +17518,10 @@ body.salty #WorldInfo #wiCheckboxes { grid-template-columns: minmax(0, 1fr); }
 body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bl-param-gap); align-items: start; }
 body.salty #left-nav-panel #range_block_openai > * { grid-column: 1 / -1; min-width: 0; }
 body.salty #left-nav-panel #range_block_openai > hr { display: none; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) { grid-column: auto; grid-template-columns: minmax(0, 1fr) auto; gap: var(--bl-param-row-gap) var(--bl-param-col-gap); padding: var(--bl-param-pad) !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title { grid-column: 1 / -1 !important; grid-row: 1; min-height: 0; font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-range { grid-column: 1 !important; grid-row: 2 !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter { grid-column: 2 !important; grid-row: 2 !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) { grid-column: auto; grid-template-columns: minmax(0, 1fr) auto; gap: var(--bl-param-row-gap) var(--bl-param-col-gap); padding: var(--bl-param-pad) !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-title { grid-column: 1 / -1 !important; grid-row: 1; min-height: 0; font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-range { grid-column: 1 !important; grid-row: 2 !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter { grid-column: 2 !important; grid-row: 2 !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) { grid-column: auto; grid-template-columns: minmax(0, 1fr) auto; gap: var(--bl-param-row-gap) var(--bl-param-col-gap); padding: var(--bl-param-pad) !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title { grid-column: 1 / -1 !important; grid-row: 1; min-height: 0; font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .toggle-description { display: none; }
@@ -17535,7 +17535,7 @@ body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkb
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"]::before { width: 14px !important; height: 14px !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"]:checked::before { transform: translateX(16px) !important; }
 body.salty #left-nav-panel #range_block_openai > * { order: 50; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) { order: 10; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) { order: 10; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(#oai_max_context_unlocked) { order: 1; grid-column: 1; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(#stream_toggle) { order: 2; grid-column: 2; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(#openai_max_context) { order: 3; grid-column: 1; }
@@ -22624,7 +22624,7 @@ body.salty #left-nav-panel {
   container:bl-generation / inline-size;
   font-size:var(--bl-fs-body);
 }
-body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   flex:1 1 11em;
   min-width:0;
   max-width:100%;
@@ -22632,18 +22632,18 @@ body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small
   gap:var(--bl-param-row-gap) var(--bl-param-col-gap);
   padding:var(--bl-param-pad);
 }
-body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-circle-info,
-body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-circle-question {
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-circle-info,
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-circle-question {
   color:var(--salty-muted);
   opacity:1;
 }
-body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider {
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider {
   grid-column:1;
   grid-row:2;
   min-width:0;
   width:100%!important;
 }
-body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   grid-column:2;
   grid-row:2;
   width:var(--bl-num-w)!important;
@@ -26650,18 +26650,18 @@ body.salty #WorldInfo#WorldInfo .world_entry_form_control:has(> select[name="ent
   width: 100% !important;
 }
 body.salty #WorldInfo#WorldInfo .world_entry_form_control > select[name="entryLogicType"] { width: auto !important; max-width: 60% !important; text-align: right !important; }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
   column-gap: var(--bl-param-col-gap) !important;
   row-gap: var(--bl-param-row-gap) !important;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-range-and-counter:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) { display: contents !important; }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter,
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-range,
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-range-and-counter:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) { display: contents !important; }
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter,
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) :is(.range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-range,
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) :is(.range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title) {
   grid-row: span 2;
   grid-template-rows: subgrid;
@@ -26671,19 +26671,19 @@ body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block
 @supports not (grid-template-rows: subgrid) {
   body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title) { grid-row: auto; align-self: baseline; }
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input),
-body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   grid-row: span 2;
   grid-template-rows: subgrid;
   row-gap: var(--bl-param-row-gap);
 }
 body.salty #left-nav-panel #range_block_openai .range-block-title:is(bl-s, *):is(bl-s, *),
 body.salty #left-nav-panel #range_block_openai :is(label.checkbox_label > span) { word-break: keep-all; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter,
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-range,
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) :is(.range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter,
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) :is(.range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-range,
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) :is(.range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: auto !important; min-width: var(--bl-num-w); }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child):not(:has(> #bl-response-range)) > .wide100p { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
@@ -26709,14 +26709,14 @@ body.salty .parameterbox:has(> :is(small, label):first-child + .neo-range-slider
 }
 body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-input { grid-area: 1 / 2 !important; }
 body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
-body.salty #user-settings-block #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty #user-settings-block #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   width: var(--bl-num-w) !important;
   min-width: 0 !important;
   height: auto !important;
   min-height: max(var(--bl-h-ctl), calc(1.45em + 8px)) !important;
   font-size: var(--bl-fs-ctl) !important;
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   width: var(--bl-num-w) !important;
 }
 body.salty #lv_settings .lv-row:not(.lv-extra) {
@@ -26833,15 +26833,15 @@ html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandl
   html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container { grid-template-columns: minmax(0, 1fr) !important; }
 }
 @container bl-user-settings (width < 22em) {
-  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
     grid-row: auto !important;
     grid-template-rows: none !important;
     grid-template-columns: minmax(0, 1fr) !important;
     justify-items: start !important;
   }
-  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-area: 1 / 1 !important; width: auto !important; }
-  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-area: 2 / 1 !important; justify-self: start !important; }
-  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-area: 3 / 1 !important; justify-self: stretch !important; width: 100% !important; margin: calc(var(--bl-knob-size) / 2) 0 !important; }
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { grid-area: 1 / 1 !important; width: auto !important; }
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input { grid-area: 2 / 1 !important; justify-self: start !important; }
+  html body.salty #user-settings-block#user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider { grid-area: 3 / 1 !important; justify-self: stretch !important; width: 100% !important; margin: calc(var(--bl-knob-size) / 2) 0 !important; }
 }
 /* css/97-param-inline.css */
 html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-slider > header {
@@ -27144,13 +27144,13 @@ body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-chi
 body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
 body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > :not(:is(small, label):first-child, .neo-range-slider, .neo-range-input) { grid-column: 1 / -1 !important; }
 body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> .neo-range-slider) > small { grid-column: 1 !important; grid-row: 1 !important; width: auto !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-column: 1 !important; grid-row: 1 !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-area: 1 / 2 !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { flex-wrap: wrap !important; gap: 2px var(--bl-s1) !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
-body.salty #user-settings-block #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { flex-wrap: wrap !important; gap: 0 var(--bl-s1) !important; }
-body.salty #user-settings-block #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { grid-column: 1 !important; grid-row: 1 !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input { grid-area: 1 / 2 !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { flex-wrap: wrap !important; gap: 2px var(--bl-s1) !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
+body.salty #user-settings-block #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { flex-wrap: wrap !important; gap: 0 var(--bl-s1) !important; }
+body.salty #user-settings-block #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
 body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 {
   flex: 1 1 0;
   min-width: 0;
@@ -27165,7 +27165,7 @@ body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 > span {
   word-break: normal;
   overflow-wrap: anywhere;
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -27293,33 +27293,33 @@ font-weight:500 !important;
 body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-text) !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: var(--bl-fs-body) !important;
   font-weight: 500 !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child span,
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child i,
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child div {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child span,
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child i,
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child div {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :where(i):is(.bl-s, *),
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :where(i):is(.bl-s, *),
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid {
 font-size:12px !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :where(i):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :where(i):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-faint) !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :where(i):is(.bl-s, *),
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :where(i):is(.bl-s, *),
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid {
 opacity:1 !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:not(:first-child) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:not(:first-child) {
   font-size: var(--bl-fs-micro) !important;
 }
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header b,
@@ -27411,8 +27411,8 @@ background-color:var(--bl-control) !important;
 border-radius:8px !important;
 }
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-column: 1 / -1; grid-row: 1;  }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input { width: var(--bl-num-w) !important; font-size: var(--bl-fs-ctl) !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { grid-column: 1 / -1; grid-row: 1;  }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter input { width: var(--bl-num-w) !important; font-size: var(--bl-fs-ctl) !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input { font-size: var(--bl-fs-ctl) !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > span { font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
 body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > h4 {
@@ -27448,7 +27448,7 @@ body.salty .popup:has(#qr--modalEditor) .popup-content > #qr--modalEditor > #qr-
   min-width:0;
   gap:8px;
 }
-body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child {
   grid-column:1 / -1;
   grid-row:1;
   min-width:0;
@@ -27457,7 +27457,7 @@ body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small
   white-space:normal;
   overflow-wrap:anywhere;
 }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input {
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter input {
   width:var(--bl-num-w)!important;
   max-width:100%;
   height:auto!important;
@@ -27488,7 +27488,7 @@ body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instru
   height:auto!important;
   min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > * {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > * {
   grid-column: 1 / -1;
 }
 body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > * {

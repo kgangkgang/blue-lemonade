@@ -7,13 +7,13 @@ body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-chi
 body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
 body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > :not(:is(small, label):first-child, .neo-range-slider, .neo-range-input) { grid-column: 1 / -1 !important; }
 body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> .neo-range-slider) > small { grid-column: 1 !important; grid-row: 1 !important; width: auto !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-column: 1 !important; grid-row: 1 !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-area: 1 / 2 !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { flex-wrap: wrap !important; gap: 2px var(--bl-s1) !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
-body.salty #user-settings-block #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { flex-wrap: wrap !important; gap: 0 var(--bl-s1) !important; }
-body.salty #user-settings-block #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { grid-column: 1 !important; grid-row: 1 !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input { grid-area: 1 / 2 !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { flex-wrap: wrap !important; gap: 2px var(--bl-s1) !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
+body.salty #user-settings-block #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { flex-wrap: wrap !important; gap: 0 var(--bl-s1) !important; }
+body.salty #user-settings-block #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
 body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 {
   flex: 1 1 0;
   min-width: 0;
@@ -28,7 +28,7 @@ body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 > span {
   word-break: normal;
   overflow-wrap: anywhere;
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -156,33 +156,33 @@ font-weight:500 !important;
 body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-text) !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: var(--bl-fs-body) !important;
   font-weight: 500 !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child span,
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child i,
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child div {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child span,
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child i,
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child div {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :where(i):is(.bl-s, *),
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :where(i):is(.bl-s, *),
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid {
 font-size:12px !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :where(i):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :where(i):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-faint) !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :where(i):is(.bl-s, *),
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :where(i):is(.bl-s, *),
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid {
 opacity:1 !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:not(:first-child) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:not(:first-child) {
   font-size: var(--bl-fs-micro) !important;
 }
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header b,
@@ -274,8 +274,8 @@ background-color:var(--bl-control) !important;
 border-radius:8px !important;
 }
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-column: 1 / -1; grid-row: 1;  }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input { width: var(--bl-num-w) !important; font-size: var(--bl-fs-ctl) !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { grid-column: 1 / -1; grid-row: 1;  }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter input { width: var(--bl-num-w) !important; font-size: var(--bl-fs-ctl) !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input { font-size: var(--bl-fs-ctl) !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > span { font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
 body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > h4 {
@@ -311,7 +311,7 @@ body.salty .popup:has(#qr--modalEditor) .popup-content > #qr--modalEditor > #qr-
   min-width:0;
   gap:8px;
 }
-body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child {
   grid-column:1 / -1;
   grid-row:1;
   min-width:0;
@@ -320,7 +320,7 @@ body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small
   white-space:normal;
   overflow-wrap:anywhere;
 }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input {
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter input {
   width:var(--bl-num-w)!important;
   max-width:100%;
   height:auto!important;
@@ -351,7 +351,7 @@ body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instru
   height:auto!important;
   min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > * {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > * {
   grid-column: 1 / -1;
 }
 body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > * {

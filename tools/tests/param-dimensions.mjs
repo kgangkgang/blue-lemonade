@@ -64,24 +64,24 @@ const badFs=find(/#range_block_openai .*input$/,'font-size').filter(({v})=>!/var
 assert.deepEqual(badFs,[],'생성 설정 숫자칸 글자는 --bl-fs-ctl:\n'+badFs.join('\n'));
 
 // 3. 이름 글자: 생성 설정 칸 이름(슬라이더 칸 · 숫자 칸 · 스위치 칸)은 월드 인포 · 사용자 설정과 같은 --bl-fs-body
-const badLabel=find(/#range_block_openai > \.range-block:has\(.*\) > (\.range-block-title|label\.checkbox_label > span)$/,'font-size').filter(({v})=>!/var\(--bl-fs-body\)/.test(v)).map(({sel,v})=>`${sel} { font-size: ${v} }`);
+const badLabel=find(/#range_block_openai > \.range-block(?::has\(.*\)|\[data-bl-row ~ ="range"\]:is\(\.bl-s, \*\)) > (\.range-block-title|label\.checkbox_label > span)$/,'font-size').filter(({v})=>!/var\(--bl-fs-body\)/.test(v)).map(({sel,v})=>`${sel} { font-size: ${v} }`);
 assert.deepEqual(badLabel,[],'생성 설정 이름 글자는 --bl-fs-body:\n'+badLabel.join('\n'));
-assert.ok(find(/#range_block_openai > \.range-block:has\(.*\) > \.range-block-title$/,'font-size').length>=2,'생성 설정 이름 규칙이 있어야 함');
+assert.ok(find(/#range_block_openai > \.range-block(?::has\(.*\)|\[data-bl-row ~ ="range"\]:is\(\.bl-s, \*\)) > \.range-block-title$/,'font-size').length>=2,'생성 설정 이름 규칙이 있어야 함');
 
 // 4. 칸 사이 · 칸 안 간격은 토큰
-const cellGap=find(/#range_block_openai > \.range-block:has\(> \.range-block-title \+ \.range-block-range-and-counter\)$/,'gap');
+const cellGap=find(/#range_block_openai > \.range-block\[data-bl-row ~ ="range"\]:is\(\.bl-s, \*\)$/,'gap');
 assert.ok(cellGap.length&&cellGap.every(({v})=>/var\(--bl-param-row-gap\) var\(--bl-param-col-gap\)/.test(v)),'생성 설정 칸 안 간격 토큰: '+cellGap.map(x=>x.v).join(' | '));
 for(const re of [/#range_block_openai$/,/#wiSliders$/,/#user-settings-block \[name="(AvatarAndChatDisplay|FontBlurChatWidthBlock|themeToggles|CharacterHandlingToggles|MiscellaneousToggles|ChatMessageHandlingToggles)"\]$/]){
   const g=find(re,'gap'); assert.ok(g.some(({v})=>/var\(--bl-param-gap\)/.test(v))&&!g.some(({v})=>/[1-9]\d*px/.test(v)),'칸 사이 간격은 토큰(px 숫자 금지): '+re+' → '+g.map(x=>x.v).join(' | '));
 }
-const pads=find(/(#range_block_openai > \.range-block:has\(.*\)|#wiSliders > \.flex-container:has\(.*\)|#user-settings-block-content \.flex-container:has\(.*\))$/,'padding').filter(({v})=>!/var\(--bl-param-pad\)/.test(v)).map(({sel,v})=>`${sel} { padding: ${v} }`);
+const pads=find(/(#range_block_openai > \.range-block(?::has\(.*\)|\[data-bl-row ~ ="range"\]:is\(\.bl-s, \*\))|#wiSliders > \.flex-container(?::has\(.*\)|\[data-bl-row ~ ="neo"\]:is\(\.bl-s, \*\):is\(\.bl-s, \*\):is\(bl-s, \*\))|#user-settings-block-content \.flex-container(?::has\(.*\)|\[data-bl-row ~ ="neo"\]:is\(\.bl-s, \*\):is\(\.bl-s, \*\):is\(bl-s, \*\)))$/,'padding').filter(({v})=>!/var\(--bl-param-pad\)/.test(v)).map(({sel,v})=>`${sel} { padding: ${v} }`);
 assert.deepEqual(pads,[],'칸 안 위아래 여백은 --bl-param-pad:\n'+pads.join('\n'));
 
 // 5. 같은 줄 두 칸은 줄을 공유 (subgrid) — 생성 설정 · 월드 인포 · 사용자 설정, 옛 브라우저는 기준선 맞춤
 const sub=re=>items.some(({sel,r})=>re.test(sel)&&!r.at.length&&decl(r.decls,'grid-template-rows')==='subgrid'&&/span 2/.test(decl(r.decls,'grid-row')||'')&&/--bl-param-row-gap/.test(decl(r.decls,'row-gap')||''));
 assert.ok(sub(/^body\.salty #left-nav-panel #range_block_openai > \.range-block:has\(> \.range-block-title\)$/),'생성 설정 이름 줄 칸: subgrid 두 줄');
-assert.ok(sub(/^body\.salty #WorldInfo #wiSliders > \.flex-container:has\(> small:first-child \+ \.neo-range-slider \+ \.neo-range-input\)$/),'월드 인포 칸: subgrid 두 줄');
-assert.ok(sub(/^body\.salty #user-settings-block \[name="FontBlurChatWidthBlock"\] > \.flex-container:has\(> small:first-child \+ \.neo-range-slider \+ \.neo-range-input\)$/),'사용자 설정 칸: subgrid 두 줄');
+assert.ok(sub(/^body\.salty #WorldInfo #wiSliders > \.flex-container\[data-bl-row ~ ="neo"\]:is\(\.bl-s, \*\):is\(\.bl-s, \*\):is\(bl-s, \*\)$/),'월드 인포 칸: subgrid 두 줄');
+assert.ok(sub(/^body\.salty #user-settings-block \[name="FontBlurChatWidthBlock"\] > \.flex-container\[data-bl-row ~ ="neo"\]:is\(\.bl-s, \*\):is\(\.bl-s, \*\):is\(bl-s, \*\)$/),'사용자 설정 칸: subgrid 두 줄');
 assert.ok(items.some(({sel,r})=>sel==='body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title)'&&r.at.some(a=>/^@supports not \(grid-template-rows: ?subgrid\)/.test(a))&&decl(r.decls,'align-self')==='baseline'),'subgrid 없는 브라우저는 기준선 맞춤');
 assert.ok(!items.some(({sel,r})=>sel==='body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title)'&&!r.at.length&&decl(r.decls,'align-self')==='baseline'),'subgrid 와 기준선 맞춤을 같이 걸지 않는다');
 

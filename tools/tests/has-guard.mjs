@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const BASELINE = 295;   // 주어 아닌 :has 규칙 수(7.9.4 313 → B3 P2 311 → B4 P4 295)
+const BASELINE = 243;   // 주어 아닌 :has 규칙 수(7.9.4 313 → B3 P2 311 → B4 P4 295 → B6 P3 일부 243)
 const root = path.resolve(process.argv[2] || '.');
 let pass = 0, fail = 0;
 async function test(name, fn) {

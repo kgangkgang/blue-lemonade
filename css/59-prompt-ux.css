@@ -17,7 +17,7 @@ body.salty #left-nav-panel {
 
 /* Kobold/텍스트 생성의 30% 세 칸은 이름과 숫자를 동시에 담기엔 좁다.
    슬라이더는 아래 한 줄, 이름은 위 한 줄 전체를 사용한다. */
-body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   flex:1 1 11em;
   min-width:0;
   max-width:100%;
@@ -25,17 +25,17 @@ body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small
   gap:var(--bl-param-row-gap) var(--bl-param-col-gap);
   padding:var(--bl-param-pad);
 }
-body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :is(.fa-circle-info,.fa-circle-question) {
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :is(.fa-circle-info,.fa-circle-question) {
   color:var(--salty-muted);
   opacity:1;
 }
-body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider {
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider {
   grid-column:1;
   grid-row:2;
   min-width:0;
   width:100%!important;
 }
-body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   grid-column:2;
   grid-row:2;
   width:var(--bl-num-w)!important;

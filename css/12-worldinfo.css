@@ -299,17 +299,17 @@ body.salty #WorldInfo #wiActivationSettings small { opacity: 1; }
 body.salty #WorldInfo #wiSliders {
   flex-wrap: wrap !important;
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   gap: var(--bl-param-row-gap) var(--bl-param-col-gap);
   padding: var(--bl-param-pad);
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child .fa-solid {
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid {
   margin: 0 !important;
   font-size: var(--bl-fs-sub);
   color: var(--salty-muted) !important;
   opacity: 1 !important;
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   width: var(--bl-num-w) !important; /* 6.9.8: 6ch+22px → 공통 숫자칸 폭 */
   max-width: 100% !important;
   height: auto !important;

@@ -305,11 +305,11 @@ body.salty #user-settings-block [name="FontBlurChatWidthBlock"] {
   gap: 0 !important;
   padding-block: var(--bl-s2) !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   flex: 1 1 100% !important;
   padding: var(--bl-param-pad) !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   width: var(--bl-num-w) !important;
 }
 /* 사용자 테마 입력(다른 확장이 슬라이더 칸에 끼워 넣음): 한 줄 차지 */

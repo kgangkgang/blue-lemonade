@@ -157,7 +157,7 @@ body.salty :is(.mes_edit_delete, .mes_reasoning_delete, .mes_media_delete, .mes_
   body.salty .popup:has(.salty-panel.in-popup) :is(.popup-body, .popup-content) { padding-inline: 0 !important; scrollbar-gutter: auto !important; }
   body.salty .popup:has(.salty-panel.in-popup) .popup-content { scrollbar-gutter: stable both-edges !important; }
   body.salty .popup .salty-panel.in-popup { --pp: 2px; --pad: 10px; padding: 2px 2px 6px !important; }
-  body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+  body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
     display: grid !important; grid-template-columns: minmax(0, 1fr) auto; width: 100%; gap: 4px 10px;
   }
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-slider { width: 100%; min-width: 0; grid-area: 2 / 1 !important; }

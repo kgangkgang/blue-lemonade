@@ -373,7 +373,7 @@ body.salty .range-block-title {
   color: var(--salty-text) !important;
 }
 /* 이름 왼쪽 · 숫자 오른쪽 한 줄, 막대는 아래 (구조가 맞을 때만 — display 는 !important 없이: 실리태번이 숨긴 칸은 그대로 숨김) */
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -381,7 +381,7 @@ body.salty .range-block:has(> .range-block-title + .range-block-range-and-counte
   row-gap: var(--bl-param-row-gap);
   padding: var(--bl-param-pad) !important;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-title {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-title {
   grid-column: 1;
   grid-row: 1;
   width: auto !important;
@@ -391,27 +391,27 @@ body.salty .range-block:has(> .range-block-title + .range-block-range-and-counte
   font-size: var(--bl-fs-body) !important;
   font-weight: 500;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > .range-block-range-and-counter {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-range-and-counter {
   display: contents;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter {
   grid-column: 2;
   grid-row: 1;
   flex: none !important;
   margin: 0 !important;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter input {
   width: var(--bl-num-w) !important;
   margin: 0 !important;
 }
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-range {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-range {
   grid-column: 1 / -1;
   grid-row: 2;
   width: 100% !important;
   margin: 0 !important;
 }
 /* 사용자 설정의 작은 슬라이더(작은 이름 + 막대 + 숫자)도 같은 배치 */
-body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
+body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-content: start;
@@ -420,7 +420,7 @@ body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-ra
   row-gap: var(--bl-param-row-gap);
   padding: var(--bl-param-pad);
 }
-body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child {
   grid-column: 1;
   grid-row: 1;
   min-width: 0;
@@ -429,18 +429,18 @@ body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-ra
   font-weight: 600;
   color: var(--salty-text) !important;
 }
-body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   grid-column: 2;
   grid-row: 1;
   width: var(--bl-num-w) !important;
   margin: 0 !important;
 }
-body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider {
+body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider {
   grid-column: 1 / -1;
   grid-row: 2;
   width: 100% !important;
 }
-body.salty .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:not(:first-child) {
+body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:not(:first-child) {
   grid-column: 1 / -1;
   grid-row: 3;
   color: var(--salty-faint);

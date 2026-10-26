@@ -545,7 +545,7 @@ export const FILE_HASHES = {
   "src/gutter.js": "4022:49ae5ff0:c0bcc337",
   "src/headswitch.js": "11852:99136461:6fc7bbb6",
   "src/help-sheet.js": "1792:a3fd85eb:90971bc7",
-  "src/icon-text.js": "8957:95c5b1ce:70c963d7",
+  "src/icon-text.js": "10742:4fb7cd98:7a96b4b5",
   "src/icons.js": "5842:596ce980:f8f9f64f",
   "src/image-zoom.js": "18327:667ef99d:c67dd36b",
   "src/imagedecode.js": "9406:ebf81685:5e366e26",
@@ -555,7 +555,7 @@ export const FILE_HASHES = {
   "src/ko-ui-data.js": "245627:2edc8c16:04ee0d73",
   "src/ko-ui.js": "11890:da455ebe:0274d99f",
   "src/layout.js": "29049:12ea2783:eb2dd73e",
-  "src/lazy-panel.gen.css": "32416:e95df111:36b7b23c",
+  "src/lazy-panel.gen.css": "32218:446ae80c:89b81869",
   "src/lite.js": "35527:f6339213:d001bfc3",
   "src/live-models.js": "44020:f8a5fa62:a3f1cbaf",
   "src/main-chat-finish.js": "14829:d34f07a5:c8c0a173",
@@ -716,5 +716,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1698303:e5514671:c85e3d65"
+  "style.css": "1697355:2c36ab73:e3e37608"
 };

@@ -17,15 +17,15 @@ body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-chi
 body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
 body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > :not(:is(small, label):first-child, .neo-range-slider, .neo-range-input) { grid-column: 1 / -1 !important; }
 body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> .neo-range-slider) > small { grid-column: 1 !important; grid-row: 1 !important; width: auto !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-column: 1 !important; grid-row: 1 !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-area: 1 / 2 !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { grid-column: 1 !important; grid-row: 1 !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input { grid-area: 1 / 2 !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
 /* 6.9.5 두 칸 격자의 윗줄: 이름 옆에 숫자칸이 서니 ? · ⓘ 아이콘은 이름 바로 뒤에 붙여 흐르게 (사이 10px · 한 줄 고정이면 이름이 두 글자씩 꺾임) */
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { flex-wrap: wrap !important; gap: 2px var(--bl-s1) !important; }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { flex-wrap: wrap !important; gap: 2px var(--bl-s1) !important; }
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
 /* 사용자 설정 슬라이더 칸도 같은 까닭: 이름 · ⓘ · 「테마가 끔」(::after)이 한 줄 고정이라 이름이 「흐림 / 강도」로 꺾였다 → 이름은 한 덩어리, 뒤는 흘러 내림 */
-body.salty #user-settings-block #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { flex-wrap: wrap !important; gap: 0 var(--bl-s1) !important; }
-body.salty #user-settings-block #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
+body.salty #user-settings-block #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { flex-wrap: wrap !important; gap: 0 var(--bl-s1) !important; }
+body.salty #user-settings-block #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
 /* 5.6.4 (점검 RP-2): 서랍 · 팝업 안에서만 맞고 :has() 오른쪽 끝이 태그뿐인 규칙 — 늘 켜 두면 크롬이 :has() 무효화 목록에
    그 태그(span · i · img · select …)를 넣어, 서랍을 한 번 연 뒤로(실리태번 코어의 body:has(…) #top-settings-holder:has(…) 가 body 를 표시)
    채팅에 요소가 붙을 때마다 그 태그의 요소 전부를 다시 계산했다. 원래 자리 순서 그대로 여기로 — 원래 모듈에는 옮김 표시만 남김.
@@ -45,7 +45,7 @@ body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 > span {
   word-break: normal;
   overflow-wrap: anywhere;
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -162,28 +162,28 @@ font-weight:500 !important;
 body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-text) !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: var(--bl-fs-body) !important;
   font-weight: 500 !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :is(span, i, div) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :is(span, i, div) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :is(i, .fa-solid) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :is(i, .fa-solid) {
 font-size:12px !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :is(i, .fa-solid):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :is(i, .fa-solid):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-faint) !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child :is(i, .fa-solid) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :is(i, .fa-solid) {
 opacity:1 !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:not(:first-child) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:not(:first-child) {
   font-size: var(--bl-fs-micro) !important;
 }
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header :is(b, strong) {
@@ -271,8 +271,8 @@ border-radius:8px !important;
 }
 }
 /* 원래 css/26-rounds-1.7.css */
-body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child { grid-column: 1 / -1; grid-row: 1; /* 3.0.0: min-height → css/12-worldinfo.css (원래 규칙으로 합침) */ }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input { width: var(--bl-num-w) !important; font-size: var(--bl-fs-ctl) !important; } /* 6.9.8: 60px · 11px → 공통 숫자칸 */
+body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { grid-column: 1 / -1; grid-row: 1; /* 3.0.0: min-height → css/12-worldinfo.css (원래 규칙으로 합침) */ }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter input { width: var(--bl-num-w) !important; font-size: var(--bl-fs-ctl) !important; } /* 6.9.8: 60px · 11px → 공통 숫자칸 */
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input { font-size: var(--bl-fs-ctl) !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > span { font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
 /* 원래 css/27-compact.css */
@@ -306,7 +306,7 @@ body.salty .popup:has(#qr--modalEditor) .popup-content > #qr--modalEditor > #qr-
   gap:8px;
 }
 /* 원래 css/59-prompt-ux.css */
-body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) > small:first-child {
+body.salty #left-nav-panel #advanced-ai-config-block .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child {
   grid-column:1 / -1;
   grid-row:1;
   min-width:0;
@@ -315,7 +315,7 @@ body.salty #left-nav-panel #advanced-ai-config-block .flex-container:has(> small
   white-space:normal;
   overflow-wrap:anywhere;
 }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .range-block-range-and-counter) .range-block-counter input {
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter input {
   width:var(--bl-num-w)!important;
   max-width:100%;
   height:auto!important;
@@ -346,7 +346,7 @@ body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instru
   min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
 }
 /* 원래 css/02-controls.css */
-body.salty .range-block:has(> .range-block-title + .range-block-range-and-counter) > * {
+body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > * {
   grid-column: 1 / -1;
 }
 /* 원래 css/14-prompt.css */
