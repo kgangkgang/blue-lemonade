@@ -4,18 +4,21 @@
    자리: 늘 절 제목 글자 바로 옆, 제목 글자 끝에서 6px, 세로 중심은 제목 글자 중심과 같게(제목이 flex 면 ? 를 제목 요소 안에 inline 으로 둔다). 글꼴 설정과 무관(글자 ? 가 아니라 아이콘).
    항목 라벨 옆 ? 는 7.7.9 에 뗐다(TTS · 다시 쓰기). 대상: TTS .lv-help-btn · 다시 쓰기 .bwr_help · 낱말 가림 · 성능 보조 .bl-word-help · 한글화 .pt-qhelp 와 공통 클래스 .bl-help-btn.
    공용 조각 ext-design/help-button.css 와 같은 값(시안 density/help/H3.css).
-   7.9.1: 한글화 패널 작업 줄의 「? 설명」(.pt-qhelp.pt-act)은 절 제목 옆 ? 가 아니라 줄의 작업 단추라 빼 둔다 — 이 규칙이 글자를 숨기고 <i> 가 없어 폰에서 빈 회색 원만 보였다(사용자 10-24) */
+   7.9.1: 한글화 패널 작업 줄의 「? 설명」(.pt-qhelp.pt-act)은 절 제목 옆 ? 가 아니라 줄의 작업 단추라 빼 둔다 — 이 규칙이 글자를 숨기고 <i> 가 없어 폰에서 빈 회색 원만 보였다(사용자 10-24)
+   7.9.9 (사용자 제보 「? 동그라미 글이랑 간격 너무 벌어짐 · 크기도 글자 크기랑 맞춰줘」): 원 24px 고정 · 여백 6px 고정이 폰 글자 15.5px 옆에서 글자보다 한 단 크게 떠 보였다
+   → 원 지름은 옆 글자의 1.3em(15.5 → 20px), 여백은 0.35em(≈5.4px), 아이콘은 0.75em(≈11.6px). 단추 글자 크기를 0 이 아니라 inherit 로 두어야 em 이 옆 글자를 따른다 —
+   글자 ? 는 모두 <i> 로 바꿨고(아래 > span 숨김) 직접 글자 노드가 든 단추는 없다. 폰의 누르는 칸 44 는 87-addon-touch(::after) · 86-touch-targets(::before, .bl-word-help) 가 그대로 그린다. */
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help) {
   box-sizing: border-box !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   flex: 0 0 auto !important;
-  width: 24px !important;
-  height: 24px !important;
-  min-width: 24px !important;
-  min-height: 24px !important;
-  margin: 0 0 0 6px !important;          /* 제목 글자 끝에서 6px */
+  width: 1.3em !important;
+  height: 1.3em !important;
+  min-width: 1.3em !important;
+  min-height: 1.3em !important;
+  margin: 0 0 0 0.35em !important;          /* 제목 글자 끝에서 0.35em (15.5px 글자면 5.4px) */
   vertical-align: middle !important;
   padding: 0 !important;
   border: 0 !important;
@@ -24,7 +27,7 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_set
   color: var(--salty-muted) !important;
   box-shadow: none !important;
   opacity: 1 !important;
-  font-size: 0 !important;          /* 글자 ? 는 숨기고 아이콘만 (글꼴 영향 없음) */
+  font-size: inherit !important;    /* 옆 글자 크기를 그대로 받아 em 의 기준으로 (글자 ? 는 아래 > span 숨김으로 가린다) */
   line-height: 1 !important;
   cursor: pointer;
   position: relative;
@@ -33,7 +36,7 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_set
 }
 /* 아이콘: 자식 <i> 로만 그린다 */
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help) > i {
-  font-size: 12px !important; line-height: 1 !important; display: block !important; color: inherit !important;   /* TTS 는 아이콘에 포인트 색을 줬었다 — 보조 글자색 하나로 */
+  font-size: 0.75em !important; line-height: 1 !important; display: block !important; color: inherit !important;   /* TTS 는 아이콘에 포인트 색을 줬었다 — 보조 글자색 하나로. 크기는 원(1.3em)의 약 58% */
 }
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help) > i::before { content: "\f128" !important; }
 /* 글자 ? 만 있던 단추는 전부 <i class="fa-solid fa-question"> 를 품게 바꿨다 — ::before 는 86-touch-targets 의 44px 누르는 칸 몫이라 여기선 쓰지 않는다 */
@@ -44,19 +47,21 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_set
 }
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help):is([aria-expanded="true"], :active) { background: var(--bl-control-hover) !important; color: var(--salty-text) !important; }
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help):focus-visible { outline: 2px solid var(--salty-accent) !important; outline-offset: 2px !important; }
-/* 제목 요소 안 inline ? : 제목 글자와 같은 줄, 글자 끝 6px */
-html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > :is(.bl-help-btn, .lv-help-btn, .bwr_help, .bl-word-help) { margin-left: 6px !important; }
+/* 제목 요소 안 inline ? : 제목 글자와 같은 줄, 글자 끝 0.35em */
+html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > :is(.bl-help-btn, .lv-help-btn, .bwr_help, .bl-word-help) { margin-left: 0.35em !important; }
 /* 2열 격자의 라벨 줄: 아이콘 단추(? · 되돌리기) 유무와 무관하게 줄 높이를 같게 — 옆 칸 입력칸 윗선이 어긋나지 않게(제보 26) */
 html body.salty #lv_settings .lv-grid > .lv-field > .lv-label { min-height: 24px; align-items: center; }
 /* 정보 ⓘ 도 같은 규격(.bl-info · 아이콘만 fa-info): 에셋 창 안내 줄의 fa-circle-info, 앞으로 쓰는 .bl-info */
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-info, .eh-guide-note > .fa-circle-info) {
   box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; flex: 0 0 auto !important;
-  width: 24px !important; height: 24px !important; min-width: 24px !important; min-height: 24px !important; margin: 0 6px 0 0 !important; padding: 0 !important;
+  width: 1.3em !important; height: 1.3em !important; min-width: 1.3em !important; min-height: 1.3em !important; margin: 0 0.35em 0 0 !important; padding: 0 !important;
   border: 0 !important; border-radius: 50% !important; background: var(--bl-control) !important; color: var(--salty-muted) !important; box-shadow: none !important;
-  font-size: 12px !important; line-height: 1 !important; vertical-align: middle !important; align-self: center;
+  font-size: inherit !important; line-height: 1 !important; vertical-align: middle !important; align-self: center;
 }
+/* 아이콘 자신이 원인 경우(.fa-circle-info): 글자 0.75em 으로 줄이고 원은 옆 글자 1.3em 그대로(1.3 ÷ 0.75) */
+html body.salty:not(#bl-h1):not(#bl-h2) .eh-guide-note > .fa-circle-info { font-size: 0.75em !important; width: calc(1.3em / 0.75) !important; height: calc(1.3em / 0.75) !important; min-width: calc(1.3em / 0.75) !important; min-height: calc(1.3em / 0.75) !important; margin-right: calc(0.35em / 0.75) !important; }
 html body.salty:not(#bl-h1):not(#bl-h2) .eh-guide-note > .fa-circle-info::before { content: "\f129" !important; }   /* fa-info */
-html body.salty:not(#bl-h1):not(#bl-h2) .bl-info > i { font-size: 12px !important; line-height: 1 !important; display: block !important; }
+html body.salty:not(#bl-h1):not(#bl-h2) .bl-info > i { font-size: 0.75em !important; line-height: 1 !important; display: block !important; }
 /* 7.8.3 머리 · 제목 아이콘 → 글자 8 (layout-audit ICONGAP): ZIP 설치 절 제목 · 모델 전환 「잠금」 */
 html body.salty .blzi :is(h2, h3, h4) > i:first-child { margin-inline-end: 8px !important; }
 html body.salty .ms-lock b > i:first-child { margin-inline-end: 6px !important; }

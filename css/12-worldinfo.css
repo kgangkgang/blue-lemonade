@@ -173,15 +173,18 @@ body.salty #WorldInfo #wiTopBlock > .range-block {
   background: var(--bl-fill-card, var(--bl-card)) !important;
   box-shadow: var(--bl-e1) !important;
 }
+/* 7.9.9 (사용자 제보 「모든 채팅에 켤 월드 인포 글자는 왜이리 작음」): 카드 이름이 묶음 이름 크기(--bl-fs-cap 12.5 · 흐린색)라 옆 「활성화 설정」 카드 이름(본문 15.5 · 글자색)과 달랐다
+   → 같은 카드 이름 규격(본문 크기 · 글자색 · 600) */
 body.salty #WorldInfo #wiTopBlock > .range-block > .range-block-title {
   justify-content: flex-start !important;
+  align-items: center;
   margin: 0 !important;
   padding: 10px 2px 6px !important;
-  color: var(--salty-muted) !important;
-  font-size: var(--bl-fs-cap) !important;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  line-height: 1.4;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.35;
   text-align: left !important;
 }
 body.salty #WorldInfo #wiTopBlock > .range-block > .range-block-title :is(small, span) {

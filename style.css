@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 42342a960f7c) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ab56bb1c2cce) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -5632,13 +5632,14 @@ body.salty #WorldInfo #wiTopBlock > .range-block {
 }
 body.salty #WorldInfo #wiTopBlock > .range-block > .range-block-title {
   justify-content: flex-start !important;
+  align-items: center;
   margin: 0 !important;
   padding: 10px 2px 6px !important;
-  color: var(--salty-muted) !important;
-  font-size: var(--bl-fs-cap) !important;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  line-height: 1.4;
+  color: var(--salty-text) !important;
+  font-size: var(--bl-fs-body) !important;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.35;
   text-align: left !important;
 }
 body.salty #WorldInfo #wiTopBlock > .range-block > .range-block-title small,
@@ -21693,117 +21694,106 @@ body.salty :is(:is(#chat,.bl-chat-like)[data-bl-dem-paused], .cg-root[data-bl-de
   animation-play-state: paused !important;
 }
 /* css/56-control-consistency.css */
-html body.salty .bl-word-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :is(.blzi .blzi-help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :is(.bwr_settings .bwr_help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty .lv-help-btn:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
 html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) {
 align-items:center !important;
 justify-content:center !important;
 position:relative;
 flex:0 0 auto !important;
 box-sizing:border-box !important;
-width:max(24px,1em) !important;
-min-width:max(24px,1em) !important;
+width:1.25em !important;
+min-width:1.25em !important;
 max-width:none !important;
-height:max(24px,1em) !important;
-min-height:max(24px,1em) !important;
+height:1.25em !important;
+min-height:1.25em !important;
 max-height:none !important;
-margin:0 0 0 4px !important;
+margin:0 0 0 0.2em !important;
 padding:0 !important;
 border:0 !important;
-border-radius:6px !important;
+border-radius:50% !important;
 }
-html body.salty .bl-word-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :is(.blzi .blzi-help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :is(.bwr_settings .bwr_help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty .lv-help-btn:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:transparent !important;
 box-shadow:none !important;
 }
-html body.salty .bl-word-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :is(.blzi .blzi-help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :is(.bwr_settings .bwr_help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty .lv-help-btn:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
 html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) {
 font:inherit !important;
 line-height:1 !important;
 vertical-align:middle !important;
 text-indent:0 !important;
 }
-html body.salty .bl-word-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :is(.blzi .blzi-help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :is(.bwr_settings .bwr_help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty .lv-help-btn:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) { display:inline-flex!important; }
-html body.salty .bl-word-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :is(.blzi .blzi-help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :is(.bwr_settings .bwr_help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:transparent !important;
 }
-html body.salty .bl-word-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) {
+transform:translateY(-1.5px);
+}
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) { display:inline-flex!important; }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-html body.salty :is(.blzi .blzi-help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-html body.salty :is(.bwr_settings .bwr_help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::after {
 content:'';
 display:block;
 position:absolute;
-width:1em;
-height:1em;
+left:0;
+top:0;
+width:100%;
+height:100%;
 }
-html body.salty .bl-word-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
-html body.salty :is(.blzi .blzi-help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
-html body.salty :is(.bwr_settings .bwr_help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
 html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after {
 background:var(--salty-accent,currentColor);
 }
-html body.salty .bl-word-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-html body.salty :is(.blzi .blzi-help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-html body.salty :is(.bwr_settings .bwr_help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::after {
+-webkit-mask:var(--salty-mi-help) center/contain no-repeat;
 mask:var(--salty-mi-help) center/contain no-repeat;
 pointer-events:none;
 }
 html body.salty .bl-wi-help::before { content:none; }
-html body.salty .bl-word-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)[hidden],
+@media (pointer: coarse) {
+  html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::before {
+content:'';
+position:absolute;
+left:50%;
+top:50%;
+right:auto;
+bottom:auto;
+width:max(100%,44px);
+height:max(100%,44px);
+transform:translate(-50%,-50%);
+}
+html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+background:none;
+}
+html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::before {
+border:0;
+}
+html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+box-shadow:none;
+}
+  html body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .bl-wi-help::before { width:max(100%,32px); }
+}
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)[hidden],
-html body.salty :is(.blzi .blzi-help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)[hidden],
-html body.salty :is(.bwr_settings .bwr_help):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)[hidden],
-html body.salty .lv-help-btn:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)[hidden],
 html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)[hidden],
 html body.salty.salty-help-off .bl-wi-help { display:none!important; }
-html body.salty :is(.lv-help-btn) > i { width:1em!important; height:1em!important; font-size:1em!important; line-height:1!important; }
-html body.salty .bl-word-help:focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty .bl-wi-help:focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty .blzi-help:focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty .bwr_help:focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty .lv-help-btn:focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty .lvs-help-button:focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 outline:2px solid var(--salty-accent) !important;
 }
-html body.salty .bl-word-help:focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
 html body.salty .bl-wi-help:focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
-html body.salty .blzi-help:focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
-html body.salty .bwr_help:focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
-html body.salty .lv-help-btn:focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
 html body.salty .lvs-help-button:focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *) {
 outline-width:2px !important;
 outline-style:solid !important;
 }
-html body.salty .bl-word-help:focus-visible,
 html body.salty .bl-wi-help:focus-visible,
-html body.salty .blzi-help:focus-visible,
-html body.salty .bwr_help:focus-visible,
-html body.salty .lv-help-btn:focus-visible,
 html body.salty .lvs-help-button:focus-visible {
 outline-offset:2px !important;
 }
@@ -24918,11 +24908,11 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.blzi .blzi-help) {
   align-items: center !important;
   justify-content: center !important;
   flex: 0 0 auto !important;
-  width: 24px !important;
-  height: 24px !important;
-  min-width: 24px !important;
-  min-height: 24px !important;
-  margin: 0 0 0 6px !important;
+  width: 1.3em !important;
+  height: 1.3em !important;
+  min-width: 1.3em !important;
+  min-height: 1.3em !important;
+  margin: 0 0 0 0.35em !important;
   vertical-align: middle !important;
   padding: 0 !important;
   border: 0 !important;
@@ -24931,7 +24921,7 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.blzi .blzi-help) {
   color: var(--salty-muted) !important;
   box-shadow: none !important;
   opacity: 1 !important;
-  font-size: 0 !important;
+  font-size: inherit !important;
   line-height: 1 !important;
   cursor: pointer;
   position: relative;
@@ -24939,7 +24929,7 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.blzi .blzi-help) {
   transform: translateY(-1.5px);
 }
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help) > i {
-  font-size: 12px !important; line-height: 1 !important; display: block !important; color: inherit !important;
+  font-size: 0.75em !important; line-height: 1 !important; display: block !important; color: inherit !important;
 }
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help) > i::before { content: "\f128" !important; }
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help) > span { display: none !important; }
@@ -24966,17 +24956,18 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.blzi .blzi-help):focus-visible { ou
 html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > .bl-help-btn,
 html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > .lv-help-btn,
 html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > .bwr_help,
-html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > .bl-word-help { margin-left: 6px !important; }
+html body.salty :is(.lv-card-head > span, .bwr_card_title > span, .bl-tool-label > b, .lv-ed-head > span) > .bl-word-help { margin-left: 0.35em !important; }
 html body.salty #lv_settings .lv-grid > .lv-field > .lv-label { min-height: 24px; align-items: center; }
 html body.salty:not(#bl-h1):not(#bl-h2) .bl-info:is(.bl-s, *),
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.eh-guide-note > .fa-circle-info) {
   box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; flex: 0 0 auto !important;
-  width: 24px !important; height: 24px !important; min-width: 24px !important; min-height: 24px !important; margin: 0 6px 0 0 !important; padding: 0 !important;
+  width: 1.3em !important; height: 1.3em !important; min-width: 1.3em !important; min-height: 1.3em !important; margin: 0 0.35em 0 0 !important; padding: 0 !important;
   border: 0 !important; border-radius: 50% !important; background: var(--bl-control) !important; color: var(--salty-muted) !important; box-shadow: none !important;
-  font-size: 12px !important; line-height: 1 !important; vertical-align: middle !important; align-self: center;
+  font-size: inherit !important; line-height: 1 !important; vertical-align: middle !important; align-self: center;
 }
+html body.salty:not(#bl-h1):not(#bl-h2) .eh-guide-note > .fa-circle-info { font-size: 0.75em !important; width: calc(1.3em / 0.75) !important; height: calc(1.3em / 0.75) !important; min-width: calc(1.3em / 0.75) !important; min-height: calc(1.3em / 0.75) !important; margin-right: calc(0.35em / 0.75) !important; }
 html body.salty:not(#bl-h1):not(#bl-h2) .eh-guide-note > .fa-circle-info::before { content: "\f129" !important; }
-html body.salty:not(#bl-h1):not(#bl-h2) .bl-info > i { font-size: 12px !important; line-height: 1 !important; display: block !important; }
+html body.salty:not(#bl-h1):not(#bl-h2) .bl-info > i { font-size: 0.75em !important; line-height: 1 !important; display: block !important; }
 html body.salty .blzi :is(h2, h3, h4) > i:first-child { margin-inline-end: 8px !important; }
 html body.salty .ms-lock b > i:first-child { margin-inline-end: 6px !important; }
 /* css/77-scrollbars.css */

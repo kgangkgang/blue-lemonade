@@ -1,31 +1,40 @@
 /* ===== css/56-control-consistency.css =====
    설정 조작의 크기와 상태를 통일한다. 채팅 본문과 사용자 선택 밀도는 유지한다.
    ===== */
-/* Small help glyphs follow their label; the transparent target remains easy to tap.
-   Exact help selectors only: ordinary action buttons and dialog illustrations keep their sizes. */
-html body.salty :is(.bl-word-help,.bl-wi-help,.blzi .blzi-help,.bwr_settings .bwr_help,.lv-help-btn,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) {
+/* 칸 이름 옆 작은 ? (선 동그라미 아이콘, 포인트 색): 월드인포 칸 이름 옆 .bl-wi-help(src/wi-help.js) · TTS 스크립트 편집기 .lvs-help-button.
+   절 제목 옆 ? (.bl-help-btn · .lv-help-btn · .bwr_help · .bl-word-help · .blzi-help)는 76-help-button.css 가 전부 그리므로 여기 목록에서 뺐다(7.9.9) —
+   예전엔 같은 목록에 있어 그 단추들의 ::after(1em 포인트 색 아이콘)가 87-addon-touch 의 44px 누르는 칸(::after)보다 세서 폰에서 누르는 칸이 안 생겼다.
+   7.9.9 (사용자 제보 「월드인포 ? 동그라미 글이랑 간격 너무 벌어짐 · 크기도 글자 크기랑 맞춰줘」): 상자 max(24px,1em) · 여백 4px → 아이콘 1em 이 24px 상자 가운데라 글자 끝에서 아이콘까지 10px 가 비었다
+   → 상자 = 아이콘 = 옆 글자의 1.25em(동그라미 선 자체는 그 0.7 ≈ 0.9em, 한글 글자 높이와 비슷), 여백 0.2em(아이콘 안쪽 빈 테 0.18em 을 더하면 눈에 보이는 간격 ≈ 0.38em).
+   폰(손가락 화면)의 누르는 칸은 ::before 투명 상자 — 세로 44, 가로는 월드인포 항목 머리줄(숫자 칸이 2px 옆)에서는 32 까지만(옆 칸을 덮지 않게), 나머지는 44. */
+html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) {
   align-items:center!important; justify-content:center!important;
   position:relative; flex:0 0 auto!important; box-sizing:border-box!important;
-  width:max(24px,1em)!important; min-width:max(24px,1em)!important; max-width:none!important;
-  height:max(24px,1em)!important; min-height:max(24px,1em)!important; max-height:none!important;
-  margin:0 0 0 4px!important; padding:0!important; border:0!important; border-radius:6px!important;
+  width:1.25em!important; min-width:1.25em!important; max-width:none!important;
+  height:1.25em!important; min-height:1.25em!important; max-height:none!important;
+  margin:0 0 0 0.2em!important; padding:0!important; border:0!important; border-radius:50%!important;
   background:transparent!important; box-shadow:none!important; font:inherit!important; line-height:1!important;
   vertical-align:middle!important; text-indent:0!important;
-}
-html body.salty :is(.bl-word-help,.blzi .blzi-help,.bwr_settings .bwr_help,.lv-help-btn,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) { display:inline-flex!important; }
-html body.salty :is(.bl-word-help,.bl-wi-help,.blzi .blzi-help,.bwr_settings .bwr_help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) {
   color:transparent!important;
+  transform:translateY(-1.5px);   /* 글자 중심에 맞춤 — 보정 전 실측 +1.4px 아래(76-help-button 과 같은 값) */
 }
-html body.salty :is(.bl-word-help,.bl-wi-help,.blzi .blzi-help,.bwr_settings .bwr_help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::after {
-  content:''; display:block; position:absolute; width:1em; height:1em;
-  background:var(--salty-accent,currentColor); mask:var(--salty-mi-help) center/contain no-repeat;
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) { display:inline-flex!important; }
+html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::after {
+  content:''; display:block; position:absolute; left:0; top:0; width:100%; height:100%;
+  background:var(--salty-accent,currentColor); -webkit-mask:var(--salty-mi-help) center/contain no-repeat; mask:var(--salty-mi-help) center/contain no-repeat;
   pointer-events:none;
 }
 html body.salty .bl-wi-help::before { content:none; }
-html body.salty :is(.bl-word-help,.bl-wi-help,.blzi .blzi-help,.bwr_settings .bwr_help,.lv-help-btn,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)[hidden],
+@media (pointer: coarse) {
+  html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::before {
+    content:''; position:absolute; left:50%; top:50%; right:auto; bottom:auto; width:max(100%,44px); height:max(100%,44px); transform:translate(-50%,-50%);   /* 51-integrations 의 inset:-8px 를 덮는다 */
+    background:none; border:0; box-shadow:none;
+  }
+  html body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .bl-wi-help::before { width:max(100%,32px); }
+}
+html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)[hidden],
 html body.salty.salty-help-off .bl-wi-help { display:none!important; }
-html body.salty :is(.lv-help-btn) > i { width:1em!important; height:1em!important; font-size:1em!important; line-height:1!important; }
-html body.salty :is(.bl-word-help,.bl-wi-help,.blzi-help,.bwr_help,.lv-help-btn,.lvs-help-button):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:2px!important; }
+html body.salty :is(.bl-wi-help,.lvs-help-button):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:2px!important; }
 html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark {
   position:relative; display:block; width:15px; height:15px; min-width:15px; flex:none; border:0; border-radius:0; background:none;   /* 7.9.1: 옆 작업 단추 아이콘(FA 15px)과 같은 크기 · 같은 글자색 — 1em(11px) · 포인트 색 · 선 아이콘 설정일 때만 그려지던 것 */
   font-size:0; line-height:1; color:inherit;
