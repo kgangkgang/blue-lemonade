@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 4c127246803d) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 9899a22f1c99) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -2448,12 +2448,12 @@ body.salty :is(#chat,.bl-chat-like) .mes .mes_bias {
   font-family: var(--salty-font-ui);
   font-size: var(--bl-fs-micro);
 }
-body.salty :is(#chat,.bl-chat-like) .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
+body.salty :is(#chat,.bl-chat-like) [data-bl-editing~="deep"] > .mes_block > .ch_name {
   flex-wrap: wrap;
   row-gap: 8px;
   margin-bottom: 10px !important;
 }
-body.salty :is(#chat,.bl-chat-like) .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) > .flex1 {
+body.salty :is(#chat,.bl-chat-like) [data-bl-editing~="deep"] > .mes_block > .ch_name > .flex1 {
   flex: 1 0 100%;
 }
 body.salty :is(#chat,.bl-chat-like) .mes .mes_edit_buttons {
@@ -2605,10 +2605,10 @@ body.salty :is(#chat,.bl-chat-like) .mes_reasoning {
   color: var(--salty-em) !important;
   font-size: 0.92em !important;
 }
-body.salty :is(#chat,.bl-chat-like) .mes_reasoning_details:has(.reasoning_edit_textarea) {
+body.salty :is(#chat,.bl-chat-like) .mes_reasoning_details[data-bl-reasoning-editing] {
   padding: 8px !important;
 }
-body.salty.salty-reasoning-off #sheld > [id="chat"] .mes_reasoning_details:not(:has(.reasoning_edit_textarea)) {
+body.salty.salty-reasoning-off #sheld > [id="chat"] .mes_reasoning_details:not([data-bl-reasoning-editing]) {
   display: none !important;
 }
 body.salty :is(#chat,.bl-chat-like) .mes_text details[class*="custom-dem-card"] {
@@ -2921,7 +2921,7 @@ body.salty.salty-user-bubble :is(#chat,.bl-chat-like) .mes[is_user="true"] .mesA
 body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes) {
   grid-template-columns: auto minmax(0, 1fr) fit-content(86%);
 }
-body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes):has(.edit_textarea) {
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes)[data-bl-editing~="deep"] {
   grid-template-columns: auto 0px minmax(0, 1fr);
 }
 body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper {
@@ -2947,9 +2947,9 @@ body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-to
   max-width: none !important;
   margin-left: 0 !important;
 }
-body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-mesIDDisplay) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mesIDDisplay:not(:empty)) > .mes_block,
-body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mes_timer:not(:empty)) > .mes_block,
-body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-tokenCount) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .tokenCounterDisplay:not(:empty)) > .mes_block {
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-mesIDDisplay) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="id"]:is(.bl-s, *):is(.bl-s, *) > .mes_block,
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="timer"]:is(.bl-s, *):is(.bl-s, *) > .mes_block,
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-tokenCount) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="tok"]:is(.bl-s, *):is(.bl-s, *) > .mes_block {
   grid-row: 1 / 3;
   padding-top: 28px !important;
 }
@@ -2962,14 +2962,14 @@ body.salty.salty-user-bubble :is(#chat,.bl-chat-like) .mes[is_user="true"] .mes_
   border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg) !important;
   box-shadow: var(--bl-e1) !important;
 }
-body.salty.salty-user-bubble :is(#chat,.bl-chat-like) .mes[is_user="true"]:has(.edit_textarea) .mes_block {
+body.salty.salty-user-bubble :is(#chat,.bl-chat-like) .mes[is_user="true"][data-bl-editing~="deep"] .mes_block {
   width: 100% !important;
   max-width: 100% !important;
 }
 body.salty.salty-user-bubble :is(#chat,.bl-chat-like) .mes[is_user="true"] .ch_name {
   margin-bottom: 4px !important;
 }
-body.salty.salty-user-bubble :is(#chat,.bl-chat-like) .mes[is_user="true"] .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
+body.salty.salty-user-bubble :is(#chat,.bl-chat-like) .mes[is_user="true"][data-bl-editing~="deep"] .mes_block > .ch_name {
   margin-bottom: 10px !important;
 }
 body.salty.salty-user-bubble :is(#chat,.bl-chat-like) .mes[is_user="true"] .name_text,
@@ -3001,9 +3001,9 @@ body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-timer.no-toke
 body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper > .avatar {
   grid-row: 1 / 3;
 }
-body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-mesIDDisplay) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mesIDDisplay:not(:empty)) > .mes_block,
-body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-timer) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mes_timer:not(:empty)) > .mes_block,
-body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-tokenCount) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .tokenCounterDisplay:not(:empty)) > .mes_block {
+body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-mesIDDisplay) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="id"]:is(.bl-s, *):is(.bl-s, *) > .mes_block,
+body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-timer) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="timer"]:is(.bl-s, *):is(.bl-s, *) > .mes_block,
+body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-tokenCount) :is(#chat,.bl-chat-like) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="tok"]:is(.bl-s, *):is(.bl-s, *) > .mes_block {
   grid-row: 1 / 3;
   padding-top: 30px !important;
 }
@@ -3128,7 +3128,7 @@ body.salty.salty-char-bubble .salty-preview[data-prev="chat"] .mes[is_user="fals
   display: block;
 }
 }
-body.salty.salty-char-bubble.salty-bubble-whole :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="false"]:not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .mes_text:not(:empty, :has(> .edit_textarea), .mes[is_system="true"] > .mes_block > .mes_text:has(> details:not([open]) > summary:empty)) {
+body.salty.salty-char-bubble.salty-bubble-whole :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="false"]:not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .mes_text:not(:empty, [data-bl-editing~="text"] > .mes_block > .mes_text, .mes[is_system="true"] > .mes_block > .mes_text:has(> details:not([open]) > summary:empty)) {
   width: fit-content !important;
   max-width: var(--bl-cb-max, 86%) !important;
   padding: 8px 16px 12px !important;
@@ -3173,9 +3173,9 @@ body.salty.salty-user-bubble.salty-bubble-para :is(:is(#chat,.bl-chat-like), #sa
   border-radius: 0 !important;
   box-shadow: none !important;
 }
-body.salty.salty-user-bubble.salty-bubble-para:not(.salty-user-profile-custom):not(.no-mesIDDisplay) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mesIDDisplay:not(:empty)) > .mes_block:not(#salty-none),
-body.salty.salty-user-bubble.salty-bubble-para:not(.salty-user-profile-custom):not(.no-timer) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mes_timer:not(:empty)) > .mes_block:not(#salty-none),
-body.salty.salty-user-bubble.salty-bubble-para:not(.salty-user-profile-custom):not(.no-tokenCount) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .tokenCounterDisplay:not(:empty)) > .mes_block:not(#salty-none) {
+body.salty.salty-user-bubble.salty-bubble-para:not(.salty-user-profile-custom):not(.no-mesIDDisplay) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="id"]:is(.bl-s, *):is(.bl-s, *) > .mes_block:not(#salty-none),
+body.salty.salty-user-bubble.salty-bubble-para:not(.salty-user-profile-custom):not(.no-timer) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="timer"]:is(.bl-s, *):is(.bl-s, *) > .mes_block:not(#salty-none),
+body.salty.salty-user-bubble.salty-bubble-para:not(.salty-user-profile-custom):not(.no-tokenCount) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="tok"]:is(.bl-s, *):is(.bl-s, *) > .mes_block:not(#salty-none) {
   padding-top: 28px !important;
 }
 body.salty.salty-user-bubble.salty-bubble-para:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper {
@@ -3184,7 +3184,7 @@ body.salty.salty-user-bubble.salty-bubble-para:not(.salty-user-profile-custom):n
 body.salty.salty-user-bubble.salty-bubble-para :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"] .mes_block > .ch_name {
   margin-bottom: 6px !important;
 }
-body.salty.salty-user-bubble.salty-bubble-para :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"] .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
+body.salty.salty-user-bubble.salty-bubble-para :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"][data-bl-editing~="deep"] .mes_block > .ch_name {
   margin-bottom: 10px !important;
 }
 body.salty.salty-user-bubble.salty-bubble-para :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"] .mes_text > p:not(:has(img, video, iframe, canvas, picture, [data-autopic-slot])),
@@ -14880,12 +14880,12 @@ body.salty.salty-hidden-fade.salty-hidden-hover :is(#salty-nochat, .salty-previe
   opacity: 1;
   filter: none;
 }
-body.salty :is(#salty-nochat, .salty-preview) .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
+body.salty :is(#salty-nochat, .salty-preview) [data-bl-editing~="deep"] > .mes_block > .ch_name {
   flex-wrap: wrap;
   row-gap: 8px;
   margin-bottom: 10px !important;
 }
-body.salty :is(#salty-nochat, .salty-preview) .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) > .flex1 {
+body.salty :is(#salty-nochat, .salty-preview) [data-bl-editing~="deep"] > .mes_block > .ch_name > .flex1 {
   flex: 1 0 100%;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes_text details[class*="custom-dem-card"] {
@@ -15135,6 +15135,9 @@ body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="tr
 body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes) {
   grid-template-columns: auto minmax(0, 1fr) fit-content(86%);
 }
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes)[data-bl-editing~="deep"] {
+  grid-template-columns: auto 0px minmax(0, 1fr);
+}
 body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper {
   display: flex;
   flex-flow: row nowrap;
@@ -15158,9 +15161,9 @@ body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer.no-to
   max-width: none !important;
   margin-left: 0 !important;
 }
-body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-mesIDDisplay) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mesIDDisplay:not(:empty)) > .mes_block,
-body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mes_timer:not(:empty)) > .mes_block,
-body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-tokenCount) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .tokenCounterDisplay:not(:empty)) > .mes_block {
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-mesIDDisplay) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="id"]:is(.bl-s, *):is(.bl-s, *) > .mes_block,
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-timer) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="timer"]:is(.bl-s, *):is(.bl-s, *) > .mes_block,
+body.salty.salty-user-bubble:not(.salty-user-profile-custom):not(.no-tokenCount) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="tok"]:is(.bl-s, *):is(.bl-s, *) > .mes_block {
   grid-row: 1 / 3;
   padding-top: 28px !important;
 }
@@ -15173,14 +15176,14 @@ body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="tr
   border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg) !important;
   box-shadow: var(--bl-e1) !important;
 }
-body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:has(.edit_textarea) .mes_block {
+body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"][data-bl-editing~="deep"] .mes_block {
   width: 100% !important;
   max-width: 100% !important;
 }
 body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .ch_name {
   margin-bottom: 4px !important;
 }
-body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
+body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"][data-bl-editing~="deep"] .mes_block > .ch_name {
   margin-bottom: 10px !important;
 }
 body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .name_text,
@@ -15212,9 +15215,9 @@ body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-timer.no-toke
 body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes) > .mesAvatarWrapper > .avatar {
   grid-row: 1 / 3;
 }
-body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-mesIDDisplay) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mesIDDisplay:not(:empty)) > .mes_block,
-body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-timer) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .mes_timer:not(:empty)) > .mes_block,
-body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-tokenCount) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes):has(> .mesAvatarWrapper > .tokenCounterDisplay:not(:empty)) > .mes_block {
+body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-mesIDDisplay) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="id"]:is(.bl-s, *):is(.bl-s, *) > .mes_block,
+body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-timer) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="timer"]:is(.bl-s, *):is(.bl-s, *) > .mes_block,
+body.salty.salty-user-card:not(.salty-user-profile-custom):not(.no-tokenCount) :is(#salty-nochat, .salty-preview) .mes[is_user="true"]:not(.smallSysMes)[data-bl-meta~="tok"]:is(.bl-s, *):is(.bl-s, *) > .mes_block {
   grid-row: 1 / 3;
   padding-top: 30px !important;
 }
@@ -24282,18 +24285,18 @@ body.salty.salty-user-meta-center.salty-user-profile-side-right.salty-user-profi
 body.salty.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .mesAvatarWrapper > .tokenCounterDisplay { grid-area: 1 / 4 !important; }
 body.salty.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .for_checkbox,
 body.salty.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone) > .del_checkbox { grid-area: 1 / 7 !important; }
-body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) { grid-template-columns: 34px 12px calc((100% - 46px) * .14) minmax(0, 1fr) auto auto auto minmax(0, 1fr) !important; }
-body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .mesIDDisplay { grid-area: 1 / 5 !important; }
-body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .mes_timer { grid-area: 1 / 6 !important; }
-body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .tokenCounterDisplay { grid-area: 1 / 7 !important; }
-body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) { grid-template-columns: calc((100% - 46px) * .14) minmax(0, 1fr) auto auto auto minmax(0, 1fr) 12px 34px !important; }
-body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .avatar { grid-area: 2 / 8 !important; }
-body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mes_block { grid-area: 2 / 1 / 3 / 7 !important; }
-body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .mesIDDisplay { grid-area: 1 / 3 !important; }
-body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .mes_timer { grid-area: 1 / 4 !important; }
-body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .mesAvatarWrapper > .tokenCounterDisplay { grid-area: 1 / 5 !important; }
-body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .for_checkbox,
-body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not(:has(.edit_textarea)) > .del_checkbox { grid-area: 1 / 8 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not([data-bl-editing~="deep"]) { grid-template-columns: 34px 12px calc((100% - 46px) * .14) minmax(0, 1fr) auto auto auto minmax(0, 1fr) !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not([data-bl-editing~="deep"]) > .mesAvatarWrapper > .mesIDDisplay { grid-area: 1 / 5 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not([data-bl-editing~="deep"]) > .mesAvatarWrapper > .mes_timer { grid-area: 1 / 6 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not([data-bl-editing~="deep"]) > .mesAvatarWrapper > .tokenCounterDisplay { grid-area: 1 / 7 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not([data-bl-editing~="deep"]) { grid-template-columns: calc((100% - 46px) * .14) minmax(0, 1fr) auto auto auto minmax(0, 1fr) 12px 34px !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not([data-bl-editing~="deep"]) > .mesAvatarWrapper > .avatar { grid-area: 2 / 8 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not([data-bl-editing~="deep"]) > .mes_block { grid-area: 2 / 1 / 3 / 7 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not([data-bl-editing~="deep"]) > .mesAvatarWrapper > .mesIDDisplay { grid-area: 1 / 3 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not([data-bl-editing~="deep"]) > .mesAvatarWrapper > .mes_timer { grid-area: 1 / 4 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not([data-bl-editing~="deep"]) > .mesAvatarWrapper > .tokenCounterDisplay { grid-area: 1 / 5 !important; }
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not([data-bl-editing~="deep"]) > .for_checkbox,
+body.salty.salty-user-bubble.salty-user-meta-center.salty-user-profile-side-right.salty-user-profile-mode-small :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes):not(.displayNone):not([data-bl-editing~="deep"]) > .del_checkbox { grid-area: 1 / 8 !important; }
 body.salty.salty-user-namerow-right.salty-user-profile-custom:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="true"][is_system="true"]:not(.smallSysMes) {
   grid-template-columns: auto auto var(--salty-meta-inset, 0px) minmax(0, 1fr) auto auto auto var(--bl-meta-trail, 0px);
 }
@@ -24313,21 +24316,21 @@ body.salty.salty-char-bubble.salty-profile-mode-small:is(.salty-namerow-right, .
 body.salty.salty-char-bubble:not(.hideChatAvatars):is(.salty-namerow-right, .salty-namerow-center) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"])[is_system="true"][type=""]:not(.smallSysMes) {
   --bl-cb-lead: 46px;
 }
-body.salty.salty-char-bubble.salty-namerow-right:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])):not(:has(> .mes_block > .mes_text > .edit_textarea)) {
+body.salty.salty-char-bubble.salty-namerow-right:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])):not([data-bl-editing~="text"]:is(.bl-s, *):is(.bl-s, *)) {
   grid-template-columns: auto auto var(--salty-meta-inset, 0px) auto fit-content(0px) fit-content(0px) fit-content(0px) var(--bl-meta-trail, 0px) minmax(calc((100% - var(--bl-cb-lead, 0px)) * .14), 1fr);
 }
-body.salty.salty-char-bubble.salty-namerow-center:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])):not(:has(> .mes_block > .mes_text > .edit_textarea)) {
+body.salty.salty-char-bubble.salty-namerow-center:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])):not([data-bl-editing~="text"]:is(.bl-s, *):is(.bl-s, *)) {
   grid-template-columns: auto auto var(--salty-meta-inset, 0px) auto fit-content(0px) fit-content(0px) fit-content(0px) auto var(--bl-meta-trail, 0px) minmax(calc((100% - var(--bl-cb-lead, 0px)) * .14), 1fr);
 }
-body.salty.salty-char-bubble:is(.salty-namerow-right, .salty-namerow-center):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])):not(:has(> .mes_block > .mes_text > .edit_textarea)) > .mes_block {
+body.salty.salty-char-bubble:is(.salty-namerow-right, .salty-namerow-center):not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])):not([data-bl-editing~="text"]:is(.bl-s, *):is(.bl-s, *)) > .mes_block {
   grid-column-end: -2;
 }
-body.salty.salty-char-bubble:is(.salty-namerow-right, .salty-namerow-center).no-timer.no-tokenCount.no-mesIDDisplay :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])):not(:has(> .mes_block > .mes_text > .edit_textarea)) > .mes_block {
+body.salty.salty-char-bubble:is(.salty-namerow-right, .salty-namerow-center).no-timer.no-tokenCount.no-mesIDDisplay :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])):not([data-bl-editing~="text"]:is(.bl-s, *):is(.bl-s, *)) > .mes_block {
   flex: 0 1 auto;
   width: auto;
   margin-right: calc((100% - var(--bl-cb-lead, 0px)) * .14) !important;
 }
-body.salty.salty-char-bubble:is(.salty-namerow-right, .salty-namerow-center) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])):not(:has(> .mes_block > .mes_text > .edit_textarea)) {
+body.salty.salty-char-bubble:is(.salty-namerow-right, .salty-namerow-center) :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])):not([data-bl-editing~="text"]:is(.bl-s, *):is(.bl-s, *)) {
   --bl-cb-max: 100%;
 }
 body.salty.expandMessageActions.salty-namerow-right :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes:not([is_user="true"]):not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .mes_buttons,

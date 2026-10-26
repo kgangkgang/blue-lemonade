@@ -9,10 +9,15 @@
 //      i   = 요소 자식이 <i> 하나뿐   svg = 요소 자식이 <svg> 하나뿐   mbi = .menu_button_icon 이고 바로 아래 <i> 가 있고 span · b · strong · small 이 없음
 //    CSS 는 `[data-bl-icon-only~="i"]` 처럼 토큰으로 본다(:only-child 와 같이 글자 노드는 세지 않는다).
 // 3) data-bl-row-check (7.9.9, 속도 P2): `label:has(> input[type="checkbox"])` 대신. 바로 아래에 체크박스 input 이 있는 label.
+// 4) 메시지 표식 (7.9.9, 속도 P4) — 채팅 · 미리보기(.salty-preview · #salty-nochat)의 .mes 에. 글자가 흘러나올 때마다 조상을 따지던 :has 를 대신한다.
+//      data-bl-editing="deep text"  deep = 안에 .edit_textarea 가 있음(`:has(.edit_textarea)`) · text = `> .mes_block > .mes_text > .edit_textarea`
+//      data-bl-meta="id timer tok"  `> .mesAvatarWrapper > .mesIDDisplay|.mes_timer|.tokenCounterDisplay:not(:empty)` (주석만 있는 칸은 :empty 와 같이 빈 것으로)
+//      data-bl-reasoning-editing    .mes_reasoning_details 안에 .reasoning_edit_textarea 가 있음
 // 관찰자 콜백은 그리기 전에 돈다 — 새로 붙은 요소가 한 프레임도 다른 모양으로 보이지 않는다.
 const MARK = 'data-bl-icon-text';
 const ICON_ONLY = 'data-bl-icon-only';
 const ROW_CHECK = 'data-bl-row-check';
+const EDITING = 'data-bl-editing', META = 'data-bl-meta', R_EDIT = 'data-bl-reasoning-editing';
 const TEXTISH = new Set(['span', 'b', 'strong', 'small']);
 
 // 공백이 아닌 글자 노드가 바로 아래에 있나 (span 같은 요소 속 글자는 CSS 가 이미 가린다)
@@ -74,12 +79,54 @@ function checkLabel(label) {
     if (want !== label.hasAttribute(ROW_CHECK)) { if (want) label.setAttribute(ROW_CHECK, ''); else label.removeAttribute(ROW_CHECK); }
 }
 
+// :empty 와 같은 판정 — 주석 · 처리 지시 말고 자식이 하나라도 있으면 비어 있지 않다(공백 글자도 자식)
+function nonEmpty(el) {
+    for (let n = el.firstChild; n; n = n.nextSibling) if (n.nodeType !== 8 && n.nodeType !== 7) return true;
+    return false;
+}
+export function editingTokens(mes) {
+    const tokens = [];
+    if (mes.getElementsByClassName('edit_textarea').length) tokens.push('deep');
+    let text = false;
+    for (const block of mes.children) {
+        if (!block.classList.contains('mes_block')) continue;
+        for (const mt of block.children) {
+            if (!mt.classList.contains('mes_text')) continue;
+            for (const e of mt.children) if (e.classList.contains('edit_textarea')) text = true;
+        }
+    }
+    if (text) tokens.push('text');
+    return tokens.join(' ');
+}
+export function metaTokens(mes) {
+    let id = false, timer = false, tok = false;
+    for (const wrap of mes.children) {
+        if (!wrap.classList.contains('mesAvatarWrapper')) continue;
+        for (const c of wrap.children) {
+            if (!nonEmpty(c)) continue;
+            if (c.classList.contains('mesIDDisplay')) id = true;
+            else if (c.classList.contains('mes_timer')) timer = true;
+            else if (c.classList.contains('tokenCounterDisplay')) tok = true;
+        }
+    }
+    return [id && 'id', timer && 'timer', tok && 'tok'].filter(Boolean).join(' ');
+}
+function checkMes(mes) { setAttr(mes, EDITING, editingTokens(mes)); setAttr(mes, META, metaTokens(mes)); }
+function checkReasoning(details) {
+    const want = details.getElementsByClassName('reasoning_edit_textarea').length > 0;
+    if (want !== details.hasAttribute(R_EDIT)) { if (want) details.setAttribute(R_EDIT, ''); else details.removeAttribute(R_EDIT); }
+}
+
 function scan(node) {
     if (node.classList?.contains('menu_button')) check(node);
     else if (node.localName === 'label') checkLabel(node);
+    if (node.classList?.contains('mes')) checkMes(node);
+    if (node.classList?.contains('mes_reasoning_details')) checkReasoning(node);
     if (!node.firstElementChild) return;
     for (const el of node.getElementsByClassName('menu_button')) check(el);
     for (const el of node.getElementsByTagName('label')) checkLabel(el);
+    for (const el of node.getElementsByClassName('mes')) checkMes(el);
+    for (const el of node.getElementsByClassName('mes_reasoning_details')) checkReasoning(el);
 }
 
 // 바뀐 요소 하나 — .menu_button 이면 단추 표식, label 이면 체크 줄 표식, input 이 바뀌었으면 그 부모 label
@@ -87,6 +134,9 @@ function touched(el) {
     if (el.classList.contains('menu_button')) check(el);
     else if (el.localName === 'label') checkLabel(el);
     else if (el.localName === 'input' && el.parentElement?.localName === 'label') checkLabel(el.parentElement);
+    // 메시지 안이 바뀌면(편집칸 넣고 빼기 · 타이머 · 토큰 글자) 그 메시지 표식을 다시
+    const mes = el.closest('.mes'); if (mes) checkMes(mes);
+    const details = el.closest('.mes_reasoning_details'); if (details) checkReasoning(details);
 }
 
 let started = false;
@@ -94,12 +144,12 @@ export function startIconTextMark() {
     if (started || !document.body) return;
     started = true;
     scan(document.body);
-    // 붙은 요소 속 .menu_button · label 과, 자식(글자 · 아이콘)이 바뀐 요소, 클래스(menu_button_icon) · type 이 바뀐 요소만 본다.
+    // 붙은 요소 속 .menu_button · label · .mes 와, 자식(글자 · 아이콘 · 편집칸 · 타이머 글자)이 바뀐 요소, 클래스(menu_button_icon) · type 이 바뀐 요소만 본다.
     new MutationObserver((records) => {
         for (const record of records) {
-            const target = record.target;
-            if (target.nodeType === 1) touched(target);
+            const target = record.target.nodeType === 1 ? record.target : record.target.parentElement;
+            if (target) touched(target);
             for (const node of record.addedNodes) if (node.nodeType === 1) scan(node);
         }
-    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'type'] });
+    }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class', 'type'] });
 }

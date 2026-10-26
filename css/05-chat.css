@@ -575,12 +575,12 @@ body.salty #chat .mes .mes_bias {
 
 /* 편집: 글 칸은 떠 있는 카드(링 + e2), 버튼은 이름 아래 한 줄 — 왼쪽 도구 · 오른쪽 취소 · 확인
    (:has 는 .ch_name 에 걸고 뒤 형제만 본다 — .mes_block 에 걸면 스트리밍 조각마다 답 전체를 다시 계산) */
-body.salty #chat .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
+body.salty #chat [data-bl-editing~="deep"] > .mes_block > .ch_name {
   flex-wrap: wrap;
   row-gap: 8px;
   margin-bottom: 10px !important;
 }
-body.salty #chat .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) > .flex1 {
+body.salty #chat [data-bl-editing~="deep"] > .mes_block > .ch_name > .flex1 {
   flex: 1 0 100%; /* 이름 줄 한 줄 통째로 → 버튼 줄은 그 아래 */
 }
 body.salty #chat .mes .mes_edit_buttons {
@@ -731,12 +731,12 @@ body.salty #chat .mes_reasoning {
   color: var(--salty-em) !important;
   font-size: 0.92em !important;
 }
-body.salty #chat .mes_reasoning_details:has(.reasoning_edit_textarea) {
+body.salty #chat .mes_reasoning_details[data-bl-reasoning-editing] {
   padding: 8px !important;
 }
 /* 5.7.5 추론 요청을 끄면 지난 추론도 숨기기 (채팅 › 화면): 실리태번 「모델 추론 요청」이 꺼져 있으면 이미 받은 생각 칸도 가림 — 클래스는 apply.js stReasoningOff.
    손으로 생각을 적는 중(편집 칸)인 것만 보인다. [id="chat"] 은 설정 창 미리보기 사본을 안 만들려고 (미리보기에는 생각 칸이 없다) */
-body.salty.salty-reasoning-off #sheld > [id="chat"] .mes_reasoning_details:not(:has(.reasoning_edit_textarea)) {
+body.salty.salty-reasoning-off #sheld > [id="chat"] .mes_reasoning_details:not([data-bl-reasoning-editing]) {
   display: none !important;
 }
 

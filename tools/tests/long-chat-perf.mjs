@@ -46,7 +46,7 @@ await test(':has() 인자 안의 inline style 속성 선택자는 설정 창 것
 });
 await test('말풍선 통째: 숨긴 글 틀 판정은 그대로 · :has 안에서 [class] 만 빠짐', () => {
     const css = fs.readFileSync(path.join(root, 'css/06-chat-text.css'), 'utf8');
-    assert.match(css, /salty-bubble-whole[^{]*\.mes_text:not\(:empty, :has\(> \.edit_textarea\), \.mes\[is_system="true"\] > \.mes_block > \.mes_text:has\(> details:not\(\[open\]\) > summary:empty\)\) \{/);
+    assert.match(css, /salty-bubble-whole[^{]*\.mes_text:not\(:empty, \[data-bl-editing~="text"\] > \.mes_block > \.mes_text, \.mes\[is_system="true"\] > \.mes_block > \.mes_text:has\(> details:not\(\[open\]\) > summary:empty\)\) \{/);
     assert.doesNotMatch(css, /details:not\(\[class\], \[open\]\) > summary:empty\)\)/);
     assert.ok(fs.readFileSync(path.join(root, 'style.css'), 'utf8').includes('.mes_block > .mes_text:has(> details:not([open]) > summary:empty))'), 'style.css 다시 빌드');
 });
