@@ -129,18 +129,22 @@ export function startNoteAnchor() {
     eventSource.on(event_types.GENERATION_STARTED, () => installTrap());
     eventSource.on(event_types.CHAT_CHANGED, () => { installTrap(); syncRadios(); setTimeout(syncRadios, 0); });
     if (event_types.SETTINGS_UPDATED) eventSource.on(event_types.SETTINGS_UPDATED, () => syncRadios());
-    document.addEventListener('change', event => {
+    // jQuery 로 듣는다: 본체 · 슬래시 명령(/note · /note-position)은 .trigger('input' · 'change') 로 jQuery 처리기만 부른다(DOM 이벤트가 안 남)
+    const $ = globalThis.jQuery;
+    const onChange = event => {
         const target = event.target;
         if (!(target instanceof HTMLInputElement)) return;
         if (target.name === RADIO && target.checked) choose(isAnchor(target.value) ? target.value : null);
         else if (target.matches(BODY_RADIO) && target.checked && chosenAnchor()) choose(null);   // 본체 위치를 고르면 원래 동작으로
-    });
+    };
+    if ($) $(document).on('change', `input[name="${RADIO}"], ${BODY_RADIO}`, onChange); else document.addEventListener('change', onChange);
     // 작가 노트 창 안의 입력마다 본체가 loadSettings 로 자기 라디오를 다시 켠다 — 그 뒤(거품 단계)에 다시 맞춘다
     const watch = () => {
         const panel = document.getElementById('floatingPrompt');
         if (!panel || panel.dataset.blNoteAnchor) return !!panel;
         panel.dataset.blNoteAnchor = '1';
-        for (const type of ['input', 'change']) panel.addEventListener(type, event => { const target = event.target; if (target?.name !== RADIO && !target?.matches?.(BODY_RADIO)) syncRadios(); });
+        const resync = event => { const target = event.target; if (target?.name !== RADIO && !target?.matches?.(BODY_RADIO)) syncRadios(); };
+        if ($) $(panel).on('input change', resync); else for (const type of ['input', 'change']) panel.addEventListener(type, resync);
         return true;
     };
     if (!watch()) setTimeout(watch, 1500);
