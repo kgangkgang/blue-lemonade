@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 0ed2b8ffe700) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 75737c6c3787) */
 /* css/00-base.css */
 :root{--bl-release:"8.0.1";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -21785,7 +21785,8 @@ body.salty :is(:is(#chat,.bl-chat-like)[data-bl-dem-paused], .cg-root[data-bl-de
 }
 /* css/56-control-consistency.css */
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) {
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button),
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
 align-items:center !important;
 justify-content:center !important;
 position:relative;
@@ -21803,28 +21804,33 @@ border:0 !important;
 border-radius:50% !important;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:transparent !important;
 box-shadow:none !important;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) {
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button),
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
 font:inherit !important;
 line-height:1 !important;
 vertical-align:middle !important;
 text-indent:0 !important;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:transparent !important;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) {
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button),
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
 transform:translateY(-1.5px);
 }
 html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) { display:inline-flex!important; }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::after {
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::after,
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after {
 content:'';
 display:block;
 position:absolute;
@@ -21834,11 +21840,13 @@ width:100%;
 height:100%;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after {
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after {
 background:var(--salty-accent,currentColor);
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::after {
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::after,
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after {
 -webkit-mask:var(--salty-mi-help) center/contain no-repeat;
 mask:var(--salty-mi-help) center/contain no-repeat;
 pointer-events:none;
@@ -21846,7 +21854,8 @@ pointer-events:none;
 html body.salty .bl-wi-help::before { content:none; }
 @media (pointer: coarse) {
   html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::before {
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::before,
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::before {
 content:'';
 position:absolute;
 left:50%;
@@ -21858,35 +21867,45 @@ height:max(100%,44px);
 transform:translate(-50%,-50%);
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
 background:none;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::before {
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::before,
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::before {
 border:0;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
 box-shadow:none;
 }
   html body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .bl-wi-help::before { width:max(100%,32px); }
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)[hidden],
 html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)[hidden],
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)[hidden],
 html body.salty.salty-help-off .bl-wi-help { display:none!important; }
 html body.salty .bl-wi-help:focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty .lvs-help-button:focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+html body.salty .lvs-help-button:focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 outline:2px solid var(--salty-accent) !important;
 }
 html body.salty .bl-wi-help:focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
-html body.salty .lvs-help-button:focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *) {
+html body.salty .lvs-help-button:focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *) {
 outline-width:2px !important;
 outline-style:solid !important;
 }
 html body.salty .bl-wi-help:focus-visible,
-html body.salty .lvs-help-button:focus-visible {
+html body.salty .lvs-help-button:focus-visible,
+html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):focus-visible {
 outline-offset:2px !important;
 }
+html body.salty #WorldInfo > .flex-container > h3 { gap:6px!important; }
+html body.salty #WorldInfo h3 > a.notes-link { font-size:var(--bl-fs-body)!important; margin:0!important; }
+html body.salty #WorldInfo h3 > a.notes-link > .note-link-span { opacity:0!important; }
 html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark {
 position:relative;
 display:block;

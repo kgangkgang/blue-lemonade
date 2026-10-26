@@ -721,5 +721,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1699583:6cd72a18:4b3a4b44"
+  "style.css": "1702181:f2368d40:da4e9e53"
 };
