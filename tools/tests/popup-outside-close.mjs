@@ -30,7 +30,7 @@ await t('① DEUS 빠른 설정: 테마 고르기 목록 · 테마 팝업 · dia
     assert.equal(press('pick'), 0, '목록 줄'); assert.equal(press('popup'), 0, '테마 팝업'); assert.equal(press('dialog'), 0, 'dialog'); assert.equal(press('plain'), 1, '바깥');
     const bundled = (await import(pathToFileURL(path.join(root, 'src/scripts/bundled/deus-qr.js')))).default;
     assert.ok(bundled.includes(line.trim()), 'bundled 에도 같은 줄');
-    assert.match(read('src/scripts/catalog.js'), /\{id:'deus-qr',name:'데우스 빠른 설정',version:'1\.0\.7'/);
+    assert.match(read('src/scripts/catalog.js'), /\{id:'deus-qr',name:'데우스 빠른 설정',version:'1\.0\.[7-9]'/); // 1.0.7 에서 고친 뒤로 판이 올라가도 돼요(1.0.8 = V3 대응)
 });
 
 await t('② 목소리 상자: 테마 고르기 목록 · 테마 팝업 안을 누르면 그대로, 정말 바깥이면 닫힘', () => {
