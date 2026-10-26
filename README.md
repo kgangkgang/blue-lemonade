@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.0.2/blue-lemonade-8.0.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.0.3/blue-lemonade-8.0.3.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.0.2 · 최신 업데이트</summary>
+<summary>8.0.3 · 최신 업데이트</summary>
+
+- 휴대폰 Chrome에서 홈 화면에 설치한 앱으로 실리태번을 쓸 때, 채팅 맨 위에서 아래로 충분히 당겼다 놓으면 새로고침돼요. 당기는 동안 「아래로 더 당겨 주세요」, 충분히 당기면 「놓으면 새로고침해요」 안내가 보여요. 일반 브라우저 탭에서는 기존 동작 그대로예요.
+- 당겨 새로고침 전에 입력칸에 쓰던 글을 보관해 두고, 같은 채팅을 다시 열면 그대로 돌아와요. 답변 생성·채팅 저장·메시지 편집 중이거나 짧게 당기다 멈추면 새로고침하지 않아요.
+- 가로로 넘기는 메뉴와 탭 줄에서 더 볼 항목이 남은 쪽 가장자리만 흐리게 보이고, 맨 끝에 닿거나 넘칠 항목이 없으면 흐림이 사라져요. 키보드로 고른 탭이 흐린 가장자리에 가려지지 않게 했어요.
+
+</details>
+
+<details>
+<summary>8.0.2 · 월드인포 제목 도움말 모양을 맞춰요</summary>
 
 - 월드 인포/로어북 제목 옆 도움말 물음표를 테마의 선 아이콘으로 맞췄어요. 제목 글자 크기를 따라 비례하고, 폰에서 누르는 영역도 넓혔어요.
 
