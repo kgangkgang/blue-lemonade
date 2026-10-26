@@ -81,6 +81,22 @@ function scanOuterCards(text) {
     // A partial known card is kept opaque instead of sending its keys/code to the model.
     if (active) ranges.push({...active,innerEnd:text.length,end:text.length,partial:true});
     if (opaque) opaqueRanges.push({start:opaque.start,end:text.length});
+    // 8.0.6 데우스 V3 · 레모나 시간 상태창: 모델(특히 Gemini)이 템플릿의 `…` 를 따라 상태창을 코드칸(```)이나 `…` 로 감싸 쓴다.
+    //   원작 정규식(Unwrap @Tracker from code backticks)이 화면에서 감싸개를 풀어 상태창으로 그리니, 번역기도 감싸개째 한 카드로 본다 —
+    //   전에는 코드칸을 통째로 「코드」로 보내(태그 · 이모지 · °C 까지) 모델이 그대로 두거나, 바꾸면 정규식이 못 알아봐 「Recovered」 카드가 됐다.
+    //   감싸개 글자는 카드 원문에 그대로 남고 모델에는 값만 간다. 원작 정규식과 같은 범위: 백틱 1~3개 · 언어 이름 a-z 12자까지 · 상태창 하나만
+    for (const f of fences) {
+        if (!/^[a-z]{0,12}$/.test(f.kind) || f.end > text.length || [...ranges,...opaqueRanges].some(r => r.start < f.end && r.end > f.start)) continue;
+        const body = text.slice(f.bodyStart,f.bodyEnd), m = /^\s*<tracker\b[^>`]{0,200}>[^`]{0,2000}?<\/tracker\s*>\s*$/i.exec(body);
+        if (!m || !/^`{3}(?!`)/.test(text.slice(f.start).trimStart()) || (body.match(/\|/g) || []).length < 2) continue;   // 칸(|)이 둘 이상인 상태창 꼴만 — 코드 예시 <tracker>sample</tracker> 은 코드 그대로
+        const open = f.bodyStart + body.indexOf('<'), innerStart = text.indexOf('>',open) + 1, innerEnd = f.bodyStart + body.search(/<\/tracker\s*>\s*$/i);
+        ranges.push({name:'tracker',start:f.start,end:f.end,innerStart,innerEnd,fenced:true});
+    }
+    for (const r of ranges) {
+        if (r.name !== 'tracker' || r.fenced || r.partial) continue;
+        const before = /`{1,2}$/.exec(text.slice(Math.max(0,r.start-2),r.start))?.[0] || '';
+        if (before && text.slice(r.end,r.end+before.length) === before && text[r.start-before.length-1] !== '`' && text[r.end+before.length] !== '`') { r.start -= before.length; r.end += before.length; r.fenced = 'inline'; }
+    }
     // This older display format uses a mode tag and two separators instead of a wrapper tag.
     const legacy = /◸[^◹\r\n]*?<(?:olden|present|scifi)>[^◹\r\n]*?[｜|][^◹\r\n]*?◹/gi;
     while ((m = legacy.exec(text))) if (![...ranges,...fences,...opaqueRanges].some(r=>m.index<r.end && legacy.lastIndex>r.start)) {
@@ -90,7 +106,8 @@ function scanOuterCards(text) {
 }
 function visibleSpans(block, card) {
     if (card.partial || block.length > 524288) return [];
-    const spans = [], fences = fenceRanges(block), stack = [], selectors = hiddenSelectors(block), tokens = new RegExp(TAG.source,'g'); let cursor = 0, match;
+    // 8.0.6 감싼 코드칸(card.fenced)은 카드 바깥 껍데기라 안 본다 (안은 상태창 하나)
+    const spans = [], fences = card.fenced ? [] : fenceRanges(block), stack = [], selectors = hiddenSelectors(block), tokens = new RegExp(TAG.source,'g'); let cursor = 0, match;
     // A broken sensitive opener is not a text node. Preserve an incomplete card as a whole.
     for (const m of block.matchAll(/<(?:head|script|style|textarea|pre|code|template|noscript|iframe)\b/gi)) {
         const token = new RegExp(TAG.source,'y'); token.lastIndex=m.index;
@@ -225,9 +242,15 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
     // Locally known fields get no token: the model sees only the remaining values of the card.
     const records = primary.map(card => {
         const local = card.fields.map(field => localOf(field,card));
+        // 8.0.6 값이 모두 이 기기에서 채워지는 카드(날짜 · 시각 · 날씨 · 전에 옮긴 장소뿐인 시간 상태창)는 여닫는 표시 둘도 보내지 않는다 —
+        //   채운 카드 전체를 보호 블록 하나로 (모델은 자리표시 하나만 본다)
+        if (local.length && !local.some(v => v === null)) {   // 값 칸이 없는 카드는 예전처럼 여닫는 표시 둘 (그 사이에 지어낸 글을 막는다)
+            const wholeText = patch(card.raw,card.fields,local.map((v,i)=>escapeDisplay(v,card.fields[i].context)));
+            return {...card,local,whole:true,wholeText,tokens:[reserve(wholeText)]};
+        }
         return {...card,local,tokens:Array.from({length:local.filter(v => v === null).length+2},()=>reserve(''))};
     });
-    const encode = (card,record) => { let n = 0; return record.tokens[0]+'\n'+card.fields.flatMap((f,i)=>record.local[i] !== null ? [] : [record.tokens[++n]+f.text]).join('\n')+'\n'+record.tokens.at(-1); };
+    const encode = (card,record) => { if (record.whole) return record.tokens[0]; let n = 0; return record.tokens[0]+'\n'+card.fields.flatMap((f,i)=>record.local[i] !== null ? [] : [record.tokens[++n]+f.text]).join('\n')+'\n'+record.tokens.at(-1); };
     const transform = (part,cards=describe(part)) => {
         if (cards.length !== records.length || cards.some((c,i)=>c.name!==records[i].name || c.fields.length!==records[i].fields.length)) throw fail();
         let output = part; for (let i=cards.length-1;i>=0;i--) output = output.slice(0,cards[i].start)+encode(cards[i],records[i])+output.slice(cards[i].end); return output;
@@ -247,14 +270,15 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
     const prepared = transform(primaryText,primary)+(split >= 0 ? REPLY_DIVIDER+correction(source.slice(split+REPLY_DIVIDER.length)) : '');
     return {
         text:prepared,count:records.length,
+        wholeBlocks:new Set(records.filter(r=>r.whole).map(r=>r.wholeText)),   // 8.0.6 모델이 빠뜨려도 제자리에 되돌릴 카드
         compare(value) { return transform(String(value ?? '')); },
         cacheable(body,answer) {
             // Paragraph caching happens before the complete message is restored. Reject bad
             // card responses here too, otherwise a retry would keep loading the same bad row.
-            const input=String(body??''), output=String(answer??''), relevant=records.filter(r=>r.tokens.some(t=>input.includes(t)));
+            const input=String(body??''), output=String(answer??''), open=records.filter(r=>!r.whole), relevant=open.filter(r=>r.tokens.some(t=>input.includes(t)));
             const expected=relevant.flatMap(r=>r.tokens);
             if (relevant.some(r=>r.tokens.some(t=>!input.includes(t)))) return false;
-            if (records.some(r=>!relevant.includes(r) && r.tokens.some(t=>output.includes(t)))) return false;
+            if (open.some(r=>!relevant.includes(r) && r.tokens.some(t=>output.includes(t)))) return false;
             let end=-1;
             for (const token of expected) {
                 const at=output.indexOf(token);
@@ -275,6 +299,11 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
         restore(value, { quiet = false } = {}) {
             let output = String(value ?? ''), replacements = [], heard = [];
             for (const record of records) {
+                if (record.whole) {   // 8.0.6 다 채운 카드: 자리표시 하나를 채운 카드로 (없으면 번역기의 빠진 보호 블록 되돌리기가 먼저 제자리에 넣어요)
+                    const at = output.indexOf(record.tokens[0]);
+                    if (at >= 0 && output.indexOf(record.tokens[0],at+record.tokens[0].length) < 0) replacements.push({start:at,end:at+record.tokens[0].length,text:record.wholeText});
+                    continue;
+                }
                 const positions = record.tokens.map(token => { const at = output.indexOf(token); if (at < 0 || output.indexOf(token,at+token.length)>=0) throw fail(); return at; });
                 if (positions.some((at,i)=>i>0 && at <= positions[i-1])) throw fail();
                 if (output.slice(positions[0]+record.tokens[0].length,positions[1]).trim()) throw fail();

@@ -1480,3 +1480,8 @@ export function repairTagPairs(source, output) {
     }
     return changed ? oParts.join('') : original;
 }
+
+// 8.0.6 프리셋 호환(숨는 블록 · 태그 속성 줄이기 · 하늘 장면)도 여기서 다시 내보낸다 — index.js 함수를 잘라 돌리는 node 시험들이 이 모듈을 env 에 펼친다
+export { HIDDEN_BLOCKS, isHiddenBlock } from './hidden-blocks.js';
+export { compactTags } from './tag-compact.js';
+export { skyAttrs } from './sky-attrs.js';

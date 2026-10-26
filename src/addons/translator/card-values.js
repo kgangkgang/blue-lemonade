@@ -18,6 +18,7 @@ const WEATHER_ZH = {
 const WORDS_EN = {
     morning: '아침', 'early morning': '이른 아침', 'late morning': '늦은 아침', noon: '정오', midday: '한낮', afternoon: '오후', 'late afternoon': '늦은 오후',
     evening: '저녁', 'late evening': '늦은 저녁', dusk: '해 질 녘', sunset: '해 질 녘', twilight: '황혼', dawn: '새벽', sunrise: '해 뜰 녘', night: '밤', 'late night': '늦은 밤', midnight: '자정',
+    'pre-dawn': '이른 새벽', predawn: '이른 새벽', 'pre dawn': '이른 새벽',   // 8.0.6 데우스 「Time Window」 칸
     am: '오전', 'a.m.': '오전', pm: '오후', 'p.m.': '오후',
     clear: '맑음', sunny: '맑음', 'partly cloudy': '구름 조금', 'mostly cloudy': '구름 많음', cloudy: '흐림', overcast: '흐림',
     rain: '비', rainy: '비', 'light rain': '약한 비', 'heavy rain': '폭우', drizzle: '이슬비', showers: '소낙비', thunderstorm: '뇌우', storm: '폭풍', stormy: '폭풍',
@@ -41,6 +42,12 @@ function dateZh(text) {
     const [, prefix, calendar, year, month, day, week] = m;
     return [prefix, calendar && CALENDAR_ZH[calendar], year && `${Number(year)}년`, `${Number(month)}월`, `${Number(day)}일`, week && WEEK_ZH[week] + '요일'].filter(Boolean).join(' ');
 }
+// 8.0.6 데우스 V3 · 레모나 「Exact Time」 시각: 11:42 PM · 7:40 a.m. → 오후 11:42 · 오전 7:40 (숫자는 그대로)
+const TIME_EN = /^(\d{1,2})\s*[:：]\s*(\d{2})\s*([AaPp])\.?\s*[Mm]\.?$/;
+function timeEn(text) {
+    const m = text.match(TIME_EN); if (!m || Number(m[1]) > 12) return null;
+    return `${/[Pp]/.test(m[3]) ? '오후' : '오전'} ${m[1]}:${m[2]}`;
+}
 function timeZh(text) {
     const m = text.match(TIME_ZH); if (!m || (!m[1] && !m[3]) || (m[1] && m[3])) return null;
     return `${PERIOD_ZH[m[1] || m[3]]} ${m[2].replace(/\s+/g, '').replace('：', ':')}`;
@@ -48,18 +55,20 @@ function timeZh(text) {
 // April 2, Tuesday, 2030 · Tuesday, April 2, 2030 · April 2, 2030 · 2 April 2030 · April 2
 function dateEn(text) {
     const words = text.replace(/(\d+)(?:st|nd|rd|th)\b/gi, '$1').split(/[\s,]+/).filter(Boolean);
-    let month = null, day = null, year = null, week = null;
+    let month = null, day = null, year = null, week = null, era = null;
     for (const word of words) {
         const w = word.toLowerCase().replace(/\.$/, '');
-        if (keyOf(MONTH_EN, w) && month === null) month = MONTH_EN[w];
+        if (keyOf(ERA_EN, w) && era === null) era = ERA_EN[w];   // 8.0.6 데우스 「Date, Day of week, Year, Era」
+        else if (keyOf(MONTH_EN, w) && month === null) month = MONTH_EN[w];
         else if (keyOf(WEEK_EN, w) && week === null) week = WEEK_EN[w];
         else if (/^\d{1,2}$/.test(w) && day === null && Number(w) >= 1 && Number(w) <= 31) day = Number(w);
         else if (/^\d{3,6}$/.test(w) && year === null) year = Number(w);
         else return null;
     }
     if (month === null || day === null) return null;
-    return [year !== null && `${year}년`, `${month}월`, `${day}일`, week && week + '요일'].filter(Boolean).join(' ');
+    return [era, year !== null && `${year}년`, `${month}월`, `${day}일`, week && week + '요일'].filter(Boolean).join(' ');
 }
+const ERA_EN = { ad: '서기', 'a.d': '서기', ce: '서기', 'c.e': '서기', bc: '기원전', 'b.c': '기원전', bce: '기원전', 'b.c.e': '기원전' };
 // 한자 덩어리는 사전의 가장 긴 낱말부터 잘라 읽는다 (恒温晴朗 → 恒温 + 晴朗). 모르는 글자가 하나라도 있으면 null.
 function hanWords(run) {
     const out = [];
@@ -96,7 +105,7 @@ function byDictionary(text) {
 export function ruleValue(text) {
     const value = String(text ?? '').trim();
     if (!value || value.length > 80 || /[\r\n<>]/.test(value)) return null;
-    return dateZh(value) || timeZh(value) || dateEn(value) || byDictionary(value);
+    return dateZh(value) || timeZh(value) || timeEn(value) || dateEn(value) || byDictionary(value);
 }
 
 // ── 같은 값의 지난 번역 (이 기기만, 최근 LIMIT 개) ──

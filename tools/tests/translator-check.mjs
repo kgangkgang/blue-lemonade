@@ -175,7 +175,7 @@ function cut(name) {
 }
 const BRACKET_NOTE = /\nconst BRACKET_NOTE = '([^']*)'/.exec(source)?.[1] ?? '';
 const ko = text => { let value = String(text); SRC.forEach((line, i) => { if (i !== 2) value = value.split(line).join(KO[i]); }); return value; };
-const S = { llm_prompt_chat: 'Translate visible text.', glossary_enabled: false, user_defined_regexes: [], user_no_fold_regexes: [], translation_display_mode: 'disabled' };
+const S = { llm_prompt_chat: 'Translate visible text.', compact_tags: false, glossary_enabled: false, user_defined_regexes: [], user_no_fold_regexes: [], translation_display_mode: 'disabled' };
 const T = { chat: [], chatId: 'chat-A', saved: 0, refreshed: [], events: [], stored: [], forgot: [] };
 const PREFIX = 'Translate visible text.\n\n';
 const hash = t => String([...String(t)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0));

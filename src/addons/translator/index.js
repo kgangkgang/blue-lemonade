@@ -15,6 +15,9 @@ import { checkpointKey, translateChunks, clearCheckpoints, readCheckpoint, write
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, stripDraftLeaks, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
 import { hideOpenComments, looksCutShort, restoreDialogueBrackets } from './translation-segments.js';   // 2.5.1 숨긴 주석 표시 보정 · 끊긴 답 · 2.5.2 빠진 대사 괄호
 import { keepKorean } from './korean-keep.js';   // 2.7.9 이미 한국어인 문단 · 대사는 번역 요청에 보내지 않기
+import { HIDDEN_BLOCKS, isHiddenBlock } from './hidden-blocks.js';   // 8.0.6 프리셋이 화면에서 숨기는 블록 · 태그 없는 생각 줄은 보내지 않기
+import { compactTags } from './tag-compact.js';   // 8.0.6 보이는 본문 태그 속성은 짧은 이름으로 보내고 받자마자 되돌리기
+import { skyAttrs } from './sky-attrs.js';   // 8.0.6 번역한 시간 상태창에서도 하늘 장면 (data-t · data-w)
 import { streamWatch, hasFailMark } from './translation-segments.js';   // 2.6.2 묶음 흘려받기 — 문단이 닫힐 때마다 진행 숫자 · 바로 보기 (흘려받기 자체는 translation-stream.js, 처음 쓸 때 불러옴)
 import { createReasoningView } from './reasoning-view.js';   // 2.6.0 생각 블록(추론) 카드 · 번역해서 보기
 import { updateReasoningUI } from '../../../../../../reasoning.js';   // 2.6.0 생각 칸 다시 그리기
@@ -1853,6 +1856,8 @@ async function translate(text, options = {}) {
     const connection = connectionSignature();
     let autoContextGuard = null;
     const cacheHeads = new Map();   // 7.7.2 캐시 배치(1) 프롬프트 → 그 고정 앞부분 (치환 뒤) — buildFullPrompt 가 채우고 request 가 붙인다
+    const tagRestores = new Map();   // 8.0.6 태그 속성을 줄여 보낸 프롬프트 → 답의 짧은 태그를 되돌리는 함수 (tag-compact.js) — buildFullPrompt 가 채우고 request 가 쓴다
+    const compactTransport = extensionSettings.compact_tags !== false && !options.isInputTranslation && !options.isRetranslation && options.checkSource === undefined;
     const watcher = watchGuard(() => {
         chatGuard.assert(); options.assertValid?.();
         if (JSON.stringify(chatGlossarySignature(getContext().chatMetadata)) !== chatTermStamp) throw Object.assign(Error('이 채팅의 표기가 바뀌어 번역을 멈췄어요. 다시 번역해 주세요.'), {cancelled:true});
@@ -1864,7 +1869,10 @@ async function translate(text, options = {}) {
         options.onRequest?.();
         // [BL 7.4.0] 요청 로그 · 사용량 장부의 용도: 화살표 다시 번역(교정)과 보낼 글 번역을 채팅 번역과 따로 센다
         const purpose = options.requestPurpose || (options.isRetranslation ? 'translation.retranslate' : options.isInputTranslation ? 'translation.input' : undefined);
-        const result = await callLLMAPI(prompt, { signal: watcher.signal, ...(purpose ? { requestPurpose: purpose } : {}), ...(cacheHeads.has(prompt) ? { promptCache: cacheHeads.get(prompt) } : {}), ...extra });
+        const untag = tagRestores.get(prompt);   // 8.0.6 짧게 보낸 태그를 흘려받는 글 · 다 받은 답 모두에서 원래 태그로
+        const sendExtra = untag && typeof extra.onStream === 'function' ? { ...extra, onStream: (text, ...rest) => extra.onStream(untag(text), ...rest) } : extra;
+        const raw = await callLLMAPI(prompt, { signal: watcher.signal, ...(purpose ? { requestPurpose: purpose } : {}), ...(cacheHeads.has(prompt) ? { promptCache: cacheHeads.get(prompt) } : {}), ...sendExtra });
+        const result = untag && typeof raw === 'string' ? untag(raw) : raw;
         watcher.check(); autoContextGuard?.assert(); return result;
     };
     try {
@@ -2004,11 +2012,16 @@ async function translate(text, options = {}) {
 
             // 마스킹된 텍스트를 AI에게 전달
             built += `\n\n${body}`;
+            // 8.0.6 보이는 본문의 태그 속성(대사색 style · class …)은 보내지 않고 짧은 이름(<span a1>)으로 — 답을 받자마자 request 가 되돌린다 (tag-compact.js)
+            //       잘라 돌리는 시험은 compactTransport 없이 예전 그대로. 용어집 · 말투 지침은 위에서 원래 본문으로 이미 골랐다
+            const sent = typeof compactTransport !== 'undefined' && compactTransport ? compactTags(body) : null;
+            if (sent?.changed) built = built.slice(0, built.length - body.length) + sent.text;
 
             // 플레이스홀더 치환 (커스텀 먼저, 기본 매크로 다음)
             built = substituteCustomPlaceholders(built, isInputTranslation);
             const full = substituteParams(built);
             if (head !== null) { const fixed = substituteParams(substituteCustomPlaceholders(head, isInputTranslation)); if (full.startsWith(fixed)) cacheHeads.set(full, fixed); }
+            if (sent?.changed) tagRestores.set(full, sent.restore);
             return full;
         };
         const PROMPT_LAYOUTS = (paragraphParts || glossaryBlock) ? (cacheFirst ? [1, 0, 2] : [0, 1, 2]) : [0, 2];
@@ -2425,7 +2438,7 @@ async function translate(text, options = {}) {
             const marker = '\n\n[Translated Text]:\n';
             const layoutSource = isRetranslation && maskedText.startsWith('[Original Text]:\n') && maskedText.includes(marker)
                 ? maskedText.slice('[Original Text]:\n'.length, maskedText.indexOf(marker)) : maskedText;
-            const dropped = droppedPlaceholders(protectedBlocks, layoutSource, translatedText, block => keptKorean.has(block) || isProtectedBlock(block, keepRules) || /^<!--[\s\S]*-->$/.test(block));   // 2.5.1 숨긴 주석도 · 2.7.9 가려 둔 한국어도 잃지 않는다
+            const dropped = droppedPlaceholders(protectedBlocks, layoutSource, translatedText, block => keptKorean.has(block) || isProtectedBlock(block, keepRules) || /^<!--[\s\S]*-->$/.test(block) || displayCards.wholeBlocks?.has(block) || isHiddenBlock(block));   // 2.5.1 숨긴 주석도 · 2.7.9 가려 둔 한국어도 · 8.0.6 다 채운 카드 · 숨는 블록도 잃지 않는다
             if (dropped.length) {
                 translatedText = restoreDroppedPlaceholders(layoutSource, translatedText, dropped);
                 if (report) report.restoredBlocks = dropped.length;
@@ -3058,6 +3071,15 @@ function tidyNamesShown(source, shown) {
     } catch { return shown; }
 }
 let commentHookAdded = false;
+// 8.0.6 데우스 V3 · 레모나 시간 상태창: 정규식이 그린 HTML 의 data-t · data-w 에 영어 꼴을 넣어 번역한 시각 · 날씨에서도 하늘 장면이 나오게 (sky-attrs.js).
+//   보이는 글자는 그대로이고, 실리태번 서식 훅(정규식 뒤)이 없는 옛 판에서는 아무것도 안 해요
+let skyHookAdded = false;
+function installSkyAttrsHook() {
+    const formatter = getContext()?.messageFormatter;
+    if (skyHookAdded || typeof formatter?.addHook !== 'function' || !formatter.stage?.AFTER_REGEX) return;
+    skyHookAdded = true;
+    formatter.addHook((mes, info) => (info?.isReasoning || typeof mes !== 'string' || !mes.includes('data-t="') ? mes : skyAttrs(mes)), { stage: formatter.stage.AFTER_REGEX, order: formatter.order?.LATEST });
+}
 function hideBrokenCommentsOnRender() {
     const formatter = getContext()?.messageFormatter;
     if (commentHookAdded || typeof formatter?.addHook !== 'function') return;
@@ -6192,6 +6214,7 @@ function initializeEventHandlers() {
     });
 
     hideBrokenCommentsOnRender();   // 2.5.1
+    installSkyAttrsHook();   // 8.0.6 번역한 시간 상태창의 하늘 장면 (sky-attrs.js)
     installCheckHooks();   // 2.6.0 번역 점검 표시 · 생각 블록 번역
     // 7.0.2 캐릭터 이름을 바꾸면 그 캐릭터 용어집 범위(아바타 파일 이름)도 새 파일로 (glossary-sync renameGlossaryScope)
     if (event_types.CHARACTER_RENAMED) eventSource.on(event_types.CHARACTER_RENAMED, (oldAvatar, newAvatar) => {
@@ -7814,7 +7837,9 @@ function getCombinedRegexes() {
         // 7.9.5 그림 요청 태그(<pic prompt="…">)도 — 영어 그림 설명을 번역 요청에 보내지 않고, 번역문에 원문 그대로 남아 그림이 들어오면 그 자리만 바꾼다 (picture-swap.js). 맨 뒤라 앞 번호 · 캐시 키는 그대로
         /<pic\b(?:[^>"']|"[^"]*"|'[^']*')*>(?:\s*<\/pic>)?/gi,   // picture-swap.js PIC_REQUEST 와 같은 꼴 (시험이 견준다)
         // 7.9.6 그림 요청 블록(<autopic>…</autopic>, 원본 그림 생성 확장의 기본 꼴)도 통째로 — 안의 영어 장면 · 인물 태그를 보내지 않는다. 맨 뒤라 앞 번호 · 캐시 키는 그대로
-        /<autopic\b(?:[^>"']|"[^"]*"|'[^']*')*>[\s\S]*?<\/autopic\s*>/gi   // picture-swap.js AUTOPIC_REQUEST 와 같은 꼴 (시험이 견준다)
+        /<autopic\b(?:[^>"']|"[^"]*"|'[^']*')*>[\s\S]*?<\/autopic\s*>/gi,   // picture-swap.js AUTOPIC_REQUEST 와 같은 꼴 (시험이 견준다)
+        // 8.0.6 화면에 안 보이거나 번역이 필요 없는 것 — 보내지 않고 제자리에 원문 그대로 (맨 뒤라 앞 번호 · 캐시 키는 그대로, hidden-blocks.js)
+        ...HIDDEN_BLOCKS.map(rule => new RegExp(rule.source, rule.flags)),
     ];
 
 

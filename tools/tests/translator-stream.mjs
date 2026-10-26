@@ -321,7 +321,7 @@ await check('requestCurrentConnection(현재 연결): 실리태번 ChatCompletio
 
 // ── ④ translate() ──
 const BRACKET_NOTE = /\nconst BRACKET_NOTE = '([^']*)'/.exec(source)?.[1] ?? '';
-const S = { llm_prompt_chat: 'Translate visible text.', glossary_enabled: false, user_defined_regexes: [], user_no_fold_regexes: [], translation_display_mode: 'disabled' };
+const S = { llm_prompt_chat: 'Translate visible text.', compact_tags: false, glossary_enabled: false, user_defined_regexes: [], user_no_fold_regexes: [], translation_display_mode: 'disabled' };
 const PREFIX = 'Translate visible text.\n\n';
 const LINE = n => `Line ${n}: The lantern by the window flickered while the kettle hummed softly over the stove.`;
 const LINE_KO = n => `${n}번째 줄: 창가의 등불이 깜박이는 동안 주전자가 화덕 위에서 나지막이 노래했다.`;

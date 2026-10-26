@@ -90,7 +90,7 @@ test('a card whose every value is local still restores; nothing of it reaches th
     forgetCardValueMemory();
     const src = '<tracker> 🌅 Morning | April 2, Tuesday, 2030 | ☀️ Clear, 19°C </tracker>';
     const p = prepare(src, cardValues({ scope: 's', storage: storage() }));
-    assert.equal(tokens(p.text).length, 2);
+    assert.equal(tokens(p.text).length, 1, '8.0.6 다 채운 카드는 여닫는 표시 둘 대신 자리표시 하나');
     assert.ok(!/Morning|April|Clear/.test(p.text));
     assert.equal(p.restore(p.text), '<tracker> 🌅 아침 | 2030년 4월 2일 화요일 | ☀️ 맑음, 19°C </tracker>');
 });
