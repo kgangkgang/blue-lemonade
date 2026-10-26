@@ -493,7 +493,7 @@ export const FILE_HASHES = {
   "src/checks.js": "3042:368ec3ff:509f89cc",
   "src/colorpick.js": "29852:5b5d8858:3ec727e4",
   "src/colorpop.js": "3885:d35d517b:d68f9617",
-  "src/control-ink.js": "16574:ff1fc505:e7f9e8e8",
+  "src/control-ink.js": "17958:f4115a79:f5e79981",
   "src/credits.js": "8099:713e0ae9:6066aaa2",
   "src/current.js": "1590:9701d538:8863d506",
   "src/custompalette.js": "15962:9e82f872:d30152ba",
@@ -624,7 +624,7 @@ export const FILE_HASHES = {
   "src/scripts/bundled/deus.js": "71720:ddbe5bc4:16add9c2",
   "src/scripts/bundled/fold.js": "14773:cf844e0a:169fb52a",
   "src/scripts/bundled/fruit-heart.js": "192916:6b4f9565:bd218137",
-  "src/scripts/bundled/fruit-style.js": "93097:f8a43b8d:7a3269a5",
+  "src/scripts/bundled/fruit-style.js": "95445:5be9fc85:a8361303",
   "src/scripts/bundled/fruit.js": "46008:de94fe1b:cec2bbd8",
   "src/scripts/bundled/helper.js": "104117:425b163a:31736cc4",
   "src/scripts/bundled/korean.js": "1029028:cc619cbc:619f91b4",
@@ -642,7 +642,7 @@ export const FILE_HASHES = {
   "src/scripts/plain/deus.js": "66897:632b8c3e:8adc7e2f",
   "src/scripts/plain/fold.js": "13815:b56ce78f:e3189530",
   "src/scripts/plain/fruit-heart.js": "179668:5169fd9d:b8f768ab",
-  "src/scripts/plain/fruit-style.js": "91805:c5970d78:39c39a3b",
+  "src/scripts/plain/fruit-style.js": "93749:1ab34968:a7716bd5",
   "src/scripts/plain/fruit.js": "42166:03605a28:1d7895a0",
   "src/scripts/plain/helper.js": "97691:f11398d4:3144a19b",
   "src/scripts/plain/korean.js": "958704:01befe38:eef1e6a9",
@@ -710,5 +710,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1695293:5c566d0c:61ddcedf"
+  "style.css": "1695295:cbd1c7c9:cc942f1d"
 };

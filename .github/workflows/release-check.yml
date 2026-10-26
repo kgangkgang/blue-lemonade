@@ -217,6 +217,7 @@ jobs:
           node tools/tests/perf-help-touch.mjs .
           node tools/tests/align-check.mjs .
           node tools/tests/control-ink.mjs .
+          node tools/tests/fruit-deus-control-ink.mjs .
           node tools/tests/tab-scroll.mjs .
           node tools/tests/tts-reanalysis-guard.mjs .
           node tools/tests/addon-note-master-off.mjs .
@@ -360,6 +361,7 @@ jobs:
           node tools/tests/settings-dialog.mjs
           node tools/tests/deus-qr.mjs
           node tools/tests/fruit-style.mjs
+          node tools/tests/fruit-skin-contrast.mjs .
           node tools/tests/fruit-entry-rows.mjs .
           node tools/tests/prompt-template.mjs .
           node tools/tests/manifest-reuse.mjs .

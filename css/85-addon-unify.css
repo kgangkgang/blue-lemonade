@@ -306,7 +306,8 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settin
 /* 하단 내비: 아이콘 + 이름 한 줄, 글자 탭 높이 36, 면 + 1px 선(고른 칸 = 포인트 면 + 650) */
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-bottom-nav { padding: 6px 10px; gap: 6px; }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-nav-item {
-  min-height: 36px; height: 36px; padding: 0 4px; gap: 6px; border: 1px solid var(--line); box-shadow: none; line-height: 1.2;
+  min-height: 36px; height: auto; padding: 6px 4px; gap: 6px; border: 1px solid var(--line); box-shadow: none; line-height: 1.2;
+  /* 7.9.9: 높이 36 고정 · 안쪽 여백 0 이면 control-ink 가 글자 잉크를 가운데로 옮길 여백이 없다(QR 탭 글자가 2.3px 아래). 보이는 높이는 min-height 36 그대로 */
 }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-nav-item.on { border-color: var(--acc); font-weight: 650; }
 

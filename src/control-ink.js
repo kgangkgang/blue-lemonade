@@ -1,8 +1,10 @@
 // Center short control labels using the font that actually rendered, including fallback fonts.
 // Only padding is redistributed: the face, hit area, font and spacing retain their sizes.
-const ROOTS = '.salty-panel, .bl-roomy-dialog, .bl-tool-dialog, .bl-credits-dialog, .bl-ft-dialog, .bl-assets-dialog, .bl-notes-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, #regex-link-settings, .po-dialog, .pa-hub, .rl-root, #cg-panel, #pt-panel, .popup-controls, .pt-help-dialog, .llmt-settings, .cg-root';
+const ROOTS = '.salty-panel, .bl-roomy-dialog, .bl-tool-dialog, .bl-credits-dialog, .bl-ft-dialog, .bl-assets-dialog, .bl-notes-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, #regex-link-settings, .po-dialog, .pa-hub, .rl-root, #cg-panel, #pt-panel, .popup-controls, .pt-help-dialog, .llmt-settings, .cg-root, #fruit-heart-v6, #bl-deus-popover';
 // 7.8.6: 한글화 패널 사용법 창 · LLM 번역 서랍 설정 · 북마크 창도 — 그 단추들은 윈도우에서 잰 글꼴 표(--bl-text-nudge)만 따라가고 있었다
+// 7.9.9: 과일의 마음 창(프리셋 스크립트가 그림 · body 밖 html 자식) · 데우스 빠른 설정 창도 — 고르기 단추 · 글자 단추 · 하단 탭의 글자 잉크가 1~2.7px 아래로 처져 있었다(10-26 리그 실측)
 const BUTTONS = 'button, .menu_button, [role="button"]';
+const WATCH = { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class', 'open', 'aria-pressed', 'aria-expanded'] };
 const saved = new WeakMap();
 const metrics = new Map();
 const baselineCache = new Map();   // 7.8.2: 글꼴 · 크기 · 줄 높이별 줄 위 → 기준선 거리
@@ -88,7 +90,13 @@ function restore(el) {
 // (padding 위아래 합은 그대로라 다른 단추 자리는 안 바뀐다).
 function readControl(el) {
     // Picture choices, switches and mixed icon labels have their own layout contracts.
-    if (el.closest('.salty-preview, .salty-sample, .salty-shapes, [data-bl-native-ext-colors]') || el.matches('.bl-md-choice, .bl-editor-group-toggle, .bl-editor-choose') || el.querySelector('i, svg, img, canvas, input, button, [class*="fa-"]')) return null;
+    if (el.closest('.salty-preview, .salty-sample, .salty-shapes, [data-bl-native-ext-colors]') || el.matches('.bl-md-choice, .bl-editor-group-toggle, .bl-editor-choose')) return null;
+    // 7.9.9: 글자 없는 절대 위치 꺾쇠(과일 고르기 단추의 <i>: 글자 크기 0 · 배경 그림)는 글자 줄에 끼지 않으니 섞인 아이콘으로 보지 않는다
+    for (const extra of el.querySelectorAll('i, svg, img, canvas, input, button, [class*="fa-"]')) {
+        if (extra.tagName !== 'I' || extra.children.length) return null;
+        const es = getComputedStyle(extra);
+        if (es.position !== 'absolute' || parseFloat(es.fontSize) !== 0) return null;
+    }
     const text = el.textContent.trim();
     if (!text || text.length > 80 || !/[\p{L}\p{N}]/u.test(text)) return null;
     const box = el.getBoundingClientRect(), style = getComputedStyle(el);
@@ -101,6 +109,7 @@ function readControl(el) {
         if (!node.textContent.trim()) continue;
         const range = document.createRange(); range.selectNodeContents(node);
         const rects = [...range.getClientRects()].filter(r => r.width > 0 && r.height > 0);
+        if (!rects.length && parseFloat(getComputedStyle(node.parentElement).fontSize) === 0) continue;   // 글자 크기 0 꺾쇠의 글자(▾)는 보이지 않는다
         if (rects.length !== 1) return null;
         const rect = rects[0];
         if (line !== null && Math.abs(rect.top - line) > 2) return null;
@@ -207,7 +216,12 @@ function onFontsLoaded(event) {
 }
 
 function watch() {
-    observer.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class', 'open', 'aria-pressed', 'aria-expanded'] });
+    observer.observe(document.body, WATCH);
+    // 7.9.9: 과일의 마음 창은 body 밖(html 의 자식)이라 body 감시로는 안 보인다 → html 바로 아래의 추가 · 삭제와, 거기 있는 창 안쪽을 따로 본다(head 안 변화는 안 본다)
+    const html = document.documentElement;
+    if (!html) return;
+    observer.observe(html, { childList: true });
+    for (const root of html.children) if (root !== document.body && root.nodeType === 1 && root.matches?.(ROOTS)) observer.observe(root, WATCH);
 }
 
 function queue(root) {

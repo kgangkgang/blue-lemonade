@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ae7daff75ea3) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 95개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 01912d5d074e) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -25731,7 +25731,7 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) .po-dialog .po-item):i
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) label:has(> input[type=checkbox]) { display: inline-flex; align-items: center; gap: 8px; }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-bottom-nav { padding: 6px 10px; gap: 6px; }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-nav-item {
-  min-height: 36px; height: 36px; padding: 0 4px; gap: 6px; border: 1px solid var(--line); box-shadow: none; line-height: 1.2;
+  min-height: 36px; height: auto; padding: 6px 4px; gap: 6px; border: 1px solid var(--line); box-shadow: none; line-height: 1.2;
 }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-nav-item.on { border-color: var(--acc); font-weight: 650; }
 html body.salty #bl-deus-popover .dq-head { grid-template-columns: minmax(0, max-content) auto minmax(0, 1fr) auto; column-gap: 8px; }

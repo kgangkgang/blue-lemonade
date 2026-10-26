@@ -13,7 +13,7 @@ const style = {
     setProperty(p, v, priority) { this.values.set(p, [v, priority]); },
     removeProperty(p) { this.values.delete(p); },
 };
-const control = { textContent: 'ABC', style, closest: () => null, matches: () => false, querySelector: () => null,
+const control = { textContent: 'ABC', style, closest: () => null, matches: () => false, querySelector: () => null, querySelectorAll: () => [],
     getBoundingClientRect: () => ({ top: 0, bottom: 44, width: 80, height: 44 }) };
 const node = { textContent: 'ABC', parentElement: control };
 const panel = { isConnected: true, hidden: false, contains: e => e === panel || e === nested,
