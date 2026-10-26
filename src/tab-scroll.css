@@ -1,0 +1,5 @@
+/* 등록된 가로 메뉴의 표식만 꾸며요. 본문·코드·그림 스크롤에는 표식을 붙이지 않아요. */
+html:not(#bl-tab-scroll-off) [data-bl-fade] { --bl-fade:28px; --bl-tab-reveal-inset:var(--bl-fade); }
+html:not(#bl-tab-scroll-off) [data-bl-fade="right"] { -webkit-mask-image:linear-gradient(to right, #000 calc(100% - var(--bl-fade)), transparent); mask-image:linear-gradient(to right, #000 calc(100% - var(--bl-fade)), transparent); }
+html:not(#bl-tab-scroll-off) [data-bl-fade="left"] { -webkit-mask-image:linear-gradient(to right, transparent, #000 var(--bl-fade)); mask-image:linear-gradient(to right, transparent, #000 var(--bl-fade)); }
+html:not(#bl-tab-scroll-off) [data-bl-fade="both"] { -webkit-mask-image:linear-gradient(to right, transparent, #000 var(--bl-fade), #000 calc(100% - var(--bl-fade)), transparent); mask-image:linear-gradient(to right, transparent, #000 var(--bl-fade), #000 calc(100% - var(--bl-fade)), transparent); }

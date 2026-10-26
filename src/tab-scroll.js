@@ -5,9 +5,12 @@ const ACTIVE = '[aria-selected="true"], [aria-pressed="true"], .active, .on, .is
 export function revealTab(bar, tab) {
     if (!bar || !tab || !bar.clientWidth || bar.scrollWidth <= bar.clientWidth + 1) return;
     const b = bar.getBoundingClientRect(), t = tab.getBoundingClientRect();
-    const left = b.left + bar.clientLeft, right = left + bar.clientWidth;
+    // 흐림을 쓰는 줄에서만 명시한 여백만큼 더 보여요. 다른 탭 줄의 기존 위치는 그대로예요.
+    const requested = parseFloat(bar.ownerDocument?.defaultView?.getComputedStyle?.(bar)?.getPropertyValue('--bl-tab-reveal-inset')) || 0;
+    const inset = Math.max(0, Math.min(requested, (bar.clientWidth - t.width) / 2));
+    const edge = b.left + bar.clientLeft, left = edge + inset, right = edge + bar.clientWidth - inset;
     // Only this strip moves; focusing a tab must not scroll its dialog or document.
-    const delta = t.width > bar.clientWidth ? t.left - left : t.left < left ? t.left - left : t.right > right ? t.right - right : 0;
+    const delta = t.width > bar.clientWidth ? t.left - edge : t.left < left ? t.left - left : t.right > right ? t.right - right : 0;
     if (Math.abs(delta) > 0.5) bar.scrollLeft += delta;
 }
 
@@ -26,6 +29,13 @@ export function applyFade(bar) {
 
 export function installTabScroll(selectors, doc = globalThis.document) {
     if (!doc?.documentElement || !selectors?.length) return;
+    // 기능 창만 열어도 같은 흐림 규칙을 쓰도록 문서마다 한 번만 연결해요.
+    if (!doc.getElementById('bl-tab-scroll-style')) {
+        const link = doc.createElement('link');
+        link.id = 'bl-tab-scroll-style'; link.rel = 'stylesheet';
+        link.href = new URL('./tab-scroll.css', import.meta.url).href;
+        (doc.head || doc.documentElement).append(link);
+    }
     if (doc[KEY]) { doc[KEY].add(selectors); return; }
     const win = doc.defaultView, names = new Set(), states = new Map();
     let selector = '', frame = 0;
@@ -45,13 +55,26 @@ export function installTabScroll(selectors, doc = globalThis.document) {
             pending.clear();
         });
     };
-    const resize = typeof win.ResizeObserver === 'function' ? new win.ResizeObserver(entries => entries.forEach(e => schedule(e.target))) : null;
+    const owners = new WeakMap();
+    const resize = typeof win.ResizeObserver === 'function' ? new win.ResizeObserver(entries => entries.forEach(e => {
+        const bar = owners.get(e.target);
+        if (bar) schedule(bar); else if (states.has(e.target)) schedule(e.target);
+    })) : null;
+    // 줄 너비가 같아도 글꼴·메뉴 내용의 폭은 달라질 수 있어요. 등록된 줄의 자식만 관찰해요.
+    const observeItems = bar => {
+        const state = states.get(bar); if (!state) return;
+        const items = new Set(bar.children);
+        for (const item of state.items) if (!items.has(item)) { resize?.unobserve(item); owners.delete(item); }
+        for (const item of items) if (!state.items.has(item)) { owners.set(item, bar); resize?.observe(item); }
+        state.items = items;
+    };
     function bind(bar) {
         if (states.has(bar)) return;
         const controller = new win.AbortController();
         const signal = controller.signal;
         const observer = new win.MutationObserver(records => {
             // Scroll position is deliberately not observed: swiping must stay under user control.
+            if (records.some(r => r.type === 'childList')) observeItems(bar);
             if (records.some(r => r.type === 'childList' || r.oldValue !== r.target.getAttribute(r.attributeName))) schedule(bar);
         });
         observer.observe(bar, { subtree: true, childList: true, attributes: true, attributeOldValue: true, attributeFilter: ['aria-selected', 'aria-pressed', 'class', 'hidden'] });
@@ -67,8 +90,9 @@ export function installTabScroll(selectors, doc = globalThis.document) {
             bar.scrollLeft += e.deltaY * (e.deltaMode === 1 ? 20 : e.deltaMode === 2 ? bar.clientWidth : 1);
             if (bar.scrollLeft !== before) e.preventDefault();
         }, { signal, passive: false });
-        states.set(bar, { controller, observer });
+        states.set(bar, { controller, observer, items: new Set() });
         resize?.observe(bar);
+        observeItems(bar);
         schedule(bar);
     }
     function scan(node) {
@@ -79,6 +103,7 @@ export function installTabScroll(selectors, doc = globalThis.document) {
     const cleanup = () => {
         for (const [bar, state] of states) if (!bar.isConnected) {
             state.controller.abort(); state.observer.disconnect(); resize?.unobserve(bar);
+            for (const item of state.items) { resize?.unobserve(item); owners.delete(item); }
             states.delete(bar); pending.delete(bar);
         }
     };

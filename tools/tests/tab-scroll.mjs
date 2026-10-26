@@ -38,4 +38,19 @@ test('fade CSS only masks edges by data attribute', () => {
     for (const side of ['left', 'right', 'both']) assert.ok(css.includes(`[data-bl-fade="${side}"]`), side);
     assert.match(css, /mask-image: linear-gradient/);
 });
-console.log(`tab-scroll: ${pass} passed`);
+test('흐림을 지정한 줄의 포커스 탭은 가장자리 28px 안쪽까지 보여요', () => {
+    const b = strip({ ownerDocument:{defaultView:{getComputedStyle:()=>({getPropertyValue:()=> '28px'})}} });
+    revealTab(b, tab(80, 30)); assert.equal(b.scrollLeft, 66);
+    revealTab(b, tab(20, 30)); assert.equal(b.scrollLeft, 46);
+});
+test('흐림 여백보다 넓은 탭도 반대 방향으로 흔들리지 않아요', () => {
+    const b = strip({ ownerDocument:{defaultView:{getComputedStyle:()=>({getPropertyValue:()=> '28px'})}} });
+    revealTab(b, tab(80, 180)); assert.equal(b.scrollLeft, 108);
+});
+test('독립 공통 스타일도 기존 방향 표식의 세 흐림을 제공해요', () => {
+    const css = fs.readFileSync(path.join(root,'src/tab-scroll.css'),'utf8');
+    for (const side of ['left','right','both']) assert.ok(css.includes(`[data-bl-fade="${side}"]`));
+    assert.match(css,/--bl-tab-reveal-inset:var\(--bl-fade\)/);
+    assert.doesNotMatch(css,/pointer-events|z-index|::before|::after|overflow\s*:/);
+});
+console.log(`탭 스크롤: ${pass}개 통과했어요.`);
