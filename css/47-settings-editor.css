@@ -47,7 +47,7 @@ html body .bl-editor .bl-editor-group-body > .bl-prompt-tools > .salty-group { m
 .bl-editor-directory .bl-search-results { position:static; max-height:55dvh; margin-top:8px; box-shadow:none; }
 .bl-editor-directory-list { min-height:0; overflow:auto; overscroll-behavior:contain; }
 .bl-editor-directory:has(.bl-search-results:not([hidden])) .bl-editor-directory-list { display:none; }
-.bl-editor-category h4 { margin:14px 0 6px; padding:7px 8px; border-left:3px solid var(--salty-accent); border-bottom:1px solid var(--bl-editor-line); border-radius:4px; background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-text); font-size:calc(15 * var(--sp)); font-weight:750; line-height:1.4; }
+.bl-editor-category h4 { margin:14px 0 6px; padding:8px 8px; border-left:3px solid var(--salty-accent); border-bottom:1px solid var(--bl-editor-line); border-radius:4px; background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-text); font-size:calc(15 * var(--sp)); font-weight:750; line-height:1.4; }
 .bl-editor-category button { display:block; width:100%; margin:2px 0; padding:calc(10px + var(--bl-text-nudge, 0px)) 12px calc(10px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border:0; border-radius:8px; text-align:left; background:transparent; color:var(--salty-text); font:inherit; font-size:calc(14 * var(--sp)); }
 .bl-editor-category button:is(:hover,[aria-current="page"]) { background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-accent); }
 .bl-editor-directory .salty-head { margin-top:20px; margin-bottom:0; border-top:1px solid var(--bl-editor-line); padding-top:18px; } /* 7.9.1: 머리줄 공용 아래 여백(8)이 목록 창 맨 아래에 남아 빈 띠가 됐다 — 창 안쪽 여백(10)만 */
@@ -64,7 +64,7 @@ html body .bl-editor .bl-editor-group-body > .bl-prompt-tools > .salty-group { m
 }
 
 .bl-editor-stage .bl-palette-tint { flex:none; width:100%; padding:10px 0 14px; }
-.bl-palette-tint small { display:block; color:var(--salty-muted); font-size:calc(11 * var(--sp)); line-height:1.5; margin-top:7px; }
+.bl-palette-tint small { display:block; color:var(--salty-muted); font-size:calc(11 * var(--sp)); line-height:1.5; margin-top:8px; }
 .bl-palette-tint .salty-slider { margin:0; }
 
 .bl-editor [data-act^="history-"]:disabled { opacity:.3; cursor:default; }

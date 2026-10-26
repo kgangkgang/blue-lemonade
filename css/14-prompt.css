@@ -157,7 +157,7 @@ body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > i
   align-items: center;
   column-gap: var(--bl-s3);
   row-gap: 0;
-  padding: 7px 0 !important;
+  padding: 8px 0 !important;
 }
 body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title {
   grid-column: 1;
@@ -584,7 +584,7 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list .completio
   color: var(--salty-faint) !important;
 }
 body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name .fa-solid[data-role] {
-  margin: 0 0 0 5px !important;
+  margin: 0 0 0 4px !important;
   font-size: 10px;
   vertical-align: 2px;
   color: var(--salty-faint) !important;
@@ -593,12 +593,12 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list .completio
   color: var(--bl-pop-ink) !important;
 }
 body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name .prompt-manager-overridden {
-  margin: 0 0 0 5px !important;
+  margin: 0 0 0 4px !important;
   color: var(--salty-accent) !important;
   opacity: 1 !important;
 }
 body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name .prompt-manager-injection-depth {
-  margin-left: 5px;
+  margin-left: 4px;
   font-size: var(--bl-fs-micro);
   font-weight: 600;
   font-variant-numeric: tabular-nums;

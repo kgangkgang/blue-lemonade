@@ -136,7 +136,7 @@ body.salty.salty-dark {
 body.salty .ui-tabs .ui-tabs-nav {
   display: flex;
   gap: 2px;
-  padding: 3px !important;
+  padding: 4px !important;
   border: 0 !important;
   border-radius: 12px !important;
   background: var(--bl-fill-hover, var(--bl-hover)) !important;
@@ -148,7 +148,7 @@ body.salty .ui-tabs .ui-tabs-nav li {
   background: transparent !important;
 }
 body.salty .ui-tabs .ui-tabs-nav .ui-tabs-anchor {
-  padding: 7px 12px !important;
+  padding: 8px 12px !important;
   color: var(--salty-muted) !important;
   font-size: var(--bl-fs-sub);
   font-weight: 650;
@@ -167,7 +167,7 @@ body.salty .ui-tabs .ui-tabs-nav li.ui-tabs-active .ui-tabs-anchor {
 /* ---------- 태그 · 거르기 칩 (리뷰 반영의 예전 태그 규칙보다 뒤라서 이김) ---------- */
 body.salty .tag {
   min-height: 24px;
-  padding: 1px 9px !important;
+  padding: 1px 8px !important;
   border: 0 !important;
   border-radius: var(--bl-r-pill) !important;
   box-shadow: none !important;

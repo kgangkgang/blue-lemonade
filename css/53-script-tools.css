@@ -4,4 +4,4 @@
 .salty-panel .bl-script-actions>.salty-btn { flex:1 1 140px;min-width:0;white-space:normal;margin:0;min-height:var(--bl-h-ctl,36px); }   /* 7.7.9 기준표: 보통 단추 36 (42 였음) */
 .salty-panel .bl-script-actions>[hidden] { display:none!important; }
 .salty-panel [data-script-feedback],.salty-panel [data-theme-update-status] { line-height:1.6;overflow-wrap:anywhere; }
-.bl-script-hint { display:block;white-space:pre-line;line-height:1.5;margin:5px 0;opacity:.8; }
+.bl-script-hint { display:block;white-space:pre-line;line-height:1.5;margin:4px 0;opacity:.8; }

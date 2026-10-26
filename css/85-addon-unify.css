@@ -273,7 +273,7 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settin
 /* 고르기 묶음(세그먼트): 고른 칸 = 면 + 진짜 1px 선 + 굵기 650 (안쪽 선 그림자 금지) */
 /* 선 1px 만큼 안쪽 여백을 줄여 전체 폭은 그대로(이름 옆 한 줄에 들어가던 묶음이 아래 줄로 떨어지지 않게) */
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-seg { border: 1px solid var(--line); padding: 2px; }
-:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-seg button { border: 1px solid transparent; box-shadow: none; padding-left: 9px; padding-right: 9px; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-seg button { border: 1px solid transparent; box-shadow: none; padding-left: 8px; padding-right: 8px; }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-seg button.on { border-color: var(--acc); box-shadow: none; font-weight: 650; }
 
 /* 단추 · 칩 · 고르기 단추: 면 + 1px 선(평평 C). 입력칸: 담는 면보다 밝은 면 + 1px 선, 그림자 없음(I2) */

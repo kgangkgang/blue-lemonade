@@ -175,7 +175,7 @@ body.salty #right-nav-panel #result_info_text {
   flex-direction: row !important;
   flex-wrap: wrap;
   align-items: baseline;
-  column-gap: 5px;
+  column-gap: 4px;
   margin-right: auto;
   color: var(--salty-muted);
   font-variant-numeric: tabular-nums;
@@ -299,8 +299,8 @@ body.salty #right-nav-panel #character_search_bar:focus {
 }
 /* 거르기 칩: 카드 위에 떠 있는 칩(e2), 누르면 오목 — 고름 · 뺌은 foundation 규칙 그대로 */
 body.salty #right-nav-panel .rm_tag_controls {
-  column-gap: 5px !important;
-  row-gap: 5px !important;
+  column-gap: 4px !important;
+  row-gap: 4px !important;
   /* 가로 스크롤 상자(overflow auto)라 안쪽 여백이 0 이면 동그라미의 고리 · 그림자가 잘림 → 3px 여백을 주고 그만큼 바깥으로 되돌려 자리는 그대로 */
 }
 /* 거르기 동그라미는 도구 막대 버튼(34)보다 한 단 작은 30 — 칩 줄이 한 줄을 통째로 먹지 않게
@@ -313,7 +313,7 @@ body.salty #right-nav-panel #rm_characters_block .rm_tag_filter .tag.actionable 
   font-size: 13px !important;
 }
 body.salty #right-nav-panel #rm_characters_block .rm_tag_filter {
-  gap: 5px !important;
+  gap: 4px !important;
 }
 body.salty #right-nav-panel .rm_tag_filter {
   align-items: center;
@@ -333,7 +333,7 @@ body.salty #right-nav-panel .rm_tag_filter .tag.actionable:where(:not(.selected,
 body.salty #right-nav-panel .rm_tag_filter .tag:not(.actionable) {
   min-height: 28px;
   gap: var(--bl-s1) !important;
-  padding: 0 11px !important;
+  padding: 0 12px !important;
 }
 body.salty #right-nav-panel #rm_characters_block .rm_tag_filter .tag:not(.actionable):where(:not(.selected, .excluded)) {
   box-shadow: var(--bl-e2) !important;
@@ -636,7 +636,7 @@ body.salty #right-nav-panel :is(.character_select, .group_select, .group_member)
 /* 레몬에이드: 흰 카드 위 흰 동그라미 속 레몬 별은 잘 안 보여서 레몬으로 채우고 별은 흰색 */
 /* 이름 · 설명 · 태그 */
 body.salty #right-nav-panel :is(.character_select_container, .group_select_container) {
-  row-gap: 3px !important;
+  row-gap: 4px !important;
   min-width: 0;
 }
 /* 목록 보기: 아바타 옆 남은 폭 전부 (실리태번의 100% - 70px 는 간격 12 와 합치면 넘쳐서 줄이 꺾임) */
@@ -725,7 +725,7 @@ body.salty:not(.charListGrid) #right-nav-panel #rm_print_characters_block .ch_de
 }
 body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_block) .tags_inline {
   gap: var(--bl-s1) !important;
-  margin-top: 3px;
+  margin-top: 4px;
   opacity: 1 !important;
 }
 body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_block) .tags_inline .tag {
@@ -740,12 +740,12 @@ body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_bloc
 }
 /* 목록 줄 태그: 카드에 눌러 찍은 이름표 (오목, 누르는 칩과 구분) */
 body.salty #right-nav-panel #rm_print_characters_block .tags_inline {
-  gap: 5px !important;
-  margin-top: 5px;
+  gap: 4px !important;
+  margin-top: 4px;
 }
 body.salty #right-nav-panel #rm_print_characters_block .tags_inline .tag {
   min-height: 22px !important;
-  padding: 2px 9px !important;
+  padding: 2px 8px !important;
   line-height: 1.35;
   box-shadow: var(--bl-well-in) !important;
 }
@@ -799,7 +799,7 @@ body.salty.charListGrid #right-nav-panel #rm_print_characters_block :is(.charact
   min-width: 0;
   max-width: none !important;
   gap: var(--bl-s2) !important;
-  padding: 6px 6px 9px !important;
+  padding: 6px 6px 8px !important;
   border-radius: var(--bl-r-md) !important;
 }
 body.salty.charListGrid #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select) > .avatar,
@@ -913,7 +913,7 @@ body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block {
 }
 body.salty #right-nav-panel #form_create[actiontype="createcharacter"] #avatar_controls .form_create_bottom_buttons_block {
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 5px !important;
+  gap: 4px !important;
 }
 body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block > .menu_button {
   width: auto !important;
@@ -974,7 +974,7 @@ body.salty #right-nav-panel :is(#tagList, #groupTagList) {
 body.salty #right-nav-panel :is(#tagList, #groupTagList) .tag {
   min-height: 28px;
   gap: 6px !important;
-  padding: 0 7px 0 11px !important;
+  padding: 0 8px 0 12px !important;
   box-shadow: var(--bl-e2) !important;
   opacity: 1 !important;
 }
@@ -990,7 +990,7 @@ body.salty #right-nav-panel :is(#tagList, #groupTagList) .tag_remove {
   width: 13px;
   height: 13px;
   margin: 0 -7px 0 -6px;
-  padding: 7px;
+  padding: 8px;
   font-size: 13px;
   line-height: 1;
   opacity: 1 !important;

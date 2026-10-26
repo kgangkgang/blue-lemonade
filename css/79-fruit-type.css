@@ -14,7 +14,7 @@
 .bl-fruit-type-editor .bl-ft-row{flex-wrap:nowrap}
 .bl-fruit-type-editor .bl-ft-row>span:first-child{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
 .bl-ft-row-ctl{display:flex;align-items:center;gap:10px;flex:none}
-.bl-fruit-type-editor .salty-btn,.bl-ft-dialog-head .salty-btn{min-height:32px;height:auto;padding:5px 12px;border-radius:8px;line-height:1.4;white-space:nowrap}
+.bl-fruit-type-editor .salty-btn,.bl-ft-dialog-head .salty-btn{min-height:32px;height:auto;padding:4px 12px;border-radius:8px;line-height:1.4;white-space:nowrap}
 /* 미리보기: 테마 미리보기 칸 그대로(따라옴 · 접기 · 높이 · 확대). 보이는 높이는 data-pv-max 로 작게 */
 .bl-ft-prevbox{margin-top:4px;background:var(--salty-fill-surface,var(--salty-surface,var(--SmartThemeBlurTintColor, var(--bl-fb-222))))}
 .bl-ft-prevbox .bl-ft-preview{display:block;width:100%;max-width:100%;min-width:0;border:1px solid var(--salty-line,var(--SmartThemeBorderColor, var(--bl-fb-8885)));border-radius:8px;background:var(--salty-bg, var(--bl-fb-fff))}
@@ -23,7 +23,7 @@
 .bl-ft-groups{margin-top:6px}
 .bl-ft-group{border-top:1px solid var(--bl-editor-line,var(--salty-line, var(--bl-fb-8884)))}
 .bl-ft-group:last-child{border-bottom:1px solid var(--bl-editor-line,var(--salty-line, var(--bl-fb-8884)))}
-html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100%;min-height:42px;margin:0;padding:9px 0;border:0;border-radius:0;background:transparent;color:var(--salty-text,inherit);font:inherit;font-weight:600;text-align:left;cursor:pointer;box-shadow:none}
+html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100%;min-height:42px;margin:0;padding:8px 0;border:0;border-radius:0;background:transparent;color:var(--salty-text,inherit);font:inherit;font-weight:600;text-align:left;cursor:pointer;box-shadow:none}
 .bl-ft-group-toggle>span{flex:0 1 auto;min-width:0;overflow-wrap:anywhere}
 .bl-ft-group-summary{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;font-size:.85em;font-weight:500;color:var(--salty-muted,inherit)}
 .bl-ft-group-toggle::after{content:'+';flex:none;width:14px;text-align:center;color:var(--salty-muted,inherit);font-size:1.25em;font-weight:400;line-height:1}
@@ -43,7 +43,7 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 .bl-ft-dialog .salty-prevbox{top:52px}
 /* 대화상자는 설정 창(.salty-panel) 밖이라 미리보기 도구 단추(돋보기 · ↺ · 확대 · 축소)가 브라우저 기본 흰 네모였다(나이트 대비 1.14) — 설정 창(45-preview-view)과 같은 모양.
    ↺ 선 그림은 56-control-consistency 의 같은 규칙이 :is(.salty-panel, .bl-ft-dialog) 로 받는다 */
-.bl-ft-dialog .bl-view-tools button{min-width:36px;min-height:32px;margin:0;padding:4px 9px;border:0;border-radius:8px;background:var(--salty-fill-shade,var(--salty-shade, var(--bl-fb-8882)));color:var(--salty-text,inherit);font:inherit;font-size:13px;cursor:pointer}
+.bl-ft-dialog .bl-view-tools button{min-width:36px;min-height:32px;margin:0;padding:4px 8px;border:0;border-radius:8px;background:var(--salty-fill-shade,var(--salty-shade, var(--bl-fb-8882)));color:var(--salty-text,inherit);font:inherit;font-size:13px;cursor:pointer}
 .bl-ft-dialog .bl-view-tools button:disabled{opacity:.4;cursor:default}
 .bl-ft-dialog .bl-view-resize>button{width:32px;height:28px;min-height:0;margin:0;padding:0;border:0;border-radius:8px;background:transparent;color:var(--salty-muted,inherit);font:13px/1 sans-serif;cursor:pointer}
 .bl-ft-dialog .bl-view-resize>.bl-view-toggle{grid-column:1;grid-row:1;font-size:12.5px}

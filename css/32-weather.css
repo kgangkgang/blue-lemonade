@@ -94,7 +94,7 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
 #bl-weather-place .bl-weather-place-bar button {
   border: 0;
   border-radius: 999px;
-  padding: 7px 12px;
+  padding: 8px 12px;
   background: var(--salty-shade, var(--bl-fb-rgb-255-255-255-p08));
   color: inherit;
   font: inherit;

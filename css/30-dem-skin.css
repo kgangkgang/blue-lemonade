@@ -126,7 +126,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__phase::after { background: var(--salty-fill-shade-2, var(--salty-shade-2)) !important; }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__step {
   column-gap: 10px !important;
-  padding: 7px 0 !important;
+  padding: 8px 0 !important;
   border: 0 !important;
   background: transparent !important;
 }
@@ -159,9 +159,9 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
 
 /* 상태 · 심리: 칸 속 칸 대신 가는 줄로 나눈 목록. 항목 이름은 작은 모듈 색 글자 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-status-row, .custom-dem-psychological-state-row) {
-  gap: 3px 10px !important;
+  gap: 4px 10px !important;
   margin: 0 !important;
-  padding: 9px 0 !important;
+  padding: 8px 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -182,7 +182,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
   font-weight: 700 !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__score {
-  padding: 0 7px !important;
+  padding: 0 8px !important;
   border: 0 !important;
   border-radius: 999px !important;
   background: var(--salty-fill-accent-13, var(--salty-accent-13)) !important;
@@ -195,7 +195,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   box-shadow: inset 0 1px 0 var(--salty-shade-2) !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status__more > summary {
-  padding: 9px 14px !important;
+  padding: 8px 14px !important;
   color: var(--salty-muted) !important;
   font-size: 0.72em !important;
   letter-spacing: 0.04em;
@@ -203,7 +203,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
 
 /* 스레드: 꼬리표를 알약으로 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-thread-row {
-  padding: 3px 0;
+  padding: 4px 0;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-thread-tag {
   padding: 1px 8px !important;
@@ -247,11 +247,11 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
 /* ---------- 트래커: 한 판 안에 시간 · 날짜 · 날씨 · 장소 ---------- */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) {
   gap: 2px 14px !important;
-  padding: 9px 14px !important;
+  padding: 8px 14px !important;
   font-size: 0.86em !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track__item, .custom-dem-track-recovery__item) {
-  gap: 5px !important;
+  gap: 4px !important;
   padding: 2px 0 !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track__icon, .custom-dem-track-recovery__icon) {
@@ -270,7 +270,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   font-weight: 500 !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track__temp, .custom-dem-track-recovery__temp) {
-  padding: 0 7px !important;
+  padding: 0 8px !important;
   border: 0 !important;
   border-radius: 999px !important;
   background: var(--salty-fill-accent-13, var(--salty-accent-13)) !important;

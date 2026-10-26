@@ -5,7 +5,7 @@
 .bl-addon-header h3 { margin:0; min-width:0; font-size:1em; line-height:1.4; color:var(--salty-text); overflow-wrap:anywhere; }
 .bl-addon-header .bl-addon-ver { margin-left:8px; padding:2.5px 10px 1.5px; /* 5.6.6 알약 글자가 사용자 글꼴 +0.8 · 기본 글꼴 0 → 0.5px 만 내림 (1px 은 기본 글꼴을 −0.98 로 보냈다) */ border:1px solid var(--salty-line); border-radius:999px; background:color-mix(in srgb, var(--salty-accent) 12%, transparent); color:var(--salty-accent-ink, var(--salty-accent)); font:inherit; font-size:12px; font-weight:600; line-height:1.5; vertical-align:.12em; cursor:pointer; }
 .bl-addon-header .bl-addon-ver:hover, .bl-addon-header .bl-addon-ver:focus-visible { background:color-mix(in srgb, var(--salty-accent) 22%, transparent); outline:none; }
-.bl-addon-header .bl-addon-status { margin:3px 0 0; color:var(--salty-muted); font-size:11px; line-height:1.4; }
+.bl-addon-header .bl-addon-status { margin:4px 0 0; color:var(--salty-muted); font-size:11px; line-height:1.4; }
 .bl-addon-header .bl-addon-status.is-on { color:var(--salty-accent-ink, var(--salty-accent)); }
 .bl-addon-power { display:flex; align-items:center; gap:8px; min-height:36px; flex:none; font-size:var(--bl-fs-body); } /* 7.9.3: 「기능 켜기」 12 → 본문 */
 .bl-addon-power input { accent-color:var(--salty-accent); width:19px; height:19px; margin:0; }
@@ -22,11 +22,11 @@ html body .bl-tool-heading { display:flex; align-items:center; justify-content:s
 .bl-tool-body .bl-tool-section { background:transparent; border-radius:8px; }
 .bl-tool-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(11em,calc((100% - 12px)/2))),1fr)); gap:8px 12px; min-width:0; align-items:start; }
 .bl-tool-grid > * { min-width:0; max-width:100%; overflow-wrap:anywhere; }
-.bl-tool-grid .bl-addon-toggle,.bl-tool-grid.bl-word-options label { align-items:center; gap:7px; margin:0; min-height:40px; font-size:12px; line-height:1.45; }
+.bl-tool-grid .bl-addon-toggle,.bl-tool-grid.bl-word-options label { align-items:center; gap:8px; margin:0; min-height:40px; font-size:12px; line-height:1.45; }
 .bl-tool-grid input[type=checkbox] { flex:none; margin:0; width:17px; height:17px; accent-color:var(--salty-accent); }
 .bl-tool-field { display:grid; grid-template-columns:minmax(0,1fr); gap:6px; min-width:0; font-size:12px; line-height:1.45; }
 .bl-tool-field small { font-size:10px; color:var(--salty-muted); }
-:is(.salty-panel,.bl-capture-dialog) .bl-tool-field :is(input[type=number],select) { display:block; width:100%; min-width:0; max-width:100%; min-height:36px; margin:0; padding:7px 9px; box-sizing:border-box; border:1px solid var(--salty-line)!important; border-radius:8px; background-color:var(--bl-fill-field,var(--salty-field))!important; color:var(--salty-text)!important; font:inherit; } /* 7.9.1: background 통째 → background-color — 고르기 칸 ▾(02)를 지우지 않게 */
+:is(.salty-panel,.bl-capture-dialog) .bl-tool-field :is(input[type=number],select) { display:block; width:100%; min-width:0; max-width:100%; min-height:36px; margin:0; padding:8px 8px; box-sizing:border-box; border:1px solid var(--salty-line)!important; border-radius:8px; background-color:var(--bl-fill-field,var(--salty-field))!important; color:var(--salty-text)!important; font:inherit; } /* 7.9.1: background 통째 → background-color — 고르기 칸 ▾(02)를 지우지 않게 */
 .bl-extension-page,.bl-capture-dialog { color-scheme:light; }
 body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; }
 .bl-tool-caption { display:block; margin:8px 0; font-size:12px; font-weight:600; }
@@ -40,7 +40,7 @@ body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; 
   .bl-tool-body .bl-word-presets { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 .bl-extension-page .bl-message-choices { max-height:200px; border:1px solid var(--salty-line); border-radius:8px; }
-.bl-extension-page .bl-message-choice { padding:9px 8px; font-size:12px; }
+.bl-extension-page .bl-message-choice { padding:8px 8px; font-size:12px; }
 .bl-extension-page .bl-message-choice small { line-height:1.45; font-size:11px; }
 .bl-extension-page .bl-message-actions { margin:0; gap:6px; }
 .bl-extension-page .bl-word-actions,.bl-extension-page .bl-addon-actions { margin:0; gap:8px; }
@@ -59,14 +59,14 @@ body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; 
 .bl-tool-status:empty { display:none; }
 .bl-capture-options { gap:10px; }
 .bl-capture-options .bl-mask-options { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
-.bl-capture-options .bl-mask-options label { gap:5px; padding:7px; min-width:0; min-height:44px; font-size:11px; }
+.bl-capture-options .bl-mask-options label { gap:4px; padding:8px; min-width:0; min-height:44px; font-size:11px; }
 .bl-capture-options .bl-mask-options input { margin:0; accent-color:var(--salty-accent); }
 .bl-capture-options .bl-mask-options .bl-mask-sample { width:23px; height:12px; flex:none; }
 .bl-capture-options .bl-mask-customize { gap:10px; padding:10px 0 0; margin-top:10px; border:0; border-top:1px solid var(--salty-line); border-radius:0; }
 .bl-mask-customize canvas { max-width:100%; max-height:90px; object-fit:contain; }
 .bl-mask-customize .bl-mask-number { display:grid; grid-template-columns:minmax(0,1fr); gap:4px; font-size:11px; }
 .bl-mask-customize .bl-mask-number-head { display:flex; gap:4px; align-items:center; justify-content:space-between; min-height:34px; }
-.bl-mask-customize .bl-mask-number input[type=number] { flex:0 0 48px; width:48px; min-height:32px; padding:3px; margin:0; color:var(--salty-text)!important; background:var(--bl-fill-field,var(--salty-field))!important; }
+.bl-mask-customize .bl-mask-number input[type=number] { flex:0 0 48px; width:48px; min-height:32px; padding:4px; margin:0; color:var(--salty-text)!important; background:var(--bl-fill-field,var(--salty-field))!important; }
 .bl-mask-customize .bl-mask-number input[type=range], .bl-capture-filter .bl-capture-filter-range input[type=range] { -webkit-appearance:none!important; appearance:none!important; display:block; width:100%!important; height:36px!important; min-height:36px; margin:0!important; padding:0!important; border:0!important; border-radius:0!important; background:transparent!important; box-shadow:none!important; touch-action:pan-y pinch-zoom; cursor:pointer; }
 .bl-mask-customize input[type=range]::-webkit-slider-runnable-track, .bl-capture-filter input[type=range]::-webkit-slider-runnable-track { height:var(--bl-track-h,5px)!important; border:0!important; border-radius:99px!important; background:linear-gradient(to right,var(--salty-accent) var(--mask-fill,0%),var(--salty-line) var(--mask-fill,0%))!important; box-shadow:none!important; }
 /* 6.9.8 치수 맞추기 ⑤: 손잡이 18px 포인트색 → 테마 공통 손잡이(--bl-knob-size 22 · 흰색 · --bl-knob 그림자), 막대 4 → --bl-track-h 5 — 생성 설정 · 설정 창 슬라이더와 같은 부품 */
@@ -146,7 +146,7 @@ html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px so
 .bl-addon-credit { display:flex; flex-direction:column; align-items:center; gap:1px; margin:24px 0 0; padding:12px 8px 2px; border-top:1px dashed var(--salty-line); text-align:center; color:var(--salty-muted); font-size:10.5px; line-height:1.7; letter-spacing:.02em; overflow-wrap:anywhere; }
 .bl-addon-layout > .bl-addon-credit { margin-top:auto; }
 /* 글자는 작게 두고 누르는 영역만 넓힌다 (폰 오탭 방지) — 5.1.3 */
-.bl-addon-credit a { display:inline-block; padding:7px 6px; margin:0; color:inherit; text-decoration:underline dotted; text-underline-offset:3px; }
+.bl-addon-credit a { display:inline-block; padding:8px 6px; margin:0; color:inherit; text-decoration:underline dotted; text-underline-offset:3px; }
 .bl-addon-credit a:hover,.bl-addon-credit a:focus-visible { color:var(--salty-text); }
 html body .bl-addon-credit-all { display:inline-block; min-height:0; margin:0; padding:calc(7px + var(--bl-text-nudge, 0px)) 6px calc(7px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border:0; border-radius:0; box-shadow:none; background:transparent; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; }
 html body .bl-addon-credit-all:hover,html body .bl-addon-credit-all:focus-visible { color:var(--salty-text); outline:none; }
@@ -179,11 +179,11 @@ html body .bl-addon-credit-all:focus-visible { outline:2px solid var(--salty-acc
 .bl-message-view { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0; }
 .bl-message-view .salty-btn { margin:0;min-width:0;min-height:40px;white-space:normal; }
 .bl-message-view .salty-btn[aria-pressed=true] { border:1px solid var(--salty-accent);background:color-mix(in srgb,var(--salty-accent) 14%,var(--salty-surface)); }
-.bl-message-language { display:block;color:var(--salty-muted);font-size:10px;font-style:normal;margin:3px 0; }
+.bl-message-language { display:block;color:var(--salty-muted);font-size:10px;font-style:normal;margin:4px 0; }
 .bl-message-choice [data-message-excerpt] { white-space:normal;overflow-wrap:anywhere; }
 /* Fit whole weather names into a responsive grid, including narrow editor panes. */
-.salty-panel .bl-weather-choices{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,7.5em),1fr));gap:5px;padding:5px;}
-.salty-panel .bl-weather-choices>button{min-width:0;width:100%;white-space:nowrap!important;word-break:keep-all!important;overflow-wrap:normal!important;padding:9px 5px;line-height:1.4;}
+.salty-panel .bl-weather-choices{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,7.5em),1fr));gap:4px;padding:4px;}
+.salty-panel .bl-weather-choices>button{min-width:0;width:100%;white-space:nowrap!important;word-break:keep-all!important;overflow-wrap:normal!important;padding:8px 4px;line-height:1.4;}
 /* 4.1.2 가독성: 설정 창 안 확장 화면의 체크박스 — 실리태번 기본(꺼져도 짙은 네모)이 그대로 나와 켜짐/꺼짐이 헷갈렸다. 서랍의 테마 체크박스와 같은 모양으로 */
 .salty-panel .bl-extension-page input[type="checkbox"]:where(:not(.bl-capture-options *)) { width:18px !important; height:18px !important; border:0 !important; border-radius:var(--bl-r-xs, 5px) !important; outline:none !important; background-color:var(--bl-check-off, var(--salty-shade-2)) !important; box-shadow:var(--bl-track, inset 0 0 0 1.5px var(--salty-faint)) !important; transform:none !important; filter:none !important; }
 .salty-panel .bl-extension-page input[type="checkbox"]:where(:not(.bl-capture-options *)):checked { background-color:var(--salty-accent) !important; box-shadow:none !important; }
@@ -195,8 +195,8 @@ dialog.popup.bl-roomy-dialog .popup-body { margin-left:0 !important; margin-righ
 dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-right:0 !important; padding:2px 0 4px !important; scrollbar-gutter:stable both-edges !important; }
 }
 /* 4.2.8 날씨: 카테고리 줄 · 혼합 칸(1 · 2) · 혼합 버튼 */
-.salty-panel .bl-weather-cats,.salty-panel .bl-weather-slots{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,5.2em),1fr));gap:5px;padding:5px;margin-bottom:6px;}
-.salty-panel .bl-weather-cats>button,.salty-panel .bl-weather-slots>button{min-width:0;width:100%;white-space:nowrap!important;padding:9px 5px;}
+.salty-panel .bl-weather-cats,.salty-panel .bl-weather-slots{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,5.2em),1fr));gap:4px;padding:4px;margin-bottom:6px;}
+.salty-panel .bl-weather-cats>button,.salty-panel .bl-weather-slots>button{min-width:0;width:100%;white-space:nowrap!important;padding:8px 4px;}
 .salty-panel .bl-weather-cats>button.open{box-shadow:inset 0 0 0 1.5px var(--salty-accent);}
 /* 7.0.3 분류 다섯 칸이 폰에서 4 + 1(「그 밖」 혼자 둘째 줄)로 갈렸다 — 분류 줄만 칸 최소 4.4em 으로 한 줄에 */
 .salty-panel .bl-weather-cats{grid-template-columns:repeat(auto-fit,minmax(min(100%,4.4em),1fr));}

@@ -155,7 +155,7 @@ body.salty .popup:has(#qr--modalEditor) .popup-content > #qr--modalEditor > #qr-
   align-items:center;
   gap:4px max(10px,.6em);
   min-height:max(34px,calc(1.4em + 10px));
-  padding:5px 6px;
+  padding:4px 6px;
   border-radius:var(--bl-r-sm);
   line-height:1.4;
   opacity:1;

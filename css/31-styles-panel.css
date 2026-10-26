@@ -127,7 +127,7 @@
   align-items: center;
   gap: 8px;
   margin: 0 0 8px;
-  padding: 7px 12px;
+  padding: 8px 12px;
   border-radius: var(--r-md);
   background: var(--salty-fill-accent-10, var(--salty-accent-10));
   color: var(--salty-accent-ink, var(--salty-accent));
@@ -270,7 +270,7 @@
 .salty-phonemock .pm-scroll p {
   display: grid;
   gap: 4px;
-  margin: 0 0 9px;
+  margin: 0 0 8px;
 }
 .salty-phonemock .pm-scroll i {
   display: block;
@@ -288,14 +288,14 @@
   right: 0;
   bottom: 0;
   z-index: 2;
-  padding: 8px 7px 8px;
+  padding: 8px 8px 8px;
   background: linear-gradient(to top, var(--salty-bg) calc(100% - 6px), transparent);
 }
 .salty-phonemock .pm-onehand {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 .salty-phonemock .pm-onehand b {
   width: 14px;
@@ -312,7 +312,7 @@
   align-items: center;
   justify-content: space-between;
   height: 24px;
-  padding: 0 5px 0 7px;
+  padding: 0 4px 0 8px;
   border-radius: 10px;
   background: var(--salty-fill-surface, var(--salty-surface));
   box-shadow: var(--bl-e2, 0 1px 3px var(--salty-shadow-50));

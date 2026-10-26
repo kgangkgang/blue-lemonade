@@ -123,7 +123,7 @@ html body.salty :is(.ms-target,.ms-lock,.rlk-keep) small { color:var(--salty-mut
 html body.salty .rl-module-head small { color:var(--salty-muted); opacity:1; }
 /* 5.3.7: 테마 설정 창의 작은 글자 — 실리태번의 small{opacity:.7} 이 테마의 옅은 글자색과 겹쳐 라이트에서 대비 2.3~2.8:1 이었다. 일부러 더 옅게 둔 곳(.bl-script-card · 글꼴 표본 등)은 더 무거운 규칙이라 그대로 */
 .salty-panel small:where(:not(.mes_text small)) { opacity:1; } /* 미리보기 속 메시지 본문의 small 은 채팅과 같게 둔다 */
-html body.salty .rl-owner { padding:3px 9px; color:var(--salty-muted); background:var(--salty-shade); opacity:1; }
+html body.salty .rl-owner { padding:4px 8px; color:var(--salty-muted); background:var(--salty-shade); opacity:1; }
 html body.salty .rl-owner.on { color:var(--salty-text); background:var(--salty-tint-14); }
 html body.salty .mr-item.is-picked { box-shadow:inset 0 0 0 2px var(--salty-accent); }
 html body.salty .mr-empty { padding:18px 14px; border-radius:14px; color:var(--salty-muted); background:var(--salty-surface); opacity:1; }
@@ -172,7 +172,7 @@ html body.salty #model-switch-settings .ms-actions .ms-apply { border-radius:var
 /* 설정 창 제목의 버전 알약은 굵은 제목에 맞춰 1px 올라가 있다(20-panel.css .salty-panel .salty-ver top:-1px) → ⓒ 도 같은 높이로.
    위아래 padding 합(4px)은 그대로라 버튼 크기 · 누르는 곳 · 초점 테두리는 안 바뀐다 (실측 5.5.3: 1440 · 412 모두 알약 가운데와 1px 차이 → 0) */
 /* 7.8.6: 위 알약 top:-1px 이 확장만 모드에만 남아 이 보정도 그 모드에만 (테마 화면은 75 가 ⓒ padding-block 0) */
-:where(body:not(.salty)) .salty-panel .salty-title .bl-copyright{padding-top:1px;padding-bottom:3px}
+:where(body:not(.salty)) .salty-panel .salty-title .bl-copyright{padding-top:1px;padding-bottom:4px}
 .bl-copyright:focus-visible{outline:2px solid var(--salty-accent, var(--bl-fb-3975b8))}
 /* 6.8.9 테마를 끈 채 서랍만 쓸 때 (커뮤니티 제보): 다른 CSS 가 제목 글자 칸을 좁히면 ⓒ 가 다음 줄로 넘어가 제목 줄이 두 줄이 되고 접기 화살표가 글자보다 아래로 내려갔다 ·
    서랍을 카드로 그리는 테마에서 제목 위 틈이 없었다 → 글자 칸은 한 줄(ⓒ 는 버전 옆), 제목 줄 위아래 8px. 테마를 켠 화면은 그대로 */
@@ -262,7 +262,7 @@ html body.salty .llmt-settings :is(.menu_button,.llmt-gl-scope,.llmt-gl-sort) {
 html body.salty .llmt-settings .llmt-gl-sort { padding-top:calc(2 * var(--bl-text-nudge, 0px)); }
 /* 5.6.6 용어집 범위 단추(이 캐릭터 · 전체) 글자가 1.06px 위 (1440 실측) → 위 1 · 아래 −1 → +0.06. 마우스 기기만 */
 @media (hover: hover) and (pointer: fine) {
-  html body.salty .llmt-settings .llmt-gl-scope { padding-top:5px; padding-bottom:3px; }
+  html body.salty .llmt-settings .llmt-gl-scope { padding-top:4px; padding-bottom:4px; }
 }
 /* 닫기는 내용만큼, 큰 메뉴 글자에서는 아이콘과 패딩 높이를 확보한다. */
 html body.salty .bl-translator-dialog > header > button {
@@ -297,7 +297,7 @@ html body.salty .ms-model { flex-wrap:wrap; gap:8px 10px; }
 html body.salty .ms-model .text_pole { flex:1 1 8em; }
 html body.salty .ms-actions { flex-wrap:wrap; gap:8px 10px; }
 html body.salty .ms-actions .menu_button { flex:0 1 auto; height:auto; white-space:normal; }
-html body.salty #model-switch-settings .ms-actions .ms-apply { flex:0 1 auto; min-height:36px; padding:7px 12px!important; line-height:1.45; font-weight:inherit; }
+html body.salty #model-switch-settings .ms-actions .ms-apply { flex:0 1 auto; min-height:36px; padding:8px 12px!important; line-height:1.45; font-weight:inherit; }
 html body.salty :is(.ms-chip b,.ms-target b,.ms-lock b) { font-weight:inherit; }
 html body.salty :is(.ms-chip b,.ms-chip small,.ms-target small) { white-space:normal; overflow-wrap:anywhere; }
 /* 6.3.3 상태 칩 이름은 한 줄 말줄임 — 20자 이름이 위 줄바꿈 규칙으로 3줄이 되어 칩(같은 줄의 칩까지)이 두 배 가까이 컸다 (412 측정 54→97px); 조합 칩처럼 이름 · 요약 두 줄 높이. 특이도(0,4,3)로 위 규칙을 이긴다 (!important 없이) */
@@ -350,7 +350,7 @@ html body.salty .eh-viewer-state { background:var(--salty-shade); color:var(--sa
 html body.salty .eh-icon-btn--light { color:var(--salty-muted)!important; }
 html body.salty .eh-icon-btn--light:hover { background:var(--salty-shade); color:var(--salty-text)!important; }
 html body.salty :is(.eh-vbtn,.eh-viewer-nav) { background:var(--salty-control,var(--salty-surface)); color:var(--salty-text)!important; border-color:var(--salty-line); border-radius:var(--bl-r-sm,8px); }
-html body.salty .eh-vbtn { height:auto; min-height:36px; max-width:100%; padding:7px 10px; line-height:1.45; white-space:normal; gap:10px; }
+html body.salty .eh-vbtn { height:auto; min-height:36px; max-width:100%; padding:8px 10px; line-height:1.45; white-space:normal; gap:10px; }
 html body.salty .eh-vbtn--danger { color:var(--bl-danger)!important; }
 html body.salty .eh-vbtn--danger:hover { background:var(--salty-danger-soft); }
 html body.salty .eh-vbtn--accent > i { color:var(--salty-accent-ink,var(--salty-accent)); }   /* 그림 자리 「이 자리에」 ✓ — 아이콘만 포인트색 */

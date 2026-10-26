@@ -71,7 +71,7 @@ html body .bl-editor .bl-backup-layout > .salty-group { margin:0; padding:4px 0;
 html body .bl-editor .bl-etc-grid > :is(.salty-group):not(.bl-decor-controls) { margin:0 0 6px; padding:4px 0; border-radius:0; background:transparent; box-shadow:none; }
 /* 5.5.2: 다른 확장 색 유지를 켜면 아래에 확장별 스위치 — 한 단계 들여서 어느 토글에 딸린 목록인지 보이게 */
 .bl-ext-colors-list { margin:2px 0 0; padding-left:12px; border-left:2px solid var(--salty-line); }
-.bl-ext-colors-list > .salty-row { padding-block:3px; }
+.bl-ext-colors-list > .salty-row { padding-block:4px; }
 html body .salty-panel.bl-editor .salty-sec .salty-group.bl-backup-actions { display:flex; flex-direction:column; }
 html body .salty-panel.bl-editor .bl-backup-actions > .salty-row { align-self:stretch; }
 .salty-panel.bl-editor .bl-control-grid > :is(.salty-stack,.salty-slider,.salty-row,.bl-color-field) { min-width:0; }

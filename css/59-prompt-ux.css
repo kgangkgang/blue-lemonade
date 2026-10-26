@@ -67,7 +67,7 @@ body.salty #left-nav-panel #textgenerationwebui_api-settings :is(#samplerResetBu
   max-width:100%;
   height:auto!important;
   min-height:max(var(--bl-prompt-control-height),calc(1.45em + 10px))!important;
-  padding:5px 10px!important;
+  padding:4px 10px!important;
   white-space:normal!important;
   overflow-wrap:anywhere;
   line-height:1.45!important;

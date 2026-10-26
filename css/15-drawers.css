@@ -782,7 +782,7 @@ html:not(#bl-tab-scroll-off) body.salty #Backgrounds #bg_tabs .bg_tabs_list {
 body.salty #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button {
   flex: 0 0 auto;
   min-width: 0 !important;
-  padding: 3px !important;
+  padding: 4px !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: var(--bl-fill-hover, var(--bl-hover)) !important;
@@ -801,7 +801,7 @@ body.salty #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button:nth-of-type(2) {
 body.salty #Backgrounds #bg_tabs .bg_tabs_list .bg_tab_button a {
   display: block;
   min-width: 64px;
-  padding: 7px 16px !important;
+  padding: 8px 16px !important;
   border-radius: var(--bl-r-sm);
   color: var(--salty-muted) !important;
   font-size: var(--bl-fs-sub);
@@ -875,7 +875,7 @@ body.salty #Backgrounds .bg_example.locked-background::after {
 }
 /* 사진 위 글자 · 버튼: 흐림 없이 옅은 어두운 면 */
 body.salty #Backgrounds .bg_example .BGSampleTitle {
-  padding: 3px 8px !important;
+  padding: 4px 8px !important;
   border-radius: 0 !important;
   background: rgba(4, 14, 26, 0.5) !important;
   color: #fff !important;
@@ -1014,7 +1014,7 @@ body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2)
   }
   body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > .menu_button {
     padding-inline: 6px !important; /* 다른 칸의 단추 여백 규칙(10px)을 이 줄에서만 덮는다 */
-    gap: 5px;
+    gap: 4px;
   }
   body.salty #rm_extensions_block .extensions_block > .flex-container:first-child > .menu_button > span {
     overflow: hidden;
@@ -1115,7 +1115,7 @@ body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 4px;
-  padding: 3px;
+  padding: 4px;
   border: 0;
   border-radius: var(--bl-r-md);
   background: var(--bl-fill-hover, var(--bl-hover));
@@ -1225,7 +1225,7 @@ body.salty .TH-custom-tailwind .inline-flex:has(> .TH-radio-button) {
   flex-wrap: wrap;
   max-width: 100%;
   gap: 6px;
-  padding: 3px;
+  padding: 4px;
   border-radius: var(--bl-r-md);
   background: var(--bl-fill-hover, var(--bl-hover));
 }
@@ -1235,7 +1235,7 @@ body.salty .TH-custom-tailwind .TH-radio-button {
   max-width: 100%;
   min-height: max(32px, calc(1.5em + 10px));
   margin: 0 !important;
-  padding: 5px 10px;
+  padding: 4px 10px;
   border: 0;
   border-radius: var(--bl-r-sm) !important;
   background: transparent;
@@ -1294,7 +1294,7 @@ body.salty .TH-custom-tailwind .TH-Button--container {
   max-width: 100%;
   min-height: max(var(--bl-helper-control-height), calc(1.5em + 10px));
   gap: 6px;
-  padding: 5px 10px;
+  padding: 4px 10px;
   border: 0;
   border-radius: var(--bl-r-sm);
   background: var(--bl-fill-control, var(--bl-control));
@@ -1483,7 +1483,7 @@ body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 {
 body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div {
   flex: 1 1 auto;
   min-width: 0;
-  padding: 5px 6px;
+  padding: 4px 6px;
 }
 @container bl-helper (width < 30em) {
   body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div i {
@@ -1519,7 +1519,7 @@ body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-p
   margin-inline: 0;
   min-height: max(var(--bl-helper-control-height), calc(1.5em + 10px));
   height: auto;
-  padding: 5px 10px;
+  padding: 4px 10px;
   gap: 6px;
   flex-wrap: wrap;
   justify-content: center;
@@ -1643,7 +1643,7 @@ body.salty #rm_extensions_block #character_assets_settings .asset-preview-thumb 
 /* 탭 넷: 테마 세그먼트 — 폰에서도 넷이 한 줄에 들어가게 폭을 나눔, 고른 탭은 떠 있는 칸 */
 body.salty #rm_extensions_block #character_assets_settings .character-assets__tabs {
   gap: 2px;
-  padding: 3px;
+  padding: 4px;
   border: 0;
   border-radius: 12px;
   background: var(--bl-fill-hover, var(--bl-hover));
@@ -1651,8 +1651,8 @@ body.salty #rm_extensions_block #character_assets_settings .character-assets__ta
 body.salty #rm_extensions_block #character_assets_settings .character-assets__tab {
   flex: 1 1 auto;
   min-width: 0;
-  gap: 5px;
-  padding: 7px 6px;
+  gap: 4px;
+  padding: 8px 6px;
   border: 0;
   border-radius: var(--bl-r-sm);
   background: transparent;
@@ -1702,7 +1702,7 @@ body.salty #rm_extensions_block #qr--color {
 body.salty #rm_extensions_block #regex_presets_block .flex-container:has(> #regex_presets) {
   flex-wrap: wrap;
   align-items: center;
-  gap: 3px !important;
+  gap: 4px !important;
 }
 body.salty #rm_extensions_block #regex_presets {
   flex: 1 1 100% !important;

@@ -1,6 +1,6 @@
 /* ===== css/45-preview-view.css ===== */
-.bl-view-tools { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:5px 0; }
-.salty-panel .bl-view-tools button { min-width:36px; min-height:34px; margin:0; padding:4px 9px; border:0; border-radius:9px; background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-text); font:inherit; font-size:13px; cursor:pointer; }
+.bl-view-tools { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:4px 0; }
+.salty-panel .bl-view-tools button { min-width:36px; min-height:34px; margin:0; padding:4px 8px; border:0; border-radius:9px; background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-text); font:inherit; font-size:13px; cursor:pointer; }
 .salty-panel .bl-view-tools button:disabled { opacity:.4; cursor:default; }
 .bl-view-tools output { min-width:42px; text-align:center; font-size:12px; font-variant-numeric:tabular-nums; }
 .bl-view-tools small { margin-left:auto; font-size:11px; color:var(--salty-muted); }

@@ -39,7 +39,7 @@ body.salty .bl-pbind-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 4px 3px 10px;
+  padding: 4px 4px 4px 10px;
   border: 1px solid var(--SmartThemeBorderColor, var(--bl-fb-rgb-128-128-128-p35));
   border-radius: 999px;
   font-size: .92em;
@@ -148,7 +148,7 @@ body.salty .bl-pbind-list.is-regex {
   gap: 2px;
 }
 body.salty .bl-pbind-list.is-regex .bl-pbind-item {
-  padding: 5px 8px;
+  padding: 4px 8px;
 }
 body.salty .bl-pbind-list.is-regex .bl-pbind-item span:last-child {
   white-space: normal;

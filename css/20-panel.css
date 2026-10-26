@@ -121,7 +121,7 @@ body.salty-dark .salty-panel {
    확장만 모드에서만 걸리게 좁혔다. 예전에는 75 가 특이도로 누르기만 해서, ⓒ 없는 제목이면 top:-1px 이 되살아났다(7.8.2 알약 1px 위 사고의 뿌리). :where 라 특이도 그대로 */
 :where(body:not(.salty)) .salty-panel .salty-ver {
   top: -1px;
-  padding: 1px 7px 0; /* 5.6.6 알약 글자가 1px 위 (390 기본 글꼴 실측 +1.01 · 사용자 글꼴 +1.1) → 고친 뒤 −0.64 */
+  padding: 1px 8px 0; /* 5.6.6 알약 글자가 1px 위 (390 기본 글꼴 실측 +1.01 · 사용자 글꼴 +1.1) → 고친 뒤 −0.64 */
   font-size: calc(10.5 * var(--sp));
   font-weight: 400;
   line-height: 1.6;
@@ -500,7 +500,7 @@ body.salty .popup:has(.salty-notice) .popup-content {
   justify-content: space-between;
   gap: 10px;
   min-height: var(--row-h);
-  padding: 7px 0;
+  padding: 8px 0;
 }
 .salty-row > span {
   min-width: 0;
@@ -515,8 +515,8 @@ body.salty .popup:has(.salty-notice) .popup-content {
 }
 .salty-stack {
   display: grid;
-  gap: 7px;
-  padding: 9px 0;
+  gap: 8px;
+  padding: 8px 0;
 }
 .salty-stack .salty-seg {
   display: flex;
@@ -530,12 +530,12 @@ body.salty .popup:has(.salty-notice) .popup-content {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 2px;
-  padding: 3px;
+  padding: 4px;
   background: var(--salty-fill-shade, var(--shade));
   border-radius: 11px;
 }
 .salty-seg button {
-  padding: 6px 9px;
+  padding: 6px 8px;
   border: 0;
   border-radius: 9px;
   background: none;
@@ -560,7 +560,7 @@ body.salty .popup:has(.salty-notice) .popup-content {
 }
 .salty-seg.salty-mini button {
   min-height: 32px;
-  padding: 6px 11px;
+  padding: 6px 12px;
   font-size: var(--fs-chip);
 }
 /* 어두운 테마: 면색 칩은 판보다 어두워 구멍처럼 보여서, 고른 칸은 판보다 한 톤 밝게 */
@@ -574,17 +574,17 @@ body.salty-dark .salty-seg button.on {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 2px;
-  padding: 3px;
+  padding: 4px;
   background: var(--salty-fill-shade, var(--shade));
   border-radius: 11px;
 }
 .salty-shapes button {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   min-width: 0;
   min-height: 42px;
-  padding: 7px 10px;
+  padding: 8px 10px;
   border: 0;
   border-radius: 9px;
   background: none;
@@ -617,7 +617,7 @@ body.salty-dark .salty-shapes button.on {
 
 /* 슬라이더 */
 .salty-slider {
-  padding: 8px 0 3px;
+  padding: 8px 0 4px;
 }
 .salty-slider header {
   display: flex;
@@ -655,7 +655,7 @@ body.salty-dark .salty-shapes button.on {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   color: var(--salty-muted);
   font-size: var(--fs-cap);
   font-variant-numeric: tabular-nums;
@@ -674,7 +674,7 @@ body.salty-dark .salty-shapes button.on {
   height: var(--num-h) !important;
   min-height: 0 !important;
   margin: 0 !important;
-  padding: 0 9px !important;
+  padding: 0 8px !important;
   border: 0 !important;
   border-radius: 10px !important;
   outline: none !important;
@@ -901,7 +901,7 @@ body.salty-dark .salty-shapes button.on {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   height: 32px;
   padding: 0 12px;
   border: 0;
@@ -960,7 +960,7 @@ body.salty-dark .salty-shapes button.on {
   top: 0;
   z-index: 1;
   margin: 0;
-  padding: 9px 12px 4px;
+  padding: 8px 12px 4px;
   background: var(--salty-fill-bg, var(--salty-bg));
   color: var(--salty-muted);
   font-size: var(--fs-small);
@@ -1121,7 +1121,7 @@ body.salty-dark .salty-shapes button.on {
 }
 .salty-pal-page {
   display: block;
-  padding: 9px 9px 8px;
+  padding: 8px 8px 8px;
   border-radius: 9px;
   background: var(--pal-surface);
   font-size: var(--fs-chip);
@@ -1144,7 +1144,7 @@ body.salty-dark .salty-shapes button.on {
   display: block;
   width: 46%;
   height: 4px;
-  margin-top: 7px;
+  margin-top: 8px;
   border-radius: 2px;
   background: var(--pal-pop, var(--pal-accent)); /* 두 번째 포인트(보내기 버튼 색) — 레몬 블루 · 블루 아워는 노랑 */
 }
@@ -1305,7 +1305,7 @@ body.salty-dark .salty-shapes button.on {
     padding: var(--pp);
   }
   .salty-head {
-    gap: 9px;
+    gap: 8px;
     margin-bottom: 10px;
   }
   .salty-mark {
@@ -1319,7 +1319,7 @@ body.salty-dark .salty-shapes button.on {
     height: 26px;
   }
   .salty-label {
-    margin: 14px 4px 5px;
+    margin: 14px 4px 4px;
   }
   .salty-sample {
     padding: 12px 14px !important;

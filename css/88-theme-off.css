@@ -31,7 +31,7 @@ html body:not(.salty) #pt-panel #pt-page-localization > .pt-bl-help { margin: 0;
 /* 모델 전환 창: 저장한 조합 칩 줄과 아래 입력 칸 사이 (테마가 꺼지면 0px 로 붙었다) */
 html body:not(.salty) #model-switch-settings .ms-presets:not(:empty) { margin-bottom: 8px; }
 /* 설정 창 › 이미지 미리보기의 종류 · 표본 단추(일반 이미지 · 투명 이미지 · ‹ ›): 테마가 꺼지면 브라우저 기본 단추(밝은 면)에 창 글자색(나이트면 밝은 글자)이 올라가 안 보였다(대비 1.1 : 1) → 테마가 켜졌을 때(21-witidy.css)와 같은 모양 */
-html body:not(.salty) .salty-panel .bl-preview-tools button { min-height: 30px; padding: 4px 7px; border: 0; border-radius: 7px; background: var(--salty-field, color-mix(in srgb, currentColor 10%, transparent)); color: var(--salty-text); font: inherit; }
+html body:not(.salty) .salty-panel .bl-preview-tools button { min-height: 30px; padding: 4px 8px; border: 0; border-radius: 7px; background: var(--salty-field, color-mix(in srgb, currentColor 10%, transparent)); color: var(--salty-text); font: inherit; }
 html body:not(.salty) .salty-panel .bl-preview-tools button[aria-pressed="true"] { background: var(--salty-accent-13, color-mix(in srgb, var(--salty-accent) 13%, transparent)); color: var(--salty-accent); }
 /* 한글화 패널 한글화 목록(이어서): 목록 · 칸은 flex 에서 줄어들지 않게 — 테마가 꺼지면 칸이 줄어 설명 셋째 줄이 아래 칸 테두리에 잘렸다 (prompt/style.css body.salty 규칙과 같은 값) */
 html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list,

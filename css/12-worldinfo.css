@@ -314,7 +314,7 @@ body.salty #WorldInfo #wiSliders > .flex-container:has(> small:first-child + .ne
   max-width: 100% !important;
   height: auto !important;
   min-height: max(var(--bl-h-ctl), calc(1.45em + 8px)) !important; /* 6.9.8: 생성 설정과 같은 식 (1.4em+10px 은 큰 글씨에서 0.5px 달랐다) */
-  padding-block: 5px !important;
+  padding-block: 4px !important;
   line-height: 1.4;
 }
 body.salty #WorldInfo #wiSliders .neo-range-input {
@@ -340,7 +340,7 @@ body.salty #WorldInfo #world_info_character_strategy {
   height: auto !important;
   min-height: max(var(--bl-h-icon), calc(1.4em + 10px)) !important;
   margin: 0 !important;
-  padding: 5px 26px 5px 8px !important;
+  padding: 4px 26px 4px 8px !important;
   line-height: 1.4;
   background-color: transparent !important;
   background-position: right 6px center !important;
@@ -915,7 +915,7 @@ body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world
 body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control > input {
   height: auto;
   min-height: max(var(--bl-h-ctl), calc(1.4em + 10px));
-  padding-block: 5px !important;
+  padding-block: 4px !important;
   line-height: 1.4;
   margin: 0 !important;
 }
@@ -930,7 +930,7 @@ body.salty #WorldInfo .world_entry_edit :is([name="perEntryOverridesBlock"] > .w
   height: auto !important;
   min-height: max(var(--bl-h-icon), calc(1.4em + 10px)) !important;
   margin: 0 !important;
-  padding: 5px 26px 5px 8px !important;
+  padding: 4px 26px 4px 8px !important;
   line-height: 1.4;
   background-color: transparent !important;
   background-position: right 6px center !important;
@@ -1066,7 +1066,7 @@ body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 input[type="
   width: 100% !important;
   height: auto;
   min-height: max(var(--bl-h-ctl), calc(1.4em + 10px));
-  padding-block: 5px !important;
+  padding-block: 4px !important;
   line-height: 1.4;
   font-variant-numeric: tabular-nums;
   text-align: center;
@@ -1075,7 +1075,7 @@ body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 input[type="
   width: 100% !important;
   height: auto;
   min-height: max(var(--bl-h-ctl), calc(1.4em + 10px));
-  padding-block: 5px !important;
+  padding-block: 4px !important;
   line-height: 1.4;
 }
 body.salty #WorldInfo .world_entry_edit > .flex-container.flexGap10 select[multiple]:not(.select2-hidden-accessible) {
@@ -1173,7 +1173,7 @@ body.salty #PersonaManagement .persona_management_left_column > .flex-container:
   align-items: center !important;
   gap: 6px !important;
   margin: 0 0 var(--bl-s1) !important;
-  padding: 7px !important;
+  padding: 8px !important;
   border-radius: var(--bl-r-md);
   background: var(--bl-fill-card, var(--bl-card));
   box-shadow: var(--bl-e1);
@@ -1337,7 +1337,7 @@ body.salty #PersonaManagement #user_avatar_block .avatar-container.default_perso
   display: inline-flex;
   align-items: center;
   min-height: 24px;
-  padding: 0 9px;
+  padding: 0 8px;
   border-radius: var(--bl-r-pill);
   background: color-mix(in srgb, var(--bl-lemon) 24%, var(--bl-card));
   color: color-mix(in srgb, var(--bl-pop-ink) 70%, var(--salty-text));
@@ -1423,7 +1423,7 @@ body.salty #PersonaManagement #user_avatar_block .avatar_container_states .menu_
   min-width: 0 !important;
   min-height: 24px !important;
   gap: 4px !important;
-  padding: 0 9px !important;
+  padding: 0 8px !important;
   border-radius: var(--bl-r-pill) !important;
   background: var(--salty-fill-accent-10, var(--salty-accent-10)) !important;
   box-shadow: none !important;
@@ -1694,8 +1694,8 @@ body.salty #PersonaManagement .persona_management_global_settings > .range-block
 }
 /* 두 줄로 꺾이는 이름: 위아래 여백으로 줄끼리 붙지 않게 (한 줄이면 46px 그대로) */
 body.salty #PersonaManagement .persona_management_global_settings label.checkbox_label {
-  padding-top: 9px;
-  padding-bottom: 9px;
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 /* 폰: 목록 아래 · 두 칸 사이 · 오른쪽 칸 위 여백이 겹쳐 32px 이 비어 보였음 (사용자: "중앙 공백 너무 길어") → 합 10px 로 */
 @media screen and (max-width: 1000px) {

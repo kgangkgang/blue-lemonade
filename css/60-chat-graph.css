@@ -27,19 +27,19 @@ body.salty .bl-chat-library:not([hidden]) { display:flex;flex-direction:column;g
 .bl-library-compare-head b { overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden; }
 .bl-library-source-names { margin:8px 0;overflow-wrap:anywhere; }
 .bl-library-source-names summary { min-height:36px;display:list-item;padding-block:8px; }
-@media(max-width:600px){.bl-library-tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.bl-library-compare-row > div{gap:5px}.bl-library-compare-row section{padding:5px}}
+@media(max-width:600px){.bl-library-tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.bl-library-compare-row > div{gap:4px}.bl-library-compare-row section{padding:4px}}
 /* 7.9.9 공용 측정 크기표: 손가락 화면에서도 보이는 높이는 글자 단추 · 탭 36 (글 칸 · 고르기 44 는 그대로), 누르는 칸 44 는 86/87 과 같은 투명 상자
    (::after — 이 단추들은 가짜 요소를 모양에 쓰지 않는다 · 기준점 relative). 탭 줄은 98 이 overflow 를 잘라 상자가 위아래로는 안 번진다 */
 @media(pointer:coarse){.bl-chat-library{--bl-h-ctl:44px}.bl-chat-library :is(select,input[type=search]){min-height:44px}body.salty .bl-chat-library button,body.salty .bl-chat-view-tabs[role=tablist] button{position:relative;min-height:36px}body.salty .bl-chat-library button::after,body.salty .bl-chat-view-tabs[role=tablist] button::after{content:'';position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}.bl-library-row>label{min-height:44px}.bl-library-source-names summary{min-height:44px}}
 .bl-chat-view-tabs, .bl-chat-graph { display: none; }
 body.salty .bl-chat-view-tabs { display: flex; flex: none; flex-wrap: wrap; gap: 4px; width: fit-content; max-width: 100%; padding: 4px; border-radius: 12px; background: var(--salty-fill-shade,var(--salty-shade)); }
-body.salty .bl-chat-view-tabs button { display: flex; align-items: center; justify-content: center; flex: 1 0 auto; gap: 8px; min-height: 34px; padding: 5px 14px; border: 0; border-radius: 8px; background: transparent; color: var(--salty-muted); font: inherit; white-space: nowrap; cursor: pointer; }
+body.salty .bl-chat-view-tabs button { display: flex; align-items: center; justify-content: center; flex: 1 0 auto; gap: 8px; min-height: 34px; padding: 4px 14px; border: 0; border-radius: 8px; background: transparent; color: var(--salty-muted); font: inherit; white-space: nowrap; cursor: pointer; }
 body.salty .bl-chat-view-tabs button[aria-selected="true"] { color: var(--salty-accent-ink,var(--salty-accent)); background: var(--bl-fill-card,var(--salty-surface)); box-shadow: var(--bl-e1); }
 body.salty #select_chat_popup.bl-chat-map-on :is(#select_chat_div,#select_chat_search,.chatBackupsList) { display: none !important; }
 body.salty #select_chat_popup.bl-chat-map-on { width: min(1180px,96vw); max-width: min(1180px,96vw); }
 body.salty .bl-chat-graph:not([hidden]) { display: flex; flex-direction: column; gap: 8px; flex: 1 1 auto; min-height: 0; font: inherit; }
 body.salty .bl-chat-graph-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: none; }
-body.salty .bl-chat-graph-tools button, body.salty .bl-chat-graph-detail button { display: inline-flex; align-items: center; justify-content: center; flex: none; gap: 8px; min-width: 32px; min-height: 34px; padding: 6px 9px; border: 0; border-radius: 8px; background: var(--salty-fill-shade,var(--salty-shade)); color: var(--salty-text); font: inherit; line-height: 1.3; cursor: pointer; }
+body.salty .bl-chat-graph-tools button, body.salty .bl-chat-graph-detail button { display: inline-flex; align-items: center; justify-content: center; flex: none; gap: 8px; min-width: 32px; min-height: 34px; padding: 6px 8px; border: 0; border-radius: 8px; background: var(--salty-fill-shade,var(--salty-shade)); color: var(--salty-text); font: inherit; line-height: 1.3; cursor: pointer; }
 body.salty .bl-chat-graph-search { display: flex; align-items: center; gap: 8px; flex: 1 1 110px; min-width: 100px; margin: 0; padding: 0 10px; border-radius: 8px; background: var(--salty-fill-shade,var(--salty-shade)); color: var(--salty-muted); }
 body.salty #select_chat_popup .bl-chat-graph-search input { width: 100%; min-width: 0; margin: 0; padding: 8px 0; border: 0; background: transparent !important; color: var(--salty-text); font: inherit; box-shadow: none !important; }
 body.salty .bl-chat-graph-search:focus-within { outline: 2px solid var(--salty-accent); outline-offset: 1px; }
@@ -54,7 +54,7 @@ body.salty .bl-chat-graph-stage path { fill: none; stroke: var(--salty-accent); 
 body.salty .bl-chat-graph-node { position: absolute; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 6px; margin: 0; padding: 12px 14px; box-sizing: border-box; border: 1px solid var(--salty-line); border-radius: 12px; background: var(--bl-fill-card,var(--salty-surface)); color: var(--salty-text); font: inherit; line-height: 1.35; text-align: left; box-shadow: var(--bl-e2); cursor: pointer; }
 body.salty .bl-chat-graph-node::before, body.salty .bl-chat-graph-node::after { content: ''; position: absolute; top: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: var(--salty-accent); }
 body.salty .bl-chat-graph-node::before { left: -5px; } body.salty .bl-chat-graph-node::after { right: -5px; }
-body.salty .bl-chat-graph[data-layout="vertical"] .bl-chat-graph-node { gap: 5px; padding: 10px; }
+body.salty .bl-chat-graph[data-layout="vertical"] .bl-chat-graph-node { gap: 4px; padding: 10px; }
 body.salty .bl-chat-graph[data-layout="vertical"] .bl-chat-graph-node::before,
 body.salty .bl-chat-graph[data-layout="vertical"] .bl-chat-graph-node::after { left: calc(50% - 4px); right: auto; }
 body.salty .bl-chat-graph[data-layout="vertical"] .bl-chat-graph-node::before { top: -5px; }
@@ -67,7 +67,7 @@ body.salty .bl-chat-graph-node[aria-pressed="true"], body.salty .bl-chat-graph-n
 body.salty .bl-chat-graph-node.is-dim { opacity: .42; }
 body.salty .bl-chat-graph-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; color: var(--salty-muted); font-size: .85em; }
 body.salty .bl-chat-graph-detail:not([hidden]) { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--salty-fill-shade,var(--salty-shade)); }
-body.salty .bl-chat-graph-detail > div { display: flex; flex-direction: column; gap: 3px; flex: 1 1 160px; min-width: 0; }
+body.salty .bl-chat-graph-detail > div { display: flex; flex-direction: column; gap: 4px; flex: 1 1 160px; min-width: 0; }
 body.salty .bl-chat-graph-detail b { overflow-wrap: anywhere; line-height: 1.35; font-size: .95em; }
 body.salty .bl-chat-graph-detail span { color: var(--salty-muted); font-size: .85em; overflow-wrap: anywhere; }
 body.salty .bl-chat-graph-detail [data-act="open"] { color: var(--salty-on-accent); background: var(--salty-accent); }

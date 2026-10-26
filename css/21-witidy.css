@@ -6,7 +6,7 @@
 body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header {
   display: grid !important;
   align-items: center !important;
-  gap: 6px 3px !important;
+  gap: 6px 4px !important;
   padding: 8px !important;
 }
 body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header::before,
@@ -43,7 +43,7 @@ body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .WIEntryHeaderTitleMo
 body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .world_entry_form_control > :is(input, select) {
   flex: 1 1 4.5em; width: 0 !important; max-width: 100% !important; min-width: min(100%, 4.5em) !important;
   height: auto !important; min-height: max(30px, calc(1.4em + 8px)) !important; margin: 0 !important;
-  padding-block: 3px !important; padding-left: 7px !important; font-size: var(--bl-fs-body) !important; line-height: 1.4;
+  padding-block: 4px !important; padding-left: 8px !important; font-size: var(--bl-fs-body) !important; line-height: 1.4;
 }
 /* 제목과 상태 선택은 같은 줄에 들어갈 때만 나란히 둔다. 사용자 글자 크기는 유지한다. */
 body.salty #WorldInfo .world_entry .WIEntryTitleAndStatus { flex-wrap: wrap !important; }
@@ -110,22 +110,22 @@ body.salty #floatingPrompt .inline-drawer-content { padding-left: 0 !important; 
 /* 별 + 이름이 있는 즐겨찾기 띠 */
 body.salty #right-nav-panel #CharListButtonAndHotSwaps { align-items: flex-start; padding: 6px 8px !important; gap: 8px !important; }
 body.salty #right-nav-panel #CharListButtonAndHotSwaps > .flex-container { flex-flow: column !important; padding-top: 20px; }
-body.salty #right-nav-panel #HotSwapWrapper { display: flex; flex-direction: column !important; align-items: stretch !important; min-width: 0; gap: 5px; }
+body.salty #right-nav-panel #HotSwapWrapper { display: flex; flex-direction: column !important; align-items: stretch !important; min-width: 0; gap: 4px; }
 body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading { width: 100%; flex: none; display: flex; align-items: center; gap: 6px; color: var(--salty-muted); font-size: var(--bl-fs-cap); font-weight: 600; line-height: 1.4; }
 body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading i { color: var(--bl-pop-ink); font-size: 1em; }
 body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading small { margin-left: auto; font-size: inherit; font-variant-numeric: tabular-nums; color: var(--salty-muted); }
-body.salty #right-nav-panel #HotSwapWrapper .hotswap { display: flex; align-items: flex-start; gap: 6px; width: 100%; height: auto !important; max-height: none !important; flex-wrap: nowrap !important; padding: 3px 0; overflow-x: auto; scrollbar-width: none; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap { display: flex; align-items: flex-start; gap: 6px; width: 100%; height: auto !important; max-height: none !important; flex-wrap: nowrap !important; padding: 4px 0; overflow-x: auto; scrollbar-width: none; }
 body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar {
   display: flex; flex-direction: column; justify-content: flex-start; flex: 0 0 64px;
-  width: 64px !important; height: auto !important; max-height: none; gap: 5px;
-  padding: 5px 4px; border-radius: 10px; 
+  width: 64px !important; height: auto !important; max-height: none; gap: 4px;
+  padding: 4px 4px; border-radius: 10px;
 }
 body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar img { width: 48px !important; height: 52px !important; border-radius: 8px !important; object-fit: cover; box-shadow: none !important; }
 body.salty #right-nav-panel #HotSwapWrapper .bl-fav-name { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--salty-text); font-size: 10px; line-height: 1.4; }
 body.salty #right-nav-panel #HotSwapWrapper .hotswap > small { min-height: 32px; text-align: left; font-size: 11px; }
 body.salty #right-nav-panel #charListFixedTop { background: transparent; box-shadow: none; padding-inline: 0 !important; }
 body.salty #right-nav-panel #rm_print_characters_block .character_select {
-  padding: 9px !important; gap: 10px !important; border-radius: 12px;
+  padding: 8px !important; gap: 10px !important; border-radius: 12px;
   background: linear-gradient(110deg, var(--salty-accent-13), transparent 65%), var(--bl-card) !important;
 }
 body.salty #right-nav-panel #rm_print_characters_block .character_select > .avatar { flex: 0 0 54px; width: 54px; height: 64px; }
@@ -138,8 +138,8 @@ body.salty .salty-panel .bl-preview-tools button[aria-pressed="true"] { backgrou
 body.salty .salty-panel .bl-preview-samples button { min-width: 28px; font-size: 21px; }
 body.salty .salty-panel .bl-preview-samples span { min-width: 30px; color: var(--salty-muted); text-align: center; font-size: 11px; }
 body.salty .salty-panel:not(.bl-editor) .salty-sec[data-tab="image"] .salty-group { padding-inline: 10px; }
-body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding: 0; background: transparent; }
-body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes button { border-radius: 9px; padding: 8px 3px 10px; /* 7.9.1: 그림(위 여백 큼) + 글자 덩어리의 잉크 가운데가 칸 가운데보다 1.4px 아래였다 — 위 1 · 아래 1 옮김 */ box-shadow: none; flex-direction: column; justify-content: center; gap: 5px; font-size: 11px; min-height: 62px; }
+body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 0; background: transparent; }
+body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes button { border-radius: 9px; padding: 8px 4px 10px; /* 7.9.1: 그림(위 여백 큼) + 글자 덩어리의 잉크 가운데가 칸 가운데보다 1.4px 아래였다 — 위 1 · 아래 1 옮김 */ box-shadow: none; flex-direction: column; justify-content: center; gap: 4px; font-size: 11px; min-height: 62px; }
 /* 작은 트랙, 넉넉한 누름 영역 */
 body.salty .salty-panel .salty-switch { width: 36px; height: 36px; }
 body.salty .salty-panel .salty-switch span { inset: 8px 0; }
@@ -158,11 +158,11 @@ body.salty :is(.mes_edit_delete, .mes_reasoning_delete, .mes_media_delete, .mes_
   body.salty .popup:has(.salty-panel.in-popup) .popup-content { scrollbar-gutter: stable both-edges !important; }
   body.salty .popup .salty-panel.in-popup { --pp: 2px; --pad: 10px; padding: 2px 2px 6px !important; }
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> small:first-child + .neo-range-slider + .neo-range-input) {
-    display: grid !important; grid-template-columns: minmax(0, 1fr) auto; width: 100%; gap: 5px 10px;
+    display: grid !important; grid-template-columns: minmax(0, 1fr) auto; width: 100%; gap: 4px 10px;
   }
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-slider { width: 100%; min-width: 0; grid-area: 2 / 1 !important; }
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .neo-range-input { grid-area: 2 / 2 !important; }
-  body.salty #user-settings-block :is(#UI-Customization, #power-user-option-checkboxes) > div[name] { padding-inline: 9px !important; }
+  body.salty #user-settings-block :is(#UI-Customization, #power-user-option-checkboxes) > div[name] { padding-inline: 8px !important; }
 }
 
 body.salty #WorldInfo .world_entry .killSwitch { width: 36px; height: 20px; }
@@ -171,12 +171,12 @@ body.salty #WorldInfo .world_entry .killSwitch.fa-toggle-on::before { transform:
 body.salty #WorldInfo .world_entry .killSwitch::after { inset: -7px 0; }
 /* 가로 퀵 리플라이: 폰은 입력판 아래 도구 줄의 남는 폭을 쓴다. */
 body.salty #send_form #qr--bar {
-  order: 30; flex-wrap: nowrap; justify-content: flex-start; gap: 5px;
+  order: 30; flex-wrap: nowrap; justify-content: flex-start; gap: 4px;
   min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
   overscroll-behavior-x: contain; padding: 2px 0; opacity: 1;
 }
 body.salty #send_form #qr--bar > .qr--buttons { flex: 0 0 auto; width: max-content; flex-wrap: nowrap; justify-content: flex-start; }
-body.salty #send_form #qr--bar .qr--button { flex-shrink: 0; min-height: 30px; padding: 4px 9px; margin: 0; border: 0; border-radius: 7px; background: var(--bl-fill-hover, var(--bl-hover)); color: var(--salty-text); box-shadow: none; font-size: 11px; white-space: nowrap; }
+body.salty #send_form #qr--bar .qr--button { flex-shrink: 0; min-height: 30px; padding: 4px 8px; margin: 0; border: 0; border-radius: 7px; background: var(--bl-fill-hover, var(--bl-hover)); color: var(--salty-text); box-shadow: none; font-size: 11px; white-space: nowrap; }
 body.salty #send_form #qr--bar #qr--popoutTrigger { position: sticky; left: 0; flex-shrink: 0; order: -1; background: var(--bl-fill-card, var(--bl-card)); }
 body.salty #send_form #qr--bar:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: -2px; }
 /* 버튼이 하나도 없는 빈 바는 자리를 차지하지 않음 (2.7.9 — 위아래 여백 2px 씩이 입력판 아래에 빈 줄을 만들어 버튼 줄 전체가 2px 위로 밀려 있었음) */
@@ -209,7 +209,7 @@ body.salty #send_form #qr--bar.bl-qr-dragging .qr--button { transform: none !imp
 }
 /* 찾기 팝업: 이름 한 줄 + 내용 미리보기 한 줄 */
 body.salty .bl-qrf .salty-pick-rows > button { flex-direction: column; align-items: stretch; justify-content: center; gap: 1px; padding: 6px 12px 6px 14px; }
-body.salty .bl-qrf .bl-qrf-name { display: flex; align-items: center; gap: 7px; min-width: 0; }
+body.salty .bl-qrf .bl-qrf-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
 body.salty .bl-qrf .bl-qrf-name b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 body.salty .bl-qrf .bl-qrf-name i { flex: none; width: 14px; color: var(--salty-muted); font-size: 12px; text-align: center; }
 body.salty .bl-qrf .salty-pick-rows > button small { overflow: hidden; color: var(--salty-muted); font-size: 11.5px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
@@ -226,13 +226,13 @@ body.salty #right-nav-panel #right-nav-panel-tabs:has(#rm_button_selected_ch h2:
 body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"] { width: 36px !important; height: 20px !important; }
 body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]::before { width: 14px !important; height: 14px !important; box-shadow: none !important; }
 body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"]:checked::before { transform: translateX(16px) !important; }
-body.salty #dialogue_del_mes { gap: 8px; padding: 7px 10px !important; }
+body.salty #dialogue_del_mes { gap: 8px; padding: 8px 10px !important; }
 body.salty #dialogue_del_mes .menu_button { min-height: var(--bl-h-btn, 36px) !important; height: var(--bl-h-btn, 36px) !important; border-radius: 8px !important; box-shadow: none !important; font-size: 13px !important; font-weight: 500 !important; }
 body.salty #dialogue_del_mes #dialogue_del_mes_ok { background: var(--salty-danger-soft) !important; color: var(--bl-danger) !important; }
 @media (max-width: 1000px) {
   body.salty #user-settings-block:not(#salty-none) { scrollbar-gutter: stable both-edges; padding-inline: 4px !important; }
   body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) {
-    display: grid !important; grid-template-columns: minmax(0, 1fr); gap: 5px !important; padding-block: 9px !important; align-items: start !important;
+    display: grid !important; grid-template-columns: minmax(0, 1fr); gap: 4px !important; padding-block: 8px !important; align-items: start !important;
   }
 }
 /* ===== /surfaces:witidy ===== */
