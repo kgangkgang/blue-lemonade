@@ -55,6 +55,9 @@ jobs:
           node tools/tests/stream-watchdog.mjs .
           node tools/tests/perf-bundle-645.mjs .
           node tools/tests/perf-start.mjs .
+          node tools/tests/perf-list-shown.mjs .
+          node tools/tests/prompt-toggle-echo.mjs .
+          node tools/tests/has-invalidation-scope.mjs .
           node tools/tests/style-dedupe.mjs .
           node tools/tests/translator-leak.mjs .
           node tools/tests/translator-comments.mjs .
