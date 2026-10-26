@@ -40,7 +40,7 @@ body.salty #send_form {
   border: 0 !important;
   border-radius: var(--bl-r-lg) !important;
   box-shadow: var(--bl-e3) !important; /* 떠 있는 바 */
-  padding: 4px 6px 5px !important;
+  padding: 4px 6px 4px !important;
   opacity: 1 !important;
   transition: box-shadow 0.2s ease;
 }
@@ -74,7 +74,7 @@ body.salty #send_textarea {
   letter-spacing: var(--salty-ls, normal) !important;         /* 자간도 본문과 같이 */
   line-height: 1.55 !important;
   min-height: var(--bottomFormBlockSize) !important;
-  padding: 4px 6px 5px !important; /* 위 3px은 실리태번 진행 줄(가려짐) */
+  padding: 4px 6px 4px !important; /* 위 3px은 실리태번 진행 줄(가려짐) */
   resize: none !important; /* 높이는 글 양에 맞춰 저절로 늘어남 → 모서리 손잡이 뺌 */
 }
 @supports (field-sizing: content) {
@@ -436,7 +436,7 @@ body.salty #jj-popup .jj-popup-head {
   align-items: center;
 }
 body.salty #jj-popup .jj-popup-title {
-  gap: 7px;
+  gap: 8px;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -444,7 +444,7 @@ body.salty #jj-popup .jj-popup-title {
 /* 6.3.6 폰 폭: 보내기 단추가 들어온 뒤 제목 칸이 모자라 「비어 있음」이 두 줄로 접혔다 → 칸 사이를 조금 좁힌다 (상태 글은 확장 쪽 nowrap) */
 @media (max-width: 440px) {
   body.salty #jj-popup .jj-popup-head { gap: 6px; }
-  body.salty #jj-popup .jj-popup-title { gap: 5px; }
+  body.salty #jj-popup .jj-popup-title { gap: 4px; }
 }
 /* 켜기 스위치: 36×20 — 손잡이는 늘 흰색 */
 body.salty #jj-popup .jj-switch {
@@ -668,7 +668,7 @@ body.salty #dialogue_del_mes {
 body.salty #dialogue_del_mes .menu_button {
   display: inline-flex;
   min-width: 108px;
-  margin: 0 3px !important;
+  margin: 0 4px !important;
   padding: 0 18px !important;
   border: 0 !important;
   background: var(--bl-fill-control, var(--bl-control)) !important;

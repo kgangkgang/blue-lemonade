@@ -108,7 +108,7 @@ html body.salty dialog.popup:not(.transparent_dialogue_popup) { min-height:0!imp
 html body.salty dialog.popup .popup-controls { flex-wrap:wrap; justify-content:center; gap:8px 10px; }
 html body.salty dialog.popup .popup-controls > .menu_button {
   flex:0 1 auto; width:auto; min-width:5.5em; max-width:100%;
-  height:auto; min-height:36px; padding:7px 16px; border-radius:var(--bl-r-sm);
+  height:auto; min-height:36px; padding:8px 16px; border-radius:var(--bl-r-sm);
   white-space:normal; line-height:1.4;
 }
 /* 타번 헬퍼 폴더 색판은 body로 옮겨 열린다. 색을 담는 canvas는 그대로 둔다. */

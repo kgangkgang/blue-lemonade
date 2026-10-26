@@ -64,7 +64,7 @@ body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #e
 /* 메뉴 칸 나눔: 선 대신 옅은 띠 */
 body.salty #options .options-content hr {
   height: 5px !important;
-  margin: 5px -6px !important;
+  margin: 4px -6px !important;
   border: 0 !important;
   background: var(--bl-fill-hover, var(--bl-hover)) !important;
   opacity: 1 !important;
@@ -125,7 +125,7 @@ body.salty .popup .popup-controls {
   margin-top: var(--bl-s5) !important;
   /* 6.9.8: 실리태번 .popup-body 가 넘침 숨김 · 안쪽 1px 이라 기본 단추의 초점 테두리(3px) · 포인트색 그림자(아래 8px)가 바닥 · 옆에서 일직선으로 잘렸다(측정 1px).
      아래 6 · 옆 3px 여유 — 창 높이 +6px (스와이프 고르기 창은 11-chrome 에서 따로) */
-  padding: 0 3px 6px;
+  padding: 0 4px 6px;
 }
 body.salty .popup .popup-controls .menu_button {
   flex: 1 1 0;

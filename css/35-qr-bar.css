@@ -15,7 +15,7 @@
   flex-wrap: nowrap;
   justify-content: flex-start;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
   padding: 2px 0;
   overflow-x: auto;
@@ -33,7 +33,7 @@
   display: flex;
   flex: 0 0 auto;
   flex-wrap: nowrap;
-  gap: 5px;
+  gap: 4px;
   width: max-content;
 }
 .salty-panel .bl-qr-sample .qr--button {
@@ -41,7 +41,7 @@
   flex-shrink: 0;
   align-items: center;
   min-height: 30px;
-  padding: 4px 9px;
+  padding: 4px 8px;
   border-radius: 7px;
   background: var(--bl-hover, var(--bl-fb-rgb-127-127-127-0p1));
   color: var(--salty-text);
@@ -57,7 +57,7 @@ body.salty :is(#send_form #qr--bar, #qr--popout > .qr--body) > .qr--buttons.qr--
 /* 7.9.7 하위 세트를 묶은 QR: 실제 줄처럼 오른쪽에 ⋮(또는 세트 이름) 칸 */
 .salty-panel .bl-qr-sample .qr--button.qr--hasCtx { padding-right: 0; }
 .salty-panel .bl-qr-sample .qr--button.qr--hasCtx > .qr--button-expander {
-  display: grid; place-items: center; align-self: stretch; flex: none; max-width: 14ch; margin: -4px 0 -4px 8px; padding: 0 9px;
+  display: grid; place-items: center; align-self: stretch; flex: none; max-width: 14ch; margin: -4px 0 -4px 8px; padding: 0 8px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
 }
 .salty-panel .bl-qr-sample .bl-qr-find-sample {
@@ -162,7 +162,7 @@ body.salty #qr--popout .qr--button.qr--hasCtx {
   min-width: 0;
   flex: 0 0 auto;
   gap: 0;
-  padding: 0 0 0 9px !important;
+  padding: 0 0 0 8px !important;
 }
 body.salty #send_form #qr--bar .qr--button.qr--hasCtx > .qr--button-expander,
 body.salty #qr--popout .qr--button.qr--hasCtx > .qr--button-expander {
@@ -176,7 +176,7 @@ body.salty #qr--popout .qr--button.qr--hasCtx > .qr--button-expander {
   min-width: 0;
   min-height: 30px;
   margin: 0 0 0 8px;
-  padding: 0 9px;
+  padding: 0 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -221,7 +221,7 @@ body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar {
 }
 body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar-track {
   background: transparent;
-  margin-block: 9px;
+  margin-block: 8px;
 }
 body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--salty-accent) 55%, transparent);
@@ -298,14 +298,14 @@ body.salty .ctx-blocker .ctx-menu .ctx-expander {
   flex: none;
   width: 14px;
   margin-left: 4px;
-  padding-left: 5px;
+  padding-left: 4px;
   border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
 }
 body.salty:not(#salty-none) .ctx-blocker .ctx-menu > .list-group-item.ctx-header {
   justify-content: center;
   text-align: center;
   min-height: 0;
-  padding: 6px 10px 3px !important;
+  padding: 6px 10px 4px !important;
   color: var(--salty-muted);
   font-size: 11px;
   font-weight: 600;

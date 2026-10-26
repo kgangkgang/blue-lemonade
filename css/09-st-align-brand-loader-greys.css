@@ -22,7 +22,7 @@ body.salty #toast-container > div {
   flex-direction: column !important; /* 제목은 본문 위 — 가로로 나란히 두면 "생성 오류" 가 좁은 칸에서 세로로 쪼개짐 */
   justify-content: center !important; /* 알림이 최소 높이보다 짧을 때 글자 뭉치를 세로 가운데로 */
   align-items: stretch !important;
-  gap: 3px !important;
+  gap: 4px !important;
 }
 body.salty #toast-container > div > :is(.toast-message, .toast-title) {
   margin: 0 !important;

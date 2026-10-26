@@ -103,7 +103,7 @@ body.salty:not(.no-timer.no-tokenCount.no-mesIDDisplay) #chat .mes:not(.smallSys
   grid-area: 2 / 3 / 3 / -1;
 }
 body.salty #chat .mes :is(.mesIDDisplay, .mes_timer, .tokenCounterDisplay) {
-  margin: 0 0 3px;
+  margin: 0 0 4px;
   padding: 0;
   color: var(--salty-faint);
   opacity: 1;
@@ -215,7 +215,7 @@ body.salty #chat .mes .ch_name .timestamp {
    그 줄만 간격을 조금 좁히고, 줄바꿈 대신 날짜가 모자라면 끝을 말줄임 */
 body.salty #chat .mes[is_system="true"] .ch_name .alignItemsBaseline {
   flex-wrap: nowrap;
-  column-gap: 5px;
+  column-gap: 4px;
 }
 body.salty #chat .mes[is_system="true"] :is(.name_text, .mes_ghost) {
   flex: none;

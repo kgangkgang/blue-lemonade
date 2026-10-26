@@ -120,7 +120,7 @@ body.salty .bl-eye-pick .salty-pick-rows > button {
   content: "";
   width: 5px;
   height: 9px;
-  margin: 0 4px 3px;
+  margin: 0 4px 4px;
   border: solid transparent;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);

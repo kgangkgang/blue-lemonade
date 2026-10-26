@@ -317,7 +317,7 @@ body.salty .select2-results__options:not([aria-multiselectable="true"]) .select2
 /* 거르기 동그라미 줄: 가로 스크롤 상자라 2.0.2 에서 커진 그림자(아래 3px + 번짐 10)가 잘림 → 아래 여백을 10 으로, 그만큼 바깥으로 되돌려 자리는 그대로 */
 body.salty #right-nav-panel .rm_tag_controls:not(#salty-none) {
   margin: 0 -3px -7px !important;
-  padding: 3px 3px 10px !important;
+  padding: 4px 4px 10px !important;
 }
 /* 캐릭터 카드: 왼쪽이 투명해지는 그라데이션이 흰 바탕과 붙어 왼쪽 가장자리가 사라짐 → 밝은 모드는 판판한 카드 면 + 11% 고리 (지금 채팅 중 카드의 포인트 테두리는 그대로) */
 body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select):not(.salty-current):not(#salty-none) { /* 2.0.11: 나이트에도 */

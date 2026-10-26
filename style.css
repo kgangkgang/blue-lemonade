@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a84914ba9e59) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f98a795d31cc) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -616,7 +616,7 @@ body.salty input.neo-range-input {
 @media (hover: hover) and (pointer: fine) {
   body.salty :is(.range-block-counter input)[type="number"],
 body.salty input.neo-range-input[type="number"] {
-    padding-left: 15px !important;
+    padding-left: 16px !important;
     padding-right: 0 !important;
   }
 }
@@ -1119,7 +1119,7 @@ body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #e
 }
 body.salty #options .options-content hr {
 height:5px !important;
-margin:5px -6px !important;
+margin:4px -6px !important;
 border:0 !important;
 }
 body.salty #options .options-content hr:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
@@ -1188,7 +1188,7 @@ body.salty .popup .popup-controls {
   flex-wrap: wrap;
   gap: var(--bl-s2) !important;
   margin-top: var(--bl-s5) !important;
-  padding: 0 3px 6px;
+  padding: 0 4px 6px;
 }
 body.salty .popup .popup-controls .menu_button {
   flex: 1 1 0;
@@ -1312,7 +1312,7 @@ body.salty #send_form {
   border: 0 !important;
   border-radius: var(--bl-r-lg) !important;
   box-shadow: var(--bl-e3) !important;
-  padding: 4px 6px 5px !important;
+  padding: 4px 6px 4px !important;
   opacity: 1 !important;
   transition: box-shadow 0.2s ease;
 }
@@ -1345,7 +1345,7 @@ body.salty #send_textarea {
   letter-spacing: var(--salty-ls, normal) !important;
   line-height: 1.55 !important;
   min-height: var(--bottomFormBlockSize) !important;
-  padding: 4px 6px 5px !important;
+  padding: 4px 6px 4px !important;
   resize: none !important;
 }
 @supports (field-sizing: content) {
@@ -1665,14 +1665,14 @@ body.salty #jj-popup .jj-popup-head {
   align-items: center;
 }
 body.salty #jj-popup .jj-popup-title {
-  gap: 7px;
+  gap: 8px;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 @media (max-width: 440px) {
   body.salty #jj-popup .jj-popup-head { gap: 6px; }
-  body.salty #jj-popup .jj-popup-title { gap: 5px; }
+  body.salty #jj-popup .jj-popup-title { gap: 4px; }
 }
 body.salty #jj-popup .jj-switch {
   flex: 0 0 auto;
@@ -1881,7 +1881,7 @@ body.salty #dialogue_del_mes {
 body.salty #dialogue_del_mes .menu_button {
   display: inline-flex;
   min-width: 108px;
-  margin: 0 3px !important;
+  margin: 0 4px !important;
   padding: 0 18px !important;
   border: 0 !important;
   background: var(--bl-fill-control, var(--bl-control)) !important;
@@ -2014,7 +2014,7 @@ body.salty:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat,.bl-chat-like)
 body.salty :is(#chat,.bl-chat-like) .mes .mesIDDisplay,
 body.salty :is(#chat,.bl-chat-like) .mes .mes_timer,
 body.salty :is(#chat,.bl-chat-like) .mes .tokenCounterDisplay {
-  margin: 0 0 3px;
+  margin: 0 0 4px;
   padding: 0;
   color: var(--salty-faint);
   opacity: 1;
@@ -2123,7 +2123,7 @@ body.salty :is(#chat,.bl-chat-like) .mes .ch_name .timestamp {
 }
 body.salty :is(#chat,.bl-chat-like) .mes[is_system="true"] .ch_name .alignItemsBaseline {
   flex-wrap: nowrap;
-  column-gap: 5px;
+  column-gap: 4px;
 }
 body.salty :is(#chat,.bl-chat-like) .mes[is_system="true"] .name_text,
 body.salty :is(#chat,.bl-chat-like) .mes[is_system="true"] .mes_ghost {
@@ -2957,7 +2957,7 @@ body.salty.salty-user-bubble :is(#chat,.bl-chat-like) .mes[is_user="true"] .mes_
   width: fit-content !important;
   max-width: 86% !important;
   margin-left: auto !important;
-  padding: 10px 16px 13px !important;
+  padding: 10px 16px 12px !important;
   background: var(--salty-user-bg, var(--salty-raised)) !important;
   border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg) !important;
   box-shadow: var(--bl-e1) !important;
@@ -2967,7 +2967,7 @@ body.salty.salty-user-bubble :is(#chat,.bl-chat-like) .mes[is_user="true"]:has(.
   max-width: 100% !important;
 }
 body.salty.salty-user-bubble :is(#chat,.bl-chat-like) .mes[is_user="true"] .ch_name {
-  margin-bottom: 3px !important;
+  margin-bottom: 4px !important;
 }
 body.salty.salty-user-bubble :is(#chat,.bl-chat-like) .mes[is_user="true"] .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
   margin-bottom: 10px !important;
@@ -3131,7 +3131,7 @@ body.salty.salty-char-bubble .salty-preview[data-prev="chat"] .mes[is_user="fals
 body.salty.salty-char-bubble.salty-bubble-whole :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="false"]:not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .mes_text:not(:empty, :has(> .edit_textarea), .mes[is_system="true"] > .mes_block > .mes_text:has(> details:not([open]) > summary:empty)) {
   width: fit-content !important;
   max-width: var(--bl-cb-max, 86%) !important;
-  padding: 9px 16px 11px !important;
+  padding: 8px 16px 12px !important;
   background: var(--bl-cb-fill, var(--salty-char-bubble-bg, var(--salty-raised))) !important;
   -webkit-background-clip: var(--bl-cb-clip, border-box) !important;
   background-clip: var(--bl-cb-clip, border-box) !important;
@@ -3801,7 +3801,7 @@ body.salty #toast-container > div {
   flex-direction: column !important;
   justify-content: center !important;
   align-items: stretch !important;
-  gap: 3px !important;
+  gap: 4px !important;
 }
 body.salty #toast-container > div > .toast-message,
 body.salty #toast-container > div > .toast-title {
@@ -4873,7 +4873,7 @@ body.salty .welcomeRecent .recentChatList .recentChat .chatActions .menu_button:
 body.salty .welcomeRecent .recentChatList .recentChat .chatMessageContainer {
   flex-direction: column;
   align-items: stretch;
-  gap: 5px;
+  gap: 4px;
 }
 body.salty .welcomeRecent .recentChatList .recentChat .chatMessageContainer .chatMessage {
   padding-right: 8px;
@@ -4908,7 +4908,7 @@ body.salty .welcomeRecent .recentChatList .recentChat .chatStats i {
 }
 body.salty .welcomeRecent .recentChatList .recentChat .chatStats .counterBlock {
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 body.salty .welcomeRecent .recentChatList .recentChat .chatStats .counterBlock i {
   font-size: 10px;
@@ -5249,7 +5249,7 @@ body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_info {
   flex: 1 1 auto;
   flex-wrap: nowrap !important;
   align-items: baseline;
-  gap: 0 5px !important;
+  gap: 0 4px !important;
   min-width: 0;
   overflow: hidden;
   color: var(--salty-faint);
@@ -11401,7 +11401,7 @@ body.salty .eh-btn--small:is(bl-s, *) {
 }
 body.salty .eh-toolbar {
   flex-wrap: nowrap;
-  gap: 5px;
+  gap: 4px;
 }
 body.salty .eh-toolbar > .eh-btn {
   flex: 0 1 auto;
@@ -14579,7 +14579,7 @@ body.salty:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#salty-nochat, .salt
 body.salty :is(#salty-nochat, .salty-preview) .mes .mesIDDisplay,
 body.salty :is(#salty-nochat, .salty-preview) .mes .mes_timer,
 body.salty :is(#salty-nochat, .salty-preview) .mes .tokenCounterDisplay {
-  margin: 0 0 3px;
+  margin: 0 0 4px;
   padding: 0;
   color: var(--salty-faint);
   opacity: 1;
@@ -14687,7 +14687,7 @@ body.salty :is(#salty-nochat, .salty-preview) .mes .ch_name .timestamp {
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes[is_system="true"] .ch_name .alignItemsBaseline {
   flex-wrap: nowrap;
-  column-gap: 5px;
+  column-gap: 4px;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes[is_system="true"] .name_text,
 body.salty :is(#salty-nochat, .salty-preview) .mes[is_system="true"] .mes_ghost {
@@ -15168,7 +15168,7 @@ body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="tr
   width: fit-content !important;
   max-width: 86% !important;
   margin-left: auto !important;
-  padding: 10px 16px 13px !important;
+  padding: 10px 16px 12px !important;
   background: var(--salty-user-bg, var(--salty-raised)) !important;
   border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg) !important;
   box-shadow: var(--bl-e1) !important;
@@ -15178,7 +15178,7 @@ body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="tr
   max-width: 100% !important;
 }
 body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .ch_name {
-  margin-bottom: 3px !important;
+  margin-bottom: 4px !important;
 }
 body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
   margin-bottom: 10px !important;
@@ -17260,7 +17260,7 @@ body.salty .welcomePanel .welcomeHeaderLogo { flex-shrink: 0; }
 body.salty #right-nav-panel #CharListButtonAndHotSwaps:has(.hotswap .avatar) {
   margin-bottom: 20px !important;
 }
-body.salty #WorldInfo .world_entry .WIEnteryHeaderControls input[type="number"] { appearance: textfield; padding-right: 5px !important; }
+body.salty #WorldInfo .world_entry .WIEnteryHeaderControls input[type="number"] { appearance: textfield; padding-right: 4px !important; }
 body.salty #WorldInfo .world_entry .WIEnteryHeaderControls input[type="number"]::-webkit-inner-spin-button,
 body.salty #WorldInfo .world_entry .WIEnteryHeaderControls input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 body.salty #PersonaManagement .persona_management_current_persona > h4.standoutHeader:first-child {
@@ -17329,7 +17329,7 @@ color:var(--salty-muted);
 body.salty #qr--settings .qr--head > small {
 font-size:10px;
 }
-body.salty #qr--settings .qr--head > .qr--actions { margin-left: auto; gap: 3px; }
+body.salty #qr--settings .qr--head > .qr--actions { margin-left: auto; gap: 4px; }
 body.salty #qr--settings .qr--setList { display: flex; flex-direction: column; gap: 6px; }
 body.salty #qr--settings .qr--setList .qr--item {
 display:grid;
@@ -17342,7 +17342,7 @@ border-radius:7px;
 body.salty #qr--settings .qr--setList .qr--item:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--salty-fill-raised, var(--salty-raised));
 }
-body.salty #qr--settings .qr--setList .qr--item > select { width: 100%; min-width: 0; margin: 0; height: 30px; padding: 3px 18px 3px 6px; font-size: 12px; }
+body.salty #qr--settings .qr--setList .qr--item > select { width: 100%; min-width: 0; margin: 0; height: 30px; padding: 4px 18px 4px 6px; font-size: 12px; }
 body.salty #qr--settings .drag-handle:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-faint);
 }
@@ -17352,7 +17352,7 @@ font-size:12px;
 body.salty #qr--settings .qr--visible {
 display:flex;
 align-items:center;
-gap:3px;
+gap:4px;
 font-size:10px;
 }
 body.salty #qr--settings .qr--visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
@@ -17370,7 +17370,7 @@ background:transparent !important;
 box-shadow:none !important;
 }
 body.salty #qr--settings :is(.inline-drawer-content, #qr--set-settings) > label.flex-container {
-  display: flex; align-items: center; gap: 8px !important; min-height: 34px; margin: 0; padding: 5px 4px;
+  display: flex; align-items: center; gap: 8px !important; min-height: 34px; margin: 0; padding: 4px 4px;
   font-size: 12px; line-height: 1.5;
 }
 body.salty #qr--settings label > input[type="checkbox"] { width: 16px; height: 16px; flex: none; margin: 0; }
@@ -17390,7 +17390,7 @@ border-radius:8px;
 body.salty #qr--settings #qr--set-settings:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--salty-fill-raised, var(--salty-raised));
 }
-body.salty #rm_extensions_block #qr--editor > .qr--head { gap: 5px !important; }
+body.salty #rm_extensions_block #qr--editor > .qr--head { gap: 4px !important; }
 body.salty #rm_extensions_block #qr--editor > .qr--head > .qr--actions { justify-content: flex-end;  }
 body.salty #rm_extensions_block #qr--editor > .qr--head #qr--set { max-width: none;  }
 body.salty #qr--settings .qr--set-item { margin-bottom: 8px; }
@@ -17432,17 +17432,17 @@ body.salty #regex_container .inline-drawer-content > .flex-container:first-child
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px !important;
 }
 body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button {
-  width: 100%; min-width: 0; margin: 0 !important; padding: 6px 3px !important;
-  justify-content: center; gap: 5px !important; font-size: 12px !important;
+  width: 100%; min-width: 0; margin: 0 !important; padding: 6px 4px !important;
+  justify-content: center; gap: 4px !important; font-size: 12px !important;
 }
 body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button > small { font-size: 11px !important; white-space: normal; text-align: center; }
 body.salty #regex_container #regex_presets_block,
 body.salty #regex_container #global_scripts_block,
 body.salty #regex_container #preset_scripts_block,
 body.salty #regex_container #scoped_scripts_block { width: 100%; min-width: 0; margin-inline: 0; }
-body.salty #regex_container .regex-script-container { width: 100%; padding: 0; gap: 5px !important; }
-body.salty #regex_container .regex-script-label { width: 100%; box-sizing: border-box; margin: 0; padding: 5px 0 5px 5px; align-items: center; gap: 5px !important; }
-body.salty #regex_container .regex-script-label > .flex-container { flex-shrink: 0; align-items: center; gap: 3px !important; }
+body.salty #regex_container .regex-script-container { width: 100%; padding: 0; gap: 4px !important; }
+body.salty #regex_container .regex-script-label { width: 100%; box-sizing: border-box; margin: 0; padding: 4px 0 4px 4px; align-items: center; gap: 4px !important; }
+body.salty #regex_container .regex-script-label > .flex-container { flex-shrink: 0; align-items: center; gap: 4px !important; }
 body.salty #regex_container .regex-script-label > .flex-container > label.checkbox { margin: 0 !important; }
 body.salty #regex_container .regex-script-label .menu_button,
 body.salty #regex_container #regex_presets_block .menu_button { width: 28px !important; min-width: 28px !important; height: 32px !important; min-height: 32px !important; padding: 0 !important; margin: 0 !important; display: inline-flex; align-items: center; justify-content: center; }
@@ -17465,12 +17465,12 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] {
 body.salty #user-settings-block :is([name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > .inline-drawer,
 body.salty #user-settings-block :is([name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > :where(div:not(:has(> select))):is(.bl-s, *) { grid-column: 1 / -1; }
   body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) {
-    flex-direction: column; align-items: stretch !important; gap: 4px !important; min-width: 0; padding-block: 3px !important;
+    flex-direction: column; align-items: stretch !important; gap: 4px !important; min-width: 0; padding-block: 4px !important;
   }
   body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) { padding-block: 6px !important; row-gap: 4px !important; }
-  body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) { min-height: 0 !important; padding-block: 2px !important; gap: 3px !important; }
+  body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) { min-height: 0 !important; padding-block: 2px !important; gap: 4px !important; }
   body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label {
-    width: 100%; min-width: 0; min-height: 38px; margin: 0 !important; padding: 3px 0 !important; gap: 7px !important;
+    width: 100%; min-width: 0; min-height: 38px; margin: 0 !important; padding: 4px 0 !important; gap: 8px !important;
   }
   body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label > span,
 body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label > small { font-size: var(--bl-fs-body) !important; line-height: 1.35; overflow-wrap: anywhere; }
@@ -17491,7 +17491,7 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :where(div
 }
 @media (max-width: 1000px) {
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label {
-    width: 100%; min-width: 0; min-height: 38px; margin: 0 !important; padding: 3px 0 !important; gap: 7px !important;
+    width: 100%; min-width: 0; min-height: 38px; margin: 0 !important; padding: 4px 0 !important; gap: 8px !important;
   }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label > span,
 body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label > small { font-size: var(--bl-fs-body) !important; line-height: 1.35; overflow-wrap: anywhere; }
@@ -17896,7 +17896,7 @@ body.salty #rm_extensions_block .extensions_block > #extensions_settings2:not([s
 }
 body.salty #right-nav-panel .rm_tag_controls:not(#salty-none) {
   margin: 0 -3px -7px !important;
-  padding: 3px 3px 10px !important;
+  padding: 4px 4px 10px !important;
 }
 body.salty #right-nav-panel #rm_print_characters_block .character_select:not(.salty-current):not(#salty-none):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 body.salty #right-nav-panel #rm_print_characters_block .group_select:not(.salty-current):not(#salty-none):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
@@ -19934,7 +19934,7 @@ body.salty .bl-cp.pic-loading .bl-cp-drop[data-act="pic"] i {
   flex-wrap: nowrap;
   justify-content: flex-start;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
   padding: 2px 0;
   overflow-x: auto;
@@ -19952,7 +19952,7 @@ body.salty .bl-cp.pic-loading .bl-cp-drop[data-act="pic"] i {
   display: flex;
   flex: 0 0 auto;
   flex-wrap: nowrap;
-  gap: 5px;
+  gap: 4px;
   width: max-content;
 }
 .salty-panel .bl-qr-sample .qr--button {
@@ -19960,7 +19960,7 @@ body.salty .bl-cp.pic-loading .bl-cp-drop[data-act="pic"] i {
   flex-shrink: 0;
   align-items: center;
   min-height: 30px;
-  padding: 4px 9px;
+  padding: 4px 8px;
   border-radius: 7px;
   background: var(--bl-hover, var(--bl-fb-rgb-127-127-127-0p1));
   color: var(--salty-text);
@@ -19973,7 +19973,7 @@ body.salty :is(#send_form #qr--bar, #qr--popout > .qr--body) > .qr--buttons.qr--
 body.salty :is(#send_form #qr--bar, #qr--popout > .qr--body) > .qr--buttons.qr--color.bl-qr-color-none { background-color: transparent; }
 .salty-panel .bl-qr-sample .qr--button.qr--hasCtx { padding-right: 0; }
 .salty-panel .bl-qr-sample .qr--button.qr--hasCtx > .qr--button-expander {
-  display: grid; place-items: center; align-self: stretch; flex: none; max-width: 14ch; margin: -4px 0 -4px 8px; padding: 0 9px;
+  display: grid; place-items: center; align-self: stretch; flex: none; max-width: 14ch; margin: -4px 0 -4px 8px; padding: 0 8px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
 }
 .salty-panel .bl-qr-sample .bl-qr-find-sample {
@@ -20073,7 +20073,7 @@ body.salty #qr--popout .qr--button.qr--hasCtx {
   min-width: 0;
   flex: 0 0 auto;
   gap: 0;
-  padding: 0 0 0 9px !important;
+  padding: 0 0 0 8px !important;
 }
 body.salty #send_form #qr--bar .qr--button.qr--hasCtx > .qr--button-expander,
 body.salty #qr--popout .qr--button.qr--hasCtx > .qr--button-expander {
@@ -20087,7 +20087,7 @@ body.salty #qr--popout .qr--button.qr--hasCtx > .qr--button-expander {
   min-width: 0;
   min-height: 30px;
   margin: 0 0 0 8px;
-  padding: 0 9px;
+  padding: 0 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -20130,7 +20130,7 @@ body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar {
 }
 body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar-track {
   background: transparent;
-  margin-block: 9px;
+  margin-block: 8px;
 }
 body.salty:not(#salty-none) .ctx-blocker > .ctx-menu::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--salty-accent) 55%, transparent);
@@ -20205,14 +20205,14 @@ body.salty .ctx-blocker .ctx-menu .ctx-expander {
   flex: none;
   width: 14px;
   margin-left: 4px;
-  padding-left: 5px;
+  padding-left: 4px;
   border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
 }
 body.salty:not(#salty-none) .ctx-blocker .ctx-menu > .list-group-item.ctx-header {
   justify-content: center;
   text-align: center;
   min-height: 0;
-  padding: 6px 10px 3px !important;
+  padding: 6px 10px 4px !important;
   color: var(--salty-muted);
   font-size: 11px;
   font-weight: 600;
@@ -21491,7 +21491,7 @@ body.salty .bl-eye-pick .salty-pick-rows > button {
   content: "";
   width: 5px;
   height: 9px;
-  margin: 0 4px 3px;
+  margin: 0 4px 4px;
   border: solid transparent;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
@@ -21879,7 +21879,7 @@ border-style:solid !important;
 .salty-panel :is(.salty-fontempty button) { height:auto; }
 .salty-panel .salty-btns,
 .salty-panel .bl-palette-actions { gap: var(--bl-settings-gap); }
-.salty-panel .salty-seg { gap: 3px; padding: 3px; border-radius: 10px; max-width: 100%; }
+.salty-panel .salty-seg { gap: 4px; padding: 4px; border-radius: 10px; max-width: 100%; }
 .salty-panel .salty-seg button { flex-shrink: 1; font-weight:var(--bl-settings-choice-weight,600); }
 html body .salty-panel :is(.salty-seg button).on,
 html body .salty-panel :is(.salty-fonttags button).on,
@@ -21946,7 +21946,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
   .salty-panel .salty-fonttags button { padding-block: 4px; }
 }
 .salty-panel .salty-sizeopt-ctl { margin-inline-start:auto; justify-content:flex-end; }
-.salty-panel .salty-row { padding-block:5px; }
+.salty-panel .salty-row { padding-block:4px; }
 .salty-panel.bl-editor .salty-row,
 .salty-panel.bl-editor .salty-sec .salty-group .salty-slider > header {
   flex-wrap:wrap;
@@ -21977,7 +21977,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-health-head p { color:var(--salty-muted); font-size:calc(12 * var(--sp)); }
 .salty-panel .bl-install-health .salty-btn { flex:none; width:auto; margin:0; white-space:normal; word-break:keep-all; }
 .salty-panel [data-health-result] { display:grid; gap:12px; min-width:0; font-size:calc(13 * var(--sp)); }
-.salty-panel .bl-health-summary { display:grid; gap:5px; padding:12px 14px; border-radius:9px; background:var(--salty-fill-accent-10,var(--salty-accent-10)); border-left:3px solid var(--salty-accent); }
+.salty-panel .bl-health-summary { display:grid; gap:4px; padding:12px 14px; border-radius:9px; background:var(--salty-fill-accent-10,var(--salty-accent-10)); border-left:3px solid var(--salty-accent); }
 .salty-panel .bl-health-summary strong { font-size:calc(14 * var(--sp)); line-height:1.5; }
 .salty-panel .bl-health-summary span { color:var(--salty-muted); line-height:1.6; }
 .salty-panel .bl-health-summary[data-state="attention"] { border-left-style:double; border-left-width:5px; }
@@ -22171,7 +22171,7 @@ mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='
 pointer-events:none;
 }
 html body.salty:not(#bl-pt-a):not(#bl-pt-b) #pt-panel .pt-page-fixed .pt-select-row { padding: 0 0 8px !important; margin-bottom: 8px !important; gap: 8px !important; align-items: center !important; }
-html body.salty:not(#bl-pt-a):not(#bl-pt-b) #pt-panel .pt-page-fixed .pt-select-row:has(> .pt-checkbox) { padding-left: 11px !important; }
+html body.salty:not(#bl-pt-a):not(#bl-pt-b) #pt-panel .pt-page-fixed .pt-select-row:has(> .pt-checkbox) { padding-left: 12px !important; }
 html body.salty #pt-panel .pt-page-fixed .pt-select-row > .pt-checkbox { margin-top: 0 !important; margin-right: 0 !important; margin-bottom: 0 !important; flex: none; }
 /* css/57-native-ux.css */
 body.salty #PersonaManagement,
@@ -22309,7 +22309,7 @@ html body.salty dialog.popup:not(.transparent_dialogue_popup) { min-height:0!imp
 html body.salty dialog.popup .popup-controls { flex-wrap:wrap; justify-content:center; gap:8px 10px; }
 html body.salty dialog.popup .popup-controls > .menu_button {
   flex:0 1 auto; width:auto; min-width:5.5em; max-width:100%;
-  height:auto; min-height:36px; padding:7px 16px; border-radius:var(--bl-r-sm);
+  height:auto; min-height:36px; padding:8px 16px; border-radius:var(--bl-r-sm);
   white-space:normal; line-height:1.4;
 }
 html body.salty > .picker[pick-colors-theme]:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
@@ -24562,14 +24562,14 @@ body.salty [data-mask-words] { min-height: 4.5em; }
 /* css/66-ui-rhythm.css */
 body.salty #rm_extensions_block .inline-drawer-header > b,
 body.salty #rm_extensions_block .inline-drawer-header > strong {
-  display:flex; align-items:center; flex-wrap:wrap; column-gap:7px; row-gap:3px; min-width:0;
+  display:flex; align-items:center; flex-wrap:wrap; column-gap:8px; row-gap:4px; min-width:0;
 }
 body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > i {
   display:inline-flex; align-items:center; justify-content:center; flex:0 0 1.2em;
   width:1.2em; height:1.2em; line-height:1; margin:0;
 }
 body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > .ext-version { margin-inline:0; }
-body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row { padding:3px 0 7px; gap:8px; line-height:1.45; }
+body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row { padding:4px 0 8px; gap:8px; line-height:1.45; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row > span { min-width:0; overflow-wrap:anywhere; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before { content:''; position:absolute; inset:-7px 0; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch:focus-visible { outline:2px solid var(--salty-accent); outline-offset:3px; }
@@ -24585,7 +24585,7 @@ body.salty .bl-pbind-list { min-height:0; }
 }
 .salty-panel .bl-mix .bl-mix-heading > span { flex:0 1 auto; width:auto; }
 .salty-panel .bl-mix .bl-mix-heading > .salty-btn {
-  flex:none; width:auto; margin:0; align-self:center; min-height:var(--bl-settings-control, 34px); padding:7px 10px 5px; font-size:inherit; line-height:1.4;
+  flex:none; width:auto; margin:0; align-self:center; min-height:var(--bl-settings-control, 34px); padding:8px 10px 4px; font-size:inherit; line-height:1.4;
 }
 .salty-panel .bl-mix .bl-mix-description { margin:4px 0 0; font-size:.85em; line-height:1.5; }
 @media(max-width:760px) {
@@ -24609,8 +24609,8 @@ body.salty .bl-pbind-list { min-height:0; }
 .salty-panel .bl-md-group > summary > span { font-weight:600; }
 .salty-panel .bl-md-group > summary > small { margin-inline-start:auto; color:var(--salty-muted); font-size:.8em; }
 .salty-panel .bl-md-group-body { padding:0 .6em .6em; }
-.salty-panel .bl-md-choices { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,5.1em),1fr)); gap:5px; }
-.salty-panel .bl-md-choice { appearance:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-width:0; min-height:66px; padding:.4em .25em; border:1px solid var(--salty-text-20); border-radius:8px; background:transparent; color:var(--salty-text); font:inherit; font-size:.88em; line-height:1.4; cursor:pointer; white-space:normal; overflow-wrap:anywhere; }
+.salty-panel .bl-md-choices { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,5.1em),1fr)); gap:4px; }
+.salty-panel .bl-md-choice { appearance:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-width:0; min-height:66px; padding:.4em .25em; border:1px solid var(--salty-text-20); border-radius:8px; background:transparent; color:var(--salty-text); font:inherit; font-size:.88em; line-height:1.4; cursor:pointer; white-space:normal; overflow-wrap:anywhere; }
 .salty-panel .bl-md-choice svg { display:block; width:100%; max-width:96px; height:30px; color:var(--bl-md-accent,var(--salty-accent-ink,var(--salty-accent))); }
 .salty-panel .bl-md-choice.on { border-color:var(--salty-accent-ink,var(--salty-accent)); background:var(--salty-fill-accent-10,var(--salty-accent-10)); box-shadow:inset 0 2px 3px var(--salty-shade); }
 .salty-panel .bl-md-choice:focus-visible, .salty-panel .bl-md-group summary:focus-visible { outline:2px solid var(--salty-accent-ink,var(--salty-accent)); outline-offset:2px; }

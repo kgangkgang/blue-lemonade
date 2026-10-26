@@ -322,7 +322,7 @@ body.salty.salty-user-bubble #chat .mes[is_user="true"] .mes_block {
   width: fit-content !important;
   max-width: 86% !important;
   margin-left: auto !important;
-  padding: 10px 16px 13px !important;
+  padding: 10px 16px 12px !important;
   background: var(--salty-user-bg, var(--salty-raised)) !important;
   border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg) !important;
   box-shadow: var(--bl-e1) !important;
@@ -334,7 +334,7 @@ body.salty.salty-user-bubble #chat .mes[is_user="true"]:has(.edit_textarea) .mes
   max-width: 100% !important;
 }
 body.salty.salty-user-bubble #chat .mes[is_user="true"] .ch_name {
-  margin-bottom: 3px !important;
+  margin-bottom: 4px !important;
 }
 body.salty.salty-user-bubble #chat .mes[is_user="true"] .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
   margin-bottom: 10px !important; /* 편집 버튼 줄과 글 칸 사이 */
@@ -513,7 +513,7 @@ body.salty.salty-char-bubble .salty-preview[data-prev="chat"] .mes[is_user="fals
 body.salty.salty-char-bubble.salty-bubble-whole :is(#chat, #salty-nochat, .salty-preview[data-prev="chat"]) .mes[is_user="false"]:not(.smallSysMes, [type="narrator"], [is_system="true"]:not([type=""])) .mes_text:not(:empty, :has(> .edit_textarea), .mes[is_system="true"] > .mes_block > .mes_text:has(> details:not([open]) > summary:empty)) {
   width: fit-content !important;
   max-width: var(--bl-cb-max, 86%) !important; /* 5.8.4: 정보 정렬 오른쪽 · 가운데면 글 칸이 이미 말풍선 칸(최대 86%)이라 100% (css/62-name-row-align) */
-  padding: 9px 16px 11px !important;
+  padding: 8px 16px 12px !important;
   background: var(--bl-cb-fill, var(--salty-char-bubble-bg, var(--salty-raised))) !important;
   -webkit-background-clip: var(--bl-cb-clip, border-box) !important;
   background-clip: var(--bl-cb-clip, border-box) !important;

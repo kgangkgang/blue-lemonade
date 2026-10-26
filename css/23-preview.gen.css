@@ -86,7 +86,7 @@ body.salty:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#salty-nochat, .salt
   grid-area: 2 / 3 / 3 / -1;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes :is(.mesIDDisplay, .mes_timer, .tokenCounterDisplay) {
-  margin: 0 0 3px;
+  margin: 0 0 4px;
   padding: 0;
   color: var(--salty-faint);
   opacity: 1;
@@ -181,7 +181,7 @@ body.salty :is(#salty-nochat, .salty-preview) .mes .ch_name .timestamp {
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes[is_system="true"] .ch_name .alignItemsBaseline {
   flex-wrap: nowrap;
-  column-gap: 5px;
+  column-gap: 4px;
 }
 body.salty :is(#salty-nochat, .salty-preview) .mes[is_system="true"] :is(.name_text, .mes_ghost) {
   flex: none;
@@ -626,7 +626,7 @@ body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="tr
   width: fit-content !important;
   max-width: 86% !important;
   margin-left: auto !important;
-  padding: 10px 16px 13px !important;
+  padding: 10px 16px 12px !important;
   background: var(--salty-user-bg, var(--salty-raised)) !important;
   border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg) !important;
   box-shadow: var(--bl-e1) !important;
@@ -636,7 +636,7 @@ body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="tr
   max-width: 100% !important;
 }
 body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .ch_name {
-  margin-bottom: 3px !important;
+  margin-bottom: 4px !important;
 }
 body.salty.salty-user-bubble :is(#salty-nochat, .salty-preview) .mes[is_user="true"] .mes_block > .ch_name:has(~ .edit_textarea, ~ * .edit_textarea) {
   margin-bottom: 10px !important;

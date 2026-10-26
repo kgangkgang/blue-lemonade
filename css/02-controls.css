@@ -213,7 +213,7 @@ body.salty :is(.range-block-counter input, input.neo-range-input) {
    터치 기기는 스핀 자리가 없어 그대로. 쉼표 그림(src/numcomma.js)은 계산된 여백 · 스핀 폭을 읽어 같이 따라온다 */
 @media (hover: hover) and (pointer: fine) {
   body.salty :is(.range-block-counter input, input.neo-range-input)[type="number"] {
-    padding-left: 15px !important;
+    padding-left: 16px !important;
     padding-right: 0 !important;
   }
 }

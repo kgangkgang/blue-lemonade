@@ -148,7 +148,7 @@ body.salty :is(.eh-segmented button, .eh-chip, .eh-btn--small) {
 /* 도구 줄: 이미지 · ZIP · 선택 · S/M/L 을 한 줄에 (390px 폰에서 10px 모자라 S/M/L 이 다음 줄로 떨어졌음) */
 body.salty .eh-toolbar {
   flex-wrap: nowrap;
-  gap: 5px;
+  gap: 4px;
 }
 body.salty .eh-toolbar > .eh-btn {
   flex: 0 1 auto;

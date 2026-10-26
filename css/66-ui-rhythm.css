@@ -3,14 +3,14 @@
    ===== */
 /* 이름과 버전은 한 기준선, 아이콘은 글꼴의 기준선 대신 제 칸 중앙. */
 body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) {
-  display:flex; align-items:center; flex-wrap:wrap; column-gap:7px; row-gap:3px; min-width:0;
+  display:flex; align-items:center; flex-wrap:wrap; column-gap:8px; row-gap:4px; min-width:0;
 }
 body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > i {
   display:inline-flex; align-items:center; justify-content:center; flex:0 0 1.2em;
   width:1.2em; height:1.2em; line-height:1; margin:0;
 }
 body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > .ext-version { margin-inline:0; }
-body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row { padding:3px 0 7px; gap:8px; line-height:1.45; }
+body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row { padding:4px 0 8px; gap:8px; line-height:1.45; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row > span { min-width:0; overflow-wrap:anywhere; }
 /* 스위치 모양은 유지하며 실제 누르는 범위만 늘린다. */
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before { content:''; position:absolute; inset:-7px 0; }
@@ -27,7 +27,7 @@ body.salty .bl-pbind-list { min-height:0; }
 }
 .salty-panel .bl-mix .bl-mix-heading > span { flex:0 1 auto; width:auto; }
 .salty-panel .bl-mix .bl-mix-heading > .salty-btn {
-  flex:none; width:auto; margin:0; align-self:center; min-height:var(--bl-settings-control, 34px); padding:7px 10px 5px; font-size:inherit; line-height:1.4; /* 7.8.1: .85em 이라 다른 글자 단추(13)보다 작던 것 — 단추 글자 한 크기. 7.9.7 --bl-fs-ctl(13.95)은 옆 단추(칸 글자 13.2 물려받음)보다 커서 물려받기로 */
+  flex:none; width:auto; margin:0; align-self:center; min-height:var(--bl-settings-control, 34px); padding:8px 10px 4px; font-size:inherit; line-height:1.4; /* 7.8.1: .85em 이라 다른 글자 단추(13)보다 작던 것 — 단추 글자 한 크기. 7.9.7 --bl-fs-ctl(13.95)은 옆 단추(칸 글자 13.2 물려받음)보다 커서 물려받기로 */
 }
 .salty-panel .bl-mix .bl-mix-description { margin:4px 0 0; font-size:.85em; line-height:1.5; }
 /* PC의 읽는 폭과 간격을 유지하고, 폰은 창 밖 빈 공간을 작업 영역으로 돌린다. */
