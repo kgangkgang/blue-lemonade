@@ -75,7 +75,7 @@ body.salty #top-settings-holder .drawer-icon:not(.redOverlayGlow) {
 body.salty #top-settings-holder .drawer-icon.openIcon:not(.redOverlayGlow) {
   color: var(--salty-accent) !important;
   background-color: var(--salty-accent-10);
-  box-shadow: 0 0 0 5px var(--salty-accent-10);
+  box-shadow: var(--bl-open-halo);
 }
 body.salty.salty-icons-line #top-settings-holder .drawer-icon {
   font-size: 21px !important;

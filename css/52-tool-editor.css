@@ -197,7 +197,7 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 /* 4.2.8 날씨: 카테고리 줄 · 혼합 칸(1 · 2) · 혼합 버튼 */
 .salty-panel .bl-weather-cats,.salty-panel .bl-weather-slots{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,5.2em),1fr));gap:4px;padding:4px;margin-bottom:6px;}
 .salty-panel .bl-weather-cats>button,.salty-panel .bl-weather-slots>button{min-width:0;width:100%;white-space:nowrap!important;padding:8px 4px;}
-.salty-panel .bl-weather-cats>button.open{box-shadow:inset 0 0 0 1.5px var(--salty-accent);}
+.salty-panel .bl-weather-cats>button.open{box-shadow:inset 0 0 0 1px var(--salty-accent);}
 /* 7.0.3 분류 다섯 칸이 폰에서 4 + 1(「그 밖」 혼자 둘째 줄)로 갈렸다 — 분류 줄만 칸 최소 4.4em 으로 한 줄에 */
 .salty-panel .bl-weather-cats{grid-template-columns:repeat(auto-fit,minmax(min(100%,4.4em),1fr));}
 /* 7.0.3 펼친 분류가 고른 칸(on, 1px 테)보다 굵은 테(1.5px)라 「끔」을 골라 둬도 「기본」이 고른 것처럼 보였다 — 펼친 분류는 테 없이 글자만 밝게 */
@@ -208,8 +208,8 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 /* 4.2.8 날씨 자리: 화면을 줄인 네모와 끌어 옮기는 점 */
 .salty-panel .bl-spot-row{display:flex;gap:14px;align-items:flex-start;}
 .salty-panel .bl-spot-pad{position:relative;flex:none;width:min(42%,150px);border-radius:14px;background:var(--salty-shade);box-shadow:inset 0 0 0 1px var(--salty-line);touch-action:none;overflow:visible;}
-.salty-panel .bl-spot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;padding:0;border:0;border-radius:50%;background:var(--salty-raised);color:var(--salty-text);font-size:12px;font-weight:700;box-shadow:0 0 0 2px var(--salty-muted),0 2px 8px rgba(0,0,0,.3);touch-action:none;cursor:grab;}
-.salty-panel .bl-spot.on{background:var(--salty-accent);color:var(--salty-on-accent, var(--bl-fb-fff));box-shadow:0 0 0 2px var(--salty-accent),0 2px 8px rgba(0,0,0,.3);}
+.salty-panel .bl-spot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;padding:0;border:0;border-radius:50%;background:var(--salty-raised);color:var(--salty-text);font-size:12px;font-weight:700;box-shadow:inset 0 0 0 1px var(--salty-muted), var(--bl-e2);touch-action:none;cursor:grab;}
+.salty-panel .bl-spot.on{background:var(--salty-accent);color:var(--salty-on-accent, var(--bl-fb-fff));box-shadow:inset 0 0 0 1px var(--salty-accent), var(--bl-e2);}
 .salty-panel .bl-spot-side{min-width:0;flex:1;display:grid;gap:8px;}
 
 /* Group related tools without changing their saved settings. */

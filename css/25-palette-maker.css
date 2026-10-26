@@ -9,7 +9,7 @@
 .salty-panel .salty-mode-switch button[aria-pressed="true"] { background: var(--salty-fill-surface, var(--salty-surface)); color: var(--salty-accent); box-shadow: 0 0 0 1px var(--salty-shade); }
 .salty-panel .salty-mode-switch button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
 .salty-panel .salty-pal { min-width: 0; gap: 8px; padding: 8px; transition: box-shadow .15s ease; }
-.salty-panel .salty-pal.on { box-shadow: 0 0 0 2px var(--salty-accent); }
+.salty-panel .salty-pal.on { box-shadow: var(--bl-pick-ring-card); }
 .salty-panel .salty-pal small { font-size: 10px; line-height: 1.5; margin-top: -3px; }
 .salty-panel .salty-pal b:not(.salty-pal-page b) { font-size: 12px; line-height: 1.5; font-weight: 600; }
 .salty-panel .salty-pal-page { padding: 8px; min-height: 69px; }

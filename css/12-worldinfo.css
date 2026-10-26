@@ -1275,10 +1275,10 @@ body.salty #PersonaManagement #user_avatar_block .avatar-container:active {
 }
 body.salty #PersonaManagement #user_avatar_block .avatar-container.selected {
   --salty-row-bg: var(--salty-tint-12, var(--bl-selected));
-  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #PersonaManagement #user_avatar_block .avatar-container.selected:active {
-  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-press) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-press) !important;
 }
 body.salty #PersonaManagement #user_avatar_block .avatar-container:focus-visible {
   box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;

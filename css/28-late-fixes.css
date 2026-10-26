@@ -168,7 +168,7 @@ body.salty.salty-shape-custom:not(.salty-fade-off) :is(#salty-nochat, .salty-pre
   color: var(--salty-text);
 }
 .salty-panel .salty-mask-item.on .salty-mask-thumb {
-  box-shadow: 0 0 0 2px var(--salty-accent);
+  box-shadow: var(--bl-pick-ring-card);
 }
 .salty-panel .salty-mask-item:focus-visible {
   outline: 2px solid var(--salty-accent);
@@ -252,8 +252,8 @@ body.salty #cg-panel .cg-setting small { word-break: keep-all; overflow-wrap: an
 .salty-panel .salty-pick > button.on { color: var(--salty-accent-ink, var(--salty-accent)); font-weight: 650; }
 body.salty-dark .salty-panel .salty-pick > button.on { color: var(--bl-pop, var(--salty-accent)); }
 /* 라디오 동그라미: 고른 것은 포인트색 고리 + 가운데 점 */
-.salty-panel .salty-pick > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--salty-faint); }
-.salty-panel .salty-pick > button.on > i { box-shadow: inset 0 0 0 2px currentColor; background: radial-gradient(circle, currentColor 0 4px, transparent 4.5px); }
+.salty-panel .salty-pick > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--salty-faint); }
+.salty-panel .salty-pick > button.on > i { box-shadow: inset 0 0 0 1px currentColor; background: radial-gradient(circle, currentColor 0 4px, transparent 4.5px); }
 @media (hover: hover) { .salty-panel .salty-pick > button:not(.on):hover { background: var(--salty-fill-shade, var(--salty-shade)); } }
 .salty-panel .salty-pick > button:active { background: var(--salty-fill-shade-2, var(--salty-shade-2)); }
 
@@ -304,7 +304,7 @@ body.salty .salty-pick-search input {
   border: 0 !important; border-radius: 10px !important; background: var(--salty-fill-shade, var(--salty-shade)) !important; color: var(--salty-text) !important;
   font: inherit !important; outline: none !important; box-shadow: none !important; -webkit-appearance: none; appearance: none;
 }
-body.salty .salty-pick-search input:focus { box-shadow: 0 0 0 2px var(--salty-accent-28) !important; }
+body.salty .salty-pick-search input:focus { box-shadow: var(--bl-ring) !important; }
 body.salty .salty-pick-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; display: flex; flex-direction: column; }
 body.salty .salty-pick-rows::-webkit-scrollbar { width: 0; height: 0; }
 body.salty .salty-pick-rows > button {
@@ -316,8 +316,8 @@ body.salty .salty-pick-rows > button > span { min-width: 0; overflow-wrap: anywh
 body.salty .salty-pick-rows > button[disabled] { opacity: 0.45; cursor: default; }
 body.salty .salty-pick-rows > button.on { color: var(--salty-accent-ink, var(--salty-accent)); font-weight: 650; }
 body.salty-dark .salty-pick-rows > button.on { color: var(--bl-pop, var(--salty-accent)); }
-body.salty .salty-pick-rows > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--salty-faint); }
-body.salty .salty-pick-rows > button.on > i { box-shadow: inset 0 0 0 2px currentColor; background: radial-gradient(circle, currentColor 0 4px, transparent 4.5px); }
+body.salty .salty-pick-rows > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--salty-faint); }
+body.salty .salty-pick-rows > button.on > i { box-shadow: inset 0 0 0 1px currentColor; background: radial-gradient(circle, currentColor 0 4px, transparent 4.5px); }
 @media (hover: hover) { body.salty .salty-pick-rows > button:not(.on):not([disabled]):hover { background: var(--salty-fill-shade, var(--salty-shade)); } }
 body.salty .salty-pick-rows > button:active { background: var(--salty-fill-shade-2, var(--salty-shade-2)); }
 body.salty .salty-pick-rows > button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: -2px; }

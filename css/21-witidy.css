@@ -185,7 +185,7 @@ body.salty #send_form #qr--bar:not(:has(.qr--button, #qr--popoutTrigger)) { disp
 body.salty #send_form #qr--bar #bl-qr-find { position: sticky; left: 0; z-index: 1; flex-shrink: 0; order: -1; display: grid; place-items: center; min-width: 30px; min-height: 30px; margin: 0; padding: 0 8px; border: 0; border-radius: 7px;  color: var(--salty-muted); box-shadow: none; font-size: 12px; cursor: pointer; }
 body.salty #send_form #qr--bar #bl-qr-find:hover { color: var(--salty-text); }
 /* 앞에 붙은 두 단추는 불투명 바탕 — .menu_button 의 반투명 면(!important)이면 넘긴 버튼 글자가 비쳐 겹쳐 보임 */
-body.salty #send_form #qr--bar :is(#bl-qr-find, #qr--popoutTrigger) { z-index: 2; background: linear-gradient(var(--bl-hover), var(--bl-hover)), var(--salty-surface) !important; box-shadow: 0 0 0 4px var(--salty-surface) !important; /* 둥근 모서리 틈으로 밑에 숨은 버튼 색이 비쳐 단추가 각진 밝은 네모로 보였음 → 바탕색 테두리로 틈을 가림 */ }
+body.salty #send_form #qr--bar :is(#bl-qr-find, #qr--popoutTrigger) { z-index: 2; background: linear-gradient(var(--bl-hover), var(--bl-hover)), var(--salty-surface) !important; box-shadow: var(--bl-gap-halo) !important; /* 둥근 모서리 틈으로 밑에 숨은 버튼 색이 비쳐 단추가 각진 밝은 네모로 보였음 → 바탕색 테두리로 틈을 가림 */ }
 /* 넘치는 끝 흐림: mask 는 폰(스크롤 칸을 따로 그리는 모바일 합성)에서 줄 뒤가 까만 네모로 칠해져 못 씀 → 줄 안 양끝에 붙는(sticky) 입력판 바탕색 그라데이션.
    간격(gap 5px)까지 음수 여백으로 지워 버튼 자리는 그대로. 왼쪽은 앞 단추(창 띄우기 · 돋보기) 바로 오른쪽에 */
 body.salty #send_form #qr--bar::after { content: ''; position: sticky; right: 0; z-index: 1; flex: 0 0 28px; align-self: stretch; margin-left: -33px; background: linear-gradient(to left, var(--salty-surface), transparent); pointer-events: none; opacity: 0; transition: opacity 0.15s ease; }

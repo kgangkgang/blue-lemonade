@@ -1126,7 +1126,7 @@ body.salty-dark .salty-shapes button.on {
   }
 }
 .salty-pal.on {
-  box-shadow: 0 0 0 2px var(--salty-accent), 0 0 0 5px var(--salty-accent-22);
+  box-shadow: var(--bl-pick-ring-card);
 }
 .salty-pal-page {
   display: block;

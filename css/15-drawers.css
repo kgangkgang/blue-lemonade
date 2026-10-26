@@ -843,10 +843,10 @@ body.salty #Backgrounds .bg_example .thumbnail-clipper {
   inset: 0;
 }
 body.salty #Backgrounds .bg_example.locked-background {
-  box-shadow: 0 0 0 2px var(--bl-page), 0 0 0 4px var(--bl-lemon), var(--bl-e2) !important;
+  box-shadow: var(--bl-lock-ring), var(--bl-e2) !important;
 }
 body.salty #Backgrounds .bg_example:is(.selected-background, .folder-group-selected) {
-  box-shadow: 0 0 0 2px var(--bl-page), 0 0 0 4px var(--salty-accent), var(--bl-e2) !important;
+  box-shadow: var(--bl-pick-ring), var(--bl-e2) !important;
 }
 body.salty #Backgrounds .bg_example:is(.selected-background, .folder-group-selected)::before,
 body.salty #Backgrounds .bg_example.locked-background::after {

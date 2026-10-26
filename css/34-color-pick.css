@@ -178,10 +178,10 @@ body.salty .bl-cp .bl-cp-hex {
   appearance: none;
 }
 body.salty .bl-cp .bl-cp-hex:focus {
-  box-shadow: inset 0 0 0 1.5px var(--salty-accent) !important;
+  box-shadow: var(--bl-ring) !important;
 }
 body.salty .bl-cp .bl-cp-hex[aria-invalid="true"] {
-  box-shadow: inset 0 0 0 1.5px var(--salty-danger, var(--bl-fb-e5484d)) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-danger, var(--bl-fb-e5484d)) !important;
 }
 body.salty .bl-cp-drop {
   display: grid;

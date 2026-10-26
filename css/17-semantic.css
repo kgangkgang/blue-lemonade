@@ -131,7 +131,7 @@ body.salty #toast-container > .toast-error::before {
   box-shadow: none;
 }
 body.salty.salty-dark #toast-container > .toast-error::before {
-  box-shadow: 0 0 0 4px var(--bl-danger-soft);
+  box-shadow: var(--bl-danger-halo);
 }
 body.salty #toast-container .toast-title {
   margin-bottom: 2px;
@@ -435,7 +435,7 @@ body.salty .popup:has(#del_char_checkbox) .popup-controls .menu_button.popup-but
 body.salty .popup.salty-danger-confirm .popup-controls .menu_button.popup-button-ok:focus-visible {
   /* 빨간 버튼에 포인트색(청록) 테가 붙으면 신호가 어긋남 → 위험 색 테로.
      틈은 창 바탕색(--bl-card): --bl-danger-ring 의 틈(--salty-surface)은 창 바탕과 달라서 선이 하나 더 보임 */
-  box-shadow: 0 0 0 2px var(--bl-card), 0 0 0 4px var(--bl-danger), var(--bl-e2) !important;
+  box-shadow: var(--bl-danger-ring), var(--bl-e2) !important;
 }
 /* 곁 버튼(스와이프만 지우기 등)은 조용한 빨강 — 꽉 찬 빨강은 한 창에 하나만 */
 body.salty .popup .popup-controls .menu_button.popup-button-custom:is([data-i18n*="Delete"], [data-i18n*="삭제"], [data-i18n*="지우"]) {

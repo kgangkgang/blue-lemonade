@@ -540,7 +540,7 @@ body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .g
 /* 지금 채팅 중인 캐릭터 · 그룹 (src/current.js 가 붙이는 .salty-current): 페르소나 고른 카드처럼 옅은 포인트 면 + 포인트 테두리 */
 body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select).salty-current {
   --salty-row-bg: var(--salty-tint-12, var(--bl-selected));
-  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 @media (hover: hover) {
   body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select):hover {
@@ -548,7 +548,7 @@ body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .g
     transform: translateY(-1px);
   }
   body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select).salty-current:hover {
-    box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e3) !important;
+    box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e3) !important;
   }
 }
 body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select):active {
@@ -557,7 +557,7 @@ body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .g
   transform: translateY(1px);
 }
 body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select).salty-current:active {
-  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-press) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-press) !important;
 }
 body.salty #right-nav-panel #rm_print_characters_block :is(.character_select, .group_select, .bogus_folder_select):focus-visible {
   box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
@@ -570,7 +570,7 @@ body.salty #right-nav-panel #rm_print_characters_block.group_overlay_mode_select
 /* 일괄 편집에서 고른 캐릭터: 포인트 테두리 + 아바타 왼쪽 아래 체크 배지 */
 body.salty #right-nav-panel #rm_print_characters_block .character_select.character_selected {
   --salty-row-bg: var(--bl-card);
-  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e2) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e2) !important;
 }
 body.salty #right-nav-panel #rm_print_characters_block .character_select.character_selected > .avatar::before {
   content: "\f00c";
@@ -1194,11 +1194,11 @@ body.salty #right-nav-panel .group_member.disabled :is(.ch_name, .avatar) {
 }
 body.salty #right-nav-panel .group_member.is_active {
   outline: 0 !important;
-  box-shadow: inset 0 0 0 2px var(--salty-accent);
+  box-shadow: inset 0 0 0 1px var(--salty-accent);
 }
 body.salty #right-nav-panel .group_member.is_queued {
   outline: 0 !important;
-  box-shadow: inset 0 0 0 2px var(--bl-lemon);
+  box-shadow: inset 0 0 0 1px var(--bl-lemon);
 }
 body.salty #right-nav-panel .group_member.is_fav .ch_name {
   color: var(--salty-text) !important;

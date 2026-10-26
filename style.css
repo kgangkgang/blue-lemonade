@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build e460e60198f7) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 10585690e910) */
 /* css/00-base.css */
 :root{--bl-release:"8.0.5";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -129,7 +129,7 @@ color:var(--salty-text) !important;
 body.salty #top-settings-holder .drawer-icon.openIcon:not(.redOverlayGlow):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-accent) !important;
 background-color:var(--salty-accent-10);
-box-shadow:0 0 0 5px var(--salty-accent-10);
+box-shadow:var(--bl-open-halo);
 }
 body.salty.salty-icons-line #top-settings-holder .drawer-icon {
   font-size: 21px !important;
@@ -1981,7 +1981,7 @@ body.salty :is(#chat,.bl-chat-like) .last_mes {
 body.salty :is(#chat,.bl-chat-like) .mes.selected {
   background: var(--bl-fill-selected, var(--bl-selected)) !important;
   border-radius: var(--bl-r-md) !important;
-  box-shadow: inset 0 0 0 2px var(--salty-accent) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty :is(#chat,.bl-chat-like) .mes .mes_block {
   overflow: visible !important;
@@ -4157,6 +4157,13 @@ body.salty {
   --bl-track: var(--salty-track, inset 0 1px 2px rgba(15, 34, 56, 0.1));
   --bl-accent-lift: 0 1px 2px var(--salty-accent-28), 0 6px 14px -6px var(--salty-accent-70);
   --bl-ring: var(--salty-ring);
+  --bl-pick-ring: 0 0 0 2px var(--bl-page), 0 0 0 4px var(--salty-accent);
+  --bl-lock-ring: 0 0 0 2px var(--bl-page), 0 0 0 4px var(--bl-lemon);
+  --bl-pick-ring-card: 0 0 0 2px var(--bl-card), 0 0 0 4px var(--salty-accent);
+  --bl-open-halo: 0 0 0 5px var(--salty-accent-10);
+  --bl-status-halo: 0 0 0 4px var(--bl-warn-halo);
+  --bl-danger-halo: 0 0 0 4px var(--bl-danger-soft);
+  --bl-gap-halo: 0 0 0 4px var(--salty-surface);
   --bl-scrim: var(--salty-scrim, rgba(7, 20, 34, 0.34));
 }
 body.salty.salty-dark {
@@ -4273,7 +4280,12 @@ body.salty .rm_tag_filter .tag:not(.actionable):not(.selected):not(.excluded) {
 }
 body.salty .rm_tag_filter .tag.selected:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background-color:var(--bl-selected) !important;
-box-shadow:inset 0 0 0 2px var(--salty-accent), var(--bl-e1) !important;
+box-shadow:inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
+}
+body.salty .rm_tag_filter .tag.selected {
+font-weight:650 !important;
+}
+body.salty .rm_tag_filter .tag.selected:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-accent-ink, var(--salty-accent)) !important;
 }
 body.salty .rm_tag_filter .tag.selected {
@@ -4285,7 +4297,7 @@ color:var(--bl-pop-ink) !important;
 body.salty .tag.excluded:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 body.salty .rm_tag_filter .tag.excluded:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background-color:var(--bl-warn-bg) !important;
-box-shadow:inset 0 0 0 2px var(--bl-warn) !important;
+box-shadow:inset 0 0 0 1px var(--bl-warn) !important;
 color:var(--bl-pop-ink) !important;
 }
 body.salty .tag.excluded, body.salty .rm_tag_filter .tag.excluded {
@@ -4457,7 +4469,10 @@ body.salty .macroBrowser .macro-item {
 }
 body.salty .macroBrowser .macro-item.selected:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-fill-selected, var(--bl-selected));
-box-shadow:inset 0 0 0 2px var(--salty-accent);
+box-shadow:inset 0 0 0 1px var(--salty-accent);
+}
+body.salty .macroBrowser .macro-item.selected {
+font-weight:650;
 }
 body.salty .macroBrowser .macro-item.selected .macro-desc-preview {
   opacity: 1;
@@ -5257,7 +5272,7 @@ body.salty .swipe_picker_block:not([highlight]):active {
 body.salty .select_chat_block[highlight],
 body.salty .swipe_picker_block[highlight] {
   background-color: var(--bl-selected) !important;
-  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty :is(.select_chat_block, .swipe_picker_block) #select_chat_name_wrapper {
   flex-wrap: wrap !important;
@@ -6746,10 +6761,10 @@ body.salty #PersonaManagement #user_avatar_block .avatar-container:active {
 }
 body.salty #PersonaManagement #user_avatar_block .avatar-container.selected {
   --salty-row-bg: var(--salty-tint-12, var(--bl-selected));
-  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 body.salty #PersonaManagement #user_avatar_block .avatar-container.selected:active {
-  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-press) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-press) !important;
 }
 body.salty #PersonaManagement #user_avatar_block .avatar-container:focus-visible {
   box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
@@ -7687,7 +7702,7 @@ body.salty #right-nav-panel #rm_print_characters_block .bogus_folder_select {
 body.salty #right-nav-panel #rm_print_characters_block .character_select.salty-current,
 body.salty #right-nav-panel #rm_print_characters_block .group_select.salty-current {
   --salty-row-bg: var(--salty-tint-12, var(--bl-selected));
-  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e1) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e1) !important;
 }
 @media (hover: hover) {
   body.salty #right-nav-panel #rm_print_characters_block .character_select:hover,
@@ -7698,7 +7713,7 @@ body.salty #right-nav-panel #rm_print_characters_block .bogus_folder_select:hove
   }
   body.salty #right-nav-panel #rm_print_characters_block .character_select.salty-current:hover,
 body.salty #right-nav-panel #rm_print_characters_block .group_select.salty-current:hover {
-    box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e3) !important;
+    box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e3) !important;
   }
 }
 body.salty #right-nav-panel #rm_print_characters_block .character_select:active,
@@ -7710,7 +7725,7 @@ body.salty #right-nav-panel #rm_print_characters_block .bogus_folder_select:acti
 }
 body.salty #right-nav-panel #rm_print_characters_block .character_select.salty-current:active,
 body.salty #right-nav-panel #rm_print_characters_block .group_select.salty-current:active {
-  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-press) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-press) !important;
 }
 body.salty #right-nav-panel #rm_print_characters_block .character_select:focus-visible,
 body.salty #right-nav-panel #rm_print_characters_block .group_select:focus-visible,
@@ -7724,7 +7739,7 @@ body.salty #right-nav-panel #rm_print_characters_block.group_overlay_mode_select
 }
 body.salty #right-nav-panel #rm_print_characters_block .character_select.character_selected {
   --salty-row-bg: var(--bl-card);
-  box-shadow: inset 0 0 0 2px var(--salty-accent), var(--bl-e2) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e2) !important;
 }
 body.salty #right-nav-panel #rm_print_characters_block .character_select.character_selected > .avatar::before {
   content: "\f00c";
@@ -8335,11 +8350,11 @@ body.salty #right-nav-panel .group_member.disabled .avatar {
 }
 body.salty #right-nav-panel .group_member.is_active {
   outline: 0 !important;
-  box-shadow: inset 0 0 0 2px var(--salty-accent);
+  box-shadow: inset 0 0 0 1px var(--salty-accent);
 }
 body.salty #right-nav-panel .group_member.is_queued {
   outline: 0 !important;
-  box-shadow: inset 0 0 0 2px var(--bl-lemon);
+  box-shadow: inset 0 0 0 1px var(--bl-lemon);
 }
 body.salty #right-nav-panel .group_member.is_fav .ch_name {
   color: var(--salty-text) !important;
@@ -9316,7 +9331,7 @@ body.salty #rm_api_block .online_status_indicator {
   height: 8px !important;
   margin: 0 4px;
   background-color: var(--bl-warn) !important;
-  box-shadow: 0 0 0 4px var(--bl-warn-halo);
+  box-shadow: var(--bl-status-halo);
 }
 body.salty #rm_api_block .online_status_indicator.success {
   background-color: var(--salty-accent) !important;
@@ -10278,10 +10293,10 @@ body.salty #Backgrounds .bg_example .thumbnail-clipper {
   inset: 0;
 }
 body.salty #Backgrounds .bg_example.locked-background:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-box-shadow:0 0 0 2px var(--bl-page), 0 0 0 4px var(--bl-lemon), var(--bl-e2) !important;
+box-shadow:var(--bl-lock-ring), var(--bl-e2) !important;
 }
 body.salty #Backgrounds .bg_example:is(.selected-background, .folder-group-selected):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-box-shadow:0 0 0 2px var(--bl-page), 0 0 0 4px var(--salty-accent), var(--bl-e2) !important;
+box-shadow:var(--bl-pick-ring), var(--bl-e2) !important;
 }
 body.salty #Backgrounds .bg_example:is(.selected-background, .folder-group-selected)::before,
 body.salty #Backgrounds .bg_example.locked-background::after {
@@ -11804,7 +11819,7 @@ body.salty #toast-container > .toast-error:where(:not([data-bl-native-ext-colors
 box-shadow:none;
 }
 body.salty.salty-dark #toast-container > .toast-error:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
-box-shadow:0 0 0 4px var(--bl-danger-soft);
+box-shadow:var(--bl-danger-halo);
 }
 body.salty #toast-container .toast-title {
 margin-bottom:2px;
@@ -12116,7 +12131,7 @@ color:var(--bl-danger-ink) !important;
 body.salty .popup .popup-controls .menu_button.popup-button-ok:is([data-i18n*="Delete"], [data-i18n*="삭제"], [data-i18n*="지우"]):focus-visible,
 body.salty .popup:has(#del_char_checkbox) .popup-controls .menu_button.popup-button-ok:focus-visible,
 body.salty .popup.salty-danger-confirm .popup-controls .menu_button.popup-button-ok:focus-visible {
-  box-shadow: 0 0 0 2px var(--bl-card), 0 0 0 4px var(--bl-danger), var(--bl-e2) !important;
+  box-shadow: var(--bl-danger-ring), var(--bl-e2) !important;
 }
 body.salty .popup .popup-controls .menu_button.popup-button-custom:is([data-i18n*="Delete"], [data-i18n*="삭제"], [data-i18n*="지우"]):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-fill-well, var(--bl-well)) !important;
@@ -12366,7 +12381,11 @@ color:var(--salty-text);
 background:var(--salty-tint-14);
 }
 html body.salty .mr-item.is-picked:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-box-shadow:inset 0 0 0 2px var(--salty-accent);
+background:var(--bl-fill-selected, var(--bl-selected));
+box-shadow:inset 0 0 0 1px var(--salty-accent);
+}
+html body.salty .mr-item.is-picked {
+font-weight:650;
 }
 html body.salty .mr-empty {
 padding:18px 14px;
@@ -13902,7 +13921,7 @@ body.salty-dark .salty-shapes button.on {
   }
 }
 .salty-pal.on {
-  box-shadow: 0 0 0 2px var(--salty-accent), 0 0 0 5px var(--salty-accent-22);
+  box-shadow: var(--bl-pick-ring-card);
 }
 .salty-pal-page {
   display: block;
@@ -14328,7 +14347,7 @@ body.salty #send_form #qr--bar:not(:has(.qr--button, #qr--popoutTrigger)) { disp
 body.salty #send_form #qr--bar #bl-qr-find { position: sticky; left: 0; z-index: 1; flex-shrink: 0; order: -1; display: grid; place-items: center; min-width: 30px; min-height: 30px; margin: 0; padding: 0 8px; border: 0; border-radius: 7px;  color: var(--salty-muted); box-shadow: none; font-size: 12px; cursor: pointer; }
 body.salty #send_form #qr--bar #bl-qr-find:hover { color: var(--salty-text); }
 body.salty #send_form #qr--bar #bl-qr-find,
-body.salty #send_form #qr--bar #qr--popoutTrigger { z-index: 2; background: linear-gradient(var(--bl-hover), var(--bl-hover)), var(--salty-surface) !important; box-shadow: 0 0 0 4px var(--salty-surface) !important;  }
+body.salty #send_form #qr--bar #qr--popoutTrigger { z-index: 2; background: linear-gradient(var(--bl-hover), var(--bl-hover)), var(--salty-surface) !important; box-shadow: var(--bl-gap-halo) !important;  }
 body.salty #send_form #qr--bar::after { content: ''; position: sticky; right: 0; z-index: 1; flex: 0 0 28px; align-self: stretch; margin-left: -33px; background: linear-gradient(to left, var(--salty-surface), transparent); pointer-events: none; opacity: 0; transition: opacity 0.15s ease; }
 body.salty #send_form #qr--bar.bl-qr-more-right::after { opacity: 1; }
 body.salty #send_form #qr--bar { scroll-snap-type: x proximity; scroll-padding-left: var(--bl-qr-snap, 0px); }
@@ -17292,7 +17311,7 @@ body.salty :is(#salty-nochat, .salty-preview):not(.cg-chatlike, .bl-notes-view, 
 .salty-panel .salty-mode-switch button[aria-pressed="true"] { background: var(--salty-fill-surface, var(--salty-surface)); color: var(--salty-accent); box-shadow: 0 0 0 1px var(--salty-shade); }
 .salty-panel .salty-mode-switch button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
 .salty-panel .salty-pal { min-width: 0; gap: 8px; padding: 8px; transition: box-shadow .15s ease; }
-.salty-panel .salty-pal.on { box-shadow: 0 0 0 2px var(--salty-accent); }
+.salty-panel .salty-pal.on { box-shadow: var(--bl-pick-ring-card); }
 .salty-panel .salty-pal small { font-size: 10px; line-height: 1.5; margin-top: -3px; }
 .salty-panel .salty-pal b:not(.salty-pal-page b) { font-size: 12px; line-height: 1.5; font-weight: 600; }
 .salty-panel .salty-pal-page { padding: 8px; min-height: 69px; }
@@ -17742,7 +17761,7 @@ border-radius:50%;
 }
 body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
 background:transparent;
-box-shadow:inset 0 0 0 2px var(--salty-faint);
+box-shadow:inset 0 0 0 1px var(--salty-faint);
 }
 body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::before {
 transition:background-color 0.18s ease, box-shadow 0.18s ease;
@@ -17959,7 +17978,7 @@ border-radius:4px;
 }
 body.salty .select2-results__options[aria-multiselectable="true"] .select2-results__option:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
 background-color:transparent;
-box-shadow:inset 0 0 0 2px var(--salty-shade-2);
+box-shadow:inset 0 0 0 1px var(--salty-shade-2);
 }
 body.salty .select2-results__options[aria-multiselectable="true"] .select2-results__option::before {
 font-size:11px;
@@ -18257,7 +18276,7 @@ body.salty.salty-shape-custom:not(.salty-fade-off) :is(#salty-nochat, .salty-pre
   color: var(--salty-text);
 }
 .salty-panel .salty-mask-item.on .salty-mask-thumb {
-  box-shadow: 0 0 0 2px var(--salty-accent);
+  box-shadow: var(--bl-pick-ring-card);
 }
 .salty-panel .salty-mask-item:focus-visible {
   outline: 2px solid var(--salty-accent);
@@ -18370,8 +18389,8 @@ body.salty #cg-panel .cg-setting small { word-break: keep-all; overflow-wrap: an
 }
 .salty-panel .salty-pick > button.on { color: var(--salty-accent-ink, var(--salty-accent)); font-weight: 650; }
 body.salty-dark .salty-panel .salty-pick > button.on { color: var(--bl-pop, var(--salty-accent)); }
-.salty-panel .salty-pick > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--salty-faint); }
-.salty-panel .salty-pick > button.on > i { box-shadow: inset 0 0 0 2px currentColor; background: radial-gradient(circle, currentColor 0 4px, transparent 4.5px); }
+.salty-panel .salty-pick > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--salty-faint); }
+.salty-panel .salty-pick > button.on > i { box-shadow: inset 0 0 0 1px currentColor; background: radial-gradient(circle, currentColor 0 4px, transparent 4.5px); }
 @media (hover: hover) { .salty-panel .salty-pick > button:not(.on):hover { background: var(--salty-fill-shade, var(--salty-shade)); } }
 .salty-panel .salty-pick > button:active { background: var(--salty-fill-shade-2, var(--salty-shade-2)); }
 .salty-prevbox:has(.salty-pvfold) { padding-bottom: 20px; }
@@ -18413,7 +18432,7 @@ body.salty .salty-pick-search input {
   border: 0 !important; border-radius: 10px !important; background: var(--salty-fill-shade, var(--salty-shade)) !important; color: var(--salty-text) !important;
   font: inherit !important; outline: none !important; box-shadow: none !important; -webkit-appearance: none; appearance: none;
 }
-body.salty .salty-pick-search input:focus { box-shadow: 0 0 0 2px var(--salty-accent-28) !important; }
+body.salty .salty-pick-search input:focus { box-shadow: var(--bl-ring) !important; }
 body.salty .salty-pick-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; display: flex; flex-direction: column; }
 body.salty .salty-pick-rows::-webkit-scrollbar { width: 0; height: 0; }
 body.salty .salty-pick-rows > button {
@@ -18425,8 +18444,8 @@ body.salty .salty-pick-rows > button > span { min-width: 0; overflow-wrap: anywh
 body.salty .salty-pick-rows > button[disabled] { opacity: 0.45; cursor: default; }
 body.salty .salty-pick-rows > button.on { color: var(--salty-accent-ink, var(--salty-accent)); font-weight: 650; }
 body.salty-dark .salty-pick-rows > button.on { color: var(--bl-pop, var(--salty-accent)); }
-body.salty .salty-pick-rows > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--salty-faint); }
-body.salty .salty-pick-rows > button.on > i { box-shadow: inset 0 0 0 2px currentColor; background: radial-gradient(circle, currentColor 0 4px, transparent 4.5px); }
+body.salty .salty-pick-rows > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--salty-faint); }
+body.salty .salty-pick-rows > button.on > i { box-shadow: inset 0 0 0 1px currentColor; background: radial-gradient(circle, currentColor 0 4px, transparent 4.5px); }
 @media (hover: hover) { body.salty .salty-pick-rows > button:not(.on):not([disabled]):hover { background: var(--salty-fill-shade, var(--salty-shade)); } }
 body.salty .salty-pick-rows > button:active { background: var(--salty-fill-shade-2, var(--salty-shade-2)); }
 body.salty .salty-pick-rows > button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: -2px; }
@@ -19115,7 +19134,8 @@ body.salty.salty-dem-skin.salty-dem-fold :is(:is(#chat,.bl-chat-like), .cg-root,
   background: var(--salty-fill-shade, var(--shade));
 }
 .salty-style.on {
-  box-shadow: inset 0 0 0 2px var(--salty-accent);
+  background: var(--bl-fill-selected, var(--bl-selected));
+  box-shadow: inset 0 0 0 1px var(--salty-accent);
 }
 .salty-style-main {
   display: flex;
@@ -19834,10 +19854,10 @@ outline:none;
 appearance:none;
 }
 body.salty .bl-cp .bl-cp-hex:focus {
-  box-shadow: inset 0 0 0 1.5px var(--salty-accent) !important;
+  box-shadow: var(--bl-ring) !important;
 }
 body.salty .bl-cp .bl-cp-hex[aria-invalid="true"]:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-box-shadow:inset 0 0 0 1.5px var(--salty-danger, var(--bl-fb-e5484d)) !important;
+box-shadow:inset 0 0 0 1px var(--salty-danger, var(--bl-fb-e5484d)) !important;
 }
 body.salty .bl-cp-drop {
 display:grid;
@@ -20099,7 +20119,7 @@ body.salty :is(#send_form #qr--bar, #qr--popout > .qr--body) > .qr--buttons.qr--
   padding: 0 8px;
   border-radius: 7px;
   background: linear-gradient(var(--bl-hover, var(--bl-fb-rgb-127-127-127-0p1)), var(--bl-hover, var(--bl-fb-rgb-127-127-127-0p1))), var(--salty-surface);
-  box-shadow: 0 0 0 4px var(--salty-surface);
+  box-shadow: var(--bl-gap-halo);
   color: var(--salty-muted);
   font-size: 12px;
 }
@@ -21477,7 +21497,7 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 }
 .salty-panel .bl-weather-cats,.salty-panel .bl-weather-slots{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,5.2em),1fr));gap:4px;padding:4px;margin-bottom:6px;}
 .salty-panel .bl-weather-cats>button,.salty-panel .bl-weather-slots>button{min-width:0;width:100%;white-space:nowrap!important;padding:8px 4px;}
-.salty-panel .bl-weather-cats>button.open{box-shadow:inset 0 0 0 1.5px var(--salty-accent);}
+.salty-panel .bl-weather-cats>button.open{box-shadow:inset 0 0 0 1px var(--salty-accent);}
 .salty-panel .bl-weather-cats{grid-template-columns:repeat(auto-fit,minmax(min(100%,4.4em),1fr));}
 .salty-panel .bl-weather-cats>button.open:not(.on){box-shadow:none;color:var(--salty-text);background:color-mix(in srgb,var(--salty-text) 8%,transparent);}
 .salty-panel .bl-weather-mix{margin-top:8px;}
@@ -21485,8 +21505,8 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .salty-panel .bl-weather-skip{margin-top:6px;}
 .salty-panel .bl-spot-row{display:flex;gap:14px;align-items:flex-start;}
 .salty-panel .bl-spot-pad{position:relative;flex:none;width:min(42%,150px);border-radius:14px;background:var(--salty-shade);box-shadow:inset 0 0 0 1px var(--salty-line);touch-action:none;overflow:visible;}
-.salty-panel .bl-spot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;padding:0;border:0;border-radius:50%;background:var(--salty-raised);color:var(--salty-text);font-size:12px;font-weight:700;box-shadow:0 0 0 2px var(--salty-muted),0 2px 8px rgba(0,0,0,.3);touch-action:none;cursor:grab;}
-.salty-panel .bl-spot.on{background:var(--salty-accent);color:var(--salty-on-accent, var(--bl-fb-fff));box-shadow:0 0 0 2px var(--salty-accent),0 2px 8px rgba(0,0,0,.3);}
+.salty-panel .bl-spot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;padding:0;border:0;border-radius:50%;background:var(--salty-raised);color:var(--salty-text);font-size:12px;font-weight:700;box-shadow:inset 0 0 0 1px var(--salty-muted), var(--bl-e2);touch-action:none;cursor:grab;}
+.salty-panel .bl-spot.on{background:var(--salty-accent);color:var(--salty-on-accent, var(--bl-fb-fff));box-shadow:inset 0 0 0 1px var(--salty-accent), var(--bl-e2);}
 .salty-panel .bl-spot-side{min-width:0;flex:1;display:grid;gap:8px;}
 .bl-addon-group { display:flex; flex-direction:column; gap:12px; min-width:0; }
 .bl-addon-group-tool { padding:12px; border:0; border-radius:var(--bl-r-md,12px); background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:var(--bl-e1); }

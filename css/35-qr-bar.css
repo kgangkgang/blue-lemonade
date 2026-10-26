@@ -73,7 +73,7 @@ body.salty :is(#send_form #qr--bar, #qr--popout > .qr--body) > .qr--buttons.qr--
   padding: 0 8px;
   border-radius: 7px;
   background: linear-gradient(var(--bl-hover, var(--bl-fb-rgb-127-127-127-0p1)), var(--bl-hover, var(--bl-fb-rgb-127-127-127-0p1))), var(--salty-surface);
-  box-shadow: 0 0 0 4px var(--salty-surface);
+  box-shadow: var(--bl-gap-halo);
   color: var(--salty-muted);
   font-size: 12px;
 }

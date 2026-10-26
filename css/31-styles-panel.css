@@ -60,7 +60,8 @@
   background: var(--salty-fill-shade, var(--shade));
 }
 .salty-style.on {
-  box-shadow: inset 0 0 0 2px var(--salty-accent);
+  background: var(--bl-fill-selected, var(--bl-selected));
+  box-shadow: inset 0 0 0 1px var(--salty-accent);
 }
 .salty-style-main {
   display: flex;

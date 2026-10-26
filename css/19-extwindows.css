@@ -125,7 +125,7 @@ html body.salty .rl-module-head small { color:var(--salty-muted); opacity:1; }
 .salty-panel small:where(:not(.mes_text small)) { opacity:1; } /* 미리보기 속 메시지 본문의 small 은 채팅과 같게 둔다 */
 html body.salty .rl-owner { padding:4px 8px; color:var(--salty-muted); background:var(--salty-shade); opacity:1; }
 html body.salty .rl-owner.on { color:var(--salty-text); background:var(--salty-tint-14); }
-html body.salty .mr-item.is-picked { box-shadow:inset 0 0 0 2px var(--salty-accent); }
+html body.salty .mr-item.is-picked { background:var(--bl-fill-selected, var(--bl-selected)); box-shadow:inset 0 0 0 1px var(--salty-accent); font-weight:650; }
 html body.salty .mr-empty { padding:18px 14px; border-radius:14px; color:var(--salty-muted); background:var(--salty-surface); opacity:1; }
 
 /* ---------- 그림 생성 확장: 제 팔레트(--ap-*)가 테마와 따로 놀아 라이트에서 글자가 안 보였음 ---------- */

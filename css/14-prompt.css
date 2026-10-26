@@ -920,7 +920,7 @@ body.salty #rm_api_block .online_status_indicator {
   height: 8px !important;
   margin: 0 4px;
   background-color: var(--bl-warn) !important;
-  box-shadow: 0 0 0 4px var(--bl-warn-halo);
+  box-shadow: var(--bl-status-halo);
 }
 body.salty #rm_api_block .online_status_indicator.success {
   background-color: var(--salty-accent) !important;

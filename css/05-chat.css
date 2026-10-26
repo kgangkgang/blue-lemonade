@@ -72,7 +72,7 @@ body.salty #chat .last_mes {
 body.salty #chat .mes.selected {
   background: var(--bl-fill-selected, var(--bl-selected)) !important;
   border-radius: var(--bl-r-md) !important;
-  box-shadow: inset 0 0 0 2px var(--salty-accent) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 body.salty #chat .mes .mes_block {
   overflow: visible !important; /* 실리태번 기본값(hidden)이면 가로 꽉 이미지가 잘림 */
