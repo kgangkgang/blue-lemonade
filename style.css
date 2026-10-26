@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 4fc2c5a32cf1) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d67634be56c6) */
 /* css/00-base.css */
 :root{--bl-release:"8.0.4";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -18937,10 +18937,6 @@ body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text :is(.custom-dem-modules details.custom-dem-card) {
   border-radius: 14px !important;
 }
-body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track:has(> .custom-dem-track__grid),
-body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules:is(.bl-s, *) {
-  font-family: var(--salty-font-ui, inherit);
-}
 body.salty.salty-light.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track:has(> .custom-dem-track__grid),
 body.salty.salty-light.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules:is(.bl-s, *),
 body.salty.salty-light.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text :is(.custom-dem-modules .custom-dem-card) {
@@ -18952,6 +18948,9 @@ body.salty.salty-light.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .s
   --dem-ink: var(--salty-text);
   --dem-ink-2: var(--salty-muted);
   --dem-ink-3: color-mix(in srgb, var(--salty-muted) 80%, transparent);
+}
+body.salty.salty-light.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__clock {
+  color: color-mix(in srgb, #94e2d5 40%, var(--salty-text));
 }
 @media (max-width: 1000px) {
   body.salty.salty-dem-skin.salty-dem-fold :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track:where(:not(:has(> .custom-dem-track__grid))),

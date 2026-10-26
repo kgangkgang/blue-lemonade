@@ -280,12 +280,9 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
 /* ---------- 8.0.6 데우스 V3: 원작의 모양 · 배치 · 그림(시계 · 하늘 · 기온 · 리본)과 색 분위기는 그대로, 블루레몬에이드는 가볍게만 ----------
    사용자: 「원작 느낌 많이 훼손하지 않으면서 블루레몬에이드 스타일로만 살짝」. 위의 2.5 카드 스킨은 :where(:not(…)) 로 V3 에 닿지 않아요
    (V3 카드는 늘 .dem-modules 묶음 안, V3 트래커 뿌리는 바로 아래 .dem-track__grid). 2.5 규칙의 무게 · 결과는 8.0.4 와 같아요.
-   손질은 세 가지: 모서리 14px(테마 카드와 같게) · 본문 글꼴은 테마 UI 글꼴(원작 세리프 제목 · 시각은 그대로) · 밝은 팔레트에서 원작 색 변수만 밝은 면 · 진한 글자로 */
+   손질은 두 가지: 모서리 14px(테마 카드와 같게) · 밝은 팔레트에서 원작 색 변수만 밝은 면 · 진한 글자로. 글꼴은 원작(채팅 글꼴 + 원작 세리프 제목 · 시각) 그대로예요 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track > .custom-dem-track__grid, .custom-dem-modules, .custom-dem-modules details.custom-dem-card) {
   border-radius: 14px !important;
-}
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track:has(> .custom-dem-track__grid), .custom-dem-modules) {
-  font-family: var(--salty-font-ui, inherit);
 }
 /* 원작 색은 어두운 화면용이라 밝은 팔레트에서는 밝은 글자가 밝은 바탕에 묻혔어요 — 보라 기운은 남기고 면 · 선 · 글자만 팔레트로 */
 body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track:has(> .custom-dem-track__grid), .custom-dem-modules, .custom-dem-modules .custom-dem-card) {
@@ -297,6 +294,10 @@ body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_
   --dem-ink: var(--salty-text);
   --dem-ink-2: var(--salty-muted);
   --dem-ink-3: color-mix(in srgb, var(--salty-muted) 80%, transparent);
+}
+/* 시각 글자는 원작 청록을 남기고 밝은 바탕에서 읽히게 본문색을 더 섞어요 */
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__clock {
+  color: color-mix(in srgb, #94e2d5 40%, var(--salty-text));
 }
 
 /* ---------- 폰 접기 ---------- */
