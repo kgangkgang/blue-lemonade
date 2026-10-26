@@ -550,7 +550,7 @@ export const FILE_HASHES = {
   "src/gutter.js": "4022:49ae5ff0:c0bcc337",
   "src/headswitch.js": "11852:99136461:6fc7bbb6",
   "src/help-sheet.js": "1792:a3fd85eb:90971bc7",
-  "src/icon-text.js": "16645:7b4ff969:ec8318e3",
+  "src/icon-text.js": "17567:997a097d:6aca3a3b",
   "src/icons.js": "5842:596ce980:f8f9f64f",
   "src/image-zoom.js": "18327:667ef99d:c67dd36b",
   "src/imagedecode.js": "9406:ebf81685:5e366e26",

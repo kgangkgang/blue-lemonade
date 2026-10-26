@@ -184,13 +184,21 @@ function scan(node) {
     else if (node.localName === 'label') checkLabel(node);
     if (node.classList?.contains('mes')) checkMes(node);
     if (node.classList?.contains('mes_reasoning_details')) checkReasoning(node);
-    if ((node.firstElementChild || node.hasAttribute(ROW)) && isRowHost(node)) checkRow(node);
-    if (!node.firstElementChild) return;
+    if (!node.firstElementChild) { if (node.hasAttribute(ROW) && isRowHost(node) && !inMessage(node)) checkRow(node); return; }
     for (const el of node.getElementsByClassName('menu_button')) check(el);
     for (const el of node.getElementsByTagName('label')) checkLabel(el);
     for (const el of node.getElementsByClassName('mes')) checkMes(el);
     for (const el of node.getElementsByClassName('mes_reasoning_details')) checkReasoning(el);
-    for (const el of node.getElementsByTagName('*')) if ((el.firstElementChild || el.hasAttribute(ROW)) && isRowHost(el)) checkRow(el);
+    scanRows(node);
+}
+// 8.0.5: 서랍 줄 표식은 채팅 메시지(.mes) 안을 보지 않아요 — 표식을 쓰는 CSS 는 전부 설정 서랍 · 확장 창 쪽이라 메시지 안 요소엔 맞는 규칙이 없고,
+//   메시지를 그릴 때마다 모든 자손에 35가지 검사를 돌던 것이 폰 메시지 5개 그리기 감시자를 76 → 1,070ms 로 늘렸어요(성능 판별 10-27).
+//   .mes 가지는 통째로 건너뛰어요(그 안의 단추 · 체크 줄 · 메시지 표식은 위에서 따로 봐요).
+function inMessage(el) { return !!el.closest('.mes'); }
+function scanRows(root) {
+    if (inMessage(root)) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, { acceptNode: el => el.classList.contains('mes') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+    for (let el = root; el; el = walker.nextNode()) if ((el.firstElementChild || el.hasAttribute(ROW)) && isRowHost(el)) checkRow(el);
 }
 
 // 바뀐 요소 하나 — .menu_button 이면 단추 표식, label 이면 체크 줄 표식, input 이 바뀌었으면 그 부모 label
@@ -201,6 +209,7 @@ function touched(el) {
     // 메시지 안이 바뀌면(편집칸 넣고 빼기 · 타이머 · 토큰 글자) 그 메시지 표식을 다시
     const mes = el.closest('.mes'); if (mes) checkMes(mes);
     const details = el.closest('.mes_reasoning_details'); if (details) checkReasoning(details);
+    if (mes) return;   // 메시지 안은 줄 표식을 보지 않아요(scanRows 와 같은 범위)
     // 자식 줄이 바뀐 .flex-container · .range-block 과, 클래스가 바뀐 자식의 부모
     if (isRowHost(el)) checkRow(el);
     const p = el.parentElement; if (p && isRowHost(p)) checkRow(p);
