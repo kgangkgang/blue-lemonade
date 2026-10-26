@@ -1488,7 +1488,7 @@ function multiAvatarSection(s) {
 function profileControls(s, prefix = 'profile') {
     const p = s[prefix];
     const range = (key, label, step = 1) => slider(`${prefix}.${key}`, label, ...PROFILE_RANGE[key], step);
-    return `${chatPreview()}${prefix === 'profile' ? multiAvatarSection(s) : ''}<div class="salty-group">
+    return `${chatPreview()}<div class="salty-group">
         ${stack(prefix === 'userProfile' ? '내 프로필' : '캐릭터 프로필', seg(`${prefix}.mode`, [['none', '프로필 없음'], ['small', '작은 프로필'], ['banner', '상단 큰 프로필']]), prefix === 'userProfile' ? '내가 보낸 메시지의 사진만 바꿔요.' : '캐릭터 메시지마다 사진이 위에, 글이 아래에 놓여요')}
     ${prefix === 'userProfile' && p.mode === 'small' ? stack('작은 사진 위치', seg(`${prefix}.side`, [['auto', '자동'], ['left', '왼쪽'], ['right', '오른쪽']], 'auto'), '자동은 말풍선이면 오른쪽, 나머지 모양은 왼쪽이에요') : ''}
     ${prefix === 'userProfile' && p.mode === 'small' ? stack('번호 · 시간 줄 위치', seg(`${prefix}.metaSide`, [['auto', '사진 따라'], ['left', '왼쪽'], ['right', '오른쪽']], 'auto'), '메시지 위의 #번호 · 걸린 시간 · 토큰 줄이에요') : ''}
@@ -1508,7 +1508,7 @@ function profileControls(s, prefix = 'profile') {
     </div>${cap('흐림 · 투명도')}<div class="salty-group">
         ${range('fadeY', '위아래 가장자리 (%)')}${range('fadeX', '좌우 가장자리 (%)')}
         ${range('blur', '사진 흐림 (px)', 0.5)}${range('opacity', '사진 진하기 (%)')}
-    </div>${frameControls(prefix, p)}` : ''}`;
+    </div>${frameControls(prefix, p)}` : ''}${prefix === 'profile' ? multiAvatarSection(s) : ''}`;
 }
 
 function tabChat(s, sub) {
