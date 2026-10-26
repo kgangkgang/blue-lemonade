@@ -14,7 +14,10 @@ import { loadWeatherModule } from './weather-load.js';
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 let rendererRetryAfter = 0;
-const WEATHER_VALUE = '.custom-dem-track__item--weather .custom-dem-track__value, .custom-dem-track-recovery__item--context .custom-dem-track-recovery__value';
+// 8.0.6 데우스 V3 트래커는 안쪽이 바뀌었어요 — 날씨 칸 .dem-track__sky(그림 글자 + 날씨), 복구판은 .dem-track__place--context(장소 → … 날씨 한 줄).
+//   옛 판(__item--weather · -recovery)도 그대로 읽어요.
+const WEATHER_VALUE = '.custom-dem-track__item--weather .custom-dem-track__value, .custom-dem-track-recovery__item--context .custom-dem-track-recovery__value, .custom-dem-track__sky, .custom-dem-track__place--context';
+const RECOVERY_VALUE = '.custom-dem-track-recovery__value, .custom-dem-track__place--context';
 
 // 날씨 글자 → 비 · 눈. 한국어는 낱말 앞(띄어쓰기 · 쉼표 뒤)에서만 — "준비", "비밀", "눈부신" 같은 말에 걸리지 않게
 // 띄어 쓴 "눈이 부신 햇살"도 눈이 아니다 ("눈이 부슬부슬"은 눈). 구형 Safari 가 lookbehind 를 못 읽으니 앞쪽 조건은 쓰지 않는다
@@ -281,7 +284,10 @@ export function statusWeatherText(text) {
 function deusWeather(scope) {
     const values = scope.querySelectorAll(`:is(${WEATHER_VALUE})`);
     const last = values[values.length - 1];
-    return last ? detectWeatherAll(last.matches('.custom-dem-track-recovery__value') ? recoveryWeatherText(last.textContent) : last.textContent) : null;
+    if (!last) return null;
+    // V3 날씨 칸은 그림 글자와 날씨 글이 붙어 있어(🌧️비) 낱말로 못 읽었다 — 칸마다 띄어 읽는다
+    const text = last.matches('.custom-dem-track__sky') ? [...last.childNodes].map(node => node.textContent.trim()).filter(Boolean).join(' ') : last.textContent;
+    return detectWeatherAll(last.matches(RECOVERY_VALUE) ? recoveryWeatherText(text) : text);
 }
 function trackerWeather() {
     const chat = SillyTavern.getContext().chat || [];

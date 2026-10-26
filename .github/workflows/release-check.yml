@@ -362,6 +362,7 @@ jobs:
           node tools/tests/fruit-watch-perf.mjs .
           node tools/tests/fruit-option-help.mjs .
           node tools/tests/fruit-typography.mjs .
+          node tools/tests/fruit-type-sample.mjs .
           node tools/tests/fruit-type-snapshot.mjs .
           node tools/tests/number-width-mutations.mjs .
           node tools/tests/prompt-tools.mjs

@@ -9,15 +9,23 @@ export const FRUIT_TYPES = [
     {"id": "qingguo-forum", "prompt": "32e14959-2f33-403c-9ac7-e47a3653f03d", "name": "청과 · 방송 포럼", "owner": "qingguo", "root": ".forum-container:has(.live-indicator):has(.subject-info)", "regions": {"info": ["방송 정보·댓글", ".subject-info,.comment-text"], "names": ["제목·작성자", ".forum-title,.comment-author"], "footer": ["방송 표시·동작", ".live-indicator,.comment-actions"]}, "layout": false},
     {"id": "qingguo-board", "prompt": "95badcf5-e6f5-41ab-8ed9-df7d90e18cf0", "name": "청과 · 소문 게시판", "owner": "qingguo", "root": ".rumor-board", "regions": {"info": ["게시글·댓글", ".post-body,.comment-body"], "names": ["제목·작성자", ".post-title,.user-id"], "footer": ["시간·부가 정보", ".timestamp,.comment-meta"]}, "layout": false},
     {"id": "qingguo-mailbox", "prompt": "3ad7662a-006b-4a87-b4be-099215ffd122", "name": "청과 · 편지함", "owner": "qingguo", "root": ".mbox:has(.m-head .m-title):has(.m-scroll)", "regions": {"info": ["편지 내용", ".sms-content"], "names": ["제목·발신자", ".m-title,.sms-id"], "footer": ["시간·상태", ".sms-time,.m-status,.m-foot"]}, "layout": false},
-    {"id": "deus-tracker", "prompt": "tracker", "name": "시간 표시", "owner": "deus", "root": ":is(.dem-track,.dem-track-recovery)", "regions": {"info": ["시간 · 날짜 · 장소 · 날씨", ".dem-track__value,.dem-track-recovery__value,.dem-track__temp,.dem-track-recovery__temp"]}, "layout": true},
+    {"id": "deus-tracker", "prompt": "tracker", "name": "시간 표시", "owner": "deus", "root": ":is(.dem-track,.dem-track-recovery,.dem-tracker)", "regions": {"info": ["시간 · 날짜 · 장소 · 날씨", ".dem-track__value,.dem-track-recovery__value,.dem-track__temp,.dem-track-recovery__temp,.dem-track__clock,.dem-track__date,.dem-track__place,.dem-track__sky,.dem-tracker .dem-card__body"]}, "layout": true},
     {"id": "deus-status", "prompt": "403539e4-e530-43a1-be30-5d5bd33d4d5e", "name": "상태창", "owner": "deus", "root": ".dem-status", "regions": {"info": ["상태 값", ".dem-status-row__value,.dem-card__body"], "names": ["인물 이름", ".dem-status-row__name"], "quote": ["제목", ".dem-card__title"]}, "layout": false},
     {"id": "deus-threads", "prompt": "ab70a374-f6f5-4e5c-a1c6-1596a4397806", "name": "스토리 떡밥", "owner": "deus", "root": ".dem-threads", "regions": {"info": ["떡밥 기록", ".dem-threads__body,.dem-card__body"], "names": ["제목", ".dem-card__title"]}, "layout": false},
     {"id": "deus-psych", "prompt": "7eb033d6-2036-4c5a-9b3a-d22d1d6da7b8", "name": "심리 상태", "owner": "deus", "root": ".dem-psychological-states", "regions": {"info": ["심리 기록", ".dem-psychological-states__body,.dem-card__body"], "names": ["인물 이름", ".dem-psychological-state-row__name"], "quote": ["제목", ".dem-card__title"]}, "layout": false},
     {"id": "deus-plot", "prompt": "9f4e7a1c-2b63-4d80-a5e7-91c3f6b8d204", "name": "줄거리 흐름", "owner": "deus", "root": ".dem-plotlines", "regions": {"info": ["줄거리 기록", ".dem-plotlines__body,.dem-card__body"], "names": ["제목", ".dem-card__title"]}, "layout": false},
     {"id": "deus-momentum", "prompt": "tension", "name": "모멘텀 엔진", "owner": "deus", "root": ".dem-momentum-engine", "regions": {"info": ["전개 경로", ".dem-momentum-engine__body,.dem-card__body"], "names": ["제목", ".dem-card__title"]}, "layout": false},
-    {"id": "deus-conflict", "prompt": "fff18557-018d-4856-9497-2f47a6ef2b2a", "name": "갈등 블록", "owner": "deus", "root": ".dem-conflict", "regions": {"info": ["갈등 내용", ".dem-card__body,details"], "names": ["제목", ".dem-card__title"]}, "layout": false},
+    {"id": "deus-conflict", "prompt": "fff18557-018d-4856-9497-2f47a6ef2b2a", "name": "갈등 블록", "owner": "deus", "root": ".dem-conflict", "regions": {"info": ["갈등 내용", ".dem-card__body,details,> :not(summary)"], "names": ["제목", ".dem-card__title"]}, "layout": false},
 ];
 export const FRUIT_UNSUPPORTED = ['🍏 하단 상태창｜카드에 상태창이 있을 때만','🍏 캐릭터 표 @YUKI','📌 요약｜필수 @喵喵电波'];
+// 8.0.6 실리태번은 채팅 메시지 안 HTML 의 class 마다 「custom-」을 붙여요(.dem-track → .custom-dem-track).
+//   데우스 상태창은 채팅 본문에 바로 그려져 접두어가 붙고, 과일 계열은 TavernHelper iframe 안이라 원래 이름 그대로예요.
+//   선택자의 class 하나하나를 두 이름 모두로 받아요(무게는 class 하나 그대로).
+export const stSelector=selector=>String(selector).replace(/\.(-?[_a-zA-Z][\w-]*)/g,(m,name)=>name.startsWith('custom-')?m:`:is(.${name},.custom-${name})`);
+const matchCache=new Map();
+export const typeMatch=type=>{let s=matchCache.get(type.root);if(!s)matchCache.set(type.root,s=stSelector(type.root));return s;};
+// 규칙 모음(중첩 없는 CSS)의 선택자 부분만 두 이름으로 바꿔요 — 값(1.6 · 22px)은 건드리지 않아요.
+export const stCss=css=>String(css).replace(/(^|[}\n])([^{}]+)\{/g,(m,head,sel)=>`${head}${stSelector(sel)}{`);
 export const REGION_DEFAULT = Object.freeze({on:false,font:'original',size:16,weight:400,italic:false,spacing:0,line:1.6,align:'original',wrap:'original'});
 export const typeOwner=type=>type.owner==='deus'?'deus':'fruit';
 export const ownerEnabled=(s,owner)=>s.ownerOn?.[owner]??s.on;
@@ -47,7 +55,9 @@ export function fruitTypeCss(value, fontFamily = ()=>'') {
         if(!ownerEnabled(s,typeOwner(type)))continue;
         const config=s.types[type.id];
         if(type.layout&&config.layout!=='original'){
-            if(type.id==='deus-tracker')rules.push(`${type.root}{display:grid!important;grid-template-columns:${config.layout==='vertical'?'minmax(0,1fr)':'repeat(4,minmax(0,1fr))'}!important;gap:8px!important}${type.root} :is(.dem-track__item,.dem-track-recovery__item){min-width:0!important}`);
+            if(type.id==='deus-tracker')rules.push(`${type.root}{display:grid!important;grid-template-columns:${config.layout==='vertical'?'minmax(0,1fr)':'repeat(4,minmax(0,1fr))'}!important;gap:8px!important}${type.root} :is(.dem-track__item,.dem-track-recovery__item){min-width:0!important}`,
+                // 8.0.6 데우스 V3: 칸은 안쪽 .dem-track__grid 가 나눠요 — 세로면 시각 · 날씨 · 날짜 · 장소를 한 줄씩
+                config.layout==='vertical'?`${type.root} .dem-track__grid{grid-template-columns:minmax(0,1fr)!important;grid-template-areas:"time" "wx" "date" "place"!important}${type.root} .dem-track__time{padding-right:0!important;border-right:0!important}${type.root} .dem-track__wx{flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;text-align:left!important}${type.root} .dem-track__place--context{grid-row:auto!important}`:'');
             else if(type.id==='status')rules.push(`${type.root} .fate-top-grid{display:grid!important;grid-template-columns:${config.layout==='vertical'?'minmax(0,1fr)':'repeat(4,minmax(0,1fr))'}!important}${type.root} .fate-grid-item{min-width:0!important}`);
             else rules.push(`${type.root} .status-bar-content{display:${config.layout==='vertical'?'flex':'grid'}!important;flex-direction:column!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}${type.root} .line-3{grid-column:1/-1}`);
         }
@@ -70,5 +80,5 @@ export function fruitTypeCss(value, fontFamily = ()=>'') {
         }
         if(config.hideFooter&&type.regions.footer)rules.push(`${type.root} ${type.regions.footer[1]}{display:none!important;margin:0!important;padding:0!important}`);
     }
-    return rules.join('\n');
+    return stCss(rules.join('\n'));
 }

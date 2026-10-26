@@ -1,5 +1,5 @@
 import {fruitStructureChanged} from './fruit-type-mutations.js';
-import {FRUIT_TYPES} from './fruit-type-schema.js';
+import {FRUIT_TYPES,typeMatch} from './fruit-type-schema.js';
 import {optionFamily} from './scripts/fruit-option-help.js';
 import {openFruitTypography} from './fruit-type-ui.js';
 const leases=new WeakMap();
@@ -10,7 +10,8 @@ function startShortcuts(doc,host){
     const buttons=new Map(),types=new Map(FRUIT_TYPES.flatMap(t=>[t.prompt,...(t.aliases||[])].map(id=>[id,t])));let stopped=false,frame=0,pickerGroup='',lastSig='';
     // 7.0.3 긴 채팅: 데우스 카드는 선택자 하나로 한 번만 훑고(종류마다 채팅 전체를 7번 훑었다), 1.5초 타이머는 과일 · 데우스 창이 열려 있거나
     // 채팅 뿌리 · iframe 문서(와 그 안 요소 수)가 바뀌었을 때만 훑는다 — iframe 안은 body 감시자가 못 보므로 요소 수까지 본다
-    const DEUS=FRUIT_TYPES.filter(t=>t.owner==='deus'||t.owner==='qingguo'),DEUS_ROOT=DEUS.map(t=>t.root).join(',');
+    // 8.0.6 채팅 안 카드 옆 바로가기는 청과(iframe)만 — 데우스 카드는 class 앞 custom- 때문에 그동안 한 번도 안 붙었고, 이름을 고친 뒤에도 모든 메시지 트래커 아래 단추가 생기지 않게 그대로 둬요(데우스는 빠른 설정 창 줄에서).
+    const DEUS=FRUIT_TYPES.filter(t=>t.owner==='qingguo'),DEUS_ROOT=DEUS.map(typeMatch).join(',');
     const ids=new WeakMap();let nextId=1;const idOf=o=>{if(!o)return 0;let i=ids.get(o);if(!i)ids.set(o,i=nextId++);return i;};
     const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of scope.querySelectorAll('iframe')){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
     const schedule=()=>{if(!stopped&&!frame)frame=host.requestAnimationFrame(flush);};
@@ -31,7 +32,7 @@ function startShortcuts(doc,host){
         }
         const attach=(anchor,type)=>{if(!anchor?.parentElement)return;live.add(anchor);let button=buttons.get(anchor);if(!button){button=anchor.ownerDocument.createElement('button');button.type='button';button.className='bl-ft-shortcut';button.textContent='블루레몬에이드';button.style.cssText='font:inherit;font-size:.8em;min-height:32px;padding:4px 10px;border:1px solid #8885;border-radius:8px;background:var(--bl-fill-control,#8882);color:inherit;max-width:100%;';button.addEventListener('pointerdown',e=>e.stopPropagation());button.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();void openFruitTypography(button.dataset.blType);});anchor.after(button);buttons.set(anchor,button);}button.dataset.blType=type.id;button.setAttribute('aria-label',type.name+' 글자 설정');};
         for(const row of doc.querySelectorAll('#bl-deus-popover .dq-row,#bl-deus-popover .dq-toggle')){const key=row.querySelector('[data-dq-focus]')?.dataset.dqFocus,type=FRUIT_TYPES.find(t=>t.owner==='deus'&&t.prompt===key);if(type)attach(row,type);}
-        const seen=new Set();const scan=(d,scope)=>{if(!scope||seen.has(d))return;seen.add(d);for(const card of scope.querySelectorAll(DEUS_ROOT)){let type=null;for(const t of DEUS)if(card.matches(t.root))type=t;if(type)attach(card,type);}for(const f of scope.querySelectorAll('iframe'))try{if(f.contentDocument?.body)scan(f.contentDocument,f.contentDocument.body);}catch{}};scan(doc,doc.querySelector('#chat'));lastSig=frameSig(true);
+        const seen=new Set();const scan=(d,scope)=>{if(!scope||seen.has(d))return;seen.add(d);for(const card of scope.querySelectorAll(DEUS_ROOT)){let type=null;for(const t of DEUS)if(card.matches(typeMatch(t)))type=t;if(type)attach(card,type);}for(const f of scope.querySelectorAll('iframe'))try{if(f.contentDocument?.body)scan(f.contentDocument,f.contentDocument.body);}catch{}};scan(doc,doc.querySelector('#chat'));lastSig=frameSig(true);
         for(const [target,button]of buttons)if(!live.has(target)||!target.isConnected){button.remove();buttons.delete(target);}
     }
     const click=e=>{const group=e.target.closest?.('#fruit-heart-v6 [data-pick-group]');if(group){pickerGroup=group.dataset.pickGroup;schedule();}else if(e.target.closest?.('#fruit-heart-v6 [data-pick-font],#fruit-heart-v6 [data-pick-model]'))pickerGroup='';};

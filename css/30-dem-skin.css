@@ -277,8 +277,87 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
   color: var(--salty-accent-ink, var(--salty-accent)) !important;
 }
 
+/* ---------- 8.0.6 데우스 V3 트래커: 안쪽이 격자(.dem-track__grid: 시각 | 날짜 · 장소 | 날씨)로 바뀌었다 ----------
+   옛 트래커와 같은 테마 카드 한 판으로: 바깥 .dem-track 이 카드(위 공통 규칙), 안쪽 격자의 보라 종이 · 하늘 장면 · 별 · ✦ 줄은 뺀다.
+   글자 색은 옛 스킨과 같은 역할 — 시각 · 장소 끝 = 본문색 굵게, 날짜 · 날씨 글 = 흐린 색, 온도 = 포인트 알약. 칸 나눔(격자)은 데우스 그대로. */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:has(> .custom-dem-track__grid) {
+  display: block !important;
+  padding: 0 !important;
+  font-size: 0.86em !important;
+  color: var(--salty-text) !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid {
+  gap: 2px 14px !important;
+  padding: 8px 14px !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid::before,
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid::after,
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track .custom-dem-track__scene,
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__rule {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track__time {
+  gap: 6px !important;
+  padding-right: 14px !important;
+  border-right: 1px solid var(--salty-line) !important;
+}
+/* 시각 글자 크기 · 글꼴은 무게를 낮춰(:where) 「상태창 글자」 꾸미기(시간 · 날짜 · 장소 · 날씨)가 이기게 */
+:where(body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text) .custom-dem-track__clock {
+  font-family: inherit !important;
+  font-size: 1.25em !important;
+  color: var(--salty-text) !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track__date, .custom-dem-track__place, .custom-dem-track__sky, .custom-dem-track__tq, .custom-dem-track__sep) {
+  color: var(--salty-muted) !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track__crumb:last-child {
+  color: var(--salty-text) !important;
+  font-weight: 600 !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track__wx .custom-dem-track__temp {
+  padding: 0 8px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--salty-fill-accent-13, var(--salty-accent-13)) !important;
+  color: var(--salty-accent-ink, var(--salty-accent)) !important;
+}
+
 /* ---------- 폰 접기 ---------- */
 @media (max-width: 1000px) {
+  /* 8.0.6 V3 트래커 한 줄: 시각 · 장소(말줄임) · 온도, 날짜와 날씨 글은 펼치면(.bl-dem-shown) 보임 — 옛 트래커 접기와 같은 내용 */
+  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0 10px !important;
+    overflow: hidden !important;
+  }
+  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) :is(.custom-dem-track__date, .custom-dem-track__sky, .custom-dem-track__tq) {
+    display: none !important;
+  }
+  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) .custom-dem-track__time {
+    flex: none !important;
+    padding-right: 0 !important;
+    border-right: 0 !important;
+  }
+  :where(body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown)) .custom-dem-track__clock {
+    font-size: 1em !important;
+  }
+  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) .custom-dem-track__place {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow-wrap: normal !important;
+  }
+  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) .custom-dem-track__wx {
+    flex: none !important;
+  }
   /* 트래커 한 줄: 시간 · 날짜 · 온도는 그대로, 날씨 글은 빼고, 장소는 남은 자리에서 말줄임. 누르면 펼침(.bl-dem-shown) */
   body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery) {
     cursor: pointer;

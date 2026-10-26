@@ -13,7 +13,7 @@ assert.deepEqual(tidyFruitType(bad),bad);
 const s=tidyFruitType({on:true});assert.equal(fruitTypeCss(s),'');
 s.types.status.regions.quote.on=true;s.types.status.regions.quote.size=22;s.types.status.regions.quote.spacing=0;
 const css=fruitTypeCss(s);assert(css.includes('font-size:22px'));assert(css.includes('transform:none'));assert(!css.includes('.fate-top-grid'));
-s.types.status.hideFooter=true;assert(fruitTypeCss(s).includes('.fate-bottom-en{display:none'));
+s.types.status.hideFooter=true;assert(fruitTypeCss(s).includes(':is(.fate-bottom-en,.custom-fate-bottom-en){display:none'));
 s.types.status.layout='vertical';assert(fruitTypeCss(s).includes('grid-template-columns:minmax(0,1fr)'));
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');let dictionary;
 const bundle=read('src/scripts/bundled/fruit.js');vm.runInNewContext(JSON.parse(bundle.slice(bundle.indexOf('export default ')+15).trim().replace(/;$/,'')),{BlueLemonade:{translate:d=>dictionary=d}});

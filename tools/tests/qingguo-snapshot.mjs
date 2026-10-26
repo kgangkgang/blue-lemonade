@@ -27,9 +27,9 @@ for(const [index,type] of types.entries()){
  source.getClientRects=()=>[];assert.equal(findFruitPreviewSource(doc,type.root),null);
 }
 const ui=fs.readFileSync(path.join(root,'src/fruit-type-ui.js'),'utf8');
-assert(ui.includes('findFruitPreviewSource(document,type.root)'));
+assert(ui.includes('findFruitPreviewSource(document,typeMatch(type))'));
 assert(ui.includes('copyFruitPreview(source,d)'));
 assert(!ui.includes('fruitTypePreview('));
 const oldPreview=fs.readFileSync(path.join(root,'src/fruit-type-preview.js'),'utf8');
 assert(!oldPreview.includes("kind==='qingguo-"));
-console.log('청과3종이 iframe의 표시 상태창과 계산 스타일을 읽고, 없으면 가상 화면으로 대체하지 않는 경로를 모의 검사했어요.');
+console.log('청과3종이 iframe의 표시 상태창과 계산 스타일을 읽는 경로를 모의 검사했어요(없을 때 표본은 fruit-type-sample 시험이 봐요).');

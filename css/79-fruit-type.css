@@ -10,10 +10,18 @@
 .bl-ft-param>select{display:block;width:100%;min-width:0;max-width:100%;min-height:36px;margin:0;border-radius:8px;font:inherit}
 .bl-ft-slider{min-width:0}
 .bl-ft-slider>input[type=range]{width:100%}
-/* 이름 · [원복] · 스위치 한 줄 */
+/* 이름 · ↺ · 스위치 한 줄 — 8.0.6 ↺ 는 테마 설정(.bl-setting-reset)과 같은 모양 · 같은 자리(이름 바로 옆), 바꾼 값이 있을 때만 */
 .bl-fruit-type-editor .bl-ft-row{flex-wrap:nowrap}
 .bl-fruit-type-editor .bl-ft-row>span:first-child{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
 .bl-ft-row-ctl{display:flex;align-items:center;gap:10px;flex:none}
+html body .bl-fruit-type-editor .bl-ft-reset{display:inline-flex;align-items:center;justify-content:center;width:28px;min-width:28px;height:28px;min-height:28px;padding:0;margin:0 0 0 6px;border:1px solid var(--salty-line);border-radius:8px;background:transparent;color:var(--salty-accent-ink,var(--salty-accent));font:18px/1 sans-serif;vertical-align:middle;box-shadow:none;cursor:pointer}
+html body .bl-fruit-type-editor .bl-ft-reset[hidden]{display:none!important}
+.bl-fruit-type-editor .bl-ft-reset:focus-visible{outline:2px solid var(--salty-accent);outline-offset:2px}
+@media (max-width:760px),(pointer:coarse){html body .bl-fruit-type-editor .bl-ft-reset{width:32px;min-width:32px;height:32px;min-height:32px;border:0;border-radius:var(--bl-settings-radius,8px)}}
+.bl-fruit-type-editor .bl-ft-row>span:first-child>small{display:block}
+/* 8.0.6 대화에 그 종류의 상태창이 없을 때 미리보기 아래 안내 앞에 붙는 작은 표시(누르는 것이 아님) — 미리보기를 가리지 않아요 */
+.bl-fruit-type-editor .bl-ft-sample-badge{display:inline-block;margin:0 6px 0 0;padding:0 6px;border-radius:6px;background:var(--salty-fill-shade,var(--salty-shade, var(--bl-fb-8882)));color:var(--salty-text,inherit);font-size:11px;font-weight:600;line-height:18px;vertical-align:1px;white-space:nowrap}
+.bl-fruit-type-editor .bl-ft-sample-badge[hidden]{display:none}
 .bl-fruit-type-editor .salty-btn,.bl-ft-dialog-head .salty-btn{min-height:32px;height:auto;padding:4px 12px;border-radius:8px;line-height:1.4;white-space:nowrap}
 /* 미리보기: 테마 미리보기 칸 그대로(따라옴 · 접기 · 높이 · 확대). 보이는 높이는 data-pv-max 로 작게 */
 .bl-ft-prevbox{margin-top:4px;background:var(--salty-fill-surface,var(--salty-surface,var(--SmartThemeBlurTintColor, var(--bl-fb-222))))}

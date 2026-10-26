@@ -1,5 +1,5 @@
 import {fruitStructureChanged} from './fruit-type-mutations.js';
-import {FRUIT_TYPES,tidyFruitType,fruitTypeCss} from './fruit-type-schema.js';
+import {FRUIT_TYPES,tidyFruitType,fruitTypeCss,typeMatch} from './fruit-type-schema.js';
 import {findFont,fontStack,loadFont} from './fonts.js';
 let stop=null, latest={on:false};
 function family(id){const f=id==='original'?null:findFont(id);if(!f||f.unusable)return '';loadFont(f);return fontStack(f);}
@@ -13,7 +13,7 @@ export function syncFruitTypography(value, enabled=true){
 // 7.0.4 프리셋이 iframe 안에 그리는 과일 상태창은 제 CSS 에 word-break: break-all 을 둬(.fate-grid-value 등 class 하나 무게) 「행 / 정력」처럼
 // 한국어 낱말 가운데서 꺾였다 — 채팅 본문 · 설정 미리보기(fruit-type-preview.js)와 같게 낱말 단위로 꺾고 긴 줄은 아무 데서나.
 // 과일 루트가 있는 iframe 문서에만, 프리셋의 class · id 규칙을 덮을 만큼만 무겁게(id 하나 + :is 안 루트, !important 없음).
-export const wrapCss=()=>{const roots=`:is(${FRUIT_TYPES.map(t=>t.root).join(',')}):not(#bl-fruit-wrap)`;return `${roots},${roots} *{word-break:keep-all;overflow-wrap:anywhere}`;};
+export const wrapCss=()=>{const roots=`:is(${FRUIT_TYPES.map(typeMatch).join(',')}):not(#bl-fruit-wrap)`;return `${roots},${roots} *{word-break:keep-all;overflow-wrap:anywhere}`;};
 /** Only owned style nodes and FontFace registrations are removed on OFF. */
 export function watchFruitTypography(doc,host,getConfig,fontFamily=()=> ''){
     const scopes=new Map(),frames=new Map(),styles=new Map(),faces=new Map(),wraps=new Map(),WRAP=wrapCss();let stopped=false,frame=0,lastSig='';
@@ -21,7 +21,7 @@ export function watchFruitTypography(doc,host,getConfig,fontFamily=()=> ''){
     const ids=new WeakMap();let nextId=1;const idOf=o=>{if(!o)return 0;let i=ids.get(o);if(!i)ids.set(o,i=nextId++);return i;};
     const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of scope.querySelectorAll('iframe')){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
     const schedule=()=>{if(!stopped&&!frame)frame=host.requestAnimationFrame(flush);};
-    const rootSelector=FRUIT_TYPES.map(t=>t.root).join(',');
+    const rootSelector=FRUIT_TYPES.map(typeMatch).join(',');
     function detach(d){styles.get(d)?.remove();styles.delete(d);for(const face of faces.get(d)||[])d.fonts?.delete(face);faces.delete(d);}
     function unwrap(d){wraps.get(d)?.remove();wraps.delete(d);}
     function flush(){
