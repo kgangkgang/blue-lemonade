@@ -204,6 +204,7 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .salty-panel .bl-weather-cats>button.open:not(.on){box-shadow:none;color:var(--salty-text);background:color-mix(in srgb,var(--salty-text) 8%,transparent);}
 .salty-panel .bl-weather-mix{margin-top:8px;}
 .salty-panel .bl-weather-skip-fold{margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;}
+.salty-panel .salty-btn.bl-weather-skip-fold{padding-block:calc(6.75px + var(--bl-text-nudge, 0px)) calc(5.25px - var(--bl-text-nudge, 0px));} /* 8.0.5: 글자 옆에 꺾쇠 <i> 가 있어 control-ink 가 건너뛰는 단추 — 꺾쇠까지 든 잉크가 0.1~1.5px 위로 떠(큰 글씨 Galmuri 22 에서 −1.48) 위 0.75 · 아래 −0.75 로 옮겨요. 높이는 그대로 */
 .salty-panel .bl-weather-skip{margin-top:6px;}
 /* 4.2.8 날씨 자리: 화면을 줄인 네모와 끌어 옮기는 점 */
 .salty-panel .bl-spot-row{display:flex;gap:16px;align-items:flex-start;}
