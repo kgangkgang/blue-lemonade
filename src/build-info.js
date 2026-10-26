@@ -545,7 +545,7 @@ export const FILE_HASHES = {
   "src/gutter.js": "4022:49ae5ff0:c0bcc337",
   "src/headswitch.js": "11852:99136461:6fc7bbb6",
   "src/help-sheet.js": "1792:a3fd85eb:90971bc7",
-  "src/icon-text.js": "2514:ef880dd1:7621c347",
+  "src/icon-text.js": "5754:df97507a:3348e62a",
   "src/icons.js": "5842:596ce980:f8f9f64f",
   "src/image-zoom.js": "18327:667ef99d:c67dd36b",
   "src/imagedecode.js": "9406:ebf81685:5e366e26",
@@ -716,5 +716,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1698319:17850c57:f9dd84b5"
+  "style.css": "1698139:51566a12:5a98aae7"
 };

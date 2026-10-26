@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f98a795d31cc) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 96개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 4c127246803d) */
 /* css/00-base.css */
 :root{--bl-release:"7.9.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -400,44 +400,44 @@ body.salty .menu_button:is(.toggleEnabled, .active, .toggled):where(:not(.redWar
 body.salty .menu_button:is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) > .fa-regular:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-accent-ink, var(--salty-accent));
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])) {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])) {
 min-width:var(--bl-h-icon);
 min-height:var(--bl-h-icon);
 padding:0 !important;
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:transparent !important;
 box-shadow:none !important;
 color:var(--salty-muted) !important;
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])) {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])) {
 font-size:var(--bl-ic) !important;
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])) > i {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])) > i {
 font-size:var(--bl-ic);
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])) > i:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])) > i:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:inherit;
 }
 @media (hover: hover) {
-  body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):hover:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+  body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):hover:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-fill-hover, var(--bl-hover)) !important;
 color:var(--salty-text) !important;
 }
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):active:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):active:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
 color:var(--salty-text) !important;
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):active {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):active {
 transform:none;
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])) {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])) {
 min-width:var(--bl-h-icon);
 min-height:var(--bl-h-icon);
 padding:0 !important;
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--salty-fill-accent-10, var(--salty-accent-10)) !important;
 box-shadow:none !important;
 color:var(--salty-accent) !important;
@@ -11828,7 +11828,7 @@ background:var(--bl-fill-control, var(--bl-control)) !important;
 box-shadow:var(--bl-e2) !important;
 color:var(--bl-danger) !important;
 }
-body.salty .menu_button:is(.redWarningBG, .red_button, .danger):is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):where(:not(#nonQRFormItems *, .salty-panel *, [data-bl-icon-text])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger):is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(#nonQRFormItems *, .salty-panel *, [data-bl-icon-text])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:transparent !important;
 box-shadow:none !important;
 }
@@ -14221,7 +14221,7 @@ body.salty .salty-panel .salty-switch { width: 36px; height: 36px; }
 body.salty .salty-panel .salty-switch span { inset: 8px 0; }
 body.salty .salty-panel .salty-switch span::after { width: 14px; height: 14px; box-shadow: none; }
 body.salty .salty-panel .salty-switch input:checked + span::after { transform: translateX(16px); }
-body.salty label.checkbox_label:has(> input[type="checkbox"]) { min-height: 36px; }
+body.salty label.checkbox_label[data-bl-row-check]:is(bl-s, *) { min-height: 36px; }
 body.salty .mes_edit_delete,
 body.salty .mes_reasoning_delete,
 body.salty .mes_media_delete,
@@ -25863,7 +25863,7 @@ html body :is(.salty-panel .salty-mode-switch button):is(.bl-s, *):is(bl-s, *),
 html body :is(.salty-panel .bl-tool-heading):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
 html body :is(.salty-panel .bl-editor-group-toggle):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
 html body :is(.salty-panel .bl-settings-toprow button):is(.bl-s, *):is(bl-s, *),
-html body :is(.salty-panel label:has(> input[type="checkbox"]):not(.salty-switch)),
+html body :is(.salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch)),
 html body.salty :is(:is(#chat,.bl-chat-like) .mes .mes_media_enlarge):is(.bl-s, *),
 html body.salty :is(:is(#chat,.bl-chat-like) .mes .mes_media_container .right_menu_button),
 html body.salty :is(:is(#chat,.bl-chat-like) .mes .mes_buttons .mes_button),
@@ -25883,7 +25883,7 @@ html body :is(.salty-panel [data-rule-delete]):is(.bl-s, *):is(bl-s, *):is(bl-s,
 html body :is(.salty-panel .salty-mode-switch button):is(.bl-s, *):is(bl-s, *)::before,
 html body :is(.salty-panel .bl-tool-heading):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
 html body :is(.salty-panel .bl-editor-group-toggle):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-html body :is(.salty-panel label:has(> input[type="checkbox"]):not(.salty-switch))::before,
+html body :is(.salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch))::before,
 html body.salty :is(
     #left-nav-panel label.checkbox_label
   )::before,
@@ -26313,7 +26313,7 @@ html body.salty .bl-translator-dialog .llmt-gl-sort { font-size: 13px; }
 @media (prefers-reduced-motion: no-preference) {
   html[data-bl-puffy]:not(#bl-puffy-off) body .salty-btn:not(.on, .active, [aria-pressed="true"], :disabled, [aria-disabled="true"]):active,
   html[data-bl-puffy]:not(#bl-puffy-off) body.salty .popup .popup-controls .menu_button:not(.disabled, [aria-disabled="true"]):active,
-  html[data-bl-puffy]:not(#bl-puffy-off) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .popup-controls *, .welcomePanel *, #rm_buttons_container *, .toggleEnabled, .active, .toggled, #movingUIreset, .disabled, :disabled, [aria-disabled="true"], :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])):active {
+  html[data-bl-puffy]:not(#bl-puffy-off) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .popup-controls *, .welcomePanel *, #rm_buttons_container *, .toggleEnabled, .active, .toggled, #movingUIreset, .disabled, :disabled, [aria-disabled="true"], :is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):not([data-bl-icon-text])):active {
     background-clip: padding-box !important;
     transform: none !important;
   }
@@ -26321,12 +26321,12 @@ html body.salty .bl-translator-dialog .llmt-gl-sort { font-size: 13px; }
     transition: background-color 0.15s ease, border-top-width 0.15s ease-out, border-bottom-width 0.15s ease-out;
   }
   html[data-bl-puffy]:not(#bl-puffy-off) body.salty .popup .popup-controls .menu_button,
-  html[data-bl-puffy]:not(#bl-puffy-off) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .popup-controls *, .welcomePanel *, #rm_buttons_container *, .toggleEnabled, .active, .toggled, #movingUIreset, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])) {
+  html[data-bl-puffy]:not(#bl-puffy-off) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .popup-controls *, .welcomePanel *, #rm_buttons_container *, .toggleEnabled, .active, .toggled, #movingUIreset, :is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):not([data-bl-icon-text])) {
     transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, transform 0.1s ease, border-top-width 0.15s ease-out, border-bottom-width 0.15s ease-out;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  html[data-bl-puffy]:not(#bl-puffy-off) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .popup-controls *, .welcomePanel *, #rm_buttons_container *, .toggleEnabled, .active, .toggled, #movingUIreset, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])):active {
+  html[data-bl-puffy]:not(#bl-puffy-off) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .popup-controls *, .welcomePanel *, #rm_buttons_container *, .toggleEnabled, .active, .toggled, #movingUIreset, :is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):not([data-bl-icon-text])):active {
     transform: none !important;
   }
 }
@@ -26382,8 +26382,8 @@ html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :wh
 html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):focus-visible { outline-color:Highlight!important; }
 }
 html:not(#bl-checkrow-off) body.salty { --bl-check-gap: 8px; }
-html:not(#bl-checkrow-off) body.salty :is(dialog, .salty-panel, .pa-hub, #pt-panel, .lv-settings, .llmt-settings) label:has(> input[type="checkbox"]):not(.salty-switch, [class*="switch"], [role=switch], .menu_button, .po-visible-toggle) { column-gap: var(--bl-check-gap) !important; }
-html:not(#bl-checkrow-off) body.salty :is(dialog, .salty-panel, .pa-hub, #pt-panel, .lv-settings, .llmt-settings) label:has(> input[type="checkbox"]):not(.salty-switch, [class*="switch"], [role=switch], .menu_button, .po-visible-toggle) > input[type="checkbox"] { margin-inline: 0 !important; }
+html:not(#bl-checkrow-off) body.salty :is(dialog, .salty-panel, .pa-hub, #pt-panel, .lv-settings, .llmt-settings) label[data-bl-row-check]:is(bl-s, *):not(.salty-switch, [class*="switch"], [role=switch], .menu_button, .po-visible-toggle) { column-gap: var(--bl-check-gap) !important; }
+html:not(#bl-checkrow-off) body.salty :is(dialog, .salty-panel, .pa-hub, #pt-panel, .lv-settings, .llmt-settings) label[data-bl-row-check]:is(bl-s, *):not(.salty-switch, [class*="switch"], [role=switch], .menu_button, .po-visible-toggle) > input[type="checkbox"] { margin-inline: 0 !important; }
 html:not(#bl-checkrow-off) body.salty :is(.pa-hub .pa-hub-load):is(bl-s, *):is(bl-s, *),
 html:not(#bl-checkrow-off) body.salty :is(.pt-help-dialog .pt-check):is(bl-s, *):is(bl-s, *),
 html:not(#bl-checkrow-off) body.salty :is(.pa-hub label:has(> input[data-act="auto-pricing"])),
@@ -26392,20 +26392,20 @@ html:not(#bl-checkrow-off) body.salty :is(.pa-hub .pa-hub-load, .pt-help-dialog 
 html:not(#bl-checkrow-off) body.salty .pt-help-dialog .pt-check > input[type="checkbox"] { width: 20px !important; height: 20px !important; flex: 0 0 20px !important; }
 /* css/93-night-surfaces.css */
 html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]),
-html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,:has(> i:only-child),:has(> svg:only-child),.menu_button_icon:has(> i):not(:has(> span,> b,> strong,> small)),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]) {
+html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,[data-bl-icon-only~="i"],[data-bl-icon-only~="svg"],[data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]) {
  background:var(--salty-raised,var(--salty-control,var(--salty-surface)))!important; color:var(--salty-text)!important; border-color:transparent!important;
  box-shadow:inset 0 1px 0 color-mix(in oklab,var(--salty-text) 28%,transparent),0 2px 0 var(--salty-bg),0 3px 3px color-mix(in oklab,var(--salty-palette-shadow) 25%,transparent)!important;
 }
 html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):active,
-html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,:has(> i:only-child),:has(> svg:only-child),.menu_button_icon:has(> i):not(:has(> span,> b,> strong,> small)),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):active { box-shadow:inset 0 1px 2px color-mix(in oklab,var(--salty-palette-shadow) 20%,transparent),0 1px 0 var(--salty-bg)!important; }
+html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,[data-bl-icon-only~="i"],[data-bl-icon-only~="svg"],[data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):active { box-shadow:inset 0 1px 2px color-mix(in oklab,var(--salty-palette-shadow) 20%,transparent),0 1px 0 var(--salty-bg)!important; }
 html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):focus-visible,
-html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,:has(> i:only-child),:has(> svg:only-child),.menu_button_icon:has(> i):not(:has(> span,> b,> strong,> small)),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:3px!important; }
+html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,[data-bl-icon-only~="i"],[data-bl-icon-only~="svg"],[data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:3px!important; }
 html:root body .salty-panel :is(.salty-seg button).on:not(:disabled),
 html:root body .salty-panel :is(.salty-fonttags button).on:not(:disabled),
 html:root body .salty-panel :is(.salty-fontempty button).on:not(:disabled) { box-shadow:inset 0 0 0 1px var(--salty-accent),var(--bl-well-in)!important; }
 /* css/94-density-c.css */
 html:not(#bl-density-off):not(#bl-density-off2) body .salty-btn,
-html:not(#bl-density-off):not(#bl-density-off2) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *, #Backgrounds #bg-header-fixed *, #Backgrounds #bg_tabs *, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])),
+html:not(#bl-density-off):not(#bl-density-off2) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *, #Backgrounds #bg-header-fixed *, #Backgrounds #bg_tabs *, :is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):not([data-bl-icon-text])),
 html:not(#bl-density-off):not(#bl-density-off2) body.salty .popup .popup-controls .menu_button {
   border: 1px solid var(--salty-line) !important;
   box-shadow: none !important;
@@ -26422,7 +26422,7 @@ html:not(#bl-density-off):not(#bl-density-off2) body.salty .popup .popup-control
   box-shadow: none !important;
 }
 html:not(#bl-density-off):not(#bl-density-off2) body.salty.salty-dark :where(.salty-panel .salty-btn):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *),
-html:not(#bl-density-off):not(#bl-density-off2) body.salty.salty-dark .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *, #Backgrounds #bg-header-fixed *, #Backgrounds #bg_tabs *, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])) {
+html:not(#bl-density-off):not(#bl-density-off2) body.salty.salty-dark .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *, #Backgrounds #bg-header-fixed *, #Backgrounds #bg_tabs *, :is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):not([data-bl-icon-text])) {
   box-shadow: none !important;
   border: 1px solid var(--salty-line) !important;
 }

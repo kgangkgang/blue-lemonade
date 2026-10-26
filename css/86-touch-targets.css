@@ -25,7 +25,7 @@
     .salty-panel .bl-tool-heading,
     .salty-panel .bl-editor-group-toggle,
     .salty-panel .bl-settings-toprow button,
-    .salty-panel label:has(> input[type="checkbox"]):not(.salty-switch)
+    .salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch)
   ),
   html body.salty :is(
     #chat .mes .mes_media_enlarge,
@@ -51,7 +51,7 @@
     .salty-panel .salty-mode-switch button,
     .salty-panel .bl-tool-heading,
     .salty-panel .bl-editor-group-toggle,
-    .salty-panel label:has(> input[type="checkbox"]):not(.salty-switch)
+    .salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch)
   )::before,
   html body.salty :is(
     #left-nav-panel label.checkbox_label

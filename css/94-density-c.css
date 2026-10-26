@@ -3,7 +3,7 @@
    주요 단추는 포인트 면 색은 그대로, 들림 그림자만 없음. 고른 상태는 면 색 + 글자 굵기. 색 · 크기 · 모서리 · 글자 크기는 그대로. :not(#bl-density-off):not(#bl-density-off2) 는 특이도만(아이디 둘 — 93-night-surfaces 의 html:root:not(#…) 보다 앞서려고).
    ===== */
 html:not(#bl-density-off):not(#bl-density-off2) body .salty-btn,
-html:not(#bl-density-off):not(#bl-density-off2) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *, #Backgrounds #bg-header-fixed *, #Backgrounds #bg_tabs *, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text])),
+html:not(#bl-density-off):not(#bl-density-off2) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *, #Backgrounds #bg-header-fixed *, #Backgrounds #bg_tabs *, :is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):not([data-bl-icon-text])),
 html:not(#bl-density-off):not(#bl-density-off2) body.salty .popup .popup-controls .menu_button {
   border: 1px solid var(--salty-line) !important;
   box-shadow: none !important;
@@ -20,7 +20,7 @@ html:not(#bl-density-off):not(#bl-density-off2) body.salty .popup .popup-control
   box-shadow: none !important;
 }
 /* 나이트 면(93-night-surfaces) 없음 */
-html:not(#bl-density-off):not(#bl-density-off2) body.salty.salty-dark :is(.salty-panel .salty-btn, .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *, #Backgrounds #bg-header-fixed *, #Backgrounds #bg_tabs *, :is(.fa-solid, .fa-regular, .fa-brands, :has(> i:only-child), :has(> svg:only-child), .menu_button_icon:has(> i):not(:has(> span, > b, > strong, > small))):not([data-bl-icon-text]))) {
+html:not(#bl-density-off):not(#bl-density-off2) body.salty.salty-dark :is(.salty-panel .salty-btn, .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *, #Backgrounds #bg-header-fixed *, #Backgrounds #bg_tabs *, :is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):not([data-bl-icon-text]))) {
   box-shadow: none !important;
   border: 1px solid var(--salty-line) !important;
 }

@@ -145,7 +145,7 @@ body.salty .salty-panel .salty-switch { width: 36px; height: 36px; }
 body.salty .salty-panel .salty-switch span { inset: 8px 0; }
 body.salty .salty-panel .salty-switch span::after { width: 14px; height: 14px; box-shadow: none; }
 body.salty .salty-panel .salty-switch input:checked + span::after { transform: translateX(16px); }
-body.salty label.checkbox_label:has(> input[type="checkbox"]) { min-height: 36px; }
+body.salty label.checkbox_label[data-bl-row-check]:is(bl-s, *) { min-height: 36px; }
 /* 메시지 삭제도 같은 빨강과 절제된 면을 쓴다. */
 body.salty :is(.mes_edit_delete, .mes_reasoning_delete, .mes_media_delete, .mes_file_delete, .PastChat_cross) {
   color: var(--bl-danger) !important; background: var(--salty-danger-soft) !important;

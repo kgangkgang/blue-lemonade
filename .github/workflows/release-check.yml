@@ -352,6 +352,7 @@ jobs:
           node tools/tests/fruit-status.mjs .
           node tools/tests/long-chat-perf.mjs .
           node tools/tests/has-guard.mjs .
+          node tools/tests/icon-only-mark.mjs .
           node tools/tests/fruit-watch-perf.mjs .
           node tools/tests/fruit-option-help.mjs .
           node tools/tests/fruit-typography.mjs .
