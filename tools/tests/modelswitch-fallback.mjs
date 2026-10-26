@@ -207,7 +207,7 @@ await test('번역: 배치를 바꿔도 막힌 묶음만 · 다른 모델도 막
     const wrap = src.slice(src.indexOf('const callWithLayouts = async (body, layouts) => {'), src.indexOf('let checkpointComplete = false;'));
     assert.equal((wrap.match(/fallbackSpent = true;/g) || []).length, 2, '실패 · 거절 둘 다 다시는 안 보냄');
     assert.match(wrap, /looksLikeInputBlock\(out\) \|\| looksLikeRefusal\(/, '다른 모델의 거절문도 번역으로 붙이지 않음');
-    assert.match(src, /const request = async \(prompt, extra = \{\}\) => \{\n        watcher\.check\(\);\n        autoContextGuard\?\.assert\(\);\n        options\.onRequest\?\.\(\);\n(?:[^\n]*\n){0,2}        const result = await callLLMAPI\(prompt, \{ signal: watcher\.signal, (?:\.\.\.\(purpose [^)]*\), )?(?:\.\.\.\(cacheHeads\.has\(prompt\) \? \{ promptCache: cacheHeads\.get\(prompt\) \} : \{\}\), )?\.\.\.extra \}\);/);   // BL 7.4.0 용도(번역 다시 · 보낼 글) 한 줄
+    assert.match(src, /const request = async \(prompt, extra = \{\}\) => \{\n        watcher\.check\(\);\n        autoContextGuard\?\.assert\(\);\n        options\.onRequest\?\.\(\);\n(?:[^\n]*\n){0,4}        const (?:result|raw) = await callLLMAPI\(prompt, \{ signal: watcher\.signal, (?:\.\.\.\(purpose [^)]*\), )?(?:\.\.\.\(cacheHeads\.has\(prompt\) \? \{ promptCache: cacheHeads\.get\(prompt\) \} : \{\}\), )?\.\.\.(?:extra|sendExtra) \}\);/);   // 번역 3.1.1: 짧게 보낸 태그를 되돌리는 sendExtra · raw   // BL 7.4.0 용도(번역 다시 · 보낼 글) 한 줄
 });
 
 await test('CI 목록에 이 시험', () => {
