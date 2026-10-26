@@ -28,6 +28,7 @@ import { saveTermChat } from './selection/term-save.js';
 const chatTermCachePolicy = createChatTermCachePolicy();
 import { glossarySignature, glossaryGone, mergeGlossary, glossaryMessage, renameGlossaryScope, GONE_KEY as GLOSSARY_GONE } from './glossary-sync.js';   // 2.7.5 다른 기기의 옛 설정 저장에 덮이지 않게 (updated · 지운 기록 · 합치기)
 import { registerSettingsMerge, startSettingsMerge } from '../../settings-merge.js';
+import { builtinTranslateState, builtinTranslateNotice, rescuePlan } from './builtin-translate.js';   // 7.9.9 실리태번 기본 「번역」 확장이 켜져 있을 때: 알림 · 지워진 번역문 되살리기
 import { linesToFix, fixNoteFor, stillLeftover } from './leftover-fix.js';   // 6.4.2 다시 보낼 줄 = 남은 가나 + 원문에 있던 한자 덩이
 import { fixPairs, leftoverNameWords, markPairs, textKey, mergeSuggestions, shownSuggestions, skipSuggestion, dropSuggestion, trimScopes, GLOBAL as SUGGEST_GLOBAL } from './glossary-suggest.js';   // 6.4.5 새 이름 용어집 제안
 import { nameFold as suggestFold } from './names-bridge.js';
@@ -67,7 +68,7 @@ function getMaxContextTokens() {
     return typeof stHost.getMaxContextTokens === 'function' ? stHost.getMaxContextTokens() : stHost.getMaxContextSize(1) + 1;   // 응답 길이 1 을 빼고 되돌린 값 = 전체 문맥
 }
 
-import { extension_settings, getContext, saveMetadataDebounced } from '../../../../../../extensions.js';
+import { extension_settings, getContext, saveMetadataDebounced, disableExtension } from '../../../../../../extensions.js';   // 7.9.9 disableExtension: 기본 「번역」 확장 끄기(알림을 누를 때만)
 import { getStringHash } from '../../../../../../utils.js';               // [1.7.1] 원문 해시 (원문 사본 대신)
 import { countTokensOpenAIAsync, getTokenizerModel } from '../../../../../../tokenizers.js';
 import { power_user } from '../../../../../../power-user.js';           // [1.6.0] 보내기 번역 참고: 페르소나 설명
@@ -4382,6 +4383,7 @@ jQuery(async () => {
         // 설정 로드 (프롬프트 매니저 초기화 후)
         loadSettings();
         initializeEventHandlers();
+        setTimeout(() => noticeBuiltinTranslate(), 2500);   // 7.9.9 기본 「번역」 확장이 같이 켜져 있으면 알린다 (부팅 알림들 뒤에)
         bindTranslatorMenus(extensionSettings, saveSettingsDebounced);
         $('#llm_selection_retranslate').off('change').on('change', function () {
             extensionSettings.selection_retranslate = this.checked;
@@ -5664,6 +5666,44 @@ async function swapShownPictures(messageId, message, currentOriginal) {
     return true;
 }
 
+// 7.9.9 실리태번 기본 「번역」 확장과 겹침 (builtin-translate.js) — 한 세션 한 번 알리고, 알림을 누르면 그 확장을 끄고 새로 고친다(사용자가 누를 때만)
+let builtinTranslateNoticed = false;
+function noticeBuiltinTranslate({ rescued = false } = {}) {
+    if (builtinTranslateNoticed || duplicate) return false;
+    const state = builtinTranslateState(extension_settings);
+    const text = builtinTranslateNotice(state, { rescued });
+    if (!text) return false;
+    builtinTranslateNoticed = true;
+    console.warn('[LLM Translator] ' + text);
+    try {
+        globalThis.toastr?.warning?.(text, 'LLM 번역 · 기본 번역 확장과 겹침', { timeOut: 15000, extendedTimeOut: 8000, onclick: () => {
+            Promise.resolve(disableExtension('translate', true)).catch(error => { console.warn('[LLM Translator] 기본 번역 확장을 끄지 못했어요', error); globalThis.toastr?.error?.('기본 「번역」 확장을 끄지 못했어요. 확장 메뉴에서 직접 꺼 주세요.', 'LLM 번역'); });
+        } });
+    } catch { /* 알림이 없어도 되살리기는 한다 */ }
+    return true;
+}
+/** MESSAGE_UPDATED 뒤: 기본 확장이 지웠거나 덮어쓴 번역문을 알고 있는 번역(이 세션 · 캐시 · 채팅 기록)으로 되살린다 → true 면 이 이벤트는 끝 */
+async function rescueFromBuiltinTranslate(messageId, message) {
+    const state = builtinTranslateState(extension_settings);
+    if (!state.enabled || !message?.extra?.original_text_hash || isTranslationInProgress(messageId)) return false;
+    const context = getContext();
+    const current = substituteParams(message.mes, context.name1, message.name);
+    const currentHash = originalHashOf(current);
+    if (message.extra.original_text_hash !== currentHash) return false;
+    const last = shownTranslations.get(message);
+    let known = last && last.original === current ? last.display : null;
+    if (!known) { const raw = await localOrDisplayedTranslation(message, current); if (raw) known = processTranslationText(current, raw); }
+    if (context.chat[messageId] !== message) return false;   // 기다리는 사이 바뀌었다
+    const plan = rescuePlan({ state, message, currentHash, known });
+    if (!plan) return false;
+    message.extra.display_text = plan.display;
+    logDebug(`[7.9.9] builtin translate ${plan.why} the translation of #${messageId}; restored`);
+    refreshMessageBlock(messageId, message);
+    noticeBuiltinTranslate({ rescued: true });
+    await context.saveChat();
+    return true;
+}
+
 async function handleMessageEdit(messageId) {
     // 6.5.2 테마가 본문을 다시 그린 뒤 헬퍼에 알리는 MESSAGE_UPDATED (src/rerender-notify.js) — 글은 그대로고 표시만 다시 그렸으니 번역 데이터를 손대지 않는다.
     //       (안 막으면 아래 '해시 같음' 가지가 또 그리고 → 또 알리고 … 돈다)
@@ -5672,6 +5712,8 @@ async function handleMessageEdit(messageId) {
     const message = context.chat[messageId];
 
     if (!message) return;
+    // 7.9.9 실리태번 기본 「번역」 확장이 켜져 있으면 이 이벤트를 먼저 받아(청취 순서) 번역문을 지우거나 제 번역으로 덮었다 — 원문이 그대로면 되살린다
+    if (await rescueFromBuiltinTranslate(messageId, message)) return;
 
     // 메시지 수정시 기존 번역문 초기화
     if (message.extra?.display_text) {

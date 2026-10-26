@@ -9,7 +9,7 @@
 // 채팅이 화면보다 짧아 단추가 계속 미리보기 영역에 있으면 화면이 찰 때까지 이어서 부른다(한 프레임에 한 번).
 // 감시는 IntersectionObserver 하나(root #chat · rootMargin 위 300% · threshold 0) · 단추가 있을 때만. 숨은 탭에서는 관찰자가 안 돌아 아무 일도 없다.
 // 설정: 채팅 › 화면 「이전 메시지 저절로 불러오기」 (chat.showMoreAuto, 기본 켬) — 끄면 관찰자 · 이벤트를 모두 뗀다.
-let on = false, bound = false, io = null, watched = null, resting = false, pending = 0;
+let on = false, bound = false, io = null, watched = null, resting = false, pending = 0, holdUntil = 0;
 const offs = [];
 const button = () => document.getElementById('show_more_messages');
 const chat = () => document.getElementById('chat');
@@ -40,9 +40,15 @@ export function loadKeepingPlace(b, c = chat()) {
     c.scrollTop = wanted;
     return { inserted, fixed: true };
 }
+/** 7.9.9 손으로 단추를 눌러 보여 준 자리를 바로 또 불러 가리지 않게 ms 동안 쉰다 (show-more-tap.js) — 쉰 뒤 단추가 아직 미리보기 영역이면 이어서 부른다 */
+export function holdAuto(ms) {
+    holdUntil = Math.max(holdUntil, Date.now() + Math.max(0, Number(ms) || 0));
+    if (on) { clearTimeout(pending); pending = setTimeout(watch, holdUntil - Date.now() + 20); }
+}
 function onSeen(entries) {
     if (!on || resting) return;
     if (!entries.some(e => e.target === watched && e.isIntersecting)) return;
+    if (Date.now() < holdUntil) return;   // 손으로 눌러 보여 준 자리 — holdAuto 가 쉰 뒤 다시 본다
     const b = button(); if (!b || b !== watched) return;
     resting = true;
     loadKeepingPlace(b);
@@ -68,4 +74,4 @@ export function syncShowMoreAuto(enabled) {
 }
 
 /** 시험용 */
-export const _forTest = { onSeen, state: () => ({ on, watched, resting }) };
+export const _forTest = { onSeen, state: () => ({ on, watched, resting, holding: Date.now() < holdUntil }) };

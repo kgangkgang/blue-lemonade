@@ -225,6 +225,7 @@ jobs:
           node tools/tests/assets-strip-chat.mjs .
           node tools/tests/after-work.mjs .
           node tools/tests/show-more-auto.mjs .
+          node tools/tests/show-more-tap.mjs .
           node tools/tests/prompt-choice.mjs .
           node tools/tests/bughunt2-core.mjs .
           node tools/tests/dem-expressive-nest.mjs .
@@ -260,6 +261,7 @@ jobs:
           node tools/tests/translator-picture-swap.mjs .
           node tools/tests/translation-guard-reload.mjs .
           node tools/tests/rerender-notify.mjs .
+          node tools/tests/translator-builtin-translate.mjs .
           node tools/tests/translation-cards.mjs .
           node tools/tests/translator-cards-integration.mjs .
           node tools/tests/translator-card-values.mjs .

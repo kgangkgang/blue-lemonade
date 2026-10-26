@@ -81,6 +81,8 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 6.9.8 「이전 메시지 더 보기」 저절로 (show-more-auto.js, 기본 켬) · 새 답 첫 줄로 가는 ↑ (reply-top.js, 켤 때만)
     const showMore = on && s.chat?.showMoreAuto !== false;
     if (showMore || modules.showmore) load('showmore', './show-more-auto.js').then(m => m?.syncShowMoreAuto(showMore));
+    // 7.9.9 단추를 손으로 누르면 불러온 메시지를 보여 준다 (show-more-tap.js, 자동 더 보기와 상관없이 · 테마가 켜져 있을 때)
+    if (on || modules.showmoretap) load('showmoretap', './show-more-tap.js').then(m => (on ? m?.installShowMoreTap() : m?.uninstallShowMoreTap()));
     const replyTop = on && !!s.chat?.replyTop;
     if (replyTop || modules.replytop) load('replytop', './reply-top.js').then(m => m?.syncReplyTop(replyTop));
     // 7.0.3 메시지 토큰 — 7.0.4 부터 토큰 수를 누르면 내역 (sent-tokens.js, 기본 켬)
