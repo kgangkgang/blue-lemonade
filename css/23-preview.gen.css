@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 469개 (169.6KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 469개 (169.7KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -954,28 +954,28 @@ body.salty :is(.cg-textarea, #jj-popup .jj-textarea, .eh-textarea, .jj-prompt te
   }
 }
 body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--physical:where(:not(.custom-dem-modules *)) {
-  color: color-mix(in srgb, #f38ba8 var(--bl-dem-ink), var(--salty-text));
+  color: color-mix(in srgb, var(--bl-dem-red) var(--bl-dem-ink), var(--salty-text));
 }
 body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--clothes:where(:not(.custom-dem-modules *)) {
-  color: color-mix(in srgb, #f9e2af var(--bl-dem-ink), var(--salty-text));
+  color: color-mix(in srgb, var(--bl-dem-yellow) var(--bl-dem-ink), var(--salty-text));
 }
 body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--mental:where(:not(.custom-dem-modules *)) {
-  color: color-mix(in srgb, #a6e3a1 var(--bl-dem-ink), var(--salty-text));
+  color: color-mix(in srgb, var(--bl-dem-green) var(--bl-dem-ink), var(--salty-text));
 }
 body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--location:where(:not(.custom-dem-modules *)) {
-  color: color-mix(in srgb, #89b4fa var(--bl-dem-ink), var(--salty-text));
+  color: color-mix(in srgb, var(--bl-dem-blue) var(--bl-dem-ink), var(--salty-text));
 }
 body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--relationship:where(:not(.custom-dem-modules *)) {
-  color: color-mix(in srgb, #fab387 var(--bl-dem-ink), var(--salty-text));
+  color: color-mix(in srgb, var(--bl-dem-peach) var(--bl-dem-ink), var(--salty-text));
 }
 body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--inventory:where(:not(.custom-dem-modules *)) {
-  color: color-mix(in srgb, #94e2d5 var(--bl-dem-ink), var(--salty-text));
+  color: color-mix(in srgb, var(--bl-dem-teal) var(--bl-dem-ink), var(--salty-text));
 }
 body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-psychological-state-row__label--inner:where(:not(.custom-dem-modules *)) {
-  color: color-mix(in srgb, #89dceb var(--bl-dem-ink), var(--salty-text));
+  color: color-mix(in srgb, var(--bl-dem-sky) var(--bl-dem-ink), var(--salty-text));
 }
 body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-psychological-state-row__label--motivation:where(:not(.custom-dem-modules *)) {
-  color: color-mix(in srgb, #f9e2af var(--bl-dem-ink), var(--salty-text));
+  color: color-mix(in srgb, var(--bl-dem-yellow) var(--bl-dem-ink), var(--salty-text));
 }
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text details.custom-dem-card:where(:not(.custom-dem-modules *)),
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):where(:not(:has(> .custom-dem-track__grid))) {

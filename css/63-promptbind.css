@@ -64,7 +64,7 @@ body.salty .bl-pbind-x {
 body.salty .bl-pbind-x:hover,
 body.salty .bl-pbind-x:focus-visible {
   opacity: 1;
-  background: rgba(128,128,128,.25);
+  background: var(--bl-grey-25);
 }
 body.salty .bl-pbind-hint {
   opacity: .7;
@@ -84,7 +84,7 @@ body.salty .bl-pbind-dialog {
   gap: 10px;
 }
 body.salty .bl-pbind-dialog::backdrop {
-  background: rgba(0,0,0,.45);
+  background: var(--bl-scrim);
 }
 body.salty .bl-pbind-dhead {
   display: flex;
@@ -119,7 +119,7 @@ body.salty .bl-pbind-item {
   cursor: pointer;
 }
 body.salty .bl-pbind-item:hover {
-  background: rgba(128,128,128,.15);
+  background: var(--bl-grey-15);
 }
 body.salty .bl-pbind-item input {
   margin: 0;
@@ -131,7 +131,7 @@ body.salty .bl-pbind-noimg {
   border-radius: 50%;
   object-fit: cover;
   flex: none;
-  background: rgba(128,128,128,.2);
+  background: var(--bl-grey-20);
 }
 body.salty .bl-pbind-item span {
   overflow: hidden;

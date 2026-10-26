@@ -468,7 +468,7 @@ body.salty #jj-popup .jj-switch[aria-checked="true"] {
 }
 body.salty #jj-popup .jj-switch[aria-checked="true"] span {
   transform: translateX(16px);
-  background: #fff; /* 5.5.6 손잡이는 켜져도 흰색 (사용자: 검은 손잡이가 어색하다) — 설정 창의 스위치와 같은 모양 */
+  background: var(--bl-knob-face); /* 5.5.6 손잡이는 켜져도 흰색 (사용자: 검은 손잡이가 어색하다) — 설정 창의 스위치와 같은 모양 */
   box-shadow: var(--bl-knob);
 }
 /* 지시 입력칸 — 7.8.6 시안 C(사용자 10-23 「C가 마음에 듦」): 입력칸 I2 와 같게 한 단계 밝은 면 + 1px 선, 누르면 선만 포인트색 1px

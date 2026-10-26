@@ -151,7 +151,7 @@ body.salty.salty-demfx-flow :is(#chat, .cg-root, .salty-preview) .custom-dem-exp
    띠 모양은 css/37-prompt-ink.css 의 형광펜 색과 같은 방법 — 테마의 붓자국 그림을 마스크로(글자 층 + 붓자국 층). 전체 칠은 통째 띠.
    '프롬프트 색 그대로 · 형광펜 색'의 !important 띠 색을 이겨야 해서 id 하나만큼 무겁게 */
 body.salty.salty-demfx-mflow:is(.salty-dlg-marker, .salty-dlg-full) :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) q:not(q q) {
-  background: var(--dem-gradient, linear-gradient(90deg, #ff6b6b, #ffd166, #7ee787, #70d6ff, #c77dff, #ff8acb)) 0 50% / 240% 100% no-repeat !important;
+  background: var(--dem-gradient, var(--bl-demfx-flow)) 0 50% / 240% 100% no-repeat !important;
 }
 body.salty.salty-demfx-go.salty-demfx-mflow:is(.salty-dlg-marker, .salty-dlg-full) :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) q:not(q q) {
   animation: bl-fx-gradient 2.75s linear infinite alternate;
@@ -221,7 +221,7 @@ body.salty :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-made {
   max-width: 100%;
   vertical-align: baseline;
   color: transparent;
-  background-image: var(--dem-gradient, linear-gradient(90deg, #ff6b6b, #ffd166, #7ee787, #70d6ff, #c77dff, #ff8acb));
+  background-image: var(--dem-gradient, var(--bl-demfx-flow));
   background-size: 240% 100%;
   background-position: 0 50%;
   background-repeat: no-repeat;

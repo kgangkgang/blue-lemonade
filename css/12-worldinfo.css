@@ -388,7 +388,7 @@ body.salty #WorldInfo #wiCheckboxes label.checkbox_label > input[type="checkbox"
   left: 3px !important;
   border-radius: 50% !important;
   clip-path: none !important;
-  background: #fff !important;
+  background: var(--bl-knob-face) !important;
   transform: none !important;
   transition: transform 0.18s ease !important;
 }
@@ -726,7 +726,7 @@ body.salty #WorldInfo .world_entry .killSwitch::before {
   top: 3px;
   left: 3px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--bl-knob-face);
   transition: transform 0.18s ease;
 }
 /* 누르는 자리: 보이지 않는 가상 요소로 스위치보다 넉넉하게 */

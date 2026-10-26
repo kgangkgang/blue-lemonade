@@ -181,7 +181,7 @@ body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b{
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b > :is(i,.bl-version,.bl-copyright){flex:none;margin-block:0}
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b > .bl-version[hidden]{display:none}
 .bl-credits-dialog{margin:auto;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--salty-line, var(--bl-fb-cdd9e8));border-radius:18px;background:var(--salty-surface, var(--bl-fb-fff));color:var(--salty-text, var(--bl-fb-24354c));overflow:hidden}
-.bl-credits-dialog[open]{display:flex;flex-direction:column}.bl-credits-dialog::backdrop{background:#07152999}
+.bl-credits-dialog[open]{display:flex;flex-direction:column}.bl-credits-dialog::backdrop{background:var(--bl-scrim)}
 .bl-credits-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;flex:none;border-bottom:1px solid var(--salty-line, var(--bl-fb-cdd9e8))}
 .bl-credits-dialog h2{font-size:18px;margin:0}.bl-credits-dialog header button{width:40px;height:40px;border:0;background:transparent;color:inherit;font:400 26px/1 system-ui;cursor:pointer}
 .bl-credits-body{overflow:auto;min-height:0;padding:4px 18px 18px;font-size:13px;line-height:1.8;word-break:keep-all;overflow-wrap:anywhere}.bl-credits-body section{padding:10px 0;border-bottom:1px solid var(--salty-line, var(--bl-fb-cdd9e8))}.bl-credits-body h3{font-size:15px;margin:8px 0}.bl-credits-body a{color:var(--salty-accent, var(--bl-fb-3975b8));text-decoration:underline}
@@ -332,7 +332,7 @@ html body.salty .bl-ctsi-dialog :is(p,small) { font-size:.85em; }
 html body.salty .bl-ctsi-dialog .ctsi-button-container { flex-wrap:wrap; gap:8px 10px; margin:12px 0; }
 html body.salty .bl-ctsi-dialog #ctsi-drawer-content .flex-container { flex-wrap:wrap; gap:8px 10px; }
 html body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(span,select,input) { min-width:0; overflow-wrap:anywhere; }
-html body.salty .jj-settings .jj-switch span { background:#fff; box-shadow:var(--bl-knob); } /* 5.5.6 전개 지시 스위치 손잡이는 켜짐 · 꺼짐 모두 흰색 (깃털 창과 같게) */
+html body.salty .jj-settings .jj-switch span { background:var(--bl-knob-face); box-shadow:var(--bl-knob); } /* 5.5.6 전개 지시 스위치 손잡이는 켜짐 · 꺼짐 모두 흰색 (깃털 창과 같게) */
 
 /* Image pixels and their overlaid captions keep their own contrast. The viewer
    chrome follows the palette like the settings dialog. */

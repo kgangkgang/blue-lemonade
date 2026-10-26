@@ -20,14 +20,14 @@
   overflow: hidden;
   background: var(--salty-surface, var(--bl-fb-fff));
   color: var(--salty-text, var(--bl-fb-222));
-  box-shadow: var(--bl-e5, 0 18px 60px rgba(0, 0, 0, .32));
+  box-shadow: var(--bl-e5);
   font-family: var(--salty-font-ui, inherit);
   font-size: var(--bl-fs-body, 15px);
   line-height: 1.5;
   text-align: left;
 }
 .bl-first-run[open] { display: flex; flex-direction: column; }
-.bl-first-run::backdrop { background: rgba(8, 12, 20, .32); }
+.bl-first-run::backdrop { background: var(--bl-scrim); }
 .bl-first-run *, .bl-first-run *::before, .bl-first-run *::after { box-sizing: border-box; }
 .bl-first-run [hidden] { display: none !important; }
 .bl-first-run .bl-fr-sheet { display: flex; flex-direction: column; min-height: 0; max-height: inherit; }

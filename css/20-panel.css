@@ -381,8 +381,8 @@ body.salty .popup:has(.salty-notice) .popup-content {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+  background: var(--bl-knob-face);
+  box-shadow: var(--bl-knob);
   transition: transform 0.2s ease;
 }
 .salty-switch input:checked + span {
@@ -575,7 +575,7 @@ body.salty .popup:has(.salty-notice) .popup-content {
 /* 어두운 테마: 면색 칩은 판보다 어두워 구멍처럼 보여서, 고른 칸은 판보다 한 톤 밝게 */
 body.salty-dark .salty-seg button.on {
   background: var(--salty-fill-control, var(--salty-control));
-  box-shadow: var(--bl-e2, inset 0 1px 0 rgba(255, 255, 255, 0.04));
+  box-shadow: var(--bl-e2);
 }
 
 /* 이미지 모양 고르기: 고르기 버튼 묶음과 같은 판 · 같은 글자 크기. 2칸씩 작은 그림 + 이름 (360px 폰에서도 이름에 자리가 넉넉함) */
@@ -730,8 +730,8 @@ body.salty-dark .salty-shapes button.on {
   margin-top: calc((var(--bl-track-h, 5px) - var(--bl-knob-size, 22px)) / 2) !important;
   border: 0 !important;
   border-radius: 50% !important;
-  background: #fff !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14), 0 3px 10px rgba(0, 0, 0, 0.18) !important;
+  background: var(--bl-knob-face) !important;
+  box-shadow: var(--bl-knob) !important;
 }
 .salty-slider input[type="range"]::-moz-range-track {
   height: var(--bl-track-h, 5px);
@@ -748,8 +748,8 @@ body.salty-dark .salty-shapes button.on {
   height: var(--bl-knob-size, 22px);
   border: 0;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+  background: var(--bl-knob-face);
+  box-shadow: var(--bl-knob);
 }
 
 /* 미리보기 */
@@ -1375,7 +1375,7 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .bl-addon-inline-content :is(.text_pole, input:is([type="text"], [type="search"], [type="password"], [type="url"], [type="email"])):not(textarea, select) { padding-inline: var(--bl-s3, 12px); }
 .salty-panel .bl-addon-inline-content .bl-hs-row { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 6px 0 2px; font-size: var(--bl-fs-body, 15px); color: var(--salty-muted); } /* 7.9.3: 12.5 → 본문 */
 .salty-panel .bl-addon-inline-content .bl-hs-switch { position: relative; flex: 0 0 auto; width: 34px; height: 20px; margin: 0; padding: 0; border: 0; border-radius: 999px; background: var(--bl-check-off, color-mix(in srgb, var(--salty-text) 24%, transparent)); box-shadow: var(--bl-track, none); cursor: pointer; transition: background-color .18s ease; }
-.salty-panel .bl-addon-inline-content .bl-hs-switch > span { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: var(--bl-knob, 0 1px 2px rgba(0, 0, 0, .25)); transition: transform .18s ease; }
+.salty-panel .bl-addon-inline-content .bl-hs-switch > span { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--bl-knob-face); box-shadow: var(--bl-knob, 0 1px 2px rgba(0, 0, 0, .25)); transition: transform .18s ease; }
 .salty-panel .bl-addon-inline-content .bl-hs-switch[aria-checked="true"] { background: var(--salty-accent); box-shadow: none; }
 .salty-panel .bl-addon-inline-content .bl-hs-switch[aria-checked="true"] > span { transform: translateX(14px); }
 

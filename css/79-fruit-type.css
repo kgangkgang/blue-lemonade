@@ -46,7 +46,7 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 @container bl-editor (max-width:799px){.bl-editor-workspace:has(> .salty-sec .bl-editor-group-body:not([hidden]) > .bl-fruit-type-editor) > .bl-editor-stage{display:none}}
 /* 과일 창 바로가기 → 대화상자 */
 .bl-ft-dialog{box-sizing:border-box;width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:0 16px 16px;border:1px solid var(--salty-line,var(--SmartThemeBorderColor, var(--bl-fb-8885)));border-radius:12px;background:var(--salty-bg,var(--SmartThemeBlurTintColor, var(--bl-fb-222)));color:var(--salty-text,var(--SmartThemeBodyColor, var(--bl-fb-ddd)));font:inherit;text-align:left}
-.bl-ft-dialog::backdrop{background:#0008}
+.bl-ft-dialog::backdrop{background:var(--bl-scrim)}
 .bl-ft-dialog-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;margin:0 -16px 4px;padding:8px 16px;background:inherit;border-bottom:1px solid var(--salty-line, var(--bl-fb-8884))}
 .bl-ft-dialog .salty-prevbox{top:52px}
 /* 대화상자는 설정 창(.salty-panel) 밖이라 미리보기 도구 단추(돋보기 · ↺ · 확대 · 축소)가 브라우저 기본 흰 네모였다(나이트 대비 1.14) — 설정 창(45-preview-view)과 같은 모양.

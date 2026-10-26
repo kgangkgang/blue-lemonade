@@ -870,15 +870,15 @@ body.salty #Backgrounds .bg_example:is(.selected-background, .folder-group-selec
 body.salty #Backgrounds .bg_example.locked-background::after {
   right: 6px !important;
   bottom: 26px !important;
-  background: rgba(4, 14, 26, 0.55);
+  background: var(--bl-media-scrim-55);
   color: var(--bl-lemon) !important;
 }
 /* 사진 위 글자 · 버튼: 흐림 없이 옅은 어두운 면 */
 body.salty #Backgrounds .bg_example .BGSampleTitle {
   padding: 4px 8px !important;
   border-radius: 0 !important;
-  background: rgba(4, 14, 26, 0.5) !important;
-  color: #fff !important;
+  background: var(--bl-media-scrim-50) !important;
+  color: var(--bl-on-media) !important;
   font-size: var(--bl-fs-micro) !important;
   font-weight: 600;
 }
@@ -893,7 +893,7 @@ body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) .mobile-only-menu-togg
   width: 26px !important;
   height: 26px !important;
   border-radius: 8px !important;
-  background-color: rgba(4, 14, 26, 0.45) !important;
+  background-color: var(--bl-media-scrim-45) !important;
   font-size: 13px;
 }
 body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) .jg-menu {
@@ -901,11 +901,11 @@ body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) .jg-menu {
   right: 6px !important;
   padding: 2px !important;
   border-radius: var(--bl-r-sm) !important;
-  background-color: rgba(4, 14, 26, 0.72) !important;
+  background-color: var(--bl-media-scrim-72) !important;
 }
 body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) .jg-button {
   border-radius: 8px !important;
-  color: #fff !important;
+  color: var(--bl-on-media) !important;
 }
 body.salty #Backgrounds #bg-scroll-top {
   width: 40px !important;
@@ -1200,7 +1200,7 @@ body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type=
   left: 3px;
   width: 20px;
   height: 20px;
-  background: #fff;
+  background: var(--bl-knob-face);
   box-shadow: var(--bl-knob);
   translate: none;
   transform: none;

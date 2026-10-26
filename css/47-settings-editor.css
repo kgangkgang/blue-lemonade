@@ -39,7 +39,7 @@ html body .bl-editor .bl-editor-group-body > .bl-prompt-tools > .salty-group { m
 .bl-editor .bl-view-tools button { min-height:30px; }
 .bl-editor .salty-pvfold { left:0; right:0; }
 .bl-editor-catalog { position:absolute; inset:0; z-index:20; min-width:0; }
-.bl-editor-scrim { position:absolute; inset:0; width:100%; height:100%; margin:0; padding:0; border:0; background:rgb(0 0 0 / .28); }
+.bl-editor-scrim { position:absolute; inset:0; width:100%; height:100%; margin:0; padding:0; border:0; background:var(--bl-scrim); }
 .bl-editor-directory { position:absolute; inset:0 auto 0 0; display:flex; flex-direction:column; width:min(340px,100%); padding:10px; background:var(--salty-panel-card,var(--salty-surface)); border-right:1px solid var(--bl-editor-line); box-shadow:12px 0 32px #0002; }
 .bl-editor-directory-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
 .bl-editor-directory-head button { border:0; background:transparent; color:var(--salty-text); width:36px; height:36px; font:24px/1 sans-serif; }

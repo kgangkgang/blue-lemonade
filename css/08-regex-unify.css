@@ -104,7 +104,7 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] {
   display: inline-flex;
   gap: 4px;
 }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--relationship { color: color-mix(in srgb, #fab387 var(--bl-dem-ink, 74%), var(--salty-text)); }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--relationship { color: color-mix(in srgb, var(--bl-dem-peach) var(--bl-dem-ink, 74%), var(--salty-text)); }
 /* 3.4.1 표본 장면 계획: 단계 이름 · 칸 이름이 단계 색 (입력 초록 · 제약 파랑 · 계획 노랑) — 카드 색 통일을 켜고 끄면 바로 달라진다 */
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__body {
   counter-reset: bl-pv-step;
@@ -165,23 +165,23 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] {
   align-items: center;
   gap: 4px;
 }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__name { color: color-mix(in srgb, #cba6f7 var(--bl-dem-ink, 74%), var(--salty-text)); font-weight: 700; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__name { color: color-mix(in srgb, var(--bl-dem-mauve) var(--bl-dem-ink, 74%), var(--salty-text)); font-weight: 700; }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label { font-size: .86em; font-weight: 700; }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--physical { color: color-mix(in srgb, #f38ba8 var(--bl-dem-ink, 74%), var(--salty-text)); }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--clothes { color: color-mix(in srgb, #f9e2af var(--bl-dem-ink, 74%), var(--salty-text)); }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--mental { color: color-mix(in srgb, #a6e3a1 var(--bl-dem-ink, 74%), var(--salty-text)); }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--physical { color: color-mix(in srgb, var(--bl-dem-red) var(--bl-dem-ink, 74%), var(--salty-text)); }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--clothes { color: color-mix(in srgb, var(--bl-dem-yellow) var(--bl-dem-ink, 74%), var(--salty-text)); }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--mental { color: color-mix(in srgb, var(--bl-dem-green) var(--bl-dem-ink, 74%), var(--salty-text)); }
 .salty-preview[data-prev="regex"] .mes_text :is(.custom-dem-status-row__score, .custom-dem-track__temp) {
   padding: 1px 8px;
   border-radius: 999px;
   font-size: .8em;
   font-weight: 700;
-  background: color-mix(in srgb, #fab387 14%, transparent);
-  border: 1px solid color-mix(in srgb, #fab387 28%, transparent);
+  background: color-mix(in srgb, var(--bl-dem-peach) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bl-dem-peach) 28%, transparent);
 }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-track__temp {
-  color: color-mix(in srgb, #f9e2af var(--bl-dem-ink, 74%), var(--salty-text));
-  background: color-mix(in srgb, #f9e2af 12%, transparent);
-  border-color: color-mix(in srgb, #f9e2af 28%, transparent);
+  color: color-mix(in srgb, var(--bl-dem-yellow) var(--bl-dem-ink, 74%), var(--salty-text));
+  background: color-mix(in srgb, var(--bl-dem-yellow) 12%, transparent);
+  border-color: color-mix(in srgb, var(--bl-dem-yellow) 28%, transparent);
 }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-thread-tag {
   padding: 1px 8px;

@@ -478,3 +478,34 @@ body.salty .autoComplete > .item.macro-ac-item > .macro-source.isThirdParty {
   --bl-fb-rgb-255-255-255-p14: rgba(255, 255, 255, .14);
   --bl-fb-rgb-96-156-206-p28: rgba(96, 156, 206, .28);
 }
+
+/* 역할 색 토큰(8.0.0 B5) — 손잡이 면 · 사진 위 글자 · 덮개 · 도구 고유색 · 데우스 피부색. 값은 바꾸기 전 리터럴과 같다(가림막만 --bl-scrim 로 모음) */
+:root {
+  --bl-knob-face: #fff;                 /* §2 스위치 · 슬라이더 손잡이 면은 늘 흰색 */
+  --bl-on-media: #fff;                  /* 사진 · 배경 타일 위 글자 · 아이콘 */
+  --bl-media-scrim-45: rgba(4, 14, 26, 0.45); /* 배경 타일 위 덮개(제목 띠 · 메뉴) */
+  --bl-media-scrim-50: rgba(4, 14, 26, 0.5);
+  --bl-media-scrim-55: rgba(4, 14, 26, 0.55);
+  --bl-media-scrim-72: rgba(4, 14, 26, 0.72);
+  --bl-dim-12: rgba(0, 0, 0, .12);      /* 날씨 자리 어둡게 */
+  --bl-grey-15: rgba(128, 128, 128, .15); /* 프롬프트 묶기 창 덧칠 */
+  --bl-grey-20: rgba(128, 128, 128, .2);
+  --bl-grey-25: rgba(128, 128, 128, .25);
+  --bl-checker-a: #d2d6db;              /* 액자 편집 캔버스 체크무늬 */
+  --bl-checker-b: #eef0f3;
+  --bl-cp-white: #fff;                  /* 색 고르기 도구 고유색(팔레트와 무관) */
+  --bl-cp-white-0: #fff0;
+  --bl-cp-black: #000;
+  --bl-cp-black-35: rgb(0 0 0 / 0.35);
+  --bl-cp-black-40: rgb(0 0 0 / 0.4);
+  --bl-cp-black-50: rgb(0 0 0 / 0.5);
+  --bl-dem-red: #f38ba8;                /* 데우스 엑스 마키나 피부색(프리셋 고정 팔레트) */
+  --bl-dem-yellow: #f9e2af;
+  --bl-dem-green: #a6e3a1;
+  --bl-dem-blue: #89b4fa;
+  --bl-dem-peach: #fab387;
+  --bl-dem-teal: #94e2d5;
+  --bl-dem-sky: #89dceb;
+  --bl-dem-mauve: #cba6f7;
+  --bl-demfx-flow: linear-gradient(90deg, #ff6b6b, #ffd166, #7ee787, #70d6ff, #c77dff, #ff8acb); /* 데우스 표현 흐름 띠 */
+}

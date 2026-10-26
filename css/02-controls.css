@@ -307,7 +307,7 @@ body.salty :where(#user-settings-block, #left-nav-panel, #rm_api_block, #Advance
   height: 14px !important;
   border-radius: 50% !important;
   clip-path: none !important;
-  background: #fff !important;
+  background: var(--bl-knob-face) !important;
   box-shadow: var(--bl-knob) !important;
   transform: none !important;
   transition: transform 0.18s ease !important;
@@ -347,7 +347,7 @@ body.salty input[type="range"]:where(:not(.salty-panel *))::-webkit-slider-thumb
   height: var(--bl-knob-size) !important;
   border: 0 !important;
   border-radius: 50% !important;
-  background: #fff !important;
+  background: var(--bl-knob-face) !important;
   box-shadow: var(--bl-knob) !important;
 }
 body.salty input[type="range"]:where(:not(.salty-panel *))::-moz-range-thumb {
@@ -355,7 +355,7 @@ body.salty input[type="range"]:where(:not(.salty-panel *))::-moz-range-thumb {
   height: var(--bl-knob-size);
   border: 0;
   border-radius: 50%;
-  background: #fff;
+  background: var(--bl-knob-face);
   box-shadow: var(--bl-knob);
 }
 body.salty .ui-slider {
@@ -366,7 +366,7 @@ body.salty .ui-slider {
 body.salty .ui-slider-handle {
   border: 0 !important;
   border-radius: 50% !important;
-  background: #fff !important;
+  background: var(--bl-knob-face) !important;
   box-shadow: var(--bl-knob) !important;
 }
 body.salty .range-block-title {

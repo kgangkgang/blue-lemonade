@@ -46,7 +46,7 @@ body.salty #chat .mes .bl-art-frame[data-bl-frame] > .bl-art-photo > img {
   padding: 20px; border: 1px solid var(--salty-line); border-radius: 18px;
   background: var(--salty-bg, var(--bl-fb-202936)); color: var(--salty-text, var(--bl-fb-e3e9f0)); font-family: var(--salty-font-ui, sans-serif);
 }
-.bl-frame-editor::backdrop { background: #0008; }
+.bl-frame-editor::backdrop { background: var(--bl-scrim); }
 .bl-frame-editor header, .bl-frame-editor footer { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
 .bl-frame-editor p { font-size: 13px; line-height: 1.6; }
 .bl-frame-editor label { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 12px 0; font-size: 13px; }
@@ -54,7 +54,7 @@ body.salty #chat .mes .bl-art-frame[data-bl-frame] > .bl-art-photo > img {
 .bl-frame-editor input[type="range"] { min-width: 0; width: 100%; }
 .bl-frame-editor button, .bl-frame-editor select { font: inherit; color: inherit; background: var(--salty-fill-shade, var(--salty-shade)); border: 1px solid var(--salty-line); border-radius: 8px; padding: 8px 12px; }
 .bl-frame-editor button:disabled { opacity: .4; }
-.bl-frame-canvas { display: block; max-width: 100%; max-height: 44dvh; width: auto; height: auto; margin: 12px auto; cursor: crosshair; background: repeating-conic-gradient(#d2d6db 0% 25%, #eef0f3 0% 50%) 50% / 20px 20px; }
+.bl-frame-canvas { display: block; max-width: 100%; max-height: 44dvh; width: auto; height: auto; margin: 12px auto; cursor: crosshair; background: repeating-conic-gradient(var(--bl-checker-a) 0% 25%, var(--bl-checker-b) 0% 50%) 50% / 20px 20px; }
 .bl-frame-manual[hidden] { display: none; }
 /* A native button takes up its full padded height, unlike an inline label. */
 .salty-group.bl-decor-controls { display: flex; flex-direction: column; gap: 12px; min-width: 0; }

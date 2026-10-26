@@ -21,8 +21,8 @@ body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch > 
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: var(--bl-knob, 0 1px 2px rgba(0, 0, 0, .25));
+  background: var(--bl-knob-face);
+  box-shadow: var(--bl-knob);
   transition: transform .18s ease;
 }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch[aria-checked="true"] {

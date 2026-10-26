@@ -194,7 +194,7 @@ body.salty .ctx-blocker .ctx-menu {
   border: 0 !important;
   border-radius: 12px;
   background: var(--bl-overlay, var(--salty-surface)) !important;
-  box-shadow: var(--bl-e4, 0 8px 28px rgba(0, 0, 0, 0.28));
+  box-shadow: var(--bl-e4);
 }
 body.salty:not(#salty-none) .ctx-blocker > .ctx-menu {
   max-height: min(var(--bl-ctx-max, 50svh), 50svh, 360px);

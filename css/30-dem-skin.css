@@ -17,14 +17,14 @@ body.salty.salty-light {
 }
 /* 밝은 팔레트 · 색 통일 끔: 데우스 항목 라벨은 색 코드를 직접 섞어 두어 변수로 못 바꿈 → 같은 색을 더 진하게 다시 적는다
    (색 통일을 켜면 08 의 !important 포인트색이 이긴다) */
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--physical:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, #f38ba8 var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--clothes:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, #f9e2af var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--mental:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, #a6e3a1 var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--location:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, #89b4fa var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--relationship:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, #fab387 var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--inventory:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, #94e2d5 var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-psychological-state-row__label--inner:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, #89dceb var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-psychological-state-row__label--motivation:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, #f9e2af var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--physical:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-red) var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--clothes:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-yellow) var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--mental:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-green) var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--location:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-blue) var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--relationship:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-peach) var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--inventory:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-teal) var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-psychological-state-row__label--inner:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-sky) var(--bl-dem-ink), var(--salty-text)); }
+body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-psychological-state-row__label--motivation:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-yellow) var(--bl-dem-ink), var(--salty-text)); }
 
 /* 3.4.1: 색 통일을 껐을 때 모듈 색을 팔레트 색으로 바꾸던 칸을 지웠다 — 대부분 포인트색이 되어 카드 색 통일을 켜고 꺼도 달라 보이지 않았다
    (사용자: "카드 색 통일이 껐다 켜도 미리보기가 안 바뀜"). 이제 끄면 데우스 원래 모듈 색(장면 계획 단계 · 상태 항목 · 스레드 꼬리표)이 그대로,

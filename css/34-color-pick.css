@@ -22,7 +22,7 @@ body.salty .bl-cp {
   overscroll-behavior: contain;
   background: var(--bl-card, var(--salty-surface));
   color: var(--salty-text);
-  box-shadow: var(--bl-e4, 0 12px 32px rgb(0 0 0 / 0.28)), 0 0 0 1px color-mix(in srgb, var(--salty-text) 8%, transparent);
+  box-shadow: var(--bl-e4), 0 0 0 1px color-mix(in srgb, var(--salty-text) 8%, transparent);
   font-family: var(--salty-font-ui, inherit);
   font-size: var(--bl-fs-sub, 13px);
   letter-spacing: var(--salty-ui-ls, normal);
@@ -59,7 +59,7 @@ body.salty .bl-cp-board {
   border-radius: 50%;
   background:
     linear-gradient(rgb(0 0 0 / var(--dim, 0)), rgb(0 0 0 / var(--dim, 0))),
-    radial-gradient(circle closest-side, #fff, #fff0),
+    radial-gradient(circle closest-side, var(--bl-cp-white), var(--bl-cp-white-0)),
     conic-gradient(from 90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
   cursor: crosshair;
   touch-action: none;
@@ -74,10 +74,10 @@ body.salty .bl-cp :is(.bl-cp-board, .bl-cp-value, .bl-cp-alpha) > i {
   top: var(--y, 50%);
   width: 18px;
   height: 18px;
-  border: 2px solid #fff;
+  border: 2px solid var(--bl-cp-white);
   border-radius: 50%;
   background: rgb(var(--rgb));
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35), 0 1px 4px rgb(0 0 0 / 0.35);
+  box-shadow: 0 0 0 1px var(--bl-cp-black-35), 0 1px 4px var(--bl-cp-black-35);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
@@ -133,7 +133,7 @@ body.salty .bl-cp :is(.bl-cp-value, .bl-cp-alpha)::before {
   inset: -8px -9px;
 }
 body.salty .bl-cp-value {
-  background: linear-gradient(to right, #000, var(--full, var(--bl-fb-fff)));
+  background: linear-gradient(to right, var(--bl-cp-black), var(--full, var(--bl-fb-fff)));
 }
 body.salty .bl-cp-alpha {
   background: linear-gradient(to right, transparent, rgb(var(--rgb))), var(--checker);
@@ -146,7 +146,7 @@ body.salty .bl-cp-value > i {
   background: var(--now);
 }
 body.salty .bl-cp-alpha > i {
-  background: linear-gradient(var(--now), var(--now)), #fff;
+  background: linear-gradient(var(--now), var(--now)), var(--bl-cp-white);
 }
 
 /* 코드 칸 + 스포이트 */
@@ -268,10 +268,10 @@ body.salty .bl-cp-pic-ring {
   display: none;
   width: 20px;
   height: 20px;
-  border: 2px solid #fff;
+  border: 2px solid var(--bl-cp-white);
   border-radius: 50%;
   background: rgb(var(--rgb));
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4), 0 1px 4px rgb(0 0 0 / 0.35);
+  box-shadow: 0 0 0 1px var(--bl-cp-black-40), 0 1px 4px var(--bl-cp-black-35);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
@@ -286,10 +286,10 @@ body.salty .bl-cp-loupe {
   display: none;
   width: 72px;
   height: 72px;
-  border: 3px solid #fff;
+  border: 3px solid var(--bl-cp-white);
   border-radius: 50%;
   background: var(--salty-fill-shade, var(--salty-shade));
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35), 0 6px 16px rgb(0 0 0 / 0.35);
+  box-shadow: 0 0 0 1px var(--bl-cp-black-35), 0 6px 16px var(--bl-cp-black-35);
   transform: translate(-50%, calc(-100% - 20px));
   image-rendering: pixelated;
   pointer-events: none;
@@ -316,8 +316,8 @@ body.salty .bl-cp-pic-tools button {
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: rgb(0 0 0 / 0.5);
-  color: #fff;
+  background: var(--bl-cp-black-50);
+  color: var(--bl-cp-white);
   font-size: 12px;
   cursor: pointer;
 }
