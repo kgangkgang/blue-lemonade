@@ -3,6 +3,14 @@ import { preserveDraftForReload } from './draft.js';
 const EXCLUDE = 'input,textarea,select,button,a,label,summary,[contenteditable]:not([contenteditable="false"]),[draggable="true"],[role="button"],[role="slider"],[role="tab"],[role="tablist"],canvas,iframe,video,audio,.mes_buttons,.mes_button,.swipe_left,.swipe_right,.mes_edit,.edit_textarea,.ui-draggable-handle';
 const OVERLAYS = 'dialog[open],.drawer-content.openDrawer,#cg-panel:not([hidden]),#pt-panel:not(.pt-hidden)';
 const THRESHOLD = 112;
+// 저장 실패는 이 시간 동안만 새로고침을 막아요. 한 번 실패한 경로가 다시 성공하지 않아도 영영 막히지 않게 해요.
+export const FAIL_HOLD_MS = 20000;
+// 실패 안내를 본 뒤 이 시간 안에 한 번 더 끝까지 당기면 초안을 보관하고 그래도 새로고침해요.
+export const FORCE_WINDOW_MS = 10000;
+// 주소가 없거나(확장이 없는 파일을 지울 때 404) 받지 않는 요청은 저장 실패가 아니에요.
+const MISSING = new Set([404, 405, 410, 501]);
+const FAILED_TEXT = '저장을 확인하지 못했어요. 한 번 더 당기면 그래도 새로고침해요.';
+const BUSY_TEXT = '저장 중이에요. 잠시 뒤 다시 당겨 주세요.';
 
 // 최초 방향을 고정해요. 가로 손짓이나 위로 스크롤하던 손짓은 나중에 새로고침으로 바뀌지 않아요.
 export function createPullGesture(x, y, at) {
@@ -25,11 +33,11 @@ export function installedTouchMode(win) {
         && (win.matchMedia('(display-mode: standalone)').matches || win.navigator.standalone === true);
 }
 
-// 요청 본문이나 인증값은 읽지 않아요. 진행 중인 서버 요청과 저장 실패 여부만 세요.
-export function trackRefreshWrites(win, now, quietMs) {
+// 요청 본문이나 인증값은 읽지 않아요. 진행 중인 서버 요청과 최근 저장 실패 여부만 세요.
+export function trackRefreshWrites(win, now, quietMs, holdMs = FAIL_HOLD_MS) {
     const original = win.fetch;
     let pending = 0, quietUntil = 0, disposed = false;
-    const failed = new Set();
+    const failed = new Map();   // 경로 → 마지막 실패 시각
     const wrapper = async function(input, init) {
         let local = false, saving = false, key = '';
         try {
@@ -43,16 +51,48 @@ export function trackRefreshWrites(win, now, quietMs) {
         pending++;
         try {
             const response = await original.apply(this, arguments);
-            if (saving) { if (response.ok) failed.delete(key); else failed.add(key); }
+            if (saving) { if (response.ok) failed.delete(key); else if (!MISSING.has(response.status)) failed.set(key, now()); }
             return response;
-        } catch (error) { if (saving) failed.add(key); throw error; }
+        } catch (error) { if (saving && error?.name !== 'AbortError') failed.set(key, now()); throw error; }
         finally { pending--; quietUntil = Math.max(quietUntil, now() + 300); }
     };
     win.fetch = wrapper;
+    const recentFailure = () => {
+        const t = now();
+        for (const [key, at] of failed) if (t - at >= holdMs) failed.delete(key);
+        return failed.size > 0;
+    };
+    // 진행 중인 저장이 먼저예요. 실패가 남아 있어도 지금 저장 중이면 강제 새로고침을 허락하지 않아요.
+    const state = () => pending || now() < quietUntil || win.jQuery?.active > 0 ? 'busy' : recentFailure() ? 'failed' : '';
     return {
         changed() { quietUntil = now() + quietMs; },
-        reason() { return failed.size ? '저장을 확인하지 못했어요. 연결을 확인해 주세요.' : pending || now() < quietUntil || win.jQuery?.active > 0 ? '저장 중이에요. 잠시 뒤 다시 당겨 주세요.' : ''; },
+        state,
+        reason() { const s = state(); return s === 'busy' ? BUSY_TEXT : s === 'failed' ? FAILED_TEXT : ''; },
         dispose() { disposed = true; if (win.fetch === wrapper) win.fetch = original; },
+    };
+}
+
+// 새로고침해도 되는지 판단해요. 생성 중·채팅 저장 중·편집 중·진행 중인 저장은 언제나 막고,
+// 최근 저장 실패만 남았을 때는 안내 뒤 한 번 더 당기면 허락해요.
+export function createRefreshGate({ host, writes, now, editing = () => false, forceMs = FORCE_WINDOW_MS }) {
+    let forceUntil = 0;
+    const hard = () => {
+        if (host.isGenerating?.() || host.is_send_press || host.is_group_generating) return '답변 생성 중에는 새로고침하지 않아요.';
+        if (host.isChatSaving) return '채팅 저장 중이에요. 잠시 뒤 다시 당겨 주세요.';
+        if (editing()) return '메시지 편집을 마친 뒤 다시 당겨 주세요.';
+        return '';
+    };
+    const check = () => {
+        const reason = hard();
+        if (reason) return { reason, forced: false, failed: false };
+        if (writes.state() === 'failed') return now() < forceUntil ? { reason: '', forced: true, failed: true } : { reason: writes.reason(), forced: false, failed: true };
+        return { reason: writes.reason(), forced: false, failed: false };
+    };
+    return {
+        check,
+        // 끝까지 당겼다 놓았을 때 불러요. 실패만으로 막혔으면 다음 당김을 허락해 둬요.
+        release() { const v = check(); if (v.failed && v.reason) forceUntil = now() + forceMs; return v; },
+        clear() { forceUntil = 0; },
     };
 }
 
@@ -72,12 +112,7 @@ export function installPullToRefresh({ host, isEnabled, doc = document, win = wi
     const enabled = () => !disposed && isEnabled() && installedTouchMode(win);
     const visible = e => e && e.getClientRects().length && win.getComputedStyle(e).visibility !== 'hidden';
     const selected = () => { const selection = win.getSelection(); return !!selection && !selection.isCollapsed; };
-    const blocked = () => {
-        if (host.isGenerating?.() || host.is_send_press || host.is_group_generating) return '답변 생성 중에는 새로고침하지 않아요.';
-        if (host.isChatSaving) return '채팅 저장 중이에요. 잠시 뒤 다시 당겨 주세요.';
-        if ([...doc.querySelectorAll('.edit_textarea')].some(visible)) return '메시지 편집을 마친 뒤 다시 당겨 주세요.';
-        return writes.reason();
-    };
+    const gate = createRefreshGate({ host, writes, now, editing: () => [...doc.querySelectorAll('.edit_textarea')].some(visible) });
     function show(text, distance = 0, armed = false) {
         indicator.hidden = false;
         if (label.textContent !== text) label.textContent = text;
@@ -120,20 +155,20 @@ export function installPullToRefresh({ host, isEnabled, doc = document, win = wi
         if (!state.claimed) return;
         if (!event.cancelable) { reset(); return; }
         event.preventDefault();
-        const reason = blocked();
-        show(reason || (state.armed ? '놓으면 새로고침해요' : '아래로 더 당겨 주세요'), state.distance, state.armed && !reason);
+        const { reason, forced } = gate.check();
+        show(reason || (state.armed ? (forced ? '놓으면 그래도 새로고침해요' : '놓으면 새로고침해요') : '아래로 더 당겨 주세요'), state.distance, state.armed && !reason);
     }
     function end(event) {
         if (!gesture) return;
         const armed = state?.armed && event.touches.length === 0 && eligible(startTarget);
         reset();
         if (!armed || !enabled() || chat.scrollTop > 1 || selected()) return;
-        const reason = blocked();
+        const { reason } = gate.release();
         if (reason || !prepare()) {
             show(reason || '입력한 글을 보관하지 못했어요. 글을 복사한 뒤 다시 시도해 주세요.');
             win.clearTimeout(resetTimer); resetTimer = win.setTimeout(reset, 2200); return;
         }
-        reloading = true; show('새로고침 중이에요', THRESHOLD, true);
+        gate.clear(); reloading = true; show('새로고침 중이에요', THRESHOLD, true);
         // 기존 beforeunload 처리와 브라우저 확인창을 그대로 거쳐요. 취소되면 다시 당길 수 있어요.
         resetTimer = win.setTimeout(() => { reloading = false; reset(); }, 1800);
         try { reload(); } catch { reloading = false; reset(); }

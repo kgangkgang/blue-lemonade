@@ -604,7 +604,7 @@ export const FILE_HASHES = {
   "src/prompt-tools.js": "10645:4c0a45d7:a6b7b68c",
   "src/promptbind.js": "43235:33a51505:e18d2b34",
   "src/promptlist.js": "9042:9a46e84f:5803940a",
-  "src/pull-to-refresh.js": "11053:c81c9aa5:ce851edf",
+  "src/pull-to-refresh.js": "13456:4dc85295:309e3de1",
   "src/qrfind.js": "13470:e1b028e2:75206d84",
   "src/readability.js": "4402:c34b7d47:0d00993d",
   "src/reader.js": "8767:c13e8292:8043ac72",
