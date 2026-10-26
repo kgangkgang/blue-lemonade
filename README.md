@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.0.3/blue-lemonade-8.0.3.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.0.4/blue-lemonade-8.0.4.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.0.3 · 최신 업데이트</summary>
+<summary>8.0.4 · 최신 업데이트</summary>
+
+- 설정 › 채팅 › 캐릭터 프로필의 「프로필 여러 개」 적용 시점 고르기가 폰에서 글자가 두 줄로 꺾여 칸이 커지던 것을, 같은 폭 2열 두 줄 배치로 바꿔 글자는 한 줄 · 다른 고르기와 같은 높이로 맞췄어요.
+- 설정 › 프롬프트 › 과일 계열의 연동 카드 고르기 칸을 다른 입력칸과 같은 높이(폰 36px)로 줄이고, 폰에서 카드 이름 글자가 1px 남짓 위로 떠 보이던 것도 가운데로 맞췄어요.
+
+</details>
+
+<details>
+<summary>8.0.3 · 설치형 앱 당겨 새로고침 · 가로 메뉴 끝 흐림</summary>
 
 - 휴대폰 Chrome에서 홈 화면에 설치한 앱으로 실리태번을 쓸 때, 채팅 맨 위에서 아래로 충분히 당겼다 놓으면 새로고침돼요. 당기는 동안 「아래로 더 당겨 주세요」, 충분히 당기면 「놓으면 새로고침해요」 안내가 보여요. 일반 브라우저 탭에서는 기존 동작 그대로예요.
 - 당겨 새로고침 전에 입력칸에 쓰던 글을 보관해 두고, 같은 채팅을 다시 열면 그대로 돌아와요. 답변 생성·채팅 저장·메시지 편집 중이거나 짧게 당기다 멈추면 새로고침하지 않아요.
