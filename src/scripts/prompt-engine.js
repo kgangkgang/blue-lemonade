@@ -146,9 +146,12 @@ export function createPromptEngine(doc = document) {
         changed.clear(); for(const el of hints.values())el.remove();hints.clear();
     }
     // 7.0.4 읽기만: 목록에 칠하는 것과 같은 글 (없으면 null) — 프롬프트 목록 「끼운 글 · 프리셋: …」 이름표가 쓴다
+    // 8.0.1 정확 일치만 — 과일의 마음 창처럼 짧은 글을 고칠 때 부분 일치로 엉뚱한 이름의 번역을 붙이지 않게
+    function lookupExact(kind, id, name) { const key = normalize(name); for (const source of ordered) { const list = source[kind]; const hit = list.ids.get(id)?.find(e=>!key||e.key===key)?.entry || list.names.get(key); if (hit) return hit; } return null; }
+    const titleExact = (kind, id, name) => lookupExact(kind, id, name)?.title ?? null;
     const title = (kind, id, name) => lookup(kind, id, name)?.title ?? null;
     return {title,register(id,data){
         if(!sources.size)start(); sources.set(id,compile(data));order();render();
         return ()=>{sources.delete(id);order();if(sources.size)render();else stop();};
-    },stop};
+    },stop,titleExact};
 }

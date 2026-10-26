@@ -1,0 +1,20 @@
+{
+ "about": "과일의 마음 창 문구 중 청과 2.0XV3 의 과일의 마음 로컬판에 새로 생긴 것. tools/build-fruit-family.mjs 가 bundled/fruit-heart.js 사전에 합쳐요(같은 zh·kind 는 이 파일 값으로).",
+ "entries": [
+  {"zh":"鲜活神态与气口补丁","ko":"생생한 표정·말투 보완","kind":"text"},
+  {"zh":"防杀语气过猛·可随时开关对比","ko":"말투 억제가 지나치지 않게 · 언제든 켜고 꺼 비교","kind":"text"},
+  {"zh":"没找到神态补丁条目","ko":"표정 보완 항목을 찾지 못했어요","kind":"text"},
+  {"zh":"抢话与扩写","ko":"대리 서술과 확장","kind":"text"},
+  {"zh":"字数微调","ko":"글자 수 미세 조정","kind":"text"},
+  {"zh":"篇幅档位","ko":"분량 단계","kind":"text"},
+  {"zh":"对白密度","ko":"대사 밀도","kind":"text"},
+  {"zh":"推进节奏","ko":"진행 속도","kind":"text"},
+  {"zh":"对白指导","ko":"대사 지침","kind":"text"},
+  {"zh":"对白","ko":"대사","kind":"text"},
+  {"zh":"对白量","ko":"대사 분량","kind":"text"},
+  {"zh":"淫语","ko":"음담","kind":"text"},
+  {"zh":"NP","ko":"다인","kind":"text"},
+  {"zh":"NSFW思考","ko":"성인 장면 생각","kind":"text"},
+  {"zh":"思考语言","ko":"생각 언어","kind":"text"}
+ ]
+}

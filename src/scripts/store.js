@@ -1,4 +1,4 @@
-import { SCRIPT_CATALOG } from './catalog.js';
+import { SCRIPT_CATALOG, SCRIPT_FAMILIES, scriptFamily } from './catalog.js';
 export const STORE_KEY='blue_lemonade_scripts';
 const ids=new Set(SCRIPT_CATALOG.map(item=>item.id));
 export const NAME_KEYS=['deus','fruit'];
@@ -13,12 +13,26 @@ export function scriptSettings(){
   if(!state.names||typeof state.names!=='object'||Array.isArray(state.names))state.names={};
   for(const key of NAME_KEYS)state.names[key]=cleanName(state.names[key]);
   state.deusIconWithName=state.deusIconWithName!==false;
+  // 8.0.1 과일 계열 한 토글: 처음 읽을 때(묶음 값이 아직 없을 때)는 실행 단위 중 하나라도 켜져 있었으면 켬으로 옮겨요(청과만 켠 사용자 → 켬).
+  // 그 뒤로는 묶음 값이 기준이고 실행 단위 값은 그 값을 따라가요.
+  for(const family of SCRIPT_FAMILIES){
+    if(typeof state.enabled[family.id]!=='boolean')state.enabled[family.id]=family.members.some(id=>state.enabled[id]===true);
+    for(const id of family.members)state.enabled[id]=state.enabled[family.id];
+  }
   for(const id of ids){
     state.enabled[id]=state.enabled[id]===true;
     if(state.overrides[id]&&(typeof state.overrides[id].code!=='string'||state.overrides[id].code.length>1000000))delete state.overrides[id];
   }
   return state;
 }
+/** 토글 하나를 켜고 끈다 — 묶음 id 거나 묶음에 든 실행 단위면 묶음 전체를 같이 */
+export function setScriptEnabled(state,id,on){
+  const family=scriptFamily(id);
+  if(family){state.enabled[family.id]=!!on;for(const member of family.members)state.enabled[member]=!!on;return;}
+  state.enabled[id]=!!on;
+}
+/** 화면에 보이는 토글의 켜짐 — 묶음이면 묶음 값 */
+export const scriptEnabled=(state,id)=>state.enabled[scriptFamily(id)?.id??id]===true;
 export function replaceScriptSettings(state){SillyTavern.getContext().extensionSettings[STORE_KEY]=state;}
 export async function persistScripts(){
   const expected=JSON.stringify(scriptSettings());
@@ -38,6 +52,8 @@ function flatten(trees,active=true,result=[]){
   return result;
 }
 export function legacyConflicts(id){
+  const family=SCRIPT_FAMILIES.find(item=>item.id===id);
+  if(family)return family.members.flatMap(member=>legacyConflicts(member));
   const definition=SCRIPT_CATALOG.find(item=>item.id===id);if(!definition)return [];
   const settings=SillyTavern.getContext().extensionSettings?.tavern_helper;
   if(settings?.enabled===false||settings?.script?.enabled?.global===false)return [];

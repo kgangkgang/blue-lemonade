@@ -39,7 +39,12 @@ function environment(){
 }
 const add=(parent,tag,attrs,text)=>{const x=new Element(tag,attrs,text);parent.append(x);return x};
 let dictionary;vm.runInNewContext(codeOf('fruit'),{BlueLemonade:{translate:data=>dictionary=data}},{timeout:1000});
-check('display dictionary covers 314 distinct prompt titles and 21 regex titles',()=>{assert.equal(dictionary.prompts.length,314);assert.equal(dictionary.regex.length,21);for(const item of [...dictionary.prompts,...dictionary.regex]){assert.deepEqual(Object.keys(item).sort(),['name','title']);assert.ok(item.name&&item.title)}});
+{const src=path.join(root,'tools/scripts-src/fruit-family'),read=n=>JSON.parse(fs.readFileSync(path.join(src,n),'utf8'));
+ const parts=['common','fruit','qingguo','sese'].map(n=>read(`prompts-${n}.json`)),norm=v=>String(v||'').normalize('NFKC').replace(/[︎️\s]/g,'');
+ check('family dictionary: priority 20, partial, at least 460 prompt and 48 regex titles',()=>{assert.equal(dictionary.priority,20);assert.equal(dictionary.partial,true);assert.ok(dictionary.prompts.length>=460);assert.ok(dictionary.regex.length>=48)});
+ check('every entry has a name and a title and only the known fields',()=>{for(const item of [...dictionary.prompts,...dictionary.regex]){assert.ok(item.name&&item.title);for(const k of Object.keys(item))assert.ok(['id','name','title','desc'].includes(k),k)}});
+ check('every source-file name is in the bundle (common and each preset file)',()=>{const names=new Set(dictionary.prompts.map(e=>norm(e.name))),regex=new Set(dictionary.regex.map(e=>norm(e.name)));for(const part of parts){for(const e of part.prompts)assert.ok(names.has(norm(e.name)),e.name);for(const e of part.regex)assert.ok(regex.has(norm(e.name)),e.name)}});
+ check('per-preset files do not repeat a common name',()=>{const common=new Set(parts[0].prompts.map(e=>norm(e.name)+'|'+(e.id||'')));for(const part of parts.slice(1))for(const e of part.prompts)assert.ok(!common.has(norm(e.name)+'|'+(e.id||'')),e.name)});}
 check('both plain copies execute the exact bundled code',()=>{for(const name of ['fruit','fruit-heart']){const s=fs.readFileSync(path.join(root,`src/scripts/plain/${name}.js`),'utf8');assert.equal(s.slice(s.indexOf('/*BL-SCRIPT-START*/')+19,s.lastIndexOf('/*BL-SCRIPT-END*/')).trim(),codeOf(name).trim())}});
 const e=environment(),panel=add(e.html,'div',{id:'fruit-heart-v6',class:'open'}),home=add(panel,'button',{'data-nav':'overview'},'首页'),close=add(panel,'button',{title:'关闭'},'×');
 const prompt=add(panel,'input',{placeholder:'搜索全部条目…'});prompt.value='首页';prompt.checked=true;
@@ -113,5 +118,5 @@ tz.mutate();
 check('model-tag toasts translate without a click in either colon width, keeping the #tag',()=>{assert.equal(halfWidth.text,'모델 태그를 바꿨어요: #DS');assert.equal(fullWidth.text,'모델 태그를 바꿨어요: #GEMINI');assert.equal(localBuild.text,'모델 태그를 바꿨어요: #CLAUDE')});
 check('other Fruit toasts still wait for a recent click in the panel',()=>{assert.equal(otherToast.text,'预设已切换，请重新打开面板')});
 check('the always-on toast list holds only the model-tag notices, each a toast pattern or entry',()=>{const data=JSON.parse('{'+codeOf('fruit-heart').split('installFruitHeartKorean(BlueLemonade,{')[1].trim().replace(/\);\s*$/,''));assert.deepEqual(data.toastAnytime,['已切换模型标签：# {0}','已切换模型标签:#{0}','已切换模型标签：#{0}']);for(const zh of data.toastAnytime)assert.ok(data.entries.some(e=>e.zh===zh&&e.kind==='pattern'&&e.ko==='모델 태그를 바꿨어요: #{0}'),zh)});
-check('catalog version moved with the dictionary change',()=>{assert.match(fs.readFileSync(path.join(root,'src/scripts/catalog.js'),'utf8'),/\{id:'fruit-heart',name:'과일의 마음 한글화',version:'1\.0\.7'/)});
+check('catalog version moved with the dictionary change',()=>{assert.match(fs.readFileSync(path.join(root,'src/scripts/catalog.js'),'utf8'),/\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.0\.8'/)});
 console.log(`fruit-localization: ${passed} passed`);

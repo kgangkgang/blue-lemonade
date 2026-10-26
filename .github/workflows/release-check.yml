@@ -349,6 +349,8 @@ jobs:
           node tools/tests/regexlink-fruit.mjs .
           node tools/tests/mermaid-addon.mjs .
           node tools/tests/fruit-localization.mjs
+          node tools/tests/fruit-family.mjs .
+          node tools/tests/prompt-choice-guard.mjs .
           node tools/tests/fruit-status.mjs .
           node tools/tests/long-chat-perf.mjs .
           node tools/tests/has-guard.mjs .
@@ -394,12 +396,15 @@ jobs:
         # Regenerate in the throwaway checkout, then fail if anything changed:
         # css/43-user-profile.gen.css, css/23-preview.gen.css (check mode fails on new root declarations),
         # src/scripts/bundled/korean.js (from tools/scripts-src/korean.js, precomputed dictionary checked against the source),
+        # src/scripts/bundled/{fruit,qingguo,fruit-heart}.js (from tools/scripts-src/fruit-family/, the fruit-family dictionary),
         # src/scripts/plain/*, style.css and src/lazy-panel.gen.css.
         run: |
           node tools/gen-user-profile.cjs
           node tools/gen-preview-css.js --quiet
           node tools/build-korean-dict.mjs --check
           node tools/build-korean-dict.mjs
+          node tools/build-fruit-family.mjs --check
+          node tools/build-fruit-family.mjs
           node tools/build-plain-scripts.mjs
           node tools/build-css.cjs
           git status --porcelain

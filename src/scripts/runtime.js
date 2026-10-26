@@ -3,6 +3,7 @@ import {addonsEnabled} from '../usage-mode.js';
 import {SCRIPT_CATALOG,loadBundledScript,loadFailure} from './catalog.js';
 import {scriptSettings,legacyConflicts} from './store.js';
 import {createPromptEngine} from './prompt-engine.js';
+import {promptChoiceGroups} from '../prompt-choice-core.js';
 import {installFruitStatusKorean} from './fruit-status.js';
 import {installFruitOptionHelp} from './fruit-option-help.js';
 import {installDeusOptionHelp} from './deus-option-help.js';
@@ -75,7 +76,7 @@ async function startOne(item,state,current){
             stack:id=>{const font=findFont(id);return font&&!font.unusable?fontStack(font,font.lang||'ko'):null;},
             load:id=>{const font=findFont(id);if(font&&!font.unusable)loadFont(font);},
         });
-        const api=Object.freeze({fonts,deusOptionHelp:read=>{const help=installDeusOptionHelp(document,window,read),links=installFruitTypeShortcuts(document,window);return()=>{help();links();};},fruitOptionHelp:()=>{const help=installFruitOptionHelp(document,window),links=installFruitTypeShortcuts(document,window),entry=installFruitEntry(document,window);return()=>{help();links();entry();};},localizeFruitStatus:()=>installFruitStatusKorean(document,window),onCleanup(fn){if(typeof fn==='function')cleanups.push(fn);},translate(data){cleanups.push(translations.register(id,data));}});
+        const api=Object.freeze({fonts,deusOptionHelp:read=>{const help=installDeusOptionHelp(document,window,read),links=installFruitTypeShortcuts(document,window);return()=>{help();links();};},fruitOptionHelp:()=>{const help=installFruitOptionHelp(document,window),links=installFruitTypeShortcuts(document,window),entry=installFruitEntry(document,window);return()=>{help();links();entry();};},localizeFruitStatus:()=>installFruitStatusKorean(document,window),promptTitle:(id,name)=>translations.titleExact('prompts',id??null,name),choicePeers:(prompts,order,metadata,id)=>{try{return [...new Set(promptChoiceGroups(prompts,order,metadata).filter(group=>group.ids.includes(id)).flatMap(group=>group.ids))].filter(peer=>peer!==id);}catch{return [];}},onCleanup(fn){if(typeof fn==='function')cleanups.push(fn);},translate(data){cleanups.push(translations.register(id,data));}});
         // Each script owns its window/timers. Built-ins remove parent-document changes on pagehide.
         frame.contentWindow.addEventListener('error',(event)=>{stop(id);status(id,`실행 오류: ${event?.message||'코드를 확인해 주세요'}`);});
         frame.contentWindow.Function('BlueLemonade',code)(api);

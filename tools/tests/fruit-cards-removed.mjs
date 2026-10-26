@@ -23,7 +23,7 @@ check('no runtime file references the removed modules, settings or markup',()=>{
 check('prompt → fruit page keeps only the QR tools markup',()=>{
   const panel=read('src/panel.js');
   assert.ok(panel.includes("if(sub==='fruit')return fruitPromptMarkup();"),'fruit sub-tab should return fruitPromptMarkup() only');
-  assert.ok(panel.includes("['fruit', '과일']"),'the fruit sub-tab itself stays');
+  assert.ok(panel.includes("['fruit', '과일 계열']"),'the fruit sub-tab itself stays (8.0.1: 과일 계열)');
   assert.equal(/'fruit\.cards\.on'/.test(panel),false,'toggle rerender list no longer names fruit.cards.on');
 });
 check('features.js no longer loads the card adapter',()=>{
@@ -34,7 +34,7 @@ check('labels, search rows and routes: card design entries gone, QR row and frui
   assert.equal(read('src/settings-labels.js').includes('fruit.cards'),false);
   const search=read('src/settings-search.js');
   assert.equal(search.includes('상태 카드 디자인'),false);
-  assert.ok(search.includes("['prompt','fruit','과일',"),'the fruit QR search row stays');
+  assert.ok(search.includes("['prompt','fruit','과일 계열 (과일 · 야한과일 · 청과)',"),'the fruit QR search row stays (8.0.1: 과일 계열)');
   assert.ok(read('src/settings-differences.js').includes("if (scope === 'fruit') return {tab:'prompt',sub:'fruit'};"),'route to the fruit sub-tab stays');
 });
 check('fruit window styling script and translator card preservation stay',()=>{

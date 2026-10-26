@@ -33,7 +33,7 @@ export function bindFruitTypography(root){
     const fold=(key,label,summary,body)=>{const open=openGroups.get(owner)===key;return `<div class="bl-ft-group" data-ft-group-box="${key}"><button type="button" class="bl-ft-group-toggle" data-ft-group="${key}" aria-expanded="${open}"><span>${esc(label)}</span><small class="bl-ft-group-summary">${esc(summary)}</small></button><div class="bl-ft-group-body"${open?'':' hidden'}>${body}</div></div>`;};
     const regionSummary=r=>!r.on?'끔':r.font!=='original'?`켬 · ${findFont(r.font)?.label||'글꼴'}`:'켬';
     function paint(){
-        const s=current(),type=FRUIT_TYPES.find(t=>t.id===s.kind),config=s.types[s.kind],ownerName=owner==='deus'?'데우스':'과일';
+        const s=current(),type=FRUIT_TYPES.find(t=>t.id===s.kind),config=s.types[s.kind],ownerName=owner==='deus'?'데우스':'과일 계열';
         const regions=Object.entries(type.regions).map(([key,[label]])=>{const r=config.regions[key];return fold(key,label,regionSummary(r),`${switchRow('이 영역 조절','',`data-ft-reset="${key}"`,`${label} 원복`,toggle(`data-region="${key}" data-ft="on"`,`${label} 조절`,r.on))}
 ${field(key,'font','글꼴',`<select>${option('original','원작 글꼴',r.font)}${allFonts().filter(f=>!f.unusable).map(f=>option(f.id,f.label,r.font)).join('')}</select>`)}
 ${slider(key,'size','크기',r.size,8,64,1,'px')}${slider(key,'weight','굵기',r.weight,100,900,100,'')}

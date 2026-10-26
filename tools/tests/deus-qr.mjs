@@ -30,6 +30,25 @@ function fixture() {
 const group=groups.find(g=>g.key==='length'), toggle=toggles[0];
 const order=p=>p.prompt_order.find(x=>String(x.character_id)==='100001').order;
 const changed=(before,after)=>order(before).filter((x,i)=>x.enabled!==order(after)[i].enabled).map(x=>x.identifier);
+await test('초장편은 아주 길게와 배타적이고 기존 프리셋에 없으면 새 항목을 만들지 않아요',async()=>{
+ const ultra='bl-deus-length-ultra-long',extra='1bbb1b67-520c-4730-96d7-9674f794538b';
+ assert.equal(group.options.find(x=>x.id===ultra)?.label,'초장편');
+ const f=fixture();await f.controller.change(group.key,ultra);
+ assert.deepEqual(group.options.filter(x=>f.controller.read().states.get(x.id)).map(x=>x.id),[ultra]);
+ await f.controller.change(group.key,extra);
+ assert.deepEqual(group.options.filter(x=>f.controller.read().states.get(x.id)).map(x=>x.id),[extra]);
+ const old=fixture();for(const p of [old.saved,old.live]){p.prompts=p.prompts.filter(x=>x.identifier!==ultra);for(const g of p.prompt_order)g.order=g.order.filter(x=>x.identifier!==ultra);}
+ await assert.rejects(old.controller.change(group.key,ultra));assert.equal(old.writes.length,0);
+});
+await test('초장편과 민속 공포의 한글 이름·도움말을 번역 사전에서 찾을 수 있어요',async()=>{
+ const code=(await import(pathToFileURL(path.join(root,'src/scripts/bundled/deus.js')))).default;
+ let dictionary;new Function('BlueLemonade',code)({translate:value=>{dictionary=value;}});
+ const ultra=dictionary.prompts.find(x=>x.id==='bl-deus-length-ultra-long');
+ assert.equal(ultra.title,'「 초장편 」');assert.ok(ultra.desc.includes('2,000~3,200'));
+ const horror=dictionary.prompts.find(x=>x.id==='6f3c2a91-4d7e-4b58-9a1c-e2f05b8d7c34');
+ assert.equal(horror.title,'「 일상 민속 공포 · 기묘한 미스터리 」');
+ assert.ok(toggles.some(x=>x.id===horror.id&&x.tab==='문체'));
+});
 await test('16 choice groups and independent multi-select styles',()=>{assert.equal(groups.length,16);assert.ok(toggles.filter(x=>x.tab==='문체').length>=10);assert.ok(!groups.some(x=>x.label.includes('분위기')));});
 await test('display labels use natural Korean instead of implementation macros',()=>{for(const item of [...groups.flatMap(g=>g.options),...toggles])assert.ok(!/\{\{(?:user|char)\}\}/.test(item.label));});
 await test('known 2.5 marker requires version and structural anchors',()=>{const f=fixture();assert.ok(matches(f.saved));f.saved.prompts[0].name='DEUS V2.3';assert.equal(matches(f.saved),false);f.saved.prompts[0].name='DEUS V2.50';assert.equal(matches(f.saved),false);});
@@ -39,7 +58,7 @@ await test('toggle updates only clicked enabled; unknown data, regex, prompt con
  assert.deepEqual(f.saved,expected);assert.deepEqual(f.writes[0],[liveBefore.preset_settings_openai,expected]);assert.equal(f.live.temperature,.99);assert.deepEqual(f.live.prompts,liveBefore.prompts);assert.equal(f.publishCount,1);
 });
 await test('radio changes exactly available known siblings, no header or unknown ID',async()=>{const f=fixture(),before=structuredClone(f.saved);await f.controller.change(group.key,group.options[2].id);assert.deepEqual(changed(before,f.saved),[group.options[0].id,group.options[2].id]);assert.equal(order(f.saved).find(x=>x.identifier===group.header).enabled,false);});
-await test('multiple selected values are preserved until explicit choice',async()=>{const f=fixture();for(const p of [f.live,f.saved])order(p).find(x=>x.identifier===group.options[1].id).enabled=true;assert.equal(f.controller.read().states.get(group.options[0].id),true);assert.equal(f.writes.length,0);await f.controller.change(group.key,group.options[2].id);assert.deepEqual(group.options.map(x=>f.controller.read().states.get(x.id)),[false,false,true,false,false]);});
+await test('multiple selected values are preserved until explicit choice',async()=>{const f=fixture();for(const p of [f.live,f.saved])order(p).find(x=>x.identifier===group.options[1].id).enabled=true;assert.equal(f.controller.read().states.get(group.options[0].id),true);assert.equal(f.writes.length,0);await f.controller.change(group.key,group.options[2].id);assert.deepEqual(group.options.map(x=>f.controller.read().states.get(x.id)),group.options.map((_,i)=>i===2));});
 await test('same value sends no request',async()=>{const f=fixture();assert.equal((await f.controller.change(group.key,group.options[0].id)).state,'unchanged');assert.equal(f.writes.length,0);});
 await test('turn a choice group off without touching its header or any other group',async()=>{const f=fixture(),before=structuredClone(f.saved);await f.controller.change(group.key,'');assert.deepEqual(changed(before,f.saved),[group.options[0].id]);assert.ok(group.options.every(x=>f.controller.read().states.get(x.id)===false));});
 await test('active unknown option within a choice group blocks only that group',async()=>{const f=fixture();for(const p of [f.saved,f.live]){const rows=order(p),idx=rows.findIndex(x=>x.identifier==='unknown-custom');const row=rows.splice(idx,1)[0];row.enabled=true;rows.splice(rows.findIndex(x=>x.identifier===group.end),0,row);}await assert.rejects(f.controller.change(group.key,group.options[1].id));assert.equal(f.writes.length,0);await f.controller.change(toggle.id,true);assert.equal(order(f.saved).find(x=>x.identifier==='unknown-custom').enabled,true);});
@@ -76,4 +95,17 @@ await test('UI entry, cleanup, explicit save and no model/network generation con
 await test('native modules import through the parent realm and native document base',()=>{assert.ok(bundled.includes("host.Function('url','return import(url)')"));assert.ok(bundled.includes("importHost(new URL('scripts/openai.js',doc.baseURI).href)"));assert.ok(!bundled.includes("import(new URL("));});
 await test('the entry name is display only: trimmed, single-spaced, capped at 40 characters, never a non-string',()=>{assert.equal(quickName('  데우스   설정 '),'데우스 설정');assert.equal(quickName('가'.repeat(60)).length,40);assert.equal(quickName(''),'');assert.equal(quickName(undefined),'');assert.equal(quickName(['x']),'');});
 await test('the entry label follows the script settings and is refreshed on settings events and from the theme panel',()=>{assert.ok(bundled.includes("extensionSettings?.blue_lemonade_scripts?.names?.deus"));assert.ok(bundled.includes('refreshName: syncName'));assert.ok(bundled.includes("    if (stopped) return;\n    syncName();"));assert.ok(bundled.includes('.dq-entry-label'));assert.ok(!bundled.includes('names.deus ='));});
+await test('8.0.1 a quick toggle inside a choice group turns its lit peers off in the same saved write (대사 색상 ↔ 카드 따라 자동)',async()=>{
+ const {promptChoiceGroups}=await import(pathToFileURL(path.join(root,'src/prompt-choice-core.js')));
+ globalThis.BlueLemonade={choicePeers:(prompts,order,metadata,id)=>[...new Set(promptChoiceGroups(prompts,order,metadata).filter(g=>g.ids.includes(id)).flatMap(g=>g.ids))].filter(x=>x!==id)};
+ try{
+  const f=fixture(),color=toggles.find(x=>x.label==='대사 색상').id;
+  for(const preset of [f.saved,f.live]){preset.prompts.push({identifier:'bl-auto',name:'| Dialogue Color (카드 따라 자동) |',content:'synthetic',role:'system'});order(preset).push({identifier:'bl-auto',enabled:true});preset.extensions.blPromptChoices={version:1,groups:[{id:'dialogue-colors',ids:[color,'bl-auto']}]};}
+  const r=await f.controller.change(color,true);assert.equal(r.state,'saved');
+  const row=id=>order(f.writes[0][1]).find(x=>x.identifier===id);
+  assert.equal(row(color).enabled,true);assert.equal(row('bl-auto').enabled,false,'the saved preset keeps only one lit');
+  assert.equal(order(f.live).find(x=>x.identifier==='bl-auto').enabled,false,'live settings follow');
+  const g=fixture();await g.controller.change(toggles.find(x=>x.label==='반복 방지').id,true);assert.equal(order(g.writes[0][1]).filter(x=>x.enabled).length,order(g.saved).filter(x=>x.enabled).length,'toggles outside any group change only themselves');
+ }finally{delete globalThis.BlueLemonade;}
+});
 console.log(`Deus quick settings: ${passed} passed`);

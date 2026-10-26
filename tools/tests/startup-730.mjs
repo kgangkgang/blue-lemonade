@@ -61,7 +61,7 @@ await test('p5: fruit-heart flush and discover pick everything with one querySel
     assert.ok(fh.includes('for (const el of doc.querySelectorAll(DISCOVER_ALL)) if (el.matches(POPUPS) || !observed.has(el)) return schedule();'));
     assert.ok(!fh.includes('[...doc.querySelectorAll(rootsSelector)]') && !fh.includes("doc.querySelectorAll('#toast-container .toast-message')"), 'old per-selector walks are gone');
     new Function('BlueLemonade', fh);
-    assert.match(read('src/scripts/catalog.js'), /\{id:'fruit-heart',name:'과일의 마음 한글화',version:'1\.0\.7'/);
+    assert.match(read('src/scripts/catalog.js'), /\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.0\.8'/);
 });
 
 await test('plain copies follow the bundled ones', async () => {

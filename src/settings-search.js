@@ -5,7 +5,7 @@ import { MARKDOWN_CONTROLS, MARKDOWN_TUNING } from './markdown.js';
 import { FAQ } from './faq-data.js';   // 7.2.6 자주 묻는 질문 — 질문 글로도 찾힌다
 const rows = [
  ['prompt','deus','데우스 빠른 설정','데우스 2.5 QR 퀵리플라이 옵션 프리셋 토글 선택 한글화'],
- ['prompt','fruit','과일','과일의 마음 QR 퀵리플라이 꾸미기 스크립트 글꼴 줄바꿈 버튼 한글화 출처'],
+ ['prompt','fruit','과일 계열 (과일 · 야한과일 · 청과)','과일 과일계열 야한과일 涩果 청과 青果 과일의 마음 QR 퀵리플라이 꾸미기 스크립트 글꼴 줄바꿈 버튼 한글화 출처'],
  ['prompt','fruit','캐릭터 이름 연동','캐릭터 이름 연동 프롬프트 정규식 자동 켜기 끄기 기본 짝 채팅 프리셋 대사 색상','캐릭터 이름 연동'],
  ['extensions','tts','TTS','음성 읽기 목소리 API 감정 대사 재생 색깔 밑줄 확장 탭 설정 표시 요술봉 MiniMax OpenAI ElevenLabs Gemini Azure'],
  ['extensions','prompt','한글화 패널','실리태번 헬퍼 데우스 샤진 거문고 한글화 프리셋 월드인포 봇카드 페르소나 설명 정규식 번역 제목 검색 사용방법'],
@@ -129,7 +129,7 @@ for (const { key, label, options } of MARKDOWN_CONTROLS) rows.push(['text','mark
 for (const {key,label,group} of MARKDOWN_TUNING) rows.push(['text','markdown',`마크다운 · ${MARKDOWN_CONTROLS.find(c=>c.key===group).label} · ${label}`,`마크다운 꾸미기 ${markdownAliases[group]} ${label}`,'',`markdown.${key}`]);
 rows.push(['text','markdown','마크다운 · 장식 색 직접 고르기','마크다운 꾸미기 색 색상 포인트 직접 선택','','markdown.accentOwn'],['text','markdown','마크다운 · 장식 색','마크다운 꾸미기 색 색상 포인트','','markdown.accentColor']);
 const tabs={extensions:'확장',theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
-const subs={mermaid:'Mermaid 도표',cutedge:'투명 그림',zipinstall:'ZIP 설치',tts:'TTS',notes:'메모',strike:'취소선',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',conflicts:'확장 충돌 진단',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',icons:'단추 아이콘',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',fruit:'과일',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
+const subs={mermaid:'Mermaid 도표',cutedge:'투명 그림',zipinstall:'ZIP 설치',tts:'TTS',notes:'메모',strike:'취소선',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절',translator:'LLM 번역',conflicts:'확장 충돌 진단',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',icons:'단추 아이콘',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',fruit:'과일 계열',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
 subs.markdown = '마크다운';
 subs.faq = '자주 묻는 질문';
 for (const item of FAQ) rows.push(['theme','faq',item.q,`자주 묻는 질문 FAQ 질문 ${item.search||''}`,item.q]);

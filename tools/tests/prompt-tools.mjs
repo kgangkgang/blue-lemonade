@@ -14,14 +14,17 @@ function environment({kind='fruit',pendingRuntime=false}={}){
   const state={enabled:{'fruit-style':false,'fruit':true,'deus-qr':true},overrides:{fruit:{code:'custom code'}}};
   const settings={addons:true,theme:true},calls=[],subscribers=new Set(),runtimeGate=deferred(),saveGate=deferred();
   let save=()=>Promise.resolve(),conflict=false;
-  const inputs=['fruit-style','fruit-heart','fruit','deus-qr','deus'].map(id=>({dataset:{promptScript:id},checked:state.enabled[id]===true,disabled:false}));
+  const inputs=['fruit-style','fruit-family','deus-qr','deus'].map(id=>({dataset:{promptScript:id},checked:state.enabled[id]===true,disabled:false}));
   const button={dataset:{promptOpen:kind},disabled:false,closest:()=>button};
   const status={textContent:''},events=new Map();
   const choice={value:'yes',disabled:false,hasAttribute:s=>s==='data-prompt-deus-icon'};
   const box={dataset:{promptTools:kind},isConnected:true,querySelector:s=>s==='[data-prompt-open]'?button:s==='[data-prompt-deus-icon]'?choice:status,querySelectorAll:()=>inputs,addEventListener:(type,fn)=>events.set(type,fn),removeEventListener:(type,fn)=>{if(events.get(type)===fn)events.delete(type)}};
   const nodes=new Map();
   const runtime={subscribeScripts:fn=>{subscribers.add(fn);return()=>subscribers.delete(fn)},syncScripts:async()=>{calls.push('sync')},scriptStatus:()=> '사용 중'};
-  const context={scriptSettings:()=>state,persistScripts:()=>{calls.push('save');return save()},legacyConflicts:()=>conflict?[{}]:[],addonsEnabled:s=>s.addons,themeEnabled:s=>s.theme,getSettings:()=>settings,leaveSettingsDialog:()=>calls.push('leave'),promptLinkMarkup:()=>'',fruitTypographyMarkup:()=>'',bindFruitTypography:()=>()=>{},document:{getElementById:id=>nodes.get(id)},runtimeReady:pendingRuntime?runtimeGate.promise:Promise.resolve(runtime),cleanName};
+  const context={scriptSettings:()=>state,persistScripts:()=>{calls.push('save');return save()},legacyConflicts:()=>conflict?[{}]:[],addonsEnabled:s=>s.addons,themeEnabled:s=>s.theme,getSettings:()=>settings,leaveSettingsDialog:()=>calls.push('leave'),promptLinkMarkup:()=>'',fruitTypographyMarkup:()=>'',bindFruitTypography:()=>()=>{},document:{getElementById:id=>nodes.get(id)},runtimeReady:pendingRuntime?runtimeGate.promise:Promise.resolve(runtime),cleanName,
+    // store.js 의 묶음 토글과 같은 동작(시험용 최소판): fruit-family 는 실행 단위 셋을 함께
+    setScriptEnabled:(st,id,on)=>{const members=['fruit','qingguo','fruit-heart'];if(id==='fruit-family'||members.includes(id)){st.enabled['fruit-family']=!!on;for(const m of members)st.enabled[m]=!!on;}else st.enabled[id]=!!on;},
+    scriptEnabled:(st,id)=>st.enabled[['fruit','qingguo','fruit-heart'].includes(id)?'fruit-family':id]===true};
   vm.runInNewContext(source+'\nglobalThis.api={bindPromptTools,promptToolsMarkup,fruitPromptMarkup};',context);
   const cleanup=context.api.bindPromptTools({querySelector:()=>box});
   return{state,settings,calls,inputs,button,status,choice,box,events,nodes,context,runtime,subscribers,cleanup,saveGate,runtimeGate,

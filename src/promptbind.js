@@ -15,6 +15,7 @@
 //   표시 전용 정규식(markdownOnly)은 CHAT_CHANGED 가 글을 다 그린 뒤라 이미 그려진 글에는 안 먹었다 (실리태번도 정규식을 켜고 끌 때 다시 그린다).
 import { getSettings, saveSettings } from './settings.js';
 import { currentKey, keyLabel } from './styles.js';
+import { promptChoiceGroups } from './prompt-choice-core.js';
 
 const POPUP_FORM = 'completion_prompt_manager_popup_edit';
 const SAVE_BUTTON = 'completion_prompt_manager_popup_entry_form_save';
@@ -312,6 +313,26 @@ export async function syncPromptBinds(reason = 'ui') {
         if (link.length) {   // 6.5.2 이름 규칙: 말이 든 프롬프트는 그 줄이 맞으면 켜고 짝은 반대로 · 직접 묶은 프롬프트는 건너뜀 · 정규식은 묶음과 같이 켜기가 이긴다
             const matches = link.map(row => linkMatches(row));
             const rule = linkRule(m, link, matches);
+            // 8.0.1 택1 묶음 존중: 묶음 안에서 이름 연동이 모르는 항목(예: 「대사 색상 (카드 따라 자동)」)이 켜져 있으면 그것이 사용자의 선택이에요 —
+            // 연동 항목(말이 든 것 · 짝)을 켜지 않고 꺼 둬요. 서로 다른 선택 경로가 자동 · 기본 · 카드 전용 항목을 함께 켜지 않게 해요.
+            try {
+                const settings = m.serviceSettings, family = new Set([...rule.linked, ...rule.twins]);
+                const groups = promptChoiceGroups(settings?.prompts || [], rule.order, settings?.extensions?.blPromptChoices);
+                const on = new Set(rule.order.filter(e => e?.enabled).map(e => e.identifier));
+                for (const [id, want] of rule.want) {
+                    if (!want) continue;
+                    if (groups.some(group => group.ids.includes(id) && group.ids.some(peer => peer !== id && !family.has(peer) && on.has(peer)))) rule.want.set(id, false);
+                }
+                // 한 묶음 안에서 연동 항목이 둘 이상 켜지려 하면(카드에 맞은 항목과 다른 줄의 기본 짝처럼) 말이 맞은 항목을 짝보다 먼저,
+                // 그다음은 목록 차례로 하나만 남겨요 — 둘을 함께 켜면 택1 지킴이와 서로 끄고 켜기를 되풀이해요.
+                const rank = new Map(rule.order.map((e, i) => [e.identifier, i]));
+                for (const group of groups) {
+                    const wanting = group.ids.filter(id => rule.want.get(id) === true);
+                    if (wanting.length < 2) continue;
+                    wanting.sort((a, b) => (rule.linked.has(b) - rule.linked.has(a)) || ((rank.get(a) ?? 0) - (rank.get(b) ?? 0)));
+                    for (const id of wanting.slice(1)) rule.want.set(id, false);
+                }
+            } catch { /* 묶음을 못 읽으면 예전처럼 */ }
             for (const [id, want] of rule.want) {
                 if (all[id] && wanted(all[id], keys) !== null) continue;
                 const entry = rule.order.find(e => e.identifier === id);

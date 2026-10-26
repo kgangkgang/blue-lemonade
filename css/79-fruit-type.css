@@ -65,3 +65,7 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 :is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel[data-pick-group]::after {
   content:""; position:absolute; inset-inline:0; top:min(0px, (100% - 44px) / 2); bottom:min(0px, (100% - 44px) / 2);
 }
+
+/* 8.0.1 택1 지킴이 창(prompt-choice.js): 켜진 항목 중 남길 하나를 고르는 목록 */
+.bl-choice-guard-list{display:flex;flex-direction:column;gap:8px;margin-top:8px;text-align:left}
+.bl-choice-guard-list .checkbox_label{align-items:center;gap:8px;min-height:36px}
