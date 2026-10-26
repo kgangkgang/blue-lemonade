@@ -353,6 +353,14 @@ body.salty .rm_tag_filter .tag.actionable.excluded::after {
     min-height: 36px;
   }
 }
+/* ---------- 확장 관리 팝업(실리태번 기본 #extensions_details → .extensions_info) 머리 단추 줄 ----------
+   실리태번은 .extensions_toolbar(모두 업데이트 · 켜진 것만 업데이트 · 정렬)를 sticky 띠로 두고 --SmartThemeBlurTintColor 를 칠한다
+   (실리태번 css/extensions-panel.css). 테마는 그 변수에 팔레트 surface 를, 팝업 바탕에는 한 톤 밝은 --bl-fill-card 를 쓰므로
+   단추 뒤에 창보다 어두운 띠가 깔렸다(7.9.9 폰 제보 「첫 줄 버튼 뒤 검은 바탕」). 팝업과 같은 색으로 — 목록이 밑으로 지나가는
+   sticky 띠라 투명이 아니라 창 바탕과 같은 색이어야 한다. 단추 모양 · 간격 · 터치는 그대로 */
+html body.salty .popup .extensions_info > .extensions_toolbar {
+  background: var(--bl-fill-card, var(--bl-card)) !important;
+}
 /* ---------- 두 번째 포인트 --bl-pop (블루 아워 레몬) — 모든 화면이 이 규칙대로만 ----------
    · 레몬 = 채팅 보내기 · 멈춤 버튼(채팅 화면의 단 하나 주 동작) · 지금 있는 곳(열린 서랍 아이콘 · 고른 탭 · 고르기 칸)
            · 즐겨찾기 · 고정 표시(--bl-lemon: 별 · 잠근 배경)
