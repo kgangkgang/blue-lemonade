@@ -161,7 +161,7 @@ body.salty #toast-container .toast-close-button {
   border-radius: 50%;
   opacity: 1;
   color: var(--salty-faint);
-  font-size: 17px;
+  font-size: var(--bl-deco-glyph-17);
   font-weight: 500;
   line-height: 24px;
   text-shadow: none;

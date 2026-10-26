@@ -93,7 +93,7 @@ body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_ent
   color: var(--salty-muted) !important;
   background: transparent !important;
   box-shadow: none !important;
-  font-size: 10px !important;
+  font-size: 12px !important;
 }
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .inline-drawer-icon::before { content: '\f078'; }
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_inspect_list .inline-drawer-icon.up::before { content: '\f077'; }

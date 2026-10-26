@@ -13,7 +13,7 @@
 /* ---------- 토큰 ---------- */
 body.salty {
   /* 글자: 실리태번 글자 배율을 따라감 (--mainFontSize = 배율 × 15px) */
-  --bl-fs-micro: calc(var(--mainFontSize, 15px) * 0.767); /* 11.5 배지 · 날짜 · 버전 */
+  --bl-fs-micro: max(12px, calc(var(--mainFontSize, 15px) * 0.8)); /* B8: 배지 · 날짜 · 버전은 최소 12px예요. */
   --bl-fs-cap: calc(var(--mainFontSize, 15px) * 0.833);   /* 12.5 묶음 이름 · 태그 */
   --bl-fs-sub: calc(var(--mainFontSize, 15px) * 0.867);   /* 13 설명 · 안내 */
   --bl-fs-ctl: calc(var(--mainFontSize, 15px) * 0.933);   /* 14 버튼 · 숫자칸 · 알림 */
@@ -536,4 +536,21 @@ body.salty .autoComplete > .item.macro-ac-item > .macro-source.isThirdParty {
   --bl-deco-swatch: 22px;
   --bl-deco-toast-icon: 22px;
   --bl-deco-welcome-logo: 30px;
+}
+
+/* B8: 장식 글리프는 기존 잉크 크기를 보존해요. 일반 글자의 단계와 구분해요. */
+:root {
+  --bl-deco-glyph-15: 15px;
+  --bl-deco-glyph-19: 19px;
+  --bl-deco-glyph-17: 17px;
+  --bl-deco-glyph-28: 28px;
+  --bl-deco-glyph-22: 22px;
+  --bl-deco-glyph-26: 26px;
+  --bl-deco-glyph-21: 21px;
+  --bl-deco-glyph-18: 18px;
+  --bl-deco-glyph-24: 24px;
+  --bl-deco-glyph-30: 30px;
+  --bl-deco-glyph-10: 10px;
+  --bl-deco-glyph-11: 11px;
+  --bl-deco-glyph-12p5: 12.5px;
 }

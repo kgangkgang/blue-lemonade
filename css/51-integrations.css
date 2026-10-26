@@ -45,7 +45,7 @@
 .bl-capture-dialog::backdrop, .bl-tool-dialog::backdrop { background:var(--bl-scrim, var(--bl-fb-0009)); }
 .bl-capture-dialog header, .bl-capture-dialog footer { display:flex; align-items:center; justify-content:space-between; gap:16px; }
 .bl-capture-dialog h3 { margin:0; min-width:0; font-size:1.1em; font-weight:inherit; overflow-wrap:anywhere; }
-.bl-capture-dialog header button { font-size:24px; background:none; border:0; color:inherit; }
+.bl-capture-dialog header button { font-size:var(--bl-deco-glyph-24); background:none; border:0; color:inherit; }
 .bl-capture-layout { display:grid; grid-template-columns:minmax(240px,1fr) minmax(0,1.5fr); gap:20px; margin:16px 0; }
 .bl-capture-preview { min-width:0; }
 .bl-capture-preview img, .bl-capture-preview canvas, .bl-capture-preview video { display:block; max-width:100%; height:auto; border-radius:10px; }
@@ -117,7 +117,7 @@ body.salty .bl-capture-options select,body.salty .bl-capture-options input[type=
 body.salty-dark .bl-capture-options select,body.salty-dark .bl-capture-options input[type=number]{color-scheme:dark;}
 
 /* 6.1.5 월드인포 ? 도움말 (src/wi-help.js) — 칸 이름 옆 작은 동그라미, 누름 영역은 ::before 로 넓힌다. 테마가 꺼져 있으면 숨김 */
-.bl-wi-help { position:relative; display:inline-flex; align-items:center; justify-content:center; flex:none; box-sizing:border-box; width:17px; height:17px; min-width:17px; min-height:0; margin:0 0 0 4px; padding:0; border:1px solid currentColor; border-radius:50%; background:transparent; color:var(--salty-accent, currentColor); font:700 11px/1 sans-serif; vertical-align:middle; cursor:pointer; opacity:.5; box-shadow:none; appearance:none; -webkit-appearance:none; }
+.bl-wi-help { position:relative; display:inline-flex; align-items:center; justify-content:center; flex:none; box-sizing:border-box; width:17px; height:17px; min-width:17px; min-height:0; margin:0 0 0 4px; padding:0; border:1px solid currentColor; border-radius:50%; background:transparent; color:var(--salty-accent, currentColor); font:700 12px/1 sans-serif; vertical-align:middle; cursor:pointer; opacity:.5; box-shadow:none; appearance:none; -webkit-appearance:none; }
 .bl-wi-help::before { content:''; position:absolute; inset:-8px; }
 .bl-wi-help:hover, .bl-wi-help:focus-visible { opacity:1; }
 body:not(.salty) .bl-wi-help, body.salty-help-off .bl-wi-help { display:none; }

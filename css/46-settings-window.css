@@ -11,7 +11,7 @@
 .bl-settings-toprow { display:flex; gap:6px; align-items:flex-start; margin:2px 0 8px; }
 .bl-settings-toprow .bl-settings-search { flex:1; min-width:0; margin:0; }
 .salty-panel :is(.bl-settings-expand,.bl-settings-close) { flex:none; min-height:40px; margin:0; padding:0 8px; border:0; border-radius:10px; background:var(--salty-fill-shade, var(--salty-shade)); color:var(--salty-text); font:inherit; font-size:12px; white-space:nowrap; }
-.salty-panel .bl-settings-close { width:38px; padding:0; font:24px/1 sans-serif; }
+.salty-panel .bl-settings-close { width:38px; padding:0; font:var(--bl-deco-glyph-24)/1 sans-serif; }
 html body dialog.popup.bl-settings-dialog > .popup-button-close,
 html body dialog.popup.bl-settings-dialog .popup-controls { display:none !important; }
 html body dialog.popup.bl-settings-fullscreen:has(.salty-panel.in-popup) {

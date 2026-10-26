@@ -2311,15 +2311,16 @@ function h(tag, attrs, children) {
 function injectStyle() {
   if (pdoc.getElementById(STYLE_ID)) return;
   const css = [
+    ":root{--bl-prompt-fallback-rgba-0-0-0-0-35:rgba(0,0,0,0.35);}:root{--bl-prompt-fallback-rgba-0-0-0-0-5:rgba(0,0,0,0.5);}:root{--bl-prompt-fallback-rgba-0-0-0-0-45:rgba(0,0,0,0.45);}:root{--bl-prompt-fallback-fff:#fff;}",
     ".ppt-ta-root { --ppt-bg: var(--salty-surface, var(--SmartThemeBlurTintColor, rgba(28,28,32,0.96))); --ppt-fg: var(--salty-text, var(--SmartThemeBodyColor, #ddd)); --ppt-border: var(--salty-line, var(--SmartThemeBorderColor, rgba(255,255,255,0.18))); --ppt-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #e69a4a)); --ppt-dim: var(--salty-muted, color-mix(in srgb, var(--ppt-fg) 70%, transparent)); }",
-    ".ppt-ta-fab { position: fixed; z-index: 30000; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--ppt-border); background: var(--ppt-bg); color: var(--ppt-fg); backdrop-filter: blur(8px); box-shadow: 0 2px 10px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; touch-action: none; user-select: none; }",
+    ".ppt-ta-fab { position: fixed; z-index: 30000; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--ppt-border); background: var(--ppt-bg); color: var(--ppt-fg); backdrop-filter: blur(8px); box-shadow: 0 2px 10px var(--bl-prompt-fallback-rgba-0-0-0-0-35); display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; touch-action: none; user-select: none; }",
     ".ppt-ta-fab:hover { color: var(--ppt-accent); }",
     // Sized in viewport units, not inset: 0. ST puts a transform on <html>,
     // which makes <html> the box fixed elements are placed in, and on mobile
     // <body> is position: fixed, so <html> is 0px tall there — inset: 0 then
     // collapses the overlay and the centred modal ends up at the top.
-    ".ppt-ta-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; box-sizing: border-box; z-index: 30001; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; padding: 16px; }",
-    ".ppt-ta-modal { width: min(560px, 100%); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; background: var(--ppt-bg); color: var(--ppt-fg); border: 1px solid var(--ppt-border); border-radius: 12px; backdrop-filter: blur(12px); box-shadow: 0 8px 32px rgba(0,0,0,0.45); overflow: hidden; }",
+    ".ppt-ta-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; box-sizing: border-box; z-index: 30001; background: var(--bl-prompt-fallback-rgba-0-0-0-0-5); display: flex; align-items: center; justify-content: center; padding: 16px; }",
+    ".ppt-ta-modal { width: min(560px, 100%); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; background: var(--ppt-bg); color: var(--ppt-fg); border: 1px solid var(--ppt-border); border-radius: 12px; backdrop-filter: blur(12px); box-shadow: 0 8px 32px var(--bl-prompt-fallback-rgba-0-0-0-0-45); overflow: hidden; }",
     ".ppt-ta-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--ppt-border); display: flex; flex-direction: column; gap: 8px; }",
     ".ppt-ta-title { font-weight: 600; font-size: 1.05em; }",
     ".ppt-ta-sub { font-size: 0.85em; color: var(--ppt-dim); overflow-wrap: anywhere; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }",
@@ -2341,7 +2342,7 @@ function injectStyle() {
     ".ppt-ta-foot { padding: 10px 16px 14px; border-top: 1px solid var(--ppt-border); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }",
     ".ppt-ta-foot .ppt-ta-grow { flex: 1 1 auto; min-width: 7em; white-space: nowrap; font-size: 0.85em; color: var(--ppt-dim); }",
     ".ppt-ta-btn { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--ppt-border); background: transparent; color: var(--ppt-fg); cursor: pointer; font: inherit; }",
-    ".ppt-ta-btn.primary { border-color: var(--ppt-accent); background: var(--ppt-accent); color: var(--salty-on-accent, #fff); font-weight: inherit; }",
+    ".ppt-ta-btn.primary { border-color: var(--ppt-accent); background: var(--ppt-accent); color: var(--salty-on-accent, var(--bl-prompt-fallback-fff)); font-weight: inherit; }",
     ".ppt-ta-btn:disabled { opacity: 0.45; cursor: default; }",
   ].join(" ");
   pdoc.head.appendChild(h("style", { id: STYLE_ID, text: css }));

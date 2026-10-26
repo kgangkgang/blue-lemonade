@@ -70,7 +70,7 @@ body.salty :is(#WorldInfo, #PersonaManagement) .paginationjs-pages ul li a {
   border-radius: 8px;
   color: var(--salty-muted) !important;
   opacity: 1 !important;
-  font-size: 15px;
+  font-size: var(--bl-fs-body);
 }
 body.salty :is(#WorldInfo, #PersonaManagement) .paginationjs-pages ul li.disabled a {
   color: var(--salty-faint) !important;
@@ -1224,7 +1224,7 @@ body.salty #PersonaManagement :is(#create_dummy_persona, #lock_persona_default, 
 }
 body.salty #PersonaManagement :is(#create_dummy_persona, #lock_persona_default, #lock_persona_to_char, #lock_user_name) > i {
   width: auto;
-  font-size: 15px !important;
+  font-size: var(--bl-deco-glyph-15) !important;
   color: var(--salty-muted) !important;
 }
 @media (hover: hover) {
@@ -1436,7 +1436,7 @@ body.salty #PersonaManagement #user_avatar_block .avatar_container_states .menu_
   overflow-wrap: normal;
 }
 body.salty #PersonaManagement #user_avatar_block .avatar_container_states .menu_button i {
-  font-size: 11px !important;
+  font-size:var(--bl-deco-glyph-11) !important;
   color: inherit !important;
 }
 /* 실리태번은 알약 글자를 hover 때만 보여 줌 → 폰에서는 영원히 아이콘만 남음. 글자를 늘 펴고 겹치는 아이콘은 접음 */
@@ -1458,7 +1458,7 @@ body.salty #PersonaManagement #user_avatar_block .avatar_upload {
   border-radius: 12px !important;
   background: var(--bl-fill-hover, var(--bl-hover)) !important;
   color: var(--salty-faint) !important;
-  font-size: 28px !important;
+  font-size: var(--bl-deco-glyph-28) !important;
 }
 /* 격자 보기: 한 줄 안 카드 높이 같게 · 카드 안은 가운데 정렬 하나로 · 설명은 접음
    (칸이 100px 밖에 안 되어 설명이 여섯 글자씩 잘려 글이 아니라 얼룩으로 보임) */

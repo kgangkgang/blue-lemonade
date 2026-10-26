@@ -114,7 +114,7 @@ html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settin
   top: 12px !important; right: 10px !important; width: 34px !important; height: 34px !important; z-index: 2 !important;
   margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 8px !important;
   background: transparent !important; color: var(--salty-text) !important; opacity: 1 !important; filter: none !important;
-  font: 400 22px/34px sans-serif !important; text-align: center !important;
+  font: 400 var(--bl-deco-glyph-22)/34px sans-serif !important; text-align: center !important;
 }
 html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-button-close::before { content: "×" !important; font: inherit !important; }
 /* 머리가 없는 요청 로그 창: × 자리만큼 위 줄을 비운다 */

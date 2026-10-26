@@ -70,7 +70,7 @@ body.salty:not(#salty-none) #WorldInfo .world_entry .inline-drawer-header .killS
 body.salty:not(#salty-none) #WorldInfo .bl-wi-actions { grid-area: 1 / 4; }
 body.salty #WorldInfo .bl-wi-actions > summary {
   display: grid; place-items: center; list-style: none; width: 30px; height: 34px;
-  border-radius: 8px; color: var(--salty-muted); cursor: pointer; font-size: 21px;
+  border-radius: 8px; color: var(--salty-muted); cursor: pointer; font-size: var(--bl-deco-glyph-21);
 }
 body.salty #WorldInfo .bl-wi-actions > summary::-webkit-details-marker { display: none; }
 body.salty #WorldInfo .bl-wi-actions[open] > summary { background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent); }
@@ -121,8 +121,8 @@ body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar {
   padding: 4px 4px; border-radius: 10px;
 }
 body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar img { width: 48px !important; height: 52px !important; border-radius: 8px !important; object-fit: cover; box-shadow: none !important; }
-body.salty #right-nav-panel #HotSwapWrapper .bl-fav-name { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--salty-text); font-size: 10px; line-height: 1.4; }
-body.salty #right-nav-panel #HotSwapWrapper .hotswap > small { min-height: 32px; text-align: left; font-size: 11px; }
+body.salty #right-nav-panel #HotSwapWrapper .bl-fav-name { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--salty-text); font-size: 12px; line-height: 1.4; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > small { min-height: 32px; text-align: left; font-size: 12px; }
 body.salty #right-nav-panel #charListFixedTop { background: transparent; box-shadow: none; padding-inline: 0 !important; }
 body.salty #right-nav-panel #rm_print_characters_block .character_select {
   padding: 8px !important; gap: 10px !important; border-radius: 12px;
@@ -133,13 +133,13 @@ body.salty #right-nav-panel #rm_print_characters_block .character_select > .avat
 /* 그림과 분리한 표본 선택 도구 */
 body.salty .salty-panel .bl-preview-tools { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 0; }
 body.salty .salty-panel .bl-preview-kinds, body.salty .salty-panel .bl-preview-samples:not([hidden]) { display: flex; align-items: center; gap: 2px; }
-body.salty .salty-panel .bl-preview-tools button { min-height: var(--bl-settings-chip, 32px); padding: calc(4px + var(--bl-text-nudge, 0px)) 8px calc(4px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border: 0; border-radius: 7px; background: transparent; color: var(--salty-muted); font: inherit; font-size: 11px; cursor: pointer; }
+body.salty .salty-panel .bl-preview-tools button { min-height: var(--bl-settings-chip, 32px); padding: calc(4px + var(--bl-text-nudge, 0px)) 8px calc(4px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border: 0; border-radius: 7px; background: transparent; color: var(--salty-muted); font: inherit; font-size: 12px; cursor: pointer; }
 body.salty .salty-panel .bl-preview-tools button[aria-pressed="true"] { background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent-ink, var(--salty-accent)); }
-body.salty .salty-panel .bl-preview-samples button { min-width: 28px; font-size: 21px; }
-body.salty .salty-panel .bl-preview-samples span { min-width: 30px; color: var(--salty-muted); text-align: center; font-size: 11px; }
+body.salty .salty-panel .bl-preview-samples button { min-width: 28px; font-size: var(--bl-deco-glyph-21); }
+body.salty .salty-panel .bl-preview-samples span { min-width: 30px; color: var(--salty-muted); text-align: center; font-size: 12px; }
 body.salty .salty-panel:not(.bl-editor) .salty-sec[data-tab="image"] .salty-group { padding-inline: 10px; }
 body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 0; background: transparent; }
-body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes button { border-radius: 9px; padding: 8px 4px 10px; /* 7.9.1: 그림(위 여백 큼) + 글자 덩어리의 잉크 가운데가 칸 가운데보다 1.4px 아래였다 — 위 1 · 아래 1 옮김 */ box-shadow: none; flex-direction: column; justify-content: center; gap: 4px; font-size: 11px; min-height: 64px; }
+body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes button { border-radius: 9px; padding: 8px 4px 10px; /* 7.9.1: 그림(위 여백 큼) + 글자 덩어리의 잉크 가운데가 칸 가운데보다 1.4px 아래였다 — 위 1 · 아래 1 옮김 */ box-shadow: none; flex-direction: column; justify-content: center; gap: 4px; font-size: 12px; min-height: 64px; }
 /* 작은 트랙, 넉넉한 누름 영역 */
 body.salty .salty-panel .salty-switch { width: 36px; height: 36px; }
 body.salty .salty-panel .salty-switch span { inset: 8px 0; }
@@ -176,7 +176,7 @@ body.salty #send_form #qr--bar {
   overscroll-behavior-x: contain; padding: 2px 0; opacity: 1;
 }
 body.salty #send_form #qr--bar > .qr--buttons { flex: 0 0 auto; width: max-content; flex-wrap: nowrap; justify-content: flex-start; }
-body.salty #send_form #qr--bar .qr--button { flex-shrink: 0; min-height: 34px; padding: 4px 8px; margin: 0; border: 0; border-radius: 7px; background: var(--bl-fill-hover, var(--bl-hover)); color: var(--salty-text); box-shadow: none; font-size: 11px; white-space: nowrap; }
+body.salty #send_form #qr--bar .qr--button { flex-shrink: 0; min-height: 34px; padding: 4px 8px; margin: 0; border: 0; border-radius: 7px; background: var(--bl-fill-hover, var(--bl-hover)); color: var(--salty-text); box-shadow: none; font-size: 12px; white-space: nowrap; }
 body.salty #send_form #qr--bar #qr--popoutTrigger { position: sticky; left: 0; flex-shrink: 0; order: -1; background: var(--bl-fill-card, var(--bl-card)); }
 body.salty #send_form #qr--bar:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: -2px; }
 /* 버튼이 하나도 없는 빈 바는 자리를 차지하지 않음 (2.7.9 — 위아래 여백 2px 씩이 입력판 아래에 빈 줄을 만들어 버튼 줄 전체가 2px 위로 밀려 있었음) */
@@ -212,7 +212,7 @@ body.salty .bl-qrf .salty-pick-rows > button { flex-direction: column; align-ite
 body.salty .bl-qrf .bl-qrf-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
 body.salty .bl-qrf .bl-qrf-name b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 body.salty .bl-qrf .bl-qrf-name i { flex: none; width: 14px; color: var(--salty-muted); font-size: 12px; text-align: center; }
-body.salty .bl-qrf .salty-pick-rows > button small { overflow: hidden; color: var(--salty-muted); font-size: 11.5px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+body.salty .bl-qrf .salty-pick-rows > button small { overflow: hidden; color: var(--salty-muted); font-size: 12px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
 /* 3.5.5 찾은 글자: 대사 형광펜과 같은 획(--salty-marker-bg) · 글자색 */
 body.salty .bl-qrf mark { padding: 0; border-radius: 0; background: var(--salty-marker-bg); color: var(--salty-marker-ink, var(--salty-text)); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 @media (max-width: 1000px) {

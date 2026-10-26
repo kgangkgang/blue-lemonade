@@ -12,27 +12,28 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;
 const ctx = () => SillyTavern.getContext();
 
 // 창 모양: 테마 공용 대화상자(.bl-tool-dialog) · 버튼(.salty-btn) 위에 목록 줄만 더한다 (처음 열 때 한 번 넣음)
-const STYLE = `
+const STYLE = `:root{--bl-dialogue-fallback-7ab:#7ab;--bl-dialogue-fallback-8882:#8882;--bl-dialogue-fallback-8888:#8888;}
+
 .bl-dlg-view{width:min(520px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:0;display:flex;flex-direction:column;overflow:hidden}
 .bl-dlg-view:not([open]){display:none}
 .bl-dlg-view:focus,.bl-dlg-list:focus:not(:focus-visible){outline:none}
-.bl-dlg-head{display:flex;align-items:baseline;gap:10px;padding:12px var(--bl-fh-pad,14px) 10px;border-bottom:1px solid var(--salty-line,#8888)}
+.bl-dlg-head{display:flex;align-items:baseline;gap:10px;padding:12px var(--bl-fh-pad,14px) 10px;border-bottom:1px solid var(--salty-line,var(--bl-dialogue-fallback-8888))}
 .bl-dlg-head h3{margin:0;flex:1 1 auto;min-width:0;font-size:1.05em;font-weight:inherit}
 .bl-dlg-count{flex:none;font-size:.86em;opacity:.78}
 .bl-dlg-list{list-style:none;margin:0;padding:0;overflow:auto;overscroll-behavior:contain;flex:1 1 auto;min-height:0}
-.bl-dlg-list>li+li{border-top:1px solid color-mix(in srgb,var(--salty-line,#8888) 55%,transparent)}
+.bl-dlg-list>li+li{border-top:1px solid color-mix(in srgb,var(--salty-line,var(--bl-dialogue-fallback-8888)) 55%,transparent)}
 .bl-dlg-view button.bl-dlg-row{all:unset;box-sizing:border-box;display:grid;grid-template-columns:10px minmax(0,1fr);column-gap:10px;align-items:start;width:100%;padding:9px var(--bl-fh-pad,14px);color:var(--salty-text,currentColor);cursor:pointer;line-height:1.6;text-align:start;overflow-wrap:anywhere}
-.bl-dlg-view button.bl-dlg-row:hover{background:var(--salty-shade,#8882)}
-.bl-dlg-view button.bl-dlg-row:focus-visible{outline:2px solid var(--salty-accent,#7ab);outline-offset:-2px}
-.bl-dlg-dot{width:10px;height:10px;margin-top:calc(.8em - 5px);border-radius:50%;background:var(--dot,var(--salty-line,#8888));box-shadow:0 0 0 1px color-mix(in srgb,var(--salty-text,currentColor) 22%,transparent)}
+.bl-dlg-view button.bl-dlg-row:hover{background:var(--salty-shade,var(--bl-dialogue-fallback-8882))}
+.bl-dlg-view button.bl-dlg-row:focus-visible{outline:2px solid var(--salty-accent,var(--bl-dialogue-fallback-7ab));outline-offset:-2px}
+.bl-dlg-dot{width:10px;height:10px;margin-top:calc(.8em - 5px);border-radius:50%;background:var(--dot,var(--salty-line,var(--bl-dialogue-fallback-8888)));box-shadow:0 0 0 1px color-mix(in srgb,var(--salty-text,currentColor) 22%,transparent)}
 .bl-dlg-name{display:block;font-size:.84em;font-weight:600;opacity:.86}
 .bl-dlg-thought .bl-dlg-text{font-style:italic;opacity:.86}
 .bl-dlg-tag{font-size:.8em;font-weight:normal;opacity:.75;margin-inline-start:6px}
 .bl-dlg-empty{margin:0;padding:16px var(--bl-fh-pad,14px);line-height:1.7}
-.bl-dlg-foot{display:flex;gap:8px;justify-content:flex-end;padding:10px var(--bl-fh-pad,14px) 12px;border-top:1px solid var(--salty-line,#8888)}
+.bl-dlg-foot{display:flex;gap:8px;justify-content:flex-end;padding:10px var(--bl-fh-pad,14px) 12px;border-top:1px solid var(--salty-line,var(--bl-dialogue-fallback-8888))}
 .bl-dlg-foot .salty-btn{min-height:34px;padding:5px 12px}
-::highlight(${HIT}){background-color:color-mix(in srgb,var(--salty-accent,#7ab) 45%,transparent);text-decoration:underline 2px var(--salty-accent,#7ab);text-underline-offset:3px}
-.bl-dlg-flash{outline:2px solid var(--salty-accent,#7ab);outline-offset:2px;border-radius:4px}`;
+::highlight(${HIT}){background-color:color-mix(in srgb,var(--salty-accent,var(--bl-dialogue-fallback-7ab)) 45%,transparent);text-decoration:underline 2px var(--salty-accent,var(--bl-dialogue-fallback-7ab));text-underline-offset:3px}
+.bl-dlg-flash{outline:2px solid var(--salty-accent,var(--bl-dialogue-fallback-7ab));outline-offset:2px;border-radius:4px}`;
 function style() {
     if (document.querySelector('style[data-bl-dialogue-only]')) return;
     const el = document.createElement('style');

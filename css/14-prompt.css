@@ -519,7 +519,7 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list .drag-hand
   justify-content: flex-start;
   padding: 0 0 0 var(--pm-x) !important;
   color: var(--salty-faint);
-  font-size: 15px;
+  font-size: var(--bl-deco-glyph-15);
 }
 /* 끌어 옮기는 줄은 떠오르고(e4), 놓일 자리는 옅은 포인트 면 */
 body.salty #completion_prompt_manager #completion_prompt_manager_list > li.ui-sortable-helper {
@@ -812,7 +812,7 @@ body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_ent
   margin: 0 !important;
   padding: 0 !important;
   border-radius: 12px !important;
-  font-size: 17px !important;
+  font-size: var(--bl-deco-glyph-17) !important;
 }
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_close {
   margin-right: auto !important;
@@ -852,7 +852,7 @@ body.salty #rm_api_block > #title_api {
   font-size: var(--bl-fs-head) !important;
 }
 body.salty #rm_api_block .notes-link .note-link-span {
-  font-size: 15px;
+  font-size: var(--bl-fs-body);
   vertical-align: 2px;
 }
 /* 프로필 줄: 고르기 + 조용한 아이콘, 오른쪽 끝 맞춤 */

@@ -136,3 +136,15 @@ html body.salty #pt-panel .pt-page:has(> .pt-page-fixed) > .pt-page-scroll { min
 
 /* B7 캐릭터 에셋 창: 「에셋 떼기」(글자 붙은 아이콘 단추) · 「기본값」「완성본 복사」(작은 단추)도 같은 창 글자 단추(이미지 · ZIP · 선택)와 같은 높이 — 폰에서만 맞추던 것을 PC 에도 */
 html body.salty #char_assets_settings :is(.eh-icon-btn--labeled, .eh-btn--small) { height: var(--bl-h-ctl, 36px); }
+
+/* B8: 같은 창의 글자 단추는 PC에서도 같은 글자 단계를 써요. */
+html body.salty #char_assets_settings :is(.eh-icon-btn--labeled, .eh-btn--small) { font-size: var(--bl-ts-ctl) !important; }
+html body.salty .bl-translator-dialog :is(.llmt-gl-extract, .llmt-gl-sort) { font-size: 13px; }
+/* 화면당 하나인 실행 단추는 주요 단추 높이를 쓰되, 큰 글자도 잘리지 않게 해요. */
+html body.salty #model-switch-settings .ms-actions .ms-apply {
+  font-size: inherit !important;
+  min-height: max(var(--bl-h-lg, 40px), 1.4em);
+  height: auto;
+  padding-block: 4px !important;
+  line-height: 1.4;
+}

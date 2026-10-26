@@ -45,7 +45,7 @@
   border-radius: 7px;
   background: var(--bl-hover, var(--bl-fb-rgb-127-127-127-0p1));
   color: var(--salty-text);
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
   scroll-snap-align: start;
   user-select: none;
@@ -307,7 +307,7 @@ body.salty:not(#salty-none) .ctx-blocker .ctx-menu > .list-group-item.ctx-header
   min-height: 0;
   padding: 6px 10px 4px !important;
   color: var(--salty-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 body.salty .ctx-blocker .ctx-menu > .ctx-item + .ctx-header {

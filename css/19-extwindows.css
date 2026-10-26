@@ -183,8 +183,8 @@ body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b 
 .bl-credits-dialog{margin:auto;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--salty-line, var(--bl-fb-cdd9e8));border-radius:18px;background:var(--salty-surface, var(--bl-fb-fff));color:var(--salty-text, var(--bl-fb-24354c));overflow:hidden}
 .bl-credits-dialog[open]{display:flex;flex-direction:column}.bl-credits-dialog::backdrop{background:var(--bl-scrim)}
 .bl-credits-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;flex:none;border-bottom:1px solid var(--salty-line, var(--bl-fb-cdd9e8))}
-.bl-credits-dialog h2{font-size:18px;margin:0}.bl-credits-dialog header button{width:40px;height:40px;border:0;background:transparent;color:inherit;font:400 26px/1 system-ui;cursor:pointer}
-.bl-credits-body{overflow:auto;min-height:0;padding:4px 16px 16px;font-size:13px;line-height:1.8;word-break:keep-all;overflow-wrap:anywhere}.bl-credits-body section{padding:10px 0;border-bottom:1px solid var(--salty-line, var(--bl-fb-cdd9e8))}.bl-credits-body h3{font-size:15px;margin:8px 0}.bl-credits-body a{color:var(--salty-accent, var(--bl-fb-3975b8));text-decoration:underline}
+.bl-credits-dialog h2{font-size:var(--bl-ts-head);margin:0}.bl-credits-dialog header button{width:40px;height:40px;border:0;background:transparent;color:inherit;font:400 var(--bl-deco-glyph-26)/1 system-ui;cursor:pointer}
+.bl-credits-body{overflow:auto;min-height:0;padding:4px 16px 16px;font-size:13px;line-height:1.8;word-break:keep-all;overflow-wrap:anywhere}.bl-credits-body section{padding:10px 0;border-bottom:1px solid var(--salty-line, var(--bl-fb-cdd9e8))}.bl-credits-body h3{font-size:var(--bl-fs-body);margin:8px 0}.bl-credits-body a{color:var(--salty-accent, var(--bl-fb-3975b8));text-decoration:underline}
 
 /* Embedded tools also open outside the editor. Keep their controls on the same
    palette and let text size determine when rows need another line. */
@@ -429,5 +429,5 @@ html body.salty .stwii--panel { max-width:max(calc((100vw - var(--sheldWidth, 50
   /* 책 단추(트리거): 원래 자리(왼쪽 아래 0.125em, z 3010)가 입력창의 ✦ 요술봉 단추 아래쪽을 덮어 요술봉이 안 눌렸다 → 입력창 바로 위로.
      입력창에 앵커를 붙이면 글자마다 문서 전체 레이아웃이 다시 돌아서(04-send-form 2.9.4) 앵커 대신 버튼 크기로 어림한다
      (단추 줄 둘 + 메모 줄 ≈ 입력창 높이 — 메모 줄이 없으면 조금 더 위에 뜬다). 흐린 25% 는 손가락 화면에서 안 보여 60% */
-  html body.salty .stwii--trigger { bottom:calc(2 * var(--bottomFormBlockSize, 34.5px) + 72px); left:8px; font-size:28px; opacity:.6; }
+  html body.salty .stwii--trigger { bottom:calc(2 * var(--bottomFormBlockSize, 34.5px) + 72px); left:8px; font-size:var(--bl-deco-glyph-28); opacity:.6; }
 }

@@ -37,7 +37,7 @@ body.salty.salty-qr-top .salty-panel .bl-qr-inputmock {
   border-radius: 9px;
   background: var(--bl-fill-hover, var(--bl-hover));
   color: var(--salty-muted);
-  font-size: 11.5px;
+  font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -51,5 +51,5 @@ body.salty.salty-qr-top .salty-panel .bl-qr-inputmock {
   border-radius: 9px;
   background: var(--bl-fill-card, var(--bl-card));
   color: var(--salty-muted);
-  font-size: 11px;
+  font-size: 12px;
 }

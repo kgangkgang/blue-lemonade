@@ -189,7 +189,7 @@ body.salty .popup .popup-button-close {
   border-radius: 50% !important;
   background: var(--bl-fill-hover, var(--bl-hover)) !important;
   color: var(--salty-muted) !important;
-  font-size: 15px !important;
+  font-size: var(--bl-deco-glyph-15) !important;
   filter: none !important;
 }
 /* 6.9.7 닫기 × 가 원 위쪽에 붙던 것: 실리태번이 보일 때 인라인 display:block 을 박아 위 align-items · justify-content 가 안 먹고

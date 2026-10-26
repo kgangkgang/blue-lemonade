@@ -7,7 +7,13 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root = path.resolve(process.argv[2] || fileURLToPath(new URL('../..', import.meta.url)));
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
-const css = read('css/85-addon-unify.css').replace(/\/\*[\s\S]*?\*\//g, '');
+const glyphCss = read('css/10-foundation.css');
+const resolveGlyphs = text => text.replace(/var\((--bl-deco-glyph-[\w]+)\)/g, (_, name) => {
+  const value = glyphCss.match(new RegExp(name + ':\\s*([^;]+);'));
+  assert.ok(value, `아이콘 크기 토큰 ${name}이 없어요`);
+  return value[1];
+});
+const css = resolveGlyphs(read('css/85-addon-unify.css')).replace(/\/\*[\s\S]*?\*\//g, '');
 const built = read('style.css');
 let passed = 0;
 const test = (name, fn) => { fn(); passed++; };

@@ -10,7 +10,7 @@ body.salty #WorldInfo .world_entry .WIEnteryHeaderControls input[type="number"]:
 body.salty #WorldInfo .world_entry .WIEnteryHeaderControls input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 /* 제목과 이름을 첫 줄, 도구와 추가 설정을 둘째 줄로. 긴 이름은 높이를 늘려 표시한다. */
 body.salty #PersonaManagement .persona_management_current_persona > h4.standoutHeader:first-child {
-  width: 116px; padding: 12px 12px 0 !important; font-size: 10px !important;
+  width: 116px; padding: 12px 12px 0 !important; font-size: 12px !important;
 }
 body.salty #PersonaManagement #persona_controls {
   display: grid; gap: 4px !important;
@@ -19,14 +19,14 @@ body.salty #PersonaManagement #persona_controls {
 body.salty #PersonaManagement #persona_controls .persona_name {
   grid-area: 1 / 1 / 2 / -1; min-height: 24px; padding: 2px 4px 2px 108px;
   text-align: left !important;
-  font-size: 15px !important; overflow-wrap: anywhere;
+  font-size: var(--bl-fs-body) !important; overflow-wrap: anywhere;
 }
 body.salty #PersonaManagement #persona_controls .persona_controls_buttons_block {
   grid-area: 2 / 1; margin: 0;
 }
 body.salty #PersonaManagement #persona_controls .persona_controls_buttons_block #persona_delete_button { margin-left: 0 !important; }
 body.salty #PersonaManagement #persona_controls > label { grid-area: 2 / 2; /* 3.0.0: width · max-width → css/27-compact.css (같은 선택자 규칙이 덮음) */ }
-body.salty #PersonaManagement #persona-management-dropdown { width: 100%; padding-left: 4px !important; font-size: 11px !important; }
+body.salty #PersonaManagement #persona-management-dropdown { width: 100%; padding-left: 4px !important; font-size: 12px !important; }
 /* 빠른 답장: 구역마다 가벼운 바탕과 한쪽으로 모은 도구. 색은 테마 팔레트만 사용한다. */
 body.salty #qr--settings > .inline-drawer > .inline-drawer-content { padding: 8px !important; }
 body.salty #qr--settings > .inline-drawer > .inline-drawer-content > hr { display: none; }
@@ -36,7 +36,7 @@ body.salty #qr--settings :is(#qr--global, #qr--chat, #qr--character, #qr--editor
 }
 body.salty #qr--settings .qr--head { align-items: center; gap: 6px; margin-bottom: 6px; }
 body.salty #qr--settings .qr--title { flex: 1; min-width: 0; color: var(--salty-text); font-size: 12px; font-weight: 600; }
-body.salty #qr--settings .qr--head > small { color: var(--salty-muted); font-size: 10px; }
+body.salty #qr--settings .qr--head > small { color: var(--salty-muted); font-size: 12px; }
 body.salty #qr--settings .qr--head > .qr--actions { margin-left: auto; gap: 4px; }
 body.salty #qr--settings .qr--setList { display: flex; flex-direction: column; gap: 6px; }
 body.salty #qr--settings .qr--setList .qr--item {
@@ -45,7 +45,7 @@ body.salty #qr--settings .qr--setList .qr--item {
 }
 body.salty #qr--settings .qr--setList .qr--item > select { width: 100%; min-width: 0; margin: 0; height: 34px; padding: 4px 16px 4px 6px; font-size: 12px; }
 body.salty #qr--settings .drag-handle { color: var(--salty-faint); font-size: 12px; }
-body.salty #qr--settings .qr--visible { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--salty-muted); white-space: nowrap; }
+body.salty #qr--settings .qr--visible { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--salty-muted); white-space: nowrap; }
 body.salty #qr--settings .menu_button_icon,
 body.salty #qr--settings .qr--action { min-width: 26px !important; width: 26px !important; height: 34px !important; min-height: 34px !important; padding: 0 !important; margin: 0 !important; font-size: 12px !important; }
 body.salty #qr--settings :is(.qr--del, .redWarningBG) { color: var(--salty-danger) !important; background: transparent !important; box-shadow: none !important; }
@@ -55,7 +55,7 @@ body.salty #qr--settings :is(.inline-drawer-content, #qr--set-settings) > label.
 }
 body.salty #qr--settings label > input[type="checkbox"] { width: 16px; height: 16px; flex: none; margin: 0; }
 body.salty #qr--settings label > span { min-width: 0; }
-body.salty #qr--settings label small { display: block; font-size: 10px; color: var(--salty-muted); }
+body.salty #qr--settings label small { display: block; font-size: 12px; color: var(--salty-muted); }
 body.salty #qr--settings #qr--set-settings { margin: 8px 0; padding: 6px; border-radius: 8px; background: var(--salty-fill-raised, var(--salty-raised)); }
 body.salty #rm_extensions_block #qr--editor > .qr--head { gap: 4px !important; }
 body.salty #rm_extensions_block #qr--editor > .qr--head > .qr--actions { justify-content: flex-end; /* 3.0.0: gap → css/27-compact.css (같은 선택자 규칙이 덮음) */ }
@@ -77,7 +77,7 @@ body.salty #regex_container .inline-drawer-content > .flex-container:first-child
   width: 100%; min-width: 0; margin: 0 !important; padding: 6px 4px !important;
   justify-content: center; gap: 4px !important; font-size: 12px !important;
 }
-body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button > small { font-size: 11px !important; white-space: normal; text-align: center; }
+body.salty #regex_container .inline-drawer-content > .flex-container:first-child > .menu_button > small { font-size: 12px !important; white-space: normal; text-align: center; }
 body.salty #regex_container :is(#regex_presets_block, #global_scripts_block, #preset_scripts_block, #scoped_scripts_block) { width: 100%; min-width: 0; margin-inline: 0; }
 body.salty #regex_container .regex-script-container { width: 100%; padding: 0; gap: 4px !important; }
 body.salty #regex_container .regex-script-label { width: 100%; box-sizing: border-box; margin: 0; padding: 4px 0 4px 4px; align-items: center; gap: 4px !important; }

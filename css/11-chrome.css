@@ -209,7 +209,7 @@ body.salty .welcomePanel .welcomeHeaderTitle .mes_button {
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 body.salty .welcomePanel .welcomeHeaderTitle .mes_button i {
-  font-size: 15px;
+  font-size: var(--bl-deco-glyph-15);
   line-height: inherit;
   vertical-align: top;
 }
@@ -428,7 +428,7 @@ body.salty .welcomeRecent .recentChatList .recentChat .chatStats .counterBlock {
   gap: 4px;
 }
 body.salty .welcomeRecent .recentChatList .recentChat .chatStats .counterBlock i {
-  font-size: 10px;
+  font-size:var(--bl-deco-glyph-10);
 }
 body.salty .welcomeRecent .recentChatList .recentChat .chatStats .counterBlock::after {
   content: none;
@@ -562,7 +562,7 @@ body.salty #select_chat_cross {
   background: var(--bl-fill-hover, var(--bl-hover));
   color: var(--salty-muted) !important;
   opacity: 1 !important;
-  font-size: 15px !important;
+  font-size: var(--bl-deco-glyph-15) !important;
 }
 body.salty #select_chat_cross::before {
   content: "\f00d"; /* 동그라미 안 × → 맨 × (카드 위 겹동그라미로 안 보이게) */
@@ -590,7 +590,7 @@ body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_b
 body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_button, button.menu_button) > i {
   flex: none;
   color: var(--salty-muted) !important;
-  font-size: 15px !important;
+  font-size: var(--bl-deco-glyph-15) !important;
 }
 body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_button, button.menu_button) > span {
   overflow: hidden;
@@ -819,7 +819,7 @@ body.salty :is(.select_chat_block, .swipe_picker_block) .select_chat_actions > *
   border-radius: var(--bl-r-xs);
   color: inherit;
   opacity: 1 !important;
-  font-size: 15px !important;
+  font-size: var(--bl-deco-glyph-15) !important;
   line-height: 1;
   transform: none;
 }
@@ -926,7 +926,7 @@ body.salty .popup.swipe_picker_popup .swipe_picker_header .popup-button-close {
   background: var(--bl-fill-hover, var(--bl-hover)) !important;
   color: var(--salty-muted) !important;
   opacity: 1 !important;
-  font-size: 15px !important;
+  font-size: var(--bl-deco-glyph-15) !important;
 }
 body.salty .popup.swipe_picker_popup .swipe_picker_header .popup-button-close::before {
   content: "\f00d";
