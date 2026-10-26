@@ -542,7 +542,7 @@ export const FILE_HASHES = {
   "src/fruit-type-schema.js": "13644:8a2cd983:39839937",
   "src/fruit-type-shortcuts.js": "7133:7b44c5c2:3be513c0",
   "src/fruit-type-snapshot.js": "7708:38ee7fe9:12c69af0",
-  "src/fruit-type-ui.js": "26927:e579edf9:5db589cf",
+  "src/fruit-type-ui.js": "27065:46717764:98a5da94",
   "src/generation-state.js": "6956:ff69362b:15d46250",
   "src/gradient-ui.js": "5326:12fabd1e:586f428a",
   "src/gradients.js": "10746:1b5ebec2:b7fb0a19",

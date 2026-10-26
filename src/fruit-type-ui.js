@@ -61,7 +61,7 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
         frame.addEventListener('load',()=>capturePreview());
         bindPreviewViews(box,'fruit-type');
         // 미리보기 칸이 보이거나 폭이 바뀌면 바로 다시 맞춰요(묶음을 펼친 직후 · 화면 회전) — 1.5초 타이머를 기다리지 않게
-        portWatch?.disconnect();portWatch=null;const port=box.querySelector('.bl-view-port');if(port&&typeof ResizeObserver==='function'){let last=-1;portWatch=new ResizeObserver(()=>{const w=port.clientWidth;if(w!==last){last=w;schedulePreview();}});portWatch.observe(port);}
+        portWatch?.disconnect();portWatch=null;const port=box.querySelector('.bl-view-port');if(port&&typeof ResizeObserver==='function'){let last=-1;portWatch=new ResizeObserver(()=>{const w=port.clientWidth;if(w!==last){last=w;refit();schedulePreview();}});portWatch.observe(port);}
         frame.srcdoc=FRUIT_SNAPSHOT_DOCUMENT;
     }
     // 미리보기 칸은 작게 두고, 펼치거나 고친 영역이 보이게 칸 안을 옮긴다 (확대 배율 · 사용자가 옮긴 가로 위치는 그대로)
@@ -96,6 +96,7 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
         frame.style.width=Math.ceil(width)+'px';frame.style.maxWidth='none';
         frame.style.height=Math.max(48,Math.ceil(height))+'px';
         placed={frame,width,height,port:portWidth};
+        if(portWidth<=40)requestAnimationFrame(refit);// 칸이 아직 자리 잡기 전이면 다음 그림 때 맞춤 배율을
         box.dispatchEvent(new Event('bl:preview-resize'));
     }
     // 미리보기 칸 폭이 나중에 바뀌면(창이 열리며 자리 잡음 · 접기 펼침) 맞춤 배율을 다시 — 표본 · 실제 모두 칸보다 넓게 남지 않게
