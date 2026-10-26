@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.0.1/blue-lemonade-8.0.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.0.2/blue-lemonade-8.0.2.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.0.1 · 최신 업데이트</summary>
+<summary>8.0.2 · 최신 업데이트</summary>
+
+- 월드 인포/로어북 제목 옆 도움말 물음표를 테마의 선 아이콘으로 맞췄어요. 제목 글자 크기를 따라 비례하고, 폰에서 누르는 영역도 넓혔어요.
+
+</details>
+
+<details>
+<summary>8.0.1 · 과일 계열 한글화 · 택1 선택 · 데우스 초장편</summary>
 
 - 과일 · 야한과일 · 청과 한글화를 「과일 계열」 토글 하나로 묶었어요. 기존 청과 선택도 이어받고, 최신 과일 계열 프리셋의 메뉴 이름을 보완했어요.
 - 택1은 프롬프트 관리자 밖에서 바꿔도 새로 켠 항목만 남겨요. 이미 여러 개가 켜진 프리셋을 불러오면 하나를 고르는 창을 보여요. 확인 중 다른 프리셋으로 바꿔도 새 선택은 건드리지 않아요.
