@@ -14,7 +14,7 @@ const root = path.resolve(process.argv[2] || '.'), url = pathToFileURL(root + '/
 const read = rel => fs.readFile(path.join(root, rel), 'utf8');
 const { placeInstructions, CONTINUE_DIRECTION } = await import(new URL('src/addons/direction/prompt.js', url));
 const ext = {};
-const probe = { ext, placeInstructions, saves: 0, model: 'example-model', extPrompts: [],
+const probe = { ext, placeInstructions, saves: 0, model: 'example-model', extPrompts: [], available: () => true,
     context: { mainApi: 'openai', substituteParams: text => String(text).replace(/\{\{char\}\}/gi, () => 'Robin') } };
 globalThis.__directionPlaceTest = probe; globalThis.window = { matchMedia: () => ({ matches: false }) };
 const js = await read('src/addons/direction/index.js');
@@ -22,9 +22,9 @@ const source = js.split('// ── 시작')[0].replace(/^import .*;$/gm, '');
 const prelude = 'const P=globalThis.__directionPlaceTest;const {ext:extension_settings,placeInstructions}=P;const getContext=()=>P.context;'
     + 'const setExtensionPrompt=(...args)=>{P.extPrompts.push(args);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};'
     + 'const saveSettingsDebounced=()=>{P.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};'
-    + 'const getChatCompletionModel=()=>P.model;const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
+    + 'const getChatCompletionModel=()=>P.model;const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};const anchorAvailable=(a,api)=>P.available(a,api);';
 const m = await import('data:text/javascript;base64,' + Buffer.from(prelude + source
-    + '\nexport {initSettings,settings,injectDirection,trackGeneration,footText,placeText,placePhrase,normalizePlace,PLACES,PLACE_LABEL,ROLE_LABEL};').toString('base64'));
+    + '\nexport {initSettings,settings,injectDirection,trackGeneration,footText,placeText,placePhrase,normalizePlace,anchorParts,PLACES,PLACE_LABEL,ROLE_LABEL};').toString('base64'));
 
 let pass = 0, fail = 0;
 async function test(name, fn) {
@@ -137,8 +137,53 @@ await test('예전 설정은 한 자리: 깊이 · 시스템 그대로 보냄 (1
     assert.deepEqual(probe.extPrompts.filter(args => args[1]), [], '메인 앞 · 뒤 칸은 안 씀');
 });
 
+await test('1.4.2 페르소나 · 캐릭터 설명 위치: 메시지 목록 · 메인 칸에 안 넣고 공용 틀 원천으로 · 순서 · 역할 · 조용한 생성/대신 쓰기 제외', () => {
+    fresh({
+        always: { enabled: true, content: 'AL {{char}}', place: { at: 'persona', role: 'system' } },
+        direction: { enabled: true, content: 'go', place: { at: 'char', role: 'user' } },
+        promptList: [
+            { title: 'a', content: 'P1', enabled: true, place: { at: 'persona', role: 'assistant' } },
+            { title: 'b', content: 'P2', enabled: true, place: { at: 'char' } },
+            { title: 'c', content: 'Poff', enabled: false, place: { at: 'persona' } },
+        ],
+    });
+    const chat = send();
+    assert.deepEqual(view(chat), view(chat3()), '채팅 완성 최종 목록에는 넣지 않음 (설명 묶음에 공용 틀이 넣는다)');
+    assert.deepEqual(probe.extPrompts.filter(args => args[1]), [], '붙일 곳이 있으면 메인 앞 · 뒤 칸도 안 씀');
+    const pick = anchor => m.anchorParts({ anchor, type: 'normal' }).map(x => `${x.role}:${x.text}`);
+    assert.deepEqual(pick('persona'), ['system:AL Robin', 'assistant:P1'], '항상 지시 → 켠 프롬프트(목록 순서) · 매크로 · 역할 · 꺼진 줄 제외');
+    assert.deepEqual(pick('char'), ['system:P2', 'user:D go'], '프롬프트 → 전개 지시(틀 채움)');
+    assert.deepEqual(m.anchorParts({ anchor: 'persona', type: 'quiet' }), []);
+    assert.deepEqual(m.anchorParts({ anchor: 'char', type: 'impersonate' }), []);
+    assert.equal(m.anchorParts({ anchor: 'persona', type: 'normal' })[0].anchor, 'persona');
+    // 붙일 곳이 없으면 메인 프롬프트 뒤로 — 채팅 완성 · 텍스트 완성 모두 (그 자리 거르기는 API 를 안 가림)
+    probe.available = anchor => anchor !== 'persona';
+    send();
+    const placed = probe.extPrompts.filter(args => args[1]);
+    assert.deepEqual(placed.map(args => [args[1], args[2], args[5]]), [['AL Robin', 0, 0], ['P1', 0, 2]], '페르소나 자리 없음 → IN_PROMPT(메인 뒤) · 역할 번호');
+    assert.equal(placed[0][6](), true);
+    probe.context.mainApi = 'kobold';
+    assert.equal(placed[0][6](), true, '텍스트 완성에서도 거르지 않음');
+    send();
+    assert.deepEqual(probe.extPrompts.filter(args => args[1]).map(args => args[1]), ['AL Robin', 'P1'], '텍스트 완성: 메인 앞 · 뒤 줄은 없고 자리 없는 설명 위치 줄만');
+    probe.context.mainApi = 'openai'; probe.available = () => true;
+    send('quiet');
+    assert.deepEqual(probe.extPrompts.filter(args => args[1]), [], '조용한 생성은 대체 자리에도 안 넣음');
+});
+
+await test('예전 설정 · 모르는 넣는 곳은 그대로(채팅 안 @깊이) — 새 값은 고른 사람만', () => {
+    const s = fresh({ always: { enabled: true, content: 'A', place: { at: 'depth', role: 'system', depth: 1 } }, direction: { enabled: true, content: 'x', place: { at: 'nowhere' } } });
+    assert.equal(s.always.place.at, 'depth');
+    assert.equal(s.direction.place.at, 'depth', '모르는 값은 예전처럼 @깊이');
+    const kept = fresh({ always: { enabled: true, content: 'A', place: { at: 'char', role: 'user' } } });
+    assert.deepEqual(kept.always.place, { at: 'char', role: 'user', depth: 1 }, '새 자리는 저장 값 그대로');
+});
+
 await test('안내 문장 · 이름표', () => {
-    assert.deepEqual(m.PLACES, ['start', 'before-main', 'after-main', 'depth', 'end']);
+    assert.deepEqual(m.PLACES, ['start', 'before-main', 'after-main', 'persona', 'char', 'depth', 'end']);
+    assert.equal(m.PLACE_LABEL.persona, '페르소나 위치'); assert.equal(m.PLACE_LABEL.char, '캐릭터 설명 위치');
+    assert.equal(m.placeText({ at: 'persona', role: 'user' }), '페르소나 위치 · 사용자');
+    assert.equal(m.placePhrase({ at: 'char' }), '캐릭터 설명 위치에');
     assert.equal(m.PLACE_LABEL.start, '프롬프트 맨 처음'); assert.equal(m.PLACE_LABEL.end, '프롬프트 맨 끝');
     assert.equal(m.PLACE_LABEL['before-main'], '메인 프롬프트 앞'); assert.equal(m.PLACE_LABEL['after-main'], '메인 프롬프트 뒤');
     assert.deepEqual(m.ROLE_LABEL, { system: '시스템', user: '사용자', assistant: 'AI 어시스턴트' });

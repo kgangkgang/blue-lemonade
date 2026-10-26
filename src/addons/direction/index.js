@@ -11,10 +11,14 @@ import { verifyAddonCss } from '../../addon-files-check.js';
 import { badgeTextHit } from '../../badge-hit.js';
 // 7.7.4 시작 덮개 동안은 테마 색을 읽지 않는다
 import { afterBoot } from '../../boot-gate.js';
+// 8.0.6 페르소나 위치 · 캐릭터 설명 위치 — 작가 노트와 같은 공용 틀
+import { registerAnchorSource, anchorAvailable } from '../../prompt-anchors.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.4.1';
+const VERSION = '1.4.2';
+// 1.4.2: 넣는 곳에 「페르소나 위치」(페르소나 설명 바로 위) · 「캐릭터 설명 위치」({{char}} 설명 바로 위) — 작가 노트와 같은 공용 틀(prompt-anchors).
+//        채팅 완성 · 텍스트 완성 둘 다. 같은 자리에서는 작가 노트 → 항상 지시 → 켠 프롬프트(목록 순서) → 전개 지시 → 원래 설명. 붙일 곳이 없으면(표식 꺼짐 · 스토리 문자열에 칸 없음) 메인 프롬프트 뒤
 // 1.4.0: 전개 지시 · 항상 지시 · 프롬프트 줄마다 넣는 곳(프롬프트 맨 처음 · 메인 프롬프트 앞/뒤 · 채팅 안 @깊이 · 프롬프트 맨 끝)과 역할(시스템 · 사용자 · AI 어시스턴트)을 따로 고른다
 // 1.3.6: 프롬프트 쪽 줄을 꾹 눌러(마우스는 끌기 · 키보드 Alt+↑/↓) 순서를 바꾼다 — 목록 순서 = 보내는 순서
 // 1.1.5: 깃털 창에 두 쪽 — 전개 지시(이번 전개) · 항상 지시(적은 글 그대로 매번, 예: <OOC: …>). 옆으로 넘기거나 제목을 눌러 바꾼다
@@ -67,9 +71,10 @@ function clampDepth(value) {
 }
 
 // 1.4.0 넣는 곳 · 역할 (지시마다 따로). 메인 프롬프트 앞 · 뒤는 실리태번 확장 프롬프트로, 나머지는 보내기 직전 메시지 목록에 넣는다
-const PLACES = ['start', 'before-main', 'after-main', 'depth', 'end'];
-const PLACE_LABEL = { start: '프롬프트 맨 처음', 'before-main': '메인 프롬프트 앞', 'after-main': '메인 프롬프트 뒤', depth: '채팅 안 @깊이', end: '프롬프트 맨 끝' };
+const PLACES = ['start', 'before-main', 'after-main', 'persona', 'char', 'depth', 'end'];
+const PLACE_LABEL = { start: '프롬프트 맨 처음', 'before-main': '메인 프롬프트 앞', 'after-main': '메인 프롬프트 뒤', persona: '페르소나 위치', char: '캐릭터 설명 위치', depth: '채팅 안 @깊이', end: '프롬프트 맨 끝' };
 const MAIN_PLACES = new Set(['before-main', 'after-main']);
+const ANCHOR_PLACES = new Set(['persona', 'char']);   // 1.4.2 설명 바로 위 (prompt-anchors 가 넣는다)
 const PLACE_ROLES = ['system', 'user', 'assistant'];
 const ROLE_LABEL = { system: '시스템', user: '사용자', assistant: 'AI 어시스턴트' };
 
@@ -380,16 +385,31 @@ let mainKeys = 0;   // 지난번에 채운 칸 수 — 남는 칸은 비운다
 function syncMainPrompts(type) {
     let parts = [];
     try {
-        if (type !== 'quiet' && type !== 'impersonate' && getContext().mainApi === 'openai') parts = instructionParts().filter(part => MAIN_PLACES.has(part.at));
+        if (type !== 'quiet' && type !== 'impersonate') {
+            const openai = getContext().mainApi === 'openai';
+            // 1.4.2 페르소나 · 캐릭터 설명 위치인데 붙일 곳이 없으면(표식 꺼짐 · 스토리 문자열에 칸 없음) 메인 프롬프트 뒤로 — 글 완성에서도
+            parts = instructionParts().filter(part => (openai && MAIN_PLACES.has(part.at)) || (ANCHOR_PLACES.has(part.at) && !anchorAvailable(part.at, openai ? 'openai' : 'text')));
+        }
     } catch (error) {
         console.warn('[전개 지시] 메인 프롬프트 앞 · 뒤 지시를 준비하지 못했어요:', error);
     }
     const roles = { system: extension_prompt_roles.SYSTEM, user: extension_prompt_roles.USER, assistant: extension_prompt_roles.ASSISTANT };
     const filter = () => getContext().mainApi === 'openai' && !isRawGeneration();
+    const anyApi = () => !isRawGeneration();
     parts.forEach((part, index) => setExtensionPrompt(mainKey(index), part.content,
-        part.at === 'before-main' ? extension_prompt_types.BEFORE_PROMPT : extension_prompt_types.IN_PROMPT, 0, false, roles[part.role] ?? extension_prompt_roles.SYSTEM, filter));
+        part.at === 'before-main' ? extension_prompt_types.BEFORE_PROMPT : extension_prompt_types.IN_PROMPT, 0, false, roles[part.role] ?? extension_prompt_roles.SYSTEM, ANCHOR_PLACES.has(part.at) ? anyApi : filter));
     for (let index = parts.length; index < mainKeys; index++) setExtensionPrompt(mainKey(index), '', extension_prompt_types.NONE, 0);
     mainKeys = parts.length;
+}
+
+/**
+ * 1.4.2 페르소나 · 캐릭터 설명 위치 원천 — prompt-anchors 가 설명 묶음을 조립할 때 부른다(dry run 포함: 프롬프트 관리자 토큰 수도 그 자리로).
+ * 조용한 생성 · 대신 쓰기에는 넣지 않는다(다른 자리와 같은 규칙). 같은 자리 안 순서는 instructionParts 순서 그대로
+ */
+function anchorParts({ anchor, type }) {
+    if (type === 'quiet' || type === 'impersonate') return [];
+    return instructionParts().filter(part => part.at === anchor)
+        .map(part => ({ anchor, text: part.content, role: part.role, identifier: `bl_direction_${part.kind}` }));
 }
 
 function injectDirection(eventData) {
@@ -412,7 +432,7 @@ function injectDirection(eventData) {
     // 프롬프트 맨 끝에 AI 어시스턴트 역할 글(프리필처럼 쓰는 것)이 있으면 그 뒤에 user 턴을 붙이지 않는다
     const prefill = type === 'impersonate' ? oai_settings.assistant_impersonation : oai_settings.assistant_prefill;
     const appendUser = parts.some(part => part.kind === 'direction') && !parts.some(part => part.at === 'end' && part.role === 'assistant');
-    placeInstructions(messages, parts.filter(part => !MAIN_PLACES.has(part.at)), getChatCompletionModel(oai_settings), { type, prefill, appendUser });
+    placeInstructions(messages, parts.filter(part => !MAIN_PLACES.has(part.at) && !ANCHOR_PLACES.has(part.at)), getChatCompletionModel(oai_settings), { type, prefill, appendUser });
 
     // 최근: 실제로 보낸 지시만. 이미 맨 앞이면 설정을 저장하지 않는다.
     // 프롬프트 관리자의 토큰 계산(dry run — 답을 받거나 메시지를 고칠 때마다 돈다)은 보낸 것이 아니다: 적다 만 글이 최근에 쌓였다
@@ -1985,6 +2005,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
     try {
     afterBoot(applyOnColor);   // 7.7.4 덮개가 걷힐 때(첫 화면 전) 한 번 — 시작 중 계산 스타일 읽기로 문서 전체를 다시 계산하지 않게
     registerDirectionMacro();
+    registerAnchorSource('direction', 20, anchorParts);   // 1.4.2 작가 노트(10) 다음
     buildSettings();
     ensureButton();
     eventSource.on(event_types.GENERATION_STARTED, trackGeneration);
@@ -2029,7 +2050,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
 }));
 
 export function showHelp() {
-    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;).</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 문체 다듬기처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 같이 들어가요. 같은 자리에서는 항상 지시 다음, 전개 지시 앞이에요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요. 줄을 꾹 누른 채 위아래로 끌어도 순서가 바뀌어요(마우스는 끌기, 키보드는 Alt+↑/↓). 위에 있는 것부터 차례로 들어가요. 줄 옆 숫자는 지금 모델 기준 토큰 수예요. 제목 옆 점을 누르면 그 쪽으로 바로 가요.</p><p><b>넣는 곳</b>: 전개 지시 · 항상 지시는 확장 설정 카드에서, 프롬프트는 줄마다 고치기에서 따로 골라요. 프롬프트 맨 처음 · 메인 프롬프트(스토리 문자열) 앞 · 메인 프롬프트 뒤 · 채팅 안 @깊이(0이면 채팅 맨 끝, 1이면 마지막 메시지 앞) · 프롬프트 맨 끝(프리필처럼 맨 끝에 붙는 자리) 가운데 하나예요. 역할은 시스템 · 사용자 · AI 어시스턴트 가운데 골라요. 메인 프롬프트 앞 · 뒤는 채팅 완성(Chat Completion) API에서만 들어가요.</p><p>깃털 모양으로 지금 보내는 것을 알 수 있어요. 아무것도 안 보내면 회색, 전개 지시 · 항상 지시 · 켠 프롬프트 중 하나면 켜짐 색 테두리, 둘이면 안까지 채움, 셋 다면 채움에 은은한 빛이에요. 전개 지시를 꺼 둬도 다른 것을 보내는 중이면 켜진 모양으로 남아요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
+    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;).</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 문체 다듬기처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 같이 들어가요. 같은 자리에서는 항상 지시 다음, 전개 지시 앞이에요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요. 줄을 꾹 누른 채 위아래로 끌어도 순서가 바뀌어요(마우스는 끌기, 키보드는 Alt+↑/↓). 위에 있는 것부터 차례로 들어가요. 줄 옆 숫자는 지금 모델 기준 토큰 수예요. 제목 옆 점을 누르면 그 쪽으로 바로 가요.</p><p><b>넣는 곳</b>: 전개 지시 · 항상 지시는 확장 설정 카드에서, 프롬프트는 줄마다 고치기에서 따로 골라요. 프롬프트 맨 처음 · 메인 프롬프트(스토리 문자열) 앞 · 메인 프롬프트 뒤 · 페르소나 위치(페르소나 설명 바로 위) · 캐릭터 설명 위치({{char}} 설명 바로 위) · 채팅 안 @깊이(0이면 채팅 맨 끝, 1이면 마지막 메시지 앞) · 프롬프트 맨 끝(프리필처럼 맨 끝에 붙는 자리) 가운데 하나예요. 페르소나 · 캐릭터 설명 위치는 작가 노트와 같은 자리에 작가 노트 다음으로 들어가고, 텍스트 완성에서도 들어가요. 역할은 시스템 · 사용자 · AI 어시스턴트 가운데 골라요. 메인 프롬프트 앞 · 뒤는 채팅 완성(Chat Completion) API에서만 들어가요.</p><p>깃털 모양으로 지금 보내는 것을 알 수 있어요. 아무것도 안 보내면 회색, 전개 지시 · 항상 지시 · 켠 프롬프트 중 하나면 켜짐 색 테두리, 둘이면 안까지 채움, 셋 다면 채움에 은은한 빛이에요. 전개 지시를 꺼 둬도 다른 것을 보내는 중이면 켜진 모양으로 남아요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
 }
 let settingsDialog = null;
 export async function openPanel() {
