@@ -1,19 +1,24 @@
 /* ===== css/78-prompt-card-picker.css ===== */
 .salty-panel .bl-prompt-link .bl-prompt-card-trigger {
     display: inline-flex; align-items: center; justify-content: space-between; gap: 10px;
-    min-width: 0; width: 100%; max-width: 100%; min-height: var(--bl-h-ctl, 36px); padding: 8px 12px;
+    min-width: 0; width: 100%; max-width: 100%; min-height: var(--bl-h-ctl, 36px); padding: 4px 12px; /* 8.0.4 위아래 8 + 줄높이 = 37.8 → 최소 높이 36 이 정하고 글자는 가운데 */
     border: 1px solid var(--salty-line); border-radius: var(--bl-r-sm, 8px); background: var(--bl-field, var(--salty-field)); color: var(--salty-text);
     font: inherit; cursor: pointer; text-align: start;
 }
 .bl-prompt-card-trigger > span { min-width: 0; overflow-wrap: anywhere; }
+/* 8.0.4 폰(고밀도 화면)에서는 한글 카드 이름 글자가 1px 남짓 위로 떴다(384 폭 −1.05 ~ −1.25) → 위 0.25px 내림.
+   설정 창 공통 보정(--bl-text-nudge ≈ 0.4)은 360 폭에서 영문 카드 이름(아래로 내려가는 g)이 +1.45 로 넘쳐 쓰지 않는다. PC(1배 화면)는 보정 없이 ±0.8 안 */
+@media (pointer: coarse) {
+  .salty-panel .bl-prompt-link .bl-prompt-card-trigger { padding-top: 4.25px; padding-bottom: 3.75px; }
+}
 .bl-prompt-card-trigger > i { flex: none; }
 /* 6.7.5 연동 줄: 머리(연동 n · 지우기) 아래로 말 칸 · 카드 단추가 세로 2줄(이름 위 · 칸 아래 가로 꽉), 줄 사이는 얇은 선 */
 .salty-panel .bl-prompt-link .bl-link-row { display: flex; flex-direction: column; min-width: 0; padding: 4px 0 10px; border-top: 1px solid var(--salty-line); }
 .salty-panel .bl-prompt-link .bl-link-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: var(--row-h, 40px); }
 .salty-panel .bl-prompt-link .bl-link-head > b { min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
 .salty-panel .bl-prompt-link .bl-link-field { padding-block: 4px 6px; min-width: 0; }
-/* 말 칸은 카드 단추와 같은 입력칸 면(--bl-field) · 높이 공식(위아래 7px + 줄높이, 최소 36px) · 안쪽 12px — 입력 중에도 면과 글자색은 그대로, 테두리 색만 바뀐다 */
-.salty-panel .bl-prompt-link .bl-link-field > input { width: 100%; min-width: 0; height: auto; min-height: var(--bl-h-ctl, 36px); margin: 0; padding: 8px 12px; line-height: 1.5; border: 1px solid var(--salty-line); border-radius: var(--bl-r-sm, 8px); background: var(--bl-field, var(--salty-field)); color: var(--salty-text); font: inherit; }
+/* 말 칸은 카드 단추와 같은 입력칸 면(--bl-field) · 높이(최소 36px, 위아래 4px) · 안쪽 12px — 입력 중에도 면과 글자색은 그대로, 테두리 색만 바뀐다 */
+.salty-panel .bl-prompt-link .bl-link-field > input { width: 100%; min-width: 0; height: auto; min-height: var(--bl-h-ctl, 36px); margin: 0; padding: 4px 12px; line-height: 1.5; border: 1px solid var(--salty-line); border-radius: var(--bl-r-sm, 8px); background: var(--bl-field, var(--salty-field)); color: var(--salty-text); font: inherit; }
 .salty-panel .bl-prompt-link .bl-link-field > input:focus { background: var(--bl-field, var(--salty-field)); color: var(--salty-text); border-color: var(--salty-accent); outline: none; }
 .salty-panel .bl-prompt-link .bl-link-hint { display: block; margin: 0; color: var(--salty-muted); font-size: var(--fs-small); line-height: 1.5; overflow-wrap: anywhere; }
 .salty-panel .bl-prompt-link .bl-link-hint[hidden] { display: none; }

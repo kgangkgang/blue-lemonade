@@ -584,7 +584,7 @@ export const FILE_HASHES = {
   "src/numcomma.js": "31859:4b995003:bdec99e6",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
   "src/palettes.js": "33830:51637840:34a73a09",
-  "src/panel.js": "260642:19489a93:00ea14f4",
+  "src/panel.js": "260994:a05a8332:ed5000f6",
   "src/people.js": "9021:76aa8129:14633595",
   "src/popup-guard.js": "4755:d66dd15c:5ae13a66",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
@@ -723,5 +723,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1703184:9068ad7d:f9503e11"
+  "style.css": "1703693:c8c34520:cc803bc0"
 };

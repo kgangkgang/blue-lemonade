@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f2187d5dbf31) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 01aa645d8659) */
 /* css/00-base.css */
 :root{--bl-release:"8.0.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -13328,6 +13328,13 @@ body.salty .popup:has(.salty-notice) .popup-content {
   color: var(--salty-text);
   box-shadow: var(--salty-e2, 0 1px 3px var(--salty-shadow-50));
 }
+.salty-panel .salty-stack > .salty-seg.bl-seg-2col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-self: stretch;
+}
+.salty-panel .salty-seg.bl-seg-2col > button { min-width: 0; white-space: nowrap; }
+.salty-panel .salty-seg.bl-seg-2col > button > .bl-seg-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .salty-seg.salty-mini {
   flex: none;
   flex-wrap: nowrap;
@@ -25118,17 +25125,20 @@ html:not(#bl-scrollbars-on) body.salty { --bl-sbw: 0px; }
 /* css/78-prompt-card-picker.css */
 .salty-panel .bl-prompt-link .bl-prompt-card-trigger {
     display: inline-flex; align-items: center; justify-content: space-between; gap: 10px;
-    min-width: 0; width: 100%; max-width: 100%; min-height: var(--bl-h-ctl, 36px); padding: 8px 12px;
+    min-width: 0; width: 100%; max-width: 100%; min-height: var(--bl-h-ctl, 36px); padding: 4px 12px;
     border: 1px solid var(--salty-line); border-radius: var(--bl-r-sm, 8px); background: var(--bl-field, var(--salty-field)); color: var(--salty-text);
     font: inherit; cursor: pointer; text-align: start;
 }
 .bl-prompt-card-trigger > span { min-width: 0; overflow-wrap: anywhere; }
+@media (pointer: coarse) {
+  .salty-panel .bl-prompt-link .bl-prompt-card-trigger { padding-top: 4.25px; padding-bottom: 3.75px; }
+}
 .bl-prompt-card-trigger > i { flex: none; }
 .salty-panel .bl-prompt-link .bl-link-row { display: flex; flex-direction: column; min-width: 0; padding: 4px 0 10px; border-top: 1px solid var(--salty-line); }
 .salty-panel .bl-prompt-link .bl-link-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: var(--row-h, 40px); }
 .salty-panel .bl-prompt-link .bl-link-head > b { min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
 .salty-panel .bl-prompt-link .bl-link-field { padding-block: 4px 6px; min-width: 0; }
-.salty-panel .bl-prompt-link .bl-link-field > input { width: 100%; min-width: 0; height: auto; min-height: var(--bl-h-ctl, 36px); margin: 0; padding: 8px 12px; line-height: 1.5; border: 1px solid var(--salty-line); border-radius: var(--bl-r-sm, 8px); background: var(--bl-field, var(--salty-field)); color: var(--salty-text); font: inherit; }
+.salty-panel .bl-prompt-link .bl-link-field > input { width: 100%; min-width: 0; height: auto; min-height: var(--bl-h-ctl, 36px); margin: 0; padding: 4px 12px; line-height: 1.5; border: 1px solid var(--salty-line); border-radius: var(--bl-r-sm, 8px); background: var(--bl-field, var(--salty-field)); color: var(--salty-text); font: inherit; }
 .salty-panel .bl-prompt-link .bl-link-field > input:focus { background: var(--bl-field, var(--salty-field)); color: var(--salty-text); border-color: var(--salty-accent); outline: none; }
 .salty-panel .bl-prompt-link .bl-link-hint { display: block; margin: 0; color: var(--salty-muted); font-size: var(--fs-small); line-height: 1.5; overflow-wrap: anywhere; }
 .salty-panel .bl-prompt-link .bl-link-hint[hidden] { display: none; }
