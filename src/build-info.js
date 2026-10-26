@@ -600,7 +600,7 @@ export const FILE_HASHES = {
   "src/prompt-tools.js": "10645:4c0a45d7:a6b7b68c",
   "src/promptbind.js": "43235:33a51505:e18d2b34",
   "src/promptlist.js": "9042:9a46e84f:5803940a",
-  "src/pull-to-refresh.js": "10981:d283a1aa:a15dbd6f",
+  "src/pull-to-refresh.js": "11053:c81c9aa5:ce851edf",
   "src/qrfind.js": "13470:e1b028e2:75206d84",
   "src/readability.js": "4402:c34b7d47:0d00993d",
   "src/reader.js": "8767:c13e8292:8043ac72",
@@ -722,5 +722,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1703261:c6c338f2:713e49fa"
+  "style.css": "1703184:e236ca35:80c36269"
 };

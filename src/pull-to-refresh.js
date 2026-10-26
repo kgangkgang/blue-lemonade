@@ -1,6 +1,6 @@
 import { preserveDraftForReload } from './draft.js';
 
-const EXCLUDE = 'input,textarea,select,button,a,summary,[contenteditable]:not([contenteditable="false"]),[draggable="true"],[role="slider"],[role="tab"],[role="tablist"],canvas,iframe,video,audio,.mes_edit,.edit_textarea,.ui-draggable-handle';
+const EXCLUDE = 'input,textarea,select,button,a,label,summary,[contenteditable]:not([contenteditable="false"]),[draggable="true"],[role="button"],[role="slider"],[role="tab"],[role="tablist"],canvas,iframe,video,audio,.mes_buttons,.mes_button,.swipe_left,.swipe_right,.mes_edit,.edit_textarea,.ui-draggable-handle';
 const OVERLAYS = 'dialog[open],.drawer-content.openDrawer,#cg-panel:not([hidden]),#pt-panel:not(.pt-hidden)';
 const THRESHOLD = 112;
 
