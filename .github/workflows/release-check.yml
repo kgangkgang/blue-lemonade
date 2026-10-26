@@ -360,6 +360,8 @@ jobs:
           node tools/tests/icon-only-mark.mjs .
           node tools/tests/mes-marks.mjs .
           node tools/tests/drawer-marks.mjs .
+          node tools/tests/popup-marks.mjs .
+          node tools/tests/mark-mutation-batch.mjs .
           node tools/tests/fruit-watch-perf.mjs .
           node tools/tests/fruit-option-help.mjs .
           node tools/tests/fruit-typography.mjs .

@@ -233,7 +233,7 @@ body.salty :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-made {
 body.salty :is(#chat, .cg-root) q .custom-dem-expressive.bl-fx-made {
   display: inline;
 }
-.salty-preview[data-prev="regex"] .custom-dem-expressive--shout { font-weight: 700; }
+.salty-preview[data-prev="regex"] .custom-dem-expressive--shout { font-weight: 650; }
 @media (prefers-reduced-motion: no-preference) {
   .salty-preview[data-prev="regex"] .custom-dem-expressive--shout { animation: bl-fx-gradient 2.75s linear infinite, bl-fx-impact .9s ease-in-out infinite alternate; }
   .salty-preview[data-prev="regex"] .custom-dem-expressive--trembling { animation: bl-fx-gradient 2.75s linear infinite, bl-fx-shake .8s steps(2, end) infinite; }

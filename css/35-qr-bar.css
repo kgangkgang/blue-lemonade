@@ -42,7 +42,7 @@
   align-items: center;
   min-height: 34px;
   padding: 4px 8px;
-  border-radius: 7px;
+  border-radius: 8px;
   background: var(--bl-hover, var(--bl-fb-rgb-127-127-127-0p1));
   color: var(--salty-text);
   font-size: 12px;
@@ -71,7 +71,7 @@ body.salty :is(#send_form #qr--bar, #qr--popout > .qr--body) > .qr--buttons.qr--
   min-width: 34px;
   min-height: 34px;
   padding: 0 8px;
-  border-radius: 7px;
+  border-radius: 8px;
   background: linear-gradient(var(--bl-hover, var(--bl-fb-rgb-127-127-127-0p1)), var(--bl-hover, var(--bl-fb-rgb-127-127-127-0p1))), var(--salty-surface);
   box-shadow: var(--bl-gap-halo);
   color: var(--salty-muted);
@@ -180,7 +180,7 @@ body.salty #qr--popout .qr--button.qr--hasCtx > .qr--button-expander {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  border-radius: 0 7px 7px 0;
+  border-radius: 0 8px 8px 0;
   border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
   font-size: 12px;
   line-height: 1;
@@ -308,7 +308,7 @@ body.salty:not(#salty-none) .ctx-blocker .ctx-menu > .list-group-item.ctx-header
   padding: 6px 10px 4px !important;
   color: var(--salty-muted);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 650;
 }
 body.salty .ctx-blocker .ctx-menu > .ctx-item + .ctx-header {
   margin-top: 4px !important;

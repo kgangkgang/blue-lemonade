@@ -197,7 +197,7 @@ body.salty select[multiple]:where(:not(.salty-panel *)) option:checked {
   background: linear-gradient(var(--salty-tint-18), var(--salty-tint-18)) !important;
   color: var(--salty-accent-ink, var(--salty-accent)) !important;
   -webkit-text-fill-color: var(--salty-accent-ink, var(--salty-accent));
-  font-weight: 600;
+  font-weight: 650;
 }
 /* 숫자칸(슬라이더 옆): 작고 가운데, 자리 맞춘 숫자 */
 body.salty :is(.range-block-counter input, input.neo-range-input) {
@@ -426,7 +426,7 @@ body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s
   min-width: 0;
   text-align: left;
   font-size: var(--bl-fs-body) !important; /* 7.9.3: 실리태번 슬라이더 이름(이미지 생성 · 월드 인포 등) 13 → 본문 — 같은 칸 스위치 이름과 같게 */
-  font-weight: 600;
+  font-weight: 650;
   color: var(--salty-text) !important;
 }
 body.salty .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input {
@@ -498,7 +498,7 @@ body.salty .select2-container--default .select2-selection__choice {
   background: var(--bl-fill-hover, var(--bl-hover)) !important;
   color: var(--salty-text) !important;
   font-size: var(--bl-fs-cap);
-  font-weight: 600;
+  font-weight: 650;
 }
 body.salty .select2-dropdown {
   padding: 6px;

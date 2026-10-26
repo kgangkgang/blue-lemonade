@@ -51,7 +51,7 @@ body.salty :is(#WorldInfo, #PersonaManagement) .paginationjs-nav {
   padding: 0 6px 0 2px !important;
   color: var(--salty-muted);
   font-size: var(--bl-fs-sub) !important;
-  font-weight: 600 !important;
+  font-weight: 650 !important;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -105,7 +105,7 @@ body.salty :is(#WorldInfo, #PersonaManagement) :is(.paginationjs-size-changer se
   box-shadow: none !important;
   color: var(--salty-muted) !important;
   font-size: var(--bl-fs-ctl) !important;
-  font-weight: 600;
+  font-weight: 650;
   text-align: right;
   text-align-last: right;
   text-overflow: ellipsis;
@@ -264,7 +264,7 @@ body.salty #WorldInfo #wiTopBlock > .range-block[data-bl-row~="idr"] > .range-bl
   padding: 10px 32px 10px 2px !important;
   color: var(--salty-text) !important;
   font-size: var(--bl-fs-body) !important;
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: 0;
   line-height: 1.35;
   pointer-events: none;
@@ -608,7 +608,7 @@ body.salty #WorldInfo .world_entry textarea[name="comment"] {
   width: 100%;
   margin: 0 !important;
   resize: none !important;
-  font-weight: 600;
+  font-weight: 650;
   line-height: 1.45 !important;
   field-sizing: content;
 }
@@ -1109,7 +1109,7 @@ body.salty #WorldInfo .world_entry_edit > .inline-drawer > .inline-drawer-header
   flex: 1 1 0;
   min-width: 0;
   overflow-wrap: anywhere;
-  font-weight: 600;
+  font-weight: 650;
 }
 body.salty #WorldInfo .world_entry_edit > .inline-drawer > .inline-drawer-content {
   flex-wrap: wrap !important;
@@ -1219,7 +1219,7 @@ body.salty #PersonaManagement :is(#create_dummy_persona, #lock_persona_default, 
   box-shadow: var(--bl-e2) !important;
   color: var(--salty-text) !important;
   font-size: var(--bl-fs-ctl) !important;
-  font-weight: 600;
+  font-weight: 650;
   white-space: nowrap;
 }
 body.salty #PersonaManagement :is(#create_dummy_persona, #lock_persona_default, #lock_persona_to_char, #lock_user_name) > i {
@@ -1252,7 +1252,7 @@ body.salty #PersonaManagement #user_avatar_block .avatar-container {
   margin: 0 !important;
   padding: 12px 12px 12px 12px !important;
   border: 0 !important;
-  border-radius: 16px !important;
+  border-radius: 12px !important;
   outline: 0 !important;
   --salty-row-bg: var(--bl-card);
   background: var(--salty-row-bg) !important;
@@ -1342,7 +1342,7 @@ body.salty #PersonaManagement #user_avatar_block .avatar-container.default_perso
   background: color-mix(in srgb, var(--bl-lemon) 24%, var(--bl-card));
   color: color-mix(in srgb, var(--bl-pop-ink) 70%, var(--salty-text));
   font-size: var(--bl-fs-micro);
-  font-weight: 600;
+  font-weight: 650;
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -1373,7 +1373,7 @@ body.salty #PersonaManagement #user_avatar_block .ch_name {
   overflow: hidden;
   color: var(--salty-text) !important;
   font-size: calc(var(--mainFontSize, 15px) * 1.067);
-  font-weight: 700 !important;
+  font-weight: 650 !important;
   letter-spacing: -0.01em;
   line-height: 1.35;
   white-space: normal !important;
@@ -1431,7 +1431,7 @@ body.salty #PersonaManagement #user_avatar_block .avatar_container_states .menu_
   opacity: 1 !important;
   filter: none !important;
   font-size: var(--bl-fs-micro) !important;
-  font-weight: 600;
+  font-weight: 650;
   white-space: nowrap;
   overflow-wrap: normal;
 }
@@ -1544,7 +1544,7 @@ body.salty #PersonaManagement #persona_controls .persona_name {
   margin: 0 !important;
   color: var(--salty-text) !important;
   opacity: 1 !important;
-  font-weight: 700;
+  font-weight: 650;
   letter-spacing: -0.015em;
   line-height: 1.3;
 }
@@ -1631,7 +1631,7 @@ body.salty #PersonaManagement #persona_depth_position_settings label {
   padding: 0 2px;
   color: var(--salty-muted);
   font-size: var(--bl-fs-sub);
-  font-weight: 600;
+  font-weight: 650;
 }
 body.salty #PersonaManagement #persona_depth_position_settings :is(input, select) {
   width: 100%;

@@ -26,7 +26,7 @@
   background: var(--salty-fill-accent, var(--salty-accent, var(--SmartThemeQuoteColor, var(--bl-fb-4a90d9))));
   color: var(--salty-on-accent, var(--bl-fb-fff));
   font: inherit;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
 }
 #bl-sync-strip > button:disabled { opacity: 0.6; cursor: default; }
@@ -43,7 +43,7 @@
   background: color-mix(in srgb, var(--bl-update-glow) 10%, transparent);
 }
 .salty-panel .bl-update-line-text { flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; line-height: 1.45; }
-.salty-panel .bl-update-line-text b { color: var(--bl-update-ink); font-weight: 700; }
+.salty-panel .bl-update-line-text b { color: var(--bl-update-ink); font-weight: 650; }
 .salty-panel .bl-update-line-text b small { margin-left: 6px; color: var(--salty-muted); font-weight: 400; font-size: 0.86em; font-variant-numeric: tabular-nums; }
 .salty-panel .bl-update-line-text span { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; color: var(--salty-text); font-size: 0.92em; }
 .salty-panel .bl-update-line > .salty-btn { flex: 0 0 auto; min-height: 34px; padding: 0 12px; }

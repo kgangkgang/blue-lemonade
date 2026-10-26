@@ -26,7 +26,7 @@ const STYLE = `:root{--bl-dialogue-fallback-7ab:#7ab;--bl-dialogue-fallback-8882
 .bl-dlg-view button.bl-dlg-row:hover{background:var(--salty-shade,var(--bl-dialogue-fallback-8882))}
 .bl-dlg-view button.bl-dlg-row:focus-visible{outline:2px solid var(--salty-accent,var(--bl-dialogue-fallback-7ab));outline-offset:-2px}
 .bl-dlg-dot{width:10px;height:10px;margin-top:calc(.8em - 5px);border-radius:50%;background:var(--dot,var(--salty-line,var(--bl-dialogue-fallback-8888)));box-shadow:0 0 0 1px color-mix(in srgb,var(--salty-text,currentColor) 22%,transparent)}
-.bl-dlg-name{display:block;font-size:.84em;font-weight:600;opacity:.86}
+.bl-dlg-name{display:block;font-size:.84em;font-weight:650;opacity:.86}
 .bl-dlg-thought .bl-dlg-text{font-style:italic;opacity:.86}
 .bl-dlg-tag{font-size:.8em;font-weight:normal;opacity:.75;margin-inline-start:6px}
 .bl-dlg-empty{margin:0;padding:16px var(--bl-fh-pad,14px);line-height:1.7}

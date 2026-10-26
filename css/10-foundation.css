@@ -181,7 +181,7 @@ body.salty .tag {
   box-shadow: none !important;
   opacity: 1 !important;
   font-size: var(--bl-fs-cap) !important;
-  font-weight: 600;
+  font-weight: 650;
 }
 body.salty .tag:not([style*="background"]) {
   background: var(--bl-fill-hover, var(--bl-hover)) !important;

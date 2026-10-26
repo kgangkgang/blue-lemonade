@@ -25,7 +25,7 @@
   list-style: none;
   color: var(--salty-text);
   font-size: calc(14 * var(--sp));
-  font-weight: 600;
+  font-weight: 650;
   line-height: 1.45;
   overflow-wrap: anywhere;
   word-break: keep-all;
@@ -40,7 +40,7 @@
   transition: transform .15s ease;
 }
 .salty-panel .bl-faq-item[open] > summary::before { transform: rotate(180deg); }
-.salty-panel .bl-faq-item > summary:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; border-radius: 6px; }
+.salty-panel .bl-faq-item > summary:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; border-radius: 5px; }
 .salty-panel .bl-faq-body { display: flex; flex-direction: column; gap: 8px; padding: 0 0 12px; border-top: 1px solid var(--salty-line); }
 .salty-panel .bl-faq-body > :first-child { margin-top: 10px; }
 .salty-panel .bl-faq-body p { margin: 0; color: var(--salty-text); font-size: calc(13.5 * var(--sp)); line-height: 1.6; overflow-wrap: anywhere; word-break: keep-all; }
@@ -51,7 +51,7 @@
   color: var(--salty-text) !important;
   font-size: calc(12.5 * var(--sp)) !important;
 }
-.salty-panel .bl-faq-status b { margin-right: .4em; color: var(--salty-accent-ink, var(--salty-accent)); font-weight: 700; }
+.salty-panel .bl-faq-status b { margin-right: .4em; color: var(--salty-accent-ink, var(--salty-accent)); font-weight: 650; }
 .salty-panel .bl-faq-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 0; }
 .salty-panel .bl-faq-actions .salty-btn { flex: 1 1 200px; min-height: var(--bl-h-ctl, 36px); }   /* 7.7.6: 보통 단추 높이(누르는 칸 44 는 87-addon-touch 의 .salty-btn::after) */
 .salty-panel .salty-note + .bl-faq-actions { margin: 10px 4px 0; }

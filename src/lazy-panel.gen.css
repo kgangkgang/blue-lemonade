@@ -187,7 +187,7 @@ body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.
 }
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header b,
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header strong {
-  font-weight: 600;
+  font-weight: 650;
 }
 body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) > select {
   flex: 1 1 180px !important;
@@ -305,8 +305,8 @@ body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > .stan
   margin: 0 !important;
 }
 body.salty #right-nav-panel .hotswap:not(:has(.avatar)) > small { display:none; }
-body.salty .popup:has(#qr--modalEditor) .popup-content > #qr--modalEditor > #qr--main > .qr--labels > :where(label):is(.bl-s, *),
-body.salty .popup:has(#qr--modalEditor) .popup-content > #qr--modalEditor > #qr--main > .qr--labels > .label {
+body.salty .popup:is(#bl-s, *) .popup-content > #qr--modalEditor > #qr--main > .qr--labels > :where(label):is(.bl-s, *),
+body.salty .popup:is(#bl-s, *) .popup-content > #qr--modalEditor > #qr--main > .qr--labels > .label {
   flex:1 1 15em;
   min-width:0;
   gap:8px;

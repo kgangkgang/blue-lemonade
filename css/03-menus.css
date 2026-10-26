@@ -95,7 +95,7 @@ body.salty .popup .popup-content:not(:has(.salty-panel)) {
 body.salty .popup .popup-content > h3 {
   margin: 2px 0 var(--bl-s2) !important;
   font-size: var(--bl-fs-head) !important;
-  font-weight: 700;
+  font-weight: 650;
   letter-spacing: -0.015em;
   line-height: 1.3;
 }

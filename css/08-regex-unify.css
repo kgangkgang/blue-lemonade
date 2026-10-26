@@ -77,15 +77,15 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] {
   justify-content: center;
   width: var(--bl-deco-dem-card-icon);
   height: var(--bl-deco-dem-card-icon);
-  border-radius: 6px;
+  border-radius: 5px;
   flex: 0 0 26px;
   background: color-mix(in srgb, var(--dem-accent) 14%, transparent);
 }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-card__title { font-weight: 700; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-card__title { font-weight: 650; }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-card__tag {
   margin-left: auto;
   font-size: .68em;
-  font-weight: 700;
+  font-weight: 650;
   text-transform: uppercase;
   opacity: .62;
 }
@@ -117,7 +117,7 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] {
   margin: 8px 0 2px;
   color: color-mix(in srgb, var(--dem-phase-accent) var(--bl-dem-ink, 74%), var(--salty-text));
   font-size: .72em;
-  font-weight: 750;
+  font-weight: 650;
 }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__phase::after {
   content: '';
@@ -143,7 +143,7 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] {
   background: color-mix(in srgb, var(--dem-accent) 14%, transparent);
   color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink, 74%), var(--salty-text));
   font-size: .72em;
-  font-weight: 800;
+  font-weight: 650;
 }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-scene-plan__label {
   color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink, 74%), var(--salty-text));
@@ -165,8 +165,8 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] {
   align-items: center;
   gap: 4px;
 }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__name { color: color-mix(in srgb, var(--bl-dem-mauve) var(--bl-dem-ink, 74%), var(--salty-text)); font-weight: 700; }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label { font-size: .86em; font-weight: 700; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__name { color: color-mix(in srgb, var(--bl-dem-mauve) var(--bl-dem-ink, 74%), var(--salty-text)); font-weight: 650; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label { font-size: .86em; font-weight: 650; }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--physical { color: color-mix(in srgb, var(--bl-dem-red) var(--bl-dem-ink, 74%), var(--salty-text)); }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--clothes { color: color-mix(in srgb, var(--bl-dem-yellow) var(--bl-dem-ink, 74%), var(--salty-text)); }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-status-row__label--mental { color: color-mix(in srgb, var(--bl-dem-green) var(--bl-dem-ink, 74%), var(--salty-text)); }
@@ -174,7 +174,7 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] {
   padding: 1px 8px;
   border-radius: 999px;
   font-size: .8em;
-  font-weight: 700;
+  font-weight: 650;
   background: color-mix(in srgb, var(--bl-dem-peach) 14%, transparent);
   border: 1px solid color-mix(in srgb, var(--bl-dem-peach) 28%, transparent);
 }
@@ -212,7 +212,7 @@ body.salty :is(#salty-nochat, .salty-preview)[data-prev="regex"] .mes_text > p:l
   margin-bottom: 0 !important;
 }
 .salty-preview[data-prev="regex"] .mes_text .custom-dem-track__icon { display: inline-flex; width: 22px; justify-content: center; }
-.salty-preview[data-prev="regex"] .mes_text .custom-dem-track__value { color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink, 74%), var(--salty-text)); font-weight: 700; }
+.salty-preview[data-prev="regex"] .mes_text .custom-dem-track__value { color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink, 74%), var(--salty-text)); font-weight: 650; }
 /* select2 안의 검색 입력칸은 그대로 */
 body.salty .select2-search--inline .select2-search__field {
   padding: 0 !important;

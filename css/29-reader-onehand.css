@@ -135,6 +135,6 @@ body.salty #bl-onehand.is-busy .bl-onehand-btn {
 .bl-notice-actions > .salty-btn,
 .bl-screen-modes .salty-btn,
 .salty-notice-toggle { min-height:44px; min-width:44px; }
-body.salty .popup:has(.salty-notice,.bl-screen-modes) .popup-button-ok { min-height:44px !important; min-width:44px; }
+body.salty .popup[data-bl-popup~="notice-screen"] .popup-button-ok { min-height:44px !important; min-width:44px; }
 /* 7.7.8 공지 창은 「닫기」 하나 — 「취소」가 같이 보여 둘 다 닫는 단추였다(사용자 제보 10-23) */
-body.salty .popup:has(.salty-notice) .popup-controls .popup-button-cancel { display:none !important; }
+body.salty .popup[data-bl-popup~="notice"] .popup-controls .popup-button-cancel { display:none !important; }

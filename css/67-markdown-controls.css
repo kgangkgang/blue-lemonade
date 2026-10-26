@@ -5,13 +5,13 @@
 .salty-panel .bl-md-group > summary::-webkit-details-marker { display:none; }
 .salty-panel .bl-md-group > summary::after { content:''; width:.4em; height:.4em; flex:none; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; transform:rotate(45deg); margin:0 .2em .2em .1em; }
 .salty-panel .bl-md-group[open] > summary::after { transform:rotate(225deg); margin-block:.2em 0; }
-.salty-panel .bl-md-group > summary > span { font-weight:600; }
+.salty-panel .bl-md-group > summary > span { font-weight:650; }
 .salty-panel .bl-md-group > summary > small { margin-inline-start:auto; color:var(--salty-muted); font-size:.8em; }
 .salty-panel .bl-md-group-body { padding:0 .6em .6em; }
 .salty-panel .bl-md-choices { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,5.1em),1fr)); gap:4px; }
 .salty-panel .bl-md-choice { appearance:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-width:0; min-height:66px; padding:.4em .25em; border:1px solid var(--salty-text-20); border-radius:8px; background:transparent; color:var(--salty-text); font:inherit; font-size:.88em; line-height:1.4; cursor:pointer; white-space:normal; overflow-wrap:anywhere; }
 .salty-panel .bl-md-choice svg { display:block; width:100%; max-width:96px; height:var(--bl-deco-md-choice); color:var(--bl-md-accent,var(--salty-accent-ink,var(--salty-accent))); }
-.salty-panel .bl-md-choice.on { border-color:var(--salty-accent-ink,var(--salty-accent)); background:var(--salty-fill-accent-10,var(--salty-accent-10)); box-shadow:inset 0 2px 3px var(--salty-shade); }
+.salty-panel .bl-md-choice.on { border-color:var(--salty-accent-ink,var(--salty-accent)); background:var(--salty-fill-accent-10,var(--salty-accent-10)); box-shadow:none; }
 .salty-panel .bl-md-choice:focus-visible, .salty-panel .bl-md-group summary:focus-visible { outline:2px solid var(--salty-accent-ink,var(--salty-accent)); outline-offset:2px; }
 .salty-panel .bl-md-tuning { margin:.6em 0 0; border-top:1px solid var(--salty-text-20); }
 .salty-panel .bl-md-tuning > summary { cursor:pointer; padding:.6em .15em; line-height:1.4; font-size:.88em; color:var(--salty-muted); }

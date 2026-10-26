@@ -24,7 +24,7 @@
 }
 .salty-preset b {
   font-size: var(--fs);
-  font-weight: 700;
+  font-weight: 650;
 }
 .salty-preset small {
   color: var(--salty-muted);
@@ -85,7 +85,7 @@
   flex: none;
   color: var(--salty-accent);
   font-size: var(--fs-small);
-  font-weight: 600;
+  font-weight: 650;
 }
 .salty-style-more {
   width: 44px;
@@ -133,7 +133,7 @@
   background: var(--salty-fill-accent-10, var(--salty-accent-10));
   color: var(--salty-accent-ink, var(--salty-accent));
   font-size: var(--fs-small);
-  font-weight: 600;
+  font-weight: 650;
 }
 .salty-style-note span {
   min-width: 0;
@@ -174,7 +174,7 @@
 }
 .salty-preset-sample q.m-bold {
   color: var(--salty-dialogue);
-  font-weight: 700;
+  font-weight: 650;
 }
 .salty-preset-sample q.m-tint {
   color: var(--salty-accent);
@@ -234,9 +234,9 @@
   height: 204px;
   margin: 12px auto 8px;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 12px;
   background: var(--salty-fill-bg, var(--salty-bg));
-  box-shadow: 0 0 0 3px var(--shade-2), var(--bl-e2, 0 2px 8px var(--salty-shadow-50));
+  box-shadow: 0 0 0 1px var(--shade-2);
   isolation: isolate;
 }
 .salty-phonemock .pm-top {
@@ -301,7 +301,7 @@
 .salty-phonemock .pm-onehand b {
   width: 14px;
   height: 11px;
-  border-radius: 6px;
+  border-radius: 5px;
   background: var(--salty-fill-surface, var(--salty-surface));
   box-shadow: var(--bl-e1, 0 1px 2px var(--salty-shadow-50));
 }

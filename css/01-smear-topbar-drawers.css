@@ -47,7 +47,7 @@ body.salty ::-webkit-scrollbar-track {
 body.salty ::-webkit-scrollbar-thumb {
   background: var(--shade-2);
   border: 0;
-  border-radius: 99px;
+  border-radius: 999px;
 }
 
 /* ---------- 상단 바 ---------- */
@@ -97,7 +97,7 @@ body.salty .drawer-content:not(.fillLeft):not(.fillRight) {
 /* 제목 */
 body.salty :is(.drawer-content, .popup, :where(#character_popup)) :is(h3, h4, h5):not(.salty-panel *) {
   color: var(--salty-text);
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: -0.01em;
 }
 /* 서랍 제목은 크게 — 확장 설정 · 여닫는 칸 속 h3 은 그대로 */
@@ -119,7 +119,7 @@ body.salty :is(.drawer-content, :where(#character_popup)) :is(h4, .standoutHeade
   box-shadow: none !important;
   filter: none !important;
   font-size: var(--bl-fs-body) !important;
-  font-weight: 600 !important;
+  font-weight: 650 !important;
   color: var(--salty-text) !important;
 }
 body.salty :is(.drawer-content, :where(#character_popup)) :is(h4, .standoutHeader:not(.inline-drawer-header)):not(.salty-panel *) :is(b, strong) {
@@ -192,11 +192,11 @@ body.salty .inline-drawer-header:where(:not(.salty-panel *, .world_entry *)) {
   background-image: none !important;
   filter: none !important;
   font-size: var(--bl-fs-body);
-  font-weight: 600;
+  font-weight: 650;
   color: var(--salty-text);
 }
 body.salty .inline-drawer-header:where(:not(.salty-panel *, .world_entry *)) :is(b, strong) {
-  font-weight: 600;
+  font-weight: 650;
 }
 body.salty .inline-drawer-icon {
   color: var(--salty-muted) !important;

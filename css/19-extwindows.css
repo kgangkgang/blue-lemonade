@@ -110,12 +110,12 @@ html body.salty :is(#model-switch-settings,#regex-link-settings,.mr-settings) {
   color:var(--salty-text);
 }
 html body.salty :is(.ms-target,.ms-lock,.rlk-keep,.rl-module,.mr-item) {
-  border:0; border-radius:14px; padding:12px 12px;
+  border:0; border-radius:12px; padding:12px 12px;
   background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:var(--bl-e1);
 }
 html body.salty :is(.ms-targets,.rl-modules,.mr-list) { gap:8px; }
 html body.salty :is(.ms-chip,.ms-options) {
-  border:0; border-radius:14px; background:var(--salty-fill-surface,var(--salty-surface)); color:var(--salty-text);
+  border:0; border-radius:12px; background:var(--salty-fill-surface,var(--salty-surface)); color:var(--salty-text);
 }
 html body.salty .ms-chip.on { background:var(--salty-accent); color:var(--salty-on-accent); }
 html body.salty :is(.ms-icon,.ms-pull,.ms-option,.mr-item-buttons .menu_button) { min-width:44px; min-height:44px; border:0; border-radius:10px; }
@@ -126,7 +126,7 @@ html body.salty .rl-module-head small { color:var(--salty-muted); opacity:1; }
 html body.salty .rl-owner { padding:4px 8px; color:var(--salty-muted); background:var(--salty-shade); opacity:1; }
 html body.salty .rl-owner.on { color:var(--salty-text); background:var(--salty-tint-14); }
 html body.salty .mr-item.is-picked { background:var(--bl-fill-selected, var(--bl-selected)); box-shadow:inset 0 0 0 1px var(--salty-accent); font-weight:650; }
-html body.salty .mr-empty { padding:16px 12px; border-radius:14px; color:var(--salty-muted); background:var(--salty-surface); opacity:1; }
+html body.salty .mr-empty { padding:16px 12px; border-radius:12px; color:var(--salty-muted); background:var(--salty-surface); opacity:1; }
 
 /* ---------- 그림 생성 확장: 제 팔레트(--ap-*)가 테마와 따로 놀아 라이트에서 글자가 안 보였음 ---------- */
 /* 확장 안의 '테마 설정'(다크 · 라이트 · 벚꽃) 이 무엇이든, 또 아직 아무 것도 안 골랐을 때도 테마 색을 앞세운다
@@ -180,7 +180,7 @@ body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header{alig
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b{display:inline-flex!important;align-items:center;flex-wrap:nowrap!important;gap:6px;white-space:nowrap!important;max-width:none!important;min-width:0}
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b > :is(i,.bl-version,.bl-copyright){flex:none;margin-block:0}
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b > .bl-version[hidden]{display:none}
-.bl-credits-dialog{margin:auto;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--salty-line, var(--bl-fb-cdd9e8));border-radius:18px;background:var(--salty-surface, var(--bl-fb-fff));color:var(--salty-text, var(--bl-fb-24354c));overflow:hidden}
+.bl-credits-dialog{margin:auto;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--salty-line, var(--bl-fb-cdd9e8));border-radius:12px;background:var(--salty-surface, var(--bl-fb-fff));color:var(--salty-text, var(--bl-fb-24354c));overflow:hidden}
 .bl-credits-dialog[open]{display:flex;flex-direction:column}.bl-credits-dialog::backdrop{background:var(--bl-scrim)}
 .bl-credits-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;flex:none;border-bottom:1px solid var(--salty-line, var(--bl-fb-cdd9e8))}
 .bl-credits-dialog h2{font-size:var(--bl-ts-head);margin:0}.bl-credits-dialog header button{width:40px;height:40px;border:0;background:transparent;color:inherit;font:400 var(--bl-deco-glyph-26)/1 system-ui;cursor:pointer}
@@ -377,7 +377,7 @@ html body.salty #rm_extensions_block :is(.regex_settings,#qr--settings,#memory_s
 }
 html body.salty #rm_extensions_block :is(.regex_settings,#qr--settings,#memory_settings,.caption_settings,#assets_ui,#tts_settings,
   .vectors_settings,.sd_settings,.expression_settings,.translation_settings:not(.llmt-settings)) .inline-drawer-content h4 {
-  margin:8px 0 6px !important; font-size:var(--bl-ts-ui,14px) !important; font-weight:600 !important; line-height:1.4 !important;
+  margin:8px 0 6px !important; font-size:var(--bl-ts-ui,14px) !important; font-weight:650 !important; line-height:1.4 !important;
 }
 html body.salty #rm_extensions_block :is(.regex_settings,#qr--settings,#memory_settings,.caption_settings,#assets_ui,#tts_settings,
   .vectors_settings,.sd_settings,.expression_settings,.translation_settings:not(.llmt-settings)) .inline-drawer-content hr {
@@ -389,7 +389,7 @@ html body.salty #rm_extensions_block .expression_settings #open_chat_expressions
 html body.salty #rm_extensions_block .sd_settings #sd_dimensions_block { padding-top:8px; }
 /* Quick Reply: 체크 줄 글은 12.5 · 묶음 제목은 13.5/650 이었다 → 라벨 14 · 제목 14/600 (예전 규칙(27~57)보다 html 한 점 무겁게) */
 html body.salty #rm_extensions_block #qr--settings :is(.inline-drawer-content, #qr--set-settings) > label.flex-container { font-size:var(--bl-ts-ui,14px); }
-html body.salty #rm_extensions_block #qr--settings .qr--title:is(.bl-s, *):is(bl-s, *) { font-size:var(--bl-ts-ui,14px); font-weight:600; }
+html body.salty #rm_extensions_block #qr--settings .qr--title:is(.bl-s, *):is(bl-s, *) { font-size:var(--bl-ts-ui,14px); font-weight:650; }
 /* 빠른 답 목록: 카드 묶음(8) 안에서 목록이 양옆 .5em 을 또 들여 써 항목 카드가 한 겹 더 좁았다 → 좌우 한 겹만 */
 html body.salty #rm_extensions_block #qr--settings #qr--set-qrList .qr--set-qrListContents { padding-inline:0; }
 /* 「Edit Quick Replies」: 고르기 칸(12em 이상) 옆에 아이콘 5개, 다음 줄에 지우기 하나만(고아) → 고르기 칸을 8em 부터 줄여 아이콘 6개와 한 줄에 */
@@ -421,7 +421,7 @@ html body.salty #rm_extensions_block #tts_settings #playback_rate_block > hr { d
 html body.salty .stwii--panel { max-width:max(calc((100vw - var(--sheldWidth, 50vw)) / 2 - 3.5em), 16em); }
 @media (max-width: 1000px) {
   html body.salty .stwii--panel { position:fixed; position-area:none; position-try-fallbacks:none; inset:calc(var(--topBarBlockSize, 40px) + 8px) 12px auto 12px; width:auto; max-width:none; max-height:min(65dvh, calc(100dvh - var(--topBarBlockSize, 40px) - 18px - var(--bl-form-h, 150px))); margin:0; padding:10px 12px; gap:6px; border:1px solid var(--salty-line, transparent); border-radius:var(--bl-r-md, 12px); background-color:var(--salty-surface, var(--secondaryBg, var(--SmartThemeBlurTintColor))); font-size:var(--bl-ts-ui, 14px); line-height:1.45; word-break:keep-all; overflow-wrap:anywhere; }
-  html body.salty .stwii--panel .stwii--world { margin-top:4px; font-weight:600; }
+  html body.salty .stwii--panel .stwii--world { margin-top:4px; font-weight:650; }
   html body.salty .stwii--panel .stwii--entry { align-items:flex-start; gap:8px; padding-left:10px; opacity:.9; }
   html body.salty .stwii--panel .stwii--entry > * { min-width:0; }
   html body.salty .stwii--messages .stwii--title { width:auto; font-size:var(--bl-ts-meta, 12.5px); }

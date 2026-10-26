@@ -16,7 +16,7 @@ body.salty .bl-pbind-row {
   gap: 6px;
 }
 body.salty .bl-pbind-title {
-  font-weight: 700;
+  font-weight: 650;
   margin-right: 4px;
 }
 body.salty .bl-pbind .menu_button {
@@ -76,7 +76,7 @@ body.salty .bl-pbind-dialog {
   max-height: 80dvh;
   padding: 12px;
   border: 1px solid var(--SmartThemeBorderColor, var(--bl-fb-rgb-128-128-128-p35));
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--SmartThemeBlurTintColor, var(--bl-fb-222));
   color: var(--SmartThemeBodyColor, var(--bl-fb-eee));
   display: flex;
@@ -161,13 +161,13 @@ body.salty .bl-pbind-noimg.is-regex {
   display: inline-grid;
   place-items: center;
   font-size: .75em;
-  font-weight: 700;
+  font-weight: 650;
   opacity: .8;
 }
 body.salty .bl-pbind-group {
   grid-column: 1 / -1;
   font-size: .85em;
-  font-weight: 700;
+  font-weight: 650;
   opacity: .7;
   padding: 8px 8px 2px;
 }

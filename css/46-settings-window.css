@@ -14,7 +14,7 @@
 .salty-panel .bl-settings-close { width:38px; padding:0; font:var(--bl-deco-glyph-24)/1 sans-serif; }
 html body dialog.popup.bl-settings-dialog > .popup-button-close,
 html body dialog.popup.bl-settings-dialog .popup-controls { display:none !important; }
-html body dialog.popup.bl-settings-fullscreen:has(.salty-panel.in-popup) {
+html body dialog.popup.bl-settings-fullscreen[data-bl-popup~="settings"]:is(.bl-s, *) {
   position:fixed !important; inset:0 !important; margin:0 !important;
   width:100vw !important; width:100dvw !important; max-width:none !important;
   height:100vh !important; height:100dvh !important; max-height:none !important; min-height:0 !important;

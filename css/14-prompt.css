@@ -86,7 +86,7 @@ body.salty #left-nav-panel :is(#range_block_openai, #openai_settings) .range-blo
   padding: 0 2px;
 }
 body.salty #left-nav-panel .toggle-description :is(strong, b) {
-  font-weight: 600;
+  font-weight: 650;
   color: var(--salty-text);
 }
 body.salty #left-nav-panel .toggle-description a {
@@ -288,7 +288,7 @@ body.salty #left-nav-panel #logit_bias_openai {
   min-height: var(--bl-h-ctl);
   padding-top: 2px;
   font-size: var(--bl-fs-body) !important;
-  font-weight: 600;
+  font-weight: 650;
 }
 body.salty #left-nav-panel #logit_bias_openai + .toggle-description {
   margin-top: -4px !important;
@@ -359,7 +359,7 @@ body.salty #completion_prompt_manager .completion_prompt_manager_header > div {
 body.salty #completion_prompt_manager .completion_prompt_manager_header > .completion_prompt_manager_header_advanced {
   margin: 0 !important;
   font-size: var(--bl-fs-body); /* 7.9.3: 12.4/650 흐림 → 서랍 칸 제목과 같게 */
-  font-weight: 600;
+  font-weight: 650;
   color: var(--salty-text);
 }
 body.salty #completion_prompt_manager .completion_prompt_manager_header_advanced span {
@@ -371,7 +371,7 @@ body.salty #completion_prompt_manager .completion_prompt_manager_header > div:la
   border-radius: var(--bl-r-pill);
   background: var(--bl-fill-hover, var(--bl-hover));
   font-size: var(--bl-fs-cap);
-  font-weight: 600;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   color: var(--salty-muted);
@@ -600,7 +600,7 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list .completio
 body.salty #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name .prompt-manager-injection-depth {
   margin-left: 4px;
   font-size: var(--bl-fs-micro);
-  font-weight: 600;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
   color: var(--salty-faint);
 }
@@ -792,7 +792,7 @@ body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_ent
   color: var(--salty-muted);
 }
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_source_block > b {
-  font-weight: 600;
+  font-weight: 650;
   color: var(--salty-text);
 }
 body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_entry_form_prompt {
@@ -887,13 +887,13 @@ body.salty #rm_api_block .flex-container > .text_pole + .manage-api-keys:last-ch
 body.salty #rm_api_block small code {
   padding: 1px 6px;
   border: 0 !important;
-  border-radius: 6px;
+  border-radius: 5px;
   background: var(--bl-fill-hover, var(--bl-hover)) !important;
   color: var(--salty-muted) !important;
   font-size: 0.92em;
 }
 body.salty #rm_api_block small :is(b, strong) {
-  font-weight: 600;
+  font-weight: 650;
   color: var(--salty-muted);
 }
 /* 연결 · 추가 설정 · 테스트: 줄을 채우는 같은 높이 칩 */
@@ -932,7 +932,7 @@ body.salty #rm_api_block .online_status_text {
 body.salty #rm_api_block #viewSecrets {
   padding: 6px 2px;
   font-size: var(--bl-fs-ctl);
-  font-weight: 600;
+  font-weight: 650;
   text-decoration: none;
   color: var(--salty-accent) !important;
 }

@@ -15,7 +15,7 @@
   cursor: pointer;
   list-style: none;
   color: var(--salty-text);
-  font-weight: 600;
+  font-weight: 650;
   line-height: 1.4;
 }
 .salty-panel .bl-ss-files > summary::-webkit-details-marker {
@@ -109,6 +109,6 @@
 }
 /* 지금 분위기 (작게) */
 .salty-panel .bl-sm-now {
-  font-weight: 600;
+  font-weight: 650;
   color: var(--salty-accent);
 }

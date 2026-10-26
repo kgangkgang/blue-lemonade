@@ -387,7 +387,7 @@ body.salty #user-settings-block-content :is(.inline-drawer-content > small, .aut
   display: block;
   padding: 10px 2px 6px;
   font-size: var(--bl-fs-sub) !important;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--salty-muted) !important;
 }
 body.salty #user-settings-block-content .auto_continue_settings_block > label {
@@ -497,7 +497,7 @@ body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2)
 }
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header {
   border-radius: var(--bl-r-md) var(--bl-r-md) 0 0 !important;
-  font-weight: 600;
+  font-weight: 650;
 }
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer) > .inline-drawer-content {
   padding: 0 10px var(--bl-s3) !important;
@@ -584,7 +584,7 @@ body.salty #AdvancedFormatting #SystemPromptColumn > #SystemPromptBlock {
   padding: var(--bl-s1) var(--bl-inset) var(--bl-s3) !important;
   border-radius: 0 0 var(--bl-r-md) var(--bl-r-md) !important;
   background: var(--bl-fill-card, var(--bl-card)) !important;
-  box-shadow: inset 0 1px 0 var(--bl-card), var(--bl-e1) !important;
+  box-shadow: inset 0 1px 0 var(--bl-card) !important;
   clip-path: inset(0 -40px -80px -40px);
 }
 /* 묶음 이름 줄의 켜기 아이콘(⚡ · 🔗 · ⏻): 스위치 줄 높이 대신 아이콘 크기 */
@@ -614,7 +614,7 @@ body.salty #AdvancedFormatting > .spaceEvenly small:where(:not(label.checkbox_la
   display: block;
   padding: 10px 2px 6px;
   font-size: var(--bl-fs-sub) !important;
-  font-weight: 600;
+  font-weight: 650;
   line-height: 1.35;
   color: var(--salty-muted) !important;
   opacity: 1 !important;
@@ -650,7 +650,7 @@ body.salty #AdvancedFormatting details > summary {
   list-style: none;
   cursor: pointer;
   font-size: var(--bl-fs-body) !important;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--salty-text);
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6.5 9.5 5.5 5.5 5.5-5.5'/%3E%3C/svg%3E") no-repeat right 4px center / 15px 15px;
 }
@@ -880,7 +880,7 @@ body.salty #Backgrounds .bg_example .BGSampleTitle {
   background: var(--bl-media-scrim-50) !important;
   color: var(--bl-on-media) !important;
   font-size: var(--bl-fs-micro) !important;
-  font-weight: 600;
+  font-weight: 650;
 }
 body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) :is(.mobile-only-menu-toggle, .jg-menu) {
   -webkit-backdrop-filter: none !important;
@@ -930,7 +930,7 @@ body.salty #Backgrounds #bg_chat_hint {
 body.salty #Backgrounds #bg_chat_hint code {
   padding: 2px 6px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 5px;
   background: var(--bl-fill-hover, var(--bl-hover));
   color: var(--salty-text);
 }
@@ -1251,7 +1251,7 @@ body.salty .TH-custom-tailwind .TH-radio-button--selected {
   background: var(--bl-fill-pop, var(--bl-pop));
   box-shadow: var(--bl-e2);
   color: var(--bl-on-pop) !important;
-  font-weight: bolder;
+  font-weight: 650;
 }
 /* 스위치·열기 버튼 줄도 라벨을 압착하지 않는다. 확장의 Item 컴포넌트 안으로만 한정한다. */
 body.salty .TH-custom-tailwind .flex.items-center.justify-between:has(> .flex-1 > .TH-Item--title) {
@@ -1401,7 +1401,7 @@ body.salty .dialog-teleported [role="dialog"] > .bg-\(--SmartThemeQuoteColor\) >
   overflow: hidden;
   color: var(--salty-text) !important;
   font-size: var(--bl-fs-head);
-  font-weight: bolder;
+  font-weight: 650;
   letter-spacing: var(--salty-ui-ls, normal);
   line-height: 1.3;
   text-overflow: ellipsis;
@@ -1634,7 +1634,7 @@ body.salty #rm_extensions_block #character_assets_settings .character-assets__pa
 }
 body.salty #rm_extensions_block #character_assets_settings code {
   border: 0;
-  border-radius: 6px;
+  border-radius: 5px;
   background: var(--bl-fill-hover, var(--bl-hover));
 }
 body.salty #rm_extensions_block #character_assets_settings .asset-preview-thumb {
@@ -1657,7 +1657,7 @@ body.salty #rm_extensions_block #character_assets_settings .character-assets__ta
   border-radius: var(--bl-r-sm);
   background: transparent;
   color: var(--salty-muted);
-  font-weight: 600;
+  font-weight: 650;
 }
 body.salty #rm_extensions_block #character_assets_settings .character-assets__tab.is-active {
   border: 0;

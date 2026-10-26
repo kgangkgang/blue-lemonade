@@ -84,7 +84,7 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
   color: var(--salty-text, var(--bl-fb-fff));
   font-size: 13px;
   white-space: nowrap;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, .35);
+  box-shadow: none;
 }
 #bl-weather-place .bl-weather-place-bar > span {
   min-width: 0;
@@ -102,7 +102,7 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
 #bl-weather-place .bl-weather-place-bar button[data-place="done"] {
   background: var(--salty-accent, var(--bl-fb-6ab3ff));
   color: var(--salty-on-accent, var(--bl-fb-fff));
-  font-weight: 700;
+  font-weight: 650;
 }
 #bl-weather-place .bl-weather-place-dot {
   position: absolute;
@@ -115,8 +115,8 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
   border-radius: 50%;
   background: var(--salty-accent, var(--bl-fb-6ab3ff));
   color: var(--salty-on-accent, var(--bl-fb-fff));
-  font-weight: 700;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, .85), 0 4px 14px rgba(0, 0, 0, .4);
+  font-weight: 650;
+  box-shadow: 0 0 0 1px var(--bl-knob-face);
   touch-action: none;
   cursor: grab;
 }

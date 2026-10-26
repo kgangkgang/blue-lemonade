@@ -53,7 +53,7 @@ body.salty.charListGrid #right-nav-panel #rm_print_characters_block :is(.charact
   box-shadow: none;
   color: var(--bl-lemon);
   font-size: 11px;
-  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.45));
+  filter: none;
 }
 body.salty #right-nav-panel #avatar_div:has(#favorite_button.fav_on) #avatar_div_div::after,
 body.salty:not(.salty-dark) #right-nav-panel #avatar_div:has(#favorite_button.fav_on) #avatar_div_div::after {
@@ -66,7 +66,7 @@ body.salty:not(.salty-dark) #right-nav-panel #avatar_div:has(#favorite_button.fa
   box-shadow: none;
   color: var(--bl-lemon);
   font-size: 13px;
-  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.45));
+  filter: none;
 }
 
 /* ---------- 프리셋 카드 펼침 삼각형 (2.1.2, 사용자: "삼각형은 왜 이리 작냐 점 같아") ----------
@@ -237,7 +237,7 @@ body.salty #cg-panel .cg-setting small { word-break: keep-all; overflow-wrap: an
    단추(지금 항목 + 꺾쇠) 밑에 카드로 펼쳐지는 라디오 목록. 탭 줄이 sticky 라 목록도 그 위에 뜬다 */
 .salty-panel .salty-pick {
   position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 5;
-  display: flex; flex-direction: column; padding: 6px; border-radius: 14px;
+  display: flex; flex-direction: column; padding: 6px; border-radius: 12px;
   background: var(--bl-card, var(--salty-surface)); box-shadow: var(--bl-e4, var(--salty-lift-lg));
   max-height: min(60vh, 420px); overflow-y: auto;
   animation: salty-pick-in 0.16s ease-out;
@@ -289,7 +289,7 @@ body.salty .salty-pick-layer {
 body.salty .salty-pick-layer::backdrop { background: transparent; }
 body.salty .salty-pick-float {
   position: fixed; display: flex; flex-direction: column; box-sizing: border-box;
-  padding: 6px; border-radius: 14px;
+  padding: 6px; border-radius: 12px;
   background: var(--bl-card, var(--salty-surface)); color: var(--salty-text);
   box-shadow: var(--bl-e4, var(--salty-lift-lg));
   font-family: var(--salty-font-ui, inherit); font-size: 13px;
@@ -322,7 +322,7 @@ body.salty .salty-pick-rows > button.on > i { box-shadow: inset 0 0 0 1px curren
 body.salty .salty-pick-rows > button:active { background: var(--salty-fill-shade-2, var(--salty-shade-2)); }
 body.salty .salty-pick-rows > button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: -2px; }
 /* optgroup 제목: 작은 흐린 글씨, 첫 것만 위 여백 없음 */
-body.salty .salty-pick-group { padding: 10px 12px 4px; font-size: 12px; font-weight: 700; color: var(--salty-muted); }
+body.salty .salty-pick-group { padding: 10px 12px 4px; font-size: 12px; font-weight: 650; color: var(--salty-muted); }
 body.salty .salty-pick-group:first-child { padding-top: 4px; }
 body.salty .salty-pick-empty { padding: 12px 12px; color: var(--salty-muted); }
 
@@ -352,7 +352,7 @@ body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world
   flex: none;
   padding: 0;
   font-size: var(--bl-fs-sub) !important;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--salty-muted) !important;
 }
 body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control > input {

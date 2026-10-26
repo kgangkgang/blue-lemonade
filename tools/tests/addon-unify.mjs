@@ -47,8 +47,8 @@ test('직접 만든 창 · 한글화 · 메모 · 북마크의 × 도 같은 크
   assert.ok(r, '× 규칙 없음');
   for (const s of OWN) assert.ok(r.sel.includes(s), `× 규칙에 ${s} 빠짐`);
 });
-test('제목: 메뉴 글자 크기 · 600, 판 알약은 확장 서랍 .ext-version 과 같은 값', () => {
-  const t = find(['.po-title', '.pa-hub-title', '> header > b', '#pt-panel-header > h3'], ['font-size: var(--bl-ts-ui, 14.5px)', 'font-weight: 600']);
+test('제목: 메뉴 글자 크기 · 650, 판 알약은 확장 서랍 .ext-version 과 같은 값', () => {
+  const t = find(['.po-title', '.pa-hub-title', '> header > b', '#pt-panel-header > h3'], ['font-size: var(--bl-ts-ui, 14.5px)', 'font-weight: 650']);
   assert.ok(t, '제목 규칙 없음');
   const v = find([':is(.ext-version, .pt-version, .bl-notes-ver)'], ['border-radius: var(--bl-r-pill, 999px)', 'font-size: var(--bl-fs-micro)', 'padding: 2px 8px 0', 'color: var(--salty-muted)']);
   assert.ok(v, '판 알약 규칙 없음');
@@ -75,7 +75,7 @@ test('탭: 기본 한 줄과 확대 배치 설정 · 아이콘 + 글자 가로 �
   for (const n of [1, 2, 3]) assert.ok(find([`.po-menu-tabs > button:nth-child(${n})::before`], ['content:']), `확장 순서 탭 ${n} 아이콘 없음`);
 });
 test('고른 칸 = 꽉 찬 포인트, 카드 = 모서리 12 · 1px 테 (원래 색 있는 테는 그대로)', () => {
-  assert.ok(find(['.bwr_seg.active', '.bl-look-segbtn.on'], ['background: var(--salty-accent)', 'color: var(--salty-on-accent, var(--bl-fb-fff))', 'font-weight: 700']), '고른 칸 규칙 없음');
+  assert.ok(find(['.bwr_seg.active', '.bl-look-segbtn.on'], ['background: var(--salty-accent)', 'color: var(--salty-on-accent, var(--bl-fb-fff))', 'font-weight: 650']), '고른 칸 규칙 없음');
   assert.ok(find(['.lv-card', '.llmt-card', '.mr-item', '.rl-module', '.po-item', '.jj-card', '.blzi-card', '.eh-card'], ['border-radius: 12px', 'border-width: 1px']), '카드 규칙 없음');
   const color = find(['.mr-item:not(.is-picked)', '.rl-module', '.po-item'], ['border-color: var(--salty-line)']);
   assert.ok(color && !color.sel.includes('.llmt-card') && !color.sel.includes('.jj-'), '테 색은 테 없던 카드에만');

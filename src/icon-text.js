@@ -1,3 +1,4 @@
+import { refreshPopupMarks } from './popup-marks.js';
 // 아이콘 단추 표식 — CSS :has() 대신 JS 가 .menu_button · 체크 줄 label 에 표식을 단다
 // 1) data-bl-icon-text: css/02-controls.css 의 '아이콘만 있는 버튼' 규칙은 `> i` 하나뿐인 .menu_button 을 면 없는 아이콘으로 칠한다.
 //    CSS 는 글자 노드를 못 봐서 `<i class="fa-…"></i> 독서 패널 열기` 같은 다른 확장의 글자 버튼도 거기 걸려
@@ -183,13 +184,13 @@ function scan(node) {
     else if (node.localName === 'label') checkLabel(node);
     if (node.classList?.contains('mes')) checkMes(node);
     if (node.classList?.contains('mes_reasoning_details')) checkReasoning(node);
-    if (node.firstElementChild && isRowHost(node)) checkRow(node);
+    if ((node.firstElementChild || node.hasAttribute(ROW)) && isRowHost(node)) checkRow(node);
     if (!node.firstElementChild) return;
     for (const el of node.getElementsByClassName('menu_button')) check(el);
     for (const el of node.getElementsByTagName('label')) checkLabel(el);
     for (const el of node.getElementsByClassName('mes')) checkMes(el);
     for (const el of node.getElementsByClassName('mes_reasoning_details')) checkReasoning(el);
-    for (const el of node.getElementsByTagName('*')) if (el.firstElementChild && isRowHost(el)) checkRow(el);
+    for (const el of node.getElementsByTagName('*')) if ((el.firstElementChild || el.hasAttribute(ROW)) && isRowHost(el)) checkRow(el);
 }
 
 // 바뀐 요소 하나 — .menu_button 이면 단추 표식, label 이면 체크 줄 표식, input 이 바뀌었으면 그 부모 label
@@ -207,17 +208,38 @@ function touched(el) {
     const rb = el.closest('.range-block'); if (rb && rb !== el && rb !== p) checkRow(rb);
 }
 
+// 같은 콜백 안의 반복 기록은 마지막 DOM 상태 한 번으로 모아요.
+// 붙인 부모를 훑으면 그 안 자식도 함께 확인하므로, 중첩해서 붙인 자식을 또 훑지 않아요.
+export function mutationWork(records) {
+    const targets = new Set(), added = new Set();
+    for (const record of records) {
+        const target = record.target.nodeType === 1 ? record.target : record.target.parentElement;
+        if (target && target.isConnected !== false) targets.add(target);
+        for (const node of record.addedNodes || []) if (node.nodeType === 1 && node.isConnected !== false) added.add(node);
+    }
+    const roots = [...added].filter(node => {
+        for (let p = node.parentElement; p; p = p.parentElement) if (added.has(p)) return false;
+        return true;
+    });
+    const rootSet = new Set(roots);
+    const remaining = [...targets].filter(node => {
+        for (let p = node; p; p = p.parentElement) if (rootSet.has(p)) return false;
+        return true;
+    });
+    return { roots, targets: remaining };
+}
+
 let started = false;
 export function startIconTextMark() {
     if (started || !document.body) return;
     started = true;
     scan(document.body);
+    refreshPopupMarks(null, document.body);
     // 붙은 요소 속 .menu_button · label · .mes 와, 자식(글자 · 아이콘 · 편집칸 · 타이머 글자)이 바뀐 요소, 클래스(menu_button_icon) · type 이 바뀐 요소만 본다.
     new MutationObserver((records) => {
-        for (const record of records) {
-            const target = record.target.nodeType === 1 ? record.target : record.target.parentElement;
-            if (target) touched(target);
-            for (const node of record.addedNodes) if (node.nodeType === 1) scan(node);
-        }
-    }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class', 'type'] });
+        const work = mutationWork(records);
+        for (const node of work.roots) scan(node);
+        for (const target of work.targets) touched(target);
+        refreshPopupMarks(records);
+    }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class', 'type', 'id'] });
 }

@@ -55,8 +55,8 @@
 .bl-capture-dialog input[type=text], .bl-tool-dialog input[type=number], .bl-word-presets input[type=text], .bl-name-row input { border:1px solid var(--salty-line); border-radius:8px; padding:8px; color:var(--salty-text); background:var(--salty-field); }
 @media(max-width:640px){.bl-capture-layout{grid-template-columns:minmax(0,1fr)}.bl-capture-dialog{padding:12px}.bl-capture-dialog footer{bottom:-14px}}
 .bl-addon-actions { display:flex; flex-wrap:wrap; gap:12px; margin:12px 0 20px; }
-.bl-apply-pending { outline:1px solid var(--salty-accent); box-shadow:0 0 12px var(--salty-accent); animation:bl-apply-glow 2s ease-in-out infinite; }
-@keyframes bl-apply-glow { 50% { box-shadow:0 0 3px var(--salty-accent); } }
+.bl-apply-pending { outline:1px solid var(--salty-accent); box-shadow:none; background:var(--salty-accent-13); font-weight:650; }
+@keyframes bl-apply-glow { 50% { box-shadow:none; } }
 @media(prefers-reduced-motion:reduce){.bl-apply-pending{animation:none}}
 .bl-addon-position-preview, .bl-wand-preview { padding:12px; border:1px solid var(--salty-line); border-radius:12px; margin:12px 0; background:var(--salty-shade); }
 .bl-addon-position-preview>div, .bl-wand-preview-input { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:12px 0; }
@@ -78,7 +78,7 @@ body.bl-hide-perf-timer #lt-wand-button, body.bl-hide-perf-log #rl-wand-button {
 .bl-mask-number { display:grid; gap:6px; }
 .bl-mask-number > span { display:flex; gap:10px; align-items:center; min-width:0; }
 .bl-mask-number input[type=range] { flex:1; min-width:0; width:0; }
-.bl-mask-number input[type=number] { flex:0 0 64px; width:64px; min-width:0; padding:4px; box-sizing:border-box; color:var(--salty-text); background:var(--salty-field); border:1px solid var(--salty-line); border-radius:6px; }
+.bl-mask-number input[type=number] { flex:0 0 64px; width:64px; min-width:0; padding:4px; box-sizing:border-box; color:var(--salty-text); background:var(--salty-field); border:1px solid var(--salty-line); border-radius:5px; }
 
 .salty-panel .bl-word-actions, .salty-panel .bl-addon-actions { align-items:stretch; gap:10px; width:100%; }
 .salty-panel .bl-word-actions > button, .salty-panel .bl-addon-actions > button { flex:1 1 140px; min-width:0; min-height:44px; height:auto; margin:0; white-space:normal; overflow-wrap:anywhere; line-height:1.4; box-sizing:border-box; }
@@ -99,7 +99,7 @@ body.bl-hide-perf-timer #lt-wand-button, body.bl-hide-perf-log #rl-wand-button {
 .bl-edit-peek { flex:1 1 auto; min-width:0; display:flex; align-items:center; gap:8px; min-height:40px; padding:0; border:0; background:transparent; color:inherit; font:inherit; text-align:left; cursor:pointer; }
 .bl-edit-peek > span { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .bl-edit-peek > span em { color:var(--salty-faint); font-style:normal; }
-.bl-edit-peek > img { flex:0 0 auto; width:28px; height:28px; object-fit:cover; border-radius:6px; }
+.bl-edit-peek > img { flex:0 0 auto; width:28px; height:28px; object-fit:cover; border-radius:5px; }
 .bl-edit-peek > i { flex:0 0 auto; color:var(--salty-faint); font-size:.8em; }
 .bl-capture-editor .bl-edit-row .bl-word-actions button { flex:0 0 48px; }
 .bl-capture-presets { display:grid; gap:8px; margin:0 0 12px; padding:0 0 12px; border-bottom:1px solid var(--salty-line); }
@@ -127,14 +127,14 @@ body.salty-help-off #pt-panel .pt-page-fixed .pt-act-row { grid-template-columns
 .bl-wi-help-dialog h3 { margin:0 0 10px; }
 .bl-wi-help-dialog p { margin:0 0 10px; }
 .bl-wi-help-list { display:grid; grid-template-columns:max-content minmax(0, 1fr); gap:6px 12px; margin:0 0 12px; line-height:1.6; }
-.bl-wi-help-list dt { font-weight:700; white-space:nowrap; }
+.bl-wi-help-list dt { font-weight:650; white-space:nowrap; }
 .bl-wi-help-list dd { margin:0; }
 .bl-wi-help-rec { padding:8px 12px; border-radius:var(--bl-r-md, 10px); background:color-mix(in srgb, var(--salty-accent, var(--bl-fb-888)) 12%, transparent); }
 .bl-wi-help-rec b { margin-right:8px; color:var(--salty-accent, inherit); }
 .bl-wi-help-actions { display:flex; justify-content:flex-end; margin-top:4px; }
 /* 2026-10-13 캐릭터 로어북 연결이 빠지면 위쪽 책 아이콘에 빨간 점 하나 (src/wi-link.js — 글자 · 팝업 없음, 고치면 사라짐). 테마가 꺼져 있으면 숨김 */
 body.salty #WIDrawerIcon.bl-wi-unlinked { position:relative; }
-body.salty #WIDrawerIcon.bl-wi-unlinked::after { content:''; position:absolute; top:0; right:0; width:7px; height:7px; border-radius:50%; background:var(--bl-danger, var(--bl-fb-e5484d)); box-shadow:0 0 0 1.5px var(--salty-fill-surface, var(--salty-surface, transparent)); pointer-events:none; }
+body.salty #WIDrawerIcon.bl-wi-unlinked::after { content:''; position:absolute; top:0; right:0; width:7px; height:7px; border-radius:50%; background:var(--bl-danger, var(--bl-fb-e5484d)); box-shadow:0 0 0 1px var(--salty-fill-surface, var(--salty-surface, transparent)); pointer-events:none; }
 @media (max-width: 520px) {
   .bl-wi-help-list { grid-template-columns:minmax(0, 1fr); gap:2px; }
   .bl-wi-help-list dd { margin-bottom:6px; }

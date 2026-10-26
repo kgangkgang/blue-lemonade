@@ -133,19 +133,19 @@ body.salty #preloader {
   color: var(--salty-text) !important;
 }
 /* 스플래시가 든 팝업은 카드가 아니라 바탕 — 면 · 그림자 · 둥글기 · 여백 되돌림 */
-body.salty .popup:has(#loader.splash-screen) {
+body.salty .popup[data-bl-popup~="loader"]:is(#bl-s, *) {
   padding: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 /* 팝업 뒤 막도 같은 바탕색 (어두운 막이 겹치면 두 겹으로 보임) */
-body.salty.salty-light .popup:has(#loader.splash-screen)::backdrop {
+body.salty.salty-light .popup[data-bl-popup~="loader"]:is(#bl-s, *)::backdrop {
   background: var(--salty-bg, var(--bl-fb-f1f8fd)) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
-body.salty.salty-dark .popup:has(#loader.splash-screen)::backdrop {
+body.salty.salty-dark .popup[data-bl-popup~="loader"]:is(#bl-s, *)::backdrop {
   background: var(--salty-bg, var(--bl-fb-071c2e)) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
@@ -196,7 +196,7 @@ body.salty #loader.splash-screen .splash-message::before {
   color: var(--salty-text);
   font-family: var(--bl-sp-font, var(--salty-font-ui, inherit));
   font-size: var(--bl-sp-title, var(--bl-fs-title, 22px));
-  font-weight: 700;
+  font-weight: 650;
   /* 이 줄이 뜰 때 테마 글꼴은 아직 받는 중(font-display: swap)이라 대체 글꼴로 먼저 그려진다.
      대체 글꼴에 700 이 없으면 크롬이 글자를 번지게 굵혀 흉내 내고, 진짜 글꼴이 오면 또렷해진다.
      가짜 굵게를 끄면 잠깐 보통 굵기로 있다가 굵어진다 — 번지는 것보다 덜 거슬림. */

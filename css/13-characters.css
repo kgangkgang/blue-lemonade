@@ -263,7 +263,7 @@ body.salty #right-nav-panel :is(#character_sort_order, .paginationjs-size-change
   box-shadow: none !important;
   color: var(--salty-muted) !important;
   font-size: var(--bl-fs-ctl) !important;
-  font-weight: 600;
+  font-weight: 650;
   text-align: right;
   text-align-last: right;
   cursor: pointer;
@@ -357,7 +357,7 @@ body.salty #right-nav-panel .rm_tag_filter .tag:not(.actionable).excluded::after
   order: -1;
   height: auto !important;
   font-size: 15px !important;
-  font-weight: 600;
+  font-weight: 650;
   line-height: 1 !important;
 }
 /* 뺀 아이콘 칩: 같은 호박색 아이콘에 겹쳐 안 보이던 × 를 오른쪽 위 작은 배지로 */
@@ -375,7 +375,7 @@ body.salty #right-nav-panel .rm_tag_filter .tag.actionable.excluded::after {
   box-shadow: var(--bl-e2);
   color: var(--bl-on-pop) !important; /* pop 면 위 글자색 — 바탕색이면 멜론 · 레몬 · 피치 · 자몽 화이트의 파스텔 pop 에서 × 가 안 보임 (1.1~1.9 : 1) */
   font-size: 13px !important;
-  font-weight: 700;
+  font-weight: 650;
   line-height: 1 !important;
 }
 /* 폴더 안으로 들어갔을 때의 경로 태그 */
@@ -409,7 +409,7 @@ body.salty #right-nav-panel .paginationjs-nav {
   padding: 0 6px 0 0 !important;
   color: var(--salty-muted);
   font-size: var(--bl-fs-sub) !important;
-  font-weight: 600 !important;
+  font-weight: 650 !important;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -585,7 +585,7 @@ body.salty #right-nav-panel #rm_print_characters_block .character_select.charact
   height: var(--bl-deco-pick-badge);
   border-radius: 50%;
   background: var(--salty-fill-accent, var(--salty-accent));
-  box-shadow: 0 0 0 2px var(--salty-row-bg, var(--bl-card)), var(--bl-e2);
+  box-shadow: 0 0 0 1px var(--salty-row-bg, var(--bl-card));
   color: var(--salty-on-accent); /* 포인트 면 위 글자색 — 밝은 커스텀 포인트(노랑 등)에서도 ✓ 가 보이게 */
   font: 900 11px/1 "Font Awesome 6 Free";
 }
@@ -659,7 +659,7 @@ body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_bloc
 /* 목록 이름은 크기로 구분하고 굵기는 한 단계만 (16/600) */
 body.salty #right-nav-panel #rm_print_characters_block .ch_name {
   font-size: calc(var(--mainFontSize, 15px) * 1.067) !important;
-  font-weight: 600 !important;
+  font-weight: 650 !important;
   letter-spacing: -0.01em;
   line-height: 1.3;
 }
@@ -732,7 +732,7 @@ body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_bloc
   min-height: 20px !important;
   padding: 2px 8px !important;
   font-size: var(--bl-fs-micro) !important;
-  font-weight: 600;
+  font-weight: 650;
   line-height: 1.35;
 }
 body.salty #right-nav-panel :is(#rm_print_characters_block, #rm_group_chats_block) .tags_inline .tag:not([style*="background"]) {
@@ -765,7 +765,7 @@ body.salty #right-nav-panel #rm_print_characters_block .bogus_folder_avatars_blo
 }
 body.salty #right-nav-panel #rm_print_characters_block .bogus_folder_avatars_block .avatar img {
   border: 0 !important;
-  border-radius: 6px !important;
+  border-radius: 5px !important;
   box-shadow: var(--bl-e1) !important;
 }
 /* 아바타 없는 캐릭터 · 새 그룹의 기본 그림: 보라 바탕을 무채색으로 */
@@ -944,7 +944,7 @@ body.salty #right-nav-panel :is(#avatar_controls, #group-metadata-controls) :is(
   position: relative;
   color: var(--salty-accent) !important;
   background: color-mix(in srgb, var(--salty-accent) 16%, var(--bl-control)) !important;
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--salty-accent) 70%, transparent), 0 0 10px color-mix(in srgb, var(--salty-accent) 20%, transparent) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
 
 body.salty #right-nav-panel #avatar-and-name-block :is(#character_name_pole, #char-management-dropdown, #tagInput) {
@@ -1012,7 +1012,7 @@ body.salty #right-nav-panel #creators_notes_div {
   gap: 0 !important;
   padding: 0 !important;
   font-size: var(--bl-fs-body) !important;
-  font-weight: 600 !important;
+  font-weight: 650 !important;
 }
 body.salty #right-nav-panel #spoiler_free_desc > .inline-drawer-content {
   padding: 0 var(--bl-s3) var(--bl-s3) 0;
@@ -1066,7 +1066,7 @@ body.salty :is(#right-nav-panel, #character_popup) .extension_token_counter {
 }
 body.salty :is(#right-nav-panel, #character_popup) .extension_token_counter [data-token-counter] {
   color: var(--salty-muted);
-  font-weight: 600;
+  font-weight: 650;
 }
 
 /* ---------- 그룹 편집 ---------- */
@@ -1232,7 +1232,7 @@ body.salty #character_popup #character_popup_text {
 body.salty #character_popup #character_popup-button-h3 {
   color: var(--salty-text);
   font-size: var(--bl-fs-title) !important;
-  font-weight: 750;
+  font-weight: 650;
   letter-spacing: -0.02em;
 }
 body.salty #character_popup #character_cross {
@@ -1263,7 +1263,7 @@ body.salty #character_popup > .inline-drawer > .inline-drawer-header h4 {
   margin: 0 !important;
   color: var(--salty-text) !important;
   font-size: var(--bl-fs-body) !important;
-  font-weight: 600 !important;
+  font-weight: 650 !important;
   letter-spacing: 0;
 }
 body.salty #character_popup > .inline-drawer > .inline-drawer-header h4 small {

@@ -22,7 +22,7 @@ export function guideHtml() {
     return `<section class="bl-tts-guide" style="text-align:left;overflow-wrap:anywhere">
       <style>
         .bl-tts-guide .lv-guide-credits { margin-top: 1.2em; padding: .85em 1em; border: 1px solid var(--SmartThemeBorderColor, currentColor); border-radius: var(--bl-r-md, 12px); }
-        .bl-tts-guide .lv-guide-credits > summary { cursor: pointer; font-weight: 600; line-height: 1.6; }
+        .bl-tts-guide .lv-guide-credits > summary { cursor: pointer; font-weight: 650; line-height: 1.6; }
         .bl-tts-guide .lv-credits { font-size: .94em; line-height: 1.65; overflow-wrap: anywhere; }
         .bl-tts-guide .lv-credits p { margin: .85em 0 0; }
         .bl-tts-guide .lv-credits a { color: var(--salty-accent-ink, var(--SmartThemeQuoteColor, inherit)); text-decoration: underline; text-underline-offset: .15em; }

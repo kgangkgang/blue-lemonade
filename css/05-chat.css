@@ -200,7 +200,7 @@ body.salty #chat .mes .name_text {
   width: auto !important;
   font-family: var(--salty-font-ui) !important;
   font-size: calc(var(--bl-ts-ui) * 0.9) !important; /* 13.5 — 메뉴 글자 크기를 따라감 */
-  font-weight: 700 !important;
+  font-weight: 650 !important;
   letter-spacing: -0.005em;
   color: var(--salty-text) !important;
 }
@@ -467,7 +467,7 @@ body.salty:not(.expandMessageActions) #chat .mes .mes_buttons:has(> .extraMesBut
   order: -1;
   width: 32px;
   height: var(--bl-deco-mes-extra-pad); /* 바로 밑(위) 메뉴와 3px 띄움 */
-  border-radius: 9px;
+  border-radius: 8px;
   background: var(--salty-fill-accent-10, var(--salty-accent-10));
 }
 body.salty:not(.expandMessageActions) #chat .mes .mes_buttons:has(> .extraMesButtons.visible)::after {
@@ -559,7 +559,7 @@ body.salty #chat .mes .swipes-counter {
   opacity: 1;
   font-family: var(--salty-font-ui) !important;
   font-size: var(--bl-fs-micro) !important;
-  font-weight: 600 !important;
+  font-weight: 650 !important;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
   white-space: nowrap;
@@ -720,7 +720,7 @@ body.salty #chat .mes_reasoning_header {
   color: var(--salty-muted) !important;
   font-family: var(--salty-font-ui);
   font-size: 13px !important;
-  font-weight: 600;
+  font-weight: 650;
 }
 body.salty #chat .mes_reasoning_details .mes_reasoning_arrow {
   right: 2px;

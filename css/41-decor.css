@@ -43,7 +43,7 @@ body.salty #chat .mes .bl-art-frame[data-bl-frame] > .bl-art-photo > img {
 }
 .bl-frame-editor {
   width: min(620px, 94vw); max-height: 90dvh; overflow: auto; box-sizing: border-box;
-  padding: 20px; border: 1px solid var(--salty-line); border-radius: 18px;
+  padding: 20px; border: 1px solid var(--salty-line); border-radius: 12px;
   background: var(--salty-bg, var(--bl-fb-202936)); color: var(--salty-text, var(--bl-fb-e3e9f0)); font-family: var(--salty-font-ui, sans-serif);
 }
 .bl-frame-editor::backdrop { background: var(--bl-scrim); }
@@ -68,7 +68,7 @@ body.salty.salty-profile-banner.salty-profile-layout-bleed #chat .mes:not([is_us
 .bl-frame-upload-row, .bl-frame-save-row, .bl-frame-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-width: 0; }
 .bl-frame-upload-row > .bl-decor-upload { min-height: 44px; max-width: 100%; margin: 0; line-height: 1.4; white-space: normal; }
 .bl-frame-save-row > input { flex: 1 1 140px; min-width: 0; width: 100%; box-sizing: border-box; min-height: var(--bl-h-ctl, 36px); margin: 0; padding: 0 12px; border: 0; border-radius: 8px; background: var(--bl-fill-field, var(--salty-field)); color: var(--salty-text); font: inherit; } /* The frame-name field was a bare browser input: white box, grey inset border, light ST text at 1.3 : 1 on night palettes. */
-.bl-frame-label { font-size: var(--bl-fs-sm, 13px); font-weight: 600; }
+.bl-frame-label { font-size: var(--bl-fs-sm, 13px); font-weight: 650; }
 .bl-frame-library { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
 .bl-frame-library > button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 100px; margin: 0; padding: 10px; border: 1px solid var(--salty-line); border-radius: 12px; color: var(--salty-text); background: transparent; font: inherit; cursor: pointer; }
 .bl-frame-library > button[aria-pressed="true"] { border-color: var(--salty-accent); background: var(--salty-fill-bg, var(--salty-bg)); }

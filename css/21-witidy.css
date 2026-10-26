@@ -82,7 +82,7 @@ body.salty #WorldInfo .bl-wi-action-list {
 body.salty #WorldInfo .world_entry .inline-drawer-header .bl-wi-action-list .menu_button {
   display: flex; align-items: center; justify-content: flex-start; gap: 10px;
   width: 100% !important; height: 40px !important; margin: 0 !important; padding: 0 10px !important;
-  background: transparent !important; box-shadow: none !important; border-radius: 6px;
+  background: transparent !important; box-shadow: none !important; border-radius: 5px;
 }
 body.salty #WorldInfo .bl-wi-action-list span { display: inline; font: 500 13px/1.4 var(--mainFontFamily); }
 body.salty #WorldInfo .world_entry:has(.bl-wi-actions[open]) { position: relative; z-index: 5; }
@@ -111,7 +111,7 @@ body.salty #floatingPrompt .inline-drawer-content { padding-left: 0 !important; 
 body.salty #right-nav-panel #CharListButtonAndHotSwaps { align-items: flex-start; padding: 6px 8px !important; gap: 8px !important; }
 body.salty #right-nav-panel #CharListButtonAndHotSwaps > .flex-container { flex-flow: column !important; padding-top: 20px; }
 body.salty #right-nav-panel #HotSwapWrapper { display: flex; flex-direction: column !important; align-items: stretch !important; min-width: 0; gap: 4px; }
-body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading { width: 100%; flex: none; display: flex; align-items: center; gap: 6px; color: var(--salty-muted); font-size: var(--bl-fs-cap); font-weight: 600; line-height: 1.4; }
+body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading { width: 100%; flex: none; display: flex; align-items: center; gap: 6px; color: var(--salty-muted); font-size: var(--bl-fs-cap); font-weight: 650; line-height: 1.4; }
 body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading i { color: var(--bl-pop-ink); font-size: 1em; }
 body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading small { margin-left: auto; font-size: inherit; font-variant-numeric: tabular-nums; color: var(--salty-muted); }
 body.salty #right-nav-panel #HotSwapWrapper .hotswap { display: flex; align-items: flex-start; gap: 6px; width: 100%; height: auto !important; max-height: none !important; flex-wrap: nowrap !important; padding: 4px 0; overflow-x: auto; scrollbar-width: none; }
@@ -129,17 +129,17 @@ body.salty #right-nav-panel #rm_print_characters_block .character_select {
   background: linear-gradient(110deg, var(--salty-accent-13), transparent 65%), var(--bl-card) !important;
 }
 body.salty #right-nav-panel #rm_print_characters_block .character_select > .avatar { flex: 0 0 54px; width: 54px; height: 64px; }
-body.salty #right-nav-panel #rm_print_characters_block .character_select > .avatar img { width: 54px !important; height: 64px !important; object-fit: cover; border-radius: 9px !important; box-shadow: none !important; }
+body.salty #right-nav-panel #rm_print_characters_block .character_select > .avatar img { width: 54px !important; height: 64px !important; object-fit: cover; border-radius: 8px !important; box-shadow: none !important; }
 /* 그림과 분리한 표본 선택 도구 */
 body.salty .salty-panel .bl-preview-tools { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 0; }
 body.salty .salty-panel .bl-preview-kinds, body.salty .salty-panel .bl-preview-samples:not([hidden]) { display: flex; align-items: center; gap: 2px; }
-body.salty .salty-panel .bl-preview-tools button { min-height: var(--bl-settings-chip, 32px); padding: calc(4px + var(--bl-text-nudge, 0px)) 8px calc(4px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border: 0; border-radius: 7px; background: transparent; color: var(--salty-muted); font: inherit; font-size: 12px; cursor: pointer; }
+body.salty .salty-panel .bl-preview-tools button { min-height: var(--bl-settings-chip, 32px); padding: calc(4px + var(--bl-text-nudge, 0px)) 8px calc(4px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border: 0; border-radius: 8px; background: transparent; color: var(--salty-muted); font: inherit; font-size: 12px; cursor: pointer; }
 body.salty .salty-panel .bl-preview-tools button[aria-pressed="true"] { background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent-ink, var(--salty-accent)); }
 body.salty .salty-panel .bl-preview-samples button { min-width: 28px; font-size: var(--bl-deco-glyph-21); }
 body.salty .salty-panel .bl-preview-samples span { min-width: 30px; color: var(--salty-muted); text-align: center; font-size: 12px; }
 body.salty .salty-panel:not(.bl-editor) .salty-sec[data-tab="image"] .salty-group { padding-inline: 10px; }
 body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 0; background: transparent; }
-body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes button { border-radius: 9px; padding: 8px 4px 10px; /* 7.9.1: 그림(위 여백 큼) + 글자 덩어리의 잉크 가운데가 칸 가운데보다 1.4px 아래였다 — 위 1 · 아래 1 옮김 */ box-shadow: none; flex-direction: column; justify-content: center; gap: 4px; font-size: 12px; min-height: 64px; }
+body.salty .salty-panel .salty-sec[data-tab="image"] .salty-shapes button { border-radius: 8px; padding: 8px 4px 10px; /* 7.9.1: 그림(위 여백 큼) + 글자 덩어리의 잉크 가운데가 칸 가운데보다 1.4px 아래였다 — 위 1 · 아래 1 옮김 */ box-shadow: none; flex-direction: column; justify-content: center; gap: 4px; font-size: 12px; min-height: 64px; }
 /* 작은 트랙, 넉넉한 누름 영역 */
 body.salty .salty-panel .salty-switch { width: 36px; height: 36px; }
 body.salty .salty-panel .salty-switch span { inset: 8px 0; }
@@ -149,13 +149,13 @@ body.salty label.checkbox_label[data-bl-row-check]:is(bl-s, *) { min-height: 36p
 /* 메시지 삭제도 같은 빨강과 절제된 면을 쓴다. */
 body.salty :is(.mes_edit_delete, .mes_reasoning_delete, .mes_media_delete, .mes_file_delete, .PastChat_cross) {
   color: var(--bl-danger) !important; background: var(--salty-danger-soft) !important;
-  box-shadow: none !important; border: 0 !important; border-radius: 7px !important;
+  box-shadow: none !important; border: 0 !important; border-radius: 8px !important;
 }
 @media (max-width: 1000px) {
   body.salty { --bl-gutter: 10px; --bl-inset: 10px; }
-  body.salty .popup:has(.salty-panel.in-popup) { padding-inline: 6px !important; width: calc(100vw - 12px) !important; max-width: calc(100vw - 12px) !important; }
-  body.salty .popup:has(.salty-panel.in-popup) :is(.popup-body, .popup-content) { padding-inline: 0 !important; scrollbar-gutter: auto !important; }
-  body.salty .popup:has(.salty-panel.in-popup) .popup-content { scrollbar-gutter: stable both-edges !important; }
+  body.salty .popup[data-bl-popup~="settings"]:is(.bl-s, *) { padding-inline: 6px !important; width: calc(100vw - 12px) !important; max-width: calc(100vw - 12px) !important; }
+  body.salty .popup[data-bl-popup~="settings"]:is(.bl-s, *) :is(.popup-body, .popup-content) { padding-inline: 0 !important; scrollbar-gutter: auto !important; }
+  body.salty .popup[data-bl-popup~="settings"]:is(.bl-s, *) .popup-content { scrollbar-gutter: stable both-edges !important; }
   body.salty .popup .salty-panel.in-popup { --pp: 2px; --pad: 10px; padding: 2px 2px 6px !important; }
   body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
     display: grid !important; grid-template-columns: minmax(0, 1fr) auto; width: 100%; gap: 4px 10px;
@@ -176,13 +176,13 @@ body.salty #send_form #qr--bar {
   overscroll-behavior-x: contain; padding: 2px 0; opacity: 1;
 }
 body.salty #send_form #qr--bar > .qr--buttons { flex: 0 0 auto; width: max-content; flex-wrap: nowrap; justify-content: flex-start; }
-body.salty #send_form #qr--bar .qr--button { flex-shrink: 0; min-height: 34px; padding: 4px 8px; margin: 0; border: 0; border-radius: 7px; background: var(--bl-fill-hover, var(--bl-hover)); color: var(--salty-text); box-shadow: none; font-size: 12px; white-space: nowrap; }
+body.salty #send_form #qr--bar .qr--button { flex-shrink: 0; min-height: 34px; padding: 4px 8px; margin: 0; border: 0; border-radius: 8px; background: var(--bl-fill-hover, var(--bl-hover)); color: var(--salty-text); box-shadow: none; font-size: 12px; white-space: nowrap; }
 body.salty #send_form #qr--bar #qr--popoutTrigger { position: sticky; left: 0; flex-shrink: 0; order: -1; background: var(--bl-fill-card, var(--bl-card)); }
 body.salty #send_form #qr--bar:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: -2px; }
 /* 버튼이 하나도 없는 빈 바는 자리를 차지하지 않음 (2.7.9 — 위아래 여백 2px 씩이 입력판 아래에 빈 줄을 만들어 버튼 줄 전체가 2px 위로 밀려 있었음) */
 body.salty #send_form #qr--bar:not(:has(.qr--button, #qr--popoutTrigger)) { display: none; }
 /* 3.5.3 QR 줄: 앞 돋보기(찾기 팝업, layout.js · qrfind.js)는 창 띄우기 버튼 옆에 붙어 있고, 넘치는 끝은 흐리게 · PC 는 잡아 끌기 */
-body.salty #send_form #qr--bar #bl-qr-find { position: sticky; left: 0; z-index: 1; flex-shrink: 0; order: -1; display: grid; place-items: center; min-width: 34px; min-height: 34px; margin: 0; padding: 0 8px; border: 0; border-radius: 7px;  color: var(--salty-muted); box-shadow: none; font-size: 12px; cursor: pointer; }
+body.salty #send_form #qr--bar #bl-qr-find { position: sticky; left: 0; z-index: 1; flex-shrink: 0; order: -1; display: grid; place-items: center; min-width: 34px; min-height: 34px; margin: 0; padding: 0 8px; border: 0; border-radius: 8px;  color: var(--salty-muted); box-shadow: none; font-size: 12px; cursor: pointer; }
 body.salty #send_form #qr--bar #bl-qr-find:hover { color: var(--salty-text); }
 /* 앞에 붙은 두 단추는 불투명 바탕 — .menu_button 의 반투명 면(!important)이면 넘긴 버튼 글자가 비쳐 겹쳐 보임 */
 body.salty #send_form #qr--bar :is(#bl-qr-find, #qr--popoutTrigger) { z-index: 2; background: linear-gradient(var(--bl-hover), var(--bl-hover)), var(--salty-surface) !important; box-shadow: var(--bl-gap-halo) !important; /* 둥근 모서리 틈으로 밑에 숨은 버튼 색이 비쳐 단추가 각진 밝은 네모로 보였음 → 바탕색 테두리로 틈을 가림 */ }
@@ -210,7 +210,7 @@ body.salty #send_form #qr--bar.bl-qr-dragging .qr--button { transform: none !imp
 /* 찾기 팝업: 이름 한 줄 + 내용 미리보기 한 줄 */
 body.salty .bl-qrf .salty-pick-rows > button { flex-direction: column; align-items: stretch; justify-content: center; gap: 1px; padding: 6px 12px 6px 12px; }
 body.salty .bl-qrf .bl-qrf-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
-body.salty .bl-qrf .bl-qrf-name b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.salty .bl-qrf .bl-qrf-name b { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 body.salty .bl-qrf .bl-qrf-name i { flex: none; width: 14px; color: var(--salty-muted); font-size: 12px; text-align: center; }
 body.salty .bl-qrf .salty-pick-rows > button small { overflow: hidden; color: var(--salty-muted); font-size: 12px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
 /* 3.5.5 찾은 글자: 대사 형광펜과 같은 획(--salty-marker-bg) · 글자색 */

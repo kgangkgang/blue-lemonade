@@ -137,11 +137,11 @@ body.salty #toast-container .toast-title {
   margin-bottom: 2px;
   color: var(--salty-text);
   font-size: var(--bl-fs-ctl);
-  font-weight: 700;
+  font-weight: 650;
   word-break: keep-all;
 }
 body.salty #toast-container > .toast-error .toast-title {
-  font-weight: 750;
+  font-weight: 650;
 }
 /* 실리태번의 toastr 가 .toast-message 에 word-wrap: break-word 를 걸어 놔서 한글이 반으로 갈림 */
 body.salty #toast-container .toast-message {
@@ -407,7 +407,7 @@ body.salty #labModeWarning {
    → 빨강 클래스 · 버튼 글자(data-i18n) · 캐릭터 지우기 체크박스, 그리고 src/danger.js 가 붙이는 .salty-danger-confirm 으로 찾음 */
 body.salty .popup .popup-controls .menu_button:is(.redWarningBG, .red_button, .danger),
 body.salty .popup .popup-controls .menu_button.popup-button-ok:is([data-i18n*="Delete"], [data-i18n*="삭제"], [data-i18n*="지우"]),
-body.salty .popup:has(#del_char_checkbox) .popup-controls .menu_button.popup-button-ok,
+body.salty .popup:where([data-bl-popup~="delete-character"]):is(#bl-s, *) .popup-controls .menu_button.popup-button-ok,
 body.salty .popup.salty-danger-confirm .popup-controls .menu_button.popup-button-ok {
   background: var(--bl-danger-btn) !important;
   box-shadow: var(--bl-e2) !important;
@@ -416,7 +416,7 @@ body.salty .popup.salty-danger-confirm .popup-controls .menu_button.popup-button
 @media (hover: hover) {
   body.salty .popup .popup-controls .menu_button:is(.redWarningBG, .red_button, .danger):hover,
   body.salty .popup .popup-controls .menu_button.popup-button-ok:is([data-i18n*="Delete"], [data-i18n*="삭제"], [data-i18n*="지우"]):hover,
-  body.salty .popup:has(#del_char_checkbox) .popup-controls .menu_button.popup-button-ok:hover,
+  body.salty .popup:where([data-bl-popup~="delete-character"]):is(#bl-s, *) .popup-controls .menu_button.popup-button-ok:hover,
   body.salty .popup.salty-danger-confirm .popup-controls .menu_button.popup-button-ok:hover {
     background: var(--bl-danger-btn-hover) !important;
     color: var(--bl-danger-ink) !important;
@@ -424,14 +424,14 @@ body.salty .popup.salty-danger-confirm .popup-controls .menu_button.popup-button
 }
 body.salty .popup .popup-controls .menu_button:is(.redWarningBG, .red_button, .danger):active,
 body.salty .popup .popup-controls .menu_button.popup-button-ok:is([data-i18n*="Delete"], [data-i18n*="삭제"], [data-i18n*="지우"]):active,
-body.salty .popup:has(#del_char_checkbox) .popup-controls .menu_button.popup-button-ok:active,
+body.salty .popup:where([data-bl-popup~="delete-character"]):is(#bl-s, *) .popup-controls .menu_button.popup-button-ok:active,
 body.salty .popup.salty-danger-confirm .popup-controls .menu_button.popup-button-ok:active {
   background: var(--bl-danger-btn-press) !important;
   box-shadow: var(--bl-press) !important;
   color: var(--bl-danger-ink) !important;
 }
 body.salty .popup .popup-controls .menu_button.popup-button-ok:is([data-i18n*="Delete"], [data-i18n*="삭제"], [data-i18n*="지우"]):focus-visible,
-body.salty .popup:has(#del_char_checkbox) .popup-controls .menu_button.popup-button-ok:focus-visible,
+body.salty .popup:where([data-bl-popup~="delete-character"]):is(#bl-s, *) .popup-controls .menu_button.popup-button-ok:focus-visible,
 body.salty .popup.salty-danger-confirm .popup-controls .menu_button.popup-button-ok:focus-visible {
   /* 빨간 버튼에 포인트색(청록) 테가 붙으면 신호가 어긋남 → 위험 색 테로.
      틈은 창 바탕색(--bl-card): --bl-danger-ring 의 틈(--salty-surface)은 창 바탕과 달라서 선이 하나 더 보임 */

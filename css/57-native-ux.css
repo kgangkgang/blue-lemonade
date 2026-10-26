@@ -6,7 +6,7 @@ body.salty :is(#PersonaManagement,#right-nav-panel,#regex_container,#qr--setting
 }
 body.salty .regex_editor { container:bl-regex / inline-size; text-align:left; }
 @media(min-width:900px) {
-  html body.salty dialog.popup:has(.regex_editor) { width:min(880px,calc(100dvw - 40px))!important; max-width:calc(100dvw - 40px)!important; }
+  html body.salty dialog.popup[data-bl-popup~="regex"] { width:min(880px,calc(100dvw - 40px))!important; max-width:calc(100dvw - 40px)!important; }
 }
 body.salty .regex_editor > h3 { flex-wrap:wrap; gap:8px 10px; margin-block:2px 10px; }
 /* 제목과 ? 링크로 이미 전달하는 입문 설명. 오류/정규식 힌트는 그대로 표시한다. */
@@ -123,7 +123,7 @@ html body.salty > .picker[pick-colors-theme] :is(input,.label) {
   border-color:var(--salty-line)!important; border-radius:var(--bl-r-sm);
 }
 @media(max-width:760px) {
-  html body.salty dialog.popup:not(.bl-settings-dialog, .transparent_dialogue_popup, .bl-roomy-dialog):not(:has(.salty-notice)) {
+  html body.salty dialog.popup:not(.bl-settings-dialog, .transparent_dialogue_popup, .bl-roomy-dialog):not([data-bl-popup~="notice"]) {
     max-width:calc(100dvw - 16px)!important; max-height:calc(100dvh - 16px)!important;
     padding:12px 10px!important;
   }

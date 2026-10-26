@@ -34,7 +34,7 @@ body.salty.salty-qr-top .salty-panel .bl-qr-inputmock {
 .salty-panel .bl-qr-inputmock-box {
   flex: 1 1 auto;
   padding: 6px 10px;
-  border-radius: 9px;
+  border-radius: 8px;
   background: var(--bl-fill-hover, var(--bl-hover));
   color: var(--salty-muted);
   font-size: 12px;
@@ -48,7 +48,7 @@ body.salty.salty-qr-top .salty-panel .bl-qr-inputmock {
   flex: 0 0 auto;
   width: 28px;
   height: 28px;
-  border-radius: 9px;
+  border-radius: 8px;
   background: var(--bl-fill-card, var(--bl-card));
   color: var(--salty-muted);
   font-size: 12px;

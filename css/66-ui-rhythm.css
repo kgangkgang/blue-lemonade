@@ -32,7 +32,7 @@ body.salty .bl-pbind-list { min-height:0; }
 .salty-panel .bl-mix .bl-mix-description { margin:4px 0 0; font-size:.85em; line-height:1.5; }
 /* PC의 읽는 폭과 간격을 유지하고, 폰은 창 밖 빈 공간을 작업 영역으로 돌린다. */
 @media(max-width:760px) {
- html body dialog.popup.bl-settings-dialog:not(.bl-settings-fullscreen):has(.salty-panel.in-popup) {
+ html body dialog.popup.bl-settings-dialog:not(.bl-settings-fullscreen)[data-bl-popup~="settings"]:is(.bl-s, *) {
   width:calc(100vw - 12px)!important; max-width:calc(100vw - 12px)!important;
   height:calc(100dvh - 12px)!important; max-height:calc(100dvh - 12px)!important;
   margin:auto!important;

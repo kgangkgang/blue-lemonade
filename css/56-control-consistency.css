@@ -81,13 +81,13 @@ html body.salty #pt-panel .pt-page-fixed .pt-act-row > .pt-qhelp.pt-act { backgr
 .salty-panel :is(.salty-fonttags button,.salty-fontempty button) { height:auto; }
 .salty-panel :is(.salty-btns, .bl-palette-actions) { gap: var(--bl-settings-gap); }
 .salty-panel .salty-seg { gap: 4px; padding: 4px; border-radius: 10px; max-width: 100%; }
-.salty-panel .salty-seg button { flex-shrink: 1; font-weight:var(--bl-settings-choice-weight,600); }
+.salty-panel .salty-seg button { flex-shrink: 1; font-weight:var(--bl-settings-choice-weight,650); }
 /* 선택은 옅은 면과 안쪽 선, 실행은 기존 primary의 진한 면으로 구분. */
 html body .salty-panel :is(.salty-seg button, .salty-fonttags button, .salty-fontempty button).on {
   background: var(--salty-fill-accent-10, var(--salty-accent-10));
   color: var(--salty-accent-ink, var(--salty-accent));
   box-shadow: inset 0 0 0 1px var(--salty-accent);
-  font-weight: bolder;
+  font-weight: 650;
 }
 html body .salty-panel.bl-editor .bl-settings-toprow button {
   min-height: 40px;
@@ -105,7 +105,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-editor-category button[aria-current="page"] {
   background: var(--salty-fill-accent-10, var(--salty-accent-10));
   color: var(--salty-accent-ink, var(--salty-accent));
-  font-weight: 700;
+  font-weight: 650;
   box-shadow: inset 3px 0 0 var(--salty-accent);
 }
 .salty-panel :is(.salty-btn, .salty-seg button, .salty-fonttags button, .bl-editor-category button):disabled {
@@ -174,7 +174,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-health-head p { color:var(--salty-muted); font-size:calc(12 * var(--sp)); }
 .salty-panel .bl-install-health .salty-btn { flex:none; width:auto; margin:0; white-space:normal; word-break:keep-all; }
 .salty-panel [data-health-result] { display:grid; gap:12px; min-width:0; font-size:calc(13 * var(--sp)); }
-.salty-panel .bl-health-summary { display:grid; gap:4px; padding:12px 12px; border-radius:9px; background:var(--salty-fill-accent-10,var(--salty-accent-10)); border-left:3px solid var(--salty-accent); }
+.salty-panel .bl-health-summary { display:grid; gap:4px; padding:12px 12px; border-radius:8px; background:var(--salty-fill-accent-10,var(--salty-accent-10)); border-left:3px solid var(--salty-accent); }
 .salty-panel .bl-health-summary strong { font-size:calc(14 * var(--sp)); line-height:1.5; }
 .salty-panel .bl-health-summary span { color:var(--salty-muted); line-height:1.6; }
 .salty-panel .bl-health-summary[data-state="attention"] { border-left-style:double; border-left-width:5px; }
@@ -191,7 +191,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-health-versions dd { margin:0; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
 
 .salty-panel .bl-usage-mode { display:block; padding:12px; margin:0 0 16px; border:1px solid var(--salty-line); border-radius:10px; }
-.salty-panel .bl-usage-mode label { display:grid; gap:8px; font-weight:600; }
+.salty-panel .bl-usage-mode label { display:grid; gap:8px; font-weight:650; }
 .salty-panel .bl-usage-mode select { width:100%; min-width:0; min-height:44px; font:inherit; }
 .salty-panel .bl-usage-mode p { margin:0; color:var(--salty-muted); font-size:calc(12 * var(--sp)); line-height:1.6; }
 .salty-panel .bl-usage-mode button { margin:0; }
@@ -202,7 +202,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 
 /* 5.5.3 세로 중앙: 줄 높이(1.7)보다 min-height 32px 가 커서 글자가 위에 붙던 것 → 남는 높이를 위아래로 나눔 (글자가 커서 남는 높이가 없으면 0 · 보정도 그 안에서만) */
 .salty-panel .bl-usage-mode summary { cursor:pointer; min-height:32px; line-height:1.7; font-size:calc(14 * var(--sp)); --bl-pad: max(0px, calc((32px - 1lh) / 2)); padding-top:calc(var(--bl-pad) + clamp(calc(0px - var(--bl-pad)), var(--bl-text-nudge, 0px), var(--bl-pad))); padding-bottom:calc(var(--bl-pad) - clamp(calc(0px - var(--bl-pad)), var(--bl-text-nudge, 0px), var(--bl-pad))); }
-.salty-panel .bl-usage-mode summary strong { font-weight:600; }
+.salty-panel .bl-usage-mode summary strong { font-weight:650; }
 .salty-panel .bl-usage-mode-body { display:grid; gap:12px; padding-top:16px; }
 
 /* 5.5.3 세로 중앙: 크롬은 글꼴 ascent · descent 를 정수 px 로 반올림하고 위쪽 반행간((줄 높이 - 두 값의 합) / 2)의 소수점을 버려 한 줄 글자가 0~1px 위로 뜬다.

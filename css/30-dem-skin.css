@@ -35,7 +35,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):where(:not(:has(> .custom-dem-track__grid))) {
   margin: 0 0 12px !important;
   border: 0 !important;
-  border-radius: 14px !important;
+  border-radius: 12px !important;
   background: var(--bl-fill-card, var(--bl-card)) !important;
   box-shadow: var(--bl-e1) !important;
   font-family: var(--salty-font-ui, inherit) !important;
@@ -91,7 +91,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   background: var(--salty-fill-shade, var(--salty-shade)) !important;
   color: var(--salty-muted) !important;
   font-size: 0.68em !important;
-  font-weight: 600 !important;
+  font-weight: 650 !important;
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
@@ -118,7 +118,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   padding: 0 !important;
   color: color-mix(in srgb, var(--dem-phase-accent, var(--dem-accent)) var(--bl-dem-ink), var(--salty-text)) !important;
   font-size: 0.68em !important;
-  font-weight: 700 !important;
+  font-weight: 650 !important;
   letter-spacing: 0.08em !important;
   text-transform: uppercase;
 }
@@ -144,7 +144,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   background: none !important;
   color: var(--salty-faint) !important;
   font-size: 0.72em !important;
-  font-weight: 600 !important;
+  font-weight: 650 !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__label:where(:not(.custom-dem-modules *)) {
   color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink), var(--salty-text)) !important;
@@ -173,13 +173,13 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-status-row__name, .custom-dem-psychological-state-row__name):where(:not(.custom-dem-modules *)) {
   color: var(--salty-text) !important;
   font-size: 1em;
-  font-weight: 700;
+  font-weight: 650;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-status-row__label, .custom-dem-psychological-state-row__label):where(:not(.custom-dem-modules *)) {
   margin-right: 2px;
   /* 색은 데우스 항목 색(몸 · 옷 · 마음 …) 그대로 — 색 통일을 켜면 08 이 포인트색으로 */
   font-size: 0.78em !important;
-  font-weight: 700 !important;
+  font-weight: 650 !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__score:where(:not(.custom-dem-modules *)) {
   padding: 0 8px !important;
@@ -188,7 +188,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   background: var(--salty-fill-accent-13, var(--salty-accent-13)) !important;
   color: var(--salty-accent-ink, var(--salty-accent)) !important;
   font-size: 0.86em;
-  font-weight: 700;
+  font-weight: 650;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status__more:where(:not(.custom-dem-modules *)) {
   border: 0 !important;
@@ -263,7 +263,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track__value, .custom-dem-track-recovery__value):where(:not(.custom-dem-track__grid *)) {
   color: var(--salty-text) !important;
-  font-weight: 600 !important;
+  font-weight: 650 !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track__item--location .custom-dem-track__value:where(:not(.custom-dem-track__grid *)) {
   color: var(--salty-muted) !important;

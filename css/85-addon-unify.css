@@ -64,7 +64,7 @@ html body.salty :is(
 ) {
   display: inline-flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 0 8px !important; /* 7.8.1: 6 → 8 (철칙 §7 머리줄 [아이콘] 8 [제목] 8 [알약], 화면 감사 HEADROW) */
   flex: 1 1 auto !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important;
-  color: var(--salty-text) !important; font-size: var(--bl-ts-ui, 14.5px) !important; font-weight: 600 !important; line-height: 1.55 !important;
+  color: var(--salty-text) !important; font-size: var(--bl-ts-ui, 14.5px) !important; font-weight: 650 !important; line-height: 1.55 !important;
   text-align: left !important;
 }
 /* 7.0.5 확장 서랍 안에 들어온 한글화 패널(.pt-in-drawer)은 패널 머리 제목 · 판을 숨긴다 — 서랍 머리가 이미 아이콘 · 제목 · 판을 보이고, 패널 머리는 ↻ 하나만
@@ -193,7 +193,7 @@ html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs
 html body.salty dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_segment > .bwr_seg.active,
 html body.salty dialog.bl-notes-look .bl-look-seg > .bl-look-segbtn.on,
 html body.salty dialog[open] .bl-look-seg > .bl-look-segbtn.on {
-  background: var(--salty-accent) !important; color: var(--salty-on-accent, var(--bl-fb-fff)) !important; box-shadow: none !important; font-weight: 700 !important;
+  background: var(--salty-accent) !important; color: var(--salty-on-accent, var(--bl-fb-fff)) !important; box-shadow: none !important; font-weight: 650 !important;
 }
 
 /* ---------- 카드: 모서리 12 · 1px 테 ---------- */

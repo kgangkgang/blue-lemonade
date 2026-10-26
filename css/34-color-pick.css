@@ -77,7 +77,7 @@ body.salty .bl-cp :is(.bl-cp-board, .bl-cp-value, .bl-cp-alpha) > i {
   border: 2px solid var(--bl-cp-white);
   border-radius: 50%;
   background: rgb(var(--rgb));
-  box-shadow: 0 0 0 1px var(--bl-cp-black-35), 0 1px 4px var(--bl-cp-black-35);
+  box-shadow: 0 0 0 1px var(--bl-cp-black-35);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
@@ -271,7 +271,7 @@ body.salty .bl-cp-pic-ring {
   border: 2px solid var(--bl-cp-white);
   border-radius: 50%;
   background: rgb(var(--rgb));
-  box-shadow: 0 0 0 1px var(--bl-cp-black-40), 0 1px 4px var(--bl-cp-black-35);
+  box-shadow: 0 0 0 1px var(--bl-cp-black-40);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
@@ -289,7 +289,7 @@ body.salty .bl-cp-loupe {
   border: 3px solid var(--bl-cp-white);
   border-radius: 50%;
   background: var(--salty-fill-shade, var(--salty-shade));
-  box-shadow: 0 0 0 1px var(--bl-cp-black-35), 0 6px 16px var(--bl-cp-black-35);
+  box-shadow: 0 0 0 1px var(--bl-cp-black-35);
   transform: translate(-50%, calc(-100% - 20px));
   image-rendering: pixelated;
   pointer-events: none;
