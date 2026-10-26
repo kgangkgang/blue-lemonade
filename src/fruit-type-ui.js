@@ -88,11 +88,16 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
     function placeFrame(frame,width,height){
         const scene=box.querySelector('.bl-view-scene'),port=box.querySelector('.bl-view-port'),view=box._previewViews?.get('fruit-type');
         if(scene)scene.style.width=(Math.ceil(width)+2)+'px';
-        if(view&&port&&(autoPreviewScale===null||Math.abs(view.scale-autoPreviewScale)<.001)){autoPreviewScale=Math.min(1,port.clientWidth/(Math.ceil(width)+2));view.scale=autoPreviewScale;view.x=0;}
+        const portWidth=port?.clientWidth||0;
+        if(view&&port&&portWidth>40&&(autoPreviewScale===null||Math.abs(view.scale-autoPreviewScale)<.001)){autoPreviewScale=Math.min(1,portWidth/(Math.ceil(width)+2));view.scale=autoPreviewScale;view.x=0;}
         frame.style.width=Math.ceil(width)+'px';frame.style.maxWidth='none';
         frame.style.height=Math.max(48,Math.ceil(height))+'px';
+        placed={frame,width,height,port:portWidth};
         box.dispatchEvent(new Event('bl:preview-resize'));
     }
+    // 미리보기 칸 폭이 나중에 바뀌면(창이 열리며 자리 잡음 · 접기 펼침) 맞춤 배율을 다시 — 표본 · 실제 모두 칸보다 넓게 남지 않게
+    let placed=null;
+    function refit(){const port=box.querySelector('.bl-view-port');if(placed?.frame.isConnected&&port&&port.clientWidth>40&&Math.abs(port.clientWidth-placed.port)>.5)placeFrame(placed.frame,placed.width,placed.height);}
     // 표본 높이 = 표본 아래 끝 + 본문 아래 여백 (글자 설정을 바꾸면 다시 재요)
     function fitSample(){
         const frame=box.querySelector('iframe'),d=frame?.contentDocument,host=d?.querySelector('[data-bl-fruit-preview]');if(docMode!=='sample'||!host?.firstElementChild)return;
@@ -107,7 +112,7 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
         const message=lastMessage(),messageWidth=message?.getBoundingClientRect().width||0,width=Math.round(messageWidth>120?messageWidth:Math.min(innerWidth-32,640));
         const vars=sampleVars(),backdrop=message?fruitPreviewBackground(message.firstElementChild||message):getComputedStyle(document.body).backgroundColor;
         const key=[type.id,width,vars,backdrop,(()=>{try{return scriptEnabled(scriptSettings(),'fruit-family');}catch{return false;}})()].join('|');
-        if(docMode==='sample'&&key===sampleKey&&previewKind===type.id){if(!fragHost)fitSample();return;}
+        if(docMode==='sample'&&key===sampleKey&&previewKind===type.id){if(!fragHost)fitSample();refit();return;}
         const token=++sampleToken;
         let localize=false;try{localize=typeOwner(type)==='fruit'&&addonsEnabled(getSettings())&&scriptEnabled(scriptSettings(),'fruit-family');}catch{localize=false;}
         const sample=await buildFruitSample(type,{width,vars,localize});
@@ -148,7 +153,7 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
         const sourceStyle=getComputedStyle(source),rect=source.getBoundingClientRect(),backdrop=fruitPreviewBackground(source);
         const imageState=[...source.querySelectorAll('img')].map(i=>[i.currentSrc,i.complete,i.naturalWidth,i.naturalHeight].join(':')).join('|');
         const signature=[s.kind,source.outerHTML,imageState,JSON.stringify(s),sourceStyle.color,sourceStyle.backgroundColor,backdrop,sourceStyle.fontFamily,sourceStyle.fontSize,rect.width,rect.height,[...source.ownerDocument.fonts||[]].filter(f=>f.status==='loaded').length].join('|');
-        if(signature===previewSignature)return;
+        if(signature===previewSignature){refit();return;}
         if(!copyFruitPreview(source,d)){d.querySelector('[data-bl-fruit-preview]').replaceChildren();note.textContent='상태창이 너무 복잡해 미리보기를 만들 수 없어요. 설정은 저장돼요.';previewKind='';previewSignature='';return;}previewKind=s.kind;previewSignature=signature;docMode='real';
         const previewHost=d.querySelector('[data-bl-fruit-preview]'),unavailable=Number(previewHost.getAttribute('data-bl-preview-unavailable-images')||0)+Number(previewHost.getAttribute('data-bl-preview-unavailable-art')||0);
         const unavailableFonts=Number(previewHost.getAttribute('data-bl-preview-unavailable-fonts')||0);
