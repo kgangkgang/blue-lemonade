@@ -77,9 +77,9 @@ body.salty :is(#user-settings-block, #AdvancedFormatting) label.checkbox_label:w
 }
 
 /* ---------- 드롭다운 줄: 이름 왼쪽 · 값 오른쪽(흐린 글자 + 꺾쇠) ---------- */
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)),
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)),
 body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"],
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) {
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) {
   display: flex;
   flex-flow: row nowrap !important;
   align-items: center !important;
@@ -122,11 +122,11 @@ body.salty #user-settings-block-content #MovingUI-presets-block label[for="movin
 body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] select:focus-visible {
   box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
-body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container:has(> .flex1 select) {
+body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container[data-bl-row~="f1sel"]:is(bl-s, *) {
   flex-direction: column;
   gap: 0 !important;
 }
-body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content .flex1 > .flex-container:has(> select),
+body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content .flex1 > .flex-container:where([data-bl-row~="sel"]):is(bl-s, *),
 body.salty #user-settings-block #MovingUI-presets-block label[for="movingUIPresets"] > .flex-container {
   flex: 1 1 0% !important;
   min-width: 0;
@@ -137,7 +137,7 @@ body.salty #user-settings-block-content :is([name="AutoCompleteToggle"] .inline-
   max-width: 100% !important;
 }
 /* 자동완성 글자 크기: 이름 왼쪽 · 숫자 오른쪽 · 막대 아래 */
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="lneo"]:is(.bl-s, *):is(bl-s, *) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -145,13 +145,13 @@ body.salty #user-settings-block-content .flex-container:has(> label + .neo-range
   row-gap: var(--bl-param-row-gap);
   padding: var(--bl-param-pad);
 }
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="lneo"]:is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   grid-column: 2;
   grid-row: 1;
   width: var(--bl-num-w) !important;
   margin: 0 !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > .neo-range-slider {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="lneo"]:is(.bl-s, *):is(bl-s, *) > .neo-range-slider {
   grid-column: 1 / -1;
   grid-row: 2;
   width: 100% !important;
@@ -344,7 +344,7 @@ body.salty #user-settings-block [name="MiscellaneousToggles"] .menu_button small
   font-weight: inherit;
   color: inherit !important;
 }
-body.salty #user-settings-block [name="MiscellaneousToggles"] > .flex-container:has(> #movingUIModeCheckBlock) {
+body.salty #user-settings-block [name="MiscellaneousToggles"] > .flex-container:where([data-bl-row~="mui"]):is(#bl-s, *) {
   flex-wrap: nowrap;
   gap: var(--bl-s3) !important;
 }
@@ -598,13 +598,13 @@ body.salty #AdvancedFormatting h4 label.checkbox_label small {
   font-size: inherit !important;
 }
 /* 템플릿 고르기: 드롭다운 + 아이콘 (좁으면 아이콘이 아래 줄 오른쪽) */
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) {
+body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) {
   flex-wrap: wrap !important;
   align-items: center;
   gap: 2px var(--bl-s1) !important;
   padding: 2px 0 var(--bl-s1);
 }
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > .flex-container {
+body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) > .flex-container {
   flex-wrap: nowrap;
   gap: 0 !important;
   margin: 0 0 0 auto !important;
@@ -619,7 +619,7 @@ body.salty #AdvancedFormatting > .spaceEvenly small:where(:not(label.checkbox_la
   color: var(--salty-muted) !important;
   opacity: 1 !important;
 }
-body.salty #AdvancedFormatting > .spaceEvenly label.flex-container:has(> small + .editor_maximize) {
+body.salty #AdvancedFormatting > .spaceEvenly label.flex-container[data-bl-row~="smax"]:is(bl-s, *) {
   align-items: center;
   justify-content: space-between;
 }
@@ -984,7 +984,7 @@ body.salty #user-settings-block-content #MovingUI-presets-block label[for="movin
   flex: 0 1 auto !important;
   max-width: 60%;
 }
-body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content .flex1 > .flex-container:has(> select) {
+body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content .flex1 > .flex-container:where([data-bl-row~="sel"]):is(bl-s, *) {
   flex: 1 1 0% !important;
   max-width: none;
 }
@@ -1183,7 +1183,7 @@ body.salty .TH-custom-tailwind [class~="border-t"].border-\(--grey5050a\) {
 }
 
 /* 스위치(Toggle): 테마 스위치와 같은 44×26 — 꺼짐은 오목한 칸 + 흰 손잡이, 켜짐은 포인트 칸 */
-body.salty .TH-custom-tailwind .relative.inline-block:has(> input.peer.sr-only[type="checkbox"] + label) {
+body.salty .TH-custom-tailwind .relative.inline-block[data-bl-row~="peer"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *) {
   flex: 0 0 auto;
   width: 44px;
   height: 26px;
@@ -1506,14 +1506,14 @@ body.salty #tavern_helper .border-x-2 > div > div[style*="170, 0, 0"] {
 }
 
 /* 스크립트 도구는 내용에 맞는 두 칸. 넓으면 네 칸, 큰 글씨에 좁으면 한 칸. */
-body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-plus) {
+body.salty #tavern_helper .flex.flex-wrap[data-bl-row~="fplus"]:is(.bl-s, *) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   width: fit-content;
   max-width: 100%;
   gap: 8px 10px;
 }
-body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-plus) > .menu_button_icon {
+body.salty #tavern_helper .flex.flex-wrap[data-bl-row~="fplus"]:is(.bl-s, *) > .menu_button_icon {
   width: auto;
   min-width: 0;
   margin-inline: 0;
@@ -1527,12 +1527,12 @@ body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-p
   overflow-wrap: anywhere;
 }
 @container bl-helper (width >= 38em) {
-  body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-plus) {
+  body.salty #tavern_helper .flex.flex-wrap[data-bl-row~="fplus"]:is(.bl-s, *) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 @container bl-helper (width < 17em) {
-  body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-plus) {
+  body.salty #tavern_helper .flex.flex-wrap[data-bl-row~="fplus"]:is(.bl-s, *) {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -1699,7 +1699,7 @@ body.salty #rm_extensions_block #qr--color {
   box-shadow: var(--bl-well-in);
 }
 /* 정규식 프리셋: 드롭다운은 넘치면 말줄임, 좁으면 아이콘 넷이 다음 줄 오른쪽 (고급 서식 템플릿 고르기와 같게) */
-body.salty #rm_extensions_block #regex_presets_block .flex-container:has(> #regex_presets) {
+body.salty #rm_extensions_block #regex_presets_block .flex-container:where([data-bl-row~="rxp"]):is(#bl-s, *) {
   flex-wrap: wrap;
   align-items: center;
   gap: 4px !important;
@@ -1737,7 +1737,7 @@ body.salty #rm_extensions_block .regex-script-label label.menu_button.regex_scri
 
 @media screen and (max-width: 1000px) {
   /* 움직이는 UI: 스위치는 다른 줄처럼 오른쪽 끝 세로줄, 초기화 아이콘은 스위치 바로 앞 (면 없는 흐린 아이콘) */
-  body.salty #user-settings-block [name="MiscellaneousToggles"] > .flex-container:has(> #movingUIModeCheckBlock) {
+  body.salty #user-settings-block [name="MiscellaneousToggles"] > .flex-container:where([data-bl-row~="mui"]):is(#bl-s, *) {
     position: relative;
   }
   body.salty #user-settings-block #movingUIModeCheckBlock {

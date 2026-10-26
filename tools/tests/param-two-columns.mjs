@@ -65,8 +65,8 @@ const GRIDS=[
   /#range_block_openai$/,
   /\[name="(AvatarAndChatDisplay|FontBlurChatWidthBlock|themeToggles|CharacterHandlingToggles|MiscellaneousToggles|ChatMessageHandlingToggles)"\]$/,
   /#wiSliders$/,/#wiCheckboxes$/,/\[name="perEntryOverridesBlock"\]$/,
-  /#openai_api$/,/#openai_api (form|div)(:has\(> h4\))?$/,/#vertexai_form > div$/,/#prompt_post_processing_form$/,
-  /\.salty-group:has\(> \.salty-slider \+ \.salty-slider\)$/,/\.salty-group:has\(> :is\(\.salty-row, ?\.salty-slider\) \+ :is\(\.salty-row, ?\.salty-slider\)\)$/,
+  /#openai_api$/,/#openai_api (form|div)(:where\(\[data-bl-row~="h4"\]\)(?:bl-s|\*))?$/,/#vertexai_form > div$/,/#prompt_post_processing_form$/,
+  /\.salty-group\[data-bl-row~="sl2"\](?:\.bl-s|\*)$/,/\.salty-group:has\(> :is\(\.salty-row, ?\.salty-slider\) \+ :is\(\.salty-row, ?\.salty-slider\)\)$/,
   /\.bl-control-grid$/,/\.salty-sizes$/,/\.bl-md-groups$/,/\.bl-prompt-name-row$/,/\.bl-capture-filter$/,/\.bl-tool-grid(:has\(.*\))?$/,/\.bl-addon-layout$/,
   /\.bl-etc-grid$/,/\.bl-setting-locks$/,/\.bl-word-presets$/,/\.regex_editor > \.flexFlowColumn$/,
   /\.lv-grid$/,/\.lv-tools$/,/\.rl-modules$/,/\.llmt-checks--grid$/,/\.lvs-fields$/,/#lv_pane_(read|voices|data)$/,/#pt-params-wrap$/,/\.bl-look-grid$/,/\.bwr_grid$/,
@@ -98,7 +98,7 @@ assert.deepEqual(bad,[],'2열 파라미터 격자를 한 열로 내리는 규칙
 
 // 원래 2열 격자가 살아 있는지 (지우면 멈춤)
 const twoCols=re=>items.some(({sel,r})=>!narrow(r)&&re.test(sel)&&tracks(decl(r.decls,'grid-template-columns')||'none')>=2);
-for(const re of [/#range_block_openai$/,/#wiSliders$/,/#wiCheckboxes$/,/\[name="themeToggles"\]$/,/\.salty-group:has\(> \.salty-slider \+ \.salty-slider\)$/,/#openai_api$/])
+for(const re of [/#range_block_openai$/,/#wiSliders$/,/#wiCheckboxes$/,/\[name="themeToggles"\]$/,/\.salty-group\[data-bl-row~="sl2"\](?:\.bl-s|\*)$/,/#openai_api$/])
   assert.ok(twoCols(re),'두 칸 격자가 있어야 함: '+re);
 
 // 생성 설정 칸 안: 윗줄 이름 | 숫자칸, 아랫줄 슬라이더 칸 너비 꽉
@@ -109,7 +109,7 @@ assert.ok(cell('.range-block-range',{'grid-column':'1 / -1 !important','grid-row
 
 // 두 칸 이름 기준선 맞춤은 이름 줄이 있는 칸만 — 격자 전체에 걸면 스위치 칸(줄 높이 채움 · 가운데)이 어긋난다
 assert.ok(!items.some(({sel,r})=>sel==='body.salty #left-nav-panel #range_block_openai'&&/baseline/.test(decl(r.decls,'align-items')||'')),'생성 설정 격자 전체에 align-items: baseline 금지');
-assert.ok(items.some(({sel,r})=>sel==='body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title)'&&decl(r.decls,'align-self')==='baseline'),'이름 줄이 있는 칸은 기준선 맞춤');
+assert.ok(items.some(({sel,r})=>sel==='body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="title"]'&&decl(r.decls,'align-self')==='baseline'),'이름 줄이 있는 칸은 기준선 맞춤');
 
 // 큰 글씨 한 열 내림은 em 기준으로만: 생성 설정의 마지막(이기는) 열 규칙은 칸 최소 em · 열 최소 40%(최대 두 칸) 자동 맞춤
 const gen=items.filter(({sel,r})=>!narrow(r)&&!narrowMedia(r)&&sel==='body.salty #left-nav-panel #range_block_openai'&&decl(r.decls,'grid-template-columns'));

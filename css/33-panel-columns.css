@@ -6,13 +6,13 @@
    숫자칸은 값 글자 수만큼 (아래 규칙) — 두 열에서도 짧은 값은 좁게
    ===== */
 @media (max-width: 1000px) {
-  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) {
+  .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 14px;
   }
   /* 4.1.2: '혼자 떨어진 칸은 전체 폭' 규칙은 css/99-lazy-panel.css 로 (오른쪽 끝 :not() + 왼쪽 :has()) */
-  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider header {
+  .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider header {
     gap: 6px;
   }
 }
@@ -115,22 +115,22 @@ html body .salty-panel.bl-editor .bl-backup-actions > .salty-row { align-self:st
    7.0.3 24em → 22em: 폰 360 기본 글씨(설정 칸 316px = 23.9em)에서 「두께 · 진하기」 같은 짝이 한 열로 내려갔다(2열 규칙 위반).
    이름은 윗줄 · 숫자칸은 아랫줄(아래 24~44em 규칙)이라 칸 148px 에도 눌리지 않는다. 큰 글씨 · 폰 320 은 그대로 한 열 */
 @container bl-controls (width < 22em) {
-  html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) { display:block; }
+  html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) { display:block; }
 }
 
 /* 6.5.1: 나란한 슬라이더는 같은 줄에서 이름·숫자·막대 높이를 맞춘다.
    한쪽 이름만 길어도 헤더가 각각 다른 방식으로 줄바꿈되지 않게 한다. */
-html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider {
+html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider {
   display:flex; flex-direction:column; align-self:stretch; min-width:0;
 }
-html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider > header {
+html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider > header {
   display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; flex:1; gap:6px 10px;
 }
-html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider > header > .salty-num {
+html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider > header > .salty-num {
   align-self:end; justify-self:end;
 }
 @container bl-controls (22em <= width < 44em) {
-  html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider > header {
+  html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider > header {
     grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(min-content,1fr) auto;
   }
 }

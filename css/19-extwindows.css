@@ -397,14 +397,14 @@ html body.salty #rm_extensions_block #qr--settings #qr--editor > .qr--head > .qr
 /* 실리태번 헬퍼(JS-Slash-Runner): 확장 칸 · 창. 15-drawers.css 의 헬퍼 규칙(탭 · 묶음 · 고르기 칸)을 그대로 두고 같은 무게로 뒤에서 덮는다.
    · 스위치 44×26 → 36×20 (손잡이 14) · 묶음 안 12 → 10 · 줄 나눔 위아래 7.5 → 4
    · 단추 글이 <small> 이라 11.3px → 단추 크기 그대로, 스크립트 탭 단추 2열은 내용 폭이 아니라 줄 폭을 나눠 채움 */
-body.salty .TH-custom-tailwind .relative.inline-block:has(> input.peer.sr-only[type="checkbox"] + label) { width:36px; height:20px; }
+body.salty .TH-custom-tailwind .relative.inline-block[data-bl-row~="peer"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *) { width:36px; height:20px; }
 body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"] + label::after { top:3px; left:3px; width:14px; height:14px; }
 body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"]:checked + label::after { transform:translateX(16px); }
 body.salty .TH-custom-tailwind div.rounded-md.p-1.border-\(--grey5050a\),
 body.salty .TH-custom-tailwind fieldset.TH-fieldset > :not(legend) { padding:10px; }
 body.salty .TH-custom-tailwind .flex.w-full.items-center.my-0\.5:has(> .grow) { margin-block:4px; }
 body.salty .TH-custom-tailwind .menu_button small { font-size:inherit; line-height:inherit; }
-body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-plus) { width:100%; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+body.salty #tavern_helper .flex.flex-wrap[data-bl-row~="fplus"]:is(.bl-s, *) { width:100%; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
 /* 헬퍼 스크립트 만들기 · 고치기 창: 묶음 아래 15 + 칸 위아래 5 (묶음 사이 20) → 묶음 사이 12 · 이름 → 칸 6.
    변수 편집기 도구 줄은 32px 칸 열 개가 폰 창 폭을 넘어 하나만 둘째 줄로 → 30px 칸으로 한 줄 */
 body.salty .TH-script-editor-container { margin-bottom:12px; }

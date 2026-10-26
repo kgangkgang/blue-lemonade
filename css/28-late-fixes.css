@@ -19,7 +19,7 @@ body.salty #qr--settings .qr--content > .qr--actions { grid-area: 3 / 1 / 4 / -1
 body.salty #regex_container .regex-script-label { border: 0; }
 @media (max-width: 1000px) {
   body.salty #user-settings-block [name="AvatarAndChatDisplay"] { align-items: stretch !important; }
-  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) { justify-content: space-between !important; }
+  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:where([data-bl-row~="sel"]):is(bl-s, *) { justify-content: space-between !important; }
 }
 
 /* 현재 페르소나: 제목 뒤 실제 글자 폭 + 10px에서 이름 시작. */

@@ -58,7 +58,7 @@ body.salty #left-nav-panel #lm_button_panel_pin:checked + label .right_menu_butt
 }
 
 /* ---------- 묶음 카드 ---------- */
-body.salty #left-nav-panel :is(#respective-presets-block > div > div:has(> .standoutHeader), #range_block_openai, #openai_settings > div:not(.range-block), #openai_settings > .range-block.m-t-1) {
+body.salty #left-nav-panel :is(#respective-presets-block > div > div[data-bl-row~="soh"], #range_block_openai, #openai_settings > div:not(.range-block), #openai_settings > .range-block.m-t-1) {
   margin: 0 0 var(--bl-s3) !important;
   padding: var(--bl-s1) var(--bl-inset) !important;
   border: 0 !important;
@@ -151,7 +151,7 @@ body.salty #left-nav-panel .range-block[data-bl-row~="range"]:is(.bl-s, *) > .ra
 }
 
 /* ---------- 숫자 하나 줄(최대 응답 길이 · 스와이프 수 · 시드): 이름 왼쪽 · 숫자칸 오른쪽 — 구조가 맞을 때만 ---------- */
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) {
+body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -159,7 +159,7 @@ body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > i
   row-gap: 0;
   padding: 8px 0 !important;
 }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title {
+body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .range-block-title {
   grid-column: 1;
   grid-row: 1;
   display: flex;
@@ -171,18 +171,18 @@ body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > i
   font-size: var(--bl-fs-body) !important;
   font-weight: 500;
 }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p {
+body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .wide100p {
   grid-column: 2;
   grid-row: 1;
   width: 84px !important;
 }
-body.salty #left-nav-panel :is(#range_block_openai, #openai_settings) .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .toggle-description {
+body.salty #left-nav-panel :is(#range_block_openai, #openai_settings) .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .toggle-description {
   grid-row: 2;
   margin: 2px 0 0 !important;
 }
 
 /* ---------- 한 줄 고르기(추론 강도 · 상세도 · 이미지 품질 등): 이름 왼쪽 · 값은 흐린 글자 + 꺾쇠 ---------- */
-body.salty #left-nav-panel #openai_settings .flex-container.flexFlowColumn:has(> .oneline-dropdown) {
+body.salty #left-nav-panel #openai_settings .flex-container.flexFlowColumn[data-bl-row~="odd"] {
   margin: 0 !important;
   text-align: left;
 }
@@ -448,7 +448,7 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list > li > .pr
   justify-self: end;
   text-align: right;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list > li > :is(span:has(> .prompt_manager_prompt_controls), span:nth-child(2):empty) {
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li > :is(span[data-bl-row~="pmc"], span:nth-child(2):empty) {
   grid-column: 3;
   grid-row: 1;
   justify-self: end;
@@ -897,11 +897,11 @@ body.salty #rm_api_block small :is(b, strong) {
   color: var(--salty-muted);
 }
 /* 연결 · 추가 설정 · 테스트: 줄을 채우는 같은 높이 칩 */
-body.salty #rm_api_block .flex-container:has(> .api_button) {
+body.salty #rm_api_block .flex-container[data-bl-row~="api"] {
   gap: var(--bl-s2) !important;
   margin: var(--bl-s4) 0 var(--bl-s1);
 }
-body.salty #rm_api_block .flex-container:has(> .api_button) > .menu_button {
+body.salty #rm_api_block .flex-container[data-bl-row~="api"] > .menu_button {
   flex: 1 1 auto;
   justify-content: center;
   margin: 0 !important;

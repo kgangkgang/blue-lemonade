@@ -10,13 +10,13 @@
 /* 원래 css/96-param-stack.css (파라미터 칸 안 세로 2줄) — 서랍 전용 · 왼쪽 :has() · 오른쪽 끝이 아무 요소/태그뿐인 규칙.
    96 바로 뒤가 이 자리라 원래 순서 그대로다 (96 에 남은 뒤 규칙과는 tools/check-order.cjs --against 로 확인).
    6.9.5: 2열을 한 열로 내리던 갈래(서식 서랍 두 칸 · API 칸 전체 폭 · 월드 인포 머리줄 세로)는 뺐다 */
-body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> label + select) > select { width: 100% !important; max-width: none !important; }
-body.salty #WorldInfo#WorldInfo .world_entry_form_control:has(> select[name="entryLogicType"]) > small { justify-content: flex-start !important; text-align: left !important; height: auto !important; }
-body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > :is(small, label):first-child { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
-body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-column: 2 !important; grid-row: 1 !important; }
-body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
-body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > :not(:is(small, label):first-child, .neo-range-slider, .neo-range-input) { grid-column: 1 / -1 !important; }
-body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> .neo-range-slider) > small { grid-column: 1 !important; grid-row: 1 !important; width: auto !important; }
+body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="lsel2"]):is(bl-s, *):is(bl-s, *) > select { width: 100% !important; max-width: none !important; }
+body.salty #WorldInfo#WorldInfo .world_entry_form_control[data-bl-row~="logic"]:is(bl-s, *) > small { justify-content: flex-start !important; text-align: left !important; height: auto !important; }
+body.salty :is(.flex-container, .parameterbox)[data-bl-row~="sneo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > :is(small, label):first-child { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
+body.salty :is(.flex-container, .parameterbox)[data-bl-row~="sneo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input { grid-column: 2 !important; grid-row: 1 !important; }
+body.salty :is(.flex-container, .parameterbox)[data-bl-row~="sneo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
+body.salty :is(.flex-container, .parameterbox)[data-bl-row~="sneo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > :not(:is(small, label):first-child, .neo-range-slider, .neo-range-input) { grid-column: 1 / -1 !important; }
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container[data-bl-row~="slider"] > small { grid-column: 1 !important; grid-row: 1 !important; width: auto !important; }
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { grid-column: 1 !important; grid-row: 1 !important; }
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input { grid-area: 1 / 2 !important; }
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
@@ -54,14 +54,14 @@ body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s,
   font-weight: 500;
   line-height: 1.35;
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) > small {
+body.salty #WorldInfo #wiSliders > .flex-container:where([data-bl-row~="wics"]):is(#bl-s, *) > small {
   flex: 1 1 10em;
   min-width: 0;
   color: var(--salty-text) !important;
   font-size: var(--bl-fs-body) !important;
   font-weight: 500;
 }
-body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) > small {
+body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control[data-bl-row~="logic"]:is(bl-s, *) > small {
   flex: 1 1 auto;
   min-width: 0;
   padding: 0 2px;
@@ -76,7 +76,7 @@ body.salty #right-nav-panel #right-nav-panel-tabs:has(> #result_info[style*="non
   color: var(--salty-muted) !important;
 }
 /* 원래 css/14-prompt.css */
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input {
+body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .wide100p > input {
   width: 100% !important;
   height: auto !important; /* 6.9.8: 숫자칸 높이 공통(--bl-h-ctl) */
   min-height: var(--bl-h-ctl) !important;
@@ -105,7 +105,7 @@ body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_ent
   color: var(--salty-muted);
 }
 /* 원래 css/15-drawers.css [guard] */
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > :is(span, small, label), body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label small, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) :is(small, label) {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > :is(span, small, label), body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > label small, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) :is(small, label) {
 flex:0 1 auto;
 min-width:0;
 margin:0 !important;
@@ -114,15 +114,15 @@ font-size:var(--bl-fs-body) !important;
 font-weight:500 !important;
 line-height:1.35;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > :is(span, small, label):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) :is(small, label):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > :is(span, small, label):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > label small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) :is(small, label):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-text) !important;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > :is(span, small, label), body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label small, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) :is(small, label) {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > :is(span, small, label), body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > label small, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) :is(small, label) {
 opacity:1 !important;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) select, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) select {
 flex:1 1 0% !important;
 width:auto !important;
 min-width:0 !important;
@@ -132,34 +132,34 @@ min-height:var(--bl-h-icon) !important;
 margin:0 !important;
 padding:0 26px 0 8px !important;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background-color:transparent !important;
 background-position:right 6px center !important;
 box-shadow:none !important;
 color:var(--salty-muted) !important;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) select, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) select {
 font-size:var(--bl-fs-body);
 text-align:right;
 text-align-last:right;
 text-overflow:ellipsis;
 field-sizing:content;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select:focus-visible,
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select:focus-visible {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) select:focus-visible,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) select:focus-visible {
   box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="lneo"]:is(.bl-s, *):is(bl-s, *) > label {
   grid-column: 1;
   grid-row: 1;
 }
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label small {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="lneo"]:is(.bl-s, *):is(bl-s, *) > label small {
 padding:0 !important;
 font-size:var(--bl-fs-body) !important;
 font-weight:500 !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="lneo"]:is(.bl-s, *):is(bl-s, *) > label small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-text) !important;
 }
 body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child {
@@ -189,7 +189,7 @@ body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header :is(b, strong) {
   font-weight: 600;
 }
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > select {
+body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) > select {
   flex: 1 1 180px !important; /* 폰에선 아이콘이 다음 줄로 — 이름이 'Neutral - Cł' 로 잘리지 않게 */
   min-width: 0;
   margin: 0 !important;
@@ -209,8 +209,8 @@ font-weight:500;
 body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) > small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-text) !important;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > :is(span, small, label),
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) > :is(small, label) {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > :is(span, small, label),
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) > :is(small, label) {
   flex: 0 1 auto !important;
   max-width: 60%;
 }
@@ -234,31 +234,31 @@ color:var(--salty-muted);
 }
 /* 원래 css/21-witidy.css */
 @media (max-width: 1000px) {
-body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> .neo-range-slider) > small { grid-column: 1 / -1; width: 100%; text-align: left; }
-body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) > :is(span, label) { width: 100%; min-width: 0; text-align: left; line-height: 1.4; }
-body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) > select { width: 100% !important; max-width: none !important; min-width: 0 !important; text-align: left !important; text-align-last: left !important; background-color: var(--bl-control) !important; border-radius: 8px !important; }
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container[data-bl-row~="slider"] > small { grid-column: 1 / -1; width: 100%; text-align: left; }
+body.salty #user-settings-block #user-settings-block-content .flex-container:where([data-bl-row~="lsel"]):is(bl-s, *):is(bl-s, *):not(#UI-language-block) > :is(span, label) { width: 100%; min-width: 0; text-align: left; line-height: 1.4; }
+body.salty #user-settings-block #user-settings-block-content .flex-container:where([data-bl-row~="lsel"]):is(bl-s, *):is(bl-s, *):not(#UI-language-block) > select { width: 100% !important; max-width: none !important; min-width: 0 !important; text-align: left !important; text-align-last: left !important; background-color: var(--bl-control) !important; border-radius: 8px !important; }
 }
 /* 원래 css/26-rounds-1.7.css */
 @media (max-width: 1000px) {
-body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > :is(small, span, label) {
+body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:where([data-bl-row~="sel"]):is(bl-s, *) > :is(small, span, label) {
     width: 100%; flex: none !important; min-width: 0; max-width: none; text-align: left; font-size: var(--bl-fs-body) !important; /* 7.9.2: 11px → 본문 (같은 칸 스위치 이름과 같게) */
   }
-body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > select { width: 100%; min-width: 0; max-width: none !important; flex: none !important; margin: 0; font-size: var(--bl-fs-body); }
-body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > :is(small, span, label) { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--bl-fs-body) !important; line-height: 1.3 !important; }
-body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > select { height: 30px !important; min-height: 30px !important; }
+body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:where([data-bl-row~="sel"]):is(bl-s, *) > select { width: 100%; min-width: 0; max-width: none !important; flex: none !important; margin: 0; font-size: var(--bl-fs-body); }
+body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:where([data-bl-row~="sel"]):is(bl-s, *) > :is(small, span, label) { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--bl-fs-body) !important; line-height: 1.3 !important; }
+body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:where([data-bl-row~="sel"]):is(bl-s, *) > select { height: 30px !important; min-height: 30px !important; }
 }
 /* 원래 css/26-rounds-1.7.css */
 @media not all and (max-width: 1000px) {
-body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) > select { min-width: 0; max-width: 60%; }
+body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) > select { min-width: 0; max-width: 60%; }
 }
 /* 원래 css/26-rounds-1.7.css */
 @media (max-width: 1000px) {
-body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > :is(span, small, label),
-body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > label small {
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) > :is(span, small, label),
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) > label small {
     max-width: none; font-size: var(--bl-fs-body) !important; font-weight: 400 !important; line-height: 1.35; /* 7.9.2: 11px → 본문 */
   }
 /* 7.9.2: 고르기 칸을 같은 창 「캐릭터 처리」 칸과 같은 모양으로 — 예전엔 26px 높이 · 13px 글자 · 칠 없는 글자만이라 옆 칸보다 작고 달라 보였다 */
-body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) select {
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) select {
 flex:none !important;
 width:100% !important;
 height:auto !important;
@@ -273,25 +273,25 @@ border-radius:8px !important;
 /* 원래 css/26-rounds-1.7.css */
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { grid-column: 1 / -1; grid-row: 1; /* 3.0.0: min-height → css/12-worldinfo.css (원래 규칙으로 합침) */ }
 body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter input { width: var(--bl-num-w) !important; font-size: var(--bl-fs-ctl) !important; } /* 6.9.8: 60px · 11px → 공통 숫자칸 */
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input { font-size: var(--bl-fs-ctl) !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > span { font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .wide100p > input { font-size: var(--bl-fs-ctl) !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) > label.checkbox_label > span { font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
 /* 원래 css/27-compact.css */
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > h4 {
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > h4 {
   grid-column: 1;
   padding: 0 !important;
   font-size: var(--bl-fs-sub) !important;
   line-height: 1.3;
 }
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > :is(select, input.text_pole, .flex-container:has(> .text_pole), .flex-container:has(> select)) {
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > :is(select, input.text_pole, .flex-container:has(> .text_pole), .flex-container:where([data-bl-row~="sel"]):is(bl-s, *)) {
   grid-column: 2;
 }
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4) > :is(div:has(> small:only-child), .neutral_warning) {
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *) > :is(div:has(> small:only-child), .neutral_warning) {
   display: none !important;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader > strong {
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > .standoutHeader > strong {
   padding-left: 2px;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > :not(.flex-container) :is(select, .select2-container) {
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > .standoutHeader + .flex-container > :not(.flex-container) :is(select, .select2-container) {
   width: 100% !important;
   max-width: 100%;
   min-width: 0;
@@ -323,24 +323,24 @@ body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="rang
   font-size:var(--bl-fs-ctl)!important;
   line-height:1.45;
 }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input {
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .wide100p > input {
   height:auto!important;
   min-height:max(var(--bl-h-ctl),calc(1.45em + 8px))!important;
   font-size:var(--bl-fs-ctl)!important;
   line-height:1.45;
 }
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > select {
+body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) > select {
   flex:1 1 12em!important;
   max-width:100%;
 }
-body.salty #AdvancedFormatting > .spaceEvenly label.flex-container:has(> small + .editor_maximize) > small {
+body.salty #AdvancedFormatting > .spaceEvenly label.flex-container[data-bl-row~="smax"]:is(bl-s, *) > small {
   min-width:0;
   overflow-wrap:anywhere;
 }
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) > :is(small, label) {
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) > :is(small, label) {
   max-width:100%;
 }
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select {
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) select {
   flex:1 1 12em!important;
   height:auto!important;
   min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
@@ -350,7 +350,7 @@ body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > * {
   grid-column: 1 / -1;
 }
 /* 원래 css/14-prompt.css */
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > * {
+body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > * {
   grid-column: 1 / -1;
 }
 /* 원래 css/15-drawers.css */
@@ -363,15 +363,15 @@ body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) >
 }
 /* 원래 css/27-compact.css */
 body.salty #rm_api_block #openai_api > *,
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > * {
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > * {
   grid-column: 1 / -1;
   min-width: 0;
   margin: 0 !important;
 }
 /* 원래 css/33-panel-columns.css (4.1.2) */
 @media (max-width: 1000px) {
-  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > :not(.salty-slider),
-  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider:not(.salty-slider + *):not(:has(+ .salty-slider)) {
+  .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > :not(.salty-slider),
+  .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider:not(.salty-slider + *):not(:has(+ .salty-slider)) {
     grid-column: 1 / -1;
   }
 }

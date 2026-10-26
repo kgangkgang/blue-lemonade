@@ -16,6 +16,9 @@
 // 5) 서랍 줄 표식 (7.9.9, 속도 P3 일부) — 실리태번 서랍의 정적 모양을 :has 로 감지하던 것
 //      data-bl-row="neo"    .flex-container 의 요소 자식이 small(첫째) + .neo-range-slider + .neo-range-input 순 (`:has(> small:first-child + .neo-range-slider + .neo-range-input)`)
 //      data-bl-row="range"  .range-block 안에 .range-block-title 바로 다음 형제가 .range-block-range-and-counter (`:has(> .range-block-title + .range-block-range-and-counter)`)
+//      그 밖의 토큰(ROW_TOKENS 표): sneo · lneo · num · numd · chk · title · slider · idr · soh · odd · api · pmc · copy · sl2 · fplus · sel · logic · subsel · pm · lsel · lsel2 · sel2 ·
+//      f1sel · numin · smax · peer · h4 · h4dep · instr · resp · wics · rxp · mui, 자손 신호 dsel(label 안 select) · oai-ctx-unl 등(.range-block 안 생성 설정 칸).
+//      표식은 요소 자식이 있는 그릇(div · form · label · span · li …)에 붙고, CSS 는 주어 클래스를 그대로 둔 채 `[data-bl-row~="…"]` 로 고른다.
 // 관찰자 콜백은 그리기 전에 돈다 — 새로 붙은 요소가 한 프레임도 다른 모양으로 보이지 않는다.
 const MARK = 'data-bl-icon-text';
 const ICON_ONLY = 'data-bl-icon-only';
@@ -115,15 +118,59 @@ export function metaTokens(mes) {
     }
     return [id && 'id', timer && 'timer', tok && 'tok'].filter(Boolean).join(' ');
 }
+// 서랍 줄 표식 표 — 이름 · 조건(요소 자식 순서). CSS 의 옛 :has 조건과 하나씩 같다(토큰 이름은 src/icon-text.js 머리 주석 5) 참고)
+const has = (el, c) => el.classList.contains(c);
+const tag = (el, t) => el.localName === t;
+const numOnly = w => w.childElementCount === 1 && tag(w.firstElementChild, 'input') && w.firstElementChild.type === 'number';
+const ROW_TOKENS = [
+    ['neo', k => k.length >= 3 && tag(k[0], 'small') && has(k[1], 'neo-range-slider') && has(k[2], 'neo-range-input')],
+    ['sneo', k => k.length >= 3 && (tag(k[0], 'small') || tag(k[0], 'label')) && has(k[1], 'neo-range-slider') && has(k[2], 'neo-range-input')],
+    ['lneo', k => k.some((c, i) => tag(c, 'label') && k[i + 1] && has(k[i + 1], 'neo-range-slider') && k[i + 2] && has(k[i + 2], 'neo-range-input'))],
+    ['range', k => k.some((c, i) => has(c, 'range-block-title') && k[i + 1] && has(k[i + 1], 'range-block-range-and-counter'))],
+    ['num', k => k.some((c, i) => has(c, 'range-block-title') && k[i + 1] && has(k[i + 1], 'wide100p') && numOnly(k[i + 1]))],
+    ['numd', k => k.some((c, i) => has(c, 'range-block-title') && k[i + 1] && has(k[i + 1], 'toggle-description') && k[i + 2] && has(k[i + 2], 'wide100p') && numOnly(k[i + 2]))],
+    ['chk', k => !!k[0] && tag(k[0], 'label') && has(k[0], 'checkbox_label')],
+    ['title', k => k.some(c => has(c, 'range-block-title'))],
+    ['slider', k => k.some(c => has(c, 'neo-range-slider'))],
+    ['idr', k => k.some(c => has(c, 'inline-drawer'))],
+    ['soh', k => k.some(c => has(c, 'standoutHeader'))],
+    ['odd', k => k.some(c => has(c, 'oneline-dropdown'))],
+    ['api', k => k.some(c => has(c, 'api_button'))],
+    ['pmc', k => k.some(c => has(c, 'prompt_manager_prompt_controls'))],
+    ['copy', k => k.some(c => has(c, 'bl-copyright'))],
+    ['sl2', k => k.some((c, i) => has(c, 'salty-slider') && k[i + 1] && has(k[i + 1], 'salty-slider'))],
+    ['fplus', k => k.some(c => has(c, 'menu_button_icon') && [...c.children].some(g => has(g, 'fa-folder-plus')))],
+    ['sel', k => k.some(c => tag(c, 'select'))],
+    ['logic', k => k.some(c => tag(c, 'select') && c.name === 'entryLogicType')],
+    ['subsel', k => k.some(c => tag(c, 'select') && c.name === 'substitute_regex')],
+    ['pm', k => k.some(c => tag(c, 'select') && c.hasAttribute('data-preset-manager-for'))],
+    ['lsel', k => k.some((c, i) => (tag(c, 'span') || tag(c, 'label')) && k[i + 1] && tag(k[i + 1], 'select'))],
+    ['lsel2', k => k.some((c, i) => tag(c, 'label') && k[i + 1] && tag(k[i + 1], 'select'))],
+    ['sel2', k => k.some((c, i) => tag(c, 'label') && k[i + 1] && has(k[i + 1], 'flex-container') && [...k[i + 1].children].some(g => tag(g, 'select')))],
+    ['f1sel', k => k.some(c => has(c, 'flex1') && !!c.querySelector('select'))],
+    ['numin', k => k.some(c => tag(c, 'input') && c.type === 'number')],
+    ['smax', k => k.some((c, i) => tag(c, 'small') && k[i + 1] && has(k[i + 1], 'editor_maximize'))],
+    ['peer', k => k.some((c, i) => tag(c, 'input') && c.type === 'checkbox' && has(c, 'peer') && has(c, 'sr-only') && k[i + 1] && tag(k[i + 1], 'label'))],
+    ['h4', k => k.some(c => tag(c, 'h4'))],
+    ['h4dep', k => k.some(c => tag(c, 'h4') && [...c.children].some(g => g.getAttribute('data-i18n') === '(DEPRECATED)'))],
+    ['instr', k => k.some(c => c.id === 'instruct_names_behavior')],
+    ['resp', k => k.some(c => c.id === 'bl-response-range')],
+    ['wics', k => k.some(c => c.id === 'world_info_character_strategy')],
+    ['rxp', k => k.some(c => c.id === 'regex_presets')],
+    ['mui', k => k.some(c => c.id === 'movingUIModeCheckBlock')],
+];
+// 자손을 보는 신호 — label 안 select, .range-block 안 생성 설정 칸(아이디)
+const DEEP_IDS = [['oai-ctx-unl', 'oai_max_context_unlocked'], ['stream', 'stream_toggle'], ['oai-ctx', 'openai_max_context'], ['oai-tok', 'openai_max_tokens'], ['n-openai', 'n_openai'], ['seed', 'seed_openai']];
 export function rowTokens(el) {
-    const tokens = [];
-    const c = el.children;
-    if (el.classList.contains('flex-container') && c.length >= 3 && c[0].localName === 'small' && c[1].classList.contains('neo-range-slider') && c[2].classList.contains('neo-range-input')) tokens.push('neo');
-    if (el.classList.contains('range-block')) {
-        for (let k = 0; k + 1 < c.length; k++) if (c[k].classList.contains('range-block-title') && c[k + 1].classList.contains('range-block-range-and-counter')) { tokens.push('range'); break; }
-    }
+    const k = [...el.children]; const tokens = [];
+    for (const [name, test] of ROW_TOKENS) if (test(k, el)) tokens.push(name);
+    if (tag(el, 'label') && el.querySelector('select')) tokens.push('dsel');
+    if (has(el, 'range-block')) for (const [name, id] of DEEP_IDS) if (el.querySelector('#' + id)) tokens.push(name);
     return tokens.join(' ');
 }
+// 표식이 붙을 수 있는 요소 — 자식 줄 모양을 보는 그릇. CSS 주어가 div · form · label · span · li 등 여러 태그라 요소 자식이 있는 요소면 다 본다(글자 · 그림 · 입력 요소와 svg 안은 뺌)
+const NOT_HOST = new Set(['script', 'style', 'template', 'svg', 'path', 'g', 'use', 'select', 'option', 'optgroup', 'textarea', 'input', 'img', 'video', 'canvas', 'iframe', 'br', 'hr', 'i']);
+function isRowHost(el) { return !NOT_HOST.has(el.localName) && !el.closest('svg'); }
 function checkRow(el) { setAttr(el, ROW, rowTokens(el)); }
 function checkMes(mes) { setAttr(mes, EDITING, editingTokens(mes)); setAttr(mes, META, metaTokens(mes)); }
 function checkReasoning(details) {
@@ -136,14 +183,13 @@ function scan(node) {
     else if (node.localName === 'label') checkLabel(node);
     if (node.classList?.contains('mes')) checkMes(node);
     if (node.classList?.contains('mes_reasoning_details')) checkReasoning(node);
-    if (node.classList && (node.classList.contains('flex-container') || node.classList.contains('range-block'))) checkRow(node);
+    if (node.firstElementChild && isRowHost(node)) checkRow(node);
     if (!node.firstElementChild) return;
     for (const el of node.getElementsByClassName('menu_button')) check(el);
     for (const el of node.getElementsByTagName('label')) checkLabel(el);
     for (const el of node.getElementsByClassName('mes')) checkMes(el);
     for (const el of node.getElementsByClassName('mes_reasoning_details')) checkReasoning(el);
-    for (const el of node.getElementsByClassName('flex-container')) checkRow(el);
-    for (const el of node.getElementsByClassName('range-block')) checkRow(el);
+    for (const el of node.getElementsByTagName('*')) if (el.firstElementChild && isRowHost(el)) checkRow(el);
 }
 
 // 바뀐 요소 하나 — .menu_button 이면 단추 표식, label 이면 체크 줄 표식, input 이 바뀌었으면 그 부모 label
@@ -155,8 +201,10 @@ function touched(el) {
     const mes = el.closest('.mes'); if (mes) checkMes(mes);
     const details = el.closest('.mes_reasoning_details'); if (details) checkReasoning(details);
     // 자식 줄이 바뀐 .flex-container · .range-block 과, 클래스가 바뀐 자식의 부모
-    if (el.classList.contains('flex-container') || el.classList.contains('range-block')) checkRow(el);
-    const p = el.parentElement; if (p && (p.classList.contains('flex-container') || p.classList.contains('range-block'))) checkRow(p);
+    if (isRowHost(el)) checkRow(el);
+    const p = el.parentElement; if (p && isRowHost(p)) checkRow(p);
+    const lab = el.closest('label'); if (lab && lab !== el) checkRow(lab);
+    const rb = el.closest('.range-block'); if (rb && rb !== el && rb !== p) checkRow(rb);
 }
 
 let started = false;

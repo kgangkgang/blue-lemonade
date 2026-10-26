@@ -1386,8 +1386,8 @@ body.salty-dark .salty-shapes button.on {
      ('큰 숫자는 쉼표로' · '블록 사이 기본 촘촘히 넉넉히') → 설명이나 고르기가 있는 묶음만 폰처럼 한 열(슬라이더 짝은 두 열 그대로).
      설명 없는 짧은 스위치 묶음은 두 열 그대로 */
 @media (max-width: 1000px) {
-  .salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks):has(> .salty-slider + .salty-slider) > :is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider:not(:has(+ .salty-slider)),
-  .salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks):has(> .salty-slider + .salty-slider) > :is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider + .salty-slider + .salty-slider:not(:has(+ .salty-slider)) {
+  .salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks)[data-bl-row~="sl2"]:is(.bl-s, *) > :is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider:not(:has(+ .salty-slider)),
+  .salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks)[data-bl-row~="sl2"]:is(.bl-s, *) > :is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider + .salty-slider + .salty-slider:not(:has(+ .salty-slider)) {
     grid-column: 1 / -1;
   }
 }

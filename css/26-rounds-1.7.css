@@ -85,7 +85,7 @@ body.salty #regex_container .regex-script-label > .flex-container { flex-shrink:
 body.salty #regex_container .regex-script-label > .flex-container > label.checkbox { margin: 0 !important; }
 body.salty #regex_container .regex-script-label .menu_button,
 body.salty #regex_container #regex_presets_block .menu_button { width: 28px !important; min-width: 28px !important; height: 32px !important; min-height: 32px !important; padding: 0 !important; margin: 0 !important; display: inline-flex; align-items: center; justify-content: center; }
-body.salty #rm_extensions_block #regex_presets_block .flex-container:has(> #regex_presets) { justify-content: flex-end; /* 3.0.0: gap → css/15-drawers.css (원래 규칙으로 합침) */ }
+body.salty #rm_extensions_block #regex_presets_block .flex-container:where([data-bl-row~="rxp"]):is(#bl-s, *) { justify-content: flex-end; /* 3.0.0: gap → css/15-drawers.css (원래 규칙으로 합침) */ }
 body.salty #rm_extensions_block #regex_presets { width: 100%; margin: 0 0 4px !important; /* 3.0.0: flex → css/15-drawers.css (원래 규칙으로 합침) */ }
 body.salty #regex_container :is(.delete_regex, #regex_preset_delete) { color: var(--bl-danger) !important; }
 /* 모바일 설정: 짧은 조절 항목 두 개를 나란히, 긴 설명과 펼침 영역은 전체 폭. */
@@ -93,13 +93,13 @@ body.salty #regex_container :is(.delete_regex, #regex_preset_delete) { color: va
   body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="FontBlurChatWidthBlock"], [name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) {
     display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bl-param-gap) !important;
   }
-  body.salty #user-settings-block :is([name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > :is(h4, .inline-drawer, div:not(:has(> select))) { grid-column: 1 / -1; }
-  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) {
+  body.salty #user-settings-block :is([name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > :is(h4, .inline-drawer, div:not(:where([data-bl-row~="sel"]):is(bl-s, *))) { grid-column: 1 / -1; }
+  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:where([data-bl-row~="sel"]):is(bl-s, *) {
     flex-direction: column; align-items: stretch !important; gap: 4px !important; min-width: 0; padding-block: 4px !important;
   }
   /* 프로필 · 채팅 · 미디어 스타일 · 알림 네 칸: 자주 안 바꾸는 값이라 작게 (195px → 약 120px). 이름은 한 줄 */
   body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) { padding-block: 6px !important; row-gap: 4px !important; }
-  body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) { min-height: 0 !important; padding-block: 2px !important; gap: 4px !important; }
+  body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:where([data-bl-row~="sel"]):is(bl-s, *) { min-height: 0 !important; padding-block: 2px !important; gap: 4px !important; }
   body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label {
     width: 100%; min-width: 0; min-height: 38px; margin: 0 !important; padding: 4px 0 !important; gap: 8px !important;
   }
@@ -120,8 +120,8 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(max(260px, 45%), 1fr)); column-gap: 28px;
   }
-  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(h4, .inline-drawer, div:not(:has(> select))) { grid-column: 1 / -1; }
-  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) { min-width: 0; gap: 8px; }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :is(h4, .inline-drawer, div:not(:where([data-bl-row~="sel"]):is(bl-s, *))) { grid-column: 1 / -1; }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) { min-width: 0; gap: 8px; }
   /* 5.3.4: 예전 :is(> …) 는 잘못된 선택자라 규칙 전체가 버려졌다 — 두 갈래로 풀어 씀 */
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > label.checkbox_label,
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label { min-width: 0; }
@@ -131,7 +131,7 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-
     width: 100%; min-width: 0; min-height: 38px; margin: 0 !important; padding: 4px 0 !important; gap: 8px !important;
   }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label > :is(span, small) { font-size: var(--bl-fs-body) !important; line-height: 1.35; overflow-wrap: anywhere; } /* 7.9.2: 스와이프 · 제스처도 옆 스위치 줄과 같은 본문 크기 */
-  body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) {
+  body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) {
     flex-flow: column nowrap !important; align-items: stretch !important; justify-content: center !important; gap: 1px !important; min-height: 38px; padding-block: 2px !important;
   }
   /* 슬라이더 이름도 스위치 이름과 같은 크기 — 7.9.2: 11px → 본문(사용자 글꼴 크기) */
@@ -145,7 +145,7 @@ body.salty #WorldInfo #wiSliders > .flex-container { flex: none !important; widt
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) { grid-template-columns: minmax(0, 1fr) auto; /* 3.0.0: gap · padding → css/12-worldinfo.css (원래 규칙으로 합침) */ }
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider { grid-area: 2 / 1 !important; width: 100%; min-width: 0; }
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input { grid-area: 2 / 2 !important; min-width: 0 !important; font-size: var(--bl-fs-ctl); /* width/height → css/12-worldinfo.css */ }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) { grid-column: 1 / -1; }
+body.salty #WorldInfo #wiSliders > .flex-container:where([data-bl-row~="wics"]):is(#bl-s, *) { grid-column: 1 / -1; }
 body.salty #WorldInfo #wiCheckboxes { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px !important; }
 body.salty #WorldInfo #wiCheckboxes label.checkbox_label { min-width: 0; }
 /* 6.9.5: 22em → 18em — PC 의 월드 인포 패널(약 330px)도 폰처럼 두 열. 칸 안 윗줄은 이름 + 아이콘 + 값 글자 수만큼의 숫자칸이라
@@ -171,27 +171,27 @@ body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="rang
 body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-range { grid-column: 1 !important; grid-row: 2 !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter { grid-column: 2 !important; grid-row: 2 !important; }
 /* 숫자 하나 칸(최대 응답 길이 · 스와이프 수 · 시드): 이름 위, 숫자 아래 — 응답 길이는 테마 슬라이더가 붙으니 막대 + 숫자 */
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) { grid-column: auto; grid-template-columns: minmax(0, 1fr) auto; gap: var(--bl-param-row-gap) var(--bl-param-col-gap); padding: var(--bl-param-pad) !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title { grid-column: 1 / -1 !important; grid-row: 1; min-height: 0; font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .toggle-description { display: none; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p { grid-column: 1 / -1 !important; grid-row: 2; width: 100% !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > .wide100p { grid-column: 2 !important; width: var(--bl-num-w) !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > #bl-response-range { grid-column: 1 !important; grid-row: 2; align-self: center; }
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) { grid-column: auto; grid-template-columns: minmax(0, 1fr) auto; gap: var(--bl-param-row-gap) var(--bl-param-col-gap); padding: var(--bl-param-pad) !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .range-block-title { grid-column: 1 / -1 !important; grid-row: 1; min-height: 0; font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .toggle-description { display: none; }
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .wide100p { grid-column: 1 / -1 !important; grid-row: 2; width: 100% !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="resp"]):is(#bl-s, *) > .wide100p { grid-column: 2 !important; width: var(--bl-num-w) !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="resp"]):is(#bl-s, *) > #bl-response-range { grid-column: 1 !important; grid-row: 2; align-self: center; }
 /* 스위치 칸(제한 해제 · 스트리밍): 이름 + 스위치, 설명 숨김 */
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) { grid-column: auto; display: flex; flex-direction: column; justify-content: center; min-height: 100%; padding: var(--bl-param-pad) !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > .toggle-description { display: none; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label { width: 100%; min-width: 0; min-height: 0; margin: 0 !important; padding: 0 !important; gap: 6px !important; justify-content: space-between; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"] { flex: none; width: 36px !important; height: 20px !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"]::before { width: 14px !important; height: 14px !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"]:checked::before { transform: translateX(16px) !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) { grid-column: auto; display: flex; flex-direction: column; justify-content: center; min-height: 100%; padding: var(--bl-param-pad) !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) > .toggle-description { display: none; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) > label.checkbox_label { width: 100%; min-width: 0; min-height: 0; margin: 0 !important; padding: 0 !important; gap: 6px !important; justify-content: space-between; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) > label.checkbox_label > input[type="checkbox"] { flex: none; width: 36px !important; height: 20px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) > label.checkbox_label > input[type="checkbox"]::before { width: 14px !important; height: 14px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) > label.checkbox_label > input[type="checkbox"]:checked::before { transform: translateX(16px) !important; }
 /* 자리 정렬(사용자: "컨텍스트 크기랑 최대 응답 길이는 커플"): 1줄 스위치 둘(제한 해제 · 스트리밍) · 2줄 토큰 둘(컨텍스트 크기 · 최대 응답 길이)
    · 그다음 슬라이더들(문서 순서) · 스와이프 수 + 시드 한 줄 · 나머지(빠른 프롬프트 · 유틸리티 프롬프트 · 소스별 잡동사니)는 맨 아래.
    grid-column 으로 왼쪽 · 오른쪽을 못 박아 슬라이더가 홀수여도 짝이 갈라지지 않는다 (시드는 스와이프 수가 숨는 소스도 있어 자동) */
 body.salty #left-nav-panel #range_block_openai > * { order: 50; }
 body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) { order: 10; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#oai_max_context_unlocked) { order: 1; grid-column: 1; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#stream_toggle) { order: 2; grid-column: 2; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#openai_max_context) { order: 3; grid-column: 1; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#openai_max_tokens) { order: 4; grid-column: 2; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#n_openai) { order: 20; grid-column: 1; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#seed_openai) { order: 21; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="oai-ctx-unl"]):is(#bl-s, *) { order: 1; grid-column: 1; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="stream"]):is(#bl-s, *) { order: 2; grid-column: 2; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="oai-ctx"]):is(#bl-s, *) { order: 3; grid-column: 1; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="oai-tok"]):is(#bl-s, *) { order: 4; grid-column: 2; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="n-openai"]):is(#bl-s, *) { order: 20; grid-column: 1; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="seed"]):is(#bl-s, *) { order: 21; }

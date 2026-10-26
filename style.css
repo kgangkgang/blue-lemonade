@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 10585690e910) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d5c4e0f1d2a8) */
 /* css/00-base.css */
 :root{--bl-release:"8.0.5";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -5781,7 +5781,7 @@ body.salty #WorldInfo #wiTopBlock > .range-block:has(> .inline-drawer > .inline-
 body.salty #WorldInfo #wiTopBlock > .range-block > .inline-drawer {
   display: contents;
 }
-body.salty #WorldInfo #wiTopBlock > .range-block:has(> .inline-drawer) > .range-block-title {
+body.salty #WorldInfo #wiTopBlock > .range-block[data-bl-row~="idr"] > .range-block-title {
   grid-area: 1 / 1;
   align-self: stretch;
   align-items: center;
@@ -5807,7 +5807,7 @@ body.salty #WorldInfo #wiTopBlock .inline-drawer-header {
 body.salty #WorldInfo #wiTopBlock .inline-drawer-header > b {
   display: none;
 }
-body.salty #WorldInfo #wiTopBlock > .range-block:has(> .inline-drawer) {
+body.salty #WorldInfo #wiTopBlock > .range-block[data-bl-row~="idr"] {
   padding-bottom: 0 !important;
 }
 body.salty #WorldInfo #wiTopBlock > .range-block > .inline-drawer > .inline-drawer-content {
@@ -5845,7 +5845,7 @@ body.salty #WorldInfo #wiSliders .neo-range-input {
   background-color: var(--bl-well) !important;
   box-shadow: var(--bl-well-in) !important;
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) {
+body.salty #WorldInfo #wiSliders > .flex-container:where([data-bl-row~="wics"]):is(#bl-s, *) {
   flex: 1 1 100% !important;
   flex-direction: row !important;
   flex-wrap: wrap !important;
@@ -6377,7 +6377,7 @@ body.salty #WorldInfo .select2-container--disabled .select2-selection__choice {
   grid-template-columns: minmax(0, 1fr);
   column-gap: 0;
 }
-body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]),
+body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control[data-bl-row~="logic"]:is(bl-s, *),
 body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control {
   flex: 1 1 100% !important;
   flex-direction: row !important;
@@ -6388,7 +6388,7 @@ body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world
   min-height: var(--bl-h-row);
   min-width: 0;
 }
-body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) {
+body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control[data-bl-row~="logic"]:is(bl-s, *) {
   margin-top: 4px;
 }
 body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control > small {
@@ -8520,7 +8520,7 @@ body.salty #left-nav-panel #lm_button_panel_pin:checked + label {
 body.salty #left-nav-panel #lm_button_panel_pin:checked + label .right_menu_button {
   color: var(--salty-accent) !important;
 }
-body.salty #left-nav-panel :where(#respective-presets-block > div > div:has(> .standoutHeader)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *),
+body.salty #left-nav-panel :where(#respective-presets-block > div > div[data-bl-row~="soh"]):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *),
 body.salty #left-nav-panel #range_block_openai:is(.bl-s, *):is(.bl-s, *),
 body.salty #left-nav-panel :where(#openai_settings > div:not(.range-block)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *),
 body.salty #left-nav-panel :is(#openai_settings > .range-block.m-t-1) {
@@ -8609,7 +8609,7 @@ body.salty #left-nav-panel .range-block[data-bl-row~="range"]:is(.bl-s, *) > .ra
   display: flex;
   align-items: center;
 }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) {
+body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -8617,7 +8617,7 @@ body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > i
   row-gap: 0;
   padding: 8px 0 !important;
 }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title {
+body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .range-block-title {
   grid-column: 1;
   grid-row: 1;
   display: flex;
@@ -8629,16 +8629,16 @@ body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > i
   font-size: var(--bl-fs-body) !important;
   font-weight: 500;
 }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p {
+body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .wide100p {
   grid-column: 2;
   grid-row: 1;
   width: 84px !important;
 }
-body.salty #left-nav-panel :is(#range_block_openai, #openai_settings) .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .toggle-description {
+body.salty #left-nav-panel :is(#range_block_openai, #openai_settings) .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .toggle-description {
   grid-row: 2;
   margin: 2px 0 0 !important;
 }
-body.salty #left-nav-panel #openai_settings .flex-container.flexFlowColumn:has(> .oneline-dropdown) {
+body.salty #left-nav-panel #openai_settings .flex-container.flexFlowColumn[data-bl-row~="odd"] {
   margin: 0 !important;
   text-align: left;
 }
@@ -8887,7 +8887,7 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list > li > .pr
   justify-self: end;
   text-align: right;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list > li > span:has(> .prompt_manager_prompt_controls):is(.bl-s, *),
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li > span[data-bl-row~="pmc"]:is(.bl-s, *),
 body.salty #completion_prompt_manager #completion_prompt_manager_list > li > span:nth-child(2):empty {
   grid-column: 3;
   grid-row: 1;
@@ -9309,11 +9309,11 @@ body.salty #rm_api_block small strong {
   font-weight: 600;
   color: var(--salty-muted);
 }
-body.salty #rm_api_block .flex-container:has(> .api_button) {
+body.salty #rm_api_block .flex-container[data-bl-row~="api"] {
   gap: var(--bl-s2) !important;
   margin: var(--bl-s4) 0 var(--bl-s1);
 }
-body.salty #rm_api_block .flex-container:has(> .api_button) > .menu_button {
+body.salty #rm_api_block .flex-container[data-bl-row~="api"] > .menu_button {
   flex: 1 1 auto;
   justify-content: center;
   margin: 0 !important;
@@ -9457,10 +9457,10 @@ body.salty :is(#user-settings-block, #AdvancedFormatting) label.checkbox_label:w
 body.salty :is(#user-settings-block, #AdvancedFormatting) label.checkbox_label:where(:not(.salty-panel *)) .fa-brands:where(:not(.menu_button, .note-link-span)) {
 opacity:1 !important;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)),
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)),
 body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"],
 body.salty #AdvancedFormatting #context_story_string_position_block:is(#bl-s, *):is(bl-s, *),
-body.salty #AdvancedFormatting :is(#instructSettingsBlock div:has(> #instruct_names_behavior)) {
+body.salty #AdvancedFormatting :is(#instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) {
   display: flex;
   flex-flow: row nowrap !important;
   align-items: center !important;
@@ -9511,11 +9511,11 @@ field-sizing:content;
 body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] select:focus-visible {
   box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
-body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container:has(> .flex1 select) {
+body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container[data-bl-row~="f1sel"]:is(bl-s, *) {
   flex-direction: column;
   gap: 0 !important;
 }
-body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content .flex1 > .flex-container:has(> select),
+body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content .flex1 > .flex-container:where([data-bl-row~="sel"]):is(bl-s, *),
 body.salty #user-settings-block #MovingUI-presets-block label[for="movingUIPresets"] > .flex-container {
   flex: 1 1 0% !important;
   min-width: 0;
@@ -9525,7 +9525,7 @@ body.salty #user-settings-block #MovingUI-presets-block label[for="movingUIPrese
 body.salty #user-settings-block-content :is([name="AutoCompleteToggle"] .inline-drawer-content .flex1 > .flex-container, #MovingUI-presets-block label[for="movingUIPresets"] > .flex-container) > select {
   max-width: 100% !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="lneo"]:is(.bl-s, *):is(bl-s, *) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -9533,13 +9533,13 @@ body.salty #user-settings-block-content .flex-container:has(> label + .neo-range
   row-gap: var(--bl-param-row-gap);
   padding: var(--bl-param-pad);
 }
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > .neo-range-input {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="lneo"]:is(.bl-s, *):is(bl-s, *) > .neo-range-input {
   grid-column: 2;
   grid-row: 1;
   width: var(--bl-num-w) !important;
   margin: 0 !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > .neo-range-slider {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="lneo"]:is(.bl-s, *):is(bl-s, *) > .neo-range-slider {
   grid-column: 1 / -1;
   grid-row: 2;
   width: 100% !important;
@@ -9741,7 +9741,7 @@ font-weight:inherit;
 body.salty #user-settings-block [name="MiscellaneousToggles"] .menu_button small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:inherit !important;
 }
-body.salty #user-settings-block [name="MiscellaneousToggles"] > .flex-container:has(> #movingUIModeCheckBlock) {
+body.salty #user-settings-block [name="MiscellaneousToggles"] > .flex-container:where([data-bl-row~="mui"]):is(#bl-s, *) {
   flex-wrap: nowrap;
   gap: var(--bl-s3) !important;
 }
@@ -10010,13 +10010,13 @@ body.salty #AdvancedFormatting h4 label.checkbox_label {
 body.salty #AdvancedFormatting h4 label.checkbox_label small {
   font-size: inherit !important;
 }
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) {
+body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) {
   flex-wrap: wrap !important;
   align-items: center;
   gap: 2px var(--bl-s1) !important;
   padding: 2px 0 var(--bl-s1);
 }
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > .flex-container {
+body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) > .flex-container {
   flex-wrap: nowrap;
   gap: 0 !important;
   margin: 0 0 0 auto !important;
@@ -10034,7 +10034,7 @@ color:var(--salty-muted) !important;
 body.salty #AdvancedFormatting > .spaceEvenly small:where(:not(label.checkbox_label *, summary *, h4 *, .fa-solid, #context_story_string_position_block *, [name="tokenPaddingBlock"] *)) {
 opacity:1 !important;
 }
-body.salty #AdvancedFormatting > .spaceEvenly label.flex-container:has(> small + .editor_maximize) {
+body.salty #AdvancedFormatting > .spaceEvenly label.flex-container[data-bl-row~="smax"]:is(bl-s, *) {
   align-items: center;
   justify-content: space-between;
 }
@@ -10472,7 +10472,7 @@ body.salty #user-settings-block-content #MovingUI-presets-block label[for="movin
   flex: 0 1 auto !important;
   max-width: 60%;
 }
-body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content .flex1 > .flex-container:has(> select) {
+body.salty #user-settings-block-content [name="AutoCompleteToggle"] .inline-drawer-content .flex1 > .flex-container:where([data-bl-row~="sel"]):is(bl-s, *) {
   flex: 1 1 0% !important;
   max-width: none;
 }
@@ -10657,7 +10657,7 @@ background:transparent;
 body.salty .TH-custom-tailwind [class~="border-t"].border-\(--grey5050a\):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 border-top-color:transparent;
 }
-body.salty .TH-custom-tailwind .relative.inline-block:has(> input.peer.sr-only[type="checkbox"] + label) {
+body.salty .TH-custom-tailwind .relative.inline-block[data-bl-row~="peer"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *) {
   flex: 0 0 auto;
   width: 44px;
   height: 26px;
@@ -11012,14 +11012,14 @@ body.salty .TH-custom-tailwind i.fa-wifi[style*="170, 0, 0"]:where(:not([data-bl
 body.salty #tavern_helper .border-x-2 > div > div[style*="170, 0, 0"]:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--bl-pop-ink) !important;
 }
-body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-plus) {
+body.salty #tavern_helper .flex.flex-wrap[data-bl-row~="fplus"]:is(.bl-s, *) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   width: fit-content;
   max-width: 100%;
   gap: 8px 10px;
 }
-body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-plus) > .menu_button_icon {
+body.salty #tavern_helper .flex.flex-wrap[data-bl-row~="fplus"]:is(.bl-s, *) > .menu_button_icon {
   width: auto;
   min-width: 0;
   margin-inline: 0;
@@ -11033,12 +11033,12 @@ body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-p
   overflow-wrap: anywhere;
 }
 @container bl-helper (width >= 38em) {
-  body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-plus) {
+  body.salty #tavern_helper .flex.flex-wrap[data-bl-row~="fplus"]:is(.bl-s, *) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 @container bl-helper (width < 17em) {
-  body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-plus) {
+  body.salty #tavern_helper .flex.flex-wrap[data-bl-row~="fplus"]:is(.bl-s, *) {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -11232,7 +11232,7 @@ body.salty #rm_extensions_block #qr--color:where(:not([data-bl-native-ext-colors
 background:var(--bl-fill-well, var(--bl-well));
 box-shadow:var(--bl-well-in);
 }
-body.salty #rm_extensions_block #regex_presets_block .flex-container:has(> #regex_presets) {
+body.salty #rm_extensions_block #regex_presets_block .flex-container:where([data-bl-row~="rxp"]):is(#bl-s, *) {
   flex-wrap: wrap;
   align-items: center;
   gap: 4px !important;
@@ -11270,7 +11270,7 @@ body.salty #rm_extensions_block .regex-script-label label.menu_button.regex_scri
 background:var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
 }
 @media screen and (max-width: 1000px) {
-  body.salty #user-settings-block [name="MiscellaneousToggles"] > .flex-container:has(> #movingUIModeCheckBlock) {
+  body.salty #user-settings-block [name="MiscellaneousToggles"] > .flex-container:where([data-bl-row~="mui"]):is(#bl-s, *) {
     position: relative;
   }
   body.salty #user-settings-block #movingUIModeCheckBlock {
@@ -12803,14 +12803,14 @@ html body.salty #rm_extensions_block #qr--settings :is(.inline-drawer-content, #
 html body.salty #rm_extensions_block #qr--settings .qr--title:is(.bl-s, *):is(bl-s, *) { font-size:var(--bl-ts-ui,14px); font-weight:600; }
 html body.salty #rm_extensions_block #qr--settings #qr--set-qrList .qr--set-qrListContents { padding-inline:0; }
 html body.salty #rm_extensions_block #qr--settings #qr--editor > .qr--head > .qr--actions > select#qr--set { flex:1 1 8em !important; min-width:0; }
-body.salty .TH-custom-tailwind .relative.inline-block:has(> input.peer.sr-only[type="checkbox"] + label) { width:36px; height:20px; }
+body.salty .TH-custom-tailwind .relative.inline-block[data-bl-row~="peer"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *) { width:36px; height:20px; }
 body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"] + label::after { top:3px; left:3px; width:14px; height:14px; }
 body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"]:checked + label::after { transform:translateX(16px); }
 body.salty .TH-custom-tailwind div.rounded-md.p-1.border-\(--grey5050a\),
 body.salty .TH-custom-tailwind fieldset.TH-fieldset > :not(legend) { padding:10px; }
 body.salty .TH-custom-tailwind .flex.w-full.items-center.my-0\.5:has(> .grow) { margin-block:4px; }
 body.salty .TH-custom-tailwind .menu_button small { font-size:inherit; line-height:inherit; }
-body.salty #tavern_helper .flex.flex-wrap:has(> .menu_button_icon > .fa-folder-plus) { width:100%; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+body.salty #tavern_helper .flex.flex-wrap[data-bl-row~="fplus"]:is(.bl-s, *) { width:100%; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
 body.salty .TH-script-editor-container { margin-bottom:12px; }
 body.salty .TH-script-editor-container > input.text_pole,
 body.salty .TH-script-editor-container > textarea.text_pole { margin:6px 0 0; }
@@ -14151,8 +14151,8 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .bl-addon-inline-content .bl-hs-switch[aria-checked="true"] { background: var(--salty-accent); box-shadow: none; }
 .salty-panel .bl-addon-inline-content .bl-hs-switch[aria-checked="true"] > span { transform: translateX(14px); }
 @media (max-width: 1000px) {
-  .salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks):has(> .salty-slider + .salty-slider) > :is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider:not(:has(+ .salty-slider)),
-  .salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks):has(> .salty-slider + .salty-slider) > :is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider + .salty-slider + .salty-slider:not(:has(+ .salty-slider)) {
+  .salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks)[data-bl-row~="sl2"]:is(.bl-s, *) > :is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider:not(:has(+ .salty-slider)),
+  .salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks)[data-bl-row~="sl2"]:is(.bl-s, *) > :is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider + .salty-slider + .salty-slider:not(:has(+ .salty-slider)) {
     grid-column: 1 / -1;
   }
 }
@@ -14382,7 +14382,7 @@ body.salty #dialogue_del_mes .menu_button { min-height: var(--bl-h-btn, 36px) !i
 body.salty #dialogue_del_mes #dialogue_del_mes_ok { background: var(--salty-danger-soft) !important; color: var(--bl-danger) !important; }
 @media (max-width: 1000px) {
   body.salty #user-settings-block:not(#salty-none) { scrollbar-gutter: stable both-edges; padding-inline: 4px !important; }
-  body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) {
+  body.salty #user-settings-block #user-settings-block-content .flex-container:where([data-bl-row~="lsel"]):is(bl-s, *):is(bl-s, *):not(#UI-language-block) {
     display: grid !important; grid-template-columns: minmax(0, 1fr); gap: 4px !important; padding-block: 8px !important; align-items: start !important;
   }
 }
@@ -14430,7 +14430,7 @@ body.salty:not(#salty-none) #WorldInfo .world_entry_edit > .flex-container.flexG
   body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] { grid-template-columns:minmax(0,1fr); }
   body.salty:not(#salty-none) #WorldInfo .world_entry_edit > .flex-container.flexGap10 > div { flex-basis:100%!important; }
 }
-body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) { display:flex!important; flex-wrap:nowrap; gap:8px; }
+body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control[data-bl-row~="logic"]:is(bl-s, *) { display:flex!important; flex-wrap:nowrap; gap:8px; }
 body.salty:not(#salty-none) #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control > small:has(+ select[name="entryLogicType"]) { width:auto!important; flex:1 1 auto; padding:0!important; }
 body.salty:not(#salty-none) #WorldInfo .world_entry_edit select[name="entryLogicType"] { flex:0 1 auto!important; max-width:60%!important; }
 body.salty:not(#salty-none) #WorldInfo .world_entry .WIEntryTitleAndStatus { flex-wrap:nowrap!important; }
@@ -17555,7 +17555,7 @@ body.salty #regex_container .regex-script-label > .flex-container { flex-shrink:
 body.salty #regex_container .regex-script-label > .flex-container > label.checkbox { margin: 0 !important; }
 body.salty #regex_container .regex-script-label .menu_button,
 body.salty #regex_container #regex_presets_block .menu_button { width: 28px !important; min-width: 28px !important; height: 32px !important; min-height: 32px !important; padding: 0 !important; margin: 0 !important; display: inline-flex; align-items: center; justify-content: center; }
-body.salty #rm_extensions_block #regex_presets_block .flex-container:has(> #regex_presets) { justify-content: flex-end;  }
+body.salty #rm_extensions_block #regex_presets_block .flex-container:where([data-bl-row~="rxp"]):is(#bl-s, *) { justify-content: flex-end;  }
 body.salty #rm_extensions_block #regex_presets { width: 100%; margin: 0 0 4px !important;  }
 body.salty #regex_container :where(.delete_regex):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 body.salty #regex_container #regex_preset_delete:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
@@ -17572,12 +17572,12 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] {
   }
   body.salty #user-settings-block :is([name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > :where(h4):is(.bl-s, *),
 body.salty #user-settings-block :is([name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > .inline-drawer,
-body.salty #user-settings-block :is([name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > :where(div:not(:has(> select))):is(.bl-s, *) { grid-column: 1 / -1; }
-  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) {
+body.salty #user-settings-block :is([name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > :where(div:not(:where([data-bl-row~="sel"]):is(bl-s, *))):is(.bl-s, *) { grid-column: 1 / -1; }
+  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:where([data-bl-row~="sel"]):is(bl-s, *) {
     flex-direction: column; align-items: stretch !important; gap: 4px !important; min-width: 0; padding-block: 4px !important;
   }
   body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) { padding-block: 6px !important; row-gap: 4px !important; }
-  body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) { min-height: 0 !important; padding-block: 2px !important; gap: 4px !important; }
+  body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:where([data-bl-row~="sel"]):is(bl-s, *) { min-height: 0 !important; padding-block: 2px !important; gap: 4px !important; }
   body.salty #user-settings-block :is([name="themeToggles"], [name="CharacterHandlingToggles"], [name="MiscellaneousToggles"], [name="ChatMessageHandlingToggles"]) > label.checkbox_label {
     width: 100%; min-width: 0; min-height: 38px; margin: 0 !important; padding: 4px 0 !important; gap: 8px !important;
   }
@@ -17593,8 +17593,8 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-
   }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :where(h4):is(.bl-s, *),
 body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .inline-drawer,
-body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :where(div:not(:has(> select))):is(.bl-s, *) { grid-column: 1 / -1; }
-  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) { min-width: 0; gap: 8px; }
+body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :where(div:not(:where([data-bl-row~="sel"]):is(bl-s, *))):is(.bl-s, *) { grid-column: 1 / -1; }
+  body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) { min-width: 0; gap: 8px; }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > label.checkbox_label,
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label { min-width: 0; }
 }
@@ -17604,7 +17604,7 @@ body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > :where(div
   }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label > span,
 body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > .checkbox-container > label.checkbox_label > small { font-size: var(--bl-fs-body) !important; line-height: 1.35; overflow-wrap: anywhere; }
-  body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) {
+  body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) {
     flex-flow: column nowrap !important; align-items: stretch !important; justify-content: center !important; gap: 1px !important; min-height: 38px; padding-block: 2px !important;
   }
   body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div > small:first-child > span { font-size: var(--bl-fs-body) !important; font-weight: 400 !important; }
@@ -17614,7 +17614,7 @@ body.salty #WorldInfo #wiSliders > .flex-container { flex: none !important; widt
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) { grid-template-columns: minmax(0, 1fr) auto;  }
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider { grid-area: 2 / 1 !important; width: 100%; min-width: 0; }
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input { grid-area: 2 / 2 !important; min-width: 0 !important; font-size: var(--bl-fs-ctl);  }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) { grid-column: 1 / -1; }
+body.salty #WorldInfo #wiSliders > .flex-container:where([data-bl-row~="wics"]):is(#bl-s, *) { grid-column: 1 / -1; }
 body.salty #WorldInfo #wiCheckboxes { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px !important; }
 body.salty #WorldInfo #wiCheckboxes label.checkbox_label { min-width: 0; }
 @container bl-wi-global (max-width: 18em) {
@@ -17628,26 +17628,26 @@ body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="rang
 body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-title { grid-column: 1 / -1 !important; grid-row: 1; min-height: 0; font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
 body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-range { grid-column: 1 !important; grid-row: 2 !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter { grid-column: 2 !important; grid-row: 2 !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) { grid-column: auto; grid-template-columns: minmax(0, 1fr) auto; gap: var(--bl-param-row-gap) var(--bl-param-col-gap); padding: var(--bl-param-pad) !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title { grid-column: 1 / -1 !important; grid-row: 1; min-height: 0; font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .toggle-description { display: none; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p { grid-column: 1 / -1 !important; grid-row: 2; width: 100% !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > .wide100p { grid-column: 2 !important; width: var(--bl-num-w) !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > #bl-response-range { grid-column: 1 !important; grid-row: 2; align-self: center; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) { grid-column: auto; display: flex; flex-direction: column; justify-content: center; min-height: 100%; padding: var(--bl-param-pad) !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > .toggle-description { display: none; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label { width: 100%; min-width: 0; min-height: 0; margin: 0 !important; padding: 0 !important; gap: 6px !important; justify-content: space-between; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"] { flex: none; width: 36px !important; height: 20px !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"]::before { width: 14px !important; height: 14px !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > input[type="checkbox"]:checked::before { transform: translateX(16px) !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) { grid-column: auto; grid-template-columns: minmax(0, 1fr) auto; gap: var(--bl-param-row-gap) var(--bl-param-col-gap); padding: var(--bl-param-pad) !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .range-block-title { grid-column: 1 / -1 !important; grid-row: 1; min-height: 0; font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .toggle-description { display: none; }
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .wide100p { grid-column: 1 / -1 !important; grid-row: 2; width: 100% !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="resp"]):is(#bl-s, *) > .wide100p { grid-column: 2 !important; width: var(--bl-num-w) !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="resp"]):is(#bl-s, *) > #bl-response-range { grid-column: 1 !important; grid-row: 2; align-self: center; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) { grid-column: auto; display: flex; flex-direction: column; justify-content: center; min-height: 100%; padding: var(--bl-param-pad) !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) > .toggle-description { display: none; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) > label.checkbox_label { width: 100%; min-width: 0; min-height: 0; margin: 0 !important; padding: 0 !important; gap: 6px !important; justify-content: space-between; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) > label.checkbox_label > input[type="checkbox"] { flex: none; width: 36px !important; height: 20px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) > label.checkbox_label > input[type="checkbox"]::before { width: 14px !important; height: 14px !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) > label.checkbox_label > input[type="checkbox"]:checked::before { transform: translateX(16px) !important; }
 body.salty #left-nav-panel #range_block_openai > * { order: 50; }
 body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) { order: 10; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#oai_max_context_unlocked) { order: 1; grid-column: 1; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#stream_toggle) { order: 2; grid-column: 2; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#openai_max_context) { order: 3; grid-column: 1; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#openai_max_tokens) { order: 4; grid-column: 2; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#n_openai) { order: 20; grid-column: 1; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#seed_openai) { order: 21; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="oai-ctx-unl"]):is(#bl-s, *) { order: 1; grid-column: 1; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="stream"]):is(#bl-s, *) { order: 2; grid-column: 2; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="oai-ctx"]):is(#bl-s, *) { order: 3; grid-column: 1; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="oai-tok"]):is(#bl-s, *) { order: 4; grid-column: 2; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="n-openai"]):is(#bl-s, *) { order: 20; grid-column: 1; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="seed"]):is(#bl-s, *) { order: 21; }
 /* css/27-compact.css */
 @media (max-width: 1000px) {
   body.salty { --bl-sbw: 0px; }
@@ -17800,8 +17800,8 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list li.complet
   opacity: 1;
 }
 body.salty #rm_api_block #openai_api:not([style*="display: none"]):not([style*="display:none"]),
-body.salty #rm_api_block #openai_api form:has(> h4):not(.flex-container):not([style*="display: none"]):not([style*="display:none"]),
-body.salty #rm_api_block #openai_api div:has(> h4):not(.flex-container):not([style*="display: none"]):not([style*="display:none"]) {
+body.salty #rm_api_block #openai_api form:where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container):not([style*="display: none"]):not([style*="display:none"]),
+body.salty #rm_api_block #openai_api div:where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container):not([style*="display: none"]):not([style*="display:none"]) {
   display: grid !important;
   grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
   gap: 10px 12px;
@@ -17816,10 +17816,10 @@ body.salty #rm_api_block #openai_api > h4 {
 body.salty #rm_api_block #openai_api > :where(select):is(.bl-s, *):is(.bl-s, *),
 body.salty #rm_api_block #openai_api > :where(input.text_pole):is(.bl-s, *):is(.bl-s, *),
 body.salty #rm_api_block #openai_api > .flex-container:has(> .text_pole),
-body.salty #rm_api_block #openai_api > :where(.flex-container:has(> select)):is(.bl-s, *):is(.bl-s, *) {
+body.salty #rm_api_block #openai_api > :where(.flex-container:where([data-bl-row~="sel"]):is(bl-s, *)):is(.bl-s, *):is(.bl-s, *) {
   grid-column: 2;
 }
-body.salty #rm_api_block #openai_api > .flex-container:has(> .api_button),
+body.salty #rm_api_block #openai_api > .flex-container[data-bl-row~="api"],
 body.salty #rm_api_block #openai_api > .online_status:is(.bl-s, *) {
   grid-column: 1 / -1;
 }
@@ -18067,10 +18067,10 @@ body.salty #rm_api_block:not(#salty-none) > #title_api { grid-column: 1; grid-ro
 body.salty #rm_api_block:not(#salty-none) > .flex-container.flexFlowColumn > #main-API-selector-block { grid-column: 2; grid-row: 1; margin: 0 !important; }
 body.salty #rm_api_block:not(#salty-none) > .flex-container.flexFlowColumn > #main-API-selector-block > select { width: 100%; margin: 0 !important; }
 body.salty #rm_api_block:not(#salty-none) > .flex-container.flexFlowColumn > #openai_api { margin-top: 8px; }
-body.salty #rm_api_block #openai_api > .flex-container:has(> .api_button) { margin-top: 6px !important; }
+body.salty #rm_api_block #openai_api > .flex-container[data-bl-row~="api"] { margin-top: 6px !important; }
 body.salty #rm_api_block #openai_api > .online_status { margin-top: 2px !important; }
 body.salty #rm_extensions_block .extensions_block > hr.wide100p:has(+ .flex-container #extensions_status),
-body.salty #rm_extensions_block .extensions_block > .flex-container:has(> h4 > [data-i18n="(DEPRECATED)"]):is(#bl-s, *),
+body.salty #rm_extensions_block .extensions_block > .flex-container[data-bl-row~="h4dep"]:is(bl-s, *):is(#bl-s, *),
 body.salty #rm_extensions_block .extensions_block > .flex-container:has(#extensions_status):is(.bl-s, *):is(bl-s, *),
 body.salty #rm_extensions_block .extensions_block > .flex-container:has(> #extensions_url):is(.bl-s, *):is(bl-s, *) {
   display: none !important;
@@ -18079,13 +18079,13 @@ body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar:where(:not([data-
 background:var(--salty-tint-12, var(--bl-card));
 box-shadow:var(--bl-e2);
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) {
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader:is(.bl-s, *),
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader + .flex-container) {
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > .standoutHeader:is(.bl-s, *),
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > :is(.standoutHeader + .flex-container) {
   display: flex !important;
   flex-wrap: nowrap !important;
   align-items: center;
@@ -18102,15 +18102,15 @@ body.salty #left-nav-panel #openai_api-presets > div:is(.bl-s, *) > .standoutHea
   width: auto !important;
   margin: 0 !important;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container {
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container {
   display: flex !important;
   flex: none;
   flex-wrap: nowrap !important;
   gap: 2px !important;
   margin: 0 !important;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container > .menu_button:is(bl-s, *),
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container > label.menu_button {
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container > .menu_button:is(bl-s, *),
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container > label.menu_button {
   flex: none;
   justify-content: center;
   width: 34px;
@@ -18132,7 +18132,7 @@ body.salty #qr--settings .qr--content > .qr--actions { grid-area: 3 / 1 / 4 / -1
 body.salty #regex_container .regex-script-label { border: 0; }
 @media (max-width: 1000px) {
   body.salty #user-settings-block [name="AvatarAndChatDisplay"] { align-items: stretch !important; }
-  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) { justify-content: space-between !important; }
+  body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:where([data-bl-row~="sel"]):is(bl-s, *) { justify-content: space-between !important; }
 }
 body.salty #PersonaManagement #persona_controls:has(> .bl-persona-title-row) { margin-top: 4px !important; }
 body.salty #PersonaManagement #persona_controls > .bl-persona-title-row {
@@ -19527,12 +19527,12 @@ body.salty .salty-preview.bl-weather-pv-on > .mes {
 }
 /* css/33-panel-columns.css */
 @media (max-width: 1000px) {
-  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) {
+  .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 14px;
   }
-  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider header {
+  .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider header {
     gap: 6px;
   }
 }
@@ -19619,19 +19619,19 @@ html body .salty-panel.bl-editor .salty-sec .salty-group.bl-qr-controls > .salty
   .salty-panel.bl-editor .bl-mespins { grid-template-columns:repeat(4,minmax(0,1fr)); }
 }
 @container bl-controls (width < 22em) {
-  html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) { display:block; }
+  html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) { display:block; }
 }
-html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider {
+html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider {
   display:flex; flex-direction:column; align-self:stretch; min-width:0;
 }
-html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider > header {
+html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider > header {
   display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; flex:1; gap:6px 10px;
 }
-html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider > header > .salty-num {
+html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider > header > .salty-num {
   align-self:end; justify-self:end;
 }
 @container bl-controls (22em <= width < 44em) {
-  html body .salty-panel.bl-editor .salty-sec .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider > header {
+  html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider > header {
     grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(min-content,1fr) auto;
   }
 }
@@ -22925,7 +22925,7 @@ body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not
   grid-template-columns:repeat(auto-fit,minmax(min(100%,11em),1fr));
   gap:var(--bl-param-gap);
 }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#oai_max_context_unlocked,#stream_toggle,#openai_max_context,#openai_max_tokens,#n_openai) {
+body.salty #left-nav-panel #range_block_openai > .range-block:where(:is([data-bl-row~="oai-ctx-unl"], [data-bl-row~="stream"], [data-bl-row~="oai-ctx"], [data-bl-row~="oai-tok"], [data-bl-row~="n-openai"])):is(#bl-s, *) {
   grid-column:auto;
 }
 body.salty #left-nav-panel .range-block-title {
@@ -22933,7 +22933,7 @@ body.salty #left-nav-panel .range-block-title {
   white-space:normal;
   overflow-wrap:anywhere;
 }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > .wide100p {
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="resp"]):is(#bl-s, *) > .wide100p {
   width:var(--bl-num-w)!important;
   max-width:100%;
 }
@@ -23007,7 +23007,7 @@ body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager
     justify-self:start;
     padding-left:var(--pm-icon);
   }
-  body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > span:has(> .prompt_manager_prompt_controls) {
+  body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > span[data-bl-row~="pmc"] {
     grid-column:2;
     grid-row:2;
   }
@@ -23038,7 +23038,7 @@ body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager
       justify-self:start;
       padding-left:var(--pm-icon);
     }
-    body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > span:has(> .prompt_manager_prompt_controls) {
+    body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > span[data-bl-row~="pmc"] {
       grid-column:2;
       grid-row:2;
     }
@@ -23185,15 +23185,15 @@ body.salty #AdvancedFormatting #SystemPromptColumn {
   flex:1 1 18em!important;
   min-width:0!important;
 }
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) {
+body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) {
   gap:8px 10px!important;
 }
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > .flex-container {
+body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) > .flex-container {
   flex-wrap:wrap;
   max-width:100%;
   gap:8px 10px!important;
 }
-body.salty #AdvancedFormatting > .spaceEvenly label.flex-container:has(> small + .editor_maximize) {
+body.salty #AdvancedFormatting > .spaceEvenly label.flex-container[data-bl-row~="smax"]:is(bl-s, *) {
   gap:8px 10px;
 }
 body.salty #AdvancedFormatting .editor_maximize {
@@ -23211,7 +23211,7 @@ body.salty #AdvancedFormatting details .flexAuto {
   flex:1 1 12em;
 }
 body.salty #AdvancedFormatting #context_story_string_position_block:is(#bl-s, *):is(bl-s, *),
-body.salty #AdvancedFormatting :is(#instructSettingsBlock div:has(> #instruct_names_behavior)) {
+body.salty #AdvancedFormatting :is(#instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) {
   flex-wrap:wrap!important;
   gap:8px 10px!important;
 }
@@ -25060,9 +25060,9 @@ html:not(#bl-pill-off) body.salty :is(#rm_extensions_block, dialog.popup) .inlin
 html:not(#bl-pill-off) body.salty #rm_extensions_block .inline-drawer-header > :is(b, strong) > [data-bl-credits] { display: inline-flex !important; align-items: center !important; padding: 0 !important; }
 html:not(#bl-pill-off) body.salty #rm_extensions_block .inline-drawer-header > :is(b, strong) > .bl-copyright { position: relative; width: 18px; min-width: 18px; min-height: 18px; padding: 0 !important; margin-inline-start: 0 !important; }
 html:not(#bl-pill-off) body.salty #rm_extensions_block .inline-drawer-header > :is(b, strong) > .bl-copyright::after { content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
-html:not(#bl-pill-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-html:not(#bl-pill-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) > .salty-ver { margin: 0 !important; }
-html:not(#bl-pill-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) > .bl-copyright { margin: 0 0 0 calc((18px - 30px) / 2) !important; padding-block: 0 !important; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] > .salty-ver { margin: 0 !important; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] > .bl-copyright { margin: 0 0 0 calc((18px - 30px) / 2) !important; padding-block: 0 !important; }
 html body.salty .llmt-settings .llmt-card-head { gap: 8px !important; }
 html body.salty .llmt-settings .llmt-card-head > i,
 html body.salty .llmt-settings .llmt-card-head > span,
@@ -25110,7 +25110,7 @@ html:not(#bl-pill-off):not(#bl-pill-off2) body.salty :is(.pa-hub .pa-hub-title, 
   html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools > :not([data-act="close"]) { order: 3; }
   html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools > :not([data-act="close"]):first-child { margin-left: auto !important; }
 }
-html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) > .salty-ver { margin: 0 !important; top: 0 !important; }
+html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] > .salty-ver { margin: 0 !important; top: 0 !important; }
 html:not(#bl-pill-off) body.salty dialog > header > b:has(> .ext-version, > i) { display: inline-flex; align-items: center; gap: 8px !important; min-width: 0; }
 html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b:has(> .ext-version, > i) > :where(i):is(.bl-s, *),
 html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b:has(> .ext-version, > i) > .ext-version,
@@ -26741,32 +26741,32 @@ html:not(#bl-num-off) body.salty :is(dialog.popup, .pa-hub, .rl-root, .sw-settin
 html:not(#bl-num-off) body.salty .sw-settings .sw-row:has(> .sw-num) { display: flex !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; }
 html:not(#bl-num-off) body.salty .sw-settings .sw-row > .sw-num { width: auto !important; margin-inline-start: auto !important; flex: 0 0 auto !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; }
 html:not(#bl-num-off) body.salty .sw-settings .sw-row > .sw-num > i { font-style: normal; color: var(--salty-muted); }
-html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label):has(> input[type="number"]),
-html:not(#bl-num-off) body.salty .rl-settings :is(.rl-budget-nums > label):has(> input[type="number"]),
-html:not(#bl-num-off) body.salty .rl-settings :is(.rl-budget-fields > label):has(> input[type="number"]),
-html:not(#bl-num-off) body.salty .rl-settings :is(.rl-budget-adv > label):has(> input[type="number"]),
-html:not(#bl-num-off) body.salty .rl-settings .rl-unit:is(bl-s, *):has(> input[type="number"]),
-html:not(#bl-num-off) body.salty .rl-settings :is(.rl-ledger label):has(> input[type="number"]),
-html:not(#bl-num-off) body.salty .rl-settings :is(.rl-cmp label):has(> input[type="number"]) { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 8px !important; width: 100% !important; }
-html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit, .rl-ledger label, .rl-cmp label):has(> input[type="number"]) > span:first-child { flex: 1 1 auto !important; min-width: 0 !important; grid-column: auto !important; }
-html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit, .rl-ledger label, .rl-cmp label):has(> input[type="number"]) > input[type="number"] { grid-column: auto !important; }
-html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit, .rl-ledger label, .rl-cmp label):has(> input[type="number"]) > span:not(:first-child) { flex: 0 0 auto !important; color: var(--salty-muted); }
+html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label)[data-bl-row~="numin"]:is(bl-s, *),
+html:not(#bl-num-off) body.salty .rl-settings :is(.rl-budget-nums > label)[data-bl-row~="numin"]:is(bl-s, *),
+html:not(#bl-num-off) body.salty .rl-settings :is(.rl-budget-fields > label)[data-bl-row~="numin"]:is(bl-s, *),
+html:not(#bl-num-off) body.salty .rl-settings :is(.rl-budget-adv > label)[data-bl-row~="numin"]:is(bl-s, *),
+html:not(#bl-num-off) body.salty .rl-settings .rl-unit:is(bl-s, *)[data-bl-row~="numin"]:is(bl-s, *),
+html:not(#bl-num-off) body.salty .rl-settings :is(.rl-ledger label)[data-bl-row~="numin"]:is(bl-s, *),
+html:not(#bl-num-off) body.salty .rl-settings :is(.rl-cmp label)[data-bl-row~="numin"]:is(bl-s, *) { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 8px !important; width: 100% !important; }
+html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit, .rl-ledger label, .rl-cmp label)[data-bl-row~="numin"]:is(bl-s, *) > span:first-child { flex: 1 1 auto !important; min-width: 0 !important; grid-column: auto !important; }
+html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit, .rl-ledger label, .rl-cmp label)[data-bl-row~="numin"]:is(bl-s, *) > input[type="number"] { grid-column: auto !important; }
+html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit, .rl-ledger label, .rl-cmp label)[data-bl-row~="numin"]:is(bl-s, *) > span:not(:first-child) { flex: 0 0 auto !important; color: var(--salty-muted); }
 html:not(#bl-num-off) body.salty #lv_settings .lv-grid > .lv-field > input[type="number"] { align-self: flex-start !important; }
-html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 8px !important; }
-html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) > .llmt-label { flex: 1 1 0 !important; width: auto !important; max-width: none !important; min-width: 0 !important; margin: 0 !important; }
-html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) > input[type="number"] { order: 1; }
-html:not(#bl-num-off) body.salty .llmt-settings .llmt-field:has(> input[type="number"]) > .llmt-desc { order: 2; flex: 1 1 100% !important; }
-html:not(#bl-num-off) body.salty #pt-panel .pt-field:has(> input[type="number"]) { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 8px !important; }
-html:not(#bl-num-off) body.salty #pt-panel .pt-field:has(> input[type="number"]) > label { flex: 1 1 auto !important; min-width: 0 !important; }
-html:not(#bl-num-off) body.salty #pt-panel .pt-field:has(> input[type="number"]) > .pt-bl-help { flex: 1 1 100% !important; margin: 0 !important; }
+html:not(#bl-num-off) body.salty .llmt-settings .llmt-field[data-bl-row~="numin"]:is(bl-s, *) { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 8px !important; }
+html:not(#bl-num-off) body.salty .llmt-settings .llmt-field[data-bl-row~="numin"]:is(bl-s, *) > .llmt-label { flex: 1 1 0 !important; width: auto !important; max-width: none !important; min-width: 0 !important; margin: 0 !important; }
+html:not(#bl-num-off) body.salty .llmt-settings .llmt-field[data-bl-row~="numin"]:is(bl-s, *) > input[type="number"] { order: 1; }
+html:not(#bl-num-off) body.salty .llmt-settings .llmt-field[data-bl-row~="numin"]:is(bl-s, *) > .llmt-desc { order: 2; flex: 1 1 100% !important; }
+html:not(#bl-num-off) body.salty #pt-panel .pt-field[data-bl-row~="numin"]:is(bl-s, *) { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 8px !important; }
+html:not(#bl-num-off) body.salty #pt-panel .pt-field[data-bl-row~="numin"]:is(bl-s, *) > label { flex: 1 1 auto !important; min-width: 0 !important; }
+html:not(#bl-num-off) body.salty #pt-panel .pt-field[data-bl-row~="numin"]:is(bl-s, *) > .pt-bl-help { flex: 1 1 100% !important; margin: 0 !important; }
 html:not(#bl-num-off) body.salty #regex-link-settings .rlk-keep { grid-template-columns: auto minmax(0, 1fr) auto !important; }
 html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field { background: var(--bl-field-face, var(--bl-control)) !important; border: 0 !important; box-shadow: inset 0 0 0 1px var(--salty-line) !important; }
 html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field:focus-within { box-shadow: inset 0 0 0 1px var(--salty-accent) !important; }
 html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field input:is([type="search"], [type="text"]) { background: transparent !important; box-shadow: none !important; border: 0 !important; outline: none !important; }
 html:not(#bl-i2-off) body.salty { --bl-field-face: color-mix(in srgb, var(--bl-control) 50%, var(--bl-card, var(--salty-surface))); }
-html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field:has(> input[type="number"]) { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; }
-html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field:has(> input[type="number"]) > span { flex: 1 1 auto; min-width: 0; }
-html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field:has(> input[type="number"]) > input[type="number"] { flex: 0 0 auto; margin: 0 !important; }
+html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field[data-bl-row~="numin"]:is(bl-s, *) { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; }
+html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field[data-bl-row~="numin"]:is(bl-s, *) > span { flex: 1 1 auto; min-width: 0; }
+html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field[data-bl-row~="numin"]:is(bl-s, *) > input[type="number"] { flex: 0 0 auto; margin: 0 !important; }
 /* css/96-param-stack.css */
 body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, max(8.5em, 40%)), 1fr));
@@ -26847,13 +26847,13 @@ body.salty :is(.eh-segmented, .cg-segmented) > button {
   min-width: 0 !important;
 }
 body.salty #user-settings-block#user-settings-block #UI-language-block:not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
-body.salty #user-settings-block#user-settings-block :where(.alignItemsFlexEnd > label:has(select)):is(#bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty #user-settings-block#user-settings-block :where(.alignItemsFlexEnd > label:where([data-bl-row~="dsel"]):is(bl-s, *)):is(#bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
 body.salty #user-settings-block#user-settings-block :where([name="CharacterHandlingToggles"] > .alignitemscenter):is(#bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
 body.salty #user-settings-block#user-settings-block :where([name="ChatMessageHandlingToggles"] > .alignitemscenter):is(#bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
 body.salty #user-settings-block#user-settings-block :where([name="AvatarAndChatDisplay"] > .flex-container):is(#bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
 body.salty #AdvancedFormatting #context_story_string_position_block#context_story_string_position_block:is(#bl-s, *):is(bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
-body.salty #AdvancedFormatting :is(#instructSettingsBlock#instructSettingsBlock div:has(> #instruct_names_behavior)):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
-body.salty #left-nav-panel .oneline-dropdown:has(> label + select):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+body.salty #AdvancedFormatting :is(#instructSettingsBlock#instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty #left-nav-panel .oneline-dropdown:where([data-bl-row~="lsel2"]):is(bl-s, *):is(bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   display: flex !important;
   flex-direction: column !important;
   flex-wrap: nowrap !important;
@@ -26863,7 +26863,7 @@ body.salty #left-nav-panel .oneline-dropdown:has(> label + select):not([hidden])
 body.salty #AdvancedFormatting #context_story_string_position_block#context_story_string_position_block { justify-content: flex-start !important; height: auto !important; min-height: 0 !important; }
 body.salty:not(#bl-param-off) #AdvancedFormatting #context_story_string_position_block#context_story_string_position_block > select { flex: 0 0 auto !important; height: auto !important; }
 body.salty #user-settings-block :is(#UI-language-block, .alignItemsFlexEnd > label, [name="CharacterHandlingToggles"] > .alignitemscenter, [name="ChatMessageHandlingToggles"] > .alignitemscenter, [name="AvatarAndChatDisplay"] > .flex-container) select:is(.bl-s, *),
-body.salty #user-settings-block :is(#UI-language-block, .alignItemsFlexEnd > label, [name="CharacterHandlingToggles"] > .alignitemscenter, [name="ChatMessageHandlingToggles"] > .alignitemscenter, [name="AvatarAndChatDisplay"] > .flex-container) .flex-container:has(> select),
+body.salty #user-settings-block :is(#UI-language-block, .alignItemsFlexEnd > label, [name="CharacterHandlingToggles"] > .alignitemscenter, [name="ChatMessageHandlingToggles"] > .alignitemscenter, [name="AvatarAndChatDisplay"] > .flex-container) .flex-container:where([data-bl-row~="sel"]):is(bl-s, *),
 body.salty #AdvancedFormatting #context_story_string_position,
 body.salty #AdvancedFormatting #instruct_names_behavior,
 body.salty #left-nav-panel .oneline-dropdown > select,
@@ -26872,16 +26872,16 @@ body.salty #left-nav-panel #openai_reasoning_effort {
   max-width: none !important;
   flex: 1 1 auto !important;
 }
-body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> label + select) {
+body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="lsel2"]):is(bl-s, *):is(bl-s, *) {
   flex-direction: column !important;
   flex-wrap: nowrap !important;
   align-items: stretch !important;
 }
 body.salty #user-settings-block#user-settings-block #UI-language-block { flex: 1 1 100% !important; width: 100% !important; }
 body.salty #rm_api_block #openai_api h4 { word-break: keep-all; overflow-wrap: break-word; }
-body.salty .regex_editor label.checkbox:has(> select[name="substitute_regex"]) { flex-direction: column !important; align-items: stretch !important; width: 100% !important; align-self: stretch !important; }
+body.salty .regex_editor label.checkbox[data-bl-row~="subsel"]:is(bl-s, *) { flex-direction: column !important; align-items: stretch !important; width: 100% !important; align-self: stretch !important; }
 body.salty .regex_editor select[name="substitute_regex"] { width: 100% !important; max-width: none !important; }
-body.salty #WorldInfo#WorldInfo .world_entry_form_control:has(> select[name="entryLogicType"]):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+body.salty #WorldInfo#WorldInfo .world_entry_form_control[data-bl-row~="logic"]:is(bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
@@ -26903,14 +26903,14 @@ body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter,
 body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) :is(.range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
 body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-range,
 body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) :is(.range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title) {
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="title"] {
   grid-row: span 2;
   grid-template-rows: subgrid;
   row-gap: var(--bl-param-row-gap);
   align-items: center;
 }
 @supports not (grid-template-rows: subgrid) {
-  body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title) { grid-row: auto; align-self: baseline; }
+  body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="title"] { grid-row: auto; align-self: baseline; }
 }
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
 body.salty #user-settings-block [name="FontBlurChatWidthBlock"] > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
@@ -26925,24 +26925,24 @@ body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="rang
 body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) :is(.range-block-counter > *) { grid-column: 2 !important; grid-row: 1 !important; }
 body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-range,
 body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) :is(.range-block-range > *) { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: auto !important; min-width: var(--bl-num-w); }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child):not(:has(> #bl-response-range)) > .wide100p { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: var(--bl-num-w) !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > #bl-response-range { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: auto !important; min-width: var(--bl-num-w); }
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):not(:where([data-bl-row~="resp"]):is(#bl-s, *)) > .wide100p { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="resp"]):is(#bl-s, *) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: var(--bl-num-w) !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="resp"]):is(#bl-s, *) > #bl-response-range { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
+body.salty #left-nav-panel .range-block[data-bl-row~="num"]:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
   column-gap: var(--bl-param-col-gap) !important;
   row-gap: var(--bl-param-row-gap) !important;
 }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: auto !important; }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child) > input[type="range"],
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child) > .toggle-description:is(bl-s, *) { grid-column: 1 / -1 !important; }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child) > input[type="range"] { grid-row: 2 !important; width: 100% !important; }
-body.salty .flex-container:has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
-body.salty .parameterbox:has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+body.salty #left-nav-panel .range-block[data-bl-row~="num"]:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .range-block-title { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
+body.salty #left-nav-panel .range-block[data-bl-row~="num"]:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .wide100p { grid-column: 2 !important; grid-row: 1 !important; width: auto !important; }
+body.salty #left-nav-panel .range-block[data-bl-row~="num"]:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > input[type="range"],
+body.salty #left-nav-panel .range-block[data-bl-row~="num"]:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .toggle-description:is(bl-s, *) { grid-column: 1 / -1 !important; }
+body.salty #left-nav-panel .range-block[data-bl-row~="num"]:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > input[type="range"] { grid-row: 2 !important; width: 100% !important; }
+body.salty .flex-container[data-bl-row~="sneo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+body.salty .parameterbox[data-bl-row~="sneo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
   column-gap: var(--bl-param-col-gap) !important;
@@ -27030,7 +27030,7 @@ body.salty .jj-card .jj-row > .jj-place > .jj-stepper:not([hidden]) { display: f
 body.salty .jj-card .jj-row > .jj-place > .jj-stepper > input { flex: 1 1 auto !important; width: auto !important; }
 body.salty .jj-card .jj-row > .jj-color-row { width: 100% !important; }
 body.salty .jj-card .jj-row > .jj-color-row > input { flex: 1 1 auto !important; width: auto !important; min-width: 0 !important; }
-:is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) :where(.bl-fruit-qr-display > label:has(select)):is(.bl-s, *):is(.bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) :where(.bl-fruit-qr-display > label:where([data-bl-row~="dsel"]):is(bl-s, *)):is(.bl-s, *):is(.bl-s, *):not([hidden]):not([style*="display: none"]):not([style*="display:none"]),
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) .fh-row.bl-fruit-qr-name:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
   display: flex !important;
   flex-direction: column !important;
@@ -27055,7 +27055,7 @@ html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandl
   margin: 0 !important;
   padding: 0 !important;
 }
-html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div:has(> .neo-range-slider) {
+html body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > h4 + div.flex-container > div[data-bl-row~="slider"] {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) !important;
   row-gap: var(--bl-param-row-gap) !important;
@@ -27377,14 +27377,14 @@ html:not(#bl-tab-scroll-off) [data-bl-fade="left"] { -webkit-mask-image: linear-
 html:not(#bl-tab-scroll-off) [data-bl-fade="both"] { -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--bl-fade), #000 calc(100% - var(--bl-fade)), transparent); mask-image: linear-gradient(to right, transparent, #000 var(--bl-fade), #000 calc(100% - var(--bl-fade)), transparent); }
 /* css/99-lazy-panel.css */
 #salty-lazy-panel-start {}
-body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> label + select) > select { width: 100% !important; max-width: none !important; }
-body.salty #WorldInfo#WorldInfo .world_entry_form_control:has(> select[name="entryLogicType"]) > small { justify-content: flex-start !important; text-align: left !important; height: auto !important; }
-body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > small:first-child,
-body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > label:first-child { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
-body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > .neo-range-input { grid-column: 2 !important; grid-row: 1 !important; }
-body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > .neo-range-slider { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
-body.salty :is(.flex-container, .parameterbox):has(> :is(small, label):first-child + .neo-range-slider + .neo-range-input) > :not(:is(small, label):first-child, .neo-range-slider, .neo-range-input) { grid-column: 1 / -1 !important; }
-body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> .neo-range-slider) > small { grid-column: 1 !important; grid-row: 1 !important; width: auto !important; }
+body.salty #user-settings-block#user-settings-block [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="lsel2"]):is(bl-s, *):is(bl-s, *) > select { width: 100% !important; max-width: none !important; }
+body.salty #WorldInfo#WorldInfo .world_entry_form_control[data-bl-row~="logic"]:is(bl-s, *) > small { justify-content: flex-start !important; text-align: left !important; height: auto !important; }
+body.salty :is(.flex-container, .parameterbox)[data-bl-row~="sneo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child,
+body.salty :is(.flex-container, .parameterbox)[data-bl-row~="sneo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > label:first-child { grid-column: 1 !important; grid-row: 1 !important; min-width: 0; }
+body.salty :is(.flex-container, .parameterbox)[data-bl-row~="sneo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input { grid-column: 2 !important; grid-row: 1 !important; }
+body.salty :is(.flex-container, .parameterbox)[data-bl-row~="sneo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider { grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; }
+body.salty :is(.flex-container, .parameterbox)[data-bl-row~="sneo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > :not(:is(small, label):first-child, .neo-range-slider, .neo-range-input) { grid-column: 1 / -1 !important; }
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container[data-bl-row~="slider"] > small { grid-column: 1 !important; grid-row: 1 !important; width: auto !important; }
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { grid-column: 1 !important; grid-row: 1 !important; }
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-input { grid-area: 1 / 2 !important; }
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .neo-range-slider { grid-area: 2 / 1 / 3 / -1 !important; }
@@ -27415,14 +27415,14 @@ body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s,
   font-weight: 500;
   line-height: 1.35;
 }
-body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) > small {
+body.salty #WorldInfo #wiSliders > .flex-container:where([data-bl-row~="wics"]):is(#bl-s, *) > small {
   flex: 1 1 10em;
   min-width: 0;
   color: var(--salty-text) !important;
   font-size: var(--bl-fs-body) !important;
   font-weight: 500;
 }
-body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) > small {
+body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control[data-bl-row~="logic"]:is(bl-s, *) > small {
   flex: 1 1 auto;
   min-width: 0;
   padding: 0 2px;
@@ -27435,7 +27435,7 @@ body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_
 body.salty #right-nav-panel #right-nav-panel-tabs:has(> #result_info[style*="none"]) #rm_button_selected_ch h2 {
   color: var(--salty-muted) !important;
 }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input {
+body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .wide100p > input {
   width: 100% !important;
   height: auto !important;
   min-height: var(--bl-h-ctl) !important;
@@ -27464,12 +27464,12 @@ body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_ent
   text-align: left;
   color: var(--salty-muted);
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > span,
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > small,
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label,
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label small,
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) small,
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) label {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > span,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > small,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > label,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > label small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) label {
 flex:0 1 auto;
 min-width:0;
 margin:0 !important;
@@ -27478,23 +27478,23 @@ font-size:var(--bl-fs-body) !important;
 font-weight:500 !important;
 line-height:1.35;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > span:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) label:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > span:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > label:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > label small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) label:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-text) !important;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > span,
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > small,
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label,
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label small,
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) small,
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) label {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > span,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > small,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > label,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > label small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) label {
 opacity:1 !important;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) select, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) select {
 flex:1 1 0% !important;
 width:auto !important;
 min-width:0 !important;
@@ -27504,34 +27504,34 @@ min-height:var(--bl-h-icon) !important;
 margin:0 !important;
 padding:0 26px 0 8px !important;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) select:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background-color:transparent !important;
 background-position:right 6px center !important;
 box-shadow:none !important;
 color:var(--salty-muted) !important;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) select, body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) select {
 font-size:var(--bl-fs-body);
 text-align:right;
 text-align-last:right;
 text-overflow:ellipsis;
 field-sizing:content;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) select:focus-visible,
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select:focus-visible {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) select:focus-visible,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) select:focus-visible {
   box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="lneo"]:is(.bl-s, *):is(bl-s, *) > label {
   grid-column: 1;
   grid-row: 1;
 }
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label small {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="lneo"]:is(.bl-s, *):is(bl-s, *) > label small {
 padding:0 !important;
 font-size:var(--bl-fs-body) !important;
 font-weight:500 !important;
 }
-body.salty #user-settings-block-content .flex-container:has(> label + .neo-range-slider + .neo-range-input) > label small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="lneo"]:is(.bl-s, *):is(bl-s, *) > label small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-text) !important;
 }
 body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child {
@@ -27567,7 +27567,7 @@ body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2)
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header strong {
   font-weight: 600;
 }
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > select {
+body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) > select {
   flex: 1 1 180px !important;
   min-width: 0;
   margin: 0 !important;
@@ -27587,11 +27587,11 @@ font-weight:500;
 body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) > small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-text) !important;
 }
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > span,
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > small,
-body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:has(> select), :has(> label + .flex-container > select)) > label,
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) > small,
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) > label {
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > span,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > small,
+body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > label,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) > small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) > label {
   flex: 0 1 auto !important;
   max-width: 60%;
 }
@@ -27613,34 +27613,34 @@ body.salty #user-settings-block-content .flex-container:has(> #shadow_width) > s
 color:var(--salty-muted);
 }
 @media (max-width: 1000px) {
-body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container:has(> .neo-range-slider) > small { grid-column: 1 / -1; width: 100%; text-align: left; }
-body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) > span,
-body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) > label { width: 100%; min-width: 0; text-align: left; line-height: 1.4; }
-body.salty #user-settings-block #user-settings-block-content .flex-container:has(> :is(span, label) + select):not(#UI-language-block) > select { width: 100% !important; max-width: none !important; min-width: 0 !important; text-align: left !important; text-align-last: left !important; background-color: var(--bl-control) !important; border-radius: 8px !important; }
+body.salty #user-settings-block [name="FontBlurChatWidthBlock"] .flex-container[data-bl-row~="slider"] > small { grid-column: 1 / -1; width: 100%; text-align: left; }
+body.salty #user-settings-block #user-settings-block-content .flex-container:where([data-bl-row~="lsel"]):is(bl-s, *):is(bl-s, *):not(#UI-language-block) > span,
+body.salty #user-settings-block #user-settings-block-content .flex-container:where([data-bl-row~="lsel"]):is(bl-s, *):is(bl-s, *):not(#UI-language-block) > label { width: 100%; min-width: 0; text-align: left; line-height: 1.4; }
+body.salty #user-settings-block #user-settings-block-content .flex-container:where([data-bl-row~="lsel"]):is(bl-s, *):is(bl-s, *):not(#UI-language-block) > select { width: 100% !important; max-width: none !important; min-width: 0 !important; text-align: left !important; text-align-last: left !important; background-color: var(--bl-control) !important; border-radius: 8px !important; }
 }
 @media (max-width: 1000px) {
-body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > small,
-body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > span,
-body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > label {
+body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:where([data-bl-row~="sel"]):is(bl-s, *) > small,
+body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:where([data-bl-row~="sel"]):is(bl-s, *) > span,
+body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:where([data-bl-row~="sel"]):is(bl-s, *) > label {
     width: 100%; flex: none !important; min-width: 0; max-width: none; text-align: left; font-size: var(--bl-fs-body) !important;
   }
-body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:has(> select) > select { width: 100%; min-width: 0; max-width: none !important; flex: none !important; margin: 0; font-size: var(--bl-fs-body); }
-body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > small,
-body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > span,
-body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--bl-fs-body) !important; line-height: 1.3 !important; }
-body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:has(> select) > select { height: 30px !important; min-height: 30px !important; }
+body.salty #user-settings-block :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"]) > div:where([data-bl-row~="sel"]):is(bl-s, *) > select { width: 100%; min-width: 0; max-width: none !important; flex: none !important; margin: 0; font-size: var(--bl-fs-body); }
+body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:where([data-bl-row~="sel"]):is(bl-s, *) > small,
+body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:where([data-bl-row~="sel"]):is(bl-s, *) > span,
+body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:where([data-bl-row~="sel"]):is(bl-s, *) > label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--bl-fs-body) !important; line-height: 1.3 !important; }
+body.salty:not(#salty-none) #user-settings-block [name="AvatarAndChatDisplay"]:not(#salty-none) > div:where([data-bl-row~="sel"]):is(bl-s, *) > select { height: 30px !important; min-height: 30px !important; }
 }
 @media not all and (max-width: 1000px) {
-body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:has(> select) > select { min-width: 0; max-width: 60%; }
+body.salty #user-settings-block [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) > select { min-width: 0; max-width: 60%; }
 }
 @media (max-width: 1000px) {
-body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > span,
-body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > small,
-body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > label,
-body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) > label small {
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) > span,
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) > small,
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) > label,
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) > label small {
     max-width: none; font-size: var(--bl-fs-body) !important; font-weight: 400 !important; line-height: 1.35;
   }
-body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:has(> select) select {
+body.salty #user-settings-block #user-settings-block-content [name="ChatMessageHandlingToggles"] > div:where([data-bl-row~="sel"]):is(bl-s, *) select {
 flex:none !important;
 width:100% !important;
 height:auto !important;
@@ -27654,29 +27654,29 @@ border-radius:8px !important;
 }
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { grid-column: 1 / -1; grid-row: 1;  }
 body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="range"]:is(.bl-s, *) .range-block-counter input { width: var(--bl-num-w) !important; font-size: var(--bl-fs-ctl) !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input { font-size: var(--bl-fs-ctl) !important; }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> label.checkbox_label:first-child) > label.checkbox_label > span { font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > h4 {
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .wide100p > input { font-size: var(--bl-fs-ctl) !important; }
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="chk"]:is(.bl-s, *):is(bl-s, *) > label.checkbox_label > span { font-size: var(--bl-fs-body) !important; font-weight: 500; line-height: 1.3; }
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > h4 {
   grid-column: 1;
   padding: 0 !important;
   font-size: var(--bl-fs-sub) !important;
   line-height: 1.3;
 }
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > :where(select):is(.bl-s, *):is(.bl-s, *),
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > :where(input.text_pole):is(.bl-s, *):is(.bl-s, *),
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > .flex-container:has(> .text_pole),
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > :where(.flex-container:has(> select)):is(.bl-s, *):is(.bl-s, *) {
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > :where(select):is(.bl-s, *):is(.bl-s, *),
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > :where(input.text_pole):is(.bl-s, *):is(.bl-s, *),
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > .flex-container:has(> .text_pole),
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > :where(.flex-container:where([data-bl-row~="sel"]):is(bl-s, *)):is(.bl-s, *):is(.bl-s, *) {
   grid-column: 2;
 }
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4) > div:has(> small:only-child),
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4) > .neutral_warning:is(bl-s, *):is(bl-s, *) {
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *) > div:has(> small:only-child),
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *) > .neutral_warning:is(bl-s, *):is(bl-s, *) {
   display: none !important;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader > strong {
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > .standoutHeader > strong {
   padding-left: 2px;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > :not(.flex-container) :where(select):is(.bl-s, *),
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > .standoutHeader + .flex-container > :not(.flex-container) .select2-container {
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > .standoutHeader + .flex-container > :not(.flex-container) :where(select):is(.bl-s, *),
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > .standoutHeader + .flex-container > :not(.flex-container) .select2-container {
   width: 100% !important;
   max-width: 100%;
   min-width: 0;
@@ -27706,25 +27706,25 @@ body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="rang
   font-size:var(--bl-fs-ctl)!important;
   line-height:1.45;
 }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > .wide100p > input {
+body.salty #left-nav-panel #range_block_openai > .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .wide100p > input {
   height:auto!important;
   min-height:max(var(--bl-h-ctl),calc(1.45em + 8px))!important;
   font-size:var(--bl-fs-ctl)!important;
   line-height:1.45;
 }
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > select {
+body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) > select {
   flex:1 1 12em!important;
   max-width:100%;
 }
-body.salty #AdvancedFormatting > .spaceEvenly label.flex-container:has(> small + .editor_maximize) > small {
+body.salty #AdvancedFormatting > .spaceEvenly label.flex-container[data-bl-row~="smax"]:is(bl-s, *) > small {
   min-width:0;
   overflow-wrap:anywhere;
 }
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) > small,
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) > label {
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) > small,
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) > label {
   max-width:100%;
 }
-body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:has(> #instruct_names_behavior)) select {
+body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) select {
   flex:1 1 12em!important;
   height:auto!important;
   min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
@@ -27732,7 +27732,7 @@ body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instru
 body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > * {
   grid-column: 1 / -1;
 }
-body.salty #left-nav-panel .range-block:has(> .range-block-title + .wide100p > input[type="number"]:only-child, > .range-block-title + .toggle-description + .wide100p > input[type="number"]:only-child) > * {
+body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > * {
   grid-column: 1 / -1;
 }
 body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#InstructSettingsColumn, #SystemPromptColumn > h4, #SystemPromptBlock, [name="tokenizerSettingsBlock"])[data-cc-null] > * {
@@ -27742,14 +27742,14 @@ body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) >
   flex: 1 1 100% !important;
 }
 body.salty #rm_api_block #openai_api > *,
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container) > * {
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > * {
   grid-column: 1 / -1;
   min-width: 0;
   margin: 0 !important;
 }
 @media (max-width: 1000px) {
-  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > :not(.salty-slider),
-  .salty-panel .salty-group:has(> .salty-slider + .salty-slider) > .salty-slider:not(.salty-slider + *):not(:has(+ .salty-slider)) {
+  .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > :not(.salty-slider),
+  .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider:not(.salty-slider + *):not(:has(+ .salty-slider)) {
     grid-column: 1 / -1;
   }
 }

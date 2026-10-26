@@ -256,7 +256,7 @@ body.salty #WorldInfo #wiTopBlock > .range-block:has(> .inline-drawer > .inline-
 body.salty #WorldInfo #wiTopBlock > .range-block > .inline-drawer {
   display: contents;
 }
-body.salty #WorldInfo #wiTopBlock > .range-block:has(> .inline-drawer) > .range-block-title {
+body.salty #WorldInfo #wiTopBlock > .range-block[data-bl-row~="idr"] > .range-block-title {
   grid-area: 1 / 1;
   align-self: stretch;
   align-items: center;
@@ -282,7 +282,7 @@ body.salty #WorldInfo #wiTopBlock .inline-drawer-header {
 body.salty #WorldInfo #wiTopBlock .inline-drawer-header > b {
   display: none;
 }
-body.salty #WorldInfo #wiTopBlock > .range-block:has(> .inline-drawer) {
+body.salty #WorldInfo #wiTopBlock > .range-block[data-bl-row~="idr"] {
   padding-bottom: 0 !important;
 }
 body.salty #WorldInfo #wiTopBlock > .range-block > .inline-drawer > .inline-drawer-content {
@@ -322,7 +322,7 @@ body.salty #WorldInfo #wiSliders .neo-range-input {
   box-shadow: var(--bl-well-in) !important;
 }
 /* 삽입 전략: 이름 왼쪽 · 값 오른쪽 */
-body.salty #WorldInfo #wiSliders > .flex-container:has(> #world_info_character_strategy) {
+body.salty #WorldInfo #wiSliders > .flex-container:where([data-bl-row~="wics"]):is(#bl-s, *) {
   flex: 1 1 100% !important;
   flex-direction: row !important;
   flex-wrap: wrap !important;
@@ -888,7 +888,7 @@ body.salty #WorldInfo .select2-container--disabled .select2-selection__choice {
   column-gap: 0;
 }
 /* 논리 · 줄마다 덮어쓰기(스캔 깊이 · 대소문자 · 자동화 ID 등): 이름 왼쪽 · 값 오른쪽 46px 줄 */
-body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]),
+body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control[data-bl-row~="logic"]:is(bl-s, *),
 body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control {
   flex: 1 1 100% !important;
   flex-direction: row !important;
@@ -899,7 +899,7 @@ body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world
   min-height: var(--bl-h-row);
   min-width: 0;
 }
-body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control:has(> select[name="entryLogicType"]) {
+body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_entry_form_control[data-bl-row~="logic"]:is(bl-s, *) {
   margin-top: 4px;
 }
 body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] > .world_entry_form_control > small {

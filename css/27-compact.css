@@ -121,7 +121,7 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list li.complet
 /* (2.0.11) 폰 전용이던 것을 PC 에도 — 사용자: "모바일이랑 PC 랑 따로 가지 말고 같이" */
 /* 실리태번이 jQuery show() 로 인라인 display:block 을 박으므로 !important, 숨김(display:none)은 살림 — #range_block_openai 와 같은 함정 */
 body.salty #rm_api_block #openai_api:not([style*="display: none"]):not([style*="display:none"]),
-body.salty #rm_api_block #openai_api :is(form, div):has(> h4):not(.flex-container):not([style*="display: none"]):not([style*="display:none"]) {
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container):not([style*="display: none"]):not([style*="display:none"]) {
   display: grid !important;
   grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
   gap: 10px 12px; /* 2.0.15: 줄 사이 10 (6 은 숨 막힘 — 사용자) */
@@ -133,10 +133,10 @@ body.salty #rm_api_block #openai_api > h4 {
   font-size: var(--bl-fs-sub) !important;
   line-height: 1.3;
 }
-body.salty #rm_api_block #openai_api > :is(select, input.text_pole, .flex-container:has(> .text_pole), .flex-container:has(> select)) {
+body.salty #rm_api_block #openai_api > :is(select, input.text_pole, .flex-container:has(> .text_pole), .flex-container:where([data-bl-row~="sel"]):is(bl-s, *)) {
   grid-column: 2;
 }
-body.salty #rm_api_block #openai_api > :is(.flex-container:has(> .api_button), .online_status) {
+body.salty #rm_api_block #openai_api > :is(.flex-container[data-bl-row~="api"], .online_status) {
   grid-column: 1 / -1;
 }
 
@@ -387,7 +387,7 @@ body.salty #rm_api_block:not(#salty-none) > #title_api { grid-column: 1; grid-ro
 body.salty #rm_api_block:not(#salty-none) > .flex-container.flexFlowColumn > #main-API-selector-block { grid-column: 2; grid-row: 1; margin: 0 !important; }
 body.salty #rm_api_block:not(#salty-none) > .flex-container.flexFlowColumn > #main-API-selector-block > select { width: 100%; margin: 0 !important; }
 body.salty #rm_api_block:not(#salty-none) > .flex-container.flexFlowColumn > #openai_api { margin-top: 8px; }
-body.salty #rm_api_block #openai_api > .flex-container:has(> .api_button) { margin-top: 6px !important; }
+body.salty #rm_api_block #openai_api > .flex-container[data-bl-row~="api"] { margin-top: 6px !important; }
 body.salty #rm_api_block #openai_api > .online_status { margin-top: 2px !important; }
 
 
@@ -395,7 +395,7 @@ body.salty #rm_api_block #openai_api > .online_status { margin-top: 2px !importa
 /* 3.6.0: 가로줄 갈래가 :has( … :has( … )) 로 겹쳐 있어 브라우저가 그 갈래만 버리고 있었다(겹친 :has 는 무효) → 줄이 남아 있었음 */
 body.salty #rm_extensions_block .extensions_block > :is(
   hr.wide100p:has(+ .flex-container #extensions_status),
-  .flex-container:has(> h4 > [data-i18n="(DEPRECATED)"]),
+  .flex-container[data-bl-row~="h4dep"]:is(bl-s, *),
   .flex-container:has(#extensions_status),
   .flex-container:has(> #extensions_url)
 ) {
@@ -414,12 +414,12 @@ body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar {
    감싸거나(div) select2 처럼 옆에 다른 칸을 붙이면 그 칸은 자리가 없어, 단추 셋이 앞 칸부터 차고 고르기가 맨 끝 34px 칸에 끼어 밖으로
    튀어나갔다 (제보: "(저장)(이름 수정)(프리셋으로 저장)(프리셋 목록 튀어나감)"). → 두 줄을 각각 flex 줄로: 아이콘은 34px · 간격 2px 로
    오른쪽에 붙고, 나머지(제목 · 고르기 · 무엇이 끼든)는 남은 폭. 두 줄 모두 오른쪽 끝이 같아 아이콘 열이 저절로 맞는다 */
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) {
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) {
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > :is(.standoutHeader, .standoutHeader + .flex-container) {
   display: flex !important;
   flex-wrap: nowrap !important;
   align-items: center;
@@ -439,14 +439,14 @@ body.salty #left-nav-panel #openai_api-presets > div:is(.bl-s, *) > .standoutHea
   margin: 0 !important;
 }
 /* 확장이 감싼 고르기 · select2 칸도 칸 폭을 넘지 않게 */
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container {
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container {
   display: flex !important;
   flex: none;
   flex-wrap: nowrap !important;
   gap: 2px !important;
   margin: 0 !important;
 }
-body.salty #left-nav-panel #openai_api-presets > div:has(> .standoutHeader) > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container > :is(.menu_button, label.menu_button) {
+body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > :is(.standoutHeader, .standoutHeader + .flex-container) > .flex-container > :is(.menu_button, label.menu_button) {
   flex: none;
   justify-content: center;
   width: 34px;

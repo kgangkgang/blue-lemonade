@@ -61,9 +61,9 @@ html:not(#bl-pill-off) body.salty #rm_extensions_block .inline-drawer-header > :
 html:not(#bl-pill-off) body.salty #rm_extensions_block .inline-drawer-header > :is(b, strong) > .bl-copyright { position: relative; width: 18px; min-width: 18px; min-height: 18px; padding: 0 !important; margin-inline-start: 0 !important; }
 html:not(#bl-pill-off) body.salty #rm_extensions_block .inline-drawer-header > :is(b, strong) > .bl-copyright::after { content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
 /* 테마 설정 창 제목도 같은 규칙: [Blue Lemonade] 8 [판 알약] 8 [© 원] */
-html:not(#bl-pill-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-html:not(#bl-pill-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) > .salty-ver { margin: 0 !important; }
-html:not(#bl-pill-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) > .bl-copyright { margin: 0 0 0 calc((18px - 30px) / 2) !important; padding-block: 0 !important; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] > .salty-ver { margin: 0 !important; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] > .bl-copyright { margin: 0 0 0 calc((18px - 30px) / 2) !important; padding-block: 0 !important; }
 /* 애드온 카드 머리줄도 같은 8 (철칙 §7): 번역 용어집 카드 [아이콘] 8 [제목] … [크게 보기] 8 [체크] 8 [사용] */
 html body.salty .llmt-settings .llmt-card-head { gap: 8px !important; }
 html body.salty .llmt-settings .llmt-card-head > :is(i, span, label) { margin: 0 !important; }
@@ -103,7 +103,7 @@ html:not(#bl-pill-off):not(#bl-pill-off2) body.salty :is(.pa-hub .pa-hub-title, 
 }
 /* 7.8.1 (사용자 사진 10-23 · 화면 감사 PILLGAP · HEADROW): 설정 선택 목록 아래 「Blue Lemonade [판] ⓒ」 줄은 gap 8 에 알약 제 여백 8 이 더해져 16 이었다 → 알약 여백 0.
    애드온 창 머리(번역 창 dialog > header > b)는 아이콘 · 제목 · 알약 사이 6 → 8 */
-html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty .salty-panel .salty-title:has(> .bl-copyright) > .salty-ver { margin: 0 !important; top: 0 !important; } /* 7.8.2: 예전 top:-1px(20-panel)이 남아 ⓒ(여백 0) 보다 1px 위 · 이름 글자보다도 1px 위였다(폰 사진 1.2 · 리그 1.0) — 한 줄 flex 가운데 정렬에 맡김 */
+html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] > .salty-ver { margin: 0 !important; top: 0 !important; } /* 7.8.2: 예전 top:-1px(20-panel)이 남아 ⓒ(여백 0) 보다 1px 위 · 이름 글자보다도 1px 위였다(폰 사진 1.2 · 리그 1.0) — 한 줄 flex 가운데 정렬에 맡김 */
 html:not(#bl-pill-off) body.salty dialog > header > b:has(> .ext-version, > i) { display: inline-flex; align-items: center; gap: 8px !important; min-width: 0; }
 html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty dialog > header > b:has(> .ext-version, > i) > :is(i, .ext-version, [class*="-version"]) { margin: 0 !important; }
 

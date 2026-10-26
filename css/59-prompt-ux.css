@@ -88,7 +88,7 @@ body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not
   grid-template-columns:repeat(auto-fit,minmax(min(100%,11em),1fr));
   gap:var(--bl-param-gap);
 }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(#oai_max_context_unlocked,#stream_toggle,#openai_max_context,#openai_max_tokens,#n_openai) {
+body.salty #left-nav-panel #range_block_openai > .range-block:where(:is([data-bl-row~="oai-ctx-unl"], [data-bl-row~="stream"], [data-bl-row~="oai-ctx"], [data-bl-row~="oai-tok"], [data-bl-row~="n-openai"])):is(#bl-s, *) {
   grid-column:auto;
 }
 body.salty #left-nav-panel .range-block-title {
@@ -96,7 +96,7 @@ body.salty #left-nav-panel .range-block-title {
   white-space:normal;
   overflow-wrap:anywhere;
 }
-body.salty #left-nav-panel #range_block_openai > .range-block:has(> #bl-response-range) > .wide100p {
+body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="resp"]):is(#bl-s, *) > .wide100p {
   width:var(--bl-num-w)!important;
   max-width:100%;
 }
@@ -168,7 +168,7 @@ body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager
     justify-self:start;
     padding-left:var(--pm-icon);
   }
-  body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > span:has(> .prompt_manager_prompt_controls) {
+  body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > span[data-bl-row~="pmc"] {
     grid-column:2;
     grid-row:2;
   }
@@ -201,7 +201,7 @@ body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager
       justify-self:start;
       padding-left:var(--pm-icon);
     }
-    body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > span:has(> .prompt_manager_prompt_controls) {
+    body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > span[data-bl-row~="pmc"] {
       grid-column:2;
       grid-row:2;
     }
@@ -348,15 +348,15 @@ body.salty #AdvancedFormatting :is(#ContextSettings,#InstructSettingsColumn,#Sys
   flex:1 1 18em!important;
   min-width:0!important;
 }
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) {
+body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) {
   gap:8px 10px!important;
 }
-body.salty #AdvancedFormatting .flex-container:has(> select[data-preset-manager-for]) > .flex-container {
+body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) > .flex-container {
   flex-wrap:wrap;
   max-width:100%;
   gap:8px 10px!important;
 }
-body.salty #AdvancedFormatting > .spaceEvenly label.flex-container:has(> small + .editor_maximize) {
+body.salty #AdvancedFormatting > .spaceEvenly label.flex-container[data-bl-row~="smax"]:is(bl-s, *) {
   gap:8px 10px;
 }
 body.salty #AdvancedFormatting .editor_maximize {
@@ -373,7 +373,7 @@ body.salty #AdvancedFormatting > .spaceEvenly .flex-container:has(> .flex1 > lab
 body.salty #AdvancedFormatting details .flexAuto {
   flex:1 1 12em;
 }
-body.salty #AdvancedFormatting :is(#context_story_string_position_block,#instructSettingsBlock div:has(> #instruct_names_behavior)) {
+body.salty #AdvancedFormatting :is(#context_story_string_position_block,#instructSettingsBlock div:where([data-bl-row~="instr"]):is(#bl-s, *)) {
   flex-wrap:wrap!important;
   gap:8px 10px!important;
 }
