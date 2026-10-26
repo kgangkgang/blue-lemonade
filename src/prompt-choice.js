@@ -22,6 +22,46 @@ export function bindPromptChoices(doc, getManager) {
     return () => doc.removeEventListener('click', click, true);
 }
 
+// ───────── 8.0.5 토글 즉시 반영 ─────────
+// 실리태번은 토글을 누르면 켜짐을 그 자리에서 바꾸고 저장하지만, 줄은 미리 돌려 보기(dry run)와 목록 전체 다시 그리기가 끝난 뒤에야 바뀐다
+// (데우스 3 · 폰 흉내 CPU 4배 2초 남짓). 그 사이 누른 줄의 켜짐 표시만 먼저 맞춘다 — 택1 이면 위 클릭 연결이 함께 끈 줄도.
+// 표시는 실리태번이 저장한 켜짐 그대로 읽어 쓰고, 곧 실리태번이 목록을 새로 그리면 같은 상태로 덮인다(저장 · 순서 · 토큰 셈은 손대지 않음).
+const TOGGLE_ON = 'fa-toggle-on', TOGGLE_OFF = 'fa-toggle-off';
+export function echoPromptToggles(manager) {
+    const container = manager?.containerElement;
+    if (!container || !manager.activeCharacter) return 0;
+    let order;
+    try { order = manager.getPromptOrderForCharacter(manager.activeCharacter) || []; } catch { return 0; }
+    const state = new Map(order.map(entry => [entry?.identifier, !!entry?.enabled]));
+    const disabled = `${manager.configuration?.prefix ?? 'completion_'}prompt_manager_prompt_disabled`;
+    let changed = 0;
+    for (const row of container.querySelectorAll('[data-pm-identifier]')) {
+        const id = row.dataset?.pmIdentifier;
+        if (!state.has(id)) continue;
+        const toggle = row.querySelector('.prompt-manager-toggle-action');
+        if (!toggle) continue;
+        const on = state.get(id);
+        if (toggle.classList.contains(TOGGLE_ON) === on && toggle.classList.contains(TOGGLE_OFF) === !on && row.classList.contains(disabled) === !on) continue;
+        row.classList.toggle(disabled, !on);
+        toggle.classList.toggle(TOGGLE_ON, on);
+        toggle.classList.toggle(TOGGLE_OFF, !on);
+        changed++;
+    }
+    return changed;
+}
+export function bindToggleEcho(doc, getManager) {
+    const click = event => {
+        const toggle = event.target?.closest?.('.prompt-manager-toggle-action');
+        if (!toggle) return;
+        const manager = getManager();
+        if (!manager?.containerElement?.contains(toggle)) return;
+        try { echoPromptToggles(manager); } catch (error) { console.warn('[Blue Lemonade] 토글 즉시 반영', error); }
+    };
+    // 거품 단계: 실리태번의 토글 처리(그 요소에 직접 단 click)가 켜짐을 바꾼 뒤에 돈다
+    doc.addEventListener('click', click);
+    return () => doc.removeEventListener('click', click);
+}
+
 // ───────── 8.0.1 택1 지킴이 ─────────
 // 10-26 실제 사용자 프리셋(과일 6.4)에서 대사 색상 택1 묶음에 셋이 함께 켜져 있었다. 원인: 캐릭터 이름 연동(promptbind.js)처럼
 // 프롬프트 관리자 토글 클릭이 아닌 길로 켜진 것은 위 클릭 연결이 못 본다. 그래서 설정이 저장될 때마다 묶음별 켜짐을 바로 전과 견준다 —
@@ -151,7 +191,8 @@ export async function syncPromptChoices(enabled) {
         if (wanted && !binding) {
             const stopClick = bindPromptChoices(document, () => api.promptManager);
             const stopGuard = bindGuard(() => api.promptManager);
-            binding = () => { stopClick(); stopGuard(); };
+            const stopEcho = bindToggleEcho(document, () => api.promptManager);
+            binding = () => { stopClick(); stopGuard(); stopEcho(); };
         }
     } catch (error) {
         loading = null;

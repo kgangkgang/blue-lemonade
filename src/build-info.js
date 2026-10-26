@@ -605,7 +605,7 @@ export const FILE_HASHES = {
   "src/prompt-cache.js": "4499:ec84e809:50ec9d1a",
   "src/prompt-card-picker.js": "6956:c7ead0af:d78c5ca6",
   "src/prompt-choice-core.js": "5193:e3a30290:1eb58aca",
-  "src/prompt-choice.js": "10158:6587ad82:7e34f4fc",
+  "src/prompt-choice.js": "12739:33ffda6e:62f02ac1",
   "src/prompt-history-label.js": "12929:cfd8025a:2a844a88",
   "src/prompt-link.js": "10963:3a265882:ccf06d8a",
   "src/prompt-tools.js": "10651:32d0be01:44978501",
