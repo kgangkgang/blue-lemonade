@@ -20,6 +20,7 @@ export function bindFruitTypography(root){
     const box=root.matches?.('[data-fruit-type-editor]')?root:root.querySelector('[data-fruit-type-editor]');if(!box)return()=>{};
     const owner=box.dataset.fruitTypeEditor==='deus'?'deus':'fruit',types=FRUIT_TYPES.filter(t=>typeOwner(t)===owner);
     const current=()=>{const s=tidyFruitType(getSettings().fruitTypography);s.kind=s.ownerKinds[owner];return s;};
+    let portWatch=null;
     let alive=true, previewTimer=0, previewFrame=0, previewKind='', previewSignature='', autoPreviewScale=null;
     // Folding follows this editor only; the theme previews keep their own fold state.
     const folded=()=>{try{return localStorage.getItem('bl_ft_pvfold')==='1';}catch{return false;}};
@@ -59,6 +60,8 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
         dropHost();lastCss='';previewKind='';previewSignature='';autoPreviewScale=null;docMode='';sampleKey='';sampleToken++;
         frame.addEventListener('load',()=>capturePreview());
         bindPreviewViews(box,'fruit-type');
+        // 미리보기 칸이 보이거나 폭이 바뀌면 바로 다시 맞춰요(묶음을 펼친 직후 · 화면 회전) — 1.5초 타이머를 기다리지 않게
+        portWatch?.disconnect();portWatch=null;const port=box.querySelector('.bl-view-port');if(port&&typeof ResizeObserver==='function'){let last=-1;portWatch=new ResizeObserver(()=>{const w=port.clientWidth;if(w!==last){last=w;schedulePreview();}});portWatch.observe(port);}
         frame.srcdoc=FRUIT_SNAPSHOT_DOCUMENT;
     }
     // 미리보기 칸은 작게 두고, 펼치거나 고친 영역이 보이게 칸 안을 옮긴다 (확대 배율 · 사용자가 옮긴 가로 위치는 그대로)
@@ -110,6 +113,7 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
     // 대화에 이 종류의 상태창이 없을 때: 원작 정규식으로 만든 표본(없으면 기본 표본)에 지금 글자 설정을 바로 입혀요.
     async function showSample(type,frame,note){
         // 표본 폭 = 채팅 메시지 본문 폭, 단 미리보기 칸보다 넓지 않게(넓으면 칸이 가로로 넘쳐요 · 배율을 줄여도 바깥 폭은 그대로)
+        if((box.querySelector('.bl-view-port')?.clientWidth||0)<=120)return;// 칸이 아직 안 보이면(접힌 묶음) 그리지 않고, 보이면 ResizeObserver 가 다시 불러요
         const message=lastMessage(),messageWidth=message?.getBoundingClientRect().width||0,portWidth=box.querySelector('.bl-view-port')?.clientWidth||0,base=messageWidth>120?messageWidth:Math.min(innerWidth-32,640),width=Math.round(portWidth>120?Math.min(base,portWidth-2):base);
         const vars=sampleVars(),backdrop=message?fruitPreviewBackground(message.firstElementChild||message):getComputedStyle(document.body).backgroundColor;
         const key=[type.id,width,vars,backdrop,(()=>{try{return scriptEnabled(scriptSettings(),'fruit-family');}catch{return false;}})()].join('|');
@@ -206,7 +210,7 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
         if(fold){const shut=!fold.parentElement.classList.contains('folded');fold.parentElement.classList.toggle('folded',shut);fold.setAttribute('aria-expanded',String(!shut));fold.setAttribute('aria-label',shut?'미리보기 펼치기':'미리보기 접기');try{localStorage.setItem('bl_ft_pvfold',shut?'1':'0');}catch{}box.dispatchEvent(new Event('bl:preview-resize'));return;}if(e.target.closest('[data-ft-all-reset]')){const s=current();s.types[s.kind]=tidyFruitType({}).types[s.kind];commit(s);paint();return;}const el=e.target.closest('[data-ft-reset]');if(!el)return;const s=current();s.types[s.kind].regions[el.dataset.ftReset]={...REGION_DEFAULT};commit(s);paint();}
     box.addEventListener('change',change);box.addEventListener('input',input);box.addEventListener('click',click);paint();
     const timer=setInterval(()=>{if(box.isConnected&&box.getClientRects().length&&!folded())schedulePreview();},1500);
-    return()=>{alive=false;dropHost();clearInterval(timer);clearTimeout(previewTimer);cancelAnimationFrame(previewFrame);box._previewCleanup?.();box.removeEventListener('change',change);box.removeEventListener('input',input);box.removeEventListener('click',click);};
+    return()=>{alive=false;dropHost();portWatch?.disconnect();clearInterval(timer);clearTimeout(previewTimer);cancelAnimationFrame(previewFrame);box._previewCleanup?.();box.removeEventListener('change',change);box.removeEventListener('input',input);box.removeEventListener('click',click);};
 }
 export async function openFruitTypography(kind){
     const s=current();if(FRUIT_TYPES.some(t=>t.id===kind)){s.kind=kind;s.ownerKinds[typeOwner(FRUIT_TYPES.find(t=>t.id===kind))]=kind;getSettings().fruitTypography=s;saveSettings();}
