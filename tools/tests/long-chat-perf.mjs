@@ -52,13 +52,16 @@ await test('말풍선 통째: 숨긴 글 틀 판정은 그대로 · :has 안에�
 });
 
 // ── ② 과일 감시 셋 — 가짜 DOM · 가짜 타이머 ──
+// 8.0.6 상태창 선택자는 :is(.x,.custom-x) 모양 — 가짜 문서는 :is 를 펼쳐 쉼표 목록으로 맞춰 봐요
+const splitTop = s => { const out = []; let depth = 0, start = 0; for (let i = 0; i < s.length; i++) { const c = s[i]; if (c === '(') depth++; else if (c === ')') depth--; else if (c === ',' && !depth) { out.push(s.slice(start, i)); start = i + 1; } } out.push(s.slice(start)); return out.map(x => x.trim()).filter(Boolean); };
+const expandIs = sel => splitTop(sel).flatMap(part => { const m = /:is\(([^()]*)\)/.exec(part); return m ? expandIs(splitTop(m[1]).map(alt => part.slice(0, m.index) + alt + part.slice(m.index + m[0].length)).join(',')) : [part]; });
 class El {
     constructor(doc, tag, attrs = {}) { this.ownerDocument = doc; this.tagName = tag.toUpperCase(); this.nodeType = 1; this.attrs = { ...attrs }; this.children = []; this.dataset = {}; this.listeners = new Map(); this.parentElement = null; }
     append(...nodes) { for (const n of nodes) { n.parentElement = this; this.children.push(n); } return nodes[0]; }
     after(n) { const p = this.parentElement; if (!p) return; n.parentElement = p; p.children.splice(p.children.indexOf(this) + 1, 0, n); }
     remove() { if (this.parentElement) this.parentElement.children = this.parentElement.children.filter(n => n !== this); this.parentElement = null; }
     get isConnected() { return this === this.ownerDocument.body || this === this.ownerDocument.head || !!this.parentElement?.isConnected; }
-    matches(sel) { return sel.split(',').some(s => { s = s.trim(); if (s === '*') return true; if (s.startsWith('#')) { const [id, ...cls] = s.slice(1).split('.'); return this.attrs.id === id && cls.every(c => (this.attrs.class || '').split(' ').includes(c)); } if (s.startsWith('.')) return s.slice(1).split('.').every(c => (this.attrs.class || '').split(' ').includes(c)); return this.tagName === s.toUpperCase(); }); }
+    matches(sel) { return expandIs(sel).some(s => { s = s.trim(); if (s === '*') return true; if (s.startsWith('#')) { const [id, ...cls] = s.slice(1).split('.'); return this.attrs.id === id && cls.every(c => (this.attrs.class || '').split(' ').includes(c)); } if (s.startsWith('.')) return s.slice(1).split('.').every(c => (this.attrs.class || '').split(' ').includes(c)); return this.tagName === s.toUpperCase(); }); }
     closest(sel) { for (let n = this; n; n = n.parentElement) if (n.matches?.(sel)) return n; return null; }
     querySelectorAll(sel) { const out = []; const visit = n => { for (const c of n.children) { if (c.nodeType !== 1) continue; let ok = false; try { ok = c.matches(sel); } catch { ok = false; } if (ok) out.push(c); visit(c); } }; visit(this); return out; }
     querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
@@ -128,7 +131,7 @@ await test('바로가기 단추(fruit-type-shortcuts): 1.5초 타이머 — 그�
     const release = installFruitTypeShortcuts(doc, H.host);
     H.settle();
     for (let i = 0; i < 3; i++) { H.tick(); assert.equal(H.frames.size, 0, '그대로인 채팅을 다시 훑음'); }
-    inner.body.append(new El(inner, 'div', { class: 'dem-status' }));   // iframe 안에 카드가 늦게 그려짐 (body 감시자는 못 봄)
+    inner.body.append(new El(inner, 'div', { class: 'rumor-board' }));   // iframe 안에 카드가 늦게 그려짐 (body 감시자는 못 봄) — 8.0.6 청과 카드
     H.tick(); assert.equal(H.frames.size, 1, 'iframe 안 새 카드를 못 봄'); H.settle();
     const panel = doc.body.append(new El(doc, 'div', { id: 'fruit-heart-v6' }));   // 7.7.4 닫힌 과일 창 뿌리는 문서에 남는다
     H.tick(); assert.equal(H.frames.size, 0, '닫힌 과일 창 뿌리만으로 다시 훑음');
@@ -162,7 +165,7 @@ await test('상태창 바로가기: 알림 100회에는 재탐색하지 않고 �
     const observer=H.observers.find(o=>o.node===doc.body),toast=new El(doc,'div',{class:'toast'});
     for(let i=0;i<100;i++)observer.fn([{target:doc.body,addedNodes:[toast],removedNodes:[]}]);
     assert.equal(H.frames.size,0,'알림 변경을 상태창 탐색으로 처리했어요');
-    observer.fn([{target:doc.body,addedNodes:[new El(doc,'section',{class:'dem-status'})],removedNodes:[]}]);
+    observer.fn([{target:doc.body,addedNodes:[new El(doc,'section',{class:'rumor-board'})],removedNodes:[]}]);   // 8.0.6 채팅 카드 바로가기는 청과만(데우스 카드는 빠른 설정 창 줄에서)
     assert.equal(H.frames.size,1,'새 상태창을 놓쳤어요');stop();
 });
 await test('CI 등록', () => {
