@@ -30,7 +30,7 @@ const url = file => JSON.stringify(pathToFileURL(path.join(dir, file)).href);
 const names = ['getCombinedRegexes', 'compileUserPattern', 'getNoFoldRegexes', 'protectBlock', 'unprotectBlock', 'runtimeRegexes', 'protectedBlockRegexes', 'isProtectedBlock', 'withoutProtectedBlocks',
     'resolveQueuedTarget', 'refreshMessageBlock', 'localOrDisplayedTranslation', 'originalHashOf',
     'processTranslationText', 'applyIsolation', 'analyzeStructure', 'extractPureText', 'renderTranslation', 'renderAllInOne', 'renderInterleaved', 'createDetailsTag', 'restoreContent'];
-const module = `import { withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure } from ${url('display-cards.js')};
+const module = `import { withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure, cardAwareUserRule } from ${url('display-cards.js')};
 import { maskTranslatorNotes, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, dropTokens, HIDDEN_BLOCKS, isHiddenBlock } from ${url('translation-segments.js')};
 import { createGuards } from ${url('translation-guard.js')};
 export const extensionSettings = { translation_display_mode: 'disabled', force_sequential_matching: false, user_defined_regexes: [], user_no_fold_regexes: [] };

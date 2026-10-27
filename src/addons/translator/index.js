@@ -9,7 +9,7 @@ import { paintPreview, previewShown, adoptPainted } from './preview-frames.js'; 
 import { typesetRoot } from '../../typography.js';   // 6.9.6 미리 보기가 넣은 문단을 그 자리에서 조판
 import { dressBody } from '../../dem-expressive.js';   // 6.9.6 · 감정 대사 칸
 import { AUTO_CONTEXT, hasAutoContext, markAutoContext, captureAutoContextGuard, prepareTranslatorAutoContext } from './context-auto.js';
-import { prepareDisplayCards, withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure } from './display-cards.js';
+import { prepareDisplayCards, withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure, cardAwareUserRule } from './display-cards.js';   // 8.0.8 cardAwareUserRule: 사용자 <tracker> 보호 줄이 시간 상태창 번역을 막지 않게
 import { cardValues } from './card-values.js';   // 6.5.4 상태 카드 고정 값은 보내지 않고 바로 채움
 import { checkpointKey, translateChunks, clearCheckpoints, readCheckpoint, writeCheckpoint } from './translation-resume.js';
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, stripDraftLeaks, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
@@ -18,6 +18,7 @@ import { keepKorean } from './korean-keep.js';   // 2.7.9 이미 한국어인 �
 import { HIDDEN_BLOCKS, isHiddenBlock } from './hidden-blocks.js';   // 8.0.6 프리셋이 화면에서 숨기는 블록 · 태그 없는 생각 줄은 보내지 않기
 import { compactTags } from './tag-compact.js';   // 8.0.6 보이는 본문 태그 속성은 짧은 이름으로 보내고 받자마자 되돌리기
 import { skyAttrs } from './sky-attrs.js';   // 8.0.6 번역한 시간 상태창에서도 하늘 장면 (data-t · data-w)
+import { stageAttrs } from './v3-modules.js';   // 8.0.8 번역한 V3 관계 단계에서도 단계 막대 (data-stage)
 import { streamWatch, hasFailMark } from './translation-segments.js';   // 2.6.2 묶음 흘려받기 — 문단이 닫힐 때마다 진행 숫자 · 바로 보기 (흘려받기 자체는 translation-stream.js, 처음 쓸 때 불러옴)
 import { createReasoningView } from './reasoning-view.js';   // 2.6.0 생각 블록(추론) 카드 · 번역해서 보기
 import { updateReasoningUI } from '../../../../../../reasoning.js';   // 2.6.0 생각 칸 다시 그리기
@@ -3080,7 +3081,8 @@ function installSkyAttrsHook() {
     const formatter = getContext()?.messageFormatter;
     if (skyHookAdded || typeof formatter?.addHook !== 'function' || !formatter.stage?.AFTER_REGEX) return;
     skyHookAdded = true;
-    formatter.addHook((mes, info) => (info?.isReasoning || typeof mes !== 'string' || !mes.includes('data-t="') ? mes : skyAttrs(mes)), { stage: formatter.stage.AFTER_REGEX, order: formatter.order?.LATEST });
+    // 8.0.8 같은 훅에서 V3 관계 줄의 data-stage 도 영어로 (번역한 단계 「모르는 사이」에서도 단계 막대가 켜지게, v3-modules.js)
+    formatter.addHook((mes, info) => (info?.isReasoning || typeof mes !== 'string' ? mes : stageAttrs(mes.includes('data-t="') ? skyAttrs(mes) : mes)), { stage: formatter.stage.AFTER_REGEX, order: formatter.order?.LATEST });
 }
 function hideBrokenCommentsOnRender() {
     const formatter = getContext()?.messageFormatter;
@@ -7849,7 +7851,7 @@ function getCombinedRegexes() {
     if (extensionSettings.user_defined_regexes && Array.isArray(extensionSettings.user_defined_regexes)) {
         extensionSettings.user_defined_regexes.forEach(regexStr => {
             const regex = compileUserPattern(regexStr, 'user regex');
-            if (regex) specialBlockRegexes.push(regex);
+            if (regex) specialBlockRegexes.push(cardAwareUserRule(regex));   // 8.0.8 <tracker>…</tracker> 줄은 카드 꼴 시간 상태창을 빼고 (display-cards.js)
         });
     }
     // 6.1.8 다른 확장이 등록한 보호 블록은 사용자 규칙 뒤에 — 앞 규칙의 [[__VAR_n__]] 번호 · 문단 캐시 키가 바뀌지 않게 (같은 source 는 한 번만)

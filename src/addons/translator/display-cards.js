@@ -1,6 +1,10 @@
 // Known prompt-card display values only. Raw markup, keys, code and hidden data stay local.
 // No DOM parsing/rendering and no preset contents or renderer code are included.
-const CARD_NAMES = new Set(['status_bar','tracker','novel_header','prologue','meow_fm','profile','branches','ccd','snow','角色状态面板']);
+import { MODULE_CARDS, isModuleCard, MODULE_KEY, moduleKeepsLocal, moduleLocalValue } from './v3-modules.js';
+// 8.0.8 데우스 V3 바닥 모듈(<relationships> · <status> · <companions> …)도 카드 — 영어 열쇠 · 줄 · 기호는 두고 값만 보낸다 (v3-modules.js)
+const CARD_NAMES = new Set(['status_bar','tracker','novel_header','prologue','meow_fm','profile','branches','ccd','snow','角色状态面板',...MODULE_CARDS]);
+// 모듈 칸 앞의 꾸밈(쌍점 · 줄표 · 이모지)은 칸 글자가 아니다 — 여는 따옴표 · 괄호는 값과 함께 보낸다
+const MODULE_GLYPHS = /^(?:[\s:：;,.\-–—•·*_~>]|\p{Extended_Pictographic}|️|‍)+/u;
 const OPAQUE = new Set(['head','script','style','textarea','pre','code','template','noscript','iframe','svg','math','think','thinking','updatevariable','tableedit','momentum_route']);
 const VOID = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
 const TAG = /<!--[\s\S]*?-->|<![^>]*>|<\/?[^\s<>/]+(?:[^>"']|"[^"]*"|'[^']*')*>/g;
@@ -137,15 +141,22 @@ function visibleSpans(block, card) {
             const part = (a,b) => {
                 const raw = value.slice(a,b), before = raw.match(/^\s*/)[0].length, after = raw.match(/\s*$/)[0].length;
                 let text = raw.slice(before,raw.length-after), glyphs = 0; if (!text || !hasWords(text)) return;
+                const module = isModuleCard(card.name);
                 if (card.name === 'tracker') { glyphs = text.match(/^[^\p{L}\p{N}]+/u)?.[0].length || 0; text = text.slice(glyphs); }
+                else if (module) { glyphs = text.match(MODULE_GLYPHS)?.[0].length || 0; text = text.slice(glyphs); }
                 // Keep literal parser labels at the start of each pipe-separated field.
-                const label = text.match(KNOWN_KEY); const skip = label?.[0].length || 0;
+                // 8.0.8 V3 모듈은 영어 열쇠면 다 (Closeness: · Stage: · Unspoken: …) — 단 [표지] 바로 뒤 「이름: …」 은 값이에요 (Undercurrents)
+                let label = text.match(KNOWN_KEY);
+                if (!label && module && !/\]\s*$/.test(value.slice(0,a))) label = text.match(MODULE_KEY);
+                const skip = label?.[0].length || 0;
                 const rest = text.slice(skip), ws = rest.match(/^\s*/)[0].length;
+                if (module && moduleKeepsLocal(rest.slice(ws),{before:value.slice(0,a),after:value.slice(b),card:card.name})) return;
                 if (rest.slice(ws) && hasWords(rest.slice(ws))) {
                     let context = 'text';
                     if (card.name === '角色状态面板' && stack.some(x=>['搜索历史','语录集','当前播放'].includes(x.name))) context = 'script';
                     if (card.name === 'novel_header') context = 'attribute';
-                    spans.push({start:at+a+before+glyphs+skip+ws,end:at+b-after,text:rest.slice(ws),context});
+                    const key = label ? label[0].replace(/^[\s*_]+|[\s*_:：]+$/g,'').toLowerCase() : '';   // 8.0.8 칸 열쇠 (관계 단계 사전)
+                    spans.push({start:at+a+before+glyphs+skip+ws,end:at+b-after,text:rest.slice(ws),context,...(key ? {key} : {})});
                 }
             };
             while ((stop = pieces.exec(value))) { part(from,stop.index); from = pieces.lastIndex; } part(from,value.length);
@@ -236,7 +247,8 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
     if (!primary.length) return {text:source,count:0,compare:value=>value,restore:value=>value,cacheable:()=>true};
     if (typeof reserve !== 'function') throw new TypeError('Card masks require a reserve callback');
     const localOf = (field,card) => {
-        const value = typeof localValue === 'function' ? localValue(field.text,card.name) : null;
+        // 8.0.8 V3 관계 단계(Stage: Strangers)는 정해진 낱말이라 이 기기에서 채운다 (v3-modules.js) — 한국어로 옮길 때만(localValue 가 있을 때)
+        const value = typeof localValue === 'function' ? moduleLocalValue(field.text,card.name,field.key) ?? localValue(field.text,card.name) : null;
         return typeof value === 'string' && value.trim() && value.trim() !== field.text && !/[\r\n<>]|\[\[__/.test(value) ? value.trim() : null;
     };
     // Locally known fields get no token: the model sees only the remaining values of the card.
@@ -343,6 +355,15 @@ export function withDisplayCardsProtected(text, transform) {
     let output = String(transform(masked));
     for (const row of rows) { const at = output.indexOf(row.token); if (at < 0 || output.indexOf(row.token,at+row.token.length)>=0) throw fail(); output = output.slice(0,at)+row.raw+output.slice(at+row.token.length); }
     return output;
+}
+
+/** 8.0.8 사용자 「보호할 텍스트」의 <tracker>…</tracker> 규칙은 칸(|) 둘 이상인 시간 상태창에는 걸지 않는다.
+ * 카드 번역(6.5.4) 전에 데우스 상태창이 깨지지 않게 넣던 줄인데, 지금은 카드가 열쇠 · 기호 · 구조를 이 기기에 두고 값만 옮기니
+ * 이 줄이 남아 있으면 시간 상태창만 영어로 남았다(10-27 제보). 다른 꼴의 <tracker>(칸 없는 글)는 예전처럼 보호해요.
+ * 규칙 앞에 「카드 꼴이면 여기서 시작하지 않음」 조건만 붙인다 — 같은 규칙 글자 · 순서라 다른 보호 블록 번호는 그대로예요. */
+export function cardAwareUserRule(regex) {
+    if (!(regex instanceof RegExp) || !/^\^?<tracker(?:\b|>|\\b)/i.test(regex.source)) return regex;
+    return new RegExp(String.raw`(?!<tracker\b[^>\x60]{0,200}>[^<\x60]*?\|[^<\x60]*?\|[^<\x60]*?<\/tracker\s*>)` + regex.source, regex.flags);
 }
 
 /** Exact blocks for display isolation; callers can escape these for their own regex registry. */
