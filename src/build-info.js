@@ -571,7 +571,7 @@ export const FILE_HASHES = {
   "src/lite.js": "38812:484d432d:e31e9483",
   "src/live-models.js": "44020:f8a5fa62:a3f1cbaf",
   "src/longpress-help-data.js": "88332:c5907bba:9694cdc0",
-  "src/longpress-help.js": "12322:54b798e0:8f657995",
+  "src/longpress-help.js": "13064:5ab5a0e9:10c67ada",
   "src/main-chat-finish.js": "14829:d34f07a5:c8c0a173",
   "src/main-chat-rules.js": "8887:961cbad4:0e0730d8",
   "src/markdown-ui.js": "6146:5cfe42a4:47c863e5",

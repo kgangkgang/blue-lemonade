@@ -19,7 +19,7 @@ const TYPING = 'textarea,[contenteditable=""],[contenteditable="true"],input:not
 const MENU_ITEMS = '.mes_buttons > .extraMesButtons > *, .mes_buttons > .bl-pinned';
 
 // 설명 창은 월드인포 ? 와 같은 help-sheet.js (그쪽이 시작할 때 이미 읽어 둬서 바로 와요)
-const openSheet = help => import('./help-sheet.js').then(m => m.openHelpSheet(help)).catch(error => console.warn('[Blue Lemonade] 길게 누르기 설명 창', error));
+const openSheet = help => import('./help-sheet.js').then(m => { const dialog = m.openHelpSheet(help); if (dialog) dialog.scrollTop = 0; return dialog; }) // 닫기 단추에 초점이 가며 긴 목록이 맨 아래로 내려가지 않게.catch(error => console.warn('[Blue Lemonade] 길게 누르기 설명 창', error));
 
 /** 사전 목록 → 열쇠별 찾기표. 같은 열쇠는 scope 가 다를 때만 여럿 */
 export function indexHelp(list) {
@@ -66,8 +66,12 @@ export function findHelp(start, index, levels = UP_LEVELS) {
 /** … 단추: 그 메시지의 … 메뉴 · 꺼내 둔 단추 설명을 한 창에 (메뉴 안 단추는 길게 누르면 꺼내기 · 넣기라 따로 설명을 못 띄워요) */
 export function menuHelp(hint, entry, index, view = globalThis) {
     const list = [], seen = new Set();
-    for (const button of hint.closest('.mes')?.querySelectorAll(MENU_ITEMS) || []) {
-        if (button === hint || view.getComputedStyle?.(button).display === 'none') continue;
+    const buttons = [...(hint.closest('.mes')?.querySelectorAll(MENU_ITEMS) || [])].filter(button => button !== hint);
+    const shown = button => view.getComputedStyle?.(button).display !== 'none';
+    // 메뉴가 접혀 있거나 테마가 단추 줄을 통째로 숨긴 때는 모두 none 이라 가릴 수 없어요 — 그땐 직접 숨긴(style) 것만 빼요
+    const anyShown = buttons.some(shown);
+    for (const button of buttons) {
+        if (anyShown ? !shown(button) : button.style?.display === 'none') continue;
         const found = findHelp(button, index, 0);
         if (!found || seen.has(found.entry)) continue;
         seen.add(found.entry);
@@ -133,7 +137,7 @@ export function startLongpressHelp({ isEnabled = () => true, doc = document, hos
     // 폰은 길게 누르면 타이머보다 먼저 길게 누르기 메뉴 신호(contextmenu)를 보내기도 해요 — 사전이 있으면 그때 바로 띄워요. 마우스 오른쪽 클릭은 그대로
     function menu(event) {
         const g = gesture;
-        if (g?.shown || (guardUntil && Date.now() < guardUntil && !event.target?.closest?.('.bl-wi-help-dialog'))) { event.preventDefault(); return; }
+        if (g?.shown || (guardUntil && Date.now() < guardUntil)) { event.preventDefault(); return; }
         if (!g || !g.touch || !index) return;
         const found = findHelp(g.target, index);
         if (!found) return;
@@ -141,9 +145,10 @@ export function startLongpressHelp({ isEnabled = () => true, doc = document, hos
         show(g, found);
     }
     function click(event) {
-        if (!guardUntil) return;
+        // 키보드로 누른 click(detail 0)은 그대로. 손을 뗄 때의 click 은 설명 창 위로 떨어지기도 해요(폰: 창이 뜬 뒤 pointerup 없이 click 이 창으로) —
+        // 새 누름(pointerdown) 없이 온 첫 click 이니 어디로 오든 막아요. 그러지 않으면 창의 「바깥 누르면 닫기」가 방금 연 창을 바로 닫아요
+        if (!guardUntil || event.detail === 0) return;
         const fresh = Date.now() < guardUntil;
-        if (event.target?.closest?.('.bl-wi-help-dialog')) return; // 설명 창 안 단추(닫기)는 그대로
         guardUntil = 0;
         if (fresh) block(event);
     }

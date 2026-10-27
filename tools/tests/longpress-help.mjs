@@ -152,6 +152,8 @@ assert.equal(findHelp(outside, index), null, 'scope .mes 밖의 같은 class 는
 const view = { getComputedStyle: el => ({ display: el === hidden ? 'none' : 'flex' }) };
 const menu = menuHelp(hint, findHelp(hint, index).entry, index, view);
 assert.deepEqual(menu.list.map(([t]) => t), [findHelp(translate, index).entry.title, findHelp(copy, index).entry.title], '… 목록 = 보이는 단추 가운데 설명이 있는 것');
+const allHidden = menuHelp(hint, findHelp(hint, index).entry, index, { getComputedStyle: () => ({ display: 'none' }) });
+assert(allHidden.list.length >= 3, '단추 줄이 통째로 숨어 있으면 직접 숨긴 것만 빼고 보여요');
 // 테마 애드온 글 열쇠(scope 로 가림)
 const prev = h('button', { 'aria-label': '이전 답' });
 h('body', {}, h('div', { id: 'bl-onehand' }, prev));
@@ -196,6 +198,16 @@ function makeEnv({ enabled = () => true } = {}) {
     env.fire('pointerdown', icon); await env.advance(80); env.fire('pointerup', icon); const next = env.fire('click', icon);
     assert(!next.stopped, '다음 짧은 누름은 원래대로');
     assert.equal(env.loads, 1, '사전은 한 번만 읽어요'); env.stop();
+}
+// 폰: 창이 뜬 뒤 pointerup 없이 click 이 설명 창으로 떨어져도 막아요(바깥 누르면 닫기가 방금 연 창을 닫지 않게). 그 뒤 창 안 누름 · 키보드 click 은 그대로
+{
+    const env = makeEnv();
+    const dialog = h('dialog', { class: 'bl-tool-dialog bl-wi-help-dialog' }); const close = h('button', {}); dialog.children.push(close); close.parentElement = dialog; h('body', {}, dialog);
+    env.fire('pointerdown', icon); await env.advance(HOLD_MS + 10);
+    const c = env.fire('click', dialog, { detail: 1 }); assert(c.stopped, '창으로 떨어진 손 뗌 click 도 막아요');
+    env.fire('pointerdown', close); env.fire('pointerup', close); const c2 = env.fire('click', close, { detail: 1 }); assert(!c2.stopped, '창 안 닫기 단추는 그대로');
+    env.fire('pointerdown', icon); await env.advance(HOLD_MS + 10);
+    const k = env.fire('click', close, { detail: 0 }); assert(!k.stopped, '키보드 click 은 그대로'); env.stop();
 }
 // 폰이 click 을 건너뛰어도, 다음 누름의 click 은 막지 않아요
 {
