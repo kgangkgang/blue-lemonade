@@ -44,16 +44,21 @@ const alpha = color => {
 
 /** 7.2.8 Checks that need no layout (same answers as the first lines of isRoundTextButton): run before offsetParent so
  *  marked, skipped and excluded elements never ask for layout. */
-function cheapSkip(el, view) {
+// 8.0.8: 뿌리 하나를 훑을 때는 건너뛸 구역(SKIP_AREA)을 뿌리 아래에서 한 번만 모아(`areas`) 후보마다 조상을 다시 오르지 않는다 —
+//   메시지 300개의 .mes_button(실리태번이 tabindex 를 달아 후보가 됨) 수천 개가 저마다 closest(SKIP_AREA) 로 조상을 오르던 것.
+//   판정은 같다: 뿌리 자신 · 뿌리의 조상이 구역이면 scan 이 뿌리째 건너뛰고, 뿌리 아래 구역은 areas 가 품는지로 본다.
+//   (contains 가 없는 가짜 문서(시험)에서는 예전처럼 closest 로)
+const inArea = (el, areas) => (areas && typeof el.contains === 'function' ? areas.some(a => a.contains(el)) : !!el.closest(SKIP_AREA));
+function cheapSkip(el, view, areas = null) {
     if (!(el instanceof view.HTMLElement) || el.hasAttribute(ATTR)) return true;
-    if (el.matches('input,select,textarea,img,svg') || el.closest(SKIP_AREA)) return true;
+    if (el.matches('input,select,textarea,img,svg') || inArea(el, areas)) return true;
     const cls = typeof el.className === 'string' ? el.className : '';
     return SKIP_CLASS.test(cls) || SKIP_CLASS.test(el.id);
 }
 
 /** True when the element is a painted, clickable text control whose corners make a pill or circle. */
-export function isRoundTextButton(el, view = el.ownerDocument.defaultView) {
-    if (cheapSkip(el, view)) return false;
+export function isRoundTextButton(el, view = el.ownerDocument.defaultView, areas = null) {
+    if (cheapSkip(el, view, areas)) return false;
     const rect = el.getBoundingClientRect();
     if (rect.height < 24 || rect.width < 24) return false;
     const text = (el.innerText || '').trim();
@@ -99,17 +104,21 @@ export function watchSquaredButtons(doc, host) {
     // 7.5.4 한 번 표시한 생김새 — 목록을 innerHTML 로 다시 그리는 확장(탭 · 칩이 새 요소가 됨)에서 새 요소가 0.3초 동안 둥글게 보였다가 네모가 되던 것을 막는다
     const seen = new Map();
     const remember = el => { if (seen.size >= SEEN_MAX) seen.clear(); seen.set(shapeKey(el), true); };
+    // 뿌리 아래 건너뛸 구역 — 뿌리 자신(또는 조상)이 구역이면 null(뿌리째 건너뜀)
+    const areasOf = root => (root.closest?.(SKIP_AREA) ? null : [...(root.querySelectorAll?.(SKIP_AREA) || [])]);
     const restamp = el => {
         if (!seen.size) return;
+        const areas = areasOf(el); if (!areas) return;
         const list = el.matches?.(CANDIDATES) ? [el, ...el.querySelectorAll(CANDIDATES)] : el.querySelectorAll?.(CANDIDATES) || [];
-        for (const c of list) if (seen.has(shapeKey(c)) && !cheapSkip(c, host)) c.setAttribute(ATTR, '');
+        for (const c of list) if (seen.has(shapeKey(c)) && !cheapSkip(c, host, areas)) c.setAttribute(ATTR, '');
     };
     let timer = 0, frame = 0, stopped = false;
     // Measure every candidate first, then mark: marking between reads re-dirtied style and forced one recalc per button.
     function scan(root, found) {
         if (!root?.isConnected) return;
+        const areas = areasOf(root); if (!areas) return;
         const list = root.matches?.(CANDIDATES) ? [root, ...root.querySelectorAll(CANDIDATES)] : root.querySelectorAll(CANDIDATES);
-        for (const el of list) if (!cheapSkip(el, host) && el.offsetParent !== null && isRoundTextButton(el, host)) found.push(el);
+        for (const el of list) if (!cheapSkip(el, host, areas) && el.offsetParent !== null && isRoundTextButton(el, host, areas)) found.push(el);
     }
     // 7.2.8 Measure at the start of a frame: the layout read there is the one the frame needs anyway. Read from the 300 ms timer,
     // it forced an extra full layout whenever the page changed again before the next paint (startup, chat open: 4x CPU 250-450 ms).

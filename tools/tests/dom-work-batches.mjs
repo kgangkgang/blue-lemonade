@@ -7,7 +7,8 @@ class El{
  constructor(tag,parent=null){this.tagName=tag;this.parentElement=parent;this.nodeType=1;this.isConnected=true;this.children=[];this.attrs=new Set();this.dataset={};this.className=tag==='BUTTON'?'known-chip':'';this.id='';this.innerText='단추';this.offsetParent={};parent?.children.push(this);}
  matches(s){return this.tagName==='BUTTON'&&s.startsWith('button,a,summary')}
  closest(s){for(let p=this;p;p=p.parentElement){if(s==='#chat'&&p.id==='chat')return p;if(s==='.mes'&&p.className==='mes')return p;if(s==='.drawer-content.closedDrawer'&&p.className==='closed')return p;}return null}
- querySelectorAll(){this.queries=(this.queries||0)+1;const out=[];const walk=e=>e.children.forEach(c=>{if(c.tagName==='BUTTON')out.push(c);walk(c)});walk(this);return out}
+ // queries = 후보(CANDIDATES) 훑기 횟수만 센다 — 8.0.8 부터 scan 이 뿌리 아래 건너뛸 구역(SKIP_AREA)을 한 번 모으는데, 그건 훑기가 아니라 빈 목록
+ querySelectorAll(s){if(s&&!s.startsWith('button,a,summary'))return[];this.queries=(this.queries||0)+1;const out=[];const walk=e=>e.children.forEach(c=>{if(c.tagName==='BUTTON')out.push(c);walk(c)});walk(this);return out}
  getBoundingClientRect(){return{width:80,height:32}}
  hasAttribute(k){return this.attrs.has(k)}setAttribute(k){this.attrs.add(k)}removeAttribute(k){this.attrs.delete(k)}
 }

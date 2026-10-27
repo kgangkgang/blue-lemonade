@@ -97,6 +97,8 @@ export function installTabScroll(selectors, doc = globalThis.document) {
     }
     function scan(node) {
         if (node.nodeType !== 1) return;
+        // 8.0.8: 탭 줄은 모두 설정 서랍 · 창 안에 있다(tab-scroll-init.js 목록) — 채팅 메시지가 붙을 때마다 그 안을 훑지 않는다(채팅 300개 열기에서 감시자 80ms)
+        if (node.closest?.('.mes')) return;
         if (node.matches(selector)) bind(node);
         node.querySelectorAll(selector).forEach(bind);
     }
