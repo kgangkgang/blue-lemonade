@@ -375,7 +375,7 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details
 body.salty.salty-dem-skin.salty-unify-regex :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-tab, .custom-dem-chip, .custom-dem-tabs__rail) {
   --tab: var(--salty-accent) !important;
 }
-/* 고른 탭의 알약은 레일의 ::after(anchor 배치)가 --pill 변수로 그려요(원작 기본 #cba6f7) — :is() 안에는 가상 요소를 못 넣으니 따로 */
+/* 고른 탭의 알약은 레일의 ::after(anchor 배치)가 --pill 변수로 그려요(원작 기본은 연보라 고정값) — :is() 안에는 가상 요소를 못 넣으니 따로 */
 body.salty.salty-dem-skin.salty-unify-regex :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tabs__rail,
 body.salty.salty-dem-skin.salty-unify-regex :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tabs__rail::after {
   --pill: var(--salty-accent) !important;
