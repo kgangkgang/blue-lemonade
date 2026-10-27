@@ -67,6 +67,15 @@ body.salty :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:is(.custo
   letter-spacing: inherit;
 }
 
+/* 10-27 무표정 · 우는 · 아픈 · 취한 대사도 인물 색 그대로 (사용자 제보 10-27: 같은 인물 색 대사인데 <deadpan> 이 붙은 대사만 형광펜 띠 · 글자가 회색빛).
+   데우스 V3 프리셋 <style>(DEM - UI module accents)이 --deadpan 에 filter: saturate(.25) brightness(.92),
+   --crying · --hurt · --intoxicated 에 고정 채도 필터를 준다. filter 는 칸 안 전부(형광펜 띠 · 글자)를 다시 칠해 인물 색이 바랬다.
+   테마가 감싼 「…」 대사(.bl-fx-made)도 프리셋 칸과 같은 이름이라 똑같이 바랜다. 고정 필터만 지운다 —
+   움직임 · 크기 · 투명도와 테마 키프레임(bl-fx-*)은 그대로(애니메이션 값은 이 줄보다 이긴다) */
+body.salty :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive:is(.custom-dem-expressive--deadpan, .custom-dem-expressive--crying, .custom-dem-expressive--hurt, .custom-dem-expressive--intoxicated):not(#salty-none) {
+  filter: none;
+}
+
 /* 들여쓰기: 감정 칸은 inline-block 이라 문단의 text-indent 를 물려받아 첫 줄을 한 번 더 들이고, 둘째 줄은 들여쓴 자리에서 시작했다.
    칸 안은 들이지 않고, 문단 맨 앞 칸(.bl-fx-lead, dem-expressive.js)만 문단 왼쪽 끝으로 당겨 안에서 한 번 들인다 → 보통 문단과 같은 모양 */
 body.salty :is(#chat, .cg-root, .salty-preview) .custom-dem-expressive {

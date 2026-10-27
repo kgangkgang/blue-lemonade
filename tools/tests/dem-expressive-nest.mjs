@@ -41,4 +41,32 @@ check('CSS: an effect box inside a character colour box inherits that colour (no
     // 대사 잉크 색 규칙보다 뒤 (같은 !important 끼리도 위 규칙보다 구체적)
     assert.ok(css.search(rule) > css.indexOf('color: var(--salty-marker-ink, var(--salty-dialogue)) !important;\n}\n/* 6.7.9'));
 });
+// 10-27 감정 태그가 붙은 대사도 같은 인물 색 (사용자 제보 10-27: <deadpan> 대사만 형광펜 띠 · 글자가 회색빛).
+// 데우스 V3 프리셋 <style>(DEM - UI module accents)이 감정 칸에 고정 채도 필터를 줘 칸 안 띠 · 글자를 다시 칠했다.
+// 실리태번이 메시지 <style> 을 바꾼 꼴(.mes_text + custom- 접두어, 특이도 0,2,0)보다 테마 규칙이 무거워야 한다 — 문장은 지어낸 것
+const PRESET_FILTERS = { deadpan: 'saturate(.25) brightness(.92)', crying: 'saturate(.8)', hurt: 'saturate(.75)', intoxicated: 'saturate(1.15)' };
+check('shape A (tag outside the colour span) finds the line in Japanese and Korean; shape B has no box', () => {
+    for (const text of ['「それは、まあ、悪くない考えだ」', '「그건, 뭐, 나쁘지 않은 생각이야」']) {
+        assert.deepEqual(findExpressive(`<deadpan><span style="color:#3aa7ff">${text}</span></deadpan>`), [{ tags: ['deadpan'], text }]);
+        assert.deepEqual(findExpressive(`<span style="color:#3aa7ff">${text}</span>`), []);
+        assert.deepEqual(findExpressive(`<whispering><deadpan><span style="color:#3aa7ff">${text}</span></deadpan></whispering>`)[0].tags, ['whispering', 'deadpan']);
+    }
+});
+check('CSS: deadpan keeps the character colour — the preset colour filters are cleared (keyframes untouched)', () => {
+    const ids = sel => (sel.match(/#[\w-]+/g) || []).length;
+    for (const rel of ['css/55-dem-expressive.css', 'style.css']) {
+        const css = fs.readFileSync(path.join(root, rel), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+        const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ sel: m[1].trim(), body: m[2] }));
+        const reset = rules.filter(r => /^\s*filter\s*:\s*none\s*;?\s*$/.test(r.body) && /custom-dem-expressive--deadpan/.test(r.sel));
+        assert.equal(reset.length, 1, `${rel}: 감정 칸의 고정 필터를 지우는 규칙이 하나여야 해요`);
+        const { sel } = reset[0];
+        for (const tag of Object.keys(PRESET_FILTERS)) assert.ok(sel.includes(`.custom-dem-expressive--${tag}`), `${rel}: --${tag} 도 지워야 해요`);
+        for (const place of ['#chat', '.cg-root', '.salty-preview']) assert.ok(sel.includes(place), `${rel}: ${place} 에도 걸려야 해요`);
+        assert.ok(!sel.includes('.mes_text'), `${rel}: 미리보기 사본에 복사되지 않게 .mes_text 를 쓰지 않아요`);
+        assert.ok(ids(sel) >= 1 && ids('.mes_text .custom-dem-expressive--deadpan') === 0, `${rel}: 프리셋 규칙보다 무거워야 해요`);
+        // 테마의 다른 고정 규칙이 감정 칸에 색을 바꾸는 필터를 다시 주지 않는다 (키프레임 단계는 선택자에 감정 칸 이름이 없어 빠진다)
+        const recolour = rules.filter(r => /custom-dem-expressive/.test(r.sel) && /(^|;)\s*filter\s*:[^;]*(saturate|grayscale|sepia|hue-rotate)/.test(r.body));
+        assert.deepEqual(recolour.map(r => r.sel), [], `${rel}: 감정 칸에 색을 바꾸는 고정 필터가 없어야 해요`);
+    }
+});
 console.log(`dem-expressive-nest: ${pass} passed, 0 failed`);

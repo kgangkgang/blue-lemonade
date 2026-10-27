@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 8c706a7c26a9) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 881594eb4435) */
 /* css/00-base.css */
 :root{--bl-release:"8.1.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -22034,6 +22034,9 @@ body.salty.salty-demfx-go :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview
 body.salty :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive:is(.custom-dem-expressive--whispering, .custom-dem-expressive--quiet):not(#salty-none) {
   font-size: inherit;
   letter-spacing: inherit;
+}
+body.salty :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive:is(.custom-dem-expressive--deadpan, .custom-dem-expressive--crying, .custom-dem-expressive--hurt, .custom-dem-expressive--intoxicated):not(#salty-none) {
+  filter: none;
 }
 body.salty :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive {
   text-indent: 0;
