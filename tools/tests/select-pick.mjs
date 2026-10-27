@@ -71,7 +71,7 @@ const seg = (() => {
     assert.ok(from >= 0 && to > from, '자리 계산 구간 있음');
     return selects.slice(from, to).replace(/^export /gm, '');
 })();
-const P = new Function('window', `${seg}\nreturn { SHEET_MAX_WIDTH, PHONE_SHEET, pickMode, pickRect, PICK_EDGE, PICK_GAP };`)({ innerWidth: 384 });
+const P = new Function('window', `${seg}\nreturn { SHEET_MAX_WIDTH, PHONE_SHEET, pickMode, pickRect, pickEdges, PICK_EDGE, PICK_GAP };`)({ innerWidth: 384 });
 
 t('③ pickMode: 폰(384 · 320 · 1000)도 PC(1280)도 드롭다운 — 시트는 꺼 둔 경로(PHONE_SHEET=false)', () => {
     assert.equal(P.PHONE_SHEET, false);
@@ -82,9 +82,11 @@ t('③ pickMode: 폰(384 · 320 · 1000)도 PC(1280)도 드롭다운 — 시트�
 
 const rect = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
 const PHONE = { x: 0, y: 0, w: 384, h: 798 }, NARROW = { x: 0, y: 0, w: 320, h: 568 }, PC = { x: 0, y: 0, w: 1280, h: 900 };
-const inside = (a, v, label) => {
-    assert.ok(a.left >= v.x + 12 - 0.01, `${label}: 왼쪽 12 안 (${a.left})`);
-    assert.ok(a.left + a.width <= v.x + v.w - 12 + 0.01, `${label}: 오른쪽 12 안 (${a.left + a.width})`);
+// 좌우 바깥 한계 = min(12, 칸의 화면 끝 거리) — 칸이 없으면(r 생략) 12
+const inside = (a, v, label, r = null) => {
+    const l = r ? Math.min(12, Math.max(0, r.left - v.x)) : 12, rr = r ? Math.min(12, Math.max(0, v.x + v.w - r.right)) : 12;
+    assert.ok(a.left >= v.x + l - 0.01, `${label}: 왼쪽 한계 ${l} 안 (${a.left})`);
+    assert.ok(a.left + a.width <= v.x + v.w - rr + 0.01, `${label}: 오른쪽 한계 ${rr} 안 (${a.left + a.width})`);
     assert.ok(a.top >= v.y + 12 - 0.01, `${label}: 위 12 안 (${a.top})`);
     assert.ok(a.top + a.h <= v.y + v.h - 12 + 0.01, `${label}: 아래 12 안 (${a.top + a.h})`);
 };
@@ -107,16 +109,33 @@ t('③ 자리: 아래쪽 칸은 위로(아래 공간이 모자랄 때) — 칸�
     inside(a, PHONE, '아래쪽 칸');
 });
 
-t('③ 자리: 화면 끝 칸 — 글이 칸보다 넓어도 화면 끝 12 안쪽으로 밀림', () => {
-    const right = P.pickRect(rect(300, 200, 80, 36), PHONE, { w: 200, h: 160 });
+t('③ 자리: 화면 끝 칸 — 글이 칸보다 넓어도 화면 끝 12 안쪽으로 밀림, 칸이 12 보다 끝에 붙어 있으면 칸 선까지', () => {
+    const right = P.pickRect(rect(280, 200, 80, 36), PHONE, { w: 200, h: 160 });
     assert.equal(right.width, 200);
-    assert.equal(right.left, 384 - 12 - 200);
-    inside(right, PHONE, '오른쪽 끝 칸');
+    assert.equal(right.left, 384 - 12 - 200, '칸이 12 보다 안쪽: 화면 끝 12 안쪽으로 밀림');
+    const flush = rect(300, 200, 80, 36);   // 칸 오른쪽 끝이 화면 끝 4px
+    const f2 = P.pickRect(flush, PHONE, { w: 200, h: 160 });
+    assert.equal(f2.left + f2.width, 380, '칸 오른쪽 선(380)에 맞춤');
+    inside(right, PHONE, '오른쪽 끝 칸'); inside(f2, PHONE, '화면 끝 4px 칸', flush);
     const left = P.pickRect(rect(0, 200, 120, 36), PHONE, { w: 100, h: 160 });
-    assert.equal(left.left, 12, '왼쪽 끝 칸');
-    const wide = P.pickRect(rect(4, 200, 316, 36), NARROW, { w: 420, h: 160 });
+    assert.equal(left.left, 0, '화면 끝에 붙은 칸: 목록도 칸 선(0)');
+    const wide = P.pickRect(rect(12, 200, 296, 36), NARROW, { w: 420, h: 160 });
     assert.equal(wide.width, 320 - 24, '320 폭 · 확대 글씨: 화면 폭 - 24 까지');
     inside(wide, NARROW, '320 폭');
+});
+
+t('③ 자리: 칸이 화면 끝 12px 안쪽에 붙어 있으면 목록 좌우 선 = 칸 좌우 선(10-28 조정자 · 규칙 16), 화면 밖으론 안 나감', () => {
+    const r = rect(10, 95, 364, 40);   // 폰 384 사용자 설정 「언어」 칸 자리(화면 끝 10)
+    const a = P.pickRect(r, PHONE, { w: 150, h: 600 });
+    assert.equal(a.left, 10, '왼쪽 선 = 칸 왼쪽');
+    assert.equal(a.left + a.width, 374, '오른쪽 선 = 칸 오른쪽');
+    inside(a, PHONE, '언어 칸', r);
+    const e = P.pickEdges(r, PHONE);
+    assert.deepEqual(e, { l: 10, r: 10 }, '바깥 한계 = min(12, 칸의 화면 끝 거리)');
+    assert.deepEqual(P.pickEdges(rect(30, 0, 200, 40), PHONE), { l: 12, r: 12 }, '칸이 안쪽이면 12');
+    assert.deepEqual(P.pickEdges(rect(-20, 0, 420, 40), PHONE), { l: 0, r: 0 }, '칸이 화면 밖으로 넘치면 0(화면 끝)');
+    const over = P.pickRect(rect(-20, 95, 420, 40), PHONE, { w: 150, h: 200 });
+    assert.ok(over.left >= 0 && over.left + over.width <= 384, '넘친 칸이어도 목록은 화면 안');
 });
 
 t('③ 자리: 긴 목록은 높이 = 남은 공간(넘치면 목록 안 스크롤)', () => {
@@ -137,8 +156,10 @@ t('③ 자리: 자판이 올라온 보이는 화면 · 확대로 밀린 보이�
     assert.ok(a.top + a.h <= 340 - 6 + 0.01, '칸을 가리지 않음');
     inside(a, kb, '자판');
     const zoom = { x: 40, y: 260, w: 192, h: 399 };   // 두 배 확대 · 밀림
-    const z = P.pickRect(rect(60, 400, 300, 36), zoom, { w: 120, h: 500 });
-    inside(z, zoom, '확대');
+    const zr = rect(60, 400, 300, 36);   // 칸 오른쪽이 보이는 화면 밖으로 넘침 → 목록은 보이는 화면 끝까지
+    const z = P.pickRect(zr, zoom, { w: 120, h: 500 });
+    inside(z, zoom, '확대', zr);
+    assert.ok(z.left + z.width <= zoom.x + zoom.w, '보이는 화면 밖으로 안 나감');
 });
 
 t('③ 자리: 폰 384 · 320 · PC 의 모든 칸 자리 × 목록 크기에서 화면 밖으로 안 나가고, 공간이 되면 칸과 겹치지 않음', () => {
@@ -148,8 +169,9 @@ t('③ 자리: 폰 384 · 320 · PC 의 모든 칸 자리 × 목록 크기에서
             for (const [cw, ch] of [[60, 48], [180, 210], [600, 900], [240, 5000]]) {
                 const r = rect(left, top, width, 40);
                 const a = P.pickRect(r, v, { w: cw, h: ch });
-                inside(a, v, `${v.w}x${v.h} 칸 ${left},${top} 목록 ${cw}x${ch}`);
-                assert.ok(a.width >= Math.min(Math.round(width), v.w - 24), '칸 폭보다 좁지 않음');
+                inside(a, v, `${v.w}x${v.h} 칸 ${left},${top} 목록 ${cw}x${ch}`, r);
+                const e = P.pickEdges(r, v);
+                assert.ok(a.width >= Math.min(Math.round(width), v.w - e.l - e.r) - 0.01, '칸 폭보다 좁지 않음');
                 const below = v.h - r.bottom - 18, above = r.top - 18;
                 if (Math.max(below, above) >= Math.min(ch, 120) && r.top >= 0 && r.bottom <= v.h) {
                     const overlap = a.top < r.bottom && a.top + a.h > r.top;

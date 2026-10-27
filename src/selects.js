@@ -60,9 +60,16 @@ function rowsHtml(sel, query = '') {
 export const SHEET_MAX_WIDTH = 1000;
 export const PHONE_SHEET = false;
 export function pickMode(width = window.innerWidth) { return PHONE_SHEET && width <= SHEET_MAX_WIDTH ? 'sheet' : 'drop'; }
-// 목록과 화면 끝 사이 — 폰에서 칸이 화면 끝에 붙어 있어도 목록은 화면 끝 12px 안쪽(철칙 벽 여백 12)
+// 목록과 화면 끝 사이 — 기본 12px 안쪽(철칙 벽 여백 12). 칸이 그보다 화면 끝에 붙어 있으면 칸 선에 맞춘다(규칙 16 같은 선, 10-28 조정자)
 export const PICK_EDGE = 12;
 export const PICK_GAP = 6;
+// 좌우 바깥 한계 = min(12, 칸의 화면 끝 거리) — 칸이 화면 안에 있으면 목록이 칸 선보다 바깥으로 나가지 않고, 칸 선과 어긋나지도 않는다
+export function pickEdges(r, v) {
+    return {
+        l: Math.min(PICK_EDGE, Math.max(0, r.left - v.x)),
+        r: Math.min(PICK_EDGE, Math.max(0, v.x + v.w - r.right)),
+    };
+}
 
 // 보이는 화면 (폰의 주소창 · 자판 · 확대를 뺀 실제 보이는 영역). visualViewport 가 없으면 창 크기
 function viewport() {
@@ -72,15 +79,15 @@ function viewport() {
 }
 
 // 목록 자리(순수 계산 — 시험이 이 함수를 그대로 부른다). r = 누른 칸의 화면 자리, v = 보이는 화면, content = { w: 글에 필요한 폭, h: 다 펼친 높이 }
-//  · 폭: 칸 폭에 맞춤(글이 더 길면 그만큼), 화면 끝 12 안쪽을 넘지 않음. 왼쪽 끝은 칸 왼쪽, 화면 밖이면 안으로 밈
+//  · 폭: 칸 폭에 맞춤(글이 더 길면 그만큼), 좌우 바깥 한계(pickEdges)를 넘지 않음. 왼쪽 끝은 칸 왼쪽, 넘치면 안으로 밈
 //  · 위아래: 다 펼쳐서 칸 밑에 들어가면 밑, 안 들어가고 위가 더 넓으면 위(2.8.1 — 위로 띄울 때도 top 기준)
 //  · 높이: 고른 쪽에 남은 공간까지, 넘치면 목록 안에서 굴림. 자판이 올라와도 v(보이는 화면) 기준이라 자판에 가리지 않음
 export function pickRect(r, v, content) {
-    const edge = PICK_EDGE, gap = PICK_GAP;
-    const maxW = Math.max(0, v.w - edge * 2);
+    const edge = PICK_EDGE, gap = PICK_GAP, side = pickEdges(r, v);
+    const maxW = Math.max(0, v.w - side.l - side.r);
     const maxH = Math.max(0, v.h - edge * 2);
     const width = Math.min(Math.max(Math.ceil(content.w), Math.round(r.width)), maxW);
-    const left = Math.min(Math.max(r.left, v.x + edge), v.x + v.w - width - edge);
+    const left = Math.min(Math.max(r.left, v.x + side.l), v.x + v.w - width - side.r);
     const below = (v.y + v.h) - r.bottom - gap - edge;
     const above = r.top - v.y - gap - edge;
     const up = content.h > below && above > below;
@@ -94,7 +101,8 @@ export function pickRect(r, v, content) {
 function place(box, sel) {
     const r = sel.getBoundingClientRect();
     const v = viewport();
-    const maxW = Math.max(0, v.w - PICK_EDGE * 2);
+    const side = pickEdges(r, v);
+    const maxW = Math.max(0, v.w - side.l - side.r);
     // 폭: 그려진 글 · 체크 자리 · 여백만큼(10-28: 적어도 누른 칸 폭). max-content 는 optgroup 제목 · 찾기 칸도 잰다
     box.style.minWidth = '0';
     box.style.maxWidth = `${maxW}px`;

@@ -680,7 +680,7 @@ export const FILE_HASHES = {
   "src/scripts/scan.js": "5805:194df255:f44ce803",
   "src/scripts/store.js": "4439:3c410dc2:8a4e723f",
   "src/selection-range.js": "6929:b51d4218:4519f447",
-  "src/selects.js": "22954:fabfe33f:303e0ce7",
+  "src/selects.js": "23444:a513a3dd:c2ae1af4",
   "src/sent-tokens.js": "6732:47259993:f6603f0c",
   "src/setting-locks.js": "1456:cbc36430:0ef5054e",
   "src/settings-dialog.js": "994:29aceab3:701cd0e4",
