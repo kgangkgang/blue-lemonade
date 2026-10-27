@@ -3,6 +3,10 @@
    ===== */
 /* ===== 실리태번 화면: 채팅 겉모습 · 시작 화면 (surfaces:chrome) ===== */
 /* ---------- 메시지 · 시작 화면 선 아이콘: 상단 바와 같은 얇은 선 (선 아이콘 설정일 때만 · 모르는 확장 버튼은 원래 글리프) ---------- */
+/* 도움말 ? 선 원(--salty-mi-help)은 선 아이콘 설정과 무관하게 늘 둔다 — 8.0.8: 아이콘 「기본」 설정에서 월드인포 제목 · 칸 이름 ? 가 마스크 없는 포인트색 네모로 깨졌다(변수가 .salty-icons-line 아래에만 있었음) */
+body.salty {
+  --salty-mi-help: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22M9.6%209.4a2.5%202.5%200%200%201%204.9.8c0%201.7-2.5%202.3-2.5%202.3%22%2F%3E%3Cpath%20d%3D%22M12%2016.3h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fsvg%3E");
+}
 body.salty.salty-icons-line {
   --salty-mi-brain: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%205.6a2.9%202.9%200%200%200-5.6-.9A2.9%202.9%200%200%200%204.2%209a3.2%203.2%200%200%200%20.2%205.6%203.1%203.1%200%200%200%203.4%204.3A2.9%202.9%200%200%200%2012%2019.4M12%205.6a2.9%202.9%200%200%201%205.6-.9A2.9%202.9%200%200%201%2019.8%209a3.2%203.2%200%200%201-.2%205.6%203.1%203.1%200%200%201-3.4%204.3%202.9%202.9%200%200%201-4.2.5M12%205.6v13.8M8.6%209.6c1.1.2%202%20.9%202.4%201.9M15.4%209.6c-1.1.2-2%20.9-2.4%201.9%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-swap: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%204%204.5%207.5%208%2011M4.5%207.5h14M16%2013l3.5%203.5L16%2020M19.5%2016.5h-14%22%2F%3E%3C%2Fsvg%3E");
@@ -41,7 +45,6 @@ body.salty.salty-icons-line {
   --salty-mi-chevcircle: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22m8.6%2010.6%203.4%203.4%203.4-3.4%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-gear: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223.2%22%2F%3E%3Cpath%20d%3D%22M12%203.5v2.3M12%2018.2v2.3M3.5%2012h2.3M18.2%2012h2.3M6%206l1.6%201.6M16.4%2016.4%2018%2018M6%2018l1.6-1.6M16.4%207.6%2018%206%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-xcircle: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22m9.3%209.3%205.4%205.4M14.7%209.3l-5.4%205.4%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-help: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22M9.6%209.4a2.5%202.5%200%200%201%204.9.8c0%201.7-2.5%202.3-2.5%202.3%22%2F%3E%3Cpath%20d%3D%22M12%2016.3h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-chatdots: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3Cpath%20d%3D%22M8.4%2011.8h.01M12%2011.8h.01M15.6%2011.8h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-pin: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2016v4.5M8.5%203.5h7M9.8%203.5v5.3l-2.9%203.5a.9.9%200%200%200%20.7%201.5h8.8a.9.9%200%200%200%20.7-1.5l-2.9-3.5V3.5%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-chat: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3C%2Fsvg%3E");
@@ -535,21 +538,7 @@ body.salty #selectChatPopupHeaderText {
   text-align: left;
   word-break: keep-all;
 }
-body.salty #selectChatPopupHeaderText .note-link-span {
-  margin-left: 2px;
-  color: var(--salty-faint);
-  font-size: 14px;
-}
-body.salty #selectChatPopupHeaderText > a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin: -8px;
-  border-radius: var(--bl-r-xs);
-  vertical-align: middle;
-}
+/* 채팅 서재 제목 옆 ? 는 56-control-consistency 의 원본 ? 블록(선 원 · 제목 등급)이 그린다 — 8.0.8 에 32px 상자 · 14px 회색 글리프 규칙을 뺐다 */
 body.salty #select_chat_cross {
   order: 1;
   flex: none;

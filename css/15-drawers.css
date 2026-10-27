@@ -54,14 +54,7 @@ body.salty :is(#user-settings-block, #AdvancedFormatting, #rm_extensions_block, 
   font-size: 13px !important;
   color: var(--salty-faint) !important;
 }
-body.salty :is(#user-settings-block, #AdvancedFormatting) h3 .note-link-span {
-  font-size: 16px !important;
-}
-body.salty :is(#user-settings-block, #AdvancedFormatting) :is(h3, h4) .notes-link {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 6px;
-}
+/* 사용자 설정 · 고급 서식의 제목 · 라벨 옆 ? 는 56 의 원본 ? 블록이 그린다(8.0.8) — 위 13px 규칙은 확장 서랍 · 배경 쪽 다른 확장의 ? 몫으로만 남는다 */
 /* 스위치 줄 이름: 속에 한 겹 더 싸인 글자(span · div 속 small)도 줄 이름 크기 */
 body.salty :is(#user-settings-block, #AdvancedFormatting) label.checkbox_label:where(:not(.salty-panel *)) :is(small, span):where(:not(.fa-solid, .fa-regular, .fa-brands, .menu_button, .menu_button *, .note-link-span)) {
   font-size: var(--bl-fs-body) !important;
@@ -623,11 +616,7 @@ body.salty #AdvancedFormatting > .spaceEvenly label.flex-container[data-bl-row~=
   align-items: center;
   justify-content: space-between;
 }
-body.salty #AdvancedFormatting > .spaceEvenly :is(small, label) :is(.fa-circle-question, .fa-question-circle) {
-  font-size: 12px !important;
-  color: var(--salty-faint) !important;
-  opacity: 1 !important;
-}
+/* 고급 서식 라벨 옆 툴팁 ? 는 56 의 원본 ? 블록(라벨 등급 선 원)이 그린다(8.0.8) */
 /* 예시 구분자 · 채팅 시작, 접두 · 접미 짝: 사이 8px */
 body.salty #AdvancedFormatting > .spaceEvenly :is(.flex-container:has(> .flex1 > label), details > .flex-container, #context_story_string_inject_settings) {
   gap: var(--bl-s2) !important;

@@ -24,20 +24,8 @@ body.salty :is(#WorldInfo, #PersonaManagement) h3 a {
   display: inline-flex;
   align-items: center;
 }
-body.salty :is(#WorldInfo, #PersonaManagement) h3 .note-link-span {
-  font-size: 16px !important;
-  color: var(--salty-faint) !important;
-}
-/* 도움말 링크(물음표)가 26×17 밖에 안 됨 → 누를 칸만 32px (음수 여백으로 제목 줄 높이는 그대로) */
-body.salty #PersonaManagement h3 > a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin: -8px !important;
-  border-radius: var(--bl-r-xs);
-}
+/* 제목 옆 ? (월드 인포 · 페르소나 관리)는 56-control-consistency 의 원본 ? 블록(선 원 1.25 × 본문 글자 · 제목에서 6px · 폰 누르는 칸 44)이 그린다.
+   8.0.8: 여기 있던 16px 회색 글리프 · 페르소나 32px 상자(margin -8px!important) 규칙이 ID 특이도로 8.0.2 의 공용 규칙(:where)을 이겨 페르소나 쪽만 옛 모양이 남았었다(사용자 제보) → 뺐다 */
 
 /* ---------- 공용: 쪽 넘김 줄 (캐릭터 목록과 같은 조용한 글자 · 아이콘) ---------- */
 body.salty :is(#WorldInfo, #PersonaManagement) .paginationjs {

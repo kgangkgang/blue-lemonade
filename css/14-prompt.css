@@ -202,11 +202,7 @@ body.salty #left-nav-panel #openai_settings .oneline-dropdown > label {
   font-size: var(--bl-fs-body);
   color: var(--salty-text);
 }
-body.salty #left-nav-panel #openai_settings .oneline-dropdown > label .fa-circle-question {
-  font-size: 14px;
-  color: var(--salty-faint) !important;
-  opacity: 1 !important;
-}
+/* 「추론 노력」 라벨 옆 ? 는 56 의 원본 ? 블록(라벨 등급)이 그린다(8.0.8) */
 body.salty #left-nav-panel #openai_settings .oneline-dropdown > select {
   flex: 0 1 auto;
   width: auto !important;
@@ -851,10 +847,7 @@ body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_clo
 body.salty #rm_api_block > #title_api {
   font-size: var(--bl-fs-head) !important;
 }
-body.salty #rm_api_block .notes-link .note-link-span {
-  font-size: var(--bl-fs-body);
-  vertical-align: 2px;
-}
+/* API 서랍 제목 옆 ? 는 56 의 원본 ? 블록이 그린다(8.0.8) */
 /* 프로필 줄: 고르기 + 조용한 아이콘, 오른쪽 끝 맞춤 */
 body.salty #rm_api_block .flex-container:has(> #connection_profiles) {
   align-items: center;

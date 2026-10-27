@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 3b194db9f4c4) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build cb9c25128848) */
 /* css/00-base.css */
 :root{--bl-release:"8.0.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -4621,6 +4621,9 @@ color:var(--bl-pop-ink);
   --bl-deco-glyph-12p5: 12.5px;
 }
 /* css/11-chrome.css */
+body.salty {
+  --salty-mi-help: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22M9.6%209.4a2.5%202.5%200%200%201%204.9.8c0%201.7-2.5%202.3-2.5%202.3%22%2F%3E%3Cpath%20d%3D%22M12%2016.3h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fsvg%3E");
+}
 body.salty.salty-icons-line {
   --salty-mi-brain: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%205.6a2.9%202.9%200%200%200-5.6-.9A2.9%202.9%200%200%200%204.2%209a3.2%203.2%200%200%200%20.2%205.6%203.1%203.1%200%200%200%203.4%204.3A2.9%202.9%200%200%200%2012%2019.4M12%205.6a2.9%202.9%200%200%201%205.6-.9A2.9%202.9%200%200%201%2019.8%209a3.2%203.2%200%200%201-.2%205.6%203.1%203.1%200%200%201-3.4%204.3%202.9%202.9%200%200%201-4.2.5M12%205.6v13.8M8.6%209.6c1.1.2%202%20.9%202.4%201.9M15.4%209.6c-1.1.2-2%20.9-2.4%201.9%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-swap: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%204%204.5%207.5%208%2011M4.5%207.5h14M16%2013l3.5%203.5L16%2020M19.5%2016.5h-14%22%2F%3E%3C%2Fsvg%3E");
@@ -4659,7 +4662,6 @@ body.salty.salty-icons-line {
   --salty-mi-chevcircle: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22m8.6%2010.6%203.4%203.4%203.4-3.4%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-gear: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223.2%22%2F%3E%3Cpath%20d%3D%22M12%203.5v2.3M12%2018.2v2.3M3.5%2012h2.3M18.2%2012h2.3M6%206l1.6%201.6M16.4%2016.4%2018%2018M6%2018l1.6-1.6M16.4%207.6%2018%206%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-xcircle: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22m9.3%209.3%205.4%205.4M14.7%209.3l-5.4%205.4%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-help: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22M9.6%209.4a2.5%202.5%200%200%201%204.9.8c0%201.7-2.5%202.3-2.5%202.3%22%2F%3E%3Cpath%20d%3D%22M12%2016.3h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-chatdots: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3Cpath%20d%3D%22M8.4%2011.8h.01M12%2011.8h.01M15.6%2011.8h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-pin: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2016v4.5M8.5%203.5h7M9.8%203.5v5.3l-2.9%203.5a.9.9%200%200%200%20.7%201.5h8.8a.9.9%200%200%200%20.7-1.5l-2.9-3.5V3.5%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-chat: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3C%2Fsvg%3E");
@@ -5134,21 +5136,6 @@ body.salty #selectChatPopupHeaderText {
   text-align: left;
   word-break: keep-all;
 }
-body.salty #selectChatPopupHeaderText .note-link-span {
-  margin-left: 2px;
-  color: var(--salty-faint);
-  font-size: 14px;
-}
-body.salty #selectChatPopupHeaderText > a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin: -8px;
-  border-radius: var(--bl-r-xs);
-  vertical-align: middle;
-}
 body.salty #select_chat_cross {
   order: 1;
   flex: none;
@@ -5603,19 +5590,6 @@ body.salty :is(#WorldInfo, #PersonaManagement) h3 {
 body.salty :is(#WorldInfo, #PersonaManagement) h3 a {
   display: inline-flex;
   align-items: center;
-}
-body.salty :is(#WorldInfo, #PersonaManagement) h3 .note-link-span {
-  font-size: 16px !important;
-  color: var(--salty-faint) !important;
-}
-body.salty #PersonaManagement h3 > a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin: -8px !important;
-  border-radius: var(--bl-r-xs);
 }
 body.salty :is(#WorldInfo, #PersonaManagement) .paginationjs {
   flex: 1 1 auto;
@@ -8233,8 +8207,7 @@ body.salty #right-nav-panel #first_message_div {
 body.salty #right-nav-panel :is(#description_div, #first_message_div) > .flex-container {
   gap: 2px;
 }
-body.salty :is(#right-nav-panel, #character_popup) .editor_maximize,
-body.salty :is(#right-nav-panel, #character_popup) .note-link-span {
+body.salty :is(#right-nav-panel, #character_popup) .editor_maximize {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -8705,11 +8678,6 @@ body.salty #left-nav-panel #openai_settings .oneline-dropdown > label {
   margin: 0 !important;
   font-size: var(--bl-fs-body);
   color: var(--salty-text);
-}
-body.salty #left-nav-panel #openai_settings .oneline-dropdown > label .fa-circle-question {
-  font-size: 14px;
-  color: var(--salty-faint) !important;
-  opacity: 1 !important;
 }
 body.salty #left-nav-panel #openai_settings .oneline-dropdown > select {
   flex: 0 1 auto;
@@ -9316,10 +9284,6 @@ body.salty #completion_prompt_manager_popup #completion_prompt_manager_popup_clo
 body.salty #rm_api_block > #title_api {
   font-size: var(--bl-fs-head) !important;
 }
-body.salty #rm_api_block .notes-link .note-link-span {
-  font-size: var(--bl-fs-body);
-  vertical-align: 2px;
-}
 body.salty #rm_api_block .flex-container:has(> #connection_profiles) {
   align-items: center;
   gap: 0 !important;
@@ -9467,14 +9431,6 @@ font-size:13px !important;
 }
 body.salty :is(#user-settings-block, #AdvancedFormatting, #rm_extensions_block, #Backgrounds) :is(h3, h4, label, small) .note-link-span:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-faint) !important;
-}
-body.salty :is(#user-settings-block, #AdvancedFormatting) h3 .note-link-span {
-  font-size: 16px !important;
-}
-body.salty :is(#user-settings-block, #AdvancedFormatting) :is(h3, h4) .notes-link {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 6px;
 }
 body.salty :is(#user-settings-block, #AdvancedFormatting) label.checkbox_label:where(:not(.salty-panel *)) small:where(:not(.fa-solid, .fa-regular, .fa-brands, .menu_button, .menu_button *, .note-link-span)),
 body.salty :is(#user-settings-block, #AdvancedFormatting) label.checkbox_label:where(:not(.salty-panel *)) span:where(:not(.fa-solid, .fa-regular, .fa-brands, .menu_button, .menu_button *, .note-link-span)) {
@@ -10085,18 +10041,6 @@ opacity:1 !important;
 body.salty #AdvancedFormatting > .spaceEvenly label.flex-container[data-bl-row~="smax"]:is(bl-s, *) {
   align-items: center;
   justify-content: space-between;
-}
-body.salty #AdvancedFormatting > .spaceEvenly :is(small, label) .fa-circle-question,
-body.salty #AdvancedFormatting > .spaceEvenly :is(small, label) .fa-question-circle {
-font-size:12px !important;
-}
-body.salty #AdvancedFormatting > .spaceEvenly :is(small, label) .fa-circle-question:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty #AdvancedFormatting > .spaceEvenly :is(small, label) .fa-question-circle:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
-color:var(--salty-faint) !important;
-}
-body.salty #AdvancedFormatting > .spaceEvenly :is(small, label) .fa-circle-question,
-body.salty #AdvancedFormatting > .spaceEvenly :is(small, label) .fa-question-circle {
-opacity:1 !important;
 }
 body.salty #AdvancedFormatting > .spaceEvenly :where(.flex-container:has(> .flex1 > label)):is(#bl-s, *),
 body.salty #AdvancedFormatting > .spaceEvenly :where(.flex-container):where(details > .flex-container):is(#bl-s, *),
@@ -22194,8 +22138,7 @@ body.salty :is(:is(#chat,.bl-chat-like)[data-bl-dem-paused], .cg-root[data-bl-de
 }
 /* css/56-control-consistency.css */
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button,
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
+html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button {
 align-items:center !important;
 justify-content:center !important;
 position:relative;
@@ -22213,33 +22156,28 @@ border:0 !important;
 border-radius:50% !important;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :where(.lvs-button):is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+html body.salty :where(.lvs-button):is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:transparent !important;
 box-shadow:none !important;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button,
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
+html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button {
 font:inherit !important;
 line-height:1 !important;
 vertical-align:middle !important;
 text-indent:0 !important;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :where(.lvs-button):is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+html body.salty :where(.lvs-button):is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:transparent !important;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button,
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
+html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button {
 transform:translateY(-1.5px);
 }
 html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button { display:inline-flex!important; }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button::after,
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after {
+html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button::after {
 content:'';
 display:block;
 position:absolute;
@@ -22249,13 +22187,11 @@ width:100%;
 height:100%;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
-html body.salty :where(.lvs-button):is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after {
+html body.salty :where(.lvs-button):is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after {
 background:var(--salty-accent,currentColor);
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button::after,
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after {
+html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button::after {
 -webkit-mask:var(--salty-mi-help) center/contain no-repeat;
 mask:var(--salty-mi-help) center/contain no-repeat;
 pointer-events:none;
@@ -22263,8 +22199,7 @@ pointer-events:none;
 html body.salty .bl-wi-help::before { content:none; }
 @media (pointer: coarse) {
   html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button::before,
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::before {
+html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button::before {
 content:'';
 position:absolute;
 left:50%;
@@ -22276,45 +22211,446 @@ height:max(100%,44px);
 transform:translate(-50%,-50%);
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-html body.salty :where(.lvs-button):is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+html body.salty :where(.lvs-button):is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
 background:none;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button::before,
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::before {
+html body.salty .lvs-dialog.lv-editor button.lvs-button.lvs-help-button::before {
 border:0;
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-html body.salty :where(.lvs-button):is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+html body.salty :where(.lvs-button):is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
 box-shadow:none;
 }
   html body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .bl-wi-help::before { width:max(100%,32px); }
 }
 html body.salty .bl-wi-help:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)[hidden],
 html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)[hidden],
-html body.salty :where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)[hidden],
 html body.salty.salty-help-off .bl-wi-help { display:none!important; }
 html body.salty .bl-wi-help:focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty .lvs-help-button:focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+html body.salty .lvs-help-button:focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 outline:2px solid var(--salty-accent) !important;
 }
 html body.salty .bl-wi-help:focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
-html body.salty .lvs-help-button:focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *) {
+html body.salty .lvs-help-button:focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *) {
 outline-width:2px !important;
 outline-style:solid !important;
 }
 html body.salty .bl-wi-help:focus-visible,
-html body.salty .lvs-help-button:focus-visible,
-html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(.bl-s, *):focus-visible {
+html body.salty .lvs-help-button:focus-visible {
 outline-offset:2px !important;
 }
-html body.salty #WorldInfo > .flex-container > h3 { gap:6px!important; }
-html body.salty #WorldInfo h3 > a.notes-link { font-size:var(--bl-fs-body)!important; margin:0!important; }
-html body.salty #WorldInfo h3 > a.notes-link > .note-link-span { opacity:0!important; }
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *),
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *),
+html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link,
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *),
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *),
+html body.salty :where(.fa-circle-question):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.fa-question-circle):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *),
+html body.salty :where(.note-link-span):where(.regex_editor :is(small, span) > .note-link-span):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *) {
+display:inline-flex !important;
+align-items:center !important;
+justify-content:center !important;
+position:relative;
+flex:0 0 auto !important;
+box-sizing:border-box !important;
+width:1.25em !important;
+min-width:1.25em !important;
+max-width:none !important;
+height:1.25em !important;
+min-height:1.25em !important;
+max-height:none !important;
+margin:0 !important;
+padding:0 !important;
+border:0 !important;
+border-radius:50% !important;
+}
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.fa-circle-question):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.fa-question-circle):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.note-link-span):where(.regex_editor :is(small, span) > .note-link-span):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+background:transparent !important;
+box-shadow:none !important;
+}
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *),
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *),
+html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link,
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *),
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *),
+html body.salty :where(.fa-circle-question):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.fa-question-circle):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *),
+html body.salty :where(.note-link-span):where(.regex_editor :is(small, span) > .note-link-span):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *) {
+font:inherit !important;
+line-height:1 !important;
+vertical-align:middle !important;
+text-indent:0 !important;
+opacity:1 !important;
+}
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.fa-circle-question):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.fa-question-circle):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.note-link-span):where(.regex_editor :is(small, span) > .note-link-span):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+color:transparent !important;
+}
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *),
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *),
+html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link,
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *),
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *),
+html body.salty :where(.fa-circle-question):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.fa-question-circle):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *),
+html body.salty :where(.note-link-span):where(.regex_editor :is(small, span) > .note-link-span):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *) {
+transform:translateY(-1.5px);
+}
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *)::after,
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *)::after,
+html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link::after,
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *)::after,
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *)::after,
+html body.salty :where(.fa-circle-question):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.fa-question-circle):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *)::after,
+html body.salty :where(.note-link-span):where(.regex_editor :is(small, span) > .note-link-span):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after {
+content:'';
+display:block;
+position:absolute;
+left:0;
+top:0;
+width:100%;
+height:100%;
+}
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.fa-circle-question):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.fa-question-circle):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.note-link-span):where(.regex_editor :is(small, span) > .note-link-span):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after {
+background:var(--salty-accent,currentColor);
+}
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *)::after,
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *)::after,
+html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link::after,
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *)::after,
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *)::after,
+html body.salty :where(.fa-circle-question):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.fa-question-circle):where(#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *)::after,
+html body.salty :where(.note-link-span):where(.regex_editor :is(small, span) > .note-link-span):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after {
+-webkit-mask:var(--salty-mi-help) center/contain no-repeat;
+mask:var(--salty-mi-help) center/contain no-repeat;
+pointer-events:none;
+}
+html body.salty :is(
+  #WorldInfo h3 > a.notes-link, #PersonaManagement h3 > a, #user-settings-block h3 > a.notes-link, #AdvancedFormatting h3 > a.notes-link,
+  #rm_api_block a.notes-link[href*="connection-profiles"], #groupControlsToggle a.notes-link, #selectChatPopupHeaderText > a,
+  #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link, #character_popup :is(h4, h5) > a.notes-link, #left-nav-panel a.topRightInset,
+  #novel_api-presets strong > a.notes-link, #AdvancedFormatting a.notes-link, #user-settings-block a.notes-link, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"]
+) > *,
+html body.salty #left-nav-panel h4 > a > small,
+html body.salty #rm_api_block a > .note-link-span:is(bl-s, *),
+html body.salty #rm_api_block a > i.fa-circle-question { opacity:0!important; margin:0!important; width:0!important; min-width:0!important; height:0!important; font-size:0!important; overflow:hidden!important; pointer-events:none; }
+@media (pointer: coarse) {
+  html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *)::before,
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *)::before,
+html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link::before,
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *)::before,
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *)::before,
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *)::before,
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before {
+content:'';
+position:absolute;
+left:50%;
+top:50%;
+right:auto;
+bottom:auto;
+width:max(100%,44px);
+height:max(100%,44px);
+transform:translate(-50%,-50%);
+}
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+background:none;
+}
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *)::before,
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *)::before,
+html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link::before,
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *)::before,
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *)::before,
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *)::before,
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before {
+border:0;
+}
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+box-shadow:none;
+}
+}
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+outline:2px solid var(--salty-accent) !important;
+}
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *) {
+outline-width:2px !important;
+outline-style:solid !important;
+}
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *):focus-visible,
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):focus-visible,
+html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):focus-visible,
+html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):focus-visible,
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
+html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(#bl-s, *):focus-visible,
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(#bl-s, *):focus-visible,
+html body.salty :where(.notes-link):where(#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible {
+outline-offset:2px !important;
+}
+html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty #left-nav-panel a.note-link-span[href],
+html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.fa-circle-question):where(label[for="openai_reasoning_effort"] > a.fa-circle-question):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(a):where(#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):is(#AdvancedFormatting a.notes-link):is(.bl-s, *),
+html body.salty #AdvancedFormatting :is(label, summary, small) > :where(.fa-circle-question):is(.fa-circle-question, .fa-question-circle):not(.note-link-span),
+html body.salty #AdvancedFormatting :is(label, summary, small) > :where(.fa-question-circle):is(.fa-circle-question, .fa-question-circle):not(.note-link-span),
+html body.salty :where(.notes-link):is(#user-settings-block a.notes-link):is(.bl-s, *),
+html body.salty :where(.note-link-span):is(.regex_editor :is(small, span) > .note-link-span):is(#bl-s, *),
+html body.salty :where(.notes-link):where(#character_popup h5 > a.notes-link):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) { font-size:var(--bl-fs-sub)!important; margin:0 0 0 2px!important; }
+html body.salty :where(.notes-link):where(#WorldInfo h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(a):where(#PersonaManagement h3 > a):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#user-settings-block h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#AdvancedFormatting h3 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="connection-profiles"]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *),
+html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *),
+html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link,
+html body.salty :where(.notes-link):where(#character_popup h4 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *) { font-size:var(--bl-fs-body)!important; margin:0!important; }
+html body.salty :where(h3):is(#WorldInfo > .flex-container > h3):is(bl-s, *),
+html body.salty :where(h3):is(#PersonaManagement h3):is(.bl-s, *):is(bl-s, *),
+html body.salty #user-settings-block h3:has(> a.notes-link),
+html body.salty #AdvancedFormatting h3:has(> a.notes-link),
+html body.salty :where(h3:has(> a.notes-link[href*="connection-profiles"])):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
+html body.salty #groupControlsToggle > span:has(> a.notes-link),
+html body.salty #character_popup h4:has(> a.notes-link) {
+  display:inline-flex; align-items:center!important; gap:6px!important; white-space:nowrap;
+}
+html body.salty :where(h3):is(#WorldInfo > .flex-container > h3):is(bl-s, *),
+html body.salty :where(h3):is(#PersonaManagement h3):is(.bl-s, *):is(bl-s, *),
+html body.salty #user-settings-block h3:has(> a.notes-link),
+html body.salty #AdvancedFormatting h3:has(> a.notes-link),
+html body.salty #character_popup h4:has(> a.notes-link) { display:flex; }
+html body.salty #selectChatPopupHeaderText > a { margin-left:6px!important; }
+html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link { margin-left:4px!important; }
+html body.salty #left-nav-panel a.topRightInset { position:absolute!important; }
+html body.salty #WorldInfo .world_entry a.notes-link[href*="inclusion-group"] { font-size:inherit!important; margin:0 0 0 0.2em!important; }
 html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark {
 position:relative;
 display:block;

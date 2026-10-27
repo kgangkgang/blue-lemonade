@@ -1035,7 +1035,7 @@ body.salty #right-nav-panel :is(#description_div, #first_message_div) > .flex-co
   gap: 2px;
 }
 /* 크게 보기 · 도움말: 아이콘은 13, 누르는 칸은 32px (줄 높이는 음수 여백으로 그대로) */
-body.salty :is(#right-nav-panel, #character_popup) :is(.editor_maximize, .note-link-span) {
+body.salty :is(#right-nav-panel, #character_popup) .editor_maximize {   /* 8.0.8: 옆 ? (.note-link-span)는 56 의 원본 ? 블록이 그린다 — 32px 상자에서 뺐다 */
   display: inline-flex;
   align-items: center;
   justify-content: center;

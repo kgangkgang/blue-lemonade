@@ -7,7 +7,7 @@
    7.9.9 (사용자 제보 「월드인포 ? 동그라미 글이랑 간격 너무 벌어짐 · 크기도 글자 크기랑 맞춰줘」): 상자 max(24px,1em) · 여백 4px → 아이콘 1em 이 24px 상자 가운데라 글자 끝에서 아이콘까지 10px 가 비었다
    → 상자 = 아이콘 = 옆 글자의 1.25em(동그라미 선 자체는 그 0.7 ≈ 0.9em, 한글 글자 높이와 비슷), 여백 0.2em(아이콘 안쪽 빈 테 0.18em 을 더하면 눈에 보이는 간격 ≈ 0.38em).
    폰(손가락 화면)의 누르는 칸은 ::before 투명 상자 — 세로 44, 가로는 월드인포 항목 머리줄(숫자 칸이 2px 옆)에서는 32 까지만(옆 칸을 덮지 않게), 나머지는 44. */
-html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button,:where(#WorldInfo h3 > a.notes-link)) {
+html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) {
   align-items:center!important; justify-content:center!important;
   position:relative; flex:0 0 auto!important; box-sizing:border-box!important;
   width:1.25em!important; min-width:1.25em!important; max-width:none!important;
@@ -19,27 +19,110 @@ html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help
   transform:translateY(-1.5px);   /* 글자 중심에 맞춤 — 보정 전 실측 +1.4px 아래(76-help-button 과 같은 값) */
 }
 html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) { display:inline-flex!important; }
-html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button,:where(#WorldInfo h3 > a.notes-link))::after {
+html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::after {
   content:''; display:block; position:absolute; left:0; top:0; width:100%; height:100%;
   background:var(--salty-accent,currentColor); -webkit-mask:var(--salty-mi-help) center/contain no-repeat; mask:var(--salty-mi-help) center/contain no-repeat;
   pointer-events:none;
 }
 html body.salty .bl-wi-help::before { content:none; }
 @media (pointer: coarse) {
-  html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button,:where(#WorldInfo h3 > a.notes-link))::before {
+  html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::before {
     content:''; position:absolute; left:50%; top:50%; right:auto; bottom:auto; width:max(100%,44px); height:max(100%,44px); transform:translate(-50%,-50%);   /* 51-integrations 의 inset:-8px 를 덮는다 */
     background:none; border:0; box-shadow:none;
   }
   html body.salty #WorldInfo .world_entry .WIEnteryHeaderControls .bl-wi-help::before { width:max(100%,32px); }
 }
-html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button,:where(#WorldInfo h3 > a.notes-link))[hidden],
+html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)[hidden],
 html body.salty.salty-help-off .bl-wi-help { display:none!important; }
-html body.salty :is(.bl-wi-help,.lvs-help-button,:where(#WorldInfo h3 > a.notes-link)):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:2px!important; }
-/* 월드인포 제목의 기본 도움말 링크도 같은 선 원을 써요. :where로 기존 도움말의 특이도는 유지해요.
-   제목의 기존 6px 간격을 쓰고, 그림 크기는 같은 패널의 도움말과 같은 메뉴 글자 크기를 따라요. */
-html body.salty #WorldInfo > .flex-container > h3 { gap:6px!important; }
-html body.salty #WorldInfo h3 > a.notes-link { font-size:var(--bl-fs-body)!important; margin:0!important; }
-html body.salty #WorldInfo h3 > a.notes-link > .note-link-span { opacity:0!important; }
+html body.salty :is(.bl-wi-help,.lvs-help-button):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:2px!important; }
+/* ---------- 실리태번 원본 ? (8.0.8 전수조사 · 사용자 제보 「페르소나 관리 옆 ? 는 왜 그대로지」) ----------
+   원본 index.html 의 fa-circle-question · note-link-span 32곳 + 연결 프로필(connection-manager) · 정규식 편집 창을 전부 테마의 선 원 ? (--salty-mi-help, 포인트 색)로 그린다.
+   8.0.2 는 #WorldInfo h3 > a.notes-link 하나만 공용 목록에 :where 로 넣었는데, 페르소나 관리 제목 링크는 notes-link 클래스가 없고(<a href target>)
+   12-worldinfo 의 ID 규칙(32px 상자 · margin -8px!important · 16px 회색 글리프)이 더 세서 옛 모양이 남았다. 그래서 원본용 목록은 :where 없이(ID 특이도 그대로) 따로 둔다.
+   등급: T(제목 옆 — 서랍 · 창 제목 h3, 캐릭터 칸 제목) = 상자 1.25 × 본문 글자(--bl-fs-body), 제목에서 6px
+         L(라벨 옆 — h4 · label · small · summary) = 상자 1.25 × 보조 글자(--bl-fs-sub), 한 단계 작게, 여백 2px(앞 공백 글자와 합쳐 ≈ 6px)
+         W(월드인포 항목 「포함 그룹」) = 같은 항목의 칸 이름 ? (.bl-wi-help) 와 같은 1.25em · 0.2em
+   툴팁만 있는 ? (span · small · i, 링크 아님)는 폰 누르는 칸 44 를 주지 않는다 — 옆 체크 줄 · 라벨의 탭을 가로채지 않게. */
+html body.salty :is(
+  #WorldInfo h3 > a.notes-link, #PersonaManagement h3 > a, #user-settings-block h3 > a.notes-link, #AdvancedFormatting h3 > a.notes-link,
+  #rm_api_block a.notes-link[href*="connection-profiles"], #groupControlsToggle a.notes-link, #selectChatPopupHeaderText > a,
+  #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link, #character_popup :is(h4, h5) > a.notes-link, #left-nav-panel a.topRightInset,
+  #novel_api-presets strong > a.notes-link, #left-nav-panel a.note-link-span[href], #left-nav-panel h4 > a:has(> small > .note-link-span), label[for="openai_reasoning_effort"] > a.fa-circle-question,
+  #rm_api_block a:has(> .note-link-span, > i.fa-circle-question), #AdvancedFormatting a.notes-link, #AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span),
+  #user-settings-block a.notes-link, .regex_editor :is(small, span) > .note-link-span, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"]
+) {
+  display:inline-flex!important; align-items:center!important; justify-content:center!important;
+  position:relative; flex:0 0 auto!important; box-sizing:border-box!important;
+  width:1.25em!important; min-width:1.25em!important; max-width:none!important;
+  height:1.25em!important; min-height:1.25em!important; max-height:none!important;
+  margin:0!important; padding:0!important; border:0!important; border-radius:50%!important;
+  background:transparent!important; box-shadow:none!important; font:inherit!important; line-height:1!important;
+  vertical-align:middle!important; text-indent:0!important; opacity:1!important;
+  color:transparent!important;   /* 자신이 FA 글리프인 ? (span · small · i · a.fa-circle-question)는 글리프를 투명하게 — 선 원은 ::after */
+  transform:translateY(-1.5px);
+}
+html body.salty :is(
+  #WorldInfo h3 > a.notes-link, #PersonaManagement h3 > a, #user-settings-block h3 > a.notes-link, #AdvancedFormatting h3 > a.notes-link,
+  #rm_api_block a.notes-link[href*="connection-profiles"], #groupControlsToggle a.notes-link, #selectChatPopupHeaderText > a,
+  #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link, #character_popup :is(h4, h5) > a.notes-link, #left-nav-panel a.topRightInset,
+  #novel_api-presets strong > a.notes-link, #left-nav-panel a.note-link-span[href], #left-nav-panel h4 > a:has(> small > .note-link-span), label[for="openai_reasoning_effort"] > a.fa-circle-question,
+  #rm_api_block a:has(> .note-link-span, > i.fa-circle-question), #AdvancedFormatting a.notes-link, #AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span),
+  #user-settings-block a.notes-link, .regex_editor :is(small, span) > .note-link-span, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"]
+)::after {
+  content:''; display:block; position:absolute; left:0; top:0; width:100%; height:100%;
+  background:var(--salty-accent,currentColor); -webkit-mask:var(--salty-mi-help) center/contain no-repeat; mask:var(--salty-mi-help) center/contain no-repeat;
+  pointer-events:none;
+}
+/* 품은 회색 글리프(span · small > div · i)는 자리만 두고 숨긴다 — 링크 · 툴팁 · 누르는 동작은 그대로 */
+html body.salty :is(
+  #WorldInfo h3 > a.notes-link, #PersonaManagement h3 > a, #user-settings-block h3 > a.notes-link, #AdvancedFormatting h3 > a.notes-link,
+  #rm_api_block a.notes-link[href*="connection-profiles"], #groupControlsToggle a.notes-link, #selectChatPopupHeaderText > a,
+  #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link, #character_popup :is(h4, h5) > a.notes-link, #left-nav-panel a.topRightInset,
+  #novel_api-presets strong > a.notes-link, #AdvancedFormatting a.notes-link, #user-settings-block a.notes-link, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"]
+) > *,
+html body.salty #left-nav-panel h4 > a > small,   /* GBNF 문법 · JSON 스키마(a > small > div) — :has 를 주어 아닌 자리에 쓰지 않으려고 자식 쪽에서 고른다(has-guard) */
+html body.salty #rm_api_block a > :is(.note-link-span, i.fa-circle-question) { opacity:0!important; margin:0!important; width:0!important; min-width:0!important; height:0!important; font-size:0!important; overflow:hidden!important; pointer-events:none; }
+/* 폰 누르는 칸 44 — 링크(a[href])인 ? 만 */
+@media (pointer: coarse) {
+  html body.salty :is(
+    #WorldInfo h3 > a.notes-link, #PersonaManagement h3 > a, #user-settings-block h3 > a.notes-link, #AdvancedFormatting h3 > a.notes-link,
+    #rm_api_block a.notes-link[href*="connection-profiles"], #groupControlsToggle a.notes-link, #selectChatPopupHeaderText > a,
+    #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link, #character_popup :is(h4, h5) > a.notes-link, #left-nav-panel a.topRightInset,
+    #novel_api-presets strong > a.notes-link, #left-nav-panel a.note-link-span[href], #left-nav-panel h4 > a:has(> small > .note-link-span), label[for="openai_reasoning_effort"] > a.fa-circle-question,
+    #rm_api_block a:has(> .note-link-span, > i.fa-circle-question), #AdvancedFormatting a.notes-link, #user-settings-block a.notes-link, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"]
+  )::before {
+    content:''; position:absolute; left:50%; top:50%; right:auto; bottom:auto; width:max(100%,44px); height:max(100%,44px); transform:translate(-50%,-50%);
+    background:none; border:0; box-shadow:none;
+  }
+}
+html body.salty :is(
+  #WorldInfo h3 > a.notes-link, #PersonaManagement h3 > a, #user-settings-block h3 > a.notes-link, #AdvancedFormatting h3 > a.notes-link,
+  #rm_api_block a.notes-link[href*="connection-profiles"], #groupControlsToggle a.notes-link, #selectChatPopupHeaderText > a,
+  #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link, #character_popup :is(h4, h5) > a.notes-link, #left-nav-panel a.topRightInset,
+  #novel_api-presets strong > a.notes-link, #left-nav-panel a.note-link-span[href], #left-nav-panel h4 > a:has(> small > .note-link-span), label[for="openai_reasoning_effort"] > a.fa-circle-question,
+  #rm_api_block a:has(> .note-link-span, > i.fa-circle-question), #AdvancedFormatting a.notes-link, #user-settings-block a.notes-link, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"]
+):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:2px!important; }
+/* L 라벨 옆: 한 단계 작게(1.25 × 보조 글자) · 여백 2px(앞 공백 글자 ≈ 4px 와 합쳐 6px 안팎) */
+html body.salty :is(
+  #novel_api-presets strong > a.notes-link, #left-nav-panel a.note-link-span[href], #left-nav-panel h4 > a:has(> small > .note-link-span), label[for="openai_reasoning_effort"] > a.fa-circle-question,
+  #rm_api_block a:has(> .note-link-span, > i.fa-circle-question), #AdvancedFormatting a.notes-link, #AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span),
+  #user-settings-block a.notes-link, .regex_editor :is(small, span) > .note-link-span, #character_popup h5 > a.notes-link
+) { font-size:var(--bl-fs-sub)!important; margin:0 0 0 2px!important; }
+/* T 제목 옆: 1.25 × 본문 글자, 제목에서 6px(머리줄이 flex 면 gap 으로, 아니면 margin 으로) */
+html body.salty :is(
+  #WorldInfo h3 > a.notes-link, #PersonaManagement h3 > a, #user-settings-block h3 > a.notes-link, #AdvancedFormatting h3 > a.notes-link,
+  #rm_api_block a.notes-link[href*="connection-profiles"], #groupControlsToggle a.notes-link, #selectChatPopupHeaderText > a,
+  #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link, #character_popup h4 > a.notes-link, #left-nav-panel a.topRightInset
+) { font-size:var(--bl-fs-body)!important; margin:0!important; }
+html body.salty :is(#WorldInfo > .flex-container > h3, #PersonaManagement h3, #user-settings-block h3:has(> a.notes-link), #AdvancedFormatting h3:has(> a.notes-link), h3:has(> a.notes-link[href*="connection-profiles"]), #groupControlsToggle > span:has(> a.notes-link), #character_popup h4:has(> a.notes-link)) {
+  display:inline-flex; align-items:center!important; gap:6px!important; white-space:nowrap;
+}
+html body.salty :is(#WorldInfo > .flex-container > h3, #PersonaManagement h3, #user-settings-block h3:has(> a.notes-link), #AdvancedFormatting h3:has(> a.notes-link), #character_popup h4:has(> a.notes-link)) { display:flex; }
+html body.salty #selectChatPopupHeaderText > a { margin-left:6px!important; }   /* 채팅 서재 제목: 글자 줄 안이라 margin */
+html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link { margin-left:4px!important; }   /* 줄 gap 2px + 4 = 6 */
+html body.salty #left-nav-panel a.topRightInset { position:absolute!important; }   /* AI 응답 설정 오른쪽 위 문서 링크: 원래 자리(absolute) 그대로 */
+/* W 월드인포 항목 「포함 그룹」: 같은 항목의 칸 이름 ? (.bl-wi-help 1.25em · 0.2em)와 같은 규격 */
+html body.salty #WorldInfo .world_entry a.notes-link[href*="inclusion-group"] { font-size:inherit!important; margin:0 0 0 0.2em!important; }
 html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark {
   position:relative; display:block; width:15px; height:15px; min-width:15px; flex:none; border:0; border-radius:0; background:none;   /* 7.9.1: 옆 작업 단추 아이콘(FA 15px)과 같은 크기 · 같은 글자색 — 1em(11px) · 포인트 색 · 선 아이콘 설정일 때만 그려지던 것 */
   font-size:0; line-height:1; color:inherit;
