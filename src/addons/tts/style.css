@@ -669,7 +669,7 @@ body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch { position:relative; fle
 body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch > span { position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:var(--bl-knob, 0 1px 2px rgba(0, 0, 0, .25)); transition:transform .18s ease; }
 body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch[aria-checked="true"] { background:var(--salty-accent, var(--SmartThemeQuoteColor, #3975b8)); box-shadow:none; }
 body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch[aria-checked="true"] > span { transform:translateX(14px); }
-body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch::before { content:''; position:absolute; inset:-7px 0; }
+body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch::before { content:''; position:absolute; inset:auto; left:50%; top:50%; width:max(100%, 44px); height:max(100%, 44px); transform:translate(-50%, -50%); } /* 8.1.x 누름 칸 44×44(테마 86-touch-targets 와 같은 상자) — 위아래 7px(34)이던 것이 86 의 44 상자와 섞여 상자가 왼쪽 위로 비껴 있었다 */
 body.salty dialog #lv_settings .bl-hs-row .bl-hs-switch:focus-visible { outline:2px solid var(--salty-accent, #3975b8); outline-offset:3px; }
 
 /* ── 2026-10-12 화면 다듬기 2차 (세션 1) ── */

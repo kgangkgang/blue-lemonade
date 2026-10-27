@@ -449,7 +449,7 @@ export const FILE_HASHES = {
   "src/addons/tts/src/voice-names.js": "7708:05c816f7:b76ae520",
   "src/addons/tts/src/voices.js": "44042:ed673cbe:faa13dc9",
   "src/addons/tts/src/word-chips.js": "4504:4ccfb4ca:7e5c7f15",
-  "src/addons/tts/style.css": "47717:357e1d16:26d9fbec",
+  "src/addons/tts/style.css": "47990:21e55a54:3c4f2649",
   "src/addons/tts/version.js": "36:d584869f:263b5108",
   "src/addons/zipinstall/batch.js": "7625:9730c8a2:060dd7dd",
   "src/addons/zipinstall/index.js": "27807:d8992042:1260ef77",
@@ -739,5 +739,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1826907:a929fff4:27910168"
+  "style.css": "1827983:4039aa75:d861d957"
 };
