@@ -621,7 +621,7 @@ export const FILE_HASHES = {
   "src/reply-notify.js": "7836:5a90a3bf:14208226",
   "src/reply-top.js": "5771:c5f79831:283f889f",
   "src/rerender-notify.js": "9554:f5d2ac94:bc712cfb",
-  "src/role-icons-core.js": "24933:918e148b:bfda06b5",
+  "src/role-icons-core.js": "24933:fae28a3e:8aa23715",
   "src/role-icons-fa.gen.js": "40164:8f55d310:6a6410ef",
   "src/role-icons-ui.js": "11176:06262ebc:3f9822fa",
   "src/role-icons.js": "1270:65650b0e:9b221571",

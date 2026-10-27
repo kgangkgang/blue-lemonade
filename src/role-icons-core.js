@@ -42,7 +42,7 @@ export const ROLES = [
     { id: 'reset', label: '처음 값', glyph: svg(1.7, 'M8.4 5H10A6.2 6.2 0 1 1 5.62 6.82M10.9 2.5 8.4 5l2.5 2.5'), swap: ['.bl-editor .bl-setting-reset', ':is(.salty-panel, .bl-ft-dialog) .bl-view-resize > button:not(.bl-view-toggle)', inRoots('기본값으로')] },
     { id: 'search', label: '찾기', glyph: svg(1.8, 'M9 3.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11ZM13 13l4 4'), swap: ['.bl-editor .bl-editor-actions > [data-act="editor-search"]', inRoots('검색', '찾기', '메모에서 찾기')] },
     { id: 'fullscreen', label: '전체 화면', glyph: svg(1.8, 'M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4'), swap: ['.salty-panel .bl-settings-expand:not([aria-pressed="true"])'] },
-    { id: 'fullscreen-exit', label: '작은 창', glyph: svg(1.8, 'M7 3v4H3M13 7V3h4M17 13h-4v4M3 13h4v4'), swap: ['.salty-panel .bl-settings-expand[aria-pressed="true"]'] },
+    { id: 'fullscreen-exit', label: '작은 창', glyph: svg(1.8, 'M7 3v4H3M13 3v4h4M17 13h-4v4M3 13h4v4'), swap: ['.salty-panel .bl-settings-expand[aria-pressed="true"]'] },
     { id: 'menu', label: '목록', glyph: svg(1.8, 'M3 5h14M3 10h14M3 15h14'), swap: [inRoots('메모 목록', '채팅 목록')], inline: ['.bl-editor .bl-settings-toprow .bl-editor-choose'] },
     { id: 'more', label: '더 보기', glyph: svg(2.6, 'M4 10h.01M10 10h.01M16 10h.01'), swap: ['.salty-panel .salty-style-more', '#pt-panel .pt-more-actions > summary', 'body.salty #WorldInfo .bl-wi-actions > summary'] },
     { id: 'plus', label: '추가', glyph: svg(1.8, 'M10 3v14M3 10h14'), swap: [inRoots('새 메모', '용어집에 넣기')] },
