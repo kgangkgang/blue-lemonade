@@ -326,9 +326,9 @@ const PAGE = `<div id="top-settings-holder"><div id="sys-settings-button" class=
 <div id="chat"><div class="mes"><div class="mes_buttons"><div class="mes_button extraMesButtonsHint fa-solid fa-ellipsis" title="Message Actions"></div><div class="extraMesButtons"><div title="번역" class="mes_button mes_translate fa-solid fa-language interactable"></div><div title="복사" class="mes_button mes_copy fa-solid fa-copy interactable"></div></div></div></div>
 <div class="mes"><div class="mes_buttons"><div class="extraMesButtons"><div title="번역" class="mes_button mes_translate fa-solid fa-language interactable"></div></div></div></div></div>
 <div id="form_sheld"><div id="nonQRFormItems"><div id="leftSendForm"><div id="options_button" class="fa-solid fa-bars interactable"></div><div id="extensionsMenuButton" class="fa-solid fa-magic-wand-sparkles"></div><div class="fa-solid fa-phone interactable" title="스마트폰"></div></div>
-<div id="rightSendForm"><div id="llm_translate_input_button" class="interactable" title="입력 번역"><i class="fa-solid fa-comment-dots"></i></div><div class="interactable" data-act="open-dock"><i class="fa-solid fa-book"></i></div><div class="interactable"><svg></svg></div><div id="send_but" class="fa-solid fa-paper-plane interactable" title="Send"></div></div></div></div>
+<div id="rightSendForm"><div id="llm_translate_input_button" class="interactable" title="입력 번역"><i class="fa-solid fa-comment-dots"></i></div><div class="interactable" data-act="open-notes"><i class="fa-solid fa-book"></i></div><div class="interactable"><svg></svg></div><div id="send_but" class="fa-solid fa-paper-plane interactable" title="Send"></div></div></div></div>
 <div id="extensionsMenu"><div id="translate_wand_container" class="extension_container"><div id="translate_chat" class="list-group-item flex-container"><div class="fa-solid fa-language extensionsMenuExtensionButton"></div><span>Translate Chat</span></div></div>
-<div class="extension_container"><div class="list-group-item flex-container interactable"><div class="fa-fw fa-solid fa-star extensionsMenuExtensionButton"></div><span>별편 열기</span></div><div class="list-group-item flex-container interactable"><svg></svg><span>그림 단추</span></div><div class="list-group-item flex-container interactable"><span>글자뿐</span></div><div class="list-group-item flex-container interactable"><span>글자뿐</span></div></div></div>
+<div class="extension_container"><div class="list-group-item flex-container interactable"><div class="fa-fw fa-solid fa-star extensionsMenuExtensionButton"></div><span>별자리 열기</span></div><div class="list-group-item flex-container interactable"><svg></svg><span>그림 단추</span></div><div class="list-group-item flex-container interactable"><span>글자뿐</span></div><div class="list-group-item flex-container interactable"><span>글자뿐</span></div></div></div>
 <div id="x-1234567"><button class="menu_button"><i class="fa-solid fa-gear"></i></button></div>`;
 
 const pickMod = await load('src/role-icons-pick.js');
@@ -341,11 +341,11 @@ await t('8.0.8 화면에서 고르기 — 열쇠 만들기: id → data → titl
     assert.equal(d('#translate_chat > span').key, '#translate_wand_container|id|translate_chat', '항목 안 글자를 눌러도 항목');
     assert.equal(d('#translate_chat > .extensionsMenuExtensionButton').key, '#translate_wand_container|id|translate_chat', '항목 안 아이콘 칸을 눌러도 항목');
     // data-* → title → 글자
-    assert.deepEqual([d('[data-act="open-dock"]').key, d('[data-act="open-dock"]').icon], ['#rightSendForm|data|act=open-dock', 'fa-solid fa-book']);
+    assert.deepEqual([d('[data-act="open-notes"]').key, d('[data-act="open-notes"]').icon], ['#rightSendForm|data|act=open-notes', 'fa-solid fa-book']);
     assert.deepEqual([d('[title="스마트폰"]').key, d('[title="스마트폰"]').label], ['#leftSendForm|title|스마트폰', '스마트폰']);
     assert.deepEqual([d('#llm_translate_input_button > i').key, d('#llm_translate_input_button > i').icon], ['#rightSendForm|id|llm_translate_input_button', 'fa-solid fa-comment-dots']);
     const star = doc.querySelectorAll('#extensionsMenu .list-group-item')[1];
-    assert.deepEqual([pickMod.describePick(star).key, pickMod.describePick(star).label, pickMod.describePick(star).icon], ['#extensionsMenu|text|별편 열기', '별편 열기', 'fa-solid fa-star']);
+    assert.deepEqual([pickMod.describePick(star).key, pickMod.describePick(star).label, pickMod.describePick(star).icon], ['#extensionsMenu|text|별자리 열기', '별자리 열기', 'fa-solid fa-star']);
     // 메시지 안 단추는 클래스(모든 메시지에 되풀이)
     assert.deepEqual([d('.mes_translate').key, d('.mes_translate').label], ['#chat|cls|mes_translate', '번역']);
     assert.equal(d('.mes_copy').key, '#chat|cls|mes_copy');
@@ -365,10 +365,10 @@ await t('8.0.8 화면에서 고르기 — 다시 찾기: 같은 열쇠로 같은
     const f = key => pickMod.findByKey(doc, key);
     const same = (got, want, msg) => assert.ok(got.length === want.length && got.every((e, i) => e === want[i]), `${msg || ''} 찾은 것 ${got.map(e => e.id || e.className).join(',')} ≠ ${want.map(e => e.id || e.className).join(',')}`);
     same(f('#rightSendForm|id|send_but'), [doc.querySelector('#send_but')]);
-    same(f('#rightSendForm|data|act=open-dock'), [doc.querySelector('[data-act="open-dock"]')]);
+    same(f('#rightSendForm|data|act=open-notes'), [doc.querySelector('[data-act="open-notes"]')]);
     same(f('#leftSendForm|title|스마트폰'), [doc.querySelector('[title="스마트폰"]')]);
     same(f('#chat|cls|mes_translate'), [...doc.querySelectorAll('.mes_translate')], '메시지마다 하나씩 둘');
-    same(f('#extensionsMenu|text|별편 열기'), [doc.querySelectorAll('#extensionsMenu .list-group-item')[1]]);
+    same(f('#extensionsMenu|text|별자리 열기'), [doc.querySelectorAll('#extensionsMenu .list-group-item')[1]]);
     same(f('#rightSendForm|nth|2'), [doc.querySelectorAll('#rightSendForm > div')[2]]);
     same(f('#extensionsMenu|title|없는 것'), []);
     same(f('#없는곳|id|send_but'), [], '어디가 없으면 없음');
@@ -386,10 +386,10 @@ await t('8.0.8 화면에서 고르기 — 표식: 글자 옆 아이콘 칸에, s
     let observer = null;
     globalThis.MutationObserver = class { constructor(cb) { this.cb = cb; observer = this; } observe(target, opts) { this.target = target; this.opts = opts; } disconnect() { observer = null; } };
     const picks = {};
-    for (const key of ['#extensionsMenu|text|별편 열기', '#chat|cls|mes_translate', '#rightSendForm|id|send_but', '#extensionsMenu|text|그림 단추']) picks[core.pickSlug(key)] = { key, label: 'x', value: 'tx:★' };
+    for (const key of ['#extensionsMenu|text|별자리 열기', '#chat|cls|mes_translate', '#rightSendForm|id|send_but', '#extensionsMenu|text|그림 단추']) picks[core.pickSlug(key)] = { key, label: 'x', value: 'tx:★' };
     pickMod.syncPicks(picks, doc);
     const star = doc.querySelectorAll('#extensionsMenu .list-group-item')[1];
-    assert.equal(star.querySelector('.extensionsMenuExtensionButton').getAttribute('data-bl-pick'), core.pickSlug('#extensionsMenu|text|별편 열기'), '글자 옆 아이콘 칸에');
+    assert.equal(star.querySelector('.extensionsMenuExtensionButton').getAttribute('data-bl-pick'), core.pickSlug('#extensionsMenu|text|별자리 열기'), '글자 옆 아이콘 칸에');
     assert.equal(star.getAttribute('data-bl-pick'), null);
     const pic = doc.querySelectorAll('#extensionsMenu .list-group-item')[2];
     assert.equal(pic.getAttribute('data-bl-pick-inline'), core.pickSlug('#extensionsMenu|text|그림 단추'), 'svg 아이콘 + 글자는 단추에 inline 표식');
@@ -407,7 +407,7 @@ await t('8.0.8 화면에서 고르기 — 표식: 글자 옆 아이콘 칸에, s
     pickMod.syncPicks(picks, doc);
     assert.equal(doc.querySelector('#send_but').getAttribute('data-bl-pick'), null, '바뀐 게 없으면 손대지 않는다');
     // 하나를 빼면 그 표식만 걷고 나머지는 다시 단다
-    const less = { ...picks }; delete less[core.pickSlug('#extensionsMenu|text|별편 열기')];
+    const less = { ...picks }; delete less[core.pickSlug('#extensionsMenu|text|별자리 열기')];
     pickMod.syncPicks(less, doc);
     assert.equal(star.querySelector('.extensionsMenuExtensionButton').getAttribute('data-bl-pick'), null);
     assert.equal(doc.querySelector('#send_but').getAttribute('data-bl-pick'), core.pickSlug('#rightSendForm|id|send_but'));
