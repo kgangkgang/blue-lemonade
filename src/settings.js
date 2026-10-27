@@ -131,7 +131,7 @@ export const DEFAULTS = {
     koUi: true,   // 6.9.0 실리태번 한국어 화면 다듬기 (ko-ui.js — 언어가 ko-kr 일 때만, 바꾸면 새로고침 뒤)
     headSwitchRows: true,   // 6.8.8 확장 창 안 「확장 탭에 보이기」 줄 보이기 (끄면 줄만 사라짐 — headswitch.js)
     roleIcons: {},   // 7.9.3 단추 아이콘 바꾸기 { <역할 id>: 'fa:s:이름:번호' | 'tx:글자' | 'im:data:…' } — 바꾼 역할만 (role-icons-core.js)
-    pickedIcons: {},   // 8.0.8 화면에서 고른 단추 { <열쇠 해시>: { key, label, icon?, value? } } — 확장이 더한 단추(role-icons-pick.js)
+    pickedIcons: {},   // 화면에서 고른 단추 { <열쇠 해시>: { key, label, icon?, value? } } — 확장이 더한 단추(role-icons-pick.js)
     headSwitches: {},   // 6.0.4 확장 위 스위치 { <창 열쇠 id:…|cls:…>: true } — 창 안 「확장 탭에 보이기」로 고른 확장 창 (headswitch.js)
     activeStyle: null,
     baseStyle: null,
@@ -676,7 +676,7 @@ export function getSettings() {
     { const tidy = tidyGradients(s.gradients); if (JSON.stringify(tidy) !== JSON.stringify(s.gradients)) s.gradients = tidy; } // 이미 정돈돼 있으면 같은 객체 그대로
     tidyFlags(s);
     { const icons = tidyRoleIcons(s.roleIcons); if (icons !== s.roleIcons) s.roleIcons = icons; } // 7.9.3 아는 역할 · 올바른 값만 (가져온 파일의 SVG 도 다시 정리해 본다)
-    { const picks = tidyPickedIcons(s.pickedIcons); if (picks !== s.pickedIcons) s.pickedIcons = picks; } // 8.0.8 올바른 열쇠 · 값만
+    { const picks = tidyPickedIcons(s.pickedIcons); if (picks !== s.pickedIcons) s.pickedIcons = picks; } // 올바른 열쇠 · 값만
     tidyStyles(s);
     // 5.3.5: 저장된 내 글꼴은 지우지 않는다 (5.3.4 는 괄호 · 공백 든 주소, 긴 이름을 업데이트 때 영영 지웠다) —
     // 못 쓰는 항목도 남기고, 적용할 때 fonts.js 가 safeFont 로 거른다. 항목 모양이 아닌 것만 뺌 (멀쩡하면 배열을 새로 만들지 않음)

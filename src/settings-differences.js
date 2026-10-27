@@ -19,7 +19,7 @@ export function settingDefault(settings, path) {
         const [, role, extra] = path.split('.');
         return { allowed: !extra && ROLE_IDS.includes(role), value: undefined };
     }
-    if (path === 'pickedIcons' || path.startsWith('pickedIcons.')) { // 8.0.8 화면에서 고른 단추: 한 단추가 한 칸, 처음 값 = 칸이 없음(목록에서 빠짐)
+    if (path === 'pickedIcons' || path.startsWith('pickedIcons.')) { // 화면에서 고른 단추: 한 단추가 한 칸, 처음 값 = 칸이 없음(목록에서 빠짐)
         const [, slug, extra] = path.split('.');
         return { allowed: !extra && /^p[0-9a-z]{7}$/.test(slug || ''), value: undefined };
     }

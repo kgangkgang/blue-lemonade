@@ -25,7 +25,7 @@ const ICONS = {
     play: '<path d="M9 7.2v9.6c0 .8.9 1.2 1.5.8l6.9-4.8c.6-.4.6-1.2 0-1.6l-6.9-4.8C9.9 6 9 6.4 9 7.2z"/>',
     halt: '<rect x="7.25" y="7.25" width="9.5" height="9.5" rx="2"/>',
     userpen: '<circle cx="10" cy="8" r="3.4"/><path d="M4 19.5c.7-3.2 3-5 6-5 1 0 2 .2 2.8.6M15.3 20.2l.4-2.4 3.6-3.6a1.35 1.35 0 0 1 1.9 1.9l-3.6 3.6z"/>',
-    // 8.0.8 단추 아이콘 역할(role-icons-core.js)의 기본 그림용 — 보내기 번역 말풍선(css/11-chrome.css 의 --salty-mi-chatdots 와 같은 그림)
+    // 단추 아이콘 역할(role-icons-core.js)의 기본 그림용 — 보내기 번역 말풍선(css/11-chrome.css 의 --salty-mi-chatdots 와 같은 그림)
     bubble: '<path d="M20.5 11.6a8.4 8.4 0 0 1-12.4 7.4L3.5 20.5 5 16a8.5 8.5 0 1 1 15.5-4.4z"/><path d="M8.4 11.8h.01M12 11.8h.01M15.6 11.8h.01" stroke-width="2.6"/>',
 };
 const STROKE = { more: 3, send: 2, pause: 2.4, play: 2, halt: 2.1 };
@@ -67,7 +67,7 @@ function svgUrl(name) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="${STROKE[name] || BASE_STROKE}" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`;
     return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
-/** 8.0.8 선 아이콘 하나의 url("data:…") — 단추 아이콘 역할(role-icons-core.js)이 상단 서랍 · 입력줄 단추의 기본 그림으로 쓴다 */
+/** 선 아이콘 하나의 url("data:…") — 단추 아이콘 역할(role-icons-core.js)이 상단 서랍 · 입력줄 단추의 기본 그림으로 쓴다 */
 export const lineIconUrl = name => (ICONS[name] ? svgUrl(name) : '');
 
 let cache = '';

@@ -10,13 +10,13 @@
 // 한 역할을 바꾸면 그 역할의 단추가 테마 곳곳(설정 창 머리 도구 줄 · 애드온 창 · 번역 창 …)에서 한꺼번에 바뀐다:
 //   아래 ROLES 의 선택자가 「그 역할」 한 곳이다. 크기 · 누르는 칸 · 자리 · 이름(aria-label)은 단추 그대로 두고 그림만 바꾼다.
 //
-// 8.0.8 화면 단추까지: 상단 서랍(연결 · AI 응답 설정 · 고급 서식 · 월드 인포 · 사용자 설정 · 배경 · 확장 · 페르소나 · 캐릭터) · 입력줄(옵션 ≡ · 요술봉 ·
+// 화면 단추까지: 상단 서랍(연결 · AI 응답 설정 · 고급 서식 · 월드 인포 · 사용자 설정 · 배경 · 확장 · 페르소나 · 캐릭터) · 입력줄(옵션 ≡ · 요술봉 ·
 //   보내기 · 이어 쓰기 · 대신 쓰기 · 멈춤) · 내장 애드온 단추(전개 지시 깃털 · 보내기 번역 말풍선)도 역할이다(group 으로 묶음, size:'host' = 단추 글자 크기를 따른다).
 //   확장이 더한 단추(요술봉 메뉴 항목 · 입력줄 아이콘 · 메시지 단추 …)는 이름을 코드에 두지 않고 「화면에서 고르기」(role-icons-pick.js)로 골라
 //   설정 pickedIcons = { <열쇠 해시>: { key, label, icon?, value? } } 에 담는다. 열쇠(key)는 「어디|무엇으로|값」 — 새로고침 · 확장 껐다 켬 뒤에도 같은 단추를 다시 찾는다.
 //   CSS 는 role-icons-pick.js 가 그 단추에 단 data-bl-pick="<해시>" 표식으로 건다(요술봉 메뉴처럼 다시 그려지는 곳은 MutationObserver 가 바뀐 곳만 다시 단다).
 
-import { lineIconUrl } from './icons.js';   // 8.0.8 상단 서랍 · 입력줄의 기본 그림 = 테마 선 아이콘 그대로
+import { lineIconUrl } from './icons.js';   // 상단 서랍 · 입력줄의 기본 그림 = 테마 선 아이콘 그대로
 
 export const ROLE_ICON_MAX_BYTES = 64 * 1024;      // 올리는 그림 파일 한도
 export const ROLE_ICON_MAX_DATA = 90000;           // 저장 문자열 한도 (64KB 를 base64 로 바꾸면 약 87,400자)
@@ -59,7 +59,7 @@ export const ROLES = [
     { id: 'more', label: '더 보기', glyph: svg(2.6, 'M4 10h.01M10 10h.01M16 10h.01'), swap: ['.salty-panel .salty-style-more', '#pt-panel .pt-more-actions > summary', 'body.salty #WorldInfo .bl-wi-actions > summary'] },
     { id: 'plus', label: '추가', glyph: svg(1.8, 'M10 3v14M3 10h14'), swap: [inRoots('새 메모', '용어집에 넣기')] },
     { id: 'check', label: '확인', glyph: svg(2, 'M3.5 10.5 8 15 16.5 5'), swap: [inRoots('넣기')] },
-    // ── 8.0.8 화면 단추 — 실리태번 상단 서랍 아이콘(id 는 실리태번 index.html 그대로). 기본 그림 = 테마 선 아이콘(icons.js). size:'host' = 그 단추의 글자 크기를 따른다
+    // ── 화면 단추 — 실리태번 상단 서랍 아이콘(id 는 실리태번 index.html 그대로). 기본 그림 = 테마 선 아이콘(icons.js). size:'host' = 그 단추의 글자 크기를 따른다
     { id: 'api', label: '연결', group: 'top', size: 'host', glyph: lineIconUrl('plug'), swap: ['#API-status-top'] },
     { id: 'preset', label: 'AI 응답 설정', group: 'top', size: 'host', glyph: lineIconUrl('sliders'), swap: ['#leftNavDrawerIcon'] },
     { id: 'format', label: '고급 서식', group: 'top', size: 'host', glyph: lineIconUrl('type'), swap: ['#advanced-formatting-button .drawer-icon'] },
@@ -366,7 +366,7 @@ export function sanitizeSvg(input) {
 // ───────── CSS ─────────
 const cssString = text => `"${[...text].map(ch => `\\${ch.codePointAt(0).toString(16)} `).join('').trimEnd()}"`;
 // 철칙 §2 「같은 역할 단추는 같은 크기」: 창 도구 줄은 잉크 ≈12.5 — 선 그림 상자 16 · Font Awesome 12.5. 그림 · 글자도 같은 잉크 크기로.
-// 8.0.8 화면 단추(size:'host')는 그 단추의 글자 크기(1em)를 상자로, 잉크는 .8em — 테마 선 아이콘(24칸 안 17)과 같은 비율이라 옆 단추와 크기가 맞는다
+// 화면 단추(size:'host')는 그 단추의 글자 크기(1em)를 상자로, 잉크는 .8em — 테마 선 아이콘(24칸 안 17)과 같은 비율이라 옆 단추와 크기가 맞는다
 export const ROLE_TOKENS = { '--bl-role-box': '16px', '--bl-role-fa': '12.5px', '--bl-role-img': '12.5px', '--bl-role-text': '13px', '--bl-role-hbox': '1em', '--bl-role-hink': '.8em' };
 const SIZES = {
     tool: { box: 'var(--bl-role-box)', fa: 'var(--bl-role-fa)', img: 'var(--bl-role-img)', text: 'var(--bl-role-text)' },
@@ -410,7 +410,7 @@ export function buildRoleCss(map, picks) {
                 `${BOOST} :is(${inline})::before{${INLINE_PLACE}${box(size)}${glyphRules(icon, size)}}`);
         }
     }
-    // 8.0.8 화면에서 고른 단추 — role-icons-pick.js 가 단 표식으로. 미리보기 칸(data-bl-role="@<해시>")도 같이
+    // 화면에서 고른 단추 — role-icons-pick.js 가 단 표식으로. 미리보기 칸(data-bl-role="@<해시>")도 같이
     for (const [slug, entry] of Object.entries(tidyPickedIcons(picks))) {
         const icon = parseRoleIcon(entry.value);
         if (!icon) continue;

@@ -22,7 +22,7 @@ import { syncExtensionColors } from './extension-colors.js';
 import { syncControlInk } from './control-ink.js';
 import { syncTagInk } from './tag-ink.js';
 import { syncRoleIcons } from './role-icons.js';
-import { syncPicks } from './role-icons-pick.js';   // 8.0.8 화면에서 고른 단추
+import { syncPicks } from './role-icons-pick.js';   // 화면에서 고른 단추
 
 function profileVars(p, pal, user = false) {
     const vars = Object.assign(frameVars(p, 'profile', pal.accent), decorVars(p.decor, 'profile', p.radius), {
@@ -711,7 +711,7 @@ export function applyAll() {
     if (icons && icons.textContent !== iconText) icons.textContent = iconText;
     // 7.9.3 단추 아이콘 바꾸기: 테마를 꺼도(확장만) 테마 창의 단추는 그대로 테마 것이라 켬/끔과 상관없이. 바꾼 역할이 없으면 <style> 도 없다
     syncRoleIcons(s.roleIcons ?? getSettings().roleIcons, s.pickedIcons ?? getSettings().pickedIcons);
-    syncPicks(s.pickedIcons ?? getSettings().pickedIcons);   // 8.0.8 화면에서 고른 단추에 표식(고른 게 없으면 아무 일도 없다)
+    syncPicks(s.pickedIcons ?? getSettings().pickedIcons);   // 화면에서 고른 단추에 표식(고른 게 없으면 아무 일도 없다)
 
     const want = new Set();
     if (s.enabled) {

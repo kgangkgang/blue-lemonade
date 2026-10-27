@@ -1,5 +1,5 @@
 // 7.9.3 단추 아이콘 바꾸기 — 저장 · 불러오기 · ↺ · 백업(설정 파일) · SVG 정리 · 크기 제한 · CSS 만들기 · 바꾸지 않으면 화면 그대로.
-// 8.0.8 화면 단추 역할(상단 서랍 · 입력줄 · 애드온) · 화면에서 고르기(열쇠 만들기 · 다시 찾기 · 표식 · 누르기, 가짜 DOM) · 옛 설정 호환.
+// 화면 단추 역할(상단 서랍 · 입력줄 · 애드온) · 화면에서 고르기(열쇠 만들기 · 다시 찾기 · 표식 · 누르기, 가짜 DOM) · 옛 설정 호환.
 //   node tools/tests/role-icons.mjs <테마 루트>
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -25,7 +25,7 @@ const PNG = Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAA
 const WEBP = Uint8Array.from([0x52, 0x49, 0x46, 0x46, 0x1a, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x4c, 0x0d, 0, 0, 0, 0x2f, 0, 0, 0, 0x10, 0x07, 0x10, 0x11, 0x11, 0x88, 0x88, 0xfe, 0x07, 0]);
 const loadSettings = value => { ctx.extensionSettings.salty = structuredClone(value); return getSettings(); };
 
-await t('역할: 창 도구 14(디자인 시스템 .ds-tool[data-role] 와 같은 id) + 8.0.8 상단 서랍 9 · 입력줄 6 · 애드온 2, 이름이 겹치지 않는다', () => {
+await t('역할: 창 도구 14(디자인 시스템 .ds-tool[data-role] 와 같은 id) + 상단 서랍 9 · 입력줄 6 · 애드온 2, 이름이 겹치지 않는다', () => {
     assert.deepEqual(core.ROLE_IDS.slice(0, 14), ['close', 'back', 'prev', 'next', 'undo', 'redo', 'reset', 'search', 'fullscreen', 'fullscreen-exit', 'menu', 'more', 'plus', 'check']);
     assert.deepEqual(core.rolesIn('top').map(r => r.id), ['api', 'preset', 'format', 'worldinfo', 'usersettings', 'background', 'extensions', 'persona', 'characters']);
     assert.deepEqual(core.rolesIn('bottom').map(r => r.id), ['options', 'wand', 'send', 'continue', 'impersonate', 'stop']);
@@ -174,7 +174,7 @@ await t('CSS: 역할 선택자 한 곳에 · Font Awesome · 글자는 16진 이
     assert.ok(!/@import|expression|javascript/i.test(css));
 });
 
-await t('8.0.8 CSS: 화면 단추(상단 · 입력줄 · 애드온)는 단추 글자 크기 1em 상자 · 잉크 .8em, 선택자는 실리태번 id 그대로', () => {
+await t('CSS: 화면 단추(상단 · 입력줄 · 애드온)는 단추 글자 크기 1em 상자 · 잉크 .8em, 선택자는 실리태번 id 그대로', () => {
     const css = core.buildRoleCss({ send: 'fa:s:star:f005', api: 'tx:★', stop: core.imageFileValue(PNG).value, close: 'fa:s:xmark:f00d' });
     assert.ok(css.includes('--bl-role-hbox:1em') && css.includes('--bl-role-hink:.8em'));
     const line = id => css.split('\n').find(l => l.startsWith(`html:not(#bl-ri) :is(${id}`) && l.includes('::before{'));
@@ -185,7 +185,7 @@ await t('8.0.8 CSS: 화면 단추(상단 · 입력줄 · 애드온)는 단추 �
     assert.ok(!css.includes('#extensionsMenuButton'), '안 바꾼 역할은 규칙이 없다');
 });
 
-await t('8.0.8 고른 단추 열쇠: 모양 검사 · 해시는 늘 같고 경로에 쓸 수 있다 · 설정 정리는 올바른 칸만', () => {
+await t('고른 단추 열쇠: 모양 검사 · 해시는 늘 같고 경로에 쓸 수 있다 · 설정 정리는 올바른 칸만', () => {
     for (const key of ['#extensionsMenu|id|translate_chat', '#extensionsMenu|title|번역', '#chat|cls|mes_translate', '#rightSendForm|data|act=open', '|nth|3', '#extensionsMenu|text|Blue Lemonade']) assert.ok(core.parsePickKey(key), key);
     for (const bad of ['', 'x', 'a|b', '#m|xx|v', '#m|id|1bad', '#m|id|has space', 'div|id|a', '#m|nth|x', '#m|data|BAD=1', '#m|title|<b>', '#m|title|' + 'a'.repeat(200), 42, null]) assert.equal(core.parsePickKey(bad), null, JSON.stringify(bad));
     const slug = core.pickSlug('#extensionsMenu|title|번역');
@@ -209,7 +209,7 @@ await t('8.0.8 고른 단추 열쇠: 모양 검사 · 해시는 늘 같고 경�
     assert.deepEqual(roles.find(r => r.slug === slug), { id: `@${slug}`, slug, label: '번역', icon: 'fa-solid fa-language', value: 'tx:★', key: good.key, group: 'picked', size: 'host' });
 });
 
-await t('8.0.8 고른 단추 CSS: 표식 [data-bl-pick="<해시>"] · 글자 옆 svg 아이콘용 data-bl-pick-inline · 미리보기 칸, 값 없는 칸은 규칙 없음', () => {
+await t('고른 단추 CSS: 표식 [data-bl-pick="<해시>"] · 글자 옆 svg 아이콘용 data-bl-pick-inline · 미리보기 칸, 값 없는 칸은 규칙 없음', () => {
     const slug = core.pickSlug('#extensionsMenu|title|번역'), slug2 = core.pickSlug('|id|send_but');
     const css = core.buildRoleCss({}, { [slug]: { key: '#extensionsMenu|title|번역', label: '번역', value: 'fa:s:language:f1ab' }, [slug2]: { key: '|id|send_but', label: '보내기' } });
     assert.ok(css.includes(`[data-bl-pick="${slug}"], .bl-roleicon-preview[data-bl-role="@${slug}"]`), '표식 + 미리보기 칸');
@@ -222,10 +222,10 @@ await t('8.0.8 고른 단추 CSS: 표식 [data-bl-pick="<해시>"] · 글자 옆
     for (const line of css.split('\n').filter(l => l && !l.startsWith('/*'))) assert.equal((line.match(/\{/g) || []).length, (line.match(/\}/g) || []).length, line.slice(0, 80));
 });
 
-await t('8.0.8 저장 · 불러오기: pickedIcons 는 옛 설정(없음)에서 빈 칸, 올바른 칸은 그대로, ↺ 는 그 단추를 목록에서 뺀다 · 테마 모습 초기화는 비운다', () => {
+await t('저장 · 불러오기: pickedIcons 는 옛 설정(없음)에서 빈 칸, 올바른 칸은 그대로, ↺ 는 그 단추를 목록에서 뺀다 · 테마 모습 초기화는 비운다', () => {
     const slug = core.pickSlug('#extensionsMenu|title|번역');
     const picks = { [slug]: { key: '#extensionsMenu|title|번역', label: '번역', value: 'tx:★' } };
-    const old = structuredClone(DEFAULTS); delete old.pickedIcons;   // 8.0.7 까지의 설정 파일
+    const old = structuredClone(DEFAULTS); delete old.pickedIcons;   // 화면에서 고르기 전의 설정 파일
     assert.deepEqual(loadSettings(old).pickedIcons, {});
     let s = loadSettings({ ...structuredClone(DEFAULTS), pickedIcons: picks, roleIcons: { close: 'fa:s:star:f005' } });
     assert.deepEqual(s.pickedIcons, picks);
@@ -332,7 +332,7 @@ const PAGE = `<div id="top-settings-holder"><div id="sys-settings-button" class=
 <div id="x-1234567"><button class="menu_button"><i class="fa-solid fa-gear"></i></button></div>`;
 
 const pickMod = await load('src/role-icons-pick.js');
-await t('8.0.8 화면에서 고르기 — 열쇠 만들기: id → data → title → (메시지) 클래스 → 글자 → 몇 번째, 이름 · 아이콘도 같이', () => {
+await t('화면에서 고르기 — 열쇠 만들기: id → data → title → (메시지) 클래스 → 글자 → 몇 번째, 이름 · 아이콘도 같이', () => {
     const doc = makeDom().html(PAGE);
     const d = sel => pickMod.describePick(doc.querySelector(sel));
     // id 가 있으면 id (어디는 안정된 id 를 가진 가장 가까운 조상)
@@ -360,7 +360,7 @@ await t('8.0.8 화면에서 고르기 — 열쇠 만들기: id → data → titl
     for (const r of [d('#send_but'), d('.mes_translate'), pickMod.describePick(star)]) assert.ok(core.parsePickKey(r.key), r.key);
 });
 
-await t('8.0.8 화면에서 고르기 — 다시 찾기: 같은 열쇠로 같은 단추(여럿이면 전부), 새로 붙은 가지 안에서만도', () => {
+await t('화면에서 고르기 — 다시 찾기: 같은 열쇠로 같은 단추(여럿이면 전부), 새로 붙은 가지 안에서만도', () => {
     const doc = makeDom().html(PAGE);
     const f = key => pickMod.findByKey(doc, key);
     const same = (got, want, msg) => assert.ok(got.length === want.length && got.every((e, i) => e === want[i]), `${msg || ''} 찾은 것 ${got.map(e => e.id || e.className).join(',')} ≠ ${want.map(e => e.id || e.className).join(',')}`);
@@ -381,7 +381,7 @@ await t('8.0.8 화면에서 고르기 — 다시 찾기: 같은 열쇠로 같은
     same(pickMod.findByKey(doc, '#rightSendForm|id|send_but', mes), [], 'id 단추도 그 가지 밖이면 없음');
 });
 
-await t('8.0.8 화면에서 고르기 — 표식: 글자 옆 아이콘 칸에, svg 아이콘은 단추에 inline 표식, 감시는 고른 게 있을 때만 · 뺀 단추는 표식을 걷는다', () => {
+await t('화면에서 고르기 — 표식: 글자 옆 아이콘 칸에, svg 아이콘은 단추에 inline 표식, 감시는 고른 게 있을 때만 · 뺀 단추는 표식을 걷는다', () => {
     const doc = makeDom().html(PAGE);
     let observer = null;
     globalThis.MutationObserver = class { constructor(cb) { this.cb = cb; observer = this; } observe(target, opts) { this.target = target; this.opts = opts; } disconnect() { observer = null; } };
@@ -420,7 +420,7 @@ await t('8.0.8 화면에서 고르기 — 표식: 글자 옆 아이콘 칸에, s
     delete globalThis.MutationObserver;
 });
 
-await t('8.0.8 화면에서 고르기 — 누르기: 단추를 누르면 열쇠가 나오고 동작은 막힘, 메뉴 여는 단추는 그대로 열림, 취소 · Esc', () => {
+await t('화면에서 고르기 — 누르기: 단추를 누르면 열쇠가 나오고 동작은 막힘, 메뉴 여는 단추는 그대로 열림, 취소 · Esc', () => {
     const doc = makeDom().html(PAGE);
     const got = [];
     let cancelled = 0;
@@ -479,7 +479,7 @@ await t('설정 창 연결: 단추 아이콘 칸 · 검색 색인 · 적용(appl
     assert.ok(panel.includes("['icons', '단추 아이콘']"));
     assert.ok(panel.includes("if (sub === 'icons') return roleIconsMarkup("));
     assert.ok(fs.readFileSync(path.join(root, 'src/settings-search.js'), 'utf8').includes("['theme','icons','단추 아이콘'"));
-    assert.ok(fs.readFileSync(path.join(root, 'src/apply.js'), 'utf8').includes('syncRoleIcons(') && fs.readFileSync(path.join(root, 'src/apply.js'), 'utf8').includes('syncPicks('), '8.0.8 고른 단추 표식도 applyAll 에서');
+    assert.ok(fs.readFileSync(path.join(root, 'src/apply.js'), 'utf8').includes('syncRoleIcons(') && fs.readFileSync(path.join(root, 'src/apply.js'), 'utf8').includes('syncPicks('), '고른 단추 표식도 applyAll 에서');
     const ui = fs.readFileSync(path.join(root, 'src/role-icons-ui.js'), 'utf8');
     for (const act of ['role-icon-pick', 'role-icon-reset-all', 'role-icon-open']) assert.ok(ui.includes(`'${act}'`), act);
     assert.ok(ui.includes('data-md-fold="icons:${group}"'), '묶음은 접히고 panel.js 가 여닫은 것을 기억한다');

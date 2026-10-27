@@ -92,7 +92,7 @@
   min-width: 0;
   margin: 0;
 }
-/* ---------- 8.0.8 묶음(창 도구 · 상단 서랍 · 입력줄 · 애드온 단추 · 내 단추) — 마크다운 설정의 접는 묶음(.bl-md-group, 67-markdown-controls)과 같은 모양 ---------- */
+/* ---------- 묶음(창 도구 · 상단 서랍 · 입력줄 · 애드온 단추 · 내 단추) — 마크다운 설정의 접는 묶음(.bl-md-group, 67-markdown-controls)과 같은 모양 ---------- */
 .salty-panel .bl-roleicon-group {
   margin-top: 8px;
 }
@@ -120,7 +120,7 @@
 .salty-panel .bl-roleicon-preview:has(> i)::before {
   content: none;
 }
-/* ---------- 8.0.8 화면에서 고르기 — 설정 창을 닫은 채 화면 위에 띄우는 안내 띠와, 고를 수 있는 단추 표시 ---------- */
+/* ---------- 화면에서 고르기 — 설정 창을 닫은 채 화면 위에 띄우는 안내 띠와, 고를 수 있는 단추 표시 ---------- */
 html.bl-roleicon-picking .bl-roleicon-pickbar {
   position: fixed;
   top: 12px;

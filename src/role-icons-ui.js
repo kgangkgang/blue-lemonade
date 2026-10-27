@@ -1,7 +1,7 @@
 // 7.9.3 설정 › 테마 › 단추 아이콘 — 역할 목록과 아이콘 고르기 창 (panel.js 가 그리고 · 부른다).
 // 고르기 창은 글꼴 고르기 창과 같은 짜임(찾기 칸 · 묶음 태그 · 목록 · 아래 「+ 추가」 줄, .salty-font* 클래스)을 그대로 쓴다.
 // Font Awesome 목록(role-icons-fa.gen.js, 40KB)은 고르기 창을 처음 열 때만 불러온다.
-// 8.0.8 역할이 많아져 묶음(창 도구 · 상단 서랍 · 입력줄 · 애드온 단추 · 내 단추)으로 접는다. 「내 단추」 는 화면에서 고른 단추(role-icons-pick.js):
+// 역할이 많아져 묶음(창 도구 · 상단 서랍 · 입력줄 · 애드온 단추 · 내 단추)으로 접는다. 「내 단추」 는 화면에서 고른 단추(role-icons-pick.js):
 //   「화면에서 고르기」 → 설정 창을 닫고 화면의 단추를 누르면 → 내 단추에 들어가고 설정 창이 다시 열리며 그 단추의 고르기 창이 펼쳐진다.
 import { ROLES, ROLE_GROUPS, rolesIn, roleLabel, parseRoleIcon, faValue, textValue, imageFileValue, ROLE_ICON_MAX_BYTES, pickedRoles, pickSlug, PICK_MAX } from './role-icons-core.js';
 import { startPicking, stopPicking, isPicking } from './role-icons-pick.js';
@@ -209,7 +209,7 @@ export async function roleIconAction(act, el, ctx) {
             ctx.update((st) => { st.roleIcons = {}; st.pickedIcons = {}; });
             ctx.toast('단추 아이콘을 모두 처음 값으로 돌렸어요');
             return true;
-        case 'role-icon-pick': {   // 8.0.8 화면에서 고르기
+        case 'role-icon-pick': {   // 화면에서 고르기
             if (isPicking()) { stopPicking(); return true; }
             const root = ctx.root;
             startPicking({
