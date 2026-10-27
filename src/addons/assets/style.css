@@ -256,10 +256,10 @@
     color: var(--eh-accent-ink) !important;
 }
 
-/* 손가락 화면: S/M/L 은 보이는 30px 그대로 두고 누르는 자리만 세로 36px (양옆은 이웃 칸이 붙어 있어 넓히지 않는다) */
+/* 손가락 화면: S/M/L 은 보이는 30px 그대로 두고 누르는 자리만 세로 44px (양옆은 이웃 칸이 붙어 있어 넓히지 않는다 · 8.1.x 36 → 44, 테마 누름 칸 기준) */
 @media (pointer: coarse) {
     .eh-segmented button { position: relative; }
-    .eh-segmented button::after { content: ''; position: absolute; inset: min(0px, 50% - 18px) 0; }
+    .eh-segmented button::after { content: ''; position: absolute; inset: min(0px, 50% - 22px) 0; }
 }
 
 /* ── 도구 줄, 찾기 ─────────────────────────────────────────── */

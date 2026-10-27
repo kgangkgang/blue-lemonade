@@ -323,8 +323,9 @@
     text-decoration: line-through;
 }
 
+/* 8.1.x 「추가」 글자는 잉크(흰 면 위 포인트 그대로 4.43:1) — 테두리는 옅은 포인트 그대로 */
 .bwr_settings .bwr_chip.bwr_add {
-    color: var(--bwr-accent);
+    color: var(--bwr-accent-ink);
     background: transparent;
     box-shadow: inset 0 0 0 1.5px var(--bwr-accent-soft);
 }
@@ -696,6 +697,10 @@ body.salty .bwr_settings :is(.bwr_tab, .bwr_seg):is(.active, .is-active) {
     box-shadow: inset 0 0 0 1px var(--salty-accent);
 }
 body.salty .bwr_settings .bwr_chip.bwr_off { color: var(--salty-muted, var(--bwr-text)); opacity: 1; }
+/* 8.1.x 고르기 칸(직접 선택 · 프로필)은 홈이 파인 면(--bwr-well) 위라 흐린 글자가 4.4:1 — 안 고른 칸 글자는 본문색, 고른 칸은 위처럼 잉크 + 면 */
+body.salty .bwr_settings .bwr_seg:not(.active, .is-active) { color: var(--salty-text, var(--bwr-text)); }
+/* 8.1.x 「마지막 요청: 아직 없음」 같은 주의 글자는 테마의 주의 잉크(밝은 팔레트 흰 면에서도 4.5:1) — 실리태번 --warning(빨강)은 3.7:1 */
+body.salty .bwr_settings .bwr_no { color: var(--bl-pop-ink, var(--salty-pop-ink, var(--warning, #e8a33d))); }
 /* 5.6.4 세로 중앙: 칩은 위아래 padding 0 에 최소 높이 가운데 정렬 — 반행간 보정 n 만큼 내리려면 위에 2n (높이 그대로) */
 body.salty .bwr_settings .bwr_chip { padding-top: calc(2 * var(--bl-text-nudge, 0px)); }
 body.salty .bwr_settings .bwr_chip .bwr_scope { font-size: var(--bl-ts-meta, .9em); color: inherit; opacity: 1; }

@@ -645,6 +645,7 @@ body.salty #pt-panel .pt-settings-nav {
 body.salty #pt-panel .pt-settings-nav button {
  min-height:32px; padding-inline:4px; border:0; border-radius:6px; background:transparent;
  color:var(--salty-muted,var(--pt-text-dim)); font-weight:inherit; white-space:nowrap; word-break:keep-all;
+ font-size:var(--bl-ts-meta,.9em); /* 8.1.x 위 창 탭(85-addon-unify, --bl-ts-meta)과 같은 글자 크기 — 하위 탭만 본문 크기(15.5)라 위 탭(13.5)보다 컸다 */
 }
 body.salty #pt-panel .pt-settings-nav button[aria-selected="true"] { background:var(--salty-accent-13,var(--pt-accent-soft)); color:var(--salty-accent-ink,var(--pt-accent)); font-weight:inherit; }
 body.salty #pt-panel #pt-settings-form .pt-settings-scroll { padding:0 var(--pt-pad-x); }

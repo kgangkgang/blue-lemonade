@@ -25,7 +25,12 @@
     .salty-panel .bl-tool-heading,
     .salty-panel .bl-editor-group-toggle,
     .salty-panel .bl-settings-toprow button,
-    .salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch)
+    .salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch),
+    .salty-panel .bl-ss-btn,
+    :is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label,
+    #pt-panel label.pt-check,
+    #rm_extensions_block label.flex-container:has(> input[type="checkbox"]),
+    #rm_extensions_block label:not([class]):has(> input[type="checkbox"])
   ),
   html body.salty :is(
     #chat .mes .mes_media_enlarge,
@@ -33,7 +38,9 @@
     #chat .mes .mes_buttons .mes_button,
     #left-nav-panel label.checkbox_label,
     #left-nav-panel .editor_maximize,
-    :is(#left-nav-panel, #rm_extensions_block) .menu_button
+    :is(#left-nav-panel, #rm_extensions_block) .menu_button,
+    #rm_extensions_block .editor_maximize,
+    #rm_extensions_block .right_menu_button
   ) {
     position: relative;
   }
@@ -51,7 +58,12 @@
     .salty-panel .salty-mode-switch button,
     .salty-panel .bl-tool-heading,
     .salty-panel .bl-editor-group-toggle,
-    .salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch)
+    .salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch),
+    .salty-panel .bl-ss-btn,
+    :is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label,
+    #pt-panel label.pt-check,
+    #rm_extensions_block label.flex-container:has(> input[type="checkbox"]),
+    #rm_extensions_block label:not([class]):has(> input[type="checkbox"])
   )::before,
   html body.salty :is(
     #left-nav-panel label.checkbox_label
@@ -68,7 +80,9 @@
     #chat .mes .mes_media_container .right_menu_button,
     #chat .mes .mes_buttons .mes_button,
     #left-nav-panel .editor_maximize,
-    :is(#left-nav-panel, #rm_extensions_block) .menu_button
+    :is(#left-nav-panel, #rm_extensions_block) .menu_button,
+    #rm_extensions_block .editor_maximize,
+    #rm_extensions_block .right_menu_button
   )::after {
     content: '';
     position: absolute;
@@ -104,9 +118,17 @@
     position: relative;
     z-index: 1;
   }
+  /* 8.1.x 애드온 창 · 확장 서랍 · 한글화 패널의 체크 줄(label.checkbox_label · 한글화 패널 .pt-check · 실리태번 확장의 체크박스를 품은 label.flex-container · 클래스 없는 label)도
+     위 ::before 상자를 단다(보이는 높이 20~36 그대로). 클래스 없는 label 만 고르는 건 다른 확장이 클래스로 그린 스위치(::before 트랙)를 건드리지 않으려고.
+     줄 안에 링크 · 단추 · 글 칸이 있으면 상자가 덮지 않게 그것들만 한 층 위로 — :where 라 특이도 0, 다른 모듈이 준 position 이 이긴다 */
+  :where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, #rm_extensions_block label:not([class])) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))) {
+    position: relative;
+    z-index: 1;
+  }
 
-  /* 확장 서랍 머리 스위치: 66-ui-rhythm.css 의 위아래 7px 를 44×44 상자로 */
-  html body :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before {
+  /* 확장 서랍 머리 스위치: 66-ui-rhythm.css 의 위아래 7px 를 44×44 상자로
+     8.1.x 그 규칙(body.salty …, 특이도 1,2,2)이 이 규칙(html body …, 1,1,3)을 이겨 폰에서도 상자가 34(20 + 7 + 7)로 남았다 — :is(.salty, *) 로 특이도만 올린다(확장만 모드도 그대로 걸림) */
+  html body:is(.salty, *) :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before {
     inset: auto;
     left: 50%;
     top: 50%;

@@ -26,7 +26,7 @@ export const FILE_HASHES = {
   "src/addons/assets/state.js": "17764:37da6ac7:23c28086",
   "src/addons/assets/store.js": "12087:33b5a43c:107ca29c",
   "src/addons/assets/strip-chat.js": "7097:271fe134:7b8af7af",
-  "src/addons/assets/style.css": "44282:0fc85506:3813c734",
+  "src/addons/assets/style.css": "44327:2e8de28c:74320469",
   "src/addons/assets/ui.js": "7725:b09405eb:655b68d6",
   "src/addons/assets/viewer.js": "18795:a8efd4e0:8986a4a7",
   "src/addons/bookmarks/alt-palette.js": "2573:aedaf8a8:640a84d8",
@@ -133,7 +133,7 @@ export const FILE_HASHES = {
   "src/addons/notes/graph.js": "12020:1cdfe68f:2b39d83a",
   "src/addons/notes/guide.js": "13946:68b0c805:a82fe18e",
   "src/addons/notes/index.js": "148927:3d8734b1:23ee2c78",
-  "src/addons/notes/style.css": "81791:f2527ddb:4c2b6f98",
+  "src/addons/notes/style.css": "81808:e637d5fc:699e623e",
   "src/addons/notes/sync.js": "4782:31c6c609:ed11f07b",
   "src/addons/notes/version.js": "163:eb1eb163:f81218f6",
   "src/addons/order/menu-plan.js": "7682:efd58bf6:ac05679a",
@@ -205,7 +205,7 @@ export const FILE_HASHES = {
   "src/addons/prompt/request-errors.js": "1558:9bebebff:d7f4f644",
   "src/addons/prompt/response-text.js": "2596:b1382aa2:260a2b4b",
   "src/addons/prompt/settings-ui.js": "8501:0e6f9924:2f4c758e",
-  "src/addons/prompt/style.css": "76981:e4634231:c1d21b8c",
+  "src/addons/prompt/style.css": "77162:84ef2d21:1efd94ff",
   "src/addons/prompt/translation-memory.js": "1476:261fa1b4:97939765",
   "src/addons/prompt/translation-progress.js": "4714:8084427b:1653c2ea",
   "src/addons/regexlink/engine.js": "10696:e3175cb9:e91d48b1",
@@ -227,7 +227,7 @@ export const FILE_HASHES = {
   "src/addons/rewrite/settings-html.js": "18260:cc91472d:3f65e7a5",
   "src/addons/rewrite/spans-worker.js": "991:ea17d03b:8c0ccf3e",
   "src/addons/rewrite/spans.js": "6761:867f9697:c609e837",
-  "src/addons/rewrite/style.css": "26969:550073e7:457d26d0",
+  "src/addons/rewrite/style.css": "27692:f031cf99:5faec062",
   "src/addons/rewrite/undo.js": "2633:931380a4:1ad3330f",
   "src/addons/rewrite/upgrades.js": "10617:1ecd6c17:e55d9256",
   "src/addons/translator/archive-bridge.js": "1842:85820c61:8fc7ab69",
@@ -739,5 +739,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1821740:220d0ca2:36d2989f"
+  "style.css": "1826084:4e9cf2a6:e3a40d4a"
 };

@@ -286,7 +286,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-usage-mode [role="status"]:empty { display:none; }
 
 .salty-panel .bl-prompt-source { margin:4px 0 16px; color:var(--salty-muted); font-size:calc(12 * var(--sp)); line-height:1.7; }
-.salty-panel .bl-prompt-source a { color:var(--salty-accent); text-underline-offset:3px; }
+.salty-panel .bl-prompt-source a { color:var(--salty-accent-ink, var(--salty-accent)); text-underline-offset:3px; } /* 8.1.x 흰 면 위 링크 글자도 잉크(포인트 그대로 4.43:1) */
 
 /* 5.5.3 세로 중앙: 줄 높이(1.7)보다 min-height 32px 가 커서 글자가 위에 붙던 것 → 남는 높이를 위아래로 나눔 (글자가 커서 남는 높이가 없으면 0 · 보정도 그 안에서만) */
 .salty-panel .bl-usage-mode summary { cursor:pointer; min-height:32px; line-height:1.7; font-size:calc(14 * var(--sp)); --bl-pad: max(0px, calc((32px - 1lh) / 2)); padding-top:calc(var(--bl-pad) + clamp(calc(0px - var(--bl-pad)), var(--bl-text-nudge, 0px), var(--bl-pad))); padding-bottom:calc(var(--bl-pad) - clamp(calc(0px - var(--bl-pad)), var(--bl-text-nudge, 0px), var(--bl-pad))); }

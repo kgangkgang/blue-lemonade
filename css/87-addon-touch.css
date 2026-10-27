@@ -8,6 +8,9 @@
    7.2.5 상자(::before/::after)를 다는 칸은 반드시 아래 기준점(position: relative) 목록에도 있어야 한다 — 확장 탭에 박힌 캐릭터 에셋 패널의 「사용법」 summary(.eh-guide summary)가
    기준점 없이 상자만 달려 서랍(#rm_extensions_block) 전체를 덮는 375×767 투명 상자가 되어 머리 단추(에셋 떼기 · 새로고침 · 압축 · 다시 그리기)가 폰에서 안 눌렸다 (제보 10-19).
    7.2.9 ZIP 설치 창의 일반 단추(ZIP 고르기 · 설치된 확장 목록 · 백업 목록 보기 …, data-action)가 도우미가 연결된 화면에서 36px 로 남아 있었다 — 같은 상자를 단다.
+   8.1.x 실리태번 팝업의 닫기(dialog > .popup-button-close, 34×34 · 글리프는 ::before)와 다시 쓰기 「금지 묘사」 칩(.bwr_chip, 한 글자면 폭 34)도 같은 상자.
+         닫기는 실리태번이 position:absolute 로 둔다 — :where 기준점은 특이도 0 이라 그 absolute 가 그대로 이긴다(absolute 도 상자의 기준점).
+         확장 탭에 박힌 캐릭터 에셋(#char_assets_settings) · 전개 지시(.jj-settings-body) 설정의 접힘 머리(「규칙 · 직접 배치」 36 · 「뜻 보기」 15 · 「프롬프트」 39)도 summary 범위에.
    ===== */
 @media (pointer: coarse) {
   /* 기준점: :where 라 다른 모듈이 준 position(absolute 스위치 손잡이 등)이 이기고, static 인 칸만 relative 가 된다 */
@@ -20,14 +23,15 @@
     .jj-switch, .jj-small-btn, .bl-direction-dialog button[data-step], .jj-settings-body button[data-step],
     .lv-icon, .lv-help-btn, .lv-version, #lv_settings button.menu_button,
     .rl-chip, .pa-hub .menu_button, .rl-root .menu_button, .rl-msg summary,
-    .blzi-help, .blzi button[data-action], .blpt-btn, .bwr_help, .bwr-version, .bwr_seg, .bwr_settings .menu_button,
+    .blzi-help, .blzi button[data-action], .blpt-btn, .bwr_help, .bwr-version, .bwr_seg, .bwr_chip, .bwr_settings .menu_button,
+    dialog > .popup-button-close,
     .pt-ui-button, #pt-panel [data-help-group], .pt-help-dialog [data-help-group], #pt-panel-close,
     #model_register_settings .menu_button, #regex-link-settings .menu_button, .bl-translator-dialog .menu_button, .bl-ctsi-dialog .menu_button,
     .bl-fr-icon, .bl-mermaid-again, .salty-btn,
     .lv-tab, .llmt-tab, .bwr_tab, .rl-tab, .pa-hub-tab, .pt-tab, .po-menu-tabs > button, .pt-version, #pt-panel-refresh,
     .salty-panel .bl-preview-kinds > button, .salty-panel .bl-prompt-card-trigger, .salty-panel .salty-shapes button,
     :is(.bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog) > header > button,
-    :is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings, .salty-panel) summary
+    :is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings, .salty-panel, #char_assets_settings, .jj-settings-body) summary
   ) {
     position: relative;
   }
@@ -42,14 +46,15 @@
     .jj-small-btn, .bl-direction-dialog button[data-step], .jj-settings-body button[data-step],
     .lv-icon, .lv-help-btn, .lv-version, #lv_settings button.menu_button,
     .rl-chip, .pa-hub .menu_button, .rl-root .menu_button, .rl-msg summary,
-    .blzi-help, .blzi button[data-action], .blpt-btn, .bwr_help, .bwr-version, .bwr_seg, .bwr_settings .menu_button,
+    .blzi-help, .blzi button[data-action], .blpt-btn, .bwr_help, .bwr-version, .bwr_seg, .bwr_chip, .bwr_settings .menu_button,
+    dialog > .popup-button-close,
     .pt-ui-button, #pt-panel [data-help-group], .pt-help-dialog [data-help-group], #pt-panel-close,
     #model_register_settings .menu_button, #regex-link-settings .menu_button, .bl-translator-dialog .menu_button, .bl-ctsi-dialog .menu_button,
     .bl-fr-icon, .bl-mermaid-again, .salty-btn,
     .lv-tab, .llmt-tab, .bwr_tab, .rl-tab, .pa-hub-tab, .pt-tab, .po-menu-tabs > button, .pt-version, #pt-panel-refresh,
     .salty-panel .bl-preview-kinds > button, .salty-panel .bl-prompt-card-trigger, .salty-panel .salty-shapes button,
     :is(.bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog) > header > button,
-    :is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings) summary:not(.rl-msg summary, .eh-guide summary)
+    :is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings, #char_assets_settings, .jj-settings-body) summary:not(.rl-msg summary, .eh-guide summary)
   )::after,
   /* ::after 로 화살표 · 판 알약을 그리는 칸 → 비어 있는 ::before */
   :is(.bl-notes-ver, .jj-switch, .eh-guide summary, .salty-panel .bl-md-group > summary, .salty-panel .bl-usage-mode > summary, .salty-panel details:not(.rl-msg) > summary)::before {
