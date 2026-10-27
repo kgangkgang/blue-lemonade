@@ -25,7 +25,9 @@
 /* 8.1.1 다듬기 슬라이더 머리(이름 · ↺ · 숫자칸): 이 격자는 .salty-group 이 아니라 97-param-inline 의 줄바꿈(flex-wrap)을 못 받았다 —
    폰 320(설정 칸 288px = 21.8em, 2열 칸 127px)에서 「위아래 여백 ↺ | 1.2 em」 이 칸보다 길어 숫자칸이 3px 넘쳤다(8.1.1 검사 overflow-320x2).
    자리가 모자랄 때만 숫자칸이 다음 줄 오른쪽 끝으로 흐르고, 넓은 칸에서는 한 줄 그대로 */
-.salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider > header { flex-wrap:wrap; row-gap:2px; }
+/* 한쪽 칸만 숫자칸이 내려가도 짝 칸의 이름 줄은 위, 막대는 아래 끝으로 맞춘다(33-panel-columns 의 sl2 짝과 같은 방식) */
+.salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider { display:flex; flex-direction:column; align-self:stretch; min-width:0; }
+.salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider > header { flex:1 0 auto; flex-wrap:wrap; align-content:flex-start; row-gap:2px; }
 .salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider > header > .salty-num { margin-inline-start:auto; }
 .salty-panel .bl-md-general { margin-block:8px; }
 @media (max-width:760px) { .salty-panel .bl-md-groups { grid-template-columns:1fr; gap:6px; } }
