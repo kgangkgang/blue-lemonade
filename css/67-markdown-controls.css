@@ -16,11 +16,16 @@
 .salty-panel .bl-md-tuning { margin:.6em 0 0; border-top:1px solid var(--salty-text-20); }
 .salty-panel .bl-md-tuning > summary { cursor:pointer; padding:.6em .15em; line-height:1.4; font-size:.88em; color:var(--salty-muted); }
 .salty-panel .bl-md-tuning > .bl-control-grid { grid-template-columns:1fr; gap:10px; padding:.3em .15em; }
-/* 8.1.0 다듬기 슬라이더(선 길이 · 위아래 여백 · 아래 띠 두께 · 형광펜 진하기 …)도 2열(철칙 §5) — 설정 칸이 21em 이상이면(폰 384 의 334px 포함, 320 은 숫자 칸이 3px 넘쳐 1열 — 8.1.1 검사). 고르기 줄(.salty-stack)과 짝 없는 슬라이더는 한 줄 전체 */
+/* 8.1.0 다듬기 슬라이더(선 길이 · 위아래 여백 · 아래 띠 두께 · 형광펜 진하기 …)도 2열(철칙 §5) — 설정 칸이 21em 이상이면(폰 384 의 334px · 320 의 288px 포함 — 칸이 좁으면 숫자칸은 아래 규칙으로 다음 줄). 고르기 줄(.salty-stack)과 짝 없는 슬라이더는 한 줄 전체 */
 @container bl-controls (width >= 21em) {
   .salty-panel .bl-md-tuning > .bl-control-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:var(--bl-s3,12px); align-items:start; }
   .salty-panel .bl-md-tuning > .bl-control-grid > .salty-stack,
   .salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider:not(.salty-slider + .salty-slider):not(:has(+ .salty-slider)) { grid-column:1 / -1; }
 }
+/* 8.1.1 다듬기 슬라이더 머리(이름 · ↺ · 숫자칸): 이 격자는 .salty-group 이 아니라 97-param-inline 의 줄바꿈(flex-wrap)을 못 받았다 —
+   폰 320(설정 칸 288px = 21.8em, 2열 칸 127px)에서 「위아래 여백 ↺ | 1.2 em」 이 칸보다 길어 숫자칸이 3px 넘쳤다(8.1.1 검사 overflow-320x2).
+   자리가 모자랄 때만 숫자칸이 다음 줄 오른쪽 끝으로 흐르고, 넓은 칸에서는 한 줄 그대로 */
+.salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider > header { flex-wrap:wrap; row-gap:2px; }
+.salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider > header > .salty-num { margin-inline-start:auto; }
 .salty-panel .bl-md-general { margin-block:8px; }
 @media (max-width:760px) { .salty-panel .bl-md-groups { grid-template-columns:1fr; gap:6px; } }
