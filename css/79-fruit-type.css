@@ -15,6 +15,17 @@
 .bl-ft-params>*{min-width:0}
 .bl-ft-params>.bl-ft-wide{grid-column:1 / -1}
 @container bl-ft-body (width >= 19em){.bl-ft-params{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* 8.1.2 맨 위 「정보 배치 · 하단 반복 문구」도 2열(사용자 10-28 시안 B) — 두 칸 모두 「이름 위 · 고르기 아래」(높이 36)라 같은 행의 이름 줄 · 조작부 위가 맞아요.
+   영역 파라미터와 같은 19em 부터 2열(320 폰 반 칸 140px 에도 이름 한 줄 · 「보임 | 숨김」 64px 씩), 더 좁으면(큰 글씨) 1열. 한 개뿐이면(데우스) 전체 폭 */
+.bl-fruit-type-editor{container:bl-ft-editor / inline-size}
+.bl-ft-top{display:grid;grid-template-columns:minmax(0,1fr);gap:0 var(--bl-param-col-gap,8px);align-items:start}
+.bl-ft-top>*{min-width:0}
+.bl-ft-top>:only-child{grid-column:1 / -1}
+/* 하단 문구 「보임 | 숨김」: 칸 폭을 둘이 나눠 꽉. 높이는 옆 고르기와 같게 — 값을 적지 않고, 2열일 때 두 칸이 한 행을 나눠 써(subgrid) 고르기 높이(PC 36 · 폰 44)를 따라가요.
+   제 키(안쪽 2px + 글자)는 고르기보다 작게 두고 행에 맞춰 늘어나요. 1열일 때는 36 */
+.bl-fruit-type-editor .bl-ft-seg{display:flex;width:100%;max-width:none;min-height:36px;margin:0;padding:2px;box-sizing:border-box;align-items:stretch}
+.bl-fruit-type-editor .bl-ft-seg>button{flex:1 1 0;min-width:0;min-height:0;white-space:nowrap}
+@container bl-ft-editor (width >= 19em){.bl-ft-top{grid-template-columns:repeat(2,minmax(0,1fr))}.bl-ft-top>.bl-ft-param{display:grid;grid-row:span 2;grid-template-rows:subgrid;row-gap:6px}}
 .bl-ft-param>span{min-width:0;overflow-wrap:anywhere}
 .bl-ft-param>select{display:block;width:100%;min-width:0;max-width:100%;min-height:36px;margin:0;border-radius:8px;font:inherit}
 .bl-ft-slider{min-width:0}

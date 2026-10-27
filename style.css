@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 12d951de0ec5) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 9022b7eefd70) */
 /* css/00-base.css */
 :root{--bl-release:"8.1.1";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -26041,6 +26041,13 @@ dialog.bl-prompt-card-picker::backdrop { background: var(--salty-scrim, var(--bl
 .bl-ft-params>*{min-width:0}
 .bl-ft-params>.bl-ft-wide{grid-column:1 / -1}
 @container bl-ft-body (width >= 19em){.bl-ft-params{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.bl-fruit-type-editor{container:bl-ft-editor / inline-size}
+.bl-ft-top{display:grid;grid-template-columns:minmax(0,1fr);gap:0 var(--bl-param-col-gap,8px);align-items:start}
+.bl-ft-top>*{min-width:0}
+.bl-ft-top>:only-child{grid-column:1 / -1}
+.bl-fruit-type-editor .bl-ft-seg{display:flex;width:100%;max-width:none;min-height:36px;margin:0;padding:2px;box-sizing:border-box;align-items:stretch}
+.bl-fruit-type-editor .bl-ft-seg>button{flex:1 1 0;min-width:0;min-height:0;white-space:nowrap}
+@container bl-ft-editor (width >= 19em){.bl-ft-top{grid-template-columns:repeat(2,minmax(0,1fr))}.bl-ft-top>.bl-ft-param{display:grid;grid-row:span 2;grid-template-rows:subgrid;row-gap:6px}}
 .bl-ft-param>span{min-width:0;overflow-wrap:anywhere}
 .bl-ft-param>select{display:block;width:100%;min-width:0;max-width:100%;min-height:36px;margin:0;border-radius:8px;font:inherit}
 .bl-ft-slider{min-width:0}

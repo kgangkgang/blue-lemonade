@@ -41,6 +41,8 @@ export function bindFruitTypography(root){
     const toggle=(attrs,label,checked)=>`<label class="salty-switch"><input type="checkbox" ${attrs} aria-label="${esc(label)}" ${checked?'checked':''}><span></span></label>`;
     // 이름 · ↺ · 스위치를 한 줄에 (상태창 전체도, 영역도 같은 모양). 8.0.6 ↺ 는 테마 설정처럼 이름 바로 옆, 바꾼 값이 있을 때만 보여요.
     const switchRow=(label,note,reset,resetLabel,on,changed)=>`<div class="salty-row bl-ft-row"><span>${label}<button type="button" class="bl-ft-reset" ${reset} title="${esc(resetLabel)}" aria-label="${esc(resetLabel)}"${changed?'':' hidden'}>↺</button>${note?`<small>${note}</small>`:''}</span><span class="bl-ft-row-ctl">${on}</span></div>`;
+    // 8.1.2 하단 문구: 스위치 대신 테마 두 칸 고르기 「보임 | 숨김」(사용자 10-28 시안 B) — 옆 「정보 배치」 고르기와 같은 높이 · 모양. 저장 값은 예전 그대로 hideFooter(숨김 = 켬)
+    const footerSeg=hidden=>`<div class="salty-seg salty-mini bl-ft-seg">${[[false,'보임'],[true,'숨김']].map(([v,t])=>`<button type="button" data-ft-hide="${v}" aria-pressed="${hidden===v}" class="${hidden===v?'on':''}">${t}</button>`).join('')}</div>`;
     const typeChanged=(s,kind)=>JSON.stringify(s.types[kind])!==JSON.stringify(tidyFruitType({}).types[kind]);
     const regionChanged=r=>Object.keys(REGION_DEFAULT).some(k=>r[k]!==REGION_DEFAULT[k]);
     // 영역은 테마 설정 묶음처럼 접는다: 이름 · 지금 상태 · +/−, 한 번에 하나만 펼침
@@ -56,15 +58,14 @@ ${field(key,'italic','기울임',`<select>${option('false','보통',String(r.ita
 ${field(key,'align','정렬',`<select>${[['original','원작 그대로'],['left','왼쪽'],['center','가운데'],['right','오른쪽'],['justify','양쪽']].map(([v,t])=>option(v,t,r.align)).join('')}</select>`)}
 ${field(key,'wrap','줄바꿈',`<select>${[['original','원작 그대로'],['word','낱말 단위'],['anywhere','글자 단위'],['nowrap','한 줄 · 넘치면 스크롤']].map(([v,t])=>option(v,t,r.wrap)).join('')}</select>`,true)}</div>`);}).join('');
         const unsupported=owner==='fruit'?fold('support','지원 범위',`${types.length}종`,`<p class="salty-note">위 ${types.length}종만 조절해요. 구조가 정해지지 않은 상태창은 덮어쓰지 않아요.</p><ul class="bl-ft-support">${FRUIT_UNSUPPORTED.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`):'';
-        const footer=type.regions.footer?`${type.id==='status'?'하단 반복 문구':type.regions.footer[0]} 숨기기`:'';
+        const footer=type.regions.footer?(type.id==='status'?'하단 반복 문구':type.regions.footer[0]):'';
         box.innerHTML=`${choice('data-ft-kind','상태창 종류',types.map(t=>[t.id,t.name]),s.kind)}
 ${switchRow(`${ownerName} 글자 설정 사용`,'끄면 원작 표시로 돌아가요','data-ft-all-reset','이 상태창 글자 설정 · 기본값으로',toggle('data-ft-on',`${ownerName} 글자 설정 사용`,ownerEnabled(s,owner)),typeChanged(s,s.kind))}
 ${owner==='deus'?choice('data-ft-demver','미리보기 판',DEUS_VERSIONS,demVersion()):''}
 <div class="salty-prevbox bl-ft-prevbox${folded()?' folded':''}" data-pv-max="120"><button type="button" class="salty-pvfold" data-ft-pvfold aria-expanded="${!folded()}" aria-label="${folded()?'미리보기 펼치기':'미리보기 접기'}"><i aria-hidden="true"></i></button><iframe class="bl-ft-preview" title="상태창 미리보기" sandbox="allow-same-origin"></iframe></div>
 <p class="salty-note bl-ft-font-note" data-ft-font-status role="status"><span class="bl-ft-sample-badge" data-ft-sample-badge hidden>표본이에요</span><span data-ft-note-text></span></p>
 
-${type.layout?choice('data-ft-layout','정보 배치',layoutChoices(type),layoutChoices(type).some(([value])=>value===config.layout)?config.layout:'original'):''}
-${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-ft-hide',footer,config.hideFooter)}</div>`:''}
+${type.layout||footer?`<div class="bl-ft-top">${type.layout?choice('data-ft-layout','정보 배치',layoutChoices(type),layoutChoices(type).some(([value])=>value===config.layout)?config.layout:'original'):''}${footer?`<div class="bl-ft-param bl-ft-seg-param" role="group" aria-label="${esc(footer)}"><span>${footer}</span>${footerSeg(config.hideFooter)}</div>`:''}</div>`:''}
 <div class="bl-ft-groups">${regions}${unsupported}</div>`;
         const frame=box.querySelector('iframe');
         dropHost();lastCss='';previewKind='';previewSignature='';autoPreviewScale=null;docMode='';sampleKey='';sampleToken++;
@@ -220,7 +221,6 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
         if(el.hasAttribute('data-ft-demver')){const settings=getSettings();settings.chat.demPreviewVersion=tidyDemVersion(el.value);saveSettings();sampleKey='';previewSignature='';schedulePreview(true);return;}
         if(el.hasAttribute('data-ft-on'))s.ownerOn[owner]=el.checked;
         else if(el.hasAttribute('data-ft-layout'))type.layout=el.value;
-        else if(el.hasAttribute('data-ft-hide'))type.hideFooter=el.checked;
         else if(el.dataset.ft&&el.dataset.region){const r=type.regions[el.dataset.region];if(!r)return;const key=el.dataset.ft;r[key]=key==='on'?el.checked:key==='italic'?el.value==='true':['size','weight','spacing','line'].includes(key)?Number(el.value):el.value;
             // Choosing a value is the intent to use it: switch on this region and the owner's typography.
             if(key!=='on'&&!r.on){r.on=true;const toggle=box.querySelector(`[data-region="${el.dataset.region}"][data-ft="on"]`);if(toggle)toggle.checked=true;}}
@@ -239,6 +239,10 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
     function click(e){
         const group=e.target.closest('[data-ft-group]');
         if(group){const open=group.getAttribute('aria-expanded')!=='true';openGroups.set(owner,open?group.dataset.ftGroup:null);for(const other of box.querySelectorAll('[data-ft-group]')){const on=open&&other===group;other.setAttribute('aria-expanded',String(on));other.nextElementSibling.hidden=!on;}if(open)reveal(group.dataset.ftGroup);return;}
+        const hide=e.target.closest('[data-ft-hide]');
+        if(hide){const s=current(),value=hide.dataset.ftHide==='true';if(s.types[s.kind].hideFooter===value&&ownerEnabled(s,owner))return;s.types[s.kind].hideFooter=value;for(const b of hide.parentElement.children){const on=b===hide;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));}
+            // 다른 값을 고르면 글자 설정도 켜요(예전 스위치와 같은 동작)
+            if(!ownerEnabled(s,owner)){s.ownerOn[owner]=true;const toggle=box.querySelector('[data-ft-on]');if(toggle)toggle.checked=true;}commit(s);return;}
         const fold=e.target.closest('[data-ft-pvfold]');
         if(fold){const shut=!fold.parentElement.classList.contains('folded');fold.parentElement.classList.toggle('folded',shut);fold.setAttribute('aria-expanded',String(!shut));fold.setAttribute('aria-label',shut?'미리보기 펼치기':'미리보기 접기');try{localStorage.setItem('bl_ft_pvfold',shut?'1':'0');}catch{}box.dispatchEvent(new Event('bl:preview-resize'));return;}if(e.target.closest('[data-ft-all-reset]')){const s=current();s.types[s.kind]=tidyFruitType({}).types[s.kind];commit(s);paint();return;}const el=e.target.closest('[data-ft-reset]');if(!el)return;const s=current();s.types[s.kind].regions[el.dataset.ftReset]={...REGION_DEFAULT};commit(s);paint();}
     box.addEventListener('change',change);box.addEventListener('input',input);box.addEventListener('click',click);paint();

@@ -63,7 +63,24 @@ const order=[...regionBody.matchAll(/\$\{(field|slider)\(key,'(\w+)'/g)].map(m=>
 assert.deepEqual(order,['font','size','weight','spacing','line','italic','align','wrap'],'Pairs are same-kind: size|weight · spacing|line · italic|align, long choices (font · wrap) alone');
 assert.equal((regionBody.match(/,true\)\}/g)||[]).length,2,'Only font and wrap are full-width');
 assert(!/border-radius\s*:\s*(9999|99)px/.test(editorCss),'No pill buttons');
-assert.equal((editorJs.match(/type="checkbox"/g)||[]).length,1,'Switches come from one theme switch helper');assert(editorJs.includes('class="salty-switch"'));
+assert.equal((editorJs.match(/type="checkbox"/g)||[]).length,1,'Switches come from one theme switch helper (글자 설정 사용 · 이 영역 조절 — 하단 문구는 8.1.2 부터 고르기)');
+// 8.1.2 맨 위 「정보 배치 · 하단 반복 문구」 2열(사용자 10-28 시안 B): 하단 문구는 스위치 대신 테마 두 칸 고르기 「보임 | 숨김」 — 저장 값은 예전 그대로 hideFooter
+assert(!editorJs.includes("toggle('data-ft-hide'"),'Footer is no longer a switch');
+assert(/<div class="bl-ft-top">/.test(editorJs)&&/\.bl-ft-top\{display:grid/.test(editorCss),'Top pair sits in its own grid');
+assert(/@container bl-ft-editor \(width >= 19em\)\{\.bl-ft-top\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}/.test(editorCss),'Top pair is two columns from 19em, like the region parameters');
+assert(/\.bl-ft-top>\.bl-ft-param\{display:grid;grid-row:span 2;grid-template-rows:subgrid/.test(editorCss),'Both top cells share one control row, so the show/hide choice is exactly as tall as the layout select (PC 36 · phone 44)');
+assert(/\.bl-ft-top>:only-child\{grid-column:1 \/ -1\}/.test(editorCss),'A lone top item (Deus) spans the row');
+assert(/\.bl-fruit-type-editor \.bl-ft-seg\{[^}]*min-height:36px[^}]*padding:2px/.test(editorCss)&&/\.bl-ft-seg>button\{[^}]*min-height:0/.test(editorCss),'Footer choice is at least 36 alone and its own height stays under the select so the shared row decides');
+assert(!/ 숨기기`/.test(editorJs),'The label names the region; the choice says show/hide');
+{const m=/const footerSeg=(hidden=>`[\s\S]*?`);\n/.exec(editorJs);assert(m,'footerSeg helper');const seg=vm.runInNewContext(m[1]);
+ // 옛 설정 호환: 예전 스위치 켬(hideFooter true) = 「숨김」 눌림, 끔 = 「보임」 눌림
+ const on=seg(true),off=seg(false);
+ assert(/data-ft-hide="true" aria-pressed="true" class="on">숨김/.test(on)&&/data-ft-hide="false" aria-pressed="false" class="">보임/.test(on),'Saved hideFooter:true shows 숨김 pressed');
+ assert(/data-ft-hide="false" aria-pressed="true" class="on">보임/.test(off)&&/data-ft-hide="true" aria-pressed="false" class="">숨김/.test(off),'Saved hideFooter:false shows 보임 pressed');
+ assert.equal((on.match(/<button /g)||[]).length,2,'Two choices');}
+for(const [saved,want] of [[true,true],[false,false],[undefined,false],['yes',false],[1,false]]){const t=tidyFruitType({types:{status:{hideFooter:saved}}});assert.equal(t.types.status.hideFooter,want,'Old hideFooter value '+String(saved));}
+{const t=tidyFruitType({on:true,types:{status:{hideFooter:true}}});assert(fruitTypeCss(t).includes(':is(.fate-bottom-en,.custom-fate-bottom-en){display:none'),'Old saved 켬 still hides the footer');t.types.status.hideFooter=false;assert(!fruitTypeCss(t).includes('fate-bottom-en,.custom-fate-bottom-en){display:none'),'보임 shows it');}
+assert(/const hide=e\.target\.closest\('\[data-ft-hide\]'\)/.test(editorJs)&&!/hasAttribute\('data-ft-hide'\)/.test(editorJs),'The choice is handled on click, not as a checkbox change');assert(editorJs.includes('class="salty-switch"'));
 assert(!/<label class="bl-ft-param"><span>[^<]*<\/span><(?:input|select)[^>]*>[^<]*<(?:input|select)/.test(editorJs),'One control per parameter');
 // 과일 창 바로가기 대화상자(.bl-ft-dialog)는 설정 창(.salty-panel) 밖 — 미리보기 도구 단추가 테마 모양을 따로 받아야 한다 (없으면 브라우저 기본 흰 네모, 나이트 대비 1.14)
 assert(editorJs.includes("dialog.className='bl-ft-dialog'")&&!editorJs.includes('salty-panel'),'Shortcut dialog lives outside .salty-panel');
