@@ -338,11 +338,11 @@ function updateConnectionVisibility() {
     const current = extensionSettings.connection_mode !== 'direct';
     $('#llm_connection_mode').val(current ? 'current' : 'direct');
     $('#llm_current_settings').toggle(current);
-    $('#llm_direct_settings').toggle(!current);
+    $('#llm_direct_settings, #llm_direct_params, #llm_direct_hint').toggle(!current);   // 3.1.3 공급자 · 모델 카드와 생성 파라미터 사이에 「검열되면 대신 쓸 모델」 카드(늘 보임)
     $('#llm_profile_max_tokens').val(extensionSettings.profile_max_tokens || 0);
 }
 
-// 6.4.5 「검열당했을 때」 칸 — 모델 탭 › 연결 방식 카드 맨 아래 (어느 연결 방식에서도). 저장 = extensionSettings.fallback,
+// 6.4.5 「검열당했을 때」 칸 — 3.1.3 부터 모델 탭 › 공급자 · 모델 카드 아래 따로 「검열되면 대신 쓸 모델」 카드 (어느 연결 방식에서도). 저장 = extensionSettings.fallback,
 //   모델 전환 「번역 (검열되면)」 줄과 같은 자리라 거기서 고른 값이 그대로 보이고, 모델 전환에서 바꾸면 다시 그린다.
 //   본 요청이 내용 차단으로 막혔을 때만 그 모델로 한 번 더 (아래 fallbackOf · 「안 함」이면 보내지 않음)
 const FALLBACK_SOURCES = ['openai', 'custom', 'claude', 'cohere', 'makersuite', 'vertexai', 'openrouter', 'deepseek'];   // 이 확장이 직접 부를 수 있는 공급자 (모델 전환 번역 줄과 같음)
@@ -351,11 +351,13 @@ function translatorMainTarget() {
     const provider = extensionSettings.llm_provider;
     return { source: provider === 'google' ? 'makersuite' : provider, model: extensionSettings.llm_model === 'custom' ? getCustomModelName(provider) : extensionSettings.llm_model };
 }
+// 3.1.3 카드 제목이 이미 「검열되면 대신 쓸 모델」이라 칸 이름은 짧게 (공용 칸 fallback-field.js · 다른 애드온은 그대로)
+const FALLBACK_LABELS = { '검열당했을 때': '대신 쓸 공급자' };
 function mountTranslatorFallback() {
     const host = document.getElementById('llm_fallback_field');
     if (!host) return;
     mountFallbackField(host, { id: 'translator', settings: () => extensionSettings, sources: FALLBACK_SOURCES, save: saveSettingsDebounced, main: translatorMainTarget,
-        row: (label, control) => `<div class="llmt-field"><span class="llmt-label">${label}</span>${control}</div>` });
+        row: (label, control) => `<div class="llmt-field"><span class="llmt-label">${FALLBACK_LABELS[label] || label}</span>${control}</div>` });
 }
 window.addEventListener('st:model-switch-applied', () => document.getElementById('llm_fallback_field')?.blFallbackRender?.());
 

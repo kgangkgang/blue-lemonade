@@ -1,7 +1,7 @@
 <div class="translation_settings llmt-settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header">
-            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v3.1.1</span></b>
+            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v3.1.3</span></b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
 
@@ -223,7 +223,7 @@
                                 <small class="llmt-desc">0이면 현재 연결의 응답 길이 설정을 따라가요.</small>
                             </div>
                         </div>
-                        <div id="llm_fallback_field" class="llmt-fallback"></div>
+                        <small id="llm_direct_hint" class="llmt-desc" style="display:none">아래 공급자 · 모델로 번역해요.</small>
                     </div>
                 </section>
                 <div id="llm_direct_settings">
@@ -280,7 +280,18 @@
                         </div>
                     </div>
                 </section>
+                </div>
 
+                <!-- 3.1.3 「검열당했을 때」 칸을 연결 방식 카드에서 꺼내 따로 — 주 번역 모델(위 공급자 · 모델)과 헷갈리지 않게. 어느 연결 방식에서도 보여요 -->
+                <section class="llmt-card" id="llmt_fallback_card">
+                    <header class="llmt-card-head"><i class="fa-solid fa-shield-halved"></i><span>검열되면 대신 쓸 모델</span></header>
+                    <div class="llmt-card-body">
+                        <small class="llmt-desc">원래 번역이 검열로 막혔을 때만 이 모델로 한 번 더 보내요. 평소엔 안 써요.</small>
+                        <div id="llm_fallback_field" class="llmt-fallback"></div>
+                    </div>
+                </section>
+
+                <div id="llm_direct_params">
                 <section class="llmt-card">
                     <header class="llmt-card-head"><i class="fa-solid fa-gauge-high"></i><span>생성 파라미터</span></header>
                     <div class="llmt-card-body">

@@ -275,6 +275,7 @@ jobs:
           node tools/tests/translator-resume-stream.mjs .
           node tools/tests/translator-segment-keys.mjs .
           node tools/tests/translator-preset-compat.mjs .
+          node tools/tests/translator-fallback-card.mjs .
           node tools/tests/translator-whole-stream.mjs .
           node tools/tests/translator-stream-idle.mjs .
           node tools/tests/translator-han-in-word.mjs .
