@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.0.6/blue-lemonade-8.0.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.0.7/blue-lemonade-8.0.7.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.0.6 · 최신 업데이트</summary>
+<summary>8.0.7 · 최신 업데이트</summary>
+
+- 작가 노트 위치에 「페르소나 위치」 · 「캐릭터 설명 위치」를 더했어요. 고르면 작가 노트가 페르소나 설명(또는 캐릭터 설명) 바로 위에 붙어서 들어가요. 설명이 비어 있으면 그 설명이 들어갈 자리에 들어가고, 삽입 빈도 · 역할 · {{char}} 같은 매크로는 그대로예요. 채팅 완성 · 텍스트 완성 모두 되고, 테마를 끄면 원래 고른 위치로 돌아가요.
+- 전개 지시의 넣는 곳에도 「페르소나 위치」 · 「캐릭터 설명 위치」를 더했어요. 작가 노트와 같은 자리에 함께 넣으면 작가 노트 → 전개 지시 줄 순서로 들어가요.
+
+</details>
+
+<details>
+<summary>8.0.6 · 디자인 시스템 — 고른 항목 · 크기표 · 글자 · 모서리 정리, 서랍 · 창 표식 가볍게</summary>
 
 - 고른 항목(캐릭터 목록 · 페르소나 · 태그 필터 · 모델 등록 · 스타일 카드 · 팔레트 견본 등)을 두꺼운 2px 고리 대신 옅은 면 + 1px 선 + 조금 굵은 글자로 보여 줘요. 키보드로 옮겨 다닐 때의 포커스 고리는 그대로예요.
 - 액자 편집 · 과일 유형 · 프롬프트 묶기 · 첫 실행 안내 같은 창 뒤 가림막의 짙기를 라이트 · 나이트에 맞춰 하나로 맞췄어요.
