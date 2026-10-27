@@ -15,6 +15,10 @@ export const ALIASES = {
     'true thoughts': ['visible', 'hidden', 'true thoughts'],
     'thinking': ['thinking'],
     'scene plan': ['scene plan'],
+    // 데우스 3: 정규식은 @Companions · @Relationships, 프롬프트는 택1 갈래 이름뿐(묶음 머리 「🔻PICK: …」 는 marker 라 빠진다).
+    //   Intimate 는 관계 묶음 안이지만 <relationships> 를 내지 않아 넣지 않는다 (짝이 없던 동안은 늘 켜져 있었다)
+    'companions': ['notes', 'chat', 'best friend'],
+    'relationships': ['friendship', 'realistic romance', 'bubbly romance', 'dark romance'],
 };
 const TAG_RE = /@[A-Z][A-Za-z]*(?: [A-Z][A-Za-z]*){0,3}|! [A-Z][A-Za-z ]{1,30}? !|Thinking \(Fallback\)|Expressive Dialogue|True Thoughts|Scene Plan/g;
 /** 과일(MoM) 꼴 이름: 한자가 들었거나 [9] · [13.5] 번호가 붙은 것 (DEM 꼴 이름에는 둘 다 없다) */

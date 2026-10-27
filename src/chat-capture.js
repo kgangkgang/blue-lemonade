@@ -171,6 +171,8 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
         const animator=moving.length?prepareAnimated(moving,wrapper,page,fonts):null;
         // Serialize a detached copy: never move the off-screen export into the live page flow.
         const exportRoot=wrapper.cloneNode(true);exportRoot.style.position='static';const edgeDefs=document.getElementById('salty-cutedge-defs');if(edgeDefs)exportRoot.append(edgeDefs.cloneNode(true));/* 6.1.6 투명 그림 외곽선 필터(url(#…))는 캡처 그림 안에도 있어야 그려진다 — 없으면 외곽선 · 그림자가 통째로 빠짐 */exportRoot.style.removeProperty('left');exportRoot.style.removeProperty('top');
+        // 성능 보조 「같은 꾸밈 한 번만 넣기」가 메시지 안에 남긴 작은 표시를 원래 CSS 로 — 그림 안에서도 메시지 style(가상 요소 꾸밈 등)이 그대로 그려지게
+        window.PerfAssist?.styleOnce?.expand?.(exportRoot);
         const html=new XMLSerializer().serializeToString(exportRoot);
         const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${pixelWidth}" height="${pixelHeight}" viewBox="0 ${page.top} ${width} ${height}"><foreignObject width="${width}" height="${fullHeight}"><div xmlns="http://www.w3.org/1999/xhtml"><style>${fonts.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</style>${html}</div></foreignObject></svg>`;
         const image=rasterImage=new Image();

@@ -4,6 +4,7 @@
 //  2. 닫힌 프롬프트 목록은 열 때 그리기 (promptlist.js)
 //  3. 큰 저장은 뒤에서 보내기 (savesend.js + save-worker.js)
 //  4. 메시지 속 같은 <style> 은 하나만 쓰기 (styledup.js · 6.4.4)
+//  5. 메시지 속 같은 꾸밈 한 번만 넣기 (styleonce.js) — 실리태번이 메시지마다 같은 CSS 를 다시 해석하지 않게
 // 각 기능은 실리태번 쪽 모양(내보내기 · 이벤트 · 메서드)이 없으면 켜지지 않고 원래대로 둔다.
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { pane } from './hub.js';
@@ -11,18 +12,20 @@ import * as extensions from '../../../../../../extensions.js';
 import * as script from '../../../../../../../script.js';
 import * as openai from '../../../../../../openai.js';
 import * as powerUser from '../../../../../../power-user.js';
+import * as chats from '../../../../../../chats.js';
 import { morphdom } from '../../../../../../../lib.js';
 import { createStreamMorph, SELF_TEST_STEPS } from './morph.js';
 import { createPromptListDefer } from './promptlist.js';
 import { listShown } from './shown.js';
 import { createSaveSender } from './savesend.js';
 import { createStyleDedupe } from './styledup.js';
+import { createStyleOnce, installStyleOnce } from './styleonce.js';
 
 const MODULE = 'perf_assist';
 const VERSION = '1.0.2';
 const TITLE = '성능 보조';
 
-const DEFAULTS = Object.freeze({ morphStream: true, deferPromptList: true, saveInWorker: true, dedupeStyles: true });
+const DEFAULTS = Object.freeze({ morphStream: true, deferPromptList: true, saveInWorker: true, dedupeStyles: true, styleOnce: true });
 
 function settings() {
     return extensions.extension_settings[MODULE];
@@ -41,7 +44,7 @@ const events = () => script.eventSource ?? context().eventSource;
 const eventTypes = () => script.event_types ?? context().eventTypes;
 
 /** 기능마다 못 쓰게 된 까닭 ('' = 쓸 수 있음) */
-const unavailable = { morphStream: '', deferPromptList: '', saveInWorker: '', dedupeStyles: '' };
+const unavailable = { morphStream: '', deferPromptList: '', saveInWorker: '', dedupeStyles: '', styleOnce: '' };
 
 // ── 1. 스트리밍 중 바뀐 곳만 다시 그리기 ─────────────────────
 
@@ -227,6 +230,28 @@ function installStyleDedupe() {
     run();
 }
 
+// ── 5. 메시지 속 같은 꾸밈 한 번만 넣기 ─────────────────────
+// 100턴 표본에서 그리기 시간의 대부분이 메시지마다 같은 <style> 을 실리태번이 다시 해석하는 데 들었다 — 같은 원문은 한 번만 해석해
+// #sheld 뒤 칸에 한 벌 두고, 메시지 안에는 작은 표시만 남긴다 (styleonce.js). 저장된 글은 그대로
+
+const styleOnce = createStyleOnce({
+    // 실리태번과 같은 길(DOMPurify 는 인코딩된 style 글을 건드리지 않는다)
+    decode: html => chats.decodeStyleTags(chats.encodeStyleTags(html), { prefix: '.mes_text ' }),
+    mediaAllowed: () => (typeof chats.isExternalMediaAllowed === 'function' ? chats.isExternalMediaAllowed() : true),
+    enabled: () => settings().styleOnce !== false && !unavailable.styleOnce,
+});
+
+function installStyleOnceHook() {
+    const es = events(), ev = eventTypes();
+    if (typeof chats.decodeStyleTags !== 'function' || typeof chats.encodeStyleTags !== 'function' || !installStyleOnce(styleOnce, context()?.messageFormatter)) {
+        unavailable.styleOnce = '실리태번 서식 훅 없음';
+        return;
+    }
+    if (!es || !ev) return;
+    // 지우기 · 다시 그리기 · 채팅 바꾸기 뒤 칸 정리 (메시지가 그려질 때는 훅이 스스로 부른다)
+    for (const name of ['CHARACTER_MESSAGE_RENDERED', 'USER_MESSAGE_RENDERED', 'MESSAGE_UPDATED', 'MESSAGE_SWIPED', 'MESSAGE_EDITED', 'MESSAGE_DELETED', 'CHAT_CHANGED', 'MORE_MESSAGES_LOADED', 'GENERATION_ENDED', 'GENERATION_STOPPED']) if (ev[name]) es.on(ev[name], () => styleOnce.schedule());
+}
+
 // ── 설정 서랍 ───────────────────────────────────────────────
 
 const ROWS = [
@@ -234,6 +259,7 @@ const ROWS = [
     ['deferPromptList', '닫힌 프롬프트 목록은 열 때 그리기'],
     ['saveInWorker', '큰 저장은 뒤에서 보내기'],
     ['dedupeStyles', '메시지 속 같은 style 은 하나만 쓰기'],
+    ['styleOnce', '메시지 속 같은 꾸밈 한 번만 넣기'],
 ];
 
 let drawer = null;
@@ -276,6 +302,7 @@ function buildDrawer() {
             if (key === 'deferPromptList' && !input.checked) { promptList.flush(true); promptList.flushBatch(); }
             if (key === 'saveInWorker' && input.checked) saver.start();
             if (key === 'dedupeStyles') styleDedupe.schedule();   // 끄면 모두 되돌린다 (run 이 enabled 를 본다)
+            // styleOnce: 끄면 다음에 그리는 메시지부터 원래대로 — 이미 그린 메시지의 꾸밈은 칸이 그대로 지킨다
             script.saveSettingsDebounced?.();
         });
     }
@@ -288,7 +315,7 @@ function checkFilesMatch() {
 }
 
 initSettings();
-for (const [name, install] of [['saveInWorker', installSaver], ['morphStream', installMorph], ['deferPromptList', installPromptList], ['dedupeStyles', installStyleDedupe]]) {
+for (const [name, install] of [['saveInWorker', installSaver], ['morphStream', installMorph], ['deferPromptList', installPromptList], ['dedupeStyles', installStyleDedupe], ['styleOnce', installStyleOnceHook]]) {
     try {
         install();
     } catch (error) {
@@ -296,7 +323,7 @@ for (const [name, install] of [['saveInWorker', installSaver], ['morphStream', i
         console.warn(`[${TITLE}] ${name} 설치 실패`, error);
     }
 }
-window.PerfAssist = { settings, unavailable, morph, promptList, saver, version: VERSION };
+window.PerfAssist = { settings, unavailable, morph, promptList, saver, styleOnce, version: VERSION };
 
 jQuery(() => {
     buildDrawer();

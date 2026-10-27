@@ -46,6 +46,7 @@ export function prepareAnimated(pairs, wrapper, page, fonts) {
         if (rect.width < 2 || rect.height < 2 || top + height <= page.top || top >= page.top + page.height) continue;
         const sourceParts = [pair.source, ...pair.source.querySelectorAll('*')];
         const piece = block.cloneNode(true);
+        window.PerfAssist?.styleOnce?.expand?.(piece);   // 성능 보조 「같은 꾸밈 한 번만 넣기」의 표시 → 원래 CSS (조각 그림 안 style 도 원래대로)
         const target = follow(piece, pathTo(block, pair.clone));
         if (!target) continue;
         setVisibility(piece, 'hidden');

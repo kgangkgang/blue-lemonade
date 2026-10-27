@@ -247,6 +247,7 @@ const ST = {
     '../../../../../../../script.js': js("export const eventSource = { on() {}, makeFirst() {} };\nexport const event_types = { APP_READY: 'app_ready' };\nexport function getRequestHeaders() { return { 'Content-Type': 'application/json', 'X-CSRF-Token': 'csrf-test' }; }\nexport function saveSettingsDebounced() {}"),
     '../../../../../../openai.js': js('export const promptManager = null;'),
     '../../../../../../power-user.js': js('export const power_user = {};'),
+    '../../../../../../chats.js': js('export const encodeStyleTags = t => t; export const decodeStyleTags = t => t; export const isExternalMediaAllowed = () => true;'),
     '../../../../../../../lib.js': js('export function morphdom() {}'),
 };
 register(js(`let S = {}, R = '';
