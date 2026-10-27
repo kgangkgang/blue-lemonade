@@ -255,10 +255,10 @@ await test('6.4.4 영어 v5 긴 답 — 원문을 말마다 다시 쪼개지 않
 await test('index.js 연결: 통째 · 문단 묶음 · 문단 캐시 모두 같은 규칙, 한 요청, 실패하면 그대로 · 이름 목록 · CI 등록', () => {
     const js = read('src/addons/translator/index.js');
     assert.match(js, /import \{ linesToFix, fixNoteFor, stillLeftover \} from '\.\/leftover-fix\.js';/);
-    assert.match(js, /return marks\(body\) === marks\(out\) && !linesToFix\(out, body, glossaryHanKeep\(\), \[\], \{ english: false \}\)\.length/, '6.4.3: English leftovers that survived the fix do not block the paragraph cache');
-    assert.match(js, /lines = linesToFix\(joined, bodies\.join\('\\n\\n'\), glossaryHanKeep\(\), glossaryNameKeep\(\)\);/);
+    assert.match(js, /return marks\(body\) === marks\(out\) && !linesToFix\(out, body, glossaryHanKeep\(\), \[\], \{ english: false, notices: noticeFix \}\)\.length/, '6.4.3: English leftovers that survived the fix do not block the paragraph cache (3.1.4 알림 줄은 막는다 — translator-rp-lines.mjs)');
+    assert.match(js, /lines = linesToFix\(joined, bodies\.join\('\\n\\n'\), glossaryHanKeep\(\), glossaryNameKeep\(\), \{ notices: noticeFix \}\);/);
     assert.match(js, /buildFullPrompt\(0, fixNoteFor\(lines, KANA_FIX_NOTE\) \+ lines\.map/);
-    assert.match(js, /const kanaLines = paragraphParts \? \[\] : linesToFix\(translatedText, isInputTranslation \? '' : \(isRetranslation \? compareText : text\), glossaryHanKeep\(\), glossaryNameKeep\(\)\);/);
+    assert.match(js, /const kanaLines = paragraphParts \? \[\] : linesToFix\(translatedText, isInputTranslation \? '' : \(isRetranslation \? compareText : text\), glossaryHanKeep\(\), glossaryNameKeep\(\), \{ notices: noticeFix \}\);/);   // 3.1.4 원문 그대로 온 알림 줄도
     assert.match(js, /const glossaryNameKeep = \(\) => \{ try \{ const c = getContext\(\);/);
     assert.match(js, /buildFullPrompt\(0, fixNoteFor\(kanaLines, KANA_FIX_NOTE\) \+ kanaLines\.map/);
     assert.match(js, /kanaLines\.forEach\(\(\[index, line, runs\], i\) => \{\s*const candidate = map\.get\(i \+ 1\);\s*if \(candidate === undefined \|\| !candidate\.trim\(\) \|\| stillLeftover\(candidate, runs, line\)\) return;/, 'v3 the line sent decides the kana-only rule');

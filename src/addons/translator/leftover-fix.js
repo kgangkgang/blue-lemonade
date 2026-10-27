@@ -10,6 +10,8 @@
 //   원문에서 그 말이 든 줄이 모두 영어가 주된 글일 때만 — 일본어 · 한국어 원문 줄에 일부러 쓴 영어(「Yes, マイロード」)는 그대로 둔다.
 // 6.4.3 영어 v4 — 한자 v4 위 · 「한글이 주된 줄」 셈에서 맨 URL · 인라인 코드 글자를 뺀다 (「자료는 https://… 에 있다. Then 미나는」 의 Then 을 놓치던 것).
 // 순수 함수 (시험: tools/tests/translator-leftover.mjs). 예: 원문 「室長」 → 번역 「실장 室長님」 의 室長 를 한 번 더 보낸다.
+// 3.1.4 이야기 속 알림 줄(【 DRAW — DOUBLE KNOCKOUT 】 — rp-lines.js)이 원문 그대로 온 것도 (notices 옵션). 한글이 하나도 없는 줄이라 위 규칙들은 못 잡았다.
+import { noticeKeys, untranslatedNotice, noticeStillLeft, NOTICE_FIX_NOTE } from './rp-lines.js';
 const KANA = /[ぁ-ゖァ-ヺ]/;
 const HAN = /\p{Script=Han}/u;
 const HAN_RUN = /\p{Script=Han}{2,}/gu;
@@ -158,18 +160,21 @@ export function leftoverEnglish(line, source, names = []) {
 const isEnglish = run => /^[A-Za-z]+(?:\s+[a-z]+)*$/.test(run);
 
 /**
- * 다시 보낼 줄 [index, line, runs]. 가나 줄은 예전 linesWithKana 와 같은 규칙(글 전체가 한글이 주된 글 · 가나가 든 줄),
+ * 다시 보낼 줄 [index, line, runs] (3.1.4 알림 줄은 넷째 칸 { notice: true }). 가나 줄은 예전 linesWithKana 와 같은 규칙(글 전체가 한글이 주된 글 · 가나가 든 줄),
  * 한자 줄은 글 전체가 한글이 주된 글이고 leftoverHan 이 덩이를 찾은 줄, 6.4.3 영어 줄은 글에 한글이 있고 leftoverEnglish 가 찾은 줄(그 줄이 한글이 주된 줄인지는 거기서).
  * 최대 MAX_LINES 줄 — 가나 줄을 6.4.1 차례대로 먼저, 남는 자리에 한자 줄, 그다음 영어만 남은 줄 (뒤 갈래가 많아도 앞 갈래가 밀리지 않게) · 줄 길이 MAX_LINE 이하.
  * source 가 없으면(입력 번역 · 원문 모름) 예전처럼 가나만. english = false 면 영어 낱말은 보지 않는다 (문단 캐시 판정 — index.js).
  */
-export function linesToFix(text, source = '', keep = [], names = [], { english = true } = {}) {
+export function linesToFix(text, source = '', keep = [], names = [], { english = true, notices = false } = {}) {
     const s = String(text ?? '');
     const hangul = count(s, HANGUL), kana = count(s, KANA), han = count(s, HAN), latin = count(bare(s), LATIN);
     const kanaOn = kana > 0 && hangul > kana;
     const hanOn = Boolean(source) && han > 0 && hangul > han + kana;
     const enOn = english && Boolean(source) && latin > 0 && hangul > kana + han;   // 6.4.4 영어 v5 글 전체가 한국어 번역문일 때만 (가나 · 한자가 더 많은 글은 6.4.1 · 6.4.2 처럼 손대지 않는다)   // 한글이 주된 줄인지는 줄마다 (남김 말을 뺀 나머지로) — 짧은 번역문도
-    if (!kanaOn && !hanOn && !enOn) return [];
+    // 3.1.4 알림 줄: 글 전체 갈래와 상관없이 (알림 줄만 든 문단도 — 문단 캐시 판정) · 원문에 알림 줄이 있을 때만 · 한국어로 옮길 때만(index.js 가 notices 를 켠다)
+    const sourceNotices = notices && source && latin > 0 ? noticeKeys(source) : null;
+    const noticeOn = Boolean(sourceNotices?.size);
+    if (!kanaOn && !hanOn && !enOn && !noticeOn) return [];
     const rows = [];
     s.split('\n').forEach((line, index) => {
         if (line.trim().length > MAX_LINE) return;
@@ -177,14 +182,15 @@ export function linesToFix(text, source = '', keep = [], names = [], { english =
         const enRuns = enOn ? leftoverEnglish(line, source, names) : [];
         const kanaHit = kanaOn && KANA.test(line);
         if (kanaHit || hanRuns.length || enRuns.length) rows.push({ index, line, runs: [...hanRuns, ...enRuns], rank: kanaHit ? 0 : hanRuns.length ? 1 : 2 });
+        else if (noticeOn) { const inner = untranslatedNotice(line, sourceNotices); if (inner !== null) rows.push({ index, line, runs: [inner], rank: 2, notice: true }); }
     });
     const picked = [];
     for (const rank of [0, 1, 2]) picked.push(...rows.filter(row => row.rank === rank).slice(0, MAX_LINES - picked.length));
-    return picked.sort((a, b) => a.index - b.index).map(row => [row.index, row.line, row.runs]);
+    return picked.sort((a, b) => a.index - b.index).map(row => (row.notice ? [row.index, row.line, row.runs, { notice: true }] : [row.index, row.line, row.runs]));
 }
 
-/** 머리말: 영어 낱말 줄이 있으면 LEFTOVER_EN_NOTE, 한자 줄이 있으면 LEFTOVER_FIX_NOTE, 아니면 가나 머리말(kanaNote) 그대로 */
-export const fixNoteFor = (lines, kanaNote) => (lines.some(row => row[2]?.some(isEnglish)) ? LEFTOVER_EN_NOTE : lines.some(row => row[2]?.length) ? LEFTOVER_FIX_NOTE : kanaNote);
+/** 머리말: 3.1.4 알림 줄이 섞이면 NOTICE_FIX_NOTE, 영어 낱말 줄이 있으면 LEFTOVER_EN_NOTE, 한자 줄이 있으면 LEFTOVER_FIX_NOTE, 아니면 가나 머리말(kanaNote) 그대로 */
+export const fixNoteFor = (lines, kanaNote) => (lines.some(row => row[3]?.notice) ? NOTICE_FIX_NOTE : lines.some(row => row[2]?.some(isEnglish)) ? LEFTOVER_EN_NOTE : lines.some(row => row[2]?.length) ? LEFTOVER_FIX_NOTE : kanaNote);
 
 /** 그 줄에 덩이 · 영어 말이 일부러 둔 자리 밖에 남았나 */
 const freeRun = (s, run, spans) => {
@@ -205,6 +211,7 @@ export const stillLeftover = (candidate, runs = [], line = '') => {
     const s = String(candidate ?? '');
     if (KANA.test(s)) return true;
     if (KANA.test(String(line ?? ''))) return false;
+    if (noticeStillLeft(s, line)) return true;   // 3.1.4 알림 줄은 답에 한글이 있어야 (한글 없는 【…】 은 아래에서 「일부러 둔 자리」로 보여 원문 그대로를 받았다)
     const spans = keptSpans(s);
     return runs.some(run => freeRun(s, run, spans));
 };

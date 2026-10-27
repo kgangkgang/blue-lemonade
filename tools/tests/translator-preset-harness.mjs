@@ -33,7 +33,7 @@ export async function loadTranslator(root, { prompt = 'Translate the following t
     const promptCache = await import(pathToFileURL(path.join(path.resolve(root), 'src/prompt-cache.js')));
     const target = /\nconst KOREAN_TARGET = (\/.+\/i);/.exec(source)?.[1];
     const extra = {};
-    for (const file of ['hidden-blocks.js', 'tag-compact.js']) if (fs.existsSync(path.join(dir, file))) Object.assign(extra, await imp(file));
+    for (const file of ['hidden-blocks.js', 'tag-compact.js', 'rp-lines.js']) if (fs.existsSync(path.join(dir, file))) Object.assign(extra, await imp(file));
     const cut = name => { const re = new RegExp('\\n(?:export )?(?:async )?function ' + name + '\\('), start = source.search(re); if (start < 0) return null; return source.slice(start + 1, source.indexOf('\n}', start + 1) + 2).replace(/^export /, ''); };
     const events = [], ctx = { chatMetadata: {} };
     const S = { llm_prompt_chat: prompt, glossary_enabled: false, user_defined_regexes: [], user_no_fold_regexes: [], translation_display_mode: 'folded', prompt_cache: false };

@@ -119,9 +119,10 @@ await check('settings keys unchanged: the field reads/writes extensionSettings.f
     assert.deepEqual([settings.connection_mode, settings.llm_provider, settings.llm_model], ['direct', 'claude', 'claude-opus-5-5'], 'main model untouched');
 });
 
-await check('translator version 3.1.3 in manifest and drawer', () => {
-    assert.equal(JSON.parse(read('src/addons/translator/manifest.json')).version, '3.1.3');
-    assert.match(html, /<span class="llmt-version ext-version">v3\.1\.3<\/span>/);
+await check('translator version 3.1.3 or later in manifest and drawer', () => {
+    assert.ok(JSON.parse(read('src/addons/translator/manifest.json')).version.localeCompare('3.1.3', undefined, { numeric: true }) >= 0);   // 3.1.4 이야기 속 알림 줄 — 올라가도 깨지지 않게
+    const shown = /<span class="llmt-version ext-version">v([\d.]+)<\/span>/.exec(html)?.[1];
+    assert.equal(shown, JSON.parse(read('src/addons/translator/manifest.json')).version, '화면 판 표시 = manifest');
 });
 
 console.log(`\ntranslator-fallback-card: ${passed} passed, ${failed} failed`);

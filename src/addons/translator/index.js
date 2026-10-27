@@ -33,7 +33,8 @@ const chatTermCachePolicy = createChatTermCachePolicy();
 import { glossarySignature, glossaryGone, mergeGlossary, glossaryMessage, renameGlossaryScope, GONE_KEY as GLOSSARY_GONE } from './glossary-sync.js';   // 2.7.5 다른 기기의 옛 설정 저장에 덮이지 않게 (updated · 지운 기록 · 합치기)
 import { registerSettingsMerge, startSettingsMerge } from '../../settings-merge.js';
 import { builtinTranslateState, builtinTranslateNotice, rescuePlan } from './builtin-translate.js';   // 7.9.9 실리태번 기본 「번역」 확장이 켜져 있을 때: 알림 · 지워진 번역문 되살리기
-import { linesToFix, fixNoteFor, stillLeftover } from './leftover-fix.js';   // 6.4.2 다시 보낼 줄 = 남은 가나 + 원문에 있던 한자 덩이
+import { linesToFix, fixNoteFor, stillLeftover } from './leftover-fix.js';
+import { NOTICE_NOTE, hasNoticeLines, NOTICE_KOREAN_TARGET } from './rp-lines.js';   // 3.1.4 이야기 속 알림 줄(【 DRAW — DOUBLE KNOCKOUT 】)도 번역 — 그런 줄이 있는 요청에만 한 줄 · 원문 그대로 온 줄은 남은 원문 다시 번역으로   // 6.4.2 다시 보낼 줄 = 남은 가나 + 원문에 있던 한자 덩이
 import { fixPairs, leftoverNameWords, markPairs, textKey, mergeSuggestions, shownSuggestions, skipSuggestion, dropSuggestion, trimScopes, GLOBAL as SUGGEST_GLOBAL } from './glossary-suggest.js';   // 6.4.5 새 이름 용어집 제안
 import { nameFold as suggestFold } from './names-bridge.js';
 import { publishNames } from './names-bridge.js';   // 6.3.5 이름 다리 — 용어집의 이름 짝을 TTS · 다른 확장이 쓰게 전역으로 // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림) · [2.3.0] TTS 듣는 언어용 줄
@@ -1911,6 +1912,9 @@ async function translate(text, options = {}) {
         const koreanKept = extensionSettings.keep_korean_source !== false && !options.isInputTranslation && !options.isRetranslation && options.checkSource === undefined
             && KOREAN_TARGET.test(String(koreanTarget ?? '')) ? keepKorean(maskedText, block => { const token = createPlaceholder(protectedBlocks.length); protectedBlocks.push(block); return token; }) : null;
         if (koreanKept) maskedText = koreanKept.text;
+        // 3.1.4 한국어로 옮길 때 원문 그대로 온 알림 줄도 남은 원문 다시 번역 · 문단 캐시에서 빼기 (rp-lines.js — 입력 번역 · 다른 말로 옮길 때는 예전처럼)
+        //   목표 말은 「into Korean」뿐 아니라 「into natural, fluent Korean」 같은 꾸밈말이 낀 꼴도 (사용자 지시문이 이 꼴 — KOREAN_TARGET 은 못 알아봤다)
+        const noticeFix = !options.isInputTranslation && typeof hasNoticeLines === 'function' && (KOREAN_TARGET.test(String(koreanTarget ?? '')) || NOTICE_KOREAN_TARGET.test(String(koreanTarget ?? '')));
         const keptKorean = new Set(koreanKept?.blocks ?? []);
 
         // 6.5.4 한국어로 옮길 때 상태 카드의 고정 값(날짜 · 시각 · 날씨 낱말 · 전에 번역한 같은 값)은 보내지 않고 바로 채운다.
@@ -2008,6 +2012,8 @@ async function translate(text, options = {}) {
 
             // 2.5.2 대사 괄호: 원문에 「」『』 가 있는데 프롬프트 · 규칙 · 지침 어디에도 「」 이야기가 없으면 한 줄 붙인다 (사용자 프롬프트는 그대로)
             if (/[「『]/.test(body) && !/「」|『』/.test(`${finalPrompt}\n${rulePrompt}\n${additionalGuidance}`)) built += `\n\n${BRACKET_NOTE}`;
+            // 3.1.4 본문에 이야기 속 알림 줄(【 … 】 · [ … ] 한 줄)이 있을 때만 「그것도 번역」 한 줄 — 모델이 화면 UI 글로 보고 영어 그대로 두었다 (10-27 제보). 없으면 요청 글자 그대로
+            if (typeof hasNoticeLines === 'function' && hasNoticeLines(body)) built += `\n\n${NOTICE_NOTE}`;
             // 2.7.8 글자로 붙여 쓴 숫자: "two hundred-and-ninety-centimeter towers" 는 190센티미터인 둘 (290 이 아님). 이런 꼴이 원문에 있을 때만 한 줄 붙인다
             if (/\b[a-z]+\s+hundred-(?:and-)?[a-z]+(?:-[a-z]+)*-(?:centimet|millimet|met(?:er|re)|kilo|gram|pound|foot|feet|inch|mile|year|ton)/i.test(body)) {
                 built += '\n\n[Numbers: copy every number from the source exactly. A spelled-out number joined by hyphens to a unit is one compound adjective, and a word right before it is a separate count. "two hundred-and-ninety-centimeter guards" means two guards who are 190 cm tall, not 290 cm. If a height, age or similar number would be implausible for the character, re-read the hyphenation before translating.]';
@@ -2174,7 +2180,7 @@ async function translate(text, options = {}) {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
                     // 5.3.4: 묶음 중 한 문단만 거절문으로 온 경우도 30일 캐시에 넣지 않는다
                     if (!displayCards.cacheable(body, out) || hasFailMark(out)) return false;   // 6.9.6 실패 표시 줄이 든 문단은 문단 캐시에도 (읽을 때도 이 검사를 지나 다시 요청)
-                    return marks(body) === marks(out) && !linesToFix(out, body, glossaryHanKeep(), [], { english: false }).length && !looksLikeRefusal(body, out) && !noCache.has(body);   // 6.4.2 원문 한자가 남은 문단도 캐시에 안 넣는다 · 6.4.3 다시 보낸 뒤 영어 낱말만 남은 문단은 넣는다 (다시 번역할 때마다 또 사지 않게)
+                    return marks(body) === marks(out) && !linesToFix(out, body, glossaryHanKeep(), [], { english: false, notices: noticeFix }).length && !looksLikeRefusal(body, out) && !noCache.has(body);   // 6.4.2 원문 한자가 남은 문단도 캐시에 안 넣는다 · 6.4.3 다시 보낸 뒤 영어 낱말만 남은 문단은 넣는다 (다시 번역할 때마다 또 사지 않게)
                 },
                 request: async (bodies, done) => {
                     const translated = [];
@@ -2291,7 +2297,7 @@ async function translate(text, options = {}) {
                         if (globalThis.toastr) toastr.warning(`${failed.cut ? '답이 중간에 끊겨서' : failed.refused ? '모델이 거절해서' : failed.format ? '답 형식이 맞지 않아' : '요청 오류로'} 문단 ${count}개를 원문으로 남겼어요 — ${String(failed.message).slice(0, 120)}`, 'LLM 번역', { timeOut: 9000 });
                     }
                     // Any remaining Japanese is repaired in one additional request for the whole batch.
-                    const joined = translated.map(text => text ?? '').join('\n\n'), lines = linesToFix(joined, bodies.join('\n\n'), glossaryHanKeep(), glossaryNameKeep());   // 6.4.2 원문 한자 덩이가 남은 줄도
+                    const joined = translated.map(text => text ?? '').join('\n\n'), lines = linesToFix(joined, bodies.join('\n\n'), glossaryHanKeep(), glossaryNameKeep(), { notices: noticeFix });   // 6.4.2 원문 한자 덩이가 남은 줄도
                     if (lines.length) {
                         try {
                             const fixed = await request(buildFullPrompt(0, fixNoteFor(lines, KANA_FIX_NOTE) + lines.map(([, line], i) => `${i + 1}. ${line}`).join('\n')));
@@ -2382,7 +2388,7 @@ async function translate(text, options = {}) {
         translatedText = tidyKana(translatedText);
         // 6.4.0 용어집 이름 지키기 · 줄 끝에 홀로 남은 여는 「 (모델이 프롬프트를 어겨도) — 정방향만
         if (!isInputTranslation) translatedText = tidyGlossaryOutput(isRetranslation ? compareText : text, translatedText);
-        const kanaLines = paragraphParts ? [] : linesToFix(translatedText, isInputTranslation ? '' : (isRetranslation ? compareText : text), glossaryHanKeep(), glossaryNameKeep());   // 6.4.2 원문 한자 덩이도 (입력 번역은 예전처럼 가나만)
+        const kanaLines = paragraphParts ? [] : linesToFix(translatedText, isInputTranslation ? '' : (isRetranslation ? compareText : text), glossaryHanKeep(), glossaryNameKeep(), { notices: noticeFix });   // 6.4.2 원문 한자 덩이도 (입력 번역은 예전처럼 가나만)
         if (kanaLines.length) {
             progress({ stage: 'kana' });
             try {
@@ -2632,8 +2638,14 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
             const now = getContext().chat[index];
             try { adoptPainted(host, getContext().messageFormatting(now?.extra?.display_text ?? now?.mes, message.name, message.is_system, message.is_user, index), { keep: isProgressBadge }); } catch { /* 못 맞추면 전부 새로 */ }
         }
+        // 3.1.4 상태창 틀(헬퍼 iframe)의 코드가 번역으로 바뀌었으면 번역 중에도 그 틀만 새 코드 블록으로 바꾸고 헬퍼에 한 번 알린다 (끝 그림과 같은 길 · 알림이 갈 때만).
+        //   전엔 틀을 끝까지 원문으로 둬, 긴 답(문단 134개)은 본문이 다 한국어가 될 때까지 상태창 값이 영어로 남았다 (10-27 제보). 바뀐 뒤에는 코드가 같아 다시 바꾸지 않는다 — 문단마다 다시 불러오지 않음
+        const swap = typeof canNotifyRerender === 'function' && canNotifyRerender(index);
+        let swapped = false;
         keepChatReadingPosition(host, () => {
-            if (!paintPreview(host, html, { keep: isProgressBadge })) return;   // 2.5.5 헬퍼가 그린 상태창 틀(iframe)은 제자리에 두고 글만 — 못 지키면 지금 화면 그대로 · 6.9.6 진행 표시도 제자리
+            const frames = swap ? host.querySelectorAll('.TH-render').length : 0;
+            if (!paintPreview(host, html, { keep: isProgressBadge, final: swap })) return;   // 2.5.5 헬퍼가 그린 상태창 틀(iframe)은 제자리에 두고 글만 — 못 지키면 지금 화면 그대로 · 6.9.6 진행 표시도 제자리
+            swapped = frames > host.querySelectorAll('.TH-render').length;
             lastPaint = Date.now();
             dressPainted(host, { ...message, extra: { ...message.extra, display_text: text } });   // 감정 대사는 이 글(미리 보기)에서 찾는다
             host.dataset.llmtPreview = '1';
@@ -2641,6 +2653,7 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
             shown = true;
             livePreviews.add(record);
         });
+        if (swapped && typeof notifyRerender === 'function') notifyRerender(index, { element: host.closest?.('.mes') ?? null }).catch?.(() => {});   // 3.1.4 바꾼 틀만 헬퍼가 번역된 코드로 다시 그린다
         cost = performance.now() - started; lastEnd = Date.now();
     };
     const schedule = () => {

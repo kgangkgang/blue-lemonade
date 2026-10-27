@@ -50,7 +50,7 @@ test('예전 규칙 그대로: 원문에 있던 2자 덩이(室長님) · 한자
 });
 test('배선: 세 길 모두 linesToFix (문단 캐시 cacheable · 묶음 끝 고치기 · 통째/덩이 길)', () => {
     const index = fs.readFileSync(path.join(root, 'src/addons/translator/index.js'), 'utf8');
-    assert.ok(index.includes('!linesToFix(out, body, glossaryHanKeep(), [], { english: false }).length'));
+    assert.ok(index.includes('!linesToFix(out, body, glossaryHanKeep(), [], { english: false, notices: noticeFix }).length'));
     assert.ok(index.includes('lines = linesToFix(joined, bodies.join'));
     assert.ok(index.includes('const kanaLines = paragraphParts ? [] : linesToFix(translatedText'));
 });

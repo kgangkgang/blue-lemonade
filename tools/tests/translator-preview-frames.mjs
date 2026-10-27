@@ -168,7 +168,7 @@ await check('real translate(): several batch groups → the count climbs and fin
     assert(previews[0].startsWith('1번째 줄') && previews[0].endsWith(LINE(12)), 'finished first, the rest still original');
 });
 await check('wiring: the preview paints through paintPreview (frames kept) and keeps the badge; version 2.5.5', () => {
-    assert(/if \(!paintPreview\(host, html, \{ keep: isProgressBadge \}\)\) return;/.test(source));
+    assert(/if \(!paintPreview\(host, html, \{ keep: isProgressBadge(?:, final: swap)? \}\)\) return;/.test(source));   // 3.1.4 알림이 갈 때만 코드가 바뀐 틀을 바꾼다 (translator-status-card.mjs)
     assert(!/host\.innerHTML = html;/.test(source.slice(source.indexOf('function translationPreview('), source.indexOf('function settleGuard('))), 'no wholesale repaint left');
     const version = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')).version;   // 올라가도 깨지지 않게 — 2.5.5 이상 · 화면 표시와 같음
     assert(version.localeCompare('2.5.5', undefined, { numeric: true }) >= 0, version);

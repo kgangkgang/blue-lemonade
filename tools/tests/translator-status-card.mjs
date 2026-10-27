@@ -206,12 +206,70 @@ await check('끝 그림: 알림이 못 가는 환경(canNotifyRerender 거짓)�
     assert.equal(b.host.children[2].textContent, KO[2]);
     assert.deepEqual(T.events, [], '그릴 코드가 없으면 알림 없음');
 });
-await check('연결: 끝 그림만 final(알림이 갈 때) · 미리 보기 그리기는 final 없이', () => {
+await check('연결: 끝 그림 final(알림이 갈 때) · 3.1.4 미리 보기도 알림이 갈 때만 final (코드가 바뀐 틀만 — 바뀐 뒤엔 코드가 같아 다시 안 바꿈)', () => {
     const refresh = cut('refreshMessageBlock');
     assert.match(refresh, /paintPreview\(host, [^\n]*\{ keep: isProgressBadge, final: canNotifyRerender\(messageId\) \}\)/);
     assert.match(source, /import \{ notifyRerender, isRerenderNotify, canNotifyRerender \} from '\.\.\/\.\.\/rerender-notify\.js';/);
     const preview = cut('translationPreview');
-    assert.match(preview, /if \(!paintPreview\(host, html, \{ keep: isProgressBadge \}\)\) return;/, '번역 중에는 틀을 바꾸지 않는다 (iframe 이 문단마다 다시 불러와지지 않게)');
+    assert.match(preview, /if \(!paintPreview\(host, html, \{ keep: isProgressBadge, final: swap \}\)\) return;/);
+    assert.match(preview, /const swap = typeof canNotifyRerender === 'function' && canNotifyRerender\(index\);/);
+});
+
+// ── ④ 3.1.4 번역 중 미리 보기: 상태창 코드가 번역되면 그 틀만 한 번 바꾸고 알림 (10-27 제보 — 문단 134개 답에서 본문이 다 번역될 때까지 상태창 값이 영어) ──
+const PV = { notified: [] };
+const penv = {
+    ...frames, extensionSettings: {}, getContext: () => ({ chat: T.chat, chatId: 'chat-A', messageFormatting: format }), processTranslationText: (_o, t) => t,
+    document: { querySelector: s => T.dom.get(s) ?? null, dispatchEvent() {} }, resolveTranslationTarget: message => T.chat.indexOf(message),
+    notifyRerender: id => { PV.notified.push(id); return Promise.resolve(true); }, canNotifyRerender: () => T.ready, readerRestsIn: () => 0, performance: { now: () => Date.now() },
+    keepChatReadingPosition: globalThis.keepChatReadingPosition, typesetRoot: () => {}, dressBody: () => {}, isProgressBadge: isBadge,
+    PREVIEW_GAP_MS: Number(/\nconst PREVIEW_GAP_MS = (\d+);/.exec(source)?.[1]), livePreviews: new Set(),
+};
+for (const name of ['dressPainted', 'previewText', 'translationPreview']) penv[name] = new Function('env', `with(env){return (${cut(name)});}`)(penv);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function onScreen(parts) {
+    const message = { mes: parts.join('\n\n'), name: 'Narrator', is_user: false, is_system: false, extra: {}, swipe_id: 0 };
+    T.chat = [message]; PV.notified = [];
+    const mes = new El('div', ' class="mes"', doc), host = mes.appendChild(new El('div', ' class="mes_text"', doc));
+    host.innerHTML = format(message.mes); helperRender(host);
+    T.dom.set('#chat .mes[mesid="0"]', mes);
+    return { message, mes, host };
+}
+await check('번역 중 미리 보기: 상태창 코드가 번역으로 바뀌면 그 틀만 새 코드 블록 + 알림 1번 → helper 가 다시 그린 뒤 다음 문단들에는 틀 · iframe 그대로 (문단마다 다시 불러오지 않음)', async () => {
+    T.ready = true;
+    const { message, host } = onScreen([JA[0], code(CARD_EN), JA[1], JA[2]]);
+    const oldFrame = host.querySelector('.TH-render');
+    const preview = penv.translationPreview(0, message, message.mes, 'chat-A', message.mes);
+    preview.show([KO[0], code(CARD_KO), JA[1], JA[2]].join('\n\n'));
+    assert.equal(oldFrame.parentNode, null, '원문 코드 틀은 떼어짐');
+    assert.match(host.querySelector('pre').textContent, /항구/, '번역된 상태창 코드');
+    assert.deepEqual(PV.notified, [0], '헬퍼에 한 번 알림');
+    helperRender(host);   // helper 가 MESSAGE_UPDATED 를 듣고 새 코드로 틀을 씌움
+    const newFrame = host.querySelector('.TH-render'), iframe = newFrame.querySelector('iframe');
+    await sleep(penv.PREVIEW_GAP_MS + 30);
+    preview.show([KO[0], code(CARD_KO), KO[1], JA[2]].join('\n\n'));
+    await sleep(penv.PREVIEW_GAP_MS + 30);
+    preview.show([KO[0], code(CARD_KO), KO[1], KO[2]].join('\n\n'));
+    await sleep(penv.PREVIEW_GAP_MS + 60);
+    assert.equal(host.querySelector('.TH-render'), newFrame, '번역된 틀 그대로');
+    assert.equal(newFrame.querySelector('iframe'), iframe, 'iframe 다시 안 만듦');
+    assert.deepEqual(PV.notified, [0], '알림은 처음 한 번뿐');
+    assert.deepEqual(els(host).filter(x => x.tagName === 'P').map(x => x.textContent), [KO[0], KO[1], KO[2]]);
+    preview.stop();
+});
+await check('번역 중 미리 보기: 상태창 코드가 아직 원문이면 틀 그대로 · 알림 없음 · 알림이 못 가는 환경이면 예전처럼 끝까지 틀 그대로', async () => {
+    T.ready = true;
+    let s = onScreen([JA[0], JA[1], code(CARD_EN)]), frame = s.host.querySelector('.TH-render');
+    let preview = penv.translationPreview(0, s.message, s.message.mes, 'chat-A', s.message.mes);
+    preview.show([KO[0], JA[1], code(CARD_EN)].join('\n\n'));
+    assert.equal(s.host.querySelector('.TH-render'), frame); assert.deepEqual(PV.notified, []);
+    preview.stop();
+    T.ready = false;
+    s = onScreen([JA[0], code(CARD_EN), JA[1]]); frame = s.host.querySelector('.TH-render');
+    preview = penv.translationPreview(0, s.message, s.message.mes, 'chat-A', s.message.mes);
+    preview.show([KO[0], code(CARD_KO), JA[1]].join('\n\n'));
+    assert.equal(s.host.querySelector('.TH-render'), frame, '날 코드가 남지 않게 틀 그대로'); assert.deepEqual(PV.notified, []);
+    preview.stop();
+    T.ready = true;
 });
 
 console.log(`translator-status-card: ${passed} passed, ${failed} failed`);
