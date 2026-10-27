@@ -19,6 +19,10 @@ export function settingDefault(settings, path) {
         const [, role, extra] = path.split('.');
         return { allowed: !extra && ROLE_IDS.includes(role), value: undefined };
     }
+    if (path === 'pickedIcons' || path.startsWith('pickedIcons.')) { // 8.0.8 화면에서 고른 단추: 한 단추가 한 칸, 처음 값 = 칸이 없음(목록에서 빠짐)
+        const [, slug, extra] = path.split('.');
+        return { allowed: !extra && /^p[0-9a-z]{7}$/.test(slug || ''), value: undefined };
+    }
     if (path.startsWith('colorOverrides.')) {
         const [, palette, token, extra] = path.split('.');
         return { allowed: !extra && !!PALETTES[palette] && Object.hasOwn(PALETTES[palette], token), value: undefined };
@@ -70,6 +74,7 @@ export function changedSettings(settings) {
     }
     for (const key of Object.keys(DEFAULTS)) if (key !== 'colorOverrides') visit(DEFAULTS[key], settings[key], key);
     for (const role of ROLE_IDS) if (typeof settings.roleIcons?.[role] === 'string') result.push({ path: `roleIcons.${role}`, before: undefined, value: settings.roleIcons[role] });
+    for (const [slug, entry] of Object.entries(settings.pickedIcons || {})) if (entry && typeof entry === 'object') result.push({ path: `pickedIcons.${slug}`, before: undefined, value: entry });
     for (const [palette, colors] of Object.entries(settings.colorOverrides || {})) for (const [token, value] of Object.entries(colors || {})) {
         const path = `colorOverrides.${palette}.${token}`;
         if (settingDefault(settings, path).allowed) result.push({ path, before: paletteColors({ ...settings, palette, colorOverrides: {} })[token], value });
@@ -83,7 +88,7 @@ export function settingRoute(path) {
     if (scope === 'addonUI') return {tab:'extensions',sub:/^modelswitch/.test(key) ? 'models' : /^perf/.test(key) ? 'perf' : /^words/.test(key) ? 'words' : /^capture/.test(key) ? 'capture' : /^translator/.test(key) ? 'translator' : /^tts/.test(key) ? 'tts' : /^notes/.test(key) ? 'notes' : /^zipinstall/.test(key) ? 'zipinstall' : 'order'};
     if (scope === 'gradients') return {tab:'theme',sub:key!=='overrides'?'palette':'colors'};
     if (scope === 'colorOverrides') return { tab:'theme', sub:'colors' };
-    if (scope === 'roleIcons') return { tab:'theme', sub:'icons' };
+    if (scope === 'roleIcons' || scope === 'pickedIcons') return { tab:'theme', sub:'icons' };
     if (['palette','lightTint','nightTint','auto','enabled','customName'].includes(scope)) return {tab:'theme',sub:'palette'};
     if (scope === 'fonts') return key === 'name' || key === 'userName' ? {tab:'chat',sub:key === 'name' ? 'name' : 'user-name'} : {tab:'text',sub:key === 'hanja' ? 'text' : key};
     if (path === 'userProfile.metaSide') return {tab:'chat',sub:'user-profile'}; // 번호 · 시간 줄 위치는 작은 사진 옆이라 내 프로필에

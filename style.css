@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 7e6d8bf1435e) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 524095c038ad) */
 /* css/00-base.css */
 :root{--bl-release:"8.1.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -21370,6 +21370,81 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-editor-actions .bl-sett
   width: 100%;
   min-width: 0;
   margin: 0;
+}
+.salty-panel .bl-roleicon-group {
+  margin-top: 8px;
+}
+.salty-panel .bl-roleicon-group > .bl-roleicon-rows,
+.salty-panel.in-popup .bl-roleicon-group > .bl-roleicon-rows {
+  padding: 0 12px 8px;
+  background: transparent;
+  border-radius: 0;
+}
+.salty-panel .bl-roleicon-empty {
+  margin: 0;
+  padding: 8px 0 4px;
+}
+.salty-panel .bl-roleicon-preview > i {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  line-height: 1;
+}
+.salty-panel .bl-roleicon-preview:has(> i)::before {
+  content: none;
+}
+html.bl-roleicon-picking .bl-roleicon-pickbar {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  z-index: 40000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  height: 44px;
+  padding: 0 4px 0 16px;
+  border: 1px solid var(--salty-line);
+  border-radius: 22px;
+  background: var(--salty-fill-surface, var(--salty-surface));
+  color: var(--salty-text);
+  font-size: 14px;
+  font-weight: 650;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+html.bl-roleicon-picking .bl-roleicon-pickbar > button {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--salty-fill-accent, var(--salty-accent));
+  color: var(--salty-on-accent, var(--bl-fb-fff));
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+html.bl-roleicon-picking body :where(button):is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :where([role="button"]):is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :where(.menu_button):is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :where(.list-group-item):is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :where(.drawer-icon):is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :where(.interactable):is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :where(summary):is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :where(.mes_button):is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :where(.extensionsMenuExtensionButton):is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :is(#leftSendForm > *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :is(#rightSendForm > *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :is(#nonQRFormItems > *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :where(.extraMesButtons > *):is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :where(.mes_buttons > *):is(#bl-s, *):not(.bl-roleicon-pickbar *) {
+  outline: 1px dashed var(--salty-accent) !important;
+  outline-offset: 2px;
+  cursor: crosshair;
 }
 /* css/50-gradients.css */
 .bl-gradient-control { padding: 0 0 12px; margin: 0 0 12px; border-bottom: 1px solid var(--salty-line); }

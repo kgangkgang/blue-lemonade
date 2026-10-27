@@ -11,13 +11,14 @@ const sameMap = (a, b) => {
     return ka.length === kb.length && ka.every(k => a[k] === b[k]);
 };
 
-/** 설정 roleIcons 를 화면에 */
-export function syncRoleIcons(map) {
-    const now = map && typeof map === 'object' && !Array.isArray(map) ? map : {};
+/** 설정 roleIcons(+ 8.0.8 pickedIcons = 화면에서 고른 단추) 를 화면에 */
+export function syncRoleIcons(map, picks) {
+    const now = map && typeof map === 'object' && !Array.isArray(map) ? { ...map } : {};
+    if (picks && typeof picks === 'object' && !Array.isArray(picks)) for (const [slug, e] of Object.entries(picks)) if (e?.value) now[`@${slug}`] = e.value;   // 고른 단추는 값이 있는 것만 비교에 넣는다
     let el = document.getElementById(ID);
     if (sameMap(now, last) && (!Object.keys(now).length || el)) return;
     last = { ...now };
-    const css = Object.keys(now).length ? buildRoleCss(now) : '';
+    const css = Object.keys(now).length ? buildRoleCss(map, picks) : '';
     if (!css) { el?.remove(); return; }
     if (!el) {
         el = document.createElement('style');

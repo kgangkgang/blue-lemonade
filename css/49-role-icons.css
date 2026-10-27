@@ -92,3 +92,70 @@
   min-width: 0;
   margin: 0;
 }
+/* ---------- 8.0.8 묶음(창 도구 · 상단 서랍 · 입력줄 · 애드온 단추 · 내 단추) — 마크다운 설정의 접는 묶음(.bl-md-group, 67-markdown-controls)과 같은 모양 ---------- */
+.salty-panel .bl-roleicon-group {
+  margin-top: 8px;
+}
+/* 묶음 안 줄은 카드 안이라 면을 또 깔지 않는다(한 겹). 줄 자체 규칙(.salty-row)은 20-panel 그대로 */
+.salty-panel .bl-roleicon-group > .bl-roleicon-rows,
+.salty-panel.in-popup .bl-roleicon-group > .bl-roleicon-rows {
+  padding: 0 12px 8px;
+  background: transparent;
+  border-radius: 0;
+}
+.salty-panel .bl-roleicon-empty {
+  margin: 0;
+  padding: 8px 0 4px;
+}
+/* 고른 단추 미리보기 칸의 Font Awesome 아이콘(고를 때 본 것) — 선 그림과 같은 잉크 크기 */
+.salty-panel .bl-roleicon-preview > i {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  line-height: 1;
+}
+.salty-panel .bl-roleicon-preview:has(> i)::before {
+  content: none;
+}
+/* ---------- 8.0.8 화면에서 고르기 — 설정 창을 닫은 채 화면 위에 띄우는 안내 띠와, 고를 수 있는 단추 표시 ---------- */
+html.bl-roleicon-picking .bl-roleicon-pickbar {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  z-index: 40000; /* 실리태번 서랍 · 요술봉 메뉴(2000~30000) 위 */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  height: 44px;
+  padding: 0 4px 0 16px;
+  border: 1px solid var(--salty-line);
+  border-radius: 22px;
+  background: var(--salty-fill-surface, var(--salty-surface));
+  color: var(--salty-text);
+  font-size: 14px;
+  font-weight: 650;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+html.bl-roleicon-picking .bl-roleicon-pickbar > button {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--salty-fill-accent, var(--salty-accent));
+  color: var(--salty-on-accent, var(--bl-fb-fff));
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+/* 고를 수 있는 것은 점선 테두리 (role-icons-pick.js CANDIDATES 와 같은 목록) */
+html.bl-roleicon-picking body :is(button, [role="button"], .menu_button, .list-group-item, .drawer-icon, .interactable, summary, .mes_button, .extensionsMenuExtensionButton, #leftSendForm > *, #rightSendForm > *, #nonQRFormItems > *, .extraMesButtons > *, .mes_buttons > *):not(.bl-roleicon-pickbar *) {
+  outline: 1px dashed var(--salty-accent) !important;
+  outline-offset: 2px;
+  cursor: crosshair;
+}

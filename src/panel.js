@@ -171,6 +171,7 @@ function historyLabel(path) {
     }
     const scope = ({'type.dialogueSize':'대사','type.uiSize':'메뉴','type.codeSize':'코드'})[path] ?? { markdown:'마크다운', ui:'메뉴', code:'코드', profile: '캐릭터 프로필', userProfile: '내 프로필', image: '에셋 이미지', type: '본문', dialogue: '대사', em: '속마음', strong: '강조', chat: '채팅' }[path.split('.')[0]];
     if (path.startsWith('roleIcons.')) return `단추 아이콘 · ${roleLabel(path.split('.')[1])}`;
+    if (path.startsWith('pickedIcons.')) return '단추 아이콘 · 내 단추';   // 8.0.8 화면에서 고른 단추 (어느 단추인지는 값 쪽 이름에)
     if (path.startsWith('colorOverrides.')) {
         const [, palette, token] = path.split('.');
         return `${PALETTES[palette]?.label || '테마'} · ${TOKEN_GROUPS.flatMap(([,list]) => list).find(([key]) => key === token)?.[1] || token}`;
@@ -180,7 +181,7 @@ function historyLabel(path) {
 function historyValue(value, path) {
     if(/^gradients\.(light|dark)\.families$/.test(path)&&Array.isArray(value))return value.map(k=>PALETTE_FAMILIES[k]?.label||k).join(' + ');
     if(path.startsWith('gradients.')&&Array.isArray(value))return value.join(' : ');
-    if (path.startsWith('roleIcons.')) return roleIconHistoryValue(value);
+    if (path.startsWith('roleIcons.') || path.startsWith('pickedIcons.')) return roleIconHistoryValue(value);
     if (value == null) return '기본값';
     if (typeof value === 'boolean') return value ? '켜짐' : '꺼짐';
     if (path === 'palette') return PALETTES[value]?.label || String(value);

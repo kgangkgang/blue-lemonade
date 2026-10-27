@@ -1,7 +1,10 @@
 // 7.9.3 설정 › 테마 › 단추 아이콘 — 역할 목록과 아이콘 고르기 창 (panel.js 가 그리고 · 부른다).
 // 고르기 창은 글꼴 고르기 창과 같은 짜임(찾기 칸 · 묶음 태그 · 목록 · 아래 「+ 추가」 줄, .salty-font* 클래스)을 그대로 쓴다.
 // Font Awesome 목록(role-icons-fa.gen.js, 40KB)은 고르기 창을 처음 열 때만 불러온다.
-import { ROLES, roleLabel, parseRoleIcon, faValue, textValue, imageFileValue, ROLE_ICON_MAX_BYTES } from './role-icons-core.js';
+// 8.0.8 역할이 많아져 묶음(창 도구 · 상단 서랍 · 입력줄 · 애드온 단추 · 내 단추)으로 접는다. 「내 단추」 는 화면에서 고른 단추(role-icons-pick.js):
+//   「화면에서 고르기」 → 설정 창을 닫고 화면의 단추를 누르면 → 내 단추에 들어가고 설정 창이 다시 열리며 그 단추의 고르기 창이 펼쳐진다.
+import { ROLES, ROLE_GROUPS, rolesIn, roleLabel, parseRoleIcon, faValue, textValue, imageFileValue, ROLE_ICON_MAX_BYTES, pickedRoles, pickSlug, PICK_MAX } from './role-icons-core.js';
+import { startPicking, stopPicking, isPicking } from './role-icons-pick.js';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const pick = { role: null, tag: 'used', query: '' };
@@ -35,10 +38,20 @@ function describe(value) {
     if (icon.kind === 'text') return `글자 ${icon.text}`;
     return '내 그림';
 }
-export const roleIconHistoryValue = value => typeof value === 'string' ? describe(value) : '처음 값';
+/** 되돌리기 기록의 값 글 — roleIcons 는 값 문자열, pickedIcons 는 { label, value } 칸 */
+export const roleIconHistoryValue = value => typeof value === 'string' ? describe(value) : value && typeof value === 'object' ? `${value.label || '단추'} · ${describe(value.value)}` : '처음 값';
+/** 설정 pickedIcons 의 칸 하나 → 설정 창 줄에 쓰는 역할 모양 (없으면 null) */
+export const pickedRole = (s, id) => (id?.startsWith('@') ? pickedRoles(s.pickedIcons).find(r => r.id === id) || null : null);
+const roleOf = (s, id) => ROLES.find(r => r.id === id) || pickedRole(s, id);
+const labelOf = (s, id) => roleOf(s, id)?.label || roleLabel(id);
+const valueOf = (s, id) => (id?.startsWith('@') ? pickedRole(s, id)?.value : s.roleIcons?.[id]) || '';
 
-// 미리보기 칸: 기본 선 그림은 줄마다 변수로 (css/49-role-icons.css) — 바꾼 역할이면 role-icons.js 의 규칙이 이 칸도 덮는다
-const preview = role => `<span class="bl-roleicon-preview" data-bl-role="${esc(role.id)}" style="--bl-ri-glyph:${esc(role.glyph)}" aria-hidden="true"></span>`;
+// 미리보기 칸: 기본 선 그림은 줄마다 변수로 (css/49-role-icons.css) — 바꾼 역할이면 role-icons.js 의 규칙이 이 칸도 덮는다.
+// 고른 단추는 고를 때 본 Font Awesome 아이콘(icon) 을 보여 주고, 모르면 빈 단추 모양
+const PICK_GLYPH = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='14' height='14' rx='3'/%3E%3C/svg%3E")`;
+const preview = role => (role.icon
+    ? `<span class="bl-roleicon-preview" data-bl-role="${esc(role.id)}" aria-hidden="true"><i class="${esc(role.icon)}" aria-hidden="true"></i></span>`
+    : `<span class="bl-roleicon-preview" data-bl-role="${esc(role.id)}" style="--bl-ri-glyph:${esc(role.glyph || PICK_GLYPH)}" aria-hidden="true"></span>`);
 
 function tile(item, current) {
     const name = item.names[0];
@@ -66,24 +79,36 @@ function pickerMarkup(role, current) {
         </div></div>`;
 }
 
+// 역할 한 줄 (이름 · ↺ · 설명 / 미리보기 · 바꾸기) — 줄 모양은 panel.js row() 와 같다. ↺ 는 다른 설정의 ↺ 와 같은 단추 · 같은 길(panel.js 'setting-reset')
+function roleRow(role, value, path, resetShown) {
+    const open = pick.role === role.id;
+    const reset = `<button type="button" class="bl-setting-reset" data-act="setting-reset" data-setting="${esc(path)}" title="${esc(role.label)} · ${role.group === 'picked' ? '내 단추에서 빼기' : '기본값으로'}" aria-label="${esc(role.label)} · ${role.group === 'picked' ? '내 단추에서 빼기' : '기본값으로'}"${resetShown ? '' : ' hidden'}>↺</button>`;
+    const control = `<span class="bl-roleicon-control">${preview(role)}<button type="button" class="salty-btn bl-roleicon-change${open ? ' on' : ''}" data-act="role-icon-open" data-role="${esc(role.id)}" aria-expanded="${open}" aria-label="${esc(role.label)} 아이콘 바꾸기">바꾸기</button></span>`;
+    const line = `<div class="salty-row bl-roleicon-row${open ? ' open' : ''}" data-role="${esc(role.id)}"><span>${esc(role.label)}${reset}${value ? `<small>${esc(describe(value))}</small>` : ''}</span>${control}</div>`;
+    return `${line}${open ? pickerMarkup(role, value) : ''}`;   // 줄은 묶음(.salty-group) 바로 아래 — 다른 설정 줄과 같은 규칙을 받는다
+}
+
 /** 설정 › 테마 › 단추 아이콘 */
 export function roleIconsMarkup(s, { cap, row }) {
     const map = s.roleIcons || {};
-    const changed = ROLES.filter(r => typeof map[r.id] === 'string').length;
-    const rows = ROLES.map((role) => {
-        const value = map[role.id];
-        const open = pick.role === role.id;
-        // ↺ 는 다른 설정의 ↺ 와 같은 단추 · 같은 길(panel.js 'setting-reset' → resetSetting · 알림 · 되돌리기 기록 · 보일지 말지 syncSettingResets)
-        const reset = `<button type="button" class="bl-setting-reset" data-act="setting-reset" data-setting="roleIcons.${role.id}" title="${esc(role.label)} · 기본값으로" aria-label="${esc(role.label)} · 기본값으로"${value ? '' : ' hidden'}>↺</button>`;
-        const control = `<span class="bl-roleicon-control">${preview(role)}<button type="button" class="salty-btn bl-roleicon-change${open ? ' on' : ''}" data-act="role-icon-open" data-role="${role.id}" aria-expanded="${open}" aria-label="${esc(role.label)} 아이콘 바꾸기">바꾸기</button></span>`;
-        // 줄 모양은 panel.js row() 와 같다 (이름 · ↺ · 설명 / 조작) — ↺ 는 다른 설정처럼 이름 바로 옆
-        const line = `<div class="salty-row bl-roleicon-row${open ? ' open' : ''}" data-role="${role.id}"><span>${esc(role.label)}${reset}${value ? `<small>${esc(describe(value))}</small>` : ''}</span>${control}</div>`;
-        return `${line}${open ? pickerMarkup(role, value) : ''}`;   // 줄은 묶음(.salty-group) 바로 아래 — 다른 설정 줄과 같은 규칙을 받는다
+    const picked = pickedRoles(s.pickedIcons);
+    const changed = ROLES.filter(r => typeof map[r.id] === 'string').length + picked.filter(r => r.value).length;
+    const groups = ROLE_GROUPS.map(([group, name]) => {
+        const roles = group === 'picked' ? picked : rolesIn(group);
+        const rows = roles.map(role => (group === 'picked'
+            ? roleRow(role, role.value, `pickedIcons.${role.slug}`, true)
+            : roleRow(role, map[role.id], `roleIcons.${role.id}`, !!map[role.id]))).join('');
+        const done = roles.filter(r => (group === 'picked' ? r.value : map[r.id])).length;
+        // 처음 그릴 때 열어 두는 묶음: 바꾼 게 있거나 고르기 창이 그 안에 있는 것 · 내 단추는 고른 게 있으면. 그 뒤 여닫은 것은 panel.js 가 data-md-fold 로 기억한다
+        const open = done > 0 || roles.some(r => r.id === pick.role) || (group === 'picked' && roles.length > 0);
+        const empty = group === 'picked' && !roles.length ? '<p class="salty-note bl-roleicon-empty">아직 고른 단추가 없어요. 위의 「화면에서 고르기」로 요술봉 메뉴 · 입력줄 · 메시지의 단추를 눌러 넣어요.</p>' : '';
+        return `<details class="bl-md-group bl-roleicon-group" data-md-fold="icons:${group}"${open ? ' open' : ''}><summary><span>${esc(name)}</span><small>${done ? `바꿈 ${done} · ` : ''}${roles.length}개</small></summary><div class="salty-group bl-roleicon-rows">${rows}${empty}</div></details>`;
     }).join('');
+    const pickBtn = `<button type="button" class="salty-btn" data-act="role-icon-pick"${picked.length >= PICK_MAX ? ' disabled' : ''}>고르기</button>`;
     return `<div class="salty-group bl-roleicons" data-search-anchor="단추 아이콘">${cap('단추 아이콘')}
-        <p class="salty-note">역할마다 아이콘 하나예요. 바꾸면 테마 곳곳의 같은 단추가 함께 바뀌어요.</p>
-        ${row(`바꾼 아이콘 ${changed}개`, `<button type="button" class="salty-btn" data-act="role-icon-reset-all"${changed ? '' : ' disabled'}>모두 처음 값으로</button>`)}
-        ${rows}</div>`;
+        <p class="salty-note">역할마다 아이콘 하나예요. 바꾸면 같은 단추가 함께 바뀌어요. 확장이 더한 단추는 「화면에서 고르기」로 넣어요.</p>
+        ${row(`바꾼 아이콘 ${changed}개`, `<button type="button" class="salty-btn" data-act="role-icon-reset-all"${changed || picked.length ? '' : ' disabled'}>모두 처음 값으로</button>`)}
+        ${row('화면에서 고르기', pickBtn, '설정 창을 닫고 화면의 단추를 눌러요')}</div>${groups}`;
 }
 
 // ───────── 거르기 (다시 그리지 않고 목록만) ─────────
@@ -111,10 +136,28 @@ export function filterRoleIcons(root) {
 }
 
 // ───────── 동작 ─────────
-const setRole = (st, role, value) => { st.roleIcons = { ...(st.roleIcons || {}), [role]: value }; };
+// 역할 값 넣기 — '@<해시>' 는 화면에서 고른 단추(pickedIcons 의 그 칸에 value), 그 밖은 roleIcons
+const setRole = (st, role, value) => {
+    if (role.startsWith('@')) { const slug = role.slice(1); const entry = st.pickedIcons?.[slug]; if (entry) st.pickedIcons = { ...st.pickedIcons, [slug]: { ...entry, value } }; return; }
+    st.roleIcons = { ...(st.roleIcons || {}), [role]: value };
+};
+const addPick = (st, { key, label, icon }) => {
+    const slug = pickSlug(key);
+    const old = st.pickedIcons?.[slug];
+    st.pickedIcons = { ...(st.pickedIcons || {}), [slug]: { ...(old || {}), key, label: old?.label || label, ...(icon ? { icon } : {}) } };
+    return slug;
+};
+// 고르는 동안 설정 창을 치운다: 팝업이면 닫고(다시 열면 같은 자리), 확장 서랍 안이면 서랍을 닫는다. 끝나면 설정 창 팝업을 다시 연다
+function hideSettings(root) {
+    const dialog = root.closest('dialog');
+    if (dialog) { try { dialog.close(); } catch { /* 이미 닫힘 */ } return; }
+    const icon = root.closest('.drawer')?.querySelector(':scope > .drawer-toggle .drawer-icon.openIcon') || document.querySelector('#extensions-settings-button .drawer-icon.openIcon');
+    icon?.closest('.drawer-toggle')?.click();
+}
+const reopenSettings = () => window.Salty?.openPopup?.();
 
 /**
- * 설정 창 클릭. 처리했으면 true. ctx = { root, update, refresh, ask, toast }
+ * 설정 창 클릭. 처리했으면 true. ctx = { root, settings, update, refresh, ask, toast }
  */
 export async function roleIconAction(act, el, ctx) {
     switch (act) {
@@ -122,7 +165,7 @@ export async function roleIconAction(act, el, ctx) {
             const role = el.dataset.role;
             pick.role = pick.role === role ? null : role;
             pick.query = '';
-            pick.tag = parseRoleIcon(ctx.settings().roleIcons?.[role])?.family === 'brands' ? 'brands' : 'used';
+            pick.tag = parseRoleIcon(valueOf(ctx.settings(), role))?.family === 'brands' ? 'brands' : 'used';
             if (pick.role && !ensureFa(ctx.refresh)) { /* 목록이 오면 다시 그린다 */ }
             ctx.refresh();
             return true;
@@ -134,9 +177,10 @@ export async function roleIconAction(act, el, ctx) {
         case 'role-icon-fa': {
             const role = pick.role;
             if (!role || !parseRoleIcon(el.dataset.v)) return true;
+            const label = labelOf(ctx.settings(), role);
             pick.role = null;
             ctx.update(st => setRole(st, role, el.dataset.v));
-            ctx.toast(`${roleLabel(role)} 아이콘을 바꿨어요`);
+            ctx.toast(`${label} 아이콘을 바꿨어요`);
             return true;
         }
         case 'role-icon-upload':
@@ -145,21 +189,39 @@ export async function roleIconAction(act, el, ctx) {
         case 'role-icon-text': {
             const role = pick.role;
             if (!role) return true;
-            const current = parseRoleIcon(ctx.settings().roleIcons?.[role]);
+            const current = parseRoleIcon(valueOf(ctx.settings(), role));
             const raw = await ctx.ask('글자나 이모지 한두 개를 넣어 주세요', current?.kind === 'text' ? current.text : '');
             if (raw == null) return true;
             const value = textValue(raw);
             if (!value) { ctx.toast('글자 · 이모지는 한두 개까지예요', 'warning'); return true; }
+            const label = labelOf(ctx.settings(), role);
             pick.role = null;
             ctx.update(st => setRole(st, role, value));
-            ctx.toast(`${roleLabel(role)} 아이콘을 바꿨어요`);
+            ctx.toast(`${label} 아이콘을 바꿨어요`);
             return true;
         }
         case 'role-icon-reset-all':
             pick.role = null;
-            ctx.update((st) => { st.roleIcons = {}; });
+            ctx.update((st) => { st.roleIcons = {}; st.pickedIcons = {}; });
             ctx.toast('단추 아이콘을 모두 처음 값으로 돌렸어요');
             return true;
+        case 'role-icon-pick': {   // 8.0.8 화면에서 고르기
+            if (isPicking()) { stopPicking(); return true; }
+            const root = ctx.root;
+            startPicking({
+                onPick: (picked) => {
+                    let slug = '';
+                    ctx.update((st) => { slug = addPick(st, picked); });
+                    pick.role = `@${slug}`; pick.query = ''; pick.tag = 'used';
+                    ensureFa(ctx.refresh);
+                    ctx.toast(`「${picked.label}」 단추를 내 단추에 넣었어요`);
+                    reopenSettings();
+                },
+                onCancel: reopenSettings,
+            });
+            hideSettings(root);
+            return true;
+        }
         default: return false;
     }
 }
@@ -171,7 +233,8 @@ export async function roleIconFile(file, ctx) {
     if (file.size > ROLE_ICON_MAX_BYTES) { ctx.toast(`그림은 ${ROLE_ICON_MAX_BYTES / 1024}KB 까지예요 (이 파일은 ${Math.ceil(file.size / 1024)}KB)`, 'warning'); return; }
     const result = imageFileValue(new Uint8Array(await file.arrayBuffer()));
     if (result.error) { ctx.toast(result.error, 'warning'); return; }
+    const label = labelOf(ctx.settings(), role);
     pick.role = null;
     ctx.update(st => setRole(st, role, result.value));
-    ctx.toast(`${roleLabel(role)} 아이콘을 내 그림으로 바꿨어요`);
+    ctx.toast(`${label} 아이콘을 내 그림으로 바꿨어요`);
 }
