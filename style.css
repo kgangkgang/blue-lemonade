@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build dababcd24c8b) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build da6de693dfc3) */
 /* css/00-base.css */
 :root{--bl-release:"8.0.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -18481,26 +18481,6 @@ body.salty #cg-panel .cg-setting small { word-break: keep-all; overflow-wrap: an
 }
 .salty-panel input[type="color"][data-color-path]::-webkit-color-swatch-wrapper { padding: 0; }
 .salty-panel input[type="color"][data-color-path]::-webkit-color-swatch { border: 0; border-radius: 8px; box-shadow: 0 0 0 1px var(--salty-shade-2); }
-.salty-panel .salty-pick {
-  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 5;
-  display: flex; flex-direction: column; padding: 6px; border-radius: 12px;
-  background: var(--bl-card, var(--salty-surface)); box-shadow: var(--bl-e4, var(--salty-lift-lg));
-  max-height: min(60vh, 420px); overflow-y: auto;
-  animation: salty-pick-in 0.16s ease-out;
-}
-@keyframes salty-pick-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .salty-panel .salty-pick { animation: none; } }
-.salty-panel .salty-pick > button {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  min-height: 40px; padding: 0 12px 0 12px; border: 0; border-radius: 10px;
-  background: transparent; color: var(--salty-text); font: inherit; font-size: 13px; font-weight: 550; text-align: left; cursor: pointer;
-}
-.salty-panel .salty-pick > button.on { color: var(--salty-accent-ink, var(--salty-accent)); font-weight: 650; }
-body.salty-dark .salty-panel .salty-pick > button.on { color: var(--bl-pop, var(--salty-accent)); }
-.salty-panel .salty-pick > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--salty-faint); }
-.salty-panel .salty-pick > button.on > i { box-shadow: inset 0 0 0 1px currentColor; background: radial-gradient(circle, currentColor 0 4px, transparent 4.5px); }
-@media (hover: hover) { .salty-panel .salty-pick > button:not(.on):hover { background: var(--salty-fill-shade, var(--salty-shade)); } }
-.salty-panel .salty-pick > button:active { background: var(--salty-fill-shade-2, var(--salty-shade-2)); }
 .salty-prevbox:has(.salty-pvfold) { padding-bottom: 20px; }
 .salty-prevbox .salty-pvfold {
   position: absolute; left: var(--pp); right: var(--pp); bottom: 0; height: 20px;
@@ -18518,48 +18498,6 @@ body.salty-dark .salty-panel .salty-pick > button.on { color: var(--bl-pop, var(
 .salty-prevbox.folded { min-height: 20px; }
 .salty-prevbox.folded > :not(.salty-pvfold) { display: none !important; }
 .salty-prevbox.folded + * { margin-top: 8px; }
-body.salty .salty-pick-layer {
-  position: fixed; inset: 0; z-index: 2147483647; background: transparent;
-  margin: 0; padding: 0; border: 0; box-sizing: border-box; max-width: none; max-height: none; overflow: visible;
-}
-body.salty .salty-pick-layer::backdrop { background: transparent; }
-body.salty .salty-pick-float {
-  position: fixed; display: flex; flex-direction: column; box-sizing: border-box;
-  padding: 6px; border-radius: 12px;
-  background: var(--bl-card, var(--salty-surface)); color: var(--salty-text);
-  box-shadow: var(--bl-e4, var(--salty-lift-lg));
-  font-family: var(--salty-font-ui, inherit); font-size: 13px;
-  animation: salty-pick-in 0.16s ease-out;
-}
-body.salty .salty-pick-float.up { animation-name: salty-pick-in-up; }
-@keyframes salty-pick-in-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { body.salty .salty-pick-float { animation: none; } }
-body.salty .salty-pick-search { flex: none; padding: 2px 2px 6px; }
-body.salty .salty-pick-search input {
-  width: 100% !important; height: 36px; margin: 0 !important; padding: 0 12px !important; box-sizing: border-box;
-  border: 0 !important; border-radius: 10px !important; background: var(--salty-fill-shade, var(--salty-shade)) !important; color: var(--salty-text) !important;
-  font: inherit !important; outline: none !important; box-shadow: none !important; -webkit-appearance: none; appearance: none;
-}
-body.salty .salty-pick-search input:focus { box-shadow: var(--bl-ring) !important; }
-body.salty .salty-pick-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; display: flex; flex-direction: column; }
-body.salty .salty-pick-rows::-webkit-scrollbar { width: 0; height: 0; }
-body.salty .salty-pick-rows > button {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex: none;
-  min-height: 40px; padding: 0 12px 0 12px; border: 0; border-radius: 10px;
-  background: transparent; color: var(--salty-text); font: inherit; font-weight: 550; text-align: left; cursor: pointer;
-}
-body.salty .salty-pick-rows > button > span { min-width: 0; overflow-wrap: anywhere; }
-body.salty .salty-pick-rows > button[disabled] { opacity: 0.45; cursor: default; }
-body.salty .salty-pick-rows > button.on { color: var(--salty-accent-ink, var(--salty-accent)); font-weight: 650; }
-body.salty-dark .salty-pick-rows > button.on { color: var(--bl-pop, var(--salty-accent)); }
-body.salty .salty-pick-rows > button > i { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--salty-faint); }
-body.salty .salty-pick-rows > button.on > i { box-shadow: inset 0 0 0 1px currentColor; background: radial-gradient(circle, currentColor 0 4px, transparent 4.5px); }
-@media (hover: hover) { body.salty .salty-pick-rows > button:not(.on):not([disabled]):hover { background: var(--salty-fill-shade, var(--salty-shade)); } }
-body.salty .salty-pick-rows > button:active { background: var(--salty-fill-shade-2, var(--salty-shade-2)); }
-body.salty .salty-pick-rows > button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: -2px; }
-body.salty .salty-pick-group { padding: 10px 12px 4px; font-size: 12px; font-weight: 650; color: var(--salty-muted); }
-body.salty .salty-pick-group:first-child { padding-top: 4px; }
-body.salty .salty-pick-empty { padding: 12px 12px; color: var(--salty-muted); }
 body.salty #WorldInfo .world_entry_edit [name="perEntryOverridesBlock"] {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -25648,6 +25586,80 @@ dialog.bl-mav-viewer .bl-mav-icon { position:absolute; top:8px; right:8px; backg
 .salty-panel .bl-mav-actions { display:flex; flex-wrap:wrap; gap:8px; }
 .salty-panel .bl-mav-actions .salty-btn { flex:1 1 auto; min-height:36px; }
 body.salty #avatar_controls #bl-mav-button.menu_button { display:inline-flex; align-items:center; justify-content:center; }
+/* css/72-pick.css */
+:root, body {
+  --bl-pick-row: 40px;
+  --bl-pick-pad: 4px;
+  --bl-pick-radius: var(--bl-r-md, 12px);
+  --bl-pick-row-radius: var(--bl-r-sm, 8px);
+  --bl-pick-face: var(--bl-card, var(--salty-surface));
+  --bl-pick-line: var(--salty-line, var(--salty-faint));
+  --bl-pick-text: var(--salty-text);
+  --bl-pick-muted: var(--salty-muted);
+  --bl-pick-on-face: var(--bl-selected, var(--salty-tint-18));
+  --bl-pick-on-ink: var(--salty-accent-ink, var(--salty-accent));
+  --bl-pick-hover: var(--salty-fill-shade, var(--salty-shade));
+  --bl-pick-press: var(--salty-fill-shade-2, var(--salty-shade-2));
+  --bl-pick-field: var(--bl-control, var(--salty-control, var(--salty-field)));
+  --bl-pick-scrim: var(--bl-scrim);
+  --bl-pick-sheet-radius: 16px;
+}
+body.salty .salty-pick-layer {
+  position: fixed; inset: 0; z-index: 2147483647; background: transparent;
+  margin: 0; padding: 0; border: 0; box-sizing: border-box; max-width: none; max-height: none; overflow: visible;
+}
+body.salty .salty-pick-layer::backdrop { background: transparent; }
+body.salty .salty-pick-float {
+  position: fixed; display: flex; flex-direction: column; box-sizing: border-box;
+  padding: var(--bl-pick-pad); border: 1px solid var(--bl-pick-line); border-radius: var(--bl-pick-radius);
+  background: var(--bl-pick-face); color: var(--bl-pick-text); box-shadow: none;
+  font-family: var(--salty-font-ui, inherit); font-size: var(--bl-fs-ctl, 13.5px); letter-spacing: var(--bl-ui-tracking, inherit);
+  animation: salty-pick-in 0.16s ease-out;
+}
+body.salty .salty-pick-float.up { animation-name: salty-pick-in-up; }
+@keyframes salty-pick-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes salty-pick-in-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes salty-pick-in-sheet { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { body.salty .salty-pick-float { animation: none; } }
+body.salty .salty-pick-search { flex: none; padding: 0 0 var(--bl-pick-pad); }
+body.salty .salty-pick-search input {
+  width: 100% !important; height: var(--bl-h-ctl, 36px); margin: 0 !important; padding: 0 12px !important; box-sizing: border-box;
+  border: 1px solid var(--bl-pick-line) !important; border-radius: var(--bl-pick-row-radius) !important;
+  background: var(--bl-pick-field) !important; color: var(--bl-pick-text) !important;
+  font: inherit !important; outline: none !important; box-shadow: none !important; -webkit-appearance: none; appearance: none;
+}
+body.salty .salty-pick-search input:focus { border-color: var(--salty-accent) !important; }
+body.salty .salty-pick-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; display: flex; flex-direction: column; }
+body.salty .salty-pick-rows::-webkit-scrollbar { width: 0; height: 0; }
+body.salty .salty-pick-rows > button {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: none;
+  min-height: var(--bl-pick-row); padding: 0 12px; margin: 0; border: 0; border-radius: var(--bl-pick-row-radius);
+  background: transparent; box-shadow: none; color: var(--bl-pick-text); font: inherit; font-weight: 400; line-height: 1.3; text-align: left; cursor: pointer;
+}
+body.salty .salty-pick-rows > button > span { min-width: 0; overflow-wrap: anywhere; }
+body.salty .salty-pick-rows > button[disabled] { opacity: 0.45; cursor: default; }
+body.salty .salty-pick-rows > button.on { background: var(--bl-pick-on-face); color: var(--bl-pick-on-ink); font-weight: 650; }
+body.salty .salty-pick-rows > button > i { flex: none; display: grid; place-content: center; width: 20px; height: 20px; border: 0; border-radius: 0; background: none; box-shadow: none; }
+body.salty .salty-pick-rows > button > i::after {
+  content: ""; display: block; box-sizing: border-box; width: 11px; height: 6px;
+  border: 0; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(-45deg); opacity: 0;
+}
+body.salty .salty-pick-rows > button.on > i::after { opacity: 1; }
+@media (hover: hover) { body.salty .salty-pick-rows > button:not(.on):not([disabled]):hover { background: var(--bl-pick-hover); } }
+body.salty .salty-pick-rows > button:not(.on):active { background: var(--bl-pick-press); }
+body.salty .salty-pick-rows > button:focus-visible { outline: 1px solid var(--salty-accent); outline-offset: -1px; }
+body.salty .salty-pick-group { padding: 8px 12px 4px; font-size: var(--bl-ts-meta, 13px); font-weight: 650; color: var(--bl-pick-muted); }
+body.salty .salty-pick-group:first-child { padding-top: 4px; }
+body.salty .salty-pick-empty { padding: 12px; color: var(--bl-pick-muted); }
+body.salty .salty-pick-layer.sheet { background: var(--bl-pick-scrim); }
+body.salty .salty-pick-float.sheet {
+  left: 0; right: 0; top: auto; bottom: 0; width: auto; max-width: none; max-height: min(60vh, 60dvh);
+  padding: 8px 12px max(8px, env(safe-area-inset-bottom));
+  border-width: 1px 0 0; border-radius: var(--bl-pick-sheet-radius) var(--bl-pick-sheet-radius) 0 0;
+  animation-name: salty-pick-in-sheet;
+}
+body.salty .salty-pick-float.sheet .salty-pick-search { padding-bottom: 8px; }
 /* css/75-version-pill.css */
 html:not(#bl-pill-off) body.salty :is(#rm_extensions_block :is(.ext-version, .jj-version, .eh-version, .wr-version, .mr-version, .bwr-version, .llmt-version, .bl-version, .pt-drawer-version, .sw-version, .rl-version, .pa-version, .lv-version, .po-version, .lt-version, .sv-version)):not([hidden]),
 html:not(#bl-pill-off) body.salty :where(dialog.popup :is(.ext-version, .pt-version, .bl-notes-ver, .pa-hub-version, .lv-version, .bwr-version, .mr-version, .po-version, .rl-version)):is(#bl-s, *):is(.bl-s, *):not([hidden]),

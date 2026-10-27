@@ -677,7 +677,7 @@ export const FILE_HASHES = {
   "src/scripts/scan.js": "5805:194df255:f44ce803",
   "src/scripts/store.js": "4439:3c410dc2:8a4e723f",
   "src/selection-range.js": "6929:b51d4218:4519f447",
-  "src/selects.js": "20418:0bf3ae4c:80089e5d",
+  "src/selects.js": "21149:08e1d83d:59a98274",
   "src/sent-tokens.js": "6732:47259993:f6603f0c",
   "src/setting-locks.js": "1456:cbc36430:0ef5054e",
   "src/settings-dialog.js": "994:29aceab3:701cd0e4",
@@ -735,5 +735,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1814569:34985f57:d028488e"
+  "style.css": "1814734:4be588f6:529825d6"
 };

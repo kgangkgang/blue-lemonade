@@ -54,6 +54,11 @@ function rowsHtml(sel, query = '') {
     return out.length ? out.join('') : '<div class="salty-pick-empty">없음</div>';
 }
 
+// 10-27 목록 모양 하나로(사용자 「라디오 목록 선택창 디자인이 다 달라요」): 폰(테마의 폰 경계 ≤1000px)은 아래에서 올라오는 시트(가로 전체 · 가림막),
+// PC 는 칸 아래 드롭다운. 모양은 css/72-pick.css — .sheet 는 여기서 붙이고 자리 계산(place)은 드롭다운만 한다
+export const SHEET_MAX_WIDTH = 1000;
+export function pickMode(width = window.innerWidth) { return width <= SHEET_MAX_WIDTH ? 'sheet' : 'drop'; }
+
 // 보이는 화면 (폰의 주소창 · 자판 · 확대를 뺀 실제 보이는 영역). visualViewport 가 없으면 창 크기
 function viewport() {
     const vv = window.visualViewport;
@@ -177,7 +182,9 @@ function open(sel, anchor = null) {
     // 크기를 화면 단위로 직접 준다 (lvh 를 모르는 브라우저는 뒤 선언을 버리고 100vh)
     layer.style.cssText = 'top:0;left:0;width:100vw;height:100vh;height:100lvh';
     const search = sel.options.length > SEARCH_FROM;
-    layer.innerHTML = `<div class="salty-pick salty-pick-float" role="listbox">
+    const sheet = pickMode() === 'sheet';
+    if (sheet) layer.classList.add('sheet');
+    layer.innerHTML = `<div class="salty-pick salty-pick-float${sheet ? ' sheet' : ''}" role="listbox">
         ${search ? '<div class="salty-pick-search"><input type="search" placeholder="찾기" autocomplete="off" spellcheck="false"></div>' : ''}
         <div class="salty-pick-rows">${rowsHtml(sel)}</div>
     </div>`;
@@ -242,7 +249,7 @@ function open(sel, anchor = null) {
         unwatchHost = () => { prev?.(); document.removeEventListener('cancel', onCancel, true); };
     }
     ownerWatch.observe(document.body, { childList: true, subtree: true });
-    place(box, anchorEl || sel);
+    if (!sheet) place(box, anchorEl || sel);   // 시트는 CSS 가 자리를 잡는다(아래 고정 · 가로 전체)
     // 고른 줄이 보이게 — 목록 칸만 굴린다. scrollIntoView 는 조상(서랍)까지 굴려서, 항목이 많은 목록(번역기 모델 칸)이
     // 폰에서 서랍을 튕기고 scroll 로 스스로 닫혔다 (2.7.10). 폰(손가락 · 자판)에서는 찾기칸에 초점을 주지 않음
     const on = rows.querySelector('button.on');
@@ -319,7 +326,7 @@ export function startSelectPop() {
     window.addEventListener('resize', () => {
         if (!layer) return;
         if (window.innerWidth !== openedWidth) { if (Date.now() - openedAt > GRACE) close(); return; }
-        if (owner) place(layer.firstElementChild, anchorEl || owner);
+        if (owner && !layer.classList.contains('sheet')) place(layer.firstElementChild, anchorEl || owner);
     });
     document.addEventListener('scroll', (e) => {
         if (layer && !layer.contains(e.target) && (e.target === document || (e.target instanceof Node && e.target.contains(owner))) && Date.now() - openedAt > GRACE) close();

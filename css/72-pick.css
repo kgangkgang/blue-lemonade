@@ -1,0 +1,90 @@
+/* ===== css/72-pick.css ===== */
+/* 10-27 고르기 목록 팝업 하나로 (src/selects.js 가 그리는 .salty-pick-layer > .salty-pick-float — 실리태번 · 애드온 창 · 확장 창의 <select> 전부, 눈 메뉴(.bl-eye-pick) · QR 찾기(.bl-qrf)도 이 위에 자기 줄만 얹음)
+   사용자 10-27 「라디오 목록으로 나오는 선택창들 디자인이 다 달라요 — 전수조사해서 가장 깔끔한 걸로 통일」. 전엔 css/28 에 라디오 고리 · 그림자 · 나이트 노란 글자(--bl-pop) · 안쪽 여백 6 이었고,
+   dialog 안에 꽂힐 때 그 창의 범용 button 규칙이 새어 알약 · 가운데 정렬이 됐다.
+   모양(철칙 §2 평평 · §3 체크 · §8 메뉴/팝오버 · §9 팔레트 변수만):
+     · 창 = 카드 면 + 1px 선 + 모서리 12, 그림자 없음, 안쪽 여백 4(줄 모서리 8 과 동심)
+     · 줄 = 높이 40, 가로 여백 12, 왼쪽 정렬 · 400. 고른 줄 = 포인트 면(--bl-selected) + 포인트 잉크 + 650 + 오른쪽 테마 체크(ㄴ자 2px). 미선택 줄은 표시 없음
+     · 폰(≤1000px) = 아래에서 올라오는 시트(가로 전체 · 위 모서리 16 · 가림막 --bl-scrim, selects.js 가 .sheet 를 붙임), PC = 칸 아래 드롭다운
+     · 찾기 칸(항목 13개 이상) = 입력 I2(한 단계 밝은 면 + 1px 선 · 36)
+   값은 토큰(--bl-pick-*) 한 곳. 같은 모양을 쓰는 개인 창의 보호 규칙은 이 토큰을 가리킨다 */
+:root, body {
+  --bl-pick-row: 40px;                                   /* 줄 높이 — 철칙 §8 메뉴 · 팝오버 40 */
+  --bl-pick-pad: 4px;                                    /* 창 안쪽 여백(줄 모서리 8 + 4 = 창 모서리 12, 동심) */
+  --bl-pick-radius: var(--bl-r-md, 12px);
+  --bl-pick-row-radius: var(--bl-r-sm, 8px);
+  --bl-pick-face: var(--bl-card, var(--salty-surface));
+  --bl-pick-line: var(--salty-line, var(--salty-faint));
+  --bl-pick-text: var(--salty-text);
+  --bl-pick-muted: var(--salty-muted);
+  --bl-pick-on-face: var(--bl-selected, var(--salty-tint-18));
+  --bl-pick-on-ink: var(--salty-accent-ink, var(--salty-accent));
+  --bl-pick-hover: var(--salty-fill-shade, var(--salty-shade));
+  --bl-pick-press: var(--salty-fill-shade-2, var(--salty-shade-2));
+  --bl-pick-field: var(--bl-control, var(--salty-control, var(--salty-field)));
+  --bl-pick-scrim: var(--bl-scrim);
+  --bl-pick-sheet-radius: 16px;
+}
+/* 층: 화면 전체를 덮는 투명 층 — 바깥을 누르면 닫히고 뒤 화면은 그동안 안 눌림. popover 의 기본 여백 · 테두리는 지운다 */
+body.salty .salty-pick-layer {
+  position: fixed; inset: 0; z-index: 2147483647; background: transparent;
+  margin: 0; padding: 0; border: 0; box-sizing: border-box; max-width: none; max-height: none; overflow: visible;
+}
+body.salty .salty-pick-layer::backdrop { background: transparent; }
+/* 창 */
+body.salty .salty-pick-float {
+  position: fixed; display: flex; flex-direction: column; box-sizing: border-box;
+  padding: var(--bl-pick-pad); border: 1px solid var(--bl-pick-line); border-radius: var(--bl-pick-radius);
+  background: var(--bl-pick-face); color: var(--bl-pick-text); box-shadow: none;
+  font-family: var(--salty-font-ui, inherit); font-size: var(--bl-fs-ctl, 13.5px); letter-spacing: var(--bl-ui-tracking, inherit);
+  animation: salty-pick-in 0.16s ease-out;
+}
+body.salty .salty-pick-float.up { animation-name: salty-pick-in-up; }
+@keyframes salty-pick-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes salty-pick-in-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes salty-pick-in-sheet { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { body.salty .salty-pick-float { animation: none; } }
+/* 찾기 칸(항목이 많을 때) — 입력 I2 */
+body.salty .salty-pick-search { flex: none; padding: 0 0 var(--bl-pick-pad); }
+body.salty .salty-pick-search input {
+  width: 100% !important; height: var(--bl-h-ctl, 36px); margin: 0 !important; padding: 0 12px !important; box-sizing: border-box;
+  border: 1px solid var(--bl-pick-line) !important; border-radius: var(--bl-pick-row-radius) !important;
+  background: var(--bl-pick-field) !important; color: var(--bl-pick-text) !important;
+  font: inherit !important; outline: none !important; box-shadow: none !important; -webkit-appearance: none; appearance: none;
+}
+body.salty .salty-pick-search input:focus { border-color: var(--salty-accent) !important; }
+/* 줄 */
+body.salty .salty-pick-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; display: flex; flex-direction: column; }
+body.salty .salty-pick-rows::-webkit-scrollbar { width: 0; height: 0; }
+body.salty .salty-pick-rows > button {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: none;
+  min-height: var(--bl-pick-row); padding: 0 12px; margin: 0; border: 0; border-radius: var(--bl-pick-row-radius);
+  background: transparent; box-shadow: none; color: var(--bl-pick-text); font: inherit; font-weight: 400; line-height: 1.3; text-align: left; cursor: pointer;
+}
+body.salty .salty-pick-rows > button > span { min-width: 0; overflow-wrap: anywhere; }
+body.salty .salty-pick-rows > button[disabled] { opacity: 0.45; cursor: default; }
+body.salty .salty-pick-rows > button.on { background: var(--bl-pick-on-face); color: var(--bl-pick-on-ink); font-weight: 650; }
+/* 고른 표시: 테마 체크(ㄴ자 2px) — 라디오 고리 대신. 미선택 줄은 빈 자리만(글자 폭이 같게) */
+body.salty .salty-pick-rows > button > i { flex: none; display: grid; place-content: center; width: 20px; height: 20px; border: 0; border-radius: 0; background: none; box-shadow: none; }
+body.salty .salty-pick-rows > button > i::after {
+  content: ""; display: block; box-sizing: border-box; width: 11px; height: 6px;
+  border: 0; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(-45deg); opacity: 0;
+}
+body.salty .salty-pick-rows > button.on > i::after { opacity: 1; }
+@media (hover: hover) { body.salty .salty-pick-rows > button:not(.on):not([disabled]):hover { background: var(--bl-pick-hover); } }
+body.salty .salty-pick-rows > button:not(.on):active { background: var(--bl-pick-press); }
+body.salty .salty-pick-rows > button:focus-visible { outline: 1px solid var(--salty-accent); outline-offset: -1px; }
+/* optgroup 제목 · 빈 목록 */
+body.salty .salty-pick-group { padding: 8px 12px 4px; font-size: var(--bl-ts-meta, 13px); font-weight: 650; color: var(--bl-pick-muted); }
+body.salty .salty-pick-group:first-child { padding-top: 4px; }
+body.salty .salty-pick-empty { padding: 12px; color: var(--bl-pick-muted); }
+/* 폰(≤1000px, 테마의 폰 경계): 아래에서 올라오는 시트 — selects.js 가 .sheet 를 붙이고 자리 계산을 건너뛴다 */
+body.salty .salty-pick-layer.sheet { background: var(--bl-pick-scrim); }
+body.salty .salty-pick-float.sheet {
+  left: 0; right: 0; top: auto; bottom: 0; width: auto; max-width: none; max-height: min(60vh, 60dvh);
+  padding: 8px 12px max(8px, env(safe-area-inset-bottom));
+  border-width: 1px 0 0; border-radius: var(--bl-pick-sheet-radius) var(--bl-pick-sheet-radius) 0 0;
+  animation-name: salty-pick-in-sheet;
+}
+body.salty .salty-pick-float.sheet .salty-pick-search { padding-bottom: 8px; }
