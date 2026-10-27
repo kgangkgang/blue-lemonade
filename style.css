@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 1031e2cc2a59) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 0a24531d7abb) */
 /* css/00-base.css */
 :root{--bl-release:"8.1.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -25452,7 +25452,7 @@ body.salty .bl-pbind-list { min-height:0; }
 .salty-panel .bl-md-tuning { margin:.6em 0 0; border-top:1px solid var(--salty-text-20); }
 .salty-panel .bl-md-tuning > summary { cursor:pointer; padding:.6em .15em; line-height:1.4; font-size:.88em; color:var(--salty-muted); }
 .salty-panel .bl-md-tuning > .bl-control-grid { grid-template-columns:1fr; gap:10px; padding:.3em .15em; }
-@container bl-controls (width >= 19em) {
+@container bl-controls (width >= 21em) {
   .salty-panel .bl-md-tuning > .bl-control-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:var(--bl-s3,12px); align-items:start; }
   .salty-panel .bl-md-tuning > .bl-control-grid > .salty-stack,
   .salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider:not(.salty-slider + .salty-slider):not(:has(+ .salty-slider)) { grid-column:1 / -1; }
