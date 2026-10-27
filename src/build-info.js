@@ -670,7 +670,7 @@ export const FILE_HASHES = {
   "src/scripts/plain/korean.js": "958704:01befe38:eef1e6a9",
   "src/scripts/plain/qingguo.js": "23198:cbd354f6:1ae59db7",
   "src/scripts/plain/shajin.js": "20099:8ad24629:14320e51",
-  "src/scripts/prompt-engine.js": "11363:3cd1d3dc:11bd7faf",
+  "src/scripts/prompt-engine.js": "11866:02c93c6b:780798ee",
   "src/scripts/prompt-fingerprint.js": "2450:d75ba97b:20a85c7a",
   "src/scripts/runtime.js": "10299:2b380bd4:521c7ae2",
   "src/scripts/scan.js": "5805:194df255:f44ce803",

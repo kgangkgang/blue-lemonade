@@ -21,8 +21,18 @@ export function createPromptEngine(doc = document) {
         }
         return result;
     }
-    const order=()=>{ordered=[...sources.values()].sort((a,b)=>b.priority-a.priority);};
+    // 8.0.5 찾은 결과를 기억한다(사전이 바뀌면 비움): 목록을 다시 그릴 때마다 줄 수백 개 × 부분 일치 사전 수천 개를 처음부터 견줬다
+    const memo=new Map();
+    const order=()=>{ordered=[...sources.values()].sort((a,b)=>b.priority-a.priority);memo.clear();};
     function lookup(kind, id, name) {
+        const k=kind+'\u0001'+(id??'')+'\u0001'+name;
+        if(memo.has(k))return memo.get(k);
+        const found=lookupFresh(kind,id,name);
+        if(memo.size>4000)memo.clear();
+        memo.set(k,found);
+        return found;
+    }
+    function lookupFresh(kind, id, name) {
         const key = normalize(name);
         for (const source of ordered) {
             const list = source[kind];
