@@ -32,7 +32,8 @@
     #rm_extensions_block label.flex-container:has(> input[type="checkbox"]),
     :is(dialog, #rm_extensions_block) label:not([class]):has(> input[type="checkbox"]),
     #model-switch-settings label:is(.ms-target, .ms-lock),
-    #regex-link-settings label.rlk-keep
+    #regex-link-settings label.rlk-keep,
+    #rm_extensions_block label.qr--visible
   ),
   html body.salty :is(
     #chat .mes .mes_media_enlarge,
@@ -67,7 +68,8 @@
     #rm_extensions_block label.flex-container:has(> input[type="checkbox"]),
     :is(dialog, #rm_extensions_block) label:not([class]):has(> input[type="checkbox"]),
     #model-switch-settings label:is(.ms-target, .ms-lock),
-    #regex-link-settings label.rlk-keep
+    #regex-link-settings label.rlk-keep,
+    #rm_extensions_block label.qr--visible
   )::before,
   html body.salty :is(
     #left-nav-panel label.checkbox_label
@@ -125,7 +127,7 @@
   /* 8.1.x 애드온 창 · 확장 서랍 · 한글화 패널의 체크 줄(label.checkbox_label · 한글화 패널 .pt-check · 실리태번 확장의 체크박스를 품은 label.flex-container · 클래스 없는 label · 모델 전환 대상 줄 · 정규식 연결 「켜 둠」 줄)도
      위 ::before 상자를 단다(보이는 높이 20~36 그대로). 클래스 없는 label 만 고르는 건 다른 확장이 클래스로 그린 스위치(::before 트랙)를 건드리지 않으려고.
      줄 안에 링크 · 단추 · 글 칸이 있으면 상자가 덮지 않게 그것들만 한 층 위로 — :where 라 특이도 0, 다른 모듈이 준 position 이 이긴다 */
-  :where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))) {
+  :where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep, #rm_extensions_block label.qr--visible) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))) {
     position: relative;
     z-index: 1;
   }

@@ -411,3 +411,6 @@ html body.salty dialog.bl-notes-dialog > header > b { flex-wrap: nowrap !importa
 /* 7.8.1 캐릭터 에셋 S · M · L 세그먼트: 높이 30 · 글자 12.4 로 크기표(세그먼트 34 · 폰 32 · 글자 13)보다 작았다(role-audit) */
 html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 32px !important; font-size: 13px !important; }
 @media (max-width: 760px), (pointer: coarse) { html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 34px !important; } } /* 7.9.7 크기표 고르기 묶음 폰 34 · PC 32 (거꾸로였다) */
+
+/* 8.1.x 애드온 창 안 글 속 링크(ZIP 설치 「자세한 준비 안내」 · 커스텀 CSS 저작권 줄)는 포인트 잉크 — 밝은 팔레트 흰 면 위 포인트 그대로는 4.43:1 */
+html body.salty dialog:not(.bl-settings-dialog) a[href]:not([class]) { color: var(--salty-accent-ink, var(--salty-accent)); }

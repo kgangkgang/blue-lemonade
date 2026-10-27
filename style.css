@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 407fd108a6b2) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build e5fca4143324) */
 /* css/00-base.css */
 :root{--bl-release:"8.1.4";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -26907,6 +26907,7 @@ html body.salty #lv_settings .lv-extras > summary > .lv-extras-clear { margin-le
 html body.salty dialog.bl-notes-dialog > header > b { flex-wrap: nowrap !important; min-width: 0; white-space: nowrap; }
 html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 32px !important; font-size: 13px !important; }
 @media (max-width: 760px), (pointer: coarse) { html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 34px !important; } }
+html body.salty dialog:not(.bl-settings-dialog) a[href]:not([class]) { color: var(--salty-accent-ink, var(--salty-accent)); }
 /* css/86-touch-targets.css */
 @media (pointer: coarse) {
   html body :where(button):is(.salty-panel .salty-seg > button):is(#bl-s, *):is(bl-s, *),
@@ -26930,6 +26931,7 @@ html body #rm_extensions_block label.flex-container:has(> input[type="checkbox"]
 html body :is(dialog, #rm_extensions_block) label:not([class]):has(> input[type="checkbox"]),
 html body :where(label):is(#model-switch-settings label:is(.ms-target, .ms-lock)):is(.bl-s, *):is(bl-s, *),
 html body :where(.rlk-keep):is(#regex-link-settings label.rlk-keep):is(.bl-s, *):is(bl-s, *),
+html body :where(.qr--visible):is(#rm_extensions_block label.qr--visible):is(.bl-s, *):is(bl-s, *),
 html body.salty :where(.mes_media_enlarge):is(:is(#chat,.bl-chat-like) .mes .mes_media_enlarge):is(.bl-s, *),
 html body.salty :is(#chat,.bl-chat-like) .mes .mes_media_container .right_menu_button,
 html body.salty :is(#chat,.bl-chat-like) .mes .mes_buttons .mes_button,
@@ -26959,6 +26961,7 @@ html body #rm_extensions_block label.flex-container:has(> input[type="checkbox"]
 html body :is(dialog, #rm_extensions_block) label:not([class]):has(> input[type="checkbox"])::before,
 html body :where(label):is(#model-switch-settings label:is(.ms-target, .ms-lock)):is(.bl-s, *):is(bl-s, *)::before,
 html body :where(.rlk-keep):is(#regex-link-settings label.rlk-keep):is(.bl-s, *):is(bl-s, *)::before,
+html body :where(.qr--visible):is(#rm_extensions_block label.qr--visible):is(.bl-s, *):is(bl-s, *)::before,
 html body.salty #left-nav-panel label.checkbox_label::before,
 html body :where(button):is(.salty-panel .bl-settings-toprow button):is(.bl-s, *)::after,
 html body :where(.bl-setting-reset):is(.salty-panel .bl-setting-reset):is(.bl-s, *):is(bl-s, *)::after,
@@ -27002,12 +27005,12 @@ html body.salty #left-nav-panel .menu_button:not(label *) {
     position: relative;
     z-index: 1;
   }
-  :where(a):where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))),
-:where(button):where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))),
-:where(select):where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))),
-:where(textarea):where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))),
-:where(.menu_button):where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))),
-:where(input):where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))) {
+  :where(a):where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep, #rm_extensions_block label.qr--visible) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))),
+:where(button):where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep, #rm_extensions_block label.qr--visible) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))),
+:where(select):where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep, #rm_extensions_block label.qr--visible) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))),
+:where(textarea):where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep, #rm_extensions_block label.qr--visible) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))),
+:where(.menu_button):where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep, #rm_extensions_block label.qr--visible) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))),
+:where(input):where(html body :is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label, #pt-panel label.pt-check, #rm_extensions_block label.flex-container, :is(dialog, #rm_extensions_block) label:not([class]), #model-switch-settings label:is(.ms-target, .ms-lock), #regex-link-settings label.rlk-keep, #rm_extensions_block label.qr--visible) :is(a, button, select, textarea, .menu_button, input:not([type="checkbox"], [type="radio"]))) {
     position: relative;
     z-index: 1;
   }
