@@ -58,6 +58,7 @@ jobs:
           node tools/tests/perf-list-shown.mjs .
           node tools/tests/prompt-toggle-echo.mjs .
           node tools/tests/has-invalidation-scope.mjs .
+          node tools/tests/perf-prompt-render-batch.mjs .
           node tools/tests/style-dedupe.mjs .
           node tools/tests/translator-leak.mjs .
           node tools/tests/translator-comments.mjs .

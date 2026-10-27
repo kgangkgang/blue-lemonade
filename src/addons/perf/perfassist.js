@@ -110,12 +110,24 @@ function watchShown(el, onChange) {
     return () => stops.forEach(stop => stop());
 }
 
+// 토글을 누른 직후의 render(true) 만 묶는다 — 실리태번 handleToggle 은 누름 처리(거품 단계) 안에서 바로 render() 를 부른다.
+// 지우기 · 끼우기 · 편집 저장 · 끌어 옮기기 뒤의 그리기는 예전처럼 바로 보낸다(보이는 결과가 늦어지지 않게).
+let lastToggleAt = 0;
+const TOGGLE_WINDOW_MS = 100;
+if (typeof document?.addEventListener === 'function') {   // 시험은 document 흉내만 준다
+    document.addEventListener('click', (event) => {
+        if (event.target?.closest?.('.prompt-manager-toggle-action')) lastToggleAt = Date.now();
+    }, true);
+}
+
 const promptList = createPromptListDefer({
     manager: () => openai.promptManager ?? null,
     enabled: () => settings().deferPromptList !== false,
     visible: isShown,
     watch: watchShown,
     peer: () => window.SaveDedupe?.promptDefer ?? null,
+    coalesceMs: 300,   // 8.0.5 토글을 잇달아 누를 때 미리 돌려 보기 · 목록 그리기를 마지막 한 번으로
+    coalesceWhen: () => Date.now() - lastToggleAt < TOGGLE_WINDOW_MS,
 });
 
 function installPromptList() {
@@ -261,7 +273,7 @@ function buildDrawer() {
         input.addEventListener('change', () => {
             settings()[key] = input.checked;
             if (key === 'morphStream' && !input.checked) morph.release();
-            if (key === 'deferPromptList' && !input.checked) promptList.flush(true);
+            if (key === 'deferPromptList' && !input.checked) { promptList.flush(true); promptList.flushBatch(); }
             if (key === 'saveInWorker' && input.checked) saver.start();
             if (key === 'dedupeStyles') styleDedupe.schedule();   // 끄면 모두 되돌린다 (run 이 enabled 를 본다)
             script.saveSettingsDebounced?.();

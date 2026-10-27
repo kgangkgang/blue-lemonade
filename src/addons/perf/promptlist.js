@@ -7,6 +7,9 @@
 // 목록이 보이기 시작하면 원래 render(false) 를 한 번 부른다.
 // - render() / render(true) (토큰 계산 포함), 서랍이 열려 있을 때의 호출은 그대로 보낸다. 그런 호출이 목록을 다시 만들면 적어 둔 것은 지운다.
 // - 저장 정리(save-dedupe)의 '닫힌 프롬프트 관리자 토큰 계산 미루기'는 renderDebounced 를 미루는 별개 기능이라 겹치지 않는다.
+// 8.0.5 묶기: 목록이 보일 때 render() / render(true)(미리 돌려 보기 + 목록 전체 다시 그리기)가 짧은 사이에 거듭 오면 마지막 한 번만 돌린다.
+//   토글을 잇달아 누르면 실리태번은 누를 때마다 미리 돌려 보기와 목록 그리기를 한 번씩 했다(데우스 3 · 폰 흉내 한 번 2초 남짓).
+//   누른 줄 표시는 prompt-choice.js 가 바로 바꾸므로, 그 뒤 계산은 마지막 상태로 한 번이면 같다. 보내기 쪽 render(false) 는 그대로 보낸다.
 
 /**
  * @param {object} env
@@ -15,9 +18,17 @@
  * @param {(el: Element) => boolean} env.visible
  * @param {(el: Element, onChange: () => void) => (null | (() => void))} env.watch
  * @param {() => any} [env.peer] 저장 정리의 promptDefer ({ dirty(), stats.rendered }) — 있으면 겹치는 목록 그리기를 한 번 줄인다
+ * @param {number} [env.coalesceMs] 보이는 목록의 render(true) 를 이 시간 안의 마지막 한 번으로 묶는다 (0 · 없음 = 안 묶음)
+ * @param {() => boolean} [env.coalesceWhen] 이 호출을 묶어도 되는가(없으면 늘) — 토글로 생긴 그리기만 묶고, 지우기 · 끼우기 · 편집 저장 · 끌어 옮기기 뒤 그리기는 바로 보낸다
+ * @param {(fn: () => void, ms: number) => any} [env.setTimer]
+ * @param {(id: any) => void} [env.clearTimer]
  */
 export function createPromptListDefer(env) {
-    const stats = { deferred: 0, rendered: 0, passed: 0, covered: 0 };
+    const stats = { deferred: 0, rendered: 0, passed: 0, covered: 0, coalesced: 0, coalescedRuns: 0 };
+    const setTimer = env.setTimer || ((fn, ms) => setTimeout(fn, ms));
+    const clearTimer = env.clearTimer || (id => clearTimeout(id));
+    /** @type {{ self: any, args: any[], timer: any, first: number } | null} */
+    let batch = null;   // 묶어 둔 render(true) — 마지막 호출의 인자
     /** @type {{ manager: any, original: Function } | null} */
     let hooked = null;
     let pending = false;
@@ -48,6 +59,15 @@ export function createPromptListDefer(env) {
         const stop = unwatch;
         unwatch = null;
         try { stop?.(); } catch { /* */ }
+    }
+
+    function mayCoalesce() {
+        if (typeof env.coalesceWhen !== 'function') return true;
+        try {
+            return !!env.coalesceWhen();
+        } catch {
+            return false; // 모르면 묶지 않는다
+        }
     }
 
     function shown(el) {
@@ -90,6 +110,16 @@ export function createPromptListDefer(env) {
             if (afterTryGenerate !== false || !env.enabled() || !el || shown(el)) {
                 // 이 호출이 목록을 다시 만든다 → 적어 둔 것은 필요 없다
                 if (pending) { pending = false; peerMark = null; stopWatching(); }
+                const ms = Number(env.coalesceMs) || 0;
+                if (afterTryGenerate !== false && ms > 0 && env.enabled() && el && shown(el) && mayCoalesce()) {
+                    // 짧은 사이에 거듭 오는 render(true) 는 마지막 한 번만 (처음 부른 뒤 ms × 4 를 넘기지는 않는다)
+                    const now = Date.now();
+                    if (batch) { clearTimer(batch.timer); stats.coalesced++; } else batch = { first: now };
+                    batch.self = this; batch.args = [afterTryGenerate, ...rest];
+                    const wait = Math.max(0, Math.min(ms, batch.first + ms * 4 - now));
+                    batch.timer = setTimer(runBatch, wait);
+                    return undefined;   // 원래 render 도 기다리는 약속을 돌려주지 않는다
+                }
                 stats.passed++;
                 return original.call(this, afterTryGenerate, ...rest);
             }
@@ -116,5 +146,21 @@ export function createPromptListDefer(env) {
         return true;
     }
 
-    return { install, flush, pending: () => pending, installed: () => hooked !== null, stats };
+    function runBatch() {
+        const b = batch;
+        batch = null;
+        if (!b || !hooked) return;
+        stats.coalescedRuns++;
+        stats.passed++;
+        hooked.original.call(b.self, ...b.args);
+    }
+    /** 묶어 둔 render(true) 를 지금 (끌 때 · 검사) */
+    function flushBatch() {
+        if (!batch) return false;
+        clearTimer(batch.timer);
+        runBatch();
+        return true;
+    }
+
+    return { install, flush, flushBatch, pending: () => pending, batched: () => batch !== null, installed: () => hooked !== null, stats };
 }
