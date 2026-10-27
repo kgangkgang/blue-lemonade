@@ -97,10 +97,19 @@ function radios() {
 export function syncRadios() {
     const group = document.querySelector('#floatingPrompt .floating_prompt_radio_group');
     if (!group) return;
-    if (!group.querySelector(`input[name="${RADIO}"]`)) group.append(makeRadio('persona'), makeRadio('char'));
+    if (!group.querySelector(`input[name="${RADIO}"]`)) {
+        // 8.0.8 사용자 제보(폰): 묶음 끝에 붙이면 「삽입 빈도」 줄에 간격 없이 붙었다. 본체는 키 큰 「채팅 안 @ 깊이」 줄(입력 칸)이
+        // 묶음 끝이라 그 아래가 띄어 보였다 — 두 칸을 「메인 프롬프트 뒤」와 「깊이」 사이에 넣어 앞 · 뒤와 같은 줄 높이로 잇고,
+        // 깊이 줄을 다시 묶음 끝에 둬 「삽입 빈도」 위 간격을 본체 그대로 둔다(순서도 실제 프롬프트 순서: 메인 → 설명들 → 채팅 안).
+        const depth = group.querySelector('label[for="extension_floating_position_depth"]')
+            ?? group.querySelector('#extension_floating_position_depth')?.closest('label');
+        const rows = [makeRadio('persona'), makeRadio('char')];
+        if (depth?.parentElement === group) depth.before(...rows); else group.append(...rows);
+    }
     const on = featureOn();
     const anchor = on ? chosenAnchor() : null;
-    for (const label of group.querySelectorAll('.bl-note-anchor')) label.hidden = !on;
+    // hidden 만으로는 본체 .checkbox_label 의 display:flex 가 이겨 테마를 꺼도 두 칸이 보였다 — 줄 자체 display 로 숨긴다
+    for (const label of group.querySelectorAll('.bl-note-anchor')) { label.hidden = !on; label.style.display = on ? '' : 'none'; }
     for (const input of radios()) input.checked = input.value === anchor;
     const body = [...document.querySelectorAll(BODY_RADIO)];
     if (anchor) for (const input of body) input.checked = false;

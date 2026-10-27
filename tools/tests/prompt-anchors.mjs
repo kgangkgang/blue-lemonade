@@ -398,11 +398,61 @@ await test('본체 설정 · 저장값: 테마는 채팅 메타데이터 칸 하
 
 await test('라디오 · 문구 · CSS · CI 등록', async () => {
     assert.match(noteJs, /label\.className = 'checkbox_label bl-note-anchor'/, '본체 라디오와 같은 줄 모양(checkbox_label)');
-    assert.match(noteJs, /group\.append\(makeRadio\('persona'\), makeRadio\('char'\)\)/);
     assert.match(anchorsJs, /persona: '페르소나 위치', char: '캐릭터 설명 위치'/);
     assert.match(noteJs, /input\.name = RADIO;/, '본체 라디오와 다른 이름 — 본체 change 처리기가 붙지 않음');
     assert.match(await read('index.js'), /import\('\.\/src\/an-anchor\.js'\)\.then\(m => m\.startNoteAnchor\(\)\)/);
     assert.match(await read('.github/workflows/release-check.yml'), /node tools\/tests\/prompt-anchors\.mjs \./, 'CI 등록');
+});
+
+// 8.0.8 사용자 제보: 두 칸이 묶음 끝에 붙어 「삽입 빈도」 줄과 간격 없이 붙었다 → 「메인 프롬프트 뒤」와 「채팅 안 @ 깊이」 사이에
+await test('라디오 자리: 깊이 줄 앞(깊이 줄이 묶음 끝 — 삽입 빈도 위 간격 본체 그대로) · 두 번 불러도 한 벌', async () => {
+    class El {
+        constructor(tag, attrs = {}) { Object.assign(this, { tagName: tag.toUpperCase(), children: [], parentElement: null, className: '', id: '', name: '', value: '', htmlFor: '', hidden: false, checked: false, textContent: '', style: { display: '' } }, attrs); }
+        append(...nodes) { for (const node of nodes) { node.parentElement = this; this.children.push(node); } }
+        before(...nodes) { const list = this.parentElement.children; const at = list.indexOf(this); for (const node of nodes) node.parentElement = this.parentElement; list.splice(at, 0, ...nodes); }
+        matches(sel) {
+            let m;
+            if ((m = sel.match(/^(\w+)?\[(name|for)="([^"]+)"\]$/))) return (!m[1] || this.tagName === m[1].toUpperCase()) && (m[2] === 'for' ? this.htmlFor : this.name) === m[3];
+            if (sel.startsWith('#')) return this.id === sel.slice(1);
+            if (sel.startsWith('.')) return this.className.split(' ').includes(sel.slice(1));
+            return false;
+        }
+        all(sel) { const out = []; const walk = el => { for (const c of el.children) { if (sel.split(',').some(s => c.matches(s.trim()))) out.push(c); walk(c); } }; walk(this); return out; }
+        querySelector(sel) { return this.all(sel)[0] ?? null; }
+        querySelectorAll(sel) { return this.all(sel); }
+        closest(sel) { let el = this; while (el && !el.matches(sel)) el = el.parentElement; return el; }
+    }
+    const row = (forId, value, text) => { const label = new El('label', { className: 'checkbox_label', htmlFor: forId }); label.append(new El('input', { type: 'radio', id: forId, name: 'extension_floating_position', value }), new El('span', { textContent: text })); return label; };
+    const group = new El('div', { className: 'floating_prompt_radio_group' });
+    group.append(row('extension_floating_position_before', '2', '앞'), row('extension_floating_position_after', '0', '뒤'), row('extension_floating_position_depth', '1', '깊이'));
+    const saved = globalThis.document;
+    globalThis.document = {
+        createElement: tag => new El(tag),
+        querySelector: sel => sel === '#floatingPrompt .floating_prompt_radio_group' ? group : group.querySelector(sel),
+        querySelectorAll: sel => group.querySelectorAll(sel),
+        getElementById: () => null, addEventListener: () => {},
+    };
+    try {
+        reset(); state.meta.bl_note_anchor = 'persona';
+        note.syncRadios(); note.syncRadios();
+        const order = group.children.map(label => label.htmlFor);
+        assert.deepEqual(order, ['extension_floating_position_before', 'extension_floating_position_after', 'bl_note_anchor_persona', 'bl_note_anchor_char', 'extension_floating_position_depth'], '앞 · 뒤 · 페르소나 · 캐릭터 · 깊이(묶음 끝)');
+        assert.ok(group.children.slice(2, 4).every(label => label.className === 'checkbox_label bl-note-anchor' && label.parentElement === group));
+        assert.equal(group.querySelector('#bl_note_anchor_persona').checked, true, '고른 칸 켜짐');
+        assert.ok(group.querySelectorAll('input[name="extension_floating_position"]').every(input => !input.checked), '본체 라디오는 꺼짐');
+        globalThis.__anchorTest.settings = { enabled: false }; note.syncRadios();
+        assert.ok(group.querySelectorAll('.bl-note-anchor').every(label => label.hidden && label.style.display === 'none'), '테마 끄면 두 칸 숨김(본체 checkbox_label 의 display:flex 를 이기게 줄 display)');
+        globalThis.__anchorTest.settings = { enabled: true }; note.syncRadios();
+        assert.ok(group.querySelectorAll('.bl-note-anchor').every(label => !label.hidden && label.style.display === ''), '다시 켜면 보임');
+        assert.equal(group.querySelectorAll('.bl-note-anchor').length, 2, '한 벌');
+        // 깊이 줄을 못 찾는 본체(다른 판)면 예전처럼 묶음 끝
+        const other = new El('div', { className: 'floating_prompt_radio_group' }); other.append(row('x_before', '2', '앞'));
+        globalThis.document.querySelector = sel => sel === '#floatingPrompt .floating_prompt_radio_group' ? other : other.querySelector(sel);
+        note.syncRadios();
+        assert.deepEqual(other.children.map(label => label.htmlFor), ['x_before', 'bl_note_anchor_persona', 'bl_note_anchor_char']);
+    } finally {
+        globalThis.document = saved; globalThis.__anchorTest.settings = { enabled: true };
+    }
 });
 
 delete globalThis.__anchorTest;   // document · SillyTavern 흉내는 남긴다 (창 감시가 1.5초 뒤 한 번 더 찾는다)
