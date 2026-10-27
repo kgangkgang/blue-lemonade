@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 10e6cace802c) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build dababcd24c8b) */
 /* css/00-base.css */
 :root{--bl-release:"8.0.9";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -22651,8 +22651,8 @@ html body.salty #selectChatPopupHeaderText > a { margin-left:6px!important; }
 html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link { margin-left:4px!important; }
 html body.salty #left-nav-panel a.topRightInset { position:absolute!important; }
 html body.salty #WorldInfo .world_entry a.notes-link[href*="inclusion-group"] { font-size:inherit!important; margin:0 0 0 0.2em!important; }
-html body.salty #WorldInfo .world_entry a.notes-link[href*="inclusion-group"] { opacity:.5!important; }
-html body.salty #WorldInfo .world_entry a.notes-link[href*="inclusion-group"]:is(:hover, :focus-visible) { opacity:1!important; }
+html body.salty #WorldInfo #world_popup_entries_list .world_entry a.notes-link[href*="inclusion-group"] { opacity:.5!important; }
+html body.salty #WorldInfo #world_popup_entries_list .world_entry a.notes-link[href*="inclusion-group"]:is(:hover, :focus-visible) { opacity:1!important; }
 html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark {
 position:relative;
 display:block;

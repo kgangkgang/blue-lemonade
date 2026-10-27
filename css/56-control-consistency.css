@@ -123,8 +123,10 @@ html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.
 html body.salty #left-nav-panel a.topRightInset { position:absolute!important; }   /* AI 응답 설정 오른쪽 위 문서 링크: 원래 자리(absolute) 그대로 */
 /* W 월드인포 항목 「포함 그룹」: 같은 항목의 칸 이름 ? (.bl-wi-help 1.25em · 0.2em)와 같은 규격 */
 html body.salty #WorldInfo .world_entry a.notes-link[href*="inclusion-group"] { font-size:inherit!important; margin:0 0 0 0.2em!important; }
-html body.salty #WorldInfo .world_entry a.notes-link[href*="inclusion-group"] { opacity:.5!important; }   /* 옆 칸 이름 ? (.bl-wi-help, 51-integrations opacity .5)와 같은 조용함 — 둘이 나란히 있어 하나만 진하면 튄다 */
-html body.salty #WorldInfo .world_entry a.notes-link[href*="inclusion-group"]:is(:hover, :focus-visible) { opacity:1!important; }
+/* 옆 칸 이름 ? (.bl-wi-help, 51-integrations opacity .5)와 같은 조용함 — 둘이 나란히 있어 하나만 진하면 튄다.
+   위 공통 규칙의 :is() 는 ID 둘짜리 선택자(#rm_ch_create_block … #description_div) 특이도라 opacity:1 을 이기려면 ID 조상 둘(#WorldInfo #world_popup_entries_list)이 필요하다 */
+html body.salty #WorldInfo #world_popup_entries_list .world_entry a.notes-link[href*="inclusion-group"] { opacity:.5!important; }
+html body.salty #WorldInfo #world_popup_entries_list .world_entry a.notes-link[href*="inclusion-group"]:is(:hover, :focus-visible) { opacity:1!important; }
 html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark {
   position:relative; display:block; width:15px; height:15px; min-width:15px; flex:none; border:0; border-radius:0; background:none;   /* 7.9.1: 옆 작업 단추 아이콘(FA 15px)과 같은 크기 · 같은 글자색 — 1em(11px) · 포인트 색 · 선 아이콘 설정일 때만 그려지던 것 */
   font-size:0; line-height:1; color:inherit;
