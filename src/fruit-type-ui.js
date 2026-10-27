@@ -149,10 +149,10 @@ ${footer?`<div class="salty-row bl-ft-row"><span>${footer}</span>${toggle('data-
         if(docMode&&docMode!=='sample'){switchMode(frame,'sample');return;}
         const say=()=>{
             const badge=box.querySelector('[data-ft-sample-badge]');badge.hidden=false;badge.textContent=deus?`표본이에요 · ${versionLabel(version)}`:'표본이에요';
-            const name=deus?`${versionLabel(version)} `:'';
-            const what=sample.origin==='regex'?`원작 ${name}정규식으로 만든 표본을 보여요.`:`원작 ${name}정규식을 찾지 못해 기본 표본을 보여요${deus?'(원작 그림 · 색은 빠져요)':''}.`;
-            const why=mismatch?`대화의 상태창은 ${versionLabel(version==='v3'?'2.5':'v3')} 모양이라, 고른 판으로`:'대화에 이 종류의 상태창이 없어';
-            note.textContent=`${why} ${what} 글자 설정은 표본에 바로 반영되고 저장돼요.`;
+            const name=deus?`${versionLabel(version)} `:'',regex=sample.origin==='regex';
+            const text=mismatch?`대화의 상태창은 ${versionLabel(version==='v3'?'2.5':'v3')} 모양이라 고른 ${versionLabel(version)} 판의 표본을 보여요(${regex?'원작 정규식으로 만든 것':'원작 정규식이 없어 기본 표본 · 원작 그림 · 색은 빠져요'}).`
+                :regex?`대화에 이 종류의 상태창이 없어 원작 ${name}정규식으로 만든 표본을 보여요.`:`대화에 이 종류의 상태창이 없고 원작 ${name}정규식도 찾지 못해 기본 표본을 보여요${deus?'(원작 그림 · 색은 빠져요)':''}.`;
+            note.textContent=`${text} 글자 설정은 표본에 바로 반영되고 저장돼요.`;
         };
         dropHost();
         if(sample.fragment){
