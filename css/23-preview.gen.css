@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 469개 (169.7KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 475개 (171.5KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -1213,21 +1213,47 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .sal
   background: var(--salty-fill-accent-13, var(--salty-accent-13)) !important;
   color: var(--salty-accent-ink, var(--salty-accent)) !important;
 }
-body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track > .custom-dem-track__grid, .custom-dem-modules, .custom-dem-modules details.custom-dem-card) {
-  border-radius: 14px !important;
-}
-body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track:has(> .custom-dem-track__grid), .custom-dem-modules, .custom-dem-modules .custom-dem-card) {
-  --dem-paper: color-mix(in srgb, #cba6f7 9%, var(--salty-surface, #fff));
-  --dem-raised: color-mix(in srgb, #cba6f7 15%, var(--salty-surface, #fff));
-  --dem-tray: color-mix(in srgb, #cba6f7 5%, var(--salty-surface, #fff));
-  --dem-rule: color-mix(in srgb, #5a4a76 28%, var(--salty-line, #ccc));
-  --dem-rule-soft: color-mix(in srgb, #5a4a76 16%, var(--salty-line, #ddd));
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track:has(> .custom-dem-track__grid), .custom-dem-modules, .custom-dem-modules .custom-dem-card) {
+  --dem-paper: var(--bl-fill-card, var(--bl-card, var(--salty-surface)));
+  --dem-raised: color-mix(in srgb, var(--salty-accent) 8%, var(--bl-fill-card, var(--bl-card, var(--salty-surface))));
+  --dem-tray: var(--salty-fill-surface, var(--salty-surface));
+  --dem-rule: color-mix(in srgb, var(--salty-accent) 30%, var(--salty-line));
+  --dem-rule-soft: var(--salty-line);
   --dem-ink: var(--salty-text);
   --dem-ink-2: var(--salty-muted);
   --dem-ink-3: color-mix(in srgb, var(--salty-muted) 80%, transparent);
+  --dem-serif: var(--salty-font-ui, inherit);
+  font-family: var(--salty-font-ui, inherit);
 }
-body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__clock {
-  color: color-mix(in srgb, #94e2d5 40%, var(--salty-text));
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track > .custom-dem-track__grid, .custom-dem-modules, .custom-dem-modules details.custom-dem-card) {
+  border-radius: 14px !important;
+  box-shadow: var(--bl-e1);
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid {
+  border-top: 2px solid var(--salty-accent) !important;
+  padding-inline: 14px !important;
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__clock {
+  color: var(--salty-accent-ink, var(--salty-accent));
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__temp {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--salty-fill-accent-13, var(--salty-accent-13));
+  color: var(--salty-accent-ink, var(--salty-accent));
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__crumb:last-child {
+  color: var(--salty-accent-ink, var(--salty-accent));
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__rule {
+  color: var(--salty-accent);
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__rule::before,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__rule::after {
+  border-top-color: color-mix(in srgb, var(--salty-accent) 55%, transparent);
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-card__title, .custom-dem-status-row__name, .custom-dem-psychological-state-row__name) {
+  color: var(--salty-accent-ink, var(--salty-accent));
 }
 @media (max-width: 1000px) {
   body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):where(:not(:has(> .custom-dem-track__grid))) {

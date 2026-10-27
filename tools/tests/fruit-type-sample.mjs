@@ -112,16 +112,17 @@ check('채팅 안 데우스 카드 아래에는 바로가기 단추를 새로 �
     const shortcuts=read('src/fruit-type-shortcuts.js');
     assert(shortcuts.includes("const DEUS=FRUIT_TYPES.filter(t=>t.owner==='qingguo')"));
 });
-check('데우스 2.5 스킨은 그대로, V3 는 원작 모양을 살리고 가볍게만 손질해요',()=>{
+check('데우스 2.5 스킨은 그대로, V3 는 원작 모양 · 그림을 살리고 색 · 글꼴만 블루레몬에이드로',()=>{
     const skin=read('css/30-dem-skin.css');
     const CARD=':where(:not(.custom-dem-modules *))',TRACK=':where(:not(:has(> .custom-dem-track__grid)))',ITEM=':where(:not(.custom-dem-track__grid *))';
     assert(skin.includes(`.mes_text details.custom-dem-card${CARD},`)&&skin.includes(`:is(.custom-dem-track, .custom-dem-track-recovery)${TRACK}`)&&skin.includes(ITEM),'2.5 규칙은 무게 0 의 덧붙임으로만 V3 를 빼요');
     const bare=skin.replace(/\/\*[\s\S]*?\*\//g,'');
-    for(const rule of bare.split('}')){const head=rule.slice(0,rule.lastIndexOf('{'));if(!/custom-dem-/.test(head)||/8\.0\.6|custom-dem-modules details|custom-dem-track > \.custom-dem-track__grid|custom-dem-track:has/.test(rule))continue;
+    for(const rule of bare.split('}')){const head=rule.slice(0,rule.lastIndexOf('{'));if(!/custom-dem-/.test(head)||/8\.0\.6|\.custom-dem-modules|custom-dem-track > \.custom-dem-track__(?:grid|rule)|custom-dem-track:has/.test(rule))continue;
         for(const sel of head.split(/,(?![^(]*\))/))if(/custom-dem-/.test(sel)&&!/:where\(:not\(/.test(sel))assert.fail('V3 에 닿을 수 있는 2.5 규칙: '+sel.trim().slice(-80));}
-    const v3=skin.slice(skin.indexOf('8.0.6 데우스 V3'),skin.indexOf('/* ---------- 폰 접기'));
+    const v3=skin.slice(skin.indexOf('/* ---------- 8.0.6 데우스 V3'),skin.indexOf('/* ---------- 폰 접기'));
     assert(!/display:\s*none/.test(v3)&&!/background:\s*transparent/.test(v3),'V3 의 그림 · 종이 · 장면은 지우지 않아요');
-    assert(v3.includes('border-radius: 14px !important')&&v3.includes('--dem-ink: var(--salty-text)')&&v3.includes('body.salty.salty-light.salty-dem-skin'),'모서리 · 밝은 팔레트 색 변수만');
+    assert(v3.includes('border-radius: 14px !important')&&v3.includes('--dem-ink: var(--salty-text)')&&v3.includes('--dem-serif: var(--salty-font-ui')&&v3.includes('border-top: 2px solid var(--salty-accent)'),'원작 색 변수 · 글꼴 자리를 테마 토큰으로 · 테마 카드 규격');
+    assert(!/--dem-serif[^;]*!important|font-family[^;]*!important/.test(v3.replace(/\/\*[\s\S]*?\*\//g,'')),'글꼴은 !important 없이 — 상태창 글자 설정이 이겨요');
     assert(!skin.includes('custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__grid'),'V3 트래커는 폰에서도 원작 배치(한 줄 접기 없음)');
 });
 console.log(`fruit-type-sample: ${passed} passed`);
