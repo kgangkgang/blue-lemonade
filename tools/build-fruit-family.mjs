@@ -35,8 +35,28 @@ export function mergeDictionary(parts) {
     return result;
 }
 
+// 항목 도움말 사전(길게 누르기 설명): option-effects.json → src/scripts/fruit-option-effects.js
+//   effects   본문 SHA-256(줄 끝 LF · 앞뒤 공백 뗀 본문) → 설명 — 지문이 맞으면 「확인된 설명」
+//   baselines 항목 id → 설명 — 본문을 고친 항목의 기본 설명. 프롬프트 관리자 사전(fruit.js)의 desc 도 같은 id 면 이 값을 따라요.
+// 원문 본문은 넣지 않아요. 새 프리셋 판이 나오면 본문 지문과 설명을 option-effects.json 에 더하고 다시 만들어요(tools/tests/fruit-option-coverage.mjs 가 빠진 항목을 잡아요).
+export const OPTION_EFFECTS_FILE = 'src/scripts/fruit-option-effects.js';
+export function readOptionEffects() {
+    const data = read('option-effects.json');
+    for (const kind of ['effects', 'baselines']) for (const [key, text] of Object.entries(data[kind] || {})) {
+        if (typeof text !== 'string' || !text.trim()) throw Error(`option-effects.json ${kind} ${key} 설명이 비었어요`);
+        if (kind === 'effects' && !/^[0-9a-f]{64}$/.test(key)) throw Error(`option-effects.json effects 열쇠가 SHA-256 지문이 아니에요: ${key}`);
+    }
+    return data;
+}
+function optionEffectsCode() {
+    const data = readOptionEffects();
+    return `// 과일 계열 항목 도움말 사전 — tools/scripts-src/fruit-family/option-effects.json 에서 tools/build-fruit-family.mjs 가 만들어요(손으로 고치지 않아요).\n// 본문 지문(SHA-256)과 표준 항목 id 만 있고 원문 본문은 없어요.\nexport const FRUIT_OPTION_EFFECTS = ${JSON.stringify(data.effects, null, 2)};\nexport const FRUIT_OPTION_BASELINES = ${JSON.stringify(data.baselines, null, 2)};\n`;
+}
+
 function fruitCode() {
     const merged = mergeDictionary(PRESET_SOURCES.map(name => read(`prompts-${name}.json`)));
+    const { baselines } = readOptionEffects();
+    for (const entry of merged.prompts) if (entry.id && baselines[entry.id]) entry.desc = baselines[entry.id];
     const data = { priority: 20, partial: true, prompts: merged.prompts, regex: merged.regex };
     return `// 과일 계열(과일 · 야한과일 · 청과) 표시용 사전이에요 — 공통 + 프리셋별 추가 (tools/build-fruit-family.mjs 가 만들어요).\n// 저장된 이름과 프롬프트 본문은 바꾸지 않아요.\nBlueLemonade.translate(${JSON.stringify(data, null, 2)});\n`;
 }
@@ -118,6 +138,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     for (const [name, code] of Object.entries(outputs)) {
         new Function('BlueLemonade', code); // 함수 몸통으로 쓸 수 있는지
         const file = path.join(bundled, name), text = bundle(code), old = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+        if (old !== text) { stale++; if (!check) fs.writeFileSync(file, text); }
+    }
+    {   // 도움말 사전은 번들이 아니라 모듈 파일이에요
+        const file = path.join(root, OPTION_EFFECTS_FILE), text = optionEffectsCode(), old = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
         if (old !== text) { stale++; if (!check) fs.writeFileSync(file, text); }
     }
     console.log(check ? (stale ? `[다름] 과일 계열 번들 ${stale}개가 원본과 달라요 — node tools/build-fruit-family.mjs` : '[같음] 과일 계열 번들이 원본과 같아요') : `과일 계열 번들을 만들었어요 (바뀐 것 ${stale}개)`);

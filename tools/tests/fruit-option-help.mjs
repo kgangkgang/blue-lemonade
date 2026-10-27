@@ -17,7 +17,7 @@ const hash=Object.keys(FRUIT_OPTION_EFFECTS)[0];
 const fake={subtle:{digest:async()=>Uint8Array.from(hash.match(/../g),x=>parseInt(x,16))}};
 assert.equal((await optionEffect('Synthetic body',fake)).text,FRUIT_OPTION_EFFECTS[hash]);
 assert(Object.keys(FRUIT_OPTION_EFFECTS).length>=300);
-assert.equal(Object.keys(FRUIT_OPTION_BASELINES).length,316);
+assert(Object.keys(FRUIT_OPTION_BASELINES).length>=316);
 const {localPromptHash}=await import(pathToFileURL(path.join(root,'src/scripts/prompt-fingerprint.js')));
 for(const text of ['', 'abc', '한글 日本語 😀', 'a'.repeat(55), 'a'.repeat(56), 'a'.repeat(64), 'test'.repeat(20000)])assert.equal(localPromptHash(text),createHash('sha256').update(text).digest('hex'));
 const id=Object.keys(FRUIT_OPTION_BASELINES)[0];

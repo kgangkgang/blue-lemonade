@@ -1,0 +1,5645 @@
+{
+ "about": "과일 계열 세 프리셋(과일 6.4 · 야한 과일 2.0 · 청과 2.0)의 표준 항목 목록 — id · 이름 · 본문 지문(SHA-256, 줄 끝 LF · 앞뒤 공백 뗀 본문) · 본문 글자 수만. 원문 본문은 없어요. tools/tests/fruit-option-coverage.mjs 가 모든 항목에 도움말이 있는지 봐요.",
+ "presets": {
+  "과일 6.4": [
+   {
+    "id": "fruit-v61-display-section-01",
+    "name": "━━ 📖 说明勿开 ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "810a046a-0096-4caa-a2d8-ca00a55dbda5",
+    "name": "🍎 欢迎词｜别开",
+    "hash": "6a496c574fa9d7a4f83459a8c7f8eeab512d0078a21151ff4f9434b3cbb7eba5",
+    "len": 408
+   },
+   {
+    "id": "8af8957e-f8e3-4b0e-a357-d4a593414059",
+    "name": "📚 使用说明｜📌 开头的条目请勿改动｜别开",
+    "hash": "5be00c2fceca4135ebb1325d9ade746cb72f4da5d5b84f6a044da3f8b0ec8b87",
+    "len": 336
+   },
+   {
+    "id": "228a4db0-d778-447f-91bc-f39e6e62bfe8",
+    "name": "❓️ 必做操作与答疑｜别开",
+    "hash": "154554fde698ab27cd6c432691e6bdf77e4da9a6626652d5d225847743727193",
+    "len": 368
+   },
+   {
+    "id": "648683d0-da5e-4a7c-b6e2-ae51f5ae42e5",
+    "name": "🐱 MoM 喵喵电波共享计划｜说明",
+    "hash": "dbb44693ae17966ef5ce646bcafbcd0af04f12533855846102a9a4cba9d0a130",
+    "len": 84
+   },
+   {
+    "id": "fruit-v61-display-section-02",
+    "name": "━━ 🍎 基础 ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "419e0b0c-c3f0-4ae8-91cd-97d4d71455a1",
+    "name": "📌 获取变量｜必开·别动",
+    "hash": "7e4858ce419f57841278d8032ac046586f70e2e29013258cbf57dc947c7fee39",
+    "len": 1879
+   },
+   {
+    "id": "ba65aeb9-aeab-4223-b8aa-9d4d739946d2",
+    "name": "🍎 美学注入",
+    "hash": "dd90f074e9e06ed40a36da664de1f377067b4fc8afd0ee15b4c971e28bb0517d",
+    "len": 1738
+   },
+   {
+    "id": "bd0dcfab-ad79-4fde-9915-6876b08221bb",
+    "name": "🌙 加强破甲｜改编自日月西 @电波系 #GEMINI",
+    "hash": "5dbc0f1ae4faa35c3c431aba6ebb221fd4bf3df210a39d49d0d6473d2f18c8a2",
+    "len": 2907
+   },
+   {
+    "id": "ab1ff991-748f-42e8-9be7-99f53daf83e9",
+    "name": "🧊加强破甲@NIAN #GEMINI",
+    "hash": "a16b50fe03492bfa113e25142fdc9d7d015e20fe9ab4eaec75e97629275544dd",
+    "len": 780
+   },
+   {
+    "id": "f68935a6-6f1a-4444-9d9e-860f51510740",
+    "name": "📌 防标记版乐园载入｜头部单选",
+    "hash": "e5fffd199002924253be5f81b282ab247f04e451b83500741eb18b125f17fb1f",
+    "len": 3104
+   },
+   {
+    "id": "main",
+    "name": "📌 乐园载入｜头部单选",
+    "hash": "3020ae14cd1e5c71f9f8a3323f76ce290ddcbef1f9166fc21b7f8696702d0584",
+    "len": 474
+   },
+   {
+    "id": "57c4caf1-6734-4f0d-83c2-fc80c8cba54b",
+    "name": "📌 超现实梦境 #GEMINI",
+    "hash": "913f8eebfd816f2ac58dfa2238e20e0b1278955d6fe61eb3b22090fda0cde973",
+    "len": 581
+   },
+   {
+    "id": "a46598d4-da13-4201-9379-f3cdd4939c41",
+    "name": "📌 梦境风味｜白描",
+    "hash": "44e3d7dacc078b21e23c5e2e57ac4af758ca2f054ada692f0f8f4761ff36bb7d",
+    "len": 165
+   },
+   {
+    "id": "fruit-heart-c-e0f9fd3c50fb98bc0d2c",
+    "name": "📌 输入分层",
+    "hash": "c2f9a9465e32bf9a14eb26efc968c70efe974888ddaac9c68e5f81b399d83a73",
+    "len": 390
+   },
+   {
+    "id": "c8ccd9c2-e12e-4fb6-af55-de5ecbae4cf7",
+    "name": "🍎 美学公理",
+    "hash": "bacf5c7e1141dfeb70eb2f15bcea3086f2c1e0e19c81eb38a204b947abfdbd63",
+    "len": 287
+   },
+   {
+    "id": "c60a3d98-af56-4725-9aa8-3123486f346e",
+    "name": "📌 果农上线",
+    "hash": "6af1442a9fc395b40921743ece255f9117ed908f9e2463ef21dfcbbd282d73d9",
+    "len": 54
+   },
+   {
+    "id": "fruit-v61-display-section-03",
+    "name": "━━ 💤 梦境载入 ━━ ",
+    "hash": "c391be54e601a9006532c8a85a0c471f37ddab8de1fee6e0de0721bf6d896197",
+    "len": 64
+   },
+   {
+    "id": "personaDescription",
+    "name": "📌 Persona Description",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "nsfw",
+    "name": "📌 梦境",
+    "hash": "64a58fc28767bec167b430a4f01c97f56d248716b1e9e4a5fca28a0915c04170",
+    "len": 15
+   },
+   {
+    "id": "worldInfoBefore",
+    "name": "📌 World Info (before)",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "charDescription",
+    "name": "📌 Char Description",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "charPersonality",
+    "name": "📌 Char Personality",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "scenario",
+    "name": "📌 Scenario",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "worldInfoAfter",
+    "name": "📌 World Info (after)",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "dialogueExamples",
+    "name": "📚 Chat Examples",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "chatHistory",
+    "name": "📚 Chat History",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "enhanceDefinitions",
+    "name": "📌 —— 💤 梦境载入 end——",
+    "hash": "4472d54171006289f3c3ff95c0a163f85bca5f03d40b24ee9b1463d3ffd01cd1",
+    "len": 8
+   },
+   {
+    "id": "e750a7ec-af2c-4b32-af0b-24b749491237",
+    "name": "📚 果农誓约 #GEMINI",
+    "hash": "09c1167909fd42ddd640c6a6c2167e038aa1a6fb34f81a7226befaa4275602a0",
+    "len": 108
+   },
+   {
+    "id": "fruit-v61-display-section-04",
+    "name": "━━ 🌍 梦境舞台 ━━ ",
+    "hash": "655ad4d8cdf603f79f2d9b4c9783c6e6b39c8c9ff5b3b2d0912e5188183d5309",
+    "len": 117
+   },
+   {
+    "id": "2136a81c-ccaa-4fa7-be7b-1d87266e24c0",
+    "name": "🌍 入梦",
+    "hash": "3353b19ab60316da674abc684d1218e4ace21176f00b3b997e4757c7c8223e8c",
+    "len": 124
+   },
+   {
+    "id": "c0987f30-8c46-4941-968c-bf9cb74f3997",
+    "name": "🌍 时代感",
+    "hash": "b52d1f1fe8c9cf35b6088731235ead63f848494f7dfced83ad89d7ca4fc33095",
+    "len": 165
+   },
+   {
+    "id": "c8cf081c-feec-43cb-8f16-acd75f4b02b2",
+    "name": "🌏 广阔世界｜去 user 中心",
+    "hash": "199fa5d22875e6dea8166e1869b9b4588812e19727f6117539d35ece0f3ac61a",
+    "len": 109
+   },
+   {
+    "id": "277e9ae6-8d86-4d7e-87b3-a2830d3d816b",
+    "name": "🌏 二改基米纠偏 @斯拉 #GEMINI",
+    "hash": "8068e21d5f5dcf17a695c0f83375434c67f67829d8f7f44584076cc4888a2a83",
+    "len": 177
+   },
+   {
+    "id": "mrghech0v458ro62m9b",
+    "name": "🌍 现实环境",
+    "hash": "119f926e34df1d796728947c6d693bd975491343cdb6005c8fedd7c2a2737e59",
+    "len": 157
+   },
+   {
+    "id": "a7566686-da34-444a-90b6-b747aabe9b0e",
+    "name": "🌍 群像塑造 NPC",
+    "hash": "f32f3a3d88180fdbbe793d09d1152c7ba843c2202c5a02dd0e9ee1322fcc4586",
+    "len": 112
+   },
+   {
+    "id": "36db009e-e880-4dc7-ba9a-be09c43d8d5e",
+    "name": "🌍 NPC 美化 @蛾摩拉",
+    "hash": "1015e3d9771071e36ab7b8332bc19b3edda2a0a1d2845516e25a0590ed00e756",
+    "len": 236
+   },
+   {
+    "id": "fruit-v61-npc-subjectivity",
+    "name": "🌍 配角平视",
+    "hash": "5b46235cf39730157e05381fbaebbf3047ae3240edf3b56c479f7014c4170920",
+    "len": 137
+   },
+   {
+    "id": "fruit-v61-worldbuilding-end",
+    "name": "——🌏梦境舞台 end——",
+    "hash": "cc754a83a7083f50868aad57d2d1a2f6b8413fb2e96f5dcc56da6cdbfdf1f874",
+    "len": 16
+   },
+   {
+    "id": "fruit-v61-display-section-05",
+    "name": "━━ 👤 行为指导 ━━ ",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "41e433f4-c4ca-4ab4-bede-14ebeb1ea4d8",
+    "name": "👤 逻辑反思",
+    "hash": "c286d72b9412ac4a52f608291e0f2549880b0712362107eedb38fa6790f66907",
+    "len": 421
+   },
+   {
+    "id": "6def23df-76fc-421b-85b8-08330e0f8a5f",
+    "name": "👤 角色平衡 #GEMINI",
+    "hash": "854b27f971193f40889fbd1db030efe740e54b2ba2b8fab49c7e9b509349e03e",
+    "len": 378
+   },
+   {
+    "id": "5ec81547-9c30-4dd8-8714-f490745364db",
+    "name": "👤 优先人设",
+    "hash": "025cafc6a1035d9109f90c9b7bc35e36cefe1e7c56e9aa36a0711e1555bce0e6",
+    "len": 522
+   },
+   {
+    "id": "fruit-heart-c-3aaa051c8b9fdc131891",
+    "name": "👤 爱U加强情感 #CLAUDE",
+    "hash": "54433127f310742c8c256a7cd44ed7e395c1cd854c9deb3836d71122ddbafddb",
+    "len": 149
+   },
+   {
+    "id": "c966ae89-6110-4f28-a55d-e870533fdc69",
+    "name": "👤 修罗场指导 @mukamuka",
+    "hash": "07273c09af5951a874bf8dd598f3326fdc499477dac00b90050b442f16b494bc",
+    "len": 413
+   },
+   {
+    "id": "5f175205-9a09-4d19-9c92-3fa1f9aff069",
+    "name": "👤 自由恋爱",
+    "hash": "241a417bb59a069d2a0b6a55f3372481c37b0f518a626dd12068ec578955def4",
+    "len": 116
+   },
+   {
+    "id": "17b18676-a53f-41a8-95cb-79e71ce1ed7c",
+    "name": "👤 真实 RP",
+    "hash": "15231b6ab738fed36730528d511aaeef991d903def095b33799521396bf4565a",
+    "len": 332
+   },
+   {
+    "id": "c925ab9f-f511-479c-97c1-7e8d2fb3b6fb",
+    "name": "👤 自然互动",
+    "hash": "5235763929b874c21b7349d7abf3fd7efcf1f4114812a35b63f314fb1b9899fc",
+    "len": 289
+   },
+   {
+    "id": "f1c8b22c-4759-4451-b7d8-bbd77a074355",
+    "name": "👤 情绪分解",
+    "hash": "aa4235f63baf33d6acd3d5a518a2d716940714f6de6b9bc41ee9ce196bdea544",
+    "len": 240
+   },
+   {
+    "id": "f2779ed5-728e-4366-925c-84e455158cf6",
+    "name": "━━ 🧩 角色塑造 ━━",
+    "hash": "9ca023459e61e48690b48362d017a6de9cdc770c7bbf1aab1092ee681fe51bc5",
+    "len": 44
+   },
+   {
+    "id": "fruit-heart-c-76f2002faf821491eb61",
+    "name": "🧩 反解剖与参数 #CLAUDE",
+    "hash": "70f712b6e0afddddaa75e3cad8cf8c5f6f5a8df0aca74fda83ef1c66404e6559",
+    "len": 289
+   },
+   {
+    "id": "fruit-heart-c-054358694af095888da6",
+    "name": "🧩 浓烈情感 #CLAUDE #DS",
+    "hash": "3bfc37a7904367f1515754e47b6e8ae3fd355422155033e45489e87174e4039b",
+    "len": 285
+   },
+   {
+    "id": "71609f43-2fbc-4a84-bd1e-1966d1924353",
+    "name": "🧩 善意视角 #GEMINI",
+    "hash": "90a9424442ea7dfcbe4590d11f55b5ab3a2d0d8911fcdf5ba6de57addb67417a",
+    "len": 343
+   },
+   {
+    "id": "mrgh95f72twlqmre5sm",
+    "name": "🧩 强势角色压制 #GEMINI",
+    "hash": "c0c0790cee5fa79a5820e0b1e86494b7ca7ec894934c64e9e797abffdd6f717d",
+    "len": 270
+   },
+   {
+    "id": "mrghc0ybviwsmp3t7tj",
+    "name": "🧩 病态角色压制 #GEMINI",
+    "hash": "11ad75609cbbb10acce0848882f2d7007633afe421f159aa0a5a017825cae874",
+    "len": 260
+   },
+   {
+    "id": "afffeee6-7489-408d-958d-e2c95167a6cf",
+    "name": "🧩 防油腻 #GEMINI",
+    "hash": "df2b191f0f537ec0719c8841c70bf608e20fa0296fa4ef5e878ce01d080baa3a",
+    "len": 180
+   },
+   {
+    "id": "mrghawn649ehw2mykht",
+    "name": "🧩 台词约束 #GEMINI",
+    "hash": "ff4ff1c161d88d84e297d4e577c56ed8a1e8d5149188478b65aa1edb4e5851f0",
+    "len": 332
+   },
+   {
+    "id": "4c675270-c2be-475d-aa01-978958500606",
+    "name": "🧩 关系对齐｜互动逻辑单选",
+    "hash": "294141339ef910742e61528838dd73a2b15ceee5e08aeb686682fd45427b970a",
+    "len": 222
+   },
+   {
+    "id": "4092e714-2673-4450-a719-8ce60375bdce",
+    "name": "🧩 人物逻辑｜互动逻辑单选 @小n",
+    "hash": "dfe880956f91c5f04510300a13ea3cd0f9822a737b654641a59e8515f39a9b50",
+    "len": 340
+   },
+   {
+    "id": "e33e09a7-e4f2-4b15-956c-931e1013b815",
+    "name": "🧩 无人万能 #GEMINI",
+    "hash": "ced460989648f30b4280e9354d999152cd5979ef8c462380b95fa9290952ab1b",
+    "len": 197
+   },
+   {
+    "id": "25407894-d779-4fcb-a3d1-0b532b983f0d",
+    "name": "🧩 美人光环 2.0",
+    "hash": "0c5eabe4201a5ecc36eb71537f6afe469fbeb59a4431e62a8b9b0f4b8e0468f7",
+    "len": 201
+   },
+   {
+    "id": "c57a2a53-346c-4971-afaa-d41959bdf4d3",
+    "name": "🧩 平等化｜做命运的主人 #GEMINI",
+    "hash": "c4bd33da916e657ef190fdd796d9296d81de75b635c3c1007cc0f236a50eced8",
+    "len": 216
+   },
+   {
+    "id": "a1f51d01-9539-4fc4-b6da-9757615bac6e",
+    "name": "🧩 角色迷雾",
+    "hash": "bbc1f45db67f6849f10d440d0c7a6fa12fff6335f497753ffcb39349c793b426",
+    "len": 241
+   },
+   {
+    "id": "e2605273-15a0-493f-b840-050974d20dee",
+    "name": "🧩 外观与习惯",
+    "hash": "27cd91f8f5c20185674f2d4db31701478c783972a345c06ab17da206e9a0e0c8",
+    "len": 376
+   },
+   {
+    "id": "e4459a41-3218-4184-8802-b5980886d41d",
+    "name": "🧩 角色洁净 @BBL索多玛 #GEMINI",
+    "hash": "21d0c000b46ff32f00fc188b0720d7c7a1da4a91a81e06950b85f30758884465",
+    "len": 143
+   },
+   {
+    "id": "fruit-v61-display-section-06",
+    "name": "━━ 🎬 剧情指导 ━━",
+    "hash": "4050a199be75ad106f0406733af471c37cbd5a4ba345c2e146439a81897203fc",
+    "len": 326
+   },
+   {
+    "id": "9e49021e-950c-4524-a077-09e22cb8606a",
+    "name": "🎬 好结局｜反阴谋 @电波系 #GEMINI",
+    "hash": "29582c76268a36c700c944465d613b1261e6bab295511a8d8c9e2de76b7baf78",
+    "len": 153
+   },
+   {
+    "id": "fruit-heart-ds-c4c05ad873452259a078",
+    "name": "🎬 好结局｜允许局部负面 #DS #CLAUDE",
+    "hash": "1fd65d27f23337938b3993b59cf1da9047e62a32b61a058b906baea62baf2cee",
+    "len": 120
+   },
+   {
+    "id": "0efff044-1d91-4cfd-96b8-9613cb57b385",
+    "name": "🎬 少阴谋｜走向单选",
+    "hash": "99f02147d06ddf949e1b70c5b44638f20bf7a94b00261e59ee4f5f65c9179497",
+    "len": 98
+   },
+   {
+    "id": "e343daad-bcf5-4318-a929-563e2fd064c1",
+    "name": "🎬 搞事业｜走向单选",
+    "hash": "09cfd8c7e64c37356e4a3611f1b31b1717aeb3774b8e8b2832e539ef597cedcd",
+    "len": 117
+   },
+   {
+    "id": "b5ac2252-03da-43e4-8667-0444f7648539",
+    "name": "🎬 搞拉扯｜走向单选",
+    "hash": "2289dbb93f40ec79be8e4887299700c51d3b1570f2f767422c4fb49c1c3c00b4",
+    "len": 149
+   },
+   {
+    "id": "4536f4df-ef49-4925-9ea1-f3e91b0c6ae1",
+    "name": "🎬 时间流速",
+    "hash": "dd59a1694d33414db2a1fbdaaf6cbcfd552882d6fe9dcbce22365d3a5c0f81a5",
+    "len": 183
+   },
+   {
+    "id": "c931d28a-56c3-4ff6-ac3d-eb866f3efd10",
+    "name": "🎬 推进慢速｜节奏单选",
+    "hash": "7295ce4137417dfc9f4bb1061609e4c4ecc474785d6b8872727ed0b7c0cfebbd",
+    "len": 166
+   },
+   {
+    "id": "f6962045-1a79-4420-bea7-aaeec20312c5",
+    "name": "🎬 推进快速｜节奏单选",
+    "hash": "92a1270d2ddff5a2bbee496af54d018ed9777a923eb19c01c9c85f0fd7056f1c",
+    "len": 132
+   },
+   {
+    "id": "5ee69d26-3b16-46a6-b30f-1537251fc8d3",
+    "name": "🎬 推故事",
+    "hash": "b60a4921b26a960f1301fb75850204ea704dfbf259c1695c8cc1385d909bf369",
+    "len": 59
+   },
+   {
+    "id": "e456843a-e23e-4f6a-8fa1-c39f1c7a1e87",
+    "name": "━━ 🎬 剧情指导 end━━",
+    "hash": "9237a3a2a087703b3ec1afd51ba903f62f8bb82cde87ce756d374a2aa6bf30a2",
+    "len": 7
+   },
+   {
+    "id": "26efab8b-1b47-4da2-8b9b-bf7e7a07b833",
+    "name": "━━ 🤖 AI模式 ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "2dcd43c5-52e2-4dcd-b220-dd889d8e5145",
+    "name": "🤖 大力推剧情｜20%扩写＋80%推进｜抢话单选",
+    "hash": "b9c2662f95265f912821f67e9aed8a4bd288df239583540f08f05c6a41ad3e74",
+    "len": 355
+   },
+   {
+    "id": "fruit-20260917-balanced-narrative",
+    "name": "🤖 均衡推剧情｜50%扩写＋50%推进｜抢话单选",
+    "hash": "9d5ec50fd32975c8786e95d02c61e73680101a672abdbf1ef3ba038fc6861730",
+    "len": 314
+   },
+   {
+    "id": "84704f6a-ef5e-4d2c-9d03-97ec3d9457d3",
+    "name": "🤖 纯复述扩写｜不推进｜抢话单选",
+    "hash": "8cac81b1ea0ac14e2da18b729a235c412c92b4f61fe79f9901002158129819b5",
+    "len": 310
+   },
+   {
+    "id": "87c8a41d-e219-4d35-acc2-dc6b5972cc6f",
+    "name": "🤖 防抢话｜只演其他角色｜抢话单选 @yuki",
+    "hash": "6740a211441562f1e583082962a8be9fad626c4551606bfbc240cb9419d49e19",
+    "len": 420
+   },
+   {
+    "id": "a1f2196e-3410-49d4-83ed-536163a7aee9",
+    "name": "🤖 AI 对话模式｜工作模式单选 @YUKI @蔚空koko",
+    "hash": "f624b72b709ee27067b1f8f687974854cdbed5987c6e303fe277bad9b39986da",
+    "len": 178
+   },
+   {
+    "id": "ff5be97f-43ac-4ec1-80b3-ad9370996dbc",
+    "name": "🤖 AI 大纲模式｜工作模式单选｜需 0927+ QR",
+    "hash": "c2be216883a3a54092e38ac3051994c4b07a24f6868e785d6572c273b6fd0a69",
+    "len": 164
+   },
+   {
+    "id": "0a82f03f-a302-4923-b3c5-982b56d4389a",
+    "name": "🤖 AI 自检模式｜工作模式单选｜测试",
+    "hash": "46fa4a5341b6216f2fd12f8ba0a0609bca23555e8e9451300ceb63e996d8005d",
+    "len": 299
+   },
+   {
+    "id": "92f5d95a-0792-4bfe-80e3-50c718b7d08d",
+    "name": "🤖 防重复 @斯拉",
+    "hash": "b3fbebe0bccc521bafe8f7b3b3fc59af6a87e66527ac48d5506c32f99162e341",
+    "len": 350
+   },
+   {
+    "id": "a75087cf-5707-4ce1-87fa-8bba69d7c132",
+    "name": "━━ 🔞 NSFW区 ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "8f04eeb8-161b-4bab-ae5a-1fbbd5cd992f",
+    "name": "🔞 温柔｜风格单选",
+    "hash": "07ae4b4ce844e399543c03f62268d1e0e7c471156f46a97100d2223b22a69fb0",
+    "len": 93
+   },
+   {
+    "id": "fcff6cca-f177-4c0b-a37d-c7f3aa797be5",
+    "name": "🔞 粗俗｜风格单选",
+    "hash": "ca117ce0f57b3566e9782ca2dd0b0720c6b201f89d3f17bfda20c15307c634a5",
+    "len": 109
+   },
+   {
+    "id": "a6b68a17-2d4d-4890-be25-df0bba808239",
+    "name": "🔞 平等｜关系单选 @顶呱呱",
+    "hash": "dd8d41fcf45c37ff7956fcc95869bd8fcfde1fed372499be661270f43de7512f",
+    "len": 105
+   },
+   {
+    "id": "25cb080c-bf51-48d4-920b-02c839f0944c",
+    "name": "🔞 背德与不平等｜关系单选 @姜狸",
+    "hash": "ba53f443f7ba22efd96de0705985fd2f9e25e8bfbb1ef8e5437bcec0a4a26626",
+    "len": 222
+   },
+   {
+    "id": "4d4c20f4-50fc-46ae-af9b-0e4556a4611b",
+    "name": "🔞 媚 user｜关系单选 @村妹儿",
+    "hash": "bd6cf3f657ec2a42354afc21bf26570c6ce97b2c331801079aef3bdb73cf3c03",
+    "len": 98
+   },
+   {
+    "id": "8bba235c-5764-4704-93ab-bcfce8c734f9",
+    "name": "🔞 NSFW 流程 @natami @电波系 @RageNight",
+    "hash": "69dba3b4dbc2fc10f96e4e783691e898fc09a48969516079151c923ec1a4e1fa",
+    "len": 5702
+   },
+   {
+    "id": "6d585e8e-0df5-439b-bf5b-4103ab6617b1",
+    "name": "🔞 体型差补丁｜男>女",
+    "hash": "5a4bdfffba081f875b3c9b2629f3e3e08e5bb1bc84680e6aa1ef6b6ef4c53aa7",
+    "len": 916
+   },
+   {
+    "id": "5383262f-7024-40f6-94f5-9d819471c34a",
+    "name": "🔞 丁丁美化 @鸦唳",
+    "hash": "81225c00e9ebfb52bc53d181f8558d586a783fba0def4d1a2aa8fd30e474022f",
+    "len": 398
+   },
+   {
+    "id": "e5fdc6cc-4171-490d-aad9-c01d37e587dd",
+    "name": "🔞 射精描写 @柑橘",
+    "hash": "9b5eaa750760896b9451cfebab2906e7ceb4c6b009d353887b388cfafdf760d9",
+    "len": 365
+   },
+   {
+    "id": "9d760b48-1911-4876-b8e6-819dc147d7b9",
+    "name": "🔞 ASMR 对白 @小纱的Phantasm预设",
+    "hash": "064e73a4f6b124a4faa84f5f42add7f4cde875325a43c36c02c83b455cad0843",
+    "len": 1110
+   },
+   {
+    "id": "ac26a9fe-8d6a-4c12-802b-13b85271b653",
+    "name": "🔞 DirtyTalk调教蜜语 @村妹儿",
+    "hash": "7cbfa9f59803c96d5c6dc120710a1805826ad2fe8361dc88d633304561140625",
+    "len": 2296
+   },
+   {
+    "id": "962e06ff-039f-4a69-9b56-75d3a9da5e5c",
+    "name": "🔞 DirtyTalk粗俗淫语 @村妹儿",
+    "hash": "ec4608f7cbf89024c264ffefaa9925ea29634c483e81f305460410fcc016c296",
+    "len": 1699
+   },
+   {
+    "id": "1484d2f7-aff6-496b-ad3a-0f5b8db60f17",
+    "name": "🔞 DirtyTalk淫语特化 @omomini",
+    "hash": "a2f0b003801bba2045ea9b37fde1ab949613532825d04c53c1097e374f68ad1a",
+    "len": 1878
+   },
+   {
+    "id": "102d2ee7-f8bf-451e-b66b-6ee630142209",
+    "name": "🔞 BL｜描写单选 @natami @吱吱",
+    "hash": "b05b6b48f42bef0732d2c81eee9726773689f3bf0f1d12236a555c9c239db6bf",
+    "len": 2284
+   },
+   {
+    "id": "e6cdb449-02f9-4626-82b4-fcf558b4a408",
+    "name": "🔞 GL｜描写单选 @Yuki",
+    "hash": "6f61099990a9699e01531d3115f985b8192dde3f599c991548047113ae53e504",
+    "len": 325
+   },
+   {
+    "id": "d5d02521-c0f9-40f4-af6c-ee4e946528f4",
+    "name": "🔞 BG 柔和｜描写单选 @YUKI",
+    "hash": "e1be3dd457d09dc42eadd62c09e67f58868390f07fe6b7604bcd421f76e1d39f",
+    "len": 250
+   },
+   {
+    "id": "cfdf95f9-6960-43b0-a921-cc5108c48ab8",
+    "name": "🔞 BG 粗俗｜描写单选 @村妹儿 @yuki",
+    "hash": "c526d1efabb6149e4876b460fcaaa489ea187995bd83ad2ef1a256bf2096ba52",
+    "len": 873
+   },
+   {
+    "id": "18d29e66-59c2-40b9-af2a-f5297d82fb91",
+    "name": "🔞 素股 BG+BL｜描写单选 @村妹儿 @NUE @小无",
+    "hash": "b5c1f8fe43f74575469a411340ccb1d9e71407a1da5bfe7ff329f4401bbc45c8",
+    "len": 1852
+   },
+   {
+    "id": "4363ceca-0bcb-4c4c-892d-2be232866caf",
+    "name": "🔞 多角色瑟瑟 @mukamuka",
+    "hash": "7f7eabc4263d8b0d5c0dfcb28c113b44d755865c3aa94701efc9f280b0f706a3",
+    "len": 1387
+   },
+   {
+    "id": "fruit-v64-nsfw-contraception",
+    "name": "🔞 主动避孕｜选开",
+    "hash": "e6e04289db5034ded7e11fa3b58e67e506580dadf0e04717fcdfda6754ec14be",
+    "len": 100
+   },
+   {
+    "id": "fruit-v64-nsfw-pregnancy-risk",
+    "name": "🔞 怀孕风险｜选开·联动seeds",
+    "hash": "13989fd307e28700541825d94bfa7ab1bbae191b1babe69d85806d7801a46648",
+    "len": 656
+   },
+   {
+    "id": "fruit-heart-ds-8376672a4e9842f6f9a5",
+    "name": "🔞 性爱主动 @小夜 #DS #CLAUDE",
+    "hash": "d6e447be602349c4a8fd18170f5a987b33db7d0e8ca4ec6aaca97250053723a7",
+    "len": 417
+   },
+   {
+    "id": "050f2d3c-ee6d-4bb3-b65a-8a1acf9e65be",
+    "name": "📌 🥵NSFW总开关｜按需·固定位置",
+    "hash": "859d4fb9e87fad7194df797290940eacd1d7b0457f08e6f674bd960ddad30cc0",
+    "len": 1728
+   },
+   {
+    "id": "ece65140-2541-4647-82a8-baf3a852c316",
+    "name": "📌 🥵NSFW输出｜必开·固定位置",
+    "hash": "4bda1ed6796ef12f64f8c55132deb82750faef6b925004677afc89f4899b012c",
+    "len": 34
+   },
+   {
+    "id": "fruit-v61-display-section-08",
+    "name": "━━ ✍️ 写作区 ━━ ",
+    "hash": "ae2944d82d5d66e965c630a33e82ee362626a6f7130ea520a823a362874e8ff9",
+    "len": 454
+   },
+   {
+    "id": "1480cbf5-ca0b-480a-8605-c58fa9c0d78e",
+    "name": "✍️ 摄像机原则｜写作指导单选 @natami",
+    "hash": "318d52746942f31aad60cce1a4e6d7139ff30a7e05045bb21f912e8ae73688bd",
+    "len": 222
+   },
+   {
+    "id": "4c522812-6528-4d62-8ff7-18e0561c050b",
+    "name": "✍️ 极光写作指导｜写作指导单选 @电波系 @眠雨",
+    "hash": "1041d5e47d8e741822fb23553f65749f1e5a7e9b8e3148919cbf083ee43e47c8",
+    "len": 770
+   },
+   {
+    "id": "66fa7145-d59e-46c7-b1be-346c5e8b3c45",
+    "name": "✍️ 抽象写作指导｜写作指导单选 @巴比伦",
+    "hash": "93ddce37093f23c5f5ff91fd37b15a08911463073872a1ab6019d3938a593327",
+    "len": 1921
+   },
+   {
+    "id": "fruit-v7-write-patch",
+    "name": "---🩹 写作补丁---",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "fruit-heart-ds-190126c69bb53b458dc2",
+    "name": "🩹 禁破折号与进一步阐释 #DS #CLAUDE",
+    "hash": "c92edb676f1446fe0957f848fed16291a70a0a361f1f5f933c170a26de40505a",
+    "len": 143
+   },
+   {
+    "id": "fruit-heart-c-7bb47548fc6c56e746dc",
+    "name": "🩹 有效对白与行动描写规范@小无",
+    "hash": "a97f8b08a47e8a41f4e1d9c61b6a24de634c7a6bb57589bd66e8dc92091f4cac",
+    "len": 1485
+   },
+   {
+    "id": "0c752c09-f16e-4b20-bc18-f2d93488e92f",
+    "name": "🩹 杀八股 @bbl @NATAMI",
+    "hash": "f7c33772d4e322e0c3ba7e2f492d05f92954b24f0c2e4b48a727d07d02126149",
+    "len": 354
+   },
+   {
+    "id": "272a027f-12b6-47f2-9631-c8708bf684ce",
+    "name": "🩹 禁比喻补丁",
+    "hash": "25911bd90f2ca12c5909de313a3fc8121aaa327b0fa10031fc4c7f1b53652c28",
+    "len": 218
+   },
+   {
+    "id": "9a668208-bb3f-4a6c-9b38-911791223bea",
+    "name": "🩹 反物化补丁",
+    "hash": "c4279bd8de4520dc3d95852938f22d4767ab0784daf73fb8dce509bee678cb74",
+    "len": 204
+   },
+   {
+    "id": "548e2eee-5858-4580-b42c-c4ed8356cd77",
+    "name": "🩹 官能凝视补丁",
+    "hash": "8a7f9c2d2545a81fa0d5f038bb4f51f5c9b9f40058a2d38ca5bb814dc4681596",
+    "len": 125
+   },
+   {
+    "id": "fruit-v7-write-end",
+    "name": "━━ ✍️ 写作区 end ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "af6e651f-f3c4-450c-9399-8fe19342b807",
+    "name": "━━ ⌨️ 文风区 ━━ ",
+    "hash": "daac2758a33c5680ac2cbae2f98b5030058b210ead7dd26e6822f63546f3b669",
+    "len": 197
+   },
+   {
+    "id": "b4a06f05-f6d2-45ba-b6f3-e300ad743bab",
+    "name": "⌨️ 恋爱轻喜剧｜1028 升级版 @电波系1028升级版",
+    "hash": "30ae1fd0895e26656a987e6fdf8ae2ffaa503d6c1a3d45be27f242d93df51fdf",
+    "len": 1696
+   },
+   {
+    "id": "84ba5cdd-0786-45ee-8329-de992f6e7dcd",
+    "name": "⌨️ 大白话 @小白狗",
+    "hash": "58f5119e7e5e6f47760e2702d341eef17bfedf09517304d424c9fec6c79c53d8",
+    "len": 4678
+   },
+   {
+    "id": "mr4r41p4lyc09z407sf",
+    "name": "⌨️ 繁花-市井与旧时代话本",
+    "hash": "aae98a1f4402358d14551d5aa55a895a1b7bb97f013da1ba808528abfeca0f93",
+    "len": 821
+   },
+   {
+    "id": "10979c03-1a22-48d8-ad6f-c2762d587858",
+    "name": "⌨️ 女性向黄油 @小白狗",
+    "hash": "75d59a8d8b40babebd0bd014a9330ec57f3667bb9d47b87cc31b9c0a7905e536",
+    "len": 3700
+   },
+   {
+    "id": "45990406-5104-4e03-91dc-10275a0602a1",
+    "name": "⌨️ 通俗文学毛姆",
+    "hash": "1674492c74138f0589aeba76ba41f3e83f4666deac1c2723547caa6850c074b1",
+    "len": 6468
+   },
+   {
+    "id": "ec31dfff-eae7-401d-9704-5315bfa78319",
+    "name": "⌨️ 民国江南白描",
+    "hash": "6945f7f34ff6c7225304d9d9b21246f16db98c466152e35af69e6648c25a282b",
+    "len": 2099
+   },
+   {
+    "id": "63ac9277-258d-42e0-8658-8f910c7054d6",
+    "name": "⌨️ 民国白话世情笔法@natami",
+    "hash": "2183a06e06aef29b8b8ae8021209fe6b6032a637973cc7a74db5d5ffe88df37a",
+    "len": 3401
+   },
+   {
+    "id": "9d5f6f08-2643-4023-99d2-9f2d04699676",
+    "name": "⌨️ 阴郁纪实 @NATAMI",
+    "hash": "7fe359a4de516323bd166664130a2387d30a0892fad0d3bf38b542d42caee435",
+    "len": 2787
+   },
+   {
+    "id": "decb3208-3b13-49a5-9eed-3fc107e2558f",
+    "name": "⌨️ 至亲至疏 @小白狗",
+    "hash": "d07837a87bd3f3b9fb9c499b97bf06279082ffc289fa65aad0dafae7c9038d27",
+    "len": 4188
+   },
+   {
+    "id": "5f841a47-d996-4891-a371-57aac4d68a4a",
+    "name": "⌨️ 克制白描 @电波系",
+    "hash": "795ea417d89c0cdfea1f82d589fcb23a97c38fc9f66570bb7443b1297c6ba46b",
+    "len": 912
+   },
+   {
+    "id": "41ecaeeb-29fb-44e4-8e0c-0fe8af746bd3",
+    "name": "⌨️ 现代日常 @村妹",
+    "hash": "8de9e34d0976c86fd841dd6e07bbf197804d109922bb22e8719bbbac0ee11e95",
+    "len": 857
+   },
+   {
+    "id": "2a8f73e6-dc4d-485f-bd59-d911471ed53a",
+    "name": "⌨️ 古代日常 @村妹",
+    "hash": "5e88662a49e11e05e0dd9d9417f6eba611439e1863844a46800c01e34bafdbb7",
+    "len": 848
+   },
+   {
+    "id": "ac9a783c-66da-4ffc-9d41-afa04f973dde",
+    "name": "⌨️ 意识流 @电波系",
+    "hash": "207721d2baf82bcc290596dc43e7b29f077b899ae2b4e2b42785d6df1f8e6bd2",
+    "len": 3148
+   },
+   {
+    "id": "1a32c768-282d-4a32-baff-6f4366412598",
+    "name": "⌨️ Galgame 青春恋爱 @贝露",
+    "hash": "b515567f5dca791abb46ddf7a0d7df6926da86104b1d708424a97a44972a21db",
+    "len": 766
+   },
+   {
+    "id": "d4380d7d-2129-4d93-a92a-d1286480eb95",
+    "name": "⌨️ 浪漫｜新版 @小白狗",
+    "hash": "9ff5e90f0662ff8bdc95b2f50c6297c04649db8369e15f0b3c1e30273635eb7d",
+    "len": 4293
+   },
+   {
+    "id": "9f465341-d880-4b60-ba8e-ca6cc278664b",
+    "name": "⌨️ 现实 @小白狗",
+    "hash": "c3dfaa7caa7add5b0e193040ef135395bff2f706fd4428c6fd610b72320dc520",
+    "len": 3624
+   },
+   {
+    "id": "5d77beb2-50c0-45f9-b35a-aa05e4d465d4",
+    "name": "⌨️ 港风 @小白狗",
+    "hash": "c5cea9308f5f7650f4e7ff3cc9e76bc7693ffdab037c3d9b34a8dc9c9641304a",
+    "len": 3858
+   },
+   {
+    "id": "a98741d0-cbeb-4827-8c77-962c17fa513a",
+    "name": "⌨️ 翻译腔 @小白狗",
+    "hash": "6b311c6a6bce80b6aad336edc4f44d78593c876eecb348f21733863af8ac3489",
+    "len": 4284
+   },
+   {
+    "id": "20c45761-e926-43a0-873c-2ed57a6802f0",
+    "name": "⌨️ 吐槽小白爽文 @酸砂糖",
+    "hash": "623e384dc07bb2fae0b4c1c16915cd7001767315a86fce3478808972ad732225",
+    "len": 1427
+   },
+   {
+    "id": "8cd2d0b8-e179-4733-ba0c-59e23e9908eb",
+    "name": "⌨️ 成人童话 @natami @yuki",
+    "hash": "512446830bb02649890291b334e6930d68e7ae59809f941aad9334463bd03c0e",
+    "len": 1803
+   },
+   {
+    "id": "0aa6b943-3e1c-4d18-899f-40dc1e3efe4b",
+    "name": "⌨️ 左翼现代情色 @natami",
+    "hash": "32f2ce67a7f466521738ea1dbc34dc261ff5850d14ac9c21b0ac709a43b8eaf6",
+    "len": 10900
+   },
+   {
+    "id": "481b867e-1d5a-4396-b81a-09868dc227ee",
+    "name": "⌨️ 拉美禁忌爱情 @natami",
+    "hash": "03af52961b174c85465d74471cb9e2e6645a4c51639a614ad34c35999878b175",
+    "len": 8796
+   },
+   {
+    "id": "f89f78ca-0e88-47bf-a82b-3177678c0133",
+    "name": "⌨️ 古风 @Asuthia",
+    "hash": "25efd5b770230abb38d7e62e59ed9e9769e1cbdbb838a78539fe4abd117b2eb8",
+    "len": 2120
+   },
+   {
+    "id": "df1725c6-0f43-4208-80ca-91bfb10a95aa",
+    "name": "⌨️ 虐恋 @Aqiao",
+    "hash": "9b02708f15ae2c6df0703c9c2f953f016dce8d8855cedd6f643bfa68e4349f5e",
+    "len": 618
+   },
+   {
+    "id": "7c11f7fb-6e2e-47db-b619-f4c873638490",
+    "name": "⌨️ 色欲张力 @电波系",
+    "hash": "7b06bf83328afa6f97e0733e617466bfc9290db0a08fc94596625407c786a2c1",
+    "len": 1793
+   },
+   {
+    "id": "28a9b463-c1cd-4a9d-8957-7e4303d7ecf4",
+    "name": "⌨️ P18 @村妹儿",
+    "hash": "8245f8977ee8d4560537a8c35d8ef80658ad86ee12f9c6ae91353e1e5965e4ad",
+    "len": 1352
+   },
+   {
+    "id": "9b0a91f0-3234-415f-97ae-345edec2917e",
+    "name": "⌨️ 后 311 日本青年存在主义 @natami",
+    "hash": "0f5651ad6ae0346e6a06ef12952f19b4bfd8d1fad877b196279d1493e59fb192",
+    "len": 15120
+   },
+   {
+    "id": "420c8a68-51ce-4a61-b099-0139cf54d6fe",
+    "name": "⌨️ 俄国文学｜陀氏特化 @小白狗",
+    "hash": "d3a4c1772edb87db14779972cf26386c568361a56df66fdc6d6d166cd9b5c619",
+    "len": 3742
+   },
+   {
+    "id": "317535a9-9314-4b3a-9714-b609c464e267",
+    "name": "⌨️ 武侠仙侠 @小白狗",
+    "hash": "69a54109fdd389b2f5f492f42a62351e33b568646d818bc9fe4dc1e49d728de3",
+    "len": 3198
+   },
+   {
+    "id": "7374963f-111e-4ac4-8d34-fbbd5560abe2",
+    "name": "⌨️ 古龙武侠 @natami",
+    "hash": "21f2aa18d022765c6b858cc03a538616299aac7e071bcb45ad4f83d70df15e19",
+    "len": 12951
+   },
+   {
+    "id": "fccafa01-f766-49bc-913a-6d4c34a88423",
+    "name": "⌨️ 模拟恐怖 V2 @YUKI",
+    "hash": "d278bfb1e5bd9b4b2c8cc6ce78e4ddbf92cc1f63c2c58ad975a6bb4b4980b312",
+    "len": 2313
+   },
+   {
+    "id": "928fb0dc-46b0-4330-972d-3ae285570c99",
+    "name": "⌨️ 群像 @小白狗",
+    "hash": "2eb6caa4a0b36e90a1906e4e533744bbc17d2787ac1aa7879bcdebd79af1ff16",
+    "len": 4617
+   },
+   {
+    "id": "6a25f0b3-67dd-4eef-8b36-2d7e07b78ebc",
+    "name": "⌨️ 自由文风 @蛾摩拉",
+    "hash": "72a10b0ed1220b54a1550fa9601283ead21307c725991fd5c10e48263cd6042b",
+    "len": 144
+   },
+   {
+    "id": "41eb5c96-53bb-47fa-8136-0fca97043300",
+    "name": "⌨️ 自定义",
+    "hash": "5b3c26f870af9afa661aa2985ff672175e0da259973ad9df85d92f003efba8cb",
+    "len": 50
+   },
+   {
+    "id": "fruit-v7-style-end",
+    "name": "━━ ⌨️ 文风区 end ━━",
+    "hash": "5366b98638137426f04a4b72494a777403a54757c4288a69f732e9ee0d28b376",
+    "len": 13
+   },
+   {
+    "id": "8f61e78c-cb5f-4261-b84a-2cc9ca58fcb1",
+    "name": "━━ 👁️ 视角区 ━━ ",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "78b513a2-346d-4e5d-a209-db3c36222093",
+    "name": "🗣️ 双语对白｜自动识别 @NUE",
+    "hash": "c819627b176b060ce14734a771dbb8022a92246458b614ee3832c9b83aa83bfa",
+    "len": 216
+   },
+   {
+    "id": "e5a86ccf-f921-4e2d-b696-1ca3b053fe38",
+    "name": "🎲 事件判定 @NUE弥月生",
+    "hash": "a0aea0409c636110b50dc130dec7f08243e877cf5dd3f08ebd4f344fe32ad1ef",
+    "len": 589
+   },
+   {
+    "id": "fruit-heart-ds-ec57a31f2ab6b6d5b0ad",
+    "name": "👁️ 防出戏 #DS #CLAUDE",
+    "hash": "0507a79a12ed7327536c7b515ec9690c3665e0798a9215f2671354dc99d6f586",
+    "len": 138
+   },
+   {
+    "id": "d69c6ff3-19d3-451d-8ca2-d8cc89091022",
+    "name": "👁️ 角色第一人称｜人称单选",
+    "hash": "1e2b3fc8fb52c4b4ad218b77a28f3551f8f1de66f8765779ce53649fc07eab4d",
+    "len": 126
+   },
+   {
+    "id": "29150ea9-4b9d-4600-afc4-a98e3b33c2e7",
+    "name": "👁️ 用户第一人称｜人称单选",
+    "hash": "038787810d3fe02f8c0744381634d81321e09ae6306a7c6d271632b86ffcb87f",
+    "len": 88
+   },
+   {
+    "id": "7b8c5602-ec9a-4469-9fbc-9df4eb0668f8",
+    "name": "👁️ 用户第二人称｜人称单选",
+    "hash": "4cf0b9e4f51fbac69a62588d3233c069f708c3a3e17f6fd43989b6dfa842b578",
+    "len": 124
+   },
+   {
+    "id": "59a054d3-7276-47a5-b0cc-30e6d5183e90",
+    "name": "👁️ 第三人称｜人称单选",
+    "hash": "59c4b2198d1dc72d1c6aae1cf9048f6f56d39c1e722205527ce9f572be547716",
+    "len": 93
+   },
+   {
+    "id": "355ecf22-0ea5-4f00-96f6-df6f15d9fc3e",
+    "name": "👁️ 他者之眼｜人称单选",
+    "hash": "bea7091e8e7d2be702de3d93569f60760d6cf8b9e5cff7039b61f4c498a6f2f8",
+    "len": 717
+   },
+   {
+    "id": "9dd126c4-34fe-47aa-80cc-bf67e2664bba",
+    "name": "👁️ 随机漂浮人称｜人称单选",
+    "hash": "df134e7be2598fe953fabb399db2f0cabf495ec0e013386a2be20ab934002ab7",
+    "len": 206
+   },
+   {
+    "id": "47fbea03-6414-4a79-80bb-d21cca50d77c",
+    "name": "━━ 🎭 剧场 ━━ 主剧场只开一个，其余可叠加",
+    "hash": "32d1e2d9299244b6070694b642a3978af817b149bb4b395a9788560522f56a16",
+    "len": 145
+   },
+   {
+    "id": "86e756fb-5bf7-48f8-8267-c4c310bda586",
+    "name": "🎭 汐见剧场｜主剧场单选 @YUKI @电波系",
+    "hash": "a9fc7ac844666d1f4b818d26b18cb549882a57cc0cd5276ec7fe4fbf7abbe8ff",
+    "len": 706
+   },
+   {
+    "id": "49af65fe-7f5e-4d00-9db3-afcde904aae9",
+    "name": "🎭 小回剧场｜主剧场单选 @小回",
+    "hash": "33af54dc8897495a2524f6408f40af8d2f4c7f7c831967d13872706aa1ad253e",
+    "len": 752
+   },
+   {
+    "id": "61e59d5f-3479-4fd4-90a3-d996050298c4",
+    "name": "🎭 极光剧场｜主剧场单选 @电波系",
+    "hash": "b197f02f97b006f4502e298a94ad98a2a1b584f3c05682861f0859351fe9ec90",
+    "len": 3088
+   },
+   {
+    "id": "3bebef2f-ad65-4f62-aeb6-37ec0d0bedb9",
+    "name": "🎭 纯文字剧场｜主剧场单选 @电波系",
+    "hash": "d5ef3b5ed81832c90444b410dda7a484b95d84a87881d937495538610bbfb7bb",
+    "len": 1227
+   },
+   {
+    "id": "594de0bd-7885-4ad2-8d1e-e00901106d47",
+    "name": "💡 完全随机剧场",
+    "hash": "14981f477eb7b54f10134925b8685cfeb63a05ccc60c65aca09a314c80b6f2ec",
+    "len": 68
+   },
+   {
+    "id": "d00bc4a5-eea6-48ee-aa0b-674d8ee0d98d",
+    "name": "💡 盲盒剧场 @电波系",
+    "hash": "cdb17a337120f55a3c298507e65a2d323c05f2ec732ff1526c0364e3173b61ef",
+    "len": 1141
+   },
+   {
+    "id": "7a63b3f1-afdd-4e56-9642-162d5896b607",
+    "name": "💡 日常剧场 @电波系",
+    "hash": "2d09c220809c5f61347abbb0539ebacca89f687a64e02dbb3ac9c957077d1bb0",
+    "len": 93
+   },
+   {
+    "id": "e1120b3c-08f3-4d2e-993c-d30c4e29b24a",
+    "name": "💡 论坛剧场 @Capybara~",
+    "hash": "ee25081bc4ce187abdc700843328de8105bd4697f1befdfbcc34b01226c00356",
+    "len": 62
+   },
+   {
+    "id": "fruit-heart-ds-7ee1941e536e98081d55",
+    "name": "💡 网黄剧场",
+    "hash": "cabd904c77254f370732e95a85780be92ef85dff06bbf6e69e1392c5d9c6e9dd",
+    "len": 80
+   },
+   {
+    "id": "4772a305-655d-40bc-9cb7-384337bd6dc4",
+    "name": "💡 文艺盲盒剧场 @Capybara~",
+    "hash": "a206632115bf04bfea5bd015635c99362e406f63e0ddbe0ae241a5941618b702",
+    "len": 337
+   },
+   {
+    "id": "dace3edc-59c0-4724-8dd9-fe65c2a5d6d8",
+    "name": "💡 后台人生 @无名氏",
+    "hash": "65b547eb37b72bf4511c475abe11de69dec0499e116bb406321d79fa702bf077",
+    "len": 426
+   },
+   {
+    "id": "8132534a-965d-4108-9b5c-19cb0c1a9cb8",
+    "name": "💡 OOXX 状态栏 @小回",
+    "hash": "7e9fff35a7f602658ffaa72352e6f8f6b8b1f84ff1df6a9bbb7e7146e9b24d9c",
+    "len": 137
+   },
+   {
+    "id": "249655f9-9564-4b65-9d2a-5d01ceca62e0",
+    "name": "💡 自慰剧场 @valiant_unicorn_98379",
+    "hash": "193d059fa353a173d44284e93cd08f1731dae6236103c19f402c4d0be1bbdddc",
+    "len": 345
+   },
+   {
+    "id": "3ff8ce3c-b381-424c-992e-ef0b2bf67e0f",
+    "name": "💡 育种吐槽剧场 @labra4798",
+    "hash": "eeeaa4e834236e8dedb94c959ea06b14484c8d9ddef82a4aee43067eb6698dff",
+    "len": 176
+   },
+   {
+    "id": "bbd36fc6-dac9-462d-9cab-f1340d253f47",
+    "name": "💡 自定义剧场",
+    "hash": "e102660d59707426ac697ae19658e7a5134a74a3b56c4de8de97e8a94631ae1b",
+    "len": 37
+   },
+   {
+    "id": "980ae290-49d4-41da-b8f2-0c2536c90186",
+    "name": "💡 SCP 剧场 @yuki",
+    "hash": "9d729e11846beafa32f9f0ddb3af5a8ed9e2fdbd3071167260f9e77bfc431175",
+    "len": 116
+   },
+   {
+    "id": "4964a43b-ce8a-4842-b63a-bea0bbe6ab5c",
+    "name": "💡 恋爱游戏剧场 @capybara046",
+    "hash": "36e0e4f1e4f74036aa7bd06e02782d9974653b79e4492c32e31463aed54c6010",
+    "len": 173
+   },
+   {
+    "id": "d25cf7f2-58d8-479a-9bf6-996ef7546d8b",
+    "name": "💡 变成瑟猫猫 @NUE",
+    "hash": "c6da6496004efb46d8467a98bed2e13cb550500685096caac233315b6367d627",
+    "len": 352
+   },
+   {
+    "id": "49c39b68-b43a-4fd6-afcc-073e9605f64f",
+    "name": "💡 黄油剧场 @Capybara~",
+    "hash": "bbbd9e3b603255d71fb6084de805e5ea57e7ead8adc7e96f5bb7d5585b439305",
+    "len": 254
+   },
+   {
+    "id": "1f7dc406-7b21-4300-a446-b803ddad848d",
+    "name": "💡 换装剧场 @右手一只鸦",
+    "hash": "79da832cae0afe6a88dd96fb1a55e3b5db262114db878ce066316943e16d09a7",
+    "len": 138
+   },
+   {
+    "id": "8f7a9856-9aea-4af4-b25c-fc3667047a85",
+    "name": "💡 What if @Capybara~",
+    "hash": "a557193a6de6e6d12777219e03d76f953abfc0fbad1248b451dcd6300d5b5845",
+    "len": 133
+   },
+   {
+    "id": "c2797fb6-c9c3-437d-b1d6-e4680c54b3c4",
+    "name": "💡 弹幕 @小回创意",
+    "hash": "f6edec79c6ae053603c16f08f4fec99399e80e70bb2c0b32693655621dfab839",
+    "len": 96
+   },
+   {
+    "id": "80bb3e14-caf9-4166-824c-37beaa084d1e",
+    "name": "💡 多人格剧场 @QAQ",
+    "hash": "df6d65a2f011d0daaa799af0d124aebe6bead0b44376c3999d7f795ff5fd45e0",
+    "len": 151
+   },
+   {
+    "id": "2704ffaa-b860-4d45-8a3c-3716cfc6ebfa",
+    "name": "💡 内裤剧场 @电波系",
+    "hash": "8d847158dd41befd8a4089e12559ca7eb6fb52f1124f2acc40fc4715f61c86e7",
+    "len": 424
+   },
+   {
+    "id": "c8a89e6c-5b37-42b7-b9e3-2b9076ec8d92",
+    "name": "💡 桌游剧场 @Clame Cyrus",
+    "hash": "3f7351034c73687064acbc9757bbc3f23e6f662c067bc442e0363ac7448267e7",
+    "len": 123
+   },
+   {
+    "id": "da7fbdcd-8753-4f54-a96e-0b30fa32e73e",
+    "name": "💡 恐怖 @右手一只鸦",
+    "hash": "e04eb9b931cc7cc9506935a26f3fd40a6bcab09a37bedcea708a9e652e453059",
+    "len": 223
+   },
+   {
+    "id": "99789e30-b37a-4719-9e7d-a0a6626cb09e",
+    "name": "💡 其他视角",
+    "hash": "c856d9a25c666b8021f2bc8f2f61d4efcc760e685b182a084b7d2159047f6b9e",
+    "len": 113
+   },
+   {
+    "id": "ef3a08bc-10f2-4ca0-9033-bec6ae86ae03",
+    "name": "💡 搞笑剧场 @鸦",
+    "hash": "6c7ae7f41cccbf4267a05086ca18b50c729988aa42eb01f99594de73d19aa715",
+    "len": 85
+   },
+   {
+    "id": "1a962feb-0485-459b-9458-e6dd6dd03a44",
+    "name": "💡 同人粮 @右手一只鸦",
+    "hash": "aac788691547a3ecb4461a942e37818d61131f8650aaa4db788200d96a3a5fe7",
+    "len": 81
+   },
+   {
+    "id": "390d6887-9a69-43dc-8c88-c6ea73288ed6",
+    "name": "💡 碎碎念",
+    "hash": "99948993f8ce3c70ac93c5d17b4d41c63264687873e333f5c1a447b5027c136e",
+    "len": 96
+   },
+   {
+    "id": "f3d5cbb8-bebb-4b00-9a5c-7ef5d2d040d2",
+    "name": "💡 电子设备模拟 @电波系",
+    "hash": "104476d34d622555d32edd8c80e7d6c5e4349d5bcbdd91a1b373be90b6f60adc",
+    "len": 190
+   },
+   {
+    "id": "fed78d89-a0ba-4e9f-a226-63ba30cd600d",
+    "name": "💡 废墟盲盒",
+    "hash": "438293dfc6ae25742ce9030d3eb70469dd264d09fad471a5ade088f88fe8a224",
+    "len": 100
+   },
+   {
+    "id": "1a51716c-48b6-4944-b8c8-e8c50b2bb66a",
+    "name": "💡 性幻想 @natami",
+    "hash": "c0bf4123184cec2227a4daa20d8c8ee6fe511de1a45cdc77991934de7539fd20",
+    "len": 180
+   },
+   {
+    "id": "30d17472-43af-49a0-9444-6859ff792c87",
+    "name": "💡 随机手机",
+    "hash": "90a98d15da8cd67259ccd5db83888bba63f244972572eaead980900befefee98",
+    "len": 101
+   },
+   {
+    "id": "1be1e101-3470-4969-aa90-cd9a491f393a",
+    "name": "👨‍🌾 果农来了｜必开",
+    "hash": "373fd7df7a8bb77b7cb11a8df036fdf8b8d7614709f81f3a24da6f1ff5c0aacc",
+    "len": 125
+   },
+   {
+    "id": "5a22bf88-bd80-46a7-b73d-75dbf723ecc8",
+    "name": "━━ 🍏 输出 ━━ 按角色卡实际功能开",
+    "hash": "7c2b5ff8f2ff93e30e2cf653f73189cb83b06405271d1e1c8ce7ec247dbfd0b0",
+    "len": 12
+   },
+   {
+    "id": "a8571e41-7604-4a15-9481-a42f838e34d5",
+    "name": "📌 语言设置",
+    "hash": "d07f487639df9457dd02fb463786f760f28e8cb880eb1aa1e042bb0083f45ca1",
+    "len": 102
+   },
+   {
+    "id": "cdbc3eb5-1c06-4ff1-8a49-ce118913d8f4",
+    "name": "📌 正文与字数要求｜正文格式单选｜必开",
+    "hash": "945f05a7d5cab9c7377cdffa96c5030e5f08cd626ac15ef6f8feac76590dfcc7",
+    "len": 142
+   },
+   {
+    "id": "8eab8a28-e6d1-44fc-bb66-8724eed57ead",
+    "name": "📌 前端卡｜正文格式单选｜必开",
+    "hash": "e09cc1e1f36fb058014759ddfc6c9a2e29b18e0b57bc1148e3e185e5f20fbfd9",
+    "len": 185
+   },
+   {
+    "id": "36c59dd3-b3c7-463c-8a77-ed15d1b849f4",
+    "name": "🍏 角色内心",
+    "hash": "d59dfaf919546be4c0c0ece9d55ce55bbb6d9a5f8cf34ec8563dc5cd80f5f16d",
+    "len": 404
+   },
+   {
+    "id": "41222085-656c-4453-bd3b-0591f410a2c7",
+    "name": "🍏 对白加强",
+    "hash": "50867f9a93396e404ad72967e89aef1ce0ea2314f82f1d9a5ec9f551d221ed36",
+    "len": 133
+   },
+   {
+    "id": "6361844b-db4f-4fb1-a3d0-5e2d16a8facd",
+    "name": "🍏 灵动正文｜选开",
+    "hash": "e0a3b7dc3740cb87316e335383a7e6b5c7d9d4f22e01c44cef727449777d18b6",
+    "len": 51
+   },
+   {
+    "id": "4f1d51a7-1fbe-4271-8c60-14e006ac5c68",
+    "name": "🍏 果农吐槽｜选开",
+    "hash": "365dd8ff6c764e5d1346e84b38f374d2d23d95b4f254ff129b5ae95bf6ed4068",
+    "len": 161
+   },
+   {
+    "id": "31661ca8-421c-4385-b98c-f517ac4e9ede",
+    "name": "🍏 正文与字数检测 @电波系 #GEMINI",
+    "hash": "59ef864484f0e6006fbe203f6b6ab24c5a4f77e31298a273d251bd1e04bfdc4c",
+    "len": 253
+   },
+   {
+    "id": "5bcde6d0-ba71-4e4c-baf8-978366628333",
+    "name": "🍏 性爱柔和自检 #GEMINI",
+    "hash": "0b20da3ececae4ad0390fd0e7ba3d121d29ebf535b13bb12e9edabf4be6e9fda",
+    "len": 29
+   },
+   {
+    "id": "87f4ee7c-f737-47fd-a7c8-37609fd01096",
+    "name": "🍏 正文防转折",
+    "hash": "cce76934440572d751ef89e964d1c23532a92cba90860f1678608f8d3627c9f0",
+    "len": 128
+   },
+   {
+    "id": "1a60fad7-59e3-420d-95f4-1eed9368d10d",
+    "name": "🍏 文末钩子",
+    "hash": "1beaa28cc332faaa066336c19ae7da51a2357c6e71fcf8612601fa90dcd7fa13",
+    "len": 158
+   },
+   {
+    "id": "a55d3f95-519e-4637-b066-2a1e424ff505",
+    "name": "📌 正文尾",
+    "hash": "f300c2540564d0bb32784104ad396649da0a4a5c9431be3d0e1ef81239fa1655",
+    "len": 236
+   },
+   {
+    "id": "1790a858-e195-4847-8151-d280ee1e95b5",
+    "name": "🍏 手机线上格式｜选开",
+    "hash": "f9de4b927c7a49c4143e7efa6e1edde2c3daa2bae4e3fd73f1eb5829678ca0b4",
+    "len": 88
+   },
+   {
+    "id": "017627d9-332d-4827-b1b0-b2e5ef120ca3",
+    "name": "🍏 顶部状态栏",
+    "hash": "d5dae0b61087146f61d48bb0909838aa389c200be696fc3e4fa67602323c832e",
+    "len": 63
+   },
+   {
+    "id": "94863b1a-5f51-4483-bb6c-f05aca62743a",
+    "name": "🍏 小说标题 @蛾摩拉",
+    "hash": "fbcf805bb4964e256a9b7e90b7bff2ec01488d500970e6741995ffd83b82991f",
+    "len": 622
+   },
+   {
+    "id": "67dbe0dc-f188-444d-a812-379088c1a7ee",
+    "name": "🍏 Top-简约｜正文前状态栏单选 @小鱼 @yuki",
+    "hash": "921a65ad7a465b7f3f6f6b6324c9cf50076d2d82baea077b1679a86060e7e2a4",
+    "len": 1118
+   },
+   {
+    "id": "cc526ae2-8d33-4cee-9f86-1629a13bb6c0",
+    "name": "🍏 Top-题记｜正文前状态栏单选 @鸦",
+    "hash": "e5bf349af71aa714b7b882d623165abac0dc7997fd9951f943e26cc87faefb15",
+    "len": 780
+   },
+   {
+    "id": "d1eeda8f-9e49-4d32-8d4a-5854410e4d8a",
+    "name": "🍏 开篇序言｜序言单选 @NUE @yuki",
+    "hash": "d043919412736d92baad44daf9bad795458395e850b31099b8aa9e6045159938",
+    "len": 237
+   },
+   {
+    "id": "7be20e56-40e9-478c-8363-872318e96c77",
+    "name": "🍏 单人状态栏 @小夜",
+    "hash": "9c94cc89bcbfa1fa32ac9428fe5075efdc03495e26368836f737e5678bfa61a8",
+    "len": 935
+   },
+   {
+    "id": "fb873456-bbe4-4809-a15d-4ed2e1a68ef4",
+    "name": "🍏 底部状态栏｜卡里有状态栏再开",
+    "hash": "b1ba1ce79f5c749d7e361879048fd6d9b6743670d4fc5bec96ff9f3e85199243",
+    "len": 31
+   },
+   {
+    "id": "9898c614-fd87-40c8-a1ac-bb4f75e179a5",
+    "name": "🍏 强调填表｜有表再开",
+    "hash": "265df0bcaab916cfdd6e0396ea395e1dae2dd849997ef579e7a38584c935ba30",
+    "len": 122
+   },
+   {
+    "id": "18b30ae2-61ec-4d18-966d-366cf3b4cffd",
+    "name": "🍏 变量更新｜有变量再开",
+    "hash": "863eb64a52b63545aa58a6724db97063592735b836fdbf9901fa3aac53703229",
+    "len": 35
+   },
+   {
+    "id": "bf363ab4-f5ed-424a-afaf-0692c4b09fb7",
+    "name": "🍏 表情包｜COT 与小剧场内生效",
+    "hash": "985abb6041596c122a2da0e3bf79b541b47a02d0401bb4cdfc60c40dd5d43fdb",
+    "len": 2062
+   },
+   {
+    "id": "dbc302fb-74ae-4ed0-8276-0ab86e8fe2f5",
+    "name": "🍏 小剧场一键开关｜可搭配世界书",
+    "hash": "53122a89161255502c731d7b53a9b0c830bacb5ec0ced20fb6f669d8cc05f48c",
+    "len": 138
+   },
+   {
+    "id": "d2866c72-44f7-49f5-a7f0-6fca506d00e2",
+    "name": "🍏 seeds 伏笔｜seeds单选 @yuki @电波系",
+    "hash": "e1e33b552868c99ebee66d05c0eade13515b8adf25432e60f8f5e4077aa1f29a",
+    "len": 461
+   },
+   {
+    "id": "d672f185-6502-4f68-bad3-51855c11c399",
+    "name": "🍏 seeds 待办计划｜seeds单选",
+    "hash": "b8d73b39a7cde9c8ffb142c25bdb54ab2ec8fa2bef8229db5b8105d7c0b2fb83",
+    "len": 250
+   },
+   {
+    "id": "09526289-84b1-4414-ad43-5270b4e40862",
+    "name": "📌 摘要｜必开 @喵喵电波",
+    "hash": "467fbf1ad8bb2f20be841f808dcbb8df62e44a71926edfbc462836f32aa3fad2",
+    "len": 371
+   },
+   {
+    "id": "d00d9ae7-ec72-4d34-92d0-ce6edaa5e5c2",
+    "name": "🍏 角色表 @YUKI",
+    "hash": "6d7fc85bb141cb581254ecbb8b362c8c78ef94e56ffa910b49d71636e2963851",
+    "len": 297
+   },
+   {
+    "id": "0045cda0-132d-40a7-9a83-1c597ae417e5",
+    "name": "🍏 文生图｜没有别开",
+    "hash": "08b9bb1c0c2c756e82e55062efbbec269f67a148b87ac0f531b1096a047cc6c1",
+    "len": 62
+   },
+   {
+    "id": "fruit-heart-c-c17722ef57fdc4b4786e",
+    "name": "🍏 喵喵选择器6选项｜需配选项正则",
+    "hash": "96e6a6135eb03a1f20608df65947f2782d5cae8956c8271c20b7e7d76637a45c",
+    "len": 355
+   },
+   {
+    "id": "84bc80b8-ecc7-4497-a399-a7ee14bff400",
+    "name": "📌 RULE",
+    "hash": "029dad3939326b2e5392d67ca6f950c644869d3bdec467d3d9b92c7b0a05b9a2",
+    "len": 123
+   },
+   {
+    "id": "c579184c-2871-4c35-a941-848cf31a3451",
+    "name": "🌙 加强破甲｜来自日月西 #GEMINI",
+    "hash": "1de05991a6a636c834b556a1e96b76267cc7b3d25d19237b271807a605359997",
+    "len": 2425
+   },
+   {
+    "id": "0b8b7352-880a-4add-8d81-97d23acb0c08",
+    "name": "━━ 🧠 思考 ━━ 四个 COT 只开一个",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "c3048bfc-d7f9-46be-824d-6978ae49bc9c",
+    "name": "== ↓以下仅在常规 COT 生效↓==",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "31b029db-6fa1-4c43-bd81-f62ee510dcfa",
+    "name": "🧠 确认 user 输入",
+    "hash": "ddefe175846507b98a5e777cc96000c0815845b8ebe14d85827e2dd25614328a",
+    "len": 130
+   },
+   {
+    "id": "af6b676f-0271-4479-a99e-b3055b59ff4a",
+    "name": "🧠 IF 线｜选开",
+    "hash": "6381e4e7315c000faee6fb656251feac2cee03d628c3aacd59ff23f29759843a",
+    "len": 84
+   },
+   {
+    "id": "42999dbc-093e-4209-8acd-90e32caf2068",
+    "name": "🧠 主线剧情｜卡有主线再开",
+    "hash": "ddb9a2aaf782f6d3cbd67f7c5a3060d1f06eec9f71fdab0818ad22709aa16693",
+    "len": 56
+   },
+   {
+    "id": "bd638843-dbcb-478f-a113-e48653809279",
+    "name": "🧠 防抢话",
+    "hash": "046566d0747570c3df349c562ca7dd826fb64091406e8f6a23cbf39998acca9a",
+    "len": 92
+   },
+   {
+    "id": "3368763c-683e-4b4b-b7ef-1997a59d3f51",
+    "name": "🧠 同人卡｜选开",
+    "hash": "3466d7f07e63ef79ac0f723a86351b649a74187a5362ff5cc43ce35301fc0f03",
+    "len": 41
+   },
+   {
+    "id": "d28ef2fc-a820-4dcd-913a-c39da5b6e69a",
+    "name": "🧠 角色卡自带 COT｜卡自带 COT 时开",
+    "hash": "0b3d65285c33e8e27f16e54f5852d40067fab4a01ecd5ef403cd810121fc77f5",
+    "len": 131
+   },
+   {
+    "id": "2fb071d9-a583-41c7-9eda-dcfdf1bc3a73",
+    "name": "🧠 小剧场数量",
+    "hash": "47335b0be0075908b0c86c94029fb7d4eb21d9e6a1ac23c3786586d635140dc0",
+    "len": 38
+   },
+   {
+    "id": "fc7c5033-abc2-4bc0-9ac3-cc55592e3f19",
+    "name": "🧠 思考约束|思考约束单选 #GEMINI",
+    "hash": "fef4d0f2ce6fd05778f8d00e882a231f7b5947e7d506d66ca25166fd30f7879f",
+    "len": 54
+   },
+   {
+    "id": "987a7c75-edae-415a-aa86-a8640edf50c9",
+    "name": "🧠 思考约束|思考约束单选 #CLAUDE #DS #GLM",
+    "hash": "b86c20163090c5dd5f8491e47acd9e3028f2675b65a802d23d3ceb5966409bb8",
+    "len": 109
+   },
+   {
+    "id": "bcd4c9eb-813b-45ca-ae33-39004c2278dd",
+    "name": "📌 以下 COT 只开一个｜必开",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "0b6b1245-f29a-41c4-8696-ea3a6d1daf3a",
+    "name": "📌 常规 COT｜COT单选｜必开·别动位置",
+    "hash": "156d37edf60c55108c4b0aba469c8358ced23e4e67ad5986bc8ee82074c7b61c",
+    "len": 793
+   },
+   {
+    "id": "cd069b86-0dc3-4ec8-8474-18a4e521eed9",
+    "name": "🧠 极简｜COT单选｜大总结等任务不听话时开",
+    "hash": "a6dd1154cf7b09877e19a244d52ba39da162e1e916554b69d1db9a354e71cd61",
+    "len": 108
+   },
+   {
+    "id": "f6e9d5ec-5378-4d92-9f3c-51163dc10386",
+    "name": "🧠 自思考｜COT单选",
+    "hash": "4853d8a0d04577dd6557fc53e511ccfdeebd8af33ad24f7201798744ca0c6f23",
+    "len": 181
+   },
+   {
+    "id": "56576e09-8cfc-44f3-89ec-9e9d4851758f",
+    "name": "🧠 自定义覆盖｜COT单选",
+    "hash": "b05693c6702ef2dc36ac426d240b1d3538bef358e4e716f1d073206de121b38f",
+    "len": 147
+   },
+   {
+    "id": "2cf820d9-1b19-4982-b5c9-67762c7b5b6b",
+    "name": "📌 COT 接收｜必开·别动位置",
+    "hash": "12a79bf66029c011980e6b06d73c2f48574964433c0b47f9fd35234b440cbd3e",
+    "len": 129
+   },
+   {
+    "id": "af40530f-e1f8-4a4d-8782-97338e4a116c",
+    "name": "━━ 🌱 果农 ━━ 果农人格只开一个",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "38442f41-7a0e-43f2-81bf-e326b2138548",
+    "name": "🌱 小弟果农｜果农单选 @Manekin",
+    "hash": "838793158670f49e21ea4cbcdea8354534daa2437996e4b81441b063cbeda4ff",
+    "len": 168
+   },
+   {
+    "id": "c6b7fe31-79bf-4bbb-bf06-57582e38b34d",
+    "name": "🌱 纯良果农｜果农单选",
+    "hash": "df23af942bd58483bf98bee19dc92a28101f5dc12eb27833baf5858e8dde1002",
+    "len": 285
+   },
+   {
+    "id": "2aa95693-fd63-4b9b-989b-2a593ae5e07a",
+    "name": "🌱 傲娇luma果农｜果农单选",
+    "hash": "3f3de3bfbb2bad89312501a5c89e339e2377984b7b126c991f1d75b775d33421",
+    "len": 500
+   },
+   {
+    "id": "dc2c728f-da48-4c63-b131-4ce1321fbbe5",
+    "name": "🌱 淡人果农｜果农单选",
+    "hash": "f5e9f330ee52bfb830767cb2703effef1115ca5723d9fbdab09c2f293c0b467f",
+    "len": 337
+   },
+   {
+    "id": "1f4eda10-3206-4c50-8e09-c76a90422f31",
+    "name": "🌱 社交恐怖甜心果农｜果农单选 @顶呱呱",
+    "hash": "c0591f58ae9480a0b2de706e618f9f55b268569fad3b0c0feda392d54f605d4d",
+    "len": 342
+   },
+   {
+    "id": "0089189b-042a-429a-b801-6f0b61430ac8",
+    "name": "🌱 老版果农｜果农单选",
+    "hash": "5acfcb470fdd6189a3a44f24d46598cac1e84c7c79d08982e867d1c76fe5ee28",
+    "len": 265
+   },
+   {
+    "id": "7bb59cce-ef80-44b9-9611-083423159169",
+    "name": "🌱 疯果农｜果农单选",
+    "hash": "224db3c517abf88d4d17b74b99c6704a9c8b47876be5aa285067008a8d75792d",
+    "len": 274
+   },
+   {
+    "id": "855ff551-b56b-4af5-a4e4-e7f4d8a5a768",
+    "name": "🌱 社畜果农｜果农单选",
+    "hash": "768b0e682b6c7b55c77472aa3ab1798399ce47a4984c8c47e916a997c2705602",
+    "len": 179
+   },
+   {
+    "id": "96e01e36-9638-4add-85f0-41b6c3e13063",
+    "name": "🌱 女王果农｜果农单选",
+    "hash": "2f63d385a06f7a2a0df9071971cff431f838883413c1e7270b453bc47b454267",
+    "len": 310
+   },
+   {
+    "id": "ec3bb06f-4f94-467d-b77c-4caff446952d",
+    "name": "🌱 腹黑哥哥果农｜果农单选",
+    "hash": "32e15af0803ec52eeb5b5d5082132d44fd4836c8ae50afe5badee2fe37096ed3",
+    "len": 269
+   },
+   {
+    "id": "e71bdaff-f597-4b8c-9cb4-94929fc6d175",
+    "name": "🌱 半醉果农｜果农单选",
+    "hash": "cf8e6f4fcf5cc6bcd560f5389894ef88bfb8a6b0098e51372a6badbdc632b877",
+    "len": 199
+   },
+   {
+    "id": "90556b7a-3611-4ad3-a26b-c330199cd599",
+    "name": "🌱 白切黑果农｜果农单选",
+    "hash": "bec49b61e8f57aa54d4849bf7581a3aeada5f526ce26e8986753a9c55adc6034",
+    "len": 164
+   },
+   {
+    "id": "743125e9-5d16-4850-af5d-2244fef3a820",
+    "name": "🌱 剧场主人果农｜果农单选",
+    "hash": "2db15d95e3cc0ca15c8e76dfb857fefe6bb4fc06bd2b4760292ea478216125d6",
+    "len": 286
+   },
+   {
+    "id": "b1ea422a-2bd2-4384-bf04-568e896d9d36",
+    "name": "(*^▽^*) COT 颜文字",
+    "hash": "c37073b053bf1e6f1390601f909f774a2fb319a80df93c18a8602e14d156872c",
+    "len": 20
+   },
+   {
+    "id": "fruit-v61-display-section-14",
+    "name": "━━ 🔌 尾部（按模型开） ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "fb86f139-05c5-4915-814c-f3696c0056c6",
+    "name": "📌 格式强调-必开@YUKI",
+    "hash": "499b57866b13a8d1d1989d01c2e25fc7614789ef5f740c5bd0d5d9f362022f0c",
+    "len": 470
+   },
+   {
+    "id": "fruit-heart-ds-3132f48ca06a9f86169e",
+    "name": "🔌 尾1 #DS @NUE ",
+    "hash": "baed657a7a93367271bbf8b05cf7165e8db5ad05e0c6b182650803d37ac42066",
+    "len": 61
+   },
+   {
+    "id": "4bcb2e4c-1502-40f6-b3f6-ce33fe530159",
+    "name": "🔌 预填充尾 #GEMINI 3.1PRO #GLM@YUKI",
+    "hash": "718e0d2a5714e5bf022d3ef23f3e5eb9654ce00aec2d1afabea3e1ee0b32ce77",
+    "len": 5
+   },
+   {
+    "id": "jailbreak",
+    "name": "🔌尾2 #GEMINI 3.7F #GEMINI 3.8F #CLAUDE",
+    "hash": "d4f6f56318bcb11f218821734358b732c003d07c3d8a8c00d0b2b4c558500775",
+    "len": 52
+   },
+   {
+    "id": "fruit-heart-c-cd11caa48d000bbd3325",
+    "name": "⚠️ 别用带 thinking 的克劳德模型",
+    "hash": "58d5e46b44a4f6c04d638046fc7d5d93b5f24044129a29a07debc3513b209f68",
+    "len": 91
+   },
+   {
+    "id": "fruit-v61-display-section-15",
+    "name": "━━ 🔧 配置 ━━ 别动别开",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "fruit-heart-control-config-v2",
+    "name": "🔧 果实之心控制配置｜别动别开",
+    "hash": "894a1bad742ae2dfa6e248e020ebd158e483de03a814a5f425400b5fb958a2c8",
+    "len": 76830
+   },
+   {
+    "id": "ec3733d2-b785-478d-a848-58758413e9ce",
+    "name": "🍏 超级序言｜序言单选 @电波系",
+    "hash": "a278ab23f1e6f99af5ea34ce902465db955827045fb75411d080b7efa8a64d91",
+    "len": 667
+   },
+   {
+    "id": "70513889-f0bd-4141-a000-5dbdc2715172",
+    "name": "📌 格式强调｜格式单选 @yuki #DS",
+    "hash": "9219ea8af8cde4047df0f9a1707797b5c5ead1587c4cf0594d8f5926c93db9de",
+    "len": 436
+   },
+   {
+    "id": "fruit-heart-ds-b8eca150ef07fb73997a",
+    "name": "📌 COT 接收｜必开·别动位置 #DS",
+    "hash": "f3efbbc740d08a6d52b8686737d960a6935469c26d4ccf2024ec653557d20b62",
+    "len": 84
+   },
+   {
+    "id": "99639adc-8604-4020-a7a3-b03cd7512f93",
+    "name": "⚙️ 防 429｜一般不开 @mk2_bear",
+    "hash": "93edc61ea4365bb5a78937cfc33278e7712d1ecf1e38f015370f75cd2e1f6ab2",
+    "len": 802
+   },
+   {
+    "id": "1b49d2d0-f130-4a91-a48d-90155c63cc6d",
+    "name": "🍏 喵喵选择器｜瑟瑟｜喵喵选择器单选｜需配选项正则",
+    "hash": "35ba2a22fbffcbf96fab3fc53fb35fea0acc8c1ac18ed2ebc21384f79b1cf63f",
+    "len": 311
+   },
+   {
+    "id": "858c394e-17ff-4937-b5de-2e06e4e4f729",
+    "name": "🍏 喵喵选择器｜扮演 user｜喵喵选择器单选｜需配选项正则",
+    "hash": "e7ca741ac2c6f5b24f5cb6d9c7b23a187af9d2f1729164229268d72ebe99d294",
+    "len": 274
+   },
+   {
+    "id": "76099514-0efc-455f-bd99-d1aa765d19d8",
+    "name": "📌 乐园公理",
+    "hash": "819def3ff11dbf0fcae894367af45feb9fdb0e09e81fb983d0b193a69ee6fa5b",
+    "len": 645
+   },
+   {
+    "id": "fruit-heart-c-e24e993e0fe629a00d27",
+    "name": "📌 果农上线 JB #CLAUDE",
+    "hash": "9ca21388a18f37e0385ef9022a93527a3177052a3c6db3c60f036cec6eb6266d",
+    "len": 65
+   },
+   {
+    "id": "fruit-heart-c-ecb1f4dee4ca6c9f8f74",
+    "name": "⚙️ Sandbox Mode #CLAUDE",
+    "hash": "01648f55764860ca3eb1273fd4ff5ce103cb3ca73b807cff3109392ba6845631",
+    "len": 1435
+   },
+   {
+    "id": "fruit-heart-c-9b4f537bbd82df02b4f7",
+    "name": "⚙️ JB #CLAUDE",
+    "hash": "9c7c94f58aa0bfb2c2b3c72a640c5cd9df5039fb644d3fe49a8753c5dd96c8f3",
+    "len": 3833
+   },
+   {
+    "id": "27e4de85-675a-42f3-9093-56aa9422281d",
+    "name": "📌 果实规则 end #CLAUDE",
+    "hash": "5385be9d379d97c0159a7470752c34a89a3beed82adbc2320fc7c8836732f6bb",
+    "len": 13
+   }
+  ],
+  "야한 과일 2.0": [
+   {
+    "id": "fruit-v61-display-section-01",
+    "name": "━━ 📖 说明勿开 ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "810a046a-0096-4caa-a2d8-ca00a55dbda5",
+    "name": "🍎 欢迎词｜别开",
+    "hash": "6a496c574fa9d7a4f83459a8c7f8eeab512d0078a21151ff4f9434b3cbb7eba5",
+    "len": 408
+   },
+   {
+    "id": "8af8957e-f8e3-4b0e-a357-d4a593414059",
+    "name": "📚 使用说明｜📌 开头的条目请勿改动｜别开",
+    "hash": "6cfefbda74883538bb822bc528e9b199eb31996bb82cc1e41556dd5b583923ec",
+    "len": 189
+   },
+   {
+    "id": "228a4db0-d778-447f-91bc-f39e6e62bfe8",
+    "name": "❓️ 必做操作与答疑｜别开",
+    "hash": "ae4b658838ea02786cef45cadba0a078a5a92acc3d78748a79ba5debe69059ff",
+    "len": 286
+   },
+   {
+    "id": "648683d0-da5e-4a7c-b6e2-ae51f5ae42e5",
+    "name": "🐱 MoM 喵喵电波共享计划｜说明",
+    "hash": "dbb44693ae17966ef5ce646bcafbcd0af04f12533855846102a9a4cba9d0a130",
+    "len": 84
+   },
+   {
+    "id": "fruit-v61-display-section-02",
+    "name": "━━ 🍎 基础 ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "419e0b0c-c3f0-4ae8-91cd-97d4d71455a1",
+    "name": "📌 获取变量｜必开·别动",
+    "hash": "0dcda62758e7514f4bd44ff34df53d1d8b4892c560cb1ddd3aaf5a36202737e9",
+    "len": 2366
+   },
+   {
+    "id": "ba65aeb9-aeab-4223-b8aa-9d4d739946d2",
+    "name": "🍎 美学注入",
+    "hash": "dd90f074e9e06ed40a36da664de1f377067b4fc8afd0ee15b4c971e28bb0517d",
+    "len": 1738
+   },
+   {
+    "id": "f4ef9910-d6c2-4604-9fe3-2c5a25b179de",
+    "name": "小说破限（需使用小说插件）",
+    "hash": "f7df47fc0f361f7ab8586dd2855f3093c4f569ee6261b6efb561c487c81227a0",
+    "len": 57
+   },
+   {
+    "id": "bd0dcfab-ad79-4fde-9915-6876b08221bb",
+    "name": "🌙 加强破甲｜改编自日月西 @电波系 #GEMINI FLASH",
+    "hash": "09e755e9c902771260c86c210a62b5afe88cffe63b3149707c177e09dad5459e",
+    "len": 2744
+   },
+   {
+    "id": "f43e0797-5aa1-4f87-9aba-587368acb5b7",
+    "name": "🧊加强破甲@NIAN",
+    "hash": "a16b50fe03492bfa113e25142fdc9d7d015e20fe9ab4eaec75e97629275544dd",
+    "len": 780
+   },
+   {
+    "id": "f68935a6-6f1a-4444-9d9e-860f51510740",
+    "name": "📌 防标记版乐园载入｜头部单选",
+    "hash": "e5fffd199002924253be5f81b282ab247f04e451b83500741eb18b125f17fb1f",
+    "len": 3104
+   },
+   {
+    "id": "main",
+    "name": "📌 乐园载入｜头部单选",
+    "hash": "3020ae14cd1e5c71f9f8a3323f76ce290ddcbef1f9166fc21b7f8696702d0584",
+    "len": 474
+   },
+   {
+    "id": "57c4caf1-6734-4f0d-83c2-fc80c8cba54b",
+    "name": "📌 超现实梦境 #GEMINI",
+    "hash": "e471985697602ff4ff7c43f1f3805cfce5ee9ef167f2081cf55a22a826446ee2",
+    "len": 569
+   },
+   {
+    "id": "fruit-heart-c-e0f9fd3c50fb98bc0d2c",
+    "name": "📌 输入分层",
+    "hash": "b572c737e911c1ff23ac0a9f0400e8a550931b765c13f34c468774c546789073",
+    "len": 609
+   },
+   {
+    "id": "a46598d4-da13-4201-9379-f3cdd4939c41",
+    "name": "📌 梦境风味｜白描",
+    "hash": "44e3d7dacc078b21e23c5e2e57ac4af758ca2f054ada692f0f8f4761ff36bb7d",
+    "len": 165
+   },
+   {
+    "id": "c8ccd9c2-e12e-4fb6-af55-de5ecbae4cf7",
+    "name": "🍎 美学公理",
+    "hash": "bacf5c7e1141dfeb70eb2f15bcea3086f2c1e0e19c81eb38a204b947abfdbd63",
+    "len": 287
+   },
+   {
+    "id": "c60a3d98-af56-4725-9aa8-3123486f346e",
+    "name": "📌 果农上线",
+    "hash": "e4fc6123e7f08066c4bc33b2bd37e8dbcf56fb8c20d32ebc84dd538d9947c895",
+    "len": 53
+   },
+   {
+    "id": "fruit-v61-display-section-03",
+    "name": "━━ 💤 梦境载入 ━━ ",
+    "hash": "c391be54e601a9006532c8a85a0c471f37ddab8de1fee6e0de0721bf6d896197",
+    "len": 64
+   },
+   {
+    "id": "personaDescription",
+    "name": "📌 Persona Description",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "nsfw",
+    "name": "📌 梦境",
+    "hash": "c3cbddefecfcb62db4900e47d1bebbe5186f65c3cc9eb1c790d55896d952735b",
+    "len": 23
+   },
+   {
+    "id": "worldInfoBefore",
+    "name": "📌 World Info (before)",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "charDescription",
+    "name": "📌 Char Description",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "charPersonality",
+    "name": "📌 Char Personality",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "scenario",
+    "name": "📌 Scenario",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "worldInfoAfter",
+    "name": "📌 World Info (after)",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "dialogueExamples",
+    "name": "📚 Chat Examples",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "chatHistory",
+    "name": "📚 Chat History",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "enhanceDefinitions",
+    "name": "📌 —— 💤 梦境载入 end——",
+    "hash": "4472d54171006289f3c3ff95c0a163f85bca5f03d40b24ee9b1463d3ffd01cd1",
+    "len": 8
+   },
+   {
+    "id": "e750a7ec-af2c-4b32-af0b-24b749491237",
+    "name": "📚 果农誓约 #GEMINI",
+    "hash": "b4ed5c8272fa2bc48aeb81bfff3904b2ed4ab2fba928332359ee3deb31334688",
+    "len": 84
+   },
+   {
+    "id": "fruit-v61-display-section-04",
+    "name": "━━ 🍎 梦境舞台 ━━ ",
+    "hash": "655ad4d8cdf603f79f2d9b4c9783c6e6b39c8c9ff5b3b2d0912e5188183d5309",
+    "len": 117
+   },
+   {
+    "id": "2136a81c-ccaa-4fa7-be7b-1d87266e24c0",
+    "name": "😴 入梦",
+    "hash": "63d9748bae77f0e23ce3ebae31ea60e1428c9fe5f2e4f39cfe37e4503e9ba0fa",
+    "len": 1890
+   },
+   {
+    "id": "c8cf081c-feec-43cb-8f16-acd75f4b02b2",
+    "name": "✨ 广阔世界｜去 user 中心",
+    "hash": "051c61ec65c7525348ebd29bc16a63961ae7c135d474483687f11f292faa7376",
+    "len": 566
+   },
+   {
+    "id": "36db009e-e880-4dc7-ba9a-be09c43d8d5e",
+    "name": "🦋 NPC 美化 @蛾摩拉",
+    "hash": "1015e3d9771071e36ab7b8332bc19b3edda2a0a1d2845516e25a0590ed00e756",
+    "len": 236
+   },
+   {
+    "id": "fruit-v61-worldbuilding-end",
+    "name": "——💃🏻梦境舞台 end——",
+    "hash": "cc754a83a7083f50868aad57d2d1a2f6b8413fb2e96f5dcc56da6cdbfdf1f874",
+    "len": 16
+   },
+   {
+    "id": "fruit-v61-display-section-05",
+    "name": "━━ 👤 行为指导 ━━ ",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "41e433f4-c4ca-4ab4-bede-14ebeb1ea4d8",
+    "name": "⚖️ 逻辑反思 改",
+    "hash": "8107cf8e4de1b116c94230852f59773e4c0d2ed2728d49b8d85b84af62980234",
+    "len": 2224
+   },
+   {
+    "id": "5ec81547-9c30-4dd8-8714-f490745364db",
+    "name": "🍓锁定人设",
+    "hash": "484f408e954e50c1a615ee9c00af16122596e36a2850474b60fd428aa4e92200",
+    "len": 2051
+   },
+   {
+    "id": "21255ae4-1893-444a-949e-43f8ec9b1a89",
+    "name": "🍓优先人设（测试版，含抗超雄）",
+    "hash": "8b8649a141982567b70a130fb815d6810f2657681e317727e67fe9132b30e3cd",
+    "len": 1173
+   },
+   {
+    "id": "mrghawn649ehw2mykht",
+    "name": "🍇 对白指导",
+    "hash": "30b61053407d0e8a6977be558bf44d7deb43d306489523ed0b2d399667976c5e",
+    "len": 1856
+   },
+   {
+    "id": "fruit-heart-c-3aaa051c8b9fdc131891",
+    "name": "👤 爱U加强情感 #CLAUDE",
+    "hash": "54433127f310742c8c256a7cd44ed7e395c1cd854c9deb3836d71122ddbafddb",
+    "len": 149
+   },
+   {
+    "id": "c966ae89-6110-4f28-a55d-e870533fdc69",
+    "name": "👤 修罗场指导 @mukamuka",
+    "hash": "07273c09af5951a874bf8dd598f3326fdc499477dac00b90050b442f16b494bc",
+    "len": 413
+   },
+   {
+    "id": "5f175205-9a09-4d19-9c92-3fa1f9aff069",
+    "name": "👤 自由恋爱",
+    "hash": "241a417bb59a069d2a0b6a55f3372481c37b0f518a626dd12068ec578955def4",
+    "len": 116
+   },
+   {
+    "id": "f2779ed5-728e-4366-925c-84e455158cf6",
+    "name": "━━ 🧩 角色塑造 ━━",
+    "hash": "f9920bc827c37771742350399220013817a45b4f46494260ddba53a792e2555c",
+    "len": 66
+   },
+   {
+    "id": "fruit-heart-c-76f2002faf821491eb61",
+    "name": "🧩 反解剖与参数 #CLAUDE",
+    "hash": "1f13f0e89d962c8c03f1943efd4c93216fd0a0917ab9d3eb246c59e6626e3f38",
+    "len": 183
+   },
+   {
+    "id": "fruit-heart-c-054358694af095888da6",
+    "name": "🧩 浓烈情感 #CLAUDE #DS",
+    "hash": "3bfc37a7904367f1515754e47b6e8ae3fd355422155033e45489e87174e4039b",
+    "len": 285
+   },
+   {
+    "id": "mrgh95f72twlqmre5sm",
+    "name": "🧩 神人压制 #GEMINI",
+    "hash": "efb8e69e709c36a05863d6ff5e47e684ca6883ed1903302624c64c556e57084b",
+    "len": 2615
+   },
+   {
+    "id": "25407894-d779-4fcb-a3d1-0b532b983f0d",
+    "name": "🧩 美人光环 2.0",
+    "hash": "0c5eabe4201a5ecc36eb71537f6afe469fbeb59a4431e62a8b9b0f4b8e0468f7",
+    "len": 201
+   },
+   {
+    "id": "c57a2a53-346c-4971-afaa-d41959bdf4d3",
+    "name": "🧩 平等化｜做命运的主人 #GEMINI",
+    "hash": "c4bd33da916e657ef190fdd796d9296d81de75b635c3c1007cc0f236a50eced8",
+    "len": 216
+   },
+   {
+    "id": "e2605273-15a0-493f-b840-050974d20dee",
+    "name": "🧩 外观与习惯",
+    "hash": "27cd91f8f5c20185674f2d4db31701478c783972a345c06ab17da206e9a0e0c8",
+    "len": 376
+   },
+   {
+    "id": "e4459a41-3218-4184-8802-b5980886d41d",
+    "name": "🧩 角色洁净 @BBL索多玛 #GEMINI",
+    "hash": "21d0c000b46ff32f00fc188b0720d7c7a1da4a91a81e06950b85f30758884465",
+    "len": 143
+   },
+   {
+    "id": "e33e09a7-e4f2-4b15-956c-931e1013b815",
+    "name": "🧩 无人万能 #GEMINI",
+    "hash": "ced460989648f30b4280e9354d999152cd5979ef8c462380b95fa9290952ab1b",
+    "len": 197
+   },
+   {
+    "id": "a1f51d01-9539-4fc4-b6da-9757615bac6e",
+    "name": "☁️ 加强版角色迷雾",
+    "hash": "a3cc736ab9d66df3287d5737094fa730bd917c316aa336fa640ac2500ceeb472",
+    "len": 1288
+   },
+   {
+    "id": "71609f43-2fbc-4a84-bd1e-1966d1924353",
+    "name": "🧩 善意视角 #GEMINI",
+    "hash": "90a9424442ea7dfcbe4590d11f55b5ab3a2d0d8911fcdf5ba6de57addb67417a",
+    "len": 343
+   },
+   {
+    "id": "6778ba40-c964-4eea-aaa8-e3be2a9e0789",
+    "name": "👥end",
+    "hash": "faea820ade0b89d3a5c737ff2b87896a7690e6dedbfa6f8c16c4a9b09c51d5f2",
+    "len": 22
+   },
+   {
+    "id": "277e9ae6-8d86-4d7e-87b3-a2830d3d816b",
+    "name": "🙀 基米指导（可改）",
+    "hash": "cb18ee15cecf6c65285f8c46702bbd95fc4585588bc6ba2d8fc4f6c31e195446",
+    "len": 237
+   },
+   {
+    "id": "fruit-v61-display-section-06",
+    "name": "━━ 🎬 剧情指导 ━━",
+    "hash": "44df414f87097acde7736ade4c48fb45fafcc4ae27e6490408fe886cc432d79a",
+    "len": 267
+   },
+   {
+    "id": "9e49021e-950c-4524-a077-09e22cb8606a",
+    "name": "🎬 好结局｜反阴谋 @电波系 #GEMINI",
+    "hash": "29582c76268a36c700c944465d613b1261e6bab295511a8d8c9e2de76b7baf78",
+    "len": 153
+   },
+   {
+    "id": "fruit-heart-ds-c4c05ad873452259a078",
+    "name": "🎬 好结局｜允许局部负面 #DS #CLAUDE",
+    "hash": "1fd65d27f23337938b3993b59cf1da9047e62a32b61a058b906baea62baf2cee",
+    "len": 120
+   },
+   {
+    "id": "0efff044-1d91-4cfd-96b8-9613cb57b385",
+    "name": "🎬 少阴谋｜走向单选",
+    "hash": "99f02147d06ddf949e1b70c5b44638f20bf7a94b00261e59ee4f5f65c9179497",
+    "len": 98
+   },
+   {
+    "id": "e343daad-bcf5-4318-a929-563e2fd064c1",
+    "name": "🎬 搞事业｜走向单选",
+    "hash": "09cfd8c7e64c37356e4a3611f1b31b1717aeb3774b8e8b2832e539ef597cedcd",
+    "len": 117
+   },
+   {
+    "id": "b5ac2252-03da-43e4-8667-0444f7648539",
+    "name": "🎬 搞拉扯｜走向单选",
+    "hash": "2289dbb93f40ec79be8e4887299700c51d3b1570f2f767422c4fb49c1c3c00b4",
+    "len": 149
+   },
+   {
+    "id": "4536f4df-ef49-4925-9ea1-f3e91b0c6ae1",
+    "name": "🎬 时间流速",
+    "hash": "dd59a1694d33414db2a1fbdaaf6cbcfd552882d6fe9dcbce22365d3a5c0f81a5",
+    "len": 183
+   },
+   {
+    "id": "c931d28a-56c3-4ff6-ac3d-eb866f3efd10",
+    "name": "🎬 推进慢速｜节奏单选",
+    "hash": "7295ce4137417dfc9f4bb1061609e4c4ecc474785d6b8872727ed0b7c0cfebbd",
+    "len": 166
+   },
+   {
+    "id": "f6962045-1a79-4420-bea7-aaeec20312c5",
+    "name": "🎬 推进快速｜节奏单选",
+    "hash": "2654c7387181aca0195fc87d993707e7986fa325ca3ca4af991f3ba00570c82e",
+    "len": 92
+   },
+   {
+    "id": "5ee69d26-3b16-46a6-b30f-1537251fc8d3",
+    "name": "🎬 推故事",
+    "hash": "b60a4921b26a960f1301fb75850204ea704dfbf259c1695c8cc1385d909bf369",
+    "len": 59
+   },
+   {
+    "id": "e456843a-e23e-4f6a-8fa1-c39f1c7a1e87",
+    "name": "━━ 🎬 剧情指导 end━━",
+    "hash": "9237a3a2a087703b3ec1afd51ba903f62f8bb82cde87ce756d374a2aa6bf30a2",
+    "len": 7
+   },
+   {
+    "id": "26efab8b-1b47-4da2-8b9b-bf7e7a07b833",
+    "name": "━━ 🤖 AI模式 ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "2dcd43c5-52e2-4dcd-b220-dd889d8e5145",
+    "name": "🤖 大力推剧情｜20%扩写＋80%推进｜抢话单选",
+    "hash": "cc00fed1ded400302bd1dc8c8b7e2047d4a873306ccebfdc80e15f1e791fda78",
+    "len": 355
+   },
+   {
+    "id": "fruit-20260917-balanced-narrative",
+    "name": "🤖 特调版推剧情 含扩写",
+    "hash": "9188f6ab9c30aedcc67a6226d78f6a373a16cc8ab8642e44fe4120f1f615e11d",
+    "len": 465
+   },
+   {
+    "id": "84704f6a-ef5e-4d2c-9d03-97ec3d9457d3",
+    "name": "🤖 纯复述扩写｜不推进｜抢话单选",
+    "hash": "8cac81b1ea0ac14e2da18b729a235c412c92b4f61fe79f9901002158129819b5",
+    "len": 310
+   },
+   {
+    "id": "87c8a41d-e219-4d35-acc2-dc6b5972cc6f",
+    "name": "🤖 防抢话｜只演其他角色｜抢话单选 @yuki",
+    "hash": "6740a211441562f1e583082962a8be9fad626c4551606bfbc240cb9419d49e19",
+    "len": 420
+   },
+   {
+    "id": "a1f2196e-3410-49d4-83ed-536163a7aee9",
+    "name": "🤖 AI 对话模式｜工作模式单选 @YUKI @蔚空koko",
+    "hash": "f624b72b709ee27067b1f8f687974854cdbed5987c6e303fe277bad9b39986da",
+    "len": 178
+   },
+   {
+    "id": "ff5be97f-43ac-4ec1-80b3-ad9370996dbc",
+    "name": "🤖 AI 大纲模式｜工作模式单选｜需 0927+ QR",
+    "hash": "4c9976509d54fb40e2645c6cdab941fc2611f8bb8098a3fb7393343b74c4fedf",
+    "len": 165
+   },
+   {
+    "id": "0a82f03f-a302-4923-b3c5-982b56d4389a",
+    "name": "🤖 AI 自检模式｜工作模式单选｜测试",
+    "hash": "46fa4a5341b6216f2fd12f8ba0a0609bca23555e8e9451300ceb63e996d8005d",
+    "len": 299
+   },
+   {
+    "id": "92f5d95a-0792-4bfe-80e3-50c718b7d08d",
+    "name": "🤖 防重复 @斯拉",
+    "hash": "b3fbebe0bccc521bafe8f7b3b3fc59af6a87e66527ac48d5506c32f99162e341",
+    "len": 350
+   },
+   {
+    "id": "a75087cf-5707-4ce1-87fa-8bba69d7c132",
+    "name": "━━ 🔞 NSFW区 ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "8f04eeb8-161b-4bab-ae5a-1fbbd5cd992f",
+    "name": "🔞 温柔｜风格单选",
+    "hash": "07ae4b4ce844e399543c03f62268d1e0e7c471156f46a97100d2223b22a69fb0",
+    "len": 93
+   },
+   {
+    "id": "fcff6cca-f177-4c0b-a37d-c7f3aa797be5",
+    "name": "🔞 粗俗｜风格单选",
+    "hash": "ca117ce0f57b3566e9782ca2dd0b0720c6b201f89d3f17bfda20c15307c634a5",
+    "len": 109
+   },
+   {
+    "id": "a6b68a17-2d4d-4890-be25-df0bba808239",
+    "name": "🔞 平等｜关系单选 @顶呱呱",
+    "hash": "dd8d41fcf45c37ff7956fcc95869bd8fcfde1fed372499be661270f43de7512f",
+    "len": 105
+   },
+   {
+    "id": "25cb080c-bf51-48d4-920b-02c839f0944c",
+    "name": "🔞 背德与不平等｜关系单选 @姜狸",
+    "hash": "ba53f443f7ba22efd96de0705985fd2f9e25e8bfbb1ef8e5437bcec0a4a26626",
+    "len": 222
+   },
+   {
+    "id": "4d4c20f4-50fc-46ae-af9b-0e4556a4611b",
+    "name": "🔞 媚 user｜关系单选 @村妹儿",
+    "hash": "bd6cf3f657ec2a42354afc21bf26570c6ce97b2c331801079aef3bdb73cf3c03",
+    "len": 98
+   },
+   {
+    "id": "8bba235c-5764-4704-93ab-bcfce8c734f9",
+    "name": "🔞 NSFW 流程 @natami @电波系 @RageNight",
+    "hash": "69dba3b4dbc2fc10f96e4e783691e898fc09a48969516079151c923ec1a4e1fa",
+    "len": 5702
+   },
+   {
+    "id": "6d585e8e-0df5-439b-bf5b-4103ab6617b1",
+    "name": "🔞 改）体型差补丁｜通用版",
+    "hash": "7b994fe4aaf131f5801b013d6f3871573ffdacc338fbccbd9266c44b5e491711",
+    "len": 1025
+   },
+   {
+    "id": "5383262f-7024-40f6-94f5-9d819471c34a",
+    "name": "🔞 丁丁美化 @鸦唳",
+    "hash": "81225c00e9ebfb52bc53d181f8558d586a783fba0def4d1a2aa8fd30e474022f",
+    "len": 398
+   },
+   {
+    "id": "e5fdc6cc-4171-490d-aad9-c01d37e587dd",
+    "name": "🔞 射精描写 @柑橘",
+    "hash": "9b5eaa750760896b9451cfebab2906e7ceb4c6b009d353887b388cfafdf760d9",
+    "len": 365
+   },
+   {
+    "id": "9d760b48-1911-4876-b8e6-819dc147d7b9",
+    "name": "🔞 ASMR 对白 @小纱的Phantasm预设",
+    "hash": "064e73a4f6b124a4faa84f5f42add7f4cde875325a43c36c02c83b455cad0843",
+    "len": 1110
+   },
+   {
+    "id": "ac26a9fe-8d6a-4c12-802b-13b85271b653",
+    "name": "🔞 DirtyTalk调教蜜语 @村妹儿",
+    "hash": "ac6da00374ac2e2540131886b1c09e3486d466276821d639469b7c77001d7d77",
+    "len": 2296
+   },
+   {
+    "id": "962e06ff-039f-4a69-9b56-75d3a9da5e5c",
+    "name": "🔞 DirtyTalk粗俗淫语 @村妹儿",
+    "hash": "ec4608f7cbf89024c264ffefaa9925ea29634c483e81f305460410fcc016c296",
+    "len": 1699
+   },
+   {
+    "id": "1484d2f7-aff6-496b-ad3a-0f5b8db60f17",
+    "name": "🔞 DirtyTalk淫语特化 @omomini",
+    "hash": "2e6f081ae32b7aff9661f884d70b55122064ebcae4db44b87970b0e6782ecaea",
+    "len": 1322
+   },
+   {
+    "id": "102d2ee7-f8bf-451e-b66b-6ee630142209",
+    "name": "🔞 BL｜描写单选 @natami @吱吱",
+    "hash": "b05b6b48f42bef0732d2c81eee9726773689f3bf0f1d12236a555c9c239db6bf",
+    "len": 2284
+   },
+   {
+    "id": "e6cdb449-02f9-4626-82b4-fcf558b4a408",
+    "name": "🔞 GL｜描写单选 @Yuki",
+    "hash": "6f61099990a9699e01531d3115f985b8192dde3f599c991548047113ae53e504",
+    "len": 325
+   },
+   {
+    "id": "18d29e66-59c2-40b9-af2a-f5297d82fb91",
+    "name": "🔞 素股 BG+BL｜描写单选 @村妹儿 @NUE @小无",
+    "hash": "d44ede1f03275e0360e344f4bce0360cec0ae2cf5ece09ad214ee4b099802bdc",
+    "len": 1851
+   },
+   {
+    "id": "be5514a2-55b7-4e02-89d1-fc81259d8a1f",
+    "name": "🥵NSFW风格纠正",
+    "hash": "61754f392027b02693daf7914afa95109a7371e222efda5e0069f584c3f30c5d",
+    "len": 560
+   },
+   {
+    "id": "d35afafc-2c07-4b31-9f16-155f7a7a2002",
+    "name": "🥵快速恢复",
+    "hash": "c20a876d5def1100a4591c120d738eed9a4e797bf85633ec792cb67586bbc1ba",
+    "len": 287
+   },
+   {
+    "id": "c5e30b32-c260-4cbe-83a5-404a560d8ae7",
+    "name": "🥵AV视角",
+    "hash": "6c7d0414883cb81a5f45bbc61ab31f0990053b0c488004691aea519e5c5e3ee9",
+    "len": 1338
+   },
+   {
+    "id": "928c8fa0-79e7-481f-bac9-1410d5c42fda",
+    "name": "🥵强节奏控制",
+    "hash": "5305a938b15b9e249c648c6b59773b8bff4f20e9430a3606a003d18540010d2e",
+    "len": 2261
+   },
+   {
+    "id": "275bbf75-c005-4d72-b2a9-35978cc2e041",
+    "name": "🥵乳控特化",
+    "hash": "c7d43184794a3326565e14576bf9fc9bc603db8151116f5873b421376de9c31b",
+    "len": 1498
+   },
+   {
+    "id": "cc4b3ba4-c92d-4737-b74f-2f9732efd987",
+    "name": "🥵臀穴特化",
+    "hash": "5c463c2d2f0d6c4c4f9e34830f1cd1ea3437606a7920b02c8d7bba3bb8eae473",
+    "len": 1145
+   },
+   {
+    "id": "b9544c26-76fc-4403-8216-3df8d0c0eba1",
+    "name": "🥵足控特化",
+    "hash": "b99b0eb15a7e5b50fe0e2a88b08934e71d200aa98049b642b8496b810e9f57fe",
+    "len": 829
+   },
+   {
+    "id": "57d655d3-198f-4389-b4ef-7783aede06e6",
+    "name": "🥵唇舌特化",
+    "hash": "814d600053d3d6c223c59fd7e1685fc86d269dc3a0bffb63b77428a4a86c8915",
+    "len": 450
+   },
+   {
+    "id": "6c2830f9-fdea-472c-8011-ed21cc577797",
+    "name": "🥵迫奸特化",
+    "hash": "105d128bab045e5b232fe5d862a8a10010116f44640929df10477836027acc46",
+    "len": 983
+   },
+   {
+    "id": "78d764be-cf2c-4c24-97e6-21de2e6b9803",
+    "name": "🥵隐奸特化",
+    "hash": "7076097907e5811a9057d2feda9d1ba87465a2f539efdb098d912c1e9ce502ea",
+    "len": 476
+   },
+   {
+    "id": "77596b2b-19bc-48a4-8c36-c5f734c4278d",
+    "name": "🥵睡奸特化",
+    "hash": "324e320d14a5c9971d34ae15f06f121bba22b2fd1cad90caf0d71a77de95eb0d",
+    "len": 462
+   },
+   {
+    "id": "17d64db0-5997-4fdd-8b9d-5edafa901bb4",
+    "name": "🥵ntl特化",
+    "hash": "3ae02290d6dc768996fa9f1d02e72445e858a30ddb2cc73ad358597a7fb0d2d3",
+    "len": 987
+   },
+   {
+    "id": "4dc6543c-cc4f-41a6-8baf-50ed6d5c2dc7",
+    "name": "🥵制服控特化",
+    "hash": "15e02ed109bc0aafae72dc8f6dfa7c6ae4444352899faf8214495ccbd4902cbd",
+    "len": 866
+   },
+   {
+    "id": "7177170d-d3e8-4bbc-8d66-60733bb38509",
+    "name": "🥵特化瑟瑟",
+    "hash": "b8cad27a1e5d9df9f89c5eae2292d9c79f5e53c21c2d3c2d1cdc1a85d4bf49e6",
+    "len": 928
+   },
+   {
+    "id": "5ea6c151-30de-4cc2-80e0-53b07a20c93e",
+    "name": "🥵NP一女多男",
+    "hash": "d63329858324ed7b3313e65aa8c6eb4b9c0c88a458e32845c592d50fe6458116",
+    "len": 2342
+   },
+   {
+    "id": "7e3c11d7-4db7-4452-b26d-99d928e9b1ea",
+    "name": "🥵NP一男多女",
+    "hash": "c6b60fa1b8a9f9a7576fb90122ce1dc170b7b7e8809cc5ed86fc672c37a7a540",
+    "len": 2130
+   },
+   {
+    "id": "c152abdc-54ef-4a09-9943-b87df98fb345",
+    "name": "🥵NP多对多",
+    "hash": "6713e25f1a2d27c0b1b9401bd253cfa7514f3c08ae9137b1c955e918a8217142",
+    "len": 1816
+   },
+   {
+    "id": "fruit-v64-nsfw-contraception",
+    "name": "🥵注意避孕",
+    "hash": "5e0db69b6c61135aa301790af2f30638274dbc38c481b048b3c019d00e7e181c",
+    "len": 1278
+   },
+   {
+    "id": "fruit-v64-nsfw-pregnancy-risk",
+    "name": "🔞 怀孕风险｜选开·联动seeds",
+    "hash": "bf0d9f87267705808b5000fdfa37caa1f5c4008715182602286f41e73be27d0d",
+    "len": 661
+   },
+   {
+    "id": "fruit-heart-ds-8376672a4e9842f6f9a5",
+    "name": "🔞 性爱主动 @小夜 #DS #CLAUDE",
+    "hash": "d6e447be602349c4a8fd18170f5a987b33db7d0e8ca4ec6aaca97250053723a7",
+    "len": 417
+   },
+   {
+    "id": "050f2d3c-ee6d-4bb3-b65a-8a1acf9e65be",
+    "name": "🥵（1版）NSFW总开关｜按需·固定位置",
+    "hash": "5f9099ba6a75de9ba968aee8b83cc0e5f0f4e9145d849bf5ff72afac3f5c0587",
+    "len": 2887
+   },
+   {
+    "id": "prompt_1792047673008_m8qwbr2",
+    "name": "🥵（2版）NSFW总开关｜按需·固定位置 (副本)",
+    "hash": "d84d7a07b7bedb61e8c456230e6b2bb9f3cd1cd979660be78f7dd3e4dd3fcaf9",
+    "len": 2979
+   },
+   {
+    "id": "ece65140-2541-4647-82a8-baf3a852c316",
+    "name": "📌 🥵NSFW输出｜必开·固定位置",
+    "hash": "4bda1ed6796ef12f64f8c55132deb82750faef6b925004677afc89f4899b012c",
+    "len": 34
+   },
+   {
+    "id": "fruit-v61-display-section-08",
+    "name": "━━ ✍️ 写作区 ━━ ",
+    "hash": "e6bc4347d693c7096786e112139b688d2d80f7b80865440a71557848bb07cc7e",
+    "len": 130
+   },
+   {
+    "id": "1480cbf5-ca0b-480a-8605-c58fa9c0d78e",
+    "name": "✍️ 摄像机原则｜写作指导单选 @natami",
+    "hash": "318d52746942f31aad60cce1a4e6d7139ff30a7e05045bb21f912e8ae73688bd",
+    "len": 222
+   },
+   {
+    "id": "4c522812-6528-4d62-8ff7-18e0561c050b",
+    "name": "✍️ 极光写作指导｜写作指导单选 @电波系 @眠雨",
+    "hash": "1041d5e47d8e741822fb23553f65749f1e5a7e9b8e3148919cbf083ee43e47c8",
+    "len": 770
+   },
+   {
+    "id": "66fa7145-d59e-46c7-b1be-346c5e8b3c45",
+    "name": "✍️ 抽象写作指导｜写作指导单选 @巴比伦",
+    "hash": "93ddce37093f23c5f5ff91fd37b15a08911463073872a1ab6019d3938a593327",
+    "len": 1921
+   },
+   {
+    "id": "fruit-v7-write-patch",
+    "name": "---🩹 写作补丁---",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "fruit-heart-c-7bb47548fc6c56e746dc",
+    "name": "🩹 防过度描写",
+    "hash": "23fcb1c4d5ad9ae4d06832dd0ad5301b1973264773362718211ad59330c014cc",
+    "len": 509
+   },
+   {
+    "id": "29c7a8d4-3e45-4269-b9e9-f5a3bb477336",
+    "name": "🩹 有效对白与行动描写规范@小无",
+    "hash": "a97f8b08a47e8a41f4e1d9c61b6a24de634c7a6bb57589bd66e8dc92091f4cac",
+    "len": 1485
+   },
+   {
+    "id": "2091c33e-1dac-4573-898d-35ad3797edbd",
+    "name": "🈲NSFW禁词（NSFW开）",
+    "hash": "7a7fd36abb4dea472d7fd74ea362ad1a4b2c53a11fc425ad64131b5c4dfbff3e",
+    "len": 95
+   },
+   {
+    "id": "00b5f3c0-d40a-4221-8117-2ceb32d86aa9",
+    "name": "🈲禁词",
+    "hash": "c482b80c2fdeec82b9fdea9d7e5981e6050c7efe32ad24980a8b0a9bf7b35b35",
+    "len": 251
+   },
+   {
+    "id": "fruit-heart-ds-190126c69bb53b458dc2",
+    "name": "🚫 缄默准则3.0",
+    "hash": "3a66db6b8f99e61201b1482d551a0e31452dc78ad98b16b7adab4e9b9f2f1c87",
+    "len": 1954
+   },
+   {
+    "id": "548e2eee-5858-4580-b42c-c4ed8356cd77",
+    "name": "🥵官能凝视补丁",
+    "hash": "3b8b3a5ffbb42e9ace21220543c4499d3d0301d4a86582ffc550943c54b7432b",
+    "len": 482
+   },
+   {
+    "id": "fruit-v7-write-end",
+    "name": "━━ ✍️ 写作区 end ━━",
+    "hash": "328f0341aaccb832755be8ee3b7c7a68920429889dca77a3e20b925fc60301a8",
+    "len": 7
+   },
+   {
+    "id": "af6e651f-f3c4-450c-9399-8fe19342b807",
+    "name": "━━ ⌨️ 文风区 ━━ ",
+    "hash": "daac2758a33c5680ac2cbae2f98b5030058b210ead7dd26e6822f63546f3b669",
+    "len": 197
+   },
+   {
+    "id": "bb30677f-528a-426b-8f03-fc4dc9428137",
+    "name": "⌨️轻小说官能特调",
+    "hash": "a039fdc23e943de0950c510653c10d539f010898a540b57750d7f596a49780bc",
+    "len": 2275
+   },
+   {
+    "id": "b4a06f05-f6d2-45ba-b6f3-e300ad743bab",
+    "name": "⌨️ 恋爱轻喜剧｜1028 升级版 @电波系1028升级版",
+    "hash": "30ae1fd0895e26656a987e6fdf8ae2ffaa503d6c1a3d45be27f242d93df51fdf",
+    "len": 1696
+   },
+   {
+    "id": "84ba5cdd-0786-45ee-8329-de992f6e7dcd",
+    "name": "⌨️ 大白话 @小白狗",
+    "hash": "58f5119e7e5e6f47760e2702d341eef17bfedf09517304d424c9fec6c79c53d8",
+    "len": 4678
+   },
+   {
+    "id": "mr4r41p4lyc09z407sf",
+    "name": "⌨️ 繁花-市井与旧时代话本",
+    "hash": "aae98a1f4402358d14551d5aa55a895a1b7bb97f013da1ba808528abfeca0f93",
+    "len": 821
+   },
+   {
+    "id": "10979c03-1a22-48d8-ad6f-c2762d587858",
+    "name": "⌨️ 女性向黄油 @小白狗",
+    "hash": "75d59a8d8b40babebd0bd014a9330ec57f3667bb9d47b87cc31b9c0a7905e536",
+    "len": 3700
+   },
+   {
+    "id": "45990406-5104-4e03-91dc-10275a0602a1",
+    "name": "⌨️ 通俗文学毛姆",
+    "hash": "1674492c74138f0589aeba76ba41f3e83f4666deac1c2723547caa6850c074b1",
+    "len": 6468
+   },
+   {
+    "id": "ec31dfff-eae7-401d-9704-5315bfa78319",
+    "name": "⌨️ 民国江南白描",
+    "hash": "6945f7f34ff6c7225304d9d9b21246f16db98c466152e35af69e6648c25a282b",
+    "len": 2099
+   },
+   {
+    "id": "63ac9277-258d-42e0-8658-8f910c7054d6",
+    "name": "⌨️ 民国白话世情笔法@natami",
+    "hash": "2183a06e06aef29b8b8ae8021209fe6b6032a637973cc7a74db5d5ffe88df37a",
+    "len": 3401
+   },
+   {
+    "id": "9d5f6f08-2643-4023-99d2-9f2d04699676",
+    "name": "⌨️ 阴郁纪实 @NATAMI",
+    "hash": "7fe359a4de516323bd166664130a2387d30a0892fad0d3bf38b542d42caee435",
+    "len": 2787
+   },
+   {
+    "id": "decb3208-3b13-49a5-9eed-3fc107e2558f",
+    "name": "⌨️ 至亲至疏 @小白狗",
+    "hash": "d07837a87bd3f3b9fb9c499b97bf06279082ffc289fa65aad0dafae7c9038d27",
+    "len": 4188
+   },
+   {
+    "id": "5f841a47-d996-4891-a371-57aac4d68a4a",
+    "name": "⌨️ 克制白描 @电波系",
+    "hash": "795ea417d89c0cdfea1f82d589fcb23a97c38fc9f66570bb7443b1297c6ba46b",
+    "len": 912
+   },
+   {
+    "id": "41ecaeeb-29fb-44e4-8e0c-0fe8af746bd3",
+    "name": "⌨️ 现代日常 @村妹",
+    "hash": "8de9e34d0976c86fd841dd6e07bbf197804d109922bb22e8719bbbac0ee11e95",
+    "len": 857
+   },
+   {
+    "id": "2a8f73e6-dc4d-485f-bd59-d911471ed53a",
+    "name": "⌨️ 古代日常 @村妹",
+    "hash": "5e88662a49e11e05e0dd9d9417f6eba611439e1863844a46800c01e34bafdbb7",
+    "len": 848
+   },
+   {
+    "id": "ac9a783c-66da-4ffc-9d41-afa04f973dde",
+    "name": "⌨️ 意识流 @电波系",
+    "hash": "207721d2baf82bcc290596dc43e7b29f077b899ae2b4e2b42785d6df1f8e6bd2",
+    "len": 3148
+   },
+   {
+    "id": "1a32c768-282d-4a32-baff-6f4366412598",
+    "name": "⌨️ Galgame 青春恋爱 @贝露",
+    "hash": "b515567f5dca791abb46ddf7a0d7df6926da86104b1d708424a97a44972a21db",
+    "len": 766
+   },
+   {
+    "id": "d4380d7d-2129-4d93-a92a-d1286480eb95",
+    "name": "⌨️ 浪漫｜新版 @小白狗",
+    "hash": "9ff5e90f0662ff8bdc95b2f50c6297c04649db8369e15f0b3c1e30273635eb7d",
+    "len": 4293
+   },
+   {
+    "id": "9f465341-d880-4b60-ba8e-ca6cc278664b",
+    "name": "⌨️ 现实 @小白狗",
+    "hash": "c3dfaa7caa7add5b0e193040ef135395bff2f706fd4428c6fd610b72320dc520",
+    "len": 3624
+   },
+   {
+    "id": "5d77beb2-50c0-45f9-b35a-aa05e4d465d4",
+    "name": "⌨️ 港风 @小白狗",
+    "hash": "c5cea9308f5f7650f4e7ff3cc9e76bc7693ffdab037c3d9b34a8dc9c9641304a",
+    "len": 3858
+   },
+   {
+    "id": "a98741d0-cbeb-4827-8c77-962c17fa513a",
+    "name": "⌨️ 翻译腔 @小白狗",
+    "hash": "6b311c6a6bce80b6aad336edc4f44d78593c876eecb348f21733863af8ac3489",
+    "len": 4284
+   },
+   {
+    "id": "20c45761-e926-43a0-873c-2ed57a6802f0",
+    "name": "⌨️ 吐槽小白爽文 @酸砂糖",
+    "hash": "623e384dc07bb2fae0b4c1c16915cd7001767315a86fce3478808972ad732225",
+    "len": 1427
+   },
+   {
+    "id": "8cd2d0b8-e179-4733-ba0c-59e23e9908eb",
+    "name": "⌨️ 成人童话 @natami @yuki",
+    "hash": "512446830bb02649890291b334e6930d68e7ae59809f941aad9334463bd03c0e",
+    "len": 1803
+   },
+   {
+    "id": "0aa6b943-3e1c-4d18-899f-40dc1e3efe4b",
+    "name": "⌨️ 左翼现代情色 @natami",
+    "hash": "32f2ce67a7f466521738ea1dbc34dc261ff5850d14ac9c21b0ac709a43b8eaf6",
+    "len": 10900
+   },
+   {
+    "id": "481b867e-1d5a-4396-b81a-09868dc227ee",
+    "name": "⌨️ 拉美禁忌爱情 @natami",
+    "hash": "03af52961b174c85465d74471cb9e2e6645a4c51639a614ad34c35999878b175",
+    "len": 8796
+   },
+   {
+    "id": "f89f78ca-0e88-47bf-a82b-3177678c0133",
+    "name": "⌨️ 古风 @Asuthia",
+    "hash": "25efd5b770230abb38d7e62e59ed9e9769e1cbdbb838a78539fe4abd117b2eb8",
+    "len": 2120
+   },
+   {
+    "id": "df1725c6-0f43-4208-80ca-91bfb10a95aa",
+    "name": "⌨️ 虐恋 @Aqiao",
+    "hash": "9b02708f15ae2c6df0703c9c2f953f016dce8d8855cedd6f643bfa68e4349f5e",
+    "len": 618
+   },
+   {
+    "id": "7c11f7fb-6e2e-47db-b619-f4c873638490",
+    "name": "⌨️ 色欲张力 @电波系",
+    "hash": "7b06bf83328afa6f97e0733e617466bfc9290db0a08fc94596625407c786a2c1",
+    "len": 1793
+   },
+   {
+    "id": "28a9b463-c1cd-4a9d-8957-7e4303d7ecf4",
+    "name": "⌨️ P18 @村妹儿",
+    "hash": "8245f8977ee8d4560537a8c35d8ef80658ad86ee12f9c6ae91353e1e5965e4ad",
+    "len": 1352
+   },
+   {
+    "id": "9b0a91f0-3234-415f-97ae-345edec2917e",
+    "name": "⌨️ 后 311 日本青年存在主义 @natami",
+    "hash": "0f5651ad6ae0346e6a06ef12952f19b4bfd8d1fad877b196279d1493e59fb192",
+    "len": 15120
+   },
+   {
+    "id": "420c8a68-51ce-4a61-b099-0139cf54d6fe",
+    "name": "⌨️ 俄国文学｜陀氏特化 @小白狗",
+    "hash": "d3a4c1772edb87db14779972cf26386c568361a56df66fdc6d6d166cd9b5c619",
+    "len": 3742
+   },
+   {
+    "id": "317535a9-9314-4b3a-9714-b609c464e267",
+    "name": "⌨️ 武侠仙侠 @小白狗",
+    "hash": "69a54109fdd389b2f5f492f42a62351e33b568646d818bc9fe4dc1e49d728de3",
+    "len": 3198
+   },
+   {
+    "id": "7374963f-111e-4ac4-8d34-fbbd5560abe2",
+    "name": "⌨️ 古龙武侠 @natami",
+    "hash": "21f2aa18d022765c6b858cc03a538616299aac7e071bcb45ad4f83d70df15e19",
+    "len": 12951
+   },
+   {
+    "id": "fccafa01-f766-49bc-913a-6d4c34a88423",
+    "name": "⌨️ 模拟恐怖 V2 @YUKI",
+    "hash": "d278bfb1e5bd9b4b2c8cc6ce78e4ddbf92cc1f63c2c58ad975a6bb4b4980b312",
+    "len": 2313
+   },
+   {
+    "id": "928fb0dc-46b0-4330-972d-3ae285570c99",
+    "name": "⌨️ 群像 @小白狗",
+    "hash": "2eb6caa4a0b36e90a1906e4e533744bbc17d2787ac1aa7879bcdebd79af1ff16",
+    "len": 4617
+   },
+   {
+    "id": "6a25f0b3-67dd-4eef-8b36-2d7e07b78ebc",
+    "name": "⌨️ 自由文风 @蛾摩拉",
+    "hash": "72a10b0ed1220b54a1550fa9601283ead21307c725991fd5c10e48263cd6042b",
+    "len": 144
+   },
+   {
+    "id": "087de388-084c-4ed1-aef2-2d4d7bbe0095",
+    "name": "⌨️市井生肉",
+    "hash": "1b188846dfa64964e0e3f307f2428a412a8f54dea658e52ab3d235bedeaadba3",
+    "len": 2213
+   },
+   {
+    "id": "41eb5c96-53bb-47fa-8136-0fca97043300",
+    "name": "⌨️ 自定义",
+    "hash": "5b3c26f870af9afa661aa2985ff672175e0da259973ad9df85d92f003efba8cb",
+    "len": 50
+   },
+   {
+    "id": "fruit-v7-style-end",
+    "name": "━━ ⌨️ 文风区 end ━━",
+    "hash": "6a6d974e616f2a10ac55235e9dec0fef138074ccdac6139ddeee07844699b3f1",
+    "len": 5
+   },
+   {
+    "id": "8f61e78c-cb5f-4261-b84a-2cc9ca58fcb1",
+    "name": "━━ 👁️ 视角区 ━━ ",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "78b513a2-346d-4e5d-a209-db3c36222093",
+    "name": "🗣️ 双语对白｜自动识别 @NUE",
+    "hash": "1ffbcad01b56723e6f286e7f5d752a8aca89705d23f926ff5168ce49b4af2440",
+    "len": 212
+   },
+   {
+    "id": "e5a86ccf-f921-4e2d-b696-1ca3b053fe38",
+    "name": "🎲 事件判定 @NUE弥月生",
+    "hash": "a0aea0409c636110b50dc130dec7f08243e877cf5dd3f08ebd4f344fe32ad1ef",
+    "len": 589
+   },
+   {
+    "id": "fruit-heart-ds-ec57a31f2ab6b6d5b0ad",
+    "name": "👁️ 防出戏 #DS #CLAUDE",
+    "hash": "0507a79a12ed7327536c7b515ec9690c3665e0798a9215f2671354dc99d6f586",
+    "len": 138
+   },
+   {
+    "id": "d69c6ff3-19d3-451d-8ca2-d8cc89091022",
+    "name": "👁️ 角色第一人称｜人称单选",
+    "hash": "1e2b3fc8fb52c4b4ad218b77a28f3551f8f1de66f8765779ce53649fc07eab4d",
+    "len": 126
+   },
+   {
+    "id": "29150ea9-4b9d-4600-afc4-a98e3b33c2e7",
+    "name": "👁️ 用户第一人称｜人称单选",
+    "hash": "038787810d3fe02f8c0744381634d81321e09ae6306a7c6d271632b86ffcb87f",
+    "len": 88
+   },
+   {
+    "id": "7b8c5602-ec9a-4469-9fbc-9df4eb0668f8",
+    "name": "👁️ 用户第二人称｜人称单选",
+    "hash": "4cf0b9e4f51fbac69a62588d3233c069f708c3a3e17f6fd43989b6dfa842b578",
+    "len": 124
+   },
+   {
+    "id": "59a054d3-7276-47a5-b0cc-30e6d5183e90",
+    "name": "👁️ 第三人称｜人称单选",
+    "hash": "59c4b2198d1dc72d1c6aae1cf9048f6f56d39c1e722205527ce9f572be547716",
+    "len": 93
+   },
+   {
+    "id": "355ecf22-0ea5-4f00-96f6-df6f15d9fc3e",
+    "name": "👁️ 他者之眼｜人称单选",
+    "hash": "bea7091e8e7d2be702de3d93569f60760d6cf8b9e5cff7039b61f4c498a6f2f8",
+    "len": 717
+   },
+   {
+    "id": "9dd126c4-34fe-47aa-80cc-bf67e2664bba",
+    "name": "👁️ 随机漂浮人称｜人称单选",
+    "hash": "df134e7be2598fe953fabb399db2f0cabf495ec0e013386a2be20ab934002ab7",
+    "len": 206
+   },
+   {
+    "id": "47fbea03-6414-4a79-80bb-d21cca50d77c",
+    "name": "━━ 🎭 剧场 ━━ 主剧场只开一个，其余可叠加",
+    "hash": "32d1e2d9299244b6070694b642a3978af817b149bb4b395a9788560522f56a16",
+    "len": 145
+   },
+   {
+    "id": "86e756fb-5bf7-48f8-8267-c4c310bda586",
+    "name": "🎭 汐见剧场｜主剧场单选 @YUKI @电波系",
+    "hash": "b5793355623de9ce17075844ba08f3a980ce685d8e08f54a05815b102a7bc831",
+    "len": 716
+   },
+   {
+    "id": "49af65fe-7f5e-4d00-9db3-afcde904aae9",
+    "name": "🎭 小回剧场｜主剧场单选 @小回",
+    "hash": "33af54dc8897495a2524f6408f40af8d2f4c7f7c831967d13872706aa1ad253e",
+    "len": 752
+   },
+   {
+    "id": "61e59d5f-3479-4fd4-90a3-d996050298c4",
+    "name": "🎭 极光剧场｜主剧场单选 @电波系",
+    "hash": "b70f195b79b40edf20b2eef6d067f6766fdf5deca82441bf06d8cad533bee448",
+    "len": 3098
+   },
+   {
+    "id": "3bebef2f-ad65-4f62-aeb6-37ec0d0bedb9",
+    "name": "🎭 纯文字剧场｜主剧场单选 @电波系",
+    "hash": "d5ef3b5ed81832c90444b410dda7a484b95d84a87881d937495538610bbfb7bb",
+    "len": 1227
+   },
+   {
+    "id": "594de0bd-7885-4ad2-8d1e-e00901106d47",
+    "name": "💡 完全随机剧场",
+    "hash": "14981f477eb7b54f10134925b8685cfeb63a05ccc60c65aca09a314c80b6f2ec",
+    "len": 68
+   },
+   {
+    "id": "d00bc4a5-eea6-48ee-aa0b-674d8ee0d98d",
+    "name": "💡 盲盒剧场 @电波系",
+    "hash": "cdb17a337120f55a3c298507e65a2d323c05f2ec732ff1526c0364e3173b61ef",
+    "len": 1141
+   },
+   {
+    "id": "7a63b3f1-afdd-4e56-9642-162d5896b607",
+    "name": "💡 日常剧场 @电波系",
+    "hash": "2d09c220809c5f61347abbb0539ebacca89f687a64e02dbb3ac9c957077d1bb0",
+    "len": 93
+   },
+   {
+    "id": "e1120b3c-08f3-4d2e-993c-d30c4e29b24a",
+    "name": "💡 论坛剧场 @Capybara~",
+    "hash": "ee25081bc4ce187abdc700843328de8105bd4697f1befdfbcc34b01226c00356",
+    "len": 62
+   },
+   {
+    "id": "fruit-heart-ds-7ee1941e536e98081d55",
+    "name": "💡 网黄剧场",
+    "hash": "cabd904c77254f370732e95a85780be92ef85dff06bbf6e69e1392c5d9c6e9dd",
+    "len": 80
+   },
+   {
+    "id": "4772a305-655d-40bc-9cb7-384337bd6dc4",
+    "name": "💡 文艺盲盒剧场 @Capybara~",
+    "hash": "a206632115bf04bfea5bd015635c99362e406f63e0ddbe0ae241a5941618b702",
+    "len": 337
+   },
+   {
+    "id": "dace3edc-59c0-4724-8dd9-fe65c2a5d6d8",
+    "name": "💡 后台人生 @无名氏",
+    "hash": "65b547eb37b72bf4511c475abe11de69dec0499e116bb406321d79fa702bf077",
+    "len": 426
+   },
+   {
+    "id": "8132534a-965d-4108-9b5c-19cb0c1a9cb8",
+    "name": "💡 OOXX 状态栏 @小回",
+    "hash": "7e9fff35a7f602658ffaa72352e6f8f6b8b1f84ff1df6a9bbb7e7146e9b24d9c",
+    "len": 137
+   },
+   {
+    "id": "249655f9-9564-4b65-9d2a-5d01ceca62e0",
+    "name": "💡 自慰剧场 @valiant_unicorn_98379",
+    "hash": "193d059fa353a173d44284e93cd08f1731dae6236103c19f402c4d0be1bbdddc",
+    "len": 345
+   },
+   {
+    "id": "3ff8ce3c-b381-424c-992e-ef0b2bf67e0f",
+    "name": "💡 育种吐槽剧场 @labra4798",
+    "hash": "eeeaa4e834236e8dedb94c959ea06b14484c8d9ddef82a4aee43067eb6698dff",
+    "len": 176
+   },
+   {
+    "id": "bbd36fc6-dac9-462d-9cab-f1340d253f47",
+    "name": "💡 自定义剧场",
+    "hash": "e102660d59707426ac697ae19658e7a5134a74a3b56c4de8de97e8a94631ae1b",
+    "len": 37
+   },
+   {
+    "id": "980ae290-49d4-41da-b8f2-0c2536c90186",
+    "name": "💡 SCP 剧场 @yuki",
+    "hash": "9d729e11846beafa32f9f0ddb3af5a8ed9e2fdbd3071167260f9e77bfc431175",
+    "len": 116
+   },
+   {
+    "id": "4964a43b-ce8a-4842-b63a-bea0bbe6ab5c",
+    "name": "💡 恋爱游戏剧场 @capybara046",
+    "hash": "36e0e4f1e4f74036aa7bd06e02782d9974653b79e4492c32e31463aed54c6010",
+    "len": 173
+   },
+   {
+    "id": "d25cf7f2-58d8-479a-9bf6-996ef7546d8b",
+    "name": "💡 变成瑟猫猫 @NUE",
+    "hash": "c6da6496004efb46d8467a98bed2e13cb550500685096caac233315b6367d627",
+    "len": 352
+   },
+   {
+    "id": "49c39b68-b43a-4fd6-afcc-073e9605f64f",
+    "name": "💡 黄油剧场 @Capybara~",
+    "hash": "bbbd9e3b603255d71fb6084de805e5ea57e7ead8adc7e96f5bb7d5585b439305",
+    "len": 254
+   },
+   {
+    "id": "1f7dc406-7b21-4300-a446-b803ddad848d",
+    "name": "💡 换装剧场 @右手一只鸦",
+    "hash": "79da832cae0afe6a88dd96fb1a55e3b5db262114db878ce066316943e16d09a7",
+    "len": 138
+   },
+   {
+    "id": "8f7a9856-9aea-4af4-b25c-fc3667047a85",
+    "name": "💡 What if @Capybara~",
+    "hash": "a557193a6de6e6d12777219e03d76f953abfc0fbad1248b451dcd6300d5b5845",
+    "len": 133
+   },
+   {
+    "id": "c2797fb6-c9c3-437d-b1d6-e4680c54b3c4",
+    "name": "💡 弹幕 @小回创意",
+    "hash": "f6edec79c6ae053603c16f08f4fec99399e80e70bb2c0b32693655621dfab839",
+    "len": 96
+   },
+   {
+    "id": "80bb3e14-caf9-4166-824c-37beaa084d1e",
+    "name": "💡 多人格剧场 @QAQ",
+    "hash": "df6d65a2f011d0daaa799af0d124aebe6bead0b44376c3999d7f795ff5fd45e0",
+    "len": 151
+   },
+   {
+    "id": "2704ffaa-b860-4d45-8a3c-3716cfc6ebfa",
+    "name": "💡 内裤剧场 @电波系",
+    "hash": "8d847158dd41befd8a4089e12559ca7eb6fb52f1124f2acc40fc4715f61c86e7",
+    "len": 424
+   },
+   {
+    "id": "c8a89e6c-5b37-42b7-b9e3-2b9076ec8d92",
+    "name": "💡 桌游剧场 @Clame Cyrus",
+    "hash": "3f7351034c73687064acbc9757bbc3f23e6f662c067bc442e0363ac7448267e7",
+    "len": 123
+   },
+   {
+    "id": "da7fbdcd-8753-4f54-a96e-0b30fa32e73e",
+    "name": "💡 恐怖 @右手一只鸦",
+    "hash": "e04eb9b931cc7cc9506935a26f3fd40a6bcab09a37bedcea708a9e652e453059",
+    "len": 223
+   },
+   {
+    "id": "99789e30-b37a-4719-9e7d-a0a6626cb09e",
+    "name": "💡 其他视角",
+    "hash": "c856d9a25c666b8021f2bc8f2f61d4efcc760e685b182a084b7d2159047f6b9e",
+    "len": 113
+   },
+   {
+    "id": "ef3a08bc-10f2-4ca0-9033-bec6ae86ae03",
+    "name": "💡 搞笑剧场 @鸦",
+    "hash": "6c7ae7f41cccbf4267a05086ca18b50c729988aa42eb01f99594de73d19aa715",
+    "len": 85
+   },
+   {
+    "id": "1a962feb-0485-459b-9458-e6dd6dd03a44",
+    "name": "💡 同人粮 @右手一只鸦",
+    "hash": "aac788691547a3ecb4461a942e37818d61131f8650aaa4db788200d96a3a5fe7",
+    "len": 81
+   },
+   {
+    "id": "390d6887-9a69-43dc-8c88-c6ea73288ed6",
+    "name": "💡 碎碎念",
+    "hash": "99948993f8ce3c70ac93c5d17b4d41c63264687873e333f5c1a447b5027c136e",
+    "len": 96
+   },
+   {
+    "id": "f3d5cbb8-bebb-4b00-9a5c-7ef5d2d040d2",
+    "name": "💡 电子设备模拟 @电波系",
+    "hash": "104476d34d622555d32edd8c80e7d6c5e4349d5bcbdd91a1b373be90b6f60adc",
+    "len": 190
+   },
+   {
+    "id": "fed78d89-a0ba-4e9f-a226-63ba30cd600d",
+    "name": "💡 废墟盲盒",
+    "hash": "438293dfc6ae25742ce9030d3eb70469dd264d09fad471a5ade088f88fe8a224",
+    "len": 100
+   },
+   {
+    "id": "1a51716c-48b6-4944-b8c8-e8c50b2bb66a",
+    "name": "💡 性幻想 @natami",
+    "hash": "c0bf4123184cec2227a4daa20d8c8ee6fe511de1a45cdc77991934de7539fd20",
+    "len": 180
+   },
+   {
+    "id": "30d17472-43af-49a0-9444-6859ff792c87",
+    "name": "💡 随机手机",
+    "hash": "90a98d15da8cd67259ccd5db83888bba63f244972572eaead980900befefee98",
+    "len": 101
+   },
+   {
+    "id": "1be1e101-3470-4969-aa90-cd9a491f393a",
+    "name": "👨‍🌾 果农来了｜必开",
+    "hash": "373fd7df7a8bb77b7cb11a8df036fdf8b8d7614709f81f3a24da6f1ff5c0aacc",
+    "len": 125
+   },
+   {
+    "id": "5a22bf88-bd80-46a7-b73d-75dbf723ecc8",
+    "name": "━━ 🍏 输出 ━━ 按角色卡实际功能开",
+    "hash": "7c2b5ff8f2ff93e30e2cf653f73189cb83b06405271d1e1c8ce7ec247dbfd0b0",
+    "len": 12
+   },
+   {
+    "id": "a8571e41-7604-4a15-9481-a42f838e34d5",
+    "name": "👄 语言设置",
+    "hash": "41934a3d5d15c202602f5b95dd9b8b95732b854dae1a128a15daa502805e4b43",
+    "len": 103
+   },
+   {
+    "id": "cdbc3eb5-1c06-4ff1-8a49-ce118913d8f4",
+    "name": "📌 正文与字数要求（抗重复）｜正文格式单选｜必开",
+    "hash": "bdf3735eb5439b93e9d2ccebb198c4237302fdd2d8c25ee19664aa86f3610dca",
+    "len": 137
+   },
+   {
+    "id": "8eab8a28-e6d1-44fc-bb66-8724eed57ead",
+    "name": "📌 前端卡｜正文格式单选｜必开",
+    "hash": "e09cc1e1f36fb058014759ddfc6c9a2e29b18e0b57bc1148e3e185e5f20fbfd9",
+    "len": 185
+   },
+   {
+    "id": "36c59dd3-b3c7-463c-8a77-ed15d1b849f4",
+    "name": "🍏 角色内心",
+    "hash": "2f37e7e2ae8546284e5e83043253a504df97846b38a14c6718d3be5a0d17ff66",
+    "len": 292
+   },
+   {
+    "id": "41222085-656c-4453-bd3b-0591f410a2c7",
+    "name": "🍏 对白加强",
+    "hash": "ce24060f225c11ae44333321c47acfc8f795cfa6776495b2af391d9e5b2cb199",
+    "len": 225
+   },
+   {
+    "id": "9e5e739f-0460-48b3-8e0e-888a8ac31a56",
+    "name": "🍏复述扩写开",
+    "hash": "19bdd472550ffdebc676799f99720aeac035d17ebf22eb88b05eb3c46a8745c0",
+    "len": 316
+   },
+   {
+    "id": "6361844b-db4f-4fb1-a3d0-5e2d16a8facd",
+    "name": "🍏 灵动正文｜选开",
+    "hash": "e0a3b7dc3740cb87316e335383a7e6b5c7d9d4f22e01c44cef727449777d18b6",
+    "len": 51
+   },
+   {
+    "id": "4f1d51a7-1fbe-4271-8c60-14e006ac5c68",
+    "name": "🍏 果农吐槽｜选开",
+    "hash": "365dd8ff6c764e5d1346e84b38f374d2d23d95b4f254ff129b5ae95bf6ed4068",
+    "len": 161
+   },
+   {
+    "id": "31661ca8-421c-4385-b98c-f517ac4e9ede",
+    "name": "🍏 正文与字数检测 @电波系 #GEMINI",
+    "hash": "d0f64a877bc734ffb03d64b302d09aa64cd2ea0a55f24ec022187ba9ca7b8cb2",
+    "len": 253
+   },
+   {
+    "id": "5bcde6d0-ba71-4e4c-baf8-978366628333",
+    "name": "🍏 性爱柔和自检 #GEMINI",
+    "hash": "0b20da3ececae4ad0390fd0e7ba3d121d29ebf535b13bb12e9edabf4be6e9fda",
+    "len": 29
+   },
+   {
+    "id": "87f4ee7c-f737-47fd-a7c8-37609fd01096",
+    "name": "🍏 正文防转折",
+    "hash": "cce76934440572d751ef89e964d1c23532a92cba90860f1678608f8d3627c9f0",
+    "len": 128
+   },
+   {
+    "id": "1a60fad7-59e3-420d-95f4-1eed9368d10d",
+    "name": "🍏 正文段落规范",
+    "hash": "bf7ca27620ef7c90ecbda417d856294014c57b52ea03c0a5556398749f4f6717",
+    "len": 412
+   },
+   {
+    "id": "a55d3f95-519e-4637-b066-2a1e424ff505",
+    "name": "📌 正文尾",
+    "hash": "e4b39ac24d7ab1699cb4d807347ad5154d7fb738e3824da0b3847abe480ae924",
+    "len": 771
+   },
+   {
+    "id": "1790a858-e195-4847-8151-d280ee1e95b5",
+    "name": "🍏 手机线上格式｜选开",
+    "hash": "f9de4b927c7a49c4143e7efa6e1edde2c3daa2bae4e3fd73f1eb5829678ca0b4",
+    "len": 88
+   },
+   {
+    "id": "017627d9-332d-4827-b1b0-b2e5ef120ca3",
+    "name": "🍏 顶部状态栏",
+    "hash": "d5dae0b61087146f61d48bb0909838aa389c200be696fc3e4fa67602323c832e",
+    "len": 63
+   },
+   {
+    "id": "5472f208-b696-4f5b-a32e-025d0ef8da82",
+    "name": "🍏 Top-题记｜正文前状态栏单选 @鸦",
+    "hash": "ec70b0f17404a696f2915fce570e8aa990f7dc65c4308ddcc94a9a5ed0fe3c96",
+    "len": 586
+   },
+   {
+    "id": "67dbe0dc-f188-444d-a812-379088c1a7ee",
+    "name": "🍏 Top-简约｜正文前状态栏单选 @小鱼 @yuki",
+    "hash": "38cf4066713fa5d5c6d421a8e23c391dde1915a0c0fcb57a9d0ed8c4c8958189",
+    "len": 750
+   },
+   {
+    "id": "94863b1a-5f51-4483-bb6c-f05aca62743a",
+    "name": "🍏 小说标题 @蛾摩拉",
+    "hash": "28751213f0f34afe4cd953e539282151b26d33f121afed34993c229a1f1a1da1",
+    "len": 611
+   },
+   {
+    "id": "d1eeda8f-9e49-4d32-8d4a-5854410e4d8a",
+    "name": "🍏 开篇序言｜序言单选 @NUE @yuki",
+    "hash": "d043919412736d92baad44daf9bad795458395e850b31099b8aa9e6045159938",
+    "len": 237
+   },
+   {
+    "id": "ec3733d2-b785-478d-a848-58758413e9ce",
+    "name": "🍏 超级序言｜序言单选 @电波系",
+    "hash": "a278ab23f1e6f99af5ea34ce902465db955827045fb75411d080b7efa8a64d91",
+    "len": 667
+   },
+   {
+    "id": "7be20e56-40e9-478c-8363-872318e96c77",
+    "name": "🍏 单人状态栏 @小夜",
+    "hash": "3ab9511bfeb4934b779a68a051dd613c471e87e3cc7f75d9cccff7eb6d0e1bca",
+    "len": 885
+   },
+   {
+    "id": "fb873456-bbe4-4809-a15d-4ed2e1a68ef4",
+    "name": "🍏 底部状态栏｜卡里有状态栏再开",
+    "hash": "b1ba1ce79f5c749d7e361879048fd6d9b6743670d4fc5bec96ff9f3e85199243",
+    "len": 31
+   },
+   {
+    "id": "9898c614-fd87-40c8-a1ac-bb4f75e179a5",
+    "name": "🍏 强调填表｜有表再开",
+    "hash": "265df0bcaab916cfdd6e0396ea395e1dae2dd849997ef579e7a38584c935ba30",
+    "len": 122
+   },
+   {
+    "id": "18b30ae2-61ec-4d18-966d-366cf3b4cffd",
+    "name": "🍏 变量更新｜有变量再开",
+    "hash": "863eb64a52b63545aa58a6724db97063592735b836fdbf9901fa3aac53703229",
+    "len": 35
+   },
+   {
+    "id": "bf363ab4-f5ed-424a-afaf-0692c4b09fb7",
+    "name": "🍏 表情包｜COT 与小剧场内生效",
+    "hash": "985abb6041596c122a2da0e3bf79b541b47a02d0401bb4cdfc60c40dd5d43fdb",
+    "len": 2062
+   },
+   {
+    "id": "dbc302fb-74ae-4ed0-8276-0ab86e8fe2f5",
+    "name": "🍏 小剧场一键开关｜可搭配世界书",
+    "hash": "53122a89161255502c731d7b53a9b0c830bacb5ec0ced20fb6f669d8cc05f48c",
+    "len": 138
+   },
+   {
+    "id": "d2866c72-44f7-49f5-a7f0-6fca506d00e2",
+    "name": "🍏 seeds 伏笔｜seeds单选 @yuki @电波系",
+    "hash": "e1e33b552868c99ebee66d05c0eade13515b8adf25432e60f8f5e4077aa1f29a",
+    "len": 461
+   },
+   {
+    "id": "d672f185-6502-4f68-bad3-51855c11c399",
+    "name": "🍏 seeds 待办计划｜seeds单选",
+    "hash": "b8d73b39a7cde9c8ffb142c25bdb54ab2ec8fa2bef8229db5b8105d7c0b2fb83",
+    "len": 250
+   },
+   {
+    "id": "09526289-84b1-4414-ad43-5270b4e40862",
+    "name": "📌 摘要｜必开 @喵喵电波",
+    "hash": "01f4f83b53eedae180bff522cca3d94ccfc90eac2dd0f5c51e30e8b5570708b2",
+    "len": 425
+   },
+   {
+    "id": "d00d9ae7-ec72-4d34-92d0-ce6edaa5e5c2",
+    "name": "🍏 角色表 @YUKI",
+    "hash": "3534d7914d56ca25b477b20d2e9ebff4fc13f0be572330a23d41450889e1278e",
+    "len": 330
+   },
+   {
+    "id": "b6dfe7de-2a93-4d7f-a193-447099acc579",
+    "name": "🍏色色角色表",
+    "hash": "9c648154193115c1e541136ab259428e36c76f6b359fbc9ba8cc4bd769bff111",
+    "len": 349
+   },
+   {
+    "id": "0045cda0-132d-40a7-9a83-1c597ae417e5",
+    "name": "🍏 文生图｜没有别开",
+    "hash": "08b9bb1c0c2c756e82e55062efbbec269f67a148b87ac0f531b1096a047cc6c1",
+    "len": 62
+   },
+   {
+    "id": "fruit-heart-c-c17722ef57fdc4b4786e",
+    "name": "🍏 喵喵选择器6选项｜需配选项正则",
+    "hash": "c45faca33e478a824fefc8f005e2cacc8226d241ca3b0ad0da5b332fc25df253",
+    "len": 355
+   },
+   {
+    "id": "1b49d2d0-f130-4a91-a48d-90155c63cc6d",
+    "name": "🍏 喵喵选择器｜瑟瑟｜喵喵选择器单选｜需配选项正则",
+    "hash": "35ba2a22fbffcbf96fab3fc53fb35fea0acc8c1ac18ed2ebc21384f79b1cf63f",
+    "len": 311
+   },
+   {
+    "id": "32e14959-2f33-403c-9ac7-e47a3653f03d",
+    "name": "🥵瑟瑟直播状态栏@louxi",
+    "hash": "17c4866ff34fe730d4be7b89db4add711d50be6371c3188e9c561b056b8f1f00",
+    "len": 1070
+   },
+   {
+    "id": "95badcf5-e6f5-41ab-8ed9-df7d90e18cf0",
+    "name": "🥵瑟瑟偷拍状态栏@louxi",
+    "hash": "082133e1643fabf824ce373e7f8cc978873605bd61cf882ea35dcc955d636932",
+    "len": 1074
+   },
+   {
+    "id": "3ad7662a-006b-4a87-b4be-099215ffd122",
+    "name": "🥵骚扰信箱状态栏@louxi",
+    "hash": "a10a688a222b605f922f6d4828638d08607d04cbc0bd28d9d0fba7db0adcea40",
+    "len": 766
+   },
+   {
+    "id": "fb86f139-05c5-4915-814c-f3696c0056c6",
+    "name": "📌 格式强调 @yuki",
+    "hash": "10a4e1ea29df50844ff4f2847ff18700cb4912b6a39f5c38cb34059749cf7af6",
+    "len": 490
+   },
+   {
+    "id": "84bc80b8-ecc7-4497-a399-a7ee14bff400",
+    "name": "📌 RULE",
+    "hash": "029dad3939326b2e5392d67ca6f950c644869d3bdec467d3d9b92c7b0a05b9a2",
+    "len": 123
+   },
+   {
+    "id": "c579184c-2871-4c35-a941-848cf31a3451",
+    "name": "🌙 加强破甲｜来自日月西 #GEMINI FLASH",
+    "hash": "1de05991a6a636c834b556a1e96b76267cc7b3d25d19237b271807a605359997",
+    "len": 2425
+   },
+   {
+    "id": "550434ef-2ec0-4907-8b01-49ca1ecaa42d",
+    "name": "🎶中文cot",
+    "hash": "3f1ae20cb94ad293908a65bc1d0cecc4ba51ea0bae18326fd4f58d7680cb71c2",
+    "len": 41
+   },
+   {
+    "id": "a3c34381-3c67-49af-aa67-6069f95bf2c8",
+    "name": "🎶英语cot",
+    "hash": "087c0effe7aba771d9ea2cea4db90b46c37137727005350e50ff3cae9b96a1b4",
+    "len": 57
+   },
+   {
+    "id": "6820564b-e2ce-4505-9f26-993cdba1a2bd",
+    "name": "🎶葡语cot",
+    "hash": "9bdcd31f7a4a0d716babf5d4bb7f47eee814e582a16b780af64fe36099dbd0dc",
+    "len": 60
+   },
+   {
+    "id": "35d47314-73b1-4531-993b-6f0fd980aa4a",
+    "name": "🎶意语cot",
+    "hash": "d7c9fc2e193e5791e792d2e0ce35157c659a6c1b171b7731380a431e6076de28",
+    "len": 60
+   },
+   {
+    "id": "5b66efa2-b698-4102-8d02-80b9923d3e80",
+    "name": "🎶日语cot",
+    "hash": "91aeadf521b11b7f7a7f5b70022fca20f5669773bbe5d0d5bf1b7128b3cdec98",
+    "len": 44
+   },
+   {
+    "id": "1e64d748-fe97-4d7b-b5b2-b8b8471bba70",
+    "name": "🎶法语cot",
+    "hash": "76ec8d8a8d40a0661b7271ca4894c711178d331d1bc650b980e7f8d620d313a2",
+    "len": 65
+   },
+   {
+    "id": "1825a890-8710-4e30-a93c-eac752f46924",
+    "name": "🎶德语cot",
+    "hash": "359a098737ff3983083b97bb5920b5259c6717b3b9ba69608d5012ac29b2d186",
+    "len": 63
+   },
+   {
+    "id": "0b8b7352-880a-4add-8d81-97d23acb0c08",
+    "name": "━━ 🧠 思考 ━━ 四个 COT 只开一个",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "c3048bfc-d7f9-46be-824d-6978ae49bc9c",
+    "name": "🧠 仅在常规 COT 生效",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "31b029db-6fa1-4c43-bd81-f62ee510dcfa",
+    "name": "🧠 确认 user 输入",
+    "hash": "8620f863470173fcdddf50ee81772ad293fc4b2149c056f05d8fd12f90db4169",
+    "len": 102
+   },
+   {
+    "id": "af6b676f-0271-4479-a99e-b3055b59ff4a",
+    "name": "🧠 IF 线｜选开",
+    "hash": "6381e4e7315c000faee6fb656251feac2cee03d628c3aacd59ff23f29759843a",
+    "len": 84
+   },
+   {
+    "id": "42999dbc-093e-4209-8acd-90e32caf2068",
+    "name": "🧠 主线剧情｜卡有主线再开",
+    "hash": "ddb9a2aaf782f6d3cbd67f7c5a3060d1f06eec9f71fdab0818ad22709aa16693",
+    "len": 56
+   },
+   {
+    "id": "bd638843-dbcb-478f-a113-e48653809279",
+    "name": "🧠 防抢话",
+    "hash": "046566d0747570c3df349c562ca7dd826fb64091406e8f6a23cbf39998acca9a",
+    "len": 92
+   },
+   {
+    "id": "3368763c-683e-4b4b-b7ef-1997a59d3f51",
+    "name": "🧠 同人卡｜选开",
+    "hash": "3466d7f07e63ef79ac0f723a86351b649a74187a5362ff5cc43ce35301fc0f03",
+    "len": 41
+   },
+   {
+    "id": "c19d88f7-dcca-4fc3-8814-4aeeac037bbe",
+    "name": "🧠演绎",
+    "hash": "08ea020255ffc3d9104aa6b1732d3e85b301acfe2c03b87c0bc7f4e18364b117",
+    "len": 107
+   },
+   {
+    "id": "d28ef2fc-a820-4dcd-913a-c39da5b6e69a",
+    "name": "🧠 角色卡自带 COT｜卡自带 COT 时开",
+    "hash": "0b3d65285c33e8e27f16e54f5852d40067fab4a01ecd5ef403cd810121fc77f5",
+    "len": 131
+   },
+   {
+    "id": "2fb071d9-a583-41c7-9eda-dcfdf1bc3a73",
+    "name": "🧠 小剧场数量",
+    "hash": "47335b0be0075908b0c86c94029fb7d4eb21d9e6a1ac23c3786586d635140dc0",
+    "len": 38
+   },
+   {
+    "id": "b71b81ae-9d4b-47bc-9f8d-f4bf1aba7319",
+    "name": "🧠思考约束一",
+    "hash": "9c15bbc13d62942fcce2fcc044b10740044443fef4e4751a1d2a4115e7dcc8fd",
+    "len": 93
+   },
+   {
+    "id": "36c103bb-2189-4017-a669-376712b06fad",
+    "name": "🧠思考约束二",
+    "hash": "a301d514a98aa633d096b1e6ccf9e502f821d583dcfeee7452d5ba81d52f255a",
+    "len": 99
+   },
+   {
+    "id": "bcd4c9eb-813b-45ca-ae33-39004c2278dd",
+    "name": "📌 以下 COT 只开一个｜必开",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "0b6b1245-f29a-41c4-8696-ea3a6d1daf3a",
+    "name": "🧠 常规 COT改｜COT单选｜必开·别动位置",
+    "hash": "590b0ee6a402282ee7a32c09d47607ac6a29467d5eddb1daf4c7f8fda917f722",
+    "len": 1104
+   },
+   {
+    "id": "prompt_1792052891097_zz6z65f",
+    "name": "🧠 常规 COT原版｜COT单选｜必开·别动位置",
+    "hash": "de0b8df1b38b4d1c4b20d6344aeed9375b8ee2bceeee8bd24bbb8f690f816cbe",
+    "len": 759
+   },
+   {
+    "id": "cd069b86-0dc3-4ec8-8474-18a4e521eed9",
+    "name": "🧠 极简｜COT单选｜大总结等任务不听话时开",
+    "hash": "a6dd1154cf7b09877e19a244d52ba39da162e1e916554b69d1db9a354e71cd61",
+    "len": 108
+   },
+   {
+    "id": "f6e9d5ec-5378-4d92-9f3c-51163dc10386",
+    "name": "🧠 自思考｜COT单选",
+    "hash": "d0c3c4bec4c59f62d494102b2f71c9e343bce42f30eacdf73080364d37048bc5",
+    "len": 263
+   },
+   {
+    "id": "56576e09-8cfc-44f3-89ec-9e9d4851758f",
+    "name": "🧠 自定义覆盖｜COT单选",
+    "hash": "b05693c6702ef2dc36ac426d240b1d3538bef358e4e716f1d073206de121b38f",
+    "len": 147
+   },
+   {
+    "id": "2cf820d9-1b19-4982-b5c9-67762c7b5b6b",
+    "name": "📌 COT 接收｜必开·别动位置 #GEMINI",
+    "hash": "12a79bf66029c011980e6b06d73c2f48574964433c0b47f9fd35234b440cbd3e",
+    "len": 129
+   },
+   {
+    "id": "af40530f-e1f8-4a4d-8782-97338e4a116c",
+    "name": "━━ 🌱 果农 ━━ 果农人格只开一个",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "38442f41-7a0e-43f2-81bf-e326b2138548",
+    "name": "🌱 小弟果农｜果农单选 @Manekin",
+    "hash": "838793158670f49e21ea4cbcdea8354534daa2437996e4b81441b063cbeda4ff",
+    "len": 168
+   },
+   {
+    "id": "c6b7fe31-79bf-4bbb-bf06-57582e38b34d",
+    "name": "🌱 纯良果农｜果农单选",
+    "hash": "df23af942bd58483bf98bee19dc92a28101f5dc12eb27833baf5858e8dde1002",
+    "len": 285
+   },
+   {
+    "id": "743125e9-5d16-4850-af5d-2244fef3a820",
+    "name": "🌱 天才美少女果农｜果农单选",
+    "hash": "c14c0252646723f2bd8fbba66c790fd7ab71f91e736b34bf3db237fe1c451f7a",
+    "len": 659
+   },
+   {
+    "id": "2aa95693-fd63-4b9b-989b-2a593ae5e07a",
+    "name": "🌱 傲娇luma果农｜果农单选",
+    "hash": "3f3de3bfbb2bad89312501a5c89e339e2377984b7b126c991f1d75b775d33421",
+    "len": 500
+   },
+   {
+    "id": "dc2c728f-da48-4c63-b131-4ce1321fbbe5",
+    "name": "🌱 淡人果农｜果农单选",
+    "hash": "f5e9f330ee52bfb830767cb2703effef1115ca5723d9fbdab09c2f293c0b467f",
+    "len": 337
+   },
+   {
+    "id": "1f4eda10-3206-4c50-8e09-c76a90422f31",
+    "name": "🌱 社交恐怖甜心果农｜果农单选 @顶呱呱",
+    "hash": "c0591f58ae9480a0b2de706e618f9f55b268569fad3b0c0feda392d54f605d4d",
+    "len": 342
+   },
+   {
+    "id": "0089189b-042a-429a-b801-6f0b61430ac8",
+    "name": "🌱 老版果农｜果农单选",
+    "hash": "5acfcb470fdd6189a3a44f24d46598cac1e84c7c79d08982e867d1c76fe5ee28",
+    "len": 265
+   },
+   {
+    "id": "7bb59cce-ef80-44b9-9611-083423159169",
+    "name": "🌱 疯果农｜果农单选",
+    "hash": "224db3c517abf88d4d17b74b99c6704a9c8b47876be5aa285067008a8d75792d",
+    "len": 274
+   },
+   {
+    "id": "855ff551-b56b-4af5-a4e4-e7f4d8a5a768",
+    "name": "🌱 社畜果农｜果农单选",
+    "hash": "768b0e682b6c7b55c77472aa3ab1798399ce47a4984c8c47e916a997c2705602",
+    "len": 179
+   },
+   {
+    "id": "96e01e36-9638-4add-85f0-41b6c3e13063",
+    "name": "🌱 女王果农｜果农单选",
+    "hash": "2f63d385a06f7a2a0df9071971cff431f838883413c1e7270b453bc47b454267",
+    "len": 310
+   },
+   {
+    "id": "ec3bb06f-4f94-467d-b77c-4caff446952d",
+    "name": "🌱 腹黑哥哥果农｜果农单选",
+    "hash": "32e15af0803ec52eeb5b5d5082132d44fd4836c8ae50afe5badee2fe37096ed3",
+    "len": 269
+   },
+   {
+    "id": "e71bdaff-f597-4b8c-9cb4-94929fc6d175",
+    "name": "🌱 半醉果农｜果农单选",
+    "hash": "cf8e6f4fcf5cc6bcd560f5389894ef88bfb8a6b0098e51372a6badbdc632b877",
+    "len": 199
+   },
+   {
+    "id": "90556b7a-3611-4ad3-a26b-c330199cd599",
+    "name": "🌱 白切黑果农｜果农单选",
+    "hash": "bec49b61e8f57aa54d4849bf7581a3aeada5f526ce26e8986753a9c55adc6034",
+    "len": 164
+   },
+   {
+    "id": "b1ea422a-2bd2-4384-bf04-568e896d9d36",
+    "name": "(*^▽^*) COT 颜文字",
+    "hash": "c37073b053bf1e6f1390601f909f774a2fb319a80df93c18a8602e14d156872c",
+    "len": 20
+   },
+   {
+    "id": "fruit-v61-display-section-14",
+    "name": "━━ 🔌 尾部（按模型开） ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "fruit-heart-ds-3132f48ca06a9f86169e",
+    "name": "🔌 DS 尾 @NUE #DS",
+    "hash": "e9710637f5d9b31f52aafbf059c3c6f74e9771ea5dedc4c2400eb37dde490bdb",
+    "len": 60
+   },
+   {
+    "id": "jailbreak",
+    "name": "🔌尾2 #GEMINI 3.7F #GEMINI 3.8F #CLAUDE",
+    "hash": "3292d488217c6885c7369a106ce3c3ed3ed6e994cda88305fdf404127586aec2",
+    "len": 107
+   },
+   {
+    "id": "4bcb2e4c-1502-40f6-b3f6-ce33fe530159",
+    "name": "🔌 Gemini Pro 尾｜卡掉原生 COT @YUKI 卡掉原生cot #GEMINI 3.1PRO",
+    "hash": "d7c98df2b4587f4c5a7a8213a8633bd96e661ef63e938c563f4431635dcfdccf",
+    "len": 108
+   },
+   {
+    "id": "fruit-v61-display-section-15",
+    "name": "━━ 🔧 配置 ━━ 别动别开",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "fruit-heart-c-cd11caa48d000bbd3325",
+    "name": "🔧 别用带 thinking 的模型 #CLAUDE",
+    "hash": "58d5e46b44a4f6c04d638046fc7d5d93b5f24044129a29a07debc3513b209f68",
+    "len": 91
+   },
+   {
+    "id": "fruit-heart-control-config-v2",
+    "name": "🔧 果实之心控制配置｜别动别开",
+    "hash": "1dc7ee57e85537276819379e04fb6dbeb8ffadab41442d5751ff3f939890ca7f",
+    "len": 76331
+   },
+   {
+    "id": "86fe4916-e2fa-4468-b00e-afa37cc35662",
+    "name": "智脑适配（需使用智脑）",
+    "hash": "d2b51a5054fd593dcc170cc57f8712b474542863a7c30350895f3078f7f46b9b",
+    "len": 454
+   },
+   {
+    "id": "c0987f30-8c46-4941-968c-bf9cb74f3997",
+    "name": "🍎 时代感",
+    "hash": "b52d1f1fe8c9cf35b6088731235ead63f848494f7dfced83ad89d7ca4fc33095",
+    "len": 165
+   },
+   {
+    "id": "mrghech0v458ro62m9b",
+    "name": "🍎 现实环境",
+    "hash": "3d117a550eacecb68f651ec873937468020df9dd0af2c086689c57ac19082397",
+    "len": 157
+   },
+   {
+    "id": "fruit-v61-npc-subjectivity",
+    "name": "🍎 配角平视",
+    "hash": "5b46235cf39730157e05381fbaebbf3047ae3240edf3b56c479f7014c4170920",
+    "len": 137
+   },
+   {
+    "id": "6def23df-76fc-421b-85b8-08330e0f8a5f",
+    "name": "👤 角色平衡 #GEMINI",
+    "hash": "854b27f971193f40889fbd1db030efe740e54b2ba2b8fab49c7e9b509349e03e",
+    "len": 378
+   },
+   {
+    "id": "f1c8b22c-4759-4451-b7d8-bbd77a074355",
+    "name": "👤 情绪分解",
+    "hash": "bafb710e31961b5077f707e6c6831a6223ca0539c0646921696f83bc63337f28",
+    "len": 284
+   },
+   {
+    "id": "17b18676-a53f-41a8-95cb-79e71ce1ed7c",
+    "name": "👤 真实 RP",
+    "hash": "15231b6ab738fed36730528d511aaeef991d903def095b33799521396bf4565a",
+    "len": 332
+   },
+   {
+    "id": "c925ab9f-f511-479c-97c1-7e8d2fb3b6fb",
+    "name": "👤 自然互动",
+    "hash": "5235763929b874c21b7349d7abf3fd7efcf1f4114812a35b63f314fb1b9899fc",
+    "len": 289
+   },
+   {
+    "id": "mrghc0ybviwsmp3t7tj",
+    "name": "🧩 病态角色压制 #GEMINI",
+    "hash": "11ad75609cbbb10acce0848882f2d7007633afe421f159aa0a5a017825cae874",
+    "len": 260
+   },
+   {
+    "id": "afffeee6-7489-408d-958d-e2c95167a6cf",
+    "name": "🧩 防油腻 #GEMINI",
+    "hash": "df2b191f0f537ec0719c8841c70bf608e20fa0296fa4ef5e878ce01d080baa3a",
+    "len": 180
+   },
+   {
+    "id": "4c675270-c2be-475d-aa01-978958500606",
+    "name": "🧩 关系对齐｜互动逻辑单选",
+    "hash": "294141339ef910742e61528838dd73a2b15ceee5e08aeb686682fd45427b970a",
+    "len": 222
+   },
+   {
+    "id": "4092e714-2673-4450-a719-8ce60375bdce",
+    "name": "🧩 人物逻辑｜互动逻辑单选 @小n",
+    "hash": "dfe880956f91c5f04510300a13ea3cd0f9822a737b654641a59e8515f39a9b50",
+    "len": 340
+   },
+   {
+    "id": "fruit-heart-ds-b8eca150ef07fb73997a",
+    "name": "📌 COT 接收｜必开·别动位置 #DS #CLAUDE",
+    "hash": "f3efbbc740d08a6d52b8686737d960a6935469c26d4ccf2024ec653557d20b62",
+    "len": 84
+   },
+   {
+    "id": "d5d02521-c0f9-40f4-af6c-ee4e946528f4",
+    "name": "🔞 BG 柔和｜描写单选 @YUKI",
+    "hash": "e1be3dd457d09dc42eadd62c09e67f58868390f07fe6b7604bcd421f76e1d39f",
+    "len": 250
+   },
+   {
+    "id": "cfdf95f9-6960-43b0-a921-cc5108c48ab8",
+    "name": "🔞 BG 粗俗｜描写单选 @村妹儿 @yuki",
+    "hash": "98e9512788d8d952e363f4e065ae1646e742d1e688e4371ac14fa110c73e6b3c",
+    "len": 928
+   },
+   {
+    "id": "4363ceca-0bcb-4c4c-892d-2be232866caf",
+    "name": "🔞 多角色瑟瑟 @mukamuka",
+    "hash": "60b158cbed0f430eba6c6f4ec0c1e4637b469bef6c10833927a90c94612b2cac",
+    "len": 1395
+   },
+   {
+    "id": "272a027f-12b6-47f2-9631-c8708bf684ce",
+    "name": "🩹 禁比喻补丁",
+    "hash": "25911bd90f2ca12c5909de313a3fc8121aaa327b0fa10031fc4c7f1b53652c28",
+    "len": 218
+   },
+   {
+    "id": "9a668208-bb3f-4a6c-9b38-911791223bea",
+    "name": "🩹 反物化补丁",
+    "hash": "c4279bd8de4520dc3d95852938f22d4767ab0784daf73fb8dce509bee678cb74",
+    "len": 204
+   },
+   {
+    "id": "99639adc-8604-4020-a7a3-b03cd7512f93",
+    "name": "⚙️ 防 429｜一般不开 @mk2_bear",
+    "hash": "93edc61ea4365bb5a78937cfc33278e7712d1ecf1e38f015370f75cd2e1f6ab2",
+    "len": 802
+   },
+   {
+    "id": "fc6527f0-2434-4e08-a428-b291cba92682",
+    "name": "🍏 反截断｜需要再开 @眠雨",
+    "hash": "a77a98a5845c79f5a5a2fcb615fd985d0c4d501d915e44d442b5d3066d229ce7",
+    "len": 214
+   },
+   {
+    "id": "3b589d12-eb36-4437-9cf4-1a2816d2febb",
+    "name": "🍏 破甲｜梦呓协定加强｜需要再开 @Bazer",
+    "hash": "dcfaa8dfbe8253f1b27dd95c3312a548cc5c74e6f78c6ea47407ee21b06dd21f",
+    "len": 2453
+   },
+   {
+    "id": "6b0a8a44-4606-4e06-93cd-509ab31fc212",
+    "name": "🧠 反动物塑和气味",
+    "hash": "369a02d36ea3750e0057bbed77a1ebfe2bcc0d7a43023ade9b5872171f385c67",
+    "len": 56
+   },
+   {
+    "id": "7a7385b4-7454-41b2-8116-507852b42959",
+    "name": "🎬 BE 与虐梗｜坏结局｜慎开",
+    "hash": "049fc90ade375e5a2711112567368574cfed3e27916101eb720560687a2e96af",
+    "len": 684
+   },
+   {
+    "id": "3bb220ab-9395-48a3-8360-eca6d30f5c0d",
+    "name": "👤 丰富互动 @电波系",
+    "hash": "91bed06f07863c2bdd6a17005e7a3d6f620db32e437f939bf423215aade35181",
+    "len": 707
+   },
+   {
+    "id": "f48b544c-eb40-4755-865f-c0aceb520d1c",
+    "name": "📖 白描少比喻补丁 @村妹儿",
+    "hash": "9c7cf789c6df2bb731c6cfd3e5897f64848f57be5beb3ffd8608e5314a78af26",
+    "len": 364
+   },
+   {
+    "id": "068e6154-9ff4-4b44-8991-6babfc807be4",
+    "name": "📖 NSFW 去八股 @村妹儿",
+    "hash": "2fc6fa6bea7ae4b0fc12120cd4ab6b835a12012f93df6416ddf09579b8155b0a",
+    "len": 799
+   },
+   {
+    "id": "82e4b11f-adc7-4f49-b999-5de9bc33b6a4",
+    "name": "📖 补丁｜BL 体型差",
+    "hash": "a34023639a925fbf415eca771b4d09f6cb63329362e59d62877c6feb8f8d59f4",
+    "len": 626
+   },
+   {
+    "id": "ea6b936e-07d1-4e94-a213-1c3df603208d",
+    "name": "📖 BG 女性向 @natami",
+    "hash": "a7e3457f81a57a499f1cee7db3be5919f7a2212675c856f5867ad6519cd6cbf1",
+    "len": 2043
+   },
+   {
+    "id": "1e467c4d-3691-44b2-8917-1964c7fdf6ec",
+    "name": "👤 活人台词",
+    "hash": "11e8f9567696ecec433bcebc52644fb1ab77960036669e5c0c590fd7a8648638",
+    "len": 161
+   },
+   {
+    "id": "067daaa2-6275-4961-a766-76d51bb8c92d",
+    "name": "👤 人物坐标",
+    "hash": "4f67534594f497942ccf405e8fce391ff0841077b67d9f418d023d68cfe55213",
+    "len": 513
+   },
+   {
+    "id": "aff27467-a512-4d4d-aad4-166c975adbfc",
+    "name": "👤 TA 的衣柜 @电波系",
+    "hash": "f956df729c9010c5f7edb3592a01099f60b28a2a1917b0b1504ec5d9606f02d0",
+    "len": 179
+   },
+   {
+    "id": "ee5844c7-d07f-4164-a964-23f98c989699",
+    "name": "📖 神秘禁词表 @斯拉",
+    "hash": "79a04156da4ccc7e8972134f3e0b3b0b7adb56c2c56fa380949a775779ed4937",
+    "len": 995
+   },
+   {
+    "id": "a87a3c63-2d71-4f0e-befb-f34990f60a42",
+    "name": "📖 反机器人 RP 指导",
+    "hash": "ed7f35c2e8bb29251f38c53cfd3c32f45803ad9644d0c47b5d282c1178842b57",
+    "len": 339
+   },
+   {
+    "id": "cec6868e-79dc-41dc-86ab-2fd5884be533",
+    "name": "📖 八股语境表 @斯拉",
+    "hash": "e4e5ff74e94f25e85929a46bc6ec6ead6b6328cfe37cf59eee193855338c107c",
+    "len": 471
+   },
+   {
+    "id": "5f850b00-3527-42db-9843-0f08fff7735c",
+    "name": "🎬 上帝视角无人称代词｜慎开",
+    "hash": "419032d0eb20115ec6ae72c6a9681b38942b71826a6fe0473eccd8a4035db68b",
+    "len": 141
+   },
+   {
+    "id": "858c394e-17ff-4937-b5de-2e06e4e4f729",
+    "name": "🍏 喵喵选择器｜扮演 user｜喵喵选择器单选｜需配选项正则",
+    "hash": "e7ca741ac2c6f5b24f5cb6d9c7b23a187af9d2f1729164229268d72ebe99d294",
+    "len": 274
+   },
+   {
+    "id": "ae2e17ca-85b9-432a-b1bf-5b0b53a52830",
+    "name": "⚙️ 梦呓协定｜减少空回｜需要再开",
+    "hash": "e38058bff7be244710ec072f1597c567e1a697aa1624f260d475f1c118de5c89",
+    "len": 728
+   },
+   {
+    "id": "34f61e34-3080-4a8a-8760-576a6a1ec92f",
+    "name": "⚙️ 无 COT｜不想要 COT 时开 @yuki",
+    "hash": "88aa25f7c54181ff07963144c24db13aadb5c747a41628e8cb9ee271078b366c",
+    "len": 89
+   },
+   {
+    "id": "d9637142-9f44-4885-af15-b88990a02079",
+    "name": "📌 函数 COT 一键开关｜必开·别动位置 @mk2_bear @卡司喵",
+    "hash": "d8495a460089f757e9624a6f63a9162e074f8577f0819f15c05e9db52467dd6f",
+    "len": 1882
+   },
+   {
+    "id": "76099514-0efc-455f-bd99-d1aa765d19d8",
+    "name": "📌 乐园公理",
+    "hash": "819def3ff11dbf0fcae894367af45feb9fdb0e09e81fb983d0b193a69ee6fa5b",
+    "len": 645
+   },
+   {
+    "id": "9c57f22e-6d21-4f16-8ade-6339f5751380",
+    "name": "📖 更多词条在后台",
+    "hash": "c4950e494fa715f7bd605c8f2cf49c6bee00ed4996aa6f3bb0490804e5a1e9ff",
+    "len": 76
+   },
+   {
+    "id": "b41d3384-f7e6-4265-be04-d723cfa1f228",
+    "name": "📖 果农注意｜已废弃",
+    "hash": "37c24659ac7aab9f909b959839f7169039a029ed437a29b4c5637affbbfd9fcd",
+    "len": 233
+   },
+   {
+    "id": "2f05a6f4-c8b9-425e-b23c-3518466ef7bc",
+    "name": "📖 动态角色表 @风空大代码 @Bazer修订",
+    "hash": "8e6c736f8e6b17bbd6690b97996b97e8ce51df51ecff1dc7c26782df18a7aed6",
+    "len": 2974
+   },
+   {
+    "id": "4876e834-1e64-445a-9748-92fffbd78b41",
+    "name": "⚙️ 越狱 2｜需与越狱 1 同开 @斯拉",
+    "hash": "bbca3fe6f66b5460cc6d479afcfdf7154c6f1574dc69910df81c0ee10c94b45a",
+    "len": 510
+   },
+   {
+    "id": "2afbcf1e-c35e-4b51-b107-e4aa57b07339",
+    "name": "⚙️ 越狱 1｜需与越狱 2 同开 @斯拉",
+    "hash": "f6ec56d4e2608350a7d09a1b250745b189f8d2a63eb93f8c27efb1b7edb7eccf",
+    "len": 749
+   },
+   {
+    "id": "fruit-heart-c-e24e993e0fe629a00d27",
+    "name": "📌 果农上线 JB #CLAUDE",
+    "hash": "9ca21388a18f37e0385ef9022a93527a3177052a3c6db3c60f036cec6eb6266d",
+    "len": 65
+   },
+   {
+    "id": "fruit-heart-c-ecb1f4dee4ca6c9f8f74",
+    "name": "⚙️ Sandbox Mode #CLAUDE",
+    "hash": "01648f55764860ca3eb1273fd4ff5ce103cb3ca73b807cff3109392ba6845631",
+    "len": 1435
+   },
+   {
+    "id": "fruit-heart-c-9b4f537bbd82df02b4f7",
+    "name": "⚙️ JB #CLAUDE",
+    "hash": "9c7c94f58aa0bfb2c2b3c72a640c5cd9df5039fb644d3fe49a8753c5dd96c8f3",
+    "len": 3833
+   },
+   {
+    "id": "1c7d874c-4d36-4619-afa1-1b1867fde0f1",
+    "name": "⚙️ 坏果子吃不了兜着走｜推荐开",
+    "hash": "5b6bc0c2b63163c08bfd71a2461b50334e1daf7cd19f67cb031b9f9b6df082a8",
+    "len": 394
+   },
+   {
+    "id": "86962778-5d17-4f00-9a0c-fab0844faefb",
+    "name": "⚙️ 有你好果子吃｜推荐开",
+    "hash": "51bea9eb5f29b67c205df37c762718fb086c6e9d9aabb3a547f7e7a95af41927",
+    "len": 541
+   },
+   {
+    "id": "b43a83b7-822e-4eee-9ec2-affe952213d8",
+    "name": "📌 去偏见",
+    "hash": "414f0fe1430db58e0677e9b30f0d2ef0287deb6aeb9e43cfcc648d447efd977c",
+    "len": 193
+   },
+   {
+    "id": "27e4de85-675a-42f3-9093-56aa9422281d",
+    "name": "📌 果实规则 end #CLAUDE",
+    "hash": "5385be9d379d97c0159a7470752c34a89a3beed82adbc2320fc7c8836732f6bb",
+    "len": 13
+   }
+  ],
+  "청과 2.0": [
+   {
+    "id": "fruit-v61-display-section-01",
+    "name": "━━ 📖 说明勿开 ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "810a046a-0096-4caa-a2d8-ca00a55dbda5",
+    "name": "🍏 青涩果轻量化预设说明｜别开",
+    "hash": "f98dafe3fbd7cfd66af281aee003e8d1f5fb548b36011fc3c0dabeff4f160356",
+    "len": 179
+   },
+   {
+    "id": "fruit-v61-display-section-02",
+    "name": "━━ 🍎 基础 ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "419e0b0c-c3f0-4ae8-91cd-97d4d71455a1",
+    "name": "📌 获取变量｜必开·别动",
+    "hash": "f0198150d0928d3bd7cd562970e085f89ccbcfde78be16a6d62cdcbb9f9b40d9",
+    "len": 2050
+   },
+   {
+    "id": "f4ef9910-d6c2-4604-9fe3-2c5a25b179de",
+    "name": "小说头部（需使用moli老师的小说插件）",
+    "hash": "891bfaea31341f387cca57c1a5b44242d6ce404785d438cfe2b613ae24888165",
+    "len": 431
+   },
+   {
+    "id": "bd0dcfab-ad79-4fde-9915-6876b08221bb",
+    "name": "🌙 加强破甲｜改编自日月西 @电波系 #GEMINI FLASH",
+    "hash": "eb06157b1ad297d0ab09a8696f97fb035f376ff9d8acf07a337e28a621dcaf55",
+    "len": 4778
+   },
+   {
+    "id": "prompt_1792063236592_alrk9mw",
+    "name": "🧊加强破甲@NIAN",
+    "hash": "7b0931c44170e8a04f94342ebf83cf4e8fe75f2ad8805d683714df9b56547b71",
+    "len": 1802
+   },
+   {
+    "id": "main",
+    "name": "📌 乐园载入｜头部单选",
+    "hash": "2125d110a615d1e626591c78362ba511f02b6c8ad53d632ab0294f19a8ac1afe",
+    "len": 2907
+   },
+   {
+    "id": "fruit-v65-head-oneiric-director",
+    "name": "📌 乐园载入·潜梦深耕｜头部单选",
+    "hash": "0ea4afdeb78f74c419286ebdf76c3b731809970699fef58e1c142bac8ad11869",
+    "len": 4470
+   },
+   {
+    "id": "chaoxi_13b33702-9b6f-4a68-b62e-60f84dcb92bd",
+    "name": "📌 乐园载入·温和｜头部单选",
+    "hash": "67e20d92f4c096cac80fbb771dcced5f2f5d0c2853eadcccf6b9786bbf001f11",
+    "len": 1775
+   },
+   {
+    "id": "chaoxi_f20630c2-01fd-4564-8388-70d951767b95",
+    "name": "📌 乐园载入·冷冽｜头部单选",
+    "hash": "e71032dcb49f8b0d1d6f0e1d6871104b578261b5f6606ed09e41c92d06837aa8",
+    "len": 1939
+   },
+   {
+    "id": "57c4caf1-6734-4f0d-83c2-fc80c8cba54b",
+    "name": "📌 超现实梦境 #GEMINI",
+    "hash": "7bb2c5c79a7f529c5aa75d0ec4c2fd72e3dc9df606de509c0cec32d7d8f5581f",
+    "len": 799
+   },
+   {
+    "id": "fruit-heart-c-e0f9fd3c50fb98bc0d2c",
+    "name": "📌 输入分层",
+    "hash": "b572c737e911c1ff23ac0a9f0400e8a550931b765c13f34c468774c546789073",
+    "len": 609
+   },
+   {
+    "id": "c60a3d98-af56-4725-9aa8-3123486f346e",
+    "name": "📌 果农上线",
+    "hash": "82dc14179023e8d2de27b7eb085e0b1c4252d3f766460463144812193e8d3e48",
+    "len": 1794
+   },
+   {
+    "id": "fruit-v61-display-section-03",
+    "name": "━━ 💤 梦境载入 ━━ ",
+    "hash": "c391be54e601a9006532c8a85a0c471f37ddab8de1fee6e0de0721bf6d896197",
+    "len": 64
+   },
+   {
+    "id": "personaDescription",
+    "name": "📌 Persona Description",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "nsfw",
+    "name": "📌 梦境",
+    "hash": "c3cbddefecfcb62db4900e47d1bebbe5186f65c3cc9eb1c790d55896d952735b",
+    "len": 23
+   },
+   {
+    "id": "worldInfoBefore",
+    "name": "📌 World Info (before)",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "charDescription",
+    "name": "📌 Char Description",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "charPersonality",
+    "name": "📌 Char Personality",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "scenario",
+    "name": "📌 Scenario",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "worldInfoAfter",
+    "name": "📌 World Info (after)",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "dialogueExamples",
+    "name": "📚 Chat Examples",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "chatHistory",
+    "name": "📚 Chat History",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "enhanceDefinitions",
+    "name": "📌 —— 💤 梦境载入 end——",
+    "hash": "4472d54171006289f3c3ff95c0a163f85bca5f03d40b24ee9b1463d3ffd01cd1",
+    "len": 8
+   },
+   {
+    "id": "e750a7ec-af2c-4b32-af0b-24b749491237",
+    "name": "📚 果农誓约 #GEMINI",
+    "hash": "b4ed5c8272fa2bc48aeb81bfff3904b2ed4ab2fba928332359ee3deb31334688",
+    "len": 84
+   },
+   {
+    "id": "fruit-v61-display-section-04",
+    "name": "━━ 🍎 梦境舞台 ━━ ",
+    "hash": "655ad4d8cdf603f79f2d9b4c9783c6e6b39c8c9ff5b3b2d0912e5188183d5309",
+    "len": 117
+   },
+   {
+    "id": "2136a81c-ccaa-4fa7-be7b-1d87266e24c0",
+    "name": "😴 入梦",
+    "hash": "23edad1c59db49b555ab92ec81b7414f443d5f7d3f346ade4729e8d84de873ff",
+    "len": 1092
+   },
+   {
+    "id": "c8cf081c-feec-43cb-8f16-acd75f4b02b2",
+    "name": "✨ 广阔世界｜去 user 中心",
+    "hash": "051c61ec65c7525348ebd29bc16a63961ae7c135d474483687f11f292faa7376",
+    "len": 566
+   },
+   {
+    "id": "36db009e-e880-4dc7-ba9a-be09c43d8d5e",
+    "name": "🦋 NPC 美化 @蛾摩拉",
+    "hash": "1015e3d9771071e36ab7b8332bc19b3edda2a0a1d2845516e25a0590ed00e756",
+    "len": 236
+   },
+   {
+    "id": "fruit-v61-worldbuilding-end",
+    "name": "——💃🏻梦境舞台 end——",
+    "hash": "cc754a83a7083f50868aad57d2d1a2f6b8413fb2e96f5dcc56da6cdbfdf1f874",
+    "len": 16
+   },
+   {
+    "id": "fruit-v61-display-section-05",
+    "name": "━━ 👤 行为指导 ━━ ",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "21255ae4-1893-444a-949e-43f8ec9b1a89",
+    "name": "🍓 优先人设｜调色盘与抗超雄",
+    "hash": "632b87506b78c621cc7d51a19b44e5fd528b612d5f29de69515a068b74c01689",
+    "len": 844
+   },
+   {
+    "id": "prompt_1792479869697_67tdywd",
+    "name": "🕵️‍♀️千人千面",
+    "hash": "52fe20d665825d73c42901efc6001448135255e7c8e387d6e19406e4d4f9ab08",
+    "len": 682
+   },
+   {
+    "id": "mrghawn649ehw2mykht",
+    "name": "🍇 对白指导（精炼本）｜对白单选",
+    "hash": "53df8baba9cd13a6c778225ce97cc7043fb9850730151d2e9ff516f989ec3368",
+    "len": 900
+   },
+   {
+    "id": "chaoxi_2110cf10-08ce-474e-883e-17889b62b221",
+    "name": "🍇 对白指导（繁杂本）｜对白单选",
+    "hash": "2c917437841a692b8911e60a170e80db28fd7b6c70a8cc35a699895d87be0672",
+    "len": 1422
+   },
+   {
+    "id": "chaoxi_e6b7a2bd-4f72-4a5b-9b39-f3aa001bcf7d",
+    "name": "🍇 对白量·随境自适应（默认推荐）｜对白量单选",
+    "hash": "80bcd71d1fd0cefdb162956898427bc0602e72b92bffe74fcd82d926a65d95d1",
+    "len": 376
+   },
+   {
+    "id": "fruit-qg-dial-sparse",
+    "name": "🍇 对白量·惜字如金（1～3句）｜对白量单选",
+    "hash": "8192ee0a8bc46bcafda48e38359c248a935af631ccecaa1ff9d3f34dc6fc1576",
+    "len": 336
+   },
+   {
+    "id": "fruit-qg-dial-balanced",
+    "name": "🍇 对白量·均衡流转（4～6句）｜对白量单选",
+    "hash": "f242b2d06e947de8000609a1f2ba6d6d0db35d689b1a5a0b7f662a1820fcc378",
+    "len": 312
+   },
+   {
+    "id": "fruit-qg-dial-dense",
+    "name": "🍇 对白量·密集交锋（6～10句）｜对白量单选",
+    "hash": "97a19e64f34e33862618c7646bb41fcd24ca047cf2b1648bd6a0b4f972b4bbeb",
+    "len": 394
+   },
+   {
+    "id": "fruit-heart-c-3aaa051c8b9fdc131891",
+    "name": "👤 爱U加强情感 #CLAUDE",
+    "hash": "54433127f310742c8c256a7cd44ed7e395c1cd854c9deb3836d71122ddbafddb",
+    "len": 149
+   },
+   {
+    "id": "c966ae89-6110-4f28-a55d-e870533fdc69",
+    "name": "👤 修罗场指导 @mukamuka",
+    "hash": "07273c09af5951a874bf8dd598f3326fdc499477dac00b90050b442f16b494bc",
+    "len": 413
+   },
+   {
+    "id": "5f175205-9a09-4d19-9c92-3fa1f9aff069",
+    "name": "👤 自由恋爱",
+    "hash": "241a417bb59a069d2a0b6a55f3372481c37b0f518a626dd12068ec578955def4",
+    "len": 116
+   },
+   {
+    "id": "f2779ed5-728e-4366-925c-84e455158cf6",
+    "name": "━━ 🧩 角色塑造 ━━",
+    "hash": "f9920bc827c37771742350399220013817a45b4f46494260ddba53a792e2555c",
+    "len": 66
+   },
+   {
+    "id": "fruit-heart-c-054358694af095888da6",
+    "name": "🧩 浓烈情感 #CLAUDE #DS",
+    "hash": "3bfc37a7904367f1515754e47b6e8ae3fd355422155033e45489e87174e4039b",
+    "len": 285
+   },
+   {
+    "id": "mrgh95f72twlqmre5sm",
+    "name": "🧩 神人压制 #GEMINI",
+    "hash": "1390c64b3360ae074a0b810d104b64931c6ebb38b17456cb5d8c56d5d2d48fb7",
+    "len": 1500
+   },
+   {
+    "id": "25407894-d779-4fcb-a3d1-0b532b983f0d",
+    "name": "🧩 美人光环 2.0",
+    "hash": "0c5eabe4201a5ecc36eb71537f6afe469fbeb59a4431e62a8b9b0f4b8e0468f7",
+    "len": 201
+   },
+   {
+    "id": "c57a2a53-346c-4971-afaa-d41959bdf4d3",
+    "name": "🧩 平等化｜做命运的主人 #GEMINI",
+    "hash": "c4bd33da916e657ef190fdd796d9296d81de75b635c3c1007cc0f236a50eced8",
+    "len": 216
+   },
+   {
+    "id": "e33e09a7-e4f2-4b15-956c-931e1013b815",
+    "name": "🧩 无人万能与克制外貌 #GEMINI",
+    "hash": "27c4f745e53e2152a171cd85e5781faba09b5dc99b485e53403864c4c9e1c2f9",
+    "len": 260
+   },
+   {
+    "id": "a1f51d01-9539-4fc4-b6da-9757615bac6e",
+    "name": "☁️ 加强版角色迷雾",
+    "hash": "01f9dd02321d80f04f10a5b6d22092dfa6944642a10a05ee1d19e79abe5ce7ca",
+    "len": 575
+   },
+   {
+    "id": "6778ba40-c964-4eea-aaa8-e3be2a9e0789",
+    "name": "👥end",
+    "hash": "faea820ade0b89d3a5c737ff2b87896a7690e6dedbfa6f8c16c4a9b09c51d5f2",
+    "len": 22
+   },
+   {
+    "id": "fruit-v61-display-section-06",
+    "name": "━━ 🎬 剧情指导 ━━",
+    "hash": "6614469cd7b4b1d72f2f90ec54a6c619d5b4681f53895d2512afbb7ab95ff245",
+    "len": 272
+   },
+   {
+    "id": "9e49021e-950c-4524-a077-09e22cb8606a",
+    "name": "🎬 好结局｜反阴谋 @电波系 #GEMINI",
+    "hash": "29582c76268a36c700c944465d613b1261e6bab295511a8d8c9e2de76b7baf78",
+    "len": 153
+   },
+   {
+    "id": "fruit-heart-ds-c4c05ad873452259a078",
+    "name": "🎬 好结局｜允许局部负面 #DS #CLAUDE",
+    "hash": "1fd65d27f23337938b3993b59cf1da9047e62a32b61a058b906baea62baf2cee",
+    "len": 120
+   },
+   {
+    "id": "0efff044-1d91-4cfd-96b8-9613cb57b385",
+    "name": "🎬 少阴谋｜走向单选",
+    "hash": "99f02147d06ddf949e1b70c5b44638f20bf7a94b00261e59ee4f5f65c9179497",
+    "len": 98
+   },
+   {
+    "id": "e343daad-bcf5-4318-a929-563e2fd064c1",
+    "name": "🎬 搞事业｜走向单选",
+    "hash": "09cfd8c7e64c37356e4a3611f1b31b1717aeb3774b8e8b2832e539ef597cedcd",
+    "len": 117
+   },
+   {
+    "id": "b5ac2252-03da-43e4-8667-0444f7648539",
+    "name": "🎬 搞拉扯｜走向单选",
+    "hash": "2289dbb93f40ec79be8e4887299700c51d3b1570f2f767422c4fb49c1c3c00b4",
+    "len": 149
+   },
+   {
+    "id": "4536f4df-ef49-4925-9ea1-f3e91b0c6ae1",
+    "name": "🎬 时间流速",
+    "hash": "dd59a1694d33414db2a1fbdaaf6cbcfd552882d6fe9dcbce22365d3a5c0f81a5",
+    "len": 183
+   },
+   {
+    "id": "fruit-qg-pace-micro",
+    "name": "🎬 推进超慢·微距切片｜节奏单选",
+    "hash": "8c0e084a435ed28da6a360f0bddb96213b0d664639e2b83acd226b654148c5f0",
+    "len": 245
+   },
+   {
+    "id": "c931d28a-56c3-4ff6-ac3d-eb866f3efd10",
+    "name": "🎬 推进慢速·半步沉浸｜节奏单选",
+    "hash": "e3294e8642dd1a6bc6943be5ef7fa5567c4a0b25be3bfe1af0beede4e579036b",
+    "len": 361
+   },
+   {
+    "id": "fruit-qg-pace-medium",
+    "name": "🎬 推进中速·完整单幕｜节奏单选",
+    "hash": "9d736d58466bda553183e36a9adcbe12addc394917f5b795461ce65f625726ec",
+    "len": 224
+   },
+   {
+    "id": "f6962045-1a79-4420-bea7-aaeec20312c5",
+    "name": "🎬 推进快速·快剪跨幕｜节奏单选",
+    "hash": "b5e16c365380eeba0360c91574f166630194b9a6bc800336224c50abbc3e5069",
+    "len": 215
+   },
+   {
+    "id": "5ee69d26-3b16-46a6-b30f-1537251fc8d3",
+    "name": "🎬 推故事",
+    "hash": "b60a4921b26a960f1301fb75850204ea704dfbf259c1695c8cc1385d909bf369",
+    "len": 59
+   },
+   {
+    "id": "e456843a-e23e-4f6a-8fa1-c39f1c7a1e87",
+    "name": "━━ 🎬 剧情指导 end━━",
+    "hash": "9237a3a2a087703b3ec1afd51ba903f62f8bb82cde87ce756d374a2aa6bf30a2",
+    "len": 7
+   },
+   {
+    "id": "26efab8b-1b47-4da2-8b9b-bf7e7a07b833",
+    "name": "━━ 🤖 AI模式 ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "2dcd43c5-52e2-4dcd-b220-dd889d8e5145",
+    "name": "🤖 大力推剧情｜20%扩写＋80%推进｜抢话单选",
+    "hash": "cc00fed1ded400302bd1dc8c8b7e2047d4a873306ccebfdc80e15f1e791fda78",
+    "len": 355
+   },
+   {
+    "id": "fruit-20260917-balanced-narrative",
+    "name": "🤖 特调版推剧情｜含扩写｜抢话单选",
+    "hash": "78fde034423ede8e2f2e7cf4a63dfc4c4510639aa54a8f917fe64d05c51a0471",
+    "len": 561
+   },
+   {
+    "id": "84704f6a-ef5e-4d2c-9d03-97ec3d9457d3",
+    "name": "🤖 纯复述扩写｜不推进｜抢话单选",
+    "hash": "8cac81b1ea0ac14e2da18b729a235c412c92b4f61fe79f9901002158129819b5",
+    "len": 310
+   },
+   {
+    "id": "87c8a41d-e219-4d35-acc2-dc6b5972cc6f",
+    "name": "🤖 防抢话｜只演其他角色｜抢话单选 @yuki",
+    "hash": "6740a211441562f1e583082962a8be9fad626c4551606bfbc240cb9419d49e19",
+    "len": 420
+   },
+   {
+    "id": "a1f2196e-3410-49d4-83ed-536163a7aee9",
+    "name": "🤖 AI 对话模式｜工作模式单选 @YUKI @蔚空koko",
+    "hash": "f624b72b709ee27067b1f8f687974854cdbed5987c6e303fe277bad9b39986da",
+    "len": 178
+   },
+   {
+    "id": "ff5be97f-43ac-4ec1-80b3-ad9370996dbc",
+    "name": "🤖 AI 大纲模式｜工作模式单选｜需 0927+ QR",
+    "hash": "4c9976509d54fb40e2645c6cdab941fc2611f8bb8098a3fb7393343b74c4fedf",
+    "len": 165
+   },
+   {
+    "id": "0a82f03f-a302-4923-b3c5-982b56d4389a",
+    "name": "🤖 AI 自检模式｜工作模式单选｜测试",
+    "hash": "46fa4a5341b6216f2fd12f8ba0a0609bca23555e8e9451300ceb63e996d8005d",
+    "len": 299
+   },
+   {
+    "id": "a75087cf-5707-4ce1-87fa-8bba69d7c132",
+    "name": "━━ 🔞 NSFW区 ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "8f04eeb8-161b-4bab-ae5a-1fbbd5cd992f",
+    "name": "🔞 温柔｜风格单选",
+    "hash": "c2ff14d054267aca17c5fd1cb81eaef35424ffcd627fa8dae747568cfd689485",
+    "len": 101
+   },
+   {
+    "id": "fcff6cca-f177-4c0b-a37d-c7f3aa797be5",
+    "name": "🔞 粗俗｜风格单选",
+    "hash": "29388c3007a786ef10d03d8cb82675d6a036ef7a0763fd6b342b43b1b2eba35e",
+    "len": 117
+   },
+   {
+    "id": "a6b68a17-2d4d-4890-be25-df0bba808239",
+    "name": "🔞 平等｜关系单选 @顶呱呱",
+    "hash": "3ae410886150f16131c28c2c3061f8a1edda20bb8e497e338164321744271380",
+    "len": 113
+   },
+   {
+    "id": "25cb080c-bf51-48d4-920b-02c839f0944c",
+    "name": "🔞 背德与不平等｜关系单选 @姜狸",
+    "hash": "6081b434a7a335df1756a26ea07f81b66a4919e04b2fc84a1becdf726d082e48",
+    "len": 230
+   },
+   {
+    "id": "4d4c20f4-50fc-46ae-af9b-0e4556a4611b",
+    "name": "🔞 媚 user｜关系单选 @村妹儿",
+    "hash": "a952759cd0ff771c5282ac1d3574263e9f1b269217ea6bf4702949ab96f13efe",
+    "len": 106
+   },
+   {
+    "id": "6d585e8e-0df5-439b-bf5b-4103ab6617b1",
+    "name": "🔞 改）体型差补丁｜通用版",
+    "hash": "0f59c743ed09a558184549cd1de46391cdd83faa87d7b78d4c9309f4b91ce5bc",
+    "len": 1033
+   },
+   {
+    "id": "5383262f-7024-40f6-94f5-9d819471c34a",
+    "name": "🔞 丁丁美化 @鸦唳",
+    "hash": "5de7845068e74d378ce19f97dfc9d880ed9e85270b184f529e7cf8b56317f7ec",
+    "len": 406
+   },
+   {
+    "id": "e5fdc6cc-4171-490d-aad9-c01d37e587dd",
+    "name": "🔞 射精描写 @柑橘",
+    "hash": "1cb030bf0fc2e17813811aef205b7c6335b20cfbbe7299bc81f75f4ee95cecb9",
+    "len": 373
+   },
+   {
+    "id": "9d760b48-1911-4876-b8e6-819dc147d7b9",
+    "name": "🔞 ASMR 对白 @小纱的Phantasm预设",
+    "hash": "27ed7c82f376c98d9f821e3174a1275e43398a416f082c26571f8f20a546a720",
+    "len": 1118
+   },
+   {
+    "id": "ac26a9fe-8d6a-4c12-802b-13b85271b653",
+    "name": "🔞 DirtyTalk调教蜜语｜淫语单选 @村妹儿",
+    "hash": "9f36cc305739394c11346562ea2da896afb30d27f6f8b9d7c4b0bf64b682be85",
+    "len": 2304
+   },
+   {
+    "id": "962e06ff-039f-4a69-9b56-75d3a9da5e5c",
+    "name": "🔞 DirtyTalk粗俗淫语｜淫语单选 @村妹儿",
+    "hash": "d47ff1df5a6701d7e7681a196ada596d2ec8896a2f945763f5964e0c95c93ee2",
+    "len": 1707
+   },
+   {
+    "id": "1484d2f7-aff6-496b-ad3a-0f5b8db60f17",
+    "name": "🔞 DirtyTalk淫语特化｜淫语单选 @omomini",
+    "hash": "6ff10ae29f9acf470c4b47689c1acd91475775cabd032e7e35da3c059c957331",
+    "len": 1330
+   },
+   {
+    "id": "d5d02521-c0f9-40f4-af6c-ee4e946528f4",
+    "name": "🔞 BG 柔和｜描写单选 @YUKI",
+    "hash": "4da2b88cb359b13ea3a1e2770f465d523805bf5204d8806f5bc9c46e8c5b7cb8",
+    "len": 258
+   },
+   {
+    "id": "cfdf95f9-6960-43b0-a921-cc5108c48ab8",
+    "name": "🔞 BG 粗俗｜描写单选 @村妹儿 @yuki",
+    "hash": "b1d7cb2594288db9489d5ba7afbb896e3f8f046ae24295a9daf4389344df8942",
+    "len": 936
+   },
+   {
+    "id": "102d2ee7-f8bf-451e-b66b-6ee630142209",
+    "name": "🔞 BL｜描写单选 @natami @吱吱",
+    "hash": "f9efe84a5a36f95122b52cbf2036259ef01d58e9df7b31edb7b18cd1a94cea61",
+    "len": 2292
+   },
+   {
+    "id": "e6cdb449-02f9-4626-82b4-fcf558b4a408",
+    "name": "🔞 GL｜描写单选 @Yuki",
+    "hash": "9b12032ee5a902e18fcc3f7f24c3a45ba28a6951a0c54da01b8a2433fb965447",
+    "len": 333
+   },
+   {
+    "id": "18d29e66-59c2-40b9-af2a-f5297d82fb91",
+    "name": "🔞 素股 BG+BL｜描写单选 @村妹儿 @NUE @小无",
+    "hash": "1fda912a70d089ef18313c23585be9c39a01d22aea57a83c03eb29a5149901cd",
+    "len": 1859
+   },
+   {
+    "id": "be5514a2-55b7-4e02-89d1-fc81259d8a1f",
+    "name": "🥵NSFW风格纠正",
+    "hash": "eef213574054d0381fbcfe000453aea81f183363f975ce786d1cacfc3a3e3597",
+    "len": 560
+   },
+   {
+    "id": "d35afafc-2c07-4b31-9f16-155f7a7a2002",
+    "name": "🥵快速恢复",
+    "hash": "9fd35b3a166748de5600a9c60b6a361d1117ac63e806f79bf6c759a866f9a7d1",
+    "len": 227
+   },
+   {
+    "id": "c5e30b32-c260-4cbe-83a5-404a560d8ae7",
+    "name": "🥵AV视角",
+    "hash": "c3c2f1f197d8cefa229c6345bfc5d776519f46a3f5770619fe9311292ff95d14",
+    "len": 1346
+   },
+   {
+    "id": "928c8fa0-79e7-481f-bac9-1410d5c42fda",
+    "name": "🥵强节奏控制",
+    "hash": "08202b1b55fbe485ee29b1f872a165d6722fb030be8bfa18822e16d56b67363e",
+    "len": 2269
+   },
+   {
+    "id": "275bbf75-c005-4d72-b2a9-35978cc2e041",
+    "name": "🥵乳控特化",
+    "hash": "424b3b1cbba76a7dea70b35a0cfdc71008e6f6b39f1866b7eeb64bf1ebc8aefb",
+    "len": 1506
+   },
+   {
+    "id": "cc4b3ba4-c92d-4737-b74f-2f9732efd987",
+    "name": "🥵臀穴特化",
+    "hash": "7c5a80999367ec40e360e24a32e7fd1ce12809390571e8b8e6eb77fd8e5e9f32",
+    "len": 1153
+   },
+   {
+    "id": "b9544c26-76fc-4403-8216-3df8d0c0eba1",
+    "name": "🥵足控特化",
+    "hash": "df8c055ca2f3d953c01ab4122a9cfaa088106f164998c7a818eab212cddbaf1a",
+    "len": 837
+   },
+   {
+    "id": "57d655d3-198f-4389-b4ef-7783aede06e6",
+    "name": "🥵唇舌特化",
+    "hash": "758b6e8d15e055c34c596d8d5ec007a00014afeae22f513ee41053de87a40168",
+    "len": 458
+   },
+   {
+    "id": "6c2830f9-fdea-472c-8011-ed21cc577797",
+    "name": "🥵迫奸特化",
+    "hash": "e06ae00e99335a933ac50675d2d6504f19fae8a3313f26e637be28938daa0592",
+    "len": 991
+   },
+   {
+    "id": "78d764be-cf2c-4c24-97e6-21de2e6b9803",
+    "name": "🥵隐奸特化",
+    "hash": "cb23fd1fdad4befafb37956648aa219a8aa9a04786458161cc0efdaa4fa9a8ea",
+    "len": 484
+   },
+   {
+    "id": "77596b2b-19bc-48a4-8c36-c5f734c4278d",
+    "name": "🥵睡奸特化",
+    "hash": "b04314e96fdb98184ec88a0b73bfb75953b53ac778162a283428e9dbd663c668",
+    "len": 470
+   },
+   {
+    "id": "17d64db0-5997-4fdd-8b9d-5edafa901bb4",
+    "name": "🥵ntl特化",
+    "hash": "4e5b6f6cf7b4a668101da990b58bd88a8d6dda19c427644d1cddc1a24d399bf8",
+    "len": 995
+   },
+   {
+    "id": "4dc6543c-cc4f-41a6-8baf-50ed6d5c2dc7",
+    "name": "🥵制服控特化",
+    "hash": "393e16e2e559d6254aec2bf73832a6e1803e1dcf42b4801fbe2ea118ef2e541d",
+    "len": 874
+   },
+   {
+    "id": "7177170d-d3e8-4bbc-8d66-60733bb38509",
+    "name": "🥵特化瑟瑟",
+    "hash": "a05c0a20b1bb8b1fd8f915dc460a13ed3ffc1171442526a3844aa12c388c374c",
+    "len": 936
+   },
+   {
+    "id": "5ea6c151-30de-4cc2-80e0-53b07a20c93e",
+    "name": "🥵 NP一女多男｜NP单选",
+    "hash": "e9d9e996ca152312edc5adae1096507c5d6ff94995093ef9576af1ba334da658",
+    "len": 2350
+   },
+   {
+    "id": "7e3c11d7-4db7-4452-b26d-99d928e9b1ea",
+    "name": "🥵 NP一男多女｜NP单选",
+    "hash": "1b7cb34ca3a4e2d1bf5cbfa77826a4a9b8d78e165a81da74436b67becb0ee716",
+    "len": 2138
+   },
+   {
+    "id": "c152abdc-54ef-4a09-9943-b87df98fb345",
+    "name": "🥵 NP多对多｜NP单选",
+    "hash": "56b0bb772fc1f0b32160244b4fbffd37f370c6c28e789848f040258ecfe703b9",
+    "len": 1824
+   },
+   {
+    "id": "fruit-v64-nsfw-contraception",
+    "name": "🥵注意避孕",
+    "hash": "a89cbee85efef8ebc502801a983f6a10df795f0772172ec597a05492ad16f51b",
+    "len": 1286
+   },
+   {
+    "id": "fruit-v64-nsfw-pregnancy-risk",
+    "name": "🔞 怀孕风险｜选开·联动seeds",
+    "hash": "37a15c7e9e8993f97030488200998b958ecd3d0225fe799ba8456e4bd5156fd5",
+    "len": 669
+   },
+   {
+    "id": "fruit-heart-ds-8376672a4e9842f6f9a5",
+    "name": "🔞 性爱主动 @小夜 #DS #CLAUDE",
+    "hash": "f84831451b64d74031d513deab841599d4d4a007d4b18675d08470a23caab287",
+    "len": 425
+   },
+   {
+    "id": "050f2d3c-ee6d-4bb3-b65a-8a1acf9e65be",
+    "name": "🥵 NSFW总开关｜按需·固定位置",
+    "hash": "5c6f3af6c8c820c5d1a7a570e39bab71fdd86d935771dfb7683b0a4a709d8f0c",
+    "len": 3298
+   },
+   {
+    "id": "ece65140-2541-4647-82a8-baf3a852c316",
+    "name": "📌 🥵NSFW输出｜必开·固定位置",
+    "hash": "4bda1ed6796ef12f64f8c55132deb82750faef6b925004677afc89f4899b012c",
+    "len": 34
+   },
+   {
+    "id": "fruit-v61-display-section-08",
+    "name": "━━ ✍️ 写作区 ━━ ",
+    "hash": "e6bc4347d693c7096786e112139b688d2d80f7b80865440a71557848bb07cc7e",
+    "len": 130
+   },
+   {
+    "id": "1480cbf5-ca0b-480a-8605-c58fa9c0d78e",
+    "name": "✍️ 摄像机原则｜写作指导单选 ",
+    "hash": "69c1e7ba48d87c0da6d168866aa1bb801d8764ace4b42349604c8af3dd34abf4",
+    "len": 238
+   },
+   {
+    "id": "4c522812-6528-4d62-8ff7-18e0561c050b",
+    "name": "✍️ 极光写作指导｜写作指导单选 @电波系 @眠雨",
+    "hash": "1041d5e47d8e741822fb23553f65749f1e5a7e9b8e3148919cbf083ee43e47c8",
+    "len": 770
+   },
+   {
+    "id": "66fa7145-d59e-46c7-b1be-346c5e8b3c45",
+    "name": "✍️ 抽象写作指导｜写作指导单选 @巴比伦",
+    "hash": "93ddce37093f23c5f5ff91fd37b15a08911463073872a1ab6019d3938a593327",
+    "len": 1921
+   },
+   {
+    "id": "fruit-v7-write-patch",
+    "name": "---🩹 写作补丁---",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "fruit-qg-vivid-demeanor",
+    "name": "🎭 鲜活神态与气口补丁｜选开",
+    "hash": "ff85a066fb5eab7d80d0c5e3f2db5bc8119b7cb18efd74e0205b74ba09cfa4dc",
+    "len": 1037
+   },
+   {
+    "id": "chaoxi_03a9e0cd-24b6-4746-99ae-4d0d0f203057",
+    "name": "🚫 禁群体对比衬托",
+    "hash": "693f2088d9fd03dbff0ef2c36283033cf45ca604b2b181a511e635293580479d",
+    "len": 601
+   },
+   {
+    "id": "2091c33e-1dac-4573-898d-35ad3797edbd",
+    "name": "🈲 NSFW禁词（随NSFW）",
+    "hash": "7a7fd36abb4dea472d7fd74ea362ad1a4b2c53a11fc425ad64131b5c4dfbff3e",
+    "len": 95
+   },
+   {
+    "id": "00b5f3c0-d40a-4221-8117-2ceb32d86aa9",
+    "name": "🈲禁词",
+    "hash": "c482b80c2fdeec82b9fdea9d7e5981e6050c7efe32ad24980a8b0a9bf7b35b35",
+    "len": 251
+   },
+   {
+    "id": "fruit-heart-ds-190126c69bb53b458dc2",
+    "name": "🚫 缄默准则3.5｜实态白描总纲",
+    "hash": "2133b37a4c7a334459828e4165503cb4f0814af33945e4e23af3c3d0291740de",
+    "len": 1432
+   },
+   {
+    "id": "548e2eee-5858-4580-b42c-c4ed8356cd77",
+    "name": "🥵 官能凝视补丁",
+    "hash": "d57ffe16e428f0880b08ca6546263c9e1d9d5b698354a3b5b5012529bb17dd69",
+    "len": 288
+   },
+   {
+    "id": "fruit-v7-write-end",
+    "name": "━━ ✍️ 写作区 end ━━",
+    "hash": "328f0341aaccb832755be8ee3b7c7a68920429889dca77a3e20b925fc60301a8",
+    "len": 7
+   },
+   {
+    "id": "af6e651f-f3c4-450c-9399-8fe19342b807",
+    "name": "━━ ⌨️ 文风区 ━━ ",
+    "hash": "daac2758a33c5680ac2cbae2f98b5030058b210ead7dd26e6822f63546f3b669",
+    "len": 197
+   },
+   {
+    "id": "bb30677f-528a-426b-8f03-fc4dc9428137",
+    "name": "⌨️轻小说官能特调",
+    "hash": "b3b86810e795f3fd1490b5aaaf01258ddee0f09bf0d29d858a914cc23089bf92",
+    "len": 935
+   },
+   {
+    "id": "b4a06f05-f6d2-45ba-b6f3-e300ad743bab",
+    "name": "⌨️ 恋爱轻喜剧｜1028 升级版 @电波系1028升级版",
+    "hash": "30ae1fd0895e26656a987e6fdf8ae2ffaa503d6c1a3d45be27f242d93df51fdf",
+    "len": 1696
+   },
+   {
+    "id": "84ba5cdd-0786-45ee-8329-de992f6e7dcd",
+    "name": "⌨️ 大白话 @小白狗",
+    "hash": "58f5119e7e5e6f47760e2702d341eef17bfedf09517304d424c9fec6c79c53d8",
+    "len": 4678
+   },
+   {
+    "id": "mr4r41p4lyc09z407sf",
+    "name": "⌨️ 繁花-市井与旧时代话本",
+    "hash": "aae98a1f4402358d14551d5aa55a895a1b7bb97f013da1ba808528abfeca0f93",
+    "len": 821
+   },
+   {
+    "id": "10979c03-1a22-48d8-ad6f-c2762d587858",
+    "name": "⌨️ 女性向黄油 @小白狗",
+    "hash": "75d59a8d8b40babebd0bd014a9330ec57f3667bb9d47b87cc31b9c0a7905e536",
+    "len": 3700
+   },
+   {
+    "id": "45990406-5104-4e03-91dc-10275a0602a1",
+    "name": "⌨️ 通俗文学毛姆",
+    "hash": "fa2b7f3ed247a18cac3ebfc035bb1d4f1a113e92f4ba5f6ec067b9a009847fe5",
+    "len": 567
+   },
+   {
+    "id": "ec31dfff-eae7-401d-9704-5315bfa78319",
+    "name": "⌨️ 民国江南白描",
+    "hash": "6945f7f34ff6c7225304d9d9b21246f16db98c466152e35af69e6648c25a282b",
+    "len": 2099
+   },
+   {
+    "id": "63ac9277-258d-42e0-8658-8f910c7054d6",
+    "name": "⌨️ 民国白话世情笔法@natami",
+    "hash": "2183a06e06aef29b8b8ae8021209fe6b6032a637973cc7a74db5d5ffe88df37a",
+    "len": 3401
+   },
+   {
+    "id": "9d5f6f08-2643-4023-99d2-9f2d04699676",
+    "name": "⌨️ 阴郁纪实 @NATAMI",
+    "hash": "7fe359a4de516323bd166664130a2387d30a0892fad0d3bf38b542d42caee435",
+    "len": 2787
+   },
+   {
+    "id": "decb3208-3b13-49a5-9eed-3fc107e2558f",
+    "name": "⌨️ 至亲至疏 @小白狗",
+    "hash": "d07837a87bd3f3b9fb9c499b97bf06279082ffc289fa65aad0dafae7c9038d27",
+    "len": 4188
+   },
+   {
+    "id": "5f841a47-d996-4891-a371-57aac4d68a4a",
+    "name": "⌨️ 克制白描 @电波系",
+    "hash": "795ea417d89c0cdfea1f82d589fcb23a97c38fc9f66570bb7443b1297c6ba46b",
+    "len": 912
+   },
+   {
+    "id": "41ecaeeb-29fb-44e4-8e0c-0fe8af746bd3",
+    "name": "⌨️ 现代日常 @村妹",
+    "hash": "8de9e34d0976c86fd841dd6e07bbf197804d109922bb22e8719bbbac0ee11e95",
+    "len": 857
+   },
+   {
+    "id": "2a8f73e6-dc4d-485f-bd59-d911471ed53a",
+    "name": "⌨️ 古代日常 @村妹",
+    "hash": "5e88662a49e11e05e0dd9d9417f6eba611439e1863844a46800c01e34bafdbb7",
+    "len": 848
+   },
+   {
+    "id": "ac9a783c-66da-4ffc-9d41-afa04f973dde",
+    "name": "⌨️ 意识流 @电波系",
+    "hash": "207721d2baf82bcc290596dc43e7b29f077b899ae2b4e2b42785d6df1f8e6bd2",
+    "len": 3148
+   },
+   {
+    "id": "1a32c768-282d-4a32-baff-6f4366412598",
+    "name": "⌨️ Galgame 青春恋爱 @贝露",
+    "hash": "b515567f5dca791abb46ddf7a0d7df6926da86104b1d708424a97a44972a21db",
+    "len": 766
+   },
+   {
+    "id": "d4380d7d-2129-4d93-a92a-d1286480eb95",
+    "name": "⌨️ 浪漫｜新版 @小白狗",
+    "hash": "9ff5e90f0662ff8bdc95b2f50c6297c04649db8369e15f0b3c1e30273635eb7d",
+    "len": 4293
+   },
+   {
+    "id": "9f465341-d880-4b60-ba8e-ca6cc278664b",
+    "name": "⌨️ 现实 @小白狗",
+    "hash": "c3dfaa7caa7add5b0e193040ef135395bff2f706fd4428c6fd610b72320dc520",
+    "len": 3624
+   },
+   {
+    "id": "5d77beb2-50c0-45f9-b35a-aa05e4d465d4",
+    "name": "⌨️ 港风 @小白狗",
+    "hash": "c5cea9308f5f7650f4e7ff3cc9e76bc7693ffdab037c3d9b34a8dc9c9641304a",
+    "len": 3858
+   },
+   {
+    "id": "a98741d0-cbeb-4827-8c77-962c17fa513a",
+    "name": "⌨️ 翻译腔 @小白狗",
+    "hash": "6b311c6a6bce80b6aad336edc4f44d78593c876eecb348f21733863af8ac3489",
+    "len": 4284
+   },
+   {
+    "id": "20c45761-e926-43a0-873c-2ed57a6802f0",
+    "name": "⌨️ 吐槽小白爽文 @酸砂糖",
+    "hash": "623e384dc07bb2fae0b4c1c16915cd7001767315a86fce3478808972ad732225",
+    "len": 1427
+   },
+   {
+    "id": "8cd2d0b8-e179-4733-ba0c-59e23e9908eb",
+    "name": "⌨️ 成人童话 @natami @yuki",
+    "hash": "512446830bb02649890291b334e6930d68e7ae59809f941aad9334463bd03c0e",
+    "len": 1803
+   },
+   {
+    "id": "0aa6b943-3e1c-4d18-899f-40dc1e3efe4b",
+    "name": "⌨️ 左翼现代情色 @natami",
+    "hash": "929e239091909257a97974b0a1e5b2aba619a25b3deafe3099eeda6c0d83b5e1",
+    "len": 719
+   },
+   {
+    "id": "481b867e-1d5a-4396-b81a-09868dc227ee",
+    "name": "⌨️ 拉美禁忌爱情 @natami",
+    "hash": "6fa67b175b2e16e9ed0ba035e45a3f9787df0407530b3558b83cea1f795833e0",
+    "len": 539
+   },
+   {
+    "id": "f89f78ca-0e88-47bf-a82b-3177678c0133",
+    "name": "⌨️ 古风 @Asuthia",
+    "hash": "25efd5b770230abb38d7e62e59ed9e9769e1cbdbb838a78539fe4abd117b2eb8",
+    "len": 2120
+   },
+   {
+    "id": "df1725c6-0f43-4208-80ca-91bfb10a95aa",
+    "name": "⌨️ 虐恋 @Aqiao",
+    "hash": "9b02708f15ae2c6df0703c9c2f953f016dce8d8855cedd6f643bfa68e4349f5e",
+    "len": 618
+   },
+   {
+    "id": "7c11f7fb-6e2e-47db-b619-f4c873638490",
+    "name": "⌨️ 色欲张力 @电波系",
+    "hash": "7b06bf83328afa6f97e0733e617466bfc9290db0a08fc94596625407c786a2c1",
+    "len": 1793
+   },
+   {
+    "id": "28a9b463-c1cd-4a9d-8957-7e4303d7ecf4",
+    "name": "⌨️ P18 @村妹儿",
+    "hash": "8245f8977ee8d4560537a8c35d8ef80658ad86ee12f9c6ae91353e1e5965e4ad",
+    "len": 1352
+   },
+   {
+    "id": "9b0a91f0-3234-415f-97ae-345edec2917e",
+    "name": "⌨️ 后 311 日本青年存在主义 @natami",
+    "hash": "c3ed30477e9baf9bbd04a177d8ad46d7d4f6575da84e41db56154f71ae2814bf",
+    "len": 1853
+   },
+   {
+    "id": "420c8a68-51ce-4a61-b099-0139cf54d6fe",
+    "name": "⌨️ 俄国文学｜陀氏特化 @小白狗",
+    "hash": "d3a4c1772edb87db14779972cf26386c568361a56df66fdc6d6d166cd9b5c619",
+    "len": 3742
+   },
+   {
+    "id": "317535a9-9314-4b3a-9714-b609c464e267",
+    "name": "⌨️ 武侠仙侠 @小白狗",
+    "hash": "69a54109fdd389b2f5f492f42a62351e33b568646d818bc9fe4dc1e49d728de3",
+    "len": 3198
+   },
+   {
+    "id": "7374963f-111e-4ac4-8d34-fbbd5560abe2",
+    "name": "⌨️ 古龙武侠 @natami",
+    "hash": "023a5bcd91027f28be38a91fc194d074f9ec5fd393f656060a30518c651af289",
+    "len": 601
+   },
+   {
+    "id": "fccafa01-f766-49bc-913a-6d4c34a88423",
+    "name": "⌨️ 模拟恐怖 V2 @YUKI",
+    "hash": "d278bfb1e5bd9b4b2c8cc6ce78e4ddbf92cc1f63c2c58ad975a6bb4b4980b312",
+    "len": 2313
+   },
+   {
+    "id": "928fb0dc-46b0-4330-972d-3ae285570c99",
+    "name": "⌨️ 群像 @小白狗",
+    "hash": "2eb6caa4a0b36e90a1906e4e533744bbc17d2787ac1aa7879bcdebd79af1ff16",
+    "len": 4617
+   },
+   {
+    "id": "6a25f0b3-67dd-4eef-8b36-2d7e07b78ebc",
+    "name": "⌨️ 自由文风 @蛾摩拉",
+    "hash": "72a10b0ed1220b54a1550fa9601283ead21307c725991fd5c10e48263cd6042b",
+    "len": 144
+   },
+   {
+    "id": "087de388-084c-4ed1-aef2-2d4d7bbe0095",
+    "name": "⌨️市井生肉",
+    "hash": "1b188846dfa64964e0e3f307f2428a412a8f54dea658e52ab3d235bedeaadba3",
+    "len": 2213
+   },
+   {
+    "id": "41eb5c96-53bb-47fa-8136-0fca97043300",
+    "name": "⌨️ 自定义",
+    "hash": "5b3c26f870af9afa661aa2985ff672175e0da259973ad9df85d92f003efba8cb",
+    "len": 50
+   },
+   {
+    "id": "fruit-v7-style-end",
+    "name": "━━ ⌨️ 文风区 end ━━",
+    "hash": "6a6d974e616f2a10ac55235e9dec0fef138074ccdac6139ddeee07844699b3f1",
+    "len": 5
+   },
+   {
+    "id": "8f61e78c-cb5f-4261-b84a-2cc9ca58fcb1",
+    "name": "━━ 👁️ 视角区 ━━ ",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "78b513a2-346d-4e5d-a209-db3c36222093",
+    "name": "🗣️ 双语对白｜自动识别 @NUE",
+    "hash": "1ffbcad01b56723e6f286e7f5d752a8aca89705d23f926ff5168ce49b4af2440",
+    "len": 212
+   },
+   {
+    "id": "e5a86ccf-f921-4e2d-b696-1ca3b053fe38",
+    "name": "🎲 事件判定 @NUE弥月生",
+    "hash": "a0aea0409c636110b50dc130dec7f08243e877cf5dd3f08ebd4f344fe32ad1ef",
+    "len": 589
+   },
+   {
+    "id": "fruit-heart-ds-ec57a31f2ab6b6d5b0ad",
+    "name": "👁️ 防出戏 #DS #CLAUDE",
+    "hash": "0507a79a12ed7327536c7b515ec9690c3665e0798a9215f2671354dc99d6f586",
+    "len": 138
+   },
+   {
+    "id": "d69c6ff3-19d3-451d-8ca2-d8cc89091022",
+    "name": "👁️ 角色第一人称｜人称单选",
+    "hash": "1e2b3fc8fb52c4b4ad218b77a28f3551f8f1de66f8765779ce53649fc07eab4d",
+    "len": 126
+   },
+   {
+    "id": "29150ea9-4b9d-4600-afc4-a98e3b33c2e7",
+    "name": "👁️ 用户第一人称｜人称单选",
+    "hash": "038787810d3fe02f8c0744381634d81321e09ae6306a7c6d271632b86ffcb87f",
+    "len": 88
+   },
+   {
+    "id": "7b8c5602-ec9a-4469-9fbc-9df4eb0668f8",
+    "name": "👁️ 用户第二人称｜人称单选",
+    "hash": "4cf0b9e4f51fbac69a62588d3233c069f708c3a3e17f6fd43989b6dfa842b578",
+    "len": 124
+   },
+   {
+    "id": "59a054d3-7276-47a5-b0cc-30e6d5183e90",
+    "name": "👁️ 第三人称｜人称单选",
+    "hash": "59c4b2198d1dc72d1c6aae1cf9048f6f56d39c1e722205527ce9f572be547716",
+    "len": 93
+   },
+   {
+    "id": "355ecf22-0ea5-4f00-96f6-df6f15d9fc3e",
+    "name": "👁️ 他者之眼｜人称单选",
+    "hash": "bea7091e8e7d2be702de3d93569f60760d6cf8b9e5cff7039b61f4c498a6f2f8",
+    "len": 717
+   },
+   {
+    "id": "9dd126c4-34fe-47aa-80cc-bf67e2664bba",
+    "name": "👁️ 随机漂浮人称｜人称单选",
+    "hash": "df134e7be2598fe953fabb399db2f0cabf495ec0e013386a2be20ab934002ab7",
+    "len": 206
+   },
+   {
+    "id": "47fbea03-6414-4a79-80bb-d21cca50d77c",
+    "name": "━━ 🎭 剧场 ━━ 主剧场只开一个，其余可叠加",
+    "hash": "32d1e2d9299244b6070694b642a3978af817b149bb4b395a9788560522f56a16",
+    "len": 145
+   },
+   {
+    "id": "86e756fb-5bf7-48f8-8267-c4c310bda586",
+    "name": "🎭 汐见剧场｜主剧场单选 @YUKI @电波系",
+    "hash": "b5793355623de9ce17075844ba08f3a980ce685d8e08f54a05815b102a7bc831",
+    "len": 716
+   },
+   {
+    "id": "49af65fe-7f5e-4d00-9db3-afcde904aae9",
+    "name": "🎭 小回剧场｜主剧场单选 @小回",
+    "hash": "33af54dc8897495a2524f6408f40af8d2f4c7f7c831967d13872706aa1ad253e",
+    "len": 752
+   },
+   {
+    "id": "61e59d5f-3479-4fd4-90a3-d996050298c4",
+    "name": "🎭 极光剧场｜主剧场单选 @电波系",
+    "hash": "b70f195b79b40edf20b2eef6d067f6766fdf5deca82441bf06d8cad533bee448",
+    "len": 3098
+   },
+   {
+    "id": "3bebef2f-ad65-4f62-aeb6-37ec0d0bedb9",
+    "name": "🎭 纯文字剧场｜主剧场单选 @电波系",
+    "hash": "d5ef3b5ed81832c90444b410dda7a484b95d84a87881d937495538610bbfb7bb",
+    "len": 1227
+   },
+   {
+    "id": "594de0bd-7885-4ad2-8d1e-e00901106d47",
+    "name": "💡 完全随机剧场",
+    "hash": "14981f477eb7b54f10134925b8685cfeb63a05ccc60c65aca09a314c80b6f2ec",
+    "len": 68
+   },
+   {
+    "id": "d00bc4a5-eea6-48ee-aa0b-674d8ee0d98d",
+    "name": "💡 盲盒剧场 @电波系",
+    "hash": "cdb17a337120f55a3c298507e65a2d323c05f2ec732ff1526c0364e3173b61ef",
+    "len": 1141
+   },
+   {
+    "id": "7a63b3f1-afdd-4e56-9642-162d5896b607",
+    "name": "💡 日常剧场 @电波系",
+    "hash": "2d09c220809c5f61347abbb0539ebacca89f687a64e02dbb3ac9c957077d1bb0",
+    "len": 93
+   },
+   {
+    "id": "e1120b3c-08f3-4d2e-993c-d30c4e29b24a",
+    "name": "💡 论坛剧场 @Capybara~",
+    "hash": "ee25081bc4ce187abdc700843328de8105bd4697f1befdfbcc34b01226c00356",
+    "len": 62
+   },
+   {
+    "id": "fruit-heart-ds-7ee1941e536e98081d55",
+    "name": "💡 网黄剧场",
+    "hash": "cabd904c77254f370732e95a85780be92ef85dff06bbf6e69e1392c5d9c6e9dd",
+    "len": 80
+   },
+   {
+    "id": "4772a305-655d-40bc-9cb7-384337bd6dc4",
+    "name": "💡 文艺盲盒剧场 @Capybara~",
+    "hash": "a206632115bf04bfea5bd015635c99362e406f63e0ddbe0ae241a5941618b702",
+    "len": 337
+   },
+   {
+    "id": "dace3edc-59c0-4724-8dd9-fe65c2a5d6d8",
+    "name": "💡 后台人生 @无名氏",
+    "hash": "65b547eb37b72bf4511c475abe11de69dec0499e116bb406321d79fa702bf077",
+    "len": 426
+   },
+   {
+    "id": "8132534a-965d-4108-9b5c-19cb0c1a9cb8",
+    "name": "💡 OOXX 状态栏 @小回",
+    "hash": "7e9fff35a7f602658ffaa72352e6f8f6b8b1f84ff1df6a9bbb7e7146e9b24d9c",
+    "len": 137
+   },
+   {
+    "id": "249655f9-9564-4b65-9d2a-5d01ceca62e0",
+    "name": "💡 自慰剧场 @valiant_unicorn_98379",
+    "hash": "193d059fa353a173d44284e93cd08f1731dae6236103c19f402c4d0be1bbdddc",
+    "len": 345
+   },
+   {
+    "id": "3ff8ce3c-b381-424c-992e-ef0b2bf67e0f",
+    "name": "💡 育种吐槽剧场 @labra4798",
+    "hash": "eeeaa4e834236e8dedb94c959ea06b14484c8d9ddef82a4aee43067eb6698dff",
+    "len": 176
+   },
+   {
+    "id": "bbd36fc6-dac9-462d-9cab-f1340d253f47",
+    "name": "💡 自定义剧场",
+    "hash": "e102660d59707426ac697ae19658e7a5134a74a3b56c4de8de97e8a94631ae1b",
+    "len": 37
+   },
+   {
+    "id": "980ae290-49d4-41da-b8f2-0c2536c90186",
+    "name": "💡 SCP 剧场 @yuki",
+    "hash": "9d729e11846beafa32f9f0ddb3af5a8ed9e2fdbd3071167260f9e77bfc431175",
+    "len": 116
+   },
+   {
+    "id": "4964a43b-ce8a-4842-b63a-bea0bbe6ab5c",
+    "name": "💡 恋爱游戏剧场 @capybara046",
+    "hash": "36e0e4f1e4f74036aa7bd06e02782d9974653b79e4492c32e31463aed54c6010",
+    "len": 173
+   },
+   {
+    "id": "d25cf7f2-58d8-479a-9bf6-996ef7546d8b",
+    "name": "💡 变成瑟猫猫 @NUE",
+    "hash": "c6da6496004efb46d8467a98bed2e13cb550500685096caac233315b6367d627",
+    "len": 352
+   },
+   {
+    "id": "49c39b68-b43a-4fd6-afcc-073e9605f64f",
+    "name": "💡 黄油剧场 @Capybara~",
+    "hash": "bbbd9e3b603255d71fb6084de805e5ea57e7ead8adc7e96f5bb7d5585b439305",
+    "len": 254
+   },
+   {
+    "id": "1f7dc406-7b21-4300-a446-b803ddad848d",
+    "name": "💡 换装剧场 @右手一只鸦",
+    "hash": "79da832cae0afe6a88dd96fb1a55e3b5db262114db878ce066316943e16d09a7",
+    "len": 138
+   },
+   {
+    "id": "8f7a9856-9aea-4af4-b25c-fc3667047a85",
+    "name": "💡 What if @Capybara~",
+    "hash": "a557193a6de6e6d12777219e03d76f953abfc0fbad1248b451dcd6300d5b5845",
+    "len": 133
+   },
+   {
+    "id": "c2797fb6-c9c3-437d-b1d6-e4680c54b3c4",
+    "name": "💡 弹幕 @小回创意",
+    "hash": "f6edec79c6ae053603c16f08f4fec99399e80e70bb2c0b32693655621dfab839",
+    "len": 96
+   },
+   {
+    "id": "80bb3e14-caf9-4166-824c-37beaa084d1e",
+    "name": "💡 多人格剧场 @QAQ",
+    "hash": "df6d65a2f011d0daaa799af0d124aebe6bead0b44376c3999d7f795ff5fd45e0",
+    "len": 151
+   },
+   {
+    "id": "2704ffaa-b860-4d45-8a3c-3716cfc6ebfa",
+    "name": "💡 内裤剧场 @电波系",
+    "hash": "8d847158dd41befd8a4089e12559ca7eb6fb52f1124f2acc40fc4715f61c86e7",
+    "len": 424
+   },
+   {
+    "id": "c8a89e6c-5b37-42b7-b9e3-2b9076ec8d92",
+    "name": "💡 桌游剧场 @Clame Cyrus",
+    "hash": "3f7351034c73687064acbc9757bbc3f23e6f662c067bc442e0363ac7448267e7",
+    "len": 123
+   },
+   {
+    "id": "da7fbdcd-8753-4f54-a96e-0b30fa32e73e",
+    "name": "💡 恐怖 @右手一只鸦",
+    "hash": "e04eb9b931cc7cc9506935a26f3fd40a6bcab09a37bedcea708a9e652e453059",
+    "len": 223
+   },
+   {
+    "id": "99789e30-b37a-4719-9e7d-a0a6626cb09e",
+    "name": "💡 其他视角",
+    "hash": "c856d9a25c666b8021f2bc8f2f61d4efcc760e685b182a084b7d2159047f6b9e",
+    "len": 113
+   },
+   {
+    "id": "ef3a08bc-10f2-4ca0-9033-bec6ae86ae03",
+    "name": "💡 搞笑剧场 @鸦",
+    "hash": "6c7ae7f41cccbf4267a05086ca18b50c729988aa42eb01f99594de73d19aa715",
+    "len": 85
+   },
+   {
+    "id": "1a962feb-0485-459b-9458-e6dd6dd03a44",
+    "name": "💡 同人粮 @右手一只鸦",
+    "hash": "aac788691547a3ecb4461a942e37818d61131f8650aaa4db788200d96a3a5fe7",
+    "len": 81
+   },
+   {
+    "id": "390d6887-9a69-43dc-8c88-c6ea73288ed6",
+    "name": "💡 碎碎念",
+    "hash": "99948993f8ce3c70ac93c5d17b4d41c63264687873e333f5c1a447b5027c136e",
+    "len": 96
+   },
+   {
+    "id": "f3d5cbb8-bebb-4b00-9a5c-7ef5d2d040d2",
+    "name": "💡 电子设备模拟 @电波系",
+    "hash": "104476d34d622555d32edd8c80e7d6c5e4349d5bcbdd91a1b373be90b6f60adc",
+    "len": 190
+   },
+   {
+    "id": "fed78d89-a0ba-4e9f-a226-63ba30cd600d",
+    "name": "💡 废墟盲盒",
+    "hash": "438293dfc6ae25742ce9030d3eb70469dd264d09fad471a5ade088f88fe8a224",
+    "len": 100
+   },
+   {
+    "id": "1a51716c-48b6-4944-b8c8-e8c50b2bb66a",
+    "name": "💡 性幻想 @natami",
+    "hash": "c0bf4123184cec2227a4daa20d8c8ee6fe511de1a45cdc77991934de7539fd20",
+    "len": 180
+   },
+   {
+    "id": "30d17472-43af-49a0-9444-6859ff792c87",
+    "name": "💡 随机手机",
+    "hash": "90a98d15da8cd67259ccd5db83888bba63f244972572eaead980900befefee98",
+    "len": 101
+   },
+   {
+    "id": "1be1e101-3470-4969-aa90-cd9a491f393a",
+    "name": "👨‍🌾 果农来了｜必开",
+    "hash": "373fd7df7a8bb77b7cb11a8df036fdf8b8d7614709f81f3a24da6f1ff5c0aacc",
+    "len": 125
+   },
+   {
+    "id": "5a22bf88-bd80-46a7-b73d-75dbf723ecc8",
+    "name": "━━ 🍏 输出 ━━ 按角色卡实际功能开",
+    "hash": "7c2b5ff8f2ff93e30e2cf653f73189cb83b06405271d1e1c8ce7ec247dbfd0b0",
+    "len": 12
+   },
+   {
+    "id": "a8571e41-7604-4a15-9481-a42f838e34d5",
+    "name": "👄 语言设置",
+    "hash": "41934a3d5d15c202602f5b95dd9b8b95732b854dae1a128a15daa502805e4b43",
+    "len": 103
+   },
+   {
+    "id": "cdbc3eb5-1c06-4ff1-8a49-ce118913d8f4",
+    "name": "📌 字数·随境三档（800-2400字·默认推荐）｜正文格式单选｜必开",
+    "hash": "8129d780e61581b358479ccb87470ed49c1e2b4e262517ddcccc2f039efb04e8",
+    "len": 660
+   },
+   {
+    "id": "prompt_1792821576575_44uqg5y",
+    "name": "📌 字数·面板弹性定制（兼容果实之心改字数）｜正文格式单选｜必开",
+    "hash": "9a9fcf23ad197bb754a7441a92b8b75c20c2fd95c787757f17f07493ab3e09ef",
+    "len": 427
+   },
+   {
+    "id": "fruit-qg-word-short",
+    "name": "📌 字数·轻快短篇（600-1000字）｜正文格式单选",
+    "hash": "81409d6e934f692bb97e0cf2582ea661ce9db297f55bf46ec69c9f62943f30b3",
+    "len": 374
+   },
+   {
+    "id": "fruit-qg-word-medium",
+    "name": "📌 字数·黄金中篇（1100-1600字）｜正文格式单选",
+    "hash": "7bb759d9d85326c07c5398916f1ecc518fa7d35c0fbd0d2925e944c9ea94290f",
+    "len": 380
+   },
+   {
+    "id": "fruit-qg-word-long",
+    "name": "📌 字数·沉浸长篇（1600-2400字）｜正文格式单选",
+    "hash": "3740bbb694e84823226c8805421e6e9109705988ee799cf63e5e7532a2920bab",
+    "len": 432
+   },
+   {
+    "id": "8eab8a28-e6d1-44fc-bb66-8724eed57ead",
+    "name": "📌 前端卡｜正文格式单选｜必开",
+    "hash": "1a7d15f83319575ee954670deac9d100e1914df4d1026af6fe5e84173bbb6c0d",
+    "len": 248
+   },
+   {
+    "id": "36c59dd3-b3c7-463c-8a77-ed15d1b849f4",
+    "name": "🍏 角色内心",
+    "hash": "2f37e7e2ae8546284e5e83043253a504df97846b38a14c6718d3be5a0d17ff66",
+    "len": 292
+   },
+   {
+    "id": "6361844b-db4f-4fb1-a3d0-5e2d16a8facd",
+    "name": "🍏 灵动正文｜选开",
+    "hash": "e0a3b7dc3740cb87316e335383a7e6b5c7d9d4f22e01c44cef727449777d18b6",
+    "len": 51
+   },
+   {
+    "id": "4f1d51a7-1fbe-4271-8c60-14e006ac5c68",
+    "name": "🍏 果农吐槽｜选开",
+    "hash": "365dd8ff6c764e5d1346e84b38f374d2d23d95b4f254ff129b5ae95bf6ed4068",
+    "len": 161
+   },
+   {
+    "id": "31661ca8-421c-4385-b98c-f517ac4e9ede",
+    "name": "🍏 正文与字数检测 @电波系 #GEMINI",
+    "hash": "f7c2135399704f96b4cf666ca4d4c2edeae383f6a0483e0da7b46854fad25600",
+    "len": 239
+   },
+   {
+    "id": "5bcde6d0-ba71-4e4c-baf8-978366628333",
+    "name": "🍏 性爱柔和自检 #GEMINI",
+    "hash": "0b20da3ececae4ad0390fd0e7ba3d121d29ebf535b13bb12e9edabf4be6e9fda",
+    "len": 29
+   },
+   {
+    "id": "87f4ee7c-f737-47fd-a7c8-37609fd01096",
+    "name": "🍏 正文防转折",
+    "hash": "cce76934440572d751ef89e964d1c23532a92cba90860f1678608f8d3627c9f0",
+    "len": 128
+   },
+   {
+    "id": "1a60fad7-59e3-420d-95f4-1eed9368d10d",
+    "name": "🍏 正文段落规范",
+    "hash": "5fb0d80877df7803a04dd7d1464fb081413f9354a52fabeb3485df4f3c1cead3",
+    "len": 185
+   },
+   {
+    "id": "a55d3f95-519e-4637-b066-2a1e424ff505",
+    "name": "📌 正文尾",
+    "hash": "e8a712a048f3c181af903ce1b4634cd6f929eef5332b9dc4a3f04c1627a2655f",
+    "len": 555
+   },
+   {
+    "id": "1790a858-e195-4847-8151-d280ee1e95b5",
+    "name": "🍏 手机线上格式｜选开",
+    "hash": "f9de4b927c7a49c4143e7efa6e1edde2c3daa2bae4e3fd73f1eb5829678ca0b4",
+    "len": 88
+   },
+   {
+    "id": "5472f208-b696-4f5b-a32e-025d0ef8da82",
+    "name": "🍏 Top-题记｜正文前状态栏单选 @鸦",
+    "hash": "ec70b0f17404a696f2915fce570e8aa990f7dc65c4308ddcc94a9a5ed0fe3c96",
+    "len": 586
+   },
+   {
+    "id": "67dbe0dc-f188-444d-a812-379088c1a7ee",
+    "name": "🍏 Top-简约｜正文前状态栏单选 @小鱼 @yuki",
+    "hash": "38cf4066713fa5d5c6d421a8e23c391dde1915a0c0fcb57a9d0ed8c4c8958189",
+    "len": 750
+   },
+   {
+    "id": "94863b1a-5f51-4483-bb6c-f05aca62743a",
+    "name": "🍏 小说标题 @蛾摩拉",
+    "hash": "28751213f0f34afe4cd953e539282151b26d33f121afed34993c229a1f1a1da1",
+    "len": 611
+   },
+   {
+    "id": "d1eeda8f-9e49-4d32-8d4a-5854410e4d8a",
+    "name": "🍏 开篇序言｜序言单选 @NUE @yuki",
+    "hash": "d043919412736d92baad44daf9bad795458395e850b31099b8aa9e6045159938",
+    "len": 237
+   },
+   {
+    "id": "ec3733d2-b785-478d-a848-58758413e9ce",
+    "name": "🍏 超级序言｜序言单选 @电波系",
+    "hash": "a278ab23f1e6f99af5ea34ce902465db955827045fb75411d080b7efa8a64d91",
+    "len": 667
+   },
+   {
+    "id": "7be20e56-40e9-478c-8363-872318e96c77",
+    "name": "🍏 单人状态栏 @小夜",
+    "hash": "3ab9511bfeb4934b779a68a051dd613c471e87e3cc7f75d9cccff7eb6d0e1bca",
+    "len": 885
+   },
+   {
+    "id": "fb873456-bbe4-4809-a15d-4ed2e1a68ef4",
+    "name": "🍏 底部状态栏｜卡里有状态栏再开",
+    "hash": "b1ba1ce79f5c749d7e361879048fd6d9b6743670d4fc5bec96ff9f3e85199243",
+    "len": 31
+   },
+   {
+    "id": "9898c614-fd87-40c8-a1ac-bb4f75e179a5",
+    "name": "🍏 强调填表｜有表再开",
+    "hash": "265df0bcaab916cfdd6e0396ea395e1dae2dd849997ef579e7a38584c935ba30",
+    "len": 122
+   },
+   {
+    "id": "18b30ae2-61ec-4d18-966d-366cf3b4cffd",
+    "name": "🍏 变量更新｜有变量再开",
+    "hash": "863eb64a52b63545aa58a6724db97063592735b836fdbf9901fa3aac53703229",
+    "len": 35
+   },
+   {
+    "id": "bf363ab4-f5ed-424a-afaf-0692c4b09fb7",
+    "name": "🍏 表情包｜COT 与小剧场内生效",
+    "hash": "985abb6041596c122a2da0e3bf79b541b47a02d0401bb4cdfc60c40dd5d43fdb",
+    "len": 2062
+   },
+   {
+    "id": "dbc302fb-74ae-4ed0-8276-0ab86e8fe2f5",
+    "name": "🍏 小剧场一键开关｜可搭配世界书",
+    "hash": "53122a89161255502c731d7b53a9b0c830bacb5ec0ced20fb6f669d8cc05f48c",
+    "len": 138
+   },
+   {
+    "id": "d2866c72-44f7-49f5-a7f0-6fca506d00e2",
+    "name": "🍏 seeds 伏笔｜seeds单选 @yuki @电波系",
+    "hash": "e1e33b552868c99ebee66d05c0eade13515b8adf25432e60f8f5e4077aa1f29a",
+    "len": 461
+   },
+   {
+    "id": "d672f185-6502-4f68-bad3-51855c11c399",
+    "name": "🍏 seeds 待办计划｜seeds单选",
+    "hash": "b8d73b39a7cde9c8ffb142c25bdb54ab2ec8fa2bef8229db5b8105d7c0b2fb83",
+    "len": 250
+   },
+   {
+    "id": "09526289-84b1-4414-ad43-5270b4e40862",
+    "name": "📌 摘要｜必开 @喵喵电波",
+    "hash": "01f4f83b53eedae180bff522cca3d94ccfc90eac2dd0f5c51e30e8b5570708b2",
+    "len": 425
+   },
+   {
+    "id": "d00d9ae7-ec72-4d34-92d0-ce6edaa5e5c2",
+    "name": "🍏 角色表｜角色表单选 @YUKI",
+    "hash": "3534d7914d56ca25b477b20d2e9ebff4fc13f0be572330a23d41450889e1278e",
+    "len": 330
+   },
+   {
+    "id": "b6dfe7de-2a93-4d7f-a193-447099acc579",
+    "name": "🍏 色色角色表｜角色表单选",
+    "hash": "9c648154193115c1e541136ab259428e36c76f6b359fbc9ba8cc4bd769bff111",
+    "len": 349
+   },
+   {
+    "id": "0045cda0-132d-40a7-9a83-1c597ae417e5",
+    "name": "🍏 文生图｜没有别开",
+    "hash": "08b9bb1c0c2c756e82e55062efbbec269f67a148b87ac0f531b1096a047cc6c1",
+    "len": 62
+   },
+   {
+    "id": "fruit-heart-c-c17722ef57fdc4b4786e",
+    "name": "🍏 喵喵选择器6选项｜喵喵选择器单选｜需配选项正则",
+    "hash": "c45faca33e478a824fefc8f005e2cacc8226d241ca3b0ad0da5b332fc25df253",
+    "len": 355
+   },
+   {
+    "id": "1b49d2d0-f130-4a91-a48d-90155c63cc6d",
+    "name": "🍏 喵喵选择器｜瑟瑟｜喵喵选择器单选｜需配选项正则",
+    "hash": "35ba2a22fbffcbf96fab3fc53fb35fea0acc8c1ac18ed2ebc21384f79b1cf63f",
+    "len": 311
+   },
+   {
+    "id": "32e14959-2f33-403c-9ac7-e47a3653f03d",
+    "name": "🥵瑟瑟直播状态栏@louxi",
+    "hash": "17c4866ff34fe730d4be7b89db4add711d50be6371c3188e9c561b056b8f1f00",
+    "len": 1070
+   },
+   {
+    "id": "95badcf5-e6f5-41ab-8ed9-df7d90e18cf0",
+    "name": "🥵瑟瑟偷拍状态栏@louxi",
+    "hash": "082133e1643fabf824ce373e7f8cc978873605bd61cf882ea35dcc955d636932",
+    "len": 1074
+   },
+   {
+    "id": "3ad7662a-006b-4a87-b4be-099215ffd122",
+    "name": "🥵骚扰信箱状态栏@louxi",
+    "hash": "a10a688a222b605f922f6d4828638d08607d04cbc0bd28d9d0fba7db0adcea40",
+    "len": 766
+   },
+   {
+    "id": "fb86f139-05c5-4915-814c-f3696c0056c6",
+    "name": "📌 格式强调 @yuki",
+    "hash": "10a4e1ea29df50844ff4f2847ff18700cb4912b6a39f5c38cb34059749cf7af6",
+    "len": 490
+   },
+   {
+    "id": "84bc80b8-ecc7-4497-a399-a7ee14bff400",
+    "name": "📌 RULE",
+    "hash": "029dad3939326b2e5392d67ca6f950c644869d3bdec467d3d9b92c7b0a05b9a2",
+    "len": 123
+   },
+   {
+    "id": "c579184c-2871-4c35-a941-848cf31a3451",
+    "name": "🌙 加强破甲｜来自日月西 #GEMINI FLASH",
+    "hash": "94e5756c1f8263f307c9d1b01aeca7d06c08c942de95d57f376efbe95ac06553",
+    "len": 982
+   },
+   {
+    "id": "550434ef-2ec0-4907-8b01-49ca1ecaa42d",
+    "name": "🎶 中文cot｜思考语言单选",
+    "hash": "3f1ae20cb94ad293908a65bc1d0cecc4ba51ea0bae18326fd4f58d7680cb71c2",
+    "len": 41
+   },
+   {
+    "id": "a3c34381-3c67-49af-aa67-6069f95bf2c8",
+    "name": "🎶 英语cot｜思考语言单选",
+    "hash": "087c0effe7aba771d9ea2cea4db90b46c37137727005350e50ff3cae9b96a1b4",
+    "len": 57
+   },
+   {
+    "id": "6820564b-e2ce-4505-9f26-993cdba1a2bd",
+    "name": "🎶 葡语cot｜思考语言单选",
+    "hash": "9bdcd31f7a4a0d716babf5d4bb7f47eee814e582a16b780af64fe36099dbd0dc",
+    "len": 60
+   },
+   {
+    "id": "35d47314-73b1-4531-993b-6f0fd980aa4a",
+    "name": "🎶 意语cot｜思考语言单选",
+    "hash": "d7c9fc2e193e5791e792d2e0ce35157c659a6c1b171b7731380a431e6076de28",
+    "len": 60
+   },
+   {
+    "id": "5b66efa2-b698-4102-8d02-80b9923d3e80",
+    "name": "🎶 日语cot｜思考语言单选",
+    "hash": "91aeadf521b11b7f7a7f5b70022fca20f5669773bbe5d0d5bf1b7128b3cdec98",
+    "len": 44
+   },
+   {
+    "id": "1e64d748-fe97-4d7b-b5b2-b8b8471bba70",
+    "name": "🎶 法语cot｜思考语言单选",
+    "hash": "76ec8d8a8d40a0661b7271ca4894c711178d331d1bc650b980e7f8d620d313a2",
+    "len": 65
+   },
+   {
+    "id": "1825a890-8710-4e30-a93c-eac752f46924",
+    "name": "🎶 德语cot｜思考语言单选",
+    "hash": "359a098737ff3983083b97bb5920b5259c6717b3b9ba69608d5012ac29b2d186",
+    "len": 63
+   },
+   {
+    "id": "0b8b7352-880a-4add-8d81-97d23acb0c08",
+    "name": "━━ 🧠 思考 ━━ 四个 COT 只开一个",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "c3048bfc-d7f9-46be-824d-6978ae49bc9c",
+    "name": "🧠 仅在常规 COT 生效",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "31b029db-6fa1-4c43-bd81-f62ee510dcfa",
+    "name": "🧠 确认 user 输入",
+    "hash": "275c7f77f034ba1197c3259587b84f442113dc564d2350f03a21a42f5872b4bc",
+    "len": 102
+   },
+   {
+    "id": "af6b676f-0271-4479-a99e-b3055b59ff4a",
+    "name": "🧠 IF 线｜选开",
+    "hash": "6381e4e7315c000faee6fb656251feac2cee03d628c3aacd59ff23f29759843a",
+    "len": 84
+   },
+   {
+    "id": "42999dbc-093e-4209-8acd-90e32caf2068",
+    "name": "🧠 主线剧情｜卡有主线再开",
+    "hash": "ddb9a2aaf782f6d3cbd67f7c5a3060d1f06eec9f71fdab0818ad22709aa16693",
+    "len": 56
+   },
+   {
+    "id": "bd638843-dbcb-478f-a113-e48653809279",
+    "name": "🧠 防抢话",
+    "hash": "046566d0747570c3df349c562ca7dd826fb64091406e8f6a23cbf39998acca9a",
+    "len": 92
+   },
+   {
+    "id": "3368763c-683e-4b4b-b7ef-1997a59d3f51",
+    "name": "🧠 同人卡｜选开",
+    "hash": "3466d7f07e63ef79ac0f723a86351b649a74187a5362ff5cc43ce35301fc0f03",
+    "len": 41
+   },
+   {
+    "id": "c19d88f7-dcca-4fc3-8814-4aeeac037bbe",
+    "name": "🧠 演绎",
+    "hash": "355f8ee60f41e3b8a8181ced58f472f44b89ce3a5c010c968aef56ec0e87522a",
+    "len": 130
+   },
+   {
+    "id": "chaoxi_55656eeb-18be-4ea8-9116-8d2f68ffd243",
+    "name": "🧠 防二选一结尾",
+    "hash": "6639e7c0fddf0e45c6b0f3d0eeb3d3321690f09c1b35a40df696a6f771182bd1",
+    "len": 279
+   },
+   {
+    "id": "d28ef2fc-a820-4dcd-913a-c39da5b6e69a",
+    "name": "🧠 角色卡自带 COT｜卡自带 COT 时开",
+    "hash": "0b3d65285c33e8e27f16e54f5852d40067fab4a01ecd5ef403cd810121fc77f5",
+    "len": 131
+   },
+   {
+    "id": "2fb071d9-a583-41c7-9eda-dcfdf1bc3a73",
+    "name": "🧠 小剧场数量",
+    "hash": "47335b0be0075908b0c86c94029fb7d4eb21d9e6a1ac23c3786586d635140dc0",
+    "len": 38
+   },
+   {
+    "id": "36c103bb-2189-4017-a669-376712b06fad",
+    "name": "🧠 思考约束｜精要创作流",
+    "hash": "1707b10eccfc9a35fa91b30d4c538eac65b509424f816f08a47807e8d78a4287",
+    "len": 171
+   },
+   {
+    "id": "bcd4c9eb-813b-45ca-ae33-39004c2278dd",
+    "name": "📌 以下 COT 只开一个｜必开",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "0b6b1245-f29a-41c4-8696-ea3a6d1daf3a",
+    "name": "🧠 常规 COT改｜COT单选｜必开·别动位置",
+    "hash": "f5f83e9f85776ea50ee131948a2ffd91e78a42d9aeaf15b863d4fe5fac72e75b",
+    "len": 1052
+   },
+   {
+    "id": "cd069b86-0dc3-4ec8-8474-18a4e521eed9",
+    "name": "🧠 极简｜COT单选｜大总结等任务不听话时开",
+    "hash": "a6dd1154cf7b09877e19a244d52ba39da162e1e916554b69d1db9a354e71cd61",
+    "len": 108
+   },
+   {
+    "id": "f6e9d5ec-5378-4d92-9f3c-51163dc10386",
+    "name": "🧠 自思考｜COT单选",
+    "hash": "a11c7728483c3e8cde28faf6a793f44c86c3a06806b3f8af121c8ab69e234d23",
+    "len": 282
+   },
+   {
+    "id": "56576e09-8cfc-44f3-89ec-9e9d4851758f",
+    "name": "🧠 自定义覆盖｜COT单选",
+    "hash": "b05693c6702ef2dc36ac426d240b1d3538bef358e4e716f1d073206de121b38f",
+    "len": 147
+   },
+   {
+    "id": "2cf820d9-1b19-4982-b5c9-67762c7b5b6b",
+    "name": "📌 COT 接收｜必开·别动位置 #GEMINI",
+    "hash": "e8505bc4a82db473ac1a8e8b2654c033a720da9cc8f12604b61ad3b1e5d6e225",
+    "len": 135
+   },
+   {
+    "id": "fruit-heart-ds-b8eca150ef07fb73997a",
+    "name": "📌 COT 接收｜必开·别动位置 #DS #CLAUDE",
+    "hash": "f3efbbc740d08a6d52b8686737d960a6935469c26d4ccf2024ec653557d20b62",
+    "len": 84
+   },
+   {
+    "id": "af40530f-e1f8-4a4d-8782-97338e4a116c",
+    "name": "━━ 🌱 果农 ━━ 果农人格只开一个",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "38442f41-7a0e-43f2-81bf-e326b2138548",
+    "name": "🌱 小弟果农｜果农单选 @Manekin",
+    "hash": "838793158670f49e21ea4cbcdea8354534daa2437996e4b81441b063cbeda4ff",
+    "len": 168
+   },
+   {
+    "id": "c6b7fe31-79bf-4bbb-bf06-57582e38b34d",
+    "name": "🌱 纯良果农｜果农单选",
+    "hash": "df23af942bd58483bf98bee19dc92a28101f5dc12eb27833baf5858e8dde1002",
+    "len": 285
+   },
+   {
+    "id": "743125e9-5d16-4850-af5d-2244fef3a820",
+    "name": "🌱 天才美少女果农｜果农单选",
+    "hash": "48c9a7f84ef6f4b7d7967a22687c375604efd644c309fcf9cb85404e5cf95582",
+    "len": 729
+   },
+   {
+    "id": "2aa95693-fd63-4b9b-989b-2a593ae5e07a",
+    "name": "🌱 傲娇luma果农｜果农单选",
+    "hash": "3f3de3bfbb2bad89312501a5c89e339e2377984b7b126c991f1d75b775d33421",
+    "len": 500
+   },
+   {
+    "id": "dc2c728f-da48-4c63-b131-4ce1321fbbe5",
+    "name": "🌱 淡人果农｜果农单选",
+    "hash": "f5e9f330ee52bfb830767cb2703effef1115ca5723d9fbdab09c2f293c0b467f",
+    "len": 337
+   },
+   {
+    "id": "1f4eda10-3206-4c50-8e09-c76a90422f31",
+    "name": "🌱 社交恐怖甜心果农｜果农单选 @顶呱呱",
+    "hash": "c0591f58ae9480a0b2de706e618f9f55b268569fad3b0c0feda392d54f605d4d",
+    "len": 342
+   },
+   {
+    "id": "0089189b-042a-429a-b801-6f0b61430ac8",
+    "name": "🌱 老版果农｜果农单选",
+    "hash": "5acfcb470fdd6189a3a44f24d46598cac1e84c7c79d08982e867d1c76fe5ee28",
+    "len": 265
+   },
+   {
+    "id": "7bb59cce-ef80-44b9-9611-083423159169",
+    "name": "🌱 疯果农｜果农单选",
+    "hash": "224db3c517abf88d4d17b74b99c6704a9c8b47876be5aa285067008a8d75792d",
+    "len": 274
+   },
+   {
+    "id": "855ff551-b56b-4af5-a4e4-e7f4d8a5a768",
+    "name": "🌱 社畜果农｜果农单选",
+    "hash": "768b0e682b6c7b55c77472aa3ab1798399ce47a4984c8c47e916a997c2705602",
+    "len": 179
+   },
+   {
+    "id": "96e01e36-9638-4add-85f0-41b6c3e13063",
+    "name": "🌱 女王果农｜果农单选",
+    "hash": "2f63d385a06f7a2a0df9071971cff431f838883413c1e7270b453bc47b454267",
+    "len": 310
+   },
+   {
+    "id": "ec3bb06f-4f94-467d-b77c-4caff446952d",
+    "name": "🌱 腹黑哥哥果农｜果农单选",
+    "hash": "32e15af0803ec52eeb5b5d5082132d44fd4836c8ae50afe5badee2fe37096ed3",
+    "len": 269
+   },
+   {
+    "id": "e71bdaff-f597-4b8c-9cb4-94929fc6d175",
+    "name": "🌱 半醉果农｜果农单选",
+    "hash": "cf8e6f4fcf5cc6bcd560f5389894ef88bfb8a6b0098e51372a6badbdc632b877",
+    "len": 199
+   },
+   {
+    "id": "90556b7a-3611-4ad3-a26b-c330199cd599",
+    "name": "🌱 白切黑果农｜果农单选",
+    "hash": "bec49b61e8f57aa54d4849bf7581a3aeada5f526ce26e8986753a9c55adc6034",
+    "len": 164
+   },
+   {
+    "id": "b1ea422a-2bd2-4384-bf04-568e896d9d36",
+    "name": "(*^▽^*) COT 颜文字",
+    "hash": "c37073b053bf1e6f1390601f909f774a2fb319a80df93c18a8602e14d156872c",
+    "len": 20
+   },
+   {
+    "id": "fruit-v61-display-section-14",
+    "name": "━━ 🔌 尾部（按模型开） ━━",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "fruit-heart-ds-3132f48ca06a9f86169e",
+    "name": "🔌 DS 尾 @NUE #DS",
+    "hash": "e9710637f5d9b31f52aafbf059c3c6f74e9771ea5dedc4c2400eb37dde490bdb",
+    "len": 60
+   },
+   {
+    "id": "jailbreak",
+    "name": "🔌尾2 #GEMINI 3.7F #GEMINI 3.8F #CLAUDE #GEMINI 4A",
+    "hash": "8cca1a34361c8668c1a90cb2903ef8a43411f45267a4ccf97840d54a4804e821",
+    "len": 113
+   },
+   {
+    "id": "4bcb2e4c-1502-40f6-b3f6-ce33fe530159",
+    "name": "🔌 Gemini Pro 尾｜卡掉原生 COT @YUKI 卡掉原生cot #GEMINI 3.1PRO",
+    "hash": "d7c98df2b4587f4c5a7a8213a8633bd96e661ef63e938c563f4431635dcfdccf",
+    "len": 108
+   },
+   {
+    "id": "fruit-v61-display-section-15",
+    "name": "━━ 🔧 配置 ━━ 别动别开",
+    "hash": "",
+    "len": 0
+   },
+   {
+    "id": "fruit-heart-c-cd11caa48d000bbd3325",
+    "name": "🔧 别用带 thinking 的模型 #CLAUDE",
+    "hash": "58d5e46b44a4f6c04d638046fc7d5d93b5f24044129a29a07debc3513b209f68",
+    "len": 91
+   },
+   {
+    "id": "fruit-heart-control-config-v2",
+    "name": "🔧 果实之心控制配置｜别动别开",
+    "hash": "de994e548634f74ee7b44d2740cfd8538818d7d96ab072d960c15f4dbd9c6c15",
+    "len": 65211
+   }
+  ]
+ }
+}

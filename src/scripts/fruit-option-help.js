@@ -22,7 +22,7 @@ export async function optionEffect(content, crypto = globalThis.crypto, identifi
     const text = FRUIT_OPTION_EFFECTS[hash];
     if (text) return {text,verified:true};
     if (baseline) return {text:baseline,verified:false,baseline:true};
-    return {text:'직접 만든 항목이거나 알려진 표준 항목과 연결되지 않았어요. 이름만으로 효과를 추측하지 않도록 현재 원문을 함께 확인해 주세요.',verified:false};
+    return {text:'과일 · 야한 과일 · 청과 프리셋의 표준 항목 목록에 없는 항목이에요(직접 만들었거나 다른 프리셋에서 가져온 항목). 이름만으로 효과를 추측하지 않도록 현재 원문을 함께 확인해 주세요.',verified:false};
 }
 
 /** Hold to inspect; normal taps retain their original behavior. No writes or requests. */

@@ -375,6 +375,7 @@ jobs:
           node tools/tests/mark-mutation-batch.mjs .
           node tools/tests/fruit-watch-perf.mjs .
           node tools/tests/fruit-option-help.mjs .
+          node tools/tests/fruit-option-coverage.mjs .
           node tools/tests/fruit-typography.mjs .
           node tools/tests/fruit-type-sample.mjs .
           node tools/tests/fruit-type-snapshot.mjs .
