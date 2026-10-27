@@ -264,9 +264,10 @@ export function groupByColor(pieces, plainColor, limit = COLOR_LIMIT, { follow =
 export function highlightRule(style, key, pin = '') {
     const name = highlightName(style, key, pin);
     const fixed = pin ? ` color: ${pin}; -webkit-text-fill-color: ${pin};` : '';
-    if (style === 'color') return `::highlight(${name}) { ${THEME_FILL}${fixed} }`;
+    // 테마 8.0.8: 주어 없는 `::highlight()` 는 모든 요소에 견줘진다 → `:root::highlight()` (강조 가상 요소는 부모 것을 상속하므로 모양은 같다, style.css 와 같은 꼴)
+    if (style === 'color') return `:root::highlight(${name}) { ${THEME_FILL}${fixed} }`;
     const line = `text-decoration: underline; text-decoration-color: ${key ? `color-mix(in srgb, ${key} 70%, transparent)` : THEME_LINE}; text-underline-offset: 2px;`;
-    return `::highlight(${name}) { ${style === 'underline' ? line : `${THEME_FILL} ${line}`}${fixed} }`;
+    return `:root::highlight(${name}) { ${style === 'underline' ? line : `${THEME_FILL} ${line}`}${fixed} }`;
 }
 
 // ───────── 아래는 브라우저에서만 ─────────

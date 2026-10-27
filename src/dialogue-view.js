@@ -32,7 +32,7 @@ const STYLE = `:root{--bl-dialogue-fallback-7ab:#7ab;--bl-dialogue-fallback-8882
 .bl-dlg-empty{margin:0;padding:16px var(--bl-fh-pad,14px);line-height:1.7}
 .bl-dlg-foot{display:flex;gap:8px;justify-content:flex-end;padding:10px var(--bl-fh-pad,14px) 12px;border-top:1px solid var(--salty-line,var(--bl-dialogue-fallback-8888))}
 .bl-dlg-foot .salty-btn{min-height:34px;padding:5px 12px}
-::highlight(${HIT}){background-color:color-mix(in srgb,var(--salty-accent,var(--bl-dialogue-fallback-7ab)) 45%,transparent);text-decoration:underline 2px var(--salty-accent,var(--bl-dialogue-fallback-7ab));text-underline-offset:3px}
+:root::highlight(${HIT}){background-color:color-mix(in srgb,var(--salty-accent,var(--bl-dialogue-fallback-7ab)) 45%,transparent);text-decoration:underline 2px var(--salty-accent,var(--bl-dialogue-fallback-7ab));text-underline-offset:3px}
 .bl-dlg-flash{outline:2px solid var(--salty-accent,var(--bl-dialogue-fallback-7ab));outline-offset:2px;border-radius:4px}`;
 function style() {
     if (document.querySelector('style[data-bl-dialogue-only]')) return;

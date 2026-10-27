@@ -114,7 +114,10 @@ function sameStructure(a, b) {
 // :is() 의 특이도는 인자 중 가장 높은 것(아이디)이라 폭포가 그대로이고, 문서에 .bl-chat-like 가 없으면 전과 똑같이 맞는다.
 // (#chat_import_button 처럼 이어지는 이름은 경계로 거른다. 주석을 뺀 본문에만 — css/ 원본은 손대지 않는다)
 const CHAT_ALIAS = ':is(#chat,.bl-chat-like)';
-function aliasChat(text) { return text.replace(/#chat(?![\w-])/g, CHAT_ALIAS); }
+// 8.0.8: `:not(#chat)` 은 `:not(:is(#chat,.bl-chat-like))` 대신 같은 뜻 · 같은 특이도(아이디 1)의 `:where(:not(.bl-chat-like)):not(#chat)` 로 —
+// 크롬이 `:not(:is(A,B))` 를 요소마다 두 번 견줘 스크롤바 숨김 규칙(77-scrollbars, 모든 요소 대상)이 문서 전체 다시 계산에서 16.6 → 4.1ms 였다
+const NOT_CHAT = '\u0000NOTCHAT\u0000';
+function aliasChat(text) { return text.replace(/:not\(#chat\)/g, NOT_CHAT).replace(/#chat(?![\w-])/g, CHAT_ALIAS).split(NOT_CHAT).join(':where(:not(.bl-chat-like)):not(#chat)'); }
 
 function build(dir = CSS_DIR, { bucket = true, key = true } = {}) {
     const names = modules(dir);

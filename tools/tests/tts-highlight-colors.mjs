@@ -99,10 +99,10 @@ test('a line with too many colours keeps the first ones and puts the rest on the
 });
 
 test('rules: underline in the text colour (70%, 2px offset); the fill stays the theme colour like style.css', () => {
-    assert.equal(highlightRule('both', '#e64553'), '::highlight(lv-now-c-e64553) { background-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 28%, transparent); text-decoration: underline; text-decoration-color: color-mix(in srgb, #e64553 70%, transparent); text-underline-offset: 2px; }');
-    assert.equal(highlightRule('underline', '#1e88c7'), '::highlight(lv-now-underline-c-1e88c7) { text-decoration: underline; text-decoration-color: color-mix(in srgb, #1e88c7 70%, transparent); text-underline-offset: 2px; }');
+    assert.equal(highlightRule('both', '#e64553'), ':root::highlight(lv-now-c-e64553) { background-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 28%, transparent); text-decoration: underline; text-decoration-color: color-mix(in srgb, #e64553 70%, transparent); text-underline-offset: 2px; }');
+    assert.equal(highlightRule('underline', '#1e88c7'), ':root::highlight(lv-now-underline-c-1e88c7) { text-decoration: underline; text-decoration-color: color-mix(in srgb, #1e88c7 70%, transparent); text-underline-offset: 2px; }');
     const css = read('src/addons/tts/style.css');
-    assert.match(css, /::highlight\(lv-now\), ::highlight\(lv-now-color\) \{\s*background-color: color-mix\(in srgb, var\(--SmartThemeQuoteColor, #51a0de\) 28%, transparent\);/);
+    assert.match(css, /:root::highlight\(lv-now\), :root::highlight\(lv-now-color\) \{\s*background-color: color-mix\(in srgb, var\(--SmartThemeQuoteColor, #51a0de\) 28%, transparent\);/);
     assert.match(css, /text-decoration-color: color-mix\(in srgb, var\(--SmartThemeQuoteColor, #51a0de\) 70%, transparent\);\s*text-underline-offset: 2px;/);
 });
 
@@ -172,7 +172,7 @@ test('1.7.0 the pin keeps the exact glyph paint: alpha for faded strike text, tr
     assert.deepEqual(pieceKey({ color: RED, fill: RED }, plain).pin, '', 'fill = color: no pin');
     assert.equal(highlightName('underline', '', 'transparent'), 'lv-now-underline-p-t');
     assert.equal(highlightName('underline', '#e63946', '#f5f5f78c'), 'lv-now-underline-c-e63946-p-f5f5f78c');
-    assert.equal(highlightRule('both', '', 'transparent'), '::highlight(lv-now-p-t) { background-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 28%, transparent); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 70%, transparent); text-underline-offset: 2px; color: transparent; -webkit-text-fill-color: transparent; }');
+    assert.equal(highlightRule('both', '', 'transparent'), ':root::highlight(lv-now-p-t) { background-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 28%, transparent); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 70%, transparent); text-underline-offset: 2px; color: transparent; -webkit-text-fill-color: transparent; }');
 });
 test('1.7.0 groups carry the pin; names and rules add -p-… and color / -webkit-text-fill-color', () => {
     const pieces = [
@@ -194,9 +194,9 @@ test('1.7.0 groups carry the pin; names and rules add -p-… and color / -webkit
     assert.deepEqual(splitGroup(''), { key: '', pin: '' });
     assert.equal(groupId('#e63946', ''), '#e63946');
     assert.equal(highlightName('color', '', '#f5f5f7'), 'lv-now-color-p-f5f5f7');
-    assert.equal(highlightRule('underline', '#e63946', '#f5f5f7'), '::highlight(lv-now-underline-c-e63946-p-f5f5f7) { text-decoration: underline; text-decoration-color: color-mix(in srgb, #e63946 70%, transparent); text-underline-offset: 2px; color: #f5f5f7; -webkit-text-fill-color: #f5f5f7; }');
-    assert.equal(highlightRule('underline', '', '#f5f5f7'), '::highlight(lv-now-underline-p-f5f5f7) { text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 70%, transparent); text-underline-offset: 2px; color: #f5f5f7; -webkit-text-fill-color: #f5f5f7; }', 'theme underline + pin');
-    assert.equal(highlightRule('color', '', '#f5f5f7'), '::highlight(lv-now-color-p-f5f5f7) { background-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 28%, transparent); color: #f5f5f7; -webkit-text-fill-color: #f5f5f7; }', 'fill-only style also keeps the ink');
+    assert.equal(highlightRule('underline', '#e63946', '#f5f5f7'), ':root::highlight(lv-now-underline-c-e63946-p-f5f5f7) { text-decoration: underline; text-decoration-color: color-mix(in srgb, #e63946 70%, transparent); text-underline-offset: 2px; color: #f5f5f7; -webkit-text-fill-color: #f5f5f7; }');
+    assert.equal(highlightRule('underline', '', '#f5f5f7'), ':root::highlight(lv-now-underline-p-f5f5f7) { text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 70%, transparent); text-underline-offset: 2px; color: #f5f5f7; -webkit-text-fill-color: #f5f5f7; }', 'theme underline + pin');
+    assert.equal(highlightRule('color', '', '#f5f5f7'), ':root::highlight(lv-now-color-p-f5f5f7) { background-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 28%, transparent); color: #f5f5f7; -webkit-text-fill-color: #f5f5f7; }', 'fill-only style also keeps the ink');
 });
 test('1.7.0 alpha of a computed colour, including other colour spaces', () => {
     for (const [v, a] of [['transparent', 0], ['rgba(0, 0, 0, 0)', 0], ['rgb(230, 57, 70)', 1], ['rgba(230, 57, 70, 0.35)', 0.35], ['rgb(1 2 3 / 50%)', 0.5], ['color(srgb 1 0 0 / 0.2)', 0.2],

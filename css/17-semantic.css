@@ -186,8 +186,10 @@ body.salty #toast-container .toast-progress {
 }
 
 /* ---------- 지우기는 빨강: 휴지통 · 해골 아이콘은 쉴 때도 빨강 ----------
-   누르면 빨간 면 + 바탕색 아이콘으로 뒤집힘 (폰에서 눌린 색이 남지 않게 :hover 는 (hover: hover) 안에서만) */
-body.salty :is(.fa-trash, .fa-trash-can, .fa-trash-alt, .fa-skull, :has(> :is(i, span):only-child:is(.fa-trash, .fa-trash-can, .fa-trash-alt, .fa-skull))):where(:not(.salty-panel, .salty-panel *, #nonQRFormItems *, #toast-container *, .popup-controls *, #chat .mes_text *)) {
+   누르면 빨간 면 + 바탕색 아이콘으로 뒤집힘 (폰에서 눌린 색이 남지 않게 :hover 는 (hover: hover) 안에서만)
+   8.0.8: :not() 안 대안은 `#chat .mes_text *` 를 맨 앞에 — :has 갈래는 모든 요소와 견주는데, 요소 대부분이 메시지 글 안이라 첫 대안에서 끝난다
+   (뜻은 그대로 · 집합이라 순서 무관 · 문서 전체 다시 계산에서 이 규칙 13.4 → 4.1ms) */
+body.salty :is(.fa-trash, .fa-trash-can, .fa-trash-alt, .fa-skull, :has(> :is(i, span):only-child:is(.fa-trash, .fa-trash-can, .fa-trash-alt, .fa-skull))):where(:not(#chat .mes_text *, .salty-panel, .salty-panel *, #nonQRFormItems *, #toast-container *, .popup-controls *)) {
   color: var(--bl-danger) !important;
 }
 /* 실리태번 빨강 버튼 클래스: 글자가 있으면 떠 있는 칩에 빨간 글자 */

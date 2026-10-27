@@ -42,7 +42,7 @@ const css = `/* a */\n.x :is(#chat,.bl-chat-like) { color: red; }\n@media (max-w
 const r1 = K.keyize(css);
 assert.equal(r1.stats.rulesChanged, 2);
 assert.ok(r1.text.includes('.x :where(#chat):is(#chat,.bl-chat-like),\n.x :where(.bl-chat-like):is(#chat,.bl-chat-like) {'), r1.text);
-assert.ok(r1.text.includes('.y :is(.a .b) > :where(.c):is(.c, .d .e),\n.y :is(.a .b) > :where(.e):is(.c, .d .e) {'), r1.text);
+assert.ok(r1.text.includes('.y :where(.b):is(.a .b) > :where(.c):is(.c, .d .e),\n.y :where(.b):is(.a .b) > :where(.e):is(.c, .d .e) {'), r1.text);
 assert.ok(r1.text.includes('.z :is(#bl-s, *) { padding: 0 }'), '열쇠 없는 칸은 그대로');
 const r2 = K.keyize(r1.text);
 assert.equal(r2.text, r1.text, '멱등');

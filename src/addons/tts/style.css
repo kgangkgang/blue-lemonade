@@ -403,11 +403,13 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .lv_play { --salty-mi:
   50% { filter: drop-shadow(0 0 8px var(--SmartThemeQuoteColor, #51a0de)); }
 }
 
-/* 읽는 대사 강조 (CSS Custom Highlight — DOM 은 건드리지 않음) */
-::highlight(lv-now), ::highlight(lv-now-color) {
+/* 읽는 대사 강조 (CSS Custom Highlight — DOM 은 건드리지 않음)
+   3.1.0(테마 8.0.8): 주어 없는 `::highlight()` 는 모든 요소에 견줘져 채팅 300 을 연 문서 전체 다시 계산마다 39ms 였다 →
+   `:root::highlight()` 하나로. 강조 가상 요소는 부모의 강조 가상 요소에서 상속받으므로(CSS Pseudo-Elements 4 · 크롬 확인) 모양은 같고 비용은 0.01ms */
+:root::highlight(lv-now), :root::highlight(lv-now-color) {
   background-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 28%, transparent);
 }
-::highlight(lv-now), ::highlight(lv-now-underline) {
+:root::highlight(lv-now), :root::highlight(lv-now-underline) {
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--SmartThemeQuoteColor, #51a0de) 70%, transparent);
   text-underline-offset: 2px;

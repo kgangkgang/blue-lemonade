@@ -36,7 +36,8 @@ test('내장 팔레트 전부: 밤 모드 포인트 잉크가 고른 칸 면 · 
     }
 });
 test('창 안 small 은 실리태번의 opacity .7 을 따르지 않아요', () => {
-    const rule = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map(r => r.trim()).find(r => r.startsWith(WINDOW + ' small {'));   // 주석 안의 중괄호에 안 끊기게 주석을 먼저 뗀다
+    // 주석 안의 중괄호에 안 끊기게 주석을 먼저 뗀다. 8.0.8 테마 가볍게: 앞에 붙는 조상 열쇠 `:where(#fruit-heart-v6)`(특이도 0)는 떼고 본다
+    const rule = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map(r => r.trim().replace(/^:where\(#[\w-]+\)/, '')).find(r => r.startsWith(WINDOW + ' small {'));
     assert.ok(rule, 'small 규칙');
     assert.match(rule, /opacity:1/);
 });

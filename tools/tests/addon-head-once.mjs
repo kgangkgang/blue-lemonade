@@ -38,7 +38,8 @@ test('통일 CSS: 서랍 안 한글화 패널의 머리 제목(판 알약 포함
 });
 test('숨김 줄이 통일 제목 규칙(빌드된 꼴)보다 무겁고 뒤에 있다', () => {
     const css = read('style.css');
-    const at = css.indexOf('html body.salty :is(#pt-panel > #pt-panel-header > h3) {');
+    // 8.0.8 테마 가볍게: build-css 가 한 갈래 `:is(…)` 감싸개를 벗겨요(특이도 같음) — 두 꼴 다 받아요
+    const at = [':is(#pt-panel > #pt-panel-header > h3) {', '#pt-panel > #pt-panel-header > h3 {'].map(t => css.indexOf('html body.salty ' + t)).find(i => i >= 0) ?? -1;
     assert.ok(at >= 0, '통일 제목 규칙의 한글화 패널 줄을 못 찾음 — 빌드 꼴이 바뀌었으면 이 시험을 맞출 것');
     assert.ok(css.indexOf(HIDE) > at, '숨김 줄은 뒤에');
     const unify = spec('html body.salty :is(#pt-panel > #pt-panel-header > h3)'), hide = spec(HIDE.slice(0, HIDE.indexOf('{')));
