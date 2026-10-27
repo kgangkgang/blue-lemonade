@@ -3,7 +3,8 @@
 //  · 원작은 하루를 9칸(새벽 전 · 새벽 · 아침 · 한낮 · 오후 · 해질녘 · 저녁 · 밤 · 깊은 밤)으로 나눠 칸마다 한 자리에 두고, 달은 늘 초승달 하나였다(10-27 사용자 요청).
 //  · 여기서는 시각으로 호 위의 자리를 연속으로 잡고(해 6시→19시 · 달 19시→6시, 끝은 지평선 · 가운데는 꼭대기), 날짜의 「일」로 위상 8단계를 돌린다
 //    (1일 신월 → 16일 보름 → 30일 다시 신월, 글에 보름달 · 초승달 같은 말이 있으면 그쪽이 먼저). 해/달 가름 · 색 · 하늘은 원작 규칙 그대로.
-//  · 스킨을 끄면(syncDemSky(false)) 덧씌운 값을 모두 떼서 원작으로 돌아간다. 설정 창 미리보기(.salty-preview)는 건드리지 않는다.
+//  · 스킨을 끄면(syncDemSky(false)) 덧씌운 값을 모두 떼서 원작으로 돌아간다. 채팅 감시는 #chat 만 — 설정 창 상태창 글자 미리보기의 숨은 표본 자리는
+//    fruit-type-ui.js 가 dressDemSky(자리, 스킨 켬) 로 직접 부른다(8.1.0, 미리보기에도 실제 채팅과 같은 해 · 달).
 const SEL = '#chat .mes_text .custom-dem-track[data-t]';
 const VARS = ['--ox', '--oy', '--gx', '--orb-m', '--moon-r'];
 const RING = 'radial-gradient(circle, #0000 0 6.2px, #000 6.5px)';   // 원작 달 마스크의 둘째 층: 달 둘레 빛무리는 그대로 두는 몫
@@ -72,6 +73,8 @@ function dress(el) {
     el.dataset.blSky = key;
 }
 function strip(el) { for (const v of VARS) el.style.removeProperty(v); delete el.dataset.blSky; }
+/** 8.1.0 미리보기 표본처럼 채팅 밖의 자리 하나 — 스킨이 켜져 있으면(on) 채팅과 같은 계산으로 입히고, 꺼져 있으면 뗀다 */
+export function dressDemSky(root, on) { root?.querySelectorAll?.('.custom-dem-track[data-t]').forEach(on ? dress : strip); }
 
 let active = false, bound = null, watcher = null, timers = [], quiet = 0, changed = new Set(), dressing = false;
 // 8.1.1(렉 제보 핫픽스): 이벤트가 가리키는 메시지만 훑는다 — 전에는 이벤트마다 80/800/3000ms 세 번 채팅 전체를 훑었고, #chat 전체를 늘 감시했다.

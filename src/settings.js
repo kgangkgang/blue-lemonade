@@ -429,6 +429,7 @@ function tidyFlags(s) {
         s.chat.demSkin = flag(s.chat.demSkin, false);
         s.chat.demFold = flag(s.chat.demFold, true);
         s.chat.demGlow = Number.isFinite(Number(s.chat.demGlow)) ? Math.min(100, Math.max(0, Math.round(Number(s.chat.demGlow)))) : 35; // 8.0.9 데우스 V3 테두리 빛 (css/30-dem-skin.css --bl-dem-glow)
+        s.chat.demPreviewVersion = s.chat.demPreviewVersion === '2.5' ? '2.5' : 'v3'; // 8.1.0 상태창 글자 미리보기의 데우스 표본 판 (fruit-type-ui.js, 데우스 전체에 하나)
         s.chat.numComma = flag(s.chat.numComma, true); // 5.3.7 큰 숫자는 쉼표로 (numcomma.js) — 예전 설정에는 없으니 켬
         s.chat.helpMarks = flag(s.chat.helpMarks, true); // 6.1.5 설명 ? 단추 (월드인포 · 한글화 패널)
         s.chat.webSearchMarks = flag(s.chat.webSearchMarks, true); // 6.2.6 웹 검색 · 출처 표시 (websearch.js) — 예전 설정에는 없으니 켬

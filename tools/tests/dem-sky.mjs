@@ -5,9 +5,11 @@
 //   2) orbAt: 해는 6:00~19:00(양 끝 3%/97% · 33%, 한낮 꼭대기 0%), 달은 19:00~6:00 — 원작 9칸의 해/달 가름과 같은 경계
 //   3) dayOf · phaseOf: 「5월 3일」 · ISO · 영어 달 이름에서 「일」, 1일 신월 · 16일 보름 · 글의 보름달/초승달 말이 먼저
 //   4) 켜고 끄기: 요소에 --ox · --oy · --gx(달이면 --orb-m · --moon-r)를 인라인으로 덧씌우고, 끄면 모두 떼어 원작으로
+//   6) 8.1.0 설정 창 미리보기의 숨은 표본 자리(dressDemSky): 스킨 켬이면 채팅과 같은 계산, 끔이면 떼기
 //   5) 설정 · 기능 로더 · CSS: chat.demGlow 기본 35 · 0~100 · 이름표, features.js 가 dem-sky 를 부름, 30-dem-skin 이 --bl-dem-glow 를 씀, 「카드 이모티콘」 끔이 __glyph 도 숨김
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 const root = path.resolve(process.argv[2] || '.'), url = pathToFileURL(root + '/');
@@ -63,6 +65,21 @@ check('켜면 요소에 자리 · 달 마스크를 덧씌우고, 끄면 전부 �
     assert.deepEqual(word.vars, {}, '칸 이름만 있는 시각은 원작 그대로');
     sky.syncDemSky(false);
     assert.deepEqual(sun.vars, {}); assert.deepEqual(moon.vars, {}); assert.equal(sun.dataset.blSky, undefined); assert.equal(events.char, undefined, '이벤트를 뗀다');
+});
+check('8.1.0 설정 창 미리보기의 숨은 표본 자리도 채팅과 같은 계산으로 입히고(스킨 켬) 떼요(스킨 끔)', () => {
+    const day = new El({ 'data-t': '3:20 PM' }, '…', '가상력 12년 5월 3일 목요일'), night = new El({ 'data-t': '9:40 PM' }, '…', '가상력 12년 5월 16일 토요일');
+    let asked = '';
+    const host = { querySelectorAll: sel => { asked = sel; return [day, night]; } };
+    sky.dressDemSky(host, true);
+    assert.equal(asked, '.custom-dem-track[data-t]', '표본 자리 안의 트래커만');
+    assert.equal(day.vars['--ox'], '70.5%'); assert.equal(day.vars['--orb-m'], undefined, '낮은 해');
+    assert.equal(night.vars['--orb-m'], 'none', '16일 밤은 보름달'); assert.ok(night.vars['--oy']);
+    sky.dressDemSky(host, false);
+    assert.deepEqual(day.vars, {}); assert.deepEqual(night.vars, {}, '스킨을 끄면 원작으로');
+    sky.dressDemSky(null, true); // 자리가 없으면 아무것도 안 해요
+    const ui = fsSync.readFileSync(path.join(root, 'src/fruit-type-ui.js'), 'utf8');
+    assert.ok(ui.includes("dressDemSky(fragHost.host,skinOn())"), '표본을 옮기기 전에 하늘을 입혀요');
+    assert.ok(ui.includes("classList.contains('salty-dem-skin')"), '채팅과 같은 조건(카드 스킨)');
 });
 check('설정 · 로더 · CSS 연결', async () => {
     const settings = await read('src/settings.js'), features = await read('src/features.js'), apply = await read('src/apply.js'), css = await read('css/30-dem-skin.css'), unify = await read('css/08-regex-unify.css'), labels = await read('src/settings-labels.js'), panel = await read('src/panel.js');
