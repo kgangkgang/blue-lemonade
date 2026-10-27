@@ -150,7 +150,11 @@ const addPick = (st, { key, label, icon }) => {
 // 고르는 동안 설정 창을 치운다: 팝업이면 닫고(다시 열면 같은 자리), 확장 서랍 안이면 서랍을 닫는다. 끝나면 설정 창 팝업을 다시 연다
 function hideSettings(root) {
     const dialog = root.closest('dialog');
-    if (dialog) { try { dialog.close(); } catch { /* 이미 닫힘 */ } return; }
+    if (dialog) {
+        // 설정 팝업은 settings-dialog.js 가 건 _onClose 로 닫아야 실리태번 Popup 의 약속이 끝나고(openPopup 의 finally) 창이 치워진다 — dialog.close() 만으로는 안 끝난다
+        if (typeof root._onClose === 'function') root._onClose(); else try { dialog.close(); } catch { /* 이미 닫힘 */ }
+        return;
+    }
     const icon = root.closest('.drawer')?.querySelector(':scope > .drawer-toggle .drawer-icon.openIcon') || document.querySelector('#extensions-settings-button .drawer-icon.openIcon');
     icon?.closest('.drawer-toggle')?.click();
 }
