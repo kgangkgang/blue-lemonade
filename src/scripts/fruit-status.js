@@ -14,16 +14,32 @@ const PHONE = new Map(Object.entries({"显示设置": "표시 설정", "手机�
 const ISLAND = new Map(Object.entries({"LOCATION / TIME": "위치 / 시간", "OUTFIT / POSE": "옷차림 / 자세", "CURRENT MOOD": "현재 기분", "PRIVATE SEARCH": "검색 기록", "AUDIO LOG": "음악", "SYSTEM SETTINGS": "화면 설정", "Coordinates": "위치", "Local Time": "현지 시간", "Upper": "상의", "Lower": "하의", "Pose": "자세", "QUERY": "검색어", "TIMESTAMP": "시각", "暂无搜索记录": "검색 기록이 없어요", "Display Name": "표시 이름", "Background Image": "배경 이미지", "Upload (GIF/PNG/JPG)": "이미지 올리기 (GIF/PNG/JPG)", "ACTIVE TRACKING": "현재 상태", "Image is too large. Only available this session.": "이미지가 커서 이번 접속 동안만 적용돼요.", "Image is saved locally in browser.": "이미지가 이 브라우저에 저장돼요."}));
 const DIALOGS = new Map([['确定要恢复所有默认设置吗？','모든 설정을 기본값으로 복원할까요?'],['图片较大，无法永久保存。背景将在本次会话中生效，刷新页面后会恢复默认。','이미지가 커서 저장하지 못했어요. 이번 접속 동안만 배경이 적용되고, 새로고침하면 기본 배경으로 돌아가요.'],['读取文件失败，请重试。','파일을 읽지 못했어요. 다시 시도해 주세요.']]);
 const SKIP = 'script,style,textarea,input,pre,code,[contenteditable="true"],.fate-raw,[data-f]';
-// The renderer lifts its night toggle 4px above the card, and its hover lift (sticky after a tap on phones) moves it
-// 1px further, so the frame edge clips it. Keep a small margin and no lift on touch screens. Day mode already sits inside.
+// The renderer lifts its day/night toggle 4px above the card (top:-4px in both modes of the global-regex build; the preset
+// build lowers only day mode), and its hover lift (sticky after a tap on phones) moves it 1px further, so the frame edge clips
+// the top of the circle. Keep it inside in both modes, no lift on touch screens, and give it a 44px touch square (::after)
+// that stays inside the frame corner (10-27 report: half-cut moon in chat and in the settings sample). The preset build's day
+// mode adds 12px side padding to a width:100% card; border-box keeps that card (and the toggle) inside a frame without a global
+// box-sizing rule.
+// The quote block: the renderer puts the short rule (::before, 40px + 15px gap) at the start of the first flex row and the small
+// title (.movie-deco-eng) absolutely at left:55px above the first glyph, so both sit left of centre. The user wants the title,
+// the rule and the quote centred: the title and the rule each take a full row (order -1 / 0) and centre themselves; the rule is
+// painted as a centred 40px background on a full-width row (same colour variable, no new colour); the big first glyph's
+// one-sided margin-right:4px is mirrored so the first row centres too, and the title's 3px letter-spacing after its last letter
+// is balanced by a 3px indent. A non-original quote alignment from the typography settings moves the rule with the text
+// (fruitTypeCss sets its background-position).
 const toggleMask = shape => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${shape}</svg>`)}")`;
 const sunMask = toggleMask('<circle cx="12" cy="12" r="4.5" fill="black" stroke="none"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>');
 const moonMask = toggleMask('<path d="M20.9 13.5A9 9 0 0 1 10.5 3.1 9 9 0 1 0 20.9 13.5Z"/>');
-const FIXES = `.fate-status-wrapper.night-mode>.fate-theme-toggle{top:3px!important}
+const FIXES = `.fate-status-wrapper{box-sizing:border-box}
+.fate-status-wrapper>.fate-theme-toggle{top:3px!important;right:2px!important}
+.fate-status-wrapper>.fate-theme-toggle::after{content:"";position:absolute;top:-3px;right:-2px;bottom:-15px;left:-16px;background:transparent}
 .fate-status-wrapper>.fate-theme-toggle{font-size:0!important;line-height:0!important;--bl-fruit-toggle-mask:${moonMask}}
 .fate-status-wrapper.night-mode>.fate-theme-toggle{--bl-fruit-toggle-mask:${sunMask}}
 .fate-status-wrapper>.fate-theme-toggle::before{content:"";position:absolute;inset:0;margin:auto;display:block;width:14px;height:14px;background:currentColor;-webkit-mask:var(--bl-fruit-toggle-mask) center/contain no-repeat;mask:var(--bl-fruit-toggle-mask) center/contain no-repeat;pointer-events:none}
-@media (hover:none){.fate-status-wrapper>.fate-theme-toggle:hover{transform:none!important}}`;
+@media (hover:none){.fate-status-wrapper>.fate-theme-toggle:hover{transform:none!important}}
+.fate-status-wrapper .movie-line-content>.movie-deco-eng{position:static;order:-1;flex:0 0 100%;width:100%;text-align:center;text-indent:3px;margin:0 0 6px}
+.fate-status-wrapper .movie-line-content::before{flex:0 0 100%;width:100%;margin:0 0 10px;background-color:transparent;background-image:linear-gradient(var(--ft-text-light),var(--ft-text-light));background-size:40px 1px;background-position:center top;background-repeat:no-repeat}
+.fate-status-wrapper .movie-line-content>.movie-huge-text{margin-left:4px}`;
 
 export function installFruitStatusKorean(doc = document, host = window) {
     const texts = new Map(), attributes = new Map(), cards = new Map(), documents = new Map(), frames = new Map(), dialogChanges = new Map(), fixes = new Map();

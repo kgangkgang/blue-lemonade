@@ -54,6 +54,16 @@ assert.equal(doc.head.children.length,1);assert.equal(innerDoc.head.children.len
 assert.match(doc.head.children[0].textContent,/inset:0;margin:auto/,'toggle icon is centered independently of font metrics');
 assert.match(doc.head.children[0].textContent,/font-size:0!important/,'original text remains in DOM but does not affect icon placement');
 assert.match(doc.head.children[0].textContent,/mask:var\(--bl-fruit-toggle-mask\)/);
+// 10-27 제보: 원작 단추는 낮 · 밤 둘 다 top:-4px(전역 정규식판)이라 상자 위 끝에서 잘려요 — 두 모드 모두 안으로, 터치 칸 44px 도 상자 안
+{const fix=doc.head.children[0].textContent,num=(re)=>Number(fix.match(re)?.[1]);
+assert(!/night-mode>\.fate-theme-toggle\{top/.test(fix)&&/\.fate-status-wrapper>\.fate-theme-toggle\{top:3px!important;right:2px!important\}/.test(fix),'toggle stays inside the card in day and night mode');
+const top=num(/toggle\{top:(-?\d+)px/),right=num(/toggle\{top:-?\d+px!important;right:(-?\d+)px/),a=fix.match(/toggle::after\{[^}]*top:(-?\d+)px;right:(-?\d+)px;bottom:(-?\d+)px;left:(-?\d+)px/).slice(1).map(Number);
+assert(top+a[0]>=0&&right+a[1]>=0,'touch square stays inside the card corner');assert.equal(26-a[0]-a[2],44);assert.equal(26-a[1]-a[3],44);
+// 「장면」 이름표 · 짧은 선 · 인용문을 가로 가운데로(원작은 선이 첫 줄 맨 앞, 제목이 left:55px)
+assert.match(fix,/movie-line-content>\.movie-deco-eng\{position:static;order:-1;flex:0 0 100%[^}]*text-align:center/);
+assert.match(fix,/movie-line-content::before\{flex:0 0 100%[^}]*background-size:40px 1px;background-position:center top/);
+assert.match(fix,/movie-huge-text\{margin-left:4px\}/,'first glyph margin is mirrored');
+assert.match(fix,/^\.fate-status-wrapper\{box-sizing:border-box\}/,'padded day card stays inside its frame');}
 assert.equal(cp.text,'관계');assert.equal(at.text,'장소');assert.equal(novelValue.text,'CP');
 assert.equal(choice.text,'선택하기');assert.equal(choiceValue.text,'Choose · Sth.');assert.equal(proButton.getAttribute('aria-label'),'밝은/어두운 모드 전환');
 assert.equal(outer.label.text,'DATE');assert.equal(direct.label.text,'날짜');assert.equal(inner.label.text,'날짜');

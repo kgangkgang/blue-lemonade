@@ -83,6 +83,8 @@ export function fruitTypeCss(value, fontFamily = ()=>'') {
             //   예전 display:block 은 글자들이 한 낱말(공백이 &nbsp;)이 되어 짧은 선만 첫 줄에 남고 글은 다음 줄로 밀려, 제목이 왼쪽에 홀로 떴어요(10-27 제보).
             //   원작 배치는 손대지 않고 글자 크기 · 어긋남만 고르게 해요.
             if(key==='quote'&&type.id==='status')rules.push(`${targets} .movie-huge-text,${targets} .char-wrap{font:inherit!important;letter-spacing:inherit!important;line-height:inherit!important;transform:none!important;margin:0!important}`);
+            // 과일 한글화가 짧은 선을 제목 아래 한 줄로 가운데 그려요(fruit-status.js FIXES). 정렬을 고르면 선도 글과 같은 쪽으로 가요.
+            if(key==='quote'&&type.id==='status'&&r.align!=='original')rules.push(`${targets}::before{background-position:${{left:'left',center:'center',right:'right',justify:'left'}[r.align]} top!important}`);
         }
         if(config.hideFooter&&type.regions.footer)rules.push(`${type.root} ${type.regions.footer[1]}{display:none!important;margin:0!important;padding:0!important}`);
     }
