@@ -1,7 +1,7 @@
 // Known renderer structures only. Names match the bundled Fruit localization dictionary.
 export const FRUIT_TYPES = [
 
-    {id:'status',prompt:'cc526ae2-8d33-4cee-9f86-1629a13bb6c0',aliases:['5472f208-b696-4f5b-a32e-025d0ef8da82'],name:'🍏 Top-글머리 문구｜본문 앞 상태창 택1 @鸦',root:'.fate-status-wrapper',regions:{info:['날짜 · 시간 · 장소 · 날씨','.fate-top-grid'],quote:['장면 인용문','.movie-line-content'],names:['인물 이름 줄','.fate-outfit-label'],footer:['하단 고정 문구','.fate-bottom-en']},layout:true},
+    {id:'status',prompt:'cc526ae2-8d33-4cee-9f86-1629a13bb6c0',aliases:['5472f208-b696-4f5b-a32e-025d0ef8da82'],name:'🍏 Top-글머리 문구｜본문 앞 상태창 택1 @鸦',root:'.fate-status-wrapper',regions:{info:['날짜 · 시간 · 장소 · 날씨','.fate-top-grid'],quote:['장면 인용문','.movie-line-content'],names:['인물 이름 줄','.fate-outfit-label'],between:['이름 줄 아래 문구','.fate-between,.fate-outfit-char,.fate-outfit-user'],footer:['하단 고정 문구','.fate-bottom-en']},layout:true},
     {id:'compact',prompt:'67dbe0dc-f188-444d-a812-379088c1a7ee',name:'🍏 Top-간결｜본문 앞 상태창 택1 @小鱼 @yuki',root:'#statusBar.dynamic-status-container',regions:{info:['시간 · 장소 · 날씨','.line-1,.line-2'],quote:['짧은 문구','.line-3']},layout:true},
     {id:'single',prompt:'7be20e56-40e9-478c-8363-872318e96c77',name:'🍏 1인 상태창 @小夜',root:'.swiss-island',regions:{info:['세부 정보 값','.detail-value,.tag-box,.text-desc'],quote:['대사 말풍선','.speech-bubble'],names:['인물 이름','.main-title,.capsule-title'],footer:['상태 표시','.status-badge']},layout:false},
     {id:'novel',prompt:'94863b1a-5f51-4483-bb6c-f05aca62743a',name:'🍏 소설 제목 @蛾摩拉',root:'.novel-header-container',regions:{info:['관계 · 장소 · 태그','#novel-meta-container,.novel-tags-wrapper'],quote:['글머리 문구','.novel-preface'],names:['장 번호 · 제목','.novel-chapter-num,.novel-title']},layout:false},
@@ -71,12 +71,18 @@ export function fruitTypeCss(value, fontFamily = ()=>'') {
             if(r.align!=='original'){declarations.push(`text-align:${r.align}!important`,`justify-content:${flex}!important`,`justify-items:${cell}!important`);rules.push(`${selector.split(',').map(x=>`${type.root} ${x} *`).join(',')}{text-align:inherit!important}`);}
             if(r.align!=='original'&&key==='info'&&type.id==='status')rules.push(`${type.root} .fate-grid-item{align-items:${r.align==='justify'?'stretch':flex}!important;text-align:inherit!important}`);
             if(r.wrap!=='original')declarations.push(`white-space:${r.wrap==='nowrap'?'nowrap':'normal'}!important`,`word-break:${r.wrap==='word'?'keep-all':'normal'}!important`,`overflow-wrap:${r.wrap==='nowrap'?'normal':'anywhere'}!important`);
-            declarations.push('min-width:0!important','max-width:100%!important');
+            // 상태창 인용문(90%) · 이름 줄 아래 문구(88%)는 원작 폭 그대로 — 100% 로 넓히면 원작보다 넓은 상자가 돼요(10-27 제보 ③)
+            declarations.push('min-width:0!important');if(!(type.id==='status'&&['quote','between'].includes(key)))declarations.push('max-width:100%!important');
             if(r.wrap==='nowrap')declarations.push('overflow-x:auto!important');
             rules.push(`${targets}{${declarations.join(';')}}`);
-            rules.push(`${selector.split(',').map(x=>`${type.root} ${x} :is(span,p,b,i,em,strong)`).join(',')}{${family?'font-family:inherit!important;':''}font-size:inherit!important;font-weight:inherit!important;font-style:inherit!important;letter-spacing:inherit!important;line-height:inherit!important;text-align:inherit!important}`);
+            // 상태창 인용문 위 작은 제목(.movie-deco-eng · 「장면」 「메아리」)은 원작처럼 작은 글자로 첫 글자 위에 — 본문 크기를 물려주면 첫 줄에 겹쳐요
+            const inner=key==='quote'&&type.id==='status'?':is(span,p,b,i,em,strong):not(.movie-deco-eng)':':is(span,p,b,i,em,strong)';
+            rules.push(`${selector.split(',').map(x=>`${type.root} ${x} ${inner}`).join(',')}{${family?'font-family:inherit!important;':''}font-size:inherit!important;font-weight:inherit!important;font-style:inherit!important;letter-spacing:inherit!important;line-height:inherit!important;text-align:inherit!important}`);
             if(key==='info'&&type.id==='status')rules.push(`${type.root} .fate-grid-value,${type.root} .fate-grid-label{font-size:inherit!important;line-height:inherit!important;font-weight:inherit!important;font-style:inherit!important;letter-spacing:inherit!important;white-space:inherit!important;overflow-wrap:inherit!important;word-break:inherit!important;${family?'font-family:inherit!important;':''}text-align:inherit!important}`);
-            if(key==='quote'&&type.id==='status')rules.push(`${targets}{display:block!important}${targets} .movie-huge-text,${targets} .char-wrap{font:inherit!important;letter-spacing:inherit!important;line-height:inherit!important;transform:none!important;margin:0!important;display:inline!important}`);
+            // 8.1.0 원작은 글자마다 flex 칸이라 첫 줄이 「짧은 선 · 첫 글자 · …」로 이어지고 작은 제목(.movie-deco-eng)이 그 첫 글자 위에 와요.
+            //   예전 display:block 은 글자들이 한 낱말(공백이 &nbsp;)이 되어 짧은 선만 첫 줄에 남고 글은 다음 줄로 밀려, 제목이 왼쪽에 홀로 떴어요(10-27 제보).
+            //   원작 배치는 손대지 않고 글자 크기 · 어긋남만 고르게 해요.
+            if(key==='quote'&&type.id==='status')rules.push(`${targets} .movie-huge-text,${targets} .char-wrap{font:inherit!important;letter-spacing:inherit!important;line-height:inherit!important;transform:none!important;margin:0!important}`);
         }
         if(config.hideFooter&&type.regions.footer)rules.push(`${type.root} ${type.regions.footer[1]}{display:none!important;margin:0!important;padding:0!important}`);
     }

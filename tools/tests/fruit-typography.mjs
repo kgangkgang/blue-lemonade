@@ -13,6 +13,12 @@ assert.deepEqual(tidyFruitType(bad),bad);
 const s=tidyFruitType({on:true});assert.equal(fruitTypeCss(s),'');
 s.types.status.regions.quote.on=true;s.types.status.regions.quote.size=22;s.types.status.regions.quote.spacing=0;
 const css=fruitTypeCss(s);assert(css.includes('font-size:22px'));assert(css.includes('transform:none'));assert(!css.includes('.fate-top-grid'));
+// 8.1.0 제보: 인용문은 원작 flex 배치 그대로(display:block 이면 짧은 선만 첫 줄에 남고 작은 제목이 왼쪽에 홀로 떠요) · 폭 90% 그대로 · 작은 제목(.movie-deco-eng)은 본문 크기를 안 물려받아요
+assert(!css.includes('display:block'),'Quote keeps the original flex layout');assert(!/movie-line-content\)\{[^}]*max-width:100%/.test(css),'Quote keeps the original 90% width');
+assert(/movie-line-content\) :is\(span,p,b,i,em,strong\):not\(:is\(\.movie-deco-eng,\.custom-movie-deco-eng\)\)\{/.test(css),'Deco title is excluded from inherited size');
+// 8.1.0 제보: 이름 줄 아래 긴 문구(.fate-between · 옛 대화의 옷차림 두 칸)도 영역이에요
+assert.deepEqual(Object.keys(FRUIT_TYPES.find(t=>t.id==='status').regions),['info','quote','names','between','footer']);
+{const b=tidyFruitType({on:true});b.types.status.regions.between.on=true;b.types.status.regions.between.size=18;const c=fruitTypeCss(b);assert(c.includes(':is(.fate-between,.custom-fate-between)')&&c.includes('.fate-outfit-char')&&c.includes('font-size:18px'));assert(!/fate-outfit-user\)\{[^}]*max-width:100%/.test(c),'Between keeps the original 88% width');}
 s.types.status.hideFooter=true;assert(fruitTypeCss(s).includes(':is(.fate-bottom-en,.custom-fate-bottom-en){display:none'));
 s.types.status.layout='vertical';assert(fruitTypeCss(s).includes('grid-template-columns:minmax(0,1fr)'));
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');let dictionary;
