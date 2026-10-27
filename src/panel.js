@@ -1734,6 +1734,7 @@ function tabPrompt(s,sub) {
         ${cap('카드')}<div class="salty-group">
             ${row('카드 스킨', toggle('chat.demSkin', !!s.chat.demSkin), '트래커 · 장면 계획 같은 카드를 테마 모양으로')}
             ${s.chat.demSkin ? row('폰에서 접어 두기', toggle('chat.demFold', s.chat.demFold !== false), '트래커는 한 줄, 펼쳐져 오는 카드는 제목만 · 누르면 펼쳐요') : ''}
+            ${s.chat.demSkin ? slider('chat.demGlow', '테두리 빛', 0, 100, 5, 35) : ''}
             ${row('카드 색 통일', toggle('chat.unifyRegex', s.chat.unifyRegex), '카드의 모듈별 색을 포인트색 하나로')}
             ${row('카드 이모티콘', toggle('chat.regexIcons', s.chat.regexIcons), '끄면 카드 제목 앞 그림 없이 글자만')}
         </div>

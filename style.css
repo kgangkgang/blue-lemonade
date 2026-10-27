@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build e339e7d1f8cb) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 97개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 7d080100e236) */
 /* css/00-base.css */
 :root{--bl-release:"8.0.8";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -3630,6 +3630,9 @@ body.salty.salty-unify-inline.salty-dem-ink :is(:is(#chat,.bl-chat-like) .mes, .
   -webkit-text-fill-color: inherit !important;
 }
 body.salty.salty-regex-noicons :is(:is(#chat,.bl-chat-like), .cg-root) .mes_text [class*="custom-"][class*="__icon"] {
+  display: none !important;
+}
+body.salty.salty-regex-noicons :is(:is(#chat,.bl-chat-like), .cg-root) .mes_text .custom-dem-track__glyph {
   display: none !important;
 }
 @media not all {
@@ -19111,10 +19114,12 @@ body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track:has(> .custom-dem-track__grid),
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules:is(.bl-s, *),
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text :is(.custom-dem-modules .custom-dem-card) {
-  --dem-paper: var(--bl-fill-card, var(--bl-card, var(--salty-surface)));
-  --dem-raised: color-mix(in srgb, var(--salty-accent) 8%, var(--bl-fill-card, var(--bl-card, var(--salty-surface))));
-  --dem-tray: var(--salty-fill-surface, var(--salty-surface));
-  --dem-rule: color-mix(in srgb, var(--salty-accent) 30%, var(--salty-line));
+  --dem-paper: color-mix(in srgb, var(--salty-accent) 24%, var(--bl-fill-card, var(--bl-card, var(--salty-surface))));
+  --dem-raised: color-mix(in srgb, var(--salty-accent) 32%, var(--bl-fill-card, var(--bl-card, var(--salty-surface))));
+  --dem-tray: color-mix(in srgb, var(--salty-accent) 12%, var(--salty-fill-surface, var(--salty-surface)));
+  --dem-rule: color-mix(in srgb, var(--salty-accent) 55%, var(--salty-line));
+  --bl-dem-glow-ring: color-mix(in srgb, var(--salty-accent) calc(26% * var(--bl-dem-glow, .35)), transparent);
+  --bl-dem-glow-halo: color-mix(in srgb, var(--salty-accent) calc(48% * var(--bl-dem-glow, .35)), transparent);
   --dem-rule-soft: var(--salty-line);
   --dem-ink: var(--salty-text);
   --dem-ink-2: var(--salty-muted);
@@ -19128,9 +19133,23 @@ body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview
   border-radius: 14px !important;
   box-shadow: var(--bl-e1);
 }
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text :where(.custom-dem-track > .custom-dem-track__grid):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) {
+  border: 2px solid var(--salty-accent) !important;
+  box-shadow:
+    0 0 0 calc(4px * var(--bl-dem-glow, .35)) var(--bl-dem-glow-ring),
+    0 0 calc(22px * var(--bl-dem-glow, .35)) var(--bl-dem-glow-halo);
+}
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid {
-  border-top: 2px solid var(--salty-accent) !important;
   padding-inline: 14px !important;
+  background:
+    linear-gradient(var(--wx-veil, #0000), var(--wx-veil, #0000)),
+    radial-gradient(circle 1px, var(--st, #0000) 45%, #0000) 0 0 / 97px 41px,
+    radial-gradient(circle 0.8px, var(--st, #0000) 50%, #0000) 71px 9px / 67px 29px,
+    linear-gradient(90deg, #0000 4%, var(--hz-c, var(--arc-c, #0000)) 18% 82%, #0000 96%) 0 var(--hz, 2px) / 100% 1px no-repeat,
+    radial-gradient(40% 56px at var(--gx, 50%) var(--hz, 2px), color-mix(in srgb, var(--s3, #0000) var(--ga, 70%), #0000), #0000 72%),
+    linear-gradient(var(--s1, #0000), var(--s2, #0000) var(--hz, 2px), color-mix(in srgb, var(--salty-accent) 14%, #0000) var(--hz, 2px)),
+    var(--dem-paper);
 }
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__clock {
   color: var(--salty-accent-ink, var(--salty-accent));
@@ -19149,7 +19168,10 @@ body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview
 }
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__rule::before,
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__rule::after {
-  border-top-color: color-mix(in srgb, var(--salty-accent) 55%, transparent);
+  border-top: 2px solid var(--salty-accent);
+}
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__crumb:last-child {
+  font-weight: 700;
 }
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-card__title,
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-status-row__name,
@@ -19161,17 +19183,46 @@ body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview
   font-family: var(--salty-font-ui, inherit);
 }
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) {
-  border: 1px solid color-mix(in srgb, var(--salty-accent) 42%, var(--salty-line));
   background: var(--dem-tray);
 }
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary {
   margin-block-end: 0;
   padding: 10px 56px;
-  border-radius: 13px;
-  background: color-mix(in srgb, var(--salty-accent) 9%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--salty-accent) 20%, transparent);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--salty-accent) 45%, transparent);
 }
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text details.custom-dem-modules[open]:not(#salty-none) > summary {
-  border-radius: 13px 13px 0 0;
+  border-radius: 12px 12px 0 0;
+}
+body.salty.salty-dem-skin.salty-unify-regex :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tab,
+body.salty.salty-dem-skin.salty-unify-regex :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-chip,
+body.salty.salty-dem-skin.salty-unify-regex :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tabs__rail {
+  --tab: var(--salty-accent) !important;
+}
+body.salty.salty-dem-skin.salty-unify-regex :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tabs__rail,
+body.salty.salty-dem-skin.salty-unify-regex :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tabs__rail::after {
+  --pill: var(--salty-accent) !important;
+}
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-status-row__name,
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-bond-row__name,
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-psychological-state-row__name,
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-meanwhile-row__title,
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-truth-row__title {
+  color: var(--salty-accent-ink, var(--salty-accent));
+  box-shadow: none;
+  font-weight: 700;
+}
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-status-row__label,
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-bond-row__label,
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-psychological-state-row__label {
+  color: color-mix(in srgb, var(--salty-accent-ink, var(--salty-accent)) 70%, var(--salty-muted));
+}
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-bond__fill {
+  background: var(--salty-accent);
+}
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules details.custom-dem-card {
+  border: 1px solid color-mix(in srgb, var(--salty-accent) 45%, var(--salty-line));
 }
 @container (max-width: 420px) {
   body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary {
@@ -19186,22 +19237,11 @@ body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview
 body.salty.salty-light.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track:has(> .custom-dem-track__grid),
 body.salty.salty-light.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules:is(.bl-s, *),
 body.salty.salty-light.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text :is(.custom-dem-modules .custom-dem-card) {
-  --dem-paper: color-mix(in srgb, var(--salty-accent) 7%, var(--bl-fill-card, var(--bl-card, var(--salty-surface))));
-  --dem-tray: color-mix(in srgb, var(--salty-accent) 4%, var(--salty-fill-surface, var(--salty-surface)));
   --dem-ink-2: color-mix(in srgb, var(--salty-muted) 72%, var(--salty-text));
 }
-body.salty.salty-light.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid {
-  background:
-    linear-gradient(var(--wx-veil, #0000), var(--wx-veil, #0000)),
-    radial-gradient(circle 1px, var(--st, #0000) 45%, #0000) 0 0 / 97px 41px,
-    radial-gradient(circle 0.8px, var(--st, #0000) 50%, #0000) 71px 9px / 67px 29px,
-    linear-gradient(90deg, #0000 4%, var(--hz-c, var(--arc-c, #0000)) 18% 82%, #0000 96%) 0 var(--hz, 2px) / 100% 1px no-repeat,
-    radial-gradient(40% 56px at var(--gx, 50%) var(--hz, 2px), color-mix(in srgb, var(--s3, #0000) var(--ga, 70%), #0000), #0000 72%),
-    linear-gradient(var(--s1, #0000), var(--s2, #0000) var(--hz, 2px), color-mix(in srgb, var(--s2, #0000) 8%, #0000) var(--hz, 2px)),
-    var(--dem-paper);
-}
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__temp:not(#salty-none) {
-  background: color-mix(in srgb, var(--salty-accent) 10%, var(--bl-fill-card, var(--bl-card, var(--salty-surface)))) !important;
+  background: color-mix(in srgb, var(--salty-accent) 20%, transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--salty-accent) 45%, transparent);
   color: var(--salty-accent-ink, var(--salty-accent)) !important;
 }
 @media (max-width: 1000px) {

@@ -636,6 +636,7 @@ export function applyAll() {
         '--salty-user-scale': String(Number(((s.chat.userSize ?? 100) / 100).toFixed(3))), // 내 메시지 크기 (본문 대비)
         '--salty-user-ink': `${s.chat.userInk ?? 100}%`,
         '--bl-hidden-opacity': String(Math.min(90, Math.max(10, Number(s.chat.hiddenOpacity) || 40)) / 100), // 5.6.8 숨긴 메시지 진하기 (css/05-chat.css)
+        '--bl-dem-glow': String(Math.min(100, Math.max(0, Number.isFinite(Number(s.chat.demGlow)) ? Number(s.chat.demGlow) : 35)) / 100), // 8.0.9 데우스 V3 카드 테두리 빛 0~1 (css/30-dem-skin.css)
         '--bl-hidden-gray': `${Math.min(100, Math.max(0, Number(s.chat.hiddenGray) || 0))}%`,            //       흑백
         '--bl-qr-rows': String(s.chat.qrRows ?? 2), // 3.5.4 세로 스크롤일 때 보이는 퀵 리플라이 줄 수                                     // 내 메시지 글자 진하기
         '--salty-ui-weight': s.ui?.weight ? String(s.ui.weight) : 'normal',

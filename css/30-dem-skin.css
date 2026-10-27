@@ -283,10 +283,13 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
    원작이 쓰는 색 변수(--dem-paper · --dem-rule · --dem-ink …)를 테마 팔레트 토큰으로 바꿔 밤/낮 · 사용자가 고른 팔레트를 그대로 따라가요.
    글꼴: 원작 세리프 자리(--dem-serif)와 본문을 테마 UI 글꼴로 — 「상태창 글자」 설정이 있으면 그쪽이 이겨요(!important 없음). 숫자는 고정 폭 숫자 그대로. */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track:has(> .custom-dem-track__grid), .custom-dem-modules, .custom-dem-modules .custom-dem-card) {
-  --dem-paper: var(--bl-fill-card, var(--bl-card, var(--salty-surface)));
-  --dem-raised: color-mix(in srgb, var(--salty-accent) 8%, var(--bl-fill-card, var(--bl-card, var(--salty-surface))));
-  --dem-tray: var(--salty-fill-surface, var(--salty-surface));
-  --dem-rule: color-mix(in srgb, var(--salty-accent) 30%, var(--salty-line));
+  /* 8.0.9 사용자 「블루레몬에이드 색채가 더 강하게」 → 시안 「테두리 빛」 채택: 카드 바탕 포인트 24% · 테두리 2px 포인트 · 바깥 빛무리(설정 「테두리 빛」 0~100, --bl-dem-glow 0~1) */
+  --dem-paper: color-mix(in srgb, var(--salty-accent) 24%, var(--bl-fill-card, var(--bl-card, var(--salty-surface))));
+  --dem-raised: color-mix(in srgb, var(--salty-accent) 32%, var(--bl-fill-card, var(--bl-card, var(--salty-surface))));
+  --dem-tray: color-mix(in srgb, var(--salty-accent) 12%, var(--salty-fill-surface, var(--salty-surface)));
+  --dem-rule: color-mix(in srgb, var(--salty-accent) 55%, var(--salty-line));
+  --bl-dem-glow-ring: color-mix(in srgb, var(--salty-accent) calc(26% * var(--bl-dem-glow, .35)), transparent);
+  --bl-dem-glow-halo: color-mix(in srgb, var(--salty-accent) calc(48% * var(--bl-dem-glow, .35)), transparent);
   --dem-rule-soft: var(--salty-line);
   --dem-ink: var(--salty-text);
   --dem-ink-2: var(--salty-muted);
@@ -294,14 +297,29 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
   --dem-serif: var(--salty-font-ui, inherit);
   font-family: var(--salty-font-ui, inherit);
 }
-/* 테마 카드 규격: 모서리 14 · 테두리 1px(포인트색 기운) · 윗선은 포인트색 · 그림자 한 단계 */
+/* 테마 카드 규격: 모서리 14 · 트래커 · 상태창 묶음은 테두리 2px 포인트색 + 바깥 빛무리(「테두리 빛」 0 이면 고리 · 빛무리 0) · 묶음 안 카드는 1px 포인트 기운 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track > .custom-dem-track__grid, .custom-dem-modules, .custom-dem-modules details.custom-dem-card) {
   border-radius: 14px !important;
   box-shadow: var(--bl-e1);
 }
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track > .custom-dem-track__grid, details.custom-dem-modules:not(#salty-none)) {
+  border: 2px solid var(--salty-accent) !important;
+  box-shadow:
+    0 0 0 calc(4px * var(--bl-dem-glow, .35)) var(--bl-dem-glow-ring),
+    0 0 calc(22px * var(--bl-dem-glow, .35)) var(--bl-dem-glow-halo);
+}
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid {
-  border-top: 2px solid var(--salty-accent) !important;
   padding-inline: 14px !important;
+  /* 하늘 띠 · 해/달 · 별 · 지평선 빛무리 · 날씨 층은 원작 값 그대로(같은 순서), 하늘 아래 「땅」 그늘만 포인트색 14% 로 — 밤 · 낮 같음.
+     변수가 없을 때(장면 정규식 끔)도 배경이 무효가 되지 않게 모든 var() 에 원작과 같은 빈 값 대체. 「장면 숨기기」 정규식(!important)은 그대로 이겨요 */
+  background:
+    linear-gradient(var(--wx-veil, #0000), var(--wx-veil, #0000)),
+    radial-gradient(circle 1px, var(--st, #0000) 45%, #0000) 0 0 / 97px 41px,
+    radial-gradient(circle 0.8px, var(--st, #0000) 50%, #0000) 71px 9px / 67px 29px,
+    linear-gradient(90deg, #0000 4%, var(--hz-c, var(--arc-c, #0000)) 18% 82%, #0000 96%) 0 var(--hz, 2px) / 100% 1px no-repeat,
+    radial-gradient(40% 56px at var(--gx, 50%) var(--hz, 2px), color-mix(in srgb, var(--s3, #0000) var(--ga, 70%), #0000), #0000 72%),
+    linear-gradient(var(--s1, #0000), var(--s2, #0000) var(--hz, 2px), color-mix(in srgb, var(--salty-accent) 14%, #0000) var(--hz, 2px)),
+    var(--dem-paper);
 }
 /* 강조색 네 곳 — 시각 숫자 · 기온 칩 · 장소 마지막 칸 · 구분선 별 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__clock {
@@ -321,7 +339,11 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__rule::before,
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__rule::after {
-  border-top-color: color-mix(in srgb, var(--salty-accent) 55%, transparent);
+  border-top: 2px solid var(--salty-accent);
+}
+/* 장소 마지막 칸은 굵게, 앞 칸은 포인트 잉크 기운 — 트래커 글자도 테마 결로 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__crumb:last-child {
+  font-weight: 700;
 }
 /* 상태창 묶음 · 카드 제목도 포인트색 잉크로(원작 모듈 색 점 · 리본 그림은 그대로) */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-card__title, .custom-dem-status-row__name, .custom-dem-psychological-state-row__name) {
@@ -335,17 +357,43 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
    V3 묶음까지 테두리 0 · 바탕 투명 · 머리 여백 .4em 으로 눌러 틀이 사라졌어요. 스킨이 켜져 있으면 원작 틀을 되살리고 색만 테마로 —
    테두리는 포인트색 기운, 머리줄은 포인트색 틴트(원작은 바탕 없음 · 마우스 올림만 --dem-raised). :not(#salty-none) 은 그 규칙보다 무겁게 하려는 것 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) {
-  border: 1px solid color-mix(in srgb, var(--salty-accent) 42%, var(--salty-line));
   background: var(--dem-tray);
 }
+/* 머리줄 · 탭 · 항목 이름표 · 유대 막대도 트래커와 같은 결(10-27 사용자 「하단 상태창도 같은 테마 느낌」): 머리줄은 알약처럼 포인트 20% 투명 띠,
+   탭의 고유 색(--tab)은 포인트색 하나로, 항목 이름표(PHYSICAL …)는 포인트 잉크 기운, 유대 막대 채움은 포인트색 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary {
   margin-block-end: 0;
   padding: 10px 56px;
-  border-radius: 13px;
-  background: color-mix(in srgb, var(--salty-accent) 9%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--salty-accent) 20%, transparent);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--salty-accent) 45%, transparent);
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules[open]:not(#salty-none) > summary {
-  border-radius: 13px 13px 0 0;
+  border-radius: 12px 12px 0 0;
+}
+/* 탭 · 인물 칩의 고유 색은 원작이 인라인(style="--tab:#…")으로 박아 둬서 「카드 색 통일」이 켜져 있을 때만 포인트색 하나로(!important 가 인라인을 이김). 끄면 원작 탭 색 그대로 */
+body.salty.salty-dem-skin.salty-unify-regex :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-tab, .custom-dem-chip, .custom-dem-tabs__rail) {
+  --tab: var(--salty-accent) !important;
+}
+/* 고른 탭의 알약은 레일의 ::after(anchor 배치)가 --pill 변수로 그려요(원작 기본 #cba6f7) — :is() 안에는 가상 요소를 못 넣으니 따로 */
+body.salty.salty-dem-skin.salty-unify-regex :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tabs__rail,
+body.salty.salty-dem-skin.salty-unify-regex :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tabs__rail::after {
+  --pill: var(--salty-accent) !important;
+}
+/* 인물 이름(원작은 <strong>)에는 본문 강조의 레몬 형광펜 띠를 깔지 않고 포인트 잉크로 — 카드 안에서 띠만 튀던 것(10-27 사진) */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row__name, .custom-dem-bond-row__name, .custom-dem-psychological-state-row__name, .custom-dem-meanwhile-row__title, .custom-dem-truth-row__title) {
+  color: var(--salty-accent-ink, var(--salty-accent));
+  box-shadow: none;
+  font-weight: 700;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row__label, .custom-dem-bond-row__label, .custom-dem-psychological-state-row__label) {
+  color: color-mix(in srgb, var(--salty-accent-ink, var(--salty-accent)) 70%, var(--salty-muted));
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-bond__fill {
+  background: var(--salty-accent);
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules details.custom-dem-card {
+  border: 1px solid color-mix(in srgb, var(--salty-accent) 45%, var(--salty-line));
 }
 @container (max-width: 420px) {
   body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary {
@@ -361,24 +409,14 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details
    그늘만 8% 로 옅게 — 하늘 띠 · 해/달 · 별 · 지평선 빛무리 · 호 · 날씨 그림은 원작 층 그대로(같은 순서 · 같은 값), 본문 바탕은 포인트색 기운 카드.
    변수가 없을 때(장면 정규식 끔)도 배경이 무효가 되지 않게 모든 var() 에 원작과 같은 빈 값 대체를 달았어요. 「장면 숨기기」 정규식(!important)은 그대로 이겨요. */
 body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track:has(> .custom-dem-track__grid), .custom-dem-modules, .custom-dem-modules .custom-dem-card) {
-  --dem-paper: color-mix(in srgb, var(--salty-accent) 7%, var(--bl-fill-card, var(--bl-card, var(--salty-surface))));
-  --dem-tray: color-mix(in srgb, var(--salty-accent) 4%, var(--salty-fill-surface, var(--salty-surface)));
   --dem-ink-2: color-mix(in srgb, var(--salty-muted) 72%, var(--salty-text)); /* 날짜 · 장소 · 날씨 글이 틴트 바탕에서도 4.5:1 넘게 */
 }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid {
-  background:
-    linear-gradient(var(--wx-veil, #0000), var(--wx-veil, #0000)),
-    radial-gradient(circle 1px, var(--st, #0000) 45%, #0000) 0 0 / 97px 41px,
-    radial-gradient(circle 0.8px, var(--st, #0000) 50%, #0000) 71px 9px / 67px 29px,
-    linear-gradient(90deg, #0000 4%, var(--hz-c, var(--arc-c, #0000)) 18% 82%, #0000 96%) 0 var(--hz, 2px) / 100% 1px no-repeat,
-    radial-gradient(40% 56px at var(--gx, 50%) var(--hz, 2px), color-mix(in srgb, var(--s3, #0000) var(--ga, 70%), #0000), #0000 72%),
-    linear-gradient(var(--s1, #0000), var(--s2, #0000) var(--hz, 2px), color-mix(in srgb, var(--s2, #0000) 8%, #0000) var(--hz, 2px)),
-    var(--dem-paper);
-}
-/* 기온 칩은 바탕 틴트를 카드색 위로 다시 깔고 글자는 포인트 잉크로 — 밤 · 낮 모두 4.5:1 넘게.
+/* 기온 칩은 포인트색 20% 틴트만 투명하게 깔고(카드색을 다시 칠하지 않아 해 · 달의 빛무리가 비쳐요) 가는 포인트 고리 + 포인트 잉크 —
+   사용자 10-27 「알약만 눈에 튀어요 · 빛 효과 받게」 → 시안 「알약 투명」 채택. 밤 · 낮 모두 4.5:1 넘게.
    「색 통일」(08-regex-unify, !important)이 켜져 있어도 같은 포인트색 계열이라 이 칩만은 읽히는 쪽이 이겨요 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__temp:not(#salty-none) {
-  background: color-mix(in srgb, var(--salty-accent) 10%, var(--bl-fill-card, var(--bl-card, var(--salty-surface)))) !important;
+  background: color-mix(in srgb, var(--salty-accent) 20%, transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--salty-accent) 45%, transparent);
   color: var(--salty-accent-ink, var(--salty-accent)) !important;
 }
 

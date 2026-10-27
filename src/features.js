@@ -120,6 +120,8 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (demfx || modules.demfx) load('demfx', './dem-expressive.js').then(m => m?.syncDemExpressive(demfx));
     const dem = on && !!s.deus?.on && !!s.chat?.demSkin;
     if (dem || modules.dem) load('dem', './demskin.js').then(m => m?.syncDemSkin(dem, s.chat));
+    // 8.0.9 데우스 V3 하늘: 트래커 시각으로 해 · 달 자리, 날짜로 달 위상 (dem-sky.js — 카드 스킨을 끄면 덧씌운 값을 모두 뗀다)
+    if (dem || modules.demsky) load('demsky', './dem-sky.js').then(m => m?.syncDemSky(dem));
     // 3.5.1 새로고침 첫 화면 파일 (user.css 에 줄이 있을 때만 씀 — splash.js)
     syncSplash(s, () => hooks.refreshPanels?.());
     // 캐릭터별 스타일: 이어 둔 캐릭터가 있을 때만. 입혀 둔 동안 바꾼 모습은 그 스타일에 적음
