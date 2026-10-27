@@ -35,7 +35,7 @@ html body.salty .bl-wi-help::before { content:none; }
 html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)[hidden],
 html body.salty.salty-help-off .bl-wi-help { display:none!important; }
 html body.salty :is(.bl-wi-help,.lvs-help-button):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:2px!important; }
-/* ---------- 실리태번 원본 ? (8.0.8 전수조사 · 사용자 제보 「페르소나 관리 옆 ? 는 왜 그대로지」) ----------
+/* ---------- 실리태번 원본 ? (8.1.0 전수조사 · 사용자 제보 「페르소나 관리 옆 ? 는 왜 그대로지」) ----------
    원본 index.html 의 fa-circle-question · note-link-span 32곳 + 연결 프로필(connection-manager) · 정규식 편집 창을 전부 테마의 선 원 ? (--salty-mi-help, 포인트 색)로 그린다.
    8.0.2 는 #WorldInfo h3 > a.notes-link 하나만 공용 목록에 :where 로 넣었는데, 페르소나 관리 제목 링크는 notes-link 클래스가 없고(<a href target>)
    12-worldinfo 의 ID 규칙(32px 상자 · margin -8px!important · 16px 회색 글리프)이 더 세서 옛 모양이 남았다. 그래서 원본용 목록은 :where 없이(ID 특이도 그대로) 따로 둔다.

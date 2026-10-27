@@ -3,7 +3,7 @@
    ===== */
 /* ===== 실리태번 화면: 채팅 겉모습 · 시작 화면 (surfaces:chrome) ===== */
 /* ---------- 메시지 · 시작 화면 선 아이콘: 상단 바와 같은 얇은 선 (선 아이콘 설정일 때만 · 모르는 확장 버튼은 원래 글리프) ---------- */
-/* 도움말 ? 선 원(--salty-mi-help)은 선 아이콘 설정과 무관하게 늘 둔다 — 8.0.8: 아이콘 「기본」 설정에서 월드인포 제목 · 칸 이름 ? 가 마스크 없는 포인트색 네모로 깨졌다(변수가 .salty-icons-line 아래에만 있었음) */
+/* 도움말 ? 선 원(--salty-mi-help)은 선 아이콘 설정과 무관하게 늘 둔다 — 8.1.0: 아이콘 「기본」 설정에서 월드인포 제목 · 칸 이름 ? 가 마스크 없는 포인트색 네모로 깨졌다(변수가 .salty-icons-line 아래에만 있었음) */
 body.salty {
   --salty-mi-help: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22M9.6%209.4a2.5%202.5%200%200%201%204.9.8c0%201.7-2.5%202.3-2.5%202.3%22%2F%3E%3Cpath%20d%3D%22M12%2016.3h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fsvg%3E");
 }
@@ -538,7 +538,7 @@ body.salty #selectChatPopupHeaderText {
   text-align: left;
   word-break: keep-all;
 }
-/* 채팅 서재 제목 옆 ? 는 56-control-consistency 의 원본 ? 블록(선 원 · 제목 등급)이 그린다 — 8.0.8 에 32px 상자 · 14px 회색 글리프 규칙을 뺐다 */
+/* 채팅 서재 제목 옆 ? 는 56-control-consistency 의 원본 ? 블록(선 원 · 제목 등급)이 그린다 — 8.1.0 에 32px 상자 · 14px 회색 글리프 규칙을 뺐다 */
 body.salty #select_chat_cross {
   order: 1;
   flex: none;

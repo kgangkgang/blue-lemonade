@@ -1,5 +1,5 @@
 // 실리태번 원본 제목 · 라벨 옆 ? 를 테마 선 원으로 그리는 56-control-consistency 의 원본 ? 블록이 빠지거나 줄지 않게 지켜요.
-// 8.0.2 는 월드인포 제목 하나만 :where 로 공용 목록에 넣어 페르소나 관리 쪽이 옛 모양으로 남았어요(사용자 제보 10-27) → 8.0.8 전수조사 뒤 원본 전용 목록으로.
+// 8.0.2 는 월드인포 제목 하나만 :where 로 공용 목록에 넣어 페르소나 관리 쪽이 옛 모양으로 남았어요(사용자 제보 10-27) → 8.1.0 전수조사 뒤 원본 전용 목록으로.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
