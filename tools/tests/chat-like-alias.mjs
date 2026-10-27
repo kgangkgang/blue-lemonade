@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 const root = path.resolve(process.argv[2] || '.');
 const built = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
-const bare = built.match(/#chat(?![\w-])/g) || [];
+// 8.0.8: 바구니 열쇠 `:where(#chat):is(#chat,.bl-chat-like)` 의 #chat 은 바꿔 쓴 갈래의 열쇠라 셈에서 뺀다
+const bare = built.replace(/:where\(#chat\):is\(#chat,\.bl-chat-like\)/g, ':is(#chat,.bl-chat-like)').match(/#chat(?![\w-])/g) || [];
 const aliased = built.match(/:is\(#chat,\.bl-chat-like\)/g) || [];
 assert.equal(bare.length, aliased.length, `style.css: #chat ${bare.length} vs aliased ${aliased.length}`);
 assert.ok(aliased.length > 500, 'alias count');

@@ -116,7 +116,7 @@ function sameStructure(a, b) {
 const CHAT_ALIAS = ':is(#chat,.bl-chat-like)';
 function aliasChat(text) { return text.replace(/#chat(?![\w-])/g, CHAT_ALIAS); }
 
-function build(dir = CSS_DIR, { bucket = true } = {}) {
+function build(dir = CSS_DIR, { bucket = true, key = true } = {}) {
     const names = modules(dir);
     const raw = [];
     const parts = [];
@@ -150,11 +150,14 @@ function build(dir = CSS_DIR, { bucket = true } = {}) {
     const expanded = bucket ? require('./css-bucket.cjs').bucketize(paintGuarded).text : paintGuarded;
     // 4.8.4: 미리보기 전용 규칙은 `@media not all { }` 로 감싸 꺼 둔 채 싣는다 (tools/css-park.cjs — src/lite.js 가 설정창을 열 때 켠다)
     const parked = require('./css-park.cjs').park(expanded);
-    const body = aliasChat(parked.text);
+    // 8.0.8: 맨 오른쪽 칸에 이름이 드러나지 않은 갈래(`:is(#chat,.bl-chat-like)` 여러 갈래 · `:is(.a .b)` 한 갈래 결합자 등)에 `:where(키)` 를 달아
+    // 크롬 규칙 바구니에 넣는다 (tools/css-key.cjs — 특이도 · 뜻 · 규칙 순서 · 선언이 같은지 스스로 확인). #chat 바꿔 쓰기 뒤에 — 그 바꿔 쓰기가 전체 바구니 갈래를 만들므로
+    const keyed = key ? require('./css-key.cjs').keyize(aliasChat(parked.text)) : { text: aliasChat(parked.text), stats: null };
+    const body = keyed.text;
     const head = `/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 ${names.length}개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ${HASH_SLOT}) */\n`;
     const draft = head + body;
     const digest = hashOf(draft);
-    return { text: draft.replace(HASH_SLOT, digest), names, digest, kept, parked, extensionColors };
+    return { text: draft.replace(HASH_SLOT, digest), names, digest, kept, parked, extensionColors, keyed: keyed.stats };
 }
 function hashOf(textWithSlot) {
     return crypto.createHash('sha1').update(textWithSlot, 'utf8').digest('hex').slice(0, 12);
@@ -175,7 +178,7 @@ function firstDiff(a, b) {
 function main(argv) {
     const check = argv.includes('--check');
     const force = argv.includes('--force');
-    const { text, names, parked } = build();
+    const { text, names, parked, keyed } = build();
     const current = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : null;
     if (check) {
         if (current === text) { console.log(`[같음] style.css = css/ 모듈 ${names.length}개`); return 0; }
@@ -201,7 +204,7 @@ function main(argv) {
     }
     fs.writeFileSync(OUT, text, 'utf8');
     fs.writeFileSync(LAZY_OUT, lazyTail(text), 'utf8');
-    console.log(`[씀] style.css ← css/ 모듈 ${names.length}개 (${(Buffer.byteLength(text) / 1024).toFixed(1)}KB) · src/lazy-panel.gen.css ${(Buffer.byteLength(lazyTail(text)) / 1024).toFixed(1)}KB · 미리보기 전용 규칙 ${parked.rules}개를 not all 덩어리 ${parked.blocks}개로 꺼 둠`);
+    console.log(`[씀] style.css ← css/ 모듈 ${names.length}개 (${(Buffer.byteLength(text) / 1024).toFixed(1)}KB) · src/lazy-panel.gen.css ${(Buffer.byteLength(lazyTail(text)) / 1024).toFixed(1)}KB · 미리보기 전용 규칙 ${parked.rules}개를 not all 덩어리 ${parked.blocks}개로 꺼 둠${keyed ? ` · 바구니 열쇠 ${keyed.keyed}갈래(전체 바구니 ${keyed.universal} 중, 남음 ${keyed.universal - keyed.keyed})` : ''}`);
     return 0;
 }
 
