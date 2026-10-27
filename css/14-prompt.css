@@ -18,7 +18,7 @@ body.salty #left-nav-panel > .scrollableInner {
 }
 /* 스크롤 위에 떠서 내용을 가리던 안내 한 줄 · 도움말 ? (실리태번이 켜고 끄지 않는 고정 요소) */
 body.salty #left-nav-panel > :is(#clickSlidersTips, .topRightInset) {
-  display: none;
+  display: none !important;   /* 도움말 ? 통일 규칙(56)의 display:inline-flex!important 가 되살리지 못하게 — 8.1.0 에서 지우기 단추 위에 떠 있었어요 */
 }
 /* 잠금(데스크톱만 — 폰은 실리태번이 숨김): 반투명 24px 자물쇠 대신 조용한 34px 아이콘, 잠김은 포인트색 */
 body.salty #left-nav-panel > #lm_button_panel_pin_div {

@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build daaa1357bd0e) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 03a5168f3f13) */
 /* css/00-base.css */
 :root{--bl-release:"8.1.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -8504,7 +8504,7 @@ body.salty #left-nav-panel > .scrollableInner {
 }
 body.salty #left-nav-panel > #clickSlidersTips,
 body.salty #left-nav-panel > :where(.topRightInset):is(#bl-s, *) {
-  display: none;
+  display: none !important;
 }
 body.salty #left-nav-panel > #lm_button_panel_pin_div {
   padding: var(--bl-s1) 0 0 calc(var(--bl-gutter) - 9px) !important;
@@ -22309,7 +22309,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *),
 html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link,
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *),
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
@@ -22347,7 +22346,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
@@ -22371,7 +22369,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *),
 html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link,
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *),
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
@@ -22398,7 +22395,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
@@ -22421,7 +22417,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *),
 html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link,
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *),
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
@@ -22444,7 +22439,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *)::after,
 html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link::after,
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *)::after,
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
@@ -22473,7 +22467,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
 html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
@@ -22496,7 +22489,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *)::after,
 html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link::after,
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *)::after,
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
@@ -22515,7 +22507,7 @@ pointer-events:none;
 html body.salty :is(
   #WorldInfo h3 > a.notes-link, #PersonaManagement h3 > a, #user-settings-block h3 > a.notes-link, #AdvancedFormatting h3 > a.notes-link,
   #rm_api_block a.notes-link[href*="connection-profiles"], #groupControlsToggle a.notes-link, #selectChatPopupHeaderText > a,
-  #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link, #character_popup :is(h4, h5) > a.notes-link, #left-nav-panel a.topRightInset,
+  #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link, #character_popup :is(h4, h5) > a.notes-link,
   #novel_api-presets strong > a.notes-link, #AdvancedFormatting a.notes-link, #user-settings-block a.notes-link, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"]
 ) > *,
 html body.salty #left-nav-panel h4 > a > small,
@@ -22531,7 +22523,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *)::before,
 html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link::before,
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *)::before,
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
@@ -22559,7 +22550,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
 html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
@@ -22579,7 +22569,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *)::before,
 html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link::before,
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *)::before,
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *)::before,
@@ -22599,7 +22588,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
 html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
@@ -22620,7 +22608,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
@@ -22640,7 +22627,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
 html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
@@ -22661,7 +22647,6 @@ html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *):focus-visible,
 html body.salty :where(.notes-link):is(#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link):focus-visible,
 html body.salty :where(.notes-link):where(#character_popup :is(h4, h5) > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *):focus-visible,
 html body.salty :where(.notes-link):where(#novel_api-presets strong > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
 html body.salty :where(.note-link-span):where(#left-nav-panel a.note-link-span[href]):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
 html body.salty :where(a):where(#left-nav-panel h4 > a:has(> small > .note-link-span)):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):focus-visible,
@@ -22691,8 +22676,7 @@ html body.salty :where(.notes-link):where(#rm_api_block a.notes-link[href*="conn
 html body.salty :where(.notes-link):is(#groupControlsToggle a.notes-link):is(#bl-s, *),
 html body.salty :where(a):is(#selectChatPopupHeaderText > a):is(#bl-s, *):is(.bl-s, *),
 html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link,
-html body.salty :where(.notes-link):where(#character_popup h4 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
-html body.salty :where(.topRightInset):is(#left-nav-panel a.topRightInset):is(#bl-s, *) { font-size:var(--bl-fs-body)!important; margin:0!important; }
+html body.salty :where(.notes-link):where(#character_popup h4 > a.notes-link):is(#bl-s, *):is(#bl-s, *):is(.bl-s, *):is(bl-s, *) { font-size:var(--bl-fs-body)!important; margin:0!important; }
 html body.salty :where(h3):is(#WorldInfo > .flex-container > h3):is(bl-s, *),
 html body.salty :where(h3):is(#PersonaManagement h3):is(.bl-s, *):is(bl-s, *),
 html body.salty #user-settings-block h3:has(> a.notes-link),
@@ -22709,7 +22693,6 @@ html body.salty #AdvancedFormatting h3:has(> a.notes-link),
 html body.salty #character_popup h4:has(> a.notes-link) { display:flex; }
 html body.salty #selectChatPopupHeaderText > a { margin-left:6px!important; }
 html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link { margin-left:4px!important; }
-html body.salty #left-nav-panel a.topRightInset { position:absolute!important; }
 html body.salty #WorldInfo .world_entry a.notes-link[href*="inclusion-group"] { font-size:inherit!important; margin:0 0 0 0.2em!important; }
 html body.salty #WorldInfo #world_popup_entries_list .world_entry a.notes-link[href*="inclusion-group"] { opacity:.5!important; }
 html body.salty #WorldInfo #world_popup_entries_list .world_entry a.notes-link[href*="inclusion-group"]:is(:hover, :focus-visible) { opacity:1!important; }

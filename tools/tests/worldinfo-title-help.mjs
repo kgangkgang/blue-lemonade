@@ -10,7 +10,7 @@ const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ selector: m
 const NATIVE = [
     '#WorldInfo h3 > a.notes-link', '#PersonaManagement h3 > a', '#user-settings-block h3 > a.notes-link', '#AdvancedFormatting h3 > a.notes-link',
     '#rm_api_block a.notes-link[href*="connection-profiles"]', '#groupControlsToggle a.notes-link', '#selectChatPopupHeaderText > a',
-    '#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link', '#character_popup :is(h4, h5) > a.notes-link', '#left-nav-panel a.topRightInset',
+    '#rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link', '#character_popup :is(h4, h5) > a.notes-link',
     '#novel_api-presets strong > a.notes-link', '#left-nav-panel a.note-link-span[href]', '#left-nav-panel h4 > a:has(> small > .note-link-span)', 'label[for="openai_reasoning_effort"] > a.fa-circle-question',
     '#rm_api_block a:has(> .note-link-span, > i.fa-circle-question)', '#AdvancedFormatting a.notes-link', '#AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span)',
     '#user-settings-block a.notes-link', '.regex_editor :is(small, span) > .note-link-span', '#WorldInfo .world_entry a.notes-link[href*="inclusion-group"]',
@@ -42,4 +42,9 @@ assert.ok(vars.includes('body.salty'), '--salty-mi-help 는 body.salty(선 아�
 const wi = fs.readFileSync(path.join(root, 'css/12-worldinfo.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 assert.ok(!/#PersonaManagement h3 > a\s*\{[^}]*margin:\s*-8px/.test(wi), '12-worldinfo 의 페르소나 32px 상자(margin -8px) 규칙이 되살아나면 안 돼요');
 assert.ok(!/h3 \.note-link-span\s*\{[^}]*font-size:\s*16px/.test(wi), '12-worldinfo 의 제목 16px 회색 글리프 규칙이 되살아나면 안 돼요');
+// AI 응답 설정 오른쪽 위 문서 링크(#left-nav-panel > a.topRightInset)는 스크롤 칸 밖 absolute 라 프리셋 머리 단추 위에 떠서 따라다녀요(8.1.0 사용자 제보 10-28).
+// 56 의 원본 ? 목록(display:inline-flex!important)에 다시 들어가면 14-prompt 의 숨김을 되살려요 → 목록에 없어야 하고, 숨김은 !important 여야 해요.
+assert.ok(!/topRightInset/.test(css), '56 에 a.topRightInset(AI 응답 설정 오른쪽 위 떠 있는 ?) 규칙이 있으면 안 돼요 — 지우기 단추 위에 떠요');
+const p14 = fs.readFileSync(path.join(root, 'css/14-prompt.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+assert.ok(/#left-nav-panel > :is\(#clickSlidersTips, \.topRightInset\)\s*\{\s*display:\s*none\s*!important/.test(p14), '14-prompt 가 a.topRightInset 을 display:none !important 로 숨겨야 해요');
 console.log(`원본 제목 · 라벨 옆 ? 누락 방지 검사를 통과했어요(목록 ${NATIVE.length}).`);
