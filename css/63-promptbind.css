@@ -35,6 +35,7 @@ body.salty .bl-pbind-chips {
   flex-wrap: wrap;
   gap: 6px;
 }
+body.salty .bl-pbind-chips[hidden] { display: none; }   /* 8.0.9 버그: 묶음이 없어 hidden 인데 flex 가 이겨 빈 줄이 그려졌어요(리그 사냥 10-27) */
 body.salty .bl-pbind-chip {
   display: inline-flex;
   align-items: center;
