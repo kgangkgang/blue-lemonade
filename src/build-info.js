@@ -570,7 +570,7 @@ export const FILE_HASHES = {
   "src/lazy-panel.gen.css": "34768:8aa24fbf:b31f1504",
   "src/lite.js": "38812:484d432d:e31e9483",
   "src/live-models.js": "44020:f8a5fa62:a3f1cbaf",
-  "src/longpress-help-data.js": "88332:c5907bba:9694cdc0",
+  "src/longpress-help-data.js": "95821:6fd24371:9559dff3",
   "src/longpress-help.js": "13064:5ab5a0e9:10c67ada",
   "src/main-chat-finish.js": "14829:d34f07a5:c8c0a173",
   "src/main-chat-rules.js": "8887:961cbad4:0e0730d8",

@@ -4183,6 +4183,305 @@
       "texts": [],
       "scope": "",
       "evidence": "src/addons/prompt/index.js:2062-2068, 2086, 2183, 2530-2565, 2635-2642"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "캐릭터 편집 창 › 아바타 아래 단추 줄",
+      "title": "프로필 여러 개",
+      "text": "이 캐릭터의 프로필 사진을 여러 장 등록하는 창을 열어요. 등록해 두면 기본은 채팅방을 열 때마다 사진이 무작위로 바뀌고, 칸을 한 번 누르면 그 그림으로 고정돼요. 사진은 서버의 user/images 폴더에 저장되고 카드 PNG 는 그대로예요.",
+      "ids": [
+        "bl-mav-button"
+      ],
+      "classes": [],
+      "texts": [],
+      "scope": "",
+      "evidence": "src/features.js:142-160; src/multi-avatar/dialog.js:29-33, 41-43, 75-113; src/multi-avatar/pick.js:3, 58-66; src/settings.js:108"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "요술봉 메뉴",
+      "title": "다시 쓰기",
+      "text": "최근 메시지 6개 안의 마지막 AI 답에서 다시 쓰기 애드온에 등록한 금지 묘사를 찾아요. 찾으면 그 부분만 다시 쓰기 애드온에 정한 연결 · 모델로 고쳐 쓰는 요청을 보내니 요금이 들 수 있어요. 고친 뒤 뜨는 알림의 ↶ 로 되돌릴 수 있어요.",
+      "ids": [
+        "bwr_wand_check"
+      ],
+      "classes": [],
+      "texts": [],
+      "scope": "",
+      "evidence": "src/addons/rewrite/index.js:873-893, 714-760, 765-776, 409-424, 620-622, 641, 677, 1875-1883"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "메시지 … 메뉴 (번역 애드온)",
+      "title": "LLM 번역",
+      "text": "이 메시지를 번역 애드온에 정한 모델로 번역해 화면에 번역문으로 보여 줘요. 같은 글의 번역이 이 기기에 저장돼 있으면 요청 없이 그걸 쓰고, 없으면 모델에 요청하니 요금이 들 수 있어요. 메시지 원문은 바뀌지 않아요.",
+      "ids": [],
+      "classes": [
+        "mes_legacy_translate"
+      ],
+      "texts": [],
+      "scope": ".mes",
+      "evidence": "src/addons/translator/index.js:3867-3874, 6190-6193, 3291-3412, 188"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "메시지 … 메뉴 (번역 애드온)",
+      "title": "LLM 번역 · 전환",
+      "text": "번역문이 없으면 번역하고, 있으면 누를 때마다 원문과 번역문을 바꿔 보여 줘요. 저장된 번역이 없을 때만 모델에 요청해서 요금이 들 수 있어요. 기본은 숨겨져 있고 번역 애드온 설정에서 보이게 할 수 있어요.",
+      "ids": [],
+      "classes": [
+        "mes_llm_translate"
+      ],
+      "texts": [],
+      "scope": ".mes",
+      "evidence": "src/addons/translator/index.js:3876-3883, 6194-6197, 3659-3706, 190, 3616-3621"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "메시지 … 메뉴 (번역 애드온)",
+      "title": "원문 · 번역 전환",
+      "text": "번역문이 붙은 메시지에서 원문과 번역문을 번갈아 보여 줘요. 모델에 요청하지 않고 화면에 보이는 글만 바꿔요. 번역문이 없는 메시지에서는 아무 일도 없어요.",
+      "ids": [],
+      "classes": [
+        "mes_toggle_original"
+      ],
+      "texts": [],
+      "scope": ".mes",
+      "evidence": "src/addons/translator/index.js:3885-3892, 6198-6201, 3506-3543, 189"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "메시지 … 메뉴 (번역 애드온)",
+      "title": "번역문 수정",
+      "text": "이 메시지의 번역문을 고치는 편집 칸을 열어요. 저장하면 고친 번역문이 화면과 이 기기의 번역 저장소에 들어가고, 칸을 비우고 저장하면 번역문이 지워져요. 취소하면 그대로예요.",
+      "ids": [],
+      "classes": [
+        "mes_edit_translation"
+      ],
+      "texts": [],
+      "scope": ".mes",
+      "evidence": "src/addons/translator/index.js:3894-3901, 6202-6205, 3963-4000, 4028-4080, 192"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "메시지 … 메뉴 (번역 애드온)",
+      "title": "문단 수 교정",
+      "text": "원문과 지금 번역문을 함께 보내 원문과 문단 수가 맞게 다시 번역해 달라고 요청해요(번역문이 없으면 새로 번역해요). 모델 요청이라 요금이 들 수 있어요. 기본은 숨겨져 있어요.",
+      "ids": [],
+      "classes": [
+        "mes_paragraph_correction"
+      ],
+      "texts": [],
+      "scope": ".mes",
+      "evidence": "src/addons/translator/index.js:3903-3910, 6206-6209, 2803-2897, 191"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "메시지 … 메뉴 (번역 애드온)",
+      "title": "번역문 삭제",
+      "text": "이 메시지에 붙은 번역문과 이 기기에 저장해 둔 그 글의 번역을 지워요. 확인 창 없이 바로 지워지고 되돌릴 수 없지만, 원문은 그대로라 다시 번역할 수 있어요. 기본은 숨겨져 있어요.",
+      "ids": [],
+      "classes": [
+        "mes_delete_translation"
+      ],
+      "texts": [],
+      "scope": ".mes",
+      "evidence": "src/addons/translator/index.js:3912-3919, 6210-6216, 7431-7530, 198"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "메시지 … 메뉴 (TTS 애드온)",
+      "title": "읽기",
+      "text": "이 메시지를 TTS 애드온에 정한 목소리로 읽어요. 읽는 중에 다시 누르면 멈춰요. 자동 읽기를 꺼 두어도 이 단추로는 읽고, 고른 음성 엔진에 따라 요금이 들 수 있어요.",
+      "ids": [],
+      "classes": [
+        "lv_play"
+      ],
+      "texts": [],
+      "scope": ".mes",
+      "evidence": "src/addons/tts/index.js:350-371, 373-379, 515-516; src/addons/tts/src/player.js:2100-2106"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "메시지 … 메뉴 (TTS 애드온)",
+      "title": "소리 대본 편집",
+      "text": "이 메시지의 소리 대본 편집 창을 열어요. 줄마다 화자 · 목소리 · 감정을 바꾸고 효과음 · 쉼을 넣어 들어 보거나 WAV 로 저장할 수 있어요. 「이 메시지에 저장」을 눌러야 편집이 남아요.",
+      "ids": [],
+      "classes": [
+        "lv_script"
+      ],
+      "texts": [],
+      "scope": ".mes",
+      "evidence": "src/addons/tts/index.js:358-363, 517-519; src/addons/tts/src/script-editor.js:10-11, 126, 140-145"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "메시지 … 메뉴",
+      "title": "대사만 보기",
+      "text": "이 메시지에서 대사만 골라 목록 창으로 보여 줘요(번역문이 있으면 번역문 기준). 줄을 누르면 창이 닫히고 본문의 그 자리로 옮겨 잠깐 표시해요. 내장 TTS 애드온이 켜져 있으면 창에서 대사를 바로 들을 수 있어요.",
+      "ids": [],
+      "classes": [
+        "mes_dialogue_only"
+      ],
+      "texts": [],
+      "scope": ".mes",
+      "evidence": "src/dialogue-only.js:1-6, 11-33; src/dialogue-view.js:1-4; src/features.js:115-117"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "메시지 … 메뉴 (캐릭터 에셋 애드온)",
+      "title": "캐릭터 에셋 다시 고르기",
+      "text": "이 답에 넣을 캐릭터 에셋 그림을 다른 모델에게 다시 골라 달라고 해요. 그림 자리가 없던 답이면 문단 사이에 자리를 넣고 골라요. 「다른 모델이 고르기」가 켜져 있고 이 캐릭터에 그림 폴더가 있을 때만 보이며, 모델 요청이라 요금이 들 수 있어요.",
+      "ids": [],
+      "classes": [
+        "bl-asset-reroll"
+      ],
+      "texts": [],
+      "scope": ".mes",
+      "evidence": "src/addons/assets/after-reply.js:171-213, 214-237, 238-246"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "작가 노트 창 › 위치",
+      "title": "페르소나 위치",
+      "text": "작가 노트 본문을 페르소나 설명 바로 위에 붙여 보내요. 이 채팅에만 저장되고, 고르면 본체 위치 선택은 꺼지며 본체 위치를 다시 고르면 원래대로 돌아가요. 붙일 자리가 없으면 본체 위치로 보내요.",
+      "ids": [
+        "bl_note_anchor_persona"
+      ],
+      "classes": [],
+      "texts": [],
+      "scope": "",
+      "evidence": "src/an-anchor.js:1-9, 72-90, 96-133, 141-146; src/prompt-anchors.js:9-10"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "작가 노트 창 › 위치",
+      "title": "캐릭터 설명 위치",
+      "text": "작가 노트 본문을 캐릭터 설명 바로 위에 붙여 보내요. 이 채팅에만 저장되고, 고르면 본체 위치 선택은 꺼지며 본체 위치를 다시 고르면 원래대로 돌아가요. 붙일 자리가 없으면 본체 위치로 보내요.",
+      "ids": [
+        "bl_note_anchor_char"
+      ],
+      "classes": [],
+      "texts": [],
+      "scope": "",
+      "evidence": "src/an-anchor.js:1-9, 72-90, 96-133, 141-146; src/prompt-anchors.js:9-10"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "TTS 재생 막대",
+      "title": "이전 줄",
+      "text": "지금 읽는 메시지의 앞 줄로 돌아가 읽어요. 지금 줄을 3초 넘게 들었으면 그 줄을 처음부터 다시 읽어요. 번역이나 대사 분석을 기다리는 동안에는 눌러도 아무 일이 없어요.",
+      "ids": [],
+      "classes": [
+        "lv-bar-prev"
+      ],
+      "texts": [],
+      "scope": ".lv-bar",
+      "evidence": "src/addons/tts/src/player.js:3333-3342, 3384-3386, 2038-2043"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "TTS 재생 막대",
+      "title": "일시정지 · 재생",
+      "text": "읽기를 잠깐 멈추거나, 멈춘 자리에서 다시 이어 읽어요. 멈춘 동안에는 재생 단추로 바뀌어요.",
+      "ids": [],
+      "classes": [
+        "lv-bar-toggle"
+      ],
+      "texts": [],
+      "scope": ".lv-bar",
+      "evidence": "src/addons/tts/src/player.js:3343, 3387, 3765"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "TTS 재생 막대",
+      "title": "다음 줄",
+      "text": "지금 줄을 건너뛰고 다음 줄을 읽어요. 마지막 줄이면 읽기를 끝내요.",
+      "ids": [],
+      "classes": [
+        "lv-bar-next"
+      ],
+      "texts": [],
+      "scope": ".lv-bar",
+      "evidence": "src/addons/tts/src/player.js:3344, 3388, 2031-2037"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "TTS 재생 막대",
+      "title": "다시 만들기",
+      "text": "지금 줄의 소리를 음성 엔진에 다시 요청해 새로 만들고 그 줄을 다시 읽어요. 다시 합성하니 요금이 들 수 있어요. 저장소가 지원하면 옛 소리를 「이전 소리」로 남겨 되돌릴 수 있어요.",
+      "ids": [],
+      "classes": [
+        "lv-bar-regen"
+      ],
+      "texts": [],
+      "scope": ".lv-bar",
+      "evidence": "src/addons/tts/src/player.js:3345, 3389, 2044-2066"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "TTS 재생 막대",
+      "title": "이전 소리",
+      "text": "다시 만들기 전의 소리와 지금 소리를 맞바꾸고 그 줄을 다시 읽어요. 새로 합성하지 않고 저장된 소리를 써요. 이전 소리가 남아 있는 줄에서만 보여요.",
+      "ids": [],
+      "classes": [
+        "lv-bar-takes"
+      ],
+      "texts": [],
+      "scope": ".lv-bar",
+      "evidence": "src/addons/tts/src/player.js:3346, 3390-3392, 2067-2088, 3689-3700"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "TTS 재생 막대 (요술봉 아이콘)",
+      "title": "다시 분석 메뉴",
+      "text": "재생성 · 효과음 · 낱말 메뉴를 열어요. 재생성은 대사 분석을 새로 받아 지금 줄부터 다시 읽고(모델 요청이라 요금이 들 수 있어요), 효과음은 보관함에서 골라 지금 대사 앞에 넣고, 낱말은 낱말에 내 효과음을 붙여요.",
+      "ids": [],
+      "classes": [
+        "lv-bar-analyze"
+      ],
+      "texts": [],
+      "scope": ".lv-bar",
+      "evidence": "src/addons/tts/src/player.js:14-15, 3347, 3355-3361, 3397-3411, 2503-2525"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "TTS 재생 막대",
+      "title": "내려받기",
+      "text": "읽는 소리를 WAV 파일로 내려받아요. 채팅 메시지를 읽는 중이면 메시지 전체와 지금 문장 가운데 골라요. 아직 만들지 않은 줄은 새로 합성하니 요금이 들 수 있어요.",
+      "ids": [],
+      "classes": [
+        "lv-bar-down"
+      ],
+      "texts": [],
+      "scope": ".lv-bar",
+      "evidence": "src/addons/tts/src/player.js:3348, 3350-3354, 3412-3431, 3074-3093"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "TTS 재생 막대",
+      "title": "정지",
+      "text": "읽기를 멈춰요. 번역이나 대사 분석을 기다리는 중에도 이 단추는 듣고 그만둬요.",
+      "ids": [],
+      "classes": [
+        "lv-bar-stop"
+      ],
+      "texts": [],
+      "scope": ".lv-bar",
+      "evidence": "src/addons/tts/src/player.js:16, 3349, 3382-3383, 3432"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "TTS 재생 막대",
+      "title": "원문 · 효과음 보기",
+      "text": "지금 읽는 대사의 원문과 이 대사에 쓴 효과음 목록을 펼쳐요. 효과음 이름을 누르면 효과음 보관함에서 그 소리를 열어요. 다시 누르면 접혀요.",
+      "ids": [],
+      "classes": [
+        "lv-bar-details-btn"
+      ],
+      "texts": [],
+      "scope": ".lv-bar",
+      "evidence": "src/addons/tts/src/player.js:3336-3337, 3374-3376, 3433-3445, 3455-3478"
     }
   ],
   "excluded": [
@@ -4385,8 +4684,48 @@
     },
     {
       "area": "블루레몬에이드 애드온 단추",
-      "element": "#bl-mav-button, #bwr_wand_check",
-      "reason": "title 에 이미 하는 일이 적혀 있어서 넣지 않았어요(src/features.js:155, src/addons/rewrite/index.js:1877). 폰에서 title 이 안 보이는 걸 고려해 넣을지 조정자가 정해 주세요"
+      "element": ".eh-slot-retry (src/addons/assets/render.js:639-655, 691)",
+      "reason": "답 글 안 그림 자리 span[data-asset-slot] 안에 붙는 단추라 #chat .mes_text 안이에요. 런타임 SKIP('#chat .mes_text' · 'span[data-asset-slot]')이 이미 빼고, 「그림 다시 고르기」 글 이름표도 붙어 있어서 뺐어요."
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "element": ".qr--button-expander (src/layout.js:147-169 · 실리태번 scripts/extensions/quick-reply/src/QuickReply.js:117-158)",
+      "reason": "누를 수 있는 ⋮ 단추(누르면 그 퀵 리플라이의 하위 목록 메뉴)인데, 이 단추는 하위 목록이 있는 QR 에만 보이고 그 QR 뿌리에는 실리태번의 contextmenu(폰 길게 누르기) 처리가 있어 길게 누르면 실리태번 메뉴와 설명 창이 겹칠 수 있어요. 넣는다면 제안 글: 「이 퀵 리플라이에 묶인 하위 목록을 메뉴로 열어요. 테마 설정에서 켜면 ⋮ 대신 묶인 세트 이름이 보여요.」 — 조정자가 겹침을 확인한 뒤 정해 주세요."
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "element": "[data-health-check] 다시 검사 (src/install-health.js:33-38)",
+      "reason": "테마 설정 창(.salty-panel) 안 「설치 · 충돌 점검」 칸의 단추라 런타임 SKIP 에 들고, id · 고유 class 도 없어서 뺐어요."
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "element": "과일 입구 대리 단추 (src/scripts/fruit-entry.js:63)",
+      "reason": "사전에 「과일의 마음 열기」 글 열쇠가 이미 있어서 건너뛰었어요."
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "element": ".cg-mes-btn 북마크 메시지 단추 (src/addons/bookmarks/index.js:37-49)",
+      "reason": "자기 길게 누르기(메모)가 있어 런타임 SKIP 에 들어 있어요."
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "element": "#jj-button · .jj-tr-btn (src/addons/direction/index.js:507, 940-947)",
+      "reason": "#jj-button 은 자기 길게 누르기(켜기 · 끄기)가 있어 SKIP, .jj-tr-btn 은 애드온 설정 서랍 · 팝업 안의 번역 보기 단추라 범위 밖이에요."
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "element": "TTS 재생 막대 펼침 안 효과음 이름 단추 (src/addons/tts/src/player.js:3462-3474)",
+      "reason": "고유 class 가 없고 효과음 이름 글이 붙어 있어서 뺐어요(펼침 단추 lv-bar-details-btn 설명에 동작을 적었어요)."
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "element": "메모 · 채팅 그래프 · 모델 비교 창 안 단추 (src/addons/notes/index.js · src/chat-graph.js:70-78 · src/addons/perf/relay-compare-view.js)",
+      "reason": "애드온이 따로 여는 창 안의 단추라 이번 범위(입력줄 · 메시지 머리 · 요술봉 · 서랍 머리 · 상단)에서 뺐어요. 필요하면 별도 영역으로 다뤄요."
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "element": "#pt-status-model (src/addons/prompt/index.js:4686-4699)",
+      "reason": "모델 이름을 보여 주는 상태 글이라 누르는 단추가 아니에요."
     }
   ]
 }

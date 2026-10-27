@@ -273,6 +273,8 @@ assert(!HOVER_SKIP.includes('extraMesButtons'));
     const themeText = [path.join(root, 'index.js'), ...walk(path.join(root, 'src'))].map(f => fs.readFileSync(f, 'utf8')).join('\n');
     const missing = [];
     for (const e of source.entries.filter(e => e.area === '블루레몬에이드 애드온 단추')) for (const key of [...e.ids, ...e.classes, ...e.texts]) if (!themeText.includes(key) && !(/^bl-perf-menu-(\w+)$/.test(key) && themeText.includes('bl-perf-menu-${tab.id}') && new RegExp(`id\\s*:\\s*['"]${key.slice(13)}['"]`).test(themeText))) missing.push(key); // 성능 보조 메뉴 줄은 탭 id 로 만들어요
+    // 작가 노트 자리 라디오는 `${RADIO}_${anchor}` 로 만들어요
+    for (let i = missing.length - 1; i >= 0; i--) { const m = /^bl_note_anchor_(\w+)$/.exec(missing[i]); if (m && themeText.includes('input.id = `${RADIO}_${anchor}`') && new RegExp(`\\b${m[1]}\\s*:`).test(fs.readFileSync(path.join(root, 'src/prompt-anchors.js'), 'utf8'))) missing.splice(i, 1); }
     assert.deepEqual(missing, [], '테마 소스에 없는 애드온 단추 열쇠');
 }
 
