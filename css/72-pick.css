@@ -5,7 +5,7 @@
    모양(철칙 §2 평평 · §3 체크 · §8 메뉴/팝오버 · §9 팔레트 변수만):
      · 창 = 카드 면 + 1px 선 + 모서리 12, 그림자 없음, 안쪽 여백 4(줄 모서리 8 과 동심)
      · 줄 = 높이 40, 가로 여백 12, 왼쪽 정렬 · 400. 고른 줄 = 포인트 면(--bl-selected) + 포인트 잉크 + 650 + 오른쪽 테마 체크(ㄴ자 2px). 미선택 줄은 표시 없음
-     · 폰(≤1000px) = 아래에서 올라오는 시트(가로 전체 · 위 모서리 16 · 가림막 --bl-scrim, selects.js 가 .sheet 를 붙임), PC = 칸 아래 드롭다운
+     · 폰 · PC 모두 누른 칸 바로 밑(모자라면 위) 드롭다운 — 칸 폭에 맞추고 화면 끝 12 안쪽, 높이는 남은 공간까지(selects.js place). 10-28 사용자 정정 「내가 누른 칸 바로 밑에 뜨는 게 좋다」
      · 찾기 칸(항목 13개 이상) = 입력 I2(한 단계 밝은 면 + 1px 선 · 36)
    값은 토큰(--bl-pick-*) 한 곳. 같은 모양을 쓰는 개인 창의 보호 규칙은 이 토큰을 가리킨다 */
 :root, body {
@@ -79,7 +79,7 @@ body.salty .salty-pick-rows > button:focus-visible { outline: 1px solid var(--sa
 body.salty .salty-pick-group { padding: 8px 12px 4px; font-size: var(--bl-ts-meta, 13px); font-weight: 650; color: var(--bl-pick-muted); }
 body.salty .salty-pick-group:first-child { padding-top: 4px; }
 body.salty .salty-pick-empty { padding: 12px; color: var(--bl-pick-muted); }
-/* 폰(≤1000px, 테마의 폰 경계): 아래에서 올라오는 시트 — selects.js 가 .sheet 를 붙이고 자리 계산을 건너뛴다 */
+/* (꺼 둔 경로) 폰 아래 시트 — selects.js 의 PHONE_SHEET 를 켤 때만 .sheet 가 붙는다. 10-28 부터 폰도 드롭다운이라 지금은 쓰지 않는다 */
 body.salty .salty-pick-layer.sheet { background: var(--bl-pick-scrim); }
 body.salty .salty-pick-float.sheet {
   left: 0; right: 0; top: auto; bottom: 0; width: auto; max-width: none; max-height: min(60vh, 60dvh);

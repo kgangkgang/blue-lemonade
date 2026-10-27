@@ -54,10 +54,15 @@ function rowsHtml(sel, query = '') {
     return out.length ? out.join('') : '<div class="salty-pick-empty">없음</div>';
 }
 
-// 10-27 목록 모양 하나로(사용자 「라디오 목록 선택창 디자인이 다 달라요」): 폰(테마의 폰 경계 ≤1000px)은 아래에서 올라오는 시트(가로 전체 · 가림막),
-// PC 는 칸 아래 드롭다운. 모양은 css/72-pick.css — .sheet 는 여기서 붙이고 자리 계산(place)은 드롭다운만 한다
+// 10-27 목록 모양 하나로(사용자 「라디오 목록 선택창 디자인이 다 달라요」). 모양은 css/72-pick.css.
+// 10-28 사용자 정정 「내가 누른 칸 바로 밑에 뜨는 게 좋다」 — 폰도 PC 처럼 누른 칸 바로 밑(모자라면 위) 드롭다운이다.
+// 폰 아래 시트(.sheet · css/72 의 시트 규칙)는 꺼 둔 경로로 남긴다: PHONE_SHEET 를 켜야만 ≤1000px 에서 시트가 된다
 export const SHEET_MAX_WIDTH = 1000;
-export function pickMode(width = window.innerWidth) { return width <= SHEET_MAX_WIDTH ? 'sheet' : 'drop'; }
+export const PHONE_SHEET = false;
+export function pickMode(width = window.innerWidth) { return PHONE_SHEET && width <= SHEET_MAX_WIDTH ? 'sheet' : 'drop'; }
+// 목록과 화면 끝 사이 — 폰에서 칸이 화면 끝에 붙어 있어도 목록은 화면 끝 12px 안쪽(철칙 벽 여백 12)
+export const PICK_EDGE = 12;
+export const PICK_GAP = 6;
 
 // 보이는 화면 (폰의 주소창 · 자판 · 확대를 뺀 실제 보이는 영역). visualViewport 가 없으면 창 크기
 function viewport() {
@@ -66,22 +71,37 @@ function viewport() {
     return { x: 0, y: 0, w: window.innerWidth, h: window.innerHeight };
 }
 
-// 목록 자리: select 바로 밑, 아래가 모자라고 위가 더 넓으면 위로. 좌우는 화면 안에 맞춤.
-// 2.8.1: 위로 띄울 때도 bottom 이 아니라 top 으로 놓는다 — 폰에서 bottom 기준이 보이는 화면과 어긋나 목록이
-// 화면 밖에 그려졌다 (사용자: "화면 절반은 내려야 나오는데"). 그려 본 뒤 높이를 재서 화면 안으로 밀어 넣는다.
+// 목록 자리(순수 계산 — 시험이 이 함수를 그대로 부른다). r = 누른 칸의 화면 자리, v = 보이는 화면, content = { w: 글에 필요한 폭, h: 다 펼친 높이 }
+//  · 폭: 칸 폭에 맞춤(글이 더 길면 그만큼), 화면 끝 12 안쪽을 넘지 않음. 왼쪽 끝은 칸 왼쪽, 화면 밖이면 안으로 밈
+//  · 위아래: 다 펼쳐서 칸 밑에 들어가면 밑, 안 들어가고 위가 더 넓으면 위(2.8.1 — 위로 띄울 때도 top 기준)
+//  · 높이: 고른 쪽에 남은 공간까지, 넘치면 목록 안에서 굴림. 자판이 올라와도 v(보이는 화면) 기준이라 자판에 가리지 않음
+export function pickRect(r, v, content) {
+    const edge = PICK_EDGE, gap = PICK_GAP;
+    const maxW = Math.max(0, v.w - edge * 2);
+    const maxH = Math.max(0, v.h - edge * 2);
+    const width = Math.min(Math.max(Math.ceil(content.w), Math.round(r.width)), maxW);
+    const left = Math.min(Math.max(r.left, v.x + edge), v.x + v.w - width - edge);
+    const below = (v.y + v.h) - r.bottom - gap - edge;
+    const above = r.top - v.y - gap - edge;
+    const up = content.h > below && above > below;
+    const room = Math.min(maxH, Math.max(Math.min(120, maxH), up ? above : below));
+    const h = Math.min(content.h, room);
+    let top = up ? r.top - gap - h : r.bottom + gap;
+    top = Math.min(Math.max(top, v.y + edge), Math.max(v.y + edge, v.y + v.h - edge - h));
+    return { width, left, top, up, maxHeight: room, h };
+}
+
 function place(box, sel) {
     const r = sel.getBoundingClientRect();
     const v = viewport();
-    const gap = 6, edge = 8;
-    // Size to the rendered labels, radio markers and padding, not the opener.
-    // max-content also measures optgroup headings and the optional search field.
+    const maxW = Math.max(0, v.w - PICK_EDGE * 2);
+    // 폭: 그려진 글 · 체크 자리 · 여백만큼(10-28: 적어도 누른 칸 폭). max-content 는 optgroup 제목 · 찾기 칸도 잰다
     box.style.minWidth = '0';
-    box.style.maxWidth = `${Math.max(0, v.w - edge * 2)}px`;
+    box.style.maxWidth = `${maxW}px`;
     const labels = [...box.querySelectorAll('.salty-pick-rows > button > span')];
     for (const label of labels) label.style.whiteSpace = 'nowrap';
     box.style.width = 'max-content';
-    // Flex intrinsic sizing can omit the gap when a label is allowed to shrink.
-    // Measure the ink at its actual font size, then add the rendered row chrome.
+    // flex 고유 폭은 글이 줄어들 수 있으면 간격을 빼먹는다 — 실제 글자 크기로 글 폭을 재고 줄 여백 · 테두리를 더한다
     const px = value => parseFloat(value) || 0;
     const sides = el => {
         const s = getComputedStyle(el);
@@ -98,25 +118,20 @@ function place(box, sel) {
             + (marker?.getBoundingClientRect().width || 0) + px(s.columnGap)
             + sides(row) + px(s.marginLeft) + px(s.marginRight) + sides(rows) + sides(box) + 2);
     }
-    const width = Math.min(Math.ceil(needed), Math.max(0, v.w - edge * 2));
-    const left = Math.min(Math.max(r.left, v.x + edge), v.x + v.w - width - edge);
-    const below = (v.y + v.h) - r.bottom - gap - edge;
-    const above = r.top - v.y - gap - edge;
-    const up = below < 220 && above > below;
-    const room = Math.max(120, up ? above : below);
+    // 폭을 먼저 정한 뒤(줄바꿈이 높이를 바꿈) 다 펼친 높이를 잰다
+    const width = Math.min(Math.max(Math.ceil(needed), Math.round(r.width)), maxW);
     box.style.width = `${width}px`;
     for (const label of labels) label.style.removeProperty('white-space');
-    box.style.left = `${left}px`;
     box.style.bottom = 'auto';
-    box.style.maxHeight = `${Math.min(room, v.h * 0.6)}px`;
-    box.classList.toggle('up', up);
-    // 먼저 아래 자리로 놓고 높이를 잰 다음, 위로 띄울 때는 그 높이만큼 올린다. 어느 쪽이든 보이는 화면 안으로 민다
-    box.style.top = `${r.bottom + gap}px`;
-    const h = box.offsetHeight || 120;
-    let top = up ? r.top - gap - h : r.bottom + gap;
-    top = Math.min(Math.max(top, v.y + edge), Math.max(v.y + edge, v.y + v.h - edge - h));
-    box.style.top = `${top}px`;
-    return { r, v, up, h, top, left, width };
+    box.style.maxHeight = `${Math.max(0, v.h - PICK_EDGE * 2)}px`;
+    box.style.top = `${v.y + PICK_EDGE}px`;
+    const at = pickRect(r, v, { w: needed, h: box.offsetHeight || 120 });
+    box.style.width = `${at.width}px`;
+    box.style.left = `${at.left}px`;
+    box.style.maxHeight = `${at.maxHeight}px`;
+    box.style.top = `${at.top}px`;
+    box.classList.toggle('up', at.up);
+    return { r, v, ...at };
 }
 
 
@@ -328,6 +343,19 @@ export function startSelectPop() {
         if (window.innerWidth !== openedWidth) { if (Date.now() - openedAt > GRACE) close(); return; }
         if (owner && !layer.classList.contains('sheet')) place(layer.firstElementChild, anchorEl || owner);
     });
+    // 10-28 폰 드롭다운: 자판이 올라오거나(안드로이드 크롬은 창 크기는 그대로 두고 보이는 화면만 줄임) 확대 · 밀기로 보이는 화면이
+    // 바뀌면 자리만 다시 잡는다 — 목록이 자판 밑에 깔리거나 화면 밖에 남지 않게. 한 프레임에 한 번만
+    let vvQueued = false;
+    const replace = () => {
+        if (vvQueued) return;
+        vvQueued = true;
+        requestAnimationFrame(() => {
+            vvQueued = false;
+            if (layer && owner && !layer.classList.contains('sheet')) place(layer.firstElementChild, anchorEl || owner);
+        });
+    };
+    window.visualViewport?.addEventListener('resize', replace);
+    window.visualViewport?.addEventListener('scroll', replace);
     document.addEventListener('scroll', (e) => {
         if (layer && !layer.contains(e.target) && (e.target === document || (e.target instanceof Node && e.target.contains(owner))) && Date.now() - openedAt > GRACE) close();
     }, true);
