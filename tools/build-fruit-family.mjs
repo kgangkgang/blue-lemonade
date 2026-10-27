@@ -44,6 +44,48 @@ function qingguoCode() {
     const fn = fs.readFileSync(path.join(src, 'qingguo-ui.js'), 'utf8').replace(/\r\n/g, '\n').trimEnd();
     return `${fn}\n\ninstallQingguoKorean(BlueLemonade,${JSON.stringify(read('qingguo-ui.json'))});\n`;
 }
+// 과일의 마음 창은 프롬프트 이름을 그대로 쓰지 않고 줄여 보여요(果实之心 창 스크립트의 nameParts · plainName · hintText).
+//   「🤖 特调版推剧情 含扩写｜抢话单选 @YUKI #DS」 → 선택 단추 「特调版推剧情 含扩写」, 항목 꼬리표 「抢话单选」, 목록 풀이 「…」
+// 프롬프트 관리자 사전의 (원문 이름, 한글 제목) 짝에서 같은 규칙으로 짧은 꼴의 짝을 만들어 창 사전 titles 에 넣어요.
+// 새 프리셋 이름을 prompts-*.json 에 더하면 창의 선택 단추 · 칩 · 항목 이름도 함께 한글이 돼요(8.0.6 까지는 과일 6.4 의 짧은 꼴만 손으로 넣어 두어 2.0 판 이름이 빠졌어요).
+const HAN = /\p{Script=Han}/u;
+const hasHan = value => HAN.test(String(value).replace(/@[^\s@｜]+/gu, '').replace(/#[^#｜]*/gu, ''));
+const stripSource = name => String(name || '').replace(/\s*#\s*[^#]+?(?=#|$)/g, '').trimEnd();
+const LEAD_EMOJI = /^(?:\p{Extended_Pictographic}️?|📌)\s*/u;
+export function panelParts(name) {
+    const plain = stripSource(name).replace(/\s*@[^\s@#]+/g, '').trim();
+    const bits = plain.split('｜').map(part => part.trim()).filter(Boolean);
+    return bits.length ? bits : [plain];
+}
+const HINT_SKIP = /单选|多选|必开|别动位置|勿动/;
+/** (원문 이름, 한글 제목) → 창에 보이는 짧은 꼴 짝 [[원문, 한글], …]. 칸 수가 다르면 첫 칸(제목)만 짝지어요 */
+// 구분선(━━ 이름 ━━ 풀이 · ——이름—— · --이름--)은 분류 제목과 풀이로 나눠 보여요(창 스크립트 dividerParts)
+const DIVIDER = /^\s*(?:━+|—{2,}|-{2,})\s*\S/, BAR = /\s*(?:━+|—{2,}|-{2,})\s*/;
+function dividerParts(name) {
+    const body = String(name).replace(new RegExp('^' + BAR.source), '').replace(new RegExp(BAR.source + '$'), '');
+    const cut = body.search(BAR);
+    if (cut < 0) return [body.trim()];
+    return [body.slice(0, cut).trim(), body.slice(cut).replace(new RegExp('^' + BAR.source), '').trim()];
+}
+export function panelTitlePairs(name, title) {
+    const pairs = [];
+    const add = (a, b) => { a = String(a || '').replace(/\s+/g, ' ').trim(); b = String(b || '').replace(/\s+/g, ' ').trim(); if (a && b && a !== b && hasHan(a) && !hasHan(b)) pairs.push([a, b]); };
+    if (DIVIDER.test(name) && DIVIDER.test(title)) {
+        const zh = dividerParts(name), ko = dividerParts(title);
+        add(zh[0], ko[0]); if (zh.length === ko.length && zh[1]) add(zh[1], ko[1]);
+        return pairs;
+    }
+    const zh = panelParts(name), ko = panelParts(title);
+    add(zh[0], ko[0]); add(zh[0].replace(LEAD_EMOJI, ''), ko[0].replace(LEAD_EMOJI, ''));
+    if (zh.length === ko.length && zh.length > 1) {
+        for (let i = 1; i < zh.length; i++) add(zh[i], ko[i]);
+        // 목록 풀이(hintText): 택1 표시 칸을 뺀 나머지 칸을 「 · 」로
+        const group = zh.slice(1).find(part => /(?:\d{1,2}|多)选1$/.test(part));
+        const keep = zh.map((part, i) => i > 0 && part !== group && !HINT_SKIP.test(part));
+        add(zh.filter((_, i) => keep[i]).join(' · '), ko.filter((_, i) => keep[i]).join(' · '));
+    }
+    return pairs;
+}
 async function fruitHeartCode() {
     const file = path.join(bundled, 'fruit-heart.js');
     const code = (await import(pathToFileURL(file).href + '?t=' + Date.now())).default;
@@ -51,10 +93,22 @@ async function fruitHeartCode() {
     const at = code.lastIndexOf(marker);
     if (at < 0) throw Error('fruit-heart 번들에서 사전 호출을 못 찾았어요');
     const data = JSON.parse(code.slice(at + marker.length).trim().replace(/\);\s*$/, ''));
-    for (const extra of read('fruit-heart-additions.json').entries) {
+    const additions = read('fruit-heart-additions.json');
+    for (const extra of additions.entries) {
         const i = data.entries.findIndex(x => x.zh === extra.zh && x.kind === extra.kind);
         if (i >= 0) data.entries[i] = extra; else data.entries.push(extra);
     }
+    // 창 이름 사전: 손으로 정한 짝(additions.titles)이 먼저, 그다음 프롬프트 사전에서 만든 짝. 있던 짝은 한자가 남은 것만 바꿔요.
+    const titleAt = new Map(data.titles.map((pair, i) => [pair[0], i]));
+    const setTitle = (zh, ko, force) => {
+        const i = titleAt.get(zh);
+        if (i === undefined) { titleAt.set(zh, data.titles.length); data.titles.push([zh, ko]); }
+        else if (force || (hasHan(data.titles[i][1]) && !hasHan(ko))) data.titles[i] = [zh, ko];
+    };
+    for (const [zh, ko] of additions.titles || []) setTitle(zh, ko, true);
+    const merged = mergeDictionary(PRESET_SOURCES.map(name => read(`prompts-${name}.json`)));
+    const manual = new Set((additions.titles || []).map(pair => pair[0]));
+    for (const entry of merged.prompts) for (const [zh, ko] of panelTitlePairs(entry.name, entry.title)) if (!manual.has(zh)) setTitle(zh, ko, false);
     return `${code.slice(0, at)}${marker}${JSON.stringify(data)});\n${code.slice(at).replace(/^[\s\S]*?\);\n/, '')}`;
 }
 

@@ -118,5 +118,39 @@ tz.mutate();
 check('model-tag toasts translate without a click in either colon width, keeping the #tag',()=>{assert.equal(halfWidth.text,'모델 태그를 바꿨어요: #DS');assert.equal(fullWidth.text,'모델 태그를 바꿨어요: #GEMINI');assert.equal(localBuild.text,'모델 태그를 바꿨어요: #CLAUDE')});
 check('other Fruit toasts still wait for a recent click in the panel',()=>{assert.equal(otherToast.text,'预设已切换，请重新打开面板')});
 check('the always-on toast list holds only the model-tag notices, each a toast pattern or entry',()=>{const data=JSON.parse('{'+codeOf('fruit-heart').split('installFruitHeartKorean(BlueLemonade,{')[1].trim().replace(/\);\s*$/,''));assert.deepEqual(data.toastAnytime,['已切换模型标签：# {0}','已切换模型标签:#{0}','已切换模型标签：#{0}']);for(const zh of data.toastAnytime)assert.ok(data.entries.some(e=>e.zh===zh&&e.kind==='pattern'&&e.ko==='모델 태그를 바꿨어요: #{0}'),zh)});
-check('catalog version moved with the dictionary change',()=>{assert.match(fs.readFileSync(path.join(root,'src/scripts/catalog.js'),'utf8'),/\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.0\.8'/)});
+check('catalog version moved with the dictionary change',()=>{assert.match(fs.readFileSync(path.join(root,'src/scripts/catalog.js'),'utf8'),/\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.0\.9'/)});
+// 8.0.7 후보(10-27 제보 「야한 과일 · 청과 한글화 안 됨」): 과일의 마음 창은 프롬프트 이름을 줄여 보여요(果实之心 창 스크립트의 규칙 그대로 옮김).
+//   선택 단추 · 목록 · 칩 · 항목 이름 = 「｜」 앞 제목에서 앞 이모지를 뗀 것, 항목 꼬리표 = 「｜」 뒤 칸들, 목록 풀이 = 택1·필수 칸을 뺀 칸을 「 · 」로, 분류 = 구분선 제목 · 풀이.
+//   과일 6.4 · 야한 과일 2.0 · 청과 2.0 의 모든 이름(사전 원본 = 공통 + 프리셋별)을 그 꼴로 창에 그려 한자가 남지 않는지 봐요.
+//   남겨도 되는 것: @만든 사람 · #모델 꼬리표 · 모델이 실제로 쓰는 표식 [语言检定].
+{
+  const src=path.join(root,'tools/scripts-src/fruit-family'),read=n=>JSON.parse(fs.readFileSync(path.join(src,n),'utf8'));
+  const stripSource=n=>String(n||'').replace(/\s*#\s*[^#]+?(?=#|$)/g,'').trimEnd();
+  const nameParts=n=>{const plain=stripSource(n).replace(/\s*@[^\s@#]+/g,'').trim();const bits=plain.split('｜').map(p=>p.trim()).filter(Boolean);const title=bits.shift()||plain;const group=bits.find(p=>/(?:\d{1,2}|多)选1$/.test(p))||'';return{title,group,hints:bits.filter(p=>p!==group)}};
+  const LEAD=/^(?:\p{Extended_Pictographic}️?|📌)\s*/u,plainName=n=>nameParts(n).title.replace(LEAD,'');
+  const hintText=n=>nameParts(n).hints.filter(x=>!/单选|多选|必开|别动位置|勿动/.test(x)).join(' · ');
+  const DIV=/^\s*(?:━+|—{2,}|-{2,})\s*\S/,BAR=/\s*(?:━+|—{2,}|-{2,})\s*/;
+  const divParts=n=>{const b=String(n).replace(new RegExp('^'+BAR.source),'').replace(new RegExp(BAR.source+'$'),'');const c=b.search(BAR);return c<0?[b.trim()]:[b.slice(0,c).trim(),b.slice(c).replace(new RegExp('^'+BAR.source),'').trim()]};
+  const HAN=/\p{Script=Han}/u,left=t=>HAN.test(String(t).replace(/@[^\s@]+/gu,'').replace(/#\S+/gu,'').replace(/[[【［]语言检定[\]】］]/gu,''));
+  const presets={'과일 6.4':['common','fruit'],'야한 과일 2.0':['common','sese'],'청과 2.0':['common','qingguo']};
+  const results={};
+  for(const [label,files] of Object.entries(presets)){
+    const names=[...new Set(files.flatMap(f=>read(`prompts-${f}.json`).prompts.map(p=>p.name)))];
+    const env=environment(),panel=add(env.html,'div',{id:'fruit-heart-v6',class:'open'}),home=add(panel,'div',{class:'fh-main'}),sheet=add(panel,'div',{class:'fh-sheet'}),list=add(panel,'div',{class:'fh-items'}),shown=[];
+    const put=(parent,tag,attrs,text,kind)=>{if(text&&HAN.test(text))shown.push([add(parent,tag,attrs,text),text,kind])};
+    for(const name of names){
+      if(DIV.test(name)){const [t,h]=divParts(name);const head=add(panel,'button',{class:'fh-sec-head'});put(head,'b',{},t,'분류');if(h)put(head,'b',{},h,'분류 풀이');continue;}
+      const sel=add(home,'button',{class:'fh-sel','data-pick-group':'g'});put(sel,'span',{class:'fh-sel-t'},plainName(name),'선택 단추');
+      put(home,'button',{'data-chip':'x'},plainName(name),'칩');
+      const item=add(sheet,'button',{class:'fh-sheet-item'});put(item,'span',{},plainName(name),'목록');put(item,'em',{},hintText(name),'목록 풀이');
+      const row=add(list,'label',{class:'fh-item'});put(row,'span',{class:'fh-item-name'},nameParts(name).title.replace(LEAD,''),'항목 이름');
+      const meta=add(row,'span',{class:'fh-item-meta'});const p=nameParts(name);if(p.group)put(meta,'i',{class:'fh-g'},p.group,'택1 꼬리표');for(const h of p.hints)put(meta,'i',{},h,'항목 꼬리표');
+    }
+    env.run();
+    results[label]={total:shown.length,left:shown.filter(([el])=>left(el.text)).map(([el,text,kind])=>`${kind}: ${text} → ${el.text}`)};
+    env.cleanups.at(-1)();
+  }
+  for(const [label,r] of Object.entries(results))check(`${label}: every option, chip, list note, entry name and tag in the Fruit Heart panel shows Korean (${r.total} labels)`,()=>{assert.ok(r.total>150,'labels collected');assert.deepEqual(r.left,[],'labels with Han left')});
+  check('the reported labels read as short Korean (특별 조정 · 일반 사고 과정 · 미니 웹 극장)',()=>{const data=JSON.parse('{'+codeOf('fruit-heart').split('installFruitHeartKorean(BlueLemonade,{')[1].trim().replace(/\);\s*$/,''));const t=new Map(data.titles);assert.equal(t.get('特调版推剧情 含扩写'),'특별 조정 밀기+확장');assert.equal(t.get('常规 COT改'),'일반 사고 과정 · 수정판');assert.equal(t.get('汐见剧场'),'미니 웹 극장');assert.equal(t.get('小回剧场'),'번외 꾸밈 극장')});
+}
 console.log(`fruit-localization: ${passed} passed`);

@@ -10,8 +10,9 @@ const root = path.resolve(process.argv[2] || '.');
 const code = (await import(pathToFileURL(path.join(root, 'src/scripts/bundled/fruit.js')).href)).default;
 let data = null;
 new Function('BlueLemonade', code)({ translate: d => { data = d; } });
-// 작가 · 원작자 이름 그대로 두는 것 (사전이 처음부터 이렇게 씀): 「日月西 원작」, 「汐见 극장」, 「小回 극장」
-const CREATORS = ['日月西', '汐见', '小回'];
+// 작가 · 원작자 이름 그대로 두는 것. 8.0.7 까지는 「日月西 원작」 「汐见 극장」 「小回 극장」 을 한자로 두었지만
+//   10-27 제보(과일의 마음 창에 중국어가 남음)로 전부 한글(일월서 · 미니 웹 극장 · 번외 꾸밈 극장)로 바꿔 지금은 비어 있어요.
+const CREATORS = [];
 const HAN = /\p{Script=Han}/u;
 const strip = title => CREATORS.reduce((t, name) => t.split(name).join(''), String(title)
     .replace(/@[^\s@｜|（）()]+/gu, '')          // @만든 사람
