@@ -19,10 +19,12 @@ export const NOTICE_KOREAN_TARGET = /\b(?:to|into)\b[^.\n]{0,40}?\bkorean\b|한�
 
 const PAIRS ={ '【': '】', '〖': '〗', '〔': '〕', '［': '］', '[': ']' };
 // 줄 앞뒤의 꾸밈: 묶음 요청의 문단 표시 ⟦n⟧ · 인용 > · 굵게 · 기울임 · 취소선 기호 · 꾸밈 태그(<span …> · <b> · <center> …)
-const LEAD = /^(?:⟦\d+⟧|[ \t]|>|[*_~]{1,3}|<[a-z][\w-]*(?:\s[^<>]*)?>)*/i;
+// 3.1.5 괄호 앞뒤의 기호 하나(⚠ · ❗ · 🔔 같은 그림 문자)도 꾸밈으로 본다 (10-27 제보 「[ … ] ⚠」)
+const MARK = '[\\p{Extended_Pictographic}\\u2600-\\u27BF\\uFE0F\\u200D]';
+const LEAD = new RegExp(`^(?:⟦\\d+⟧|[ \\t]|>|[*_~]{1,3}|<[a-z][\\w-]*(?:\\s[^<>]*)?>|${MARK})*`, 'iu');
 const MAX_INNER = 160;   // 괄호 속 긴 글(지시 · 안내 문장 — 다시 번역 머리말 같은)은 알림이 아니다
-const TAIL = /(?:[ \t]|[*_~]{1,3}|<\/[a-z][\w-]*\s*>)*$/i;
-const CODEISH = /[{}<>=\\`$|]|::|=>|->|\/\/|\[\[|__|\w_\w|\b[a-z]+[A-Z]\w*\(|\w\(\)|^\s*\^|^\s*[xX ]?\s*$/;
+const TAIL = new RegExp(`(?:[ \\t]|[*_~]{1,3}|<\\/[a-z][\\w-]*\\s*>|${MARK})*$`, 'iu');
+const CODEISH = /[{}<>=\\`$|]|::|=>|->|\/\/|\[\[|__|\b[a-z]+[A-Z]\w*\(|\w\(\)|^\s*\^|^\s*[xX ]?\s*$/;   // 3.1.5 밑줄 하나 든 이름표(Player_01)는 코드가 아니다 — 겹밑줄(__)만
 const FOREIGN = /[\p{Script=Hangul}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u;
 const WORD = /[A-Za-z][A-Za-z'’]+/g;
 

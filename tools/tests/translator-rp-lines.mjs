@@ -77,11 +77,12 @@ const ko = line => fakeTranslate(line);
 
 await test('경계: 이야기 속 알림 줄은 번역 대상 / 코드 · 링크 · 각주 · 번호 · 체크 · 낱말 하나 표지 · 자리표시 · 이미 한국어 · 가나 · 한자는 아님', () => {
     for (const line of [NOTICE_A, NOTICE_B, '【 DRAW — DOUBLE KNOCKOUT 】', '[ SYSTEM ALERT: Firewall breached ]', '> [Text from Rex: see you at the arena]', '<b>〔 Welcome to Harbor Ward 〕</b>',
-        '***[ WARNING — RADIATION ZONE ]***', '［ Level Up! ］', '〖 Quest Complete 〗', '<span style="color:#e63946">【 YOU DIED 】</span>'])
+        '***[ WARNING — RADIATION ZONE ]***', '［ Level Up! ］', '〖 Quest Complete 〗', '<span style="color:#e63946">【 YOU DIED 】</span>',
+        '[Player_01 has requested a 1v1 Custom Match Rematch. Map: Iron Foundry. Accept? Y/N] ⚠', '⚠️ [ SYSTEM ALERT: Firewall breached ]', '[Text from Night_Owl_7: see you at the arena] 🔔'])   // 3.1.5 밑줄 이름표 · 괄호 뒤 기호
         assert.notEqual(rp.noticeInner(line), null, line);
     for (const line of ['[OOC]', '[Image]', '[1]', '【3】', '[^2]', '[x]', '[ ]', '[the rules](https://example.com)', '[[__VAR_3__]]', '[ __VAR_3__ ]', '【 무승부 — 더블 녹아웃 】',
         '【 ドロー 】', '【烤面包机 文风】', '[if (hp <= 0) gameOver()]', '[player_hp = 0]', '[System::Reset now]', '[https://example.com/a b]', '[Info|Date: x]',
-        'The board said 【 DRAW 】 and then [ KO ] again.', '【 A 】 and 【 B 】', '[a b]', '[ 12 - 12 ]', `[${'word '.repeat(90)}]`])
+        'The board said 【 DRAW 】 and then [ KO ] again.', '【 A 】 and 【 B 】', '[a b]', '[ 12 - 12 ]', `[${'word '.repeat(90)}]`, '[__init__ called twice]', '[ Accept? Y/N ] ⚠ and then more words'])
         assert.equal(rp.noticeInner(line), null, line);
     assert.deepEqual(rp.noticeLines('```\n[ SYSTEM ONLINE ]\n```\n[ SYSTEM ONLINE ]').map(r => r.index), [3], '코드 울타리 안 줄은 빼고');
     assert.equal(rp.noticeInner(rp.NOTICE_NOTE), null, '안내 한 줄 자신은 알림 줄이 아니다');
