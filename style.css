@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 881594eb4435) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build daaa1357bd0e) */
 /* css/00-base.css */
 :root{--bl-release:"8.1.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -21753,9 +21753,13 @@ html body .bl-addon-credit-all:focus-visible { outline:2px solid var(--salty-acc
   .bl-extension-page .bl-addon-embedded-layout { grid-template-columns:minmax(240px,.75fr) minmax(0,1.25fr); }
   .bl-extension-page > .bl-addon-group { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; padding-right:4px; }
   .bl-extension-page .bl-addon-embedded-layout { grid-template-rows:minmax(0,1fr) auto; min-height:0; }
+  .bl-extension-page > .bl-addon-group > .bl-addon-embedded-layout { flex:none; grid-template-rows:auto auto; }
+  .bl-extension-page > .bl-addon-group > .bl-addon-embedded-layout > .bl-addon-main,
+.bl-extension-page > .bl-addon-group > .bl-addon-embedded-layout > .bl-addon-config { overflow:visible; }
   .bl-addon-embedded-layout > .bl-addon-credit { grid-column:1/-1; align-self:end; margin-top:0; }
   .bl-addon-inline { display:flex; }
-  .bl-addon-mobile-open { display:none!important; }
+  .bl-addon-mobile-open,
+  html:not(#bl-groups-off) body.salty .bl-editor:not(#salty-none) .bl-addon-actions > button.bl-addon-mobile-open { display:none!important; }
 }
 .bl-message-view { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0; }
 .bl-message-view .salty-btn { margin:0;min-width:0;min-height:40px;white-space:normal; }
