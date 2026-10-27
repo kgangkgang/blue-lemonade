@@ -10,7 +10,7 @@
 import { parsePickKey, pickSlug, tidyPickedIcons, PICK_ATTR, PICK_INLINE_ATTR } from './role-icons-core.js';
 
 // 고를 수 있는 것 — 단추 노릇을 하는 요소 (실리태번 · 확장이 흔히 쓰는 모양)
-export const CANDIDATES = 'button, [role="button"], .menu_button, .list-group-item, .drawer-icon, .interactable, summary, .mes_button, .extensionsMenuExtensionButton, #leftSendForm > *, #rightSendForm > *, #nonQRFormItems > *, .extraMesButtons > *, .mes_buttons > *';
+export const CANDIDATES = 'button, [role="button"], .menu_button, .list-group-item, .drawer-icon, .interactable, summary, .mes_button, .extensionsMenuExtensionButton, #leftSendForm > *, #rightSendForm > *, #nonQRFormItems > .fa-solid, #nonQRFormItems > .fa-regular, .extraMesButtons > *, .mes_buttons > *';   // css/49-role-icons.css 의 고르기 표시 목록과 같게
 // 고르는 동안에도 눌러서 열어야 하는 것 — 메뉴 여는 단추(안의 항목을 고르려면 열어야 한다) · 메시지 「…」(숨은 단추를 펼친다). 이들은 내장 역할로 바꾼다
 const OPENERS = '#options_button, #extensionsMenuButton, .extraMesButtonsHint';
 // 글자 옆 아이콘 칸

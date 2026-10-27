@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 524095c038ad) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 8c706a7c26a9) */
 /* css/00-base.css */
 :root{--bl-release:"8.1.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -21428,20 +21428,21 @@ html.bl-roleicon-picking .bl-roleicon-pickbar > button {
   font-weight: 650;
   cursor: pointer;
 }
-html.bl-roleicon-picking body :where(button):is(#bl-s, *):not(.bl-roleicon-pickbar *),
-html.bl-roleicon-picking body :where([role="button"]):is(#bl-s, *):not(.bl-roleicon-pickbar *),
-html.bl-roleicon-picking body :where(.menu_button):is(#bl-s, *):not(.bl-roleicon-pickbar *),
-html.bl-roleicon-picking body :where(.list-group-item):is(#bl-s, *):not(.bl-roleicon-pickbar *),
-html.bl-roleicon-picking body :where(.drawer-icon):is(#bl-s, *):not(.bl-roleicon-pickbar *),
-html.bl-roleicon-picking body :where(.interactable):is(#bl-s, *):not(.bl-roleicon-pickbar *),
-html.bl-roleicon-picking body :where(summary):is(#bl-s, *):not(.bl-roleicon-pickbar *),
-html.bl-roleicon-picking body :where(.mes_button):is(#bl-s, *):not(.bl-roleicon-pickbar *),
-html.bl-roleicon-picking body :where(.extensionsMenuExtensionButton):is(#bl-s, *):not(.bl-roleicon-pickbar *),
-html.bl-roleicon-picking body :is(#leftSendForm > *):not(.bl-roleicon-pickbar *),
-html.bl-roleicon-picking body :is(#rightSendForm > *):not(.bl-roleicon-pickbar *),
-html.bl-roleicon-picking body :is(#nonQRFormItems > *):not(.bl-roleicon-pickbar *),
-html.bl-roleicon-picking body :where(.extraMesButtons > *):is(#bl-s, *):not(.bl-roleicon-pickbar *),
-html.bl-roleicon-picking body :where(.mes_buttons > *):is(#bl-s, *):not(.bl-roleicon-pickbar *) {
+html.bl-roleicon-picking body :where(button):is(#bl-s, *):is(.bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body [role="button"]:is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body .menu_button:is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body .list-group-item:is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body .drawer-icon:is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body .interactable:is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :where(summary):is(#bl-s, *):is(.bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body .mes_button:is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body .extensionsMenuExtensionButton:is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :is(#leftSendForm > *):is(.bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :is(#rightSendForm > *):is(.bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :where(.fa-solid):is(#nonQRFormItems > .fa-solid):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :where(.fa-regular):is(#nonQRFormItems > .fa-regular):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :is(.extraMesButtons > *):is(#bl-s, *):not(.bl-roleicon-pickbar *),
+html.bl-roleicon-picking body :is(.mes_buttons > *):is(#bl-s, *):not(.bl-roleicon-pickbar *) {
   outline: 1px dashed var(--salty-accent) !important;
   outline-offset: 2px;
   cursor: crosshair;

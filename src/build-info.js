@@ -625,7 +625,7 @@ export const FILE_HASHES = {
   "src/rerender-notify.js": "9554:f5d2ac94:bc712cfb",
   "src/role-icons-core.js": "34943:ba457c5f:46de81e7",
   "src/role-icons-fa.gen.js": "40164:8f55d310:6a6410ef",
-  "src/role-icons-pick.js": "12998:09d294e3:0eab586c",
+  "src/role-icons-pick.js": "13102:1ba87367:cc9c29fa",
   "src/role-icons-ui.js": "16772:8148526c:73262983",
   "src/role-icons.js": "1561:f92cd21e:bdb03312",
   "src/scene-music-rules.js": "16233:2c35ac80:d739dbf4",
@@ -736,5 +736,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1822253:ad3dc9b0:0c328540"
+  "style.css": "1822381:d574232f:14be009c"
 };
