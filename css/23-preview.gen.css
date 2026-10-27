@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 475개 (171.5KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 484개 (174.5KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -1254,6 +1254,51 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .sal
 }
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-card__title, .custom-dem-status-row__name, .custom-dem-psychological-state-row__name) {
   color: var(--salty-accent-ink, var(--salty-accent));
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-tab, .custom-dem-chip) {
+  font-family: var(--salty-font-ui, inherit);
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) {
+  border: 1px solid color-mix(in srgb, var(--salty-accent) 42%, var(--salty-line));
+  background: var(--dem-tray);
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary {
+  margin-block-end: 0;
+  padding: 10px 56px;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--salty-accent) 9%, transparent);
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text details.custom-dem-modules[open]:not(#salty-none) > summary {
+  border-radius: 13px 13px 0 0;
+}
+@container (max-width: 420px) {
+  body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary {
+    padding-inline: 46px;
+  }
+}
+@media (hover: hover) {
+  body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary:hover {
+    background: var(--dem-raised);
+  }
+}
+body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track:has(> .custom-dem-track__grid), .custom-dem-modules, .custom-dem-modules .custom-dem-card) {
+  --dem-paper: color-mix(in srgb, var(--salty-accent) 7%, var(--bl-fill-card, var(--bl-card, var(--salty-surface))));
+  --dem-tray: color-mix(in srgb, var(--salty-accent) 4%, var(--salty-fill-surface, var(--salty-surface)));
+  --dem-ink-2: color-mix(in srgb, var(--salty-muted) 72%, var(--salty-text));
+}
+body.salty.salty-light.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid {
+  background:
+  linear-gradient(var(--wx-veil, #0000), var(--wx-veil, #0000)),
+  radial-gradient(circle 1px, var(--st, #0000) 45%, #0000) 0 0 / 97px 41px,
+  radial-gradient(circle 0.8px, var(--st, #0000) 50%, #0000) 71px 9px / 67px 29px,
+  linear-gradient(90deg, #0000 4%, var(--hz-c, var(--arc-c, #0000)) 18% 82%, #0000 96%) 0 var(--hz, 2px) / 100% 1px no-repeat,
+  radial-gradient(40% 56px at var(--gx, 50%) var(--hz, 2px), color-mix(in srgb, var(--s3, #0000) var(--ga, 70%), #0000), #0000 72%),
+  linear-gradient(var(--s1, #0000), var(--s2, #0000) var(--hz, 2px), color-mix(in srgb, var(--s2, #0000) 8%, #0000) var(--hz, 2px)),
+  var(--dem-paper);
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__temp:not(#salty-none) {
+  background: color-mix(in srgb, var(--salty-accent) 10%, var(--bl-fill-card, var(--bl-card, var(--salty-surface)))) !important;
+  color: var(--salty-accent-ink, var(--salty-accent)) !important;
 }
 @media (max-width: 1000px) {
   body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):where(:not(:has(> .custom-dem-track__grid))) {
