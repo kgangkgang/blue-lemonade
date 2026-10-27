@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 25d943cf3edb) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build d0fd4817bc2a) */
 /* css/00-base.css */
 :root{--bl-release:"8.1.4";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -22968,6 +22968,32 @@ html body.salty input[type="color"]::-moz-color-swatch {
 border-radius:50%;
 }
 html body.salty .salty-panel .salty-row > input[type="color"] { margin-inline-start:auto; }
+@media (pointer: coarse) {
+  html body.salty input[type="color"] {
+flex-basis:44px;
+width:44px !important;
+min-width:44px;
+max-width:44px;
+height:44px !important;
+min-height:44px;
+box-sizing:border-box;
+}
+html body.salty input[type="color"]:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+border:5px solid transparent;
+}
+html body.salty input[type="color"]:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *) {
+border-width:5px;
+border-style:solid;
+}
+html body.salty input[type="color"]:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+background-clip:content-box;
+}
+html body.salty input[type="color"] {
+margin-block:-5px;
+margin-inline-end:-5px;
+}
+  html body.salty input[type="color"]:where(:not(.salty-panel .salty-row > *)) { margin-inline-start:-5px; }
+}
 html body.salty toolcool-color-picker {
   --tool-cool-color-picker-btn-border-radius:50%;
   --tool-cool-color-picker-btn-border-radius-inner:50%;
