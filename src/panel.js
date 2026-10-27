@@ -1535,6 +1535,9 @@ function tabChat(s, sub) {
         ${cap('확장 탭')}<div class="salty-group">
             ${row('「확장 탭에 보이기」 줄', toggle('headSwitchRows', s.headSwitchRows !== false), '확장 창 맨 위에 생기는 줄이에요 · 끄면 줄만 사라지고, 이미 제목 줄에 꺼내 둔 스위치는 그대로예요')}
         </div>
+        ${cap('단추 설명')}<div class="salty-group">
+            ${row('단추 길게 누르면 설명 보기', toggle('longpressHelp', s.longpressHelp !== false), '실리태번 · 테마 단추를 꾹 누르면 무슨 기능인지 작은 창으로 알려 줘요 · PC 는 마우스를 올려 두면 풍선 글로 보여요 · 짧게 누르면 원래 동작 그대로예요')}
+        </div>
         ${cap('실리태번 한국어')}<div class="salty-group">
             ${row('한국어 화면 다듬기', toggle('koUi', s.koUi !== false), '실리태번 화면에 영어로 남은 글과 어색한 번역을 자연스러운 한국어로 바꿔요 · 실리태번 언어가 한국어일 때만 · 바꾸면 새로고침 뒤에 적용돼요')}
         </div>

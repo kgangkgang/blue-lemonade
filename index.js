@@ -40,6 +40,7 @@ import { startReadingResume } from './src/reading-resume.js';
 import { startMainChatRules } from './src/main-chat-rules.js';
 import { startNaturalSlash } from './src/natural-slash.js';
 import { startWorldInfoHelp } from './src/wi-help.js';
+import { startLongpressHelp } from './src/longpress-help.js';
 import { startWebSearchMarks } from './src/websearch.js';
 import { startWorldInfoLinkMark } from './src/wi-link.js';
 import { startSwipePickerTranslation } from './src/swipe-picker-translation.js';
@@ -222,6 +223,7 @@ jQuery(() => {
     startPullToRefresh({ isEnabled: () => themeEnabled(getSettings()) && document.body.classList.contains('salty') }).catch(error => console.warn('[Blue Lemonade] 당겨 새로고침 준비를 못 했어요', error));
     startNaturalSlash({ isEnabled: () => themeEnabled(getSettings()) });
     startWorldInfoHelp(); // 6.1.5 월드인포 설정 · 항목 칸 옆 ? 도움말 (테마가 꺼져 있으면 CSS 로 숨김)
+    startLongpressHelp({ isEnabled: () => { const s = getSettings(); return s.longpressHelp !== false && themeEnabled(s); } }); // 8.1.2 단추 길게 누르면 설명 — 위임 리스너 한 벌, 사전은 처음 길게 누를 때만 (longpress-help.js)
     startWebSearchMarks(); // 6.2.6 웹 검색을 쓴 답에 지구 표시 · 낱말 꾹 눌러 출처 (websearch.js — 흔적은 성능 보조 요청 로그가 알린다)
     startWorldInfoLinkMark().catch(error => console.warn('[Blue Lemonade] 로어북 연결 점검', error)); // 캐릭터 로어북 연결이 빠지면 책 아이콘에 빨간 점
     startCardInk(); // 메시지 안 HTML 카드가 제 배경만 칠했을 때 글자색을 읽히게
