@@ -20,7 +20,10 @@ html body .bl-tool-heading { display:flex; align-items:center; justify-content:s
 .bl-tool-body > * { min-width:0; max-width:100%; box-sizing:border-box; }
 .bl-tool-body .salty-note { margin:0; line-height:1.5; font-size:12px; }
 .bl-tool-body .bl-tool-section { background:transparent; border-radius:8px; }
-.bl-tool-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(11em,calc((100% - 12px)/2))),1fr)); gap:8px 12px; min-width:0; align-items:start; }
+.bl-tool-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(var(--bl-tool-min,11em),calc((100% - 12px)/2))),1fr)); gap:8px 12px; min-width:0; align-items:start; }
+/* 8.1.0 스위치 · 체크 · 색 · 숫자만 든 격자는 9em 부터 2열(철칙 §5, 사용자 10-27 「파라미터는 웬만하면 다 세로 2열」) — 폰 384 · 360 의 설정 칸(≈330 · 306px)에서 11em(165px) 은 몇 px 모자라
+   채팅 캡처 「날씨 효과 포함 · 배경 이미지·영상」 · 성능 보조 다섯 스위치가 1열로 늘어섰어요. 고르기(select)가 든 격자는 선택지(「본문만 · 이름·모델·시간 숨김」)가 반 칸에서 잘리니 11em 그대로 */
+.bl-tool-grid:not(:has(> .bl-tool-field > select)) { --bl-tool-min:9em; }
 .bl-tool-grid > * { min-width:0; max-width:100%; overflow-wrap:anywhere; }
 .bl-tool-grid .bl-addon-toggle,.bl-tool-grid.bl-word-options label { align-items:center; gap:8px; margin:0; min-height:40px; font-size:12px; line-height:1.45; }
 .bl-tool-grid input[type=checkbox] { flex:none; margin:0; width:17px; height:17px; accent-color:var(--salty-accent); }

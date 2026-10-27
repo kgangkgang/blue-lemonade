@@ -204,7 +204,7 @@ export const FILE_HASHES = {
   "src/addons/prompt/request-errors.js": "1558:9bebebff:d7f4f644",
   "src/addons/prompt/response-text.js": "2596:b1382aa2:260a2b4b",
   "src/addons/prompt/settings-ui.js": "8501:0e6f9924:2f4c758e",
-  "src/addons/prompt/style.css": "76151:0149a58d:82bbf6c2",
+  "src/addons/prompt/style.css": "76981:e4634231:c1d21b8c",
   "src/addons/prompt/translation-memory.js": "1476:261fa1b4:97939765",
   "src/addons/prompt/translation-progress.js": "4714:8084427b:1653c2ea",
   "src/addons/regexlink/engine.js": "10242:ac39044e:37e62e6f",
@@ -226,7 +226,7 @@ export const FILE_HASHES = {
   "src/addons/rewrite/settings-html.js": "18260:cc91472d:3f65e7a5",
   "src/addons/rewrite/spans-worker.js": "991:ea17d03b:8c0ccf3e",
   "src/addons/rewrite/spans.js": "6761:867f9697:c609e837",
-  "src/addons/rewrite/style.css": "26267:c5b6fff7:c23ffbde",
+  "src/addons/rewrite/style.css": "26969:550073e7:457d26d0",
   "src/addons/rewrite/undo.js": "2633:931380a4:1ad3330f",
   "src/addons/rewrite/upgrades.js": "10617:1ecd6c17:e55d9256",
   "src/addons/translator/archive-bridge.js": "1842:85820c61:8fc7ab69",
@@ -547,7 +547,7 @@ export const FILE_HASHES = {
   "src/fruit-type-schema.js": "14748:405a3338:d17de410",
   "src/fruit-type-shortcuts.js": "7133:7b44c5c2:3be513c0",
   "src/fruit-type-snapshot.js": "7708:38ee7fe9:12c69af0",
-  "src/fruit-type-ui.js": "27065:46717764:98a5da94",
+  "src/fruit-type-ui.js": "27404:5bae2a6c:39d3bae5",
   "src/generation-state.js": "6956:ff69362b:15d46250",
   "src/gradient-ui.js": "5326:12fabd1e:586f428a",
   "src/gradients.js": "10746:1b5ebec2:b7fb0a19",
@@ -735,5 +735,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1817706:969087c9:aafb227f"
+  "style.css": "1819088:f341c5b5:e4461ea2"
 };

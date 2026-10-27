@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 4f423a2e7dde) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 1031e2cc2a59) */
 /* css/00-base.css */
 :root{--bl-release:"8.1.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -12587,6 +12587,10 @@ html body.salty .llmt-settings .llmt-label,
 html body.salty .llmt-settings .llmt-section-title { font-weight:inherit; }
 html body.salty .llmt-settings .llmt-field { gap:8px; }
 html body.salty .llmt-settings .llmt-checks--grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,12em),1fr)); gap:8px 10px; }
+html body.salty .llmt-settings .llmt-checks:not(.llmt-checks--grid) { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(16em,calc((100% - 10px) / 2))),1fr)); gap:6px 10px; }
+html body.salty .llmt-settings .llmt-checks:not(.llmt-checks--grid) > * { grid-column:1 / -1; min-width:0; }
+html body.salty .llmt-settings .llmt-checks:not(.llmt-checks--grid) > .llmt-check + .llmt-check,
+html body.salty .llmt-settings .llmt-checks:not(.llmt-checks--grid) > .llmt-check:has(+ .llmt-check) { grid-column:auto; }
 html body.salty .llmt-settings .llmt-card--accent {
 padding:10px;
 }
@@ -21530,7 +21534,8 @@ html body .bl-tool-heading { display:flex; align-items:center; justify-content:s
 .bl-tool-body > * { min-width:0; max-width:100%; box-sizing:border-box; }
 .bl-tool-body .salty-note { margin:0; line-height:1.5; font-size:12px; }
 .bl-tool-body .bl-tool-section { background:transparent; border-radius:8px; }
-.bl-tool-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(11em,calc((100% - 12px)/2))),1fr)); gap:8px 12px; min-width:0; align-items:start; }
+.bl-tool-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(var(--bl-tool-min,11em),calc((100% - 12px)/2))),1fr)); gap:8px 12px; min-width:0; align-items:start; }
+.bl-tool-grid:not(:has(> .bl-tool-field > select)) { --bl-tool-min:9em; }
 .bl-tool-grid > * { min-width:0; max-width:100%; overflow-wrap:anywhere; }
 .bl-tool-grid .bl-addon-toggle,.bl-tool-grid.bl-word-options label { align-items:center; gap:8px; margin:0; min-height:40px; font-size:12px; line-height:1.45; }
 .bl-tool-grid input[type=checkbox] { flex:none; margin:0; width:17px; height:17px; accent-color:var(--salty-accent); }
@@ -25447,6 +25452,11 @@ body.salty .bl-pbind-list { min-height:0; }
 .salty-panel .bl-md-tuning { margin:.6em 0 0; border-top:1px solid var(--salty-text-20); }
 .salty-panel .bl-md-tuning > summary { cursor:pointer; padding:.6em .15em; line-height:1.4; font-size:.88em; color:var(--salty-muted); }
 .salty-panel .bl-md-tuning > .bl-control-grid { grid-template-columns:1fr; gap:10px; padding:.3em .15em; }
+@container bl-controls (width >= 19em) {
+  .salty-panel .bl-md-tuning > .bl-control-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:var(--bl-s3,12px); align-items:start; }
+  .salty-panel .bl-md-tuning > .bl-control-grid > .salty-stack,
+  .salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider:not(.salty-slider + .salty-slider):not(:has(+ .salty-slider)) { grid-column:1 / -1; }
+}
 .salty-panel .bl-md-general { margin-block:8px; }
 @media (max-width:760px) { .salty-panel .bl-md-groups { grid-template-columns:1fr; gap:6px; } }
 /* css/68-cutout-edge.css */
@@ -25957,6 +25967,11 @@ dialog.bl-prompt-card-picker::backdrop { background: var(--salty-scrim, var(--bl
 .bl-fruit-type-editor{display:flex;flex-direction:column;min-width:0}
 .bl-fruit-type-editor *{box-sizing:border-box}
 .bl-ft-param{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;padding:8px 0 6px}
+.bl-ft-group-body{container:bl-ft-body / inline-size}
+.bl-ft-params{display:grid;grid-template-columns:minmax(0,1fr);gap:0 var(--bl-param-col-gap,8px);align-items:start}
+.bl-ft-params>*{min-width:0}
+.bl-ft-params>.bl-ft-wide{grid-column:1 / -1}
+@container bl-ft-body (width >= 19em){.bl-ft-params{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .bl-ft-param>span{min-width:0;overflow-wrap:anywhere}
 .bl-ft-param>select{display:block;width:100%;min-width:0;max-width:100%;min-height:36px;margin:0;border-radius:8px;font:inherit}
 .bl-ft-slider{min-width:0}

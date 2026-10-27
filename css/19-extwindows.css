@@ -252,6 +252,13 @@ html body.salty .llmt-settings :is(.llmt-card-body,.llmt-field,.llmt-inline-row)
 html body.salty .llmt-settings :is(.llmt-label,.llmt-section-title) { font-weight:inherit; }
 html body.salty .llmt-settings .llmt-field { gap:8px; }
 html body.salty .llmt-settings .llmt-checks--grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,12em),1fr)); gap:8px 10px; }
+/* 8.1.0 번역 탭의 체크 묶음(요술봉 표시 · 퀵 입력 번역 버튼 · 문단 순차 매칭 · 번역 점검, 다섯 줄)도 2열(철칙 §5) — 칸 최소 16em = 가장 긴 이름 「요술봉에 LLM으로 전체 번역 표시」+ 스위치.
+   폰 창은 1열 그대로(이름이 꺾이는 2열은 안 만들어요), 넓은 창에서 2열 */
+html body.salty .llmt-settings .llmt-checks:not(.llmt-checks--grid) { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(16em,calc((100% - 10px) / 2))),1fr)); gap:6px 10px; } /* 최대 2열 */
+/* 설명(.llmt-desc)이 딸린 줄 · 설명 · 단추 묶음은 한 줄 전체 — 설명 없이 이어지는 체크 줄만 반 칸 */
+html body.salty .llmt-settings .llmt-checks:not(.llmt-checks--grid) > * { grid-column:1 / -1; min-width:0; }
+html body.salty .llmt-settings .llmt-checks:not(.llmt-checks--grid) > .llmt-check + .llmt-check,
+html body.salty .llmt-settings .llmt-checks:not(.llmt-checks--grid) > .llmt-check:has(+ .llmt-check) { grid-column:auto; }
 html body.salty .llmt-settings .llmt-card--accent { padding:10px; box-shadow:none; }
 html body.salty .llmt-settings .llmt-card-body { padding:10px; }
 html body.salty .llmt-settings :is(.menu_button,.llmt-gl-scope,.llmt-gl-sort) {

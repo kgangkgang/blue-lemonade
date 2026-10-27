@@ -677,6 +677,10 @@ body.salty .bwr_settings :is(.menu_button, .text_pole, .bwr_chip) {
 body.salty .bwr_settings .bwr_editor_head .bwr_delete { width: auto; min-width: 36px; height: auto; }
 body.salty .bwr_settings .bwr_grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 12em), 1fr)); }
 body.salty .bwr_settings .bwr_switch_row { gap: max(10px, .6em); }
+/* 8.1.0 스위치 줄이 둘 이상 이어지는 카드(기능: 금지 묘사 · 씬 플랜 리롤 · 글 선택 시 단어 밴 버튼 표시 · 알림)는 2열 격자(철칙 §5).
+   칸 최소 12em = 가장 긴 이름 + 스위치 — 폰 서랍(≈352px)은 1열 그대로(이름이 꺾이는 2열은 안 만들어요), PC 서랍에서 2열. 제목 줄은 한 줄 전체 */
+body.salty .bwr_settings .bwr_card:has(> .bwr_switch_row + .bwr_switch_row) { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, max(12em, calc((100% - 12px) / 2))), 1fr)); gap: 0 12px; align-items: start; } /* 최대 2열 */
+body.salty .bwr_settings .bwr_card > .bwr_card_title { grid-column: 1 / -1; }
 body.salty .bwr_settings .bwr_switch_row > span:first-child { min-width: 0; overflow-wrap: anywhere; }
 /* 2.1.3 switch knobs stay white in every palette, like the theme switches */
 body.salty .bwr_settings .bwr_switch::after,

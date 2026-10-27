@@ -71,6 +71,7 @@ const GRIDS=[
   /\.bl-etc-grid$/,/\.bl-setting-locks$/,/\.bl-word-presets$/,/\.regex_editor > \.flexFlowColumn$/,
   /\.lv-grid$/,/\.lv-tools$/,/\.rl-modules$/,/\.llmt-checks--grid$/,/\.lvs-fields$/,/#lv_pane_(read|voices|data)$/,/#pt-params-wrap$/,/\.bl-look-grid$/,/\.bwr_grid$/,
   /\.rl-numbers$/,/\.rl-budget-nums$/,
+  /\.bl-ft-params$/,   // 8.1.0 상태창 글자(과일 · 데우스) 영역 파라미터 — 기본 1열, 본문 19em 부터 2열(@container bl-ft-body)
 ];
 // 두 칸이 가로로 나란한 flex 줄 — 세로(column)로 바꾸는 규칙은 안 됨
 const ROWS=[

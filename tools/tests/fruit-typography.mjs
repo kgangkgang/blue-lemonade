@@ -50,9 +50,16 @@ const {originalPreview}=await import(pathToFileURL(path.join(root,'src/fruit-typ
 assert(originalPreview('status').css.includes('LXGW WenKai'));assert(originalPreview('status').css.includes('SiyinSong'));
 assert.notEqual(originalPreview('compact','present').css,originalPreview('compact','olden').css);
 assert(!fruitTypeCss({on:true,types:{status:{regions:{info:{on:true,font:'original'}}}}}).includes('font-family:'),'Original region fonts are not flattened');
-// 상태창 글자 화면 모양: 파라미터 세로 2줄(2열 격자 없음) · 테마 스위치만 · 알약 없음 · 과일/데우스 같은 묶음 자리
+// 상태창 글자 화면 모양: 영역 파라미터는 2열 격자(8.1.0, 사용자 10-27 「파라미터는 웬만하면 다 세로 2열」) · 테마 스위치만 · 알약 없음 · 과일/데우스 같은 묶음 자리
 const editorCss=read('css/79-fruit-type.css'),editorJs=read('src/fruit-type-ui.js');
-assert(!/grid-template-columns\s*:\s*repeat\(\s*2/.test(editorCss),'No two-column parameter grid');assert(!/border-radius\s*:\s*(9999|99)px/.test(editorCss),'No pill buttons');
+assert(/@container bl-ft-body \(width >= 19em\)\{\.bl-ft-params\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}\}/.test(editorCss),'Region parameters form a two-column grid from 19em (same threshold as the theme editor)');
+assert(/\.bl-ft-group-body\{container:bl-ft-body \/ inline-size\}/.test(editorCss),'The grid measures its own region body, so the shortcut dialog gets the same columns');
+assert(/\.bl-ft-params>\.bl-ft-wide\{grid-column:1 \/ -1\}/.test(editorCss),'Long choices span the full row');
+const regionBody=/<div class="bl-ft-params">([\s\S]*?)<\/div>`\);\}\)\.join\(''\)/.exec(editorJs)?.[1]||'';
+const order=[...regionBody.matchAll(/\$\{(field|slider)\(key,'(\w+)'/g)].map(m=>m[2]);
+assert.deepEqual(order,['font','size','weight','spacing','line','italic','align','wrap'],'Pairs are same-kind: size|weight · spacing|line · italic|align, long choices (font · wrap) alone');
+assert.equal((regionBody.match(/,true\)\}/g)||[]).length,2,'Only font and wrap are full-width');
+assert(!/border-radius\s*:\s*(9999|99)px/.test(editorCss),'No pill buttons');
 assert.equal((editorJs.match(/type="checkbox"/g)||[]).length,1,'Switches come from one theme switch helper');assert(editorJs.includes('class="salty-switch"'));
 assert(!/<label class="bl-ft-param"><span>[^<]*<\/span><(?:input|select)[^>]*>[^<]*<(?:input|select)/.test(editorJs),'One control per parameter');
 // 과일 창 바로가기 대화상자(.bl-ft-dialog)는 설정 창(.salty-panel) 밖 — 미리보기 도구 단추가 테마 모양을 따로 받아야 한다 (없으면 브라우저 기본 흰 네모, 나이트 대비 1.14)

@@ -16,5 +16,11 @@
 .salty-panel .bl-md-tuning { margin:.6em 0 0; border-top:1px solid var(--salty-text-20); }
 .salty-panel .bl-md-tuning > summary { cursor:pointer; padding:.6em .15em; line-height:1.4; font-size:.88em; color:var(--salty-muted); }
 .salty-panel .bl-md-tuning > .bl-control-grid { grid-template-columns:1fr; gap:10px; padding:.3em .15em; }
+/* 8.1.0 다듬기 슬라이더(선 길이 · 위아래 여백 · 아래 띠 두께 · 형광펜 진하기 …)도 2열(철칙 §5) — 설정 칸이 19em 이상이면(폰 384 의 334px 포함). 고르기 줄(.salty-stack)과 짝 없는 슬라이더는 한 줄 전체 */
+@container bl-controls (width >= 19em) {
+  .salty-panel .bl-md-tuning > .bl-control-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:var(--bl-s3,12px); align-items:start; }
+  .salty-panel .bl-md-tuning > .bl-control-grid > .salty-stack,
+  .salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider:not(.salty-slider + .salty-slider):not(:has(+ .salty-slider)) { grid-column:1 / -1; }
+}
 .salty-panel .bl-md-general { margin-block:8px; }
 @media (max-width:760px) { .salty-panel .bl-md-groups { grid-template-columns:1fr; gap:6px; } }

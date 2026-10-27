@@ -660,6 +660,11 @@ body.salty #pt-panel #pt-settings-form .pt-card > h4 {
 }
 body.salty #pt-panel #pt-settings-form .pt-card > h4::before { height:14px; }
 body.salty #pt-panel #pt-settings-form :is(.pt-card > p,.pt-field > p) { margin:0; }
+/* 8.1.0 화면 탭 「원문 글자 크기 · 번역문 글자 크기」 슬라이더 둘은 2열(철칙 §5) — 칸 최소 10em(이름 + 값), 최대 2열. 설명 · 체크 · 단추는 한 줄 전체 */
+body.salty #pt-panel #pt-setting-display .pt-card:has(> .pt-field + .pt-field) { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(10em,calc((100% - 12px) / 2))),1fr)); gap:0 12px; align-items:start; }
+body.salty #pt-panel #pt-setting-display .pt-card > * { grid-column:1 / -1; min-width:0; } /* 격자가 아닌 카드에서는 효과 없음(has-guard: 주어 아닌 :has 를 늘리지 않으려고 카드 조건을 뺌) */
+body.salty #pt-panel #pt-setting-display .pt-card > .pt-field + .pt-field,
+body.salty #pt-panel #pt-setting-display .pt-card > .pt-field:has(+ .pt-field) { grid-column:auto; }
 body.salty #pt-panel #pt-settings-form .pt-field { gap:8px; margin:0; }
 body.salty #pt-panel #pt-settings-form .pt-bl-help { margin:0; font-size:var(--bl-ts-meta,12.5px); line-height:1.5; color:var(--salty-muted,var(--pt-text-dim)); }
 body.salty #pt-panel #pt-settings-form #pt-proxy-wrap { display:flex; flex-direction:column; gap:10px; }

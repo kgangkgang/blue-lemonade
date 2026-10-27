@@ -1,11 +1,20 @@
 /* ===== css/79-fruit-type.css ===== */
 /* 상태창 글자 설정 (프롬프트 › 과일 · 데우스 › 상태창 글자, 과일 창 바로가기 대화상자).
    새 모양을 만들지 않고 테마 부품을 그대로 쓴다: 줄(.salty-row) · 스위치 · 슬라이더 · 미리보기 칸 · 접기 줄.
-   파라미터는 모두 세로 2줄 — 윗줄 이름(·현재 값), 아랫줄 조절칸 가로 꽉, 한 줄에 하나. */
+   파라미터 칸은 윗줄 이름(·현재 값), 아랫줄 조절칸 가로 꽉. 영역 본문의 짧은 칸은 2열 격자(아래 .bl-ft-params). */
 .bl-fruit-type-editor{display:flex;flex-direction:column;min-width:0}
 .bl-fruit-type-editor *{box-sizing:border-box}
-/* 세로 2줄 파라미터 (고르기 칸) — 슬라이더(.salty-slider)와 같은 위아래 여백 */
+/* 파라미터 칸(고르기) — 슬라이더(.salty-slider)와 같은 위아래 여백 */
 .bl-ft-param{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;padding:8px 0 6px}
+/* 8.1.0 영역 본문의 파라미터는 2열 격자(사용자 10-27 「파라미터는 웬만하면 다 세로 2열」, 철칙 §5) — 공개 테마 97-param-inline 과 같은 19em 문턱 · 같은 간격 토큰.
+   글꼴 고르기(긴 목록) · 줄바꿈 고르기(「한 줄 · 넘치면 스크롤」이 반 칸에서 잘려요)는 한 줄 전체(.bl-ft-wide).
+   짝은 같은 종류끼리(크기|굵기 · 자간|줄간격 · 기울임|정렬)라 같은 행의 이름 줄 · 조작부 위가 맞아요.
+   본문 폭이 19em 아래(큰 글씨 · 320 폰 대화상자)면 1열 — 이름이 꺾이거나 조작부가 떨어지는 2열은 만들지 않아요. 설정 창 · 바로가기 대화상자 어느 쪽이든 자기 본문 폭(컨테이너)을 봐요 */
+.bl-ft-group-body{container:bl-ft-body / inline-size}
+.bl-ft-params{display:grid;grid-template-columns:minmax(0,1fr);gap:0 var(--bl-param-col-gap,8px);align-items:start}
+.bl-ft-params>*{min-width:0}
+.bl-ft-params>.bl-ft-wide{grid-column:1 / -1}
+@container bl-ft-body (width >= 19em){.bl-ft-params{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .bl-ft-param>span{min-width:0;overflow-wrap:anywhere}
 .bl-ft-param>select{display:block;width:100%;min-width:0;max-width:100%;min-height:36px;margin:0;border-radius:8px;font:inherit}
 .bl-ft-slider{min-width:0}

@@ -24,8 +24,9 @@ export function bindFruitTypography(root){
     let alive=true, previewTimer=0, previewFrame=0, previewKind='', previewSignature='', autoPreviewScale=null;
     // Folding follows this editor only; the theme previews keep their own fold state.
     const folded=()=>{try{return localStorage.getItem('bl_ft_pvfold')==='1';}catch{return false;}};
-    // 파라미터는 모두 세로 2줄: 윗줄 이름(슬라이더는 오른쪽에 현재 값), 아랫줄 조절칸 가로 꽉. 한 줄에 하나만.
-    const field=(region,key,label,html)=>`<label class="bl-ft-param"><span>${label}</span>${html.replace('<select',`<select data-region="${region}" data-ft="${key}"`)}</label>`;
+    // 파라미터 칸은 윗줄 이름(슬라이더는 오른쪽에 현재 값), 아랫줄 조절칸 가로 꽉. 8.1.0 영역 본문의 짧은 칸은 2열 격자(.bl-ft-params, css/79) —
+    // 글꼴 고르기(긴 목록) · 줄바꿈 고르기(긴 선택지)만 한 줄 전체(bl-ft-wide). 짝은 같은 종류끼리(슬라이더|슬라이더 · 고르기|고르기)라 같은 행의 이름 줄이 맞아요.
+    const field=(region,key,label,html,wide=false)=>`<label class="bl-ft-param${wide?' bl-ft-wide':''}"><span>${label}</span>${html.replace('<select',`<select data-region="${region}" data-ft="${key}"`)}</label>`;
     const choice=(attr,label,options,value)=>`<label class="bl-ft-param"><span>${label}</span><select ${attr}>${options.map(([v,t])=>option(v,t,value)).join('')}</select></label>`;
     // Same parts as the theme sliders, but values belong to this editor, not to a theme path.
     const slider=(region,key,label,value,min,max,step,unit)=>{const attrs=`data-region="${region}" data-ft="${key}" aria-label="${esc(label)}" min="${min}" max="${max}"`;return `<div class="salty-slider bl-ft-slider"><header><span>${label}</span><span class="salty-num"><input type="number" step="any" ${attrs} value="${value}" style="--num-ch:${Math.max(3,String(value).length)}"><i class="salty-unit">${unit}</i></span></header><input type="range" data-touch-range step="${step}" ${attrs} value="${value}" style="--fill:${(value-min)/(max-min)*100}%"></div>`;};
@@ -40,12 +41,12 @@ export function bindFruitTypography(root){
     function paint(){
         const s=current(),type=FRUIT_TYPES.find(t=>t.id===s.kind),config=s.types[s.kind],ownerName=owner==='deus'?'데우스':'과일 계열';
         const regions=Object.entries(type.regions).map(([key,[label]])=>{const r=config.regions[key];return fold(key,label,regionSummary(r),`${switchRow('이 영역 조절','',`data-ft-reset="${key}"`,`${label} · 기본값으로`,toggle(`data-region="${key}" data-ft="on"`,`${label} 조절`,r.on),regionChanged(r))}
-${field(key,'font','글꼴',`<select>${option('original','원작 글꼴',r.font)}${allFonts().filter(f=>!f.unusable).map(f=>option(f.id,f.label,r.font)).join('')}</select>`)}
+<div class="bl-ft-params">${field(key,'font','글꼴',`<select>${option('original','원작 글꼴',r.font)}${allFonts().filter(f=>!f.unusable).map(f=>option(f.id,f.label,r.font)).join('')}</select>`,true)}
 ${slider(key,'size','크기',r.size,8,64,1,'px')}${slider(key,'weight','굵기',r.weight,100,900,100,'')}
-${field(key,'italic','기울임',`<select>${option('false','보통',String(r.italic))}${option('true','기울임',String(r.italic))}</select>`)}
 ${slider(key,'spacing','자간',r.spacing,-2,12,.1,'px')}${slider(key,'line','줄간격',r.line,.8,4,.05,'배')}
+${field(key,'italic','기울임',`<select>${option('false','보통',String(r.italic))}${option('true','기울임',String(r.italic))}</select>`)}
 ${field(key,'align','정렬',`<select>${[['original','원작 그대로'],['left','왼쪽'],['center','가운데'],['right','오른쪽'],['justify','양쪽']].map(([v,t])=>option(v,t,r.align)).join('')}</select>`)}
-${field(key,'wrap','줄바꿈',`<select>${[['original','원작 그대로'],['word','낱말 단위'],['anywhere','글자 단위'],['nowrap','한 줄 · 넘치면 스크롤']].map(([v,t])=>option(v,t,r.wrap)).join('')}</select>`)}`);}).join('');
+${field(key,'wrap','줄바꿈',`<select>${[['original','원작 그대로'],['word','낱말 단위'],['anywhere','글자 단위'],['nowrap','한 줄 · 넘치면 스크롤']].map(([v,t])=>option(v,t,r.wrap)).join('')}</select>`,true)}</div>`);}).join('');
         const unsupported=owner==='fruit'?fold('support','지원 범위',`${types.length}종`,`<p class="salty-note">위 ${types.length}종만 조절해요. 구조가 정해지지 않은 상태창은 덮어쓰지 않아요.</p><ul class="bl-ft-support">${FRUIT_UNSUPPORTED.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`):'';
         const footer=type.regions.footer?`${type.id==='status'?'하단 반복 문구':type.regions.footer[0]} 숨기기`:'';
         box.innerHTML=`${choice('data-ft-kind','상태창 종류',types.map(t=>[t.id,t.name]),s.kind)}
