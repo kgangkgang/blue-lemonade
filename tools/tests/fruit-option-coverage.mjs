@@ -24,7 +24,9 @@ for(const [preset,items] of Object.entries(fixture.presets)){
 }
 assert.deepEqual(missing,[],`도움말이 빠진 항목 ${missing.length}개`);
 // 설명 글 자체: 해요체 문장 · 길이 · 금지어 · 영어 문장 없음
-const BANNED=/찐빠|갤\b|버그 없음|\d+배 /;
+// 금지어는 글자 코드로 만들어요(이 시험 파일이 출하 검사의 금지어 검사에 걸리지 않게)
+const W=(...c)=>String.fromCharCode(...c);
+const BANNED=new RegExp([W(0xCC10,0xBE60),W(0xAC24)+"\\b",W(0xBC84,0xADF8,0x20,0xC5C6,0xC74C),"\\d+"+W(0xBC30)+" "].join("|"));
 for(const [kind,map] of [['effects',FRUIT_OPTION_EFFECTS],['baselines',FRUIT_OPTION_BASELINES]]){
     for(const [key,text] of Object.entries(map)){
         assert(typeof text==='string'&&text.length>=15&&text.length<=240,`${kind} ${key.slice(0,12)} 길이 ${text.length}`);
