@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 7464cc4a8143) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 3cfef67f7e91) */
 /* css/00-base.css */
 :root{--bl-release:"8.1.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -16011,6 +16011,24 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .sal
   linear-gradient(var(--s1, #0000), var(--s2, #0000) var(--hz, 2px), color-mix(in srgb, var(--salty-accent) 14%, #0000) var(--hz, 2px)),
   var(--dem-paper);
 }
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :where(.custom-dem-track__grid):where(.custom-dem-track > .custom-dem-track__grid):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) {
+  contain: layout paint;
+}
+@media not all {
+body.salty.salty-dem-skin.salty-dem-streaming :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text :where(.custom-dem-track__grid):where(.custom-dem-track > .custom-dem-track__grid):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+body.salty.salty-dem-skin.salty-dem-streaming :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text details.custom-dem-modules:not(#salty-none),
+body.salty.salty-dem-skin.salty-dem-streaming :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text :where(.custom-dem-card):where(.custom-dem-modules details.custom-dem-card):is(#bl-s, *):is(.bl-s, *):is(bl-s, *) {
+  box-shadow: none !important;
+}
+body.salty.salty-dem-skin.salty-dem-streaming :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text .custom-dem-track > .custom-dem-track__grid {
+  background: var(--dem-paper) !important;
+}
+body.salty.salty-dem-skin.salty-dem-streaming :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text details.custom-dem-modules:not(#salty-none) > summary {
+  background: var(--dem-tray) !important;
+  box-shadow: none !important;
+}
+}
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__clock {
   color: var(--salty-accent-ink, var(--salty-accent));
 }
@@ -19086,6 +19104,22 @@ body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview
     radial-gradient(40% 56px at var(--gx, 50%) var(--hz, 2px), color-mix(in srgb, var(--s3, #0000) var(--ga, 70%), #0000), #0000 72%),
     linear-gradient(var(--s1, #0000), var(--s2, #0000) var(--hz, 2px), color-mix(in srgb, var(--salty-accent) 14%, #0000) var(--hz, 2px)),
     var(--dem-paper);
+}
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text :where(.custom-dem-track__grid):where(.custom-dem-track > .custom-dem-track__grid):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) {
+  contain: layout paint;
+}
+body.salty.salty-dem-skin.salty-dem-streaming :is(#chat,.bl-chat-like) .mes.last_mes .mes_text :where(.custom-dem-track__grid):where(.custom-dem-track > .custom-dem-track__grid):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+body.salty.salty-dem-skin.salty-dem-streaming :is(#chat,.bl-chat-like) .mes.last_mes .mes_text details.custom-dem-modules:not(#salty-none),
+body.salty.salty-dem-skin.salty-dem-streaming :is(#chat,.bl-chat-like) .mes.last_mes .mes_text :where(.custom-dem-card):where(.custom-dem-modules details.custom-dem-card):is(#bl-s, *):is(.bl-s, *):is(bl-s, *) {
+  box-shadow: none !important;
+}
+body.salty.salty-dem-skin.salty-dem-streaming :is(#chat,.bl-chat-like) .mes.last_mes .mes_text .custom-dem-track > .custom-dem-track__grid {
+  background: var(--dem-paper) !important;
+}
+body.salty.salty-dem-skin.salty-dem-streaming :is(#chat,.bl-chat-like) .mes.last_mes .mes_text details.custom-dem-modules:not(#salty-none) > summary {
+  background: var(--dem-tray) !important;
+  box-shadow: none !important;
 }
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__clock {
   color: var(--salty-accent-ink, var(--salty-accent));

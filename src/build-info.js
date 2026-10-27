@@ -511,7 +511,7 @@ export const FILE_HASHES = {
   "src/decor.js": "5307:06c9c2d8:a2df29ca",
   "src/dem-expressive.js": "15114:2820ad84:8d3474bd",
   "src/dem-selection.js": "6543:92f23ad3:78853776",
-  "src/dem-sky.js": "8548:6534ed47:a1fa7c40",
+  "src/dem-sky.js": "11472:88077cc0:23de0ad8",
   "src/demskin.js": "2167:c0308caa:b58b2d08",
   "src/device-layouts.js": "2740:8a16332c:d2d0fb29",
   "src/diag-errors.js": "5048:1878d7b1:0b034498",
@@ -735,5 +735,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1814734:95ff7dba:518d8d34"
+  "style.css": "1817652:166b979e:43ff4a2c"
 };

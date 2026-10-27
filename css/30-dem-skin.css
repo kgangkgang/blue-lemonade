@@ -321,6 +321,22 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
     linear-gradient(var(--s1, #0000), var(--s2, #0000) var(--hz, 2px), color-mix(in srgb, var(--salty-accent) 14%, #0000) var(--hz, 2px)),
     var(--dem-paper);
 }
+/* 8.1.1 답장을 받는 동안: 실리태번은 토큰마다 마지막 메시지 본문을 통째로 다시 그리고, V3 답장은 트래커가 맨 앞에 와서 트래커 · 상태창이 매번 다시 칠해져요.
+   그동안만 마지막 메시지의 비싼 층(빛무리 그림자 · 하늘 배경 7층 · 묶음 바탕)을 쉬게 하고(색은 같은 팔레트 변수 --dem-paper · --dem-tray),
+   끝나면 src/dem-sky.js 가 body.salty-dem-streaming 을 떼어 원래 모양으로 돌아가요. 트래커 · 묶음은 layout · paint 담기(contain)로 다시 그릴 때 영향 범위를 카드 안으로 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track > .custom-dem-track__grid, details.custom-dem-modules:not(#salty-none)) {
+  contain: layout paint;
+}
+body.salty.salty-dem-skin.salty-dem-streaming #chat .mes.last_mes .mes_text :is(.custom-dem-track > .custom-dem-track__grid, details.custom-dem-modules:not(#salty-none), .custom-dem-modules details.custom-dem-card) {
+  box-shadow: none !important;
+}
+body.salty.salty-dem-skin.salty-dem-streaming #chat .mes.last_mes .mes_text .custom-dem-track > .custom-dem-track__grid {
+  background: var(--dem-paper) !important;
+}
+body.salty.salty-dem-skin.salty-dem-streaming #chat .mes.last_mes .mes_text details.custom-dem-modules:not(#salty-none) > summary {
+  background: var(--dem-tray) !important;
+  box-shadow: none !important;
+}
 /* 강조색 네 곳 — 시각 숫자 · 기온 칩 · 장소 마지막 칸 · 구분선 별 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__clock {
   color: var(--salty-accent-ink, var(--salty-accent));

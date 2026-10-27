@@ -74,30 +74,72 @@ function dress(el) {
 function strip(el) { for (const v of VARS) el.style.removeProperty(v); delete el.dataset.blSky; }
 
 let active = false, bound = null, watcher = null, timers = [], quiet = 0, changed = new Set(), dressing = false;
-function sweep() { if (!active) return; dressing = true; try { document.querySelectorAll(SEL).forEach(dress); } finally { queueMicrotask(() => { watcher?.takeRecords(); dressing = false; }); } }
-function schedule() { timers.forEach(clearTimeout); timers = [setTimeout(sweep, 80), setTimeout(sweep, 800), setTimeout(sweep, 3000)]; }
+// 8.1.1(렉 제보 핫픽스): 이벤트가 가리키는 메시지만 훑는다 — 전에는 이벤트마다 80/800/3000ms 세 번 채팅 전체를 훑었고, #chat 전체를 늘 감시했다.
+//  · pending = 다음 sweep 이 볼 메시지 번호들, full = 채팅 전체(CHAT_CHANGED · MORE_MESSAGES_LOADED · 켤 때). 세 타이머가 다 돌 때까지 유지(번역 · 다른 확장이 늦게 본문을 고친 몫).
+//  · 감시자(번역처럼 이벤트 없이 본문이 바뀌는 몫)는 채팅에 트래커가 하나라도 보일 때만 건다 — 트래커 없는 채팅은 감시자 · 추가 훑기 없음.
+let pending = new Set(), full = false, seen = false;
+function bodiesToSweep() {
+    if (full) return null;
+    const out = [];
+    for (const id of pending) { const b = document.querySelector(`#chat .mes[mesid="${id}"] .mes_text`); if (b) out.push(b); }
+    return out;
+}
+function sweep(last = false) {
+    if (!active) return;
+    dressing = true;
+    try {
+        const bodies = bodiesToSweep();
+        let n = 0;
+        if (bodies === null) { const all = document.querySelectorAll(SEL); n = all.length; all.forEach(dress); }
+        else for (const b of bodies) { const found = b.querySelectorAll('.custom-dem-track[data-t]'); n += found.length; found.forEach(dress); }
+        if (n) seen = true;
+        if (bodies === null && !n) seen = false;
+        watch(seen);
+    } finally { queueMicrotask(() => { watcher?.takeRecords(); dressing = false; }); }
+    if (last) { pending = new Set(); full = false; }
+}
+function schedule(id) {
+    if (Number.isFinite(Number(id)) && String(id).trim() !== '') pending.add(Number(id)); else full = true;
+    timers.forEach(clearTimeout);
+    timers = [setTimeout(sweep, 80), setTimeout(sweep, 800), setTimeout(() => sweep(true), 3000)];
+}
 // 번역 확장은 본문을 갈아 끼울 때 이벤트를 내지 않는다 — 본문이 통째로 바뀐 메시지만 적어 뒀다가 조용해진 뒤(0.4초) 그 메시지만 다시 본다(dem-expressive.js 와 같은 방식)
+// 8.1.1: 답장을 받는 동안(STREAM_TOKEN_RECEIVED)은 토큰마다 본문이 통째로 다시 그려진다 — 그동안은 감시자가 모은 것을 버리고 아무것도 안 한다.
+//  대신 body 에 salty-dem-streaming 을 달아 css/30-dem-skin.css 가 마지막 메시지의 비싼 층(빛무리 · 하늘 배경)을 쉬게 하고, 끝(MESSAGE_RECEIVED · CHARACTER_MESSAGE_RENDERED · GENERATION_ENDED)에 한 번만 다시 본다.
+let streaming = false, streamEnd = 0;
+function setStreaming(on) {
+    clearTimeout(streamEnd);
+    if (on) streamEnd = setTimeout(() => setStreaming(false), 4000);   // 토큰이 4초 끊기면 끝난 것으로(끝 이벤트를 못 받는 경우의 안전장치)
+    if (streaming === !!on) return;
+    streaming = !!on; changed = new Set();
+    document.body?.classList.toggle('salty-dem-streaming', streaming);
+}
 function onMutations(records) {
-    if (dressing) return;
+    if (dressing || streaming) return;
     for (const r of records) { const body = r.target.nodeType === 1 && r.target.classList.contains('mes_text') ? r.target : null; if (body) changed.add(body); }
     if (!changed.size) return;
     clearTimeout(quiet);
     quiet = setTimeout(() => { const bodies = [...changed]; changed = new Set(); dressing = true; try { for (const b of bodies) if (b.isConnected) b.querySelectorAll('.custom-dem-track[data-t]').forEach(dress); } finally { queueMicrotask(() => { watcher?.takeRecords(); dressing = false; }); } }, 400);
 }
+function watch(on) {
+    if (on && !watcher) { const chatBox = document.getElementById('chat'); if (chatBox) { watcher = new MutationObserver(onMutations); watcher.observe(chatBox, { childList: true, subtree: true }); } }
+    else if (!on && watcher) { watcher.disconnect(); watcher = null; clearTimeout(quiet); changed = new Set(); }
+}
 function bind() {
     if (bound) return;
-    const chatBox = document.getElementById('chat');
-    if (chatBox && !watcher) { watcher = new MutationObserver(onMutations); watcher.observe(chatBox, { childList: true, subtree: true }); }
     const { eventSource, event_types: t } = SillyTavern.getContext();
-    const names = [t.CHAT_CHANGED, t.CHARACTER_MESSAGE_RENDERED, t.USER_MESSAGE_RENDERED, t.MORE_MESSAGES_LOADED, t.MESSAGE_UPDATED, t.MESSAGE_SWIPED, t.MESSAGE_EDITED].filter(Boolean);
-    names.forEach(name => eventSource.on(name, schedule));
-    bound = { eventSource, names };
+    const names = [t.CHAT_CHANGED, t.CHARACTER_MESSAGE_RENDERED, t.USER_MESSAGE_RENDERED, t.MORE_MESSAGES_LOADED, t.MESSAGE_UPDATED, t.MESSAGE_SWIPED, t.MESSAGE_EDITED, t.MESSAGE_RECEIVED].filter(Boolean);
+    const byName = new Map(names.map(name => [name, name === t.CHAT_CHANGED || name === t.MORE_MESSAGES_LOADED ? () => schedule() : id => { setStreaming(false); schedule(id); }]));
+    if (t.STREAM_TOKEN_RECEIVED) byName.set(t.STREAM_TOKEN_RECEIVED, () => setStreaming(true));
+    for (const name of [t.GENERATION_ENDED, t.GENERATION_STOPPED].filter(Boolean)) byName.set(name, () => setStreaming(false));
+    byName.forEach((fn, name) => eventSource.on(name, fn));
+    bound = { eventSource, byName };
 }
 function unbind() {
     if (!bound) return;
-    watcher?.disconnect(); watcher = null; clearTimeout(quiet); changed = new Set();
-    bound.names.forEach(name => bound.eventSource.removeListener(name, schedule));
-    timers.forEach(clearTimeout); timers = []; bound = null;
+    watch(false); seen = false; setStreaming(false);
+    bound.byName.forEach((fn, name) => bound.eventSource.removeListener(name, fn));
+    timers.forEach(clearTimeout); timers = []; pending = new Set(); full = false; bound = null;
 }
 
 /** features.js 가 설정이 바뀔 때마다 부른다 — 켜짐/꺼짐이 그대로면 아무것도 안 한다 */
