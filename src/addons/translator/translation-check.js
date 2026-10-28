@@ -60,6 +60,8 @@ const weightOf = text => {
 const SPAN_DIALOGUE = /<span\b[^<>]*>\s*[「『][^<>]*[」』]\s*<\/span>/gi;
 const dialogueUnits = text => String(text ?? '').replace(HTML_COMMENT, '').split('\n').reduce((n, line) =>
     n + (/^[\s*_]*[「『][\s\S]*[」』][\s*_]*$/.test(line.replace(/<[^>]*>/g, '')) ? 1 : (line.match(SPAN_DIALOGUE) || []).length), 0);
+/** 코드 표기(코드 블록 · `인라인 코드`)를 걷은 글 — 모델이 코드를 원문 그대로 두는 건 번역 관례라 「원문 그대로」 무게에서 뺀다 (8.1.3, 게임 킬 로그를 `…` 로 쓴 문단이 ⚠ 였다) */
+const withoutCode = text => String(text ?? '').replace(FENCES, '').replace(/`[^`\n]+`/g, '');
 /** 보호 블록을 걷은 글 (원문 그대로인 게 당연한 자리) */
 const unprotected = (text, protect) => (protect || []).reduce((value, re) => (re instanceof RegExp ? value.replace(global(re), '') : value), String(text ?? ''));
 /** 문단 뼈대: 태그 이름 차례 · 숨김 주석 · 대사인가 (문단 수가 다를 때 짝 찾기) */
@@ -157,13 +159,13 @@ export function checkTranslation(source, translation, { protect = [] } = {}) {
                 if (looksCutShort(srcBody, body)) add('cut');
                 // 빠진 괄호는 그릴 때 되살린다 (2.5.2) — 되살린 뒤에도 원문보다 대사가 적을 때만
                 if (dialogueUnits(restoreDialogueBrackets(srcBody, body)) < dialogueUnits(srcBody)) add('brackets');
-                // 원문 그대로: 보호 블록 · 상태 카드를 걷고도 글자가 넉넉하고, 원문 갈래가 번역문 갈래와 다른데 글자가 같다
+                // 원문 그대로: 보호 블록 · 상태 카드 · 코드 표기를 걷고도 글자가 넉넉하고, 원문 갈래가 번역문 갈래와 다른데 글자가 같다
                 //   (먼저 맨 글자끼리 견줘 거의 다른 문단은 건너뛴다 — 문단마다 상태 카드를 다시 읽으면 긴 답에서 느렸다)
                 const rawSrc = letters(srcBody).replace(/\s+/g, ''), rawOut = letters(body).replace(/\s+/g, '');
                 if (rawSrc && (rawSrc.includes(rawOut) || rawOut.includes(rawSrc))) {
                     target ??= scriptOf(keyOf(unprotected(withoutDisplayCards(out), protect)));
                     const bare = unprotected(withoutDisplayCards(srcBody), protect);
-                    if (weightOf(bare) >= 12 && target && scriptOf(keyOf(bare)) !== target && keyOf(unprotected(withoutDisplayCards(body), protect)) === keyOf(bare)) add('same');
+                    if (weightOf(withoutCode(bare)) >= 12 && target && scriptOf(keyOf(bare)) !== target && keyOf(unprotected(withoutDisplayCards(body), protect)) === keyOf(bare)) add('same');
                 }
             }
         }

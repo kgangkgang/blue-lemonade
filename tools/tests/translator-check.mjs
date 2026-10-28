@@ -111,6 +111,14 @@ await test('untranslated paragraph, blocked marker and echoed source are flagged
     assert.deepEqual(reasonsAt(run(SRC, [`[차단된 문단 — 원문 그대로]\n${SRC[0]}`, ...KO.slice(1)]), 0), ['blocked']);
     assert(reasonsAt(run(SRC, [`${SRC[0]}\n->\n${KO[0]}`, ...KO.slice(1)]), 0).includes('echo'));
     // 원문이 한국어인 글을 그대로 둔 것 · 상태 카드 · 보호 블록은 원문 그대로가 당연하다
+    // 8.1.3 문단 전체가 코드 표기(`…` · ```)면 원문 그대로가 관례 — 고르지 않는다. 코드 밖 문장이 넉넉한데 그대로면 지금처럼 고른다
+    const KILL = '`Night_Fox_07 eliminated Paper_Crane (Headshot)`', FENCED = ['```', 'Night_Fox_07 eliminated Paper_Crane (Headshot)', '```'].join('\n');
+    const LEAD = 'Everyone in the hall stared at the giant screen when it flashed ';
+    const codeSrc = mid => join(...SRC, mid);   // 번역문 갈래가 한국어로 잡히게 다른 문단은 넉넉히
+    const codeOut = mid => join(...KO, mid);
+    assert.equal(check.checkTranslation(codeSrc(KILL), codeOut(KILL), { protect: PROTECT }).flagged, 0);
+    assert.equal(check.checkTranslation(codeSrc(FENCED), codeOut(FENCED), { protect: PROTECT }).flagged, 0);
+    assert.deepEqual(reasonsAt(check.checkTranslation(codeSrc(LEAD + KILL), codeOut(LEAD + KILL), { protect: PROTECT }), SRC.length), ['same']);
     assert.equal(check.checkTranslation('그는 웃었다. 오늘은 비가 그칠 것 같지 않다고 그녀가 말했다.\n\nNext line here for the test.', '그는 웃었다. 오늘은 비가 그칠 것 같지 않다고 그녀가 말했다.\n\n테스트를 위한 다음 줄.', { protect: PROTECT }).flagged, 0);
 });
 await test('lost paragraphs: the message is suspicious and the gap (with the missing source range) is found', () => {

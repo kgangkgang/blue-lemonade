@@ -284,7 +284,7 @@ export const FILE_HASHES = {
   "src/addons/translator/style-profile.js": "10454:81161082:0db4e115",
   "src/addons/translator/style.css": "31996:f8434d63:fdfc9420",
   "src/addons/translator/tag-compact.js": "3603:7d297909:469712a3",
-  "src/addons/translator/translation-check.js": "21636:b992a144:00885645",
+  "src/addons/translator/translation-check.js": "22009:fb5076b5:644598ed",
   "src/addons/translator/translation-guard.js": "10277:a91cfaaa:d344a784",
   "src/addons/translator/translation-notes.js": "4170:857a3c57:060906cd",
   "src/addons/translator/translation-resume.js": "5921:1d9d6c8d:6c8c5b59",
