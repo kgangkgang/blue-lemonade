@@ -95,7 +95,7 @@ check('index.js: 미리 보기마다 가드를 만들고 틀 바꾸기 · 알림
     assert.match(body, /const swap = frameGuard\.allowed\(\) && typeof canNotifyRerender === 'function' && canNotifyRerender\(index\)/);
     assert.match(body, /Promise\.resolve\(notifyRerender\(index,[\s\S]{0,80}?\)\.then\(notified =>/);
     assert.match(body, /frameGuard\.settled\(\{ notified, shown: view \? previewShown\(view, \{ keep: isProgressBadge \}\) : null \}\)/);
-    assert.match(body, /view\.prepend\(badge\)/, '지워진 진행 줄을 곧바로 제자리에');
+    assert.match(body, /view\.insertBefore\(badge, first\)/, '지워진 진행 줄을 곧바로 제자리에');
     assert.match(source, /import \{[^}]*createFrameSwapGuard[^}]*\} from '\.\/preview-frames\.js'/);
 });
 

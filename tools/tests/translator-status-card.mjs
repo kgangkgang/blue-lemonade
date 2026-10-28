@@ -212,7 +212,7 @@ await check('연결: 끝 그림 final(알림이 갈 때) · 3.1.4 미리 보기�
     assert.match(source, /import \{ notifyRerender, isRerenderNotify, canNotifyRerender \} from '\.\.\/\.\.\/rerender-notify\.js';/);
     const preview = cut('translationPreview');
     assert.match(preview, /if \(!paintPreview\(host, html, \{ keep: isProgressBadge, final: swap \}\)\) return;/);
-    assert.match(preview, /const swap = typeof canNotifyRerender === 'function' && canNotifyRerender\(index\);/);
+    assert.match(preview, /const swap = frameGuard\.allowed\(\) && typeof canNotifyRerender === 'function' && canNotifyRerender\(index\);/);   // 8.1.3 다시 그리기 고리 가드 (translator-preview-rerender-loop.mjs)
 });
 
 // ── ④ 3.1.4 번역 중 미리 보기: 상태창 코드가 번역되면 그 틀만 한 번 바꾸고 알림 (10-27 제보 — 문단 134개 답에서 본문이 다 번역될 때까지 상태창 값이 영어) ──
@@ -270,6 +270,29 @@ await check('번역 중 미리 보기: 상태창 코드가 아직 원문이면 �
     assert.equal(s.host.querySelector('.TH-render'), frame, '날 코드가 남지 않게 틀 그대로'); assert.deepEqual(PV.notified, []);
     preview.stop();
     T.ready = true;
+});
+
+await check('8.1.3 번역 중 미리 보기: 알림을 듣고 메시지를 원문으로 통째 다시 그리는 확장이 있어도 알림 · 다시 그리기가 돌지 않음 (10-28 깜빡임 재현) · 진행 줄 제자리', async () => {
+    T.ready = true;
+    const { message, mes, host } = onScreen([JA[0], code(CARD_EN), JA[1], JA[2]]);
+    const badge = new El('div', ' class="llmt-progress"', doc); host.insertBefore(badge, host.childNodes[0]);
+    let wipes = 0;
+    const real = penv.notifyRerender;
+    // ST-Prompt-Template 처럼: MESSAGE_UPDATED 를 듣고 저장된 글(원문)로 .mes_text 를 통째 다시 그림 → helper 가 원문 코드로 틀을 다시 씌움
+    penv.notifyRerender = async id => { PV.notified.push(id); wipes++; host.innerHTML = format(message.mes); helperRender(host); return true; };
+    try {
+        const preview = penv.translationPreview(0, message, message.mes, 'chat-A', message.mes);
+        const steps = [[KO[0], code(CARD_KO), JA[1], JA[2]], [KO[0], code(CARD_KO), KO[1], JA[2]], [KO[0], code(CARD_KO), KO[1], KO[2]]];
+        for (const parts of steps) { preview.show(parts.join('\n\n')); await sleep(penv.PREVIEW_GAP_MS + 40); }
+        await sleep(penv.PREVIEW_GAP_MS + 60);
+        assert.deepEqual(PV.notified, [0], '알림은 한 번 — 고치기 전엔 그림마다 알림 · 통째 다시 그리기');
+        assert.equal(wipes, 1);
+        assert.deepEqual(els(host).filter(x => x.tagName === 'P').map(x => x.textContent), [KO[0], KO[1], KO[2]], '미리 보기가 화면에 있음');
+        assert.match(host.querySelector('pre').textContent, /Harbor/, '번역 중 틀은 원문 코드 그대로 (끝 그림에서 바뀜)');
+        assert.equal(host.childNodes[0], badge, '지워진 진행 줄이 같은 노드로 제자리에');
+        assert.equal(mes.querySelectorAll('.llmt-progress').length, 1);
+        preview.stop();
+    } finally { penv.notifyRerender = real; }
 });
 
 console.log(`translator-status-card: ${passed} passed, ${failed} failed`);

@@ -2656,12 +2656,12 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
         });
         // 3.1.4 바꾼 틀만 헬퍼가 번역된 코드로 다시 그린다 · 8.1.3 알림을 들은 쪽이 메시지를 저장된 글로 통째 다시 그려 미리 보기가 사라졌으면
         //       이번 번역 동안은 틀을 그대로 두고 미리 보기만 곧바로 다시 (안 그러면 알림 ↔ 다시 그리기가 0.4초마다 돌아 본문이 깜빡였다)
-        const badge = swapped ? host.querySelector?.(':scope > .llmt-progress') ?? null : null;
+        const badge = swapped ? [...host.childNodes].find(isProgressBadge) ?? null : null;
         if (swapped && typeof notifyRerender === 'function') Promise.resolve(notifyRerender(index, { element: host.closest?.('.mes') ?? null })).then(notified => {
             if (stopped) return;
-            const now = target(), view = now < 0 ? null : document.querySelector(`#chat .mes[mesid="${now}"] .mes_text`);
+            const now = target(), view = now < 0 ? null : hostOf(now);
             if (!frameGuard.settled({ notified, shown: view ? previewShown(view, { keep: isProgressBadge }) : null })) return;
-            if (badge && !badge.isConnected && view && !view.querySelector(':scope > .llmt-progress')) view.prepend(badge);   // 진행 줄도 1초 기다리지 않고 제자리에 (줄이 한 번 더 들썩이지 않게)
+            try { if (badge && view && badge.parentNode !== view && ![...view.childNodes].some(isProgressBadge)) { const first = view.childNodes[0]; if (first) view.insertBefore(badge, first); else view.appendChild(badge); } } catch { /* 진행 줄은 1초 타이머가 다시 붙인다 */ }   // 진행 줄도 1초 기다리지 않고 제자리에 (줄이 한 번 더 들썩이지 않게)
             paint();
         }).catch(() => {});
         cost = performance.now() - started; lastEnd = Date.now();
