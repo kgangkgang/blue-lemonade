@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 803129c3e235) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build f5763aa43864) */
 /* css/00-base.css */
 :root{--bl-release:"8.2.1";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -16107,8 +16107,17 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .sal
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-modules details.custom-dem-card {
   border: 1px solid color-mix(in srgb, var(--salty-accent) 45%, var(--salty-line));
 }
-body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-relationships > .custom-dem-relationships__body {
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-card > .custom-dem-status__body,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-card > .custom-dem-relationships__body,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-card > .custom-dem-psychological-states__body,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-card > .custom-dem-undercurrents__body,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > .custom-dem-card > .custom-dem-threads__body,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > .custom-dem-card > .custom-dem-momentum-engine__body {
   padding-inline: 12px;
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > .custom-dem-card > .custom-dem-plotlines__body,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > .custom-dem-card > .custom-dem-scratchpad__body {
+  padding-inline: 14px;
 }
 @container (max-width: 420px) {
   body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary {
@@ -19206,8 +19215,17 @@ body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview
 body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules details.custom-dem-card {
   border: 1px solid color-mix(in srgb, var(--salty-accent) 45%, var(--salty-line));
 }
-body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-relationships > .custom-dem-relationships__body {
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-card > .custom-dem-status__body,
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-card > .custom-dem-relationships__body,
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-card > .custom-dem-psychological-states__body,
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-card > .custom-dem-undercurrents__body,
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > .custom-dem-card > .custom-dem-threads__body,
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > .custom-dem-card > .custom-dem-momentum-engine__body {
   padding-inline: 12px;
+}
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > .custom-dem-card > .custom-dem-plotlines__body,
+body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > .custom-dem-card > .custom-dem-scratchpad__body {
+  padding-inline: 14px;
 }
 @container (max-width: 420px) {
   body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary {
