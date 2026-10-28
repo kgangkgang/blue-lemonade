@@ -114,6 +114,8 @@ t('보이는 속성은 안 바꿈 (글자 · 색 · 자간 · 칸 여백) — �
 t('확장 서랍 머리 스위치는 기존 ::before(위아래 7px)를 44×44 로 · 왼쪽 서랍의 링크 · 고르기 · 아이콘은 한 층 위 · style.css 에 들어감', () => {
     assert.match(otherCss, /\.bl-hs-switch::before \{ content:''; position:absolute; inset:-7px 0; \}/);
     assert.match(body, /\.bl-hs-switch::before \{\s*inset: auto;/);
+    // 8.1.x 스위치는 줄 오른쪽 끝 — 상자는 오른쪽 끝에 맞춰 왼쪽으로만 넓힌다(가운데 맞춤이면 번역 창 본문이 가로로 5px 넘쳤다)
+    assert.match(body, /\.bl-hs-switch::before \{\s*inset: auto;\s*left: auto;\s*right: 0;[^}]*transform: translateY\(-50%\);/);
     assert.match(body, /#left-nav-panel :is\(a, select, textarea, \.menu_button\):not\(label \*\) \{\s*position: relative;\s*z-index: 1;/);
     const built = read('style.css');
     assert.ok(built.includes('/* css/86-touch-targets.css */'), 'style.css 에 모듈');

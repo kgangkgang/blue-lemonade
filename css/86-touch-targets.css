@@ -133,14 +133,17 @@
   }
 
   /* 확장 서랍 머리 스위치: 66-ui-rhythm.css 의 위아래 7px 를 44×44 상자로
-     8.1.x 그 규칙(body.salty …, 특이도 1,2,2)이 이 규칙(html body …, 1,1,3)을 이겨 폰에서도 상자가 34(20 + 7 + 7)로 남았다 — :is(.salty, *) 로 특이도만 올린다(확장만 모드도 그대로 걸림) */
+     8.1.x 그 규칙(body.salty …, 특이도 1,2,2)이 이 규칙(html body …, 1,1,3)을 이겨 폰에서도 상자가 34(20 + 7 + 7)로 남았다 — :is(.salty, *) 로 특이도만 올린다(확장만 모드도 그대로 걸림)
+     8.1.x 스위치(폭 34)는 줄 오른쪽 끝에 붙어 있다 — 가운데 맞춤 44 상자는 오른쪽으로 5px 삐져나가 번역 창 본문(.inline-drawer-content)이 가로로 5px 넘쳤다(matrix 32조합).
+     설정 창 스위치(7.0.6, label.salty-switch)처럼 상자를 스위치 오른쪽 끝에 맞춰 왼쪽으로만 넓힌다(44×44 그대로) */
   html body:is(.salty, *) :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before {
     inset: auto;
-    left: 50%;
+    left: auto;
+    right: 0;
     top: 50%;
     width: max(100%, 44px);
     height: max(100%, 44px);
-    transform: translate(-50%, -50%);
+    transform: translateY(-50%);
   }
 
   /* 슬라이더: 위아래로 늘리고 같은 만큼 바깥 여백을 빼서 자리 · 트랙 위치는 그대로 (바탕이 투명한 range 만) */
