@@ -411,6 +411,11 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules details.custom-dem-card {
   border: 1px solid color-mix(in srgb, var(--salty-accent) 45%, var(--salty-line));
 }
+/* 관계 카드 본문은 원작 묶음 규칙(summary ~ *)이 좌우 여백을 0으로 덮어요. 전체 인물 보기에서만 안전 여백을 복구해요.
+   인물별 합친 화면은 행마다 이미 여백이 있어 그대로 두어요. 색 · 글꼴 · 바깥 카드 폭은 바꾸지 않아요. */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-relationships > .custom-dem-relationships__body {
+  padding-inline: 12px;
+}
 @container (max-width: 420px) {
   body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary {
     padding-inline: 46px;
