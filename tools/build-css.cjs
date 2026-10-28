@@ -187,7 +187,13 @@ function main(argv) {
     const { text, names, parked, keyed } = build();
     const current = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : null;
     if (check) {
-        if (current === text) { console.log(`[같음] style.css = css/ 모듈 ${names.length}개`); return 0; }
+        if (current === text) {
+            // 10-28: 미리보기 덩어리 한 벌도 같은가 — 다르면 다시 만들게(게시 regen 이 이 결과로 다시 빌드해요)
+            const park = previewParkText(text);
+            const hadPark = fs.existsSync(PREVIEW_OUT) ? fs.readFileSync(PREVIEW_OUT, 'utf8') : null;
+            if (hadPark !== park) { console.error('[다름] src/preview-park.gen.css 가 style.css 의 미리보기 덩어리와 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
+            console.log(`[같음] style.css = css/ 모듈 ${names.length}개`); return 0;
+        }
         const d = current == null ? null : firstDiff(current, text);
         console.error(`[다름] style.css 가 css/ 와 어긋났다${d ? ` — ${d.line}번째 줄\n  지금: ${String(d.was).slice(0, 160)}\n  빌드: ${String(d.now).slice(0, 160)}` : ''}`);
         console.error(current && !untouched(current) ? '  style.css 를 손으로 고친 흔적이 있다 → 고친 규칙을 css/ 로 옮기고 node tools/build-css.cjs --force' : '  node tools/build-css.cjs 로 다시 만들 것');
