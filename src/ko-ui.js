@@ -173,12 +173,13 @@ export function startKoreanUi(ctx = SillyTavern.getContext()) {
     const menu = () => [...document.querySelectorAll(RELABEL)].reduce((sum, root) => sum + relabel(root, translate), 0);
     const relabeled = menu();
     // 표보다 먼저 그려진 쪽수 고르기: 지금 한 번. 그런 게 있었으면 실리태번 쪽수 모듈이 쪽을 넘길 때 그때 받은 옛 글로 다시 그리니,
-    // 쪽수 줄 안을 누르거나 고를 때만 한 번 더 고쳐요(목록을 새로 그리면 실리태번이 고친 표로 적어서 그 뒤로는 할 일이 없어요)
+    // 쪽수 줄 안을 누르거나 고를 때만 한 번 더 고쳐요(목록을 새로 그리면 실리태번이 고친 표로 적어서 그 뒤로는 할 일이 없어요).
+    // 쪽수 모듈은 click · change 를 return false 로 막아 문서까지 안 올라와요 → 잡기 단계에서 받아, 모듈이 다시 그린 뒤 화면에 그리기 전(rAF)에 고쳐요
     const pageSizes = relabelPageSize(document, translate);
     if (pageSizes) {
-        const again = event => { if (event.target?.closest?.('.paginationjs')) relabelPageSize(document, translate); };
-        document.addEventListener('click', again);
-        document.addEventListener('change', again);
+        const again = event => { if (event.target?.closest?.('.paginationjs')) requestAnimationFrame(() => relabelPageSize(document, translate)); };
+        document.addEventListener('click', again, true);
+        document.addEventListener('change', again, true);
     }
     const t2 = performance.now();
     const result = { add: Object.keys(ADD).length, fix: map ? Object.keys(FIX).length : 0, changed, relabeled, pageSizes, msData: +(t1 - t0).toFixed(2), msVisible: +(t2 - t1).toFixed(2), msIdle: 0, done: false };
