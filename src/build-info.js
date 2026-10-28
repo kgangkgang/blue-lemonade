@@ -288,7 +288,7 @@ export const FILE_HASHES = {
   "src/addons/translator/translation-guard.js": "10277:a91cfaaa:d344a784",
   "src/addons/translator/translation-notes.js": "4170:857a3c57:060906cd",
   "src/addons/translator/translation-resume.js": "5921:1d9d6c8d:6c8c5b59",
-  "src/addons/translator/translation-segments.js": "114890:8064eb1a:809dcf2c",
+  "src/addons/translator/translation-segments.js": "116775:1a336516:61304b1a",
   "src/addons/translator/translation-source.js": "7836:bf170ab0:93e8eb3d",
   "src/addons/translator/translation-stream.js": "9000:290adf3b:70902b1a",
   "src/addons/translator/v3-modules.js": "5614:e52bb7e1:4d34ad28",

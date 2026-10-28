@@ -31,6 +31,21 @@ await test('10문단 묶음 중 6문단까지 흘려받고 끊김 → 다시 번
     const whole = await go(async bodies => bodies.map(ko));
     assert.equal(again.text, whole.text, '이어 한 결과 = 한 번에 받은 결과');
 });
+await test('8.1.3 번역 도중 페이지가 닫히면(새로고침 · 앱 닫기 — catch 가 돌지 않음) 그때까지 닫힌 문단이 남아, 다시 열어 번역하면 남은 문단만 (10-28 「새로고침했는데 번역 캐시가 안 남아」)', async () => {
+    await clearSegmentCache();
+    let closeTab;
+    const first = go(async (bodies, done) => {
+        for (let k = 1; k <= 6; k++) done(bodies.slice(0, k).map(ko), k, k);   // 흘려받는 동안 하나씩 닫힘
+        await new Promise(resolve => { closeTab = resolve; });                // 답이 끝나기 전에 페이지가 사라짐 — 끝도 오류도 오지 않는다
+        return bodies.map(ko);
+    });
+    await new Promise(resolve => setTimeout(resolve, 20));
+    let asked = null;
+    const again = await go(async bodies => { asked = bodies.map(b => Number(b.match(/\d+/)[0])); return bodies.map(ko); });
+    assert.deepEqual(asked, [6, 7, 8, 9], '닫힌 6문단은 남고 나머지 4문단만 — 고치기 전엔 10문단 모두 다시');
+    assert.equal(again.reused, 6); assert.equal(again.resumed, 6);
+    closeTab(); await first;
+});
 await test('2.9.2 실패한 묶음의 끝 알림(null 배열)이 앞서 닫힌 문단을 지우지 않는다 (리그에서 찾음: 시간 초과 · 연결 끊김 뒤 이어 하기가 비었다)', async () => {
     await clearSegmentCache();
     await assert.rejects(go(async (bodies, done) => {

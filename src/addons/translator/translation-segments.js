@@ -113,6 +113,11 @@ export async function forgetSegments(parts, signature, protection = null) {
     const keys = [];
     for (let i = 0; i < parts.length; i += 2) if (!skipBody(parts[i])) keys.push((await segmentCacheKey(signature, parts[i], protection)).key);   // 3.0.1 번역할 때와 같은 열쇠
     if (!keys.length) return 0;
+    await dropKeys(keys);
+    return keys.length;
+}
+/** 열쇠 줄을 메모리 · 저장소에서 한 트랜잭션으로 지운다 */
+async function dropKeys(keys) {
     for (const key of keys) memory.delete(key);
     let handle;
     try {
@@ -123,7 +128,6 @@ export async function forgetSegments(parts, signature, protection = null) {
             tx.oncomplete = resolve; tx.onerror = tx.onabort = reject;
         });
     } catch { /* Memory-only environment. */ } finally { handle?.close(); }
-    return keys.length;
 }
 
 /** 7.3.1 segmentParagraphs 가 나누는 조각 상한 (문단 + 구분자) — 401문단 */
@@ -1046,17 +1050,26 @@ export async function translateSegments({ parts, signature, request, check = () 
     const markOf = (body, error) => typeof blockedMarker === 'function' ? blockedMarker(body, error) : blockedMarker;
     // 2.9.0 끊기면 남길 문단: 알림이 준 앞쪽의 이어 붙여도 되는 문단(safe)까지만. 검사는 캐시와 같게, 실패해도 원래 오류를 가리지 않는다
     let closedRows = [];
+    const keptRows = new Map();   // 8.1.3 이미 남긴 문단 (n → 그때 글) — 흘려받는 동안 여러 번 남겨도 새로 닫힌 것만 쓴다
     const keepClosed = async () => {
         try {
-            const rows = [];
+            const rows = [], marks = [];
             closedRows.forEach((text, n) => {
                 const row = pending[n];
-                if (!row || typeof text !== 'string' || !text.trim()) return;
+                if (!row || typeof text !== 'string' || !text.trim() || keptRows.get(n) === text) return;
                 const cleaned = cleanParagraphEcho(text, row.body);
-                if (cleaned !== null && epoch === stamp && cacheable(row.body, cleaned)) rows.push([RESUME + row.key, localizeOut(cleaned, row.map)]);   // 3.0.1 문단 안 차례로 저장
+                if (cleaned !== null && epoch === stamp && cacheable(row.body, cleaned)) { rows.push([RESUME + row.key, localizeOut(cleaned, row.map)]); marks.push([n, text]); }   // 3.0.1 문단 안 차례로 저장
             });
-            if (rows.length) await writeMany(rows, stamp);
+            if (rows.length) { await writeMany(rows, stamp); for (const [n, text] of marks) keptRows.set(n, text); }
         } catch { /* 남기기 실패는 원래 오류를 바꾸지 않는다 */ }
+    };
+    // 8.1.3 흘려받는 동안에도 닫힌 문단을 곧바로 이어 하기로 남긴다 (한 번에 하나 · 그 사이에 닫힌 것은 끝나고 한 번 더).
+    //   끊김 · 실패 때만 남기면(catch) 번역 도중 새로고침 · 앱 닫기로 페이지가 사라질 때는 그 자리가 돌지 않아, 문단 53개 중 26개를 받아 놓고도
+    //   다시 열면 「캐시 0개」부터 처음부터 다시 보냈다 (10-28 폰 제보 「새로고침했는데 번역 캐시가 안 남아」 — 리그: 8초째 새로고침하면 남은 문단 0)
+    let saving = null, saveAgain = false;
+    const checkpoint = () => {
+        if (saving) { saveAgain = true; return; }
+        saving = keepClosed().finally(() => { saving = null; if (saveAgain) { saveAgain = false; checkpoint(); } });
     };
     if (pending.length) {
         let results;
@@ -1066,11 +1079,13 @@ export async function translateSegments({ parts, signature, request, check = () 
                 const finished = Math.min(count, pending.length);
                 // 2.9.0 · 2.9.2 받은 글만 더한다 — 실패한 묶음은 끝에 null 배열로 한 번 더 알리는데(index.js done(translated)), 그때 앞서 닫힌 문단을 지워 이어 하기가 비었다
                 if (Array.isArray(done)) done.slice(0, Math.min(safe, finished)).forEach((text, n) => { if (typeof text === 'string' && text.trim()) closedRows[n] = text; });
+                if (finished < pending.length && closedRows.length) checkpoint();   // 8.1.3 페이지가 닫혀도 받은 문단은 남게
                 progress({ stage: 'segments', done: reused + finished, total, reused, resumed: resumedCount, translated, pending: pending.length, batch: pending.length, finished });
                 if (finished < pending.length) tell(done);
             });
         }
         catch (error) {
+            await saving;   // 8.1.3 흘려받는 동안 남기던 것이 끝난 뒤
             await keepClosed();   // 2.9.0 이어 하기 — 이미 받은 문단은 하루 동안 남긴다
             if (!error?.refused || !blockedMarker) throw error;
             check();
@@ -1101,6 +1116,10 @@ export async function translateSegments({ parts, signature, request, check = () 
                     for (const i of row.indices) { output[i] = result; translated++; }
                 }
             } finally { if (epoch === stamp) rows.push(...touched.splice(0)); if (rows.length) await writeMany(rows, stamp); }   // 7.3.1 꺼내 쓴 문단도 같은 트랜잭션으로
+            // 8.1.3 흘려받는 동안 남긴 이어 하기 줄: 다 받은 문단은 30일 캐시에 들어갔으니 지운다 (다 받은 묶음은 이어 하기 줄을 남기지 않는다 — 2.9.0 그대로)
+            await saving;
+            const done = [...keptRows.keys()].filter(n => results[n] !== null && pending[n]).map(n => RESUME + pending[n].key);
+            if (done.length) await dropKeys(done);
             if (results.some(text => text === null)) await keepClosed();   // 2.9.0 일부 묶음만 실패 — 결과는 그대로(그 문단은 차단 표시), 받은 문단만 이어 하기로
         } else if (!blocked) throw Error('빈 번역 응답은 저장하지 않았어요.');
     }
