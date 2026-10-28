@@ -96,6 +96,21 @@ export function relabel(root, translate) {
     return changed;
 }
 
+/** 쪽수 고르기(「5 / page」): 실리태번은 목록을 그릴 때 t`/ page` 로 글을 박아 넣어요(utils.js renderPaginationDropdown — data-i18n 없음).
+ *  이 표는 index.js 가 기다리지 않고 불러오니, 표가 늦게 오면(폰 · 바쁜 PC) 페르소나 · 캐릭터 목록이 먼저 그려져 영어로 남았어요(8.1.3 미리 통합 사진).
+ *  → 표를 넣은 뒤 이미 그려진 쪽수 고르기만 고쳐요. 바꾼 개수를 돌려줘요 */
+export const PAGE_SIZE_OPTIONS = '.J-paginationjs-size-select option';
+export function relabelPageSize(root, translate) {
+    const label = translate('/ page');
+    if (!root || !label || label === '/ page') return 0;
+    let changed = 0;
+    for (const option of root.querySelectorAll(PAGE_SIZE_OPTIONS)) {
+        const m = /^(\d+) \/ page$/.exec(String(option.textContent).trim());
+        if (m) { option.textContent = `${m[1]} ${label}`; changed++; }
+    }
+    return changed;
+}
+
 /** 자리표시(${0} …)가 있는 알림 글 → 정규식. 처음 필요할 때 한 번 만든다 */
 export function compileTemplates(keys, translate) {
     const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -157,8 +172,16 @@ export function startKoreanUi(ctx = SillyTavern.getContext()) {
     for (const root of document.querySelectorAll(VISIBLE)) changed += retranslate(root, keys, lookup, known);
     const menu = () => [...document.querySelectorAll(RELABEL)].reduce((sum, root) => sum + relabel(root, translate), 0);
     const relabeled = menu();
+    // 표보다 먼저 그려진 쪽수 고르기: 지금 한 번. 그런 게 있었으면 실리태번 쪽수 모듈이 쪽을 넘길 때 그때 받은 옛 글로 다시 그리니,
+    // 쪽수 줄 안을 누르거나 고를 때만 한 번 더 고쳐요(목록을 새로 그리면 실리태번이 고친 표로 적어서 그 뒤로는 할 일이 없어요)
+    const pageSizes = relabelPageSize(document, translate);
+    if (pageSizes) {
+        const again = event => { if (event.target?.closest?.('.paginationjs')) relabelPageSize(document, translate); };
+        document.addEventListener('click', again);
+        document.addEventListener('change', again);
+    }
     const t2 = performance.now();
-    const result = { add: Object.keys(ADD).length, fix: map ? Object.keys(FIX).length : 0, changed, relabeled, msData: +(t1 - t0).toFixed(2), msVisible: +(t2 - t1).toFixed(2), msIdle: 0, done: false };
+    const result = { add: Object.keys(ADD).length, fix: map ? Object.keys(FIX).length : 0, changed, relabeled, pageSizes, msData: +(t1 - t0).toFixed(2), msVisible: +(t2 - t1).toFixed(2), msIdle: 0, done: false };
     inIdleSlices([...document.querySelectorAll('[data-i18n]')], (el) => {
         const s = performance.now();
         result.changed += retranslateElement(el, keys, lookup, known);

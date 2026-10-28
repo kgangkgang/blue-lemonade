@@ -198,6 +198,20 @@ test('시작: 공식 addLocaleData 로 더하고, 있는 키는 표에서 고치
     assert.equal(ui.startKoreanUi(ctx), null, '두 번 시작하지 않는다');
 });
 
+test('쪽수 고르기: 표보다 먼저 그려진 「N / page」만 고치고, 표가 없으면 그대로 둔다 (8.1.3 미리 통합 사진의 페르소나 「5 / page」)', () => {
+    const options = ['5 / page', '10 / page', '25 / 쪽', 'All'].map(text => ({ textContent: text }));
+    const root = { querySelectorAll: sel => (sel === ui.PAGE_SIZE_OPTIONS ? options : []) };
+    const english = fakeLocale({}).translate;
+    assert.equal(ui.relabelPageSize(root, english), 0, '표가 아직 없으면 아무것도 안 바꾼다');
+    assert.equal(options[0].textContent, '5 / page');
+    const { translate } = fakeLocale({ '/ page': ADD['/ page'] });
+    assert.equal(ui.relabelPageSize(root, translate), 2);
+    assert.deepEqual(options.map(o => o.textContent), [`5 ${ADD['/ page']}`, `10 ${ADD['/ page']}`, '25 / 쪽', 'All']);
+    assert.equal(ui.relabelPageSize(root, translate), 0, '두 번째는 할 일 없음');
+    assert.equal(ui.relabelPageSize(null, translate), 0);
+    assert.match(read('src/ko-ui.js'), /const pageSizes = relabelPageSize\(document, translate\);/, '시작할 때 그려진 쪽수 고르기를 고친다');
+});
+
 test('가벼움: 이 파일엔 감시자 · 반복 타이머 없음(더 보기 단추 감시는 show-more-watch.js 가 #chat 자식만), ko-kr 일 때만 불러온다 (다른 언어는 파일도 안 받음)', () => {
     const code = read('src/ko-ui.js').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''); // 주석은 빼고 본다
     assert.ok(!/MutationObserver|setInterval|ResizeObserver|IntersectionObserver/.test(code));
