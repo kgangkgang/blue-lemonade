@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.1.5/blue-lemonade-8.1.5.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.1.6/blue-lemonade-8.1.6.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.1.5 · 최신 업데이트</summary>
+<summary>8.1.6 · 최신 업데이트</summary>
+
+- 번역 점검 › 문단 전체가 코드 표기(`…` · 코드 블록)뿐이면 「번역되지 않고 원문 그대로예요」로 고르지 않아요. 게임 기록 같은 코드 표기는 모델이 원문 그대로 두는 게 관례라 ⚠ 표시가 뜨지 않게 했어요. 코드 밖 문장이 원문 그대로 남은 문단은 지금처럼 알려 줘요.
+
+</details>
+
+<details>
+<summary>8.1.5 · 누르는 넓이 · 글자 대비 · 길게 누르기 설명</summary>
 
 - 폰에서 애드온 창 · 확장 서랍 · 한글화 패널의 체크 줄, 팝업 닫기 ×, 머리 스위치, 색 칸, 작은 아이콘 단추의 누르는 넓이를 44로 넓혔어요(보이는 크기는 그대로예요).
 - 밝은 팔레트에서 애드온 창의 고른 탭 글자와 링크 · 「추가」 글자가 더 진해져 잘 읽혀요.
