@@ -326,7 +326,7 @@ await test('판 · CI 등록', () => {
     const v = (rel, re) => (read(rel).match(re) || [])[1];
     assert.equal(v('src/addons/notes/version.js', /NOTES_VERSION = '([\d.]+)'/), '1.3.8');
     assert.equal(v('src/addons/translator/manifest.json', /"version": "([\d.]+)"/), '3.1.6');   // 7.5.1 · 8.0.6 프리셋 호환 · 3.1.3 검열되면 대신 쓸 모델 카드 · 8.0.8 V3 상태창 · 모듈 · 3.1.4 이야기 속 알림 줄 · 3.1.5 밑줄 이름표 · 괄호 뒤 기호 · 번역 중 상태창 틀 · 3.1.6 프롬프트 기본값 · DB 단추 켬끔
-    assert.equal(v('src/addons/assets/state.js', /VERSION = '([\d.]+)'/), '1.7.5');   // 7.0.7
+    assert.equal(v('src/addons/assets/state.js', /VERSION = '([\d.]+)'/), '1.7.6');   // 7.0.7 · 1.7.6 그림 확장 그림을 에셋으로
     assert.equal(v('src/addons/prompt/manifest.json', /"version": "([\d.]+)"/), '1.4.0');   // 도구줄 간격을 공통값으로 맞춰요
     assert.equal(v('src/addons/rewrite/index.js', /const VERSION = '([\d.]+)'/), '2.1.9');   // 7.1.5
     assert.equal(v('src/addons/direction/index.js', /const VERSION = '([\d.]+)'/), '1.4.2');   // 7.9.9 테마 고르기 목록을 누를 때 창이 닫히지 않게

@@ -125,6 +125,30 @@ async function fill(messageId, message, ids, swipe, avoid = []) {
     redraw(messageId, message, swipe);
 }
 
+/** 1.7.6 「그림 확장 그림을 에셋으로」가 새로 넣을 자리를 고를 수 있나 — 다른 모델이 고르기가 켜졌고 그 답 주인에 그림 폴더가 있다 */
+export function pickReady(message, context = getContext()) {
+    return !!(message && !message.is_user && typeof message.mes === 'string' && pickActive() && ownerFolder(message, context));
+}
+/**
+ * 1.7.6 이미 넣어 둔 자리(기록 「고르는 중」)를 답장 뒤 고르기와 같은 길(fill)로 — 메시지마다 한 번, 앞에서부터 차례로 (한꺼번에 부르지 않는다).
+ * jobs = [{ index, swipe, ids }]. 그 사이 글에서 사라진 자리 · 다른 채팅이면 건너뛴다. → 부른 수
+ */
+export async function pickSlots(jobs, { cancelled = () => false } = {}) {
+    let calls = 0;
+    const chat = getContext().chat;
+    const list = Array.isArray(jobs) ? jobs : [];
+    for (const { ids } of list) for (const id of ids) slotRunning.add(id);   // 차례를 기다리는 자리도 「고르는 중」 (끊긴 자리로 보이지 않게)
+    for (const { index, swipe, ids } of list) {
+        const message = chat?.[index];
+        const alive = message && getContext().chat === chat && swipeOf(message) === swipe ? ids.filter(id => slotIds(message.mes).includes(id)) : [];
+        if (cancelled() || !alive.length) { for (const id of ids) slotRunning.delete(id); continue; }
+        for (const id of ids) if (!alive.includes(id)) slotRunning.delete(id);
+        calls++;
+        await fill(index, message, alive, swipe);
+    }
+    return calls;
+}
+
 /** 고른 뒤 다시 그리기 — 자리 요소가 화면에 있으면 그 메시지만, 없으면(스트리밍 뒤 · 번역문) 메시지를 다시 그린다 */
 function redraw(messageId, message, swipe) {
     if (swipeOf(message) !== swipe) return;   // 다른 스와이프를 보고 있다 — 돌아오면 그때 그려진다

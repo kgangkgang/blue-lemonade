@@ -260,6 +260,9 @@ export function parsePicks(raw, count) {
 // ── 자리 기록 (메시지 extra.bl_asset_slots[자리 번호] = { name, pending, error?, asked?, repeat? }) ──
 
 export const RECORD_KEY = 'bl_asset_slots';
+/** 1.7.6 「에셋 그림 떼기」가 뗀 자리의 선택(자리 기록 · {{img::}} 원문)을 숨겨 두는 칸 — extra.bl_asset_gone_slots[뗀 자리 id] = 기록 | { tag }.
+ *  화면에 그리지 않고, 「그림 확장 그림을 에셋으로」가 같은 자리를 모델 없이 되살릴 때만 읽는다 (from-pictures.js) */
+export const GONE_KEY = 'bl_asset_gone_slots';
 const isObj = value => !!value && typeof value === 'object' && !Array.isArray(value);
 export const swipeOf = message => Number(message?.swipe_id) || 0;
 export const textOf = (message, swipe) => swipeOf(message) === swipe ? String(message.mes ?? '') : String(message.swipes?.[swipe] ?? '');

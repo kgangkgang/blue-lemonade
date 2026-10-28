@@ -16,6 +16,8 @@ import { fillSelect, onChange as onModelListChange } from '../../live-models.js'
 import { PROVIDERS, canFetch, fetchModelList, autoFetchModelList, listKey, missingNote, modelChoices, pickModel, isHttpUrl, resolveModel } from '../rewrite/providers.js';
 import { pickSettings, customEndpoint, connectionProblem, connectionLabel, listRequest } from './pick.js';
 import { countStrip, stripChat, undoStrip } from './strip-chat.js';   // 1.7.3 이 채팅의 에셋 그림 떼기
+import { PICTURE_EVENTS, pictureIds, planFromPictures, applyFromPictures, undoFromPictures } from './from-pictures.js';   // 1.7.6 그림 확장 그림을 에셋으로
+import { pickReady, pickSlots } from './after-reply.js';
 import { ask, attachUndo } from '../../ask.js';   // 1.7.3 테마 확인 창 · 알림의 ↶
 import { messageWork } from '../../message-work.js';
 import { notifyRerender } from '../../rerender-notify.js';
@@ -57,6 +59,7 @@ async function stripThisChat() {
     }
     redrawMessages(chat, record.items.map(item => item.index));
     try { await saveChatConditional(); } catch (error) { console.warn(`[${TITLE}] 저장 실패`, error); }
+    tellChanged(chat);   // 1.7.6 그림 확장이 「에셋 있던 자리」를 다시 센다
     const done = toast('success', `에셋 그림 ${record.pictures}개를 뗐어요 (메시지 ${record.messages}개).`, { timeOut: 9000, extendedTimeOut: 4000 });
     attachUndo(done, async () => {
         const now = getContext();
@@ -69,13 +72,111 @@ async function stripThisChat() {
         }
         redrawMessages(now.chat, result.indexes);
         try { await saveChatConditional(); } catch (error) { console.warn(`[${TITLE}] 저장 실패`, error); }
+        tellChanged(now.chat);
         toast(result.skipped ? 'warning' : 'success', result.skipped
             ? `${result.restored}개 메시지는 되돌렸고, 그 사이 바뀐 ${result.skipped}개는 그대로 뒀어요.`
             : `에셋 그림을 되돌렸어요 (메시지 ${result.restored}개).`);
     });
 }
 
-const mbText = bytes => (bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)}MB` : `${Math.round(bytes / 1024)}KB`);
+/** 1.7.6 그림 확장에게 묻기 (문서 이벤트 · 동기) — items 마다 assetWas · busy 를 채워 받는다. 그림 확장이 없거나 옛 판이면 supported = false */
+function askPictures(chat, items = []) {
+    const detail = { chat, items, supported: false, blocked: '' };
+    try { document.dispatchEvent(new CustomEvent(PICTURE_EVENTS.query, { detail })); } catch (error) { console.debug(`[${TITLE}] 그림 확장 묻기 실패`, error); }
+    return detail;
+}
+const tellPictures = (type, chat, items) => {
+    if (!items.length) return;
+    try { document.dispatchEvent(new CustomEvent(type, { detail: { chat, items } })); } catch (error) { console.warn(`[${TITLE}] 그림 확장 알림 실패`, error); }
+};
+/** 1.7.6 에셋 그림을 떼거나 되돌렸다 — 그림 확장이 「에셋 있던 자리」 수를 다시 세게 (떼기 · 되돌리기는 실리태번 이벤트를 내지 않는다) */
+const tellChanged = chat => { try { document.dispatchEvent(new CustomEvent(PICTURE_EVENTS.changed, { detail: { chat } })); } catch (error) { console.debug(`[${TITLE}] 그림 확장 알림 실패`, error); } };
+/** 1.7.6 머리 줄 「에셋으로」 단추 — 그림 확장이 답할 때만 보인다 */
+export function syncPictureButton() {
+    const button = root?.querySelector('[data-act="from-pictures"]');
+    if (!button) return;
+    const on = askPictures(getContext().chat ?? []).supported;
+    if (button.hidden === on) button.hidden = !on;
+}
+function picturePlan(chat) {
+    const items = [];
+    chat.forEach((message, index) => { if (typeof message?.mes === 'string' && message.mes.includes('autopic-image-slot')) for (const id of pictureIds(message.mes)) items.push({ index, id }); });
+    const reply = askPictures(chat, items);
+    const answers = new Map(items.map(item => [`${item.index}:${item.id}`, item]));
+    const plan = planFromPictures(chat, { answer: (index, id) => answers.get(`${index}:${id}`) ?? {}, canPick: message => pickReady(message) });
+    return { reply, plan };
+}
+let picturesBusy = false;
+
+/**
+ * 1.7.6 「이 채팅의 그림 확장 그림을 에셋으로」 — 그림 확장의 그림 자리를 캐릭터 에셋 자리로 (from-pictures.js).
+ * 예전 에셋 자리는 떼어 둔 선택 그대로(모델 없음), 나머지는 새 자리를 넣고 답장 뒤 고르기 길로 메시지마다 한 번 고른다 — 몇 곳 · 모델 몇 번인지 묻고 나서만.
+ * 그림 확장의 그림 · 파일은 지우지 않는다 (그림 확장이 숨겨 둔다). 한 번 저장하고, 알림의 ↶ 로 되돌린다 (같은 채팅 · 그 사이 안 바뀐 메시지만)
+ */
+export async function picturesToAssets() {
+    const ctx = getContext();
+    const chat = ctx.chat;
+    const chatId = ctx.getCurrentChatId?.() ?? '';
+    if (!Array.isArray(chat) || !chat.length || !chatId) { toast('info', '지금 열린 채팅이 없어요.'); return; }
+    if (picturesBusy) { toast('info', '에셋으로 바꾼 자리를 고르는 중이에요. 끝난 뒤 다시 눌러 주세요.'); return; }
+    let { reply, plan } = picturePlan(chat);
+    if (!reply.supported) { toast('info', '그림 확장이 없거나 이 기능을 아직 몰라요. 그림 확장을 새 판으로 올려 주세요.'); return; }
+    if (reply.blocked) { toast('info', String(reply.blocked).slice(0, 160)); return; }
+    let c = plan.counts;
+    if (!c.pictures) { toast('info', '이 채팅에는 그림 확장 그림이 없어요.'); return; }
+    if (!c.restore && !c.pick) {
+        toast('info', c.busy && !c.keep ? '그림 확장이 지금 그리는 그림뿐이에요. 다 그린 뒤 다시 눌러 주세요.'
+            : '바꿀 수 있는 그림이 없어요. 「다른 모델이 고르기」를 켜고 고르는 모델을 정하면 새로 골라서 바꿀 수 있어요.', { timeOut: 9000 });
+        return;
+    }
+    const lines = [`이 채팅의 메시지 ${c.messages}개에서 그림 확장 그림 ${c.restore + c.pick}장을 캐릭터 에셋으로 바꿔요.`];
+    if (c.restore) lines.push(`· ${c.restore}곳은 전에 쓰던 에셋을 그대로 되살려요 (모델 호출 없음).`);
+    if (c.pick) lines.push(`· ${c.pick}곳은 새로 골라요 — 고르는 모델을 메시지마다 한 번, 모두 ${c.calls}번 불러요.`);
+    if (c.keep) lines.push(`· ${c.keep}곳은 고를 수 없어서 그림 그대로 둬요 (「다른 모델이 고르기」가 꺼졌거나 그 캐릭터에 그림 폴더가 없어요).`);
+    if (c.busy) lines.push(`· 지금 그리는 ${c.busy}곳은 그대로 둬요.`);
+    lines.push('그림 확장의 그림과 파일은 지우지 않고 숨겨 둬요. 나중에 「에셋 떼기」를 하고 그림 확장에서 「에셋 있던 자리에 그림 그리기」를 누르면 같은 그림이 돌아와요.');
+    const ok = await ask(lines.join('\n'), { ok: c.pick ? `바꾸기 · 모델 ${c.calls}번` : '바꾸기', cancel: '취소', title: '이 채팅의 그림 확장 그림을 에셋으로' });
+    if (!ok) return;
+    const live = getContext();
+    if ((live.getCurrentChatId?.() ?? '') !== chatId || live.chat !== chat) { toast('info', '채팅을 바꿔서 바꾸지 않았어요.'); return; }
+    ({ reply, plan } = picturePlan(chat));   // 묻는 사이 그림 확장이 그린 자리 · 바뀐 글을 다시 본다 (모델 호출은 물은 수를 넘지 않는다)
+    if (!reply.supported || reply.blocked) { toast('info', reply.blocked ? String(reply.blocked).slice(0, 160) : '그림 확장이 답하지 않아서 바꾸지 않았어요.'); return; }
+    if (plan.counts.calls > c.calls) { toast('info', '묻는 사이 그림이 바뀌었어요. 다시 눌러 주세요.'); return; }
+    const before = new Map(chat.map((message, i) => [i, message?.mes]));
+    const record = applyFromPictures(chat, plan);
+    if (!record.messages) { toast('info', '바꿀 그림이 없어요.'); return; }
+    for (const { index } of record.items) {
+        const message = chat[index];
+        if (before.get(index) !== message.mes) messageWork().noteWrite(message, { by: 'assets', before: before.get(index), after: message.mes });
+    }
+    tellPictures(PICTURE_EVENTS.replaced, chat, record.pairs);   // 그림 확장이 그 그림 기록을 지우지 않고 숨겨 둔다 (저장 전에)
+    redrawMessages(chat, record.items.map(item => item.index));
+    try { await saveChatConditional(); } catch (error) { console.warn(`[${TITLE}] 저장 실패`, error); }
+    const parts = [record.restored ? `그대로 되살림 ${record.restored}` : '', record.picked ? `새로 고르는 중 ${record.picked}` : ''].filter(Boolean).join(' · ');
+    const done = toast('success', `그림 확장 그림 ${record.restored + record.picked}장을 에셋으로 바꿨어요 (${parts}).`, { timeOut: 9000, extendedTimeOut: 4000 });
+    attachUndo(done, async () => {
+        const now = getContext();
+        if ((now.getCurrentChatId?.() ?? '') !== chatId) { toast('info', '채팅을 바꿔서 되돌리지 않았어요.'); return; }
+        const current = new Map(now.chat.map((message, i) => [i, message?.mes]));
+        const result = undoFromPictures(now.chat, record);
+        for (const index of result.indexes) {
+            const message = now.chat[index];
+            if (current.get(index) !== message.mes) messageWork().noteWrite(message, { by: 'assets', before: current.get(index), after: message.mes });
+        }
+        tellPictures(PICTURE_EVENTS.restored, now.chat, result.pictures);   // 숨겨 둔 그림 기록을 되살린다
+        redrawMessages(now.chat, result.indexes);
+        try { await saveChatConditional(); } catch (error) { console.warn(`[${TITLE}] 저장 실패`, error); }
+        toast(result.skipped ? 'warning' : 'success', result.skipped
+            ? `${result.restored}개 메시지는 되돌렸고, 그 사이 바뀐 ${result.skipped}개는 그대로 뒀어요.`
+            : `그림 확장 그림으로 되돌렸어요 (메시지 ${result.restored}개).`);
+    });
+    if (!record.picks.length) return;
+    picturesBusy = true;
+    try { await pickSlots(record.picks, { cancelled: () => getContext().chat !== chat }); }
+    finally { picturesBusy = false; }
+}
+
+const mbText = bytes =>(bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)}MB` : `${Math.round(bytes / 1024)}KB`);
 
 /**
  * [1.3.0] 그림 가볍게 만들기. 먼저 몇 장을 재서 얼마나 줄지 보여 주고, 승낙하면 한 장씩 WebP 로 바꾼다.
@@ -198,6 +299,7 @@ function template() {
                 <button type="button" class="eh-icon-btn" data-act="refresh" title="다시 불러오기" aria-label="다시 불러오기"><i class="fa-solid fa-arrows-rotate"></i></button>
                 <button type="button" class="eh-icon-btn" data-act="redraw" title="채팅 다시 그리기" aria-label="채팅 다시 그리기"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
                 <button type="button" class="eh-icon-btn eh-icon-btn--labeled" data-act="strip-chat" title="이 채팅의 에셋 그림 떼기" aria-label="이 채팅의 에셋 그림 떼기"><i class="fa-solid fa-eraser" aria-hidden="true"></i><span class="eh-icon-btn-label" aria-hidden="true">에셋 떼기</span></button>
+                <button type="button" class="eh-icon-btn eh-icon-btn--labeled" data-act="from-pictures" title="이 채팅의 그림 확장 그림을 에셋으로" aria-label="이 채팅의 그림 확장 그림을 에셋으로" hidden><i class="fa-solid fa-right-left" aria-hidden="true"></i><span class="eh-icon-btn-label" aria-hidden="true">에셋으로</span></button>
             </div>
 
             <section class="eh-card eh-card--prompt">
@@ -412,6 +514,7 @@ export function buildPanel(stub) {
     bind();
     bindPick();
     hooks.onChanged = () => renderAll();
+    document.addEventListener(PICTURE_EVENTS.hello, syncPictureButton);   // 1.7.6 그림 확장이 늦게 켜져도 단추가 보이게
     renderAll();
 }
 
@@ -912,6 +1015,7 @@ async function deletePresetFlow() {
 }
 
 function renderHero() {
+    syncPictureButton();   // 1.7.6
     const character = runtime.character;
     if (!character) {
         refs.avatar.hidden = true;
@@ -1525,6 +1629,9 @@ async function onClick(event) {
             break;
         case 'strip-chat':
             await stripThisChat();
+            break;
+        case 'from-pictures':
+            await picturesToAssets();
             break;
         case 'redraw': {
             // 그림이 안 나올 때 어디서 막혔는지 한 번에 보여 준다.

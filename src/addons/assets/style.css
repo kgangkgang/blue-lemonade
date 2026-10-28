@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* state.js의 VERSION과 같아야 한다. 다르면 예전 style.css가 남아 있다는 뜻이라 알림을 띄운다. */
-:root { --eh-css-version: "1.7.5"; }
+:root { --eh-css-version: "1.7.6"; }
 
 .eh-root {
     --eh-text: var(--SmartThemeBodyColor, #ccc);
@@ -1052,6 +1052,8 @@ body.salty #char_assets_settings .eh-tile-name { overflow-wrap: break-word !impo
    단추 줄이 넓어져 이름 · 장 수 자리가 좁아지므로 머리 줄을 접는 폭을 320 → 400 으로 (폰 375 · 390 · 412 에서는 그림 · 단추 한 줄, 이름 · 장 수는 그 아래 한 줄) */
 .eh-icon-btn--labeled { display: inline-flex; gap: 5px; width: auto !important; padding: 0 9px 0 7px; white-space: nowrap; }
 .eh-icon-btn-label { font-size: .78rem; font-weight: 600; line-height: 1; }
+/* 1.7.6 「에셋으로」(그림 확장 그림을 에셋으로)는 그림 확장이 답할 때만 — 글자 단추의 inline-flex 가 hidden 을 덮지 않게 */
+#char_assets_settings .eh-icon-btn[hidden] { display: none !important; }
 @container eh-hero (width < 400px) {
     #char_assets_settings .eh-hero:has(.eh-icon-btn--labeled) .eh-hero-text { order: 1; flex: 1 1 100%; }
     #char_assets_settings .eh-hero:has(.eh-icon-btn--labeled) .eh-hero-text + .eh-icon-btn { margin-left: auto; }

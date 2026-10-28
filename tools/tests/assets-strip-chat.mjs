@@ -98,7 +98,7 @@ await t('위치 표시는 자리처럼 지켜진다: 번역기 보호 규칙 · 
     assert.match(read('src/addons/assets/render.js'), /markGoneOnly\(text\);\n\s+fillSlots\(text, mes\);/);
 });
 
-await t('그림 파일은 건드리지 않음 · 배선 (창 머리 단추 「에셋 떼기」 글자 · 확인 창 · 한 번 저장 · ↶) · 판 1.7.5', () => {
+await t('그림 파일은 건드리지 않음 · 배선 (창 머리 단추 「에셋 떼기」 글자 · 확인 창 · 한 번 저장 · ↶) · 판 1.7.6', () => {
     const src = read('src/addons/assets/strip-chat.js');
     assert.ok(!/import[^\n]*(assets\.js|store\.js|fetch|deleteAsset)/.test(src) && !/fetch\(|deleteAsset|\/api\//.test(src), '파일 · 서버 길 없음');
     const panel = read('src/addons/assets/panel.js');
@@ -113,8 +113,8 @@ await t('그림 파일은 건드리지 않음 · 배선 (창 머리 단추 「�
     assert.equal((fn.match(/await saveChatConditional\(\)/g) || []).length, 2, '떼기 한 번 · 되돌리기 한 번');
     assert.match(fn, /attachUndo\(done, async \(\) => \{/);
     assert.match(fn, /getCurrentChatId\?\.\(\) \?\? ''\) !== chatId\) \{ toast\('info', '채팅을 바꿔서 되돌리지 않았어요\.'\)/);
-    assert.match(read('src/addons/assets/state.js'), /VERSION = '1\.7\.5'/);
-    assert.match(read('src/addons/assets/style.css'), /--eh-css-version: "1\.7\.5"/);
+    assert.match(read('src/addons/assets/state.js'), /VERSION = '1\.7\.6'/);
+    assert.match(read('src/addons/assets/style.css'), /--eh-css-version: "1\.7\.6"/);
 });
 
 console.log(`assets-strip-chat: ${n} passed, 0 failed`);

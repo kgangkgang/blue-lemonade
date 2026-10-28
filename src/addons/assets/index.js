@@ -14,6 +14,7 @@ import { setupHold } from './hold.js';
 import { toast, watchThemeVars, refreshThemeVars } from './ui.js';
 import { badgeTextHit } from '../../badge-hit.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
+import { PICTURE_EVENTS } from './from-pictures.js';   // 1.7.6 그림 확장 쪽 단추가 「그림 확장 그림을 에셋으로」를 부른다
 
 initSettings();
 
@@ -62,6 +63,11 @@ if (event_types.GENERATION_STARTED) eventSource.on(event_types.GENERATION_STARTE
     last.extra.eh_seed = last.send_date ?? String(chat.length - 1); // 지금 씨앗과 같은 값 (send_date ?? mesid)
 });
 
+// 1.7.6 그림 확장 쪽 「에셋으로」 단추 → 테마가 묻고 바꾼다 (설정 창을 안 열었어도 — panel.js 를 그때 읽는다)
+document.addEventListener(PICTURE_EVENTS.open, event => {
+    if (event.detail && typeof event.detail === 'object') event.detail.handled = true;
+    import('./panel.js').then(m => m.picturesToAssets()).catch(error => console.warn(`[${TITLE}] 그림 확장 그림을 에셋으로 실패`, error));
+});
 // 메시지가 새로 그려지면 채팅을 다시 본다 (DOM 감시가 놓치는 경우의 보험)
 for (const type of [
     event_types.CHARACTER_MESSAGE_RENDERED,
