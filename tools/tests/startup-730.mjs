@@ -53,12 +53,13 @@ await test('open flush: any top drawer that opens flushes its pending translatio
     assert.match(read('src/scripts/catalog.js'), /\{id:'korean',name:'실리태번 한글화',version:'1\.4\.8'/);
 });
 
-await test('p5: fruit-heart flush and discover pick everything with one querySelectorAll', async () => {
+await test('p5: 과일 창은 한 번에 훑고 유휴 발견은 좁은 범위로 찾아요', async () => {
     const fh = await bundled('fruit-heart.js');
     assert.ok(fh.includes("const FLUSH_ALL = [rootsSelector, helperRootsSelector, POPUPS, TOASTS, watchSelector].join(',');"));
-    assert.ok(fh.includes("const DISCOVER_ALL = [rootsSelector, helperRootsSelector, watchSelector, POPUPS].join(',');"));
+    assert.ok(fh.includes('function rootAppeared() {'));
     assert.ok(fh.includes('const found = [...doc.querySelectorAll(FLUSH_ALL)];'));
-    assert.ok(fh.includes('for (const el of doc.querySelectorAll(DISCOVER_ALL)) if (el.matches(POPUPS) || !observed.has(el)) return schedule();'));
+    assert.ok(fh.includes('if (rootAppeared()) return schedule();'));
+    assert.ok(!fh.includes('doc.querySelectorAll(DISCOVER_ALL)'));
     assert.ok(!fh.includes('[...doc.querySelectorAll(rootsSelector)]') && !fh.includes("doc.querySelectorAll('#toast-container .toast-message')"), 'old per-selector walks are gone');
     new Function('BlueLemonade', fh);
     assert.match(read('src/scripts/catalog.js'), /\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.0\.[89]'/); // 1.0.8 에서 고친 뒤 사전만 바뀐 1.0.9(10-27 창 이름 한글 보강)도 돼요

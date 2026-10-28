@@ -39,7 +39,7 @@ function installFruitHeartKorean(BlueLemonade, data) {
     return { regex: new RegExp('^' + expression + '$'), zh: x.zh, indexes, ko: x.ko, weight: x.zh.replace(/\{\d+\}/g, '').length };
   }).sort((a, b) => b.weight - a.weight);
   let stopped = false, frame = 0, discovery = 0, recent = 0;
-  const translate = (value, allowPatterns = true, allowTitles = false, native = false) => {
+  const translateOnce = (value, allowPatterns = true, allowTitles = false, native = false) => {
     const source = normalize(value);
     if (!source) return value;
     let replacement = exact.get(source) ?? (allowTitles ? titles.get(source) : undefined);
@@ -64,6 +64,18 @@ function installFruitHeartKorean(BlueLemonade, data) {
     }
     if (replacement === undefined) return value;
     return String(value).match(/^\s*/)[0] + replacement + String(value).match(/\s*$/)[0];
+  };
+  // BL 8.2.2 (폰): 같은 글 · 같은 문맥이면 결과도 같아요(사전은 바뀌지 않아요). 다시 칠할 때 못 바꾸는 글마다 패턴 정규식 수백 개를 또 돌리지 않게 결과를 기억해요.
+  const remembered = new Map();
+  const translate = (value, allowPatterns = true, allowTitles = false, native = false) => {
+    if (native || typeof value !== 'string') return translateOnce(value, allowPatterns, allowTitles, native);
+    const memoKey = (allowPatterns ? 'p' : '-') + (allowTitles ? 't' : '-') + value;
+    let result = remembered.get(memoKey);
+    if (result === undefined) {
+      if (remembered.size >= 5000) remembered.clear();
+      remembered.set(memoKey, result = translateOnce(value, allowPatterns, allowTitles));
+    }
+    return result;
   };
   const eligible = element => element && !element.closest(skip);
   const titleContext = element => Boolean(element.closest('[data-chip],.fh-item-name,.fh-item-meta,.fh-sel,.fh-sheet,.fh-sec-head,.fh-sortrow,[data-section-show],.fh-ch .fh-n,.fh-g'));
@@ -159,10 +171,11 @@ function installFruitHeartKorean(BlueLemonade, data) {
     }
     if (found) popupRoots.add(root); else popupRoots.delete(root); return found;
   }
-  // BL 7.3.0 (폰 시작): flush 의 문서 훑기 다섯 번 · discover(1.5초마다)의 네 번을 querySelectorAll 한 번 + matches 로 (고르는 요소 · 차례는 같다)
+  // BL 7.3.0 (폰 시작): flush 의 문서 훑기 다섯 번을 querySelectorAll 한 번 + matches 로 (고르는 요소 · 차례는 같다)
   const POPUPS = 'dialog.popup[open],.popup:not(dialog)', TOASTS = '#toast-container .toast-message';
   const FLUSH_ALL = [rootsSelector, helperRootsSelector, POPUPS, TOASTS, watchSelector].join(',');
-  const DISCOVER_ALL = [rootsSelector, helperRootsSelector, watchSelector, POPUPS].join(',');
+  // BL 8.2.2: 닫힌 과일 창(#fruit-heart-v6 에 .open 없음)은 보이지 않아요 — 칠하지 않고 감시만 해요. 열리는 class 변화에서 바로 칠해요(아래 observer).
+  const closedPanel = root => root.id === 'fruit-heart-v6' && !root.matches('.open');
   function flush() {
     frame = 0; if (stopped) return;
     observer.disconnect();
@@ -171,7 +184,7 @@ function installFruitHeartKorean(BlueLemonade, data) {
     for (const node of popupRoots) if (!node.isConnected) popupRoots.delete(node);
     const found = [...doc.querySelectorAll(FLUSH_ALL)];
     const roots = found.filter(el => el.matches(rootsSelector));
-    for (const root of roots) paint(root);
+    for (const root of roots) if (!closedPanel(root)) paint(root);
     const helperRoots = found.filter(el => el.matches(helperRootsSelector));
     for (const root of helperRoots) for (const label of root.querySelectorAll(helperLabelsSelector)) paintHelperName(label);
     if (doc.getElementById('fruit-heart-v6')) for (const option of doc.querySelectorAll('#reasoning_select option[value="果实之心"]')) paint(option);
@@ -193,7 +206,13 @@ function installFruitHeartKorean(BlueLemonade, data) {
     roots.forEach(watch); helperRoots.forEach(watch); found.filter(el => el.matches(watchSelector)).forEach(watch); popupRoots.forEach(watch);
   }
   function schedule() { if (!stopped && !frame) frame = host.requestAnimationFrame(flush); }
-  const observer = new host.MutationObserver(schedule);
+  // 창이 열리는 class 변화는 rAF 를 기다리지 않고 그 작업 끝(microtask)에서 바로 칠해요 — 닫힌 동안 안 칠한 글이 한 frame 도 보이지 않게.
+  const opened = records => Array.isArray(records) && records.some(r => r.type === 'attributes' && r.attributeName === 'class' && r.target?.id === 'fruit-heart-v6' && r.target.matches?.('.open'));
+  const observer = new host.MutationObserver(records => {
+    if (stopped || !opened(records)) return schedule();
+    if (frame) host.cancelAnimationFrame(frame);
+    flush();
+  });
   // Watch only top-level insertions plus known UI roots; never observe chat or the whole body subtree.
   const insertionObserver = new host.MutationObserver(schedule);
   insertionObserver.observe(doc.documentElement, { childList: true });
@@ -226,7 +245,7 @@ function installFruitHeartKorean(BlueLemonade, data) {
     for (const [node, value] of texts) if (node.nodeValue === value.shown) node.nodeValue = value.original;
     for (const [node, record] of attrs) for (const [name, value] of record) if (node.getAttribute(name) === value.shown) node.setAttribute(name, value.original);
     for (const [method, original, wrapped] of wrappers) if (host[method] === wrapped) host[method] = original;
-    texts.clear(); attrs.clear(); popupRoots.clear(); observed.clear(); style.remove();
+    texts.clear(); attrs.clear(); popupRoots.clear(); observed.clear(); remembered.clear(); style.remove();
     if (host[key]?.stop === stop) delete host[key];
   }
   host[key] = { stop };
@@ -234,10 +253,29 @@ function installFruitHeartKorean(BlueLemonade, data) {
   // Discovery tick: repaint only when a root appeared or left, the user just used the panel, or a popup is open.
   // Observed roots already repaint on their own changes; a full repaint every 1.5 s cost ~36 ms on a 4x-throttled phone.
   const fruitOption = '#reasoning_select option[value="果实之心"]';
+  // BL 8.2.2 (폰 4배 · 긴 채팅): 예전에는 1.5초마다 문서 전체를 querySelectorAll(뿌리 · 감시 · 팝업 선택자 13개) 로 훑었다 — 요소가 많으면 한 번에 십수 ms.
+  //   이제 id 뿌리는 getElementById, 과일 입구 단추([data-fh-cat="1"], 과일 창 스크립트가 QR 단추에만 붙여요)는 QR 자리 안과 살아 있는 .qr--button 목록에서,
+  //   Helper 목록은 #tavern_helper 안에서만 찾아요. 열린 팝업은 보지 않아요: flush 는 최근 클릭(15초)이 있거나 이미 고른 팝업이 있을 때만 팝업을 칠하고, 그 둘은 discover 첫 줄이 맡아요.
+  const ROOT_IDS = [rootsSelector, watchSelector].join(',').split(',').filter(s => /^#[\w-]+$/.test(s)).map(s => s.slice(1));
+  const FRUIT_ENTRY = '[data-fh-cat="1"]', QR_SCOPES = ['qr--bar', 'qr--popout', 'quickReplies'];
+  const liveClass = name => typeof doc.getElementsByClassName === 'function' ? doc.getElementsByClassName(name) : null;
+  const qrButtons = liveClass('qr--button'), qrGroups = liveClass('qr--buttons');
+  function rootAppeared() {
+    const unseen = el => el && !observed.has(el);
+    for (const id of ROOT_IDS) if (unseen(doc.getElementById(id))) return true;
+    if (!qrButtons || !qrGroups) { for (const el of doc.querySelectorAll(FRUIT_ENTRY)) if (unseen(el)) return true; }
+    else {
+      for (const el of qrButtons) if (el.getAttribute('data-fh-cat') === '1' && unseen(el)) return true;
+      for (const scope of [...QR_SCOPES.map(id => doc.getElementById(id)), ...qrGroups]) if (scope) for (const el of scope.querySelectorAll(FRUIT_ENTRY)) if (unseen(el)) return true;
+    }
+    const helper = doc.getElementById('tavern_helper');
+    if (helper) for (const el of helper.querySelectorAll(helperRootsSelector)) if (unseen(el)) return true;
+    return false;
+  }
   const discover = () => {
     if (Date.now() - recent < 15000 || popupRoots.size) return schedule();
     for (const node of observed) if (!node.isConnected) return schedule();
-    for (const el of doc.querySelectorAll(DISCOVER_ALL)) if (el.matches(POPUPS) || !observed.has(el)) return schedule();
+    if (rootAppeared()) return schedule();
     if (doc.getElementById('fruit-heart-v6')) for (const option of doc.querySelectorAll(fruitOption)) if (!texts.has(option.firstChild) && /[\u4e00-\u9fff]/.test(option.textContent)) return schedule();
   };
   discovery = host.setInterval(discover, 1500);

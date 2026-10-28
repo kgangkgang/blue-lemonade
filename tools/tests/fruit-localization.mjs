@@ -153,4 +153,38 @@ check('catalog version moved with the dictionary change',()=>{assert.match(fs.re
   for(const [label,r] of Object.entries(results))check(`${label}: every option, chip, list note, entry name and tag in the Fruit Heart panel shows Korean (${r.total} labels)`,()=>{assert.ok(r.total>150,'labels collected');assert.deepEqual(r.left,[],'labels with Han left')});
   check('the reported labels read as short Korean (특별 조정 · 일반 사고 과정 · 미니 웹 극장)',()=>{const data=JSON.parse('{'+codeOf('fruit-heart').split('installFruitHeartKorean(BlueLemonade,{')[1].trim().replace(/\);\s*$/,''));const t=new Map(data.titles);assert.equal(t.get('特调版推剧情 含扩写'),'특별 조정 밀기+확장');assert.equal(t.get('常规 COT改'),'일반 사고 과정 · 수정판');assert.equal(t.get('汐见剧场'),'미니 웹 극장');assert.equal(t.get('小回剧场'),'번외 꾸밈 극장')});
 }
+
+check('유휴 발견은 문서 전체를 훑지 않고 늦게 들어온 창과 입구를 찾아요',()=>{
+  const env=environment();
+  env.doc.getElementsByClassName=name=>({[Symbol.iterator]:function*(){yield* env.html.querySelectorAll('.'+name)}});
+  let broad=0;const query=env.doc.querySelectorAll;
+  env.doc.querySelectorAll=selector=>{if(selector.includes(','))broad++;return query(selector)};
+  env.run();broad=0;
+  const tick=()=>{for(const fn of env.intervals.values())fn()};
+  for(let i=0;i<20;i++)tick();assert.equal(broad,0,'유휴 타이머가 문서 전체를 훑었어요');
+  const holder=add(env.body,'section',{}),late=add(holder,'div',{id:'fruit-heart-v6',class:'open'}),button=add(late,'button',{},'首页');
+  tick();env.settle();assert.equal(button.text,'홈','깊이 들어온 창을 못 찾았어요');
+  const entry=add(holder,'button',{class:'qr--button','data-fh-cat':'1'},'保存');
+  tick();env.settle();assert.equal(entry.text,'저장','살아 있는 입구 목록을 못 봤어요');
+  broad=0;for(let i=0;i<20;i++)tick();assert.equal(broad,0,'알던 창을 다시 전체로 훑었어요');
+  env.cleanups.at(-1)();
+});
+check('닫힌 창은 번역을 미루고 열리는 변화에서는 다음 화면 전에 바로 번역해요',()=>{
+  const env=environment(),panel=add(env.body,'div',{id:'fruit-heart-v6'}),label=add(panel,'button',{},'首页');
+  env.run();assert.equal(label.text,'首页');
+  panel.setAttribute('class','open');
+  const observer=env.observers.find(o=>o.targets.some(([node])=>node===panel));
+  assert.ok(observer,'닫힌 창을 지켜보지 않아요');
+  observer.fn([{type:'attributes',attributeName:'class',target:panel}]);
+  assert.equal(label.text,'홈','rAF 전에 번역하지 않았어요');
+  env.cleanups.at(-1)();assert.equal(label.text,'首页');
+});
+check('늦게 들어온 Helper 목록도 좁은 범위 발견으로 번역해요',()=>{
+  const env=environment();env.run();
+  const holder=add(env.body,'section',{}),helper=add(holder,'div',{id:'tavern_helper'}),group=add(helper,'div',{'data-container-type':'preset'});
+  const row=add(group,'div',{'data-type':'script','data-script-id':'qa-late'}),label=add(row,'div',{class:'grow overflow-hidden'},'果实之心');
+  for(const fn of env.intervals.values())fn();env.settle();
+  assert.equal(label.text,'과일의 마음');env.cleanups.at(-1)();assert.equal(label.text,'果实之心');
+});
+
 console.log(`fruit-localization: ${passed} passed`);
