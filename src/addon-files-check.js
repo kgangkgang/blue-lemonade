@@ -56,7 +56,10 @@ export async function verifyAddonCss({ folder, name, version, title, selector })
     for (let i = 0; i < 4; i++) { await idle(); if (ok()) return true; await wait(3000); }
     const reloaded = await reloadStyle(folder);
     for (let i = 0; i < 3; i++) { await wait(i ? 3000 : 300); await idle(); if (ok()) return true; }
-    console.warn(`[Blue Lemonade] ${title}: 코드 ${version}, 스타일 ${read(name, selector) || '없음'} (다시 받기 ${reloaded ? '함' : '실패'})`);
+    const seen = read(name, selector);
+    console.warn(`[Blue Lemonade] ${title}: 코드 ${version}, 스타일 ${seen || '없음'} (다시 받기 ${reloaded ? '함' : '실패'})`);
+    // 8.2.0 값이 비었으면 옛 파일이 아니라 아직 안 불러왔거나 나중에 불러오는 스타일이에요 — 느린 폰 · 무거운 시험 환경에서 「스타일 없음」 오탐 알림이 떴어요. 판이 실제로 다를 때만 알려요
+    if (!seen) return false;
     if (!warned && typeof toastr !== 'undefined') {
         warned = true;
         toastr.warning(`${title} 스타일 파일이 코드와 달라요 (코드 ${version}, 스타일 ${read(name, selector) || '없음'}). 최신 버전으로 업데이트한 뒤 새로고침해 주세요. 계속 뜨면 이 경고의 코드·스타일 버전을 알려 주세요.`, 'Blue Lemonade', { timeOut: 15000 });

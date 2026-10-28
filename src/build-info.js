@@ -3,7 +3,7 @@ export const BUILD_VERSION = "8.1.9";
 export const FILE_HASHES = {
   "index.js": "24469:9ef24166:72174af5",
   "manifest.json": "365:d79ca73b:2f25d468",
-  "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
+  "src/addon-files-check.js": "5001:b7fe0df9:d1f21c49",
   "src/addon-layout.js": "2768:fc762257:da2db162",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
   "src/addon-versions.js": "2737:ae6041ef:3cc0d3dc",
