@@ -51,7 +51,7 @@ if(fs.existsSync(musicDir)||fs.existsSync(path.join(root,'src/scene-music.js')))
     if(bytes.length!==row.bytes||createHash('sha256').update(bytes).digest('hex')!==row.sha256)throw Error('Scene music content differs: '+row.id);
   }
 }
-const files=[...new Set(['manifest.json','index.js','style.css',...ttsAssets,...ttsExtraAssets,...musicAssets,...walk(path.join(root,'src')).filter(p=>/\.(js|css|html)$/.test(p)).map(p=>path.relative(root,p).replaceAll('\\','/'))])].filter(p=>p!=='src/build-info.js').sort();
+const files=[...new Set(['manifest.json','index.js','style.css',...(fs.existsSync(path.join(root,'style-ext.css'))?['style-ext.css']:[]),...ttsAssets,...ttsExtraAssets,...musicAssets,...walk(path.join(root,'src')).filter(p=>/\.(js|css|html)$/.test(p)).map(p=>path.relative(root,p).replaceAll('\\','/'))])].filter(p=>p!=='src/build-info.js').sort();
 const hashes=Object.fromEntries(files.map(file=>[file,fileFingerprint(fs.readFileSync(path.join(root,file)))]));
 const version=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8')).version;
 const data=`// Generated: installed runtime integrity, excluding this manifest itself.\nexport const BUILD_VERSION = ${JSON.stringify(version)};\nexport const FILE_HASHES = ${JSON.stringify(hashes,null,2)};\n`;

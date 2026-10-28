@@ -1,9 +1,9 @@
 name: Release consistency
 on:
   push:
-    paths: ['server-plugin/**', 'src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
+    paths: ['server-plugin/**', 'src/**', 'css/**', 'index.js', 'style.css', 'style-ext.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
   pull_request:
-    paths: ['server-plugin/**', 'src/**', 'css/**', 'index.js', 'style.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
+    paths: ['server-plugin/**', 'src/**', 'css/**', 'index.js', 'style.css', 'style-ext.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
   release:
     types: [published]
   workflow_dispatch:
@@ -193,6 +193,7 @@ jobs:
           node tools/tests/ko-ui.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/preview-park.mjs .
+          node tools/tests/theme-sheet-ext.mjs .
           node tools/tests/zipinstall-remove.mjs .
           node tools/tests/word-replace-marks.mjs .
           node tools/tests/translator-glossary.mjs .

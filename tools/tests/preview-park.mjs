@@ -45,5 +45,5 @@ ok(/preview-park\.gen\.css/.test(lite), 'lite.js 가 생성 파일을 받아요'
 ok(/if \(previewStyle\) \{ previewStyle\.media = 'all'; return; \}/.test(lite), '켤 때 작은 <style> 만');
 ok(/if \(previewStyle\) previewStyle\.media = 'not all';/.test(lite), '끌 때도 작은 <style> 만');
 ok(/sameShape\(b\.cssRules, deferred\[i\]\.cssRules\)/.test(lite), '붙이기 전에 덩어리마다 뼈대를 견줘요');
-ok(/\(previewStyle\?\.isConnected \? previewStyle : sheet\.ownerNode\)\.after\(style\)/.test(lite), '게으른 칸은 미리보기 <style> 뒤에');
+ok(/\(previewStyle\?\.isConnected \? previewStyle : (?:sheet\.ownerNode|sheetTail\(sheet\))\)\.after\(style\)/.test(lite), '게으른 칸은 미리보기 <style> 뒤에');   // 8.2.1 sheetTail: 확장만 모드의 가벼운 사본이 있으면 그 뒤(없으면 sheet.ownerNode)
 console.log(`preview-park: ${n}/${n} 통과`);

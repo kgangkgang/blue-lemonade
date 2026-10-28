@@ -33,6 +33,8 @@ const LAZY_OUT = path.join(ROOT, 'src', 'lazy-panel.gen.css');
 // 10-28 미리보기 전용 덩어리(`@media not all`)를 한 벌 더 — src/lite.js 가 시작할 때 이것을 꺼 둔 작은 <style> 로 붙여 두고 설정 창을 열 때 그 <style> 만 켠다.
 // style.css 안의 덩어리 수백 개를 켜면 1.7MB 시트 전체가 바뀐 것으로 쳐져 문서 전체를 다시 계산했다(긴 채팅 · 폰 4배에서 설정 창 처음 열기 약 6초).
 const PREVIEW_OUT = path.join(ROOT, 'src', 'preview-park.gen.css');
+// 8.2.1 「확장만」 · 테마 끔에서 큰 style.css 대신 켜는 가벼운 사본(src/theme-sheet.js) — extText() 참고
+const EXT_OUT = path.join(ROOT, 'style-ext.css');
 const LAZY = '99-lazy-panel.css';
 const LAZY_SENTINEL = '#salty-lazy-panel-start';
 const HASH_SLOT = '@@HASH@@';
@@ -191,6 +193,8 @@ function main(argv) {
             // 10-28: 미리보기 덩어리 한 벌도 같은가 — 다르면 다시 만들게(게시 regen 이 이 결과로 다시 빌드해요)
             const park = previewParkText(text);
             const hadPark = fs.existsSync(PREVIEW_OUT) ? fs.readFileSync(PREVIEW_OUT, 'utf8') : null;
+            const hadExt = fs.existsSync(EXT_OUT) ? fs.readFileSync(EXT_OUT, 'utf8') : null;
+            if (hadExt !== extText(text)) { console.error('[다름] style-ext.css 가 style.css 와 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
             if (hadPark !== park) { console.error('[다름] src/preview-park.gen.css 가 style.css 의 미리보기 덩어리와 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
             console.log(`[같음] style.css = css/ 모듈 ${names.length}개`); return 0;
         }
@@ -206,6 +210,9 @@ function main(argv) {
         if (had !== tail) { fs.writeFileSync(LAZY_OUT, tail, 'utf8'); console.log(`[씀] src/lazy-panel.gen.css (${(Buffer.byteLength(tail) / 1024).toFixed(1)}KB)`); }
         const park = previewParkText(text);
         const hadPark = fs.existsSync(PREVIEW_OUT) ? fs.readFileSync(PREVIEW_OUT, 'utf8') : null;
+        const ext = extText(text);
+        const hadExt = fs.existsSync(EXT_OUT) ? fs.readFileSync(EXT_OUT, 'utf8') : null;
+        if (hadExt !== ext) { fs.writeFileSync(EXT_OUT, ext, 'utf8'); console.log(`[씀] style-ext.css (${(Buffer.byteLength(ext) / 1024).toFixed(1)}KB)`); }
         if (hadPark !== park) { fs.writeFileSync(PREVIEW_OUT, park, 'utf8'); console.log(`[씀] src/preview-park.gen.css (${(Buffer.byteLength(park) / 1024).toFixed(1)}KB)`); }
         console.log(`[그대로] style.css 가 이미 최신 (모듈 ${names.length}개)`);
         return 0;
@@ -220,6 +227,7 @@ function main(argv) {
     fs.writeFileSync(OUT, text, 'utf8');
     fs.writeFileSync(LAZY_OUT, lazyTail(text), 'utf8');
     fs.writeFileSync(PREVIEW_OUT, previewParkText(text), 'utf8');
+    fs.writeFileSync(EXT_OUT, extText(text), 'utf8');
     console.log(`[씀] style.css ← css/ 모듈 ${names.length}개 (${(Buffer.byteLength(text) / 1024).toFixed(1)}KB) · src/lazy-panel.gen.css ${(Buffer.byteLength(lazyTail(text)) / 1024).toFixed(1)}KB · 미리보기 전용 규칙 ${parked.rules}개를 not all 덩어리 ${parked.blocks}개로 꺼 둠${keyed ? ` · 바구니 열쇠 ${keyed.keyed}갈래(전체 바구니 ${keyed.universal} 중, 남음 ${keyed.universal - keyed.keyed})` : ''}`);
     return 0;
 }
@@ -265,4 +273,46 @@ function previewParkText(text) {
     return `/* src/preview-park.gen.css — tools/build-css.cjs 가 style.css 의 미리보기 전용 덩어리 ${out.length}개를 옮겨 적은 것(고치지 말 것) */\n${out.join('\n')}\n`;
 }
 
-module.exports = { build, modules, untouched, LAZY, LAZY_SENTINEL, CSS_DIR, lazyTail, LAZY_OUT, previewParkText, PREVIEW_OUT };
+
+/**
+ * 8.2.1 「확장만」 · 테마 끔용 가벼운 사본(style-ext.css). 확장만 모드에서는 body 에서 salty 를 떼서(src/usage-mode.js) style.css 규칙의 9할이
+ * 하나도 맞지 않는데도, 브라우저는 다시 계산할 때마다 그 규칙들을 견줬다(폰 4배: 부팅 스타일 재계산 순정 0.5초 → 1.5초 · 10-29 커뮤니티 제보).
+ * 그래서 테마가 꺼진 동안은 큰 시트를 끄고 이 사본을 켠다(src/theme-sheet.js). 빼는 것은 셋 — 그 모드에서 원래 하나도 맞지 않던 것만:
+ *   ① body.salty 가 꼭 있어야 맞는 선택자(괄호 밖에 body.salty 가 있는 갈래 — :not(.salty) · :is( … ) 안은 남김)
+ *   ② 미리보기 전용 덩어리(@media not all — src/lite.js 가 preview-park.gen.css 로 따로 켬)  ③ 게으른 칸 꼬리(lite.js 가 lazy-panel.gen.css 로 따로 켬)
+ * 남는 규칙은 원문 그대로 · 같은 차례예요(갈래 일부만 빠진 규칙은 남은 갈래만 다시 적음).
+ */
+function extText(text) {
+    const lib = require('./css-lib.cjs');
+    const cut = text.lastIndexOf(`${LAZY_SENTINEL} {}`);
+    if (cut < 0) throw new Error(`style.css 에 게으른 칸 표시가 없음`);
+    const body = text.slice(0, cut);
+    const tree = lib.parse(body);
+    if (tree.problems.length) throw new Error(`가벼운 사본 읽기 문제: ${tree.problems.slice(0, 3).join(' / ')}`);
+    const splitTop = sel => { const out = []; let depth = 0, from = 0; for (let i = 0; i < sel.length; i++) { const c = sel[i]; if (c === '(' || c === '[') depth++; else if (c === ')' || c === ']') depth--; else if (c === ',' && depth === 0) { out.push(sel.slice(from, i).trim()); from = i + 1; } } out.push(sel.slice(from).trim()); return out.filter(Boolean); };
+    const outside = sel => { let depth = 0, s = ''; for (const c of sel) { if (c === '(') depth++; else if (c === ')') depth--; else if (depth === 0) s += c; } return s; };
+    const needsTheme = sel => /(^|[\s>+~])body\.salty(?![\w-])/.test(outside(sel));
+    const GROUP = new Set(['media', 'supports', 'container', 'layer', 'scope', 'document']);
+    let kept = 0, dropped = 0;
+    const emit = nodes => {
+        const out = [];
+        for (const n of nodes) {
+            if (n.type === 'rule') {
+                const parts = splitTop(n.selector), keep = parts.filter(p => !needsTheme(p));
+                if (!keep.length) { dropped++; continue; }
+                kept++;
+                out.push(keep.length === parts.length ? body.slice(n.start, n.end) : `${keep.join(',\n')} {${body.slice(n.bodyStart, n.bodyEnd)}}`);
+            } else if (n.type === 'at' && n.block && GROUP.has(n.name) && n.children) {
+                if (n.name === 'media' && /^@media\s+not\s+all$/i.test(n.prelude)) { dropped++; continue; }   // ② 미리보기 덩어리
+                const inner = emit(n.children);
+                if (inner.length) out.push(`${n.prelude} {\n${inner.join('\n')}\n}`);
+            } else out.push(body.slice(n.start, n.end));   // @font-face · @keyframes · @property · 문장형 @ 은 그대로
+        }
+        return out;
+    };
+    const rules = emit(tree.children);
+    const digest = crypto.createHash('sha1').update(text, 'utf8').digest('hex').slice(0, 12);
+    return `/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 ${kept} · 뺀 규칙 ${dropped} (style.css ${digest}) */\n${rules.join('\n')}\n`;
+}
+
+module.exports = { build, modules, untouched, LAZY, LAZY_SENTINEL, CSS_DIR, lazyTail, LAZY_OUT, previewParkText, PREVIEW_OUT, extText, EXT_OUT };

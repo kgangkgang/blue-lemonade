@@ -22,7 +22,8 @@ import { syncExtensionColors } from './extension-colors.js';
 import { syncControlInk } from './control-ink.js';
 import { syncTagInk } from './tag-ink.js';
 import { syncRoleIcons } from './role-icons.js';
-import { syncPicks } from './role-icons-pick.js';   // 화면에서 고른 단추
+import { syncPicks } from './role-icons-pick.js';
+import { syncThemeSheet } from './theme-sheet.js';   // 8.2.1 테마 꺼짐이면 가벼운 사본   // 화면에서 고른 단추
 
 function profileVars(p, pal, user = false) {
     const vars = Object.assign(frameVars(p, 'profile', pal.accent), decorVars(p.decor, 'profile', p.radius), {
@@ -467,6 +468,7 @@ export function syncReasoningOff() {
 export function applyAll() {
     const rendered = appearanceForRender(getSettings());
     const s = themeEnabled(rendered) ? rendered : {...rendered, enabled:false};
+    syncThemeSheet(!!s.enabled);   // 8.2.1 테마가 꺼진 모드면 큰 style.css 대신 style-ext.css (src/theme-sheet.js)
     prepareDecor(s);
     const pal = paletteColors(s);
     const mode = (PALETTES[s.palette] || PALETTES.salt).mode;

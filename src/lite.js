@@ -170,7 +170,7 @@ async function detachPreviewRules(sheet) {
         style.id = 'salty-preview-css';
         style.media = 'not all';
         style.textContent = text;
-        sheet.ownerNode.after(style);   // 게으른 칸(<style id="salty-panel-css">)이 이미 붙어 있으면 그 앞 — 원래 style.css 안 차례(미리보기 → 게으른 칸)와 같다
+        sheetTail(sheet).after(style);   // 게으른 칸(<style id="salty-panel-css">)이 이미 붙어 있으면 그 앞 — 원래 style.css 안 차례(미리보기 → 게으른 칸)와 같다
         previewStyle = style;
     } catch (err) {
         console.info('[Blue Lemonade] 미리보기 규칙은 style.css 안에서 켜요 (화면은 같음):', err?.message || err);
@@ -216,6 +216,8 @@ export function deferredPreviewRuleCount() {
 // `body:has(.drawer-content.maximized) #top-settings-holder:has(.drawer-content.openDrawer …)` 가 서랍을 처음 연 순간 body 에
 // ':has() 영향' 표시를 남긴 뒤로는 채팅에 요소가 붙을 때마다 body 아래에서 그 태그(span · i · select …)를 가진 요소를 전부 다시
 // 계산했다 (폰 리그 4배: 글 붙이기 한 번 35 → 180~210ms, 그중 테마 몫 = 다시 계산하는 요소 1,091 → 791).
+// 8.2.1 테마가 꺼진 모드면 큰 시트 바로 뒤에 가벼운 사본(<link id="salty-ext-css">)이 있어요 — 미리보기 · 게으른 칸 <style> 은 그 뒤에 붙여야 원래 차례(본문 → 미리보기 → 게으른 칸)예요
+const sheetTail = sheet => { const ext = document.getElementById('salty-ext-css'); return ext?.isConnected && ext.previousElementSibling === sheet.ownerNode ? ext : sheet.ownerNode; };
 const LAZY_SENTINEL = '#salty-lazy-panel-start';
 const LEGACY_POPUPS = '#character_popup, #world_popup, #select_chat_popup, #shadow_popup, #dialogue_popup, #export_format_popup';
 let panelStyle = null;  // 옮겨 둔 게으른 칸 규칙이 든 <style id="salty-panel-css">
@@ -329,7 +331,7 @@ export function deferPanelHasRules(tries = 25) {
             style.id = 'salty-panel-css';
             style.media = 'not all';
             style.textContent = tail;
-            (previewStyle?.isConnected ? previewStyle : sheet.ownerNode).after(style); // 10-28 미리보기 <style> 이 먼저 붙었으면 그 뒤(원래 차례: 미리보기 → 게으른 칸). 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
+            (previewStyle?.isConnected ? previewStyle : sheetTail(sheet)).after(style); // 10-28 미리보기 <style> 이 먼저 붙었으면 그 뒤(원래 차례: 미리보기 → 게으른 칸). 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
             for (let i = sheet.cssRules.length - 1; i > from; i--) sheet.deleteRule(i);
             panelCount = live.length;
             panelStyle = style;

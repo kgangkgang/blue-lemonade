@@ -461,7 +461,7 @@ export const FILE_HASHES = {
   "src/an-anchor.js": "9761:d209f894:daca46e4",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
   "src/appearance-compare.js": "3140:831ffdf1:a1f78cb0",
-  "src/apply.js": "63601:8873979e:a5ff0d33",
+  "src/apply.js": "63827:756362b2:eb35aa8f",
   "src/ask.js": "3222:02049ce8:69a2b062",
   "src/assets.js": "35468:789b2815:728dfddd",
   "src/assist/core.js": "1927:14e3f07b:8a781a61",
@@ -571,7 +571,7 @@ export const FILE_HASHES = {
   "src/ko-ui.js": "13781:3256a34c:d80ce7da",
   "src/layout.js": "29049:12ea2783:eb2dd73e",
   "src/lazy-panel.gen.css": "34768:8aa24fbf:b31f1504",
-  "src/lite.js": "38812:484d432d:e31e9483",
+  "src/lite.js": "39247:d139c491:029f69cd",
   "src/live-models.js": "44020:f8a5fa62:a3f1cbaf",
   "src/longpress-help-data.js": "96732:d96f0542:aba0176a",
   "src/longpress-help.js": "13064:5ab5a0e9:10c67ada",
@@ -715,6 +715,7 @@ export const FILE_HASHES = {
   "src/tab-scroll.css": "968:2091689d:8e8a3f3f",
   "src/tab-scroll.js": "8441:c7345e39:b03f6c71",
   "src/tag-ink.js": "4327:29373070:6d88b3d8",
+  "src/theme-sheet.js": "3241:0472d3e4:24b8e978",
   "src/theme-update.js": "8995:944960da:1125b756",
   "src/tone.js": "6415:7ed9f3f6:a7e0d13d",
   "src/touch-sliders.js": "1826:c0645cac:6b4521ba",
@@ -744,5 +745,6 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
+  "style-ext.css": "317339:8c12bde6:f3ee4d80",
   "style.css": "1832078:5d828cc9:cff6c45a"
 };

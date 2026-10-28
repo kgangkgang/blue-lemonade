@@ -442,6 +442,7 @@ def validate_scene_music(files):
 def inventory(root, kind):
     root = Path(root).resolve()
     names = ['manifest.json', 'index.js', 'style.css', 'README.md']
+    if (root / 'style-ext.css').is_file(): names.append('style-ext.css')   # 8.2.1 확장만 · 테마 끔용 가벼운 사본
     if kind == 'theme':
         if (root / 'server-plugin').is_dir():
             names += ['server-plugin/' + n for n in ('setup.mjs', 'setup-windows.cmd', 'README.md', 'blue-lemonade-zip/index.mjs', 'blue-lemonade-zip/archive.mjs', 'blue-lemonade-zip/install.mjs')]
