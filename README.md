@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.1.8/blue-lemonade-8.1.8.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.1.9/blue-lemonade-8.1.9.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.1.8 · 최신 업데이트</summary>
+<summary>8.1.9 · 최신 업데이트</summary>
+
+- 캐릭터 에셋 「이 채팅의 그림 확장 그림을 에셋으로」: 확장 창 머리 「에셋 떼기」 옆 「에셋으로」 단추로 그림 생성 확장이 넣은 그림을 캐릭터 에셋 그림으로 바꿔요. 예전에 에셋이던 자리는 그때 고른 그림 그대로 되살리고, 나머지 자리는 「다른 모델이 고르기」 연결로 메시지마다 한 번 골라요. 확인 창에 바꿀 수와 모델 호출 수를 먼저 보여 주고, 알림의 되돌리기 단추로 되돌릴 수 있어요. 그림 생성 확장이 이 기능을 지원할 때만 보여요 (캐릭터 에셋 1.7.6).
+- 「에셋 떼기」는 뗀 선택을 지우지 않고 숨겨 둬요. 그래서 에셋 → 그림 → 에셋으로 오가도 같은 그림이 돌아와요. 그림 파일은 어느 쪽에서도 지우지 않아요.
+
+</details>
+
+<details>
+<summary>8.1.8 · 번역 프롬프트 기본값 되돌리기 · DB 단추 켬끔</summary>
 
 - 번역 프롬프트 편집 칸에서 기본 프롬프트(채팅 번역 · 재번역 · 입력 · 보내기 · 프리필)를 고르면 「기본값으로」 단추가 보여요. 확인한 뒤 처음 값으로 되돌리고, 알림의 되돌리기 단추로 한 번 다시 살릴 수 있어요.
 - 번역 DB 카드에 「입력창에 DB 관리 단추 두기」를 더했어요. 끄면 입력창의 llm번역DB관리 단추를 숨기고, 다시 켜면 돌아와요.
