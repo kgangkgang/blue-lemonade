@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.1.9/blue-lemonade-8.1.9.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.2.0/blue-lemonade-8.2.0.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.1.9 · 최신 업데이트</summary>
+<summary>8.2.0 · 최신 업데이트</summary>
+
+- 과일 · 청과 상태창 글자 › 맨 위 「하단 반복 문구」의 「보임 · 숨김」 단추가 옆 고르기 칸 높이로 늘어나 다른 고르기보다 커 보이던 것을, 다른 고르기와 같은 크기로 두고 칸 가운데에 맞췄어요.
+- 애드온 스타일 확인 › 느린 폰에서 스타일을 아직 다 불러오기 전에 「스타일 파일이 코드와 달라요(스타일 없음)」 알림이 잘못 뜰 수 있던 것을 고쳤어요. 스타일 판이 실제로 다를 때만 알려요.
+
+</details>
+
+<details>
+<summary>8.1.9 · 그림을 캐릭터 에셋으로 되돌리기</summary>
 
 - 캐릭터 에셋 「이 채팅의 그림 확장 그림을 에셋으로」: 확장 창 머리 「에셋 떼기」 옆 「에셋으로」 단추로 그림 생성 확장이 넣은 그림을 캐릭터 에셋 그림으로 바꿔요. 예전에 에셋이던 자리는 그때 고른 그림 그대로 되살리고, 나머지 자리는 「다른 모델이 고르기」 연결로 메시지마다 한 번 골라요. 확인 창에 바꿀 수와 모델 호출 수를 먼저 보여 주고, 알림의 되돌리기 단추로 되돌릴 수 있어요. 그림 생성 확장이 이 기능을 지원할 때만 보여요 (캐릭터 에셋 1.7.6).
 - 「에셋 떼기」는 뗀 선택을 지우지 않고 숨겨 둬요. 그래서 에셋 → 그림 → 에셋으로 오가도 같은 그림이 돌아와요. 그림 파일은 어느 쪽에서도 지우지 않아요.
