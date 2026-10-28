@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.2.0/blue-lemonade-8.2.0.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.2.1/blue-lemonade-8.2.1.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -333,7 +333,16 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.2.0 · 최신 업데이트</summary>
+<summary>8.2.1 · 최신 업데이트</summary>
+
+- 설정 › 기타 › 테마 설정 파일 › 가져오기 › 가져온 파일의 사용 방식(테마 + 확장 · 테마만 · 확장만)이 지금과 다르면 값만 바뀌고 화면은 옛 방식으로 남던 것을, 사용 방식 단추처럼 저장한 뒤 새로고침하도록 고쳤어요.
+- 「확장만」 · 테마 끔에서는 쓰지 않는 테마 꾸밈 규칙을 끄고 가벼운 사본만 켜요(테마 CSS 1.8MB → 0.3MB). 확장만 모드에서는 원래 맞지 않던 규칙만 빠져서 화면은 그대로이고, 폰처럼 느리게 맞춘 시험 환경에서 300메시지 채팅을 열 때 스타일 계산이 약 14% 줄었어요.
+- README 자주 묻는 질문에 「폰에서 무거워요」를 더했어요. 안 쓰는 내장 확장 · 내장 스크립트 · 정규식 끄기와 「Msg. to Render」 줄이기처럼 직접 가볍게 하는 순서를 적었어요.
+
+</details>
+
+<details>
+<summary>8.2.0 · 청과 상태창 글자 고르기 크기 · 스타일 확인 오탐 알림</summary>
 
 - 과일 · 청과 상태창 글자 › 맨 위 「하단 반복 문구」의 「보임 · 숨김」 단추가 옆 고르기 칸 높이로 늘어나 다른 고르기보다 커 보이던 것을, 다른 고르기와 같은 크기로 두고 칸 가운데에 맞췄어요.
 - 애드온 스타일 확인 › 느린 폰에서 스타일을 아직 다 불러오기 전에 「스타일 파일이 코드와 달라요(스타일 없음)」 알림이 잘못 뜰 수 있던 것을 고쳤어요. 스타일 판이 실제로 다를 때만 알려요.
