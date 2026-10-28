@@ -231,12 +231,14 @@
     const labels = [...root.querySelectorAll(WELCOME_LABELS)];
     if (root.matches(WELCOME_LABELS)) labels.unshift(root);
     for (const label of labels) {
+      watchChatText(label);
       for (const node of label.childNodes) if (node.nodeType === 3) swapText(node, text => welcomeExact.get(normalize(text)) ?? null);
       for (const attribute of ATTRIBUTE_NAMES) welcomeAttribute(label, attribute);
     }
     const assistants = [...root.querySelectorAll('.mes[type="assistant_message"][ch_name="Assistant"]')];
     if (root.matches('.mes[type="assistant_message"][ch_name="Assistant"]')) assistants.unshift(root);
     for (const message of assistants) {
+      watchChatText(message);
       const avatar = message.querySelector('.avatar img');
       const avatarSrc=avatar?.getAttribute('src')||'';
       let defaultAvatar=avatarSrc.split('?')[0].endsWith('img/five.png');
@@ -408,6 +410,7 @@
   let chatTimer = null;
 
   function translateChatLabel(element) {
+    watchChatText(element);
     if (element.closest('[contenteditable="true"], textarea')) return;
     for (const child of element.childNodes) if (child.nodeType === 3) swapText(child, translateChat);
   }
@@ -425,6 +428,7 @@
     }
     for (const node of textChanges.keys()) if (!node.isConnected) textChanges.delete(node);
     for (const element of attributeChanges.keys()) if (!element.isConnected) attributeChanges.delete(element);
+    chatText.takeRecords(); // 방금 바꾼 글자(우리가 쓴 것)의 기록은 버린다
   }
 
   function scheduleChat(element) {
@@ -435,37 +439,54 @@
   // 채팅처럼 메시지를 그리는 칸: #chat 과 북마크 확장 창(.cg-root — messageFormatting 으로 같은 프리셋 카드를 그림, v1.2.1)
   const CHAT_ROOTS = '#chat, .cg-root';
   const chatObservers = new Map();
+  // 글자만 고쳐 쓰는 기록(characterData)은 채팅 뿌리 전체가 아니라 번역하는 칸(CHAT_TARGETS · 환영 칸 글자 · 도우미 인사말)에만 건다.
+  //   뿌리 전체에 걸면 답이 스트리밍으로 본문 글자 노드를 고쳐 쓸 때마다 콜백이 불렸다 (폰 4배 측정: 채팅 열기 · 그리기 · 스트리밍에 2,019번).
+  //   칸이 들어오는 것(childList)은 뿌리가 그대로 보고, 칸을 처음 볼 때(translateChatLabel · processWelcome) 그 칸에 글자 감시를 붙인다.
+  const chatTextWatched = new WeakSet();
+  const chatText = new host.MutationObserver(handleChatRecords);
+  const CHAT_TEXT_WATCH = { subtree: true, characterData: true };
+  function watchChatText(element) {
+    if (chatTextWatched.has(element)) return;
+    chatTextWatched.add(element);
+    chatText.observe(element, CHAT_TEXT_WATCH);
+  }
+
+  function handleChatRecords(records) {
+    if (stopped) return;
+    // 뿌리 콜백이 먼저 불려도 아직 안 넘어온 글자 기록을 같이 본다 (끝에서 버리는 것은 이 콜백 안에서 우리가 쓴 것뿐)
+    records = records.concat(chatText.takeRecords());
+    const labels = new Set();
+    const welcomes = new Set();
+    let removed = false;
+    for (const record of records) {
+      if (record.removedNodes.length) removed = true;
+      const target = record.type === 'characterData' ? record.target.parentElement : record.target;
+      const welcome = target?.closest(WELCOME_CONTAINER);
+      if (welcome) welcomes.add(welcome);
+      // 생각 칸 머리글은 textContent 로 통째로 바뀐다 → 그 칸 자신이 target
+      const label = target?.closest(CHAT_TARGETS);
+      if (label) labels.add(label);
+      for (const node of record.addedNodes) {
+        if (node.nodeType !== 1) continue;
+        if (!welcome) welcomes.add(node);
+        if (node.matches(CHAT_TARGETS)) labels.add(node);
+        for (const inner of node.querySelectorAll(CHAT_TARGETS)) labels.add(inner);
+      }
+    }
+    for (const welcome of welcomes) if (welcome.isConnected) processWelcome(welcome);
+    // v1.3.2: 그리기 전에 이 자리에서 바꾼다. 스트리밍은 걸음마다 메시지를 새로 써서, 40ms 뒤에 바꾸면
+    // 걸음마다 카드 제목·생각 칸 머리글이 영어로 한두 프레임씩 보였다 (폰 5fps 에서 보이는 프레임의 15~20%).
+    for (const label of labels) if (label.isConnected) translateChatLabel(label);
+    // 방금 바꾼 글자(swapText)의 기록은 버린다 — 예전엔 제 번역 때문에 콜백이 한 번 더 불렸다
+    chatText.takeRecords();
+    // 40ms 타이머는 문서에서 떨어져 나간 글자 기록만 치운다 (걸음마다 옛 제목 글자 노드가 빠진다)
+    if ((labels.size || (removed && (textChanges.size || attributeChanges.size))) && chatTimer === null) chatTimer = host.setTimeout(flushChat, 40);
+  }
 
   function watchChatRoot(root) {
     if (!root || chatObservers.has(root)) return;
-    const observer = new host.MutationObserver(records => {
-      if (stopped) return;
-      const labels = new Set();
-      const welcomes = new Set();
-      let removed = false;
-      for (const record of records) {
-        if (record.removedNodes.length) removed = true;
-        const target = record.type === 'characterData' ? record.target.parentElement : record.target;
-        const welcome = target?.closest(WELCOME_CONTAINER);
-        if (welcome) welcomes.add(welcome);
-        // 생각 칸 머리글은 textContent 로 통째로 바뀐다 → 그 칸 자신이 target
-        const label = target?.closest(CHAT_TARGETS);
-        if (label) labels.add(label);
-        for (const node of record.addedNodes) {
-          if (node.nodeType !== 1) continue;
-          if (!welcome) welcomes.add(node);
-          if (node.matches(CHAT_TARGETS)) labels.add(node);
-          for (const inner of node.querySelectorAll(CHAT_TARGETS)) labels.add(inner);
-        }
-      }
-      for (const welcome of welcomes) if (welcome.isConnected) processWelcome(welcome);
-      // v1.3.2: 그리기 전에 이 자리에서 바꾼다. 스트리밍은 걸음마다 메시지를 새로 써서, 40ms 뒤에 바꾸면
-      // 걸음마다 카드 제목·생각 칸 머리글이 영어로 한두 프레임씩 보였다 (폰 5fps 에서 보이는 프레임의 15~20%).
-      for (const label of labels) if (label.isConnected) translateChatLabel(label);
-      // 40ms 타이머는 문서에서 떨어져 나간 글자 기록만 치운다 (걸음마다 옛 제목 글자 노드가 빠진다)
-      if ((labels.size || (removed && (textChanges.size || attributeChanges.size))) && chatTimer === null) chatTimer = host.setTimeout(flushChat, 40);
-    });
-    observer.observe(root, { subtree: true, childList: true, characterData: true });
+    const observer = new host.MutationObserver(handleChatRecords);
+    observer.observe(root, { subtree: true, childList: true });
     chatObservers.set(root, observer);
     scheduleChat(root);
   }
@@ -607,6 +628,7 @@
     for(const observer of helperObservers.values())observer.disconnect();helperObservers.clear();
     for (const observer of chatObservers.values()) observer.disconnect();
     chatObservers.clear();
+    chatText.disconnect();
     for (const observer of scopes.values()) observer.disconnect();
     scopes.clear();
     if (timer !== null) host.clearTimeout(timer);
