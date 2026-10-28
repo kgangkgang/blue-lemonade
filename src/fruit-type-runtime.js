@@ -19,7 +19,9 @@ export function watchFruitTypography(doc,host,getConfig,fontFamily=()=> ''){
     const scopes=new Map(),frames=new Map(),styles=new Map(),faces=new Map(),wraps=new Map(),WRAP=wrapCss();let stopped=false,frame=0,lastSig='';
     // 7.0.3 긴 채팅: 1.5초 타이머는 채팅 뿌리 · iframe 문서가 바뀌었을 때만 훑는다 (그 밖의 변화는 문서마다 건 감시자 · iframe load 가 알린다)
     const ids=new WeakMap();let nextId=1;const idOf=o=>{if(!o)return 0;let i=ids.get(o);if(!i)ids.set(o,i=nextId++);return i;};
-    const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of scope.querySelectorAll('iframe')){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
+    // 8.2.2 1.5초 타이머가 #chat 아래 전체를 querySelectorAll('iframe') 로 다시 훑지 않게 — 살아 있는 목록(브라우저가 DOM 바뀔 때만 다시 셈) · 고르는 iframe · 순서는 같아요
+    const frameLists=new WeakMap();const framesOf=scope=>{if(typeof scope.getElementsByTagName!=='function')return scope.querySelectorAll('iframe');let list=frameLists.get(scope);if(!list){list=scope.getElementsByTagName('iframe');frameLists.set(scope,list);}return list;};
+    const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of framesOf(scope)){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
     const schedule=()=>{if(!stopped&&!frame)frame=host.requestAnimationFrame(flush);};
     const rootSelector=FRUIT_TYPES.map(typeMatch).join(',');
     function detach(d){styles.get(d)?.remove();styles.delete(d);for(const face of faces.get(d)||[])d.fonts?.delete(face);faces.delete(d);}

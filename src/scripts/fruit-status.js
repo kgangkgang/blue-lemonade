@@ -46,7 +46,9 @@ export function installFruitStatusKorean(doc = document, host = window) {
     let stopped = false, scheduled = 0, lastSig = '';
     // 7.0.3 long chats: the 1.5 s timer only rescans when the chat root or an iframe document changed (observers and iframe load report the rest)
     const ids=new WeakMap();let nextId=1;const idOf=o=>{if(!o)return 0;let i=ids.get(o);if(!i)ids.set(o,i=nextId++);return i;};
-    const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of scope.querySelectorAll('iframe')){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
+    // 8.2.2 1.5초 타이머가 #chat 아래 전체를 querySelectorAll('iframe') 로 다시 훑지 않게 — 살아 있는 목록(브라우저가 DOM 바뀔 때만 다시 셈) · 고르는 iframe · 순서는 같아요
+    const frameLists=new WeakMap();const framesOf=scope=>{if(typeof scope.getElementsByTagName!=='function')return scope.querySelectorAll('iframe');let list=frameLists.get(scope);if(!list){list=scope.getElementsByTagName('iframe');frameLists.set(scope,list);}return list;};
+    const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of framesOf(scope)){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
     const schedule = () => { if (!stopped && !scheduled) scheduled = host.requestAnimationFrame(flush); };
     function restoreText(node) {
         const old = texts.get(node);

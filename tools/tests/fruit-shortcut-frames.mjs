@@ -9,4 +9,9 @@ assert.match(src, /const framesOf=scope=>\{if\(typeof scope\.getElementsByTagNam
 assert.match(sig, /for\(const f of framesOf\(scope\)\)/, 'frameSig walks the live list');
 assert.doesNotMatch(sig, /querySelectorAll\('iframe'\)/, 'frameSig never rescans the chat with querySelectorAll');
 assert.match(src, /const frameLists=new WeakMap\(\)/, 'lists are dropped with their scope (a replaced #chat gets a new list)');
-console.log('PASS fruit shortcut timer finds iframes through a cached live list');
+for (const file of ['src/fruit-type-runtime.js', 'src/scripts/fruit-status.js']) {
+    const s = fs.readFileSync(path.join(root, file), 'utf8'), g = s.slice(s.indexOf('const frameSig='), s.indexOf('const frameSig=') + 400);
+    assert.match(s, /const framesOf=scope=>\{if\(typeof scope\.getElementsByTagName!=='function'\)/, file + ' has the cached live list');
+    assert.match(g, /for\(const f of framesOf\(scope\)\)/, file + ' frameSig walks the live list');
+}
+console.log('PASS fruit shortcut · status text · status Korean timers find iframes through a cached live list');
