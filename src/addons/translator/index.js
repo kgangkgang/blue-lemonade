@@ -84,7 +84,9 @@ import { POPUP_TYPE, callGenericPopup } from '../../../../../../popup.js';
 import { SlashCommandParser } from '../../../../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../../../../slash-commands/SlashCommand.js';
 import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../../../../../slash-commands/SlashCommandArgument.js';
-import { ask } from '../../ask.js';   // 7.0.1 테마 확인 창 (기본 confirm 대신)
+import { ask, attachUndo } from '../../ask.js';   // 7.0.1 테마 확인 창 (기본 confirm 대신) · 3.1.6 알림 끝 되돌리기 단추
+import { canResetPrompt, resetButtonState, resetPrompt, undoPromptReset } from './prompt-reset.js';   // 3.1.6 프롬프트 「기본값으로」
+import { DB_QR_LABEL, applyDbQrVisibility, dbQrSets } from './db-tool-qr.js';   // 3.1.6 「입력창에 DB 관리 단추 두기」
 
 const DB_NAME = 'LLMtranslatorDB';
 const STORE_NAME = 'translations';
@@ -196,6 +198,7 @@ const defaultSettings = {
     keep_korean_source: true,    // 2.7.9 한국어로 옮길 때 이미 한국어인 문단 · 대사는 보내지 않고 그대로 (korean-keep.js)
     prompt_cache: true,          // 7.7.2 채팅 번역은 지시문을 앞에 두고 Claude 직접 연결이면 그 앞부분을 캐시 (끄면 예전 요청 그대로)
     hide_delete_button: true,
+    db_tool_qr: true,            // 3.1.6 「DB 관리 도구 준비」가 Quick Reply 에 llm번역DB관리 단추를 둘지 (끄면 숨김 · 캐릭터만 준비)
     use_reverse_proxy: false,
     reverse_proxy_url: '',
     reverse_proxy_password: '',
@@ -559,6 +562,7 @@ function loadSettings() {
     $('#llm_reasoning_translate').prop('checked', extensionSettings.reasoning_translate !== false);   // 2.6.0
     $('#llm_keep_korean').prop('checked', extensionSettings.keep_korean_source !== false);   // 2.7.9
     $('#llm_prompt_cache').prop('checked', extensionSettings.prompt_cache !== false);   // 7.7.2
+    $('#llm_db_tool_qr').prop('checked', extensionSettings.db_tool_qr !== false);   // 3.1.6
 
     // llmContext 설정 로드
     syncContextRangeUI();
@@ -5885,6 +5889,14 @@ function initializeEventHandlers() {
     $('#llm_translator_db_tool_setup_button').off('click').on('click', async function () {
         await prepareQrAndCharacterForDbManagement();
     });
+    // 3.1.6 입력창에 DB 관리 단추 두기 — 끄면 모든 QR 세트의 llm번역DB관리 를 숨기고, 켜면 다시 보이거나(없으면) 새로 만든다. 캐릭터는 그대로
+    $('#llm_db_tool_qr').off('change').on('change', async function () {
+        extensionSettings.db_tool_qr = $(this).is(':checked');
+        saveSettingsDebounced();
+        await syncDbToolQr({ notify: true });
+    });
+    // 다른 기기에서 끈 설정이면 부팅 때도 숨긴다 (Quick Reply 확장이 늦게 뜰 수 있어 두 번). 켜져 있으면 부팅 때는 손대지 않는다 — 사용자가 QR 창에서 직접 숨긴 것도 그대로
+    for (const wait of [3000, 15000]) setTimeout(() => { if (extensionSettings.db_tool_qr === false) syncDbToolQr({ notify: false, create: false }); }, wait);
 
     // 핵심 버튼 이벤트 핸들러 (공식 스크립트 스타일)
     $('#llm_translate_chat').on('click', onTranslateChatClick);
@@ -7756,6 +7768,27 @@ async function ensureCharacterExists(characterName, firstMessage) {
 // 2026-10-06: 준비 중에 버튼을 또 누르면 진행 중인 준비를 같이 기다린다 — 전엔 캐릭터 가져오기가 끝나기 전 두 번째 누름이
 //             또 가져와 'llm번역DB백업용' 캐릭터가 둘 생기고 /go 가 어느 쪽으로 갈지 몰랐다
 let dbToolSetupJob = null;
+// 3.1.6 설정(db_tool_qr)에 맞춰 llm번역DB관리 QR 을 숨기거나 보인다. create: 켰는데 어느 세트에도 없으면 「DB 관리 도구 준비」처럼 첫 활성 전역 세트에 만든다
+async function syncDbToolQr({ notify = false, create = true } = {}) {
+    const api = window.quickReplyApi;
+    if (!api) { if (notify && window.toastr) toastr.warning('Quick Reply 확장을 찾지 못해 입력창 단추는 그대로예요. 확장 → Quick Reply 를 켜 주세요.'); return null; }
+    const on = extensionSettings.db_tool_qr !== false;
+    const result = applyDbQrVisibility(api, on, DB_QR_LABEL);
+    if (on && !result.found) {
+        if (!create) return result;
+        if (dbToolSetupJob) await dbToolSetupJob.catch(() => { });
+        if (dbQrSets(api, DB_QR_LABEL).length) return result;   // 기다린 준비가 이미 만들었다
+        await prepareQrAndCharacterForDbManagement();
+        return result;
+    }
+    if (notify && window.toastr) {
+        if (result.failed) toastr.error(`입력창 DB 관리 단추를 ${on ? '보이지' : '숨기지'} 못한 세트가 ${result.failed}개 있어요.`);
+        else if (on) toastr.success('입력창에 DB 관리 단추를 다시 보여요.');
+        else if (result.found) toastr.success(`입력창의 DB 관리 단추를 ${result.deleted ? '지웠어요' : '숨겼어요'}. 캐릭터 llm번역DB백업용 은 그대로예요.`);
+        else toastr.info('입력창 DB 관리 단추를 꺼 두었어요. 「DB 관리 도구 준비」를 눌러도 단추는 만들지 않아요.');
+    }
+    return result;
+}
 async function prepareQrAndCharacterForDbManagement() {
     if (dbToolSetupJob) return dbToolSetupJob;
     dbToolSetupJob = prepareDbToolOnce().finally(() => { dbToolSetupJob = null; });
@@ -7793,6 +7826,15 @@ async function prepareDbToolOnce() {
     `.trim();
 
     try {
+        // 3.1.6 「입력창에 DB 관리 단추 두기」를 껐으면 QR 은 만들지 않고(있으면 숨김) 캐릭터만 준비한다
+        if (extensionSettings.db_tool_qr === false) {
+            if (window.quickReplyApi) applyDbQrVisibility(window.quickReplyApi, false, qrLabel);
+            const hadChar = doesCharacterExist(targetCharName);
+            const charOnly = await ensureCharacterExists(targetCharName, targetCharFirstMessage);
+            if (!charOnly) { if (window.toastr) toastr.error(`DB 관리 기능 설정 실패: 캐릭터 '${targetCharName}' 준비에 실패했습니다.`); return; }
+            if (window.toastr) toastr.info(`캐릭터 '${targetCharName}'${hadChar ? '은 이미 준비돼 있어요' : '을 준비했어요'}. 「입력창에 DB 관리 단추 두기」가 꺼져 있어서 입력창 단추는 만들지 않았어요.`);
+            return;
+        }
         const activeQrSetName = getFirstActiveGlobalQuickReplySetName();
         if (!activeQrSetName) {
             if (window.toastr) toastr.error("활성화된 전역 QR 세트를 찾을 수 없습니다. QR 관련 작업을 진행할 수 없습니다.");
@@ -8903,6 +8945,14 @@ class PromptManager {
             this.deleteSelectedPrompt();
         });
 
+        // 3.1.6 기본 프롬프트 「기본값으로」 · 편집 칸 글이 바뀌면 단추 켜짐 다시 계산
+        $(document).off('click', '#llm_prompt_reset_button').on('click', '#llm_prompt_reset_button', () => {
+            this.resetSelectedPrompt();
+        });
+        $(document).off('input', '#llm_prompt_editor').on('input', '#llm_prompt_editor', () => {
+            this.updatePromptButtons();
+        });
+
         // 프롬프트 선택 이벤트 리스너 (번역용 + 편집기 로드)
         $(document).off('change', '#prompt_select').on('change', '#prompt_select', () => {
             const promptSelect = document.getElementById('prompt_select');
@@ -9018,6 +9068,45 @@ class PromptManager {
                 promptEditor.value = '';
             }
         }
+        this.updatePromptButtons();
+    }
+
+    // 3.1.6 기본 프롬프트를 고르면 「기본값으로」(지우기 자리), 사용자 정의 프롬프트면 「지우기」 — 단추 수는 셋 그대로라 위 「설정 프리셋」 줄과 칸이 맞는다.
+    //       지금 값(저장값 · 편집 칸)이 기본값과 같으면 「기본값으로」는 꺼짐. 숨김은 줄 규칙(display !important)을 이기도록 style 에 important 로
+    updatePromptButtons() {
+        const key = document.getElementById('prompt_select')?.value;
+        const editor = document.getElementById('llm_prompt_editor');
+        const resetBtn = document.getElementById('llm_prompt_reset_button');
+        const deleteBtn = document.getElementById('deletePromptBtn');
+        const isCustom = this.customPrompts.some(p => p.id === key);
+        const state = resetButtonState(key, { settings: extensionSettings, defaults: defaultSettings, editorText: editor?.value, isCustom });
+        const show = (el, visible) => {
+            if (!el) return;
+            el.hidden = !visible;
+            if (visible) el.style.removeProperty('display'); else el.style.setProperty('display', 'none', 'important');
+        };
+        show(resetBtn, state.visible);
+        show(deleteBtn, !state.visible);
+        if (resetBtn) { resetBtn.disabled = !state.enabled; resetBtn.setAttribute('aria-disabled', String(!state.enabled)); }
+    }
+
+    async resetSelectedPrompt() {
+        const select = document.getElementById('prompt_select');
+        const key = select?.value;
+        if (!canResetPrompt(key, defaultSettings) || this.customPrompts.some(p => p.id === key)) return;
+        const name = (select.selectedOptions?.[0]?.textContent || '이 프롬프트').replace(/^⚙️\s*/, '').trim();
+        if (!await ask(`「${name}」을 처음 기본값으로 되돌릴까요?\n지금 내용은 알림의 되돌리기 단추로 한 번 살릴 수 있어요.`, { ok: '기본값으로', cancel: '취소' })) return;
+        const undo = resetPrompt(extensionSettings, key, defaultSettings);
+        if (!undo) { this.loadPromptToEditor(); return; }
+        saveSettingsDebounced();
+        this.loadPromptToEditor();
+        const toast = toastr.success(`「${name}」을 기본값으로 되돌렸어요.`, '', { timeOut: 8000, extendedTimeOut: 6000 });
+        attachUndo(toast, () => {
+            if (!undoPromptReset(extensionSettings, undo, defaultSettings)) { toastr.info('그 사이 프롬프트를 다시 고쳐서 되돌리지 않았어요.'); return; }
+            saveSettingsDebounced();
+            if (document.getElementById('prompt_select')?.value === key) this.loadPromptToEditor();
+            toastr.info(`「${name}」을 되돌리기 전 내용으로 다시 돌려놨어요.`);
+        }, { label: '되돌리기 취소' });
     }
 
     async showAddPromptDialog() {
@@ -9136,6 +9225,7 @@ class PromptManager {
             if (promptKey && promptKey in extensionSettings) {
                 extensionSettings[promptKey] = newContent;
                 saveSettingsDebounced();
+                this.updatePromptButtons();   // 3.1.6
                 toastr.success('프롬프트가 저장되었습니다.');
             }
         }

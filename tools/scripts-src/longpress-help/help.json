@@ -4482,6 +4482,32 @@
       "texts": [],
       "scope": ".lv-bar",
       "evidence": "src/addons/tts/src/player.js:3336-3337, 3374-3376, 3433-3445, 3455-3478"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "번역 설정 › 프롬프트",
+      "title": "프롬프트 기본값으로 되돌리기",
+      "text": "고른 기본 프롬프트(채팅 번역 · 재번역 · 입력 · 보내기 번역 · 프리필)를 처음 기본값으로 되돌려요. 확인 창이 뜨고, 되돌린 뒤 알림의 되돌리기 단추로 전 내용을 한 번 다시 살릴 수 있어요. 지금 내용이 기본값과 같으면 꺼져 있고, 직접 추가한 프롬프트를 고르면 이 자리에 지우기 단추가 보여요.",
+      "ids": [
+        "llm_prompt_reset_button"
+      ],
+      "classes": [],
+      "texts": [],
+      "scope": "",
+      "evidence": "src/addons/translator/index.html (llm_prompt_reset_button); src/addons/translator/prompt-reset.js; src/addons/translator/index.js (resetSelectedPrompt · updatePromptButtons)"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "번역 설정 › 번역 DB",
+      "title": "입력창에 DB 관리 단추 두기",
+      "text": "켜 두면 「DB 관리 도구 준비」가 Quick Reply 세트에 llm번역DB관리 단추를 만들어요. 끄면 그 단추를 모든 Quick Reply 세트에서 숨기고, 준비 단추는 캐릭터만 준비해요. 다시 켜면 숨긴 단추가 돌아오고, 없으면 새로 만들어요. 기본은 켜져 있어요.",
+      "ids": [
+        "llm_db_tool_qr"
+      ],
+      "classes": [],
+      "texts": [],
+      "scope": "",
+      "evidence": "src/addons/translator/index.html (llm_db_tool_qr); src/addons/translator/db-tool-qr.js; src/addons/translator/index.js (syncDbToolQr · prepareDbToolOnce)"
     }
   ],
   "excluded": [

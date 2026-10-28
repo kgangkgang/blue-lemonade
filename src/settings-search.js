@@ -105,6 +105,8 @@ rows.push(['extensions','words','단어 치환','단어 바꾸기 조사 규칙 
  ['extensions','direction','전개 지시','전개 지시 감독 이야기 다음 장면 깃털 프롬프트 깊이'],
  ['extensions','assets','캐릭터 에셋','이미지 그림 사진 에셋 프리셋 업로드 묶음 캐릭터'],
  ['extensions','translator','LLM 번역','번역 LLM 단독 확장 탭 표시 숨기기 용어집 선택 번역'],
+ ['extensions','translator','번역 프롬프트 기본값으로 되돌리기','번역 프롬프트 기본값 기본 값 초기화 처음 값 원래대로 되돌리기 복구 채팅 번역 재번역 교정 지침교정 문단 수 맞추기 입력 번역 보내기 번역 프리필'],
+ ['extensions','translator','입력창에 DB 관리 단추 두기','번역 DB 관리 단추 llm번역DB관리 퀵 리플라이 퀵리플라이 Quick Reply QR 입력창 숨기기 없애기 끄기 지우기 DB 관리 도구 준비'],
  ['extensions','bookmarks','북마크','북마크 책갈피 즐겨찾기 메시지 표시 메모 모아 보기 찾기 이동 앞뒤 문맥 다른 채팅'],
  ['extensions','models','모델 전환','번역 다시 쓰기 모델 한번에 바꾸기 중계 공식 API 조합 저장 주소 잠금 공급자 전환'],
  ['extensions','perf','프롬프트 연동 정규식','정규식 프롬프트 연동 모듈 모멘텀 엔진 상태창 선택지 끄기 켜기 자동 스트리밍 가볍게 데우스 regex'],
