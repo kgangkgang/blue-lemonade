@@ -179,6 +179,10 @@ html body .bl-addon-credit-all:focus-visible { outline:2px solid var(--salty-acc
      칸마다 스크롤바 없는 작은 스크롤이 생겨 「화면이 잘리고 하얀 여백 · 끌 수 없음」(10-28 제보, PC · 태블릿 · 가로 폰) */
   .bl-extension-page > .bl-addon-group > .bl-addon-embedded-layout { flex:none; grid-template-rows:auto auto; }
   .bl-extension-page > .bl-addon-group > .bl-addon-embedded-layout > :is(.bl-addon-main, .bl-addon-config) { overflow:visible; }
+  /* 10-28 제보(전체 화면에서 왼쪽 칸이 통째로 빔): 묶음 하나가 굴러가니 오른쪽 세부 설정이 긴 도구(정규식 연동의 모듈 목록)를 내려 보면
+     왼쪽 칸은 위로 지나가 버려 빈 칸만 남았다 → 왼쪽 칸(도구 머리 · 실행·설정 · 표시할 위치)은 자기 도구가 끝날 때까지 묶음 위에 붙어 있다.
+     왼쪽이 묶음 칸보다 길면 src/addon-layout.js 가 top 을 음수(칸 높이 − 왼쪽 키)로 줘서 바닥까지 다 본 뒤에 붙는다 */
+  .bl-extension-page > .bl-addon-group > .bl-addon-embedded-layout > .bl-addon-main { position:sticky; top:var(--bl-main-stick, 0px); align-self:start; }
   .bl-addon-embedded-layout > .bl-addon-credit { grid-column:1/-1; align-self:end; margin-top:0; }
   .bl-addon-inline { display:flex; }
   /* 오른쪽에 세부 설정이 끼워져 있으니 「세부 설정」 단추는 숨김 — 7.8.0 단추 묶음 규칙(84-button-groups, display:inline-flex !important ·

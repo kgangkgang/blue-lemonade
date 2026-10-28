@@ -4,7 +4,7 @@ export const FILE_HASHES = {
   "index.js": "24469:9ef24166:72174af5",
   "manifest.json": "365:5af1125e:e8e513e6",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
-  "src/addon-layout.js": "1713:efaa71c2:629895f0",
+  "src/addon-layout.js": "2768:fc762257:da2db162",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
   "src/addon-versions.js": "2737:ae6041ef:3cc0d3dc",
   "src/addons.js": "34105:21b9d22d:908e9e00",
@@ -597,7 +597,7 @@ export const FILE_HASHES = {
   "src/numcomma.js": "31859:4b995003:bdec99e6",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
   "src/palettes.js": "33830:51637840:34a73a09",
-  "src/panel.js": "261848:703d4c1d:70017e24",
+  "src/panel.js": "262348:aeaac91c:759c458e",
   "src/people.js": "9021:76aa8129:14633595",
   "src/popup-guard.js": "4755:d66dd15c:5ae13a66",
   "src/popup-marks.js": "1818:0af84657:5805cf62",
@@ -741,5 +741,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1828567:0cb5c0d3:915e99c2"
+  "style.css": "1831876:fcb2a63a:e4714aa7"
 };

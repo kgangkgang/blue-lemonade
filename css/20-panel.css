@@ -1368,8 +1368,10 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel.bl-editor .salty-row:has(> .salty-switch) { flex-wrap: nowrap; }
 .salty-panel .salty-row > span:where(.salty-row > *):is(.salty-switch, .salty-switch ~ *, :has(~ .salty-switch)) { flex: 1 1 auto; min-width: 0; } /* 8.0.5: :has 를 고를 칸 쪽으로(뜻 · 특이도 같음) — 아래 css/99-lazy-panel.css 머리 설명 */
 .salty-panel .salty-row > .salty-switch { flex: none; }
-.salty-panel .bl-tool-chevron { display: inline-grid; place-items: center; width: 14px; height: 14px; font-size: 0; line-height: 1; }
-.salty-panel .bl-tool-chevron::before { content: "\f078"; font: 900 11px/1 "Font Awesome 6 Free"; }
+/* 10-28 제보(묶음 머리 오른쪽 화살표 두 개): 글자 ⌄ 는 font-size 0 으로만 숨겨 왔다 — 최소 글꼴 크기 · 사용자 CSS 처럼 0 을 지키지 않는 환경에서는
+   글자가 격자 둘째 줄(아이콘 ::before 아래)에 작은 ˅ 로 나타났다. 칸은 14×14 한 칸(아이콘은 그 칸 가운데), 둘째 줄은 칸 밖(한 칸 띄운 0 높이 줄) · 위 맞춤 · 넘침 숨김이라 글자 크기와 상관없이 아이콘 하나만 보인다 */
+.salty-panel .bl-tool-chevron { display: inline-grid; place-items: start center; width: 14px; height: 14px; font-size: 0; line-height: 1; grid-template: 14px / 14px; grid-auto-rows: 0; row-gap: 14px; overflow: hidden; }
+.salty-panel .bl-tool-chevron::before { content: "\f078"; font: 900 11px/1 "Font Awesome 6 Free"; align-self: center; }
 /* PC 설정 창 오른쪽에 끼운 애드온 설정(.bl-addon-inline-content)
    · 테마 칸 규칙(02-controls)이 .salty-panel 안을 빼서 칸이 실리태번 기본 26px 이었다 → 확장 서랍과 같은 36 · 안쪽 12
    · 「확장 탭에 보이기」 줄(headswitch)은 확장 서랍 · 에셋 창에만 모양이 있어 맨 단추(16×8)로 보였다 → 서랍과 같은 34×20 스위치 */

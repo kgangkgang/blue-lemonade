@@ -38,3 +38,25 @@ html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list,
 html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-card { flex-shrink: 0; }
 html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-card { gap: 0 8px; min-height: 0; padding: 0 10px; }
 html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list small { padding: 0 6px; font-size: 12px; line-height: 1.5; }
+/* 10-28 제보(확장만 모드 설정 창): 「별 두 개 메뉴」 옆 ? 가 선 있는 원으로 글자에 붙었다 — ? 하나 규격(H3, css/76-help-button.css)이 body.salty 에만 걸려서.
+   테마 자신의 설정 창(.salty-panel) 안 ? 는 테마가 꺼져도 같은 H3: 평평한 면 원 1.3em(선 없음) · 제목 글자 끝에서 0.35em · 아이콘 fa-question 0.75em · 보조 글자색.
+   면은 테마가 켜졌을 때의 --bl-control, 꺼졌을 때는 이 창 단추와 같은 면(.salty-btn 의 --salty-fill-shade → --shade) */
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel :is(.bl-help-btn, .bl-word-help) {
+  box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; flex: 0 0 auto !important;
+  width: 1.3em !important; height: 1.3em !important; min-width: 1.3em !important; min-height: 1.3em !important;
+  margin: 0 0 0 clamp(5px, 0.35em, 6.8px) !important; vertical-align: middle !important; padding: 0 !important; border: 0 !important; border-radius: 50% !important;
+  background: var(--bl-control, var(--salty-fill-shade, var(--shade))) !important; color: var(--salty-muted) !important; box-shadow: none !important; opacity: 1 !important;
+  font-size: inherit !important; line-height: 1 !important; cursor: pointer; position: relative; align-self: center; transform: translateY(-1.5px);
+}
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel :is(.bl-help-btn, .bl-word-help) > i { font-size: 0.75em !important; line-height: 1 !important; display: block !important; color: inherit !important; }
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel :is(.bl-help-btn, .bl-word-help) > i::before { content: "\f128" !important; }
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel :is(.bl-help-btn, .bl-word-help) > span { display: none !important; }
+@media (hover: hover) {
+  html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel :is(.bl-help-btn, .bl-word-help):hover { background: var(--bl-control-hover, var(--salty-shade-2, var(--shade))) !important; color: var(--salty-text) !important; }
+}
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel :is(.bl-help-btn, .bl-word-help):is([aria-expanded="true"], :active) { background: var(--bl-control-hover, var(--salty-shade-2, var(--shade))) !important; color: var(--salty-text) !important; }
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel :is(.bl-help-btn, .bl-word-help):focus-visible { outline: 2px solid var(--salty-accent) !important; outline-offset: 2px !important; }
+/* 10-28 같은 제보: 확장만 모드 설정 창이 이제 창 크기 안에서 굴러가니(data-bl-popup="settings") 실리태번 기본 스크롤바가 창 오른쪽에 드러났다 —
+   테마가 켜졌을 때(css/77-scrollbars.css)처럼 설정 창 안 스크롤바는 숨기고 굴리기는 그대로 */
+html body:not(.salty) dialog.popup[data-bl-popup~="settings"] :is(.popup-body, .popup-content, .salty-panel, .salty-panel *) { scrollbar-width: none; }
+html body:not(.salty) dialog.popup[data-bl-popup~="settings"] :is(.popup-body, .popup-content, .salty-panel, .salty-panel *)::-webkit-scrollbar { display: none; }

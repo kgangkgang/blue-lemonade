@@ -11,6 +11,7 @@ import { listMenuButtons, PIN_LIMIT } from './mes-pins.js';
 import {updateMarkup,bindThemeUpdate} from './theme-update.js';
 import { hasUpdate, latestVersion, openUpdate, checkForUpdate, clearUpdate } from './update-check.js';   // 5.7.0 새 버전 알림
 import { bindAddonLayout } from './addon-layout.js';
+import { markPopup } from './popup-marks.js';
 import { typesetRoot } from './typography.js';
 import { addonMarkup, bindAddons, syncRegexlinkFlag, syncAddonIcons } from './addons.js';
 import { wordToolsMarkup, bindWordTools } from './word-tools.js';
@@ -347,6 +348,9 @@ export function setPanelFullscreen(root, enabled) {
     if (!dialog) return;
     root._fullscreen = !!enabled;
     dialog.classList.add('bl-settings-dialog');
+    // 10-28 제보(확장만 모드): 팝업 표시(data-bl-popup) 관찰자는 테마가 켜졌을 때만 돌아(icon-text.js) 이 창에 「settings」 표시가 안 붙었다 →
+    // 창 크기 · 전체 화면 규칙(css/46 · 47)이 안 맞아 실리태번 기본 팝업(내용만큼 길어져 머리줄 · 닫기가 화면 밖)으로 떴다. 창을 열 때 · 전체 화면을 바꿀 때 직접 붙인다
+    markPopup(dialog);
     dialog.classList.toggle('bl-settings-fullscreen', root._fullscreen);
     const button = root.querySelector('[data-act="panel-fullscreen"]');
     if (button) { button.textContent = enabled ? '작은 창' : '전체 화면'; button.setAttribute('aria-pressed', String(root._fullscreen)); }
@@ -362,7 +366,7 @@ export function unmountPanel(root) {
     root._healthCleanup?.();
     root._updateCleanup?.(); root._updateCleanup=null;
     root._previewCleanup?.();
-    for (const key of ['_fontIO', '_rowsRO']) { root[key]?.disconnect(); root[key] = null; }
+    for (const key of ['_fontIO', '_rowsRO', '_mainStickRO']) { root[key]?.disconnect(); root[key] = null; }
     root.remove(); panels.delete(root); root._pv = {}; root._previewViews?.clear();
     const settings = getSettings(); syncDecor(settings); syncProfileClip(settings);
 }

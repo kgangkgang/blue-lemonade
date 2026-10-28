@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 6aded9345f4a) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 20a43b41fef8) */
 /* css/00-base.css */
 :root{--bl-release:"8.1.6";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -14135,8 +14135,8 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel.bl-editor .salty-row:has(> .salty-switch) { flex-wrap: nowrap; }
 .salty-panel .salty-row > span:where(.salty-row > *):is(.salty-switch, .salty-switch ~ *, :has(~ .salty-switch)) { flex: 1 1 auto; min-width: 0; }
 .salty-panel .salty-row > .salty-switch { flex: none; }
-.salty-panel .bl-tool-chevron { display: inline-grid; place-items: center; width: 14px; height: 14px; font-size: 0; line-height: 1; }
-.salty-panel .bl-tool-chevron::before { content: "\f078"; font: 900 11px/1 "Font Awesome 6 Free"; }
+.salty-panel .bl-tool-chevron { display: inline-grid; place-items: start center; width: 14px; height: 14px; font-size: 0; line-height: 1; grid-template: 14px / 14px; grid-auto-rows: 0; row-gap: 14px; overflow: hidden; }
+.salty-panel .bl-tool-chevron::before { content: "\f078"; font: 900 11px/1 "Font Awesome 6 Free"; align-self: center; }
 .salty-panel .bl-addon-inline-content .text_pole:is(bl-s, *):not(textarea, .neo-range-input),
 .salty-panel .bl-addon-inline-content select:is(.bl-s, *):not(textarea, .neo-range-input),
 .salty-panel .bl-addon-inline-content input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"]):not(textarea, .neo-range-input) { min-height: var(--bl-h-ctl, 36px); }
@@ -21761,6 +21761,7 @@ html body .bl-addon-credit-all:focus-visible { outline:2px solid var(--salty-acc
   .bl-extension-page > .bl-addon-group > .bl-addon-embedded-layout { flex:none; grid-template-rows:auto auto; }
   .bl-extension-page > .bl-addon-group > .bl-addon-embedded-layout > .bl-addon-main,
 .bl-extension-page > .bl-addon-group > .bl-addon-embedded-layout > .bl-addon-config { overflow:visible; }
+  .bl-extension-page > .bl-addon-group > .bl-addon-embedded-layout > .bl-addon-main { position:sticky; top:var(--bl-main-stick, 0px); align-self:start; }
   .bl-addon-embedded-layout > .bl-addon-credit { grid-column:1/-1; align-self:end; margin-top:0; }
   .bl-addon-inline { display:flex; }
   .bl-addon-mobile-open,
@@ -27228,6 +27229,33 @@ html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list,
 html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-card { flex-shrink: 0; }
 html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list .pt-card { gap: 0 8px; min-height: 0; padding: 0 10px; }
 html body:not(.salty) #pt-panel #pt-page-localization .pt-localization-list small { padding: 0 6px; font-size: 12px; line-height: 1.5; }
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel .bl-help-btn,
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel .bl-word-help {
+  box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; flex: 0 0 auto !important;
+  width: 1.3em !important; height: 1.3em !important; min-width: 1.3em !important; min-height: 1.3em !important;
+  margin: 0 0 0 clamp(5px, 0.35em, 6.8px) !important; vertical-align: middle !important; padding: 0 !important; border: 0 !important; border-radius: 50% !important;
+  background: var(--bl-control, var(--salty-fill-shade, var(--shade))) !important; color: var(--salty-muted) !important; box-shadow: none !important; opacity: 1 !important;
+  font-size: inherit !important; line-height: 1 !important; cursor: pointer; position: relative; align-self: center; transform: translateY(-1.5px);
+}
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel :is(.bl-help-btn, .bl-word-help) > i { font-size: 0.75em !important; line-height: 1 !important; display: block !important; color: inherit !important; }
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel :is(.bl-help-btn, .bl-word-help) > i::before { content: "\f128" !important; }
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel :is(.bl-help-btn, .bl-word-help) > span { display: none !important; }
+@media (hover: hover) {
+  html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel .bl-help-btn:hover,
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel .bl-word-help:hover { background: var(--bl-control-hover, var(--salty-shade-2, var(--shade))) !important; color: var(--salty-text) !important; }
+}
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel .bl-help-btn:is([aria-expanded="true"], :active),
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel .bl-word-help:is([aria-expanded="true"], :active) { background: var(--bl-control-hover, var(--salty-shade-2, var(--shade))) !important; color: var(--salty-text) !important; }
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel .bl-help-btn:focus-visible,
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel .bl-word-help:focus-visible { outline: 2px solid var(--salty-accent) !important; outline-offset: 2px !important; }
+html body:not(.salty) dialog.popup[data-bl-popup~="settings"] .popup-body,
+html body:not(.salty) dialog.popup[data-bl-popup~="settings"] .popup-content,
+html body:not(.salty) dialog.popup[data-bl-popup~="settings"] .salty-panel,
+html body:not(.salty) dialog.popup[data-bl-popup~="settings"] :is(.salty-panel *) { scrollbar-width: none; }
+html body:not(.salty) dialog.popup[data-bl-popup~="settings"] .popup-body::-webkit-scrollbar,
+html body:not(.salty) dialog.popup[data-bl-popup~="settings"] .popup-content::-webkit-scrollbar,
+html body:not(.salty) dialog.popup[data-bl-popup~="settings"] .salty-panel::-webkit-scrollbar,
+html body:not(.salty) dialog.popup[data-bl-popup~="settings"] :is(.salty-panel *)::-webkit-scrollbar { display: none; }
 /* css/89-form-metrics.css */
 :where(.salty-panel),
 :where(.bl-ft-dialog),
