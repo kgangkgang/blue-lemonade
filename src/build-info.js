@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "8.1.1";
+export const BUILD_VERSION = "8.1.2";
 export const FILE_HASHES = {
   "index.js": "24151:babbbec4:032b552d",
-  "manifest.json": "365:5c2bef53:3228abeb",
+  "manifest.json": "365:38b73faa:833b940a",
   "src/addon-files-check.js": "4683:43c61ec6:6ba1fcb5",
   "src/addon-layout.js": "1713:efaa71c2:629895f0",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -587,7 +587,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "364564:38bccb36:fd25b740",
+  "src/notice-data.js": "366369:15d162f0:aa6f7c0c",
   "src/notice.js": "7015:67a9b734:b55e9315",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/num-width.js": "3476:eb9197b8:21327eac",
@@ -738,5 +738,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1821629:b7fc1885:3ddae3da"
+  "style.css": "1821629:838824b8:bbb6cc06"
 };
