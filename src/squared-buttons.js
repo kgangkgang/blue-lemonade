@@ -48,7 +48,14 @@ const alpha = color => {
 //   메시지 300개의 .mes_button(실리태번이 tabindex 를 달아 후보가 됨) 수천 개가 저마다 closest(SKIP_AREA) 로 조상을 오르던 것.
 //   판정은 같다: 뿌리 자신 · 뿌리의 조상이 구역이면 scan 이 뿌리째 건너뛰고, 뿌리 아래 구역은 areas 가 품는지로 본다.
 //   (contains 가 없는 가짜 문서(시험)에서는 예전처럼 closest 로)
-const inArea = (el, areas) => (areas && typeof el.contains === 'function' ? areas.some(a => a.contains(el)) : !!el.closest(SKIP_AREA));
+// 10-28: 구역은 Set 으로 들고, 후보에서 조상으로 오르며 구역인지 본다 — 예전에는 후보마다 구역 전부(메시지 300개면 .mes_buttons 300여 개)에
+//   contains 를 물어 body 를 훑을 때 후보 수천 × 구역 수백 번이었다(긴 채팅 · 폰 4배에서 설정 슬라이더 한 걸음마다 약 0.7초). 판정은 같다(구역 자신 · 그 안 = 참).
+export const inArea = (el, areas) => {
+    if (!areas || typeof el.contains !== 'function') return !!el.closest(SKIP_AREA);
+    if (!areas.size) return false;
+    for (let p = el; p; p = p.parentElement) if (areas.has(p)) return true;
+    return false;
+};
 function cheapSkip(el, view, areas = null) {
     if (!(el instanceof view.HTMLElement) || el.hasAttribute(ATTR)) return true;
     if (el.matches('input,select,textarea,img,svg') || inArea(el, areas)) return true;
@@ -105,7 +112,7 @@ export function watchSquaredButtons(doc, host) {
     const seen = new Map();
     const remember = el => { if (seen.size >= SEEN_MAX) seen.clear(); seen.set(shapeKey(el), true); };
     // 뿌리 아래 건너뛸 구역 — 뿌리 자신(또는 조상)이 구역이면 null(뿌리째 건너뜀)
-    const areasOf = root => (root.closest?.(SKIP_AREA) ? null : [...(root.querySelectorAll?.(SKIP_AREA) || [])]);
+    const areasOf = root => (root.closest?.(SKIP_AREA) ? null : new Set(root.querySelectorAll?.(SKIP_AREA) || []));
     const restamp = el => {
         if (!seen.size) return;
         const areas = areasOf(el); if (!areas) return;
