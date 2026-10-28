@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.1.2/blue-lemonade-8.1.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.1.3/blue-lemonade-8.1.3.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.1.2 · 최신 업데이트</summary>
+<summary>8.1.3 · 최신 업데이트</summary>
+
+- 폰에서도 고르기 목록이 누른 칸 바로 아래에 떠요. 아래 공간이 모자라면 칸 위에 뜨고, 칸 폭에 맞춰 화면 끝 안쪽에 머물며, 항목이 많으면 목록 안에서 굴러가요. 목록 모양은 8.1.0 에서 바꾼 그대로예요.
+
+</details>
+
+<details>
+<summary>8.1.2 · 상태창 글자 2열 · 채팅 꾸밈 한 번만</summary>
 
 - 상태창 글자 설정 맨 위의 「정보 배치」와 「하단 반복 문구」도 2열로 나란히 놓았어요. 하단 문구는 스위치 대신 「보임 | 숨김」 두 칸 고르기라 옆 고르기와 높이 · 모양이 같아요. 예전에 숨김으로 켜 둔 설정은 그대로 「숨김」으로 보여요.
 - 채팅 그리기가 가벼워졌어요. 프리셋 정규식이 메시지마다 똑같은 꾸밈(<style>)을 넣으면 실리태번이 그릴 때마다 그 CSS 를 처음부터 다시 해석했는데, 이제 같은 꾸밈은 한 번만 해석해 화면에 한 벌만 두고 메시지 안에는 작은 표시만 남겨요. 저장된 대화 글과 보이는 모양은 그대로예요. 시험 환경에서 100턴 채팅 그리기가 과일 계열 표본 약 9.8초 → 1.1초, 데우스 표본 약 29초 → 3.5초로 줄었고, 폰처럼 느리게 맞추면 각각 약 52초 → 7초, 139초 → 22초였어요. 기기 · 프리셋 · 대화 길이에 따라 체감은 달라요.
