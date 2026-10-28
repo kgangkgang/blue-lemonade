@@ -16,7 +16,7 @@ const rows = [
  ['extensions','mermaid','Mermaid 도표','머메이드 다이어그램 순서도 관계도 그래프 flowchart sequence diagram'],
  ['extensions','prompt-template','프롬프트 템플릿','EJS 템플릿 프롬프트 카드 월드 인포 변수 조건 반복 시뮬 설치 업데이트 삭제 ST-Prompt-Template zonde306'],
  ['extensions','customstyle','커스텀 CSS 조절','IceFog 색 변수 슬라이더 입력 커스텀 스타일'],
- ['chat','profile','프로필 여러 개','아바타 사진 여러 장 랜덤 고정 핀 코스튬 캐릭터 선택창 채팅방 열 때마다 하루에 한 번', '', 'multiAvatar.on'],
+ ['chat','profile','프로필 여러 개','아바타 사진 여러 장 랜덤 고정 핀 코스튬 캐릭터 선택창 답변마다 메시지마다 채팅방 열 때마다 하루에 한 번', '', 'multiAvatar.on'],
  ['chat','profile','적용 시점','프로필 여러 개 랜덤 바뀌는 때 채팅방 열 때마다 캐릭터 목록 열 때마다 하루에 한 번 끔', '', 'multiAvatar.when'],
  ['chat','profile','원본 카드 그림도 섞기','프로필 여러 개 원본 카드 랜덤 후보 섞기', '', 'multiAvatar.includeCard'],
  ['theme','backup','최근 꾸미기 복구함','이전 모습 기록 복구 새로고침 스타일 프리셋 보관'],

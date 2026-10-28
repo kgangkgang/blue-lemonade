@@ -72,6 +72,34 @@ await test('하루에 한 번(daily): 같은 날 같은 그림, 날이 바뀌면
     session.set('Arin.png', F[2]);
     assert.equal(session.get(settings({ when: 'daily' }), 'Arin.png'), a, 'daily 는 세션 기억보다 날짜 규칙');
 });
+await test('8.1.3 답변마다(message): 같은 답변은 늘 같은 그림 · 답변마다 바뀜 · 앞 답변 피함 · 스와이프하면 새로 · 고정 우선', () => {
+    const { chooseForMessage, messageSeed, WHEN, WHEN_LABEL } = P;
+    assert.ok(WHEN.includes('message') && WHEN_LABEL.message === '답변마다');
+    const msg = (i, swipe = 0) => ({ send_date: `2026-10-28 09:${String(i).padStart(2, '0')}`, swipe_id: swipe });
+    const seed = (i, swipe = 0) => messageSeed('Arin.png', 'chat-1', i, msg(i, swipe));
+    const pick = (i, swipe = 0) => chooseForMessage(rec(), { seed: seed(i, swipe), prevSeed: i > 0 ? seed(i - 1) : null });
+    for (let i = 0; i < 10; i++) assert.equal(pick(i), pick(i), '같은 답변 → 같은 그림(다시 그려도 · 새로고침해도)');
+    const picks = Array.from({ length: 40 }, (_, i) => pick(i));
+    assert.ok(new Set(picks).size > 2, '답변이 쌓이면 여러 그림이 나옴');
+    for (let i = 1; i < 40; i++) {
+        const raw = chooseForMessage(rec(), { seed: seed(i - 1) });
+        assert.notEqual(pick(i), raw, `답변 ${i}: 바로 앞 답변 그림과 다름`);
+    }
+    const swipes = new Set(Array.from({ length: 12 }, (_, k) => pick(5, k)));
+    assert.ok(swipes.size > 1, '스와이프 번호가 바뀌면 다른 그림도 나옴');
+    assert.notEqual(messageSeed('Arin.png', 'chat-1', 3, msg(3)), messageSeed('Arin.png', 'chat-2', 3, msg(3)), '채팅이 다르면 열쇠도 다름');
+    assert.equal(chooseForMessage(rec(F, F[1]), { seed: seed(2) }), F[1], '고정이 먼저');
+    assert.equal(chooseForMessage(rec(F, CARD), { seed: seed(2) }), CARD);
+    assert.equal(chooseForMessage(rec(), { on: false, seed: seed(2) }), CARD, '끔 → 원본');
+    assert.equal(chooseForMessage(null, { seed: seed(2) }), CARD, '등록 없음 → 원본');
+    assert.equal(chooseForMessage(rec([F[0]]), { includeCard: false, seed: seed(1), prevSeed: seed(0) }), F[0], '후보 1장이면 그대로');
+    assert.ok(Array.from({ length: 30 }, (_, i) => chooseForMessage(rec(), { includeCard: false, seed: seed(i) })).every(x => F.includes(x)), '원본 섞기 끔이면 등록 사진만');
+    const s = settings({ when: 'message' }), session = new Session({ random: seq(0.3, 0.6, 0.9) });
+    const before = session.get(s, 'Arin.png');
+    const [[, after]] = session.chatChanged(s, ['Arin.png']);
+    assert.notEqual(after, before, 'message 모드에서도 메시지 밖 자리(목록 · 그룹 칸)는 채팅을 바꾸면 새로 고름');
+    assert.equal(tidyMultiAvatar({ when: 'message' }).when, 'message', '정리해도 message 는 그대로');
+});
 await test('그룹: 멤버마다 따로 · 등록 없는 멤버는 원본', () => {
     const s = settings(), session = new Session({ random: seq(0.5, 0.5) });
     const picks = Object.fromEntries(session.chatChanged(s, ['Arin.png', 'Rin.png', 'Nobody.png']));

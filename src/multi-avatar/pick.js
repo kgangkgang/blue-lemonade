@@ -1,10 +1,12 @@
 // 7.9.9 프로필 여러 개 — 고르기 규칙 (순수 모듈, DOM · 실리태번 없음. 시험: tools/tests/multi-avatar-pick.mjs)
 //   캐릭터 아바타(카드 PNG)는 그대로 두고, 등록한 사진 중 하나를 골라 화면의 아바타 <img> 에만 입힌다.
-//   설정: multiAvatar { on, when: chat|list|daily|off, includeCard, chars: { <아바타 파일명>: { files: [경로…], pinned: ''|'card'|경로 } } }
+//   설정: multiAvatar { on, when: message|chat|list|daily|off, includeCard, chars: { <아바타 파일명>: { files: [경로…], pinned: ''|'card'|경로 } } }
 //   규칙: 끔 → 원본 · 고정 → 그 그림(지워졌으면 원본) · off → 원본(고정만) · daily → 날짜 해시 · chat/list → 랜덤(직전은 피함)
-//   세션: 한 채팅 안에서는 같은 그림 — Session 이 아바타마다 고른 경로를 기억하고, chat 은 CHAT_CHANGED 마다 · list 는 목록 창이 열릴 때마다 다시 고른다.
-export const WHEN = ['chat', 'list', 'daily', 'off'];
-export const WHEN_LABEL = { chat: '채팅방 열 때마다', list: '캐릭터 목록 열 때마다', daily: '하루에 한 번', off: '끔' };
+//         message(8.1.3) → 채팅 속 답변마다 따로: (아바타 · 채팅 · 메시지 번호 · 보낸 시각 · 스와이프) 해시라 다시 그려져도 · 새로고침해도 그 답변은 같은 그림, 바로 앞 답변 그림은 피함
+//   세션: 한 채팅 안에서는 같은 그림 — Session 이 아바타마다 고른 경로를 기억하고, chat · message 는 CHAT_CHANGED 마다 · list 는 목록 창이 열릴 때마다 다시 고른다.
+//         (message 모드에서도 캐릭터 목록 · 그룹 멤버 칸처럼 메시지가 아닌 자리는 chat 과 같아요)
+export const WHEN = ['message', 'chat', 'list', 'daily', 'off'];
+export const WHEN_LABEL = { message: '답변마다', chat: '채팅방 열 때마다', list: '캐릭터 목록 열 때마다', daily: '하루에 한 번', off: '끔' };
 export const MAX_FILES = 24;
 export const CARD = 'card';   // 「원본 카드 그림」을 가리키는 값 (pinned · 고른 결과)
 export const FOLDER_PREFIX = 'bl-avatar-';
@@ -68,6 +70,25 @@ export function choose(record, { on = true, when = 'chat', includeCard = true, a
     return candidates[Math.min(candidates.length - 1, Math.floor(random() * candidates.length))];
 }
 
+/**
+ * 8.1.3 답변마다: 메시지 하나의 그림. 랜덤 대신 해시라서 같은 답변은 늘 같은 그림(다시 그리기 · 더 불러오기 · 새로고침).
+ * seed = 이 답변 열쇠, prevSeed = 같은 캐릭터의 바로 앞 답변 열쇠(없으면 null) — 앞 답변과 같은 칸이 나오면 다음 칸으로 비켜요.
+ * 고정 · 끔(on=false)은 choose 와 같은 규칙이에요.
+ */
+export function chooseForMessage(record, { on = true, includeCard = true, seed = '', prevSeed = null } = {}) {
+    if (!on || !record) return CARD;
+    const files = Array.isArray(record.files) ? record.files : [];
+    if (record.pinned) return record.pinned === CARD ? CARD : files.includes(record.pinned) ? record.pinned : CARD;
+    const pool = poolOf(record, includeCard);
+    if (!pool.length) return CARD;
+    if (pool.length === 1) return pool[0];
+    let i = fnv(String(seed), 0x811c9dc5) % pool.length;
+    if (prevSeed !== null && prevSeed !== undefined && fnv(String(prevSeed), 0x811c9dc5) % pool.length === i) i = (i + 1) % pool.length;
+    return pool[i];
+}
+/** 답변 열쇠: 아바타 · 채팅 · 메시지 번호 · 보낸 시각 · 스와이프 번호 (스와이프하면 새 그림) */
+export const messageSeed = (avatar, chatId, mesId, message) => `${avatar}|${chatId || ''}|${mesId}|${message?.send_date ?? ''}|${Number(message?.swipe_id) || 0}`;
+
 /** 세션 기억 — 아바타마다 지금 보여 주는 그림. 새로고침하면 비워진다 */
 export class Session {
     constructor({ random = Math.random, today = () => new Date().toISOString().slice(0, 10) } = {}) { this.picks = new Map(); this.random = random; this.today = today; this.listVisible = false; }
@@ -94,9 +115,9 @@ export class Session {
     /** 미리보기 · 고정처럼 손으로 정한 그림 */
     set(avatar, pick) { this.picks.set(avatar, pick); }
     clear() { this.picks.clear(); }
-    /** 채팅이 바뀜: chat 모드면 그 채팅의 캐릭터들을 다시 고른다 */
+    /** 채팅이 바뀜: chat · message 모드면 그 채팅의 캐릭터들을 다시 고른다 (message 는 메시지 밖 자리 — 목록 · 그룹 칸) */
     chatChanged(settings, avatars) {
-        if (settings.when !== 'chat') return [];
+        if (settings.when !== 'chat' && settings.when !== 'message') return [];
         return avatars.map(a => [a, this.repick(settings, a)]);
     }
     /** 캐릭터 목록이 그려짐: list 모드이고 「숨어 있다가 보이게 된」 때만 다시 고른다 */

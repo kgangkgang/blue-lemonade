@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a8baa5fa940b) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 88c39dbdab2d) */
 /* css/00-base.css */
 :root{--bl-release:"8.1.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -13378,6 +13378,7 @@ body.salty .popup[data-bl-popup~="notice"] .popup-content {
   justify-self: stretch;
 }
 .salty-panel .salty-seg.bl-seg-2col > button { min-width: 0; white-space: nowrap; }
+.salty-panel .salty-stack > .salty-seg.bl-seg-2col > button:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .salty-panel .salty-seg.bl-seg-2col > button > .bl-seg-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .salty-seg.salty-mini {
   flex: none;

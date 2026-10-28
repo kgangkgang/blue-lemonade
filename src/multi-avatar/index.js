@@ -3,7 +3,7 @@
 //   어느 캐릭터인지는 src('/thumbnail?type=avatar&file=X' · '/characters/X')에서 읽으니 그룹 · 즐겨찾기 · 최근 채팅도 같은 길이다.
 //   원래 주소는 data-bl-avatar-orig 에 두고 끄면 되돌린다. 바뀐 아바타를 누르면 실리태번 확대 대신 테마 보기 창(실리태번은 src 의 '=' 뒤를 파일명으로 읽어 깨진다).
 import { getSettings, saveSettings } from '../settings.js';
-import { Session, CARD, urlOf, avatarFromSrc, hasAny } from './pick.js';
+import { Session, CARD, urlOf, avatarFromSrc, hasAny, chooseForMessage, messageSeed } from './pick.js';
 
 const session = new Session();
 const SWAP = 'blAvatar', ORIG = 'blAvatarOrig';
@@ -29,10 +29,22 @@ function restore(img) {
     delete img.dataset[SWAP]; delete img.dataset[ORIG];
     if (orig && img.getAttribute('src') !== orig) img.src = orig;
 }
+/** 8.1.3 답변마다: 채팅 메시지 안 아바타면 그 답변의 그림(해시 · 앞 답변 피함), 메시지 밖이거나 사용자 메시지면 null(세션 규칙) */
+function messagePick(img, s, key) {
+    const mes = img.closest('#chat .mes[mesid]'); if (!mes) return null;
+    const c = ctx(), chat = Array.isArray(c.chat) ? c.chat : [], id = Number(mes.getAttribute('mesid'));
+    const m = chat[id]; if (!m || m.is_user) return null;
+    const chatId = typeof c.getCurrentChatId === 'function' ? c.getCurrentChatId() : '';
+    const same = x => x && !x.is_user && !x.is_system && (c.groupId ? x.original_avatar === key : true);
+    let prevSeed = null;
+    for (let j = id - 1; j >= Math.max(0, id - 200); j--) if (same(chat[j])) { prevSeed = messageSeed(key, chatId, j, chat[j]); break; }
+    return chooseForMessage(s.chars?.[key], { on: s.on !== false, includeCard: s.includeCard !== false, seed: messageSeed(key, chatId, id, m), prevSeed });
+}
 function paint(img, s) {
     const key = img.dataset[SWAP] || avatarFromSrc(img.getAttribute('src'), location.origin);
     if (!key) return;
-    let pick = on ? session.get(s, key) : CARD;
+    const perMessage = on && s.when === 'message' ? messagePick(img, s, key) : null;
+    let pick = !on ? CARD : perMessage ?? session.get(s, key);
     if (pick !== CARD && broken.has(pick)) pick = CARD;
     if (pick === CARD) { restore(img); return; }
     const url = urlOf(pick);
@@ -91,6 +103,7 @@ function bind() {
     if (t.CHARACTER_PAGE_LOADED) eventSource.on(t.CHARACTER_PAGE_LOADED, onPageLoaded);
     for (const name of ['CHARACTER_MESSAGE_RENDERED', 'USER_MESSAGE_RENDERED', 'MESSAGE_SWIPED', 'MESSAGE_UPDATED']) if (t[name]) eventSource.on(t[name], id => { if (on) paintMessage(id); });
     if (t.MORE_MESSAGES_LOADED) eventSource.on(t.MORE_MESSAGES_LOADED, () => { if (on) paintChat(); });
+    if (t.MESSAGE_DELETED) eventSource.on(t.MESSAGE_DELETED, () => { if (on && current().when === 'message') paintChat(); });   // 8.1.3 답변마다: 지우면 뒤 메시지 번호가 당겨져 열쇠가 바뀌어요
     if (t.GROUP_UPDATED) eventSource.on(t.GROUP_UPDATED, () => { if (on) paintGroup(); });
     if (t.CHARACTER_RENAMED) eventSource.on(t.CHARACTER_RENAMED, onRenamed);
     document.addEventListener('click', onClick, true);

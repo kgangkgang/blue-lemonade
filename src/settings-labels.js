@@ -13,7 +13,7 @@ Object.assign(SETTING_LABELS, {'addons.conflicts':'확장: 충돌 진단',
     'strike.line':'취소선 · 선 긋기','strike.own':'취소선 · 선 색 따로 정하기','strike.color':'취소선 · 선 색','strike.thickness':'취소선 · 선 굵기','strike.fade':'취소선 · 흐리기','strike.italic':'취소선 · 기울이기',
     'chat.weatherMotion':'날씨 움직임','chat.weatherSway':'날씨 흔들림','chat.weatherSpin':'날씨 회전','chat.weatherCurvature':'유성우 곡률','chat.weatherOrbitSize':'유성우 원 크기','chat.weatherOrbitDirection':'유성우 도는 방향',
     'chat.markerTone.light.s':'화이트 형광펜 채도','chat.markerTone.light.l':'화이트 형광펜 밝기','chat.markerTone.dark.s':'나이트 형광펜 채도','chat.markerTone.dark.l':'나이트 형광펜 밝기'});
-Object.assign(SETTING_VALUES, {'multiAvatar.when:chat':'채팅방 열 때마다','multiAvatar.when:list':'캐릭터 목록 열 때마다','multiAvatar.when:daily':'하루에 한 번','multiAvatar.when:off':'끔'});   // 7.9.9
+Object.assign(SETTING_VALUES, {'multiAvatar.when:message':'답변마다','multiAvatar.when:chat':'채팅방 열 때마다','multiAvatar.when:list':'캐릭터 목록 열 때마다','multiAvatar.when:daily':'하루에 한 번','multiAvatar.when:off':'끔'});   // 7.9.9
 Object.assign(SETTING_VALUES, {'usageMode:both':'테마 + 확장','usageMode:theme':'테마만','usageMode:extensions':'확장만',
     'userProfile.metaSide:auto':'사진 따라','userProfile.metaSide:left':'왼쪽','userProfile.metaSide:right':'오른쪽',
     'profile.nameRowAlign:left':'왼쪽','profile.nameRowAlign:center':'가운데','profile.nameRowAlign:right':'오른쪽','userProfile.nameRowAlign:left':'왼쪽','userProfile.nameRowAlign:center':'가운데','userProfile.nameRowAlign:right':'오른쪽',

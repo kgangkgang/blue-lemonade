@@ -581,8 +581,8 @@ export const FILE_HASHES = {
   "src/message-work.js": "7592:9af6cb91:7ad233df",
   "src/modal.js": "1570:fc1776ad:43eb6e78",
   "src/multi-avatar/dialog.js": "12671:a9ede2a5:b2246635",
-  "src/multi-avatar/index.js": "7235:29dede3e:e2e79c38",
-  "src/multi-avatar/pick.js": "8153:fce0023e:d7f2b6ae",
+  "src/multi-avatar/index.js": "8548:6b15db3f:9e3ea9e4",
+  "src/multi-avatar/pick.js": "10074:bf996f18:6043e72a",
   "src/multi-avatar/store.js": "7079:a5f0164c:1ec299ed",
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17591:c1a782d0:a654c101",
@@ -595,7 +595,7 @@ export const FILE_HASHES = {
   "src/numcomma.js": "31859:4b995003:bdec99e6",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
   "src/palettes.js": "33830:51637840:34a73a09",
-  "src/panel.js": "261278:d0993e7d:0f993f48",
+  "src/panel.js": "261452:c0cf8e3c:5c0e4901",
   "src/people.js": "9021:76aa8129:14633595",
   "src/popup-guard.js": "4755:d66dd15c:5ae13a66",
   "src/popup-marks.js": "1818:0af84657:5805cf62",
@@ -688,9 +688,9 @@ export const FILE_HASHES = {
   "src/settings-editor.js": "8589:6aa54ddc:6690b32a",
   "src/settings-favorites.js": "3202:43eff96b:1a42f5d8",
   "src/settings-history.js": "3491:c0f06c71:b7a64e71",
-  "src/settings-labels.js": "38870:03007d96:7c4fc40e",
+  "src/settings-labels.js": "38912:9b60a6d8:1376488b",
   "src/settings-merge.js": "10781:78d3a1e2:a478335e",
-  "src/settings-search.js": "38771:cd0d3fe9:01392231",
+  "src/settings-search.js": "38800:c64c5aa2:fd2b0748",
   "src/settings-sync.js": "6623:9fbae458:092efa56",
   "src/settings.js": "72814:498bca3b:d954c79d",
   "src/show-more-auto.js": "6378:b1d2f7da:5fcbca3e",
@@ -738,5 +738,5 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "style.css": "1821629:3992458c:539bf24f"
+  "style.css": "1821740:65075f06:a9370a57"
 };

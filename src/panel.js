@@ -1486,7 +1486,7 @@ function multiAvatarSection(s) {
     const ctx = SillyTavern.getContext(), current = !ctx.groupId && ctx.characters?.[ctx.characterId]?.avatar;
     return `${cap('프로필 여러 개', '시작 인사말처럼 사진도 여러 장')}<div class="salty-group">
         ${row('프로필 여러 개', toggle('multiAvatar.on', m.on !== false), '캐릭터 선택창 · 채팅 아바타에 등록한 사진 중 하나가 떠요. 카드 PNG 는 그대로예요')}
-        ${m.on !== false ? `${stack('적용 시점', seg('multiAvatar.when', [['chat', '채팅방 열 때마다'], ['list', '캐릭터 목록 열 때마다'], ['daily', '하루에 한 번'], ['off', '끔']], undefined, 'bl-seg-2col bl-mav-when'), '한 채팅 안에서는 같은 그림을 유지해요. 「끔」은 랜덤만 멈추고 고정한 그림은 그대로 써요')}
+        ${m.on !== false ? `${stack('적용 시점', seg('multiAvatar.when', [['message', '답변마다'], ['chat', '채팅방 열 때마다'], ['list', '캐릭터 목록 열 때마다'], ['daily', '하루에 한 번'], ['off', '끔']], undefined, 'bl-seg-2col bl-mav-when'), '「답변마다」는 캐릭터 답변마다 다른 그림이고, 한 번 정한 답변의 그림은 다시 열어도 그대로예요. 나머지는 한 채팅 안에서 같은 그림을 유지해요. 「끔」은 랜덤만 멈추고 고정한 그림은 그대로 써요')}
         ${row('원본 카드 그림도 섞기', toggle('multiAvatar.includeCard', m.includeCard !== false), '끄면 등록한 사진 중에서만 골라요')}
         ${entries ? `<div class="salty-label">등록한 캐릭터 (${Object.keys(m.chars).length})</div><ul class="bl-mav-list">${entries}</ul>` : '<p class="salty-note">아직 등록한 캐릭터가 없어요. 캐릭터 편집 화면의 <i class="fa-solid fa-images" aria-hidden="true"></i> 단추나 아래 단추로 사진을 더해요.</p>'}
         <div class="bl-mav-actions"><button type="button" class="salty-btn bl-tool-primary" data-act="mav-current" ${current ? '' : 'disabled'}>${current ? '지금 캐릭터의 프로필 관리' : '캐릭터 채팅을 열면 관리할 수 있어요'}</button><button type="button" class="salty-btn" data-act="mav-cleanup">남은 파일 정리</button></div>
