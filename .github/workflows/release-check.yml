@@ -80,6 +80,7 @@ jobs:
           node tools/tests/chat-sync-local.mjs .
           node tools/tests/translator-preview-frames.mjs .
           node tools/tests/translator-preview-steady.mjs .
+          node tools/tests/translator-preview-rerender-loop.mjs .
           node tools/tests/chat-reading-position.mjs .
           node tools/tests/translate-scroll.mjs .
           node tools/tests/reading-resume.mjs

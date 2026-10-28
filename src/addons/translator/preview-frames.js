@@ -96,3 +96,30 @@ export function paintPreview(host, html, { keep = () => false, final = false } =
     });
     return true;
 }
+
+/**
+ * 8.1.3 번역 중 상태창 틀 바꾸기(3.1.4)가 다시 그리기 고리를 만들지 않게 — 이번 번역에서 틀을 더 바꿔도 되나를 기억한다.
+ *   3.1.4 는 번역 중에도 코드가 바뀐 상태창 틀을 새 코드 블록으로 바꾸고 헬퍼에 MESSAGE_UPDATED 를 한 번 보낸다.
+ *   그런데 그 알림을 듣고 메시지를 저장된 글로 통째 다시 그리는 확장(ST-Prompt-Template 의 updateMessageBlock 등)이 있으면
+ *   미리 보기 · 진행 줄이 지워지고 틀은 다시 원문 코드가 된다 → 다음 그림이 또 틀을 바꾸고 또 알린다. 리그(긴 답 · 청과 상태창)에서
+ *   25초에 알림 77번 · 본문 통째 다시 쓰기 156번 · 진행 줄 붙음/떨어짐 53번, 미리 보기는 한 문단도 안 보였다 (10-28 폰 제보 「전등처럼 깜빡」).
+ *   알림 뒤(모든 청취자가 끝난 뒤) 미리 보기가 화면에서 사라졌으면 이번 번역 동안은 틀을 바꾸지 않고(원문 코드 그대로 — 3.1.4 전과 같음)
+ *   미리 보기만 다시 그린다. 끝 그림(refreshMessageBlock)은 저장된 번역문으로 그리니 그때 틀도 번역된 코드가 된다.
+ *   지워지지 않아도 알림은 한 번역에 limit 번까지만 (늦게 다시 그리는 확장 대비).
+ * settled({ notified, shown }): notified = 알림을 실제로 보냈나 · shown = 그 뒤 미리 보기가 아직 있나(모르면 null). 반환: 지금 다시 그려야 하면 true.
+ */
+export function createFrameSwapGuard({ limit = 8 } = {}) {
+    let off = false, sent = 0;
+    return {
+        allowed: () => !off,
+        settled({ notified, shown = null } = {}) {
+            if (!notified || off) return false;
+            sent++;
+            if (shown === false) { off = true; return true; }
+            if (sent >= limit) off = true;
+            return false;
+        },
+        get off() { return off; },
+        get sent() { return sent; },
+    };
+}

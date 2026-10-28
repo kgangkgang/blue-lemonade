@@ -5,7 +5,7 @@ import { createGuards, watchGuard } from './translation-guard.js';
 import { observeEventCompletion } from './render-completion.js';
 import { keepChatReadingPosition, readerRestsIn } from '../../chat-reading-position.js';   // 7.7.4 readerRestsIn: 손으로 굴리는 동안 미리 보기 그림을 미룬다
 import { notifyRerender, isRerenderNotify, canNotifyRerender } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) · 그 알림의 MESSAGE_UPDATED 는 건너뛴다 · 6.9.7 알림이 갈 환경인가
-import { paintPreview, previewShown, adoptPainted } from './preview-frames.js';   // 2.5.5 번역 중 미리 보기가 헬퍼가 그린 상태창(iframe)을 지우지 않게 · 6.9.6 바뀐 문단만 갈아 끼우기
+import { paintPreview, previewShown, adoptPainted, createFrameSwapGuard } from './preview-frames.js';   // 2.5.5 번역 중 미리 보기가 헬퍼가 그린 상태창(iframe)을 지우지 않게 · 6.9.6 바뀐 문단만 갈아 끼우기
 import { typesetRoot } from '../../typography.js';   // 6.9.6 미리 보기가 넣은 문단을 그 자리에서 조판
 import { dressBody } from '../../dem-expressive.js';   // 6.9.6 · 감정 대사 칸
 import { AUTO_CONTEXT, hasAutoContext, markAutoContext, captureAutoContextGuard, prepareTranslatorAutoContext } from './context-auto.js';
@@ -2601,6 +2601,7 @@ function previewText(message) {
 function translationPreview(messageId, message, sourceMes, chatId, originalText, guard = null) {   // 2.9.0 guard: 진행 표시와 같은 까닭
     const swipeId = message?.swipe_id ?? 0;
     let latest = null, shown = false, stopped = false, timer = null, wait = 0, lastPaint = 0, display = null, adopted = false, cost = 0, lastEnd = 0;
+    const frameGuard = createFrameSwapGuard();   // 8.1.3 틀 바꾸기 알림이 다른 확장의 통째 다시 그리기와 도는 고리를 끊는다 (preview-frames.js)
     const target = () => {
         const index = guard ? guard.index() : resolveTranslationTarget(message, messageId, sourceMes, chatId);
         return index !== -1 && (getContext().chat?.[index]?.swipe_id ?? 0) === swipeId ? index : -1;
@@ -2640,7 +2641,7 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
         }
         // 3.1.4 상태창 틀(헬퍼 iframe)의 코드가 번역으로 바뀌었으면 번역 중에도 그 틀만 새 코드 블록으로 바꾸고 헬퍼에 한 번 알린다 (끝 그림과 같은 길 · 알림이 갈 때만).
         //   전엔 틀을 끝까지 원문으로 둬, 긴 답(문단 134개)은 본문이 다 한국어가 될 때까지 상태창 값이 영어로 남았다 (10-27 제보). 바뀐 뒤에는 코드가 같아 다시 바꾸지 않는다 — 문단마다 다시 불러오지 않음
-        const swap = typeof canNotifyRerender === 'function' && canNotifyRerender(index);
+        const swap = frameGuard.allowed() && typeof canNotifyRerender === 'function' && canNotifyRerender(index);
         let swapped = false;
         keepChatReadingPosition(host, () => {
             const frames = swap ? host.querySelectorAll('.TH-render').length : 0;
@@ -2653,7 +2654,16 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
             shown = true;
             livePreviews.add(record);
         });
-        if (swapped && typeof notifyRerender === 'function') notifyRerender(index, { element: host.closest?.('.mes') ?? null }).catch?.(() => {});   // 3.1.4 바꾼 틀만 헬퍼가 번역된 코드로 다시 그린다
+        // 3.1.4 바꾼 틀만 헬퍼가 번역된 코드로 다시 그린다 · 8.1.3 알림을 들은 쪽이 메시지를 저장된 글로 통째 다시 그려 미리 보기가 사라졌으면
+        //       이번 번역 동안은 틀을 그대로 두고 미리 보기만 곧바로 다시 (안 그러면 알림 ↔ 다시 그리기가 0.4초마다 돌아 본문이 깜빡였다)
+        const badge = swapped ? host.querySelector?.(':scope > .llmt-progress') ?? null : null;
+        if (swapped && typeof notifyRerender === 'function') Promise.resolve(notifyRerender(index, { element: host.closest?.('.mes') ?? null })).then(notified => {
+            if (stopped) return;
+            const now = target(), view = now < 0 ? null : document.querySelector(`#chat .mes[mesid="${now}"] .mes_text`);
+            if (!frameGuard.settled({ notified, shown: view ? previewShown(view, { keep: isProgressBadge }) : null })) return;
+            if (badge && !badge.isConnected && view && !view.querySelector(':scope > .llmt-progress')) view.prepend(badge);   // 진행 줄도 1초 기다리지 않고 제자리에 (줄이 한 번 더 들썩이지 않게)
+            paint();
+        }).catch(() => {});
         cost = performance.now() - started; lastEnd = Date.now();
     };
     const schedule = () => {
