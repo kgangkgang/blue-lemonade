@@ -190,6 +190,7 @@ jobs:
           node tools/tests/dialogue-only.mjs .
           node tools/tests/ko-ui.mjs .
           node tools/tests/chat-like-alias.mjs .
+          node tools/tests/preview-park.mjs .
           node tools/tests/zipinstall-remove.mjs .
           node tools/tests/word-replace-marks.mjs .
           node tools/tests/translator-glossary.mjs .
@@ -417,7 +418,7 @@ jobs:
         # css/43-user-profile.gen.css, css/23-preview.gen.css (check mode fails on new root declarations),
         # src/scripts/bundled/korean.js (from tools/scripts-src/korean.js, precomputed dictionary checked against the source),
         # src/scripts/bundled/{fruit,qingguo,fruit-heart}.js (from tools/scripts-src/fruit-family/, the fruit-family dictionary),
-        # src/scripts/plain/*, style.css and src/lazy-panel.gen.css.
+        # src/scripts/plain/*, style.css, src/lazy-panel.gen.css and src/preview-park.gen.css.
         run: |
           node tools/gen-user-profile.cjs
           node tools/gen-preview-css.js --quiet

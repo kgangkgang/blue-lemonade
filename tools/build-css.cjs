@@ -30,6 +30,9 @@ const OUT = path.join(ROOT, 'style.css');
 // 예전에는 1.8KB 를 얻으려고 style.css 842KB 를 다시 받아 통째로 문자열로 풀었다.
 // src/ 아래여야 한다 — release_gate 의 inventory 는 최상위 4개 + src/**.{js,css} 만 담는다.
 const LAZY_OUT = path.join(ROOT, 'src', 'lazy-panel.gen.css');
+// 10-28 미리보기 전용 덩어리(`@media not all`)를 한 벌 더 — src/lite.js 가 시작할 때 이것을 꺼 둔 작은 <style> 로 붙여 두고 설정 창을 열 때 그 <style> 만 켠다.
+// style.css 안의 덩어리 수백 개를 켜면 1.7MB 시트 전체가 바뀐 것으로 쳐져 문서 전체를 다시 계산했다(긴 채팅 · 폰 4배에서 설정 창 처음 열기 약 6초).
+const PREVIEW_OUT = path.join(ROOT, 'src', 'preview-park.gen.css');
 const LAZY = '99-lazy-panel.css';
 const LAZY_SENTINEL = '#salty-lazy-panel-start';
 const HASH_SLOT = '@@HASH@@';
@@ -195,6 +198,9 @@ function main(argv) {
         const tail = lazyTail(text);
         const had = fs.existsSync(LAZY_OUT) ? fs.readFileSync(LAZY_OUT, 'utf8') : null;
         if (had !== tail) { fs.writeFileSync(LAZY_OUT, tail, 'utf8'); console.log(`[씀] src/lazy-panel.gen.css (${(Buffer.byteLength(tail) / 1024).toFixed(1)}KB)`); }
+        const park = previewParkText(text);
+        const hadPark = fs.existsSync(PREVIEW_OUT) ? fs.readFileSync(PREVIEW_OUT, 'utf8') : null;
+        if (hadPark !== park) { fs.writeFileSync(PREVIEW_OUT, park, 'utf8'); console.log(`[씀] src/preview-park.gen.css (${(Buffer.byteLength(park) / 1024).toFixed(1)}KB)`); }
         console.log(`[그대로] style.css 가 이미 최신 (모듈 ${names.length}개)`);
         return 0;
     }
@@ -207,6 +213,7 @@ function main(argv) {
     }
     fs.writeFileSync(OUT, text, 'utf8');
     fs.writeFileSync(LAZY_OUT, lazyTail(text), 'utf8');
+    fs.writeFileSync(PREVIEW_OUT, previewParkText(text), 'utf8');
     console.log(`[씀] style.css ← css/ 모듈 ${names.length}개 (${(Buffer.byteLength(text) / 1024).toFixed(1)}KB) · src/lazy-panel.gen.css ${(Buffer.byteLength(lazyTail(text)) / 1024).toFixed(1)}KB · 미리보기 전용 규칙 ${parked.rules}개를 not all 덩어리 ${parked.blocks}개로 꺼 둠${keyed ? ` · 바구니 열쇠 ${keyed.keyed}갈래(전체 바구니 ${keyed.universal} 중, 남음 ${keyed.universal - keyed.keyed})` : ''}`);
     return 0;
 }
@@ -223,4 +230,33 @@ function lazyTail(text) {
     return text.slice(at + mark.length);
 }
 
-module.exports = { build, modules, untouched, LAZY, LAZY_SENTINEL, CSS_DIR, lazyTail, LAZY_OUT };
+/**
+ * 10-28 style.css 의 미리보기 전용 `@media not all { … }` 덩어리를 차례대로 모아 한 덩어리씩 `@media all { … }` 로 싸서 이어 붙인다.
+ * 덩어리가 @media · @supports 같은 묶음 안에 있으면 그 겉 조건으로 다시 싼다. src/lite.js 가 시트의 덩어리와 하나씩 견준 뒤 쓴다(안 맞으면 예전처럼 제자리에서 켬).
+ */
+function previewParkText(text) {
+    const lib = require('./css-lib.cjs');
+    const PREVIEW = /#salty-nochat|\.salty-preview|\.salty-sample/;
+    const tree = lib.parse(text);
+    if (tree.problems.length) throw new Error(`미리보기 덩어리 읽기 문제: ${tree.problems.slice(0, 3).join(' / ')}`);
+    const out = [];
+    const visit = nodes => {
+        for (const n of nodes) {
+            if (n.type !== 'at' || !n.block) continue;
+            if (n.name === 'media' && /^@media\s+not\s+all$/i.test(n.prelude)) {
+                const first = (n.children || []).find(c => c.type === 'rule');
+                if (first && PREVIEW.test(first.selector)) {
+                    let block = `@media all {${text.slice(n.bodyStart, n.bodyEnd)}}`;
+                    for (const outer of [...n.ctx].reverse()) block = `${outer} {\n${block}\n}`;
+                    out.push(block);
+                }
+                continue;
+            }
+            if (n.children) visit(n.children);
+        }
+    };
+    visit(tree.children);
+    return `/* src/preview-park.gen.css — tools/build-css.cjs 가 style.css 의 미리보기 전용 덩어리 ${out.length}개를 옮겨 적은 것(고치지 말 것) */\n${out.join('\n')}\n`;
+}
+
+module.exports = { build, modules, untouched, LAZY, LAZY_SENTINEL, CSS_DIR, lazyTail, LAZY_OUT, previewParkText, PREVIEW_OUT };

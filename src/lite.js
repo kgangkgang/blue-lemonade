@@ -124,7 +124,7 @@ export function deferPreviewRules(tries = 25) {
     }
     try {
         collectParked(sheet.cssRules);
-        if (deferred.length) return;
+        if (deferred.length) { afterBoot(() => setTimeout(() => detachPreviewRules(sheet), 1500)); return; }
         const lazy = lazyStart(sheet);
         pull(sheet.cssRules, sheet, lazy < 0 ? sheet.cssRules.length : lazy);
     } catch (err) {
@@ -142,7 +142,45 @@ export function restorePreviewRules() {
 function turnOn() {
     if (restored) return;
     restored = true;
+    if (previewStyle) { previewStyle.media = 'all'; return; }
     for (const block of deferred) block.media.mediaText = 'all';
+}
+
+// 10-28: 덩어리를 style.css 안에서 켜면(mediaText) 1.7MB 시트 전체가 바뀐 것으로 쳐져 문서 전체를 다시 계산했다 —
+// 긴 채팅(메시지 300)에서 폰 4배 기준 설정 창 · 북마크 창을 처음 열 때 약 6초. 빌드가 같은 덩어리를 src/preview-park.gen.css 로 따로 적어 두므로,
+// 시작 덮개가 걷힌 뒤 그 글을 꺼 둔 작은 <style> 로 테마 시트 바로 뒤(게으른 칸보다 앞)에 붙여 두고, 켜고 끌 때 그 <style> 의 media 만 바꾼다
+// (작은 시트는 바뀐 규칙이 맞을 요소만 다시 계산해요 — 같은 채팅에서 30ms 안팎). style.css 안의 덩어리는 꺼진 채 그대로 둔다.
+// 받은 글이 시트의 덩어리와 하나씩 같은 뼈대가 아니면(캐시에 남은 옛 style.css 등) 붙이지 않고 예전처럼 제자리에서 켠다 — 화면은 같다.
+let previewStyle = null;
+async function detachPreviewRules(sheet) {
+    if (previewStyle || restored || !deferred.length) return;
+    try {
+        const res = await fetch(new URL('./preview-park.gen.css', import.meta.url));
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        if (previewStyle || restored) return;   // 받는 사이 설정 창을 열었으면 이번 세션은 제자리 그대로
+        const probe = new CSSStyleSheet();
+        probe.replaceSync(text);
+        const blocks = [];
+        const dig = rule => { while (rule && rule.media?.mediaText !== 'all' && rule.cssRules?.length === 1) rule = rule.cssRules[0]; return rule; };
+        for (const rule of probe.cssRules) blocks.push(dig(rule));
+        const ok = blocks.length === deferred.length && blocks.every((b, i) => b?.media?.mediaText === 'all' && sameShape(b.cssRules, deferred[i].cssRules) && outerOf(b) === outerOf(deferred[i]));
+        if (!ok) { console.info('[Blue Lemonade] 미리보기 규칙은 style.css 안에서 켜요 (화면은 같음): 받은 덩어리가 시트와 다름'); return; }
+        const style = document.createElement('style');
+        style.id = 'salty-preview-css';
+        style.media = 'not all';
+        style.textContent = text;
+        sheet.ownerNode.after(style);   // 게으른 칸(<style id="salty-panel-css">)이 이미 붙어 있으면 그 앞 — 원래 style.css 안 차례(미리보기 → 게으른 칸)와 같다
+        previewStyle = style;
+    } catch (err) {
+        console.info('[Blue Lemonade] 미리보기 규칙은 style.css 안에서 켜요 (화면은 같음):', err?.message || err);
+    }
+}
+/** 덩어리를 싼 겉 조건(@media · @supports …)을 바깥에서 안쪽 차례로 — 받은 글 쪽은 맨 바깥 `@media all` 감싸개 바로 위까지 */
+function outerOf(rule) {
+    const out = [];
+    for (let p = rule.parentRule; p; p = p.parentRule) out.unshift(p.conditionText ?? p.media?.mediaText ?? p.name ?? '');
+    return out.join(' / ');
 }
 // 5.6.6 (점검 PAB-4): 북마크 창처럼 닫히는 쪽은 쥐었다 놓는다 — 놓는 쪽이 마지막이고 세션 끝까지 켜 둔 쪽(설정 창 · 메모)이 없으면
 // 352개 미리보기 규칙을 다시 끈다 (예전엔 한 번 열면 그 세션 내내 켜져 있어, 글이 붙을 때마다 채팅 전체를 다시 맞춰 봤다)
@@ -150,7 +188,8 @@ export function holdPreviewRules() { holders++; turnOn(); }
 export function releasePreviewRules() {
     holders = Math.max(0, holders - 1);
     if (holders || permanent || !restored) return;
-    for (const block of deferred) block.media.mediaText = 'not all';
+    if (previewStyle) previewStyle.media = 'not all';
+    else for (const block of deferred) block.media.mediaText = 'not all';
     restored = false;
 }
 
@@ -290,7 +329,7 @@ export function deferPanelHasRules(tries = 25) {
             style.id = 'salty-panel-css';
             style.media = 'not all';
             style.textContent = tail;
-            sheet.ownerNode.after(style); // 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
+            (previewStyle?.isConnected ? previewStyle : sheet.ownerNode).after(style); // 10-28 미리보기 <style> 이 먼저 붙었으면 그 뒤(원래 차례: 미리보기 → 게으른 칸). 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
             for (let i = sheet.cssRules.length - 1; i > from; i--) sheet.deleteRule(i);
             panelCount = live.length;
             panelStyle = style;
