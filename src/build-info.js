@@ -550,7 +550,7 @@ export const FILE_HASHES = {
   "src/fruit-type-runtime.js": "5632:e1008ad0:fa46f182",
   "src/fruit-type-sample.js": "39267:cad3138c:6723288f",
   "src/fruit-type-schema.js": "15136:f7b8e20b:095f826a",
-  "src/fruit-type-shortcuts.js": "7133:7b44c5c2:3be513c0",
+  "src/fruit-type-shortcuts.js": "7802:521c796a:a6e5201b",
   "src/fruit-type-snapshot.js": "7708:38ee7fe9:12c69af0",
   "src/fruit-type-ui.js": "32275:4aa408f6:b5eae7ed",
   "src/generation-state.js": "6956:ff69362b:15d46250",

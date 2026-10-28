@@ -194,6 +194,7 @@ jobs:
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/preview-park.mjs .
           node tools/tests/theme-sheet-ext.mjs .
+          node tools/tests/fruit-shortcut-frames.mjs .
           node tools/tests/zipinstall-remove.mjs .
           node tools/tests/word-replace-marks.mjs .
           node tools/tests/translator-glossary.mjs .

@@ -13,7 +13,10 @@ function startShortcuts(doc,host){
     // 8.0.6 채팅 안 카드 옆 바로가기는 청과(iframe)만 — 데우스 카드는 class 앞 custom- 때문에 그동안 한 번도 안 붙었고, 이름을 고친 뒤에도 모든 메시지 트래커 아래 단추가 생기지 않게 그대로 둬요(데우스는 빠른 설정 창 줄에서).
     const DEUS=FRUIT_TYPES.filter(t=>t.owner==='qingguo'),DEUS_ROOT=DEUS.map(typeMatch).join(',');
     const ids=new WeakMap();let nextId=1;const idOf=o=>{if(!o)return 0;let i=ids.get(o);if(!i)ids.set(o,i=nextId++);return i;};
-    const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of scope.querySelectorAll('iframe')){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
+    // 8.2.2 1.5초마다 #chat 아래 전체를 querySelectorAll('iframe') 로 다시 훑었다(300메시지면 요소 10만 개 · 폰 4배 한 번에 약 7ms — iframe 이 하나도 없어도).
+    //   살아 있는 목록(getElementsByTagName)은 브라우저가 들고 있다가 DOM 이 바뀔 때만 다시 세서, 그대로면 거의 공짜예요. 고르는 iframe · 순서는 같아요(문서 순서)
+    const frameLists=new WeakMap();const framesOf=scope=>{if(typeof scope.getElementsByTagName!=='function')return scope.querySelectorAll('iframe');let list=frameLists.get(scope);if(!list){list=scope.getElementsByTagName('iframe');frameLists.set(scope,list);}return list;};
+    const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of framesOf(scope)){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
     const schedule=()=>{if(!stopped&&!frame)frame=host.requestAnimationFrame(flush);};
     function flush(){
         frame=0;if(stopped)return;const live=new Set();
