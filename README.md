@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.2.1/blue-lemonade-8.2.1.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.2.2/blue-lemonade-8.2.2.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -333,7 +333,18 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.2.1 · 최신 업데이트</summary>
+<summary>8.2.2 · 최신 업데이트</summary>
+
+- 데우스 상태창 본문에 좌우 여백을 두어 글자가 카드 테두리에 붙지 않도록 했어요.
+- 데우스 빠른 설정 아이콘의 기본 색을 입력줄의 다른 아이콘과 맞췄어요.
+- 상태창을 찾을 때 채팅 전체를 반복해서 훑는 작업을 줄였어요.
+- 과일 창을 닫아 둔 동안 반복 탐색과 번역을 줄였어요.
+- 채팅 한글화가 번역 대상 글자만 감시하도록 범위를 좁혔어요.
+
+</details>
+
+<details>
+<summary>8.2.1 · 확장만 모드 가벼운 CSS · 설정 가져오기</summary>
 
 - 설정 › 기타 › 테마 설정 파일 › 가져오기 › 가져온 파일의 사용 방식(테마 + 확장 · 테마만 · 확장만)이 지금과 다르면 값만 바뀌고 화면은 옛 방식으로 남던 것을, 사용 방식 단추처럼 저장한 뒤 새로고침하도록 고쳤어요.
 - 「확장만」 · 테마 끔에서는 쓰지 않는 테마 꾸밈 규칙을 끄고 가벼운 사본만 켜요(테마 CSS 1.8MB → 0.3MB). 확장만 모드에서는 원래 맞지 않던 규칙만 빠져서 화면은 그대로이고, 폰처럼 느리게 맞춘 시험 환경에서 300메시지 채팅을 열 때 스타일 계산이 약 14% 줄었어요.
