@@ -600,7 +600,7 @@ export const FILE_HASHES = {
   "src/numcomma.js": "31859:4b995003:bdec99e6",
   "src/onehand.js": "3884:55946dd4:4f42d7a8",
   "src/palettes.js": "33830:51637840:34a73a09",
-  "src/panel.js": "262348:aeaac91c:759c458e",
+  "src/panel.js": "263183:c66ec132:bb49e166",
   "src/people.js": "9021:76aa8129:14633595",
   "src/popup-guard.js": "4755:d66dd15c:5ae13a66",
   "src/popup-marks.js": "1818:0af84657:5805cf62",

@@ -28,3 +28,11 @@ const usedTokens = [...new Set([...checkboxCss.matchAll(/var\((--bl-checkbox-[a-
 assert.deepEqual(usedTokens, Object.keys(checkboxTokens(palette, true)).sort(), 'every standalone checkbox color has a value');
 assert.doesNotMatch(checkboxCss, /var\(--salty-[a-z-]+\)/, 'theme colors need an owned-control fallback');
 console.log('PASS standalone checkbox CSS has complete color fallbacks');
+
+// 8.2.1 settings import: a file whose usageMode differs saves and reloads like the dedicated control (stale half-applied mode otherwise)
+const panelSrc = fs.readFileSync(new URL('src/panel.js', root), 'utf8');
+const importBlock = panelSrc.slice(panelSrc.indexOf('input[data-file="settings"]\') && target.files'), panelSrc.indexOf("toastr.success('\uC124\uC815\uC744 \uAC00\uC838\uC654\uC5B4\uC694'"));
+assert.match(importBlock, /const modeChanged = usageMode\(backup \|\| \{\}\) !== usageMode\(ext\.salty\)/, 'import compares the usage mode before and after');
+assert.match(importBlock, /if \(modeChanged\) \{[^}]*await saveAddonsNow\(\); location\.reload\(\); return; \}/, 'a changed mode saves then reloads');
+assert.match(importBlock, /usageMode\(ext\.salty\) === 'extensions' && restoreState\(\)\) \{ try \{ await offerRestore\(\)/, 'switching to extensions-only offers the SillyTavern restore first');
+console.log('PASS settings import reloads when the usage mode changes');

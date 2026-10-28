@@ -3153,9 +3153,14 @@ function bind(root) {
                     throw new Error('설정 파일 내용이 이상해서 되돌렸어요: ' + (error.message || error));
                 }
                 history.run(backup, st => { for (const key of Object.keys(st)) delete st[key]; Object.assign(st, ext.salty); ext.salty = st; });
+                // 8.2.1 사용 방식(테마 + 확장 · 테마만 · 확장만)이 바뀌는 파일이면 사용 방식 단추처럼 저장한 뒤 새로고침해요 —
+                //   값만 바뀌고 새로고침이 없으면 켜진 확장 · 테마 그리기가 옛 방식으로 남았어요(부록 F 5.5.6)
+                const modeChanged = usageMode(backup || {}) !== usageMode(ext.salty);
+                if (modeChanged && usageMode(ext.salty) === 'extensions' && restoreState()) { try { await offerRestore(); } catch (error) { toastr.warning(`실리태번 모습은 못 되돌렸어요: ${error.message || error}`, 'Blue Lemonade'); } }
                 saveSettings();
                 refreshPanels();
                 try { await syncRegexlinkFlag(); } catch (error) { console.warn('[Blue Lemonade] 정규식 연동 맞추기 실패', error); }
+                if (modeChanged) { toastr.info('사용 방식이 바뀌어 저장한 뒤 새로고침해요', 'Blue Lemonade'); await saveAddonsNow(); location.reload(); return; }
                 toastr.success('설정을 가져왔어요', 'Blue Lemonade');
             } catch (error) {
                 toastr.error(error.message, 'Blue Lemonade');
