@@ -70,7 +70,7 @@ assert(/<div class="bl-ft-top">/.test(editorJs)&&/\.bl-ft-top\{display:grid/.tes
 assert(/@container bl-ft-editor \(width >= 19em\)\{\.bl-ft-top\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}/.test(editorCss),'Top pair is two columns from 19em, like the region parameters');
 assert(/\.bl-ft-top>\.bl-ft-param\{display:grid;grid-row:span 2;grid-template-rows:subgrid/.test(editorCss),'Both top cells share one control row, so the show/hide choice is exactly as tall as the layout select (PC 36 · phone 44)');
 assert(/\.bl-ft-top>:only-child\{grid-column:1 \/ -1\}/.test(editorCss),'A lone top item (Deus) spans the row');
-assert(/\.bl-fruit-type-editor \.bl-ft-seg\{[^}]*min-height:36px[^}]*padding:2px/.test(editorCss)&&/\.bl-ft-seg>button\{[^}]*min-height:0/.test(editorCss),'Footer choice is at least 36 alone and its own height stays under the select so the shared row decides');
+assert(/\.bl-fruit-type-editor \.bl-ft-seg\{[^}]*min-height:36px[^}]*padding:2px/.test(editorCss)&&/\.bl-ft-seg>button\{[^}]*min-height:var\(--bl-ft-chip,32px\)/.test(editorCss)&&/\.bl-fruit-type-editor \.bl-ft-seg\{align-items:center\}/.test(editorCss)&&/--bl-ft-chip:34px/.test(editorCss),'Footer choice box is at least 36 alone and follows the shared row; its buttons stay chip size (PC 32, phone 34) centred - 8.2.0, 8.1.2 stretched them to 40');
 assert(!/ 숨기기`/.test(editorJs),'The label names the region; the choice says show/hide');
 {const m=/const footerSeg=(hidden=>`[\s\S]*?`);\n/.exec(editorJs);assert(m,'footerSeg helper');const seg=vm.runInNewContext(m[1]);
  // 옛 설정 호환: 예전 스위치 켬(hideFooter true) = 「숨김」 눌림, 끔 = 「보임」 눌림

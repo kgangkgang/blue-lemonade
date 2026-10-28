@@ -24,7 +24,11 @@
 /* 하단 문구 「보임 | 숨김」: 칸 폭을 둘이 나눠 꽉. 높이는 옆 고르기와 같게 — 값을 적지 않고, 2열일 때 두 칸이 한 행을 나눠 써(subgrid) 고르기 높이(PC 36 · 폰 44)를 따라가요.
    제 키(안쪽 2px + 글자)는 고르기보다 작게 두고 행에 맞춰 늘어나요. 1열일 때는 36 */
 .bl-fruit-type-editor .bl-ft-seg{display:flex;width:100%;max-width:none;min-height:36px;margin:0;padding:2px;box-sizing:border-box;align-items:stretch}
-.bl-fruit-type-editor .bl-ft-seg>button{flex:1 1 0;min-width:0;min-height:0;white-space:nowrap}
+.bl-fruit-type-editor .bl-ft-seg>button{flex:1 1 0;min-width:0;min-height:var(--bl-ft-chip,32px);white-space:nowrap}
+/* 8.2.0 조정자: 바깥 칸은 옆 고르기와 같은 행 높이(줄 맞춤) · 안쪽 단추는 크기표 칩(PC 32 · 폰 34) 그대로 가운데 — 8.1.2 는 단추가 행 높이로 늘어나 40px 이었어요(측정 settings-prompt-fruit-group1) */
+.bl-fruit-type-editor .bl-ft-seg{align-items:center}
+.bl-fruit-type-editor{--bl-ft-chip:32px}
+@media (max-width: 760px), (pointer: coarse){.bl-fruit-type-editor{--bl-ft-chip:34px}}
 @container bl-ft-editor (width >= 19em){.bl-ft-top{grid-template-columns:repeat(2,minmax(0,1fr))}.bl-ft-top>.bl-ft-param{display:grid;grid-row:span 2;grid-template-rows:subgrid;row-gap:6px}}
 .bl-ft-param>span{min-width:0;overflow-wrap:anywhere}
 .bl-ft-param>select{display:block;width:100%;min-width:0;max-width:100%;min-height:36px;margin:0;border-radius:8px;font:inherit}
