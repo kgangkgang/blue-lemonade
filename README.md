@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.1.6/blue-lemonade-8.1.6.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.1.7/blue-lemonade-8.1.7.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.1.6 · 최신 업데이트</summary>
+<summary>8.1.7 · 최신 업데이트</summary>
+
+- 확장만 모드에서 요술봉으로 연 설정 창이 화면 밖으로 길어지던 것 · 묶음 머리 화살표가 두 개로 보이던 것 · 전체 화면에서 정규식 모듈 목록을 내리면 왼쪽 칸이 비던 것을 고쳤어요.
+- 번역 도중 새로고침하거나 앱을 닫아도 이미 받은 문단은 남아서, 다시 번역하면 남은 문단만 이어서 번역해요.
+
+</details>
+
+<details>
+<summary>8.1.6 · 번역 점검 코드 표기</summary>
 
 - 번역 점검 › 문단 전체가 코드 표기(`…` · 코드 블록)뿐이면 「번역되지 않고 원문 그대로예요」로 고르지 않아요. 게임 기록 같은 코드 표기는 모델이 원문 그대로 두는 게 관례라 ⚠ 표시가 뜨지 않게 했어요. 코드 밖 문장이 원문 그대로 남은 문단은 지금처럼 알려 줘요.
 
