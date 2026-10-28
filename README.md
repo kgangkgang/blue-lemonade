@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.1.7/blue-lemonade-8.1.7.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.1.8/blue-lemonade-8.1.8.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -319,7 +319,15 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.1.7 · 최신 업데이트</summary>
+<summary>8.1.8 · 최신 업데이트</summary>
+
+- 번역 프롬프트 편집 칸에서 기본 프롬프트(채팅 번역 · 재번역 · 입력 · 보내기 · 프리필)를 고르면 「기본값으로」 단추가 보여요. 확인한 뒤 처음 값으로 되돌리고, 알림의 되돌리기 단추로 한 번 다시 살릴 수 있어요.
+- 번역 DB 카드에 「입력창에 DB 관리 단추 두기」를 더했어요. 끄면 입력창의 llm번역DB관리 단추를 숨기고, 다시 켜면 돌아와요.
+
+</details>
+
+<details>
+<summary>8.1.7 · 설정 창 화살표 · 빈 칸 · 번역 도중 새로고침 캐시</summary>
 
 - 확장만 모드에서 요술봉으로 연 설정 창이 화면 밖으로 길어지던 것 · 묶음 머리 화살표가 두 개로 보이던 것 · 전체 화면에서 정규식 모듈 목록을 내리면 왼쪽 칸이 비던 것을 고쳤어요.
 - 번역 도중 새로고침하거나 앱을 닫아도 이미 받은 문단은 남아서, 다시 번역하면 남은 문단만 이어서 번역해요.
