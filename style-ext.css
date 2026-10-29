@@ -1,5 +1,5 @@
-/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1742 · 뺀 규칙 4487 (style.css 72fe69824904) */
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build eeeca24125fa) */
+/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1743 · 뺀 규칙 4487 (style.css 8b5e648e75d8) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a9958a639b20) */
 /* css/00-base.css */
 :root{--bl-release:"8.2.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -1561,6 +1561,7 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .bl-prompt-tools .bl-prompt-name-row:not([hidden]){display:flex;flex-direction:column;align-items:stretch;row-gap:6px}
 .salty-panel .bl-prompt-tools .bl-prompt-name-row>span{flex:0 0 auto;min-width:0}
 .salty-panel .bl-prompt-source{overflow-wrap:anywhere;word-break:normal}
+.salty-panel .salty-row > span small .bl-rest-note { font-weight: 600; color: var(--salty-accent, inherit); }
 /* css/21-witidy.css */
 .bl-wi-actions { display: contents; }
 .bl-wi-actions > summary, .bl-wi-actions .bl-wi-action-list span { display: none; }

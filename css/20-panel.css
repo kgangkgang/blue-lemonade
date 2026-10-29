@@ -1418,3 +1418,5 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .bl-prompt-tools .bl-prompt-name-row:not([hidden]){display:flex;flex-direction:column;align-items:stretch;row-gap:6px}
 .salty-panel .bl-prompt-tools .bl-prompt-name-row>span{flex:0 0 auto;min-width:0}
 .salty-panel .bl-prompt-source{overflow-wrap:anywhere;word-break:normal}
+/* 「가볍게」 줄 안내 (panel.js restNote): 칵테일 · 바이바이가 같은 기능을 켜고 있어 쉬는 동안 — 토글 값은 그대로 */
+.salty-panel .salty-row > span small .bl-rest-note { font-weight: 600; color: var(--salty-accent, inherit); }

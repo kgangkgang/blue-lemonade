@@ -2,6 +2,9 @@ import { syncTypography } from './typography.js';
 // 켜야 쓰는 기능 (3.1.0): 몰입 읽기 · 한 손 버튼 줄 · 데우스 카드 스킨 · 캐릭터별 스타일 · (3.2.0) 화이트/나이트 자동의 코드는 켤 때 처음 불러온다.
 // 꺼 두면 파일도 받지 않고 이벤트도 걸지 않는다 — 테마가 무거워지지 않게. 한 번 불러온 뒤 끄면 그 모듈이 스스로 정리한다.
 import { syncSplash } from './splash.js';
+// 칵테일 · 바이바이가 켜져 있으면 같은 일을 하는 성능 기능은 쉰다 (ext-presence.js — 토글 값은 그대로, 그 확장을 지우면 바로 다시 켜진다)
+import { startPresence, onPresenceChange, restingFor } from './ext-presence.js';
+let presenceBound = false;
 
 const modules = {};
 let hooks = { applyAll: null, refreshPanels: null };
@@ -52,6 +55,7 @@ function startScripts(tries=4){
 /** apply.js applyAll 끝에서 부른다 */
 export function syncFeatures(s, addonsOn = !!s.enabled) {
     const on = !!s.enabled;
+    if (!presenceBound) { presenceBound = true; onPresenceChange(() => { hooks.applyAll?.(); hooks.refreshPanels?.(); }); startPresence(); }
     if (['conflicts'].some(id=>s.addons?.[id]) || modules.assist) load('assist','./assist/index.js').then(m=>m?.syncAssist());
     syncTypography(on);
     if (on || modules.promptchoices) load('promptchoices', './prompt-choice.js').then(m => m?.syncPromptChoices(on));
@@ -83,6 +87,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (showMore || modules.showmore) load('showmore', './show-more-auto.js').then(m => m?.syncShowMoreAuto(showMore));
     // 7.9.9 단추를 손으로 누르면 불러온 메시지를 보여 준다 (show-more-tap.js, 자동 더 보기와 상관없이 · 테마가 켜져 있을 때)
     if (on || modules.showmoretap) load('showmoretap', './show-more-tap.js').then(m => (on ? m?.installShowMoreTap() : m?.uninstallShowMoreTap()));
+    // 아바타는 가까워질 때 받기 (lazy-avatars.js, 기본 켬) — 캐릭터 · 페르소나 목록의 화면 밖 썸네일을 미룬다
+    const lazyAvatars = on && s.chat?.lazyAvatars !== false && !restingFor('lazyAvatars');
+    if (lazyAvatars || modules.lazyavatars) load('lazyavatars', './lazy-avatars.js').then(m => m?.syncLazyAvatars(lazyAvatars));
     const replyTop = on && !!s.chat?.replyTop;
     if (replyTop || modules.replytop) load('replytop', './reply-top.js').then(m => m?.syncReplyTop(replyTop));
     // 7.0.3 메시지 토큰 — 7.0.4 부터 토큰 수를 누르면 내역 (sent-tokens.js, 기본 켬)

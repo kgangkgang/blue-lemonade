@@ -38,6 +38,7 @@ import { applySillyTavernTheme, saveAsSillyTavernTheme, alreadyMatches, restoreS
 import { classifyAll } from './assets.js';
 import { CUT_EDGE_RANGES, CUT_EDGE_PRESETS, cutEdgeDefaults, imageFrameOn, resolveCutEdge, toCustom, ringFilterMarkup, baseInk, darkBackground, outlineVisible, shadowVisible } from './cutedge.js';
 import { openNotice, currentVersion, hasUnseenNotice } from './notice.js';
+import { restingFor } from './ext-presence.js';   // 칵테일 · 바이바이가 켜져 있어 쉬는 성능 기능의 안내
 import { COPYRIGHT_ICON } from './credits.js';
 import { customCssReport, otherCssReport, buildDiagnosis } from './diagnose.js';
 import { FAQ } from './faq-data.js';   // 7.2.6 자주 묻는 질문 (글만)
@@ -569,6 +570,12 @@ function qrSample(showFind = true, ctxNames = false) {
     // 3.7.1 입력창 모형을 같이 그린다 — '자리'(입력창 아래 · 위)가 미리보기에서 바로 보이게. 모형은 body.salty-qr-top 에 따라 순서가 바뀐다 (css/36-qr-place.css)
     const inputMock = '<div class="bl-qr-inputmock" aria-hidden="true"><span class="bl-qr-inputmock-box">메시지를 입력하세요…</span><span class="bl-qr-inputmock-btn"><i class="fa-solid fa-paper-plane"></i></span></div>';
     return `<div class="bl-qr-sample-wrap"><div class="bl-qr-sample" data-qr-sample tabindex="0" aria-label="퀵 리플라이 미리보기">${showFind ? '<span class="bl-qr-find-sample" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>' : ''}${groups.map(g => `<div class="qr--buttons" inert aria-hidden="true">${g.map(q => `<div class="qr--button${q.ctx ? ' qr--hasCtx' : ''}"><div class="qr--button-label">${esc(q.label)}</div>${q.ctx ? `<div class="qr--button-expander">${esc(q.ctx)}</div>` : ''}</div>`).join('')}</div>`).join('')}</div>${inputMock}</div>`;
+}
+
+/** 「가볍게」 줄: 같은 기능을 켠 다른 확장이 있어 쉬면 그 안내를 설명 끝에 붙인다 (토글 값은 그대로) */
+function restNote(feature) {
+    const who = restingFor(feature);
+    return who ? ` · <b class="bl-rest-note">${who}가 같은 기능을 켜고 있어 지금은 쉬어요</b>` : '';
 }
 
 function row(label, control, note = '') {
@@ -1580,6 +1587,9 @@ function tabChat(s, sub) {
             ${s.chat.hiddenFade ? slider('chat.hiddenGray', '흑백', 0, 100, 5, 30) : ''}
             ${s.chat.hiddenFade ? row('마우스 올리면 진하게', toggle('chat.hiddenHover', s.chat.hiddenHover !== false), '폰에서는 누르는 동안') : ''}
             ${row('추론 요청을 끄면 지난 추론도 숨기기', toggle('chat.reasoningFollow', s.chat.reasoningFollow !== false), '실리태번 「모델 추론 요청」을 따라가요 · 켜면 다시 보여요')}
+        </div>
+        ${cap('가볍게', '폰이 느릴 때')}<div class="salty-group">
+            ${row('아바타는 가까워질 때 받기', toggle('chat.lazyAvatars', s.chat.lazyAvatars !== false), '캐릭터 · 페르소나 목록의 화면 밖 아바타는 스크롤해 가까워질 때 받아요 · 캐릭터가 많을 때 목록이 빨리 떠요' + restNote('lazyAvatars'))}
         </div>
         ${cap('메시지 버튼', '··· 메뉴 밖에 늘 보일 버튼')}<div class="salty-group">
             ${mesPinPicker(s)}

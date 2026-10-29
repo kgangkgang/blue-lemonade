@@ -40,15 +40,17 @@ function messagePick(img, s, key) {
     for (let j = id - 1; j >= Math.max(0, id - 200); j--) if (same(chat[j])) { prevSeed = messageSeed(key, chatId, j, chat[j]); break; }
     return chooseForMessage(s.chars?.[key], { on: s.on !== false, includeCard: s.includeCard !== false, seed: messageSeed(key, chatId, id, m), prevSeed });
 }
+/** 그림의 원래 주소 — lazy-avatars.js 가 자리표시로 바꿔 둔 그림은 data-bl-src 에 원래 주소가 있다 */
+const srcOf = img => img.dataset.blSrc || img.getAttribute('src');
 function paint(img, s) {
-    const key = img.dataset[SWAP] || avatarFromSrc(img.getAttribute('src'), location.origin);
+    const key = img.dataset[SWAP] || avatarFromSrc(srcOf(img), location.origin);
     if (!key) return;
     const perMessage = on && s.when === 'message' ? messagePick(img, s, key) : null;
     let pick = !on ? CARD : perMessage ?? session.get(s, key);
     if (pick !== CARD && broken.has(pick)) pick = CARD;
     if (pick === CARD) { restore(img); return; }
     const url = urlOf(pick);
-    if (img.dataset[SWAP] !== key) { img.dataset[ORIG] = img.getAttribute('src') || ''; img.dataset[SWAP] = key; }
+    if (img.dataset[SWAP] !== key) { img.dataset[ORIG] = srcOf(img) || ''; img.dataset[SWAP] = key; }
     if (img.getAttribute('src') !== url) img.src = url;
 }
 const sweep = (selector, s = current()) => { for (const img of document.querySelectorAll(selector)) paint(img, s); };
@@ -57,7 +59,7 @@ const paintList = s => sweep('#rm_print_characters_block .avatar img, #HotSwapWr
 const paintGroup = s => sweep('#rm_group_members .avatar img, #rm_group_add_members .avatar img', s);
 const paintMessage = id => { if (id === undefined || id === null) return paintChat(); sweep(`#chat .mes[mesid="${String(id).replace(/[^\w-]/g, '')}"] .avatar img`); };
 const listVisible = () => { const block = document.getElementById('rm_characters_block'); return !!block && block.getClientRects().length > 0; };
-const listedAvatars = () => [...new Set([...document.querySelectorAll('#rm_print_characters_block .avatar img')].map(img => img.dataset[SWAP] || avatarFromSrc(img.getAttribute('src'), location.origin)).filter(Boolean))];
+const listedAvatars = () => [...new Set([...document.querySelectorAll('#rm_print_characters_block .avatar img')].map(img => img.dataset[SWAP] || avatarFromSrc(srcOf(img), location.origin)).filter(Boolean))];
 
 /** 전부 다시 칠하기 (관리 창이 사진 · 고정을 바꾼 뒤, 설정이 바뀐 뒤) — 한 프레임에 모아서 */
 export function repaint() {
