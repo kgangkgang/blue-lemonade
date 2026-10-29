@@ -202,6 +202,7 @@ jobs:
           node tools/tests/ko-ui.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/preview-park.mjs .
+          node tools/tests/preview-measure-batch.mjs .
           node tools/tests/theme-sheet-ext.mjs .
           node tools/tests/fruit-shortcut-frames.mjs .
           node tools/tests/zipinstall-remove.mjs .

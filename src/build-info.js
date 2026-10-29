@@ -615,7 +615,7 @@ export const FILE_HASHES = {
   "src/popup-marks.js": "1818:0af84657:5805cf62",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
   "src/preview-park.gen.css": "120973:c92562e8:fe46edce",
-  "src/preview-view.js": "15640:4ca24d2f:096a5129",
+  "src/preview-view.js": "17270:6c138445:2764a1d7",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
   "src/profile.js": "6026:34f89f44:fc6757bf",
   "src/prompt-anchors-core.js": "10232:1faf43c9:64063146",

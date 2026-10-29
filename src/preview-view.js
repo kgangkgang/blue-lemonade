@@ -1,5 +1,31 @@
 import { updateQrEdges } from './layout.js';
 import { dragIntent } from './touch-drag-intent.js';   // 8.2.3 폰: 세로 끌기는 화면 스크롤에 양보, 가로 끌기만 미리보기 이동
+// 8.2.6 성능: 미리보기 칸 재기를 한 프레임에 모아 「모두 읽고 → 모두 쓰고 → 그리기」 순서로 돌려요.
+//   예전에는 칸마다 제 프레임 콜백에서 「읽기 → 높이 쓰기 → 다시 읽기(viewport.clientWidth)」를 해서, 칸이 N개면 한 프레임에 강제 배치가 2N번이었어요
+//   (긴 채팅 위에 테마 설정 창을 열면 그 한 번이 문서 전체 배치 — 전수조사 4절 8, 창 열기 테마 JS 의 84%). 이제는 읽기 묶음 앞에서 한 번이에요.
+//   viewport 는 overflow:hidden 이라 제 높이를 바꿔도 안쪽 폭(clientWidth)이 그대로여서, 폭은 높이를 쓰기 전에 읽어도 같은 값이에요.
+//   (높이가 늘어 바깥 서랍에 스크롤 막대가 생기는 드문 경우는 장면 폭이 바뀌어 ResizeObserver 가 다음 프레임에 다시 재요 — 예전과 같은 자리로 모여요)
+const queued = new Set();
+let batchFrame = 0, batchTimer = 0;
+export const previewMeasureStats = { batches: 0, measured: 0 };   // 시험 · 진단용
+function runBatch() {
+    batchFrame = 0; batchTimer = 0;
+    const list = [...queued]; queued.clear();
+    previewMeasureStats.batches++;
+    const ready = [];
+    for (const task of list) { const r = task.read(); if (r) ready.push([task, r]); }
+    for (const [task, r] of ready) task.write(r);
+    for (const [task, r] of ready) task.finish(r);
+    previewMeasureStats.measured += ready.length;
+}
+function queueMeasure(task) {
+    queued.add(task);
+    if (batchFrame || batchTimer) return;
+    // Hidden tabs do not receive animation frames. Keep the preview
+    // usable there as well, without retaining callbacks after close.
+    if (document.hidden) batchTimer = setTimeout(runBatch, 0);
+    else batchFrame = requestAnimationFrame(runBatch);
+}
 // Viewing state belongs to the open panel, never to a saved theme.
 /** 8.2.3 미리보기 위 세로 끌기가 굴릴 칸: 설정 편집 창은 .salty-sec(미리보기 무대와 형제라 조상이 아님), 서랍 · 팝업 판은 가장 가까운 스크롤 칸 */
 function scrollerOf(root, box) {
@@ -32,7 +58,7 @@ export function bindPreviewViews(root, section) {
         toolsToggle.onclick = () => { state.tools = !state.tools; syncTools(); measure(); };
         syncTools();
         const [minus, plus, reset] = bar.querySelectorAll('button'), output = bar.querySelector('output');
-        let width = 0, height = 0, viewHeight = 0, raf = 0, measureFrame = 0, measureTimer = 0, disposed = false;
+        let width = 0, height = 0, viewHeight = 0, raf = 0, disposed = false;
         const pointers = new Map();
         let resizeStart = null, grip;
         const sideBySide = () => getComputedStyle(root.querySelector('.bl-editor-workspace') || root).display === 'grid';
@@ -59,19 +85,19 @@ export function bindPreviewViews(root, section) {
         if (!toolsToggle.isConnected) { box.classList.add('bl-view-float'); box.append(toolsToggle); }
         // 5.3.7 같은 값이면 쓰지 않는다 — 슬라이더 틱마다 변환 · 글자 · disabled 를 다시 써 작은 재계산이 붙었다
         let painted = '';
-        function paint() {
+        function paint(cw = viewport.clientWidth) {
             raf = 0;
-            const extraX = Math.max(0, width * state.scale - viewport.clientWidth);
+            const extraX = Math.max(0, width * state.scale - cw);
             state.x = Math.max(-extraX / 2, Math.min(extraX / 2, state.x));
             state.y = Math.max(Math.min(0, viewHeight - height * state.scale), Math.min(0, state.y));
-            const transform = `translate(${(viewport.clientWidth - width * state.scale) / 2 + state.x}px,${state.y}px) scale(${state.scale})`;
+            const transform = `translate(${(cw - width * state.scale) / 2 + state.x}px,${state.y}px) scale(${state.scale})`;
             if (transform === painted && scene.style.transform === transform) return;
             painted = transform;
             scene.style.transform = transform;
             output.textContent = `${Math.round(state.scale * 100)}%`;
             minus.disabled = state.scale <= .5; plus.disabled = state.scale >= 3;
         }
-        const schedule = () => { if (!raf) raf = requestAnimationFrame(paint); };
+        const schedule = () => { if (!raf) raf = requestAnimationFrame(() => paint()); };
         const wheel = e => {
             if (e.ctrlKey || e.metaKey) return;
             const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? viewHeight : 1;
@@ -152,41 +178,43 @@ export function bindPreviewViews(root, section) {
         const qrSample = box.dataset.pv === 'qr' && scene.querySelector('[data-qr-sample]');
         const syncQr = () => { if (qrSample && state.scale === 1) updateQrEdges(qrSample); };
         qrSample?.addEventListener?.('scroll', syncQr, {passive:true});
-        const measure = () => {
-            if (disposed) return;
-            if (measureFrame) { cancelAnimationFrame(measureFrame); measureFrame = 0; }
-            if (measureTimer) { clearTimeout(measureTimer); measureTimer = 0; }
-            if (!box.isConnected) { dispose(); return; }
+        // 읽기 — 이 칸의 크기 · 높이 한계 · 안쪽 폭. 쓰기 전에 모두 읽어요(5.3.7 와 같은 뜻을 여러 칸에 걸쳐)
+        const read = () => {
+            if (disposed) return null;
+            if (!box.isConnected) { dispose(); return null; }
             // Hidden drawers and folded previews have zero dimensions. Keep pan
             // until the same view becomes visible again instead of clamping to 0.
-            if (!scene.offsetWidth || !scene.offsetHeight) return;
-            // 5.3.7 읽기를 모두 끝낸 뒤 쓴다 — 전에는 높이를 쓰고 나서 heightLimit() 이 다시 재어 강제 레이아웃이 한 번 더 났다. 같은 높이면 쓰지 않는다
+            if (!scene.offsetWidth || !scene.offsetHeight) return null;
             width = scene.offsetWidth; height = scene.offsetHeight;
             const limit = heightLimit();
             // A stacked preview leaves room for settings; an explicitly resized view keeps its height.
-            viewHeight = Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, limit)) : Math.min(height, limit, sideBySide() && grip ? limit : Math.min(window.innerHeight * .22, Number(box.dataset.pvMax) || 180)); // data-pv-max: 설정 사이에 끼는 작은 미리보기(상태창 글자)
+            const next = Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, limit)) : Math.min(height, limit, sideBySide() && grip ? limit : Math.min(window.innerHeight * .22, Number(box.dataset.pvMax) || 180)); // data-pv-max: 설정 사이에 끼는 작은 미리보기(상태창 글자)
+            return { limit, next, cw: viewport.clientWidth };
+        };
+        // 쓰기 — 같은 높이면 쓰지 않는다
+        const write = r => {
+            viewHeight = r.next;
             const px = `${viewHeight}px`;
             state.viewHeight = viewHeight;
             if (viewport.style.height !== px) viewport.style.height = px;
+        };
+        const finish = r => {
             if (raf) cancelAnimationFrame(raf);
-            paint();
+            paint(r.cw);
             if (grip) {
-                const max = String(Math.round(limit)), now = String(Math.round(viewHeight));
+                const max = String(Math.round(r.limit)), now = String(Math.round(viewHeight));
                 if (grip.getAttribute('aria-valuemin') !== '48') grip.setAttribute('aria-valuemin', '48');
                 if (grip.getAttribute('aria-valuemax') !== max) grip.setAttribute('aria-valuemax', max);
                 if (grip.getAttribute('aria-valuenow') !== now) grip.setAttribute('aria-valuenow', now);
             }
             syncQr();
         };
-        const requestMeasure = () => {
-            if (disposed || measureFrame || measureTimer) return;
-            // Hidden tabs do not receive animation frames. Keep the preview
-            // usable there as well, without retaining callbacks after close.
-            if (document.hidden) measureTimer = setTimeout(() => { measureTimer = 0; measure(); }, 0);
-            else measureFrame = requestAnimationFrame(() => { measureFrame = 0; measure(); });
-        };
+        const task = { read, write, finish };
+        // 손으로 끌기 · 키 · 단추는 그 자리에서 바로 (묶음에 남은 것은 뺌)
+        const measure = () => { queued.delete(task); const r = read(); if (r) { write(r); finish(r); } };
+        const requestMeasure = () => { if (!disposed) queueMeasure(task); };
         const resize = new ResizeObserver(requestMeasure);
-        const dispose = () => { disposed = true; qrSample?.removeEventListener?.('scroll',syncQr); resize.disconnect(); cancelAnimationFrame(raf); cancelAnimationFrame(measureFrame); clearTimeout(measureTimer); pointers.clear(); resizeStart = null; window.removeEventListener('resize', requestMeasure); root.removeEventListener('bl:preview-resize', requestMeasure); };
+        const dispose = () => { disposed = true; queued.delete(task); qrSample?.removeEventListener?.('scroll',syncQr); resize.disconnect(); cancelAnimationFrame(raf); pointers.clear(); resizeStart = null; window.removeEventListener('resize', requestMeasure); root.removeEventListener('bl:preview-resize', requestMeasure); };
         requestMeasure();
         resize.observe(scene);
         window.addEventListener('resize', requestMeasure, { passive: true });
