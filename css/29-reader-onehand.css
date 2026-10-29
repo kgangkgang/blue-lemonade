@@ -23,8 +23,10 @@
   }
   body.salty.bl-reader #form_sheld {
     position: absolute !important;
-    left: 0;
-    right: 0;
+    /* 8.2.7 가로 아이폰: 실리태번은 #sheld 에 좌우 안전 영역만큼 안쪽 여백을 두는데(mobile-styles.css), absolute 의 left/right 0 은 그 여백 밖(노치 밑)부터 잰다 —
+       몰입 읽기에서 입력판 왼쪽 ≡ 단추 · 글 칸이 노치에 가렸다. 노치 없는 기기는 0 이라 그대로 */
+    left: env(safe-area-inset-left, 0px);
+    right: env(safe-area-inset-right, 0px);
     bottom: 0;
     margin: 0 !important;
     padding-top: 12px !important;
