@@ -180,7 +180,9 @@ export function installPullToRefresh({ host, isEnabled, doc = document, win = wi
     listen(chat, 'touchcancel', reset, { passive: true });
     listen(chat, 'scroll', () => { lastScroll = now(); reset(); }, { passive: true });
     listen(doc, 'touchstart', e => { if (e.touches.length !== 1) reset(); }, { passive: true, capture: true });
-    listen(doc, 'contextmenu', reset, true); listen(doc, 'selectionchange', () => { if (selected()) reset(); });
+    listen(doc, 'contextmenu', reset, true);
+    // 8.2.5 입력칸에 글자를 칠 때마다 오는 selectionchange 에 isCollapsed 를 읽으면 배치를 강제로 계산한다 — 당기는 중이거나 표시가 떠 있을 때만 본다
+    listen(doc, 'selectionchange', () => { if ((gesture || !indicator.hidden) && selected()) reset(); });
     listen(doc, 'input', changed, true); listen(doc, 'change', changed, true);
     listen(doc, 'visibilitychange', reset); listen(win, 'pagehide', reset);
     const syncMode = () => { doc.documentElement.toggleAttribute('data-bl-pull-refresh', enabled()); if (!enabled()) reset(); };

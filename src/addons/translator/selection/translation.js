@@ -47,8 +47,17 @@ export function assertTranslationAlive(job) {
     if (!enabled('retranslate') || chatKey() !== job.chatKey || ctx.chat[job.id] !== job.message || job.message.mes !== job.mes || job.message.swipe_id !== job.swipe || job.message.extra?.display_text !== job.display) throw Object.assign(Error('메시지나 번역이 바뀌었어요. 현재 글에서 다시 선택해 주세요.'), { cancelled: true });
 }
 const assertAlive=assertTranslationAlive;
+// 8.2.5 입력칸(textarea · input · contenteditable)에 글자를 칠 때마다 selectionchange 가 온다 — 그 안의 선택은 채팅 글이 아니라
+// Selection 을 읽기 전에(rangeCount · getRangeAt 도 입력칸 안에서는 배치를 계산한다) activeElement 만 보고 돌아간다 (delete.js 와 같은 규칙).
+const TEXT_INPUT = /^(text|search|url|tel|email|password|number)$/;
+export function typingInField(element = document.activeElement) {
+    if (!element) return false;
+    if (element.isContentEditable) return true;
+    return element.tagName === 'TEXTAREA' || (element.tagName === 'INPUT' && TEXT_INPUT.test(element.type));
+}
 export function selectionSnapshot() {
     if (document.body.classList.contains('cg-previewing')) return null;
+    if (typingInField()) return null;
     const selected = window.getSelection();
     if (!selected?.rangeCount || selected.getRangeAt(0).collapsed) return null;   // 6.4.5 isCollapsed 는 selectionchange 마다 배치를 강제로 계산한다 — 범위 하나의 collapsed 로 같은 답
     const range = selected.getRangeAt(0);

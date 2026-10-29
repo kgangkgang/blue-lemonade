@@ -1,7 +1,7 @@
 import { IDS, LABELS } from './core.js';
 import { context, enabled, configure, deleteEnabled } from './state.js';
 import { syncSelectionDelete } from './delete.js';   // 6.4.4 고른 글 지우기
-import { selectionSnapshot } from './translation.js';
+import { selectionSnapshot, typingInField } from './translation.js';
 // 7.7.4 고른 글 창(ui.js · 비교 · 용어 기억)은 글을 처음 고를 때 받는다 — 시작할 때는 아무도 부르지 않아 받기만 했다.
 //   받기 전에는 고른 글도 열린 창도 없으니 비우기 · 닫기는 할 일이 없다
 let ui = null, uiLoading = null;
@@ -19,6 +19,8 @@ function positionToolbar() {
 const ICONS = { retranslate: 'language' };
 function selectionChanged() {
     clearTimeout(selectionTimer);
+    // 8.2.5 입력칸에 글을 치는 중이고 도구 막대도 없으면 할 일이 없다 — 타이머도 걸지 않는다 (막대가 있으면 아래에서 치운다)
+    if (typingInField() && !document.getElementById('llmt-selection-selection')) return;
     selectionTimer = setTimeout(async () => {
         if (!enabled()) return;
         let snap = selectionSnapshot();

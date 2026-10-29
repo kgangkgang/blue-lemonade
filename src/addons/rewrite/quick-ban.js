@@ -4,10 +4,22 @@
 const MAX = 40;
 let chip = null, timer = 0, current = '', onAdd = null, enabled = true, bound = false, canSelect = () => true;
 
+// 8.2.5 입력칸(textarea · input · contenteditable)에 글자를 칠 때마다 selectionchange 가 오는데, 그때 Selection 을 읽으면(isCollapsed ·
+// toString · getClientRects) 문서 전체 스타일 · 배치를 강제로 계산한다 — 페르소나 설명 50자에 2~3초(PC). 입력칸 안의 선택은 채팅 글이
+// 아니라 칩이 뜰 일이 없으니 activeElement 만 보고 바로 돌아간다. (bookmarks/selection-chip.js · translator/selection 과 같은 규칙)
+const TEXT_INPUT = /^(text|search|url|tel|email|password|number)$/;
+export function typingInField(element = document.activeElement) {
+    if (!element) return false;
+    if (element.isContentEditable) return true;
+    return element.tagName === 'TEXTAREA' || (element.tagName === 'INPUT' && TEXT_INPUT.test(element.type));
+}
+
 function selectedText() {
     if (document.body.classList.contains('cg-previewing')) return null;
+    if (typingInField()) return null;
     const selection = document.getSelection();
-    if (!selection || selection.isCollapsed || selection.rangeCount !== 1) return null;
+    // isCollapsed 대신 범위 하나의 collapsed — 배치 계산을 강제하지 않고 같은 답(6.4.5 번역 애드온과 같은 길)
+    if (!selection || selection.rangeCount !== 1 || selection.getRangeAt(0).collapsed) return null;
     const range = selection.getRangeAt(0);
     const inside = node => (node?.nodeType === 1 ? node : node?.parentElement)?.closest?.('#chat .mes_text');
     const container = inside(range.startContainer);
@@ -87,7 +99,13 @@ export function startQuickBan(add, allowSelection = () => true) {
     canSelect = allowSelection;
     if (bound) return;
     bound = true;
-    document.addEventListener('selectionchange', () => { clearTimeout(timer); if (enabled) timer = setTimeout(check, 250); });
+    document.addEventListener('selectionchange', () => {
+        clearTimeout(timer);
+        if (!enabled) return;
+        // 8.2.5 입력칸에 글을 치는 중 — 칩이 떠 있지 않으면 Selection 을 읽지 않고 끝 (떠 있으면 숨기기만)
+        if (typingInField()) { if (current) hide(); return; }
+        timer = setTimeout(check, 250);
+    });
     // 스크롤하면 위치가 어긋나므로 숨긴다 (다시 고르면 다시 뜬다)
     document.getElementById('chat')?.addEventListener('scroll', hide, { passive: true });
     window.addEventListener('resize', hide);
