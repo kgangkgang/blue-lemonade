@@ -535,7 +535,7 @@ export const FILE_HASHES = {
   "src/dialogue-span.js": "19679:3d1e8c9c:3f0aacee",
   "src/dialogue-tildes.js": "4392:01070682:e63ab692",
   "src/dialogue-view.js": "14697:12cda5ad:94284d61",
-  "src/dom-watch.js": "11035:94d7d458:697794de",
+  "src/dom-watch.js": "12897:09fe15a6:f92c74bd",
   "src/draft.js": "10834:37edf1aa:54879c10",
   "src/edit-origin.js": "3547:2df8164c:611794f6",
   "src/empty-guard-boot.js": "8054:412745bb:9a8dc9ee",

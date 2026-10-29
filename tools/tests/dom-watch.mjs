@@ -91,6 +91,19 @@ await test('자기만 보는 뿌리 여럿을 한꺼번에 끊으면 다음 마�
     assert.deepEqual(got, [[4, 1]], '쌓인 기록은 남은 구독이 받아요');
     proto.observe = realObserve; offs[4]();
 });
+await test('감시자 옵션이 곧 원한 것이면 받은 기록 그대로(하나씩 안 따짐) · 아니면 걸러서 — 부르는 차례는 구독 순서', async () => {
+    const order = []; let fullGot = null, partGot = null;
+    const offA = watchDom(chat, { childList: true, subtree: true, name: 'A' }, r => { order.push('A'); partGot = r; });
+    const offB = watchDom(chat, { childList: true, attributes: ['class'], subtree: true, name: 'B' }, r => { order.push('B'); fullGot = r; });
+    const el = document.createElement('p'); chat.append(el); el.className = 'x';
+    await tick();
+    assert.deepEqual(order, ['A', 'B']);
+    assert.equal(partGot.length, 1, 'A 는 자식 기록만'); assert.equal(fullGot.length, 2, 'B 는 둘 다');
+    offA(); order.length = 0;
+    el.className = 'y'; chat.append(document.createElement('i')); await tick();
+    assert.deepEqual(order, ['B']); assert.equal(fullGot.length, 2);
+    offB();
+});
 await test('구독별 이름 · 횟수 · 시간이 진단에 보여요', async () => {
     const off = watchDom(body, { childList: true, subtree: true, name: '시험 구독' }, () => {});
     body.append(document.createElement('div')); await tick();

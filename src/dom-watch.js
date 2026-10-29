@@ -112,8 +112,16 @@ export function watchDom(root, spec, fn) {
         let hub = hubs.roots.get(root);
         if (!hub) {
             hub = { subs: new Set(), opts: null, mo: null };
-            const pairs = [];
-            hub.mo = new win.MutationObserver(records => { pairs.length = 0; for (const x of hub.subs) pairs.push([x, root]); dispatch(win, () => pairs, records); });
+            const pair = [null], only = () => pair;
+            hub.mo = new win.MutationObserver(records => {
+                // 감시자 옵션이 곧 그 구독이 원한 것(full)이면 기록을 하나씩 따지지 않고 그대로 넘겨요 — 구독이 하나뿐일 때(대부분)는 예전 감시자와 같은 일만 해요
+                //   구독 차례(만든 순서)는 예전 감시자들이 불리던 순서와 같아요
+                for (const x of hub.subs) {
+                    if (x.off) continue;
+                    if (x.full && !x.skip) { deliver(win, x, records); continue; }
+                    pair[0] = [x, root]; dispatch(win, only, records);
+                }
+            });
             hubs.roots.set(root, hub);
         }
         hub.subs.add(sub);
@@ -128,8 +136,17 @@ export function watchDom(root, spec, fn) {
     let d = hubs.direct;
     if (!d) {
         d = hubs.direct = { byRoot: new Map(), opts: new Map(), mo: null, win, rebuild: false };
-        d.route = r => { const subs = d.byRoot.get(r.target); return subs ? [...subs].map(x => [x, r.target]) : []; };
-        d.mo = new win.MutationObserver(records => dispatch(win, d.route, records));
+        // 기록을 뿌리(target)별로 묶어 그 뿌리 구독에만 — 구독이 원한 것과 같으면(full) 묶음 그대로
+        d.handle = records => {
+            const groups = new Map();
+            for (const r of records) { if (!d.byRoot.has(r.target)) continue; let g = groups.get(r.target); if (!g) groups.set(r.target, g = []); g.push(r); }
+            for (const [root, list] of groups) for (const x of d.byRoot.get(root) || []) {
+                if (x.off) continue;
+                if (x.full && !x.skip) { deliver(win, x, list); continue; }
+                deliver(win, x, list.filter(r => { if (!wants(x, r, root)) return false; if (!x.skip) return true; try { return !x.skip(r); } catch { return false; } }));
+            }
+        };
+        d.mo = new win.MutationObserver(records => d.handle(records));
     }
     let subs = d.byRoot.get(root); if (!subs) d.byRoot.set(root, subs = new Set());
     subs.add(sub);
@@ -141,8 +158,21 @@ export function watchDom(root, spec, fn) {
         refitDirect(d);
     };
 }
+/** 감시자 옵션(opts)으로 오는 기록이 전부 이 구독이 원한 종류인가 */
+function covers(spec, opts) {
+    if (opts.childList && !spec.childList) return false;
+    if (opts.characterData && !spec.characterData) return false;
+    if (opts.subtree && !spec.subtree) return false;
+    if (opts.attributes) {
+        if (spec.attributes === true) return true;
+        if (!Array.isArray(spec.attributes) || !opts.attributeFilter) return false;
+        return opts.attributeFilter.every(a => spec.attributes.includes(a));
+    }
+    return true;
+}
 function refit(hub, root) {
     const opts = unionOf(hub.subs);
+    for (const x of hub.subs) x.full = covers(x.spec, opts);
     if (hub.opts && sameOpts(hub.opts, opts)) return;
     hub.opts = opts;
     hub.mo.observe(root, opts);   // 같은 노드를 다시 observe 하면 옵션만 바뀌고 쌓인 기록은 그대로예요
@@ -158,12 +188,13 @@ function refitDirect(d) {
             d.rebuild = false;
             const pending = typeof d.mo.takeRecords === 'function' ? d.mo.takeRecords() : [];
             d.mo.disconnect(); d.opts.clear();
-            for (const [root, subs] of d.byRoot) { const o = unionOf(subs); d.opts.set(root, o); d.mo.observe(root, o); }
-            if (pending.length) dispatch(d.win, d.route, pending);
+            for (const [root, subs] of d.byRoot) { const o = unionOf(subs); for (const x of subs) x.full = covers(x.spec, o); d.opts.set(root, o); d.mo.observe(root, o); }
+            if (pending.length) d.handle(pending);
         });
     }
     for (const [root, subs] of d.byRoot) {
         const o = unionOf(subs);
+        for (const x of subs) x.full = covers(x.spec, o);
         if (d.opts.has(root) && sameOpts(d.opts.get(root), o)) continue;
         d.opts.set(root, o); d.mo.observe(root, o);
     }
