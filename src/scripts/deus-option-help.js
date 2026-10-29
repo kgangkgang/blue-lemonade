@@ -13,7 +13,7 @@ export function describeDeusOption(key, preset) {
         // 같은 id 라도 V3 원문이면 V3 설명(v3 덧칠)을, 2.5 원문이면 2.5 설명을 보여요. 원문이 둘 다 아니면 프리셋 판을 따라요.
         const hash=localPromptHash(String(prompt.content||'').replace(/\r\n?/g,'\n').trim());
         const data=base.v3&&(hash===base.v3.hash||(hash!==base.hash&&v3))?{...base,...base.v3}:base;
-        const same=hash===data.hash;
+        const same=hash===data.hash||!!data.standing?.includes(hash);
         changed ||= !same;
         rows.push({data,prompt,same});
     }

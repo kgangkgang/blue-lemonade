@@ -421,6 +421,7 @@ jobs:
           node tools/tests/fruit-watch-scope.mjs .
           node tools/tests/fruit-option-help.mjs .
           node tools/tests/fruit-option-coverage.mjs .
+          node tools/tests/option-help-standing.mjs .
           node tools/tests/longpress-help.mjs .
           node tools/build-longpress-help.mjs . --check
           node tools/tests/fruit-typography.mjs .

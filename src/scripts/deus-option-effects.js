@@ -1,5 +1,6 @@
 // Reviewed DEUS 2.5 and V3 quick-setting effects. No original prompt body.
 // v3 = the same id in DEUS V3: its body hash, plus a label/text only where the meaning changed.
+// standing = 같은 원문에 블루레몬에이드 상시 손질(프리셋 자동 갱신)만 얹은 본문 지문 — 뜻이 같아 확인된 설명으로 봐요(10-29 상태창 영어 줄).
 export const DEUS_EFFECTS = {
   "a3c64aa2-de6f-4ace-987d-1eca5c4ffdb7": {
     "label": "내 캐릭터 직접 조종",
@@ -515,7 +516,10 @@ export const DEUS_EFFECTS = {
     "text": "등장 중이거나 장면 밖에 있는 주요 인물의 상태를 기록해요.",
     "hash": "366872c37740d485dbe5c4a1e5ddd3e88bb29dde841be3ba25d3ea0d06a7d15b",
     "v3": {
-      "hash": "72082f5d16150538d93dc9ef4f36ae1528a1075d92a0b18f8f8e83b73ccc7572"
+      "hash": "72082f5d16150538d93dc9ef4f36ae1528a1075d92a0b18f8f8e83b73ccc7572",
+      "standing": [
+        "f6b347b791cd2bdc59e50af59abfa97a35a6b369a150f5d139bace9ca1c1fb11"
+      ]
     }
   },
   "ab70a374-f6f5-4e5c-a1c6-1596a4397806": {
