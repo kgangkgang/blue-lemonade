@@ -3913,7 +3913,7 @@ export function askPersonaVoice({ quiet = false } = {}) {
     askingPersona = (async () => {
         let r = null;
         try {
-            r = await callGenericPopup(`${who}(나) 대사도 자동 목소리로 읽을까요?`, POPUP_TYPE.TEXT, '', { okButton: '여자 목소리', cancelButton: '취소', customButtons: ['남자 목소리'] });
+            r = await callGenericPopup(`${escHtml(who)}(나) 대사도 자동 목소리로 읽을까요?`, POPUP_TYPE.TEXT, '', { okButton: '여자 목소리', cancelButton: '취소', customButtons: ['남자 목소리'] });
         } catch { r = null; }
         if (r !== POPUP_RESULT.AFFIRMATIVE && r !== 2) return false;
         setPersonaAuto(name, r === 2 ? 'm' : 'f');

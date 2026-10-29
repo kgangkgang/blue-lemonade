@@ -227,6 +227,7 @@ jobs:
           node tools/tests/theme-sheet-ext.mjs .
           node tools/tests/fruit-shortcut-frames.mjs .
           node tools/tests/zipinstall-remove.mjs .
+          node tools/tests/security-untrusted-text.mjs .
           node tools/tests/word-replace-marks.mjs .
           node tools/tests/translator-glossary.mjs .
           node tools/tests/translator-leftover.mjs .

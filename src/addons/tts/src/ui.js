@@ -256,7 +256,8 @@ function hash(str) {
     return (h >>> 0).toString(36);
 }
 async function confirm(msg) {
-    const r = await callGenericPopup(msg, POPUP_TYPE.CONFIRM, '', { okButton: '네', cancelButton: '아니요' });
+    // 글만 받는다 — 실리태번 팝업은 글을 innerHTML 로 넣으니, 캐릭터 · 목소리 이름(모델 출력 · 외부 목록 · 가져온 설정)이 태그로 실행되지 않게 이스케이프
+    const r = await callGenericPopup(esc(msg), POPUP_TYPE.CONFIRM, '', { okButton: '네', cancelButton: '아니요' });
     return r === POPUP_RESULT.AFFIRMATIVE;
 }
 function getPath(obj, path) { return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj); }
