@@ -28,9 +28,12 @@ const SIGNAL_NAMES = new Set(POPUP_SIGNALS.map(([name]) => name));
 const ownMark = value => String(value).split(/\s+/).filter(Boolean).every(name => SIGNAL_NAMES.has(name));
 
 export function refreshPopupMarks(records, root) {
-    const pending = new Set();
+    const pending = new Set(), walked = new Set();
+    // 10-30 perf-icon: 한 번 지나간 요소에서 멈춰요 — 그 위 조상은 그때 이미 다 봤어요(기록 수천 개가 저마다 문서 꼭대기까지 오르던 것)
     const ancestors = node => {
         for (let el = node; el?.nodeType === 1; el = el.parentElement) {
+            if (walked.has(el)) return;
+            walked.add(el);
             if (el.matches('.popup') || el.hasAttribute(POPUP_MARK)) pending.add(el);
         }
     };

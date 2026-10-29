@@ -307,16 +307,23 @@ export function mutationWork(records) {
         if (target && target.isConnected !== false) targets.add(target);
         for (const node of record.addedNodes || []) if (node.nodeType === 1 && node.isConnected !== false) added.add(node);
     }
-    const roots = [...added].filter(node => {
-        for (let p = node.parentElement; p; p = p.parentElement) if (added.has(p)) return false;
-        return true;
-    });
-    const rootSet = new Set(roots);
-    const remaining = [...targets].filter(node => {
-        for (let p = node; p; p = p.parentElement) if (rootSet.has(p)) return false;
-        return true;
-    });
+    // 10-30 perf-icon: 조상 오르기는 한 번 지나간 조상의 답을 적어 두고 다음 요소는 거기서 멈춰요(메시지 수백 개를 붙일 때 요소마다 문서 꼭대기까지 오르던 것)
+    const addedMemo = new Map();
+    const roots = [...added].filter(node => !underSet(node.parentElement, added, addedMemo));
+    const rootSet = new Set(roots), memo = new Map();
+    const remaining = [...targets].filter(node => !underSet(node, rootSet, memo));
     return { roots, targets: remaining };
+}
+// start 자신이나 조상이 set 에 있나 — 지나간 요소의 답은 memo 에(같은 set 끼리만 나눠 써요)
+function underSet(start, set, memo) {
+    const path = []; let hit = false;
+    for (let p = start; p; p = p.parentElement) {
+        const known = memo.get(p); if (known !== undefined) { hit = known; break; }
+        if (set.has(p)) { hit = true; break; }
+        path.push(p);
+    }
+    for (const p of path) memo.set(p, hit);
+    return hit;
 }
 
 let started = false;

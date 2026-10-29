@@ -1,7 +1,8 @@
 // 10-30 perf-icon: src/icon-text.js 의 서랍 줄 표식 훑기가 「모든 요소를 TreeWalker 로 돌기」에서 「바뀔 수 있는 요소만 선택자로 모으기」(rowHosts)로 바뀐 뒤에도
 //   ① 끝 표식이 예전 훑기와 같은지(무작위 나무 400개 · 표식이 미리 붙은 요소 · #chat · .mes · svg 가지 포함) ② 뿌리 자신도 후보가 되는지,
 //   ③ 줄 검사는 그 자식 특징이 있는 것만 도는지(35가지를 다 돌리지 않음)
-//   ④ 감시 콜백 하나에서 같은 메시지를 여러 번 재지 않는지(메시지 안 30곳이 바뀌어도 checkMes 1번 · 같은 값 기록은 0번) 봐요(가짜 DOM, 브라우저 없음)
+//   ④ 감시 콜백 하나에서 같은 메시지를 여러 번 재지 않는지(메시지 안 30곳이 바뀌어도 checkMes 1번 · 같은 값 기록은 0번)
+//   ⑤ 팝업 표식 조상 오르기가 겹치지 않는지 봐요(가짜 DOM, 브라우저 없음)
 //   node tools/tests/icon-text-hosts.mjs <테마 루트>
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -127,6 +128,15 @@ await test('메시지 안 30곳이 한 콜백에서 바뀌어도 그 메시지�
     const ta = new El('textarea', 'edit_textarea'); text.append(ta);
     cb([{ type: 'childList', target: text, addedNodes: [ta] }, { type: 'attributes', attributeName: 'class', target: spans[3], addedNodes: [] }]);
     assert.equal(mes.getAttribute('data-bl-editing'), 'deep text');
+});
+
+await test('팝업 표식 조상 오르기는 기록 1,000개여도 한 요소를 한 번만 봐요', async () => {
+    const { refreshPopupMarks } = await import(pathToFileURL(path.join(root, 'src/popup-marks.js')).href);
+    const top = new El('body'); let leaf = top; for (let i = 0; i < 20; i++) { const c = new El('div'); leaf.append(c); leaf = c; }
+    const kids = Array.from({ length: 1000 }, () => new El('span')); leaf.append(...kids);
+    counts.matches = 0;
+    refreshPopupMarks(kids.map(k => ({ type: 'attributes', target: k, addedNodes: [] })));
+    assert.ok(counts.matches <= 1000 + 25, `조상 확인 ${counts.matches}번 — 예전엔 약 ${1000 * 22}번`);
 });
 
 console.log(`icon-text-hosts: ${passed}개 통과`);
