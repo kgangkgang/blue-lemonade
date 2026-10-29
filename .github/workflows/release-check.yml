@@ -391,6 +391,7 @@ jobs:
           node tools/tests/perf-copy-http.mjs .
           node tools/tests/custompalette-http-id.mjs .
           node tools/tests/assets-shrink-http-hash.mjs .
+          node tools/tests/addon-touch-sliders.mjs .
           node tools/tests/weather-amount.mjs .
           node tools/tests/weather-coverage.mjs .
           node tools/tests/weather-retired.mjs .

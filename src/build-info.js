@@ -1,7 +1,7 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
 export const BUILD_VERSION = "8.2.3";
 export const FILE_HASHES = {
-  "index.js": "26210:9d420b23:0783f726",
+  "index.js": "26525:9a49d29a:92e73a08",
   "manifest.json": "365:d56957f8:f4e71926",
   "src/addon-files-check.js": "5001:b7fe0df9:d1f21c49",
   "src/addon-layout.js": "2768:fc762257:da2db162",
@@ -734,7 +734,7 @@ export const FILE_HASHES = {
   "src/theme-update.js": "8995:944960da:1125b756",
   "src/tone.js": "6547:c347f987:98e0318c",
   "src/touch-drag-intent.js": "1102:b5771a2c:f07f6d0d",
-  "src/touch-sliders.js": "1826:c0645cac:6b4521ba",
+  "src/touch-sliders.js": "3025:0587d9a3:11f3fe33",
   "src/typography.js": "23512:bef0bfc7:89dc59bb",
   "src/update-check.js": "24320:4976c8b1:c409fe22",
   "src/usage-feed.js": "3182:70ae2063:357d8ea5",
