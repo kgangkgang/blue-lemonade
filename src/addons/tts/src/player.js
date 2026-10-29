@@ -2915,7 +2915,7 @@ function externalTapSegments(mes, { text = '', index = null }) {
     return hit.map(x => ({ kind: 'dialogue', text: x.text, raw: x.raw ?? x.text, color: x.color || null, tags: (x.tags || []).slice(), speakerHint: x.speakerHint || null, line: x.line || 0, dialogueIndex: dial.indexOf(x) }));
 }
 /** 1.3.8 시험용 (tools/tests/tts-extras.mjs · tts-onboarding.mjs): 작업 마무리(엔진 값 · 세기 · 캐시 키) · 이번 읽기에서 안 되는 엔진 */
-export const _forTest = { keepAlive, onHidden, paragraphPartner, finishJobs, paramsFor, listenNeeds, listenPendingOf, listenFill, sceneJobs, setListenTimeout: (ms) => { LISTEN_TIMEOUT_MS = ms; }, deadEngines: () => [...deadEngines], playCool, streamDead: () => (streamDead ? { mesId: streamDead.mesId, set: [...streamDead.set] } : null),
+export const _forTest = { previewSfx: (id) => previewSfx(id), keepAlive, onHidden, paragraphPartner, finishJobs, paramsFor, listenNeeds, listenPendingOf, listenFill, sceneJobs, setListenTimeout: (ms) => { LISTEN_TIMEOUT_MS = ms; }, deadEngines: () => [...deadEngines], playCool, streamDead: () => (streamDead ? { mesId: streamDead.mesId, set: [...streamDead.set] } : null),
     // 1.9.1 tools/tests/tts-join.mjs: 메시지 읽기(speakNow · 내려받기)와 같은 작업 — 소리 대본 · 효과음이 없는 답장
     autoJobs: (mesId, from = 0) => { const mes = msg(mesId); const s = settings(); return finishJobs(buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: from, final: true }).jobs, s, { merge: false, join: true }); },
     listenHead, listenText, waitingText: () => (waiting ? waiting.text : null), PREP_TEXT,   // 1.9.1 듣는 언어 (tts-listen · tts-scene)
@@ -3533,7 +3533,7 @@ function onDownloadMenuKey(e) {
     closeDownloadMenu();
 }
 // ---------- 1.6.3 요술봉 메뉴 · 효과음 직접 넣기
-let wandPick = null, previewAudio = null;
+let wandPick = null, previewAudio = null, previewUrl = '';   // 8.2.7 previewUrl: 지금 미리 듣기 소리의 blob 주소 (다음 미리 듣기 때 푼다)
 function positionWandMenu() {
     for (const m of [barEl.wandmenu, barEl.sfxpick, barEl.wordpick]) {
         const b = barEl.analyze;
@@ -3578,10 +3578,14 @@ function dialogueOrdinal(mesId, job) {
 async function previewSfx(id) {
     try {
         previewAudio?.pause();
-        const url = URL.createObjectURL(await sfxBlob(id));
+        const blob = await sfxBlob(id);
+        // 8.2.7 앞 미리 듣기를 멈추면 ended 가 안 와 그 소리 주소가 풀리지 않았다 (연달아 누르면 누른 만큼 쌓임) — 바꿀 때 푼다
+        previewAudio?.pause();
+        if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = ''; }
+        const url = previewUrl = URL.createObjectURL(blob);
         previewAudio = new Audio(url);
         previewAudio.volume = Math.max(0, Math.min(1, Number(settings().sfx?.volume ?? 0.45)));
-        previewAudio.onended = () => URL.revokeObjectURL(url);
+        previewAudio.onended = () => { URL.revokeObjectURL(url); if (previewUrl === url) previewUrl = ''; };
         await previewAudio.play();
     } catch { /* 들려주기 실패는 조용히 — 넣는 건 이미 됐다 */ }
 }
