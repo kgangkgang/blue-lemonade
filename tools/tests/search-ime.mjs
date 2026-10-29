@@ -65,8 +65,8 @@ t('입력칸이 없으면 켜도 걸지 않는다', () => { document.getElementB
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 t('설정 chat.searchIme 기본 켬 · 보정 · 초기화에서 남김 · CHAT_BEHAVIOR · features(바이바이면 쉼) · 패널 줄 · 라벨 · CI', () => {
     const settings = read('src/settings.js');
-    assert.match(settings, /lazyAvatars: true, searchIme: true,/); assert.match(settings, /s\.chat\.searchIme = flag\(s\.chat\.searchIme, true\)/); assert.match(settings, /'lazyAvatars', 'searchIme'\]\) \{/);
-    assert.match(read('src/styles.js'), /'lazyAvatars', 'searchIme'\];/);
+    assert.match(settings, /lazyAvatars: true, searchIme: true,/); assert.match(settings, /s\.chat\.searchIme = flag\(s\.chat\.searchIme, true\)/); assert.match(settings, /'lazyAvatars', 'searchIme'[^\]]*\]\) \{/);
+    assert.match(read('src/styles.js'), /'lazyAvatars', 'searchIme'[^\]]*\];/);
     assert.match(read('src/features.js'), /const searchIme = on && s\.chat\?\.searchIme !== false && !restingFor\('searchIme'\);\n\s+if \(searchIme \|\| modules\.searchime\) load\('searchime', '\.\/search-ime\.js'\)\.then\(m => m\?\.syncSearchIme\(searchIme\)\)/);
     const panel = read('src/panel.js'); assert.ok(panel.includes("toggle('chat.searchIme', s.chat.searchIme !== false)") && panel.includes("restNote('searchIme')"));
     assert.ok(read('src/settings-labels.js').includes('"chat.searchIme":"검색은 글자 조합이 끝난 뒤"'));

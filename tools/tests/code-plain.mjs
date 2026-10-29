@@ -51,8 +51,8 @@ t('누가 우리 뒤에 또 감쌌으면 끌 때 그 함수를 두고(끊지 않
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 t('설정 chat.codePlain 기본 끔 · 보정 · 초기화에서 남김 · CHAT_BEHAVIOR · features(켤 때만 · 칵테일이면 쉼) · 패널 줄 설명 「코드블록이 많은 채팅에서 폰이 느릴 때」 · 라벨 · CI', () => {
     const settings = read('src/settings.js');
-    assert.match(settings, /searchIme: true, codePlain: false,/); assert.match(settings, /s\.chat\.codePlain = flag\(s\.chat\.codePlain, false\)/); assert.match(settings, /'searchIme', 'codePlain'\]\) \{/);
-    assert.match(read('src/styles.js'), /'searchIme', 'codePlain'\];/);
+    assert.match(settings, /searchIme: true, codePlain: false,/); assert.match(settings, /s\.chat\.codePlain = flag\(s\.chat\.codePlain, false\)/); assert.match(settings, /'searchIme', 'codePlain'[^\]]*\]\) \{/);
+    assert.match(read('src/styles.js'), /'searchIme', 'codePlain'[^\]]*\];/);
     assert.match(read('src/features.js'), /const codePlain = on && !!s\.chat\?\.codePlain && !restingFor\('codePlain'\);\n\s+if \(codePlain \|\| modules\.codeplain\) load\('codeplain', '\.\/code-plain\.js'\)\.then\(m => m\?\.syncCodePlain\(codePlain\)\)/);
     const panel = read('src/panel.js');
     assert.ok(panel.includes("toggle('chat.codePlain', !!s.chat.codePlain)") && panel.includes('코드블록이 많은 채팅에서 폰이 느릴 때') && panel.includes("restNote('codePlain')"));

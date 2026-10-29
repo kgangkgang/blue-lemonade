@@ -144,7 +144,7 @@ const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 t('설정 chat.lazyAvatars 기본 켬 · 옛 설정 보정 · 모습 초기화에서 남김 · 스타일 공유에서 빼는 동작 값', () => {
     const settings = read('src/settings.js');
     assert.match(settings, /showMoreAuto: true, lazyAvatars: true,/); assert.match(settings, /s\.chat\.lazyAvatars = flag\(s\.chat\.lazyAvatars, true\)/);
-    assert.match(settings, /'mesPins', 'lazyAvatars'\]\) \{/); assert.match(read('src/styles.js'), /'mesPins', 'lazyAvatars'\];/);
+    assert.match(settings, /'mesPins', 'lazyAvatars'[^\]]*\]\) \{/); assert.match(read('src/styles.js'), /'mesPins', 'lazyAvatars'[^\]]*\];/);
 });
 t('features 가 켬/끔을 넘기고 · 패널 「가볍게」 묶음에 줄 · 라벨 사전 · multi-avatar 가 원래 주소를 data-bl-src 에서도 읽는다', () => {
     assert.match(read('src/features.js'), /load\('lazyavatars', '\.\/lazy-avatars\.js'\)\.then\(m => m\?\.syncLazyAvatars\(lazyAvatars\)\)/);

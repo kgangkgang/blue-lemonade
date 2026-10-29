@@ -96,6 +96,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 코드 색 입히기 끄기 (code-plain.js, 기본 끔) — 메시지 코드블록의 hljs 를 건너뛴다 · 칵테일이 켜져 있으면 쉰다
     const codePlain = on && !!s.chat?.codePlain && !restingFor('codePlain');
     if (codePlain || modules.codeplain) load('codeplain', './code-plain.js').then(m => m?.syncCodePlain(codePlain));
+    // 월드인포 긴 목록 가볍게 (worldinfo-light.js, 기본 켬) — 항목 80개 이상이면 접힌 화면 밖 항목에 content-visibility:auto (CSS) · 바이바이가 켜져 있으면 쉰다
+    const worldInfoLight = on && s.chat?.worldInfoLight !== false && !restingFor('worldInfoLight');
+    if (worldInfoLight || modules.wilight) load('wilight', './worldinfo-light.js').then(m => m?.syncWorldInfoLight(worldInfoLight));
     const replyTop = on && !!s.chat?.replyTop;
     if (replyTop || modules.replytop) load('replytop', './reply-top.js').then(m => m?.syncReplyTop(replyTop));
     // 7.0.3 메시지 토큰 — 7.0.4 부터 토큰 수를 누르면 내역 (sent-tokens.js, 기본 켬)
