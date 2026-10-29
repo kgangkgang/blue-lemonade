@@ -14,6 +14,9 @@ const PHONE = new Map(Object.entries({"显示设置": "표시 설정", "手机�
 const ISLAND = new Map(Object.entries({"LOCATION / TIME": "위치 / 시간", "OUTFIT / POSE": "옷차림 / 자세", "CURRENT MOOD": "현재 기분", "PRIVATE SEARCH": "검색 기록", "AUDIO LOG": "음악", "SYSTEM SETTINGS": "화면 설정", "Coordinates": "위치", "Local Time": "현지 시간", "Upper": "상의", "Lower": "하의", "Pose": "자세", "QUERY": "검색어", "TIMESTAMP": "시각", "暂无搜索记录": "검색 기록이 없어요", "Display Name": "표시 이름", "Background Image": "배경 이미지", "Upload (GIF/PNG/JPG)": "이미지 올리기 (GIF/PNG/JPG)", "ACTIVE TRACKING": "현재 상태", "Image is too large. Only available this session.": "이미지가 커서 이번 접속 동안만 적용돼요.", "Image is saved locally in browser.": "이미지가 이 브라우저에 저장돼요."}));
 const DIALOGS = new Map([['确定要恢复所有默认设置吗？','모든 설정을 기본값으로 복원할까요?'],['图片较大，无法永久保存。背景将在本次会话中生效，刷新页面后会恢复默认。','이미지가 커서 저장하지 못했어요. 이번 접속 동안만 배경이 적용되고, 새로고침하면 기본 배경으로 돌아가요.'],['读取文件失败，请重试。','파일을 읽지 못했어요. 다시 시도해 주세요.']]);
 const SKIP = 'script,style,textarea,input,pre,code,[contenteditable="true"],.fate-raw,[data-f]';
+// 8.2.7 붙거나 떨어진 요소가 카드 · iframe 이거나 품을 때만 다시 훑어요(카드 안 변화는 카드 감시자가 알려요). 조상 꼴(.mobile-screen #settings-panel)은 안쪽 칸으로 넓게 봐요
+const HOSTS = ROOT.split(',').map(s => s.trim().split(/\s+/).pop()).join(',') + ',iframe';
+const touchesCard = n => n.nodeType === 1 && (typeof n.matches !== 'function' || n.matches(HOSTS) || n.querySelector(HOSTS) !== null);
 // The renderer lifts its day/night toggle 4px above the card (top:-4px in both modes of the global-regex build; the preset
 // build lowers only day mode), and its hover lift (sticky after a tap on phones) moves it 1px further, so the frame edge clips
 // the top of the circle. Keep it inside in both modes, no lift on touch screens, and give it a 44px touch square (::after)
@@ -142,7 +145,8 @@ export function installFruitStatusKorean(doc = document, host = window) {
             if (!entry || entry.scope !== scope) {
                 entry?.observer.disconnect();
                 const observer = new host.MutationObserver(records => {
-                    if (records.some(r => [...r.addedNodes, ...r.removedNodes].some(n => n.nodeType === 1))) schedule();
+                    // 8.2.7 스트리밍 · 메시지 그리기마다 #chat 전체를 다시 훑지 않게 — 카드 · iframe 과 상관없는 요소가 붙고 떨어진 것은 결과가 같아요
+                    if (records.some(r => [...r.addedNodes, ...r.removedNodes].some(touchesCard))) schedule();
                 });
                 observer.observe(scope, {childList: true, subtree: true});
                 documents.set(current, {scope, observer});

@@ -451,6 +451,7 @@ jobs:
           node tools/tests/fruit-family.mjs .
           node tools/tests/prompt-choice-guard.mjs .
           node tools/tests/fruit-status.mjs .
+          node tools/tests/fruit-status-chat-scan.mjs .
           node tools/tests/long-chat-perf.mjs .
           node tools/tests/has-guard.mjs .
           node tools/tests/lite-forced-quiet.mjs .

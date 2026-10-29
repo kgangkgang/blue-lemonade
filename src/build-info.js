@@ -682,7 +682,7 @@ export const FILE_HASHES = {
   "src/scripts/fruit-entry.js": "17339:a0a1e03e:8817e516",
   "src/scripts/fruit-option-effects.js": "218045:43156b10:82e76ece",
   "src/scripts/fruit-option-help.js": "12643:7b752750:fb33009e",
-  "src/scripts/fruit-status.js": "17700:f8a2992f:8a51b8bf",
+  "src/scripts/fruit-status.js": "18343:cac271d2:11332798",
   "src/scripts/plain/deus-qr.js": "66138:65b7bf8d:0b42e30f",
   "src/scripts/plain/deus.js": "121049:78209b16:53e5a9a6",
   "src/scripts/plain/fold.js": "13815:b56ce78f:e3189530",
