@@ -407,6 +407,7 @@ jobs:
           node tools/tests/icon-text-scope.mjs .
           node tools/tests/mes-pins-one.mjs .
           node tools/tests/fruit-watch-perf.mjs .
+          node tools/tests/fruit-watch-scope.mjs .
           node tools/tests/fruit-option-help.mjs .
           node tools/tests/fruit-option-coverage.mjs .
           node tools/tests/longpress-help.mjs .

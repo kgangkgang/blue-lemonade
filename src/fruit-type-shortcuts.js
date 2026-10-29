@@ -16,7 +16,11 @@ function startShortcuts(doc,host){
     // 8.2.2 1.5초마다 #chat 아래 전체를 querySelectorAll('iframe') 로 다시 훑었다(300메시지면 요소 10만 개 · 폰 4배 한 번에 약 7ms — iframe 이 하나도 없어도).
     //   살아 있는 목록(getElementsByTagName)은 브라우저가 들고 있다가 DOM 이 바뀔 때만 다시 세서, 그대로면 거의 공짜예요. 고르는 iframe · 순서는 같아요(문서 순서)
     const frameLists=new WeakMap();const framesOf=scope=>{if(typeof scope.getElementsByTagName!=='function')return scope.querySelectorAll('iframe');let list=frameLists.get(scope);if(!list){list=scope.getElementsByTagName('iframe');frameLists.set(scope,list);}return list;};
-    const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of framesOf(scope)){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
+    const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of framesOf(scope)){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(countOf(d));if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
+    // 8.2.6 iframe 문서의 요소 수도 살아 있는 목록(getElementsByTagName('*'))으로 — 1.5초마다 iframe 문서마다 querySelectorAll('*') 로 새 목록을 만들어 세던 것. 세는 요소는 같아요
+    const allLists=new WeakMap();const countOf=d=>{if(!d)return 0;if(typeof d.getElementsByTagName!=='function')return d.querySelectorAll?.('*').length||0;let list=allLists.get(d);if(!list){list=d.getElementsByTagName('*');allLists.set(d,list);}return list.length;};
+    // 8.2.6 과일 창이 열렸나 · 데우스 빠른 설정 창이 있나를 아이디로 바로 — 쉼표 선택자 목록(querySelector)은 둘 다 없을 때(거의 늘) 1.5초마다 문서 끝까지 훑었어요. 결과는 같아요(아이디는 하나뿐)
+    const windowOpen=()=>typeof doc.getElementById==='function'?!!doc.getElementById('fruit-heart-v6')?.classList?.contains('open')||!!doc.getElementById('bl-deus-popover'):!!doc.querySelector('#fruit-heart-v6.open,#bl-deus-popover');
     const schedule=()=>{if(!stopped&&!frame)frame=host.requestAnimationFrame(flush);};
     function flush(){
         frame=0;if(stopped)return;const live=new Set();
@@ -45,6 +49,6 @@ function startShortcuts(doc,host){
     // While a reply streams, skip its text changes and look once when generation ends (body[data-generating] is removed).
     // Settings drawers and <select> lists never hold these cards or rows.
     const observer=new host.MutationObserver(records=>{const streaming=!!doc.body.dataset.generating;for(const r of records){if(r.attributeName==='data-generating'){if(!streaming)schedule();continue;}if(r.target.closest?.('.drawer-content,select'))continue;if((!streaming||!r.target.closest?.('.mes_text'))&&fruitStructureChanged([r],DEUS_ROOT+',iframe,#chat,#fruit-heart-v6,#bl-deus-popover','#fruit-heart-v6,#bl-deus-popover')){schedule();return;}}});
-    observer.observe(doc.documentElement||doc.body,{childList:true,subtree:true});observer.observe(doc.body,{attributes:true,attributeFilter:['data-generating']});const timer=host.setInterval(()=>{if(doc.querySelector('#fruit-heart-v6.open,#bl-deus-popover')||frameSig(true)!==lastSig)schedule();},1500);flush();
+    observer.observe(doc.documentElement||doc.body,{childList:true,subtree:true});observer.observe(doc.body,{attributes:true,attributeFilter:['data-generating']});const timer=host.setInterval(()=>{if(windowOpen()||frameSig(true)!==lastSig)schedule();},1500);flush();
     return()=>{stopped=true;host.clearInterval(timer);doc.removeEventListener('click',click,true);observer.disconnect();host.cancelAnimationFrame(frame);for(const b of buttons.values())b.remove();buttons.clear();};
 }

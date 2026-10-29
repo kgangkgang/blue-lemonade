@@ -23,16 +23,19 @@ export function watchFruitTypography(doc,host,getConfig,fontFamily=()=> ''){
     const frameLists=new WeakMap();const framesOf=scope=>{if(typeof scope.getElementsByTagName!=='function')return scope.querySelectorAll('iframe');let list=frameLists.get(scope);if(!list){list=scope.getElementsByTagName('iframe');frameLists.set(scope,list);}return list;};
     const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of framesOf(scope)){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
     const schedule=()=>{if(!stopped&&!frame)frame=host.requestAnimationFrame(flush);};
-    const rootSelector=FRUIT_TYPES.map(typeMatch).join(',');
+    const rootSelector=FRUIT_TYPES.map(typeMatch).join(',');let mainWatch=rootSelector+',iframe';
     function detach(d){styles.get(d)?.remove();styles.delete(d);for(const face of faces.get(d)||[])d.fonts?.delete(face);faces.delete(d);}
     function unwrap(d){wraps.get(d)?.remove();wraps.delete(d);}
     function flush(){
         frame=0;if(stopped)return;
         const config=tidyFruitType(getConfig()),css=fruitTypeCss(config,fontFamily),docs=new Set(),liveFrames=new Set();
+        // 8.2.6 글꼴 설정이 하나도 켜져 있지 않으면(css 없음) 채팅 문서 안의 상태창 뿌리는 아무것도 바꾸지 않아요(아래 hasRoot 가 늘 거짓) — 그때 채팅 감시는 iframe 이 붙고 빠질 때만 다시 봐요.
+        //   메시지가 붙을 때마다 과일 · 데우스 뿌리 선택자 목록(수십 갈래)으로 그 메시지 아래를 훑던 것. iframe 문서 안은 감싸기(WRAP) 때문에 그대로 뿌리까지 봐요
+        mainWatch=css?rootSelector+',iframe':'iframe';
         const fonts=new Set();for(const t of Object.values(config.types))for(const r of Object.values(t.regions))if(r.on&&r.font!=='original'){const f=findFont(r.font);if(f&&!f.unusable)fonts.add(String(f.family).replace(/^['"]|['"]$/g,''));}
         function visit(d,scope){
             if(!scope||docs.has(d))return;docs.add(d);
-            const old=scopes.get(d);if(old?.root!==scope){old?.observer.disconnect();const observer=new host.MutationObserver(records=>{if(fruitStructureChanged(records,rootSelector+',iframe'))schedule();});observer.observe(scope,{childList:true,subtree:true});scopes.set(d,{root:scope,observer});}
+            const old=scopes.get(d);if(old?.root!==scope){old?.observer.disconnect();const observer=new host.MutationObserver(records=>{if(fruitStructureChanged(records,d===doc?mainWatch:rootSelector+',iframe'))schedule();});observer.observe(scope,{childList:true,subtree:true});scopes.set(d,{root:scope,observer});}
             const hasRoot=(css||d!==doc)&&!!scope.querySelector(rootSelector);
             if(d!==doc&&hasRoot){let wrap=wraps.get(d);if(!wrap?.isConnected){wrap=d.createElement('style');wrap.dataset.blFruitWrap='';wrap.textContent=WRAP;(d.head||d.documentElement).append(wrap);wraps.set(d,wrap);}}else unwrap(d);
             if(css&&hasRoot){
