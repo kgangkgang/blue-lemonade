@@ -479,6 +479,8 @@ function installFruitExtraControls(doc, host, BlueLemonade) {
     record.node.removeAttribute(FRUIT_USER_LABEL);
   }
   function paintEntries() {
+    // BL 10-30 (폰 4배 · 긴 채팅): 이름을 바꾸지 않았고(entryName 없음) 바꿔 둔 입구도 없으면 할 일이 없어요 — 예전엔 그때도 문서 전체를 [data-fh-cat] 로 훑었어요(긴 채팅 300 열기에 약 0.5초)
+    if (!entryName && !entries.size) return;
     const live = new Set(doc.querySelectorAll('[data-fh-cat="1"]'));
     for (const [node, record] of entries) if (!live.has(node) || !entryName) { restoreEntry(record); entries.delete(node); }
     if (!entryName) return;
@@ -532,7 +534,8 @@ function installFruitExtraControls(doc, host, BlueLemonade) {
   function sync() {
     scheduled = false; if (stopped) return;
     if ([...barRoots].some(node => !node.isConnected)) { barObserver.disconnect(); barRoots.clear(); }
-    for (const node of doc.querySelectorAll('#form_sheld,#qr--popout,#quickReplies')) if (!barRoots.has(node)) { barRoots.add(node); barObserver.observe(node, { childList: true, subtree: true, characterData: true }); }
+    // 아이디 셋을 쉼표로 묶으면 크롬이 아이디 지름길을 못 써 문서 전체를 훑어요 — 하나씩 물으면 같은 요소를 바로 찾아요
+    for (const node of ['#form_sheld', '#qr--popout', '#quickReplies'].flatMap(id => [...doc.querySelectorAll(id)])) if (!barRoots.has(node)) { barRoots.add(node); barObserver.observe(node, { childList: true, subtree: true, characterData: true }); }
     const next = doc.getElementById('fruit-heart-v6');
     if (next !== root) {
       restoreFont(); inner.disconnect(); root = next; nameRow = nameInput = null; sheetPending = false;
