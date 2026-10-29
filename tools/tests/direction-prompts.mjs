@@ -119,7 +119,7 @@ await test('7.4.2 (1.3.1) 깃털 단계 = 보내는 것의 수 (테두리 · 채
     assert.equal(level({ always: { enabled: true, content: 'A' }, promptList: [on] }), 2);
     assert.equal(level({ direction: { enabled: true, content: 'd' }, always: { enabled: true, content: 'A' }, promptList: [on] }), 3);
     assert.equal(level({ extensionEnabled: false, direction: { enabled: true, content: 'd' }, always: { enabled: true, content: 'A' }, promptList: [on] }), 0, 'feather button off');
-    assert.match(js, /button\.dataset\.jjLevel = String\(level\);\s*button\.classList\.toggle\('is-on', level > 0\);/);
+    assert.match(js, /setData\(button, 'jjLevel', String\(level\)\);\s*button\.classList\.toggle\('is-on', level > 0\);/, '10-29: 같은 값이면 안 쓰는 setData');
     assert.doesNotMatch(js, /partnerColor|gradientColors|setProperty\('--jj-grad-/, 'no gradient code');
     const css = await read('src/addons/direction/style.css'), theme = await read('css/04-send-form.css');
     for (const text of [css, theme]) assert.doesNotMatch(text, /--jj-grad-|is-always/, 'no gradient rules');
@@ -138,7 +138,7 @@ await test('7.4.2 (1.3.1) 깃털 단계 = 보내는 것의 수 (테두리 · 채
     assert.match(theme, /body\.salty\.salty-icons-line :is\(#jj-button\[data-jj-level\] > i, #jj-popup\[data-jj-level\] \.jj-popup-title > i\)::before \{\s*content: "\\f56b" !important;/, '7.4.4 line icons: every level (off too) uses the same glyph');
     assert.match(theme, /body\.salty :is\(#jj-button\[data-jj-level="0"\] > i, #jj-popup\[data-jj-level="0"\] \.jj-popup-title > i\) \{\s*color: var\(--salty-muted\);[^}]*-webkit-text-stroke: 0;/, '7.4.4 off = solid grey glyph');
     assert.match(js, /now\.textContent = tokenNumber\(value\); now\.title = tokenLabel\(value\); now\.setAttribute\('aria-label', tokenLabel\(value\)\);/, '7.4.4 row badge: number only, label says 토큰');
-    assert.match(js, /popup\.dataset\.jjLevel = String\(sendLevel\(\)\);/, 'popup title icon follows the same level');
+    assert.match(js, /setData\(popup, 'jjLevel', String\(sendLevel\(\)\)\);/, 'popup title icon follows the same level');
     assert.match(theme, /body\.salty #jj-popup \.jj-dots b\.is-current \{\s*background: var\(--jj-on\);/, 'current-page dot: solid on-colour');
     assert.doesNotMatch(js + css, /유저 편향|성격 교정/, 'no such examples in shipped text');
 });
