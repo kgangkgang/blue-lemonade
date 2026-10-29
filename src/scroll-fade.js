@@ -7,6 +7,7 @@
 // 제외: #chat · 메시지 본문 · textarea · 편집 칸 · pre · iframe · 이미 자체 흐림이 있는 칸(.salty-fonttags · .salty-fontscroll · 가로 흐림 줄).
 // 다른 확장: 바이바이(ST-BaiBai-Tools)는 월드인포 항목에 content-visibility + ResizeObserver 를 걸어요 — 켜져 있으면 월드인포 목록은 건너뛰어요(resting).
 // CSS 는 css/73-scroll-fade.css(모두 mask-image — 서랍의 sticky 가상 요소는 스크롤에 긴 작업을 만들어 뺐어요). 끄기는 탭 줄 흐림과 같은 길: html#bl-tab-scroll-off.
+import { watchDom } from './dom-watch.js';
 export const FADE_Y_SELECTORS = [
     '#rm_print_characters_block',                 // 캐릭터 목록
     '#rm_extensions_block .inline-drawer-content', // 확장 설정 안 접힘 칸 중 넘치는 것
@@ -40,9 +41,16 @@ export function applyFadeY(el, scrollable = true) {
 const scrollableY = (el, style) => { const o = style(el).overflowY; return o === 'auto' || o === 'scroll'; };
 
 const KEY = Symbol.for('blue-lemonade.scroll-fade.v1');
+/** ResizeObserver 기록이 「상자가 없음(테두리 상자 높이 0)」을 알려 주면 true — 그때 clientHeight 도 0 이라 흐림은 늘 없어요. 크기를 모르면 false(재요) */
+const boxless = entry => { const b = entry?.borderBoxSize; const box = Array.isArray(b) ? b[0] : b; return !!box && box.blockSize === 0; };
 /**
  * 문서에 한 번. resting(feature) 가 true 면 그 칸은 건너뛰어요(지금은 'worldInfo' 만 — 바이바이가 켜져 있을 때).
  * 돌려주는 api: scan(root) · bind(el) · unbind(el) · refreshResting() · size()
+ * (8.2.7 perf-fade) 칸마다 따로 걸던 감시자 · scroll · click 리스너를 문서에 하나씩으로 묶었어요(감시자는 공용 감시자 dom-watch.js 의 「뿌리 자신만」 감시자 하나).
+ *   처음 재기와 크기 바뀜은 ResizeObserver 알림 자리에서 바로(스타일 · 배치가 맞은 때) 재요. 상자가 없는 칸(닫힌 서랍 · 숨은 칸 — 처음 알림이 안 오거나 높이 0)은
+ *   다시 보일 때까지 getComputedStyle · 넘침을 읽지 않아요(크기가 0 → n 이면 ResizeObserver 가 알려요). 측정(폰 4배): 시작 때 scrollableY 의 강제 스타일 계산 약 0.2초가 이것이었어요.
+ *   한 프레임에 모인 칸은 먼저 전부 읽고 그다음 전부 써요 — 예전엔 칸마다 읽고(넘침 · overflow) 쓰기(data-bl-fade-y)를 번갈아, 쓴 속성이 스타일을 무효로 만들어
+ *   다음 칸을 읽을 때마다 스타일 · 배치를 다시 셌어요. 결과(붙는 속성 · 때)는 같아요.
  */
 export function installScrollFade(doc = globalThis.document, { resting = () => false, style = el => el.ownerDocument.defaultView.getComputedStyle(el) } = {}) {
     if (!doc?.documentElement) return null;
@@ -50,41 +58,58 @@ export function installScrollFade(doc = globalThis.document, { resting = () => f
     const win = doc.defaultView;
     const states = new Map(), roots = new Map(), pending = new Map();
     let frame = 0;
-    const flush = () => {
-        frame = 0;
-        for (const [el, recheck] of pending) {
+    /** [칸, overflow 다시 볼까] 목록을 1) 전부 읽고 2) 바뀐 것만 써요. 상자 없는 칸은 읽지 않고 빈 상태 */
+    const measure = list => {
+        const reads = [];
+        for (const [el, recheck] of list) {
             const state = states.get(el);
             if (!state || !el.isConnected) continue;
+            if (state.hidden) { reads.push([el, '']); continue; }
             if (recheck) state.scrollable = scrollableY(el, style);
-            applyFadeY(el, state.scrollable);
+            reads.push([el, state.scrollable ? fadeStateY(el) : '']);
         }
-        pending.clear();
+        for (const [el, next] of reads) {
+            if (next) { if (el.dataset.blFadeY !== next) el.dataset.blFadeY = next; }
+            else if ('blFadeY' in el.dataset) delete el.dataset.blFadeY;
+        }
     };
+    const flush = () => { frame = 0; const list = [...pending]; pending.clear(); measure(list); };
     // recheck: overflow 가 바뀌었을 수 있는 변화(열림 · 크기 · 자식) 때만 getComputedStyle — 스크롤마다는 안 해요
     const schedule = (el, recheck = false) => {
         pending.set(el, recheck || pending.get(el) || false);
         if (!frame) frame = win.requestAnimationFrame(flush);
     };
-    const resize = typeof win.ResizeObserver === 'function' ? new win.ResizeObserver(entries => { for (const e of entries) schedule(e.target, true); }) : null;
+    // ResizeObserver 는 배치가 끝난 뒤(그리기 전) 알려 줘요 — 그 자리에서 바로 재면 스타일 · 배치가 이미 맞아 강제 계산이 없고, 같은 프레임에 그려져요.
+    //   테두리 상자(border-box)로 봐요: 처음 묶을 때 상자가 있는 칸만 바로 알려 주고(0×0 은 안 알림 = 숨은 칸), 높이가 0 이면 clientHeight 도 0 이라 흐림이 없어요
+    const resize = typeof win.ResizeObserver === 'function' ? new win.ResizeObserver(entries => {
+        const list = [];
+        for (const e of entries) { const state = states.get(e.target); if (!state) continue; state.hidden = boxless(e); pending.delete(e.target); list.push([e.target, true]); }
+        measure(list);
+    }) : null;
     const skip = el => !!el.closest?.(SKIP_Y) || (el.matches(WORLD_INFO_LIST) && !!resting('worldInfo'));
+    // 문서에 하나씩: scroll 은 거품이 안 올라와서 capture 로, click 도 capture(설정 창 panel.js 처럼 안쪽 처리기가 전파를 멈추는 곳)로 받아요
+    const listeners = new win.AbortController();
+    doc.addEventListener('scroll', e => { if (states.has(e.target)) schedule(e.target); }, { capture: true, passive: true, signal: listeners.signal });
+    doc.addEventListener('click', e => {
+        // 안에서 누름(접기 · 펼치기 뒤) — 누른 곳을 품은 묶인 칸마다(겹친 칸 포함) 바로 한 번 + 애니메이션이 끝난 뒤 한 번
+        for (let n = e.target?.nodeType === 1 ? e.target : e.target?.parentElement; n; n = n.parentElement) {
+            const state = states.get(n); if (!state) continue;
+            const el = n;
+            schedule(el, true); clearTimeout(state.settle); state.settle = setTimeout(() => schedule(el, true), SETTLE_MS);
+        }
+    }, { capture: true, passive: true, signal: listeners.signal });
     function bind(el) {
         if (!el || el.nodeType !== 1 || states.has(el) || skip(el)) return false;
-        const controller = new win.AbortController(), signal = controller.signal;
-        el.addEventListener('scroll', () => schedule(el), { signal, passive: true });
-        // 안의 내용이 바뀌어도 칸 크기는 안 변해요(ResizeObserver 는 칸만 봄) — 바로 아래 자식 변화와 안에서 누른 뒤(접기 · 펼치기가 끝난 뒤)를 봐요
-        const observer = new win.MutationObserver(() => schedule(el, true));
-        observer.observe(el, { childList: true });
-        let settle = 0;
-        // capture: 설정 창(panel.js)처럼 안쪽 처리기가 전파를 멈추는 곳에서도 받아요
-        el.addEventListener('click', () => { schedule(el, true); clearTimeout(settle); settle = setTimeout(() => schedule(el, true), SETTLE_MS); }, { signal, passive: true, capture: true });
-        resize?.observe(el);
-        states.set(el, { controller, observer, scrollable: true });
-        schedule(el, true);
+        // 안의 내용이 바뀌어도 칸 크기는 안 변해요(ResizeObserver 는 칸만 봄) — 바로 아래 자식 변화를 봐요(subtree 없음, 공용 감시자 하나)
+        const off = watchDom(el, { childList: true, name: 'scroll-fade' }, () => schedule(el, true));
+        // 처음 재기: ResizeObserver 가 있으면 그 첫 알림(상자가 있는 칸만 옴)에서 — 닫힌 서랍 · 숨은 칸은 열릴 때까지 getComputedStyle · 넘침을 읽지 않아요
+        states.set(el, { off, scrollable: true, hidden: !!resize, settle: 0 });
+        if (resize) resize.observe(el, { box: 'border-box' }); else schedule(el, true);
         return true;
     }
     function unbind(el) {
         const state = states.get(el); if (!state) return;
-        state.controller.abort(); state.observer.disconnect(); resize?.unobserve(el);
+        state.off(); clearTimeout(state.settle); resize?.unobserve(el);
         states.delete(el); pending.delete(el);
         if ('blFadeY' in el.dataset) delete el.dataset.blFadeY;
     }
