@@ -308,8 +308,10 @@ export function openPickFor(sel, anchor) {
 
 // 8.2.7: 누르는 사이 select 밖의 모달 창이 떴으면(폰에서 select 를 길게 누르면 뜨는 단추 설명 창 · longpress-help.js) 손을 떼도 열지 않는다 —
 // 열면 목록이 설명 창 뒤에 눌리지 않는 채로 떠 있다가, 설명 창을 닫으면 고르지도 않은 목록이 남았다
+// 8.2.7 검토: 창 위에 창이 겹치면(설정 창 위에 연 액자 편집 창 등) 문서 순서로 첫 모달은 아래 깔린 창이라, 맨 위 창 안의 select 까지 열지 않았다 —
+// 창은 열 때 body 끝에 붙으니 마지막 모달(맨 위 창)을 본다
 function behindModal(el) {
-    try { const modal = document.querySelector('dialog:modal'); return !!modal && !modal.contains(el); } catch { return false; }
+    try { const modals = document.querySelectorAll('dialog:modal'), top = modals[modals.length - 1]; return !!top && !top.contains(el); } catch { return false; }
 }
 
 export function startSelectPop() {

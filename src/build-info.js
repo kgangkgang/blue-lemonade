@@ -700,7 +700,7 @@ export const FILE_HASHES = {
   "src/scroll-fade.js": "10780:6b8689a0:e7d680e2",
   "src/search-ime.js": "4767:8c5c70ef:e3adf74a",
   "src/selection-range.js": "6929:b51d4218:4519f447",
-  "src/selects.js": "24143:ea11107a:0e41eb00",
+  "src/selects.js": "24456:b3e5f40e:ba98ba20",
   "src/sent-tokens.js": "6732:47259993:f6603f0c",
   "src/setting-locks.js": "1456:cbc36430:0ef5054e",
   "src/settings-dialog.js": "994:29aceab3:701cd0e4",

@@ -6,7 +6,7 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 const root = path.resolve(process.argv[2] || fileURLToPath(new URL('../..', import.meta.url)));
 
 const handlers = {};
-let modal = null, tried = 0;
+let modal = null, modals = null, tried = 0;
 class HTMLSelectElement { constructor() { this.options = [{}]; this.classList = { contains: () => false }; } closest() { return null; } }
 globalThis.HTMLSelectElement = HTMLSelectElement;
 globalThis.Node = class {};
@@ -18,7 +18,8 @@ globalThis.SillyTavern = { getContext: () => ({ extensionSettings: {}, powerUser
 globalThis.document = {
     body: { classList: { contains: c => c === 'salty' } },
     addEventListener: (type, fn) => { (handlers[type] ||= []).push(fn); },
-    querySelector: sel => (sel === 'dialog:modal' ? modal : null),
+    querySelector: sel => (sel === 'dialog:modal' ? (modals ? modals[0] ?? null : modal) : null),
+    querySelectorAll: sel => (sel === 'dialog:modal' ? (modals || (modal ? [modal] : [])) : []),
     get activeElement() { tried++; throw new Error('목록 그리기 시도'); },   // open() 이 시작되면 여기서 멈춤 → OS 목록으로(경고)
 };
 const warn = console.warn; console.warn = () => {};
@@ -38,5 +39,14 @@ assert.equal(tried, 1, '설명 창이 떠 있으면 손을 떼도 목록을 열�
 modal = { contains: el => el instanceof HTMLSelectElement }; // select 가 그 모달 안에 있으면(실리태번 팝업 속 select) 그대로 열어요
 tap();
 assert.equal(tried, 2, '모달 안의 select 는 그대로 열어요');
+// 8.2.7 게시 전 검토 B: 창 위에 창이 겹친 경우(설정 창(실리태번 팝업) 위에 연 액자 편집 창 같은) — 맨 위 창 안의 select 는 그대로 열어요.
+//   고치기 전에는 문서 순서로 첫 모달(아래 깔린 설정 창)만 보고 「모달 뒤」로 여겨 테마 목록을 열지 않았어요
+modal = null;
+modals = [{ contains: () => false }, { contains: el => el instanceof HTMLSelectElement }];
+tap();
+assert.equal(tried, 3, '겹친 창 중 맨 위 창 안의 select 는 그대로 열어요');
+modals = [{ contains: el => el instanceof HTMLSelectElement }, { contains: () => false }];   // select 가 든 창 위에 설명 창이 떴어요
+tap();
+assert.equal(tried, 3, '맨 위 창(설명 창) 밖의 select 는 열지 않아요');
 console.warn = warn;
-console.log('PASS 길게 누르기 설명 창이 뜬 누름은 고르기 목록을 열지 않고, 모달 안 select 는 그대로 열어요');
+console.log('PASS 길게 누르기 설명 창이 뜬 누름은 고르기 목록을 열지 않고, 모달 안 select 는 그대로 열어요(창이 겹치면 맨 위 창 기준)');
