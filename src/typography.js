@@ -293,6 +293,9 @@ export function syncTypography(on) {
         const generating=document.body.dataset.generating==='true',now=new Set(),touched=new Set();
         for(const record of records){
             const element=record.target.nodeType===1?record.target:record.target.parentElement;
+            // 8.2.7 번역 진행 표시(.llmt-progress)는 번역하는 동안 1초마다 글을 새로 쓴다 — 그 안에는 조판할 것(대사 · 그림 · 색 글자 · 한자 줄)이 없으니 메시지를 다시 조판하지 않는다
+            //   (표시를 붙이고 떼는 기록은 .mes_text 의 자식 목록이라 그대로 본다)
+            if(element?.closest('.llmt-progress'))continue;
             const mes=element?.closest('.mes');if(mes){dirty.add(mes);touched.add(mes);if(generating)now.add(mes);continue;}
             // 5.3.4: #chat 에 새 메시지가 붙은 기록 — 예전엔 부모(#chat)를 넣어 새 메시지 하나에 채팅 전체를 다시 조판했다. 붙은 메시지만
             for(const node of record.addedNodes)if(node.nodeType===1&&(node.matches('.mes')||node.querySelector('.mes'))){dirty.add(node);touched.add(node);}

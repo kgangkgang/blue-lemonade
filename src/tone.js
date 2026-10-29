@@ -109,6 +109,8 @@ export function startInlineTone() {
         // 답변이 자라는 동안 조각마다 불린다 — 설정을 다시 읽지 않고 apply.js 가 붙인 body.salty-tone 으로 (켜짐 조건이 같음, 2.9.2)
         if (!document.body.classList.contains('salty-tone')) return;
         for (const record of records) {
+            // 8.2.7 번역 진행 표시(.llmt-progress)의 1초마다 바뀌는 글은 칠할 것이 없다 — 메시지를 다시 칠하지 않는다
+            if ((record.target.nodeType === 1 ? record.target : record.target.parentElement)?.closest?.('.llmt-progress')) continue;
             const mes = record.target.nodeType === 1 ? record.target.closest('.mes') : record.target.parentElement?.closest('.mes');
             if (mes) dirty.add(mes);
             for (const node of record.addedNodes) {
