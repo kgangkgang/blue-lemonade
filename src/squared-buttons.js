@@ -68,9 +68,8 @@ export function isRoundTextButton(el, view = el.ownerDocument.defaultView, areas
     if (cheapSkip(el, view, areas)) return false;
     const rect = el.getBoundingClientRect();
     if (rect.height < 24 || rect.width < 24) return false;
-    const text = (el.innerText || '').trim();
-    // A single glyph in a circle is an icon (?, ✕, ⚙); two or more characters are a label.
-    if ([...text].length < 2) return false;
+    // 10-30 perf-icon: 글자 읽기(innerText — 자손 전체의 배치를 보고 글자를 모아요)는 맨 끝에 해요. 모서리 · 칠 · 누를 수 있음은 계산된 스타일 한 번이라 싸고,
+    //   후보 대부분(모서리가 둥글지 않은 단추 · 탭 · 칸)은 거기서 떨어져요. 조건은 모두 「그리고」라 순서를 바꿔도 답은 같아요.
     const s = view.getComputedStyle(el);
     if (s.display === 'none' || s.visibility === 'hidden') return false;
     const raw = s.borderTopLeftRadius;
@@ -79,7 +78,10 @@ export function isRoundTextButton(el, view = el.ownerDocument.defaultView, areas
     const painted = alpha(s.backgroundColor) > 0.03 || parseFloat(s.borderTopWidth) > 0 || s.backgroundImage !== 'none' || s.boxShadow !== 'none';
     if (!painted) return false;
     const clickable = el.matches('button,a,summary,[role="button"],[role="tab"],.menu_button') || s.cursor === 'pointer';
-    return clickable;
+    if (!clickable) return false;
+    const text = (el.innerText || '').trim();
+    // A single glyph in a circle is an icon (?, ✕, ⚙); two or more characters are a label.
+    return [...text].length >= 2;
 }
 
 // 7.8.5: 인라인 style 에서 padding 위 · 아래만 바뀐 것(control-ink 의 글자 세로 맞춤)은 모양 · 보임이 안 바뀐다 — 다시 재지 않는다.
