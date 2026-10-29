@@ -867,7 +867,7 @@ function card(note, index, total, inFolder = false) {
     let titleBefore = null; // 제목을 고치기 시작할 때의 제목 — 칸에서 나가면 다른 메모의 [[연결]] 도 새 제목으로
     title.addEventListener('focus', () => { titleBefore = current().title; });
     title.addEventListener('blur', () => { commit(null, true); if (titleBefore !== null && titleBefore !== title.value) renameLinks(titleBefore, title.value, note.id); titleBefore = null; });
-    title.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); field.show(true); body.focus(); } });
+    title.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); field.show(true); body.focus(); } });   // 8.2.7 조합 중 Enter 는 넘기지 않아요(두 번째 Enter 가 본문에 빈 줄을 넣었어요)
     const field = bodyField(view, body, () => body.value, commit, fmt => title.after(fmt));
     el._sync = () => { const n = current(); el._upd = n.updated; if (document.activeElement !== title) title.value = n.title; if (document.activeElement !== body) body.value = n.body; field.refresh(); time.textContent = when(n.updated); time.title = whenFull(n.updated); };
     return el;
@@ -1467,7 +1467,7 @@ export function openSticky(id) {
     let titleBefore = null;
     title.addEventListener('focus', () => { titleBefore = current().title; });
     title.addEventListener('blur', () => { commit(null, true); if (titleBefore !== null && titleBefore !== title.value) renameLinks(titleBefore, title.value, id); titleBefore = null; });
-    title.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); field.show(true); body.focus(); } });
+    title.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); field.show(true); body.focus(); } });   // 8.2.7 조합 중 Enter 는 넘기지 않아요(두 번째 Enter 가 본문에 빈 줄을 넣었어요)
     const field = bodyField(view, body, () => body.value, commit, fmt => title.after(fmt)); // 서식 줄은 머리띠 안(제목 옆)
     el._sync = () => { const n = current(); if (document.activeElement !== title) title.value = n.title; if (document.activeElement !== body) body.value = n.body; field.refresh(); };
     el._flush = () => commit(null, true);

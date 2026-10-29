@@ -273,7 +273,7 @@ export function createChatGraph(popup, showList) {
     });
     search.addEventListener('input', filter);
     search.addEventListener('keydown', event => {
-        if (event.key !== 'Enter') return;
+        if (event.key !== 'Enter' || event.isComposing) return;   // 8.2.7 한글 조합 중 Enter 는 조합만 끝내요(두 번 와서 일치 하나를 건너뛰었어요)
         const matches = [...nodesBox.querySelectorAll('.is-match')]; if (!matches.length) return;
         const index = matches.findIndex(n => n.dataset.id === selected), node = matches[(index + 1) % matches.length];
         select(node.dataset.id); center(node.dataset.id, true);

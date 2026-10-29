@@ -236,7 +236,7 @@ function open(sel, anchor = null) {
             e.preventDefault();
             const next = e.key === 'ArrowDown' ? Math.min(items.length - 1, at + 1) : Math.max(0, at - 1);
             items[next]?.focus();
-        } else if (e.key === 'Enter' && e.target === input) {
+        } else if (e.key === 'Enter' && e.target === input && !e.isComposing) {   // 8.2.7 한글 조합 중 Enter 는 조합만 끝내요(두 번째 Enter 가 목록을 다시 열었어요)
             e.preventDefault();
             items[0]?.click();
         }

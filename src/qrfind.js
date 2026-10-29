@@ -256,7 +256,7 @@ export function openQrFind(button) {
             e.preventDefault();
             const next = e.key === 'ArrowDown' ? Math.min(list.length - 1, at + 1) : Math.max(-1, at - 1);
             if (next < 0) input.focus(); else list[next]?.focus();
-        } else if (e.key === 'Enter' && e.target === input) {
+        } else if (e.key === 'Enter' && e.target === input && !e.isComposing) {   // 8.2.7 한글 조합 중 Enter 는 조합만 끝내요
             e.preventDefault();
             list[0]?.click();
         }

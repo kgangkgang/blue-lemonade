@@ -4122,7 +4122,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     cInput?.addEventListener('keydown', e => {
         if (e.key === 'ArrowDown')      { e.preventDefault(); if (!comboOpen) openCombo(cInput.value); else setActive(activeIdx + 1); }
         else if (e.key === 'ArrowUp')   { e.preventDefault(); if (comboOpen) setActive(activeIdx - 1); }
-        else if (e.key === 'Enter')     {
+        else if (e.key === 'Enter' && !e.isComposing) {   // 8.2.7 한글 조합 중 Enter 로 고르면 칸 글을 바꾼 뒤에 마지막 음절이 붙었어요
             if (comboOpen && matches.length) {
                 e.preventDefault();
                 pick(matches[activeIdx >= 0 ? activeIdx : 0].value);

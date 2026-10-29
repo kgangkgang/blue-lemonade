@@ -5299,7 +5299,7 @@ function initGlossaryUI() {
     addButton.addEventListener('click', submit);
     for (const input of [srcInput, dstInput]) {
         input.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') { event.preventDefault(); submit(); }
+            if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); submit(); }   // 8.2.7 한글 조합 중 Enter(맥 크롬은 두 번 옴)로 저장 · 비우면 마지막 음절이 빈칸에 남았어요
         });
     }
     card.querySelector('.llmt-gl-scopes').addEventListener('click', (event) => {

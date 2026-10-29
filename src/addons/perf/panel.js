@@ -215,7 +215,7 @@ export function buildDrawer() {
     $('.rl-price-save').addEventListener('click', onPriceAdd);
     for (const selector of ['.rl-price-model', '.rl-price-in', '.rl-price-out']) {
         $(selector).addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') { event.preventDefault(); onPriceAdd(); }
+            if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); onPriceAdd(); }   // 8.2.7 한글 조합 중 Enter 로 저장 · 비우면 마지막 음절이 남았어요
         });
     }
     $('.rl-price-list').addEventListener('click', async (event) => {
