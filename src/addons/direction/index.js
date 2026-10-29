@@ -486,6 +486,12 @@ function preview(text, length = 50) {
     return line.length > length ? `${line.slice(0, length)}…` : line;
 }
 
+// (10-29) 같은 값이면 쓰지 않는다 — 속성 · 글을 같은 값으로 다시 써도 변경 기록이 생겨 실리태번 keyboard.js · 테마 감시자가 깨고 스타일을 다시 계산한다(타이핑마다 창을 다시 그리던 때 글자당 20건)
+const setText = (el, text) => { if (el && el.textContent !== text) el.textContent = text; };
+const setAttr = (el, name, value) => { if (el && el.getAttribute(name) !== value) el.setAttribute(name, value); };
+const setData = (el, key, value) => { if (el && el.dataset[key] !== value) el.dataset[key] = value; };
+const setHidden = (el, hidden) => { if (el && el.hidden !== hidden) el.hidden = hidden; };
+
 function refreshButton() {
     refreshSettingsStatus();
     if (!button) return;
@@ -493,20 +499,21 @@ function refreshButton() {
     const always = alwaysActive();
     const prompts = promptsActive() ? enabledPrompts() : [];
     const filled = hasContent();
-    button.hidden = !settings().extensionEnabled;
+    setHidden(button, !settings().extensionEnabled);
     // 1.3.1 켜짐 단계 = 보내는 것의 수 (전개 지시 · 항상 지시 · 켠 프롬프트 한 줄 이상). 전개 지시를 꺼도 다른 것을 보내는 중이면 켜짐 색으로 남는다
     const level = sendLevel();
-    button.dataset.jjLevel = String(level);
+    setData(button, 'jjLevel', String(level));
     button.classList.toggle('is-on', level > 0);
     button.classList.remove('is-always');
     button.classList.toggle('has-content', filled);
-    button.setAttribute('aria-pressed', String(level > 0));
+    setAttr(button, 'aria-pressed', String(level > 0));
     const lines = [!on
         ? '전개 지시 꺼짐'
         : filled ? `전개 지시 켜짐 · ${preview(settings().direction.content)}` : '전개 지시 켜짐 · 내용이 비어 있어 AI가 알아서 전개해요'];
     if (always) lines.push(`항상 지시 켜짐 · ${preview(settings().always.content)}`);
     if (prompts.length) lines.push(`프롬프트 ${prompts.length}개 켜짐 · ${preview(prompts.map(promptTitle).join(' · '))}`);
-    button.title = `${lines.join('\n')}\n눌러서 열기 · 길게 누르면 전개 지시 켜기/끄기`;
+    const title = `${lines.join('\n')}\n눌러서 열기 · 길게 누르면 전개 지시 켜기/끄기`;
+    if (button.title !== title) button.title = title;
     if (popup) refreshPopup();
 }
 
@@ -654,23 +661,23 @@ function stateText(kind) {
 
 function refreshPopup() {
     const store = settings();
-    popup.dataset.page = page;
+    setData(popup, 'page', page);
     popup.classList.toggle('is-on', kindActive(page));
     const toggle = popup.querySelector('.jj-switch');
-    toggle.setAttribute('aria-checked', String(store[page].enabled));
-    toggle.setAttribute('aria-label', `${KIND_LABEL[page]} 켜기/끄기`);
-    popup.querySelector('.jj-title-text').textContent = KIND_LABEL[page];
-    popup.querySelector('.jj-state').textContent = stateText(page);
+    setAttr(toggle, 'aria-checked', String(store[page].enabled));
+    setAttr(toggle, 'aria-label', `${KIND_LABEL[page]} 켜기/끄기`);
+    setText(popup.querySelector('.jj-title-text'), KIND_LABEL[page]);
+    setText(popup.querySelector('.jj-state'), stateText(page));
     popup.querySelectorAll('.jj-dots b').forEach((dot, index) => dot.classList.toggle('is-current', KINDS[index] === page));
     popup.querySelectorAll('.jj-page').forEach(section => section.classList.toggle('is-off', !kindActive(section.dataset.kind)));
     popup.querySelector('.jj-page-prompts')?.classList.toggle('is-muted', !(store.extensionEnabled && store.prompts.enabled));   // 쪽 스위치가 꺼지면 줄을 흐리게 (줄 스위치는 그대로 보인다)
-    popup.querySelector('.jj-foot-text').textContent = footText();
-    popup.querySelector('.jj-send').hidden = !sendButton();   // 1.2.3 보내기 단추가 숨은 동안(생성 중 · 스와이프 중 · 명령 실행 중)은 ▶ 도 숨긴다
+    setText(popup.querySelector('.jj-foot-text'), footText());
+    setHidden(popup.querySelector('.jj-send'), !sendButton());   // 1.2.3 보내기 단추가 숨은 동안(생성 중 · 스와이프 중 · 명령 실행 중)은 ▶ 도 숨긴다
     // 1.3.0 프롬프트 쪽에는 저장 · 최근 목록과 지우개가 없다 (줄마다 고치기 · 지우기)
-    for (const act of ['list', 'clear']) popup.querySelector(`.jj-popup-head [data-act="${act}"]`).hidden = page === 'prompts';
-    popup.dataset.jjLevel = String(sendLevel());   // 1.3.1 창 제목 깃털도 입력창 깃털과 같은 단계 모양
+    for (const act of ['list', 'clear']) setHidden(popup.querySelector(`.jj-popup-head [data-act="${act}"]`), page === 'prompts');
+    setData(popup, 'jjLevel', String(sendLevel()));   // 1.3.1 창 제목 깃털도 입력창 깃털과 같은 단계 모양
     if (page === 'prompts' && popup.dataset.tokPage !== 'prompts') void fillPromptTokens();   // 1.3.2 프롬프트 쪽으로 넘어올 때만 센다
-    popup.dataset.tokPage = page;
+    setData(popup, 'tokPage', page);
     syncPagesHeight();
     if (listView) renderList();
 }
@@ -1770,20 +1777,20 @@ function refreshSettingsStatus() {
         if (!card) continue;
         const on = kindActive(kind);
         card.classList.toggle('is-on', on);
-        card.querySelector('.jj-status-title').textContent = kind === 'direction' && !store.extensionEnabled
+        setText(card.querySelector('.jj-status-title'), kind === 'direction' && !store.extensionEnabled
             ? '입력창 버튼이 꺼져 있어요'
-            : `${KIND_LABEL[kind]} ${stateText(kind)}`;
-        card.querySelector('.jj-status-text').textContent = !store.extensionEnabled
+            : `${KIND_LABEL[kind]} ${stateText(kind)}`);
+        setText(card.querySelector('.jj-status-text'), !store.extensionEnabled
             ? (kind === 'direction' ? '아래 ‘입력창 버튼’을 켜면 쓸 수 있어요' : '입력창 버튼이 꺼져 있으면 보내지 않아요')
             : kind === 'prompts' ? promptsStatusText()
             : hasContent(kind) ? preview(store[kind].content, 70)
                 : kind === 'always' ? '깃털 창을 옆으로 넘기거나 제목을 눌러 적어요'
-                    : on ? '비어 있어요 · AI가 알아서 전개해요' : '입력창의 깃털 버튼으로 지시를 적어요';
+                    : on ? '비어 있어요 · AI가 알아서 전개해요' : '입력창의 깃털 버튼으로 지시를 적어요');
         const toggle = card.querySelector('.jj-switch');
-        toggle.setAttribute('aria-checked', String(store[kind].enabled));
-        toggle.disabled = !store.extensionEnabled;
+        setAttr(toggle, 'aria-checked', String(store[kind].enabled));
+        if (toggle.disabled !== !store.extensionEnabled) toggle.disabled = !store.extensionEnabled;
     }
-    settingsRoot.querySelector('#jj_extension_switch').setAttribute('aria-checked', String(store.extensionEnabled));
+    setAttr(settingsRoot.querySelector('#jj_extension_switch'), 'aria-checked', String(store.extensionEnabled));
 }
 
 // 캐릭터 에셋 확장과 같은 카드 모양으로, 세로로 짧게: 상태 카드 → 설정 세 줄 → 접어 둔 프롬프트

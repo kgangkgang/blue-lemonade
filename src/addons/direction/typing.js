@@ -11,13 +11,13 @@
  * @param {object} env
  * @param {(value: string) => void} env.onValue 입력 값이 바뀔 때마다 (저장 · 상태)
  * @param {() => void} env.refresh 단추 · 창 다시 그리기 — 조합 중이 아닐 때 delay 뒤 한 번
- * @param {number} [env.delay] 다시 그리기까지 기다리는 ms (기본 120)
+ * @param {number} [env.delay] 다시 그리기까지 기다리는 ms (기본 250)
  * @param {(fn: () => void, ms: number) => any} [env.setTimer]
  * @param {(id: any) => void} [env.clearTimer]
  * @returns {{ composing: () => boolean, pending: () => boolean, flush: () => void, stop: () => void }}
  */
 export function attachTypingRefresh(textarea, env) {
-    const delay = Number.isFinite(env.delay) ? env.delay : 120;
+    const delay = Number.isFinite(env.delay) ? env.delay : 250;   // 타자 사이(100~200ms)보다 길게 — 글자마다 한 번씩 다시 그리지 않게
     const setTimer = env.setTimer || ((fn, ms) => setTimeout(fn, ms));
     const clearTimer = env.clearTimer || (id => clearTimeout(id));
     let composing = false;
