@@ -1,5 +1,5 @@
-/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1743 · 뺀 규칙 4488 (style.css 2e8ef6df1d85) */
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 253b32367f37) */
+/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1743 · 뺀 규칙 4496 (style.css 07aeb00bce3d) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 07b9f78e551c) */
 /* css/00-base.css */
 :root{--bl-release:"8.2.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -3908,6 +3908,7 @@ dialog.bl-mav-viewer .bl-mav-icon { position:absolute; top:8px; right:8px; backg
 @keyframes salty-pick-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 @keyframes salty-pick-in-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @keyframes salty-pick-in-sheet { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+/* css/73-scroll-fade.css */
 /* css/75-version-pill.css */
 /* css/76-help-button.css */
 /* css/77-scrollbars.css */

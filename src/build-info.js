@@ -1,7 +1,7 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
 export const BUILD_VERSION = "8.2.3";
 export const FILE_HASHES = {
-  "index.js": "24707:2eb9dff2:09c2a7c3",
+  "index.js": "25430:0e1d2d5c:898a92ae",
   "manifest.json": "365:d56957f8:f4e71926",
   "src/addon-files-check.js": "5001:b7fe0df9:d1f21c49",
   "src/addon-layout.js": "2768:fc762257:da2db162",
@@ -605,7 +605,7 @@ export const FILE_HASHES = {
   "src/palettes.js": "33830:51637840:34a73a09",
   "src/panel.js": "264929:39c0a86d:657aff7d",
   "src/people.js": "9021:76aa8129:14633595",
-  "src/popup-guard.js": "4755:d66dd15c:5ae13a66",
+  "src/popup-guard.js": "5328:fab87000:195a34d2",
   "src/popup-marks.js": "1818:0af84657:5805cf62",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
   "src/preview-park.gen.css": "120749:2622fc38:d4582d11",
@@ -688,6 +688,7 @@ export const FILE_HASHES = {
   "src/scripts/runtime.js": "10299:2b380bd4:521c7ae2",
   "src/scripts/scan.js": "5805:194df255:f44ce803",
   "src/scripts/store.js": "4439:3c410dc2:8a4e723f",
+  "src/scroll-fade.js": "10008:a49be5ec:fdb503db",
   "src/search-ime.js": "3958:a46c635c:88d8ff00",
   "src/selection-range.js": "6929:b51d4218:4519f447",
   "src/selects.js": "23444:a513a3dd:c2ae1af4",
@@ -751,6 +752,6 @@ export const FILE_HASHES = {
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
   "src/worldinfo-light.js": "2949:e91008f8:04eead81",
-  "style-ext.css": "317449:69b5d6d4:99d9f0c2",
-  "style.css": "1835591:fc6c9ac9:a2dfb772"
+  "style-ext.css": "317478:17c49dff:96928df3",
+  "style.css": "1837510:7c0e4b69:305e0877"
 };

@@ -234,6 +234,7 @@ jobs:
           node tools/tests/fruit-deus-control-ink.mjs .
           node tools/tests/tab-scroll.mjs .
           node tools/tests/wheel-x.mjs .
+          node tools/tests/scroll-fade.mjs .
           node tools/tests/tts-reanalysis-guard.mjs .
           node tools/tests/addon-note-master-off.mjs .
           node tools/tests/popup-outside-close.mjs .

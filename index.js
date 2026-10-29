@@ -22,6 +22,7 @@ import { startCurrentMark } from './src/current.js';
 import { startDangerMark } from './src/danger.js';
 import { startPopupGuard, onPopupAdded } from './src/popup-guard.js';
 import { installWheelX } from './src/wheel-x.js';
+import { installScrollFade, baibaiPresence } from './src/scroll-fade.js';
 import { startNumberWidth } from './src/num-width.js';
 import { startGroupGrid } from './src/group-grid.js';
 import { startIconTextMark } from './src/icon-text.js';
@@ -215,6 +216,13 @@ jQuery(() => {
     startDangerMark();
     startPopupGuard(); // 7.7.9 안내 창 「닫기」 하나 보장 + 실리태번 판 로그
     installWheelX();   // 8.2.3 가로로만 넘치는 칸은 Shift 없이 휠로 (wheel-x.js — 탭 줄 · 퀵 리플라이 줄이 먼저 처리한 이벤트는 건너뜀)
+    // 8.2.3 세로 스크롤 칸의 넘친 쪽 흐림 (scroll-fade.js) — 새 팝업은 popup-guard 의 body 자식 감시자에 얹고, 바이바이가 켜져 있으면 월드인포 목록은 쉼
+    baibaiPresence().then(presence => {
+        const fade = installScrollFade(document, { resting: feature => feature === 'worldInfo' && presence.baibai() });
+        if (!fade) return;
+        onPopupAdded(dialog => { fade.scan(dialog); setTimeout(() => { if (dialog.isConnected) fade.scan(dialog); }, 600); });
+        presence.onChange(() => fade.refreshResting());
+    }).catch(error => console.warn('[Blue Lemonade] 스크롤 흐림', error));
     startNumberWidth(); // 7.7.9 애드온 창 · 팝업 숫자칸 유동 폭(--bl-num-ch)
     startGroupGrid(); // 7.7.9 단추 묶음 · 짧은 체크 묶음 2열 격자, 안 들어가면 그 묶음만 1열
     startIconTextMark(); // 아이콘 + 맨 글자 .menu_button 은 아이콘 버튼 규칙에서 뺀다 (CSS 는 글자 노드를 못 봄)

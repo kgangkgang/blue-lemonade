@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 98개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 253b32367f37) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 07b9f78e551c) */
 /* css/00-base.css */
 :root{--bl-release:"8.2.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -25835,6 +25835,17 @@ body.salty .salty-pick-float.sheet {
   animation-name: salty-pick-in-sheet;
 }
 body.salty .salty-pick-float.sheet .salty-pick-search { padding-bottom: 8px; }
+/* css/73-scroll-fade.css */
+html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y] { --bl-fade-y: 28px; }
+html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="bottom"]:not(.drawer-content) { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); }
+html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="top"]:not(.drawer-content) { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); }
+html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="both"]:not(.drawer-content) { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); }
+html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y]::before,
+html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y]::after { content: ""; position: sticky; z-index: 2; display: block; flex: none; width: 100%; height: var(--bl-fade-y); pointer-events: none; }
+html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y]::before { top: 0; margin-bottom: calc(-1 * var(--bl-fade-y)); background: linear-gradient(to bottom, var(--bl-fill-page, var(--bl-page)), transparent); }
+html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y]::after { bottom: 0; margin-top: calc(-1 * var(--bl-fade-y)); background: linear-gradient(to top, var(--bl-fill-page, var(--bl-page)), transparent); }
+html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y="bottom"]::before,
+html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y="top"]::after { display: none; }
 /* css/75-version-pill.css */
 html:not(#bl-pill-off) body.salty :is(#rm_extensions_block :is(.ext-version, .jj-version, .eh-version, .wr-version, .mr-version, .bwr-version, .llmt-version, .bl-version, .pt-drawer-version, .sw-version, .rl-version, .pa-version, .lv-version, .po-version, .lt-version, .sv-version)):not([hidden]),
 html:not(#bl-pill-off) body.salty :where(dialog.popup :is(.ext-version, .pt-version, .bl-notes-ver, .pa-hub-version, .lv-version, .bwr-version, .mr-version, .po-version, .rl-version)):is(#bl-s, *):is(.bl-s, *):not([hidden]),

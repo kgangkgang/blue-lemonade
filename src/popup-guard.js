@@ -7,6 +7,10 @@
 // 또 시작 때 실리태번 판(/version)을 콘솔에 한 번 남겨 다음에 사용자 폰 ST 판을 알 수 있게 한다.
 const INFO_OK = /^(닫기|close)$/i;   // 7.8.3: 「확인 · OK」 까지 잡으면 남의 확장 확인 창의 취소까지 숨길 수 있어 「닫기」 만
 let observer = null, logged = false;
+const popupHooks = new Set();   // 8.2.3 새 dialog.popup 이 붙었을 때 부르는 콜백(scroll-fade.js 가 세로 흐림 칸을 묶는다) — body 자식 감시자는 이것 하나로 나눠 쓴다
+/** 새 팝업(dialog.popup)이 body 에 붙을 때 fn(dialog). 떼는 함수를 돌려줘요. */
+export function onPopupAdded(fn) { popupHooks.add(fn); return () => popupHooks.delete(fn); }
+function announce(dlg) { for (const fn of popupHooks) { try { fn(dlg); } catch (e) { console.warn('[Blue Lemonade] 팝업 콜백', e); } } }
 
 function visible(el) { return !!el && el.style.display !== 'none' && !el.hidden && el.getClientRects().length > 0; }
 
@@ -42,8 +46,8 @@ export function startPopupGuard() {
     observer = new MutationObserver(records => {
         for (const r of records) for (const node of r.addedNodes) {
             if (!(node instanceof Element)) continue;
-            if (node.matches('dialog.popup')) queueMicrotask(() => check(node));
-            else for (const d of node.querySelectorAll?.('dialog.popup') || []) queueMicrotask(() => check(d));
+            if (node.matches('dialog.popup')) { queueMicrotask(() => check(node)); announce(node); }
+            else for (const d of node.querySelectorAll?.('dialog.popup') || []) { queueMicrotask(() => check(d)); announce(d); }
         }
     });
     observer.observe(document.body, { childList: true, subtree: false });
