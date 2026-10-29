@@ -125,7 +125,7 @@ export const FILE_HASHES = {
   "src/addons/modelswitch/fallback-field.css": "1425:c6854036:608bca6a",
   "src/addons/modelswitch/fallback-field.js": "9086:23c4e7a6:2f385891",
   "src/addons/modelswitch/fallback.js": "10265:b41c479e:2784deb7",
-  "src/addons/modelswitch/index.js": "37074:a5552697:73acecba",
+  "src/addons/modelswitch/index.js": "37460:3d0c0e9f:fc12fb70",
   "src/addons/modelswitch/jump.js": "3993:2e189859:5dde0462",
   "src/addons/modelswitch/lock.js": "4571:3571a980:98e7f308",
   "src/addons/modelswitch/menu.js": "794:644422e0:cedd047b",

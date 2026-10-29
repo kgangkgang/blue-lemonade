@@ -32,6 +32,10 @@ function store() {
     if (!Array.isArray(s.presets)) s.presets = [];
     s.presets = s.presets.filter(p => p && typeof p.name === 'string' && typeof p.source === 'string' && typeof p.model === 'string').slice(0, MAX_PRESETS);
     if (!s.draft || typeof s.draft !== 'object') s.draft = { source: 'custom', model: '', url: '' };
+    // 1029 객체여도 칸이 글자가 아니면(옛 형식 · 모델 없이 값을 돌려준 대상에서 ↑) 창이 그릴 때마다 d.model.trim() 에서 멈췄어요
+    if (typeof s.draft.source !== 'string' || !s.draft.source) s.draft.source = 'custom';
+    if (typeof s.draft.model !== 'string') s.draft.model = '';
+    if (typeof s.draft.url !== 'string') s.draft.url = '';
     // 예전에 받아 둔 Custom 주소별 목록 — 이제 읽기만 한다 (새 목록은 이 브라우저의 localStorage, live-models.js)
     if (!s.lists || typeof s.lists !== 'object' || Array.isArray(s.lists)) s.lists = {};
     s.lock = s.lock === true;

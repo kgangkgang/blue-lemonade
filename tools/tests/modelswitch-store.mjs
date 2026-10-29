@@ -195,6 +195,17 @@ await test('store(): 손으로 망가뜨린 칸은 기본값 · 조합은 글자
     }
 });
 
+await test('1029 store(): 입력칸(draft)이 객체여도 모델 · 공급자 · 주소가 글자가 아니면 고쳐요 (옛 형식 · 모델 없이 값을 돌려준 대상에서 ↑ — 창이 그릴 때마다 trim 에서 멈추던 것)', () => {
+    for (const draft of [{ source: 'openai' }, { source: 'openai', model: null, url: null }, { source: 3, model: 7, url: {} }]) {
+        reset({ ...usual(), model_switch: { draft: structuredClone(draft) } });
+        const d = M.store().draft;
+        assert.equal(typeof d.model, 'string', JSON.stringify(draft)); assert.equal(typeof d.source, 'string'); assert.equal(typeof d.url, 'string');
+        assert.doesNotThrow(() => d.model.trim());
+    }
+    reset({ ...usual(), model_switch: { draft: { source: 'openai', model: 'm1', url: 'https://relay.invalid' } } });
+    assert.deepEqual(M.store().draft, { source: 'openai', model: 'm1', url: 'https://relay.invalid' }, '좋은 값은 그대로');
+});
+
 // ---------- 2) 조합
 await test('조합 저장: 모델이 비면 묻지 않음 · 이름 기본값(중계/공식) · 이름 20자 · 모델 · 주소 다듬음 · 같은 이름은 그 자리에 덮어씀 · 취소는 안 씀', async () => {
     reset();
