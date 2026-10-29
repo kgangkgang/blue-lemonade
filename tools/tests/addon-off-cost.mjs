@@ -40,11 +40,13 @@ check('프롬프트 목록은 한글화 패널이 실제로 돌 때만 그 모�
 check('애드온 밖(src · index.js)에서 시작 입구를 부르는 곳은 addonRunning 으로 지키거나 사용자 동작 목록에 있어요', () => {
     const files = ['index.js', ...walk('src')].filter(rel => rel !== 'src/addons.js');
     const bad = [];
+    let seen = 0;
     for (const rel of files) {
         const src = read(rel);
         for (const starter of STARTERS) {
-            const re = new RegExp(`import\(['"][^'"]*addons/${starter.replace(/[.]/g, '\.')}['"]\)`, 'g');
+            const re = new RegExp(`import[(]['"][^'"]*addons/${starter.replace(/[.]/g, '[.]')}['"][)]`, 'g');
             for (const m of src.matchAll(re)) {
+                seen++;
                 if (USER_ACTION.has(rel)) continue;
                 const before = src.slice(Math.max(0, m.index - 400), m.index);
                 if (!/addonRunning/.test(before)) bad.push(`${rel}: ${m[0]}`);
@@ -52,5 +54,6 @@ check('애드온 밖(src · index.js)에서 시작 입구를 부르는 곳은 ad
         }
     }
     assert.deepEqual(bad, []);
+    assert.ok(seen >= 3, `찾은 곳이 너무 적어요(${seen}) — 찾는 식이 깨졌을 수 있어요`);
 });
 console.log(`addon off cost: ${passed} passed`);
