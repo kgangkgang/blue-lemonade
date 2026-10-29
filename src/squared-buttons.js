@@ -153,13 +153,25 @@ export function unchangedAttr(record) {
 //   다음 프레임 맨 앞에서 그 메시지만 재요. 판정 · 표시는 같아요(알려진 생김새는 예전처럼 변화 때 바로 붙음 · restamp).
 //   서랍 덮개(bl-chat-covered · content-visibility:hidden)일 때는 예전 길 그대로예요.
 export const LIGHT_MES = '#chat > .mes';
-/** 후보가 「건너뛴 content-visibility:auto 메시지」 안이면 그 메시지, 아니면 null — 계산을 풀지 않는 읽기만 */
-export function skippedMessageOf(el, view, cache = new Map()) {
-    if (typeof el.checkVisibility !== 'function' || el.checkVisibility({ contentVisibilityAuto: true })) return null;
+/** 후보가 「건너뛴 content-visibility:auto 메시지」 안이면 그 메시지, 아니면 null — 계산을 풀지 않는 읽기만
+ *  10-30 perf-icon: 예전에는 후보마다 checkVisibility 를 물었어요(부팅 · 긴 채팅에서 메시지 수백 개 × 후보 수십 개 — 폰 4배 부팅 0.23초).
+ *  이제 메시지마다 한 번 상태를 정해 둬요(cache): 'none' = c-v auto 가 아니거나 메시지가 안 보임 → 예전에도 늘 null,
+ *  'skipped' = 크롬이 마지막으로 알린 상태(contentvisibilityautostatechange · known)가 「건너뜀」 → 그 안 후보는 모두 checkVisibility 가 거짓이라 예전에도 늘 그 메시지,
+ *  'check' = 그 밖(아직 알림 없음 · 안 건너뜀) → 예전처럼 후보마다 물어요(화면 가까운 몇 개뿐). 돌려주는 값은 후보마다 예전과 같아요(시험 tools/tests/squared-noop-records.mjs).
+ *  메시지 안 요소의 계산된 스타일은 읽지 않아요 — 건너뛴 내용의 스타일을 읽으면 크롬이 그 자리에서 풀어 계산해요(긴 채팅 300 열기 배치 11 → 289번이 됐던 것).
+ *  알림이 막 오는 틈(풀렸는데 아직 알림 전)에는 「건너뜀」으로 미루고, 곧 오는 skipped=false 알림 때 그 메시지를 다시 재요(onLightState). */
+export function skippedMessageOf(el, view, cache = new Map(), known = null) {
+    if (typeof el.checkVisibility !== 'function') return null;
     const mes = el.closest?.(LIGHT_MES);
     if (!mes || mes === el) return null;
-    if (!cache.has(mes)) cache.set(mes, mes.checkVisibility({ contentVisibilityAuto: true }) && view.getComputedStyle(mes).contentVisibility === 'auto');
-    return cache.get(mes) ? mes : null;
+    let state = cache.get(mes);
+    if (state === undefined) {
+        state = mes.checkVisibility({ contentVisibilityAuto: true }) && view.getComputedStyle(mes).contentVisibility === 'auto' ? (known?.get(mes) === true ? 'skipped' : 'check') : 'none';
+        cache.set(mes, state);
+    }
+    if (state === 'none') return null;
+    if (state === 'skipped') return mes;
+    return el.checkVisibility({ contentVisibilityAuto: true }) ? null : mes;
 }
 
 export function watchSquaredButtons(doc, host) {
@@ -167,7 +179,7 @@ export function watchSquaredButtons(doc, host) {
     style.dataset.blSquaredStyle = '';
     style.textContent = `[${ATTR}]{border-radius:var(--bl-r-btn,8px)!important}`;
     (doc.head || doc.documentElement).append(style);
-    const roots = new Set(), waiting = new Set(), skippedMes = new Set();
+    const roots = new Set(), waiting = new Set(), skippedMes = new Set(), lockState = new WeakMap();   // lockState: 메시지마다 크롬이 마지막으로 알린 건너뜀 여부
     // 7.5.4 한 번 표시한 생김새 — 목록을 innerHTML 로 다시 그리는 확장(탭 · 칩이 새 요소가 됨)에서 새 요소가 0.3초 동안 둥글게 보였다가 네모가 되던 것을 막는다
     const seen = new Map();
     const remember = el => { if (seen.size >= SEEN_MAX) seen.clear(); seen.set(shapeKey(el), true); };
@@ -188,7 +200,7 @@ export function watchSquaredButtons(doc, host) {
         const light = !doc.getElementById?.('chat')?.classList?.contains('bl-chat-covered'), cache = new Map();
         for (const el of list) {
             if (cheapSkip(el, host, areas)) continue;
-            const mes = light ? skippedMessageOf(el, host, cache) : null;
+            const mes = light ? skippedMessageOf(el, host, cache, lockState) : null;
             if (mes) { skippedMes.add(mes); continue; }   // 화면 가까이 오면(onLightState) 그 메시지만 재요
             if (el.offsetParent !== null && isRoundTextButton(el, host, areas)) found.push(el);
         }
@@ -250,6 +262,7 @@ export function watchSquaredButtons(doc, host) {
     host.addEventListener('resize', resize);
     const onLightState = event => {
         const mes = event.target;
+        if (mes && typeof event.skipped === 'boolean') lockState.set(mes, event.skipped);
         if (event.skipped || stopped || !skippedMes.delete(mes) || !mes.isConnected) return;
         restamp(mes); roots.add(mes);
         if (timer) { host.clearTimeout(timer); timer = 0; }
