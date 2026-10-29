@@ -6,7 +6,7 @@
 //   body 전체 subtree 감시자는 새로 만들지 않아요 — 새 팝업은 popup-guard.js 의 body 자식 감시자(onPopupAdded)에 얹고, 확장 설정의 접힘 칸은 그 서랍 안 누름 뒤 다시 훑어요.
 // 제외: #chat · 메시지 본문 · textarea · 편집 칸 · pre · iframe · 이미 자체 흐림이 있는 칸(.salty-fonttags · .salty-fontscroll · 가로 흐림 줄).
 // 다른 확장: 바이바이(ST-BaiBai-Tools)는 월드인포 항목에 content-visibility + ResizeObserver 를 걸어요 — 켜져 있으면 월드인포 목록은 건너뛰어요(resting).
-// CSS 는 css/73-scroll-fade.css(mask-image · 서랍은 sticky 가상 요소). 끄기는 탭 줄 흐림과 같은 길: html#bl-tab-scroll-off.
+// CSS 는 css/73-scroll-fade.css(모두 mask-image — 서랍의 sticky 가상 요소는 스크롤에 긴 작업을 만들어 뺐어요). 끄기는 탭 줄 흐림과 같은 길: html#bl-tab-scroll-off.
 export const FADE_Y_SELECTORS = [
     '#rm_print_characters_block',                 // 캐릭터 목록
     '#rm_extensions_block .inline-drawer-content', // 확장 설정 안 접힘 칸 중 넘치는 것

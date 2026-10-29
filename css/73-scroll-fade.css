@@ -1,19 +1,12 @@
 /* ===== css/73-scroll-fade.css =====
-   8.2.3 세로 스크롤 칸의 넘친 쪽 흐림 — src/scroll-fade.js 가 붙이는 data-bl-fade-y 의 짝. 탭 줄의 가로 흐림(98-tab-strips, data-bl-fade)과 같은 방식이지만
-   98 은 「높이 · 글꼴을 바꾸지 않는다」는 시험(tab-scroll.mjs)이 지키는 파일이라 서랍 가상 요소의 height 가 들어가는 이 규칙은 따로 둔다. ===== */
-/* 8.2.3 세로 스크롤 칸의 넘친 쪽 흐림 (src/scroll-fade.js): scroll · resize 때 넘친 쪽만 data-bl-fade-y="top|bottom|both" 를 붙인다 — 가로 data-bl-fade 와 따로.
+   8.2.3 세로 스크롤 칸의 넘친 쪽 흐림 — src/scroll-fade.js 가 scroll · resize 때 넘친 쪽만 data-bl-fade-y="top|bottom|both" 를 붙인다(가로 data-bl-fade 와 따로).
    스크롤바(77 에서 숨김) 대신 「더 있음」을 보여 준다(커뮤니티 제보 「봇 목록 · 확장 칸에 스크롤바가 없다」 → 사용자 결정 10-29 「스크롤바는 숨긴 채로」).
    넘칠 때만 속성이 붙으므로 맞는 칸에는 mask 가 아예 없다. 끄기는 탭 줄 흐림과 같은 길(html#bl-tab-scroll-off).
-   바탕이 자기 것이 아닌 칸(캐릭터 목록 · 팝업 본문 · 월드인포 목록 · 애드온 칸)은 mask-image 로 — 색과 무관하게 정확하다. */
+   98-tab-strips 는 「높이 · 글꼴을 바꾸지 않는다」는 시험이 지키는 파일이라 따로 둔다.
+   서랍(.drawer-content)도 mask — 처음엔 시트 배경 · 그림자를 지키려 sticky 가상 요소(시트 색 → 투명)를 썼는데, 확장 설정 서랍에서 가상 요소가 있기만 해도
+   (높이 0 · 배경 없음 · static 이어도) 폰 4배 CPU 스크롤 80프레임에 긴 작업 3~6개(400~800ms, p95 60~120ms)가 생겼고 mask 는 0개였다(리그 10-29, _rig/perf3~5).
+   mask 는 넘칠 때 시트 그림자(e5)를 함께 가리지만 폰 시트는 위 막대 아래 붙어 있어 눈에 띄지 않는다. ===== */
 html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y] { --bl-fade-y: 28px; }
-html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="bottom"]:not(.drawer-content) { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); }
-html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="top"]:not(.drawer-content) { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); }
-html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="both"]:not(.drawer-content) { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); }
-/* 서랍(.drawer-content)은 종이 시트 — 배경(01-smear: --bl-fill-page) · 그림자(e5)가 자기 것이라 mask 를 걸면 그림자까지 잘린다.
-   대신 스크롤 칸 위 · 아래에 붙는 sticky 가상 요소에 시트 색 → 투명 그라데이션(팔레트 변수만). 넘친 쪽만 보이고, 맞으면 속성이 없어 가상 요소도 없다. */
-html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y]::before,
-html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y]::after { content: ""; position: sticky; z-index: 2; display: block; flex: none; width: 100%; height: var(--bl-fade-y); pointer-events: none; }
-html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y]::before { top: 0; margin-bottom: calc(-1 * var(--bl-fade-y)); background: linear-gradient(to bottom, var(--bl-fill-page, var(--bl-page)), transparent); }
-html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y]::after { bottom: 0; margin-top: calc(-1 * var(--bl-fade-y)); background: linear-gradient(to top, var(--bl-fill-page, var(--bl-page)), transparent); }
-html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y="bottom"]::before,
-html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y="top"]::after { display: none; }
+html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="bottom"] { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); }
+html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="top"] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); }
+html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="both"] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); }

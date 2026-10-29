@@ -688,7 +688,7 @@ export const FILE_HASHES = {
   "src/scripts/runtime.js": "10299:2b380bd4:521c7ae2",
   "src/scripts/scan.js": "5805:194df255:f44ce803",
   "src/scripts/store.js": "4439:3c410dc2:8a4e723f",
-  "src/scroll-fade.js": "10008:a49be5ec:fdb503db",
+  "src/scroll-fade.js": "10066:b3b01de1:119aef04",
   "src/search-ime.js": "3958:a46c635c:88d8ff00",
   "src/selection-range.js": "6929:b51d4218:4519f447",
   "src/selects.js": "23444:a513a3dd:c2ae1af4",
@@ -752,6 +752,6 @@ export const FILE_HASHES = {
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
   "src/worldinfo-light.js": "2949:e91008f8:04eead81",
-  "style-ext.css": "317478:17c49dff:96928df3",
-  "style.css": "1837510:7c0e4b69:305e0877"
+  "style-ext.css": "317478:566dd738:1bca2be7",
+  "style.css": "1836509:66080316:f5660b89"
 };

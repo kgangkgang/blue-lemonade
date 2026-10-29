@@ -101,11 +101,11 @@ await test('새 팝업을 scan(dialog) 으로 얹으면 그 안의 본문만 묶
     const before = fade.size(); dialog.isConnected = false; content.isConnected = false; body.children = body.children.filter(c => c !== dialog); fade.scan(doc);
     assert.equal(fade.size(), before - 1); assert.equal(fade.has(content), false);
 });
-await test('CSS: 세로 흐림은 data-bl-fade-y 로(가로 data-bl-fade 와 따로) · 서랍은 sticky 가상 요소에 팔레트 변수 · 끄기 길 같음 · 스크롤바 규칙은 안 건드림', () => {
+await test('CSS: 세로 흐림은 data-bl-fade-y 로(가로 data-bl-fade 와 따로) · 서랍까지 mask(가상 요소 없음) · 끄기 길 같음 · 스크롤바 규칙은 안 건드림', () => {
     const css = fs.readFileSync(path.join(root, 'css/73-scroll-fade.css'), 'utf8');
     for (const side of ['top', 'bottom', 'both']) assert.ok(css.includes(`[data-bl-fade-y="${side}"]`), side);
-    assert.match(css, /\.drawer-content\[data-bl-fade-y\]::before/); assert.match(css, /\.drawer-content\[data-bl-fade-y\]::after/);
-    assert.match(css, /position: sticky/); assert.match(css, /var\(--bl-fill-page, var\(--bl-page\)\)/);
+    // 서랍도 mask — 가상 요소(sticky 덮개)는 확장 설정 서랍 스크롤에 긴 작업을 만들었다(리그 10-29). 가상 요소 · 높이 · 글꼴 규칙이 없어야 한다
+    assert.doesNotMatch(css, /::before|::after|position: sticky|(?:font(?:-size|-family|-weight)?|(?:min-)?height)\s*:/);
     for (const line of css.split('8.2.3')[1].split(String.fromCharCode(10)).filter(l => /background:/.test(l))) assert.doesNotMatch(line, /#[0-9a-f]{3,8}|rgb|hsl/i, '그라데이션은 팔레트 변수만: ' + line.slice(0, 80));
     assert.doesNotMatch(css, /scrollbar/);
     assert.ok(css.includes('html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y]'));
