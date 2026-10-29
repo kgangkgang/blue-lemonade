@@ -228,6 +228,7 @@ jobs:
           node tools/tests/tts-takes.mjs .
           node tools/tests/dialogue-only.mjs .
           node tools/tests/ko-ui.mjs .
+          node tools/tests/ko-locale-quiet.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/preview-park.mjs .
           node tools/tests/preview-measure-batch.mjs .

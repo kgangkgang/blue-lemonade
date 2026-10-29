@@ -580,7 +580,7 @@ export const FILE_HASHES = {
   "src/ink-contrast.js": "13252:b8857f6e:8fbc54dd",
   "src/install-health.js": "8473:6dd5b71d:76e67fb5",
   "src/ko-ui-data.js": "245934:8530b8f9:f8d0e603",
-  "src/ko-ui.js": "13781:3256a34c:d80ce7da",
+  "src/ko-ui.js": "16029:e812aa6e:56b37f26",
   "src/layout.js": "31175:84ca45a4:14dbd07d",
   "src/lazy-avatars.js": "7776:814db34c:91741946",
   "src/lazy-panel.gen.css": "34768:8aa24fbf:b31f1504",

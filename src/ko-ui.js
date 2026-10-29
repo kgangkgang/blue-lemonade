@@ -19,15 +19,44 @@ const RELABEL = '#extensionsMenu, #claude_function_prefill_warning, #koboldcpp_h
 // 시작할 때 이미 보이는 곳 — 여기만 바로 고치고 나머지(닫힌 서랍)는 쉬는 틈에
 const VISIBLE = '#send_form, #options, #chat > .welcomePanel, dialog[open]';
 
-/** translate() 가 읽는 언어 표(i18n.js 의 localeData). 공개 함수가 없어 translate 를 한 번 불러 그 표를 받는다 — 못 찾으면 null */
-export function findLocaleMap(translate) {
+/** translate() 가 그 순간 읽는 객체를 그대로 돌려준다(비었어도) — 못 찾으면 null */
+export function probeLocaleMap(translate) {
     let map = null;
     try {
         Object.defineProperty(Object.prototype, PROBE, { configurable: true, get() { map = this; return undefined; } });
         translate(PROBE);
     } catch { map = null; } finally { delete Object.prototype[PROBE]; }
+    return map && map !== Object.prototype ? map : null;
+}
+
+/** translate() 가 읽는 언어 표(i18n.js 의 localeData). 공개 함수가 없어 translate 를 한 번 불러 그 표를 받는다 — 못 찾으면 null */
+export function findLocaleMap(translate) {
+    const map = probeLocaleMap(translate);
     // 엉뚱한 객체를 잡지 않게: 실리태번 ko-kr 표에는 늘 있는 키로 확인
-    return map && map !== Object.prototype && Object.hasOwn(map, 'Delete') && Object.hasOwn(map, 'Persona') ? map : null;
+    return map && Object.hasOwn(map, 'Delete') && Object.hasOwn(map, 'Persona') ? map : null;
+}
+
+/** 8.2.7 실리태번이 언어 표를 못 받아 표가 텅 빈 경우(브라우저 언어 'ko' — lang.json 엔 ko-kr 만 있어요)에만: 더할 키를 「목록에 안 잡히는」(enumerable: false) 칸으로 넣어요.
+ *  translate() · 실리태번 감시자(translateElement)는 표[키] 로 읽으니 번역은 그대로 되고, applyLocale 은 Object.keys(표) 가 0 이라 순정처럼 바로 돌아가요
+ *  — 공식 addLocaleData 로 채우면 그때부터 템플릿을 그릴 때마다 DOMParser 문서를 새로 만들어 jQuery 로 훑어요(순정 'ko' 엔 없던 일).
+ *  표가 이미 차 있으면(ko-kr · 다른 확장이 먼저 더함) 순정도 그 값을 내니 건드리지 않고 false. 넣은 뒤 translate 로 한 번 확인하고, 안 맞으면 되돌리고 false(공식 길로) */
+export function addQuietLocaleData(map, data, translate) {
+    if (!map || typeof map !== 'object' || Object.getPrototypeOf(map) !== Object.prototype || !Object.isExtensible(map)) return false;
+    if (Object.keys(map).length !== 0) return false;
+    const added = [];
+    try {
+        const props = {};
+        for (const [key, value] of Object.entries(data)) {
+            if (Object.hasOwn(map, key)) continue; // 공식 addLocaleData 처럼 있는 키는 덮지 않아요
+            props[key] = { value, writable: true, configurable: true, enumerable: false };
+            added.push(key);
+        }
+        Object.defineProperties(map, props);
+        const sample = added.find(key => data[key]);
+        if (Object.keys(map).length === 0 && (!sample || translate(sample) === data[sample])) return true;
+    } catch { /* 아래에서 되돌려요 */ }
+    for (const key of added) { try { delete map[key]; } catch { /* 넘어가요 */ } }
+    return false;
 }
 
 /** 실리태번 translateElement 와 같게 적되, 표보다 늦게 붙은 자식 요소(아이콘 · 단추)는 지우지 않는다 */
@@ -159,7 +188,9 @@ export function startKoreanUi(ctx = SillyTavern.getContext()) {
     if (typeof translate !== 'function' || typeof addLocaleData !== 'function') return null; // 언어 표 함수가 없는 옛 실리태번
     started = true;
     const t0 = performance.now();
-    addLocaleData(locale, ADD);   // 실리태번은 지금 언어 id(ko · ko-kr)와 같은 것만 받는다
+    // 8.2.7 표가 빈 'ko' 는 숨은 칸으로(템플릿마다 드는 번역 비용을 순정과 같게), 그 밖엔 공식 길 — 실리태번은 지금 언어 id(ko · ko-kr)와 같은 것만 받는다
+    const quiet = addQuietLocaleData(probeLocaleMap(translate), ADD, translate);
+    if (!quiet) addLocaleData(locale, ADD);
     const map = findLocaleMap(translate);
     if (map) Object.assign(map, FIX);
     else console.warn('[Blue Lemonade] 한국어 표를 찾지 못해 기존 번역 고치기는 건너뛰어요');
@@ -182,7 +213,7 @@ export function startKoreanUi(ctx = SillyTavern.getContext()) {
         document.addEventListener('change', again, true);
     }
     const t2 = performance.now();
-    const result = { add: Object.keys(ADD).length, fix: map ? Object.keys(FIX).length : 0, changed, relabeled, pageSizes, msData: +(t1 - t0).toFixed(2), msVisible: +(t2 - t1).toFixed(2), msIdle: 0, done: false };
+    const result = { add: Object.keys(ADD).length, quiet, fix: map ? Object.keys(FIX).length : 0, changed, relabeled, pageSizes, msData: +(t1 - t0).toFixed(2), msVisible: +(t2 - t1).toFixed(2), msIdle: 0, done: false };
     inIdleSlices([...document.querySelectorAll('[data-i18n]')], (el) => {
         const s = performance.now();
         result.changed += retranslateElement(el, keys, lookup, known);
