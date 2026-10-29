@@ -103,11 +103,38 @@ function sweep(root = document.getElementById('chat')) {
     root.querySelectorAll('.mes_buttons > .extraMesButtons > *').forEach(el => { if (wantedKey(el, wanted)) pin(el); });
 }
 
-function schedule() {
+// 8.2.6 성능: 메시지 하나가 그려지거나 바뀐 이벤트(번호가 같이 옴)는 그 메시지만 훑어요 — 예전에는 새 답 하나에도 채팅 전체(메시지 300개 ×
+//   메뉴 단추 십수 개)를 60ms · 700ms 뒤 두 번 다 훑었어요. 채팅 바뀜 · 더 불러오기 · 지우기, 번호가 없거나 그 메시지를 못 찾으면, 한꺼번에 20개 넘게 쌓이면 예전처럼 전체.
+//   두 번 훑기(바로 한 번 · 다른 확장이 버튼을 늦게 붙인 뒤 한 번 더)와 이벤트마다 타이머를 새로 거는 것은 그대로예요 — 쌓인 번호는 700ms 쪽이 끝날 때 비워요.
+const ONE_LIMIT = 20;
+let pendingAll = false;
+const pendingIds = new Set();
+/** #chat 의 바로 아래 .mes 가운데 mesid 가 같은 것 (뒤에서부터 — 새 메시지는 대개 끝에 있어요). querySelector 로 채팅 전체를 훑지 않게 */
+export function messageById(chat, id) {
+    const want = String(id);
+    for (let el = chat?.lastElementChild; el; el = el.previousElementSibling) {
+        if (el.classList?.contains('mes') && el.getAttribute('mesid') === want) return el;
+    }
+    return null;
+}
+function runPending() {
+    const chat = document.getElementById('chat');
+    if (!chat) return;
+    if (pendingAll) { sweep(chat); return; }
+    const found = [];
+    for (const id of pendingIds) { const mes = messageById(chat, id); if (!mes) { sweep(chat); return; } found.push(mes); }
+    found.forEach(mes => sweep(mes));
+}
+function schedule(id, all = false) {
+    if (all || id === undefined || id === null || id === '' || !Number.isInteger(Number(id))) pendingAll = true;
+    else pendingIds.add(Number(id));
+    if (pendingIds.size > ONE_LIMIT) pendingAll = true;
     timers.forEach(clearTimeout);
     // 두 번: 바로 한 번, 다른 확장이 버튼을 늦게 붙인 뒤 한 번 더
-    timers = [setTimeout(sweep, 60), setTimeout(sweep, 700)];
+    timers = [setTimeout(runPending, 60), setTimeout(() => { runPending(); pendingAll = false; pendingIds.clear(); }, 700)];
 }
+const scheduleOne = id => schedule(id);
+const scheduleAll = () => schedule(null, true);
 
 function onHint(event) {
     const hint = event.target?.closest?.('.extraMesButtonsHint');
@@ -117,18 +144,21 @@ function onHint(event) {
 function bind() {
     if (bound) return;
     const { eventSource, event_types: t } = SillyTavern.getContext();
-    const names = [t.CHAT_CHANGED, t.CHARACTER_MESSAGE_RENDERED, t.USER_MESSAGE_RENDERED, t.MORE_MESSAGES_LOADED, t.MESSAGE_UPDATED, t.MESSAGE_SWIPED, t.MESSAGE_EDITED, t.MESSAGE_DELETED].filter(Boolean);
-    names.forEach(name => eventSource.on(name, schedule));
+    const one = [t.CHARACTER_MESSAGE_RENDERED, t.USER_MESSAGE_RENDERED, t.MESSAGE_UPDATED, t.MESSAGE_SWIPED, t.MESSAGE_EDITED].filter(Boolean);
+    const whole = [t.CHAT_CHANGED, t.MORE_MESSAGES_LOADED, t.MESSAGE_DELETED].filter(Boolean);
+    const handlers = [...one.map(name => [name, scheduleOne]), ...whole.map(name => [name, scheduleAll])];
+    handlers.forEach(([name, fn]) => eventSource.on(name, fn));
     document.addEventListener('click', onHint, true);
-    bound = { eventSource, names };
+    bound = { eventSource, handlers };
 }
 
 function unbind() {
     if (!bound) return;
-    bound.names.forEach(name => bound.eventSource.removeListener(name, schedule));
+    bound.handlers.forEach(([name, fn]) => bound.eventSource.removeListener(name, fn));
     document.removeEventListener('click', onHint, true);
     timers.forEach(clearTimeout);
     timers = [];
+    pendingAll = false; pendingIds.clear();
     bound = null;
 }
 
