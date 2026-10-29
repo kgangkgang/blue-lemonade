@@ -113,6 +113,7 @@ jobs:
           node tools/tests/customstyle-values.mjs .
           node tools/tests/direction-migrate.mjs .
           node tools/tests/direction-saved-list.mjs .
+          node tools/tests/direction-typing.mjs .
           node tools/tests/model-register-panel.mjs .
           node tools/tests/model-register-picks.mjs .
           node tools/tests/model-register-state.mjs .

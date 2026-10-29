@@ -7,6 +7,8 @@ import { POPUP_TYPE, callGenericPopup } from '../../../../../../popup.js';
 
 import { getChatCompletionModel, oai_settings } from '../../../../../../openai.js';
 import { placeInstructions } from './prompt.js';
+// (10-29) 입력칸 타이핑: 조합 중엔 창을 다시 그리지 않는다 (시험 틀이 import 줄을 통째로 떼니 주석은 윗줄에)
+import { attachTypingRefresh } from './typing.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { badgeTextHit } from '../../badge-hit.js';
 // 7.7.4 시작 덮개 동안은 테마 색을 읽지 않는다
@@ -708,6 +710,7 @@ function sendNow(doc = document) {
 // 창이 열려 있는 동안 실리태번의 생성 중 표시(body[data-generating] · [data-swiping]) · 명령 실행 중(#form_sheld class) ·
 // 연결 전 숨김(#send_but.displayNone)을 따라 ▶ 를 숨기고 보인다
 let sendWatch = null;
+let typingRefreshers = [];   // (10-29) 글 쪽 입력칸마다 attachTypingRefresh 결과 — 창을 닫을 때 멈춘다
 function watchSendButton() {
     sendWatch?.disconnect();
     sendWatch = typeof MutationObserver === 'function' ? new MutationObserver(() => { if (popup) refreshPopup(); }) : null;
@@ -1640,11 +1643,12 @@ function openPopup() {
     for (const kind of TEXT_KINDS) {
         const textarea = pageTextarea(kind);
         textarea.value = store[kind].content;
-        textarea.addEventListener('input', () => {
-            store[kind].content = textarea.value;
-            save();
-            refreshButton();
-        });
+        // (10-29) 글자마다 refreshButton() → refreshPopup() 이 창의 글 · class 를 다시 쓰고 배치를 강제해 글자가 뚝뚝 끊기고, 한글 조합 중에 끼면
+        //   조합이 깨졌다(「미안」→「ㅣ안」). 값은 바로 적고, 창 · 단추 다시 그리기는 조합이 끝난 뒤 · 타자가 잠깐 멈춘 뒤 한 번만 (typing.js)
+        typingRefreshers.push(attachTypingRefresh(textarea, {
+            onValue: value => { store[kind].content = value; save(); },
+            refresh: () => { if (popup) refreshButton(); },
+        }));
     }
 
     popup.querySelector('.jj-switch').addEventListener('click', () => {
@@ -1716,6 +1720,7 @@ function closePopup() {
     if (!popup) return;
     endPromptDrag(false);   // 1.3.6
     cancelPromptPress();
+    for (const t of typingRefreshers.splice(0)) t.stop();   // (10-29) 미뤄 둔 다시 그리기는 창과 함께 버린다
     const closing = popup;
     popup = null;
     listView = null;
