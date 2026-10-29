@@ -762,6 +762,6 @@ export const FILE_HASHES = {
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "9370:2d815bc8:4cd0d636",
   "src/worldinfo-light.js": "2949:e91008f8:04eead81",
-  "style-ext.css": "318810:6e2b2600:1ad783e9",
-  "style.css": "1838599:641f9a44:585c809f"
+  "style-ext.css": "318792:ff175e48:99604325",
+  "style.css": "1838581:2a1c5e60:66be1009"
 };

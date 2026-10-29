@@ -223,7 +223,8 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .salty-panel .bl-weather-skip{margin-top:6px;}
 /* 4.2.8 날씨 자리: 화면을 줄인 네모와 끌어 옮기는 점 */
 .salty-panel .bl-spot-row{display:flex;gap:16px;align-items:flex-start;}
-.salty-panel .bl-spot-pad{position:relative;flex:none;width:min(42%,150px);border-radius:12px;background:var(--salty-shade);box-shadow:inset 0 0 0 1px var(--salty-line);touch-action:none;overflow:visible;}
+/* 8.2.7 판은 touch-action 을 두지 않아요 — 끌기는 점(.bl-spot, 아래 none)만 받아서, 판 위에서 세로로 밀면 설정 창이 굴러가요(폰 예측점검) */
+.salty-panel .bl-spot-pad{position:relative;flex:none;width:min(42%,150px);border-radius:12px;background:var(--salty-shade);box-shadow:inset 0 0 0 1px var(--salty-line);overflow:visible;}
 .salty-panel .bl-spot{position:absolute;width:32px;height:32px;margin:-16px 0 0 -16px;padding:0;border:0;border-radius:50%;background:var(--salty-raised);color:var(--salty-text);font-size:12px;font-weight:650;box-shadow:inset 0 0 0 1px var(--salty-muted), var(--bl-e2);touch-action:none;cursor:grab;}
 .salty-panel .bl-spot.on{background:var(--salty-accent);color:var(--salty-on-accent, var(--bl-fb-fff));box-shadow:inset 0 0 0 1px var(--salty-accent), var(--bl-e2);}
 .salty-panel .bl-spot-side{min-width:0;flex:1;display:grid;gap:8px;}

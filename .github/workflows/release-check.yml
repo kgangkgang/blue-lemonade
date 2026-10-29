@@ -378,6 +378,7 @@ jobs:
           node tools/tests/weather-styles.mjs .
           node tools/tests/weather-simple.mjs .
           node tools/tests/weather-place-swipe.mjs .
+          node tools/tests/weather-spot-pad-scroll.mjs .
           node tools/tests/weather-amount.mjs .
           node tools/tests/weather-coverage.mjs .
           node tools/tests/weather-retired.mjs .
