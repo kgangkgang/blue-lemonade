@@ -78,9 +78,11 @@ export async function followCharacterRename(oldAvatar, newAvatar, host, io = {})
     const store = host.settings();
     const keys = folderKeys(store, from);
     const found = [];
+    // 1029 목록을 못 읽은 것(서버 오류 · 권한)은 「그림 없음」이 아니에요 — 예전엔 빈 것으로 쳐서 설정 열쇠만 새 이름으로 옮겨, 옛 폴더 그림이 이 캐릭터에서 안 보이게 됐어요
+    const unreadable = () => { host.toast?.('error', `그림 목록을 읽지 못해서 옛 폴더 「${from}」의 그림과 설정을 그대로 뒀어요. 연결을 확인한 뒤 캐릭터 에셋 창에서 다시 확인해 주세요.`, { timeOut: 10000 }); return 'failed'; };
     for (const key of keys) {
         let members = [];
-        try { members = await get(key); } catch { members = []; }
+        try { members = await get(key); } catch (error) { console.warn('[캐릭터 에셋] 이름 바꾼 캐릭터 그림 목록 읽기 실패', key, error); return unreadable(); }
         if (members.length) found.push({ key, members });
     }
     const total = found.reduce((n, f) => n + f.members.length, 0);
@@ -89,7 +91,7 @@ export async function followCharacterRename(oldAvatar, newAvatar, host, io = {})
         return 'keys';
     }
     let already = [];
-    try { already = await get(to); } catch { already = []; }
+    try { already = await get(to); } catch { return unreadable(); }   // 1029 새 폴더가 비었는지 모르면 덮어쓰지 않아요
     if (already.length) {
         host.toast?.('warning', `새 이름 폴더 「${to}」에 이미 그림이 있어서 옛 폴더 「${from}」의 그림 ${total}장을 옮기지 않았어요.`, { timeOut: 10000 });
         return 'busy';

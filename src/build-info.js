@@ -19,7 +19,7 @@ export const FILE_HASHES = {
   "src/addons/assets/pick.js": "8862:c6c06646:f2db14b2",
   "src/addons/assets/presets.js": "11896:8a7784a0:89bddb08",
   "src/addons/assets/prompt.js": "8601:8c0db090:5347b3c8",
-  "src/addons/assets/rename.js": "8193:ed78634f:02a3c67e",
+  "src/addons/assets/rename.js": "8907:0fafff9f:21aef329",
   "src/addons/assets/render.js": "56970:e366c596:9b3f09a3",
   "src/addons/assets/shrink.js": "6234:7afc634a:1c48dca1",
   "src/addons/assets/slots.js": "26306:4340626b:eb31215d",
