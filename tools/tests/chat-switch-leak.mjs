@@ -286,6 +286,30 @@ await test('입력칸에 200번 치고 지워도 리스너 · 관찰자 · 타�
     same(base, snapshot(), '200번 친 뒤');
 });
 
+await test('테마 고르기 목록(select)을 20번 열고 닫아도 늘지 않고 닫은 목록 DOM 이 남지 않아요', async () => {
+    const host = document.getElementById('extensions_settings');
+    const sel = document.createElement('select'); sel.innerHTML = '<option value="a">가</option><option value="b">나</option><option value="c">다</option>';
+    host.append(sel);
+    const layers = [];
+    const cycle = async () => {
+        const before = new Set(document.body.children);
+        sel.dispatchEvent(Object.assign(new Event('pointerdown', { bubbles: true, cancelable: true }), { pointerType: 'mouse', button: 0 }));
+        await settle(300);
+        for (const el of document.body.children.filter(n => !before.has(n))) layers.push(new WeakRef(el));
+        document.dispatchEvent(Object.assign(new Event('keydown', { bubbles: true, cancelable: true }), { key: 'Escape' }));
+        await settle(700);
+    };
+    await cycle(); await cycle();
+    const base = snapshot();
+    for (let i = 0; i < 18; i++) await cycle();
+    for (let i = 0; i < 3; i++) { await settle(2000); globalThis.gc(); await new Promise(r => setImmediate(r)); }
+    assert.ok(layers.length >= 20, `목록이 열리지 않았어요 (${layers.length})`);
+    const kept = layers.filter(ref => ref.deref()?.isConnected === false).length;
+    assert.equal(kept, 0, `닫은 목록 층 ${layers.length}개 중 ${kept}개가 떨어진 채 남았어요`);
+    same(base, snapshot(), '고르기 목록 20번 뒤');
+    sel.remove();
+});
+
 // 애드온 창 (애드온을 켠 설정에서만)
 const ADDON_PANELS = [['tts', 'tts/index.js'], ['direction', 'direction/index.js'], ['assets', 'assets/index.js'], ['prompt', 'prompt/index.js'], ['mermaid', 'mermaid/index.js'], ['prompt-template', 'prompt-template/index.js'],
     ['customstyle', 'customstyle/index.js'], ['translator', 'translator/bridge.js'], ['modelswitch', 'modelswitch/index.js'], ['regexlink', 'regexlink/index.js'], ['rewrite', 'rewrite/index.js'], ['bookmarks', 'bookmarks/index.js'], ['zipinstall', 'zipinstall/index.js'], ['notes', 'notes/index.js']];
