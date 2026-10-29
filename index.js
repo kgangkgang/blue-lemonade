@@ -256,6 +256,8 @@ jQuery(() => {
     startSafe('startWebSearchMarks', () => { startWebSearchMarks(); }); // 6.2.6 웹 검색을 쓴 답에 지구 표시 · 낱말 꾹 눌러 출처 (websearch.js — 흔적은 성능 보조 요청 로그가 알린다)
     startWorldInfoLinkMark().catch(error => console.warn('[Blue Lemonade] 로어북 연결 점검', error)); // 캐릭터 로어북 연결이 빠지면 책 아이콘에 빨간 점
     startSafe('startCardInk', () => { startCardInk(); }); // 메시지 안 HTML 카드가 제 배경만 칠했을 때 글자색을 읽히게
+    // 8.2.7 메시지 class 의 같은 값 쓰기(실리태번 스와이프 단추 새로 고침이 메시지마다 없는 클래스를 뺌)를 브라우저까지 보내지 않아 keyboard.js 감시가 메시지를 다시 훑지 않게 (mes-class-quiet.js)
+    import('./src/mes-class-quiet.js').then(m => m.startMesClassQuiet()).catch(error => console.warn('[Blue Lemonade] 메시지 class 같은 값 쓰기 막기', error));
     startSafe('startSwipePickerTranslation', () => { startSwipePickerTranslation(); }); // 6.9.7 스와이프 고르기 창 미리보기에 그 스와이프의 번역문 (창을 여는 단추를 누를 때만 잠깐 찾음)
     startSafe('startSelectPop', () => { startSelectPop(); });   // select 를 테마가 그린 목록 팝업으로 (2.5.0)
     startSafe('startAddonTouchSliders', () => { import('./src/touch-sliders.js').then(m => { m.startAddonTouchSliders(); }).catch(error => console.warn('[Blue Lemonade] 애드온 슬라이더 손가락 보호', error)); });   // 10-30 시작 그래프 상한(111) 때문에 동적으로   // 8.2.7 폰: 애드온 · 도구 창 슬라이더 위에서 시작한 세로 스크롤이 값을 바꾸지 않게 (touch-sliders.js)

@@ -1,7 +1,7 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
 export const BUILD_VERSION = "8.2.3";
 export const FILE_HASHES = {
-  "index.js": "30619:36ebde06:3246663b",
+  "index.js": "31047:2e5b2ce1:39ca2016",
   "manifest.json": "365:d56957f8:f4e71926",
   "src/addon-files-check.js": "5001:b7fe0df9:d1f21c49",
   "src/addon-layout.js": "2768:fc762257:da2db162",
@@ -593,6 +593,7 @@ export const FILE_HASHES = {
   "src/markdown.js": "5670:583b23b2:87c60e83",
   "src/marquee.js": "4261:042dd0ea:df654cb6",
   "src/menu-position.js": "3354:c5e883de:c4671ab5",
+  "src/mes-class-quiet.js": "3075:bc6627d5:d4f2bc44",
   "src/mes-fold.js": "15542:5c43e78e:a96ce929",
   "src/mes-pins.js": "16854:6f808e77:ae9f7836",
   "src/message-work.js": "7592:9af6cb91:7ad233df",
