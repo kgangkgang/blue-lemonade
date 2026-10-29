@@ -40,7 +40,7 @@ assert.ok(sendMarkup,'▶ button markup');
 assert.match(sendMarkup,/aria-label="보내기"/);assert.doesNotMatch(sendMarkup,/title=/,'no tooltip');
 assert.ok(js.indexOf('data-act="send"')<js.indexOf('data-act="close" aria-label="닫기"'),'▶ sits before 닫기');
 assert.match(js,/querySelector\('\[data-act="send"\]'\)\.addEventListener\('click', \(\) => sendNow\(\)\)/);
-assert.match(js,/popup\.querySelector\('\.jj-send'\)\.hidden = !sendButton\(\);/,'refreshPopup hides ▶ with the send button');
+assert.match(js,/setHidden\(popup\.querySelector\('\.jj-send'\), !sendButton\(\)\);/,'refreshPopup hides ▶ with the send button (10-29: 같은 값이면 안 쓰는 setHidden)');
 assert.match(js,/attributeFilter: \['data-generating', 'data-swiping'\]/,'watches the generating state while open');
 assert.match(js,/for \(const id of \['form_sheld', 'send_but'\]\) \{\s*const element = document\.getElementById\(id\);\s*if \(element\) sendWatch\.observe\(element, \{ attributes: true, attributeFilter: \['class', 'style'\] \}\);/,'also watches command execution and the connect state');
 assert.match(js,/창 안의 종이비행기 단추를 누르면/,'help names the paper-plane icon');assert.doesNotMatch(js,/창 안의 ▶/,'no ▶ in the help text');
