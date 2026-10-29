@@ -35,8 +35,10 @@ const settle = () => { settleUntil = performance.now() + SETTLE_MS; };
 const root = document.documentElement;
 const body = document.body;
 
+// 8.2.7 perf-fade: 「바 숨김」 표식은 html 에 — body class 를 바꾸면 기록마다 실리태번 keyboard.js 가 body 아래 전부(채팅 300개면 요소 3만 개 남짓)를
+//   선택자 31개로 다시 훑었어요. 채팅을 내리고 올릴 때마다라 폰 4배에서 스크롤 중 한 번에 140~240ms 였어요(성능 관문 스크롤 장면). CSS(29-reader-onehand)도 html 로 — 모양은 같아요
 function hidden() {
-    return body.classList.contains('bl-bars-hidden');
+    return root.classList.contains('bl-bars-hidden');
 }
 
 function busy() {
@@ -51,7 +53,7 @@ function busy() {
 function hide() {
     if (hidden() || busy()) return;
     if (document.activeElement?.closest?.('#form_sheld')) document.activeElement.blur(); // 빈 입력칸 초점 → 키보드도 내림
-    body.classList.add('bl-bars-hidden');
+    root.classList.add('bl-bars-hidden');
     settle();
     // 숨긴 동안 서랍이 열리면(단축키 · 다른 확장) 바를 꺼낸다
     holderObserver ??= new MutationObserver(() => { if (document.querySelector('#top-settings-holder .openDrawer')) show(); });
@@ -61,7 +63,7 @@ function hide() {
 
 function show() {
     if (!hidden()) return;
-    body.classList.remove('bl-bars-hidden');
+    root.classList.remove('bl-bars-hidden');
     settle();
     holderObserver?.disconnect();
 }

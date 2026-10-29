@@ -32,13 +32,13 @@ t('몰입 읽기 폰 구간: absolute · 위 바 아래 · z 31 · 바 숨김이
     assert.match(shown, /top: calc\(var\(--topBarBlockSize\) \+ 4px\);/);
     assert.match(shown, /left: 0;/); assert.match(shown, /right: 0;/);
     assert.match(shown, /z-index: 31;/);
-    assert.match(block(phone, 'body.salty.bl-reader.bl-bars-hidden #bl-sync-strip'), /top: 4px;/);
+    assert.match(block(phone, 'html.bl-bars-hidden body.salty.bl-reader #bl-sync-strip'), /top: 4px;/);
 });
 
 t('만든 style.css 에도 같은 두 규칙', () => {
     const built = read('style.css');
     assert.match(block(built, 'body.salty.bl-reader #bl-sync-strip'), /top: calc\(var\(--topBarBlockSize\) \+ 4px\);/);
-    assert.match(block(built, 'body.salty.bl-reader.bl-bars-hidden #bl-sync-strip'), /top: 4px;/);
+    assert.match(block(built, 'html.bl-bars-hidden body.salty.bl-reader #bl-sync-strip'), /top: 4px;/);
 });
 
 t('CI 등록', () => assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/reader-sync-strip\.mjs \./));

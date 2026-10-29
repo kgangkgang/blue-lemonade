@@ -97,7 +97,7 @@ await test('6.8.9 테마를 끈 서랍 제목 줄: 한 줄(ⓒ 는 버전 옆) �
 await test('6.9.1 몰입 읽기로 바를 숨기면 TTS 재생 막대도 화면 아래로 (CSS 만)', async () => {
     const fs = await import('node:fs');
     const css = fs.readFileSync(path.join(root, 'css/29-reader-onehand.css'), 'utf8');
-    assert.match(css, /body\.salty\.bl-reader\.bl-bars-hidden \.lv-bar \{\s*top: calc\(100dvh - 10px - env\(safe-area-inset-bottom, 0px\)\) !important;/);
+    assert.match(css, /html\.bl-bars-hidden body\.salty\.bl-reader \.lv-bar \{\s*top: calc\(100dvh - 10px - env\(safe-area-inset-bottom, 0px\)\) !important;/);
     assert.match(css, /body\.salty\.bl-reader \.lv-bar \{\s*transition: top 0\.24s ease;/);
 });
 console.log(`${passed} tests passed`);

@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build cf69dd5e26a4) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build da6a93aecb67) */
 /* css/00-base.css */
 :root{--bl-release:"8.2.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -18764,18 +18764,18 @@ body.salty.bl-reader :where(.bl-chat-like):is(#chat,.bl-chat-like) {
 body.salty.bl-reader #top-settings-holder {
     transition: top 0.24s ease;
   }
-  body.salty.bl-reader.bl-bars-hidden #top-bar,
-body.salty.bl-reader.bl-bars-hidden #top-settings-holder {
+  html.bl-bars-hidden body.salty.bl-reader #top-bar,
+html.bl-bars-hidden body.salty.bl-reader #top-settings-holder {
     top: calc(-1 * var(--topBarBlockSize) - 32px) !important;
   }
-  body.salty.bl-reader.bl-bars-hidden #form_sheld {
+  html.bl-bars-hidden body.salty.bl-reader #form_sheld {
     transform: translateY(calc(100% + 16px));
     pointer-events: none;
   }
   body.salty.bl-reader .lv-bar {
     transition: top 0.24s ease;
   }
-  body.salty.bl-reader.bl-bars-hidden .lv-bar {
+  html.bl-bars-hidden body.salty.bl-reader .lv-bar {
     top: calc(100dvh - 10px - env(safe-area-inset-bottom, 0px)) !important;
   }
   body.salty.bl-reader #bl-sync-strip {
@@ -18786,7 +18786,7 @@ body.salty.bl-reader.bl-bars-hidden #top-settings-holder {
     z-index: 31;
     transition: top 0.24s ease;
   }
-  body.salty.bl-reader.bl-bars-hidden #bl-sync-strip {
+  html.bl-bars-hidden body.salty.bl-reader #bl-sync-strip {
     top: 4px;
   }
   @media (prefers-reduced-motion: reduce) {

@@ -638,7 +638,7 @@ export const FILE_HASHES = {
   "src/pull-to-refresh.js": "13742:f9794657:72af7701",
   "src/qrfind.js": "14328:46965475:b97af162",
   "src/readability.js": "4402:c34b7d47:0d00993d",
-  "src/reader.js": "8767:c13e8292:8043ac72",
+  "src/reader.js": "9194:4e320fd9:c1314b78",
   "src/reading-resume-anchor.js": "4927:487a9eff:ca0131aa",
   "src/reading-resume.js": "7684:21edaf0e:22dca30e",
   "src/recent-context.js": "16290:98c34053:c6b55f4b",
@@ -767,6 +767,6 @@ export const FILE_HASHES = {
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "9370:2d815bc8:4cd0d636",
   "src/worldinfo-light.js": "2949:e91008f8:04eead81",
-  "style-ext.css": "318792:d84ac284:315beace",
-  "style.css": "1841730:195098e7:66caa2cf"
+  "style-ext.css": "318792:117dd34b:4eee90b0",
+  "style.css": "1841755:ada91521:dd9b5161"
 };
