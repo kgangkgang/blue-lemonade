@@ -1259,13 +1259,13 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .sal
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track > .custom-dem-track__grid, details.custom-dem-modules:not(#salty-none)) {
   contain: layout paint;
 }
-body.salty.salty-dem-skin.salty-dem-streaming :is(#salty-nochat, .salty-preview) .mes.last_mes .mes_text :is(.custom-dem-track > .custom-dem-track__grid, details.custom-dem-modules:not(#salty-none), .custom-dem-modules details.custom-dem-card) {
+html.salty-dem-streaming body.salty.salty-dem-skin :is(#salty-nochat, .salty-preview) .mes.last_mes .mes_text :is(.custom-dem-track > .custom-dem-track__grid, details.custom-dem-modules:not(#salty-none), .custom-dem-modules details.custom-dem-card) {
   box-shadow: none !important;
 }
-body.salty.salty-dem-skin.salty-dem-streaming :is(#salty-nochat, .salty-preview) .mes.last_mes .mes_text .custom-dem-track > .custom-dem-track__grid {
+html.salty-dem-streaming body.salty.salty-dem-skin :is(#salty-nochat, .salty-preview) .mes.last_mes .mes_text .custom-dem-track > .custom-dem-track__grid {
   background: var(--dem-paper) !important;
 }
-body.salty.salty-dem-skin.salty-dem-streaming :is(#salty-nochat, .salty-preview) .mes.last_mes .mes_text details.custom-dem-modules:not(#salty-none) > summary {
+html.salty-dem-streaming body.salty.salty-dem-skin :is(#salty-nochat, .salty-preview) .mes.last_mes .mes_text details.custom-dem-modules:not(#salty-none) > summary {
   background: var(--dem-tray) !important;
   box-shadow: none !important;
 }

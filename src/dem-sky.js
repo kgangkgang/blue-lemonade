@@ -108,14 +108,16 @@ function schedule(id) {
 }
 // 번역 확장은 본문을 갈아 끼울 때 이벤트를 내지 않는다 — 본문이 통째로 바뀐 메시지만 적어 뒀다가 조용해진 뒤(0.4초) 그 메시지만 다시 본다(dem-expressive.js 와 같은 방식)
 // 8.1.1: 답장을 받는 동안(STREAM_TOKEN_RECEIVED)은 토큰마다 본문이 통째로 다시 그려진다 — 그동안은 감시자가 모은 것을 버리고 아무것도 안 한다.
-//  대신 body 에 salty-dem-streaming 을 달아 css/30-dem-skin.css 가 마지막 메시지의 비싼 층(빛무리 · 하늘 배경)을 쉬게 하고, 끝(MESSAGE_RECEIVED · CHARACTER_MESSAGE_RENDERED · GENERATION_ENDED)에 한 번만 다시 본다.
+//  대신 html 에 salty-dem-streaming 을 달아(8.2.6 까지는 body) css/30-dem-skin.css 가 마지막 메시지의 비싼 층(빛무리 · 하늘 배경)을 쉬게 하고, 끝(MESSAGE_RECEIVED · CHARACTER_MESSAGE_RENDERED · GENERATION_ENDED)에 한 번만 다시 본다.
 let streaming = false, streamEnd = 0;
 function setStreaming(on) {
     clearTimeout(streamEnd);
     if (on) streamEnd = setTimeout(() => setStreaming(false), 4000);   // 토큰이 4초 끊기면 끝난 것으로(끝 이벤트를 못 받는 경우의 안전장치)
     if (streaming === !!on) return;
     streaming = !!on; changed = new Set();
-    document.body?.classList.toggle('salty-dem-streaming', streaming);
+    // 8.2.7: 표식은 html 에 — body class 를 바꾸면 기록마다 실리태번 keyboard.js 가 body 아래 전부(채팅 300개면 요소 3만 개 남짓)를 선택자 31개로 다시 훑고,
+    //   body 를 보는 테마 감시자(네모 단추 · 아이콘 글자 …)도 다시 돌았어요(답장마다 시작 · 끝 두 번). html 은 그 감시자들이 안 봐요. CSS(30-dem-skin)도 html 로 — 모양은 같아요
+    document.documentElement?.classList.toggle('salty-dem-streaming', streaming);
 }
 function onMutations(records) {
     if (dressing || streaming) return;

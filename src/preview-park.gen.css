@@ -1269,15 +1269,15 @@ body.salty :where(.salty-preview):is(#salty-nochat, *) .mes {
 }
 }
 @media all {
-body.salty.salty-dem-skin.salty-dem-streaming :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text :where(.custom-dem-track__grid):where(.custom-dem-track > .custom-dem-track__grid):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
-body.salty.salty-dem-skin.salty-dem-streaming :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text details.custom-dem-modules:not(#salty-none),
-body.salty.salty-dem-skin.salty-dem-streaming :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text :where(.custom-dem-card):where(.custom-dem-modules details.custom-dem-card):is(#bl-s, *):is(.bl-s, *):is(bl-s, *) {
+html.salty-dem-streaming body.salty.salty-dem-skin :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text :where(.custom-dem-track__grid):where(.custom-dem-track > .custom-dem-track__grid):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html.salty-dem-streaming body.salty.salty-dem-skin :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text details.custom-dem-modules:not(#salty-none),
+html.salty-dem-streaming body.salty.salty-dem-skin :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text :where(.custom-dem-card):where(.custom-dem-modules details.custom-dem-card):is(#bl-s, *):is(.bl-s, *):is(bl-s, *) {
   box-shadow: none !important;
 }
-body.salty.salty-dem-skin.salty-dem-streaming :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text .custom-dem-track > .custom-dem-track__grid {
+html.salty-dem-streaming body.salty.salty-dem-skin :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text .custom-dem-track > .custom-dem-track__grid {
   background: var(--dem-paper) !important;
 }
-body.salty.salty-dem-skin.salty-dem-streaming :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text details.custom-dem-modules:not(#salty-none) > summary {
+html.salty-dem-streaming body.salty.salty-dem-skin :where(.salty-preview):is(#salty-nochat, *) .mes.last_mes .mes_text details.custom-dem-modules:not(#salty-none) > summary {
   background: var(--dem-tray) !important;
   box-shadow: none !important;
 }

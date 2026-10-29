@@ -523,7 +523,7 @@ export const FILE_HASHES = {
   "src/dem-expressive.js": "16443:049a2261:acb6fee4",
   "src/dem-glow.js": "2856:d4394686:3e248bd0",
   "src/dem-selection.js": "6543:92f23ad3:78853776",
-  "src/dem-sky.js": "11939:c15f016c:16be1989",
+  "src/dem-sky.js": "12408:e2c6fbd1:c00b9a58",
   "src/demskin.js": "2337:853c5d36:a4c1982e",
   "src/deus-preview-samples.js": "29419:cd94237e:62e3a5a0",
   "src/device-layouts.js": "5269:80ad5447:05031201",
@@ -620,7 +620,7 @@ export const FILE_HASHES = {
   "src/popup-guard.js": "5328:fab87000:195a34d2",
   "src/popup-marks.js": "2740:461f8ddf:edecd720",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
-  "src/preview-park.gen.css": "121087:fb7ba656:fbc788f3",
+  "src/preview-park.gen.css": "121112:daee2561:f872b7d1",
   "src/preview-view.js": "17270:6c138445:2764a1d7",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
   "src/profile.js": "6026:34f89f44:fc6757bf",
@@ -767,6 +767,6 @@ export const FILE_HASHES = {
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "9370:2d815bc8:4cd0d636",
   "src/worldinfo-light.js": "2949:e91008f8:04eead81",
-  "style-ext.css": "318792:2ba1890a:e93466f6",
-  "style.css": "1841887:eb8dc67c:7acc80d1"
+  "style-ext.css": "318792:66363395:23c32d2c",
+  "style.css": "1841937:f6a12866:8b8c8fe5"
 };

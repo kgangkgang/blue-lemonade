@@ -275,6 +275,7 @@ jobs:
           node tools/tests/scroll-fade.mjs .
           node tools/tests/dom-watch.mjs .
           node tools/tests/apply-class-batch.mjs .
+          node tools/tests/dem-streaming-root.mjs .
           node tools/tests/preview-view-touch.mjs .
           node tools/tests/tts-reanalysis-guard.mjs .
           node tools/tests/addon-note-master-off.mjs .
