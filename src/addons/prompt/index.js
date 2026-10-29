@@ -23,6 +23,7 @@ function controlsHelp(kind) {
     };
 }
 import { installLocalizationPage } from './localization-ui.js';
+import { presence as extPresence } from '../../ext-presence.js';   // 8.2.7 바이바이가 켜져 있을 때만 그룹 이름
 import { forEachLimited } from './cache-loading.js';
 import { validateTranslationMemory } from './translation-memory.js';
 import { createTranslationProgress, translationSummary, renderTranslationResult } from './translation-progress.js';
@@ -1265,8 +1266,8 @@ function readPresetBlocks(presetName) {
             });
         }
 
-        // ST-BaiBai-Tools 그룹(폴더) 이름.
-        readPresetGroups(preset).forEach((g, i) => {
+        // ST-BaiBai-Tools 그룹(폴더) 이름 — 바이바이가 켜져 있을 때만 (8.2.7)
+        if (baibaiOn()) readPresetGroups(preset).forEach((g, i) => {
             if (!g || !g.name) return;
             blocks.push({
                 id: `${GROUP_ID_PREFIX}${g.id || i}`,
@@ -1306,6 +1307,9 @@ const regexBlockId = (script, index) => `${REGEX_ID_PREFIX}${script?.id || index
 // file, and both are label-only: their payload is code or layout state, so
 // they are read as titleOnly blocks exactly like regex scripts.
 const GROUP_ID_PREFIX = '__grp::';
+// 8.2.7 바이바이 그룹은 바이바이(ST-BaiBai-Tools)가 설치돼 켜져 있을 때만 목록에 올리고 적용한다 — 꺼져 있으면 그 이름은 쓰일 곳이 없어
+//   제목 번역 묶음에 괜히 끼어 요청만 늘고, 적용 뒤 바이바이 캐시를 다시 읽게 하는 이벤트도 보낼 까닭이 없다. 감지를 못 하는 곳(시험 · 옛 판)은 예전처럼 켬
+const baibaiOn = () => { try { return extPresence().baibai !== false; } catch (e) { return true; } };
 const THS_ID_PREFIX   = '__ths::';
 
 // ST-BaiBai-Tools (柏宝箱) prompt grouping. Current path is
@@ -3055,7 +3059,7 @@ async function applyPresetLive(presetName, titlesOnly) {
     // 프리셋에 되쓰기 때문에, 우리가 넣은 번역명이 원래 이름으로 되돌아간다.
     // (프리셋을 떠났다 돌아와도 소용없다 — 떠나는 시점에 낡은 캐시가 먼저
     //  파일로 flush되기 때문이다.) 저장 후 캐시를 강제로 버리게 만든다.
-    const groupRenamed  = applyPresetGroupTitles(presetObj, ns);
+    const groupRenamed  = baibaiOn() ? applyPresetGroupTitles(presetObj, ns) : 0;   // 8.2.7
     const runnerRenamed = applyPresetRunnerTitles(presetObj, ns);
     applied += groupRenamed + runnerRenamed;
 

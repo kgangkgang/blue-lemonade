@@ -9,6 +9,7 @@
 //   3) 저장된 다른 프리셋: 사본에 적용 · 파일 형식 그대로(temperature 유지, 2026-10-06 고침) · 저장이 끝난 뒤에만 메모리 목록 교체 · 실패하면 그대로
 //   4) 옛 실리태번(PresetManager 없음): /api/presets/save · 실패면 목록 그대로 · 번역이 없으면 저장하지 않는다
 //   5) 월드인포: 키워드 합치기 · AND_ALL/NOT_ALL 보조 키워드는 바꾸기 · 원래 없던 키워드 줄은 본문으로 · 빈 제목은 그대로 · 고른 항목만 · originalData 거울 · 제목만
+//   7) 8.2.7 바이바이 그룹: 바이바이가 꺼져 있으면 목록에 올리지 않고 적용 · 캐시 다시 읽기 이벤트도 하지 않는다
 //   6) 봇카드: 보낼 것만 (빈 본문 번역 · 고르지 않은 칸 제외) · 추가 인사말은 전체 목록에 번역 칸만 · 캐릭터 노트는 depth/role 유지 · 실패면 다시 읽지 않음
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -36,7 +37,7 @@ const CODE = [
     section(src, 'function deepClone(obj) {', '// ── JSON Export: Preset'),
     section(src, '// ── Live Apply: Preset', '// ── Title-only translation (batched)'),
     // 고른 항목은 vm 쪽 Set 으로 (적용 함수가 instanceof Set 으로 가린다)
-    'globalThis.__api = { setCache, setCacheTitle, applyPresetLive, applyWorldInfoLive, applyCharacterLive, picked: ids => new Set(ids) };',
+    'globalThis.__api = { setCache, setCacheTitle, readPresetBlocks, applyPresetLive, applyWorldInfoLive, applyCharacterLive, picked: ids => new Set(ids) };',
 ].join('\n');
 
 let pass = 0, fail = 0;
@@ -80,7 +81,7 @@ const hero = () => ({
 });
 
 /** 새 모듈 상태 한 벌 + 가짜 실리태번 */
-function boot({ presetManager = true, saveFails = false, fetchStatus = 200 } = {}) {
+function boot({ presetManager = true, saveFails = false, fetchStatus = 200, baibai } = {}) {
     const calls = [], editor = new Map();
     const T = { calls, editor, oai: samplePreset(), stored: [archivePreset()], names: { Archive: 0 }, book: atlas(), characters: [hero()], saved: [] };
     const pm = { savePreset: async (name, body, opts) => { calls.push(['savePreset', name, plain(opts)]); T.saved.push(plain(body)); if (saveFails) throw new Error('save failed'); } };
@@ -103,6 +104,7 @@ function boot({ presetManager = true, saveFails = false, fetchStatus = 200 } = {
         PDOC: { getElementById: id => editor.get(id) || null },
         fetch: async (url, opts) => { calls.push(['fetch', url, JSON.parse(opts.body)]); return { ok: fetchStatus < 300, status: fetchStatus }; },
     };
+    if (baibai !== undefined) ctx.extPresence = () => ({ cocktail: false, baibai });   // 8.2.7 src/ext-presence.js presence()
     ctx.SillyTavern = { getContext: () => ({
         characterId: 0,
         getPresetManager: () => (presetManager ? pm : null),
@@ -295,6 +297,25 @@ await test('봇카드: 고른 칸만 보내고, 저장이 실패하면 다시 �
     delete nameless.characters[0].avatar;
     await assert.rejects(nameless.api.applyCharacterLive('__cur__', null), /아바타 파일명/);
     assert.equal(nameless.called('fetch').length, 0);
+});
+
+await test('8.2.7 바이바이가 꺼져 있으면 그룹 이름은 목록에 없고, 적용해도 그룹 이름 · 바이바이 캐시 이벤트를 건드리지 않는다', async () => {
+    const off = boot({ baibai: false });
+    const ids = plain(off.api.readPresetBlocks('Sample')).map(b => b.id);
+    assert.ok(!ids.some(id => id.startsWith('__grp::')), '그룹 줄 없음');
+    assert.ok(ids.includes('__pp_regex__::rx-1') && ids.includes('__ths::f1'), '정규식 · JS러너 이름은 그대로 목록에');
+    translatePreset(off);
+    const result = plain(await off.api.applyPresetLive('__cur__', true));
+    assert.equal(result.groupRenamed, 0);
+    assert.equal(result.regexRenamed, 1);
+    assert.equal(result.runnerRenamed, 2);
+    assert.equal(off.oai.extensions.baibaiToolkit.presetPromptGroups[0].name, 'Group One', '그룹 이름은 그대로');
+    assert.deepEqual(off.called('emit'), [], '바이바이 캐시 다시 읽기 이벤트를 보내지 않는다');
+    assert.equal(off.called('savePreset').length, 1, '나머지 적용은 그대로 저장');
+    const on = boot({ baibai: true });
+    assert.ok(plain(on.api.readPresetBlocks('Sample')).some(b => b.id === '__grp::g1' && b.titleOnly), '켜져 있으면 그룹 줄이 제목 전용으로');
+    translatePreset(on);
+    assert.equal((await on.api.applyPresetLive('__cur__', true)).groupRenamed, 1);
 });
 
 console.log(`prompt-apply-live: ${pass} passed, ${fail} failed`);
