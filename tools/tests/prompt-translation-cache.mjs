@@ -78,14 +78,14 @@ function server(initial = {}) {
 }
 
 /** 새 모듈 상태 한 벌 (vm 컨텍스트) — 세션 하나 = 탭 하나 */
-function boot({ srv = server(), settings = {}, indexedDB } = {}) {
+function boot({ srv = server(), settings = {}, indexedDB, localStorage } = {}) {
     const timers = [], toasts = [], warns = [];
     const ctx = {
         console: { log() {}, warn: (...a) => warns.push(a.map(String).join(' ')), error() {} },
         fetch: srv.fetch, getRequestHeaders: () => ({ 'Content-Type': 'application/json' }), btoa, TextEncoder, forEachLimited,
         setTimeout: (_fn, ms) => { timers.push(ms); return timers.length; }, clearTimeout() {},
         toastr: { warning: m => toasts.push(['warning', m]), error: m => toasts.push(['error', m]), success() {}, info() {} },
-        EXT: 'prompt-panel', extension_settings: { 'prompt-panel': settings }, indexedDB,
+        EXT: 'prompt-panel', extension_settings: { 'prompt-panel': settings }, indexedDB, localStorage,
     };
     vm.createContext(ctx);
     vm.runInContext(CODE, ctx);
@@ -482,6 +482,35 @@ await test('8.2.7 다른 기기의 예전 IndexedDB 번역: 목록 파일이 이
     const u = boot({ srv: bad, indexedDB: legacyDB(legacy) });
     await u.api.initTranslationCache();
     await assert.rejects(() => u.api.scanLegacyIndexedDB(), /가져올 수 없어요/, '목록 파일을 못 읽은 세션에서는 가져오지 않는다');
+});
+
+await test('8.2.7 맡겨 둔 표시(localStorage): 맡길 때 켜고, 다 옮기거나 비었으면 꺼서 다음 부팅은 IndexedDB 를 열어 보지 않는다', async () => {
+    const store = new Map(), ls = { getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) };
+    const idb = idbHost();
+    let looked = 0;
+    const counted = { ...idb, databases: async () => { looked++; return idb.databases(); }, open: name => idb.open(name) };
+    const srv = server();
+    srv.failing.set('GET ' + INDEX, 503);
+    const t = boot({ srv, indexedDB: counted, localStorage: ls });
+    await t.api.initTranslationCache();
+    assert.equal(looked, 0, '표시가 없으면 부팅 때 DB 를 보지 않는다');
+    t.api.setCache(NS, 'tone', '맡긴 번역');
+    await t.api.flushTranslationCache();
+    assert.equal(store.get('bl-prompt-cache-local-held'), '1');
+    srv.failing.delete('GET ' + INDEX);
+    const ok = boot({ srv, indexedDB: counted, localStorage: ls });
+    await ok.api.initTranslationCache();
+    assert.equal(srv.json(A).entries['pt-preset::Sample::tone::Korean'], '맡긴 번역');
+    assert.equal(store.has('bl-prompt-cache-local-held'), false, '다 옮기면 표시를 끈다');
+    store.set('bl-prompt-cache-local-held', '1');
+    idb.dbs.get(LOCAL)?.clear();
+    const empty = boot({ srv, indexedDB: counted, localStorage: ls });
+    await empty.api.initTranslationCache();
+    assert.equal(store.has('bl-prompt-cache-local-held'), false, '표시만 남고 비었으면 끈다');
+    looked = 0;
+    const quiet = boot({ srv, indexedDB: counted, localStorage: ls });
+    await quiet.api.initTranslationCache();
+    assert.equal(looked, 0);
 });
 
 console.log(`prompt-translation-cache: ${pass} passed, ${fail} failed`);

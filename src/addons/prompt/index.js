@@ -342,7 +342,7 @@ async function holdLocally(files) {
 /** 서버 파일을 읽은 세션 처음: 로컬에 맡겨 둔 번역을 서버로 옮기고, 올라간 키만 로컬에서 지운다 */
 async function adoptLocalEntries() {
     const local = await localReadAll();
-    if (!local.size) return;
+    if (!local.size) { if (!localHeld.size) localFlag(false); return; }   // 표시만 남고 비었으면 다음 부팅부터 열어 보지 않는다
     const moved = [];
     for (const [key, value] of local) {
         if (typeof key !== 'string') continue;
