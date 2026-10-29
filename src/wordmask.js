@@ -72,10 +72,35 @@ function maskTextNode(node) {
     node.replaceWith(frag);
     return n;
 }
+/**
+ * 8.2.7: 조판(typography.js)은 「 · 『 와 첫 글자를 <span class="bl-quote-lead"> 로 떼어 둔다(「민 + 수야…). 글자 노드 하나씩 맞춰 보는
+ * 가리기는 그 경계를 넘는 낱말(「민수야」의 '민수')을 못 찾아 이름이 그대로 보였다. 낱말이 경계를 넘을 때만 떼어 둔 칸을 뒤 글자에 다시 붙인다
+ * (가린 뒤에는 첫 글자 노드가 「 뿐이라 조판이 다시 떼지 않는다 — 넘지 않는 낱말이면 그대로 두어 서로 되풀이하지 않게).
+ */
+function joinQuoteLeads(part) {
+    for (const lead of part.querySelectorAll('.bl-quote-lead')) {
+        const next = lead.nextSibling;
+        if (next?.nodeType !== 3 || lead.closest('.bl-wmask')) continue;
+        const head = lead.textContent, cut = head.length;
+        let at = 0, cross = false;
+        for (const p of maskPlan(head + next.nodeValue, words)) {
+            const len = p.masked ? p.orig.length : p.text.length;
+            if (p.masked && at < cut && at + len > cut) { cross = true; break; }
+            at += len;
+            if (at >= cut) break;
+        }
+        if (!cross) continue;
+        next.nodeValue = head + next.nodeValue;
+        lead.remove();
+    }
+}
 /** 메시지 하나의 본문 · 이름 줄을 가린다. 이미 가린 조각(.bl-wmask) 안은 건너뛰므로 여러 번 불러도 같다. */
 function maskMessage(mes) {
     let n = 0;
-    for (const part of mes.querySelectorAll('.mes_text, .name_text')) for (const node of textNodes(part)) n += maskTextNode(node);
+    for (const part of mes.querySelectorAll('.mes_text, .name_text')) {
+        joinQuoteLeads(part);
+        for (const node of textNodes(part)) n += maskTextNode(node);
+    }
     return n;
 }
 function unmaskIn(root) {
