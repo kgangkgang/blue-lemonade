@@ -354,26 +354,41 @@ function onMessageChanged(id) {
 }
 
 // ---------- 메시지 버튼
-function addButtons() {
-    if (!runtimeEnabled()) return;
-    for (const el of document.querySelectorAll('#chat .mes')) {
-        const mes = msgOf(Number(el.getAttribute('mesid')));
-        if (mes && mes.is_system) continue;
-        const box = el.querySelector('.extraMesButtons');
-        if (!box) continue;
-        if (!el.querySelector('.lv_script')) {
-            const edit = document.createElement('div');
-            edit.className = 'mes_button lv_script fa-solid fa-file-audio interactable';
-            edit.tabIndex = 0; edit.setAttribute('role', 'button'); edit.setAttribute('aria-label', '소리 대본 편집');
-            box.prepend(edit);
-        }
-        if (el.querySelector('.lv_play')) continue;
+// 8.2.7 메시지 하나에 읽기 · 소리 대본 단추 (없는 것만). 둘 다 없으면 한 번에 붙인다 — 결과 순서는 예전과 같다(읽기 · 대본 · 원래 단추)
+function addButtonsTo(el) {
+    const mes = msgOf(Number(el.getAttribute('mesid')));
+    if (mes && mes.is_system) return;
+    const box = el.querySelector('.extraMesButtons');
+    if (!box) return;
+    const add = [];
+    if (!el.querySelector('.lv_play')) {
         const btn = document.createElement('div');
         btn.className = 'mes_button lv_play fa-solid fa-volume-high interactable';
         btn.tabIndex = 0;
         btn.setAttribute('role', 'button');
         btn.setAttribute('aria-label', '읽기');
-        box.prepend(btn);
+        add.push(btn);
+    }
+    if (!el.querySelector('.lv_script')) {
+        const edit = document.createElement('div');
+        edit.className = 'mes_button lv_script fa-solid fa-file-audio interactable';
+        edit.tabIndex = 0; edit.setAttribute('role', 'button'); edit.setAttribute('aria-label', '소리 대본 편집');
+        // 읽기 단추가 이미 있으면 그 뒤가 아니라 맨 앞 (예전 순서: 대본을 먼저 맨 앞에 · 그다음 읽기를 맨 앞에)
+        if (add.length) add.push(edit); else box.prepend(edit);
+    }
+    if (add.length) box.prepend(...add);
+}
+function addButtons() {
+    if (!runtimeEnabled()) return;
+    for (const el of document.querySelectorAll('#chat .mes')) addButtonsTo(el);
+}
+// 8.2.7 #chat 에 새로 붙은 메시지만 본다 — 예전엔 메시지 하나가 붙어도(답 하나 · 더 보기) 채팅 전체를 다시 훑었다 (붙이는 결과는 같다: 단추는 메시지와 함께만 사라진다)
+function addButtonsFor(records) {
+    if (!runtimeEnabled()) return;
+    for (const record of records) for (const node of record.addedNodes) {
+        if (node.nodeType !== 1) continue;
+        if (node.classList.contains('mes')) addButtonsTo(node);
+        else for (const el of node.querySelectorAll?.('.mes') || []) addButtonsTo(el);
     }
 }
 function onPlayClick(el) {
@@ -524,7 +539,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
     $(document).on('click', '#chat .mes .lv_script', function (e) { e.stopPropagation(); openScript(this); });
     $(document).on('keydown', '#chat .mes .lv_script', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); openScript(this); } });
     const chatEl = document.getElementById('chat');
-    if (chatEl) new MutationObserver(() => addButtons()).observe(chatEl, { childList: true });
+    if (chatEl) new MutationObserver(addButtonsFor).observe(chatEl, { childList: true });
     addButtons();
 
     // 이벤트
