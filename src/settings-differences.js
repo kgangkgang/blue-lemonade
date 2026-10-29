@@ -110,6 +110,7 @@ export function settingRoute(path) {
     if (scope === 'deviceLayouts') return {tab:'text',sub:'para'};
     if (scope === 'settingLocks') return {tab:'theme',sub:'backup'};
     if (scope === 'compat') return key === 'preserveExtensionColors' || key === 'extensionColorsOff' ? {tab:'theme',sub:'etc'} : {tab:'chat',sub:'etc'};
+    if (scope === 'chat' && key === 'emptyGuard') return {tab:'chat',sub:'etc'};   // 빈 채팅 덮어쓰기 막기(채팅 › 기타 「채팅 저장」)
     if (scope === 'chat' && /^(user|header|char$|bubbleSplit$)/.test(key)) return {tab:'chat',sub:'message'};   // 캐릭터 메시지 · 말풍선 나누기도 메시지 화면
     return {tab:'chat',sub:'screen'};
 }
