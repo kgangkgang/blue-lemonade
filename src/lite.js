@@ -2,6 +2,7 @@ import { positionMessageMenu } from './menu-position.js';
 import { getSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
 import { booting, afterBoot } from './boot-gate.js';
+import { watchDom } from './dom-watch.js';
 // 가볍게 (2.5.2): 테마 설정창 미리보기 전용 CSS 는 설정창을 열 때까지 빼 둔다.
 //
 // css/23-preview.gen.css (style.css 안의 미리보기 사본)는 #chat 규칙을 :is(#salty-nochat, .salty-preview) · .salty-sample 용으로 복사한 것이라
@@ -372,7 +373,8 @@ function watchPanelOpen() {
         return t !== document.body && (t.matches(LEGACY_POPUPS) || !!t.querySelector(LEGACY_POPUPS));
     };
     panelObserving = true;
-    new MutationObserver((list) => {
+    // 8.2.7: body 전체 감시는 공용 감시자(dom-watch.js) 구독으로 — 같은 body 를 보는 다른 모듈과 감시자 하나를 나눠 써요(받는 기록 · 때는 같아요)
+    watchDom(document.body, { attributes: ['class', 'open', 'style'], subtree: true, childList: true, name: 'lite 서랍 · 팝업 열림' }, (list) => {
         let hit = false;
         for (const m of list) {
             const t = m.target;
@@ -387,7 +389,7 @@ function watchPanelOpen() {
         // 변화마다 문서를 훑었다 (폰 리그 시작 한 번에 0.2초). 늦게 꺼져도 서랍이 닫힌 뒤라 보이는 것이 없다.
         if (panelOn) { if (!offTimer) offTimer = setTimeout(() => { offTimer = 0; syncPanelCss(); }, 100); return; }
         syncPanelCss();
-    }).observe(document.body, { attributes: true, attributeFilter: ['class', 'open', 'style'], subtree: true, childList: true });
+    });
     // 서랍 아이콘 · 팝업 여는 순간에도 한 번 (관찰자보다 먼저 그려지는 일이 없게)
     // 2.9.4: 채팅 · 입력판 안의 클릭(보내기 · 메시지 단추)은 건너뛴다. 거기서 여는 팝업 · 서랍은 위 관찰자가 dialog · open · 옛 팝업의
     // style 변화로 같은 마이크로태스크 안에 잡는다. 이 훅이 부르는 uiOpen() 은 옛 팝업 6개에 getClientRects() 를 해서, 보내기를 누른
@@ -449,7 +451,7 @@ export function startMenuOpenMark() {
     for (const ms of [1500, 5000]) measureSoon(ms);
     // 5.5.6: 접속 중에 테마를 켜고 끄면(설정 창의 스위치 — 새로고침 없음) 다시 잰다. body.salty 가 바뀐 때만 — detectForced 도 body 클래스를 바꾸므로 되먹임을 막는다
     let themed = document.body.classList.contains('salty');
-    new MutationObserver(() => { const now = document.body.classList.contains('salty'); if (now !== themed) { themed = now; measureSoon(0); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    watchDom(document.body, { attributes: ['class'], name: 'lite 테마 켜고 끔' }, () => { const now = document.body.classList.contains('salty'); if (now !== themed) { themed = now; measureSoon(0); } });
     // 메뉴 안 '가지 만들기'처럼 메뉴가 열린 채 채팅이 바뀌면 떨어져 나간 메뉴의 클래스 변화는 안 잡혀 #chat 앵커가 남았다 — 채팅이 바뀔 때 다시 잰다
     try { const { eventSource, event_types } = SillyTavern.getContext(); eventSource.on(event_types.CHAT_CHANGED, () => { syncChat(); measureSoon(1200); }); } catch { /* 이벤트를 못 걸면 시작할 때 잰 값만 쓴다 */ }
     // 4.2.8 바깥을 눌러도 메뉴가 안 닫히는 환경(예전 실리태번은 ··· 를 누르면 버튼 칸을 열어 두기만 하고 닫지 않는다 · 닫는 애니메이션이 끝나지 않는 폰)에서는
@@ -475,13 +477,13 @@ export function startMenuOpenMark() {
             syncChat();
         }, 450);
     }, true);
-    new MutationObserver((list) => {
+    watchDom(chat, { attributes: ['class'], subtree: true, name: 'lite 메시지 메뉴' }, (list) => {
         let menu = false;
         for (const m of list) if (m.target.classList?.contains('extraMesButtons')) { sync(m.target); menu = true; }
         if (menu) syncChat();
-    }).observe(chat, { attributes: true, attributeFilter: ['class'], subtree: true });
+    });
     // 열린 메뉴째로 메시지가 지워진 경우도 (메시지를 넣고 뺄 때만 불림 — 스트리밍 글자는 .mes 안쪽이라 안 불림)
-    new MutationObserver(() => { if (chat.classList.contains('bl-mes-menu-open')) syncChat(); }).observe(chat, { childList: true });
+    watchDom(chat, { childList: true, name: 'lite 메뉴 연 메시지 지움' }, () => { if (chat.classList.contains('bl-mes-menu-open')) syncChat(); });
 }
 
 // ── 앵커 이름은 쓸 때만 (2.9.4) ─────────────────────────────────────────────
@@ -509,8 +511,7 @@ export function startAnchorGate(tries = 25) {
     let frame = 0;
     const schedule = () => { if (!frame) frame = requestAnimationFrame(sync); };
     sync();
-    const observer = new MutationObserver(schedule);
-    for (const el of menus) observer.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
+    for (const el of menus) watchDom(el, { attributes: ['style', 'class'], name: 'lite 입력판 메뉴 앵커' }, schedule);
 }
 
 // ── jQuery 선택자 캐시 넓히기 (2.9.4) ───────────────────────────────────────

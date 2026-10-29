@@ -1,4 +1,4 @@
-// 8.2.7 lite.js 열림 판정(uiOpenQuick)은 문서를 한 번만 훑고 예전과 같은 답을 내요
+// 8.2.7 lite.js 열림 판정(uiOpenQuick)은 문서를 한 번만 훑고 예전과 같은 답을 내요 + lite 감시자는 공용 감시자(dom-watch.js) 구독이에요
 //   node tools/tests/lite-open-once.mjs <테마 루트>
 //   예전: 살아 있는 .openDrawer 목록 length(DOM 이 바뀐 뒤엔 문서 끝까지 다시 셈) → body 자식 dialog → 없으면 querySelector('.openDrawer, dialog[open]') 로 한 번 더.
 import assert from 'node:assert/strict';
@@ -37,6 +37,11 @@ const cases = {
 };
 for (const [name, make] of Object.entries(cases)) test(`결과가 예전과 같아요: ${name}`, () => { reset(); make(); assert.equal(newOpen(document), oldOpen(), name); });
 
+test('lite 감시자는 공용 감시자 구독(body · #chat · 입력판 메뉴) — 따로 만드는 MutationObserver 없음', () => {
+    assert.doesNotMatch(src, /new MutationObserver/);
+    assert.match(src, /import \{ watchDom \} from '\.\/dom-watch\.js'/);
+    for (const name of ['lite 서랍 · 팝업 열림', 'lite 테마 켜고 끔', 'lite 메시지 메뉴', 'lite 메뉴 연 메시지 지움', 'lite 입력판 메뉴 앵커']) assert.ok(src.includes(`name: '${name}'`), name);
+});
 test('CI 등록', () => assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/lite-open-once\.mjs \./));
 console.log(`lite 열림 판정 · 공용 감시자: ${pass}개 통과했어요.`);
 process.exit(0);
