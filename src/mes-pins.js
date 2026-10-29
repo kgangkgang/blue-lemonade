@@ -191,9 +191,28 @@ const loadFold = () => (foldModule ||= import('./mes-fold.js').catch((error) => 
     console.warn('[Blue Lemonade] 눈 길게 누르기', error);
     return null;
 }));
+// (10-30) 접기 고치기(mes-fold.js startFoldRepair)는 접어 둔 메시지(extra.bl_folded)가 채팅에 있을 때만 받는다 — 접기를 안 쓰는 사람은
+//   시작할 때 그 파일(과 rerender-notify.js)을 싣지 않는다. 고치는 때는 같다: 실리태번 숨김 풀기(is_system → false) · 채팅 바뀜 · 생성 시작
+//   (실리태번 emit 은 리스너를 기다리므로 생성 시작에서 받아 고친 뒤에 프롬프트를 만든다). 한 번 받으면 그 모듈이 스스로 지켜보니 여기는 뗀다.
+let foldWatch = null;
+function watchFoldRepair() {
+    if (foldWatch) return;
+    const chat = document.getElementById('chat');
+    const ctx = SillyTavern.getContext(), types = ctx.eventTypes || ctx.event_types;
+    if (!chat || !ctx.eventSource) return;
+    const folded = () => (SillyTavern.getContext().chat || []).some(message => !message?.is_system && message?.extra?.bl_folded === true);
+    const names = ['CHAT_CHANGED', 'GENERATION_STARTED'].filter(name => types?.[name]);
+    const observer = new MutationObserver(records => { if (records.some(record => record.target.getAttribute('is_system') === 'false')) kick(); });
+    const stop = () => { observer.disconnect(); for (const name of names) ctx.eventSource.removeListener?.(types[name], kick); };
+    function kick() { if (foldWatch === 'started' || !folded()) return; return loadFold().then(module => { if (!module || foldWatch === 'started') return; foldWatch = 'started'; stop(); module.startFoldRepair(); }); }
+    foldWatch = 'watching';
+    observer.observe(chat, { subtree: true, attributes: true, attributeFilter: ['is_system'] });
+    for (const name of names) ctx.eventSource.on(types[name], kick);
+    kick();
+}
 function startPinGesture(on) {
     gestureOn = on;
-    if (on) loadFold().then(module => module?.startFoldRepair());
+    if (on) watchFoldRepair();
     if (!on || gestureBound) { if (!on) { clearTimeout(hold); foldModule?.then(m => m?.closeEyeChoice()); } return; }
     gestureBound = true;
     document.addEventListener('pointerdown', (event) => {
