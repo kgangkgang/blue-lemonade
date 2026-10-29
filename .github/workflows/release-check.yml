@@ -381,6 +381,7 @@ jobs:
           node tools/tests/weather-spot-pad-scroll.mjs .
           node tools/tests/translator-restore-overlay.mjs .
           node tools/tests/modelswitch-lock-passive.mjs .
+          node tools/tests/notes-sticky-keyboard.mjs .
           node tools/tests/weather-amount.mjs .
           node tools/tests/weather-coverage.mjs .
           node tools/tests/weather-retired.mjs .

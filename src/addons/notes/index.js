@@ -1282,11 +1282,16 @@ function placeSticky(el, pos) {
     const w = clamp(pos.w || 260, 180, innerWidth - edge * 2), h = clamp(pos.h || 220, 120, innerHeight - 20);
     const x = clamp(pos.x ?? innerWidth - w - edge, edge, innerWidth - w - edge), y = clamp(pos.y ?? 80, 0, innerHeight - h);
     Object.assign(el.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+    el._fit = { x, y, w, h }; // 8.2.7 화면 크기 때문에 당긴 자리 — rememberSticky 가 이것을 사람이 정한 자리로 적지 않게
 }
 function rememberSticky(id, el) {
     if (!el.isConnected || el.hidden || stickies.get(id) !== el) return; // 닫힌 쪽지(목록에 다시 넣음)는 자리를 다시 적지 않는다
     const r = el.getBoundingClientRect(), next = { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }, old = stickyStore()[id];
     if (old && old.x === next.x && old.y === next.y && old.w === next.w && old.h === next.h) return; // 쪽지 안을 누르기만 했으면(자리 · 크기 그대로) 저장하지 않는다
+    // 8.2.7 폰: 자판이 올라오면(가로 폰 · 태블릿) 화면이 줄어 placeSticky 가 쪽지를 위로 당기거나 줄인다. 그 자리 그대로면(사람이 옮기거나 키우지 않음) 적지 않는다 —
+    //   적으면 자판을 내려도 위로 올라간 · 작아진 채 남았다. 폴더 쪽지는 높이를 줄 수에 맡기니(style.height 비움) 높이는 적어 둔 값과 견준다(줄이 늘면 지금처럼 적음)
+    const fit = el._fit, near = (a, b) => Math.abs(a - b) <= 1;
+    if (old && fit && near(next.x, fit.x) && near(next.y, fit.y) && near(next.w, fit.w) && near(next.h, el.style.height === '' ? old.h : fit.h)) return;
     stickyStore()[id] = next;
     saveSettingsDebounced(); // 자리 · 크기는 메모 줄과 무관 — save() 의 메모 줄 다시 그리기는 건너뜀
 }

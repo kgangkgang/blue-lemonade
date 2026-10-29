@@ -135,7 +135,7 @@ export const FILE_HASHES = {
   "src/addons/modelswitch/targets.js": "28345:f8187a8a:2e645661",
   "src/addons/notes/graph.js": "12020:1cdfe68f:2b39d83a",
   "src/addons/notes/guide.js": "13946:68b0c805:a82fe18e",
-  "src/addons/notes/index.js": "148927:3d8734b1:23ee2c78",
+  "src/addons/notes/index.js": "149747:c104e9a2:c73ddd52",
   "src/addons/notes/style.css": "81808:e637d5fc:699e623e",
   "src/addons/notes/sync.js": "4782:31c6c609:ed11f07b",
   "src/addons/notes/version.js": "163:eb1eb163:f81218f6",
