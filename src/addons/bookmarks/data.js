@@ -35,18 +35,18 @@ function ensureFavorites(metadata) {
     return metadata.favorites;
 }
 
-/** 지금 열린 캐릭터나 그룹. 채팅이 없으면 null */
+/** 지금 열린 캐릭터나 그룹. 채팅이 없으면 null. key 는 창의 다른 채팅 목록 캐시가 주인을 가르는 열쇠예요(1029 — 없어서 캐릭터를 바꿔도 앞 캐릭터 목록이 나왔어요) */
 export function getOwner() {
     const context = getContext();
     if (context.groupId) {
         const group = context.groups?.find(item => item.id === context.groupId);
         if (!group) return null;
-        return { isGroup: true, groupId: group.id, name: group.name || '그룹 채팅', avatarUrl: group.avatar_url || 'img/ai4.png', character: null };
+        return { key: `group:${group.id}`, isGroup: true, groupId: group.id, name: group.name || '그룹 채팅', avatarUrl: group.avatar_url || 'img/ai4.png', character: null };
     }
     const character = context.characters?.[context.characterId];
     if (!character) return null;
     const avatarUrl = character.avatar && character.avatar !== 'none' ? getThumbnailUrl('avatar', character.avatar) : 'img/ai4.png';
-    return { isGroup: false, groupId: null, name: character.name, avatarUrl, character };
+    return { key: `char:${character.avatar || character.name}`, isGroup: false, groupId: null, name: character.name, avatarUrl, character };
 }
 
 /**

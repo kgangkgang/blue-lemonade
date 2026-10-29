@@ -182,6 +182,8 @@ export async function openPanel({ keepState = false } = {}) {
             return;
         }
         view.session++;
+        // 1029 방금 떠난 채팅 사진은 새 채팅을 그리기 전에 따로 쥐어요 — 그린 뒤엔 사진이 새 채팅으로 덮여 떠난 채팅이 목록에서 빠졌어요
+        view.leftSnap = view.currentSnap?.ownerKey === owner.key ? view.currentSnap : null;
         view.owner = owner;
         const current = currentRecord();
         view.records = current ? [current] : [];
@@ -308,14 +310,15 @@ const OTHERS_TTL = 5 * 60 * 1000;
 const othersCache = new Map();
 function snapCurrent() {
     const cur = view.records.find(record => record.isCurrent);
-    if (cur && view.owner) view.currentSnap = { ownerKey: view.owner.key, key: cur.key, favorites: [...cur.favorites], messageCount: cur.messageCount, lastMes: new Date().toISOString() };
+    // 1029 채팅이 이미 바뀌었으면 찍지 않아요 — 현재 채팅 record 의 북마크는 getter 라 새 채팅 것을 떠난 채팅 이름으로 찍게 돼요
+    if (cur && view.owner && cur.key === currentChatKey()) view.currentSnap = { ownerKey: view.owner.key, key: cur.key, favorites: [...cur.favorites], messageCount: cur.messageCount, lastMes: new Date().toISOString() };
 }
 function cachedOthers() {
     const cached = view.open && view.owner ? othersCache.get(view.owner.key) : null;
     if (!cached || Date.now() - cached.at > OTHERS_TTL) return null;
     const currentKey = currentChatKey();
     const others = cached.others.filter(record => record.key !== currentKey);
-    const snap = view.currentSnap;
+    const snap = view.leftSnap;
     if (snap && snap.ownerKey === view.owner.key && snap.key !== currentKey && !others.some(record => record.key === snap.key)) {
         const record = otherRecord(view.owner, snap.key, { favorites: snap.favorites, messageCount: snap.messageCount, lastMes: snap.lastMes });
         others.push(record); cached.others.push(record);
