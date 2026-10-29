@@ -109,7 +109,7 @@ export function paddingOnly(record) {
     return changed;
 }
 
-// (10-29 perf-persona) 테마 자신의 성능 표식(#chat 의 bl-chat-light · bl-chat-covered)만 바뀐 class 기록은 단추의 모양 · 보임을 바꾸지 않는다.
+// (10-29 perf-persona) 테마 자신의 성능 표식(#chat 의 bl-chat-light(8.2.7 부터 html) · bl-chat-covered)만 바뀐 class 기록은 단추의 모양 · 보임을 바꾸지 않는다.
 //   예전에는 그 기록도 #chat 을 뿌리로 넣어 메시지 300개의 후보(.mes_button 등 수천 개)를 offsetParent 로 다시 쟀다 — 서랍 덮개(chat-light.js)가
 //   #chat 을 content-visibility:hidden 으로 둔 동안에는 그 읽기가 하나하나 건너뛴 내용을 그 자리에서 계산하게 해, 폰 리그에서 서랍 열기가 0.25 → 3.5초(재계산 284번)가 됐다.
 // 8.2.7 폰: 몰입 읽기(reader.js)는 채팅을 내리고 올릴 때마다 body 에 bl-bars-hidden 을 붙였다 뗀다 — 위 바 · 입력판을 top · transform 으로 밀기만 해서
@@ -267,7 +267,8 @@ export function watchSquaredButtons(doc, host) {
         const pending = new Set();
         for (const r of records) {
             // 긴 채팅 가볍게가 꺼지면(메시지가 줄어 bl-chat-light 가 빠짐) 건너뛰던 메시지는 사건 없이 그려져요 — 적어 둔 것을 다시 재요
-            if (perfMarkOnly(r) && skippedMes.size && String(r.oldValue || '').split(' ').includes('bl-chat-light') && !r.target.classList?.contains('bl-chat-light')) { for (const mes of skippedMes) pending.add(mes); skippedMes.clear(); }
+            //   8.2.7 lean-perf: 그 표식은 이제 #chat 이 아니라 html 에 달려요(perf-fade) — html 자기 class 기록만 따로 받아 보고, 다른 html 기록은 훑지 않아요
+            if (r.target === htmlEl) { if (skippedMes.size && String(r.oldValue || '').split(' ').includes('bl-chat-light') && !htmlEl.classList?.contains('bl-chat-light')) { for (const mes of skippedMes) pending.add(mes); skippedMes.clear(); } continue; }
             if (perfMarkOnly(r)) { if (!r.target.classList?.contains('bl-chat-covered') && !doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
             if (r.attributeName === 'data-generating') { if (!doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
             if (unchangedAttr(r) || swipeMarkOnly(r)) continue;   // 10-30 perf-icon: 같은 값을 다시 쓴 기록 · 스와이프 표시만 바뀐 메시지는 다시 재지 않아요
@@ -276,6 +277,8 @@ export function watchSquaredButtons(doc, host) {
         queueMany(pending);
     });
     observer.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['class', 'style', 'hidden', 'open', 'data-generating'] });
+    const htmlEl = doc.documentElement && doc.documentElement !== doc.body ? doc.documentElement : null;
+    if (htmlEl) observer.observe(htmlEl, { attributes: true, attributeOldValue: true, attributeFilter: ['class'] });   // subtree 없음 — html 자기 class 만(긴 채팅 가볍게 꺼짐)
     const resize = () => queue(doc.body);
     host.addEventListener('resize', resize);
     const onLightState = event => {

@@ -28,17 +28,21 @@ class El {
     hasAttribute(k) { return this.attrs.has(k); } setAttribute(k) { this.attrs.add(k); } removeAttribute(k) { this.attrs.delete(k); }
 }
 function rig() {
-    const body = new El('BODY', null, { cls: 'salty' }); const chat = new El('DIV', body, { id: 'chat', cls: 'bl-chat-light' });
-    const timers = [], frames = [], listeners = new Map();
-    const host = { HTMLElement: El, MutationObserver: class { constructor(cb) { host.notify = cb; } observe() {} disconnect() {} }, setTimeout: fn => (timers.push(fn), timers.length), clearTimeout() {}, requestAnimationFrame: fn => (frames.push(fn), frames.length), cancelAnimationFrame() {}, addEventListener() {}, removeEventListener() {},
+    // 8.2.7 lean-perf: 긴 채팅 가볍게 표식은 html 에 달려요(perf-fade) — 가짜 감시자는 observe 한 뿌리의 기록만 넘겨요(html 을 안 보면 html 기록은 안 와요)
+    const html = new El('HTML', null, { cls: 'bl-chat-light' });
+    const body = new El('BODY', html, { cls: 'salty' }); const chat = new El('DIV', body, { id: 'chat' });
+    const timers = [], frames = [], listeners = new Map(), watched = new Map();
+    const under = (el, root) => { for (let p = el; p; p = p.parentElement) if (p === root) return true; return false; };
+    const host = { HTMLElement: El, MutationObserver: class { constructor(cb) { host.cb = cb; } observe(target, opts) { watched.set(target, opts); } disconnect() { watched.clear(); } }, setTimeout: fn => (timers.push(fn), timers.length), clearTimeout() {}, requestAnimationFrame: fn => (frames.push(fn), frames.length), cancelAnimationFrame() {}, addEventListener() {}, removeEventListener() {},
         getComputedStyle: el => ({ contentVisibility: el.cv, display: 'block', visibility: 'visible', borderTopLeftRadius: '16px', backgroundColor: 'rgb(1,2,3)', borderTopWidth: '0', backgroundImage: 'none', boxShadow: 'none', cursor: 'pointer' }) };
-    const doc = { body, head: { append() {} }, createElement: () => ({ dataset: {}, remove() {} }), querySelectorAll: () => [], getElementById: id => (id === 'chat' ? chat : null),
+    host.notify = records => { const got = records.filter(r => !r.target || [...watched].some(([t, o]) => r.target === t || (o.subtree && under(r.target, t)))); if (got.length) host.cb(got); };
+    const doc = { documentElement: html, body, head: { append() {} }, createElement: () => ({ dataset: {}, remove() {} }), querySelectorAll: () => [], getElementById: id => (id === 'chat' ? chat : null),
         addEventListener: (t, fn) => listeners.set(t, fn), removeEventListener: t => listeners.delete(t) };
     const mes = []; for (let i = 0; i < 5; i++) { const m = new El('DIV', chat, { cls: 'mes' }); m.cv = i < 4 ? 'auto' : 'visible'; m.skipped = i < 3; const b = new El('BUTTON', new El('DIV', m, { cls: 'mes_text' })); b.cls.add('card-chip-' + i); m.button = b; mes.push(m); }
     const stop = watchSquaredButtons(doc, host);
     const flush = () => { while (timers.length || frames.length) { while (timers.length) timers.shift()(); while (frames.length) frames.shift()(); } };
     const unskip = m => { m.skipped = false; listeners.get('contentvisibilityautostatechange')?.({ target: m, skipped: false }); };
-    return { body, chat, mes, host, flush, stop, unskip, listeners };
+    return { html, body, chat, mes, host, flush, stop, unskip, listeners, watched };
 }
 const marked = m => m.button.hasAttribute('data-bl-squared');
 test('건너뛴 메시지 안 후보는 offsetParent · 크기를 묻지 않아요 (고치기 전: 메시지마다 풀어 계산)', () => {
@@ -62,11 +66,20 @@ test('새로 안 생김새는 건너뛴 메시지 안 같은 생김새에도 재
     assert.deepEqual(r.mes.map(marked), [true, true, true, true, true]); assert.equal(reads, 0);
     r.stop();
 });
-test('긴 채팅 가볍게가 꺼지면(bl-chat-light 빠짐 · 사건 없음) 적어 둔 메시지를 다시 재요', () => {
+test('긴 채팅 가볍게가 꺼지면(html 의 bl-chat-light 빠짐 · 사건 없음) 적어 둔 메시지를 다시 재요', () => {
     const r = rig(); r.flush();
-    const old = r.chat.className; r.chat.cls.delete('bl-chat-light'); for (const m of r.mes) { m.cv = 'visible'; m.skipped = false; }
-    r.host.notify([{ type: 'attributes', attributeName: 'class', oldValue: old, target: r.chat }]); r.flush();
+    assert.deepEqual(r.watched.get(r.html), { attributes: true, attributeOldValue: true, attributeFilter: ['class'] }, 'html 은 자기 class 만(subtree 없음) 봐요');
+    const old = r.html.className; r.html.cls.delete('bl-chat-light'); for (const m of r.mes) { m.cv = 'visible'; m.skipped = false; }
+    r.host.notify([{ type: 'attributes', attributeName: 'class', oldValue: old, target: r.html }]); r.flush();
     assert.deepEqual(r.mes.map(marked), [true, true, true, true, true]);
+    r.stop();
+});
+test('html 의 다른 class 기록(몰입 읽기 바 숨김 등)은 문서를 다시 훑지 않아요', () => {
+    const r = rig(); r.flush(); reads = 0;
+    let walks = 0; const qsa = El.prototype.querySelectorAll; El.prototype.querySelectorAll = function (s) { walks++; return qsa.call(this, s); };
+    r.html.cls.add('bl-bars-hidden'); r.host.notify([{ type: 'attributes', attributeName: 'class', oldValue: 'bl-chat-light', target: r.html }]); r.flush();
+    El.prototype.querySelectorAll = qsa;
+    assert.equal(walks, 0); assert.deepEqual(r.mes.map(marked), [false, false, false, true, true], '건너뛴 메시지는 그대로 미뤄 둬요');
     r.stop();
 });
 test('서랍 덮개(bl-chat-covered) 동안에는 예전 길 그대로(미루지 않음)', () => {
