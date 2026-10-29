@@ -309,5 +309,151 @@ await test('설정 옮기기: 연결 방식 · 직접 입력 언어 (\'__custom_
     assert.equal(blank.api.ckT(NS, 'main'), 'pt-preset::Sample@title::main::Korean');
 });
 
+/** 8.2.7 IndexedDB 가짜 — 이름 → Map(키 → 값). 실제처럼 요청 · 거래 끝은 다음 틱에, 없는 DB 를 열면 onupgradeneeded (abort 하면 안 만든다) */
+function idbHost(dbs = new Map()) {
+    const tick = fn => Promise.resolve().then(fn);
+    const handle = name => ({
+        objectStoreNames: { contains: n => n === (name === 'PTTranslationDB_PLUS' ? 'translations' : 'entries') },
+        createObjectStore() {}, close() {},
+        transaction() {
+            const store = dbs.get(name), tx = {};
+            let open = 0;
+            const req = fn => { open++; const r = {}; tick(() => { r.result = fn(); r.onsuccess?.(); if (--open === 0) tick(() => tx.oncomplete?.()); }); return r; };
+            tx.objectStore = () => ({
+                put: (v, k) => req(() => { store.set(k, v); }), delete: k => req(() => { store.delete(k); }), clear: () => req(() => { store.clear(); }),
+                getAll: () => req(() => [...store.values()]), getAllKeys: () => req(() => [...store.keys()]),
+            });
+            tick(() => { if (!open) tx.oncomplete?.(); });
+            return tx;
+        },
+    });
+    return {
+        dbs, opened: [],
+        databases: async () => [...dbs.keys()].map(name => ({ name })),
+        open(name) {
+            this.opened.push(name);
+            const r = {};
+            tick(() => {
+                if (!dbs.has(name)) {
+                    dbs.set(name, new Map());
+                    let aborted = false;
+                    r.transaction = { abort() { aborted = true; dbs.delete(name); } };
+                    r.result = handle(name);
+                    r.onupgradeneeded?.();
+                    if (aborted) { r.error = new Error('AbortError'); r.onerror?.(); return; }
+                }
+                r.result = handle(name);
+                r.onsuccess?.();
+            });
+            return r;
+        },
+    };
+}
+const LOCAL = 'BlueLemonadePromptCacheLocal';
+const localOf = idb => Object.fromEntries(idb.dbs.get(LOCAL) || []);
+
+await test('8.2.7 목록 파일을 못 읽은 세션: 번역을 이 브라우저 IndexedDB 에 맡기고, 다음에 목록이 읽히면 서버로 옮긴 뒤 비운다', async () => {
+    const srv = server({ [INDEX]: { version: 1, shards: [A] }, [A]: { entries: { 'pt-preset::Sample::main::Korean': '서버 번역' } } });
+    srv.failing.set('GET ' + INDEX, 503);
+    const idb = idbHost();
+    const t = boot({ srv, indexedDB: idb });
+    await t.api.initTranslationCache();
+    assert.equal(t.api.state().writable, false);
+    assert.ok(t.toasts.some(([type, m]) => type === 'warning' && m.includes('이 브라우저에만')), '알림이 로컬 저장을 말한다');
+    assert.ok(!idb.dbs.has(LOCAL), '맡길 것이 없으면 DB 를 만들지 않는다');
+    t.api.setCache(NS, 'tone', '로컬 번역');
+    t.api.setCacheTitle(WI, 'Atlas::0', '항구');
+    await t.api.flushTranslationCache();
+    assert.deepEqual(srv.log.filter(l => !l.startsWith('GET ')), [], '서버에는 올리지도 지우지도 않는다');
+    assert.deepEqual(localOf(idb), { 'pt-preset::Sample::tone::Korean': '로컬 번역', 'pt-wi::Atlas@title::Atlas::0::Korean': '항구' });
+    // 다음 세션도 못 읽으면 맡긴 번역을 보여 준다
+    const again = boot({ srv, indexedDB: idb });
+    await again.api.initTranslationCache();
+    assert.equal(again.api.getCached(NS, 'tone'), '로컬 번역');
+    assert.equal(again.api.getCachedTitle(WI, 'Atlas::0'), '항구');
+    // 목록이 읽히는 세션: 서버 조각에 합치고(서버 번역은 그대로) 로컬은 비운다
+    srv.failing.delete('GET ' + INDEX);
+    const ok = boot({ srv, indexedDB: idb });
+    await ok.api.initTranslationCache();
+    assert.deepEqual(srv.json(A).entries, { 'pt-preset::Sample::main::Korean': '서버 번역', 'pt-preset::Sample::tone::Korean': '로컬 번역' });
+    assert.deepEqual(srv.json(B).entries, { 'pt-wi::Atlas@title::Atlas::0::Korean': '항구' });
+    assert.deepEqual(srv.json(INDEX).shards.sort(), [A, B].sort());
+    assert.deepEqual(localOf(idb), {}, '올라간 것은 로컬에서 지운다');
+    const later = boot({ srv, indexedDB: idb });
+    await later.api.initTranslationCache();
+    assert.equal(later.api.getCached(NS, 'tone'), '로컬 번역');
+});
+
+await test('8.2.7 올리기 실패한 번역도 IndexedDB 에 맡긴다 — 나중에 올라가면 지우고, 못 올린 채 탭을 닫으면 다음 세션이 올린다', async () => {
+    const idb = idbHost();
+    const t = boot({ indexedDB: idb });
+    await t.api.initTranslationCache();
+    t.api.setCache(NS, 'main', '첫 번역');
+    t.srv.failing.set('PUT ' + A, 500);
+    await t.api.flushTranslationCache();
+    assert.deepEqual(localOf(idb), { 'pt-preset::Sample::main::Korean': '첫 번역' });
+    t.srv.failing.delete('PUT ' + A);
+    await t.api.flushTranslationCache();
+    assert.equal(t.srv.json(A).entries['pt-preset::Sample::main::Korean'], '첫 번역');
+    assert.deepEqual(localOf(idb), {}, '올라가면 로컬에서 지운다');
+    t.srv.failing.set('PUT ' + A, 500);
+    t.api.setCache(NS, 'main', '두 번째');
+    await t.api.flushTranslationCache();
+    assert.equal(localOf(idb)['pt-preset::Sample::main::Korean'], '두 번째');
+    // 탭을 닫음 → 서버가 살아난 다음 세션
+    t.srv.failing.delete('PUT ' + A);
+    const next = boot({ srv: t.srv, indexedDB: idb });
+    await next.api.initTranslationCache();
+    assert.equal(t.srv.json(A).entries['pt-preset::Sample::main::Korean'], '두 번째', '다음 세션이 맡긴 번역을 올린다');
+    assert.deepEqual(localOf(idb), {});
+});
+
+await test('8.2.7 읽지 못한 조각에 들어갈 번역은 로컬에 맡기고, 조각이 읽히는 세션에 남의 번역과 합친다', async () => {
+    const srv = server({ [INDEX]: { version: 1, shards: [A] }, [A]: { entries: { 'pt-preset::Sample::main::Korean': '남의 번역' } } });
+    srv.failing.set('GET ' + A, 500);
+    const idb = idbHost();
+    const t = boot({ srv, indexedDB: idb });
+    await t.api.initTranslationCache();
+    assert.ok(t.toasts.some(([type, m]) => type === 'warning' && m.includes('맡겨')));
+    t.api.setCache(NS, 'tone', '새 번역');
+    await t.api.flushTranslationCache();
+    assert.ok(!srv.log.includes('PUT ' + A), '못 읽은 조각은 덮어쓰지 않는다');
+    assert.deepEqual(localOf(idb), { 'pt-preset::Sample::tone::Korean': '새 번역' });
+    const still = boot({ srv, indexedDB: idb });   // 이번에도 못 읽음 — 그대로 맡겨 둔다
+    await still.api.initTranslationCache();
+    assert.deepEqual(localOf(idb), { 'pt-preset::Sample::tone::Korean': '새 번역' });
+    srv.failing.delete('GET ' + A);
+    const ok = boot({ srv, indexedDB: idb });
+    await ok.api.initTranslationCache();
+    assert.deepEqual(srv.json(A).entries, { 'pt-preset::Sample::main::Korean': '남의 번역', 'pt-preset::Sample::tone::Korean': '새 번역' });
+    assert.deepEqual(localOf(idb), {});
+});
+
+await test('8.2.7 전부 지우기는 이 브라우저에 맡긴 번역도 지운다 (다음 세션이 되살리지 않게) · 평소 세션은 로컬 DB 를 만들지 않는다', async () => {
+    const srv = server();
+    srv.failing.set('GET ' + INDEX, 503);
+    const idb = idbHost();
+    const t = boot({ srv, indexedDB: idb });
+    await t.api.initTranslationCache();
+    t.api.setCache(NS, 'tone', '맡긴 번역');
+    await t.api.flushTranslationCache();
+    const v = boot({ srv, indexedDB: idb });
+    await v.api.initTranslationCache();
+    assert.equal(v.api.getCached(NS, 'tone'), '맡긴 번역');
+    srv.failing.delete('GET ' + INDEX);
+    await v.api.clearTranslationCache();
+    assert.deepEqual(localOf(idb), {});
+    const w = boot({ srv, indexedDB: idb });
+    await w.api.initTranslationCache();
+    assert.equal(w.api.getCached(NS, 'tone'), null);
+    const plain = idbHost();
+    const p = boot({ indexedDB: plain });
+    await p.api.initTranslationCache();
+    p.api.setCache(NS, 'main', '보통 번역');
+    await p.api.flushTranslationCache();
+    assert.ok(!plain.dbs.has(LOCAL), '서버에 잘 쓰면 로컬 DB 를 만들지 않는다');
+    assert.ok(!plain.opened.includes(LOCAL), '없는 로컬 DB 는 열어 보지도 않는다');
+});
+
 console.log(`prompt-translation-cache: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

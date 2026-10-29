@@ -250,6 +250,114 @@ let saveErrorShown   = false;
 let saveRetryMs      = 0;      // 7.2.4 저장 재시도 간격 (실패마다 두 배, 성공하면 0)
 let indexDirty       = false;
 
+// 8.2.7 서버 파일에 못 쓸 때 기댈 곳 — 이 브라우저의 IndexedDB (키 → 번역 글, 지운 것은 null).
+//   ① 목록 파일을 못 읽은 세션: 번역을 여기에만 두고, 다음 세션도 목록 파일을 못 읽으면 여기서 읽어 보여 준다
+//   ② 올리기에 실패한 번역 · 못 읽은 조각에 들어갈 번역: 여기에 함께 맡겨 둔다 (탭을 닫아도 남게)
+//   서버 파일을 다시 읽는 세션이 처음에 여기 것을 서버로 옮기고(여기 값이 더 새것 — 서버에 못 쓴 내 고침), 올라간 키만 지운다.
+//   예전 판의 PTTranslationDB_PLUS(한 번만 옮기는 원본 캐시)와는 다른 DB 다. 없으면 만들지 않고, 쓸 일이 생길 때만 만든다
+const LOCAL_DB_NAME  = 'BlueLemonadePromptCacheLocal';
+const LOCAL_STORE    = 'entries';
+let localFallback    = false;      // 이번 세션은 목록 파일을 못 읽어 로컬에만 둔다
+const localHeld      = new Set();  // 로컬에 맡겨 둔 키 (서버에 올라가면 로컬에서 지운다)
+const hasLocalDB = () => typeof indexedDB !== 'undefined';
+// 맡겨 둔 것이 있다는 표시 (localStorage) — 없으면 부팅 때 IndexedDB 를 열어 보지도 않는다. localStorage 가 없는 곳이면 늘 DB 로 확인
+const LOCAL_FLAG = 'bl-prompt-cache-local-held';
+function localFlag(on) {
+    try {
+        const ls = globalThis.localStorage;
+        if (!ls) return undefined;
+        if (on === undefined) return ls.getItem(LOCAL_FLAG) === '1';
+        if (on) ls.setItem(LOCAL_FLAG, '1'); else ls.removeItem(LOCAL_FLAG);
+        return on;
+    } catch (e) { return undefined; }
+}
+async function openLocalDB(create) {
+    if (!hasLocalDB()) return null;
+    try {
+        if (!create && indexedDB.databases) {
+            const dbs = await indexedDB.databases();
+            if (!dbs.some(d => d.name === LOCAL_DB_NAME)) return null;
+        }
+        return await new Promise((resolve, reject) => {
+            const req = indexedDB.open(LOCAL_DB_NAME, 1);
+            req.onupgradeneeded = () => {
+                if (!create) { req.transaction.abort(); return; }   // 읽기만 할 때는 새로 만들지 않는다
+                req.result.createObjectStore(LOCAL_STORE);
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror   = () => reject(req.error);
+        });
+    } catch (e) { return null; }
+}
+/** 로컬 DB 한 번 다루기: work(store) 가 요청을 걸고, 거래가 끝나면 그 값. DB 가 없거나 실패하면 fallback */
+async function withLocalStore(create, mode, work, fallback) {
+    const db = await openLocalDB(create);
+    if (!db) return fallback;
+    try {
+        if (!db.objectStoreNames.contains(LOCAL_STORE)) return fallback;
+        return await new Promise((resolve, reject) => {
+            const tx = db.transaction(LOCAL_STORE, mode);
+            const out = work(tx.objectStore(LOCAL_STORE));
+            tx.oncomplete = () => resolve(typeof out === 'function' ? out() : out);
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error);
+        });
+    } catch (e) {
+        console.warn(`[${EXT}] local cache store failed`, e);
+        return fallback;
+    } finally { db.close(); }
+}
+async function localWrite(pairs) {
+    if (!pairs.length) return true;
+    const ok = await withLocalStore(true, 'readwrite', store => { for (const [key, value] of pairs) store.put(typeof value === 'string' ? value : null, key); return true; }, false);
+    if (ok) localFlag(true);
+    return ok;
+}
+const localRemove = keys => keys.length
+    ? withLocalStore(false, 'readwrite', store => { for (const key of keys) store.delete(key); return true; }, false)
+    : Promise.resolve(true);
+async function localClear() {
+    if (localFlag() === false) return true;
+    const ok = await withLocalStore(false, 'readwrite', store => { store.clear(); return true; }, true);
+    if (ok) localFlag(false);
+    return ok;
+}
+function localReadAll() {
+    if (localFlag() === false) return Promise.resolve(new Map());
+    return withLocalStore(false, 'readonly', store => {
+        const keys = store.getAllKeys(), values = store.getAll();
+        return () => new Map((keys.result || []).map((key, i) => [key, (values.result || [])[i]]));
+    }, new Map());
+}
+/** 서버에 못 쓴 변경(파일별 pendingEntries)을 로컬에 맡긴다. 맡겼으면 true */
+async function holdLocally(files) {
+    const pairs = [];
+    for (const file of files) for (const pair of pendingEntries.get(file) || []) pairs.push(pair);
+    if (!pairs.length) return true;
+    const ok = await localWrite(pairs);
+    if (ok) for (const [key] of pairs) localHeld.add(key);
+    return ok;
+}
+/** 서버 파일을 읽은 세션 처음: 로컬에 맡겨 둔 번역을 서버로 옮기고, 올라간 키만 로컬에서 지운다 */
+async function adoptLocalEntries() {
+    const local = await localReadAll();
+    if (!local.size) return;
+    const moved = [];
+    for (const [key, value] of local) {
+        if (typeof key !== 'string') continue;
+        const ns = nsFromKey(key), file = shardFileForNS(ns);
+        if (brokenShards.has(file)) { localHeld.add(key); continue; }   // 이번에도 못 읽은 조각 — 맡겨 둔 채로
+        if (typeof value === 'string' && value) { if (translationMap.get(key) !== value) cachePut(ns, key, value); }
+        else if (translationMap.has(key)) cacheDelete(key);
+        moved.push(key);
+    }
+    if (dirtyShards.size) await flushTranslationCache();
+    const done = moved.filter(key => { const file = shardFileForNS(nsFromKey(key)); return !dirtyShards.has(file) && !pendingEntries.get(file)?.has(key); });
+    if (done.length) { await localRemove(done); console.log(`[${EXT}] moved ${done.length} locally held translations to user/files`); }
+    for (const key of moved) if (!done.includes(key)) localHeld.add(key);
+    if (!localHeld.size && done.length === local.size) localFlag(false);
+}
+
 // FNV-1a — a stable, filename-safe id for a namespace. A collision would only
 // put two items in one file; entries are still keyed by their full cache key.
 function hashNS(str) {
@@ -337,10 +445,22 @@ function flushTranslationCache() {
 
 async function doFlush() { return withCacheLock(doFlushLocked); }
 async function doFlushLocked() {
-    if (!cacheWritable || (!dirtyShards.size && !indexDirty)) return;
+    if (!cacheWritable) {
+        // 8.2.7 목록 파일을 못 읽은 세션: 서버에는 쓰지 않고 이 브라우저에 맡긴다 (다음에 서버 파일을 읽으면 옮긴다)
+        if (localFallback && dirtyShards.size) {
+            const files = [...dirtyShards];
+            if (await holdLocally(files)) for (const file of files) { dirtyShards.delete(file); pendingEntries.delete(file); }
+        }
+        return;
+    }
+    if (!dirtyShards.size && !indexDirty) return;
     const files = [...dirtyShards];
     dirtyShards.clear();
     const failed = [];
+    const uploaded = [];   // 8.2.7 올라간 키 — 로컬에 맡겨 둔 것이면 로컬에서 지운다
+    const broken = files.filter(file => brokenShards.has(file));
+    // 8.2.7 못 읽은 조각에 들어갈 번역은 덮어쓸 수 없으니 이 브라우저에 맡긴다 (조각이 읽히는 다음 세션에 합친다)
+    if (broken.length && await holdLocally(broken)) for (const file of broken) pendingEntries.delete(file);
     for (const file of files) {
         if (brokenShards.has(file)) continue;
         const keys = shardKeys.get(file);
@@ -362,7 +482,7 @@ async function doFlushLocked() {
                 if (!indexShards.has(file)) { indexShards.add(file); indexDirty = true; }
             }
             const live = pendingEntries.get(file);
-            for (const [key, value] of pending) if (live?.get(key) === value) live.delete(key);
+            for (const [key, value] of pending) if (live?.get(key) === value) { live.delete(key); if (localHeld.has(key)) uploaded.push(key); }
             if (live && !live.size) pendingEntries.delete(file);
             // Refresh untouched memory entries without overwriting edits made
             // while the network request was in flight.
@@ -382,6 +502,9 @@ async function doFlushLocked() {
         try { await writeCacheIndex(); indexDirty = false; }
         catch (e) { console.warn(`[${EXT}] cache index save failed`, e); }
     }
+    if (uploaded.length && await localRemove(uploaded)) { for (const key of uploaded) localHeld.delete(key); if (!localHeld.size) localFlag(false); }
+    // 8.2.7 올리지 못한 번역은 다시 해 보는 동안 이 브라우저에도 맡겨 둔다 — 그사이 탭을 닫아도 다음 세션이 올린다
+    if (failed.length) await holdLocally(failed);
     if (failed.length || indexDirty) {
         failed.forEach(f => dirtyShards.add(f));
         if (!saveErrorShown && typeof toastr !== 'undefined') {
@@ -426,6 +549,9 @@ async function clearTranslationCache() {
     indexShards = new Set();
     indexDirty = false;
     try { await writeCacheIndex(true); } catch (e) { console.warn(`[${EXT}] cache index save failed`, e); }
+    // 8.2.7 이 브라우저에 맡겨 둔 번역도 지운다 — 남겨 두면 다음 세션이 서버로 되살린다
+    localHeld.clear();
+    await localClear();
     });
 }
 
@@ -465,8 +591,19 @@ async function initTranslationCache() {
     } catch (e) {
         // Unknown state on disk — saving now could orphan existing shards.
         cacheWritable = false;
-        console.warn(`[${EXT}] cache index load failed; translations will not be saved this session`, e);
-        if (typeof toastr !== 'undefined') toastr.warning('번역 캐시 파일을 읽지 못해 이번 세션에는 번역이 저장되지 않습니다.');
+        // 8.2.7 이 브라우저에 맡겨 두기 — 지난 세션에 맡긴 번역도 읽어 보여 준다 (IndexedDB 가 없는 곳이면 예전처럼 이번 세션만)
+        localFallback = hasLocalDB();
+        console.warn(`[${EXT}] cache index load failed; ${localFallback ? 'keeping translations in this browser' : 'translations will not be saved this session'}`, e);
+        if (localFallback) {
+            for (const [key, value] of await localReadAll()) {
+                if (typeof key !== 'string') continue;
+                localHeld.add(key);
+                if (typeof value === 'string' && value) memPut(shardFileForNS(nsFromKey(key)), key, value);
+            }
+        }
+        if (typeof toastr !== 'undefined') toastr.warning(localFallback
+            ? '번역 캐시 파일을 읽지 못해 이번 세션의 번역은 이 브라우저에만 저장해요. 다음에 파일을 읽을 수 있으면 그리로 옮겨요.'
+            : '번역 캐시 파일을 읽지 못해 이번 세션에는 번역이 저장되지 않습니다.');
         return;
     }
 
@@ -482,6 +619,7 @@ async function initTranslationCache() {
         if (legacy.length) console.log(`[${EXT}] migrating ${translationMap.size} translations from IndexedDB to user/files`);
         if (dirtyShards.size) await flushTranslationCache();
         else { try { await writeCacheIndex(); } catch (e) {} }
+        await adoptLocalEntries();   // 8.2.7
         console.log(`[${EXT}] Translation cache loaded: ${translationMap.size} entries`);
         return;
     }
@@ -500,8 +638,11 @@ async function initTranslationCache() {
         }
     });
     if (brokenShards.size && typeof toastr !== 'undefined') {
-        toastr.warning(`번역 캐시 파일 ${brokenShards.size}개를 읽지 못했습니다. 해당 항목의 번역은 이번 세션에 저장되지 않습니다.`);
+        toastr.warning(hasLocalDB()
+            ? `번역 캐시 파일 ${brokenShards.size}개를 읽지 못했어요. 해당 항목의 새 번역은 이 브라우저에 맡겨 두고, 파일을 읽을 수 있을 때 합쳐요.`
+            : `번역 캐시 파일 ${brokenShards.size}개를 읽지 못했습니다. 해당 항목의 번역은 이번 세션에 저장되지 않습니다.`);
     }
+    await adoptLocalEntries();   // 8.2.7 지난 세션에 이 브라우저에 맡겨 둔 번역을 서버로
     console.log(`[${EXT}] Translation cache loaded: ${translationMap.size} entries`);
 }
 
