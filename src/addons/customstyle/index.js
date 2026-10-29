@@ -482,7 +482,8 @@ class CustomThemeSettingsManager {
     async resetDefaults() {
         if (!await ask('현재 CSS 설정 항목을 기본값으로 되돌릴까요?', { ok: '되돌리기', cancel: '취소' })) return;
 
-        for(const entry of this._parseCSSConfig(CSS_THEME_STYLE_VAR))delete this.settings.entries[entry.varId];
+        // 1029 적용해 둔 변수도 지워요 — 기본값이 없는 항목은 다시 채울 때 setProperty 를 건너뛰어 옛 값이 <html> 에 남았어요
+        for(const entry of this._parseCSSConfig(CSS_THEME_STYLE_VAR)){delete this.settings.entries[entry.varId];document.documentElement.style.removeProperty(`--${entry.varId}`);}
         this.updateCSSVariables({});
         this.previousStyleValue = null;
         this.buildUI();

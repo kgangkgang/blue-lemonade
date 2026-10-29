@@ -209,6 +209,17 @@ await test('기본값 복원: 취소하면 그대로 · 확인하면 지금 CSS 
     assert.equal(T.saves, 1);
 });
 
+await test('1029 기본값 복원: 기본값이 없는 항목(빈 글자칸)은 적용해 둔 CSS 변수를 지워 사용자 CSS 의 값으로 돌아가요 (예전엔 새로고침 전까지 옛 값이 남았어요)', async () => {
+    const config = [...CONFIG, { type: 'text', varId: 'bl-note', displayText: 'Note' }];
+    const { manager, css } = await boot({ config, ext: { CTSI: { entries: { 'bl-note': 'mine', 'bl-size': '30' } } } });
+    assert.equal(css.get('--bl-note'), 'mine');
+    T.confirms.push(true);
+    manager.handleDelegatedClick({ target: { closest: () => ({ id: 'ctsi-reset-defaults' }) } });
+    for (let i = 0; i < 6; i++) await Promise.resolve();
+    assert.equal(css.has('--bl-note'), false, '기본값 없는 항목의 옛 값이 화면에 남으면 안 돼요');
+    assert.equal(css.get('--bl-size'), '5', '기본값 있는 항목은 기본값');
+});
+
 // ---------- 4) CSS 가 바뀔 때
 await test('CSS 가 바뀜: 같은 CSS 면 다시 만들지 않음 · 빠진 항목은 CSS 변수만 지우고 값은 남김 · 다시 생기면 저장 값으로 · 이 과정에서 저장 없음', async () => {
     await boot({ ext: { CTSI: { entries: { 'bl-bg': '#123456' } } } });
