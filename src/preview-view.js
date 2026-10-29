@@ -1,5 +1,10 @@
 import { updateQrEdges } from './layout.js';
+import { dragIntent } from './touch-drag-intent.js';   // 8.2.3 폰: 세로 끌기는 화면 스크롤에 양보, 가로 끌기만 미리보기 이동
 // Viewing state belongs to the open panel, never to a saved theme.
+/** 8.2.3 미리보기 위 세로 끌기가 굴릴 칸: 설정 편집 창은 .salty-sec(미리보기 무대와 형제라 조상이 아님), 서랍 · 팝업 판은 가장 가까운 스크롤 칸 */
+function scrollerOf(root, box) {
+    return root.querySelector?.('.bl-editor .salty-sec') || box.closest('.drawer-content, .popup-content, .salty-sec') || null;
+}
 export function bindPreviewViews(root, section) {
     root._previewViews ??= new Map();
     root._previewCleanup?.();
@@ -111,12 +116,25 @@ export function bindPreviewViews(root, section) {
         viewport.onpointerdown = e => {
             if (e.button !== 0) return;
             if (box.dataset.pv === 'markdown' && e.target.closest('summary,a,button,input,select,textarea')) return;
-            pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            // 8.2.3 터치 한 손가락은 첫 8px 방향을 본 뒤 결정(decided) — 세로면 설정 칸(scroll)을 손가락 따라 굴리고(설정 칸이 조상이 아니라 브라우저가 못 굴린다), 가로면 미리보기 이동. 마우스는 바로 끌기
+            pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, decided: e.pointerType !== 'touch', scroll: null });
             viewport.setPointerCapture(e.pointerId); e.preventDefault();
         };
         viewport.onpointermove = e => {
             const old = pointers.get(e.pointerId); if (!old) return;
-            const next = { x: e.clientX, y: e.clientY };
+            const next = { x: e.clientX, y: e.clientY, x0: old.x0, y0: old.y0, decided: old.decided, scroll: old.scroll };
+            if (!next.decided) {
+                // 두 손가락은 확대라 바로 결정. 한 손가락은 첫 8px 이 세로 우세면 설정 칸 스크롤(아래 scroll), 가로 우세면 미리보기 이동
+                const intent = pointers.size >= 2 ? 'horizontal' : dragIntent(next.x - old.x0, next.y - old.y0);
+                if (!intent) { pointers.set(e.pointerId, next); return; }
+                if (intent === 'vertical') next.scroll = scrollerOf(root, box);
+                next.decided = true;
+            }
+            if (next.scroll) {
+                // 세로 끌기 = 화면 스크롤(사용자 결정 10-29). 손가락 따라 설정 칸을 굴린다 — 미리보기는 안 움직인다
+                if (pointers.size === 1) next.scroll.scrollTop -= next.y - old.y;
+                pointers.set(e.pointerId, next); e.preventDefault(); return;
+            }
             if (pointers.size === 2) {
                 const other = [...pointers].find(([id]) => id !== e.pointerId)[1];
                 const d0 = Math.hypot(old.x - other.x, old.y - other.y), d1 = Math.hypot(next.x - other.x, next.y - other.y);

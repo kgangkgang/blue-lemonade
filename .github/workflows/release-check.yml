@@ -235,6 +235,7 @@ jobs:
           node tools/tests/tab-scroll.mjs .
           node tools/tests/wheel-x.mjs .
           node tools/tests/scroll-fade.mjs .
+          node tools/tests/preview-view-touch.mjs .
           node tools/tests/tts-reanalysis-guard.mjs .
           node tools/tests/addon-note-master-off.mjs .
           node tools/tests/popup-outside-close.mjs .
