@@ -90,8 +90,13 @@ async function startOne(id){
     }
     finally{loading.delete(id);changed();}
 }
+// 8.2.6 성능 보조 시작 시도가 끝났다(켜져 있지 않거나 · 실패해도) — 빈 채팅 막기 독립 모듈(empty-guard-boot.js)이 저장 정리가 맡는지 본 뒤 설치한다
+let settlePerf;export const perfStarted=new Promise(resolve=>{settlePerf=resolve;});
 export async function startAddons(){
     if(started)return;started=true;
+    try{await startAddonsOnce();}finally{settlePerf();}
+}
+async function startAddonsOnce(){
     const restored=await restorePendingAddons();
     if(restored)whenAppReady(()=>persist().catch(()=>{}));
     const s=getSettings();if(!addonsEnabled(s))return;
@@ -112,6 +117,7 @@ export async function startAddons(){
     const styling=Promise.allSettled(styled.map(stylesheet)).then(results=>results.forEach((outcome,i)=>{if(outcome.status==='rejected')console.warn('[Blue Lemonade]',names[styled[i]],'스타일:',outcome.reason?.message||outcome.reason);}));
     // 성능 보조는 fetch 를 감싸고 로딩 시간을 재므로 스타일을 기다리지 않고 맨 먼저 시작한다 (5.2.3: 기다리면 그 사이 실린 확장을 못 잰다)
     if(ids.includes('perf')){await startOne('perf');try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}}
+    settlePerf();
     await styling;
     await Promise.allSettled(ids.filter(id=>id!=='perf').map(startOne));
     try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}

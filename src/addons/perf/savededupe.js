@@ -21,7 +21,7 @@ import { listShown } from './shown.js';
 import { createSaveTimers, createSwitchFlush, matchSwitchEntry, SWITCH_ENTRIES } from './switchflush.js';
 import { createSwitchGuard, wrapCommands, DELETE_ENTRY, GUARD_COMMANDS } from './switchguard.js';
 import { createCodeGuard, isClickTrigger, CODE_SWITCH_KEYS } from './switchcode.js';
-import { createEmptyGuard, GUARD_STATUS, GUARD_ERROR, createSaveFailMute } from './emptyguard.js';
+import { createEmptyGuard, createSaveFailMute, guardWanted, guardSlot, guardResponse, notifyBlocked, notifySuspect, createServerCount, bindGuardEvents, quickLiveFrom } from './emptyguard.js';
 
 const MODULE = 'save_dedupe';
 const VERSION = '1.1.7'; // 1.1.6 빈 채팅 덮어쓰기 막기 · 1.1.7 막은 뒤 실리태번의 저장 실패 알림은 숨김 (style.css 의 --sv-css-version 도 함께)
@@ -213,61 +213,49 @@ function installDedupe() {
 // ── [1.1.6] 빈 채팅 덮어쓰기 막기 ─────────────────────────────
 
 let emptyGuard = null;
-const saveFailMute = createSaveFailMute();   // 1.1.7 막은 직후 실리태번의 「Chat could not be saved」 알림은 BL 알림 하나로
+// 1.1.7 막은 직후 실리태번의 「Chat could not be saved」 알림은 BL 알림 하나로 — 8.2.6 독립 모듈과 같은 것을 쓴다 (toastr.error 를 두 번 감싸지 않게)
+const saveFailMute = guardSlot().mute ??= createSaveFailMute();
 
-function guardResponse(result) {
-    return new Response(JSON.stringify({ error: GUARD_ERROR, reason: result.reason, messages: result.messages, had: result.had }),
-        { status: GUARD_STATUS, headers: { 'Content-Type': 'application/json' } });
-}
-
-/** 서버 파일의 메시지 수 — /api/chats/recent 에 그 파일 하나만 (없으면 0, 모르면 null) */
-async function serverCount(key) {
-    const m = /^(c|g)\|(.*)$/.exec(String(key));
-    if (!m) return null;
-    let pin;
-    if (m[1] === 'g') pin = { file_name: `${m[2]}.jsonl`, group: groupChats.selected_group ?? undefined };
-    else {
-        const at = m[2].indexOf('|');
-        if (at < 0) return null;
-        pin = { avatar: m[2].slice(0, at), file_name: `${m[2].slice(at + 1)}.jsonl` };
-    }
-    const headers = typeof script.getRequestHeaders === 'function' ? script.getRequestHeaders() : { 'Content-Type': 'application/json' };
-    const r = await fetch('/api/chats/recent', { method: 'POST', headers, body: JSON.stringify({ max: 0, pinned: [pin], metadata: false }), signal: AbortSignal.timeout(10000) });
-    if (!r.ok) return null;
-    const list = await r.json();
-    const hit = Array.isArray(list) ? list.find(x => x?.file_name === pin.file_name && (pin.group ? x.group === pin.group : x.avatar === pin.avatar)) : null;
-    if (!hit) return 0;
-    const n = Number(hit.chat_items);
-    return Number.isFinite(n) ? n : null;
-}
+/** 서버 파일의 메시지 수 — /api/chats/recent 에 그 파일 하나만 (없으면 0, 모르면 null · emptyguard.js) */
+const serverCount = createServerCount({
+    fetcher: (url, init) => fetch(url, init),
+    headers: () => (typeof script.getRequestHeaders === 'function' ? script.getRequestHeaders() : { 'Content-Type': 'application/json' }),
+    selectedGroup: () => groupChats.selected_group,
+});
 
 function installEmptyGuard() {
+    // 8.2.6 판정 · 알림 문구 · 사건 걸기는 emptyguard.js 하나 — 성능 보조를 켜지 않은 사람은 src/empty-guard-boot.js 가 같은 것을 설치한다.
+    // 표식(guardSlot)을 'perf' 로: 독립 모듈이 먼저 돌고 있었으면 그 기억(본 메시지 수 · 직접 비운 채팅 · 의심)을 그대로 넘겨받고, 그쪽 감싸개 · 사건은 이제 그냥 지나간다.
+    const slot = guardSlot();
+    const before = slot.owner === 'boot' ? slot.guard : null;
     emptyGuard = createEmptyGuard({
         live: quickLive,
         serverCount,
-        enabled: () => settings().emptyGuard !== false,
+        state: before?.debug,
+        // 이 서랍의 스위치(save_dedupe.emptyGuard)와 BL 설정 chat.emptyGuard — 둘 중 하나라도 끄면 끔 (근거는 emptyguard.js guardWanted)
+        enabled: () => guardWanted(extensions.extension_settings),
         onBlock: (info) => {
             console.warn(`[${TITLE}] 메시지가 있던 채팅을 빈 채팅으로 덮는 저장을 막았어요`, info);
             refreshStats();
-            if (typeof toastr !== 'undefined') {
-                saveFailMute.wrap(toastr);
-                saveFailMute.arm();
-                toastr.warning('채팅이 비어 있는 채로 저장하려 해서 막았어요. 파일은 그대로예요. 페이지를 새로 고친 뒤 채팅을 다시 열어 주세요.', TITLE, { preventDuplicates: true, timeOut: 15000 });
-            }
+            if (typeof toastr !== 'undefined') notifyBlocked(toastr, saveFailMute);
         },
         onSuspect: (info) => {
             console.warn(`[${TITLE}] 채팅을 열었는데 메시지가 없어요 (전에 ${info.had}개) — 다시 열 때까지 이 채팅 저장을 막아요`, info);
-            if (typeof toastr !== 'undefined') {
-                toastr.warning('채팅을 불러오지 못했어요. 지금 저장하면 내용이 사라질 수 있어 저장을 막아 둘게요. 페이지를 새로 고쳐 주세요.', TITLE, { preventDuplicates: true, timeOut: 0, extendedTimeOut: 0 });
-            }
+            if (typeof toastr !== 'undefined') notifySuspect(toastr);
         },
     });
+    slot.owner = 'perf';
+    slot.guard = emptyGuard;
     try {
-        const types = script.event_types;
-        // makeFirst: 다른 확장의 CHAT_CHANGED 처리(채팅을 열 때 기록을 다시 맞춰 저장하는 확장 등)보다 먼저 「의심」을 판단한다
-        const on = (type, fn, first = false) => { if (!type) return; if (first && typeof script.eventSource?.makeFirst === 'function') script.eventSource.makeFirst(type, fn); else script.eventSource?.on?.(type, fn); };
-        on(types?.CHAT_CHANGED, () => emptyGuard.onChatOpened(), true);
-        on(types?.MESSAGE_DELETED, () => emptyGuard.onMessageDeleted());
+        // CHAT_CHANGED · MESSAGE_DELETED 는 맨 앞(makeFirst) · 지우기 모드 확인 단추는 capture 클릭 (emptyguard.js bindGuardEvents)
+        bindGuardEvents({
+            guard: () => emptyGuard,
+            eventSource: script.eventSource,
+            eventTypes: script.event_types,
+            doc: typeof document !== 'undefined' ? document : null,
+            chatLength: () => quickLive()?.length ?? 0,
+            active: () => guardSlot().guard === emptyGuard,
+        });
     } catch (error) {
         console.info(`[${TITLE}] 빈 채팅 막기 이벤트를 걸지 못했어요`, error);
     }
@@ -402,15 +390,7 @@ const saveDelay = () => (Number(script.DEFAULT_SAVE_EDIT_TIMEOUT) > 0 ? script.D
  * 키 모양은 recovery.js liveChatFrom 과 같다 (c|아바타|파일, g|채팅id).
  */
 function quickLive() {
-    if (!Array.isArray(script.characters) || typeof script.getCurrentChatId !== 'function' || !('selected_group' in groupChats)) return liveChatFrom(context());
-    const integrity = script.chat_metadata?.integrity;
-    if (groupChats.selected_group) {
-        const id = script.getCurrentChatId();
-        return { key: id ? `g|${id}` : null, integrity, length: Array.isArray(script.chat) ? script.chat.length : 0 };
-    }
-    const chid = script.this_chid;
-    const character = chid !== undefined && chid !== null && chid !== '' ? script.characters[chid] : null;
-    return { key: character?.chat && character?.avatar ? `c|${character.avatar}|${character.chat}` : null, integrity, length: Array.isArray(script.chat) ? script.chat.length : 0 };
+    return quickLiveFrom(script, groupChats, context);   // 8.2.6 emptyguard.js 로 옮김 (독립 빈 채팅 막기도 같은 것)
 }
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 

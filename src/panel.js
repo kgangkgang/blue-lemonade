@@ -1553,6 +1553,9 @@ function tabChat(s, sub) {
         ${cap('실리태번 한국어')}<div class="salty-group">
             ${row('한국어 화면 다듬기', toggle('koUi', s.koUi !== false), '실리태번 화면에 영어로 남은 글과 어색한 번역을 자연스러운 한국어로 바꿔요 · 실리태번 언어가 한국어일 때만 · 바꾸면 새로고침 뒤에 적용돼요')}
         </div>
+        ${cap('채팅 저장')}<div class="salty-group">
+            ${row('빈 채팅 덮어쓰기 막기', toggle('chat.emptyGuard', s.chat.emptyGuard !== false), '채팅을 다시 불러오는 사이나 불러오기가 실패했을 때, 메시지가 있던 채팅 파일을 빈 채팅으로 덮어 날아가지 않게 그 저장을 막고 알려 줘요 · 직접 지워 비운 채팅은 그대로 저장해요 · 성능 보조를 켜지 않아도 돼요(성능 보조 › 저장 정리의 같은 스위치를 끄면 그것도 따라요)')}
+        </div>
         ${cap('다른 기기')}<div class="salty-group">
             ${row('다른 기기 변경 알림', toggle('syncWatch', s.syncWatch !== false), '이 채팅이 다른 기기에서 바뀌면 위에 띠를 띄우고, 덮어쓰기 전에 물어요')}
         </div>

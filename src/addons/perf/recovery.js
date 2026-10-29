@@ -235,32 +235,6 @@ export async function asyncStacksWork() {
     }
 }
 
-/** 저장 본문에서 대상 채팅 키. 캐릭터: c|아바타|파일, 그룹: g|채팅id. 모르면 null */
-export function bodyKey(path, body) {
-    if (typeof body !== 'string') return null;
-    try {
-        if (path === '/api/chats/group/save') {
-            const m = /^\{"id":("(?:[^"\\]|\\.)*"),/.exec(body.slice(0, 1024));
-            return m ? `g|${JSON.parse(m[1])}` : null;
-        }
-        const head = /^\{"ch_name":"(?:[^"\\]|\\.)*","file_name":("(?:[^"\\]|\\.)*"),"chat":/.exec(body.slice(0, 4096));
-        const tail = /,"avatar_url":("(?:[^"\\]|\\.)*"),"force":(?:true|false)\}$/.exec(body.slice(-4096));
-        return head && tail ? `c|${JSON.parse(tail[1])}|${JSON.parse(head[1])}` : null;
-    } catch {
-        return null;
-    }
-}
-
-/** 실리태번 getContext() 에서 지금 채팅 키 · integrity · 메시지 수 */
-export function liveChatFrom(ctx) {
-    if (!ctx) return null;
-    let key = null;
-    if (ctx.groupId) {
-        const id = typeof ctx.getCurrentChatId === 'function' ? ctx.getCurrentChatId() : ctx.chatId;
-        key = id ? `g|${id}` : null;
-    } else if (ctx.characterId !== undefined && ctx.characterId !== null && ctx.characterId !== '') {
-        const character = ctx.characters?.[ctx.characterId];
-        key = character?.chat && character?.avatar ? `c|${character.avatar}|${character.chat}` : null;
-    }
-    return { key, integrity: ctx.chatMetadata?.integrity, length: Array.isArray(ctx.chat) ? ctx.chat.length : 0 };
-}
+// 8.2.6 저장 본문의 채팅 키(bodyKey) · getContext 의 지금 채팅(liveChatFrom)은 emptyguard.js 로 옮겼다 — 성능 보조 없이 도는 빈 채팅 막기(src/empty-guard-boot.js)가
+// 이 파일(12KB)을 불러오지 않고 같은 규칙을 쓰게. 여기서는 예전 이름 그대로 다시 내보낸다.
+export { bodyKey, liveChatFrom } from './emptyguard.js';

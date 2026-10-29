@@ -252,8 +252,8 @@ test('연결: features.js · 설정 기본값 · 보정 · 동작 값 목록 · 
     const settings = read('src/settings.js');
     assert.match(settings, /chatLight: true, personaDefer: true,/);
     assert.match(settings, /s\.chat\.personaDefer = flag\(s\.chat\.personaDefer, true\);/);
-    assert.match(settings, /'chatLight', 'personaDefer'\]\) \{/);
-    assert.match(read('src/styles.js'), /'chatLight', 'personaDefer'\];/);
+    assert.match(settings, /'mesPins'[^\]]*'personaDefer'[^\]]*\]\) \{/);   // 뒤에 키가 더 붙어도(8.2.6 emptyGuard) 목록 안에만 있으면 된다
+    assert.match(read('src/styles.js'), /'mesPins'[^\]]*'personaDefer'[^\]]*\];/);
     assert.match(read('src/panel.js'), /row\('입력 중 목록 갱신 미루기', toggle\('chat\.personaDefer', s\.chat\.personaDefer !== false\)/);
     assert.match(read('src/settings-labels.js'), /"chat\.personaDefer":"입력 중 목록 갱신 미루기"/);
     assert.match(read('src/settings-search.js'), /'입력 중 목록 갱신 미루기'.*'chat\.personaDefer'\]/);

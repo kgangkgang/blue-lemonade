@@ -82,18 +82,24 @@ await test('끄면(설정) 막지 않는다', () => {
     const g = createEmptyGuard({ live: () => state, serverCount: async () => 16, enabled: () => false });
     assert.equal(g.precheck('/api/chats/save', body(0), K), null);
 });
-await test('연결: savededupe 1.1.6 의 fetch 감싸개가 저장마다 precheck → 막으면 409 · 기본 켬 · 설정 스위치 · CHAT_CHANGED 먼저 · MESSAGE_DELETED · 판(JS = CSS) · CI', () => {
+await test('연결: savededupe 1.1.6 의 fetch 감싸개가 저장마다 precheck → 막으면 409 · 기본 켬 · 설정 스위치 · 사건은 emptyguard.js 로 맨 앞 · 판(JS = CSS) · CI', () => {
     const src = read('src/addons/perf/savededupe.js');
-    assert.match(src, /import \{ createEmptyGuard, GUARD_STATUS, GUARD_ERROR, createSaveFailMute \} from '\.\/emptyguard\.js';/);
+    const guard = read('src/addons/perf/emptyguard.js');
+    assert.match(src, /import \{ createEmptyGuard, createSaveFailMute, guardWanted, guardSlot, guardResponse, notifyBlocked, notifySuspect, createServerCount, bindGuardEvents, quickLiveFrom \} from '\.\/emptyguard\.js';/);
     assert.match(src, /const VERSION = '1\.1\.7';/);   // 7.4.1 저장 실패 알림 숨김
     assert.match(read('src/addons/perf/style.css'), /--sv-css-version: "1\.1\.7";/);
-    assert.match(src, /saveFailMute\.wrap\(toastr\);\s*saveFailMute\.arm\(\);\s*toastr\.warning\(/, 'arm the mute before BL warns (ST toasts after the 409)');
+    // 8.2.6 알림 · 숨기기는 emptyguard.js notifyBlocked 하나 (독립 모듈과 같은 글)
+    assert.match(src, /if \(typeof toastr !== 'undefined'\) notifyBlocked\(toastr, saveFailMute\);/);
+    assert.match(guard, /mute\?\.wrap\(toast\);\s*mute\?\.arm\(\);\s*toast\.warning\(BLOCK_TEXT, NOTICE_TITLE,/, 'arm the mute before BL warns (ST toasts after the 409)');
     assert.match(src, /emptyGuard: true \}\);/);
+    assert.match(src, /enabled: \(\) => guardWanted\(extensions\.extension_settings\),/);
     assert.match(src, /pre = emptyGuard \? emptyGuard\.precheck\(path, init\?\.body, bodyKey\(path, init\?\.body\)\) : null;/);
     assert.match(src, /result => \(result\?\.block \? guardResponse\(result\) : handleSave\(self, input, init, path\)\)/);
     assert.match(src, /return handleSave\(this, input, init, path\);/);
-    assert.match(src, /on\(types\?\.CHAT_CHANGED, \(\) => emptyGuard\.onChatOpened\(\), true\);/);
-    assert.match(src, /on\(types\?\.MESSAGE_DELETED, \(\) => emptyGuard\.onMessageDeleted\(\)\);/);
+    assert.match(src, /bindGuardEvents\(\{\s*guard: \(\) => emptyGuard,/);
+    assert.match(guard, /on\(eventTypes\?\.CHAT_CHANGED, \(\) => \{ if \(active\(\)\) guard\(\)\.onChatOpened\(\); \}\);/);
+    assert.match(guard, /on\(eventTypes\?\.MESSAGE_DELETED, \(\) => \{ if \(active\(\)\) guard\(\)\.onMessageDeleted\(\); \}\);/);
+    assert.match(guard, /if \(typeof eventSource\.makeFirst === 'function'\) eventSource\.makeFirst\(type, fn\);/, '두 사건 모두 맨 앞');
     assert.match(src, /bind\('#sv_empty', 'emptyGuard'\);/);
     assert.ok(src.includes('빈 채팅으로 덮어쓰는 저장 막기'));
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/empty-chat-guard-731\.mjs \./);

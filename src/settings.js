@@ -83,7 +83,7 @@ export const DEFAULTS = {
     em: { italic: true, weight: 400, size: null, letterSpacing: null },
     strike: { line: true, own: false, color: '#ff7a7a', thickness: 2, fade: 55, italic: false },   // ~~취소선~~ — own: 선 색을 따로(false 면 글자 색), thickness px, fade: 지워진 글자를 남기는 정도 %   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
     strong: { weight: 650, size: null, letterSpacing: null },              // **강조**
-    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: true, helpMarks: true, webSearchMarks: true, personaTall: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // hiddenFade: 5.6.8 숨긴 메시지(컨텍스트에서 뺀 것, is_system) 흐리게 · hiddenOpacity 진하기 % · hiddenGray 흑백 % · hiddenHover 마우스 올리면(폰은 누르면) 원래대로 (apply.js 변수 · 클래스, css/05-chat.css) · streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · colorPop: 설정 창 밖 색 칸도 테마 색 고르기로 (3.5.0, colorpop.js) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
+    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: true, helpMarks: true, webSearchMarks: true, personaTall: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, emptyGuard: true, replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // hiddenFade: 5.6.8 숨긴 메시지(컨텍스트에서 뺀 것, is_system) 흐리게 · hiddenOpacity 진하기 % · hiddenGray 흑백 % · hiddenHover 마우스 올리면(폰은 누르면) 원래대로 (apply.js 변수 · 클래스, css/05-chat.css) · streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · colorPop: 설정 창 밖 색 칸도 테마 색 고르기로 (3.5.0, colorpop.js) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
     // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
     reader: { autoHide: false },
     // 3.4.0 프롬프트 호환: 데우스 엑스 마키나 — 끄면 카드 스킨 · 폰 접기 · 카드 색 통일 · 카드 이모티콘 · 트래커 날씨가 모두 쉰다 (값은 남음)
@@ -435,6 +435,7 @@ function tidyFlags(s) {
         s.chat.numComma = flag(s.chat.numComma, true); // 5.3.7 큰 숫자는 쉼표로 (numcomma.js) — 예전 설정에는 없으니 켬
         s.chat.chatLight = flag(s.chat.chatLight, true); // (10-29) 긴 채팅의 화면 밖 메시지 가볍게 (chat-light.js) — 예전 설정에는 없으니 켬
         s.chat.personaDefer = flag(s.chat.personaDefer, true); // (10-29 perf-persona) 입력 중 목록 갱신 미루기 (persona-defer.js) — 예전 설정에는 없으니 켬
+        s.chat.emptyGuard = flag(s.chat.emptyGuard, true); // 8.2.6 빈 채팅 덮어쓰기 막기 (empty-guard-boot.js · 성능 보조 없이도) — 예전 설정에는 없으니 켬 (저장 정리에서 끈 사람은 getSettings 가 먼저 끔으로)
         s.chat.helpMarks = flag(s.chat.helpMarks, true); // 6.1.5 설명 ? 단추 (월드인포 · 한글화 패널)
         s.chat.webSearchMarks = flag(s.chat.webSearchMarks, true); // 6.2.6 웹 검색 · 출처 표시 (websearch.js) — 예전 설정에는 없으니 켬
         s.chat.showMoreAuto = flag(s.chat.showMoreAuto, true); // 6.9.8 「이전 메시지 더 보기」 저절로 (show-more-auto.js) — 예전 설정에는 없으니 켬
@@ -629,6 +630,9 @@ export function getSettings() {
     const ext = SillyTavern.getContext().extensionSettings;
     if (memo && ext[KEY] === memo) return memo;
     settingsStats.tidy++;
+    // 8.2.6 빈 채팅 덮어쓰기 막기는 예전엔 성능 보조 › 저장 정리 안에만 있었다(save_dedupe.emptyGuard). 이 칸이 처음 생기는 설정이고 그쪽에서 꺼 두었으면
+    //       이쪽도 끔으로 시작한다 — 끈 뜻을 지킨다(켜 둔 · 안 건드린 사람은 기본 켬). 그 뒤엔 둘을 따로 두고 둘 중 하나라도 끄면 끔 (emptyguard.js guardWanted)
+    const guardUnset = !isObj(ext[KEY]?.chat) || ext[KEY].chat.emptyGuard === undefined;
     if (!isObj(ext[KEY])) ext[KEY] = structuredClone(DEFAULTS);
     migrate(ext[KEY]);
     // 3.4.0 전 설정: 데우스 카드 스킨이나 트래커 날씨를 쓰던 사람이면 호환을 켠 채로 시작 (한 번만)
@@ -644,6 +648,7 @@ export function getSettings() {
     }
     const migrateWordSyntax = ext[KEY].wordTools && ext[KEY].wordTools.syntax !== 'comma';
     const s = fill(ext[KEY], DEFAULTS);
+    if (guardUnset && isObj(s.chat) && ext.save_dedupe?.emptyGuard === false) s.chat.emptyGuard = false;
     if (migrateUserMode) s.userProfile.mode = SillyTavern.getContext().powerUserSettings?.hideChatAvatars_enabled || s.chat.user === 'bubble' ? 'none' : 'small';
     syncDeviceLayout(s);
     if (TILT_RENAME[s.dialogue?.tilt]) s.dialogue.tilt = TILT_RENAME[s.dialogue.tilt];
@@ -807,7 +812,7 @@ export function resetSettings(groups = { look: true }) {
         next.deviceLayouts = { on: old.deviceLayouts?.on === true, pc: {}, mobile: {} };
         // 5.2.3: chat 안의 동작 값과 고정 메시지(데이터)도 모습이 아니다 — 남긴다 (styles.js CHAT_BEHAVIOR 와 같은 목록 + QR 배치 · 고정)
         if (old.chat && typeof old.chat === 'object') {
-            for (const key of ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'qrFind', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer']) {
+            for (const key of ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'qrFind', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard']) {
                 if (key in old.chat) next.chat[key] = structuredClone(old.chat[key]);
             }
         }

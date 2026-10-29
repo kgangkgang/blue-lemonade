@@ -376,6 +376,7 @@ jobs:
           node tools/tests/bookmark-masonry-731.mjs .
           node tools/tests/order-keys-731.mjs .
           node tools/tests/empty-chat-guard-731.mjs .
+          node tools/tests/empty-guard-standalone.mjs .
           node tools/tests/usage-ledger-740.mjs .
           node tools/tests/relay-compare.mjs .
           node tools/tests/bookmark-excerpt-740.mjs .

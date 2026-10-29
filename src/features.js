@@ -69,6 +69,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 6.6.9 다른 기기(Syncthing · 다른 탭)에서 지금 채팅이 바뀌면 띠 + 덮어쓰기 전에 묻기 (chat-sync.js, 기본 켬)
     const chatWatch=(on||addonsOn)&&s.syncWatch!==false;
     if(chatWatch||modules.chatsync)load('chatsync','./chat-sync.js').then(m=>m?.syncChatWatch(chatWatch));
+    // 8.2.6 빈 채팅 덮어쓰기 막기 (empty-guard-boot.js, 기본 켬) — 성능 보조를 켜지 않아도. 성능 보조 › 저장 정리가 맡으면 그쪽이 하고 이것은 아무것도 안 한다 (표식 하나)
+    const emptyGuard=(on||addonsOn)&&s.chat?.emptyGuard!==false;
+    if(emptyGuard||modules.emptyguard)load('emptyguard','./empty-guard-boot.js').then(m=>m?.syncEmptyGuard(emptyGuard));
     // 6.0.4 단어 치환 › 잠시 가리기: 테마를 끄면 가린 글을 모두 되돌린다 — 모듈을 이미 불러온 뒤에만 (안 썼으면 파일도 안 받는다)
     if (modules.wordmask) load('wordmask', './wordmask.js').then(m => m?.syncWordMask(on));
     const fold=on&&!!(s.chat?.triangleFold??SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled?.fold);
