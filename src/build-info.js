@@ -613,7 +613,7 @@ export const FILE_HASHES = {
   "src/people.js": "9021:76aa8129:14633595",
   "src/persona-defer.js": "14607:d2c17ac7:54049f3c",
   "src/popup-guard.js": "5328:fab87000:195a34d2",
-  "src/popup-marks.js": "1818:0af84657:5805cf62",
+  "src/popup-marks.js": "2468:3099aaf2:c1ad19e1",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
   "src/preview-park.gen.css": "120973:c92562e8:fe46edce",
   "src/preview-view.js": "17270:6c138445:2764a1d7",

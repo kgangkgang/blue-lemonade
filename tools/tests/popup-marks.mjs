@@ -47,4 +47,13 @@ inner.classes = [];
 refreshPopupMarks([{type:'attributes', target:inner}]);
 assert.equal(inner.hasAttribute(POPUP_MARK), false, '창 역할을 잃으면 표식을 지워요');
 assert.equal(refreshPopupMarks([{type:'characterData',target:qr}]), 0, '스트리밍 글자는 창 구조를 다시 훑지 않아요');
+// 8.2.7: 다른 모듈이 단 공용 표식(고르기 목록 층 'pick' · TTS 막대 'bar')은 body 에 붙어도 지우지 않아요
+const pickLayer = body.append(new Element('salty-pick-layer'));
+pickLayer.setAttribute(POPUP_MARK, 'pick');
+refreshPopupMarks([{type:'childList', target:body, addedNodes:[pickLayer]}]);
+assert.equal(pickLayer.getAttribute(POPUP_MARK), 'pick', '고르기 목록 층의 표식을 지키면 전개 지시 창이 항목을 누를 때 닫히지 않아요');
+const bar = body.append(new Element('bl-tts-bar'));
+bar.setAttribute(POPUP_MARK, 'bar');
+refreshPopupMarks(null, body);
+assert.equal(bar.getAttribute(POPUP_MARK), 'bar', '재생 막대 표식도 지켜요');
 console.log('창 표식의 초기 상태·실행 상태·중첩·제거·중복 갱신 검사를 통과했어요.');
