@@ -226,6 +226,9 @@
 .lv-extras > summary { cursor: pointer; color: var(--lv-dim); font-size: .92em; line-height: 1.6; }
 .lv-extras[open] > summary { margin-bottom: 6px; }
 .lv-row.lv-extra { grid-template-columns: minmax(64px, 26%) minmax(0, 1fr) auto; }
+.lv-row.lv-map-add { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }   /* 2.0.6 인물 추가: 이름 칸 | 목소리 + 추가 (같은 폭 두 칸) */
+.lv-map-add > input { min-width: 0; }
+@container (max-width: 439px) { .lv-row.lv-map-add { grid-template-columns: minmax(0, 1fr); } }   /* 좁으면 한 칸 */
 /* 1.3.7 목소리마다 모델: 목록 줄의 작은 이름표 · 편집 창의 직접 입력 칸 */
 .lv-model-chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .lv-editor .lv-model-custom { margin-top: 6px; }

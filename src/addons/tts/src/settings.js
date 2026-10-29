@@ -81,6 +81,7 @@ export const DEFAULTS = Object.freeze({
     prefetch: 2,
     voices: [],
     char_map: {},
+    char_aliases: {},              // 2.0.6 { 연결표 이름: [다른 이름 …] } — 「인물 추가」에서 쉼표로 적은 별명 (speakers.js 별명표 · normCharAliases)
     account_sync: {},              // 1.3.7 엔진별 마지막 계정 맞춤 시각 (ms) — 목소리 탭을 열 때 6시간에 한 번
     extras: 'auto',                // 1.3.7 엑스트라 목소리: 'auto' = 목소리를 안 정한 화자(카페 사장 · 점원 …)에게 대사 분석이 알려 준 성별 · 나이로 엔진 기본 목소리를 골라 줌 (같은 이름은 늘 같은 목소리) · 'off' = 기본 목소리 (voices.extraFor)
     extra_map: {},                 // 1.3.7 { 이름: { g: 'm'|'f', a: 'y'|'a'|'o'|'', l: 언어, t: 처음 본 시각, v: { 엔진 id: voiceId } } } — 300명까지 (오래된 것부터 지움)
@@ -120,7 +121,7 @@ export const LISTEN_LANGS = Object.freeze(['auto', 'ko', 'ja', 'en', 'zh']);
 /** 1.3.8 「나」 자동: 내 목소리 칸의 표시값 (목소리 uid 가 아님) — 페르소나도 목소리를 안 정한 화자처럼 엑스트라 목소리로 (voices.voiceFor) */
 export const USER_AUTO = '@auto';
 // 기본값과 합치지 않는 표 (사용자 이름 · 엔진 id 가 키 — 기본값이 비어 있어도 모양만 지킴)
-const NO_MERGE = new Set(['providers', 'char_map', 'card_colors', 'extra_map', 'prefer_keep', 'prefer_declined', 'account_removed', 'field_stamps']);
+const NO_MERGE = new Set(['providers', 'char_map', 'char_aliases', 'card_colors', 'extra_map', 'prefer_keep', 'prefer_declined', 'account_removed', 'field_stamps']);
 /** 7.0.2 기기 간 합치기를 하는 글 칸 — 고칠 때 field_stamps[칸] 에 시각 (ui.js afterEdit) */
 export const SYNC_TEXT_FIELDS = Object.freeze(['pron_dict', 'mute_words']);
 const clone = (v) => (v && typeof v === 'object' ? JSON.parse(JSON.stringify(v)) : v);
@@ -403,6 +404,7 @@ export function settings() {
     if (!['auto', 'off'].includes(s.extras)) s.extras = 'auto';
     if (!LISTEN_LANGS.includes(s.listen_lang)) s.listen_lang = 'auto';   // 1.4.4 모르는 값은 자동 (지금처럼)
     if (!isObj(s.extra_map)) s.extra_map = {};
+    s.char_aliases = normCharAliases(s.char_aliases);   // 2.0.6 인물 다른 이름 (모르는 모양은 버림)
     for (const k of ['prefer_keep', 'prefer_declined', 'account_removed']) if (!isObj(s[k])) s[k] = {};   // 1.3.8
     // 1.3.8 미뤄 둔 「바꿀까요」: 엔진 id 목록 (개발판의 글 하나도 받음) — 겹침 없이 12개까지
     s.prefer_pending = [...new Set((typeof s.prefer_pending === 'string' ? [s.prefer_pending] : Array.isArray(s.prefer_pending) ? s.prefer_pending : []).filter(x => typeof x === 'string' && x))].slice(-12);
@@ -419,6 +421,27 @@ export function settings() {
     cached = s;
     if (usageKey) restoreUsage(s); else askUsageKey();   // 7.2.8 이 기기에 남긴 사용량 사본과 합치기 (설정 객체가 바뀌었을 때도)
     return s;
+}
+
+/** 2.0.6 인물 다른 이름 표 다듬기 (순수): 글자 열쇠 → 겹치지 않는 글자 배열 (이름 40자 · 열쇠마다 12개 · 열쇠 300개). 열쇠 자신과 빈 값은 뺀다 */
+export const ALIAS_LIMIT = Object.freeze({ chars: 40, per: 12, keys: 300 });
+const aliasFold = (t) => String(t || '').trim().toLowerCase().replace(/\s+/g, '');
+export function normCharAliases(v) {
+    const out = {};
+    if (!isObj(v)) return out;
+    for (const [k, list] of Object.entries(v)) {
+        const key = String(k || '').trim().slice(0, ALIAS_LIMIT.chars);
+        if (!aliasFold(key) || !Array.isArray(list) || Object.keys(out).length >= ALIAS_LIMIT.keys) continue;
+        const seen = new Set([aliasFold(key)]), names = [];
+        for (const a of list) {
+            const n = typeof a === 'string' ? a.replace(/\s+/g, ' ').trim().slice(0, ALIAS_LIMIT.chars) : '';
+            if (!aliasFold(n) || seen.has(aliasFold(n))) continue;
+            seen.add(aliasFold(n)); names.push(n);
+            if (names.length >= ALIAS_LIMIT.per) break;
+        }
+        if (names.length) out[key] = names;
+    }
+    return out;
 }
 
 export const save = () => { saveSettingsDebounced(); peopleChanged(); };   // 6.9.5 목소리 · 연결표가 바뀌면 인물표도

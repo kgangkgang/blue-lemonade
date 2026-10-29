@@ -159,6 +159,7 @@ jobs:
           node tools/tests/tts-italic-quote.mjs .
           node tools/tests/tts-name-hint.mjs .
           node tools/tests/tts-shared-color.mjs .
+          node tools/tests/tts-char-add.mjs .
           node tools/tests/bughunt2-addons.mjs .
           node tools/tests/fa-free-icons.mjs .
           node tools/tests/reader-sync-strip.mjs .

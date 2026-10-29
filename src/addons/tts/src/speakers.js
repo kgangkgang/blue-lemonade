@@ -33,6 +33,7 @@ const fold = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
 /** 2.0.2 색 표의 이름이 {{user}} 매크로 그대로인가 (카드 팔레트 · 연결표의 「{{user}}」 줄) — 페르소나 이름과 글자가 달라도 나 */
 const isUserMacro = (s) => /^\{\{user\}\}$/i.test(String(s || '').trim());
 const cleanName = (s) => String(s || '').replace(/[*_`~"'“”‘’]/g, '').trim().slice(0, 40);
+const isPlainObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
 // 7.2.8 색 표(st)를 고치는 곳은 모두 dirty() — 별명표 · 인물표 기억을 그 자리에서 비운다 (bump 는 st 의 표 · 이름표에만 쓴다)
 const dirty = () => invalidatePeople();
@@ -156,6 +157,12 @@ export function renameCharacterKeys(s, { oldAvatar = '', newAvatar = '', oldName
         map[String(newName).trim()] = map[oldKey];
         out.voices++;
     }
+    // 2.0.6 인물 다른 이름도 새 이름으로 복사 (연결 수에는 넣지 않는다)
+    const al = s.char_aliases;
+    if (isPlainObj(al)) {
+        const oldKey = Object.keys(al).find(k => key(k) === from);
+        if (oldKey !== undefined && !Object.keys(al).some(k => key(k) === to) && Array.isArray(al[oldKey])) { al[String(newName).trim()] = al[oldKey].slice(); dirty(); }
+    }
     if (out.voices) dirty();
     return out;
 }
@@ -170,7 +177,7 @@ const charName = () => String(ctx().name2 || '').trim();
 let tableMemo = null;
 function aliasTable(st) {
     const s0 = settings(), c0 = ctx();
-    const keys = [peopleStamp(), st, st?.names, st?.colors, s0, s0.voices, s0.voices?.length, s0.char_map, s0.char_map ? Object.keys(s0.char_map).length : 0, c0.name1, c0.name2, globalThis[NAMES_BRIDGE]];
+    const keys = [peopleStamp(), st, st?.names, st?.colors, s0, s0.voices, s0.voices?.length, s0.char_map, s0.char_map ? Object.keys(s0.char_map).length : 0, s0.char_aliases, c0.name1, c0.name2, globalThis[NAMES_BRIDGE]];
     if (peopleMemoOn() && tableMemo && tableMemo.keys.length === keys.length && tableMemo.keys.every((x, i) => Object.is(x, keys[i]))) return tableMemo.table;
     const table = buildAliasTable(st);
     tableMemo = peopleMemoOn() ? { keys, table } : null;
@@ -186,6 +193,12 @@ function buildAliasTable(st) {
     const s = settings();
     for (const v of s.voices) { put(v.name, v.name); for (const a of v.aliases) put(a, v.name); }
     for (const k of Object.keys(s.char_map)) put(k, k);
+    // 2.0.6 「인물 추가」의 다른 이름 → 연결표 이름 (사용자가 정한 이름이라 배운 이름 · 색 표보다 먼저 — 목소리 이름 · 다른 이름은 그대로 앞선다)
+    for (const [k, list] of Object.entries(isPlainObj(s.char_aliases) ? s.char_aliases : {})) {
+        if (!Array.isArray(list)) continue;
+        put(k, k);
+        for (const a of list) if (typeof a === 'string') put(a, k);
+    }
     const labels = new Map();
     for (const [n, k] of Object.entries(st.names || {})) labels.set(fold(n), (labels.get(fold(n)) || 0) + k);
     const lab = (a) => labels.get(fold(a)) || 0;
@@ -298,7 +311,7 @@ export function peopleNames() {
 export function peopleInputs() {
     const c = ctx(), s = settings(), md = c.chatMetadata;
     const lv = md && typeof md === 'object' ? md.lemon_voice : undefined;
-    return [md, lv, lv?.names, lv?.colors, lv?.userColor, c.name1, c.name2, c.characterId, c.groupId, s, s.voices, s.voices?.length, s.char_map, s.char_map ? Object.keys(s.char_map).length : 0, s.user_voice, s.prefer_provider, s.prefer_keep, s.providers];
+    return [md, lv, lv?.names, lv?.colors, lv?.userColor, c.name1, c.name2, c.characterId, c.groupId, s, s.voices, s.voices?.length, s.char_map, s.char_map ? Object.keys(s.char_map).length : 0, s.char_aliases, s.user_voice, s.prefer_provider, s.prefer_keep, s.providers];
 }
 /** 나(페르소나) 이름인가 — 별명표를 거쳐 */
 export function isPersonaName(name) {

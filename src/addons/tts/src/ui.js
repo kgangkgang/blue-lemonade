@@ -1,7 +1,7 @@
 // TTS 설정 창: 탭 · 카드 · 스키마 기반 입력칸(data-lv-path) · 목소리 편집 팝업
 import { getContext } from '../../../../../../../extensions.js';
 import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../../popup.js';
-import { settings, save, VERSION, DEFAULTS, ANALYSIS_DEFAULTS, READ_PRESETS, maskKey, exportable, applyReadPreset, applyBodyFilters, providerConfig, toVoice, PREGEN_MODES, fillKnownVoices, migrateVoicesV8, fillKnownFacts, hasDb, USER_AUTO, LISTEN_LANGS, SYNC_TEXT_FIELDS } from './settings.js';
+import { settings, save, VERSION, DEFAULTS, ANALYSIS_DEFAULTS, READ_PRESETS, maskKey, exportable, applyReadPreset, applyBodyFilters, providerConfig, toVoice, PREGEN_MODES, fillKnownVoices, migrateVoicesV8, fillKnownFacts, hasDb, USER_AUTO, LISTEN_LANGS, SYNC_TEXT_FIELDS, normCharAliases, ALIAS_LIMIT } from './settings.js';
 import * as player from './player.js';
 import * as voices from './voices.js';
 import * as speakers from './speakers.js';
@@ -486,6 +486,7 @@ const STRENGTH_HELP = [
 const MAP_HELP = [
     '캐릭터 이름마다 읽을 목소리를 정해요. 「엔진」을 고르면 이름이 같은 그 엔진의 목소리로 읽어요.',
     '「기본」은 목소리를 못 찾은 화자, 「나」는 내 대사, 「내레이터」는 서술이에요.',
+    '맨 아래 「인물 추가」에 이름을 적고 목소리를 고르면 대화 색이 없어도 그 이름의 대사(이름표 · 화자 찾기)를 그 목소리로 읽어요. 「미나, Mina, 미나쨩」처럼 쉼표로 적으면 뒤의 이름들은 같은 사람의 다른 이름이에요.',
     ...STRENGTH_HELP,
 ];
 const COLORS_HELP = [
@@ -767,7 +768,16 @@ const ACTIONS = {
         applyBodyFilters(); save(); renderReadCard('text');
         toast('본문 필터 기본값을 적용했어요', 'success');
     },
-    'map-remove': (b) => { const s = settings(); delete s.char_map[b.dataset.name]; if (isObj(s.prefer_keep)) delete s.prefer_keep[b.dataset.name]; save(); renderMap(); renderColors(); },
+    'map-remove': (b) => { const s = settings(); delete s.char_map[b.dataset.name]; if (isObj(s.prefer_keep)) delete s.prefer_keep[b.dataset.name]; const ak = aliasKeyOf(s, b.dataset.name); if (ak) delete s.char_aliases[ak]; save(); renderMap(); renderColors(); },   // 2.0.6 다른 이름도 같이
+    'alias-remove': (b) => { const s = settings(); const ak = aliasKeyOf(s, b.dataset.name); if (!ak) return; delete s.char_aliases[ak]; save(); renderMap(); renderColors(); },   // 2.0.6 카드 인물의 다른 이름만 빼기
+    'map-add': (b) => {   // 2.0.6 인물 추가
+        const box = b.closest('.lv-map-add');
+        const nameEl = box?.querySelector('[data-lv-map-new]'), voiceEl = box?.querySelector('[data-lv-map-new-voice]');
+        const r = addCharacter(nameEl?.value, voiceEl?.value, { cardNames: chatNames() });
+        if (!r.ok) { toast(r.msg); (r.msg.startsWith('이름') ? nameEl : voiceEl)?.focus?.(); return; }
+        save(); renderMap(); renderColors();
+        toast(r.skipped.length ? `${r.name} 을(를) 추가했어요 (${r.skipped.join(', ')} 은(는) 다른 인물이라 뺐어요)` : `${r.name} 을(를) 추가했어요`, 'success');
+    },
     'color-accept': (b) => {   // 1.4.1 새 색에 추천 이름을 받음 (잠금 — 다시 배워도 그대로)
         const name = String(b.dataset.name || '').trim();
         if (!name) return;
@@ -1381,6 +1391,49 @@ function flushPendingOffer() {
     })();
     return flushing;
 }
+// ---------- 2.0.6 인물 추가: 대화 색 · 카드에 없는 인물도 이름(쉼표로 다른 이름)과 목소리를 직접 — 연결표(char_map) + 다른 이름(char_aliases)
+const nameFold = (t) => String(t || '').trim().toLowerCase().replace(/\s+/g, '');
+/** 이름 칸 글 → 겹치지 않는 이름들 (쉼표 · 읽점 · 줄바꿈으로 나눔, 앞뒤 공백 · 꾸밈 글자 뺌) */
+function splitNames(text) {
+    const out = [];
+    for (const raw of String(text || '').split(/[,，、\n]/)) {
+        const n = raw.replace(/[*_`~"“”「」『』]/g, '').replace(/\s+/g, ' ').trim().slice(0, ALIAS_LIMIT.chars);
+        if (nameFold(n) && !out.some(x => nameFold(x) === nameFold(n))) out.push(n);
+    }
+    return out;
+}
+/** 그 이름의 다른 이름 열쇠 (띄어쓰기 · 대소문자 무시) */
+function aliasKeyOf(s, name) { return Object.keys(isObj(s.char_aliases) ? s.char_aliases : {}).find(k => nameFold(k) === nameFold(name)) || ''; }
+function aliasesOf(s, name) { const k = aliasKeyOf(s, name); return k && Array.isArray(s.char_aliases[k]) ? s.char_aliases[k] : []; }
+/**
+ * 인물 추가 (순수에 가깝게 — 설정만 고친다. 저장 · 다시 그리기는 부른 쪽): 첫 이름이 연결표 이름, 나머지는 다른 이름.
+ * 적은 이름 가운데 이미 연결표 · 이 채팅 캐릭터에 있는 이름이 있으면 그 사람에 붙인다. 다른 인물의 연결표 이름은 다른 이름으로 받지 않는다.
+ * → { ok, name, skipped: [이름], msg }
+ */
+function addCharacter(text, uid, { cardNames = [] } = {}) {
+    const s = settings();
+    const list = splitNames(text);
+    if (!list.length) return { ok: false, msg: '이름을 적어 주세요' };
+    if (!uid || !voices.findVoice(uid)) return { ok: false, msg: '목소리를 골라 주세요' };
+    const owners = [...Object.keys(s.char_map || {}), ...cardNames];
+    const hit = list.map(n => owners.find(o => nameFold(o) === nameFold(n))).find(Boolean);
+    const key = hit || list[0];
+    const skipped = [];
+    const rest = list.filter(n => nameFold(n) !== nameFold(key)).filter(n => {
+        const other = owners.find(o => nameFold(o) === nameFold(n));
+        if (other && nameFold(other) !== nameFold(key)) { skipped.push(n); return false; }
+        return true;
+    });
+    setCharVoice(key, uid);
+    if (!isObj(s.char_aliases)) s.char_aliases = {};
+    const ak = aliasKeyOf(s, key) || key;
+    const merged = normCharAliases({ [ak]: [...aliasesOf(s, key), ...rest] })[ak] || [];
+    if (merged.length) s.char_aliases[ak] = merged; else delete s.char_aliases[ak];
+    return { ok: true, name: key, skipped, msg: '' };
+}
+function mapAddHtml() {
+    return `<div class="lv-sub"><span>인물 추가</span></div><div class="lv-row lv-map-add"><input type="text" class="text_pole" data-lv-map-new maxlength="300" placeholder="이름, 다른 이름" aria-label="추가할 인물 이름 (쉼표로 다른 이름)" autocomplete="off"><span class="lv-color-voicebox"><select class="text_pole" data-lv-map-new-voice aria-label="추가할 인물 목소리">${voiceOptions('')}</select><button type="button" class="lv-icon" data-lv-act="map-add" aria-label="인물 추가"><i class="fa-solid fa-plus"></i></button></span></div>`;
+}
 /** 5.7.2+ 알약 · 목록에 보일 이름: 엔진 자동 맞춤이면 실제로 읽는 목소리 (Corvin → 코르빈 (Corvin), 진우 쿠키 아님) */
 const effName = (uid, n) => { const v = voices.findVoice(uid); return (v ? voices.preferVoice(v, n) : null)?.name || uid; };
 function mapCardHtml() {
@@ -1395,11 +1448,13 @@ function mapCardHtml() {
     const prefer = preferRowHtml(s);
     if (prefer) rows.unshift(prefer);
     rows.push(extrasHtml(s));
+    const aka = (n) => { const a = aliasesOf(s, n); return a.length ? ` (${a.join(', ')})` : ''; };   // 2.0.6 다른 이름
     const pills = Object.entries(s.char_map)
         .filter(([n]) => !names.includes(n))
-        .map(([n, uid]) => `<span class="lv-pill"><span>${esc(n)} → ${esc(effName(uid, n))}</span>${pinChip(n, uid)}<button type="button" class="lv-x" data-lv-act="map-remove" data-name="${esc(n)}" aria-label="빼기"><i class="fa-solid fa-xmark"></i></button></span>`)
+        .map(([n, uid]) => `<span class="lv-pill"><span>${esc(n + aka(n))} → ${esc(effName(uid, n))}</span>${pinChip(n, uid)}<button type="button" class="lv-x" data-lv-act="map-remove" data-name="${esc(n)}" aria-label="빼기"><i class="fa-solid fa-xmark"></i></button></span>`)
+        .concat(names.filter(n => aliasesOf(s, n).length).map(n => `<span class="lv-pill"><span>${esc(n)} = ${esc(aliasesOf(s, n).join(', '))}</span><button type="button" class="lv-x" data-lv-act="alias-remove" data-name="${esc(aliasKeyOf(s, n))}" aria-label="다른 이름 빼기"><i class="fa-solid fa-xmark"></i></button></span>`))
         .join('');
-    return card('map', 'fa-users', '캐릭터별 목소리', `<div class="lv-rows">${rows.join('')}</div>${pills ? `<div class="lv-pills">${pills}</div>` : ''}`, '', '', MAP_HELP);
+    return card('map', 'fa-users', '캐릭터별 목소리', `<div class="lv-rows">${rows.join('')}</div>${pills ? `<div class="lv-pills">${pills}</div>` : ''}${mapAddHtml()}`, '', '', MAP_HELP);
 }
 function colorRows() {
     try { return speakers.colorTable() || []; } catch { return []; }
@@ -2522,6 +2577,7 @@ function importSettings(obj) {
             continue;
         }
         if (!hasOwn(DEFAULTS, k)) continue;
+        if (k === 'char_aliases') { s.char_aliases = normCharAliases(v); continue; }   // 2.0.6
         if (k === 'pregen' && !PREGEN_MODES.includes(v)) continue;   // 고르는 값은 목록 안의 것만
         if (k === 'listen_lang' && !LISTEN_LANGS.includes(v)) continue;   // 1.4.4
         const d = DEFAULTS[k];
@@ -2555,7 +2611,8 @@ export const _forTest = {
     control, canListModels, listingProvider, autoModelsDue, autoEngineModels, refreshEngineModels, keyTest,
     // 1.3.8 (tools/tests/tts-onboarding.mjs): 계정 맞춤 · 바꿀까요 · 불러오기 · 도움말 · 말투 칩 · 「나」 자동 · 엔진 고정
     autoSyncAccounts, offerPrefer, flushPendingOffer, pullVoices, afterKeyJob: () => afterKeyJob, toggleHelp, tagChipsHtml, edParam, voiceRowHtml, HELP_LINES, card,   // 7.7.9 카드 제목 ? 로 모은 도움말
-    voiceOptions, mapCardHtml, colorsCardHtml, setCharVoice, unpinChar, keySave, loadBalance, balanceCache: () => balanceCache,
+    voiceOptions, mapCardHtml, colorsCardHtml, setCharVoice, unpinChar, addCharacter, splitNames, ACTIONS: () => ACTIONS,   // 2.0.6 인물 추가 (tools/tests/tts-char-add.mjs)
+    keySave, loadBalance, balanceCache: () => balanceCache,
 };
 
 // ---------- 시작
