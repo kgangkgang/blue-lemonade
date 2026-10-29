@@ -87,6 +87,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 6.9.8 「이전 메시지 더 보기」 저절로 (show-more-auto.js, 기본 켬) · 새 답 첫 줄로 가는 ↑ (reply-top.js, 켤 때만)
     const showMore = on && s.chat?.showMoreAuto !== false;
     if (showMore || modules.showmore) load('showmore', './show-more-auto.js').then(m => m?.syncShowMoreAuto(showMore));
+    // (10-29) 긴 채팅 가볍게 (chat-light.js, 기본 켬) — 메시지 60개 이상이면 화면 밖 메시지에 content-visibility:auto (css/05-chat.css): 글자를 칠 때마다 도는 문서 전체 재계산을 보이는 메시지로 좁힌다
+    const chatLight = on && s.chat?.chatLight !== false;
+    if (chatLight || modules.chatlight) load('chatlight', './chat-light.js').then(m => m?.syncChatLight(chatLight));
     // 7.9.9 단추를 손으로 누르면 불러온 메시지를 보여 준다 (show-more-tap.js, 자동 더 보기와 상관없이 · 테마가 켜져 있을 때)
     if (on || modules.showmoretap) load('showmoretap', './show-more-tap.js').then(m => (on ? m?.installShowMoreTap() : m?.uninstallShowMoreTap()));
     // 아바타는 가까워질 때 받기 (lazy-avatars.js, 기본 켬) — 캐릭터 · 페르소나 목록의 화면 밖 썸네일을 미룬다
