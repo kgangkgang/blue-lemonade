@@ -132,6 +132,25 @@ export function installPersonaDefer(deps) {
         es.on(ev, fn);
         offs.push(() => (es.removeListener || es.off)?.call(es, ev, fn));
     }
+    // (review-persona) 실리태번이 클릭 · 키 없이 코드로 칸 글을 덮기 직전에 거치는 사건 — 덮기 전에 미룬 저장을 먼저 돌린다.
+    //   칸 글을 덮는 길은 setPersonaDescription()(비공개 호출이라 감쌀 수 없다) 뿐이고, 그 앞에 사건이 있는 길만 여기서 막는다:
+    //   · CHAT_CHANGED → personas.js loadPersonaForCurrentChat → setUserAvatar(채팅 · 캐릭터 잠금 페르소나로 바꿈). 실리태번 리스너가 먼저 걸려 있어 makeFirst 로 앞에 선다.
+    //   · PERSONA_CREATED(복제 · /persona-create · /persona-duplicate 가 새 페르소나를 고르기 전) · PERSONA_DELETED(/persona-delete 뒤 다음 페르소나 고르기 전).
+    //     그 사건의 페르소나가 지금 페르소나면 건너뛴다 — 「캐릭터로 페르소나 만들기」 덮어쓰기는 새 설명을 이미 적은 뒤에 알리므로, 돌리면 친 글이 그 설명을 덮는다.
+    //   실리태번 emit 은 리스너를 차례로 기다리므로 여기서 돌린 저장(동기 부분)은 다음 리스너보다 앞선다.
+    //   사건이 없는 길(/persona · /persona-update · /getpersonabook create 같은 슬래시 · 확장이 setUserAvatar 를 바로 부름)은 막지 못한다 — 보고서 「완화 불가」.
+    const T = deps.eventTypes || {};
+    const ownerOf = deps.owner || (() => null);
+    const hooks = [
+        [T.CHAT_CHANGED, () => flush('chat'), true],
+        [T.PERSONA_CREATED, d => { if (d?.avatarId == null || d.avatarId !== ownerOf()) flush('persona'); }, false],
+        [T.PERSONA_DELETED, d => { if (d?.avatarId == null || d.avatarId !== ownerOf()) flush('persona'); }, false],
+    ];
+    if (es?.on) for (const [name, fn, first] of hooks) {
+        if (!name) continue;
+        if (first && typeof es.makeFirst === 'function') es.makeFirst(name, fn); else es.on(name, fn);
+        offs.push(() => (es.removeListener || es.off)?.call(es, name, fn));
+    }
     return {
         ok: true, core,
         uninstall() {

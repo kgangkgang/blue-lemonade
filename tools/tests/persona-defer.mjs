@@ -60,11 +60,13 @@ function makeWorld({ withHandler = true, handlerName = 'onPersonaDescriptionInpu
     const clearTimer = id => { timers.delete(id); };
     const advance = ms => { const end = now + ms; for (;;) { const next = [...timers.entries()].sort((a, b) => a[1].at - b[1].at)[0]; if (!next || next[1].at > end) break; now = next[1].at; timers.delete(next[0]); next[1].fn(); } now = end; };
     const listeners = new Map();
-    const eventSource = { on(ev, fn) { if (!listeners.has(ev)) listeners.set(ev, []); listeners.get(ev).push(fn); }, removeListener(ev, fn) { const a = listeners.get(ev) || []; const i = a.indexOf(fn); if (i >= 0) a.splice(i, 1); }, emit(ev) { for (const fn of [...(listeners.get(ev) || [])]) fn(); } };
+    // 실리태번 lib/eventemitter.js 흉내: on 은 뒤에 · makeFirst 는 맨 앞에 · emit 은 차례로(인자 그대로)
+    const eventSource = { on(ev, fn) { if (!listeners.has(ev)) listeners.set(ev, []); listeners.get(ev).push(fn); }, makeFirst(ev, fn) { if (!listeners.has(ev)) listeners.set(ev, []); const a = listeners.get(ev); const i = a.indexOf(fn); if (i >= 0) a.splice(i, 1); a.unshift(fn); }, removeListener(ev, fn) { const a = listeners.get(ev) || []; const i = a.indexOf(fn); if (i >= 0) a.splice(i, 1); }, emit(ev, ...args) { for (const fn of [...(listeners.get(ev) || [])]) fn(...args); } };
+    const EVT = { GENERATION_STARTED: 'generation_started', CHAT_CHANGED: 'chat_id_changed', PERSONA_CREATED: 'persona_created', PERSONA_DELETED: 'persona_deleted' };
     const logs = [];
     const type = (text, opts = {}) => { for (const ch of text) { field.value += ch; dispatch(field, 'input', opts); advance(opts.gap ?? 120); } };
-    const install = (extra = {}) => M.installPersonaDefer({ $, document: doc, window: win, MutationObserver: FakeMO, eventSource, eventTypes: { GENERATION_STARTED: 'generation_started' }, owner: () => st.user_avatar, setTimer, clearTimer, log: (...a) => logs.push(a.join(' ')), ...extra });
-    return { win, doc, body, drawer, block, field, avatar, dialog, calls, other, st, events, named, advance, type, install, eventSource, logs, timers };
+    const install = (extra = {}) => M.installPersonaDefer({ $, document: doc, window: win, MutationObserver: FakeMO, eventSource, eventTypes: EVT, owner: () => st.user_avatar, setTimer, clearTimer, log: (...a) => logs.push(a.join(' ')), ...extra });
+    return { win, doc, body, drawer, block, field, avatar, dialog, calls, other, st, events, named, advance, type, install, eventSource, listeners, EVT, logs, timers };
 }
 
 let n = 0, failed = 0;
@@ -175,6 +177,43 @@ test('(review-persona) 미룬 사이 다른 길로 페르소나가 바뀐 뒤 �
     w.advance(M.DELAY);
     assert.equal(w.st.saved['b.png'], 'B 설명 더', '새 페르소나에 친 글');
     assert.equal(w.st.saved['a.png'], undefined, '옛 페르소나에 새 글을 쓰지 않는다');
+});
+// (review-persona) 실리태번이 코드로 칸 글을 덮는 길(setPersonaDescription) 앞의 사건에서 미룬 저장을 먼저
+//   실리태번이 하는 일 흉내: user_avatar 를 바꾸고 칸 글을 새 페르소나 것으로(power_user 의 「아직 안 적힌」 값 = 묶음 전 값)
+const switchTo = (w, avatar, text) => { w.st.user_avatar = avatar; w.field.value = text; };
+test('(review-persona) 채팅이 바뀌어 실리태번이 잠긴 페르소나로 바꿀 때(CHAT_CHANGED → loadPersonaForCurrentChat) — 실리태번 리스너보다 먼저 옛 페르소나에 저장', () => {
+    const w = makeWorld();
+    w.eventSource.on(w.EVT.CHAT_CHANGED, () => switchTo(w, 'b.png', 'B 설명'));   // 실리태번 personas.js 가 시작 때 먼저 건다
+    w.install(); w.type('옛 글', { gap: 50 });
+    w.eventSource.emit(w.EVT.CHAT_CHANGED, 'chat-2');
+    assert.equal(w.st.saved['a.png'], '옛 글', '옛 페르소나에 친 글까지');
+    assert.equal(w.st.saved['b.png'], undefined, '새 페르소나에 옛 글을 쓰지 않는다');
+    assert.equal(w.listeners.get(w.EVT.CHAT_CHANGED)[0] !== undefined && w.listeners.get(w.EVT.CHAT_CHANGED).length, 2);
+    w.advance(2000); assert.equal(w.calls.length, 1);
+});
+test('(review-persona) 복제 · 슬래시 만들기로 새 페르소나를 고르기 전(PERSONA_CREATED) — 먼저 저장 · 지금 페르소나 덮어쓰기(캐릭터로 만들기)에는 끼지 않는다', () => {
+    const w = makeWorld(); w.install(); w.type('복제 전', { gap: 50 });
+    w.eventSource.emit(w.EVT.PERSONA_CREATED, { avatarId: 'c.png', name: 'C' }); switchTo(w, 'c.png', '복제된 설명');
+    assert.equal(w.st.saved['a.png'], '복제 전'); assert.equal(w.st.saved['c.png'], undefined);
+    const v = makeWorld(); v.install(); v.type('덮일 글', { gap: 50 });
+    v.eventSource.emit(v.EVT.PERSONA_CREATED, { avatarId: 'a.png', name: 'A' });
+    assert.equal(v.calls.length, 0, '새 설명을 이미 적은 뒤 알리는 덮어쓰기 — 친 글로 덮지 않는다');
+});
+test('(review-persona) 슬래시로 다른 페르소나를 지운 뒤 다음 페르소나를 고르기 전(PERSONA_DELETED) — 먼저 저장 · 지금 페르소나를 지운 것이면 그대로', () => {
+    const w = makeWorld(); w.install(); w.type('지우기 전', { gap: 50 });
+    w.eventSource.emit(w.EVT.PERSONA_DELETED, { avatarId: 'z.png', name: 'Z' });
+    assert.deepEqual(w.calls, ['지우기 전']);
+    const v = makeWorld(); v.install(); v.type('x', { gap: 50 });
+    v.eventSource.emit(v.EVT.PERSONA_DELETED, { avatarId: 'a.png', name: 'A' });
+    assert.equal(v.calls.length, 0);
+});
+test('(review-persona) makeFirst 가 없는 판은 on 으로 · 끄면 사건 리스너를 다 뗀다', () => {
+    const w = makeWorld(); delete w.eventSource.makeFirst;
+    const r = w.install(); w.type('q', { gap: 50 });
+    w.eventSource.emit(w.EVT.CHAT_CHANGED); assert.deepEqual(w.calls, ['q']);
+    r.uninstall();
+    const left = [...w.listeners.values()].reduce((a, v) => a + v.length, 0);
+    assert.equal(left, 0, '사건 리스너가 남지 않는다');
 });
 test('핸들러가 없거나(실리태번 판이 바뀜) jQuery 가 없으면 아무것도 걸지 않고 한 줄만 · 칸의 input 은 그대로 흐른다', () => {
     for (const opts of [{ withHandler: false }, { handlerName: 'somethingElse' }, { withJQuery: false }]) {
