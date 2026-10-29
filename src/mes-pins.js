@@ -149,6 +149,10 @@ function bind() {
     const handlers = [...one.map(name => [name, scheduleOne]), ...whole.map(name => [name, scheduleAll])];
     handlers.forEach(([name, fn]) => eventSource.on(name, fn));
     document.addEventListener('click', onHint, true);
+    // 8.2.6 검토: 테마 애드온(TTS · LLM 번역)은 켜질 때 이미 그려진 메시지 전부에 메뉴 단추를 붙여요(설정 열쇠는 그대로라 syncMesPins 는 다시 안 훑음).
+    //   예전엔 다음 메시지 이벤트의 전체 훑기가 그 단추를 옛 메시지에서도 꺼냈는데, 메시지 하나만 훑게 된 뒤로는 채팅을 다시 열 때까지 메뉴 안에 남았어요.
+    //   애드온이 시작 · 켜짐 · 저장을 마치면 내는 bl:addons-state(addons.js) 뒤에 채팅 전체를 훑어요(tools/tests/mes-pins-addon-late.mjs)
+    globalThis.window?.addEventListener?.('bl:addons-state', scheduleAll);
     bound = { eventSource, handlers };
 }
 
@@ -156,6 +160,7 @@ function unbind() {
     if (!bound) return;
     bound.handlers.forEach(([name, fn]) => bound.eventSource.removeListener(name, fn));
     document.removeEventListener('click', onHint, true);
+    globalThis.window?.removeEventListener?.('bl:addons-state', scheduleAll);
     timers.forEach(clearTimeout);
     timers = [];
     pendingAll = false; pendingIds.clear();

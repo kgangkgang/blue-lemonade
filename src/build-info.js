@@ -590,7 +590,7 @@ export const FILE_HASHES = {
   "src/marquee.js": "4261:042dd0ea:df654cb6",
   "src/menu-position.js": "3354:c5e883de:c4671ab5",
   "src/mes-fold.js": "15542:5c43e78e:a96ce929",
-  "src/mes-pins.js": "14413:c1e962ee:c50e7a10",
+  "src/mes-pins.js": "15151:d048135a:4679bf4c",
   "src/message-work.js": "7592:9af6cb91:7ad233df",
   "src/modal.js": "1570:fc1776ad:43eb6e78",
   "src/multi-avatar/dialog.js": "12671:a9ede2a5:b2246635",
