@@ -1,7 +1,7 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
 export const BUILD_VERSION = "8.2.3";
 export const FILE_HASHES = {
-  "index.js": "31047:2e5b2ce1:39ca2016",
+  "index.js": "31270:73d390b5:465e6729",
   "manifest.json": "365:d56957f8:f4e71926",
   "src/addon-files-check.js": "5001:b7fe0df9:d1f21c49",
   "src/addon-layout.js": "2768:fc762257:da2db162",
