@@ -59,6 +59,7 @@ test('CSS: #chat.bl-chat-light 의 메시지에 content-visibility:auto · conta
     assert.ok(!m[1].includes(':has('), '메시지마다 :has 주어가 되지 않게');
     assert.ok(!/\[\s*style/.test(m[1]));
     assert.match(m[2], /content-visibility:\s*auto/); assert.match(m[2], /contain-intrinsic-size:\s*auto \d+px/);
+    assert.match(m[2], /flex-shrink:\s*0/, '#chat 세로 flex 에서 건너뛴 메시지가 납작해지지 않게');
     assert.ok(read('style.css').includes('.bl-chat-light > .mes:not(.last_mes, .bl-menu-open, .selected):not(:nth-last-child(-n+10))'), 'style.css 에 빌드돼 있다 (빌드가 #chat 을 :is(#chat,.bl-chat-like) 로 넓힌다)');
     assert.match(src, /\.mes\.bl-menu-open \{[^}]*content-visibility: visible !important/s, '메뉴 열린 메시지는 visible !important 로 이미 뺀다');
 });

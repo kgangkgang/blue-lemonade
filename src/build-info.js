@@ -613,7 +613,7 @@ export const FILE_HASHES = {
   "src/popup-guard.js": "5328:fab87000:195a34d2",
   "src/popup-marks.js": "1818:0af84657:5805cf62",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
-  "src/preview-park.gen.css": "120955:b95d2152:e41cbe86",
+  "src/preview-park.gen.css": "120973:c92562e8:fe46edce",
   "src/preview-view.js": "15640:4ca24d2f:096a5129",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
   "src/profile.js": "6026:34f89f44:fc6757bf",
@@ -758,6 +758,6 @@ export const FILE_HASHES = {
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
   "src/worldinfo-light.js": "2949:e91008f8:04eead81",
-  "style-ext.css": "318810:42ea8749:d60b84a4",
-  "style.css": "1838477:af968b16:7c4d833c"
+  "style-ext.css": "318810:facc92ab:d95d8ba5",
+  "style.css": "1838513:e55812a8:3e0cd5d6"
 };
