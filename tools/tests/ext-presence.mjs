@@ -88,7 +88,7 @@ t('features.js: startPresence 한 번 · 바뀌면 applyAll + refreshPanels · �
 });
 t('panel.js: restNote 가 쉬는 확장 이름을 설명에 붙이고 토글은 설정 값 그대로', () => {
     const p = read('src/panel.js');
-    assert.match(p, /function restNote\(feature\)/); assert.ok(p.includes("가 같은 기능을 켜고 있어 지금은 쉬어요"));
+    assert.match(p, /function restNote\(feature(, part = '')?\)/); assert.ok(p.includes("가 같은 기능을 켜고 있어 지금은 쉬어요"));
     assert.ok(p.includes("toggle('chat.lazyAvatars', s.chat.lazyAvatars !== false)") && p.includes("restNote('lazyAvatars')"));
     assert.match(read('css/20-panel.css'), /\.bl-rest-note/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/ext-presence\.mjs \./);

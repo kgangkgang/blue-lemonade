@@ -101,9 +101,10 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 아바타는 가까워질 때 받기 (lazy-avatars.js, 기본 켬) — 캐릭터 · 페르소나 목록의 화면 밖 썸네일을 미룬다
     const lazyAvatars = on && s.chat?.lazyAvatars !== false && !restingFor('lazyAvatars');
     if (lazyAvatars || modules.lazyavatars) load('lazyavatars', './lazy-avatars.js').then(m => m?.syncLazyAvatars(lazyAvatars));
-    // 검색은 글자 조합이 끝난 뒤 (search-ime.js, 기본 켬) — #character_search_bar 의 한글 조합 중 검색을 미룬다
-    const searchIme = on && s.chat?.searchIme !== false && !restingFor('searchIme');
-    if (searchIme || modules.searchime) load('searchime', './search-ime.js').then(m => m?.syncSearchIme(searchIme));
+    // 검색은 글자 조합이 끝난 뒤 (search-ime.js, 기본 켬) — 캐릭터 · 월드인포 · 페르소나 · 채팅 파일 · 그룹 멤버 검색 칸의 한글 조합 중 검색을 미룬다
+    //   바이바이가 켜져 있으면 캐릭터 검색 칸만 그쪽에 맡긴다(바이바이는 캐릭터 검색만 같은 일을 한다)
+    const searchIme = on && s.chat?.searchIme !== false;
+    if (searchIme || modules.searchime) load('searchime', './search-ime.js').then(m => m?.syncSearchIme(searchIme, { skip: restingFor('searchIme') ? [m.INPUT_ID] : [] }));
     // 코드 색 입히기 끄기 (code-plain.js, 기본 끔) — 메시지 코드블록의 hljs 를 건너뛴다 · 칵테일이 켜져 있으면 쉰다
     const codePlain = on && !!s.chat?.codePlain && !restingFor('codePlain');
     if (codePlain || modules.codeplain) load('codeplain', './code-plain.js').then(m => m?.syncCodePlain(codePlain));

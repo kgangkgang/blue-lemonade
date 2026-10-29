@@ -282,6 +282,7 @@ jobs:
           node tools/tests/lazy-avatars-detach.mjs .
           node tools/tests/search-ime.mjs .
           node tools/tests/search-ime-composing.mjs .
+          node tools/tests/search-ime-fields.mjs .
           node tools/tests/code-plain.mjs .
           node tools/tests/code-plain-rewrap.mjs .
           node tools/tests/worldinfo-light.mjs .

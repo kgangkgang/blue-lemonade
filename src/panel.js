@@ -574,9 +574,9 @@ function qrSample(showFind = true, ctxNames = false) {
 }
 
 /** 「가볍게」 줄: 같은 기능을 켠 다른 확장이 있어 쉬면 그 안내를 설명 끝에 붙인다 (토글 값은 그대로) */
-function restNote(feature) {
+function restNote(feature, part = '') {
     const who = restingFor(feature);
-    return who ? ` · <b class="bl-rest-note">${who}가 같은 기능을 켜고 있어 지금은 쉬어요</b>` : '';
+    return who ? ` · <b class="bl-rest-note">${part}${who}가 같은 기능을 켜고 있어 지금은 쉬어요</b>` : '';
 }
 
 function row(label, control, note = '') {
@@ -1596,7 +1596,7 @@ function tabChat(s, sub) {
         </div>
         ${cap('가볍게', '폰이 느릴 때')}<div class="salty-group">
             ${row('아바타는 가까워질 때 받기', toggle('chat.lazyAvatars', s.chat.lazyAvatars !== false), '캐릭터 · 페르소나 목록의 화면 밖 아바타는 스크롤해 가까워질 때 받아요 · 캐릭터가 많을 때 목록이 빨리 떠요' + restNote('lazyAvatars'))}
-            ${row('검색은 글자 조합이 끝난 뒤', toggle('chat.searchIme', s.chat.searchIme !== false), '캐릭터 검색 칸에 한글을 조합하는 동안은 찾지 않고, 글자가 완성되고 0.3초 뒤에 한 번만 찾아요' + restNote('searchIme'))}
+            ${row('검색은 글자 조합이 끝난 뒤', toggle('chat.searchIme', s.chat.searchIme !== false), '캐릭터 · 월드인포 · 페르소나 · 채팅 파일 · 그룹 멤버 검색 칸에 한글을 조합하는 동안은 찾지 않고, 글자가 완성되고 0.3초 뒤에 한 번만 찾아요' + restNote('searchIme', '캐릭터 검색 칸은 '))}
             ${row('코드 색 입히기 끄기', toggle('chat.codePlain', !!s.chat.codePlain), '코드블록이 많은 채팅에서 폰이 느릴 때 · 메시지 코드블록의 구문 강조를 건너뛰어요 · 이미 그려진 메시지는 다시 그릴 때부터' + restNote('codePlain'))}
             ${row('월드인포 긴 목록 가볍게', toggle('chat.worldInfoLight', s.chat.worldInfoLight !== false), '한 쪽에 항목이 80개 넘게 보이면 화면 밖 접힌 항목은 그리지 않고 두어 스크롤이 덜 끊겨요 · 펼친 항목 · 끌고 있는 항목은 그대로예요' + restNote('worldInfoLight'))}
         </div>

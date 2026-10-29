@@ -5,7 +5,7 @@
 //   「鸡尾酒」·「柏宝箱」·「BaiBai」가 들어가는 것도 같은 확장으로 본다. 판정은 순수 함수 detectPresence(시험 가능), 결과는 한 번 재어 두고
 //   EXTENSION_SETTINGS_LOADED 와 확장 관리 창의 켜고 끄기(.extension_toggle 의 change — 「나중에 새로고침」을 고르면 페이지가 안 바뀐다) 때 다시 잰다.
 //   바뀌면 등록된 콜백(features.js → applyAll · refreshPanels)을 부른다 — 토글 값은 그대로 두고 쉬기만 하므로 그 확장을 지우면 바로 다시 켜진다.
-// 겹침 규칙(restingFor): 바이바이 켜짐 → 아바타 지연 로딩 · 월드인포 경량화 · 검색 IME 디바운스 쉼. 칵테일 켜짐 → 코드 하이라이트 끄기 쉼.
+// 겹침 규칙(restingFor): 바이바이 켜짐 → 아바타 지연 로딩 · 월드인포 경량화 · 검색 IME 디바운스(캐릭터 검색 칸만 — 다른 칸은 그대로) 쉼. 칵테일 켜짐 → 코드 하이라이트 끄기 쉼.
 import { folderBase } from './extension-folder.js';
 
 export const OTHERS = {

@@ -13,7 +13,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const form = { listeners: {}, addEventListener(type, fn, cap) { (this.listeners[type] ??= []).push({ fn, cap }); }, removeEventListener(type, fn) { this.listeners[type] = (this.listeners[type] || []).filter(l => l.fn !== fn); } };
 let stCalls = 0, dispatched = [];
 const input = { id: 'character_search_bar', parentElement: form, value: '', dispatchEvent(ev) { dispatched.push(ev); deliver(ev.type, { isComposing: false, synthetic: true }); return true; } };
-const other = { id: 'rm_group_filter' };
+const other = { id: 'bg-filter' };
 globalThis.document = { getElementById: id => id === 'character_search_bar' ? input : null };
 /** 캡처 단계 흉내: 우리 리스너를 먼저, 멈추지 않았으면 실리태번 핸들러 */
 function deliver(type, { target = input, isComposing = false } = {}) {
@@ -51,7 +51,7 @@ t('compositionend → 300ms 재기 시작 · 그 안에 다음 글자 조합이 
     await sleep(si.DELAY + 60);
     assert.equal(stCalls, 2, '조합이 끝난 뒤 한 번만'); assert.equal(dispatched.length, 2); n++;
 }
-t('다른 칸(그룹 필터)의 input 은 건드리지 않는다', () => { assert.equal(deliver('input', { target: other }), false); deliver('compositionstart', { target: other }); assert.equal(si._forTest.state().composing, false); });
+t('맡지 않는 칸(배경 검색)의 input 은 건드리지 않는다', () => { assert.equal(deliver('input', { target: other }), false); deliver('compositionstart', { target: other }); assert.equal(si._forTest.state().composing, false); });
 t('끄면 리스너를 떼고, 멈춰 둔 입력이 있으면 그 자리에서 한 번 보낸다', () => {
     deliver('input'); assert.equal(stCalls, 2);
     si.syncSearchIme(false);
@@ -68,8 +68,9 @@ t('설정 chat.searchIme 기본 켬 · 보정 · 초기화에서 남김 · CHAT_
     const settings = read('src/settings.js');
     assert.match(settings, /lazyAvatars: true, searchIme: true,/); assert.match(settings, /s\.chat\.searchIme = flag\(s\.chat\.searchIme, true\)/); assert.match(settings, /'lazyAvatars', 'searchIme'[^\]]*\]\) \{/);
     assert.match(read('src/styles.js'), /'lazyAvatars', 'searchIme'[^\]]*\];/);
-    assert.match(read('src/features.js'), /const searchIme = on && s\.chat\?\.searchIme !== false && !restingFor\('searchIme'\);\n\s+if \(searchIme \|\| modules\.searchime\) load\('searchime', '\.\/search-ime\.js'\)\.then\(m => m\?\.syncSearchIme\(searchIme\)\)/);
-    const panel = read('src/panel.js'); assert.ok(panel.includes("toggle('chat.searchIme', s.chat.searchIme !== false)") && panel.includes("restNote('searchIme')"));
+    // (8.2.7) 바이바이가 켜져 있으면 기능 전체가 아니라 캐릭터 검색 칸만 쉰다 — search-ime-fields.mjs
+    assert.match(read('src/features.js'), /const searchIme = on && s\.chat\?\.searchIme !== false;\n\s+if \(searchIme \|\| modules\.searchime\) load\('searchime', '\.\/search-ime\.js'\)\.then\(m => m\?\.syncSearchIme\(searchIme, \{ skip: restingFor\('searchIme'\) \? \[m\.INPUT_ID\] : \[\] \}\)\)/);
+    const panel = read('src/panel.js'); assert.ok(panel.includes("toggle('chat.searchIme', s.chat.searchIme !== false)") && panel.includes("restNote('searchIme', '캐릭터 검색 칸은 ')"));
     assert.ok(read('src/settings-labels.js').includes('"chat.searchIme":"검색은 글자 조합이 끝난 뒤"'));
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/search-ime\.mjs \./);
 });
