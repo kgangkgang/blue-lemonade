@@ -595,7 +595,7 @@ export const FILE_HASHES = {
   "src/mes-fold.js": "15542:5c43e78e:a96ce929",
   "src/mes-pins.js": "16854:6f808e77:ae9f7836",
   "src/message-work.js": "7592:9af6cb91:7ad233df",
-  "src/modal.js": "1570:fc1776ad:43eb6e78",
+  "src/modal.js": "2279:c866de49:2cedcaa3",
   "src/multi-avatar/dialog.js": "12671:a9ede2a5:b2246635",
   "src/multi-avatar/index.js": "8708:a3d98d56:c8acd1cc",
   "src/multi-avatar/pick.js": "10074:bf996f18:6043e72a",

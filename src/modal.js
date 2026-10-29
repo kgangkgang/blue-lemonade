@@ -1,4 +1,13 @@
-import { fixToastrForDialogs } from '../../../../popup.js';
+// 실리태번 판 호환: 이름으로 가져오면(import { fixToastrForDialogs }) 실리태번이 그 이름을 바꾸거나 뺀 판에서 모듈 연결이 실패해
+// index.js(credits.js → modal.js)까지 통째로 안 떠 테마 전체가 멈춘다. 모듈 묶음으로 받아 있으면 부르고, 없으면 알림 자리 맞추기만 건너뛴다.
+import * as popupHost from '../../../../popup.js';
+
+let toastrFixMissing = false;
+function fixToastrForDialogs() {
+    const fix = popupHost.fixToastrForDialogs;
+    if (typeof fix === 'function') return fix();
+    if (!toastrFixMissing) { toastrFixMissing = true; console.warn('[Blue Lemonade] 이 실리태번 판에는 fixToastrForDialogs 가 없어 창 위 알림 자리 맞추기를 건너뛰어요'); }
+}
 
 /** Keep notifications in the modal top layer, and recover them before removal. */
 export function showThemeModal(dialog) {

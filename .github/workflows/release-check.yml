@@ -67,6 +67,7 @@ jobs:
           node tools/tests/chat-switch-leak.mjs .
           node tools/tests/perf-list-shown.mjs .
           node tools/tests/prompt-toggle-echo.mjs .
+          node tools/tests/st-compat-boot.mjs .
           node tools/tests/history-warning.mjs .
           node tools/tests/has-invalidation-scope.mjs .
           node tools/tests/perf-prompt-render-batch.mjs .
