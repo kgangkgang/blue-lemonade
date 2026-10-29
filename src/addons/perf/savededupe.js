@@ -697,21 +697,40 @@ function installReloadGuard() {
     };
 }
 
-/** getContext() 는 부를 때마다 새 객체를 만든다 → getContext 자체를 감싸 채팅 바꾸는 함수만 바꿔 준다 */
+/** 8.2.5 마지막으로 감싼 키 묶음(원래 함수 → 감싼 함수) — 같으면 다시 감싸지 않고 그대로 꽂는다 */
+let contextMemo = null;
+const contextStats = { calls: 0, wraps: 0 };
+
+/**
+ * getContext() 는 부를 때마다 새 객체를 만든다 → getContext 자체를 감싸 채팅 바꾸는 함수만 바꿔 준다.
+ * 8.2.5 테마 · 애드온이 getContext() 를 자주 부르는데(스크롤 · 스트리밍 · 토글마다), 그때마다 키마다 typeof · WeakMap 조회로 감싸개를 찾았다.
+ *   실리태번의 openCharacterChat · openGroupChat 은 모듈 함수라 신원이 바뀌지 않으니, 지난번과 같은 묶음이면 지난번 감싸개를 그대로 꽂는다.
+ */
 function installContextGuard() {
     const holder = window.SillyTavern;
     if (!holder || typeof holder.getContext !== 'function' || holder.getContext.name === 'saveDedupeGetContext') return;
     const original = holder.getContext;
     holder.getContext = function saveDedupeGetContext(...args) {
         const ctx = original.apply(this, args);
-        if (ctx && codeGuard) {
-            for (const key of CODE_SWITCH_KEYS) {
-                const fn = ctx[key];
-                if (typeof fn === 'function') ctx[key] = guardedSwitchFn(fn);
-            }
-        }
+        if (!ctx || !codeGuard) return ctx;
+        contextStats.calls++;
+        let memo = contextMemo;
+        if (!memo || !sameBundle(memo, ctx)) memo = contextMemo = wrapBundle(ctx);
+        for (let i = 0; i < CODE_SWITCH_KEYS.length; i++) if (memo.wrapped[i]) ctx[CODE_SWITCH_KEYS[i]] = memo.wrapped[i];
         return ctx;
     };
+}
+
+/** ctx 의 바꾸기 함수들이 memo 가 감쌀 때 본 것과 같은 신원인지 */
+function sameBundle(memo, ctx) {
+    for (let i = 0; i < CODE_SWITCH_KEYS.length; i++) if (ctx[CODE_SWITCH_KEYS[i]] !== memo.original[i]) return false;
+    return true;
+}
+
+function wrapBundle(ctx) {
+    contextStats.wraps++;
+    const original = CODE_SWITCH_KEYS.map(key => ctx[key]);
+    return { original, wrapped: original.map(fn => (typeof fn === 'function' ? guardedSwitchFn(fn) : null)) };
 }
 
 function guardedSwitchFn(original) {
@@ -894,6 +913,7 @@ window.SaveDedupe = {
     get saveTimers() { return saveTimers; },
     get switchGuard() { return switchGuard; },
     get codeGuard() { return codeGuard; },
+    contextGuard: contextStats,   // 8.2.5 getContext 감싸기: 부른 수 · 키 묶음을 새로 감싼 수(시험 · 점검용)
     get emptyGuard() { return emptyGuard; },
     debug: { quickLive, liveChat: () => liveChatFrom(context()) },
 };

@@ -123,6 +123,7 @@ jobs:
           node tools/tests/notes-task-fence.mjs .
           node tools/tests/order-apply.mjs .
           node tools/tests/perf-save-dedupe.mjs .
+          node tools/tests/perf-context-guard.mjs .
           node tools/tests/perf-save-recovery.mjs .
           node tools/tests/perf-save-worker.mjs .
           node tools/tests/prompt-apply-live.mjs .

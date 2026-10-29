@@ -174,7 +174,7 @@ export const FILE_HASHES = {
   "src/addons/perf/relay-compare-view.js": "18304:574984e2:ffde6bf0",
   "src/addons/perf/requestlog.js": "6728:6384c0c3:6b904f88",
   "src/addons/perf/save-worker.js": "1467:0f9e73b9:bab6c212",
-  "src/addons/perf/savededupe.js": "46667:bbf6da5a:52e279de",
+  "src/addons/perf/savededupe.js": "47964:9d8813c8:eec20ad0",
   "src/addons/perf/savesend.js": "13482:1ece8843:3be88d12",
   "src/addons/perf/shown.js": "1547:46735fd4:7a89018e",
   "src/addons/perf/start-error.js": "1373:7f5deb05:e85feea0",
