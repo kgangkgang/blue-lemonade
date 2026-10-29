@@ -229,11 +229,6 @@ body.salty :where(.salty-preview):is(#salty-nochat, *) .mes {
 body.salty :where(.salty-preview):is(#salty-nochat, *) .mes + .mes {
   margin-top: 8px !important;
 }
-body.salty :is(#salty-nochat, .salty-preview).bl-chat-light > .mes:not(.last_mes, .bl-menu-open, .selected):not(:nth-last-child(-n+10)) {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 160px;
-  flex-shrink: 0;
-}
 body.salty :where(.salty-preview):is(#salty-nochat, *) .mes .mes_block {
   overflow: visible !important;
   min-width: 0;

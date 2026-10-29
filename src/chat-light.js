@@ -7,6 +7,8 @@
 // 어떻게: 메시지가 THRESHOLD 개 이상 그려져 있으면 #chat 에 bl-chat-light 를 붙이고, CSS(css/05-chat.css)가 화면 밖 메시지에
 //   content-visibility: auto 를 걸어 그 메시지 안의 스타일 · 배치 계산을 건너뛴다(브라우저가 화면 가까이 오면 다시 그린다 · 한 번 그린 크기는 auto 로 기억).
 //   마지막 메시지(스트리밍 · 스와이프 줄) · 바닥 10개(실리태번의 바닥 붙이기가 정확하게) · 메뉴 열린 · 고른 메시지는 CSS 가 뺀다. 리그 재현: 글자당 재계산 163 → 48ms · 입력 지연 240 → 83ms.
+// (8.2.7) 표식은 html 에 단다(html.bl-chat-light) — #chat 의 class 를 바꾸면 기록마다 실리태번 keyboard.js 가 #chat 아래 전부(메시지 300개면 요소 2~3만 개)를
+//   선택자 31개로 다시 훑고, body 전체를 보는 테마 감시자도 #chat 을 다시 봤다(긴 채팅을 열 때 뗐다 붙이며 두 번). html 은 그 감시자들이 안 본다. 모양은 같다.
 // 여기서는 #chat 에만 childList 감시자(subtree 없음)를 걸어 .mes 수를 센다. 설정: 채팅 › 화면 「긴 채팅의 화면 밖 메시지 가볍게」(chat.chatLight · 기본 켬).
 export const THRESHOLD = 60;
 export const CLASS = 'bl-chat-light';
@@ -16,14 +18,15 @@ let on = false, mo = null, chat = null;
 export function measure(el = chat) {
     if (!el) return false;
     const light = on && el.querySelectorAll(':scope > .mes').length >= THRESHOLD;
-    if (el.classList.contains(CLASS) !== light) el.classList.toggle(CLASS, light);   // 같으면 쓰지 않는다 (속성 변경 → 감시자 · 재계산)
+    const mark = document.documentElement.classList;
+    if (mark.contains(CLASS) !== light) mark.toggle(CLASS, light);   // 같으면 쓰지 않는다 (속성 변경 → 감시자 · 재계산)
     return light;
 }
 
 export function syncChatLight(enabled) {
     on = !!enabled;
     if (typeof document !== 'undefined' && typeof document.querySelectorAll === 'function') syncChatCover(on);   // 같은 설정(긴 채팅 가볍게) — 아래 서랍 덮개
-    if (!on) { mo?.disconnect(); mo = null; if (chat) chat.classList.remove(CLASS); chat = null; return; }
+    if (!on) { mo?.disconnect(); mo = null; if (chat && document.documentElement.classList.contains(CLASS)) document.documentElement.classList.remove(CLASS); chat = null; return; }
     const el = document.getElementById('chat');
     if (!el) { mo?.disconnect(); mo = null; chat = null; return; }
     if (el !== chat) {

@@ -504,7 +504,7 @@ export const FILE_HASHES = {
   "src/chat-graph.js": "24883:3361ae54:d817b84b",
   "src/chat-library-data.js": "5043:6dfcb24b:504fa300",
   "src/chat-library.js": "16640:3ef42170:42e103d6",
-  "src/chat-light.js": "11136:74c6f696:6525f555",
+  "src/chat-light.js": "11655:2a6de94d:cebfaa78",
   "src/chat-reading-position.js": "15615:5179e143:69d53288",
   "src/chat-sync.js": "24501:26a49faf:13b60fdb",
   "src/checks.js": "3042:368ec3ff:509f89cc",
@@ -620,7 +620,7 @@ export const FILE_HASHES = {
   "src/popup-guard.js": "5328:fab87000:195a34d2",
   "src/popup-marks.js": "2740:461f8ddf:edecd720",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
-  "src/preview-park.gen.css": "121112:daee2561:f872b7d1",
+  "src/preview-park.gen.css": "120888:42b5cbb1:8d14d636",
   "src/preview-view.js": "17270:6c138445:2764a1d7",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
   "src/profile.js": "6026:34f89f44:fc6757bf",
@@ -767,6 +767,6 @@ export const FILE_HASHES = {
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "9370:2d815bc8:4cd0d636",
   "src/worldinfo-light.js": "2949:e91008f8:04eead81",
-  "style-ext.css": "318792:66363395:23c32d2c",
-  "style.css": "1841937:f6a12866:8b8c8fe5"
+  "style-ext.css": "318792:0fbcb84d:91015846",
+  "style.css": "1841745:2e9edb51:8bc307d4"
 };

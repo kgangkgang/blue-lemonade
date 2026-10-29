@@ -61,6 +61,8 @@ const DENY = [
     '.bl-st-solid-chat',
     // (10-29 perf-persona) 서랍이 채팅을 다 덮을 때 #chat 을 통째로 건너뛰는 표식 (chat-light.js syncChatCover) — 미리보기 상자를 숨기면 안 된다
     '.bl-chat-covered',
+    // (8.2.7 perf-fade) 긴 채팅 가볍게 표식 — html 에 달려 미리보기 상자에도 걸릴 수 있다(예전 #chat.bl-chat-light 사본은 미리보기 상자에 그 클래스가 없어 늘 안 맞았다)
+    '.bl-chat-light',
 ];
 
 // ───────── 닻 (이 이름이 사본에 하나도 없으면 미리보기가 조용히 빈다) ─────────
