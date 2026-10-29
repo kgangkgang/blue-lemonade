@@ -171,22 +171,30 @@ function undress(root = document) {
     });
 }
 
-function sweep() {
+// 8.2.7 이벤트가 가리키는 메시지만 훑는다(dem-sky.js 8.1.1 과 같은 방식) — 예전에는 답 하나 · 스와이프 · 수정마다 세 번 채팅의 모든 메시지 원문을 정규식으로 훑었다.
+//  · pending = 다음 훑기가 볼 메시지 번호들, full = 채팅 전체(채팅 열기 · 더 불러오기 · 켤 때 · 번호 없는 이벤트). 세 타이머가 다 돌 때까지 유지.
+//  · 이벤트 없이 본문이 바뀌는 몫(번역)은 아래 감시자가 그 메시지만 맡는다.
+let pending = new Set(), full = false;
+function sweep(last = false) {
     if (!active) return;
     const chat = SillyTavern.getContext().chat || [];
-    document.querySelectorAll('#chat .mes[mesid]').forEach((mes) => {
+    const list = full ? document.querySelectorAll('#chat .mes[mesid]') : [...pending].map(id => document.querySelector(`#chat .mes[mesid="${id}"]`)).filter(Boolean);
+    list.forEach((mes) => {
         dress(mes, chat[Number(mes.getAttribute('mesid'))]);
         const body = mes.querySelector('.mes_text');
-        if (body) markLeads(body);
+        if (body) { markLeads(body); if (!full) watchFx(body); }
     });
-    watchFx(document.getElementById('chat'));
+    if (full) watchFx(document.getElementById('chat'));
+    if (last) { pending = new Set(); full = false; }
 }
 
-function schedule() {
+function schedule(id) {
+    if (Number.isFinite(Number(id)) && String(id ?? '').trim() !== '') pending.add(Number(id)); else full = true;
     timers.forEach(clearTimeout);
     // 세 번: 바로 · 다른 확장이 본문을 고친 뒤 · 번역이 늦게 들어온 뒤. 이미 감싼 대사는 건너뛰니 되풀이해도 같다
-    timers = [setTimeout(sweep, 80), setTimeout(sweep, 800), setTimeout(sweep, 3000)];
+    timers = [setTimeout(sweep, 80), setTimeout(sweep, 800), setTimeout(() => sweep(true), 3000)];
 }
+const scheduleAll = () => schedule();
 
 // 번역 확장은 본문을 번역문으로 갈아 끼울 때 실리태번 이벤트를 내지 않는다 — 그래서 번역이 늦게 오면 감싼 칸이 사라진 채로 남았다(새로고침해야 다시 움직임).
 // #chat 에서 '본문이 통째로 바뀐 메시지'만 적어 두었다가 조용해진 뒤(0.4초) 그 메시지만 다시 감싼다. 스트리밍 중에는 글자가 올 때마다 미뤄져 끝난 뒤 한 번만 돈다.
@@ -214,16 +222,18 @@ function bind() {
     if (chatBox && !watcher) { watcher = new MutationObserver(onMutations); watcher.observe(chatBox, { childList: true, subtree: true }); }
     const { eventSource, event_types: t } = SillyTavern.getContext();
     const names = [t.CHAT_CHANGED, t.CHARACTER_MESSAGE_RENDERED, t.USER_MESSAGE_RENDERED, t.MORE_MESSAGES_LOADED, t.MESSAGE_UPDATED, t.MESSAGE_SWIPED, t.MESSAGE_EDITED].filter(Boolean);
-    names.forEach(name => eventSource.on(name, schedule));
-    bound = { eventSource, names };
+    // 채팅 열기 · 더 불러오기는 채팅 전체(CHAT_CHANGED 의 인자는 채팅 이름이라 번호로 읽지 않는다), 나머지는 인자의 메시지 번호만
+    const byName = new Map(names.map(name => [name, name === t.CHAT_CHANGED || name === t.MORE_MESSAGES_LOADED ? scheduleAll : id => schedule(id)]));
+    byName.forEach((fn, name) => eventSource.on(name, fn));
+    bound = { eventSource, byName };
 }
 
 function unbind() {
     if (!bound) return;
     watcher?.disconnect(); watcher = null; clearTimeout(quiet); changed = new Set();
-    bound.names.forEach(name => bound.eventSource.removeListener(name, schedule));
+    bound.byName.forEach((fn, name) => bound.eventSource.removeListener(name, fn));
     timers.forEach(clearTimeout);
-    timers = [];
+    timers = []; pending = new Set(); full = false;
     bound = null;
 }
 

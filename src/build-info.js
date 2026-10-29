@@ -517,7 +517,7 @@ export const FILE_HASHES = {
   "src/danger.js": "2765:75c387ef:f3d6eeb2",
   "src/decor-view.js": "7200:ed7b75d4:64e82ae5",
   "src/decor.js": "5307:06c9c2d8:a2df29ca",
-  "src/dem-expressive.js": "15114:2820ad84:8d3474bd",
+  "src/dem-expressive.js": "16443:049a2261:acb6fee4",
   "src/dem-glow.js": "2856:d4394686:3e248bd0",
   "src/dem-selection.js": "6543:92f23ad3:78853776",
   "src/dem-sky.js": "11939:c15f016c:16be1989",
