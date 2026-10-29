@@ -110,7 +110,8 @@ async function onClick(event) {
 
 export function syncSentTokens(enabled) {
     on = !!enabled;
-    document.body?.classList.toggle(BODY_CLASS, on);
+    // 8.2.7 표식은 body 대신 html 에 — body class 기록마다 실리태번 keyboard.js 가 body 아래 전부를 다시 훑고 body 를 보는 테마 감시자도 다시 돌았어요
+    document.documentElement?.classList.toggle(BODY_CLASS, on);
     const chatEl = document.getElementById('chat');
     chatEl?.removeEventListener('click', onClick);
     if (on) chatEl?.addEventListener('click', onClick);

@@ -619,7 +619,7 @@ export const FILE_HASHES = {
   "src/popup-guard.js": "5328:fab87000:195a34d2",
   "src/popup-marks.js": "2740:461f8ddf:edecd720",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
-  "src/preview-park.gen.css": "121030:651b83c0:bd14a5a7",
+  "src/preview-park.gen.css": "121087:fb7ba656:fbc788f3",
   "src/preview-view.js": "17270:6c138445:2764a1d7",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
   "src/profile.js": "6026:34f89f44:fc6757bf",
@@ -703,7 +703,7 @@ export const FILE_HASHES = {
   "src/search-ime.js": "7868:0cf3ecc7:4cb5550a",
   "src/selection-range.js": "6929:b51d4218:4519f447",
   "src/selects.js": "24456:b3e5f40e:ba98ba20",
-  "src/sent-tokens.js": "6732:47259993:f6603f0c",
+  "src/sent-tokens.js": "6936:ad8f9074:367d11a8",
   "src/setting-locks.js": "1456:cbc36430:0ef5054e",
   "src/settings-dialog.js": "994:29aceab3:701cd0e4",
   "src/settings-differences.js": "10217:72ca7e14:a37a971f",
@@ -766,6 +766,6 @@ export const FILE_HASHES = {
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "9370:2d815bc8:4cd0d636",
   "src/worldinfo-light.js": "2949:e91008f8:04eead81",
-  "style-ext.css": "318792:f3703d9b:c84877c5",
-  "style.css": "1841773:b92e1247:106407f0"
+  "style-ext.css": "318792:d560c39f:3089293c",
+  "style.css": "1841887:25a168ca:722688d1"
 };

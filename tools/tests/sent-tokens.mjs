@@ -64,11 +64,11 @@ await t('누를 때 세기: 실리태번 숫자는 token_count · 같은 토크�
     delete globalThis.SillyTavern;
 });
 
-await t('누르면 알림 한 번(줄마다 · 이스케이프 · 번호) · 끄면 안 뜸 · 켜면 body 표시', async () => {
+await t('누르면 알림 한 번(줄마다 · 이스케이프 · 번호) · 끄면 안 뜸 · 켜면 html 표시', async () => {
     const shown = [];
     const body = { classList: { set: new Set(), toggle(c, v) { v ? this.set.add(c) : this.set.delete(c); } } };
     const chatEl = { listeners: new Set(), addEventListener(_, f) { this.listeners.add(f); }, removeEventListener(_, f) { this.listeners.delete(f); } };
-    globalThis.document = { body, getElementById: id => id === 'chat' ? chatEl : null };
+    globalThis.document = { documentElement: body, getElementById: id => id === 'chat' ? chatEl : null };
     globalThis.toastr = { info: (html, title, opt) => shown.push({ html, title, opt }) };
     globalThis.SillyTavern = { getContext: () => ({ chat: [{ is_user: false, mes: 'a <b> c', extra: { token_count: 3 } }], getTokenCountAsync: async text => text.split(' ').length }) };
     const counter = { textContent: '3t', closest: sel => sel === '.mes' ? { getAttribute: () => '0' } : null };
@@ -103,9 +103,9 @@ await t('배선: 열쇠 chat.sentTokens 그대로(기본 켬) · 이름 「토�
     assert.match(read('src/features.js'), /const sentTokens = on && s\.chat\?\.sentTokens !== false;\n\s+if \(sentTokens \|\| modules\.senttokens\) load\('senttokens', '\.\/sent-tokens\.js'\)\.then\(m => m\?\.syncSentTokens\(sentTokens\)\);/);
     const scope = '(?:#chat|:is\\(#chat,\\.bl-chat-like\\))';
     const rules = [
-        new RegExp(`body\\.salty\\.bl-sent-tokens ${scope} \\.mes \\.tokenCounterDisplay:not\\(:empty\\) \\{\\n\\s+cursor: pointer;`),
-        new RegExp(`@media \\(hover: hover\\) \\{\\n\\s+body\\.salty\\.bl-sent-tokens ${scope} \\.mes \\.tokenCounterDisplay:not\\(:empty\\):hover \\{\\n\\s+text-decoration: underline;`),
-        new RegExp(`body\\.salty\\.bl-sent-tokens ${scope} \\.mes\\[is_system="true"\\] \\.tokenCounterDisplay:not\\(:empty\\)::after \\{\\n\\s+content: "\\\\00a0\\\\00a0·\\\\00a0\\\\00a0숨김";`),
+        new RegExp(`:where\\(html\\.bl-sent-tokens\\) body\\.salty\\.salty ${scope} \\.mes \\.tokenCounterDisplay:not\\(:empty\\) \\{\\n\\s+cursor: pointer;`),
+        new RegExp(`@media \\(hover: hover\\) \\{\\n\\s+:where\\(html\\.bl-sent-tokens\\) body\\.salty\\.salty ${scope} \\.mes \\.tokenCounterDisplay:not\\(:empty\\):hover \\{\\n\\s+text-decoration: underline;`),
+        new RegExp(`:where\\(html\\.bl-sent-tokens\\) body\\.salty\\.salty ${scope} \\.mes\\[is_system="true"\\] \\.tokenCounterDisplay:not\\(:empty\\)::after \\{\\n\\s+content: "\\\\00a0\\\\00a0·\\\\00a0\\\\00a0숨김";`),
     ];
     // 큰 파일이라 실패해도 글 전체를 찍지 않게 test 로
     for (const file of ['css/05-chat.css', 'style.css']) {

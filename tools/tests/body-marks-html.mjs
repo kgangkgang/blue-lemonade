@@ -11,13 +11,16 @@ const root = path.resolve(process.argv[2] || '.');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const MARKS = [
     { mark: 'bl-weather-on', js: ['src/weather.js'], css: 'css/32-weather.css', rules: 4 },
+    { mark: 'bl-sent-tokens', js: ['src/sent-tokens.js'], css: 'css/05-chat.css', rules: 3, name: 'BODY_CLASS' },
 ];
 let passed = 0;
-for (const { mark, js, css, rules } of MARKS) {
+for (const { mark, js, css, rules, name } of MARKS) {
+    const ref = name ? `(?:'${mark}'|${name}\\b)` : `'${mark}'`;   // 상수 이름(예: BODY_CLASS)으로 쓰는 파일도
     for (const file of js) {
         const code = read(file);
-        assert.ok(!new RegExp(`document\\.body\\??\\.classList\\.(add|remove|toggle|contains)\\('${mark}'`).test(code), `${file}: ${mark} 를 body 에 쓰지 않아요`);
-        assert.ok(new RegExp(`document\\.documentElement\\??\\.classList\\.(add|toggle)\\('${mark}'`).test(code), `${file}: ${mark} 를 html 에 붙여요`);
+        if (name) assert.ok(code.includes(`const ${name} = '${mark}'`), `${file}: ${name} 는 ${mark}`);
+        assert.ok(!new RegExp(`document\\.body\\??\\.classList\\.(add|remove|toggle|contains)\\(${ref}`).test(code), `${file}: ${mark} 를 body 에 쓰지 않아요`);
+        assert.ok(new RegExp(`document\\.documentElement\\??\\.classList\\.(add|toggle)\\(${ref}`).test(code), `${file}: ${mark} 를 html 에 붙여요`);
     }
     const src = read(css);
     const now = src.match(new RegExp(`:where\\(html\\.${mark}\\) body\\.salty\\.salty`, 'g')) || [];

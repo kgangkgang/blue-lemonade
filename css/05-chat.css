@@ -175,18 +175,18 @@ body.salty:not(.no-timer) #chat .mes .mes_timer:not(:empty) ~ .tokenCounterDispl
   content: "·";
   margin: 0 6px;
 }
-/* 7.0.4 토큰 수를 누르면 그 메시지의 생각 · 본문 · 다음 프롬에 들어가는 양 (src/sent-tokens.js, 켜면 body.bl-sent-tokens) —
+/* 7.0.4 토큰 수를 누르면 그 메시지의 생각 · 본문 · 다음 프롬에 들어가는 양 (src/sent-tokens.js, 켜면 html.bl-sent-tokens — 8.2.7 body 대신 html, :where(html.…) body.salty.salty 는 예전 body.salty.bl-sent-tokens 와 특이도가 같아요) —
    머리엔 실리태번 숫자만, 숨긴 메시지만 작게 「· 숨김」. 누를 수 있다는 것만 손가락 모양 · 마우스면 밑줄로 */
-body.salty.bl-sent-tokens #chat .mes .tokenCounterDisplay:not(:empty) {
+:where(html.bl-sent-tokens) body.salty.salty #chat .mes .tokenCounterDisplay:not(:empty) {
   cursor: pointer;
 }
 @media (hover: hover) {
-  body.salty.bl-sent-tokens #chat .mes .tokenCounterDisplay:not(:empty):hover {
+  :where(html.bl-sent-tokens) body.salty.salty #chat .mes .tokenCounterDisplay:not(:empty):hover {
     text-decoration: underline;
     text-underline-offset: 2px;
   }
 }
-body.salty.bl-sent-tokens #chat .mes[is_system="true"] .tokenCounterDisplay:not(:empty)::after {
+:where(html.bl-sent-tokens) body.salty.salty #chat .mes[is_system="true"] .tokenCounterDisplay:not(:empty)::after {
   content: "\00a0\00a0·\00a0\00a0숨김";   /* 앞 점과 같은 띄움 (nowrap 이라 줄지 않는 빈칸) */
 }
 /* 옅은 바탕(레몬에이드) · 카드 · 말풍선 · 테이블 면 위에선 흐림색 대비가 모자람 → 메타 · 시간은 보조색 */

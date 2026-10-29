@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 66a2b97d39f3) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 07324d94498e) */
 /* css/00-base.css */
 :root{--bl-release:"8.2.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -2087,16 +2087,16 @@ body.salty:not(.no-timer) :is(#chat,.bl-chat-like) .mes .mes_timer:not(:empty) ~
   content: "·";
   margin: 0 6px;
 }
-body.salty.bl-sent-tokens :is(#chat,.bl-chat-like) .mes .tokenCounterDisplay:not(:empty) {
+:where(html.bl-sent-tokens) body.salty.salty :is(#chat,.bl-chat-like) .mes .tokenCounterDisplay:not(:empty) {
   cursor: pointer;
 }
 @media (hover: hover) {
-  body.salty.bl-sent-tokens :is(#chat,.bl-chat-like) .mes .tokenCounterDisplay:not(:empty):hover {
+  :where(html.bl-sent-tokens) body.salty.salty :is(#chat,.bl-chat-like) .mes .tokenCounterDisplay:not(:empty):hover {
     text-decoration: underline;
     text-underline-offset: 2px;
   }
 }
-body.salty.bl-sent-tokens :is(#chat,.bl-chat-like) .mes[is_system="true"] .tokenCounterDisplay:not(:empty)::after {
+:where(html.bl-sent-tokens) body.salty.salty :is(#chat,.bl-chat-like) .mes[is_system="true"] .tokenCounterDisplay:not(:empty)::after {
   content: "\00a0\00a0·\00a0\00a0숨김";
 }
 body.salty:not(.salty-dark) :is(#chat,.bl-chat-like) .mes .mesIDDisplay,
@@ -14732,20 +14732,20 @@ body.salty:not(.no-timer) :where(.salty-preview):is(#salty-nochat, *) .mes .mes_
   content: "·";
   margin: 0 6px;
 }
-body.salty.bl-sent-tokens :where(.salty-preview):is(#salty-nochat, *) .mes .tokenCounterDisplay:not(:empty) {
+:where(html.bl-sent-tokens) body.salty.salty :where(.salty-preview):is(#salty-nochat, *) .mes .tokenCounterDisplay:not(:empty) {
   cursor: pointer;
 }
 }
 @media (hover: hover) {
   @media not all {
-body.salty.bl-sent-tokens :where(.salty-preview):is(#salty-nochat, *) .mes .tokenCounterDisplay:not(:empty):hover {
+:where(html.bl-sent-tokens) body.salty.salty :where(.salty-preview):is(#salty-nochat, *) .mes .tokenCounterDisplay:not(:empty):hover {
     text-decoration: underline;
     text-underline-offset: 2px;
   }
 }
 }
 @media not all {
-body.salty.bl-sent-tokens :where(.salty-preview):is(#salty-nochat, *) .mes[is_system="true"] .tokenCounterDisplay:not(:empty)::after {
+:where(html.bl-sent-tokens) body.salty.salty :where(.salty-preview):is(#salty-nochat, *) .mes[is_system="true"] .tokenCounterDisplay:not(:empty)::after {
   content: "\00a0\00a0·\00a0\00a0숨김";
 }
 body.salty:not(.salty-dark) :where(.salty-preview):is(#salty-nochat, *) .mes .mesIDDisplay,

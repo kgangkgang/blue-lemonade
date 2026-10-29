@@ -1,5 +1,5 @@
-/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1757 · 뺀 규칙 4512 (style.css 8aa9ad97d93e) */
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 66a2b97d39f3) */
+/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1757 · 뺀 규칙 4512 (style.css a897eeeb405a) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 07324d94498e) */
 /* css/00-base.css */
 :root{--bl-release:"8.2.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}

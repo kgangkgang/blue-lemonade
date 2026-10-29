@@ -103,7 +103,7 @@ await test('누르기: 켜졌을 때 메시지 머리 숫자만, 줄은 이스�
     const listeners = [];
     const chatEl = { addEventListener: (t, f) => listeners.push(f), removeEventListener: (t, f) => { const i = listeners.indexOf(f); if (i >= 0) listeners.splice(i, 1); } };
     const classes = new Set();
-    globalThis.document = { body: { classList: { toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)) } }, getElementById: id => (id === 'chat' ? chatEl : null) };
+    globalThis.document = { documentElement: { classList: { toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)) } }, getElementById: id => (id === 'chat' ? chatEl : null) };
     const counter = (text, mesid = '0') => ({ textContent: text, closest: sel => (sel === '.mes' ? { getAttribute: () => mesid } : null) });
     const click = target => ({ target: { closest: sel => (sel === '#chat .mes .tokenCounterDisplay' ? target : null) } });
     await S._forTest.onClick(click(counter('3t')));

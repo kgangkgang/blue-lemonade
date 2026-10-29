@@ -314,20 +314,20 @@ body.salty:not(.no-timer) :where(.salty-preview):is(#salty-nochat, *) .mes .mes_
   content: "·";
   margin: 0 6px;
 }
-body.salty.bl-sent-tokens :where(.salty-preview):is(#salty-nochat, *) .mes .tokenCounterDisplay:not(:empty) {
+:where(html.bl-sent-tokens) body.salty.salty :where(.salty-preview):is(#salty-nochat, *) .mes .tokenCounterDisplay:not(:empty) {
   cursor: pointer;
 }
 }
 @media (hover: hover) {
 @media all {
-body.salty.bl-sent-tokens :where(.salty-preview):is(#salty-nochat, *) .mes .tokenCounterDisplay:not(:empty):hover {
+:where(html.bl-sent-tokens) body.salty.salty :where(.salty-preview):is(#salty-nochat, *) .mes .tokenCounterDisplay:not(:empty):hover {
     text-decoration: underline;
     text-underline-offset: 2px;
   }
 }
 }
 @media all {
-body.salty.bl-sent-tokens :where(.salty-preview):is(#salty-nochat, *) .mes[is_system="true"] .tokenCounterDisplay:not(:empty)::after {
+:where(html.bl-sent-tokens) body.salty.salty :where(.salty-preview):is(#salty-nochat, *) .mes[is_system="true"] .tokenCounterDisplay:not(:empty)::after {
   content: "\00a0\00a0·\00a0\00a0숨김";
 }
 body.salty:not(.salty-dark) :where(.salty-preview):is(#salty-nochat, *) .mes .mesIDDisplay,
