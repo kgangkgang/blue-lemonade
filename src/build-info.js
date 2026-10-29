@@ -303,7 +303,7 @@ export const FILE_HASHES = {
   "src/addons/tts/NOTICE.md": "12716:20ebd654:d7cefb0b",
   "src/addons/tts/credits.js": "4930:4ab86de1:e56e32cc",
   "src/addons/tts/guide.js": "30679:fbe5b142:dc78b510",
-  "src/addons/tts/index.js": "36248:5e0e096c:b564c58c",
+  "src/addons/tts/index.js": "37049:09fe2fb3:d378f26a",
   "src/addons/tts/script-editor.css": "8960:0eed3f59:dba78b6d",
   "src/addons/tts/settings.html": "2586:4fc6909d:16a47526",
   "src/addons/tts/sfx-extra/LICENSE-CC-BY.txt": "18657:e975071f:4918a281",

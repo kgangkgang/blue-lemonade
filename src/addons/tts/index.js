@@ -43,7 +43,17 @@ function nativeHome() {
     nativeAnchor = document.createComment('Blue Lemonade TTS settings home');
     host.append(nativeAnchor); return nativeAnchor;
 }
+// 8.2.7 설정 화면(카드 · 목소리 표 · 엔진 · 데이터 탭)은 처음 보일 때 그린다 — 서랍 머리를 누를 때(잡기 단계라 ui 의 펼침 처리보다 먼저) ·
+//       창 · 설정 안 칸에 붙일 때(prepareEmbedded). 예전엔 닫힌 서랍 안에 부팅마다 전부 그렸다. 보이는 서랍 머리(판 표시)는 settings.html 그대로
+let uiStarted = false;
+function ensureUi() {
+    if (uiStarted || !root) return;
+    uiStarted = true;
+    try { ui.init(); }
+    catch (e) { console.error('[tts] 설정 화면 초기화 실패', e); log('err', `설정 화면 초기화 실패: ${e.message}`); }
+}
 function prepareEmbedded() {
+    ensureUi();
     if (placement === 'native') nativeDisplay = root.querySelector('.inline-drawer-content').style.display;
     root.hidden = false;
     root.classList.add('bl-embedded-settings');
@@ -514,8 +524,8 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
         event.preventDefault(); event.stopPropagation();
         import('./guide.js').then(module => module.showTtsGuide()).catch(error => console.error('[TTS] 사용법 열기 실패', error));
     });
-    try { ui.init(); }
-    catch (e) { console.error('[tts] 설정 화면 초기화 실패', e); log('err', `설정 화면 초기화 실패: ${e.message}`); }
+    for (const el of root.querySelectorAll('.lv-version')) el.textContent = `v${VERSION}`;   // 서랍 머리의 판 표시 (화면 그리기는 처음 펼칠 때 — ensureUi)
+    root.addEventListener('click', event => { if (event.target?.closest?.('.inline-drawer-toggle')) ensureUi(); }, true);
     try { player.init(); }
     catch (e) { console.error('[tts] 재생기 초기화 실패', e); log('err', `재생기 초기화 실패: ${e.message}`); }
     try { paint.init(); } catch (e) { log('err', `화자 색 시작 실패: ${e.message}`); }   // 6.2.3 색 없는 대사에 화자 색 (#chat 관찰)
