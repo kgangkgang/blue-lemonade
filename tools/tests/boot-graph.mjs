@@ -79,5 +79,44 @@ await test('당겨 새로고침은 홈 화면에 깐 터치 앱에서만 받아�
     assert.match(read('src/pull-to-refresh.js'), /export \{ installedTouchMode \}/, '예전 이름도 그대로');
 });
 
+await test('스와이프 고르기 번역은 창을 여는 단추를 처음 누를 때 받아요', async () => {
+    notAtBoot('src/swipe-picker-translation.js', '스와이프 고르기 창을 열 때만 써요');
+    notAtBoot('src/addons/translator/translation-source.js', '번역 기록 읽기 — 번역 애드온 · 고르기 창이 쓸 때만');
+    const launch = read('src/swipe-picker-launch.js'), full = read('src/swipe-picker-translation.js');
+    const openers = text => /const OPENERS = '([^']+)'/.exec(text)?.[1];
+    assert.equal(openers(launch), openers(full), '여는 단추 판정이 본 모듈과 같아요');
+    assert.match(launch, /import\('\.\/swipe-picker-translation\.js'\)/);
+    assert.match(full, /export function lookForPicker\(/);
+    // 가짜 문서: 여는 단추를 누르면 본 모듈을 한 번만 받고 그 자리에서 창 찾기를 시작해요 · 다른 곳을 누르면 받지 않아요
+    const listeners = {};
+    class El { constructor(opener) { this.opener = opener; } closest(sel) { return this.opener && sel === openers(launch) ? this : null; } }
+    globalThis.Element = El;
+    globalThis.document = { addEventListener: (type, fn) => (listeners[type] ||= []).push(fn), querySelectorAll: () => [], body: {} };
+    globalThis.SillyTavern = { getContext: () => ({ extensionSettings: { salty: { enabled: true } } }) };
+    const mod = await import(pathToFileURL(path.join(root, 'src/swipe-picker-launch.js')).href + '?t=' + Date.now());
+    let imported = 0;
+    mod._forTest.setLoader(() => { imported++; return Promise.resolve({ lookForPicker: () => { mod._forTest.looked++; } }); });
+    mod.startSwipePickerTranslation(); mod.startSwipePickerTranslation();
+    assert.equal(listeners.pointerdown.length, 1, '한 번만 걸어요');
+    for (const fn of listeners.pointerdown) fn({ type: 'pointerdown', target: new El(false) });
+    await new Promise(r => setTimeout(r, 0));
+    assert.equal(imported, 0, '다른 곳 누름에는 받지 않아요');
+    for (const fn of listeners.pointerdown) fn({ type: 'pointerdown', target: new El(true) });
+    for (const fn of listeners.click) fn({ type: 'click', target: new El(true) });
+    await new Promise(r => setTimeout(r, 0));
+    assert.equal(mod._forTest.looked, 2, '누를 때마다 창 찾기');
+    assert.ok(imported >= 1);
+    const runtime = read('index.js');
+    assert.match(runtime, /import \{ startSwipePickerTranslation \} from '\.\/src\/swipe-picker-launch\.js';/);
+});
+
+await test('시작 그래프 크기 상한 (모듈 수 · 바이트)', () => {
+    let bytes = 0; for (const rel of graph.keys()) bytes += fs.statSync(path.join(root, rel)).size;
+    console.log(`  시작 그래프: 모듈 ${graph.size}개 · ${(bytes / 1024).toFixed(0)}KB`);
+    // 10-30 기준 170b690f: 113개 · 1,372KB → 이 고침 뒤 111개 · 1,294KB. 새 기능은 꺼진 동안 동적 import 로 (features.js load 처럼)
+    assert.ok(graph.size <= 112, `모듈 ${graph.size}개`);
+    assert.ok(bytes <= 1320 * 1024, `${bytes} 바이트`);
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

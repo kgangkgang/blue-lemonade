@@ -1,7 +1,7 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
 export const BUILD_VERSION = "8.2.3";
 export const FILE_HASHES = {
-  "index.js": "26122:74dc5f0e:a63c03b0",
+  "index.js": "26210:9d420b23:0783f726",
   "manifest.json": "365:d56957f8:f4e71926",
   "src/addon-files-check.js": "5001:b7fe0df9:d1f21c49",
   "src/addon-layout.js": "2768:fc762257:da2db162",
@@ -723,7 +723,8 @@ export const FILE_HASHES = {
   "src/streamfade.js": "14136:0e2127b6:06593cf1",
   "src/sttheme.js": "21112:b0503cd0:8e5dcb5b",
   "src/styles.js": "17035:b8e6453a:a6c765a6",
-  "src/swipe-picker-translation.js": "17047:ff4fc95a:2ea5d437",
+  "src/swipe-picker-launch.js": "1890:ef1f4da4:906eebe0",
+  "src/swipe-picker-translation.js": "17168:1a473d7b:84996d0f",
   "src/tab-scroll-init.js": "538:96fb9e59:bd3b5c92",
   "src/tab-scroll.css": "968:2091689d:8e8a3f3f",
   "src/tab-scroll.js": "8441:c7345e39:b03f6c71",

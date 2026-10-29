@@ -47,7 +47,7 @@ import { startWorldInfoHelp } from './src/wi-help.js';
 import { startLongpressHelp } from './src/longpress-help.js';
 import { startWebSearchMarks } from './src/websearch.js';
 import { startWorldInfoLinkMark } from './src/wi-link.js';
-import { startSwipePickerTranslation } from './src/swipe-picker-translation.js';
+import { startSwipePickerTranslation } from './src/swipe-picker-launch.js';   // 본 모듈(swipe-picker-translation.js)은 창을 여는 단추를 누를 때 받는다
 // 4.1.2: 설정 창(panel.js 와 거기에만 딸린 모듈 24개 · 310KB)은 설정 창을 처음 열 때 불러온다 — 시작할 때 읽는 모듈 64 → 40개.
 let panelApi = null, panelLoading = null;
 // 못 불러오면 기억을 지워 다음에 누를 때 다시 부른다 (실패한 약속을 붙들고 있으면 새로고침 전까지 서랍이 빈 채였다)

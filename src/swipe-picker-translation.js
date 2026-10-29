@@ -229,7 +229,8 @@ function stopLooking() {
     bodyWatch?.disconnect(); bodyWatch = null;
     clearTimeout(stopTimer); stopTimer = 0;
 }
-function lookForPicker() {
+/** 창 찾기 — 여는 단추를 누를 때 (swipe-picker-launch.js 가 이 모듈을 받은 뒤 부른다) */
+export function lookForPicker() {
     const scan = () => {
         let found = false;
         for (const dialog of document.querySelectorAll('body > dialog.popup.swipe_picker_popup')) found = watchDialog(dialog) || found;
