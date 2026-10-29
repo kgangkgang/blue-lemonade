@@ -39,6 +39,7 @@ jobs:
           node tools/tests/prompt-page-lifecycle.mjs .
           node tools/tests/prompt-progress-counts.mjs .
           node tools/tests/prompt-memory-import.mjs .
+          node tools/tests/prompt-memory-export.mjs .
           node tools/tests/models-add-race.mjs .
           node tools/tests/notes-search-index.mjs .
           node tools/tests/assets-dialog-lifecycle.mjs .

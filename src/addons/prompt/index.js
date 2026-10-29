@@ -4426,7 +4426,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     // scope: 'full'  → 제목 + 본문(주석 포함) 번역을 모두 내보낸다.
     //        'title' → 제목 번역만 내보낸다. 원문 name/content는 매칭 키로
     //                  남겨두되 contentTranslated는 절대 쓰지 않는다.
-    function exportTM(scope) {
+    async function exportTM(scope) {
         const titleOnlyExport = scope === 'title';
         if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('로드된 데이터가 없습니다'); return; }
         const entries = [];
@@ -4461,6 +4461,9 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
             if (typeof toastr!=='undefined') toastr.warning(titleOnlyExport ? '내보낼 제목 번역이 없습니다' : '내보낼 번역이 없습니다');
             return;
         }
+        // 8.2.7 전체 내보내기는 원문 본문을 대조 열쇠로 함께 담는다 — 나누기 전에 알린다 (제목만 내보내기는 원문 본문을 넣지 않아 묻지 않는다)
+        const withSource = entries.filter(e => typeof e.content === 'string' && e.content).length;
+        if (!titleOnlyExport && withSource && !await ask(`전체 내보내기 파일에는 번역문과 함께 원문 ${withSource}개가 그대로 들어가요. 가져올 때 원문이 같은지 대조하는 데 써요.\n\n다른 사람과 나눌 때는 원작자가 나눠도 된다고 한 자료인지 확인해 주세요. 원문 없이 나누려면 「제목만 내보내기」를 써요.`, { ok: '내보내기', cancel: '취소' })) return;
         const srcName = getSourceName(kind, page, idPfx);
         // Everything here is load-bearing: `type` validates the file, `kind`
         // rejects a memory exported from a different source type, `version` is
@@ -4505,7 +4508,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
             { v: 'import', label: '메모리 가져오기' },
         ]);
         if (!choice) return;
-        if (choice === 'title' || choice === 'full') exportTM(choice);
+        if (choice === 'title' || choice === 'full') await exportTM(choice);
         else if (choice === 'import') importTM();
     });
 

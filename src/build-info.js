@@ -200,7 +200,7 @@ export const FILE_HASHES = {
   "src/addons/prompt/connection.js": "11622:6c30609d:ea863f81",
   "src/addons/prompt/current-connection.js": "3055:67fc264b:5c2798bc",
   "src/addons/prompt/guide.js": "24684:bab98ad2:4da0565f",
-  "src/addons/prompt/index.js": "292652:c4eb36fa:e18c7564",
+  "src/addons/prompt/index.js": "293407:060a770e:fc7608b4",
   "src/addons/prompt/localization-ui.js": "7537:4b3b2ae3:7d4f2026",
   "src/addons/prompt/persona-data.js": "4579:b96d5db9:3b8d8ae3",
   "src/addons/prompt/persona.js": "1743:3ad25141:4e82525d",
