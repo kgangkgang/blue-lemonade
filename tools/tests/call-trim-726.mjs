@@ -74,7 +74,7 @@ await test('#13 프롬프트 템플릿: 창을 열 때마다가 아니라 5분�
     const pt = read('src/addons/prompt-template/index.js');
     assert.match(pt, /const REFRESH_TTL = 5 \* 60 \* 1000;/);
     assert.match(pt, /if \(!state\.busy && \(state\.installed === null \|\| Date\.now\(\) - state\.refreshedAt > REFRESH_TTL\)\) refresh\(\)\.catch/);
-    assert.match(pt, /state\.refreshedAt = Date\.now\(\);/);
+    assert.match(pt, /state\.refreshedAt = probeGit [?] Date\.now\(\) : 0;/);   // 1029 git 을 안 본 가벼운 다시 읽기는 시각을 남기지 않아요(창이 다시 읽게)
     assert.match(read('src/addons/models/offer.js'), /if \(changed\.length\) saveSettings\(\);/);
     // 가격 타이머: 설정에 따라 켜고 끈다
     const timers = [];
