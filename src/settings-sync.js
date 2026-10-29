@@ -86,6 +86,7 @@ export function startThemeSettingsSync({ getSalty, save, after } = {}) {
         if (!isObj(salty) || !isObj(remote)) return null;
         const view = layoutMergeView(salty);   // 기기별 배치: 위 칸은 이 기기 배치끼리 견줘요 (device-layouts.js)
         const result = mergeSalty(salty, view(base), view(remote));
+        view.settle();
         base = clone(remote);   // 서버 값까지는 맞췄다 — 이 탭만 가진 것은 다음 저장이 서버로
         if (result.changed) { try { after?.(); } catch (error) { console.warn('[Blue Lemonade] 설정 합친 뒤 다시 적용', error); } }
         return { pulled: result.changed ? 1 : 0, removed: 0, needSave: result.needSave };

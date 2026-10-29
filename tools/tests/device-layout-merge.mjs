@@ -138,6 +138,21 @@ await test('기기별 배치를 안 쓰면 예전처럼 서버 값을 받아요'
     assert.equal(S.getSettings().type.size, 24);
 });
 
+await test('다른 기기가 기기별 배치를 다시 켜고 제 배치를 바꾸면, 열려 있던 이 탭은 서버에 담긴 이 기기 배치를 받아요 (다른 기기 값이 아니라)', async () => {
+    assert.equal(S.getSettings().deviceLayouts.on, false, '앞 시험에서 끈 상태');
+    S.getSettings().type.size = 17; S.saveSettings();   // 끈 동안 함께 쓰는 값 17
+    remote = otherDevice(true, s => { s.deviceLayouts.on = true; S.invalidateSettings(); S.getSettings(); s.type.size = 23; });   // 폰에서 다시 켜고 폰만 23
+    const pcMemory = remote.deviceLayouts.pc.type.size;   // 켜는 기기가 정한 PC 배치 (끄기 전 기억이 있으면 그 값)
+    assert.notEqual(pcMemory, 23);
+    await comeBack();
+    const s = S.getSettings();
+    assert.equal(s.deviceLayouts.on, true);
+    assert.equal(s.type.size, pcMemory, 'PC 위 칸은 서버의 PC 배치 — 폰 값 23 이 아니에요');
+    S.saveSettings();
+    assert.equal(server.deviceLayouts.pc.type.size, pcMemory, 'PC 배치 기억을 폰 값으로 덮지 않아요');
+    assert.equal(server.deviceLayouts.mobile.type.size, 23);
+});
+
 await test('연결: CI 목록에 이 시험', () => {
     assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/device-layout-merge\.mjs \./);
 });

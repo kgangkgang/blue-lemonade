@@ -43,11 +43,14 @@ export function saveDeviceLayout(s) {
 // 세 갈래 합치기(settings-sync.js) 앞에 불러요. 기기별 배치를 쓰면 위 칸의 배치 값은 「그 값을 저장한 기기」 것이라 기기끼리 견주면 안 돼요 —
 // 견주면 다른 기기 글자 크기를 「서버가 바꾼 값」으로 받아, 다음 저장이 그 값을 이 기기 배치에 담았어요(폰 ↔ PC 를 오가면 이 기기 배치가 사라짐).
 // 이 기기 배치 칸을 지금 위 칸으로 맞춘 뒤, 견줄 쪽(서버 · 마지막으로 맞춘 값)의 위 칸을 그쪽에 담긴 「이 기기 배치」로 바꿔 보는 함수를 돌려줘요.
+// 합친 뒤 view.settle(): 이 탭은 꺼 둔 채였는데 다른 기기가 켰으면, 이 기기 배치를 새로 불러온 것처럼 다시 입혀요
+// (그대로 두면 「이 탭에서 방금 켬」으로 보고 위 칸 = 다른 기기 값을 이 기기 배치로 담았어요).
 export function layoutMergeView(local) {
-    const active = sessions.get(local);
-    if (!object(local) || !local.deviceLayouts?.on || !active?.on) return other => other;
+    const active = sessions.get(local), wasOn = object(local) && local.deviceLayouts?.on === true;
+    const settle = () => { if (!wasOn && object(local) && local.deviceLayouts?.on === true) sessions.delete(local); };
+    if (!object(local) || !local.deviceLayouts?.on || !active?.on) return Object.assign(other => other, { settle });
     saveDeviceLayout(local);
-    return other => {
+    return Object.assign(other => {
         if (!object(other) || other.deviceLayouts?.on !== true) return other;
         const mine = other.deviceLayouts[active.device];
         if (!object(mine) || !Object.keys(mine).length) return other;   // 그쪽이 이 기기 배치를 비웠음(테마 모습 초기화) → 위 칸 그대로 견줘 처음 값을 받아요
@@ -59,5 +62,5 @@ export function layoutMergeView(local) {
             out[a][b] = structuredClone(value !== undefined ? value : read(local, path));   // 그쪽이 이 기기 값을 모르면 이 탭 값 = 바꾼 것 없음
         }
         return out;
-    };
+    }, { settle });
 }
