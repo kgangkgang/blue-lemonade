@@ -421,7 +421,7 @@ export const FILE_HASHES = {
   "src/addons/tts/src/name-voice.js": "9782:52d5084a:dd25277f",
   "src/addons/tts/src/paid.js": "5151:654904ec:67fc64ff",
   "src/addons/tts/src/paint-core.js": "3071:0b2a3bf3:65e061dd",
-  "src/addons/tts/src/paint.js": "15390:e01fed4e:405a0fd5",
+  "src/addons/tts/src/paint.js": "15924:dfcede72:9c0e2108",
   "src/addons/tts/src/playback-details.js": "5739:0e707358:42cdb5cf",
   "src/addons/tts/src/player.js": "273628:727812d2:73ef795d",
   "src/addons/tts/src/pregen.js": "39568:fbf9e57e:bcff9ebd",

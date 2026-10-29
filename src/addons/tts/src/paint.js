@@ -199,10 +199,14 @@ function flush() {
     timer = 0;
     if (!observer) { dirty.clear(); return; }
     const t0 = performance.now();
+    // 8.2.7 메시지 요소는 한 조각에 한 번 모아 둔다 — 예전엔 메시지마다 #chat .mes[mesid="…"] 를 문서에서 찾았다(긴 채팅을 연 뒤 폰 4배 300개에 0.27초).
+    //       같은 번호가 둘이면 querySelector 처럼 앞의 것. 표에 없으면 paintMessage 가 예전처럼 찾는다
+    const boxes = new Map();
+    for (const el of document.querySelectorAll('#chat .mes[mesid]')) { const id = mesIdOf(el); if (id !== null && !boxes.has(id)) boxes.set(id, el); }
     // 아래(최근) 메시지부터 — 화면에 보이는 쪽이 먼저
     for (const id of [...dirty].sort((a, b) => b - a)) {
         dirty.delete(id);
-        try { paintMessage(id); } catch (e) { log('err', `화자 색: 칠하기 실패 ${String(e?.message || e).slice(0, 40)}`); }
+        try { paintMessage(id, boxes.get(id) || null); } catch (e) { log('err', `화자 색: 칠하기 실패 ${String(e?.message || e).slice(0, 40)}`); }
         if (dirty.size && performance.now() - t0 > SLICE_MS) { timer = setTimeout(flush, 16); break; }
     }
     observer.takeRecords();   // 우리가 바꾼 것은 다시 부르지 않게
