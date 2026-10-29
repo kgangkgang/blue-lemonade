@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a1aa47054a7e) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build c94472b054e0) */
 /* css/00-base.css */
 :root{--bl-release:"8.2.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -14296,6 +14296,23 @@ body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar {
 }
 body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar img { width: 48px !important; height: 52px !important; border-radius: 8px !important; object-fit: cover; box-shadow: none !important; }
 body.salty #right-nav-panel #HotSwapWrapper .bl-fav-name { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--salty-text); font-size: 12px; line-height: 1.4; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage { position: relative; width: 64px !important; min-width: 64px; max-width: 64px; aspect-ratio: auto; padding-top: 60px; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage img { position: absolute; top: 4px; left: 8px; max-width: none; max-height: none; border-radius: 0 !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_2, .collage_3, .collage_4) img { width: 24px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_3, .collage_4) img { height: 26px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_2, .collage_3, .collage_4) .img_2,
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_4 .img_4 { left: 32px; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_3, .collage_4) .img_3,
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_3, .collage_4) .img_4 { top: 30px; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_3 .img_3 { width: 48px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_1 .img_1 { border-radius: 8px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage .img_1 { border-top-left-radius: 8px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_2 .img_1,
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_3, .collage_4) .img_3 { border-bottom-left-radius: 8px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_2, .collage_3, .collage_4) .img_2 { border-top-right-radius: 8px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_2 .img_2,
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_3 .img_3,
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_4 .img_4 { border-bottom-right-radius: 8px !important; }
 body.salty #right-nav-panel #HotSwapWrapper .hotswap > small { min-height: 32px; text-align: left; font-size: 12px; }
 body.salty #right-nav-panel #charListFixedTop { background: transparent; box-shadow: none; padding-inline: 0 !important; }
 body.salty #right-nav-panel #rm_print_characters_block .character_select {

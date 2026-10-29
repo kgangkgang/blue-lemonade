@@ -122,6 +122,25 @@ body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar {
 }
 body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar img { width: 48px !important; height: 52px !important; border-radius: 8px !important; object-fit: cover; box-shadow: none !important; }
 body.salty #right-nav-panel #HotSwapWrapper .bl-fav-name { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--salty-text); font-size: 12px; line-height: 1.4; }
+/* (hunt-world) 즐겨찾기 그룹 칸: 실리태번 콜라주(.avatar_collage)는 그림을 절대 배치(칸 크기의 %)로 칸 위쪽에 겹쳐 그려 이름표를 덮고 아래는 비었다(리그 실측 60×90, 이름표 위에 그림).
+   캐릭터 칸과 같은 그림 자리(가로 가운데 48×52, 위 4px)에 px 로 놓고 이름표는 그 아래(60px)부터. 칸 폭도 캐릭터 칸처럼 64 (콜라주의 정사각 비율 · 폭 상한을 푼다) */
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage { position: relative; width: 64px !important; min-width: 64px; max-width: 64px; aspect-ratio: auto; padding-top: 60px; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage img { position: absolute; top: 4px; left: 8px; max-width: none; max-height: none; border-radius: 0 !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_2, .collage_3, .collage_4) img { width: 24px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_3, .collage_4) img { height: 26px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_2, .collage_3, .collage_4) .img_2,
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_4 .img_4 { left: 32px; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_3, .collage_4) .img_3,
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_3, .collage_4) .img_4 { top: 30px; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_3 .img_3 { width: 48px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_1 .img_1 { border-radius: 8px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage .img_1 { border-top-left-radius: 8px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_2 .img_1,
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_3, .collage_4) .img_3 { border-bottom-left-radius: 8px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage:is(.collage_2, .collage_3, .collage_4) .img_2 { border-top-right-radius: 8px !important; }
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_2 .img_2,
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_3 .img_3,
+body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage.collage_4 .img_4 { border-bottom-right-radius: 8px !important; }
 body.salty #right-nav-panel #HotSwapWrapper .hotswap > small { min-height: 32px; text-align: left; font-size: 12px; }
 body.salty #right-nav-panel #charListFixedTop { background: transparent; box-shadow: none; padding-inline: 0 !important; }
 body.salty #right-nav-panel #rm_print_characters_block .character_select {
