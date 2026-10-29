@@ -161,6 +161,7 @@ jobs:
           node tools/tests/translator-auto-skip.mjs .
           node tools/tests/translator-buttons-template.mjs .
           node tools/tests/tts-buttons-added.mjs .
+          node tools/tests/head-signature-watch.mjs .
           node tools/tests/translator-group-glossary.mjs .
           node tools/tests/tts-media-card.mjs .
           node tools/tests/tts-settings-migrate.mjs .

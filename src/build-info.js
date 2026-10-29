@@ -55,7 +55,7 @@ export const FILE_HASHES = {
   "src/addons/bookmarks/ui-kit.js": "7803:6bea9cec:659d728b",
   "src/addons/bookmarks/view-mode.js": "3586:a8e6b1a0:10cde9d0",
   "src/addons/bookmarks/viewers.js": "19549:ceeea4cd:94db4b12",
-  "src/addons/customstyle/head-signature.js": "1985:874c37b9:8127002d",
+  "src/addons/customstyle/head-signature.js": "3512:5c69fdec:8d3f0d06",
   "src/addons/customstyle/index.js": "29979:3232ac9e:a394d4a1",
   "src/addons/customstyle/style.css": "3793:a55698b3:63ca622a",
   "src/addons/direction/index.js": "125157:ef018f43:77ea2e60",
