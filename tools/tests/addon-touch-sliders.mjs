@@ -63,10 +63,10 @@ test('선택자가 가리키는 창 · 슬라이더가 실제로 있어요', () 
     assert.match(read('src/addons/prompt/settings-ui.js'), /pt-orig-size/);
     assert.match(read('src/capture-options.js'), /type="range"[^`]*data-capture-option|data-capture-option[^`]*type="range"/);
 });
-test('index.js 가 시작할 때 한 번 걸어요', () => {
+test('index.js 가 시작할 때 한 번 걸어요 (시작 경계 startSafe 로 감싸도)', () => {
     const src = read('index.js');
     assert.match(src, /import \{ startAddonTouchSliders \} from '\.\/src\/touch-sliders\.js';/);
-    assert.equal((src.match(/^\s*startAddonTouchSliders\(\);/gm) || []).length, 1);
+    assert.equal((src.match(/^\s*(?:startSafe\('startAddonTouchSliders', \(\) => \{ )?startAddonTouchSliders\(\);/gm) || []).length, 1);
 });
 assert.ok(read('.github/workflows/release-check.yml').includes('node tools/tests/addon-touch-sliders.mjs .'), 'release-check.yml 에 등록');
 console.log(`애드온 슬라이더 손가락 보호: ${pass}개 통과했어요.`);
