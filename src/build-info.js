@@ -266,7 +266,7 @@ export const FILE_HASHES = {
   "src/addons/translator/preview-frames.js": "9876:8c8502d0:1265453d",
   "src/addons/translator/prompt-reset.js": "2979:b67d2a92:5c1522b0",
   "src/addons/translator/reasoning-view.js": "8594:234e9b61:f50b69b7",
-  "src/addons/translator/remote.js": "35912:9d7006b7:c6e45348",
+  "src/addons/translator/remote.js": "35990:a45ec895:66fa4d72",
   "src/addons/translator/render-completion.js": "1746:5ddbaa71:016066f8",
   "src/addons/translator/rp-lines.js": "6262:f00d0cce:a87f184e",
   "src/addons/translator/selection/book-transfer-state.js": "2493:8941a52e:d616d839",

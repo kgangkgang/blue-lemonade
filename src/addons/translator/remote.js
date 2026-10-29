@@ -602,6 +602,7 @@ export function createRemote(host) {
         saveLayout();
         mount();
         render();
+        host.changed?.();   // 설정 카드의 자리 고르기도 맞춰요
         if (menu && !menu.hidden) { fillMenu(); placeMenu(); }
     }
 
