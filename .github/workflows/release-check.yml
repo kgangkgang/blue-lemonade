@@ -356,6 +356,7 @@ jobs:
           node tools/tests/direction-place.mjs .
           node tools/tests/prompt-anchors.mjs .
           node tools/tests/an-anchor-read-cost.mjs .
+          node tools/tests/st-has-anchor.mjs .
           node tools/tests/dem-sky.mjs .
           node tools/tests/dem-skin-perf.mjs .
           node tools/tests/mix-selection.mjs .

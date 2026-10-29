@@ -77,6 +77,7 @@ import { badgeTextHit } from './src/badge-hit.js';
 import { setFeatureHooks } from './src/features.js';
 import { startThemeSettingsSync } from './src/settings-sync.js';
 import { deferPreviewRules, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, startAnchorGate, widenSelectorCache, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
+import { rebaseBodyHasRules } from './src/st-has-anchor.js';   // 8.2.4 실리태번 body:has(…) 서랍 규칙을 holder 기준으로(가운데 서랍을 연 뒤 채팅 전체 다시 계산 막기)
 
 function mountDrawer() {
     const host = document.getElementById('extensions_settings2') || document.getElementById('extensions_settings');
@@ -215,6 +216,7 @@ jQuery(() => {
     startSafe('deferPanelHasRules', () => { deferPanelHasRules(); }); // 서랍 · 팝업 전용 :has() 규칙은 서랍 · 팝업이 열려 있을 때만 (lite.js, 2.8.4)
     startSafe('startMenuOpenMark', () => { startMenuOpenMark(); }); // ··· 메뉴가 열린 메시지에 bl-menu-open (style.css 의 :has() 대신, lite.js)
     startSafe('startAnchorGate', () => { startAnchorGate(); });   // ≡ · ✦ 메뉴가 열려 있을 때만 입력판에 앵커 이름 (2.9.4, lite.js)
+    startSafe('rebaseBodyHasRules', () => { rebaseBodyHasRules(); }); // 8.2.4 가운데 서랍을 한 번 열면 body 가 :has() 기준이 되어 프롬프트 토글 · 채팅 변화마다 메시지 요소 전부를 다시 계산했다 (st-has-anchor.js)
     startSafe('mountDrawer', () => { mountDrawer(); });
     // 8.0.7 작가 노트 「페르소나 위치」 · 「캐릭터 설명 위치」 — 테마 화면 켜짐과 따로(확장만 모드에서도), 테마를 끄면 본체 위치로 (an-anchor.js)
     import('./src/an-anchor.js').then(m => m.startNoteAnchor()).catch(error => console.warn('[Blue Lemonade] 작가 노트 자리 맞추기', error));

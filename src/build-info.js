@@ -1,7 +1,7 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
 export const BUILD_VERSION = "8.2.3";
 export const FILE_HASHES = {
-  "index.js": "30105:9d183f45:d091a4f1",
+  "index.js": "30561:a4615cf6:6da28685",
   "manifest.json": "365:d56957f8:f4e71926",
   "src/addon-files-check.js": "5001:b7fe0df9:d1f21c49",
   "src/addon-layout.js": "2768:fc762257:da2db162",
@@ -718,6 +718,7 @@ export const FILE_HASHES = {
   "src/show-more-watch.js": "1968:1131245b:7389446a",
   "src/splash.js": "19344:c97fc557:9dcea6a3",
   "src/squared-buttons.js": "13676:c8f4b4bc:d848c4a8",
+  "src/st-has-anchor.js": "7275:8dd8ca27:b12ba93e",
   "src/st-solid.js": "5312:22b0ac68:45060844",
   "src/storage-report.js": "12921:e870a096:2f44b56c",
   "src/stream-follow.js": "5680:7e8695b2:8ecf21b7",
