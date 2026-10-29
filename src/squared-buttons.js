@@ -102,6 +102,24 @@ export function paddingOnly(record) {
     return changed;
 }
 
+// (10-29 perf-persona) 테마 자신의 성능 표식(#chat 의 bl-chat-light · bl-chat-covered)만 바뀐 class 기록은 단추의 모양 · 보임을 바꾸지 않는다.
+//   예전에는 그 기록도 #chat 을 뿌리로 넣어 메시지 300개의 후보(.mes_button 등 수천 개)를 offsetParent 로 다시 쟀다 — 서랍 덮개(chat-light.js)가
+//   #chat 을 content-visibility:hidden 으로 둔 동안에는 그 읽기가 하나하나 건너뛴 내용을 그 자리에서 계산하게 해, 폰 리그에서 서랍 열기가 0.25 → 3.5초(재계산 284번)가 됐다.
+const PERF_MARKS = new Set(['bl-chat-light', 'bl-chat-covered']);
+export function perfMarkOnly(record) {
+    if (record.type !== 'attributes' || record.attributeName !== 'class' || typeof record.target?.getAttribute !== 'function') return false;
+    const words = v => new Set(String(v || '').split(/\s+/).filter(Boolean));
+    const before = words(record.oldValue), after = words(record.target.getAttribute('class'));
+    let changed = false;
+    for (const c of new Set([...before, ...after])) {
+        if (before.has(c) === after.has(c)) continue;
+        if (!PERF_MARKS.has(c)) return false;
+        changed = true;
+    }
+    return changed;
+}
+const COVERED = '#chat.bl-chat-covered';
+
 export function watchSquaredButtons(doc, host) {
     const style = doc.createElement('style');
     style.dataset.blSquaredStyle = '';
@@ -150,6 +168,8 @@ export function watchSquaredButtons(doc, host) {
             if (!el || !el.isConnected || el.closest?.('style,script')) continue;
             // Streaming changes a message repeatedly; inspect it once generation ends.
             if (doc.body.dataset.generating && el.closest?.('#chat')) { waiting.add(el.closest('.mes') || el); continue; }
+            // (perf-persona) 서랍이 덮어 건너뛰는 채팅 안은 보이지 않는다 — 덮개가 걷힌 뒤에 잰다(건너뛴 내용을 재면 그 자리에서 계산을 강제한다)
+            if (el.closest?.(COVERED)) { waiting.add(el.closest('.mes') || el); continue; }
             // Opening a closed drawer re-checks that subtree.
             if (el.closest?.('.drawer-content.closedDrawer')) continue;
             ready.add(el);
@@ -165,6 +185,7 @@ export function watchSquaredButtons(doc, host) {
     const observer = new host.MutationObserver(records => {
         const pending = new Set();
         for (const r of records) {
+            if (perfMarkOnly(r)) { if (!r.target.classList?.contains('bl-chat-covered') && !doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
             if (r.attributeName === 'data-generating') { if (!doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
             if (r.type === 'childList') r.addedNodes.forEach(node => pending.add(node)); else if (!paddingOnly(r)) pending.add(r.target);
         }

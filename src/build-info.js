@@ -714,7 +714,7 @@ export const FILE_HASHES = {
   "src/show-more-tap.js": "4564:e82a71d4:fe68ce88",
   "src/show-more-watch.js": "1968:1131245b:7389446a",
   "src/splash.js": "19344:c97fc557:9dcea6a3",
-  "src/squared-buttons.js": "11508:99e7db1f:711b6819",
+  "src/squared-buttons.js": "13276:690e16b6:22214f86",
   "src/st-solid.js": "5312:22b0ac68:45060844",
   "src/storage-report.js": "12921:e870a096:2f44b56c",
   "src/stream-follow.js": "5639:70759422:927bc111",
