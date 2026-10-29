@@ -14,6 +14,36 @@ const foreign = () => !!globalThis.webpackChunkextension_mermaid || Array.from(d
 export const duplicate = foreign();
 const blocks = () => Array.from(document.querySelectorAll(BLOCK));
 
+// 10-30 묶어 둔 mermaid 11.12.3 은 아래 세 도표에서 끝없이 돌아 탭이 멈춰요(실리태번은 마지막 채팅을 다시 여니 켤 때마다).
+// mermaid 11.15.0 · 11.16.1 보안 고침과 같은 조건만 그리기 전에 막아요: 간트가 모든 요일을 빼기 · xychart x 축 두 값이 같음(→ 못 그림),
+// radar ticks 가 32 넘음(→ 32 로, 새 판과 같은 결과). 메시지 원문은 바꾸지 않아요.
+const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+function guardSource(source) {
+    const lines = source.replace(/^\s*---\r?\n[\s\S]*?\r?\n---[^\n]*/, '').split(/[\n;]/).map(line => line.trim()).filter(line => line && !line.startsWith('%%'));
+    const kind = (lines[0] || '').toLowerCase();
+    if (/^gantt\b/.test(kind)) {
+        let excludes = [], weekend = 'saturday';
+        for (const line of lines) {
+            const ex = /^excludes\s([^#]+)/i.exec(line), we = /^weekend\s+(friday|saturday)\b/i.exec(line);
+            if (ex) excludes = ex[1].trim().toLowerCase().split(/[\s,]+/);
+            if (we) weekend = we[1].toLowerCase();
+        }
+        const off = new Set(excludes.filter(day => DAYS.includes(day)));
+        if (excludes.includes('weekends')) for (const day of weekend === 'friday' ? ['friday', 'saturday'] : ['saturday', 'sunday']) off.add(day);
+        if (off.size === DAYS.length) throw Error('간트가 모든 요일을 빼서 그리지 않아요.');
+    } else if (/^xychart(?:-beta)?\b/.test(kind)) {
+        for (const line of lines) {
+            const range = /^x-axis\b.*?([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*-->\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))$/i.exec(line);
+            if (range && Number(range[1]) === Number(range[2])) throw Error('xychart x 축의 두 값이 같아서 그리지 않아요.');
+        }
+    } else if (/^radar-beta\b/.test(kind)) {
+        const clamped = source.replace(/^(\s*ticks\s+)(\S+)/gim, (all, head, value) => Number(value) > 32 ? head + '32' : all);
+        if ([...clamped.matchAll(/\bticks\s+([\d.eE+]+)/gi)].some(match => Number(match[1]) > 32)) throw Error('radar ticks 가 너무 커서 그리지 않아요.');
+        return clamped;
+    }
+    return source;
+}
+
 function load() {
     if (foreign()) { phase = 'other'; paint(); return Promise.resolve(false); }
     if (phase === 'ready') return Promise.resolve(true);
@@ -64,7 +94,7 @@ async function renderBlock(code, retry) {
     stage.className = 'bl-mermaid-stage'; stage.setAttribute('aria-hidden', 'true');
     document.body.append(stage);
     try {
-        const { svg } = await globalThis.__blMermaidEngine.render('bl-mermaid-' + (++serial), source, stage);
+        const { svg } = await globalThis.__blMermaidEngine.render('bl-mermaid-' + (++serial), guardSource(source), stage);
         if (!code.isConnected || !code.closest('#chat') || code.textContent !== source || foreign()) return;
         const output = document.createElement('div'); output.className = 'bl-mermaid-output';
         // Mermaid strict mode sanitizes SVG. Never attach interactive bindFunctions.

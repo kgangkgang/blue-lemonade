@@ -396,6 +396,7 @@ jobs:
           node tools/tests/regexlink-engine.mjs .
           node tools/tests/regexlink-fruit.mjs .
           node tools/tests/mermaid-addon.mjs .
+          node tools/tests/mermaid-dos-guard.mjs .
           node tools/tests/fruit-localization.mjs
           node tools/tests/fruit-family.mjs .
           node tools/tests/prompt-choice-guard.mjs .

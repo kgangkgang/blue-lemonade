@@ -63,7 +63,7 @@ export const FILE_HASHES = {
   "src/addons/direction/style.css": "39845:50555bd7:c261721c",
   "src/addons/direction/typing.js": "3600:231579db:782de8b9",
   "src/addons/list-sync.js": "4902:487dc198:b4d6512a",
-  "src/addons/mermaid/index.js": "8963:2a351705:f617c845",
+  "src/addons/mermaid/index.js": "11206:ee9504d5:f09d08c3",
   "src/addons/mermaid/source/src/index.js": "394:f55b3e28:fa2de41b",
   "src/addons/mermaid/source/src/style.css": "132:d1d11072:18e27703",
   "src/addons/mermaid/source/upstream/src/index.js": "1530:03ea7c91:0c896b35",
