@@ -63,7 +63,7 @@
 .bl-addon-position-preview span { padding:8px; border:1px solid var(--salty-line); border-radius:8px; }
 .bl-addon-position-preview .bl-preview-location, .bl-wand-preview-input strong { outline:2px solid var(--salty-accent); border-radius:8px; padding:8px; }
 .bl-wand-preview p { margin:8px 0; }
-body.bl-hide-perf-timer #lt-wand-button, body.bl-hide-perf-log #rl-wand-button { display:none!important; }
+html.bl-hide-perf-timer #lt-wand-button, html.bl-hide-perf-log #rl-wand-button { display:none!important; }
 
 @media(max-width:640px){.bl-capture-preview{order:-1;max-height:44dvh;overflow:auto}.bl-capture-dialog footer{gap:8px}}
 

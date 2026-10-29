@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 07324d94498e) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 7e768be5f569) */
 /* css/00-base.css */
 :root{--bl-release:"8.2.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -21596,7 +21596,7 @@ html.bl-roleicon-picking body :is(.mes_buttons > *):is(#bl-s, *):not(.bl-roleico
 .bl-addon-position-preview span { padding:8px; border:1px solid var(--salty-line); border-radius:8px; }
 .bl-addon-position-preview .bl-preview-location, .bl-wand-preview-input strong { outline:2px solid var(--salty-accent); border-radius:8px; padding:8px; }
 .bl-wand-preview p { margin:8px 0; }
-body.bl-hide-perf-timer #lt-wand-button, body.bl-hide-perf-log #rl-wand-button { display:none!important; }
+html.bl-hide-perf-timer #lt-wand-button, html.bl-hide-perf-log #rl-wand-button { display:none!important; }
 @media(max-width:640px){.bl-capture-preview{order:-1;max-height:44dvh;overflow:auto}.bl-capture-dialog footer{gap:8px}}
 .salty-panel .bl-message-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:12px 0; width:100%; }
 .salty-panel .bl-message-actions > button { position:static; display:flex; align-items:center; justify-content:center; width:100%; min-width:0; min-height:44px; height:auto; margin:0; padding:10px 12px; white-space:normal; overflow-wrap:anywhere; line-height:1.4; box-sizing:border-box; }

@@ -157,7 +157,7 @@ export const FILE_HASHES = {
   "src/addons/perf/hub.js": "9301:f228322b:33bf7c65",
   "src/addons/perf/ledger-view.js": "5406:ebe513dc:4eec4ba9",
   "src/addons/perf/loadtimer.js": "20199:476b218f:90dba4fe",
-  "src/addons/perf/menu.js": "1153:ca8762e5:b1e0e3dd",
+  "src/addons/perf/menu.js": "1394:30a3c17d:a2833964",
   "src/addons/perf/morph.js": "15302:d29b66df:419a2e96",
   "src/addons/perf/panel.js": "60760:43ffe0e7:d02d32eb",
   "src/addons/perf/perfassist.js": "18684:a2fad17e:9fa40607",
@@ -766,6 +766,6 @@ export const FILE_HASHES = {
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "9370:2d815bc8:4cd0d636",
   "src/worldinfo-light.js": "2949:e91008f8:04eead81",
-  "style-ext.css": "318792:d560c39f:3089293c",
-  "style.css": "1841887:25a168ca:722688d1"
+  "style-ext.css": "318792:2ba1890a:e93466f6",
+  "style.css": "1841887:eb8dc67c:7acc80d1"
 };
