@@ -121,6 +121,30 @@ export function perfMarkOnly(record) {
     return changed;
 }
 const COVERED = '#chat.bl-chat-covered';
+// 10-30 perf-icon: 속성을 같은 값으로 다시 쓴 기록(oldValue 가 지금 값과 같음)은 모양 · 보임을 바꾸지 않아요.
+//   실리태번 refreshSwipeButtons 는 메시지가 하나 붙을 때마다 넘길 수 없는 메시지 전부에 classList.remove('swipes_visible', 'last_swipe') 를 불러
+//   (없는 클래스를 빼도 class 기록이 나요) 메시지마다 기록이 하나씩 났고, 이 감시는 그때마다 메시지 하나하나를 다시 쟀어요(긴 채팅에서 메시지 1개 그리기마다 150번 남짓).
+//   한 콜백에 같은 요소의 기록이 여럿이면 그중 하나라도 값이 달라졌으면 남으니, 「콜백 사이에 실제로 바뀐 것」만 남는 셈이에요.
+// 같은 까닭으로, 실리태번이 메시지(.mes)에 다는 스와이프 표시 클래스(fade · last_swipe · swipes_visible)만 바뀐 기록도 다시 재지 않아요 —
+//   실리태번 style.css 와 테마 css 가 이 클래스로 고르는 것은 .swipe_left · .swipe_right · .swipes-counter 뿐이고(투명도 · 숨김 · 전환),
+//   그 셋은 이 감시가 처음부터 보지 않는 구역 · 클래스예요(SKIP_AREA · SKIP_CLASS 의 count). 「더 보기」로 메시지 100개를 붙이면 fade 가 메시지 전부에 붙어 150번 다시 쟀어요.
+const SWIPE_MARKS = new Set(['fade', 'last_swipe', 'swipes_visible']);
+export function swipeMarkOnly(record) {
+    if (record.type !== 'attributes' || record.attributeName !== 'class' || typeof record.target?.getAttribute !== 'function' || !record.target.classList?.contains('mes')) return false;
+    const words = v => new Set(String(v || '').split(/\s+/).filter(Boolean));
+    const before = words(record.oldValue), after = words(record.target.getAttribute('class'));
+    if (!before.has('mes')) return false;
+    let changed = false;
+    for (const c of new Set([...before, ...after])) {
+        if (before.has(c) === after.has(c)) continue;
+        if (!SWIPE_MARKS.has(c)) return false;
+        changed = true;
+    }
+    return changed;
+}
+export function unchangedAttr(record) {
+    return record.type === 'attributes' && record.oldValue !== undefined && typeof record.target?.getAttribute === 'function' && record.oldValue === record.target.getAttribute(record.attributeName);
+}
 // 10-30 perf-gaps: 긴 채팅 가볍게(chat-light.js)는 화면 밖 메시지(#chat > .mes)에 content-visibility:auto 를 걸어 안쪽 계산을 건너뛰어요.
 //   그 안의 후보에 offsetParent 를 물으면 크롬이 그 메시지만 그 자리에서 풀어 계산해요 — 메시지 하나마다 스타일 · 배치 한 번씩이라
 //   긴 채팅 300 열기(폰 4배)에서 배치 300번 · 약 5초, body class 가 바뀐 뒤 훑기(스크롤 중 데우스 하늘 표시 등)에서 0.5~6초였어요.
@@ -216,6 +240,7 @@ export function watchSquaredButtons(doc, host) {
             if (perfMarkOnly(r) && skippedMes.size && String(r.oldValue || '').split(' ').includes('bl-chat-light') && !r.target.classList?.contains('bl-chat-light')) { for (const mes of skippedMes) pending.add(mes); skippedMes.clear(); }
             if (perfMarkOnly(r)) { if (!r.target.classList?.contains('bl-chat-covered') && !doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
             if (r.attributeName === 'data-generating') { if (!doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
+            if (unchangedAttr(r) || swipeMarkOnly(r)) continue;   // 10-30 perf-icon: 같은 값을 다시 쓴 기록 · 스와이프 표시만 바뀐 메시지는 다시 재지 않아요
             if (r.type === 'childList') r.addedNodes.forEach(node => pending.add(node)); else if (!paddingOnly(r)) pending.add(r.target);
         }
         queueMany(pending);
