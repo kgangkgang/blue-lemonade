@@ -388,6 +388,7 @@ jobs:
           node tools/tests/same-value-hidden.mjs .
           node tools/tests/longpress-fab-drag.mjs .
           node tools/tests/reader-form-safe-area.mjs .
+          node tools/tests/perf-copy-http.mjs .
           node tools/tests/weather-amount.mjs .
           node tools/tests/weather-coverage.mjs .
           node tools/tests/weather-retired.mjs .

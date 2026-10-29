@@ -8,6 +8,7 @@ import { listEntries, getEntry, listDaily, clearEntries, clearDaily, repriceDail
 import { mergeEntries } from './entry-order.js';
 import { onEntry } from './capture.js';
 import * as budget from './budget.js';
+import { copyPlain } from './copy.js';   // 8.2.7 http 폰 복사
 import { main_api } from '../../../../../../../script.js';
 import { textgenerationwebui_settings, getTextGenServer, getTextGenModel } from '../../../../../../textgen-settings.js';
 import { nai_settings } from '../../../../../../nai-settings.js';
@@ -923,13 +924,10 @@ function renderDetail(entry) {
         <div class="rl-messages">${params}</div>`;
 }
 
+// 8.2.7 http:// 로 연 폰(LAN)은 clipboard 가 없어 늘 실패했어요 — copyPlain 이 옛 복사 명령으로 대신해요
 async function copyText(text, label) {
-    try {
-        await navigator.clipboard.writeText(text);
-        toast('success', `${label}을 복사했어요.`);
-    } catch {
-        toast('warning', '복사하지 못했어요. 글을 직접 골라서 복사해 주세요.');
-    }
+    if (await copyPlain(text)) toast('success', `${label}을 복사했어요.`);
+    else toast('warning', '복사하지 못했어요. 글을 직접 골라서 복사해 주세요.');
 }
 
 // ── 집계 ────────────────────────────────────────────────────

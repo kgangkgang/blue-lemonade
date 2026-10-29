@@ -4,6 +4,7 @@
 // 확장별 "받아서 실행하기까지" 걸린 시간을 구한다. 앱 준비(APP_READY)와 첫 채팅이 그려진 시각도 같이 적는다.
 // 폰에서 잠깐 켜 두고 숫자를 보는 용도라, 설정은 없고 켜질 때마다 결과 창이 한 번 뜬다. 마법봉 메뉴 → 로딩 시간 으로 다시 볼 수 있다.
 import { pane } from './hub.js';
+import { copyPlain } from './copy.js';   // 8.2.7 http 폰 복사
 import { eventSource, event_types, saveSettingsDebounced } from '../../../../../../../script.js';
 import { extension_settings, getContext } from '../../../../../../extensions.js';
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
@@ -285,12 +286,9 @@ async function showReport() {
     const root = document.createElement('div');
     root.innerHTML = render(data);
     root.querySelector('.lt-copy')?.addEventListener('click', async () => {
-        try {
-            await navigator.clipboard.writeText(asText(data));
-            toastr.success('복사했어요.', TITLE);
-        } catch {
-            toastr.warning('복사하지 못했어요.', TITLE);
-        }
+        // 8.2.7 http:// 로 연 폰(LAN)은 clipboard 가 없어 늘 실패했어요 — copyPlain 이 옛 복사 명령으로 대신해요
+        if (await copyPlain(asText(data))) toastr.success('복사했어요.', TITLE);
+        else toastr.warning('복사하지 못했어요.', TITLE);
     });
     await callGenericPopup(root, POPUP_TYPE.TEXT, '', { okButton: '닫기', wide: true, allowVerticalScrolling: true });
 }
