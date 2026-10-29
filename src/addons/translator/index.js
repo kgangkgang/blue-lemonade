@@ -1,6 +1,6 @@
 import { maskTranslatorNotes } from './translation-notes.js';
 // Modified 2026-09-24: Blue Lemonade bundled adapter; original settings and translation DB retained.
-import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows } from './preset-data.js';
+import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows, presetEndpointFields, withoutEndpoints } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
 import { observeEventCompletion } from './render-completion.js';
 import { keepChatReadingPosition, readerRestsIn } from '../../chat-reading-position.js';   // 7.7.4 readerRestsIn: 손으로 굴리는 동안 미리 보기 그림을 미룬다
@@ -86,7 +86,7 @@ import { power_user } from '../../../../../../power-user.js';           // [1.6.
 import { getWorldInfoPrompt, getSortedEntries } from '../../../../../../world-info.js';   // [1.6.0] 보내기 번역 참고: 월드인포 (건조 실행) · [1.8.4] 용어집: 키워드 뽑기
 import { SECRET_KEYS, secret_state } from '../../../../../../secrets.js';
 import { oai_settings } from '../../../../../../openai.js';
-import { POPUP_TYPE, callGenericPopup } from '../../../../../../popup.js';
+import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../popup.js';
 import { SlashCommandParser } from '../../../../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../../../../slash-commands/SlashCommand.js';
 import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../../../../../slash-commands/SlashCommandArgument.js';
@@ -9739,6 +9739,24 @@ class PresetManager {
             if (!validImport(data, defaultSettings)) {
                 toastr.error('유효하지 않은 JSON 파일입니다.');
                 return;
+            }
+
+            // 실리태번 프리셋 가져오기처럼: 프록시 · 커스텀 주소가 든 프리셋은 그대로 둘지 먼저 묻는다 (기본 = 주소 빼기)
+            const endpoints = presetEndpointFields(data.presets);
+            if (endpoints.length) {
+                const choice = await callGenericPopup(
+                    `가져올 프리셋에 프록시 · 커스텀 주소 설정이 들어 있어요: ${endpoints.join(', ')}
+
+` +
+                    `그대로 가져와서 그 프리셋을 고르면 번역할 글과 저장된 키 · 프록시 비밀번호가 파일에 적힌 주소로 가요. 직접 만든 파일이 아니면 주소를 빼고 가져오세요.`,
+                    POPUP_TYPE.CONFIRM, '',
+                    { okButton: '주소 빼고 가져오기', cancelButton: '그대로 가져오기', customButtons: [{ text: '가져오기 취소', result: POPUP_RESULT.CANCELLED, appendAtEnd: true }] }
+                );
+                if (choice !== POPUP_RESULT.AFFIRMATIVE && choice !== POPUP_RESULT.NEGATIVE) {
+                    toastr.info('가져오기가 취소되었습니다.');
+                    return;
+                }
+                if (choice === POPUP_RESULT.AFFIRMATIVE) data.presets = withoutEndpoints(data.presets);
             }
 
             const confirm = await callGenericPopup(

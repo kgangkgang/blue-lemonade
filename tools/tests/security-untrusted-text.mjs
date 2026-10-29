@@ -133,4 +133,44 @@ await t('장면 소리 · 분위기 음악 파일 바꾸기 · 빼기: 가져온
     assert.deepEqual(posts, [['/api/files/delete', { path: 'user/files/bl-scene-rain-1700000000000.mp3' }], ['/api/files/delete', { path: 'user/files/bl-scene-music-sad-1700000000001.ogg' }]], '이 테마가 올린 파일은 그대로 지워요');
 });
 
+// ───────── 3. 공유 설정으로 키가 새는 길 ─────────
+await t('번역기 백업 가져오기: 프록시 · 커스텀 주소가 든 프리셋은 먼저 묻고, 기본으로 주소를 빼요 (실리태번 프리셋 가져오기와 같게)', async () => {
+    const src = read('src/addons/translator/index.js');
+    const data = await import(pathToFileURL(path.join(root, 'src/addons/translator/preset-data.js')).href);
+    const method = slice(src, 'async importFromJson(file) {');
+    const file = { text: async () => JSON.stringify({ version: 1, customPrompts: [], presets: [
+        { id: 'p1', name: '받은 프리셋', settings: { llm_provider: 'custom', custom_url: 'https://relay.example.invalid/v1', use_reverse_proxy: true, reverse_proxy_url: 'https://proxy.example.invalid', llm_model: 'm' } },
+        { id: 'p2', name: '주소 없는 프리셋', settings: { llm_provider: 'openai', llm_model: 'gpt' } },
+    ] }) };
+    const run = async (answers) => {
+        const box = vm.createContext({
+            asked: [], extensionSettings: {}, promptManager: null, saveSettingsDebounced() {}, toastr: { info() {}, error() {}, success() {} },
+            POPUP_TYPE: { CONFIRM: 2 }, POPUP_RESULT: { AFFIRMATIVE: 1, NEGATIVE: 0, CANCELLED: null },
+            defaultSettings: { llm_provider: 'openai', llm_model: '', custom_url: '', use_reverse_proxy: false, reverse_proxy_url: '', reverse_proxy_password: '' },
+            ...data, structuredClone,
+        });
+        box.callGenericPopup = async (text, type, value, options) => { box.asked.push({ text, options }); return answers.shift(); };
+        vm.runInContext(`this.owner = { presets: [], updatePresetDropdown() {}, ${method} };`, box);
+        await box.owner.importFromJson(file);
+        return box;
+    };
+    // 주소 빼기(첫 단추) → 개수 확인(예)
+    let box = await run([1, true]);
+    assert.equal(box.asked.length, 2, '주소 확인 창이 먼저 떠요');
+    assert.match(box.asked[0].text, /custom_url, use_reverse_proxy, reverse_proxy_url/);
+    assert.equal(box.asked[0].options.okButton, '주소 빼고 가져오기');
+    const kept = box.extensionSettings.presets;
+    assert.equal(kept.length, 2, '프리셋은 다 가져와요');
+    for (const field of ['custom_url', 'use_reverse_proxy', 'reverse_proxy_url']) assert.ok(!(field in kept[0].settings), `${field} 가 남았어요`);
+    assert.equal(kept[0].settings.llm_model, 'm', '주소 말고 다른 설정은 그대로');
+    // 그대로 가져오기(둘째 단추) → 사용자가 고른 대로 남겨요
+    box = await run([0, true]);
+    assert.equal(box.extensionSettings.presets[0].settings.custom_url, 'https://relay.example.invalid/v1');
+    // 취소 · Esc → 아무것도 안 바뀜
+    box = await run([null]);
+    assert.equal(box.asked.length, 1); assert.equal(box.extensionSettings.presets, undefined);
+    // 주소 없는 파일은 예전처럼 개수 확인 하나만
+    assert.deepEqual(data.presetEndpointFields([{ id: 'x', name: 'x', settings: { llm_provider: 'openai' } }]), []);
+});
+
 console.log(`security-untrusted-text: ${n} passed`);

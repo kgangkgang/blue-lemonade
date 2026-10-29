@@ -23,6 +23,17 @@ export function validImport(data, defaults) {
         && (!Object.hasOwn(data, 'customPrompts') || Array.isArray(data.customPrompts) && data.customPrompts.every(isPrompt))
         && (!Object.hasOwn(data, 'presets') || Array.isArray(data.presets) && data.presets.every(preset => isPreset(preset) && validSettings(preset.settings, defaults)));
 }
+// 가져온 프리셋의 연결 주소 칸 (실리태번 프리셋 가져오기의 sensitiveFields 와 같은 뜻). 그대로 고르면 번역할 글과
+// 실리태번에 저장된 커스텀 키(custom_url) · 지금 쓰는 프록시 비밀번호(reverse_proxy_url)가 파일이 정한 주소로 가요.
+export const ENDPOINT_FIELDS = ['custom_url', 'use_reverse_proxy', 'reverse_proxy_url', 'reverse_proxy_password'];
+export function presetEndpointFields(presets) {
+    const found = new Set();
+    for (const preset of Array.isArray(presets) ? presets : []) for (const field of ENDPOINT_FIELDS) if (isRecord(preset?.settings) && preset.settings[field]) found.add(field);
+    return ENDPOINT_FIELDS.filter(field => found.has(field));
+}
+export function withoutEndpoints(presets) {
+    return presets.map(preset => { const copy = structuredClone(preset); for (const field of ENDPOINT_FIELDS) delete copy.settings[field]; return copy; });
+}
 export function exportPresets(presets) {
     // Local presets may intentionally switch proxy credentials. Only shared files omit the password.
     return validPresetList(presets).map(preset => {
