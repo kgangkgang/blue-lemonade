@@ -702,7 +702,7 @@ export const FILE_HASHES = {
   "src/sent-tokens.js": "6732:47259993:f6603f0c",
   "src/setting-locks.js": "1456:cbc36430:0ef5054e",
   "src/settings-dialog.js": "994:29aceab3:701cd0e4",
-  "src/settings-differences.js": "9480:ce023beb:6943e0a2",
+  "src/settings-differences.js": "9949:06289490:bf83ecc4",
   "src/settings-editor.js": "8589:6aa54ddc:6690b32a",
   "src/settings-favorites.js": "3202:43eff96b:1a42f5d8",
   "src/settings-history.js": "3491:c0f06c71:b7a64e71",

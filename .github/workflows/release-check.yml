@@ -454,6 +454,7 @@ jobs:
           node tools/tests/settings-merge-edges.mjs .
           node tools/tests/settings-held.mjs .
           node tools/tests/device-layout-merge.mjs .
+          node tools/tests/settings-changes-map.mjs .
           node tools/tests/sent-tokens-edges.mjs .
           node tools/tests/bookmarks-attach-edges.mjs .
           node tools/tests/tts-pair-edges.mjs .

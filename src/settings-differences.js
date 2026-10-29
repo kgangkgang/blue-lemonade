@@ -97,6 +97,9 @@ export function settingRoute(path) {
     if (scope === 'markdown') return {tab:'text',sub:'markdown'};
     if (['dialogue','em','strong','ui','code','strike'].includes(scope)) return {tab:'text',sub:scope};
     if (scope === 'usageMode') return {tab:'theme',sub:'etc'};
+    if (scope === 'updateCheck') return {tab:'theme',sub:'update'};
+    if (['headSwitchRows','koUi','longpressHelp'].includes(scope)) return {tab:'chat',sub:'etc'};   // 채팅 › 기타의 스위치 (예전엔 아래 끝 줄로 떨어져 채팅 › 화면으로 갔어요)
+    if (scope === 'fruitTypography' || scope.startsWith('fruitEntry')) return {tab:'prompt',sub:'fruit'};
     if (['shadow','outline'].includes(scope)) return {tab:'text',sub:'shadow'};
     if (scope === 'image' && key === 'cutEdge') return {tab:'image',sub:'cutedge'}; // 6.1.6 투명 그림 외곽선 · 그림자
     if (scope === 'image') return {tab:'image',sub:key.startsWith('edge') || key === 'decor' ? 'frame' : /^(fit|maxh|height)$/.test(key) ? 'size' : /^(fade|blendWhite)/.test(key) ? 'fade' : key === 'layout' ? 'layout' : 'shape'};
@@ -107,6 +110,6 @@ export function settingRoute(path) {
     if (scope === 'deviceLayouts') return {tab:'text',sub:'para'};
     if (scope === 'settingLocks') return {tab:'theme',sub:'backup'};
     if (scope === 'compat') return key === 'preserveExtensionColors' || key === 'extensionColorsOff' ? {tab:'theme',sub:'etc'} : {tab:'chat',sub:'etc'};
-    if (scope === 'chat' && /^(user|header)/.test(key)) return {tab:'chat',sub:'message'};
+    if (scope === 'chat' && /^(user|header|char$|bubbleSplit$)/.test(key)) return {tab:'chat',sub:'message'};   // 캐릭터 메시지 · 말풍선 나누기도 메시지 화면
     return {tab:'chat',sub:'screen'};
 }
