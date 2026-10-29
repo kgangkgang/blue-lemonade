@@ -127,7 +127,7 @@ export const FILE_HASHES = {
   "src/addons/modelswitch/fallback.js": "10265:b41c479e:2784deb7",
   "src/addons/modelswitch/index.js": "37460:3d0c0e9f:fc12fb70",
   "src/addons/modelswitch/jump.js": "3993:2e189859:5dde0462",
-  "src/addons/modelswitch/lock.js": "4571:3571a980:98e7f308",
+  "src/addons/modelswitch/lock.js": "4809:c94ab899:afecff97",
   "src/addons/modelswitch/menu.js": "794:644422e0:cedd047b",
   "src/addons/modelswitch/rows.js": "5355:63abb463:502a7831",
   "src/addons/modelswitch/state.js": "8832:c2b74546:fa22e4a5",

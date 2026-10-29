@@ -40,7 +40,8 @@ function bind() {
         if (event.type === 'click') open?.();
     };
     // window 의 capture 가 document 의 capture 보다 먼저 돈다 — 테마의 '고르기 목록 팝업'(selects.js, document capture)이 열리기 전에 막아야 한다
-    for (const type of ['pointerdown', 'mousedown', 'touchstart', 'touchend', 'click']) window.addEventListener(type, block, { capture: true, passive: false });
+    // 8.2.7 폰: 터치는 preventDefault 를 안 하니 passive 로 건다 — window 의 passive:false touchstart 는 화면 어디를 대든 크롬이 스크롤 시작 전에 메인 스레드를 기다리게 했다
+    for (const type of ['pointerdown', 'mousedown', 'touchstart', 'touchend', 'click']) window.addEventListener(type, block, { capture: true, passive: type.startsWith('touch') });
     window.addEventListener('keydown', event => { if (event.key === 'Tab' || event.key === 'Escape') return; const control = hit(event); if (!control) return; event.preventDefault(); event.stopImmediatePropagation(); if (event.key === 'Enter' || event.key === ' ') open?.(); }, true);
     // 키보드로 들어와 값을 바꾸는 길(select 의 글자 입력 등)도 막는다
     window.addEventListener('focusin', event => { const control = hit(event); if (control) control.blur(); }, true);
