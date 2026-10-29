@@ -593,7 +593,7 @@ export const FILE_HASHES = {
   "src/markdown.js": "5670:583b23b2:87c60e83",
   "src/marquee.js": "4261:042dd0ea:df654cb6",
   "src/menu-position.js": "3354:c5e883de:c4671ab5",
-  "src/mes-class-quiet.js": "3075:bc6627d5:d4f2bc44",
+  "src/mes-class-quiet.js": "2772:5fb0927f:3e3753aa",
   "src/mes-fold.js": "15542:5c43e78e:a96ce929",
   "src/mes-pins.js": "16854:6f808e77:ae9f7836",
   "src/message-work.js": "7592:9af6cb91:7ad233df",
