@@ -793,8 +793,12 @@ export function applyAll() {
     // 바뀐 클래스만 만지기 (전부 뗐다 붙이면 매번 화면 전체를 다시 그림)
     const cls = document.body.classList;
     const cutoutBefore = cls.contains('salty-cutout-same');
-    [...cls].filter(c => (c === 'salty' || c.startsWith('salty-')) && !want.has(c)).forEach(c => cls.remove(c));
-    want.forEach(c => { if (!cls.contains(c)) cls.add(c); });
+    // 8.2.7: 떼고 붙일 것을 모아 한 번씩 — 예전엔 클래스마다 add 를 따로 불러 처음 켤 때 body class 변경 기록이 마흔 번 넘게 났고,
+    //   기록마다 실리태번 keyboard.js 가 body 아래 전부(시작 때 요소 9천 개 남짓)를 선택자 31개로 다시 훑었어요(폰 리그 감사: 시작 한 번에 이 자리 기록 45번). 끝 상태는 같아요
+    const stale = [...cls].filter(c => (c === 'salty' || c.startsWith('salty-')) && !want.has(c));
+    if (stale.length) cls.remove(...stale);
+    const missing = [...want].filter(c => !cls.contains(c));
+    if (missing.length) cls.add(...missing);
     const fold = want.has('salty-dem-skin') && s.chat.demFold !== false;
     if (document.body.hasAttribute('data-bl-dem-fold') !== fold) { if (fold) document.body.setAttribute('data-bl-dem-fold', ''); else document.body.removeAttribute('data-bl-dem-fold'); }
     // 5.3.7: html 바탕색은 클래스로 — 예전 html:has(> body.salty:not(.salty-bgimg)) 는 인라인 style 이 바뀔 때마다 html 까지 :has 를 다시 따지게 한다 (리뷰 측정: 설정 창을 연 뒤 스트리밍이 크게 느려짐)
