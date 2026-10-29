@@ -49,7 +49,9 @@ export function layoutMergeView(local) {
     saveDeviceLayout(local);
     return other => {
         if (!object(other) || other.deviceLayouts?.on !== true) return other;
-        const mine = other.deviceLayouts[active.device], out = structuredClone(other);
+        const mine = other.deviceLayouts[active.device];
+        if (!object(mine) || !Object.keys(mine).length) return other;   // 그쪽이 이 기기 배치를 비웠음(테마 모습 초기화) → 위 칸 그대로 견줘 처음 값을 받아요
+        const out = structuredClone(other);
         for (const path of LAYOUT_PATHS) {
             const [a, b] = path.split('.');
             if (!object(out[a])) continue;

@@ -109,6 +109,21 @@ await test('이 탭이 숨은 사이 PC 배치를 고쳐 두었으면(저장 전
     assert.equal(server.deviceLayouts.pc.type.size, 19);
 });
 
+await test('다른 기기에서 테마 모습을 초기화하면(배치 기억도 비움) 이 기기 배치도 처음 값으로 따라가요', async () => {
+    remote = otherDevice(true, s => {
+        const fresh = S.resetSettings({ look: true });
+        assert.deepEqual(fresh.deviceLayouts.mobile, {}, '초기화는 배치 기억을 비워요');
+    });
+    // 초기화한 기기가 다음 저장에서 제 기기 배치만 다시 담아요 — PC 칸은 빈 채로 서버에
+    assert.deepEqual(remote.deviceLayouts.pc, {});
+    await comeBack();
+    const s = S.getSettings();
+    assert.equal(s.type.size, S.DEFAULTS.type.size, 'PC 글자 크기도 처음 값');
+    assert.equal(s.palette, S.DEFAULTS.palette);
+    S.saveSettings();
+    assert.equal(server.deviceLayouts.pc.type.size, S.DEFAULTS.type.size, '다음 저장이 옛 PC 배치를 되살리지 않아요');
+});
+
 await test('다른 기기가 기기별 배치를 끄면 그 기기 값을 함께 쓰는 값으로 받아요 (켬/끔이 따라감)', async () => {
     remote = otherDevice(true, s => { s.deviceLayouts.on = false; });
     await comeBack();

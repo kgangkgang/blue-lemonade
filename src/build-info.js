@@ -523,7 +523,7 @@ export const FILE_HASHES = {
   "src/dem-sky.js": "11939:c15f016c:16be1989",
   "src/demskin.js": "2337:853c5d36:a4c1982e",
   "src/deus-preview-samples.js": "29419:cd94237e:62e3a5a0",
-  "src/device-layouts.js": "4110:b44773e9:90083d69",
+  "src/device-layouts.js": "4318:87e14879:64142ef9",
   "src/diag-errors.js": "5048:1878d7b1:0b034498",
   "src/diag-file.js": "10132:bda77560:58b8f57f",
   "src/diagnose.js": "7141:a9cce45a:00b0e590",
