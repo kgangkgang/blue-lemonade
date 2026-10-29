@@ -37,6 +37,11 @@ if (!scenario) {
         const names = (m[1] || '').split(',').map(x => x.trim().split(/\s+as\s+/)[0]).filter(Boolean);
         stubs[m[2]] = names.map(n => CONSTS[n] ? `export const ${n} = ${CONSTS[n]};` : `export function ${n}(...a) { return globalThis.__stReady.call(${JSON.stringify(n)}, a); }`).join('\n');
     }
+    // 10-30: 시작 그래프 상한 때문에 startSafe 안에서 `import('./…').then(m => { m.이름(); })` 로 부르는 시작 함수도 같은 가짜로
+    for (const m of source.matchAll(/import\('(\.\/[^']+)'\)\.then\(m => \{ m\.(\w+)\(/g)) {
+        const line = `export function ${m[2]}(...a) { return globalThis.__stReady.call(${JSON.stringify(m[2])}, a); }`;
+        if (!(stubs[m[1]] || '').includes(`function ${m[2]}(`)) stubs[m[1]] = ((stubs[m[1]] || '') + '\n' + line).trim();
+    }
     const js = code => `data:text/javascript,${encodeURIComponent(code)}`;
     register(js(`
 let index, stubs;
