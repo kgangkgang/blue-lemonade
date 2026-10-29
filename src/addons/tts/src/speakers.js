@@ -610,7 +610,13 @@ export function resolveSpeaker(seg, rctx = {}) {
     if (hint0 && c && (e?.name || st.userColor === c)) {
         const owner = e?.name ? (isUserMacro(e.name) && userName ? userName : e.name) : userName;
         const hn = cn(hint0);
-        const known = map.has(fold(hint0)) || currentCards().some(ch => ch?.name && fold(ch.name) === fold(hint0));
+        // 8.2.7 「아는 인물」은 사용자가 정한 이름(목소리 · 연결표 · 인물 추가 · 잠긴 팔레트 색 · 지금 카드 · 나)만 — 속마음 라벨로 배우기만 한 이름(st.names)이나
+        //       배운 색의 이름은 넣지 않는다. 넣으면 같은 사람의 다른 표기(character="Mina" · 「박미나」)가 라벨로 쌓인 채팅에서 색 임자(미나) 목소리 대신 그 표기로 읽었다
+        const s0 = settings(), hk = fold(hn);
+        const defined = !!hk && (s0.voices.some(v => fold(v.name) === hk) || Object.keys(s0.char_map || {}).some(k => fold(k) === hk) ||
+            Object.keys(isPlainObj(s0.char_aliases) ? s0.char_aliases : {}).some(k => fold(k) === hk) ||
+            Object.values(st.colors).some(x => x?.locked && x.name && fold(x.name) === hk) || (!!userName && hk === fold(userName)));
+        const known = (map.has(fold(hint0)) && defined) || currentCards().some(ch => ch?.name && fold(ch.name) === fold(hint0));
         if (known && fold(hn) && fold(hn) !== fold(cn(owner)) && !(isUser(hn) && isUser(owner))) return { name: hn, source: 'hint', isUser: isUser(hn) };
     }
     // 2.0.2 칸 이름이 「{{user}}」 매크로면 내 이름으로 (전엔 「{{user}}」 라는 모르는 캐릭터가 되어 내 목소리를 안 쓰고 「목소리를 먼저 정해요」)

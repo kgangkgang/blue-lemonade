@@ -58,6 +58,25 @@ t('모르는 이름표는 색을 이기지 않는다', () => {
     const p = who({ color: '#ff0000', speakerHint: '지나가던사람' });
     assert.equal(p.name, '미나'); assert.equal(p.source, 'palette');
 });
+t('8.2.7 속마음 라벨로 배우기만 한 다른 표기(Mina · 박미나)는 색을 이기지 않는다 (색 기반 목소리 그대로)', () => {
+    const st = T.ctx.chatMetadata.lemon_voice;
+    const before = st.names;
+    st.names = { ...(st.names || {}), Mina: 3, 박미나: 2 };
+    try {
+        for (const hint of ['Mina', '박미나']) {
+            for (const kind of ['dialogue', 'thought']) {
+                const p = SP.resolveSpeaker({ kind, color: '#ff0000', speakerHint: hint }, R);
+                assert.equal(p.name, '미나', `${kind} ${hint}`); assert.equal(p.source, 'palette');
+            }
+        }
+    } finally { st.names = before; }
+});
+t('8.2.7 인물 추가(연결표)로 정한 이름표는 색보다 먼저', () => {
+    const s = settings();
+    s.char_map['세라'] = 'v-sera';
+    try { assert.equal(who({ color: '#ff0000', speakerHint: '세라' }).name, '세라'); }
+    finally { delete s.char_map['세라']; }
+});
 t('이름표 없는 대사는 전처럼 색', () => {
     assert.equal(who({ color: '#aaaaaa' }).name, '조연');
     assert.equal(who({ color: '#0000ff' }).name, '렉스');
