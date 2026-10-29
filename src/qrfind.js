@@ -205,6 +205,16 @@ function hookDocument() {
         if (phantom) { e.preventDefault(); e.stopPropagation(); }
     }, true);
     window.addEventListener('resize', () => { if (layer && anchor?.isConnected) place(layer.firstElementChild); else closeQrFind(); });
+    // 8.2.7 아이폰 사파리 · 보이는 화면만 줄이는 웹뷰: 자판이 올라와도 창 크기는 그대로이고 visualViewport 만 줄어요 — window resize 만 들으면 찾기 칸을 눌러 뜬 자판 밑에
+    //   목록 아래쪽이 깔렸어요. 고르기 목록(selects.js)처럼 보이는 화면이 바뀌면 한 프레임에 한 번 다시 붙여요 (tools/tests/qrfind-keyboard.mjs)
+    let vvQueued = false;
+    const replace = () => {
+        if (vvQueued) return;
+        vvQueued = true;
+        requestAnimationFrame(() => { vvQueued = false; if (layer && anchor?.isConnected) place(layer.firstElementChild); });
+    };
+    window.visualViewport?.addEventListener('resize', replace);
+    window.visualViewport?.addEventListener('scroll', replace);
     // 초점이 팝업 밖(돋보기 단추)에 있어도 Esc 로 닫힘
     document.addEventListener('keydown', (e) => {
         if (layer && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); const back = anchor; closeQrFind(); if(back?.isConnected)back.focus({preventScroll:true}); }

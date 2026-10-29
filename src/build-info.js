@@ -632,7 +632,7 @@ export const FILE_HASHES = {
   "src/promptbind.js": "43235:33a51505:e18d2b34",
   "src/promptlist.js": "9277:6491aa0f:3c844129",
   "src/pull-to-refresh.js": "13632:6ff415c2:2cec85db",
-  "src/qrfind.js": "13470:e1b028e2:75206d84",
+  "src/qrfind.js": "14251:316b6903:382e2ed5",
   "src/readability.js": "4402:c34b7d47:0d00993d",
   "src/reader.js": "8767:c13e8292:8043ac72",
   "src/reading-resume-anchor.js": "4927:487a9eff:ca0131aa",
