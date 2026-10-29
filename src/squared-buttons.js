@@ -7,6 +7,11 @@ const ATTR = 'data-bl-squared';
 const CANDIDATES = 'button,a,summary,label,[role="button"],[role="tab"],[tabindex],.menu_button,.qr--button,[class*="btn"],[class*="chip"],[class*="tab"],[class*="pill"]';
 const SKIP_CLASS = /(switch|toggle|knob|dot|badge|spinner|progress|slider|avatar|thumb|count|indicator|scroll)/i;
 const SKIP_AREA = '#send_form,.mes_buttons,.swipe_left,.swipe_right,[data-bl-native-ext-colors]';
+// 10-30 perf-icon: 진짜 문서에서는 후보를 브라우저 선택자로 미리 걸러요 — 이미 표시한 것 · 입력 · 그림 태그 · 건너뛸 구역 자신과 그 안.
+//   예전에는 후보를 다 꺼내 JS 로 하나씩 조상을 올라 구역인지 봤어요(긴 채팅 300 에서 body 한 번 훑기 후보 15,125개 → 이제 6,659개).
+//   답은 cheapSkip 의 앞 세 조건 · areasOf 와 같아요(뿌리가 구역 안이면 예전처럼 통째로 건너뜀) — 리그에서 뿌리 315개 대조 · 틀림 0.
+export const FAST_CANDIDATES = `:is(${CANDIDATES}):not([${ATTR}],input,select,textarea,img,svg,${SKIP_AREA},:is(${SKIP_AREA}) *)`;
+const NO_AREAS = new Set();
 // 7.5.4 상태를 나타내는 클래스는 생김새 열쇠에서 뺀다 (.on · .active · is-* 가 바뀌어도 같은 단추)
 const STATE_CLASS = /^(?:on|off|active|inactive|selected|current|open|closed|hidden|disabled|focus(?:ed)?|hover|pressed|checked|is-|has-|bl-)/;
 const SEEN_MAX = 400;
@@ -162,9 +167,9 @@ export const LIGHT_MES = '#chat > .mes';
  *  'check' = 그 밖(아직 알림 없음 · 안 건너뜀) → 예전처럼 후보마다 물어요(화면 가까운 몇 개뿐). 돌려주는 값은 후보마다 예전과 같아요(시험 tools/tests/squared-noop-records.mjs).
  *  메시지 안 요소의 계산된 스타일은 읽지 않아요 — 건너뛴 내용의 스타일을 읽으면 크롬이 그 자리에서 풀어 계산해요(긴 채팅 300 열기 배치 11 → 289번이 됐던 것).
  *  알림이 막 오는 틈(풀렸는데 아직 알림 전)에는 「건너뜀」으로 미루고, 곧 오는 skipped=false 알림 때 그 메시지를 다시 재요(onLightState). */
-export function skippedMessageOf(el, view, cache = new Map(), known = null) {
+export function skippedMessageOf(el, view, cache = new Map(), known = null, rootMes = null) {
     if (typeof el.checkVisibility !== 'function') return null;
-    const mes = el.closest?.(LIGHT_MES);
+    const mes = rootMes && el !== rootMes ? rootMes : el.closest?.(LIGHT_MES);   // rootMes: 훑는 뿌리가 든 메시지(뿌리 아래 후보는 모두 그 안)
     if (!mes || mes === el) return null;
     let state = cache.get(mes);
     if (state === undefined) {
@@ -187,22 +192,33 @@ export function watchSquaredButtons(doc, host) {
     const remember = el => { if (seen.size >= SEEN_MAX) seen.clear(); seen.set(shapeKey(el), true); };
     // 뿌리 아래 건너뛸 구역 — 뿌리 자신(또는 조상)이 구역이면 null(뿌리째 건너뜀)
     const areasOf = root => (root.closest?.(SKIP_AREA) ? null : new Set(root.querySelectorAll?.(SKIP_AREA) || []));
+    // 뿌리 아래 후보와 그 판정에 쓸 구역 — 진짜 문서(contains 가 있음)는 FAST_CANDIDATES 로 미리 거른 목록(구역은 이미 빠짐), 흉내 문서는 예전 길
+    let fastOk = null;
+    const candidates = root => {
+        if (fastOk === null) { try { doc.body.matches(FAST_CANDIDATES); fastOk = typeof doc.body.contains === 'function'; } catch { fastOk = false; } }
+        if (fastOk && typeof root.contains === 'function') {
+            if (root.closest(SKIP_AREA)) return null;
+            return { areas: NO_AREAS, list: root.matches(FAST_CANDIDATES) ? [root, ...root.querySelectorAll(FAST_CANDIDATES)] : root.querySelectorAll(FAST_CANDIDATES) };
+        }
+        const areas = areasOf(root); if (!areas) return null;
+        return { areas, list: root.matches?.(CANDIDATES) ? [root, ...root.querySelectorAll(CANDIDATES)] : root.querySelectorAll?.(CANDIDATES) || [] };
+    };
     const restamp = el => {
         if (!seen.size) return;
-        const areas = areasOf(el); if (!areas) return;
-        const list = el.matches?.(CANDIDATES) ? [el, ...el.querySelectorAll(CANDIDATES)] : el.querySelectorAll?.(CANDIDATES) || [];
-        for (const c of list) if (seen.has(shapeKey(c)) && !cheapSkip(c, host, areas)) c.setAttribute(ATTR, '');
+        const got = candidates(el); if (!got) return;
+        for (const c of got.list) if (seen.has(shapeKey(c)) && !cheapSkip(c, host, got.areas)) c.setAttribute(ATTR, '');
     };
     let timer = 0, frame = 0, stopped = false;
     // Measure every candidate first, then mark: marking between reads re-dirtied style and forced one recalc per button.
     function scan(root, found) {
         if (!root?.isConnected) return;
-        const areas = areasOf(root); if (!areas) return;
-        const list = root.matches?.(CANDIDATES) ? [root, ...root.querySelectorAll(CANDIDATES)] : root.querySelectorAll(CANDIDATES);
+        const got = candidates(root); if (!got) return;
+        const { areas, list } = got;
         const light = !doc.getElementById?.('chat')?.classList?.contains('bl-chat-covered'), cache = new Map();
+        const rootMes = light ? root.closest?.(LIGHT_MES) || null : null;   // 메시지 하나를 훑을 때는 후보마다 그 메시지를 다시 찾지 않아요
         for (const el of list) {
             if (cheapSkip(el, host, areas)) continue;
-            const mes = light ? skippedMessageOf(el, host, cache, lockState) : null;
+            const mes = light ? skippedMessageOf(el, host, cache, lockState, rootMes) : null;
             if (mes) { skippedMes.add(mes); continue; }   // 화면 가까이 오면(onLightState) 그 메시지만 재요
             if (el.offsetParent !== null && isRoundTextButton(el, host, areas)) found.push(el);
         }

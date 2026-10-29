@@ -400,6 +400,7 @@ jobs:
           node tools/tests/squared-light-skip.mjs .
           node tools/tests/squared-noop-records.mjs .
           node tools/tests/squared-text-last.mjs .
+          node tools/tests/squared-fast-select.mjs .
           node tools/tests/same-value-hidden.mjs .
           node tools/tests/longpress-fab-drag.mjs .
           node tools/tests/reader-form-safe-area.mjs .
