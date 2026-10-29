@@ -2,6 +2,7 @@
 import { imageFormat } from './image-format.js';
 import { fetchAssets, uploadImage, sameBaseSiblings, sanitizeBase } from './assets.js';
 import { disabledSet, setDisabled, settings, saveSettings } from './state.js';
+import { sha256Hex } from '../prompt-template/sha256.js';   // 8.2.7 http 폰(crypto.subtle 없음)
 export function canShrink(){try{return document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp');}catch{return false;}}
 const QUALITY=.9;
 export const SKIP_LABELS={optimized:'이미 경량화한 파일',webp:'기존 WebP 보존',collision:'같은 이름 충돌',animated:'움직이는 이미지 보존',unsupported:'브라우저가 읽지 못하는 형식',large:'해상도가 너무 큼',smaller:'이미 원본이 더 작음',failed:'읽기·변환 실패'};
@@ -16,7 +17,8 @@ async function decodeStill(blob,format){
   finally{URL.revokeObjectURL(url);}
  }
 }
-async function digest(bytes){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');}
+// 8.2.7 http:// 로 연 폰(LAN)은 보안 컨텍스트가 아니라 crypto.subtle 이 없어요 — 해시에서 TypeError 로 모든 그림이 「실패」였어요. 없으면 순수 JS(같은 16진 값)로
+async function digest(bytes){if(!globalThis.crypto?.subtle?.digest)return sha256Hex(new Uint8Array(bytes));return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');}
 async function shrinkOne(asset){
  const response=await fetch(asset.url,{cache:'no-cache',signal:AbortSignal.timeout(20000)});if(!response.ok)throw Error(`못 읽었어요 (${response.status})`);
  const blob=await response.blob(),before=blob.size,bytes=await blob.arrayBuffer(),format=imageFormat(new Uint8Array(bytes));

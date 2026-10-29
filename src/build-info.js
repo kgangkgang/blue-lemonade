@@ -21,7 +21,7 @@ export const FILE_HASHES = {
   "src/addons/assets/prompt.js": "8601:8c0db090:5347b3c8",
   "src/addons/assets/rename.js": "8907:0fafff9f:21aef329",
   "src/addons/assets/render.js": "56970:e366c596:9b3f09a3",
-  "src/addons/assets/shrink.js": "6234:7afc634a:1c48dca1",
+  "src/addons/assets/shrink.js": "6622:ba94006c:6d07ff49",
   "src/addons/assets/slots.js": "26306:4340626b:eb31215d",
   "src/addons/assets/spellings.js": "1680:b5844b48:6a297d94",
   "src/addons/assets/state.js": "17764:90f3814e:8ac5c764",
