@@ -1,4 +1,5 @@
 import { preserveDraftForReload } from './draft.js';
+import { installedTouchMode } from './device-layouts.js';
 
 const EXCLUDE = 'input,textarea,select,button,a,label,summary,[contenteditable]:not([contenteditable="false"]),[draggable="true"],[role="button"],[role="slider"],[role="tab"],[role="tablist"],canvas,iframe,video,audio,.mes_buttons,.mes_button,.swipe_left,.swipe_right,.mes_edit,.edit_textarea,.ui-draggable-handle';
 const OVERLAYS = 'dialog[open],.drawer-content.openDrawer,#cg-panel:not([hidden]),#pt-panel:not(.pt-hidden)';
@@ -28,10 +29,7 @@ export function createPullGesture(x, y, at) {
     };
 }
 
-export function installedTouchMode(win) {
-    return win.navigator.maxTouchPoints > 0 && win.matchMedia('(pointer: coarse)').matches
-        && (win.matchMedia('(display-mode: standalone)').matches || win.navigator.standalone === true);
-}
+export { installedTouchMode };   // 판정은 device-layouts.js 에 (index.js 가 이 파일을 받기 전에 묻는다)
 
 // 요청 본문이나 인증값은 읽지 않아요. 진행 중인 서버 요청과 최근 저장 실패 여부만 세요.
 export function trackRefreshWrites(win, now, quietMs, holdMs = FAIL_HOLD_MS) {

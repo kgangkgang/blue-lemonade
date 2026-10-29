@@ -33,7 +33,6 @@ import { startCompactLayout } from './src/layout.js';
 import { startNameMarquee } from './src/marquee.js';
 import { startGutterWatch } from './src/gutter.js';
 import { startDraftKeep } from './src/draft.js';
-import { startPullToRefresh } from './src/pull-to-refresh.js';
 import { startCardInk } from './src/cardink.js';
 import { startSelectPop } from './src/selects.js';
 import { startColorPop } from './src/colorpop.js';
@@ -165,7 +164,7 @@ function addMenuItem() {
     // 7.2.1 요술봉의 「화면 모드」 항목은 뺐다 (사용자 요청) — 어디서도 화면 모드를 열지 않는다
 }
 
-import { DEVICE_QUERY } from './src/device-layouts.js';
+import { DEVICE_QUERY, installedTouchMode } from './src/device-layouts.js';
 // 5.6.6 (점검 PC-5): 기기별 배치를 안 쓰면(기본) 760px 을 넘나들어도 바뀔 값이 없다 — 창 크기를 바꿀 때마다 설정 전체를 다시 적용 · 저장(2MB)하지 않는다
 matchMedia(DEVICE_QUERY).addEventListener('change', () => { window.dispatchEvent(new Event('bl:device-layout')); if (!getSettings().deviceLayouts?.on) return; applyAll(); refreshPanels(); saveSettings(); });
 
@@ -233,7 +232,8 @@ jQuery(() => {
     startNameMarquee(); // 헬퍼 스크립트 이름: 눌러서 긴 이름 끝까지 보기
     startGutterWatch(); // 스크롤하는 칸에만 양쪽 스크롤바 홈 (PC)
     startDraftKeep(); // 입력칸에 쓰다 만 글은 새로고침해도 남는다 (채팅마다 따로)
-    startPullToRefresh({ isEnabled: () => themeEnabled(getSettings()) && document.body.classList.contains('salty') }).catch(error => console.warn('[Blue Lemonade] 당겨 새로고침 준비를 못 했어요', error));
+    // 당겨 새로고침은 홈 화면에 깐 터치 앱에서만 — 그 밖(PC · 브라우저 탭)에서는 파일도 받지 않는다 (device-layouts.js installedTouchMode)
+    if (installedTouchMode(window)) import('./src/pull-to-refresh.js').then(m => m.startPullToRefresh({ isEnabled: () => themeEnabled(getSettings()) && document.body.classList.contains('salty') })).catch(error => console.warn('[Blue Lemonade] 당겨 새로고침 준비를 못 했어요', error));
     startNaturalSlash({ isEnabled: () => themeEnabled(getSettings()) });
     startWorldInfoHelp(); // 6.1.5 월드인포 설정 · 항목 칸 옆 ? 도움말 (테마가 꺼져 있으면 CSS 로 숨김)
     startLongpressHelp({ isEnabled: () => { const s = getSettings(); return s.longpressHelp !== false && themeEnabled(s); } }); // 8.1.2 단추 길게 누르면 설명 — 위임 리스너 한 벌, 사전은 처음 길게 누를 때만 (longpress-help.js)

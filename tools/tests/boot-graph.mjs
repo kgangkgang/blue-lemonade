@@ -67,5 +67,17 @@ await test('Claude 5 판정은 예전 live-models.js 판정과 같아요', async
     assert.match(read('src/live-models.js'), /export \{ isClaude5Plus \}/, 'live-models.js 는 같은 이름을 그대로 내보내요 (애드온들이 씀)');
 });
 
+await test('당겨 새로고침은 홈 화면에 깐 터치 앱에서만 받아요', async () => {
+    notAtBoot('src/pull-to-refresh.js', 'PC · 브라우저 탭에서는 쓰지 않아요');
+    const runtime = read('index.js');
+    assert.match(runtime, /if \(installedTouchMode\(window\)\) import\('\.\/src\/pull-to-refresh\.js'\)\.then\(m => m\.startPullToRefresh\(/);
+    const { installedTouchMode } = await import(pathToFileURL(path.join(root, 'src/device-layouts.js')).href);
+    const mode = (coarse, standalone, touch = 5, legacy = false) => ({ navigator: { maxTouchPoints: touch, standalone: legacy }, matchMedia: q => ({ matches: q === '(pointer: coarse)' ? coarse : standalone }) });
+    assert.equal(installedTouchMode(mode(true, true)), true);
+    assert.equal(installedTouchMode(mode(true, false, 5, true)), true, '옛 iOS navigator.standalone');
+    for (const w of [mode(false, true), mode(true, false), mode(true, true, 0)]) assert.equal(installedTouchMode(w), false);
+    assert.match(read('src/pull-to-refresh.js'), /export \{ installedTouchMode \}/, '예전 이름도 그대로');
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

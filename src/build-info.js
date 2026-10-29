@@ -1,7 +1,7 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
 export const BUILD_VERSION = "8.2.3";
 export const FILE_HASHES = {
-  "index.js": "25906:bdaf471f:96a90f5f",
+  "index.js": "26122:74dc5f0e:a63c03b0",
   "manifest.json": "365:d56957f8:f4e71926",
   "src/addon-files-check.js": "5001:b7fe0df9:d1f21c49",
   "src/addon-layout.js": "2768:fc762257:da2db162",
@@ -524,7 +524,7 @@ export const FILE_HASHES = {
   "src/dem-sky.js": "11939:c15f016c:16be1989",
   "src/demskin.js": "2337:853c5d36:a4c1982e",
   "src/deus-preview-samples.js": "29419:cd94237e:62e3a5a0",
-  "src/device-layouts.js": "4836:f13873d5:3dd13413",
+  "src/device-layouts.js": "5269:80ad5447:05031201",
   "src/diag-errors.js": "5048:1878d7b1:0b034498",
   "src/diag-file.js": "10132:bda77560:58b8f57f",
   "src/diagnose.js": "7141:a9cce45a:00b0e590",
@@ -631,7 +631,7 @@ export const FILE_HASHES = {
   "src/prompt-tools.js": "10651:32d0be01:44978501",
   "src/promptbind.js": "43235:33a51505:e18d2b34",
   "src/promptlist.js": "9277:6491aa0f:3c844129",
-  "src/pull-to-refresh.js": "13692:f4a9a898:d7a6a4c4",
+  "src/pull-to-refresh.js": "13632:6ff415c2:2cec85db",
   "src/qrfind.js": "13470:e1b028e2:75206d84",
   "src/readability.js": "4402:c34b7d47:0d00993d",
   "src/reader.js": "8767:c13e8292:8043ac72",
