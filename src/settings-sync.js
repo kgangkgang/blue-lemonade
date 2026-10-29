@@ -70,7 +70,7 @@ export function mergeSalty(salty, base, remote) {
     return { changed, needSave: !same(merged, remote) };
 }
 
-let base = null, started = false;
+let base = null, started = false, readFrom;   // readFrom: 서버 읽기를 시작할 때의 base (읽는 사이 이 탭 저장이 끝나 base 가 옮겨 가도 그때 것으로 견줘요)
 /** 테마 시작 때 한 번 (애드온과 무관). hooks: { getSalty, save, after } */
 export function startThemeSettingsSync({ getSalty, save, after } = {}) {
     if (started || typeof getSalty !== 'function') return;
@@ -82,17 +82,21 @@ export function startThemeSettingsSync({ getSalty, save, after } = {}) {
         if (event_types?.SETTINGS_UPDATED) eventSource.on(event_types.SETTINGS_UPDATED, snap);   // 저장이 끝남 = 서버가 이 탭 값을 가짐
     } catch { /* 이벤트가 없으면 합치기 뒤에만 base 를 옮긴다 */ }
     registerSettingsMerge('salty', ext => {
+        // 읽는 사이 이 탭 저장이 끝나면(SETTINGS_UPDATED → base = 이 탭 값) 서버가 먼저 내준 옛 값이 「서버가 바꿈」으로 보여
+        // 방금 저장한 이 탭 값을 되돌렸어요 — 읽기를 시작할 때의 base 로 견줘요
+        const from = readFrom !== undefined ? readFrom : base;
+        readFrom = undefined;
         const salty = getSalty(), remote = ext?.salty;
         if (!isObj(salty) || !isObj(remote)) return null;
         const view = layoutMergeView(salty);   // 기기별 배치: 위 칸은 이 기기 배치끼리 견줘요 (device-layouts.js)
-        const result = mergeSalty(salty, view(base), view(remote));
+        const result = mergeSalty(salty, view(from), view(remote));
         view.settle();
         base = clone(remote);   // 서버 값까지는 맞췄다 — 이 탭만 가진 것은 다음 저장이 서버로
         if (result.changed) { try { after?.(); } catch (error) { console.warn('[Blue Lemonade] 설정 합친 뒤 다시 적용', error); } }
         return { pulled: result.changed ? 1 : 0, removed: 0, needSave: result.needSave };
-    });
+    }, { begin: () => { readFrom = base; } });
     startSettingsMerge({ save });
 }
 
 /** 시험용 */
-export const _forTest = { base: () => base, setBase: v => { base = v; }, reset: () => { base = null; started = false; } };
+export const _forTest = { base: () => base, setBase: v => { base = v; }, reset: () => { base = null; started = false; readFrom = undefined; } };

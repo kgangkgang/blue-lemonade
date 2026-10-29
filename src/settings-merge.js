@@ -112,6 +112,7 @@ export function serverExtensionSettings(body) {
 
 // ───────── 숨김 → 보임 ─────────
 const consumers = new Map();
+const begins = new Map();   // 이름 → 서버 읽기를 시작할 때 부를 것 (settings-sync.js 가 그 순간의 base 를 잡아 둠)
 let host = {
     doc: () => globalThis.document,
     now: () => Date.now(),
@@ -120,11 +121,12 @@ let host = {
 };
 let started = false, hiddenAt = 0, running = null, saveFn = null, lastRun = null;
 
-/** 합칠 것 등록 (이름이 같으면 바꿔 끼운다). 해제 함수를 돌려준다 */
-export function registerSettingsMerge(name, fn) {
+/** 합칠 것 등록 (이름이 같으면 바꿔 끼운다). 해제 함수를 돌려준다. begin: 서버 읽기를 시작할 때 (읽는 사이 바뀌는 기준값을 잡아 두게) */
+export function registerSettingsMerge(name, fn, { begin } = {}) {
     if (typeof fn !== 'function') return () => {};
     consumers.set(String(name), fn);
-    return () => { if (consumers.get(String(name)) === fn) consumers.delete(String(name)); };
+    if (typeof begin === 'function') begins.set(String(name), begin); else begins.delete(String(name));
+    return () => { if (consumers.get(String(name)) === fn) { consumers.delete(String(name)); begins.delete(String(name)); } };
 }
 
 /** 지금 한 번: 서버 설정을 읽어 등록한 것마다 합친다. 저장이 필요하면 save() 한 번 */
@@ -134,6 +136,7 @@ export function mergeFromServer(reason = 'manual') {
         const result = { reason, at: host.now(), ok: false, consumers: {} };
         try {
             if (!consumers.size) return result;
+            for (const [name, begin] of begins) { try { begin(); } catch (error) { console.warn('[Blue Lemonade] 설정 합치기 시작', name, error); } }
             const res = await host.fetch('/api/settings/get', { method: 'POST', headers: host.headers(), body: '{}', cache: 'no-store' });
             if (!res?.ok) { result.error = `HTTP ${res?.status}`; return result; }
             const ext = serverExtensionSettings(await res.json());
@@ -178,7 +181,7 @@ export function startSettingsMerge({ save } = {}) {
 /** 시험 · 측정용 */
 export const _forTest = {
     setHost(partial) { host = { ...host, ...partial }; },
-    reset() { const doc = host.doc(); doc?.removeEventListener?.('visibilitychange', onVisibility); globalThis.removeEventListener?.('pageshow', onPageShow); consumers.clear(); started = false; hiddenAt = 0; running = null; saveFn = null; lastRun = null; },
+    reset() { const doc = host.doc(); doc?.removeEventListener?.('visibilitychange', onVisibility); globalThis.removeEventListener?.('pageshow', onPageShow); consumers.clear(); begins.clear(); started = false; hiddenAt = 0; running = null; saveFn = null; lastRun = null; },
     lastRun: () => lastRun,
     consumers: () => [...consumers.keys()],
 };
