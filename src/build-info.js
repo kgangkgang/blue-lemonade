@@ -1,7 +1,7 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
 export const BUILD_VERSION = "8.2.3";
 export const FILE_HASHES = {
-  "index.js": "24469:9ef24166:72174af5",
+  "index.js": "24707:2eb9dff2:09c2a7c3",
   "manifest.json": "365:d56957f8:f4e71926",
   "src/addon-files-check.js": "5001:b7fe0df9:d1f21c49",
   "src/addon-layout.js": "2768:fc762257:da2db162",
@@ -743,6 +743,7 @@ export const FILE_HASHES = {
   "src/weather.js": "38902:77a0d917:0c5494f4",
   "src/websearch-core.js": "17125:d18d37ff:114569c1",
   "src/websearch.js": "23413:6753586f:be03a4b1",
+  "src/wheel-x.js": "3743:864ddc4f:c8098c55",
   "src/wi-help-data.js": "23093:a4cbce3e:822b4fbb",
   "src/wi-help.js": "4110:3ad5e5ef:5bfb6bbb",
   "src/wi-link.js": "6848:9a852a37:3c23d647",
