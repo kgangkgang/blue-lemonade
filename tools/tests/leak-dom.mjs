@@ -466,6 +466,11 @@ export function installBrowser({ settings = {}, extensionSettings = {} } = {}) {
     sheld.append(chat, formSheld);
     body.append(el('div', 'top-bar'), el('div', 'top-settings-holder'), el('div', 'left-nav-panel'), el('div', 'right-nav-panel'), sheld,
         el('div', 'extensions_settings'), el('div', 'extensions_settings2'), el('div', 'extensionsMenu'), el('div', 'movingDivs'), el('div', 'WorldInfo'), el('template', 'entry_edit_template'), el('div', 'character_popup'));
+    // 목록 뿌리 (캐릭터 · 페르소나 · 월드인포 항목 · 프롬프트 관리자) 와 실리태번이 복제하는 캐릭터 틀
+    const charTemplate = el('div', 'character_template'); charTemplate.innerHTML = '<div class="character_select entity_block"><div class="avatar"><img loading="lazy" src="" alt=""></div><span class="ch_name"></span></div>';
+    const wi = documentLite.getElementById('WorldInfo'); wi.append(el('div', 'world_popup_entries_list'));
+    const pm = el('div', 'completion_prompt_manager'); pm.append(el('ul', 'completion_prompt_manager_list'));
+    body.append(el('div', 'rm_print_characters_block'), el('div', 'user_avatar_block'), charTemplate, pm, el('input', 'character_search_bar'));
     // 실리태번 eventSource 흉내
     const handlers = new Map();
     const eventSource = {

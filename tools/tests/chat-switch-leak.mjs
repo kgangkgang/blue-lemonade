@@ -252,6 +252,40 @@ await test('이전 메시지 더 보기 20번 뒤 채팅을 바꾸면 그 메시
     assert.deepEqual(alive, {}, `채팅을 바꾼 뒤 남은 옛 메시지: ${JSON.stringify(alive)}`);
 });
 
+await test('캐릭터 · 페르소나 · 월드인포 · 프롬프트 목록을 20번 다시 그려도 늘지 않고 옛 목록 DOM 이 남지 않아요', async () => {
+    const old = [];
+    const block = (cls, i) => { const b = document.createElement('div'); b.className = cls; b.innerHTML = `<div class="avatar"><img loading="lazy" src="/thumbnail?type=avatar&amp;file=c${i}.png" alt=""></div><span class="ch_name">캐릭터 ${i}</span>`; return b; };
+    const redraw = async k => {
+        const chars = document.getElementById('rm_print_characters_block'), users = document.getElementById('user_avatar_block');
+        const wiList = document.getElementById('world_popup_entries_list'), pmList = document.getElementById('completion_prompt_manager_list');
+        const next = (n, make) => Array.from({ length: n }, (_, i) => { const e = make(i); old.push(new WeakRef(e)); return e; });
+        chars.replaceChildren(...next(40, i => block('character_select entity_block', i)));
+        users.replaceChildren(...next(10, i => block('avatar-container', i)));
+        wiList.replaceChildren(...next(90, i => { const e = document.createElement('div'); e.className = 'world_entry'; e.setAttribute('uid', String(i)); e.innerHTML = `<div class="inline-drawer wide100p"><div class="inline-drawer-header"><span class="world_entry_form_control">항목 ${i}</span></div><div class="inline-drawer-content" style="display:none"></div></div>`; return e; }));
+        pmList.replaceChildren(...next(20, i => { const e = document.createElement('li'); e.className = 'completion_prompt_manager_prompt'; e.setAttribute('data-pm-identifier', `p${i}`); e.innerHTML = `<span class="completion_prompt_manager_prompt_name"><span title="프롬프트 ${i}">프롬프트 ${i}</span></span><span class="prompt_manager_prompt_controls"><span class="prompt-manager-toggle-action fa-solid fa-toggle-on"></span></span>`; return e; }));
+        await eventSource.emit(T.CHARACTER_PAGE_LOADED); await eventSource.emit(T.WORLDINFO_UPDATED, 'book', {}); await eventSource.emit(T.SETTINGS_UPDATED);
+        await settle(1500);
+    };
+    await redraw(0); await redraw(1);
+    const base = snapshot();
+    for (let k = 2; k < 20; k++) await redraw(k);
+    for (let i = 0; i < 4; i++) { await settle(3000); globalThis.gc(); await new Promise(r => setImmediate(r)); }
+    const lastRound = 40 + 10 + 90 + 20;
+    const kept = old.slice(0, -lastRound).filter(ref => ref.deref()).length;
+    assert.equal(kept, 0, `옛 목록 블록 ${old.length - lastRound}개 중 ${kept}개가 남았어요 (${JSON.stringify(snapshot())})`);
+    same(base, snapshot(), '목록 20번 뒤');
+});
+
+await test('입력칸에 200번 치고 지워도 리스너 · 관찰자 · 타이머가 늘지 않아요', async () => {
+    const box = document.getElementById('send_textarea');
+    const type = async k => { for (const text of ['/', '/검색 따옴표', `글 ${k}`, '']) { box.value = text; box.dispatchEvent(new Event('input', { bubbles: true })); box.dispatchEvent(new Event('keyup', { bubbles: true })); await settle(60); } };
+    await type(0); await type(1);
+    const base = snapshot();
+    for (let k = 2; k < 50; k++) await type(k);
+    await settle(3000);
+    same(base, snapshot(), '200번 친 뒤');
+});
+
 // 애드온 창 (애드온을 켠 설정에서만)
 const ADDON_PANELS = [['tts', 'tts/index.js'], ['direction', 'direction/index.js'], ['assets', 'assets/index.js'], ['prompt', 'prompt/index.js'], ['mermaid', 'mermaid/index.js'], ['prompt-template', 'prompt-template/index.js'],
     ['customstyle', 'customstyle/index.js'], ['translator', 'translator/bridge.js'], ['modelswitch', 'modelswitch/index.js'], ['regexlink', 'regexlink/index.js'], ['rewrite', 'rewrite/index.js'], ['bookmarks', 'bookmarks/index.js'], ['zipinstall', 'zipinstall/index.js'], ['notes', 'notes/index.js']];

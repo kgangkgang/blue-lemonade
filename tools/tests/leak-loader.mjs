@@ -38,6 +38,7 @@ export async function resolve(specifier, context, next) {
 }
 
 export async function load(url, context, next) {
+    if (process.env.LEAK_MODLOG && url.startsWith('file:') && fileURLToPath(url).startsWith(root + path.sep) && !fileURLToPath(url).includes(path.sep + 'tools' + path.sep)) fs.appendFileSync(process.env.LEAK_MODLOG, path.relative(root, fileURLToPath(url)).split(path.sep).join('/') + '\n');
     if (!url.startsWith('leakstub:')) return next(url, context);
     const target = url.slice('leakstub:'.length);
     let abs = ''; try { abs = fileURLToPath(target); } catch { /* /scripts/… */ }
