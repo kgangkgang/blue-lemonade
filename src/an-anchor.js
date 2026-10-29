@@ -35,15 +35,26 @@ function placing(which = api()) {
 // ── 본체 작가 노트 확장 프롬프트 가로채기 ──────────────────────────
 // extension_prompts['2_floating_prompt'] 에 읽기 · 쓰기 문을 단다. 쓰기는 그대로 받아 두고, 읽을 때 자리를 맞추는 중이면 position 만 NONE(-1).
 // 채팅을 바꾸면 본체가 extension_prompts 를 새 객체로 바꾸므로 생성을 시작할 때마다 다시 단다.
-let stored;
+// 8.2.3 읽기 문의 비용: 본체는 생성 미리 돌리기(프롬프트 관리자 토글 · 답장 뒤 토큰 수 세기)마다 getExtensionPrompt 로 이 칸을 수만 번 읽는다
+//   (채팅 300개 · 데우스 프리셋에서 3만 번). 예전엔 읽을 때마다 placing() → getSettings()(마이크로태스크마다 설정 정리를 통째로 다시) · getContext() 두 번을
+//   돌려 폰 4배 CPU 에서 토글 한 번에 17초가 들었다(제보 10-29: 토글 · 단추 · 스크롤 3~4초 멈춤 — 순정 0.3초 · 테마 22초). 이제 자리 판단은 기억해 두고,
+//   바뀔 수 있는 때(생성 시작 · 채팅 바뀜 · 설정 저장 · 프리셋 · API 바뀜 · 라디오 고름)에만 다시 잰다. 읽는 쪽이 받는 값은 전과 같다.
+let stored, placedAnchor = null, stale = true;
+/** 자리 판단을 다음 읽기 때 다시 재게 한다 (설정 · 채팅 · 프리셋이 바뀌었을 때) */
+export function markStale() { stale = true; }
+function placingNow() {
+    if (stale) { stale = false; placedAnchor = placing(); }
+    return placedAnchor;
+}
 export function installTrap(prompts = ctx().extensionPrompts) {
     if (!prompts || typeof prompts !== 'object') return false;
+    stale = true;   // 생성 시작 · 채팅 바뀜마다 불린다 — 그때마다 한 번 다시 잰다
     const current = Object.getOwnPropertyDescriptor(prompts, AN_KEY);
     if (current?.get?.[TRAP]) return true;
     stored = current && 'value' in current ? current.value : undefined;
     const get = () => {
         if (!stored || typeof stored !== 'object') return stored;
-        return placing() ? { ...stored, position: -1 } : stored;
+        return placingNow() ? { ...stored, position: -1 } : stored;
     };
     get[TRAP] = true;
     Object.defineProperty(prompts, AN_KEY, { configurable: true, enumerable: true, get, set: value => { stored = value; } });
@@ -124,6 +135,7 @@ function choose(anchor) {
     const meta = ctx().chatMetadata;
     if (!meta) return;
     if (anchor) meta[META_KEY] = anchor; else delete meta[META_KEY];
+    markStale();
     ctx().saveMetadataDebounced?.();
     syncRadios();
 }
@@ -137,7 +149,11 @@ export function startNoteAnchor() {
     const { eventSource, event_types } = ctx();
     eventSource.on(event_types.GENERATION_STARTED, () => installTrap());
     eventSource.on(event_types.CHAT_CHANGED, () => { installTrap(); syncRadios(); setTimeout(syncRadios, 0); });
-    if (event_types.SETTINGS_UPDATED) eventSource.on(event_types.SETTINGS_UPDATED, () => syncRadios());
+    if (event_types.SETTINGS_UPDATED) eventSource.on(event_types.SETTINGS_UPDATED, () => { markStale(); syncRadios(); });
+    // 8.2.3 자리 판단의 재료(테마 켬 · 프리셋의 표식 켬 · 스토리 문자열 · API)가 바뀌는 사건들 — 다음 읽기 때 한 번 다시 잰다
+    for (const name of ['OAI_PRESET_CHANGED_AFTER', 'MAIN_API_CHANGED', 'CHATCOMPLETION_SOURCE_CHANGED', 'SETTINGS_LOADED']) {
+        if (event_types[name]) eventSource.on(event_types[name], markStale);
+    }
     // jQuery 로 듣는다: 본체 · 슬래시 명령(/note · /note-position)은 .trigger('input' · 'change') 로 jQuery 처리기만 부른다(DOM 이벤트가 안 남)
     const $ = globalThis.jQuery;
     const onChange = event => {

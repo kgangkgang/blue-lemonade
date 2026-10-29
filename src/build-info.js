@@ -458,7 +458,7 @@ export const FILE_HASHES = {
   "src/addons/zipinstall/index.js": "27807:d8992042:1260ef77",
   "src/addons/zipinstall/style.css": "6209:a473af9c:0d8e5af6",
   "src/after-work.js": "4051:6ad4ecc2:7c929fed",
-  "src/an-anchor.js": "9761:d209f894:daca46e4",
+  "src/an-anchor.js": "11384:99d7f148:7cb25660",
   "src/appearance-archive.js": "1287:215093f5:1c7f1dc7",
   "src/appearance-compare.js": "3140:831ffdf1:a1f78cb0",
   "src/apply.js": "63827:756362b2:eb35aa8f",
