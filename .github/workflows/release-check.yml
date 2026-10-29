@@ -82,6 +82,7 @@ jobs:
           node tools/tests/translator-cancel-reason.mjs .
           node tools/tests/translator-group-guard.mjs .
           node tools/tests/translator-edit-while-translating.mjs .
+          node tools/tests/translator-cache-read-once.mjs .
           node tools/tests/diag-copy.mjs .
           node tools/tests/chat-sync-local.mjs .
           node tools/tests/translator-preview-frames.mjs .

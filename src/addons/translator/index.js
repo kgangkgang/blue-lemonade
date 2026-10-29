@@ -3343,6 +3343,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         // 1. 모든 수동 번역시 표시
         // 2. 자동 번역시: DB에 번역문이 없는 새로운 메시지만 표시 (스와이프 기존 번역 제외)
         let showStartToast = false;
+        let lookedUp = null;   // 8.2.7 { value } 이 실행에서 이미 읽은 메시지 번역 캐시 — 아래에서 같은 원문을 IndexedDB 에서 또 읽지 않게 (새 답마다 열기 · 읽기 한 번 덜)
         if (source === 'manual' ||
             source === 'handleTranslateButtonClick' ||
             source === 'handleTranslateButtonClick_retranslate') {
@@ -3350,6 +3351,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         } else if (source === 'auto' && !message.extra.display_text) {
             // 자동 번역시: DB에서 번역문을 가져올 수 있는지 먼저 확인
             const existingTranslation = await readCachedTranslation(originalText);
+            lookedUp = { value: existingTranslation };
 
             // DB에 번역문이 없는 경우만 토스트 표시 (새로운 메시지)
             if (!existingTranslation) {
@@ -3376,6 +3378,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             } else {
                 // DB에서 현재 원문에 대한 번역이 있는지 확인
                 const cachedForCurrentText = await readCachedTranslation(originalText);
+                lookedUp = { value: cachedForCurrentText };
                 if (!cachedForCurrentText) {
                     shouldTranslate = true;
                 }
@@ -3384,7 +3387,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
 
         if (shouldTranslate) {
             // 캐시된 번역 확인
-            const cachedTranslation = await readCachedTranslation(originalText);
+            const cachedTranslation = lookedUp ? lookedUp.value : await readCachedTranslation(originalText);
             let translation = cachedTranslation;
             let cacheReport = null;   // 7.9.5 새 번역을 캐시에 넣었으면 그 report (그림을 바꾼 글도 같은 조건으로 넣는다)
 
