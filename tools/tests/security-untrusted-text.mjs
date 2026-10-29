@@ -121,4 +121,16 @@ await t('내 글꼴 「목록에서 지우기」: 받은 스타일 · 가져온 
     } finally { Object.assign(globalThis, saved); }
 });
 
+await t('장면 소리 · 분위기 음악 파일 바꾸기 · 빼기: 가져온 설정이 가리킨 다른 소리 파일은 지우지 않아요', async () => {
+    const ui = await import(pathToFileURL(path.join(root, 'src/scene-sound-ui.js')).href);
+    const posts = [];
+    const io = { fetch: async (url, init) => { posts.push([url, JSON.parse(init.body)]); return { ok: true }; }, headers: () => ({}) };
+    // 가져온 설정의 files 칸은 user/files 안 소리 확장자면 무엇이든 통과해요 (scene-sound-rules.js FILE_URL) — 그 값이 그대로 지우기로 가요
+    for (const url of ['/user/files/voice-memo.mp3', 'user/files/other-extension-bgm.ogg', '/user/files/bl-scene-rain-x.mp3', '/user/files/bl-scene-rain-1.mp3.png']) await ui.deleteSceneFile(url, io);
+    assert.deepEqual(posts, [], '이 테마가 올린 이름이 아니면 지우지 않아요');
+    await ui.deleteSceneFile('/user/files/bl-scene-rain-1700000000000.mp3', io);
+    await ui.deleteSceneFile('/user/files/bl-scene-music-sad-1700000000001.ogg', io);
+    assert.deepEqual(posts, [['/api/files/delete', { path: 'user/files/bl-scene-rain-1700000000000.mp3' }], ['/api/files/delete', { path: 'user/files/bl-scene-music-sad-1700000000001.ogg' }]], '이 테마가 올린 파일은 그대로 지워요');
+});
+
 console.log(`security-untrusted-text: ${n} passed`);

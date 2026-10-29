@@ -68,8 +68,10 @@ export async function uploadSceneFile(file, kind, { fetch: doFetch = (...a) => g
     const { path } = await res.json();
     return '/' + String(path).replace(/^\/+/, '');
 }
+const OWN_SCENE_FILE = /^\/?user\/files\/bl-scene-(?:music-)?[a-z]+-\d+\.(mp3|ogg|oga|wav|m4a|aac|webm|flac|opus)$/i;
 export async function deleteSceneFile(url, { fetch: doFetch = (...a) => globalThis.fetch(...a), headers = () => globalThis.SillyTavern?.getContext?.()?.getRequestHeaders?.() || {} } = {}) {
-    if (!url) return;
+    // 이 테마가 올린 파일(uploadSceneFile 의 bl-scene-<종류>-<시각>)만 — 가져온 설정의 경로가 user/files 의 다른 소리 파일을 가리켜도 지우지 않게
+    if (!url || !OWN_SCENE_FILE.test(String(url))) return;
     try { await doFetch('/api/files/delete', { method: 'POST', headers: headers(), body: JSON.stringify({ path: String(url).replace(/^\/+/, '') }) }); } catch { /* 서버 파일은 남아도 문제 없음 */ }
 }
 

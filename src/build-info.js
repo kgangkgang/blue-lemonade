@@ -662,7 +662,7 @@ export const FILE_HASHES = {
   "src/scene-music/tense_pressure.mp3": "892082:25fcaf0e:ba8163b4",
   "src/scene-sound-rules.js": "7471:a0bdf191:d9cd2f32",
   "src/scene-sound-synth.js": "9345:f746d71f:e21f7a54",
-  "src/scene-sound-ui.js": "13103:9cb07bb9:5ad7d4ba",
+  "src/scene-sound-ui.js": "13447:c0081f84:4fd9ccf9",
   "src/scene-sound.js": "20190:87220b7f:e2969cb1",
   "src/scripts/bundled/deus-qr.js": "68840:c1d02f45:b31a6d92",
   "src/scripts/bundled/deus.js": "129040:af7e5082:31393646",
