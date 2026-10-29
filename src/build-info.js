@@ -571,7 +571,7 @@ export const FILE_HASHES = {
   "src/headswitch.js": "11852:99136461:6fc7bbb6",
   "src/help-sheet.js": "1792:a3fd85eb:90971bc7",
   "src/history-warning.js": "14611:92e8c782:032604ca",
-  "src/icon-text.js": "20681:ceba58a8:93badbb4",
+  "src/icon-text.js": "22065:63bed260:228ed4e4",
   "src/icons.js": "6406:99d138cf:6db35f7e",
   "src/image-zoom.js": "18327:667ef99d:c67dd36b",
   "src/imagedecode.js": "9406:ebf81685:5e366e26",

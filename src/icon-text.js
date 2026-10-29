@@ -212,10 +212,25 @@ function scan(node) {
 //   메시지를 그릴 때마다 모든 자손에 35가지 검사를 돌던 것이 폰 메시지 5개 그리기 감시자를 76 → 1,070ms 로 늘렸어요(성능 판별 10-27).
 //   .mes 가지는 통째로 건너뛰어요(그 안의 단추 · 체크 줄 · 메시지 표식은 위에서 따로 봐요).
 function inMessage(el) { return !!el.closest('#chat, .mes'); }   // #chat 자체도 — 메시지가 붙을 때마다 #chat 의 모든 자식(메시지 수백 개)에 35가지 검사를 돌았어요
+// 10-30 perf-icon: 예전에는 뿌리 아래 모든 요소를 TreeWalker 로 돌며 요소마다 자식을 훑었어요(부팅 때 body 전체 — 폰 4배 0.4초 남짓, 서랍 · 확장 창이 붙을 때마다 또).
+//   표식이 바뀔 수 있는 요소는 넷뿐이에요 — ① 걸릴 자식(ROW_CHILD_* 표)이 있는 요소 = 그런 자식의 부모 ② select 를 품은 label(dsel) ③ .range-block(자손 아이디)
+//   ④ 이미 표식이 있는 요소(지울지 봐야 함). 그 밖의 요소는 rowTokens 가 늘 '' 이고 표식도 없어 checkRow 가 아무것도 안 해요.
+//   그래서 브라우저 선택자로 ①~④ 만 모아 같은 checkRow 를 돌려요 — 범위(뿌리 포함 · #chat · .mes 가지 빼기 · isRowHost)도 같아요(시험 tools/tests/icon-text-hosts.mjs).
+const ROW_CHILD_SELECTOR = [...ROW_CHILD_TAGS, ...[...ROW_CHILD_IDS].map(id => '#' + id), ...[...ROW_CHILD_CLASSES].map(c => '.' + c)].join(',');
+export function rowHosts(root) {
+    const hosts = new Set();
+    if (root.localName === 'label' || root.classList.contains('range-block') || root.hasAttribute(ROW) || (root.firstElementChild && rowCandidate(root))) hosts.add(root);
+    for (const c of root.querySelectorAll(ROW_CHILD_SELECTOR)) {
+        const p = c.parentElement; if (p) hosts.add(p);
+        if (c.localName === 'select') for (let a = p; a; a = a === root ? null : a.parentElement) if (a.localName === 'label') hosts.add(a);
+    }
+    for (const el of root.getElementsByClassName('range-block')) hosts.add(el);
+    for (const el of root.querySelectorAll('[' + ROW + ']')) hosts.add(el);
+    return hosts;
+}
 function scanRows(root) {
     if (inMessage(root)) return;
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, { acceptNode: el => el.id === 'chat' || el.classList.contains('mes') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
-    for (let el = root; el; el = walker.nextNode()) if ((el.firstElementChild || el.hasAttribute(ROW)) && isRowHost(el)) checkRow(el);
+    for (const el of rowHosts(root)) if (isRowHost(el) && !inMessage(el)) checkRow(el);
 }
 
 // 바뀐 요소 하나 — .menu_button 이면 단추 표식, label 이면 체크 줄 표식, input 이 바뀌었으면 그 부모 label

@@ -457,6 +457,7 @@ jobs:
           node tools/tests/popup-marks.mjs .
           node tools/tests/mark-mutation-batch.mjs .
           node tools/tests/icon-text-scope.mjs .
+          node tools/tests/icon-text-hosts.mjs .
           node tools/tests/mes-pins-one.mjs .
           node tools/tests/mes-pins-addon-late.mjs .
           node tools/tests/fruit-watch-perf.mjs .
