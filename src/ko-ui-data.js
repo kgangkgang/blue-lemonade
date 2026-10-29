@@ -4,6 +4,8 @@
 // 빈 값("")은 data-i18n 글 칸에서만 쓴다 (앞뒤 조각의 순서를 우리말에 맞추려고 한 조각을 비움).
 export const ADD = {
     "Rename current preset": "현재 프리셋 이름 바꾸기",
+    "Very little of your chat history is being sent, consider deactivating some other prompts.": "채팅 기록이 거의 안 보내지고 있어요. 다른 프롬프트를 꺼 보세요.",
+    "Only a few messages worth chat history are being sent.": "최근 메시지 몇 개만 보내지고 있어요.",
     "Bind presets to API connections": "프리셋을 API 연결에 묶기",
     "Linear": "선형",
     "Quad": "2차",

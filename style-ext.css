@@ -1,5 +1,5 @@
-/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1743 · 뺀 규칙 4492 (style.css 8f6164295ac3) */
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build cc617ec9a38f) */
+/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1757 · 뺀 규칙 4493 (style.css 35aa0119ab87) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 2df297920614) */
 /* css/00-base.css */
 :root{--bl-release:"8.2.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -4054,6 +4054,20 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 }
 .bl-choice-guard-list{display:flex;flex-direction:column;gap:8px;margin-top:8px;text-align:left}
 .bl-choice-guard-list .checkbox_label{align-items:center;gap:8px;min-height:36px}
+.bl-hw{display:flex;flex-direction:column;gap:8px;text-align:left;word-break:keep-all;overflow-wrap:break-word}
+.bl-hw-title{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:1em;font-weight:650;line-height:1.45}
+.bl-hw-title>.fa-solid{margin-top:.2em;flex:none}
+.bl-hw-calc,.bl-hw-note{margin:0;line-height:1.55}
+.bl-hw-sub{margin:6px 0 0;font-size:1em;font-weight:650}
+.bl-hw-table{display:grid;grid-template-columns:minmax(0,1fr) auto;margin:0;border:1px solid var(--salty-line);border-radius:8px;overflow:hidden}
+.bl-hw-table>dt,.bl-hw-table>dd{margin:0;padding:6px 10px;min-height:32px;box-sizing:border-box;display:flex;align-items:center;border-top:1px solid var(--salty-line)}
+.bl-hw-table>dt:first-of-type,.bl-hw-table>dt:first-of-type+dd{border-top:0}
+.bl-hw-table>dd{justify-content:flex-end;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bl-hw-steps{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none;counter-reset:bl-hw}
+.bl-hw-step{display:flex;flex-direction:column;align-items:flex-start;gap:6px;counter-increment:bl-hw;line-height:1.55}
+.bl-hw-step-text::before{content:counter(bl-hw) ". ";font-weight:650}
+.bl-hw-go{min-height:36px;padding:0 10px;margin:0;box-sizing:border-box}
+.bl-hw-flash{outline:2px solid var(--bl-pop-ink);outline-offset:2px;border-radius:8px}
 /* css/80-first-run.css */
 .bl-first-run {
   --fr-accent: var(--salty-accent, #4a7fa6);

@@ -536,7 +536,7 @@ export const FILE_HASHES = {
   "src/extension-colors.js": "9262:b93831f6:c18337b9",
   "src/extension-folder.js": "1942:735f0044:a763d9ee",
   "src/faq-data.js": "14484:d699149a:17afe56d",
-  "src/features.js": "17199:987569f6:b064adf6",
+  "src/features.js": "17510:e5feb7b0:6f60c48f",
   "src/file-fingerprint.js": "524:98923ac4:298a0ced",
   "src/first-run.js": "23534:c329eb33:40cd4012",
   "src/fold.js": "14815:8543a1b6:6775b6de",
@@ -564,6 +564,7 @@ export const FILE_HASHES = {
   "src/gutter.js": "4022:49ae5ff0:c0bcc337",
   "src/headswitch.js": "11852:99136461:6fc7bbb6",
   "src/help-sheet.js": "1792:a3fd85eb:90971bc7",
+  "src/history-warning.js": "14611:92e8c782:032604ca",
   "src/icon-text.js": "17757:98951496:7a714a66",
   "src/icons.js": "6406:99d138cf:6db35f7e",
   "src/image-zoom.js": "18327:667ef99d:c67dd36b",
@@ -571,7 +572,7 @@ export const FILE_HASHES = {
   "src/ink-contrast-core.js": "7980:f3fffe2d:150030b9",
   "src/ink-contrast.js": "13252:b8857f6e:8fbc54dd",
   "src/install-health.js": "8473:6dd5b71d:76e67fb5",
-  "src/ko-ui-data.js": "245627:2edc8c16:04ee0d73",
+  "src/ko-ui-data.js": "245934:8530b8f9:f8d0e603",
   "src/ko-ui.js": "13781:3256a34c:d80ce7da",
   "src/layout.js": "30678:5ffa4cd0:c9aff45b",
   "src/lazy-avatars.js": "6817:18767d2c:5167c050",
@@ -755,6 +756,6 @@ export const FILE_HASHES = {
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
   "src/worldinfo-light.js": "2949:e91008f8:04eead81",
-  "style-ext.css": "317478:0dad3882:1643e744",
-  "style.css": "1836629:271c2e5c:73b5614d"
+  "style-ext.css": "318810:28cee4de:a03219f3",
+  "style.css": "1838075:822f062a:db0f7497"
 };
