@@ -59,6 +59,8 @@ const DENY = [
     '.bl-reader',
     // 7.2.3 테마가 빠져 있을 때(확장만 · 테마 끔)만 채팅 칸을 불투명하게 까는 규칙 — 테마 미리보기에는 해당이 없다 (st-solid.js)
     '.bl-st-solid-chat',
+    // (10-29 perf-persona) 서랍이 채팅을 다 덮을 때 #chat 을 통째로 건너뛰는 표식 (chat-light.js syncChatCover) — 미리보기 상자를 숨기면 안 된다
+    '.bl-chat-covered',
 ];
 
 // ───────── 닻 (이 이름이 사본에 하나도 없으면 미리보기가 조용히 빈다) ─────────
