@@ -1,5 +1,8 @@
 // 커스텀 에이드 작업대. 미리보기만 바꾸다가 '완성 · 적용'에서 두 모드의 레시피를 저장한다.
 import { PALETTES, paletteFamily, paletteVariant, parseColor, safeColor, onColor, sameColor, paletteColors } from './palettes.js';
+// 8.2.7 http:// 로 연 폰(LAN)은 보안 컨텍스트가 아니라 crypto.randomUUID 가 없어요 — 「지금 에이드 담기」 · 새 에이드 저장이 TypeError 로 멈췄어요.
+//   없으면 시각 + 무작위 글자로 (아이디는 문자열이면 돼요 — settings.js 정리 규칙)
+const newPaletteId = () => globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}-${Math.random().toString(36).slice(2, 10)}`;
 
 const KEYS = [['bg', '바탕'], ['surface', '패널'], ['text', '글자'], ['accent', '포인트']];
 const hex = value => '#' + parseColor(value).slice(0, 3).map(n => Math.round(n).toString(16).padStart(2, '0')).join('');
@@ -53,7 +56,7 @@ export function saveCustomPalette(settings) {
     settings.customName = draft.name.trim().slice(0, 24) || '나만의 에이드';
     for (const mode of ['light', 'dark']) settings.colorOverrides[paletteVariant('custom', mode)] = { ...makeCustomPalette(draft[mode], mode), ...draft.extra[mode] };
     settings.palette = paletteVariant('custom', draft.mode);
-    const entry={id:draft.id||crypto.randomUUID(),name:settings.customName,light:structuredClone(settings.colorOverrides['custom-light']),dark:structuredClone(settings.colorOverrides['custom-night'])};
+    const entry={id:draft.id||newPaletteId(),name:settings.customName,light:structuredClone(settings.colorOverrides['custom-light']),dark:structuredClone(settings.colorOverrides['custom-night'])};
     if(index<0)library.push(entry);else library[index]=entry;
     draft.id=entry.id;settings.activeCustomPalette=entry.id;
     delete settings.deletedCustomSlot; // 2026-10-06: 슬롯을 덮었으니 삭제 표시는 할 일을 다 함
@@ -61,7 +64,7 @@ export function saveCustomPalette(settings) {
 
 export function newCustomPalette(settings, mode) { openCustomBuilder(settings,mode);draft.id='';draft.fresh=true;draft.name='새 에이드';draft.extra={light:{},dark:{}};for(const kind of ['light','dark']) {const id=paletteVariant(paletteFamily(settings.palette),kind);draft[kind]=recipe({...PALETTES[id],...(settings.colorOverrides?.[id]||{})});} }
 export function saveCurrentPalette(settings) {
-    const family=paletteFamily(settings.palette), id=crypto.randomUUID();
+    const family=paletteFamily(settings.palette), id=newPaletteId();
     const orphan=family==='custom'?null:orphanCustom(settings); // 2026-10-06: 커스텀이 아닌 에이드를 담을 때 지금 커스텀 색(보관함에 없는 것)도 함께 남김
     if(settings.customPalettes.length+(orphan?1:0)>=24)throw Error('에이드는 24개까지 저장할 수 있어요.');
     const colors=mode=>{
@@ -90,7 +93,7 @@ function orphanCustom(settings) {
     const active = settings.customPalettes.find(item => item.id === settings.activeCustomPalette);
     // '(수정)'은 지금 이름이 그 에이드 이름일 때만 (남의 스타일 · 캐릭터 스타일로 바뀐 색은 그 스타일의 에이드 이름으로)
     const name = active && settings.customName === active.name ? `${active.name.slice(0, 19)} (수정)` : (settings.customName || '나만의 에이드');
-    return { id: crypto.randomUUID(), name, light: structuredClone(light || {}), dark: structuredClone(dark || {}) };
+    return { id: newPaletteId(), name, light: structuredClone(light || {}), dark: structuredClone(dark || {}) };
 }
 export function useCustomPalette(settings,id) {
     const entry=settings.customPalettes.find(item=>item.id===id);if(!entry)return;

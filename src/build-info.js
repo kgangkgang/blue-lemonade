@@ -514,7 +514,7 @@ export const FILE_HASHES = {
   "src/control-ink.js": "17958:f4115a79:f5e79981",
   "src/credits.js": "8099:713e0ae9:6066aaa2",
   "src/current.js": "1590:9701d538:8863d506",
-  "src/custompalette.js": "15962:9e82f872:d30152ba",
+  "src/custompalette.js": "16430:6634daf6:2c9f8752",
   "src/cutedge.js": "26129:92a6449e:c0b95464",
   "src/danger.js": "2765:75c387ef:f3d6eeb2",
   "src/decor-view.js": "7200:ed7b75d4:64e82ae5",
