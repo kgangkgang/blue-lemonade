@@ -7,7 +7,7 @@ import { ROLE_IDS } from './role-icons-core.js';
 const read = (obj, path) => path.split('.').reduce((v, k) => v != null && Object.hasOwn(v,k) ? v[k] : undefined, obj);
 const equal = (a, b) => a === b || (!!a && !!b && typeof a === 'object' && typeof b === 'object' && Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(k => equal(a[k], b[k])));
 const omitted = new Set(['appearanceHistory','version','noticeSeen','frameLibrary','customFonts','styles','charStyles','promptBinds','headSwitches','activeStyle','baseStyle','weatherImages','customPalettes','activeCustomPalette','wordTools','multiAvatar']);
-const omittedPaths = new Set(['deviceLayouts.pc','deviceLayouts.mobile','image.masks','image.maskId','chat.weatherImageId']);
+const omittedPaths = new Set(['deviceLayouts.pc','deviceLayouts.mobile','image.masks','image.maskId','chat.weatherImageId','compat.cssAsked']);   // cssAsked: 「쓰던 테마가 있어요」에 답한 지문 (설정이 아니라 기억)
 const safe = path => typeof path === 'string' && !path.split('.').some(k => ['__proto__','constructor','prototype'].includes(k));
 export function settingDefault(settings, path) {
     if (!safe(path) || omitted.has(path.split('.')[0]) || omittedPaths.has(path)) return { allowed: false };

@@ -54,6 +54,24 @@ await test('손잡이 자리 그대로: 캐릭터 메시지 · 말풍선 나누�
     assert.match(panel, /if\(sub==='update'\)return `<div class="salty-group">\$\{row\('새 버전 자동 확인', toggle\('updateCheck'/);
 });
 
+await test('바뀔 수 있는 모든 칸에 사람이 읽는 이름이 있어요 (설정 창이 그 손잡이를 아직 안 그렸어도 — 키 이름 그대로 보이지 않게)', async () => {
+    const { SETTING_LABELS } = await import(pathToFileURL(path.join(root, 'src/settings-labels.js')).href);
+    const { MARKDOWN_CONTROLS, MARKDOWN_TUNING } = await import(pathToFileURL(path.join(root, 'src/markdown.js')).href);
+    // panel.js historyLabels 와 같은 출처: 이름 표 · 마크다운 손잡이 · 설정 창 row/slider/stack 이 그릴 때 적는 이름(labelHistoryControl)
+    const named = new Set([...Object.keys(SETTING_LABELS), ...[...MARKDOWN_CONTROLS, ...MARKDOWN_TUNING].map(c => 'markdown.' + c.key), 'markdown.accentOwn', 'markdown.accentColor']);
+    const STR = "('[^']*'|`[^`]*`)", unq = t => t.slice(1, -1);
+    for (const re of [new RegExp(String.raw`row\(\s*` + STR + String.raw`\s*,\s*toggle\(\s*` + STR, 'g'), new RegExp(String.raw`stack\(\s*` + STR + String.raw`\s*,\s*seg\(\s*` + STR, 'g')]) for (const m of panel.matchAll(re)) named.add(unq(m[2]));
+    for (const m of panel.matchAll(new RegExp(String.raw`slider\(\s*` + STR + String.raw`\s*,\s*` + STR, 'g'))) named.add(unq(m[1]));
+    assert.ok(named.size > 300, '이름 표를 못 읽음: ' + named.size);
+    const missing = changed.filter(p => !p.startsWith('gradients.') && !named.has(p));   // 그라데이션은 historyLabel 이 따로 이름을 지어요
+    assert.deepEqual(missing, []);
+});
+
+await test('속 값(「쓰던 테마가 있어요」에 답한 지문)은 변경한 설정에 오르지 않아요 — 되돌리면 같은 물음이 다시 떠요', () => {
+    assert.equal(changed.includes('compat.cssAsked'), false);
+    assert.equal(D.settingDefault({}, 'compat.cssAsked').allowed, false);
+});
+
 await test('연결: CI 목록에 이 시험', () => {
     assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/settings-changes-map\.mjs \./);
 });

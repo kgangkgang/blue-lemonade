@@ -23,6 +23,10 @@ Object.assign(SETTING_VALUES, {'usageMode:both':'테마 + 확장','usageMode:the
 Object.assign(SETTING_LABELS, {'image.height':'높이','image.radius':'모서리','image.fadeY':'위아래 가장자리','image.fadeX':'좌우 가장자리','shadow.on':'글자 그림자','outline.on':'글자 외곽선','deus.ink.shadow.on':'데우스 글자 그림자','deus.ink.outline.on':'데우스 글자 외곽선','profile.edgeShadowAlpha':'그림자 진하기','userProfile.edgeShadowAlpha':'그림자 진하기','image.edgeShadowAlpha':'그림자 진하기','chat.weatherSize':'날씨 크기','chat.userSize':'내 메시지 크기','chat.reasoningFollow':'추론 요청을 끄면 지난 추론도 숨기기'});
 
 SETTING_LABELS['addons.zipinstall'] = '확장: ZIP 설치';
+// 설정 창 바깥(확장 목록 · 캡처 · 과일 패널 고르기 창)에서 그리는 손잡이 — 설정 창이 이름을 적지 않아 「변경한 설정」에 키 이름이 그대로 보였어요
+Object.assign(SETTING_LABELS, {'addons.tts':'확장: TTS','addonUI.ttsDrawer':'확장 탭에 TTS 설정 표시','captureTools.imagePages':'긴 이미지를 여러 PNG로 나누기',
+    'fruitEntryMode':'과일 패널 여는 방법','fruitEntryDisplay':'과일 패널 버튼 표시','fruitEntryIcon':'과일 패널 버튼 아이콘','fruitTypography.on':'상태창 글자','fruitTypography.kind':'상태창 글자 · 종류'});
+Object.assign(SETTING_VALUES, {'fruitEntryMode:wand':'요술봉','fruitEntryMode:qr':'QR','fruitEntryMode:cat':'고양이','fruitEntryDisplay:icon':'아이콘만','fruitEntryDisplay:text':'글자만','fruitEntryDisplay:both':'아이콘+글자'});
 
 // 6.1.6 이미지 › 투명 그림 (외곽선 · 그림자)
 Object.assign(SETTING_LABELS, {'image.cutEdge':'투명 그림 외곽선 · 그림자','image.cutEdge.preset':'투명 그림 프리셋','image.cutEdge.shadow.colorMode':'투명 그림 그림자 색 고르기','image.cutEdge.overflow':'투명 그림: 그림 칸 밖으로도 그리기','image.cutEdge.outline':'투명 그림 외곽선','image.cutEdge.outline.on':'투명 그림 외곽선','image.cutEdge.outline.colorMode':'투명 그림 외곽선 색 고르기','image.cutEdge.outline.color':'투명 그림 외곽선 색','image.cutEdge.outline.width':'투명 그림 외곽선 두께','image.cutEdge.outline.alpha':'투명 그림 외곽선 진하기','image.cutEdge.outline.blur':'투명 그림 외곽선 퍼짐','image.cutEdge.shadow':'투명 그림 그림자','image.cutEdge.shadow.on':'투명 그림 그림자','image.cutEdge.shadow.color':'투명 그림 그림자 색','image.cutEdge.shadow.alpha':'투명 그림 그림자 투명도','image.cutEdge.shadow.angle':'투명 그림 그림자 각도','image.cutEdge.shadow.distance':'투명 그림 그림자 거리','image.cutEdge.shadow.blur':'투명 그림 그림자 퍼짐'});
