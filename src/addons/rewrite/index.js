@@ -52,7 +52,7 @@ function updateMessageBlock(messageId, message) {
 }
 import { withNameAliases } from '../../name-aliases.js';   // 6.3.x 예외 캐릭터를 다른 표기(영 · 한 · 일)로도 찾는다
 import { PERSONAL } from './defaults-personal.js';
-import { isEditingMessage } from './guards.js';
+import { isEditingMessage, removeListed } from './guards.js';
 import { createSpanFinder } from './spans.js';
 import { PROVIDERS, autoFetchModelList, canFetch, fetchModelList, isHttpUrl, listKey, missingNote, modelChoices, normalizeUrl, pickModel, resolveModel, providerKeyOf } from './providers.js';
 import { applyModelRequestRules, cached as cachedModels, fillSelect, onChange as onModelListChange } from '../../live-models.js';
@@ -1396,7 +1396,7 @@ function renderRuleEditor() {
     editor.find('.bwr_delete').on('click', async () => {
         const confirmed = await callGenericPopup(textNode(`'${rule.name || '이름 없음'}' 금지 묘사를 삭제할까요?`), POPUP_TYPE.CONFIRM);
         if (!confirmed) return;
-        settings.rules.splice(settings.rules.indexOf(rule), 1);
+        if (!removeListed(settings.rules, rule)) { renderRules(); return; }   // 1029 확인하는 사이 다른 기기에서 이미 지웠으면 맨 끝 규칙을 지우지 않게
         listGone(settings, 'rulesGone', rule.id);   // 7.0.2 다른 기기의 옛 목록이 되살리지 않게
         for (const exception of settings.exceptions) {
             const allow = (exception.allow ?? []).filter(id => id !== rule.id);
@@ -1586,7 +1586,7 @@ function renderExceptionEditor() {
     editor.find('.bwr_delete').on('click', async () => {
         const confirmed = await callGenericPopup(textNode(`'${exceptionTitle(exception)}' 예외를 삭제할까요?`), POPUP_TYPE.CONFIRM);
         if (!confirmed) return;
-        settings.exceptions.splice(settings.exceptions.indexOf(exception), 1);
+        if (!removeListed(settings.exceptions, exception)) { renderExceptions(); return; }   // 1029
         listGone(settings, 'exceptionsGone', exception.id);   // 7.0.2
         renderExceptions();
         touched(exception);

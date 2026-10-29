@@ -24,3 +24,15 @@ export function chatSwitchTarget(target) {
 export function isEditingMessage(root, messageId) {
     return !!root?.querySelector?.(`#chat .mes[mesid="${messageId}"] .edit_textarea`);
 }
+
+/**
+ * 1029 목록에서 그 항목만 뺀다. 없으면(확인 창이 떠 있는 사이 다른 기기 합치기가 이미 뺐으면) 아무것도 안 하고 false.
+ * 예전엔 splice(indexOf(item), 1) 이라 -1 이면 맨 끝 항목(엉뚱한 금지 묘사 · 예외)을 지웠다.
+ * @template T @param {T[]} list @param {T} item
+ */
+export function removeListed(list, item) {
+    const at = Array.isArray(list) ? list.indexOf(item) : -1;
+    if (at < 0) return false;
+    list.splice(at, 1);
+    return true;
+}
