@@ -610,7 +610,7 @@ export const FILE_HASHES = {
   "src/palettes.js": "33830:51637840:34a73a09",
   "src/panel.js": "267451:0088bafc:a698c3d1",
   "src/people.js": "9021:76aa8129:14633595",
-  "src/persona-defer.js": "11928:ec0428e5:fc062287",
+  "src/persona-defer.js": "12616:bfcbe77b:6f201db3",
   "src/popup-guard.js": "5328:fab87000:195a34d2",
   "src/popup-marks.js": "1818:0af84657:5805cf62",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",

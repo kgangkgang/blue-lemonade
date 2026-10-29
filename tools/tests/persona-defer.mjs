@@ -37,11 +37,13 @@ function makeWorld({ withHandler = true, handlerName = 'onPersonaDescriptionInpu
     const win = new Target('window');
     const doc = new Target('document'); doc.parent = null; doc.visibilityState = 'visible';
     const body = new Target('body'); body.parent = doc;
-    const drawer = new Target('persona-management-block'); drawer.parent = body; drawer.classes.add('openDrawer');
-    const field = new Target('persona_description'); field.parent = drawer; field.value = '';
-    const avatar = new Target('avatar-other'); avatar.parent = drawer;
+    // 실리태번 index.html 모양 그대로: #persona-management-button(.drawer) > #PersonaManagement(.drawer-content — openDrawer 가 여기 붙음) > #persona-management-block(안쪽 칸) > 칸
+    const drawer = new Target('PersonaManagement'); drawer.parent = body; drawer.classes.add('drawer-content'); drawer.classes.add('openDrawer');
+    const block = new Target('persona-management-block'); block.parent = drawer; block.classes.add('flex-container');
+    const field = new Target('persona_description'); field.parent = block; field.value = '';
+    const avatar = new Target('avatar-other'); avatar.parent = block;
     const dialog = new Target('dialog'); dialog.parent = body;
-    const ids = { persona_description: field, 'persona-management-block': drawer };
+    const ids = { persona_description: field, PersonaManagement: drawer, 'persona-management-block': block };
     doc.getElementById = id => ids[id] || null;
     const calls = [];   // 실리태번 핸들러가 본 값
     const st = { user_avatar: 'a.png', saved: {} };
@@ -62,7 +64,7 @@ function makeWorld({ withHandler = true, handlerName = 'onPersonaDescriptionInpu
     const logs = [];
     const type = (text, opts = {}) => { for (const ch of text) { field.value += ch; dispatch(field, 'input', opts); advance(opts.gap ?? 120); } };
     const install = (extra = {}) => M.installPersonaDefer({ $, document: doc, window: win, MutationObserver: FakeMO, eventSource, eventTypes: { GENERATION_STARTED: 'generation_started' }, owner: () => st.user_avatar, setTimer, clearTimer, log: (...a) => logs.push(a.join(' ')), ...extra });
-    return { win, doc, body, drawer, field, avatar, dialog, calls, other, st, events, named, advance, type, install, eventSource, logs, timers };
+    return { win, doc, body, drawer, block, field, avatar, dialog, calls, other, st, events, named, advance, type, install, eventSource, logs, timers };
 }
 
 let n = 0, failed = 0;
@@ -95,6 +97,14 @@ test('즉시 실행 ② 서랍이 닫히면(openDrawer 가 빠짐 — 바깥 누
     w.drawer.classList.remove('openDrawer');
     assert.deepEqual(w.calls, ['abc']);
     const mo = observers.filter(o => o.live && o.target === w.drawer).at(-1); assert.deepEqual(mo.opts, { attributes: true, attributeFilter: ['class'] }, '서랍 class 만 본다(subtree 없음)');
+});
+test('(review-persona) 서랍 감시는 openDrawer 가 붙는 실제 서랍(#PersonaManagement)을 본다 — 안쪽 칸(#persona-management-block)이 아니라', () => {
+    assert.equal(M.DRAWER_ID, 'PersonaManagement', '실리태번 index.html 의 페르소나 서랍 .drawer-content id');
+    const w = makeWorld(); w.install(); w.type('코드로 닫힘', { gap: 50 });
+    assert.equal(observers.filter(o => o.live && o.target === w.block).length, 0, '안쪽 칸은 class 가 바뀌지 않으니 볼 일이 없다');
+    // 실리태번이 코드로 닫는 모양: toggleClass('closedDrawer openDrawer') — 클릭 · 키 없이
+    w.drawer.classList.add('closedDrawer'); w.drawer.classList.remove('openDrawer');
+    assert.deepEqual(w.calls, ['코드로 닫힘'], '타이머를 기다리지 않고 바로');
 });
 test('즉시 실행 ③ 다른 페르소나를 누르면 — 캡처 단계라 실리태번의 고르기 처리보다 먼저 옛 페르소나에 저장', () => {
     const w = makeWorld(); w.install(); w.type('옛 설명', { gap: 50 });
@@ -157,6 +167,14 @@ test('미룬 사이 다른 길로 페르소나가 바뀌면(칸 글이 이미 �
     const w = makeWorld(); w.install(); w.type('a', { gap: 50 });
     w.st.user_avatar = 'b.png'; w.field.value = 'B 설명';
     w.advance(M.DELAY); assert.equal(w.calls.length, 0); assert.equal(w.st.saved['b.png'], undefined);
+});
+test('(review-persona) 미룬 사이 다른 길로 페르소나가 바뀐 뒤 새 페르소나에 이어 치면 — 그 글은 새 페르소나에 저장(버리지 않는다)', () => {
+    const w = makeWorld(); w.install(); w.type('a', { gap: 50 });
+    w.st.user_avatar = 'b.png'; w.field.value = 'B 설명';   // 실리태번 setUserAvatar → setPersonaDescription(칸 글을 새 페르소나 것으로 · input 은 안 쏨)
+    w.type(' 더', { gap: 50 });
+    w.advance(M.DELAY);
+    assert.equal(w.st.saved['b.png'], 'B 설명 더', '새 페르소나에 친 글');
+    assert.equal(w.st.saved['a.png'], undefined, '옛 페르소나에 새 글을 쓰지 않는다');
 });
 test('핸들러가 없거나(실리태번 판이 바뀜) jQuery 가 없으면 아무것도 걸지 않고 한 줄만 · 칸의 input 은 그대로 흐른다', () => {
     for (const opts of [{ withHandler: false }, { handlerName: 'somethingElse' }, { withJQuery: false }]) {

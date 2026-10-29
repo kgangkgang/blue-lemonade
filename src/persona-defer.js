@@ -16,7 +16,7 @@
 export const DELAY = 400;                               // 폰 타자 사이(200~300ms)보다 길게 — 치는 동안 글자마다 한 번씩 돌지 않게
 export const HANDLER = 'onPersonaDescriptionInput';
 export const FIELD_ID = 'persona_description';
-export const DRAWER_ID = 'persona-management-block';
+export const DRAWER_ID = 'PersonaManagement';          // (review-persona) openDrawer 가 붙는 실제 서랍 .drawer-content(#persona-management-button 안) — 안쪽 칸 #persona-management-block 은 class 가 바뀌지 않아 닫힘을 못 봤다
 const TAG = '[Blue Lemonade]';
 
 /**
@@ -54,7 +54,9 @@ export function createDeferrer(env) {
         /** 감싼 핸들러가 부른다: 이번 호출을 미룬다 */
         input(self, args, event) {
             deferred++;
-            pending = { self, args, owner: pending?.owner ?? owner() };
+            // 주인은 이번 입력 때의 페르소나 — 실리태번은 칸 글을 바꾼 그 자리에서 페르소나도 바꾸니, 이번 입력의 칸 글은 지금 페르소나 것이다.
+            //   (review-persona) 예전에는 첫 입력 때 주인을 붙들어, 미룬 사이 다른 길로 바뀐 새 페르소나에 이어 친 글까지 타이머가 버렸다.
+            pending = { self, args, owner: owner() };
             // 조합 상태는 input 이벤트의 isComposing 도 따른다: 조합 중 input 은 true, 조합이 끝난 뒤의 input 은 false.
             //   리그(CDP imeSetComposition → insertText 확정)에서는 compositionend 가 오지 않아 조합 중으로 남은 채 타이머가 영영 돌지 않았다.
             const c = typeof event?.isComposing === 'boolean' ? event.isComposing : event?.originalEvent?.isComposing;
@@ -116,7 +118,7 @@ export function installPersonaDefer(deps) {
     on(win, 'pagehide', () => flush('unload'));
     on(doc, 'visibilitychange', () => { if (doc.visibilityState === 'hidden') flush('hidden'); });
     // 서랍이 코드로 닫혀도(바깥 누름 · 다른 서랍 열기) — openDrawer 가 빠지는 순간
-    const drawer = doc.getElementById?.(DRAWER_ID);
+    const drawer = doc.getElementById?.(DRAWER_ID) || doc.querySelector?.('#persona-management-button .drawer-content');   // 실리태번 isPersonaPanelOpen 과 같은 자리
     if (drawer && typeof deps.MutationObserver === 'function') {
         let open = !!drawer.classList?.contains('openDrawer');
         const mo = new deps.MutationObserver(() => { const now = !!drawer.classList?.contains('openDrawer'); if (open && !now) flush('drawer'); open = now; });
