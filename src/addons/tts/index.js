@@ -111,6 +111,9 @@ let streamTimer = 0;
 let streamLast = 0;
 let genStartedAt = 0;     // 마지막 생성 시작 시각
 let chatChangedAt = 0;
+let groupTurnFrom = -1;   // 8.2.7 그룹 차례(GROUP_WRAPPER_STARTED ~ FINISHED)가 시작될 때의 채팅 길이 (차례 밖이면 -1)
+/** 8.2.7 이 번호의 메시지가 지금 그룹 차례에 나온 답인가 */
+const inGroupTurn = (id) => groupTurnFrom >= 0 && Number.isInteger(id) && id >= groupTurnFrom;
 
 function toast(msg, kind = 'info') {
     if (window.toastr) toastr[kind](msg, 'TTS', { closeButton: false, timeOut: kind === 'error' ? 5000 : 2500 });
@@ -241,6 +244,9 @@ function onGenStarted(type, _params, dryRun) {
     const cur = player.currentMesId();
     const mes = msgOf(cur);
     if (mes && mes.is_user && cur === chat.length - 1) return;
+    // 8.2.7 그룹 채팅은 한 차례에 캐릭터들이 차례로 답한다 — 다음 캐릭터의 생성이 시작될 때 이 차례의 앞 캐릭터 답을 끊지 않는다.
+    //       예전엔 여기서 끊겨(번역 · 분석을 기다리던 것도) 마지막 캐릭터 답만 들렸다. 「끊고 읽기」는 다음 답이 그려질 때 그대로 (위 내 메시지와 같게)
+    if (type === 'normal' && mes && !mes.is_user && inGroupTurn(cur)) return;
     player.stop();
 }
 function onGenEnded() {
@@ -312,7 +318,7 @@ function onChatChanged() {
     if (pendingRename) { try { finishRename(); } catch { /* 다음에 */ } }
     if (!runtimeEnabled()) return;
     player.stop();
-    spoken = null; stream = null;
+    spoken = null; stream = null; groupTurnFrom = -1;
     clearTimeout(streamTimer); streamTimer = 0; streamLast = 0;
     chatChangedAt = Date.now();
     addButtons();
@@ -528,6 +534,9 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
     eventSource.on(event_types.GENERATION_STARTED, onGenStarted);
     eventSource.on(event_types.GENERATION_ENDED, onGenEnded);
     eventSource.on(event_types.GENERATION_STOPPED, onGenEnded);
+    // 8.2.7 그룹 차례 — 조용한 생성 · 대신 쓰기는 차례가 아니다
+    if (event_types.GROUP_WRAPPER_STARTED) eventSource.on(event_types.GROUP_WRAPPER_STARTED, (e) => { groupTurnFrom = e?.type === 'quiet' || e?.type === 'impersonate' ? -1 : chat.length; });
+    if (event_types.GROUP_WRAPPER_FINISHED) eventSource.on(event_types.GROUP_WRAPPER_FINISHED, () => { groupTurnFrom = -1; });
     eventSource.on(event_types.MESSAGE_SWIPED, (id) => onSwiped(Number(id)));
     eventSource.on(event_types.MESSAGE_DELETED, onDeleted);
     eventSource.on(event_types.CHAT_CHANGED, onChatChanged);
