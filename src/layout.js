@@ -17,6 +17,15 @@ export function wideScroller(target, root = null) {
     return null;
 }
 
+/** 8.2.3 메시지 스와이프 손짓으로 넘기지 않을 가로 줄 — QR 줄 · QR 팝아웃은 늘, 나머지는 실제로 가로로 넘칠 때만 */
+export const SWIPE_STRIPS = '#qr--bar, #qr--popout, #HotSwapWrapper .hotswap, [data-bl-fade], .salty-fonttags, .bl-qr-sample';
+let stripGesture = false;
+export function swipeStripOf(target, selector = SWIPE_STRIPS) {
+    const strip = target?.closest?.(selector);
+    if (!strip) return null;
+    return strip.id === 'qr--bar' || strip.id === 'qr--popout' || strip.scrollWidth > strip.clientWidth + 1 ? strip : null;
+}
+
 export function startCompactLayout() {
 
     // Chat Completion의 숫자 전용 응답 길이에 원래 입력값을 사용하는 슬라이더를 붙인다.
@@ -285,8 +294,12 @@ export function startCompactLayout() {
     sendForm?.addEventListener('wheel', event => qrWheel(event, event.target.closest?.('#qr--bar')), { passive: false });
     sendForm?.addEventListener('pointerdown', event => qrPointerDown(event, event.target.closest?.('#qr--bar')));
     // 6.9.8 퀵 리플라이 줄을 좌우로 밀면 실리태번 손짓(swiped-events, document 의 touch*)이 스와이프 · 새 답 만들기로 읽었다 → 줄 안의 터치는 문서까지 올리지 않는다 (스크롤 · 누르기는 그대로)
-    const qrSwipeGuard = event => { if (event.target.closest?.('#qr--bar')) event.stopPropagation(); };
-    for (const type of ['touchstart', 'touchmove', 'touchend']) sendForm?.addEventListener(type, qrSwipeGuard, { passive: true });
+    // 8.2.3 (제보 「QR 즐겨찾기 줄을 오른쪽으로 넘기다가 대사가 재생성됨 · 모바일」) 가드를 #send_form 에서 body 로 올리고 줄을 넓힌다:
+    //   QR 줄이 #send_form 밖에 있는 판 · 팝아웃(#qr--popout)과, 캐릭터 즐겨찾기 줄 · 탭 줄([data-bl-fade]) · 글꼴 묶음 줄 · QR 미리보기 줄처럼 가로로 넘치는 줄 전부.
+    //   QR 줄은 예전처럼 touchstart 부터 막고, 다른 줄은 7.0.2 와 같이 touchstart 는 올리고(바깥 누르면 서랍 닫기) touchmove · touchend 만 막는다 — 스크롤은 브라우저 몫이라 그대로.
+    //   리그(폰 384px · 빠른 끌기 150px)에서 QR 줄 · 입력창 위 자리 모두 스와이프 0회였고 마지막 메시지 위 끌기는 swiped-left → .swipe_right 클릭이 났다(계측 검증, 10-29).
+    document.body.addEventListener('touchstart', event => { stripGesture = !!swipeStripOf(event.target); if (stripGesture && event.target.closest?.('#qr--bar')) event.stopPropagation(); }, { passive: true });
+    for (const type of ['touchmove', 'touchend', 'touchcancel']) document.body.addEventListener(type, event => { if (stripGesture) event.stopPropagation(); if (type !== 'touchmove') stripGesture = false; }, { passive: true });
     // 7.0.2 채팅 속 넓은 표 · 코드 · 상태창(칸 안 가로 스크롤)을 손가락으로 가로로 밀어도 같은 손짓이 걸려 마지막 답이 넘어가거나 새 답이 생성됐다.
     // 누르기 시작한 곳이 실제로 넘치는 가로 스크롤 칸 안이면 그 손짓의 touchmove · touchend 만 문서까지 올리지 않는다 —
     // touchstart 는 그대로 올려 실리태번의 바깥 누르면 서랍 닫기가 돈다(touchend 가 안 가면 swiped-events 가 손짓을 끝내지 못하고 다음 touchstart 가 새로 잡는다)

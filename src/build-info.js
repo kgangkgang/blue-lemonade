@@ -571,7 +571,7 @@ export const FILE_HASHES = {
   "src/install-health.js": "8473:6dd5b71d:76e67fb5",
   "src/ko-ui-data.js": "245627:2edc8c16:04ee0d73",
   "src/ko-ui.js": "13781:3256a34c:d80ce7da",
-  "src/layout.js": "29049:12ea2783:eb2dd73e",
+  "src/layout.js": "30678:5ffa4cd0:c9aff45b",
   "src/lazy-avatars.js": "6817:18767d2c:5167c050",
   "src/lazy-panel.gen.css": "34768:8aa24fbf:b31f1504",
   "src/lite.js": "39247:d139c491:029f69cd",
