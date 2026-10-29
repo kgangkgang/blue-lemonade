@@ -162,6 +162,7 @@ jobs:
           node tools/tests/prompt-history-label.mjs .
           node tools/tests/prompt-injected-source.mjs .
           node tools/tests/prompt-translated-name.mjs .
+          node tools/tests/prompt-engine-once.mjs .
           node tools/tests/fruit-dictionary-han.mjs .
           node tools/tests/sent-tokens.mjs .
           node tools/tests/tts-background.mjs .

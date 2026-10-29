@@ -99,17 +99,28 @@ export function createPromptEngine(doc = document) {
         if(next!==el.getAttribute('title'))el.setAttribute('title',next);
         if(entry)titles.set(el,{before:original,after:next});else titles.delete(el);
     }
+    // 8.2.6 성능: 예전에는 그리기 한 번에 문서 전체를 querySelectorAll 로 여섯 번 훑었어요(긴 채팅이면 요소 10만 개 남짓 × 6 — 프롬프트 토글마다).
+    //   여섯 묶음을 한 선택자 목록으로 한 번만 훑고, 찾은 요소를 묶음마다 나눠 예전 순서(묶음 순서 · 그 안은 문서 순서) 그대로 칠해요.
+    //   앞 묶음이 글을 바꿔 문서에서 빠진 요소는 뒤 묶음에서 건너뛰어요(예전에는 뒤 묶음을 훑을 때 이미 없던 것). 결과는 같아요(tools/tests/prompt-engine-once.mjs).
+    const GROUPS=[
+        ['li[data-pm-identifier] .completion_prompt_manager_prompt_name > a.prompt-manager-inspect-action, li[data-pm-identifier] .completion_prompt_manager_prompt_name > span[title]:not([class])', el=>paint(el,'prompts',el.closest('li').dataset.pmIdentifier)],
+        ['#completion_prompt_manager_footer_append_prompt option', el=>paint(el,'prompts',el.value)],
+        ['.regex-script-label[id] > .regex_script_name, div.regex_script_name[title], li.regex-debugger-rule[data-id] .rule-name', el=>paint(el,'regex',el.closest('li.regex-debugger-rule')?.dataset.id || el.parentElement.id)],
+        ['#completion_prompt_manager_popup_entry_form_name', el=>hint(el,'prompts',lastId)],
+        ['input.regex_script_name', el=>hint(el,'regex',null)],
+        ['#saved_preset_scripts [title],#saved_regex_scripts [title],#saved_scoped_scripts [title]', el=>translateTitle(el)],
+    ];
+    const ALL=GROUPS.map(([sel])=>sel).join(',');
     function render() {
         timer=null;
         for (const [el] of changed) if (!el.isConnected) changed.delete(el);
         for (const [input,el] of hints) if (!input.isConnected) {el.remove();hints.delete(input);}
-        doc.querySelectorAll('li[data-pm-identifier] .completion_prompt_manager_prompt_name > a.prompt-manager-inspect-action, li[data-pm-identifier] .completion_prompt_manager_prompt_name > span[title]:not([class])').forEach(el => paint(el,'prompts',el.closest('li').dataset.pmIdentifier));
-        doc.querySelectorAll('#completion_prompt_manager_footer_append_prompt option').forEach(el=>paint(el,'prompts',el.value));
-        doc.querySelectorAll('.regex-script-label[id] > .regex_script_name, div.regex_script_name[title], li.regex-debugger-rule[data-id] .rule-name').forEach(el=>paint(el,'regex',el.closest('li.regex-debugger-rule')?.dataset.id || el.parentElement.id));
-        doc.querySelectorAll('#completion_prompt_manager_popup_entry_form_name').forEach(el=>hint(el,'prompts',lastId));
-        doc.querySelectorAll('input.regex_script_name').forEach(el=>hint(el,'regex',null));
-        for(const [el] of titles)if(!el.isConnected)titles.delete(el);
-        doc.querySelectorAll('#saved_preset_scripts [title],#saved_regex_scripts [title],#saved_scoped_scripts [title]').forEach(translateTitle);
+        const found=GROUPS.map(()=>[]);
+        for (const el of doc.querySelectorAll(ALL)) for (let i=0;i<GROUPS.length;i++) if (el.matches(GROUPS[i][0])) found[i].push(el);
+        GROUPS.forEach(([,run],i)=>{
+            if(i===GROUPS.length-1)for(const [el] of titles)if(!el.isConnected)titles.delete(el);
+            for(const el of found[i])if(i===0||el.isConnected)run(el);
+        });
     }
     function schedule() { if (!timer) timer=setTimeout(render,60); }
     function click(event) { const row=event.target.closest?.('li[data-pm-identifier]'); if(row)lastId=row.dataset.pmIdentifier; if(event.target.closest?.(watched+formButtons))schedule(); }
