@@ -55,7 +55,10 @@ export function createDeferrer(env) {
         input(self, args, event) {
             deferred++;
             pending = { self, args, owner: pending?.owner ?? owner() };
-            if (event?.isComposing || event?.originalEvent?.isComposing) composing = true;
+            // 조합 상태는 input 이벤트의 isComposing 도 따른다: 조합 중 input 은 true, 조합이 끝난 뒤의 input 은 false.
+            //   리그(CDP imeSetComposition → insertText 확정)에서는 compositionend 가 오지 않아 조합 중으로 남은 채 타이머가 영영 돌지 않았다.
+            const c = typeof event?.isComposing === 'boolean' ? event.isComposing : event?.originalEvent?.isComposing;
+            if (c === true) composing = true; else if (c === false) composing = false;
             arm();
         },
         compositionStart() { composing = true; clear(); },

@@ -145,6 +145,14 @@ test('한글 조합: 조합 중 isComposing 으로만 알려 와도(compositions
     assert.equal(w.calls.length, 0);
     dispatch(w.field, 'compositionend'); w.advance(M.DELAY); assert.deepEqual(w.calls, ['해']);
 });
+test('한글 조합: compositionend 가 오지 않아도(리그 CDP 확정) 조합이 끝난 input(isComposing:false)이 오면 그 뒤 DELAY 에 한 번', () => {
+    const w = makeWorld(); w.install();
+    dispatch(w.field, 'compositionstart');
+    w.field.value = '미'; dispatch(w.field, 'input', { isComposing: true }); w.advance(M.DELAY * 3);
+    assert.equal(w.calls.length, 0, '조합 중');
+    w.field.value = '미안'; dispatch(w.field, 'input', { isComposing: false });
+    w.advance(M.DELAY); assert.deepEqual(w.calls, ['미안']);
+});
 test('미룬 사이 다른 길로 페르소나가 바뀌면(칸 글이 이미 새 페르소나 것) 타이머 실행은 버린다', () => {
     const w = makeWorld(); w.install(); w.type('a', { gap: 50 });
     w.st.user_avatar = 'b.png'; w.field.value = 'B 설명';
