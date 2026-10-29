@@ -179,9 +179,32 @@ export function rowCandidate(el) {
     }
     return false;
 }
+// 10-30 perf-icon: 걸릴 자식이 있는 요소(설정 서랍의 input · select · flex-container 를 품은 줄 수천 개)도 예전에는 35가지 검사를 다 돌렸어요(부팅 폰 4배 0.25~0.33초).
+//   검사마다 꼭 필요한 자식 특징은 하나씩 정해져 있어서(ROW_NEED — 위 표의 조건을 하나씩 옮긴 것), 자식을 한 번 훑어 있는 특징을 모으고
+//   그 특징이 있는 검사만 돌려요. 특징이 없으면 그 검사는 어차피 거짓이라 결과는 같아요(tools/tests/icon-text-scope.mjs · drawer-marks.mjs 가 옛 표와 견줘요).
+const ROW_NEED = {
+    neo: '.neo-range-slider', sneo: '.neo-range-slider', lneo: '.neo-range-slider', range: '.range-block-title', num: '.range-block-title', numd: '.range-block-title',
+    chk: '.checkbox_label', title: '.range-block-title', slider: '.neo-range-slider', idr: '.inline-drawer', soh: '.standoutHeader', odd: '.oneline-dropdown', api: '.api_button',
+    pmc: '.prompt_manager_prompt_controls', copy: '.bl-copyright', sl2: '.salty-slider', fplus: '.menu_button_icon', sel: 'select', logic: 'select', subsel: 'select', pm: 'select',
+    lsel: 'select', lsel2: 'select', sel2: '.flex-container', f1sel: '.flex1', numin: 'input', smax: '.editor_maximize', peer: 'input', h4: 'h4', h4dep: 'h4',
+    instr: '#instruct_names_behavior', resp: '#bl-response-range', wics: '#world_info_character_strategy', rxp: '#regex_presets', mui: '#movingUIModeCheckBlock',
+};
+export function rowFeatures(el) {
+    const found = new Set();
+    for (const c of el.children) {
+        if (ROW_CHILD_TAGS.has(c.localName)) found.add(c.localName);
+        if (c.id && ROW_CHILD_IDS.has(c.id)) found.add('#' + c.id);
+        const list = c.classList;
+        if (!list || list.length === 0) continue;
+        if (typeof list[Symbol.iterator] === 'function') { for (const name of list) if (ROW_CHILD_CLASSES.has(name)) found.add('.' + name); }
+        else for (const name of ROW_CHILD_CLASSES) if (list.contains(name)) found.add('.' + name);
+    }
+    return found;
+}
 export function rowTokens(el) {
     const tokens = [];
-    if (rowCandidate(el)) { const k = [...el.children]; for (const [name, test] of ROW_TOKENS) if (test(k, el)) tokens.push(name); }
+    const found = rowFeatures(el);
+    if (found.size) { const k = [...el.children]; for (const [name, test] of ROW_TOKENS) { const need = ROW_NEED[name]; if ((need === undefined || found.has(need)) && test(k, el)) tokens.push(name); } }   // 표에 없는 검사는 늘 돌려요
     if (tag(el, 'label') && el.querySelector('select')) tokens.push('dsel');
     if (has(el, 'range-block')) for (const [name, id] of DEEP_IDS) if (el.querySelector('#' + id)) tokens.push(name);
     return tokens.join(' ');

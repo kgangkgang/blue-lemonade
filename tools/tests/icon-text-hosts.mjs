@@ -1,5 +1,6 @@
 // 10-30 perf-icon: src/icon-text.js 의 서랍 줄 표식 훑기가 「모든 요소를 TreeWalker 로 돌기」에서 「바뀔 수 있는 요소만 선택자로 모으기」(rowHosts)로 바뀐 뒤에도
-//   ① 끝 표식이 예전 훑기와 같은지(무작위 나무 400개 · 표식이 미리 붙은 요소 · #chat · .mes · svg 가지 포함) ② 뿌리 자신도 후보가 되는지 봐요(가짜 DOM, 브라우저 없음)
+//   ① 끝 표식이 예전 훑기와 같은지(무작위 나무 400개 · 표식이 미리 붙은 요소 · #chat · .mes · svg 가지 포함) ② 뿌리 자신도 후보가 되는지,
+//   ③ 줄 검사는 그 자식 특징이 있는 것만 도는지(35가지를 다 돌리지 않음) 봐요(가짜 DOM, 브라우저 없음)
 //   node tools/tests/icon-text-hosts.mjs <테마 루트>
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -94,6 +95,13 @@ await test('뿌리 자신도 후보가 되고, 메시지 안 뿌리는 훑지 �
     assert.ok(rowHosts(marked).has(marked), '표식만 남은 뿌리(지워야 함)');
     const rb = new El('div', 'range-block').append(new El('div').append(new El('input', '', { id: 'stream_toggle' })));
     assert.ok(rowHosts(rb).has(rb), '.range-block 뿌리(자손 아이디)');
+});
+
+await test('걸릴 자식이 input 하나뿐인 줄은 그 특징이 필요한 검사만 돌아요(35가지를 다 돌리지 않음)', () => {
+    const row = new El('div', 'flex-container').append(new El('span', 'a b'), new El('input', 'text_pole', { type: 'number' }), new El('small', 'c'), new El('div', 'd e'));
+    counts.contains = 0;
+    assert.equal(rowTokens(row), 'numin');
+    assert.ok(counts.contains <= 6, `클래스 확인 ${counts.contains}번 — 35가지를 다 돌리면 60번 가까이`);
 });
 
 console.log(`icon-text-hosts: ${passed}개 통과`);
