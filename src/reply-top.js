@@ -3,7 +3,7 @@
 // 첫 줄(이름 줄)이 보이면(IntersectionObserver 하나, 떠 있는 동안만) · 다음 보내기 · 스와이프 · 채팅 바뀜에 걷는다.
 // 끝 신호: GENERATION_ENDED, 번역 애드온의 'llm-translator:rendered'(번역이 그려져 길이가 바뀐 뒤). 아이콘만 · 툴팁 없음 · aria-label 만.
 // 설정: 채팅 › 화면 「새 답 첫 줄로 가는 단추」 (chat.replyTop, 기본 끔) — 켤 때만 불러온다 (features.js)
-let on = false, bound = false, btn = null, io = null, target = null, nearAtStart = true, timer = 0;
+let on = false, bound = false, btn = null, io = null, target = null, nearAtStart = true, timer = 0, armed = false;
 const offs = [];
 const NEAR = 160;   // 답이 끝났을 때 바닥에서 이만큼 안이면 「맨 아래 근처」
 const chat = () => document.getElementById('chat');
@@ -63,14 +63,16 @@ function onRendered(event) {
 
 export function syncReplyTop(enabled) {
     on = !!enabled;
-    if (!on) { hide(); btn?.remove(); btn = null; for (const off of offs.splice(0)) off(); bound = false; return; }
+    if (!on) { hide(); btn?.remove(); btn = null; for (const off of offs.splice(0)) off(); bound = false; armed = false; return; }
     if (bound) return;
     bound = true;
     try {
         const { eventSource, event_types } = SillyTavern.getContext();
         const listen = (name, fn) => { if (event_types[name]) { eventSource.on(event_types[name], fn); offs.push(() => eventSource.removeListener?.(event_types[name], fn)); } };
-        listen('GENERATION_STARTED', (_type, _params, dryRun) => { if (dryRun) return; hide(); nearAtStart = nearBottom(); });
-        listen('GENERATION_ENDED', onEnded);
+        // 8.2.7: 사칭(impersonate) · 조용한 생성(quiet — 요약 확장 · /gen)도 끝에 GENERATION_ENDED 가 와요. 새 답이 없는데 지난 답으로 ↑ 를 띄웠어요 —
+        // 새 답을 받는 생성이 시작됐을 때만 끝을 봐요
+        listen('GENERATION_STARTED', (type, _params, dryRun) => { if (dryRun || type === 'quiet' || type === 'impersonate') return; armed = true; hide(); nearAtStart = nearBottom(); });
+        listen('GENERATION_ENDED', () => { if (!armed) return; armed = false; onEnded(); });
         listen('MESSAGE_SWIPED', hide);
         listen('CHAT_CHANGED', hide);
         for (const name of ['MESSAGE_DELETED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED']) listen(name, hide);   // 지우거나 고친 뒤 ↑ 가 남아 아무 데도 안 가지 않게

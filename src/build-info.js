@@ -639,7 +639,7 @@ export const FILE_HASHES = {
   "src/recent-context.js": "16290:98c34053:c6b55f4b",
   "src/relay-prices.js": "9699:42bc6101:4c08ef06",
   "src/reply-notify.js": "7836:5a90a3bf:14208226",
-  "src/reply-top.js": "5771:c5f79831:283f889f",
+  "src/reply-top.js": "6174:cfc77cb1:71eb1391",
   "src/rerender-notify.js": "9554:f5d2ac94:bc712cfb",
   "src/role-icons-core.js": "34913:8883e16f:dc2958fb",
   "src/role-icons-fa.gen.js": "40164:8f55d310:6a6410ef",

@@ -50,6 +50,7 @@ jobs:
           node tools/tests/fruit-content-gap.mjs .
           node tools/tests/wordmask.mjs .
           node tools/tests/wordmask-quote-lead.mjs .
+          node tools/tests/reply-top-generation-types.mjs .
           node tools/tests/promptbind.mjs .
           node tools/tests/headswitch.mjs .
           node tools/tests/usage-mode.mjs .
