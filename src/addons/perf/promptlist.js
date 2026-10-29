@@ -10,6 +10,9 @@
 // 8.0.5 묶기: 목록이 보일 때 render() / render(true)(미리 돌려 보기 + 목록 전체 다시 그리기)가 짧은 사이에 거듭 오면 마지막 한 번만 돌린다.
 //   토글을 잇달아 누르면 실리태번은 누를 때마다 미리 돌려 보기와 목록 그리기를 한 번씩 했다(데우스 3 · 폰 흉내 한 번 2초 남짓).
 //   누른 줄 표시는 prompt-choice.js 가 바로 바꾸므로, 그 뒤 계산은 마지막 상태로 한 번이면 같다. 보내기 쪽 render(false) 는 그대로 보낸다.
+// 8.2.5 앞쪽 가장자리: 뒤쪽 가장자리만 있던 묶기는 토글 한 번도 300ms 를 기다렸다 그려서(성능 빈틈 전수조사 — 토글 다시 그림 604 ↔ 402ms)
+//   토글마다 체감 지연이 늘었다. 이제 마지막 그리기에서 coalesceMs 가 지난 첫 render(true) 는 바로 돌리고, 그 뒤 coalesceMs 안에
+//   잇달아 오는 것만 마지막 한 번으로 묶는다 — 토글 세 번(200ms 사이)은 「첫 번째 바로 + 마지막 한 번」 두 번으로 그려진다.
 
 /**
  * @param {object} env
@@ -24,11 +27,12 @@
  * @param {(id: any) => void} [env.clearTimer]
  */
 export function createPromptListDefer(env) {
-    const stats = { deferred: 0, rendered: 0, passed: 0, covered: 0, coalesced: 0, coalescedRuns: 0 };
+    const stats = { deferred: 0, rendered: 0, passed: 0, covered: 0, coalesced: 0, coalescedRuns: 0, leading: 0 };
     const setTimer = env.setTimer || ((fn, ms) => setTimeout(fn, ms));
     const clearTimer = env.clearTimer || (id => clearTimeout(id));
     /** @type {{ self: any, args: any[], timer: any, first: number } | null} */
     let batch = null;   // 묶어 둔 render(true) — 마지막 호출의 인자
+    let lastRunAt = -Infinity;   // 8.2.5 묶기 대상 render(true) 를 마지막으로 돌린 시각 — 앞쪽 가장자리 판정
     /** @type {{ manager: any, original: Function } | null} */
     let hooked = null;
     let pending = false;
@@ -112,14 +116,21 @@ export function createPromptListDefer(env) {
                 if (pending) { pending = false; peerMark = null; stopWatching(); }
                 const ms = Number(env.coalesceMs) || 0;
                 if (afterTryGenerate !== false && ms > 0 && env.enabled() && el && shown(el) && mayCoalesce()) {
-                    // 짧은 사이에 거듭 오는 render(true) 는 마지막 한 번만 (처음 부른 뒤 ms × 4 를 넘기지는 않는다)
                     const now = Date.now();
+                    // 8.2.5 앞쪽 가장자리: 마지막 그리기에서 ms 가 지난 첫 호출은 바로 돌린다 — 토글 한 번은 예전처럼 300ms 를 기다리지 않는다.
+                    //   그 뒤 ms 안에 거듭 오는 render(true) 만 마지막 한 번으로 묶는다(처음 묶은 뒤 ms × 4 를 넘기지는 않는다).
+                    if (!batch && now - lastRunAt >= ms) {
+                        lastRunAt = now;
+                        stats.passed++; stats.leading++;
+                        return original.call(this, afterTryGenerate, ...rest);
+                    }
                     if (batch) { clearTimer(batch.timer); stats.coalesced++; } else batch = { first: now };
                     batch.self = this; batch.args = [afterTryGenerate, ...rest];
                     const wait = Math.max(0, Math.min(ms, batch.first + ms * 4 - now));
                     batch.timer = setTimer(runBatch, wait);
                     return undefined;   // 원래 render 도 기다리는 약속을 돌려주지 않는다
                 }
+                if (afterTryGenerate !== false) lastRunAt = Date.now();   // 토글이 아닌 그리기(지우기 · 끼우기 …)도 「방금 그렸다」로 친다
                 stats.passed++;
                 return original.call(this, afterTryGenerate, ...rest);
             }
@@ -150,6 +161,7 @@ export function createPromptListDefer(env) {
         const b = batch;
         batch = null;
         if (!b || !hooked) return;
+        lastRunAt = Date.now();
         stats.coalescedRuns++;
         stats.passed++;
         hooked.original.call(b.self, ...b.args);

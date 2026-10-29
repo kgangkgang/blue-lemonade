@@ -129,7 +129,7 @@ const promptList = createPromptListDefer({
     visible: isShown,
     watch: watchShown,
     peer: () => window.SaveDedupe?.promptDefer ?? null,
-    coalesceMs: 300,   // 8.0.5 토글을 잇달아 누를 때 미리 돌려 보기 · 목록 그리기를 마지막 한 번으로
+    coalesceMs: 300,   // 8.0.5 토글을 잇달아 누를 때 미리 돌려 보기 · 목록 그리기를 마지막 한 번으로 — 8.2.5 첫 번째는 바로, 300ms 안의 뒤따르는 것만 묶는다
     coalesceWhen: () => Date.now() - lastToggleAt < TOGGLE_WINDOW_MS,
 });
 
