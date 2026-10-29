@@ -610,6 +610,7 @@ export async function uploadFont(file) {
     return font;
 }
 
+const OWN_FONT_FILE = /^\/?user\/files\/salty-font-\d+\.(woff2|woff|ttf|otf)$/i;
 export async function removeCustomFont(id) {
     const settings = getSettings();
     const font = settings.customFonts.find(f => f.id === id);
@@ -622,7 +623,9 @@ export async function removeCustomFont(id) {
         }
     }
     saveSettings();
-    if (font?.file) {
+    // 서버 파일은 이 테마가 올린 글꼴(uploadFont 의 salty-font-<시각>.<확장자>)만 지운다 — 받은 스타일 · 가져온 설정의 글꼴 항목이
+    // user/files 의 다른 파일을 가리켜도 「목록에서 지우기」가 그 파일을 지우지 않게. 받은 글꼴(shared)은 남의 서버 경로라 지우지 않는다
+    if (font?.file && !font.shared && OWN_FONT_FILE.test(font.file)) {
         try {
             await fetch('/api/files/delete', {
                 method: 'POST',

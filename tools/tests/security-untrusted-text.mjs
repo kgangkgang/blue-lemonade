@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = path.resolve(process.argv[2] || fileURLToPath(new URL('../..', import.meta.url)));
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 let n = 0; const t = async (name, fn) => { await fn(); n++; console.log('PASS', name); };
@@ -96,6 +96,29 @@ await t('TTS 내 목소리 묻기: 페르소나 이름이 태그로 실행되지
     box.name1 = '레몬';
     await box.ask();
     assert.equal(box.shown.at(-1), '레몬(나) 대사도 자동 목소리로 읽을까요?', '보통 이름은 모양이 같아요');
+});
+
+// ───────── 2. 남의 파일 지우기 (실리태번 /api/files/delete 는 user/files 안이면 무엇이든 지워요) ─────────
+await t('내 글꼴 「목록에서 지우기」: 받은 스타일 · 가져온 설정의 글꼴 항목이 가리킨 다른 파일은 지우지 않아요', async () => {
+    const posts = [];
+    const ext = { salty: { customFonts: [
+        { id: 'f-1', label: '받은 글꼴', family: "'Salty f1'", group: 'custom', file: '/user/files/notes.txt', shared: true },
+        { id: 'f-2', label: '내 글꼴', family: "'Salty f2'", group: 'custom', file: '/user/files/salty-font-1700000000000.woff2' },
+        { id: 'f-3', label: '가져온 설정 글꼴', family: "'Salty f3'", group: 'custom', file: '/user/files/backup.png' },
+        { id: 'f-4', label: '받은 같은 이름', family: "'Salty f4'", group: 'custom', file: '/user/files/salty-font-1700000000001.woff2', shared: true },
+    ] } };
+    const saved = { SillyTavern: globalThis.SillyTavern, fetch: globalThis.fetch, localStorage: globalThis.localStorage, document: globalThis.document };
+    globalThis.SillyTavern = { getContext: () => ({ extensionSettings: ext, saveSettingsDebounced() {}, getRequestHeaders: () => ({}) }) };
+    globalThis.fetch = async (url, init) => { posts.push([url, JSON.parse(init.body)]); return { ok: true }; };
+    globalThis.localStorage = { getItem: () => null, setItem() {} };
+    globalThis.document = { fonts: { add() {}, delete() {} }, createElement: () => ({ getContext: () => null }) };
+    try {
+        const fonts = await import(pathToFileURL(path.join(root, 'src/fonts.js')).href);
+        assert.equal(fonts.allFonts().filter(f => f.group === 'custom' && !f.unusable).length, 4, '네 항목 모두 목록에 보이는 글꼴(검사를 통과)이에요');
+        for (const id of ['f-1', 'f-2', 'f-3', 'f-4']) await fonts.removeCustomFont(id);
+        assert.deepEqual(ext.salty.customFonts, [], '목록에서는 넷 다 빠져요');
+        assert.deepEqual(posts, [['/api/files/delete', { path: 'user/files/salty-font-1700000000000.woff2' }]], '서버 파일은 이 테마가 올린 내 글꼴 하나만 지워요');
+    } finally { Object.assign(globalThis, saved); }
 });
 
 console.log(`security-untrusted-text: ${n} passed`);

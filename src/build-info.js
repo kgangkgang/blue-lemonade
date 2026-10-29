@@ -545,7 +545,7 @@ export const FILE_HASHES = {
   "src/file-fingerprint.js": "524:98923ac4:298a0ced",
   "src/first-run.js": "23534:c329eb33:40cd4012",
   "src/fold.js": "14815:8543a1b6:6775b6de",
-  "src/fonts.js": "33294:d8a9263f:a396db57",
+  "src/fonts.js": "33783:f81a644a:c93849c7",
   "src/frame-editor.js": "8154:9bb94eb0:a58b488b",
   "src/frame-library.js": "3031:b57d8ee7:08c1a717",
   "src/frame-presets.js": "12865:6a04743b:c2843f25",
