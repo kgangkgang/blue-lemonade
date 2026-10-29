@@ -1514,7 +1514,7 @@ function prefetch(from, s) {
     const n = Math.max(0, Math.min(3, Number(s.prefetch) || 0));
     for (let i = from; i < Math.min(queue.length, from + n); i++) {
         const j = queue[i];
-        if (!j.sceneKind && !j.audio && !deadFor(j)) ensureAudio(j).catch(() => { /* 재생 때 다시 시도 */ });
+        if (!j.sceneKind && !j.audio && !deadFor(j) && !mesGone(j)) ensureAudio(j).catch(() => { /* 재생 때 다시 시도 */ });   // 8.2.7 지운 메시지 줄은 받지 않음
     }
 }
 /**
@@ -1525,7 +1525,7 @@ function prefetch(from, s) {
 function lookAhead(from, s) {
     if ((Number(s.prefetch) || 0) > 0) return;   // 미리 받기가 켜져 있으면 prefetch 가 이미
     const cur = queue[from - 1], j = queue[from];
-    if (!cur || !j || cur.sceneKind || j.sceneKind || j.audio || deadFor(j) || coolingFor(j) || !canMerge(cur, j)) return;
+    if (!cur || !j || cur.sceneKind || j.sceneKind || j.audio || deadFor(j) || coolingFor(j) || mesGone(j) || !canMerge(cur, j)) return;   // 8.2.7 지운 메시지 줄은 받지 않음
     ensureAudio(j).catch((e) => { if (!isAbort(e) && current !== j) j.aheadErr = e; });   // 6.4.2 v3.1 실패는 그 줄에 남긴다 — 재생 루프가 다시 보내지 않고 이 오류로 fail (쉬는 시간 · 키 오류 판정 그대로)
     // 6.4.3 v3.2 재생이 이미 그 줄에 닿았으면(같은 요청에 붙어 run 이 그 오류로 fail) 남기지 않는다 — 남기면 ⏮ 로 돌아왔을 때 다시 요청하지 않고 옛 오류를 던졌다 (503 · 끊김도 다시 시도할 기회를 잃음)
 }
@@ -1541,6 +1541,7 @@ const usedEffects = new Map();
 let sceneManual = false; // Explicit editor playback may use effects while ordinary chat effects are off.
 const exportJobs = new Set();
 let queue = [], idx = 0, running = false, current = null;
+const jobMes = new WeakMap();   // 8.2.7 줄 → 큐에 넣을 때의 메시지 객체 (가운데 메시지를 지우면 번호가 당겨져 번호만으로는 지워졌는지 모른다)
 let gen = 0;                 // stop() 마다 +1: 옛 루프는 스스로 끝남
 let nav = null;              // 다음에 갈 색인 (skip / prev / regenerate)
 let currentIr = null;        // 지금 작업 끊기
@@ -1859,6 +1860,7 @@ async function run() {
                 if (nav !== null) { idx = nav; nav = null; continue; }   // 6.4.4 v1.3 앞 메시지 꼬리를 기다리는 동안 ⟲ · ↻ · ⏮: 그 줄로 돌아가 다시 읽는다 (같은 메시지라 다음 반복은 기다리지 않음)
             }
             if (job.sceneKind === 'sfx' && (!isSfxEnabled(job.sfxId) || (!job.sceneManual && settings().sfx?.enabled !== true) || ambientCovers(job.sfxId))) { idx++; continue; }   // 6.9.8 테마 장면 소리가 같은 소리를 내는 동안은 건너뛴다
+            if (mesGone(job)) { if (typeof job.done === 'function') { const d = job.done; job.done = null; d(false); } idx++; continue; }   // 8.2.7 기다리던 줄의 메시지가 지워졌으면 만들지(값을 치르지) 않고 건너뛴다
             if (deadFor(job)) {   // 1.3.8 이번 읽기(스트리밍이면 이 답장)에서 안 되는 엔진
                 skipDead(job);
                 // 6.3.9 v2.2 그 대사에 미룬 효과음은 버리지 않고 제자리에서 (6.4.0 처럼 · 합성 실패 줄과 같게)
@@ -1968,6 +1970,7 @@ function cancelCurrent() {
 /** 큐에 넣고 시작. append 가 아니면 지금 것을 끊고 새로 */
 function enqueue(jobs, { append = false } = {}) {
     if (!jobs.length) return;
+    for (const j of jobs) if (Number.isInteger(j?.mesId) && j.mesId >= 0 && chat[j.mesId] && !jobMes.has(j)) jobMes.set(j, chat[j.mesId]);   // 8.2.7
     if (append && isPlaying()) { tapRun = null; queue.push(...jobs); run(); return; }   // 6.2.8 스트리밍 조각이 덧붙은 큐는 누른 줄의 큐가 아니다 (이어 듣기 없음)
     const carry = !!fxCarry && jobs.every(j => j.mesId === fxCarry.mesId);   // 6.3.9 이어 듣기가 넣은 다음 줄(같은 메시지): 앞 줄의 겹침 효과음 꼬리를 끊지 않음
     stop({ keepStream: true, keepFx: carry });
@@ -2927,6 +2930,19 @@ export function wasStreamRead(mesId) {
 export function forgetFrom(n) {
     for (const k of [...readState.keys()]) if (k >= n) readState.delete(k);
 }
+/** 8.2.7 이 줄의 메시지가 채팅에서 지워졌나 (큐에 넣을 때 잡아 둔 객체로 본다) */
+function mesGone(job) {
+    const mes = job ? jobMes.get(job) : null;
+    return !!mes && !chat.includes(mes);
+}
+/**
+ * 8.2.7 메시지를 지웠을 때: 읽고 있던(또는 번역 · 분석을 기다리던) 메시지가 지워졌으면 멈춘다.
+ * 실리태번은 가운데 메시지를 지우면 뒤 메시지 번호를 당겨 같은 번호의 메시지가 생긴다 — 번호만 보던 확인(index.js onDeleted)이 그걸 「아직 있음」으로 봐서
+ * 지운 메시지의 남은 줄을 계속 만들어(값을 치르며) 읽었다. 뒤에 기다리던 다른 메시지의 줄은 run() 이 건너뛴다
+ */
+function stopIfDeleted() {
+    if (mesGone(current) || (waiting && Number.isInteger(waiting.mesId) && waiting.mesId >= 0 && !!waiting.mes && !chat.includes(waiting.mes))) stop();
+}
 
 // ---------- 공개: 스트리밍 읽기 (호출자가 700 ms 로 묶어서 부름)
 export function onStreamProgress(mesId, text) {
@@ -3858,7 +3874,7 @@ export function init() {
     eventSource.on(event_types.CHAT_CHANGED, () => { stop(); readState.clear(); stream = null; renderedAt.clear(); });
     // 지운 메시지·스와이프의 읽은 자리를 잊음: 같은 번호로 다시 만든 답장을 옛 미룸 자리부터 읽지 않게 (2026-10-06)
     //   애드온이 꺼져 있을 때 지운 것도 잊도록 runtime 확인 없이 여기서 받는다. 스와이프를 지우면 그 위 번호 기록은 지워졌거나 밀린 것
-    eventSource.on(event_types.MESSAGE_DELETED, () => forgetFrom(chat.length));
+    eventSource.on(event_types.MESSAGE_DELETED, () => { forgetFrom(chat.length); stopIfDeleted(); });
     if (event_types.MESSAGE_SWIPE_DELETED) eventSource.on(event_types.MESSAGE_SWIPE_DELETED, (e) => {
         const id = Number(e?.messageId), r = readState.get(id);
         if (r && Number.isInteger(e?.swipeId) && r.swipe >= e.swipeId) readState.delete(id);
