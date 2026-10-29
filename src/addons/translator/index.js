@@ -7054,7 +7054,10 @@ async function restoreTranslationsFromMetadata() {
         progressContainer.style.top = '0';
         progressContainer.style.left = '0';
         progressContainer.style.width = '100%';
-        progressContainer.style.height = '100%';
+        // 8.2.7 폰: 실리태번은 html 에 transform 을 걸고 폰에서 body 를 position:fixed 로 둬 fixed 의 기준(html)이 높이 0 이에요 — 100% 면 막 높이가 0 이라
+        //   진행 상자가 화면 맨 위에 반쯤 잘리고 뒤 화면이 눌렸어요. 화면 단위로 줘요(dvh 를 모르는 브라우저는 100vh 로 남아요)
+        progressContainer.style.height = '100vh';
+        progressContainer.style.height = '100dvh';
         progressContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
         progressContainer.style.zIndex = '10000';
         progressContainer.style.display = 'flex';
