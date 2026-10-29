@@ -3,6 +3,18 @@ import { startErrorLog } from './src/diag-errors.js';
 import { installUsageLedger } from './src/usage-ledger.js';   // 7.4.0 사용량 장부 허브 — 다른 확장이 읽기 전에 (가볍다: 장부 · 가격표는 처음 쓸 때 연다)
 installUsageLedger();
 startErrorLog(); // 6.6.9 진단 파일용: 블루레몬에이드 오류만 최근 20줄 (주소 · 키는 가림)
+// 실리태번 판 호환: getContext().event_types 는 실리태번이 「옛 이름」으로 표시해 둔 것(새 이름 eventTypes). 그 이름이 빠진 판이 오면 새 이름을 옛 이름으로도
+//   이어 붙여, 테마 모듈 30여 곳이 거는 사건 리스너(채팅 바뀜 · 설정 저장 · 생성 시작 …)가 조용히 빠지거나 시작 함수가 던지지 않게 한다. 둘 다 있는 지금 판에서는 아무것도 안 바꾼다.
+try {
+    const host = globalThis.SillyTavern, probe = host?.getContext?.();
+    if (probe && probe.event_types === undefined && probe.eventTypes && !host.getContext.__blEventTypesAlias) {
+        const original = host.getContext;
+        const aliased = function (...args) { const ctx = original.apply(this, args); if (ctx && ctx.event_types === undefined) ctx.event_types = ctx.eventTypes; return ctx; };
+        aliased.__blEventTypesAlias = true;
+        host.getContext = aliased;
+        console.warn('[Blue Lemonade] 이 실리태번 판에는 getContext().event_types 가 없어 eventTypes 로 이어 붙였어요');
+    }
+} catch { /* 그대로 */ }
 // 공용 모델 목록(live-models.js)은 맨 위 await(실리태번 모듈 · 모델 등록 상태 받기)가 있어 정적 import 하면 테마 시작 전체가 그만큼 기다렸다 —
 //   기다리지 않고 바로 받는다. 실리태번이 연결하며 받은 목록을 받아 두는 훅은 예전처럼 시작할 때 걸린다 (연결은 확장을 다 실은 뒤)
 import('./src/live-models.js').catch(error => console.warn('[Blue Lemonade] 모델 목록', error));

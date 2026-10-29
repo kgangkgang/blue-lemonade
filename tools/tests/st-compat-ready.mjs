@@ -80,7 +80,8 @@ export async function resolve(spec, ctx, next) {
         eventTypes: TYPES, event_types: TYPES, extensionSettings: { salty: {} }, getCurrentLocale: () => 'en', powerUserSettings: {},
     };
     if (scenario === 'no-legacy-event-types') delete ctx.event_types;
-    globalThis.SillyTavern = { getContext: () => ctx };
+    const originalGetContext = () => (scenario === 'no-legacy-event-types' ? { ...ctx } : ctx);
+    globalThis.SillyTavern = { getContext: originalGetContext };
     console.error = (...args) => T.errors.push(args.map(String).join(' '));
     console.warn = () => {};
 
@@ -97,6 +98,9 @@ export async function resolve(spec, ctx, next) {
     assert.ok(T.jqOn.some(s => String(s).includes('#openai_show_thoughts')), '추론 숨김 리스너가 붙어야 해요');
     assert.ok(T.jqOn.some(s => String(s).includes('#chat_display')), '실리태번 설정 바뀜 리스너가 붙어야 해요');
     assert.ok(T.on.includes(TYPES.CHAT_CHANGED), '채팅 바뀜 → 그림 분류 리스너가 붙어야 해요');
+    // 옛 이름이 빠진 판: 테마 모듈 · 옛 확장이 getContext().event_types 로 읽어도 새 이름과 같은 표 / 둘 다 있는 판: getContext 를 건드리지 않음
+    if (scenario === 'no-legacy-event-types') assert.equal(SillyTavern.getContext().event_types, TYPES, 'event_types 가 eventTypes 로 이어 붙어야 해요');
+    else assert.equal(SillyTavern.getContext, originalGetContext, '두 이름이 다 있으면 getContext 를 감싸지 않아요');
     if (throwOn) assert.ok(T.errors.some(line => line.includes(throwOn) || line.includes('본채팅 규칙')), '던진 함수는 콘솔에 남겨요');
     process.exit(0);
 }
