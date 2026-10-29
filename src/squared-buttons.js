@@ -121,13 +121,29 @@ export function perfMarkOnly(record) {
     return changed;
 }
 const COVERED = '#chat.bl-chat-covered';
+// 10-30 perf-gaps: 긴 채팅 가볍게(chat-light.js)는 화면 밖 메시지(#chat > .mes)에 content-visibility:auto 를 걸어 안쪽 계산을 건너뛰어요.
+//   그 안의 후보에 offsetParent 를 물으면 크롬이 그 메시지만 그 자리에서 풀어 계산해요 — 메시지 하나마다 스타일 · 배치 한 번씩이라
+//   긴 채팅 300 열기(폰 4배)에서 배치 300번 · 약 5초, body class 가 바뀐 뒤 훑기(스크롤 중 데우스 하늘 표시 등)에서 0.5~6초였어요.
+//   checkVisibility({ contentVisibilityAuto: true }) 는 풀지 않고 「건너뛴 채인지」만 알려 줘요(300개 1ms). 건너뛴 메시지 안 후보는 재지 않고
+//   그 메시지를 적어 두었다가, 화면 가까이 와서 크롬이 계산을 시작할 때(contentvisibilityautostatechange · skipped=false — 보이기 전 여유 거리에서 와요)
+//   다음 프레임 맨 앞에서 그 메시지만 재요. 판정 · 표시는 같아요(알려진 생김새는 예전처럼 변화 때 바로 붙음 · restamp).
+//   서랍 덮개(bl-chat-covered · content-visibility:hidden)일 때는 예전 길 그대로예요.
+export const LIGHT_MES = '#chat > .mes';
+/** 후보가 「건너뛴 content-visibility:auto 메시지」 안이면 그 메시지, 아니면 null — 계산을 풀지 않는 읽기만 */
+export function skippedMessageOf(el, view, cache = new Map()) {
+    if (typeof el.checkVisibility !== 'function' || el.checkVisibility({ contentVisibilityAuto: true })) return null;
+    const mes = el.closest?.(LIGHT_MES);
+    if (!mes || mes === el) return null;
+    if (!cache.has(mes)) cache.set(mes, mes.checkVisibility({ contentVisibilityAuto: true }) && view.getComputedStyle(mes).contentVisibility === 'auto');
+    return cache.get(mes) ? mes : null;
+}
 
 export function watchSquaredButtons(doc, host) {
     const style = doc.createElement('style');
     style.dataset.blSquaredStyle = '';
     style.textContent = `[${ATTR}]{border-radius:var(--bl-r-btn,8px)!important}`;
     (doc.head || doc.documentElement).append(style);
-    const roots = new Set(), waiting = new Set();
+    const roots = new Set(), waiting = new Set(), skippedMes = new Set();
     // 7.5.4 한 번 표시한 생김새 — 목록을 innerHTML 로 다시 그리는 확장(탭 · 칩이 새 요소가 됨)에서 새 요소가 0.3초 동안 둥글게 보였다가 네모가 되던 것을 막는다
     const seen = new Map();
     const remember = el => { if (seen.size >= SEEN_MAX) seen.clear(); seen.set(shapeKey(el), true); };
@@ -145,7 +161,13 @@ export function watchSquaredButtons(doc, host) {
         if (!root?.isConnected) return;
         const areas = areasOf(root); if (!areas) return;
         const list = root.matches?.(CANDIDATES) ? [root, ...root.querySelectorAll(CANDIDATES)] : root.querySelectorAll(CANDIDATES);
-        for (const el of list) if (!cheapSkip(el, host, areas) && el.offsetParent !== null && isRoundTextButton(el, host, areas)) found.push(el);
+        const light = !doc.getElementById?.('chat')?.classList?.contains('bl-chat-covered'), cache = new Map();
+        for (const el of list) {
+            if (cheapSkip(el, host, areas)) continue;
+            const mes = light ? skippedMessageOf(el, host, cache) : null;
+            if (mes) { skippedMes.add(mes); continue; }   // 화면 가까이 오면(onLightState) 그 메시지만 재요
+            if (el.offsetParent !== null && isRoundTextButton(el, host, areas)) found.push(el);
+        }
     }
     // 7.2.8 Measure at the start of a frame: the layout read there is the one the frame needs anyway. Read from the 300 ms timer,
     // it forced an extra full layout whenever the page changed again before the next paint (startup, chat open: 4x CPU 250-450 ms).
@@ -157,11 +179,14 @@ export function watchSquaredButtons(doc, host) {
     function flush() {
         frame = 0; timer = 0; if (stopped) return;
         if (booting(doc)) { afterBoot(measure); return; }   // 7.7.4 시작 덮개 동안은 재지 않는다 — 걷힐 때 모아 둔 자리를 한 번에 (boot-gate.js)
+        for (const mes of skippedMes) if (!mes.isConnected) skippedMes.delete(mes);
         const list = roots.has(doc.body) ? [doc.body] : compactRoots(roots);
         roots.clear();
         const found = [];
         for (const root of list) scan(root, found);
         for (const el of found) { el.setAttribute(ATTR, ''); remember(el); }
+        // 새로 안 생김새는 건너뛰어 둔 메시지에도 바로 붙여요(예전처럼 재서 붙인 것과 같은 결과 · 배치 읽기 없음)
+        if (found.length) for (const mes of skippedMes) restamp(mes);
     }
     const queueMany = nodes => {
         const ready = new Set();
@@ -187,6 +212,8 @@ export function watchSquaredButtons(doc, host) {
     const observer = new host.MutationObserver(records => {
         const pending = new Set();
         for (const r of records) {
+            // 긴 채팅 가볍게가 꺼지면(메시지가 줄어 bl-chat-light 가 빠짐) 건너뛰던 메시지는 사건 없이 그려져요 — 적어 둔 것을 다시 재요
+            if (perfMarkOnly(r) && skippedMes.size && String(r.oldValue || '').split(' ').includes('bl-chat-light') && !r.target.classList?.contains('bl-chat-light')) { for (const mes of skippedMes) pending.add(mes); skippedMes.clear(); }
             if (perfMarkOnly(r)) { if (!r.target.classList?.contains('bl-chat-covered') && !doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
             if (r.attributeName === 'data-generating') { if (!doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
             if (r.type === 'childList') r.addedNodes.forEach(node => pending.add(node)); else if (!paddingOnly(r)) pending.add(r.target);
@@ -196,9 +223,18 @@ export function watchSquaredButtons(doc, host) {
     observer.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['class', 'style', 'hidden', 'open', 'data-generating'] });
     const resize = () => queue(doc.body);
     host.addEventListener('resize', resize);
+    const onLightState = event => {
+        const mes = event.target;
+        if (event.skipped || stopped || !skippedMes.delete(mes) || !mes.isConnected) return;
+        restamp(mes); roots.add(mes);
+        if (timer) { host.clearTimeout(timer); timer = 0; }
+        if (typeof host.requestAnimationFrame !== 'function') flush(); else if (!frame) frame = host.requestAnimationFrame(flush);
+    };
+    doc.addEventListener?.('contentvisibilityautostatechange', onLightState, true);
     queue(doc.body);
     return () => {
         stopped = true; observer.disconnect(); host.clearTimeout(timer); if (frame) host.cancelAnimationFrame?.(frame); host.removeEventListener('resize', resize);
+        doc.removeEventListener?.('contentvisibilityautostatechange', onLightState, true); skippedMes.clear();
         for (const el of doc.querySelectorAll(`[${ATTR}]`)) el.removeAttribute(ATTR);
         style.remove();
     };
