@@ -88,6 +88,8 @@ export async function resolve(spec, ctx, next) {
     let importError = null, readyError = null;
     try { await import(indexUrl); } catch (error) { importError = error; }
     for (const fn of ready) { try { fn(); } catch (error) { readyError = error; } }
+    // 10-30: 시작 그래프 상한 때문에 몇몇 시작 함수는 startSafe 안에서 동적 import 로 불러요 — 그 import 가 끝날 때까지 한 박자 기다려 세요
+    await new Promise(resolve => setTimeout(resolve, 200));
 
     assert.equal(importError, null, `index.js 가 끝까지 실행돼야 해요: ${importError?.message}`);
     assert.equal(readyError, null, `준비 콜백이 중간에 끊기면 안 돼요: ${readyError?.message}`);
