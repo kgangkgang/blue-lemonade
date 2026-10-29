@@ -1,21 +1,22 @@
 /* ===== css/32-weather.css =====
-   3.3.0 날씨 효과 (채팅 › 화면 › 날씨, src/weather.js). 켜 두는 동안만 body.bl-weather-on.
+   3.3.0 날씨 효과 (채팅 › 화면 › 날씨, src/weather.js). 켜 두는 동안만 html.bl-weather-on(8.2.7: body 대신 html — body class 기록마다 실리태번 keyboard.js 가 body 아래를 다시 훑었어요.
+   :where(html.…) body.salty.salty 는 예전 body.salty.bl-weather-on 과 특이도가 같아요).
    ===== */
 /* 캔버스는 #sheld(쌓임 맥락: absolute + z-index) 의 맨 앞 자식, z-index -1 → #sheld 바탕 위 · 채팅 글 아래.
    채팅 칸의 바탕색은 #sheld 로 옮기고 채팅 칸은 투명하게 — 안 그러면 채팅 칸 바탕이 효과를 덮는다 */
-body.salty.bl-weather-on #chat {
+:where(html.bl-weather-on) body.salty.salty #chat {
   background: transparent !important;
 }
 /* White-image blending normally paints a backing on every message. With
    weather active, the chat container already supplies that backing; opaque
    message rectangles would cut the falling particles into horizontal strips. */
-body.salty.salty-blend.bl-weather-on #chat .mes:not(.selected) {
+:where(html.bl-weather-on) body.salty.salty-blend.salty #chat .mes:not(.selected) {
   background: none !important;
 }
-body.salty.bl-weather-on #sheld {
+:where(html.bl-weather-on) body.salty.salty #sheld {
   background: var(--salty-fill-bg, var(--salty-bg)) !important;
 }
-body.salty.salty-bgimg.bl-weather-on #sheld {
+:where(html.bl-weather-on) body.salty.salty-bgimg.salty #sheld {
   background: var(--salty-fill-bg-82, var(--salty-bg-82)) !important;
 }
 body.salty #sheld > canvas.bl-weather {

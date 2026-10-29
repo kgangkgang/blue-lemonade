@@ -453,6 +453,7 @@ jobs:
           node tools/tests/fruit-status.mjs .
           node tools/tests/fruit-status-chat-scan.mjs .
           node tools/tests/mes-class-quiet.mjs .
+          node tools/tests/body-marks-html.mjs .
           node tools/tests/long-chat-perf.mjs .
           node tools/tests/has-guard.mjs .
           node tools/tests/lite-forced-quiet.mjs .

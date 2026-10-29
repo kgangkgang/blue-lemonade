@@ -1407,10 +1407,10 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .sal
     transform: none !important;
   }
 }
-body.salty.bl-weather-on :is(#salty-nochat, .salty-preview) {
+:where(html.bl-weather-on) body.salty.salty :is(#salty-nochat, .salty-preview) {
   background: transparent !important;
 }
-body.salty.salty-blend.bl-weather-on :is(#salty-nochat, .salty-preview) .mes:not(.selected) {
+:where(html.bl-weather-on) body.salty.salty-blend.salty :is(#salty-nochat, .salty-preview) .mes:not(.selected) {
   background: none !important;
 }
 body.salty.salty-profile-banner :is(#salty-nochat, .salty-preview) .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) {

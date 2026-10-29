@@ -26,7 +26,7 @@ globalThis.MutationObserver = class { observe() {} disconnect() {} };
 globalThis.requestAnimationFrame = () => 0; globalThis.cancelAnimationFrame = noop;
 globalThis.getComputedStyle = () => ({ getPropertyValue: () => '' });
 globalThis.document = {
-    hidden: false, body, documentElement: {},
+    hidden: false, body, documentElement: { classList: { contains: () => false, add: noop, remove: noop } },
     querySelector: s => (s === 'body > #sheld' ? host : null), querySelectorAll: () => [], getElementById: id => (id === 'sheld' ? host : null),
     createElement: () => ({ style: {}, isConnected: true, parentElement: host, remove: noop, setAttribute: noop, getContext: () => null }),
     addEventListener: noop, removeEventListener: noop,

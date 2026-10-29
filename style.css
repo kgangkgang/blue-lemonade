@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 5a0153955022) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 66a2b97d39f3) */
 /* css/00-base.css */
 :root{--bl-release:"8.2.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -16242,11 +16242,11 @@ body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-previe
   }
 }
 @media not all {
-body.salty.bl-weather-on #salty-nochat,
-body.salty.bl-weather-on :where(.salty-preview):is(#bl-s, *) {
+:where(html.bl-weather-on) body.salty.salty #salty-nochat,
+:where(html.bl-weather-on) body.salty.salty :where(.salty-preview):is(#bl-s, *) {
   background: transparent !important;
 }
-body.salty.salty-blend.bl-weather-on :where(.salty-preview):is(#salty-nochat, *) .mes:not(.selected) {
+:where(html.bl-weather-on) body.salty.salty-blend.salty :where(.salty-preview):is(#salty-nochat, *) .mes:not(.selected) {
   background: none !important;
 }
 body.salty.salty-profile-banner :where(.salty-preview):is(#salty-nochat, *) .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) {
@@ -19689,17 +19689,17 @@ body.salty .salty-preview .thk-fold {
 }
 }
 /* css/32-weather.css */
-body.salty.bl-weather-on :where(#chat):is(#chat,.bl-chat-like),
-body.salty.bl-weather-on :where(.bl-chat-like):is(#chat,.bl-chat-like) {
+:where(html.bl-weather-on) body.salty.salty :where(#chat):is(#chat,.bl-chat-like),
+:where(html.bl-weather-on) body.salty.salty :where(.bl-chat-like):is(#chat,.bl-chat-like) {
   background: transparent !important;
 }
-body.salty.salty-blend.bl-weather-on :is(#chat,.bl-chat-like) .mes:not(.selected) {
+:where(html.bl-weather-on) body.salty.salty-blend.salty :is(#chat,.bl-chat-like) .mes:not(.selected) {
   background: none !important;
 }
-body.salty.bl-weather-on #sheld {
+:where(html.bl-weather-on) body.salty.salty #sheld {
   background: var(--salty-fill-bg, var(--salty-bg)) !important;
 }
-body.salty.salty-bgimg.bl-weather-on #sheld {
+:where(html.bl-weather-on) body.salty.salty-bgimg.salty #sheld {
   background: var(--salty-fill-bg-82, var(--salty-bg-82)) !important;
 }
 body.salty #sheld > canvas.bl-weather {

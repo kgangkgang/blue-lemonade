@@ -619,7 +619,7 @@ export const FILE_HASHES = {
   "src/popup-guard.js": "5328:fab87000:195a34d2",
   "src/popup-marks.js": "2740:461f8ddf:edecd720",
   "src/preset-sharing.js": "10609:0e2cdbdc:4e3bc6e5",
-  "src/preview-park.gen.css": "120973:c92562e8:fe46edce",
+  "src/preview-park.gen.css": "121030:651b83c0:bd14a5a7",
   "src/preview-view.js": "17270:6c138445:2764a1d7",
   "src/profile-clip.js": "4837:9b817c36:29f305b7",
   "src/profile.js": "6026:34f89f44:fc6757bf",
@@ -755,7 +755,7 @@ export const FILE_HASHES = {
   "src/weather-rest.js": "1885:72edcdd7:6cfbb747",
   "src/weather-scenes.js": "14501:514d19d0:3ddb51b3",
   "src/weather-worker.js": "1953:1834075b:9831021d",
-  "src/weather.js": "40853:b6e66a21:08c8b725",
+  "src/weather.js": "41090:61b0a577:b859bdb8",
   "src/websearch-core.js": "17125:d18d37ff:114569c1",
   "src/websearch.js": "23413:6753586f:be03a4b1",
   "src/wheel-x.js": "4118:fbb1b923:226b9d82",
@@ -766,6 +766,6 @@ export const FILE_HASHES = {
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "9370:2d815bc8:4cd0d636",
   "src/worldinfo-light.js": "2949:e91008f8:04eead81",
-  "style-ext.css": "318792:29e43688:67df1c2e",
-  "style.css": "1841621:860eb827:a3013d9c"
+  "style-ext.css": "318792:f3703d9b:c84877c5",
+  "style.css": "1841773:b92e1247:106407f0"
 };

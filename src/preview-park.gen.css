@@ -1283,11 +1283,11 @@ body.salty.salty-dem-skin.salty-dem-streaming :where(.salty-preview):is(#salty-n
 }
 }
 @media all {
-body.salty.bl-weather-on #salty-nochat,
-body.salty.bl-weather-on :where(.salty-preview):is(#bl-s, *) {
+:where(html.bl-weather-on) body.salty.salty #salty-nochat,
+:where(html.bl-weather-on) body.salty.salty :where(.salty-preview):is(#bl-s, *) {
   background: transparent !important;
 }
-body.salty.salty-blend.bl-weather-on :where(.salty-preview):is(#salty-nochat, *) .mes:not(.selected) {
+:where(html.bl-weather-on) body.salty.salty-blend.salty :where(.salty-preview):is(#salty-nochat, *) .mes:not(.selected) {
   background: none !important;
 }
 body.salty.salty-profile-banner :where(.salty-preview):is(#salty-nochat, *) .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) {

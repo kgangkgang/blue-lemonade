@@ -153,8 +153,9 @@ check('numcomma · mes-pins: 모양 서명이 같으면 다시 훑지 않는다 
 // ── 7) 설정 적용마다 같은 값으로 body class 를 다시 쓰던 것 ──
 check('weather.js: bl-weather-on 은 없을 때만 더하고 있을 때만 뗀다 (같은 값 classList.add 도 변경 기록을 내서 keyboard.js · squared-buttons 가 매번 깨어났다)', () => {
     const w = read('src/weather.js');
-    assert.ok(w.includes("if (!document.body.classList.contains('bl-weather-on')) document.body.classList.add('bl-weather-on')"));
-    assert.ok(w.includes("if (document.body.classList.contains('bl-weather-on')) document.body.classList.remove('bl-weather-on')"));
-    assert.ok(!/^\s*document\.body\.classList\.(add|remove)\('bl-weather-on'\)/m.test(w), '조건 없는 add · remove 가 없다');
+    // 8.2.7: 표식은 html 에(body-marks-html.mjs) — 없을 때만 더하고 있을 때만 떼는 것은 그대로
+    assert.ok(w.includes("if (!document.documentElement.classList.contains('bl-weather-on')) document.documentElement.classList.add('bl-weather-on')"));
+    assert.ok(w.includes("if (document.documentElement.classList.contains('bl-weather-on')) document.documentElement.classList.remove('bl-weather-on')"));
+    assert.ok(!/^\s*document\.(body|documentElement)\.classList\.(add|remove)\('bl-weather-on'\)/m.test(w), '조건 없는 add · remove 가 없다');
 });
 console.log(`dem-skin-perf: ${passed} passed`);
