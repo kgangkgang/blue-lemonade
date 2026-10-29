@@ -4,7 +4,7 @@
 // 보내기 직전(CHAT_COMPLETION_SETTINGS_READY)에 Claude 5 이후 모델이면 샘플링 값만 뺀다 — 테마의 다른 기능(번역 · 다시 쓰기 · TTS)이
 // 쓰는 live-models.js 규칙과 같은 판단. 본체가 이미 빼는 모델(opus-5 · sonnet-5 · fable)은 결과가 같고, Claude 5 가 아닌 모델은 그대로.
 // 다시 쓰기 리롤(reroll.js)은 같은 요청 객체를 잡아 두므로 처리 순서와 상관없이 같은 값으로 다시 보낸다.
-import { isClaude5Plus } from './live-models.js';
+import { isClaude5Plus } from './claude-gen.js';   // live-models.js 와 같은 판단 (그 파일은 맨 위 await 가 있어 시작 순서를 막지 않게 따로 받는다)
 import { mainGoogleBody, isGenerateRequest, createMainGate, stackOrigin, HELPER_EVENTS, tallyOf, finishNotice, NOTICES } from './main-chat-finish.js';   // 6.4.x Google 답의 끝 이유 알림 (v3 본채팅 문지기)
 import { createGenerationState } from './generation-state.js';   // 6.5.3 생성 상태 — 애드온 공용 「생성 중」 판정 (본채팅 생성만)
 

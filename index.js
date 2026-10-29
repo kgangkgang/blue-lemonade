@@ -3,6 +3,9 @@ import { startErrorLog } from './src/diag-errors.js';
 import { installUsageLedger } from './src/usage-ledger.js';   // 7.4.0 사용량 장부 허브 — 다른 확장이 읽기 전에 (가볍다: 장부 · 가격표는 처음 쓸 때 연다)
 installUsageLedger();
 startErrorLog(); // 6.6.9 진단 파일용: 블루레몬에이드 오류만 최근 20줄 (주소 · 키는 가림)
+// 공용 모델 목록(live-models.js)은 맨 위 await(실리태번 모듈 · 모델 등록 상태 받기)가 있어 정적 import 하면 테마 시작 전체가 그만큼 기다렸다 —
+//   기다리지 않고 바로 받는다. 실리태번이 연결하며 받은 목록을 받아 두는 훅은 예전처럼 시작할 때 걸린다 (연결은 확장을 다 실은 뒤)
+import('./src/live-models.js').catch(error => console.warn('[Blue Lemonade] 모델 목록', error));
 import { themeEnabled, publicSettings, forcedThemeGuard } from './src/usage-mode.js';
 import { bindSettingsDialog } from './src/settings-dialog.js';
 // 5.3.2: 애플 웹킷 표시 — 여러 줄 인라인 마스크를 끝 줄 조각에만 그리는 버그 피하기용 (css/37-prompt-ink.css)

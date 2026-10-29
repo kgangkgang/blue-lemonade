@@ -1,7 +1,7 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
 export const BUILD_VERSION = "8.2.3";
 export const FILE_HASHES = {
-  "index.js": "25430:0e1d2d5c:898a92ae",
+  "index.js": "25906:bdaf471f:96a90f5f",
   "manifest.json": "365:d56957f8:f4e71926",
   "src/addon-files-check.js": "5001:b7fe0df9:d1f21c49",
   "src/addon-layout.js": "2768:fc762257:da2db162",
@@ -506,6 +506,7 @@ export const FILE_HASHES = {
   "src/chat-reading-position.js": "15615:5179e143:69d53288",
   "src/chat-sync.js": "24501:26a49faf:13b60fdb",
   "src/checks.js": "3042:368ec3ff:509f89cc",
+  "src/claude-gen.js": "721:533547c1:ef46b274",
   "src/code-plain.js": "3046:4e246e55:6ba7a5df",
   "src/colorpick.js": "29852:5b5d8858:3ec727e4",
   "src/colorpop.js": "3885:d35d517b:d68f9617",
@@ -581,11 +582,11 @@ export const FILE_HASHES = {
   "src/lazy-avatars.js": "7776:814db34c:91741946",
   "src/lazy-panel.gen.css": "34768:8aa24fbf:b31f1504",
   "src/lite.js": "39721:f2a3eb53:dd95f990",
-  "src/live-models.js": "44020:f8a5fa62:a3f1cbaf",
+  "src/live-models.js": "44082:6a619507:07a28919",
   "src/longpress-help-data.js": "96732:d96f0542:aba0176a",
   "src/longpress-help.js": "13180:0b96ccfe:c2d90d0b",
   "src/main-chat-finish.js": "14829:d34f07a5:c8c0a173",
-  "src/main-chat-rules.js": "8887:961cbad4:0e0730d8",
+  "src/main-chat-rules.js": "9013:29b70c38:11a178e7",
   "src/markdown-ui.js": "6146:5cfe42a4:47c863e5",
   "src/markdown.js": "5670:583b23b2:87c60e83",
   "src/marquee.js": "4261:042dd0ea:df654cb6",

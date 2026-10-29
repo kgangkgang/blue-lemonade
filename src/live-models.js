@@ -687,7 +687,8 @@ function isOSeries(source, m) {
     return false;
 }
 const isGpt5Plus = (m) => /gpt-(5|6)/.test(m) || inRange(versions(/gpt-(\d+)/g, m), 7, 9);
-export const isClaude5Plus = (m) => /claude-(fable|opus-5|sonnet-5)/.test(m) || inRange(versions(/claude-[a-z]+-(\d+)/g, m), 5, 9);
+import { isClaude5Plus } from './claude-gen.js';   // 본채팅 규칙(main-chat-rules.js)과 같은 판단 — 시작할 때 이 파일을 싣지 않게 따로 뒀다
+export { isClaude5Plus };
 
 /** 모델별 요청 규칙 — body 를 고쳐서 돌려준다 (source: 실리태번 공급자 id · 'google' 도 받음) */
 export function applyModelRequestRules(source, model, body) {

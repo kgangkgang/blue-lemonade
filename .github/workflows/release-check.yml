@@ -62,6 +62,7 @@ jobs:
           node tools/tests/perf-bundle-645.mjs .
           node tools/tests/selection-typing.mjs .
           node tools/tests/perf-start.mjs .
+          node tools/tests/boot-graph.mjs .
           node tools/tests/perf-list-shown.mjs .
           node tools/tests/prompt-toggle-echo.mjs .
           node tools/tests/history-warning.mjs .
