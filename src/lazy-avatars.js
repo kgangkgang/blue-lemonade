@@ -47,7 +47,11 @@ export function deferImages(node) {
     let n = 0;
     const imgs = node.matches?.('img') ? [node] : node.querySelectorAll?.('.avatar img') ?? [];
     for (const img of imgs) {
-        if (img.dataset.blLazy) continue;
+        if (img.dataset.blLazy) {
+            // 8.2.4 검토: 떼었다가 다시 붙은 자리표시 그림 — 다시 관찰해야 빈칸으로 남지 않는다
+            if (io && img.dataset.blSrc !== undefined && !pending.has(img)) { io.observe(img); pending.add(img); }
+            continue;
+        }
         img.dataset.blLazy = '1';
         if (img.getAttribute('decoding') !== 'async') img.setAttribute('decoding', 'async');
         const src = img.getAttribute('src') || '';
@@ -66,9 +70,20 @@ function onSeen(entries) {
 function restoreAll() {
     for (const img of [...pending]) reveal(img);
 }
+/** 8.2.4 검토: 문서에서 빠진 자리표시 그림은 관찰을 푼다 — 실리태번은 검색 · 정렬 · 필터 · 쪽 넘김마다 목록을 비우고 새로 그려서,
+ *  안 풀면 화면 밖이던 그림(과 그 블록)이 pending · 관찰자에 끌 때까지 쌓였다. 원래 주소(data-bl-src)는 남겨 다시 붙으면 deferImages 가 다시 본다 */
+export function forgetDetached() {
+    let n = 0;
+    for (const img of pending) if (!img.isConnected) { io?.unobserve(img); pending.delete(img); n++; }
+    return n;
+}
 function watchRoot(root) {
     if (!root || watchers.has(root)) return;
-    const mo = new MutationObserver(records => { for (const r of records) for (const node of r.addedNodes) deferImages(node); });
+    const mo = new MutationObserver(records => {
+        let removed = false;
+        for (const r of records) { if (r.removedNodes?.length) removed = true; for (const node of r.addedNodes) deferImages(node); }
+        if (removed && pending.size) forgetDetached();
+    });
     mo.observe(root, { childList: true });
     watchers.set(root, mo);
 }

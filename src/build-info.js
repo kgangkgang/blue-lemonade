@@ -577,7 +577,7 @@ export const FILE_HASHES = {
   "src/ko-ui-data.js": "245934:8530b8f9:f8d0e603",
   "src/ko-ui.js": "13781:3256a34c:d80ce7da",
   "src/layout.js": "30678:5ffa4cd0:c9aff45b",
-  "src/lazy-avatars.js": "6817:18767d2c:5167c050",
+  "src/lazy-avatars.js": "7776:814db34c:91741946",
   "src/lazy-panel.gen.css": "34768:8aa24fbf:b31f1504",
   "src/lite.js": "39247:d139c491:029f69cd",
   "src/live-models.js": "44020:f8a5fa62:a3f1cbaf",
