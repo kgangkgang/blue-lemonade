@@ -83,6 +83,11 @@ body.salty #chat .last_mes {
      실제 내용이 있는 메시지는 어차피 내용 아래로 줄어들지 않으니 flex-shrink:0 은 그려진 메시지의 모양을 바꾸지 않는다 */
   flex-shrink: 0;
 }
+/* (10-30 perf-chatlight) 쉴 때 미리 그린 메시지(src/chat-light.js 가 쉬는 시간에 data-bl-warm 을 달아요): 건너뛰지 않고 그대로 그린다 — 빨리 굴려도 들어오는 프레임마다
+   스타일 · 배치 · 칠하기를 하지 않게(관문 스크롤 50ms 넘는 프레임 33 → 끈 것만큼). 서랍이 열리거나 답장을 받는 동안은 화면 밖 것만 표식을 떼 다시 건너뛴다. */
+body.salty #chat > .mes[data-bl-warm] {
+  content-visibility: visible !important;
+}
 /* (10-29 perf-persona) 서랍이 채팅을 다 덮을 때(폰의 페르소나 관리 같은 서랍 · src/chat-light.js syncChatCover 가 덮였는지 · 바탕이 불투명한지 재서 붙인다):
    보이지 않는 채팅의 스타일 · 배치를 통째로 건너뛴다 — 서랍 안의 일(페르소나 고르기 · 설명 글 갱신)마다 메시지 300개가 다시 계산되지 않게. 닫히는 순간 뗀다. */
 body.salty #chat.bl-chat-covered {

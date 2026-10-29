@@ -504,7 +504,7 @@ export const FILE_HASHES = {
   "src/chat-graph.js": "24883:3361ae54:d817b84b",
   "src/chat-library-data.js": "5043:6dfcb24b:504fa300",
   "src/chat-library.js": "16640:3ef42170:42e103d6",
-  "src/chat-light.js": "11655:2a6de94d:cebfaa78",
+  "src/chat-light.js": "23502:449319d3:e1c382e4",
   "src/chat-reading-position.js": "15615:5179e143:69d53288",
   "src/chat-sync.js": "24501:26a49faf:13b60fdb",
   "src/checks.js": "3042:368ec3ff:509f89cc",
@@ -767,6 +767,6 @@ export const FILE_HASHES = {
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "9370:2d815bc8:4cd0d636",
   "src/worldinfo-light.js": "2949:e91008f8:04eead81",
-  "style-ext.css": "318792:117dd34b:4eee90b0",
-  "style.css": "1841755:ada91521:dd9b5161"
+  "style-ext.css": "318792:84fdfe42:9ef45764",
+  "style.css": "1841858:7c1165f8:f05140a5"
 };

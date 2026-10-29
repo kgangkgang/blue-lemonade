@@ -135,6 +135,7 @@ jobs:
           node tools/tests/review-825-fixes.mjs .
           node tools/tests/persona-defer.mjs .
           node tools/tests/chat-cover.mjs .
+          node tools/tests/chat-light-warm.mjs .
           node tools/tests/model-register-panel.mjs .
           node tools/tests/model-register-picks.mjs .
           node tools/tests/model-register-state.mjs .

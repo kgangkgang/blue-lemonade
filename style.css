@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build da6a93aecb67) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 247f346e434a) */
 /* css/00-base.css */
 :root{--bl-release:"8.2.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -1994,6 +1994,9 @@ body.salty :is(#chat,.bl-chat-like) .last_mes {
   content-visibility: auto;
   contain-intrinsic-size: auto 160px;
   flex-shrink: 0;
+}
+body.salty :is(#chat,.bl-chat-like) > .mes[data-bl-warm] {
+  content-visibility: visible !important;
 }
 body.salty :is(#chat,.bl-chat-like).bl-chat-covered {
   content-visibility: hidden;
