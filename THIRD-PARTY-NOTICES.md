@@ -12,6 +12,7 @@ Blue Lemonade는 GNU Affero General Public License v3.0 조건으로 배포합�
 | Character Assets | [tincansimagine](https://github.com/tincansimagine/character-assets) / 공유 게시글 작성자 「깡」 | [공유 허락 댓글](https://kkangtong.xyz/posts/122931#comment-7bd0d60e-f2f9-4c2c-9f42-4f395873fa17) · [별도 고지](src/addons/assets/NOTICE.md) |
 | 기반 테마 Moonlit Echoes Theme | [RivelleDays](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme) | [AGPL-3.0](LICENSE) |
 | LLM Translator | [1234anon](https://github.com/1234anon/llm-translator) / 수정판 [NamelessKkang](https://github.com/NamelessKkang/llm-translator-custom) | [AGPL-3.0](src/addons/translator/LICENSE) |
+| 번역 리모컨 (LLM Translator 안) | 번역 리모컨 — 커뮤니티 공유 태번 헬퍼 스크립트(원작자의 허락으로 수정 · 통합). 원작자 이름은 따로 밝히지 않았어요 | 원작자의 수정 · 사용 허락 · 애드온 구조에 맞춰 다시 짠 [remote.js](src/addons/translator/remote.js) |
 | Prompt Panel | [anon4961](https://github.com/anon4961/prompt-panel) / [개인개조+++ 게시글 작성자 「깡」](https://kkangtong.xyz/posts/138394) | [AGPL-3.0](src/addons/prompt/LICENSE) |
 | CustomThemeStyleInputs | Copyright (c) 2025 [IceFog72](https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs) | [MIT 전문](src/addons/customstyle/LICENSE) |
 | Prompt Template (ST-Prompt-Template) · 설치형, 원본 무수정 | [zonde306](https://github.com/zonde306/ST-Prompt-Template) | [AGPL-3.0 전문](src/addons/prompt-template/LICENSE) · [별도 고지](src/addons/prompt-template/NOTICE.md) |

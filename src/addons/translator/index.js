@@ -558,6 +558,7 @@ function loadSettings() {
     syncSelection();
     $('#llm_translation_button_toggle').prop('checked', extensionSettings.show_input_translate_button);
     updateInputTranslateButton();
+    syncRemote();   // 번역 리모컨 (켜 둔 사람만 remote.js 를 불러옴)
 
     // [변경] 새 메시지 자동 번역 모드 설정 (드롭다운)
     $('#llm_auto_mode').val(extensionSettings.auto_mode);
@@ -3352,7 +3353,8 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         let lookedUp = null;   // 8.2.7 { value } 이 실행에서 이미 읽은 메시지 번역 캐시 — 아래에서 같은 원문을 IndexedDB 에서 또 읽지 않게 (새 답마다 열기 · 읽기 한 번 덜)
         if (source === 'manual' ||
             source === 'handleTranslateButtonClick' ||
-            source === 'handleTranslateButtonClick_retranslate') {
+            source === 'handleTranslateButtonClick_retranslate' ||
+            source === 'fresh') {   // 번역 리모컨 「다시 번역」
             showStartToast = true;
         } else if (source === 'auto' && !message.extra.display_text) {
             // 자동 번역시: DB에서 번역문을 가져올 수 있는지 먼저 확인
@@ -3392,8 +3394,8 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         }
 
         if (shouldTranslate) {
-            // 캐시된 번역 확인
-            const cachedTranslation = lookedUp ? lookedUp.value : await readCachedTranslation(originalText);
+            // 캐시된 번역 확인 — 번역 리모컨 「다시 번역」(fresh)은 저장된 번역 · 문단 캐시를 건너뛰고 새로 받는다 (그 메시지 하나만, 누를 때만)
+            const cachedTranslation = lookedUp ? lookedUp.value : source === 'fresh' ? null : await readCachedTranslation(originalText);
             let translation = cachedTranslation;
             let cacheReport = null;   // 7.9.5 새 번역을 캐시에 넣었으면 그 report (그림을 바꾼 글도 같은 조건으로 넣는다)
 
@@ -3406,7 +3408,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 const badge = progressBadge(messageId, message, sourceMes, chatId, runToken.guard);
                 const preview = runToken.preview = translationPreview(messageId, message, sourceMes, chatId, originalText, runToken.guard);   // 2.5.1 끝난 문단부터 번역문으로 (화면에만)
                 // 화살표 다시 번역이라도 차단 표시가 남은 글이면 문단 캐시를 쓴다 — 이미 된 문단은 다시 보내지 않고 차단된 문단만 다시 시도
-                const segmentCache = source !== 'handleTranslateButtonClick_retranslate' || String(message.extra.display_text || '').includes(MARK_TAIL);
+                const segmentCache = source !== 'fresh' && (source !== 'handleTranslateButtonClick_retranslate' || String(message.extra.display_text || '').includes(MARK_TAIL));
                 const startTimer = startToast ? setTimeout(() => startToast?.(), 1500) : 0;
                 const edited = Boolean(message.extra.display_text);   // 3.0.0 번역문이 있던 메시지 = 원문이 바뀌어 다시 번역 (진행 문구 「바뀐 문단」 은 이때만)
                 const onProgress = stage => { const info = stage && typeof stage === 'object' ? { ...stage, edited } : stage; if (startToast) { clearTimeout(startTimer); startToast(startNotice(info, messageId)); } badge.update(info); };   // 7.3.1
@@ -3737,19 +3739,56 @@ async function handleTranslateButtonClick(messageId) {
     }
 }
 
+// 번역 리모컨(translate-remote) 「모두 원문/번역」: 번역이 붙은 메시지를 한 번에 원문 보기 ↔ 번역 보기로 (요청 없음).
+//   하나라도 번역을 보이고 있으면 모두 원문으로, 모두 원문이면 치워 둔 번역문으로 되돌린다 — 메시지 하나의 돋보기(toggleOriginalText)와 같은 자료(original_translation_backup)만 쓴다.
+//   화면에 그려진 메시지만 다시 그리고(읽던 자리 유지), 번역 중인 메시지는 건드리지 않는다. 채팅 저장은 한 번 (미룸)
+async function toggleAllTranslations() {
+    const context = getContext(), chat = context.chat || [];
+    const ids = chat.map((message, id) => (message?.extra?.display_text && !isTranslationInProgress(id) ? id : -1)).filter(id => id >= 0);
+    if (!ids.length) { toastr.info('이 채팅에는 번역된 메시지가 없어요.'); return 0; }
+    const shown = new Map(ids.map(id => [id, isTranslationCurrentlyDisplayed(id)]));   // 메시지마다 한 번만 잰다
+    const toOriginal = [...shown.values()].some(Boolean);
+    let changed = 0;
+    for (const id of ids) {
+        const message = chat[id], showing = shown.get(id);
+        if (toOriginal && showing) {
+            if (!message.extra.original_translation_backup) message.extra.original_translation_backup = message.extra.display_text;
+            message.extra.display_text = substituteParams(message.mes, context.name1, message.name);
+        } else if (!toOriginal && !showing && message.extra.original_translation_backup) {
+            message.extra.display_text = message.extra.original_translation_backup;
+            delete message.extra.original_translation_backup;
+        } else continue;
+        changed++;
+        if (!document.querySelector(`#chat .mes[mesid="${id}"]`)) continue;   // 안 그려진 메시지는 그릴 때 display_text 를 따른다
+        await refreshMessageBlock(id, message);
+        $(`#chat .mes[mesid="${id}"] .mes_text`).data('showing-original', toOriginal);
+        emitTranslationUIUpdate(id, toOriginal ? 'show_original' : 'toggle');
+    }
+    if (changed) (context.saveChatDebounced ?? context.saveChat)?.call(context);
+    toastr.info(toOriginal ? `원문으로 모두 바꿨어요 (${changed}개)` : `번역문으로 모두 바꿨어요 (${changed}개)`, '', { timeOut: 1600 });
+    return changed;
+}
+
 // Batch owns its stop state; a stopped run cannot reset a newer run's button.
+// 번역 리모컨(translate-remote): 확인 창에 번역이 없는 메시지 수(요청이 갈 수 있는 수)를 보이고, 진행(done/total)을 llm-translator:batch 로 알린다 — 리모컨 단추 · 메뉴가 듣는다
+const batchNeeded = message => !!String(message?.mes ?? '').trim() && (!message.extra?.display_text || String(message.extra.display_text).includes(MARK_TAIL));   // translateMessage 의 batch 판단과 같게
+const emitBatch = run => { try { document.dispatchEvent(new CustomEvent('llm-translator:batch', { detail: { running: batchRun === run && run.total != null && !run.stopped, done: run.done ?? 0, total: run.total ?? 0 } })); } catch { /* 알림은 번역을 막지 않는다 */ } };
 async function onTranslateChatClick() {
-    if (batchRun) { batchRun.stopped = true; toastr.info('현재 메시지 뒤에 전체 번역을 멈춰요.'); return; }
+    if (batchRun) { batchRun.stopped = true; toastr.info('현재 메시지 뒤에 전체 번역을 멈춰요.'); emitBatch(batchRun); return; }
     const guard = guards.capture(), messages = [...(getContext().chat || [])];
     if (!messages.length) { toastr.warning('번역할 채팅이 없습니다.'); return; }
+    const pending = new Set(messages.filter(batchNeeded));
+    if (!pending.size) { toastr.info('이 채팅은 이미 모두 번역돼 있어요.'); return; }
     // Reserve while the confirmation is open as well.
     const run = { stopped: false }; batchRun = run;
     const button = $('#llm_translate_chat');
     try {
-        if (!await callGenericPopup('전체 채팅을 번역하시겠습니까?', POPUP_TYPE.CONFIRM)) return;
+        if (!await ask(`번역이 없는 메시지 ${pending.size}개를 차례로 번역할까요?
+저장된 번역이 있는 글은 요청 없이 붙이고, 없으면 메시지마다 번역 요청이 가요(긴 글은 나눠서 여러 번). 도중에 다시 누르면 멈춰요.`, { ok: '번역 시작', cancel: '취소', title: '채팅 전체 번역' })) return;
         guard.assert();
         if (run.stopped) return;
         isChatTranslationInProgress = true;
+        run.total = pending.size; run.done = 0; emitBatch(run);
         button.find('.fa-right-left').removeClass('fa-right-left').addClass('fa-stop-circle');
         button.find('span').text('번역 중단'); button.addClass('translating');
         // 2026-10-06: 모델이 거절한 메시지(구조 HTML · 덩이 하나뿐이라 차단 표시를 못 다는 글)는 원문으로 두고 다음 메시지로 —
@@ -3766,6 +3805,7 @@ async function onTranslateChatClick() {
                 refusedCount++;
                 console.warn('[LLM Translator] 전체 번역: 거절된 메시지 건너뜀', id, error.message);
             }
+            if (pending.has(message)) { run.done++; emitBatch(run); }
             guard.assert();
             const delay = Math.max(0, Number(extensionSettings.throttle_delay) || 0);
             if (delay && !run.stopped) await new Promise(resolve => setTimeout(resolve, delay));
@@ -3780,6 +3820,7 @@ async function onTranslateChatClick() {
             batchRun = null; isChatTranslationInProgress = false;
             button.find('.fa-stop-circle').removeClass('fa-stop-circle').addClass('fa-right-left');
             button.find('span').text('LLM으로 전체 번역'); button.removeClass('translating');
+            emitBatch(run);
         }
     }
 }
@@ -3988,6 +4029,7 @@ function addButtonsToExistingMessages() {
 }
 
 // 번역문 수정
+let editShowsSource = false;   // 번역 리모컨(translate-remote): 수정 창에서 원문을 펴 두었는지 (이 세션 동안 기억)
 // 번역문 수정 함수 (원복 및 플래그 갱신 수정)
 async function editTranslation(messageId) {
     const context = getContext();
@@ -4036,18 +4078,27 @@ async function editTranslation(messageId) {
     const cancelButton = $('<div>')
         .addClass('translation_edit_cancel interactable fa-solid fa-times-circle')
         .attr('title', '취소');
-    editButtons.append(saveButton, cancelButton);
+    // 번역 리모컨(translate-remote): 고치는 동안 원문을 위에 같이 볼 수 있게 — 책 단추로 펴고 접는다 (다음 수정 창도 같은 상태, 글로만 넣어 HTML 로 읽지 않음)
+    const sourceButton = $('<div>')
+        .addClass('translation_edit_source_toggle interactable fa-solid fa-book-open')
+        .attr({ title: '원문 같이 보기', 'aria-label': '원문 같이 보기', role: 'button', tabindex: '0', 'aria-pressed': String(editShowsSource) });
+    const sourceBox = $('<div>').addClass('translation_edit_source').text(originalMessageText).prop('hidden', !editShowsSource);
+    const flipSource = () => { editShowsSource = !editShowsSource; sourceBox.prop('hidden', !editShowsSource); sourceButton.attr('aria-pressed', String(editShowsSource)); };
+    sourceButton.on('click', flipSource).on('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); flipSource(); } });
+    editButtons.append(saveButton, cancelButton, sourceButton);
 
     // UI 배치
     mesText.hide();
     mesText.after(editTextarea);
     editTextarea.before(editButtons);
+    editTextarea.before(sourceBox);
 
     // 취소 버튼
     cancelButton.on('click', function () {
         // 기존 정리 로직 수행
         editTextarea.remove();
         editButtons.remove();
+        sourceBox.remove();
         mesText.show();
         mesBlock.removeClass('translation-editing');
         mesButtons.show();
@@ -4060,6 +4111,7 @@ async function editTranslation(messageId) {
         //         실리태번 편집 창으로 보고 다시 그리지 않아, 저장 · 삭제해도 화면에 옛 번역문이 남았다
         editTextarea.remove();
         editButtons.remove();
+        sourceBox.remove();
         mesText.show();
         mesBlock.removeClass('translation-editing');
         mesButtons.show();
@@ -4151,6 +4203,90 @@ function updateInputTranslateButton() {
     } else {
         document.querySelectorAll('#llm_translate_input_button').forEach(button => button.remove());
     }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 번역 리모컨 (translate-remote) — 커뮤니티에 공유된 태번 헬퍼 스크립트 「✨️번역 리모컨」을 원작자의 허락으로 고쳐 넣은 것 (remote.js).
+//   설정은 번역 탭 「번역 리모컨」 카드(기본 꺼짐). 켰을 때만 remote.js 를 불러온다 — 끈 사람은 시작 때 읽는 파일 · 리스너가 늘지 않는다.
+//   켬 · 대표 기능 · 메뉴에 보일 기능은 번역 설정(remote — 프리셋을 골라도 지키는 기기 상태), 자리 · 크기는 기기마다(localStorage).
+// ═══════════════════════════════════════════════════════════════════════════════
+let remoteLoad = null, remote = null, remoteModule = null;
+function remoteHost(m) {
+    let storage = null;
+    try { storage = window.localStorage; } catch { /* 막힘 — 자리는 이번만 */ }
+    return {
+        doc: document, win: window, storage,
+        settings: () => m.normalizeSettings(extensionSettings),
+        save: saveSettingsDebounced,
+        thSettings: () => extension_settings.tavern_helper,
+        autoMode: () => extensionSettings.auto_mode ?? autoModeOptions.NONE,
+        setAutoMode: mode => { extensionSettings.auto_mode = mode; $('#llm_auto_mode').val(mode); saveSettingsDebounced(); },
+        hasTranslation: id => !!getContext().chat?.[id]?.extra?.display_text,
+        editedByHand: id => {
+            const context = getContext(), message = context.chat?.[id];
+            return !!message?.extra?.translation_edited && message.extra.translation_edited === originalHashOf(substituteParams(message.mes, context.name1, message.name));
+        },
+        busy: id => isTranslationInProgress(id),
+        batch: () => (batchRun && batchRun.total != null && !batchRun.stopped ? { done: batchRun.done, total: batchRun.total } : null),
+        ask: (text, options) => ask(text, options),
+        toast: toastr,
+        run: {
+            translate: id => handleTranslateButtonClick(id),
+            retranslate: id => translateMessage(id, true, getContext().chat?.[id]?.extra?.display_text ? 'fresh' : 'manual'),
+            edit: id => editTranslation(id),
+            delete: id => deleteTranslationById(id),
+            toggleAll: () => toggleAllTranslations(),
+            translateAll: () => onTranslateChatClick(),
+        },
+        changed: () => paintRemoteOptions(),
+        onRest: () => paintRemoteOptions(),
+    };
+}
+/** 설정에 맞춰 리모컨을 켜고 끈다 (켤 때 처음 한 번 remote.js 를 불러옴) */
+function syncRemote() {
+    const on = extensionSettings.remote?.enabled === true;
+    $('#llm_remote_enabled').prop('checked', on);
+    $('#llm_remote_options').prop('hidden', !on);
+    if (!on && !remote) return Promise.resolve(null);
+    remoteLoad ??= import('./remote.js').then(m => { remoteModule = m; remote = m.createRemote(remoteHost(m)); return remote; }, error => {
+        remoteLoad = null;
+        console.warn('[LLM Translator] 번역 리모컨을 불러오지 못했어요', error);
+        return null;
+    });
+    return remoteLoad.then(r => { r?.sync(); paintRemoteOptions(); return r; });
+}
+/** 설정 카드의 값 · 쉬는 안내 (리모컨을 불러온 뒤에만 — 꺼져 있으면 칸이 숨어 있다) */
+function paintRemoteOptions() {
+    if (!remoteModule || !remote) return;
+    const s = remoteModule.normalizeSettings(extensionSettings);
+    $('#llm_remote_main').val(s.main);
+    $('#llm_remote_place').val(remote.layout().place);
+    $('#llm_remote_menu_items input[data-remote-item]').each(function () { this.checked = !s.hidden.includes(this.dataset.remoteItem); });
+    const rest = remote.resting();
+    $('#llm_remote_rest').prop('hidden', !s.enabled || !rest)
+        .text(rest === 'running' ? '태번 헬퍼의 「번역 리모컨」 스크립트가 돌고 있어 내장 리모컨은 쉬어요. 스크립트를 끄면 바로 이어서 나와요.' : '태번 헬퍼의 「번역 리모컨」 스크립트가 켜져 있어 시작하는 동안 기다려요.');
+}
+function bindRemoteSettings() {
+    const settings = () => (remoteModule ? remoteModule.normalizeSettings(extensionSettings) : (extensionSettings.remote && typeof extensionSettings.remote === 'object' && !Array.isArray(extensionSettings.remote) ? extensionSettings.remote : (extensionSettings.remote = {})));
+    $('#llm_remote_enabled').off('change').on('change', function () {
+        settings().enabled = this.checked;
+        saveSettingsDebounced();
+        syncRemote().then(r => { if (this.checked && r?.resting() === 'running') toastr.info('태번 헬퍼의 「번역 리모컨」 스크립트가 돌고 있어 내장 리모컨은 쉬어요. 스크립트를 끄면 바로 나와요.', '번역 리모컨', { timeOut: 5000 }); });
+    });
+    $('#llm_remote_main').off('change').on('change', function () {
+        settings().main = this.value;
+        saveSettingsDebounced();
+        remote?.render();
+    });
+    $('#llm_remote_place').off('change').on('change', function () { remote?.setPlace(this.value); });
+    $('#llm_remote_menu_items').off('change').on('change', 'input[data-remote-item]', function () {
+        const s = settings(), key = this.dataset.remoteItem;
+        const hidden = new Set(Array.isArray(s.hidden) ? s.hidden : []);
+        if (this.checked) hidden.delete(key); else hidden.add(key);
+        s.hidden = [...hidden];
+        saveSettingsDebounced();
+    });
+    $('#llm_remote_reset').off('click').on('click', () => { remote?.reset(); toastr.info('리모컨 위치 · 크기를 처음대로 했어요.', '', { timeOut: 1500 }); });
 }
 
 export async function openCharacterSpeechPreferences() {
@@ -4453,6 +4589,7 @@ jQuery(async () => {
         initializeEventHandlers();
         setTimeout(() => noticeBuiltinTranslate(), 2500);   // 7.9.9 기본 「번역」 확장이 같이 켜져 있으면 알린다 (부팅 알림들 뒤에)
         bindTranslatorMenus(extensionSettings, saveSettingsDebounced);
+        bindRemoteSettings();   // 번역 리모컨 카드
         $('#llm_selection_retranslate').off('change').on('change', function () {
             extensionSettings.selection_retranslate = this.checked;
             saveSettingsDebounced();
@@ -6086,11 +6223,14 @@ function initializeEventHandlers() {
     }
     // 보내는 메시지를 채팅에 넣은 직후(프롬프트 만들기 전)에 번역 — emit 이 기다려 주므로 번역이 끝난 뒤 생성이 이어진다
     eventSource.on(event_types.MESSAGE_SENT, onMessageSentTranslate);
+    // 번역 리모컨: 채팅을 바꾸면 열린 메뉴를 닫고 단추 자리 · 모양을 다시 맞춘다 (켜 둔 사람만 — remote 가 없으면 아무 일 없음)
+    eventSource.on(event_types.CHAT_CHANGED, () => { remote?.closeMenu(); remote?.sync(); });
 	
 	// [변경] 자동 번역 모드 드롭다운 변경 이벤트
     $('#llm_auto_mode').off('change').on('change', function () {
         extensionSettings.auto_mode = $(this).val();
         saveSettingsDebounced();
+        remote?.render();   // 번역 리모컨이 자동 번역 켬/끔을 보이고 있으면
     });
 
     // 7.7.9 번역 점검 아래 보조 단추 3개는 한 묶음(.llmt-btn-group) — 테마가 2열 격자로 그린다 (세로 3줄 금지, 제보 19)
@@ -9477,6 +9617,7 @@ class PresetManager {
         delete settingsSnapshot.show_input_translate_menu;
         delete settingsSnapshot.selection_delete;   // 6.4.4 고른 글 지우기 켜짐은 프리셋에 담지 않는다 (기기 상태)
         if ('send_translate' in settingsSnapshot) delete settingsSnapshot.send_translate; // [1.6.0] 켜고 끄는 상태는 프리셋에 안 담음
+        delete settingsSnapshot.remote;   // 번역 리모컨 켬 · 대표 기능은 기기 상태 (프리셋에 안 담음)
 		if ('glossary_entries' in settingsSnapshot) delete settingsSnapshot.glossary_entries; // [1.8.0] 용어집은 캐릭터별 데이터라 프리셋에 안 담음
 		if ('glossary_suggest' in settingsSnapshot) delete settingsSnapshot.glossary_suggest; // 6.4.5 새 이름 제안도 캐릭터별 데이터라 프리셋에 안 담음
 		if (GLOSSARY_GONE in settingsSnapshot) delete settingsSnapshot[GLOSSARY_GONE]; // 2.7.5 용어집 지운 기록도 프리셋에 안 담음
@@ -9527,6 +9668,7 @@ class PresetManager {
         const deviceState = Object.fromEntries(['show_chat_translate_menu', 'show_input_translate_menu', 'current_connection_v1', 'selection_delete']   // 6.4.4 고른 글 지우기 켜짐도 기기 상태
             .filter(key => Object.hasOwn(extensionSettings, key)).map(key => [key, extensionSettings[key]]));
         const myProxyPassword = extensionSettings.reverse_proxy_password;
+        const myRemote = extensionSettings.remote;   // 번역 리모컨 켬 · 대표 기능도 기기 상태 (프리셋을 골라도 그대로)
 
         // 3. 기존 설정 싹 지우기 (여기서 customPrompts도 같이 지워짐)
         Object.keys(extensionSettings).forEach(key => {
@@ -9545,6 +9687,7 @@ class PresetManager {
         if (mySuggest) extensionSettings.glossary_suggest = mySuggest;   // 6.4.5
         extensionSettings.send_translate = mySendTranslate;    // [1.9.2]
         Object.assign(extensionSettings, deviceState);
+        if (myRemote) extensionSettings.remote = myRemote;
         if (!Object.hasOwn(loadedSettings, 'reverse_proxy_password')) extensionSettings.reverse_proxy_password = myProxyPassword;
 
         // 6. 클래스 변수 동기화 및 매니저 리로드
@@ -9658,6 +9801,7 @@ class PresetManager {
         delete settingsSnapshot.show_input_translate_menu;
         delete settingsSnapshot.selection_delete;   // 6.4.4 고른 글 지우기 켜짐은 프리셋에 담지 않는다 (기기 상태)
         if ('send_translate' in settingsSnapshot) delete settingsSnapshot.send_translate; // [1.6.0] 켜고 끄는 상태는 프리셋에 안 담음
+        delete settingsSnapshot.remote;   // 번역 리모컨 켬 · 대표 기능은 기기 상태 (프리셋에 안 담음)
 		if ('glossary_entries' in settingsSnapshot) delete settingsSnapshot.glossary_entries; // [1.8.0] 용어집은 캐릭터별 데이터라 프리셋에 안 담음
 		if ('glossary_suggest' in settingsSnapshot) delete settingsSnapshot.glossary_suggest; // 6.4.5 새 이름 제안도 캐릭터별 데이터라 프리셋에 안 담음
 		if (GLOSSARY_GONE in settingsSnapshot) delete settingsSnapshot[GLOSSARY_GONE]; // 2.7.5 용어집 지운 기록도 프리셋에 안 담음

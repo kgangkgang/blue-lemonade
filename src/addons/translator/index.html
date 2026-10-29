@@ -203,6 +203,55 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- 번역 리모컨 (translate-remote): 커뮤니티 공유 태번 헬퍼 스크립트 「✨️번역 리모컨」을 원작자의 허락으로 고쳐 넣었어요 -->
+                <section class="llmt-card llmt-remote-card">
+                    <header class="llmt-card-head"><i class="fa-solid fa-gamepad"></i><span>번역 리모컨</span></header>
+                    <div class="llmt-card-body">
+                        <label class="checkbox_label llmt-check" for="llm_remote_enabled">
+                            <input type="checkbox" id="llm_remote_enabled"><span>번역 리모컨 단추 두기</span>
+                        </label>
+                        <small class="llmt-desc">한 단추로 자동 번역 켬/끔 · 번역 · 수정 · 삭제를 해요. 대상은 화면에서 가장 많이 보이는 메시지예요. 짧게 누르면 아래 대표 기능, 길게 누르거나 우클릭하면 나머지 기능과 빠른 설정이 떠요.</small>
+                        <small id="llm_remote_rest" class="llmt-desc llmt-remote-rest" hidden></small>
+                        <div id="llm_remote_options" hidden>
+                            <div class="llmt-remote-fields">
+                                <div class="llmt-field">
+                                    <label for="llm_remote_main" class="llmt-label">짧게 누르면</label>
+                                    <select id="llm_remote_main" class="text_pole">
+                                        <option value="auto">자동 번역 켬/끔</option>
+                                        <option value="translate">번역 · 원문/번역 전환</option>
+                                        <option value="retranslate">다시 번역</option>
+                                        <option value="edit">번역 수정</option>
+                                        <option value="delete">번역 삭제</option>
+                                        <option value="toggleAll">모두 원문/번역</option>
+                                        <option value="translateAll">채팅 전체 번역</option>
+                                    </select>
+                                </div>
+                                <div class="llmt-field">
+                                    <label for="llm_remote_place" class="llmt-label">자리 (이 기기)</label>
+                                    <select id="llm_remote_place" class="text_pole">
+                                        <option value="left">입력칸 왼쪽 단추 줄</option>
+                                        <option value="right">입력칸 오른쪽 단추 줄</option>
+                                        <option value="float">플로팅 (끌어서 옮기기)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <label class="llmt-label">길게 누르기 메뉴에 둘 기능</label>
+                            <div id="llm_remote_menu_items" class="llmt-checks llmt-checks--grid">
+                                <label class="checkbox_label llmt-check"><input type="checkbox" data-remote-item="auto"><span>자동 번역</span></label>
+                                <label class="checkbox_label llmt-check"><input type="checkbox" data-remote-item="translate"><span>번역</span></label>
+                                <label class="checkbox_label llmt-check"><input type="checkbox" data-remote-item="retranslate"><span>다시 번역</span></label>
+                                <label class="checkbox_label llmt-check"><input type="checkbox" data-remote-item="edit"><span>번역 수정</span></label>
+                                <label class="checkbox_label llmt-check"><input type="checkbox" data-remote-item="delete"><span>번역 삭제</span></label>
+                                <label class="checkbox_label llmt-check"><input type="checkbox" data-remote-item="toggleAll"><span>모두 원문/번역</span></label>
+                                <label class="checkbox_label llmt-check"><input type="checkbox" data-remote-item="translateAll"><span>채팅 전체 번역</span></label>
+                            </div>
+                            <small class="llmt-desc">다시 번역은 그 메시지 하나만 새로 받고, 채팅 전체 번역은 남은 메시지 수를 확인한 뒤에 시작해요.</small>
+                            <button id="llm_remote_reset" class="menu_button" type="button"><i class="fa-solid fa-arrows-rotate"></i><span>위치 · 크기 처음대로</span></button>
+                        </div>
+                        <small class="llmt-remote-credit">아이디어 · 원작: 번역 리모컨 스크립트 제작자님 💙</small>
+                    </div>
+                </section>
             </div>
 
             <!-- ───────────── 모델 탭 ───────────── -->

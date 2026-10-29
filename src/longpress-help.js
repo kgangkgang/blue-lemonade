@@ -12,6 +12,7 @@ export const SKIP = [
     '.swipes-counter', '#world_button', '.chat_lorebook_button', '#persona_lore_button',
     '.bl-wi-help-dialog',
     '.ppt-ta-fab',   // 8.2.7 제목 번역 떠 있는 단추는 꾹 누른 채 끌어 옮겨요 — 설명이 뜨면 pointerup 을 막아 옮긴 자리가 저장되지 않았어요
+    '#llmt_remote_button',   // 번역 리모컨: 길게 누르면 자기 메뉴 · 플로팅이면 끌어 옮기기 (src/addons/translator/remote.js)
 ].join(',');
 // PC 마우스 올려 두기: 누르기 동작과는 안 겹치니 이미 설명이 있는 창 · 답 글 안만 빼요(… 메뉴 단추도 풍선 글은 보여요)
 export const HOVER_SKIP = '#fruit-heart-v6,#bl-deus-popover,.salty-panel,.bl-wi-help,.bl-wi-help-dialog,#chat .mes_text';

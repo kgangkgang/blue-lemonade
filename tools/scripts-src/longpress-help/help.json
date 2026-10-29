@@ -4186,6 +4186,19 @@
     },
     {
       "area": "블루레몬에이드 애드온 단추",
+      "where": "입력칸 단추 줄 또는 화면 위 떠 있는 단추 (번역 리모컨)",
+      "title": "번역 리모컨",
+      "text": "번역 설정에서 켠 리모컨 단추예요. 짧게 누르면 고른 대표 기능(번역 · 자동 번역 켬/끔 · 수정 등)을 화면에서 가장 많이 보이는 메시지에 하고, 길게 누르거나 우클릭하면 나머지 기능과 빠른 설정이 떠요.",
+      "ids": [
+        "llmt_remote_button"
+      ],
+      "classes": [],
+      "texts": [],
+      "scope": "",
+      "evidence": "src/addons/translator/remote.js (createRemote · onDown · openMenu); src/addons/translator/index.html (llm_remote_enabled)"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
       "where": "캐릭터 편집 창 › 아바타 아래 단추 줄",
       "title": "프로필 여러 개",
       "text": "이 캐릭터의 프로필 사진을 여러 장 등록하는 창을 열어요. 등록해 두면 기본은 채팅방을 열 때마다 사진이 무작위로 바뀌고, 칸을 한 번 누르면 그 그림으로 고정돼요. 사진은 서버의 user/images 폴더에 저장되고 카드 PNG 는 그대로예요.",
@@ -4594,6 +4607,10 @@
     {
       "selector": ".ppt-ta-fab",
       "reason": "제목 번역 떠 있는 단추 — 꾹 누른 채 끌어 옮겨요(src/addons/prompt/index.js makeFab). 설명이 뜨면 손을 뗄 때 pointerup 을 막아 옮긴 자리가 저장되지 않았어요(8.2.7 폰 예측점검). PC 마우스 올려 두기 설명은 그대로"
+    },
+    {
+      "selector": "#llmt_remote_button",
+      "reason": "번역 리모컨 단추 — 길게 누르거나 우클릭하면 자기 메뉴, 플로팅이면 꾹 눌러 끌어 옮겨요 (src/addons/translator/remote.js onDown · openMenu)"
     }
   ],
   "unsure": [
