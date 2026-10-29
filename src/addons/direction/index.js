@@ -1727,11 +1727,15 @@ function closePopup() {
     if (!popup) return;
     endPromptDrag(false);   // 1.3.6
     cancelPromptPress();
-    for (const t of typingRefreshers.splice(0)) t.stop();   // (10-29) 미뤄 둔 다시 그리기는 창과 함께 버린다
+    // (10-29) 미뤄 둔 다시 그리기는 창과 함께 버린다. 8.2.5 검토: 그런데 250ms 안에 닫거나 한글 마지막 글자가 아직 조합 중이면 입력창 깃털 단추
+    //   (켜짐 단계 · 내용 표시 · 툴팁)가 옛 상태로 남았다 — 값은 이미 적혀 있으니 창을 뗀 뒤 단추만 한 번 맞춘다
+    const staleButton = typingRefreshers.some(t => t.pending() || t.composing());
+    for (const t of typingRefreshers.splice(0)) t.stop();
     const closing = popup;
     popup = null;
     listView = null;
     pageTarget = null;
+    if (staleButton) refreshButton();
     closing.classList.remove('is-open');
     setTimeout(() => { closing.remove(); if (!popup) document.querySelector('.jj-popup-host')?.classList.remove('jj-popup-host'); }, 180);
     button?.classList.remove('has-popup');

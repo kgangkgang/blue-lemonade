@@ -2,6 +2,9 @@
 const OMIT = new Set(['SCRIPT','STYLE','LINK','META','BASE','IFRAME','OBJECT','EMBED','AUDIO','VIDEO','SOURCE']);
 // 부모에서 물려받는 속성 — 복제한 부모와 같은 값이면 자식에 쓰지 않아도 같은 모양 (CSS 규격의 inherited: yes 가운데 계산 값이 절대값으로 풀리는 것만)
 const INHERITED = new Set(['color','cursor','direction','font-family','font-size','font-style','font-weight','font-stretch','font-variant','font-variant-ligatures','font-variant-caps','font-variant-numeric','font-variant-east-asian','font-variant-alternates','font-variant-position','font-kerning','font-feature-settings','font-variation-settings','font-optical-sizing','font-synthesis-weight','font-synthesis-style','font-synthesis-small-caps','letter-spacing','line-height','list-style-type','list-style-position','list-style-image','quotes','tab-size','text-align','text-align-last','text-indent','text-shadow','text-transform','text-rendering','text-underline-position','visibility','white-space','white-space-collapse','text-wrap','text-wrap-mode','text-wrap-style','word-break','word-spacing','overflow-wrap','word-wrap','line-break','hyphens','writing-mode','text-orientation','caption-side','border-collapse','border-spacing','empty-cells','orphans','widows','color-scheme','caret-color','image-rendering','-webkit-text-fill-color','-webkit-text-stroke-color','-webkit-text-stroke-width','-webkit-font-smoothing','-webkit-text-size-adjust','-webkit-locale','-webkit-rtl-ordering','-webkit-text-emphasis-color','-webkit-text-emphasis-position','-webkit-text-emphasis-style','text-decoration-skip-ink','ruby-position','text-combine-upright','print-color-adjust','paint-order','stroke','stroke-width','stroke-opacity','stroke-linecap','stroke-linejoin','fill','fill-opacity','fill-rule','clip-rule','color-interpolation','color-rendering','shape-rendering','dominant-baseline','text-anchor','marker-start','marker-mid','marker-end','speak','math-style','math-shift','math-depth']);
+// 8.2.5 검토: 브라우저 기본 스타일(UA)이 물려받는 속성을 직접 정하는 태그 — 미리보기 문서에서도 그 기본값이 물려받기보다 이기므로 건너뛰면 안 된다
+// (button · input 은 검은 13px 기본 글꼴, em · i 는 기울임, b · strong 은 한 단계 더 굵게 …). 이 태그는 부모와 같아도 다 적는다.
+const UA_INHERITED_TAGS = new Set(['A','ABBR','ACRONYM','ADDRESS','B','BDI','BDO','BIG','BLOCKQUOTE','BUTTON','CAPTION','CENTER','CITE','CODE','DD','DFN','DIALOG','DIR','DL','EM','FIELDSET','FONT','H1','H2','H3','H4','H5','H6','HR','I','INPUT','INS','KBD','LEGEND','LISTING','MARK','MENU','METER','OL','OPTGROUP','OPTION','OUTPUT','PLAINTEXT','PRE','PROGRESS','Q','RP','RT','RUBY','S','SAMP','SELECT','SMALL','STRIKE','STRONG','SUB','SUMMARY','SUP','TABLE','TEXTAREA','TH','TT','U','UL','VAR','XMP']);
 const ATTRS = new Set(['id','class','title','alt','role','dir','lang','hidden','colspan','rowspan','viewBox','d','fill','stroke','stroke-width','width','height','open','x','y','x1','x2','y1','y2','cx','cy','r','rx','ry','points','preserveAspectRatio']);
 export function safePreviewStyleValue(value) {
     if(/expression\s*\(|-moz-binding|@import/i.test(value))return false;
@@ -73,7 +76,7 @@ export function copyFruitPreview(source, target) {
         const el=node.namespaceURI==='http://www.w3.org/2000/svg'?target.createElementNS(node.namespaceURI,node.localName):target.createElement(node.localName);
         for(const attr of node.attributes)if(ATTRS.has(attr.name)||attr.name.startsWith('aria-'))el.setAttribute(attr.name,attr.value);
         const key=String(count);el.setAttribute('data-bl-preview-node',key);
-        const own=declarations(node,undefined,inherited);
+        const own=declarations(node,undefined,UA_INHERITED_TAGS.has(String(node.tagName).toUpperCase())?null:inherited);
         el.style.cssText=own.text;el.style.pointerEvents='none';
         if(node.tagName==='IMG')el.setAttribute('src',imageSource(node));
         if(node.tagName==='INPUT'){
