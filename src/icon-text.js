@@ -256,30 +256,42 @@ function scanRows(root) {
     for (const el of rowHosts(root)) if (isRowHost(el) && !inMessage(el)) checkRow(el);
 }
 
-// 바뀐 요소 하나 — .menu_button 이면 단추 표식, label 이면 체크 줄 표식, input 이 바뀌었으면 그 부모 label
-function touched(el) {
-    if (el.classList.contains('menu_button')) check(el);
-    else if (el.localName === 'label') checkLabel(el);
-    else if (el.localName === 'input' && el.parentElement?.localName === 'label') checkLabel(el.parentElement);
-    // 메시지 안이 바뀌면(편집칸 넣고 빼기 · 타이머 · 토큰 글자) 그 메시지 표식을 다시
-    const mes = el.closest('.mes'); if (mes) checkMes(mes);
-    const details = el.closest('.mes_reasoning_details'); if (details) checkReasoning(details);
-    if (mes || inMessage(el)) return;   // 채팅 · 메시지 안은 줄 표식을 보지 않아요(scanRows 와 같은 범위)
-    // 자식 줄이 바뀐 .flex-container · .range-block 과, 클래스가 바뀐 자식의 부모
-    if (isRowHost(el)) checkRow(el);
-    const p = el.parentElement; if (p && isRowHost(p)) checkRow(p);
-    const lab = el.closest('label'); if (lab && lab !== el) checkRow(lab);
-    const rb = el.closest('.range-block'); if (rb && rb !== el && rb !== p) checkRow(rb);
+// 바뀐 요소들 — .menu_button 이면 단추 표식, label 이면 체크 줄 표식, input 이 바뀌었으면 그 부모 label
+// 10-30 perf-icon: 메시지 · 줄 표식은 콜백 하나에서 요소마다 한 번만 다시 재요 — 예전에는 바뀐 요소마다 그 메시지의 checkMes(자손 전체를 훑는 edit_textarea 찾기)를
+//   다시 불러, 메시지 하나 안에서 수십 곳이 바뀌면 같은 메시지를 수십 번 쟀어요. 재는 값은 DOM 만 보고 표식 쓰기와 서로 엮이지 않아 한 번 잰 결과와 같아요.
+export function touchedAll(targets) {
+    const mesSet = new Set(), detailsSet = new Set(), rows = new Set();
+    for (const el of targets) {
+        if (el.classList.contains('menu_button')) check(el);
+        else if (el.localName === 'label') checkLabel(el);
+        else if (el.localName === 'input' && el.parentElement?.localName === 'label') checkLabel(el.parentElement);
+        // 메시지 안이 바뀌면(편집칸 넣고 빼기 · 타이머 · 토큰 글자) 그 메시지 표식을 다시
+        const mes = el.closest('.mes'); if (mes) mesSet.add(mes);
+        const details = el.closest('.mes_reasoning_details'); if (details) detailsSet.add(details);
+        if (mes || inMessage(el)) continue;   // 채팅 · 메시지 안은 줄 표식을 보지 않아요(scanRows 와 같은 범위)
+        // 자식 줄이 바뀐 .flex-container · .range-block 과, 클래스가 바뀐 자식의 부모
+        if (isRowHost(el)) rows.add(el);
+        const p = el.parentElement; if (p && isRowHost(p)) rows.add(p);
+        const lab = el.closest('label'); if (lab && lab !== el) rows.add(lab);
+        const rb = el.closest('.range-block'); if (rb && rb !== el && rb !== p) rows.add(rb);
+    }
+    for (const mes of mesSet) checkMes(mes);
+    for (const details of detailsSet) checkReasoning(details);
+    for (const el of rows) checkRow(el);
 }
 
 // 8.2.6 성능: 글자 칸(characterData) 변화가 바꿀 수 있는 표식은 .menu_button 바로 아래 맨 글자(bareText)뿐이에요 —
 //   체크 줄 · 메시지 표식(편집칸 · 번호 · 타이머 · 토큰 칸의 비어 있음) · 서랍 줄 표식은 요소 · 속성만 보고, 글 노드의 글자가 바뀌어도 노드는 그대로라 :empty 판정도 같아요.
 //   그래서 부모가 .menu_button 이 아닌 글자 변화(토큰 수 · 타이머 · 서랍 안 숫자 글자)는 콜백에서 버려요. 팝업 표식(refreshPopupMarks)도 글자 변화는 원래 건너뛰어요.
+// 10-30 perf-icon: 속성을 같은 값으로 다시 쓴 기록(oldValue 가 지금 값과 같음)도 버려요 — 표식은 DOM 상태만 보니 바뀔 것이 없어요.
+//   실리태번 refreshSwipeButtons 가 메시지가 붙을 때마다 메시지 전부에 없는 클래스를 classList.remove 해(기록만 남) 메시지마다 checkMes 가 돌았어요.
+//   한 콜백에 같은 요소의 기록이 여럿이면 하나라도 값이 달라졌으면 남아요.
+const sameAttr = r => r.type === 'attributes' && r.oldValue !== undefined && typeof r.target?.getAttribute === 'function' && r.oldValue === r.target.getAttribute(r.attributeName);
 export function relevantRecords(records) {
     let keep = null;
     for (let i = 0; i < records.length; i++) {
         const r = records[i];
-        const drop = r.type === 'characterData' && !r.target.parentElement?.classList?.contains('menu_button');
+        const drop = (r.type === 'characterData' && !r.target.parentElement?.classList?.contains('menu_button')) || sameAttr(r);
         if (drop && !keep) keep = records.slice(0, i);
         else if (!drop && keep) keep.push(r);
     }
@@ -319,7 +331,7 @@ export function startIconTextMark() {
         if (!records.length) return;
         const work = mutationWork(records);
         for (const node of work.roots) scan(node);
-        for (const target of work.targets) touched(target);
+        touchedAll(work.targets);
         refreshPopupMarks(records);
-    }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class', 'type', 'id'] });
+    }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeOldValue: true, attributeFilter: ['class', 'type', 'id'] });
 }
