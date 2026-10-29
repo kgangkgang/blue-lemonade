@@ -466,7 +466,8 @@ function registerDirectionMacro() {
     const description = '전개 지시에 적은 내용 (꺼져 있으면 빈칸)';
     try {
         const ctx = getContext();
-        const modern = ctx.powerUserSettings?.experimental_macro_engine && typeof ctx.macros?.register === 'function' ? ctx.macros : null;
+        // 실리태번 판 호환: registerMacro 는 실리태번이 폐지 예고한 옛 길 — 빠진 판이면 새 엔진 설정과 상관없이 새 길로(전엔 {{direction}} 이 조용히 빠졌다)
+        const modern = (ctx.powerUserSettings?.experimental_macro_engine || typeof ctx.registerMacro !== 'function') && typeof ctx.macros?.register === 'function' ? ctx.macros : null;
         if (modern) modern.register('direction', { category: 'extension', description, handler: () => directionMacroText() });
         else ctx.registerMacro?.('direction', directionMacroText, description);
     } catch (error) {

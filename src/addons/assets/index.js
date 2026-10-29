@@ -3,7 +3,8 @@ import { showThemeModal } from '../../modal.js';
 // 이전 '캐릭터 에셋 확장(character-assets)'을 새로 만든 확장. 그림은 같은 폴더(characters/<캐릭터>/)를 그대로 쓴다.
 import { eventSource, event_types } from '../../../../../../../script.js';
 import { getContext } from '../../../../../../extensions.js';
-import { MacrosParser } from '../../../../../../macros.js';
+// 실리태번 판 호환: MacrosParser 는 실리태번이 폐지 예고한 옛 매크로 등록 길 — 이름으로 가져오면 빠진 판에서 이 애드온이 통째로 안 켜진다(모듈 묶음으로 받음)
+import * as legacyMacros from '../../../../../../macros.js';
 import { power_user } from '../../../../../../power-user.js';
 import { initSettings, settings, saveSettings, VERSION, TITLE, currentFolder } from './state.js';
 import { reload, activeEntry, loadMember } from './store.js';
@@ -22,17 +23,20 @@ initSettings();
 // 새 매크로 엔진이 켜져 있으면 새 등록 방식을, 아니면 예전 방식을 쓴다 (예전 방식은 경고를 찍지만 동작한다).
 async function registerMacros() {
     let modern = null;
-    if (power_user.experimental_macro_engine) {
+    const legacy = legacyMacros.MacrosParser;
+    const hasLegacy = typeof legacy?.registerMacro === 'function';
+    if (power_user.experimental_macro_engine || !hasLegacy) {   // 옛 길이 빠진 판이면 새 엔진 설정과 상관없이 새 길로
         try {
             modern = (await import('../../../../../../macros/macro-system.js')).macros;
         } catch (error) {
             console.debug(`[${TITLE}] 새 매크로 엔진을 찾지 못해 예전 방식으로 등록해요.`, error);
         }
     }
+    if (!modern && !hasLegacy) { console.warn(`[${TITLE}] 이 실리태번 판에는 매크로 등록 길이 없어 {{img_…}} · {{charkey}} 매크로를 건너뛰어요.`); return; }
     const register = (key, value, description) => {
         try {
             if (modern) modern.register(key, { category: 'extension', description, handler: () => value() });
-            else MacrosParser.registerMacro(key, value, description);
+            else legacy.registerMacro(key, value, description);
         } catch (error) {
             console.error(`[${TITLE}] 매크로 등록 실패: ${key}`, error);
         }

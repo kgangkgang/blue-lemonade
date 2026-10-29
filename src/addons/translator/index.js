@@ -58,7 +58,6 @@ import {
     substituteParams,
     updateMessageBlock,
     syncMesToSwipe,
-    callPopup,
     createRawPrompt,
     amount_gen, // 2026-10-06: 텍스트 완성 응답 길이 (현재 연결 번역 출력 한도)
 } from '../../../../../../../script.js';
@@ -68,6 +67,13 @@ import * as stHost from '../../../../../../../script.js';
 import { picturesOnlyChanged, swapPictures } from './picture-swap.js';   // 7.9.5 그림 확장이 그림 표시만 바꾼 답은 다시 번역하지 않는다
 function getMaxPromptTokens(overrideResponseLength = null) {
     return typeof stHost.getMaxPromptTokens === 'function' ? stHost.getMaxPromptTokens(overrideResponseLength) : stHost.getMaxContextSize(overrideResponseLength);
+}
+// 실리태번 판 호환: callPopup 은 실리태번이 폐지 예고한 옛 팝업 — 이름으로 가져오면 빠진 판에서 번역기가 통째로 안 켜진다(위 7.9.5 와 같은 꼴).
+//   있으면 그것(전과 같은 인수), 없으면 새 팝업(callGenericPopup 확인 창)으로 같은 답(참/거짓)
+async function confirmPopup(content, title) {
+    if (typeof stHost.callPopup === 'function') return stHost.callPopup(content, 'confirm', title);
+    const ctx = getContext();
+    return (await ctx.callGenericPopup(content, ctx.POPUP_TYPE.CONFIRM, '')) === ctx.POPUP_RESULT.AFFIRMATIVE;
 }
 function getMaxContextTokens() {
     return typeof stHost.getMaxContextTokens === 'function' ? stHost.getMaxContextTokens() : stHost.getMaxContextSize(1) + 1;   // 응답 길이 1 을 빼고 되돌린 값 = 전체 문맥
@@ -9135,7 +9141,7 @@ class PromptManager {
         `;
 
         // SillyTavern의 팝업 시스템 사용
-        const result = await callPopup(wrapper, 'confirm', '프롬프트 추가');
+        const result = await confirmPopup(wrapper, '프롬프트 추가');
 
         if (!result) {
             return; // 취소 버튼 클릭 또는 팝업 닫힘
