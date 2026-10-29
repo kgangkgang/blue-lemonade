@@ -36,12 +36,13 @@ t('조합 아닌 입력(영문 · 지우기)도 바로 보내지 않고 300ms �
 });
 await sleep(si.DELAY + 60);
 t('… 300ms 뒤 input 을 한 번 다시 보내고 그 이벤트는 멈추지 않아 실리태번에 닿는다', () => { assert.equal(dispatched.length, 1); assert.equal(dispatched[0].type, 'input'); assert.equal(stCalls, 1); assert.equal(si._forTest.state().dirty, false); });
-t('한글 조합: compositionstart 뒤 자모마다 오는 input(isComposing) 은 모두 멈추고 타이머도 걸지 않는다', () => {
+t('한글 조합: compositionstart 뒤 자모마다 오는 input(isComposing) 은 모두 멈추고 조합 중 타이머(COMPOSING_DELAY, 8.2.4 검토)만 건다', () => {
     deliver('compositionstart'); deliver('input', { isComposing: true }); deliver('input', { isComposing: true }); deliver('input', { isComposing: true });
-    assert.equal(stCalls, 1); assert.deepEqual(si._forTest.state(), { on: true, bound: true, composing: true, dirty: true, waiting: false });
+    assert.equal(stCalls, 1); assert.deepEqual(si._forTest.state(), { on: true, bound: true, composing: true, dirty: true, waiting: true });
+    assert.ok(si.COMPOSING_DELAY > si.DELAY);
 });
 await sleep(si.DELAY + 60);
-t('… 조합 중엔 아무리 기다려도 검색이 돌지 않는다', () => assert.equal(stCalls, 1));
+t('… 조합 중엔 DELAY 만큼 기다려도 검색이 돌지 않는다 (마지막 음절을 조합 중인 채로 멈춘 경우는 search-ime-composing.mjs)', () => assert.equal(stCalls, 1));
 t('compositionend → 300ms 재기 시작 · 그 안에 다음 글자 조합이 시작되면 다시 멈춘다', async () => {});
 {
     deliver('compositionend'); assert.equal(si._forTest.state().waiting, true);
