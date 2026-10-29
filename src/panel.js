@@ -1576,6 +1576,7 @@ function tabChat(s, sub) {
             ${row('설명 ? 단추', toggle('chat.helpMarks', s.chat.helpMarks !== false), '월드인포 설정 · 한글화 패널 칸 옆의 ? 를 보여요 · 끄면 숨겨요')}
             ${row('이전 메시지 저절로 불러오기', toggle('chat.showMoreAuto', s.chat.showMoreAuto !== false), '위로 올리다 채팅 맨 위 「이전 메시지 더 보기」에 가까워지면 누르지 않아도 미리 불러와요. 불러온 뒤에도 보던 자리는 그대로예요')}
             ${row('긴 채팅의 화면 밖 메시지 가볍게', toggle('chat.chatLight', s.chat.chatLight !== false), '메시지가 60개 넘게 그려져 있으면 화면 밖 메시지의 스타일 · 배치 계산을 건너뛰어요(화면 가까이 오면 다시 그려요). 긴 채팅에서 페르소나 설명 · 전개 지시 같은 칸에 글자를 칠 때 덜 끊겨요 · 마지막 메시지 · 편집 중 · 메뉴 열린 메시지는 그대로예요')}
+            ${row('입력 중 목록 갱신 미루기', toggle('chat.personaDefer', s.chat.personaDefer !== false), '페르소나 설명을 치는 동안은 목록 카드의 설명 글 · 토큰 수 갱신을 잠깐 미루고, 손을 멈추거나 칸을 떠날 때(다른 곳 누르기 · 서랍 닫기 · 페르소나 바꾸기) 한 번에 적어요. 저장되는 글은 같아요')}
             ${row('새 답 첫 줄로 가는 단추', toggle('chat.replyTop', !!s.chat.replyTop), '긴 답이 끝나 첫 줄이 위로 지나가 있으면 ↑ 아이콘이 떠요 · 첫 줄이 보이면 사라져요')}
             ${row('토큰 수 누르면 내역', toggle('chat.sentTokens', s.chat.sentTokens !== false), '메시지 머리 토큰 수를 누르면 생각 · 본문 · 다음 프롬에 들어가는 양을 한 줄씩 보여 줘요')}
             ${row('웹 검색 · 출처 표시', toggle('chat.webSearchMarks', s.chat.webSearchMarks !== false), '웹 검색을 쓴 답에 지구 표시 · 답의 낱말을 꾹 누르면 어디서 왔는지 한 줄')}

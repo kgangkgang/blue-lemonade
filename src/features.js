@@ -90,6 +90,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // (10-29) 긴 채팅 가볍게 (chat-light.js, 기본 켬) — 메시지 60개 이상이면 화면 밖 메시지에 content-visibility:auto (css/05-chat.css): 글자를 칠 때마다 도는 문서 전체 재계산을 보이는 메시지로 좁힌다
     const chatLight = on && s.chat?.chatLight !== false;
     if (chatLight || modules.chatlight) load('chatlight', './chat-light.js').then(m => m?.syncChatLight(chatLight));
+    // (10-29 perf-persona) 입력 중 목록 갱신 미루기 (persona-defer.js, 기본 켬) — 페르소나 설명 글자마다 실리태번이 목록 카드 글을 다시 써 문서 전체가 재계산되던 것을 손을 멈출 때 · 칸을 떠날 때 한 번으로
+    const personaDefer = on && s.chat?.personaDefer !== false;
+    if (personaDefer || modules.personadefer) load('personadefer', './persona-defer.js').then(m => m?.syncPersonaDefer(personaDefer));
     // 7.9.9 단추를 손으로 누르면 불러온 메시지를 보여 준다 (show-more-tap.js, 자동 더 보기와 상관없이 · 테마가 켜져 있을 때)
     if (on || modules.showmoretap) load('showmoretap', './show-more-tap.js').then(m => (on ? m?.installShowMoreTap() : m?.uninstallShowMoreTap()));
     // 아바타는 가까워질 때 받기 (lazy-avatars.js, 기본 켬) — 캐릭터 · 페르소나 목록의 화면 밖 썸네일을 미룬다

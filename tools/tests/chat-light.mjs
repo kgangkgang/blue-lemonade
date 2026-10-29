@@ -70,6 +70,8 @@ test('연결: features.js · settings.js(기본값 · 보정 · 동작 값) · s
     assert.match(settings, /s\.chat\.chatLight = flag\(s\.chat\.chatLight, true\);/);
     assert.match(settings, /'mesPins'[^\]]*'chatLight'[^\]]*\]\) \{/);   // 8.2.4 키(lazyAvatars …)와 합치면 사이에 다른 키가 낀다 — 목록 안에만 있으면 된다
     assert.match(read('src/styles.js'), /'mesPins'[^\]]*'chatLight'[^\]]*\];/);
+    assert.match(settings, /'mesPins', 'chatLight'(?:, '\w+')*\]\) \{/);   // 뒤에 동작 값이 더 붙어도 (10-29 perf-persona: personaDefer)
+    assert.match(read('src/styles.js'), /'mesPins', 'chatLight'(?:, '\w+')*\];/);
     assert.match(read('src/panel.js'), /row\('긴 채팅의 화면 밖 메시지 가볍게', toggle\('chat\.chatLight', s\.chat\.chatLight !== false\)/);
     assert.match(read('src/settings-labels.js'), /"chat\.chatLight":"긴 채팅의 화면 밖 메시지 가볍게"/);
     assert.match(read('src/settings-search.js'), /'chat\.chatLight'\]/);
