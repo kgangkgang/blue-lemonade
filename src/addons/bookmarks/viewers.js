@@ -362,6 +362,7 @@ window.addEventListener('keydown', (event) => {
 export async function abandonPreviewForGeneration() {
     if (!preview) return;
     preview = null;
+    hooks.previewEnded?.();   // 1029 창이 닫혀 있으면 쥐고 있던 카드 서식 규칙을 놓아요 (예전엔 다음에 창을 열고 닫을 때까지 켜져 있었어요)
     document.body.classList.remove('cg-previewing');
     applyColors(colorsFor(currentChatKey()));
     if (typeof sillyTavern.printMessages === 'function') {
@@ -381,6 +382,7 @@ export async function exitPreview({ reload = true } = {}) {
         return;
     }
     preview = null;
+    hooks.previewEnded?.();   // 1029 창이 닫혀 있으면 쥐고 있던 카드 서식 규칙을 놓아요 (예전엔 다음에 창을 열고 닫을 때까지 켜져 있었어요)
     document.body.classList.remove('cg-previewing');
     applyColors(colorsFor(currentChatKey()));
     if (reload) {

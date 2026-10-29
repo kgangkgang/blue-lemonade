@@ -296,6 +296,8 @@ hooks.openPanel = openPanel;
 hooks.closePanel = closePanel;
 hooks.refreshPanel = refreshPanel;
 hooks.isPanelOpen = isPanelOpen;
+// 1029 미리보기로 가는 닫기(keepColors)는 규칙을 쥔 채 닫는다 — 미리보기가 끝났는데 창이 닫혀 있으면 여기서 놓는다
+hooks.previewEnded = () => { if (!view.open && holdingPreviewRules) { holdingPreviewRules = false; releasePreviewRules(); } };
 
 // ── 다른 채팅 불러오기 ──────────────────────────────────────
 
