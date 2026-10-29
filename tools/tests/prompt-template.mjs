@@ -251,6 +251,20 @@ await test('7.0.1 git 확인 실패: /version 이 500(오프라인 git fetch)이
     versionStatus = 404; assert.equal(await mod.isGit(false), false, '그 자리에 폴더 없음 = git 아님');
     versionStatus = 200; gitHash = ''; assert.equal(await mod.isGit(false), false); gitHash = 'abc'; assert.equal(await mod.isGit(false), true); gitHash = '';
 });
+await test('1029 <% %> 알림의 가벼운 다시 읽기(git 안 봄)가 git 설치본을 「git 아님」으로 적지 않고 · 다음에 창을 열면 git 까지 다시 읽어요', async () => {
+    reset({ helper: null, installed: null, refreshedAt: 0 }); installedManifest = { version: '1.17.9', display_name: source.display_name }; gitHash = 'abc123'; versionAsked.length = 0;
+    await mod.refresh({ probeGit: false });
+    assert.equal(versionAsked.length, 0, 'git 확인 요청은 보내지 않아요');
+    assert.notEqual(S.git, false, 'git 을 안 봤으면 「git 아님」이 아니에요');
+    assert.ok(mod.blockedReason(), '모르는 동안은 덮어쓰기 · 지우기를 막아요');
+    calls.length = 0;
+    assert.equal(await mod.install({ confirm: async () => true }), false); assert.equal(await mod.remove({ confirm: async () => true }), false);
+    assert.ok(!calls.some(c => c.u.includes('blue-lemonade-zip')), JSON.stringify(calls.map(c => c.u)));
+    assert.ok(Date.now() - S.refreshedAt > 5 * 60 * 1000, '창(mountInline)이 5분 캐시로 건너뛰지 않고 다시 읽게');
+    await mod.refresh();
+    assert.equal(S.git, true); assert.equal(mod.blockedReason(), 'git');
+    gitHash = '';
+});
 await test('7.0.1 전역 설치본: discover 가 global 이면 「전역 설치본 — 서버 관리자에게」 · git 확인도 global:true · 단추 막음', async () => {
     reset({ helper: null, installed: null }); installedManifest = { version: '1.17.9', display_name: source.display_name }; ourType = 'global'; versionAsked.length = 0;
     await mod.refresh();

@@ -172,9 +172,10 @@ export async function refresh({ probeGit = true } = {}) {
     const where = await locate();
     state.others = where.others;
     state.scope = state.installed ? (where.scope ?? 'unknown') : null;
-    state.git = state.installed && probeGit ? await isGit(state.scope === 'global') : false;
+    // 1029 git 을 안 본 가벼운 다시 읽기(<% %> 알림)는 「모름」으로 두고 시각도 적지 않아요 — 예전엔 false(git 아님)로 적어 5분 동안 git 설치본의 설치 · 삭제 단추가 풀렸어요
+    state.git = !state.installed ? false : probeGit ? await isGit(state.scope === 'global') : 'unknown';
     if (state.helper === null) await checkHelper();
-    state.refreshedAt = Date.now();   // 7.2.6
+    state.refreshedAt = probeGit ? Date.now() : 0;   // 7.2.6
     renderAll();
     return state;
 }
@@ -308,7 +309,7 @@ function renderAll() {
 export function mountCard(host) {
     if (!host || cards.has(host)) return;
     cards.add(host); renderCard(host);
-    if (!state.busy && state.installed === null) refresh().catch(() => {});
+    if (!state.busy && (state.installed === null || !state.refreshedAt)) refresh().catch(() => {});   // 1029 가벼운 다시 읽기(git 모름) 뒤에도 다시
 }
 async function act(name, button) {
     if (state.busy) return;

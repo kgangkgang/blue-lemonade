@@ -191,7 +191,7 @@ export const FILE_HASHES = {
   "src/addons/perf/watchdog-main.js": "8760:332449ef:f23b02d7",
   "src/addons/perf/watchdog.js": "14317:e447d2cd:b2099ddd",
   "src/addons/prompt-template/host.js": "4448:ab5b5c8d:d266c7a8",
-  "src/addons/prompt-template/index.js": "27544:7d0420cb:d5458c39",
+  "src/addons/prompt-template/index.js": "27891:f6484fee:43de1c65",
   "src/addons/prompt-template/ko-kr.js": "6795:27fa3e8e:c58ba6dc",
   "src/addons/prompt-template/sha256.js": "3464:de93a8fc:d33f2ba0",
   "src/addons/prompt-template/style.css": "3347:c72ff689:c6699f06",
