@@ -4590,6 +4590,10 @@
     {
       "selector": "#world_button, .chat_lorebook_button, #persona_lore_button",
       "reason": "실리태번: 캐릭터 · 채팅 · 페르소나 로어 단추를 길게 누르면 연결 창 (public/scripts/world-info.js · personas.js)"
+    },
+    {
+      "selector": ".ppt-ta-fab",
+      "reason": "제목 번역 떠 있는 단추 — 꾹 누른 채 끌어 옮겨요(src/addons/prompt/index.js makeFab). 설명이 뜨면 손을 뗄 때 pointerup 을 막아 옮긴 자리가 저장되지 않았어요(8.2.7 폰 예측점검). PC 마우스 올려 두기 설명은 그대로"
     }
   ],
   "unsure": [
