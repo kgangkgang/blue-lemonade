@@ -496,6 +496,9 @@ export function placeWeatherSpots(mode, defaults, onDone) {
     box.id = 'bl-weather-place';
     box.innerHTML = `<div class="bl-weather-place-bar"><span>점을 끌어 자리를 정해요</span><button type="button" data-place="auto">자동 배치</button><button type="button" data-place="cancel">취소</button><button type="button" data-place="done">완료</button></div>${list.map((_, i) => `<button type="button" class="bl-weather-place-dot" data-index="${i}" aria-label="자리 ${i + 1}">${list.length > 1 ? i + 1 : ''}</button>`).join('')}`;
     host.append(box);
+    // 8.2.7 폰: 막은 #sheld 안이라 점을 옆으로 빠르게 끌면 실리태번 손짓(swiped-events, document 의 touch*)이 옆 밀기로 읽어 마지막 답의 다음 답을 눌렀어요(없으면 새 답 생성).
+    //   막 안에서 시작한 터치는 문서로 올리지 않아요 — 끌기(pointer*) · 단추 click 은 막 안에서 그대로 받아요 (tools/tests/weather-place-swipe.mjs)
+    for (const type of ['touchstart', 'touchmove', 'touchend', 'touchcancel']) box.addEventListener(type, event => event.stopPropagation(), { passive: true });
     const dots = [...box.querySelectorAll('.bl-weather-place-dot')];
     const paint = () => dots.forEach((dot, i) => { dot.style.left = `${list[i].x * 100}%`; dot.style.top = `${list[i].y * 100}%`; });
     let queued = 0;
