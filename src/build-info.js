@@ -446,7 +446,7 @@ export const FILE_HASHES = {
   "src/addons/tts/src/sfx-credits.js": "6587:1a7aad53:1c14435d",
   "src/addons/tts/src/sfx-daily.js": "29219:f782eea1:efd00527",
   "src/addons/tts/src/sfx-library.js": "33942:1d4c7858:c728f8f3",
-  "src/addons/tts/src/speakers.js": "41061:3ba5b07b:eaf3ed55",
+  "src/addons/tts/src/speakers.js": "41945:2928f10d:a9178c29",
   "src/addons/tts/src/stapi.js": "23853:689ef6ab:ca0f4640",
   "src/addons/tts/src/text.js": "45741:2a78e948:5d4087ac",
   "src/addons/tts/src/translation.js": "19668:814d7ac1:672d99b6",

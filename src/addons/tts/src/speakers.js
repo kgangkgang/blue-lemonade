@@ -591,6 +591,15 @@ export function resolveSpeaker(seg, rctx = {}) {
     const isUser = (n) => !!n && (isUserMacro(n) || (!!userName && (fold(n) === fold(userName) || fold(cn(n)) === fold(cn(userName)))));
     const c = normColor(seg?.color);
     const e = c ? st.colors[c] : null;
+    // 2.0.6 같은 색을 여러 인물이 쓸 때(「- 조연: #aaa」 · 모델이 한 색만 쓰는 답): 대사에 붙은 이름표(「렉스: "…"」 · character="렉스")가 아는 다른 인물이면
+    //   색 임자보다 먼저. 같은 사람의 다른 표기 · 모르는 이름표(오인 이름표 「결국: "…"」)는 전처럼 색이 정한다
+    const hint0 = String(seg?.speakerHint || '').trim();
+    if (hint0 && c && (e?.name || st.userColor === c)) {
+        const owner = e?.name ? (isUserMacro(e.name) && userName ? userName : e.name) : userName;
+        const hn = cn(hint0);
+        const known = map.has(fold(hint0)) || currentCards().some(ch => ch?.name && fold(ch.name) === fold(hint0));
+        if (known && fold(hn) && fold(hn) !== fold(cn(owner)) && !(isUser(hn) && isUser(owner))) return { name: hn, source: 'hint', isUser: isUser(hn) };
+    }
     // 2.0.2 칸 이름이 「{{user}}」 매크로면 내 이름으로 (전엔 「{{user}}」 라는 모르는 캐릭터가 되어 내 목소리를 안 쓰고 「목소리를 먼저 정해요」)
     if (e?.name) return { name: isUserMacro(e.name) && userName ? userName : e.name, source: e.locked ? 'palette' : 'learned', isUser: isUser(e.name) };
     if (c && st.userColor === c) return { name: userName, source: 'user', isUser: true };
