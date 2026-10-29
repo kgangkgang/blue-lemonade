@@ -94,6 +94,13 @@ export function installScrollFade(doc = globalThis.document, { resting = () => f
         let timer = 0;
         // capture: 테마 설정 창은 페이지를 바꿀 때 스크롤 칸(.salty-sec)을 새로 만들고 클릭 전파를 멈춰요 — bubbling 으로는 한 번도 못 받았어요(리그 확인 10-29)
         root.addEventListener('click', () => { clearTimeout(timer); timer = setTimeout(() => { if (root.isConnected) scan(root); }, SETTLE_MS); }, { signal: controller.signal, passive: true, capture: true });
+        // (10-30) 창(dialog.popup)은 닫혀 떨어지면 바로 놓아요 — 예전엔 다음 팝업이 뜰 때(scan → cleanup)까지 닫힌 창의 뿌리 · 칸을 붙잡아,
+        //   테마 설정 창이면 떨어진 창 DOM 전체가 몇 시간이고 남았어요. 실리태번은 close 뒤 onClose 를 기다렸다 떼므로 떨어질 때까지 몇 번 더 봐요
+        if (root.localName === 'dialog') {
+            let tries = 0;
+            const sweep = () => { if (root.isConnected) { if (!root.open && tries++ < 8) setTimeout(sweep, 250); return; } cleanup(); };
+            root.addEventListener('close', () => { tries = 0; setTimeout(sweep, 0); }, { signal: controller.signal });
+        }
         roots.set(root, controller);
     }
     const cleanup = () => {

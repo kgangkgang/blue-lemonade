@@ -696,7 +696,7 @@ export const FILE_HASHES = {
   "src/scripts/runtime.js": "10299:2b380bd4:521c7ae2",
   "src/scripts/scan.js": "5805:194df255:f44ce803",
   "src/scripts/store.js": "4439:3c410dc2:8a4e723f",
-  "src/scroll-fade.js": "10066:b3b01de1:119aef04",
+  "src/scroll-fade.js": "10780:6b8689a0:e7d680e2",
   "src/search-ime.js": "4767:8c5c70ef:e3adf74a",
   "src/selection-range.js": "6929:b51d4218:4519f447",
   "src/selects.js": "24014:5c99d2c0:21a86caf",
