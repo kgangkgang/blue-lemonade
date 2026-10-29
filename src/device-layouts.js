@@ -40,3 +40,22 @@ export function saveDeviceLayout(s) {
     const active = sessions.get(s);
     if (s.deviceLayouts?.on && active?.on) s.deviceLayouts[active.device] = capture(s);
 }
+// 세 갈래 합치기(settings-sync.js) 앞에 불러요. 기기별 배치를 쓰면 위 칸의 배치 값은 「그 값을 저장한 기기」 것이라 기기끼리 견주면 안 돼요 —
+// 견주면 다른 기기 글자 크기를 「서버가 바꾼 값」으로 받아, 다음 저장이 그 값을 이 기기 배치에 담았어요(폰 ↔ PC 를 오가면 이 기기 배치가 사라짐).
+// 이 기기 배치 칸을 지금 위 칸으로 맞춘 뒤, 견줄 쪽(서버 · 마지막으로 맞춘 값)의 위 칸을 그쪽에 담긴 「이 기기 배치」로 바꿔 보는 함수를 돌려줘요.
+export function layoutMergeView(local) {
+    const active = sessions.get(local);
+    if (!object(local) || !local.deviceLayouts?.on || !active?.on) return other => other;
+    saveDeviceLayout(local);
+    return other => {
+        if (!object(other) || other.deviceLayouts?.on !== true) return other;
+        const mine = other.deviceLayouts[active.device], out = structuredClone(other);
+        for (const path of LAYOUT_PATHS) {
+            const [a, b] = path.split('.');
+            if (!object(out[a])) continue;
+            const value = read(mine, path);
+            out[a][b] = structuredClone(value !== undefined ? value : read(local, path));   // 그쪽이 이 기기 값을 모르면 이 탭 값 = 바꾼 것 없음
+        }
+        return out;
+    };
+}

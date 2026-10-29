@@ -8,6 +8,7 @@
 // 이 탭이 salty 를 하나도 안 바꿨으면 서버 값을 그대로 받는다 → 합치기 저장(settings-merge.js)이 이 탭의 옛 salty 로 서버를 덮지 않는다.
 // 메모 · 용어집과 같은 공용 길(settings-merge.js: 탭이 1분 넘게 숨었다 다시 보일 때 서버를 한 번 읽음)에 「salty」로 등록하고, 애드온과 무관하게 늘 건다.
 import { registerSettingsMerge, startSettingsMerge } from './settings-merge.js';
+import { layoutMergeView } from './device-layouts.js';
 
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
 const same = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
@@ -83,7 +84,8 @@ export function startThemeSettingsSync({ getSalty, save, after } = {}) {
     registerSettingsMerge('salty', ext => {
         const salty = getSalty(), remote = ext?.salty;
         if (!isObj(salty) || !isObj(remote)) return null;
-        const result = mergeSalty(salty, base, remote);
+        const view = layoutMergeView(salty);   // 기기별 배치: 위 칸은 이 기기 배치끼리 견줘요 (device-layouts.js)
+        const result = mergeSalty(salty, view(base), view(remote));
         base = clone(remote);   // 서버 값까지는 맞췄다 — 이 탭만 가진 것은 다음 저장이 서버로
         if (result.changed) { try { after?.(); } catch (error) { console.warn('[Blue Lemonade] 설정 합친 뒤 다시 적용', error); } }
         return { pulled: result.changed ? 1 : 0, removed: 0, needSave: result.needSave };
