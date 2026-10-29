@@ -3491,12 +3491,18 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             //       (실리태번 정규식 창 · 프롬프트 귀속 · 헬퍼 스크립트의 정규식 교체 …). 끝난 번역은 캐시에서 바로 온다. 같은 메시지에 두 번까지 — 그 뒤엔 전처럼 알린다.
             const again = source === 'auto' && runToken.chatGuard.valid() && (autoRetries.get(runToken.guard.target()) || 0) < 2;
             if (again) {
+                // 8.2.7 처음 번역하던 중에 글을 고쳤다(편집 ✓ → MESSAGE_EDITED): 번역문이 아직 없어 편집 처리기(handleMessageEdit)는 다시 번역하지 않는다 —
+                //       예전엔 여기서도 「같은 대상 아님」으로 조용히 끝나 고친 답이 끝내 번역되지 않았다. 번역이 끝난 뒤에 고친 것과 같게 고친 글로 한 번 (자동 번역 모드 · 건너뛰기 판단 그대로)
+                const edited = error.reason?.what === 'edited' && error.reason?.event === 'edited';
                 afterGeneration(async () => {
                     await settleGuard(runToken.guard);
-                    const target = runToken.guard.sameTarget() ? runToken.guard.target() : null;
+                    let target = runToken.guard.sameTarget() ? runToken.guard.target() : null;
+                    const editedTarget = !target && edited ? runToken.guard.target() : null;
+                    if (editedTarget && editedTarget.swipe_id === runToken.swipe && !editedTarget.extra?.display_text && shouldTranslate(editedTarget.is_user ? outgoingTypes : incomingTypes)) target = editedTarget;
                     const id = target ? getContext().chat.indexOf(target) : -1;
                     if (!runToken.chatGuard.valid() || id < 0 || skipCutAutoTranslate(target, id)) return;
                     autoRetries.set(target, (autoRetries.get(target) || 0) + 1);
+                    if (target === editedTarget) { (target.is_user ? translateOutgoingMessage : translateIncomingMessage)(id); return; }
                     translateMessage(id, false, 'auto').catch(() => {});
                 });
             } else toastr.info(error.message, '번역 중단', { timeOut: 4000 });
