@@ -335,10 +335,18 @@ function refresh() {
     layer.set(next.mode, next.level, next.params, wanted.sprite);
 }
 
+// 8.2.7: 새 스와이프는 빈 글로 MESSAGE_SWIPED 를 낸 뒤 생성을 시작해요. 그 0.4초 뒤에 보면 마지막 답에 날씨가 없어(아직 오는 중)
+// 생성하는 동안 날씨가 꺼지거나 옛 트래커 날씨로 바뀌었다가 답이 다 그려지면 돌아왔어요 — 생성 중이면 지금 날씨를 두고 끝난 뒤에 봐요
+function refreshTracker() {
+    trackerTimer = 0;
+    if (document.body?.dataset?.generating === 'true') { trackerTimer = setTimeout(refreshTracker, 400); return; }
+    refresh();
+}
+
 function scheduleTracker() {
     if (wanted.mode !== 'tracker') return;
     clearTimeout(trackerTimer);
-    trackerTimer = setTimeout(refresh, 400);
+    trackerTimer = setTimeout(refreshTracker, 400);
 }
 
 function listen() {
