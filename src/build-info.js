@@ -255,7 +255,7 @@ export const FILE_HASHES = {
   "src/addons/translator/glossary-sync.js": "4410:86799b24:8d1eafff",
   "src/addons/translator/hidden-blocks.js": "2621:d83d1f42:af480309",
   "src/addons/translator/index.html": "64119:f14ae06b:f08b7976",
-  "src/addons/translator/index.js": "595948:fc0f5de5:5a34a6cd",
+  "src/addons/translator/index.js": "595403:0d96dcb1:eb0ee325",
   "src/addons/translator/korean-keep.js": "3875:e48e9ac8:e1078d76",
   "src/addons/translator/leftover-fix.js": "22097:4dc56f41:2952c144",
   "src/addons/translator/menu-visibility.js": "1137:ae729d76:8ea71da6",

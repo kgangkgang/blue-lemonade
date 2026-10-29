@@ -3925,107 +3925,49 @@ async function onTranslationsClearClick() {
 }
 
 // 메세지 블록에 번역 버튼 생성
+// 8.2.7 단추 여섯 개를 메시지마다 jQuery 로 하나씩 짓고(요소 · 클래스 · 속성 · 숨김) 따로 여섯 번 붙이던 것을, 숨김 설정마다 한 번 만든 틀을 복제해 한 번에 붙여요.
+//       붙는 DOM 은 예전과 같아요 — 순서(뇌 · ⇄ · 돋보기 · 연필 · 렌치 · 휴지통 · 그 뒤에 원래 단추), 클래스 · title · data-i18n · tabindex="0", 숨긴 단추의 style="display: none;".
+//       긴 채팅을 열면 메시지 수만큼 돌던 일이라(폰 4배 300메시지 · 감시자 한 번) 실리태번 keyboard.js · a11y.js 감시자가 받는 변경 기록도 메시지마다 여섯 → 하나로 줄어요
+const TRANSLATE_BUTTONS = [
+    ['mes_legacy_translate fa-solid fa-brain', 'LLM 번역 (기존)', 'hide_legacy_translate_button'],
+    ['mes_llm_translate fa-solid fa-right-left', 'LLM 번역/전환', 'hide_new_translate_button'],
+    ['mes_toggle_original fa-solid fa-magnifying-glass', '원문/번역 전환', 'hide_toggle_button'],
+    ['mes_edit_translation fa-solid fa-pen-to-square', '번역문 수정', 'hide_edit_button'],
+    ['mes_paragraph_correction fa-solid fa-wrench', '문단 수 교정', 'hide_paragraph_button'],
+    ['mes_delete_translation fa-solid fa-trash', '번역문 삭제', 'hide_delete_button'],
+];
+let translateButtonsTemplate = null, translateButtonsKey = '';
+function translateButtonsFragment() {
+    const key = TRANSLATE_BUTTONS.map(([, , hide]) => (extensionSettings[hide] ? '1' : '0')).join('');
+    if (!translateButtonsTemplate || key !== translateButtonsKey) {
+        const fragment = document.createDocumentFragment();
+        for (const [classes, title, hide] of TRANSLATE_BUTTONS) {
+            const button = document.createElement('div');
+            button.className = `mes_button ${classes} interactable`;
+            button.setAttribute('title', title);
+            button.setAttribute('data-i18n', `[title]${title}`);
+            button.setAttribute('tabindex', '0');
+            if (extensionSettings[hide]) button.setAttribute('style', 'display: none;');   // jQuery .hide() 가 남기던 것과 같은 속성 글
+            fragment.append(button);
+        }
+        translateButtonsTemplate = fragment; translateButtonsKey = key;
+    }
+    return translateButtonsTemplate.cloneNode(true);
+}
+/** 메시지 요소(또는 그 jQuery)에 번역 단추를 붙인다 — 이미 있으면 그대로. 붙였으면 true */
 const createTranslateButtons = (mesBlock) => {
-    const messageId = mesBlock.attr('mesid');
-    const extraMesButtons = mesBlock.find('.extraMesButtons');
-
-    // 아이콘이 이미 추가되어 있는지 확인
-    if (mesBlock.find('.mes_llm_translate').length > 0) {
-        return;
-    }
-
-    // 1. 기존 번역 아이콘 (뇌) - 순수 번역 기능
-    const legacyTranslateButton = $('<div>')
-        .addClass('mes_button mes_legacy_translate fa-solid fa-brain interactable')
-        .attr({
-            'title': 'LLM 번역 (기존)',
-            'data-i18n': '[title]LLM 번역 (기존)',
-            'tabindex': '0'
-        });
-
-    // 2. 새로운 번역/전환 아이콘 (좌우 화살표) - 토글 기능
-    const newTranslateButton = $('<div>')
-        .addClass('mes_button mes_llm_translate fa-solid fa-right-left interactable')
-        .attr({
-            'title': 'LLM 번역/전환',
-            'data-i18n': '[title]LLM 번역/전환',
-            'tabindex': '0'
-        });
-
-    // 3. 번역 전환 아이콘 (돋보기)
-    const toggleButton = $('<div>')
-        .addClass('mes_button mes_toggle_original fa-solid fa-magnifying-glass interactable')
-        .attr({
-            'title': '원문/번역 전환',
-            'data-i18n': '[title]원문/번역 전환',
-            'tabindex': '0'
-        });
-
-    // 4. 편집 아이콘
-    const editButton = $('<div>')
-        .addClass('mes_button mes_edit_translation fa-solid fa-pen-to-square interactable')
-        .attr({
-            'title': '번역문 수정',
-            'data-i18n': '[title]번역문 수정',
-            'tabindex': '0'
-        });
-
-    // 5. 문단 수 교정 아이콘 (렌치)
-    const paragraphButton = $('<div>')
-        .addClass('mes_button mes_paragraph_correction fa-solid fa-wrench interactable')
-        .attr({
-            'title': '문단 수 교정',
-            'data-i18n': '[title]문단 수 교정',
-            'tabindex': '0'
-        });
-
-    // 6. 번역 삭제 아이콘 (쓰레기통)
-    const deleteButton = $('<div>')
-        .addClass('mes_button mes_delete_translation fa-solid fa-trash interactable')
-        .attr({
-            'title': '번역문 삭제',
-            'data-i18n': '[title]번역문 삭제',
-            'tabindex': '0'
-        });
-
-    // 설정에 따라 아이콘 표시/숨김
-    if (extensionSettings.hide_legacy_translate_button) {
-        legacyTranslateButton.hide();
-    }
-    if (extensionSettings.hide_new_translate_button) {
-        newTranslateButton.hide();
-    }
-    if (extensionSettings.hide_toggle_button) {
-        toggleButton.hide();
-    }
-    if (extensionSettings.hide_paragraph_button) {
-        paragraphButton.hide();
-    }
-    if (extensionSettings.hide_edit_button) {
-        editButton.hide();
-    }
-    if (extensionSettings.hide_delete_button) {
-        deleteButton.hide();
-    }
-
-    // 버튼들을 메시지에 추가
-    extraMesButtons.prepend(deleteButton);
-    extraMesButtons.prepend(paragraphButton);
-    extraMesButtons.prepend(editButton);
-    extraMesButtons.prepend(toggleButton);
-    extraMesButtons.prepend(newTranslateButton);
-    extraMesButtons.prepend(legacyTranslateButton);
+    const mes = mesBlock?.jquery ? mesBlock[0] : mesBlock;
+    if (!mes?.querySelector || mes.querySelector('.mes_llm_translate')) return false;
+    const messageId = mes.getAttribute('mesid');
+    const extraMesButtons = mes.querySelector('.extraMesButtons');
+    if (extraMesButtons) extraMesButtons.prepend(translateButtonsFragment());
     if (typeof checkView !== 'undefined') checkView.paintFromCache(messageId);   // 2.6.0 번역 단추의 메시지 상태 (이미 점검한 것만)
+    return !!extraMesButtons;
 };
 
 // 기존 메시지에 아이콘 추가
 function addButtonsToExistingMessages() {
-    $('#chat .mes').each(function () {
-        const $this = $(this);
-        if (!$this.find('.mes_llm_translate').length) {
-            createTranslateButtons($this);
-        }
-    });
+    for (const mes of document.querySelectorAll('#chat .mes')) createTranslateButtons(mes);
 }
 
 // 번역문 수정
@@ -6333,19 +6275,13 @@ function initializeEventHandlers() {
 
     // 메세지에 자동 번역버튼 추가
     if (!window.llmTranslatorObserver) {
+        // 8.2.7 새 메시지에 붙인 단추는 틀이 이미 숨김 설정대로라 가시성을 다시 맞추지 않아요(예전엔 메시지마다 querySelectorAll 여섯 번 · jQuery 감싸기)
         window.llmTranslatorObserver = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.classList?.contains('mes')) {
-                        const $node = $(node);
-                        if (!$node.find('.mes_llm_translate').length) {
-                            createTranslateButtons($node);
-                            // 새로 생성된 버튼들의 가시성 업데이트
-                            updateButtonVisibility(node);
-                        }
-                    }
-                });
-            });
+            for (const mutation of mutations) {
+                for (const node of mutation.addedNodes) {
+                    if (node.classList?.contains('mes')) createTranslateButtons(node);
+                }
+            }
         });
 
         // [2.1.2] subtree 를 껐다 — 실리태번은 .mes 를 늘 #chat 의 직계 자식으로 넣는다
