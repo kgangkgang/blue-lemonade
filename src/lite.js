@@ -252,8 +252,11 @@ export function quickOpen(skipClass = '') {
     return false;
 }
 // 5.8.4: 서랍 · dialog 는 class · open 만 본다 (스타일 계산 없음). 옛 팝업은 상자가 있는지(getClientRects)라 스타일 · 배치를 센다 — 따로 뗐다
+// 8.2.7: 선택자 하나로 한 번만 훑어요 — 예전엔 살아 있는 .openDrawer 목록의 length(DOM 이 바뀐 뒤엔 문서 끝까지 다시 셈) · body 자식 dialog 를 먼저 보고,
+//   없으면 같은 것을 querySelector 로 또 훑어 닫혀 있을 때(거의 늘) 문서를 두 번 돌았어요. 리그(폰 4배 · 메시지 300 · DOM 이 바뀐 직후): 닫힘 19~25 → 11ms, 서랍 열림 8~10 → 1ms.
+//   결과는 같아요(.openDrawer 어디든 · dialog[open] 어디든 — quickOpen 이 보던 것은 그 일부).
 function uiOpenQuick() {
-    return quickOpen() || !!document.querySelector('.openDrawer, dialog[open]');
+    return !!document.querySelector('.openDrawer, dialog[open]');
 }
 function legacyOpen() {
     for (const el of document.querySelectorAll(LEGACY_POPUPS)) if (el.getClientRects().length) return true;

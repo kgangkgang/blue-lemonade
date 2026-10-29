@@ -584,7 +584,7 @@ export const FILE_HASHES = {
   "src/layout.js": "31175:84ca45a4:14dbd07d",
   "src/lazy-avatars.js": "7776:814db34c:91741946",
   "src/lazy-panel.gen.css": "34768:8aa24fbf:b31f1504",
-  "src/lite.js": "39721:f2a3eb53:dd95f990",
+  "src/lite.js": "40255:f4849b18:6b385f6c",
   "src/live-models.js": "44082:6a619507:07a28919",
   "src/longpress-help-data.js": "97079:ea2f1950:0bed21f3",
   "src/longpress-help.js": "13513:3f3a9cb9:1b2f3275",
