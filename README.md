@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.2.2/blue-lemonade-8.2.2.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.2.3/blue-lemonade-8.2.3.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -333,7 +333,14 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.2.2 · 최신 업데이트</summary>
+<summary>8.2.3 · 최신 업데이트</summary>
+
+- 프롬프트 토글 · 단추 · 스크롤이 몇 초씩 멈추던 것을 고쳤어요. 8.0.7의 작가 노트 「페르소나 위치」 기능이 실리태번의 생성 미리 돌리기(토글 · 답장 뒤 토큰 수 세기)마다 작가 노트 칸을 수만 번 읽히면서 그때마다 테마 설정을 다시 정리하고 있었어요. 이제 자리 판단을 기억해 두고 생성 시작 · 채팅 바뀜 · 설정 저장 · 프리셋 바뀜 때만 다시 재요. 폰처럼 느리게 맞춘 시험 환경(데우스 프리셋 · 채팅 300개)에서 토글 뒤 목록 다시 그리기가 약 20초에서 1초 안쪽으로 줄었어요(순정 실리태번은 0.3초). 테마 모드와 확장만 모드 모두 해당하며, 작가 노트 위치 기능 자체는 그대로예요.
+
+</details>
+
+<details>
+<summary>8.2.2 · 상태창 여백 · 반복 작업 줄이기</summary>
 
 - 데우스 상태창 본문에 좌우 여백을 두어 글자가 카드 테두리에 붙지 않도록 했어요.
 - 데우스 빠른 설정 아이콘의 기본 색을 입력줄의 다른 아이콘과 맞췄어요.
