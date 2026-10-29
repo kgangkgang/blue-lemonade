@@ -7,7 +7,7 @@ export const FILE_HASHES = {
   "src/addon-layout.js": "2768:fc762257:da2db162",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
   "src/addon-versions.js": "2737:ae6041ef:3cc0d3dc",
-  "src/addons.js": "34748:c50d3f0a:4f926ad2",
+  "src/addons.js": "35586:161d7742:1ba96977",
   "src/addons/assets/after-reply.js": "22323:d7bc9b76:a021aa3b",
   "src/addons/assets/assets.js": "11458:8d5c2ea1:1c0d7e2e",
   "src/addons/assets/from-pictures.js": "13210:dcb36ae3:fd4aa5c3",

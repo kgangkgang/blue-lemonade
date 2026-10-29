@@ -41,6 +41,8 @@ async function whenAppReady(task){
     setTimeout(task,0);
 }
 const DUPLICATE_RUNNING='같은 확장이 이미 켜져 있어요. 단독 확장을 끄고 새로고침해 주세요.';
+// 모듈이 가져오려는 이름이 없을 때의 브라우저 오류(크롬 · 엣지 / 파이어폭스 / 사파리) → 그 이름
+export function missingExportName(error){const m=error instanceof SyntaxError&&/export named:? '?([\w$]+)|import not found: ([\w$]+)|binding name '([\w$]+)' is not found/.exec(String(error.message||''));return m?(m[1]||m[2]||m[3]):null;}
 async function startOne(id){
     try{
         let module=null;
@@ -87,7 +89,9 @@ async function startOne(id){
         if(id==='translator')try{module.syncVisibility();}catch(error){console.warn('[Blue Lemonade]',error);}
         running.add(id);
     }catch(error){
-        const message=id==='perf'?`시작하지 못했어요. ${perfErrorText(error)}. 새로고침 후에도 같으면 이 오류 코드를 알려 주세요.`:'시작하지 못했어요. 새로고침 후 다시 확인해 주세요.';
+        // 실리태번 판 호환: 그 판에 없는 이름을 가져오다 실패했으면(ESM 연결 오류) 새로고침으로는 안 풀린다 — 이름과 함께 판 · 설치를 안내
+        const missing=id==='perf'?null:missingExportName(error);
+        const message=id==='perf'?`시작하지 못했어요. ${perfErrorText(error)}. 새로고침 후에도 같으면 이 오류 코드를 알려 주세요.`:missing?`이 실리태번 판과 맞지 않는 이름(${missing})이 있어 시작하지 못했어요. 실리태번을 최신 판으로 올리고, 그래도 같으면 테마를 다시 설치해 주세요.`:'시작하지 못했어요. 새로고침 후 다시 확인해 주세요.';
         failed.set(id,message);console.error('[Blue Lemonade]',id==='perf'?message:error);
     }
     finally{loading.delete(id);changed();}

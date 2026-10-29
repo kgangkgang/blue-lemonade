@@ -69,6 +69,7 @@ jobs:
           node tools/tests/prompt-toggle-echo.mjs .
           node tools/tests/st-compat-boot.mjs .
           node tools/tests/st-compat-ready.mjs .
+          node tools/tests/st-compat-addon-message.mjs .
           node tools/tests/history-warning.mjs .
           node tools/tests/has-invalidation-scope.mjs .
           node tools/tests/perf-prompt-render-batch.mjs .
