@@ -192,33 +192,36 @@ window.Salty = { ensureDrawerPanel: () => document.getElementById('salty-drawer'
 window.addEventListener('bl:addons-state', () => refreshPanels());
 
 jQuery(() => {
-    installCredits();
+    // 실리태번 판 호환: 시작 함수 하나가 던져도(실리태번이 이름 · DOM 을 바꾼 판) 서랍 · 메뉴 · 나머지 기능 · 아래 감시와 안내는 그대로 시작한다.
+    //   예전에는 하나가 던지면 그 뒤가 전부 안 붙었다(테마 런타임은 started 표시가 이미 서 있어 다시 시도도 안 했다).
+    const startSafe = (name, start) => { try { return start(); } catch (error) { console.error(`[Blue Lemonade] 시작하지 못했어요(${name})`, error); } };
+    startSafe('installCredits', () => { installCredits(); });
     // 7.4.0 저장 공간 보고 다리에 등록 (다리를 만드는 확장이 늦게 떠도 대기 줄로) — 시작이 끝난 뒤
     setTimeout(() => { import('./src/storage-report.js').then(m => m.registerStorageReport()).catch(error => console.warn('[Blue Lemonade] 저장 공간 보고', error)); }, 4000);
-    widenSelectorCache(); // 실리태번의 위임 핸들러 선택자를 jQuery 가 매번 다시 컴파일하지 않게 (2.9.4, lite.js)
-    deferPreviewRules(); // 설정창 미리보기 전용 규칙은 설정창을 열 때까지 시트에서 빼 둠 (lite.js)
-    deferPanelHasRules(); // 서랍 · 팝업 전용 :has() 규칙은 서랍 · 팝업이 열려 있을 때만 (lite.js, 2.8.4)
-    startMenuOpenMark(); // ··· 메뉴가 열린 메시지에 bl-menu-open (style.css 의 :has() 대신, lite.js)
-    startAnchorGate();   // ≡ · ✦ 메뉴가 열려 있을 때만 입력판에 앵커 이름 (2.9.4, lite.js)
-    mountDrawer();
+    startSafe('widenSelectorCache', () => { widenSelectorCache(); }); // 실리태번의 위임 핸들러 선택자를 jQuery 가 매번 다시 컴파일하지 않게 (2.9.4, lite.js)
+    startSafe('deferPreviewRules', () => { deferPreviewRules(); }); // 설정창 미리보기 전용 규칙은 설정창을 열 때까지 시트에서 빼 둠 (lite.js)
+    startSafe('deferPanelHasRules', () => { deferPanelHasRules(); }); // 서랍 · 팝업 전용 :has() 규칙은 서랍 · 팝업이 열려 있을 때만 (lite.js, 2.8.4)
+    startSafe('startMenuOpenMark', () => { startMenuOpenMark(); }); // ··· 메뉴가 열린 메시지에 bl-menu-open (style.css 의 :has() 대신, lite.js)
+    startSafe('startAnchorGate', () => { startAnchorGate(); });   // ≡ · ✦ 메뉴가 열려 있을 때만 입력판에 앵커 이름 (2.9.4, lite.js)
+    startSafe('mountDrawer', () => { mountDrawer(); });
     // 8.0.7 작가 노트 「페르소나 위치」 · 「캐릭터 설명 위치」 — 테마 화면 켜짐과 따로(확장만 모드에서도), 테마를 끄면 본체 위치로 (an-anchor.js)
     import('./src/an-anchor.js').then(m => m.startNoteAnchor()).catch(error => console.warn('[Blue Lemonade] 작가 노트 자리 맞추기', error));
     // 확장 서랍 · ✦ 메뉴를 여는 순간 설정 창 코드를 미리 받아 둔다 (테마 줄을 누를 때 기다리지 않게)
     for (const id of ['extensions-settings-button', 'extensionsMenuButton']) document.getElementById(id)?.addEventListener('pointerdown', () => { loadPanel().catch(() => {}); }, { capture: true, passive: true });
-    syncAddonIcons();
-    addMenuItem();
+    startSafe('syncAddonIcons', () => { syncAddonIcons(); });
+    startSafe('addMenuItem', () => { addMenuItem(); });
     // 7.2.1 확장만 · 테마 끔: 실리태번 판이 반투명 + 흐림 꺼짐이면 서랍 글자가 채팅 위에 겹친다 — 그때만 같은 색을 불투명하게 (st-solid.js, 테마가 켜지면 스스로 뗀다)
     import('./src/st-solid.js').then(m => m.startStSolid()).catch(error => console.warn('[Blue Lemonade] 실리태번 판 불투명', error));
     let themeRuntimeStarted = false;
     const startThemeRuntime = () => {
         if (themeRuntimeStarted || !themeEnabled(getSettings())) return;
         themeRuntimeStarted = true;
-    startAssetWatcher();
-    startPromptList(); // 검사 창 프롬프트 목록 줄을 세 조각으로 쪼갬 (CSS 로는 순서를 못 바꿈)
-    startCurrentMark();
-    startDangerMark();
-    startPopupGuard(); // 7.7.9 안내 창 「닫기」 하나 보장 + 실리태번 판 로그
-    installWheelX();   // 8.2.3 가로로만 넘치는 칸은 Shift 없이 휠로 (wheel-x.js — 탭 줄 · 퀵 리플라이 줄이 먼저 처리한 이벤트는 건너뜀)
+    startSafe('startAssetWatcher', () => { startAssetWatcher(); });
+    startSafe('startPromptList', () => { startPromptList(); }); // 검사 창 프롬프트 목록 줄을 세 조각으로 쪼갬 (CSS 로는 순서를 못 바꿈)
+    startSafe('startCurrentMark', () => { startCurrentMark(); });
+    startSafe('startDangerMark', () => { startDangerMark(); });
+    startSafe('startPopupGuard', () => { startPopupGuard(); }); // 7.7.9 안내 창 「닫기」 하나 보장 + 실리태번 판 로그
+    startSafe('installWheelX', () => { installWheelX(); });   // 8.2.3 가로로만 넘치는 칸은 Shift 없이 휠로 (wheel-x.js — 탭 줄 · 퀵 리플라이 줄이 먼저 처리한 이벤트는 건너뜀)
     // 8.2.3 세로 스크롤 칸의 넘친 쪽 흐림 (scroll-fade.js) — 새 팝업은 popup-guard 의 body 자식 감시자에 얹고, 바이바이가 켜져 있으면 월드인포 목록은 쉼
     baibaiPresence().then(presence => {
         const fade = installScrollFade(document, { resting: feature => feature === 'worldInfo' && presence.baibai() });
@@ -226,36 +229,38 @@ jQuery(() => {
         onPopupAdded(dialog => { fade.scan(dialog); setTimeout(() => { if (dialog.isConnected) fade.scan(dialog); }, 600); });
         presence.onChange(() => fade.refreshResting());
     }).catch(error => console.warn('[Blue Lemonade] 스크롤 흐림', error));
-    startNumberWidth(); // 7.7.9 애드온 창 · 팝업 숫자칸 유동 폭(--bl-num-ch)
-    startGroupGrid(); // 7.7.9 단추 묶음 · 짧은 체크 묶음 2열 격자, 안 들어가면 그 묶음만 1열
-    startIconTextMark(); // 아이콘 + 맨 글자 .menu_button 은 아이콘 버튼 규칙에서 뺀다 (CSS 는 글자 노드를 못 봄)
-    startCompactLayout();
-    startNameMarquee(); // 헬퍼 스크립트 이름: 눌러서 긴 이름 끝까지 보기
-    startGutterWatch(); // 스크롤하는 칸에만 양쪽 스크롤바 홈 (PC)
-    startDraftKeep(); // 입력칸에 쓰다 만 글은 새로고침해도 남는다 (채팅마다 따로)
+    startSafe('startNumberWidth', () => { startNumberWidth(); }); // 7.7.9 애드온 창 · 팝업 숫자칸 유동 폭(--bl-num-ch)
+    startSafe('startGroupGrid', () => { startGroupGrid(); }); // 7.7.9 단추 묶음 · 짧은 체크 묶음 2열 격자, 안 들어가면 그 묶음만 1열
+    startSafe('startIconTextMark', () => { startIconTextMark(); }); // 아이콘 + 맨 글자 .menu_button 은 아이콘 버튼 규칙에서 뺀다 (CSS 는 글자 노드를 못 봄)
+    startSafe('startCompactLayout', () => { startCompactLayout(); });
+    startSafe('startNameMarquee', () => { startNameMarquee(); }); // 헬퍼 스크립트 이름: 눌러서 긴 이름 끝까지 보기
+    startSafe('startGutterWatch', () => { startGutterWatch(); }); // 스크롤하는 칸에만 양쪽 스크롤바 홈 (PC)
+    startSafe('startDraftKeep', () => { startDraftKeep(); }); // 입력칸에 쓰다 만 글은 새로고침해도 남는다 (채팅마다 따로)
     // 당겨 새로고침은 홈 화면에 깐 터치 앱에서만 — 그 밖(PC · 브라우저 탭)에서는 파일도 받지 않는다 (device-layouts.js installedTouchMode)
-    if (installedTouchMode(window)) import('./src/pull-to-refresh.js').then(m => m.startPullToRefresh({ isEnabled: () => themeEnabled(getSettings()) && document.body.classList.contains('salty') })).catch(error => console.warn('[Blue Lemonade] 당겨 새로고침 준비를 못 했어요', error));
-    startNaturalSlash({ isEnabled: () => themeEnabled(getSettings()) });
-    startWorldInfoHelp(); // 6.1.5 월드인포 설정 · 항목 칸 옆 ? 도움말 (테마가 꺼져 있으면 CSS 로 숨김)
-    startLongpressHelp({ isEnabled: () => { const s = getSettings(); return s.longpressHelp !== false && themeEnabled(s); } }); // 8.1.2 단추 길게 누르면 설명 — 위임 리스너 한 벌, 사전은 처음 길게 누를 때만 (longpress-help.js)
-    startWebSearchMarks(); // 6.2.6 웹 검색을 쓴 답에 지구 표시 · 낱말 꾹 눌러 출처 (websearch.js — 흔적은 성능 보조 요청 로그가 알린다)
+    startSafe('startPullToRefresh', () => { if (installedTouchMode(window)) import('./src/pull-to-refresh.js').then(m => m.startPullToRefresh({ isEnabled: () => themeEnabled(getSettings()) && document.body.classList.contains('salty') })).catch(error => console.warn('[Blue Lemonade] 당겨 새로고침 준비를 못 했어요', error)); });
+    startSafe('startNaturalSlash', () => { startNaturalSlash({ isEnabled: () => themeEnabled(getSettings()) }); });
+    startSafe('startWorldInfoHelp', () => { startWorldInfoHelp(); }); // 6.1.5 월드인포 설정 · 항목 칸 옆 ? 도움말 (테마가 꺼져 있으면 CSS 로 숨김)
+    startSafe('startLongpressHelp', () => { startLongpressHelp({ isEnabled: () => { const s = getSettings(); return s.longpressHelp !== false && themeEnabled(s); } }); }); // 8.1.2 단추 길게 누르면 설명 — 위임 리스너 한 벌, 사전은 처음 길게 누를 때만 (longpress-help.js)
+    startSafe('startWebSearchMarks', () => { startWebSearchMarks(); }); // 6.2.6 웹 검색을 쓴 답에 지구 표시 · 낱말 꾹 눌러 출처 (websearch.js — 흔적은 성능 보조 요청 로그가 알린다)
     startWorldInfoLinkMark().catch(error => console.warn('[Blue Lemonade] 로어북 연결 점검', error)); // 캐릭터 로어북 연결이 빠지면 책 아이콘에 빨간 점
-    startCardInk(); // 메시지 안 HTML 카드가 제 배경만 칠했을 때 글자색을 읽히게
-    startSwipePickerTranslation(); // 6.9.7 스와이프 고르기 창 미리보기에 그 스와이프의 번역문 (창을 여는 단추를 누를 때만 잠깐 찾음)
-    startSelectPop();   // select 를 테마가 그린 목록 팝업으로 (2.5.0)
-    startAddonTouchSliders();   // 8.2.7 폰: 애드온 · 도구 창 슬라이더 위에서 시작한 세로 스크롤이 값을 바꾸지 않게 (touch-sliders.js)
-    startColorPop();    // 색 칸을 테마 색 고르기로 (3.5.0)
-    startChatGraph();   // 채팅 파일 관리: 목록 / 분기 지도
-    startInlineTone();  // 본문 글자색의 채도 · 밝기 맞춤 (2.6.0)
-    startStreamFade();  // 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5)
-    startStreamFollow(); // 새 글 뒤에 늦게 온 scroll 이벤트가 자동 스크롤을 잠그지 않게
-    startReadingResume({isEnabled:()=>themeEnabled(getSettings())});
+    startSafe('startCardInk', () => { startCardInk(); }); // 메시지 안 HTML 카드가 제 배경만 칠했을 때 글자색을 읽히게
+    startSafe('startSwipePickerTranslation', () => { startSwipePickerTranslation(); }); // 6.9.7 스와이프 고르기 창 미리보기에 그 스와이프의 번역문 (창을 여는 단추를 누를 때만 잠깐 찾음)
+    startSafe('startSelectPop', () => { startSelectPop(); });   // select 를 테마가 그린 목록 팝업으로 (2.5.0)
+    startSafe('startAddonTouchSliders', () => { startAddonTouchSliders(); });   // 8.2.7 폰: 애드온 · 도구 창 슬라이더 위에서 시작한 세로 스크롤이 값을 바꾸지 않게 (touch-sliders.js)
+    startSafe('startColorPop', () => { startColorPop(); });    // 색 칸을 테마 색 고르기로 (3.5.0)
+    startSafe('startChatGraph', () => { startChatGraph(); });   // 채팅 파일 관리: 목록 / 분기 지도
+    startSafe('startInlineTone', () => { startInlineTone(); });  // 본문 글자색의 채도 · 밝기 맞춤 (2.6.0)
+    startSafe('startStreamFade', () => { startStreamFade(); });  // 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5)
+    startSafe('startStreamFollow', () => { startStreamFollow(); }); // 새 글 뒤에 늦게 온 scroll 이벤트가 자동 스크롤을 잠그지 않게
+    startSafe('startReadingResume', () => { startReadingResume({isEnabled:()=>themeEnabled(getSettings())}); });
     $(document).on('change', 'input[data-toggle="chat.toneInline"], input[data-toggle="chat.unifyInline"]', () => setTimeout(retoneAll, 50));
 
-    const { eventSource, event_types } = SillyTavern.getContext();
-    eventSource.on(event_types.CHAT_CHANGED, () => setTimeout(classifyAll, 300));
+    startSafe('classifyOnChatChanged', () => {
+        const { eventSource, eventTypes, event_types = eventTypes } = SillyTavern.getContext();   // event_types 는 실리태번이 옛 이름으로 표시해 둔 것 — 빠진 판이면 새 이름으로
+        eventSource.on(event_types.CHAT_CHANGED, () => setTimeout(classifyAll, 300));
+    });
 
-        classifyAll();
+        startSafe('classifyAll', () => { classifyAll(); });
     };
     startThemeRuntime();
     // 7.2.4 테마가 빠진 모드에서 바깥 확장이 body.salty 를 붙이면 바로 뗀다 — 테마 변수 없이 테마 규칙만 걸려 채팅 · 서랍 배경이 사라졌다 (quiet-notes 일코 OFF 제보, usage-mode.js forcedThemeGuard)
@@ -307,7 +312,7 @@ jQuery(() => {
 });
 
 // 5.8.0 본채팅 요청의 Claude 5 세대 규칙 (본체가 claude-haiku-5-5 를 Claude 5 로 모르는 동안) — 테마 화면 켜짐과 상관없이
-startMainChatRules();
+try { startMainChatRules(); } catch (error) { console.error('[Blue Lemonade] 본채팅 규칙 시작', error); }   // 던져도 아래 애드온 시작은 그대로
 
 // Host modules finish evaluating after extensions load; do not hold that cycle open.
 startAddons().catch(error => console.error('[Blue Lemonade] 확장 기능 시작', error));
