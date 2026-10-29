@@ -306,6 +306,12 @@ export function openPickFor(sel, anchor) {
     return tryOpen(sel, anchor);
 }
 
+// 8.2.7: 누르는 사이 select 밖의 모달 창이 떴으면(폰에서 select 를 길게 누르면 뜨는 단추 설명 창 · longpress-help.js) 손을 떼도 열지 않는다 —
+// 열면 목록이 설명 창 뒤에 눌리지 않는 채로 떠 있다가, 설명 창을 닫으면 고르지도 않은 목록이 남았다
+function behindModal(el) {
+    try { const modal = document.querySelector('dialog:modal'); return !!modal && !modal.contains(el); } catch { return false; }
+}
+
 export function startSelectPop() {
     // 마우스: pointerdown 을 막으면 뒤따르는 mousedown(= 목록이 열리는 순간)도 막힌다. 손가락은 스크롤을 살리려 touchend 에서
     document.addEventListener('pointerdown', (e) => {
@@ -323,7 +329,7 @@ export function startSelectPop() {
         const t = e.changedTouches[0];
         const moved = Math.hypot(t.clientX - touchStart.x, t.clientY - touchStart.y) > 10;
         touchStart = null;
-        if (moved) return;
+        if (moved || behindModal(e.target)) return;
         // 열렸을 때만 뒤따르는 click(폰에서 OS 목록이 열리는 순간)을 막는다 — 못 열면 OS 목록이 대신 뜨게
         if (tryOpen(e.target)) e.preventDefault();
     }, { capture: true, passive: false });
