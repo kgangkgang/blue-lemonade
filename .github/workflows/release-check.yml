@@ -384,6 +384,7 @@ jobs:
           node tools/tests/notes-sticky-keyboard.mjs .
           node tools/tests/qrfind-keyboard.mjs .
           node tools/tests/ime-enter-guards.mjs .
+          node tools/tests/squared-reader-bars.mjs .
           node tools/tests/weather-amount.mjs .
           node tools/tests/weather-coverage.mjs .
           node tools/tests/weather-retired.mjs .

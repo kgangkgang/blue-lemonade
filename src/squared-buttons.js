@@ -105,7 +105,9 @@ export function paddingOnly(record) {
 // (10-29 perf-persona) 테마 자신의 성능 표식(#chat 의 bl-chat-light · bl-chat-covered)만 바뀐 class 기록은 단추의 모양 · 보임을 바꾸지 않는다.
 //   예전에는 그 기록도 #chat 을 뿌리로 넣어 메시지 300개의 후보(.mes_button 등 수천 개)를 offsetParent 로 다시 쟀다 — 서랍 덮개(chat-light.js)가
 //   #chat 을 content-visibility:hidden 으로 둔 동안에는 그 읽기가 하나하나 건너뛴 내용을 그 자리에서 계산하게 해, 폰 리그에서 서랍 열기가 0.25 → 3.5초(재계산 284번)가 됐다.
-const PERF_MARKS = new Set(['bl-chat-light', 'bl-chat-covered']);
+// 8.2.7 폰: 몰입 읽기(reader.js)는 채팅을 내리고 올릴 때마다 body 에 bl-bars-hidden 을 붙였다 뗀다 — 위 바 · 입력판을 top · transform 으로 밀기만 해서
+//   (css/29-reader-onehand.css) 단추 보임 · 크기 · 모서리는 같다. 예전에는 그때마다 body 를 뿌리로 문서 전체를 다시 쟀다(스크롤 중 0.3초대 끊김)
+const PERF_MARKS = new Set(['bl-chat-light', 'bl-chat-covered', 'bl-bars-hidden']);
 export function perfMarkOnly(record) {
     if (record.type !== 'attributes' || record.attributeName !== 'class' || typeof record.target?.getAttribute !== 'function') return false;
     const words = v => new Set(String(v || '').split(/\s+/).filter(Boolean));
