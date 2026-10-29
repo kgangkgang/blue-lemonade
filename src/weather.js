@@ -286,7 +286,9 @@ function deusWeather(scope) {
     const last = values[values.length - 1];
     if (!last) return null;
     // V3 날씨 칸은 그림 글자와 날씨 글이 붙어 있어(🌧️비) 낱말로 못 읽었다 — 칸마다 띄어 읽는다
-    const text = last.matches('.custom-dem-track__sky') ? [...last.childNodes].map(node => node.textContent.trim()).filter(Boolean).join(' ') : last.textContent;
+    // 10-29 상태창 한글 표시 정규식은 날씨 낱말을 빈 칸(<span class="bl-sko" data-en="Light rain">)으로 바꾸고 CSS 가 한글을 그려요 — 그 칸은 data-en 을 읽어요
+    const part = node => (node.nodeType === 1 && node.classList?.contains('custom-bl-sko') ? node.getAttribute('data-en') || '' : node.textContent).trim();
+    const text = last.matches('.custom-dem-track__sky') ? [...last.childNodes].map(part).filter(Boolean).join(' ') : last.textContent;
     return detectWeatherAll(last.matches(RECOVERY_VALUE) ? recoveryWeatherText(text) : text);
 }
 function trackerWeather() {
