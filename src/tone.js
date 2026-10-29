@@ -5,7 +5,7 @@
 // 실제 색은 style.css 가 hsl(var(--bl-hue) var(--bl-tone-s) var(--bl-tone-l)) 로 그린다 — 채도 · 밝기는 라이트/나이트마다
 // CSS 값이라 팔레트를 바꿔도 다시 잴 필요가 없다. 회색끼(채도 낮음)는 색상이 뜻이 없으니 테마 글자색으로 (--bl-hue 없음 · bl-tone-grey).
 // 켜짐 여부는 body.salty-tone (apply.js) — 꺼져 있으면 아무것도 안 잰다. 본문 색 지정(unifyInline)이 켜져 있으면 그쪽이 이긴다.
-import { getSettings } from './settings.js';
+import { readSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
 
 const SEL = '.mes_text font[color], .mes_text [style*="color"]';
@@ -14,7 +14,7 @@ let probe = null;  // 이름 색(darkred 같은 것) · 온갖 표기를 브라�
 let timer = null;
 
 function enabled() {
-    const s = getSettings();
+    const s = readSettings();   // 8.2.6 채팅 감시 콜백(스트리밍 글자마다)에서 도는 읽기 — 설정 사건까지 정리 결과를 그대로
     return themeEnabled(s) && s.chat?.toneInline && !s.chat?.unifyInline; // 5.5.6: 확장만 모드에서도 재지 않게 (s.enabled 만 보면 켜진 것으로 친다)
 }
 

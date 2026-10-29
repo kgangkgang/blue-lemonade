@@ -1,4 +1,4 @@
-import {getSettings,saveSettings} from '../settings.js';
+import {getSettings,readSettings,saveSettings} from '../settings.js';
 import {entryDisplay,entryIcon,chooseFruitIcon} from './fruit-entry-icons.js';
 export const entryMode=value=>['wand','qr','cat'].includes(value)?value:'wand';
 const fruitButtonName=value=>String(value||'').replace(/\s+/g,'')==='🍎果实之心';
@@ -47,7 +47,7 @@ body[data-bl-fruit-entry] #send_form :is(#qr--bar,#nonQRFormItems)>[data-bl-frui
     // QR 줄 계산 스타일을 읽었다 (폰 흉내 CPU 6배, 채팅 전환 10번에 1.3초). 서명이 못 보는 변화에 대비해 10번에 한 번은 그냥 다시 본다.
     // 과일 창(<html> 아래라 body 감시 밖)이 열려 있는 동안은 예전처럼 매번 — 창 안의 입구 고르기 · 줄 숨기기가 늦지 않게.
     const ids=new WeakMap();let nextId=1,ticks=0,lastSig='';const idOf=o=>{if(!o)return 0;let i=ids.get(o);if(!i)ids.set(o,i=nextId++);return i;};
-    const signature=()=>{const el=id=>doc.getElementById(id),qr=el('qr--bar'),s=getSettings();return [...['fruit-heart-v6','fruit-heart-v6-wand-entry','fruit-heart-v6-dock','qr--bar','quickReplies','nonQRFormItems','extensionsMenu','send_form','loader'].map(id=>idOf(el(id))),qr?.childElementCount,qr?.className,qr?.getAttribute('style'),el('nonQRFormItems')?.childElementCount,el('extensionsMenu')?.childElementCount,doc.body.childElementCount,doc.body.className,doc.documentElement.className,idOf(proxy?.parentElement),idOf(proxy?.nextElementSibling),!!chooser?.isConnected,s.fruitEntryMode,s.fruitEntryDisplay,s.fruitEntryIcon,host.SillyTavern?.getContext?.()?.extensionSettings?.blue_lemonade_scripts?.names?.fruit,typeof host.__FRUIT_HEART_MAIN__?.open].join('|');};
+    const signature=()=>{const el=id=>doc.getElementById(id),qr=el('qr--bar'),s=readSettings();return [...['fruit-heart-v6','fruit-heart-v6-wand-entry','fruit-heart-v6-dock','qr--bar','quickReplies','nonQRFormItems','extensionsMenu','send_form','loader'].map(id=>idOf(el(id))),qr?.childElementCount,qr?.className,qr?.getAttribute('style'),el('nonQRFormItems')?.childElementCount,el('extensionsMenu')?.childElementCount,doc.body.childElementCount,doc.body.className,doc.documentElement.className,idOf(proxy?.parentElement),idOf(proxy?.nextElementSibling),!!chooser?.isConnected,s.fruitEntryMode,s.fruitEntryDisplay,s.fruitEntryIcon,host.SillyTavern?.getContext?.()?.extensionSettings?.blue_lemonade_scripts?.names?.fruit,typeof host.__FRUIT_HEART_MAIN__?.open].join('|');};
     function open(){
         const api=host.__FRUIT_HEART_MAIN__;
         if(typeof api?.open==='function')api.open();else doc.getElementById('fruit-heart-v6-wand-entry')?.click();

@@ -1,7 +1,7 @@
 // A scroll event can arrive after the next streamed paragraph has grown. The host then
 // mistakes the new bottom gap for an upward gesture and locks automatic scrolling.
 // Repair only this race, before the host's scroll listener sees the delayed event.
-import { getSettings } from './settings.js';
+import { readSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
 
 let started = false;
@@ -79,7 +79,7 @@ export function startStreamFollow() {
         const gap = height - viewport - top;
         if (streaming && pinned && gap >= 5 && height > lastHeight && viewport === lastViewport
             && top >= lastTop - 1 && !held && performance.now() >= userUntil
-            && generationChat === key() && themeEnabled(getSettings())) {
+            && generationChat === key() && themeEnabled(readSettings())) {   // 8.2.6 scroll 마다 도는 읽기
             const power = SillyTavern.getContext().powerUserSettings;
             if (power?.auto_scroll_chat_to_bottom && !power.waifuMode) chat.scrollTop = height;
         }

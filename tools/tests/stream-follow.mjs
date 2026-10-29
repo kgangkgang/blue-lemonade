@@ -23,7 +23,7 @@ function fixture({async=null,start=true}={}) {
         eventSource:{on(n,fn){bus.set(n,fn);}}};
     const frames=[], idles=[], timeouts=[], idleOptions=[];
     const globals={document:{...target('document'),getElementById:()=>chat},window:target('window'),
-        SillyTavern:{getContext:()=>context},getSettings:()=>settings,themeEnabled:s=>s.enabled!==false&&s.usageMode!=='extensions',performance:{now:()=>now}};
+        SillyTavern:{getContext:()=>context},getSettings:()=>settings,readSettings:()=>settings,themeEnabled:s=>s.enabled!==false&&s.usageMode!=='extensions',performance:{now:()=>now}};
     if(async==='frame')Object.assign(globals,{requestAnimationFrame:fn=>frames.push(fn),requestIdleCallback:(fn,options)=>{idleOptions.push(options);return idles.push(fn);}});
     if(async==='timeout')Object.assign(globals,{requestAnimationFrame:fn=>frames.push(fn),setTimeout:(fn,ms)=>{idleOptions.push(ms);return timeouts.push(fn);}});
     vm.runInNewContext(source+'\nstartStreamFollow();',globals);

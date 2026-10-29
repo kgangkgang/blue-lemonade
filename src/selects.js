@@ -8,7 +8,7 @@
 // 빼는 것: multiple · size>1(목록형) · select2 가 대신 그리는 것(.select2-hidden-accessible) · 테마 설정창 안(직접 그린 세그먼트뿐)
 // · 비활성 · 항목 0개. 실리태번 팝업(dialog) 안의 select 는 목록을 그 dialog 안에 꽂는다 — 최상위 층(top layer)
 // 밖의 요소는 inert 라 body 에 두면 눌리지 않는다.
-import { getSettings } from './settings.js';
+import { getSettings, readSettings } from './settings.js';
 
 const SEARCH_FROM = 12; // 항목이 이보다 많으면 찾기칸
 let layer = null;       // 열린 팝업 (한 번에 하나)
@@ -26,7 +26,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 function eligible(el) {
     if (!(el instanceof HTMLSelectElement)) return false;
     if (!document.body.classList.contains('salty')) return false;
-    if (getSettings().chat?.selectPop === false) return false;
+    if (readSettings().chat?.selectPop === false) return false;   // 8.2.6 키 · 누름마다 도는 읽기
     if (el.multiple || el.size > 1 || el.disabled) return false;
     if (el.classList.contains('select2-hidden-accessible')) return false;
     if (el.closest('.salty-panel, .salty-pick-layer')) return false;

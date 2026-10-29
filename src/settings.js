@@ -1,5 +1,5 @@
 import { tidyRoleIcons, tidyPickedIcons } from './role-icons-core.js';
-import { syncDeviceLayout, saveDeviceLayout } from './device-layouts.js';
+import { syncDeviceLayout, saveDeviceLayout, DEVICE_QUERY } from './device-layouts.js';
 import { tidyFruitType } from './fruit-type-schema.js';
 import { entryDisplay, entryIcon } from './scripts/fruit-entry-icons.js';
 import { MASK_STYLES, normalizeMaskStyle, FILTER_RANGES, FILTER_PRESET_IDS, FILTER_PRESETS } from './capture-style.js';
@@ -596,11 +596,39 @@ function tidyFontSlot(fonts, slot) {
 // 저장 칸의 객체가 통째로 바뀌면(초기화 · 가져오기) 같은 객체가 아니라 그냥 지나가고, 제자리에서 고친 값은 같은 객체라 그대로 보인다.
 // 값을 고친 뒤 같은 마이크로태스크 안에서 정리(범위 · 형식)를 다시 받고 싶으면 invalidateSettings()
 let memo = null;
-export function invalidateSettings() { memo = null; }
+export function invalidateSettings() { memo = null; held = null; }
+export const settingsStats = { tidy: 0 };   // 정리를 몇 번 했나 (시험 · 진단용)
+
+// 8.2.6 성능: 읽기만 하는 뜨거운 자리(1.5초 타이머 · 채팅 감시 콜백 · 키마다)는 readSettings — 마이크로태스크가 지나도 「설정 사건」까지 정리 결과를 그대로 써요.
+//   설정 사건 = saveSettings · invalidateSettings · resetSettings · 저장 칸 객체가 통째로 바뀜(가져오기) · 실리태번 SETTINGS_UPDATED · SETTINGS_LOADED ·
+//   기기 모양(폰 ↔ PC, 기기별 배치) 바뀜, 그리고 안전망으로 HOLD_MS. 돌려주는 것은 getSettings 와 같은 객체(저장 칸 그 자체)라 제자리에서 고친 값은 바로 보이고,
+//   늦어지는 것은 정리(범위 · 형식 맞추기)뿐이에요. 값을 고치는 곳 · 고친 뒤 정리된 값을 바로 받아야 하는 곳은 그대로 getSettings.
+//   (getSettings 의 정리 한 번은 폰 4배에서 약 1ms — 1.5초마다 · 스트리밍 글자마다 · 키마다 도는 자리에서 그만큼씩 쌓였어요. 전수조사 4절 3)
+const HOLD_MS = 3000;
+let held = null, heldAt = 0, heldBound = false;
+const dropHeld = () => { held = null; };
+function bindHeld() {
+    if (heldBound) return;
+    heldBound = true;
+    try {
+        const { eventSource, event_types: t } = SillyTavern.getContext();
+        for (const name of ['SETTINGS_UPDATED', 'SETTINGS_LOADED', 'SETTINGS_LOADED_AFTER']) if (t?.[name]) eventSource?.on?.(t[name], dropHeld);
+    } catch { /* 이벤트가 없으면 HOLD_MS 안전망만 */ }
+    try { globalThis.matchMedia?.(DEVICE_QUERY)?.addEventListener?.('change', dropHeld); } catch { /* 옛 브라우저 */ }
+}
+export function readSettings() {
+    const ext = SillyTavern.getContext().extensionSettings;
+    const now = performance.now();
+    if (held && ext[KEY] === held && now - heldAt < HOLD_MS) return held;
+    const s = getSettings();
+    held = s; heldAt = now; bindHeld();
+    return s;
+}
 
 export function getSettings() {
     const ext = SillyTavern.getContext().extensionSettings;
     if (memo && ext[KEY] === memo) return memo;
+    settingsStats.tidy++;
     if (!isObj(ext[KEY])) ext[KEY] = structuredClone(DEFAULTS);
     migrate(ext[KEY]);
     // 3.4.0 전 설정: 데우스 카드 스킨이나 트래커 날씨를 쓰던 사람이면 호환을 켠 채로 시작 (한 번만)
@@ -755,6 +783,7 @@ export function getSettings() {
 }
 
 export function saveSettings() {
+    held = null;
     const s = SillyTavern.getContext().extensionSettings[KEY];
     if (s) saveDeviceLayout(s);
     SillyTavern.getContext().saveSettingsDebounced();
@@ -789,7 +818,7 @@ export function resetSettings(groups = { look: true }) {
     if (groups.library) { next.activeCustomPalette = ''; next.image.masks = []; next.image.maskId = ''; if (next.image.shape === 'custom') next.image.shape = 'rect'; }
     else if (groups.look) next.image.masks = structuredClone(old.image?.masks || []);
     ext[KEY] = next;
-    memo = null;
+    memo = null; held = null;
     saveSettings();
     return next;
 }
