@@ -90,6 +90,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 아바타는 가까워질 때 받기 (lazy-avatars.js, 기본 켬) — 캐릭터 · 페르소나 목록의 화면 밖 썸네일을 미룬다
     const lazyAvatars = on && s.chat?.lazyAvatars !== false && !restingFor('lazyAvatars');
     if (lazyAvatars || modules.lazyavatars) load('lazyavatars', './lazy-avatars.js').then(m => m?.syncLazyAvatars(lazyAvatars));
+    // 검색은 글자 조합이 끝난 뒤 (search-ime.js, 기본 켬) — #character_search_bar 의 한글 조합 중 검색을 미룬다
+    const searchIme = on && s.chat?.searchIme !== false && !restingFor('searchIme');
+    if (searchIme || modules.searchime) load('searchime', './search-ime.js').then(m => m?.syncSearchIme(searchIme));
     const replyTop = on && !!s.chat?.replyTop;
     if (replyTop || modules.replytop) load('replytop', './reply-top.js').then(m => m?.syncReplyTop(replyTop));
     // 7.0.3 메시지 토큰 — 7.0.4 부터 토큰 수를 누르면 내역 (sent-tokens.js, 기본 켬)

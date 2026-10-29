@@ -243,6 +243,7 @@ jobs:
           node tools/tests/show-more-auto.mjs .
           node tools/tests/ext-presence.mjs .
           node tools/tests/lazy-avatars.mjs .
+          node tools/tests/search-ime.mjs .
           node tools/tests/show-more-tap.mjs .
           node tools/tests/prompt-choice.mjs .
           node tools/tests/bughunt2-core.mjs .
