@@ -119,8 +119,9 @@ await test('문서: 실리태번 style.css 만 바꿔요(테마 style.css · 다
 });
 await test('index.js 가 시작할 때(테마 켜짐과 따로) 불러요', () => {
     const index = fs.readFileSync(path.join(root, 'index.js'), 'utf8');
-    assert.match(index, /import \{ rebaseBodyHasRules \} from '\.\/src\/st-has-anchor\.js'/);
-    const ready = index.indexOf('jQuery(() => {'); const call = index.indexOf('rebaseBodyHasRules();'); const theme = index.indexOf('const startThemeRuntime');
+    // 10-30: 시작 그래프 상한(boot-graph 111개) 때문에 startSafe 안에서 동적 import 로 불러요
+    assert.match(index, /import\('\.\/src\/st-has-anchor\.js'\)\.then\(m => \{ m\.rebaseBodyHasRules\(\); \}\)/);
+    const ready = index.indexOf('jQuery(() => {'); const call = index.indexOf('m.rebaseBodyHasRules();'); const theme = index.indexOf('const startThemeRuntime');
     assert.ok(ready > 0 && call > ready && call < theme, 'jQuery 준비 블록 안 · 테마 실행부 앞에서 불러야 해요');
 });
 await test('상한: 테마 CSS 에도 body · html 을 비주체 :has() 기준으로 삼는 선택자 0개', () => {

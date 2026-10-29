@@ -65,8 +65,9 @@ test('선택자가 가리키는 창 · 슬라이더가 실제로 있어요', () 
 });
 test('index.js 가 시작할 때 한 번 걸어요 (시작 경계 startSafe 로 감싸도)', () => {
     const src = read('index.js');
-    assert.match(src, /import \{ startAddonTouchSliders \} from '\.\/src\/touch-sliders\.js';/);
-    assert.equal((src.match(/^\s*(?:startSafe\('startAddonTouchSliders', \(\) => \{ )?startAddonTouchSliders\(\);/gm) || []).length, 1);
+    // 10-30: 시작 그래프 상한(boot-graph 111개) 때문에 startSafe 안에서 동적 import 로 한 번 불러요
+    assert.equal((src.match(/startSafe\('startAddonTouchSliders', \(\) => \{ import\('\.\/src\/touch-sliders\.js'\)\.then\(m => \{ m\.startAddonTouchSliders\(\); \}\)/g) || []).length, 1);
+    assert.ok(!/import \{ startAddonTouchSliders \}/.test(src), '정적 import 는 없어요');
 });
 assert.ok(read('.github/workflows/release-check.yml').includes('node tools/tests/addon-touch-sliders.mjs .'), 'release-check.yml 에 등록');
 console.log(`애드온 슬라이더 손가락 보호: ${pass}개 통과했어요.`);

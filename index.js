@@ -47,7 +47,6 @@ import { startGutterWatch } from './src/gutter.js';
 import { startDraftKeep } from './src/draft.js';
 import { startCardInk } from './src/cardink.js';
 import { startSelectPop } from './src/selects.js';
-import { startAddonTouchSliders } from './src/touch-sliders.js';   // 8.2.7 폰: 애드온 · 도구 창 슬라이더도 가로로 민 손짓만 값
 import { startColorPop } from './src/colorpop.js';
 import { startChatGraph } from './src/chat-graph-launcher.js';
 import { startInlineTone, retoneAll } from './src/tone.js';
@@ -77,7 +76,6 @@ import { badgeTextHit } from './src/badge-hit.js';
 import { setFeatureHooks } from './src/features.js';
 import { startThemeSettingsSync } from './src/settings-sync.js';
 import { deferPreviewRules, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, startAnchorGate, widenSelectorCache, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
-import { rebaseBodyHasRules } from './src/st-has-anchor.js';   // 8.2.4 실리태번 body:has(…) 서랍 규칙을 holder 기준으로(가운데 서랍을 연 뒤 채팅 전체 다시 계산 막기)
 
 function mountDrawer() {
     const host = document.getElementById('extensions_settings2') || document.getElementById('extensions_settings');
@@ -216,7 +214,7 @@ jQuery(() => {
     startSafe('deferPanelHasRules', () => { deferPanelHasRules(); }); // 서랍 · 팝업 전용 :has() 규칙은 서랍 · 팝업이 열려 있을 때만 (lite.js, 2.8.4)
     startSafe('startMenuOpenMark', () => { startMenuOpenMark(); }); // ··· 메뉴가 열린 메시지에 bl-menu-open (style.css 의 :has() 대신, lite.js)
     startSafe('startAnchorGate', () => { startAnchorGate(); });   // ≡ · ✦ 메뉴가 열려 있을 때만 입력판에 앵커 이름 (2.9.4, lite.js)
-    startSafe('rebaseBodyHasRules', () => { rebaseBodyHasRules(); }); // 8.2.4 가운데 서랍을 한 번 열면 body 가 :has() 기준이 되어 프롬프트 토글 · 채팅 변화마다 메시지 요소 전부를 다시 계산했다 (st-has-anchor.js)
+    startSafe('rebaseBodyHasRules', () => { import('./src/st-has-anchor.js').then(m => { m.rebaseBodyHasRules(); }).catch(error => console.warn('[Blue Lemonade] 서랍 :has 규칙 바꾸기', error)); });   // 10-30 시작 그래프 상한(111) 때문에 동적으로 // 8.2.4 가운데 서랍을 한 번 열면 body 가 :has() 기준이 되어 프롬프트 토글 · 채팅 변화마다 메시지 요소 전부를 다시 계산했다 (st-has-anchor.js)
     startSafe('mountDrawer', () => { mountDrawer(); });
     // 8.0.7 작가 노트 「페르소나 위치」 · 「캐릭터 설명 위치」 — 테마 화면 켜짐과 따로(확장만 모드에서도), 테마를 끄면 본체 위치로 (an-anchor.js)
     import('./src/an-anchor.js').then(m => m.startNoteAnchor()).catch(error => console.warn('[Blue Lemonade] 작가 노트 자리 맞추기', error));
@@ -260,7 +258,7 @@ jQuery(() => {
     startSafe('startCardInk', () => { startCardInk(); }); // 메시지 안 HTML 카드가 제 배경만 칠했을 때 글자색을 읽히게
     startSafe('startSwipePickerTranslation', () => { startSwipePickerTranslation(); }); // 6.9.7 스와이프 고르기 창 미리보기에 그 스와이프의 번역문 (창을 여는 단추를 누를 때만 잠깐 찾음)
     startSafe('startSelectPop', () => { startSelectPop(); });   // select 를 테마가 그린 목록 팝업으로 (2.5.0)
-    startSafe('startAddonTouchSliders', () => { startAddonTouchSliders(); });   // 8.2.7 폰: 애드온 · 도구 창 슬라이더 위에서 시작한 세로 스크롤이 값을 바꾸지 않게 (touch-sliders.js)
+    startSafe('startAddonTouchSliders', () => { import('./src/touch-sliders.js').then(m => { m.startAddonTouchSliders(); }).catch(error => console.warn('[Blue Lemonade] 애드온 슬라이더 손가락 보호', error)); });   // 10-30 시작 그래프 상한(111) 때문에 동적으로   // 8.2.7 폰: 애드온 · 도구 창 슬라이더 위에서 시작한 세로 스크롤이 값을 바꾸지 않게 (touch-sliders.js)
     startSafe('startColorPop', () => { startColorPop(); });    // 색 칸을 테마 색 고르기로 (3.5.0)
     startSafe('startChatGraph', () => { startChatGraph(); });   // 채팅 파일 관리: 목록 / 분기 지도
     startSafe('startInlineTone', () => { startInlineTone(); });  // 본문 글자색의 채도 · 밝기 맞춤 (2.6.0)
