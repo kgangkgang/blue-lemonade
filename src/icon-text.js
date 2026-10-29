@@ -162,9 +162,26 @@ const ROW_TOKENS = [
 ];
 // 자손을 보는 신호 — label 안 select, .range-block 안 생성 설정 칸(아이디)
 const DEEP_IDS = [['oai-ctx-unl', 'oai_max_context_unlocked'], ['stream', 'stream_toggle'], ['oai-ctx', 'openai_max_context'], ['oai-tok', 'openai_max_tokens'], ['n-openai', 'n_openai'], ['seed', 'seed_openai']];
+// 8.2.6 성능: 위 35가지 검사는 모두 「자식 가운데 이 클래스 · 태그 · 아이디를 가진 것이 하나는 있다」를 전제로 해요(검사마다 꼭 필요한 자식 특징을 모은 표).
+//   그런 자식이 하나도 없는 요소(프롬프트 목록 줄 · 아이콘 칸처럼 대부분)는 35가지를 돌리지 않고 바로 건너뛰어요 — 결과는 같아요(tools/tests/icon-text-scope.mjs 가 옛 표와 견줘요).
+//   토글 한 번에 프롬프트 목록 139줄이 통째로 다시 그려질 때 줄마다 35가지 검사가 돌던 것이 이 감시의 가장 큰 몫이었어요(전수조사 4절 2).
+const ROW_CHILD_CLASSES = new Set(['neo-range-slider', 'range-block-title', 'checkbox_label', 'inline-drawer', 'standoutHeader', 'oneline-dropdown', 'api_button', 'prompt_manager_prompt_controls', 'bl-copyright', 'salty-slider', 'menu_button_icon', 'flex-container', 'flex1', 'editor_maximize']);
+const ROW_CHILD_TAGS = new Set(['select', 'input', 'h4']);
+const ROW_CHILD_IDS = new Set(['instruct_names_behavior', 'bl-response-range', 'world_info_character_strategy', 'regex_presets', 'movingUIModeCheckBlock']);
+export function rowCandidate(el) {
+    for (const c of el.children) {
+        if (ROW_CHILD_TAGS.has(c.localName) || (c.id && ROW_CHILD_IDS.has(c.id))) return true;
+        const list = c.classList;
+        if (list.length === 0) continue;
+        // 자식의 클래스 몇 개만 표에서 찾아요(표 14개를 자식마다 contains 로 묻지 않게). 되풀이할 수 없는 흉내(시험)는 contains 로
+        if (typeof list[Symbol.iterator] === 'function') { for (const name of list) if (ROW_CHILD_CLASSES.has(name)) return true; }
+        else for (const name of ROW_CHILD_CLASSES) if (list.contains(name)) return true;
+    }
+    return false;
+}
 export function rowTokens(el) {
-    const k = [...el.children]; const tokens = [];
-    for (const [name, test] of ROW_TOKENS) if (test(k, el)) tokens.push(name);
+    const tokens = [];
+    if (rowCandidate(el)) { const k = [...el.children]; for (const [name, test] of ROW_TOKENS) if (test(k, el)) tokens.push(name); }
     if (tag(el, 'label') && el.querySelector('select')) tokens.push('dsel');
     if (has(el, 'range-block')) for (const [name, id] of DEEP_IDS) if (el.querySelector('#' + id)) tokens.push(name);
     return tokens.join(' ');
@@ -217,6 +234,20 @@ function touched(el) {
     const rb = el.closest('.range-block'); if (rb && rb !== el && rb !== p) checkRow(rb);
 }
 
+// 8.2.6 성능: 글자 칸(characterData) 변화가 바꿀 수 있는 표식은 .menu_button 바로 아래 맨 글자(bareText)뿐이에요 —
+//   체크 줄 · 메시지 표식(편집칸 · 번호 · 타이머 · 토큰 칸의 비어 있음) · 서랍 줄 표식은 요소 · 속성만 보고, 글 노드의 글자가 바뀌어도 노드는 그대로라 :empty 판정도 같아요.
+//   그래서 부모가 .menu_button 이 아닌 글자 변화(토큰 수 · 타이머 · 서랍 안 숫자 글자)는 콜백에서 버려요. 팝업 표식(refreshPopupMarks)도 글자 변화는 원래 건너뛰어요.
+export function relevantRecords(records) {
+    let keep = null;
+    for (let i = 0; i < records.length; i++) {
+        const r = records[i];
+        const drop = r.type === 'characterData' && !r.target.parentElement?.classList?.contains('menu_button');
+        if (drop && !keep) keep = records.slice(0, i);
+        else if (!drop && keep) keep.push(r);
+    }
+    return keep || records;
+}
+
 // 같은 콜백 안의 반복 기록은 마지막 DOM 상태 한 번으로 모아요.
 // 붙인 부모를 훑으면 그 안 자식도 함께 확인하므로, 중첩해서 붙인 자식을 또 훑지 않아요.
 export function mutationWork(records) {
@@ -245,7 +276,9 @@ export function startIconTextMark() {
     scan(document.body);
     refreshPopupMarks(null, document.body);
     // 붙은 요소 속 .menu_button · label · .mes 와, 자식(글자 · 아이콘 · 편집칸 · 타이머 글자)이 바뀐 요소, 클래스(menu_button_icon) · type 이 바뀐 요소만 본다.
-    new MutationObserver((records) => {
+    new MutationObserver((all) => {
+        const records = relevantRecords(all);
+        if (!records.length) return;
         const work = mutationWork(records);
         for (const node of work.roots) scan(node);
         for (const target of work.targets) touched(target);
