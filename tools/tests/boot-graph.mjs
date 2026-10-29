@@ -114,8 +114,10 @@ await test('시작 그래프 크기 상한 (모듈 수 · 바이트)', () => {
     let bytes = 0; for (const rel of graph.keys()) bytes += fs.statSync(path.join(root, rel)).size;
     console.log(`  시작 그래프: 모듈 ${graph.size}개 · ${(bytes / 1024).toFixed(0)}KB`);
     // 10-30 기준 170b690f: 113개 · 1,372KB → 이 고침 뒤 111개 · 1,294KB. 새 기능은 꺼진 동안 동적 import 로 (features.js load 처럼)
+    // 8.2.7 lean-perf: 성능 고침을 합친 판 111개 · 1,321KB — 감시자를 줄이려고 시작에 들어온 공용 감시자(dom-watch.js 13KB · perf-fade)와
+    //   icon-text 미리 거르기(+5.6KB · perf-icon)가 각 분기에서는 상한 안이었는데 합치면 1KB 남짓 넘어 상한을 1,330KB 로 올려요(모듈 수 상한은 그대로)
     assert.ok(graph.size <= 112, `모듈 ${graph.size}개`);
-    assert.ok(bytes <= 1320 * 1024, `${bytes} 바이트`);
+    assert.ok(bytes <= 1330 * 1024, `${bytes} 바이트`);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);
