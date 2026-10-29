@@ -120,7 +120,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (sceneSound || modules.scenesound) load('scenesound', './scene-sound.js').then(m => m?.syncSceneSound(sceneSound, s.sceneSound, weatherChat, weather));
     // 5.3.7 큰 숫자는 쉼표로: 숫자 칸의 30000 을 포커스 밖에서만 30,000 으로 (numcomma.js — 끄면 듣기 · 덧씌운 값까지 전부 뗀다)
     const numComma = on && s.chat?.numComma !== false;
-    if (numComma || modules.numcomma) load('numcomma', './numcomma.js').then(m => m?.syncNumComma(numComma));
+    // 8.2.3 뒤: 칸 글꼴 · 글자 · 색이 그대로면(서명 같음) 다시 재지 않는다 (numcomma.js syncNumComma)
+    const numKey = JSON.stringify([s.palette, s.colorOverrides?.[s.palette], s.nightTint, s.lightTint, s.fonts, s.type, s.ui, s.usageMode, s.squareButtons, s.density]);
+    if (numComma || modules.numcomma) load('numcomma', './numcomma.js').then(m => m?.syncNumComma(numComma, numKey));
     // 6.6.9 글자색 대비 맞추기: 메시지에 적힌 글자색이 바탕에 묻히면 밝기만 옮겨 보여 준다 (ink-contrast.js — 끄면 덧씌운 표시를 모두 뗀다)
     const ink = on && s.usageMode !== 'extensions' && s.chat?.inkContrast !== false;
     if (ink || modules.inkcontrast) load('inkcontrast', './ink-contrast.js').then(m => m?.syncInkContrast(ink));

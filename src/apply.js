@@ -24,6 +24,7 @@ import { syncTagInk } from './tag-ink.js';
 import { syncRoleIcons } from './role-icons.js';
 import { syncPicks } from './role-icons-pick.js';
 import { syncThemeSheet } from './theme-sheet.js';   // 8.2.1 테마 꺼짐이면 가벼운 사본   // 화면에서 고른 단추
+import { syncDemGlow } from './dem-glow.js';   // 데우스 「테두리 빛」 — :root 가 아니라 상태창 요소에만 (문서 전체 재계산 없이)
 
 function profileVars(p, pal, user = false) {
     const vars = Object.assign(frameVars(p, 'profile', pal.accent), decorVars(p.decor, 'profile', p.radius), {
@@ -639,7 +640,7 @@ export function applyAll() {
         '--salty-user-scale': String(Number(((s.chat.userSize ?? 100) / 100).toFixed(3))), // 내 메시지 크기 (본문 대비)
         '--salty-user-ink': `${s.chat.userInk ?? 100}%`,
         '--bl-hidden-opacity': String(Math.min(90, Math.max(10, Number(s.chat.hiddenOpacity) || 40)) / 100), // 5.6.8 숨긴 메시지 진하기 (css/05-chat.css)
-        '--bl-dem-glow': String(Math.min(100, Math.max(0, Number.isFinite(Number(s.chat.demGlow)) ? Number(s.chat.demGlow) : 35)) / 100), // 8.0.9 데우스 V3 카드 테두리 빛 0~1 (css/30-dem-skin.css)
+        // 8.0.9 데우스 V3 카드 테두리 빛(--bl-dem-glow)은 여기(:root) 아니라 아래 syncDemGlow 가 상태창 요소에만 둔다 — 슬라이더 한 칸에 문서 전체가 다시 계산되지 않게 (src/dem-glow.js)
         '--bl-hidden-gray': `${Math.min(100, Math.max(0, Number(s.chat.hiddenGray) || 0))}%`,            //       흑백
         '--bl-qr-rows': String(s.chat.qrRows ?? 2), // 3.5.4 세로 스크롤일 때 보이는 퀵 리플라이 줄 수                                     // 내 메시지 글자 진하기
         '--salty-ui-weight': s.ui?.weight ? String(s.ui.weight) : 'normal',
@@ -702,6 +703,7 @@ export function applyAll() {
     }
     const variables = styleTag('salty-vars');
     if (variables.textContent !== css) variables.textContent = css;
+    syncDemGlow(s.chat.demGlow);   // 상태창 묶음 · 트래커에만 — 값이 그대로면 시트를 건드리지 않는다
     // Keep selector rules stable while sliders change only the variable sheet.
     const gradients = styleTag('salty-gradients');
     const gradientRules = gradientTextCss(s, vars['--salty-marker-bg']);
@@ -763,7 +765,8 @@ export function applyAll() {
         }
         if (fx?.flow) want.add(fx.flowMode === 'marker' ? 'salty-demfx-mflow' : 'salty-demfx-flow'); // 색 흐름: 글자에 | 형광펜 띠에
         if (deus && s.chat.demSkin) want.add('salty-dem-skin');          // 3.1.0 데우스 카드 스킨 (css/30-dem-skin.css)
-        if (deus && s.chat.demSkin && s.chat.demFold !== false) want.add('salty-dem-fold'); // 폰: 트래커 한 줄 · 펼쳐 오는 카드 접기 (demskin.js)
+        // 폰 접기(트래커 한 줄 · 펼쳐 오는 카드 접기, demskin.js)는 body 클래스가 아니라 아래 data-bl-dem-fold 속성으로 — 클래스를 바꾸면 실리태번 keyboard.js 감시자가
+        // 문서 전체를 훑는다(선택자 27개 × 전체 · 폰 4배 0.3초). 속성은 그 감시자(class 만)와 테마의 class 감시자들이 보지 않는다. 모양은 같다(css/30-dem-skin.css)
         if (s.type.indent) want.add('salty-indent');
         if (reasoningOff(s)) want.add('salty-reasoning-off'); // 5.7.5 추론 요청을 끄면 지난 추론도 숨기기 (위 stReasoningOff)
         if (s.chat.hiddenFade) { // 5.6.8 숨긴 메시지 흐리게 — 흑백은 0 이면 filter 자체를 안 걸고(레이어 비용), 마우스 올리면 원래대로는 따로 (css/05-chat.css)
@@ -792,6 +795,8 @@ export function applyAll() {
     const cutoutBefore = cls.contains('salty-cutout-same');
     [...cls].filter(c => (c === 'salty' || c.startsWith('salty-')) && !want.has(c)).forEach(c => cls.remove(c));
     want.forEach(c => { if (!cls.contains(c)) cls.add(c); });
+    const fold = want.has('salty-dem-skin') && s.chat.demFold !== false;
+    if (document.body.hasAttribute('data-bl-dem-fold') !== fold) { if (fold) document.body.setAttribute('data-bl-dem-fold', ''); else document.body.removeAttribute('data-bl-dem-fold'); }
     // 5.3.7: html 바탕색은 클래스로 — 예전 html:has(> body.salty:not(.salty-bgimg)) 는 인라인 style 이 바뀔 때마다 html 까지 :has 를 다시 따지게 한다 (리뷰 측정: 설정 창을 연 뒤 스트리밍이 크게 느려짐)
     // 조건은 body 의 salty · salty-bgimg 와 똑같이 (테마를 끄면 둘 다 빠지듯 이것도 빠짐)
     const htmlBg = want.has('salty') && !want.has('salty-bgimg');

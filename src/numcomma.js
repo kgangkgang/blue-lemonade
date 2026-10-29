@@ -484,11 +484,15 @@ function stop() {
     tracked.clear(); queue.clear(); roots.clear(); images.clear(); cells.clear();
 }
 
-/** features.js 가 설정을 적용할 때마다 부른다: 켜고 끄기, 켜져 있으면 글꼴 · 색 · 크기가 바뀌었을 수 있으니 다시 그리기 */
-export function syncNumComma(want) {
-    if (want && !on) start();
-    else if (!want && on) stop();
-    else if (on) refresh();
+/** features.js 가 설정을 적용할 때마다 부른다: 켜고 끄기, 켜져 있으면 글꼴 · 색 · 크기가 바뀌었을 수 있으니 다시 그리기.
+ *  8.2.3 뒤: lookKey(글꼴 · 글자 · 팔레트 서명)가 그대로면 다시 그리지 않는다 — 예전에는 설정 하나(데우스 테두리 빛 등)를 바꿀 때마다 기억한 칸 전부를 다시 재서,
+ *  칸마다 getClientRects 가 그 사이 더러워진 문서 전체 스타일 · 레이아웃을 강제했다(상태창 30개 긴 채팅 · 폰 4배 한 번에 1.8~2.2초). 칸 모양이 바뀌는 때는
+ *  서랍 · 팝업 관찰자(class · style) · ResizeObserver · 글꼴 loadingdone 이 따로 알린다 */
+let lookKey = null;
+export function syncNumComma(want, key = null) {
+    if (want && !on) { lookKey = key; start(); }
+    else if (!want && on) { lookKey = null; stop(); }
+    else if (on && (key === null || key !== lookKey)) { lookKey = key; refresh(); }
 }
 
 /** 시험용: 쉼표 대신 다른 모양으로 그려 보기 (원래 글자와 겹쳐 자리 비교) — null 이면 원래대로 */

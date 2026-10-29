@@ -33,6 +33,7 @@ import { getSettings, invalidateSettings, saveSettings, resetSettings, FONT_SET,
 import { PALETTES, PALETTE_FAMILIES, paletteFamily, paletteVariant, TOKEN_GROUPS, paletteColors, parseColor, sameColor, safeColor } from './palettes.js';
 import { GROUPS, LANGS, SAMPLES, fontsFor, findFont, previewStack, queuePreview, isPreviewReady, isPreviewBlank, addGoogleFont, addCssFont, uploadFont, removeCustomFont } from './fonts.js';
 import { applyAll, syncSamples } from './apply.js';
+import { setDemGlowPreview, demGlowPreviewing } from './dem-glow.js';   // 「테두리 빛」을 끄는 동안은 설정 창 표본만, 채팅은 손을 뗄 때
 import { getIssues } from './checks.js';
 import { applySillyTavernTheme, saveAsSillyTavernTheme, alreadyMatches, restoreState, offerRestore } from './sttheme.js';
 import { classifyAll } from './assets.js';
@@ -2943,6 +2944,18 @@ function bind(root) {
         event.target.dispatchEvent(new Event('change', { bubbles: true }));
         event.target.blur();
     });
+    // 데우스 「테두리 빛」: 슬라이더를 누른 채 끄는 동안은 설정 창 안 표본에만 새 값(src/dem-glow.js), 채팅의 상태창은 손을 뗄 때(change) 한 번만.
+    // 예전에는 틱마다 :root 변수가 바뀌어 상태창 30개가 든 채팅 전체가 다시 계산됐다(폰 4배 한 틱 0.2초 남짓). 자판(화살표) · 숫자 칸은 누름이 없으니 바로 반영
+    const glowDrag = (event) => { if (event.target.matches?.('input[data-range="chat.demGlow"]')) setDemGlowPreview(true); };
+    root.addEventListener('pointerdown', glowDrag, true);
+    const glowRelease = (event) => {
+        if (!demGlowPreviewing()) return;
+        if (event.type !== 'change' && !event.target.matches?.('input[data-range="chat.demGlow"]')) return;
+        setDemGlowPreview(false);
+        applySoon();   // 다음 프레임에 채팅에도 — 끌던 마지막 값으로
+    };
+    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) root.addEventListener(type, glowRelease, true);
+    root.addEventListener('change', (event) => { if (event.target.matches?.('input[data-range="chat.demGlow"]')) glowRelease(event); }, true);
 
     root.addEventListener('input', (event) => {
         const iconSearch = event.target.closest('input[data-search="role-icon"]');
@@ -3066,8 +3079,9 @@ function bind(root) {
             if (path === 'markdown.accentOwn') { update(st => setPath(st, path, target.checked)); return; }
             // 2.9.2: 본문 색 지정 → '글자색 톤 맞추기' 줄, 톤 맞추기 → 톤 값 슬라이더 넷, 투명 그림도 똑같이 → 설명 문구가 스위치에 따라
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
+            // 폰에서 접어 두기(chat.demFold)는 줄이 늘거나 줄지 않으니 창을 다시 그리지 않는다 — 다시 그리면 데우스 화면 전체(표본 복제 · 상태창 글자 미리보기 iframe)가 다시 만들어져 폰 4배에서 2~3초가 들었다. 모양은 body 속성(apply.js) · CSS 가 바로 바꾼다
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
-            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.qrCtxNames', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'image.cutEdge.outline.on', 'image.cutEdge.shadow.on', 'image.cutEdge.overflow', 'chat.streamFade', 'chat.hiddenFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'chat.demFold', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors'].includes(path));
+            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.qrCtxNames', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'image.cutEdge.outline.on', 'image.cutEdge.shadow.on', 'image.cutEdge.overflow', 'chat.streamFade', 'chat.hiddenFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors'].includes(path));
             await syncChangedAddons([path]);
             if (path === 'updateCheck') { if (target.checked) void checkForUpdate({ force: true }); else clearUpdate(); }   // 5.7.0
             // 5.5.6: 테마를 끄는 순간에도 '맞추기' 값이 남아 있으면 되돌릴지 묻는다

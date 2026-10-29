@@ -6,7 +6,7 @@
 //   3) dayOf · phaseOf: 「5월 3일」 · ISO · 영어 달 이름에서 「일」, 1일 신월 · 16일 보름 · 글의 보름달/초승달 말이 먼저
 //   4) 켜고 끄기: 요소에 --ox · --oy · --gx(달이면 --orb-m · --moon-r)를 인라인으로 덧씌우고, 끄면 모두 떼어 원작으로
 //   6) 8.1.0 설정 창 미리보기의 숨은 표본 자리(dressDemSky): 스킨 켬이면 채팅과 같은 계산, 끔이면 떼기
-//   5) 설정 · 기능 로더 · CSS: chat.demGlow 기본 35 · 0~100 · 이름표, features.js 가 dem-sky 를 부름, 30-dem-skin 이 --bl-dem-glow 를 씀, 「카드 이모티콘」 끔이 __glyph 도 숨김
+//   5) 설정 · 기능 로더 · CSS: chat.demGlow 기본 35 · 0~100 · 이름표, features.js 가 dem-sky 를 부름, 30-dem-skin 이 --bl-dem-glow 를 씀(값은 src/dem-glow.js 가 상태창 요소에만 둠), 「카드 이모티콘」 끔이 __glyph 도 숨김
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
@@ -83,7 +83,7 @@ check('8.1.0 설정 창 미리보기의 숨은 표본 자리도 채팅과 같은
 });
 check('설정 · 로더 · CSS 연결', async () => {
     const settings = await read('src/settings.js'), features = await read('src/features.js'), apply = await read('src/apply.js'), css = await read('css/30-dem-skin.css'), unify = await read('css/08-regex-unify.css'), labels = await read('src/settings-labels.js'), panel = await read('src/panel.js');
-    assert.match(settings, /s\.chat\.demGlow = .*: 35/); assert.match(apply, /'--bl-dem-glow'/); assert.match(features, /dem-sky\.js/);
+    assert.match(settings, /s\.chat\.demGlow = .*: 35/); assert.match(apply, /syncDemGlow\(s\.chat\.demGlow\)/); assert.doesNotMatch(apply, /'--bl-dem-glow'\s*:/, '8.2.3 뒤: :root 가 아니라 상태창 요소에만(src/dem-glow.js)'); assert.match(features, /dem-sky\.js/);
     assert.match(css, /var\(--bl-dem-glow, \.35\)/); assert.match(css, /--salty-accent\) 20%, transparent\) !important/, '기온 칩은 투명 틴트');
     assert.match(unify, /\.custom-dem-track__glyph \{\s*display: none !important/); assert.ok(labels.includes('"chat.demGlow":"테두리 빛"')); assert.match(panel, /slider\('chat\.demGlow', '테두리 빛', 0, 100, 5, 35\)/);
     assert.ok(!/#[0-9a-f]{3,8}\b/i.test(css.split('8.0.6 데우스 V3')[1].replace(/#0000\b/g, '').replace(/#salty-none/g, '')), 'V3 절에 고정 색이 없다(팔레트 변수만)');

@@ -5,7 +5,8 @@ import { showThemeModal } from '../../modal.js';
 import { eventSource, event_types, saveSettingsDebounced } from '../../../../../../../script.js';
 import { extension_settings } from '../../../../../../extensions.js';
 import { ask } from '../../ask.js';   // 7.0.1 테마 확인 창 (기본 confirm 대신)
-import { isMainChatGenerating, whenMainChatIdle } from '../../main-chat-rules.js';   // 7.2.8 답을 받는 동안은 :root 를 읽지 않는다
+import { isMainChatGenerating, whenMainChatIdle } from '../../main-chat-rules.js';
+import { headSignature } from './head-signature.js';   // 7.2.8 답을 받는 동안은 :root 를 읽지 않는다
 
 // Constants and Types
 const CSS_THEME_STYLE_VAR = '--custom-theme-style-inputs';
@@ -640,19 +641,8 @@ class CustomThemeSettingsManager {
     }
 }
 
-// 7.7.4 :root 계산 스타일을 바꿀 수 있는 것만 모은 서명 — 메시지 속 <style> 은 실리태번이 .mes_text 범위로 묶어 :root 를 못 바꾼다 (<head> 만 본다)
+// 7.7.4 :root 계산 스타일을 바꿀 수 있는 것만 모은 서명 — head-signature.js (8.2.3 뒤: 시트 글 전체를 이어 붙이지 않고 노드별 번호로)
 let headSeen = '';
-function headSignature() {
-    const html = document.documentElement;
-    if (typeof html?.getAttribute !== 'function' || typeof document.head?.querySelectorAll !== 'function') return '';   // 모르면 서명 없음 = 늘 읽는다
-    const out = [html.getAttribute('class'), html.getAttribute('style'), globalThis.innerWidth, globalThis.innerHeight, globalThis.devicePixelRatio];
-    for (const node of document.head.querySelectorAll('style, link[rel~="stylesheet"]')) {
-        let rules = -1;
-        try { rules = node.sheet?.cssRules.length ?? -1; } catch { /* 다른 출처 */ }
-        out.push(node.tagName, node.getAttribute('href') || '', node.getAttribute('media') || '', node.disabled || node.sheet?.disabled ? 1 : 0, rules, node.tagName === 'STYLE' ? node.textContent : '');
-    }
-    return JSON.stringify(out);
-}
 
 const holder=document.createElement('div');holder.id='bl-ctsi-holder';holder.hidden=true;document.body.append(holder);
 const customThemeManager = new CustomThemeSettingsManager();

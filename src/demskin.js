@@ -6,8 +6,9 @@
 const mq = window.matchMedia('(max-width: 1000px)');
 let bound = false;
 
+// 접기 켬은 body 의 data-bl-dem-fold 속성 (apply.js — 예전 클래스 salty-dem-fold 는 바꿀 때마다 실리태번 keyboard.js 가 문서 전체를 훑었다)
 function folding() {
-    return mq.matches && document.body.classList.contains('salty-dem-fold');
+    return mq.matches && document.body.hasAttribute('data-bl-dem-fold');
 }
 
 function onClick(event) {

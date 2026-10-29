@@ -133,12 +133,15 @@ function unbind() {
 }
 
 /** apply.js(features.js) 가 설정이 바뀔 때마다 부른다 */
+let pinsKey = null;
 export function syncMesPins(on, list, themeOn = on) {
     pins = tidyPins(list);
     order = pins.flatMap(k => [k, ...(PAIRS[k] || [])]);
     active = !!on && order.length > 0;
     if (active) bind(); else unbind();
-    sweep();
+    // 8.2.3 뒤: 고정 목록 · 켬이 그대로면 채팅을 다시 훑지 않는다 — 설정 적용마다(슬라이더 틱마다) 300메시지의 메뉴 단추를 전부 훑었다(폰 4배 40~50ms). 새 메시지는 이벤트(bind)가 따로 알린다
+    const key = `${active}|${order.join(',')}`;
+    if (key !== pinsKey) { pinsKey = key; sweep(); }
     startPinGesture(!!themeOn);
 }
 

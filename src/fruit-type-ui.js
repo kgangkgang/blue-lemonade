@@ -88,14 +88,16 @@ ${type.layout||footer?`<div class="bl-ft-top">${type.layout?choice('data-ft-layo
     let lastCss='',docMode='',sampleKey='',sampleToken=0,fragHost=null,sampleBackdrop='',lookSig='',lookTimer=0;
     // 8.1.0 테두리 빛 · 카드 스킨 · 이모티콘 · 색 통일 · 팔레트를 바꾸면(body class · 테마 변수 style) 표본을 바로 다시 옮겨요 — 1.5초 타이머를 기다리지 않게.
     //   숨은 표본 자리는 채팅과 같은 테마 규칙을 받으므로 하늘만 다시 입히고 복제만 새로 해요(표본을 다시 만들지 않음).
-    const lookSignature=()=>{const st=getComputedStyle(document.body);return `${document.body.className}|${st.getPropertyValue('--bl-dem-glow')}|${st.getPropertyValue('--salty-accent')}|${st.getPropertyValue('--salty-text')}`;};
+    //   테두리 빛은 :root 변수가 아니라 상태창 요소의 변수(#salty-dem-vars, src/dem-glow.js) — 값은 설정에서 읽어요(계산 스타일을 읽어 문서 전체 재계산을 당기지 않게).
+    //   폰 접기는 body 의 data-bl-dem-fold 속성(apply.js). 끌어서 움직이는 동안(demGlowPreviewing)은 표본만 따라가고 채팅은 손을 떼면 바뀌어요.
+    const lookSignature=()=>{const st=getComputedStyle(document.body);return `${document.body.className}|${document.body.hasAttribute('data-bl-dem-fold')}|${getSettings().chat?.demGlow}|${st.getPropertyValue('--salty-accent')}|${st.getPropertyValue('--salty-text')}`;};
     function onLook(){clearTimeout(lookTimer);lookTimer=setTimeout(()=>{
         if(!alive||!box.isConnected||!box.getClientRects().length)return;const sig=lookSignature();if(sig===lookSig)return;lookSig=sig;
         if(docMode==='sample'&&fragHost){dressDemSky(fragHost.host,skinOn());requestAnimationFrame(()=>{if(alive)copySampleHost();});}else if(docMode)schedulePreview(true);
     },60);}
     const lookWatch=typeof MutationObserver==='function'?new MutationObserver(onLook):null;
-    lookWatch?.observe(document.body,{attributes:true,attributeFilter:['class']});
-    {const vars=document.getElementById('salty-vars');if(vars)lookWatch?.observe(vars,{childList:true,characterData:true,subtree:true});}
+    lookWatch?.observe(document.body,{attributes:true,attributeFilter:['class','data-bl-dem-fold']});
+    for(const id of ['salty-vars','salty-dem-vars']){const vars=document.getElementById(id);if(vars)lookWatch?.observe(vars,{childList:true,characterData:true,subtree:true});}
     const dropHost=()=>{fragHost?.remove();fragHost=null;};
     // 미리보기 문서는 실제 복제 · 표본 중 한 가지로만 써요. 바뀌면 빈 문서로 다시 읽고(load 가 다시 부름) 남은 모양을 섞지 않아요.
     function switchMode(frame,want){if(!docMode||docMode===want)return false;dropHost();docMode='';sampleKey='';previewKind='';previewSignature='';lastCss='';frame.srcdoc=FRUIT_SNAPSHOT_DOCUMENT;return true;}

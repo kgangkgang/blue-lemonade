@@ -1352,53 +1352,53 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview), .cg-root, .sal
   color: var(--salty-accent-ink, var(--salty-accent)) !important;
 }
 @media (max-width: 1000px) {
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):where(:not(:has(> .custom-dem-track__grid))) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):where(:not(:has(> .custom-dem-track__grid))) {
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):not(.bl-dem-shown):where(:not(:has(> .custom-dem-track__grid))) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):not(.bl-dem-shown):where(:not(:has(> .custom-dem-track__grid))) {
     flex-wrap: nowrap !important;
     gap: 0 10px !important;
     overflow: hidden !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):not(.bl-dem-shown) > :is(.custom-dem-track__item, .custom-dem-track-recovery__item):where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):not(.bl-dem-shown) > :is(.custom-dem-track__item, .custom-dem-track-recovery__item):where(:not(.custom-dem-track__grid *)) {
     flex: 0 1 auto !important;
     min-width: 0 !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > :is(.custom-dem-track__item--time, .custom-dem-track__item--weather):where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > :is(.custom-dem-track__item--time, .custom-dem-track__item--weather):where(:not(.custom-dem-track__grid *)) {
     flex: none !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track-recovery:not(.bl-dem-shown) > .custom-dem-track-recovery__item:last-child:where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track-recovery:not(.bl-dem-shown) > .custom-dem-track-recovery__item:last-child:where(:not(.custom-dem-track__grid *)) {
     flex: none !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--location:where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--location:where(:not(.custom-dem-track__grid *)) {
     flex: 1 1 0 !important;
     order: 2 !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--weather:where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--weather:where(:not(.custom-dem-track__grid *)) {
     order: 3 !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--date:where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--date:where(:not(.custom-dem-track__grid *)) {
     display: none !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):not(.bl-dem-shown) :is(.custom-dem-track__value, .custom-dem-track-recovery__value):where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):not(.bl-dem-shown) :is(.custom-dem-track__value, .custom-dem-track-recovery__value):where(:not(.custom-dem-track__grid *)) {
     overflow: hidden !important;
     white-space: nowrap !important;
     text-overflow: ellipsis !important;
     overflow-wrap: normal !important;
     word-break: normal !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--weather > .custom-dem-track__value:where(:not(.custom-dem-track__grid *)),
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) :is(.custom-dem-track__icon, .custom-dem-track-recovery__icon):where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--weather > .custom-dem-track__value:where(:not(.custom-dem-track__grid *)),
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) :is(.custom-dem-track__icon, .custom-dem-track-recovery__icon):where(:not(.custom-dem-track__grid *)) {
     display: none !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root) .mes_text details.custom-dem-card[open]:not(.bl-dem-shown) > :not(summary):where(:not(.custom-dem-modules *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root) .mes_text details.custom-dem-card[open]:not(.bl-dem-shown) > :not(summary):where(:not(.custom-dem-modules *)) {
     display: none !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root) .mes_text details.custom-dem-card[open]:not(.bl-dem-shown) > summary:where(:not(.custom-dem-modules *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root) .mes_text details.custom-dem-card[open]:not(.bl-dem-shown) > summary:where(:not(.custom-dem-modules *)) {
     box-shadow: none !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(:is(#salty-nochat, .salty-preview), .cg-root) .mes_text details.custom-dem-card[open]:not(.bl-dem-shown) > summary .custom-dem-card__caret:not(#salty-none):where(:not(.custom-dem-modules *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(:is(#salty-nochat, .salty-preview), .cg-root) .mes_text details.custom-dem-card[open]:not(.bl-dem-shown) > summary .custom-dem-card__caret:not(#salty-none):where(:not(.custom-dem-modules *)) {
     transform: none !important;
   }
 }

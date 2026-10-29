@@ -321,6 +321,7 @@ jobs:
           node tools/tests/prompt-anchors.mjs .
           node tools/tests/an-anchor-read-cost.mjs .
           node tools/tests/dem-sky.mjs .
+          node tools/tests/dem-skin-perf.mjs .
           node tools/tests/mix-selection.mjs .
           node tools/tests/capture-motion.mjs .
           node tools/tests/capture-filter.mjs .

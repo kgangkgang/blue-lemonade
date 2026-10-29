@@ -1,5 +1,5 @@
 /* ===== css/30-dem-skin.css =====
-   3.1.0 데우스 카드 스킨 (채팅 › 기타 › 데우스 카드 스킨 → body.salty-dem-skin, 폰 접기 → body.salty-dem-fold).
+   3.1.0 데우스 카드 스킨 (채팅 › 기타 › 데우스 카드 스킨 → body.salty-dem-skin, 폰 접기 → body[data-bl-dem-fold], 8.2.3 뒤 속성으로).
    데우스(DEM) 정규식 카드 — 트래커 · 장면 계획 · 상태 · 스레드 · 심리 · 모멘텀 · 갈등 · 선택지 — 를 테마 카드 모양으로 다시 그린다.
    카드 틀(둥근 판 · 그림자) · 제목 줄 · 본문 칸 · 칩은 팔레트 변수만 쓴다. 색 통일을 켜면 모듈 색은 08-regex-unify 가 포인트색 하나로,
    끄면 데우스 원래 모듈 색 (3.4.1 전에는 여기서 팔레트 색으로 바꿨다).
@@ -449,56 +449,56 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
 /* ---------- 폰 접기 ---------- */
 @media (max-width: 1000px) {
   /* 트래커 한 줄: 시간 · 날짜 · 온도는 그대로, 날씨 글은 빼고, 장소는 남은 자리에서 말줄임. 누르면 펼침(.bl-dem-shown) */
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):where(:not(:has(> .custom-dem-track__grid))) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):where(:not(:has(> .custom-dem-track__grid))) {
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):not(.bl-dem-shown):where(:not(:has(> .custom-dem-track__grid))) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):not(.bl-dem-shown):where(:not(:has(> .custom-dem-track__grid))) {
     flex-wrap: nowrap !important;
     gap: 0 10px !important;
     overflow: hidden !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):not(.bl-dem-shown) > :is(.custom-dem-track__item, .custom-dem-track-recovery__item):where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):not(.bl-dem-shown) > :is(.custom-dem-track__item, .custom-dem-track-recovery__item):where(:not(.custom-dem-track__grid *)) {
     flex: 0 1 auto !important;
     min-width: 0 !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > :is(.custom-dem-track__item--time, .custom-dem-track__item--weather):where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > :is(.custom-dem-track__item--time, .custom-dem-track__item--weather):where(:not(.custom-dem-track__grid *)) {
     flex: none !important;
   }
   /* 3.3.0 복구 트래커의 온도 칸(마지막 칸)은 줄지 않게 — 줄어든 칸 밖으로 온도 알약이 8px 삐져나왔다 (영어 원문, 폰 점검) */
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track-recovery:not(.bl-dem-shown) > .custom-dem-track-recovery__item:last-child:where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track-recovery:not(.bl-dem-shown) > .custom-dem-track-recovery__item:last-child:where(:not(.custom-dem-track__grid *)) {
     flex: none !important;
   }
   /* 한 줄에는 시간 · 장소 · 온도 (날짜와 날씨 글은 펼치면 보임) — 장소가 날짜에 밀려 "S.T.A.R. 중앙 …" 만 남던 것 */
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--location:where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--location:where(:not(.custom-dem-track__grid *)) {
     flex: 1 1 0 !important;
     order: 2 !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--weather:where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--weather:where(:not(.custom-dem-track__grid *)) {
     order: 3 !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--date:where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--date:where(:not(.custom-dem-track__grid *)) {
     display: none !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):not(.bl-dem-shown) :is(.custom-dem-track__value, .custom-dem-track-recovery__value):where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):not(.bl-dem-shown) :is(.custom-dem-track__value, .custom-dem-track-recovery__value):where(:not(.custom-dem-track__grid *)) {
     overflow: hidden !important;
     white-space: nowrap !important;
     text-overflow: ellipsis !important;
     overflow-wrap: normal !important;
     word-break: normal !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--weather > .custom-dem-track__value:where(:not(.custom-dem-track__grid *)),
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) :is(.custom-dem-track__icon, .custom-dem-track-recovery__icon):where(:not(.custom-dem-track__grid *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__item--weather > .custom-dem-track__value:where(:not(.custom-dem-track__grid *)),
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track:not(.bl-dem-shown) :is(.custom-dem-track__icon, .custom-dem-track-recovery__icon):where(:not(.custom-dem-track__grid *)) {
     display: none !important;
   }
   /* 처음부터 펼쳐져 오는 카드(선택지 · 상태 · 복구 카드)는 제목 줄만 — 제목을 누르면 보임(.bl-dem-shown) */
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root) .mes_text details.custom-dem-card[open]:not(.bl-dem-shown) > :not(summary):where(:not(.custom-dem-modules *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root) .mes_text details.custom-dem-card[open]:not(.bl-dem-shown) > :not(summary):where(:not(.custom-dem-modules *)) {
     display: none !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root) .mes_text details.custom-dem-card[open]:not(.bl-dem-shown) > summary:where(:not(.custom-dem-modules *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root) .mes_text details.custom-dem-card[open]:not(.bl-dem-shown) > summary:where(:not(.custom-dem-modules *)) {
     box-shadow: none !important;
   }
-  body.salty.salty-dem-skin.salty-dem-fold :is(#chat, .cg-root) .mes_text details.custom-dem-card[open]:not(.bl-dem-shown) > summary .custom-dem-card__caret:not(#salty-none):where(:not(.custom-dem-modules *)) {
+  body.salty.salty-dem-skin[data-bl-dem-fold] :is(#chat, .cg-root) .mes_text details.custom-dem-card[open]:not(.bl-dem-shown) > summary .custom-dem-card__caret:not(#salty-none):where(:not(.custom-dem-modules *)) {
     transform: none !important;
   }
 }

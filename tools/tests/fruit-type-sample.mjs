@@ -205,9 +205,9 @@ check('미리보기 판 고르기: 테마 고르기 부품 그대로, 설정 하
 });
 check('테두리 빛 · 카드 스킨 · 이모티콘 · 색 통일을 바꾸면 표본이 바로 바뀌어요(body class · 테마 변수 감시, 닫으면 뗌)',()=>{
     const ui=read('src/fruit-type-ui.js');
-    assert.ok(ui.includes("lookWatch?.observe(document.body,{attributes:true,attributeFilter:['class']})"));
-    assert.ok(ui.includes("document.getElementById('salty-vars')"),'테두리 빛(--bl-dem-glow)은 테마 변수 style 에');
-    assert.ok(ui.includes("getPropertyValue('--bl-dem-glow')"));
+    assert.ok(ui.includes("lookWatch?.observe(document.body,{attributes:true,attributeFilter:['class','data-bl-dem-fold']})"),'body 클래스와 폰 접기 속성');
+    assert.ok(ui.includes("['salty-vars','salty-dem-vars']"),'테마 변수 style 과 테두리 빛 시트(--bl-dem-glow, src/dem-glow.js) 둘 다');
+    assert.ok(ui.includes("getSettings().chat?.demGlow")&&!ui.includes("getPropertyValue('--bl-dem-glow')"),'테두리 빛은 설정값으로(계산 스타일을 읽지 않음)');
     assert.ok(ui.includes('lookWatch?.disconnect();clearTimeout(lookTimer);'),'창을 닫으면 감시를 떼요');
     for(const cls of ['salty-dem-skin','salty-regex-noicons','salty-unify-regex']){const css=read('style.css');assert.ok(new RegExp(`body\\.salty\\.${cls}[^{]*\\.salty-preview`).test(css),`${cls} 규칙이 미리보기 자리(.salty-preview)에도 닿아요`);}
     const host=read('src/fruit-type-sample.js');assert.ok(host.includes("host.className='salty-preview bl-ft-sample-host'"));
