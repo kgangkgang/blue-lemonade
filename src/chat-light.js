@@ -10,6 +10,7 @@
 // (8.2.7) 표식은 html 에 단다(html.bl-chat-light) — #chat 의 class 를 바꾸면 기록마다 실리태번 keyboard.js 가 #chat 아래 전부(메시지 300개면 요소 2~3만 개)를
 //   선택자 31개로 다시 훑고, body 전체를 보는 테마 감시자도 #chat 을 다시 봤다(긴 채팅을 열 때 뗐다 붙이며 두 번). html 은 그 감시자들이 안 본다. 모양은 같다.
 // 여기서는 #chat 에만 childList 감시자(subtree 없음)를 걸어 .mes 수를 센다. 설정: 채팅 › 화면 「긴 채팅의 화면 밖 메시지 가볍게」(chat.chatLight · 기본 켬).
+import { booting, afterBoot } from './boot-gate.js';
 export const THRESHOLD = 60;
 export const CLASS = 'bl-chat-light';
 let on = false, mo = null, chat = null;
@@ -158,7 +159,7 @@ export const _cover = { state: () => ({ on: cover.on, covered: cover.covered, bl
 //   content-visibility:auto 로 건너뛴 메시지는 화면에 들어오는 그 프레임에 스타일(메시지 하나 약 16ms) · 배치 · 칠하기 · 그림 칠하기를 해요(프레임마다 새 메시지 5개 남짓 → 80~200ms).
 //   한 번 그린 메시지도 다시 화면 밖으로 나가면 건너뛰어, 돌아올 때 배치 · 칠하기를 또 해서 내려오는 길도 느렸어요.
 //   스크롤 전에 그 자리에서 강제로 재 두기(getBoundingClientRect)는 스타일만 남고 배치 · 칠하기는 그대로라 30개였어요 — 건너뛰기를 풀어야 해요.
-// 어떻게: 채팅이 조용해지면(메시지가 들고 난 뒤 WARM_QUIET_MS) 낮은 우선순위 작업으로 지금 보는 자리에 가까운 메시지부터 data-bl-warm 을 달아
+// 어떻게: 채팅이 조용해지면(메시지가 들고 난 뒤 WARM_QUIET_MS) 쉬는 시간 콜백(requestIdleCallback) 안에서 지금 보는 자리에 가까운 메시지부터 data-bl-warm 을 달아
 //   건너뛰기를 풀고(css/05-chat.css) 그 자리에서 배치까지 끝내요 — 한 조각 WARM_SLICE_MS 안에서 몇 개씩 묶어(비용을 재 가며). 다 풀면 끈 것과 같은 스크롤이고,
 //   여는 순간(긴 채팅 열기)은 예전처럼 화면 밖을 건너뛰어 빨라요(그 일을 쉬는 시간으로 옮길 뿐 · 모양은 같아요).
 //   생성 중(body data-generating) · 답장 토큰이 오는 동안 · 서랍이 열린 동안(고정 서랍 빼고)은 쉬고, 그때 푼 메시지를 다시 건너뛰게 돌려놔요 —
@@ -168,19 +169,19 @@ export const _cover = { state: () => ({ on: cover.on, covered: cover.covered, bl
 export const WARM_ATTR = 'data-bl-warm';
 export const WARM_QUIET_MS = 500;
 const WARM_RETRY_MS = 1000;   // 쉬는 조건(생성 중 · 서랍)이 풀렸는지 다시 볼 간격
-let warm = { timer: 0, job: 0, list: null, i: 0, k: 4, done: 0, slices: 0, cool: false };
-// 한 조각의 목표 시간(묶음 크기를 이것에 맞춰요). requestIdleCallback 은 화면이 계속 그려지는 동안(애니메이션 · rAF 고리) 프레임 사이 몇 ms 만 줘서, 메시지 하나(고정 몫 약 20ms)도 못 들어가
-//   리그에서 300개에 1분 넘게 걸렸어요. 그래서 낮은 우선순위 작업(scheduler.postTask background — 입력 · 그리기 · 보통 작업이 먼저)으로 한 묶음씩 하고 비켜요.
-export const WARM_SLICE_MS = 50;
-export const WARM_BATCH_MAX = 12;   // 깨끗한 메시지(하나 1ms 남짓)로 키운 묶음이 처음 그리는 메시지(하나 4ms 안팎)를 만나도 한 조각이 너무 길지 않게
-const bgTask = fn => {
-    if (typeof scheduler !== 'undefined' && typeof scheduler?.postTask === 'function' && typeof AbortController === 'function') {
-        const ctl = new AbortController(); scheduler.postTask(fn, { priority: 'background', signal: ctl.signal }).catch(() => { }); return ctl;
-    }
-    return setTimeout(fn, 16);
-};
-const cancelBg = job => { if (!job) return; if (typeof job.abort === 'function') job.abort(); else clearTimeout(job); };
-function stopWarm() { clearTimeout(warm.timer); cancelBg(warm.job); warm.timer = 0; warm.job = 0; warm.list = null; warm.i = 0; }
+let warm = { timer: 0, job: 0, list: null, i: 0, k: 2, done: 0, slices: 0, cool: false, coolJob: 0 };
+// (10-30 07시 관문) 쉬는 시간 콜백(requestIdleCallback) 안에서만, 잘게 — 낮은 우선순위 작업(postTask)으로 50ms 조각을 돌렸더니 타이핑 장면에 50ms 넘는 작업 9개 ·
+//   중앙 +5ms 가 얹혔어요. 쉬는 시간이 WARM_IDLE_MIN 보다 짧으면 다음 쉬는 시간을 기다리고, 한 번에 메시지 몇 개(WARM_BATCH_MAX 까지)만 —
+//   묶음 크기는 「하나 더 넣어도 WARM_SLICE_MS 안」이면 늘리고 WARM_SLICE_MS 의 1.15 배를 넘었으면 절반으로(잴 때마다 메시지 수와 상관없는 고정 몫이
+//   폰 4배 약 20ms 라 하나씩은 비싸요 · 30ms 의 0.6 배 문턱으로는 묶음이 2 에 머물러 관문 순서에서 다 못 푼 회차가 있었어요(스크롤 13)).
+//   rAF 고리가 도는 화면(프레임 사이 쉬는 시간 10ms 남짓)에서도 조각 하나가 40ms 안팎이라 50ms 넘는 작업이 되지 않아요.
+export const WARM_SLICE_MS = 40;
+export const WARM_IDLE_MIN = 8;
+export const WARM_BATCH_MAX = 8;
+const hasIdle = () => typeof requestIdleCallback === 'function';
+const idle = fn => (hasIdle() ? requestIdleCallback(fn) : setTimeout(() => { const end = performance.now() + 12; fn({ didTimeout: false, timeRemaining: () => Math.max(0, end - performance.now()) }); }, 50));
+const cancelIdle = id => { if (!id) return; if (hasIdle()) cancelIdleCallback(id); else clearTimeout(id); };
+function stopWarm() { clearTimeout(warm.timer); cancelIdle(warm.job); warm.timer = 0; warm.job = 0; warm.list = null; warm.i = 0; }
 /** 미리 그리기를 쉬어야 하나 — 꺼짐 · 생성 중 · (고정 아닌) 서랍이 열림 */
 export function warmPaused(doc = document) {
     if (!on) return true;
@@ -192,12 +193,23 @@ export function kickWarm(delay = WARM_QUIET_MS) {
     stopWarm();
     if (!on || typeof document === 'undefined') return;
     listenWarm();
+    // (10-30 07시 관문) 시작 덮개(#preloader) 동안은 일정도 잡지 않아요 — 덮개 동안 계산된 스타일을 읽으면 그때마다 문서 전체를 다시 계산해
+    //   폰 첫 화면이 약 0.5초 늦었어요(boot-gate.js 와 같은 이유). 걷힌 뒤 처음부터.
+    if (booting(document)) { afterBoot(kickWarmAfterBoot); return; }
     warm.timer = setTimeout(startWarm, delay);
+}
+function kickWarmAfterBoot() { kickWarm(); }
+/** 긴 채팅 가볍게가 지금 걸려 있나 — 스타일을 읽지 않고(표식 · 메시지 수만). 표식은 판에 따라 html 또는 #chat 에 붙어요 */
+function lightNow(el) {
+    if (!el) return false;
+    if (!document.documentElement?.classList?.contains(CLASS) && !el.classList?.contains(CLASS)) return false;
+    return el.querySelectorAll(':scope > .mes').length >= THRESHOLD;
 }
 function startWarm() {
     warm.timer = 0;
     if (warmPaused()) { warm.timer = setTimeout(startWarm, WARM_RETRY_MS); return; }
-    warm.job = bgTask(stepWarm);
+    if (!lightNow(document.getElementById('chat'))) return;   // 짧은 채팅이면 고를 것도 없다 — 계산된 스타일을 읽지 않고 끝
+    warm.job = idle(stepWarm);
 }
 /** 지금 건너뛰는(content-visibility:auto) 메시지를 보는 자리에서 가까운 차례로 */
 export function warmCandidates(el, win = window) {
@@ -218,16 +230,13 @@ function announce(mes) {
         mes.dispatchEvent(ev);
     } catch { }
 }
-function stepWarm() {
+function stepWarm(deadline) {
     warm.job = 0; warm.slices++;
     if (warmPaused()) { warm.list = null; warm.timer = setTimeout(startWarm, WARM_RETRY_MS); return; }
     const el = document.getElementById('chat');
-    if (!el) return;
+    if (!lightNow(el)) { warm.list = null; return; }
+    if (deadline && deadline.timeRemaining() < WARM_IDLE_MIN) { warm.job = idle(stepWarm); return; }   // 쉬는 시간이 짧으면 다음으로
     if (!warm.list) { warm.list = warmCandidates(el); warm.i = 0; }
-    // 한 조각에 한 묶음 — 잴 때마다(스타일 · 배치 한 번) 메시지 수와 상관없는 고정 몫이 있어서(폰 4배 스타일 약 12ms · #chat 배치 약 7ms)
-    //   하나씩 재면 메시지마다 그 몫을 또 냈어요(하나 20~25ms · 10개 30~44ms). 묶음 크기는 지난 조각 시간으로 맞춘다:
-    //   WARM_SLICE_MS 의 0.6 배보다 빨랐으면 두 배, 1.5 배를 넘었으면 절반(스타일이 깨끗한 메시지는 싸고 처음 그리는 메시지는 비싸서 그때그때 달라요 ·
-    //   바쁠 때 한두 번 튄 시간으로 묶음이 하나까지 줄면 고정 몫만 내다 끝나서 — 리그: 타이핑 동안 38조각에 98개 — 넉넉히 봐요).
     const picked = [];
     while (warm.i < warm.list.length && picked.length < warm.k) {
         const mes = warm.list[warm.i++];
@@ -237,33 +246,46 @@ function stepWarm() {
         const t = performance.now();
         for (const mes of picked) mes.setAttribute(WARM_ATTR, '');
         warm.cool = false;
-        void el.offsetHeight;   // 건너뛰기가 풀린 안쪽 스타일 · 배치를 지금(낮은 우선순위 작업 안에서) 끝낸다
+        void el.offsetHeight;   // 건너뛰기가 풀린 안쪽 스타일 · 배치를 지금(쉬는 시간 안에서) 끝낸다
         const spent = performance.now() - t;
-        if (picked.length === warm.k && spent < WARM_SLICE_MS * 0.6) warm.k = Math.min(warm.k * 2, WARM_BATCH_MAX);
-        else if (spent > WARM_SLICE_MS * 1.5) warm.k = Math.max(1, warm.k >> 1);
+        if (picked.length === warm.k && spent + spent / picked.length <= WARM_SLICE_MS) warm.k = Math.min(warm.k + 1, WARM_BATCH_MAX);
+        else if (spent > WARM_SLICE_MS * 1.15) warm.k = Math.max(1, warm.k >> 1);
         warm.done += picked.length;
         for (const mes of picked) announce(mes);
     }
-    if (warm.i < warm.list.length) warm.job = bgTask(stepWarm);
+    if (warm.i < warm.list.length) warm.job = idle(stepWarm);
     else warm.list = null;
 }
 /** 푼 메시지를 다시 건너뛸 수 있게 돌려놓는다 — 서랍이 열릴 때 · 답장을 받기 시작할 때.
  *  표식을 모두 떼도 보이는 메시지는 content-visibility:auto 라 그대로 그려지고(화면 밖 것만 건너뜀), 자리를 재지 않는다 —
  *  서랍이 열리는 순간 · 토큰이 막 바뀐 순간에 재면 그때 더러워진 스타일 · 배치를 푼 메시지 전부와 함께 강제로 계산해 버린다. */
 export function coolOffscreen(doc = document) {
-    stopWarm(); warm.cool = true;
+    stopWarm(); cancelCool(); warm.cool = true;
     const el = doc.getElementById('chat');
     const warmed = el ? el.querySelectorAll(':scope > .mes[' + WARM_ATTR + ']') : [];
     for (const mes of warmed) mes.removeAttribute(WARM_ATTR);
     return warmed.length;
 }
 /** 서랍이 열리면 쉬면서 화면 밖을 되돌리고, 닫히면 다시 미리 그린다 */
+// (10-30 07시 관문) 서랍이 열리는 그 순간에 표식을 다 떼면 메시지마다 배치 객체를 다시 붙이는 몫(폰 4배 145개 약 0.1~0.25초)이 서랍 여는 프레임에 얹혀요.
+//   열릴 때는 미리 그리기만 멈추고, 떼기는 쉬는 시간에 몇십 개씩(서랍 안 타이핑 같은 일은 그 뒤부터 가벼워요). 닫히면 떼기를 멈추고 다시 미리 그려요.
+export const COOL_CHUNK = 20;
+function cancelCool() { cancelIdle(warm.coolJob); warm.coolJob = 0; }
+function coolStep() {
+    warm.coolJob = 0;
+    if (!on || !document.querySelector('.drawer-content.openDrawer:not(.pinnedOpen)')) return;
+    const el = document.getElementById('chat');
+    const warmed = el ? el.querySelectorAll(':scope > .mes[' + WARM_ATTR + ']') : [];
+    for (let i = 0; i < warmed.length && i < COOL_CHUNK; i++) warmed[i].removeAttribute(WARM_ATTR);
+    if (warmed.length > COOL_CHUNK) warm.coolJob = idle(coolStep);
+}
 export function warmOnDrawers(doc = document) {
     if (!on) return;
-    if (doc.querySelector('.drawer-content.openDrawer:not(.pinnedOpen)')) { if (!warm.cool || warm.timer || warm.job) coolOffscreen(doc); } else kickWarm();
+    if (doc.querySelector('.drawer-content.openDrawer:not(.pinnedOpen)')) { stopWarm(); warm.cool = true; if (!warm.coolJob) warm.coolJob = idle(coolStep); }
+    else { cancelCool(); kickWarm(); }
 }
 // 답장을 받는 동안: 토큰마다 마지막 메시지가 다시 그려질 때 푼 메시지 전부가 배치 · 층 나누기 · 넘기기에 끼어(폰 4배 스트리밍 50ms 넘는 프레임 3 → 14개)
-//   첫 토큰(또는 생성 시작)에 화면 밖을 되돌리고, 토큰이 STREAM_QUIET_MS 끊기거나 생성이 끝나면 다시 쉬는 시간에 푼다. 드라이런(토큰 세기)은 건너뛴다.
+//   첫 토큰(또는 생성 시작)에 화면 밖을 바로 되돌리고(서랍과 달리 다음 토큰부터 가벼워야 해서), 토큰이 STREAM_QUIET_MS 끊기거나 생성이 끝나면 다시 쉬는 시간에 푼다. 드라이런(토큰 세기)은 건너뛴다.
 //   (실제 생성은 body data-generating 동안 내내 쉬어요 — 토큰 간격은 그 표식이 없는 스트림(확장 · 측정 장면)을 위한 것)
 export const STREAM_QUIET_MS = 400;
 let warmEvents = null;

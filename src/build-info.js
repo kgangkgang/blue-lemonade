@@ -504,7 +504,7 @@ export const FILE_HASHES = {
   "src/chat-graph.js": "24883:3361ae54:d817b84b",
   "src/chat-library-data.js": "5043:6dfcb24b:504fa300",
   "src/chat-library.js": "16640:3ef42170:42e103d6",
-  "src/chat-light.js": "23502:449319d3:e1c382e4",
+  "src/chat-light.js": "25358:fe38c8d0:c8610bbb",
   "src/chat-reading-position.js": "15615:5179e143:69d53288",
   "src/chat-sync.js": "24501:26a49faf:13b60fdb",
   "src/checks.js": "3042:368ec3ff:509f89cc",
