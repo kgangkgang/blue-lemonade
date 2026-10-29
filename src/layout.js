@@ -85,7 +85,10 @@ export function startCompactLayout() {
         const count = heading.querySelector('small');
         if (count.textContent !== String(avatars.length)) count.textContent = String(avatars.length);
         for (const avatar of avatars) {
-            const name = avatar.querySelector('img')?.alt || avatar.title.split('\n')[0];
+            // (hunt-world) 그룹은 실리태번이 그림을 콜라주(alt 「img1」) · alt 없는 그림으로 바꿔 끼워 이름표가 「img1」 · 「[Group] 이름」이었다 →
+            //   그룹은 title(「[Group] 이름」)에서, 캐릭터 · 페르소나는 그림 alt 에서 읽고, 앞머리 [Character] · [Group] · [Persona] 는 뗀다
+            const titled = avatar.title.split('\n')[0].replace(/^\[(?:Character|Group|Persona)\]\s*/, '');
+            const name = avatar.dataset.type === 'group' ? titled : (avatar.querySelector('img')?.alt || titled);
             let label = avatar.querySelector('.bl-fav-name');
             if (!label) {
                 label = document.createElement('span');
