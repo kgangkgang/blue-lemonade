@@ -878,9 +878,11 @@ async function checkLastMessage() {
         if (waitingForReply) { toastr.info('답이 끝나면 검사할게요. (이미 기다리는 중)', TITLE); return; }
         waitingForReply = true;
         toastr.info('답이 끝나면 검사할게요.', TITLE);
+        const chatAtClick = getContext().getCurrentChatId?.() ?? '';   // 1029 기다리는 사이 지난 채팅 목록으로 바꾸면 새 채팅의 마지막 답을 고쳐 저장했어요
         let idle = false;
         try { idle = await whenMainChatIdle({ quietMs: 500, maxMs: WAIT_REPLY_MAX_MS }); } finally { waitingForReply = false; }
         if (!idle) { toastr.info('답이 10분 넘게 끝나지 않아 검사하지 않았어요. 끝난 뒤 다시 눌러 주세요.', TITLE); return; }
+        if ((getContext().getCurrentChatId?.() ?? '') !== chatAtClick) { toastr.info('기다리는 사이 채팅이 바뀌어서 검사하지 않았어요. 이 채팅에서 다시 눌러 주세요.', TITLE); return; }
     }
     const { chat } = getContext();
     for (let id = chat.length - 1; id >= Math.max(0, chat.length - 6); id--) {

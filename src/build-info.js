@@ -221,7 +221,7 @@ export const FILE_HASHES = {
   "src/addons/rewrite/defaults.js": "20070:d7ee63a8:c1154816",
   "src/addons/rewrite/guards.js": "2015:77948f33:35dfdd0b",
   "src/addons/rewrite/guide.js": "15525:07f577f4:1ac464f9",
-  "src/addons/rewrite/index.js": "107200:3aa4dcd9:ca7718c6",
+  "src/addons/rewrite/index.js": "107608:1d7c23a5:549a7e24",
   "src/addons/rewrite/multilingual.js": "12119:a4c98688:7f7d8c74",
   "src/addons/rewrite/providers.js": "8767:15d78664:ce4229dc",
   "src/addons/rewrite/quick-ban.js": "6943:6f22e338:74280f10",

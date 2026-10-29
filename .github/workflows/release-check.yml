@@ -468,6 +468,7 @@ jobs:
           node tools/tests/fault-translator.mjs .
           node tools/tests/fault-rewrite.mjs .
           node tools/tests/rewrite-delete-gone.mjs .
+          node tools/tests/rewrite-wait-chat.mjs .
           node tools/tests/fault-tts.mjs .
           node tools/tests/fault-tts-player.mjs .
           node tools/tests/tts-delete-playing.mjs .
