@@ -552,10 +552,30 @@ export function syncChat() {
     return moved + dropped;
 }
 
-/** 켜진 프롬프트와 현재 카드에서 "- 이름 / 별명: #색" 줄을 읽어 잠긴 색으로 넣는다. { '#rrggbb': [이름들] } 을 돌려준다 (deferSave: learnFromMessage 와 같음) */
-export function importPalette({ deferSave = false } = {}) {
-    const st = state(), c = ctx();
-    const texts = [];
+// 8.2.8 프리셋 인물 표: 프리셋은 `{{setvar::bl_cast_<이름>::…}}` 표를 여러 개 두고 `{{getvar::bl_cast_{{char}}}}` 로 지금 카드 이름과 같은 표 하나만 쓴다
+const CAST_OPEN = '{{setvar::bl_cast_';
+/** 글에서 인물 표를 떼어 { rest: 표 밖 글, tables: [{ name, body }] } 로 (안쪽 {{user}} 같은 매크로는 짝을 세어 건너뛴다) */
+function splitCastTables(text) {
+    const s = String(text || ''), tables = [];
+    let rest = '', i = 0;
+    for (;;) {
+        const at = s.indexOf(CAST_OPEN, i);
+        const sep = at < 0 ? -1 : s.indexOf('::', at + CAST_OPEN.length);
+        if (sep < 0) { rest += s.slice(i); break; }
+        let depth = 1, j = sep + 2;
+        while (j < s.length && depth) {
+            if (s.startsWith('{{', j)) { depth++; j += 2; } else if (s.startsWith('}}', j)) { depth--; j += 2; } else j++;
+        }
+        if (depth) { rest += s.slice(i); break; }   // 닫히지 않은 표 — 예전처럼 통째로 읽는다
+        rest += s.slice(i, at);
+        tables.push({ name: s.slice(at + CAST_OPEN.length, sep).normalize('NFC').trim(), body: s.slice(sep + 2, j - 2) });
+        i = j;
+    }
+    return { rest, tables };
+}
+/** 켜진 프롬프트 글 (프롬프트 매니저 순서의 켜짐을 따른다) */
+function promptTexts() {
+    const c = ctx(), out = [];
     const oai = c.chatCompletionSettings || {};
     const prompts = Array.isArray(oai.prompts) ? oai.prompts : [];
     const orders = Array.isArray(oai.prompt_order) ? oai.prompt_order : [];
@@ -564,7 +584,35 @@ export function importPalette({ deferSave = false } = {}) {
     const on = Array.isArray(order) ? new Set(order.filter(x => x && x.enabled).map(x => x.identifier)) : null;
     for (const p of prompts) {
         if (!p || p.marker || !p.content) continue;
-        if (on ? on.has(p.identifier) : p.enabled !== false) texts.push(String(p.content));
+        if (on ? on.has(p.identifier) : p.enabled !== false) out.push(String(p.content));
+    }
+    return out;
+}
+/** 이 채팅의 {{char}} 이름들: 한 카드는 그 카드 이름, 그룹은 멤버마다 (프리셋의 getvar 와 같게 글자 그대로) */
+function castKeys() {
+    const c = ctx(), keys = new Set();
+    for (const ch of currentCards()) if (ch?.name) keys.add(String(ch.name).normalize('NFC').trim());
+    if (!c.groupId && c.name2) keys.add(String(c.name2).normalize('NFC').trim());
+    keys.delete('');
+    return keys;
+}
+/** 켜진 프롬프트의 인물 표 이름들과 그중 이 채팅에 맞는 것 { tables, hit } */
+export function castScope() {
+    const keys = castKeys(), tables = [];
+    for (const t of promptTexts()) for (const x of splitCastTables(t).tables) if (!tables.includes(x.name)) tables.push(x.name);
+    return { tables, hit: tables.filter(n => keys.has(n)) };
+}
+
+/** 켜진 프롬프트와 현재 카드에서 "- 이름 / 별명: #색" 줄을 읽어 잠긴 색으로 넣는다. { '#rrggbb': [이름들] } 을 돌려준다 (deferSave: learnFromMessage 와 같음)
+ *  8.2.8 프리셋 인물 표(bl_cast_*)는 이 채팅에 맞는 것만 (all = 표 전부, 「전부 불러오기」) */
+export function importPalette({ deferSave = false, all = false } = {}) {
+    const st = state();
+    const texts = [];
+    const keys = all ? null : castKeys();
+    for (const t of promptTexts()) {
+        const { rest, tables } = splitCastTables(t);
+        texts.push(rest);
+        for (const x of tables) if (!keys || keys.has(x.name)) texts.push(x.body);
     }
     for (const ch of currentCards()) texts.push(ch.description, ch.personality, ch.scenario, ch.data?.creator_notes ?? ch.creatorcomment);
     const found = {};

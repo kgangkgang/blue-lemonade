@@ -793,9 +793,16 @@ const ACTIONS = {
         renderColors();
     },
     palette: async () => {
-        const pal = await speakers.importPalette();
+        // 8.2.8 프리셋 인물 표(bl_cast_*)는 이 채팅에 맞는 것만 — 맞는 표가 없으면 안내하고 「전부 불러오기」를 고를 수 있게
+        let pal = await speakers.importPalette();
+        const sc = speakers.castScope();
+        if (sc.tables.length && !sc.hit.length) {
+            renderColors();
+            const r = await callGenericPopup(esc(`이 채팅에 맞는 인물 표가 없어요. 프리셋의 표 ${sc.tables.length}개(${sc.tables.join(', ')})를 전부 불러올까요?`), POPUP_TYPE.CONFIRM, '', { okButton: '전부 불러오기', cancelButton: '닫기' });
+            if (r === POPUP_RESULT.AFFIRMATIVE) pal = await speakers.importPalette({ all: true });
+        }
         const n = Object.keys(pal || {}).length;
-        toast(n ? `${n}가지 색을 불러왔어요` : '프리셋·카드에 색 목록이 없어요', n ? 'success' : 'warning');
+        toast(n ? `${n}가지 색을 불러왔어요` : sc.tables.length ? '이 채팅에 맞는 인물 표가 없어요' : '프리셋·카드에 색 목록이 없어요', n ? 'success' : 'warning');
         renderColors();
     },
     relearn: () => {
