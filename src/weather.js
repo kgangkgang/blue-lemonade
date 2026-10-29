@@ -357,7 +357,7 @@ export function syncWeather(on, chat = {}) {
         restBinding?.dispose();restBinding=null;
         layer?.destroy();
         layer = null;
-        document.body.classList.remove('bl-weather-on');
+        if (document.body.classList.contains('bl-weather-on')) document.body.classList.remove('bl-weather-on');
         return;
     }
     const host = document.querySelector('body > #sheld') || document.getElementById('sheld');
@@ -371,7 +371,9 @@ export function syncWeather(on, chat = {}) {
         layer.onDestroy(()=>{restBinding?.dispose();restBinding=null;});
     }
     restBinding?.sync();
-    document.body.classList.add('bl-weather-on');
+    // 8.2.3 뒤: 이미 있으면 더하지 않는다 — classList.add 는 같은 값이어도 class 속성 변경 기록을 내서(크롬) 설정 적용마다(슬라이더 틱마다) 실리태번 keyboard.js 가
+    // 문서 전체를 훑고(0.24초) 테마 squared-buttons 가 전체를 다시 쟀다(0.34초, 폰 4배 · 긴 채팅). 리그 추적(mutations.mjs)으로 잡은 것
+    if (!document.body.classList.contains('bl-weather-on')) document.body.classList.add('bl-weather-on');
     listen();
     refresh();
 }
