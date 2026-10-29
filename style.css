@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 2ce7b3d8a555) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 99개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build a1aa47054a7e) */
 /* css/00-base.css */
 :root{--bl-release:"8.2.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
@@ -7244,7 +7244,7 @@ body.salty #PersonaManagement .persona_management_global_settings label.checkbox
     padding: 0 8px !important;
   }
 }
-body.salty #WorldInfo #world_popup_entries_list.bl-wi-light > .world_entry:not(.ui-sortable-helper, .ui-sortable-placeholder):not(:has(> form > .inline-drawer > .inline-drawer-header .inline-drawer-icon.up)) {
+body.salty #WorldInfo #world_popup_entries_list.bl-wi-light > .world_entry:not(.ui-sortable-helper, .ui-sortable-placeholder):not(:has(> form > .inline-drawer > .inline-drawer-header .inline-drawer-icon.up)):not(:has(> form > .inline-drawer > .inline-drawer-header > .bl-wi-actions[open])) {
   content-visibility: auto;
   contain-intrinsic-size: auto 56px;
 }

@@ -1749,8 +1749,9 @@ body.salty #PersonaManagement .persona_management_global_settings label.checkbox
 }
 /* 월드인포 긴 목록 가볍게 (src/worldinfo-light.js — 항목 80개 이상이면 목록에 bl-wi-light): 화면 밖 접힌 항목은 그리기 · 재계산을 건너뛴다.
    펼친 항목(머리 줄 토글 아이콘이 .up — 실리태번은 내용 display:block 과 함께 아이콘 down/up 을 바꾼다 · :has 안에 [style*=] 는 두지 않는다, tools/tests/long-chat-perf.mjs) · 끌고 있는 항목(.ui-sortable-helper) · 끌기 자리표시(.ui-sortable-placeholder)는 제외.
+   (hunt-world) ⋯ 항목 작업 메뉴(.bl-wi-actions, src/layout.js)를 연 항목도 제외 — content-visibility 는 늘 칠하기 가두기(paint containment)라 접힌 항목 밖으로 내려오는 메뉴의 「복제 · 삭제」가 잘렸다.
    contain-intrinsic-size: 아직 못 그린 항목은 접힌 머리 줄 높이(46px 줄 + 아래 여백 10px)로 자리를 잡고, 한 번 그린 항목은 그 크기를 기억한다(auto). */
-body.salty #WorldInfo #world_popup_entries_list.bl-wi-light > .world_entry:not(.ui-sortable-helper, .ui-sortable-placeholder):not(:has(> form > .inline-drawer > .inline-drawer-header .inline-drawer-icon.up)) {
+body.salty #WorldInfo #world_popup_entries_list.bl-wi-light > .world_entry:not(.ui-sortable-helper, .ui-sortable-placeholder):not(:has(> form > .inline-drawer > .inline-drawer-header .inline-drawer-icon.up)):not(:has(> form > .inline-drawer > .inline-drawer-header > .bl-wi-actions[open])) {
   content-visibility: auto;
   contain-intrinsic-size: auto 56px;
 }

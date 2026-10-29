@@ -285,6 +285,7 @@ jobs:
           node tools/tests/code-plain.mjs .
           node tools/tests/code-plain-rewrap.mjs .
           node tools/tests/worldinfo-light.mjs .
+          node tools/tests/worldinfo-light-menu.mjs .
           node tools/tests/show-more-tap.mjs .
           node tools/tests/prompt-choice.mjs .
           node tools/tests/bughunt2-core.mjs .
