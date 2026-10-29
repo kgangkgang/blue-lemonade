@@ -19,7 +19,8 @@ const TYPING = 'textarea,[contenteditable=""],[contenteditable="true"],input:not
 const MENU_ITEMS = '.mes_buttons > .extraMesButtons > *, .mes_buttons > .bl-pinned';
 
 // 설명 창은 월드인포 ? 와 같은 help-sheet.js (그쪽이 시작할 때 이미 읽어 둬서 바로 와요)
-const openSheet = help => import('./help-sheet.js').then(m => { const dialog = m.openHelpSheet(help); if (dialog) dialog.scrollTop = 0; return dialog; }) // 닫기 단추에 초점이 가며 긴 목록이 맨 아래로 내려가지 않게.catch(error => console.warn('[Blue Lemonade] 길게 누르기 설명 창', error));
+// 맨 위로: 닫기 단추에 초점이 가며 긴 목록이 맨 아래로 내려가지 않게. 8.2.7 .catch 가 이 주석 안에 들어가 있어 못 열면 처리되지 않은 거절로 샜어요
+const openSheet = help => import('./help-sheet.js').then(m => { const dialog = m.openHelpSheet(help); if (dialog) dialog.scrollTop = 0; return dialog; }).catch(error => console.warn('[Blue Lemonade] 길게 누르기 설명 창', error));
 
 /** 사전 목록 → 열쇠별 찾기표. 같은 열쇠는 scope 가 다를 때만 여럿 */
 export function indexHelp(list) {

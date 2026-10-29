@@ -162,12 +162,12 @@ const prevElse = h('button', { 'aria-label': '이전 답' }); h('body', {}, prev
 assert.equal(findHelp(prevElse, index), null, 'scope 밖 같은 글은 안 맞아요');
 
 // ── 5. 누르기 흐름 (가짜 시계 · 이벤트) ──
-function makeEnv({ enabled = () => true } = {}) {
+function makeEnv({ enabled = () => true, own = true } = {}) {
     let now = 0, seq = 0; const timers = new Map(), listeners = [];
     const target = (where) => ({ addEventListener: (type, fn, opt) => listeners.push({ where, type, fn, capture: opt === true || !!opt?.capture }), removeEventListener: (type, fn) => { const i = listeners.findIndex(l => l.where === where && l.type === type && l.fn === fn); if (i >= 0) listeners.splice(i, 1); } });
     const doc = target('doc'), host = { ...target('host'), Element: El, navigator: {}, setTimeout: (fn, ms) => { const id = ++seq; timers.set(id, { at: now + ms, fn }); return id; }, clearTimeout: id => timers.delete(id) };
     let loads = 0; const opened = [];
-    const stop = startLongpressHelp({ isEnabled: enabled, doc, host, load: () => { loads++; return { HELP }; }, open: help => opened.push(help) });
+    const stop = startLongpressHelp({ isEnabled: enabled, doc, host, load: () => { loads++; return { HELP }; }, ...(own ? { open: help => opened.push(help) } : {}) });
     const fire = (type, el, extra = {}) => {
         const ev = { type, target: el, pointerId: 1, isPrimary: true, button: 0, pointerType: 'touch', clientX: 10, clientY: 10, defaultPrevented: false, stopped: false, ...extra,
             preventDefault() { this.defaultPrevented = true; }, stopImmediatePropagation() { this.stopped = true; }, stopPropagation() { this.stopped = true; } };
@@ -198,6 +198,20 @@ function makeEnv({ enabled = () => true } = {}) {
     env.fire('pointerdown', icon); await env.advance(80); env.fire('pointerup', icon); const next = env.fire('click', icon);
     assert(!next.stopped, '다음 짧은 누름은 원래대로');
     assert.equal(env.loads, 1, '사전은 한 번만 읽어요'); env.stop();
+}
+// 8.2.7: 기본 설명 창(help-sheet.js)을 못 불러오거나 창을 못 그려도 처리되지 않은 거절로 새지 않아요 (.catch 가 주석 안에 들어가 있었어요)
+{
+    const leaked = [];
+    const onLeak = error => leaked.push(error);
+    process.on('unhandledRejection', onLeak);
+    const env = makeEnv({ own: false });
+    const warn = console.warn; console.warn = () => {};
+    env.fire('pointerdown', icon); await env.advance(HOLD_MS + 10);
+    for (let i = 0; i < 20; i++) await new Promise(r => setImmediate(r));
+    console.warn = warn;
+    process.off('unhandledRejection', onLeak);
+    env.stop();
+    assert.deepEqual(leaked.map(String), [], '설명 창을 못 열어도 경고로 끝나요');
 }
 // 폰: 창이 뜬 뒤 pointerup 없이 click 이 설명 창으로 떨어져도 막아요(바깥 누르면 닫기가 방금 연 창을 닫지 않게). 그 뒤 창 안 누름 · 키보드 click 은 그대로
 {
