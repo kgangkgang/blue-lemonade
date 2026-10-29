@@ -200,9 +200,11 @@ export function startNaturalSlash({ isEnabled = () => true } = {}) {
             hint.addEventListener('click', event => { event.preventDefault(); void execute(); });
             host.prepend(hint);
         }
-        hint.textContent = message;
-        hint.hidden = !message;
-        hint.disabled = !actionable || busy;
+        // 8.2.7 입력창에 글자를 칠 때마다 불려요 — 같은 값을 다시 쓰면 #send_form 안에 속성 기록이 생겨 body 감시자들이 돌아요. 바뀔 때만 써요
+        if (hint.textContent !== message) hint.textContent = message;
+        if (hint.hidden !== !message) hint.hidden = !message;
+        const disabled = !actionable || busy;
+        if (hint.disabled !== disabled) hint.disabled = disabled;
     }
     function refresh() {
         const state = current();

@@ -120,7 +120,7 @@ export function installPullToRefresh({ host, isEnabled, doc = document, win = wi
     }
     function reset() {
         gesture?.cancel(); gesture = null; state = null; identifier = null; startTarget = null;
-        if (!reloading) indicator.hidden = true;
+        if (!reloading && !indicator.hidden) indicator.hidden = true;   // 8.2.7 scroll · 입력마다 불려요 — 숨어 있으면 다시 쓰지 않아요
     }
     function eligible(target) {
         if (!enabled() || reloading || chat.scrollTop > 1 || now() - lastScroll < 250 || selected()) return false;

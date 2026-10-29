@@ -49,7 +49,7 @@ export function chipGap({ coarse = false, lines = [], left = 0, width = 0 } = {}
 const coarse = () => !!globalThis.matchMedia?.('(pointer: coarse)')?.matches;
 
 function hide() {
-    if (chip) chip.hidden = true;
+    if (chip && !chip.hidden) chip.hidden = true;   // 8.2.7 채팅 scroll 마다 불려요 — 같은 값을 다시 쓰면 속성 기록이 생겨 감시자들이 돌아요
     current = '';
 }
 
