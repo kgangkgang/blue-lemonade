@@ -25,8 +25,9 @@ export function syncCodePlain(enabled) {
         return;
     }
     if (!hooked) return;
-    if (hooked.highlightElement === wrapper) { hooked.highlightElement = original; original = null; }   // 깨끗이 되돌릴 수 있을 때만 — 누가 그 뒤에 또 감쌌으면 그 사슬에 우리 겹이 남으니 original 은 두고 통과만 시킨다 (on=false)
-    hooked = null;
+    // 깨끗이 되돌릴 수 있을 때만 — 누가 그 뒤에 또 감쌌으면 그 사슬에 우리 겹이 남으니 original · hooked 를 두고 통과만 시킨다 (on=false).
+    // 8.2.4 검토: hooked 까지 비우면 다시 켤 때 남의 겹(안에 우리 겹)을 original 로 잡고 또 감싸 메시지 밖 코드에서 서로를 끝없이 불렀다 — 남은 겹을 그대로 다시 쓴다
+    if (hooked.highlightElement === wrapper) { hooked.highlightElement = original; original = null; hooked = null; }
 }
 
 /** 시험용 */

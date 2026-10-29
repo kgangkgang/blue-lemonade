@@ -506,7 +506,7 @@ export const FILE_HASHES = {
   "src/chat-reading-position.js": "15615:5179e143:69d53288",
   "src/chat-sync.js": "24501:26a49faf:13b60fdb",
   "src/checks.js": "3042:368ec3ff:509f89cc",
-  "src/code-plain.js": "2814:d4d8839f:437351c1",
+  "src/code-plain.js": "3046:4e246e55:6ba7a5df",
   "src/colorpick.js": "29852:5b5d8858:3ec727e4",
   "src/colorpop.js": "3885:d35d517b:d68f9617",
   "src/control-ink.js": "17958:f4115a79:f5e79981",
