@@ -426,6 +426,7 @@ jobs:
           node tools/tests/extension-folder.mjs .
           node tools/tests/model-register-move.mjs .
           node tools/tests/model-register-offer.mjs .
+          node tools/tests/models-parse-media.mjs .
           node tools/tests/preset-sharing.mjs .
           node tools/tests/first-run.mjs .
           node tools/tests/first-run-css.mjs .

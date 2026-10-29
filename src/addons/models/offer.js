@@ -8,7 +8,7 @@ import * as LM from '../../live-models.js';
 import { SOURCES } from './sources.js';
 import { TITLE, modelsOf, saveSettings, setModels, settings } from './state.js';
 import { applyOne } from './inject.js';
-import { pickNew, pruneStep, withAdded, withOffered } from './offer-core.js';
+import { pickNew, pruneStep, withAdded, withOffered, withoutMedia } from './offer-core.js';
 
 let asking = false;
 
@@ -22,7 +22,7 @@ export function builtInLists() {
     builtIn ??= fetch(new URL('index.html', document.baseURI), { cache: 'force-cache' })
         .then(res => (res.ok ? res.text() : Promise.reject(new Error(`index.html ${res.status}`))))
         .then((html) => {
-            const page = new DOMParser().parseFromString(html, 'text/html');
+            const page = new DOMParser().parseFromString(withoutMedia(html), 'text/html');   // 미디어 요소가 문서를 붙잡지 않게 (offer-core.js)
             const lists = {};
             for (const source of SOURCES) {
                 if (source.kind !== 'select' || source.wiped) continue;

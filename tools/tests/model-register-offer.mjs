@@ -68,7 +68,7 @@ const T = globalThis.__mrOffer = {
     known: {}, page: {}, store: { sources: {}, picks: {}, offered: {} },
     saves: 0, applied: [], popups: [], answer: 1, onPopup: null,
 };
-const prelude = `const T=globalThis.__mrOffer;const {pickNew,pruneStep,withAdded,withOffered}=T.core;const SOURCES=T.SOURCES;const TITLE='모델 등록';
+const prelude = `const T=globalThis.__mrOffer;const {pickNew,pruneStep,withAdded,withOffered,withoutMedia}=T.core;const SOURCES=T.SOURCES;const TITLE='모델 등록';
 const POPUP_RESULT={AFFIRMATIVE:1,NEGATIVE:0,CANCELLED:null};const POPUP_TYPE={TEXT:1,CONFIRM:2};
 const LM={get KNOWN(){return T.known;},pageModels:id=>T.page[id]??[]};
 const settings=()=>T.store;const saveSettings=()=>{T.saves++;};const modelsOf=id=>T.store.sources[id]??[];
@@ -175,7 +175,7 @@ await ok('부르는 자리: 실리태번 로딩 뒤 한 번 (index.js) · 설정
     const panel = await fs.readFile(path.join(dir, 'panel.js'), 'utf8');
     assert.match(panel, /\(await builtInLists\(\)\)\?\.\[sourceId\]\?\.has\(name\)/, '등록 창: 기본 목록에 있는 이름은 넣지 않는다');
     const offerSrc = await fs.readFile(path.join(dir, 'offer.js'), 'utf8');
-    assert.match(offerSrc, /new DOMParser\(\)\.parseFromString\(html, 'text\/html'\)/, '기본 목록은 index.html 원본에서');
+    assert.match(offerSrc, /new DOMParser\(\)\.parseFromString\(withoutMedia\(html\), 'text\/html'\)/, '기본 목록은 index.html 원본에서 (미디어 태그만 빼고 — models-parse-media.mjs)');
     const state = await fs.readFile(path.join(dir, 'state.js'), 'utf8');
     assert.match(state, /offered: \{\}/);
     assert.match(state, /store\.offered = \{\};/);

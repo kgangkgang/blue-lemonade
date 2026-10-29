@@ -3,6 +3,13 @@
 // 목록을 받아 오는 공급자(OpenRouter 등)는 받은 목록이 이미 그 계정의 최신이라, 거기 없는 이름은 끝난 모델일 수 있다.
 export const FIXED_SOURCES = Object.freeze(['openai', 'claude', 'makersuite', 'vertexai', 'cohere', 'zai']);
 
+/**
+ * 실리태번 index.html 을 기본 목록 읽기용으로 파싱하기 전에 <audio> · <video> 여는 태그를 뺀다 (perf-heap 10-30).
+ * DOMParser 문서 안의 미디어 요소(#audio_message_sound)는 RemotePlayback 이 「할 일 남음」으로 남아 파싱한 문서 전체(노드 약 1.75만)를
+ * 세션 내내 붙잡았다. select · option 은 미디어 태그 안에 없으니 읽는 목록은 같다 (닫는 태그만 남으면 파서가 버린다).
+ */
+export const withoutMedia = html => String(html ?? '').replace(/<(?:audio|video)\b[^>]*>/gi, '');
+
 const clean = list => (Array.isArray(list) ? list : []).map(item => String(item ?? '').trim()).filter(Boolean);
 
 /**
