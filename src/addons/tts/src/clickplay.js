@@ -35,7 +35,7 @@
 import { chat, substituteParams } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
 import { settings } from './settings.js';
-import { segmentMessage, pairSegments, parseRegexLines, normColor, speechDisplay } from './text.js';
+import { segmentMessage, pairSegments, parseRegexLines, normColor, speechDisplay, linePrefixName } from './text.js';
 import { resolveSpeaker, canon, knownNames as learnedNames } from './speakers.js';
 import { findVoice, voiceByName } from './voices.js';
 import { speakSegments } from './player.js';
@@ -51,8 +51,6 @@ const CLOSER = { '“': '”', '"': '"', '「': '」', '『': '』', '«': '»',
 const ONE_LINE = new Set(['"', '＂']); // 좌우 같은 모양 → 한 줄 안에서만 짝을 찾음
 const LETTER = /[\p{L}\p{N}]/u;
 const HEX_BEFORE = /(?:^|\s)#([0-9a-fA-F]{6})[ \t]*$/;                 // 데우스 맨 색 표기  #e63946 "…"
-const PREFIX_COLON = /^\s*([^\s:：「『“"]{1,20})\s*[:：]\s*$/;           // 이름: 「…」
-const PREFIX_BARE = /^\s*([^\s「『]{1,20})$/;                            // 이름「…」 (아는 이름일 때만)
 
 // 클릭을 무시할 대상 (그 안을 눌렀을 때)
 const INTERACTIVE = 'a, button, input, textarea, select, img, video, audio, details, summary, code, pre, .mes_button, [contenteditable]';
@@ -191,11 +189,8 @@ export function colorFromBareHex(flat, start) {
 /** 줄 앞 이름: "이름: 「" · 이름「 (아는 이름일 때만) */
 function prefixHint(flat, d, known) {
     const ls = flat.lastIndexOf('\n', d.start - 1) + 1;
-    const prefix = flat.slice(ls, d.start).replace(/[*_~`]/g, '');
-    let m = PREFIX_COLON.exec(prefix);
-    if (m) return m[1];
-    if ((d.opener === '「' || d.opener === '『') && (m = PREFIX_BARE.exec(prefix)) && known.has(fold(m[1]).replace(/\s+/g, ''))) return m[1];
-    return null;
+    const has = (n) => known.has(fold(n).replace(/\s+/g, ''));
+    return linePrefixName(flat.slice(ls, d.start), d.opener, has, has);   // 2.0.6 text.js 와 같은 이름표 규칙 (괄호 · 띄어 쓴 아는 이름)
 }
 
 // ---------- 누른 글자 확인 (caretPositionFromPoint 는 빈 곳을 눌러도 가장 가까운 자리를 준다)

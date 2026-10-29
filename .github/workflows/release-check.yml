@@ -157,6 +157,7 @@ jobs:
           node tools/tests/undo-701.mjs .
           node tools/tests/tts-paragraph-pair.mjs .
           node tools/tests/tts-italic-quote.mjs .
+          node tools/tests/tts-name-hint.mjs .
           node tools/tests/bughunt2-addons.mjs .
           node tools/tests/fa-free-icons.mjs .
           node tools/tests/reader-sync-strip.mjs .

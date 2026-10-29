@@ -92,10 +92,33 @@ function colorOf(name, attrs) {
     return null;
 }
 
+// 2.0.6 따옴표로 감싼 값은 띄어 쓴 이름 전체 (character="Mina Park" — 전엔 첫 낱말 「Mina」 만), 따옴표 없는 값은 전처럼 한 낱말
 function characterAttr(attrs) {
     if (!attrs) return null;
-    const m = /\bcharacter\s*=\s*["“'‘]?\s*([^"”“'‘’<>\s]+)/i.exec(attrs);
-    return m ? m[1] : null;
+    const m = /\bcharacter\s*=\s*(?:"([^"<>]*)"|'([^'<>]*)'|“([^”<>]*)”|‘([^’<>]*)’|([^"”“'‘’<>\s]+))/i.exec(attrs);
+    const v = m ? String(m[1] ?? m[2] ?? m[3] ?? m[4] ?? m[5] ?? '').replace(/\s+/g, ' ').trim().slice(0, 40) : '';
+    return v || null;
+}
+
+/**
+ * 2.0.6 줄 앞 이름표 → 이름 | null. prefix = 그 줄 처음부터 대화문 여는 글자 앞까지, opener = 여는 글자.
+ *   「이름: "…"」 (모르는 이름도) · 「[이름]: "…"」 · 「【이름】: "…"」 (괄호를 뺀 이름) · 「Mina Park: "…"」 (띄어 쓴 이름은 knownSpaced 일 때만) ·
+ *   「이름「…」」 (knownBare 일 때만). 글자 꾸밈(* _ ~ `)은 먼저 뺀다. text.js 조각 나누기와 clickplay.js 누른 대사가 같이 쓴다
+ */
+const PREFIX_ONE = /^\s*([^\s:：「『“"]{1,20})\s*[:：]\s*$/;
+const PREFIX_SPACED = /^\s*([^:：「『“"\n]{1,40}?)\s*[:：]\s*$/;
+const PREFIX_BARE_NAME = /^\s*([^\s「『]{1,20})$/;
+const unbracket = (s) => { const t = String(s || '').trim(); const m = /^[[【〔]\s*([^\]】〕]+?)\s*[\]】〕]$/.exec(t); return m ? m[1] : t; };
+export function linePrefixName(prefix, opener, knownBare = () => false, knownSpaced = () => false) {
+    const p = String(prefix || '').replace(/[*_~`]/g, '');
+    let m = PREFIX_ONE.exec(p);
+    if (m) return unbracket(m[1]) || null;
+    if ((m = PREFIX_SPACED.exec(p))) {
+        const name = unbracket(m[1]).replace(/\s+/g, ' ');
+        if (/\s/.test(name) && name.split(' ').length <= 4 && knownSpaced(name)) return name;
+    }
+    if ((opener === '「' || opener === '『') && (m = PREFIX_BARE_NAME.exec(p)) && knownBare(m[1])) return m[1];
+    return null;
 }
 
 /** [a, e) 를 빈칸으로 (줄바꿈은 남겨 줄 번호를 지킴) */
@@ -429,6 +452,7 @@ export function segmentMessage(rawText, opts = {}) {
     const readThought = !!(opts.routes && opts.routes.thought && opts.routes.thought !== 'skip');
     const known = new Set([...(opts.knownNames || []), opts.userName, opts.charName].filter(Boolean).map(n => String(n).toLowerCase().replace(/\s+/g, '')));
     const isKnown = (name) => !known.size || known.has(String(name).toLowerCase().replace(/\s+/g, ''));
+    const isKnownStrict = (name) => known.has(String(name).toLowerCase().replace(/\s+/g, ''));   // 2.0.6 띄어 쓴 이름표는 아는 이름만
 
     // 1~2. 정리
     let work = String(rawText ?? '').replace(/\r\n?/g, '\n');
@@ -475,10 +499,7 @@ export function segmentMessage(rawText, opts = {}) {
         const line = lineAt(d.start);
         if (!lineHint.has(line)) {
             const ls = body.lastIndexOf('\n', d.start - 1) + 1;
-            const prefix = body.slice(ls, d.start).replace(/[*_~`]/g, '');
-            let name = null, m;
-            if ((m = /^\s*([^\s:：「『“"]{1,20})\s*[:：]\s*$/.exec(prefix))) name = m[1];
-            else if ((body[d.start] === '「' || body[d.start] === '『') && (m = /^\s*([^\s「『]{1,20})$/.exec(prefix)) && isKnown(m[1])) name = m[1];
+            const name = linePrefixName(body.slice(ls, d.start), body[d.start], isKnown, isKnownStrict);   // 2.0.6 괄호 이름표 · 띄어 쓴 아는 이름
             lineHint.set(line, name);
             if (name) covered.push([ls, d.start]); // 이름 표시는 읽지 않음
         }
