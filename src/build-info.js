@@ -750,7 +750,7 @@ export const FILE_HASHES = {
   "src/weather.js": "39399:216772d6:2dda6475",
   "src/websearch-core.js": "17125:d18d37ff:114569c1",
   "src/websearch.js": "23413:6753586f:be03a4b1",
-  "src/wheel-x.js": "3743:864ddc4f:c8098c55",
+  "src/wheel-x.js": "4118:fbb1b923:226b9d82",
   "src/wi-help-data.js": "23093:a4cbce3e:822b4fbb",
   "src/wi-help.js": "4110:3ad5e5ef:5bfb6bbb",
   "src/wi-link.js": "6848:9a852a37:3c23d647",

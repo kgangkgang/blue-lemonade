@@ -15,7 +15,11 @@ export function findWheelStrip(target, root = null, style = el => el.ownerDocume
     if (!el || el.closest?.(SKIP)) return null;
     for (; el && el !== root && el.nodeType === 1 && el !== el.ownerDocument?.body; el = el.parentElement) {
         const cw = el.clientWidth;
-        if (!cw || el.scrollWidth <= cw + 1) continue;
+        if (!cw || el.scrollWidth <= cw + 1) {
+            // 8.2.4 검토: 가로로는 맞지만 세로로 굴러가는 칸(목록 · 설정 칸) 안이면 그 세로 스크롤이 우선 — 바깥의 가로 넘침 칸까지 올라가지 않아요
+            if (cw && el.scrollHeight > el.clientHeight + 1) { const oy = style(el).overflowY; if (oy === 'auto' || oy === 'scroll') return null; }
+            continue;
+        }
         if (el.scrollHeight > el.clientHeight + 1) return null;   // 세로로도 넘치는 칸 — 세로 스크롤이 우선
         const overflow = style(el).overflowX;
         if (overflow === 'auto' || overflow === 'scroll') return el;
