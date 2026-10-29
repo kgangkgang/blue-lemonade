@@ -452,6 +452,7 @@ jobs:
           node tools/tests/pricing-quote-edges.mjs .
           node tools/tests/relay-prices-edges.mjs .
           node tools/tests/addon-save-verify.mjs .
+          node tools/tests/addon-off-cost.mjs .
           node tools/tests/settings-merge-edges.mjs .
           node tools/tests/settings-held.mjs .
           node tools/tests/device-layout-merge.mjs .

@@ -51,7 +51,7 @@ await t('배선: 엔진 title · runtime 의 translatedPromptName · 한글화 �
     const list = read('src/promptlist.js');
     const runtimeAt = list.indexOf("import('./scripts/runtime.js')"), addonAt = list.indexOf("import('./addons/prompt/index.js')");
     assert.ok(runtimeAt > 0 && addonAt > runtimeAt, '목록에 칠하는 사전이 먼저, 한글화 패널 캐시는 다음');
-    assert.match(list, /if \(ctx\?\.extensionSettings\?\.salty\?\.addons\?\.prompt\) \{/, '한글화 패널이 꺼져 있으면 불러오지 않는다');
+    assert.match(list, /if \(\(await import\('\.\/addons\.js'\)\.catch\(\(\) => null\)\)\?\.addonRunning\?\.\('prompt'\)\) \{/, '한글화 패널이 실제로 돌 때만 불러온다(켜 둔 값만으로는 안 불러온다 — 불러오면 시작해요)');
     assert.match(list, /presetName: await presetNamer\(ctx\),/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/prompt-translated-name\.mjs \./);
 });

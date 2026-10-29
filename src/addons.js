@@ -17,6 +17,8 @@ const names={mermaid:'Mermaid 도표',zipinstall:'ZIP 설치',tts:'TTS',directio
 const icons={mermaid:'fa-diagram-project',zipinstall:'fa-file-zipper',tts:'fa-volume-high',direction:'fa-feather-pointed',assets:'fa-images',prompt:'fa-table-list',customstyle:'fa-sliders',translator:'fa-language',words:'fa-arrow-right-arrow-left',capture:'fa-camera',order:'fa-arrow-down-short-wide',perf:'fa-gauge-high',models:'fa-circle-plus',modelswitch:'fa-shuffle',regexlink:'fa-link',bookmarks:'fa-bookmark',rewrite:'fa-glasses',notes:'fa-note-sticky','prompt-template':'fa-code'};
 const tabs=[['watchdog','끊김 감시','heart-pulse'],['timer','로딩 시간','stopwatch'],['perf','성능 보조','gauge-high'],['log','요청 로그','receipt'],['dedupe','저장 정리','floppy-disk']];
 const changed=()=>window.dispatchEvent(new Event('bl:addons-state'));
+// 1029 지금 이 페이지에서 실제로 도는지 — 설정 값(켜 둠)만 보면 사용 모드 · 단독 확장 대기 · 새로고침 전에도 바깥에서 애드온을 불러 시작시켰다
+export const addonRunning=id=>running.has(id);
 export async function conflict(id){
     const {extensionNames,extension_settings}=await import('../../../../extensions.js');
     const candidates=DUPLICATES[id]??[];

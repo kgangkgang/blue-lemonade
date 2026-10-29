@@ -88,7 +88,8 @@ async function installedExtensions() {
 async function presetNamer(ctx) {
     const finders = [];
     try { const rt = await import('./scripts/runtime.js'); if (typeof rt.translatedPromptName === 'function') finders.push(p => rt.translatedPromptName(String(p.identifier), String(p.name || ''))); } catch { /* 사전 없이 */ }
-    if (ctx?.extensionSettings?.salty?.addons?.prompt) {
+    // 1029 켜 둔 값이 아니라 실제로 도는지 — 한글화 패널 모듈은 불러오는 순간 시작해서(설정 칸 · 캐시 읽기) 사용 모드에서 확장을 꺼도 여기서 켜졌다
+    if ((await import('./addons.js').catch(() => null))?.addonRunning?.('prompt')) {
         try { const pa = await import('./addons/prompt/index.js'); if (typeof pa.translatedPromptTitle === 'function') finders.push(p => pa.translatedPromptTitle(String(p.identifier))); } catch { /* 캐시 없이 */ }
     }
     return prompt => { for (const find of finders) { try { const name = find(prompt); if (name && String(name).trim()) return String(name).trim(); } catch { /* 다음 */ } } return null; };
