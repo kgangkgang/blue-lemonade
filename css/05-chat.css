@@ -72,8 +72,10 @@ body.salty #chat .last_mes {
    실리태번 본체가 body 를 :has 주어로 써서 문서 어디서든 노드가 들고 나면(설명 칸 한 글자 → .ch_description 글 다시 쓰기) 메시지 300개의 요소 1만 4천 개가
    글자마다 다시 계산됐다(PC 163ms) — 화면 밖 메시지를 건너뛰면 48ms. 마지막 메시지(스트리밍 · 스와이프 줄) · 메뉴 열린(.bl-menu-open 은 위에서 visible !important) ·
    고른 메시지는 뺀다. 편집 중 메시지는 따로 빼지 않는다 — 초점(textarea)이 있는 내용은 브라우저가 「보이는 것」으로 쳐서 그리고, :has(.edit_textarea) 를 두면
-   메시지마다 :has 주어가 되어 스트리밍 글자마다 그 메시지를 다시 훑는다. contain-intrinsic-size: 아직 못 그린 메시지는 160px 로 자리를 잡고, 한 번 그린 메시지는 그 크기를 기억한다(auto). */
-body.salty #chat.bl-chat-light > .mes:not(.last_mes, .bl-menu-open, .selected) {
+   메시지마다 :has 주어가 되어 스트리밍 글자마다 그 메시지를 다시 훑는다. contain-intrinsic-size: 아직 못 그린 메시지는 160px 로 자리를 잡고, 한 번 그린 메시지는 그 크기를 기억한다(auto).
+   마지막 10개는 늘 그대로 그린다 — 실리태번이 scrollTop = scrollHeight 로 바닥에 붙일 때 바닥 쪽이 자리표시(추정 높이)면 그려진 뒤 높이가 바뀌어 바닥에 못 닿았다
+   (리그: 바닥까지 1,700px 남음). 바닥 10개가 실제 높이면 바닥 붙이기 · 새 답 따라가기가 정확하고, 그 위는 화면에 들어올 때 그려진다. */
+body.salty #chat.bl-chat-light > .mes:not(.last_mes, .bl-menu-open, .selected):not(:nth-last-child(-n+10)) {
   content-visibility: auto;
   contain-intrinsic-size: auto 160px;
 }

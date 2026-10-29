@@ -50,15 +50,16 @@ test('채팅 칸이 바뀌면(다시 그림) 새 칸을 감시한다 · 끄면 �
     assert.equal(observers.filter(o => o.live).length, 0); assert.equal(chat.classes.has('bl-chat-light'), false); assert.equal(M._test.state().watching, false);
     chat.count = 300; fire(); assert.equal(chat.classes.has('bl-chat-light'), false, '끈 뒤에는 세지 않는다');
 });
-test('CSS: #chat.bl-chat-light 의 메시지에 content-visibility:auto · contain-intrinsic-size auto · 마지막 · 메뉴 · 고른 메시지 제외 · :has 없음 · [style 없음 · style.css 에 들어 있다', () => {
+test('CSS: #chat.bl-chat-light 의 메시지에 content-visibility:auto · contain-intrinsic-size auto · 마지막 · 바닥 10개 · 메뉴 · 고른 메시지 제외 · :has 없음 · [style 없음 · style.css 에 들어 있다', () => {
     const src = read('css/05-chat.css');
     const m = src.match(/^body\.salty #chat\.bl-chat-light > \.mes([^{]*)\{([^}]*)\}/m);
     assert.ok(m, '규칙이 없다');
     assert.match(m[1], /:not\(\.last_mes, \.bl-menu-open, \.selected\)/);
+    assert.match(m[1], /:not\(:nth-last-child\(-n\+10\)\)/, '바닥 10개는 실제 높이로 — 바닥 붙이기 정확');
     assert.ok(!m[1].includes(':has('), '메시지마다 :has 주어가 되지 않게');
     assert.ok(!/\[\s*style/.test(m[1]));
     assert.match(m[2], /content-visibility:\s*auto/); assert.match(m[2], /contain-intrinsic-size:\s*auto \d+px/);
-    assert.ok(read('style.css').includes('.bl-chat-light > .mes:not(.last_mes, .bl-menu-open, .selected)'), 'style.css 에 빌드돼 있다 (빌드가 #chat 을 :is(#chat,.bl-chat-like) 로 넓힌다)');
+    assert.ok(read('style.css').includes('.bl-chat-light > .mes:not(.last_mes, .bl-menu-open, .selected):not(:nth-last-child(-n+10))'), 'style.css 에 빌드돼 있다 (빌드가 #chat 을 :is(#chat,.bl-chat-like) 로 넓힌다)');
     assert.match(src, /\.mes\.bl-menu-open \{[^}]*content-visibility: visible !important/s, '메뉴 열린 메시지는 visible !important 로 이미 뺀다');
 });
 test('연결: features.js · settings.js(기본값 · 보정 · 동작 값) · styles.js · 설정 줄 · 라벨 · 검색 · CI', () => {
