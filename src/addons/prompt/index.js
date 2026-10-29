@@ -260,6 +260,10 @@ const LOCAL_DB_NAME  = 'BlueLemonadePromptCacheLocal';
 const LOCAL_STORE    = 'entries';
 let localFallback    = false;      // 이번 세션은 목록 파일을 못 읽어 로컬에만 둔다
 const localHeld      = new Set();  // 로컬에 맡겨 둔 키 (서버에 올라가면 로컬에서 지운다)
+// 8.2.7 서버 값을 못 보고 만든 번역(목록 · 조각을 못 읽은 세션)은 { blind: true, value } 로 맡긴다 — 옮길 때 서버에 이미 있는 키는 덮지도 지우지도 않는다.
+//   예전엔 못 읽은 세션에서 다시 번역한 글이 다음 세션에 서버의 같은 키(직접 고친 번역 · 다른 기기 번역)를 덮었다. 올리기만 실패한 번역(서버를 본 내 고침)은 전처럼 글자 그대로 — 서버를 이긴다
+const heldSeen       = new Set();  // 못 읽은 세션이 처음에 읽어 보여 준, 서버를 본 맡긴 키 (그 세션에서 다시 고쳐도 서버를 이긴다)
+const heldEntry = raw => raw && typeof raw === 'object' && raw.blind === true ? { value: raw.value, blind: true } : { value: raw, blind: false };
 const hasLocalDB = () => typeof indexedDB !== 'undefined';
 // 맡겨 둔 것이 있다는 표시 (localStorage) — 없으면 부팅 때 IndexedDB 를 열어 보지도 않는다. localStorage 가 없는 곳이면 늘 DB 로 확인
 const LOCAL_FLAG = 'bl-prompt-cache-local-held';
@@ -308,9 +312,9 @@ async function withLocalStore(create, mode, work, fallback) {
         return fallback;
     } finally { db.close(); }
 }
-async function localWrite(pairs) {
+async function localWrite(pairs, blind = false) {
     if (!pairs.length) return true;
-    const ok = await withLocalStore(true, 'readwrite', store => { for (const [key, value] of pairs) store.put(typeof value === 'string' ? value : null, key); return true; }, false);
+    const ok = await withLocalStore(true, 'readwrite', store => { for (const [key, value] of pairs) { const v = typeof value === 'string' ? value : null; store.put(blind && !heldSeen.has(key) ? { blind: true, value: v } : v, key); } return true; }, false);
     if (ok) localFlag(true);
     return ok;
 }
@@ -331,11 +335,11 @@ function localReadAll() {
     }, new Map());
 }
 /** 서버에 못 쓴 변경(파일별 pendingEntries)을 로컬에 맡긴다. 맡겼으면 true */
-async function holdLocally(files) {
+async function holdLocally(files, blind = false) {
     const pairs = [];
     for (const file of files) for (const pair of pendingEntries.get(file) || []) pairs.push(pair);
     if (!pairs.length) return true;
-    const ok = await localWrite(pairs);
+    const ok = await localWrite(pairs, blind);
     if (ok) for (const [key] of pairs) localHeld.add(key);
     return ok;
 }
@@ -344,10 +348,12 @@ async function adoptLocalEntries() {
     const local = await localReadAll();
     if (!local.size) { if (!localHeld.size) localFlag(false); return; }   // 표시만 남고 비었으면 다음 부팅부터 열어 보지 않는다
     const moved = [];
-    for (const [key, value] of local) {
+    for (const [key, raw] of local) {
         if (typeof key !== 'string') continue;
         const ns = nsFromKey(key), file = shardFileForNS(ns);
         if (brokenShards.has(file)) { localHeld.add(key); continue; }   // 이번에도 못 읽은 조각 — 맡겨 둔 채로
+        const { value, blind } = heldEntry(raw);
+        if (blind && translationMap.has(key)) { moved.push(key); continue; }   // 서버 값을 못 보고 만든 것 — 서버에 있는 번역이 이긴다
         if (typeof value === 'string' && value) { if (translationMap.get(key) !== value) cachePut(ns, key, value); }
         else if (translationMap.has(key)) cacheDelete(key);
         moved.push(key);
@@ -450,7 +456,7 @@ async function doFlushLocked() {
         // 8.2.7 목록 파일을 못 읽은 세션: 서버에는 쓰지 않고 이 브라우저에 맡긴다 (다음에 서버 파일을 읽으면 옮긴다)
         if (localFallback && dirtyShards.size) {
             const files = [...dirtyShards];
-            if (await holdLocally(files)) for (const file of files) { dirtyShards.delete(file); pendingEntries.delete(file); }
+            if (await holdLocally(files, true)) for (const file of files) { dirtyShards.delete(file); pendingEntries.delete(file); }
         }
         return;
     }
@@ -461,7 +467,7 @@ async function doFlushLocked() {
     const uploaded = [];   // 8.2.7 올라간 키 — 로컬에 맡겨 둔 것이면 로컬에서 지운다
     const broken = files.filter(file => brokenShards.has(file));
     // 8.2.7 못 읽은 조각에 들어갈 번역은 덮어쓸 수 없으니 이 브라우저에 맡긴다 (조각이 읽히는 다음 세션에 합친다)
-    if (broken.length && await holdLocally(broken)) for (const file of broken) pendingEntries.delete(file);
+    if (broken.length && await holdLocally(broken, true)) for (const file of broken) pendingEntries.delete(file);
     for (const file of files) {
         if (brokenShards.has(file)) continue;
         const keys = shardKeys.get(file);
@@ -623,9 +629,11 @@ async function initTranslationCache() {
         localFallback = hasLocalDB();
         console.warn(`[${EXT}] cache index load failed; ${localFallback ? 'keeping translations in this browser' : 'translations will not be saved this session'}`, e);
         if (localFallback) {
-            for (const [key, value] of await localReadAll()) {
+            for (const [key, raw] of await localReadAll()) {
                 if (typeof key !== 'string') continue;
                 localHeld.add(key);
+                const { value, blind } = heldEntry(raw);
+                if (!blind) heldSeen.add(key);
                 if (typeof value === 'string' && value) memPut(shardFileForNS(nsFromKey(key)), key, value);
             }
         }

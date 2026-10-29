@@ -366,7 +366,7 @@ await test('8.2.7 목록 파일을 못 읽은 세션: 번역을 이 브라우저
     t.api.setCacheTitle(WI, 'Atlas::0', '항구');
     await t.api.flushTranslationCache();
     assert.deepEqual(srv.log.filter(l => !l.startsWith('GET ')), [], '서버에는 올리지도 지우지도 않는다');
-    assert.deepEqual(localOf(idb), { 'pt-preset::Sample::tone::Korean': '로컬 번역', 'pt-wi::Atlas@title::Atlas::0::Korean': '항구' });
+    assert.deepEqual(JSON.parse(JSON.stringify(localOf(idb))), { 'pt-preset::Sample::tone::Korean': { blind: true, value: '로컬 번역' }, 'pt-wi::Atlas@title::Atlas::0::Korean': { blind: true, value: '항구' } }, '서버를 못 보고 만든 번역이라는 표시와 함께');
     // 다음 세션도 못 읽으면 맡긴 번역을 보여 준다
     const again = boot({ srv, indexedDB: idb });
     await again.api.initTranslationCache();
@@ -419,14 +419,51 @@ await test('8.2.7 읽지 못한 조각에 들어갈 번역은 로컬에 맡기�
     t.api.setCache(NS, 'tone', '새 번역');
     await t.api.flushTranslationCache();
     assert.ok(!srv.log.includes('PUT ' + A), '못 읽은 조각은 덮어쓰지 않는다');
-    assert.deepEqual(localOf(idb), { 'pt-preset::Sample::tone::Korean': '새 번역' });
+    assert.deepEqual(JSON.parse(JSON.stringify(localOf(idb))), { 'pt-preset::Sample::tone::Korean': { blind: true, value: '새 번역' } });
     const still = boot({ srv, indexedDB: idb });   // 이번에도 못 읽음 — 그대로 맡겨 둔다
     await still.api.initTranslationCache();
-    assert.deepEqual(localOf(idb), { 'pt-preset::Sample::tone::Korean': '새 번역' });
+    assert.deepEqual(JSON.parse(JSON.stringify(localOf(idb))), { 'pt-preset::Sample::tone::Korean': { blind: true, value: '새 번역' } });
     srv.failing.delete('GET ' + A);
     const ok = boot({ srv, indexedDB: idb });
     await ok.api.initTranslationCache();
     assert.deepEqual(srv.json(A).entries, { 'pt-preset::Sample::main::Korean': '남의 번역', 'pt-preset::Sample::tone::Korean': '새 번역' });
+    assert.deepEqual(localOf(idb), {});
+});
+
+await test('8.2.7 서버를 못 보고 만든 번역(목록 · 조각을 못 읽은 세션)은 옮길 때 서버에 있는 같은 키(직접 고친 번역)를 덮지도 지우지도 않는다', async () => {
+    const MAIN = 'pt-preset::Sample::main::Korean', TONE = 'pt-preset::Sample::tone::Korean', BLANK = 'pt-preset::Sample::blank::Korean';
+    const srv = server({ [INDEX]: { version: 1, shards: [A] }, [A]: { entries: { [MAIN]: '직접 고친 번역', [BLANK]: '서버 번역' } } });
+    srv.failing.set('GET ' + INDEX, 503);
+    const idb = idbHost();
+    const t = boot({ srv, indexedDB: idb });
+    await t.api.initTranslationCache();
+    t.api.setCache(NS, 'main', '못 본 세션의 다시 번역');   // 서버 것을 못 보여 줘서 다시 번역한 것
+    t.api.setCache(NS, 'tone', '새 어조');
+    t.api.setCache(NS, 'blank', '잠깐');
+    t.api.setCache(NS, 'blank', null);
+    await t.api.flushTranslationCache();
+    srv.failing.delete('GET ' + INDEX);
+    const ok = boot({ srv, indexedDB: idb });
+    await ok.api.initTranslationCache();
+    assert.deepEqual(srv.json(A).entries, { [MAIN]: '직접 고친 번역', [BLANK]: '서버 번역', [TONE]: '새 어조' }, '서버에 없던 키만 더한다');
+    assert.deepEqual(localOf(idb), {}, '옮기지 않은 것도 로컬에서는 치운다');
+    // 올리기만 실패한 내 고침(서버를 본 것)은 전처럼 서버를 이긴다 — 그 키를 못 읽은 세션이 보여 주고 다시 고쳐도 그대로
+    const u = boot({ srv, indexedDB: idb });
+    await u.api.initTranslationCache();
+    srv.failing.set('PUT ' + A, 500);
+    u.api.setCache(NS, 'main', '내 고침');
+    await u.api.flushTranslationCache();
+    srv.failing.delete('PUT ' + A);
+    srv.failing.set('GET ' + INDEX, 503);
+    const blind = boot({ srv, indexedDB: idb });
+    await blind.api.initTranslationCache();
+    assert.equal(blind.api.getCached(NS, 'main'), '내 고침');
+    blind.api.setCache(NS, 'main', '내 고침 2');
+    await blind.api.flushTranslationCache();
+    srv.failing.delete('GET ' + INDEX);
+    const back = boot({ srv, indexedDB: idb });
+    await back.api.initTranslationCache();
+    assert.equal(srv.json(A).entries[MAIN], '내 고침 2');
     assert.deepEqual(localOf(idb), {});
 });
 
