@@ -700,7 +700,7 @@ export const FILE_HASHES = {
   "src/settings-history.js": "3491:c0f06c71:b7a64e71",
   "src/settings-labels.js": "39188:8a893521:4fc986d9",
   "src/settings-merge.js": "10781:78d3a1e2:a478335e",
-  "src/settings-search.js": "39514:be1aa8e1:769a759a",
+  "src/settings-search.js": "40332:d6a0c728:b561489d",
   "src/settings-sync.js": "6623:9fbae458:092efa56",
   "src/settings.js": "73733:b1a3c572:4cc9d2e4",
   "src/show-more-auto.js": "6378:b1d2f7da:5fcbca3e",
@@ -749,7 +749,7 @@ export const FILE_HASHES = {
   "src/word-tools-core.js": "4719:5f51fc3d:6e19d567",
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "8083:c6cab743:bffa3e7a",
-  "src/worldinfo-light.js": "2736:d9e8d2d4:66e4938b",
-  "style-ext.css": "317449:32e2c50c:7e6d4f1c",
-  "style.css": "1835594:a7f9c8af:b054014c"
+  "src/worldinfo-light.js": "2949:e91008f8:04eead81",
+  "style-ext.css": "317449:69b5d6d4:99d9f0c2",
+  "style.css": "1835591:fc6c9ac9:a2dfb772"
 };

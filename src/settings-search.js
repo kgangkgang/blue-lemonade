@@ -119,6 +119,10 @@ rows.push(['extensions','words','단어 치환','단어 바꾸기 조사 규칙 
  ['theme','update','새 버전 자동 확인','업데이트 새 버전 자동 확인 알림 버전 표시 노랗게 6시간','','updateCheck'],
  ['chat','screen','백그라운드에서도 계속','백그라운드 다른 앱 앱 전환 탭 잠 멈춤 소리 없이 무음 작은 창 pip 버티기 번역 계속 버티는 방식','', 'bgWindow.on'],
  ['chat','screen','이전 메시지 저절로 불러오기','이전 메시지 더 보기 더보기 자동 저절로 불러오기 위로 스크롤 옛 메시지 지난 대화 무한 스크롤 show more messages','', 'chat.showMoreAuto'],
+ ['chat','screen','아바타는 가까워질 때 받기','아바타 썸네일 지연 로딩 느리게 받기 가까워질 때 캐릭터 목록 페르소나 목록 캐릭터 많을 때 가볍게 lazy 성능','', 'chat.lazyAvatars'],
+ ['chat','screen','검색은 글자 조합이 끝난 뒤','캐릭터 검색 한글 조합 입력 중 디바운스 느림 멈칫 검색 칸 가볍게 성능 ime','', 'chat.searchIme'],
+ ['chat','screen','코드 색 입히기 끄기','코드 블록 코드블록 구문 강조 하이라이트 색 끄기 hljs 코드 많은 채팅 폰 느릴 때 가볍게 성능','', 'chat.codePlain'],
+ ['chat','screen','월드인포 긴 목록 가볍게','월드인포 월드 인포 로어북 항목 많을 때 긴 목록 스크롤 끊김 가볍게 성능 content-visibility','', 'chat.worldInfoLight'],
  ['chat','screen','새 답 첫 줄로 가는 단추','새 답 첫 줄 맨 위로 처음으로 화살표 위 아이콘 긴 답 답변 시작 위치 점프 이동 단추','', 'chat.replyTop'],
  ['chat','screen','토큰 수 누르면 내역','토큰 수 내역 생각 본문 총 프롬 프롬프트 다음 답 들어가는 양 정규식 숨긴 메시지','', 'chat.sentTokens'],
  ['chat','screen','답이 오면 알려 주기','알림 진동 푸시 답 도착 완료 알려 주기 다른 앱 폰 백그라운드','', 'replyNotify.on']);

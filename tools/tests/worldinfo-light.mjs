@@ -1,5 +1,5 @@
 // 월드인포 큰 목록 경량화 (src/worldinfo-light.js + css/12-worldinfo.css) — 가짜 DOM 흉내.
-// 목록 뿌리에만 childList 감시자 · 항목 80개 이상이면 bl-wi-light · 아래로 내려가면 뗀다 · 끄면 감시자 · 클래스를 뗀다. CSS 는 펼친 항목 · 드래그 중 항목을 뺀다.
+// 목록 뿌리에만 childList 감시자 · 항목 80개 이상이면 bl-wi-light · 아래로 내려가면 뗀다 · 끄면 감시자 · 클래스를 뗀다. CSS 는 펼친 항목(아이콘 .up) · 드래그 중 항목을 뺀다.
 //   node tools/tests/worldinfo-light.mjs <테마 루트>
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -42,12 +42,13 @@ t('목록이 아직 없으면 켜도 걸지 않는다 · 다음 켜기에 생기
 
 // ---- CSS · 연결
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
-t('CSS: .bl-wi-light 의 접힌 항목에만 content-visibility:auto + contain-intrinsic-size · 펼친 항목(display:block) · 드래그 중 · 자리표시는 제외 · style.css 에 들어 있다', () => {
+t('CSS: .bl-wi-light 의 접힌 항목에만 content-visibility:auto + contain-intrinsic-size · 펼친 항목(아이콘 .up) · 드래그 중 · 자리표시는 제외 · style.css 에 들어 있다', () => {
     const css = read('css/12-worldinfo.css');
     const rule = css.match(/body\.salty #WorldInfo #world_popup_entries_list\.bl-wi-light > \.world_entry([^{]*)\{([^}]*)\}/);
     assert.ok(rule, '규칙이 있다');
     assert.ok(rule[1].includes(':not(.ui-sortable-helper, .ui-sortable-placeholder)'), '드래그 중 · 자리표시 제외');
-    assert.ok(rule[1].includes(':not(:has(> form > .inline-drawer > .inline-drawer-content[style*="display: block"]))'), '펼친 항목 제외');
+    assert.ok(rule[1].includes(':not(:has(> form > .inline-drawer > .inline-drawer-header .inline-drawer-icon.up))'), '펼친 항목(아이콘 .up) 제외');
+    assert.ok(!/\[\s*style/.test(rule[1]), ':has 안에 inline style 선택자를 두지 않는다 (long-chat-perf 규칙)');
     assert.match(rule[2], /content-visibility:\s*auto/); assert.match(rule[2], /contain-intrinsic-size:\s*auto 56px/);
     assert.ok(read('style.css').includes('#world_popup_entries_list.bl-wi-light > .world_entry'), 'style.css 다시 만들었다');
 });
