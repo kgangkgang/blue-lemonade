@@ -401,6 +401,7 @@ jobs:
           node tools/tests/fruit-status.mjs .
           node tools/tests/long-chat-perf.mjs .
           node tools/tests/has-guard.mjs .
+          node tools/tests/lite-forced-quiet.mjs .
           node tools/tests/icon-only-mark.mjs .
           node tools/tests/mes-marks.mjs .
           node tools/tests/drawer-marks.mjs .

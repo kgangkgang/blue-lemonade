@@ -431,12 +431,14 @@ export function startMenuOpenMark() {
         const body = document.body, menu = chat.querySelector(':scope > .mes:last-of-type .mes_buttons > .extraMesButtons');
         // 5.5.6: 테마가 빠진 상태(확장만 · 테마 끔)에서는 실리태번의 표시를 달지 않는다 — 내가 달아 둔 것이 있으면 뗀다
         if (!themeEnabled(getSettings())) { if (body.classList.contains('bl-forced-expand')) { body.classList.remove('bl-forced-expand'); if (!document.getElementById('expandMessageActions')?.checked) body.classList.remove('expandMessageActions'); } return; }
-        if (!menu || document.getElementById('expandMessageActions')?.checked) { body.classList.remove('bl-forced-expand'); return; }
+        // 8.2.6: 붙어 있을 때만 뗀다 — 없는 클래스를 remove 해도 class 변경 기록이 나서 실리태번 keyboard.js 가 문서 전체를 다시 훑고(body 아래 전부)
+        //   squared-buttons 가 body 를 통째로 다시 쟀다(실리태번 「메시지 작업 펼치기」를 켠 사람은 채팅을 바꿀 때마다). 끝 상태는 같다
+        if (!menu || document.getElementById('expandMessageActions')?.checked) { if (body.classList.contains('bl-forced-expand')) body.classList.remove('bl-forced-expand'); return; }
         const mine = body.classList.contains('bl-forced-expand');
         if (mine) body.classList.remove('expandMessageActions'); // 내가 단 표시를 잠깐 떼고 잰다 (같은 태스크 안이라 화면에는 안 보인다)
         const forced = !menu.classList.contains('visible') && !/display/.test(menu.getAttribute('style') || '') && getComputedStyle(menu).display !== 'none';
         body.classList.toggle('bl-forced-expand', forced);
-        if (forced) body.classList.add('expandMessageActions');
+        if (forced && !body.classList.contains('expandMessageActions')) body.classList.add('expandMessageActions');
     };
     // 경량화(10-15): 잴 때는 다음 프레임 맨 앞에서 — 채팅을 막 그리는 중(채팅 바꾼 1.2초 뒤)에 계산된 스타일을 읽으면 그 자리에서 문서 전체를 다시 계산했다
     // (폰 리그 4배 30개 열기 1.4~2.4초). 프레임이 어차피 할 계산과 하나로 묶인다. 숨은 탭은 화면이 돌아올 때 잰다
