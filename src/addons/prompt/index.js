@@ -583,6 +583,33 @@ async function readLegacyIndexedDB() {
     }
 }
 
+// 8.2.7 다른 기기 · 브라우저에 남은 예전 IndexedDB 번역 — 저절로 옮기기는 서버에 목록 파일이 없을 때(처음 쓴 기기) 한 번뿐이라,
+//   두 번째 기기의 예전 번역은 읽히지 않았다. 사용자가 누를 때만 읽어, 서버 캐시에 없는 키만 더한다 (있는 번역 · 지운 뒤 다시 번역한 것은 그대로).
+//   저절로 하지 않는 까닭: 이미 옮긴 기기에서 「전체 캐시 삭제」 · 비우기로 지운 번역이 되살아날 수 있다
+const legacyIndexedDBExists = async () => {
+    try { return typeof indexedDB !== 'undefined' && !!indexedDB.databases && (await indexedDB.databases()).some(d => d.name === LEGACY_DB_NAME); }
+    catch (e) { return false; }
+};
+/** 가져올 것 세기만 (쓰지 않는다) → { total, fresh: [[키, 번역]] } */
+async function scanLegacyIndexedDB() {
+    if (!cacheWritable) throw new Error('번역 캐시 파일을 읽지 못해 지금은 가져올 수 없어요. 새로고침한 뒤 다시 해 주세요.');
+    const legacy = await readLegacyIndexedDB(), fresh = [], seen = new Set();
+    for (const rec of legacy) {
+        const key = rec?.cacheKey, value = rec?.translation;
+        if (typeof key !== 'string' || typeof value !== 'string' || !value || seen.has(key) || translationMap.has(key)) continue;
+        if (brokenShards.has(shardFileForNS(nsFromKey(key)))) continue;   // 못 읽은 조각엔 쓰지 않는다
+        seen.add(key); fresh.push([key, value]);
+    }
+    return { total: legacy.length, fresh };
+}
+/** 센 것을 서버 캐시에 더한다 — 그사이 생긴 키는 건너뛴다 */
+async function importLegacyEntries(fresh) {
+    let added = 0;
+    for (const [key, value] of fresh) { if (translationMap.has(key)) continue; cachePut(nsFromKey(key), key, value); added++; }
+    if (added) await flushTranslationCache();
+    return added;
+}
+
 // Load all translations into the memory Map at startup
 async function initTranslationCache() {
     let index;
@@ -5182,6 +5209,25 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
         await clearTranslationCache();
         if (typeof toastr !== 'undefined') toastr.success(`번역 캐시 ${count}개가 삭제되었습니다`);
         updateCacheStatsUI();
+    });
+
+    // 8.2.7 설정 › 저장을 열 때만 예전 IndexedDB 가 있는지 본다 (부팅 때는 보지 않는다)
+    const legacyBox = PDOC.getElementById('pt-legacy-import'), legacyStatus = PDOC.getElementById('pt-legacy-import-status');
+    const checkLegacy = async () => { if (legacyBox && legacyBox.hidden && await legacyIndexedDBExists()) legacyBox.hidden = false; };
+    PDOC.querySelector('.pt-settings-nav [data-setting-tab="storage"]')?.addEventListener('click', checkLegacy);
+    $('#pt-legacy-import-btn').on('click', async function () {
+        const button = this;
+        button.disabled = true;
+        try {
+            const { total, fresh } = await scanLegacyIndexedDB();
+            if (!fresh.length) { legacyStatus.textContent = total ? `예전 번역 ${total}개가 이미 모두 서버 캐시에 있어요.` : '이 브라우저에는 가져올 예전 번역이 없어요.'; return; }
+            if (!await ask(`이 브라우저에 남은 예전 번역 ${total}개 중 서버 캐시에 없는 ${fresh.length}개를 가져올까요?\n\n이미 있는 번역은 그대로 둬요. 예전에 비우기로 지운 번역도 다시 들어올 수 있어요.`, { ok: '가져오기', cancel: '취소' })) return;
+            const added = await importLegacyEntries(fresh);
+            updateCacheStatsUI();
+            legacyStatus.textContent = `예전 번역 ${added}개를 서버 캐시에 더했어요. 다른 기기에서도 쓸 수 있어요.`;
+        } catch (e) {
+            legacyStatus.textContent = e?.message || String(e);
+        } finally { button.disabled = false; }
     });
 
     buildPanel();

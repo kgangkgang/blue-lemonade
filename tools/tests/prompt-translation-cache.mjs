@@ -11,6 +11,7 @@
 //   6) 전부 지우기 → 모든 조각 파일 삭제 + 빈 목록 파일 (예전 IndexedDB 옮기기가 다시 돌지 않게)
 //   7) 예전 IndexedDB 번역은 목록 파일이 없을 때 한 번만 옮기고, DB 는 지우지 않는다
 //      — 옮겨 온 월드인포 번역을 다시 번역해도 새로고침 뒤 옛 번역이 이기면 안 된다 (지금 코드는 옛 번역이 이김: 보고한 버그)
+//   9) 8.2.7 서버에 못 쓴 번역은 이 브라우저 IndexedDB 에 맡겼다가 옮기고, 다른 기기의 예전 번역은 누를 때만 서버에 없는 키를 더한다
 //   8) 설정 옮기기: 옛 '__same__' 제목 · 주석 언어, 연결 방식, 숫자 범위 — 옛 제목 캐시 키가 그대로 맞는다
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -32,7 +33,7 @@ const CODE = [
     section(src, 'function cfg() {', 'function getCurrentParams() {'),
     section(src, '// ── Translation Cache Layer', '// A hidden/closing tab'),
     section(src, '// Effective target language string.', '// Local heuristic only.'),
-    `globalThis.__api = { cfg, effLang, ck, ckT, getCached, setCache, getCachedTitle, setCacheTitle, clearNS, cacheDelete, flushTranslationCache, clearTranslationCache, initTranslationCache, getCacheStats, shardFileForNS, CACHE_INDEX_FILE,
+    `globalThis.__api = { cfg, effLang, ck, ckT, getCached, setCache, getCachedTitle, setCacheTitle, clearNS, cacheDelete, flushTranslationCache, clearTranslationCache, initTranslationCache, getCacheStats, scanLegacyIndexedDB: typeof scanLegacyIndexedDB === 'function' ? scanLegacyIndexedDB : async () => { throw new Error('가져오기 없음'); }, importLegacyEntries: typeof importLegacyEntries === 'function' ? importLegacyEntries : async () => 0, shardFileForNS, CACHE_INDEX_FILE,
         state: () => JSON.stringify({ size: translationMap.size, dirty: [...dirtyShards], broken: [...brokenShards], writable: cacheWritable }) };`,
 ].join('\n');
 
@@ -453,6 +454,34 @@ await test('8.2.7 전부 지우기는 이 브라우저에 맡긴 번역도 지�
     await p.api.flushTranslationCache();
     assert.ok(!plain.dbs.has(LOCAL), '서버에 잘 쓰면 로컬 DB 를 만들지 않는다');
     assert.ok(!plain.opened.includes(LOCAL), '없는 로컬 DB 는 열어 보지도 않는다');
+});
+
+await test('8.2.7 다른 기기의 예전 IndexedDB 번역: 목록 파일이 이미 있으면 저절로 읽지 않고, 가져오기를 누르면 서버에 없는 키만 더한다', async () => {
+    const srv = server({ [INDEX]: { version: 1, shards: [A] }, [A]: { entries: { 'pt-preset::Sample::main::Korean': '서버 번역' } } });
+    const legacy = [
+        { cacheKey: 'pt-preset::Sample::main::Korean', translation: '옛 번역 (서버에 있음)' },
+        { cacheKey: 'pt-preset::Sample::tone::Korean', translation: '옛 어조' },
+        { cacheKey: 'pt-wi::Book::Book::2::Korean', translation: '옛 월드인포' },
+        { cacheKey: 'pt-preset::Sample::blank::Korean', translation: '' },
+    ];
+    const t = boot({ srv, indexedDB: legacyDB(legacy) });
+    await t.api.initTranslationCache();
+    assert.equal(t.api.getCached(NS, 'tone'), null, '부팅 때는 예전 DB 를 읽지 않는다 (지운 번역이 되살아나지 않게)');
+    const scan = await t.api.scanLegacyIndexedDB();
+    assert.equal(scan.total, 4);
+    assert.deepEqual(JSON.parse(JSON.stringify(scan.fresh.map(([key]) => key))), ['pt-preset::Sample::tone::Korean', 'pt-wi::Book::Book::2::Korean'], '서버에 있는 키 · 빈 번역은 빼고 센다');
+    assert.ok(!srv.log.some(l => l.startsWith('PUT ')), '세기만 할 때는 쓰지 않는다');
+    assert.equal(await t.api.importLegacyEntries(scan.fresh), 2);
+    assert.deepEqual(srv.json(A).entries, { 'pt-preset::Sample::main::Korean': '서버 번역', 'pt-preset::Sample::tone::Korean': '옛 어조' }, '서버 번역은 그대로');
+    const book = t.api.shardFileForNS('pt-wi::Book');
+    assert.deepEqual(srv.json(book).entries, { 'pt-wi::Book::Book::2::Korean': '옛 월드인포' }, '월드인포 키는 그 책의 조각으로');
+    assert.ok(srv.json(INDEX).shards.includes(book));
+    assert.equal((await t.api.scanLegacyIndexedDB()).fresh.length, 0, '다시 누르면 더할 것이 없다');
+    const bad = server({ [INDEX]: { version: 1, shards: [] } });
+    bad.failing.set('GET ' + INDEX, 503);
+    const u = boot({ srv: bad, indexedDB: legacyDB(legacy) });
+    await u.api.initTranslationCache();
+    await assert.rejects(() => u.api.scanLegacyIndexedDB(), /가져올 수 없어요/, '목록 파일을 못 읽은 세션에서는 가져오지 않는다');
 });
 
 console.log(`prompt-translation-cache: ${pass} passed, ${fail} failed`);
