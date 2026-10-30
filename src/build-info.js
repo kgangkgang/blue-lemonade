@@ -1,8 +1,8 @@
 // Generated: installed runtime integrity, excluding this manifest itself.
-export const BUILD_VERSION = "8.2.3";
+export const BUILD_VERSION = "8.2.4";
 export const FILE_HASHES = {
   "index.js": "31270:73d390b5:465e6729",
-  "manifest.json": "365:d56957f8:f4e71926",
+  "manifest.json": "365:e1590589:067c7c18",
   "src/addon-files-check.js": "5001:b7fe0df9:d1f21c49",
   "src/addon-layout.js": "2768:fc762257:da2db162",
   "src/addon-save.js": "2090:ab0afd55:f2ec3654",
@@ -606,7 +606,7 @@ export const FILE_HASHES = {
   "src/name-aliases.js": "1331:b3bd9c8c:24d0fbcf",
   "src/natural-slash.js": "17913:0e3b4028:f2610ea1",
   "src/notice-actions.js": "1324:3f9ea5de:3c738b09",
-  "src/notice-data.js": "376166:094b472b:6c2820b6",
+  "src/notice-data.js": "393929:6a17eca7:ffa91f4a",
   "src/notice.js": "7015:67a9b734:b55e9315",
   "src/notify-sw.js": "1262:abec0501:546e2b05",
   "src/num-width.js": "3476:eb9197b8:21327eac",
@@ -767,6 +767,6 @@ export const FILE_HASHES = {
   "src/word-tools.js": "40578:0578c84a:8b0f1404",
   "src/wordmask.js": "9370:2d815bc8:4cd0d636",
   "src/worldinfo-light.js": "2949:e91008f8:04eead81",
-  "style-ext.css": "318792:84fdfe42:9ef45764",
-  "style.css": "1841858:7c1165f8:f05140a5"
+  "style-ext.css": "318792:2e5d1563:2d52dfa0",
+  "style.css": "1841858:23c831d4:bfe61faf"
 };
