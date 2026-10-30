@@ -1,7 +1,7 @@
 # Blue Lemonade
 
 SillyTavern용 테마와 선택형 내장 확장 모음입니다.
-[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.2.4/blue-lemonade-8.2.4.zip)
+[소개·설치 방법](https://kgangkgang.github.io/blue-lemonade/) · [최신 전체 ZIP](https://github.com/kgangkgang/blue-lemonade/releases/download/v8.2.5/blue-lemonade-8.2.5.zip)
 
 <!-- start-guide:begin -->
 ## 처음이면 이것만
@@ -333,7 +333,18 @@ else (globalThis[Symbol.for('st.storage-report.pending')] ??= []).push(report);
 - 요청 로그 이름표: 다른 확장이 요청에 용도 이름을 붙이면 요청 로그 목록 · 집계에서 따로 보여요.
 
 <details open>
-<summary>8.2.4 · 최신 업데이트</summary>
+<summary>8.2.5 · 최신 업데이트</summary>
+
+- TTS: 캐릭터별 목소리에 「ElevenLabs 한도가 다 차면 MiniMax 로 대신 읽기」를 넣었어요(기본 끔). 켜고 캐릭터마다 대신 쓸 MiniMax 목소리를 고르면 ElevenLabs 글자 한도가 다 찼을 때만 그 목소리로 읽고, 연결 · 키 · 잠깐 몰림 같은 다른 오류는 지금처럼 알려요. 한 번 막히면 ElevenLabs 에 다시 보내지 않다가 초기화 시각이 지나거나 맨 위 「ElevenLabs 로 돌아가기」를 누르면 다시 ElevenLabs 로 읽어요.
+- TTS: ElevenLabs 글자 한도가 다 찼을 때 「API 키가 맞지 않아요」로 잘못 알리던 것을 「이번 달 글자 한도를 다 썼어요」로 고쳤어요.
+- 한글화 패널에 솔라(Sola V4) 프롬프트 번역이 생겼어요 — 프롬프트 137개·정규식 242개 제목과 설명을 한글로 보여요. 저장 이름·본문은 그대로예요.
+- 고르기 목록 통일 › 테마 설정 창 안의 고르기 칸(사용 모드, 데우스 · 과일 상태창 글자의 종류 · 글꼴 · 정렬 · 줄바꿈, 확장 설정 묶음의 TTS · 채팅 캡처 · 단어 치환 · 한글화 이름 칸 등)이 안드로이드 기본 선택창으로 뜨던 것을 고쳤어요. 이제 화면의 모든 고르기 칸이 같은 테마 목록으로 열려요(여러 개 고르는 칸 · 목록형 · 비활성 칸은 원래대로).
+- 검사 › 화면의 모든 고르기 칸이 테마 목록으로 열리는지 코드에서 세는 시험(select-unify-static)과 격리 실리태번에서 전부 눌러 보는 시험(select-unify-rig)을 더했어요.
+
+</details>
+
+<details>
+<summary>8.2.4 · 8.2.4~8.2.7 합본</summary>
 
 - 이번 8.2.4는 8.2.4부터 8.2.7까지 따로 준비하던 네 판을 하나로 합친 큰 판이에요. 커밋 180개, 새 기능 1(번역 리모컨), 고침 · 개선 40여 줄을 담았고, 공개 CI와 검사 45개 · 화면 사진 636장 비교 · 순정 대비 성능 관문을 거쳐 나왔어요. 아래 「더 가볍게」 줄에는 같은 시험 폰(CPU를 4배 느리게 맞춘 격리 환경)에서 전후를 잰 숫자를 적었어요. 기기 · 채팅 길이 · 함께 쓰는 확장에 따라 체감은 다르고, 첫 화면이 뜨는 시간처럼 아직 순정보다 무거운 곳은 다음 판에서 이어서 줄여요.
 - 새 기능 「번역 리모컨」: 팬이 만들어 나눠 준 태번 헬퍼 스크립트 「✨️번역 리모컨」을, 만든 분의 흔쾌한 허락을 받아 번역 애드온 안에 넣었어요. 좋은 아이디어를 먼저 만들어 나눠 주셔서 정말 고마워요 💙 덕분에 이제 한 단추로 번역을 다룰 수 있어요.
