@@ -48,7 +48,12 @@ function startShortcuts(doc,host){
     //   데우스 빠른 설정 창(#bl-deus-popover)은 닫으면 빠지므로 그대로.
     // While a reply streams, skip its text changes and look once when generation ends (body[data-generating] is removed).
     // Settings drawers and <select> lists never hold these cards or rows.
-    const observer=new host.MutationObserver(records=>{const streaming=!!doc.body.dataset.generating;for(const r of records){if(r.attributeName==='data-generating'){if(!streaming)schedule();continue;}if(r.target.closest?.('.drawer-content,select'))continue;if((!streaming||!r.target.closest?.('.mes_text'))&&fruitStructureChanged([r],DEUS_ROOT+',iframe,#chat,#fruit-heart-v6,#bl-deus-popover','#fruit-heart-v6,#bl-deus-popover')){schedule();return;}}});
+    // 8.2.7 채팅을 열면 기록 수천 개가 같은 부모 몇백 개에 몰려요 — 부모마다 서랍 · 본문 안인지는 한 번만 묻고, 남은 기록을 한 번에 넘겨 판정해요(고르는 기록 · 결과는 같아요)
+    //   떨어진 노드는 자손을 다 훑지 않고 결과로 봐요: 떨어짐으로 flush 가 바꾸는 것은 단추를 단 자리가 문서에서 빠진 경우뿐이에요(단추는 그 자리 바로 뒤 형제라 조상이 빠지면 함께 빠져요).
+    //   iframe 이 통째로 빠진 것은 1.5초 타이머(frameSig)가 예전처럼 알아채요
+    const orphaned=()=>{for(const [anchor,button]of buttons)if(!anchor.isConnected||!button.isConnected)return true;return false;};
+    const WATCH=DEUS_ROOT+',iframe,#chat,#fruit-heart-v6,#bl-deus-popover',PANELS='#fruit-heart-v6,#bl-deus-popover';
+    const observer=new host.MutationObserver(records=>{const streaming=!!doc.body.dataset.generating,skip=new Map(),left=[];for(const r of records){if(r.attributeName==='data-generating'){if(!streaming)schedule();continue;}const t=r.target;let out=skip.get(t);if(out===undefined){out=!!t.closest?.('.drawer-content,select')||(streaming&&!!t.closest?.('.mes_text'));skip.set(t,out);}if(!out)left.push(r);}if(left.length&&(fruitStructureChanged(left,WATCH,PANELS,false)||(left.some(r=>r.removedNodes?.length)&&orphaned())))schedule();});
     observer.observe(doc.documentElement||doc.body,{childList:true,subtree:true});observer.observe(doc.body,{attributes:true,attributeFilter:['data-generating']});const timer=host.setInterval(()=>{if(windowOpen()||frameSig(true)!==lastSig)schedule();},1500);flush();
     return()=>{stopped=true;host.clearInterval(timer);doc.removeEventListener('click',click,true);observer.disconnect();host.cancelAnimationFrame(frame);for(const b of buttons.values())b.remove();buttons.clear();};
 }

@@ -24,6 +24,10 @@ export function watchFruitTypography(doc,host,getConfig,fontFamily=()=> ''){
     const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of framesOf(scope)){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
     const schedule=()=>{if(!stopped&&!frame)frame=host.requestAnimationFrame(flush);};
     const rootSelector=FRUIT_TYPES.map(typeMatch).join(',');let mainWatch=rootSelector+',iframe';
+    // 8.2.7 채팅 문서에서 떨어진 노드는 그 자손을 다 훑지 않고 결과로 봐요 — 채팅을 바꾸면 메시지 수백 개(요소 2만여 개)가 한 번에 떨어져, 떨어진 것마다 뿌리 선택자로 훑던 값이 컸어요.
+    //   떨어짐으로 flush 결과가 바뀌는 것은 둘뿐이에요: 글자 style 을 붙여 둔 채(뿌리가 있었음) 마지막 뿌리가 빠졌을 때 · 지켜보던 iframe 이 빠졌을 때. 붙은 노드는 예전처럼 봐요
+    const removedMatters=()=>{for(const f of frames.keys())if(!f.isConnected)return true;return styles.has(doc)&&!scopes.get(doc)?.root?.querySelector(rootSelector);};
+    const mainRecords=records=>{if(fruitStructureChanged(records,mainWatch,'',false)||(records.some(r=>r.removedNodes?.length)&&removedMatters()))schedule();};
     function detach(d){styles.get(d)?.remove();styles.delete(d);for(const face of faces.get(d)||[])d.fonts?.delete(face);faces.delete(d);}
     function unwrap(d){wraps.get(d)?.remove();wraps.delete(d);}
     function flush(){
@@ -35,7 +39,7 @@ export function watchFruitTypography(doc,host,getConfig,fontFamily=()=> ''){
         const fonts=new Set();for(const t of Object.values(config.types))for(const r of Object.values(t.regions))if(r.on&&r.font!=='original'){const f=findFont(r.font);if(f&&!f.unusable)fonts.add(String(f.family).replace(/^['"]|['"]$/g,''));}
         function visit(d,scope){
             if(!scope||docs.has(d))return;docs.add(d);
-            const old=scopes.get(d);if(old?.root!==scope){old?.observer.disconnect();const observer=new host.MutationObserver(records=>{if(fruitStructureChanged(records,d===doc?mainWatch:rootSelector+',iframe'))schedule();});observer.observe(scope,{childList:true,subtree:true});scopes.set(d,{root:scope,observer});}
+            const old=scopes.get(d);if(old?.root!==scope){old?.observer.disconnect();const observer=new host.MutationObserver(d===doc?mainRecords:records=>{if(fruitStructureChanged(records,rootSelector+',iframe'))schedule();});observer.observe(scope,{childList:true,subtree:true});scopes.set(d,{root:scope,observer});}
             const hasRoot=(css||d!==doc)&&!!scope.querySelector(rootSelector);
             if(d!==doc&&hasRoot){let wrap=wraps.get(d);if(!wrap?.isConnected){wrap=d.createElement('style');wrap.dataset.blFruitWrap='';wrap.textContent=WRAP;(d.head||d.documentElement).append(wrap);wraps.set(d,wrap);}}else unwrap(d);
             if(css&&hasRoot){
