@@ -501,6 +501,7 @@ jobs:
           node tools/tests/settings-dialog.mjs
           node tools/tests/deus-qr.mjs
           node tools/tests/deus-dictionary.mjs .
+          node tools/tests/sola-dictionary.mjs .
           node tools/tests/fruit-style.mjs
           node tools/tests/fruit-style-idle-scan.mjs .
           node tools/tests/fruit-skin-contrast.mjs .
