@@ -56,6 +56,8 @@ import { segmentMessage, pairSegments, colorsClash, detectLang, parseRegexLines,
 import { resolveSpeaker, canon, knownNames as learnedNames, colorOfName, ownerOfColor } from './speakers.js';
 import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned, setPersonaAuto, personaKnown, ensureStock, extraEngine, hasOwnVoice, unknownVoice, shownVoices } from './voices.js';
 import { usesTags } from './providers/elevenlabs.js';   // 6.1.8 다른 확장용 synth — 글 속 오디오 태그를 받는 모델인가
+import { isQuotaError, fallbackVoiceOf, quotaOut, tripQuota, setQuotaUntil, takeNotice, clearQuota, QF_FROM, QUOTA_NOTICE } from './quota-fallback.js';   // 8.2.5 ElevenLabs 한도가 다 차면 MiniMax 로
+import { isPaidProvider, pregenPaid } from './paid.js';   // 8.2.5 대신 읽는 줄도 미리 만들기 규칙 그대로 (유료 엔진은 pregen_paid 를 켠 사람만)
 import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../../popup.js';
 import * as cache from './cache.js';
 import { prepare } from './loudness.js';
@@ -1029,6 +1031,7 @@ function finishJobs(jobs, s, { merge = true, quiet = false, join = false } = {})
         if (!j.provider) { if (!quiet) toastOnce(`엔진을 찾을 수 없어요: ${j.voice.provider}`, 'error'); continue; }
         { const w = muteWords(s.mute_words); if (w.length && (s.mute_mode === 'text' || j.provider.caps?.blob === false)) j.text = muteText(j.text, w); }   // 1.6.3 다시 만들기(text) · 브라우저 내장(소리 파일 없음): 글에서 뺀다 → 캐시 열쇠(아래 keyOf)가 바뀌어 그 줄만 새로. 모든 길(자동 읽기 · 누름 · 소리 대본 · 시험)이 여길 지난다
         j.params = paramsFor(j.provider, j.voice);
+        if (j.emotion0 === undefined) { j.emotion0 = j.emotion; j.loud0 = !!j.loud; }   // 8.2.5 엔진에 맞추기 전 감정 (한도 초과로 MiniMax 로 바꿀 때 다시 맞춤 — swapToAlt)
         fitShout(j);
         fitStrength(j, s);
         ready.push(j);
@@ -1395,13 +1398,90 @@ function keyCheck(job) {
     const cfg = providerConfig(job.provider.id, job.provider.defaults || {});
     if (job.provider.needsKey && !cfg.key) throw Object.assign(new Error(`${job.provider.name} API 키를 먼저 저장해요 (엔진 탭)`), { fatal: true });
 }
+// ---------- 8.2.5 ElevenLabs 한도가 다 차면 MiniMax 로 대신 읽기 (설정 quota_fallback — quota-fallback.js)
+// 한도 초과(e.quota · 402 · quota_exceeded · insufficient_credits)일 때만 그 줄을 같은 캐릭터의 MiniMax 목소리로 다시 만든다. 한 번 막히면 이 탭에서는
+// ElevenLabs 에 보내지 않고 바로 MiniMax 로 (ElevenLabs 가 알려 준 초기화 시각이 지나거나 「ElevenLabs 로 돌아가기」까지). 이미 만든 ElevenLabs 소리
+// (캐시 · 메모리 · 받는 중)는 그대로 난다. 대신 쓸 목소리가 없는 목소리는 보내지 않고 지금과 같은 한도 오류 → fail 이 그 엔진 줄을 건너뜀.
+// 화자 고르기(색 · 이름표 · 그룹 차례)는 손대지 않는다 — 고른 목소리(job.voice)만 바꾸고 캐시 열쇠는 MiniMax 소리의 열쇠로 다시 만든다.
+const qfOn = (s = settings()) => s.quota_fallback?.enabled === true;
+const qfAlt = (job, s = settings()) => (job?.provider?.id === QF_FROM && !job.sceneKind ? fallbackVoiceOf(job.voice, s.quota_fallback, findVoice) : null);
+/** 한도로 막힌 동안 대신 읽을 수 있는 ElevenLabs 줄 — 「이번 읽기에서 안 되는 엔진」으로 건너뛰지 않는다 (deadFor) */
+function quotaLive(job) {
+    try { return job.provider.id === QF_FROM && qfOn() && quotaOut() && !!qfAlt(job); } catch { return false; }
+}
+const quotaOutError = () => Object.assign(new Error('이번 달 글자 한도를 다 썼어요'), { code: 'quota_exceeded', quota: true, fatal: true, retry: false, lv: true });
+/** 고른 ElevenLabs 목소리 → 대신 쓸 MiniMax 목소리 (엔진 값 · 감정 맞춤 · 캐시 열쇠를 MiniMax 로 다시). 글이 MiniMax 한 번 한도보다 길면 바꾸지 않음 */
+function swapToAlt(job, alt, s = settings()) {
+    const provider = getProvider(alt.provider);
+    if (!provider || String(job.text || '').length > (Number(provider.maxChars) || 5000)) return false;
+    job.qfFrom = job.qfFrom || job.voice;
+    job.voice = alt;
+    job.provider = provider;
+    if (job.external) job.text = String(job.text).replace(/\[[A-Za-z][A-Za-z' -]{0,30}\]\s*/g, '').trim() || job.text;   // 다른 확장 글의 ElevenLabs 오디오 태그 (MiniMax 는 소리 내 읽음)
+    if (job.emotion0 !== undefined) { job.emotion = job.emotion0; job.loud = !!job.loud0; }
+    job.params = paramsFor(provider, alt);
+    fitShout(job);
+    fitStrength(job, s);
+    job.key = keyOf(job);
+    return true;
+}
+function quotaNotice() {
+    if (takeNotice()) toastOnce(QUOTA_NOTICE, 'info');
+}
+/** 처음 막힘: 이 탭에 기억 + 다음 초기화 시각 (구독 조회 — 글자를 쓰지 않음, 못 받으면 이 탭 동안) */
+function noteQuota() {
+    if (!tripQuota()) return;
+    log('info', 'ElevenLabs 글자 한도가 다 찼어요 · 이 탭에서는 대신 쓸 MiniMax 목소리로 읽어요');
+    const p = getProvider(QF_FROM);
+    if (typeof p?.balance !== 'function') return;
+    Promise.resolve().then(() => p.balance(providerConfig(QF_FROM, p.defaults || {}))).then(b => { if (b?.reset) setQuotaUntil(b.reset); }).catch(() => { /* 초기화 시각을 모름 — 이 탭 동안 */ });
+}
+/** 막힌 동안의 ElevenLabs 줄인가 (아니면 quotaBefore 를 기다리지 않는다 — 같은 열쇠의 진행 중 요청에 그 자리에서 붙게) */
+const quotaPending = (job) => job?.provider?.id === QF_FROM && !job.sceneKind && qfOn() && quotaOut();
+/** 보내기 전: 이미 막힌 동안 캐시에 없는 ElevenLabs 줄 → MiniMax 로 (바꿨으면 true). 대신 쓸 목소리가 없으면 보내지 않고 한도 오류 */
+async function quotaBefore(job, s = settings()) {
+    if (!quotaPending(job)) return false;
+    if (warm.get(job.key) || inflight.has(job.key)) return false;
+    const rec = await Promise.resolve(cache.get(job.key)).catch(() => null);
+    const b = rec instanceof Blob ? rec : rec?.blob;
+    if (b instanceof Blob && b.size) return false;
+    if (job.provider?.id !== QF_FROM) return false;   // 기다리는 사이 다른 쪽이 이미 바꿈
+    const alt = qfAlt(job, s);
+    if (!alt || !swapToAlt(job, alt, s)) throw quotaOutError();
+    quotaNotice();
+    return true;
+}
+/** 보낸 뒤: 한도 초과 오류면 기억하고 그 줄을 MiniMax 로 바꿈 (바꿨으면 true — 부른 쪽이 한 번 더 받는다). 다른 오류 · 꺼짐 · 대신 쓸 목소리 없음은 false */
+function quotaAfter(job, err, s = settings()) {
+    if (job?.provider?.id !== QF_FROM || !qfOn(s) || !isQuotaError(err)) return false;
+    noteQuota();
+    const alt = qfAlt(job, s);
+    if (!alt || !swapToAlt(job, alt, s)) return false;
+    quotaNotice();
+    return true;
+}
+/** 「ElevenLabs 로 돌아가기」(설정 창): 기억을 지우고 이번 읽기에서 건너뛰던 ElevenLabs 도 다시 */
+export function quotaReturn() {
+    const had = clearQuota();
+    deadEngines.delete(QF_FROM);
+    if (streamDead) streamDead.set.delete(QF_FROM);
+    playCool.delete(QF_FROM);
+    return had;
+}
 /** 작업의 소리 (한 번만 만들고 재사용). 결과: { blob, lufs, cached } 또는 { speak } (브라우저 내장) */
 function ensureAudio(job) {
     if (job.audio) return job.audio;
     job.ctrl = new AbortController();
     const p = (async () => {
+        if (quotaPending(job)) await quotaBefore(job);   // 8.2.5 ElevenLabs 한도가 이미 찼으면 보내지 않고 MiniMax 로 (만들어 둔 ElevenLabs 소리는 그대로) — 아니면 기다림 없이 예전 그대로
         keyCheck(job);
-        const r = await obtainRaw(job, { signal: job.ctrl.signal });
+        let r;
+        try { r = await obtainRaw(job, { signal: job.ctrl.signal }); }
+        catch (err) {
+            if (!quotaAfter(job, err)) throw err;   // 8.2.5 한도 초과일 때만 같은 줄을 MiniMax 로 한 번 (다른 오류는 그대로)
+            keyCheck(job);
+            r = await obtainRaw(job, { signal: job.ctrl.signal });
+        }
         if (r.speak) return { speak: r.speak };
         if (job.provider.caps?.blob === false) {
             const out = await prepare(r.raw, { ...prepOpts(job, settings()), lufs: null });
@@ -1420,8 +1500,18 @@ function ensureAudio(job) {
  */
 export async function ensureClip(job, { signal = null, prepare: prep = true } = {}) {
     if (!job?.provider || !job.key || job.provider.caps?.blob === false) return { made: false, hit: false, skipped: true };
+    const skip = { made: false, hit: false, skipped: true };
+    const paidSkip = () => !pregenPaid(settings()) && isPaidProvider(job.provider.id);   // 8.2.5 MiniMax 로 바뀐 줄도 유료 엔진 미리 만들기 규칙
+    if (quotaPending(job) && await quotaBefore(job) && paidSkip()) return skip;
     keyCheck(job);
-    const r = await obtainRaw(job, { pre: true, signal, prep });
+    let r;
+    try { r = await obtainRaw(job, { pre: true, signal, prep }); }
+    catch (err) {
+        if (!quotaAfter(job, err)) throw err;
+        if (paidSkip()) return skip;
+        keyCheck(job);
+        r = await obtainRaw(job, { pre: true, signal, prep });
+    }
     return { made: !!r.made, hit: !!r.hit, skipped: false };
 }
 /** 이 키를 지금 만드는 중인가 */
@@ -1711,7 +1801,7 @@ const deadEngines = new Set();
 // 1.3.8 스트리밍 읽기: 조각(청크)마다 큐가 비었다 다시 차서 위 표가 지워진다 → 그 답장 동안은 따로 기억 (꺼진 서버를 조각마다 다시 기다리지 않게).
 //   사용자가 멈춤 · 처음부터 다시 · 다른 답장 스트리밍 · 채팅 바뀜 · 스트리밍이 끝난 뒤 큐가 다 끝나면 비운다
 let streamDead = null;       // { mesId, set:Set<엔진 id> }
-const deadFor = (job) => !!job?.provider && (deadEngines.has(job.provider.id) || (!!streamDead && job.mesId === streamDead.mesId && streamDead.set.has(job.provider.id)));   // 6.4.2 v3 429 로 쉬는 엔진은 여기서 빼고 startEntry 에서 (캐시 · 메모리 줄은 나게)
+const deadFor = (job) => !!job?.provider && !quotaLive(job) && (deadEngines.has(job.provider.id) || (!!streamDead && job.mesId === streamDead.mesId && streamDead.set.has(job.provider.id)));   // 6.4.2 v3 429 로 쉬는 엔진은 여기서 빼고 startEntry 에서 (캐시 · 메모리 줄은 나게)
 // 6.4.2 재생 줄이 429 · 1002 로 재시도를 다 쓰면 그 엔진은 쉬는 시간(COOL_MS) 동안 보내지 않고 건너뛴다 (알림은 fail 이 한 번 · 미리 받기도 deadFor 로 멈춤) —
 //   줄마다 합성이라 같은 엔진 줄이 저마다 재시도를 되풀이해 요청 · 시간만 늘었다 (소리 없이 6줄 18번 · 33초). 쉬는 시간이 지나면 다시 보낸다
 const playCool = new Map();   // 엔진 id → 쉬는 끝 시각

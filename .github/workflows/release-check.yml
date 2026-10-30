@@ -532,6 +532,7 @@ jobs:
           node tools/tests/rewrite-wait-chat.mjs .
           node tools/tests/fault-tts.mjs .
           node tools/tests/fault-tts-player.mjs .
+          node tools/tests/tts-quota-fallback.mjs .
           node tools/tests/tts-delete-playing.mjs .
           node tools/tests/tts-group-turn.mjs .
           node tools/tests/tts-sfx-preview-url.mjs .

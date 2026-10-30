@@ -5,6 +5,7 @@ import { KNOWN_VOICES, KNOWN_SIG } from './known-voices.js';
 import { TTS_VERSION } from '../version.js';
 import { normalizeSfxCredit } from './sfx-credits.js';
 import { FALLBACK_DEFAULTS, normFallback } from './block-fallback.js';   // 6.1.8 검열되면 다른 모델로
+import { QF_DEFAULTS, normQuotaFallback } from './quota-fallback.js';   // 8.2.5 ElevenLabs 한도가 다 차면 MiniMax 로
 import { peopleChanged } from '../../../people.js';   // 6.9.5 인물표
 
 export const VERSION = TTS_VERSION;
@@ -89,6 +90,7 @@ export const DEFAULTS = Object.freeze({
     prefer_keep: {},               // 1.3.8 { 캐릭터 이름: true } — 「엔진」을 따르지 않고 연결표 목소리(그 엔진) 그대로 읽는 캐릭터 (고정)
     prefer_declined: {},           // 1.3.8 { 엔진 id: [캐릭터 이름] } — 「이 엔진으로 바꿀까요」에 아니요 한 이름들 (새 이름이 없으면 다시 묻지 않음)
     prefer_pending: [],            // 1.3.8 서랍이 닫혀 있어 미뤄 둔 「바꿀까요」 엔진 id 들 (목소리 · 엔진 탭이 보이면 차례로 묻는다)
+    quota_fallback: QF_DEFAULTS,   // 8.2.5 { enabled: 끔(기본), map: { ElevenLabs 목소리 uid: 대신 쓸 MiniMax 목소리 uid } } — 한도 초과일 때만 (quota-fallback.js)
     account_removed: {},           // 1.3.8 { 엔진 id: [voiceId] } — 사용자가 목록에서 지운 계정 목소리 (계정 맞춤이 다시 넣지 않음 · 불러오기로 고르면 풂)
     default_voice: '',
     user_voice: '',
@@ -375,6 +377,7 @@ export function settings() {
     }
     if (!Array.isArray(s.voices)) s.voices = [];
     if (isObj(s.analysis)) s.analysis.fallback = normFallback(s.analysis.fallback);   // 6.1.8 검열되면 다른 모델로
+    s.quota_fallback = normQuotaFallback(s.quota_fallback);   // 8.2.5 한도 초과 대신 읽기 (모르는 값은 끔)
     if (typeof s.mute_words !== 'string') s.mute_words = '';                       // 1.6.3 단어 음소거
     if (s.mute_words.length > 2000) s.mute_words = s.mute_words.slice(0, 2000);
     if (s.mute_mode !== 'text') s.mute_mode = 'audio';

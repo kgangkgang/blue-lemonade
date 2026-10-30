@@ -4,6 +4,7 @@
 //   그래서 eleven_v5 같은 새 모델도 코드 고침 없이 최신 갈래처럼 읽는다
 import { audioOrError, koError, safeMsg, timedFetch } from './_http.js';
 import { modelOptions, storeModels, modelMeta, resolveModel, keyModel, customField, shared, keySig } from './_models.js';
+import { detailOf, quotaResponse } from '../quota-fallback.js';   // 8.2.5 한도 초과 판정 (대신 읽기)
 
 const ID = 'elevenlabs';
 const BASE = 'https://api.elevenlabs.io';
@@ -112,7 +113,7 @@ export function calmText(text) {
 // 목록의 category → 묶음 이름
 const GROUPS = { premade: '기본', cloned: '복제', generated: '생성', professional: '전문', famous: '유명', high_quality: '고음질' };
 // 키·한도·요금제 문제: 다음 작업도 다 실패하니 재생기가 줄을 멈춘다
-const FATAL = new Set(['invalid_api_key', 'unauthorized', 'quota_exceeded', 'free_users_not_allowed', 'paid_plan_required', 'detected_unusual_activity', 'missing_permissions']);
+const FATAL = new Set(['invalid_api_key', 'unauthorized', 'quota_exceeded', 'insufficient_credits', 'free_users_not_allowed', 'paid_plan_required', 'detected_unusual_activity', 'missing_permissions']);
 // 5.7.2 권한을 고른 키의 권한 이름 (ElevenLabs › API 키 › 권한)
 const PERM_KO = { voices_read: '목소리 읽기(Voices Read)', text_to_speech: '음성 만들기(Text to Speech)', user_read: '계정 읽기(User Read)', models_read: '모델 읽기(Models Read)' };
 
@@ -207,10 +208,11 @@ const snap3 = (v) => [0, 0.5, 1].reduce((a, b) => (Math.abs(b - v) < Math.abs(a 
 const strengthStab = (level, stab) => (level === 'weak' ? 1 : level === 'strong' ? Math.max(0, Math.round((stab - 0.3) * 100) / 100) : stab);
 
 /** 응답 본문(JSON detail) → 한글 오류. 모르면 공용 koError */
-function elError(status, text) {
+export function elError(status, text) {
     let detail = null;
     try { detail = JSON.parse(text)?.detail ?? null; } catch { /* 본문이 JSON이 아님 */ }
-    const code = typeof detail === 'object' && detail ? String(detail.status || '') : '';
+    // 8.2.5 새 오류 모양은 detail.code (detail.status 는 옛 칸) — 공식 오류 안내 elevenlabs.io/docs/developers/resources/errors
+    const code = typeof detail === 'object' && detail ? detailOf({ detail }).code : '';
     const msg = safeMsg(typeof detail === 'string' ? detail : (detail?.message || (Array.isArray(detail) ? detail[0]?.msg : '') || ''), 100);
     const make = (m, retry = false) => {
         const e = new Error(m); e.code = code || status; e.retry = retry;
@@ -223,8 +225,9 @@ function elError(status, text) {
         const perm = (/permission\s+([a-z_]+)/i.exec(msg) || [])[1] || '';
         return make(`키에 ${PERM_KO[perm] || perm || '이 기능'} 권한이 없어요 (ElevenLabs API 키 설정에서 켜요)`);
     }
+    // 8.2.5 한도 초과를 키 오류보다 먼저 — 옛 모양은 HTTP 401 + quota_exceeded 라 전엔 「API 키가 맞지 않아요」로 보였다. e.quota = 대신 읽기 판정 (quota-fallback.js)
+    if (quotaResponse(status, text)) { const e = make('이번 달 글자 한도를 다 썼어요'); e.quota = true; e.fatal = true; return e; }
     if (status === 401 || code === 'invalid_api_key' || code === 'unauthorized') return make('API 키가 맞지 않아요');
-    if (code === 'quota_exceeded') return make('이번 달 글자 한도를 다 썼어요');
     if (code === 'too_many_concurrent_requests' || code === 'system_busy' || status === 429) return make('요청이 몰렸어요. 잠시 뒤 다시 시도해요', true);
     if (code === 'voice_not_found' || (status === 404 && /voice/i.test(msg))) return make('없는 목소리예요. 목록을 다시 불러오세요');
     if (code === 'free_users_not_allowed' || code === 'paid_plan_required') return make('유료 요금제가 필요한 기능이에요');

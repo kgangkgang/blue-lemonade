@@ -15,6 +15,7 @@ import * as paint from './paint.js';     // 6.2.3 색 없는 대사에 화자 �
 import { entries as logEntries, timeStr, onLog, log } from './log.js';
 import { paidEngines, paidOnly, pregenPaid } from './paid.js';   // 5.6.4 돈이 드는 엔진 (pregen.js 와 같은 판단)
 import { balanceParts, balanceLow, BALANCE_TTL } from './balance.js';   // 1.3.5 엔진 카드 잔액 줄
+import { quotaState, quotaNoteText, onQuotaChange, normQuotaFallback, QF_FROM, QF_TO } from './quota-fallback.js';   // 8.2.5 ElevenLabs 한도가 다 차면 MiniMax 로
 import * as ttsModels from './providers/_models.js';   // 1.3.7 엔진 모델 목록 (늘 최신 — localStorage 12시간)
 import { koModelLabel } from './model-names.js';         // 1.3.7 모델 이름 한국어
 import { ttsCreditsHtml } from '../credits.js';
@@ -487,6 +488,7 @@ const STRENGTH_HELP = [
 const MAP_HELP = [
     '캐릭터 이름마다 읽을 목소리를 정해요. 「엔진」을 고르면 이름이 같은 그 엔진의 목소리로 읽어요.',
     '「기본」은 목소리를 못 찾은 화자, 「나」는 내 대사, 「내레이터」는 서술이에요.',
+    '「ElevenLabs 한도가 다 차면 MiniMax 로 대신 읽기」를 켜면 ElevenLabs 글자 한도가 다 찼을 때만 캐릭터마다 고른 MiniMax 목소리로 읽어요. 연결 · 키 · 잠깐 몰림 같은 다른 오류는 지금처럼 알려요. 한 번 막히면 이 탭에서는 ElevenLabs 에 다시 보내지 않고, 초기화 시각이 지나거나 맨 위 「ElevenLabs 로 돌아가기」를 누르면 다시 ElevenLabs 로 읽어요. 칸을 비운 캐릭터는 대신 읽지 않아요.',
     '맨 아래 「인물 추가」에 이름을 적고 목소리를 고르면 대화 색이 없어도 그 이름의 대사(이름표 · 화자 찾기)를 그 목소리로 읽어요. 「미나, Mina, 미나쨩」처럼 쉼표로 적으면 뒤의 이름들은 같은 사람의 다른 이름이에요.',
     ...STRENGTH_HELP,
 ];
@@ -561,6 +563,8 @@ function onEdit(e, live) {
     if (el.id === 'lv_fbmodel_manual') { if (!live) { setFallbackModel(el.value); renderReadCard('analysis'); } return; }   // 미뤄 둔 모델 줄은 blur 때 (renderModelSlot)
     if (el.id === 'lv_prefer_provider') { if (!live) setPreferProvider(el.value); return; }   // 1.3.7 엔진 자동 맞춤
     if (el.id === 'lv_extras') { if (!live) { settings().extras = el.value === 'off' ? 'off' : 'auto'; save(); renderMap(); } return; }   // 1.3.7 엑스트라 목소리
+    if (el.id === 'lv_qf_on') { if (!live) setQuotaOn(el.checked === true); return; }   // 8.2.5 한도 초과 대신 읽기
+    if (el.dataset.lvQf !== undefined) { if (!live) setQuotaVoice(el.dataset.lvQf, el.value); return; }
     if (el.dataset.lvExtra !== undefined) { if (!live) onExtraPin(el); return; }
     if (el.dataset.lvMap !== undefined) { if (!live) onMapChange(el); return; }
     if (el.dataset.lvColorName !== undefined) { if (!live) onColorName(el); return; }
@@ -883,6 +887,8 @@ const ACTIONS = {
         b.setAttribute('aria-pressed', String(next.includes(t)));
     },
     unpin: (b) => { unpinChar(b.dataset.name || ''); },   // 1.3.8 캐릭터 엔진 고정 풀기
+    'qf-fill': () => fillQuotaVoices(),   // 8.2.5 같은 이름 MiniMax 목소리로 채우기
+    'qf-return': () => { player.quotaReturn(); renderQuotaNote(); toast('다시 ElevenLabs 로 읽어요', 'success'); },   // 8.2.5 ElevenLabs 로 돌아가기
     'cache-clear': async () => { await Promise.all([cache.clear(), listen.clearCache()]); toast('캐시를 비웠어요', 'success'); renderData(); },   // 1.4.4 듣는 언어 번역도
     export: () => exportSettings(),
     import: () => q('#lv_import_file')?.click(),
@@ -1462,7 +1468,95 @@ function mapCardHtml() {
         .map(([n, uid]) => `<span class="lv-pill"><span>${esc(n + aka(n))} → ${esc(effName(uid, n))}</span>${pinChip(n, uid)}<button type="button" class="lv-x" data-lv-act="map-remove" data-name="${esc(n)}" aria-label="빼기"><i class="fa-solid fa-xmark"></i></button></span>`)
         .concat(names.filter(n => aliasesOf(s, n).length).map(n => `<span class="lv-pill"><span>${esc(n)} = ${esc(aliasesOf(s, n).join(', '))}</span><button type="button" class="lv-x" data-lv-act="alias-remove" data-name="${esc(aliasKeyOf(s, n))}" aria-label="다른 이름 빼기"><i class="fa-solid fa-xmark"></i></button></span>`))
         .join('');
-    return card('map', 'fa-users', '캐릭터별 목소리', `<div class="lv-rows">${rows.join('')}</div>${pills ? `<div class="lv-pills">${pills}</div>` : ''}${mapAddHtml()}`, '', '', MAP_HELP);
+    return card('map', 'fa-users', '캐릭터별 목소리', `<div class="lv-rows">${rows.join('')}</div>${pills ? `<div class="lv-pills">${pills}</div>` : ''}${quotaHtml(s, names)}${mapAddHtml()}`, '', '', MAP_HELP);
+}
+// ---------- 8.2.5 ElevenLabs 한도가 다 차면 MiniMax 로 대신 읽기 (quota-fallback.js · player.js quotaBefore · quotaAfter)
+// 줄은 그 캐릭터가 실제로 읽는 ElevenLabs 목소리마다 하나 (엔진 자동 맞춤 짝 · 고정 그대로 — 같은 목소리를 쓰는 캐릭터는 한 줄). 표 열쇠는 그 목소리 uid
+const qfEff = (uid, n) => { const v = uid && uid !== USER_AUTO ? voices.findVoice(uid) : null; return v ? voices.preferVoice(v, n) : null; };
+function quotaTargets(s, names) {
+    const rows = new Map();
+    const add = (label, v) => {
+        if (!v || v.provider !== QF_FROM || v.gone) return;
+        const r = rows.get(v.uid) || { voice: v, labels: [] };
+        if (!r.labels.includes(label)) r.labels.push(label);
+        rows.set(v.uid, r);
+    };
+    for (const n of names) add(n, qfEff((s.char_map || {})[n] || voices.voiceByName(n)?.uid || '', n));
+    for (const n of Object.keys(s.char_map || {})) if (!names.includes(n)) add(n, qfEff(s.char_map[n], n));
+    add('기본', qfEff(s.default_voice, ''));
+    add('나', qfEff(s.user_voice, ''));
+    add('내레이터', qfEff(s.narrator_voice, ''));
+    return [...rows.values()];
+}
+const qfVoices = () => voices.allVoices().filter(v => v.provider === QF_TO && !v.gone);
+function quotaOptions(sel) {
+    const list = qfVoices();
+    let h = '<option value="">(대신 안 읽음)</option>';
+    if (sel && !list.some(v => v.uid === sel)) {
+        const hv = voices.findVoice(sel);
+        h += `<option value="${esc(sel)}" selected>${esc(hv ? hv.name : sel)} (${hv && hv.gone ? '계정에 없음' : '없는 목소리'})</option>`;
+    }
+    const groups = new Map();
+    for (const v of list) { const g = v.group || '기타'; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(v); }
+    for (const [g, arr] of groups) h += `<optgroup label="${esc(g)}">` + arr.map(v => `<option value="${esc(v.uid)}"${v.uid === sel ? ' selected' : ''}>${esc(v.name)}</option>`).join('') + '</optgroup>';
+    return h;
+}
+const qfLabel = (r) => r.labels.slice(0, 3).join(', ') + (r.labels.length > 3 ? ` 외 ${r.labels.length - 3}명` : '');
+function quotaHtml(s, names) {
+    if (!voices.allVoices().some(v => v.provider === QF_FROM && !v.gone)) return '';   // ElevenLabs 목소리가 없으면 안 보임
+    const qf = isObj(s.quota_fallback) ? s.quota_fallback : {};
+    const on = qf.enabled === true;
+    const h = `<div class="lv-sub"><span>ElevenLabs 한도 초과</span></div><label class="checkbox_label lv-toggle lv-qf-toggle"><input type="checkbox" id="lv_qf_on"${on ? ' checked' : ''}><span>ElevenLabs 한도가 다 차면 MiniMax 로 대신 읽기</span></label>`;
+    if (!on) return h;
+    if (!qfVoices().length) return h + '<p class="lv-empty">MiniMax 목소리가 아직 없어요. 목소리 목록에서 불러와요</p>';
+    const rows = quotaTargets(s, names);
+    if (!rows.length) return h + '<p class="lv-empty">ElevenLabs 로 읽는 캐릭터가 없어요</p>';
+    const map = isObj(qf.map) ? qf.map : {};
+    const items = rows.map(r => `<label class="lv-row"><span class="lv-row-label">${esc(qfLabel(r))}<small class="lv-row-via">${esc(r.voice.name)}</small></span><select class="text_pole" data-lv-qf="${esc(r.voice.uid)}" aria-label="${esc(qfLabel(r))} 대신 쓸 MiniMax 목소리">${quotaOptions(map[r.voice.uid] || '')}</select></label>`);
+    const fill = rows.some(r => !map[r.voice.uid]) ? '<div class="lv-actions"><button type="button" class="menu_button" data-lv-act="qf-fill">같은 이름 MiniMax 목소리로 채우기</button></div>' : '';
+    return h + `<div class="lv-rows lv-qf-rows">${items.join('')}</div>${fill}`;
+}
+function quotaTable(s) {
+    if (!isObj(s.quota_fallback)) s.quota_fallback = { enabled: false, map: {} };
+    if (!isObj(s.quota_fallback.map)) s.quota_fallback.map = {};
+    return s.quota_fallback;
+}
+function setQuotaOn(on) {
+    quotaTable(settings()).enabled = !!on;
+    save();
+    renderMap();
+    renderQuotaNote();
+}
+function setQuotaVoice(elUid, mmUid) {
+    const qf = quotaTable(settings());
+    const v = mmUid ? voices.findVoice(mmUid) : null;
+    if (v && v.provider === QF_TO) qf.map[elUid] = v.uid; else delete qf.map[elUid];
+    save();
+    renderMap();
+}
+/** 비어 있는 줄을 같은 사람의 MiniMax 목소리(「엔진」 짝과 같은 판단 — 이름 · 다른 이름 · 캐릭터 이름)로 채운다. 고른 줄은 그대로 */
+function fillQuotaVoices() {
+    const s = settings();
+    const map = quotaTable(s).map;
+    let n = 0, miss = 0;
+    for (const r of quotaTargets(s, chatNames())) {
+        if (map[r.voice.uid]) continue;
+        let t = null;
+        for (const who of ['', ...r.labels]) { t = voices.twinOf(r.voice, QF_TO, who); if (t) break; }
+        if (t && !t.gone) { map[r.voice.uid] = t.uid; n++; } else miss++;
+    }
+    if (n) save();
+    renderMap();
+    toast(n ? `${n}명 채웠어요${miss ? ` · ${miss}명은 같은 이름 목소리가 없어 비워 뒀어요` : ''}` : '같은 이름 MiniMax 목소리를 못 찾았어요', n ? 'success' : 'info');
+}
+/** 맨 위 한 줄: 지금 대신 읽는 중 + 「ElevenLabs 로 돌아가기」 (켜져 있고 막혔을 때만) */
+function renderQuotaNote() {
+    const el = q('#lv_quota_note');
+    if (!el) return;
+    const st = quotaState();
+    const show = st.out && settings().quota_fallback?.enabled === true;
+    el.hidden = !show;
+    el.innerHTML = show ? `<span>${esc(quotaNoteText(st))}</span><button type="button" class="menu_button" data-lv-act="qf-return">ElevenLabs 로 돌아가기</button>` : '';
 }
 function colorRows() {
     try { return speakers.colorTable() || []; } catch { return []; }
@@ -2586,6 +2680,7 @@ function importSettings(obj) {
         }
         if (!hasOwn(DEFAULTS, k)) continue;
         if (k === 'char_aliases') { s.char_aliases = normCharAliases(v); continue; }   // 2.0.6
+        if (k === 'quota_fallback') { s.quota_fallback = normQuotaFallback(v); continue; }   // 8.2.5 켬은 true 일 때만 · 표는 글자만
         if (k === 'pregen' && !PREGEN_MODES.includes(v)) continue;   // 고르는 값은 목록 안의 것만
         if (k === 'listen_lang' && !LISTEN_LANGS.includes(v)) continue;   // 1.4.4
         const d = DEFAULTS[k];
@@ -2621,6 +2716,7 @@ export const _forTest = {
     autoSyncAccounts, offerPrefer, flushPendingOffer, pullVoices, afterKeyJob: () => afterKeyJob, toggleHelp, tagChipsHtml, edParam, voiceRowHtml, HELP_LINES, card,   // 7.7.9 카드 제목 ? 로 모은 도움말
     voiceOptions, mapCardHtml, colorsCardHtml, setCharVoice, unpinChar, addCharacter, splitNames, ACTIONS: () => ACTIONS,   // 2.0.6 인물 추가 (tools/tests/tts-char-add.mjs)
     keySave, loadBalance, balanceCache: () => balanceCache,
+    quotaHtml, quotaTargets, setQuotaOn, setQuotaVoice, fillQuotaVoices,   // 8.2.5 한도 초과 대신 읽기 (tools/tests/tts-quota-fallback.mjs)
 };
 
 // ---------- 시작
@@ -2711,4 +2807,7 @@ export function init() {
         catch (e) { log('err', `분석 카드 다시 그리기 실패: ${e.message}`); }
     });
     try { setPlaying(player.isPlaying()); } catch { /* 재생기가 아직 없으면 넘어감 */ }
+    // 8.2.5 한도 초과 대신 읽기 상태가 바뀌면 맨 위 한 줄 (그리는 중에 불려도 한 번 미뤄서)
+    renderQuotaNote();
+    onQuotaChange(() => setTimeout(renderQuotaNote, 0));
 }
