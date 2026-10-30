@@ -102,7 +102,7 @@ await t('카탈로그 항목이 데우스 다음에 있고, 판 번호가 사전
 await t('공개 금지: 사용자 전달본 전용 항목 · 금지어가 사전에 없어요', () => {
     const text = JSON.stringify(dict);
     // 금지 낱말은 글자를 나눠 적어요 — 공개 정적 검사가 이 시험 파일 자체를 금지어로 잡지 않게(README 의 fromCharCode 방식과 같은 뜻)
-    const banned = ['bl-sola-', ['찐', '빠'].join(''), ['갤', ' '].join(''), ['버그', ' 없음'].join(''), ['Cla', 'ude'].join(''), ['yunzhu', 'hub'].join('')];
+    const banned = ['bl-sola-', ['찐', '빠'].join(''), String.fromCharCode(0xAC24) + ' ', ['버그', ' 없음'].join(''), ['Cla', 'ude'].join(''), ['yunzhu', 'hub'].join('')];
     for (const word of banned) assert.ok(!text.includes(word), word);
     assert.ok(!/#[0-9a-f]{6}\b/i.test(text), '색 코드 없음');
 });
