@@ -545,6 +545,13 @@ export function startAssetWatcher() {
             }
             m.addedNodes.forEach((node) => {
                 if (node.nodeType !== 1) return;
+                // 8.2.7 자식 요소가 없는 <img> 아닌 요소(메시지마다 붙는 단추 열몇 개 등)는 그림도 아니고 그림을 품지도 못해요 — 에셋 · 외곽선 선택자를 맞춰 보지 않아요.
+                //   에셋 선택자 가운데 그림이 아니어도 맞는 갈래는 .custom-cac-img 하나뿐이라 그 class 만 봐요(대소문자를 안 가리는 quirks 문서는 예전처럼). 줄바꿈 정리 판정은 그대로예요
+                if (node.firstElementChild === null && node.localName !== 'img' && node.ownerDocument?.compatMode === 'CSS1Compat') {
+                    if (node.classList.contains('custom-cac-img') && node.matches(ASSET_IMG)) classify(node);
+                    if (node.matches('.mes, .mes_text, .mes_text *')) tidy.add(node.closest('.mes') || node);
+                    return;
+                }
                 if (node.matches(ASSET_IMG)) classify(node);
                 else node.querySelectorAll?.(ASSET_IMG).forEach(classify);
                 if (node.matches(EDGE_IMG)) classifyEdge(node); // 7.3.0 다른 확장의 채팅 그림도 투명 외곽선

@@ -258,6 +258,7 @@ jobs:
           node tools/tests/websearch-mark.mjs .
           node tools/tests/wi-link.mjs .
           node tools/tests/cutout-edge.mjs .
+          node tools/tests/assets-watch-leaf.mjs .
           node tools/tests/startup-730.mjs .
           node tools/tests/numcomma-fit.mjs .
           node tools/tests/ink-contrast.mjs .

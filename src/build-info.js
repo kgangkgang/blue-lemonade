@@ -467,7 +467,7 @@ export const FILE_HASHES = {
   "src/appearance-compare.js": "3140:831ffdf1:a1f78cb0",
   "src/apply.js": "65155:bd49730f:ac411ea7",
   "src/ask.js": "3222:02049ce8:69a2b062",
-  "src/assets.js": "35468:789b2815:728dfddd",
+  "src/assets.js": "36344:e3a604e5:89b63c65",
   "src/assist/core.js": "1927:14e3f07b:8a781a61",
   "src/assist/diagnostics.js": "4778:b76a9825:f6e0071b",
   "src/assist/index.js": "1033:4334a8fb:c00ef99f",
