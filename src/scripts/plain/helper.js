@@ -1028,9 +1028,13 @@ export default function blueLemonadeScript(BlueLemonade) {
 
   // A lightweight watcher discovers helper popups; detailed watching stays inside helper UI.
   const discovery = new host.MutationObserver(records => {
+    // BL 8.2.7: 기록 수천 개가 같은 부모에 몰려요(채팅을 열면 메시지마다 단추 줄) — 부모마다 채팅 · 입력칸 안인지는 한 번만 물어요(이 고리에서 바꾸는 것은 글자 · 속성뿐이라 조상이 그대로예요)
+    const inChat = new Map();
     for (const record of records) {
       const target = record.target.nodeType === 1 ? record.target : record.target.parentElement;
-      if (target?.closest('#chat, #send_form')) continue;
+      let skip = inChat.get(target);
+      if (skip === undefined) { skip = !!target?.closest('#chat, #send_form'); inChat.set(target, skip); }
+      if (skip) continue;
       for (const node of record.addedNodes) {
         if (node.nodeType !== 1) continue;
         // 마법봉 메뉴 칸은 헬퍼가 빈 칸을 먼저 넣고 항목을 나중에 채운다. 그때는 칸이 아직 SCOPE(:has 아이콘)에 안 맞아 놓쳤고,

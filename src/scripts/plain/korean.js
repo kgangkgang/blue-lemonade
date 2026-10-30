@@ -438,19 +438,24 @@ export default function blueLemonadeScript(BlueLemonade) {
     const labels = new Set();
     const welcomes = new Set();
     let removed = false;
+    // BL 8.2.7: 채팅을 열면 기록 수천 개가 같은 부모 몇백 개(메시지마다 단추 줄)에 몰려요 — 부모마다 조상 두 번 거슬러 오르기(closest)를 한 번만 해요.
+    //   이 콜백 안에서는 아직 아무것도 바꾸지 않으니(바꾸기는 아래 고리 뒤) 같은 부모의 답은 같아요. 자식 요소가 없는 요소는 그 아래를 훑지 않아요(찾을 것이 없음)
+    const ancestors = new Map();
     for (const record of records) {
       if (record.removedNodes.length) removed = true;
       const target = record.type === 'characterData' ? record.target.parentElement : record.target;
-      const welcome = target?.closest(WELCOME_CONTAINER);
+      let found = ancestors.get(target);
+      if (!found) { found = { welcome: target?.closest(WELCOME_CONTAINER), label: target?.closest(CHAT_TARGETS) }; ancestors.set(target, found); }
+      const welcome = found.welcome;
       if (welcome) welcomes.add(welcome);
       // 생각 칸 머리글은 textContent 로 통째로 바뀐다 → 그 칸 자신이 target
-      const label = target?.closest(CHAT_TARGETS);
+      const label = found.label;
       if (label) labels.add(label);
       for (const node of record.addedNodes) {
         if (node.nodeType !== 1) continue;
         if (!welcome) welcomes.add(node);
         if (node.matches(CHAT_TARGETS)) labels.add(node);
-        for (const inner of node.querySelectorAll(CHAT_TARGETS)) labels.add(inner);
+        if (node.firstElementChild !== null) for (const inner of node.querySelectorAll(CHAT_TARGETS)) labels.add(inner);
       }
     }
     for (const welcome of welcomes) if (welcome.isConnected) processWelcome(welcome);

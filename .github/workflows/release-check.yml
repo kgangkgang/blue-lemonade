@@ -484,6 +484,7 @@ jobs:
           node tools/tests/fruit-watch-perf.mjs .
           node tools/tests/fruit-watch-scope.mjs .
           node tools/tests/fruit-watch-records.mjs .
+          node tools/tests/script-watch-records.mjs .
           node tools/tests/fruit-option-help.mjs .
           node tools/tests/fruit-option-coverage.mjs .
           node tools/tests/option-help-standing.mjs .

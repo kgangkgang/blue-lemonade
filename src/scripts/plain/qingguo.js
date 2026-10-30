@@ -84,8 +84,9 @@ function installQingguoKorean(BlueLemonade, data) {
   };
   const observer=new host.MutationObserver(records=>{
     const present=[];for(const id of rootIds)for(const el of doc.querySelectorAll('#'+id))present.push(el);
-    const relevant=relevantTo(present);
-    if(records.some(record=>relevant(record.target.nodeType===3?record.target.parentElement:record.target)||[...record.addedNodes].some(relevant)))schedule();
+    // 8.2.7 기록 수만 개가 같은 부모에 몰려요(스트리밍 글자 · 메시지마다 단추 줄) — 부모마다 판정은 한 번만(이 판정은 읽기만 해서 답이 같아요) · 기록마다 새 배열 없이
+    const relevant=relevantTo(present),seen=new Map(),targetRelevant=node=>{let hit=seen.get(node);if(hit===undefined){hit=relevant(node);seen.set(node,hit);}return hit;};
+    if(records.some(record=>{if(targetRelevant(record.target.nodeType===3?record.target.parentElement:record.target))return true;for(const node of record.addedNodes)if(relevant(node))return true;return false;}))schedule();
   });
   observer.observe(doc.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']});
   function stop(){
