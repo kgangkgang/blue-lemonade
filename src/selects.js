@@ -5,8 +5,11 @@
 // 그 자리 밑(또는 위)에 목록을 그린다. 고르면 select 의 값을 바꾸고 input · change 를 쏘아
 // 실리태번의 jQuery 핸들러가 그대로 돈다. select 자체는 손대지 않는다 (다른 확장 · 실리태번이 늘 다시 그림).
 //
-// 빼는 것: multiple · size>1(목록형) · select2 가 대신 그리는 것(.select2-hidden-accessible) · 테마 설정창 안(직접 그린 세그먼트뿐)
-// · 비활성 · 항목 0개. 실리태번 팝업(dialog) 안의 select 는 목록을 그 dialog 안에 꽂는다 — 최상위 층(top layer)
+// 빼는 것: multiple · size>1(목록형) · select2 가 대신 그리는 것(.select2-hidden-accessible) · 비활성 · 항목 0개 · 목록 자신(.salty-pick-layer).
+// 10-30 고르기 통일: 「테마 설정 창 안(.salty-panel)」 예외를 걷었어요 — 2.7.9 에 넣을 땐 설정 창이 직접 그린 세그먼트뿐이었지만, 지금은 사용 모드 · 상태창 글자(데우스 · 과일) ·
+//   확장 설정 묶음(TTS · 캡처 · 단어 치환 …)에 진짜 <select> 가 들어가 그 칸만 OS 목록으로 떨어졌어요(사용자 「모든 선택창 통일」). 화면의 모든 select 가 같은 목록이에요.
+//   통일 목록을 일부러 안 쓰는 건 위 다섯 가지뿐 — 다중 선택 · 목록형은 한 줄 고르기가 아니고, select2 는 실리태번이 제 목록을 그리며, 비활성은 열리면 안 돼요.
+// 실리태번 팝업(dialog) 안의 select 는 목록을 그 dialog 안에 꽂는다 — 최상위 층(top layer)
 // 밖의 요소는 inert 라 body 에 두면 눌리지 않는다.
 import { getSettings, readSettings } from './settings.js';
 
@@ -29,7 +32,7 @@ function eligible(el) {
     if (readSettings().chat?.selectPop === false) return false;   // 8.2.6 키 · 누름마다 도는 읽기
     if (el.multiple || el.size > 1 || el.disabled) return false;
     if (el.classList.contains('select2-hidden-accessible')) return false;
-    if (el.closest('.salty-panel, .salty-pick-layer')) return false;
+    if (el.closest('.salty-pick-layer')) return false;   // 10-30: .salty-panel 예외 없음 — 설정 창 안의 select 도 같은 목록(머리 주석)
     return el.options.length > 0;
 }
 

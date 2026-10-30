@@ -287,6 +287,8 @@ jobs:
           node tools/tests/popup-outside-close.mjs .
           node tools/tests/select-pick.mjs .
           node tools/tests/select-pick-longpress.mjs .
+          node tools/tests/select-unify-static.mjs .
+          node --check tools/tests/select-unify-rig.mjs
           node tools/tests/assets-strip-chat.mjs .
           node tools/tests/assets-from-pictures.mjs .
           node tools/tests/after-work.mjs .
