@@ -140,17 +140,22 @@ test('partial known cards preserve all incomplete data',()=>{
     const src='Prose\n<status_bar>\n日期：Monday\n<script>unfinished';
     const p=prepare(src);assert.equal(p.count,1);assert.ok(!p.text.includes('Monday'));assert.equal(p.restore(p.text),src);
 });
-test('missing duplicate reordered and empty card fields reject the entire result',()=>{
-    const p=prepare('<status_bar>\n日期：Monday\n地点：Room\n</status_bar>');
-    const t=[...p.text.matchAll(/\[\[__VAR_\d+__\]\]/g)].map(m=>m[0]);
-    for(const bad of [p.text.replace(t[1],''),p.text+t[0],p.text.replace(t[1],'TEMP').replace(t[2],t[1]).replace('TEMP',t[2]),p.text.replace('Monday',''),p.text.replace(t[0],t[0]+'invented preface')]) {
-        assert.throws(()=>p.restore(bad),e=>e.structuredCard===true);assert.equal(p.cacheable(p.text,bad),false);
+// 1.0.0 칸 하나가 어긋났다고 카드 전체를 원문으로 되돌리지 않는다 — 그 칸만 원문 (fallbackCount) · 구조는 언제나 원문. 캐시는 예전처럼 온전한 답만
+test('missing reordered and empty card fields keep only those fields original; a split duplicate still rejects',()=>{
+    const src='<status_bar>\n日期：Monday\n地点：Room\n</status_bar>',p=prepare(src);
+    const t=[...p.text.matchAll(/\[\[__VAR_\d+__\]\]/g)].map(m=>m[0]),ko=p.text.replace('Monday','월요일').replace('Room','방'),both=replace(src,{Monday:'월요일',Room:'방'});
+    const cases=[[ko.replace(t[1],''),both,0],[ko.replace(t[0],''),both,0],[ko.replace(t[3],''),both,0],[ko.replace('월요일',''),both.replace('월요일','Monday'),1],
+        [ko.replace(t[1]+'월요일\n',''),both.replace('월요일','Monday'),1],[ko.replace(t[1],'TEMP').replace(t[2],t[1]).replace('TEMP',t[2]),src,2],[ko.replace(t[0],t[0]+'invented preface'),both,0]];
+    for(const [bad,want,fallback] of cases) {
+        assert.equal(p.restore(bad),want,bad);assert.equal(p.fallbackCount(),fallback,bad);assert.equal(p.cacheable(p.text,bad),false,bad);
     }
+    assert.throws(()=>p.restore(ko+'\n'+t[0]),e=>e.structuredCard===true);   // 떨어져 두 번 나온 자리표 — 어느 쪽이 카드인지 모른다
+    assert.equal(p.restore(ko.replace(t[1],t[1]+t[1])),both);   // 바로 붙어 되풀이된 자리표는 하나로
     assert.equal(p.cacheable(p.text,p.text.replace('Monday','월요일')),true);
 });
 test('no-field cards are also checked and preserved exactly',()=>{
     const src='<status_bar>\ninternal_id: Hidden\n</status_bar>',p=prepare(src);assert.equal(p.restore(p.text),src);assert.ok(!p.text.includes('Hidden'));
-    assert.throws(()=>p.restore(p.text.replace(/\n/, '\nInvented')),e=>e.structuredCard);
+    assert.equal(p.restore(p.text.replace(/\n/, '\nInvented')),src);assert.equal(p.cacheable(p.text,p.text.replace(/\n/, '\nInvented')),false);   // 1.0.0 지어낸 글은 버리고 원문 카드
 });
 test('multiple cards stay independent, prose remains free',()=>{
     const src='<status_bar>\n地点：Room\n</status_bar>\nA story.\n<tracker> 🌅 Dawn | Monday | Hall | ☀ Clear, 12°C </tracker>';
@@ -221,6 +226,25 @@ test('old cached translations must preserve keys tags code and hidden data',()=>
     const protectedScript=prepare(scripted);assert.equal(matchesDisplayCardStructure(scripted,protectedScript.restore(protectedScript.text.replace('Hello','${shown}'))),true);
     assert.equal(matchesDisplayCardStructure('ordinary prose','보통 문장'),true);
 });
+test('one-line key=value status cards send only worded values',()=>{
+    // 카드 정규식이 그리는 한 줄 상태창 (가상 값). 열쇠 · 칸 구분 · 날짜 · 시각 · 수치는 보내지 않고 장소 · 곡명만
+    const src='<stat>Date=2031-04-02|Time=19:42|Location=Forest Hall, east wing|Track=Nocturne No. 2 - Andante |Calm=80</stat>\n\nSeraphina hums.';
+    const pairs={'Forest Hall, east wing':'숲의 홀, 동쪽 별관','Nocturne No. 2 - Andante':'녹턴 2번 - 안단테','Seraphina hums.':'세라피나가 흥얼거린다.'};
+    const p=roundtrip(src,pairs,replace(src,pairs));assert.equal(p.count,1);
+    for(const kept of ['<stat>','Date=','Time=','Location=','Track=','Calm=','2031-04-02','19:42','80']) assert.ok(!p.text.includes(kept),kept);
+    // 번역 값의 | 는 칸을 깨지 않게 글자 표기로
+    const out=p.restore(p.text.replace('Forest Hall, east wing','숲 | 홀'));
+    assert.equal((out.match(/\|/g)||[]).length,4);assert.ok(out.includes('숲 &#124; 홀'));
+    assert.equal(withoutDisplayCards(src),'\n\n\nSeraphina hums.');
+    assert.equal(matchesDisplayCardStructure(src,replace(src,pairs)),true);
+});
+test('key=value cards need a plain tag and a key on every field',()=>{
+    for(const src of ['<span>a=1|b=2|c=3 words</span>','<stat>Location=Forest Hall</stat>','<stat>Date=1|Location=Forest Hall|free words here</stat>','<stat>Date=1|Location=Forest Hall\n\nTrack=Song</stat>',
+        '<stat>Date=1|Location=Forest\nHall|Track=Song</stat>','<stat class="x">Date=1|Location=Forest Hall|Track=Song</stat>','```\n<stat>Date=1|Location=Forest Hall|Track=Song</stat>\n```'])
+        assert.equal(prepare(src).count,0,src);
+    // 이미 아는 카드 안에 들어 있으면 그 카드로 한 번만
+    assert.equal(prepare('<status_bar>\n地点：Room <stat>A=1|B=Hall|C=Song</stat>\n</status_bar>').count,1);
+});
 {
     await clearSegmentCache();
     const src='Opening prose.\n\n<status_bar>\n日期：Monday\n地点：Green hall\n</status_bar>\n\nClosing prose.';
@@ -231,7 +255,7 @@ test('old cached translations must preserve keys tags code and hidden data',()=>
     const second=await translateSegments(config);assert.equal(p.restore(second.text),replace(src,pairs));assert.equal(calls,1);assert.equal(second.reused,3);
     await clearSegmentCache();let phase=0;
     const retry={...config,signature:()=> 'display-card-empty-field-test',request:async bodies=>{phase++;return bodies.map(b=>replace(b,pairs).replace('월요일',phase===1?'':'월요일'));}};
-    const bad=await translateSegments(retry);assert.throws(()=>p.restore(bad.text),e=>e.structuredCard);
+    const bad=await translateSegments(retry);assert.equal(p.restore(bad.text),replace(src,pairs).replace('월요일','Monday'));assert.equal(p.fallbackCount(),1);   // 1.0.0 빈 칸만 원문 (캐시에는 안 들어가 다음에 다시 받는다)
     const good=await translateSegments(retry);assert.equal(phase,2);assert.equal(p.restore(good.text),replace(src,pairs));assert.equal(good.reused,2);
     await clearSegmentCache();cases.push('real paragraph cache reuses complete cards and retries malformed fields');
 }

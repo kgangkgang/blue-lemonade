@@ -81,8 +81,9 @@ test('half-translated, unchanged or placeholder answers are not remembered; a fa
     assert.equal(box.data.size, 0);
     const p = prepare('<status_bar>\n地点：Green hall\n题记：Line\n</status_bar>', values);
     const broken = answer(p.text, { 'Green hall': '초록 홀' }).replace(/\[\[__VAR_23__\]\]Line/, '');
-    assert.throws(() => p.restore(broken));
-    assert.equal(box.data.size, 0, 'restore failed before learning');
+    // 1.0.0 빠진 칸만 원문으로 두고 카드는 살린다 — 자리표가 다 맞지 않은 카드의 값은 기억하지 않는다
+    assert.equal(p.restore(broken), '<status_bar>\n地点：초록 홀\n题记：Line\n</status_bar>'); assert.equal(p.fallbackCount(), 1);
+    assert.equal(box.data.size, 0, 'a card with missing fields teaches nothing');
     for (let i = 0; i < 405; i++) values.learn(`Room ${i}`, `방 ${i}`);
     assert.equal(JSON.parse(box.data.get('llmt-card-values-v1')).length, 400, 'only the newest 400 are kept');
 });

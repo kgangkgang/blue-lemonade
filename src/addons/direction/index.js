@@ -8,17 +8,19 @@ import { POPUP_TYPE, callGenericPopup } from '../../../../../../popup.js';
 import { getChatCompletionModel, oai_settings } from '../../../../../../openai.js';
 import { placeInstructions } from './prompt.js';
 // (10-29) 입력칸 타이핑: 조합 중엔 창을 다시 그리지 않는다 (시험 틀이 import 줄을 통째로 떼니 주석은 윗줄에)
+import { addonRunning } from '../../usage-mode.js';
 import { attachTypingRefresh } from './typing.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { badgeTextHit } from '../../badge-hit.js';
 // 7.7.4 시작 덮개 동안은 테마 색을 읽지 않는다
 import { afterBoot } from '../../boot-gate.js';
+import { onThemeLook } from '../../shared/theme-look.js';
 // 8.0.7 페르소나 위치 · 캐릭터 설명 위치 — 작가 노트와 같은 공용 틀
 import { registerAnchorSource, anchorAvailable } from '../../prompt-anchors.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.4.2';
+const VERSION = '1.4.3';
 // 1.4.2: 넣는 곳에 「페르소나 위치」(페르소나 설명 바로 위) · 「캐릭터 설명 위치」({{char}} 설명 바로 위) — 작가 노트와 같은 공용 틀(prompt-anchors).
 //        채팅 완성 · 텍스트 완성 둘 다. 같은 자리에서는 작가 노트 → 항상 지시 → 켠 프롬프트(목록 순서) → 전개 지시 → 원래 설명. 붙일 곳이 없으면(표식 꺼짐 · 스토리 문자열에 칸 없음) 메인 프롬프트 뒤
 // 1.4.0: 전개 지시 · 항상 지시 · 프롬프트 줄마다 넣는 곳(프롬프트 맨 처음 · 메인 프롬프트 앞/뒤 · 채팅 안 @깊이 · 프롬프트 맨 끝)과 역할(시스템 · 사용자 · AI 어시스턴트)을 따로 고른다
@@ -140,7 +142,7 @@ function initSettings() {
     for (const item of store.presets) if (typeof item.id !== 'string' || !item.id) item.id = newId();
     const history = store.history && typeof store.history === 'object' ? store.history : {};
     store.history = Object.fromEntries(TEXT_KINDS.map(kind => [kind, unique((Array.isArray(history[kind]) ? history[kind] : []).filter(listed), item => item.content).slice(0, HISTORY_MAX)]));
-    // 1.2.2 즐겨찾기 칩(6.2.8)은 뺐다 — 사용자 10-13 「별 빼줘 · 위의 북마크 표시(저장)로 하는 게 나을듯」.
+    // 1.2.2 즐겨찾기 칩(6.2.8)은 뺐다 — 위의 북마크 표시(저장)로 대신해요.
     //       칩으로 넣어 둔 글은 저장 목록의 전개 지시로 옮기고(같은 글은 한 번만 · 저장 상한 안에서 · 칩 순서대로 맨 위에) 칸은 지운다
     if (Array.isArray(store.favorites)) {
         for (const item of [...store.favorites].reverse()) {
@@ -179,10 +181,13 @@ function newId() {
     return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 }
 
+/** 애드온 스위치 · 「블루레몬에이드 사용」 · 사용 모드를 끄면 새로고침 전에도 프롬프트에 넣지 않아요 */
+const addonLive = () => addonRunning(extension_settings.salty, 'direction');
+
 /** 실제로 보낼 때 들어가는 상태인지 (전개 지시 — 비어 있어도 'AI가 알아서 전개'로 들어간다) */
 function isActive() {
     const store = settings();
-    return store.extensionEnabled && store.direction.enabled;
+    return addonLive() && store.extensionEnabled && store.direction.enabled;
 }
 
 function hasContent(kind = 'direction') {
@@ -192,7 +197,7 @@ function hasContent(kind = 'direction') {
 /** 항상 지시는 적은 글 그대로라 비어 있으면 보낼 것이 없다 */
 function alwaysActive() {
     const store = settings();
-    return store.extensionEnabled && store.always.enabled && hasContent('always');
+    return addonLive() && store.extensionEnabled && store.always.enabled && hasContent('always');
 }
 
 /** 1.3.0 켜 둔 프롬프트 (목록 순서, 글이 있는 것만) */
@@ -203,7 +208,7 @@ function enabledPrompts() {
 /** 프롬프트 쪽은 항상 지시처럼: 입력창 버튼 + 쪽 스위치가 켜져 있고, 켠 줄이 하나라도 있어야 보낸다 */
 function promptsActive() {
     const store = settings();
-    return store.extensionEnabled && store.prompts.enabled && enabledPrompts().length > 0;
+    return addonLive() && store.extensionEnabled && store.prompts.enabled && enabledPrompts().length > 0;
 }
 
 /** 1.3.1 깃털 켜짐 단계: 지금 보내는 것의 수 0~3 (전개 지시 · 항상 지시 · 켠 프롬프트 한 줄 이상) */
@@ -696,7 +701,7 @@ function syncPagesHeight() {
 }
 
 // 1.2.3 깃털 창 안 ▶ — 지시는 적는 대로 저장돼 있으니 창을 닫고 실리태번의 보내기 단추를 누른다. 빈 입력(이어 쓰기) · 생성 중 규칙은 실리태번 것 그대로
-//       (사용자 10-13: 깃털 → 쓰기 → 닫기 → 보내기 네 번을 한 번으로). 글을 넣는 게 아니라 보내기 동작만 — 지시 켜기/끄기는 손대지 않는다
+//       (깃털 → 쓰기 → 닫기 → 보내기 네 번을 한 번으로). 글을 넣는 게 아니라 보내기 동작만 — 지시 켜기/끄기는 손대지 않는다
 function sendButton(doc = document) {
     const element = doc.getElementById('send_but');
     if (!element || !element.getClientRects().length) return null;
@@ -889,7 +894,7 @@ function promptButton(act, className, icon, label, { text = '', disabled = false
     return element;
 }
 
-// ── 번역 보기 (사용자 「무슨 프롬프트인지 헷갈릴 때 바로 번역본 보면 좋잖아 · 한글화 패널처럼 번역본이 위에, 원문이 아래로」) ──
+// ── 번역 보기 (어떤 프롬프트인지 헷갈릴 때 바로 번역본 — 한글화 패널처럼 번역본 위 · 원문 아래) ──
 // 프롬프트가 든 칸(프롬프트 쪽 줄 · 고치는 칸, 설정의 전개 지시 프롬프트) 위에 번역본(읽기 전용 면), 아래에 원문 — 한글화 패널 항목의 「번역 · 원문」 차례 그대로.
 // 번역 엔진 · 캐시는 한글화 패널(prompt 애드온)의 translatePlainText · cachedTextTranslation 을 그대로 부른다(새 번역 길 없음).
 // 요청은 사람이 단추를 눌렀을 때만 · 같은 글은 캐시에서 바로(이번 접속의 표 → 패널의 파일 캐시). 원문은 그대로 고칠 수 있고, 번역한 글과 달라지면 「원문이 바뀌었어요 · 다시 번역」.
@@ -1233,7 +1238,7 @@ async function onPromptsClick(event) {
     }
 }
 
-// ── 1.3.6 꾹 눌러 순서 바꾸기 (사용자 10-23 「꾹 눌러서 순서 바꿀 수 있게」) ──
+// ── 1.3.6 꾹 눌러 순서 바꾸기 ──
 // 줄 머리(제목 · 토큰 수 · 스위치 자리)를 꾹 누르면(손가락 400ms, 거의 안 움직였을 때) 줄이 살짝 떠올라 집히고, 위아래로 끌면 다른 줄이 비켜 주고,
 // 놓으면 그 순서로 promptList 에 저장한다 — 이 목록 순서가 곧 보내는 순서다(injectDirection: 항상 지시 → 켠 프롬프트 목록 순서 → 전개 지시).
 // 꾹 누르기 전에 손가락이 움직이면 그냥 스크롤(브라우저가 pointercancel 을 보낸다) · 짧게 누르면 지금처럼 펼치기 · 스위치.
@@ -1647,7 +1652,7 @@ function openPopup() {
                 <p class="jj-empty" hidden></p>
             </div>
         </div>
-        <div class="jj-popup-foot"><i class="fa-solid fa-circle-info"></i><span class="jj-foot-text"></span></div>`;
+        <div class="jj-popup-foot"><span class="bl-info" aria-hidden="true"><i class="fa-solid fa-info"></i></span><span class="jj-foot-text"></span></div>`;
     for (const kind of TEXT_KINDS) {
         const textarea = pageTextarea(kind);
         textarea.value = store[kind].content;
@@ -1865,7 +1870,6 @@ function buildSettings() {
                 <details class="jj-card jj-prompt">
                     <summary>
                         <i class="fa-solid fa-scroll"></i><span>프롬프트</span><small class="jj-prompt-state"></small>
-                        <i class="fa-solid fa-chevron-down jj-caret" aria-hidden="true"></i>
                     </summary>
                     <div class="jj-prompt-body">
                         <p class="jj-hint"><code>{{direction}}</code> 자리에 적은 지시가 들어가요. AI에게 보내는 글이라 영어로 두었어요.</p>
@@ -2047,15 +2051,13 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
     // (폰 흉내 부팅 0.4~0.9초). 앱이 준비될 때까지는 조용히 있다가 한 번만 맞춘다.
     let bootQuiet = !!document.getElementById('loader');
     if (bootQuiet) eventSource.once(event_types.APP_READY, () => setTimeout(() => { bootQuiet = false; syncOnColor(); }, 1500));
-    const watchTheme = new MutationObserver(() => {
+    // 9.0.4: html style · head · body class 는 테마 색 따라가기 한 구독(src/shared/theme-look.js)으로 — 다음 프레임에 한 번 알려 줘요(아래 묶음은 그대로)
+    onThemeLook(() => {
         if (bootQuiet || themeFrame) return;
         clearTimeout(themeTimer);
         themeTimer = setTimeout(() => { cancelAnimationFrame(themeFrame); themeFrame = 0; syncOnColor(); }, 1000);
         themeFrame = requestAnimationFrame(() => { themeFrame = 0; afterPaint(); });
-    });
-    watchTheme.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
-    watchTheme.observe(document.head, { childList: true, subtree: true, characterData: true });
-    watchTheme.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }, { watch: 'html.style head body.class', name: '전개 지시 색' });
 
     verifyAddonCss({ folder: 'direction', name: '--jj-css-version', version: VERSION, title: '전개 지시' });
     // 7.0.2 저장한 지시 목록 기기 간 합치기 — 지시는 고치지 않고 더하거나 지우기만 해서 저장 시각(at)이 곧 고친 시각

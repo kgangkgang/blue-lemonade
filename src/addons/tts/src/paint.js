@@ -15,11 +15,12 @@ import { chat } from '../../../../../../../../script.js';
 import { getContext } from '../../../../../../../extensions.js';
 import { settings } from './settings.js';
 import { runtimeEnabled } from './runtime.js';
-import { textIndex, scanDialogue, colorFromBareHex, previewing } from './clickplay.js';   // 7.0.2 previewing
+import { textIndex, scanDialogue, colorFromBareHex, previewing } from './text-index.js';   // 7.0.2 previewing · 1.0.0 극한 최적화: 대사 클릭 묶음 없이 글 도구만
 import { colorOfName, normColor } from './speakers.js';
-import * as player from './player.js';
+import { dialogueSpeakers, analysisCfg, analysisBound } from './message-segments.js';   // 1.0.0 극한 최적화: 재생기 280KB 없이 같은 화자 판단 — 대사 분석 요청(analyzeForPaint)만 그때 재생기를 받아요
 import { log } from './log.js';
 import { PAINT_ATTR, planPaint, needsSpeakers } from './paint-core.js';
+import { watchDom } from '../../../dom-watch.js';
 
 const DEBOUNCE_MS = 300;
 const SLICE_MS = 12;                       // 한 번에 칠하는 시간 — 넘으면 쉬었다가 이어서 (폰에서 채팅을 열 때 길게 막지 않게)
@@ -136,7 +137,7 @@ export function paintMessage(mesId, el = null) {
     let { nodes, flat, list } = quotesOf(root);
     if (!list.some(q => !q.colored)) { if (had.length) unwrap(root); return 0; }   // 색 없는 대사가 없으면 화자를 구하지 않는다
     let speakers = [];
-    try { speakers = player.dialogueSpeakers(mesId); } catch (e) { log('err', `화자 색: 화자 구하기 실패 ${String(e?.message || e).slice(0, 40)}`); return 0; }
+    try { speakers = dialogueSpeakers(mesId); } catch (e) { log('err', `화자 색: 화자 구하기 실패 ${String(e?.message || e).slice(0, 40)}`); return 0; }
     let userName = '';
     try { userName = String(getContext()?.name1 || ''); } catch { userName = ''; }
     const colorOf = (name) => colorOfName(name, { userName });
@@ -164,7 +165,7 @@ function needsAnalysis(mesId) {
     const { list } = quotesOf(root);
     if (!list.some(q => !q.colored)) return false;
     let speakers = [];
-    try { speakers = player.dialogueSpeakers(mesId); } catch { return false; }
+    try { speakers = dialogueSpeakers(mesId); } catch { return false; }
     return needsSpeakers(list, speakers);
 }
 
@@ -173,6 +174,16 @@ function translatorSkipReason(mes) {
     try { return globalThis[Symbol.for('blue-lemonade.translator')]?.autoSkipReason?.(mes) ?? null; } catch { return null; }
 }
 
+/** analyzeForPaint 가 통신 없이 null 을 주는 조건의 앞부분(player.js 와 같은 판단) — 거짓이면 재생기를 받지 않아요. 'provider' 엔진은 공급자 모듈이 봐야 해서 받아요 */
+function mayAnalyze() {
+    const s = settings();
+    const an = analysisCfg(s);
+    if (!runtimeEnabled() || !s.enabled || !an?.enabled || an.speaker === false || (an.when || 'auto') !== 'auto') return false;
+    const engine = an.engine || 'compat';
+    if (engine === 'st') { try { return typeof getContext()?.generateRaw === 'function'; } catch { return false; } }
+    if (engine === 'compat') return !!(String(an.base || '').trim() && String(an.key || '').trim() && String(an.model || '').trim());
+    return true;
+}
 /** 새 답장 · 채팅을 연 뒤 마지막 답장: 화자를 모르는 색 없는 대사가 있으면 대사 분석 한 번 (메시지 글마다 한 번) → 다시 칠함 */
 async function maybeAnalyze(mesId) {
     if (!enabled() || !Number.isInteger(mesId)) return;
@@ -184,7 +195,10 @@ async function maybeAnalyze(mesId) {
     if (translatorSkipReason(mes) === 'system') { log('info', '화자 색: 번역 애드온이 눈 끈 답으로 건너뛰어 대사 분석도 쉼'); return; }
     tried.set(mes, key);
     let a = null;
-    try { a = await player.analyzeForPaint(mesId); } catch (e) { log('err', `화자 색: 분석 실패 ${String(e?.message || e).slice(0, 40)}`); a = null; }
+    // 1.0.0 극한 최적화: 재생기(analyzeForPaint)는 분석을 정말 부를 수 있을 때만 받아요 — analyzeForPaint 가 통신 없이 null 을 줄 조건(꺼짐 · 자동 아님 · 엔진 준비 안 됨)은 여기서 같게 거르고,
+    //   분석 모듈이 이미 붙어 있으면(재생기가 올라온 뒤) 예전처럼 늘 재생기에 물어요(저장된 분석 그대로 돌려줌)
+    if (!analysisBound() && !mayAnalyze()) a = null;
+    else { try { a = await (await import('./player.js')).analyzeForPaint(mesId); } catch (e) { log('err', `화자 색: 분석 실패 ${String(e?.message || e).slice(0, 40)}`); a = null; } }
     if (a && chat[mesId] === mes) queue(mesId);
 }
 
@@ -209,7 +223,7 @@ function flush() {
         try { paintMessage(id, boxes.get(id) || null); } catch (e) { log('err', `화자 색: 칠하기 실패 ${String(e?.message || e).slice(0, 40)}`); }
         if (dirty.size && performance.now() - t0 > SLICE_MS) { timer = setTimeout(flush, 16); break; }
     }
-    observer.takeRecords();   // 우리가 바꾼 것은 다시 부르지 않게
+    observer.quiet();   // 우리가 바꾼 것은 다시 부르지 않게(이 구독만 — 다른 감시는 그대로 봐요)
 }
 function onMutations(records) {
     if (!enabled() || previewing()) return;
@@ -262,13 +276,13 @@ export function init() {
     if (observer) return;
     const chatEl = document.getElementById('chat');
     if (!chatEl) return;
-    observer = new MutationObserver(onMutations);
-    observer.observe(chatEl, { childList: true, subtree: true });
+    // 9.0.4: 공용 감시 허브 구독(#chat 구역 — 채팅을 보는 감시자는 문서마다 하나)
+    observer = watchDom(chatEl, { childList: true, subtree: true, name: 'TTS 화자 색' }, onMutations);
     refresh();
 }
 export function destroy() {
     clearTimeout(timer); clearTimeout(openTimer); timer = 0; openTimer = 0; dirty.clear();
-    if (observer) { observer.disconnect(); observer = null; }
+    if (observer) { observer(); observer = null; }
     const chatEl = document.getElementById('chat');
     if (chatEl) unwrap(chatEl);
 }

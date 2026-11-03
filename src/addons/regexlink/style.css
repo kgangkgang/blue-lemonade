@@ -1,4 +1,4 @@
-#regex-link-settings{--rl-version:"1.1.0"}
+#regex-link-settings{--rl-version:"1.1.3"}
 #regex-link-settings .inline-drawer-content{display:flex;flex-direction:column;gap:12px;text-align:left}
 .rl-summary{margin:0}
 .rlk-empty{margin:0;opacity:.75}
@@ -31,3 +31,8 @@
 #regex-link-settings .rlk-keep>span>b{grid-column:2;grid-row:1;min-width:0}
 #regex-link-settings .rlk-keep>input[type="number"]{grid-column:3;grid-row:1}
 #regex-link-settings .rlk-keep>span>small{grid-column:2/-1;grid-row:2;min-width:0}
+/* 1.1.2 직접 바꾼 정규식: 이름(보조 글자) · 「자동으로」 한 줄 — 이름이 길면 이름 칸만 꺾인다 */
+#regex-link-settings .rl-manual{display:flex;align-items:center;gap:8px;min-width:0}
+#regex-link-settings .rl-manual small{flex:1 1 auto;min-width:0;font-size:var(--bl-ts-meta,12.5px);line-height:1.5;color:var(--salty-muted,inherit);overflow-wrap:anywhere}
+#regex-link-settings .rl-manual .rl-auto{flex:0 0 auto;min-height:36px;margin:0;padding:0 10px;white-space:nowrap}
+@media (hover:hover) and (pointer:fine){#regex-link-settings .rl-manual .rl-auto{min-height:34px}}

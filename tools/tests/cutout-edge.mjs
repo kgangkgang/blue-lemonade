@@ -222,12 +222,12 @@ await test('detection: every transparent chat picture (other extensions too, laz
     assert.ok(assets.includes("if (!img.complete || !img.naturalWidth) { img.addEventListener('load', onEdgeLoad, { once: true }); return; }"), 'lazy pictures classify when they load');
     assert.ok(assets.includes("export const CUTOUT_ATTR = 'data-salty-cutout';"));
     assert.ok(assets.includes("const wanted = opt === 'auto' || opt === 'on' || known?.seen || img.matches(VIEW_IMG);"));
-    assert.ok(assets.includes("observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: [CUTOUT_ATTR, 'src'] })"), 'dialogs appended to <body>, the attribute and (7.3.1) src swaps');
+    assert.ok(assets.includes("watchDom(document.body, { childList: true, subtree: true, attributes: [CUTOUT_ATTR, 'src'], exclude: '#chat'"), 'dialogs appended to <body>, the attribute and (7.3.1) src swaps (9.0.4 shared watch hub, chat branch not watched)');
     assert.ok(assets.includes("if (chat.contains(m.target)) continue;"), 'chat changes are not scanned twice');
     assert.ok(assets.includes("img.classList.toggle('salty-alpha-view', rec.cutout);"));
     assert.ok(!new RegExp('auto' + '-?' + 'pic', 'i').test(assets.slice(assets.indexOf('const EDGE_IMG'), assets.indexOf('const optOf'))), 'generic: no extension names in the new rules');
-    const readme = read('README.md');
-    assert.ok(readme.includes('## 확장 만드는 분께') && readme.includes('data-salty-cutout="auto"') && readme.includes('data-salty-cutout="off"'), 'README documents the attribute');
+    const readme = read('DEVELOPERS.md');   // 1.0.0 README 나눔: 다른 확장과 맞물리는 표시는 DEVELOPERS.md
+    assert.ok(readme.includes('# 다른 확장과 맞물리는 표시') && readme.includes('data-salty-cutout="auto"') && readme.includes('data-salty-cutout="off"'), 'DEVELOPERS.md documents the attribute');
 });
 
 await test('wiring: apply passes the screen tone and accent, panel shows preset cards on a real sample and keeps sliders under 「자세히」', () => {
@@ -238,7 +238,9 @@ await test('wiring: apply passes the screen tone and accent, panel shows preset 
     const panel = read('src/panel.js');
     assert.ok(panel.includes('data-act="cutedge-preset"') && panel.includes("case 'cutedge-preset':"));
     assert.ok(panel.includes("const own = document.querySelector('#chat .salty-alpha img, #chat img.salty-alpha');"), 'cards use a transparent picture from this chat when there is one');
-    assert.ok(panel.includes('<details class="bl-cutedge-more" data-md-fold="cutedge-more"><summary>자세히</summary>'));
+    // 1.0.0 간단화: 「자세히」 접힘은 화면 맨 아래 공용 「고급」 접힘이 맡아요(src/settings-advanced.js — 외곽선 · 그림자 · 빛 · 그리는 범위 묶음)
+    const adv = fs.readFileSync(new URL('../../src/settings-advanced.js', import.meta.url), 'utf8');
+    assert.ok(/'image\/cutedge': \['group:외곽선', 'group:그림자 · 빛', 'group:그리는 범위'\]/.test(adv));
     for (const key of ['outline.width', 'outline.alpha', 'outline.blur', 'shadow.alpha', 'shadow.angle', 'shadow.distance', 'shadow.blur']) assert.ok(panel.includes(`slider('image.cutEdge.${key}'`), key);
     for (const key of ['outline.on', 'shadow.on', 'overflow']) assert.ok(panel.includes(`toggle('image.cutEdge.${key}'`), key);
     assert.ok(panel.includes("seg('image.cutEdge.outline.colorMode', [['custom', '직접'], ['picture', '그림 가장자리 색'], ['accent', '테마 포인트 색']])"));

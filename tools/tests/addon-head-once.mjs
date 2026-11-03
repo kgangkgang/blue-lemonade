@@ -34,10 +34,11 @@ const cmp = (x, y) => x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
 const HIDE = 'html body.salty #pt-panel.pt-in-drawer > #pt-panel-header > h3 { display: none !important; }';
 test('통일 CSS: 서랍 안 한글화 패널의 머리 제목(판 알약 포함)을 숨기는 한 줄 · style.css 에도', () => {
     assert.ok(read('css/85-addon-unify.css').includes(HIDE));
-    assert.ok(read('style.css').includes(HIDE), 'node tools/build-css.cjs 로 다시 빌드');
+    const builtAll = read('style.css') + (fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? read('src/style-lazy.gen.css') : '');   // 1.0.0 두 장 빌드: 85 모듈은 둘째 장
+    assert.ok(builtAll.includes(HIDE), 'node tools/build-css.cjs 로 다시 빌드');
 });
 test('숨김 줄이 통일 제목 규칙(빌드된 꼴)보다 무겁고 뒤에 있다', () => {
-    const css = read('style.css');
+    const css = read('style.css') + (fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? read('src/style-lazy.gen.css') : '');
     // 8.0.8 테마 가볍게: build-css 가 한 갈래 `:is(…)` 감싸개를 벗겨요(특이도 같음) — 두 꼴 다 받아요
     const at = [':is(#pt-panel > #pt-panel-header > h3) {', '#pt-panel > #pt-panel-header > h3 {'].map(t => css.indexOf('html body.salty ' + t)).find(i => i >= 0) ?? -1;
     assert.ok(at >= 0, '통일 제목 규칙의 한글화 패널 줄을 못 찾음 — 빌드 꼴이 바뀌었으면 이 시험을 맞출 것');

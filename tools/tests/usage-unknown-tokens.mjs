@@ -38,8 +38,8 @@ await t('Anthropic 꼴: 캐시만 온 조각도 입력이 0 보다 크면 실제
 });
 await t('capture.js 가 settleTokens 로 토큰을 정한다 (예전 usageKnown 만 보던 길이 없다)', async () => {
     const src = fs.readFileSync(path.join(root, 'src/addons/perf/capture.js'), 'utf8');
-    assert.match(src, /await settleTokens\(\{ usage: acc\.usage, promptText, replyText: acc\.text \+ acc\.reasoning,/);
+    assert.match(src, /await (?:PR\.)?settleTokens\(\{ usage: acc\.usage, promptText, replyText: acc\.text \+ acc\.reasoning,/);   // 1.0.0 가격 모듈은 첫 요청 때 받아 PR.settleTokens 로 불러요
     assert.doesNotMatch(src, /if \(!usageKnown && promptText && httpOk/);
-    assert.match(fs.readFileSync(path.join(root, 'src/addons/perf/hub.js'), 'utf8'), /SUITE_VERSION = '2\.3\.3'/);
+    assert.match(fs.readFileSync(path.join(root, 'src/addons/perf/hub.js'), 'utf8'), /SUITE_VERSION = '2\.3\.4'/);
 });
 console.log(`usage-unknown-tokens: ${n} passed`);

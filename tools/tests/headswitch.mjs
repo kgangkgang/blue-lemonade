@@ -47,7 +47,7 @@ await test('보이기 켜고 끄기: setShown 이 설정에 적고 저장한다'
     assert.deepEqual(getSettings().headSwitches, {});
     assert.ok((ctx.saves || 0) > before, '저장했다');
 });
-await test('6.1.8 줄 이름은 모든 창에서 「확장 탭에 보이기」 하나 (확장 이름 · 켜기 이름 없이) — 사용자: 「~위에도 보이기 … 확장탭에 보이기로 이름 다 통일해 줘」', async () => {
+await test('6.1.8 줄 이름은 모든 창에서 「확장 탭에 보이기」 하나 (확장 이름 · 켜기 이름 없이)', async () => {
     assert.equal(H.ROW_LABEL, '확장 탭에 보이기');
     const fs = await import('node:fs');
     const src = fs.readFileSync(path.join(root, 'src/headswitch.js'), 'utf8');
@@ -93,11 +93,5 @@ await test('6.8.9 테마를 끈 서랍 제목 줄: 한 줄(ⓒ 는 버전 옆) �
     const chat = fs.readFileSync(path.join(root, 'css/05-chat.css'), 'utf8');
     assert.match(chat, /body\.salty #chat \.mes\[is_system="true"\] \.ch_name \.alignItemsBaseline \{\s*flex-wrap: nowrap;/, '숨긴 메시지 머리줄은 한 줄');
     assert.match(chat, /body\.salty #chat \.mes\[is_system="true"\] \.ch_name \.timestamp \{\s*flex: 0 1 auto;/, '날짜가 모자라면 줄어듦');
-});
-await test('6.9.1 몰입 읽기로 바를 숨기면 TTS 재생 막대도 화면 아래로 (CSS 만)', async () => {
-    const fs = await import('node:fs');
-    const css = fs.readFileSync(path.join(root, 'css/29-reader-onehand.css'), 'utf8');
-    assert.match(css, /html\.bl-bars-hidden body\.salty\.bl-reader \.lv-bar \{\s*top: calc\(100dvh - 10px - env\(safe-area-inset-bottom, 0px\)\) !important;/);
-    assert.match(css, /body\.salty\.bl-reader \.lv-bar \{\s*transition: top 0\.24s ease;/);
 });
 console.log(`${passed} tests passed`);

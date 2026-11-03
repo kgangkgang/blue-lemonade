@@ -150,7 +150,10 @@ function clear(el) {
 // 폭은 기기마다 한 번 재고(폰은 0), 칸마다 '스핀 단추 숨김' 규칙(::-webkit-inner-spin-button 에 appearance/display none)이 맞는지 본다
 let platformSpin = null;
 let spinRules = null, spinSheets = -1;
+// 1.0.0 극한 최적화: 플랫폼 스핀 단추 폭은 브라우저(UA)마다 정해진 값이라 한 번 재면 localStorage 에 두고 다음 부팅엔 재지 않아요 — 재기는 문서 전체 강제 배치 한 번(프로파일: 토글 장면의 테마 자기 시간 1위)
+const SPIN_KEY = 'bl-num-spin:' + (globalThis.navigator?.userAgent || '').slice(0, 200);
 function measurePlatformSpin() {
+    try { const saved = localStorage.getItem(SPIN_KEY); if (saved !== null && /^\d+(\.\d+)?$/.test(saved)) { platformSpin = Number(saved); return; } } catch { /* 저장소 없음 */ }
     const box = document.createElement('div');
     box.style.cssText = 'position:fixed;left:-10000px;top:0;visibility:hidden;pointer-events:none;contain:strict;width:200px;height:40px';
     // 테마의 !important 규칙(글자 칸만 좌우 여백 등)이 둘을 다르게 만들지 않게 인라인도 !important
@@ -159,6 +162,7 @@ function measurePlatformSpin() {
     document.body.append(box);
     platformSpin = Math.max(0, num.scrollWidth - text.scrollWidth);
     box.remove();
+    try { localStorage.setItem(SPIN_KEY, String(platformSpin)); } catch { /* 저장소 없음 */ }
 }
 function collectSpinRules(list, out) {
     for (const rule of list) {
@@ -495,13 +499,6 @@ export function syncNumComma(want, key = null) {
     else if (on && (key === null || key !== lookKey)) { lookKey = key; refresh(); }
 }
 
-/** 시험용: 쉼표 대신 다른 모양으로 그려 보기 (원래 글자와 겹쳐 자리 비교) — null 이면 원래대로 */
-export function numCommaTestFormat(fn) {
-    format = typeof fn === 'function' ? fn : groupedNumber;
-    images.clear();
-    for (const el of tracked) drawn.delete(el);
-    if (on) refresh();
-}
 
 /** 시험용: 전체 상태, 또는 칸 하나의 상태 */
 export function numCommaState(el) {

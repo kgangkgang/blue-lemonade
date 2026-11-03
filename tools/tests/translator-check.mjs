@@ -361,5 +361,17 @@ await test('wiring: hooks at start-up, endTranslation re-checks, version 2.6.0, 
     assert(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8').includes('node tools/tests/translator-check.mjs .'));
 });
 
+await test('한 줄 열쇠=값 상태창은 「원문 그대로」로 고르지 않고, 옮기지 않은 본문은 그대로 고른다', () => {
+    // 카드 정규식이 그리는 상태창 줄은 값만 따로 옮기는 카드라 문단 점검에서 빠진다 (가상 값)
+    const stat = '<stat>Date=2031-04-02|Time=19:42|Location=Forest Hall, east wing|Track=Nocturne No. 2 - Andante|Calm=80</stat>';
+    const prose = 'Seraphina folded the letter twice and set it beside the lamp, listening to the rain against the window.';
+    const ko = '세라피나는 편지를 두 번 접어 등잔 옆에 두고, 창을 두드리는 빗소리에 귀를 기울였다. 방 안은 조용했고 촛불은 낮게 흔들렸다.';
+    const ok = check.checkTranslation(join(stat, prose), join(stat, ko));
+    assert.equal(ok.flagged, 0, JSON.stringify(ok));
+    const left = 'The candle burned low beside the quiet window.';
+    const bad = check.checkTranslation(join(stat, prose, left), join(stat, ko, left));
+    assert.deepEqual(bad.paragraphs.map(p => [p.index, p.reasons]), [[2, ['same']]]);
+});
+
 console.log(`translator-check: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

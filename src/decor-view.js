@@ -1,3 +1,4 @@
+import { watchDom } from './dom-watch.js';
 import { decorEnabled } from './decor.js';
 const ASSET = '.mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img)';
 const PROFILE = '.mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
@@ -7,7 +8,7 @@ const wrapped = new Map();
 const SELECTORS = { image: ASSET, profile: PROFILE, userProfile: USER_PROFILE };
 const toggled = new Set();
 const isMes = node => node.nodeType === 1 && node.classList.contains('mes');
-let state = { image: false, profile: false, userProfile: false }, observer = null, roots = [], frame = 0;
+let state = { image: false, profile: false, userProfile: false }, unwatch = [], roots = [], frame = 0;
 const dirty = new Set();
 const hasImage = node => node.nodeType === 1 && (node.tagName === 'IMG' || node.querySelector('img'));
 const maskCache = new Map(), maskSources = {};
@@ -72,7 +73,13 @@ function scan(root) {
         for (const img of root.querySelectorAll(selector)) wrap(img, kind);
     }
 }
-function listen() { for (const root of roots) observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['is_system'] }); }
+function changed(records) {
+    note(records);
+    if (!frame && (dirty.size || toggled.size || records.some(rec => [...rec.removedNodes].some(hasImage)))) frame = requestAnimationFrame(flush);
+}
+function listen() { unwatch = roots.map(root => watchDom(root, { childList: true, subtree: true, attributes: ['is_system'], name: '장식 액자' }, changed)); }
+function quiet(fn) { let run = fn; for (const off of unwatch) { const next = run; run = () => off.quiet(next); } run(); }
+
 function note(records) {
     for (const rec of records) {
         if (rec.type === 'attributes') { if (isMes(rec.target)) toggled.add(rec.target); continue; }
@@ -82,9 +89,9 @@ function note(records) {
 function flush() {
     frame = 0;
     // 직접 만든 감싸기 요소의 변경 알림은 남기지 않는다.
-    const queued = observer?.takeRecords() || [];
-    note(queued);
-    observer?.disconnect();
+    for (const off of unwatch) off.flush();
+    cancelAnimationFrame(frame); frame = 0;
+    quiet(() => {
     for (const [img, info] of wrapped) {
         if (!info.host.contains(img)) {
             // An extension may replace/remove the photo itself. Preserve its new
@@ -108,20 +115,17 @@ function flush() {
     toggled.clear();
     for (const root of dirty) scan(root);
     dirty.clear();
-    if (state.image || state.profile || state.userProfile) listen();
+    });
 }
 export function syncDecorView(settings) {
     const next = decorEnabled(settings);
     syncWindows(settings, next);
     const nextRoots = [...document.querySelectorAll('#chat, .salty-preview')];
-    if (observer && next.image === state.image && next.profile === state.profile && next.userProfile === state.userProfile && nextRoots.length === roots.length && nextRoots.every((root, i) => root === roots[i])) return;
+    if (unwatch.length && next.image === state.image && next.profile === state.profile && next.userProfile === state.userProfile && nextRoots.length === roots.length && nextRoots.every((root, i) => root === roots[i])) return;
+    for (const off of unwatch.splice(0)) off();
     state = next; roots = nextRoots;
-    if (!observer) observer = new MutationObserver(records => {
-        note(records);
-        // 삭제만 된 경우에도 참조를 해제한다.
-        if (!frame && (dirty.size || toggled.size || records.some(rec => [...rec.removedNodes].some(hasImage)))) frame = requestAnimationFrame(flush);
-    });
     cancelAnimationFrame(frame); frame = 0;
     if (state.image || state.profile || state.userProfile) for (const root of roots) dirty.add(root);
     flush();
+    if (state.image || state.profile || state.userProfile) listen();
 }

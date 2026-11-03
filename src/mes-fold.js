@@ -8,6 +8,7 @@
 // 내장 번역기도 원문 비교를 다시 한다. 다시 그리기는 updateMessageBlock, 저장은 hideChatMessageRange 가 한 번 한다.
 
 // 감싸는 틀: 빈 줄을 두어야 첫 문단부터 <p> 로 그려진다 (한 줄 틀은 첫 문단이 <br> 붙은 맨 글자로 남았다)
+import { watchDom } from './dom-watch.js';
 import { notifyRerender } from './rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) — 이벤트는 여전히 쏘지 않고 알림기가 판단한다
 
 const HEAD = '<details><summary></summary>\n\n', TAIL = '\n\n</details>';
@@ -79,9 +80,10 @@ export function startFoldRepair() {
     if (repairBound) return;
     const chat = document.getElementById('chat'); if (!chat) return;
     repairBound = true;
-    new MutationObserver(records => {
+    // 9.0.4: 공용 감시 허브 구독(#chat 구역 — 채팅을 보는 감시자는 문서마다 하나)
+    watchDom(chat, { subtree: true, attributes: ['is_system'], name: '접은 메시지 숨김 풀기' }, records => {
         if (records.some(record => record.target.getAttribute('is_system') === 'false')) repairUnhiddenFolds();
-    }).observe(chat, {subtree:true, attributes:true, attributeFilter:['is_system']});
+    });
     const ctx = SillyTavern.getContext(), types = ctx.eventTypes || ctx.event_types;
     for (const name of ['CHAT_CHANGED', 'GENERATION_STARTED']) if (types?.[name]) ctx.eventSource.on(types[name], repairUnhiddenFolds);
     repairUnhiddenFolds();

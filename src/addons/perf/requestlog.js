@@ -1,8 +1,9 @@
-import { loadPriceCache, startPriceSync } from './pricing-sync.js';
 // 요청 로그 (Request Log)
 // 실리태번과 확장이 보내는 API 요청을 모두 기록한다. 프롬프트·응답·오류를 다시 보고, 토큰과 비용을 날짜·모델별로 모아 본다.
 // 기록은 이 기기의 브라우저(IndexedDB)에만 남는다.
 import { verifyAddonCss } from '../../addon-files-check.js';
+import { afterBoot } from '../../boot-gate.js';
+import { onGate } from '../../boot-layers.js';
 import { onFirstShow } from './hub.js';
 import { eventSource, event_types } from '../../../../../../../script.js';
 import { TITLE, VERSION, FOLDER, initSettings, settings } from './state.js';
@@ -14,7 +15,7 @@ let budgetPromise = null;
 const budgetModule = () => (budgetPromise ??= import('./budget.js'));
 
 initSettings();
-loadPriceCache();
+// 1.0.0 극한 최적화: 가격표 캐시(loadPriceCache)는 가격 모듈을 처음 받을 때(capture.js ensurePricing · usage-ledger pricingModules)가 해요 — 부팅 때 가격표 235KB 를 받지 않아요
 // 다른 확장보다 먼저 fetch를 감싸야 그 확장의 요청도 잡힌다 (loading_order가 낮다).
 installCapture();
 // 7.4.0 사용량 장부: 요청이 끝나 응답의 usage 를 읽으면 본 생성 · BL 기능만 장부에 적는다 (다른 확장은 스스로 적는다).
@@ -101,5 +102,7 @@ jQuery(async () => {
     setTimeout(() => { let done = false; const go = () => { if (!done) { done = true; checkFilesMatch(); } }; requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 5000); }, 3000);
     // 4.5.8: 첫 정리는 시작 경로에서 빼 예산 확인과 같은 타이머에 얹는다 —
     // jQuery ready 에서 곧장 IndexedDB 를 readwrite 커서로 최대 500행 훑었고 보통은 지울 것이 없다.
-    setTimeout(() => { startPriceSync(() => settings().priceAutoRefresh !== false); trimEntries().catch(() => {}); if (settings().budget?.enabled) budgetModule().then(m => m.refresh()).catch(() => {}); }, 6000);
+    // 1.0.0 극한 최적화: 가격표 동기화(가격 모듈 받기)는 시작 덮개가 걷힌 뒤 6초(예전엔 jQuery ready 뒤 6초 — 폰에선 첫 화면 전이었어요)
+    afterBoot(() => setTimeout(() => { onGate('press', () => import('./pricing-sync.js').then(m => m.startPriceSync(() => settings().priceAutoRefresh !== false)).catch(() => {}));   // 1.0.0: 가격표(약 250KB)는 처음 누를 때 — 생성 · 요청 기록은 그 뒤예요
+    trimEntries().catch(() => {}); if (settings().budget?.enabled) budgetModule().then(m => m.refresh()).catch(() => {}); }, 6000));
 });

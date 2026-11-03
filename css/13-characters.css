@@ -133,7 +133,6 @@ body.salty #right-nav-panel #rm_button_selected_ch h2 {
   color: var(--salty-text) !important;
   font-size: var(--bl-fs-title) !important;
   font-weight: 650 !important;
-  letter-spacing: -0.02em;
   line-height: 1.3;
   transition: color 0.15s ease;
 }
@@ -207,7 +206,7 @@ body.salty #right-nav-panel #charListFixedTop {
   border-radius: var(--bl-r-md);
 }
 /* 폰에서 캐릭터 서랍은 좌우 여백을 줄여 폭을 더 쓴다 —
-   서랍 padding 8 + 카드 margin 14 = 22px 씩 먹어서 360~390px 화면에서 답답했다 (사용자 지적) */
+   서랍 padding 8 + 카드 margin 14 = 22px 씩 먹어서 360~390px 화면에서 답답했다 */
 @media (max-width: 1000px) {
   /* 기반 규칙(2918줄)이 :not(#salty-none) 으로 아이디 둘을 쓰므로 같은 방법으로 이겨야 한다 */
   body.salty #right-nav-panel:not(#salty-none) > .scrollableInner {
@@ -572,22 +571,24 @@ body.salty #right-nav-panel #rm_print_characters_block .character_select.charact
   --salty-row-bg: var(--bl-card);
   box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e2) !important;
 }
+/* (10-31 동그란 체크 전수) 꺾쇠는 글꼴 ✓ 대신 공용 꺾쇠(10-foundation --bl-check-bars, A3 모양) — 글꼴 ✓ 는 무게 중심이 원 중심에서 위로 0.9px 였어요.
+   ::after 는 즐겨찾기 별이라 한 가상 요소에 면 + 꺾쇠: 원을 −45° 돌려 꺾쇠를 곧은 두 막대로 그려요(원은 돌려도 원). font-size = 면 크기라 em 이 면 비율 */
 body.salty #right-nav-panel #rm_print_characters_block .character_select.character_selected > .avatar::before {
-  content: "\f00c";
+  content: "";
   position: absolute;
   bottom: -6px;
   left: -6px;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--bl-deco-pick-badge);
-  height: var(--bl-deco-pick-badge);
+  display: block;
+  box-sizing: border-box;
+  font-size: var(--bl-deco-pick-badge);
+  width: 1em;
+  height: 1em;
   border-radius: 50%;
-  background: var(--salty-fill-accent, var(--salty-accent));
+  background: var(--bl-check-bars), var(--salty-fill-accent, var(--salty-accent));
   box-shadow: 0 0 0 1px var(--salty-row-bg, var(--bl-card));
-  color: var(--salty-on-accent); /* 포인트 면 위 글자색 — 밝은 커스텀 포인트(노랑 등)에서도 ✓ 가 보이게 */
-  font: 900 11px/1 "Font Awesome 6 Free";
+  color: var(--salty-on-accent); /* 포인트 면 위 꺾쇠색 — 밝은 커스텀 포인트(노랑 등)에서도 보이게 */
+  transform: rotate(-45deg);
 }
 /* 아바타: 떠 있는 사진(e2) — 목록에서는 한 단 크고 깊게 (큰 아바타 설정이면 64×96, e3) */
 body.salty #right-nav-panel :is(.character_select, .group_select, .bogus_folder_select, .group_member) > .avatar {
@@ -842,7 +843,6 @@ body.salty #right-nav-panel #form_create {
 body.salty #right-nav-panel #avatar-and-name-block {
   margin: var(--bl-s2) 0 0;
   padding: var(--bl-s4) var(--bl-inset) var(--bl-s3);
-  border-radius: var(--bl-r-lg);
   background: var(--bl-fill-card, var(--bl-card));
   box-shadow: var(--bl-e2);
 }
@@ -905,7 +905,6 @@ body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   flex: none;
-  gap: 6px !important;
   margin: 0 !important;
   padding: 0 !important;
   background: transparent;
@@ -918,7 +917,6 @@ body.salty #right-nav-panel #form_create[actiontype="createcharacter"] #avatar_c
 body.salty #right-nav-panel #avatar_controls .form_create_bottom_buttons_block > .menu_button {
   width: auto !important;
   min-width: 0 !important;
-  height: 40px !important;
   margin: 0 !important;
   border-radius: var(--bl-r-sm) !important;
   background-color: var(--bl-control) !important;

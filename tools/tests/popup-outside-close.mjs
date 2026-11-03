@@ -19,7 +19,7 @@ const t = async (name, fn) => { await fn(); n++; console.log(`  PASS  ${name}`);
 const target = kind => ({ kind, closest: sel => (kind && sel.split(',').map(s => s.trim()).includes(kind) ? { kind } : null) });
 const KINDS = { pick: '.salty-pick-layer', popup: '[data-bl-popup]', dialog: 'dialog', plain: null };
 
-await t('① DEUS 빠른 설정: 테마 고르기 목록 · 테마 팝업 · dialog 안을 누르면 그대로, 정말 바깥이면 닫힘 (bundled = plain)', async () => {
+await t('① DEUS 빠른 설정: 테마 고르기 목록 · 테마 팝업 · dialog 안을 누르면 그대로, 정말 바깥이면 닫힘 (모듈 하나 — 9.0.7)', async () => {
     const plain = read('src/scripts/plain/deus-qr.js');
     const line = plain.split('\n').find(l => l.trim().startsWith('const outside = event =>'));
     assert.ok(line, 'outside handler');
@@ -28,8 +28,7 @@ await t('① DEUS 빠른 설정: 테마 고르기 목록 · 테마 팝업 · dia
     const outside = make({ contains: () => false }, { busy: false }, { contains: () => false }, () => closed++);
     const press = kind => { closed = 0; outside({ target: target(KINDS[kind]), composedPath: () => [] }); return closed; };
     assert.equal(press('pick'), 0, '목록 줄'); assert.equal(press('popup'), 0, '테마 팝업'); assert.equal(press('dialog'), 0, 'dialog'); assert.equal(press('plain'), 1, '바깥');
-    const bundled = (await import(pathToFileURL(path.join(root, 'src/scripts/bundled/deus-qr.js')))).default;
-    assert.ok(bundled.includes(line.trim()), 'bundled 에도 같은 줄');
+    assert.ok(!fs.existsSync(path.join(root, 'src/scripts/bundled')), '옛 bundled 사본은 걷었어요');
     assert.match(read('src/scripts/catalog.js'), /\{id:'deus-qr',name:'데우스 빠른 설정',version:'1\.0\.[7-9]'/); // 1.0.7 에서 고친 뒤로 판이 올라가도 돼요(1.0.8 = V3 대응)
 });
 

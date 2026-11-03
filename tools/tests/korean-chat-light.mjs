@@ -2,11 +2,12 @@
 //   환영 칸 글자)은 예전처럼 그리기 전에 바뀐다. 제 번역이 쓴 글자 때문에 콜백이 한 번 더 불리지도 않는다.
 //   node tools/tests/korean-chat-light.mjs <테마 루트>
 // 폰 4배 측정에서 내장 스크립트 실행기 몫의 MutationObserver 콜백이 2,019번이었다 (채팅 뿌리 전체를 characterData 로 보던 때).
-// 내장본(src/scripts/bundled/korean.js)의 채팅 감시 조각을 잘라 작은 가짜 DOM · 가짜 MutationObserver 위에서 돌린다. 글은 모두 지어낸 것.
+// 내장 모듈(src/scripts/plain/korean.js)의 채팅 감시 조각을 잘라 작은 가짜 DOM · 가짜 MutationObserver 위에서 돌린다. 글은 모두 지어낸 것.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { scriptCode } from './script-code.mjs';
 
 const root = path.resolve(process.argv[2] || '.');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
@@ -17,7 +18,7 @@ async function test(name, fn) {
 }
 
 const source = read('tools/scripts-src/korean.js');
-const bundled = String((await import(pathToFileURL(path.join(root, 'src/scripts/bundled/korean.js')).href)).default).replace(/\r\n/g, '\n');
+const bundled = await scriptCode(root, 'korean');
 
 // ── 작은 선택자: 태그 · #id · .class · [속성] · [속성="값"] · [속성*="값"] · [속성^="값"] · :is(…) · 자손(빈칸) · 자식(>) · 쉼표
 function splitTop(text, sep) {

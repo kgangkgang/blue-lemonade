@@ -1,12 +1,30 @@
 /* ===== css/73-scroll-fade.css =====
    8.2.3 세로 스크롤 칸의 넘친 쪽 흐림 — src/scroll-fade.js 가 scroll · resize 때 넘친 쪽만 data-bl-fade-y="top|bottom|both" 를 붙인다(가로 data-bl-fade 와 따로).
-   스크롤바(77 에서 숨김) 대신 「더 있음」을 보여 준다(커뮤니티 제보 「봇 목록 · 확장 칸에 스크롤바가 없다」 → 사용자 결정 10-29 「스크롤바는 숨긴 채로」).
-   넘칠 때만 속성이 붙으므로 맞는 칸에는 mask 가 아예 없다. 끄기는 탭 줄 흐림과 같은 길(html#bl-tab-scroll-off).
+   스크롤바(77 에서 숨김) 대신 「더 있음」을 보여 준다(스크롤바는 숨긴 채 넘친 쪽만 흐리게).
+   넘칠 때만 속성이 붙으므로 맞는 칸에는 흐림 규칙이 아예 없다. 끄기는 탭 줄 흐림과 같은 길(html#bl-tab-scroll-off).
    98-tab-strips 는 「높이 · 글꼴을 바꾸지 않는다」는 시험이 지키는 파일이라 따로 둔다.
-   서랍(.drawer-content)도 mask — 처음엔 시트 배경 · 그림자를 지키려 sticky 가상 요소(시트 색 → 투명)를 썼는데, 확장 설정 서랍에서 가상 요소가 있기만 해도
-   (높이 0 · 배경 없음 · static 이어도) 폰 4배 CPU 스크롤 80프레임에 긴 작업 3~6개(400~800ms, p95 60~120ms)가 생겼고 mask 는 0개였다(리그 10-29, _rig/perf3~5).
-   mask 는 넘칠 때 시트 그림자(e5)를 함께 가리지만 폰 시트는 위 막대 아래 붙어 있어 눈에 띄지 않는다. ===== */
+   ① 흐림은 전부 mask-image — 스크롤 칸 안에 아무것도 더하지 않는다. 서랍(.drawer-content)에 가상 요소 자식(sticky 덮개)을 두면 그것이 있기만 해도
+      (sticky 가 아니고 opacity 가 고정이어도) 확장 설정 서랍의 폰 4배 CPU 스크롤 80프레임에 긴 작업 4~6개(0.8~1.3초)가 생기고 mask 는 0개다(리그 10-29 · 10-30 재확인).
+   ② 흐림은 「칸 안에 내용이 더 있다」는 표시라 칸 안 내용만 가리고 칸의 바탕은 그대로여야 한다. 자기 바탕이 없는 칸(캐릭터 목록 · 접힘 칸 · 팝업 본문 · 월드인포 목록 ·
+      테마 설정 창 · 애드온 창)은 비치는 것이 같은 면에 있는 부모(시트 · 팝업)의 바탕뿐이라 mask 로 충분하다. 서랍은 01-smear 가 같은 요소에 시트 바탕(--bl-fill-page)을
+      칠하는데 실리태번은 서랍 자신을 스크롤시켜(.openDrawer { overflow-y: auto }) mask 가 바탕까지 투명하게 만든다 — 폰은 서랍이 입력줄 위까지 내려와
+      (mobile-styles: fixed · 100dvh - 45px) 채팅 입력줄의 깃털 · 폰 · 보내기 아이콘이 서랍 아래 가장자리에 그대로 보였다(8.2.4 폰). PC 는 서랍 바닥 뒤의 채팅이 같은 식.
+      그래서 서랍 뒤에 같은 자리 · 같은 색의 받침을 깐다: 서랍 바깥 실제 요소(#top-settings-holder > .bl-drawer-backing — scroll-fade.js 가 hidden 으로 한 번 붙이고 여기서만 보임, fixed, z -1)를 CSS 앵커 위치로 서랍 상자에 맞춘다 —
+      서랍 안에는 아무것도 더하지 않아 스크롤 비용이 그대로고, 열리는 전환 · 창 크기 · 이동 UI 끌기도 배치가 따라간다. 앵커 위치(Chrome 125 · Safari 26 이상)가 없는
+      브라우저는 서랍 흐림만 끈다(비치는 것보다 낫다). 받침은 넘친 서랍이 없으면 폴백값(0 크기)으로 보이지 않는다.
+   ③ 1.0.0 퇴행 고침: 처음엔 받침을 #top-settings-holder::after 가상 요소로 그렸는데, 실리태번 코어의 #top-settings-holder:has(…) 규칙 때문에 서랍 안이 바뀔 때마다
+      #top-settings-holder 가 다시 계산되고 그때마다 가상 요소 스타일도 새로 맞춰, 월드인포 서랍을 한 번 연 뒤 프롬프트 토글 · 토큰 세기 · 서랍 열기가 느려졌다
+      (폰 4배 리그 · 같은 판에서 가상 요소만 끄면 토글 1,462 → 694ms · 실리태번 설정 서랍 987 → 483ms. 앵커 함수 · 앵커 이름 · fixed 를 바꿔도 그대로 느렸고 가상 요소가 있다는 것 자체가 비용).
+      같은 규칙을 실제 요소에 걸면 가상 요소 없음과 같다(토글 799 · 서랍 435ms ↔ 없음 839 · 513ms). 그래서 #top-settings-holder 에는 가상 요소를 두지 않는다. ===== */
 html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y] { --bl-fade-y: 28px; }
 html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="bottom"] { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); }
 html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="top"] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); }
 html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="both"] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); }
+/* ② 서랍 받침 — 위 막대 묶음 안의 서랍만(이동 UI 로 #movingDivs 에 옮긴 서랍은 다른 쌓임 맥락이라 받침이 위로 올라올 수 있어 제외) */
+@supports (anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)) {
+  html:not(#bl-tab-scroll-off) body.salty #top-settings-holder .drawer-content:is([data-bl-fade-y="top"], [data-bl-fade-y="bottom"], [data-bl-fade-y="both"]) { anchor-name: --bl-drawer; }
+  html:not(#bl-tab-scroll-off) body.salty #top-settings-holder > .bl-drawer-backing { display: block; position: fixed; z-index: -1; pointer-events: none; top: anchor(--bl-drawer top, 0px); left: anchor(--bl-drawer left, 0px); width: anchor-size(--bl-drawer width, 0px); height: anchor-size(--bl-drawer height, 0px); background: var(--bl-fill-page, var(--bl-page)); border-radius: 0 0 var(--bl-r-lg) var(--bl-r-lg); }
+}
+@supports not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px))) {
+  html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y] { -webkit-mask-image: none; mask-image: none; }
+}

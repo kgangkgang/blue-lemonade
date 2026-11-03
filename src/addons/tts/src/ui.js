@@ -26,8 +26,8 @@ const TAB_IDS = ['read', 'voices', 'engine', 'data'];   // 탭 버튼은 setting
 const PRESET_LABEL = {
     dialogue: '대화문만',
     dialogue_narrator: '대화문 + 서술(내레이터)',
-    no_action: '*행동* 빼고 전부',
-    all: '전부',
+    no_action: '*행동* · 속마음 빼고 전부',
+    all: '속마음 빼고 전부',
     custom: '직접 설정',
 };
 const ROUTE_OPTS = [
@@ -67,8 +67,8 @@ function translatorLabel() {
 }
 /**
  * 5.6.3 돈이 드는 엔진(이름 목록) — 등록한 목소리의 엔진 중 무료(브라우저 내장 · Google 번역)와 내 PC · 집 안 주소의 OpenAI 호환 서버를 뺀 것.
- * 사용자 제보: 미리 만들기(대사+속마음)가 답장 · 스와이프마다 모든 줄을 만들어 10월 첫 엿새에 MiniMax 크레딧을 다 씀 — 미리 만든 글의 12 %만 들음.
- * 5.6.4 판단은 paid.js 로 옮김 (pregen.js 도 같이 씀): MiniMax 는 공식 서버일 때만 유료 (집 PC 로컬 게이트웨이 = 무료). 유료 엔진은 기본으로 미리 만들지 않는다
+ * 미리 만들기(대사+속마음)가 답장 · 스와이프마다 모든 줄을 만들어, 듣지 않을 줄까지 유료 크레딧을 크게 쓰던 것.
+ * 5.6.4 판단은 paid.js 로 옮김 (pregen.js 도 같이 씀): MiniMax 는 공식 서버일 때만 유료 (로컬 게이트웨이 = 무료). 유료 엔진은 기본으로 미리 만들지 않는다
  */
 export { paidEngines };
 /** 미리 만들기 옆 '!' 를 눌렀을 때의 안내 — 유료 엔진이 없으면 '' (단추도 없음). 5.6.4 '유료 엔진도 미리 만들기' 를 켠 때만 닳는다는 경고 */
@@ -151,8 +151,8 @@ const READ_CARDS = {
         { key: 'skip_tags', label: '건너뛸 태그 (내용 포함)', type: 'text', wide: true, desc: '예: status → <status> 안의 글까지 제외해요. 쉼표로 구분해요. 속마음은 읽을 부분 → 직접 설정에서 골라요.' },
         { key: 'pron_dict', label: '발음 사전', type: 'textarea', rows: 3, placeholder: '원래말=읽을말', desc: '읽을 때만 바꿔요 · 한 줄에 하나' },
         { key: 'strip_regex', label: '추가로 지울 글 (정규식)', type: 'textarea', rows: 3, placeholder: '필요할 때만 입력하세요', desc: '일치한 부분만 읽기에서 빼요 · 한 줄에 하나. 태그 자체는 자동 정리하므로 보통 비워 둬요. 태그를 지우는 규칙은 내용 제외·감정 힌트를 방해할 수 있어요. 저장된 채팅은 바꾸지 않아요.' },
-        { key: 'mute_words', label: '음소거할 말', type: 'textarea', rows: 3, placeholder: '한 줄에 하나', desc: '이 말은 소리 내지 않아요 · 화면 글은 그대로',   // 1.6.3
-            help: '로그를 공유할 때 이름 같은 말을 소리에서 감춰요. 대소문자는 구별하지 않고, 읽는 글(번역문 · 발음 사전 뒤)에서 찾아요. 효과음에는 적용되지 않아요.' },
+        { key: 'mute_words', label: '음소거할 말', type: 'textarea', rows: 3, placeholder: '한 줄에 하나 · 쉼표로 여럿도 돼요', desc: '원문 · 한국어 번역 어느 쪽으로 적어도 같이 찾아요 · 쉼표(,)로 나눠 적어도 돼요',   // 1.6.3 · 원문 ↔ 번역 표기 (mute.js muteTerms)
+            help: '로그를 공유할 때 이름 같은 말을 소리에서 감춰요. 화면 글은 그대로예요. 번역 용어집의 이름 짝 · 목소리 별명 · 발음 사전으로 같은 말의 다른 표기(원문 · 한국어 · 가나)도 같이 찾아요 — 짝이 없는 말은 적힌 그대로만 찾아요. 대소문자 · 전각/반각은 구별하지 않고, 「세라피나가」처럼 조사가 붙으면 낱말 부분만 지워요. 효과음에는 적용되지 않아요.' },
         { key: 'mute_mode', label: '음소거 방법', type: 'select', options: [{ value: 'audio', label: '소리에서 지우기' }, { value: 'text', label: '다시 만들기 (요금)' }], show: s => String(s.mute_words || '').trim() !== '',
             help: '소리에서 지우기는 이미 만든 소리에서 그 말의 구간만 무음으로 바꿔요 — 요금이 없어요. 정확한 자리는 글자별 시간표가 있어야 알아요: ElevenLabs 는 같은 요금으로 시간표를 주며 앞으로 만드는 소리부터 함께 저장돼요. MiniMax · 로컬 · 예전에 만든 소리는 시간표가 없어 글자 위치 비율로 어림해 앞뒤를 넉넉히 비우니 틀릴 수 있어요(기록에 남아요). 다시 만들기는 글에서 그 말을 빼고 새로 합성해요(요금). 브라우저 내장 목소리는 소리 파일이 없어 늘 글에서 빼요.' },
     ]],
@@ -165,7 +165,7 @@ const READ_CARDS = {
         { key: 'sfx.tap', label: '누른 대사 앞 지문의 효과음도', type: 'toggle', show: s => !!s.sfx?.enabled && s.sfx?.auto !== false, help: '대사를 눌러 읽을 때 그 대사 바로 앞 지문에서 찾은 효과음을 먼저 들려줘요. 지문을 읽지 않는 설정에서도 효과음이 나요. 분석이 아직 없으면 먼저 분석해요.' },
         { key: 'sfx.level', label: '효과음 넓이', type: 'select', show: s => !!s.sfx?.enabled && s.sfx?.auto !== false, options: [{ value: 'few', label: '적음' }, { value: 'normal', label: '보통' }, { value: 'many', label: '많이' }], help: '서술을 얼마나 넓게 소리로 해석할지 — 개수가 아니라 해석의 확실함으로 골라요. 적음은 분명히 난 소리만, 보통은 소리 나는 동작까지, 많이는 비슷하거나 불확실한 소리까지(과해석일 수 있어요). 개수로 자르지 않아 긴 지문이면 그만큼 많이 나요. 바꿔도 분석을 다시 하거나 음성을 다시 만들지 않아요. WAV 저장은 적어도 보통으로 넣어요.' },
         { key: 'sfx.scene_chars', label: '효과음 찾을 지문 글자', type: 'number', min: 1000, max: 40000, step: 500, default: 4000, show: s => !!s.sfx?.enabled && s.sfx?.auto !== false,
-            help: '대사 분석에 보내는 지문(서술 · 행동)의 최대 글자예요 (기본 4,000). 긴 답장에서 효과음을 놓치면 늘리고, 분석 요청의 토큰을 아끼려면 줄여요. 모델이 읽는 토큰은 한국어 · 일본어가 글자 수와 비슷하고 영어는 그 1/4 쯤이에요. 바꾸면 긴 답장의 저장된 분석을 다음 읽기 때 다시 받아요.' },   // 1.5.8
+            help: '대사 분석에 보내는 지문(서술 · 행동)의 최대 글자예요 (기본 4,000). 긴 답장에서 효과음을 놓치면 늘리고, 분석 요청의 토큰을 아끼려면 줄여요. 모델이 읽는 토큰은 한국어 · 일본어가 글자 수와 비슷하고 영어는 그 1/4 쯤이에요. 이미 저장된 분석은 그대로 써요. 새 값으로 받으려면 요술봉 › 재생성을 눌러요.' },   // 1.5.8
         { key: 'sfx.mode', label: '자동 효과음 재생', type: 'select', options: [{ value: 'overlay', label: '대사와 겹치기' }, { value: 'sequence', label: '차례로 재생' }], help: '겹치기는 효과음 위로 다음 대사가 이어져요. 차례로는 효과음이 끝나고 다음 대사를 읽어요. 각 줄은 소리 대본에서 따로 바꿀 수 있어요.' },
         { key: 'sfx.volume', label: '효과음 음량', type: 'range', min: 0, max: 1, step: 0.05, default: 0.45, fmt: v => `${Math.round(Number(v) * 100)}%`, help: '전체 재생 볼륨 안에서 효과음만 조절해요. 반복 소리는 대사를 가리지 않도록 더 작게 재생돼요.' },
         { key: 'sfx.normalize', label: '효과음 크기 맞추기', type: 'toggle', help: '큰 효과음은 줄이고 작은 효과음은 키워 목소리 음량 고르기의 목표 음량에 맞춰요. 짧은 타격음은 찌그러지지 않는 데까지만 키워요. 효과음 음량은 그 위에 더해지고, 미리듣기와 WAV 저장에도 적용돼요. 원본 파일은 바꾸지 않고, 끄면 다음 소리부터 원본이에요. 60초·2MB 넘는 소리는 그대로예요.' },   // 1.6.2
@@ -377,18 +377,21 @@ const isOff = (f) => (typeof f.disabled === 'function' ? !!f.disabled(settings()
 const helpOf = (f) => (f && f.help ? String(typeof f.help === 'function' ? f.help(settings()) : f.help) : '');
 const helpBtn = (f) => (helpOf(f) ? '<button type="button" class="lv-help-btn" data-lv-act="help" aria-label="도움말" aria-expanded="false"><i class="fa-solid fa-question" aria-hidden="true"></i></button>' : '');
 const helpNote = (f) => { const h = helpOf(f); return h ? `<span class="lv-help-note" hidden>${esc(h)}</span>` : ''; };
-// 7.7.9 항목마다 붙던 ? 는 떼고 절(카드 · 편집 팝업) 제목 옆 하나로 (사용자 규칙 「설정 항목마다 붙은 도움말 ? 는 전부 떼고 절 제목 옆에 하나만」).
+// 7.7.9 항목마다 붙던 ? 는 떼고 절(카드 · 편집 팝업) 제목 옆 하나로 (도움말 ? 는 절 제목 옆에 하나만).
 //   항목을 그리는 동안 「이름: 설명」을 모아 두면 card() · editorHtml() 이 제목 ? 밑 한 묶음으로 보여 준다. 항목 아래 설명 줄(desc)은 그대로.
 export const HELP_LINES = [];
 const collectHelp = (f) => { const h = helpOf(f); if (h) HELP_LINES.push(`${f.label}: ${h}`); return h; };
 const takeHelp = () => [...new Set(HELP_LINES.splice(0))];
 /** ? 를 눌렀을 때: 같은 칸(data-lv-help)의 도움말 글을 펴고 접는다 (설정 창 · 목소리 편집 팝업 같이) */
-function toggleHelp(b) {
+function toggleHelp(b, open = h => import('../../../help-sheet.js').then(m => m.openHelpSheet(h))) {
     const scope = b.closest('[data-lv-help]') || b.closest('.lv-card') || b.closest('.lv-ed-head')?.parentElement;   // 1.4.0 카드 제목 옆 ? 는 그 카드의 첫 설명 · 7.7.9 편집 팝업 머리 ?
     const note = scope?.querySelector('.lv-help-note');
     if (!note) return;
-    note.hidden = !note.hidden;
-    b.setAttribute('aria-expanded', String(!note.hidden));
+    // 1.0.0 도움말 하나로: 제자리 펼침 대신 테마 공용 도움말 창(help-sheet.js) — 글은 같은 「이름: 설명」 묶음
+    const title = (b.closest('.lv-card-head,.lv-ed-head')?.querySelector('span')?.textContent || '도움말').trim();
+    const help = { title, html: note.innerHTML };
+    open(help);
+    return help;
 }
 // ---------- 1.3.8 'tags' 항목 (여러 개 고르기 — ElevenLabs 말투): 한국어 이름 칩 (aria-pressed). 값 = 고른 value 배열 (4개까지)
 const TAG_MAX = 4;
@@ -656,7 +659,7 @@ function afterEdit(path, el) {
 }
 /**
  * 1.3.8 캐릭터 목소리 고르기 (캐릭터별 목소리 · 대화 색 · 엑스트라 줄이 같이 씀). 「엔진」을 골라 둔 채:
- *   다른 엔진 목소리를 고름 → 그 캐릭터는 그 목소리로 고정 (prefer_keep — 사용자: "렉스는 미니맥스로 듣기")
+ *   다른 엔진 목소리를 고름 → 그 캐릭터는 그 목소리로 고정 (prefer_keep — 인물마다 엔진을 따로 고르기)
  *   「엔진」 엔진의 짝을 다시 고름 → 고정만 풂 (연결표는 원래 목소리 — 「엔진」을 되돌리면 그 목소리)
  * 「엔진」이 없거나 쓸 수 없으면 1.3.7 처럼 연결표만 (고정 표시는 지움)
  */
@@ -933,7 +936,7 @@ function analysisExtra(s) {
     const st = !isCompat(s)
         ? '<div class="lv-actions"><button type="button" class="menu_button" data-lv-act="akey-test">연결 확인</button></div><div class="lv-test-result" id="lv_atest_result"></div>'
         : '';
-    return st + '<span class="lv-desc">분석 결과를 채팅에 저장해 다시 써요. 글·주변 문맥·분석 설정이 달라지면 새로 분석해요.</span>'
+    return st + '<span class="lv-desc">분석 결과를 채팅에 저장해 다시 써요. 글이 바뀌면 새로 분석해요. 모델이나 분석 설정을 바꾼 뒤 새로 받으려면 요술봉 › 재생성을 눌러요.</span>'
         + '<div class="lv-actions"><button type="button" class="menu_button" data-lv-act="analysis-clear">이 채팅 분석 비우기</button></div>';
 }
 function readCardHtml(name) {
@@ -1284,7 +1287,7 @@ function pinChip(name, uid) {
 }
 /**
  * 1.4.0 줄 옆 도구 (캐릭터별 목소리 · 대화 색): 감정 세기(그 목소리만 — 비우면 전체) + 목소리 설정 열기.
- * 사용자: "대화 색 화면에서도 바로 바꿀 수 있으면 · 감정 세기는 밖에 꺼내 두면". uid = 그 줄이 실제로 읽는 목소리 (엔진 자동 맞춤이면 짝)
+ * 대화 색 화면에서도 바로 바꾸고 · 감정 세기는 밖에 꺼내 두기. uid = 그 줄이 실제로 읽는 목소리 (엔진 자동 맞춤이면 짝)
  */
 const STRENGTH_SHORT = [['', '전체'], ['weak', '약'], ['normal', '보통'], ['strong', '강']];
 function voiceToolsHtml(uid) {
@@ -1573,7 +1576,7 @@ function colorRowHtml(r, s, alts = []) {
     const cnt = r.count ?? (r.votes ? Object.values(r.votes).reduce((a, b) => a + (Number(b) || 0), 0) : 0);
     const hint = topVote(r) || (r.near && r.near.name) || '이름';   // 이름이 비면 가장 많은 표 → 가까운 색의 이름을 제안
     // 1.4.1 같은 사람이 다른 색으로도 나오면(AI 가 그때그때 다른 색) 줄은 하나 — 점은 원래 색 그대로, 오른쪽 아래에 다른 색 작은 점
-    //   (처음엔 점을 반으로 나눠 칠했는데, 원래 색이 배경과 비슷하면(짙은 회색 등) 반쪽만 보여 잘린 것 같았다 — 사용자 10-08)
+    //   (처음엔 점을 반으로 나눠 칠했는데, 원래 색이 배경과 비슷하면(짙은 회색 등) 반쪽만 보여 잘린 것 같았다)
     const badge = alts.length ? `<span class="lv-swatch-alt" style="background:${safeColor(alts[0])}"></span>` : '';
     // 1.4.1 이름 없는 새 색: 추천 이름을 ✓ 로 바로 받기 (흐린 글씨는 추천일 뿐이라 헷갈렸다)
     const accept = !name && hint && hint !== '이름' ? `<button type="button" class="lv-pin-chip lv-accept-chip" data-lv-act="color-accept" data-color="${esc(r.color)}" data-name="${esc(hint)}" aria-label="${esc(hint)} 으로 정하기"><i class="fa-solid fa-check" aria-hidden="true"></i> ${esc(hint)}</button>` : '';
@@ -1647,7 +1650,7 @@ function colorsCardHtml() {
     const s = settings();
     const rows = colorRows();
     const speakersPart = chatSpeakersHtml(s, rows);   // 1.4.0
-    // 1.4.1 사용자 요청: 진짜 동명이인일 때만 두 줄 — 이름 없는 새 색인데 추천 이름이
+    // 1.4.1 진짜 동명이인일 때만 두 줄 — 이름 없는 새 색인데 추천 이름이
     //   이미 있는 사람이면 따로 줄을 만들지 않고 그 사람 줄의 점에 함께 칠한다. 이름을 직접 같게 적은 두 색(진짜 동명이인)은 두 줄 그대로.
     //   추천도 없이 한 번만 본 색은 숨김 (읽기는 그대로 — 이름 없는 색의 대사는 화자 찾기 · 보낸 이 이름으로)
     const owner = new Map();
@@ -1736,7 +1739,7 @@ function listCardHtml() {
 function replaceCard(name, html) {
     const old = q(`[data-lv-card="${name}"]`);
     if (!old) return;
-    // 7.7.9 다시 그려도 접힘 상태 · 스크롤 자리 유지 (엑스트라 ✕ 를 누르면 절이 접히고 화면이 튀었다 — 사용자 제보 15)
+    // 7.7.9 다시 그려도 접힘 상태 · 스크롤 자리 유지 (엑스트라 ✕ 를 누르면 절이 접히고 화면이 튀었다)
     const open = new Set(Array.from(old.querySelectorAll('details[open]')).map(d => d.className + '|' + (d.querySelector('summary')?.textContent || '').replace(/\d+/g, '#').trim()));
     const scroller = old.closest('.popup-content, .lv-body, .drawer-content, .inline-drawer-content') || null;
     const top = scroller ? scroller.scrollTop : null;
@@ -1909,7 +1912,7 @@ async function pullVoices(p, { auto = false } = {}) {
     await offerPrefer(p);   // 1.3.7 이름이 맞는 캐릭터가 있으면 이 엔진으로 바꿀지
 }
 // ---------- 1.3.7 계정 맞춤: 목소리 탭이 보일 때 엔진마다 6시간에 한 번 (키가 있는 엔진) — 실패는 조용히 (기록만)
-// 5.7.2: 키를 저장 · 연결 확인하면 그 엔진은 바로 맞춘다. 목소리가 아직 하나도 없는 엔진도 (키만 넣고 목소리는 안 들어오던 것 — 사용자 제보)
+// 5.7.2: 키를 저장 · 연결 확인하면 그 엔진은 바로 맞춘다. 목소리가 아직 하나도 없는 엔진도 (키만 넣고 목소리는 안 들어오던 것)
 //        새 내 목소리가 들어왔고 이름이 맞는 캐릭터가 있으면 그 엔진으로 바꿀지 한 번 묻는다 (offerPrefer)
 // 1.3.8: 엔진마다 따로 · 함께 (꺼진 MiniMax 직접 입력 서버의 30초 시간 초과가 ElevenLabs 맞춤을 붙잡지 않게) ·
 //        실패한 엔진은 10분 쉼 (메모리만 — 설정 파일은 폰과 같이 쓰니 다른 기기의 맞춤을 막지 않게) · 페이지를 열 때(서랍이 닫힘)는 하지 않음

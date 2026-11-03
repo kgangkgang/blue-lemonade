@@ -1,7 +1,7 @@
 // 8.0.8 데우스 V3 모듈 카드(<relationships> · <status> · <companions> …)를 번역할 때 지킬 것.
 //   V3 정규식은 줄마다 「- 이름 | Closeness: 50/100 (was 45) | Stage: Strangers | Unspoken: … | Obstacle: …」 꼴을 영어 열쇠(Closeness · Stage …)로 읽어
 //   인물 줄(dem-bond-row)로 그린다. 열쇠 · 단계 낱말 · 「was」 까지 옮기면 정규식이 줄을 못 알아봐 날글이 되고,
-//   V3 가 그 칸의 <br> 을 숨겨(.dem-relationships__body>br{display:none}) 인물 줄이 한 문단으로 붙었다(10-27 제보).
+//   V3 가 그 칸의 <br> 을 숨겨(.dem-relationships__body>br{display:none}) 인물 줄이 한 문단으로 붙었다.
 //   그래서 display-cards.js 가 이 카드들을 상태 카드처럼 다뤄 열쇠 · 줄 · 기호는 이 기기에 두고 값만 보낸다. 이 파일은 그 목록과 낱말표예요.
 //   실리태번 모듈을 import 하지 않아요 (node 시험: tools/tests/translator-v3-modules.mjs).
 
@@ -15,7 +15,8 @@ export const isModuleCard = name => MODULES.has(String(name ?? '').toLowerCase()
 const TITLES = new Set(['relationships', 'relationship', 'bond', 'bonds', 'status', 'story threads', 'threads', 'psychological states', 'plotlines', 'meanwhile', 'hidden truths', 'truths',
     'conflict', 'undercurrents', "phi's scratchpad", 'phi’s scratchpad', 'scratchpad', 'companions']);
 // 칸 값 전체가 정규식의 스위치인 낱말 (빈 모듈 None · 자리 밖 (Off-scene) · (Departed) · 점수 unknown · N/A)
-const SWITCHES = new Set(['none', 'n/a', 'na', 'unknown', 'off-scene', 'offscene', 'departed']);
+// 1.0.0 데우스 3 숨은 진실(Hidden Truths) 칸 Knows · Suspects · Misled 의 빈 값 낱말 nobody · no one 도 (정규식이 영어 그대로 읽는다)
+const SWITCHES = new Set(['none', 'n/a', 'na', 'unknown', 'off-scene', 'offscene', 'departed', 'nobody', 'no one']);
 /** 칸 첫머리 열쇠: 「Closeness:」 · 「Inner state:」 · 「Current scene:」 (영어 낱말 1~4개 + 쌍점, 굵게 표시 허용) */
 export const MODULE_KEY = /^(?:\*\*|__)?([A-Za-z][A-Za-z'’]*(?:[ -][A-Za-z][A-Za-z'’]*){0,3})(?:\*\*|__)?[ \t]*[:：](?!\/\/)/;
 

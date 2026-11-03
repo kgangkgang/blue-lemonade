@@ -674,14 +674,14 @@ body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !
 .bl-notes-look .bl-look-grid .bl-look-head { display: flex; align-items: center; gap: 8px; min-height: 24px; margin: 0 0 8px !important; }
 .bl-look-name { color: var(--bl-notes-text); font-size: 13px; font-weight: 600; white-space: nowrap; }
 .bl-look-val { display: inline-flex; align-items: baseline; gap: 2px; margin-left: auto; color: var(--bl-notes-text); font-variant-numeric: tabular-nums; }
-.bl-notes-look .bl-look-val input[type="number"] { width: 3.3em !important; height: 24px !important; min-height: 0 !important; margin: 0 !important; padding: 0 2px !important; border: 0 !important; border-radius: 4px !important; background: transparent !important; box-shadow: none !important; color: var(--bl-notes-text) !important; font: inherit !important; font-size: 13px !important; text-align: right !important; outline: none !important; -moz-appearance: textfield; appearance: textfield; }
+.bl-notes-look .bl-look-val input[type="number"] { width: 3.3em !important; height: 24px !important; min-height: 0 !important; margin: 0 !important; padding: 0 2px !important; border: 0 !important; border-radius: var(--bl-ui-radius, 8px) !important; background: transparent !important; box-shadow: none !important; color: var(--bl-notes-text) !important; font: inherit !important; font-size: 13px !important; text-align: right !important; outline: none !important; -moz-appearance: textfield; appearance: textfield; }
 .bl-notes-look .bl-look-val input[type="number"]::-webkit-inner-spin-button, .bl-notes-look .bl-look-val input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .bl-notes-look .bl-look-val input[type="number"]:focus { background: var(--bl-notes-hover) !important; }
 .bl-notes-look .bl-look-val input[type="number"]:disabled { opacity: .45; }
 .bl-notes-look .bl-look-val .bl-look-unit { min-width: 0; color: var(--bl-notes-muted); font-size: 11px; }
 .bl-notes-look .bl-look-val .bl-look-unit:empty { display: none; }
 .bl-notes-look .bl-look-grid .bl-look-same { flex: none; gap: 5px; padding: 3px 9px 3px 7px; border-radius: 999px; background: var(--bl-notes-card); font-size: 11px; }
-.bl-notes-look .bl-look-grid .bl-look-same:has(input:checked) { background: color-mix(in srgb, var(--bl-notes-accent) 16%, transparent); color: var(--salty-accent-ink, var(--bl-notes-accent)); }
+.bl-notes-look .bl-look-grid .bl-look-same:has(input:checked) { background: var(--bl-ui-pick-face, var(--salty-tint-18)); color: var(--bl-ui-pick-ink, var(--salty-accent-ink, var(--bl-notes-accent))); } /* 1.0.0 고른 항목 면 · 글자는 공용 토큰 하나(88-ui-parts) — 이름 없는 혼색(강조색 16%)이 팔레트 밖 색으로 잡혔어요 */
 .bl-notes-look .bl-look-grid .bl-look-ctl { min-height: 0; }
 .bl-notes-look .bl-look-grid .bl-look-ctl input[type="range"] { width: 100%; margin: 0; }
 .bl-notes-look .bl-look-grid .bl-look-ctl input[type="range"]:disabled { opacity: .35; }
@@ -876,3 +876,27 @@ body.salty .bl-notes-look .bl-look-title { font-size: var(--bl-ts-ui, 14px); fon
 
 /* ── 6.2.0 (ui-density-620b): 메모 설정의 숫자 칸(크기 · 줄 간격 · 자간 · 굵기)도 칸 높이 36/38 — 30 이었다 ── */
 body.salty .bl-notes-look .bl-look-val input[type="number"] { height: auto !important; min-height: var(--bl-h-ctl, 36px) !important; }   /* 앞 규칙이 max(30px, …) !important */
+
+/* ── 1.0.0 통합 검사(fix-1102): 메모 창 부품을 설정 창 공용 부품과 같은 값으로 ──
+   폰 폭(480 이하)에서는 머리 한 줄에 도구 7개 + 제목이 안 들어가, 제목 묶음이 꺾여 ? 가 제목 아래로 떨어지고 ✕ 만 둘째 줄에 남았어요(groups 리그 사진).
+   → 첫 줄 = [아이콘] 메모 ? … ✕, 둘째 줄 = 도구(오른쪽 맞춤). 85-addon-unify 의 머리 제목 규칙(목록에 ID 가 있어 특이도가 높음)을 이기려고 ID 두 겹 */
+@media (max-width: 480px) {
+    html:not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty dialog.bl-notes-dialog > header { flex-wrap: wrap !important; column-gap: 8px !important; row-gap: 4px !important; }
+    html:not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty dialog.bl-notes-dialog > header > b { flex: 1 1 0 !important; flex-wrap: nowrap !important; min-width: 0; white-space: nowrap; order: 0; }
+    html:not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools { display: contents !important; }
+    html:not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools > [data-act="close"] { order: 1; }
+    html:not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty dialog.bl-notes-dialog > header::after { content: ''; order: 2; flex: 0 0 100%; height: 0; }
+    html:not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools > :not([data-act="close"]) { order: 3; }
+    html:not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools > :first-child { margin-left: auto !important; }
+}
+/* 머리 도구 줄 아이콘 색은 하나(철칙 §7) — 「새 메모」 만 포인트 색이던 것 */
+.bl-notes-dialog > header .bl-note-add:not(:hover, :focus-visible) { color: var(--bl-notes-muted); }
+/* 메모 설정 창: 「한 줄에 메모」 고르기 묶음 = 설정 창 고르기(.salty-seg 면 · 안여백 4 · 모서리 10 · 글자 13),
+   글꼴 단추 = 글자 단추 크기표(36 · 가로 10 · 모서리 8 · 단추 면 + 선 1) · 화살표 잉크 12.5 글자색 */
+html:not(#bl-ui-parts-off):not(#bl-notes-look-off) body.salty .bl-notes-look .bl-look-seg { padding: 4px !important; gap: 2px !important; border-radius: 10px !important; background: var(--salty-shade) !important; font-size: var(--bl-ui-tab-fs, 13px) !important; }
+html:not(#bl-ui-parts-off):not(#bl-notes-look-off) body.salty .bl-notes-look .bl-look-segbtn { font-size: var(--bl-ui-tab-fs, 13px) !important; }
+html:not(#bl-ui-parts-off):not(#bl-notes-look-off) body.salty .bl-notes-look .bl-look-fontbtn { box-sizing: border-box !important; height: var(--bl-ui-ctl, 36px) !important; min-height: var(--bl-ui-ctl, 36px) !important; padding: 0 10px !important; border: 1px solid var(--bl-ui-line) !important; border-radius: var(--bl-ui-radius, 8px) !important; background: var(--salty-raised, var(--bl-control)) !important; font-size: var(--bl-ui-btn-fs, 14px) !important; }
+html:not(#bl-ui-parts-off):not(#bl-notes-look-off) body.salty .bl-notes-look .bl-look-fontbtn > i { font-size: var(--bl-ui-ink-fa, 12.5px) !important; color: inherit !important; }
+/* ? 는 제목 글자 끝에서 --bl-help-gap(철칙 §6 · 56-control-consistency 의 ? 간격 하나) — 머리 제목 묶음 gap 8 만큼 당겨요.
+   메모 수(.bl-notes-count)는 ? 뒤로 옮겼어요: 빈 칸이 제목과 ? 사이에 gap 8 을 한 번 더 넣어 ? 가 13.5 떨어졌어요(groups · census 리그) */
+html:not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:not(#bl-h3) dialog.bl-notes-dialog > header > b > .bl-notes-guide { margin-left: calc(var(--bl-help-gap, 6px) - 8px) !important; }

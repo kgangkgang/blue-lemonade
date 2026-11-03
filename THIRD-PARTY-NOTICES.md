@@ -12,10 +12,13 @@ Blue Lemonade는 GNU Affero General Public License v3.0 조건으로 배포합�
 | Character Assets | [tincansimagine](https://github.com/tincansimagine/character-assets) / 공유 게시글 작성자 「깡」 | [공유 허락 댓글](https://kkangtong.xyz/posts/122931#comment-7bd0d60e-f2f9-4c2c-9f42-4f395873fa17) · [별도 고지](src/addons/assets/NOTICE.md) |
 | 기반 테마 Moonlit Echoes Theme | [RivelleDays](https://github.com/RivelleDays/SillyTavern-MoonlitEchoesTheme) | [AGPL-3.0](LICENSE) |
 | LLM Translator | [1234anon](https://github.com/1234anon/llm-translator) / 수정판 [NamelessKkang](https://github.com/NamelessKkang/llm-translator-custom) | [AGPL-3.0](src/addons/translator/LICENSE) |
-| 번역 리모컨 (LLM Translator 안) | 번역 리모컨 — 커뮤니티 공유 태번 헬퍼 스크립트(원작자의 허락으로 수정 · 통합). 원작자 이름은 따로 밝히지 않았어요 | 원작자의 수정 · 사용 허락 · 애드온 구조에 맞춰 다시 짠 [remote.js](src/addons/translator/remote.js) |
+| 번역 리모컨 (LLM Translator 안) | 번역 리모컨 — 태번 헬퍼 스크립트(원작자의 허락으로 수정 · 통합) | 원작자의 수정 · 사용 허락 · 애드온 구조에 맞춰 다시 짠 [remote.js](src/addons/translator/remote.js) |
 | Prompt Panel | [anon4961](https://github.com/anon4961/prompt-panel) / [개인개조+++ 게시글 작성자 「깡」](https://kkangtong.xyz/posts/138394) | [AGPL-3.0](src/addons/prompt/LICENSE) |
-| CustomThemeStyleInputs | Copyright (c) 2025 [IceFog72](https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs) | [MIT 전문](src/addons/customstyle/LICENSE) |
-| Prompt Template (ST-Prompt-Template) · 설치형, 원본 무수정 | [zonde306](https://github.com/zonde306/ST-Prompt-Template) | [AGPL-3.0 전문](src/addons/prompt-template/LICENSE) · [별도 고지](src/addons/prompt-template/NOTICE.md) |
+| 태번 헬퍼 한글화 사전(짧은 단추 · 메뉴 이름만) | 태번 헬퍼 [JS-Slash-Runner](https://github.com/N0VI028/JS-Slash-Runner)(KAKAA · N0VI028, [GitLab](https://gitlab.com/novi028/JS-Slash-Runner)) 화면 문구 | 원작은 [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0). 원작 문구가 든 [사전 파일](src/scripts/plain/helper.js)만 **PolyForm Noncommercial License 1.0.0** 조건으로 배포해요(비상업 목적만 · 테마의 다른 파일은 AGPL-3.0) |
+| 설정 창 그림 표본 5장(src/preview-art/sample-*.webp) | 실리태번 기본 캐릭터 화면을 찍은 그림 — [SillyTavern](https://github.com/SillyTavern/SillyTavern) 기본 캐릭터 세라피나 표정 그림(`default/content/Seraphina/*.png`)과 기본 배경(`default/content/backgrounds/` 의 tavern day · landscape beach day · japan path cherry blossom · cityscape medieval night · landscape winter lake house)을 실리태번 화면에 띄워 찍고 webp 로 담음(그림 편집 없음) | [AGPL-3.0](LICENSE) |
+| 날씨 그림 6장(src/weather-art/*.webp) | Blue Lemonade 작업 중 이미지 생성 도구로 만든 그림(원작 그림 없음 · 원본과 만든 지시문은 비공개 작업 기록에 보관) | 테마와 같은 조건 [AGPL-3.0](LICENSE) |
+| 설정 창 투명 그림 표본(src/preview-art/character.webp) | [SillyTavern](https://github.com/SillyTavern/SillyTavern) 기본 캐릭터 세라피나 표정 그림(`default/content/Seraphina/joy.png`, webp 로 다시 담음) | [AGPL-3.0](LICENSE) |
+| CustomThemeStyleInputs (커스텀 CSS 조절) | Copyright (c) 2025 [IceFog72](https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs) | [MIT 전문](src/addons/customstyle/LICENSE) |
 | 장면 소리 · 분위기 음악 곡 8개 | OpenGameArt — cynicmusic · omfgdude · yd · Emma_MA · Joth · RandomMind | 음원 CC0 · [곡별 출처](src/scene-music/SOURCES.json) · [CC0 전문](src/scene-music/LICENSE-CC0.txt) |
 
 Prompt Panel은 사용자 제공 개인개조+++ 공유본을 기반으로 수정했습니다. [원작 소개글](https://kkangtong.xyz/posts/87408). 추가 수정자의 이름은 공유 게시글에 표시된 이름을 따릅니다.
@@ -26,10 +29,22 @@ Character Assets는 원작자의 개인 수정본 공유 허락에 따라 포함
 
 2026-09-30 Blue Lemonade 수정: TTS 1.3.0 내장, 엔진·목소리 등록과 캐릭터별 읽기, 별도 감정 분석 연결, 재생 표시 선택을 추가했습니다. 개인 API 키·음성 목록·개인 녹음은 포함하지 않습니다. 이후 추가한 공개 효과음의 출처와 조건은 아래에 구분합니다.
 
+## 프리셋 지원 · 한글화 사전
+
+프리셋을 고치지 않고 화면에 보이는 이름만 바꾸거나 고르기 단추를 더하는 기능이에요. 저장되는 이름 · 프롬프트 본문은 바꾸지 않아요. 프롬프트 본문은 담지 않아요.
+
+| 대상 | 원작 · 출처 | 담은 것 · 조건 |
+|---|---|---|
+| 데우스 엑스 마키나 2.5 · V3 | [lsennn/Deus-ex-machina](https://github.com/lsennn/Deus-ex-machina), [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) | [이름 사전](src/scripts/plain/deus.js) · [빠른 설정](src/scripts/plain/deus-qr.js) · 옵션 효과: 프롬프트 이름 · id 와 Blue Lemonade 가 쓴 설명만. **CC BY-NC-SA 4.0 조건으로 배포하는 파일**(원작 표시 정규식 · HTML 뼈대를 옮김 — 원작 CSS · 그림은 빼고 글은 지어냄): [미리보기 표본](src/deus-preview-samples.js), 시험 고정물 [translator-v3-module-fixtures.mjs](tools/tests/translator-v3-module-fixtures.mjs) · [translator-preset-fixtures.mjs](tools/tests/translator-preset-fixtures.mjs)(데우스 정규식 부분) |
+| 과일 · 야한 과일(涩果) · 청과(青果) · 레모나 프리셋, 과일의 마음(果实之心) 스크립트 | 출처: 원작 배포본(라이선스 표기 없음 · 원작자 이름을 확인하지 못했어요) | [이름 사전](src/scripts/plain/fruit.js) · [화면 보조](src/scripts/plain/qingguo.js) · [과일의 마음 화면 문구 사전](src/scripts/plain/fruit-heart.js)(긴 변경 내역 · 도움말 문단은 빼고 메뉴 · 단추 이름 위주) · 위 시험 고정물의 해당 프리셋 정규식. 원문 문구의 권리는 원작자에게 있어요 |
+| 솔라 V4(Gremlin Sola) 프리셋 | 출처: 원작 배포본(라이선스 표기 없음 · 원작자 이름을 확인하지 못했어요) | [이름 사전](src/scripts/plain/sola.js): 프롬프트 이름 · id 와 Blue Lemonade 가 쓴 설명만 · [빠른 설정](src/scripts/plain/deus-qr.js): 프리셋을 포함하지 않고, 실행할 때 지금 프리셋의 프롬프트 이름 · 순서 · 택1 묶음만 읽어요(구역 · 묶음 이름 규칙과 Blue Lemonade 가 쓴 탭 안내만 담음) |
+
 ## 포함 라이브러리
 
 - [omggif](https://github.com/deanm/omggif) 1.0.10의 GIF writer, Dean McNamee, MIT. 전문: [gif-writer.js](src/vendor/gif-writer.js).
 - [image-q](https://github.com/ibezkrovnyi/image-quantization) 4.0.0, Igor Bezkrovny 및 기여자, MIT. 포함된 NeuQuant·RgbQuant 등 구성요소의 고지도 [image-q.js](src/vendor/image-q.js)에 보존합니다.
+- 글꼴 프리젠테이션 4 Regular · 7 Bold(PT& · 이주임) · [갈무리모노11](https://github.com/quiple/galmuri) 2.40.3(이민서), 둘 다 SIL OFL 1.1(원본 글꼴의 라이선스 칸). 글자 갈래별로 나눈 woff2 조각(수정본 — 글꼴 안 이름을 바꿈)만 [fonts/](fonts/SOURCES.json)에 담고, 원본 주소 · 해시 · 저작권은 [SOURCES.json](fonts/SOURCES.json), 전문은 [LICENSE-OFL.txt](fonts/LICENSE-OFL.txt). 다시 만들기 `python tools/build-fonts.py`.
+- 글꼴 [리디바탕](https://www.sandollcloud.com/free-font/857/RIDIBatang)(ⓒ 리디주식회사)은 배포 파일에 담지 않아요. 글꼴 목록에서 고르면 브라우저가 공개 배포 주소(jsDelivr `projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff`)에서 직접 받아요. 다른 목록 글꼴(Pretendard 등)도 같은 방식이에요.
 - [Font Awesome Free](https://fontawesome.com/license/free) 6.5.2의 아이콘 이름 · 글자 번호 목록, Fonticons, Inc., 아이콘 CC BY 4.0 · 글꼴 SIL OFL 1.1 · 코드 MIT. 단추 아이콘 고르기 창이 쓰는 목록만 [role-icons-fa.gen.js](src/role-icons-fa.gen.js)에 담고, 글꼴은 SillyTavern이 싣는 것을 그대로 씁니다.
 
 ## 대응 소스와 빌드
@@ -49,7 +64,7 @@ Character Assets는 원작자의 개인 수정본 공유 허락에 따라 포함
 
 ## MultiCast-TTS 효과음과 대본 편집
 
-2026-10-10 Blue Lemonade TTS 1.5.0: [JINSIN2/MultiCast-TTS](https://github.com/JINSIN2/MultiCast-TTS), Copyright (c) 2026 JINSIN2, MIT. 내장 효과음 목록·매칭과 대본 편집·효과음 배치 흐름을 기존 TTS에 연결했습니다. [MIT 전문](src/addons/tts/LICENSE-MultiCast.txt) · [반영 범위와 변경 고지](src/addons/tts/NOTICE.md) · [음원 47개별 원본 URL·해시](src/addons/tts/sfx/SOURCES.json). 원본 커밋은 `f48ebeef9b19d814bf8d4568af13613544007e63`입니다. 음원은 원본 저장소의 CC0 표기를 따르며, 개별 녹음의 최초 출처·라이선스를 독립적으로 확인한 것은 아닙니다.
+2026-10-10 Blue Lemonade TTS 1.5.0: [JINSIN2/MultiCast-TTS](https://github.com/JINSIN2/MultiCast-TTS), Copyright (c) 2026 JINSIN2, MIT. 내장 효과음 목록·매칭과 대본 편집·효과음 배치 흐름을 기존 TTS에 연결했습니다. [MIT 전문](src/addons/tts/LICENSE-MultiCast.txt) · [반영 범위와 변경 고지](src/addons/tts/NOTICE.md) · [음원 47개별 원본 URL·해시](src/addons/tts/sfx/SOURCES.json). 원본 커밋은 `f48ebeef9b19d814bf8d4568af13613544007e63`입니다. 음원은 원본 저장소의 CC0 표기를 따르며, 개별 녹음의 최초 출처·라이선스를 독립적으로 확인한 것은 아닙니다(출처: 원작 확장 배포본 — 파일별 최초 출처 표기 없음). 일부 파일 메타데이터에 다른 효과음 묶음 이름이 남아 있는 것 등 관찰 기록은 [TTS 고지](src/addons/tts/NOTICE.md)에 있어요.
 
 ## 추가 효과음 44개 · 내장 효과음 총 91개
 

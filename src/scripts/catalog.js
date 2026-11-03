@@ -1,16 +1,15 @@
-// Bundled code loads only when opened or enabled. User edits live outside theme/style presets.
+// 내장 스크립트 목록. 코드는 src/scripts/plain/<file>.js 모듈이고 켤 때 처음 받아요(runtime.js). 9.0.7 부터 iframe 없이 테마 창에서 돌아요.
 export const SCRIPT_CATALOG = [
   {id:'korean',name:'실리태번 한글화',version:'1.4.8',icon:'fa-language',description:'남아 있는 영어 메뉴와 기본 안내를 한글로 보여요. 대화와 입력한 값은 그대로예요.',match:['__sillyTavernKoreanUI_v1'],file:'korean'},
-  {id:'helper',name:'실리태번 헬퍼 한글화',version:'1.3.9',icon:'fa-puzzle-piece',description:'헬퍼 메뉴·도움말·공지와 스크립트 관리 화면을 한글로 보여요.',match:['__tavernHelperKoreanUI_v1'],file:'helper'},
+  {id:'helper',name:'실리태번 헬퍼 한글화',version:'1.4.0',icon:'fa-puzzle-piece',description:'헬퍼 메뉴·단추·스크립트 관리 화면의 짧은 이름을 한글로 보여요. 긴 도움말·공지는 원래 말 그대로예요.',match:['__tavernHelperKoreanUI_v1'],file:'helper'},
   {id:'deus',name:'데우스 프롬프트 번역',version:'3.0',icon:'fa-book-open',description:'데우스 V3 · 2.5 프롬프트·정규식 제목과 편집 힌트를 번역해요. 저장되는 이름과 본문은 바꾸지 않아요.',match:['Prompt Name Translator','데우스'],file:'deus'},
   {id:'sola',name:'솔라 프롬프트 번역',version:'1.0.0',icon:'fa-sun',description:'Sola V4 프리셋의 프롬프트·정규식 제목과 편집 힌트를 번역해요. 저장되는 이름과 본문은 바꾸지 않아요.',match:['Prompt Name Translator','Gremlin Sola'],file:'sola'},
-  {id:'shajin',name:'샤진 프롬프트 번역',version:'3.9',icon:'fa-book',description:'거문고자리·물고기자리 프롬프트와 정규식 제목, 편집 힌트를 번역해요.',match:['Prompt Name Translator','거문고자리'],file:'shajin'},
   // 과일 계열(과일 · 야한과일 · 청과)은 한글화 토글 하나(SCRIPT_FAMILIES)로 함께 켜고 꺼요. 아래 세 칸은 실행 단위예요.
   {id:'fruit',family:'fruit-family',name:'과일 계열 프롬프트 이름 한글화',version:'2.0.1',icon:'fa-leaf',description:'과일 6.4 · 야한과일 2.0 · 청과 1.75X2 · 청과 2.0XV3 의 프롬프트·정규식 이름을 한 사전(공통 + 프리셋별 추가)으로 한글로 보여요. 저장된 이름과 본문은 그대로예요.',match:['BlueLemonade.translate','果实之心控制配置'],file:'fruit'},
   {id:'qingguo',family:'fruit-family',name:'과일 계열 화면 보조 한글화',version:'2.0.0',icon:'fa-leaf',description:'과일의 마음 창 항목 이름과 청과 문장 점검 화면을 한글로 보여요. 원본과 선택은 그대로예요.',match:['__blueLemonadeQingguoKorean_v1'],file:'qingguo'},
-  {id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1.0.9',icon:'fa-heart',description:'과일의 마음 메뉴와 상태창의 고정 문구·버튼 설명을 한글로 보여요. 프리셋·대화·입력값·켜짐 상태는 그대로예요.',match:['__blueLemonadeFruitHeartKorean_v1'],file:'fruit-heart'},
+  {id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1.1.0',icon:'fa-heart',description:'과일의 마음 메뉴와 상태창의 고정 문구·버튼 설명을 한글로 보여요. 프리셋·대화·입력값·켜짐 상태는 그대로예요.',match:['__blueLemonadeFruitHeartKorean_v1'],file:'fruit-heart'},
   {id:'fruit-style',name:'과일의 마음 꾸미기',version:'1.0.7',kind:'tool',icon:'fa-palette',description:'과일 창의 색·글꼴·버튼을 블루레몬에이드에 맞추고, 빠른 답장 이름 바꾸기와 ? 도움말을 더해요. 프롬프트 → 과일에서 켤 수 있어요.',match:['__blueLemonadeFruitStyle_v1'],file:'fruit-style'},
-  {id:'deus-qr',name:'데우스 빠른 설정',version:'1.0.8',kind:'tool',icon:'fa-sliders',description:'데우스 V3 · 2.5 프리셋의 옵션을 입력창 옆에서 바로 골라요. 프롬프트 → 데우스 엑스 마키나에서 켤 수 있어요.',match:['__blueLemonadeDeusQuick_v1'],file:'deus-qr'},
+  {id:'deus-qr',name:'데우스 빠른 설정',version:'1.0.8',kind:'tool',icon:'fa-sliders',description:'데우스 V3 · 2.5 · 솔라 프리셋의 옵션을 입력창 옆에서 바로 골라요. 지금 프리셋에 맞는 창이 열려요. 프롬프트 → 데우스 엑스 마키나에서 켤 수 있어요.',match:['__blueLemonadeDeusQuick_v1'],file:'deus-qr'},
 ];
 // 한 토글로 여러 실행 단위를 켜는 묶음. 저장은 enabled['fruit-family'] 하나를 기준으로 하고, 실행 단위 값은 그 값을 따라가요.
 export const SCRIPT_FAMILIES = [
@@ -18,56 +17,3 @@ export const SCRIPT_FAMILIES = [
 ];
 export const scriptFamily = id => SCRIPT_FAMILIES.find(item=>item.id===id||item.members.includes(id));
 export const scriptDefinition = id => SCRIPT_CATALOG.find(item=>item.id===id);
-const cache=new Map();
-const failures=new Map();
-export const loadFailure=id=>failures.get(id)||'';
-const bundledUrl=(item,bust)=>new URL(`./bundled/${item.file}.js${bust?`?r=${Date.now().toString(36)}`:''}`,import.meta.url).href;
-/** 파일을 글로 직접 받아 `export default "…";` 안의 글을 꺼낸다 — 모듈로 읽기가 실패하는 환경(덜 쓰인 파일을 브라우저가 쥐고 있음 등)의 우회로이자 진단 */
-async function fetchBundled(item){
-  const response=await fetch(bundledUrl(item,true),{cache:'no-store'});
-  const text=await response.text();
-  const at=text.indexOf('export default ');
-  const body=at<0?'':text.slice(at+15).trim().replace(/;$/,'');
-  if(!response.ok)throw Error(`파일 응답 ${response.status}`);
-  if(!body.startsWith('"')||!body.endsWith('"'))throw Error(`파일이 덜 풀렸어요 (${text.length}자, 끝 ${JSON.stringify(text.slice(-12))})`);
-  const code=JSON.parse(body);
-  if(typeof code!=='string'||code.length<50)throw Error('파일 내용이 비었어요');
-  return code;
-}
-/** 셋째 길: 모양이 전혀 다른 둘째 사본(src/scripts/plain/<id>.js — 여러 줄짜리 보통 함수)에서 함수 몸통을 글로 꺼낸다 (tools/build-plain-scripts.mjs 가 만든다) */
-// retry=true 일 때만 주소를 흔든다. 4.5.8 전에는 늘 흔들어서, 둘째 사본으로 도는 기기
-// (bl_scripts_plain='1')는 새로고침마다 609KB 를 통째로 다시 받았다 — 캐시가 절대 안 맞았다.
-// 첫 번째 시도는 주소를 고정해 조건부 GET(304)이 먹게 하고, 실패해서 다시 받을 때만 흔든다.
-// 4.5.9: 둘째 사본 우선 분기에 retry 를 false 로 박아 두면 안 된다 — runtime.js 는 재시도를
-// loadBundledScript(id, attempt>0) 로 알리는데, 주소가 같으면 모듈 맵이 멈춰 있는 레코드를
-// 그대로 돌려줘 재시도가 요청을 한 번도 안 낸다. fresh 를 그대로 넘긴다.
-async function loadPlain(item,retry){
-  const bust=retry?`?r=${Date.now().toString(36)}`:'';
-  const module=await import(new URL(`./plain/${item.file}.js${bust}`,import.meta.url).href);
-  const text=String(module.default||''),from=text.indexOf('/*BL-SCRIPT-START*/'),to=text.lastIndexOf('/*BL-SCRIPT-END*/');
-  if(from<0||to<0)throw Error('둘째 사본도 비었어요');
-  const code=text.slice(from+19,to).trim();
-  if(code.length<50)throw Error('둘째 사본도 비었어요');
-  return code;
-}
-export function loadBundledScript(id,fresh=false){
-  const item=scriptDefinition(id);if(!item)return Promise.reject(Error('알 수 없는 스크립트예요.'));
-  // 폰에서 테마를 다시 깐 직후에는 파일이 빈 채로(또는 쓰다 만 채로) 읽혀 default 가 없는 모듈이 올 때가 있다. 빈 모듈도 문법상 멀쩡해서 오류 없이 undefined 가 나왔고,
-  // 실행기는 그것을 '이미 돌고 있는 코드와 같다'로 잘못 읽어 아무것도 띄우지 않은 채 '사용 중'이라고 적었다 (메뉴가 중국어로 남던 원인).
-  // 글이 아니면 실패로 치고, 모듈 읽기가 안 되면 파일을 글로 직접 받아 본다. 그래도 안 되면 이유를 남긴다(진단 · 상태 줄에 보임)
-  if(fresh)cache.delete(id);
-  // 이 기기에서 원래 파일이 비어 온 적이 있으면(브라우저가 막음) 둘째 사본부터 받는다 — 스크립트마다 헛요청 두 번(모듈 · 직접 받기)을 건너뛴다. 둘째가 안 되면 원래 순서로
-  let plainFirst=false;try{plainFirst=localStorage.getItem('bl_scripts_plain')==='1';}catch{/* 저장소를 못 쓰면 늘 원래 순서 */}
-  if(plainFirst&&!cache.has(id)){cache.set(id,loadPlain(item,fresh).catch(()=>{try{localStorage.removeItem('bl_scripts_plain');}catch{/* 무시 */}cache.delete(id);return loadBundledScript(id,true);}));return cache.get(id);}
-  if(!cache.has(id))cache.set(id,import(bundledUrl(item,fresh)).then(module=>{
-    if(typeof module.default!=='string'||module.default.length<50)throw Error('모듈에 내용이 없어요');
-    return module.default;
-  }).catch(async importError=>{
-    try{const code=await fetchBundled(item);failures.delete(id);return code;}
-    catch(error){
-      try{const code=await loadPlain(item,true);try{localStorage.setItem('bl_scripts_plain','1');}catch{/* 무시 */}failures.set(id,`둘째 사본으로 돌아요 (${String(error?.message||error).slice(0,50)})`);return code;}catch(plainError){error=Error(`${String(error?.message||error).slice(0,60)} → ${plainError.message}`);}
-      failures.set(id,`${String(importError?.message||importError).slice(0,50)} → ${String(error?.message||error).slice(0,70)}`);throw error;}
-  }).catch(error=>{cache.delete(id);throw error;}));
-  return cache.get(id);
-}
-

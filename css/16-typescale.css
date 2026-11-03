@@ -126,7 +126,7 @@ body.salty :is(.cg-toolbar-meta, .cg-chat-loading, .cg-sheet-subtitle, .cg-hint,
 body.salty :is(.cg-eyebrow, .cg-side-head, .cg-chip, .cg-preview-chip, .cg-action) {
   font-size: var(--bl-ts-cap) !important;
 }
-body.salty :is(.cg-badge, .cg-card-who span, .cg-bubble-name, .cg-chat-meta, .cg-chat-count, .cg-version) {
+body.salty :is(.cg-badge, .cg-card-who span, .cg-bubble-name, .cg-chat-meta, .cg-chat-count) {
   font-size: var(--bl-ts-micro) !important;
 }
 
@@ -180,10 +180,10 @@ body.salty:not(#salty-none) .eh-search:not(#salty-none) input:not(#salty-none) {
 body.salty .eh-steps li::before {
   font-size: var(--bl-ts-cap) !important;
 }
-body.salty :is(.eh-tile-badge, .eh-tile-off, .eh-tile-check, .eh-version-foot) {
+body.salty :is(.eh-tile-badge, .eh-tile-off, .eh-tile-check) {
   font-size: var(--bl-ts-micro) !important;
 }
-/* 7.7.9 S/M/L 은 열 수 · 타일 폭 · 라벨 크기가 한 세트(제보 28): 라벨 13 · 14 · 16 (철칙 §14 글자 단계) */
+/* 7.7.9 S/M/L 은 열 수 · 타일 폭 · 라벨 크기가 한 세트: 라벨 13 · 14 · 16 (철칙 §14 글자 단계) */
 body.salty .eh-grid .eh-tile-name { font-size: 14px !important; }
 body.salty .eh-grid[data-size="s"] .eh-tile-name { font-size: 13px !important; }
 body.salty .eh-grid[data-size="l"] .eh-tile-name { font-size: 16px !important; }
@@ -225,8 +225,7 @@ body.salty :is(.jj-row-label b, .jj-prompt > summary > span, .jj-status-title, .
 body.salty .jj-small-btn {
   font-size: var(--bl-ts-ctl) !important;
 }
-body.salty :is(.jj-row-label small, .jj-hint, .jj-status-text, .jj-meaning > summary, .jj-meaning ul,
-  .jj-prompt-state, .jj-depth-meaning, .jj-popup-foot) {
+body.salty :is(.jj-row-label small, .jj-hint, .jj-status-text, .jj-meaning > summary, .jj-meaning ul, .jj-prompt-state, .jj-popup-foot) {
   font-size: var(--bl-ts-meta) !important;
 }
 body.salty .jj-state {
@@ -265,19 +264,14 @@ body.salty .th-text-xs:not(.TH-radio-button) {
 
 /* ---------- 로그 발췌 (text-to-image-converter) — 10 ~ 18px 이 섞여 있던 것을 눈금 5단으로 ---------- */
 /* 미리보기 · 본문 편집칸은 만들 그림을 그대로 보여 주는 곳이라 건드리지 않음 */
-body.salty :is(.tti-editor-title, .tti-modal > header h3) {
+body.salty :is(.tti-modal > header h3) {
   font-size: var(--bl-ts-head) !important;
 }
-body.salty :is(.tti-preset-current b, .tti-mobile-sheet-heading) {
-  font-size: var(--bl-ts-ui) !important;
-}
-body.salty :is(.tti-primary-btn, .tti-secondary-btn, .tti-wide-btn, .tti-modal > footer button.primary,
-  .tti-modal > footer button.text-field-copy, .tti-highlight-action, .tti-select-trigger,
-  .option-stepper .stepper-display, .tti-web-font-name) {
+
+body.salty :is(.tti-modal > footer button.primary, .tti-modal > footer button.text-field-copy) {
   font-size: var(--bl-ts-ctl) !important;
 }
-body.salty :is(.text-to-image-converter-settings, .tti-modal-backdrop) :is(input[type="text"], input[type="number"], select, option, optgroup),
-body.salty .tti-replace-modal .replacement-rule input[type="text"] {
+body.salty :is(.text-to-image-converter-settings, .tti-modal-backdrop) :is(input[type="text"], input[type="number"], select, option, optgroup) {
   font-size: var(--bl-ts-ctl) !important;
 }
 body.salty :is(.tti-section-desc, .tti-option-label, .tti-field > span:first-child, .tti-color-row > label,
@@ -289,8 +283,7 @@ body.salty :is(.tti-section-desc, .tti-option-label, .tti-field > span:first-chi
   .bg-image-item .delete-bg-btn, .tti-mobile-sheet-heading button) {
   font-size: var(--bl-ts-meta) !important;
 }
-body.salty :is(.text-to-image-converter-settings, .tti-modal) .buttons,
-body.salty .tti-selection-menu * {
+body.salty :is(.text-to-image-converter-settings, .tti-modal) .buttons {
   font-size: var(--bl-ts-meta) !important;
 }
 body.salty :is(.tab-btn, .tti-control-section > h3, .tti-preview-pane h4, .tti-mobile-bar button,
@@ -298,9 +291,7 @@ body.salty :is(.tab-btn, .tti-control-section > h3, .tti-preview-pane h4, .tti-m
   .tti-web-font-type, .tti-selection-submenu-header, .tti-ratio-btn > span) {
   font-size: var(--bl-ts-cap) !important;
 }
-body.salty .tti-web-font-list .tti-field .buttons {
-  font-size: var(--bl-ts-cap) !important;
-}
+
 body.salty :is(.replacement-rule label small, .tti-replace-modal .replacement-rule > .rule-toggle,
   .tti-modal > header small, .tti-preset-current small, .tti-preview-count, .download-btn, .dl_all,
   .range-value-tooltip, .tag-color-chip, .tti-replace-modal .rule-index, .tti-primary-btn em,

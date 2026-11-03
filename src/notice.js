@@ -3,56 +3,53 @@
 // 본 버전은 설정(noticeSeen)에 적는다 — 새로고침해도 유지되고, 다음 업데이트에서 다시 빛난다.
 //
 // 본문 표는 src/notice-data.js 에 있다 — 팝업을 열 때만 읽는다(4.5.0, 부팅 JS 에서 뺌).
+// 1.0.0 바탕: 9.0.0 정리에서 걷었던 것을 되살리며 시작 그래프 밖으로 — 이 모듈은 판 알약(version-pill.js, 3층 유휴)이 받는다.
+//   판 비교는 (계열, 판) 짝(src/version-series.js): 1.0.0(계열 2)은 저장값 「8.2.4」(계열 1)보다 새 판이에요. 저장은 releaseString(계열 2 부터 「s2:1.0.0」).
 import { getSettings, saveSettings } from './settings.js';
 import { noticeActions, openNoticeAction } from './notice-actions.js';
+import { compareRelease, releaseString } from './version-series.js';
 
 
-let version = '';
+let version = '', release = '';
 let loading = null;
 
-/** 실리태번이 시작할 때 읽어 둔 이 확장의 manifest 판 (getExtensionManifest 가 없는 옛 판 · 못 찾으면 '') */
-function knownVersion() {
+/** 실리태번이 시작할 때 읽어 둔 이 확장의 manifest (getExtensionManifest 가 없는 옛 판 · 못 찾으면 null) */
+function knownManifest() {
     try {
         const folder = decodeURIComponent(new URL('..', import.meta.url).pathname.split('/').filter(Boolean).at(-1) || '');
-        return String(globalThis.SillyTavern?.getContext?.()?.getExtensionManifest?.(folder)?.version || '');
-    } catch { return ''; }
+        const manifest = globalThis.SillyTavern?.getContext?.()?.getExtensionManifest?.(folder);
+        return manifest?.version ? manifest : null;
+    } catch { return null; }
 }
 
 /** manifest.json 의 버전 (한 번만 읽는다). 7.7.4: 실리태번이 이미 읽어 둔 manifest 가 있으면 그 판 — 시작할 때 같은 파일을 한 번 더 받지 않는다 */
 export function loadVersion() {
     const read = () => {
-        const known = knownVersion();
+        const known = knownManifest();
         if (known) return Promise.resolve(known);
         return fetch(new URL('../manifest.json', import.meta.url), { cache: 'no-store' })
-            .then(res => { if (!res.ok) throw new Error('manifest unavailable'); return res.json(); })
-            .then(manifest => String(manifest?.version || ''));
+            .then(res => { if (!res.ok) throw new Error('manifest unavailable'); return res.json(); });
     };
     loading ??= read()
-        .then((v) => { version = v; return version; })
+        .then((manifest) => { version = String(manifest?.version || ''); release = releaseString(manifest) || version; return version; })
         .catch(() => { loading = null; return ''; });
     return loading;
 }
 
+/** 화면에 적는 판 글자('1.0.0') */
 export function currentVersion() {
     return version;
 }
-
-/** 'a.b.c' 비교: a > b 면 양수 (5.7.0 update-check.js 도 씀) */
-export function compareVersions(a, b) {
-    const pa = String(a).split('.').map(n => parseInt(n, 10) || 0);
-    const pb = String(b).split('.').map(n => parseInt(n, 10) || 0);
-    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-        const d = (pa[i] || 0) - (pb[i] || 0);
-        if (d) return d;
-    }
-    return 0;
+/** 계열까지 붙은 판('8.2.5' · 's2:1.0.0') — 비교 · 저장용 */
+export function currentRelease() {
+    return release;
 }
 
-/** 아직 안 본 업데이트가 있나 (지금 버전이 본 버전보다 새것) */
+/** 아직 안 본 업데이트가 있나 (지금 판이 본 판보다 새것 — (계열, 판) 짝 비교) */
 export function hasUnseenNotice() {
-    if (!version) return false;
+    if (!release) return false;
     const seen = getSettings().noticeSeen;
-    return !seen || compareVersions(version, seen) > 0;
+    return !seen || compareRelease(release, seen) > 0;
 }
 
 const escapeHtml = text => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -89,7 +86,7 @@ async function noticeHtml() {
 /**
  * 공지사항 창. 여는 순간 지금 버전을 본 것으로 적고 onSeen 을 부른다 (알약들을 보통 모양으로 돌리게).
  * 7.8.0: 실리태번 팝업(callGenericPopup) 대신 테마 자체 <dialog class="bl-notice-dialog"> — 폰에 깔린 실리태번 판에 따라
- * 「취소」가 끼고 「닫기」가 빨갛게 칠해지던 것(7.7.8 · 7.7.9 사용자 사진 10-23)이 판과 상관없이 생길 수 없게. 단추는 「닫기」 하나.
+ * 「취소」가 끼고 「닫기」가 빨갛게 칠해지던 것(7.7.8 · 7.7.9)이 판과 상관없이 생길 수 없게. 단추는 「닫기」 하나.
  * @param {() => void} [onSeen]
  */
 let openDlg = null;
@@ -97,8 +94,8 @@ export async function openNotice(onSeen) {
     await loadVersion();
     const html = await noticeHtml();
     const s = getSettings();
-    if (version && s.noticeSeen !== version) {
-        s.noticeSeen = version;
+    if (release && s.noticeSeen !== release) {
+        s.noticeSeen = release;
         saveSettings();
     }
     onSeen?.();

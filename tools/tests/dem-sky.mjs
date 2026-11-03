@@ -84,8 +84,12 @@ check('8.1.0 설정 창 미리보기의 숨은 표본 자리도 채팅과 같은
 check('설정 · 로더 · CSS 연결', async () => {
     const settings = await read('src/settings.js'), features = await read('src/features.js'), apply = await read('src/apply.js'), css = await read('css/30-dem-skin.css'), unify = await read('css/08-regex-unify.css'), labels = await read('src/settings-labels.js'), panel = await read('src/panel.js');
     assert.match(settings, /s\.chat\.demGlow = .*: 35/); assert.match(apply, /syncDemGlow\(s\.chat\.demGlow\)/); assert.doesNotMatch(apply, /'--bl-dem-glow'\s*:/, '8.2.3 뒤: :root 가 아니라 상태창 요소에만(src/dem-glow.js)'); assert.match(features, /dem-sky\.js/);
-    assert.match(css, /var\(--bl-dem-glow, \.35\)/); assert.match(css, /--salty-accent\) 20%, transparent\) !important/, '기온 칩은 투명 틴트');
-    assert.match(unify, /\.custom-dem-track__glyph \{\s*display: none !important/); assert.ok(labels.includes('"chat.demGlow":"테두리 빛"')); assert.match(panel, /slider\('chat\.demGlow', '테두리 빛', 0, 100, 5, 35\)/);
-    assert.ok(!/#[0-9a-f]{3,8}\b/i.test(css.split('8.0.6 데우스 V3')[1].replace(/#0000\b/g, '').replace(/#salty-none/g, '')), 'V3 절에 고정 색이 없다(팔레트 변수만)');
+    // 1.0.0 시안 A(평평한 카드): 「테두리 빛」 · 빛무리는 걷었어요 — 설정 키(chat.demGlow)는 그대로 남기고 슬라이더 줄만 뺐어요
+    assert.doesNotMatch(css, /--bl-dem-glow/); assert.doesNotMatch(panel, /slider\('chat\.demGlow'/);
+    assert.match(css, /\.custom-dem-track__temp:not\(#salty-none\) \{[^}]*border: 1px solid var\(--salty-line\) !important/, '기온 = 판 알약 결(1px 선)');
+    assert.match(unify, /\.custom-dem-track__glyph \{\s*display: none !important/); assert.ok(labels.includes('"chat.demGlow":"테두리 빛"'));
+    const v3 = css.split('8.0.6 데우스 V3')[1];
+    assert.ok(!/#[0-9a-f]{3,8}\b/i.test(v3.replace(/#0000\b/g, '').replace(/#salty-none/g, '')), 'V3 절에 고정 색이 없다(팔레트 변수만)');
+    assert.ok(!/color-mix|box-shadow:\s*0 0/.test(v3), 'V3 절에 이름 없는 혼색 · 빛무리가 없다');
 });
 console.log(`dem-sky: ${passed} passed`);

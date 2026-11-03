@@ -1,4 +1,5 @@
 import { syncDemSelection } from './dem-selection.js';
+import { addMessageDecorator } from './message-decor.js';
 // 데우스 감정 대사: 「…」『…』 대사 살리기 (프롬프트 › 데우스 엑스 마키나 › 감정 대사 효과).
 //
 // 프리셋의 'DEM - Render Expressive Dialogue' 정규식은 "…" · “…” 대사만 알아본다. 「…」 대사에 붙은 <excited> 같은 태그는
@@ -11,7 +12,7 @@ const TAGS = 'shout|quiet|angry|excited|dizzy|crying|anxious|hurt|intoxicated|wh
 // 4.7.0: 괄호 짝을 맞춘다 — 「『…』, …」 처럼 안에 『』가 든 대사를 첫 』에서 끊으면 대사 일부만 q 안쪽에 감싸게 되고,
 // 형광펜 색 모드의 q 글자 마스크가 안쪽 inline-block 글자를 띠 투명도로 흐리고, 움직이면 q 상자 밖을 잘랐다 (2026-09-23 실측)
 // 6.7.9 같은 괄호가 한 겹 든 대사(「… 「여」 자도 …」)도 짝을 맞춘다 — 첫 」 에서 끊으면 화면의 색 칸(span style · font)과 글이 안 맞아
-//       감정 칸을 색 칸 안쪽(q 바로 바깥)에 감쌌고, 색 흐름을 끈 감정 칸의 대사 잉크 색이 인물 색을 덮어 형광펜 띠가 회색이 됐다 (사용자 폰 · 속삭임 대사)
+//       감정 칸을 색 칸 안쪽(q 바로 바깥)에 감쌌고, 색 흐름을 끈 감정 칸의 대사 잉크 색이 인물 색을 덮어 형광펜 띠가 회색이 됐다 (속삭임 대사)
 const FIND = new RegExp(`((?:<(?:${TAGS})\\b[^>\\r\\n]{0,240}>[ \\t]*){1,4})(?:<(?:span|font)\\b[^>\\r\\n]{0,240}>[ \\t]*)?(「(?:[^「」\\r\\n]|「[^「」\\r\\n]{0,600}」){1,600}」|『(?:[^『』\\r\\n]|『[^『』\\r\\n]{0,600}』){1,600}』)`, 'gi');
 // 6.7.9 화면 글은 마크다운이 「...」 를 「…」 로 바꾼다 — 원문 대사와 견줄 때 같은 꼴로 (전엔 ... 든 감정 대사는 칸을 못 찾아 효과가 빠졌다)
 const shown = text => String(text ?? '').replace(/\.\.\./g, '…');
@@ -199,27 +200,21 @@ const scheduleAll = () => schedule();
 // 번역 확장은 본문을 번역문으로 갈아 끼울 때 실리태번 이벤트를 내지 않는다 — 그래서 번역이 늦게 오면 감싼 칸이 사라진 채로 남았다(새로고침해야 다시 움직임).
 // #chat 에서 '본문이 통째로 바뀐 메시지'만 적어 두었다가 조용해진 뒤(0.4초) 그 메시지만 다시 감싼다. 스트리밍 중에는 글자가 올 때마다 미뤄져 끝난 뒤 한 번만 돈다.
 let watcher = null, changed = new Set(), quiet = 0, dressing = false;
-function onMutations(records) {
-    if (dressing) return;
-    for (const record of records) {
-        const body = record.target.nodeType === 1 && record.target.classList.contains('mes_text') ? record.target : null;
-        if (body && ![...record.addedNodes].every(n => n.nodeType === 1 && n.classList.contains(MADE))) changed.add(body);
-    }
-    if (!changed.size) return;
-    clearTimeout(quiet);
-    quiet = setTimeout(() => {
-        const chat = SillyTavern.getContext().chat || [], bodies = [...changed]; changed = new Set();
-        dressing = true;
-        try {
-            for (const body of bodies) { const mes = body.closest('.mes[mesid]'); if (mes?.isConnected) { dress(mes, chat[Number(mes.getAttribute('mesid'))]); markLeads(body); watchFx(body); } }
-        } finally { queueMicrotask(() => { watcher?.takeRecords(); dressing = false; }); }
-    }, 400);
+// 9.0.4: 그 감시는 메시지 꾸미기(src/message-decor.js)의 #chat 구독 하나가 맡아요 — 본문이 통째로 바뀐 기록(내가 감싼 칸만 붙은 것은 빼고)이 온 메시지를
+//   0.4초 조용해진 뒤(예전 그대로 · 스트리밍 중에는 끝난 뒤 한 번) 그 메시지만 다시 감싸요.
+const bodyReplaced = r => r.type === 'childList' && r.target.nodeType === 1 && r.target.classList.contains('mes_text') && ![...r.addedNodes].every(n => n.nodeType === 1 && n.classList.contains(MADE));
+function onMessages(list) {
+    const chat = SillyTavern.getContext().chat || [];
+    dressing = true;
+    try {
+        for (const mes of list) { const body = mes.querySelector('.mes_text'); if (body && mes.matches('.mes[mesid]')) { dress(mes, chat[Number(mes.getAttribute('mesid'))]); markLeads(body); watchFx(body); } }
+    } finally { queueMicrotask(() => { dressing = false; }); }
 }
 
 function bind() {
     if (bound) return;
     const chatBox = document.getElementById('chat');
-    if (chatBox && !watcher) { watcher = new MutationObserver(onMutations); watcher.observe(chatBox, { childList: true, subtree: true }); }
+    if (chatBox && !watcher) watcher = addMessageDecorator('데우스 감정 대사', onMessages, { kinds: ['dom'], settle: 400, order: 12, filter: bodyReplaced, enabled: () => !dressing });
     const { eventSource, event_types: t } = SillyTavern.getContext();
     const names = [t.CHAT_CHANGED, t.CHARACTER_MESSAGE_RENDERED, t.USER_MESSAGE_RENDERED, t.MORE_MESSAGES_LOADED, t.MESSAGE_UPDATED, t.MESSAGE_SWIPED, t.MESSAGE_EDITED].filter(Boolean);
     // 채팅 열기 · 더 불러오기는 채팅 전체(CHAT_CHANGED 의 인자는 채팅 이름이라 번호로 읽지 않는다), 나머지는 인자의 메시지 번호만
@@ -230,7 +225,7 @@ function bind() {
 
 function unbind() {
     if (!bound) return;
-    watcher?.disconnect(); watcher = null; clearTimeout(quiet); changed = new Set();
+    watcher?.(); watcher = null; clearTimeout(quiet); changed = new Set();
     bound.byName.forEach((fn, name) => bound.eventSource.removeListener(name, fn));
     timers.forEach(clearTimeout);
     timers = []; pending = new Set(); full = false;

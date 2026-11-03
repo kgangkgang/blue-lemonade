@@ -42,24 +42,13 @@ import { speakSegments } from './player.js';
 import { applyMessageItalics } from './analysis.js';   // 1.9.1 대사 분석이 가른 기울임 (재생기 sourcesOf 와 같은 판단)
 import { shownDisplay } from './translation.js';   // 6.9.6 번역 중 미리 보기 글로도 원문 짝
 import { log } from './log.js';
+import { previewing, textIndex, scanDialogue, colorFromBareHex, CLOSER, LETTER, BLOCK_TAGS } from './text-index.js';   // 1.0.0 극한 최적화: 글자 노드 잇기 · 대화문 짝 · 색 표기는 화자 색(paint.js)이 재생기 없이 쓰게 따로
+export { previewing, textIndex, scanDialogue, colorFromBareHex };
 
-// 7.0.2 북마크 「채팅에서 미리보기」: 화면에는 다른 채팅이 그려져 있지만 chat[] 은 지금 채팅이라 mesid → chat[mesid] 가 엉뚱한 메시지 — 그동안은 손대지 않는다
-export const previewing = () => !!globalThis.document?.body?.classList?.contains('cg-previewing');
 
-// 대화문 여닫이 글자 (text.js 와 같은 짝 + „“). ASCII ' 는 안 씀
-const CLOSER = { '“': '”', '"': '"', '「': '」', '『': '』', '«': '»', '＂': '＂', '‘': '’', '„': '“' };
-const ONE_LINE = new Set(['"', '＂']); // 좌우 같은 모양 → 한 줄 안에서만 짝을 찾음
-const LETTER = /[\p{L}\p{N}]/u;
-const HEX_BEFORE = /(?:^|\s)#([0-9a-fA-F]{6})[ \t]*$/;                 // 데우스 맨 색 표기  #e63946 "…"
 
 // 클릭을 무시할 대상 (그 안을 눌렀을 때)
 const INTERACTIVE = 'a, button, input, textarea, select, img, video, audio, details, summary, code, pre, .mes_button, [contenteditable]';
-// 글자를 세지 않는 요소 (그 안의 글은 대화문 짝 찾기에 넣지 않음)
-const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'TEMPLATE', 'NOSCRIPT', 'CODE', 'PRE', 'TEXTAREA', 'BUTTON', 'SELECT', 'INPUT', 'DETAILS', 'SVG']);
-// 줄을 나누는 블록 요소 (앞에 문단 경계를 넣음)
-const BLOCK_TAGS = new Set(['P', 'DIV', 'LI', 'UL', 'OL', 'DL', 'DT', 'DD', 'TR', 'TABLE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'HR', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'ASIDE', 'NAV', 'MAIN', 'FIGURE', 'FIGCAPTION']);
-const SHOW_ELEMENT_AND_TEXT = 0x1 | 0x4;   // NodeFilter.SHOW_ELEMENT | SHOW_TEXT
-const FILTER_ACCEPT = 1, FILTER_REJECT = 2;
 // 속마음 틀: span 의 class 낱말 custom-tt + custom-tt-<이름> + 안에 em (강한 틀), 약한 틀은 기울임·색 글자 → 없으면 문단
 const THOUGHT_NAME = /^custom-tt-(.+)$/;
 const WEAK_INLINE = new Set(['EM', 'I', 'FONT']);
@@ -74,11 +63,6 @@ const fold = (s) => String(s || '').normalize('NFC').replace(/\.\.\./g, '…').r
 const loose = (s) => fold(s).replace(/[\p{P}\p{S}\s]/gu, '');
 const letters = (s) => (String(s || '').match(/[\p{L}\p{N}]/gu) || []).length;
 function inside(node, root) { for (let n = node; n; n = n.parentNode) if (n === root) return true; return false; }
-function isHidden(el) {
-    if (el.hidden === true || el.style?.display === 'none') return true;
-    if (typeof getComputedStyle === 'function') { try { return getComputedStyle(el).display === 'none'; } catch { /* 떨어진 요소 */ } }
-    return false;
-}
 
 /** 강한 속마음 틀이면 그 이름 (class custom-tt + custom-tt-<이름> + 안에 em), 아니면 null */
 function strongName(el) {
@@ -112,59 +96,8 @@ function toTextNode(node, offset) {
     return null;
 }
 
-// ---------- 글자 노드 이어 붙이기 (문단 경계 '\n\n' · <br> '\n')
-// computed=false (6.2.3 화자 색 · paint.js): 숨김은 hidden 속성 · 인라인 display:none 만 본다 — getComputedStyle 이 다시 그린 직후의 스타일 계산을 앞당기지 않게
-export function textIndex(root, { computed = true } = {}) {
-    const nodes = [];
-    let flat = '';
-    const hidden = computed ? isHidden : (el) => !!el.hidden || el.style?.display === 'none';
-    const walker = document.createTreeWalker(root, SHOW_ELEMENT_AND_TEXT, (n) => (n.nodeType === 1 && (SKIP_TAGS.has(n.tagName) || hidden(n)) ? FILTER_REJECT : FILTER_ACCEPT));
-    for (let n; (n = walker.nextNode());) {
-        if (n.nodeType === 1) {
-            if (n.tagName === 'BR') flat += '\n';
-            else if (BLOCK_TAGS.has(n.tagName) && flat && !flat.endsWith('\n\n')) flat += flat.endsWith('\n') ? '\n' : '\n\n';
-            continue;
-        }
-        if (n.nodeType !== 3) continue;
-        nodes.push({ node: n, start: flat.length });
-        flat += String(n.nodeValue || '');
-    }
-    return { nodes, flat };
-}
 
-// ---------- 대화문 짝 찾기 (text.js scanDialogue 와 같은 규칙, 다 온 글 기준)
-function paraEnd(s, from) {
-    const re = /\n[ \t]*\n/g;
-    re.lastIndex = from;
-    const m = re.exec(s);
-    return m ? m.index : -1;
-}
-function findCloser(s, closer, from, to) {
-    for (let k = s.indexOf(closer, from); k >= 0 && k < to; k = s.indexOf(closer, k + 1)) {
-        if (closer === '’' && LETTER.test(s[k + 1] || '')) continue; // don’t 의 ’ 는 닫는 글자가 아님
-        return k;
-    }
-    return -1;
-}
 /** [{ start, end, is, ie, opener }] — start/end 는 여닫이 글자 포함, is/ie 는 안쪽 */
-export function scanDialogue(body) {
-    const out = [], n = body.length;
-    let i = 0;
-    while (i < n) {
-        const ch = body[i], closer = CLOSER[ch];
-        if (!closer || (ch === '‘' && LETTER.test(body[i - 1] || ''))) { i++; continue; }
-        const oneLine = ONE_LINE.has(ch);
-        let bound = oneLine ? body.indexOf('\n', i) : paraEnd(body, i);
-        if (bound < 0) bound = n;
-        const j = findCloser(body, closer, i + 1, bound);
-        if (j >= 0) { out.push({ start: i, end: j + 1, is: i + 1, ie: j, opener: ch }); i = j + 1; continue; }
-        if (!/\S/.test(body.slice(bound))) { out.push({ start: i, end: n, is: i + 1, ie: n, opener: ch }); break; } // 글 끝에서 안 닫힘
-        if (oneLine) { i++; continue; }
-        out.push({ start: i, end: bound, is: i + 1, ie: bound, opener: ch }); // 여러 문단 대화의 첫 문단
-        i = bound;
-    }
-    return out;
-}
 
 // ---------- 색 · 이름 힌트
 /** 누른 글자 노드를 감싼 요소의 색 (안쪽부터): style="color:…" · <font color> */
@@ -181,10 +114,6 @@ export function colorFromDom(node, root) {
 function computedColor(el) {
     if (!el || typeof getComputedStyle !== 'function') return null;
     try { return normColor(getComputedStyle(el).color); } catch { return null; }
-}
-export function colorFromBareHex(flat, start) {
-    const m = HEX_BEFORE.exec(flat.slice(Math.max(0, start - 12), start));
-    return m ? `#${m[1].toLowerCase()}` : null;
 }
 /** 줄 앞 이름: "이름: 「" · 이름「 (아는 이름일 때만) */
 function prefixHint(flat, d, known) {
@@ -488,7 +417,7 @@ export function segmentForHit(mes, hit, { preview = false } = {}) {
         else return null;
     } else if (hit.kind === 'action') {
         // 1.9.1 말 기울임 (번역문 → 원문, 같은 글이 여럿이면 누른 줄에 가까운 것). 1.9.2 말 기울임이 아니어도(분석이 「서술」이라 했거나 *행동*) 누르면 읽는다 —
-        //   누른 건 사용자가 듣고 싶은 것 (사용자: 「눌러도 반응 없수」). 재생기가 속마음의 길 · 그 장면 시점 인물의 목소리로 읽는다 (buildJobs tapped)
+        //   누른 건 사용자가 듣고 싶은 것 (누르면 반응이 없던 것). 재생기가 속마음의 길 · 그 장면 시점 인물의 목소리로 읽는다 (buildJobs tapped)
         const want = fold(hit.text);
         const find = (list, any = false) => { const all = (list || []).filter(x => x.kind === 'action' && (any || x.speech) && x.text && fold(x.text) === want); return all.length ? nearest(all, hit.line || 0) : null; };
         let list = disp, found = find(disp);
@@ -503,7 +432,7 @@ export function segmentForHit(mes, hit, { preview = false } = {}) {
             let all = (list || []).filter(x => x.kind === 'dialogue' && x.text && fold(x.text) === want);
             if (!all.length) { const l = loose(hit.text); if (l.length >= 2) all = (list || []).filter(x => x.kind === 'dialogue' && x.text && loose(x.text) === l); }   // 1.9.1
             if (all.length < 2) return all[0] || null;
-            // 1.4.0 같은 대사가 여럿 (사용자 제보: 두 사람이 「다릅니다.」 — 아래를 눌러도 위 캐릭터로 읽음): 누른 줄의 색 → 이름 → 번째(양쪽 개수가 같을 때만) → 가까운 줄
+            // 1.4.0 같은 대사가 여럿 (두 사람이 같은 대사를 말할 때 아래를 눌러도 위 캐릭터로 읽던 것): 누른 줄의 색 → 이름 → 번째(양쪽 개수가 같을 때만) → 가까운 줄
             const hc = normColor(hit.color);
             if (hc) { const byColor = all.filter(x => normColor(x.color) === hc); if (byColor.length === 1) return byColor[0]; }
             const hk = nameKey(hit.speakerHint);

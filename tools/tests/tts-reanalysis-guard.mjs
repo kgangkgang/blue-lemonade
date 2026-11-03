@@ -1,6 +1,6 @@
 // TTS 대사 분석 재요청 막기 (7.2.5 안 P1 · P2) — 실패 기억을 채팅에 남기고(새로고침 · 다시 열기 뒤에도) 잠깐의 실패엔 식는 시간,
 //   값을 치른 결과는 보관함에 두어 같은 글(채팅을 바꾼 뒤 도착 · 같은 인사말)을 요청 없이 다시 쓴다.
-//   사용자 제보(10-19): 「TTS 분석도 뭔가 API 과하게 가는 것 같은데 … 왜 분석한 걸 또 분석하지?」 — 조사 outputs/tts-reanalysis/report.md
+//   (이미 분석한 답을 TTS 가 또 분석해 API 를 과하게 부르던 것)
 //   node tools/tests/tts-reanalysis-guard.mjs <테마 루트>     (7.2.3 소스에서는 P1 · P2 항목이 기대대로 실패한다)
 // rewrite-tts-keep.mjs 와 같은 틀: 실리태번 모듈은 data: 스텁, 진짜 analysis.js · settings.js, compat 엔진은 가짜 fetch.
 import assert from 'node:assert/strict';

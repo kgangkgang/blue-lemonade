@@ -1,7 +1,7 @@
 <div class="translation_settings llmt-settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header">
-            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v3.1.6</span></b>
+            <b><i class="fa-solid fa-language"></i> 번역 <span class="llmt-version ext-version">v3.1.8</span></b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
 
@@ -249,7 +249,7 @@
                             <small class="llmt-desc">다시 번역은 그 메시지 하나만 새로 받고, 채팅 전체 번역은 남은 메시지 수를 확인한 뒤에 시작해요.</small>
                             <button id="llm_remote_reset" class="menu_button" type="button"><i class="fa-solid fa-arrows-rotate"></i><span>위치 · 크기 처음대로</span></button>
                         </div>
-                        <small class="llmt-remote-credit">아이디어 · 원작: 번역 리모컨 스크립트 제작자님 💙</small>
+                        <small class="llmt-remote-credit">아이디어 · 원작: 번역 리모컨 스크립트 원작자</small>
                     </div>
                 </section>
             </div>
@@ -672,6 +672,10 @@
 
                         <!-- llmContext 설정 -->
                         <label class="llmt-label" for="llm_context_message_mode">참고할 최근 대화</label>
+                        <div id="llm_context_unused" class="llmt-context-unused" hidden>
+                            <small class="llmt-desc">지금 번역 프롬프트에 <code>{{llmContext}}</code> 자리가 없어 채팅 번역에는 아래 설정이 쓰이지 않아요.</small>
+                            <button id="llm_context_slot_insert" class="menu_button" type="button"><i class="fa-solid fa-plus"></i><span>프롬프트에 넣기</span></button>
+                        </div>
                         <select id="llm_context_message_mode" class="neo-select">
                             <option value="manual">개수 지정</option>
                             <option value="auto">자동 · 현재 컨텍스트</option>

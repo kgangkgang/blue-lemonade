@@ -41,6 +41,27 @@ export function syncChatLight(enabled) {
 
 export const _test = { state: () => ({ on, watching: !!mo, chat }) };
 
+// ---------------------------------------------------------------- (9.0.3) 강제 배치 없이 — 프레임 도우미
+// 이 모듈은 DOM 에 쓴 뒤 같은 작업 안에서 자리 · 크기를 읽지 않아요(읽으면 브라우저가 그 자리에서 스타일 · 배치를 끝내야 해서 — 강제 배치).
+//   읽어야 하는 일(덮였는지 재기 · 스크롤 되돌리기)은 afterLayout 으로 「그 프레임의 배치가 끝난 뒤 · 칠하기 전」에 해요: ResizeObserver 알림은 배치 뒤 · 칠하기 전에 와서
+//   그 안에서 읽는 값은 이미 계산된 것이고, 거기서 쓴 스크롤은 같은 프레임에 칠해져요(깜빡임 없음). 쓰는 일(미리 그리기 표식)은 프레임 첫머리(rAF)에 몰아 그 프레임이 한 번에 계산해요.
+//   시험 tools/tests/chat-light-layout.mjs 가 이 규칙(쓰기 뒤 동기 배치 읽기 없음)을 정적으로 지켜요.
+const hasRaf = () => typeof requestAnimationFrame === 'function';
+const raf = fn => (hasRaf() ? requestAnimationFrame(fn) : setTimeout(fn, 16));
+const cancelRaf = id => { if (!id) return; if (hasRaf() && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(id); else clearTimeout(id); };
+const AFTER_LAYOUT_FALLBACK_MS = 300;   // 크기가 0 인 칸(숨김) · 그리지 않는 탭은 ResizeObserver 첫 알림이 오지 않을 수 있어 — 그때만 늦게라도 한 번(바쁜 폰에서 첫 프레임보다 먼저 오지 않게 넉넉히)
+/** el 이 그려지는 다음 프레임의 배치가 끝난 뒤(칠하기 전) fn 을 한 번 — 돌려주는 함수로 취소 */
+function afterLayout(el, fn) {
+    let done = false, ro = null, fallback = 0;
+    const run = () => { if (done) return; done = true; ro?.disconnect(); if (ro) clearTimeout(fallback); fn(); };
+    if (el && typeof ResizeObserver === 'function') {
+        ro = new ResizeObserver(run);   // 첫 알림 = 관찰을 시작한 뒤 첫 배치 직후
+        ro.observe(el);
+        fallback = setTimeout(run, AFTER_LAYOUT_FALLBACK_MS);
+    } else fallback = raf(run);   // 없으면 다음 프레임 첫머리 — 그 프레임이 어차피 할 배치를 한 번 앞당길 뿐
+    return () => { if (done) return; done = true; ro?.disconnect(); if (ro) clearTimeout(fallback); else cancelRaf(fallback); };
+}
+
 // ---------------------------------------------------------------- (10-29 perf-persona) 서랍이 채팅을 다 덮으면 뒤의 #chat 을 통째로 건너뛰기
 // 제보: 「모바일 기준 유저 페르소나 편집하는데 많이 버벅거림 · 300챗 장기 챗」. 폰에서는 페르소나 관리 같은 서랍이 채팅을 화면 가득 덮는데도
 //   서랍 안의 일(페르소나 고르기 → 실리태번이 메시지 300개의 아바타 src 를 다시 씀 · 설명 글 갱신 → body :has 무효화)마다 뒤의 #chat 요소가 전부 다시 계산됐다.
@@ -48,11 +69,17 @@ export const _test = { state: () => ({ on, watching: !!mo, chat }) };
 //   닫히는 순간(openDrawer 가 빠짐) 바로 뗀다. 숨긴 동안 채팅이 바뀌면(새 메시지 · 다른 채팅 · 생성 시작) 바로 떼고 다시 붙이지 않는다(다음에 서랍을 열 때까지).
 //   뗄 때 스크롤: 숨기기 전 바닥이었으면 바닥으로, 아니면 그 자리로(값이 다를 때만 쓴다).
 //   리그(폰 384): 숨기면 브라우저가 #chat 의 스크롤 범위를 0 으로 보고 scroll 이벤트(scrollTop 0)를 한 번, 다시 보이면 원래 자리로 되돌리며 한 번 더 쏜다.
-//   읽던 자리 저장(reading-resume) · 바닥 따라가기(stream-follow) 같은 리스너가 그 0 을 「읽는 사람이 맨 위로 갔다」로 보지 않게, 덮인 동안과 뗀 직후 두 프레임은
+//   읽던 자리 저장(reading-resume) · 바닥 따라가기(stream-follow) 같은 리스너가 그 0 을 「읽는 사람이 맨 위로 갔다」로 보지 않게, 덮인 동안과 되돌린 뒤 두 프레임은
 //   #chat 의 scroll 이벤트를 창 캡처 단계에서 멈춘다(그 사이 사람이 채팅을 굴릴 수는 없다 — 서랍이 덮고 있다).
+// (9.0.3) 덮개는 content-visibility: hidden 그대로예요 — transform · opacity 로는 뒤 채팅의 스타일 계산을 건너뛸 수 없어서(이 덮개의 이유) 바꾸지 않았어요.
+//   대신 읽기 · 쓰기를 갈랐어요: 덮였는지 재기(evaluate — 서랍 · 채팅 자리와 서랍의 계산된 스타일)와 스크롤 되돌리기(restoreScroll)는 afterLayout 에서만 읽고,
+//   떼기(show)는 class 만 빼고 바로 돌아가요. 예전에는 class 를 뺀 그 자리에서 scrollHeight · scrollTop 을 읽어(폰 157+184ms) 서랍을 닫는 클릭 안에서
+//   채팅 전체 배치를 강제로 끝냈고, 같은 클릭의 다른 쓰기(아이콘 · 다른 서랍)로 그 프레임이 배치를 한 번 더 했어요 — 이제 그 프레임의 배치 한 번에 모여요.
+//   덮였는지 재기도 예전에는 타이머(서랍을 연 뒤 0 · 120 · 300 · 600 · 1000ms)에서 바로 읽어, 여는 전환 중 더러워진 스타일 · 배치를 그때마다 강제로 끝냈어요.
 export const COVER_CLASS = 'bl-chat-covered';
 const COVER_CHECKS = [0, 120, 300, 600, 1000];   // 서랍 여는 전환(opacity · transform) 이 끝난 뒤에야 덮였는지 알 수 있다
-let cover = { on: false, drawers: [], mo: null, chatMo: null, covered: false, saved: null, timers: [], offs: [], blocked: false, mute: false, muted: 0 };
+const freshCover = () => ({ on: false, drawers: [], mo: null, chatMo: null, covered: false, saved: null, timers: [], offs: [], blocked: false, mute: false, muted: 0, check: null, restoring: null });
+let cover = freshCover();
 
 /** a 가 b 를 다 덮는가(1px 여유) */
 export function rectCovers(a, b, tol = 1) {
@@ -73,43 +100,67 @@ function chatViewRect(el, win) {
     const r = el.getBoundingClientRect(); const vw = win.innerWidth, vh = win.innerHeight;
     return { left: Math.max(r.left, 0), top: Math.max(r.top, 0), right: Math.min(r.right, vw), bottom: Math.min(r.bottom, vh) };
 }
-/** 지금 열린 서랍 중 #chat 을 다 덮는 불투명한 것이 있는가 */
+/** 지금 열린 서랍 중 #chat 을 다 덮는 불투명한 것이 있는가 (읽기만 — afterLayout 안의 evaluate 에서 불러요) */
 export function drawerCoversChat(drawers, el, win) {
     const open = drawers.filter(d => d.classList.contains('openDrawer'));
     if (!open.length || !el) return false;
     const view = chatViewRect(el, win);
     return open.some(d => rectCovers(d.getBoundingClientRect(), view) && opaqueStyle(win.getComputedStyle(d)));
 }
+const anyOpenDrawer = () => cover.drawers.some(d => d.classList.contains('openDrawer'));
+/** 덮는다 — 읽기(지금 스크롤) 먼저, 쓰기(class) 마지막. evaluate(afterLayout) 에서만 불러요 */
 function hide(el) {
     if (cover.covered) return;
-    const bottom = el.scrollHeight - el.clientHeight - el.scrollTop < 5;
-    cover.saved = { top: el.scrollTop, bottom };
+    const pending = cover.restoring;   // 떼고 아직 되돌리기 전에 다시 덮이면 그때 적어 둔 자리를 그대로 이어요
+    if (pending) { pending.cancel(); cover.restoring = null; }
+    const saved = pending ? pending.saved : { top: el.scrollTop, bottom: el.scrollHeight - el.clientHeight - el.scrollTop < 5 };
+    cover.saved = saved;
     cover.covered = true; cover.mute = true;
     el.classList.add(COVER_CLASS);
 }
-const nextFrames = fn => (typeof requestAnimationFrame === 'function' ? requestAnimationFrame(() => requestAnimationFrame(fn)) : setTimeout(fn, 34));
+const nextFrames = fn => (hasRaf() ? requestAnimationFrame(() => requestAnimationFrame(fn)) : setTimeout(fn, 34));
+/** 뗀다 — class 만 빼고(쓰기만) 스크롤은 그 프레임의 배치가 끝난 뒤 되돌려요(restoreScroll: 읽기 → 쓰기 한 번) */
 function show(el = document.getElementById('chat')) {
     if (!cover.covered) return;
     cover.covered = false;
     const saved = cover.saved; cover.saved = null;
-    if (!el) return;
+    if (!el) { cover.mute = false; return; }
     el.classList.remove(COVER_CLASS);
-    if (!saved) return;
-    const want = saved.bottom ? el.scrollHeight - el.clientHeight : saved.top;
-    if (Math.abs(el.scrollTop - want) > 1) el.scrollTop = want;
-    // 되돌리는 scroll 이벤트는 다음 프레임에 온다 — 두 프레임 뒤에 푼다(그새 다시 덮이면 그대로 둔다)
-    nextFrames(() => { if (!cover.covered) cover.mute = false; });
+    if (!saved) { cover.mute = false; return; }
+    cover.restoring?.cancel();
+    const job = { saved, cancel: null };
+    cover.restoring = job;
+    job.cancel = afterLayout(el, () => {
+        if (cover.restoring === job) cover.restoring = null;
+        restoreScroll(el, saved);
+        // 되돌리는 scroll 이벤트는 다음 프레임에 온다 — 두 프레임 뒤에 푼다(그새 다시 덮이면 그대로 둔다)
+        nextFrames(() => { if (!cover.covered) cover.mute = false; });
+    });
 }
-function clearChecks() { for (const t of cover.timers.splice(0)) clearTimeout(t); }
+/** 배치가 끝난 뒤에만 불러요 — 읽기 셋을 먼저, 다를 때만 scrollTop 한 번 쓰기 */
+function restoreScroll(el, saved) {
+    if (cover.covered || el.isConnected === false) return;   // 그새 다시 덮였거나 채팅 칸이 바뀌었으면 두어요
+    const top = el.scrollTop, max = el.scrollHeight - el.clientHeight;
+    const want = saved.bottom ? max : saved.top;
+    if (Math.abs(top - want) > 1) el.scrollTop = want;
+}
+function clearChecks() { for (const t of cover.timers.splice(0)) clearTimeout(t); cover.check?.(); cover.check = null; }
+/** 덮였는지 재고 맞춘다 — 서랍 · 채팅 자리와 서랍의 계산된 스타일을 읽어요(읽기 다음 쓰기). 배치가 끝난 뒤(checkSoon)에만 불러요 */
 function evaluate() {
     const el = document.getElementById('chat');
     if (!cover.on || !el) return;
-    const anyOpen = cover.drawers.some(d => d.classList.contains('openDrawer'));
-    if (!anyOpen) { clearChecks(); cover.blocked = false; show(el); return; }
+    if (!anyOpenDrawer()) { clearChecks(); cover.blocked = false; show(el); return; }
     if (cover.blocked) return;
     if (drawerCoversChat(cover.drawers, el, window)) hide(el); else show(el);
 }
-function scheduleChecks() { clearChecks(); for (const ms of COVER_CHECKS) cover.timers.push(setTimeout(evaluate, ms)); }
+/** 다음 프레임의 배치가 끝난 뒤 한 번 잰다(이미 잡혀 있으면 그것으로) */
+function checkSoon() {
+    if (cover.check || !cover.on) return;
+    const el = document.getElementById('chat');
+    if (!el) return;
+    cover.check = afterLayout(el, () => { cover.check = null; evaluate(); });
+}
+function scheduleChecks() { clearChecks(); for (const ms of COVER_CHECKS) cover.timers.push(setTimeout(checkSoon, ms)); }
 /** 숨긴 동안 채팅이 바뀌면 — 바로 보이게 하고 이번 서랍이 닫힐 때까지 다시 숨기지 않는다 */
 function release() { if (!cover.covered) return; cover.blocked = true; clearChecks(); show(); }
 
@@ -117,7 +168,8 @@ export function syncChatCover(enabled) {
     const want = !!enabled && typeof window !== 'undefined';
     if (!want) {
         clearChecks(); cover.mo?.disconnect(); cover.chatMo?.disconnect(); show(); for (const off of cover.offs.splice(0)) { try { off(); } catch { } }
-        cover = { on: false, drawers: [], mo: null, chatMo: null, covered: false, saved: null, timers: [], offs: [], blocked: false, mute: false, muted: 0 };
+        const restoring = cover.restoring;   // 끄는 순간 뗀 덮개의 스크롤 되돌리기는 그대로 끝내요
+        cover = freshCover(); cover.restoring = restoring;
         return;
     }
     const el = document.getElementById('chat');
@@ -126,12 +178,13 @@ export function syncChatCover(enabled) {
     syncChatCover(false);
     cover.on = true; cover.drawers = drawers; cover.chatEl = el;
     if (!drawers.length || !el) return;
-    // 서랍 class 만(subtree 없음) — openDrawer 가 붙으면 전환이 끝날 때까지 몇 번 보고, 빠지면 그 자리에서 바로 뗀다
+    // 서랍 class 만(subtree 없음) — openDrawer 가 붙으면 전환이 끝날 때까지 몇 번 재고, 다 닫히면 그 자리에서 바로 뗀다(쓰기만 · 읽지 않아요)
     cover.mo = new MutationObserver(records => {
         const closed = records.some(r => !r.target.classList.contains('openDrawer') && (r.oldValue || '').split(/\s+/).includes('openDrawer'));
-        if (closed) evaluate();
+        const open = anyOpenDrawer();
+        if (closed && !open) { clearChecks(); cover.blocked = false; show(); }
         warmOnDrawers();   // (10-30 perf-chatlight) 서랍이 열리면 미리 그리기를 쉬고 화면 밖을 되돌려요
-        if (cover.drawers.some(d => d.classList.contains('openDrawer'))) scheduleChecks();
+        if (open) scheduleChecks();
     });
     for (const d of drawers) cover.mo.observe(d, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
     cover.chatMo = new MutationObserver(() => release());
@@ -139,7 +192,7 @@ export function syncChatCover(enabled) {
     const onScroll = event => { if (cover.mute && event.target === cover.chatEl) { cover.muted++; event.stopImmediatePropagation(); } };
     window.addEventListener('scroll', onScroll, true);
     cover.offs.push(() => window.removeEventListener('scroll', onScroll, true));
-    const onResize = () => { if (cover.drawers.some(d => d.classList.contains('openDrawer'))) scheduleChecks(); };
+    const onResize = () => { if (anyOpenDrawer()) scheduleChecks(); };
     window.addEventListener('resize', onResize, { passive: true });
     cover.offs.push(() => window.removeEventListener('resize', onResize));
     try {
@@ -149,30 +202,39 @@ export function syncChatCover(enabled) {
             es.on(ev, release); cover.offs.push(() => (es.removeListener || es.off)?.call(es, ev, release));
         }
     } catch { }
-    if (drawers.some(d => d.classList.contains('openDrawer'))) scheduleChecks();
+    if (anyOpenDrawer()) scheduleChecks();
 }
-export const _cover = { state: () => ({ on: cover.on, covered: cover.covered, blocked: cover.blocked, drawers: cover.drawers.length, saved: cover.saved, mute: cover.mute, muted: cover.muted }), evaluate, show, release };
+export const _cover = { state: () => ({ on: cover.on, covered: cover.covered, blocked: cover.blocked, drawers: cover.drawers.length, saved: cover.saved, mute: cover.mute, muted: cover.muted, restoring: !!cover.restoring }), evaluate, show, release };
 
 // ---------------------------------------------------------------- (10-30 perf-chatlight) 쉴 때 화면 밖 메시지를 미리 그려 두기
 // 왜: 성능 관문 스크롤(150개 메시지를 1초에 맨 위까지 올렸다 내림 · 폰 4배)에서 50ms 넘는 프레임이 끄면 3개 · 켜면 33~34개였어요. 프로파일:
 //   content-visibility:auto 로 건너뛴 메시지는 화면에 들어오는 그 프레임에 스타일(메시지 하나 약 16ms) · 배치 · 칠하기 · 그림 칠하기를 해요(프레임마다 새 메시지 5개 남짓 → 80~200ms).
 //   한 번 그린 메시지도 다시 화면 밖으로 나가면 건너뛰어, 돌아올 때 배치 · 칠하기를 또 해서 내려오는 길도 느렸어요.
-//   스크롤 전에 그 자리에서 강제로 재 두기(getBoundingClientRect)는 스타일만 남고 배치 · 칠하기는 그대로라 30개였어요 — 건너뛰기를 풀어야 해요.
-// 어떻게: 채팅이 조용해지면(메시지가 들고 난 뒤 WARM_QUIET_MS) 낮은 우선순위 작업으로 지금 보는 자리에 가까운 메시지부터 data-bl-warm 을 달아
-//   건너뛰기를 풀고(css/05-chat.css) 그 자리에서 배치까지 끝내요 — 한 조각 WARM_SLICE_MS 안에서 몇 개씩 묶어(비용을 재 가며). 다 풀면 끈 것과 같은 스크롤이고,
-//   여는 순간(긴 채팅 열기)은 예전처럼 화면 밖을 건너뛰어 빨라요(그 일을 쉬는 시간으로 옮길 뿐 · 모양은 같아요).
+// 어떻게: 채팅이 조용해지면(메시지가 들고 난 뒤 WARM_QUIET_MS) 지금 보는 자리에 가까운 메시지부터 data-bl-warm 을 달아 건너뛰기를 풀어요(css/05-chat.css).
+//   다 풀면 끈 것과 같은 스크롤이고, 여는 순간(긴 채팅 열기)은 예전처럼 화면 밖을 건너뛰어 빨라요(그 일을 쉬는 시간으로 옮길 뿐 · 모양은 같아요).
 //   생성 중(body data-generating) · 답장 토큰이 오는 동안 · 서랍이 열린 동안(고정 서랍 빼고)은 쉬고, 그때 푼 메시지를 다시 건너뛰게 돌려놔요 —
 //   페르소나 설명 타이핑처럼 서랍 안 일마다 메시지 전체가 다시 계산되던 것(이 모듈의 원래 이유)을 그대로 막아요. 닫히면 다시 쉬는 시간에 풀어요.
 //   표식은 class 가 아니라 data 속성 — 실리태번 keyboard.js 감시자(class 만 봐요)와 네모 단추 감시(class · style …)가 메시지마다 다시 훑지 않게.
-//   건너뛰는지는 계산된 content-visibility 로 봐요(표식이 #chat · html 어디에 붙든 · 바닥 10개 · 마지막 · 메뉴 열린 메시지는 처음부터 안 건너뛰어 고르지 않아요).
+// (9.0.3) 고르기는 계산된 스타일 · 자리를 읽지 않아요 — 건너뛰는지는 CSS 와 같은 선택자(SKIP_SELECTOR)를 matches 로, 보는 자리는 IntersectionObserver 첫 알림
+//   (배치 뒤에 비동기로 와요)으로 가운데 메시지를 찾고 DOM 차례로 가까운 것부터. 예전(8.2.4)에는 메시지마다 getComputedStyle · getBoundingClientRect 를 읽었어요.
+// (1.0.0 scroll-919) 묶음은 다시 낮은 우선순위 작업 안에서 끝내요 — 표식을 달고 그 작업 안에서 스타일 · 배치를 한 번 끝낸 뒤(void el.offsetHeight) 걸린 시간으로 묶음 크기를 맞춰요.
+//   9.0.3 은 표식을 프레임 첫머리(rAF)에 달고 읽지 않게 바꿨는데, 이 테마는 표식이 바뀐 프레임마다 칠하기(폰 4배 Paint 30~160ms)가 붙어
+//   묶음 하나(묶음 크기가 늘 1 로 줄었어요)마다 그 칠하기를 따로 냈어요 — 리그 폰 4배 쉬는 동안: 4초에 35개 · 긴 작업 34개(8.2.4 는 5초에 112개 · 긴 작업 12개).
+//   작업 안에서 끝내면 묶음 여럿이 다음 프레임의 칠하기 한 번을 나눠 써요. 또 9.0.3 은 키 · 누름 · 클릭 · 휠 · 터치 뒤 1초를 쉬어, 답장을 받은 뒤(토큰 동안 표식을 뗌)
+//   글을 치다 바로 굴리면(관문: 스트리밍 → 타이핑 → 0.3초 뒤 스크롤) 하나도 풀리지 않은 채로 굴렸어요(관문 폰 50ms 넘는 프레임 0 → 22 · p95 16.8 → 116.6ms).
+//   이제 시간으로 쉬지 않고, 처리를 기다리는 입력이 있으면(navigator.scheduling.isInputPending) 그 묶음을 미뤄 입력이 먼저 돌게 해요 —
+//   한 묶음은 WARM_SLICE_MS 안팎이라 막 온 키 · 누름이 기다려도 그만큼이에요. 굴리는 손가락(휠 · 터치)은 오히려 풀어야 할 때라 쉬지 않아요.
 export const WARM_ATTR = 'data-bl-warm';
 export const WARM_QUIET_MS = 500;
 const WARM_RETRY_MS = 1000;   // 쉬는 조건(생성 중 · 서랍)이 풀렸는지 다시 볼 간격
-let warm = { timer: 0, job: 0, list: null, i: 0, k: 4, done: 0, slices: 0, cool: false };
-// 한 조각의 목표 시간(묶음 크기를 이것에 맞춰요). requestIdleCallback 은 화면이 계속 그려지는 동안(애니메이션 · rAF 고리) 프레임 사이 몇 ms 만 줘서, 메시지 하나(고정 몫 약 20ms)도 못 들어가
-//   리그에서 300개에 1분 넘게 걸렸어요. 그래서 낮은 우선순위 작업(scheduler.postTask background — 입력 · 그리기 · 보통 작업이 먼저)으로 한 묶음씩 하고 비켜요.
+// 한 묶음(낮은 우선순위 작업 하나)의 목표 시간 · 묶음 크기는 8.2.4 값 그대로. 폰 4배에서 표식을 바꾸고 배치를 끝내면 메시지 수와 상관없는 고정 몫(스타일 약 12ms · #chat 배치 약 7ms)이 있어
+//   작게(9.0.3 의 32ms · 최대 8 · 처음 2) 잡으면 묶음이 늘 하나라 고정 몫만 되풀이해요 — 리그 폰 4배: 관문 타이핑 동안 145개 중 74~122개만 풀려 스크롤에 50ms 넘는 프레임 10~20개
+//   (8.2.4 값이면 타이핑 동안 145개 다). 지난 묶음이 0.6 배보다 빨랐으면 두 배, 1.5 배를 넘었으면 절반. 입력 · 그리기 · 보통 작업이 먼저 돌아요(background 우선순위).
 export const WARM_SLICE_MS = 50;
-export const WARM_BATCH_MAX = 12;   // 깨끗한 메시지(하나 1ms 남짓)로 키운 묶음이 처음 그리는 메시지(하나 4ms 안팎)를 만나도 한 조각이 너무 길지 않게
+export const WARM_BATCH_MAX = 12;   // 깨끗한 메시지(하나 1ms 남짓)로 키운 묶음이 처음 그리는 메시지(하나 4ms 안팎)를 만나도 한 묶음이 너무 길지 않게
+// css/05-chat.css 의 「긴 채팅 가볍게」 규칙과 같은 꼴(시험이 둘을 맞춰 봐요) — 이 선택자에 맞고 표식이 없는 메시지가 건너뛰는 메시지예요
+export const SKIP_SELECTOR = '.mes:not(.last_mes, .bl-menu-open, .selected):not(:nth-last-child(-n+10))';
+let warm = { timer: 0, job: 0, look: null, list: null, i: 0, k: 4, done: 0, slices: 0, yielded: 0, cool: false };
 const bgTask = fn => {
     if (typeof scheduler !== 'undefined' && typeof scheduler?.postTask === 'function' && typeof AbortController === 'function') {
         const ctl = new AbortController(); scheduler.postTask(fn, { priority: 'background', signal: ctl.signal }).catch(() => { }); return ctl;
@@ -180,13 +242,23 @@ const bgTask = fn => {
     return setTimeout(fn, 16);
 };
 const cancelBg = job => { if (!job) return; if (typeof job.abort === 'function') job.abort(); else clearTimeout(job); };
-function stopWarm() { clearTimeout(warm.timer); cancelBg(warm.job); warm.timer = 0; warm.job = 0; warm.list = null; warm.i = 0; }
-/** 미리 그리기를 쉬어야 하나 — 꺼짐 · 생성 중 · (고정 아닌) 서랍이 열림 */
+function stopWarm() {
+    clearTimeout(warm.timer); cancelBg(warm.job); warm.look?.cancel();
+    warm.timer = 0; warm.job = 0; warm.look = null; warm.list = null; warm.i = 0;
+}
+/** 미리 그리기를 쉬어야 하나 — 꺼짐 · 시작 덮개(#preloader · boot-gate.js 와 같은 판정) · 생성 중 · (고정 아닌) 서랍이 열림 */
 export function warmPaused(doc = document) {
     if (!on) return true;
+    if (doc.getElementById?.('preloader')) return true;   // 처음 불러오는 동안은 그리는 일을 보태지 않아요(걷힌 뒤 다시 봐요)
     if (doc.body?.dataset?.generating === 'true') return true;
     return !!doc.querySelector?.('.drawer-content.openDrawer:not(.pinnedOpen)');
 }
+/** 처리를 기다리는 키 · 누름이 있나 — 있으면 묶음을 미뤄 입력이 먼저(없는 브라우저는 늘 false) */
+export function inputPending(nav = typeof navigator !== 'undefined' ? navigator : null) {
+    try { return !!nav?.scheduling?.isInputPending?.(); } catch { return false; }
+}
+/** 긴 채팅 가볍게가 지금 걸려 있나 — 스타일을 읽지 않고(표식만). 표식은 판에 따라 html 또는 #chat 에 붙어요 */
+const lightNow = el => !!el && (!!document.documentElement?.classList?.contains(CLASS) || !!el.classList?.contains?.(CLASS));
 /** 메시지가 들고 났거나 설정이 바뀌면 — 조용해진 뒤 처음부터 다시 고른다 */
 export function kickWarm(delay = WARM_QUIET_MS) {
     stopWarm();
@@ -197,19 +269,48 @@ export function kickWarm(delay = WARM_QUIET_MS) {
 function startWarm() {
     warm.timer = 0;
     if (warmPaused()) { warm.timer = setTimeout(startWarm, WARM_RETRY_MS); return; }
-    warm.job = bgTask(stepWarm);
+    const el = document.getElementById('chat');
+    if (!lightNow(el)) return;   // 짧은 채팅이면 고를 것도 없다
+    warm.look = findAnchor(el, anchor => {
+        warm.look = null;
+        warm.list = warmCandidates(el, anchor); warm.i = 0;
+        if (warm.list.length) warm.job = bgTask(stepWarm); else warm.list = null;
+    });
 }
-/** 지금 건너뛰는(content-visibility:auto) 메시지를 보는 자리에서 가까운 차례로 */
-export function warmCandidates(el, win = window) {
+/** 보는 자리의 가운데 메시지 차례(:scope > .mes 안 번호 · 반 칸도 됨)를 IntersectionObserver 첫 알림으로 — 자리를 직접 읽지 않아요.
+ *  없거나 ANCHOR_WAIT_MS 안에 알림이 없으면(그리지 않는 탭 등) 바닥(채팅은 바닥에서 열려요) — 관찰은 어느 쪽이든 바로 끊어요(메시지를 붙잡지 않게).
+ *  돌려주는 것: { cancel } 또는 null(그 자리에서 불렀음) */
+const ANCHOR_WAIT_MS = 300;
+export function findAnchor(el, cb) {
+    const all = [...el.querySelectorAll(':scope > .mes')];
+    if (!all.length || typeof IntersectionObserver !== 'function') { cb(all.length - 1); return null; }
+    const index = new Map(all.map((mes, i) => [mes, i]));
+    let done = false, timer = 0, io = null;
+    const finish = entries => {
+        if (done) return;
+        done = true; io.disconnect(); clearTimeout(timer);
+        let lo = Infinity, hi = -Infinity;
+        for (const e of entries || []) if (e.isIntersecting && index.has(e.target)) { const i = index.get(e.target); if (i < lo) lo = i; if (i > hi) hi = i; }
+        index.clear();
+        cb(hi >= lo ? (lo + hi) / 2 : all.length - 1);
+    };
+    io = new IntersectionObserver(finish, { root: el });
+    for (const mes of all) io.observe(mes);
+    timer = setTimeout(() => finish(null), ANCHOR_WAIT_MS);
+    return { cancel() { if (done) return; done = true; io.disconnect(); clearTimeout(timer); index.clear(); } };
+}
+/** 건너뛰는 메시지(SKIP_SELECTOR · 표식 없음)를 anchor 에서 DOM 차례로 가까운 것부터 — 계산된 스타일 · 자리를 읽지 않아요 */
+export function warmCandidates(el, anchor = Infinity) {
+    const all = [...el.querySelectorAll(':scope > .mes')];
+    const at = Number.isFinite(anchor) && anchor >= 0 ? anchor : all.length - 1;
     const out = [];
-    for (const mes of el.querySelectorAll(':scope > .mes:not([' + WARM_ATTR + '])')) if (win.getComputedStyle(mes).contentVisibility === 'auto') out.push(mes);
-    if (out.length < 2) return out;
-    const box = el.getBoundingClientRect(); const mid = box.top + box.height / 2;
-    const dist = new Map(out.map(mes => { const r = mes.getBoundingClientRect(); return [mes, Math.abs(r.top + r.height / 2 - mid)]; }));
-    return out.sort((a, b) => dist.get(a) - dist.get(b));
+    all.forEach((mes, i) => { if (!mes.hasAttribute(WARM_ATTR) && mes.matches(SKIP_SELECTOR)) out.push([mes, Math.abs(i - at), i]); });
+    out.sort((a, b) => a[1] - b[1] || b[2] - a[2]);   // 같은 거리면 아래 것 먼저
+    return out.map(x => x[0]);
 }
 // 크롬은 content-visibility 가 auto → visible 로 바뀌어 건너뛰기가 풀릴 때 contentvisibilityautostatechange 를 내지 않아요(리그 확인).
 //   네모 단추 감시(squared-buttons.js)는 그 사건(skipped=false)을 받아 건너뛰어 둔 메시지 안 단추를 재므로, 풀어 준 메시지마다 같은 꼴로 알려 줘요.
+//   알림은 배치를 끝낸 뒤라 감시가 재는 값은 이미 계산돼 있어요.
 function announce(mes) {
     try {
         const E = typeof ContentVisibilityAutoStateChangeEvent === 'function' ? ContentVisibilityAutoStateChangeEvent : Event;
@@ -218,33 +319,32 @@ function announce(mes) {
         mes.dispatchEvent(ev);
     } catch { }
 }
+const stillSkipped = (mes, el) => mes.isConnected && mes.parentElement === el && !mes.hasAttribute(WARM_ATTR) && mes.matches(SKIP_SELECTOR);
+/** 낮은 우선순위 작업 하나 = 묶음 하나: 표식을 달고 → 이 작업 안에서 스타일 · 배치를 한 번 끝내고(void el.offsetHeight) → 걸린 시간으로 다음 묶음 크기.
+ *  처리를 기다리는 입력이 있으면 달지 않고 다음 작업으로 미뤄요(입력 작업이 먼저 돌아요). */
 function stepWarm() {
     warm.job = 0; warm.slices++;
     if (warmPaused()) { warm.list = null; warm.timer = setTimeout(startWarm, WARM_RETRY_MS); return; }
     const el = document.getElementById('chat');
-    if (!el) return;
-    if (!warm.list) { warm.list = warmCandidates(el); warm.i = 0; }
-    // 한 조각에 한 묶음 — 잴 때마다(스타일 · 배치 한 번) 메시지 수와 상관없는 고정 몫이 있어서(폰 4배 스타일 약 12ms · #chat 배치 약 7ms)
-    //   하나씩 재면 메시지마다 그 몫을 또 냈어요(하나 20~25ms · 10개 30~44ms). 묶음 크기는 지난 조각 시간으로 맞춘다:
-    //   WARM_SLICE_MS 의 0.6 배보다 빨랐으면 두 배, 1.5 배를 넘었으면 절반(스타일이 깨끗한 메시지는 싸고 처음 그리는 메시지는 비싸서 그때그때 달라요 ·
-    //   바쁠 때 한두 번 튄 시간으로 묶음이 하나까지 줄면 고정 몫만 내다 끝나서 — 리그: 타이핑 동안 38조각에 98개 — 넉넉히 봐요).
+    if (!el || !warm.list || !lightNow(el)) { warm.list = null; return; }
+    if (inputPending()) { warm.yielded++; warm.job = bgTask(stepWarm); return; }
     const picked = [];
     while (warm.i < warm.list.length && picked.length < warm.k) {
         const mes = warm.list[warm.i++];
-        if (mes.isConnected && !mes.hasAttribute(WARM_ATTR) && mes.parentElement === el) picked.push(mes);
+        if (stillSkipped(mes, el)) picked.push(mes);
     }
     if (picked.length) {
         const t = performance.now();
         for (const mes of picked) mes.setAttribute(WARM_ATTR, '');
         warm.cool = false;
-        void el.offsetHeight;   // 건너뛰기가 풀린 안쪽 스타일 · 배치를 지금(낮은 우선순위 작업 안에서) 끝낸다
+        void el.offsetHeight;   // 풀린 안쪽의 스타일 · 배치를 지금(이 낮은 우선순위 작업 안에서) 끝낸다 — 칠하기는 다음 프레임에 묶음 여럿이 한 번
         const spent = performance.now() - t;
         if (picked.length === warm.k && spent < WARM_SLICE_MS * 0.6) warm.k = Math.min(warm.k * 2, WARM_BATCH_MAX);
         else if (spent > WARM_SLICE_MS * 1.5) warm.k = Math.max(1, warm.k >> 1);
         warm.done += picked.length;
-        for (const mes of picked) announce(mes);
+        for (const mes of picked) announce(mes);   // 알림을 받은 쪽이 미리 그리기를 멈췄을 수도 있어요(아래 warm.list 확인)
     }
-    if (warm.i < warm.list.length) warm.job = bgTask(stepWarm);
+    if (warm.list && warm.i < warm.list.length) warm.job = bgTask(stepWarm);
     else warm.list = null;
 }
 /** 푼 메시지를 다시 건너뛸 수 있게 돌려놓는다 — 서랍이 열릴 때 · 답장을 받기 시작할 때.
@@ -260,7 +360,7 @@ export function coolOffscreen(doc = document) {
 /** 서랍이 열리면 쉬면서 화면 밖을 되돌리고, 닫히면 다시 미리 그린다 */
 export function warmOnDrawers(doc = document) {
     if (!on) return;
-    if (doc.querySelector('.drawer-content.openDrawer:not(.pinnedOpen)')) { if (!warm.cool || warm.timer || warm.job) coolOffscreen(doc); } else kickWarm();
+    if (doc.querySelector('.drawer-content.openDrawer:not(.pinnedOpen)')) { if (!warm.cool || warm.timer || warm.job || warm.look) coolOffscreen(doc); } else kickWarm();
 }
 // 답장을 받는 동안: 토큰마다 마지막 메시지가 다시 그려질 때 푼 메시지 전부가 배치 · 층 나누기 · 넘기기에 끼어(폰 4배 스트리밍 50ms 넘는 프레임 3 → 14개)
 //   첫 토큰(또는 생성 시작)에 화면 밖을 되돌리고, 토큰이 STREAM_QUIET_MS 끊기거나 생성이 끝나면 다시 쉬는 시간에 푼다. 드라이런(토큰 세기)은 건너뛴다.
@@ -276,7 +376,10 @@ function onReveal(event) {
     mes.setAttribute(WARM_ATTR, '');
 }
 function listenWarm() {
-    if (!revealOn && typeof document.addEventListener === 'function') { revealOn = true; document.addEventListener('contentvisibilityautostatechange', onReveal, true); }
+    if (!revealOn && typeof document.addEventListener === 'function') {
+        revealOn = true;
+        document.addEventListener('contentvisibilityautostatechange', onReveal, true);
+    }
     if (warmEvents) return;
     try {
         const ctx = globalThis.SillyTavern?.getContext?.(); const es = ctx?.eventSource, T = ctx?.eventTypes || ctx?.event_types;
@@ -290,4 +393,7 @@ function listenWarm() {
         for (const name of ['GENERATION_ENDED', 'GENERATION_STOPPED', 'MESSAGE_RECEIVED']) if (T[name]) es.on(T[name], onEnd);
     } catch { }
 }
-export const _warm = { state: () => ({ timer: !!warm.timer, job: !!warm.job, pending: warm.list ? warm.list.length - warm.i : null, k: warm.k, done: warm.done, slices: warm.slices, cool: warm.cool }), stop: stopWarm, step: stepWarm, start: startWarm };
+export const _warm = {
+    state: () => ({ timer: !!warm.timer, job: !!warm.job, look: !!warm.look, pending: warm.list ? warm.list.length - warm.i : null, k: warm.k, done: warm.done, slices: warm.slices, yielded: warm.yielded, cool: warm.cool }),
+    stop: stopWarm, step: stepWarm, start: startWarm,
+};

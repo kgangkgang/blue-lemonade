@@ -2,7 +2,7 @@
 import { imageFormat } from './image-format.js';
 import { fetchAssets, uploadImage, sameBaseSiblings, sanitizeBase } from './assets.js';
 import { disabledSet, setDisabled, settings, saveSettings } from './state.js';
-import { sha256Hex } from '../prompt-template/sha256.js';   // 8.2.7 http 폰(crypto.subtle 없음)
+import { sha256Hex } from './sha256.js';   // 8.2.7 http 폰(crypto.subtle 없음)
 export function canShrink(){try{return document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp');}catch{return false;}}
 const QUALITY=.9;
 export const SKIP_LABELS={optimized:'이미 경량화한 파일',webp:'기존 WebP 보존',collision:'같은 이름 충돌',animated:'움직이는 이미지 보존',unsupported:'브라우저가 읽지 못하는 형식',large:'해상도가 너무 큼',smaller:'이미 원본이 더 작음',failed:'읽기·변환 실패'};

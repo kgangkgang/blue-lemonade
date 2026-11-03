@@ -1,4 +1,4 @@
-// 7.9.9 실리태번 기본 「번역」 확장(public/scripts/extensions/translate)과 같이 켜져 있을 때 — 사용자 설정은 꺼져 있지만 다른 사용자(제보자)는 켜 둘 수 있다.
+// 7.9.9 실리태번 기본 「번역」 확장(public/scripts/extensions/translate)과 같이 켜져 있을 때 — 사용자 설정은 꺼져 있지만 다른 사용자는 켜 둘 수 있다.
 // 그 확장은 MESSAGE_UPDATED 마다 translateMessageEdit 을 돈다 (실리태번 1.16 · 1.19 같음):
 //   · auto_mode 'none': 번역문(extra.display_text)이 있으면 지우고 다시 그린다 → 메시지를 고치거나(편집 끝 · 취소) 다른 확장이 MESSAGE_UPDATED 를 내면 테마 LLM 번역이 사라진다
 //   · auto_mode 'responses' · 'both'(답) / 'inputs' · 'both'(내 글): 제 공급자(Google · DeepL …)로 번역해 display_text 를 덮어쓴다 → LLM 번역이 기계 번역으로 바뀐다

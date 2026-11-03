@@ -45,13 +45,12 @@ await test('검색 표에 화면이 적힌 손잡이는 변경한 설정도 같�
     assert.deepEqual(bad, []);
 });
 
-await test('손잡이 자리 그대로: 캐릭터 메시지 · 말풍선 나누기 → 채팅 › 메시지, 채팅 › 기타 스위치 셋, 새 버전 자동 확인 → 테마 › 업데이트', () => {
-    const want = { 'chat.char': 'chat/message', 'chat.bubbleSplit': 'chat/message', 'chat.user': 'chat/message', headSwitchRows: 'chat/etc', koUi: 'chat/etc', longpressHelp: 'chat/etc', updateCheck: 'theme/update', 'fruitTypography.on': 'prompt/fruit', fruitEntryMode: 'prompt/fruit', 'chat.weather': 'chat/screen' };
+await test('손잡이 자리 그대로: 캐릭터 메시지 · 말풍선 나누기 → 채팅 › 메시지, 채팅 › 기타 스위치 셋', () => {
+    const want = { 'chat.char': 'chat/message', 'chat.bubbleSplit': 'chat/message', 'chat.user': 'chat/message', headSwitchRows: 'chat/etc', koUi: 'chat/etc', longpressHelp: 'chat/etc', 'fruitTypography.on': 'prompt/fruit', fruitEntryMode: 'prompt/fruit', 'chat.weather': 'chat/screen' };
     for (const [p, where] of Object.entries(want)) { const r = D.settingRoute(p); assert.equal(`${r.tab}/${r.sub}`, where, p); }
     // 설정 창에서 그 손잡이가 정말 그 화면에 있는지 (원문)
     const block = sub => { const at = panel.indexOf(`if (sub === '${sub}')`, panel.indexOf('function tabChat(')); return panel.slice(at, panel.indexOf('\n    }\n', at)); };
     for (const key of ['headSwitchRows', 'koUi', 'longpressHelp']) assert.ok(block('etc').includes(`toggle('${key}'`), key);
-    assert.match(panel, /if\(sub==='update'\)return `<div class="salty-group">\$\{row\('새 버전 자동 확인', toggle\('updateCheck'/);
 });
 
 await test('바뀔 수 있는 모든 칸에 사람이 읽는 이름이 있어요 (설정 창이 그 손잡이를 아직 안 그렸어도 — 키 이름 그대로 보이지 않게)', async () => {

@@ -1,4 +1,4 @@
-// 6.6.5 번역 모델의 초안 · 혼잣말 · 감싸개 누출 (사용자 제보 10-15, 인물 이름은 가상)
+// 6.6.5 번역 모델의 초안 · 혼잣말 · 감싸개 누출 (인물 이름은 가상)
 // node tools/tests/translator-leak.mjs [repo root]
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -10,7 +10,7 @@ const { stripDraftLeaks, restoreParagraphBreaks, cleanParagraphEcho, parseBatchR
 let passed = 0;
 const check = (name, fn) => { fn(); passed++; };
 
-// ── 실제 사례 (사용자 채팅에서 나온 실제 누출 모양을 가상 인물·문장으로 옮김) ──
+// ── 실제 사례 (실제 누출 모양을 가상 인물 · 문장으로 옮김) ──
 const SRC = [
     'She was so happy that her five-centimeter heels gave an involuntary little tap-tap against the marble floor, her whole posture radiating the kind of uncontainable Friday-evening joy that could probably power a small generator in the IT Department.',
     "Watching the top of her head bob up and down across the counter, Bram couldn't help the low, rumbling laugh that escaped his chest. He took another slow, appreciative bite of his birthday doughnut, letting the rich vanilla custard coat his tongue before swallowing.",

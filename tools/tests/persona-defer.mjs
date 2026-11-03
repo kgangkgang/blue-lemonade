@@ -248,7 +248,7 @@ test('소스: 입력칸 글 · 선택 · 포커스는 건드리지 않는다(val
     assert.match(src, /'\.\.\/\.\.\/\.\.\/\.\.\/personas\.js'/, 'user_avatar 는 실리태번 personas.js 에서(src/ 기준 네 단계 위)');
 });
 test('연결: features.js · 설정 기본값 · 보정 · 동작 값 목록 · 설정 줄 · 라벨 · 검색', () => {
-    assert.match(read('src/features.js'), /const personaDefer = on && s\.chat\?\.personaDefer !== false;\n\s*if \(personaDefer \|\| modules\.personadefer\) load\('personadefer', '\.\/persona-defer\.js'\)\.then\(m => m\?\.syncPersonaDefer\(personaDefer\)\);/);
+    assert.match(read('src/features.js'), /const personaDefer = on && s\.chat\?\.personaDefer !== false;\n\s*if \(personaDefer \|\| modules\.personadefer\) onGate\('drawer', \(\) => load\('personadefer', '\.\/persona-defer\.js'\)\.then\(m => m\?\.syncPersonaDefer\(personaDefer\)\), 'personadefer'\);/);
     const settings = read('src/settings.js');
     assert.match(settings, /chatLight: true, personaDefer: true,/);
     assert.match(settings, /s\.chat\.personaDefer = flag\(s\.chat\.personaDefer, true\);/);

@@ -1,5 +1,5 @@
 // TTS — ElevenLabs 한도가 다 차면 MiniMax 로 대신 읽기 (테마 8.2.5)
-// 사용자: 「일레븐랩스 한도초과일때만 미니맥스로 쓰이게끔 설정가능하게」 — 주로 ElevenLabs(감정 표현 · 연간 구독)로 듣고, 캐릭터마다 MiniMax 목소리도 있다.
+// ElevenLabs 글자 한도가 다 찼을 때만 MiniMax 로 대신 읽기 — 주로 ElevenLabs 로 듣고, 캐릭터마다 MiniMax 목소리를 따로 골라 둬요.
 //   ElevenLabs 글자 한도가 다 찼을 때만 같은 캐릭터의 MiniMax 목소리로 읽는다. 다른 실패(연결 · 키 · 몰림 429 · 서버 오류)는 지금처럼 그대로.
 //
 // 설정 settings().quota_fallback = { enabled: false(기본 끔 — 사용자가 켬), map: { ElevenLabs 목소리 uid: MiniMax 목소리 uid } }

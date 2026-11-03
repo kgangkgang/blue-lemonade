@@ -107,7 +107,7 @@ await test('squared-buttons: 300ms 타이머 뒤 다음 프레임 처음에 재�
     host.timers[0].fn();
     assert.equal(host.frames.length, 1, '타이머는 프레임만 예약한다');
     assert.equal(all.reduce((n, e) => n + e.offsetReads, 0), 0, '프레임 전에는 레이아웃을 묻지 않는다');
-    host.frames[0]();
+    host.frames[0](); host.timers.at(-1).fn();   // 1.0.0: 프레임 뒤 setTimeout(배치가 끝난 뒤)에 재요
     assert.deepEqual(all.map(e => e.hasAttribute('data-bl-squared')), all.map((e, i) => e === marked || expected[i]));
     assert.equal(pill.hasAttribute('data-bl-squared'), true);
     assert.deepEqual([marked, skipped, inSend, input].map(e => e.offsetReads), [0, 0, 0, 0], '표시된 · 건너뛸 요소는 offsetParent 를 안 읽는다');
@@ -164,7 +164,6 @@ await test('B1 모달이 열린 동안 알림: 테마 창 표시 · 화면 아�
     assert.match(read('src/modal.js'), /dialog\.toggleAttribute\?\.\('data-bl-modal', true\);[^\n]*\n\s*try \{ dialog\.showModal\(\); \}/);
     const css = read('style.css');
     assert.match(css, /dialog\[data-bl-modal\]\[open\] > #toast-container \{ top: auto !important; bottom: max\(8px, env\(safe-area-inset-bottom, 0px\)\) !important; margin-top: 0 !important; pointer-events: none; \}/);
-    assert.match(css, /dialog\.bl-first-run\[data-bl-modal\]\[open\] > #toast-container \{ position: static !important; order: 99;/);
 });
 
 console.log(`phone-speed-728: ${pass} passed, ${fail} failed`);

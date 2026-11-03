@@ -8,7 +8,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(process.argv[2]||fileURLToPath(new URL('../..',import.meta.url)));
 const file=process.argv[3]||path.join(root,'style.css');
-const css=fs.readFileSync(file,'utf8');
+const css=fs.readFileSync(file,'utf8')+(process.argv[3]?'':['src/style-lazy.gen.css','src/compat-browser.gen.css','src/compat-width.gen.css'].map(f=>'\n'+fs.readFileSync(path.join(root,f),'utf8')).join(''));   // 1.0.0 크로미움 밖 · 다른 폭 규칙은 따로 받는 두 장(tools/css-compat.cjs) — 셋을 합치면 예전 한 장과 같은 규칙
 
 // ---- 작은 CSS 읽개: 스타일 규칙마다 { selectors, decls, at:[at-rule 머리말…] }
 function parse(text){

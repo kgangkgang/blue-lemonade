@@ -23,7 +23,7 @@ const listBefore = (pseudo) => {
 const relativeList = (() => { const m = /html body(?:\.salty)? :is\(([\s\S]*?)\n\s*\)(?:,\n\s*html body(?:\.salty)? :is\(([\s\S]*?)\n\s*\))? \{\n\s*position: relative;/.exec(body); return m ? [m[1], m[2] || ''].join(',\n').split(/,\s*\n/).map(s => s.trim()).filter(Boolean) : []; })();
 // 다른 모듈에서 이미 position 이 있는 칸 (그 선언을 실제로 확인한다)
 // 7.7.4 증거는 상자와 같은 범위여야 한다: 상자는 html body(테마가 꺼진 「확장만」 모드 포함)에 걸리는데 ? 단추(.bl-word-help) · 예시 단추의 relative 는
-//   56 의 body.salty 아래에만 있어 확장만 모드에서 static → 상자가 카드 크기로 번져 성능 보조 「기능 켜기」를 덮었다(누르면 도움말만 뜸, 커뮤니티 제보).
+//   56 의 body.salty 아래에만 있어 확장만 모드에서 static → 상자가 카드 크기로 번져 성능 보조 「기능 켜기」를 덮었다(누르면 도움말만 뜸).
 //   그 둘은 86 기준점 목록으로 옮겼고, 남은 증거는 body.salty 없이 걸리는지까지 본다 (tools/tests/perf-help-touch.mjs 가 전체를 낱 선택자로 다시 확인).
 const ALREADY_POSITIONED = {
     // 56-control-consistency.css 의 선 그림 단추 묶음(↺ · 미리보기 기본 높이) — html body · .salty-panel 범위라 확장만 모드에서도 relative
@@ -93,7 +93,7 @@ const pseudoUsers = (cls, pseudo) => otherSelectors.filter(s => [...s.matchAll(n
 t('상자에 쓰는 가상 요소를 그 칸이 다른 모듈에서 모양으로 쓰지 않음', () => {
     // 찾는 방법이 제대로 도는지: 알려진 모양 가상 요소는 잡고, 자손 것은 안 잡음
     assert.ok(pseudoUsers('.bl-setting-reset', 'before').length, '↺ 의 ::before 선 그림을 찾음');
-    assert.ok(pseudoUsers('.bl-editor-group-toggle', 'after').length, '묶음 접기의 ::after 화살표를 찾음');
+    assert.ok(pseudoUsers('.bl-settings-expand', 'before').length, '전체 화면 단추의 ::before 아이콘을 찾음');   // 1.0.0 묶음 접기(::after 화살표)는 걷었어요
     assert.equal(pseudoUsers('.salty-switch', 'after').length, 0, '스위치 span::after 는 자손');
     const cls = sel => (sel.match(/\.[\w-]+/g) || []).filter(c => !['.salty-panel', '.mes', '.salty-sec'].includes(c)).pop();
     for (const [pseudo, list] of [['before', listBefore('before')], ['after', listBefore('after')]]) {
@@ -130,7 +130,7 @@ t('실리태번 1.19 의 빠른 프롬프트 편집 「크게 보기」(왼쪽 �
 });
 
 t('7.0.6 가로 넘침 없음: 줄 오른쪽 끝의 스위치는 상자를 오른쪽 끝에 맞춰 왼쪽으로만 넓힌다 · 굴리는 목록은 overflow-x 를 숨기지 않는다', () => {
-    // 7.0.5 는 가운데 맞춤 상자(36 → 44)가 오른쪽으로 4px 삐져나가 「설정 선택」 목록(overflow:auto)에 가로 스크롤 줄이 생겼다 (폰 제보)
+    // 7.0.5 는 가운데 맞춤 상자(36 → 44)가 오른쪽으로 4px 삐져나가 「설정 선택」 목록(overflow:auto)에 가로 스크롤 줄이 생겼다 (폰)
     const rule = /html body(?:\.salty)? \.salty-panel label\.salty-switch::before \{([^}]*)\}/.exec(body)?.[1];
     assert.ok(rule, '스위치 전용 규칙');
     assert.match(rule, /right: 0;/); assert.match(rule, /left: auto;/);

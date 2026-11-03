@@ -1,3 +1,4 @@
+import { watchDom } from './dom-watch.js';
 import { booting, afterBoot } from './boot-gate.js';   // 7.7.4 시작 덮개 동안은 퀵 리플라이 줄을 재지 않는다
 // 원래 클릭 대상은 유지하고, 즐겨찾기 이름과 항목 도구 묶음만 보탠다.
 /**
@@ -157,7 +158,7 @@ export function startCompactLayout() {
         scheduleQrEdges();
     }
     function syncQrTitles(enabled = document.body.classList.contains('salty')) {
-        // 7.9.7 세트 색이 검정(색 고르기 기본값이 그대로 저장된 경우가 대부분)이면 테마는 칠하지 않는다 — 묶음 뒤가 새까만 띠로 보였다(제보 · css/35-qr-bar.css)
+        // 7.9.7 세트 색이 검정(색 고르기 기본값이 그대로 저장된 경우가 대부분)이면 테마는 칠하지 않는다 — 묶음 뒤가 새까만 띠로 보였다(css/35-qr-bar.css)
         for (const group of document.querySelectorAll('#qr--bar > .qr--buttons.qr--color, #qr--popout .qr--buttons.qr--color')) {
             const color = group.style.getPropertyValue('--qr--color').replace(/\s+/g, '').toLowerCase();
             group.classList.toggle('bl-qr-color-none', /^(#000(000)?(ff)?|rgba?\(0,0,0(,1(\.0+)?)?\)|black)$/.test(color));
@@ -276,7 +277,7 @@ export function startCompactLayout() {
     };
     const initialPopout = document.getElementById('qr--popout');
     if (initialPopout) watchQrPopout(initialPopout);
-    new MutationObserver((records) => {
+    watchDom(document.body, { childList: true, name: '퀵 리플라이 메뉴 · 팝아웃' }, (records) => {
         for (const record of records) {
             for (const node of record.addedNodes) {
                 if (node.nodeType === 1 && node.classList.contains('ctx-blocker')) fitQrMenu(node);
@@ -288,7 +289,7 @@ export function startCompactLayout() {
         for (const [node, observer] of qrPopoutObservers) {
             if (!node.isConnected) { observer.disconnect(); qrPopoutObservers.delete(node); }
         }
-    }).observe(document.body, { childList: true });
+    });
     // QR 줄 흐림 · 스냅 · 휠 · 끌기는 아래 모듈 함수 (설정 창 미리보기 줄도 같이 씀)
     sendForm?.addEventListener('scroll', (event) => { if (event.target.id === 'qr--bar') updateQrEdges(event.target); }, true);
     window.addEventListener('resize', scheduleQrEdges);
@@ -297,7 +298,7 @@ export function startCompactLayout() {
     sendForm?.addEventListener('wheel', event => qrWheel(event, event.target.closest?.('#qr--bar')), { passive: false });
     sendForm?.addEventListener('pointerdown', event => qrPointerDown(event, event.target.closest?.('#qr--bar')));
     // 6.9.8 퀵 리플라이 줄을 좌우로 밀면 실리태번 손짓(swiped-events, document 의 touch*)이 스와이프 · 새 답 만들기로 읽었다 → 줄 안의 터치는 문서까지 올리지 않는다 (스크롤 · 누르기는 그대로)
-    // 8.2.3 (제보 「QR 즐겨찾기 줄을 오른쪽으로 넘기다가 대사가 재생성됨 · 모바일」) 가드를 #send_form 에서 body 로 올리고 줄을 넓힌다:
+    // 8.2.3 (폰에서 QR 즐겨찾기 줄을 옆으로 넘기다 대사가 다시 생성되던 것) 가드를 #send_form 에서 body 로 올리고 줄을 넓힌다:
     //   QR 줄이 #send_form 밖에 있는 판 · 팝아웃(#qr--popout)과, 캐릭터 즐겨찾기 줄 · 탭 줄([data-bl-fade]) · 글꼴 묶음 줄 · QR 미리보기 줄처럼 가로로 넘치는 줄 전부.
     //   QR 줄은 예전처럼 touchstart 부터 막고, 다른 줄은 7.0.2 와 같이 touchstart 는 올리고(바깥 누르면 서랍 닫기) touchmove · touchend 만 막는다 — 스크롤은 브라우저 몫이라 그대로.
     //   리그(폰 384px · 빠른 끌기 150px)에서 QR 줄 · 입력창 위 자리 모두 스와이프 0회였고 마지막 메시지 위 끌기는 swiped-left → .swipe_right 클릭이 났다(계측 검증, 10-29).
@@ -315,7 +316,7 @@ export function startCompactLayout() {
     let wasQrVertical = document.body.classList.contains('salty-qr-y');
     let wasFindOff = document.body.classList.contains('salty-qr-find-off');
     let wasCtxNames = document.body.classList.contains('salty-qr-ctx-names');
-    new MutationObserver(() => {
+    watchDom(document.body, { attributes: ['class'], name: '입력판 배치 (body class)' }, () => {
         const enabled = document.body.classList.contains('salty');
         const qrTop = document.body.classList.contains('salty-qr-top');
         const qrVertical = document.body.classList.contains('salty-qr-y');
@@ -326,7 +327,7 @@ export function startCompactLayout() {
         const ctxNames = document.body.classList.contains('salty-qr-ctx-names');
         if (ctxNames !== wasCtxNames) syncQrTitles();   // 7.9.7
         wasEnabled = enabled; wasQrTop = qrTop; wasQrVertical = qrVertical; wasFindOff = findOff; wasCtxNames = ctxNames;
-    }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    });
     mobile.addEventListener('change', placeQuickReplies);
     document.addEventListener('change', event => { if (event.target?.id === 'qr--isEnabled') placeQuickReplies(); });
     // 5.4.4 ≡ · ✦ 메뉴 높이: PC 는 실리태번 Popper 가 메뉴 아래 끝을 버튼 윗변에 붙이고 위로 키운다. 최대 높이가 '화면 - 위 막대'뿐이라
@@ -357,10 +358,11 @@ export function startCompactLayout() {
     }
     refreshWelcome();
     const chat = document.querySelector('#chat');
-    if (chat) new MutationObserver(mutations => {
-        // 환영 화면은 메시지 안에 안 생긴다 — 답변이 자라며 들어오는 문단은 들여다보지 않는다 (2.5.2)
-        if (mutations.some(m => !m.target.closest?.('.mes') && [...m.addedNodes].some(n => n.nodeType === 1 && (n.matches?.('.welcomePanel, .welcomeHeaderVersionDisplay') || n.querySelector?.('.welcomeHeaderVersionDisplay'))))) refreshWelcome();
-    }).observe(chat, { childList: true, subtree: true });
+    // 환영 화면은 메시지 안에 안 생긴다 — 답변이 자라며 들어오는 문단은 들여다보지 않는다 (2.5.2 · 9.0.4 메시지 안은 구독 거르개로)
+    // 9.0.4: 공용 감시 허브 구독(#chat 구역 — 채팅을 보는 감시자는 문서마다 하나)
+    if (chat) watchDom(chat, { childList: true, subtree: true, exclude: '.mes', name: '환영 화면 판 표시' }, mutations => {
+        if (mutations.some(m => [...m.addedNodes].some(n => n.nodeType === 1 && (n.matches?.('.welcomePanel, .welcomeHeaderVersionDisplay') || n.querySelector?.('.welcomeHeaderVersionDisplay'))))) refreshWelcome();
+    });
     refreshFavorites();
     refreshWorld();
     if (favorites) new MutationObserver(refreshFavorites).observe(favorites, { childList: true, subtree: true });
@@ -403,7 +405,7 @@ export function updateQrEdges(bar) {
     const find = bar.querySelector(':scope > #bl-qr-find, :scope > .bl-qr-find-sample');
     if (find) find.style.left = pop ? `${Math.round(pop.getBoundingClientRect().width) + 5}px` : '0px';
     // 3.5.4 왼쪽 흐림은 버튼이 앞 단추 밑으로 반쯤 걸려 있을 때만 (넘기는 중) — 멈추면 스냅으로 딱 붙어 흐림도 꺼짐.
-    // 늘 켜 두면 스냅된 첫 버튼 왼쪽이 흐려져 밝은 조각처럼 보였다 (사용자: "흰색 네모" · "흐림은 있는 게 낫다")
+    // 늘 켜 두면 스냅된 첫 버튼 왼쪽이 흐려져 밝은 조각처럼 보였다 (흰 네모처럼 보이던 것 — 흐림은 남김)
     let cut = false;
     if (leads.length && bar.scrollLeft > 2 && max > 2) {
         const edge = box.left + parseFloat(cs.borderLeftWidth) + snap;

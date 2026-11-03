@@ -40,7 +40,7 @@ const relativeList = splitList(relativeRule.selector.replace(/^:where\(/, '').re
 // 7.2.5 엄격하게: 상자를 다는 선택자 하나하나가 기준점 목록에 그대로 있거나(`.eh-guide summary` 처럼), `:is(범위) summary` · `:is(범위) > header > button` 꼴이면 그 범위가
 //   기준점 목록의 같은 꼴 범위에 다 들어 있거나, `.salty-panel … > summary` 처럼 첫 조각이 그 범위에 든 자손 summary 여야 한다.
 //   7.2.4 는 「summary 로 끝나면 아무 summary 라도 있으면 됨」이라 .eh-guide summary(확장 탭 캐릭터 에셋 「사용법」)가 기준점 없이 지나갔다 →
-//   static summary 의 ::before(absolute · max(100%,44px))가 서랍 #rm_extensions_block 을 기준으로 375×767 이 되어 머리 단추를 덮었다 (제보 10-19).
+//   static summary 의 ::before(absolute · max(100%,44px))가 서랍 #rm_extensions_block 을 기준으로 375×767 이 되어 머리 단추를 덮었다.
 const scopeOf = (sel, tail) => { const m = sel.match(new RegExp('^:is\\((.*)\\) ' + tail + '$')); return m ? splitList(m[1]) : null; };
 t('상자를 다는 칸은 모두 기준점(position: relative, :where 로 다른 모듈의 position 을 존중) 묶음에 있음 — 선택자마다 그대로', () => {
     assert.ok(afterList.length >= 30 && beforeList.length >= 4, `after ${afterList.length} · before ${beforeList.length}`);
@@ -67,7 +67,7 @@ const others = [
     ...fs.readdirSync(path.join(root, 'css')).filter(f => f.endsWith('.css') && f !== '87-addon-touch.css' && f !== '23-preview.gen.css').map(f => 'css/' + f),
     ...fs.readdirSync(path.join(root, 'src/addons')).map(d => `src/addons/${d}/style.css`).filter(f => fs.existsSync(path.join(root, f))),
 ].map(f => ({ f, text: read(f).replace(/\/\*[\s\S]*?\*\//g, '') }));
-const classesOf = sel => [...sel.matchAll(/\.([A-Za-z0-9_-]+)/g)].map(m => m[1]).filter(c => !/^(bl-roomy-dialog|bl-notes-dialog|bl-assets-dialog|bl-direction-dialog|bl-ctsi-dialog|bl-mermaid-dialog|blpt-dialog|blzi-dialog|bl-translator-dialog|salty-panel|bl-embedded-settings|po-dialog|pa-hub|rl-root|bwr_settings|pt-help-dialog|jj-settings-body|bl-first-run|menu_button|text_pole|eh-size|rl-msg|eh-guide)$/.test(c));
+const classesOf = sel => [...sel.matchAll(/\.([A-Za-z0-9_-]+)/g)].map(m => m[1]).filter(c => !/^(bl-roomy-dialog|bl-notes-dialog|bl-assets-dialog|bl-direction-dialog|bl-ctsi-dialog|bl-mermaid-dialog|blzi-dialog|bl-translator-dialog|salty-panel|bl-embedded-settings|po-dialog|pa-hub|rl-root|bwr_settings|pt-help-dialog|jj-settings-body|bl-first-run|menu_button|text_pole|eh-size|rl-msg|eh-guide)$/.test(c));
 t('상자에 쓰는 ::after/::before 를 그 칸이 다른 CSS 에서 모양으로 쓰지 않음', () => {
     const check = (list, pseudo) => {
         for (const sel of list) {
@@ -90,16 +90,19 @@ t('보이는 속성은 안 바꿈 (글자 · 색 · 여백 · 테두리 · 그�
         if (r === box) continue;
         assert.ok(!/(^|;)\s*(color|font|margin|padding|border(?!:\s*0)|box-shadow|background)\s*:/.test(r.body), r.selector.slice(0, 60) + ' => ' + r.body.trim().slice(0, 60));
     }
-    const field = rules.find(r => /min-height:\s*44px/.test(r.body));
-    assert.ok(field && /input\.text_pole/.test(field.selector) && /data-num/.test(field.selector), '글자 · 숫자 칸 높이 44');
-    assert.ok(!/height:\s*\d/.test(field.body.replace(/min-height:\s*44px;?/, '')), '고정 높이 없음');
+    // 1.0.0 사용자 결정: 칸은 보이는 높이 크기표 하나(36 · 88-ui-parts --bl-ui-ctl) — 칸을 44 로 키우지 않음
+    const field = rules.find(r => /min-height:\s*var\(--bl-ui-ctl, 36px\)/.test(r.body));
+    assert.ok(field && /input\.text_pole/.test(field.selector) && /data-num/.test(field.selector), '글자 · 숫자 칸 높이 = 크기표(--bl-ui-ctl)');
+    assert.ok(!rules.some(r => /min-height:\s*44px/.test(r.body) && /input|select/.test(r.selector)), '보이는 칸 44 가 남음');
+    assert.ok(!/height:\s*\d/.test(field.body.replace(/min-height:[^;]*;?/, '')), '고정 높이 없음');
 });
 
 t('style.css 에 들어감 (build-css 가 모듈 순서대로 이어 붙임 · 99-lazy-panel 앞)', () => {
-    const built = read('style.css');
+    const built = read('style.css') + (fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? read('src/style-lazy.gen.css') : '');   // 1.0.0 두 장 빌드: 이 모듈은 둘째 장에 실려요
     const at = built.indexOf('css/87-addon-touch.css');
     assert.ok(at > 0, '모듈 표시');
-    assert.ok(at < built.indexOf('css/99-lazy-panel.css'), '게으른 칸보다 앞');
+    const first = read('style.css');
+    if (first.includes('css/87-addon-touch.css')) assert.ok(first.indexOf('css/87-addon-touch.css') < first.indexOf('css/99-lazy-panel.css'), '게으른 칸보다 앞');   // 1.0.0 두 장 빌드면 둘째 장(첫 장 뒤)에 실려요
     assert.ok(built.includes('.po-move') && built.includes('.bl-fr-icon') && built.includes('.ms-pull'), '규칙이 들어감');
 });
 

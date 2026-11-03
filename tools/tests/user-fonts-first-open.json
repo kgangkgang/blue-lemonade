@@ -1,0 +1,24 @@
+{
+  "note": "1.0.0 지금 쓰는 설정의 모양(2026-10-31 읽기 전용 확인) — 글꼴 칸 · 팔레트만, 개인 값 · 대화 없음. tools/tests/user-fonts-first-open.mjs",
+  "salty": {
+    "version": 4,
+    "palette": "night",
+    "fonts": {
+      "text": { "ko": "ridibatang", "en": "auto", "ja": "auto", "zh": "auto" },
+      "dialogue": "same",
+      "ui": { "ko": "freesentation", "en": "auto", "ja": "auto", "zh": "auto" },
+      "em": "same",
+      "strong": "same",
+      "code": { "ko": "galmurimono11", "en": "auto", "ja": "auto", "zh": "auto" },
+      "name": "same",
+      "userName": "same",
+      "hanja": "auto"
+    },
+    "customFonts": []
+  },
+  "expect825": {
+    "ridibatang": { "family": "RIDIBatang", "group": "serif", "url": "https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff" },
+    "freesentation": { "family": "Freesentation", "group": "sans" },
+    "galmurimono11": { "family": "GalmuriMono11", "group": "mono" }
+  }
+}

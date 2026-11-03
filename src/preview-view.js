@@ -43,7 +43,7 @@ export function bindPreviewViews(root, section) {
         const state = root._previewViews.get(key) || { scale: 1, x: 0, y: 0 };
         root._previewViews.set(key, state);
         const bar = document.createElement('div'); bar.className = 'bl-view-tools';
-        bar.innerHTML = '<button type="button" aria-label="미리보기 축소">−</button><output aria-label="미리보기 배율"></output><button type="button" aria-label="미리보기 확대">+</button><button type="button" class="bl-view-reset">원래 크기</button><small>드래그 · 두 손가락으로 조절</small>';
+        bar.innerHTML = '<button type="button" aria-label="미리보기 축소">−</button><output aria-label="미리보기 배율"></output><button type="button" aria-label="미리보기 확대">+</button><button type="button" class="bl-view-reset">원래 크기</button><small><span class="bl-view-mobile-hint">드래그 · 두 손가락으로 조절</span><span class="bl-view-pc-hint">휠로 이동</span></small>';
         const viewport = document.createElement('div'); viewport.className = 'bl-view-port'; viewport.tabIndex = 0;
         // Reserve the last measured height while the new DOM is being built.
         // Measuring here forces style/layout halfway through a settings render.
@@ -51,6 +51,9 @@ export function bindPreviewViews(root, section) {
         viewport.setAttribute('aria-label', '미리보기 · 방향키 또는 드래그로 이동');
         const scene = document.createElement('div'); scene.className = 'bl-view-scene';
         targets.forEach(e => scene.append(e)); viewport.append(scene); box.append(bar, viewport);
+        // 10-31 UI 점검: 무대를 보기 칸 안으로 옮기면 「불러오는 중」 안내(.bl-pv-wait)가 무대보다 앞 형제가 되어 `.salty-preview ~ .bl-pv-wait` 숨김이 안 걸려,
+        //   미리보기 CSS 를 받은 뒤에도 안내 글이 무대 뒤에 남았어요(테두리 · 그림 미리보기 양옆에 「미리보…」 「…용돼요」). 안내를 보기 칸 뒤로 옮겨요 — 숨김은 css/24-previewbox.css
+        const wait = box.querySelector(':scope > .bl-pv-wait'); if (wait) box.append(wait);
         // 확대 · 축소 줄은 평소엔 접어 둔다 (4.1.2) — 폰에서 설정 줄이 더 보이게. 돋보기로 펴고, 두 손가락 · 휠 · 키보드 확대는 그대로
         const toolsToggle = document.createElement('button'); toolsToggle.type = 'button'; toolsToggle.className = 'bl-view-toggle';
         toolsToggle.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>'; toolsToggle.setAttribute('aria-label', '미리보기 확대 · 축소 도구');
@@ -64,6 +67,14 @@ export function bindPreviewViews(root, section) {
         const sideBySide = () => getComputedStyle(root.querySelector('.bl-editor-workspace') || root).display === 'grid';
         const heightLimit = () => {
             const work = root.querySelector('.bl-editor-workspace');
+            const stage=box.closest('.bl-editor-stage');
+            if (sideBySide() && stage) {
+                const cs=getComputedStyle(stage);
+                const siblings=[...stage.children].filter(e=>e!==box).reduce((n,e)=>{const s=getComputedStyle(e);return n+e.offsetHeight+(parseFloat(s.marginTop)||0)+(parseFloat(s.marginBottom)||0)},0);
+                const footer=Math.max(bar.offsetHeight,box.querySelector('.salty-pvfold')?.offsetHeight||0);
+                const extra=[...box.children].filter(e=>e.matches('.bl-preview-tools')).reduce((n,e)=>n+e.offsetHeight,0);
+                return Math.max(48,stage.clientHeight-(parseFloat(cs.paddingTop)||0)-(parseFloat(cs.paddingBottom)||0)-siblings-footer-extra);
+            }
             const available = work?.clientHeight || window.innerHeight - (root.querySelector('.salty-nav')?.offsetHeight || 0);
             return Math.max(48, Math.min(window.innerHeight * .7, available - bar.offsetHeight - (grip ? 48 : 0) - (sideBySide() ? 80 : 150)));
         };
@@ -95,6 +106,7 @@ export function bindPreviewViews(root, section) {
             painted = transform;
             scene.style.transform = transform;
             output.textContent = `${Math.round(state.scale * 100)}%`;
+            const hint=bar.querySelector('.bl-view-pc-hint');if(hint)hint.textContent=height*state.scale>viewHeight+1?'휠로 이동':'확대해 보기';
             minus.disabled = state.scale <= .5; plus.disabled = state.scale >= 3;
         }
         const schedule = () => { if (!raf) raf = requestAnimationFrame(() => paint()); };
@@ -153,11 +165,17 @@ export function bindPreviewViews(root, section) {
                 // 두 손가락은 확대라 바로 결정. 한 손가락은 첫 8px 이 세로 우세면 설정 칸 스크롤(아래 scroll), 가로 우세면 미리보기 이동
                 const intent = pointers.size >= 2 ? 'horizontal' : dragIntent(next.x - old.x0, next.y - old.y0);
                 if (!intent) { pointers.set(e.pointerId, next); return; }
-                if (intent === 'vertical') next.scroll = scrollerOf(root, box);
+                // 11-03(사용자 결정 · 10-29 「세로 끌기 = 화면 스크롤」을 좁힘): 미리보기가 보기 칸보다 길고 그 방향으로 더 움직일 수 있으면 세로 끌기는 미리보기를 움직여요(아래 내용을 봐야 하니까).
+                //   다 보이거나 끝에 닿아 있으면 예전처럼 설정 칸을 굴려요
+                if (intent === 'vertical') {
+                    const minY = Math.min(0, viewHeight - height * state.scale), up = next.y - old.y0 < 0;
+                    const canPan = height * state.scale > viewHeight + 1 && (up ? state.y > minY + .5 : state.y < -.5);
+                    if (!canPan) next.scroll = scrollerOf(root, box);
+                }
                 next.decided = true;
             }
             if (next.scroll) {
-                // 세로 끌기 = 화면 스크롤(사용자 결정 10-29). 손가락 따라 설정 칸을 굴린다 — 미리보기는 안 움직인다
+                // 세로 끌기(미리보기가 다 보이거나 끝에 닿음) = 화면 스크롤. 손가락 따라 설정 칸을 굴린다
                 if (pointers.size === 1) next.scroll.scrollTop -= next.y - old.y;
                 pointers.set(e.pointerId, next); e.preventDefault(); return;
             }
@@ -188,7 +206,8 @@ export function bindPreviewViews(root, section) {
             width = scene.offsetWidth; height = scene.offsetHeight;
             const limit = heightLimit();
             // A stacked preview leaves room for settings; an explicitly resized view keeps its height.
-            const next = Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, limit)) : Math.min(height, limit, sideBySide() && grip ? limit : Math.min(window.innerHeight * .22, Number(box.dataset.pvMax) || 180)); // data-pv-max: 설정 사이에 끼는 작은 미리보기(상태창 글자)
+            const reading = sideBySide() && !!grip;
+            const next = reading ? limit : Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, limit)) : Math.min(height, limit, sideBySide() && grip ? limit : Math.min(window.innerHeight * .22, Number(box.dataset.pvMax) || 180)); // data-pv-max: 설정 사이에 끼는 작은 미리보기(상태창 글자)
             return { limit, next, cw: viewport.clientWidth };
         };
         // 쓰기 — 같은 높이면 쓰지 않는다
@@ -197,6 +216,7 @@ export function bindPreviewViews(root, section) {
             const px = `${viewHeight}px`;
             state.viewHeight = viewHeight;
             if (viewport.style.height !== px) viewport.style.height = px;
+            if(viewport.style.getPropertyValue('--bl-preview-height')!==px)viewport.style.setProperty('--bl-preview-height',px);
         };
         const finish = r => {
             if (raf) cancelAnimationFrame(raf);

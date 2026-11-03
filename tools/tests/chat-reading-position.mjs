@@ -205,7 +205,7 @@ await check('gesture before the first paint leaves ongoing momentum free', f => 
         assert.equal(f.chat.scrollTop, 250);
     } finally { stop(); }
 });
-// 7.7.9 (제보 24) a finger that starts inside a helper iframe never sends touchmove to this document; the chat still scrolls.
+// 7.7.9 a finger that starts inside a helper iframe never sends touchmove to this document; the chat still scrolls.
 // Two scroll events the guard did not cause within 200 ms are the reader: absolute restoring stops, like a gesture.
 await check('a run of reader scroll events the guard cannot see as a gesture softens it', f => {
     keep(f.body, () => f.replace(80)); f.flush(); f.flush();

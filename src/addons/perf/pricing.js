@@ -9,10 +9,8 @@ export const PRICE_SOURCES = Object.freeze(Object.fromEntries(Object.entries(PRO
 // USD / 1M: ordinary input, output, cache read, 5-minute write, 1-hour write.
 
 
-export function safeOrigin(value) {
-    try { const url = new URL(value); return ['https:', 'http:'].includes(url.protocol) ? url.origin : ''; }
-    catch { return ''; }
-}
+import { safeOrigin } from './pricing-origin.js';
+export { safeOrigin };
 
 export function manualPriceForConnection(price, connection) {
     if (!price) return null;

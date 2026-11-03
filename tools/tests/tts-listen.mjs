@@ -456,7 +456,7 @@ await test('설정 가져오기: listen_lang 은 목록 안의 값만', () => {
     assert.equal(settings().listen_lang, 'auto');
 });
 
-// ---------- 6.1.8 원문이 일본어인데 「일본어로 번역 중…」에서 멈춤 (사용자: listen_lang ja · 원문 읽기 · 화면은 한국어 번역 · 대사 누르기)
+// ---------- 6.1.8 원문이 일본어인데 「일본어로 번역 중…」에서 멈춤 (listen_lang ja · 원문 읽기 · 화면은 한국어 번역 · 대사 누르기)
 const dispSegs = (mes) => TX.segmentMessage(mes.extra.display_text, { userName: 'User', charName: mes.name, knownNames: [], routes: settings().routes, final: true, skipTags: new Set(), stripRegex: [] }).filter(x => x.kind === 'dialogue' && x.text);
 await test('6.1.8 Japanese original + Korean display: tapping a Korean line reads the Japanese original, no translation request', () => {
     reset('ja');
@@ -513,7 +513,7 @@ await test('6.1.8 a slow translator: the late answer is kept and the next tap re
 });
 
 // ---------- 1.9.1 이미 그 언어인 줄은 번역을 기다리지 않음 · 막대 글은 옮길 때만 몇 줄인지 · 서술 속 낱말 인용은 읽지 않음
-//   (사용자: 원문 대사가 이미 일본어인데 막대에 「일본어로 번역 중…」 — 서술 속 영어 인용 몇 줄을 옮기느라 메시지 전체가 멈췄다)
+//   (원문 대사가 이미 일본어인데 막대에 「일본어로 번역 중…」 — 서술 속 영어 인용 몇 줄을 옮기느라 메시지 전체가 멈췄다)
 await test('1.9.1 막대 글: 옮길 줄이 없으면 「번역 중」이 아님 · 있으면 「영어 2줄 일본어로 번역 중…」 (언어가 섞이면 「2줄 …」)', async () => {
     reset('ja');
     const T9 = P._forTest;

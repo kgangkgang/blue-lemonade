@@ -1,0 +1,96 @@
+/* 생성 파일 — tools/build-addon-css.mjs (애드온 창 밖 규칙만 · 전체는 style.css) */
+:root { --cg-css-version: "1.7.6"; }
+:is(.cg-list, .cg-chat-list, .cg-sheet-body, .cg-page-scroll) { scrollbar-gutter: stable both-edges; }
+@keyframes cg-chat-intro {
+    0% { max-height: 2.5em; opacity: 0; visibility: visible; transform: translateY(-5px); }
+    10%, 75% { max-height: 2.5em; opacity: 1; visibility: visible; transform: translateY(0); }
+    90% { max-height: 2.5em; opacity: 0; visibility: hidden; transform: translateY(-5px); }
+    100% { max-height: 0; opacity: 0; visibility: hidden; transform: translateY(-5px); }
+}
+@keyframes cg-chat-intro-still {
+    0%, 99% { max-height: 2.5em; opacity: 1; visibility: visible; }
+    100% { max-height: 0; opacity: 0; visibility: hidden; }
+}
+.cg-ribbon {
+    position: absolute;
+    top: -1px;
+    right: 22px;
+    width: 14px;
+    height: 26px;
+    background: var(--cg-role);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 74%, 0 100%);
+}
+:is(.cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text).mes_text { padding-right: 0; padding-left: 0; }
+:is(.cg-mes, .cg-bubble-text).mes_text img.eh-img {
+    display: block;
+    max-width: min(100%, 520px);
+    max-height: 62vh;
+    width: auto;
+    height: auto;
+    margin: .6em auto;
+    border-radius: 12px;
+    object-fit: contain;
+}
+.cg-mes-btn {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+}
+.cg-mes-btn.is-marked {
+    color: var(--cg-icon, #f2c14e) !important;
+    opacity: 1 !important;
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--cg-icon, #f2c14e) 45%, transparent));
+}
+.cg-mes-btn.cg-pop { animation: cg-pop .4s cubic-bezier(.3, 1.6, .5, 1); }
+#chat .mes.cg-flash { animation: cg-flash 2.2s ease; }
+body.cg-previewing #form_sheld > :not(#cg-preview-bar) { display: none !important; }
+body.cg-previewing #chat .mes .mes_buttons > :not(.cg-mes-btn),
+body.cg-previewing #chat .mes .mes_edit_buttons,
+body.cg-previewing #chat .mes .swipe_left,
+body.cg-previewing #chat .mes .swipeRightBlock,
+body.cg-previewing #chat .mes .swipes-counter { display: none !important; }
+@media (max-width: 760px) {
+    .cg-ribbon { right: 16px; }
+}
+@keyframes cg-spin { to { transform: rotate(360deg); } }
+@keyframes cg-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+@keyframes cg-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes cg-drop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes cg-pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.45); }
+    100% { transform: scale(1); }
+}
+@keyframes cg-flash {
+    0%, 45% {
+        background-color: color-mix(in srgb, var(--cg-accent, #a98bd9) 14%, transparent);
+        box-shadow: inset 0 0 0 2px var(--cg-accent, #a98bd9);
+    }
+    100% { background-color: transparent; box-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .cg-root *,
+    .cg-root,
+    .cg-mes-btn,
+    #chat .mes.cg-flash {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+:where(.cg-root) ::highlight(cg-hit) {
+    background-color: color-mix(in srgb, var(--cg-accent, #a98bd9) 38%, transparent);
+    color: inherit;
+}
+.cg-root .salty-preview.cg-chatlike:not(#salty-none), .cg-root .cg-chatlike:not(#salty-none) > .mes, .cg-root .cg-chatlike:not(#salty-none) > .mes > .mes_block {
+    display: block !important; width: auto !important; max-width: none !important; min-width: 0; margin: 0 !important; padding: 0 !important;
+    border: 0 !important; background: none !important; box-shadow: none !important; overflow: visible !important; pointer-events: auto !important;
+    max-height: none !important; opacity: 1 !important; filter: none !important; -webkit-mask: none !important; mask: none !important;
+    position: static !important; height: auto !important; min-height: 0 !important; float: none !important; contain: none !important; content-visibility: visible !important; transform: none !important;
+}
+.cg-root .cg-chatlike:not(#salty-none):not(#salty-none) > .mes, .cg-root .cg-chatlike:not(#salty-none):not(#salty-none) > .mes > .mes_block, .cg-root .cg-chatlike:not(#salty-none):not(#salty-none) .mes_text { background: none !important; }
+.cg-root .cg-chatlike:not(#salty-none) > .mes::before, .cg-root .cg-chatlike:not(#salty-none) > .mes::after,
+.cg-root .cg-chatlike:not(#salty-none) > .mes > .mes_block::before, .cg-root .cg-chatlike:not(#salty-none) > .mes > .mes_block::after,
+.cg-root .cg-chatlike:not(#salty-none) .mes_text::before, .cg-root .cg-chatlike:not(#salty-none) .mes_text::after { content: none !important; display: none !important; }
+@keyframes bl-addon-css{from{--bl-addon-css:0}to{--bl-addon-css:1}}
+.cg-root,.cg-window,.cg-overlay,.cg-sheet-overlay,.cg-scrim,#cg-preview-bar{animation:bl-addon-css 1ms}

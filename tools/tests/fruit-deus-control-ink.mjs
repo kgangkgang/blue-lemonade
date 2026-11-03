@@ -5,7 +5,9 @@ import path from 'node:path';
 import vm from 'node:vm';
 
 const root = path.resolve(process.argv[2] || '.');
-const source = fs.readFileSync(path.join(root, 'src/control-ink.js'), 'utf8');
+// 9.0.4: control-ink 는 공용 감시 허브(src/dom-watch.js)로 봐요 — 허브 원본을 같은 상자에 먼저 올려 실제 등록(html 구역)을 확인해요
+const hubSource = fs.readFileSync(path.join(root, 'src/dom-watch.js'), 'utf8').replace(/^export /gm, '');
+const source = hubSource + '\n' + fs.readFileSync(path.join(root, 'src/control-ink.js'), 'utf8').replace(/^import .*$/m, '').replace(/^export \{[^}]*\};$/m, '');
 let count = 0; const test = (name, fn) => { fn(); console.log('PASS', name); count++; };
 
 test('과일의 마음 창과 데우스 빠른 설정 창이 맞추는 창 목록에 있어요', () => {
@@ -23,7 +25,7 @@ function world({ arrowFontSize = '0px', arrowPosition = 'absolute' } = {}) {
     const caret = { textContent: '▾', parentElement: arrow };
     const fruit = { id: 'fruit-heart-v6', nodeType: 1, isConnected: true, contains: e => e === fruit, matches: sel => sel.includes('#fruit-heart-v6'), getClientRects: () => [{}], checkVisibility: () => true, querySelectorAll: () => [control] };
     const body = { nodeType: 1, matches: () => false };
-    const html = { children: [body, fruit] };
+    const html = { nodeType: 1, children: [body, fruit] };
     const css = { fontStyle: 'normal', fontWeight: '400', fontSize: '15px', fontFamily: 'sans-serif', letterSpacing: 'normal', lineHeight: '21.75px', visibility: 'visible', writingMode: 'horizontal-tb', borderTopWidth: '0px', borderBottomWidth: '0px' };
     const document = {
         body, documentElement: html, fonts: { addEventListener() {} },
@@ -39,6 +41,7 @@ function world({ arrowFontSize = '0px', arrowPosition = 'absolute' } = {}) {
         requestAnimationFrame: fn => { frames.set(++next, fn); return next; }, cancelAnimationFrame: id => frames.delete(id),
         console, Uint8ClampedArray,
     };
+    for (const n of [body, html, fruit]) n.ownerDocument = document;
     vm.createContext(sandbox); vm.runInContext(source.replace('export function syncControlInk', 'function syncControlInk') + '\nthis.sync = syncControlInk;', sandbox);
     const flush = () => { const jobs = [...frames.values()]; frames.clear(); jobs.forEach(f => f()); };
     return { sandbox, flush, observed, style, html, fruit, body };

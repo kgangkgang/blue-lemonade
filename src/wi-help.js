@@ -12,7 +12,7 @@ function makeButton(id) {
     button.className = 'bl-wi-help';
     button.dataset.blWiHelp = id;
     button.setAttribute('aria-label', `${WI_HELP[id].title} 도움말`);
-    button.textContent = '?';
+    button.innerHTML = '<i class="fa-solid fa-question" aria-hidden="true"></i>';   // 1.0.0 도움말 하나로: 글자 ? 대신 H3 공용 아이콘(css/76)
     return button;
 }
 
@@ -41,6 +41,10 @@ export function placeHelpButtons(root, anchors) {
             target.append(makeButton(id));
         } else target.after(makeButton(id));
         placed++;
+    }
+    // 1.0.0 도움말 하나로: 같은 자리에 실리태번 원본 ? · ⓘ 가 이미 있으면(「포함 그룹」 ? ? · 「우선」 ? ⓘ) 테마 ? 하나만 보이게 원본에 표시(css/56 .bl-wi-dup)
+    for (const button of root.querySelectorAll('.bl-wi-help')) {
+        for (const dup of button.parentElement?.querySelectorAll(':scope > :is(a.notes-link, .note-link-span, .fa-circle-question, .fa-question-circle, .fa-circle-info, .fa-info-circle)') || []) dup.classList.add('bl-wi-dup');
     }
     return placed;
 }

@@ -719,7 +719,7 @@ await test('설정 카드(index.html): 기본 꺼짐 체크 · 대표 기능 7�
     assert.deepEqual(mains, [...R.ORDER, 'left', 'right', 'float']);
     assert.deepEqual([...card.matchAll(/data-remote-item="(\w+)"/g)].map(m => m[1]), [...R.ORDER]);
     assert.match(card, /<div id="llm_remote_options" hidden>/, '켜기 전엔 세부 칸이 숨어 있어요');
-    assert.match(card, /<small class="llmt-remote-credit">아이디어 · 원작: 번역 리모컨 스크립트 제작자님 💙<\/small>/);
+    assert.match(card, /<small class="llmt-remote-credit">아이디어 · 원작: 번역 리모컨 스크립트 원작자<\/small>/);
     for (const label of ['자동 번역', '번역', '다시 번역', '번역 수정', '번역 삭제', '모두 원문/번역', '채팅 전체 번역']) assert.ok(Object.values(R.ACTIONS).some(a => a.label === label), label);
 });
 await test('스타일: 단추 · 플로팅 44 · 누르는 칸 44 · 메뉴 줄 · 고른 칸 650 · 테마 토큰만', () => {
@@ -744,8 +744,8 @@ await test('길게 누르기 설명: 리모컨 단추는 자기 길게 누르기
     assert.ok(src.entries.some(e => e.ids.includes(R.BUTTON_ID)));
 });
 await test('출처: THIRD-PARTY-NOTICES · 애드온 README · MODIFICATIONS 에 원작 스크립트 한 줄', () => {
-    assert.match(read('THIRD-PARTY-NOTICES.md'), /번역 리모컨 — 커뮤니티 공유 태번 헬퍼 스크립트\(원작자의 허락으로 수정 · 통합\)/);
-    assert.match(read('src/addons/translator/README.md'), /번역 리모컨 — 커뮤니티 공유 태번 헬퍼 스크립트\(원작자의 허락으로 수정 · 통합\)/);
+    assert.match(read('THIRD-PARTY-NOTICES.md'), /번역 리모컨 — 태번 헬퍼 스크립트\(원작자의 허락으로 수정 · 통합\)/);
+    assert.match(read('src/addons/translator/README.md'), /번역 리모컨 — 태번 헬퍼 스크립트\(원작자의 허락으로 수정 · 통합\)/);
     assert.match(read('src/addons/translator/MODIFICATIONS.md'), /번역 리모컨\): 커뮤니티에 공유된 태번 헬퍼 스크립트/);
     assert.match(read('src/addons/translator/remote.js'), /원작자의 허락으로 고쳐/);
 });

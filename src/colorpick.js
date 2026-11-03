@@ -1,10 +1,11 @@
 // 색 고르기 팝업 (3.5.0) — 실리태번의 toolcool 색 칸 · <input type="color"> 를 누르면 뜨는 테마 색 고르기.
-// 사용자: "모바일 색깔 선택화면 안 보임 · PC 도 좀 더 괜찮은 색 고르는 거 없어?" — toolcool 팝업은 칸 옆에 고정 위치로 떠서
+// 폰에서 색 고르기 화면이 안 보이던 것 · PC 도 더 나은 색 고르기 — toolcool 팝업은 칸 옆에 고정 위치로 떠서
 // 폰에서 화면 밖으로 잘렸다. 이것은 칸 밑(모자라면 위)에 보이는 화면 안으로 띄우고, 원형 색판 · 밝기 · 투명도 막대 · 코드 칸 ·
 // 지금 테마 색 · 최근 색을 한 장에. 만지는 동안 바로 칠하고(짧게 솎아서), 닫을 때 한 번 더 확정.
 // 문서 갈고리는 colorpop.js (늘 로드), 이 파일은 처음 누를 때 불러온다.
 import { getSettings } from './settings.js';
 import { paletteColors, parseColor } from './palettes.js';
+import './palette-data.js';   // 1.0.0 팔레트 11벌 · 커스텀 색 정의 (시작 그래프 밖 — 이 모듈은 지연으로 받아요)
 import { decodeAnyImage, imageWidth, imageHeight, IMAGE_ACCEPT } from './imagedecode.js';
 
 const RECENT_KEY = 'bl-color-recent';
@@ -94,7 +95,7 @@ function swatchList() {
 const swatchButtons = (list, kind) => list.map(c => `<button type="button" class="bl-cp-sw" data-sw="${c}" data-kind="${kind}" style="--c:${c}" aria-label="${c}"></button>`).join('');
 
 // ───────── 이미지에서 색 따기 (3.5.1) ─────────
-// 사용자: "갤러리에서 이미지 가져와서 스포이드로 콕 찍어 색만 빼오는 거". 고른 이미지는 긴 변 1024px 캔버스로 줄여
+// 갤러리 그림에서 스포이드로 색만 찍어 오기. 고른 이미지는 긴 변 1024px 캔버스로 줄여
 // 이 페이지에서만 기억한다 (저장 안 함 — 다른 색 칸을 열어도 그대로, 새로 고치면 사라짐). 누른 자리 3×3 평균 색,
 // 손가락에 가리지 않게 위에 확대경. 이미지의 대표 색 8개는 따로 한 줄.
 const PIC_MAX = 1024;
@@ -369,7 +370,7 @@ export function closeColorPick() {
 }
 
 // 4.1.2: 색을 한 번 움직이면 설정 창이 다시 그려져 색 칸(anchor)이 새 요소로 바뀐다. 예전엔 그 뒤의 첫 resize 에서 '색 칸이 사라짐'으로 보고
-// 닫았는데, 폰에서는 색 코드 칸을 누르면 키보드가 올라오며 resize 가 온다 — 코드를 치려는 순간 창이 꺼졌다 (사용자 제보).
+// 닫았는데, 폰에서는 색 코드 칸을 누르면 키보드가 올라오며 resize 가 온다 — 코드를 치려는 순간 창이 꺼졌다.
 // 같은 data-* 를 가진 새 색 칸을 다시 찾아 붙고, 못 찾으면 닫지 않고 그 자리에 둔다 (닫기는 바깥 누름 · Esc · Enter).
 function sameAnchor(old) {
     const entries = Object.entries(old.dataset || {});

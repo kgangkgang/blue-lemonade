@@ -65,7 +65,6 @@
 }
 .salty-style-main {
   display: flex;
-  align-items: baseline;
   gap: 8px;
   min-width: 0;
   min-height: 44px;
@@ -210,15 +209,16 @@
   align-items: center;
 }
 
-/* ---------- 3.2.0 화이트 · 나이트 자동 옵션 ---------- */
+
+/* ---------- 3.2.0 화이트 · 나이트 자동 옵션 (1.0.0 되살림 — 칸 높이 · 모서리는 공용 부품 토큰 88-ui-parts) ---------- */
 .salty-auto {
   margin: -4px 0 12px;
 }
 .salty-time {
-  min-height: 34px;
+  min-height: var(--bl-ui-ctl, 36px);
   padding: 4px 8px;
   border: 0;
-  border-radius: var(--r-sm);
+  border-radius: var(--bl-ui-radius, 8px);
   background: var(--salty-fill-shade, var(--shade));
   color: var(--salty-text);
   font: inherit;

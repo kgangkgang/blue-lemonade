@@ -132,7 +132,7 @@ test('player paints and clears through the colour module with the switch; versio
 });
 
 // ---------- 1.7.0 (테마 6.1.7) 형광펜 띠 위 밑줄 · 글자 칠 고정 · 다시 칠하기
-// 시험대(사용자 설정: 형광펜 직사각형 95 · 데우스 대사색 · 어두운 팔레트)에서 잰 실제 값: 인물색 대사 q 는 color = 인물 색, 글자 칠 = 잉크 #f5f5f7, 띠 = q 바탕(인물 색) + 마스크 2층.
+// 시험대(설정: 형광펜 직사각형 95 · 데우스 대사색 · 어두운 팔레트)에서 잰 실제 값: 인물색 대사 q 는 color = 인물 색, 글자 칠 = 잉크 #f5f5f7, 띠 = q 바탕(인물 색) + 마스크 2층.
 const INK = 'rgb(245, 245, 247)', PLAIN = 'rgb(225, 225, 229)', RED = 'rgb(230, 57, 70)', BLUE = 'rgb(78, 168, 222)';
 const MASK = 'linear-gradient(rgb(0, 0, 0) 0px, rgb(0, 0, 0) 0px), url("data:image/svg+xml,%3Csvg%3E")';
 test('1.7.0 band test (pure): only q / mark with a background, first block stops it; slot only for the marker mask on a plain-colour band', () => {
@@ -219,7 +219,8 @@ test('1.7.0 player repaints the read line on re-render, theme changes and once m
     assert.match(player, /const SETTLE_MS = \[120, 600\];/);
     assert.match(player, /const REPAINT_GAP_MS = 200;/);
     assert.match(player, /w\.mo\.observe\(root, \{ childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: \['class', 'style', 'color'\] \}\);/);
-    assert.match(player, /w\.mo\.observe\(document\.body, \{ attributes: true, attributeFilter: \['class'\] \}\);/);
+    assert.match(player, /w\.offLook = onThemeLook\(later, \{ watch: 'body\.class'/, '9.0.4 body class(팔레트 · 꾸밈)는 테마 색 따라가기 한 구독으로');
+    assert.match(player, /w\.offLook\?\.\(\);/, '읽기를 멈추면 그 구독도 끊어요');
     assert.match(player, /function highlightJob\(job\) \{\s*const root = paintHighlight\(job\);\s*if \(root\) watchHighlight\(job, root\);\s*\}/);
     assert.match(player, /if \(hlWatch !== w \|\| current !== job\) return;/, 'only the line still being read');
     assert.match(player, /const root = prefer\?\.isConnected \? prefer : document\.querySelector/, 'stays on the same message element');
@@ -227,7 +228,7 @@ test('1.7.0 player repaints the read line on re-render, theme changes and once m
     assert.match(player, /analysis\.analysisCovers\(cached, need\.langs\)/, 'a pending redo of rewritten lines counts as not covered');
 });
 
-// ---------- 1.7.1 (테마 6.1.8) 재생 막대의 이름 색 = 읽는 줄의 대사 색 — 사용자: 「tts 밑에 이름 뜨는 것도 대사 색깔이랑 맞춰 주삼 대사 색 있는 애들은」
+// ---------- 1.7.1 (테마 6.1.8) 재생 막대의 이름 색 = 읽는 줄의 대사 색 — 대사 색이 있는 인물은 막대 이름도 그 색
 test('1.7.1 bar name colour: the dialogue colour that covers most of the read line; plain text, the theme dialogue colour and marker ink count as no colour', () => {
     const TEAL = 'rgb(60, 207, 191)', THEME_DIALOGUE = 'rgb(243, 247, 252)', THEME_EM = 'rgb(164, 199, 237)', THEME_STRONG = 'rgb(255, 232, 115)', WHITE_EM = 'rgb(51, 111, 166)';
     const THEME = [PLAIN, THEME_DIALOGUE, INK, THEME_EM, THEME_STRONG];   // player.js THEME_INKS 를 푼 값 (블루 아워)
@@ -263,7 +264,7 @@ test('1.7.1 bar: name tinted per line from the read range (same ranges as the hi
     assert.match(player, /const ranges = rangesFor\(job, root\);\n/, 'the highlight uses the same range finder');
 });
 
-// ---------- 6.3.9 막대 이름 색: 화자의 팔레트 색이 그 줄에 보이면 그 색 — 사용자 제보: 옅은 노랑 · 하늘색 인물의 막대 이름이 테마 색으로 나옴
+// ---------- 6.3.9 막대 이름 색: 화자의 팔레트 색이 그 줄에 보이면 그 색 — 옅은 노랑 · 하늘색 인물의 막대 이름이 테마 색으로 나옴
 test('6.3.9 bar name colour: the speaker palette colour wins when it is on the line, even near a theme ink; theme-ink text stays theme colour', () => {
     const THEME_STRONG = 'rgb(255, 232, 115)', THEME_QUOTE = 'rgb(147, 201, 255)', PLAIN_BODY = 'rgb(225, 225, 229)';
     const INKS = [PLAIN_BODY, 'rgb(245, 245, 247)', 'rgb(164, 199, 237)', THEME_STRONG, THEME_QUOTE];   // 블루 레몬에이드 어둠 + 실리태번 인용색 (시험대에서 잰 값)
@@ -284,7 +285,7 @@ test('6.3.9 bar name colour: the speaker palette colour wins when it is on the l
     assert.match(player, /import \{ resolveSpeaker, canon, knownNames as learnedNames, colorOfName, ownerOfColor \} from '\.\/speakers\.js';/);
 });
 
-// ---------- 6.5.4 막대 이름 색: 화자 자신의 색이 먼저 · 막대 배경에서 읽히게 밝기만 조절 · 남의 색은 절대 안 집음 — 사용자 제보: 어두운 슬레이트(#424c59) 인물의 줄이 옆 인물의 빨강으로 칠해져 막대 이름도 빨강
+// ---------- 6.5.4 막대 이름 색: 화자 자신의 색이 먼저 · 막대 배경에서 읽히게 밝기만 조절 · 남의 색은 절대 안 집음 — 어두운 슬레이트(#424c59) 인물의 줄이 옆 인물의 빨강으로 칠해져 막대 이름도 빨강
 test('6.5.4 bar name colour: own colour wins and is lightened on a dark bar; no own colour → line colour unless it belongs to another known speaker', () => {
     const DARK = '#1c1c20', LIGHT = '#f3f3f5';
     assert.ok(Math.abs(luminance('#ffffff') - 1) < 1e-6 && luminance('#000000') === 0 && luminance('nope') === null);

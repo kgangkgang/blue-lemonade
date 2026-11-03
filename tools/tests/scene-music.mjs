@@ -394,7 +394,7 @@ await t('출처: SOURCES.json 8곡 — OpenGameArt CC0 · 원본 URL · 작가 �
     }
     assert.ok(read('src/scene-music/LICENSE-CC0.txt').includes('CC0 1.0 Universal'));
 });
-await t('게시 목록: release_gate.py SCENE_MUSIC · build-integrity.mjs · THIRD-PARTY-NOTICES 가 같은 8곡 · CI 등록', () => {
+await t('게시 목록: release_gate.py SCENE_MUSIC · THIRD-PARTY-NOTICES 가 같은 8곡 · CI 등록', () => {
     const catalog = JSON.parse(read('src/scene-music/SOURCES.json'));
     const gate = read('tools/release_gate.py');
     for (const f of catalog.files) {
@@ -402,10 +402,6 @@ await t('게시 목록: release_gate.py SCENE_MUSIC · build-integrity.mjs · TH
         assert.ok(gate.includes(`'${f.sha256}'`) && gate.includes(`'${f.sourceSha256}'`), `gate sha ${f.id}`);
     }
     assert.ok(/validate_scene_music\(files\)/.test(gate) && /SCENE_MUSIC_RESOURCES = \('SOURCES\.json', 'LICENSE-CC0\.txt'\)/.test(gate));
-    const integrity = read('tools/build-integrity.mjs');
-    assert.ok(integrity.includes(`const musicIds='${catalog.files.map(f => f.id).join(' ')}'`), 'integrity 고정 목록 · 순서');
-    const info = read('src/build-info.js');
-    for (const f of catalog.files) assert.ok(info.includes(`"src/scene-music/${f.id}.mp3"`), `build-info ${f.id}`);
     const notices = read('THIRD-PARTY-NOTICES.md');
     assert.ok(notices.includes('src/scene-music/SOURCES.json') && notices.includes('src/scene-music/LICENSE-CC0.txt'));
     for (const f of catalog.files) assert.ok(notices.includes(f.source), `notice ${f.id}`);

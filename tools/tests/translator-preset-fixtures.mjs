@@ -1,6 +1,11 @@
 // 시험 고정물 (시험 아님): 프리셋별 모델 답 꼴 그대로 지어낸 메시지 + 그 프리셋의 표시 정규식(찾기는 원작 그대로, 바꿀 글은 style · 그림을 뺀 뼈대).
 //   인물 · 장소는 지어낸 것이에요. 데우스 2.5 · 데우스 V3 · 레모나(데우스식 시간 상태창) · 과일 6.4 · 청과 2.0 · 야한 과일 2.0.
 
+// 출처 · 라이선스: 이 파일의 표시 정규식(찾기 식 · 바꿀 글의 뼈대)은 데우스 엑스 마키나(Deus ex Machina, lsennn — 아래 데우스 2.5 · V3 정규식,
+//   https://github.com/lsennn/Deus-ex-machina) 프리셋에서 옮긴 것이에요. 원작은 CC BY-NC-SA 4.0
+//   (https://creativecommons.org/licenses/by-nc-sa/4.0/) 이라 이 파일만 테마의 다른 파일(AGPL-3.0)과 달리 CC BY-NC-SA 4.0 조건으로 배포해요
+//   — 비상업 목적으로, 같은 조건으로만 다시 나눌 수 있어요. 바꾼 것: 바꿀 글에서 style · 그림을 뺐어요. 메시지 · 인물은 지어낸 것이에요. 원작자의 보증을 뜻하지 않아요.
+//   레모나 · 과일 · 청과 · 야한 과일 프리셋 정규식의 출처: 원작 배포본(라이선스 표기 없음).
 const prose = (open = '<prose>', close = '</prose>') => `${open}
 Rain needled the window. Rex leaned against the doorframe, arms folded, watching the city lights blur into long streaks of gold.
 

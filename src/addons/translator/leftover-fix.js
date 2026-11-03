@@ -94,7 +94,7 @@ const EN_START = String.raw`(?:^|[.!?…。」』”"')\]]\s+|[「『“"'(\[]\s
 const EN_ONE = new RegExp(EN_START + String.raw`([A-Z][a-z]+)(?=[*_~]*(?:\s*,|\s*[.!?]+\s+[*_~]*[가-힣]|\s*(?:…+|\.{2,})\s*[*_~]*[가-힣]|\s+[*_~]*[가-힣]))`, 'g');
 // 여는 말 (두 · 세 낱말, 뒤 낱말은 소문자 · v3 첫 낱말은 A 처럼 한 글자도): 뒤에 쉼표
 const EN_MANY = new RegExp(EN_START + String.raw`([A-Z][a-z]*(?:\s+[a-z]+){1,2})(?=[*_~]*\s*,)`, 'g');
-// 2.6.3 문장 가운데 남은 소문자 영어 (사용자 10-16 「홈 row 위에서」 ← 원문 「over the home row」): 앞이 한글(띄어쓰기 하나까지), 뒤가 한글(조사 · 다음 낱말) —
+// 2.6.3 문장 가운데 남은 소문자 영어 (「홈 row 위에서」 ← 원문 「over the home row」): 앞이 한글(띄어쓰기 하나까지), 뒤가 한글(조사 · 다음 낱말) —
 //       한두 낱말 · 두 글자 이상 · 단위 · 흔한 약어는 뺀다. 원문의 영어 위주 줄에 있는 말일 때만 (fromEnglish 와 같은 규칙).
 const EN_MID = /(?<=[가-힣][*_~]*\s?)([a-z]{2,}(?:\s+[a-z]{2,})?)(?=[*_~]*\s?[가-힣])/g;
 const EN_MID_SKIP = new Set('km cm mm kg mg ml px pt vs etc am pm kb mb gb tb fps bpm rpm cc mph kph'.split(' '));

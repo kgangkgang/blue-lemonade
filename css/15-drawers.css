@@ -83,7 +83,6 @@ body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instru
   padding: 0 !important;
 }
 body.salty #user-settings-block-content #MovingUI-presets-block label[for="movingUIPresets"] > small {
-  flex: 0 1 auto;
   min-width: 0;
   margin: 0 !important;
   padding: 0 !important;
@@ -594,12 +593,9 @@ body.salty #AdvancedFormatting h4 label.checkbox_label small {
 body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) {
   flex-wrap: wrap !important;
   align-items: center;
-  gap: 2px var(--bl-s1) !important;
   padding: 2px 0 var(--bl-s1);
 }
 body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) > .flex-container {
-  flex-wrap: nowrap;
-  gap: 0 !important;
   margin: 0 0 0 auto !important;
 }
 /* 입력 이름: 작은 흐린 이름 → 칸 */
@@ -623,7 +619,6 @@ body.salty #AdvancedFormatting > .spaceEvenly :is(.flex-container:has(> .flex1 >
 }
 /* 접두 · 접미 짝: 칸이 좁으면(폰) 한 줄에 하나씩 — 이름이 '접두/사' 로 꺾이지 않게 */
 body.salty #AdvancedFormatting details .flexAuto {
-  flex: 1 1 200px;
   min-width: 0;
 }
 /* 순서 묶음(details): 여닫는 줄 + 오른쪽 꺾쇠 */
@@ -674,9 +669,6 @@ body.salty #AdvancedFormatting [name="tokenPaddingBlock"] small {
 }
 body.salty #AdvancedFormatting :is([name="tokenPaddingBlock"] > input, #reasoning_max_additions) {
   flex: 0 0 auto !important;
-  width: var(--bl-num-w) !important;
-  height: auto !important;
-  min-height: var(--bl-h-ctl) !important;
   margin: 0 !important;
   text-align: center;
   font-variant-numeric: tabular-nums;
@@ -759,7 +751,7 @@ body.salty #Backgrounds #bg_tabs .bg_tabs_list {
   border-radius: 0 !important;
   background: transparent !important;
 }
-/* 7.7.8 「전역」 탭 윗부분 잘림(사용자 제보 10-23): #bg_tabs 는 실리태번이 세로 flex(height: 100% · overflow-y: hidden)로 두고, 탭 줄은
+/* 7.7.8 「전역」 탭 윗부분 잘림: #bg_tabs 는 실리태번이 세로 flex(height: 100% · overflow-y: hidden)로 두고, 탭 줄은
    98-tab-strips 가 가로 스크롤 칸(overflow-x: auto)으로 만들어 flex 최소 높이가 0 이 된다 → 배경 목록이 길면(전역) 탭 줄이 눌려 위가 잘리고,
    비어 있으면(채팅) 제 높이. 탭 줄은 줄어들지 않고 제 높이, 고른 탭의 그림자도 잘리지 않게 넘침을 보임 (두 탭뿐이라 가로 스크롤은 필요 없다) */
 html:not(#bl-tab-scroll-off) body.salty #Backgrounds #bg_tabs .bg_tabs_list {
@@ -995,7 +987,7 @@ body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2)
     flex: 1 1 0; /* 기준 너비 0 — 글자 길이가 줄을 넘기지 않고, 남는 자리를 글자 단추끼리 나눠 갖는다 */
     min-width: 0;
   }
-  /* 3.6.5: 자리가 모자라면 글자를 자르지 말고 줄에 맞춰 작게 (사용자: "… 으로 짤리는 거 아쉬운데 글자 크기 작게").
+  /* 3.6.5: 자리가 모자라면 글자를 자르지 말고 줄에 맞춰 작게 (… 로 잘리던 것).
      줄 너비를 기준(cqi)으로 재니 단추가 늘어날수록 글씨만 조금씩 작아진다 — 폭 412 13.4px · 360 11.5px · 320 10.1px 로 안 잘림.
      말줄임은 그래도 모자랄 때를 위한 마지막 수단으로 남겨 둔다 */
   body.salty #rm_extensions_block .extensions_block > .flex-container:first-child {
@@ -1060,12 +1052,9 @@ body.salty #rm_extensions_block #qr--editor > .qr--head > .qr--title {
   white-space: nowrap;
 }
 body.salty #rm_extensions_block #qr--editor > .qr--head > .qr--actions {
-  justify-content: flex-end;
   min-width: 0;
 }
-@media screen and (max-width: 1000px) {
-  /* 폰: 세트 고르기는 한 줄 전체, 아이콘 여섯은 그 밑 오른쪽 한 줄 (고급 서식 템플릿 고르기와 같은 모양) */
-}
+
 /* 펼친 확장 칸(한 톤 밝은 면) 속 꺼진 체크박스: 남색 페이지 톤으로 오목하게 — 밝아진 면에 묻히지 않게 (헬퍼 묶음 칸은 이미 남색이라 제외) */
 body.salty.salty-dark #rm_extensions_block :is(#extensions_settings, #extensions_settings2) input[type="checkbox"]:where(:not(:checked, .sr-only, .salty-switch > input, .salty-panel *, .TH-custom-tailwind *)) {
   background-color: var(--bl-page) !important;
@@ -1140,7 +1129,6 @@ body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div
 /* 묶음 상자: 1px 테 대신 오목한 페이지 톤 칸 (팝업 체크 묶음과 같은 모양) */
 body.salty .TH-custom-tailwind div.rounded-md.p-1.border-\(--grey5050a\),
 body.salty .TH-custom-tailwind fieldset.TH-fieldset > :not(legend) {
-  padding: var(--bl-s3);
   border: 0;
   border-radius: var(--bl-r-md);
   background: var(--bl-fill-page, var(--bl-page));
@@ -1174,8 +1162,6 @@ body.salty .TH-custom-tailwind [class~="border-t"].border-\(--grey5050a\) {
 /* 스위치(Toggle): 테마 스위치와 같은 44×26 — 꺼짐은 오목한 칸 + 흰 손잡이, 켜짐은 포인트 칸 */
 body.salty .TH-custom-tailwind .relative.inline-block[data-bl-row~="peer"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *) {
   flex: 0 0 auto;
-  width: 44px;
-  height: 24px;
 }
 body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"] + label {
   overflow: visible;
@@ -1184,11 +1170,7 @@ body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type=
   transition: background-color 0.18s ease;
 }
 body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"] + label::after {
-  top: 3px;
   right: auto;
-  left: 3px;
-  width: 20px;
-  height: 20px;
   background: var(--bl-knob-face);
   box-shadow: var(--bl-knob);
   translate: none;
@@ -1199,9 +1181,7 @@ body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type=
   background-color: var(--salty-accent);
   box-shadow: none;
 }
-body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"]:checked + label::after {
-  transform: translateX(18px);
-}
+
 body.salty .TH-custom-tailwind .relative.inline-block > input.peer.sr-only[type="checkbox"]:focus-visible + label {
   box-shadow: inset 0 0 0 1px var(--salty-accent);
 }
@@ -1497,10 +1477,7 @@ body.salty #tavern_helper .border-x-2 > div > div[style*="170, 0, 0"] {
 /* 스크립트 도구는 내용에 맞는 두 칸. 넓으면 네 칸, 큰 글씨에 좁으면 한 칸. */
 body.salty #tavern_helper .flex.flex-wrap[data-bl-row~="fplus"]:is(.bl-s, *) {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: fit-content;
   max-width: 100%;
-  gap: 8px 10px;
 }
 body.salty #tavern_helper .flex.flex-wrap[data-bl-row~="fplus"]:is(.bl-s, *) > .menu_button_icon {
   width: auto;
@@ -1605,59 +1582,6 @@ body.salty #rm_extensions_block .jj-settings-body .jj-stepper input {
 body.salty #rm_extensions_block .jj-settings-body .jj-swatch {
   box-shadow: var(--bl-e2);
 }
-/* 캐릭터 에셋 확장: 상태 · 묶음은 파인 칸, 탭 패널 테는 지움 */
-body.salty #rm_extensions_block #character_assets_settings :is(.character-assets__status, .character-assets__section, .character-assets__toolbar, .character-assets__upload-options) {
-  border: 0;
-  border-radius: var(--bl-r-md);
-  background: var(--bl-fill-page, var(--bl-page));
-  box-shadow: var(--bl-well-in);
-}
-body.salty #rm_extensions_block #character_assets_settings :is(.keyword-group, .style-option) {
-  border: 0;
-  background: var(--bl-fill-hover, var(--bl-hover));
-}
-body.salty #rm_extensions_block #character_assets_settings .character-assets__panel.is-active {
-  padding: var(--bl-s2) 0 0;
-  border: 0;
-  background: transparent;
-}
-body.salty #rm_extensions_block #character_assets_settings code {
-  border: 0;
-  border-radius: 5px;
-  background: var(--bl-fill-hover, var(--bl-hover));
-}
-body.salty #rm_extensions_block #character_assets_settings .asset-preview-thumb {
-  border-bottom: 0;
-}
-/* 탭 넷: 테마 세그먼트 — 폰에서도 넷이 한 줄에 들어가게 폭을 나눔, 고른 탭은 떠 있는 칸 */
-body.salty #rm_extensions_block #character_assets_settings .character-assets__tabs {
-  gap: 2px;
-  padding: 4px;
-  border: 0;
-  border-radius: 12px;
-  background: var(--bl-fill-hover, var(--bl-hover));
-}
-body.salty #rm_extensions_block #character_assets_settings .character-assets__tab {
-  flex: 1 1 auto;
-  min-width: 0;
-  gap: 4px;
-  padding: 8px 6px;
-  border: 0;
-  border-radius: var(--bl-r-sm);
-  background: transparent;
-  color: var(--salty-muted);
-  font-weight: 650;
-}
-body.salty #rm_extensions_block #character_assets_settings .character-assets__tab.is-active {
-  border: 0;
-  background: var(--salty-fill-surface, var(--salty-surface));
-  box-shadow: var(--bl-e2);
-  color: var(--salty-text);
-}
-body.salty.salty-dark #rm_extensions_block #character_assets_settings .character-assets__tab.is-active {
-  background: color-mix(in srgb, var(--salty-text) 18%, var(--salty-surface));
-  color: var(--bl-pop);
-}
 
 /* ---------- 확장: 그 밖의 서랍 자잘한 것 ---------- */
 /* 체크 줄 이름 뒤 작은 설명(무료 모드 프롬프트 확장 (interactive/commands)): 설명은 이름 밑 줄로 — 이름이 두 줄로 꺾여 두 항목처럼 보이지 않게 */
@@ -1701,9 +1625,7 @@ body.salty #rm_extensions_block #regex_presets {
 body.salty #rm_extensions_block #regex_presets + .menu_button {
   margin-left: auto !important;
 }
-@media screen and (max-width: 1000px) {
-  /* 폰: 드롭다운은 한 줄 전체, 아이콘 넷은 그 밑 오른쪽 한 줄 (휴지통만 홀로 떨어지지 않게) */
-}
+
 /* 정규식 스크립트 줄 … (더 보기): 옆 연필 · 휴지통처럼 면 없는 흐린 아이콘 (label 이라 아이콘 버튼 규칙에 안 걸림) */
 body.salty #rm_extensions_block .regex-script-label label.menu_button.regex_script_expand {
   min-width: var(--bl-h-icon);

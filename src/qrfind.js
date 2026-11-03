@@ -28,7 +28,7 @@ function pushRecent(key) {
     } catch { /* 저장 못 해도 누르기는 됨 */ }
 }
 
-// 3.7.4 ⋮ 목록 속 QR 도 찾기 (사용자: "20 이란 QR 이 있는데 안 보이네" — ⋮ 목록으로만 단 세트의 QR 은 줄에 버튼이 없어 후보에서 빠졌다).
+// 3.7.4 ⋮ 목록 속 QR 도 찾기 (⋮ 목록으로만 단 세트의 QR 은 줄에 버튼이 없어 후보에서 빠졌다).
 // 실리태번 ⋮ 목록(quick-reply/src/ui/ctx/ContextMenu.js build)과 똑같이 모으고 실행한다: 자기 세트를 ⋮ 로 단 경우는 숨긴 것 중 아이콘 있는 것만,
 // '이어 실행'(isChained)이면 부모 내용을 ' | ' 로 앞에 붙이고, %%parent%% · %%parent-N%% 는 부모 이름으로, 실행은 그 세트의 execute.
 // 같은 세트로 되돌아가는 고리는 hierarchy 로 끊고, 목록이 터무니없이 커지지 않게 모두 합쳐 2000개까지.
@@ -96,7 +96,7 @@ function collect() {
     return out;
 }
 
-// 3.5.5 찾은 글자에 테마 형광펜 (사용자: "검색어가 제목인지 본문인지 알 수 있게") — 이름 줄 · 내용 줄 어디에 걸렸는지 보임
+// 3.5.5 찾은 글자에 테마 형광펜 (제목 · 본문 어디에 걸렸는지 보이게) — 이름 줄 · 내용 줄 어디에 걸렸는지 보임
 function marked(text, q) {
     if (!q) return esc(text);
     const lower = text.toLowerCase();

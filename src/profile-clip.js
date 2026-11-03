@@ -1,9 +1,10 @@
+import { watchDom } from './dom-watch.js';
 // Round the painted photo, including contain-mode letterboxing, rather than its empty box.
 const selector = '.mes:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
 const tracked = new Set(), dirty = new Set();
 const ownerOf = img => img.closest('.mes')?.getAttribute('is_user') === 'true' ? 'userProfile' : 'profile';
 let active = { profile: false, userProfile: false };
-let roots = [], observer, resize, frame = 0, options, signature = '';
+let roots = [], unwatch = [], resize, frame = 0, options, signature = '';
 export function photoBounds(width, height, ratio, x, y) {
     const w = Math.min(width, height * ratio), h = Math.min(height, width / ratio);
     const left = Math.max(0, width - w) * x / 100, top = Math.max(0, height - h) * y / 100;
@@ -45,7 +46,7 @@ function toggle(mes) {
 }
 function loaded(event) { if (tracked.has(event.target)) queue(event.target); }
 function stop() {
-    observer?.disconnect(); resize?.disconnect(); cancelAnimationFrame(frame); frame = 0;
+    for (const off of unwatch.splice(0)) off(); resize?.disconnect(); cancelAnimationFrame(frame); frame = 0;
     for (const root of roots) root.removeEventListener('load', loaded, true);
     for (const img of tracked) img.style.removeProperty('--bl-photo-clip');
     roots = []; tracked.clear(); dirty.clear(); signature = '';
@@ -60,14 +61,14 @@ export function syncProfileClip(settings) {
     if (roots.length !== nextRoots.length || nextRoots.some((r, i) => r !== roots[i])) {
         stop(); roots = nextRoots;
         resize ||= new ResizeObserver(entries => entries.forEach(e => queue(e.target)));
-        observer ||= new MutationObserver(records => {
+        const changed = records => {
             for (const rec of records) {
                 if (rec.type === 'attributes') { if (rec.target.classList.contains('mes')) toggle(rec.target); continue; }
                 for (const node of rec.addedNodes) scan(node);
             }
             if (records.some(rec => [...rec.removedNodes].some(node => node.nodeType === 1 && (node.tagName === 'IMG' || node.querySelector('img'))))) queue();
-        });
-        for (const root of roots) { observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['is_system'] }); root.addEventListener('load', loaded, true); scan(root); }
+        };
+        for (const root of roots) { unwatch.push(watchDom(root, { childList: true, subtree: true, attributes: ['is_system'], name: '프로필 사진 자르기' }, changed)); root.addEventListener('load', loaded, true); scan(root); }
     }
     const next = ['profile', 'userProfile'].map(owner => { const p = settings[owner]; return p && active[owner] ? [p.positionX, p.positionY, p.visibleHeight, p.radius, p.edgeGap, p.decor.on].join('/') : ''; }).join('|');
     if (signature !== next) { signature = next; for (const img of tracked) queue(img); }

@@ -1,5 +1,5 @@
 /* ===== css/85-addon-unify.css =====
-   7.0.3 테마 확장 창 모양 통일 (사용자 승인 「모양 통일 ㄱㄱ」) — 새 모양은 만들지 않고, 창 19개 가운데 가장 많이 쓰는 모양으로 맞춘다.
+   7.0.3 테마 확장 창 모양 통일 — 새 모양은 만들지 않고, 창 19개 가운데 가장 많이 쓰는 모양으로 맞춘다.
    기준(../blue-lemonade-audit/ui-unify-audit-20261017/TABLE.md):
    · 머리 = 왼쪽 아이콘 + 제목(메뉴 글자 크기 · 600) + 회색 테 판 알약(확장 서랍 .ext-version 과 같은 값) · 오른쪽 위 × 하나(34px · 22px 글자)
      실리태번 팝업에 뜨는 창은 아래 「닫기」 단추 줄을 숨기고 실리태번 자신의 닫기(×)를 머리 오른쪽에 — Esc · 바깥 누르기 · 뒤로 가기 그대로
@@ -12,7 +12,7 @@
 /* ---------- 창 폭 ---------- */
 html body.salty :is(
   dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)),
-  dialog:is(.bl-translator-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .bl-direction-dialog, .blzi-dialog, .bl-mermaid-dialog, .blpt-dialog)
+  dialog:is(.bl-translator-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .blpt-dialog, .bl-direction-dialog, .blzi-dialog, .bl-mermaid-dialog)
 ) {
   /* 실리태번 넓은 팝업과 같은 폭: 폰은 화면 − 12px(378 @390), PC 는 채팅 폭(기본 720) — --sheldWidth 는 폰에서 작은 값이라 min 만 쓰면 반 폭이 된다 */
   width: max(min(var(--sheldWidth, 720px), 100vw - 12px), min(100vw - 12px, 720px)) !important;
@@ -24,8 +24,8 @@ html body.salty :is(
 html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) { padding: 12px 10px 12px 10px !important; }
 html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-body { padding-top: 0 !important; }
 html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-body > .popup-content { padding-top: 0 !important; margin-top: 0 !important; }
-html body.salty dialog:is(.bl-assets-dialog, .bl-ctsi-dialog, .bl-direction-dialog, .bl-mermaid-dialog) { padding: 12px 10px 12px 12px !important; }
-html body.salty dialog:is(.bl-translator-dialog, .blzi-dialog, .blpt-dialog) > header { padding: 12px 10px 0 12px !important; }
+html body.salty dialog:is(.bl-assets-dialog, .bl-ctsi-dialog, .blpt-dialog, .bl-direction-dialog, .bl-mermaid-dialog) { padding: 12px 10px 12px 12px !important; }
+html body.salty dialog:is(.bl-translator-dialog, .blzi-dialog) > header { padding: 12px 10px 0 12px !important; }
 
 /* ---------- 머리 줄 ---------- */
 html body.salty :is(
@@ -42,7 +42,7 @@ html body.salty :is(
   dialog.popup > .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings) > .inline-drawer > .inline-drawer-header,
   dialog.popup > .popup-body > .popup-content > :is(#model-switch-settings, #regex-link-settings) > .inline-drawer-header
 ) > .inline-drawer-icon { display: none !important; }
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog) > header {
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog) > header {
   display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 12px !important;
   min-height: 34px !important; height: auto !important; margin: 0 0 8px !important; padding-top: 0; padding-bottom: 0;
   border: 0 !important; background: none !important;
@@ -58,7 +58,7 @@ html body.salty :is(
   dialog.popup > .popup-body > .popup-content > :is(#model-switch-settings, #regex-link-settings) > .inline-drawer-header > b,
   dialog.popup > .popup-body > .popup-content > .po-dialog > .po-title,
   dialog.popup > .popup-body > .popup-content > .pa-hub > .pa-hub-title,
-  dialog:is(.bl-translator-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .bl-direction-dialog, .blzi-dialog, .bl-mermaid-dialog, .blpt-dialog) > header > b,
+  dialog:is(.bl-translator-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .blpt-dialog, .bl-direction-dialog, .blzi-dialog, .bl-mermaid-dialog) > header > b,
   dialog.bl-notes-dialog > header > b,
   #pt-panel > #pt-panel-header > h3
 ) {
@@ -74,28 +74,10 @@ html body.salty #pt-panel.pt-in-drawer > #pt-panel-header > h3 { display: none !
 /* 아이콘 없던 한글화 패널 — 테마 설정 창과 같은 아이콘 */
 html body.salty #pt-panel > #pt-panel-header > h3::before { content: "\f022"; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 1em; line-height: 1; }
 
-/* ---------- 머리: 판 알약 (확장 서랍 css/09 의 .ext-version 과 같은 값) ---------- */
-html body.salty :is(
-  dialog.popup > .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings) > .inline-drawer > .inline-drawer-header,
-  dialog.popup > .popup-body > .popup-content > :is(#model-switch-settings, #regex-link-settings) > .inline-drawer-header,
-  dialog.popup > .popup-body > .popup-content > .po-dialog > .po-title,
-  dialog.popup > .popup-body > .popup-content > .pa-hub > .pa-hub-title,
-  dialog:is(.bl-translator-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .bl-direction-dialog, .blzi-dialog, .bl-mermaid-dialog, .blpt-dialog) > header,
-  dialog.bl-notes-dialog > header,
-  #pt-panel > #pt-panel-header
-) :is(.ext-version, .pt-version, .bl-notes-ver):not([hidden]) {
-  display: inline-block !important; flex: none !important;
-  width: auto !important; height: auto !important; min-width: 0 !important; min-height: 0 !important;
-  margin: 0 !important; padding: 2px 8px 0 !important;
-  border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent) !important;
-  border-radius: var(--bl-r-pill, 999px) !important;
-  background: var(--bl-fill-hover, var(--bl-hover)) !important; box-shadow: none !important;
-  color: var(--salty-muted) !important; font-size: var(--bl-fs-micro) !important; font-weight: 400 !important; line-height: 1.5 !important;
-  vertical-align: middle !important;
-}
+/* ---------- 머리: 판 알약은 1.0.0 부터 75-version-pill 의 공용 알약 하나(여기 따로 그리던 11.5 · 글자 16% 선 알약은 걷음) ---------- */
 
 /* ---------- 머리: 닫기 × 하나 ---------- */
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog) > header > button,
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog) > header > button,
 html body.salty #pt-panel #pt-panel-close,
 html body.salty dialog.bl-notes-dialog .bl-note-btn:has(> i.fa-xmark),
 html body.salty #cg-panel .cg-icon-btn[data-act="close"] {
@@ -111,7 +93,7 @@ html body.salty :is(#pt-panel #pt-panel-close, dialog.bl-notes-dialog .bl-note-b
 html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-body > .popup-controls { display: none !important; }
 html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-button-close {
   display: block !important; position: absolute !important;
-  top: 12px !important; right: 10px !important; width: 34px !important; height: 34px !important; z-index: 2 !important;
+width: 34px !important; height: 34px !important; z-index: 2 !important;
   margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 8px !important;
   background: transparent !important; color: var(--salty-text) !important; opacity: 1 !important; filter: none !important;
   font: 400 var(--bl-deco-glyph-22)/34px sans-serif !important; text-align: center !important;
@@ -119,16 +101,16 @@ html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settin
 html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-button-close::before { content: "×" !important; font: inherit !important; }
 /* 머리가 없는 요청 로그 창: × 자리만큼 위 줄을 비운다 */
 html body.salty dialog.popup > .popup-body > .popup-content > .rl-root > .rl-top { padding-right: 52px !important; }
-/* 7.7.8 탭 알약 윗부분 잘림(사용자 제보 10-23): 요청 로그 창은 머리가 없어 첫 줄 탭이 스크롤 칸(.popup-content, overflow auto) 위 가장자리에 딱 붙었고 글꼴 · 보정에 따라 몇 px 위로 올라가 둥근 모서리가 잘렸다
+/* 7.7.8 탭 알약 윗부분 잘림: 요청 로그 창은 머리가 없어 첫 줄 탭이 스크롤 칸(.popup-content, overflow auto) 위 가장자리에 딱 붙었고 글꼴 · 보정에 따라 몇 px 위로 올라가 둥근 모서리가 잘렸다
    → 뿌리 위에 4px 여백, × 는 탭 줄과 같은 세로 중심(팝업 위 12 + 여백 4 + 탭 36/2 − 34/2 = 17) */
 html body.salty dialog.popup > .popup-body > .popup-content > .rl-root { padding-top: 4px !important; }
 html body.salty:not(#bl-rl-off) dialog.popup:has(> .popup-body > .popup-content > .rl-root) > .popup-button-close { top: 17px !important; } /* :not(#…) 는 특이도만(위 :is(#lv_settings …) 규칙보다 앞서려고) */
-/* 7.7.8 ×는 내용 스크롤바 홈(오른쪽 끝 ≈ 16px)보다 안쪽 — 폰에서 스크롤 손잡이가 × 오른쪽 반을 덮었다(사용자 제보 10-23). 위 줄과 같은 수평선(탭 줄 높이 가운데) */
+/* 7.7.8 ×는 내용 스크롤바 홈(오른쪽 끝 ≈ 16px)보다 안쪽 — 폰에서 스크롤 손잡이가 × 오른쪽 반을 덮었다. 위 줄과 같은 수평선(탭 줄 높이 가운데) */
 html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-button-close { right: 26px !important; top: 9px !important; } /* 탭 줄(36, 내용 위 8px)과 같은 세로 중심: 12+8+18-17 = 9 (4배 확대 확인 10-23) */
 html body.salty dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab > .rl-tab-sub { display: inline !important; margin-left: 2px; font-size: .8em !important; opacity: .85; }
 html body.salty dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab > .rl-tab-sub:empty { display: none !important; }
 
-/* ---------- 선택칸 + 아이콘 단추 N개 한 줄 (7.7.8, 사용자 제보 10-23 「위랑 아래랑 같은 버튼 배열인데 왜 다르냐」) ----------
+/* ---------- 선택칸 + 아이콘 단추 N개 한 줄 (7.7.8 같은 단추 배열인데 위아래 모양이 다르던 것) ----------
    번역 창 「설정 프리셋」(선택 + 갱신 · 저장 · 삭제) · 「프롬프트 선택」(선택 + 저장 · 추가 · 삭제) · 한글화 패널 고르기 줄: 선택칸 높이 = 아이콘 단추 높이 = --bl-h-ctl(폰 36 · PC 34),
    같은 모서리 8, 사이 8, 선택칸이 남은 폭 전부, 단추는 정사각. :not(#bl-row-off) 는 특이도만(87 · 89 의 :is(#pt-panel …) 아이디 무게를 넘으려고). 손가락 화면의 입력칸 44(87-addon-touch)는 이 줄에서만 36 — 단추의 누르는 칸 44 는 투명 ::after 그대로 */
 html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-settings .prompt-select-container, #pt-panel .pt-select-row) {
@@ -149,7 +131,7 @@ html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-sett
 html body.salty .llmt-settings .llmt-card--accent { border-color: var(--llmt-border, var(--salty-line)) !important; box-shadow: none !important; }
 
 /* ---------- 탭: 머리 바로 아래 · 한 줄 · 아이콘 + 글자 가로 ----------
-   7.7.8: 아이콘 위 · 글자 아래로 쌓인 50px 블록(사용자 제보 10-23 「요청 로그에 로그 집계 예산은 또 버튼 왜 이리 커」)을 걷고
+   7.7.8: 아이콘 위 · 글자 아래로 쌓인 50px 블록(요청 로그 · 집계 · 예산 단추가 크던 것)을 걷고
    글자 탭 기준(기준표 폰 36 · PC 34 = --bl-h-ctl)의 한 줄 아이콘 + 글자로. 누르는 칸 44 는 87-addon-touch 의 투명 ::after 그대로.
    예산 금액(.rl-tab-sub)은 탭 안 글자 옆 작은 글자 */
 /* TTS · 번역: 탭을 맨 위로, 「확장 탭에 보이기」 줄은 탭 바로 아래 — 나머지 차례는 그대로 */
@@ -171,30 +153,15 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tabs,
   gap: 4px !important; width: auto !important; margin: 0 0 10px !important; padding: 0 !important;
   background: none !important; border: 0 !important; border-radius: 0 !important;
 }
-html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tab, dialog.bl-translator-dialog .llmt-tab, dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_tab, dialog.popup:not(.bl-settings-dialog) .pa-hub > .pa-hub-tabs > .pa-hub-tab, dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab, #pt-panel > #pt-tabs > .pt-tab) {
-  position: relative; display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important;
-  gap: 6px !important; min-width: 0 !important; min-height: var(--bl-h-ctl, 36px) !important; height: auto !important; margin: 0 !important;
-  padding: 0 8px !important; border: 0 !important; border-radius: 8px !important; opacity: 1 !important;
-  background: var(--bl-hover) !important; color: var(--salty-muted) !important; box-shadow: none !important; outline-offset: -2px;
-  font-size: var(--bl-ts-meta) !important; font-weight: 400 !important; line-height: 1.35 !important; white-space: var(--bl-tab-whitespace,nowrap) !important;
-}
-html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tab, dialog.bl-translator-dialog .llmt-tab, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_tab, dialog.popup:not(.bl-settings-dialog) .pa-hub > .pa-hub-tabs > .pa-hub-tab, dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab, #pt-panel > #pt-tabs > .pt-tab) > i,
-html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button::before { margin: 0 !important; font-size: 1.1em !important; line-height: 1 !important; }
-html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tab, dialog.bl-translator-dialog .llmt-tab, dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_tab, dialog.popup:not(.bl-settings-dialog) .pa-hub > .pa-hub-tabs > .pa-hub-tab, dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab, #pt-panel > #pt-tabs > .pt-tab):is(.active, [aria-pressed="true"], [aria-selected="true"]) {
-  background: color-mix(in srgb, var(--salty-accent) 13%, transparent) !important; color: var(--salty-accent-ink, var(--salty-accent)) !important; /* 8.1.x 글자는 잉크(밝은 팔레트에서 옅은 포인트 면 위 4.5:1 — apply.js readableInk). 포인트 그대로면 화이트 계열에서 3.7:1 */
-}
+/* 탭 한 칸 모양(면 · 선 · 높이 · 글자 · 고름)은 1.0.0 부터 88-ui-parts 의 글자 탭 하나 — 여기는 줄 배치만 */
+html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button::before { margin: 0 !important; font-size: var(--bl-ui-ink-fa, 12.5px) !important; line-height: 1 !important; }
 /* 글자만 있던 탭에 아이콘 (확장 순서: 확장 설정 · 요술봉 · 채팅 메뉴) */
 html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button::before { font-family: "Font Awesome 6 Free"; font-weight: 900; }
 html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button:nth-child(1)::before { content: "\f12e"; }
 html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button:nth-child(2)::before { content: "\e2ca"; }
 html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button:nth-child(3)::before { content: "\f086"; }
 
-/* ---------- 고르기 단추: 고른 칸 = 꽉 찬 포인트 (캐릭터 에셋 · 북마크와 같은 값) ---------- */
-html body.salty dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_segment > .bwr_seg.active,
-html body.salty dialog.bl-notes-look .bl-look-seg > .bl-look-segbtn.on,
-html body.salty dialog[open] .bl-look-seg > .bl-look-segbtn.on {
-  background: var(--salty-accent) !important; color: var(--salty-on-accent, var(--bl-fb-fff)) !important; box-shadow: none !important; font-weight: 650 !important;
-}
+/* ---------- 고르기 단추: 1.0.0 고른 칸은 88-ui-parts 의 「옅은 면 + 색 글자 + 체크」 하나(옛 꽉 찬 포인트 면은 걷음) ---------- */
 
 /* ---------- 카드: 모서리 12 · 1px 테 ---------- */
 html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-card, dialog.bl-translator-dialog .llmt-card, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_card, dialog.popup:not(.bl-settings-dialog) #model_register_settings .mr-item, dialog.popup:not(.bl-settings-dialog) #regex-link-settings .rl-module, dialog.popup:not(.bl-settings-dialog) .po-dialog .po-item, dialog.bl-direction-dialog :is(.jj-card, .jj-status), dialog.blzi-dialog .blzi-card, dialog.bl-assets-dialog .eh-card) {
@@ -205,7 +172,7 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settin
   border-color: var(--salty-line) !important;
 }
 
-/* ---------- 7.8.5 다음 판: 과일의 마음 창 · 데우스 빠른 설정 창을 디자인 철칙에 맞춤 (사용자 10-15 취향 · 10-23 철칙).
+/* ---------- 7.8.5 다음 판: 과일의 마음 창 · 데우스 빠른 설정 창을 디자인 철칙에 맞춤.
    두 창 모두 프리셋 · 내장 스크립트가 그리고, 테마는 선택자로 모양만 바꾼다(창의 글 · 동작은 그대로).
    · 설정 줄 = 작은 체크박스(A3: 20 · 모서리 5 · 미체크 선만 · 체크 포인트 면 + 꺽쇠 하나, 꺽쇠 색은 92-checkboxes 와 같은 --salty-on-accent) + 이름 한 줄, 설명은 아래 따로
    · 평평 C: 진짜 1px 선 + 그림자 없음(투명 테두리 + 안쪽 선 금지), 머리줄 아이콘만 단추는 상자 없음
@@ -227,14 +194,14 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settin
 
 /* ? 도움말: H3 — 평평 면 원 24, 선 없음, Font Awesome fa-question 12, 보조 글자색. 제목 끝에서 6px */
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .bl-fruit-help-button {
-  width: 24px; height: 24px; min-width: 24px; min-height: 24px; margin: 0 0 0 6px;
+  /* 1.0.0 도움말 하나로: 76 H3 와 같은 값(옆 글자의 1.3em 면 원 · 여백 0.35em · 글리프 0.75em) — 이 패널은 body 밖에도 붙어 76 공용 규칙이 못 닿아 같은 값을 여기 적어요 */
+  box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: var(--bl-help-d); height: var(--bl-help-d); min-width: var(--bl-help-d); min-height: var(--bl-help-d); margin: 0 0 0 var(--bl-help-gap); padding: 0; vertical-align: middle; align-self: center;
   border: 0; border-radius: 50%; background: var(--fill); color: var(--ink2); box-shadow: none;
-  font-size: 12px; line-height: 1;
+  font-size: inherit; line-height: 1; transform: translateY(var(--bl-help-y));
 }
-:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .bl-fruit-help-button > svg { display: none; }
-:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .bl-fruit-help-button::before {
-  content: "\f128"; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 12px; line-height: 1; display: block;
-}
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .bl-fruit-help-button > i { font-size: 0; line-height: 0; display: block; width: var(--bl-help-glyph); height: var(--bl-help-glyph); background: currentColor; -webkit-mask: var(--bl-help-mask) center/contain no-repeat; mask: var(--bl-help-mask) center/contain no-repeat; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .bl-fruit-help-button > i::before { content: none; }
 
 /* 스위치 → 작은 체크박스(A3). 원작 단추(role=switch · .on)는 그대로 두고 모양만: 손잡이 자리에 꺽쇠 하나 */
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sw {
@@ -242,13 +209,14 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settin
   width: 20px; height: 20px; min-width: 20px; min-height: 20px; margin: 0; padding: 0;
   border: 1px solid var(--line); border-radius: 5px; background: transparent; box-shadow: none; transition: none;
 }
+/* 꺾쇠: 공용 정의(10-foundation --bl-check-mask) — 단추 테두리 상자(20)와 같은 자리에 1em 상자(inset −1px · transform 없음 · 10-31) */
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sw::after {
-  content: ""; position: absolute; top: 50%; left: 50%; width: 9px; height: 5px;
-  border: 0; border-left: 2px solid var(--on-acc, var(--salty-on-accent, var(--bl-fb-fff))); border-bottom: 2px solid var(--on-acc, var(--salty-on-accent, var(--bl-fb-fff))); border-radius: 0;
-  background: none; box-shadow: none; transform: translate(-50%, -65%) rotate(-45deg); opacity: 0; transition: none;
+  content: ""; position: absolute; inset: -1px; margin: auto; box-sizing: border-box; font-size: var(--bl-check-face); width: 1em; height: 1em;
+  border: 0; border-radius: 0; background: var(--on-acc, var(--salty-on-accent, var(--bl-fb-fff))); -webkit-mask: var(--bl-check-mask); mask: var(--bl-check-mask);
+  box-shadow: none; transform: none; opacity: 0; transition: none;
 }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sw.on { background: var(--acc); border-color: var(--acc); }
-:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sw.on::after { left: 50%; opacity: 1; background: none; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sw.on::after { opacity: 1; }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sw[disabled] { opacity: .5; }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(.fh-cv, .fh-row) .fh-sw { margin-left: 0; }
 
@@ -296,8 +264,8 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settin
   border: 1px solid var(--line); border-radius: 5px; background: transparent; box-shadow: none; color: var(--on-acc, var(--bl-fb-fff)); cursor: pointer; vertical-align: middle;
 }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) input[type=checkbox]::after {
-  content: ""; display: block; width: 9px; height: 5px; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor;
-  transform: translateY(-1px) rotate(-45deg); opacity: 0;
+  content: ""; display: block; box-sizing: border-box; font-size: var(--bl-check-face); width: 1em; height: 1em; border: 0;
+  background: currentColor; -webkit-mask: var(--bl-check-mask); mask: var(--bl-check-mask); transform: none; opacity: 0;
 }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) input[type=checkbox]:checked { background: var(--acc); border-color: var(--acc); }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) input[type=checkbox]:checked::after { opacity: 1; }
@@ -319,13 +287,7 @@ html body.salty #bl-deus-popover .dq-head > strong { white-space: nowrap; overfl
 html body.salty #bl-deus-popover .dq-close { grid-column: 4; justify-self: end; width: 34px; height: 34px; min-width: 34px; min-height: 34px; padding: 0; border: 0; background: transparent; box-shadow: none; }
 html body.salty #bl-deus-popover .dq-version { border-radius: 999px !important; padding: 0 8px !important; min-height: 18px; line-height: 18px; font-size: .75em !important; }
 
-/* ? : H3 */
-html body.salty #bl-deus-popover .dq-help-button {
-  width: 24px; height: 24px; min-width: 24px; min-height: 24px; padding: 0; margin: 0;
-  border: 0; border-radius: 50%; background: var(--bl-control, var(--salty-shade)); color: var(--salty-muted); box-shadow: none;
-}
-html body.salty #bl-deus-popover .dq-help-glyph { width: auto; height: auto; border: 0; border-radius: 0; font-size: 0; }
-html body.salty #bl-deus-popover .dq-help-glyph::before { content: "\f128"; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 12px; line-height: 1; display: block; }
+/* ? : 1.0.0 부터 76-help-button 의 H3 공용 규칙이 그려요(24px 고정 흉내는 걷음) */
 
 /* 위 내비 5개(진행 · 문체 · 시점 · 표현 · 추가): 한 줄, 글자 탭 36, 면 + 1px 선, 고른 칸 = 포인트 면 + 650 */
 html body.salty #bl-deus-popover .dq-tabs { gap: 4px; }
@@ -366,9 +328,9 @@ html body.salty #bl-deus-popover .dq-toggle > input[type="checkbox"] {
 }
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]::before { content: none !important; display: none !important; }
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]::after {
-  content: "" !important; display: block !important; position: static !important; width: 9px !important; height: 5px !important; margin: 0 !important;
-  border: 0 !important; border-left: 2px solid currentColor !important; border-bottom: 2px solid currentColor !important; border-radius: 0 !important;
-  background: none !important; box-shadow: none !important; transform: translateY(-1px) rotate(-45deg) !important; opacity: 0 !important;
+  content: "" !important; display: block !important; position: static !important; box-sizing: border-box !important; font-size: var(--bl-check-face) !important; width: 1em !important; height: 1em !important; margin: 0 !important;
+  border: 0 !important; border-radius: 0 !important; background: currentColor !important; -webkit-mask: var(--bl-check-mask) !important; mask: var(--bl-check-mask) !important;
+  box-shadow: none !important; transform: none !important; opacity: 0 !important;
 }
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked { background: var(--salty-accent) !important; border-color: var(--salty-accent) !important; }
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked::after { opacity: 1 !important; }
@@ -392,7 +354,7 @@ html body.salty :is(.rl-chip.rl-chip-icon, .salty-btn.salty-btn-icon[data-health
 }
 html body.salty :is(.rl-chip.rl-chip-icon, .salty-btn.salty-btn-icon[data-health-check], .bl-library-tools .bl-icon-btn) > i { font-size: inherit !important; line-height: 1 !important; }
 
-/* ---------- 7.7.9 TTS 설정 창 칸 묶음(.lv-grid): 짧은 항목은 세로 2열 (사용자 제보 14 · 17: 「안정감 · 원음 유사도도 세로 2열」 「체크 항목도 다 세로 2열」) ----------
+/* ---------- 7.7.9 TTS 설정 창 칸 묶음(.lv-grid): 짧은 항목은 세로 2열 (안정감 · 원음 유사도 · 체크 항목도) ----------
    애드온 style.css 의 「한 줄 폭이 반 칸에 들어가면 반 칸」 flex 를 격자로: 체크 · 스위치 · 슬라이더 · 선택 · 숫자 = 반 칸(설명은 그 칸 안 작은 글자),
    긴 입력(글 · 암호 · 주소 · 찾기) · 글 영역 · 모델 줄 · 단추 줄 · 안내 · 태그 칩 = 한 줄 전체. 18em 아래 좁은 카드(320 큰 글씨)는 애드온 규칙대로 한 칸 */
 @container lvcard (min-width: 18em) {
@@ -403,7 +365,7 @@ html body.salty :is(.rl-chip.rl-chip-icon, .salty-btn.salty-btn-icon[data-health
   html body.salty #lv_settings .lv-grid .lv-toggle > span:not(.lv-desc) { word-break: keep-all; }
   html body.salty #lv_settings .lv-grid .lv-label { word-break: keep-all; }
 }
-/* 엑스트라 절 머리줄의 「모두 지우기」(7.7.9 제보 15) — summary 안 작은 글자 단추 */
+/* 엑스트라 절 머리줄의 「모두 지우기」(7.7.9) — summary 안 작은 글자 단추 */
 html body.salty #lv_settings .lv-extras > summary { display: flex; align-items: center; gap: 8px; }
 html body.salty #lv_settings .lv-extras > summary > .lv-extras-clear { margin-left: auto; min-height: 28px !important; padding: 0 10px !important; font-size: var(--bl-ts-meta, 12.5px) !important; }
 /* 7.8.1 메모 창 머리: 제목 묶음이 줄바꿈되면 판 알약이 둘째 줄로 떨어졌다(HEADROW dy 22) — 한 줄 고정, 좁으면 알약이 양보(notes/style.css 의 숨김 규칙) */

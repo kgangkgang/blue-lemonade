@@ -162,7 +162,7 @@ body.salty :is(#salty-nochat, .salty-preview):not(.cg-chatlike, .bl-notes-view, 
 }
 /* 표본 넘기기 화살표 · 이름표(.salty-pvarrow · .salty-pvname) 규칙은 3.0.0 에서 지움 — 설정 창이 더는 그 클래스를 그리지 않는다 (넘기기 단추는 data-act="pvpic") */
 /* ---------- 3.2.1 긴 표본은 칸 안에서 스크롤 ----------
-   사용자: "예시를 피면 아래 설정이 하나도 안 보여 — 예시 칸 절반으로 줄여서 스크롤 가능하게". 데우스 카드 표본은 높이 제한이 없어
+   예시를 펴면 아래 설정이 하나도 안 보이던 것 — 예시 칸을 절반으로 줄이고 스크롤되게. 데우스 카드 표본은 높이 제한이 없어
    붙어 있는 칸이 폰 화면을 거의 다 덮었다. 채팅 · 카드 표본과 글자 표본은 화면의 약 1/4(최대 230px)로 막고 안에서 굴린다.
    표본 속 요소는 계속 눌리지 않게(pointer-events: none) 두고 굴리는 칸만 손가락을 받는다 — 가짜 메시지가 실리태번의
    문서 위임 처리(메시지 클릭 · 스와이프)에 걸리지 않게. 그림 표본(data-prev="img")은 높이가 붙박이라 그대로 */
@@ -192,3 +192,74 @@ body.salty :is(#salty-nochat, .salty-preview):not(.cg-chatlike, .bl-notes-view, 
   margin-bottom: 0 !important;
 }
 /* ===== /surfaces:previewbox ===== */
+
+/* ===== 9.0.1 미리보기 CSS 폴백 =====
+   미리보기 규칙(23-preview.gen 사본 · 이 파일의 표본 보정)은 빌드가 style.css 에서 떼어 src/preview.gen.css 로 따로 쓰고,
+   src/lite.js 가 설정 창을 처음 열 때 받는다. 받기 전 · 못 받았을 때는 표본 무대가 맨 실리태번 모양(큰 아바타 · 맨 글자)이라
+   헷갈리니 숨기고 안내 한 줄(.bl-pv-wait — panel.js fillPreviews 가 무대 뒤에 붙임)만 보인다. 실제 채팅은 늘 바로 바뀐다.
+   아래 앞의 둘은 선택자에 미리보기 이름이 없어 style.css 에 남고, 뒤의 둘은 미리보기 이름이 있어 src/preview.gen.css 로 간다
+   (tools/css-park.cjs previewOnly) — 그래서 그 시트가 붙는 순간 무대가 보이고 안내가 숨는다. JS 로 표식을 달지 않는다. */
+.salty-prevbox > [data-prev] {
+  visibility: hidden;
+}
+.salty-prevbox > .bl-pv-wait {
+  position: absolute;
+  inset: 0 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 var(--pp, 12px);
+  font-size: var(--fs-cap);
+  line-height: 1.5;
+  text-align: center;
+  color: var(--salty-muted);
+  pointer-events: none;
+}
+.salty-prevbox.folded > .bl-pv-wait {
+  display: none;
+}
+.salty-prevbox > .salty-preview[data-prev] {
+  visibility: visible;
+}
+.salty-prevbox > .salty-preview ~ .bl-pv-wait {
+  display: none;
+}
+/* 10-31 UI 점검: 무대를 보기 칸(.bl-view-port) 안으로 옮긴 미리보기 — preview-view.js 가 안내를 보기 칸 뒤로 옮겨 두고, 미리보기 CSS 를 받으면 숨겨요.
+   :not(.salty-preview) 는 늘 참이지만 선택자에 미리보기 이름이 들어가 이 규칙이 src/preview.gen.css 로 가요(tools/css-park.cjs previewOnly) — 받기 전에는 안내가 그대로 보여요 */
+.salty-prevbox > .bl-view-port ~ .bl-pv-wait:not(.salty-preview) {
+  display: none;
+}
+
+/* PC 미리보기는 같은 메시지 부품에 긴 대화 표본을 보여줘요. 폰의 짧은 표본은 그대로예요. */
+.bl-preview-wide, .bl-pc-detail { display:none !important; }
+@container bl-editor (min-width:800px) {
+  [data-bl-preview-compact] { display:none !important; }
+  .bl-preview-wide, .bl-pc-detail { display:block !important; }
+}
+
+@container bl-editor (min-width:800px) {
+  .salty-uisample.bl-menu-preview { display:grid !important; align-items:center; min-height:var(--bl-preview-height,0px); padding:24px 16px; background:transparent; border-radius:0; }
+  .bl-menu-specimen { width:100%; max-width:440px; margin-inline:auto; }
+  .bl-menu-specimen > header { display:flex; align-items:center; gap:12px; padding:0 4px 16px; border-bottom:1px solid var(--salty-line); }
+  .bl-menu-specimen > header > :last-child { margin-left:auto; color:var(--salty-muted); }
+  .bl-menu-spec-section { margin-block:24px; }
+  .bl-menu-spec-section > small { display:block; margin:0 4px 8px; color:var(--salty-muted); font-size:13px; }
+  .bl-menu-specimen .salty-group { display:block !important; padding:8px 12px; margin:0; border-radius:12px; background:var(--salty-surface); }
+  .bl-menu-spec-row { display:flex; align-items:center; gap:12px; min-height:56px; padding-block:8px; }
+  .bl-menu-spec-row > span { flex:1; min-width:0; }
+  .bl-menu-spec-row > span > small { display:block; margin-top:4px; color:var(--salty-muted); font-size:13px; }
+  .bl-menu-spec-row > i { flex:none; width:20px; text-align:center; color:var(--salty-muted); }
+  .bl-menu-spec-row > i:last-child { width:16px; font-size:13px; }
+  .bl-menu-specimen .salty-btns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .bl-menu-specimen .salty-btns > span { display:flex; align-items:center; justify-content:center; font:inherit; }
+  body.salty .salty-panel .bl-image-reading .ch_name.bl-pc-detail { display:flex !important; gap:8px; width:var(--bl-prev-w); margin:0 auto 16px; }
+  body.salty .salty-panel .bl-image-reading .mes_text > p.bl-pc-detail { margin-block:16px !important; }
+  body.salty.salty-header-none .salty-panel .bl-image-reading .ch_name.bl-pc-detail { display:none !important; }
+}
+@container bl-editor (min-width:800px) {
+body.salty .salty-panel .salty-preview.bl-reading-preview { padding:16px 8px 24px !important; border-radius:0; }
+}
+@container bl-editor (min-width:800px) {
+body.salty .salty-panel .salty-preview.bl-image-reading[data-prev="img"] { display:grid; align-items:center; height:auto; min-height:var(--bl-preview-height,0px); padding:24px 0 !important; }
+}

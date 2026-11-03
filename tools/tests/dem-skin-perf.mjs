@@ -96,7 +96,7 @@ check('panel.js: 접어 두기 토글은 다시 그리기 목록에 없고(모�
     assert.ok(/input\[data-range="chat\.demGlow"\]/.test(panelSrc));
 });
 check('fruit-type-ui.js: 표본 다시 옮기기는 body 속성 · #salty-dem-vars 도 보고, 테두리 빛은 계산 스타일 대신 설정값으로 본다', () => {
-    assert.ok(ftSrc.includes("attributeFilter:['class','data-bl-dem-fold']"));
+    assert.ok(ftSrc.includes("watch:'body.class vars'") && ftSrc.includes("attributes:['data-bl-dem-fold']"));   // 9.0.4 테마 색 따라가기 한 구독(theme-look vars = #salty-vars · #salty-dem-vars) · 공용 감시 허브
     assert.ok(ftSrc.includes("['salty-vars','salty-dem-vars']"));
     assert.ok(!ftSrc.includes("getPropertyValue('--bl-dem-glow')"), '계산 스타일에서 --bl-dem-glow 를 읽지 않는다(문서 전체 재계산을 당기지 않게)');
     assert.ok(ftSrc.includes('getSettings().chat?.demGlow'));

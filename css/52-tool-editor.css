@@ -1,39 +1,39 @@
 /* ===== css/52-tool-editor.css ===== */
 /* Compact controls and an independent desktop workspace. */
 .bl-extension-page { --bl-tool-gap:10px; font-size:var(--salty-ui-size,var(--mainFontSize,15px)); font-weight:var(--salty-ui-weight,normal); letter-spacing:var(--bl-settings-tracking,normal); }
-.bl-addon-header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 2px 6px; margin-bottom:0; border-bottom:1px solid var(--salty-line); }
+.bl-addon-header { display:flex; align-items:center; justify-content:space-between;padding:0 2px 6px; margin-bottom:0; border-bottom:1px solid var(--salty-line); }
 .bl-addon-header h3 { margin:0; min-width:0; font-size:1em; line-height:1.4; color:var(--salty-text); overflow-wrap:anywhere; }
-.bl-addon-header .bl-addon-ver { margin-left:8px; padding:calc(2px + var(--bl-addon-pill-ink-nudge, .5px)) 10px calc(2px - var(--bl-addon-pill-ink-nudge, .5px)); /* 5.6.6 알약 글자가 사용자 글꼴 +0.8 · 기본 글꼴 0 → 0.5px 만 내림 (1px 은 기본 글꼴을 −0.98 로 보냈다) */ border:1px solid var(--salty-line); border-radius:999px; background:color-mix(in srgb, var(--salty-accent) 12%, transparent); color:var(--salty-accent-ink, var(--salty-accent)); font:inherit; font-size:12px; font-weight:650; line-height:1.5; vertical-align:.12em; cursor:pointer; }
-.bl-addon-header .bl-addon-ver:hover, .bl-addon-header .bl-addon-ver:focus-visible { background:color-mix(in srgb, var(--salty-accent) 22%, transparent); outline:none; }
+.bl-addon-header .bl-addon-ver { cursor:pointer; } /* 1.0.0 모양은 75-version-pill 의 공용 판 알약 하나(옛 포인트 면 · 650 · 높이 25 알약은 걷음) */
+.bl-addon-header .bl-addon-ver:focus-visible { outline:1px solid var(--salty-accent); outline-offset:1px; }
 .bl-addon-header .bl-addon-status { margin:4px 0 0; color:var(--salty-muted); font-size:12px; line-height:1.4; }
 .bl-addon-header .bl-addon-status.is-on { color:var(--salty-accent-ink, var(--salty-accent)); }
-.bl-addon-power { display:flex; align-items:center; gap:8px; min-height:36px; flex:none; font-size:var(--bl-fs-body); } /* 7.9.3: 「기능 켜기」 12 → 본문 */
+.bl-addon-power { display:flex; align-items:center;min-height:36px; flex:none;} /* 7.9.3: 「기능 켜기」 12 → 본문 */
 .bl-addon-power input { accent-color:var(--salty-accent); width:19px; height:19px; margin:0; }
 .bl-addon-layout { display:flex; flex-direction:column; gap:10px; min-width:0; min-height:0; }
 .bl-addon-main,.bl-addon-config { display:flex; flex-direction:column; gap:10px; min-width:0; }
-.bl-tool-section { flex:none; min-width:0; border:1px solid var(--salty-line); border-radius:12px; background:var(--bl-fill-card,var(--salty-surface)); overflow:clip; }
-html body .bl-tool-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-height:36px; margin:0; padding:calc(7px + var(--bl-text-nudge, 0px)) 10px calc(7px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border:0; border-radius:0; box-shadow:none; background:transparent; color:var(--salty-text); text-align:left; font:600 13px/1.4 var(--salty-font-ui,inherit); cursor:pointer; }
+.bl-tool-section { flex:none; min-width:0; border:1px solid var(--salty-line);background:var(--bl-fill-card,var(--salty-surface)); overflow:clip; }
+html body .bl-tool-heading { display:flex; align-items:center; justify-content:space-between;width:100%; min-height:36px; margin:0; padding:calc(7px + var(--bl-text-nudge, 0px)) 10px calc(7px - var(--bl-text-nudge, 0px)) /* 5.5.3 세로 중앙 */; border:0; border-radius:0; box-shadow:none; background:transparent; color:var(--salty-text); text-align:left;cursor:pointer; }
 .bl-tool-heading small { display:block; margin-top:2px; color:var(--salty-muted); font-size:12px; font-weight:400; }
 .bl-tool-chevron { flex:none; opacity:.6; transition:transform .15s; }
 .bl-tool-heading[aria-expanded=false] .bl-tool-chevron { transform:rotate(-90deg); }
 .bl-tool-body { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; min-width:0; padding:0 10px 10px; }
 .bl-tool-body > * { min-width:0; max-width:100%; box-sizing:border-box; }
-.bl-tool-body .salty-note { margin:0; line-height:1.5; font-size:12px; }
-.bl-tool-body .bl-tool-section { background:transparent; border-radius:8px; }
+.bl-tool-body .salty-note { margin:0; line-height:1.5;}
+.bl-tool-body .bl-tool-section { background:transparent;}
 .bl-tool-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(var(--bl-tool-min,11em),calc((100% - 12px)/2))),1fr)); gap:8px 12px; min-width:0; align-items:start; }
-/* 8.1.0 스위치 · 체크 · 색 · 숫자만 든 격자는 9em 부터 2열(철칙 §5, 사용자 10-27 「파라미터는 웬만하면 다 세로 2열」) — 폰 384 · 360 의 설정 칸(≈330 · 306px)에서 11em(165px) 은 몇 px 모자라
+/* 8.1.0 스위치 · 체크 · 색 · 숫자만 든 격자는 9em 부터 2열(철칙 §5 파라미터 두 열) — 폰 384 · 360 의 설정 칸(≈330 · 306px)에서 11em(165px) 은 몇 px 모자라
    채팅 캡처 「날씨 효과 포함 · 배경 이미지·영상」 · 성능 보조 다섯 스위치가 1열로 늘어섰어요. 고르기(select)가 든 격자는 선택지(「본문만 · 이름·모델·시간 숨김」)가 반 칸에서 잘리니 11em 그대로 */
 .bl-tool-grid:not(:has(> .bl-tool-field > select)) { --bl-tool-min:9em; }
 .bl-tool-grid > * { min-width:0; max-width:100%; overflow-wrap:anywhere; }
-.bl-tool-grid .bl-addon-toggle,.bl-tool-grid.bl-word-options label { align-items:center; gap:8px; margin:0; min-height:40px; font-size:12px; line-height:1.45; }
+.bl-tool-grid .bl-addon-toggle,.bl-tool-grid.bl-word-options label { align-items:center;margin:0;line-height:1.45; }
 .bl-tool-grid input[type=checkbox] { flex:none; margin:0; width:17px; height:17px; accent-color:var(--salty-accent); }
-.bl-tool-field { display:grid; grid-template-columns:minmax(0,1fr); gap:6px; min-width:0; font-size:12px; line-height:1.45; }
+.bl-tool-field { display:grid; grid-template-columns:minmax(0,1fr);min-width:0;line-height:1.45; }
 .bl-tool-field small { font-size:12px; color:var(--salty-muted); }
 :is(.salty-panel,.bl-capture-dialog) .bl-tool-field :is(input[type=number],select) { display:block; width:100%; min-width:0; max-width:100%; min-height:36px; margin:0; padding:8px 8px; box-sizing:border-box; border:1px solid var(--salty-line)!important; border-radius:8px; background-color:var(--bl-fill-field,var(--salty-field))!important; color:var(--salty-text)!important; font:inherit; } /* 7.9.1: background 통째 → background-color — 고르기 칸 ▾(02)를 지우지 않게 */
 .bl-extension-page,.bl-capture-dialog { color-scheme:light; }
 body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; }
-.bl-tool-caption { display:block; margin:8px 0; font-size:12px; font-weight:650; }
-.bl-tool-label,.bl-mask-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.bl-tool-caption { display:block; margin:8px 0;}
+.bl-tool-label,.bl-mask-heading { display:flex; justify-content:space-between; align-items:center;}
 .bl-mask-heading small { color:var(--salty-muted); font-size:12px; }
 .bl-extension-page [hidden],.bl-capture-dialog [hidden] { display:none!important; }
 .bl-tool-section[data-tool-section="presets"] { container:bl-presets / inline-size; }
@@ -43,11 +43,11 @@ body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; 
   .bl-tool-body .bl-word-presets { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 .bl-extension-page .bl-message-choices { max-height:200px; border:1px solid var(--salty-line); border-radius:8px; }
-.bl-extension-page .bl-message-choice { padding:8px 8px; font-size:12px; }
-.bl-extension-page .bl-message-choice small { line-height:1.45; font-size:12px; }
+.bl-extension-page .bl-message-choice { padding:8px 8px;}
+.bl-extension-page .bl-message-choice small { line-height:1.45;}
 .bl-extension-page .bl-message-actions { margin:0; gap:6px; }
 .bl-extension-page .bl-word-actions,.bl-extension-page .bl-addon-actions { margin:0; gap:8px; }
-.salty-panel .bl-extension-page :is(.bl-word-actions,.bl-addon-actions) > button:where(:not(.bl-word-help)) { flex:0 1 auto; min-height:36px; padding:calc(6px + var(--bl-text-nudge, 0px)) 10px calc(6px - var(--bl-text-nudge, 0px)) /* 5.6.4 세로 중앙 (5.5.3 반행간 보정 — 기본 글꼴에서 +0.8px 위) */; font-size:12px; }
+.salty-panel .bl-extension-page :is(.bl-word-actions,.bl-addon-actions) > button:where(:not(.bl-word-help)) { flex:0 1 auto; min-height:36px; padding:calc(6px + var(--bl-text-nudge, 0px)) 10px calc(6px - var(--bl-text-nudge, 0px)) /* 5.6.4 세로 중앙 (5.5.3 반행간 보정 — 기본 글꼴에서 +0.8px 위) */;}
 .bl-extension-page .bl-word-actions > .bl-word-help { flex:0 0 32px; width:32px; height:32px; min-height:32px; align-self:center; padding:0; }
 .bl-rule-caption { display:grid; grid-template-columns:1fr 1fr; gap:36px; padding:0 32px 0 24px; font-size:12px; color:var(--salty-muted); } /* 5.6.4 gap 20 → 36: 아래 → 칸이 12 → 28px 로 넓어진 만큼 '바꿀 말' 이름을 둘째 입력칸 왼쪽에 그대로 */
 .bl-extension-page .bl-word-rule { grid-template-columns:18px minmax(0,1fr) 28px minmax(0,1fr) 26px; gap:4px; } /* 5.6.4 → 바꾸기 단추 12 → 28px: 누르기 어렵고 글자가 2px 넘쳤다 */
@@ -61,15 +61,15 @@ body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; 
 .bl-word-comparison mark.bl-diff-del { background:var(--salty-accent-10); text-decoration:line-through; text-decoration-color:var(--salty-accent-70); text-decoration-thickness:1px; }
 .bl-tool-status:empty { display:none; }
 .bl-capture-options { gap:10px; }
-.bl-capture-options .bl-mask-options { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
-.bl-capture-options .bl-mask-options label { gap:4px; padding:8px; min-width:0; min-height:44px; font-size:12px; }
+
+.bl-capture-options .bl-mask-options label {padding:8px; min-width:0;}
 .bl-capture-options .bl-mask-options input { margin:0; accent-color:var(--salty-accent); }
 .bl-capture-options .bl-mask-options .bl-mask-sample { width:23px; height:12px; flex:none; }
 .bl-capture-options .bl-mask-customize { gap:10px; padding:10px 0 0; margin-top:10px; border:0; border-top:1px solid var(--salty-line); border-radius:0; }
 .bl-mask-customize canvas { max-width:100%; max-height:90px; object-fit:contain; }
-.bl-mask-customize .bl-mask-number { display:grid; grid-template-columns:minmax(0,1fr); gap:4px; font-size:12px; }
-.bl-mask-customize .bl-mask-number-head { display:flex; gap:4px; align-items:center; justify-content:space-between; min-height:34px; }
-.bl-mask-customize .bl-mask-number input[type=number] { flex:0 0 48px; width:48px; min-height:32px; padding:4px; margin:0; color:var(--salty-text)!important; background:var(--bl-fill-field,var(--salty-field))!important; }
+.bl-mask-customize .bl-mask-number { display:grid; grid-template-columns:minmax(0,1fr);}
+.bl-mask-customize .bl-mask-number-head { display:flex;align-items:center; justify-content:space-between; min-height:34px; }
+.bl-mask-customize .bl-mask-number input[type=number] {min-height:32px; padding:4px; margin:0; color:var(--salty-text)!important; background:var(--bl-fill-field,var(--salty-field))!important; }
 .bl-mask-customize .bl-mask-number input[type=range], .bl-capture-filter .bl-capture-filter-range input[type=range] { -webkit-appearance:none!important; appearance:none!important; display:block; width:100%!important; height:36px!important; min-height:36px; margin:0!important; padding:0!important; border:0!important; border-radius:0!important; background:transparent!important; box-shadow:none!important; touch-action:pan-y pinch-zoom; cursor:pointer; }
 .bl-mask-customize input[type=range]::-webkit-slider-runnable-track, .bl-capture-filter input[type=range]::-webkit-slider-runnable-track { height:var(--bl-track-h,5px)!important; border:0!important; border-radius:999px!important; background:linear-gradient(to right,var(--salty-accent) var(--mask-fill,0%),var(--salty-line) var(--mask-fill,0%))!important; box-shadow:none!important; }
 /* 6.9.8 치수 맞추기 ⑤: 손잡이 18px 포인트색 → 테마 공통 손잡이(--bl-knob-size 22 · 흰색 · --bl-knob 그림자), 막대 4 → --bl-track-h 5 — 생성 설정 · 설정 창 슬라이더와 같은 부품 */
@@ -84,14 +84,14 @@ body.salty-dark :is(.bl-extension-page,.bl-capture-dialog) { color-scheme:dark; 
 .bl-capture-filter input[type=range]::-moz-range-progress { background:transparent; }
 .bl-capture-options input:is([type=checkbox],[type=radio]) { appearance:auto!important; -webkit-appearance:auto!important; accent-color:var(--salty-accent); width:18px!important; height:18px!important; min-width:18px; margin:0!important; padding:0!important; box-shadow:none!important; color-scheme:light; transform:none!important; } /* 5.6.4 transform: 실리태번 체크박스의 translateY(-0.075em) 를 지움 — 다른 확장 화면 체크박스(아래 :179)와 같게, 상자가 글자보다 1.2px 위였다 */
 body.salty-dark .bl-capture-options input:is([type=checkbox],[type=radio]) { color-scheme:dark; }
-.bl-mask-color { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px 10px; font-size:12px; }
+.bl-mask-color { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px 10px;}
 .bl-mask-color input[type=color] { -webkit-appearance:none!important; appearance:none!important; width:100%; height:34px; min-height:34px; margin:0; padding:4px!important; border:1px solid var(--salty-line)!important; border-radius:8px!important; background:var(--salty-field)!important; box-shadow:none!important; cursor:pointer; }
 .bl-mask-color input[type=color]::-webkit-color-swatch-wrapper { padding:0; }
 .bl-mask-color input[type=color]::-webkit-color-swatch { border:0; border-radius:5px; }
 .bl-mask-color input[type=color]::-moz-color-swatch { border:0; border-radius:5px; }
 .bl-mask-detail { padding-top:10px; border-top:1px solid var(--salty-line); }
 /* 5.5.3 캡처 필터: 프리셋 + 슬라이더 여섯 — 마스크 슬라이더와 같은 모양.
-   5.5.4 사용자 요청: 폰에서도 두 열(그레인·밝기 / 대비·채도 / 색온도·비네트) — 필터 칸 너비가 17em 이상이면 두 열, 큰 UI 글씨로 좁아지면 한 열 */
+   5.5.4 폰에서도 두 열(그레인·밝기 / 대비·채도 / 색온도·비네트) — 필터 칸 너비가 17em 이상이면 두 열, 큰 UI 글씨로 좁아지면 한 열 */
 .bl-tool-section[data-tool-section="filter"] { container:bl-capture-filter / inline-size; }
 .bl-capture-filter { grid-template-columns:minmax(0,1fr); }
 @container bl-capture-filter (min-width:17em) {
@@ -110,18 +110,18 @@ body.salty-dark .bl-capture-options input:is([type=checkbox],[type=radio]) { col
 .bl-capture-options [data-capture-filter-reset] { justify-self:start; } /* 작은 버튼 하나 — 칸 끝까지 늘리지 않고 글자 너비 */
 .bl-capture-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px 10px; min-height:140px; border:1px dashed var(--salty-line); border-radius:10px; background:var(--salty-shade); text-align:center; }
 .bl-capture-empty > span { font-size:var(--bl-deco-glyph-30); opacity:.5; }
-.bl-capture-empty b { font-size:13px; font-weight:650; }
-.bl-capture-empty p { margin:0; font-size:12px; line-height:1.6; color:var(--salty-muted); }
+
+.bl-capture-empty p { margin:0;line-height:1.6; color:var(--salty-muted); }
 .bl-capture-stage-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
 .bl-capture-stage-actions > * { flex:1 1 100px; min-width:0; white-space:normal; min-height:40px; }
 .bl-capture-stage-actions > .bl-capture-share { flex:0 0 auto; width:var(--bl-h-lg,44px); min-width:var(--bl-h-lg,44px); padding-inline:0; } /* 6.9.8 공유 아이콘: 저장 옆 아이콘 단추 하나 (폰 · 공유 가능할 때만 보임) */
 html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px solid color-mix(in srgb,var(--salty-accent) 50%,transparent); background:color-mix(in srgb,var(--salty-accent) 14%,var(--salty-surface)); }
-.bl-extension-page .bl-addon-position-preview,.bl-extension-page .bl-wand-preview { padding:10px; margin:0; }
-.bl-extension-page .bl-addon-position-preview > small,.bl-wand-preview > small { color:var(--salty-muted); font-size:12px; }
+.bl-extension-page .bl-addon-position-preview,.bl-extension-page .bl-wand-preview {margin:0; }
+.bl-extension-page .bl-addon-position-preview > small,.bl-wand-preview > small { color:var(--salty-muted);}
 .bl-extension-page .bl-addon-position-preview > div,.bl-extension-page .bl-wand-preview-input { margin:8px 0; gap:8px; font-size:12px; }
 .bl-extension-page .bl-addon-position-preview span { padding:6px 8px; }
 .bl-wand-preview-menu { padding:6px; border:1px solid var(--salty-line); border-radius:8px; background:var(--salty-surface); }
-.bl-wand-preview-menu p { margin:0; padding:6px 8px; font-size:12px; }
+.bl-wand-preview-menu p { margin:0;font-size:12px; }
 @container bl-editor (min-width:720px) {
   html body .bl-editor .bl-extension-page { display:flex; flex-direction:column; overflow:hidden; padding:10px; }
   .bl-extension-page .bl-addon-header { flex:none; margin:0; }
@@ -146,7 +146,7 @@ html body .salty-panel .bl-tool-primary { color:var(--salty-text); border:1px so
 
 /* 5.1.2 원작자 출처 — 화면 맨 아래, 엔딩 크레딧처럼 가운데 회색 작은 글씨 (ⓒ 창과 같은 링크) */
 .bl-extension-page .bl-addon-embedded-layout { min-height:100%; box-sizing:border-box; }
-.bl-addon-credit { display:flex; flex-direction:column; align-items:center; gap:1px; margin:24px 0 0; padding:12px 8px 2px; border-top:1px dashed var(--salty-line); text-align:center; color:var(--salty-muted); font-size:12px; line-height:1.7; letter-spacing:.02em; overflow-wrap:anywhere; }
+.bl-addon-credit { display:flex; flex-direction:column; align-items:center; gap:1px; margin:24px 0 0; padding:12px 8px 2px; border-top:1px dashed var(--salty-line); text-align:center; color:var(--salty-muted);line-height:1.7;overflow-wrap:anywhere; }
 .bl-addon-layout > .bl-addon-credit { margin-top:auto; }
 /* 글자는 작게 두고 누르는 영역만 넓힌다 (폰 오탭 방지) — 5.1.3 */
 .bl-addon-credit a { display:inline-block; padding:8px 6px; margin:0; color:inherit; text-decoration:underline dotted; text-underline-offset:3px; }

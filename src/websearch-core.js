@@ -1,7 +1,7 @@
 // 6.2.6 웹 검색 · 출처 — 순수 함수. DOM · 실리태번 import 없음 (tools/tests/websearch-mark.mjs 가 node 로 검사한다).
 // 화면 · 이벤트 연결은 src/websearch.js, 응답 흔적을 알리는 곳은 성능 보조의 요청 로그(src/addons/perf/capture.js).
 //
-// 사용자: 「검색한 답에는 작은 지구 표시를 띄우고, 낱말을 꾹 누르면 프롬프트 어디서 왔는지(카드 · 로어북 · 기억 · 지시, 없으면 '지어냄/검색') 보여 주는 거」
+// 검색한 답에는 작은 지구 표시, 낱말을 꾹 누르면 프롬프트 어디서 왔는지(카드 · 로어북 · 기억 · 지시, 없으면 '지어냄/검색') 보여 줘요
 // · 응답 흔적(webSearchEvidence): 실리태번 서버는 Claude 5 모델 + 웹 검색 켬이면 web_search 도구를 붙인다(src/endpoints/backends/chat-completions.js).
 //   답의 server_tool_use(name web_search) · web_search_tool_result 블록, usage.server_tool_use.web_search_requests 가 그 증거.
 //   다른 공급자도 같은 뜻의 흔적이 있으면 본다: OpenAI 계열 url_citation 주석 · Responses web_search_call, Gemini groundingMetadata, citations.

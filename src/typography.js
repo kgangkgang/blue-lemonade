@@ -2,14 +2,16 @@
 import { normalizeTrackerSpacing } from './addons/bookmarks/tracker-spacing.js';
 import { restoreDialogueTildes, resetDialogueTildes } from './dialogue-tildes.js';
 import { wrapSpanningQuotes, resetSpanningQuotes } from './dialogue-span.js';
-let active=false, observer=null, timer=0;
+import { watchDom } from './dom-watch.js';
+import { addMessageDecorator } from './message-decor.js';
+let active=false, observer=null, decor=null;
 // 6.6.9 조판이 메시지를 다시 볼 때 같이 할 일 (글자색 대비 맞추기 ink-contrast.js 가 건다 — 감시자를 따로 두지 않게)
 let typesetHook=null;
 export function setTypesetHook(fn){typesetHook=typeof fn==='function'?fn:null;}
 const originals=new Map(), dirty=new Set();
 const LINE_INDENT='bl-dialogue-indent';
 // 6.9.2 중국어 · 일본어 덩어리는 글자 사이에서 줄바꿈 — 본문은 한국어를 낱말 단위(keep-all)로 끊는데, 띄어쓰기 없는 중국어 문장은 통째로 한 낱말이 돼
-//       줄 끝에 자리가 남아도 다음 줄로 넘어가 큰 빈칸이 생겼다 (커뮤니티 제보 「중국어 (한국어 번역)」 줄). 여섯 자 넘는 덩어리만 감싸고 CSS 가 그 안만 word-break: normal
+//       줄 끝에 자리가 남아도 다음 줄로 넘어가 큰 빈칸이 생겼다 (「중국어 (한국어 번역)」 같은 줄). 여섯 자 넘는 덩어리만 감싸고 CSS 가 그 안만 word-break: normal
 export const CJK_WRAP='bl-cjk';
 const CJK_CHAR=/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
 const CJK_RUN=/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}ー々〆〇][\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}ー々〆〇，。、．！？；：…・〜～]*/gu;
@@ -44,7 +46,7 @@ const mounting=new WeakSet();
 // 5.3.4: 에셋 그림에 곧장 붙은 <br> (사이에 빈칸 · 주석만) — 뒤로 셋, 앞으로 둘까지 .bl-img-br (css/07-images 가 숨김).
 // 예전 CSS 형제 선택자(img + br + br)는 사이의 글자를 건너뛰어 "줄A<br>줄B" 의 줄바꿈까지 숨겼다
 // 5.3.4: 첫 줄 들여쓰기(salty-indent)는 문단의 첫 줄에만 걸려서, <p><img><br>글</p> 의 '글' 은 그림 뒤 새 줄인데도 들여쓰지 않았다
-// (사용자 제보). 그림 뒤 글 앞에 빈 칸(.bl-img-indent, 들여쓰기가 켜졌을 때만 1em — css/07-images)을 하나 끼운다
+// 그림 뒤 글 앞에 빈 칸(.bl-img-indent, 들여쓰기가 켜졌을 때만 1em — css/07-images)을 하나 끼운다
 const ASSET_IMG='img.character-asset-rendered, img.eh-img', IMG_BR='bl-img-br', IMG_INDENT='bl-img-indent';
 const blank=node=>node.nodeType===8||(node.nodeType===3&&!node.data.trim())||node.classList?.contains(IMG_INDENT);
 // 들여 쓸 글 줄의 첫 조각인가: 글자 또는 글 속 요소(q · span · em …). 줄바꿈 · 그림 · 블록은 아님
@@ -74,7 +76,7 @@ export function markAssetBreaks(root){
     for(const br of want)if(!br.classList.contains(IMG_BR))br.classList.add(IMG_BR);
     for(const pad of [...(root.getElementsByClassName?.(IMG_INDENT) || root.querySelectorAll(`.${IMG_INDENT}`))])if(!spots.has(pad.nextSibling)){pad.remove();changed=true;}
     for(let spot of spots)if(!spot.previousSibling?.classList?.contains(IMG_INDENT)){
-        // 5.3.7: 글 마디가 줄바꿈 · 빈칸으로 시작하면("\n나이트…") 칸 뒤의 그 빈칸이 띄어쓰기 한 칸으로 그려져 들여쓰기가 1em+빈칸(16px → 20px)이었다.
+        // 5.3.7: 글 마디가 줄바꿈 · 빈칸으로 시작하면("\n세라피나…") 칸 뒤의 그 빈칸이 띄어쓰기 한 칸으로 그려져 들여쓰기가 1em+빈칸(16px → 20px)이었다.
         // 접히는 빈칸만 떼어 칸 앞(줄 머리 — 그려지지 않는다)에 두고, 글자 바로 앞에 칸을 끼운다. 글자는 그대로 (마디만 둘로)
         if(spot.nodeType===3){const lead=/^[ \t\n\r\f]+/.exec(spot.data)?.[0].length;if(lead)spot=spot.splitText(lead);}
         const pad=document.createElement('span');pad.className=IMG_INDENT;pad.setAttribute('aria-hidden','true');
@@ -263,7 +265,7 @@ function writeRoot({root,quotes,starts}){
 export function syncTypography(on) {
     if(active===on)return;active=on;
     if(!on){
-        observer?.disconnect();observer=null;clearTimeout(timer);timer=0;dirty.clear();
+        observer?.();observer=null;decor?.();decor=null;dirty.clear();
         for(const [node,value] of originals){
             if(!node.isConnected)continue;
             if(node.textContent===value.after&&(!value.lead||value.lead.textContent===value.prefix)){
@@ -282,36 +284,32 @@ export function syncTypography(on) {
 
     const chat=document.getElementById('chat');if(!chat)return;
     // 4.7.8: 답이 오는 동안(body[data-generating]) 그 메시지는 걸음마다 다시 그려지므로 조판해 봐야 다음 걸음에 사라진다 —
-    // 생성 중에는 표시줄 뒤 빈 줄만 정리하고, 나머지 조판은 답이 끝나면 한 번에 처리한다.
-    // 5.8.4: 변화마다 clearTimeout + setTimeout 하던 것을 타이머 하나 + 마감 시각(due)으로 — 변화가 오면 마감만 뒤로 민다 (성능 보조가 타이머를 감싸 조각마다 값이 났다).
-    // 걸린 타이머가 마감보다 먼저 울리면 남은 만큼 다시 건다 → 마지막 변화 120ms 뒤(생성 중 다시 보기는 400ms 뒤)에 도는 것은 같다. 마감보다 늦게 울릴 타이머면 예전처럼 다시 건다.
-    let due=0,timerAt=0;
-    const fire=()=>{timer=0;const left=due-performance.now();if(left>0.5){timerAt=due;timer=setTimeout(fire,left);return;}flush();};
-    const later=ms=>{due=performance.now()+ms;if(timer&&timerAt<=due)return;clearTimeout(timer);timerAt=due;timer=setTimeout(fire,ms);};
-    const flush=()=>{timer=0;if(document.body.dataset.generating==='true'){for(const root of dirty)if(root?.isConnected){normalizeTrackerSpacing(root);restoreDialogueTildes(root);}later(400);return;}typesetRoots([...dirty].filter(root=>root?.isConnected));dirty.clear();observer?.takeRecords();};
-    observer=new MutationObserver(records=>{
+    // 생성 중에는 표시줄 뒤 빈 줄만 정리하고(아래 그리기 전 구독), 나머지 조판은 답이 끝나면 한 번에 처리한다.
+    // 9.0.4: 메시지 조판은 메시지 꾸미기(src/message-decor.js) 한 함수로 — 메시지 이벤트(그려짐 · 고침 · 스와이프 · 채팅 열기)는 다음 프레임에 그 메시지만,
+    //   이벤트 없는 변화(번역 · 다른 확장)는 마지막 변화 120ms 뒤(예전 묶음 시간 그대로), 답이 오는 동안 바뀐 메시지는 끝나면 한 번에.
+    decor=addMessageDecorator('조판',list=>typesetRoots(list),{settle:120,order:20});
+    // 그리기 전 일만 #chat 구독(공용 감시 허브 · when 'now')에 남겨요: 생성 중 표시줄 뒤 빈 줄 · 그림 옆 <br> · <style> 뒤 빈 줄 · 색 글자 훅
+    observer=watchDom(chat,{childList:true,subtree:true,characterData:true,name:'조판 (그리기 전)'},records=>{
         const generating=document.body.dataset.generating==='true',now=new Set(),touched=new Set();
         for(const record of records){
             const element=record.target.nodeType===1?record.target:record.target.parentElement;
             // 8.2.7 번역 진행 표시(.llmt-progress)는 번역하는 동안 1초마다 글을 새로 쓴다 — 그 안에는 조판할 것(대사 · 그림 · 색 글자 · 한자 줄)이 없으니 메시지를 다시 조판하지 않는다
             //   (표시를 붙이고 떼는 기록은 .mes_text 의 자식 목록이라 그대로 본다)
             if(element?.closest('.llmt-progress'))continue;
-            const mes=element?.closest('.mes');if(mes){dirty.add(mes);touched.add(mes);if(generating)now.add(mes);continue;}
-            // 5.3.4: #chat 에 새 메시지가 붙은 기록 — 예전엔 부모(#chat)를 넣어 새 메시지 하나에 채팅 전체를 다시 조판했다. 붙은 메시지만
-            for(const node of record.addedNodes)if(node.nodeType===1&&(node.matches('.mes')||node.querySelector('.mes'))){dirty.add(node);touched.add(node);}
+            const mes=element?.closest('.mes');if(mes){touched.add(mes);if(generating)now.add(mes);continue;}
+            // 5.3.4: #chat 에 새 메시지가 붙은 기록 — 붙은 메시지만(채팅 전체가 아니라)
+            for(const node of record.addedNodes)if(node.nodeType===1&&(node.matches('.mes')||node.querySelector('.mes')))touched.add(node);
         }
         // 5.3.2: 생성 중 표시줄 뒤 빈 줄은 그리기 전에(이 콜백은 화면을 그리기 전 마이크로태스크) 바로 지운다.
-        // 예전엔 120ms 뒤에 지워서, 글자 조각이 올 때마다 빈 줄이 생겼다 사라져 답이 위아래로 흔들렸다 (사용자 제보: 떡방아).
+        // 예전엔 120ms 뒤에 지워서, 글자 조각이 올 때마다 빈 줄이 생겼다 사라져 답이 위아래로 흔들렸다 .
         // 지우면서 생긴 기록은 버린다 (다시 이 콜백을 부르지 않게).
-        if(now.size){for(const mes of now)if(mes.isConnected)normalizeTrackerSpacing(mes);observer.takeRecords();}
+        if(now.size){for(const mes of now)if(mes.isConnected)normalizeTrackerSpacing(mes);observer.quiet();}
         // 5.3.4: 그림 옆 <br> 표시도 그리기 전에 — 늦게 달면 빈 줄이 한 번 보였다 사라진다 (클래스만 바꾸므로 감시 기록이 생기지 않는다)
         // 들여쓰기 칸을 넣고 뺀 기록도 버린다 (우리가 만든 것뿐 — 이 메시지는 이미 dirty 에 있다)
         let padded=false;for(const root of touched)if(root.isConnected){if(markAssetBreaks(root))padded=true;markStyleBreaks(root);}   // 6.7.5 <style> 뒤 빈 줄도 그리기 전에 (클래스만)
-        if(padded)observer.takeRecords();
+        if(padded)observer.quiet();
         // 6.6.9 다시 그려진 메시지의 색 글자는 그리기 전에 (실리태번은 답이 오는 동안 조각마다 본문을 통째로 다시 그린다 — 늦으면 원래 색이 깜빡인다)
         typesetHook?.([...touched].filter(root=>root.isConnected));
-        later(120);
     });
-    observer.observe(chat,{childList:true,subtree:true,characterData:true});
 }
 document.addEventListener('chat-bookmarks:render',event=>typesetRoot(event.detail?.root));

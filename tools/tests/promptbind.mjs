@@ -349,4 +349,21 @@ await test('7.0.7 다시 그리기를 잃지 않는다: 프리셋 저장 중에 
     B.clearBinds('bluelock_colors'); delete ctx.getPresetManager; delete ctx.reloadCurrentChat; delete ctx.saveChat; delete ctx.reloads;
 });
 
+await test('테마를 끄거나 「확장만」이면 채팅을 바꿔도 프롬프트를 켜고 끄지 않아요 (새로고침 전 포함)', async () => {
+    const s = getSettings(), id = 'bluelock_colors';
+    B.setBind(id, 'c:haru.png', true);
+    order.find(e => e.identifier === id).enabled = true;
+    ctx.characterId = 1;
+    s.enabled = false;
+    assert.equal(await B.syncPromptBinds('chat'), 0, '끈 상태');
+    assert.equal(on(id), true, '끈 상태에서는 그대로');
+    s.enabled = true; s.usageMode = 'extensions';
+    assert.equal(await B.syncPromptBinds('chat'), 0, '확장만');
+    assert.equal(on(id), true, '확장만에서도 그대로');
+    s.usageMode = 'both';
+    assert.equal(await B.syncPromptBinds('chat'), 1, '켜면 다시 맞춰요');
+    assert.equal(on(id), false);
+    B.clearBinds(id); ctx.characterId = 0;
+});
+
 console.log(`\npromptbind: ${passed} passed, 0 failed`);

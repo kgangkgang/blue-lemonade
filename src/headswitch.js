@@ -1,10 +1,11 @@
 // 확장 위 스위치 (6.0.4) — 확장 설정 창 안의 켜기·끄기 스위치를 창 제목 줄에도 보인다.
-// 사용자: "모든 확장 … 기본은 다 안 보이게 … 안에서 설정하면 밖에 토글 보이게 … 기본값은 안에만 토글 있는 거".
+// 확장 스위치는 기본으로 안에만 두고, 안에서 켜면 밖에도 보이게.
 // 기본은 전부 숨김. 켜기·끄기 스위치가 있는 창에는 안 맨 위에 「확장 탭에 보이기」 줄이 생기고, 켜면 제목 줄에 스위치가 붙어 안의 것과 같이 움직인다.
-// 6.1.8: 줄 이름은 모든 창에서 「확장 탭에 보이기」 하나로 (전엔 「<켜기 이름>」 위에도 보이기). 사용자: 「~위에도 보이기 버튼 그냥 확장탭에 보이기로 이름 다 통일해 줘 지금 너무 산만하다」
+// 6.1.8: 줄 이름은 모든 창에서 「확장 탭에 보이기」 하나로 (전엔 「<켜기 이름>」 위에도 보이기). 이름이 제각각이라 산만하던 것.
 // 안의 스위치 찾기: [data-bl-master] → id·name 에 enable/active/on/use 힌트 → 라벨 글에 사용/켜/enable 힌트 → 후보가 하나뿐이면 그것 (여럿인데 힌트가 없으면 안 건다).
 // 설정: headSwitches { <창 열쇠>: true } — 열쇠는 창의 id, 없으면 class (확장 순서 애드온 keyOf 와 같은 규칙, data-po-key 가 있으면 그것).
 import { getSettings, saveSettings } from './settings.js';
+import { watchDom } from './dom-watch.js';   // 9.0.4 공용 감시 허브
 
 const COLUMNS = ['extensions_settings', 'extensions_settings2'];
 const STRIP = '.ext-version, [class*="-version"], [class*="_version"], .inline-drawer-icon, i, svg, button, input, select, textarea';
@@ -185,12 +186,12 @@ function schedule() { clearTimeout(timer); timer = setTimeout(refresh, 250); }
 function onChange() { setTimeout(sync, 0); }
 function start() {
     const block = document.getElementById('rm_extensions_block') || document.body;
-    observer = new MutationObserver((records) => {
+    // 9.0.4: 공용 감시 허브 구독 — 확장 칸이 아직 없어 body 를 보게 되면 채팅 가지는 감시도 안 걸어요
+    observer = watchDom(block, { childList: true, subtree: true, attributes: ['aria-checked'], exclude: block === document.body ? '#chat' : undefined, name: '머리 스위치' }, (records) => {
         if (records.every(ours)) return;
         if (records.some(r => r.type === 'attributes')) setTimeout(sync, 0);
         if (records.some(r => r.type === 'childList')) schedule();
     });
-    observer.observe(block, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-checked'] });
     block.addEventListener('change', onChange, true);
     block.addEventListener('click', onChange, true);
     // 체크박스를 코드로 바꾸면 알림이 없다 — 확장 칸이 보이는 동안 2초마다 맞춘다
@@ -198,7 +199,7 @@ function start() {
     ticker = setInterval(() => { const b = document.getElementById('rm_extensions_block'); if (!b || b.closest('.drawer-content')?.classList.contains('openDrawer') === false) return; if (b.offsetParent !== null) sync(); }, 2000);
 }
 function stop() {
-    observer?.disconnect(); observer = null;
+    observer?.(); observer = null;
     clearTimeout(timer); clearInterval(ticker); timer = 0; ticker = 0;
     const block = document.getElementById('rm_extensions_block') || document.body;
     block.removeEventListener('change', onChange, true);

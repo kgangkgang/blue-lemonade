@@ -15,5 +15,6 @@ installTabScroll([
     "body.salty .ui-tabs .ui-tabs-nav",
     ".ppt-ta-tabs",
     ".jj-seg[role=\"tablist\"]",
-    ".dq-tabs"
+    ".dq-tabs",
+    ".bl-editor .bl-screen-chips"
 ]);

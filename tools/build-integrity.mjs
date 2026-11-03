@@ -51,7 +51,12 @@ if(fs.existsSync(musicDir)||fs.existsSync(path.join(root,'src/scene-music.js')))
     if(bytes.length!==row.bytes||createHash('sha256').update(bytes).digest('hex')!==row.sha256)throw Error('Scene music content differs: '+row.id);
   }
 }
-const files=[...new Set(['manifest.json','index.js','style.css',...(fs.existsSync(path.join(root,'style-ext.css'))?['style-ext.css']:[]),...ttsAssets,...ttsExtraAssets,...musicAssets,...walk(path.join(root,'src')).filter(p=>/\.(js|css|html)$/.test(p)).map(p=>path.relative(root,p).replaceAll('\\','/'))])].filter(p=>p!=='src/build-info.js').sort();
+// 1.0.0 극한 최적화: 브라우저가 받는 JS 는 dist/(tools/build-bundle.mjs). 판 올림 · 빌드 흐름이 모두 이 도구를 지나니 src 가 바뀌었으면 여기서 다시 묶어요(--check 는 낡았으면 멈춰요)
+const bundleTool=await import(pathToFileURL(path.join(root,'tools/build-bundle.mjs')));
+if(process.argv.includes('--check')){const fresh=bundleTool.bundleFresh(root);if(!fresh.ok)throw Error('Stale dist bundle: '+fresh.why);}
+else if(!bundleTool.bundleFresh(root).ok)await bundleTool.buildBundle();
+const distFiles=fs.existsSync(path.join(root,'dist'))?walk(path.join(root,'dist')).map(file=>path.relative(root,file).split(path.sep).join('/')).filter(file=>file.endsWith('.js')):[];
+const files=[...new Set(['manifest.json','index.js','style.css',...distFiles,...(fs.existsSync(path.join(root,'style-ext.css'))?['style-ext.css']:[]),...ttsAssets,...ttsExtraAssets,...musicAssets,...walk(path.join(root,'src')).filter(p=>/\.(js|mjs|css|html)$/.test(p)).map(p=>path.relative(root,p).replaceAll('\\','/'))])].filter(p=>p!=='src/build-info.js').sort();
 const hashes=Object.fromEntries(files.map(file=>[file,fileFingerprint(fs.readFileSync(path.join(root,file)))]));
 const version=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8')).version;
 const data=`// Generated: installed runtime integrity, excluding this manifest itself.\nexport const BUILD_VERSION = ${JSON.stringify(version)};\nexport const FILE_HASHES = ${JSON.stringify(hashes,null,2)};\n`;

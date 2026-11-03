@@ -97,17 +97,15 @@ async function openEditor(mesId, { soundId } = {}) {
     function mutate(fn, focusId) { if (busy) return; const before = copy(rows); fn(); snapshot(before); renderScript(); if (focusId) scriptPanel.querySelector(`[data-row-id="${focusId}"] textarea`)?.focus(); }
     function setTab(next) { tab = next; scriptPanel.hidden = next !== 'script'; libraryPanel.hidden = next !== 'library'; hideHelp(); if (next === 'library') renderLibrary(); updateControls(); }
     function history(back) { const from = back ? undo : redo, to = back ? redo : undo; if (!from.length || busy) return; to.push(copy(rows)); rows = from.pop(); renderScript(); notice('대본 편집을 ' + (back ? '되돌렸어요.' : '다시 적용했어요.')); }
-    function help(text) {
-        const b = button('?', null, 'lvs-help-button'); b.setAttribute('aria-label', '사용 방법'); b.setAttribute('aria-expanded', 'false');
-        const hide = () => { if (helpPinned || helpButton !== b) return; tooltip.hidden = true; b.removeAttribute('aria-describedby'); b.setAttribute('aria-expanded', 'false'); };
-        const show = () => { if (helpButton && helpButton !== b) { helpButton.removeAttribute('aria-describedby'); helpButton.setAttribute('aria-expanded', 'false'); helpPinned = false; } helpButton = b; tooltip.textContent = text; tooltip.hidden = false; b.setAttribute('aria-describedby', tooltip.id); b.setAttribute('aria-expanded', 'true'); const rect = b.getBoundingClientRect(); tooltip.style.left = Math.max(12, Math.min(rect.left, innerWidth - tooltip.offsetWidth - 12)) + 'px'; tooltip.style.top = Math.max(12, Math.min(rect.bottom + 6, innerHeight - tooltip.offsetHeight - 12)) + 'px'; };
-        b.addEventListener('mouseenter', show); b.addEventListener('mouseleave', hide); b.addEventListener('focus', show); b.addEventListener('blur', () => { helpPinned = false; hide(); });
-        b.addEventListener('click', () => { helpPinned = !helpPinned; if (helpPinned) show(); else hide(); }); return b;
+    function help(text, title = '사용 방법') {
+        // 1.0.0 도움말 하나로: 말풍선 대신 테마 공용 도움말 창(help-sheet.js) · 모양은 H3(css/76 .bl-help-btn)
+        const b = button('', null, 'lvs-help-button bl-help-btn'); b.innerHTML = '<i class="fa-solid fa-question" aria-hidden="true"></i>'; b.setAttribute('aria-label', `${title} 사용 방법`);
+        b.addEventListener('click', () => { import('../../../help-sheet.js').then(m => m.openHelpSheet({ title, body: [text] })); }); return b;
     }
     function hideHelp() { helpPinned = false; tooltip.hidden = true; helpButton?.removeAttribute('aria-describedby'); helpButton?.setAttribute('aria-expanded', 'false'); helpButton = null; }
     function field(labelText, control, explanation = '') {
         const wrap = element('div', 'lvs-field'), label = element('label', '', labelText), caption = element('div', 'lvs-label');
-        control.id = `lvs-field-${++serial}`; label.htmlFor = control.id; caption.append(label); if (explanation) caption.append(help(explanation)); wrap.append(caption, control); return wrap;
+        control.id = `lvs-field-${++serial}`; label.htmlFor = control.id; caption.append(label); if (explanation) caption.append(help(explanation, labelText)); wrap.append(caption, control); return wrap;
     }
     function valueControl(row, key, control, numeric = false) {
         control.value = row[key]; let before = null;

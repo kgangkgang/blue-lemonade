@@ -382,8 +382,6 @@ body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) {
   padding: var(--bl-param-pad) !important;
 }
 body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > .range-block-title {
-  grid-column: 1;
-  grid-row: 1;
   width: auto !important;
   min-height: var(--bl-h-num);
   justify-content: flex-start !important;

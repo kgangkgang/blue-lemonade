@@ -135,7 +135,7 @@
 
 /* ===== 요청 로그 (parts/request-log.css) ===== */
 /* 요청 로그 (Request Log) — 설정 서랍 · 로그·집계 창 */
-:root { --rl-css-version: "1.6.0"; }
+:root { --rl-css-version: "1.6.1"; }
 .rl-price-sync-controls { display:flex; flex-wrap:wrap; align-items:center; gap:.65em 1em; margin:.65em 0; }
 .rl-price-sync-controls label { display:flex; align-items:center; gap:.4em; min-width:0; }
 .rl-price-sync-controls input { flex:0 0 auto; }
@@ -716,7 +716,7 @@
 
 /* ===== 저장 정리 (parts/save-dedupe.css) ===== */
 /* 저장 정리 (Save Dedupe) — 설정 서랍 */
-:root { --sv-css-version: "1.1.7"; }
+:root { --sv-css-version: "1.1.8"; }
 
 .sv-settings .sv-body {
     display: flex;
@@ -733,7 +733,7 @@
 }
 
 /* ===== 설정 톱니바퀴 (hub.js, 2.0.0) — 확장 서랍 맨 위 버튼 줄의 단추와 탭 창 ===== */
-:root { --pa-hub-css-version: "2.3.3"; }
+:root { --pa-hub-css-version: "2.3.4"; }
 
 .pa-hub-open {
     display: inline-flex;
@@ -946,6 +946,10 @@ html body.salty .pa-hub .pa-hub-tab > span { word-break: keep-all; overflow-wrap
 html body.salty .pa-hub .pa-hub-tab.active { background: var(--salty-accent-13, var(--salty-shade)); color: var(--salty-accent-ink, var(--pa-hub-accent)); box-shadow: none; }
 .pa-hub .pa-hub-load { min-height: 36px; margin: 0 0 6px; padding: 0; border-bottom: 1px solid var(--salty-line, var(--pa-hub-line)); font-size: var(--bl-ts-meta, 12.5px); opacity: 1; }
 .pa-hub .pa-hub-note { margin: 0 0 6px; font-size: var(--bl-ts-meta, 12.5px); }
+/* 2026-10-31 「저장 공간 보기」 줄 — 불러오기 줄과 같은 글자 크기 · 아래 선 */
+.pa-hub .pa-hub-storage { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; padding: 0 0 6px; border-bottom: 1px solid var(--salty-line, var(--pa-hub-line)); font-size: var(--bl-ts-meta, 12.5px); }
+.pa-hub .pa-hub-storage > span { min-width: 0; color: var(--salty-muted, inherit); }
+.pa-hub .pa-hub-storage > .menu_button { flex: none; margin: 0; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .pa-hub-pane :is(.sw-body, .pa-body, .sv-body, .rl-body, .lt-drawer) { padding: 0; }
 .pa-hub-pane :is(p, small):is(.sw-hint, .sv-hint, .rl-hint, .lt-note) { margin: 0; font-size: var(--bl-ts-meta, 12.5px); line-height: 1.5; color: var(--salty-muted, var(--rl-muted, inherit)); opacity: 1; }
 .pa-hub-pane .pa-note { font-size: var(--bl-ts-meta, 12.5px); color: var(--salty-muted, inherit); }

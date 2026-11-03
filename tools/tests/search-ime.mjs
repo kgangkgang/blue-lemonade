@@ -69,7 +69,7 @@ t('설정 chat.searchIme 기본 켬 · 보정 · 초기화에서 남김 · CHAT_
     assert.match(settings, /lazyAvatars: true, searchIme: true,/); assert.match(settings, /s\.chat\.searchIme = flag\(s\.chat\.searchIme, true\)/); assert.match(settings, /'lazyAvatars', 'searchIme'[^\]]*\]\) \{/);
     assert.match(read('src/styles.js'), /'lazyAvatars', 'searchIme'[^\]]*\];/);
     // (8.2.7) 바이바이가 켜져 있으면 기능 전체가 아니라 캐릭터 검색 칸만 쉰다 — search-ime-fields.mjs
-    assert.match(read('src/features.js'), /const searchIme = on && s\.chat\?\.searchIme !== false;\n\s+if \(searchIme \|\| modules\.searchime\) load\('searchime', '\.\/search-ime\.js'\)\.then\(m => m\?\.syncSearchIme\(searchIme, \{ skip: restingFor\('searchIme'\) \? \[m\.INPUT_ID\] : \[\] \}\)\)/);
+    assert.match(read('src/features.js'), /const searchIme = on && s\.chat\?\.searchIme !== false;\n\s+if \(searchIme \|\| modules\.searchime\) onGate\('drawer', \(\) => load\('searchime', '\.\/search-ime\.js'\)\.then\(m => m\?\.syncSearchIme\(searchIme, \{ skip: restingFor\('searchIme'\) \? \[m\.INPUT_ID\] : \[\] \}\)\), 'searchime'\)/);
     const panel = read('src/panel.js'); assert.ok(panel.includes("toggle('chat.searchIme', s.chat.searchIme !== false)") && panel.includes("restNote('searchIme', '캐릭터 검색 칸은 ')"));
     assert.ok(read('src/settings-labels.js').includes('"chat.searchIme":"검색은 글자 조합이 끝난 뒤"'));
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/search-ime\.mjs \./);

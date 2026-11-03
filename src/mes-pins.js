@@ -4,12 +4,10 @@
 // 감시자는 두지 않는다: 메시지가 그려지는 이벤트와 ··· 를 누르는 순간에만 훑는다 (대기 중 콜백 0).
 
 import { getSettings, saveSettings } from './settings.js';
+import { watchDom } from './dom-watch.js';
 
-const GENERIC = /^(mes_button|interactable|menu_button|fa|fa-.+|bl-.+|salty-.+)$/;
-// 실리태번이 상태에 따라 둘 중 하나만 보여 주는 짝 — 앞의 것을 고르면 뒤의 것도 같이 옮긴다
-const PAIRS = { mes_hide: ['mes_unhide'], mes_media_gallery: ['mes_media_list'] };
-const PAIRED = new Set(Object.values(PAIRS).flat());
-export const PIN_LIMIT = 12;
+import { GENERIC, PAIRS, PAIRED, PIN_LIMIT, KNOWN_PINS, tidyPins } from './mes-pins-keys.js';   // 9.0.9 통합: 설정 정리(settings.js)가 쓰는 순수 부분 — 이 파일(감시 허브 포함)은 2층(features.js)에서만 받아요
+export { PIN_LIMIT, tidyPins };
 
 const slots = new WeakMap();
 let pins = [];
@@ -19,7 +17,15 @@ let timers = [];
 let bound = null;
 
 /** 버튼 하나의 이름표: 공통 클래스를 뺀 첫 클래스 (mes_translate · mes_llm_translate …) */
-const basePinKey = el => [...(el.classList || [])].find(name => !GENERIC.test(name)) || '';
+// 1.0.0 극한 최적화: 단추 class 문자열마다 한 번만 — 300개 채팅 열기에서 단추마다 classList 펼치기 · 정규식이 폰 4배 89ms(프로파일 chatLong300 테마 1위)
+const pinKeyCache = new Map();
+const basePinKey = el => {
+    const cls = el.className;
+    if (typeof cls !== 'string') return [...(el.classList || [])].find(name => !GENERIC.test(name)) || '';   // SVG · 시험의 가짜 요소
+    let key = pinKeyCache.get(cls);
+    if (key === undefined) { key = [...(el.classList || [])].find(name => !GENERIC.test(name)) || ''; if (pinKeyCache.size < 4000) pinKeyCache.set(cls, key); }
+    return key;
+};
 export function pinKey(el) {
     const base = basePinKey(el);
     // Extensions can use one common class for several actions. Keep the saved
@@ -32,17 +38,6 @@ export function pinKey(el) {
 }
 const wantedKey = (el, wanted) => wanted.has(pinKey(el)) || wanted.has(basePinKey(el));
 
-export function tidyPins(list) {
-    if (!Array.isArray(list)) return [];
-    const out = [];
-    for (const key of list) {
-        if (typeof key !== 'string' || !/^[A-Za-z_][\w-]{0,63}$/.test(key) || GENERIC.test(key) || PAIRED.has(key) || out.includes(key)) continue;
-        out.push(key);
-        if (out.length >= PIN_LIMIT) break;
-    }
-    return out;
-}
-
 /** 설정 창의 고르기 목록: 메시지 틀과 지금 채팅의 마지막 메시지에서 메뉴 버튼을 모은다 (다른 확장이 메시지마다 붙이는 버튼 포함) */
 export function listMenuButtons() {
     const found = new Map();
@@ -53,7 +48,8 @@ export function listMenuButtons() {
         // 다른 확장이 자기 설정으로 숨겨 둔 버튼은 빼고, 실리태번이 메시지에 따라 숨기는 기본 버튼(프롬프트 보기 등)은 남긴다
         if (!key || PAIRED.has(key) || found.has(key) || (el.style.display === 'none' && !stock.has(key))) return;
         const icon = [...el.classList].filter(c => /^fa(-|$)/.test(c)).join(' ');
-        found.set(key, { key, icon, title: (el.getAttribute('title') || el.getAttribute('aria-label') || key).trim() });
+        const title = (el.getAttribute('title') || el.getAttribute('aria-label') || '').trim();
+        found.set(key, { key, icon: icon || KNOWN_PINS[key]?.[0] || 'fa-solid fa-puzzle-piece', title: title || KNOWN_PINS[key]?.[1] || '다른 확장 단추' });
     };
     const last = [...document.querySelectorAll('#chat > .mes')].at(-1);
     // 꺼내 둔 버튼은 메뉴에 남긴 자리 표시(주석 노드) 순서로 — 고를 때마다 목록 순서가 바뀌지 않게
@@ -64,7 +60,27 @@ export function listMenuButtons() {
         else if (moved.has(node)) take(moved.get(node));
     }
     template.forEach(take);
+    rememberNames(found.values());
     return [...found.values()];
+}
+
+// 1.0.0 후보: 고정해 둔 단추가 지금 안 잡혀도 고르기 목록에 사람이 읽는 이름 · 아이콘으로 — 테마 단추는 KNOWN_PINS, 다른 확장 단추는 이 기기에서 본 이름(최대 40개)
+const NAMES_KEY = 'bl_mespin_names';
+function readNames() { try { const v = JSON.parse(localStorage.getItem(NAMES_KEY) || '{}'); return v && typeof v === 'object' ? v : {}; } catch { return {}; } }
+function rememberNames(items) {
+    const names = readNames(); let changed = false;
+    for (const { key, icon, title } of items) {
+        if (KNOWN_PINS[key] || title === '다른 확장 단추' || names[key]?.[1] === title) continue;
+        delete names[key]; names[key] = [icon, title]; changed = true;
+    }
+    if (!changed) return;
+    const keys = Object.keys(names); for (const k of keys.slice(0, Math.max(0, keys.length - 40))) delete names[k];
+    try { localStorage.setItem(NAMES_KEY, JSON.stringify(names)); } catch { /* 저장 못 해도 이름만 덜 친절해져요 */ }
+}
+/** 지금 채팅에서 안 잡힌 고정 단추의 이름 · 아이콘 (열쇠 이름은 보이지 않아요) */
+export function pinLabel(key) {
+    const [icon, title] = KNOWN_PINS[key] || readNames()[key] || ['fa-solid fa-puzzle-piece', '다른 확장 단추'];
+    return { key, icon, title };
 }
 
 function restore(el) {
@@ -202,11 +218,12 @@ function watchFoldRepair() {
     if (!chat || !ctx.eventSource) return;
     const folded = () => (SillyTavern.getContext().chat || []).some(message => !message?.is_system && message?.extra?.bl_folded === true);
     const names = ['CHAT_CHANGED', 'GENERATION_STARTED'].filter(name => types?.[name]);
-    const observer = new MutationObserver(records => { if (records.some(record => record.target.getAttribute('is_system') === 'false')) kick(); });
-    const stop = () => { observer.disconnect(); for (const name of names) ctx.eventSource.removeListener?.(types[name], kick); };
+    let observer = null;
+    const stop = () => { observer?.(); observer = null; for (const name of names) ctx.eventSource.removeListener?.(types[name], kick); };
     function kick() { if (foldWatch === 'started' || !folded()) return; return loadFold().then(module => { if (!module || foldWatch === 'started') return; foldWatch = 'started'; stop(); module.startFoldRepair(); }); }
     foldWatch = 'watching';
-    observer.observe(chat, { subtree: true, attributes: true, attributeFilter: ['is_system'] });
+    // 9.0.4: 공용 감시 허브 구독(#chat 구역 — 채팅을 보는 감시자는 문서마다 하나)
+    observer = watchDom(chat, { subtree: true, attributes: ['is_system'], name: '메시지 핀 · 접은 메시지 숨김 풀기' }, records => { if (records.some(record => record.target.getAttribute('is_system') === 'false')) kick(); });
     for (const name of names) ctx.eventSource.on(types[name], kick);
     kick();
 }

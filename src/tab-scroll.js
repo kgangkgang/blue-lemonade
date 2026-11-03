@@ -1,4 +1,5 @@
 // Horizontal navigation only. Callers explicitly register strips, never option grids.
+import { watchWith } from './dom-watch.js';
 const KEY = Symbol.for('blue-lemonade.tab-scroll.v1');
 const ACTIVE = '[aria-selected="true"], [aria-pressed="true"], .active, .on, .is-active, .ui-tabs-active';
 
@@ -14,7 +15,7 @@ export function revealTab(bar, tab) {
     if (Math.abs(delta) > 0.5) bar.scrollLeft += delta;
 }
 
-/** 7.7.9 (제보 18) which edges hide more tabs: '' (fits or at both ends), 'left', 'right', 'both'. CSS (98-tab-strips) fades those edges. */
+/** 7.7.9 which edges hide more tabs: '' (fits or at both ends), 'left', 'right', 'both'. CSS (98-tab-strips) fades those edges. */
 export function fadeState(bar) {
     if (!bar || !bar.clientWidth || bar.scrollWidth <= bar.clientWidth + 1) return '';
     const left = bar.scrollLeft > 1, right = bar.scrollLeft + bar.clientWidth < bar.scrollWidth - 1;
@@ -44,16 +45,17 @@ export function installTabScroll(selectors, doc = globalThis.document) {
     const selected = bar => buttons(bar).find(el => el.matches(ACTIVE) || el.parentElement?.matches('.ui-tabs-active'));
     const schedule = bar => {
         pending.add(bar);
-        if (!frame) frame = win.requestAnimationFrame(() => {
+        // 1.0.0 극한 최적화: 읽기(getClientRects)는 그 프레임 배치가 끝난 뒤(setTimeout 0)에, 닫힌 서랍 · 안 열린 창 안의 탭 줄은 재지 않아요(보이면 ResizeObserver 가 다시 불러요)
+        if (!frame) frame = win.requestAnimationFrame(() => win.setTimeout(() => {
             frame = 0;
             for (const row of pending) {
-                if (!row.isConnected) continue;
+                if (!row.isConnected || row.closest('.drawer-content:not(.openDrawer), dialog:not([open])')) continue;
                 const active = selected(row);
                 if (active) revealTab(row, active);
                 applyFade(row);
             }
             pending.clear();
-        });
+        }, 0));
     };
     const owners = new WeakMap();
     const resize = typeof win.ResizeObserver === 'function' ? new win.ResizeObserver(entries => entries.forEach(e => {
@@ -117,14 +119,15 @@ export function installTabScroll(selectors, doc = globalThis.document) {
     } };
     doc[KEY] = api;
     api.add(selectors);
-    new win.MutationObserver(records => {
+    // 9.0.4: 공용 감시 허브 구독(html 구역 — 채팅 · head 는 안 봐요: 탭 줄은 서랍 · 창 안이에요) · 다음 프레임에 한 번
+    watchWith(win, [[doc.documentElement, { childList: true, subtree: true, exclude: ['#chat', 'head'], when: 'frame', name: '가로 탭 줄' }]], records => {
         let removed = false;
         for (const r of records) {
             r.addedNodes.forEach(scan);
             if ([...r.removedNodes].some(n => n.nodeType === 1)) removed = true;
         }
         if (removed) cleanup();
-    }).observe(doc.documentElement, { childList: true, subtree: true });
+    });
     // Existing tab handlers run first. Supply focus navigation only when they did not handle it; Enter/Space keep native activation.
     doc.addEventListener('keydown', e => {
         if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;

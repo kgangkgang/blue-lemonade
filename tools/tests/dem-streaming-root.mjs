@@ -30,9 +30,9 @@ test('답장 토큰이 오면 html 에 표식, 끝나면 뗌 — body class 는 
 });
 test('CSS 는 html 표식을 봐요(원본 · style.css · 미리보기 사본) — body 표식 규칙은 남지 않아요', () => {
     const src = read('css/30-dem-skin.css'), built = read('style.css');
-    assert.equal((src.match(/html\.salty-dem-streaming body\.salty\.salty-dem-skin #chat \.mes\.last_mes/g) || []).length, 3);
+    // 1.0.0 시안 A: 답장 중에 쉬게 하던 비싼 층(빛무리 · 하늘 7층 · 묶음 띠)이 없어져 쉬게 하는 규칙도 0개 — 다시 생기면 html 표식으로만
     for (const text of [src, built, read('css/23-preview.gen.css')]) assert.doesNotMatch(text, /body\.salty\.salty-dem-skin\.salty-dem-streaming/);
-    assert.ok(built.includes('html.salty-dem-streaming body.salty.salty-dem-skin :is(#chat,.bl-chat-like) .mes.last_mes'));
+    assert.ok(!/(?<!html)\.salty-dem-streaming/.test(src.replace(/html\.salty-dem-streaming/g, '')), '표식은 html 에만');
 });
 test('CI 등록', () => assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/dem-streaming-root\.mjs \./));
 console.log(`\n${passed} passed`);

@@ -1,0 +1,67 @@
+/* ===== css/50-settings-screens.css ===== */
+/* 1.0.0 설정창 화면 안쪽 — 묶음 제목 줄 · 합친 화면의 칩 한 줄 · 짧은 항목 2열, 그리고 「설정 선택」 목록 모양.
+   색은 기존 토큰만(새 색 · 그라데이션 · 그림자 없음). 크기는 철칙 1절 표(글자 단추 폰 36 · PC 34, 판 알약 20). */
+
+/* 묶음 제목: 누를 것이 아닌 소제목 한 줄 */
+html body .salty-panel.bl-editor .bl-editor-group-head { display:flex; align-items:center; margin:20px 0 8px; padding:0; border:0; background:none; color:var(--salty-text); font-size:calc(15 * var(--sp)); font-weight:650; line-height:1.4; }
+.bl-editor .salty-sec > .bl-editor-group:first-child > .bl-editor-group-head,
+.bl-editor .salty-sec > .bl-screen-chips + .bl-editor-group > .bl-editor-group-head { margin-top:8px; }
+
+/* 합친 화면 맨 위 칩 한 줄: 가로로 밀기 · 넘치는 쪽 흐림(tab-scroll 의 data-bl-fade) · 스크롤바 숨김 */
+html body .salty-panel.bl-editor .salty-seg.bl-screen-chips { display:flex; flex-wrap:nowrap; width:100%; margin:0 0 4px; overflow-x:auto; overscroll-behavior-x:contain; scrollbar-width:none; }
+.bl-editor .bl-screen-chips::-webkit-scrollbar { display:none; }
+/* 칩은 남는 폭을 나눠 갖되 글자보다 좁아지지 않아요 — 고르기 단추를 같은 폭으로 줄이는 공용 규칙(!important)이 칩 8개를 겹쳐 그렸어요 */
+html body .salty-panel.bl-editor .salty-sec .salty-seg.bl-screen-chips > button { flex:1 0 auto !important; min-width:max-content !important; white-space:nowrap; }
+
+/* 짧은 항목 2열(철칙 5): 크기 · 굵기 · 자간 · 줄 간격 묶음 — 좁으면 1열 */
+@container bl-editor (min-width:340px) {
+  html body .salty-panel.bl-editor .bl-editor-group-body > .salty-group.salty-sizes { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:4px 16px; }
+  html body .salty-panel.bl-editor .bl-editor-group-body > .salty-group.salty-sizes > * { grid-column:auto; min-width:0; margin:0; }
+}
+
+/* ── 설정 선택 목록 ── */
+/* 탭 이름: 면 · 왼쪽 선 막대 대신 작은 이름 줄(보조 글자) */
+html body .salty-panel .bl-editor-directory .bl-editor-category h4 { grid-column:1 / -1; margin:16px 0 4px; padding:0 4px; border:0; border-radius:0; background:none; color:var(--salty-muted); font-size:calc(13 * var(--sp)); font-weight:650; line-height:1.4; }
+.bl-editor-directory .bl-editor-category:first-child h4 { margin-top:4px; }
+/* 화면 이름 칸: 글자 단추 높이(폰 36 · PC 34)에 딱 맞게 — 위아래 여백을 칸 높이에서 계산 */
+html body.salty .salty-panel .bl-editor-directory .bl-editor-category button { display:flex; align-items:center; gap:8px; min-height:36px; margin:0; padding:0 10px; border:0; border-radius:8px; background:transparent; color:var(--salty-text); font:inherit; line-height:1.3; text-align:left; box-shadow:none; }
+@media (min-width:761px) and (hover:hover) { html body.salty .salty-panel .bl-editor-directory .bl-editor-category button { min-height:34px; } }
+html body.salty .salty-panel .bl-editor-directory .bl-editor-category button:hover { background:var(--salty-fill-shade, var(--salty-shade)); }
+html body.salty .salty-panel .bl-editor-directory .bl-editor-category button[hidden] { display:none; }
+/* 지금 화면 표시는 예전 그대로(56-control-consistency 와 같은 값) — 위 칸 규칙이 덮지 않게 같은 범위로 다시 적어요 */
+html body.salty .salty-panel .bl-editor-directory .bl-editor-category button[aria-current="page"] { background:var(--salty-fill-accent-10, var(--salty-accent-10)); color:var(--salty-accent-ink, var(--salty-accent)); font-weight:650; box-shadow:inset 3px 0 0 var(--salty-accent); }
+.bl-editor-directory .bl-editor-category { gap:0 8px; }
+/* 바꾼 설정 수: 판 알약과 같은 규격(12px · 높이 20 · 0 8 · 1px 선 · 모서리 10) — 글자에 섞지 않고 data-count 로 */
+.bl-editor-directory .bl-editor-category button[data-count]::after { content:attr(data-count); flex:none; margin-left:auto; display:inline-flex; align-items:center; height:20px; padding:0 8px; border:1px solid var(--salty-line); border-radius:10px; color:var(--salty-muted); font-size:12px; font-weight:400; line-height:1; }
+/* 아이콘: 보조 글자색 · 16 칸(고른 화면은 글자색 따라감) */
+.bl-editor-directory .bl-editor-category button > i { flex:none; width:16px; text-align:center; color:var(--salty-muted); font-size:calc(13 * var(--sp)); }
+.bl-editor-directory .bl-editor-category button[aria-current="page"] > i { color:inherit; }
+
+/* 즐겨찾기: 비었으면 머리 한 줄(설명은 그 줄 안에 짧게), 있으면 칩 줄 */
+.salty-panel .bl-editor-directory .bl-favorites { padding:0 0 8px; margin-bottom:4px; }
+.salty-panel .bl-editor-directory .bl-favorites header { min-height:36px; }
+.salty-panel .bl-editor-directory .bl-favorites header > b { flex:none; font-size:calc(13 * var(--sp)); color:var(--salty-muted); }
+.salty-panel .bl-editor-directory .bl-favorites header > small { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--salty-faint, var(--salty-muted)); font-size:calc(12 * var(--sp)); }
+.salty-panel .bl-editor-directory .bl-favorite-chips { display:flex; flex-wrap:wrap; gap:8px; }
+.salty-panel .bl-editor-directory .bl-favorite-chip { display:inline-flex; align-items:center; min-height:34px; padding:0 0 0 12px; border:1px solid var(--salty-line); border-radius:8px; background:transparent; }
+.salty-panel .bl-editor-directory .bl-favorite-chip > [data-favorite-jump] { min-height:32px; margin:0; padding:0; border:0; background:none; color:var(--salty-text); font:inherit; cursor:pointer; }
+.salty-panel .bl-editor-directory .bl-favorite-chip > .bl-favorite-toggle { flex:0 0 32px; width:32px; min-height:32px; }
+
+/* 1.0.0 묶음 칩: 칩이 묶음 이름을 대신하니 묶음 제목 줄은 숨겨요 · 숨은 묶음은 그리지 않아요 */
+.bl-editor .salty-sec.bl-group-chipped > .bl-editor-group > .bl-editor-group-head { display:none; }
+.bl-editor .salty-sec.bl-group-chipped > .bl-editor-group[hidden] { display:none !important; }
+.bl-editor .salty-sec.bl-group-chipped > .bl-group-chips + .bl-editor-group { margin-top:8px; }
+
+/* 1.0.0 간단화: 화면 맨 아래 「고급」 접힘 하나(마크다운 묶음 접힘 .bl-md-group 과 같은 모양 · 기본 접힘) — src/settings-advanced.js */
+.bl-editor .salty-sec details.bl-advanced { margin:16px 0 8px; }
+.bl-editor .salty-sec .bl-editor-group-body > details.bl-advanced { margin-top:12px; }
+.bl-editor .bl-advanced > .bl-advanced-body { padding:0 .6em .6em; }
+/* 고급 안 작은 제목(어느 묶음에서 왔는지) — 카드 안 카드가 되지 않게 면 · 선 없이 */
+html body .salty-panel.bl-editor .bl-advanced .bl-editor-group-head { margin:12px 0 4px; font-size:calc(13 * var(--sp)); color:var(--salty-muted); }
+html body .salty-panel.bl-editor .bl-advanced .bl-advanced-body > .bl-editor-group:first-child > .bl-editor-group-head { margin-top:4px; }
+@container bl-editor (min-width:340px) {
+  html body .salty-panel.bl-editor .bl-advanced-body > .salty-group.salty-sizes { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:4px 16px; }
+  html body .salty-panel.bl-editor .bl-advanced-body > .salty-group.salty-sizes > * { grid-column:auto; min-width:0; margin:0; }
+}
+/* 긴 설명을 모은 ? 의 제목 줄: 이름 없는 첫 묶음 · 칩 화면 묶음에만 생겨요(칩 화면에서도 보이게 묶음 몸 안에) */
+.bl-editor .salty-sec .bl-editor-group-body > .bl-help-head:first-child { margin-top:8px; }

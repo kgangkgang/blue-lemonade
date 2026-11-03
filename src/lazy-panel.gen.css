@@ -14,7 +14,7 @@ body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s,
 body.salty #WorldInfo #wiSliders > .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
 body.salty #user-settings-block #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child { flex-wrap: wrap !important; gap: 0 var(--bl-s1) !important; }
 body.salty #user-settings-block #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child > span { flex: 0 1 auto; min-width: min-content; }
-body.salty #WorldInfo > .flex-container:has(> #WI_panel_pin_div) > h3 {
+body.salty #WorldInfo > .flex-container:where(body.salty #WorldInfo > .flex-container):has(> #WI_panel_pin_div) > h3 {
   flex: 1 1 0;
   min-width: 0;
   flex-wrap: wrap;
@@ -54,7 +54,7 @@ body.salty #WorldInfo .world_entry_edit [name="keywordsAndLogicBlock"] > .world_
   letter-spacing: 0;
   white-space: normal;
 }
-body.salty #right-nav-panel #right-nav-panel-tabs:has(> #result_info[style*="none"]) #rm_button_selected_ch h2 {
+body.salty #right-nav-panel #right-nav-panel-tabs:where(body.salty #right-nav-panel #right-nav-panel-tabs):has(> #result_info[style*="none"]) #rm_button_selected_ch h2 {
   color: var(--salty-muted) !important;
 }
 body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > .wide100p > input {
@@ -68,10 +68,10 @@ body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="
   font-variant-numeric: tabular-nums;
   text-align: center;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) + li:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:where(body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt):has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) + li:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
   --pm-top: inset 0 0 transparent;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt:where(body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt):has(.prompt_manager_prompt_controls > :last-child:not(.prompt-manager-toggle-action)) {
   --bl-pm-group-name: 1;
 }
 @container style(--bl-pm-group-name: 1) {
@@ -80,7 +80,7 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list > li.compl
     font-weight: 650;
   }
 }
-body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:has(#completion_prompt_manager_popup_entry_form_prompt:disabled) > div:first-child::after {
+body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control:where(body.salty #completion_prompt_manager_popup .completion_prompt_manager_popup_entry_form_control):has(#completion_prompt_manager_popup_entry_form_prompt:disabled) > div:first-child::after {
   flex-basis: 100%;
   margin: var(--bl-s1) 0 var(--bl-s2);
   padding: var(--bl-s3) var(--bl-inset);
@@ -175,23 +175,22 @@ body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.
   align-items: center;
   gap: 6px;
 }
-body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :where(i):is(.bl-s, *),
-body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :where(i):is(.bl-s, *):not(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle),
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid:not(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) {
 font-size:12px !important;
 }
-body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :where(i):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :where(i):is(.bl-s, *):not(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid:not(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-faint) !important;
 }
-body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :where(i):is(.bl-s, *),
-body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :where(i):is(.bl-s, *):not(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle),
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child .fa-solid:not(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) {
 opacity:1 !important;
 }
 body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:not(:first-child) {
   font-size: var(--bl-fs-micro) !important;
 }
-body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header b,
-body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header strong {
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):where(body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header b, body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):where(body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header strong {
   font-weight: 650;
 }
 body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) > select {
@@ -200,18 +199,18 @@ body.salty #AdvancedFormatting .flex-container[data-bl-row~="pm"]:is(bl-s, *) > 
   margin: 0 !important;
   text-overflow: ellipsis;
 }
-body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) {
+body.salty #AdvancedFormatting .flex-container:where(body.salty #AdvancedFormatting .flex-container):has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) {
   flex-direction: row-reverse;
   align-items: center !important;
   justify-content: space-between;
   min-height: var(--bl-h-row);
 }
-body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) > small {
+body.salty #AdvancedFormatting .flex-container:where(body.salty #AdvancedFormatting .flex-container):has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) > small {
 padding:0 !important;
 font-size:var(--bl-fs-body) !important;
 font-weight:500;
 }
-body.salty #AdvancedFormatting .flex-container:has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) > small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty #AdvancedFormatting .flex-container:where(body.salty #AdvancedFormatting .flex-container):has(> label[for^="reasoning_"]) > div:has(> #reasoning_max_additions) > small:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-text) !important;
 }
 body.salty #user-settings-block-content :is([name="AvatarAndChatDisplay"], [name="CharacterHandlingToggles"], [name="ChatMessageHandlingToggles"], [name="AutoCompleteToggle"] .inline-drawer-content, [name="AutoCompleteToggle"] .inline-drawer-content > .flex-container) > div:is(:where([data-bl-row~="sel"]):is(bl-s, *), [data-bl-row~="sel2"]:is(bl-s, *):is(bl-s, *)) > span,
@@ -222,21 +221,20 @@ body.salty #AdvancedFormatting :is(#context_story_string_position_block, #instru
   flex: 0 1 auto !important;
   max-width: 60%;
 }
-body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label > span:where(label.checkbox_label > *):is(input[type="checkbox"] + span:has(+ small:last-child), :has(~ input[type="checkbox"] + span + small:last-child)) {
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label > span:where(label.checkbox_label > *):where(body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label > span):is(input[type="checkbox"] + span:has(+ small:last-child), :has(~ input[type="checkbox"] + span + small:last-child)) {
   flex: 1 1 0%;
   min-width: 0;
 }
-body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:has(> input[type="checkbox"] + span + small:last-child) > small {
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label:where(body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) label.checkbox_label):has(> input[type="checkbox"] + span + small:last-child) > small {
   flex: 1 1 100%;
   padding-left: 44px;
 }
-body.salty #user-settings-block-content .flex-container:has(> #blur_strength) > small:first-child::after, body.salty #user-settings-block-content .flex-container:has(> #shadow_width) > small:first-child::after {
+body.salty #user-settings-block-content .flex-container:where(body.salty #user-settings-block-content .flex-container):has(> #blur_strength) > small:first-child::after, body.salty #user-settings-block-content .flex-container:where(body.salty #user-settings-block-content .flex-container):has(> #shadow_width) > small:first-child::after {
 content:"테마가 끔";
 font-size:var(--bl-fs-sub);
 font-weight:400;
 }
-body.salty #user-settings-block-content .flex-container:has(> #blur_strength) > small:first-child:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
-body.salty #user-settings-block-content .flex-container:has(> #shadow_width) > small:first-child:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after {
+body.salty #user-settings-block-content .flex-container:where(body.salty #user-settings-block-content .flex-container):has(> #blur_strength) > small:first-child:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after, body.salty #user-settings-block-content .flex-container:where(body.salty #user-settings-block-content .flex-container):has(> #shadow_width) > small:first-child:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after {
 color:var(--salty-muted);
 }
 @media (max-width: 1000px) {
@@ -289,14 +287,10 @@ body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):i
   font-size: var(--bl-fs-sub) !important;
   line-height: 1.3;
 }
-body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > :where(select):is(.bl-s, *):is(.bl-s, *),
-body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > :where(input.text_pole):is(.bl-s, *):is(.bl-s, *),
-body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > .flex-container:has(> .text_pole),
-body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > :where(.flex-container:where([data-bl-row~="sel"]):is(bl-s, *)):is(.bl-s, *):is(.bl-s, *) {
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > :where(select):is(.bl-s, *):is(.bl-s, *), body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > :where(input.text_pole):is(.bl-s, *):is(.bl-s, *), body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > .flex-container:where(body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > .flex-container):has(> .text_pole), body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *):not(.flex-container) > :where(.flex-container:where([data-bl-row~="sel"]):is(bl-s, *)):is(.bl-s, *):is(.bl-s, *) {
   grid-column: 2;
 }
-body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *) > div:has(> small:only-child),
-body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *) > .neutral_warning:is(bl-s, *):is(bl-s, *) {
+body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *) > div:where(body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *) > div):has(> small:only-child), body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):is(bl-s, *) > .neutral_warning:is(bl-s, *):is(bl-s, *) {
   display: none !important;
 }
 body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > .standoutHeader > strong {
@@ -309,7 +303,7 @@ body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > .stan
   min-width: 0;
   margin: 0 !important;
 }
-body.salty #right-nav-panel .hotswap:not(:has(.avatar)) > small { display:none; }
+body.salty #right-nav-panel .hotswap:where(body.salty #right-nav-panel .hotswap):not(:has(.avatar)) > small { display:none; }
 body.salty .popup:is(#bl-s, *) .popup-content > #qr--modalEditor > #qr--main > .qr--labels > :where(label):is(.bl-s, *),
 body.salty .popup:is(#bl-s, *) .popup-content > #qr--modalEditor > #qr--main > .qr--labels > .label {
   flex:1 1 15em;
@@ -362,10 +356,7 @@ body.salty .range-block[data-bl-row~="range"]:is(.bl-s, *) > * {
 body.salty #left-nav-panel .range-block:is([data-bl-row~="num"], [data-bl-row~="numd"]):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > * {
   grid-column: 1 / -1;
 }
-body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting #InstructSettingsColumn:is(bl-s, *)[data-cc-null],
-body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#SystemPromptColumn > h4)[data-cc-null],
-body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting #SystemPromptBlock:is(bl-s, *)[data-cc-null],
-body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :where([name="tokenizerSettingsBlock"]):is(#bl-s, *):is(bl-s, *)[data-cc-null] {
+body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting #InstructSettingsColumn:is(bl-s, *)[data-cc-null], body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#SystemPromptColumn > h4)[data-cc-null], body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting #SystemPromptBlock:is(bl-s, *)[data-cc-null], body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :where([name="tokenizerSettingsBlock"]):is(#bl-s, *):is(bl-s, *)[data-cc-null] {
   --bl-cc-null-dim: 1;
 }
 @container style(--bl-cc-null-dim: 1) {
@@ -373,7 +364,7 @@ body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #A
     opacity: 0.5;
   }
 }
-body.salty #AdvancedFormatting .flex-container > :where(.flex-container > *):is(label[for^="reasoning_"], label[for^="reasoning_"] ~ *, :has(~ label[for^="reasoning_"])) {
+body.salty #AdvancedFormatting .flex-container > :where(.flex-container > *):where(body.salty #AdvancedFormatting .flex-container > *):is(label[for^="reasoning_"], label[for^="reasoning_"] ~ *, :has(~ label[for^="reasoning_"])) {
   flex: 1 1 100% !important;
 }
 body.salty #rm_api_block #openai_api > *,
@@ -383,24 +374,19 @@ body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):i
   margin: 0 !important;
 }
 @media (max-width: 1000px) {
-  .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > :not(.salty-slider),
-  .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider:not(.salty-slider + *):not(:has(+ .salty-slider)) {
+  .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > :not(.salty-slider), .salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider:not(.salty-slider + *):where(.salty-panel .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider):not(:has(+ .salty-slider)) {
     grid-column: 1 / -1;
   }
 }
 @media not all and (max-width: 1000px) {
-  .salty-panel.in-popup .salty-group > :where(.salty-group > *):not(.salty-row, .salty-slider):is(:has(~ :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)), :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider) ~ *),
-.salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-row:not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))),
-.salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-slider:not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))) {
+  .salty-panel.in-popup .salty-group > :where(.salty-group > *):not(.salty-row, .salty-slider):where(.salty-panel.in-popup .salty-group > *):is(:has(~ :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)), :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider) ~ *), .salty-panel.in-popup .salty-group:where(.salty-panel.in-popup .salty-group):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-row:not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))), .salty-panel.in-popup .salty-group:where(.salty-panel.in-popup .salty-group):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-slider:not(:is(.salty-row, .salty-slider) + *):not(:has(+ :is(.salty-row, .salty-slider))) {
     grid-column: 1 / -1;
   }
 }
 .bl-editor-actions [data-compare]{touch-action:none;user-select:none;white-space:nowrap;}
 .bl-editor-actions [data-compare][aria-pressed="true"]{background:var(--salty-accent);color:var(--salty-on-accent);}
 @container bl-controls (width < 41em) {
-  .salty-panel.in-popup .salty-group:not(.bl-setting-locks) > :where(.salty-group > *):not(.salty-slider):is(:is(.salty-row, .salty-slider):has(+ :is(.salty-row, .salty-slider)), :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider), :has(~ :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)), :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider) ~ *):where(.salty-row:has(> span > small, > .salty-seg), :has(~ .salty-row > span > small, ~ .salty-row > .salty-seg), .salty-row:has(> span > small, > .salty-seg) ~ *):not(.bl-x.bl-x),
-.salty-panel.in-popup .salty-group:not(.bl-setting-locks):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)):has(> .salty-row > span > small, > .salty-row > .salty-seg) > .salty-slider:not(.salty-slider + *):not(:has(+ .salty-slider)),
-.salty-panel.in-popup .salty-group:not(.bl-setting-locks):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)):has(> .salty-row > span > small, > .salty-row > .salty-seg) > :where(.salty-slider):is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider:not(:has(+ .salty-slider)) {
+  .salty-panel.in-popup .salty-group:not(.bl-setting-locks) > :where(.salty-group > *):not(.salty-slider):where(.salty-panel.in-popup .salty-group:not(.bl-setting-locks) > *):is(:is(.salty-row, .salty-slider):has(+ :is(.salty-row, .salty-slider)), :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider), :has(~ :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)), :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider) ~ *):where(.salty-row:has(> span > small, > .salty-seg), :has(~ .salty-row > span > small, ~ .salty-row > .salty-seg), .salty-row:has(> span > small, > .salty-seg) ~ *):not(.bl-x.bl-x), .salty-panel.in-popup .salty-group:not(.bl-setting-locks):where(.salty-panel.in-popup .salty-group):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)):has(> .salty-row > span > small, > .salty-row > .salty-seg) > .salty-slider:not(.salty-slider + *):not(:has(+ .salty-slider)), .salty-panel.in-popup .salty-group:not(.bl-setting-locks):where(.salty-panel.in-popup .salty-group):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)):has(> .salty-row > span > small, > .salty-row > .salty-seg) > :where(.salty-slider):is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider:not(:has(+ .salty-slider)) {
     grid-column: 1 / -1;
   }
 }

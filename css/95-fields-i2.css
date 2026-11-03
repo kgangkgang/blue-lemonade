@@ -1,5 +1,5 @@
 /* ===== css/95-fields-i2.css ===== */
-/* 7.7.9 입력칸 I2 (사용자 확정 · 제보 22): 면은 배경보다 한 단계 밝은 면(--bl-control: 라이트 surface · 나이트 raised) + 1px --salty-line 선, 그림자 없음.
+/* 7.7.9 입력칸 I2: 면은 배경보다 한 단계 밝은 면(--bl-control: 라이트 surface · 나이트 raised) + 1px --salty-line 선, 그림자 없음.
    포커스는 포인트 색 선 + 고리. 비활성은 면 · 글자만 흐리게. 텍스트 · 숫자 · 선택칸 · 텍스트영역 · 검색칸 전부, 라이트 · 나이트 공통 —
    시트 위(02) · 팝업 안(02 오목한 칸) · 애드온 창(19 --salty-field: 나이트에서 카드 색과 거의 같아 칸이 안 보였다) · 테마 설정 창 · 한글화 패널 을 한 규칙으로.
    높이는 같은 줄 단추와 같게(--bl-h-ctl, 02 그대로). 끄기: html#bl-i2-off */
@@ -11,7 +11,7 @@ html:not(#bl-i2-off) body.salty :is(.text_pole, select, textarea, input:is([type
 }
 html:not(#bl-i2-off) body.salty :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"], [type="tel"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, #nonQRFormItems *, ul, ol, [data-bl-native-ext-colors] *, .salty-switch input, [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"])):focus {
   background-color: var(--bl-field-face, var(--bl-control)) !important;
-  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;   /* 7.8.6 누르면 포인트색 1px 만 — 바깥 3px 번진 고리(--bl-ring)는 두껍고 흐려 보였음 (디자인 철칙 §4 · 사용자 10-23 전개 지시 시안 C) */
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;   /* 7.8.6 누르면 포인트색 1px 만 — 바깥 3px 번진 고리(--bl-ring)는 두껍고 흐려 보였음 (디자인 철칙 §4 · 전개 지시 시안 C) */
 }
 html:not(#bl-i2-off) body.salty :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"], [type="tel"]), .neo-range-input):where(:not(#send_textarea, .select2-search__field, #nonQRFormItems *, ul, ol, [data-bl-native-ext-colors] *, .salty-switch input, [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"])):disabled {
   opacity: .55 !important;
@@ -23,10 +23,10 @@ html:not(#bl-i2-off) body.salty .salty-panel :is(input:is([type="text"], [type="
   border: 0 !important;
 }
 html:not(#bl-i2-off) body.salty .salty-panel :is(input:is([type="text"], [type="search"], [type="number"], [type="url"], [type="password"]), select, textarea):where(:not(.salty-switch input, .salty-reset-pick input, [type="color"], [type="range"])):focus-visible {
-  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;   /* 7.8.6 누르면 포인트색 1px 만 — 바깥 3px 번진 고리(--bl-ring)는 두껍고 흐려 보였음 (디자인 철칙 §4 · 사용자 10-23 전개 지시 시안 C) */
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;   /* 7.8.6 누르면 포인트색 1px 만 — 바깥 3px 번진 고리(--bl-ring)는 두껍고 흐려 보였음 (디자인 철칙 §4 · 전개 지시 시안 C) */
 }
 
-/* ---- 숫자칸 유동 폭(제보 14 · 22 보충): 애드온 창 · 팝업의 숫자 입력칸은 값 길이만큼(최소 3자) + 안쪽 여백, 단위는 바로 옆.
+/* ---- 숫자칸 유동 폭: 애드온 창 · 팝업의 숫자 입력칸은 값 길이만큼(최소 3자) + 안쪽 여백, 단위는 바로 옆.
    src/num-width.js 가 값이 바뀔 때 --bl-num-ch 를 넣는다. 슬라이더 짝(.neo-range-input) · 스텝퍼 · 테마 설정 창(.salty-num, 97) · 섞기 비율은 제 규칙. 끄기: html#bl-num-off */
 html:not(#bl-num-off) body.salty :is(dialog.popup, .pa-hub, .rl-root, .sw-settings, #lv_settings, .llmt-settings, #regex-link-settings, .jj-settings, #pt-panel, .cg-root, .bl-notes-dialog, #extensions_settings, #extensions_settings2) input[type="number"]:where(:not(.neo-range-input, .lv-mix-w, .pt-param-num, .jj-stepper input, .cg-stepper input, .salty-num input, .bl-look-val input, [data-bl-num-wide], [data-bl-native-ext-colors] *)) {
   width: calc(var(--bl-num-ch, 3) * 1ch + 28px) !important;
@@ -48,7 +48,7 @@ html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budge
 html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit, .rl-ledger label, .rl-cmp label)[data-bl-row~="numin"]:is(bl-s, *) > span:first-child { flex: 1 1 auto !important; min-width: 0 !important; grid-column: auto !important; }
 html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit, .rl-ledger label, .rl-cmp label)[data-bl-row~="numin"]:is(bl-s, *) > input[type="number"] { grid-column: auto !important; }
 html:not(#bl-num-off) body.salty .rl-settings :is(.rl-numbers > label, .rl-budget-nums > label, .rl-budget-fields > label, .rl-budget-adv > label, .rl-unit, .rl-ledger label, .rl-cmp label)[data-bl-row~="numin"]:is(bl-s, *) > span:not(:first-child) { flex: 0 0 auto !important; color: var(--salty-muted); }
-/* TTS .lv-field 숫자칸: 2열 격자 안이라 이웃 칸(선택칸 · 글자칸)과 같은 세로 배치(이름 위 · 칸 아래)를 지킨다 — 한 줄 규칙은 격자 밖 줄에만(제보 26: 줄 맞춤 우선).
+/* TTS .lv-field 숫자칸: 2열 격자 안이라 이웃 칸(선택칸 · 글자칸)과 같은 세로 배치(이름 위 · 칸 아래)를 지킨다 — 한 줄 규칙은 격자 밖 줄에만(줄 맞춤 우선).
    폭만 값 길이만큼(위 공통 규칙), 왼쪽 맞춤 */
 html:not(#bl-num-off) body.salty #lv_settings .lv-grid > .lv-field > input[type="number"] { align-self: flex-start !important; }
 /* 번역 창 .llmt-field 숫자칸(이름 · 설명 · 칸 순서라 설명을 맨 아래로) */
@@ -62,13 +62,13 @@ html:not(#bl-num-off) body.salty #pt-panel .pt-field[data-bl-row~="numin"]:is(bl
 html:not(#bl-num-off) body.salty #pt-panel .pt-field[data-bl-row~="numin"]:is(bl-s, *) > .pt-bl-help { flex: 1 1 100% !important; margin: 0 !important; }
 /* 정규식 연동: 최근 메시지 개수 칸 */
 html:not(#bl-num-off) body.salty #regex-link-settings .rlk-keep { grid-template-columns: auto minmax(0, 1fr) auto !important; }
-/* 7.8.1 검색칸 두 겹 상자(사용자 사진 10-23 · 화면 감사 NESTED): 바깥 .bl-search-field 가 I2 칸(밝은 면 + 1px 선)이고 안의 입력은 투명 — 입력에도 I2 가 입혀져 상자가 두 겹이었다 */
+/* 7.8.1 검색칸 두 겹 상자(화면 감사 NESTED): 바깥 .bl-search-field 가 I2 칸(밝은 면 + 1px 선)이고 안의 입력은 투명 — 입력에도 I2 가 입혀져 상자가 두 겹이었다 */
 html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field { background: var(--bl-field-face, var(--bl-control)) !important; border: 0 !important; box-shadow: inset 0 0 0 1px var(--salty-line) !important; }
 html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field:focus-within { box-shadow: inset 0 0 0 1px var(--salty-accent) !important; }
 html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field input:is([type="search"], [type="text"]) { background: transparent !important; box-shadow: none !important; border: 0 !important; outline: none !important; }
-/* 7.8.2 입력칸 면 반 단계(사용자 10-23 「전개 지시 입력칸 너무 밝아 — 줄여」): I2 면(--bl-control)과 담는 카드 면의 가운데. 한 곳에서 바꾸기: --bl-field-face */
+/* 7.8.2 입력칸 면 반 단계(전개 지시 입력칸이 너무 밝던 것): I2 면(--bl-control)과 담는 카드 면의 가운데. 한 곳에서 바꾸기: --bl-field-face */
 html:not(#bl-i2-off) body.salty { --bl-field-face: color-mix(in srgb, var(--bl-control) 50%, var(--bl-card, var(--salty-surface))); }
-/* 7.8.3 숫자칸 한 줄(사용자 제보 「숫자칸이 이름 아래 혼자 가운데」 · layout-audit PARAMSTACK): 다시 쓰기 .bwr_field 의 숫자칸을 이름 오른쪽에(번역 .llmt-field 는 위 55~58 규칙에서) */
+/* 7.8.3 숫자칸 한 줄(숫자칸이 이름 아래 혼자 가운데 놓이던 것 · layout-audit PARAMSTACK): 다시 쓰기 .bwr_field 의 숫자칸을 이름 오른쪽에(번역 .llmt-field 는 위 55~58 규칙에서) */
 html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field[data-bl-row~="numin"]:is(bl-s, *) { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; }
 html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field[data-bl-row~="numin"]:is(bl-s, *) > span { flex: 1 1 auto; min-width: 0; }
 html:not(#bl-num-off) body.salty .bwr_settings label.bwr_field[data-bl-row~="numin"]:is(bl-s, *) > input[type="number"] { flex: 0 0 auto; margin: 0 !important; }

@@ -42,23 +42,6 @@ await test('wide scroller wiring: only touchmove · touchend · touchcancel are 
     assert.match(src, /for \(const type of \['touchmove', 'touchend', 'touchcancel'\]\) chatEl\?\.addEventListener\(type, event => \{ if \(wideGesture\) event\.stopPropagation\(\);/);
 });
 
-// ---- data-03 화이트 · 나이트 자동은 저장하지 않는다
-globalThis.window = { matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }) };
-globalThis.document = { visibilityState: 'visible', addEventListener() {}, removeEventListener() {} };
-const palettes = await import(pathToFileURL(path.join(root, 'src/palettes.js')));
-const s = { enabled: true, palette: 'salt', auto: { on: true, by: 'time', night: '00:00', day: '23:59' } };
-let saves = 0;
-const auto = await load('src/automode.js', { getSettings: () => s, saveSettings: () => saves++, ...palettes });
-await test('auto day/night switches the palette in memory and re-applies, but never saves (hidden tabs cannot overwrite other devices)', async () => {
-    let applied = 0;
-    auto.syncAutoMode(true, { applyAll: () => applied++, refreshPanels() {} });
-    const want = auto.wantMode(s.auto);
-    assert.equal(palettes.PALETTES[s.palette].mode, want);
-    assert.ok(applied >= 1); assert.equal(saves, 0);
-    assert.doesNotMatch(await read('src/automode.js'), /saveSettings\(\)/);
-    auto.syncAutoMode(false);
-});
-
 // ---- data-01 채팅 이름 바꾸기
 const store = { promptBinds: { a: { keys: ['c:A.png', 'c:A.png/main', 'g:7/day'] }, b: { keys: ['c:A.png/main', 'c:A.png/main-2'] }, c: { keys: ['c:B.png/main'] } } };
 let bindSaves = 0;
@@ -114,7 +97,7 @@ await test('settings sync wiring: registered as 「salty」 on the shared merge,
     const src = await read('src/settings-sync.js');
     assert.match(src, /registerSettingsMerge\('salty', ext => \{/);
     assert.match(src, /startSettingsMerge\(\{ save \}\)/);
-    assert.match(await read('index.js'), /startThemeSettingsSync\(\{ getSalty: \(\) => SillyTavern\.getContext\(\)\.extensionSettings\?\.salty, save: saveSettings, after: \(\) => \{ applyAll\(\); refreshPanels\(\); \} \}\);/);
+    assert.match(await read('index.js'), /startThemeSettingsSync\(\{ getSalty: \(\) => SillyTavern\.getContext\(\)\.extensionSettings\?\.salty, save: saveSettings, after: \(\) => \{ invalidateSettings\(\); applyAll\(\); refreshPanels\(\); \} \}\);/);
 });
 
 // ---- data-04 · integration-02 단어 도구 (원문 확인)

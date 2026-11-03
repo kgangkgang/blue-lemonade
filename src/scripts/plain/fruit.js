@@ -1,5 +1,6 @@
-// 자동 생성 (tools/build-plain-scripts.mjs) — 고치려면 bundled/fruit.js 을 고치고 다시 만든다
-export default function blueLemonadeScript(BlueLemonade) {
+// 내장 스크립트 fruit (9.0.7 부터 iframe 없이 테마 창에서 도는 모듈). 만든 파일 — tools/build-fruit-family.mjs 가 tools/scripts-src/fruit-family/ 에서 만들어요. 손으로 고치지 않아요.
+// 실행기(src/scripts/runtime.js)가 BlueLemonade(테마 API)와 스크립트별 창 대리 window(src/scripts/realm.js — 타이머 · 감시 모음, setInterval 은 공용 스케줄러)를 넘겨요.
+export default function blueLemonadeScript(BlueLemonade, window) {
 /*BL-SCRIPT-START*/
 // 과일 계열(과일 · 야한과일 · 청과) 표시용 사전이에요 — 공통 + 프리셋별 추가 (tools/build-fruit-family.mjs 가 만들어요).
 // 저장된 이름과 프롬프트 본문은 바꾸지 않아요.
@@ -2796,6 +2797,5 @@ BlueLemonade.translate({
     }
   ]
 });
-
 /*BL-SCRIPT-END*/
 }

@@ -1,0 +1,184 @@
+/* 시안 B 「설정창 머리 · 묶음 언어의 단정한 상태판」 — 테마 설정 창이 쓰는 모양 그대로:
+   바깥 판 = 면 --bl-card(선 없음 · 모서리 12) · 머리줄 36(아이콘 · 제목 16/650 · 알약 … ⌄),
+   안쪽 = 설정 묶음처럼 옅은 면(--salty-fill-shade) 한 장 · 모서리 8 · 줄 사이 1px 선 · 「이름표 13 보조 | 값」 두 칸.
+   하늘 · 해 궤도 · ✦ 구분 · 그림자 · 빛무리 · 색 아이콘 없음. 강조색은 고른 탭/칩만. */
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) {
+  --dx-face: var(--bl-card, var(--salty-surface));
+  --dx-well: var(--salty-fill-shade, var(--salty-shade));
+  --dx-line: var(--salty-line);
+  --dx-r: var(--bl-r-md, 12px);
+  --dx-r-sm: var(--bl-r-sm, 8px);
+  --dx-pick: var(--bl-ui-pick-face, var(--bl-selected, var(--salty-tint-18)));
+  --dx-pick-ink: var(--bl-ui-pick-ink, var(--salty-accent-ink, var(--salty-accent)));
+  --dx-h: 36px;
+  --dx-t16: 16px;
+  --dx-t13: 13px;
+  --dx-key: 104px;
+  --dx-chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7.5l5 5 5-5'/%3E%3C/svg%3E");
+  --dx-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 10.5l3.5 3.5 7.5-8'/%3E%3C/svg%3E");
+}
+/* ---------- 바깥 판: 면만(선 · 그림자 없음) ---------- */
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-track > .custom-dem-track__grid, details.custom-dem-modules, details.custom-dem-card:not(.custom-dem-modules *)) {
+  margin: 0 0 12px !important;
+  border: 0 !important;
+  border-radius: var(--dx-r) !important;
+  background: var(--dx-face) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  font-family: var(--salty-font-ui, inherit);
+}
+/* 트래커 = 머리줄 하나 + 묶음 한 장: [시각 20/650] [날씨 · 기온 알약] / 묶음 안 「날짜 · 장소」 두 줄 */
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track > .custom-dem-track__grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  grid-template-areas: "time wx" "date date" "place place" !important;
+  gap: 0 !important;
+  padding: 8px !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track > .custom-dem-track__grid::before,
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track > .custom-dem-track__grid::after,
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track__scene,
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track > .custom-dem-track__rule { display: none !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track__time { grid-area: time !important; border: 0 !important; padding: 0 8px !important; min-height: var(--dx-h); align-self: center !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track__clock { font-family: inherit !important; font-size: 20px !important; font-weight: 650 !important; color: var(--salty-text) !important; letter-spacing: inherit !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track__wx { grid-area: wx !important; flex-direction: row !important; align-items: center !important; gap: 8px !important; padding: 0 8px !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track__sky { color: var(--salty-muted) !important; font-size: var(--dx-t13) !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track > .custom-dem-track__grid .custom-dem-track__temp:not(#salty-none) {
+  display: inline-flex !important; align-items: center !important; height: 20px !important; padding: 0 8px !important; border: 1px solid var(--dx-line) !important; border-radius: 10px !important;
+  background: transparent !important; box-shadow: none !important; color: var(--salty-text) !important; font-size: 12px !important; font-weight: 650 !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-track__date, .custom-dem-track__place) {
+  margin: 0 !important; padding: 8px 12px !important; background: var(--dx-well) !important; color: var(--salty-text) !important;
+  font-size: 1em !important; font-weight: 400 !important; letter-spacing: inherit !important; text-transform: none !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track__date { grid-area: date !important; margin-top: 4px !important; border-radius: var(--dx-r-sm) var(--dx-r-sm) 0 0 !important; color: var(--salty-muted) !important; font-size: var(--dx-t13) !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track__place { grid-area: place !important; grid-row: auto !important; border-top: 1px solid var(--dx-line) !important; border-radius: 0 0 var(--dx-r-sm) var(--dx-r-sm) !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track__crumb { color: var(--salty-muted) !important; font-weight: 400 !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track__crumb:last-child { color: var(--salty-text) !important; font-weight: 650 !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track__sep { color: var(--salty-faint) !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-track { margin-bottom: 12px !important; }
+
+/* ---------- 머리줄: 36 · 아이콘(단색 점) 8 제목 16/650 … 알약 8 ⌄ ---------- */
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(details.custom-dem-modules, details.custom-dem-card) > summary {
+  display: flex !important; align-items: center !important; gap: 8px !important;
+  min-height: var(--dx-h) !important; padding: 0 16px !important; margin: 0 !important;
+  background: transparent !important; box-shadow: none !important; border: 0 !important; border-radius: 0 !important;
+  justify-content: flex-start !important; text-align: left !important; list-style: none !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(details.custom-dem-modules, details.custom-dem-card) > summary::-webkit-details-marker { display: none !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-modules__title, .custom-dem-card__title) {
+  flex: 1 1 auto !important; min-width: 0 !important; margin: 0 !important; text-align: left !important;
+  font-size: var(--dx-t16) !important; font-weight: 650 !important; letter-spacing: inherit !important; text-transform: none !important; color: var(--salty-text) !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-modules__title, .custom-dem-card__title)::before,
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-modules__title, .custom-dem-card__title)::after { display: none !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-modules__icon, .custom-dem-card__icon) { display: none !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(details.custom-dem-modules, details.custom-dem-card) > summary::before {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-card__tag {
+  margin: 0 0 0 auto !important; padding: 0 8px !important; height: 20px; line-height: 18px; border: 1px solid var(--dx-line) !important; border-radius: 10px !important;
+  background: transparent !important; color: var(--salty-muted) !important; font-size: 12px !important; font-weight: 400 !important; letter-spacing: inherit !important; text-transform: none !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(details.custom-dem-modules, details.custom-dem-card) > summary::after {
+  display: block !important; content: '' !important; flex: none !important; width: 14px !important; height: 14px !important; margin: 0 0 0 auto !important;
+  position: static !important; inset: auto !important; border: 0 !important; transform: rotate(-90deg) !important; transition: transform .15s;
+  background: var(--salty-muted) !important; box-shadow: none !important; clip-path: none !important;
+  -webkit-mask: var(--dx-chev) center / contain no-repeat !important; mask: var(--dx-chev) center / contain no-repeat !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(details.custom-dem-modules, details.custom-dem-card)[open] > summary::after { transform: none !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) summary:has(.custom-dem-card__tag)::after { margin-left: 0 !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-card__caret { display: none !important; }
+
+/* ---------- 묶음 밖 카드 · 묶음 안 카드 본문 = 설정 묶음 한 장(옅은 면 · 모서리 8 · 판 안쪽 8) ---------- */
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-status__body, .custom-dem-relationships__body, .custom-dem-threads__body, .custom-dem-psychological-states__body, .custom-dem-plotlines__body, .custom-dem-momentum-engine__body, .custom-dem-undercurrents__body, .custom-dem-scratchpad__body, .custom-dem-scene-plan__body, .custom-dem-card__body, .custom-dem-meanwhile__body, .custom-dem-hidden-truths__body) {
+  margin: 0 8px 8px !important; padding: 0 12px !important; background: var(--dx-well) !important; border: 0 !important; border-radius: var(--dx-r-sm) !important; box-shadow: none !important; color: var(--salty-text) !important;
+}
+/* 묶음 안 카드: 상자 없이 머리줄(36) + 묶음 한 장 */
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules details.custom-dem-card {
+  margin: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules details.custom-dem-card > summary .custom-dem-card__title { font-size: var(--dx-t13) !important; color: var(--salty-muted) !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules details.custom-dem-card > summary { min-height: 32px !important; padding: 8px 16px 0 !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules .custom-dem-modules__body { padding: 0 0 4px !important; margin: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+/* 줄: 묶음 안 1px 선으로 나눔 · 이름 = 16/650 · 항목 = 「이름표 13 보조 | 값」 두 칸 */
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent, .custom-dem-scene-plan__group) {
+  margin: 0 !important; padding: 12px 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent, .custom-dem-scene-plan__group:not(:empty)) ~ :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent, .custom-dem-scene-plan__group) {
+  border-top: 1px solid var(--dx-line) !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-scene-plan__group:empty { display: none !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-scene-plan__phase { display: none !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-scene-plan__step {
+  display: grid !important; grid-template-columns: var(--dx-key) minmax(0, 1fr) !important; gap: 0 12px !important; align-items: baseline !important;
+  margin: 0 !important; padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-scene-plan__step::before,
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-scene-plan__step::after { display: none !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-status-row__fields {
+  display: grid !important; grid-template-columns: var(--dx-key) minmax(0, 1fr) !important; gap: 4px 12px !important; margin-top: 8px !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-status-row__field { display: contents !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-bond-row__fields { display: grid !important; grid-template-columns: var(--dx-key) minmax(0, 1fr) !important; gap: 4px 12px !important; margin-top: 8px !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-bond-field { display: contents !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-status-row__name, .custom-dem-bond-row__name, .custom-dem-psychological-state-row__name, .custom-dem-undercurrents__name, .custom-dem-meanwhile-row__title, .custom-dem-truth-row__title) {
+  color: var(--salty-text) !important; font-weight: 650 !important; font-size: var(--dx-t16) !important; box-shadow: none !important; background: none !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-status-row__label, .custom-dem-bond-row__label, .custom-dem-bond-field__label, .custom-dem-bond-meter__label, .custom-dem-psychological-state-row__label, .custom-dem-scene-plan__label, .custom-dem-plotlines__label, .custom-dem-undercurrents__label, .custom-dem-momentum-engine__label) {
+  color: var(--salty-muted) !important; font-size: var(--dx-t13) !important; font-weight: 400 !important; letter-spacing: inherit !important; text-transform: none !important; background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-status-row__value, .custom-dem-bond-field__value, .custom-dem-psychological-state-f__v, .custom-dem-scene-plan__value) { color: var(--salty-text) !important; font-size: 1em !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-thread-tag, .custom-dem-undercurrent__tag, .custom-dem-meanwhile-tag, .custom-dem-truth-tag, .custom-dem-bond-arc__stage, .custom-dem-choice__category) {
+  display: inline-flex !important; align-items: center !important; height: 20px !important; padding: 0 8px !important; border: 1px solid var(--dx-line) !important; border-radius: 10px !important;
+  background: transparent !important; color: var(--salty-muted) !important; font-size: 12px !important; font-weight: 400 !important; letter-spacing: inherit !important; text-transform: none !important; box-shadow: none !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-bond-meter__track { background: var(--dx-line) !important; box-shadow: none !important; border: 0 !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-bond-meter__fill { background: var(--salty-accent) !important; box-shadow: none !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-momentum-branch, .custom-dem-choice, .custom-dem-momentum-engine__notice) {
+  margin: 0 !important; padding: 12px 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-momentum-branch, .custom-dem-choice) ~ :is(.custom-dem-momentum-branch, .custom-dem-choice) { border-top: 1px solid var(--dx-line) !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) :is(.custom-dem-momentum-branch__label, .custom-dem-choice__num) {
+  border: 0 !important; background: var(--dx-face) !important; color: var(--salty-text) !important; box-shadow: none !important;
+}
+
+/* ---------- 탭 줄 = 테마 탭(한 줄 · 가로 스크롤 · 36 · 13 메타 글자) · 인물 = 칩 34 + 고름 체크 ---------- */
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules .custom-dem-tabs { padding: 0 8px !important; margin: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules .custom-dem-tabs__rail {
+  display: flex !important; flex-wrap: nowrap !important; overflow-x: auto !important; scrollbar-width: none !important; gap: 4px !important; padding: 0 !important;
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules .custom-dem-tabs__rail::after { display: none !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules .custom-dem-tab {
+  flex: none !important; display: inline-flex !important; align-items: center !important; height: 36px !important; min-height: 36px !important; padding: 0 12px !important; margin: 0 !important;
+  border: 0 !important; border-radius: var(--dx-r-sm) !important; background: transparent !important; box-shadow: none !important;
+  color: var(--salty-muted) !important; font-family: var(--salty-font-ui, inherit) !important; font-size: var(--dx-t13) !important; font-weight: 400 !important; letter-spacing: inherit !important; text-transform: none !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules .custom-dem-tab__icon { display: none !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules :is(.custom-dem-tab, .custom-dem-chip) > span { color: inherit !important; font: inherit !important; background: none !important; padding: 0 !important; box-shadow: none !important; border: 0 !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules .custom-dem-tab:has(input:checked) { background: var(--dx-pick) !important; color: var(--dx-pick-ink) !important; font-weight: 650 !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules .custom-dem-cast { gap: 8px !important; padding: 8px 16px 4px !important; margin: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules .custom-dem-chip {
+  display: inline-flex !important; align-items: center !important; gap: 4px !important; height: 34px !important; min-height: 34px !important; padding: 0 12px !important; margin: 0 !important;
+  border: 1px solid var(--dx-line) !important; border-radius: var(--dx-r-sm) !important; background: transparent !important; box-shadow: none !important;
+  color: var(--salty-text) !important; font-family: var(--salty-font-ui, inherit) !important; font-size: var(--bl-fs-ctl, 14px) !important; font-weight: 400 !important; letter-spacing: inherit !important; text-transform: none !important;
+}
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules .custom-dem-chip:has(input:checked) { border-color: transparent !important; background: var(--dx-pick) !important; color: var(--dx-pick-ink) !important; font-weight: 650 !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules .custom-dem-chip:has(input:checked)::before {
+  content: '' !important; display: block !important; width: 14px !important; height: 14px !important; background: currentColor !important;
+  -webkit-mask: var(--dx-check) center / contain no-repeat !important; mask: var(--dx-check) center / contain no-repeat !important;
+}
+/* 「다른 인물」 접기 줄 */
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-status__more { margin: 0 8px 8px !important; border: 0 !important; box-shadow: none !important; background: transparent !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-status__more > summary { min-height: var(--dx-h) !important; padding: 0 8px !important; display: flex !important; align-items: center !important; color: var(--salty-muted) !important; font-size: var(--dx-t13) !important; letter-spacing: inherit !important; text-transform: none !important; background: transparent !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-status__offscene { margin: 0 !important; padding: 0 12px !important; background: var(--dx-well) !important; border-radius: var(--dx-r-sm) !important; border: 0 !important; }
+/* B: 인물 페이지 = 설정 묶음 한 장(옅은 면 · 모서리 8) — 칩 줄은 묶음 위 */
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules .custom-dem-modules__body.custom-dem-charpage { margin: 0 8px 8px !important; padding: 0 12px !important; background: var(--dx-well) !important; border-radius: var(--dx-r-sm) !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-charpage .custom-dem-cast { padding: 12px 0 !important; border-bottom: 1px solid var(--dx-line) !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-charpage .custom-dem-charpage__head > summary { padding: 0 !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-modules .custom-dem-tabs { padding: 4px 8px !important; }
+/* B: 인물 페이지가 이미 묶음 한 장 — 그 안 카드 본문은 한 겹 더 깔지 않음(입력칸 한 겹 원칙과 같음) */
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-charpage details.custom-dem-card > :is(.custom-dem-threads__body, .custom-dem-plotlines__body, .custom-dem-momentum-engine__body, .custom-dem-scratchpad__body, .custom-dem-card__body, .custom-dem-meanwhile__body, .custom-dem-hidden-truths__body) { margin: 0 !important; padding: 0 0 8px !important; background: transparent !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-charpage > details.custom-dem-card:not(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents) { border-top: 1px solid var(--dx-line) !important; }
+body.salty.salty-dem-skin :is(#chat,.cg-root,.salty-preview) .mes_text:not(#dmx) .custom-dem-charpage > details.custom-dem-card > summary { padding: 8px 0 0 !important; }

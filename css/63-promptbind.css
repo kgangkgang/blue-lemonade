@@ -22,7 +22,6 @@ body.salty .bl-pbind-title {
 body.salty .bl-pbind .menu_button {
   margin: 0;
   padding: 4px 10px;
-  min-height: 34px;
   flex: 0 0 auto;
   white-space: nowrap;   /* 6.0.5: 폰에서 「+ 지금 캐릭터」가 세 줄로 꺾였다 */
 }
@@ -68,13 +67,11 @@ body.salty .bl-pbind-x:focus-visible {
   background: var(--bl-grey-25);
 }
 body.salty .bl-pbind-hint {
-  opacity: .7;
   line-height: 1.4;
 }
 /* 고르기 창 */
 body.salty .bl-pbind-dialog {
   width: min(92vw, 520px);
-  max-height: 80dvh;
   padding: 12px;
   border: 1px solid var(--SmartThemeBorderColor, var(--bl-fb-rgb-128-128-128-p35));
   border-radius: 12px;
@@ -109,7 +106,6 @@ body.salty .bl-pbind-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 6px;
-  min-height: 60px;
 }
 body.salty .bl-pbind-item {
   display: flex;

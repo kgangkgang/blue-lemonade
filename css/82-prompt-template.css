@@ -1,8 +1,7 @@
 /* ===== css/82-prompt-template.css =====
    6.9.9 프롬프트 템플릿(ST-Prompt-Template) 확장 블록 머리글 — 원본 마크업(#prompt_template_settings) · JS 는 그대로 두고 모양만.
-   다른 확장처럼 「아이콘 · 이름 · 판 알약」: 아이콘은 ::before(폰트어썸 fa-code), 판은 src/addons/prompt-template/host.js 가
-   머리글 <b> 에 단 data-bl-version 을 ::after 알약으로 (알약 모양은 09-st-align 의 .ext-version 과 같은 값).
-   원본의 되돌리기 아이콘(#pt_reset)은 알약 뒤로. 판을 못 읽으면 알약 없이.
+   다른 확장처럼 「아이콘 · 이름」: 아이콘은 ::before(폰트어썸 fa-code). 원본의 되돌리기 아이콘(#pt_reset)은 이름 뒤로.
+   (8.2.5 판 알약(data-bl-version ::after)은 뺐다 — 혼자 쓰는 테마라 판을 화면에 보이지 않는다.)
    ===== */
 body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .inline-drawer-header > b::before {
   content: "\f121";
@@ -20,19 +19,6 @@ body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .in
 }
 body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .inline-drawer-header > b > span {
   order: 1;
-}
-body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .inline-drawer-header > b[data-bl-version]::after {
-  content: attr(data-bl-version);
-  order: 2;
-  display: inline-block;
-  padding: 2px 8px 0;
-  border: 1px solid color-mix(in srgb, var(--salty-text) 16%, transparent);
-  border-radius: var(--bl-r-pill);
-  background: var(--bl-fill-hover, var(--bl-hover));
-  color: var(--salty-muted);
-  font-size: var(--bl-fs-micro);
-  font-weight: 400;
-  line-height: 1.5;
 }
 body.salty #rm_extensions_block #prompt_template_settings > .inline-drawer > .inline-drawer-header > b > #pt_reset {
   order: 3;

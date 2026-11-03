@@ -15,7 +15,11 @@ class GateError(ValueError):
 
 # wings*.webp belonged to the retired feather / butterfly weather and is no longer shipped.
 WEATHER_ARTWORK = tuple(f'{pack}{style}.webp' for pack in ('nature', 'light') for style in ('', '-anime', '-cel'))
-PREVIEW_ARTWORK = ('ade-game.webp', 'ade-lemon.webp', 'ade-cat.webp', 'ade-nap.webp', 'ade-rain.webp', 'character.webp')
+PREVIEW_ARTWORK = ('sample-tavern.webp', 'sample-beach.webp', 'sample-blossom.webp', 'sample-night.webp', 'sample-winter.webp', 'character.webp')
+# 9.0.9 글꼴 로컬 woff2 (tools/build-fonts.py · SIL OFL 1.1): 이 고정 목록의 조각만 fonts/ 에서 싣는다 — 폴더를 통째로 쓸지 않는다
+# 1.0.0 리디바탕 조각은 싣지 않는다(라이선스 칸 없는 글꼴 — 공개 배포 주소에서 받음)
+FONT_RESOURCES = ('SOURCES.json', 'LICENSE-OFL.txt')
+FONT_FILES = tuple(f'{face}-{part}.woff2' for face in ('freesentation-400', 'freesentation-700', 'galmurimono11-400') for part in ('latin', 'ko2', 'ko', 'rest'))
 
 # Only this reviewed, pinned sound pack may enter a public release. Never sweep
 # arbitrary local recordings or trust a catalog path when constructing inventory.
@@ -232,6 +236,12 @@ def tts_extra_origin(ident):
             'licenseUrl': 'https://creativecommons.org/licenses/by/4.0/',
             'downloadUrl': f'https://gongu.copyright.or.kr/gongu/wrt/cmmn/wrtFileMediaPlay.do?wrtSn={sn}&fileSn=1'}
 
+# 8.3.0 단독 확장을 테마 안으로 들일 때(설계 10-31 · 안 A): 코드(.js · .mjs · .css)는 src 글롭이 담고, 여기 적은 자기 manifest · 소개 글 · 실행 때 fetch 하는 자원만 더 담는다.
+# 1.0.0 공개판에는 들인 것이 없어 표가 비어 있다 — 꼴: '<폴더>': ('manifest.json', 'README.md', …).
+# 그 밖(palette-allow.json 같은 검사 설정 · 시험)은 저장소 전용. 폴더가 있으면 적힌 파일이 다 있어야 한다. 이름에 * 가 있으면 그 폴더의 glob(한 개 이상).
+# tools/build-integrity.mjs 의 PRIVATE_ASSETS 는 이 중 실행 때 읽는 자원(json · png · webp)만 같은 이름으로 든다.
+PRIVATE_ADDON_RESOURCES = {}
+
 # Embedded tools have their own versions, independent of the theme release.
 ADDON_CSS_VERSIONS = (
     ('zipinstall/index.js', 'zipinstall', '--blzi-css-version'),
@@ -391,6 +401,29 @@ def validate_tts_extra_sfx(files):
     require(seen == set(TTS_EXTRA_IDS), 'TTS everyday sound catalog is incomplete')
 
 
+def validate_fonts(files):
+    if 'src/fonts-local.gen.js' not in files:
+        return  # Older releases load fonts from the CDN.
+    for name in FONT_RESOURCES:
+        require(bool(files.get('fonts/' + name)), f'Missing local font resource: {name}')
+    require(b'SIL OPEN FONT LICENSE Version 1.1' in files['fonts/LICENSE-OFL.txt'], 'Local font license text is not OFL 1.1')
+    try:
+        catalog = json.loads(files['fonts/SOURCES.json'].decode('utf-8'))
+    except (ValueError, UnicodeDecodeError) as error:
+        raise GateError('Invalid local font catalog JSON') from error
+    rows = [(font, item) for font in catalog.get('fonts', []) for item in font.get('files', [])]
+    require(sorted(item.get('file') for _, item in rows) == sorted(FONT_FILES), 'Local font catalog must list exactly the reviewed font files')
+    shipped = {name[len('fonts/'):] for name in files if name.startswith('fonts/') and name.endswith('.woff2')}
+    require(shipped == set(FONT_FILES), 'Unexpected local font files')
+    gen = files['src/fonts-local.gen.js'].decode('utf-8')
+    for font, item in rows:
+        require(font.get('license') == 'OFL-1.1', f'Local font license must be OFL-1.1: {item.get("file")}')
+        data = files['fonts/' + item['file']]
+        require(data[:4] == b'wOF2', f'Local font is not WOFF2: {item["file"]}')
+        require(hashlib.sha256(data).hexdigest() == item.get('sha256'), f'Local font hash differs: {item["file"]}')
+        require(f'file: "{item["file"]}"' in gen, f'Local font is not referenced: {item["file"]}')
+
+
 def validate_scene_music(files):
     prefix = 'src/scene-music/'
     actual = {name[len(prefix):] for name in files if name.startswith(prefix)}
@@ -446,18 +479,29 @@ def inventory(root, kind):
     if kind == 'theme':
         if (root / 'server-plugin').is_dir():
             names += ['server-plugin/' + n for n in ('setup.mjs', 'setup-windows.cmd', 'README.md', 'blue-lemonade-zip/index.mjs', 'blue-lemonade-zip/archive.mjs', 'blue-lemonade-zip/install.mjs')]
-        names += [p.relative_to(root).as_posix() for p in (root / 'src').rglob('*') if p.is_file() and p.suffix in {'.js', '.css'}]
+        # 9.0.6 노드 시험(*.test.mjs · *.test.js)은 저장소 전용 — 설치 ZIP 에 싣지 않아요
+        names += [p.relative_to(root).as_posix() for p in (root / 'src').rglob('*') if p.is_file() and p.suffix in {'.js', '.mjs', '.css'} and not p.name.endswith(('.test.mjs', '.test.js'))]   # 8.3.0 .mjs
         # Corresponding editable source, build tools and bundled license/template files.
         for name in ['LICENSE', 'THIRD-PARTY-NOTICES.md']:
             if (root / name).is_file(): names.append(name)
         names += [p.relative_to(root).as_posix() for p in (root / 'css').glob('*.css')]
-        for name in ['build-css.cjs','build-plain-scripts.mjs','gen-preview-css.js','gen-user-profile.cjs','css-lib.cjs','css-bucket.cjs','css-park.cjs','extension-color-guard.cjs']:
+        # 1.0.0: 브라우저가 받는 JS 묶음(tools/build-bundle.mjs) · 다시 만드는 도구
+        names += [p.relative_to(root).as_posix() for p in (root / 'dist').rglob('*') if p.is_file()]
+        for name in ['build-bundle.mjs','package.json','package-lock.json','build-css.cjs','build-plain-scripts.mjs','build-script-titles.mjs','gen-preview-css.js','gen-user-profile.cjs','css-lib.cjs','css-bucket.cjs','css-park.cjs','extension-color-guard.cjs','build-fonts.py','build-addon-css.mjs','css-cascade-diff.mjs']:
             if (root / 'tools' / name).is_file(): names.append('tools/' + name)
         for folder in ['translator','prompt','customstyle']:
             bundle = root / 'src' / 'addons' / folder
             if bundle.is_dir():
                 require((bundle / 'LICENSE').is_file(), f'Missing bundled license: {folder}')
                 names += [p.relative_to(root).as_posix() for p in bundle.rglob('*') if p.is_file() and (p.suffix in {'.html','.json','.md'} or p.name == 'LICENSE')]
+        # 8.3.0 개인 확장 내장: 자기 manifest · 소개 글 (코드는 위 src 글롭)
+        for folder, extras in PRIVATE_ADDON_RESOURCES.items():
+            bundle = root / 'src' / 'addons' / folder
+            if bundle.is_dir():
+                for name in extras:
+                    items = sorted(p for p in bundle.glob(name) if p.is_file()) if '*' in name else [bundle / name]
+                    require(bool(items) and all(p.is_file() for p in items), f'Missing embedded private addon resource: {folder}/{name}')
+                    names += [p.relative_to(root).as_posix() for p in items]
         # Only public pinned Mermaid licenses and corresponding source/build inputs.
         if (root / 'src/addons/mermaid').is_dir():
             for name in ('LICENSE', 'NOTICE.md', 'source/README.md', 'source/rebuild.py', 'source/upstream-sha256.json', 'source/vendor-sha256.json', 'source/package.json', 'source/package-lock.json', 'source/upstream/package.json', 'source/upstream/package-lock.json'):
@@ -511,6 +555,11 @@ def inventory(root, kind):
             asset = root / 'src' / 'preview-art' / name
             if asset.is_file():
                 names.append(asset.relative_to(root).as_posix())
+        if (root / 'src/fonts-local.gen.js').is_file():
+            for name in (*FONT_RESOURCES, *FONT_FILES):
+                item = root / 'fonts' / name
+                require(item.is_file(), f'Missing local font resource: {name}')
+                names.append('fonts/' + name)
     else:
         names += [p.name for p in root.glob('*.js') if p.name != 'index.js']
     require(len(names) > 4, 'No runtime modules found')
@@ -526,13 +575,18 @@ def validate(files, kind):
     manifest = json.loads(files['manifest.json'].decode('utf-8-sig'))
     version = manifest.get('version', '')
     require(bool(re.fullmatch(r'\d+\.[0-9]\.[0-9]', version)), 'Version must carry at 10, e.g. 3.9.9 -> 4.0.0')
-    require(manifest.get('js') == 'index.js' and manifest.get('css') == 'style.css', 'Unexpected manifest entry points')
+    # 판 계열(10-31): 공개 부활판부터 판 번호를 1.0.0 으로 다시 시작해요. 계열은 manifest 의 따로 칸 bl_series(없으면 계열 1 = 8.2.5 이하)에
+    # 적고 "version" 글자는 그대로 둬요. bool 은 int 의 하위형이라 따로 막아요. 비교 규칙은 tools/version-series.mjs.
+    series = manifest.get('bl_series', 1)
+    require(type(series) is int and series >= 1, 'manifest 의 bl_series 는 1 이상의 정수여야 해요(없으면 계열 1)')
+    require(manifest.get('js') in ('dist/index.js', 'index.js') and manifest.get('css') == 'style.css', 'Unexpected manifest entry points')
     if kind == 'theme':
         validate_addon_css(files)
         validate_embedded_versions(files)
         validate_tts_sfx(files)
         validate_tts_extra_sfx(files)
         validate_scene_music(files)
+        validate_fonts(files)
         if b'./preview-art/' in files.get('src/panel.js', b''):
             for name in PREVIEW_ARTWORK:
                 data = files.get('src/preview-art/' + name, b'')
@@ -541,10 +595,13 @@ def validate(files, kind):
             for name in WEATHER_ARTWORK:
                 data = files.get('src/weather-art/' + name, b'')
                 require(data.startswith(b'RIFF') and data[8:12] == b'WEBP', f'Missing weather artwork: {name}')
-        # 4.5.0: 공지 본문이 src/notice-data.js 로 갈라졌다 (팝업 열 때만 읽는다). 옛 판도 받아 준다.
-        notice = files.get('src/notice-data.js', files.get('src/notice.js', b'')).decode('utf-8')
-        found = re.search(r'\bNOTICES\s*=\s*\[\s*\{\s*[\'"]?version[\'"]?\s*:\s*[\'"]([^\'"]+)', notice)
-        require(found is not None and found[1] == version, 'Manifest and newest notice versions differ')
+        # 4.5.0: 공지 본문은 src/notice-data.js (팝업 열 때만 읽음). 1.0.0 바탕에서 공지 창과 함께 되살림 — 맨 앞 항목의 판 · 계열(series, 없으면 1)이 manifest 와 같아야 해요.
+        notice = files.get('src/notice-data.js', b'').decode('utf-8')
+        found = re.search(r'\bNOTICES\s*=\s*\[\s*\{([^{}\[]*)', notice)
+        head = found[1] if found else ''
+        nv = re.search(r'''['"]?version['"]?\s*:\s*['"]([^'"]+)''', head)
+        ns = re.search(r'''['"]?series['"]?\s*:\s*(\d+)''', head)
+        require(nv is not None and nv[1] == version and (int(ns[1]) if ns else 1) == series, 'Manifest and newest notice versions differ')
     else:
         code = files.get('defs.js', b'').decode('utf-8')
         css = files['style.css'].decode('utf-8')
@@ -556,8 +613,13 @@ def validate(files, kind):
     # its root are intentionally left to SillyTavern.
     import posixpath
     for name, content in files.items():
-        if not name.endswith('.js'):
+        if not name.endswith(('.js', '.mjs')):
             continue
+        # 8.3.3 vendor/ 아래는 고치지 않은 상류 묶음(한 파일에 다 들어 있음) — 압축된 글 안의 '@import "' 같은 글자가 import 로 보여 막히지 않게 건너뛴다
+        if '/vendor/' in name:
+            continue
+        if name == 'tools/build-bundle.mjs':
+            continue   # 1.0.0 묶음 도구는 소스 고쳐 쓰기용 import('./x') 꼴 문자열을 품어요(실제 import 아님) — 11-03 출하 관문
         for spec in re.findall(r'(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s*)[\'"](\.[^\'"]+)[\'"]', content.decode('utf-8')):
             target = posixpath.normpath(posixpath.join(posixpath.dirname(name), spec.split('?')[0]))
             if not target.startswith('../'):

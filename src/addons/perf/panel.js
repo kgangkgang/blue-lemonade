@@ -69,6 +69,8 @@ function requestMoney(entry) {
 
 const PAGE = 100;
 
+// 숫자 칸: 비우거나 글자면 전 값을 지켜요 (비우면 최솟값이 돼 기록이 바로 지워졌어요)
+const keptNumber = (raw, previous, min, max) => { const n = Number.parseInt(raw, 10); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : previous; };
 function esc(text) {
     return String(text ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[ch]));
 }
@@ -194,13 +196,13 @@ export function buildDrawer() {
         saveSettings();
     });
     $('.rl-keep').addEventListener('change', (event) => {
-        store.keepBodies = Math.min(500, Math.max(0, Number.parseInt(event.target.value, 10) || 0));
+        store.keepBodies = keptNumber(event.target.value, store.keepBodies, 0, 500);
         event.target.value = store.keepBodies;
         saveSettings();
         trimEntries().catch(() => {});
     });
     $('.rl-max').addEventListener('change', (event) => {
-        store.maxEntries = Math.min(5000, Math.max(20, Number.parseInt(event.target.value, 10) || 20));
+        store.maxEntries = keptNumber(event.target.value, store.maxEntries, 20, 5000);
         event.target.value = store.maxEntries;
         saveSettings();
         trimEntries().catch(() => {});

@@ -1,0 +1,22 @@
+// 손대지 않은 설치의 「기본값에서 바뀐 설정」은 0개예요. 날씨 양의 기본값(null)은 정리 뒤 100 이 되는 값이라 바뀐 것으로 세지 않아요.
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+const root = pathToFileURL(path.resolve(process.argv[2] || '.') + '/');
+const ctx = { extensionSettings: {}, powerUserSettings: {}, characters: [], saveSettingsDebounced() {} };
+globalThis.SillyTavern = { getContext: () => ctx };
+globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+globalThis.matchMedia = () => ({ matches: false, addEventListener() {} });
+globalThis.window = globalThis; globalThis.addEventListener = () => {};
+globalThis.document = { createElement: () => ({ style: {} }), addEventListener() {}, querySelector() { return null; }, querySelectorAll() { return []; }, head: { append() {} }, body: { classList: { add() {}, remove() {}, toggle() {}, contains: () => false }, dataset: {} }, documentElement: { style: { setProperty() {}, removeProperty() {} }, dataset: {}, classList: { add() {}, remove() {}, toggle() {}, contains: () => false } } };
+const S = await import(new URL('src/settings.js', root));
+const D = await import(new URL('src/settings-differences.js', root));
+const s = S.getSettings();
+assert.deepEqual(D.changedSettings(s).map(c => c.path), [], '새 설치는 바뀐 설정 0개');
+assert.equal(D.settingChanged(s, 'chat.weatherAmount'), false);
+s.chat.weatherAmount = 150; s.chat.weather2Amount = 30;
+assert.deepEqual(D.changedSettings(s).map(c => c.path).sort(), ['chat.weather2Amount', 'chat.weatherAmount'], '실제로 바꾸면 떠요');
+assert.equal(D.resetSetting(s, 'chat.weatherAmount'), true); assert.equal(s.chat.weatherAmount, 100, '복원하면 100');
+assert.equal(D.resetSetting(s, 'chat.weather2Amount'), true); assert.equal(s.chat.weather2Amount, 100);
+assert.equal(S.DEFAULTS.chat.weatherAmount, null, '옛 세 단계 값 이어받기 때문에 기본값 칸은 그대로 null');
+console.log('PASS 새 설치의 변경 목록이 비어 있어요');

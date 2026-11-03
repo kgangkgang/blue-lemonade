@@ -46,7 +46,7 @@ function simulate({ guard = null, listener = 'none', chunks = 100 } = {}) {
     return { notified, wipes, badgeGone, view };
 }
 
-check('고치기 전 모형: 통째 다시 그리는 확장이 있으면 그림마다 알림 · 다시 그리기가 돈다 (제보 재현)', () => {
+check('고치기 전 모형: 통째 다시 그리는 확장이 있으면 그림마다 알림 · 다시 그리기가 돈다 (재현)', () => {
     const r = simulate({ listener: 'rewrite', chunks: 100 });
     assert.equal(r.notified, 100);
     assert.equal(r.wipes, 100);

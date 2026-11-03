@@ -1,0 +1,39 @@
+/* src/compat-width.gen.css — tools/build-css.cjs 가 css/ 에서 폰 384 · PC 1280 밖 화면 폭 규칙 10개만 떼어 적은 것(고치지 말 것 · tools/css-compat.cjs). src/lite.js loadCompatCss 가 조건이 맞을 때만 테마 시트 뒤에 붙인다 (build ec2250a96e93) */
+@media screen and (max-width: 1000px) and (hover: hover) {
+body.salty .welcomePanel .welcomeShortcuts .menu_button.openTemporaryChat:hover {
+    background: var(--bl-fill-hover, var(--bl-hover)) !important;
+    color: var(--salty-text) !important;
+  }
+}
+@media screen and (max-width: 380px) {
+body.salty #select_chat_popup > [name="selectChatPopupHeader"] {
+    gap: 6px !important;
+  }
+  body.salty #select_chat_popup #newChatFromManageScreenButton,
+body.salty #select_chat_popup #chat_import_button,
+body.salty #select_chat_popup :where(button.menu_button):is(#bl-s, *) {
+    gap: 4px !important;
+    padding: 0 8px !important;
+    font-size: var(--bl-fs-sub) !important;
+  }
+  body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_button, button.menu_button) > i {
+    font-size: 13px !important;
+  }
+  body.salty #select_chat_popup :is(#newChatFromManageScreenButton, #chat_import_button, button.menu_button) > span {
+    min-width: 0;
+  }
+  body.salty .select_chat_block:not(.swipe_picker_block) .select_chat_info .chat_file_size {
+    display: none;
+  }
+  body.salty .select_chat_block:not(.swipe_picker_block) .select_chat_info .chat_messages_num::before {
+    content: "(";
+  }
+}
+@media screen and (max-width: 380px) {
+body.salty #right-nav-panel #rm_print_characters_pagination .paginationjs-pages ul li a {
+    width: 23px;
+  }
+}
+@media(max-width:360px) {
+.bl-ft-dialog{padding:0 12px 12px}.bl-ft-dialog-head{margin:0 -12px 4px;padding:8px 12px}
+}

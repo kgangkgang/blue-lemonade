@@ -2,16 +2,16 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { scriptCode } from './script-code.mjs';
 const root = path.resolve(process.argv[2] || '.');
-const text = fs.readFileSync(path.join(root, 'src/scripts/bundled/fruit-style.js'), 'utf8');
-const bundled = JSON.parse(text.slice(text.indexOf('export default ') + 15).trim().replace(/;$/, ''));
+const bundled = await scriptCode(root, 'fruit-style');
 const plain = fs.readFileSync(path.join(root, 'src/scripts/plain/fruit-style.js'), 'utf8');
 let passed = 0;
 function test(name, fn) { fn(); console.log('PASS', name); passed++; }
 
-test('the plain copy executes the exact bundled code', () => {
-  assert.equal(plain.split('/*BL-SCRIPT-START*/\n')[1].split('\n/*BL-SCRIPT-END*/')[0], bundled);
-  new Function('BlueLemonade', bundled);
+test('the module takes (BlueLemonade, window) and its code runs as a function body (9.0.7 — one copy, no iframe)', () => {
+  assert.ok(plain.includes('export default function blueLemonadeScript(BlueLemonade, window) {'));
+  new Function('BlueLemonade', 'window', bundled);
 });
 const marker = 'installFruitStyle(BlueLemonade, ';
 const at = bundled.lastIndexOf(marker);

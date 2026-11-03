@@ -9,7 +9,7 @@ import { getSettings, saveSettings } from '../../settings.js';
 import { perfErrorText } from './start-error.js';
 
 export const SUITE_TITLE = '성능 보조';   // 7.0.3 창 제목이 「설정」이라 무슨 창인지 몰랐다 — 애드온 이름으로
-export const SUITE_VERSION = '2.3.3';
+export const SUITE_VERSION = '2.3.4';
 const BUTTON_ID = 'pa-hub-open';
 const TAB_KEY = 'pa_hub_tab';
 
@@ -34,6 +34,7 @@ const root = document.createElement('div');
 root.className = 'pa-hub';
 root.innerHTML = `
     <h3 class="pa-hub-title"><i class="fa-solid fa-gauge-high"></i> ${SUITE_TITLE} <span class="pa-hub-version ext-version">v${SUITE_VERSION}</span></h3>
+    <div class="pa-hub-storage"><span>이 기기 · 서버에서 확장들이 쓰는 자리</span><button type="button" class="menu_button" data-pa-storage><i class="fa-solid fa-hard-drive" aria-hidden="true"></i><span>저장 공간 보기</span></button></div>
     <div class="pa-hub-tabs" role="tablist">
         ${TABS.map(tab => `<button type="button" class="pa-hub-tab" role="tab" data-tab="${tab.id}" aria-selected="false"><i class="fa-solid ${tab.icon}"></i><span>${esc(tab.title)}</span></button>`).join('')}
     </div>
@@ -61,6 +62,11 @@ function showTab(id) {
     try { localStorage.setItem(TAB_KEY, id); } catch { /* 저장 못 해도 이번엔 보임 */ }
 }
 
+// 2026-10-31 저장 공간 창(storage/view.js — 누를 때 받아요). 창 제목을 1초 길게 누르면 점검 도구
+root.querySelector('[data-pa-storage]').addEventListener('click', () => {
+    import('./storage/boot.js').then(m => m.openStorage()).catch(error => console.error('[성능 보조] 저장 공간', error));
+});
+
 root.querySelector('.pa-hub-tabs').addEventListener('click', (event) => {
     const button = event.target.closest('.pa-hub-tab');
     if (button) showTab(button.dataset.tab);
@@ -81,13 +87,13 @@ function note(id, html) {
 /** 옛 따로 확장이 아직 켜져 있어 이 기능을 쉬게 했을 때 */
 export function markLegacy(id, folder) {
     const title = TABS.find(tab => tab.id === id)?.title ?? id;
-    note(id, `<i class="fa-solid fa-circle-info"></i> 예전 <b>${esc(title)}</b> 확장(<code>${esc(folder)}</code>)이 아직 켜져 있어서 여기서는 쉬어요. 확장 관리에서 지우고 새로고침하면 이 탭으로 합쳐져요.`);
+    note(id, `<span class="bl-info" aria-hidden="true"><i class="fa-solid fa-info"></i></span>예전 <b>${esc(title)}</b> 확장(<code>${esc(folder)}</code>)이 아직 켜져 있어서 여기서는 쉬어요. 확장 관리에서 지우고 새로고침하면 이 탭으로 합쳐져요.`);
 }
 
 /** 사용자가 이 도구를 꺼 두어 아예 안 읽었을 때 */
 export function markOff(id) {
     const title = TABS.find(tab => tab.id === id)?.title ?? id;
-    note(id, `<i class="fa-solid fa-circle-info"></i> <b>${esc(title)}</b>을(를) 꺼 두어서 불러오지 않았어요. 위 '이 도구 불러오기'를 켜고 새로고침하면 다시 써요.`);
+    note(id, `<span class="bl-info" aria-hidden="true"><i class="fa-solid fa-info"></i></span><b>${esc(title)}</b>을(를) 꺼 두어서 불러오지 않았어요. 위 '이 도구 불러오기'를 켜고 새로고침하면 다시 써요.`);
 }
 
 // 4.5.5: 도구마다 '불러오기' 스위치. 끄면 다음 새로고침부터 그 파일을 아예 안 읽는다

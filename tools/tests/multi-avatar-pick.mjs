@@ -207,7 +207,7 @@ await test('올리기: 서버 경로를 돌려주고 폴더는 아바타 해시'
 });
 await test('화면 · CSS · CI 배선', async () => {
     const fs = await import('node:fs/promises');
-    const read = rel => fs.readFile(path.join(root, rel), 'utf8');
+    const read = async rel => (await fs.readFile(path.join(root, rel), 'utf8')) + (rel === 'style.css' ? await fs.readFile(path.join(root, 'src/style-lazy.gen.css'), 'utf8').catch(() => '') : '');   // 1.0.0 두 장 빌드: style.css 를 읽을 땐 둘째 장(src/style-lazy.gen.css)도 이어 읽어요
     const settings = await read('src/settings.js'); assert.match(settings, /multiAvatar: \{ on: true, when: 'chat', includeCard: true, chars: \{\} \}/); assert.match(settings, /tidyMultiAvatar\(s\.multiAvatar/);
     const features = await read('src/features.js'); assert.match(features, /multi-avatar\/index\.js/); assert.match(features, /bl-mav-button/);
     const panel = await read('src/panel.js'); for (const key of ['multiAvatar.on', 'multiAvatar.when', 'multiAvatar.includeCard', 'mav-open', 'mav-current', 'mav-cleanup']) assert.ok(panel.includes(key), key);

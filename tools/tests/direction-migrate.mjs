@@ -20,7 +20,7 @@ const ext = {};
 const P = globalThis.__directionMigrateTest = { ext, insertInstructions, saves: 0, context: { substituteParams: text => String(text) } };
 globalThis.window = { matchMedia: () => ({ matches: false, addEventListener() {} }) };
 const source = (await fs.readFile(src('src/addons/direction/index.js'), 'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm, '');
-const prelude = 'const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const P = globalThis.__directionMigrateTest; const extension_settings = P.ext; const insertInstructions = P.insertInstructions;'
+const prelude = 'const addonRunning=()=>true;const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const P = globalThis.__directionMigrateTest; const extension_settings = P.ext; const insertInstructions = P.insertInstructions;'
     + 'const getContext = () => P.context; const saveSettingsDebounced = () => { P.saves++; }; const eventSource = { on() {}, once() {} }; const event_types = {};'
     + 'const POPUP_TYPE = { TEXT: 1, CONFIRM: 2 }; const callGenericPopup = async () => true; const oai_settings = {}; const getChatCompletionModel = () => "";'
     + 'const verifyAddonCss = () => {}; const badgeTextHit = () => true; const showThemeModal = () => {};';

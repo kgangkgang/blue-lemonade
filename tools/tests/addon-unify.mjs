@@ -14,13 +14,13 @@ const resolveGlyphs = text => text.replace(/var\((--bl-deco-glyph-[\w]+)\)/g, (_
   return value[1];
 });
 const css = resolveGlyphs(read('css/85-addon-unify.css')).replace(/\/\*[\s\S]*?\*\//g, '');
-const built = read('style.css');
+const built = read('style.css') + (fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? read('src/style-lazy.gen.css') : '');   // 1.0.0 두 장 빌드: 이 모듈은 둘째 장에 실려요
 let passed = 0;
 const test = (name, fn) => { fn(); passed++; };
 
 // 실리태번 팝업에 뜨는 창 8 · 애드온이 직접 만든 창 7
 const POP = ['#lv_settings', '.bwr_settings', '#model_register_settings', '#model-switch-settings', '.po-dialog', '.pa-hub', '.rl-root', '#regex-link-settings'];
-const OWN = ['.bl-translator-dialog', '.bl-assets-dialog', '.bl-ctsi-dialog', '.bl-direction-dialog', '.blzi-dialog', '.bl-mermaid-dialog', '.blpt-dialog'];
+const OWN = ['.bl-translator-dialog', '.bl-assets-dialog', '.bl-ctsi-dialog', '.bl-direction-dialog', '.blzi-dialog', '.bl-mermaid-dialog'];
 // 규칙 하나 찾기: 선택자에 모든 낱말이 들어 있고 선언에 모든 값이 있는 규칙
 const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ sel: m[1].replace(/\s+/g, ' ').trim(), decl: m[2].replace(/\s+/g, ' ') }));
 const find = (selParts, declParts) => rules.find(r => selParts.every(p => r.sel.includes(p)) && declParts.every(d => r.decl.includes(d)));
@@ -47,16 +47,15 @@ test('직접 만든 창 · 한글화 · 메모 · 북마크의 × 도 같은 크
   assert.ok(r, '× 규칙 없음');
   for (const s of OWN) assert.ok(r.sel.includes(s), `× 규칙에 ${s} 빠짐`);
 });
-test('제목: 메뉴 글자 크기 · 650, 판 알약은 확장 서랍 .ext-version 과 같은 값', () => {
+test('제목: 메뉴 글자 크기 · 650, 판 알약은 1.0.0 공용 알약 하나(75-version-pill) — 85 는 알약을 따로 그리지 않음', () => {
   const t = find(['.po-title', '.pa-hub-title', '> header > b', '#pt-panel-header > h3'], ['font-size: var(--bl-ts-ui, 14.5px)', 'font-weight: 650']);
   assert.ok(t, '제목 규칙 없음');
-  const v = find([':is(.ext-version, .pt-version, .bl-notes-ver)'], ['border-radius: var(--bl-r-pill, 999px)', 'font-size: var(--bl-fs-micro)', 'padding: 2px 8px 0', 'color: var(--salty-muted)']);
-  assert.ok(v, '판 알약 규칙 없음');
-  const drawer = read('css/09-st-align-brand-loader-greys.css');
-  for (const d of ['padding: 2px 8px 0', 'border-radius: var(--bl-r-pill)', 'font-size: var(--bl-fs-micro) !important', 'color: var(--salty-muted)']) assert.ok(drawer.includes(d), `확장 서랍 판 알약 값이 바뀜(${d}) — 85 와 같이 고칠 것`);
+  assert.ok(!rules.some(r => /:is\(\.ext-version, \.pt-version\)/.test(r.sel) && /border:/.test(r.decl)), '85 가 판 알약 모양을 따로 그림 — 75-version-pill 한 곳에서');
+  const pill = read('css/75-version-pill.css');
+  assert.ok(pill.includes('dialog :is(.ext-version, .pt-version, .rl-version)') && pill.includes('#pt-panel :is(.pt-version, .ext-version)') && pill.includes('.bl-addon-header .bl-addon-ver'), '75 공용 알약 목록에 애드온 창 · 한글화 · 설정 애드온 머리 알약');
 });
 test('직접 만든 창 머리 마크업: 아이콘 + 이름 + 판(.ext-version) + ×', () => {
-  const files = { 'src/addons/translator/bridge.js': 'fa-language', 'src/addons/assets/index.js': 'fa-images', 'src/addons/customstyle/index.js': 'fa-sliders', 'src/addons/direction/index.js': 'fa-feather-pointed', 'src/addons/zipinstall/index.js': 'fa-file-zipper', 'src/addons/mermaid/index.js': 'fa-diagram-project', 'src/addons/prompt-template/index.js': 'fa-code' };
+  const files = { 'src/addons/translator/bridge.js': 'fa-language', 'src/addons/assets/index.js': 'fa-images', 'src/addons/customstyle/index.js': 'fa-sliders', 'src/addons/direction/index.js': 'fa-feather-pointed', 'src/addons/zipinstall/index.js': 'fa-file-zipper', 'src/addons/mermaid/index.js': 'fa-diagram-project' };
   for (const [f, icon] of Object.entries(files)) {
     const head = (read(f).match(/<header><b>[\s\S]*?<\/header>/) || [''])[0];
     assert.ok(head, `${f}: 머리 마크업 <header><b>… 없음`);
@@ -65,17 +64,23 @@ test('직접 만든 창 머리 마크업: 아이콘 + 이름 + 판(.ext-version)
     assert.ok(/<button[^>]*>×<\/button><\/header>/.test(head), `${f}: × 단추 없음(✕ 말고 ×)`);
   }
 });
-test('탭: 기본 한 줄과 확대 배치 설정 · 아이콘 + 글자 가로 한 줄(7.7.8, 글자 탭 높이 --bl-h-ctl) · 고른 탭 포인트 13% · 글자는 포인트 잉크(8.1.x)', () => {
+test('탭: 줄 배치(한 줄 · 확대 배치 설정)는 85, 한 칸 모양은 1.0.0 공용 부품(88-ui-parts) 글자 탭 하나 — 아이콘 + 글자 가로 한 줄 · 높이 크기표 · 고름 = 옅은 면 + 색 글자 + 650', () => {
   const box = find(['.lv-tabs', '.llmt-tabs', '.po-menu-tabs', '.bwr_tabs', '.pa-hub-tabs', '.rl-tabs', '#pt-tabs'], ['grid-auto-flow: var(--bl-tab-flow,column)', 'grid-auto-columns: minmax(0, 1fr)', 'grid-template-columns: var(--bl-tab-columns,none)']);
-  const tab = find(['.lv-tab', '.llmt-tab', '.po-menu-tabs > button', '.bwr_tab', '.pa-hub-tab', '.rl-tab', '.pt-tab'], ['flex-direction: row', 'min-height: var(--bl-h-ctl, 36px)', 'border-radius: 8px']);
-  const on = find(['.lv-tab', '.pt-tab', ':is(.active, [aria-pressed="true"], [aria-selected="true"])'], ['color-mix(in srgb, var(--salty-accent) 13%, transparent)', 'color: var(--salty-accent-ink, var(--salty-accent))']);   // 8.1.x 밝은 팔레트에서 옅은 포인트 면 위 포인트 그대로는 3.7:1 — 잉크(apply.js readableInk)로 4.5:1
-  assert.ok(box && tab && on, '탭 규칙 없음');
+  assert.ok(box, '탭 줄 규칙 없음');
+  assert.ok(!rules.some(r => /\.(lv|pt)-tab/.test(r.sel) && /:is\(\.active/.test(r.sel) && r.decl.includes('background')), '85 에 고른 탭 모양이 남음 — 88-ui-parts 한 곳에서');
+  const parts = read('css/88-ui-parts.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const pr = [...parts.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ sel: m[1].replace(/\s+/g, ' ').trim(), decl: m[2].replace(/\s+/g, ' ') }));
+  const tab = pr.find(r => ['.lv-tab', '.llmt-tab', '.po-menu-tabs > button', '.bwr_tab', '.pa-hub-tab', '.rl-tab', '.pt-tab', '.dq-tabs > button'].every(p => r.sel.includes(p)) && ['flex-direction: row', 'min-height: var(--bl-ui-ctl)', 'border: 1px solid var(--bl-ui-line)'].every(d => r.decl.includes(d)));
+  const on = pr.find(r => r.sel.includes('.lv-tab') && r.sel.includes(':is(.active, [aria-pressed="true"], [aria-selected="true"])') && r.decl.includes('background: var(--bl-ui-pick-face)') && r.decl.includes('color: var(--bl-ui-pick-ink)'));
+  assert.ok(tab && on, '공용 탭 규칙 없음');
   assert.ok(find(['.lv-tabs', '.llmt-tabs'], ['order: -2']), 'TTS · 번역 탭이 맨 위로 안 감');
   assert.ok(find(['.bwr_body > .bwr_tabs'], ['order: -1']), '다시 쓰기 탭이 맨 위로 안 감');
   for (const n of [1, 2, 3]) assert.ok(find([`.po-menu-tabs > button:nth-child(${n})::before`], ['content:']), `확장 순서 탭 ${n} 아이콘 없음`);
 });
-test('고른 칸 = 꽉 찬 포인트, 카드 = 모서리 12 · 1px 테 (원래 색 있는 테는 그대로)', () => {
-  assert.ok(find(['.bwr_seg.active', '.bl-look-segbtn.on'], ['background: var(--salty-accent)', 'color: var(--salty-on-accent, var(--bl-fb-fff))', 'font-weight: 650']), '고른 칸 규칙 없음');
+test('고른 칸 = 1.0.0 공용 「옅은 면 + 색 글자 + 체크」(88-ui-parts · 꽉 찬 포인트 면 없음), 카드 = 모서리 12 · 1px 테 (원래 색 있는 테는 그대로)', () => {
+  assert.ok(!find(['.bwr_seg.active'], ['background: var(--salty-accent)']) && !find(['.bl-look-segbtn.on'], ['background: var(--salty-accent)']), '85 에 꽉 찬 포인트 고른 칸이 남음');
+  const parts = read('css/88-ui-parts.css');
+  assert.ok(/\.bwr_settings \.bwr_seg\.active/.test(parts) && /\.bl-look-seg > \.bl-look-segbtn\.on/.test(parts) && parts.includes('background: var(--bl-ui-pick-face) !important'), '공용 고른 칸 규칙 없음');
   assert.ok(find(['.lv-card', '.llmt-card', '.mr-item', '.rl-module', '.po-item', '.jj-card', '.blzi-card', '.eh-card'], ['border-radius: 12px', 'border-width: 1px']), '카드 규칙 없음');
   const color = find(['.mr-item:not(.is-picked)', '.rl-module', '.po-item'], ['border-color: var(--salty-line)']);
   assert.ok(color && !color.sel.includes('.llmt-card') && !color.sel.includes('.jj-'), '테 색은 테 없던 카드에만');

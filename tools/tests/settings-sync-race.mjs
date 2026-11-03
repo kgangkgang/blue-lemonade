@@ -50,12 +50,12 @@ await test('서버를 읽는 사이 이 탭 저장이 끝나도: 이 탭이 바�
 });
 
 await test('그사이 저장이 없으면 예전처럼 (이 탭이 안 바꾼 값은 서버 값)', async () => {
-    server.palette = 'melon-night';
+    server.palette = 'night';
     const run = merge.mergeFromServer('visible');
     await new Promise(r => setTimeout(r, 0));
     answer();
     await run;
-    assert.equal(ctx.extensionSettings.salty.palette, 'melon-night');
+    assert.equal(ctx.extensionSettings.salty.palette, 'night');
     assert.equal(ctx.extensionSettings.salty.type.size, 20);
 });
 

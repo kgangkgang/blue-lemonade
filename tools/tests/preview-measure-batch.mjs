@@ -12,7 +12,7 @@ const test = async (name, fn) => { await fn(); passed++; console.log(`  PASS  ${
 // ── 가짜 배치: 높이(height)를 쓰면 배치가 더러워지고, 더러운 채로 크기를 읽으면 강제 배치 한 번 ──
 let dirty = true, flushes = 0;
 const layoutRead = v => { if (dirty) { flushes++; dirty = false; } return v; };
-class Style { constructor() { this._h = ''; this.transform = ''; } get height() { return this._h; } set height(v) { if (v !== this._h) { this._h = v; dirty = true; } } }
+class Style { constructor() { this._h = ''; this.transform = ''; this.props = new Map(); } getPropertyValue(k) { return this.props.get(k) || ''; } setProperty(k,v) { if(this.props.get(k)!==v){this.props.set(k,v);dirty=true;} } get height() { return this._h; } set height(v) { if (v !== this._h) { this._h = v; dirty = true; } } }
 class El {
     constructor(tag, attrs = {}) {
         this.localName = tag; this.attrs = { ...attrs }; this.children = []; this.parentElement = null; this.style = new Style(); this.dataset = {}; this.listeners = {}; this.hidden = false; this.disabled = false; this.textContent = '';
@@ -34,6 +34,7 @@ class El {
     dispatch(t) { for (const fn of this.listeners[t] || []) fn({}); }
     one(sel) { return sel.split(',').map(s => s.trim()).some(s => s.startsWith('.') ? this.classList.contains(s.slice(1)) : s.startsWith('[') ? s.slice(1, -1) in this.attrs : s === this.localName); }
     matches(sel) { return this.one(sel); }
+    closest(sel) { for(let el=this;el;el=el.parentElement)if(el.matches(sel))return el;return null; }
     querySelectorAll(sel) { const out = []; const walk = e => { for (const c of e.children) { if (c.one(sel)) out.push(c); walk(c); } }; walk(this); return out; }
     querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
     setPointerCapture() {}

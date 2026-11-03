@@ -1,3 +1,4 @@
+import { watchDom } from './dom-watch.js';
 // 한 손 버튼 줄 (3.1.0) — 입력창 바로 위에 자주 쓰는 동작을 모아 엄지로 누르게 한다.
 // ‹ › (마지막 답 스와이프) · 사칭 · 이어 쓰기 · 다시 생성. 동작은 실리태번 자신의 단추를 대신 눌러서 하므로
 // 막혀 있는 때(생성 중 · 스와이프 못 하는 메시지)의 판단도 실리태번이 한다. 생성 중에는 줄을 흐리게.
@@ -13,6 +14,9 @@ const BUTTONS = [
 let row = null;
 let listening = false;
 let current = '';
+let unwatch = null;
+const cleanups = [];
+function unlisten() { unwatch?.(); unwatch = null; for (const off of cleanups.splice(0)) off(); listening = false; }
 
 function markBusy(busy) {
     row?.classList.toggle('is-busy', busy);
@@ -24,11 +28,14 @@ function listen() {
     const { eventSource, event_types } = SillyTavern.getContext();
     // 흐리게만 한다 (누르는 것은 막지 않음 — 실리태번이 알아서 무시). 번역 · 기억 같은 조용한 생성은 빼고
     const sync = () => markBusy(document.body.dataset.generating === 'true');
-    const observer = new MutationObserver(sync);
-    observer.observe(document.body, { attributes: true, attributeFilter: ['data-generating'] });
+    unwatch = watchDom(document.body, { attributes: ['data-generating'], name: '한 손 줄 생성 상태' }, sync);
     sync();
     for (const name of ['GENERATION_ENDED', 'GENERATION_STOPPED', 'MESSAGE_RECEIVED', 'CHAT_CHANGED']) {
-        if (event_types[name]) eventSource.on(event_types[name], () => markBusy(false));
+        if (event_types[name]) {
+            const handler = () => markBusy(false), type = event_types[name];
+            eventSource.on(type, handler);
+            cleanups.push(() => (eventSource.removeListener || eventSource.off)?.call(eventSource, type, handler));
+        }
     }
 }
 
@@ -62,7 +69,9 @@ function onClick(event) {
 export function syncOneHand(on, options = {}) {
     const form = document.getElementById('form_sheld');
     if (!on || !form) {
-        row?.remove();
+        unlisten();
+        if (row) { row.removeEventListener('pointerdown', onPointerDown); row.removeEventListener('mousedown', onPointerDown); row.removeEventListener('click', onClick); row.remove(); }
+        row = null; current = '';
         return;
     }
     const fresh = !row;

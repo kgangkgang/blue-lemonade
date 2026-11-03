@@ -7,7 +7,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 const root = path.resolve(process.argv[2] || fileURLToPath(new URL('../..', import.meta.url)));
-const read = f => fs.readFileSync(path.join(root, f), 'utf8');
+const read = f => fs.readFileSync(path.join(root, f), 'utf8') + (f === 'style.css' ? (fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? fs.readFileSync(path.join(root, 'src/style-lazy.gen.css'), 'utf8') : '') : '');   // 1.0.0 두 장 빌드: style.css 를 읽을 땐 둘째 장(src/style-lazy.gen.css)도 이어 읽어요
 let n = 0; const t = (name, fn) => { fn(); n++; console.log(`ok ${n} - ${name}`); };
 const P = 'body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar.avatar_collage';
 /** 선택자 하나(정확히 같은 글자)의 선언 덩어리 — 줄 맨 앞에서 시작하는 규칙만 */

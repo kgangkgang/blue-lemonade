@@ -1,3 +1,4 @@
+import { watchDom } from './dom-watch.js';   // 9.0.4 공용 감시 허브 — body · html 자기 감시는 문서마다 감시자 하나
 // 메시지 안 HTML 카드의 글자색 — 프리셋이 AI 에게 "매번 HTML/CSS 를 직접 만들라" 고 시키면(데우스의
 // 시각적 연출 등) AI 는 카드 배경만 칠하고 글자색은 안 정하는 일이 잦다. 그러면 테마 글자색을 물려받아,
 // 밝은 팔레트에서 어두운 카드 위에 어두운 글자가 얹힌다 — 실측 대비 1.23(사실상 안 보임).
@@ -165,12 +166,12 @@ export function startCardInk() {
         if (root?.nodeType === 1 && root.isConnected) schedule(root);
     });
     let active=document.body.classList.contains('salty');
-    new MutationObserver(()=>{
+    watchDom(document.body,{attributes:['class'],name:'카드 글자색 (테마 켜짐)'},()=>{
         const next=document.body.classList.contains('salty');
         if(next===active)return;
         active=next;
         if(active)schedule(null);
         else for(const el of document.querySelectorAll('[data-bl-ink]'))restoreOne(el);
-    }).observe(document.body,{attributes:true,attributeFilter:['class']});
+    });
     schedule(null);
 }

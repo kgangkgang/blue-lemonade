@@ -88,7 +88,6 @@ await test('AGPL source, MIT/dependency notices and public source UI links',()=>
   assert.ok(read('src/addons/mermaid/source/'+rel).length);
   assert.ok(read('src/addons/mermaid/source/upstream/'+rel).length);
  }
- const credits=text('src/credits.js');assert.ok(credits.includes('https://github.com/SillyTavern/Extension-Mermaid'));assert.ok(credits.includes('./addons/mermaid/source/README.md'));
  assert.ok(text('THIRD-PARTY-NOTICES.md').includes('src/addons/mermaid/NOTICE.md'));
  for(const file of ['source/rebuild.py','source/package-lock.json','source/vendor-sha256.json','NOTICE.md','LICENSE'])assert.ok(text('tools/release_gate.py').includes("'"+file+"'"),file);
 });
@@ -96,8 +95,8 @@ await test('AGPL source, MIT/dependency notices and public source UI links',()=>
 await test('등록 배선 — 이름 · 아이콘 · 시작 · 목록 · 새로고침 · 세부 설정 · 출처', async () => {
     const src = text('src/addons.js');
     for (const part of ["mermaid:'Mermaid 도표'", "mermaid:'fa-diagram-project'", "}else if(id==='mermaid'){\n            module=await import('./addons/mermaid/index.js');",
-        "'customstyle','mermaid','tts','words']){", "'customstyle','mermaid','tts'].includes(id)", "addonOpen==='mermaid'){(await import('./addons/mermaid/index.js')).openPanel();return;}",
-        "id==='mermaid'?import('./addons/mermaid/index.js'):", 'instructions.mermaid=', "credits.mermaid=['Cohee1207 · Extension-Mermaid','https://github.com/SillyTavern/Extension-Mermaid']"]) assert.ok(src.includes(part), part);
+        "'mermaid','tts',...EMBEDDED_PRIVATE]){", "'mermaid','tts',...EMBEDDED_PRIVATE];", "addonOpen==='mermaid'){(await import('./addons/mermaid/index.js')).openPanel();return;}",
+        "id==='mermaid'?import('./addons/mermaid/index.js'):", 'instructions.mermaid=']) assert.ok(src.includes(part), part);
     const saved = { enabled: true, addons: { mermaid: true } };
     globalThis.SillyTavern = { getContext: () => ({ extensionSettings: { salty: saved } }) };
     const { getSettings, DEFAULTS } = await import(new URL('src/settings.js', rootUrl));
@@ -106,13 +105,11 @@ await test('등록 배선 — 이름 · 아이콘 · 시작 · 목록 · 새로�
     assert.equal(s.addons.mermaid, true);
     const { addonMarkup } = await import(new URL('src/addons.js', rootUrl));
     const html = addonMarkup(s, 'mermaid');
-    for (const part of ['fa-diagram-project', 'Mermaid 도표', 'data-addon-toggle="mermaid" checked', '도표가 있을 때만', '기존 단독 확장과는 둘 중 하나만 켜 주세요.', 'href="https://github.com/SillyTavern/Extension-Mermaid"', 'data-addon-inline="mermaid"', 'data-addon-open="mermaid"']) assert.ok(html.includes(part), part);
+    for (const part of ['fa-diagram-project', 'Mermaid 도표', 'data-addon-toggle="mermaid" checked', '도표가 있을 때만', '기존 단독 확장과는 둘 중 하나만 켜 주세요.', 'data-addon-inline="mermaid"', 'data-addon-open="mermaid"']) assert.ok(html.includes(part), part);
     s.addons.mermaid = false;
     assert.ok(!addonMarkup(s, 'mermaid').includes('data-addon-toggle="mermaid" checked'));
-    const { DUPLICATES, knownConflicts } = await import(new URL('src/assist/core.js', rootUrl));
+    const { DUPLICATES } = await import(new URL('src/extension-folder.js', rootUrl));
     assert.deepEqual(DUPLICATES.mermaid, ['Extension-Mermaid', 'mermaid']);
-    assert.deepEqual(knownConflicts(['third-party/Extension-Mermaid'], [], { mermaid: true }).map(x => x.code), ['duplicate-mermaid']);
-    assert.deepEqual(knownConflicts(['third-party/Extension-Mermaid'], ['third-party/Extension-Mermaid'], { mermaid: true }), []);
     const { SETTING_LABELS } = await import(new URL('src/settings-labels.js', rootUrl));
     assert.equal(SETTING_LABELS['addons.mermaid'], '확장: Mermaid 도표');
     const { settingRoute } = await import(new URL('src/settings-differences.js', rootUrl));

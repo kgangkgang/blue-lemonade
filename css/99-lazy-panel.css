@@ -179,13 +179,13 @@ body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.
   align-items: center;
   gap: 6px;
 }
-body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :is(i, .fa-solid) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :is(i, .fa-solid):not(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) {
 font-size:12px !important;
 }
-body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :is(i, .fa-solid):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :is(i, .fa-solid):not(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-faint) !important;
 }
-body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :is(i, .fa-solid) {
+body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:first-child :is(i, .fa-solid):not(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) {
 opacity:1 !important;
 }
 body.salty #user-settings-block-content .flex-container[data-bl-row~="neo"]:is(.bl-s, *):is(.bl-s, *):is(bl-s, *) > small:not(:first-child) {

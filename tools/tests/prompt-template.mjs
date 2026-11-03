@@ -54,8 +54,9 @@ await test('담긴 ZIP = SOURCE.json · 소스맵 없음 · 맨 위 폴더 하�
     assert.match(fs.readFileSync(path.join(dir, 'LICENSE'), 'utf8'), /GNU AFFERO GENERAL PUBLIC LICENSE\s+Version 3/);
 });
 
-const KO = (await import(pathToFileURL(path.join(dir, 'ko-kr.js')))).KO;
-const host = await import(pathToFileURL(path.join(dir, 'host.js')));
+// 1.0.0: 설정 블록 한국어 표 · host 는 9.0.0 에서 애드온 폴더 밖(src/prompt-template-*.js, 애드온을 켜지 않아도 index.js 가 부름)으로 옮겨 그대로 써요
+const KO = (await import(pathToFileURL(path.join(root, 'src/prompt-template-ko.js')))).KO;
+const host = await import(pathToFileURL(path.join(root, 'src/prompt-template-host.js')));
 const mod = await import(pathToFileURL(path.join(dir, 'index.js')));
 
 await test('index.js 상수 = SOURCE.json (판 · 커밋 · ZIP 해시) · CSS 판 = VERSION · 판 자리 10 아님', () => {
@@ -99,9 +100,8 @@ await test('host.js: data-i18n 규칙("[title]키;키")대로 적고 · 표에 �
     assert.equal(host.applyKorean(panel), 2);
     assert.equal(a.textContent, '확장 켜기'); assert.equal(b.attrs.title, KO['Global switch']); assert.equal(c.textContent, 'Keep me');
     assert.equal(host.applyKorean(null), -1);
-    assert.equal(host.markVersion(panel, '1.17.9'), true); assert.equal(panel.head.dataset.blVersion, 'v1.17.9');
-    assert.equal(host.markVersion(panel, 'x"><b>'), false);
-    // 시작: 블록이 나타나면 한 번 적고 판을 단다 (가짜 문서 · 타이머 바로 실행)
+    assert.equal(host.markVersion, undefined, '1.0.0: 9.0.0 에서 걷은 머리글 판 알약은 되살리지 않는다 (css/82 주석)');
+    // 시작: 블록이 나타나면 한 번 적고 판은 읽기만 한다 (가짜 문서 · 타이머 바로 실행)
     const added = []; const live = new El(); live.kids = [new El({ 'data-i18n': 'Prompt template settings' }, 'Prompt template settings')]; live.head = new El();
     const doc = { getElementById: id => id === host.PANEL ? live : null };
     const timers = [];
@@ -110,7 +110,8 @@ await test('host.js: data-i18n 규칙("[title]키;키")대로 적고 · 표에 �
     await new Promise(r => setTimeout(r, 20));
     assert.deepEqual(added, []);   // 6.9.9 검토: 전역 언어 데이터에는 넣지 않는다 (원본 편집기 label 안 칸이 지워지고 일반 낱말이 다른 화면을 바꿈) — 설정 블록만
     assert.equal(live.kids[0].textContent, '프롬프트 템플릿');
-    assert.equal(live.head.dataset.blVersion, 'v1.17.9');
+    assert.equal(live.head.dataset.blVersion, undefined, '1.0.0: 판 알약 속성을 달지 않는다');
+    assert.equal(result.version, '1.17.9', '판은 진단용으로만 읽는다');
     assert.equal(result.done, true);
     assert.equal(host.startPromptTemplateHost({ doc }), null, '한 번만');
 });
@@ -207,28 +208,29 @@ await test('배선: 애드온 목록 · 시작 · 세부 설정 · 판 표 · �
     assert.match(addons, /addonOpen==='prompt-template'\)\{\(await import\('\.\/addons\/prompt-template\/index\.js'\)\)\.openPanel\(\)/);
     assert.match(addons, /id==='prompt-template'\?import\('\.\/addons\/prompt-template\/index\.js'\)/);
     assert.match(addons, /instructions\['prompt-template'\]=/);
-    assert.match(addons, /credits\['prompt-template'\]=\['zonde306 · ST-Prompt-Template \(AGPL-3\.0\)','https:\/\/github\.com\/zonde306\/ST-Prompt-Template'\]/);
-    assert.match(read('src/settings.js'), /mermaid: false, 'prompt-template': false, conflicts: false/);
+    // 1.0.0: 카드 꼬리 출처 표는 addon-credits.js 로 옮겨 있어요(설정 창이 넘김 — 시작 그래프 밖)
+    assert.match(read('src/addon-credits.js'), /'prompt-template':\['zonde306 · ST-Prompt-Template \(AGPL-3\.0\)','https:\/\/github\.com\/zonde306\/ST-Prompt-Template'\]/);
+    assert.match(read('src/settings.js'), /mermaid: false, 'prompt-template': false, \.\.\.PRIVATE_FLAGS/);
     assert.match(read('src/addon-versions.js'), /'prompt-template': \['프롬프트 템플릿', 'prompt-template\/index\.js'\]/);
     assert.match(read('src/panel.js'), /\['prompt-template','프롬프트 템플릿'\]/);
     assert.match(read('src/settings-search.js'), /\['extensions','prompt-template','프롬프트 템플릿','EJS 템플릿/);
     assert.match(read('src/settings-labels.js'), /'addons\.prompt-template':'확장: 프롬프트 템플릿'/);
     assert.match(read('src/credits.js'), /프롬프트 템플릿 · ST-Prompt-Template/);
-    assert.match(read('index.js'), /import\('\.\/src\/addons\/prompt-template\/host\.js'\)\.then\(m => m\.startPromptTemplateHost\(\{ koUi: settings\.koUi \}\)\)/);
+    assert.match(read('index.js'), /\['startPromptTemplateHost', \(\) => import\('\.\/src\/prompt-template-host\.js'\), m => \{ m\.startPromptTemplateHost\(\{ koUi: settings\.koUi \}\); \}, 'drawer'\]/);
     const notices = read('THIRD-PARTY-NOTICES.md');
     assert.ok(notices.includes('## 프롬프트 템플릿 (ST-Prompt-Template)') && notices.includes(source.commit) && notices.includes('src/addons/prompt-template/LICENSE'));
-    assert.match(read('README.md'), /zonde306 \/ ST-Prompt-Template\]\(https:\/\/github\.com\/zonde306\/ST-Prompt-Template\) \(AGPL-3\.0/);
+    assert.ok(!read('README.md').includes('github.com/zonde306'), '1.0.0: 짧은 README 에는 출처 링크를 두지 않는다 (고지는 THIRD-PARTY-NOTICES · NOTICE.md · 출처 창)');
     assert.match(read('.github/workflows/release-check.yml').replace(/\r\n/g, '\n'), /\n\s+node tools\/tests\/prompt-template\.mjs \.\n/);
     const gate = read('tools/release_gate.py');
     assert.match(gate, /for name in \('ST-Prompt-Template\.zip', 'SOURCE\.json', 'LICENSE', 'NOTICE\.md'\):/);
     assert.match(gate, /names\.append\('tools\/prompt-template-bundle\.mjs'\)/);
 });
-await test('머리글 CSS: 아이콘 · 판 알약(data-bl-version) · 되돌리기 아이콘은 뒤 — css/82 와 style.css', () => {
+await test('머리글 CSS: 아이콘 · 되돌리기 아이콘은 뒤 · 판 알약(data-bl-version) 없음 — css/82 와 style.css', () => {
     const css = read('css/82-prompt-template.css');
     assert.match(css, /#prompt_template_settings > \.inline-drawer > \.inline-drawer-header > b::before \{\n\s+content: "\\f121";/);
-    assert.match(css, /b\[data-bl-version\]::after \{\n\s+content: attr\(data-bl-version\);/);
+    assert.ok(!css.includes('[data-bl-version]'), '1.0.0: 판 알약 규칙 없음');
     assert.match(css, /> #pt_reset \{\n\s+order: 3;/);
-    assert.ok(read('style.css').includes('attr(data-bl-version)'), 'style.css 를 다시 만들었다 (node tools/build-css.cjs)');
+    assert.ok(!read('style.css').includes('attr(data-bl-version)'), 'style.css 를 다시 만들었다 (node tools/build-css.cjs)');
 });
 await test('확장 순서 1.2.2: 창 구성이 바뀌면(늦게 붙는 확장) 열린 목록을 다시 그린다', () => {
     const order = read('src/addons/order/order.js'), panel = read('src/addons/order/panel.js');
@@ -287,7 +289,7 @@ await test('7.0.1 다른 이름 폴더에 같은 확장(전역 · 내 계정): �
     await mod.refresh(); assert.deepEqual(S.others, []); assert.equal(mod.actions()[0].disabled, false);
 });
 await test('7.0.1 http(crypto.subtle 없음): 순수 JS SHA-256 이 node 와 같고 · 담긴 ZIP 크기 · 해시를 본다 · 한 바이트 다르면 거절', async () => {
-    const { sha256Hex } = await import(pathToFileURL(path.join(dir, 'sha256.js')));
+    const { sha256Hex } = await import(pathToFileURL(path.join(root, 'src/addons/assets/sha256.js')));   // 1.0.0: 9.0.0 에서 캐릭터 에셋 폴더로 옮긴 같은 파일
     for (const n of [0, 1, 55, 56, 63, 64, 65, 119, 1000, (1 << 20) + 37]) {
         const bytes = new Uint8Array(n).map((_, i) => (i * 131 + n) & 255);
         assert.equal(await sha256Hex(bytes), sha(bytes), 'n=' + n);
@@ -321,8 +323,8 @@ await test('7.0.1 새 판 · 같은 판 재설치는 확인 창 뒤에만 · 옛
 });
 await test('7.0.1 판: 애드온 1.0.1(JS = CSS) · perf 2.2.8(7.0.3 요청 로그 이름표 · hub.js SUITE_VERSION = --pa-hub-css-version)', () => {
     assert.equal(mod.VERSION, '1.0.4');   // 7.0.5 설치 상태 카드 · <% %> 알림
-    assert.match(read('src/addons/perf/hub.js'), /export const SUITE_VERSION = '2\.3\.3';/);   // 7.7.4
-    assert.deepEqual([...read('src/addons/perf/style.css').matchAll(/--pa-hub-css-version:\s*"([^"]+)"/g)].map(m => m[1]), ['2.3.3']);
+    assert.match(read('src/addons/perf/hub.js'), /export const SUITE_VERSION = '2\.3\.4';/);   // 7.7.4
+    assert.deepEqual([...read('src/addons/perf/style.css').matchAll(/--pa-hub-css-version:\s*"([^"]+)"/g)].map(m => m[1]), ['2.3.4']);
 });
 await test('확장 순서 1.2.3: 다시 그리기 전 초점(줄 key · 동작) 기억 → 그린 뒤 같은 칸 · 꺼졌으면 같은 줄 첫 칸', () => {
     const panel = read('src/addons/order/panel.js');

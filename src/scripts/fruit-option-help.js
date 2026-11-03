@@ -1,5 +1,4 @@
 import { localPromptHash } from './prompt-fingerprint.js';
-import { FRUIT_OPTION_EFFECTS, FRUIT_OPTION_BASELINES } from './fruit-option-effects.js';
 
 const SCOPE = '#fruit-heart-v6';
 const TARGET = '.fh-item,[data-chip],[data-pick-group],[data-pick-index],[data-master],[data-qr]';
@@ -14,6 +13,8 @@ export function optionFamily(prompt, groups = {}) {
     return name.startsWith('⌨') ? '文风' : groups[promptId(prompt)] || '';
 }
 export async function optionEffect(content, crypto = globalThis.crypto, identifier = '') {
+    // 효과 설명 213KB는 옵션 도움말을 실제로 열 때 받아요. 기본 탭과 일반 클릭에는 필요하지 않아요.
+    const { FRUIT_OPTION_EFFECTS, FRUIT_OPTION_BASELINES } = await import('./fruit-option-effects.js');
     const body = normalize(content), baseline = FRUIT_OPTION_BASELINES[String(identifier)];
     if (!body) return {text:baseline || '내용이 없는 구분 항목이에요. 이 항목만 켜도 새 지시가 추가되지는 않아요.', verified:true};
     let hash;

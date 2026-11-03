@@ -146,7 +146,7 @@ export const DEFAULT_SETTINGS = {
             words: 'cane, canes, walking stick*',
         },
         {
-            // 7.7.9 소품 클리셰 (사용자: "요새 애들이 자꾸 회중시계 들고 나오는데") — loadSettings 가 offeredRules 로 기존 설정에 한 번 붙인다
+            // 7.7.9 소품 클리셰 (인물마다 회중시계를 꺼내던 것) — loadSettings 가 offeredRules 로 기존 설정에 한 번 붙인다
             id: 'pocket_watch',
             name: '회중시계',
             enabled: true,

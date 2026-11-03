@@ -1,10 +1,11 @@
 // 에셋 이미지: 가장자리가 투명한 PNG면 .salty-cutout (캐릭터 컷) 표시 + 테두리 자동 색(--salty-pick-*) 뽑기.
 // img.eh-img = 캐릭터 에셋 확장(esetham)이 정규식 없이 {{img::…}}를 바꾼 그림
-// 5.6.5 img[data-autopic-id] = 그림 생성 확장(원본과 개조판 모두)이 글 사이에 넣은 그림 — 에셋 그림과 같은 배치 · 모양 · 액자 · 크기 · 흐림을 탄다.
+// 5.6.5 img[data-autopic-id] = 그림 생성 확장(AutoPic 계열)이 글 사이에 넣은 그림 — 에셋 그림과 같은 배치 · 모양 · 액자 · 크기 · 흐림을 탄다.
 //       틀(.autopic-tag-img-wrapper)은 그림 생성 확장이 그린 뒤 감싸므로 처음엔 그림 자신이 host, 감싼 뒤 다시 분류돼 틀이 host 가 된다 (css/07 의 .salty-asset img 규칙)
 // 5.6.6 메시지 아래 그림 칸 모드(실리태번 기본 mes_img — 그림 생성 확장이 .autopic-media-owner 를 단 메시지만)도 같은 규칙
 // 6.1.6 투명 판정은 '투명 그림도 똑같이'와 상관없이 .salty-alpha 로도 남긴다 — 외곽선 · 그림자(cutedge.js)는 두 경우 다 건다
 import { paintCutEdge } from './cutedge.js';
+import { watchDom } from './dom-watch.js';
 const ASSET_IMG = '.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id], .autopic-media-owner img.mes_img';
 const HOST = '.custom-cac-wrap, [class*="custom-imageWrapper"], .autopic-tag-img-wrapper, .autopic-media-owner .mes_img_container';
 // 7.3.0 투명 그림 외곽선은 채팅의 모든 그림에 — 다른 확장이 글 속 · 그림 칸에 넣은 그림도 (에셋 모양 · 배치는 입히지 않고 .salty-alpha 만).
@@ -528,7 +529,8 @@ function tidyFlush() {
 export function startAssetWatcher() {
     const chat = document.getElementById('chat');
     if (!chat || observer) return;
-    observer = new MutationObserver((mutations) => {
+    // 9.0.4: 공용 감시 허브 구독(#chat 구역 — 채팅을 보는 감시자는 문서마다 하나)
+    observer = watchDom(chat, { childList: true, subtree: true, attributes: ['src'], name: '그림 분류 (채팅)' }, (mutations) => {
         // 답변이 자랄 때는 한 번에 문단 여러 개가 새로 들어온다 — 줄바꿈 정리는 메시지마다 한 번만 (2.5.2)
         const tidy = new Set();
         for (const m of mutations) {
@@ -563,11 +565,11 @@ export function startAssetWatcher() {
         for (const mes of tidy) { if (document.body.dataset.generating === 'true' && mes.matches?.('.mes:last-of-type, .mes:last-of-type *')) tidyLater.add(mes); else tidyLeadingBreaks(mes); }
         if (tidyLater.size && !tidyTimer) tidyTimer = setTimeout(tidyFlush, 500);
     });
-    observer.observe(chat, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
     // 7.3.0 채팅 밖(크게 보기 · 모아 보기 · 다른 확장의 <dialog>)에 붙는 그림과 data-salty-cutout 표시 — 채팅 안 변화는 위 관찰자 몫이라 건너뛴다
     // 7.3.1 src 도 본다: 크게 보기 · 모아 보기가 <img> 하나의 주소만 바꿔 다음 그림을 보이면 그 그림을 다시 잰다 (실린 뒤에도 한 번 — 바뀐 주소가 아직
     //   안 실렸으면 complete · naturalWidth 가 앞 그림을 가리킨다). [data-salty-cutout] 안 · VIEW_IMG · 이미 표시가 붙은 그림만 — 아바타 같은 다른 그림은 그냥 지나간다
-    new MutationObserver((mutations) => {
+    // 9.0.4: 공용 감시 허브 구독 — 채팅(#chat) 가지는 감시도 안 걸어요(위 채팅 구독 몫)
+    watchDom(document.body, { childList: true, subtree: true, attributes: [CUTOUT_ATTR, 'src'], exclude: '#chat', name: '그림 분류 (채팅 밖)' }, (mutations) => {
         for (const m of mutations) {
             if (m.type === 'attributes') {
                 if (chat.contains(m.target)) continue;
@@ -582,7 +584,7 @@ export function startAssetWatcher() {
             if (chat.contains(m.target)) continue;
             m.addedNodes.forEach(scanViews);
         }
-    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: [CUTOUT_ATTR, 'src'] });
+    });
     document.querySelectorAll(`[${CUTOUT_ATTR}]`).forEach(node => { if (!chat.contains(node)) queueView(node); });
     classifyAll();
 }

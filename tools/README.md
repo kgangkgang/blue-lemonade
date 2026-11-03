@@ -30,6 +30,12 @@ python tools/release_gate.py --kind memory --source "MEMORY_EXTENSION_DIRECTORY"
 
 GitHub Actions는 커밋된 런타임으로 ZIP 을 만들어 검사하고, 그 판의 릴리스가 있으면 릴리스 자산과 한 바이트씩 비교합니다 (릴리스가 공개될 때는 태그의 트리로 다시 비교). 푸시 뒤 CI는 사후 검증입니다. 배포 전 차단은 위 로컬 명령이 담당하므로 이를 생략하지 않습니다. 브랜치 보호나 필수 체크를 자동 설정하지는 않습니다.
 
+## CSS 크기 보기 · 두 장 빌드 (9.0.1)
+
+`node tools/css-report.mjs . [--dupes] [--unused] [--addons] [--json <파일>]` 은 style.css 의 KB · 규칙 수 · :has · @media 와 모듈별 몫, 지연 시트(설정 창 미리보기 src/preview.gen.css · 서랍 전용 src/lazy-panel.gen.css), 같은 규칙 · 안 쓰는 이름 후보 · 애드온 CSS 공통 덩어리를 보여 줘요. 줄이기 전후를 이것으로 찍어요.
+
+설정 창 미리보기 CSS 는 style.css 에 넣지 않고 src/preview.gen.css 로만 써요(설정 창을 처음 열 때 받음). `node tools/build-css.cjs --split` 은 첫 화면에 안 쓰는 모듈을 src/style-lazy.gen.css 두 번째 장으로 나누는 준비예요(기본은 한 장 · 켜기 전에 사진 비교).
+
 ## 긴 채팅 검사
 
 로컬 HTTP 서버로 tests/long-chat.html을 엽니다. 기본은 루트 배포본, ?dev는 salty-ext 개발 원본입니다. SillyTavern/public 폴더가 저장소의 형제 위치에 있어야 호스트 CSS/jQuery를 읽습니다. 모든 메시지와 이미지는 합성이며 API 호출을 하지 않습니다. 검사 시작 버튼을 눌러 JSON 결과를 확인합니다.

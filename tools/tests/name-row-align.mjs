@@ -16,13 +16,8 @@ assert.equal(DEFAULTS.profile.nameRowAlign,'left');
 assert.equal(DEFAULTS.userProfile.nameRowAlign,'left');
 let s=load(old());
 assert.equal(s.profile.nameRowAlign,'left');assert.equal(s.userProfile.nameRowAlign,'left');
-s=load(old({},{mode:'none',nameAlign:'right'}));
-assert.equal(s.userProfile.nameRowAlign,'right','5.8.2 right choice without the big profile carries over');
-assert.equal(s.profile.nameRowAlign,'left');
-s=load(old({mode:'small',nameAlign:'right'},{}));
-assert.equal(s.profile.nameRowAlign,'right');
 for(const [why,value] of [['banner keeps its own key',old({},{mode:'banner',nameAlign:'right'})],['centre is the old default',old({},{mode:'none',nameAlign:'center'})],
-    ['device layouts may hold another device',old({},{mode:'none',nameAlign:'right'},{deviceLayouts:{on:true,pc:{},mobile:{}}})]])
+    ['9.0.0: an old right choice no longer carries over (migration removed)',old({},{mode:'none',nameAlign:'right'})]])
     assert.equal(load(value).userProfile.nameRowAlign,'left',why);
 const saved=structuredClone(DEFAULTS);saved.userProfile.mode='none';saved.userProfile.nameAlign='right';saved.userProfile.nameRowAlign='center';
 assert.equal(load(saved).userProfile.nameRowAlign,'center','an existing choice is never overwritten');

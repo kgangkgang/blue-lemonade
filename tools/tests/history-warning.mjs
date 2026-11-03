@@ -272,7 +272,7 @@ await test('가벼움: 감시자 · 반복 타이머 · 스크롤 듣기 없음,
     const listeners = [...code.matchAll(/doc\.addEventListener\('(\w+)'/g)].map(m => m[1]);
     assert.deepEqual(listeners, ['click', 'mouseover']);
     const features = fs.readFileSync(path.join(root, 'src/features.js'), 'utf8');
-    assert.match(features, /if \(on \|\| modules\.historywarning\) load\('historywarning', '\.\/history-warning\.js'\)\.then\(m => m\?\.syncHistoryWarning\(on\)\);/);
+    assert.match(features, /if \(on \|\| modules\.historywarning\) onGate\('drawer', \(\) => load\('historywarning', '\.\/history-warning\.js'\)\.then\(m => m\?\.syncHistoryWarning\(on\)\), 'historywarning'\);/);
 });
 
 console.log(`\n${n} passed`);

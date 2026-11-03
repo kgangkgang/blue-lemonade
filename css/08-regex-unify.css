@@ -42,7 +42,7 @@ body.salty.salty-unify-inline.salty-dem-ink :is(#chat .mes, .cg-root) .mes_text 
 body.salty.salty-regex-noicons :is(#chat, .cg-root) .mes_text [class*="custom-"][class*="__icon"] {
   display: none !important;
 }
-/* 데우스 V3 는 트래커의 시계 · 날씨 이모티콘을 …__glyph 스팬에 넣는다(묶음 · 탭 · 카드 그림은 위 __icon 규칙이 잡음) — 「카드 이모티콘」을 끄면 같이 숨김 (10-27 사용자 제보) */
+/* 데우스 V3 는 트래커의 시계 · 날씨 이모티콘을 …__glyph 스팬에 넣는다(묶음 · 탭 · 카드 그림은 위 __icon 규칙이 잡음) — 「카드 이모티콘」을 끄면 같이 숨김 */
 body.salty.salty-regex-noicons :is(#chat, .cg-root) .mes_text .custom-dem-track__glyph {
   display: none !important;
 }

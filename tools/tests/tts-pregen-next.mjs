@@ -98,8 +98,8 @@ async function until(fn, label, ms = 3000) {
 }
 
 const V = {
-    mm: { uid: 'minimax:ade', provider: 'minimax', voiceId: 'ade', name: '에이드' },
-    cp: { uid: 'openai_compat:night', provider: 'openai_compat', voiceId: 'night', name: '나이트' },
+    mm: { uid: 'minimax:seraphina', provider: 'minimax', voiceId: 'seraphina', name: '세라피나' },
+    cp: { uid: 'openai_compat:narrator', provider: 'openai_compat', voiceId: 'narrator', name: '해설' },
 };
 const OFFICIAL = { key: 'test-key', host: 'https://api.minimax.io' };
 const GATEWAY = { key: 'test-key', host: 'custom', host_custom: 'http://198.51.100.7:8880' };
@@ -122,7 +122,7 @@ let n = 0;
 function reply() {
     T.chat.length = 0;
     T.chat.push({ name: 'User', is_user: true, mes: 'hi' });
-    T.chat.push({ name: 'Ade', is_user: false, mes: `「하나」 「둘」 「셋」 ${++n}`, extra: { api: 'custom', model: 'm' } });
+    T.chat.push({ name: 'Seraphina', is_user: false, mes: `「하나」 「둘」 「셋」 ${++n}`, extra: { api: 'custom', model: 'm' } });
     return 1;
 }
 function setup({ mode = 'next', voices = [V.cp], providers = {}, pregenPaid = false, segs = LINES, voiceFor = () => V.cp } = {}) {

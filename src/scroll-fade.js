@@ -1,12 +1,16 @@
 // 세로 스크롤 칸의 넘친 쪽 흐림 (8.2.3): 스크롤바를 숨긴 칸(캐릭터 목록 · 확장 설정 · 서랍 · 팝업 본문 · 테마 설정 창 · 월드인포 목록 · 애드온 창)에서
 // 「더 있음」을 보여 줘요 — 탭 줄의 가로 흐림(tab-scroll.js applyFade · data-bl-fade)과 같은 방식, 세로는 data-bl-fade-y="top|bottom|both" 로 따로.
-// 왜: 커뮤니티 제보 「봇 목록 · 확장 칸에 스크롤바가 없다」 → 사용자 결정(10-29) 「스크롤바는 숨긴 채로, 넘친 쪽만 흐리게」.
+// 왜: 스크롤바를 숨긴 목록 · 확장 칸에서 넘친 쪽을 흐리게 해 더 있음을 보여 준다.
 // 방식: 대상은 선택자 목록(FADE_Y_SELECTORS)으로 정하고, 칸마다 passive scroll · 바로 아래 자식 변화(MutationObserver, subtree 없음) · 안에서 누름(접기 · 펼치기 뒤) ·
 //   ResizeObserver(서랍 열림 = 크기 0 → n) 를 받아 rAF 한 번에 묶어 다시 재요. 넘치지 않으면 속성을 떼서 mask 가 아예 없게(mask 는 넘칠 때만).
 //   body 전체 subtree 감시자는 새로 만들지 않아요 — 새 팝업은 popup-guard.js 의 body 자식 감시자(onPopupAdded)에 얹고, 확장 설정의 접힘 칸은 그 서랍 안 누름 뒤 다시 훑어요.
 // 제외: #chat · 메시지 본문 · textarea · 편집 칸 · pre · iframe · 이미 자체 흐림이 있는 칸(.salty-fonttags · .salty-fontscroll · 가로 흐림 줄).
 // 다른 확장: 바이바이(ST-BaiBai-Tools)는 월드인포 항목에 content-visibility + ResizeObserver 를 걸어요 — 켜져 있으면 월드인포 목록은 건너뛰어요(resting).
-// CSS 는 css/73-scroll-fade.css(모두 mask-image — 서랍의 sticky 가상 요소는 스크롤에 긴 작업을 만들어 뺐어요). 끄기는 탭 줄 흐림과 같은 길: html#bl-tab-scroll-off.
+// CSS 는 css/73-scroll-fade.css — 모두 mask-image(서랍 안에 가상 요소를 두면 있기만 해도 스크롤에 긴 작업이 생겨요). 자기 바탕을 칠하는 서랍(.drawer-content)은
+//   mask 가 바탕까지 투명하게 만들어 서랍 뒤 채팅 입력줄이 비쳤어요(8.2.4 폰) → 서랍 바깥 받침 요소(#top-settings-holder > .bl-drawer-backing)를 CSS 앵커 위치로
+//   서랍 자리에 맞춰 같은 색 받침을 깔아요. 끄기는 탭 줄 흐림과 같은 길: html#bl-tab-scroll-off.
+//   받침은 가상 요소(::after)가 아니라 실제 요소예요 — 실리태번 코어의 #top-settings-holder:has(…) 때문에 서랍 안이 바뀔 때마다 #top-settings-holder 가 다시 계산되는데,
+//   가상 요소가 있으면 그때마다 그 스타일도 새로 맞춰 월드인포를 연 뒤 프롬프트 토글 · 서랍 열기가 느려졌어요(1.0.0 퇴행, 폰 4배 토글 1,462 → 694ms · 서랍 987 → 483ms).
 import { watchDom } from './dom-watch.js';
 export const FADE_Y_SELECTORS = [
     '#rm_print_characters_block',                 // 캐릭터 목록
@@ -39,6 +43,18 @@ export function applyFadeY(el, scrollable = true) {
     return state;
 }
 const scrollableY = (el, style) => { const o = style(el).overflowY; return o === 'auto' || o === 'scroll'; };
+
+export const BACKING_CLASS = 'bl-drawer-backing';
+/** 서랍 받침 요소를 #top-settings-holder 맨 끝에 한 번 붙여요(hidden — css/73 의 앵커 위치 규칙이 있을 때만 보임). 돌려줌: 받침 요소 또는 null */
+export function ensureDrawerBacking(doc = globalThis.document) {
+    const holder = doc?.getElementById?.('top-settings-holder');
+    if (!holder) return null;
+    for (const child of holder.children || []) if (child.classList?.contains(BACKING_CLASS)) return child;
+    const el = doc.createElement('div');
+    el.className = BACKING_CLASS; el.hidden = true; el.setAttribute('aria-hidden', 'true');
+    holder.append(el);
+    return el;
+}
 
 const KEY = Symbol.for('blue-lemonade.scroll-fade.v1');
 /** ResizeObserver 기록이 「상자가 없음(테두리 상자 높이 0)」을 알려 주면 true — 그때 clientHeight 도 0 이라 흐림은 늘 없어요. 크기를 모르면 false(재요) */
@@ -151,6 +167,7 @@ export function installScrollFade(doc = globalThis.document, { resting = () => f
     }
     const api = { scan, bind, unbind, refreshResting, size: () => states.size, has: el => states.has(el) };
     doc[KEY] = api;
+    ensureDrawerBacking(doc);
     scan(doc);
     return api;
 }

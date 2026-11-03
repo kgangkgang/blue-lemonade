@@ -1,6 +1,6 @@
 // 번역기 용어집 찾기 (번역기 2.2.9 · 테마 5.7.3) — 원문에 나온 항목만 프롬프트 줄로, 가타카나 표기 흔들림까지
 //   node tools/tests/translator-glossary.mjs <테마 루트>   (공개 저장소는 '.', 개발본은 'salty-ext')
-// 2026-10-08 사용자 제보: 용어집 「Kleinstein, クラインスタイン → 클라인스타인」 이 있는데 원문이 クラインシュタイン 이라 그 줄이 빠지고
+// 2026-10-08 용어집 「Kleinstein, クラインスタイン → 클라인스타인」 이 있는데 원문이 クラインシュタイン 이라 그 줄이 빠지고
 // 「クライン → 클라인」 만 들어가 「클라인슈타인」 으로 옮겨졌다. 합성 항목만 씀 (사용자 자료 없음).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -105,6 +105,21 @@ t('반각 가타카나 · 줄 수 한도', () => {
     assert.deepEqual(lines(KLEIN, 'ｸﾗｲﾝｼｭﾀｲﾝさん'), ['ｸﾗｲﾝｼｭﾀｲﾝ → 클라인스타인']);
     const many = Array.from({ length: 80 }, (_, i) => E(`語${i}号`, `어${i}`));
     assert.equal(lines(many, many.map(e => e.src).join('、'), { maxLines: 60 }).length, 60);
+});
+t('줄 수 한도를 넘으면 긴 표기를 남기고 뺀 수를 알려요 · 한도 안이면 예전과 같아요', () => {
+    const many = Array.from({ length: 80 }, (_, i) => E(`語${i}号`, `어${i}`));
+    many.push(E('クラインシュタイン公爵家', '클라인슈타인 공작가'));
+    const text = many.map(e => e.src).join('、');
+    const cut = glossaryLines(many, text, { maxLines: 60 });
+    assert.equal(cut.lines.length, 60);
+    assert.equal(cut.dropped, 21);
+    assert.ok(cut.lines.some(line => line.startsWith('クラインシュタイン公爵家')), '목록 끝에 있어도 긴 표기는 남아요');
+    const fit = glossaryLines(many.slice(0, 10), many.slice(0, 10).map(e => e.src).join('、'), { maxLines: 60 });
+    assert.equal(fit.dropped, 0);
+    assert.deepEqual(fit.lines, many.slice(0, 10).map(e => `${e.src} → ${e.dst}`), '한도 안이면 순서 그대로 (문단 캐시 열쇠 유지)');
+    const index = fs.readFileSync(path.join(path.dirname(file), 'index.js'), 'utf8');
+    assert.match(index, /const \{ lines, hasChoice, dropped \} = glossaryLines\(/);
+    assert.match(index, /if \(dropped\) noteGlossaryCut\(lines\.length, dropped\)/, '잘리면 화면에 알려요');
 });
 t('빈 항목 · 빈 원문', () => {
     assert.deepEqual(lines([{ src: '', dst: '' }, E('クライン', '클라인')], ''), []);

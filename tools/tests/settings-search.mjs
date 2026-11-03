@@ -9,6 +9,7 @@ const root = path.resolve(process.argv[2] || '.');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
 const S = await import(pathToFileURL(path.join(root, 'src/settings-search.js')).href);
+await S.loadIntents();   // 10-31 말하듯 쓴 문장 사전은 검색창을 처음 쓸 때 받아요 — 이 시험은 받은 뒤 순위를 봐요
 let pass = 0, fail = 0;
 async function test(name, fn) {
     try { await fn(); pass++; console.log('  ok  ' + name); }
@@ -45,11 +46,11 @@ await test('다 친 낱말 · 초성 · 말하듯 쓴 문장은 예전 순위 �
     assert.equal(top('배경'), '가독성 확인 · 색 보정');
     assert.equal(top('배겨'), '마크다운 · 인용문 · 배경 진하기');
     assert.equal(top('ㅂㄱ'), '변경한 설정·항목별 복원');
-    assert.equal(top('글씨가 작아'), '내 메시지 모양');
-    assert.equal(top('에이드 섞기 방향'), '에이드 혼합하기 · 그라데이션');
+    assert.equal(top('글씨가 작아'), '본문 글꼴과 크기');   // 10-31 사전: 글씨가 작다 = 본문 글자 크기 (예전엔 「크기」 낱말만 보태 내 메시지 모양이 먼저였어요)
+    assert.equal(top('테마 색'), '테마 색과 밝기');   // 1.0.0 후보: 9.0.2 에서 걷은 에이드 혼합(그라데이션) 줄은 검색에서도 뺐어요
     assert.equal(top('폰트 바꾸고 싶어'), '본문 글꼴과 크기');
     assert.equal(top('눈이 오게'), '날씨 효과');
-    assert.equal(top('액자'), '에셋 장식 액자');
+    // 9.0.1 장식 액자는 걷었다 — 「액자」 줄은 없다
     assert.equal(top('초기화'), '설정 백업·복원');
 });
 
@@ -77,12 +78,12 @@ await test('설정 창의 모든 스위치 · 슬라이더 · 고르기 이름�
 });
 
 await test('6.8.8 「확장 탭에 보이기」 줄 · 따로 찾던 줄은 그 손잡이로 바로 간다 (path 가 설정 창에 있음)', () => {
-    const want = { headSwitchRows: ['chat', 'etc'], koUi: ['chat', 'etc'], syncWatch: ['chat', 'etc'], updateCheck: ['theme', 'update'], 'chat.hiddenFade': ['chat', 'screen'], 'chat.qrFind': ['chat', 'screen'], 'chat.weatherIllustrated': ['chat', 'screen'], 'chat.demSkin': ['prompt', 'deus'], 'chat.demInk': ['prompt', 'deus'] };
+    const want = { headSwitchRows: ['chat', 'etc'], koUi: ['chat', 'etc'], syncWatch: ['chat', 'etc'], 'chat.hiddenFade': ['chat', 'screen'], 'chat.qrFind': ['chat', 'screen'], 'chat.weatherIllustrated': ['chat', 'screen'], 'chat.demSkin': ['prompt', 'deus'], 'chat.demInk': ['prompt', 'deus'] };
     for (const [key, [tab, sub]] of Object.entries(want)) {
         const entry = S.SEARCH_ENTRIES.find(e => e.path === key);
         assert.ok(entry, key);
         assert.deepEqual([entry.tab, entry.sub], [tab, sub], key);
-        assert.ok(panel.includes(`toggle('${key}'`), 'panel.js 에 그 손잡이: ' + key);
+        assert.ok(panel.includes(`toggle('${key}'`) || panel.includes(`segMulti('${key}'`), 'panel.js 에 그 손잡이: ' + key);   // 1.0.0 간단화: 켬/끔 + 고르기를 합친 칸(segMulti)도 그 키로 찾아가요
     }
     for (const q of ['확장 탭', '확장 탭에 보이기', '확장 탭 줄 끄기', '제목 줄 스위치']) assert.ok(titles(q).slice(0, 3).includes('「확장 탭에 보이기」 줄'), q + ' → ' + titles(q).slice(0, 3).join(' | '));
 });

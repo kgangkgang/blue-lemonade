@@ -17,7 +17,7 @@
 //   - 휴지통 · 편집 칸 지우기 · /cut · /del N (deleteMessage): 배열을 줄이고 saveChatDebounced() 를 건 뒤 MESSAGE_DELETED 를 쏜다 → 저장보다 사건이 먼저.
 //     다만 사건은 등록 차례대로 하나씩 await 되므로, 앞선 확장 처리가 느리거나 그 안에서 저장하면 저장이 먼저 올 수 있다 → 사건을 맨 앞(makeFirst)에 건다.
 //   - 메시지 지우기 모드(/del 숫자 없이 · ··· 메뉴) 확인 단추 #dialogue_del_mes_ok: chat.length 를 줄이고 saveChatConditional() 을 먼저 기다린 뒤
-//     MESSAGE_DELETED 를 쏜다 → 0번부터 고르면 그 저장이 막혔다(사용자 제보). 그래서 확인 단추 누름을 먼저(capture) 듣고 「지울 때 있던 수 · 남을 수」를 적어 둔다.
+//     MESSAGE_DELETED 를 쏜다 → 0번부터 고르면 그 저장이 막혔다. 그래서 확인 단추 누름을 먼저(capture) 듣고 「지울 때 있던 수 · 남을 수」를 적어 둔다.
 //   - /delname: splice → 저장 → reloadCurrentChat, 사건 없음. 확장의 chat.splice 뒤 saveChat 도 사건 없음 — 사용자 동작인지 알 수 없어 예전처럼 막는다.
 //   - 스와이프 지우기는 메시지 수가 그대로라 상관없다. 채팅 지우기(/delchat · 채팅 관리)는 파일을 지우는 요청이라 저장이 아니다.
 

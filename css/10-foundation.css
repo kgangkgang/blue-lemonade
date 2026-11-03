@@ -122,7 +122,7 @@ body.salty.salty-dark {
   --bl-on-pop: var(--salty-on-pop, #071C2E);
   --bl-lemon: var(--bl-pop); /* 즐겨찾기 별도 같은 레몬 */
   --bl-check-off: var(--bl-control-hover); /* 남색 위에서도 꺼진 칸이 보이게 */
-  /* 다크에서는 단추 · 칩의 드롭 그림자가 촌스럽다 (사용자: "구시대 ppt 같음").
+  /* 다크에서는 단추 · 칩의 드롭 그림자가 무거워 보였다.
      어두운 화면에서 물체가 떠 보이게 하는 건 그림자가 아니라 위쪽 1px 하이라이트와 면 색 차이다.
      그래서 여기서는 --salty-e1/e2 (apply.js 가 만드는 드롭 그림자) 를 일부러 쓰지 않는다.
      밝은 테마(위 3168~3169)는 종이 위 물체라 그림자가 맞으므로 그대로 둔다.
@@ -265,11 +265,9 @@ body.salty .rm_tag_filter .tag.actionable.excluded::after {
     --bl-fs-cap: calc(var(--mainFontSize, 15px) * 0.8);     /* 12 */
     --bl-fs-sub: calc(var(--mainFontSize, 15px) * 0.833);   /* 12.5 */
     --bl-fs-ctl: calc(var(--mainFontSize, 15px) * 0.9);     /* 13.5 */
-    --bl-fs-body: var(--mainFontSize, 15px);                /* 7.9.1: 폰에서도 본문 = 사용자 글꼴 크기(기본 15.5) 그대로 — ×0.933(14.46)이라 실리태번 기본 줄(체크 줄 · 메뉴)만 테마 창 · 애드온(15.5)보다 작았다(사용자 10-24) */
+    --bl-fs-body: var(--mainFontSize, 15px);                /* 7.9.1: 폰에서도 본문 = 사용자 글꼴 크기(기본 15.5) 그대로 — ×0.933(14.46)이라 실리태번 기본 줄(체크 줄 · 메뉴)만 테마 창 · 애드온(15.5)보다 작았다 */
     --bl-fs-head: calc(var(--mainFontSize, 15px) * 1.133);  /* 17 */
     --bl-fs-title: calc(var(--mainFontSize, 15px) * 1.333); /* 20 */
-    --bl-gutter: 14px;
-    --bl-inset: 12px;
     --bl-h-num: 30px;
     --bl-h-ctl: 36px;
     --bl-h-btn: 36px;
@@ -520,7 +518,7 @@ body.salty .autoComplete > .item.macro-ac-item > .macro-source.isThirdParty {
   --bl-demfx-flow: linear-gradient(90deg, #ff6b6b, #ffd166, #7ee787, #70d6ff, #c77dff, #ff8acb); /* 데우스 표현 흐름 띠 */
 }
 
-/* 장식 그림 크기(로고 · 견본 · 그림 · 의사 요소 표시) — 조작부 크기표(§1) 밖이라 검사에서 빼요(2026-10-26 사용자 결정 ②). 조작부에는 쓰지 않아요 */
+/* 장식 그림 크기(로고 · 견본 · 그림 · 의사 요소 표시) — 조작부 크기표(§1) 밖이라 검사에서 빼요(철칙 크기표 밖). 조작부에는 쓰지 않아요 */
 :root {
   --bl-deco-cp-compare: 38px;
   --bl-deco-create-icon: 38px;
@@ -536,6 +534,33 @@ body.salty .autoComplete > .item.macro-ac-item > .macro-source.isThirdParty {
   --bl-deco-swatch: 22px;
   --bl-deco-toast-icon: 22px;
   --bl-deco-welcome-logo: 30px;
+}
+
+/* 체크 꺾쇠 공용(10-31 동그란 체크 전수) — 동그란 · 둥근 상자 체크는 모두 이 정의 하나로 그려요
+   (체크박스 A3 · 프롬프트 관리자 켜기 · 캐릭터 일괄 선택 배지 · 데우스 빠른 설정 · 과일 창).
+   모양 = A3 그대로: 면 20 에서 9×5 상자의 왼쪽 · 아래 2px 선을 −45° 돌린 ㄴ자. 면 크기의 비율(45% · 25% · 10%)로 정의해서 면이 22 · 24 로 바뀌면 같이 커져요.
+   가운데 = 눈으로 보는 무게 중심: 잉크(두 막대) 무게 중심이 면 한가운데(10, 10)에 오게 좌표를 미리 계산했어요(옛 border + rotate 는 무게 중심이 1.24px 아래라 translateY(−1px) 로 어림).
+   transform 을 쓰지 않아요: 크롬은 transform 이 걸린 상자의 위치를 CSS 1px 단위로 반올림해서 면(기기 픽셀 단위)과 최대 0.5px 어긋났어요(리그 실측).
+   쓰는 법 ① 면 위에 빈 가상 요소가 있을 때(대부분) — 꺾쇠 요소를 면과 같은 상자(font-size: 면 크기 · 1em × 1em)로 두고
+            background: currentColor + mask: var(--bl-check-mask) — 색은 그 요소의 color(A3 은 --salty-on-accent).
+          ② 면과 꺾쇠를 한 가상 요소에 그려야 할 때(일괄 선택 배지 — ::after 는 즐겨찾기 별) — 면을 −45° 돌리고(원은 돌려도 원)
+            background: var(--bl-check-bars), 면 색. 면과 꺾쇠가 같이 움직여 반올림이 생겨도 둘 사이는 그대로예요.
+   검사: automation checks/rig/center-marks.mjs(꺾쇠 무게 중심 − 면 중심 ≤ 0.5px · 폰 384 밤/낮 · PC 1280) */
+:root {
+  --bl-check-face: 20px;
+  --bl-check-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.0503 10.1768 6.4645 8.7626 8.5858 10.8839 13.5355 5.9341 14.9497 7.3483 8.5858 13.7123Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  --bl-check-bars: linear-gradient(currentColor, currentColor) .31875em .33125em / .1em .25em no-repeat, linear-gradient(currentColor, currentColor) .31875em .48125em / .45em .1em no-repeat;
+}
+
+/* 가운데 줄 공용(10-31 가운데 맞춤 전수) — 가운데 정렬 제목 · 라벨 옆에 한쪽 장식(점 · 아이콘 · 숫자 알약 · 화살표 · ✕)이 있는 줄은
+   flex 로 나란히 두지 않고 이 세 칸 격자로: 장식은 1열(justify-self: start) · 제목은 2열 · 반대쪽 장식 · 꼬리표는 3열(justify-self: end).
+   양옆 칸이 같은 1fr 이라 장식 폭과 상관없이 제목 중심 = 줄 중심(데우스 「장면 계획」 머리가 점 폭의 절반 7.5px 오른쪽으로 밀렸던 것).
+   세로: 줄은 align-items: center, 가운데 제목은 position: relative; top: var(--bl-ink-dy, 0px) · 제목 안 장식(줄표 ::before/::after)은
+   translate: 0 calc(-1 * var(--bl-ink-dy, 0px)). --bl-ink-dy 는 src/center-ink.js 가 그 글꼴 · 글자의 잉크를 재서 「상자 가운데 − 잉크 가운데」로 적어요
+   (줄 상자 가운데는 글꼴 ascent · descent 에 따라 잉크보다 위 · 아래 — 10-31 사용자 사진: 제목이 줄표 · 점보다 위). 새 가운데 줄은 center-ink.js CENTER_INK 에 한 줄.
+   검사: automation checks/rig/center-marks.mjs(가로: 글자 덩어리 중심 − 줄 중심 ≤ 1px · 세로: 글자 잉크 중심 − 같은 줄 장식 중심 ≤ 1px) */
+:root {
+  --bl-center-row: minmax(0, 1fr) auto minmax(0, 1fr);
 }
 
 /* B8: 장식 글리프는 기존 잉크 크기를 보존해요. 일반 글자의 단계와 구분해요. */

@@ -1,10 +1,11 @@
 // 데우스 V3 하늘(8.0.9) — 트래커의 시각 · 날짜 글자를 읽어 해 · 달 자리와 달 모양을 정한다. 모양은 css/30-dem-skin.css 가 아니라 원작 V3 <style> 의 변수
 //  (--ox · --oy · --gx: 해/달 · 지평선 빛무리 자리, --orb-m: 달 마스크, --moon-r: 달 기울기)를 요소 인라인 값으로만 덧씌운다.
-//  · 원작은 하루를 9칸(새벽 전 · 새벽 · 아침 · 한낮 · 오후 · 해질녘 · 저녁 · 밤 · 깊은 밤)으로 나눠 칸마다 한 자리에 두고, 달은 늘 초승달 하나였다(10-27 사용자 요청).
+//  · 원작은 하루를 9칸(새벽 전 · 새벽 · 아침 · 한낮 · 오후 · 해질녘 · 저녁 · 밤 · 깊은 밤)으로 나눠 칸마다 한 자리에 두고, 달은 늘 초승달 하나였다.
 //  · 여기서는 시각으로 호 위의 자리를 연속으로 잡고(해 6시→19시 · 달 19시→6시, 끝은 지평선 · 가운데는 꼭대기), 날짜의 「일」로 위상 8단계를 돌린다
 //    (1일 신월 → 16일 보름 → 30일 다시 신월, 글에 보름달 · 초승달 같은 말이 있으면 그쪽이 먼저). 해/달 가름 · 색 · 하늘은 원작 규칙 그대로.
 //  · 스킨을 끄면(syncDemSky(false)) 덧씌운 값을 모두 떼서 원작으로 돌아간다. 채팅 감시는 #chat 만 — 설정 창 상태창 글자 미리보기의 숨은 표본 자리는
 //    fruit-type-ui.js 가 dressDemSky(자리, 스킨 켬) 로 직접 부른다(8.1.0, 미리보기에도 실제 채팅과 같은 해 · 달).
+import { addMessageDecorator } from './message-decor.js';
 const SEL = '#chat .mes_text .custom-dem-track[data-t]';
 const VARS = ['--ox', '--oy', '--gx', '--orb-m', '--moon-r'];
 const RING = 'radial-gradient(circle, #0000 0 6.2px, #000 6.5px)';   // 원작 달 마스크의 둘째 층: 달 둘레 빛무리는 그대로 두는 몫
@@ -98,7 +99,7 @@ function sweep(last = false) {
         if (n) seen = true;
         if (bodies === null && !n) seen = false;
         watch(seen);
-    } finally { queueMicrotask(() => { watcher?.takeRecords(); dressing = false; }); }
+    } finally { queueMicrotask(() => { dressing = false; }); }
     if (last) { pending = new Set(); full = false; }
 }
 function schedule(id) {
@@ -119,16 +120,17 @@ function setStreaming(on) {
     //   body 를 보는 테마 감시자(네모 단추 · 아이콘 글자 …)도 다시 돌았어요(답장마다 시작 · 끝 두 번). html 은 그 감시자들이 안 봐요. CSS(30-dem-skin)도 html 로 — 모양은 같아요
     document.documentElement?.classList.toggle('salty-dem-streaming', streaming);
 }
-function onMutations(records) {
-    if (dressing || streaming) return;
-    for (const r of records) { const body = r.target.nodeType === 1 && r.target.classList.contains('mes_text') ? r.target : null; if (body) changed.add(body); }
-    if (!changed.size) return;
-    clearTimeout(quiet);
-    quiet = setTimeout(() => { const bodies = [...changed]; changed = new Set(); dressing = true; try { for (const b of bodies) if (b.isConnected) b.querySelectorAll('.custom-dem-track[data-t]').forEach(dress); } finally { queueMicrotask(() => { watcher?.takeRecords(); dressing = false; }); } }, 400);
+// 9.0.4: 이벤트 없이 본문(.mes_text)이 통째로 바뀐 메시지(번역)는 메시지 꾸미기(src/message-decor.js)의 #chat 구독 하나가 적어 두었다가 0.4초 조용해진 뒤 그 메시지만.
+//   답이 오는 동안(streaming)의 변화는 예전처럼 버려요(끝 이벤트에 schedule 이 다시 봐요)
+const bodyReplaced = r => r.type === 'childList' && r.target.nodeType === 1 && r.target.classList.contains('mes_text');
+function onMessages(list) {
+    dressing = true;
+    try { for (const mes of list) for (const b of mes.querySelectorAll('.mes_text')) b.querySelectorAll('.custom-dem-track[data-t]').forEach(dress); }
+    finally { queueMicrotask(() => { dressing = false; }); }
 }
 function watch(on) {
-    if (on && !watcher) { const chatBox = document.getElementById('chat'); if (chatBox) { watcher = new MutationObserver(onMutations); watcher.observe(chatBox, { childList: true, subtree: true }); } }
-    else if (!on && watcher) { watcher.disconnect(); watcher = null; clearTimeout(quiet); changed = new Set(); }
+    if (on && !watcher) watcher = addMessageDecorator('데우스 하늘', onMessages, { kinds: ['dom'], settle: 400, order: 10, filter: bodyReplaced, enabled: () => !dressing && !streaming });
+    else if (!on && watcher) { watcher(); watcher = null; clearTimeout(quiet); changed = new Set(); }
 }
 function bind() {
     if (bound) return;

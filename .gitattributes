@@ -2,13 +2,18 @@
 /style.css text eol=lf
 /style-ext.css text eol=lf
 /.github/workflows/** text eol=lf
+/.gitattributes text eol=lf
+/.gitignore text eol=lf
 /manifest.json text eol=lf
 /README.md text eol=lf
+/CHANGELOG.md text eol=lf
+/DEVELOPERS.md text eol=lf
 /LICENSE text eol=lf
 /THIRD-PARTY-NOTICES.md text eol=lf
 /css/** text eol=lf
 /tools/** text eol=lf
 /src/** text eol=lf
+/dist/** text eol=lf
 /src/weather-art/*.webp binary
 
 /src/preview-art/*.webp binary
@@ -21,3 +26,15 @@
 /src/addons/tts/sfx-extra/LICENSE-CC-BY.txt whitespace=-blank-at-eof
 /src/addons/prompt-template/*.zip binary
 /src/scene-music/*.mp3 binary
+
+# 저장소 전용(설치에 안 쓰임): GitHub 「Download ZIP」 · Release 의 Source code · git archive 에서 빼요.
+# git clone(실리태번 확장 설치 · 업데이트)에는 영향이 없어요.
+/.github/ export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/tools/tests/ export-ignore
+/tools/audit/ export-ignore
+/tools/perf/ export-ignore
+/tools/pricing/ export-ignore
+*.test.mjs export-ignore
+*.test.js export-ignore

@@ -1,7 +1,7 @@
 // 6.5.2 다시 그린 메시지를 실리태번 헬퍼(JS-Slash-Runner)에 알리기.
 // 테마가 updateMessageBlock 으로 메시지 본문(.mes_text)을 다시 그리면(번역이 붙을 때 · 원문 보기 · 번역문 수정 · 다시 쓰기 ·
 // 북마크 고치기 · 단어 치환 · 접기 · 에셋 자리) 헬퍼가 코드 블록을 iframe 으로 바꿔 둔 것이 사라지고 원시 ```html 코드가 보였다
-// (사용자: 번역이 끝나면 새로고침해야 상태 카드가 제대로 보였다).
+// (번역이 끝나면 새로고침해야 상태 카드가 제대로 보이던 것).
 //   - 실리태번 1.19 의 updateMessageBlock 은 이벤트를 내지 않는다 (script.js updateMessageBlock).
 //   - 헬퍼 4.11.3 의 iframe 런타임(store/iframe_runtimes/message.ts)은 CHARACTER_MESSAGE_RENDERED · USER_MESSAGE_RENDERED ·
 //     MESSAGE_UPDATED · MESSAGE_SWIPED 가 그 번호로 올 때만 그 메시지를 버리고 다시 훑는다. 그 밖에는 「이미 그린 메시지」로 기억해 건너뛴다.

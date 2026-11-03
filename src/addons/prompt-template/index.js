@@ -8,7 +8,7 @@
 import { getSettings } from '../../settings.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { leaveSettingsDialog } from '../../settings-dialog.js';
-import { sha256Hex } from './sha256.js';
+import { sha256Hex } from '../assets/sha256.js';   // 1.0.0 되살림: 9.0.0 에서 캐릭터 에셋 폴더로 옮긴 순수 SHA-256 을 같이 써요
 
 export const VERSION = '1.0.4';
 export const FOLDER = 'ST-Prompt-Template';
@@ -328,7 +328,7 @@ export function openPanel() {
     if (dialog?.open) { dialog.focus(); return; }
     const previous = document.activeElement;
     dialog = document.createElement('dialog'); dialog.className = 'blpt-dialog'; dialog.setAttribute('aria-label', '프롬프트 템플릿');
-    dialog.innerHTML = `<header><b><i class="fa-solid fa-code" aria-hidden="true"></i> 프롬프트 템플릿 <span class="ext-version">v${VERSION}</span></b><button type="button" aria-label="닫기">×</button></header><div data-content></div>`;
+    dialog.innerHTML = `<header><b><i class="fa-solid fa-code" aria-hidden="true"></i> 프롬프트 템플릿</b><button type="button" aria-label="닫기">×</button></header><div data-content></div>`;
     document.body.append(dialog); const cleanup = mountInline(dialog.querySelector('[data-content]'));
     dialog.querySelector('header button').addEventListener('click', () => dialog.close());
     dialog.addEventListener('close', () => { cleanup(); dialog.remove(); dialog = null; if (previous?.isConnected) previous.focus(); }, { once: true });

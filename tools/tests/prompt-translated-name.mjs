@@ -44,7 +44,7 @@ await t('이름표: 보이는 이름 함수가 주면 그것 · 비었거나 오
 });
 
 await t('배선: 엔진 title · runtime 의 translatedPromptName · 한글화 패널 translatedPromptTitle(캐시, 읽기만) · 목록 먼저 그다음 캐시 · CI', () => {
-    assert.match(read('src/scripts/prompt-engine.js'), /const title = \(kind, id, name\) => lookup\(kind, id, name\)\?\.title \?\? null;\n\s+return \{title,register\(id,data\)\{/);
+    assert.match(read('src/scripts/prompt-engine.js'), /const title = \(kind, id, name\) => lookup\(kind, id, name\)\?\.title \?\? null;\n\s+return \{title,register\(id,data(?:,loadDetails=null)?\)\{/);
     assert.match(read('src/scripts/runtime.js'), /export const translatedPromptName=\(id,name\)=>translations\.title\('prompts',id,name\);/);
     const addon = read('src/addons/prompt/index.js');
     assert.match(addon, /export function translatedPromptTitle\(identifier, presetName = ''\) \{\n\s+try \{ return getTranslatedTitle\(presetNs\(presetName\), String\(identifier\)\) \|\| null; \} catch \{ return null; \}\n\}/);

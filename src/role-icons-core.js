@@ -27,7 +27,7 @@ export const PICK_ATTR = 'data-bl-pick';           // 고른 단추(또는 그 �
 export const PICK_INLINE_ATTR = 'data-bl-pick-inline';   // 글자 옆 svg · img 아이콘일 때: 단추 자체에 달고 아이콘 자리에 새 그림을 끼운다
 
 // 테마가 그리는 창들 — 「이름표(aria-label)로 찾는」 단추는 이 안에서만 (다른 확장 · 실리태번 단추는 건드리지 않는다)
-const ROOTS = ':is(.salty-panel, .bl-tool-dialog, .bl-assist, .bl-credits-dialog, .bl-notice-dialog, .bl-fruit-icon-picker, .bl-fruit-option-help, .bl-ft-dialog, .bl-notes-dialog, .bl-sticky, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-mermaid-dialog, .bl-pbind-dialog, .bl-capture-dialog, .bl-ctsi-dialog, .bl-dialogue-tildes, .bl-chat-graph, .bl-first-run, .bl-embedded-settings, .blpt-dialog, .blzi-dialog, .llmt-check-board, .llmt-selection, .pt-help-dialog, #pt-panel, #cg-panel, .cg-root, .cg-viewer, .eh-root, .po-dialog, .rl-root, .pa-hub)';
+const ROOTS = ':is(.salty-panel, .bl-tool-dialog, .bl-credits-dialog, .bl-notice-dialog, .bl-fruit-icon-picker, .bl-fruit-option-help, .bl-ft-dialog, .bl-notes-dialog, .bl-sticky, .bl-translator-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .bl-direction-dialog, .bl-mermaid-dialog, .bl-pbind-dialog, .bl-capture-dialog, .bl-dialogue-tildes, .bl-chat-graph, .bl-first-run, .bl-embedded-settings, .blzi-dialog, .llmt-check-board, .llmt-selection, .pt-help-dialog, #pt-panel, #cg-panel, .cg-root, .cg-viewer, .eh-root, .po-dialog, .rl-root, .pa-hub)';
 const labels = (...names) => names.map(n => `[aria-label="${n}"]`).join(', ');
 const inRoots = (...names) => `${ROOTS} :is(button, summary, [role="button"]):is(${labels(...names)})`;
 // 애드온이 실리태번 팝업으로 뜰 때 머리의 × (css/85-addon-unify.css 와 같은 선택자)

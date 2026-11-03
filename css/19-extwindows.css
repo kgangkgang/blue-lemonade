@@ -27,22 +27,10 @@ html body.salty :is(.text-to-image-converter-settings, .tti-select-menu, .tti-mo
   --ui-shadow: var(--bl-e4);
   --ui-shadow-soft: var(--bl-e2);
 }
-/* 제목 줄은 떠 있는 바처럼 — 아래 가는 선 대신 그림자 */
-html body.salty .tti-editor-header {
-  box-shadow: var(--bl-e3);
-}
+
 /* 팝업 뒤 어둠 — 확장은 #08080a 64% 로 고정돼 있음 */
 html body.salty .tti-modal-backdrop {
   background: var(--bl-scrim);
-}
-/* 확장 설정 줄의 켜짐 알약: 팔레트에 없는 보라(#a29bfe) 였음 */
-html body.salty :is(#tti_ext_float_toggle, #tti_ext_mes_toggle) .tti-ext-toggle-state.on {
-  background: var(--bl-fill-pop, var(--bl-pop));
-  color: var(--bl-on-pop);
-}
-html body.salty :is(#tti_ext_float_toggle, #tti_ext_mes_toggle) .tti-ext-toggle-state.off {
-  background: var(--bl-fill-check-off, var(--bl-check-off));
-  color: var(--salty-faint);
 }
 
 /* ---------- 북마크: 창 · 시트 면이 제 검정(#141318) 이라 다른 앱 창처럼 보였음 ---------- */
@@ -110,15 +98,15 @@ html body.salty :is(#model-switch-settings,#regex-link-settings,.mr-settings) {
   color:var(--salty-text);
 }
 html body.salty :is(.ms-target,.ms-lock,.rlk-keep,.rl-module,.mr-item) {
-  border:0; border-radius:12px; padding:12px 12px;
+  border:0;
   background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:var(--bl-e1);
 }
 html body.salty :is(.ms-targets,.rl-modules,.mr-list) { gap:8px; }
 html body.salty :is(.ms-chip,.ms-options) {
-  border:0; border-radius:12px; background:var(--salty-fill-surface,var(--salty-surface)); color:var(--salty-text);
+  border:0;background:var(--salty-fill-surface,var(--salty-surface)); color:var(--salty-text);
 }
 html body.salty .ms-chip.on { background:var(--salty-accent); color:var(--salty-on-accent); }
-html body.salty :is(.ms-icon,.ms-pull,.ms-option,.mr-item-buttons .menu_button) { min-width:44px; min-height:44px; border:0; border-radius:10px; }
+html body.salty :is(.ms-icon,.ms-pull,.ms-option,.mr-item-buttons .menu_button) {border:0;}
 html body.salty :is(.ms-target,.ms-lock,.rlk-keep) small { color:var(--salty-muted); opacity:1; line-height:1.5; }
 html body.salty .rl-module-head small { color:var(--salty-muted); opacity:1; }
 /* 5.3.7: 테마 설정 창의 작은 글자 — 실리태번의 small{opacity:.7} 이 테마의 옅은 글자색과 겹쳐 라이트에서 대비 2.3~2.8:1 이었다. 일부러 더 옅게 둔 곳(.bl-script-card · 글꼴 표본 등)은 더 무거운 규칙이라 그대로 */
@@ -151,18 +139,13 @@ html body.salty #autopic_settings_container .inline-drawer-content {
 }
 /* 꽉 찬 포인트 바탕 위 글자 — 확장은 흰색으로 박아 뒀는데 나이트 팔레트의 포인트색은 밝다.
    포인트색을 '바탕' 으로 쓴 것만 고른다 — 같은 변수를 글자색 · accent-color 로 쓰는 곳도 있어서. */
-html body.salty #autopic_settings_container :is(.image-gen-nav-item, .nai-param-nav-item).active,
-html body.salty #autopic_settings_container .gen-btn-blue,
+html body.salty #autopic_settings_container :is(.nai-param-nav-item).active,
 html body.salty #autopic_settings_container [style*="background: var(--ap-accent)"] {
   color: var(--salty-on-accent) !important;
 }
-html body.salty #autopic_settings_container .gen-checkbox-label input[type="checkbox"]:checked::after {
-  color: var(--salty-on-accent);
-}
+
 /* 인라인으로 박힌 고정 색 셋 — 밝은 팔레트에서 흰 종이에 묻힌다 (각각 파일에 한 번씩만 쓰임) */
 html body.salty #autopic_settings_container [style*="#cccccc"] { color: var(--salty-muted) !important; }
-html body.salty #autopic_settings_container [style*="#e07b7b"] { color: var(--bl-danger) !important; }
-html body.salty #autopic_settings_container [style*="#ff9f43"] { color: var(--bl-pop-ink, var(--salty-em)) !important; }
 
 html body.salty #model-switch-settings .ms-actions .ms-apply { border-radius:var(--bl-r-sm,8px)!important; }
 /* Source and license notices: one click from the theme version. */
@@ -174,12 +157,13 @@ html body.salty #model-switch-settings .ms-actions .ms-apply { border-radius:var
 /* 7.8.6: 위 알약 top:-1px 이 확장만 모드에만 남아 이 보정도 그 모드에만 (테마 화면은 75 가 ⓒ padding-block 0) */
 :where(body:not(.salty)) .salty-panel .salty-title .bl-copyright{padding-top:1px;padding-bottom:4px}
 .bl-copyright:focus-visible{outline:2px solid var(--salty-accent, var(--bl-fb-3975b8))}
-/* 6.8.9 테마를 끈 채 서랍만 쓸 때 (커뮤니티 제보): 다른 CSS 가 제목 글자 칸을 좁히면 ⓒ 가 다음 줄로 넘어가 제목 줄이 두 줄이 되고 접기 화살표가 글자보다 아래로 내려갔다 ·
+/* 6.8.9 테마를 끈 채 서랍만 쓸 때: 다른 CSS 가 제목 글자 칸을 좁히면 ⓒ 가 다음 줄로 넘어가 제목 줄이 두 줄이 되고 접기 화살표가 글자보다 아래로 내려갔다 ·
    서랍을 카드로 그리는 테마에서 제목 위 틈이 없었다 → 글자 칸은 한 줄(ⓒ 는 버전 옆), 제목 줄 위아래 8px. 테마를 켠 화면은 그대로 */
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header{align-items:center!important;padding-top:8px!important;padding-bottom:8px!important}
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b{display:inline-flex!important;align-items:center;flex-wrap:nowrap!important;gap:6px;white-space:nowrap!important;max-width:none!important;min-width:0}
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b > :is(i,.bl-version,.bl-copyright){flex:none;margin-block:0}
 body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b > .bl-version[hidden]{display:none}
+/* 출처 · 라이선스 창 (src/credits.js — 1.0.0 바탕에서 되살림) */
 .bl-credits-dialog{margin:auto;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--salty-line, var(--bl-fb-cdd9e8));border-radius:12px;background:var(--salty-surface, var(--bl-fb-fff));color:var(--salty-text, var(--bl-fb-24354c));overflow:hidden}
 .bl-credits-dialog[open]{display:flex;flex-direction:column}.bl-credits-dialog::backdrop{background:var(--bl-scrim)}
 .bl-credits-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;flex:none;border-bottom:1px solid var(--salty-line, var(--bl-fb-cdd9e8))}
@@ -259,7 +243,7 @@ html body.salty .llmt-settings .llmt-checks:not(.llmt-checks--grid) { display:gr
 html body.salty .llmt-settings .llmt-checks:not(.llmt-checks--grid) > * { grid-column:1 / -1; min-width:0; }
 html body.salty .llmt-settings .llmt-checks:not(.llmt-checks--grid) > .llmt-check + .llmt-check,
 html body.salty .llmt-settings .llmt-checks:not(.llmt-checks--grid) > .llmt-check:has(+ .llmt-check) { grid-column:auto; }
-html body.salty .llmt-settings .llmt-card--accent { padding:10px; box-shadow:none; }
+html body.salty .llmt-settings .llmt-card--accent { padding:10px;}
 html body.salty .llmt-settings .llmt-card-body { padding:10px; }
 html body.salty .llmt-settings :is(.menu_button,.llmt-gl-scope,.llmt-gl-sort) {
   height:auto; min-height:var(--bl-h-ctl, 36px); max-width:100%; white-space:normal;
@@ -296,7 +280,7 @@ html body.salty .mr-item { flex-wrap:wrap; column-gap:10px; row-gap:8px; }
 html body.salty .mr-name { flex:1 1 9em; }
 html body.salty .mr-item-buttons { flex-wrap:wrap; gap:8px 10px; margin-inline-start:auto; }
 html body.salty .mr-row { gap:8px 10px; }
-html body.salty .mr-warn { color:var(--bl-pop-ink,var(--salty-accent-ink)); }
+
 html body.salty #model-switch-settings { container:bl-model-switch / inline-size; }
 html body.salty :is(.ms-row,.ms-form label) { grid-template-columns:minmax(4em,max-content) minmax(0,1fr); gap:8px 10px; }
 html body.salty .ms-presets { grid-template-columns:repeat(auto-fit,minmax(min(100%,10em),1fr)); gap:8px 10px; }
@@ -304,7 +288,7 @@ html body.salty .ms-model { flex-wrap:wrap; gap:8px 10px; }
 html body.salty .ms-model .text_pole { flex:1 1 8em; }
 html body.salty .ms-actions { flex-wrap:wrap; gap:8px 10px; }
 html body.salty .ms-actions .menu_button { flex:0 1 auto; height:auto; white-space:normal; }
-html body.salty #model-switch-settings .ms-actions .ms-apply { flex:0 1 auto; min-height:36px; padding:8px 12px!important; line-height:1.45; font-weight:inherit; }
+html body.salty #model-switch-settings .ms-actions .ms-apply { flex:0 1 auto;padding:8px 12px!important;font-weight:inherit; }
 html body.salty :is(.ms-chip b,.ms-target b,.ms-lock b) { font-weight:inherit; }
 html body.salty :is(.ms-chip b,.ms-chip small,.ms-target small) { white-space:normal; overflow-wrap:anywhere; }
 /* 6.3.3 상태 칩 이름은 한 줄 말줄임 — 20자 이름이 위 줄바꿈 규칙으로 3줄이 되어 칩(같은 줄의 칩까지)이 두 배 가까이 컸다 (412 측정 54→97px); 조합 칩처럼 이름 · 요약 두 줄 높이. 특이도(0,4,3)로 위 규칙을 이긴다 (!important 없이) */
@@ -400,7 +384,7 @@ html body.salty #rm_extensions_block #qr--settings .qr--title:is(.bl-s, *):is(bl
 /* 빠른 답 목록: 카드 묶음(8) 안에서 목록이 양옆 .5em 을 또 들여 써 항목 카드가 한 겹 더 좁았다 → 좌우 한 겹만 */
 html body.salty #rm_extensions_block #qr--settings #qr--set-qrList .qr--set-qrListContents { padding-inline:0; }
 /* 「Edit Quick Replies」: 고르기 칸(12em 이상) 옆에 아이콘 5개, 다음 줄에 지우기 하나만(고아) → 고르기 칸을 8em 부터 줄여 아이콘 6개와 한 줄에 */
-html body.salty #rm_extensions_block #qr--settings #qr--editor > .qr--head > .qr--actions > select#qr--set { flex:1 1 8em !important; min-width:0; }
+
 /* 실리태번 헬퍼(JS-Slash-Runner): 확장 칸 · 창. 15-drawers.css 의 헬퍼 규칙(탭 · 묶음 · 고르기 칸)을 그대로 두고 같은 무게로 뒤에서 덮는다.
    · 스위치 44×26 → 36×20 (손잡이 14) · 묶음 안 12 → 10 · 줄 나눔 위아래 7.5 → 4
    · 단추 글이 <small> 이라 11.3px → 단추 크기 그대로, 스크립트 탭 단추 2열은 내용 폭이 아니라 줄 폭을 나눠 채움 */
@@ -419,22 +403,4 @@ body.salty .TH-script-editor-container > :is(input.text_pole, textarea.text_pole
 body.salty .TH-script-editor-container .jse-main { --jse-menu-button-size:30px; }
 /* TTS 재생 속도: 묶음 안 구분선 + 바로 뒤 구분선이 겹쳐(테마엔 가는 선이 없어 둘 다 빈칸) 37px 틈 → 안쪽 것만 뺀다 */
 html body.salty #rm_extensions_block #tts_settings #playback_rate_block > hr { display:none; }
-/* stwii-phone: WorldInfo Info (LenAnderson/SillyTavern-WorldInfoInfo 1.3.x) — 켜진 월드인포 목록 창.
-   원래는 채팅 옆 빈자리에 띄운다(max-width = (100vw - --sheldWidth)/2 - 3.5em, 앵커 위치 top right). 폰은 빈자리가 0 이하라
-   창이 한 글자 폭이 되어 글이 한 글자씩 세로로 꺾였다.
-   · 폰(1000px 이하): 앵커 위치를 끄고 화면 안 양옆 12px, 위 막대 바로 아래부터 입력창 위까지(65dvh 까지), 글은 14 · 낱말 단위 줄바꿈 · 항목 사이 6.
-     자리는 top 으로 잡는다 — html 에 transform 이 있어 fixed 창의 기준이 높이 0 인 html 이 되므로 bottom 으로 잡으면 화면 위로 나간다.
-   · PC: 자리 · 모양은 그대로, 채팅 옆 빈자리가 16em 보다 좁을 때만 그 폭을 보장 */
-html body.salty .stwii--panel { max-width:max(calc((100vw - var(--sheldWidth, 50vw)) / 2 - 3.5em), 16em); }
-@media (max-width: 1000px) {
-  html body.salty .stwii--panel { position:fixed; position-area:none; position-try-fallbacks:none; inset:calc(var(--topBarBlockSize, 40px) + 8px) 12px auto 12px; width:auto; max-width:none; max-height:min(65dvh, calc(100dvh - var(--topBarBlockSize, 40px) - 18px - var(--bl-form-h, 150px))); margin:0; padding:10px 12px; gap:6px; border:1px solid var(--salty-line, transparent); border-radius:var(--bl-r-md, 12px); background-color:var(--salty-surface, var(--secondaryBg, var(--SmartThemeBlurTintColor))); font-size:var(--bl-ts-ui, 14px); line-height:1.45; word-break:keep-all; overflow-wrap:anywhere; }
-  html body.salty .stwii--panel .stwii--world { margin-top:4px; font-weight:650; }
-  html body.salty .stwii--panel .stwii--entry { align-items:flex-start; gap:8px; padding-left:10px; opacity:.9; }
-  html body.salty .stwii--panel .stwii--entry > * { min-width:0; }
-  html body.salty .stwii--messages .stwii--title { width:auto; font-size:var(--bl-ts-meta, 12.5px); }
-  html body.salty .stwii--panel .stwii--configRow { gap:8px; padding:6px 0; }
-  /* 책 단추(트리거): 원래 자리(왼쪽 아래 0.125em, z 3010)가 입력창의 ✦ 요술봉 단추 아래쪽을 덮어 요술봉이 안 눌렸다 → 입력창 바로 위로.
-     입력창에 앵커를 붙이면 글자마다 문서 전체 레이아웃이 다시 돌아서(04-send-form 2.9.4) 앵커 대신 버튼 크기로 어림한다
-     (단추 줄 둘 + 메모 줄 ≈ 입력창 높이 — 메모 줄이 없으면 조금 더 위에 뜬다). 흐린 25% 는 손가락 화면에서 안 보여 60% */
-  html body.salty .stwii--trigger { bottom:calc(2 * var(--bottomFormBlockSize, 34.5px) + 72px); left:8px; font-size:var(--bl-deco-glyph-28); opacity:.6; }
-}
+

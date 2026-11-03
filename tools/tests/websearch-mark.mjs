@@ -1,4 +1,4 @@
-// 6.2.6 웹 검색을 쓴 답 표시 · 낱말 꾹 눌러 출처 찾기 — 순수 함수 검사 (응답 흔적 · 블록 이름표 · 낱말 찾기 · 설정 off · 등록)
+// 6.2.6 웹 검색을 쓴 답 표시 · 낱말 꾹 눌러 출처 찾기 — 순수 함수 검사 (응답 흔적 · 블록 이름표 · 낱말 찾기 · 설정 off · 등록) + 1.0.0 꾹 누르기 동작(기록 없으면 가로채지 않음)
 //   node tools/tests/websearch-mark.mjs .
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -234,6 +234,122 @@ await test('marksEnabled: on unless chat.webSearchMarks is exactly false', () =>
     assert.equal(marksEnabled({ chat: { [SETTING_KEY]: false } }), false);
 });
 
+// ── 꾹 누르기 동작 (1.0.0: 출처 기록이 없는 답은 누르기를 보지 않아요) — 작은 가짜 DOM 으로 src/websearch.js 를 그대로 돌려요 ──
+//   websearch.js 를 임시 폴더에 옮기고 settings · usage-mode · name-aliases 만 흉내(나머지는 진짜 websearch-core.js)
+const hold = await (async () => {
+    const os = await import('node:os');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bl-websearch-hold-'));
+    fs.copyFileSync(path.join(root, 'src/websearch.js'), path.join(dir, 'websearch.js'));
+    fs.copyFileSync(path.join(root, 'src/websearch-core.js'), path.join(dir, 'websearch-core.js'));
+    fs.writeFileSync(path.join(dir, 'settings.js'), 'export const getSettings = () => globalThis.__wsSettings;\n');
+    fs.writeFileSync(path.join(dir, 'usage-mode.js'), 'export const themeEnabled = () => true;\n');
+    fs.writeFileSync(path.join(dir, 'name-aliases.js'), 'export const nameAliases = () => [];\n');
+    globalThis.__wsSettings = { chat: {} };
+    const listeners = new Map();   // window 이벤트
+    const on = (type, fn) => { if (!listeners.has(type)) listeners.set(type, new Set()); listeners.get(type).add(fn); };
+    const off = (type, fn) => listeners.get(type)?.delete(fn);
+    const emit = (type, event) => { for (const fn of [...(listeners.get(type) || [])]) fn(event); return event; };
+    class FakeElement {}
+    globalThis.Element = FakeElement;
+    const node = { nodeType: 3, nodeValue: '세라피나는 바다를 본 적이 없어요' };
+    const mesEl = Object.assign(new FakeElement(), { getAttribute: k => (k === 'mesid' ? String(mesEl.id) : k === 'is_user' ? 'false' : null), id: 1 });
+    const textEl = Object.assign(new FakeElement(), {
+        closest: sel => (sel === '.mes_text' ? textEl : sel.startsWith('#chat .mes') ? mesEl : null),
+        contains: n => n === node,
+        getBoundingClientRect: () => ({ top: 100 }),
+        textContent: node.nodeValue,
+    });
+    const body = [];
+    const makeEl = () => ({ style: {}, offsetWidth: 80, offsetHeight: 24, setAttribute() {}, remove() { const i = body.indexOf(this); if (i >= 0) body.splice(i, 1); } });
+    let caretOffset = 2;
+    globalThis.document = {
+        querySelector: () => null, querySelectorAll: () => [], getElementById: () => null, createElement: makeEl,
+        body: { append: el => body.push(el) }, documentElement: { clientWidth: 384 },
+        addEventListener() {}, removeEventListener() {},
+        caretRangeFromPoint: () => ({ startContainer: node, startOffset: caretOffset }),
+    };
+    globalThis.window = { addEventListener: on, removeEventListener: off, innerHeight: 800, getSelection: () => ({ isCollapsed: true }) };
+    globalThis.CSS = { escape: s => s };
+    let buzz = 0;
+    Object.defineProperty(globalThis, 'navigator', { value: { vibrate: () => { buzz++; return true; } }, configurable: true, writable: true });
+    const st = new Map();   // 실리태번 이벤트
+    const chat = [{ is_user: true, mes: '안녕', extra: {} }, { is_user: false, mes: node.nodeValue, extra: {} }, { is_user: false, mes: '다른 답', extra: {} }];
+    let chatId = 'chat-a';
+    const types = Object.fromEntries(['GENERATION_STARTED', 'GENERATION_ENDED', 'GENERATION_STOPPED', 'WORLD_INFO_ACTIVATED', 'CHAT_COMPLETION_PROMPT_READY', 'MESSAGE_RECEIVED', 'CHARACTER_MESSAGE_RENDERED', 'MESSAGE_UPDATED', 'MESSAGE_SWIPED', 'MESSAGE_EDITED', 'CHAT_CHANGED', 'MESSAGE_DELETED', 'MORE_MESSAGES_LOADED'].map(k => [k, k]));
+    const context = { chat, characters: [], characterId: undefined, eventTypes: types, getCurrentChatId: () => chatId,
+        eventSource: { on: (name, fn) => { if (!st.has(name)) st.set(name, []); st.get(name).push(fn); } } };
+    globalThis.SillyTavern = { getContext: () => context };
+    const fireST = (name, ...args) => { for (const fn of st.get(name) || []) fn(...args); };
+    const ws = await import(pathToFileURL(path.join(dir, 'websearch.js')).href);
+    ws.startWebSearchMarks();
+    const record = (id = 1) => {   // 생성 한 번: 보낸 프롬프트 → 답 id
+        fireST('GENERATION_STARTED', 'normal', {}, false);
+        fireST('CHAT_COMPLETION_PROMPT_READY', { chat: [{ role: 'system', content: '세라피나는 숲을 지키는 수호자예요' }, { role: 'user', content: '안녕' }], dryRun: false });
+        fireST('MESSAGE_RECEIVED', id, 'normal');
+    };
+    let pid = 0;
+    const ev = (extra = {}) => ({ pointerId: pid, isPrimary: true, pointerType: 'touch', button: 0, clientX: 50, clientY: 120, target: textEl, isTrusted: true,
+        prevented: false, stopped: false, preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; }, ...extra });
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const hideAll = () => { ws.hideChip(); body.length = 0; };
+    /** 한 번 꾹 누르기: via 'timer'(0.5초) · 'menu'(폰 contextmenu) → 무엇이 일어났나 */
+    async function longPress({ id = 1, via = 'timer', during } = {}) {
+        mesEl.id = id;
+        pid++;
+        hideAll();
+        const before = buzz;
+        emit('pointerdown', ev());
+        const watching = (listeners.get('pointermove')?.size || 0) > 0;
+        during?.();
+        const menu = ev();
+        if (via === 'menu') emit('contextmenu', menu);
+        else await sleep(560);
+        emit('pointerup', ev());
+        const click = emit('click', ev());
+        return { watching, buzz: buzz - before, chip: body.length ? body[0].textContent : null, clickEaten: click.prevented || click.stopped, menuBlocked: menu.prevented };
+    }
+    return { ws, record, longPress, fireST, setChat: v => { chatId = v; }, setCaret: v => { caretOffset = v; }, cleanup: () => fs.rmSync(dir, { recursive: true, force: true }) };
+})();
+
+await test('hold: no origin record (reloaded chat) → no watch, no vibration, no chip, click passes, context menu untouched', async () => {
+    assert.equal(hold.ws.originCount(), 0);
+    for (const via of ['timer', 'menu']) {
+        const r = await hold.longPress({ via });
+        assert.deepEqual(r, { watching: false, buzz: 0, chip: null, clickEaten: false, menuBlocked: false }, via);
+    }
+});
+
+await test('hold: with a record the chip and vibration work as before (found → label, not found → 지어냄), and only that click is eaten', async () => {
+    hold.record(1);
+    assert.equal(hold.ws.originCount(), 1);
+    hold.setCaret(2);   // 「세라피나는」
+    for (const via of ['timer', 'menu']) {
+        const r = await hold.longPress({ via });
+        assert.deepEqual(r, { watching: true, buzz: 1, chip: '프롬프트', clickEaten: true, menuBlocked: false }, via);
+    }
+    hold.setCaret(7);   // 「바다를」 — 보낸 프롬프트에 없는 말
+    const r = await hold.longPress({ via: 'menu' });
+    assert.deepEqual(r, { watching: true, buzz: 1, chip: '지어냄', clickEaten: true, menuBlocked: false });
+    hold.setCaret(2);
+});
+
+await test('hold: another answer without a record, a different chat, or a record dropped mid-press → nothing intercepted', async () => {
+    const quiet = { buzz: 0, chip: null, clickEaten: false, menuBlocked: false };
+    const strip = ({ watching, ...rest }) => rest;
+    assert.deepEqual(strip(await hold.longPress({ id: 2 })), quiet, 'answer #2 has no record');
+    hold.setChat('chat-b');
+    assert.deepEqual(strip(await hold.longPress({ id: 1 })), quiet, 'same number in another chat');
+    hold.setChat('chat-a');
+    const dropped = await hold.longPress({ id: 1, during: () => hold.fireST('MESSAGE_DELETED', 0) });
+    assert.equal(dropped.watching, true, 'the press started while the record existed');
+    assert.deepEqual(strip(dropped), quiet, 'record cleared before the hold fired');
+    hold.record(1);
+    hold.fireST('CHAT_CHANGED');
+    assert.equal(hold.ws.originCount(), 0);
+    assert.deepEqual(await hold.longPress({ id: 1, via: 'menu' }), { watching: false, ...quiet }, 'reloaded chat');
+    hold.cleanup();
+});
+
 // ── 등록 (설정 · 화면 · CSS · CI) ──
 await test('setting is registered everywhere the 6.1.5 helpMarks switch is, plus the body class and CSS', () => {
     const settings = read('src/settings.js');
@@ -255,8 +371,7 @@ await test('setting is registered everywhere the 6.1.5 helpMarks switch is, plus
 
 await test('wiring: index.js starts the module, capture.js reports evidence, CI runs this test, no forbidden syllable', () => {
     const index = read('index.js');
-    assert.match(index, /import \{ startWebSearchMarks \} from '\.\/src\/websearch\.js';/);
-    assert.match(index, /startWebSearchMarks\(\);/);
+    assert.match(index, /\['startWebSearchMarks', \(\) => import\('\.\/src\/websearch\.js'\), m => \{ m\.startWebSearchMarks\(\); \}\]/);   // 9.0.2 부팅 3층 표(IDLE_LAYER)
     const capture = read('src/addons/perf/capture.js');
     assert.match(capture, /import \{ webSearchEvidence \} from '\.\.\/\.\.\/websearch-core\.js';/);
     assert.match(capture, /import \{ noteWebSearchEvidence \} from '\.\.\/\.\.\/websearch\.js';/);

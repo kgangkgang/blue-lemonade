@@ -39,7 +39,7 @@ if (!scenario) {
         }
     };
     visit('index.js');
-    assert.ok(seen.size > 50, `시작 묶음을 찾지 못했어요(${seen.size}개)`);
+    assert.ok(seen.size > 30, `시작 묶음을 찾지 못했어요(${seen.size}개)`);   // 9.0.2 부팅 3층으로 시작 묶음이 50개 남짓으로 줄었어요
     assert.deepEqual(problems, [], '시작 묶음이 실리태번 모듈에서 이름으로 가져와요 — 그 이름이 없는 판에서 테마 전체가 안 떠요:\n' + problems.join('\n'));
     console.log(`PASS 시작 묶음 ${seen.size}개 모듈에 실리태번 이름 import 없음`);
 

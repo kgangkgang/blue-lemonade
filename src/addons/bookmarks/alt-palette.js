@@ -6,6 +6,7 @@
 import { getSettings } from '../../settings.js';
 import { applyAll } from '../../apply.js';
 import { PALETTES, paletteFamily, paletteVariant } from '../../palettes.js';
+import '../../palette-data.js';   // 1.0.0 팔레트 11벌 · 커스텀 색 정의 (시작 그래프 밖 — 이 모듈은 지연으로 받아요)
 
 const STYLE_ID = 'bl-bm-alt-vars';
 let cacheKey = '', busy = false;
@@ -13,7 +14,7 @@ let cacheKey = '', busy = false;
 /** @param {'auto'|'light'|'dark'} wanted 북마크 설정에서 고른 테마. 돌려주는 값: 창에 붙일 data-bl-alt ('' = 테마 그대로) */
 export function syncAltPalette(wanted) {
     const s = getSettings();
-    const current = (PALETTES[s.palette] || PALETTES.salt).mode;
+    const current = (PALETTES[s.palette] || PALETTES.salt).mode;   // palette-data.js 를 위에서 받아 26벌 모두 있어요
     const tag = document.getElementById(STYLE_ID);
     if (!s.enabled || busy || !['light', 'dark'].includes(wanted) || wanted === current) { if (!busy) { tag?.remove(); cacheKey = ''; } return busy ? (tag ? wanted : '') : ''; }
     const other = paletteVariant(paletteFamily(s.palette), wanted);

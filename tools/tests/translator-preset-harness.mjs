@@ -33,7 +33,7 @@ export async function loadTranslator(root, { prompt = 'Translate the following t
     const promptCache = await import(pathToFileURL(path.join(path.resolve(root), 'src/prompt-cache.js')));
     const target = /\nconst KOREAN_TARGET = (\/.+\/i);/.exec(source)?.[1];
     const extra = {};
-    for (const file of ['hidden-blocks.js', 'tag-compact.js', 'rp-lines.js']) if (fs.existsSync(path.join(dir, file))) Object.assign(extra, await imp(file));
+    for (const file of ['hidden-blocks.js', 'tag-compact.js', 'rp-lines.js', 'code-fences.js']) if (fs.existsSync(path.join(dir, file))) Object.assign(extra, await imp(file));
     const cut = name => { const re = new RegExp('\\n(?:export )?(?:async )?function ' + name + '\\('), start = source.search(re); if (start < 0) return null; return source.slice(start + 1, source.indexOf('\n}', start + 1) + 2).replace(/^export /, ''); };
     const events = [], ctx = { chatMetadata: {} };
     const S = { llm_prompt_chat: prompt, glossary_enabled: false, user_defined_regexes: [], user_no_fold_regexes: [], translation_display_mode: 'folded', prompt_cache: false };
@@ -59,7 +59,8 @@ export async function loadTranslator(root, { prompt = 'Translate the following t
         'renderAllInOne', 'renderInterleaved', 'createDetailsTag', 'restoreContent']) install(name);
     let reply = fakeTranslate;
     /** 프롬프트에서 본문만 (지시문 · 묶음 머리말 뺌) */
-    const bodyOf = full => { let body = String(full); const head = `${prompt}\n\n`; if (body.startsWith(head)) body = body.slice(head.length); return body.replace(seg.BATCH_HEADER, ''); };
+    const bodyOf = full => { let body = String(full); const head = `${prompt}\n\n`; if (body.startsWith(head)) body = body.slice(head.length); if (extra.FENCE_NOTE) body = body.replace(`${extra.FENCE_NOTE}\n\n`, '');   // 3.1.7 울타리 자리표 안내 한 줄도 지시문
+        return body.replace(seg.BATCH_HEADER, ''); };
     env.callLLMAPI = async full => { const body = bodyOf(full); events.push(body); return reply(body); };
     return {
         env, S, events, seg, card,

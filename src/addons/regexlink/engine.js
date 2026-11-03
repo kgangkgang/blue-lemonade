@@ -89,6 +89,9 @@ export function ownersFor(keys, prompts, aliases = ALIASES) {
     const list = prompts.filter(p => p && !p.marker && p.identifier);
     // 낱말 단위로 견준다: @Map 이 "Roadmap" 에 걸리면 안 된다
     const byName = (needle) => list.filter(p => hasWords(promptKey(p.name), needle)).map(p => p.identifier);
+    // 1.1.1 별칭은 별칭마다 이름 키가 똑같은 프롬프트를 먼저, 없을 때만 낱말 포함으로 — 낱말 포함만 보면 별칭 hidden 이 「| Hidden Truths |」에도 걸렸어요
+    //   (best friend 처럼 「| Mira, The Best Friend |」 안에 든 별칭은 똑같은 이름이 없어 예전처럼 낱말 포함으로 찾아요)
+    const byAlias = (alias) => { const exact = list.filter(p => promptKey(p.name) === alias).map(p => p.identifier); return exact.length ? exact : byName(alias); };
     const lowered = new Map();
     const lowOf = p => { let low = lowered.get(p); if (low === undefined) { low = String(p.content || '').toLowerCase(); lowered.set(p, low); } return low; };
     const out = new Map();
@@ -99,7 +102,7 @@ export function ownersFor(keys, prompts, aliases = ALIASES) {
             continue;
         }
         let owners = byName(key);
-        if (!owners.length) for (const alias of aliases[key] || []) owners.push(...byName(alias));
+        if (!owners.length) for (const alias of aliases[key] || []) owners.push(...byAlias(alias));
         owners = [...new Set(owners)];
         if (!owners.length) {
             const byContent = list.filter(p => hasWords(keyOf(String(p.content || '').replace(/@/g, ' @')), key) && tagIn(String(p.content || '').toLowerCase(), key)).map(p => p.identifier);
@@ -119,9 +122,10 @@ export function ownersFor(keys, prompts, aliases = ALIASES) {
  * @param {Record<string,boolean>} args.origin 정규식 id → 원래 disabled
  * @param {Record<string,'auto'|'on'|'off'>} args.overrides 모듈 키 → 사용자 지정 (늘 켜기 · 늘 끄기)
  * @param {(keys:string[])=>boolean} [args.recentHas] 최근 메시지에 그 모듈 태그가 있으면 true (표시 정규식은 켜 둔다)
- * @returns {{id:string,name:string,keys:string[],owners:string[],linked:boolean,reason:string,want:boolean|null}[]} want: true=켜기 · false=끄기 · null=손대지 않음 ('늘 필요' 포함)
+ * @param {Set<string>} [args.manual] 1.1.2 사용자가 정규식 화면에서 직접 바꾼 정규식 id — 자동으로 켜고 끄지 않는다 (「자동으로」를 누를 때까지)
+ * @returns {{id:string,name:string,keys:string[],owners:string[],linked:boolean,reason:string,want:boolean|null,manual?:boolean}[]} want: true=켜기 · false=끄기 · null=손대지 않음 ('늘 필요' · '직접 바꿈' 포함)
  */
-export function plan({ scripts, prompts, enabled, origin = {}, overrides = {}, recentHas = () => false }) {
+export function plan({ scripts, prompts, enabled, origin = {}, overrides = {}, recentHas = () => false, manual = new Set() }) {
     const keys = [...new Set(scripts.flatMap(modulesOf))];
     const owners = ownersFor(keys, prompts);
     return scripts.map(script => {
@@ -130,6 +134,8 @@ export function plan({ scripts, prompts, enabled, origin = {}, overrides = {}, r
         const base = origin[id] ?? !!script.disabled; // 원래 상태 (사용자가 손으로 꺼 둔 것은 존중)
         const row = { id, name: script.scriptName, keys: mine, owners: [], linked: false, reason: '', want: null };
         if (alwaysNeeded(script)) return { ...row, reason: '늘 필요' };
+        // 직접 바꾼 것: 사용자 값 그대로 (모듈 태그가 있는 것만 — 태그 없는 정규식은 원래 손대지 않는다)
+        if (mine.length && manual.has(id)) return { ...row, owners: [...new Set(mine.flatMap(k => owners.get(k) || []))], linked: true, reason: '직접 바꿈', want: null, manual: true };
         if (mine.length && mine.some(k => overrides[k] === 'on')) return { ...row, linked: true, reason: base ? '원래 꺼 둔 것' : '늘 켜기', want: !base };
         if (mine.length && mine.every(k => overrides[k] === 'off')) return { ...row, linked: true, reason: '늘 끄기', want: false };
         const ownerIds = [...new Set(mine.filter(k => overrides[k] !== 'off').flatMap(k => owners.get(k) || []))];

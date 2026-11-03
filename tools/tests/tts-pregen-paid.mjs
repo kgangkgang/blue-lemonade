@@ -93,8 +93,8 @@ async function load(name) {
 const need = (m, name) => { if (m.__error) throw new Error(`${name} 를 못 불러옴: ${m.__error.message}`); return m; };
 
 const V = {
-    mm: { uid: 'minimax:ade', provider: 'minimax', voiceId: 'ade', name: '에이드' },
-    cp: { uid: 'openai_compat:night', provider: 'openai_compat', voiceId: 'night', name: '나이트' },
+    mm: { uid: 'minimax:seraphina', provider: 'minimax', voiceId: 'seraphina', name: '세라피나' },
+    cp: { uid: 'openai_compat:narrator', provider: 'openai_compat', voiceId: 'narrator', name: '해설' },
     br: { uid: 'browser:ko', provider: 'browser', voiceId: 'ko', name: '브라우저' },
     el: { uid: 'elevenlabs:x', provider: 'elevenlabs', voiceId: 'x', name: '일레븐' },
 };
@@ -206,7 +206,7 @@ let n = 0;
 function reply() {
     T.chat.length = 0;
     T.chat.push({ name: 'User', is_user: true, mes: 'hi' });
-    T.chat.push({ name: 'Ade', is_user: false, mes: `「안녕 ${++n}」`, extra: { api: 'custom', model: 'm' } });
+    T.chat.push({ name: 'Seraphina', is_user: false, mes: `「안녕 ${++n}」`, extra: { api: 'custom', model: 'm' } });
     return 1;
 }
 const job = (key, v) => ({ key, text: `줄 ${key}`, voice: v, provider: P.getProvider(v.provider) });

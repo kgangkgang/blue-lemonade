@@ -28,7 +28,7 @@ for (const { mark, js, css, rules, name, rule } of MARKS) {
     const want = rule || `:where(html.${mark}) body.salty.salty`;
     const now = read(css).split(want).length - 1;
     assert.equal(now, rules, `${css}: ${want} 규칙 ${rules}개`);
-    for (const gen of ['style.css', 'style-ext.css', 'css/23-preview.gen.css', 'src/preview-park.gen.css']) {
+    for (const gen of ['style.css', 'css/23-preview.gen.css', 'src/preview.gen.css']) {
         assert.ok(!new RegExp(`body[.\\w-]*\\.${esc(mark)}\\b`).test(read(gen)), `${gen}: body….${mark} 꼴이 남지 않아요`);
     }
     passed++;

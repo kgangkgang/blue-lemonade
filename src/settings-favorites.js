@@ -24,7 +24,8 @@ export function favoriteButton(entry) {
 }
 export function favoritesMarkup(current) {
     const items=readFavorites();
-    return `<section class="bl-favorites"><header><b>즐겨찾기</b><span>현재 항목 ${favoriteButton(current)}</span></header>${items.length?items.map(e=>`<div class="bl-favorite-row"><button type="button" data-favorite-jump="${esc(JSON.stringify(e))}">${esc(e.title)}</button>${favoriteButton(e)}</div>`).join(''):'<p class="salty-note">현재 항목이나 검색 결과의 별 아이콘으로 자주 쓰는 설정을 고정해요.</p>'}</section>`;
+    // 1.0.0: 비었으면 머리 한 줄(짧은 안내는 그 줄 안), 있으면 칩 줄 — 늘 두 줄을 차지하던 설명 문단을 걷었어요
+    return `<section class="bl-favorites"><header><b>즐겨찾기</b>${items.length?'<small></small>':'<small>별을 누르면 여기 고정돼요</small>'}<span>현재 화면 ${favoriteButton(current)}</span></header>${items.length?`<div class="bl-favorite-chips">${items.map(e=>`<span class="bl-favorite-chip"><button type="button" data-favorite-jump="${esc(JSON.stringify(e))}">${esc(e.title)}</button>${favoriteButton(e)}</span>`).join('')}</div>`:''}</section>`;
 }
 export function bindFavorites(root,navigate,refresh) {
     root.addEventListener('click',event=>{

@@ -1,5 +1,5 @@
-// 8.2.6 성능: src/settings.js readSettings — 읽기만 하는 뜨거운 자리는 마이크로태스크가 지나도 설정 사건까지 정리를 다시 하지 않는지,
-//   돌려주는 객체 · 값이 getSettings 와 같은지, 설정 사건(저장 · 무효화 · 초기화 · 객체 바뀜 · SETTINGS_UPDATED · 기기 모양 바뀜 · 안전망 시간)마다 다시 정리하는지
+// 9.0.2 성능: src/settings.js getSettings — 마이크로태스크 · 작업이 지나도 설정 사건까지 정리(fill · tidy)를 다시 하지 않는지 (예전엔 마이크로태스크마다),
+//   readSettings 가 getSettings 와 같은 객체 · 값인지, 설정 사건(저장 · 무효화 · 초기화 · 객체 바뀜 · SETTINGS_UPDATED · SETTINGS_LOADED)마다 다시 정리하는지
 //   node tools/tests/settings-held.mjs <테마 루트>
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -23,8 +23,14 @@ const { DEFAULTS, getSettings, readSettings, invalidateSettings, saveSettings, r
 ctx.extensionSettings.salty = structuredClone(DEFAULTS);
 const tidies = async (fn, n = 1000) => { const before = settingsStats.tidy; for (let i = 0; i < n; i++) { await null; fn(); } return settingsStats.tidy - before; };
 
-await test('getSettings 는 예전처럼 마이크로태스크마다 다시 정리해요(바뀌지 않음)', async () => {
-    assert.equal(await tidies(getSettings, 200), 200);
+await test('getSettings 1,000번(마이크로태스크 · 작업마다) → 정리는 한 번 (9.0.2 · 예전엔 1,000번)', async () => {
+    invalidateSettings();
+    assert.equal(await tidies(getSettings), 1);
+    const before = settingsStats.tidy;
+    for (let i = 0; i < 20; i++) { await new Promise(r => setTimeout(r, 0)); getSettings(); }
+    clock += 60000;
+    getSettings();
+    assert.equal(settingsStats.tidy, before, '작업 · 시간이 지나도 사건이 없으면 다시 정리하지 않아요');
 });
 await test('readSettings 1,000번(마이크로태스크마다) → 정리는 한 번', async () => {
     invalidateSettings();
@@ -58,8 +64,8 @@ await test('저장 칸 객체가 통째로 바뀌면(가져오기) 새 객체를
     const s = readSettings();
     assert.notEqual(s, old); assert.equal(s, fresh); assert.equal(s.palette, 'salt');
 });
-await test('실리태번 SETTINGS_UPDATED · SETTINGS_LOADED · 기기 모양 바뀜 · 3초 안전망 뒤에는 다시 정리', async () => {
-    for (const [name, fire] of [['SETTINGS_UPDATED', () => eventSource.emit(event_types.SETTINGS_UPDATED)], ['SETTINGS_LOADED', () => eventSource.emit(event_types.SETTINGS_LOADED)], ['matchMedia change', () => media.listeners.forEach(fn => fn())], ['3초', () => { clock += 3001; }]]) {
+await test('실리태번 SETTINGS_UPDATED · SETTINGS_LOADED 뒤에는 다시 정리', async () => {
+    for (const [name, fire] of [['SETTINGS_UPDATED', () => eventSource.emit(event_types.SETTINGS_UPDATED)], ['SETTINGS_LOADED', () => eventSource.emit(event_types.SETTINGS_LOADED)]]) {
         await null; readSettings(); await null;
         const before = settingsStats.tidy;
         readSettings(); assert.equal(settingsStats.tidy, before, `${name} 전`);
@@ -67,7 +73,6 @@ await test('실리태번 SETTINGS_UPDATED · SETTINGS_LOADED · 기기 모양 �
         readSettings(); assert.equal(settingsStats.tidy, before + 1, `${name} 뒤`);
     }
     assert.equal(listeners.get(event_types.SETTINGS_UPDATED).length, 1, '이벤트 리스너는 한 번만 걸어요');
-    assert.equal(media.listeners.length, 1);
 });
 await test('뜨거운 읽기 자리가 readSettings 를 써요(과일 입구 1.5초 서명 · 색 맞춤 감시 · 고르기 키 · 생성 따라가기 scroll)', () => {
     const read = f => fs.readFileSync(path.join(root, f), 'utf8');
@@ -76,5 +81,7 @@ await test('뜨거운 읽기 자리가 readSettings 를 써요(과일 입구 1.5
     assert.match(read('src/selects.js'), /if \(readSettings\(\)\.chat\?\.selectPop === false\) return false;/);
     assert.match(read('src/stream-follow.js'), /themeEnabled\(readSettings\(\)\)/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/settings-held\.mjs \./);
+    assert.match(read('index.js'), /after: \(\) => \{ invalidateSettings\(\); applyAll\(\);/, '기기 간 합치기(제자리 고침) 뒤에는 정리 메모를 비워요');
+    assert.ok(!/queueMicrotask/.test(read('src/settings.js')), '마이크로태스크마다 비우던 메모는 없어요');
 });
 console.log(`\n${passed} passed`);

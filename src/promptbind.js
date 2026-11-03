@@ -1,5 +1,5 @@
 // 프롬프트 귀속 (6.0.4) — 프롬프트 관리자(Chat Completion 프리셋)의 항목을 캐릭터 · 그룹 · 채팅에 묶어 두면,
-// 그 채팅을 열 때 그 항목이 켜지고 다른 채팅으로 가면 꺼진다 (사용자: "대사 컬러 프롬은 그 캐릭터한테만 귀속").
+// 그 채팅을 열 때 그 항목이 켜지고 다른 채팅으로 가면 꺼진다 (대사 색 프롬프트를 그 캐릭터에만).
 // 항목에 정규식을 붙여 두면 그 정규식도 같이 켜지고 꺼진다 ("정규식도 캐릭터 연동 · 프롬프트에서 조작").
 // 켜짐을 바꾸면 실리태번이 설정을 저장하므로 정규식 연결 애드온(regexlink)으로 이은 정규식도 따라간다.
 //
@@ -14,6 +14,8 @@
 //   "한글화 스크립트 적용된 걸로도 검색되게". 묶인 정규식이 켜지거나 꺼지면 reloadCurrentChat 로 채팅을 다시 그린다 —
 //   표시 전용 정규식(markdownOnly)은 CHAT_CHANGED 가 글을 다 그린 뒤라 이미 그려진 글에는 안 먹었다 (실리태번도 정규식을 켜고 끌 때 다시 그린다).
 import { getSettings, saveSettings } from './settings.js';
+import { themeEnabled } from './usage-mode.js';
+import { watchDom } from './dom-watch.js';
 import { currentKey, keyLabel } from './styles.js';
 import { promptChoiceGroups } from './prompt-choice-core.js';
 
@@ -67,7 +69,7 @@ export function regexScripts() {
 export function scopedRegexScripts() {
     try { const ctx = SillyTavern.getContext(); const ch = ctx.characters?.[Number(ctx.characterId)]; const list = ch?.data?.extensions?.regex_scripts; return Array.isArray(list) ? list : []; } catch { return []; }
 }
-/** 6.0.6 지금 프리셋 안의 정규식 스크립트 (Chat Completion 프리셋 extensions.regex_scripts) — 없으면 [] (사용자: 전역 0개 · 프리셋 79개) */
+/** 6.0.6 지금 프리셋 안의 정규식 스크립트 (Chat Completion 프리셋 extensions.regex_scripts) — 없으면 [] */
 export function presetRegexScripts() {
     try { const list = SillyTavern.getContext().getPresetManager?.()?.readPresetExtensionField?.({ path: 'regex_scripts' }); return Array.isArray(list) ? list : []; } catch { return []; }
 }
@@ -279,6 +281,7 @@ function presetSettled(pmgr, name, live) {
 }
 /** 묶인 프롬프트(와 붙인 정규식)를 지금 채팅에 맞춰 켜고 끈다 → 바꾼 개수 (프롬프트 관리자가 없거나 묶음이 없으면 0). reason 은 RELOAD_REASONS 참고 */
 export async function syncPromptBinds(reason = 'ui') {
+    if (!themeEnabled(getSettings())) return 0;   // 테마를 끄면(새로고침 전이어도) 프롬프트를 켜고 끄거나 저장하지 않아요
     if (syncing) { rerun = true; if (RELOAD_REASONS.has(reason)) pendingReason = reason; return syncing; }   // 맞추는 중에 또 부르면(채팅이 바로 또 바뀜) 끝난 뒤 한 번 더 (7.0.7 그 계기로)
     syncing = (async () => {
         const all = binds();
@@ -550,8 +553,8 @@ export function startPromptBinds() {
     if (typeof document !== 'undefined') {
         watchPopup();
         if (!observer) {   // 프롬프트 관리자 창이 아직 없으면 생길 때 붙는다
-            const discovery = new MutationObserver(() => { watchPopup(); if (observer) discovery.disconnect(); });
-            discovery.observe(document.body, { childList: true, subtree: true });
+            // 9.0.4: 공용 감시 허브 구독 — 채팅 밖(창은 body 아래에 붙어요) · 다음 프레임에 한 번
+            const discovery = watchDom(document.body, { childList: true, subtree: true, exclude: '#chat', when: 'frame', name: '프롬프트 귀속 창 찾기' }, () => { watchPopup(); if (observer) discovery(); });
         }
     }
     if (SillyTavern.getContext().getCurrentChatId?.()) syncPromptBinds('start');

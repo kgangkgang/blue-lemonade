@@ -70,7 +70,7 @@ body.salty #send_textarea {
   color: var(--salty-text) !important;
   background: transparent !important;
   font-family: var(--salty-font-text) !important;
-  font-size: var(--salty-size, var(--bl-ts-ui)) !important; /* 2.7.1: 채팅 본문 크기를 따라감 (전엔 메뉴 크기라 본문보다 커 보였음 — 사용자 지적) */
+  font-size: var(--salty-size, var(--bl-ts-ui)) !important; /* 2.7.1: 채팅 본문 크기를 따라감 (전엔 메뉴 크기라 본문보다 커 보였음) */
   letter-spacing: var(--salty-ls, normal) !important;         /* 자간도 본문과 같이 */
   line-height: 1.55 !important;
   min-height: var(--bottomFormBlockSize) !important;
@@ -138,6 +138,22 @@ body.salty #nonQRFormItems > #rightSendForm {
     flex: 1 1 calc(100% - var(--bottomFormBlockSize) - 4px) !important;
     resize: none !important;
   }
+}
+/* 8.2.5 채팅 입력칸 숨기기 (설정 › 채팅 › 화면, apply.js 가 body.salty-send-textarea-off 를 붙임):
+   입력칸(textarea)만 접고 ≡ · ✦ · 깃털 · 다른 확장 단추 · 보내기 묶음은 한 줄에 그대로 — 단추만 쓰는 배치용.
+   display:none 이 아니라 visibility:hidden + 0 크기 — 실리태번 · 다른 확장이 #send_textarea 값을 읽고 쓰는 건 그대로 되게.
+   특이도 (2,2,1) 로 위 PC · 폰 규칙(1,1,1)을 모두 이긴다 (폰의 flex-basis calc(100% …) 가 줄을 둘로 나누던 것도 함께) */
+body.salty.salty-send-textarea-off #nonQRFormItems #send_textarea {
+  visibility: hidden !important;
+  flex: 0 0 0px !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  pointer-events: none !important;
 }
 
 /* 5.4.4: 메뉴는 버튼 윗변에서 위로 커진다(실리태번 Popper, 아래 끝 고정) — 화면에서 위 막대 · 여백 6px · 버튼 아래(--bl-menu-foot:
@@ -271,7 +287,7 @@ body.salty :where(#nonQRFormItems > :not(#leftSendForm, #rightSendForm, #send_te
 body.salty {
   /* 켜짐은 팔레트의 포인트색(--salty-pop: 보내기 버튼과 같은 색) — 버튼 · 깃털 창 배지 · 스위치가 같은 색 (확장 설정에서 색을 고르면 그 색이 이김)
      밝은 테마는 불투명 포인트 알약 + 그 위 글자색, 어두운 테마는 칸 위에 포인트색 아이콘 (비치는 노랑은 올리브색이 됨)
-     4.1.2: 레몬색이 박혀 있어 에이드를 바꿔도 노랗게 빛나던 것을 팔레트를 따라가게 (사용자 요청) */
+     4.1.2: 레몬색이 박혀 있어 에이드를 바꿔도 노랗게 빛나던 것을 팔레트를 따라가게 */
   --bl-jj: var(--salty-pop, #FFDE3D);
   --bl-jj-ink: var(--salty-on-pop, var(--salty-text)); /* 포인트색 위 글자 · 손잡이 */
   --bl-jj-fg: var(--salty-accent);       /* 흰 면 위 글자 · 아이콘 (읽히는 포인트색) */
@@ -308,7 +324,7 @@ body.salty #nonQRFormItems #jj-button:not(.is-on) {
     color: var(--salty-text) !important;
   }
 }
-/* 7.4.2 깃털 켜짐 단계 (전개 지시 1.3.1, 사용자 10-20 고른 모양): 보내는 것(전개 지시 · 항상 지시 · 켠 프롬프트 한 줄 이상)의 수
+/* 7.4.2 깃털 켜짐 단계 (전개 지시 1.3.1): 보내는 것(전개 지시 · 항상 지시 · 켠 프롬프트 한 줄 이상)의 수
    0 = 흐린 색으로 채움 · 1 = 켜짐 색 테두리 · 안은 켜짐 색 12% · 2 = 안까지 채움 · 3 = 채움 + 은은한 빛. 색은 켜짐 색 하나(--jj-on), 그라데이션 없음.
    7.4.4 모든 단계가 같은 깃털 글리프 — 꺼짐만 선 아이콘이라 모양이 바뀌던 것을 맞췄다. 테두리는 고정 1.3px — 입력줄의 선 아이콘(✨ 등)과 같은 굵기, 깃의 홈 · 줄기 선이 막히지 않는다.
    7.4.5 em 비례(.08em)는 폰에서 아이콘이 커지면 같이 두꺼워져 옆 아이콘의 두 배가 됐다 (412×915 · DPR 2.625 에서 3배로 찍어 견줌). 밝은 테마의 켜짐 테두리는 흰 바탕에서 또렷하게 조금 진한 색으로 */
@@ -319,7 +335,7 @@ body.salty.salty-dark {
   --jj-stroke: var(--jj-on);
 }
 body.salty :is(#jj-button[data-jj-level="0"] > i, #jj-popup[data-jj-level="0"] .jj-popup-title > i) {
-  color: var(--salty-muted); /* 사용자 10-20 「꺼졌을 때는 그냥 회색」 — 입력줄의 다른 꺼진 아이콘과 같은 흐린 색으로 채움 */
+  color: var(--salty-muted); /* 꺼졌을 때는 회색 — 입력줄의 다른 꺼진 아이콘과 같은 흐린 색으로 채움 */
   -webkit-text-stroke: 0;
   filter: none;
 }
@@ -412,8 +428,6 @@ body.salty #jj-popup .jj-popup-foot {
 }
 /* 지우기 · 닫기: 조용한 34px 아이콘 */
 body.salty #jj-popup .jj-icon-btn {
-  width: var(--bl-h-icon);
-  height: var(--bl-h-icon);
   border: 0;
   border-radius: 50%;
   color: var(--salty-muted);
@@ -428,7 +442,7 @@ body.salty #jj-popup .jj-icon-btn {
 body.salty #jj-popup .jj-icon-btn:active {
   background: var(--bl-fill-press-bg, var(--bl-press-bg));
 }
-/* 4.1.2 깃털 창 다듬기 (사용자: "촌티 남 · 버튼이 너무 크고 켜짐 글자도 구림") — 스위치는 작고 얇게, 상태는 알약 대신 조용한 글자,
+/* 4.1.2 깃털 창 다듬기 (단추가 크고 켜짐 표시가 무겁던 것) — 스위치는 작고 얇게, 상태는 알약 대신 조용한 글자,
    제목은 한 단 가볍게, 입력칸의 두꺼운 3px 고리는 얇은 포인트색 선으로 */
 body.salty #jj-popup .jj-popup-head {
   gap: 10px;
@@ -468,10 +482,10 @@ body.salty #jj-popup .jj-switch[aria-checked="true"] {
 }
 body.salty #jj-popup .jj-switch[aria-checked="true"] span {
   transform: translateX(16px);
-  background: var(--bl-knob-face); /* 5.5.6 손잡이는 켜져도 흰색 (사용자: 검은 손잡이가 어색하다) — 설정 창의 스위치와 같은 모양 */
+  background: var(--bl-knob-face); /* 5.5.6 손잡이는 켜져도 흰색 (검은 손잡이가 어색하던 것) — 설정 창의 스위치와 같은 모양 */
   box-shadow: var(--bl-knob);
 }
-/* 지시 입력칸 — 7.8.6 시안 C(사용자 10-23 「C가 마음에 듦」): 입력칸 I2 와 같게 한 단계 밝은 면 + 1px 선, 누르면 선만 포인트색 1px
+/* 지시 입력칸 — 7.8.6 시안 C: 입력칸 I2 와 같게 한 단계 밝은 면 + 1px 선, 누르면 선만 포인트색 1px
    (예전: 오목한 칸 + 번진 1.5px 파란 고리 — 두껍고 흐려 보였음). 꺼지면 확장이 흐리게 — 그대로 */
 body.salty #jj-popup .jj-textarea {
   resize: none; /* 글 양에 맞춰 늘어남 */
@@ -601,7 +615,7 @@ body.salty #send_but:focus-visible { outline: 1px solid currentColor; outline-of
 body.salty #send_but::after { content: ""; position: absolute; left:0; right:min(0px,100% - 44px); top:min(0px,(100% - 44px)/2); bottom:min(0px,(100% - 44px)/2); }
 body.salty.salty-icons-line #llm_translate_input_button { font-size:calc(var(--bottomFormIconSize) * .75)!important; }
 
-/* 보내기 쪽 버튼 묶음: 다른 버튼과 같은 세로 중심 (2.7.9 — 전엔 2px 위로 옮겨 놓아 💬 · 보내기가 ≡ · ✦ 보다 떠 보였음, 사용자 지적) */
+/* 보내기 쪽 버튼 묶음: 다른 버튼과 같은 세로 중심 (2.7.9 — 전엔 2px 위로 옮겨 놓아 💬 · 보내기가 ≡ · ✦ 보다 떠 보였음) */
 body.salty #nonQRFormItems > #rightSendForm {
   transform: none;
 }

@@ -27,7 +27,8 @@ function read(name, selector) {
 
 function reloadStyle(folder) {
     if (!reloads.has(folder)) reloads.set(folder, (async () => {
-        const old = [...document.querySelectorAll('link[rel="stylesheet"]')].find(link => link.href.includes(`/addons/${folder}/style.css`));
+        // 9.0.9 애드온 CSS 한 장(addons.js · data-bl-addons)이면 그 한 장을 같은 자리에서 다시 받아요
+        const old = [...document.querySelectorAll('link[rel="stylesheet"]')].find(link => link.href.includes(`/addons/${folder}/style.`) || String(link.dataset?.blAddons ?? '').split(' ').includes(folder));
         if (!old) return false;
         const url = new URL(old.href);
         url.searchParams.set('r', Date.now().toString(36));

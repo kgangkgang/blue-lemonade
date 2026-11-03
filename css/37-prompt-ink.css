@@ -20,7 +20,7 @@ body.salty.salty-dem-ink:not(.salty-dem-ink-marker) :is(#chat .mes, .cg-root, :i
   padding: 0;
 }
 
-/* 형광펜 색 (3.7.1, 사용자: "형광펜 좋아하는 사람도 있을 것 같아서"):
+/* 형광펜 색 (3.7.1 형광펜을 좋아하는 쪽을 위한 고르기):
    띠에 프롬프트 색을 넣고 글자는 테마 색 그대로 둔다.
    - color 는 프롬프트 색을 그대로 받아 두고(위 규칙), 띠는 background-color: currentColor 로 그 색을 쓴다.
    - 글자만 따로 테마 색으로: -webkit-text-fill-color (color 보다 글자 칠에서 우선한다).
@@ -55,7 +55,7 @@ body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#sal
     padding: 0;
   }
 }
-/* 5.3.2 애플 웹킷: 여러 줄 인라인 마스크는 끝 줄 조각에만 그려져 줄을 넘는 대사가 사라졌다(아이폰 제보) → 마스크 없이 반투명 띠 */
+/* 5.3.2 애플 웹킷: 여러 줄 인라인 마스크는 끝 줄 조각에만 그려져 줄을 넘는 대사가 사라졌다→ 마스크 없이 반투명 띠 */
 :root.bl-apple-webkit body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q,
 :root.bl-apple-webkit body.salty.salty-tone.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"])[style*="--bl-hue"] q:not(q q) {
   -webkit-mask: none !important;

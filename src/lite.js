@@ -3,16 +3,17 @@ import { getSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
 import { booting, afterBoot } from './boot-gate.js';
 import { watchDom } from './dom-watch.js';
-// 가볍게 (2.5.2): 테마 설정창 미리보기 전용 CSS 는 설정창을 열 때까지 빼 둔다.
+// 9.0.1 설정 창 미리보기 CSS 는 따로 받는 시트(src/preview.gen.css)로만 — 설정 창 · 미리보기를 처음 쓸 때 <link> 로 붙인다.
 //
-// css/23-preview.gen.css (style.css 안의 미리보기 사본)는 #chat 규칙을 :is(#salty-nochat, .salty-preview) · .salty-sample 용으로 복사한 것이라
-// 규칙이 200개 가까이 된다. 브라우저는 채팅 본문이 바뀔 때마다(답변이 한 글자씩 자랄 때) 바뀐 요소를 모든 규칙과 견주는데,
-// 이 규칙들은 설정창 밖에서는 절대 맞지 않으면서도 매번 견줘진다 (PC 에서 스타일 계산의 약 1/4). 그래서 제자리에서 꺼 뒀다가
-// 설정 서랍을 펴거나 설정 팝업을 열 때 다시 켠다 (2.9.1 부터 제자리 — 순서가 안 바뀜).
-const PREVIEW = /#salty-nochat|\.salty-preview|\.salty-sample/;
-let deferred = [];     // 제자리에서 꺼 둔 CSSMediaRule 들 (parkRule)
-let restored = false;
-let deferredRules = 0;   // 꺼 둔 규칙 수 (덩어리 수가 아니라)
+// css/23-preview.gen.css 는 #chat 규칙을 :is(#salty-nochat, .salty-preview) · .salty-sample 용으로 복사한 것이고(tools/gen-preview-css.js),
+// 빌드(tools/css-park.cjs)가 그 사본과 미리보기 전용 손 규칙(24-previewbox …)을 style.css 에서 통째로 떼어 src/preview.gen.css 로 쓴다.
+// 브라우저는 채팅 본문이 바뀔 때마다 바뀐 요소를 모든 규칙과 견주는데 이 규칙들은 설정 창 밖에서는 절대 맞지 않는다 —
+// 그래서 2.5.2 ~ 8.x 는 style.css 안에서 꺼 뒀다가 켰고(@media not all · 10-28 부터는 작은 <style> 로 옮겨 켬), 9.0.1 부터는 아예 받지 않는다.
+// 안 열면 0KB · 파싱도 없다. 열면 테마 시트 바로 뒤(서랍 전용 <style> 보다 앞 — 원래 style.css 안 차례)에 붙고, 쓰는 동안만 켠다.
+// 받기 전 · 못 받았을 때: 표본 칸은 style.css 의 폴백(24-previewbox — 표본 숨김 · 안내 한 줄)으로 보인다. 실제 채팅은 늘 바로 바뀐다.
+const PREVIEW_URL = new URL('./preview.gen.css', import.meta.url).href;
+let previewLink = null;   // <link id="salty-preview-css">
+let restored = false;     // 켜져 있나 (media all)
 
 // 폴더 이름이 blue-lemonade 가 아니어도(blue-lemonade-main …) 제 style.css 를 찾는다 — 이 파일 기준 상대 주소가 먼저, 옛 이름 규칙은 예비
 const OWN_SHEET = new URL('../style.css', import.meta.url).href;
@@ -27,175 +28,118 @@ function themeSheet() {
     return null;
 }
 
-// 쉼표로 나뉜 선택자 전부가 미리보기 칸을 가리킬 때만 (채팅과 같이 쓰는 규칙은 남긴다).
-// :is(A, B) · :where(A, B) 안의 쉼표도 갈래로 센다 — `:is(body.salty #chat .mes .mes_text, .salty-sample)` 처럼
-// 채팅과 표본이 한 규칙을 나눠 쓰는 것(본문 글꼴 · 크기 · 줄 간격!)을 통째로 떼면 설정창을 열기 전까지 글꼴이 안 먹는다
-function splitTop(text) {
-    const parts = [];
-    let depth = 0, cur = '';
-    for (const c of text) {
-        if (c === '(') depth++;
-        else if (c === ')') depth--;
-        if (c === ',' && depth === 0) { parts.push(cur); cur = ''; } else cur += c;
-    }
-    parts.push(cur);
-    return parts;
-}
-function expand(selector) {
-    const m = /:(?:is|where)\(/.exec(selector);
-    if (!m) return [selector];
-    let depth = 0, end = -1;
-    for (let i = m.index + m[0].length - 1; i < selector.length; i++) {
-        if (selector[i] === '(') depth++;
-        else if (selector[i] === ')' && --depth === 0) { end = i; break; }
-    }
-    if (end < 0) return [selector];
-    const head = selector.slice(0, m.index), tail = selector.slice(end + 1);
-    const args = splitTop(selector.slice(m.index + m[0].length, end));
-    return args.flatMap(a => expand(head + a + tail));
-}
-function previewOnly(selectorText) {
-    if (!PREVIEW.test(selectorText)) return false; // 4.1.2: 규칙 대부분(3천여 개)은 미리보기 이름이 아예 없다 — 쪼개 보기 전에 넘긴다
-    return splitTop(selectorText).flatMap(expand).every(p => PREVIEW.test(p));
-}
-
-/**
- * 규칙을 제자리에서 `@media not all { … }` 로 감싸 꺼 둔다. 돌려받은 CSSMediaRule 의 mediaText 를 'all' 로 바꾸면 다시 켜진다.
- * 2.9.1: 예전에는 떼어 낸 규칙을 <style> 로 문서 맨 뒤에 붙였는데, 그러면 style.css 안에서 그 뒤에 오던 같은 세기의 규칙보다
- * 나중이 되어 덮어쓰기가 뒤집혔다 (월드인포 줄마다 덮어쓰기 칸이 2열 · 세로 대신 옛 한 줄 규칙으로 깨짐).
- * 제자리에 두면 순서가 그대로다. 안 맞는 @media 안의 규칙은 브라우저가 규칙 목록에 넣지 않으니 :has() 비용도 똑같이 빠진다.
- */
-// 4.1.2: 나란히 붙은 규칙들은 한 덩어리로 (count 개) — 미리보기 사본은 수백 개가 줄지어 있어, 하나씩 넣고 지우면 그때마다 시트가 바뀐 것으로 쳐졌다
-function parkRule(owner, index, count = 1) {
-    let text = '';
-    for (let i = index; i < index + count; i++) text += `${owner.cssRules[i].cssText}\n`;
-    owner.insertRule(`@media not all {\n${text}}`, index); // 먼저 넣고 원래 것을 지운다 — 넣기가 실패해도 규칙이 사라지지 않게
-    for (let i = 0; i < count; i++) owner.deleteRule(index + 1);
-    return owner.cssRules[index];
-}
-
-// 3.0.0: 맨 위 목록은 게으른 칸 시작 표시(#salty-lazy-panel-start) 앞까지만 — 그 뒤는 deferPanelHasRules 가 통째로 옮긴다
-function pull(list, owner, end = list.length) {
-    for (let i = end - 1; i >= 0; i--) {
-        const rule = list[i];
-        if (rule.cssRules && rule.type !== CSSRule.STYLE_RULE) {
-            if (rule.type === CSSRule.MEDIA_RULE && rule.media.mediaText === 'not all') {
-                // 4.8.3: 빌드(gen-preview-css.js)가 미리 꺼 둔 미리보기 덩어리 — 뽑아 넣을 것 없이 목록에만 넣고, 켤 때 함께 켠다
-                const first = rule.cssRules[0];
-                if (first && first.type === CSSRule.STYLE_RULE && PREVIEW.test(first.selectorText) && !deferred.includes(rule)) {
-                    deferred.push(rule);
-                    deferredRules += rule.cssRules.length;
-                }
-                continue;
-            }
-            pull(rule.cssRules, rule);
-            continue;
-        }
-        if (rule.type !== CSSRule.STYLE_RULE || !previewOnly(rule.selectorText)) continue;
-        let first = i;
-        while (first > 0 && list[first - 1].type === CSSRule.STYLE_RULE && previewOnly(list[first - 1].selectorText)) first--;
-        deferred.push(parkRule(owner, first, i - first + 1));
-        deferredRules += i - first + 1;
-        i = first;
-    }
-}
-
-// 4.8.4: 빌드(tools/css-park.cjs)가 미리보기 전용 규칙을 `@media not all` 로 미리 꺼 둔다 — 여기서는 그 덩어리만 모은다
-// (규칙 하나하나의 selectorText 를 읽지 않는다: 3,500개를 읽는 것만으로 폰 리그 부팅 0.15s@4x 였다).
-// 덩어리를 하나도 못 찾으면(옛 빌드 · 손으로 고친 style.css) 예전처럼 훑어서 뽑는다.
-function collectParked(list) {
-    for (const rule of list) {
-        if (rule.type === CSSRule.STYLE_RULE || !rule.cssRules) continue;
-        if (rule.type === CSSRule.MEDIA_RULE && rule.media.mediaText === 'not all') {
-            const first = rule.cssRules[0];
-            if (first && first.type === CSSRule.STYLE_RULE && PREVIEW.test(first.selectorText)) { deferred.push(rule); deferredRules += rule.cssRules.length; }
-            continue;
-        }
-        collectParked(rule.cssRules);
-    }
-}
-
-/** 시트가 읽히면 미리보기 규칙을 떼어 둔다. 시트가 아직 안 왔으면 잠시 뒤 다시. */
-export function deferPreviewRules(tries = 25) {
-    if (restored || deferred.length) return;
+/** 미리보기 시트를 꺼진 채(media="not all") 붙여 받아 둔다 — 서랍 · ✦ 메뉴를 누르는 순간(설정 창 코드를 미리 받는 그때) 부른다. 이미 있으면 그대로 */
+export function preloadPreviewCss() {
+    if (previewLink?.isConnected) return previewLink;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.id = 'salty-preview-css';
+    link.href = PREVIEW_URL;
+    link.media = restored ? 'all' : 'not all';
+    // 못 받으면 떼어 두고 다음에 다시 — 그동안 표본 칸은 폴백(숨김 · 안내 한 줄)이다
+    link.addEventListener('error', () => { console.info('[Blue Lemonade] 미리보기 CSS 를 못 받았어요 — 다음에 열 때 다시 받아요 (실제 채팅은 그대로)'); link.remove(); if (previewLink === link) previewLink = null; }, { once: true });
     const sheet = themeSheet();
-    if (!sheet || !sheet.cssRules.length) {
-        if (tries > 0) setTimeout(() => deferPreviewRules(tries - 1), 200);
-        return;
-    }
-    try {
-        collectParked(sheet.cssRules);
-        if (deferred.length) { afterBoot(() => setTimeout(() => detachPreviewRules(sheet), 1500)); return; }
-        const lazy = lazyStart(sheet);
-        pull(sheet.cssRules, sheet, lazy < 0 ? sheet.cssRules.length : lazy);
-    } catch (err) {
-        console.warn('[Blue Lemonade] 미리보기 규칙 분리 실패 — 그대로 둠', err);
-        restorePreviewRules();
-    }
+    if (sheet?.ownerNode?.isConnected) (document.getElementById('salty-lazy-css')?.isConnected ? document.getElementById('salty-lazy-css') : sheet.ownerNode).after(link);   // 서랍 전용 <style id="salty-panel-css"> 가 이미 붙었으면 그 앞 — 원래 차례(본문 → 나머지(--split) → 미리보기 → 서랍 전용)
+    else document.head.append(link);
+    previewLink = link;
+    return link;
 }
 
-/** 설정창을 열 때: 꺼 둔 규칙을 제자리에서 다시 켠다 (이 호출은 세션 끝까지 — 설정 창 · 서랍 · 메모 바). */
+// --split 첫 시트는 작게 시작해요. 첫 서랍에서 원래 모듈 순서 전체를 받아 첫 시트를 끄고 교체해요.
+// 첫 시트는 메타와99꼬리를 찾는 원본으로 남아요. 둘째 파일의99꼬리도 원문으로 분리해 별도 받기 실패를 복구해요.
+const SPLIT_URL = new URL('./style-lazy.gen.css', import.meta.url).href;
+// 서랍 · 테마 설정 창 · 애드온 창(85-addon-unify 가 아는 창들)만 — 실리태번 보통 팝업(.popup · bl-roomy-dialog 표식 포함)은 아니에요
+//   닫힌 채 늘 문서에 있는 설정 블록(#model_register_settings · .bwr_settings …)은 열림이 아니에요 — 열린 서랍(.openDrawer)이나 열린 dialog 안에 있을 때만
+const LAZY_OPENERS = ['.drawer-content.openDrawer', 'dialog[open] .salty-panel', 'dialog[open].bl-settings-dialog', 'dialog[open].bl-translator-dialog', 'dialog[open].bl-assets-dialog', 'dialog[open].bl-direction-dialog', 'dialog[open].bl-notes-dialog', 'dialog[open].bl-ctsi-dialog', 'dialog[open].blpt-dialog', 'dialog[open].blzi-dialog', 'dialog[open].bl-mermaid-dialog', 'dialog[open].bl-mav-viewer', 'dialog[open] .bl-extension-page', 'dialog[open] .pa-hub', 'dialog[open].po-dialog', 'dialog[open] #pt-panel', 'dialog[open] .bwr_settings', 'dialog[open] #model_register_settings', 'dialog[open] #model-switch-settings', 'dialog[open] #lv_settings', 'dialog[open] .cg-root', 'dialog[open] .bl-notes-view'].join(', ');
+let splitPrefetched = false;
+/** 두 장 빌드면 테마 시트 */
+function splitBuild() {
+    const sheet = themeSheet();
+    const first = sheet?.cssRules?.[0];
+    if (!first || first.selectorText !== ':root' || first.style?.getPropertyValue('--bl-css-split').trim() !== '1') return null;
+    return sheet;
+}
+/** 둘째 장 미리 받기(fetch 만) */
+export function prefetchSplitCss() {
+    if (splitPrefetched || document.getElementById('salty-lazy-css') || !splitBuild()) return false;
+    splitPrefetched = true;
+    try { fetch(SPLIT_URL, { priority: 'low', credentials: 'same-origin' }).catch(() => {}); } catch { /* fetch 없음 */ }
+    return true;
+}
+let splitRequest = null;
+export function loadSplitCss() {
+    if (splitRequest || document.getElementById('salty-lazy-css')) return false;
+    const sheet = splitBuild(); if (!sheet) return false;
+    try { window.dispatchEvent(new Event('bl:full-css')); } catch { /* 창 없는 시험 */ }   // 애드온 시트도 같은 때 전체로 (addons.js)
+    let timer;
+    const loaded = Promise.race([import('./split-css.js'), new Promise(resolve => { timer = setTimeout(() => resolve(null), 15000); })]);
+    splitRequest = loaded.then(m => { clearTimeout(timer); return m ? m.loadFullCss(sheet, style => {
+        panelStyle = style; panelCount = style.sheet?.cssRules.length || 0;
+        syncPanelCss(); if (!panelObserving) watchPanelOpen();
+    }, () => themeEnabled(getSettings())) : false; }).catch(() => false)
+        .then(ok => { clearTimeout(timer); if (!ok) splitRequest = null; return ok; });
+    return true;
+}
+/** 전체 CSS가 적용됐거나 받기에 실패하면 끝나요. 실패한 다음 호출은 다시 받아요. */
+export function splitCssReady() { loadSplitCss(); return splitRequest || Promise.resolve(document.getElementById('salty-lazy-css')?.dataset.blFullTheme === 'ready'); }
+// 1.0.0 크로미움 밖 · 다른 폭 규칙 시트 — 조건이 맞을 때만 src/compat-css.js 가 붙여요(설명 · 조건은 그 파일)
+export function loadCompatCss(win = window) {
+    const first = themeSheet()?.cssRules?.[0];
+    if (first?.selectorText !== ':root') return null;
+    const mark = name => String(first.style.getPropertyValue(name)).trim().replace(/^"|"$/g, '').split('|').filter(Boolean);
+    const ok = f => { try { return !!f(); } catch { return false; } };
+    const mq = q => ok(() => win.matchMedia(q).matches);
+    const go = what => import('./compat-css.js').then(m => m.attachCompat(what, win)).catch(error => console.warn('[Blue Lemonade] 호환 CSS', error));
+    const ua = win.navigator?.userAgent || '';
+    const groups = mark('--bl-compat-media').map(g => g.split(' & ')), wide = () => groups.some(g => g.every(mq));
+    const browser = mark('--bl-compat-supports').some(c => ok(() => win.CSS.supports(c))) || ok(() => win.CSS.supports('-moz-appearance: none')) || (/AppleWebKit/.test(ua) && !/Chrome\/|Chromium\/|Edg\/|OPR\//.test(ua)) || mq('(forced-colors: active)');
+    if (browser) go('browser'); else ok(() => win.matchMedia('(forced-colors: active)').addEventListener('change', e => { if (e.matches) go('browser'); }));
+    if (wide()) go('width'); else for (const q of new Set(groups.flat())) ok(() => win.matchMedia(q).addEventListener('change', () => { if (wide()) go('width'); }));
+    return { browser, width: wide() };
+}
+export function scheduleSplitCss({ after = null, then = null } = {}) {
+    // 1.0.0(11-03 퇴행 고침): 덮개가 걷히고 3층까지 끝난 뒤(after) 쉴 때 둘째 장 · 애드온 전체 시트를 붙여요. 예전엔 처음 여는 서랍(캐릭터 목록 · 월드인포 …)이
+    //   받기 · 해석 · 문서 전체 재계산을 떠안고, 받는 사이 첫 장 모양으로 먼저 그렸다가 다시 그렸어요(PC 첫 서랍 작업 1,687 → 850ms).
+    //   다 붙은 뒤(못 받아도) then — 서랍 문 모듈을 쉴 때 시작(index.js). 서랍 · 메뉴를 먼저 누르면 그때 붙는 것은 그대로예요
+    const idle = fn => { if (typeof requestIdleCallback === 'function') requestIdleCallback(fn, { timeout: 4000 }); else setTimeout(fn, 1500); };
+    afterBoot(() => Promise.resolve(after).catch(() => {}).then(() => idle(() => {
+        let ready = null;
+        try { loadSplitCss(); ready = splitRequest; } catch (error) { console.warn('[Blue Lemonade] 두 번째 CSS', error); }
+        if (then) Promise.resolve(ready).catch(() => {}).then(() => idle(() => { try { then(); } catch (error) { console.warn('[Blue Lemonade] 쉴 때 서랍 준비', error); } }));
+    })));
+    return true;
+}
+
+/** 미리보기 시트를 다 받았을 때(못 받았어도) 풀리는 약속 — 표본을 그린 뒤 바로 계산 스타일을 옮겨 적는 쪽(과일 상태창 표본)이 기다린다 */
+export function previewCssReady() {
+    const link = preloadPreviewCss();
+    if (link.sheet) return Promise.resolve(true);
+    return new Promise(resolve => { link.addEventListener('load', () => resolve(true), { once: true }); link.addEventListener('error', () => resolve(false), { once: true }); });
+}
+
+/** 설정 창을 열 때: 미리보기 시트를 켠다 (이 호출은 세션 끝까지 — 설정 창 · 서랍). */
 let permanent = false, holders = 0;
 export function restorePreviewRules() {
     permanent = true;
     turnOn();
 }
 function turnOn() {
-    if (restored) return;
     restored = true;
-    if (previewStyle) { previewStyle.media = 'all'; return; }
-    for (const block of deferred) block.media.mediaText = 'all';
+    preloadPreviewCss().media = 'all';
 }
-
-// 10-28: 덩어리를 style.css 안에서 켜면(mediaText) 1.7MB 시트 전체가 바뀐 것으로 쳐져 문서 전체를 다시 계산했다 —
-// 긴 채팅(메시지 300)에서 폰 4배 기준 설정 창 · 북마크 창을 처음 열 때 약 6초. 빌드가 같은 덩어리를 src/preview-park.gen.css 로 따로 적어 두므로,
-// 시작 덮개가 걷힌 뒤 그 글을 꺼 둔 작은 <style> 로 테마 시트 바로 뒤(게으른 칸보다 앞)에 붙여 두고, 켜고 끌 때 그 <style> 의 media 만 바꾼다
-// (작은 시트는 바뀐 규칙이 맞을 요소만 다시 계산해요 — 같은 채팅에서 30ms 안팎). style.css 안의 덩어리는 꺼진 채 그대로 둔다.
-// 받은 글이 시트의 덩어리와 하나씩 같은 뼈대가 아니면(캐시에 남은 옛 style.css 등) 붙이지 않고 예전처럼 제자리에서 켠다 — 화면은 같다.
-let previewStyle = null;
-async function detachPreviewRules(sheet) {
-    if (previewStyle || restored || !deferred.length) return;
-    try {
-        const res = await fetch(new URL('./preview-park.gen.css', import.meta.url));
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const text = await res.text();
-        if (previewStyle || restored) return;   // 받는 사이 설정 창을 열었으면 이번 세션은 제자리 그대로
-        const probe = new CSSStyleSheet();
-        probe.replaceSync(text);
-        const blocks = [];
-        const dig = rule => { while (rule && rule.media?.mediaText !== 'all' && rule.cssRules?.length === 1) rule = rule.cssRules[0]; return rule; };
-        for (const rule of probe.cssRules) blocks.push(dig(rule));
-        const ok = blocks.length === deferred.length && blocks.every((b, i) => b?.media?.mediaText === 'all' && sameShape(b.cssRules, deferred[i].cssRules) && outerOf(b) === outerOf(deferred[i]));
-        if (!ok) { console.info('[Blue Lemonade] 미리보기 규칙은 style.css 안에서 켜요 (화면은 같음): 받은 덩어리가 시트와 다름'); return; }
-        const style = document.createElement('style');
-        style.id = 'salty-preview-css';
-        style.media = 'not all';
-        style.textContent = text;
-        sheetTail(sheet).after(style);   // 게으른 칸(<style id="salty-panel-css">)이 이미 붙어 있으면 그 앞 — 원래 style.css 안 차례(미리보기 → 게으른 칸)와 같다
-        previewStyle = style;
-    } catch (err) {
-        console.info('[Blue Lemonade] 미리보기 규칙은 style.css 안에서 켜요 (화면은 같음):', err?.message || err);
-    }
-}
-/** 덩어리를 싼 겉 조건(@media · @supports …)을 바깥에서 안쪽 차례로 — 받은 글 쪽은 맨 바깥 `@media all` 감싸개 바로 위까지 */
-function outerOf(rule) {
-    const out = [];
-    for (let p = rule.parentRule; p; p = p.parentRule) out.unshift(p.conditionText ?? p.media?.mediaText ?? p.name ?? '');
-    return out.join(' / ');
-}
-// 5.6.6 (점검 PAB-4): 북마크 창처럼 닫히는 쪽은 쥐었다 놓는다 — 놓는 쪽이 마지막이고 세션 끝까지 켜 둔 쪽(설정 창 · 메모)이 없으면
-// 352개 미리보기 규칙을 다시 끈다 (예전엔 한 번 열면 그 세션 내내 켜져 있어, 글이 붙을 때마다 채팅 전체를 다시 맞춰 봤다)
+// 5.6.6 (점검 PAB-4): 북마크 창처럼 닫히는 쪽은 쥐었다 놓는다 — 놓는 쪽이 마지막이고 세션 끝까지 켜 둔 쪽(설정 창)이 없으면 다시 끈다
+// (켜 둔 채면 글이 붙을 때마다 채팅 전체를 미리보기 규칙과 다시 맞춰 봤다). 작은 따로 시트라 켜고 끌 때 다시 계산은 맞는 요소만이다.
 export function holdPreviewRules() { holders++; turnOn(); }
 export function releasePreviewRules() {
     holders = Math.max(0, holders - 1);
     if (holders || permanent || !restored) return;
-    if (previewStyle) previewStyle.media = 'not all';
-    else for (const block of deferred) block.media.mediaText = 'not all';
     restored = false;
+    if (previewLink) previewLink.media = 'not all';
 }
 
+/** 꺼져 있나(1) · 켜져 있나(0) — 9.0.1 부터 규칙 수는 시트를 받기 전이라 세지 않는다(예전엔 꺼 둔 규칙 수) */
 export function deferredPreviewRuleCount() {
-    return restored ? 0 : deferredRules;
+    return restored ? 0 : 1;
 }
 
 // ── 서랍 · 팝업이 열렸을 때만 켜는 규칙: style.css 맨 끝의 게으른 칸 ──────────────────────────────
@@ -218,7 +162,8 @@ export function deferredPreviewRuleCount() {
 // ':has() 영향' 표시를 남긴 뒤로는 채팅에 요소가 붙을 때마다 body 아래에서 그 태그(span · i · select …)를 가진 요소를 전부 다시
 // 계산했다 (폰 리그 4배: 글 붙이기 한 번 35 → 180~210ms, 그중 테마 몫 = 다시 계산하는 요소 1,091 → 791).
 // 8.2.1 테마가 꺼진 모드면 큰 시트 바로 뒤에 가벼운 사본(<link id="salty-ext-css">)이 있어요 — 미리보기 · 게으른 칸 <style> 은 그 뒤에 붙여야 원래 차례(본문 → 미리보기 → 게으른 칸)예요
-const sheetTail = sheet => { const ext = document.getElementById('salty-ext-css'); return ext?.isConnected && ext.previousElementSibling === sheet.ownerNode ? ext : sheet.ownerNode; };
+// 전체 교체 시트(<style id="salty-lazy-css">)가 있으면 그 뒤 — 본문 → 미리보기 → 서랍 전용이에요.
+const sheetTail = sheet => { const split = document.getElementById('salty-lazy-css'); if (split?.isConnected) return split; const ext = document.getElementById('salty-ext-css'); return ext?.isConnected && ext.previousElementSibling === sheet.ownerNode ? ext : sheet.ownerNode; };
 const LAZY_SENTINEL = '#salty-lazy-panel-start';
 const LEGACY_POPUPS = '#character_popup, #world_popup, #select_chat_popup, #shadow_popup, #dialogue_popup, #export_format_popup';
 let panelStyle = null;  // 옮겨 둔 게으른 칸 규칙이 든 <style id="salty-panel-css">
@@ -279,6 +224,8 @@ function syncPanelCss(inFrame = false) {
     if (!quick && !panelOn && booting()) { afterBoot(syncPanelCss); return; }   // 7.7.4 시작 덮개 동안 열린 옛 팝업은 없다 — 걷힐 때 한 번 본다
     const want = quick || legacyOpen();
     if (want) closedSeen = 0;
+    // 1.0.0 둘째 장은 서랍 · 테마 설정 창 · 애드온 창이 처음 열릴 때만 — 보통 팝업(확인 · 모델 제안 …)은 첫 장만으로 그려요. 시작 덮개는 열림이 아니에요
+    if (want && !booting() && !document.getElementById('salty-lazy-css') && document.querySelector(LAZY_OPENERS)) { try { loadSplitCss(); } catch { /* 그대로 */ } }
     if (want === panelOn) return;
     if (!want) {
         // 5.6.4: 켜기는 바로(그리기 전), 끄기는 닫힌 것을 처음 본 뒤 offDelay() 가 지나서 — 그 사이 다시 열리면 그대로 켜 둠
@@ -326,6 +273,7 @@ export function deferPanelHasRules(tries = 25) {
         for (const [url, cut] of [[tailUrl, false], [sheet.href, true]]) {
             let tail;
             try { tail = await read(url, cut); } catch (err) { reasons.push(err.message); continue; }
+            if (panelStyle) return;   // 전체 시트가 먼저 도착해 꼬리를 이미 준비했어요.
             const probe = new CSSStyleSheet();
             probe.replaceSync(tail);
             const from = lazyStart(sheet);
@@ -335,7 +283,7 @@ export function deferPanelHasRules(tries = 25) {
             style.id = 'salty-panel-css';
             style.media = 'not all';
             style.textContent = tail;
-            (previewStyle?.isConnected ? previewStyle : sheetTail(sheet)).after(style); // 10-28 미리보기 <style> 이 먼저 붙었으면 그 뒤(원래 차례: 미리보기 → 게으른 칸). 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
+            (previewLink?.isConnected ? previewLink : sheetTail(sheet)).after(style); // 9.0.1 미리보기 <link> 가 먼저 붙었으면 그 뒤(원래 차례: 미리보기 → 게으른 칸). 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
             for (let i = sheet.cssRules.length - 1; i > from; i--) sheet.deleteRule(i);
             panelCount = live.length;
             panelStyle = style;
@@ -374,7 +322,8 @@ function watchPanelOpen() {
     };
     panelObserving = true;
     // 8.2.7: body 전체 감시는 공용 감시자(dom-watch.js) 구독으로 — 같은 body 를 보는 다른 모듈과 감시자 하나를 나눠 써요(받는 기록 · 때는 같아요)
-    watchDom(document.body, { attributes: ['class', 'open', 'style'], subtree: true, childList: true, name: 'lite 서랍 · 팝업 열림' }, (list) => {
+    // 9.0.4: 채팅 · 입력판은 콜백에서 건너뛰던 것을 구독 거르개로 — 채팅(#chat) 가지는 감시도 안 걸어요(body 구역)
+    watchDom(document.body, { attributes: ['class', 'open', 'style'], subtree: true, childList: true, exclude: ['#chat', '#form_sheld'], name: 'lite 서랍 · 팝업 열림' }, (list) => {
         let hit = false;
         for (const m of list) {
             const t = m.target;

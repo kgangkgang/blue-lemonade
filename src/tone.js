@@ -1,5 +1,5 @@
 // 글자색 톤 맞추기 (2.6.0) — 메시지 안에 적힌 글자색(<font color> · style="color") 의 색상(hue)은 두고
-// 채도 · 밝기만 테마에 맞춘다. 사용자: "애들 퍼스널 컬러 정규식 색깔이 들쭉날쭉 — 채도 · 명도는 똑같고 색깔만 다르게".
+// 채도 · 밝기만 테마에 맞춘다. 인물별 정규식 색의 채도 · 밝기가 들쭉날쭉하던 것 — 채도 · 밝기는 같게, 색만 다르게.
 //
 // CSS 는 색에서 색상만 뽑아낼 수 없으니 여기서 잰다: 요소의 색을 rgb 로 읽어 HSL 로 바꾸고 --bl-hue 만 요소에 심는다.
 // 실제 색은 style.css 가 hsl(var(--bl-hue) var(--bl-tone-s) var(--bl-tone-l)) 로 그린다 — 채도 · 밝기는 라이트/나이트마다
@@ -7,6 +7,7 @@
 // 켜짐 여부는 body.salty-tone (apply.js) — 꺼져 있으면 아무것도 안 잰다. 본문 색 지정(unifyInline)이 켜져 있으면 그쪽이 이긴다.
 import { readSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
+import { addMessageDecorator } from './message-decor.js';
 
 const SEL = '.mes_text font[color], .mes_text [style*="color"]';
 const GREY = 0.14; // 이 아래 채도는 회색으로 침
@@ -103,27 +104,8 @@ export function startInlineTone() {
     const chat = document.getElementById('chat');
     if (!chat) return;
     retoneAll();
-    // 답변이 한 글자씩 자랄 때마다 도는 것을 막으려 0.4초 묶음 — 스트리밍 중엔 마지막 메시지만 늦게 칠해진다
-    const dirty = new Set();
-    new MutationObserver(records => {
-        // 답변이 자라는 동안 조각마다 불린다 — 설정을 다시 읽지 않고 apply.js 가 붙인 body.salty-tone 으로 (켜짐 조건이 같음, 2.9.2)
-        if (!document.body.classList.contains('salty-tone')) return;
-        for (const record of records) {
-            // 8.2.7 번역 진행 표시(.llmt-progress)의 1초마다 바뀌는 글은 칠할 것이 없다 — 메시지를 다시 칠하지 않는다
-            if ((record.target.nodeType === 1 ? record.target : record.target.parentElement)?.closest?.('.llmt-progress')) continue;
-            const mes = record.target.nodeType === 1 ? record.target.closest('.mes') : record.target.parentElement?.closest('.mes');
-            if (mes) dirty.add(mes);
-            for (const node of record.addedNodes) {
-                if (node.nodeType !== 1) continue;
-                if (node.matches('.mes')) dirty.add(node);
-                else if (!mes) for (const nested of node.querySelectorAll('.mes')) dirty.add(nested);
-            }
-        }
-        if (!dirty.size) return;
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-            retoneRoots([...dirty].filter(el => el.isConnected));
-            dirty.clear();
-        }, 400);
-    }).observe(chat, { childList: true, subtree: true });
+    // 9.0.4: 메시지 꾸미기(src/message-decor.js) 한 함수로 — 메시지 이벤트는 다음 프레임에 그 메시지만, 이벤트 없는 변화는 0.4초 묶음(예전 그대로 ·
+    //   답이 오는 동안 바뀐 메시지는 끝나면 한 번에). 번역 진행 표시(.llmt-progress) 안 글 변화는 메시지 꾸미기가 건너뛰어요(8.2.7 고침 그대로).
+    //   켜짐은 설정을 다시 읽지 않고 apply.js 가 붙인 body.salty-tone 으로 (켜짐 조건이 같음, 2.9.2)
+    addMessageDecorator('글자색 맞춤', list => retoneRoots(list), { settle: 400, order: 40, enabled: () => document.body.classList.contains('salty-tone') });
 }

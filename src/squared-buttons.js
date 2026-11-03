@@ -2,6 +2,7 @@
 // slim rounded rectangles. Only a marker attribute is added; removing it restores the original shape.
 // Switches, dots, badges, progress bars, avatars and icon-only round buttons keep their shape.
 import { booting, afterBoot } from './boot-gate.js';
+import { watchWith } from './dom-watch.js';
 
 const ATTR = 'data-bl-squared';
 const CANDIDATES = 'button,a,summary,label,[role="button"],[role="tab"],[tabindex],.menu_button,.qr--button,[class*="btn"],[class*="chip"],[class*="tab"],[class*="pill"]';
@@ -228,7 +229,8 @@ export function watchSquaredButtons(doc, host) {
     function measure() {
         timer = 0; if (stopped) return;
         if (typeof host.requestAnimationFrame !== 'function') { flush(); return; }
-        if (!frame) frame = host.requestAnimationFrame(flush);
+        // 1.0.0 극한 최적화: rAF 안(배치 전) 읽기(offsetParent · getBoundingClientRect 후보 1,000~1,800개)가 문서 전체 배치를 강제했어요 — 그 프레임 배치가 끝난 뒤(setTimeout 0)에 읽어요
+        if (!frame) frame = host.requestAnimationFrame(() => { frame = 0; if (stopped) return; if (typeof host.setTimeout === 'function') frame = host.setTimeout(flush, 0); else flush(); });
     }
     function flush() {
         frame = 0; timer = 0; if (stopped) return;
@@ -263,7 +265,8 @@ export function watchSquaredButtons(doc, host) {
     };
     const queue = node => queueMany([node]);
     // Drawers and popups open by class/style changes, so attribute changes re-check that subtree.
-    const observer = new host.MutationObserver(records => {
+    const htmlEl = doc.documentElement && doc.documentElement !== doc.body ? doc.documentElement : null;
+    const onRecords = records => {
         const pending = new Set();
         for (const r of records) {
             // 긴 채팅 가볍게가 꺼지면(메시지가 줄어 bl-chat-light 가 빠짐) 건너뛰던 메시지는 사건 없이 그려져요 — 적어 둔 것을 다시 재요
@@ -275,10 +278,13 @@ export function watchSquaredButtons(doc, host) {
             if (r.type === 'childList') r.addedNodes.forEach(node => pending.add(node)); else if (!paddingOnly(r)) pending.add(r.target);
         }
         queueMany(pending);
-    });
-    observer.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['class', 'style', 'hidden', 'open', 'data-generating'] });
-    const htmlEl = doc.documentElement && doc.documentElement !== doc.body ? doc.documentElement : null;
-    if (htmlEl) observer.observe(htmlEl, { attributes: true, attributeOldValue: true, attributeFilter: ['class'] });   // subtree 없음 — html 자기 class 만(긴 채팅 가볍게 꺼짐)
+    };
+    // 9.0.4: 공용 감시 허브 구독 — body 구역(채팅 안 단추도 봐요: 메시지마다 붙는 다른 확장 단추) + html 자기 class(subtree 없음 — 긴 채팅 가볍게 꺼짐).
+    //   콜백은 예전처럼 그리기 전에(when 'now') — 아는 생김새는 콜백에서 바로 붙여요. 시험이 넘긴 가짜 창(host)은 그 창 감시자 하나(watchWith)
+    const unwatch = watchWith(host, [
+        [doc.body, { childList: true, subtree: true, attributes: ['class', 'style', 'hidden', 'open', 'data-generating'], attributeOldValue: true, name: '네모 단추' }],
+        [htmlEl, { attributes: ['class'], attributeOldValue: true, name: '네모 단추 (html class)' }],
+    ], onRecords);
     const resize = () => queue(doc.body);
     host.addEventListener('resize', resize);
     const onLightState = event => {
@@ -292,7 +298,7 @@ export function watchSquaredButtons(doc, host) {
     doc.addEventListener?.('contentvisibilityautostatechange', onLightState, true);
     queue(doc.body);
     return () => {
-        stopped = true; observer.disconnect(); host.clearTimeout(timer); if (frame) host.cancelAnimationFrame?.(frame); host.removeEventListener('resize', resize);
+        stopped = true; unwatch(); host.clearTimeout(timer); if (frame) host.cancelAnimationFrame?.(frame); host.removeEventListener('resize', resize);
         doc.removeEventListener?.('contentvisibilityautostatechange', onLightState, true); skippedMes.clear();
         for (const el of doc.querySelectorAll(`[${ATTR}]`)) el.removeAttribute(ATTR);
         style.remove();

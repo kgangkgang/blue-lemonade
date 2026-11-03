@@ -28,7 +28,7 @@ export async function closeModelDialogs() {
 }
 const MODULES = {
     translator: () => import('../translator/bridge.js'), prompt: () => import('../prompt/index.js'),
-    rewrite: () => import('../rewrite/index.js'), assets: () => import('../assets/index.js'), 'tts-analysis': () => import('../tts/index.js'),
+    rewrite: () => import('../rewrite/index.js'), assets: () => import('../assets/index.js'), 'tts-analysis': () => import('../tts/shell.js').then(m => m.ensureBody('모델 전환')),
 };
 const ROOTS = { translator: '.translation_settings.llmt-settings', prompt: '#pt-panel', rewrite: '.bwr_settings', assets: '#char_assets_settings', 'tts-analysis': '.lv-settings' };
 const ancestor = (root, selector, closest) => root.querySelector(selector)?.closest(closest);

@@ -68,7 +68,7 @@ export function renderSettingsPage(page, viewingChat, onBack) {
     page.innerHTML = `
         <header class="cg-page-head">
             <button type="button" class="cg-icon-btn" data-act="back" title="뒤로" aria-label="뒤로"><i class="fa-solid fa-arrow-left"></i></button>
-            <div class="cg-page-title">설정</div>
+            <div class="cg-page-title">설정<button type="button" class="bl-help-btn" data-act="guide" aria-label="북마크 사용법"><i class="fa-solid fa-question" aria-hidden="true"></i></button></div>
         </header>
         <div class="cg-page-scroll">
             <section class="cg-section">
@@ -143,7 +143,7 @@ export function renderSettingsPage(page, viewingChat, onBack) {
             <section class="cg-section">
                 <h3 class="cg-section-title"><i class="fa-solid fa-list"></i>목록</h3>
                 <div class="cg-setting">
-                    <div class="cg-setting-text"><b>한 페이지에 보여 줄 북마크</b><small>1~50개. 너무 많으면 여는 속도가 느려져요.</small></div>
+                    <div class="cg-setting-text"><b>한 페이지에 보여 줄 북마크</b><small>1~50개. 그림만 보기는 이 값의 2배(최소 24장)씩 보여요. 너무 많으면 여는 속도가 느려져요.</small></div>
                     ${stepper('itemsPerPage', 1, 50, store.itemsPerPage)}
                 </div>
                 <div class="cg-setting">
@@ -151,13 +151,6 @@ export function renderSettingsPage(page, viewingChat, onBack) {
                     ${stepper('contextRange', 0, 10, store.contextRange)}
                 </div>
             </section>
-
-            <details class="cg-section cg-section-fold">
-                <summary class="cg-section-title"><i class="fa-solid fa-book-open"></i>사용법<i class="fa-solid fa-chevron-down cg-fold-caret" aria-hidden="true"></i></summary>
-                <ul class="cg-guide">
-                    ${GUIDE.map(([icon, title, text]) => `<li><i class="fa-solid ${icon ?? iconName()}"></i><div><b>${title}</b><p>${text}</p></div></li>`).join('')}
-                </ul>
-            </details>
 
             <p class="cg-version">북마크 ${VERSION}</p>
         </div>`;
@@ -262,6 +255,11 @@ export function renderSettingsPage(page, viewingChat, onBack) {
         const action = target.closest('[data-act]')?.dataset.act;
         if (action === 'back') {
             onBack();
+            return;
+        }
+        if (action === 'guide') {   // 1.0.0 「사용법」 펼침 대신 머리 ? — 테마 공용 도움말 창(같은 글)
+            const html = `<ul class="cg-guide">${GUIDE.map(([icon, title, text]) => `<li><i class="fa-solid ${icon ?? iconName()}"></i><div><b>${title}</b><p>${text}</p></div></li>`).join('')}</ul>`;
+            import('../../help-sheet.js').then(m => m.openHelpSheet({ title: '북마크 사용법', html }));
             return;
         }
         if (action === 'color-save') return saveColors();

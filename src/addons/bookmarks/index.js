@@ -14,6 +14,7 @@ import { imageList, hasImage, createImageLookup } from './images.js';
 import { safeImageSrc } from './render.js';
 import { startSelectionChip, hideSelectionChip } from './selection-chip.js';
 import { booting, afterBoot } from '../../boot-gate.js';
+import { onThemeLook } from '../../shared/theme-look.js';
 
 // 4.5.4: 모아 보기 창(panel.js 47KB + 그것만 쓰는 settings-view.js 17.7KB)은 창을 열 때 읽는다.
 // 북마크 표시 · 메모 · 미리보기는 창 없이도 돌아가야 해서 index.js 는 그대로 시작할 때 읽힌다.
@@ -367,14 +368,12 @@ jQuery(() => {
     refreshMessageIcons();
     startSelectionChip({ enabled: selectionChipEnabled, iconName, onBookmark: bookmarkSelection });
 
-    const watchTheme = new MutationObserver(() => {
+    // 블루 레몬에이드는 팔레트 변수를 <head>의 <style id="salty-vars"> 글자로 써 넣는다 (html의 style 속성이 아님)
+    // 9.0.4: html style · body class · head 는 테마 색 따라가기 한 구독(src/shared/theme-look.js)으로 — 다음 프레임에 한 번 알려 주면 0.12초 묶음은 그대로
+    onThemeLook(() => {
         clearTimeout(themeTimer);
         themeTimer = setTimeout(syncThemeColors, 120);
-    });
-    watchTheme.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
-    watchTheme.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    // 블루 레몬에이드는 팔레트 변수를 <head>의 <style id="salty-vars"> 글자로 써 넣는다 (html의 style 속성이 아님)
-    watchTheme.observe(document.head, { childList: true, subtree: true, characterData: true });
+    }, { watch: 'html.style body.class head', name: '북마크 색' });
     syncThemeColors();
 
     // 메시지 칸이 생기거나 빠지면 아이콘을 다시 달고 북마크 번호도 확인한다.

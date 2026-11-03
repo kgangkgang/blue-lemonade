@@ -80,6 +80,62 @@ await test('칠한 결과는 예전과 같아요 — 프롬프트 이름 · 추�
     off();
     assert.equal(f.a.textContent, 'Main Prompt', '끄면 원래 글로'); assert.equal(f.both.getAttribute('title'), 'Trim', '끄면 원래 제목으로');
 });
+const settled = () => new Promise(resolve => setImmediate(resolve));
+const hintText = input => input.parentElement?.children.find(el => el.className === 'bl-script-hint')?.textContent;
+const fullDict = () => ({...DICT,prompts:DICT.prompts.map(entry=>({...entry,desc:entry.name+'의 설명이에요.'}))});
+await test('시작용 사전은 제목이 같고 닫힌 편집창은 설명을 받지 않아요 · 열리면 한 번 받아요', async () => {
+    const f=fixture();let visible=false,intersections,loads=0;const observed=new Set();
+    f.nameInput.checkVisibility=f.regexInput.checkVisibility=()=>visible;
+    globalThis.IntersectionObserver=class{constructor(fn){intersections=fn;}observe(el){observed.add(el);}unobserve(el){observed.delete(el);}disconnect(){observed.clear();}};
+    const engine=createPromptEngine(doc),off=engine.register('qa',DICT,async()=>{loads++;return fullDict();});
+    await settled();assert.equal(loads,0);assert.equal(f.a.textContent,'메인 프롬프트');
+    assert.equal(engine.title('prompts','main','Main Prompt'),'메인 프롬프트');
+    visible=true;intersections([{target:f.nameInput,isIntersecting:true}]);await new Promise(resolve=>setTimeout(resolve,75));
+    assert.equal(loads,1);assert.equal(hintText(f.nameInput),'→ 메인 프롬프트\nMain Prompt의 설명이에요.');
+    assert.equal(observed.size,0,'설명을 받은 입력칸은 보임 감시에서 빼요');
+    off();const scans=docScans;intersections([{target:f.nameInput,isIntersecting:true}]);await new Promise(resolve=>setTimeout(resolve,75));
+    assert.equal(docScans,scans,'끄고 난 뒤 큐에 남은 보임 알림은 다시 그리기를 예약하지 않아요');
+    delete globalThis.IntersectionObserver;
+});
+await test('설명을 받는 동안 입력 항목이 바뀌면 현재 이름의 설명을 보여요',async()=>{
+    const f=fixture();let resolve;const engine=createPromptEngine(doc);
+    const off=engine.register('qa',DICT,()=>new Promise(done=>resolve=done));await settled();
+    f.nameInput.value='Jailbreak';resolve(fullDict());await settled();
+    assert.equal(hintText(f.nameInput),'→ 탈옥\nJailbreak의 설명이에요.');off();
+});
+await test('설명 로딩 중 끄면 도착한 결과가 번역과 힌트를 되살리지 않아요',async()=>{
+    const f=fixture();let resolve;const engine=createPromptEngine(doc);
+    const off=engine.register('qa',DICT,()=>new Promise(done=>resolve=done));await settled();off();
+    resolve(fullDict());await settled();assert.equal(f.a.textContent,'Main Prompt');
+    assert.equal(hintText(f.nameInput),undefined);assert.equal(engine.title('prompts','main','Main Prompt'),null);
+});
+await test('같은 ID를 새 사전으로 바꿔도 옛 로딩과 정리가 새 사전을 덮지 않아요',async()=>{
+    const f=fixture();let resolve;const engine=createPromptEngine(doc);
+    const oldOff=engine.register('qa',DICT,()=>new Promise(done=>resolve=done));await settled();
+    const next={prompts:[{id:'main',name:'Main Prompt',title:'새 제목',desc:'새 설명'}]};
+    const off=engine.register('qa',next);oldOff();resolve(fullDict());await settled();
+    assert.equal(f.a.textContent,'새 제목');assert.equal(hintText(f.nameInput),'→ 새 제목\n새 설명');off();
+});
+await test('설명 파일 받기 실패 뒤 다음 편집 화면 갱신에서 다시 받아요',async()=>{
+    const f=fixture();let loads=0;const engine=createPromptEngine(doc),warn=console.warn;console.warn=()=>{};
+    try{
+        const off=engine.register('qa',DICT,async()=>{if(++loads===1)throw Error('시험 중 받기 실패');return fullDict();});
+        await settled();assert.equal(loads,1);assert.equal(f.a.textContent,'메인 프롬프트');
+        const offAux=engine.register('aux',{prompts:[]});await settled();
+        assert.equal(loads,2);assert.equal(hintText(f.nameInput),'→ 메인 프롬프트\nMain Prompt의 설명이에요.');offAux();off();
+    }finally{console.warn=warn;}
+});
+await test('생성된 시작용 사전은 설명만 빼고 원본 이름 · ID · 제목 · 순서를 모두 보존해요',async()=>{
+    const {buildScriptTitles,TITLE_DICTIONARIES}=await import(pathToFileURL(path.join(root,'tools/build-script-titles.mjs')));
+    assert.equal(buildScriptTitles(root,{check:true}),0);
+    for(const id of TITLE_DICTIONARIES){
+        let original,titles;
+        (await import(pathToFileURL(path.join(root,`src/scripts/plain/${id}.js`)))).default({translate:value=>original=value},{});
+        (await import(pathToFileURL(path.join(root,`src/scripts/titles/${id}.gen.js`)))).default({translate:value=>titles=value});
+        const expected=structuredClone(original);for(const kind of ['prompts','regex'])for(const entry of expected[kind]||[])delete entry.desc;
+        assert.deepEqual(titles,expected,id);
+    }
+});
 await test('CI 등록', () => {
     assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/prompt-engine-once\.mjs \./);
 });

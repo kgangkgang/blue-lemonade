@@ -1,4 +1,4 @@
-// 번역기 2.6.2 묶음 번역 흘려받기 — 「수정 문단 n/전체」가 묶음이 아니라 문단마다 오른다 (사용자 요청 10-16).
+// 번역기 2.6.2 묶음 번역 흘려받기 — 「수정 문단 n/전체」가 묶음이 아니라 문단마다 오른다.
 //   ① translation-stream.js: 공급자별 SSE(OpenAI 꼴 · Claude · Gemini · Cohere)를 실리태번이 stream:false 로 줬을 꼴로 — 같은 답이면 번역문이 바이트까지 같다
 //   ② streamedPassages · streamWatch: 닫힌 ⟦n⟧ 문단만 · 한 프레임에 한 번 · 끝 · 멈춤 뒤엔 알리지 않는다
 //   ③ callLLMAPI(직접 연결) · requestCurrentConnection(현재 연결): 못 쓰는 공급자 · 실패 · 끊김이면 예전 요청 그대로, 429 · 5xx · 멈춤 · 시간 초과는 예전 오류

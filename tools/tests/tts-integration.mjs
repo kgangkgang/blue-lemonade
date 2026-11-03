@@ -9,7 +9,7 @@ const root = pathToFileURL(rootPath + '/');
 const { getSettings, DEFAULTS } = await import(new URL('src/settings.js', root));
 const { addonMarkup } = await import(new URL('src/addons.js', root));
 const { settingRoute } = await import(new URL('src/settings-differences.js', root));
-const { knownConflicts, DUPLICATES } = await import(new URL('src/assist/core.js', root));
+const { knownConflicts, DUPLICATES } = await import(new URL('src/extension-folder.js', root));
 
 const storedTts = { enabled: true, voices: [{ id: 'example-custom-id', name: 'My voice' }],
     char_map: { Narrator: 'example-custom-id' }, highlight_style: 'underline', privateKey: 'fixture-only' };

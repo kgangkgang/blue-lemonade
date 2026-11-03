@@ -1,6 +1,6 @@
 // TTS 목소리 찾기: 화자 이름 → 목소리, 목록 관리
 import { settings, save, toVoice, fillKnown, fillKnownFacts, hasDb, providerConfig, USER_AUTO } from './settings.js';
-import { getProvider } from './providers/index.js';
+import { getProviderInfo as getProvider } from './providers/info.js';
 import { koVoiceName } from './voice-names.js';
 import { canon } from './speakers.js';   // 6.3.x 별명표 (사용자 별명 · 연결표 · 색 표 · 이름 다리) — 바로 못 찾은 이름만
 
@@ -505,11 +505,12 @@ export function ensureStock(pid) {
     if (!pid || stockFresh(pid)) return Promise.resolve(stockOf(pid));
     if (stockJobs.has(pid)) return stockJobs.get(pid);
     if (Date.now() - (stockFailAt.get(pid) || 0) < STOCK_RETRY_MS) return Promise.resolve(stockOf(pid));
-    let p = null;
-    try { p = getProvider(pid); } catch { p = null; }
-    if (!p || typeof p.listVoices !== 'function' || !engineUsable(pid)) return Promise.resolve(stockOf(pid));
+    if (!getProvider(pid) || !engineUsable(pid)) return Promise.resolve(stockOf(pid));
     const job = Promise.resolve()
-        .then(() => p.listVoices(providerConfig(pid, p.defaults || {})))
+        .then(async () => {
+            const p = (await import('./providers/index.js')).getProvider(pid);
+            return typeof p?.listVoices === 'function' ? p.listVoices(providerConfig(pid, p.defaults || {})) : [];
+        })
         .then(list => { if (Array.isArray(list) && list.length) { stockFailAt.delete(pid); return storeStock(pid, list); } stockFailAt.set(pid, Date.now()); return stockOf(pid); })
         .catch(() => { stockFailAt.set(pid, Date.now()); return stockOf(pid); })
         .finally(() => stockJobs.delete(pid));

@@ -1,22 +1,24 @@
 // 과일 계열(과일 · 야한과일 涩果 · 청과 青果) 한글화 번들을 원본 파일에서 만든다.
 //   tools/scripts-src/fruit-family/prompts-common.json   둘 이상의 프리셋에 같은 이름으로 있는 항목
 //   tools/scripts-src/fruit-family/prompts-<프리셋>.json  한 프리셋에만 있는 항목 (fruit · qingguo · sese)
-//   → src/scripts/bundled/fruit.js   프롬프트·정규식 이름 사전 하나 (BlueLemonade.translate)
-//   tools/scripts-src/fruit-family/qingguo-ui.js · qingguo-ui.json → src/scripts/bundled/qingguo.js (과일의 마음 창 항목 이름 · 청과 문장 점검 화면)
-//   tools/scripts-src/fruit-family/fruit-heart-additions.json → src/scripts/bundled/fruit-heart.js 사전에 합침
-// 새 프리셋 판이 나오면 빠진 이름만 해당 prompts-*.json 에 더하고 다시 만든다. 그 뒤 node tools/build-plain-scripts.mjs.
+//   → src/scripts/plain/fruit.js   프롬프트·정규식 이름 사전 하나 (BlueLemonade.translate)
+//   tools/scripts-src/fruit-family/qingguo-ui.js · qingguo-ui.json → src/scripts/plain/qingguo.js (과일의 마음 창 항목 이름 · 청과 문장 점검 화면)
+//   tools/scripts-src/fruit-family/fruit-heart-additions.json → src/scripts/plain/fruit-heart.js 사전에 합침
+// 새 프리셋 판이 나오면 빠진 이름만 해당 prompts-*.json 에 더하고 다시 만든다. (9.0.7 부터 내장 스크립트는 plain 모듈 하나 — 머리는 build-plain-scripts.mjs 의 wrapScript)
 // node tools/build-fruit-family.mjs [--check]
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { readScript, writeScript } from './build-plain-scripts.mjs';
+import { keepPresetText, SHORT_TEXT_WIDTH } from './preset-text-limit.mjs';
+import { buildScriptTitles } from './build-script-titles.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const src = path.join(root, 'tools/scripts-src/fruit-family'), bundled = path.join(root, 'src/scripts/bundled');
+const src = path.join(root, 'tools/scripts-src/fruit-family');
 const check = process.argv.includes('--check');
 export const PRESET_SOURCES = ['common', 'fruit', 'qingguo', 'sese'];
 const read = name => JSON.parse(fs.readFileSync(path.join(src, name), 'utf8'));
 const normalize = value => String(value || '').normalize('NFKC').replace(/[︎️\s]/g, '');
-const bundle = code => `export default ${JSON.stringify(code)};\n`;
 
 /** 공통 → 프리셋별 차례로 합친다. 같은 (id, 이름)은 먼저 나온 것 하나만 */
 export function mergeDictionary(parts) {
@@ -106,14 +108,17 @@ export function panelTitlePairs(name, title) {
     }
     return pairs;
 }
-async function fruitHeartCode() {
-    const file = path.join(bundled, 'fruit-heart.js');
-    const code = (await import(pathToFileURL(file).href + '?t=' + Date.now())).default;
+function fruitHeartCode() {
+    const code = readScript(root, 'fruit-heart') + '\n';   // 모듈 코드 칸은 끝 줄바꿈이 없어요 — 아래에서 옛 사전 호출을 「);\n」 까지 잘라요
     const marker = 'installFruitHeartKorean(BlueLemonade,';
     const at = code.lastIndexOf(marker);
-    if (at < 0) throw Error('fruit-heart 번들에서 사전 호출을 못 찾았어요');
+    if (at < 0) throw Error('fruit-heart 모듈에서 사전 호출을 못 찾았어요');
     const data = JSON.parse(code.slice(at + marker.length).trim().replace(/\);\s*$/, ''));
     const additions = read('fruit-heart-additions.json');
+    // 1.0.0 공개판: 긴 원문(변경 내역 · 도움말 문단 · 작가 감사 문장)은 사전에 넣지 않아요 — 손으로 더하는 짝도 짧은 이름만 (tools/preset-text-limit.mjs)
+    //   창 이름(titles)은 프롬프트 · 항목 이름이라 과일 프롬프트 이름 사전(fruit.js)처럼 길이와 상관없이 받아요
+    const long = additions.entries.map(x => x.zh).filter(zh => !keepPresetText(zh));
+    if (long.length) throw Error(`fruit-heart-additions.json 에 폭 ${SHORT_TEXT_WIDTH} 을 넘거나 「@이름」 표기가 든 원문이 있어요: ${long.join(' | ')}`);
     for (const extra of additions.entries) {
         const i = data.entries.findIndex(x => x.zh === extra.zh && x.kind === extra.kind);
         if (i >= 0) data.entries[i] = extra; else data.entries.push(extra);
@@ -129,21 +134,21 @@ async function fruitHeartCode() {
     const merged = mergeDictionary(PRESET_SOURCES.map(name => read(`prompts-${name}.json`)));
     const manual = new Set((additions.titles || []).map(pair => pair[0]));
     for (const entry of merged.prompts) for (const [zh, ko] of panelTitlePairs(entry.name, entry.title)) if (!manual.has(zh)) setTitle(zh, ko, false);
+    // 원래 사전(모듈 안)에 있던 긴 원문도 걸러요 — 다시 만들어도 돌아오지 않게. 키 목록(알림 · 창 확인)도 같은 기준 (창 이름 titles 는 그대로)
+    data.entries = data.entries.filter(x => keepPresetText(x.zh));
+    for (const name of ['dialogKeys', 'nativeKeys', 'toastKeys', 'toastPatterns', 'toastAnytime']) if (Array.isArray(data[name])) data[name] = data[name].filter(keepPresetText);
     return `${code.slice(0, at)}${marker}${JSON.stringify(data)});\n${code.slice(at).replace(/^[\s\S]*?\);\n/, '')}`;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    const outputs = { 'fruit.js': fruitCode(), 'qingguo.js': qingguoCode(), 'fruit-heart.js': await fruitHeartCode() };
+    const outputs = { fruit: fruitCode(), qingguo: qingguoCode(), 'fruit-heart': fruitHeartCode() };
     let stale = 0;
-    for (const [name, code] of Object.entries(outputs)) {
-        new Function('BlueLemonade', code); // 함수 몸통으로 쓸 수 있는지
-        const file = path.join(bundled, name), text = bundle(code), old = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-        if (old !== text) { stale++; if (!check) fs.writeFileSync(file, text); }
-    }
+    for (const [id, code] of Object.entries(outputs)) if (writeScript(root, id, code, { check })) stale++;
     {   // 도움말 사전은 번들이 아니라 모듈 파일이에요
         const file = path.join(root, OPTION_EFFECTS_FILE), text = optionEffectsCode(), old = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
         if (old !== text) { stale++; if (!check) fs.writeFileSync(file, text); }
     }
     console.log(check ? (stale ? `[다름] 과일 계열 번들 ${stale}개가 원본과 달라요 — node tools/build-fruit-family.mjs` : '[같음] 과일 계열 번들이 원본과 같아요') : `과일 계열 번들을 만들었어요 (바뀐 것 ${stale}개)`);
+    stale += buildScriptTitles(root, { check });
     if (check && stale) process.exitCode = 1;
 }

@@ -11,9 +11,9 @@
   max-height: min(92dvh, 62rem); min-height: 0; margin: auto; padding: 0; overflow: hidden;
   border: 1px solid var(--lvs-line); border-radius: var(--bl-r-lg, 16px); color: var(--lvs-text);
   background: var(--lvs-bg); font-family: var(--salty-font-ui, inherit); font-size: var(--bl-fs-body, 1rem);
-  text-align: start; box-shadow: 0 16px 60px #0005;
+  text-align: start; box-shadow: none;
 }
-.lvs-dialog::backdrop { background: #0007; }
+.lvs-dialog::backdrop { background: var(--bl-scrim, rgba(0, 6, 14, .6)); }
 .lvs-dialog *, .lvs-dialog *::before, .lvs-dialog *::after { box-sizing: border-box; }
 .lvs-dialog [hidden] { display: none !important; }
 .lvs-shell { display: flex; flex-direction: column; max-height: inherit; min-height: 0; width: 100%; }

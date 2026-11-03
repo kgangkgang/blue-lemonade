@@ -6,10 +6,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { scriptCode } from './script-code.mjs';
 const root = path.resolve(process.argv[2] || '.');
 let passed = 0, failed = 0;
 const test = async (name, fn) => { try { await fn(); passed++; console.log(`  PASS  ${name}`); } catch (e) { failed++; console.log(`  FAIL  ${name}\n        ${String(e.stack || e).split('\n').slice(0, 6).join('\n        ')}`); } };
-const bundled = async id => String((await import(pathToFileURL(path.join(root, `src/scripts/bundled/${id}.js`)).href)).default).replace(/\r\n/g, '\n');
+const bundled = id => scriptCode(root, id);
 function piece(text, from, to) {
     const lines = text.split('\n'); const a = lines.findIndex(l => from.test(l)); const b = lines.findIndex((l, i) => i > a && to.test(l));
     assert.ok(a >= 0 && b > a, `조각을 못 찾았어요: ${from}`); return lines.slice(a, b).join('\n');
@@ -50,7 +51,7 @@ await test('한글화 채팅 감시: 같은 단추 줄에 붙는 기록 200개 �
         '  const processWelcome = el => seen.welcomes.push(el); const translateChatLabel = el => seen.labels.push(el);',
         piece(code, /^  function handleChatRecords\(records\) \{$/, /^  function watchChatRoot\(root\) \{$/),
         '  return { handleChatRecords, seen };',
-    ].join('\n'))({ setTimeout: () => 1 }, null);
+    ].join('\n'))({ setTimeout: () => 1, MutationObserver: class { observe() {} disconnect() {} } }, null);
     const { row, records } = page(); const title = new El('span', { class: 'custom-dem-card__title' }); row.append(title);
     records.push({ type: 'childList', target: title, addedNodes: [], removedNodes: [] });
     counted.closest = 0; fn.handleChatRecords(records);
@@ -82,7 +83,7 @@ await test('헬퍼 창 찾기: 같은 부모 기록 200개 — 채팅 · 입력�
     const code = await bundled('helper');
     const found = [];
     const fn = new Function('host', [
-        "  const SCOPE = '.helper-scope'; const scopes = new Map(); const attachScope = el => found.push(el);",
+        "  const SCOPE = '.helper-scope'; const scopes = new Set(); const attachScope = el => found.push(el);",
         '  const found = arguments[1];',
         piece(code, /^  const discovery = new host\.MutationObserver\(records => \{$/, /^  \/\/ 탭 줄: /),
         '  return discovery;',

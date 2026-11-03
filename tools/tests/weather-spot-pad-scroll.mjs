@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 const root = path.resolve(process.argv[2] || '.');
-const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
+const read = rel => fs.readFileSync(path.join(root, rel), 'utf8') + (rel === 'style.css' ? (fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? fs.readFileSync(path.join(root, 'src/style-lazy.gen.css'), 'utf8') : '') : '');   // 1.0.0 두 장 빌드: style.css 를 읽을 땐 둘째 장(src/style-lazy.gen.css)도 이어 읽어요
 let pass = 0; const test = (name, fn) => { fn(); pass++; console.log('PASS ' + name); };
 const rule = (css, selector) => { const at = css.indexOf(selector + '{'); assert.ok(at >= 0, selector); return css.slice(at, css.indexOf('}', at)); };
 for (const file of ['css/52-tool-editor.css', 'style.css', 'style-ext.css']) {

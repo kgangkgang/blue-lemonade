@@ -14,7 +14,7 @@ export function playbackOriginal(job) {
     return original && changed ? original : '';
 }
 /** 6.3.8 칸 제목: 원문 짝을 못 찾아 화면 글(번역문)을 옮겨 읽는 줄이면 「원문」이라고 하지 않는다.
- *  1.9.1 더 솔직하게 (사용자: 「아니 원문도 일본어인데」 — 칸에 번역문이 「지금 읽는 대사의 원문」으로 떴다) */
+ *  1.9.1 더 솔직하게 (칸에 번역문이 「지금 읽는 대사의 원문」으로 떴다) */
 export const ORIGINAL_MISSING = '원문을 못 찾았어요 — 화면 글(번역문)';
 export const ORIGINAL_MISSING_LISTEN = '원문을 못 찾았어요 — 화면 글을 옮겨 읽는 중';   // 1.9.2 듣는 언어로 번역문을 옮겨 읽음 (칸 = 실제로 읽는 글)
 // 6.9.6 번역 중 미리 보기에서 누른 줄인데 그 문단 번역이 아직 덜 와서 원문 짝이 없음 — 까닭까지
@@ -27,10 +27,10 @@ export function playbackOriginalTitle(job) {
     if (!fromDisplayOf(job)) return '지금 읽는 대사의 원문';
     return missingTitle(job);
 }
-/** 1.9.3 원문 칸 (막대): 메시지 원문(source)과 직접 견줘 { text, title } — 사용자 10-16 「원문 일본어라고~~~!!!」
+/** 1.9.3 원문 칸 (막대): 메시지 원문(source)과 직접 견줘 { text, title }
  *  (막대는 일본어 원문을 읽는데 칸에 화면 한국어 번역문이 「지금 읽는 대사의 원문」으로 떴다 — 효과음 대본 · 누르기 길의 조각은 원문 짝 자리에 화면 글이 있었다)
  *  · 1.9.4 TTS 가 옮겨 읽은 줄(듣는 언어 job.listen · 목소리 원어 번역 job.translated)만 칸 — 원문 · 화면 글을 그대로 읽으면 칸 없음
- *    (사용자 「번역했을 때만 보여야지 · tts는 번역 안 했잖아」)
+ *    (번역했을 때만 보여요)
  *  · 원문 짝이라고 둔 글이 원문에 없으면 화면 글 — 「원문」이라 하지 않는다 · 원문이 없는 메시지는 예전 규칙 */
 export function playbackOriginalIn(job, source) {
     if (!job || job.sceneKind || (!job.listen && !job.translated)) return { text: '', title: playbackOriginalTitle(job) };

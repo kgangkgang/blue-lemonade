@@ -1,7 +1,6 @@
 import { showThemeModal } from '../../modal.js';
 // 메모 사용방법 — 패널 머리 · 큰 창 머리의 버전 버튼을 누르면 뜨는 창 (한글화 패널 사용방법과 같은 모양: 주제 탭 + 펼치는 장)
 // 정적 글만 (사용자 자료 없음). 애드온이 꺼져 있어도 열 수 있게 메모 스타일만 따로 붙인다.
-import { NOTES_VERSION } from './version.js';
 
 const CHAPTERS = [
     ['메모는 이런 거예요', `<p>제목과 내용을 적어 두는 쪽지예요. 롤플하면서 설정 · 할 일 · 떡밥 · 말투 같은 걸 적어 두고, 채팅하다가 바로 꺼내 봐요.</p>
@@ -79,7 +78,7 @@ export function showNotesGuide({ onOpen = null } = {}) {
     const back = document.activeElement;
     dialog = document.createElement('dialog');
     dialog.className = 'bl-notes-help'; dialog.setAttribute('aria-label', '메모 사용방법');
-    dialog.innerHTML = `<header><div><small>BLUE LEMONADE · v${NOTES_VERSION}</small><h2>메모 사용방법</h2></div><button type="button" class="bl-note-btn" data-help="close" aria-label="사용방법 닫기"><i class="fa-solid fa-xmark"></i></button></header>
+    dialog.innerHTML = `<header><div><h2>메모 사용방법</h2></div><button type="button" class="bl-note-btn" data-help="close" aria-label="사용방법 닫기"><i class="fa-solid fa-xmark"></i></button></header>
 <nav role="tablist" aria-label="사용방법 주제">${GROUPS.map(([name], i) => `<button type="button" role="tab" id="bl-notes-help-tab-${i}" aria-controls="bl-notes-help-page-${i}" aria-selected="${!i}" tabindex="${i ? -1 : 0}" data-help-tab="${i}">${name}</button>`).join('')}</nav>
 <div class="bl-notes-help-body">${GROUPS.map(([, list], i) => `<section role="tabpanel" id="bl-notes-help-page-${i}" aria-labelledby="bl-notes-help-tab-${i}" data-help-page="${i}" ${i ? 'hidden' : ''}>${i === 0 ? '<p class="bl-notes-help-lead">채팅 옆에 두고 쓰는 쪽지예요. 태그로 모으고, 메모끼리 연결하고, 폴더로 묶을 수 있어요.</p>' : ''}${list.map((n, j) => `<details ${j === 0 ? 'open' : ''}><summary>${CHAPTERS[n][0]}</summary><div>${CHAPTERS[n][1]}</div></details>`).join('')}</section>`).join('')}</div>
 ${onOpen ? '<footer><button type="button" class="bl-notes-help-open" data-help="open"><i class="fa-solid fa-note-sticky" aria-hidden="true"></i> 메모 열기</button></footer>' : ''}`;

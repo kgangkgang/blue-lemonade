@@ -20,6 +20,9 @@ async function start() {
   names = [...host.extensionNames];
   disabled = [...(host.extension_settings.disabledExtensions ?? [])];
  } catch (error) { throw perfStartError('HOST', error); }
+ // 저장 공간 창 · 점검 도구 · 저장 공간 다리 · 오류 고리 (storage/ — 창 코드는 열 때만 받아요)
+ try { (await import('./storage/boot.js')).installStorage(); }
+ catch (error) { failures.push('storage'); console.error('[Blue Lemonade] storage', perfErrorText(perfStartError('TOOL', error))); }
  for (const [id,file] of [['timer','loadtimer'],['perf','perfassist'],['watchdog','watchdog-main'],['dedupe','savededupe'],['log','requestlog']]) {
   try {
    const folder=old[id], key=`third-party/${folder}`;

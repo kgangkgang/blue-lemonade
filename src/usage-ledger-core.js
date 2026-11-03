@@ -110,7 +110,7 @@ export function connectionOf(entry, relays = []) {
 
 /** 결제 수단 열쇠: 공식 = 제공처 id, 중계 = 'relay:<host>', 모름 = 'other:<host>' */
 export const payKeyOf = conn => conn.kind === 'relay' ? `relay:${conn.host}` : conn.kind === 'official' ? conn.provider : `other:${conn.host || '?'}`;
-/** 기본 결제 수단 (사용자 10-20): Vertex · Anthropic 공식 = 크레딧, 중계 = 중계, 그 밖 = 실제 결제 */
+/** 기본 결제 수단: Vertex · Anthropic 공식 = 크레딧, 중계 = 중계, 그 밖 = 실제 결제 */
 export function defaultPayMethod(conn) {
     if (conn.kind === 'relay') return '중계';
     if (conn.kind === 'official' && (conn.provider === 'vertex' || conn.provider === 'anthropic')) return '크레딧';

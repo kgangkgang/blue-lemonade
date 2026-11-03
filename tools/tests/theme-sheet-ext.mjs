@@ -10,10 +10,12 @@ const build = require(path.join(root, 'tools/build-css.cjs'));
 const lib = require(path.join(root, 'tools/css-lib.cjs'));
 const style = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 const ext = fs.readFileSync(path.join(root, 'style-ext.css'), 'utf8');
+const lazyPath = path.join(root, 'src/style-lazy.gen.css');   // 1.0.0 두 장 빌드: 둘째 장의 몫도 사본에 들어가요
+const lazy = fs.existsSync(lazyPath) ? fs.readFileSync(lazyPath, 'utf8') : null;
 
 // 1) 빌드와 같고, 크기가 확실히 작다
-assert.equal(ext, build.extText(style), 'style-ext.css matches node tools/build-css.cjs');
-assert.ok(Buffer.byteLength(ext) < Buffer.byteLength(style) * 0.4, 'the light copy is much smaller');
+assert.equal(ext, build.extText(style, lazy), 'style-ext.css matches node tools/build-css.cjs');
+assert.ok(Buffer.byteLength(ext) < (Buffer.byteLength(style) + Buffer.byteLength(lazy || '')) * 0.4, 'the light copy is much smaller');
 console.log(`PASS style-ext.css is the build output (${(Buffer.byteLength(ext) / 1024).toFixed(0)}KB of ${(Buffer.byteLength(style) / 1024).toFixed(0)}KB)`);
 
 // 2) 남은 선택자는 하나도 body.salty 를 꼭 요구하지 않고, 미리보기 덩어리 · 게으른 칸은 없다
@@ -29,7 +31,8 @@ assert.ok(extRules.some(r => /salty-panel/.test(r.sel)), 'panel rules that work 
 console.log(`PASS ${extRules.length} kept rules never need body.salty; preview and lazy blocks are left to lite.js`);
 
 // 3) 남은 규칙은 style.css 에서와 같은 차례 · 같은 선언(갈래 일부만 빠진 규칙은 남은 갈래만)
-const full = rules(style.slice(0, style.lastIndexOf(`${build.LAZY_SENTINEL} {}`))).filter(r => !/@media not all(?! and)( \/|$)/i.test(r.ctx));   // 미리보기 덩어리만(`not all and (…)` 같은 진짜 조건은 남김)
+const canonical = lazy || style;
+const full = rules(canonical.slice(0,canonical.lastIndexOf(`${build.LAZY_SENTINEL} {}`))).filter(r => !/@media not all(?! and)( \/|$)/i.test(r.ctx));
 let j = 0;
 for (const r of extRules) {
     while (j < full.length && !(full[j].body === r.body && full[j].ctx === r.ctx && split(full[j].sel).filter(p => !needs(p)).join(',') === split(r.sel).join(','))) j++;
@@ -41,13 +44,17 @@ console.log('PASS kept rules keep the original cascade order and declarations');
 // 4) 켜고 끄는 순서: 사본을 다 받은 뒤에 큰 시트를 끄고, 테마를 켜면 큰 시트를 먼저 켠다 · 못 받으면 큰 시트 그대로
 const src = fs.readFileSync(path.join(root, 'src/theme-sheet.js'), 'utf8');
 assert.match(src, /addEventListener\('load', \(\) => \{[^}]*main\.sheet\.disabled = true/, 'the big sheet is disabled only after the copy loaded');
-assert.match(src, /addEventListener\('error', \(\) => \{ failed = true; ext\.remove\(\); main\.sheet\.disabled = false/, 'a missing copy keeps the big sheet');
-assert.match(src, /if \(themeOn \|\| failed\) \{[^}]*main\.sheet\.disabled = false;[^}]*ext\?\.remove\(\)/, 'turning the theme on enables the big sheet before removing the copy');
+assert.match(src, /failed = true; ext\.remove\(\); enableTheme\(main\)/, 'a missing copy keeps the available theme sheet');
+assert.match(src, /if \(themeOn \|\| failed\) \{[^}]*enableTheme\(main\);[^}]*ext\?\.remove\(\)/, 'turning the theme on enables the full or boot sheet before removing the copy');
 assert.match(src, /main\.after\(ext\)/, 'the copy sits right after the big sheet (same order against other CSS)');
 const apply = fs.readFileSync(path.join(root, 'src/apply.js'), 'utf8');
-assert.match(apply, /const s = themeEnabled\(rendered\) \? rendered : \{\.\.\.rendered, enabled:false\};\n\s+syncThemeSheet\(!!s\.enabled\);/, 'applyAll switches sheets from the rendered theme state');
+// 1.0.0 되살림: theme-sheet.js 는 테마가 꺼졌을 때만 받아요(lateSync — 시작 그래프 밖). 한 번 받은 뒤에는 켜질 때도 불러 큰 시트로 돌려요
+assert.match(apply, /const s = themeEnabled\(rendered\) \? rendered : \{\.\.\.rendered, enabled:false\};\n(?:\s*\/\/[^\n]*\n)?\s+\{ const on = !!s\.enabled; lateSync\('themeSheet', \(\) => import\('\.\/theme-sheet\.js'\), !on, m => m\.syncThemeSheet\(on\)\); \}/, 'applyAll switches sheets from the rendered theme state');
+assert.doesNotMatch(apply, /^import [^\n]*theme-sheet\.js/m, 'theme-sheet.js stays out of the start graph');
 const lite = fs.readFileSync(path.join(root, 'src/lite.js'), 'utf8');
-assert.equal((lite.match(/sheetTail\(sheet\)/g) || []).length, 2, 'preview and lazy <style> go after the copy');
+// 1.0.0: 미리보기는 따로 받는 <link>(9.0.1) — 게으른 칸 <style> 만 sheetTail 로 사본 뒤에 붙어요
+assert.ok((lite.match(/sheetTail\(sheet\)/g) || []).length >= 1, 'lazy <style> goes after the copy');
+assert.match(lite, /const ext = document\.getElementById\('salty-ext-css'\)/, 'sheetTail knows the light copy');
 console.log('PASS sheet switching keeps the screen covered and the cascade order');
 
 // 5) 가짜 문서로 실제로 돌려 보기

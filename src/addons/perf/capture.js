@@ -1,4 +1,7 @@
-import { priceSnapshot } from './pricing-live.js';
+// 1.0.0 극한 최적화: 가격 모듈(pricing.js · pricing-live.js → 가격표 235KB)은 첫 요청을 잡을 때 받아요 — 부팅 때 늘 받던 것. 요청 감싸기(installCapture)는 그대로 바로예요
+let PR = null, pricingLoading = null;
+const ensurePricing = () => pricingLoading ||= Promise.all([import('./pricing.js'), import('./pricing-live.js'), import('./pricing-sync.js')]).then(([p, live, sync]) => { try { sync.loadPriceCache(); } catch { /* 저장된 표 없음 */ } PR = { connectionFor: p.connectionFor, mergeTokenUsage: p.mergeTokenUsage, quoteRequest: p.quoteRequest, manualPriceForConnection: p.manualPriceForConnection, settleTokens: p.settleTokens, priceSnapshot: live.priceSnapshot }; return PR; }).catch(error => { pricingLoading = null; throw error; });
+export const pricingReady = () => ensurePricing();
 // 요청 로그 — fetch를 가로채서 API 요청과 응답을 기록한다
 //
 // 실리태번(그리고 확장들)은 모두 브라우저에서 서버의 /api/backends/…/generate 로 요청을 보낸다.
@@ -7,7 +10,6 @@ import { LOG_BRIDGE, createAttribution, requestKind, groupRecentReplies } from '
 const attribution=createAttribution();
 import { getCurrentChatId, name2 } from '../../../../../../../script.js';
 import { settings, priceFor } from './state.js';
-import { connectionFor, mergeTokenUsage, quoteRequest, manualPriceForConnection, settleTokens } from './pricing.js';
 import { addEntry, bumpDaily, trimEntries, listEntries } from './store.js';
 import { ledgerEnabled } from '../../usage-ledger.js';   // 7.4.0 요청 로그를 꺼도 사용량 장부가 켜져 있으면 응답의 usage 는 읽는다 (저장은 안 함)
 import { webSearchEvidence } from '../../websearch-core.js';
@@ -209,8 +211,8 @@ export function absorbChunk(json, acc) {
     if(json.type==='response.completed'&&json.response?.usage)json=json.response;
     const responseMeta = json.message || json;
     if (typeof json.modelVersion === 'string') acc.model = json.modelVersion;
-    if (json.x_groq?.usage) acc.usage = mergeTokenUsage(acc.usage, json.x_groq.usage);
-    if (json.prompt_eval_count !== undefined || json.eval_count !== undefined) acc.usage = mergeTokenUsage(acc.usage, { prompt_tokens: json.prompt_eval_count, completion_tokens: json.eval_count });
+    if (json.x_groq?.usage) acc.usage = PR.mergeTokenUsage(acc.usage, json.x_groq.usage);
+    if (json.prompt_eval_count !== undefined || json.eval_count !== undefined) acc.usage = PR.mergeTokenUsage(acc.usage, { prompt_tokens: json.prompt_eval_count, completion_tokens: json.eval_count });
     if (typeof responseMeta.model === 'string') acc.model = responseMeta.model;
     if (typeof responseMeta.service_tier === 'string') acc.serviceTier = responseMeta.service_tier;
     if (typeof responseMeta.usage?.service_tier === 'string') acc.serviceTier = responseMeta.usage.service_tier;
@@ -242,14 +244,14 @@ export function absorbChunk(json, acc) {
 
     // Claude (메시지 API)
     if (json.type === 'message_start' && json.message?.usage) {
-        acc.usage = mergeTokenUsage(acc.usage, json.message.usage, true);
+        acc.usage = PR.mergeTokenUsage(acc.usage, json.message.usage, true);
     }
     if (json.type === 'content_block_delta' && json.delta) {
         if (typeof json.delta.text === 'string') acc.text += json.delta.text;
         if (typeof json.delta.thinking === 'string') acc.reasoning += json.delta.thinking;
     }
     if (json.type === 'message_delta') {
-        if (json.usage) acc.usage = mergeTokenUsage(acc.usage, json.usage, true);
+        if (json.usage) acc.usage = PR.mergeTokenUsage(acc.usage, json.usage, true);
         if (json.delta?.stop_reason) acc.finish = String(json.delta.stop_reason);
         if (json.delta?.stop_details) acc.stopDetail = String(json.delta.stop_details.category ?? json.delta.stop_details.explanation ?? ''); // 1.2.7: 거절(refusal) 분류
     }
@@ -260,7 +262,7 @@ export function absorbChunk(json, acc) {
         }
         if (json.stop_reason) acc.finish = String(json.stop_reason);
         if (json.stop_details) acc.stopDetail = String(json.stop_details.category ?? json.stop_details.explanation ?? '');
-        if (json.usage) acc.usage = mergeTokenUsage(acc.usage, json.usage, true);
+        if (json.usage) acc.usage = PR.mergeTokenUsage(acc.usage, json.usage, true);
     }
 
     // Gemini (MakerSuite / Vertex)
@@ -292,14 +294,14 @@ export function absorbChunk(json, acc) {
     if (json.type === 'content-delta' && typeof json.delta?.message?.content?.text === 'string') acc.text += json.delta.message.content.text;
     if (json.type === 'message-end' && json.delta?.usage) {
         const billed = json.delta.usage.billed_units || json.delta.usage.tokens;
-        if (billed) acc.usage = mergeTokenUsage(acc.usage, billed);
+        if (billed) acc.usage = PR.mergeTokenUsage(acc.usage, billed);
     }
-    if (json.usage?.tokens && !json.type) acc.usage = mergeTokenUsage(acc.usage, json.usage.billed_units || json.usage.tokens);
+    if (json.usage?.tokens && !json.type) acc.usage = PR.mergeTokenUsage(acc.usage, json.usage.billed_units || json.usage.tokens);
 
     // OpenAI 계열 usage (마지막 조각이나 전체 응답에 온다)
     if (!['message','message_delta'].includes(json.type) && json.usage && (json.usage.prompt_tokens !== undefined || json.usage.completion_tokens !== undefined || json.usage.input_tokens !== undefined)) {
         const usage = json.usage;
-        acc.usage = mergeTokenUsage(acc.usage, usage, usage.prompt_tokens === undefined && (usage.cache_read_input_tokens !== undefined || usage.cache_creation_input_tokens !== undefined));
+        acc.usage = PR.mergeTokenUsage(acc.usage, usage, usage.prompt_tokens === undefined && (usage.cache_read_input_tokens !== undefined || usage.cache_creation_input_tokens !== undefined));
     }
 }
 
@@ -382,7 +384,7 @@ async function finishEntry(context, response, acc, marks, failure) {
     const httpOk = !!response?.ok;
     const errorOnly = !!acc.error && !acc.text && !acc.reasoning;
     // 7.7.1 usage 가 와도 입력 · 출력이 비었거나 0 이면 그 칸만 센다 (pricing.js settleTokens)
-    const { prompt: promptTokens, completion: completionTokens, estimated } = await settleTokens({ usage: acc.usage, promptText, replyText: acc.text + acc.reasoning,
+    const { prompt: promptTokens, completion: completionTokens, estimated } = await PR.settleTokens({ usage: acc.usage, promptText, replyText: acc.text + acc.reasoning,
         canPrompt: httpOk && !errorOnly && tokenBased, canCompletion: context.kind === 'text', count: estimateTokens });
 
     // 1.2.7: Claude 는 안전 분류기가 거절하면 HTTP 200 + 빈 글 + stop_reason 'refusal' 을 준다 — 실리태번은 빈 답으로만 보여 원인을 몰랐다
@@ -392,7 +394,7 @@ async function finishEntry(context, response, acc, marks, failure) {
     const error = failure ? (context.aborted ? '중단됨' : String(failure.message ?? failure)) : (acc.error ?? (response && !response.ok ? `HTTP ${status}` : null));
 
     const model = acc.model || context.model;
-    const pricing = quoteRequest({ ...context.priceContext, model, requestedModel: context.model, requestEnd: Date.now(), usage: { ...acc.usage, prompt: promptTokens, completion: completionTokens }, estimated,
+    const pricing = PR.quoteRequest({ ...context.priceContext, model, requestedModel: context.model, requestEnd: Date.now(), usage: { ...acc.usage, prompt: promptTokens, completion: completionTokens }, estimated,
         serviceTier: acc.serviceTier || context.priceContext.serviceTier, speed: acc.speed || context.priceContext.speed,
         unsupported: !tokenBased });
     if (!usageKnown && !estimated && pricing.kind !== 'free') pricing.cost = null;
@@ -446,7 +448,7 @@ async function finishEntry(context, response, acc, marks, failure) {
         if (acc.reasoning) entry.reasoning = acc.reasoning;
         if (failure && context.rawError) entry.raw = context.rawError;
         else if (error && acc.error) entry.raw = acc.error;
-    }
+    } else entry.stripped = true;
 
     if (store.enabled) try {   // 7.4.0 요청 로그가 꺼져 있으면(사용량 장부만 켬) 기록하지 않고 알리기만
         await addEntry(entry);
@@ -478,6 +480,14 @@ function modelFromPath(path) {
 
 /** 요청 하나를 지켜본다. 원래 fetch의 결과는 그대로 돌려준다. */
 async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
+    if (!PR) {
+        try { await ensurePricing(); }
+        catch (error) {
+            // 부가 기록기의 파일을 못 받아도 원래 생성 요청은 한 번 그대로 보내요. 다음 요청에서 다시 받아요.
+            console.warn('[요청 로그] 가격 모듈을 받지 못해 이번 요청은 기록하지 않아요', error);
+            return nativeFetch(input, init);
+        }
+    }
     const at = Date.now();
     const endpoint=pathOf(input),kind=requestKind(endpoint);
     const marks = { start: performance.now(), firstByte: null };
@@ -496,10 +506,10 @@ async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
         aborted: false,
         rawError: null,
     };
-    const connection = connectionFor(input, body, location.origin);
+    const connection = PR.connectionFor(input, body, location.origin);
     const manualPrice = priceFor(context.model);
-    context.priceContext = { connection, priceData: priceSnapshot(connection.provider), at, hasMedia: /input_audio|inlineData|inline_data|audio_url|video_url/.test(JSON.stringify(body.messages || body.contents || [])), serviceTier: body.service_tier || '', speed: body.speed || '', inferenceGeo: body.inference_geo || '',
-        manualPrice: manualPriceForConnection(manualPrice, connection), manualUnit: settings().unit };
+    context.priceContext = { connection, priceData: PR.priceSnapshot(connection.provider), at, hasMedia: /input_audio|inlineData|inline_data|audio_url|video_url/.test(JSON.stringify(body.messages || body.contents || [])), serviceTier: body.service_tier || '', speed: body.speed || '', inferenceGeo: body.inference_geo || '',
+        manualPrice: PR.manualPriceForConnection(manualPrice, connection), manualUnit: settings().unit };
     if (endpoint === '/api/novelai/generate' && typeof body.input === 'string') context.prompt = body.input;
     if (context.caller === 'chat') context.type = (/\/chat-completions\/generate$/.test(endpoint) && ['normal', 'regenerate', 'swipe', 'continue', 'impersonate', 'quiet'].includes(body.type) ? body.type : null) ?? generationType ?? 'quiet';
     Object.assign(context,attribution.resolve({explicit:init?.requestLog,caller:context.caller,type:context.type,kind,body}));

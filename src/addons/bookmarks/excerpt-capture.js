@@ -5,83 +5,9 @@
 //   · 기울기 · 굵기 · 밑줄/취소선. 둘레 글자와 같은 값은 적지 않는다 (북마크 창의 글자색을 따른다).
 // 번역문이 보이는 중이면 고른 글이 곧 번역문이다 — 화면에 보이는 그대로가 저장된다.
 import { compactRuns, runsToHtml, runsToText, toneOf, bandImage, EXCERPT_LIMITS } from './excerpts.js';
+import { parseColor, cssColor, hexColor, svgPaint, pillSpan } from '../../shared/ink-paint.js';   // 로그 복사(log-copy-capture.js)와 같은 읽기
 
 const SKIP = 'script, style, template, textarea, input, select, iframe, svg, canvas, video, audio, img, picture, noscript, object, embed';
-
-function parseColor(value) {
-    const text = String(value ?? '').trim();
-    const rgb = text.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/i);
-    if (rgb) {
-        const alpha = rgb[4] === undefined ? 1 : rgb[4].endsWith('%') ? Number.parseFloat(rgb[4]) / 100 : Number(rgb[4]);
-        return { r: Math.round(Number(rgb[1])), g: Math.round(Number(rgb[2])), b: Math.round(Number(rgb[3])), a: alpha };
-    }
-    // color-mix() · 상대 색은 color(srgb r g b / a) 로 계산되어 나온다 (0~1)
-    const srgb = text.match(/^color\(\s*srgb\s+([\d.e-]+)\s+([\d.e-]+)\s+([\d.e-]+)(?:\s*\/\s*([\d.e-]+%?))?\s*\)$/i);
-    if (srgb) {
-        const channel = n => Math.round(Math.min(1, Math.max(0, Number(n))) * 255);
-        const alpha = srgb[4] === undefined ? 1 : srgb[4].endsWith('%') ? Number.parseFloat(srgb[4]) / 100 : Number(srgb[4]);
-        return { r: channel(srgb[1]), g: channel(srgb[2]), b: channel(srgb[3]), a: alpha };
-    }
-    return null;
-}
-
-const round = n => Math.round(n * 1000) / 1000;
-function cssColor(color, alpha = color.a) {
-    const a = Math.min(1, Math.max(0, alpha));
-    return a >= 0.999 ? `rgb(${color.r}, ${color.g}, ${color.b})` : `rgba(${color.r}, ${color.g}, ${color.b}, ${round(a)})`;
-}
-
-/**
- * url("data:image/svg+xml,…") 안 그림(테마 형광펜 — apply.js markerBackground)의 칠 색 · 투명도 · 띠 높이.
- * 띠 높이는 글 상자 높이의 % — 네모는 rect 의 y · height, 붓 획은 경로의 왼쪽 · 오른쪽 윗변과 두께(가운데로), 알약은 그림 크기 · 자리(layer)에서.
- */
-function svgPaint(image) {
-    const text = String(image ?? '');
-    const at = text.indexOf('data:image/svg+xml');
-    if (at < 0) return null;
-    // 계산된 값은 url("data:…") — 그림 글 안에 ' ( ) 가 그대로 들어 있으니(encodeURIComponent 는 안 바꾼다) 감싼 따옴표의 짝까지 자른다
-    const quote = text[at - 1];
-    let end = -1;
-    if (quote === '"' || quote === "'") {
-        for (let i = at; i < text.length; i++) {
-            if (text[i] === '\\') { i++; continue; }
-            if (text[i] === quote) { end = i; break; }
-        }
-    } else end = text.indexOf(')', at);
-    let svg = text.slice(at, end === -1 ? undefined : end);
-    svg = svg.slice(svg.indexOf(',') + 1).replace(/\\(.)/g, '$1');
-    try { svg = decodeURIComponent(svg); } catch { /* 이미 풀린 글 */ }
-    const opacity = svg.match(/fill-opacity=['"]([\d.]+)['"]/);
-    const fill = svg.match(/fill=['"](rgba?\([^'"]*\)|#[0-9a-f]{3,8})['"]/i);
-    let span = null;
-    if (/<circle/i.test(svg)) span = { pill: true };
-    else {
-        const rect = svg.match(/<rect\b[^>]*\by=['"]([\d.]+)['"][^>]*\bheight=['"]([\d.]+)['"]/i);
-        const left = svg.match(/L2\.2,([\d.-]+)/), right = svg.match(/T98\.6,([\d.-]+)/), rightBottom = svg.match(/L97\.2,([\d.-]+)/);
-        if (rect) span = { from: Number(rect[1]), to: Number(rect[1]) + Number(rect[2]) };
-        else if (left && right && rightBottom) {
-            const top = (Number(left[1]) + Number(right[1])) / 2;
-            span = { from: top, to: top + Number(rightBottom[1]) - Number(right[1]) };
-        }
-    }
-    return { color: fill ? (parseColor(fill[1]) ?? hexColor(fill[1])) : null, opacity: opacity ? Number(opacity[1]) : null, span };
-}
-
-/** 알약 띠: 그림 크기(100% T%) · 세로 자리(y%)는 그림 층의 값 — 여러 층이면 마지막 층(형광펜) */
-function pillSpan(size, positionY) {
-    const height = Number.parseFloat(String(size ?? '').split(',').at(-1)?.trim().split(/\s+/)[1]);
-    const y = Number.parseFloat(String(positionY ?? '').split(',').at(-1));
-    if (!Number.isFinite(height) || !Number.isFinite(y)) return null;
-    const from = (100 - height) * y / 100;
-    return { from, to: from + height };
-}
-
-function hexColor(value) {
-    const hex = String(value ?? '').trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-    if (!hex) return null;
-    const digits = hex[1].length === 3 ? [...hex[1]].map(d => d + d).join('') : hex[1];
-    return { r: Number.parseInt(digits.slice(0, 2), 16), g: Number.parseInt(digits.slice(2, 4), 16), b: Number.parseInt(digits.slice(4, 6), 16), a: 1 };
-}
 
 /**
  * @param {Range} range 고른 범위 (한 메시지 .mes_text 안)

@@ -1,29 +1,29 @@
+import { appearance } from './device-layouts.js';
 import { tidyRoleIcons, tidyPickedIcons } from './role-icons-core.js';
-import { syncDeviceLayout, saveDeviceLayout, DEVICE_QUERY } from './device-layouts.js';
-import { tidyFruitType } from './fruit-type-schema.js';
+import { tidyFruitType } from './fruit-type-tidy.js';   // 1.0.x 시작에는 설정 고르기만(종류 전체 목록 · 선택자는 상태창 글자를 쓸 때 받아요)
 import { entryDisplay, entryIcon } from './scripts/fruit-entry-icons.js';
 import { MASK_STYLES, normalizeMaskStyle, FILTER_RANGES, FILTER_PRESET_IDS, FILTER_PRESETS } from './capture-style.js';
 import { MARKDOWN_DEFAULTS, tidyMarkdown } from './markdown.js';
-import { MIX_DEFAULT, tidyGradients } from './gradients.js';
-import { tidyPins } from './mes-pins.js';
+import { tidyPins } from './mes-pins-keys.js';
 import { syncWeatherProfile } from './weather-profiles.js';
 import { tidySceneSound } from './scene-sound-rules.js';   // 6.9.8 장면 소리 설정 정리 (순수 모듈)
-import { tidyFrameLibrary } from './frame-library.js';
 import { tidyMultiAvatar } from './multi-avatar/pick.js';   // 7.9.9 프로필 여러 개 (순수)
-import { DECOR_DEFAULTS, tidyDecor, slimDecor } from './decor.js';
+// 추가 모양의 정리 코드는 첫 프레임 뒤에 연결하고 저장 키는 그대로 둬요.
+const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100 };
+const MIX_DEFAULT = { on: false, families: ['blue', 'strawberry'], angle: 90, weights: [50, 50, 50], blend: 50 };
 import { FRAME_DEFAULTS, FRAME_RANGE, tidyFrame } from './frames.js';
 import { cutEdgeDefaults, tidyCutEdge } from './cutedge.js';
 // 설정 저장 칸: extension_settings.salty
-import { PALETTES, PALETTE_ALIASES } from './palettes.js';
+import { PALETTE_ALIASES, isPaletteId } from './palettes.js';
+import { PRIVATE_FLAGS } from './private-addons.js';   // 8.3.0 테마 안으로 들인 단독 확장의 켜고 끄기 플래그(1.0.0 은 빈 표)
 
 export const KEY = 'salty';
-export const VERSION = 4; // 설정 구조 버전 (1.0.0 = 1 · 1.4 = 2 · 4.3.4 = 4)
-// 6.9.5 처음 설정 안내(first-run.js): 이 모듈을 읽는 순간 테마 설정 칸이 없었나 — getSettings() 가 칸을 만들기 전에 잰다 (기존 사용자는 늘 false)
+// 6.9.5 처음 설정 안내(first-run.js): 이 모듈을 읽는 순간 테마 설정 칸이 없었나 — getSettings() 가 칸을 만들기 전에 잰다 (기존 사용자는 늘 false · 1.0.0 되살림)
 export const FRESH_SETTINGS = (() => {
     try { const saved = SillyTavern.getContext().extensionSettings?.[KEY]; return !(saved && typeof saved === 'object' && !Array.isArray(saved)); }
     catch { return false; }
 })();
-
+export const VERSION = 4; // 설정 구조 버전 (1.0.0 = 1 · 1.4 = 2 · 4.3.4 = 4)
 // 언어별 글꼴 묶음. en/ja/zh 가 'auto' 면 한국어 글꼴이 그 글자도 맡음.
 export const FONT_SET = { ko: 'pretendard', en: 'auto', ja: 'auto', zh: 'auto' };
 // 글꼴 칸: 본문 · 대사 · 메뉴 · 속마음(*기울임*) · 강조(**굵게**) · 코드(`코드`)
@@ -39,11 +39,12 @@ export const DEFAULTS = {
     gradients: { light: structuredClone(MIX_DEFAULT), dark: structuredClone(MIX_DEFAULT), overrides: {} },
     frameLibrary: [],
     noticeSeen: '', // 3.0.0: 공지사항을 열어 본 마지막 버전 — 지금 버전이 더 새것이면 버전 알약이 빛난다 (notice.js)
-    updateCheck: true, // 5.7.0: 6시간에 한 번 GitHub 에서 새 버전만 확인 → 버전 알약이 노랗게 (update-check.js). 끄면 업데이트 탭의 버튼을 누를 때만
+    syncWatch: true,
+    updateCheck: true, // 5.7.0 새 버전 자동 확인 (src/update-check.js — 1.0.0 바탕에서 되살림, 스위치는 테마 › 기타 설정)
     palette: 'salt',
     nightTint: 1,                // Stock night surfaces: theme-color mix, 1–20%.
     lightTint: .5,               // Stock light surfaces: theme-color mix, 0.5–20%.
-    customName: '', // 커스텀 에이드 이름. 색은 기존 colorOverrides에 모드별로 저장.
+    customName: '', // 커스텀 에이드 이름 (색은 colorOverrides 에)
     colorOverrides: {},           // { [paletteId]: { token: color } }
     fonts: {
         text: { ...FONT_SET },    // 본문
@@ -83,7 +84,7 @@ export const DEFAULTS = {
     em: { italic: true, weight: 400, size: null, letterSpacing: null },
     strike: { line: true, own: false, color: '#ff7a7a', thickness: 2, fade: 55, italic: false },   // ~~취소선~~ — own: 선 색을 따로(false 면 글자 색), thickness px, fade: 지워진 글자를 남기는 정도 %   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
     strong: { weight: 650, size: null, letterSpacing: null },              // **강조**
-    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: true, helpMarks: true, webSearchMarks: true, personaTall: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, emptyGuard: true, replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // hiddenFade: 5.6.8 숨긴 메시지(컨텍스트에서 뺀 것, is_system) 흐리게 · hiddenOpacity 진하기 % · hiddenGray 흑백 % · hiddenHover 마우스 올리면(폰은 누르면) 원래대로 (apply.js 변수 · 클래스, css/05-chat.css) · streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · colorPop: 설정 창 밖 색 칸도 테마 색 고르기로 (3.5.0, colorpop.js) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
+    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], inkContrast: true, triangleFold: false, weatherBubble: 70, qrCtxNames: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: true, helpMarks: true, webSearchMarks: true, personaTall: false, hideSendTextarea: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, emptyGuard: true, replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // hiddenFade: 5.6.8 숨긴 메시지(컨텍스트에서 뺀 것, is_system) 흐리게 · hiddenOpacity 진하기 % · hiddenGray 흑백 % · hiddenHover 마우스 올리면(폰은 누르면) 원래대로 (apply.js 변수 · 클래스, css/05-chat.css) · streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · colorPop: 설정 창 밖 색 칸도 테마 색 고르기로 (3.5.0, colorpop.js) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
     // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
     reader: { autoHide: false },
     // 3.4.0 프롬프트 호환: 데우스 엑스 마키나 — 끄면 카드 스킨 · 폰 접기 · 카드 색 통일 · 카드 이모티콘 · 트래커 날씨가 모두 쉰다 (값은 남음)
@@ -100,22 +101,25 @@ export const DEFAULTS = {
         // 4.1.2 감정 대사 효과(Expressive Dialogue): 움직임 soft|normal|big · 빛 · 색 흐름 · 기기의 애니메이션 줄이기 무시 (css/55-dem-expressive.css)
         fx: { on: true, motion: 'normal', glow: true, flow: false, flowMode: 'text', force: false }, // flowMode: 색 흐름을 글자에(text) | 형광펜 띠에(marker)
     },
-    // 3.2.0 화이트 · 나이트 자동: by = system(기기 다크 모드) | time(night 부터 day 까지 나이트) — automode.js
+    // 3.2.0 화이트 · 나이트 자동: by = system(기기 다크 모드) | time(night 부터 day 까지 나이트) — automode.js (1.0.0 되살림 · 8.2.5 와 같은 키)
     auto: { on: false, by: 'system', night: '20:00', day: '07:00' },
     // 3.3.1 날씨 효과의 내 그림 목록 [{ id, name, data }] — 스타일에는 안 담김 (고른 그림만 chat.weatherImage)
     weatherImages: [],
     // 7.9.9 프로필 여러 개: 캐릭터 아바타 사진을 여러 장 등록해 두고 채팅방을 열 때마다 하나를 고른다 (multi-avatar/). 파일은 서버 user/images, 여기엔 경로 · 고정만
     multiAvatar: { on: true, when: 'chat', includeCard: true, chars: {} },
-    customPalettes: [],
+    customPalettes: [],   // [{ id, name, light, dark }] custompalette.js
     activeCustomPalette: '',
-    addons: { zipinstall: false, tts: false, direction: false, assets: false, order: false, perf: false, words: false, capture: false, models: false, modelorder: false, modelswitch: false, regexlink: false, rewrite: false, bookmarks: false, notes: false, translator: false, prompt: false, customstyle: false, mermaid: false, 'prompt-template': false, conflicts: false },
-    addonUI: { translatorDrawer: true, ttsDrawer: true, orderIcon: false, perfIcon: false, wordsMenu: false, captureMenu: false, modelswitchMenu: true, notesMenu: true, notesBarMenu: true, zipinstallMenu: true, perfMenu: { watchdog:false, timer:true, perf:false, log:true, dedupe:false },
+    addons: { zipinstall: false, tts: false, direction: false, assets: false, order: false, perf: false, words: false, capture: false, models: false, modelswitch: false, regexlink: false, rewrite: false, bookmarks: false, notes: false, translator: false, prompt: false, customstyle: false, mermaid: false, 'prompt-template': false, ...PRIVATE_FLAGS },
+    addonCarry: 0,   // 8.3.0 개인 확장 플래그 이어받기를 어느 단계까지 했나 (private-addons.js ADDON_CARRY · addons.js 가 한 번 올린다)
+    addonUI: { translatorDrawer: true, ttsDrawer: true, orderIcon: false, perfIcon: false, wordsMenu: false, captureMenu: false, modelswitchMenu: true, notesMenu: true, notesBarMenu: true, zipinstallMenu: true, perfMenu: { watchdog:false, timer:true, perf:false, log:true, dedupe:false, storage:true },
         // 4.5.5: 성능 보조의 도구를 아예 안 불러오게 (perfMenu 는 '메뉴에 보이기', 이것은 '불러오기').
         // 기본은 전부 켬 — 지금 쓰던 대로 돌아가고, 안 쓰는 도구를 끄면 그만큼 시작이 가벼워진다.
         perfLoad: { watchdog:true, timer:true, perf:true, log:true, dedupe:true } },
-    wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true, maskWords: '' }, // maskWords: 6.0.4 잠시 가리기 낱말(한 줄에 하나 · 쉼표) — 스위치는 세션 안에서만, 저장하지 않는다 (wordmask.js)
-    captureTools: { replace: false, preset: '', redact: false, names: [], mask: 'auto', maskStyles: {}, format:'image', imagePages:false, duration:6, maxMB:8, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true, filterPreset:'none', grain:0, brightness:0, contrast:0, saturation:0, temperature:0, vignette:0 }, // filterPreset · grain … vignette: 5.5.3 캡처 필터 (프리셋 none|mono|film|vintage|cool|warm|custom · 전부 0 이면 결과 픽셀 그대로)
+    wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true, maskWords: '' }, // maskWords: 6.0.4 잠시 가리기 낱말(한 줄에 하나 · 쉼표) — 스위치는 세션 안에서만, 저장하지 않는다 (wordmask.js) · 1.0.0 되살림(9.0.0 5357f89e 에서 걷었던 단어 치환)
+    captureTools: { replace: false, replaceRules: [], preset: '', redact: false, names: [], mask: 'auto', maskWord: '○○', maskStyles: {}, format:'image', imagePages:false, duration:6, maxMB:8, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true, filterPreset:'none', grain:0, brightness:0, contrast:0, saturation:0, temperature:0, vignette:0 }, // filterPreset · grain … vignette: 5.5.3 캡처 필터 (프리셋 none|mono|film|vintage|cool|warm|custom · 전부 0 이면 결과 픽셀 그대로)
     onehand: { on: false, swipe: true, imp: true, cont: true, regen: true },
+    logCopy: { on: true, shape: 'card', palette: '', category: 'basic', recent: [], fav: [], custom: [] },   // 로그 복사: 채팅에서 고른 글을 보이는 그대로 (selection-bar.js · log-copy*.js) — on 만 설정 창에, 나머지는 시트가 마지막 고른 것을 기억 · custom = 내 글꾸 [{ id, name, html(소독한 것), slot }]
+    searchAi: { on: false, profileId: '' }, // 10-31 검색창 「AI 에게 맡기기」: 켠 사람만 · 단추를 눌렀을 때만 요청 한 번 · 미리보기 뒤 「적용」 (settings-search.js · settings-ai.js). profileId '' = 실리태번 지금 연결
     replyNotify: { on: false }, // 4.8.7 답 완료 알림: 다른 앱을 보고 있을 때 답이 끝나면 폰 알림 · 진동 (reply-notify.js)
     bgWindow: { on: false, mode: 'audio' }, // 4.3.2 백그라운드 창 (실험): 답을 기다리는 동안 PIP 작은 창을 띄워 다른 앱을 봐도 생성 · 번역이 이어지게
     sceneSound: { on: false, volume: 40, thunder: true, background: true, files: {}, music: { on: false, volume: 30, mood: 'auto', files: {} } }, // 6.9.8 장면 소리: 날씨 효과에 맞춘 배경 소리 (scene-sound.js) — volume %, thunder 비에 천둥, background 숨은 탭에서도, files { rain | wind | hush | water: '/user/files/…' }
@@ -219,28 +223,6 @@ function fill(target, defaults) {
     return target;
 }
 
-/** 예전 설정 → 지금 구조. 1 → 2: 글꼴이 언어별 묶음으로 */
-function migrate(s) {
-    const from = s.version || 1;
-    if (from >= VERSION) return s;
-    if (from < 2) {
-        const f = s.fonts || {};
-        const toSet = id => ({ ...FONT_SET, ko: typeof id === 'string' && id !== 'same' ? id : FONT_SET.ko });
-        const text = typeof f.text === 'string' ? toSet(f.text) : (f.text && typeof f.text === 'object' ? { ...FONT_SET, ...f.text } : { ...FONT_SET });
-        const dialogue = typeof f.dialogue === 'string' ? (f.dialogue === 'same' ? 'same' : toSet(f.dialogue)) : (f.dialogue || 'same');
-        let ui = typeof f.ui === 'string' ? (f.ui === 'same' ? 'same' : toSet(f.ui)) : (f.ui || 'same');
-        if (ui !== 'same' && ui.ko === text.ko) ui = 'same';
-        s.fonts = { text, dialogue, ui, hanja: f.hanja || 'auto' };
-        if (s.chat?.user === 'line') s.chat.user = 'plain';
-    }
-    // 2 → 3: 양쪽 정렬 켜기/끄기(type.justify) → 정렬 방식(type.align). 가져온 파일에도 남아 있을 수 있어 tidyType 이 매번 바꿈
-    // 3 → 4 (4.3.4): 내 작은 사진 위치의 예전 기본값 '왼쪽'을 '자동'으로 (말풍선이면 오른쪽 — 왼쪽 끝에 있으면 말풍선이 붕 떠 보였다). 그 뒤에 왼쪽을 다시 고르면 그대로 둔다
-    if (from < 4 && s.userProfile && typeof s.userProfile === 'object' && s.userProfile.side === 'left') s.userProfile.side = 'auto';
-    s.version = VERSION;
-    return s;
-}
-
-const TILT_RENAME = { slight: 'slant', more: 'steep' }; // 1.2.0 초안 이름
 const IMAGE_SHAPES = ['rect', 'custom']; // 에셋 이미지 모양: 네모 | custom = 내가 고른 투명 PNG 의 알파를 마스크로 (2.2.1 에 대각선 · 코너 컷 · 스크래치를 뺌 → 예전 값은 네모로)
 const MASK_FITS = ['stretch', 'contain']; // 커스텀 도형을 그림에 맞추는 법: 늘리기(그림 상자 가득) | 맞추기(비율 유지, 가운데)
 const IMAGE_FITS = ['ratio', 'fixed']; // 에셋 이미지 크기: 비율 유지 | 높이 맞춤
@@ -417,13 +399,11 @@ function tidyFlags(s) {
     // 6.5.2: 과일 상태 카드 꾸미기(6.5.0~6.5.1 의 fruit.cards)를 뺐다 — 켜 둔 채 올려도 저장값만 조용히 버린다
     if (isObj(s.fruit)) delete s.fruit.cards;
     if (!isObj(s.fruit) || !Object.keys(s.fruit).length) delete s.fruit;
-    if (!isObj(s.auto)) s.auto = structuredClone(DEFAULTS.auto);
-    s.auto.on = flag(s.auto.on, false);
-    if (!['system', 'time'].includes(s.auto.by)) s.auto.by = 'system';
-    for (const key of ['night', 'day']) if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(s.auto[key]))) s.auto[key] = DEFAULTS.auto[key];
     if (!isObj(s.onehand)) s.onehand = structuredClone(DEFAULTS.onehand);
     if (!isObj(s.bgWindow)) s.bgWindow = structuredClone(DEFAULTS.bgWindow);
     s.replyNotify = { on: isObj(s.replyNotify) && s.replyNotify.on === true };
+    s.logCopy = tidyLogCopy(s.logCopy);
+    s.searchAi = { on: isObj(s.searchAi) && s.searchAi.on === true, profileId: isObj(s.searchAi) && typeof s.searchAi.profileId === 'string' ? s.searchAi.profileId.slice(0, 120) : '' };   // 10-31
     s.bgWindow = { on: s.bgWindow.on === true, mode: s.bgWindow.mode === 'pip' ? 'pip' : 'audio' };
     s.sceneSound = tidySceneSound(s.sceneSound);   // 6.9.8 장면 소리
     for (const key of Object.keys(DEFAULTS.onehand)) s.onehand[key] = flag(s.onehand[key], DEFAULTS.onehand[key]);
@@ -485,6 +465,7 @@ function tidyFlags(s) {
         s.chat.qrFind = flag(s.chat.qrFind, true);
         s.chat.qrCtxNames = flag(s.chat.qrCtxNames, false);   // 7.9.7 하위 세트를 묶은 QR 의 ⋮ 자리에 세트 이름 (기본 ⋮ 만 — 제보: 미리보기와 달리 세트 이름이 이중으로 보였다)
         s.chat.personaTall = flag(s.chat.personaTall, false);
+        s.chat.hideSendTextarea = flag(s.chat.hideSendTextarea, false); // 8.2.5 채팅 입력칸 숨기기 (단추 줄만 남김 · apply.js salty-send-textarea-off)
         s.chat.reasoningFollow = flag(s.chat.reasoningFollow, true); // 5.7.5 추론 요청을 끄면 지난 추론도 숨기기 (apply.js stReasoningOff)
         range('qrRows', 1, 4, 2);
         // 3.7.0 퀵 리플라이 줄 자리: bottom 입력창 아래(여태 모양) | top 입력창 위 (사용자 요청 — 입력창 옆에 아이콘을 많이 빼 두면 줄이 좁아서)
@@ -593,65 +574,51 @@ function tidyFontSlot(fonts, slot) {
     else fonts[slot] = 'same';
 }
 
-// 5.1.2: 한 마이크로태스크 안에서는 정리를 한 번만 — 설정 창이 한 번 그려질 때 getSettings 를 40~60번 부른다.
-// 저장 칸의 객체가 통째로 바뀌면(초기화 · 가져오기) 같은 객체가 아니라 그냥 지나가고, 제자리에서 고친 값은 같은 객체라 그대로 보인다.
-// 값을 고친 뒤 같은 마이크로태스크 안에서 정리(범위 · 형식)를 다시 받고 싶으면 invalidateSettings()
+// 9.0.2 설정 정리(fill · tidy)는 「설정 사건」 때만 다시 해요 — 예전(5.1.2 ~ 9.0.1)에는 메모가 마이크로태스크 하나만 살아
+//   작업마다(타이머 · 감시 콜백 · 키 · 채팅 열기 …) 설정 전체를 다시 채우고 정리했어요(폰 4배 프로파일 getSettings 자기 시간 약 200ms).
+//   설정 사건 = saveSettings · invalidateSettings · resetSettings · 저장 칸 객체가 통째로 바뀜(가져오기 · 실리태번이 설정을 다시 읽음) ·
+//   실리태번 SETTINGS_UPDATED · SETTINGS_LOADED · SETTINGS_LOADED_AFTER · 기기 간 합치기(index.js 가 invalidateSettings 를 불러요).
+//   돌려주는 것은 늘 저장 칸 그 객체라 제자리에서 고친 값은 바로 보이고, 늦어지는 것은 정리(범위 · 형식 맞추기)뿐이에요 —
+//   고친 뒤 정리된 값을 바로 받아야 하는 곳(설정 창 update · 스타일 입히기 · 여러 장 프로필)은 예전처럼 invalidateSettings() 를 불러요.
 let memo = null;
-export function invalidateSettings() { memo = null; held = null; }
+/** 로그 복사 설정 정리 — 모양 id 는 짧은 글자만(모르는 id 는 시트가 「카드」로), 내 글꾸는 20개 · 60KB 까지 (html 은 시트가 소독해 넣은 것) */
+function tidyLogCopy(value) {
+    const v = isObj(value) ? value : {};
+    const id = x => typeof x === 'string' && /^[a-z0-9-]{1,24}$/i.test(x);
+    const custom = (Array.isArray(v.custom) ? v.custom : []).filter(c => isObj(c) && id(c.id) && typeof c.html === 'string' && c.html.length <= 60000).slice(0, 20)
+        .map(c => ({ id: c.id, name: typeof c.name === 'string' && c.name.trim() ? c.name.trim().slice(0, 40) : '내 글꾸', html: c.html,
+            slot: c.slot === 'auto' ? 'auto' : Array.isArray(c.slot) && c.slot.length <= 64 && c.slot.every(n => Number.isInteger(n) && n >= 0 && n < 10000) ? c.slot : null }));
+    const ids = (list, max = 24) => [...new Set((Array.isArray(list) ? list : []).filter(id))].slice(0, max);
+    return { on: v.on !== false, shape: id(v.shape) ? v.shape : 'card', palette: isPaletteId(v.palette) ? v.palette : '', category: id(v.category) ? v.category : 'basic', recent: ids(v.recent).slice(0, 5), fav: ids(v.fav, 48), custom };
+}
+export function invalidateSettings() { memo = null; }
 export const settingsStats = { tidy: 0 };   // 정리를 몇 번 했나 (시험 · 진단용)
-
-// 8.2.6 성능: 읽기만 하는 뜨거운 자리(1.5초 타이머 · 채팅 감시 콜백 · 키마다)는 readSettings — 마이크로태스크가 지나도 「설정 사건」까지 정리 결과를 그대로 써요.
-//   설정 사건 = saveSettings · invalidateSettings · resetSettings · 저장 칸 객체가 통째로 바뀜(가져오기) · 실리태번 SETTINGS_UPDATED · SETTINGS_LOADED ·
-//   기기 모양(폰 ↔ PC, 기기별 배치) 바뀜, 그리고 안전망으로 HOLD_MS. 돌려주는 것은 getSettings 와 같은 객체(저장 칸 그 자체)라 제자리에서 고친 값은 바로 보이고,
-//   늦어지는 것은 정리(범위 · 형식 맞추기)뿐이에요. 값을 고치는 곳 · 고친 뒤 정리된 값을 바로 받아야 하는 곳은 그대로 getSettings.
-//   (getSettings 의 정리 한 번은 폰 4배에서 약 1ms — 1.5초마다 · 스트리밍 글자마다 · 키마다 도는 자리에서 그만큼씩 쌓였어요. 전수조사 4절 3)
-const HOLD_MS = 3000;
-let held = null, heldAt = 0, heldBound = false;
-const dropHeld = () => { held = null; };
-function bindHeld() {
-    if (heldBound) return;
-    heldBound = true;
+let bound = false;
+function bindInvalidation() {
+    if (bound) return;
+    bound = true;
     try {
         const { eventSource, event_types: t } = SillyTavern.getContext();
-        for (const name of ['SETTINGS_UPDATED', 'SETTINGS_LOADED', 'SETTINGS_LOADED_AFTER']) if (t?.[name]) eventSource?.on?.(t[name], dropHeld);
-    } catch { /* 이벤트가 없으면 HOLD_MS 안전망만 */ }
-    try { globalThis.matchMedia?.(DEVICE_QUERY)?.addEventListener?.('change', dropHeld); } catch { /* 옛 브라우저 */ }
+        for (const name of ['SETTINGS_UPDATED', 'SETTINGS_LOADED', 'SETTINGS_LOADED_AFTER']) if (t?.[name]) eventSource?.on?.(t[name], invalidateSettings);
+    } catch { bound = false; /* 실리태번 문맥이 아직 없으면 다음 정리 때 다시 */ }
 }
-export function readSettings() {
-    const ext = SillyTavern.getContext().extensionSettings;
-    const now = performance.now();
-    if (held && ext[KEY] === held && now - heldAt < HOLD_MS) return held;
-    const s = getSettings();
-    held = s; heldAt = now; bindHeld();
-    return s;
-}
+// 8.2.6 에 뜨거운 읽기 자리를 위해 따로 둔 readSettings 는 이제 getSettings 와 같아요 (부르는 곳이 많아 이름은 남겨요)
+export function readSettings() { return getSettings(); }
 
 export function getSettings() {
     const ext = SillyTavern.getContext().extensionSettings;
     if (memo && ext[KEY] === memo) return memo;
     settingsStats.tidy++;
-    // 8.2.6 빈 채팅 덮어쓰기 막기는 예전엔 성능 보조 › 저장 정리 안에만 있었다(save_dedupe.emptyGuard). 이 칸이 처음 생기는 설정이고 그쪽에서 꺼 두었으면
-    //       이쪽도 끔으로 시작한다 — 끈 뜻을 지킨다(켜 둔 · 안 건드린 사람은 기본 켬). 그 뒤엔 둘을 따로 두고 둘 중 하나라도 끄면 끔 (emptyguard.js guardWanted)
-    const guardUnset = !isObj(ext[KEY]?.chat) || ext[KEY].chat.emptyGuard === undefined;
     if (!isObj(ext[KEY])) ext[KEY] = structuredClone(DEFAULTS);
-    migrate(ext[KEY]);
-    // 3.4.0 전 설정: 데우스 카드 스킨이나 트래커 날씨를 쓰던 사람이면 호환을 켠 채로 시작 (한 번만)
-    // 5.3.4: 아래 5.1.2 칸 채우기보다 먼저 본다 — 채운 뒤에 보면 deus · userProfile 이 늘 있어 두 옮기기가 5.1.3 부터 한 번도 안 돌았다.
-    // 한 번 돈 뒤에는 칸이 생기고(deus) 모드가 정해져(userProfile) 다시 돌지 않는다
-    const firstDeus = ext[KEY].deus === undefined;
-    const migrateUserMode = !ext[KEY].userProfile || ext[KEY].userProfile.mode === 'inherit';
-    // 5.8.3 정보 정렬(작은 프로필 · 없음)을 처음 보는 설정 — 아래 fill() 이 칸을 채우기 전에 본다 (옮겨 받기는 프로필 정리에서)
-    const rowFresh = Object.fromEntries(['profile', 'userProfile'].map(owner => [owner, isObj(ext[KEY][owner]) && ext[KEY][owner].nameRowAlign === undefined]));
     // 5.1.2: 칸 자체가 깨진 값(fonts: "pretendard" · colorOverrides: "salt" …)이면 그 칸을 기본값으로 — fill() 은 있는 값을 안 건드려 아래 정리 · apply 가 죽었다 (매 시작마다)
     for (const [key, value] of Object.entries(DEFAULTS)) {
         if (isObj(value) ? !isObj(ext[KEY][key]) : Array.isArray(value) ? !Array.isArray(ext[KEY][key]) : false) ext[KEY][key] = structuredClone(value);
     }
+    // 옛 스크립트 접기 값 이어받기
+    if (isObj(ext[KEY].chat) && ext[KEY].chat.triangleFold === undefined && typeof ext.blue_lemonade_scripts?.enabled?.fold === 'boolean') ext[KEY].chat.triangleFold = ext.blue_lemonade_scripts.enabled.fold;
     const migrateWordSyntax = ext[KEY].wordTools && ext[KEY].wordTools.syntax !== 'comma';
     const s = fill(ext[KEY], DEFAULTS);
-    if (guardUnset && isObj(s.chat) && ext.save_dedupe?.emptyGuard === false) s.chat.emptyGuard = false;
-    if (migrateUserMode) s.userProfile.mode = SillyTavern.getContext().powerUserSettings?.hideChatAvatars_enabled || s.chat.user === 'bubble' ? 'none' : 'small';
-    syncDeviceLayout(s);
-    if (TILT_RENAME[s.dialogue?.tilt]) s.dialogue.tilt = TILT_RENAME[s.dialogue.tilt];
+    appearance?.syncDeviceLayout(s);
     if (isObj(s.dialogue)) tidyDialogue(s.dialogue);
     tidyShadow(s);
     tidyOutline(s);
@@ -674,14 +641,14 @@ export function getSettings() {
     }
     if (s.image && !IMAGE_SHAPES.includes(s.image.shape)) s.image.shape = 'rect'; // 모르는 모양(가져온 파일 · 뺀 유리 조각 · 물방울) → 네모
     if (s.image) { tidyImage(s.image); tidyFrame(s.image); }
-    tidyDecor(s.image);
-    slimDecor(s.image.decor); // 5.6.4: 꺼 둔 기본 프리셋 액자의 그림은 저장하지 않음 (켜면 다시 그림) — 예전 설정도 다음 저장부터 가벼워진다
+    appearance?.tidyDecor(s.image);
+    appearance?.slimDecor(s.image.decor); // 5.6.4: 꺼 둔 기본 프리셋 액자의 그림은 저장하지 않음 (켜면 다시 그림) — 예전 설정도 다음 저장부터 가벼워진다
     for (const owner of ['profile', 'userProfile']) {
         if (!isObj(s[owner])) s[owner] = structuredClone(DEFAULTS[owner]);
         fill(s[owner], DEFAULTS[owner]);
         tidyFrame(s[owner]);
-        tidyDecor(s[owner]);
-        slimDecor(s[owner].decor);
+        appearance?.tidyDecor(s[owner]);
+        appearance?.slimDecor(s[owner].decor);
         for (const key of ['nameAuto', 'nameItalic', 'nameUnderline', 'nameShadow']) s[owner][key] = flag(s[owner][key], DEFAULTS[owner][key]);
         for (const key of ['nameColor', 'nameOutlineColor']) if (!/^#[a-f\d]{6}$/i.test(s[owner][key])) s[owner][key] = DEFAULTS[owner][key];
         if (!['left', 'center', 'right'].includes(s[owner].nameAlign)) s[owner].nameAlign = 'center';
@@ -692,9 +659,6 @@ export function getSettings() {
             s[owner].modeVersion = 1;
         }
         if (!['none', 'small', 'banner'].includes(s[owner].mode)) s[owner].mode = DEFAULTS[owner].mode;
-        // 5.8.3: 5.8.2 까지는 큰 프로필이 아니면 정보 정렬이 안 먹었다 — 그때 '오른쪽'을 골라 둔 사람(기본은 가운데)은 그 뜻 그대로 옮긴다.
-        // 폰 · PC 배치 따로면 nameAlign 이 다른 기기의 큰 프로필 것일 수 있어 건너뛴다
-        if (rowFresh[owner] && s[owner].mode !== 'banner' && !s.deviceLayouts?.on && s[owner].nameAlign === 'right') s[owner].nameRowAlign = 'right';
         if (owner === 'userProfile' && !['auto', 'left', 'right'].includes(s[owner].side)) s[owner].side = 'auto';
         if (owner === 'userProfile' && !['auto', 'left', 'right'].includes(s[owner].metaSide)) s[owner].metaSide = 'auto'; // 번호 · 시간 · 토큰 줄 (auto = 사진을 따라감)
         if (!['cover', 'contain'].includes(s[owner].fit)) s[owner].fit = 'cover';
@@ -706,16 +670,22 @@ export function getSettings() {
             s[owner][key] = Number.isFinite(n) ? clampTo(n, range) : DEFAULTS[owner][key];
         }
     }
-    tidyFrameLibrary(s);
     if (PALETTE_ALIASES[s.palette]) s.palette = PALETTE_ALIASES[s.palette];
-    if (!PALETTES[s.palette]) s.palette = 'salt';
+    if (!isPaletteId(s.palette)) s.palette = 'salt';
+    if (!isObj(s.auto)) s.auto = structuredClone(DEFAULTS.auto);
+    s.auto.on = flag(s.auto.on, false);
+    if (!['system', 'time'].includes(s.auto.by)) s.auto.by = 'system';
+    for (const key of ['night', 'day']) if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(s.auto[key]))) s.auto[key] = DEFAULTS.auto[key];
     s.nightTint = Number.isFinite(Number(s.nightTint)) ? Math.max(1, Math.min(20, Number(s.nightTint))) : 1;
     s.lightTint = Number.isFinite(Number(s.lightTint)) ? Math.max(.5, Math.min(20, Number(s.lightTint))) : .5;
-    delete s.pastel; // 1.8.2~1.9.1 의 파스텔 스위치 — 파스텔로 정착하며 없앰 (id 는 PALETTE_ALIASES 가 원래 id 로)
     s.customName = typeof s.customName === 'string' ? s.customName.trim().slice(0, 24) : '';
     s.noticeSeen = typeof s.noticeSeen === 'string' ? s.noticeSeen.slice(0, 20) : '';
     s.updateCheck = s.updateCheck !== false;
-    { const tidy = tidyGradients(s.gradients); if (JSON.stringify(tidy) !== JSON.stringify(s.gradients)) s.gradients = tidy; } // 이미 정돈돼 있으면 같은 객체 그대로
+    if (appearance) {
+        appearance.tidyFrameLibrary(s);
+        const gradients = appearance.tidyGradients(s.gradients);
+        if (JSON.stringify(gradients) !== JSON.stringify(s.gradients)) s.gradients = gradients;
+    }
     tidyFlags(s);
     { const icons = tidyRoleIcons(s.roleIcons); if (icons !== s.roleIcons) s.roleIcons = icons; } // 7.9.3 아는 역할 · 올바른 값만 (가져온 파일의 SVG 도 다시 정리해 본다)
     { const picks = tidyPickedIcons(s.pickedIcons); if (picks !== s.pickedIcons) s.pickedIcons = picks; } // 올바른 열쇠 · 값만
@@ -724,10 +694,9 @@ export function getSettings() {
     // 못 쓰는 항목도 남기고, 적용할 때 fonts.js 가 safeFont 로 거른다. 항목 모양이 아닌 것만 뺌 (멀쩡하면 배열을 새로 만들지 않음)
     if (!Array.isArray(s.customFonts)) s.customFonts = [];
     else if (!s.customFonts.every(isObj)) s.customFonts = s.customFonts.filter(isObj);
-    if (!Array.isArray(s.customPalettes)) s.customPalettes=[];
-    if (typeof s.activeCustomPalette !== 'string') s.activeCustomPalette='';
     if (!isObj(s.addons)) s.addons=structuredClone(DEFAULTS.addons);
     for (const key of Object.keys(DEFAULTS.addons)) s.addons[key]=s.addons[key]===true;
+    s.addonCarry=Number.isInteger(s.addonCarry)&&s.addonCarry>0?s.addonCarry:0;
     if (!isObj(s.addonUI)) s.addonUI=structuredClone(DEFAULTS.addonUI);
     if (!isObj(s.addonUI.perfMenu)) s.addonUI.perfMenu=structuredClone(DEFAULTS.addonUI.perfMenu);
     if (!isObj(s.addonUI.perfLoad)) s.addonUI.perfLoad=structuredClone(DEFAULTS.addonUI.perfLoad);
@@ -751,6 +720,7 @@ export function getSettings() {
     s.captureTools.format=['video','gif','apng','webp'].includes(s.captureTools.format)?s.captureTools.format:'image';
     s.captureTools.imagePages=s.captureTools.imagePages===true;
     s.captureTools.resolution=Number(s.captureTools.resolution)===1440?1440:1080;
+    s.captureTools.maskWord=(typeof s.captureTools.maskWord==='string'&&s.captureTools.maskWord.trim())?s.captureTools.maskWord.trim().slice(0,12):'○○';   // 로그 복사 이름 숨김의 가림 글자(11-03 사용자 요청: 직접 정함)
     s.captureTools.backgroundTint=Math.min(100,Math.max(0,Number(s.captureTools.backgroundTint??60)||0));
     s.captureTools.maxParagraphs=Math.min(20,Math.max(1,Math.floor(Number(s.captureTools.maxParagraphs)||4)));
     s.captureTools.duration=Math.min(30,Math.max(3,Number(s.captureTools.duration)||6));
@@ -761,36 +731,37 @@ export function getSettings() {
     if(s.captureTools.filterPreset!=='custom')Object.assign(s.captureTools,FILTER_PRESETS[s.captureTools.filterPreset]); // 이름 있는 프리셋이면 여섯 값을 표에 맞춘다 (가져온 설정 · 표가 바뀐 판에서도 화면과 결과가 같게)
     for(const key of ['showName','showAvatar','showAssets','showTimestamp','showModel','showMessageId','showTokens','showGenerationTime','includeWeather','includeBackground'])s.captureTools[key]=s.captureTools[key]!==false;
     s.captureTools.replace=s.captureTools.replace===true;s.captureTools.redact=s.captureTools.redact===true;
+    s.captureTools.replaceRules=(Array.isArray(s.captureTools.replaceRules)?s.captureTools.replaceRules:[]).filter(r=>isObj(r)&&typeof r.from==='string'&&typeof r.to==='string').map(r=>({from:r.from.slice(0,100),to:r.to.slice(0,100)})).slice(0,50); // 로그 복사 「바꾸기」 찾을 말 → 바꿀 말 (replace 가 켬 · 이름 가림과 같은 묶음)
     s.captureTools.names=Array.isArray(s.captureTools.names)?s.captureTools.names.filter(n=>typeof n==='string').slice(0,40):[];
     if(!['auto','white','black','mosaic','tape'].includes(s.captureTools.mask))s.captureTools.mask='auto';
     if(typeof s.captureTools.preset!=='string')s.captureTools.preset='';
     if(!isObj(s.captureTools.maskStyles))s.captureTools.maskStyles={};
     for(const style of MASK_STYLES)s.captureTools.maskStyles[style]=normalizeMaskStyle(s.captureTools.maskStyles[style]);
-    s.customPalettes=s.customPalettes.filter(item=>item&&typeof item.id==='string'&&typeof item.name==='string'&&isObj(item.light)&&isObj(item.dark)).slice(0,24);
-    for (const item of s.customPalettes) for (const mode of ['light', 'dark']) {
-        for (const [token, value] of Object.entries(item[mode])) {
-            if (UNSAFE_KEYS.has(token) || !isCssColor(value)) delete item[mode][token];
-            else item[mode][token] = value.trim();
-        }
+    // 커스텀 에이드 보관함: 모양이 맞는 것만 · 24개까지 · 색은 색 문자열만
+    if (typeof s.activeCustomPalette !== 'string') s.activeCustomPalette = '';
+    const okPal = item => item && typeof item.id === 'string' && typeof item.name === 'string' && isObj(item.light) && isObj(item.dark);
+    if (!Array.isArray(s.customPalettes) || s.customPalettes.length > 24 || !s.customPalettes.every(okPal)) s.customPalettes = (Array.isArray(s.customPalettes) ? s.customPalettes : []).filter(okPal).slice(0, 24);
+    for (const item of s.customPalettes) for (const colors of [item.light, item.dark]) for (const [token, value] of Object.entries(colors)) {
+        if (UNSAFE_KEYS.has(token) || !isCssColor(value)) delete colors[token];
+        else if (value !== value.trim()) colors[token] = value.trim();
     }
-    if (firstDeus) s.deus.on = !!(s.chat?.demSkin || s.chat?.weather === 'tracker');
     // 직접 고친 색: 팔레트 id 는 아는 것만, 값은 색 문자열만 — 값이 <style> 에 그대로 들어가니 "red} body{display:none}" 같은 것이 화면을 지웠다 (5.1.2)
     for (const [id, colors] of Object.entries(s.colorOverrides)) {
-        if (!Object.hasOwn(PALETTES, id) || !isObj(colors)) { delete s.colorOverrides[id]; continue; }
+        if (!isPaletteId(id) || !isObj(colors)) { delete s.colorOverrides[id]; continue; }
         for (const [token, value] of Object.entries(colors)) {
             if (UNSAFE_KEYS.has(token) || !isCssColor(value)) delete colors[token];
             else if (value !== value.trim()) colors[token] = value.trim();
         }
     }
     memo = s;
-    queueMicrotask(() => { memo = null; });
+    bindInvalidation();
     return s;
 }
 
 export function saveSettings() {
-    held = null;
-    const s = SillyTavern.getContext().extensionSettings[KEY];
-    if (s) saveDeviceLayout(s);
+    const state = SillyTavern.getContext().extensionSettings[KEY];
+    if (state) appearance?.saveDeviceLayout(state);
+    memo = null;   // 저장하는 값은 다음 읽기 때 한 번 다시 정리해요 (고친 값의 범위 · 형식)
     SillyTavern.getContext().saveSettingsDebounced();
 }
 
@@ -798,7 +769,7 @@ export function saveSettings() {
 // 내 글꼴 · 본 공지 · 내 스타일 · 캐릭터 연결은 늘 남긴다 (입혀 둔 캐릭터 스타일 상태는 비움)
 const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools', 'captureTools'], library: ['frameLibrary', 'customPalettes', 'weatherImages'] };
 // 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS)은 '테마 모습' 초기화에 남긴다
-const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'sceneSound'];
+const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'searchAi', 'logCopy', 'sceneSound'];
 export function resetSettings(groups = { look: true }) {
     const ext = SillyTavern.getContext().extensionSettings;
     const old = ext[KEY] || {};
@@ -806,13 +777,11 @@ export function resetSettings(groups = { look: true }) {
     const next = groups.look ? fresh : structuredClone(old);
     if (groups.look) {
         for (const key of RESET_KEEP) next[key] = structuredClone(old[key] ?? fresh[key]);
-        // 2026-10-06: 예전 기본값 정리 표시도 남긴다 — 지우면 초기화 뒤 고른 나이트 #000000 · 화이트 #FFFFFF 가 다음 새로고침에 다시 지워진다 (apply.js dropStaleOverrides)
-        if ('legacyColorsRev' in old) next.legacyColorsRev = old.legacyColorsRev;
         // 기기별 배치는 켬/끔만 남긴다 — 담긴 pc · mobile 값은 모습이라, 남기면 syncDeviceLayout 이 초기화한 모습 위에 옛 배치를 도로 입힌다
         next.deviceLayouts = { on: old.deviceLayouts?.on === true, pc: {}, mobile: {} };
         // 5.2.3: chat 안의 동작 값과 고정 메시지(데이터)도 모습이 아니다 — 남긴다 (styles.js CHAT_BEHAVIOR 와 같은 목록 + QR 배치 · 고정)
         if (old.chat && typeof old.chat === 'object') {
-            for (const key of ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'qrFind', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard']) {
+            for (const key of ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'hideSendTextarea', 'qrFind', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard']) {
                 if (key in old.chat) next.chat[key] = structuredClone(old.chat[key]);
             }
         }
@@ -823,7 +792,7 @@ export function resetSettings(groups = { look: true }) {
     if (groups.library) { next.activeCustomPalette = ''; next.image.masks = []; next.image.maskId = ''; if (next.image.shape === 'custom') next.image.shape = 'rect'; }
     else if (groups.look) next.image.masks = structuredClone(old.image?.masks || []);
     ext[KEY] = next;
-    memo = null; held = null;
+    memo = null;
     saveSettings();
     return next;
 }

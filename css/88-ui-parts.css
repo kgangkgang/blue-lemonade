@@ -1,0 +1,360 @@
+/* ===== css/88-ui-parts.css =====
+   1.0.0 공용 부품 한 곳 — UI 전수조사(10-31) 뒤 사용자가 정한 기준(디자인 철칙 끝 「10-31 UI 전수조사 뒤 정한 것」):
+     · 입력칸(글 · 숫자 · 고르기 칸) 보이는 높이 = 크기표 하나(--bl-h-ctl 36). 누르는 넓이 44 는 바깥 여백 · 가상 요소로(87 · 89 가 이 토큰을 씀)
+     · 고른 항목 = 「옅은 면 + 색 글자 + 체크」 하나(고르기 목록 팝업 72-pick 과 같은 면 · 글자 · ㄴ자 체크). 색은 팔레트 강조색 변수 하나(밤 · 낮 같은 변수)
+       — 고르기 묶음 · 칩 · 라디오 카드는 체크까지, 「지금 있는 곳」을 뜻하는 탭 · 목록 이동은 면 + 색 글자 + 650 만(체크 없음)
+     · 스위치 = 36×20 · 손잡이 14 흰색 · 켬 강조색 하나 · 끔 --bl-check-off 하나
+     · 라디오 = 체크 A3 짝(빈칸 1px 선 · 고름 강조색 점)
+     · 탭 = 글자 탭 하나(36 · 메타 글자 · 1px 선 · 면 --bl-hover), 아이콘은 글자 옆(위아래 두 줄 탭 없음)
+     · 닫기 ✕ = 설정 창 닫기와 같은 선 그림(마스크 16) · 상자 없음 · 34 칸
+     · 아이콘만 단추 = 34 · 모서리 8 · 상자 없음 · 잉크 FA 12.5(마스크 16 과 같은 잉크)
+     · 글자 단추 = 글자 --bl-ts-ctl 하나 · 굵기 400(주요 650)
+     · 접힘 머리 = 36 · 화살표 하나(오른쪽 chevron 12.5 · 보조색)
+   화면마다 따로 고치지 않고 여기 목록에 그 화면의 부품 이름을 더해요(호환성 — 한 곳을 고치면 다 같이 바뀜).
+   애드온 CSS 는 style.css 뒤에 붙으므로 겹치는 칸은 html:not(#bl-ui-parts-off) body + !important(85-addon-unify 와 같은 방식).
+   검사: 자동화 UI 전수조사(checks/rig/ui-census.mjs)에 끼운 규칙 census-rules/{switch-sig · selected-sig · pill-identity · badge-overlap · close-ink · details-head · native-control · icon-btn-size · text-btn-type · empty-chip · heading-scale}.mjs
+         + 전수조사 기본 규칙 palette(팔레트 밖 색 · 그라데이션 0) · variant(부품마다 변형 1)
+         · tools/tests/ui-parts-static.mjs(정적: 토큰 한 곳 · 꽉 찬 고름 면 0 · 이름 없는 혼색 · 장식 그라데이션)
+   ===== */
+
+/* ---------- 토큰(크기표 · 색 역할) — 값은 여기만 ----------
+   과일의 마음 창은 body 밖(html 의 자식)에 붙으므로 그 뿌리에도 같은 토큰을 둬요(팔레트 변수가 없으면 대체값) */
+:root, body, #fruit-heart-v6 {
+  --bl-ui-ctl: var(--bl-h-ctl, 36px);                 /* 글자 단추 · 글자 탭 · 입력칸 보이는 높이 */
+  --bl-ui-icon: var(--bl-h-icon, 34px);               /* 아이콘만 단추 · 닫기 ✕ 칸 */
+  --bl-ui-chip: 34px;                                 /* 칩 · 고르기 묶음 */
+  --bl-ui-touch: 44px;                                /* 누르는 넓이(투명 상자) */
+  --bl-ui-radius: var(--bl-r-sm, 8px);
+  --bl-ui-ink-fa: 12.5px;                             /* 아이콘 글꼴 잉크 */
+  --bl-ui-ink-mask: 16px;                             /* 선 그림 마스크 상자(잉크 ≈ 12.5) */
+  --bl-ui-tab-fs: var(--bl-ts-meta, 13px);
+  --bl-ui-btn-fs: var(--bl-ts-ctl, 14px);
+  --bl-ui-strong: 650;
+  --bl-ui-h-title: 20px;                              /* 창 제목 */
+  --bl-ui-h-sub: 16px;                                /* 절 · 묶음 제목 */
+  --bl-ui-line: var(--salty-line, var(--bl-grey-20));
+  /* 스위치 */
+  --bl-ui-sw-w: 36px;
+  --bl-ui-sw-h: 20px;
+  --bl-ui-sw-knob: 14px;
+  --bl-ui-sw-pad: 3px;
+  --bl-ui-sw-on: var(--salty-accent);
+  --bl-ui-sw-off: var(--bl-check-off, var(--salty-shade-2));
+  /* 고른 항목 · 지금 있는 곳 */
+  --bl-ui-pick-face: var(--bl-selected, var(--salty-tint-18));
+  --bl-ui-pick-ink: var(--salty-accent-ink, var(--salty-accent));
+  /* 판 알약 */
+  --bl-ui-pill-line: var(--salty-line, var(--bl-grey-20));
+  /* 접힘 화살표 선 그림(⌄) — 칸 14 · 잉크 ≈ 12.5 와 같은 무게 */
+  --bl-ui-chev: 14px;
+  --bl-ui-glyph-chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7.5l5 5 5-5'/%3E%3C/svg%3E");
+  /* 닫기 ✕ · 지우기 선 그림 */
+  --bl-ui-glyph-close: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M3 3l14 14M17 3 3 17'/%3E%3C/svg%3E");
+}
+
+/* ---------- 스위치 ---------- */
+/* 길(트랙) */
+html:not(#bl-ui-parts-off) body :is(.cg-switch, .eh-switch, .jj-switch, .bl-hs-switch, .bwr_settings .bwr_switch, .salty-switch > span, .bl-look-switch > span) {
+  width: var(--bl-ui-sw-w) !important; height: var(--bl-ui-sw-h) !important; min-width: var(--bl-ui-sw-w) !important; min-height: var(--bl-ui-sw-h) !important;
+  border-radius: 999px !important; background: var(--bl-ui-sw-off) !important; border: 0 !important;
+}
+/* 메모 모양 창 스위치(.bl-look-switch — 길이 label 안에 inset 0 으로 깔림): 칸도 같은 크기로 */
+html:not(#bl-ui-parts-off) body .bl-look-switch { width: var(--bl-ui-sw-w) !important; height: var(--bl-ui-sw-h) !important; }
+html:not(#bl-ui-parts-off) body .salty-switch > span { top: 50% !important; bottom: auto !important; left: 0 !important; right: auto !important; margin-top: calc(var(--bl-ui-sw-h) / -2) !important; }
+/* 손잡이 */
+html:not(#bl-ui-parts-off) body :is(.cg-switch, .eh-switch, .jj-switch, .bl-hs-switch) > span,
+html:not(#bl-ui-parts-off) body :is(.bwr_settings .bwr_switch, .salty-switch > span, .bl-look-switch > span)::after {
+  top: var(--bl-ui-sw-pad) !important; left: var(--bl-ui-sw-pad) !important; width: var(--bl-ui-sw-knob) !important; height: var(--bl-ui-sw-knob) !important;
+  border-radius: 50% !important; background: var(--bl-knob-face) !important; box-shadow: var(--bl-knob, none) !important;
+}
+/* 켬 */
+html:not(#bl-ui-parts-off) body :is(.cg-switch, .eh-switch, .jj-switch, .bl-hs-switch)[aria-checked="true"],
+html:not(#bl-ui-parts-off) body .bwr_settings input:checked + .bwr_switch,
+html:not(#bl-ui-parts-off) body :is(.salty-switch, .bl-look-switch) > input:checked + span { background: var(--bl-ui-sw-on) !important; box-shadow: none !important; }
+html:not(#bl-ui-parts-off) body :is(.cg-switch, .eh-switch, .jj-switch, .bl-hs-switch)[aria-checked="true"] > span,
+html:not(#bl-ui-parts-off) body .bwr_settings input:checked + .bwr_switch::after,
+html:not(#bl-ui-parts-off) body :is(.salty-switch, .bl-look-switch) > input:checked + span::after { transform: translateX(calc(var(--bl-ui-sw-w) - var(--bl-ui-sw-knob) - 2 * var(--bl-ui-sw-pad))) !important; }
+
+/* ---------- 고른 항목: 옅은 면 + 색 글자 + 체크 ---------- */
+html:not(#bl-ui-parts-off) body :is(
+  .salty-panel :is(.salty-seg button, .salty-fonttags button, .salty-fontempty button, .bl-pick-card, .bl-mix-swatches button).on,
+  .bl-ft-dialog .salty-seg button.on,
+  .bl-look-seg > .bl-look-segbtn.on,
+  .bwr_settings .bwr_seg.active, .bwr_settings .bwr_chip.active,
+  .cg-segmented button.is-active, .cg-chip:is([aria-pressed="true"], .is-on),
+  .eh-segmented button.is-active, .eh-pchip.is-active,
+  .rl-chip[aria-pressed="true"], .ms-chip.on, .ms-option.on,
+  .lv-tag-chip[aria-pressed="true"], .lv-bar-wordchip[aria-pressed="true"], .llmt-remote-chip[aria-pressed="true"],
+  .salty-panel .salty-mode-switch > button:is(.on, [aria-pressed="true"]),
+  .cg-root .cg-view:is(.is-active, [aria-pressed="true"]), .bl-translator-dialog .llmt-gl-scope.active,
+  #fruit-heart-v6 :is(.fh-chip, .fh-sel).on,
+  .bl-lc .bl-lc-chip:is([aria-checked="true"], [aria-pressed="true"]), .bl-lc .salty-seg.bl-lc-cats > button.on
+) {
+  background: var(--bl-ui-pick-face) !important; color: var(--bl-ui-pick-ink) !important;
+  border-color: var(--bl-ui-line) !important; box-shadow: none !important; font-weight: var(--bl-ui-strong) !important; opacity: 1 !important;
+  display: inline-flex !important; flex-direction: var(--bl-ui-pick-direction, row) !important; align-items: center !important; justify-content: center !important; /* 체크가 글자 옆 한 줄(칸이 grid · block 이면 아래 줄로 떨어짐) */
+}
+/* 체크(ㄴ자 2px, 72-pick 과 같은 그림) — 누름 상자가 ::before 인 설정 창 묶음은 ::after, 누름 상자가 ::after 인 애드온 칩은 ::before.
+   설정 창 화면 칩 줄(.bl-screen-chips — 본문 · 대사 · 메뉴 …)은 「지금 있는 곳」을 고르는 탭이라 체크 없이 면 + 색 글자 */
+html:not(#bl-ui-parts-off) body .salty-panel :is(.salty-seg:not(.bl-screen-chips) button, .salty-fonttags button, .salty-fontempty button, .bl-pick-card, .bl-mix-swatches button).on::after,
+html:not(#bl-ui-parts-off) body .bl-ft-dialog .salty-seg button.on::after,
+html:not(#bl-ui-parts-off) body :is(
+  .bl-look-seg > .bl-look-segbtn.on,
+  .bwr_settings .bwr_seg.active, .bwr_settings .bwr_chip.active,
+  .cg-segmented button.is-active, .cg-chip:is([aria-pressed="true"], .is-on),
+  .eh-segmented button.is-active, .eh-pchip.is-active,
+  .rl-chip[aria-pressed="true"], .ms-chip.on, .ms-option.on,
+  .lv-tag-chip[aria-pressed="true"], .lv-bar-wordchip[aria-pressed="true"], .llmt-remote-chip[aria-pressed="true"],
+  .cg-root .cg-view:is(.is-active, [aria-pressed="true"]), .bl-translator-dialog .llmt-gl-scope.active
+)::before,
+/* 로그 복사 시트 칩: 누름 상자가 ::before 라 체크는 ::after(분류 줄 .bl-lc-cats 는 「지금 있는 곳」 탭이라 체크 없음) */
+html:not(#bl-ui-parts-off) body .bl-lc .bl-lc-chip:is([aria-checked="true"], [aria-pressed="true"])::after {
+  content: "" !important; position: var(--bl-ui-pick-check-position, static) !important; display: inline-block !important; flex: none !important; order: 99;
+  box-sizing: border-box; width: 9px !important; height: 5px !important; margin: var(--bl-ui-pick-check-margin, 0 1px 3px 6px) !important; padding: 0 !important; inset: var(--bl-ui-pick-check-inset, auto) !important;
+  border: 0 !important; border-left: 2px solid currentColor !important; border-bottom: 2px solid currentColor !important; border-radius: 0 !important;
+  background: none !important; box-shadow: none !important; transform: rotate(-45deg) !important; -webkit-mask: none !important; mask: none !important;
+  font-size: 0 !important; vertical-align: middle;
+}
+/* 썸네일 카드: 선택해도 그림 위·이름 아래를 유지하고 체크는 오른쪽 위에 둬요. */
+.salty-panel .bl-pick-card {
+  position: relative;
+  --bl-ui-pick-direction: column;
+  --bl-ui-pick-check-position: absolute;
+  --bl-ui-pick-check-inset: 8px 8px auto auto;
+  --bl-ui-pick-check-margin: 0;
+}
+/* 고르기 묶음 · 칩 글자 굵기: 안 고름 400, 고름 650 */
+html:not(#bl-ui-parts-off) body :is(.salty-panel .salty-seg button, .bl-ft-dialog .salty-seg button, .bl-look-seg > .bl-look-segbtn, .bwr_settings .bwr_seg, .cg-segmented button, .eh-segmented button, .rl-chip, .cg-chip, .eh-pchip, .ms-chip, .cg-root .cg-view, .bl-translator-dialog .llmt-gl-scope):not(.on, .active, .is-active, .is-on, [aria-pressed="true"]) { font-weight: 400 !important; }
+/* 고르기 묶음 칸 높이 = 칩 34 */
+html:not(#bl-ui-parts-off) body :is(.bwr_settings .bwr_seg, .cg-segmented button, .eh-segmented button, .bl-look-seg > .bl-look-segbtn) { min-height: var(--bl-ui-chip) !important; }
+/* 라디오 카드(채팅 캡처 가리기 방식): 고른 카드 = 같은 면 · 글자 */
+html:not(#bl-ui-parts-off) body .bl-capture-options .bl-mask-options label:has(> input:checked) { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); border-color: var(--bl-ui-line); font-weight: var(--bl-ui-strong); }
+
+/* ---------- 라디오: 체크 A3 짝 ---------- */
+html:not(#bl-ui-parts-off) body :is(.salty-panel, .bl-capture-options, .bl-tool-dialog, .bl-roomy-dialog, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-mermaid-dialog, #pt-panel, #cg-panel, .bwr_settings, #lv_settings, .po-dialog, .pa-hub, .rl-root, #fruit-heart-v6 .bl-fruit-entry-choice) input[type="radio"] {
+  -webkit-appearance: none !important; appearance: none !important; display: inline-grid !important; place-content: center; flex: none; box-sizing: border-box;
+  width: 20px !important; height: 20px !important; min-width: 20px; min-height: 20px; margin: 0 !important; padding: 0 !important;
+  border: 1px solid var(--bl-ui-line) !important; border-radius: 50% !important; background: transparent !important; box-shadow: none !important; accent-color: auto;
+  cursor: pointer;
+}
+html:not(#bl-ui-parts-off) body :is(.salty-panel, .bl-capture-options, .bl-tool-dialog, .bl-roomy-dialog, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-mermaid-dialog, #pt-panel, #cg-panel, .bwr_settings, #lv_settings, .po-dialog, .pa-hub, .rl-root, #fruit-heart-v6 .bl-fruit-entry-choice) input[type="radio"]::before {
+  content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--salty-accent); transform: scale(0); transition: transform .12s ease;
+}
+html:not(#bl-ui-parts-off) body :is(.salty-panel, .bl-capture-options, .bl-tool-dialog, .bl-roomy-dialog, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-mermaid-dialog, #pt-panel, #cg-panel, .bwr_settings, #lv_settings, .po-dialog, .pa-hub, .rl-root, #fruit-heart-v6 .bl-fruit-entry-choice) input[type="radio"]:checked { border-color: var(--salty-accent) !important; }
+html:not(#bl-ui-parts-off) body :is(.salty-panel, .bl-capture-options, .bl-tool-dialog, .bl-roomy-dialog, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-mermaid-dialog, #pt-panel, #cg-panel, .bwr_settings, #lv_settings, .po-dialog, .pa-hub, .rl-root, #fruit-heart-v6 .bl-fruit-entry-choice) input[type="radio"]:checked::before { transform: scale(1); }
+html:not(#bl-ui-parts-off) body :is(.salty-panel, .bl-capture-options, .bl-tool-dialog, .bl-roomy-dialog, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-mermaid-dialog, #pt-panel, #cg-panel, .bwr_settings, #lv_settings, .po-dialog, .pa-hub, .rl-root, #fruit-heart-v6 .bl-fruit-entry-choice) input[type="radio"]:disabled { opacity: .5; }
+
+/* ---------- 탭: 글자 탭 하나 ---------- */
+html:not(#bl-ui-parts-off) body :is(.lv-tab, .llmt-tab, .bwr_settings .bwr_tab, .pa-hub-tab, .rl-tab, .pt-tab, .po-menu-tabs > button, #pt-panel .pt-settings-nav > button, .pt-help-dialog > nav > button, #bl-deus-popover .dq-tabs > button, .jj-seg[role="tablist"] > button) {
+  display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important; gap: 6px !important;
+  box-sizing: border-box !important; min-height: var(--bl-ui-ctl) !important; height: var(--bl-ui-ctl) !important; margin: 0 !important; padding: 0 10px !important;
+  border: 1px solid var(--bl-ui-line) !important; border-radius: var(--bl-ui-radius) !important; background: var(--bl-hover, var(--salty-shade)) !important;
+  color: var(--salty-muted) !important; box-shadow: none !important; opacity: 1 !important;
+  font-size: var(--bl-ui-tab-fs) !important; font-weight: 400 !important; line-height: 1.35 !important; white-space: nowrap !important; word-break: keep-all;
+}
+html:not(#bl-ui-parts-off) body :is(.lv-tab, .llmt-tab, .bwr_settings .bwr_tab, .pa-hub-tab, .rl-tab, .pt-tab, .po-menu-tabs > button, #pt-panel .pt-settings-nav > button, .pt-help-dialog > nav > button, #bl-deus-popover .dq-tabs > button, .jj-seg[role="tablist"] > button) > i { font-size: var(--bl-ui-ink-fa) !important; margin: 0 !important; line-height: 1 !important; }
+html:not(#bl-ui-parts-off) body :is(.lv-tab, .llmt-tab, .bwr_settings .bwr_tab, .pa-hub-tab, .rl-tab, .pt-tab, .po-menu-tabs > button, #pt-panel .pt-settings-nav > button, .pt-help-dialog > nav > button, #bl-deus-popover .dq-tabs > button, .jj-seg[role="tablist"] > button):is(.active, [aria-pressed="true"], [aria-selected="true"]) {
+  background: var(--bl-ui-pick-face) !important; color: var(--bl-ui-pick-ink) !important; border-color: var(--bl-ui-line) !important; font-weight: var(--bl-ui-strong) !important;
+}
+/* 탭 안 숫자 배지는 글자 뒤 흐름 안(겹치지 않게) — 다시 쓰기 「금지 묘사 11」 */
+html:not(#bl-ui-parts-off) body .bwr_settings .bwr_tab > span:not(.bwr_badge) { overflow: visible !important; text-overflow: clip !important; max-width: none !important; }
+html:not(#bl-ui-parts-off) body .bwr_settings .bwr_tab .bwr_badge { position: static !important; inset: auto !important; flex: none !important; margin: 0 !important; }
+html:not(#bl-ui-parts-off) body .bwr_settings .bwr_tab { flex: 1 0 auto !important; min-width: max-content !important; }
+
+/* ---------- 판 알약: 75-version-pill 의 공용 알약과 같은 값(설정 창 애드온 머리 · 애드온 창 머리) ---------- */
+/* (규칙 본체는 75-version-pill.css 한 곳 — 거기 목록에 .bl-addon-ver · dialog 머리 알약을 더했다) */
+
+/* ---------- 닫기 ✕: 설정 창 닫기와 같은 선 그림 · 상자 없음 ---------- */
+html:not(#bl-ui-parts-off) body.salty :is(
+  :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog) > header > button:last-child,
+  #pt-panel #pt-panel-close, #cg-panel .cg-icon-btn[data-act="close"], #bl-deus-popover .dq-close, .bls-panel-head > [data-bls-close], #fruit-heart-v6 .fh-close,
+  dialog.popup:not(.bl-settings-dialog) > .popup-button-close
+) {
+  position: relative; display: inline-block; width: var(--bl-ui-icon) !important; height: var(--bl-ui-icon) !important; min-width: var(--bl-ui-icon) !important; min-height: var(--bl-ui-icon) !important;
+  padding: 0 !important; border: 0 !important; border-radius: var(--bl-ui-radius) !important; background: transparent !important; box-shadow: none !important;
+  color: var(--salty-text) !important; -webkit-text-fill-color: transparent !important; font-size: 0 !important; line-height: 0 !important; text-shadow: none !important; filter: none !important;
+}
+html:not(#bl-ui-parts-off) body.salty :is(
+  :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog) > header > button:last-child,
+  #pt-panel #pt-panel-close, #cg-panel .cg-icon-btn[data-act="close"], #bl-deus-popover .dq-close, .bls-panel-head > [data-bls-close], #fruit-heart-v6 .fh-close,
+  dialog.popup:not(.bl-settings-dialog) > .popup-button-close
+) > * { visibility: hidden !important; }
+html:not(#bl-ui-parts-off) body.salty :is(
+  :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog) > header > button:last-child,
+  #pt-panel #pt-panel-close, #cg-panel .cg-icon-btn[data-act="close"], #bl-deus-popover .dq-close, .bls-panel-head > [data-bls-close], #fruit-heart-v6 .fh-close,
+  dialog.popup:not(.bl-settings-dialog) > .popup-button-close
+)::before {
+  content: "" !important; position: absolute !important; inset: 0 !important; margin: auto !important; display: block !important;
+  width: var(--bl-ui-ink-mask) !important; height: var(--bl-ui-ink-mask) !important; background: currentColor !important;
+  -webkit-mask: var(--bl-ui-glyph-close) center / contain no-repeat !important; mask: var(--bl-ui-glyph-close) center / contain no-repeat !important;
+  font-size: 0 !important; pointer-events: none;
+}
+/* 출처 창 · 한글화 사용방법 창 ✕ 도 같은 크기(56 의 14 → 16) */
+html:not(#bl-ui-parts-off) body :is(.bl-credits-dialog > header > button, .pt-help-dialog > header > button) { --bl-glyph-size: var(--bl-ui-ink-mask) !important; }
+/* 채팅 캡처 「숨길 이름」 줄의 지우기 × — 볼록한 회색 단추 대신 같은 선 그림(입력칸 옆 아이콘 단추 · 상자 없음) */
+html:not(#bl-ui-parts-off) body .bl-name-row > button[data-capture-remove] {
+  position: relative; flex: 0 0 var(--bl-ui-icon) !important; width: var(--bl-ui-icon) !important; min-width: var(--bl-ui-icon) !important; height: var(--bl-ui-ctl) !important; min-height: var(--bl-ui-ctl) !important;
+  padding: 0 !important; border: 0 !important; border-radius: var(--bl-ui-radius) !important; background: transparent !important; box-shadow: none !important; outline-offset: -1px;
+  color: var(--salty-muted) !important; -webkit-text-fill-color: transparent !important; font-size: 0 !important;
+}
+html:not(#bl-ui-parts-off) body .bl-name-row > button[data-capture-remove]::before {
+  content: ""; position: absolute; inset: 0; margin: auto; width: var(--bl-ui-ink-mask); height: var(--bl-ui-ink-mask); background: currentColor;
+  -webkit-mask: var(--bl-ui-glyph-close) center / contain no-repeat; mask: var(--bl-ui-glyph-close) center / contain no-repeat; pointer-events: none;
+}
+
+/* ---------- 아이콘만 단추: 34 · 모서리 8 · 상자 없음 · 잉크 하나 ---------- */
+html:not(#bl-ui-parts-off) body :is(.po-dialog :is(.po-pin, .po-move, button.po-hide), .llmt-card-head :is(.llmt-head-action, .rule-prompt-editor-button), .llmt-settings .menu_button.small-button:not(:has(> span)), .llmt-gl-icon:not(.llmt-gl-chip .llmt-gl-icon), .jj-stepper > button, .cg-stepper > button, .jj-prompt-actions > .jj-pbtn-icon, :is(#jj-popup, #jj-settings) .jj-tr-btn, #cg-panel .cg-icon-btn:not([data-act="close"]), .cg-root .cg-icon-btn:not([data-act="close"]), .pa-hub-open, #lv_settings .lv-icon, #model-switch-settings :is(.ms-pull, .ms-icon), .eh-icon-btn:not(.eh-icon-btn--labeled), .bwr_settings .bwr_delete, .salty-panel .bl-favorite-toggle, .salty-panel .salty-btn.salty-btn-icon:not([data-health-check]), .bl-mermaid-again, .salty-panel .bl-ss-btn, #model-switch-settings .ms-actions > :is(.ms-invert, .ms-snap)) {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important; flex: none !important;
+  box-sizing: border-box !important; width: var(--bl-ui-icon) !important; height: var(--bl-ui-icon) !important; min-width: var(--bl-ui-icon) !important; min-height: var(--bl-ui-icon) !important;
+  padding: 0 !important; border: 0 !important; border-radius: var(--bl-ui-radius) !important; background: transparent !important; box-shadow: none !important;
+}
+html:not(#bl-ui-parts-off) body :is(.po-dialog :is(.po-pin, .po-move, button.po-hide), .llmt-card-head :is(.llmt-head-action, .rule-prompt-editor-button), .llmt-settings .menu_button.small-button:not(:has(> span)), .llmt-gl-icon:not(.llmt-gl-chip .llmt-gl-icon), .jj-stepper > button, .cg-stepper > button, .jj-prompt-actions > .jj-pbtn-icon, :is(#jj-popup, #jj-settings) .jj-tr-btn, #cg-panel .cg-icon-btn:not([data-act="close"]), .cg-root .cg-icon-btn:not([data-act="close"]), .pa-hub-open, #lv_settings .lv-icon, #model-switch-settings :is(.ms-pull, .ms-icon), .eh-icon-btn:not(.eh-icon-btn--labeled), .bwr_settings .bwr_delete, .salty-panel .bl-favorite-toggle, .salty-panel .salty-btn.salty-btn-icon:not([data-health-check]), .bl-mermaid-again, .salty-panel .bl-ss-btn, #model-switch-settings .ms-actions > :is(.ms-invert, .ms-snap)) > i { font-size: var(--bl-ui-ink-fa) !important; line-height: 1 !important; translate: 0 .06em; }
+
+/* 1.0.0 아이콘 잉크 가운데: 크롬은 Font Awesome 의 위 · 아래 높이(459/75 · 512)를 정수 화소로 반올림해 줄 높이 1 상자 안 글리프를 0.06em(12.5px 에서 약 0.75px) 위에 그려요
+   — 상자는 가운데인데 아이콘만 떠 보이던 것(모델 전환 · TTS · 캐릭터 에셋 · 다시 쓰기 · 설정 즐겨찾기 아이콘 −0.95~−1.5px). 아래로 0.06em 만 옮겨요(상자 · 크기 그대로).
+   공용 목록 단추는 위 「> i」 규칙에 같이 두고(:has 든 목록을 다시 쓰지 않으려고), 부품 목록 밖 아이콘만 단추(메모 창 · 미리보기 돋보기 · 프롬프트 템플릿)는 여기서. 꺾쇠 · 화살촉은 글리프가 원래 아래로 치우쳐 빼요. */
+html:not(#bl-ui-parts-off) body :is(.bl-notes-dialog .bl-note-btn, .salty-panel .bl-view-toggle, .blpt .blpt-btn) > i:not(.fa-chevron-down, .fa-chevron-up, .fa-chevron-left, .fa-chevron-right, .fa-angle-down, .fa-angle-up, .fa-caret-down, .fa-caret-up, .fa-caret-right) { translate: 0 .06em; }
+
+/* ---------- 글자 단추: 글자 한 단계 · 굵기 400 ---------- */
+html:not(#bl-ui-parts-off) body :is(.salty-panel .salty-btn:not(.salty-btn-icon, .primary, .salty-primary), .salty-panel .bl-editor-choose, .salty-panel .bl-link-mini, .bl-translator-dialog :is(.llmt-gl-extract, .llmt-gl-sort), .bl-assets-dialog .eh-btn:not(.eh-btn--primary), #char_assets_settings .eh-btn:not(.eh-btn--primary),
+  :is(#lv_settings, .llmt-settings, .po-dialog, #model_register_settings, #model-switch-settings, .pa-hub, .rl-root, #regex-link-settings, .bl-embedded-settings, .pa-hub-storage) .menu_button:not(.primary, .ms-apply, .popup-controls *, [class*="-tab"]), #pt-panel :is(.pt-btn, .pt-ui-button, .pt-btn-icon)) {
+  font-size: var(--bl-ui-btn-fs) !important; font-weight: 400 !important;
+}
+
+/* ---------- 빈 알약 · 배지: 글자가 없으면 그리지 않음 ---------- */
+html:not(#bl-ui-parts-off) body :is(#pt-panel .pt-info-chip, .bwr_settings .bwr_badge, .rl-root .rl-badge, .cg-root .cg-count):empty { display: none !important; }
+
+/* ---------- 누르는 넓이 44: 보이는 칸을 줄인 곳(89 의 옛 44 칸)의 투명 상자 — 손가락 화면 ---------- */
+@media (pointer: coarse) {
+  :where(.po-dialog button.po-hide, #pt-panel :is(.pt-btn, .pt-btn-icon, [data-setting-tab]), #model-switch-settings .ms-expand, #model_register_settings .mr-handle, .bl-translator-dialog .llmt-gl-icon) { position: relative; }
+  html:not(#bl-ui-parts-off) body :is(.po-dialog button.po-hide, #pt-panel :is(.pt-btn, .pt-btn-icon, [data-setting-tab]), #model-switch-settings .ms-expand, #model_register_settings .mr-handle, .bl-translator-dialog .llmt-gl-icon)::after {
+    content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--bl-ui-touch)); height: max(100%, var(--bl-ui-touch)); transform: translate(-50%, -50%);
+    background: none; border: 0; box-shadow: none;
+  }
+}
+
+/* ---------- 접힘 머리(details > summary): 36 · 본문 글자 · 오른쪽 화살표 하나(선 그림 ⌄ 14 · 보조색, 펼치면 뒤집힘) ----------
+   화살표 그림은 가짜 요소 하나 — 누름 상자(86/87)가 ::before 인 곳(설정 창 · 에셋 사용법)은 ::after, ::after 인 곳(애드온 창)은 ::before.
+   실리태번 기본 ▸ · 글자 ⌄ · 안쪽 화살표 아이콘(chevron · angle · caret)은 숨겨요. 메뉴로 쓰는 ⋯ 접힘 · 로그 본문 접힘은 빼요 */
+html:not(#bl-ui-parts-off) body :is(.salty-panel, .bl-tool-dialog, .bl-roomy-dialog, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-mermaid-dialog, #pt-panel, #cg-panel, .cg-root, .bwr_settings, #lv_settings, .po-dialog, .pa-hub, .rl-root, #char_assets_settings, .jj-settings-body, #bl-deus-popover, #fruit-heart-v6, .bls-panel, .llmt-settings, #model_register_settings, #model-switch-settings, #regex-link-settings) details:not(.bl-wi-actions, .pt-more-actions, .rl-msg, .rl-pricing-preview, .salty-style-more, :is(.salty-prevbox, .bl-md-preview, .mes_text) *) > summary {
+  position: relative !important; display: flex !important; flex-wrap: wrap; align-items: center !important; column-gap: 8px;
+  box-sizing: border-box; min-height: var(--bl-ui-ctl) !important; padding-inline-end: 28px !important; list-style: none !important;
+  font-size: var(--bl-fs-body, 15px) !important; font-weight: 400 !important; line-height: 1.4 !important; cursor: pointer;
+}
+html:not(#bl-ui-parts-off) body :is(.salty-panel, .bl-tool-dialog, .bl-roomy-dialog, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-mermaid-dialog, #pt-panel, #cg-panel, .cg-root, .bwr_settings, #lv_settings, .po-dialog, .pa-hub, .rl-root, #char_assets_settings, .jj-settings-body, #bl-deus-popover, #fruit-heart-v6, .bls-panel, .llmt-settings, #model_register_settings, #model-switch-settings, #regex-link-settings) details:not(.bl-wi-actions, .pt-more-actions, .rl-msg, .rl-pricing-preview, .salty-style-more, :is(.salty-prevbox, .bl-md-preview, .mes_text) *) > summary::-webkit-details-marker { display: none !important; }
+html:not(#bl-ui-parts-off) body :is(.salty-panel, .bl-tool-dialog, .bl-roomy-dialog, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-mermaid-dialog, #pt-panel, #cg-panel, .cg-root, .bwr_settings, #lv_settings, .po-dialog, .pa-hub, .rl-root, #char_assets_settings, .jj-settings-body, #bl-deus-popover, #fruit-heart-v6, .bls-panel, .llmt-settings, #model_register_settings, #model-switch-settings, #regex-link-settings) details:not(.bl-wi-actions, .pt-more-actions, .rl-msg, .rl-pricing-preview, .salty-style-more, :is(.salty-prevbox, .bl-md-preview, .mes_text) *) > summary i:is(.fa-chevron-down, .fa-chevron-up, .fa-chevron-right, .fa-angle-down, .fa-caret-down, .fa-caret-right) { display: none !important; }
+/* 화살표 — 설정 창 · 에셋 사용법 · 데우스: ::after */
+html:not(#bl-ui-parts-off) body :is(.salty-panel details:not(.salty-style-more, :is(.salty-prevbox, .bl-md-preview, .mes_text) *), .eh-guide, #bl-deus-popover details, #fruit-heart-v6 details, .bls-panel details) > summary::after,
+/* 애드온 창: ::before */
+html:not(#bl-ui-parts-off) body :is(.bl-tool-dialog, .bl-roomy-dialog, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-mermaid-dialog, #pt-panel, #cg-panel, .cg-root, .bwr_settings, #lv_settings, .po-dialog, .pa-hub, .rl-root, #char_assets_settings, .jj-settings-body, .llmt-settings, #model_register_settings, #model-switch-settings, #regex-link-settings) details:not(.bl-wi-actions, .pt-more-actions, .rl-msg, .rl-pricing-preview, .eh-guide) > summary::before {
+  content: "" !important; position: absolute !important; left: auto !important; right: 8px !important; top: 50% !important; bottom: auto !important; display: block !important;
+  box-sizing: border-box; width: var(--bl-ui-chev) !important; height: var(--bl-ui-chev) !important; min-width: 0 !important; min-height: 0 !important; margin: calc(var(--bl-ui-chev) / -2) 0 0 !important; padding: 0 !important;
+  border: 0 !important; border-radius: 0 !important; background: var(--salty-muted) !important; box-shadow: none !important; font-size: 0 !important; opacity: 1 !important;
+  -webkit-mask: var(--bl-ui-glyph-chev) center / contain no-repeat !important; mask: var(--bl-ui-glyph-chev) center / contain no-repeat !important;
+  transform: none !important; transition: transform .15s ease; pointer-events: none;
+}
+html:not(#bl-ui-parts-off) body :is(.salty-panel details:not(.salty-style-more, :is(.salty-prevbox, .bl-md-preview, .mes_text) *), .eh-guide, #bl-deus-popover details, #fruit-heart-v6 details, .bls-panel details)[open] > summary::after,
+html:not(#bl-ui-parts-off) body :is(.bl-tool-dialog, .bl-roomy-dialog, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-mermaid-dialog, #pt-panel, #cg-panel, .cg-root, .bwr_settings, #lv_settings, .po-dialog, .pa-hub, .rl-root, #char_assets_settings, .jj-settings-body, .llmt-settings, #model_register_settings, #model-switch-settings, #regex-link-settings) details[open]:not(.bl-wi-actions, .pt-more-actions, .rl-msg, .rl-pricing-preview, .eh-guide) > summary::before {
+  transform: rotate(180deg) !important;
+}
+
+/* ---------- 제목: 절 · 묶음 제목 16/650 하나(창 제목 20/650) — 글자 단계 4개(철칙 §14) ---------- */
+html:not(#bl-ui-parts-off) body :is(.salty-panel, .bl-tool-dialog, .bl-roomy-dialog, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-mermaid-dialog, #pt-panel, #cg-panel, .cg-root, .bwr_settings, #lv_settings, .po-dialog, .pa-hub, .rl-root, #char_assets_settings, .jj-settings-body, #bl-deus-popover, .llmt-settings, #model_register_settings, #model-switch-settings, #regex-link-settings) :is(h3, h4, h5):not(.pa-hub-title, #pt-panel-header > h3, .po-title, dialog > header > h3) {
+  font-size: var(--bl-ui-h-sub) !important; font-weight: var(--bl-ui-strong) !important;
+}
+html:not(#bl-ui-parts-off) body :is(.bls-panel-body, .bl-credits-dialog, #fruit-heart-v6) :is(h2, h3, h4, h5) { font-size: var(--bl-ui-h-sub) !important; font-weight: var(--bl-ui-strong) !important; }
+/* 저장 공간 · 점검 도구 창 머리 제목은 다른 애드온 창 머리(85: 메뉴 글자 · 650)와 같게 */
+html:not(#bl-ui-parts-off) body .bls-panel-head h2 { font-size: var(--bl-ts-ui, 15px) !important; font-weight: var(--bl-ui-strong) !important; }
+
+/* ---------- 이름 없는 색 섞기 → 팔레트 변수(전수조사 #19) ----------
+   애드온이 글자색 · 포인트색을 몇 % 씩 섞어 만든 면 · 선 · 흐린 글자를 같은 역할의 팔레트 이름으로(19-extwindows 와 같은 방식 — 애드온 변수만 바꿈, 규칙은 그대로).
+   면: 옅은 면 --salty-shade(글자 6%) · 진한 면 --salty-shade-2(11%) · 선: --salty-line · 흐린 글자: --salty-muted · 고른 면: --bl-ui-pick-face */
+html:not(#bl-ui-parts-off) body.salty .bwr_settings {
+  --bwr-tint: var(--salty-shade); --bwr-well: var(--salty-shade-2); --bwr-track: var(--bl-ui-sw-off); --bwr-accent-soft: var(--bl-ui-pick-face);
+}
+html:not(#bl-ui-parts-off) body.salty :is(.jj-settings, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, #jj-popup) {
+  --jj-card: var(--salty-shade); --jj-border: var(--bl-ui-line); --jj-line: var(--bl-ui-line); --jj-muted: var(--salty-muted);
+}
+html:not(#bl-ui-parts-off) body.salty :is(.jj-settings, .bl-direction-dialog) .jj-status:not(.is-on, .on, [data-on="1"]) { background: var(--bl-card, var(--salty-surface)) !important; }
+html:not(#bl-ui-parts-off) body.salty :is(.lv-settings, .lv-editor, .lv-bar, .lv-namevoice) {
+  --lv-dim: var(--salty-muted); --lv-fill: var(--salty-shade); --lv-fill-hover: var(--salty-shade-2);
+}
+html:not(#bl-ui-parts-off) body.salty .cg-root {
+  --cg-muted: var(--salty-muted); --cg-faint: var(--salty-faint); --cg-hover: var(--salty-shade); --cg-accent-soft: var(--bl-ui-pick-face); --cg-accent-text: var(--bl-ui-pick-ink);
+}
+html:not(#bl-ui-parts-off) body.salty .po-dialog .po-item { background: var(--salty-shade) !important; }
+html:not(#bl-ui-parts-off) body.salty .cg-root :is(.cg-segmented, .cg-stepper) { background: var(--salty-shade) !important; }
+html:not(#bl-ui-parts-off) body.salty #lv_settings .lv-icon:not(:hover) { background: transparent !important; border-color: transparent !important; }
+
+/* ---------- 채팅 안 프리셋 상태창(데우스 V3 「DEM Active Modules」 등) 접힘 화살표도 같은 선 그림 ----------
+   정규식(사용자 것)이 summary::after 에 글자 「▸」(.8em ≈ 잉크 6~7px)를 그려 너무 작았다 — 글자 대신 공용 ⌄ 선 그림 14 · 보조색, 펼치면 뒤집힘.
+   정규식은 고치지 않고 테마 CSS 로만 덮어요. 테마 DEM 스킨 카드의 삼각형(.custom-dem-card__caret)도 같은 그림 */
+html:not(#bl-ui-parts-off) body.salty :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-modules__body > .custom-dem-card, .custom-dem-charpage__head) > summary::after,
+html:not(#bl-ui-parts-off) body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-card__caret {
+  content: "" !important; display: inline-block !important; flex: none !important; box-sizing: border-box;
+  width: var(--bl-ui-chev) !important; height: var(--bl-ui-chev) !important; margin: 0 !important; padding: 0 !important;
+  border: 0 !important; background: var(--salty-muted) !important; color: transparent !important; font-size: 0 !important;
+  -webkit-mask: var(--bl-ui-glyph-chev) center / contain no-repeat !important; mask: var(--bl-ui-glyph-chev) center / contain no-repeat !important;
+  transform: none !important;
+}
+html:not(#bl-ui-parts-off) body.salty :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-modules__body > .custom-dem-card, .custom-dem-charpage__head)[open] > summary::after,
+html:not(#bl-ui-parts-off) body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details[open] > summary .custom-dem-card__caret {
+  transform: rotate(180deg) !important;
+}
+/* 「DEM Active Modules」 안 카드 테두리가 왼쪽만 남아 반쯤 잘린 괄호처럼 보이던 것(10-31 사용자 사진): 05-chat 의 「프리셋 카드는 위 · 오른쪽 · 아래 테 투명, 왼쪽 색 띠만」
+   (굵은 왼쪽 띠를 가진 옛 DEM 카드용)이 V3 묶음 안 카드(테 1px 한 겹 · 둥근 모서리 14)에도 걸려 1px 왼쪽 선과 모서리 곡선만 보였어요 — 묶음 안 카드는 네 변 같은 1px 선(이름 있는 팔레트 색) */
+html:not(#bl-ui-parts-off) body.salty :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules details[class*="custom-dem-card"] {
+  border: 1px solid var(--salty-accent-28, var(--bl-ui-line)) !important;
+}
+
+/* ---------- 과일의 마음 창(프리셋이 그리는 빠른 패널) — 85-addon-unify 와 같은 세 겹 ID 로 공용 부품을 덮어요(프리셋 CSS 가 ID 를 겹쳐 써서) ---------- */
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-close {
+  position: relative !important; width: var(--bl-ui-icon) !important; height: var(--bl-ui-icon) !important; min-width: var(--bl-ui-icon) !important; min-height: var(--bl-ui-icon) !important;
+  padding: 0 !important; border: 0 !important; border-radius: var(--bl-ui-radius) !important; background: transparent !important; box-shadow: none !important;
+  color: var(--salty-text) !important; -webkit-text-fill-color: transparent !important; font-size: 0 !important; line-height: 0 !important;
+}
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-close::before {
+  content: "" !important; position: absolute !important; inset: 0 !important; margin: auto !important; display: block !important;
+  width: var(--bl-ui-ink-mask) !important; height: var(--bl-ui-ink-mask) !important; background: currentColor !important;
+  -webkit-mask: var(--bl-ui-glyph-close) center / contain no-repeat !important; mask: var(--bl-ui-glyph-close) center / contain no-repeat !important;
+}
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(.fh-chip, .fh-sel, .fh-nav-item, .fh-btn:not(.solid, .danger), .fh-seg > button).on {
+  background: var(--bl-ui-pick-face) !important; color: var(--bl-ui-pick-ink) !important; border-color: var(--bl-ui-line) !important; box-shadow: none !important; font-weight: var(--bl-ui-strong) !important;
+}
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) details > summary {
+  position: relative !important; display: flex !important; align-items: center !important; min-height: var(--bl-ui-ctl) !important; padding-inline-end: 28px !important;
+  list-style: none !important; font-size: var(--bl-fs-body, var(--mainFontSize, 15.5px)) !important; font-weight: 400 !important;
+}
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) details > summary::before { content: none !important; display: none !important; } /* 과일 쪽 「▸」 글자 꺾쇠(10px) — 공용 ⌄ 하나만 */
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) details > summary::-webkit-details-marker { display: none !important; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) details > summary::after {
+  content: "" !important; position: absolute !important; right: 8px !important; left: auto !important; top: 50% !important; display: block !important;
+  width: var(--bl-ui-chev) !important; height: var(--bl-ui-chev) !important; margin: calc(var(--bl-ui-chev) / -2) 0 0 !important; border: 0 !important;
+  background: var(--salty-muted) !important; font-size: 0 !important; transform: none !important;
+  -webkit-mask: var(--bl-ui-glyph-chev) center / contain no-repeat !important; mask: var(--bl-ui-glyph-chev) center / contain no-repeat !important;
+}
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) details[open] > summary::after { transform: rotate(180deg) !important; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(h2, h3, h4) { font-size: var(--bl-ui-h-sub) !important; font-weight: var(--bl-ui-strong) !important; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(.fh-btn, .fh-theme, .fh-header-meta button, .bl-fruit-entry-choice button) { font-size: var(--bl-ui-btn-fs) !important; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .bl-fruit-entry-choice input[type="radio"] {
+  -webkit-appearance: none !important; appearance: none !important; display: inline-grid !important; place-content: center; flex: none; box-sizing: border-box;
+  width: 20px !important; height: 20px !important; margin: 0 !important; padding: 0 !important; border: 1px solid var(--bl-ui-line) !important; border-radius: 50% !important; background: transparent !important; box-shadow: none !important;
+}
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .bl-fruit-entry-choice input[type="radio"]::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--salty-accent); transform: scale(0); }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .bl-fruit-entry-choice input[type="radio"]:checked { border-color: var(--salty-accent) !important; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .bl-fruit-entry-choice input[type="radio"]:checked::before { transform: scale(1); }
+/* 11-01 화면 점검: 과일의 마음 입력칸 39 · 같은 줄 「추가」 39 · 고르기 칸(.fh-sel) 38 · 칩 · 단어 칩 38 → 크기표(입력 · 글자 단추 36, 칩 34). QR 머리의 작은 꼬리표(.fh-qr-head > .fh-tag)는 칩이 아니라 빼요 */
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(input[type="text"], input[type="search"], input[type="number"], select, .fh-sel, .fh-tagadd > .fh-btn) { box-sizing: border-box !important; height: var(--bl-ui-ctl) !important; min-height: var(--bl-ui-ctl) !important; padding-block: 0 !important; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(.fh-chip, .fh-tag:not(.fh-qr-head > .fh-tag)) { min-height: var(--bl-ui-chip) !important; padding-block: 0 !important; }
+/* 데우스 빠른 설정 「상태창 글자 설정」 바로가기(.bl-ft-shortcut): 생 회색 면 · 선(#8882 · #8885) → 글자 단추 면 · 선, 글자 한 단계 */
+html:not(#bl-ui-parts-off) body .bl-ft-shortcut, :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .bl-ft-shortcut { background: var(--bl-control, var(--salty-shade)) !important; border: 1px solid var(--bl-ui-line) !important; font-size: var(--bl-ui-btn-fs) !important; font-weight: 400 !important; }
+
+/* ---------- 입력칸 보이는 높이 36: 따로 키우던 칸(채팅 캡처 도구 칸 44 · 가림 숫자 칸 39 · 데우스 글 칸 38 · 과일의 마음 찾기 · 고르기 39) ---------- */
+html:not(#bl-ui-parts-off) body :is(.bl-tool-field, .bl-mask-number-head, #bl-deus-popover .dq-row) > :is(input:not([type="range"], [type="checkbox"], [type="radio"], [type="color"]), select) {
+  height: var(--bl-ui-ctl) !important; min-height: var(--bl-ui-ctl) !important; box-sizing: border-box !important; padding-block: 0 !important;
+}
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(.fh-search input, .bl-fruit-qr-display select) {
+  height: var(--bl-ui-ctl) !important; min-height: var(--bl-ui-ctl) !important; box-sizing: border-box !important; padding-block: 0 !important;
+}
+/* 캐릭터 에셋 프리셋 칩(role=tab)도 글자 탭 글자 */
+html:not(#bl-ui-parts-off) body .eh-pchip { font-size: var(--bl-ui-tab-fs) !important; min-height: var(--bl-ui-ctl) !important; height: var(--bl-ui-ctl) !important; }

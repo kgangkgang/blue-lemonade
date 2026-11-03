@@ -105,9 +105,17 @@ await test('연결: 첫 실행 맨 앞 장 · 업데이트 사용자는 index.js
     assert.match(index, /s\.compat\?\.muteCustomCss \|\| !String\(SillyTavern\.getContext\(\)\.powerUserSettings\?\.custom_css \|\| ''\)\.trim\(\)\) return;/, '조건이 안 맞으면 모듈을 받지 않는다');
     const css = read('css/80-first-run.css');
     assert.ok(css.includes('.bl-first-run .bl-fr-choice {') && css.includes('min-height: 44px'));
-    assert.ok(read('style.css').includes('.bl-first-run .bl-fr-choice'), 'style.css 빌드에 들어감');
+    assert.ok((read('style.css') + (fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? fs.readFileSync(path.join(root, 'src/style-lazy.gen.css'), 'utf8') : '')).includes('.bl-first-run .bl-fr-choice'), 'style.css 빌드에 들어감(1.0.0 두 장: 둘째 장)');
+    assert.match(read('src/first-run.js'), /splitCssReady\(\)/, '첫 실행 창을 열기 전에 둘째 장을 붙여요');
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/first-run-css\.mjs \./);
 });
 
 console.log(`first-run-css: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
+{
+    // 첫 실행 안내가 없어진 화면을 가리키지 않아요: 「그대로 두기」의 길은 채팅 › 기타 › 다른 CSS 예요
+    const text = fs.readFileSync(path.join(process.argv[2] || '.', 'src/first-run.js'), 'utf8');
+    assert.doesNotMatch(text, /자주 묻는 질문/);
+    assert.match(text, /글자가 깨지면 설정 창 채팅 › 기타 › 다른 CSS 에서 고칠 수 있어요/);
+    console.log('PASS 첫 실행 안내가 있는 화면을 가리켜요');
+}

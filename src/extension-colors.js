@@ -1,3 +1,4 @@
+import { watchDom } from './dom-watch.js';
 // Opt out of our UI color overrides without changing another extension's settings,
 // inline styles, class-based panel-order keys, or layout rules.
 const MARKER = 'data-bl-native-ext-colors';
@@ -130,7 +131,7 @@ export function syncExtensionColors(enabled, offList = []) {
     if (enabled === active) return;
     active = enabled;
     if (!enabled) {
-        observer?.disconnect(); observer = null;
+        observer?.(); observer = null;
         if (pending !== null) clearTimeout(pending);
         pending = null;
         for (const root of marked) root.removeAttribute(MARKER);
@@ -139,7 +140,8 @@ export function syncExtensionColors(enabled, offList = []) {
     }
     collectForeign(document.body);
     refresh();
-    observer = new MutationObserver(records => {
+    // 9.0.4: 공용 감시 허브 구독 — 채팅(#chat) 가지는 아예 안 봐요(SKIP_TREE 첫째 · 스트리밍 메시지가 확장 설정을 다시 훑지 않게)
+    observer = watchDom(document.body, { childList: true, subtree: true, attributes: ['class', 'id'], exclude: '#chat', name: '확장 색 지키기' }, records => {
         let dirty = false;
         for (const record of records) {
             // A streamed message must not rescan the extension settings or CSS.
@@ -165,5 +167,4 @@ export function syncExtensionColors(enabled, offList = []) {
         }
         if (dirty) schedule();
     });
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'id'] });
 }

@@ -1,5 +1,9 @@
-// 5.7.0 새 버전 알림 · 업데이트 창 (사용자: 실리태번 헬퍼처럼 업데이트가 있으면 확장 목록에서 바로 보이게 —
+// 5.7.0 새 버전 알림 · 업데이트 창 (실리태번 헬퍼처럼 업데이트가 있으면 확장 목록에서 바로 보이게 —
 //   버전 알약을 노랗게 빛나게 하고, 누르면 '새 버전이 나왔어요 · 업데이트할까요?' 와 바뀐 내역)
+// 1.0.0 바탕: 9.0.0 정리에서 걷었던 것을 되살려요. 시작 그래프 밖 — 판 알약(version-pill.js)이 부팅 8초 뒤에 받아요.
+//   판 비교는 (계열, 판) 짝(src/version-series.js): 원격 manifest 의 bl_series 를 같이 읽어 「s2:1.0.0」 꼴로 들고,
+//   1.0.0(계열 2) 이 8.2.5(계열 1) 보다 새 판이에요. 공지(release-notes.json) 항목도 series 칸(없으면 계열 1)으로 견줘요.
+//   설정 창 「테마 › 업데이트」 상자 · 맨 위 한 줄은 되살리지 않았어요 — 알약 · 업데이트 창 · 공지 창의 자동 확인 스위치만.
 //
 // 확인: 6시간에 한 번 GitHub 의 manifest.json(365 B)만 받아 버전을 비교한다 (설정 updateCheck — 기본 켬; 끄면 업데이트 탭의 버튼을 누를 때만).
 //   결과는 이 브라우저의 localStorage(bl_update_check)에 — 새로고침 · 탭 전환마다 다시 묻지 않는다. 못 받으면 조용히 (다음 기회에).
@@ -16,29 +20,33 @@
 //     설치가 안 되면 백업을 제자리로 되돌린다. 설정 · 대화 · 그림은 설치 폴더 밖(settings.json · chats · user)이라 그대로.
 //     옮기기는 관리자만 (실리태번 단독 사용자는 관리자) — 아니거나 공용(전역)으로 깐 ZIP 이면 ZIP 받기 링크.
 //   끝나면 '새로고침' 단추 (새 파일은 새로고침해야 돈다).
-import { loadVersion, currentVersion, compareVersions } from './notice.js';
+import { loadVersion, currentVersion, currentRelease } from './notice.js';
 import { getSettings } from './settings.js';
-import { installationFrom } from './theme-update.js';
+import { compareRelease, parseRelease, releaseString } from './version-series.js';
+import { paintPills } from './version-pill.js';
+import { REPO, RAW, PAGES } from './repo.js';
+export { REPO };
 
-export const REPO = 'https://github.com/kgangkgang/blue-lemonade';
-const MANIFEST = 'https://raw.githubusercontent.com/kgangkgang/blue-lemonade/main/manifest.json';
-const NOTES = 'https://kgangkgang.github.io/blue-lemonade/release-notes.json';
-const SITE = 'https://kgangkgang.github.io/blue-lemonade/';
+const MANIFEST = `${RAW}/manifest.json`;
+const NOTES = `${PAGES}/release-notes.json`;
+const RELEASES = `${REPO}/releases/latest`;   // 여기서 업데이트를 못 할 때 ZIP 을 받는 곳 (예전 소개 사이트 자리)
 const STORE = 'bl_update_check';
 export const EVERY = 6 * 60 * 60 * 1000;
-const VER = /^\d+\.\d+\.\d+$/;
 export const SLOW_GIT_MS = 15 * 60 * 1000;   // 7.8.8 /version · /update 기다림 — 기록이 바뀐 뒤 첫 git fetch 는 새 기록 전체를 받아 몇 분 걸림
 
-let latest = '';
+let latest = '';   // 계열까지 붙은 판('8.2.5' · 's2:1.0.0')
 let checking = null;
 
 const esc = (text) => String(text ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-export const latestVersion = () => latest;
-/** 지금 버전보다 새 버전이 GitHub 에 있나 */
+/** 화면에 적는 새 판 글자('1.0.0') */
+export const latestVersion = () => parseRelease(latest)?.version || '';
+/** 지금 판보다 새 판이 GitHub 에 있나 ((계열, 판) 짝 비교) */
 export function hasUpdate() {
-    const now = currentVersion();
-    return !!latest && !!now && compareVersions(latest, now) > 0;
+    const now = currentRelease();
+    return !!latest && !!now && compareRelease(latest, now) > 0;
 }
+/** 공지 · release-notes 항목 → 비교용 판 (series 칸이 없으면 계열 1) */
+export const noteRelease = n => releaseString({ version: String(n?.version ?? ''), series: n?.series });
 
 function readStore() {
     try { const v = JSON.parse(localStorage.getItem(STORE) || 'null'); return v && typeof v === 'object' ? v : null; } catch { return null; }
@@ -47,18 +55,9 @@ function writeStore(value) {
     try { localStorage.setItem(STORE, JSON.stringify(value)); } catch { /* 사생활 모드 · 막힌 저장소 */ }
 }
 
-/** 버전 알약 두 곳(확장 서랍 머리 · 설정 창 제목)에 노란 빛을 켜고 끈다 — 설정 창은 다시 그릴 때도 panel.js 가 같은 값으로 그린다 */
-export function paintBadges() {
-    const on = hasUpdate();
-    for (const badge of document.querySelectorAll('#salty-drawer .bl-version, .salty-panel .salty-ver')) {
-        badge.classList.toggle('has-update', on);
-        badge.setAttribute('aria-label', on ? `업데이트 v${latest}` : '공지사항');
-    }
-}
 function setLatest(v) {
-    latest = VER.test(String(v || '')) ? String(v) : '';
-    paintBadges();
-    for (const root of document.querySelectorAll('.salty-panel')) paintUpdateLine(root);
+    latest = releaseString(String(v || ''));
+    paintPills({ update: hasUpdate(), latest: latestVersion() });   // 확장 서랍 머리 · 설정 창 제목의 판 알약 (설정 창은 다시 그릴 때도 같은 값)
 }
 
 /** GitHub 의 최신 버전 (manifest → 막히면 Pages 공지 맨 위). 못 받으면 던진다 */
@@ -66,13 +65,13 @@ export async function fetchLatest(fetcher = fetch, now = Date.now()) {
     const t = Math.floor(now / EVERY);   // 6시간 묶음마다 다른 주소 — 중간 캐시가 옛 manifest 를 주지 않게
     try {
         const r = await fetcher(`${MANIFEST}?t=${t}`, { cache: 'no-store', signal: AbortSignal.timeout(15000) });
-        if (r.ok) { const j = await r.json(); if (VER.test(String(j?.version || ''))) return String(j.version); }
+        if (r.ok) { const v = releaseString(await r.json()); if (v) return v; }   // bl_series 칸까지 (없으면 계열 1)
     } catch { /* 아래 Pages 로 */ }
     const r = await fetcher(`${NOTES}?t=${t}`, { cache: 'no-store', signal: AbortSignal.timeout(20000) });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
-    const v = String(Array.isArray(j) ? (j[0]?.version || '') : '');
-    if (!VER.test(v)) throw new Error('버전 없음');
+    const v = Array.isArray(j) ? noteRelease(j[0]) : '';
+    if (!v) throw new Error('버전 없음');
     return v;
 }
 
@@ -106,11 +105,11 @@ export function startUpdateCheck() {
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') void checkForUpdate(); });
 }
 
-/** 공지 목록에서 from 보다 새롭고 to 까지인 버전 (새것 먼저) */
+/** 공지 목록에서 from 보다 새롭고 to 까지인 판 (새것 먼저) — from · to 는 계열까지 붙은 판 */
 export function notesBetween(notes, from, to) {
     return (Array.isArray(notes) ? notes : [])
-        .filter(n => n && VER.test(String(n.version)) && Array.isArray(n.items) && compareVersions(n.version, from) > 0 && compareVersions(n.version, to) <= 0)
-        .sort((a, b) => compareVersions(b.version, a.version));
+        .filter(n => n && noteRelease(n) && Array.isArray(n.items) && compareRelease(noteRelease(n), from) > 0 && compareRelease(noteRelease(n), to) <= 0)
+        .sort((a, b) => compareRelease(noteRelease(b), noteRelease(a)));
 }
 export function notesHtml(list) {
     return list.map((n, i) => `
@@ -124,60 +123,14 @@ export function notesHtml(list) {
         </div>`).join('');
 }
 
-// 6.6.9 「무엇이 고쳐졌는지」 한두 줄 (사용자: 폰이 옛 판에 머물러 고친 것을 못 받았다 — 새 판이 있으면 고친 것을 같이 보여 주고 한 번에 업데이트로).
-// 새 상주 타이머 없이: 설정 창을 그릴 때 새 판이 있으면 맨 위에 한 줄. 공지(release-notes.json)는 새 판마다 한 번만 받고 이 브라우저에 기억한다.
-const SUMMARY_STORE = 'bl_update_notes';
-const clip = (text, n = 90) => { const t = String(text ?? '').replace(/\s+/g, ' ').trim(); return t.length > n ? `${t.slice(0, n - 1)}…` : t; };
-/** 공지 목록(새것 먼저) → 판마다 첫 항목 max 줄 + 남은 판 수 */
-export function summarizeNotes(list, max = 2) {
-    const rows = Array.isArray(list) ? list.filter(n => n?.items?.length) : [];
-    return { lines: rows.slice(0, max).map(n => ({ version: String(n.version), text: clip(n.items[0]) })), more: Math.max(0, rows.length - max) };
-}
-let summaryLoading = null, summaryFailedAt = 0;   // 7.2.4 요약(release-notes.json 152KB) 실패 · 빈 결과 뒤 10분은 설정 창을 그려도 다시 받지 않는다 (api-audit)
-function readSummary(key) {
-    try { const v = JSON.parse(localStorage.getItem(SUMMARY_STORE) || 'null'); return v?.key === key && Array.isArray(v.lines) ? v : null; } catch { return null; }
-}
-/** 지금 → 새 판 사이 공지 요약 (없거나 못 받으면 null) */
-export function updateSummary(fetcher = fetch) {
-    if (!hasUpdate()) return Promise.resolve(null);
-    const now = currentVersion(), next = latest, key = `${now}>${next}`;
-    const saved = readSummary(key);
-    if (saved) return Promise.resolve(saved);
-    if (summaryFailedAt && Date.now() - summaryFailedAt < 10 * 60 * 1000) return Promise.resolve(null);
-    summaryLoading ??= (async () => {
-        const r = await fetcher(`${NOTES}?t=${Math.floor(Date.now() / EVERY)}`, { cache: 'no-store', signal: AbortSignal.timeout(20000) });
-        if (!r.ok) throw new Error(String(r.status));
-        const value = { key, ...summarizeNotes(notesBetween(await r.json(), now, next)) };
-        if (value.lines.length) writeSummary(value); else summaryFailedAt = Date.now();
-        return value.lines.length ? value : null;
-    })().catch(() => { summaryFailedAt = Date.now(); return null; }).finally(() => { summaryLoading = null; });
-    return summaryLoading;
-}
-function writeSummary(value) { try { localStorage.setItem(SUMMARY_STORE, JSON.stringify(value)); } catch { /* 막힌 저장소 */ } }
-
-/** 한 줄 속 (요약을 아직 모르면 판만) */
-export function updateLineHtml(now, next, summary) {
-    const first = summary?.lines?.[0], second = summary?.lines?.[1];
-    const text = first ? `${first.text}${second ? ` · ${second.text}` : ''}${summary.more ? ` 외 ${summary.more}개 판` : ''}` : '';
-    return `<div class="bl-update-line-text"><b>새 판 v${esc(next)} 이 나왔어요<small>지금 v${esc(now)}</small></b>${text ? `<span>${esc(text)}</span>` : ''}</div>`
-        + '<button type="button" class="salty-btn primary" data-update-now>업데이트</button>';
-}
-/** 설정 창 맨 위 한 줄 — 새 판이 있을 때만. panel 을 다시 그릴 때마다 theme-update.bindThemeUpdate 가 부른다 */
-export function paintUpdateLine(root) {
-    const sec = root?.querySelector?.('.salty-sec');
-    let line = root?.querySelector?.('.bl-update-line');
-    if (!sec || !hasUpdate()) { line?.remove(); return; }
-    const now = currentVersion(), next = latest;
-    if (!line) {
-        line = document.createElement('div');
-        line.className = 'bl-update-line';
-        line.setAttribute('role', 'status');
-        line.addEventListener('click', (event) => { if (event.target.closest('[data-update-now]')) void openUpdate({ start: true }); });
-        sec.prepend(line);
-    }
-    const saved = readSummary(`${now}>${next}`);
-    line.innerHTML = updateLineHtml(now, next, saved);
-    if (!saved) void updateSummary().then((summary) => { if (summary && line.isConnected && hasUpdate()) line.innerHTML = updateLineHtml(now, next, summary); });
+/** 이 테마가 깔린 자리(확장 폴더 이름 · 공용 여부) — 예전 theme-update.js 에 있던 것 */
+export function installationFrom(url,types){
+    const parts=new URL(url).pathname.split('/').map(decodeURIComponent),index=parts.indexOf('third-party');
+    const name=index>=0?parts[index+1]:null;
+    if(!name||/[\\/]/.test(name)||name==='.'||name==='..')throw Error('설치 경로를 확인하지 못했어요. 확장 관리 또는 ZIP 다운로드를 이용해 주세요.');
+    const type=types[`third-party/${name}`];
+    if(!['global','local'].includes(type))throw Error('설치 유형을 확인하지 못했어요. 새로고침 후 다시 확인해 주세요.');
+    return {extensionName:name,global:type==='global'};
 }
 
 /**
@@ -263,7 +216,7 @@ export async function openUpdate({ start = false } = {}) {   // 6.6.9 start: 설
     await loadVersion();
     if (!hasUpdate()) return false;
     const ctx = SillyTavern.getContext();
-    const now = currentVersion(), next = latest;
+    const now = currentVersion(), next = latestVersion(), from = currentRelease(), to = latest;
     const wrap = document.createElement('div');
     wrap.className = 'salty-notice bl-update';
     wrap.innerHTML = `
@@ -286,11 +239,11 @@ export async function openUpdate({ start = false } = {}) {   // 6.6.9 start: 설
         try {
             const r = await fetch(`${NOTES}?t=${Math.floor(Date.now() / 600000)}`, { cache: 'no-store', signal: AbortSignal.timeout(20000) });
             if (!r.ok) throw new Error(String(r.status));
-            const list = notesBetween(await r.json(), now, next);
+            const list = notesBetween(await r.json(), from, to);
             if (!list.length) throw new Error('empty');
             box.innerHTML = notesHtml(list);
         } catch {
-            box.innerHTML = `<p class="salty-note">바뀐 내역을 못 불러왔어요. <a href="${SITE}" target="_blank" rel="noopener noreferrer">소개 페이지</a>에서 볼 수 있어요.</p>`;
+            box.innerHTML = `<p class="salty-note">바뀐 내역을 못 불러왔어요. <a href="${RELEASES}" target="_blank" rel="noopener noreferrer">GitHub 릴리스</a>에서 볼 수 있어요.</p>`;
         }
     })();
     let stage = 'ask', popup = null;
@@ -329,7 +282,7 @@ export async function openUpdate({ start = false } = {}) {   // 6.6.9 start: 설
             if (stage === 'busy') return false;                       // 업데이트 중에는 닫지 않는다
             if (p.result !== ctx.POPUP_RESULT.AFFIRMATIVE) return true;
             if (stage === 'done') { location.reload(); return false; }
-            if (stage === 'zip') { window.open(SITE, '_blank', 'noopener,noreferrer'); return true; }
+            if (stage === 'zip') { window.open(RELEASES, '_blank', 'noopener,noreferrer'); return true; }
             void go();
             return false;
         },

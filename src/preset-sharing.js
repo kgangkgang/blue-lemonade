@@ -1,9 +1,10 @@
+import { GRADIENT_KEYS } from './gradients.js';
 import { preserveLocks } from './setting-locks.js';
 // Portable, opt-in appearance presets. Never include chats, addon credentials or libraries.
 import { WEATHER_FIELDS, WEATHER_MODES } from './weather-profiles.js';
 import { DEFAULTS, isCssColor } from './settings.js';
 import { PALETTES } from './palettes.js';
-import { GRADIENT_KEYS } from './gradients.js';
+import './palette-data.js';   // 1.0.0 팔레트 11벌 · 커스텀 색 정의 (시작 그래프 밖 — 이 모듈은 지연으로 받아요)
 
 export const PRESET_GROUPS = [
     ['marker', '형광펜'], ['text', '글꼴 · 글자 · 문단'], ['colors', '테마 색'],

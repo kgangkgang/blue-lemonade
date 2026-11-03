@@ -2,7 +2,7 @@
    3.5.4 퀵 리플라이: 설정 창 미리보기 줄(.bl-qr-sample, 채팅 › 화면 › 퀵 리플라이) + 세로 스크롤 모드(body.salty-qr-y).
    미리보기는 입력판 #qr--bar 규칙(21-witidy)과 같은 모양 · 같은 휠/끌기/스냅 (layout.js bindQrScroller).
    세로 스크롤: 버튼이 줄바꿈되어 --bl-qr-rows 줄만큼 보이고 위아래로 넘긴다. 세트 묶음(.qr--buttons)은 풀어 한 흐름으로 —
-   묶음마다 줄이 새로 시작하면 짧은 세트가 줄을 낭비함 (사용자: "세로가 편할 때도 가로가 편할 때도")
+   묶음마다 줄이 새로 시작하면 짧은 세트가 줄을 낭비함 (세로 · 가로 둘 다 쓰임)
    ===== */
 .salty-panel .bl-qr-sample-wrap {
   padding: 8px 10px;
@@ -50,7 +50,7 @@
   scroll-snap-align: start;
   user-select: none;
 }
-/* 7.9.7 QR 세트 색: 실리태번은 세트 색으로 묶음 뒤 띠를 꽉 칠해, 색 고르기 기본값(검정)이 저장된 세트가 새까만 띠로 보였다(제보)
+/* 7.9.7 QR 세트 색: 실리태번은 세트 색으로 묶음 뒤 띠를 꽉 칠해, 색 고르기 기본값(검정)이 저장된 세트가 새까만 띠로 보였다
    → 테마에서는 고른 색을 16% 만 섞은 옅은 바탕으로, 검정이면 칠하지 않는다(src/layout.js 가 bl-qr-color-none). 테두리만 쓰기(onlyBorderColor)는 실리태번 그대로 */
 body.salty :is(#send_form #qr--bar, #qr--popout > .qr--body) > .qr--buttons.qr--color { background-color: color-mix(in srgb, var(--qr--color) 16%, transparent); }
 body.salty :is(#send_form #qr--bar, #qr--popout > .qr--body) > .qr--buttons.qr--color.bl-qr-color-none { background-color: transparent; }
@@ -150,7 +150,7 @@ body.salty.salty-qr-y :is(#send_form #qr--bar, .salty-panel .bl-qr-sample) > :is
   left: auto !important;
 }
 
-/* ---------- 3.7.4 QR ⋮ 버튼 · 하위 목록 (사용자 제보: QR 세트 안에 QR 이 아주 많으면 ⋮ 목록이 화면 위로 솟구쳐 잘린 건 못 고름) ----------
+/* ---------- 3.7.4 QR ⋮ 버튼 · 하위 목록 (QR 이 아주 많은 세트의 ⋮ 목록이 화면 위로 솟아 잘리던 것) ----------
    ⋮ (.qr--button-expander): 실리태번 기본은 margin-left 1em + 폭 2em 이라 글자 한두 개짜리 버튼이 쓸데없이 넓었다 → 좁은 칸 · 옅은 구분선.
    하위 목록 (.ctx-blocker > ul.ctx-menu, quick-reply/src/ui/ctx/ContextMenu.js): 누른 자리를 바닥으로 위로 자라고(bottom = 화면 높이 − 누른 y)
    높이 제한이 없었다. 폰(1000px 이하)은 항목마다 padding 1em 이라 한 칸이 글자보다 훨씬 컸다.
@@ -201,8 +201,6 @@ body.salty:not(#salty-none) .ctx-blocker > .ctx-menu {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--salty-accent) 55%, transparent) transparent;
   touch-action: pan-y;
   clip-path: inset(0 round 12px);
 }

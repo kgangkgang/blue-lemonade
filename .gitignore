@@ -16,3 +16,6 @@ __pycache__/
 /.handoff/
 /AGENTS.md
 /CLAUDE.md
+
+# 묶음 도구(tools/package.json 고정 판) — npm ci 로 받아요
+/tools/node_modules/

@@ -348,8 +348,8 @@ function template() {
                 </div>
             </section>
 
-            <section class="eh-card">
-                <details class="eh-guide" ${store.guideOpen ? 'open' : ''}>
+            <section class="eh-card" hidden data-guide-source>   <!-- 1.0.0 중복 정리: 「사용법」은 판 알약(캐릭터 에셋 사용방법)이 열어요 — 이 칸은 그 창 글의 원본 -->
+                <details class="eh-guide">
                     <summary><i class="fa-solid fa-book-open"></i><span>사용법</span><small>그림을 올리고 켜요</small></summary>
                     <ol class="eh-steps">
                         <li>
@@ -378,7 +378,7 @@ function template() {
                         <div><code>{{img_keywords_autogen}}</code><span>그림 목록만. 규칙을 직접 쓸 때 써요.</span></div>
                         <div><code>{{charkey}}</code><span>캐릭터 폴더 이름. 정규식에서 <code>/characters/{{charkey}}/…</code>로 써요.</span></div>
                     </div>
-                    <p class="eh-guide-note"><i class="fa-solid fa-circle-info"></i> 그림 파일은 <code>characters/캐릭터 이름/</code> 폴더에 그대로 있어요. 이전 캐릭터 에셋 확장으로 올린 그림도 그대로 보여요.</p>
+                    <p class="eh-guide-note"><span class="bl-info" aria-hidden="true"><i class="fa-solid fa-info"></i></span>그림 파일은 <code>characters/캐릭터 이름/</code> 폴더에 그대로 있어요. 이전 캐릭터 에셋 확장으로 올린 그림도 그대로 보여요.</p>
                 </details>
             </section>
 

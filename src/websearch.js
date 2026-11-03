@@ -12,6 +12,8 @@
 //   (6.1.9 교훈: touchend 를 막으면 폰의 톡이 죽는다 · 길게 누르기 메뉴를 막으면 폰의 낱말 고르기가 죽어 글 고르기로 도는 기능들이 멈춘다) —
 //   칩을 띄운 누르기의 끝에 오는 click 하나만 먹는다(캐릭터 에셋 hold.js 와 같은 규칙). 폰에선 브라우저의 낱말 선택과 칩이 같이 뜨고(칩은 손가락 아래), 다시 누르면(어디든 pointerdown) 닫힌다.
 //   토스트 없음. 내 메시지 · 스트리밍 중인 답 · 누르기 전부터 글을 고르던 중에는 뜨지 않는다.
+//   1.0.0: 그 답에 출처 기록이 없으면(불러온 채팅 · 기록을 버린 뒤 · 오래돼 밀려난 답) 꾹 누르기를 아예 보지 않는다 — 진동 · 칩 · click 먹기 없이 브라우저 낱말 선택 그대로.
+//   칩을 띄우지 않은 누르기는 click 도 먹지 않는다(먹는 것은 칩을 띄운 누르기의 끝뿐).
 import { WEBSEARCH_KEY, marksEnabled, buildOrigin, makeChatIndex, wordAt, findOrigins, chipText, labelExtensionPrompt, enabledPromptIds, textOf, originSize, trimOrigins, searchKeys, normalizeText } from './websearch-core.js';
 import { getSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
@@ -38,6 +40,7 @@ const ctx = () => globalThis.SillyTavern?.getContext?.();
 const enabled = () => { const s = getSettings(); return themeEnabled(s) && marksEnabled(s); };
 const chatKey = (c, id) => `${c?.getCurrentChatId?.() ?? ''}\u0000${id}`;
 const isObj = v => !!v && typeof v === 'object';
+const hasOrigin = id => origins.has(chatKey(ctx(), id));   // 이 답에 출처 기록이 있나 (기억에만 있다 — 다시 불러온 채팅은 없음)
 
 // ── 후보 모으기 (프롬프트를 보낼 때) ──────────────────────────────
 
@@ -271,7 +274,7 @@ function wordAtPoint(x, y, within) {
     return hit ? { word: hit.word, at: pos.offset - hit.start } : null;   // at = 낱말 안에서 누른 자리 (일본어: 누른 가타카나 덩이만 열쇠로)
 }
 
-/** 칩에 적을 한 줄 (낱말이 없으면 null) */
+/** 칩에 적을 한 줄 (낱말이 없거나 출처 기록이 없으면 null — 「기록 없음」 칩은 띄우지 않는다) */
 function lookup(id, x, y, text) {
     const c = ctx();
     const mes = c?.chat?.[id];
@@ -279,9 +282,10 @@ function lookup(id, x, y, text) {
     const hit = wordAtPoint(x, y, text), word = hit?.word;
     if (!word || !searchKeys(word).length) return null;   // 1자 낱말 · 숫자 한 자리: 찾을 열쇠가 없다 → 칩 없음 (「지어냄」이라 하면 거짓)
     const blocks = originBlocks(c, id);
-    const labels = blocks ? findOrigins(blocks, word, undefined, { aliasesOf: nameAliases, at: hit.at }) : [];
+    if (!blocks) return null;   // 누르는 동안 기록이 사라졌다(채팅 바꿈 · 메시지 지움) → 칩 · 진동 없음
+    const labels = findOrigins(blocks, word, undefined, { aliasesOf: nameAliases, at: hit.at });
     // F3. 번역문(LLM 번역 display_text)이 보이는 답: 한국어 번역 낱말은 원문 프롬프트와 말이 달라 못 찾을 수 있다 → 「지어냄」 대신 「번역문 · 못 찾음」
-    return chipText(labels, { searched: mes.extra?.[WEBSEARCH_KEY] === true, hasRecord: !!blocks, translated: showingTranslation(mes, text) });
+    return chipText(labels, { searched: mes.extra?.[WEBSEARCH_KEY] === true, hasRecord: true, translated: showingTranslation(mes, text) });
 }
 
 /** .mes_text 가 번역문(extra.display_text)을 보여 주고 있나 — 앞 40자 서명으로 (번역 확장이 원문 보기로 바꿔 두면 원문) */
@@ -343,20 +347,21 @@ function cancel() {
     document.removeEventListener('visibilitychange', cancel);
 }
 
+/** 칩을 띄웠으면 true — 띄운 누르기만 끝의 click 을 먹는다 */
 function open(p) {
-    if (p.hadSelection && selecting()) return;   // 누르기 전부터 고르던 글이 아직 있으면(선택을 다듬는 중) 칩 없음 — 길게 누르기가 방금 고른 낱말은 막지 않는다
+    if (p.hadSelection && selecting()) return false;   // 누르기 전부터 고르던 글이 아직 있으면(선택을 다듬는 중) 칩 없음 — 길게 누르기가 방금 고른 낱말은 막지 않는다
     const label = lookup(p.mesId, p.x, p.y, p.text);
-    if (!label) return;
+    if (!label) return false;
     vibrate();
     showChip(label, p.x, p.y, p.touch);
+    return true;
 }
 
 function fire() {
     const p = press;
     cancel();
     if (!p) return;
-    held = { id: p.id, up: 0 };
-    open(p);
+    if (open(p)) held = { id: p.id, up: 0 };
 }
 
 function onDown(event) {
@@ -369,6 +374,7 @@ function onDown(event) {
     if (!enabled()) return;
     const t = textTarget(event.target);
     if (!t || streaming(t.id)) return;
+    if (!hasOrigin(t.id)) return;   // 출처 기록이 없는 답 — 누르기를 보지 않는다(진동 · 칩 · click 먹기 없음)
     press = { id: event.pointerId, x: event.clientX, y: event.clientY, mesId: t.id, text: t.text, top: t.text.getBoundingClientRect().top, touch: event.pointerType !== 'mouse', hadSelection: selecting(), timer: setTimeout(fire, HOLD_MS) };
     for (const [type, handler] of WATCH) window.addEventListener(type, handler, { capture: true, passive: true });
     document.addEventListener('visibilitychange', cancel);
@@ -401,8 +407,7 @@ function onContextMenu(event) {
     if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) { cancel(); return; }
     const p = press;
     cancel();
-    held = { id: p.id, up: 0, menu: true };
-    open(p);
+    if (open(p)) held = { id: p.id, up: 0, menu: true };
 }
 
 function onDragStart() {

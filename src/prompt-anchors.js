@@ -34,7 +34,6 @@ export function registerAnchorSource(id, order, collect) {
 
 /** 시험 · 진단: 마지막 조립에서 실제로 넣은 것 */
 export const lastPlaced = () => engine.placed();
-export const currentGeneration = () => engine.generation();
 
 let started = false;
 export function startPromptAnchors() {

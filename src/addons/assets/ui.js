@@ -1,6 +1,7 @@
 // 캐릭터 에셋 — 알림, 확인 창, 입력 창, 복사, 테마 색
 import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../popup.js';
 import { TITLE } from './state.js';
+import { onThemeLook } from '../../shared/theme-look.js';
 
 export function escapeHtml(value) {
     return String(value ?? '')
@@ -155,9 +156,7 @@ export function refreshThemeVars() {
  * applyThemeVars는 .eh-root에만 쓰므로 여기로 다시 들어오지 않는다.
  */
 export function watchThemeVars() {
-    const observer = new MutationObserver(refreshThemeVars);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
-    observer.observe(document.head, { childList: true, subtree: true, characterData: true });
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    // 9.0.4: 테마 색 따라가기 한 구독(src/shared/theme-look.js)으로 — 다음 프레임에 한 번(0.06초 묶음은 그대로)
+    onThemeLook(() => refreshThemeVars(), { watch: 'html.style head body.class', name: '에셋 색' });
     refreshThemeVars();
 }

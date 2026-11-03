@@ -317,7 +317,7 @@ await test('목록 API 가 없는 엔진 (MiniMax · Cartesia) 은 손으로 쓴
     assert.deepEqual(values(opts('cartesia', setCfg('cartesia', { model: 'sonic-3.6' }))), ['sonic-3.6', 'sonic-3.5', 'sonic-3', 'custom']);
 });
 
-// ---------- 3) MiniMax: 지금 내놓는 모델만 (사용자: "미니맥스에 몇 개 없지 않냐 · 내 목록엔 많아")
+// ---------- 3) MiniMax: 지금 내놓는 모델만 (공식 목록이 고른 모델보다 적던 것)
 await test('MiniMax 모델 목록: speech-2.8-hd · speech-2.8-turbo + 직접 입력 · 이전 모델을 고른 사람은 그대로 (이전 모델) · 기본은 그대로 2.8-turbo', () => {
     assert.deepEqual(values(opts('minimax', setCfg('minimax', { model: 'speech-2.8-turbo' }))), ['speech-2.8-hd', 'speech-2.8-turbo', 'custom']);
     for (const m of ['speech-2.6-hd', 'speech-2.6-turbo', 'speech-02-hd', 'speech-02-turbo', 'speech-01-hd', 'speech-01-turbo']) {

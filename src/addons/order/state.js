@@ -20,7 +20,7 @@ const DEFAULTS = Object.freeze({
     auto: true,
     /** 고정한 확장 아래에 구분선을 그을지 */
     divider: true,
-    /** 넓은 화면(PC)에서 두 칸으로: 왼쪽은 고정한 확장, 오른쪽은 나머지 (사용자: "PC는 화면 넓으니까 세로 2줄로") */
+    /** 넓은 화면(PC)에서 두 칸으로: 왼쪽은 고정한 확장, 오른쪽은 나머지 (PC 는 넓으니 두 열로) */
     twoColumns: true,
     /** 위에 고정한 확장 (보이는 차례대로) */
     pinned: [...DEFAULT_PINNED],

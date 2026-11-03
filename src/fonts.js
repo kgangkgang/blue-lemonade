@@ -188,11 +188,15 @@ function sourceUrls(font) {
 
 function fileFaces(font, family, ranges) {
     const files = font.files || (font.file ? [{ url: font.file, weight: null }] : []);
-    const range = ranges ? `unicode-range:${formatRange(ranges)};` : '';
     // 5.3.5: 주소 · 굵기 · 모양도 검사한 값만 (family 는 langFamily 가 만든 이름)
     return files.flatMap((f) => {
         const url = cssUrl(f?.url);
         if (!url) return [];
+        // 9.0.9 조각 파일(catalog.js 로컬 글꼴): 조각이 맡는 글자(range)와 이 칸이 맡는 언어 범위가 겹치는 만큼만 — 안 겹치면 그 조각은 안 씀
+        const own = f.range ? parseRange(f.range) : null;
+        const r = own && ranges ? intersect(own, ranges) : (own || ranges);
+        if (r && !r.length) return [];
+        const range = r ? `unicode-range:${formatRange(r)};` : '';
         const weight = f.weight != null && /^\d{1,3}( \d{1,3})?$/.test(String(f.weight)) ? `font-weight:${f.weight};` : '';
         const style = ['normal', 'italic', 'oblique'].includes(f.style) ? `font-style:${f.style};` : '';
         return [`@font-face{font-family:${family};${weight}${style}font-display:swap;src:url("${url}");${range}}`];
@@ -262,7 +266,7 @@ function inkOf(family, ch) {
 
 /** 검사용으로 받을 src 하나 (기본 굵기 우선). 구글 글꼴은 조각(unicode-range)으로 나뉘어 있고 이런 문제가 없어 검사하지 않음 */
 async function probeSource(font) {
-    if (font.google || font.cors === false || font.unusable) return null;
+    if (font.google || font.cors === false || font.unusable || font.probe === false) return null;   // 9.0.9 probe: false = 빌드 때 검사한 로컬 글꼴 (조각 하나를 받으러 가지 않게)
     if (font.file || font.files) {
         const files = font.files || [{ url: font.file, weight: null }];
         const pick = files.find(f => !f.weight || String(f.weight) === '400') || files[0];
@@ -365,6 +369,33 @@ export async function buildComposite(slot, set, hanja, depth = 0) {
     return { css: parts.join('\n'), stack: slotStack(slot, set), failed };
 }
 
+// ───────── 첫 화면 글꼴 미리 받기 (9.0.9) ─────────
+// 합친 @font-face 는 buildComposite 가 끝난 뒤 <style> 로 들어가고, 브라우저는 그 글꼴을 쓰는 글자를 그릴 때에야 파일을 받아요.
+// 본문 · 메뉴 칸의 한국어 글꼴이 로컬 조각이면 영문 · 한글 2,350자 조각(기본 굵기)을 <link rel=preload> 로 먼저 받아 둬요 —
+// @font-face 와 같은 주소 · 같은 CORS 모드(crossorigin)라 브라우저가 받아 둔 것을 그대로 써요. 드문 한글 · 그 밖 조각은 나올 때만
+const PRELOAD_PARTS = new Set(['latin', 'ko']);
+const preloaded = new Set();
+export function preloadFonts(ids) {
+    if (typeof document === 'undefined') return;
+    for (const id of new Set(ids)) {
+        const font = findFont(id);
+        if (!font || font.unusable || !Array.isArray(font.files)) continue;
+        const regular = font.files.filter(f => PRELOAD_PARTS.has(f.part) && (!f.weight || String(f.weight) === '400'));
+        for (const f of regular) {
+            const href = cssUrl(f.url);
+            if (!href || preloaded.has(href)) continue;
+            preloaded.add(href);
+            const link = document.createElement('link');
+            link.rel = 'preload';
+            link.as = 'font';
+            link.type = 'font/woff2';
+            link.crossOrigin = 'anonymous';
+            link.href = href;
+            document.head.appendChild(link);
+        }
+    }
+}
+
 // ───────── 링크·미리보기 ─────────
 function addLink(id, href) {
     if (document.getElementById(id)) return;
@@ -386,7 +417,7 @@ export function loadFont(font) {
     loadedFonts.add(font.id);
     if (font.file || font.files) {
         const files = font.files || [{ url: font.file, weight: null }];
-        addFaces(files.flatMap(f => (cssUrl(f?.url) ? [{ 'font-family': font.family, src: `url("${cssUrl(f.url)}")`, 'font-weight': f.weight, 'font-style': f.style }] : [])));
+        addFaces(files.flatMap(f => (cssUrl(f?.url) ? [{ 'font-family': font.family, src: `url("${cssUrl(f.url)}")`, 'font-weight': f.weight, 'font-style': f.style, 'unicode-range': f.range ? formatRange(parseRange(f.range)) : undefined }] : [])));
         return;
     }
     sourceUrls(font).forEach((url, i) => {
@@ -402,20 +433,37 @@ export function loadFont(font) {
 }
 
 // CSS 에서 읽은 @font-face 들 → FontFace (실제로 쓰일 때 받음)
+let idleFaceLoads = false, idleFaceTimer = 0;
 function addFaces(faces) {
     for (const d of faces) {
         try {
-            document.fonts.add(new FontFace(String(d['font-family']).trim().replace(/^['"]|['"]$/g, ''), d.src, {
+            const face = new FontFace(String(d['font-family']).trim().replace(/^['"]|['"]$/g, ''), d.src, {
                 weight: String(d['font-weight'] || 'normal'),
                 style: d['font-style'] || 'normal',
                 stretch: d['font-stretch'] || 'normal',
                 unicodeRange: d['unicode-range'] || 'U+0-10FFFF',
                 display: 'swap',
-            }));
+            });
+            document.fonts.add(face);
         } catch {
             // 못 읽는 한 줄은 건너뜀
         }
     }
+    // 글꼴을 바꾼 뒤에도 쉴 때(loadRemainingFaces 가 한 번 돈 뒤부터)
+    if (idleFaceLoads && !idleFaceTimer) idleFaceTimer = (typeof requestIdleCallback === 'function' ? requestIdleCallback : (fn => setTimeout(fn, 1500)))(() => { idleFaceTimer = 0; loadRemainingFaces(); }, { timeout: 4000 });
+}
+/** (11-03) 쉴 때 안 받은 조각을 받아요 — 안 받은 조각이 남은 가족의 글은 「받는 중 대체」라 어느 글꼴이든 받힐 때마다 전부 다시 배치됐어요(긴 채팅 폰 4배 +110ms) */
+export function loadRemainingFaces() {
+    idleFaceLoads = true;
+    let n = 0;
+    if (typeof document === 'undefined' || !document.fonts) return 0;
+    for (const face of document.fonts) {   // 합친 @font-face 의 글 자리 가족(Salty …)만 — 원래 가족의 face 는 글이 안 써요
+        const family = unquote(face.family);
+        if (face.status !== 'unloaded' || !family.startsWith('salty ') || family.startsWith('salty preview')) continue;   // unquote 는 소문자
+        n++;
+        try { face.load().catch(() => {}); } catch { /* 받지 못한 조각은 쓰일 때 다시 */ }
+    }
+    return n;
 }
 
 const previewed = new Set();
@@ -481,7 +529,7 @@ function flushPreviews() {
 }
 
 // ───────── 미리보기 글꼴이 준비됐는지 (2.7.7) ─────────
-// 폰에서 글꼴을 받는 몇 초 동안 목록의 표본 줄이 통째로 비어 보였다 (사용자: "기다리니까 나왔다").
+// 폰에서 글꼴을 받는 몇 초 동안 목록의 표본 줄이 통째로 비어 보였다 (기다리면 나오던 것).
 // 그래서 표본 줄은 처음엔 기기 글꼴로 그리고(panel.js — data-font 에 진짜 묶음을 적어 둠), 여기서 파일을 다 받은 것을 확인한 뒤
 // salty:font-ready 로 알려 그때 글꼴을 바꾼다. 받았는데도 표본 글자가 안 그려지면(기기 · 브라우저의 그리기 문제) salty:font-blank —
 // 그 줄은 "이 기기에서 안 그려짐" 표시를 달고 기기 글꼴로 남는다

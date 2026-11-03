@@ -8,6 +8,7 @@ export function validSettings(value, defaults) {
     return Object.entries(value).every(([key, child]) => {
         if (!Object.hasOwn(defaults, key)) return true;
         const base = defaults[key];
+        if (base === null) return child === null || typeof child === 'string'; // 기본값 null 칸(고른 프롬프트 id · 본문)은 글자도 정상이에요.
         if (Array.isArray(base)) return Array.isArray(child);
         if (isRecord(base)) return validSettings(child, base);
         return typeof child === typeof base && (typeof child !== 'number' || Number.isFinite(child));

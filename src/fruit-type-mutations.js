@@ -28,8 +28,10 @@ function needsKey(list){return topSplit(list).every(complex=>{
     return false;});}
 function keysOf(sel){
     let k=keySets.get(sel);if(k!==undefined)return k;k=null;
+    // 1.0.x 값 없는 [속성] 은 조건을 더할 뿐이라 떼고 봐요(뗀 쪽이 더 많이 맞아 「안 맞음」 판정은 그대로) — 생각 계획 카드 details[data-dem-thinking-fallback]
+    const whole=sel;sel=sel.replace(/\[[\w-]+\]/g,'');
     if(!/[[*"'\\]/.test(sel)&&needsKey(sel)){k={cls:new Set(),ids:new Set(),tags:new Set()};for(const m of sel.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g))k.cls.add(m[1]);for(const m of sel.matchAll(/#(-?[_a-zA-Z][\w-]*)/g))k.ids.add(m[1]);for(const m of sel.matchAll(/(?:^|[\s,>+~(])([a-zA-Z][\w-]*)/g))k.tags.add(m[1].toLowerCase());}
-    keySets.set(sel,k);return k;
+    keySets.set(whole,k);return k;
 }
 // 요소 자신이 sel 에 맞을 수 있나(거짓이면 확실히 안 맞음). 모르면 참
 function mayMatch(node,sel){

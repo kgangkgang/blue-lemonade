@@ -41,6 +41,7 @@ import {
     splitNames,
 } from './core.js';
 import { DEFAULT_SETTINGS } from './defaults.js';
+import { addonRunning } from '../../usage-mode.js';
 import { badgeTextHit } from '../../badge-hit.js';
 import { markRewrite } from '../../edit-origin.js';
 import { notifyRerender } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
@@ -65,7 +66,7 @@ import { attachUndo } from '../../ask.js';
 import { touch, listGone, registerAddonMerge } from '../list-sync.js';   // 7.0.2 기기 간 합치기   // 7.0.1 알림 끝 ↶ 단추
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 
-const VERSION = '2.1.9';
+const VERSION = '2.2.0';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -1016,6 +1017,7 @@ async function ensureScenePlan(messageId, end, stopSignal) {
 
 // Runs before other listeners and is awaited, so the translator (CHARACTER_MESSAGE_RENDERED) only sees the final text.
 async function onMessageReceived(messageId, type) {
+    if (!addonRunning(extension_settings.salty, 'rewrite')) return;   // 끄면 새로고침 전에도 고치지도 요청하지도 않아요
     if (SKIP_TYPES.includes(type)) return;
     const reroll = settings.scenePlan.enabled && !REROLL_SKIP_TYPES.includes(type);
     if (!reroll && !settings.enabled) return;
@@ -1496,9 +1498,11 @@ async function openGuide() {
 }
 
 async function openSceneHelp() {
-    const { SCENE_HELP_HTML } = await import('./guide.js');
-    const box = $('<div class="bwr_settings"></div>').html(SCENE_HELP_HTML);
-    return callGenericPopup(box, POPUP_TYPE.TEXT, '', { okButton: '닫기', wide: true, allowVerticalScrolling: true, onOpen: roomyPopup });
+    // 1.0.0 도움말 하나로: 테마 공용 도움말 창(help-sheet.js) — 제목은 창 머리로, 본문은 그대로
+    const [{ SCENE_HELP_HTML }, { openHelpSheet }] = await Promise.all([import('./guide.js'), import('../../help-sheet.js')]);
+    const box = document.createElement('div'); box.innerHTML = SCENE_HELP_HTML;
+    const h3 = box.querySelector('h3'), title = h3?.textContent.trim() || '씬 플랜 리롤'; h3?.remove();
+    return openHelpSheet({ title, html: `<div class="bwr_settings">${box.innerHTML}</div>` });
 }
 
 function bindGuide() {

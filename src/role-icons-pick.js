@@ -8,6 +8,7 @@
 // 3) 글자 옆 아이콘(「<i> 번역」 같은 메뉴 항목)은 아이콘 칸(<i> · <div class="fa-…">)에 표식을 달아 글자는 그대로 두고 그림만 바뀐다.
 //    svg · img 아이콘은 가상 요소를 못 가지니 단추 자체에 data-bl-pick-inline 을 달고 CSS 가 아이콘을 숨긴 뒤 새 그림을 글자 앞에 끼운다.
 import { parsePickKey, pickSlug, tidyPickedIcons, PICK_ATTR, PICK_INLINE_ATTR } from './role-icons-core.js';
+import { watchDom } from './dom-watch.js';
 
 // 고를 수 있는 것 — 단추 노릇을 하는 요소 (실리태번 · 확장이 흔히 쓰는 모양)
 export const CANDIDATES = 'button, [role="button"], .menu_button, .list-group-item, .drawer-icon, .interactable, summary, .mes_button, .extensionsMenuExtensionButton, #leftSendForm > *, #rightSendForm > *, #nonQRFormItems > .fa-solid, #nonQRFormItems > .fa-regular, .extraMesButtons > *, .mes_buttons > *';   // css/49-role-icons.css 의 고르기 표시 목록과 같게
@@ -140,14 +141,14 @@ export function syncPicks(picks, doc = globalThis.document) {
     const same = Object.keys(next).length === Object.keys(current).length && Object.keys(next).every(k => current[k] === next[k]);
     current = next;
     if (!same) untagAll(doc, new Set(Object.keys(current)));
-    if (!Object.keys(current).length) { observer?.disconnect(); observer = null; return; }
+    if (!Object.keys(current).length) { observer?.(); observer = null; return; }
     if (same && observer) return;   // applyAll 이 자주 불려도(슬라이더) 바뀐 게 없으면 다시 찾지 않는다 — 새로 붙는 단추는 감시가 잡는다
     tagIn(doc, null);
     if (observer || !globalThis.MutationObserver || !doc.body) return;
-    observer = new MutationObserver((records) => {
+    // 9.0.4: 공용 감시 허브 구독(body 구역 · 채팅 포함 — 메시지 단추도 고를 수 있어요)
+    observer = watchDom(doc.body, { childList: true, subtree: true, name: '단추 아이콘 바꾸기' }, (records) => {
         for (const r of records) for (const node of r.addedNodes) if (node.nodeType === 1 && !node.hasAttribute?.(PICK_ATTR)) tagIn(doc, node);
     });
-    observer.observe(doc.body, { childList: true, subtree: true });
 }
 /** 시험용: 감시 상태 */
 export const pickState = () => ({ observing: !!observer, slugs: Object.keys(current) });

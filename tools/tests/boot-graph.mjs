@@ -53,7 +53,7 @@ await test('시작 그래프에 맨 위 await 가 없어요 (live-models.js 는 
     assert.ok(graph.has('src/claude-gen.js'), '본채팅 규칙은 작은 판정 모듈을 써요');
     const index = read('index.js');
     assert.match(index, /import\('\.\/src\/live-models\.js'\)/, '모델 목록 훅(실리태번이 연결하며 받은 목록)은 시작할 때 기다리지 않고 걸어요');
-    assert.ok(index.indexOf("import('./src/live-models.js')") < index.indexOf('startAddons()'), '애드온보다 먼저 받기 시작해요');
+    assert.ok(index.indexOf("import('./src/live-models.js')") < index.indexOf('startAddons('), '애드온보다 먼저 받기 시작해요');
 });
 
 await test('Claude 5 판정은 예전 live-models.js 판정과 같아요', async () => {
@@ -70,7 +70,7 @@ await test('Claude 5 판정은 예전 live-models.js 판정과 같아요', async
 await test('당겨 새로고침은 홈 화면에 깐 터치 앱에서만 받아요', async () => {
     notAtBoot('src/pull-to-refresh.js', 'PC · 브라우저 탭에서는 쓰지 않아요');
     const runtime = read('index.js');
-    assert.match(runtime, /if \(installedTouchMode\(window\)\) import\('\.\/src\/pull-to-refresh\.js'\)\.then\(m => m\.startPullToRefresh\(/);
+    assert.match(runtime, /\['startPullToRefresh', \(\) => installedTouchMode\(window\) \? import\('\.\/src\/pull-to-refresh\.js'\) : Promise\.resolve\(null\), m => m\?\.startPullToRefresh\(/);   // 9.0.2 3층 표(IDLE_LAYER)
     const { installedTouchMode } = await import(pathToFileURL(path.join(root, 'src/device-layouts.js')).href);
     const mode = (coarse, standalone, touch = 5, legacy = false) => ({ navigator: { maxTouchPoints: touch, standalone: legacy }, matchMedia: q => ({ matches: q === '(pointer: coarse)' ? coarse : standalone }) });
     assert.equal(installedTouchMode(mode(true, true)), true);
@@ -107,7 +107,7 @@ await test('스와이프 고르기 번역은 창을 여는 단추를 처음 누�
     assert.equal(mod._forTest.looked, 2, '누를 때마다 창 찾기');
     assert.ok(imported >= 1);
     const runtime = read('index.js');
-    assert.match(runtime, /import \{ startSwipePickerTranslation \} from '\.\/src\/swipe-picker-launch\.js';/);
+    assert.match(runtime, /\['startSwipePickerTranslation', \(\) => import\('\.\/src\/swipe-picker-launch\.js'\), m => \{ m\.startSwipePickerTranslation\(\); \}\]/);   // 9.0.2 3층 표(IDLE_LAYER)
 });
 
 await test('시작 그래프 크기 상한 (모듈 수 · 바이트)', () => {
@@ -116,8 +116,32 @@ await test('시작 그래프 크기 상한 (모듈 수 · 바이트)', () => {
     // 10-30 기준 170b690f: 113개 · 1,372KB → 이 고침 뒤 111개 · 1,294KB. 새 기능은 꺼진 동안 동적 import 로 (features.js load 처럼)
     // 8.2.7 lean-perf: 성능 고침을 합친 판 111개 · 1,321KB — 감시자를 줄이려고 시작에 들어온 공용 감시자(dom-watch.js 13KB · perf-fade)와
     //   icon-text 미리 거르기(+5.6KB · perf-icon)가 각 분기에서는 상한 안이었는데 합치면 1KB 남짓 넘어 상한을 1,330KB 로 올려요(모듈 수 상한은 그대로)
-    assert.ok(graph.size <= 112, `모듈 ${graph.size}개`);
-    assert.ok(bytes <= 1330 * 1024, `${bytes} 바이트`);
+    // 8.3.0 개인 확장 내장 틀(private-addons.js 표 · addons.js 대기 · 「옛 단독 확장 끄기」 · 플래그 이어받기 ≈ +9KB)로 1,340KB — 확장 본체는 동적 import 라 시작 그래프 밖(모듈 수 상한은 그대로)
+    // 9.0.2 내려요: 9.0.1 끝 101개 · 1,075KB → 죽은 JS 걷기 94개 · 1,022KB → 부팅 3층(채팅 · 메뉴 모양 감시 · 켜 둔 기능 · 그리기 모듈은 2층, 누르거나 열어야 쓰는 것은 3층) 49개 · 617KB.
+    //   새 모듈은 첫 화면(설정 읽기 · CSS 변수 · 글꼴 · 채팅 핵심 배치 · 한국어 표 · 요청 훅)에 꼭 필요할 때만 정적으로 — 아니면 index.js FRAME_LAYER · IDLE_LAYER 표나 features.js load 로
+    assert.ok(graph.size <= 52, `모듈 ${graph.size}개`);
+    // 1.0.0 극한 최적화 1단계(CSS 두 장 · 애드온 CSS 3층): lite.js · addons.js 에 미리 받기 · 붙이기 코드 +1.5KB 로 641KB — 상한을 645KB 로 두고, JS 단계(시작 그래프 줄이기)에서 다시 640KB 아래로 내려요
+    // 1.0.0: 브라우저는 줄인 묶음(dist)을 받아요 — 실제 상한은 tools/tests/bundle-fresh.mjs 의 정적 묶음. 여기 원본 크기는 애드온 첫 장 표 몫만큼 655KB
+    // 1.0.0 Salty.addon(id) 입구(addons.js 실행 모듈 표 · 검사 도구용 +1KB 남짓) — 657KB. 브라우저가 받는 양은 dist 묶음 시험(bundle-fresh.mjs)이 지켜요
+    assert.ok(bytes <= 657 * 1024, `${bytes} 바이트`);
+});
+
+await test('9.0.2 부팅 2 · 3층 모듈은 시작 그래프 밖이에요 (첫 프레임 뒤 · 유휴 · 처음 쓸 때 받아요)', () => {
+    const LATER = {
+        'src/assets.js': '그림 분류 — 2층', 'src/icon-text.js': '아이콘 단추 표식 — 2층', 'src/selects.js': '고르기 팝업 — 2층', 'src/tone.js': '글자색 맞춤 — 2층',
+        'src/streamfade.js': '스트리밍 페이드 — 2층', 'src/draft.js': '초안 — 2층', 'src/popup-guard.js': '안내 창 닫기 — 2층', 'src/typography.js': '조판 — 2층(features.js)',
+        'src/control-ink.js': '단추 글자 세로 맞춤 — 2층(apply.js)', 'src/extension-colors.js': '확장 색 지키기 — 켤 때만', 'src/role-icons-pick.js': '단추 아이콘 바꾸기 — 바꾼 게 있을 때만',
+        'src/tag-ink.js': '태그 글자색 — 2층', 'src/wi-help.js': '월드인포 도움말 — 3층', 'src/wi-help-data.js': '월드인포 도움말 사전 — 3층', 'src/longpress-help.js': '길게 누르기 — 3층',
+        'src/websearch.js': '웹 검색 표시 — 3층(성능 보조가 쓰면 그때)', 'src/natural-slash.js': '자연 슬래시 — 3층', 'src/chat-graph-launcher.js': '채팅 지도 — 3층', 'src/promptlist.js': '프롬프트 목록 줄 — 3층',
+        'src/tab-scroll.js': '탭 줄 스크롤 — 3층', 'src/marquee.js': '긴 이름 흐르기 — 3층', 'src/cardink.js': 'HTML 카드 글자색 — 2층', 'src/reading-resume.js': '읽던 자리 — 2층',
+        'src/mes-pins.js': '메시지 버튼 고정 본체 — 2층(features.js) · 설정 정리는 mes-pins-keys.js 만',
+    };
+    for (const [rel, why] of Object.entries(LATER)) notAtBoot(rel, why);
+    const index = read('index.js');
+    for (const table of ['FRAME_LAYER', 'IDLE_LAYER', 'BOOT_FRAME', 'BOOT_IDLE']) assert.ok(index.includes(`const ${table} = [`), `${table} 표`);
+    assert.match(index, /afterFirstFrame\(\(\) => withReplay\('테마 2층'/, '2층은 첫 프레임 뒤 · 늦게 붙은 리스너에 지금 채팅 한 번');
+    assert.match(index, /whenIdle\('테마 3층', \(\) => withReplay\('테마 3층'/, '3층은 유휴');
+    assert.match(index, /scheduleIdle\(\);\s*$/, '파일 끝에서 3층을 예약해요');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

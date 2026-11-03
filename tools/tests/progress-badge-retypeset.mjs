@@ -16,14 +16,16 @@ const el = (cls, parent = null) => ({ nodeType: 1, cls, parentElement: parent, i
     closest(sel) { for (let e = this; e; e = e.parentElement) if (sel.split(',').some(s => s.trim() === '.' + e.cls || (s.trim() === '#chat' && e.cls === 'chat'))) return e; return null; } });
 const chat = el('chat'), mes = el('mes', chat), text = el('mes_text', mes), badge = el('llmt-progress', text);
 let observed = null;
-globalThis.MutationObserver = class { constructor(cb) { observed = cb; } observe() {} disconnect() {} takeRecords() { return []; } };
+// 9.0.4: 감시는 공용 감시 허브 — #chat 을 보는 감시자의 콜백을 잡아요(body 자기 data-generating 감시자는 따로)
+let chatObserved = null;
+globalThis.MutationObserver = class { constructor(cb) { this.cb = cb; observed = cb; } observe(t) { if (t === chat) chatObserved = this.cb; } disconnect() {} takeRecords() { return []; } };
 globalThis.document = { body: { dataset: {}, classList: { contains: c => c === 'salty-tone' } }, getElementById: id => (id === 'chat' ? chat : null), querySelectorAll: () => [], addEventListener() {}, createTreeWalker: () => ({ nextNode: () => null }) };
 const timers = []; globalThis.setTimeout = (fn, ms) => { timers.push({ fn, ms }); return timers.length; }; globalThis.clearTimeout = () => {};
 globalThis.performance ??= { now: () => 0 };
 const typo = await import(pathToFileURL(path.join(root, 'src/typography.js')));
 const hooked = []; typo.setTypesetHook(roots => hooked.push(roots));
 typo.syncTypography(true);
-const typoObserver = observed;
+const typoObserver = chatObserved;
 test('조판: 진행 표시의 글이 바뀐 기록은 메시지를 다시 조판하지 않아요 (고치기 전: 메시지 전체 dirty → 훅 · 0.12초 뒤 조판)', () => {
     hooked.length = 0;
     typoObserver([{ type: 'childList', target: badge, addedNodes: [], removedNodes: [] }, { type: 'characterData', target: { nodeType: 3, parentElement: badge }, addedNodes: [] }]);
@@ -35,11 +37,12 @@ test('조판: 진행 표시를 붙이는 기록(.mes_text 자식 목록) · 메�
     assert.ok(hooked.some(list => list.includes(mes)));
 });
 // 글자 맞춤(tone.js): 0.4초 묶음 타이머가 걸리는지로 봐요
-observed = null; timers.length = 0;
+// 9.0.4: 글자 맞춤 · 조판의 메시지 다시 보기는 메시지 꾸미기(src/message-decor.js)의 #chat 구독 하나가 모아요 — 같은 #chat 감시자(공용 감시 허브)라 위 콜백으로 기록을 넣어요
+timers.length = 0;
 globalThis.SillyTavern ??= { getContext: () => ({ extensionSettings: {}, saveSettingsDebounced() {} }) };   // 설정 읽기(켜짐 판정)만 — 처음 칠하기는 꺼짐으로 끝나요
 const tone = await import(pathToFileURL(path.join(root, 'src/tone.js')));
 tone.startInlineTone();
-const toneObserver = observed;
+const toneObserver = typoObserver;
 test('글자 맞춤: 진행 표시 안의 변화는 다시 칠하지 않아요 (고치기 전: 0.4초 뒤 메시지 다시 칠하기)', () => {
     assert.equal(typeof toneObserver, 'function');
     timers.length = 0;

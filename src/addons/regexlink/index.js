@@ -5,25 +5,37 @@
 // 원래 상태는 origin 에 적어 두고, 기능을 끄면 되돌린다 (그새 저장돼 파일에 들어간 우리 값도). 계산은 engine.js (테스트 가능).
 // 과일의 마음 패널이 프롬프트를 켜고 끄면(Tavern Helper updatePresetWith('in_use')) 프롬프트 · 정규식 목록이 새 배열로 바뀌고 saveSettingsDebounced
 // → SETTINGS_UPDATED 로 여기 sync 가 돈다 — 새 목록은 「새로 읽힌 목록」이라 origin 으로 다시 맞춘다.
+// 1.1.2 사용자가 정규식 화면에서 직접 켜고 끈 정규식(하나씩 · 일괄 · 정규식 프리셋 적용)은 id 로 「직접 바꿈」(store().manual)에 적고 다시는 자동으로 바꾸지 않는다
+//   — 예전에는 origin 만 바꿔서, 꺼진 모듈의 정규식을 손으로 켜면 다음 sync 가 도로 껐고(눌러도 되돌아감), 목록 배열이 새로 바뀌면 손으로 바꾼 것을 아예 못 알아봤다.
+//   패널의 「자동으로」가 그 표시를 지운다. 테마 설정에서 이 기능이 꺼져 있으면(불러오기만 됐어도) 정규식을 읽지도 쓰지도 않는다.
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { extension_settings } from '../../../../../../extensions.js';
 import { getPresetManager } from '../../../../../../preset-manager.js';
 import { saveSettingsDebounced, eventSource, event_types } from '../../../../../../../script.js';
 import { oai_settings, promptManager } from '../../../../../../openai.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
-import { plan, textHasModuleLow } from './engine.js';
+import { plan, textHasModuleLow, modulesOf } from './engine.js';
 
-const VERSION = '1.1.0';
+const VERSION = '1.1.3';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const holder = document.createElement('div'); holder.hidden = true; document.body.append(holder);
 let root, inlineHost = null, opening = false, timer = 0, lastRows = [], lastNote = '', applied = new Map(), stopped = false;
 const seenLists = new WeakSet(); // sync 가 본 목록 배열 — 처음 보는 배열은 새로 읽힌 것 (프리셋 다시 고르기 · 캐릭터 다시 읽기)
+let userEdit = null;             // 정규식 화면을 누른 순간의 disabled 사진 { at, before: Map<id, disabled>, ids: Set<id> } — 다음 sync 가 견줘 달라진 것 · 누른 줄(ids)을 「직접 바꿈」으로
+const USER_EDIT_MS = 60000;      // 사진을 들고 있는 시간 (실리태번 저장 → SETTINGS_UPDATED 가 늦게 와도 놓치지 않게)
+
+/** 테마 설정에서 이 기능이 켜져 있나 (addons.js 와 같은 값: 블루레몬에이드 사용 · 애드온 regexlink) — 꺼져 있으면 정규식을 건드리지 않는다 */
+function featureOn() {
+    const s = extension_settings.salty;
+    return !!s && typeof s === 'object' && s.enabled !== false && s.addons?.regexlink === true;
+}
 
 function store() {
     const s = extension_settings.regex_link ??= {};
     if (!s.origin || typeof s.origin !== 'object') s.origin = {};       // 정규식 id → 우리가 손대기 전 disabled
     if (!s.modules || typeof s.modules !== 'object') s.modules = {};     // 모듈 키 → 'on' | 'off' (없으면 자동)
     if (typeof s.keepRecent !== 'boolean') s.keepRecent = true;          // 최근 메시지에 그 모듈이 있으면 켜 둔다
+    if (!s.manual || typeof s.manual !== 'object' || Array.isArray(s.manual)) s.manual = {};   // 1.1.2 정규식 id → true: 사용자가 직접 바꿈 · 자동 안 함
     s.recent = Math.min(200, Math.max(1, Number(s.recent) || 30));
     return s;
 }
@@ -90,50 +102,92 @@ function boundByPrompt(lists) {
 /** 계산하고 바뀐 것만 쓴다. 되돌린다: restore=true 면 origin 으로 (keep 에 든 id 는 origin 을 남긴다) */
 export function sync({ restore = false, keep = null } = {}) {
     if (stopped && !restore) { render(); return; } // 끈 뒤에는 다시 켜지 않는다 (다시 켜려면 새로고침)
+    if (!restore && !featureOn()) { lastRows = []; lastNote = '기능이 꺼져 있어 정규식을 바꾸지 않아요.'; render(); return; }
     const s = store();
     const enabled = enabledPrompts();
     const lists = restore ? restoreLists() : scriptLists();
     const bound = boundByPrompt(lists);
     for (const id of bound) { delete s.origin[id]; applied.delete(id); }   // 귀속이 맡은 정규식은 우리 기록을 지우고 그대로 둔다
     const scripts = lists.flat().filter(x => x && x.id && !bound.has(x.id));
-    if (!scripts.length) { lastRows = []; lastNote = bound.size ? '지금 쓰는 정규식은 모두 프롬프트 귀속이 맡고 있어요.' : '지금 쓰는 정규식이 없어요.'; render(); return; }
-    // 사용자가 정규식 화면에서 직접 바꾼 것: 우리가 마지막에 쓴 값과 다르면 그 값을 새 원래 상태로
-    for (const script of lists.filter(list => seenLists.has(list)).flat()) {
-        if (!script?.id) continue;
-        const mine = applied.get(script.id);
-        if (mine !== undefined && !!script.disabled !== mine) { s.origin[script.id] = !!script.disabled; applied.delete(script.id); }
+    // 1.1.2 사용자가 직접 바꾼 것 → 「직접 바꿈」: ① 정규식 화면을 누른 뒤 값이 달라진 것(배열이 새로 바뀌어도 id 로) ② 같은 배열에서 우리가 마지막에 쓴 값과 달라진 것(슬래시 명령 · 편집 창)
+    let marked = 0;
+    const mark = id => { if (!s.manual[id]) { s.manual[id] = true; marked++; } };
+    if (userEdit) {
+        for (const script of scripts) if ((userEdit.ids.has(script.id) || (userEdit.before.has(script.id) && !!script.disabled !== userEdit.before.get(script.id))) && modulesOf(script).length) mark(script.id);
+        userEdit.ids.clear();
+        if (Date.now() - userEdit.at > USER_EDIT_MS) userEdit = null;
     }
+    for (const script of lists.filter(list => seenLists.has(list)).flat()) {
+        if (!script?.id || bound.has(script.id)) continue;
+        const mine = applied.get(script.id);
+        if (mine !== undefined && !!script.disabled !== mine) mark(script.id);
+    }
+    // 직접 바꾼 정규식은 우리 기록을 지운다 — 되돌릴 원래 값도 사용자 값이라 그대로 둔다
+    for (const id of Object.keys(s.manual)) { if (id in s.origin) { delete s.origin[id]; marked++; } applied.delete(id); }
+    if (marked) saveSettingsDebounced();
+    if (!scripts.length) { lastRows = []; lastNote = bound.size ? '지금 쓰는 정규식은 모두 프롬프트 귀속이 맡고 있어요.' : '지금 쓰는 정규식이 없어요.'; render(); return; }
     // 새로 읽힌 목록은 파일에 저장된 우리 옛 값일 수 있어 견주지 않는다 — 우리 기록만 지우고 origin 으로 다시 맞춘다
     for (const list of lists) if (!seenLists.has(list)) { seenLists.add(list); for (const script of list) if (script?.id) applied.delete(script.id); }
     let changed = 0;
     if (restore || !enabled) {
         for (const script of scripts) {
             if (!(script.id in s.origin)) continue;
-            if (!!script.disabled !== s.origin[script.id]) { script.disabled = s.origin[script.id]; changed++; }
+            if (!!script.disabled !== s.origin[script.id]) { script.disabled = s.origin[script.id]; changed++; reflect(script.id, script.disabled); }
             if (!keep?.has(script.id)) delete s.origin[script.id];
             applied.delete(script.id);
         }
         lastRows = []; lastNote = restore ? '원래 상태로 되돌렸어요.' : '프롬프트 관리자(채팅 완성)를 쓸 때만 동작해요.';
     } else {
-        const rows = plan({ scripts, prompts: oai_settings.prompts || [], enabled, origin: s.origin, overrides: s.modules, recentHas: recentHasFactory() });
+        const rows = plan({ scripts, prompts: oai_settings.prompts || [], enabled, origin: s.origin, overrides: s.modules, recentHas: recentHasFactory(), manual: new Set(Object.keys(s.manual)) });
         const byId = new Map(scripts.map(x => [x.id, x]));
         for (const row of rows) {
             const script = byId.get(row.id);
             if (row.want === null) {
                 // 더는 연결되지 않는 정규식은 원래대로
-                if (row.id in s.origin) { if (!!script.disabled !== s.origin[row.id]) { script.disabled = s.origin[row.id]; changed++; } delete s.origin[row.id]; applied.delete(row.id); }
+                if (row.id in s.origin) { if (!!script.disabled !== s.origin[row.id]) { script.disabled = s.origin[row.id]; changed++; reflect(row.id, script.disabled); } delete s.origin[row.id]; applied.delete(row.id); }
                 continue;
             }
             if (!(row.id in s.origin)) s.origin[row.id] = !!script.disabled;
             const want = !row.want; // disabled
-            if (!!script.disabled !== want) { script.disabled = want; changed++; }
+            if (!!script.disabled !== want) { script.disabled = want; changed++; reflect(row.id, want); }
             applied.set(row.id, want);
         }
         lastRows = rows; lastNote = '';
     }
+    // 우리가 쓴 값은 사진에도 적는다 — 다음 sync 가 「사용자가 바꿈」으로 잘못 보지 않게
+    if (userEdit) for (const script of scripts) if (userEdit.before.has(script.id)) userEdit.before.set(script.id, !!script.disabled);
     if (changed) saveSettingsDebounced();
     render();
 }
+
+/** 정규식 화면이 열려 있으면 우리가 바꾼 켜짐을 그 줄 스위치에도 (실리태번은 다시 그리기 전까지 옛 값을 보여 준다) */
+function reflect(id, disabled) {
+    try {
+        const row = document.getElementById?.(id);
+        const box = row?.classList?.contains('regex-script-label') ? row.querySelector('input.disable_regex') : null;
+        if (box && box.checked !== disabled) box.checked = disabled;
+    } catch { /* 화면 없음 */ }
+}
+
+/** 정규식 화면(실리태번 「정규식」 서랍)을 누르는 순간: 지금 disabled 를 사진으로 — 하나씩 켜고 끄기 · 일괄 켜고 끄기 · 정규식 프리셋 적용 모두 이 뒤에 값이 바뀐다.
+ *  누르기를 먼저(캡처 단계) 받아서 실리태번이 값을 바꾸기 전 사진이다. 실리태번은 저장한 뒤 SETTINGS_UPDATED 를 내고 → sync 가 견준다. */
+function onRegexScreen(event) {
+    const target = event?.target;
+    if (!target?.closest?.('#regex_container, .regex_settings')) return;
+    if (!userEdit || Date.now() - userEdit.at > USER_EDIT_MS) {
+        const before = new Map();
+        for (const script of scriptLists().flat()) if (script?.id) before.set(script.id, !!script.disabled);
+        userEdit = { at: Date.now(), before, ids: new Set() };
+    } else userEdit.at = Date.now();
+    // 줄 스위치 · 일괄 켜기/끄기는 누른 정규식이 분명하다 — 값이 이미 같았어도(우리가 꺼 둔 것을 「끄기」) 사용자 뜻으로 적는다
+    const toggle = target.closest('.regex-toggle-on, .regex-toggle-off, input.disable_regex');
+    if (toggle) { const id = toggle.closest('.regex-script-label')?.id; if (id) userEdit.ids.add(id); return; }
+    if (target.closest('#bulk_enable_regex, #bulk_disable_regex')) {
+        for (const row of document.querySelectorAll?.('#regex_container .regex-script-label') || []) if (row.id && row.querySelector('.regex_bulk_checkbox:checked')) userEdit.ids.add(row.id);
+    }
+}
+/** 프리셋을 바꿔 목록이 통째로 다시 읽히면 그 차이는 사용자가 정규식 화면에서 바꾼 게 아니다 */
+function forgetUserEdit() { userEdit = null; }
 
 function schedule() { clearTimeout(timer); timer = setTimeout(() => sync(), 300); }
 
@@ -141,8 +195,8 @@ function schedule() { clearTimeout(timer); timer = setTimeout(() => sync(), 300)
 function summary() {
     const rows = lastRows;
     const on = rows.filter(r => r.want === true).length, off = rows.filter(r => r.want === false).length;
-    const keep = rows.filter(r => r.reason === '늘 필요').length, skip = rows.filter(r => r.want === null).length - keep;
-    return { on, off, keep, skip, total: rows.length };
+    const keep = rows.filter(r => r.reason === '늘 필요').length, manual = rows.filter(r => r.manual).length, skip = rows.filter(r => r.want === null).length - keep - manual;
+    return { on, off, keep, manual, skip, total: rows.length };
 }
 
 function moduleTable() {
@@ -158,18 +212,21 @@ function moduleTable() {
     const rowsHtml = [...groups.values()].sort((a, b) => a.key.localeCompare(b.key)).map(g => {
         const on = g.rows.filter(r => r.want === true).length, off = g.rows.filter(r => r.want === false).length;
         const owners = [...g.owners].map(id => `<span class="rl-owner ${enabled.has(id) ? 'on' : ''}">${esc(String(names.get(id) || id).replace(/[「」|!⚠️❗]/g, '').trim())}</span>`).join('');
-        const state = !g.owners.size ? '<i>짝 프롬프트 없음 · 그대로</i>' : `${on ? `켜짐 ${on}` : ''}${on && off ? ' · ' : ''}${off ? `꺼짐 ${off}` : ''}`;
+        const hand = g.rows.filter(r => r.manual);
+        const state = !g.owners.size ? '<i>짝 프롬프트 없음 · 그대로</i>' : [on && `켜짐 ${on}`, off && `꺼짐 ${off}`, hand.length && `직접 바꿈 ${hand.length}`].filter(Boolean).join(' · ');
         const mode = s.modules[g.key] || 'auto';
-        return `<div class="rl-module"><div class="rl-module-head"><b>${esc(g.key)}</b><small>정규식 ${g.rows.length}개 · ${state}</small></div><div class="rl-owners">${owners || '<span class="rl-owner">—</span>'}</div><select class="text_pole rl-mode" data-module="${esc(g.key)}" aria-label="${esc(g.key)} 처리"><option value="auto" ${mode === 'auto' ? 'selected' : ''}>프롬프트 따라</option><option value="on" ${mode === 'on' ? 'selected' : ''}>늘 켜기</option><option value="off" ${mode === 'off' ? 'selected' : ''}>늘 끄기</option></select></div>`;
+        // 1.1.2 직접 바꾼 정규식: 이름과 「자동으로」 (누르면 직접 바꿈 표시를 지우고 다시 프롬프트를 따라요)
+        const manual = hand.length ? `<div class="rl-manual"><small>직접 바꿈 — 자동 안 함: ${hand.map(r => esc(r.name || r.id)).join(' · ')}</small><button type="button" class="salty-btn rl-auto" data-auto="${esc(g.key)}">자동으로</button></div>` : '';
+        return `<div class="rl-module"><div class="rl-module-head"><b>${esc(g.key)}</b><small>정규식 ${g.rows.length}개 · ${state}</small></div><div class="rl-owners">${owners || '<span class="rl-owner">—</span>'}</div>${manual}<select class="text_pole rl-mode" data-module="${esc(g.key)}" aria-label="${esc(g.key)} 처리"><option value="auto" ${mode === 'auto' ? 'selected' : ''}>프롬프트 따라</option><option value="on" ${mode === 'on' ? 'selected' : ''}>늘 켜기</option><option value="off" ${mode === 'off' ? 'selected' : ''}>늘 끄기</option></select></div>`;
     }).join('');
     return rowsHtml;
 }
 
 function render() {
     if (!root) return;
-    const s = store(), { on, off, keep, skip, total } = summary();
+    const s = store(), { on, off, keep, manual, skip, total } = summary();
     root.querySelector('.rl-summary').innerHTML = total
-        ? `정규식 ${total}개 중 <b>${on}개 켜짐</b> · <b>${off}개 꺼짐</b>${keep ? ` · ${keep}개는 늘 필요해 그대로` : ''}${skip ? ` · ${skip}개는 태그가 없어 그대로` : ''}`
+        ? `정규식 ${total}개 중 <b>${on}개 켜짐</b> · <b>${off}개 꺼짐</b>${manual ? ` · ${manual}개는 직접 바꿔 그대로` : ''}${keep ? ` · ${keep}개는 늘 필요해 그대로` : ''}${skip ? ` · ${skip}개는 태그나 짝 프롬프트가 없어 그대로` : ''}`
         : '연동 중인 정규식 없음';
     root.querySelector('[data-keep]').checked = s.keepRecent;
     root.querySelector('[data-recent]').value = s.recent;
@@ -193,6 +250,14 @@ function mount() {
         else if ('recent' in el.dataset) { store().recent = Number(el.value) || 30; saveSettingsDebounced(); sync(); }
         else if (el.dataset.module) { const s = store(); if (el.value === 'auto') delete s.modules[el.dataset.module]; else s.modules[el.dataset.module] = el.value; saveSettingsDebounced(); sync(); }
     });
+    root.addEventListener('click', event => {
+        const key = event.target?.closest?.('[data-auto]')?.dataset?.auto;
+        if (!key) return;
+        const s = store();
+        // 「자동으로」 = 프롬프트를 따름: 원래 값은 켜짐으로 적는다 (지금 값으로 적으면 손으로 꺼 둔 것이 「원래 꺼 둔 것」이 돼 계속 꺼져 있어요)
+        for (const row of lastRows) if (row.manual && row.keys.includes(key)) { delete s.manual[row.id]; s.origin[row.id] = false; }
+        saveSettingsDebounced(); sync();
+    });
     verifyAddonCss({ folder: 'regexlink', name: '--rl-version', version: VERSION, title: '프롬프트 연동 정규식', selector: '#regex-link-settings' });
 }
 
@@ -201,13 +266,22 @@ function listen() {
     if (listened.length) return;
     const t = event_types;
     for (const name of [t.SETTINGS_UPDATED, t.OAI_PRESET_CHANGED_AFTER, t.CHAT_CHANGED, t.MESSAGE_RECEIVED, t.MESSAGE_SWIPED, t.MESSAGE_DELETED].filter(Boolean)) { eventSource.on(name, schedule); listened.push(name); }
+    if (t.OAI_PRESET_CHANGED_AFTER) eventSource.on(t.OAI_PRESET_CHANGED_AFTER, forgetUserEdit);
+    // 정규식 화면 누르기는 캡처 단계로 — 실리태번 스위치(.regex-toggle-on/off) · 일괄 단추 · 정규식 프리셋이 값을 바꾸기 전에 사진을 찍는다
+    for (const type of SCREEN_EVENTS) document.addEventListener?.(type, onRegexScreen, true);
 }
+function unlisten() {
+    for (const name of listened) eventSource.removeListener(name, schedule);
+    if (listened.length && event_types.OAI_PRESET_CHANGED_AFTER) eventSource.removeListener(event_types.OAI_PRESET_CHANGED_AFTER, forgetUserEdit);
+    for (const type of SCREEN_EVENTS) document.removeEventListener?.(type, onRegexScreen, true);
+    listened.length = 0; userEdit = null;
+}
+const SCREEN_EVENTS = ['click', 'input', 'change'];
 
 /** 테마가 기능을 끌 때 (addons.js) — 원래 상태로 되돌리고 감시를 멈춘다 */
 export async function stop() {
     stopped = true;
-    for (const name of listened) eventSource.removeListener(name, schedule);
-    listened.length = 0; clearTimeout(timer);
+    unlisten(); clearTimeout(timer);
     // 정규식 화면 · 프리셋 저장으로 우리가 쓴 값이 프리셋 파일에 들어갔으면 되돌린 목록으로 파일도 고친다 (origin 은 저장한 뒤 지운다)
     const s = store(), list = oai_settings.extensions?.regex_scripts, name = oai_settings.preset_settings_openai;
     const mine = restoreLists().includes(list) ? list.filter(x => x?.id && x.id in s.origin) : [];
@@ -231,7 +305,8 @@ export async function resume() {
     stopped = false; listen(); sync();
 }
 
-jQuery(() => { mount(); if (!stopped) { listen(); schedule(); } });
+// 1.1.2 불러오기만 해서는 시작하지 않는다: 테마 설정에서 켜져 있을 때만 감시를 건다 (꺼져 있으면 정규식 화면 · 설정 저장을 보지도 않는다)
+jQuery(() => { mount(); if (!stopped && featureOn()) { listen(); schedule(); } });
 
 export async function openPanel() {
     if (inlineHost?.isConnected && inlineHost.offsetParent) { root.scrollIntoView({ block: 'nearest' }); return; }

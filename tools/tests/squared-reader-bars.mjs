@@ -26,7 +26,7 @@ function rig() {
         getComputedStyle: () => ({ display: 'block', visibility: 'visible', borderTopLeftRadius: '16px', backgroundColor: 'rgb(1,2,3)', borderTopWidth: '0', backgroundImage: 'none', boxShadow: 'none', cursor: 'pointer' }) };
     const doc = { body, head: { append() {} }, createElement: () => ({ dataset: {}, remove() {} }), querySelectorAll: () => [] };
     const stop = watchSquaredButtons(doc, host);
-    const flush = () => { while (timers.length) timers.shift()(); while (frames.length) frames.shift()(); };
+    const flush = () => { while (timers.length || frames.length) { while (timers.length) timers.shift()(); while (frames.length) frames.shift()(); } };   // 1.0.0: 재기는 rAF → setTimeout(배치 뒤)라 둘을 번갈아 비워요
     return { body, host, flush, stop, pending: () => timers.length + frames.length };
 }
 const flip = (body, add, remove = []) => { const old = body.getAttribute(); for (const c of add) body.cls.add(c); for (const c of remove) body.cls.delete(c); return { type: 'attributes', attributeName: 'class', oldValue: old, target: body }; };

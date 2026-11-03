@@ -13,7 +13,6 @@ const { capturePreset, readPreset, applyPreset } = await loadModule('preset-shar
 const { SettingsHistory } = await loadModule('settings-history.js');
 const { appearanceSnapshot, beginComparison, comparisonView, endComparison } = await loadModule('appearance-compare.js');
 const { changedSettings, settingRoute, resetSetting } = await loadModule('settings-differences.js');
-const { syncDeviceLayout, saveDeviceLayout } = await loadModule('device-layouts.js');
 const { searchSettings, SEARCH_ENTRIES } = await loadModule('settings-search.js');
 const ctx = { extensionSettings: {}, powerUserSettings: {}, saveSettingsDebounced() {} };
 globalThis.SillyTavern = { getContext: () => ctx };
@@ -29,7 +28,7 @@ const decorated = () => {
 const results = [];
 async function check(name, run) { try { await run(); results.push({ name, pass: true }); } catch (error) { results.push({ name, pass: false, error: error.stack }); } }
 await check('old settings receive default choices without replacing custom appearance', () => {
-    const old = fresh(); delete old.markdown; old.palette = 'lemon-night'; old.type.size = 23; old.type.letterSpacing = 12; old.fonts.text.ko = 'custom-font'; old.dialogue.style = 'plain'; old.image.radius = 31;
+    const old = fresh(); delete old.markdown; old.palette = 'night'; old.type.size = 23; old.type.letterSpacing = 12; old.fonts.text.ko = 'custom-font'; old.dialogue.style = 'plain'; old.image.radius = 31;
     const after = loaded(old);
     assert.deepEqual(after.markdown, MARKDOWN_DEFAULTS);
     for (const key of ['type', 'fonts', 'dialogue', 'image']) assert.deepEqual(after[key], old[key]);
@@ -127,40 +126,6 @@ await check('spacing and color locks preserve fine tuning across both style and 
         for (const key of protectedKeys) assert.equal(s.markdown[key], before[key], `${mode}: ${key}`);
         for (const key of ['heading','hr','strongStyle','underlineWidth','strongThick']) assert.equal(s.markdown[key], MARKDOWN_DEFAULTS[key], `${mode}: unlocked ${key}`);
     }
-});
-await check('device layouts separate geometry while appearance choices remain shared', () => {
-    const s = fresh(); s.deviceLayouts.on = true; syncDeviceLayout(s, 'pc'); s.markdown.size = 'large'; s.markdown.space = 'relaxed'; s.markdown.hr = 'line'; saveDeviceLayout(s);
-    syncDeviceLayout(s, 'mobile'); assert.equal(s.markdown.size, 'default'); s.markdown.size = 'small'; s.markdown.space = 'compact'; saveDeviceLayout(s);
-    syncDeviceLayout(s, 'pc'); assert.equal(s.markdown.size, 'large'); assert.equal(s.markdown.space, 'relaxed'); assert.equal(s.markdown.hr, 'line');
-});
-await check('mobile fine spacing survives device switches without splitting decoration or colors', () => {
-    const geometry = ['hrWidth','hrSpace','quotePadding','listIndent','tablePadding','underlineOffset'];
-    const s = fresh(); s.deviceLayouts.on = true; syncDeviceLayout(s, 'pc');
-    const pc = { hrWidth: 88, hrSpace: 1.6, quotePadding: 1.1, listIndent: 2, tablePadding: .65, underlineOffset: .3 };
-    Object.assign(s.markdown, pc); saveDeviceLayout(s); syncDeviceLayout(s, 'mobile');
-    for (const key of geometry) assert.equal(s.markdown[key], MARKDOWN_DEFAULTS[key], key);
-    const mobile = { hrWidth: 65, hrSpace: .5, quotePadding: .2, listIndent: 1.1, tablePadding: .2, underlineOffset: .1 };
-    const shared = { hr: 'star', strongThick: 65, underlineWidth: 3, quoteAlpha: 20, strongAlpha: 45, accentOwn: true, accentColor: '#123456' };
-    Object.assign(s.markdown, mobile, shared); saveDeviceLayout(s);
-    for (const [device, expected] of [['pc', pc], ['mobile', mobile], ['pc', pc]]) {
-        syncDeviceLayout(s, device);
-        for (const key of geometry) assert.equal(s.markdown[key], expected[key], `${device}: ${key}`);
-        for (const [key, value] of Object.entries(shared)) assert.equal(s.markdown[key], value, `${device}: shared ${key}`);
-    }
-});
-await check('saved device spacing restores on a fresh mobile or PC session', () => {
-    const s = fresh(); s.deviceLayouts.on = true; syncDeviceLayout(s, 'pc');
-    s.markdown.hrWidth = 92; s.markdown.quotePadding = 1.2; saveDeviceLayout(s);
-    syncDeviceLayout(s, 'mobile'); s.markdown.hrWidth = 60; s.markdown.quotePadding = .25; s.markdown.accentOwn = true; s.markdown.accentColor = '#aabbcc'; saveDeviceLayout(s);
-    const saved = JSON.stringify(s), previous = globalThis.matchMedia;
-    try {
-        for (const [mobile, width, padding] of [[true, 60, .25], [false, 92, 1.2]]) {
-            globalThis.matchMedia = () => ({ matches: mobile });
-            const restored = loaded(JSON.parse(saved));
-            assert.equal(restored.markdown.hrWidth, width); assert.equal(restored.markdown.quotePadding, padding);
-            assert.equal(restored.markdown.accentOwn, true); assert.equal(restored.markdown.accentColor, '#aabbcc');
-        }
-    } finally { if (previous === undefined) delete globalThis.matchMedia; else globalThis.matchMedia = previous; }
 });
 await check('undo/redo and held comparison affect only the intended saved/rendered values', () => {
     const s = fresh(), h = new SettingsHistory(), token = {}; const snap = appearanceSnapshot(s);

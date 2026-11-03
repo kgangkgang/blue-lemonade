@@ -395,12 +395,12 @@ await t('화면에서 고르기 — 표식: 글자 옆 아이콘 칸에, svg 아
     assert.equal(pic.getAttribute('data-bl-pick-inline'), core.pickSlug('#extensionsMenu|text|그림 단추'), 'svg 아이콘 + 글자는 단추에 inline 표식');
     assert.equal(doc.querySelector('#send_but').getAttribute('data-bl-pick'), core.pickSlug('#rightSendForm|id|send_but'));
     assert.deepEqual([...doc.querySelectorAll('.mes_translate')].map(e => e.getAttribute('data-bl-pick')), Array(2).fill(core.pickSlug('#chat|cls|mes_translate')));
-    assert.ok(observer && observer.target === doc.body && observer.opts.childList && observer.opts.subtree, '감시 켜짐');
+    assert.ok(observer && pickMod.pickState().observing && observer.opts.childList && observer.opts.subtree, '감시 켜짐(9.0.4 공용 감시 허브 — body 구역 감시자 하나)');
     assert.deepEqual(pickMod.pickState().slugs.length, 4);
     // 새 메시지가 붙으면 그 가지만 다시
     const mes = doc.createElement('div'); mes.className = 'mes'; mes.innerHTML = '<div class="mes_buttons"><div class="extraMesButtons"><div title="번역" class="mes_button mes_translate fa-solid fa-language interactable"></div></div></div>';
     doc.querySelector('#chat').append(mes);
-    observer.cb([{ addedNodes: [mes] }]);
+    observer.cb([{ type: 'childList', target: doc.querySelector('#chat'), addedNodes: [mes], removedNodes: [] }]);
     assert.equal(mes.querySelector('.mes_translate').getAttribute('data-bl-pick'), core.pickSlug('#chat|cls|mes_translate'));
     // 같은 값으로 다시 불러도(슬라이더마다 applyAll) 다시 찾지 않는다 — 표식을 손으로 지워 보면 그대로
     doc.querySelector('#send_but').removeAttribute('data-bl-pick');

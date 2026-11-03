@@ -1,6 +1,6 @@
 // 7.3.1 (저장 정리 1.1.6) 빈 채팅 덮어쓰기 막기 — src/addons/perf/emptyguard.js 판단 + savededupe.js 연결
 //   실리태번이 채팅을 다시 불러오는 사이(배열을 먼저 비움 · 메타데이터는 남음)에 저장이 끼거나, 다시 읽기가 실패한 뒤 「서버에 있게」 저장이 돌면
-//   머리줄만 있는 파일(메시지 0개)이 써져 메시지가 다 사라졌다 (사용자 채팅 메시지 16개). 그런 저장은 보내지 않고 409.
+//   머리줄만 있는 파일(메시지 0개)이 써져 메시지가 다 사라졌다. 그런 저장은 보내지 않고 409.
 //   흔한 저장(지금 채팅에 메시지가 있음) · 막지 않는 저장은 모두 동기로 그대로 지나간다(null) — 겹친 저장의 차례가 바뀌지 않게.
 //   지어낸 캐릭터 · 파일 이름만 쓴다.   node tools/tests/empty-chat-guard-731.mjs [테마 뿌리, 기본 .]
 import assert from 'node:assert/strict';
@@ -86,8 +86,8 @@ await test('연결: savededupe 1.1.6 의 fetch 감싸개가 저장마다 prechec
     const src = read('src/addons/perf/savededupe.js');
     const guard = read('src/addons/perf/emptyguard.js');
     assert.match(src, /import \{ createEmptyGuard, createSaveFailMute, guardWanted, guardSlot, guardResponse, notifyBlocked, notifySuspect, createServerCount, bindGuardEvents, quickLiveFrom \} from '\.\/emptyguard\.js';/);
-    assert.match(src, /const VERSION = '1\.1\.7';/);   // 7.4.1 저장 실패 알림 숨김
-    assert.match(read('src/addons/perf/style.css'), /--sv-css-version: "1\.1\.7";/);
+    assert.match(src, /const VERSION = '1\.1\.8';/);   // 7.4.1 저장 실패 알림 숨김
+    assert.match(read('src/addons/perf/style.css'), /--sv-css-version: "1\.1\.8";/);
     // 8.2.6 알림 · 숨기기는 emptyguard.js notifyBlocked 하나 (독립 모듈과 같은 글)
     assert.match(src, /if \(typeof toastr !== 'undefined'\) notifyBlocked\(toastr, saveFailMute\);/);
     assert.match(guard, /mute\?\.wrap\(toast\);\s*mute\?\.arm\(\);\s*toast\.warning\(BLOCK_TEXT, NOTICE_TITLE,/, 'arm the mute before BL warns (ST toasts after the 409)');
@@ -100,7 +100,7 @@ await test('연결: savededupe 1.1.6 의 fetch 감싸개가 저장마다 prechec
     assert.match(guard, /on\(eventTypes\?\.CHAT_CHANGED, \(\) => \{ if \(active\(\)\) guard\(\)\.onChatOpened\(\); \}\);/);
     assert.match(guard, /on\(eventTypes\?\.MESSAGE_DELETED, \(\) => \{ if \(active\(\)\) guard\(\)\.onMessageDeleted\(\); \}\);/);
     assert.match(guard, /if \(typeof eventSource\.makeFirst === 'function'\) eventSource\.makeFirst\(type, fn\);/, '두 사건 모두 맨 앞');
-    assert.match(src, /bind\('#sv_empty', 'emptyGuard'\);/);
+    assert.match(src, /drawer\.querySelector\('#sv_empty'\)/);
     assert.ok(src.includes('빈 채팅으로 덮어쓰는 저장 막기'));
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/empty-chat-guard-731\.mjs \./);
 });

@@ -37,15 +37,15 @@ test('imageKey drops the fragment and, given the origin, shortens same-server ad
 
 test('the same picture seen from two devices shares one key (1.4.9 absolute records stay compatible)', () => {
     const fav = { images: [{ src: 'http://127.0.0.1:8000/user/images/a.png', at: 1 }] };   // 1.4.9 가 저장한 절대 주소
-    assert.equal(im.hasImage(fav, 'http://192.168.0.7:8000/user/images/a.png', 'http://192.168.0.7:8000'), true);
-    assert.equal(im.hasImage(fav, '/user/images/a.png', 'http://192.168.0.7:8000'), true);   // 1.4.9 절대 저장도 경로로 알아본다
-    assert.equal(im.appendImage(fav, { src: 'http://192.168.0.7:8000/user/images/a.png' }, { origin: 'http://192.168.0.7:8000' }).reason, 'duplicate');
-    assert.equal(im.hasImage(fav, '/user/images/other.png', 'http://192.168.0.7:8000'), false);
+    assert.equal(im.hasImage(fav, 'http://192.0.2.7:8000/user/images/a.png', 'http://192.0.2.7:8000'), true);
+    assert.equal(im.hasImage(fav, '/user/images/a.png', 'http://192.0.2.7:8000'), true);   // 1.4.9 절대 저장도 경로로 알아본다
+    assert.equal(im.appendImage(fav, { src: 'http://192.0.2.7:8000/user/images/a.png' }, { origin: 'http://192.0.2.7:8000' }).reason, 'duplicate');
+    assert.equal(im.hasImage(fav, '/user/images/other.png', 'http://192.0.2.7:8000'), false);
     assert.deepEqual([im.imagePathKey('https://cdn.example/p.png?v=1'), im.imagePathKey('/x/y.png'), im.imagePathKey('http://h:1/')], ['/p.png?v=1', '/x/y.png', '/']);
     const fresh = {};
     im.appendImage(fresh, { src: 'http://127.0.0.1:8000/user/images/b.png' }, { origin: ORIGIN, now: 5 });
     assert.deepEqual(fresh.images, [{ src: '/user/images/b.png', at: 5 }]);
-    assert.equal(im.hasImage(fresh, 'http://192.168.0.7:8000/user/images/b.png', 'http://192.168.0.7:8000'), true);
+    assert.equal(im.hasImage(fresh, 'http://192.0.2.7:8000/user/images/b.png', 'http://192.0.2.7:8000'), true);
     assert.equal(im.removeImage(fresh, 'http://10.0.0.2:8000/user/images/b.png', 'http://10.0.0.2:8000'), true);
     assert.equal('images' in fresh, false);
 });

@@ -98,7 +98,7 @@ const BUNDLED = UPSTREAM_LIBRARY.flatMap(group => group.files.map((id, i) => {
         words: Object.freeze([...group.words, ...ko.split(',')]), custom: false, loop: false });
 })).concat(DAILY_SFX);
 const BUNDLED_MAP = new Map(BUNDLED.map(row => [row.id, row]));
-// 6.2.5 뺀 효과음 — 사용자 10-13 「군화 발소리는 걍 없애줘」: 분석 목록 · 낱말 찾기 · 보관함 목록에 안 나오고 재생도 안 한다.
+// 6.2.5 뺀 효과음(군화 발소리): 분석 목록 · 낱말 찾기 · 보관함 목록에 안 나오고 재생도 안 한다.
 //       저장된 분석에 남은 'footsteps'(1.6.8 뒤 = 군화)는 소리 없이 지나간다. 1.6.8 전 분석의 'footsteps' 는 그때처럼 보통 발소리(daily_footsteps).
 //       파일 · 출처 기록은 그대로 둔다 (getSfx 는 이름 표시를 위해 계속 찾는다)
 export const RETIRED_SFX = Object.freeze(new Set(['footsteps']));

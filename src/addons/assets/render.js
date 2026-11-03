@@ -22,6 +22,7 @@ import { settings, currentFolder, folderOf, messageFolder } from './state.js';
 import { groupKeyOf, baseOf } from './assets.js';
 import { findSimilar, findSimilarList } from './names.js';
 import { slotView, isManual } from './slots.js';
+import { watchDom } from '../../dom-watch.js';
 
 const TAG_PATTERN = /\{\{img::\s*([^{}]+?)\s*\}\}/gi;
 const SKIP_TAGS = new Set(['CODE', 'PRE', 'SCRIPT', 'STYLE', 'TEXTAREA']);
@@ -1082,7 +1083,8 @@ export function setupRenderer() {
     }
     const chat = document.getElementById('chat');
     if (!chat || observer) return;
-    observer = new MutationObserver((mutations) => {
+    // 9.0.4: 공용 감시 허브 구독(#chat 구역 — 채팅을 보는 감시자는 문서마다 하나)
+    observer = watchDom(chat, { childList: true, subtree: true, characterData: true, name: '캐릭터 에셋 그림' }, (mutations) => {
         const touched = new Set();
         let full = false;
         // 스트리밍 한 번에 기록이 수백 개 오고 대부분 같은 요소 안이라, 바로 앞 기록과 같은 요소면 closest 를 다시 부르지 않는다
@@ -1110,5 +1112,4 @@ export function setupRenderer() {
         if (full) schedulePass();
         else if (touched.size) schedulePass(touched);
     });
-    observer.observe(chat, { childList: true, subtree: true, characterData: true });
 }

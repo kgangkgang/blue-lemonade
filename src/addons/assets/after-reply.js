@@ -1,7 +1,7 @@
 // 캐릭터 에셋 1.6.0 — 답장 뒤 다른 모델이 고르기 (실리태번 쪽).
 // 답을 받는 순간(MESSAGE_RECEIVED — 다시 쓰기(makeFirst) 뒤 · 번역기 · TTS(CHARACTER_MESSAGE_RENDERED) 전) 대사 문단 앞에 빈 자리를
 // await 없이 넣는다. 그 뒤로 글(mes)은 바뀌지 않는다 — 연결한 모델이 고른 이름은 extra.bl_asset_slots 에만 적는다.
-// 사용자: 「캐릭터 에셋도 다른 모델이 하게끔 … 비싸서 이렇게라도 돈 아낄 수 있으면」.
+// 캐릭터 에셋 고르기를 더 싼 다른 모델에 맡겨 비용을 줄이려는 것.
 import { eventSource, event_types, saveChatConditional, updateMessageBlock } from '../../../../../../../script.js';
 import { getContext } from '../../../../../../extensions.js';
 import { notifyRerender } from '../../rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe)
@@ -177,7 +177,7 @@ function retry(messageId, slotId) {
     void fill(messageId, message, ids, swipe);
 }
 
-// ── 6.5.3 메시지 ··· 메뉴 「캐릭터 에셋 다시 고르기」 (그림 확장의 그리기 단추처럼 — 사용자 10-15) ──
+// ── 6.5.3 메시지 ··· 메뉴 「캐릭터 에셋 다시 고르기」 (그림 확장의 그리기 단추처럼) ──
 
 /** 번역문(display_text)도 글과 같은 자리로 — 자리 없이(또는 옛 번호로) 번역된 답은 새 자리가 번역 화면에 안 보이니까. 넣을 경계가 모자라면 앞 자리만 */
 function addSlotsToTranslation(message, ids) {

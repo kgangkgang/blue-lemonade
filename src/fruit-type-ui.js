@@ -2,13 +2,16 @@ import {themeEnabled,addonsEnabled} from './usage-mode.js';
 import {scriptSettings,scriptEnabled} from './scripts/store.js';
 import {getSettings,saveSettings} from './settings.js';
 import {allFonts,findFont,fontStack,loadFont} from './fonts.js';
-import {FRUIT_TYPES,FRUIT_UNSUPPORTED,REGION_DEFAULT,tidyFruitType,fruitTypeCss,typeOwner,ownerEnabled,layoutChoices,typeMatch,stSelector} from './fruit-type-schema.js';
+import './catalog-full.js';   // 1.0.0 글꼴 고르기 목록 전체
+import {FRUIT_TYPES,FRUIT_UNSUPPORTED,REGION_DEFAULT,tidyFruitType,fruitTypeCss,typeOwner,ownerEnabled,layoutChoices,typeMatch,stSelector,splitList,inRoot,DECOR_CHOICES,decorFilterMarkup} from './fruit-type-schema.js';
 import {findFruitPreviewSource,copyFruitPreview,fruitPreviewBackground,FRUIT_SNAPSHOT_DOCUMENT} from './fruit-type-snapshot.js';
 import {buildFruitSample,sampleVars,mountFragmentHost,DEUS_VERSIONS,tidyDemVersion} from './fruit-type-sample.js';
 import {dressDemSky} from './dem-sky.js';
 import {syncFruitTypography} from './fruit-type-runtime.js';
 import {bindTouchSliders} from './touch-sliders.js';
 import {bindPreviewViews} from './preview-view.js';
+import {onThemeLook} from './shared/theme-look.js';
+import {watchDom} from './dom-watch.js';
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const current=()=>tidyFruitType(getSettings().fruitTypography);
@@ -16,10 +19,10 @@ const family=id=>{const f=findFont(id);if(!f||f.unusable)return '';loadFont(f);r
 const option=(v,label,value)=>`<option value="${esc(v)}" ${v===value?'selected':''}>${esc(label)}</option>`;
 // 펼친 영역은 창이 열린 동안만 기억한다 (저장 값 아님) — 종류를 바꾸거나 원복해 다시 그려도 그대로
 const openGroups=new Map();
-export const fruitTypographyMarkup=(owner="fruit")=>`<div data-fruit-type-editor="${owner==='deus'?'deus':'fruit'}" class="bl-fruit-type-editor"></div>`;
+export const fruitTypographyMarkup=(owner="fruit")=>`<div data-fruit-type-editor="${['deus','sola'].includes(owner)?owner:'fruit'}" class="bl-fruit-type-editor"></div>`;
 export function bindFruitTypography(root){
     const box=root.matches?.('[data-fruit-type-editor]')?root:root.querySelector('[data-fruit-type-editor]');if(!box)return()=>{};
-    const owner=box.dataset.fruitTypeEditor==='deus'?'deus':'fruit',types=FRUIT_TYPES.filter(t=>typeOwner(t)===owner);
+    const owner=['deus','sola'].includes(box.dataset.fruitTypeEditor)?box.dataset.fruitTypeEditor:'fruit',types=FRUIT_TYPES.filter(t=>typeOwner(t)===owner);
     const current=()=>{const s=tidyFruitType(getSettings().fruitTypography);s.kind=s.ownerKinds[owner];return s;};
     let portWatch=null;
     let alive=true, previewTimer=0, previewFrame=0, previewKind='', previewSignature='', autoPreviewScale=null;
@@ -29,6 +32,7 @@ export function bindFruitTypography(root){
     // 실제 채팅과 같은 조건(body.salty-dem-skin = 데우스 · 카드 스킨 켬)일 때만 표본에도 하늘(해 · 달 자리 · 달 모양)을 입혀요 — dem-sky.js
     const skinOn=()=>document.body.classList.contains('salty-dem-skin');
     // 대화에서 찾은 데우스 상태창의 판 — V3 는 묶음(.dem-modules) 안이거나 트래커 격자(.dem-track__grid)를 품어요
+    const VERSIONED=new Set(['deus-tracker','deus-status','deus-threads','deus-psych','deus-plot','deus-momentum','deus-conflict']);
     const sourceVersion=el=>el.closest('.custom-dem-modules,.dem-modules')||el.querySelector('.custom-dem-track__grid,.dem-track__grid')?'v3':'2.5';
     // Folding follows this editor only; the theme previews keep their own fold state.
     const folded=()=>{try{return localStorage.getItem('bl_ft_pvfold')==='1';}catch{return false;}};
@@ -41,7 +45,7 @@ export function bindFruitTypography(root){
     const toggle=(attrs,label,checked)=>`<label class="salty-switch"><input type="checkbox" ${attrs} aria-label="${esc(label)}" ${checked?'checked':''}><span></span></label>`;
     // 이름 · ↺ · 스위치를 한 줄에 (상태창 전체도, 영역도 같은 모양). 8.0.6 ↺ 는 테마 설정처럼 이름 바로 옆, 바꾼 값이 있을 때만 보여요.
     const switchRow=(label,note,reset,resetLabel,on,changed)=>`<div class="salty-row bl-ft-row"><span>${label}<button type="button" class="bl-ft-reset" ${reset} title="${esc(resetLabel)}" aria-label="${esc(resetLabel)}"${changed?'':' hidden'}>↺</button>${note?`<small>${note}</small>`:''}</span><span class="bl-ft-row-ctl">${on}</span></div>`;
-    // 8.1.2 하단 문구: 스위치 대신 테마 두 칸 고르기 「보임 | 숨김」(사용자 10-28 시안 B) — 옆 「정보 배치」 고르기와 같은 높이 · 모양. 저장 값은 예전 그대로 hideFooter(숨김 = 켬)
+    // 8.1.2 하단 문구: 스위치 대신 테마 두 칸 고르기 「보임 | 숨김」(시안 B) — 옆 「정보 배치」 고르기와 같은 높이 · 모양. 저장 값은 예전 그대로 hideFooter(숨김 = 켬)
     const footerSeg=hidden=>`<div class="salty-seg salty-mini bl-ft-seg">${[[false,'보임'],[true,'숨김']].map(([v,t])=>`<button type="button" data-ft-hide="${v}" aria-pressed="${hidden===v}" class="${hidden===v?'on':''}">${t}</button>`).join('')}</div>`;
     const typeChanged=(s,kind)=>JSON.stringify(s.types[kind])!==JSON.stringify(tidyFruitType({}).types[kind]);
     const regionChanged=r=>Object.keys(REGION_DEFAULT).some(k=>r[k]!==REGION_DEFAULT[k]);
@@ -49,7 +53,7 @@ export function bindFruitTypography(root){
     const fold=(key,label,summary,body)=>{const open=openGroups.get(owner)===key;return `<div class="bl-ft-group" data-ft-group-box="${key}"><button type="button" class="bl-ft-group-toggle" data-ft-group="${key}" aria-expanded="${open}"><span>${esc(label)}</span><small class="bl-ft-group-summary">${esc(summary)}</small></button><div class="bl-ft-group-body"${open?'':' hidden'}>${body}</div></div>`;};
     const regionSummary=r=>!r.on?'끔':r.font!=='original'?`켬 · ${findFont(r.font)?.label||'글꼴'}`:'켬';
     function paint(){
-        const s=current(),type=FRUIT_TYPES.find(t=>t.id===s.kind),config=s.types[s.kind],ownerName=owner==='deus'?'데우스':'과일 계열';
+        const s=current(),type=FRUIT_TYPES.find(t=>t.id===s.kind),config=s.types[s.kind],ownerName=owner==='deus'?'데우스':owner==='sola'?'솔라':'과일 계열';
         const regions=Object.entries(type.regions).map(([key,[label]])=>{const r=config.regions[key];return fold(key,label,regionSummary(r),`${switchRow('이 영역 조절','',`data-ft-reset="${key}"`,`${label} · 기본값으로`,toggle(`data-region="${key}" data-ft="on"`,`${label} 조절`,r.on),regionChanged(r))}
 <div class="bl-ft-params">${field(key,'font','글꼴',`<select>${option('original','원작 글꼴',r.font)}${allFonts().filter(f=>!f.unusable).map(f=>option(f.id,f.label,r.font)).join('')}</select>`,true)}
 ${slider(key,'size','크기',r.size,8,64,1,'px')}${slider(key,'weight','굵기',r.weight,100,900,100,'')}
@@ -62,10 +66,10 @@ ${field(key,'wrap','줄바꿈',`<select>${[['original','원작 그대로'],['wor
         box.innerHTML=`${choice('data-ft-kind','상태창 종류',types.map(t=>[t.id,t.name]),s.kind)}
 ${switchRow(`${ownerName} 글자 설정 사용`,'끄면 원작 표시로 돌아가요','data-ft-all-reset','이 상태창 글자 설정 · 기본값으로',toggle('data-ft-on',`${ownerName} 글자 설정 사용`,ownerEnabled(s,owner)),typeChanged(s,s.kind))}
 ${owner==='deus'?choice('data-ft-demver','미리보기 판',DEUS_VERSIONS,demVersion()):''}
-<div class="salty-prevbox bl-ft-prevbox${folded()?' folded':''}" data-pv-max="120"><button type="button" class="salty-pvfold" data-ft-pvfold aria-expanded="${!folded()}" aria-label="${folded()?'미리보기 펼치기':'미리보기 접기'}"><i aria-hidden="true"></i></button><iframe class="bl-ft-preview" title="상태창 미리보기" sandbox="allow-same-origin"></iframe></div>
+<div class="salty-prevbox bl-ft-prevbox${folded()?' folded':''}" data-pv-max="160"><button type="button" class="salty-pvfold" data-ft-pvfold aria-expanded="${!folded()}" aria-label="${folded()?'미리보기 펼치기':'미리보기 접기'}"><i aria-hidden="true"></i></button><iframe class="bl-ft-preview" title="상태창 미리보기" sandbox="allow-same-origin"></iframe></div>
 <p class="salty-note bl-ft-font-note" data-ft-font-status role="status"><span class="bl-ft-sample-badge" data-ft-sample-badge hidden>표본이에요</span><span data-ft-note-text></span></p>
 
-${type.layout||footer?`<div class="bl-ft-top">${type.layout?choice('data-ft-layout','정보 배치',layoutChoices(type),layoutChoices(type).some(([value])=>value===config.layout)?config.layout:'original'):''}${footer?`<div class="bl-ft-param bl-ft-seg-param" role="group" aria-label="${esc(footer)}"><span>${footer}</span>${footerSeg(config.hideFooter)}</div>`:''}</div>`:''}
+${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('data-ft-layout','정보 배치',layoutChoices(type),layoutChoices(type).some(([value])=>value===config.layout)?config.layout:'original'):''}${type.decor?choice('data-ft-decor','장식 색',DECOR_CHOICES,config.decor||'accent'):''}${footer?`<div class="bl-ft-param bl-ft-seg-param" role="group" aria-label="${esc(footer)}"><span>${footer}</span>${footerSeg(config.hideFooter)}</div>`:''}</div>`:''}
 <div class="bl-ft-groups">${regions}${unsupported}</div>`;
         const frame=box.querySelector('iframe');
         dropHost();lastCss='';previewKind='';previewSignature='';autoPreviewScale=null;docMode='';sampleKey='';sampleToken++;
@@ -79,9 +83,18 @@ ${type.layout||footer?`<div class="bl-ft-top">${type.layout?choice('data-ft-layo
     function reveal(key){
         const s=current(),type=FRUIT_TYPES.find(t=>t.id===s.kind),region=type?.regions[key],d=box.querySelector('iframe')?.contentDocument,view=box._previewViews?.get('fruit-type');if(!region||!d?.body||!view)return;
         const pick=sel=>{try{return d.querySelector(sel);}catch{return null;}};
-        const target=region[1].split(',').map(sel=>pick(`${typeMatch(type)} ${stSelector(sel)}`)||pick(stSelector(sel))).find(Boolean);if(!target)return;
+        const target=splitList(region[1]).map(sel=>pick(inRoot(typeMatch(type),stSelector(sel)))||pick(stSelector(sel))).find(Boolean);if(!target)return;
         const top=Math.max(0,target.getBoundingClientRect().top-8)*view.scale,port=box.querySelector('.bl-view-port')?.clientHeight||0,shown=top+view.y;if(shown>=0&&shown<port-24)return;// 이미 보이면 그대로 (슬라이더를 끄는 동안 흔들리지 않게)
         view.y=-top;box.dispatchEvent(new Event('bl:preview-resize'));
+    }
+    // 미리보기에 보이는 그 영역의 첫 글자 칸에서 지금 글자 값을 읽어요(설정 값 범위로). 못 찾으면 빈 값 — 기본값 그대로
+    function shownRegion(kind,key){
+        const type=FRUIT_TYPES.find(t=>t.id===kind),region=type?.regions[key],d=box.querySelector('iframe')?.contentDocument;if(!region||!d?.body)return {};
+        const pick=sel=>{try{return d.querySelector(sel);}catch{return null;}};
+        const el=splitList(region[1]).map(sel=>pick(inRoot(typeMatch(type),stSelector(sel)))||pick(stSelector(sel))).find(Boolean);if(!el)return {};
+        const st=d.defaultView.getComputedStyle(el),size=parseFloat(st.fontSize);if(!(size>0))return {};
+        const clamp=(v,min,max)=>Math.min(max,Math.max(min,Math.round(v*100)/100)),line=parseFloat(st.lineHeight),spacing=parseFloat(st.letterSpacing);
+        return {size:clamp(size,8,64),weight:clamp(Number(st.fontWeight)||400,100,900),italic:st.fontStyle==='italic',spacing:clamp(Number.isFinite(spacing)?spacing:0,-2,12),line:clamp(Number.isFinite(line)&&line>0?line/size:1.2,.8,4)};
     }
     // 값이 바뀐 뒤 영역 머리 요약 · ↺ 만 고친다 (다시 그리지 않음)
     function summarize(s){const config=s.types[s.kind];for(const out of box.querySelectorAll('[data-ft-group-box]')){const r=config.regions[out.dataset.ftGroupBox];if(r){out.querySelector('.bl-ft-group-summary').textContent=regionSummary(r);const reset=out.querySelector('[data-ft-reset]');if(reset)reset.hidden=!regionChanged(r);}}const all=box.querySelector('[data-ft-all-reset]');if(all)all.hidden=!typeChanged(s,s.kind);}
@@ -95,16 +108,17 @@ ${type.layout||footer?`<div class="bl-ft-top">${type.layout?choice('data-ft-layo
         if(!alive||!box.isConnected||!box.getClientRects().length)return;const sig=lookSignature();if(sig===lookSig)return;lookSig=sig;
         if(docMode==='sample'&&fragHost){dressDemSky(fragHost.host,skinOn());requestAnimationFrame(()=>{if(alive)copySampleHost();});}else if(docMode)schedulePreview(true);
     },60);}
-    const lookWatch=typeof MutationObserver==='function'?new MutationObserver(onLook):null;
-    lookWatch?.observe(document.body,{attributes:true,attributeFilter:['class','data-bl-dem-fold']});
-    for(const id of ['salty-vars','salty-dem-vars']){const vars=document.getElementById(id);if(vars)lookWatch?.observe(vars,{childList:true,characterData:true,subtree:true});}
+    // 9.0.4: body class · 테마 변수 글(['salty-vars','salty-dem-vars'] — theme-look 의 vars)은 테마 색 따라가기 한 구독(src/shared/theme-look.js), 폰 접기(body data-bl-dem-fold)는 공용 감시 허브
+    const lookOffs=[onThemeLook(onLook,{watch:'body.class vars',name:'과일 글자 설정 표본'}),watchDom(document.body,{attributes:['data-bl-dem-fold'],name:'과일 글자 설정 폰 접기'},onLook)];
     const dropHost=()=>{fragHost?.remove();fragHost=null;};
     // 미리보기 문서는 실제 복제 · 표본 중 한 가지로만 써요. 바뀌면 빈 문서로 다시 읽고(load 가 다시 부름) 남은 모양을 섞지 않아요.
     function switchMode(frame,want){if(!docMode||docMode===want)return false;dropHost();docMode='';sampleKey='';previewKind='';previewSignature='';lastCss='';frame.srcdoc=FRUIT_SNAPSHOT_DOCUMENT;return true;}
     // 숨은 자리의 표본을 실제 상태창과 같은 방법으로 미리보기에 복제해요(글자 설정은 숨은 자리에 먼저 입혀요)
+    // 1.0.x 장식 색 필터(#bl-decor-…)를 미리보기 문서에도 — 복제한 계산 스타일이 그 필터를 가리켜요. 테마 변수가 없는 문서라 지금 팔레트 값으로
+    function shareDecorFilters(d){d.querySelector('svg[data-bl-fruit-decor-filters]')?.remove();const st=getComputedStyle(document.body),box=d.createElement('div');box.innerHTML=decorFilterMarkup(k=>st.getPropertyValue(`--salty-${k}`).trim());if(box.firstElementChild)d.body.append(box.firstElementChild);}
     function copySampleHost(){
         const frame=box.querySelector('iframe'),d=frame?.contentDocument,root=fragHost?.root;if(!root||!d?.querySelector('[data-bl-fruit-preview]'))return;
-        if(!copyFruitPreview(root,d))return;
+        if(!copyFruitPreview(root,d))return;shareDecorFilters(d);
         const style=getComputedStyle(root),rect=root.getBoundingClientRect();
         d.body.style.backgroundColor=sampleBackdrop;d.body.style.colorScheme=style.colorScheme;
         d.getElementById('custom').textContent='';lastCss='';
@@ -126,8 +140,10 @@ ${type.layout||footer?`<div class="bl-ft-top">${type.layout?choice('data-ft-layo
     let placed=null;
     function refit(){const port=box.querySelector('.bl-view-port');if(placed?.frame.isConnected&&port&&port.clientWidth>40&&Math.abs(port.clientWidth-placed.port)>.5)placeFrame(placed.frame,placed.width,placed.height);}
     // 표본 높이 = 표본 아래 끝 + 본문 아래 여백 (글자 설정을 바꾸면 다시 재요)
-    function fitSample(){
-        const frame=box.querySelector('iframe'),d=frame?.contentDocument,host=d?.querySelector('[data-bl-fruit-preview]');if(docMode!=='sample'||!host?.firstElementChild)return;
+    function fitSample(){if(docMode==='sample')fitFrame();}
+    // 11-03 실제 복제본도 같은 식으로 — 글자 CSS 만 덮은 뒤 복제본 높이가 바뀌면 칸 높이를 따라가요(다시 복제하지 않고)
+    function fitFrame(){
+        const frame=box.querySelector('iframe'),d=frame?.contentDocument,host=d?.querySelector('[data-bl-fruit-preview]');if(!host?.firstElementChild)return;
         const style=d.defaultView.getComputedStyle(d.body),height=host.getBoundingClientRect().bottom+(parseFloat(style.paddingBottom)||0)+(parseFloat(style.marginBottom)||0)+(parseFloat(style.borderBottomWidth)||0);
         const width=parseFloat(frame.style.width)||frame.clientWidth;
         if(Math.abs((parseFloat(frame.style.height)||0)-Math.ceil(height))>1)placeFrame(frame,width,height);
@@ -157,6 +173,7 @@ ${type.layout||footer?`<div class="bl-ft-top">${type.layout?choice('data-ft-layo
                 :regex?`대화에 이 종류의 상태창이 없어 원작 ${name}정규식으로 만든 표본을 보여요.`:`대화에 이 종류의 상태창이 없고 원작 ${name}정규식도 찾지 못해 기본 표본을 보여요${deus?'(원작 그림 · 색은 빠져요)':''}.`;
             note.textContent=`${text} 글자 설정은 표본에 바로 반영되고 저장돼요.`;
         };
+        if(sample.fragment){await (await import('./lite.js')).previewCssReady();if(!alive||token!==sampleToken||!box.isConnected)return;}   // 9.0.1 숨은 자리는 미리보기 시트(src/preview.gen.css)의 데우스 스킨 규칙을 받아요 — 다 받은 뒤 그려요
         dropHost();
         if(sample.fragment){
             // 채팅 본문형(데우스): 테마 규칙을 받는 숨은 자리에 그리고 실제 상태창처럼 복제해요
@@ -185,22 +202,23 @@ ${type.layout||footer?`<div class="bl-ft-top">${type.layout?choice('data-ft-layo
         const s=current(),type=FRUIT_TYPES.find(t=>t.id===s.kind),frame=box.querySelector('iframe'),d=frame?.contentDocument;
         if(!d?.querySelector('[data-bl-fruit-preview]'))return;
         let source=findFruitPreviewSource(document,typeMatch(type)),mismatch=false;const note=box.querySelector('[data-ft-note-text]');
-        if(source&&owner==='deus'&&sourceVersion(source)!==demVersion()){source=null;mismatch=true;}
+        if(source&&owner==='deus'&&VERSIONED.has(s.kind)&&sourceVersion(source)!==demVersion()){source=null;mismatch=true;}
         if(!source){if(!switchMode(frame,'sample'))void showSample(type,frame,note,mismatch);return;}
         if(switchMode(frame,'real'))return;
         sampleToken++;box.querySelector('[data-ft-sample-badge]').hidden=true;
         const sourceStyle=getComputedStyle(source),rect=source.getBoundingClientRect(),backdrop=fruitPreviewBackground(source);
         const imageState=[...source.querySelectorAll('img')].map(i=>[i.currentSrc,i.complete,i.naturalWidth,i.naturalHeight].join(':')).join('|');
-        const signature=[s.kind,source.outerHTML,imageState,JSON.stringify(s),sourceStyle.color,sourceStyle.backgroundColor,backdrop,sourceStyle.fontFamily,sourceStyle.fontSize,rect.width,rect.height,[...source.ownerDocument.fonts||[]].filter(f=>f.status==='loaded').length].join('|');
+        // 11-03 설정 값(JSON)은 서명에서 빼요 — 글자 · 배치 규칙은 !important 라 복제본 위에 CSS 로 덮으면 같은 결과예요. 구조가 바뀌는 변경은 commit(force) 가 서명을 비워 다시 복제해요
+        const signature=[s.kind,source.outerHTML,imageState,sourceStyle.color,sourceStyle.backgroundColor,backdrop,sourceStyle.fontFamily,sourceStyle.fontSize,rect.width,[...source.ownerDocument.fonts||[]].filter(f=>f.status==='loaded').length].join('|');
         if(signature===previewSignature){refit();return;}
-        if(!copyFruitPreview(source,d)){d.querySelector('[data-bl-fruit-preview]').replaceChildren();note.textContent='상태창이 너무 복잡해 미리보기를 만들 수 없어요. 설정은 저장돼요.';previewKind='';previewSignature='';return;}previewKind=s.kind;previewSignature=signature;docMode='real';
+        if(!copyFruitPreview(source,d)){d.querySelector('[data-bl-fruit-preview]').replaceChildren();note.textContent='상태창이 너무 복잡해 미리보기를 만들 수 없어요. 설정은 저장돼요.';previewKind='';previewSignature='';return;}shareDecorFilters(d);previewKind=s.kind;previewSignature=signature;docMode='real';
         const previewHost=d.querySelector('[data-bl-fruit-preview]'),unavailable=Number(previewHost.getAttribute('data-bl-preview-unavailable-images')||0)+Number(previewHost.getAttribute('data-bl-preview-unavailable-art')||0);
         const unavailableFonts=Number(previewHost.getAttribute('data-bl-preview-unavailable-fonts')||0);
         note.textContent='현재 대화 상태창을 너비에 맞춰 보여요.'+(unavailable?' 그림·배경 '+unavailable+'곳은 다시 요청하지 않고 같은 크기의 자리로 보여요.':'')+(unavailableFonts?' 브라우저에서 공유하지 못한 글꼴 '+unavailableFonts+'종은 대체 글꼴로 보여요.':'');
         d.body.style.backgroundColor=backdrop;
         d.body.style.colorScheme=getComputedStyle(source).colorScheme;
-        // 이미 적용된 실제 결과를 복제했으므로 설정 CSS를 다시 덧씌우지 않아요.
-        d.getElementById('custom').textContent='';lastCss='';
+        // 11-03 복제본 위에 지금 글자 CSS 를 덮어 둬요(계산 값과 같아 모양은 그대로) — 끄는 동안 값이 바뀌면 다시 복제하지 않고 이 CSS 만 바꿔요
+        {const css=fruitTypeCss(current(),family);d.getElementById('custom').textContent=css;lastCss=css;shareFonts(d,css);}
         placeFrame(frame,rect.width,rect.height+(parseFloat(sourceStyle.marginTop)||0)+(parseFloat(sourceStyle.marginBottom)||0));
     }
     function schedulePreview(force=false){
@@ -213,30 +231,60 @@ ${type.layout||footer?`<div class="bl-ft-top">${type.layout?choice('data-ft-layo
         const css=fruitTypeCss(current(),family);
         if(docMode==='sample'&&fragHost){fragHost.setTypography(css);requestAnimationFrame(copySampleHost);return;}
         if(css!==lastCss){d.getElementById('custom').textContent=css;lastCss=css;}
-        if(docMode==='sample'){shareFonts(d,css);requestAnimationFrame(fitSample);}
+        shareFonts(d,css);requestAnimationFrame(fitFrame);
     }
-    function commit(s){s.ownerKinds[owner]=s.kind;getSettings().fruitTypography=tidyFruitType(s);saveSettings();syncFruitTypography(s,themeEnabled(getSettings()));summarize(s);updatePreview();schedulePreview(true);}
+    // commit 은 저장 · 채팅 적용 · 미리보기 다시 복제(11-03b: 글자 값도 다시 복제 — 복제본의 인라인 크기 때문)
+    function commit(s,force=true){s.ownerKinds[owner]=s.kind;getSettings().fruitTypography=tidyFruitType(s);saveSettings();syncFruitTypography(s,themeEnabled(getSettings()));summarize(s);updatePreview();schedulePreview(force);}
+    // 11-03 조절칸 값을 설정 사본에 반영만 해요(저장 · 적용 없음) — change(손 뗌 · 고르기)와 input(끄는 중)이 같이 써요
+    function assign(el,s){
+        const type=s.types[s.kind];let seeded=false;
+        if(el.hasAttribute('data-ft-on'))s.ownerOn[owner]=el.checked;
+        else if(el.hasAttribute('data-ft-layout'))type.layout=el.value;
+        else if(el.hasAttribute('data-ft-decor'))type.decor=DECOR_CHOICES.some(([k])=>k===el.value)?el.value:'accent';
+        else if(el.dataset.ft&&el.dataset.region){const r=type.regions[el.dataset.region];if(!r)return null;const key=el.dataset.ft;
+            // 1.0.x 손대지 않은 영역을 스위치로 켜면 미리보기에 지금 보이는 글자(크기 · 굵기 · 자간 · 줄간격 · 기울임)에서 시작해요 — 켜기만 해서는 모양이 바뀌지 않게
+            if(key==='on'&&el.checked&&!regionChanged(r)){const shown=shownRegion(s.kind,el.dataset.region);if(Object.keys(shown).length){Object.assign(r,shown);seeded=true;}}
+            r[key]=key==='on'?el.checked:key==='italic'?el.value==='true':['size','weight','spacing','line'].includes(key)?Number(el.value):el.value;
+            // Choosing a value is the intent to use it: switch on this region and the owner's typography.
+            if(key!=='on'&&!r.on){r.on=true;const toggle=box.querySelector(`[data-region="${el.dataset.region}"][data-ft="on"]`);if(toggle)toggle.checked=true;}}
+        else return null;
+        if(el.dataset.region)reveal(el.dataset.region);
+        if(!el.hasAttribute('data-ft-on')&&!ownerEnabled(s,owner)){s.ownerOn[owner]=true;const toggle=box.querySelector('[data-ft-on]');if(toggle)toggle.checked=true;}
+        return {seeded};
+    }
     function change(e){
-        const el=e.target,s=current(),type=s.types[s.kind];
+        const el=e.target,s=current();
         if(el.hasAttribute('data-ft-kind')){if(!types.some(t=>t.id===el.value))return;s.kind=el.value;commit(s);paint();return;}
         // 미리보기 판은 글자 설정이 아니라 미리보기만 바꿔요 — 표본을 그 판으로 다시 만들어요
         if(el.hasAttribute('data-ft-demver')){const settings=getSettings();settings.chat.demPreviewVersion=tidyDemVersion(el.value);saveSettings();sampleKey='';previewSignature='';schedulePreview(true);return;}
-        if(el.hasAttribute('data-ft-on'))s.ownerOn[owner]=el.checked;
-        else if(el.hasAttribute('data-ft-layout'))type.layout=el.value;
-        else if(el.dataset.ft&&el.dataset.region){const r=type.regions[el.dataset.region];if(!r)return;const key=el.dataset.ft;r[key]=key==='on'?el.checked:key==='italic'?el.value==='true':['size','weight','spacing','line'].includes(key)?Number(el.value):el.value;
-            // Choosing a value is the intent to use it: switch on this region and the owner's typography.
-            if(key!=='on'&&!r.on){r.on=true;const toggle=box.querySelector(`[data-region="${el.dataset.region}"][data-ft="on"]`);if(toggle)toggle.checked=true;}}
-        else return;
-        if(el.dataset.region)reveal(el.dataset.region);
-        if(!el.hasAttribute('data-ft-on')&&!ownerEnabled(s,owner)){s.ownerOn[owner]=true;const toggle=box.querySelector('[data-ft-on]');if(toggle)toggle.checked=true;}
-        commit(s);
+        clearTimeout(idleTimer);idleTimer=0;idleState=null;
+        const a=assign(el,s);if(!a)return;
+        commit(s);if(a.seeded)paint();// 슬라이더가 읽어 온 값을 보이게
+    }
+    // 11-03 끄는 동안(input)은 미리보기 글자만 바꿔요 — 전엔 input 마다 commit(저장 · 채팅 전체에 글자 CSS 적용 · 실제 상태창을 요소마다 계산 스타일 600여 속성씩 읽어 복제)이 돌아
+    //   데우스 상태창이 든 긴 채팅에서 폰 4배로 슬라이더 한 번 끌기에 긴 작업 11개 · 2.7초(최대 0.45초)가 들어 화면이 굳었어요(사용자 제보). 저장 · 채팅 적용 · 복제는 손 뗄 때(change) 한 번만.
+    //   미리보기 문서의 글자 규칙은 !important 라 복제본의 인라인 계산 스타일보다 세요 — 끄는 동안에도 미리보기는 바로 따라와요. 한 프레임에 한 번만 써요.
+    let lightFrame=0,lightCss=null,idleTimer=0,idleState=null;
+    // 11-03b 손을 안 떼도 실제 상태창이 따라오게 commit 을 해요 — 숫자 칸 타이핑은 느린 입력이라 바로(fruit-live-preview 검사가 input 만 보내고 240ms 뒤 실제 상태창과 견줘요),
+    //   슬라이더 끌기는 input 이 300ms 멈춘 뒤(끄는 중엔 미리보기 글자만). 숫자 칸은 change 가 칸을 떠날 때에야 오고, 끌다 멈춘 손가락도 그 자리의 값이 채팅에 보여야 해요.
+    //   commit 은 늘 다시 복제해요 — 복제본은 계산된 너비 · 높이를 인라인으로 들고 있어 글자 CSS 만 덮으면 글자는 바뀌어도 칸은 옛 크기라(fruit-live-preview 가 잡음) 채팅과 어긋나요. 끄는 동안의 CSS 덮기는 임시 미리보기예요
+    function idleCommit(){clearTimeout(idleTimer);idleTimer=0;const st=idleState;idleState=null;if(!alive||!st||!box.isConnected)return;commit(st);}
+    function previewOnly(s,wait=300){
+        lightCss=fruitTypeCss(s,family);summarize(s);
+        idleState=s;clearTimeout(idleTimer);idleTimer=0;
+        if(wait<=0)idleCommit();else idleTimer=setTimeout(idleCommit,wait);   // 숫자 칸(wait 0)은 바로 — 폰 4배에서 틱 하나 미루면 채팅이 300ms 뒤에야 따라와요
+        if(lightFrame)return;
+        lightFrame=requestAnimationFrame(()=>{lightFrame=0;if(!alive||lightCss===null)return;const css=lightCss;lightCss=null;
+            const d=box.querySelector('iframe')?.contentDocument,custom=d?.getElementById('custom');if(!custom||previewKind!==current().kind)return;
+            if(custom.textContent!==css)custom.textContent=css;lastCss=css;
+            shareFonts(d,css);requestAnimationFrame(fitFrame);});
     }
     function input(e){
         const el=e.target;if(!['number','range'].includes(el.type)||!el.dataset.ft)return;
         if(el.type==='number'&&(el.value===''||!el.validity.valid))return;
         const value=Math.min(Number(el.max),Math.max(Number(el.min),Number(el.value)));
         for(const other of el.closest('.bl-ft-slider')?.querySelectorAll('input')||[]){if(other!==el)other.value=String(value);if(other.type==='range')other.style.setProperty('--fill',`${(value-Number(other.min))/(Number(other.max)-Number(other.min))*100}%`);else other.style.setProperty('--num-ch',Math.max(3,String(other.value).length));}
-        change(e);
+        const s=current();if(!assign(el,s))return;previewOnly(s,el.type==='number'?0:300);
     }
     function click(e){
         const group=e.target.closest('[data-ft-group]');
@@ -249,7 +297,7 @@ ${type.layout||footer?`<div class="bl-ft-top">${type.layout?choice('data-ft-layo
         if(fold){const shut=!fold.parentElement.classList.contains('folded');fold.parentElement.classList.toggle('folded',shut);fold.setAttribute('aria-expanded',String(!shut));fold.setAttribute('aria-label',shut?'미리보기 펼치기':'미리보기 접기');try{localStorage.setItem('bl_ft_pvfold',shut?'1':'0');}catch{}box.dispatchEvent(new Event('bl:preview-resize'));return;}if(e.target.closest('[data-ft-all-reset]')){const s=current();s.types[s.kind]=tidyFruitType({}).types[s.kind];commit(s);paint();return;}const el=e.target.closest('[data-ft-reset]');if(!el)return;const s=current();s.types[s.kind].regions[el.dataset.ftReset]={...REGION_DEFAULT};commit(s);paint();}
     box.addEventListener('change',change);box.addEventListener('input',input);box.addEventListener('click',click);paint();
     const timer=setInterval(()=>{if(box.isConnected&&box.getClientRects().length&&!folded())schedulePreview();},1500);
-    return()=>{alive=false;dropHost();portWatch?.disconnect();lookWatch?.disconnect();clearTimeout(lookTimer);clearInterval(timer);clearTimeout(previewTimer);cancelAnimationFrame(previewFrame);box._previewCleanup?.();box.removeEventListener('change',change);box.removeEventListener('input',input);box.removeEventListener('click',click);};
+    return()=>{alive=false;dropHost();portWatch?.disconnect();for(const off of lookOffs)off();clearTimeout(lookTimer);clearInterval(timer);clearTimeout(previewTimer);cancelAnimationFrame(previewFrame);cancelAnimationFrame(lightFrame);clearTimeout(idleTimer);box._previewCleanup?.();box.removeEventListener('change',change);box.removeEventListener('input',input);box.removeEventListener('click',click);};
 }
 export async function openFruitTypography(kind){
     const s=current();if(FRUIT_TYPES.some(t=>t.id===kind)){s.kind=kind;s.ownerKinds[typeOwner(FRUIT_TYPES.find(t=>t.id===kind))]=kind;getSettings().fruitTypography=s;saveSettings();}

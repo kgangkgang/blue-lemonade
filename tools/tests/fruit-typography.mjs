@@ -25,8 +25,8 @@ assert.deepEqual(Object.keys(FRUIT_TYPES.find(t=>t.id==='status').regions),['inf
 s.types.status.hideFooter=true;assert(fruitTypeCss(s).includes(':is(.fate-bottom-en,.custom-fate-bottom-en){display:none'));
 s.types.status.layout='vertical';assert(fruitTypeCss(s).includes('grid-template-columns:minmax(0,1fr)'));
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');let dictionary;
-const bundle=read('src/scripts/bundled/fruit.js');vm.runInNewContext(JSON.parse(bundle.slice(bundle.indexOf('export default ')+15).trim().replace(/;$/,'')),{BlueLemonade:{translate:d=>dictionary=d}});
-for(const type of FRUIT_TYPES){if(!['deus','qingguo'].includes(type.owner))assert(dictionary.prompts.some(x=>x.title===type.name),type.name);if(type.owner!=='qingguo')assert(fruitTypePreview(type.id).length>100);}
+const bundle=read('src/scripts/plain/fruit.js');vm.runInNewContext(bundle.slice(bundle.indexOf('/*BL-SCRIPT-START*/')+19,bundle.lastIndexOf('/*BL-SCRIPT-END*/')),{BlueLemonade:{translate:d=>dictionary=d}});
+for(const type of FRUIT_TYPES){if(!['deus','qingguo','sola'].includes(type.owner))assert(dictionary.prompts.some(x=>x.title===type.name),type.name);if(type.owner!=='qingguo')assert(fruitTypePreview(type.id).length>100);}
 const preview=read('src/fruit-type-preview.js');assert(!/getContext\(|\.characters|\.persona|chat_metadata|fetch\(/.test(preview));
 const {DEUS_EFFECTS,DEUS_EFFECT_GROUPS}=await import(pathToFileURL(path.join(root,'src/scripts/deus-option-effects.js')));
 const {describeDeusOption}=await import(pathToFileURL(path.join(root,'src/scripts/deus-option-help.js')));
@@ -47,13 +47,10 @@ assert.equal(separated.ownerKinds.fruit,'status');assert.equal(separated.ownerKi
 assert(!ownerEnabled(separated,'fruit'));assert(ownerEnabled(separated,'deus'));
 separated.types.status.regions.quote.on=true;separated.types['deus-status'].regions.info.on=true;
 assert(!fruitTypeCss(separated).includes('.fate-status-wrapper'));assert(fruitTypeCss(separated).includes('.dem-status'));
-assert.equal(FRUIT_TYPES.filter(t=>typeOwner(t)==='fruit').length,8);assert.equal(FRUIT_TYPES.filter(t=>typeOwner(t)==='deus').length,7);
+assert.equal(FRUIT_TYPES.filter(t=>typeOwner(t)==='fruit').length,12);assert.equal(FRUIT_TYPES.filter(t=>typeOwner(t)==='deus').length,20);
 for(const t of FRUIT_TYPES.filter(t=>t.layout))assert.equal(layoutChoices(t).length,2,'Only distinct layouts');
-const {originalPreview}=await import(pathToFileURL(path.join(root,'src/fruit-type-original.js')));
-assert(originalPreview('status').css.includes('LXGW WenKai'));assert(originalPreview('status').css.includes('SiyinSong'));
-assert.notEqual(originalPreview('compact','present').css,originalPreview('compact','olden').css);
 assert(!fruitTypeCss({on:true,types:{status:{regions:{info:{on:true,font:'original'}}}}}).includes('font-family:'),'Original region fonts are not flattened');
-// 상태창 글자 화면 모양: 영역 파라미터는 2열 격자(8.1.0, 사용자 10-27 「파라미터는 웬만하면 다 세로 2열」) · 테마 스위치만 · 알약 없음 · 과일/데우스 같은 묶음 자리
+// 상태창 글자 화면 모양: 영역 파라미터는 2열 격자(8.1.0, 철칙 §5) · 테마 스위치만 · 알약 없음 · 과일/데우스 같은 묶음 자리
 const editorCss=read('css/79-fruit-type.css'),editorJs=read('src/fruit-type-ui.js');
 assert(/@container bl-ft-body \(width >= 19em\)\{\.bl-ft-params\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}\}/.test(editorCss),'Region parameters form a two-column grid from 19em (same threshold as the theme editor)');
 assert(/\.bl-ft-group-body\{container:bl-ft-body \/ inline-size\}/.test(editorCss),'The grid measures its own region body, so the shortcut dialog gets the same columns');
@@ -64,7 +61,7 @@ assert.deepEqual(order,['font','size','weight','spacing','line','italic','align'
 assert.equal((regionBody.match(/,true\)\}/g)||[]).length,2,'Only font and wrap are full-width');
 assert(!/border-radius\s*:\s*(9999|99)px/.test(editorCss),'No pill buttons');
 assert.equal((editorJs.match(/type="checkbox"/g)||[]).length,1,'Switches come from one theme switch helper (글자 설정 사용 · 이 영역 조절 — 하단 문구는 8.1.2 부터 고르기)');
-// 8.1.2 맨 위 「정보 배치 · 하단 반복 문구」 2열(사용자 10-28 시안 B): 하단 문구는 스위치 대신 테마 두 칸 고르기 「보임 | 숨김」 — 저장 값은 예전 그대로 hideFooter
+// 8.1.2 맨 위 「정보 배치 · 하단 반복 문구」 2열(시안 B): 하단 문구는 스위치 대신 테마 두 칸 고르기 「보임 | 숨김」 — 저장 값은 예전 그대로 hideFooter
 assert(!editorJs.includes("toggle('data-ft-hide'"),'Footer is no longer a switch');
 assert(/<div class="bl-ft-top">/.test(editorJs)&&/\.bl-ft-top\{display:grid/.test(editorCss),'Top pair sits in its own grid');
 assert(/@container bl-ft-editor \(width >= 19em\)\{\.bl-ft-top\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}/.test(editorCss),'Top pair is two columns from 19em, like the region parameters');

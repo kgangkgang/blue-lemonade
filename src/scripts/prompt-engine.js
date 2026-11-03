@@ -1,16 +1,19 @@
 // One reversible renderer for both dictionaries. No prompt values or chat text are written.
 export function createPromptEngine(doc = document) {
     const sources = new Map(), changed = new Map(), hints = new Map(), titles = new Map();
+    const DETAILS = Symbol('prompt-details'), detailsInputs = new Set();
+    let detailsObserver = null;
     const normalize = value => String(value || '').normalize('NFKC').replace(/[\uFE0E\uFE0F\s]/g, '');
     let observer, timer, lastId = null, ordered = [];
     const watched='li[data-pm-identifier],#completion_prompt_manager_footer_append_prompt,.regex-script-label,div.regex_script_name,li.regex-debugger-rule,#completion_prompt_manager_popup_entry_form_name,input.regex_script_name';
     // These open or clear the edit form without a mutation we watch, so re-render after them too.
     const formButtons=',.completion_prompt_manager_footer .menu_button,#completion_prompt_manager_popup_entry_form_close,#completion_prompt_manager_popup_close_button';
-    function compile(data) {
+    function compile(data, details = null) {
         const result={priority:Number(data.priority)||0,partial:!!data.partial};
         for(const kind of ['prompts','regex']){
             const names=new Map(),ids=new Map(),partial=[];
-            for(const entry of data[kind]||[]){
+            for(const raw of data[kind]||[]){
+                const entry = details ? { ...raw, [DETAILS]: details } : raw;
                 const key=normalize(entry.name);if(!key)continue;
                 if(!names.has(key))names.set(key,entry);
                 if(entry.id){if(!ids.has(entry.id))ids.set(entry.id,[]);ids.get(entry.id).push({key,entry});}
@@ -85,7 +88,17 @@ export function createPromptEngine(doc = document) {
         // An empty name gets no hint; otherwise the last clicked row's id would label a new prompt.
         const entry = normalize(input.value) ? lookup(kind,id,input.value) : null;
         let el = hints.get(input);
+        if (!entry?.[DETAILS] && detailsInputs.delete(input)) detailsObserver?.unobserve(input);
         if (!entry) { el?.remove(); hints.delete(input); return; }
+        // 제목은 시작부터 같아요. 긴 설명은 편집 힌트가 실제로 보일 때만 받고,
+        // 늦게 도착하면 현재 입력값으로 다시 찾아 그려요(옛 항목의 설명을 붙이지 않아요).
+        if (entry[DETAILS]) {
+            if (!input.checkVisibility || input.checkVisibility({ visibilityProperty: true })) entry[DETAILS]();
+            else if (typeof globalThis.IntersectionObserver === 'function' && !detailsInputs.has(input)) {
+                detailsObserver ||= new IntersectionObserver(entries => { if (sources.size && entries.some(item => item.isIntersecting && detailsInputs.has(item.target))) schedule(); });
+                detailsInputs.add(input); detailsObserver.observe(input);
+            }
+        }
         if (!el) { el=doc.createElement('small'); el.className='bl-script-hint'; input.insertAdjacentElement('afterend',el); hints.set(input,el); }
         const text = `→ ${entry.title}${entry.desc ? '\n'+entry.desc : ''}`;
         if (el.textContent !== text) el.textContent=text;
@@ -114,7 +127,7 @@ export function createPromptEngine(doc = document) {
     function render() {
         timer=null;
         for (const [el] of changed) if (!el.isConnected) changed.delete(el);
-        for (const [input,el] of hints) if (!input.isConnected) {el.remove();hints.delete(input);}
+        for (const [input,el] of hints) if (!input.isConnected) {el.remove();hints.delete(input);detailsObserver?.unobserve(input);detailsInputs.delete(input);}
         const found=GROUPS.map(()=>[]);
         for (const el of doc.querySelectorAll(ALL)) for (let i=0;i<GROUPS.length;i++) if (el.matches(GROUPS[i][0])) found[i].push(el);
         GROUPS.forEach(([,run],i)=>{
@@ -161,6 +174,7 @@ export function createPromptEngine(doc = document) {
     }
     function stop() {
         observer?.disconnect(); observer=null; clearTimeout(timer);timer=null;
+        detailsObserver?.disconnect(); detailsObserver=null; detailsInputs.clear();
         doc.removeEventListener('click',click); doc.removeEventListener('input',input);
         for(const [el,state] of changed) if(el.textContent===state.after)el.textContent=state.before;
         for(const [el,state] of titles)if(el.getAttribute('title')===state.after)el.setAttribute('title',state.before);titles.clear();
@@ -171,8 +185,16 @@ export function createPromptEngine(doc = document) {
     function lookupExact(kind, id, name) { const key = normalize(name); for (const source of ordered) { const list = source[kind]; const hit = list.ids.get(id)?.find(e=>!key||e.key===key)?.entry || list.names.get(key); if (hit) return hit; } return null; }
     const titleExact = (kind, id, name) => lookupExact(kind, id, name)?.title ?? null;
     const title = (kind, id, name) => lookup(kind, id, name)?.title ?? null;
-    return {title,register(id,data){
-        if(!sources.size)start(); sources.set(id,compile(data));order();render();
-        return ()=>{sources.delete(id);order();if(sources.size)render();else stop();};
+    return {title,register(id,data,loadDetails=null){
+        let active=true, pending=null, source;
+        const details = typeof loadDetails==='function' ? () => {
+            if(pending||!active||sources.get(id)!==source)return;
+            pending=Promise.resolve().then(loadDetails).then(full=>{
+                if(!active||sources.get(id)!==source||!full)return;
+                source=compile(full); sources.set(id,source);order();render();
+            }).catch(error=>{pending=null;console.warn('[Blue Lemonade] 프롬프트 설명을 받지 못했어요',error);});
+        } : null;
+        if(!sources.size)start(); source=compile(data,details);sources.set(id,source);order();render();
+        return ()=>{active=false;if(sources.get(id)!==source)return;sources.delete(id);order();if(sources.size)render();else stop();};
     },stop,titleExact};
 }

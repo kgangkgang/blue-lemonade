@@ -7,7 +7,8 @@
 // 테마를 끄면 빈 파일로 → 실리태번 기본 화면. user.css 에 줄이 없으면 파일을 만들지 않는다.
 export const SPLASH_FILE = 'blue-lemonade-splash.css';
 export const SPLASH_IMPORT = `@import url("/user/files/${SPLASH_FILE}");`;
-export const SPLASH_COMMAND = `f=~/SillyTavern/data/_css/user.css; mkdir -p "\${f%/*}" && touch "$f" && (grep -q ${SPLASH_FILE} "$f" || { printf '%s\\n' '${SPLASH_IMPORT}' | cat - "$f" > "$f.tmp" && mv "$f.tmp" "$f"; }) && echo OK`;
+// 1.0.0: 명령 글 속 슬래시 · 별표는 \* 로 적어요(만들어지는 글은 같음 — 주석 지우는 검사 module-syntax-links 가 주석 시작으로 읽지 않게)
+export const SPLASH_COMMAND = `f=~/SillyTavern/data/_css/user.css; mkdir -p "\${f%/\*}" && touch "$f" && (grep -q ${SPLASH_FILE} "$f" || { printf '%s\\n' '${SPLASH_IMPORT}' | cat - "$f" > "$f.tmp" && mv "$f.tmp" "$f"; }) && echo OK`;
 
 const LEMON_PATH = 'M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z';
 

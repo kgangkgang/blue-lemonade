@@ -31,6 +31,9 @@ await test('첫 실행 판정: 테마 설정 칸이 없을 때만 (기존 사용
 globalThis.SillyTavern = { getContext: () => ({ extensionSettings: {} }) };
 const { DEFAULTS } = await import(url('src/settings.js'));
 const F = await import(url('src/first-run.js'));
+// 1.0.0: 팔레트 11벌 · 글꼴 전체 목록은 늦게 받는 데이터 — 창(openFirstRun)이 열기 전에 받는 것과 같이 받아 둬요
+await (await import(url('src/palettes.js'))).ensurePalettes();
+await (await import(url('src/catalog.js'))).loadFullCatalog();
 const { PRESETS } = await import(url('src/styles.js'));
 const { CATALOG } = await import(url('src/catalog.js'));
 const fresh = () => structuredClone(DEFAULTS);
@@ -98,7 +101,7 @@ await test('연결: 첫 실행만 자동 · 설정 창 기타 설정의 다시 �
     const css = read('css/80-first-run.css');
     assert.ok(css.startsWith('/* ===== css/80-first-run.css'));
     assert.ok(!css.includes(':has('), '늘 켜진 칸에 :has() 없음');
-    assert.ok(read('style.css').includes('.bl-first-run'), 'style.css 빌드에 들어감');
+    assert.ok((read('style.css') + (fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? fs.readFileSync(path.join(root, 'src/style-lazy.gen.css'), 'utf8') : '')).includes('.bl-first-run'), 'style.css 빌드에 들어감(1.0.0 두 장: 둘째 장)');
 });
 
 console.log(`first-run: ${pass} passed, ${fail} failed`);

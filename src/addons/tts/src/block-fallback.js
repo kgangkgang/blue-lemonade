@@ -1,5 +1,5 @@
 // TTS 대사 분석 — 검열되면 다른 모델로 (TTS 1.7.1 · 테마 6.1.8)
-// 사용자: 「분석도 … 검열당하면 다른 모델 쓰게끔」 — 수위 높은 답장에서 분석 요청이 내용 차단으로 실패하면 분석이 아예 없어서
+// 분석 요청이 검열로 막히면 다른 모델로 — 수위 높은 답장에서 분석 요청이 내용 차단으로 실패하면 분석이 아예 없어서
 // 색 없는 엑스트라 대사의 화자를 못 찾았다 (「목소리를 먼저 정해요」). 막히면 골라 둔 다른 공급자 · 모델로 딱 한 번 더 보낸다.
 // 다른 모델은 늘 "실리태번 API 중 선택" 길로 보낸다 (키는 실리태번에 저장된 것을 서버가 붙임).
 // 차단 판정: 내용 차단 글(PROHIBITED_CONTENT · safety · content_filter …) · 거절 글로 시작하는 답 · 실리태번의 'Candidate text empty' ·
@@ -90,6 +90,7 @@ export function fallbackCfg(cfg, target) {
         provider_models: { [target.provider]: target.model },
         custom_url: target.provider === 'custom' ? str(c.custom_url) : '',
         temperature: c.temperature,
+        prompt_cache: c.prompt_cache,
     };
 }
 

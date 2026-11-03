@@ -44,11 +44,14 @@ await test(':has() 인자 안의 inline style 속성 선택자는 설정 창 것
     for (const f of cssFiles) for (const { arg, line } of hasArgs(fs.readFileSync(path.join(root, f), 'utf8'))) if (/\[\s*style\b/i.test(arg) && !STYLE_OK.test(arg.replace(/\s+/g, ' ').trim())) bad.push(`${f}:${line} ${arg.slice(0, 120)}`);
     assert.deepEqual(bad, [], bad.join('\n'));
 });
-await test('말풍선 통째: 숨긴 글 틀 판정은 그대로 · :has 안에서 [class] 만 빠짐', () => {
+await test('9.0.1 말풍선 갈래는 걷었다 — 06-chat-text · style.css 에 salty-char-bubble · salty-user-bubble 규칙이 없어요', () => {
     const css = fs.readFileSync(path.join(root, 'css/06-chat-text.css'), 'utf8');
-    assert.match(css, /salty-bubble-whole[^{]*\.mes_text:not\(:empty, \[data-bl-editing~="text"\] > \.mes_block > \.mes_text, \.mes\[is_system="true"\] > \.mes_block > \.mes_text:has\(> details:not\(\[open\]\) > summary:empty\)\) \{/);
+    assert.doesNotMatch(css, /\.salty-(char|user)-bubble(?![\w-])/);
     assert.doesNotMatch(css, /details:not\(\[class\], \[open\]\) > summary:empty\)\)/);
-    assert.ok(fs.readFileSync(path.join(root, 'style.css'), 'utf8').includes('.mes_block > .mes_text:has(> details:not([open]) > summary:empty))'), 'style.css 다시 빌드');
+    // style.css 에는 :not(.salty-user-bubble, …) 꼴(늘 참 — 특이도 때문에 둠)만 남아요
+    const built = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
+    assert.doesNotMatch(built, /\.salty-char-bubble(?![\w-])/);
+    for (const m of built.matchAll(/(:\w+\()[^()]*\.salty-user-bubble(?![\w-])/g)) assert.equal(m[1], ':not(', m[0].slice(0, 80));
 });
 
 // ── ② 과일 감시 셋 — 가짜 DOM · 가짜 타이머 ──

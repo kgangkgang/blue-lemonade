@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 const runtime=new URL(process.argv.includes('--dev')?'../../salty-ext/':'../../',import.meta.url);
+await import(new URL('src/palette-data.js',runtime));
 const {tidyGradients,gradientFor,gradientCss,gradientStops,gradientFills,gradientSample}=await import(new URL('src/gradients.js',runtime));
 const {DEFAULTS,getSettings}=await import(new URL('src/settings.js',runtime));
 const {PALETTE_FAMILIES,paletteVariant,paletteColors}=await import(new URL('src/palettes.js',runtime));

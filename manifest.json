@@ -4,9 +4,11 @@
   "loading_order": 20,
   "requires": [],
   "optional": [],
-  "js": "index.js",
+  "js": "dist/index.js",
   "css": "style.css",
+  "generate_interceptor": "blueLemonadeGenerate",
   "author": "",
-  "version": "8.2.5",
-  "auto_update": false
+  "version": "1.0.0",
+  "bl_series": 2,
+  "auto_update": true
 }

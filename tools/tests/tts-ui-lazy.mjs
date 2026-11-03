@@ -11,7 +11,7 @@ const src = fs.readFileSync(path.join(root, 'src/addons/tts/index.js'), 'utf8');
 const ui = fs.readFileSync(path.join(root, 'src/addons/tts/src/ui.js'), 'utf8');
 let passed = 0;
 const check = (name, fn) => { fn(); passed++; console.log('ok', name); };
-const readyAt = src.indexOf('export const ready = new Promise(');
+const readyAt = src.indexOf('function initialize() { return new Promise(');
 const ready = src.slice(readyAt);
 
 check('부팅(ready)에서 설정 화면을 바로 그리지 않아요', () => {

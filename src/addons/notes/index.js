@@ -1117,7 +1117,7 @@ export function openPanel() {
     const previous = document.activeElement;
     dialog = document.createElement('dialog');
     dialog.className = 'bl-notes-dialog'; dialog.setAttribute('aria-label', TITLE);
-    dialog.innerHTML = `<header><b><i class="fa-solid fa-note-sticky" aria-hidden="true"></i> ${TITLE} <small class="bl-notes-count"></small><button type="button" class="bl-notes-ver" data-act="guide" title="메모 사용방법" aria-label="메모 사용방법">v${VERSION}</button></b><div class="bl-notes-head-tools">${HEAD_TOOLS}<button type="button" class="bl-note-btn" data-act="close" title="닫기" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div></header>
+    dialog.innerHTML = `<header><b><i class="fa-solid fa-note-sticky" aria-hidden="true"></i> ${TITLE}<button type="button" class="bl-notes-guide bl-help-btn" data-act="guide" title="메모 사용방법" aria-label="메모 사용방법"><i class="fa-solid fa-question" aria-hidden="true"></i></button><small class="bl-notes-count"></small></b><div class="bl-notes-head-tools">${HEAD_TOOLS}<button type="button" class="bl-note-btn" data-act="close" title="닫기" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div></header>
 ${FIND_ROW}${EMPTY_ROW}
 <div class="bl-notes-list"></div>`;
     document.body.append(dialog);

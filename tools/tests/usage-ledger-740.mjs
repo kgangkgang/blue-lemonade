@@ -222,8 +222,9 @@ await test('허브: Symbol.for(blue-lemonade.usage) 에 record · query · summa
 
 await test('연결: index.js 가 시작 때 허브를 건다 · 요청 로그가 BL 몫을 적는다 · 예산이 중계 장부를 맞춘다 · TTS 음성 · 대사 분석 · 번역 다시 표시 · README', () => {
     const index = read('index.js');
-    assert.match(index, /^(?:import '\.\/src\/tab-scroll-init\.js';\n)?import \{ startErrorLog \} from '\.\/src\/diag-errors\.js';\nimport \{ installUsageLedger \} from '\.\/src\/usage-ledger\.js';[^\n]*\ninstallUsageLedger\(\);/);
-    assert.match(index, /import\('\.\/src\/storage-report\.js'\)\.then\(m => m\.registerStorageReport\(\)\)/);
+    // 9.0.2: 맨 위 설명 주석 다음 첫 import 가 사용량 장부 허브 (탭 줄 스크롤은 3층으로 옮겼어요)
+    assert.match(index.replace(/^\/\/.*\n/gm, ''), /^import \{ installUsageLedger \} from '\.\/src\/usage-ledger\.js';[^\n]*\ninstallUsageLedger\(\);/);
+    assert.match(index, /\['registerStorageReport', \(\) => import\('\.\/src\/storage-report\.js'\), m => \{ m\.registerStorageReport\(\); \}, 'drawer'\]/);   // 9.0.2 부팅 3층 표(BOOT_IDLE)
     const rl = read('src/addons/perf/requestlog.js');
     assert.match(rl, /onEntry\(\(entry\) => \{\n\s+const raw = ledgerEntryFromLog\(entry\);/);
     assert.match(read('src/addons/perf/budget.js'), /applyRelayLogs\(pricingOrigin, state\.logs\)\.catch\(\(\) => \{\}\);/);
@@ -233,8 +234,8 @@ await test('연결: index.js 가 시작 때 허브를 건다 · 요청 로그가
     assert.match(read('src/addons/tts/src/player.js'), /recordVoice\(job, res\.usage\?\.chars \?\? job\.text\.length, res\.usage\?\.model\);/);
     assert.match(read('src/addons/tts/src/analysis.js'), /const callerOf = \(engine, purpose = 'tts\.analysis'\) => attributed\(purpose, rawCallerOf\(engine\)\);/);
     assert.match(read('src/addons/translator/index.js'), /options\.isRetranslation \? 'translation\.retranslate'/);
-    const readme = read('README.md');
-    for (const s of ["Symbol.for('blue-lemonade.usage')", "Symbol.for('st.storage-report.v1')", 'recent({ replies'] ) assert.ok(readme.includes(s), 'README ' + s);
+    const readme = read('DEVELOPERS.md');   // 1.0.0 README 나눔: 다른 확장과 맞물리는 표시는 DEVELOPERS.md
+    for (const s of ["Symbol.for('blue-lemonade.usage')", "Symbol.for('st.storage-report.v1')", 'recent({ replies'] ) assert.ok(readme.includes(s), 'DEVELOPERS.md ' + s);
     const all = ['src/usage-ledger.js', 'src/usage-ledger-core.js', 'src/usage-feed.js', 'src/storage-report.js'].map(read).join('\n');
     assert.ok(!new RegExp(['yunzhu' + 'hub', '레몬' + '폰', '오토' + '픽', 'lemon-' + 'phone', '장기 ' + '기억', 'auto-' + 'pic'].join('|'), 'i').test(all), 'no private names in ledger code');
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/usage-ledger-740\.mjs \./);

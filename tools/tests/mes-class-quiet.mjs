@@ -66,7 +66,7 @@ const quiet = TokenList.prototype.remove; stopMesClassQuiet(); assert.notEqual(T
 records.length = 0; m.classList.remove('nope'); assert.equal(records.length, 1);
 // ⑥ index.js 에서 테마 런타임이 시작될 때 동적 import(시작 그래프 밖)
 const index = fs.readFileSync(path.join(root, 'index.js'), 'utf8');
-const rt = index.slice(index.indexOf('const startThemeRuntime'), index.indexOf('const startThemeRuntime') + 6000);
-assert.match(rt, /import\('\.\/src\/mes-class-quiet\.js'\)\.then\(m => m\.startMesClassQuiet\(\)\)/, '테마 런타임에서 켜요');
+const rt = index.slice(index.indexOf('const FRAME_LAYER'), index.indexOf('const IDLE_LAYER'));   // 9.0.2 테마 런타임 2층 표
+assert.match(rt, /\['startMesClassQuiet', \(\) => import\('\.\/src\/mes-class-quiet\.js'\), m => \{ m\.startMesClassQuiet\(\); \}\]/, '테마 런타임에서 켜요');
 assert.doesNotMatch(index, /^import .*mes-class-quiet/m, '정적 import 가 아니에요(시작 그래프 밖)');
 console.log('mes-class-quiet: 같은 값 기록 0(그리기 · 채팅 열기) · 결과 같음 · 원래 함수로 넘기는 경우 · 메시지 밖 · 끄기 · 시작 자리 통과');

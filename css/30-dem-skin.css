@@ -1,7 +1,7 @@
 /* ===== css/30-dem-skin.css =====
    3.1.0 데우스 카드 스킨 (채팅 › 기타 › 데우스 카드 스킨 → body.salty-dem-skin, 폰 접기 → body[data-bl-dem-fold], 8.2.3 뒤 속성으로).
    데우스(DEM) 정규식 카드 — 트래커 · 장면 계획 · 상태 · 스레드 · 심리 · 모멘텀 · 갈등 · 선택지 — 를 테마 카드 모양으로 다시 그린다.
-   카드 틀(둥근 판 · 그림자) · 제목 줄 · 본문 칸 · 칩은 팔레트 변수만 쓴다. 색 통일을 켜면 모듈 색은 08-regex-unify 가 포인트색 하나로,
+   카드 틀(면 · 1px 선 · 모서리 12, 그림자 없음) · 제목 줄 · 본문 칸 · 칩은 팔레트 변수만 쓴다. 색 통일을 켜면 모듈 색은 08-regex-unify 가 포인트색 하나로,
    끄면 데우스 원래 모듈 색 (3.4.1 전에는 여기서 팔레트 색으로 바꿨다).
    선택자 맨 오른쪽은 늘 정확한 클래스(.custom-dem-…) — [class*=…] 를 맨 오른쪽에 두면 모든 요소에서 검사한다.
    폰 접기(1000px 이하): 트래커는 한 줄 요약(누르면 펼침), 처음부터 펼쳐져 오는 카드(선택지 · 상태)는 제목 줄만 — src/demskin.js 가 누름을 받는다.
@@ -15,227 +15,303 @@ body.salty {
 body.salty.salty-light {
   --bl-dem-ink: 50%;
 }
-/* 밝은 팔레트 · 색 통일 끔: 데우스 항목 라벨은 색 코드를 직접 섞어 두어 변수로 못 바꿈 → 같은 색을 더 진하게 다시 적는다
-   (색 통일을 켜면 08 의 !important 포인트색이 이긴다) */
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--physical:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-red) var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--clothes:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-yellow) var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--mental:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-green) var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--location:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-blue) var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--relationship:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-peach) var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__label--inventory:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-teal) var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-psychological-state-row__label--inner:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-sky) var(--bl-dem-ink), var(--salty-text)); }
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-psychological-state-row__label--motivation:where(:not(.custom-dem-modules *)) { color: color-mix(in srgb, var(--bl-dem-yellow) var(--bl-dem-ink), var(--salty-text)); }
 
-/* 3.4.1: 색 통일을 껐을 때 모듈 색을 팔레트 색으로 바꾸던 칸을 지웠다 — 대부분 포인트색이 되어 카드 색 통일을 켜고 꺼도 달라 보이지 않았다
-   (사용자: "카드 색 통일이 껐다 켜도 미리보기가 안 바뀜"). 이제 끄면 데우스 원래 모듈 색(장면 계획 단계 · 상태 항목 · 스레드 꼬리표)이 그대로,
-   켜면 08-regex-unify 가 포인트색 하나로. 글자로 쓰는 모듈 색은 본문 색과 섞어 밝은 테마에서도 읽히게 (데우스도 본문 색과 섞는다) */
+/* 1.0.0 데우스 블록 디자인 통일(10-31 사용자가 고른 시안 A 「평평한 카드」): 데우스 블록은 모두 테마 카드 한 가지 —
+   면 --bl-card · 1px --salty-line · 모서리 12 · 그림자 · 빛무리 · 하늘 배경 · 리본 없음. 머리줄은 접힘 머리 36(왼쪽 [점/아이콘] 8 [제목 16/650] … [꼬리표] 8 [⌄]),
+   이름표는 13 보조색(대문자 · 벌린 자간 없음), 강조색은 시각 · 해 점 · 고른 탭/칩 · 유대 막대만. 색은 팔레트 변수만(이름 없는 혼색 없음).
+   글자 크기 · 굵기 · 글꼴은 「상태창 글자」 설정(fruit-type-schema DEUS_WEIGHT, id 둘 무게)이 켜져 있으면 그쪽이 이겨요. 장식 색(✦ · 아이콘)도 그 설정의 몫. */
 
-/* ---------- 카드 틀: 둥근 판 하나 (왼쪽 색 띠 없음) ---------- */
+/* ---------- 카드 틀: 묶음 밖 카드(장면 계획 · 선택지 · 2.5 카드) · 2.5 트래커 ---------- */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-card:where(:not(.custom-dem-modules *)),
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):where(:not(:has(> .custom-dem-track__grid))) {
-  margin: 0 0 12px !important;
-  border: 0 !important;
-  border-radius: 12px !important;
+  margin: 0 0 16px !important;
+  border: 1px solid var(--salty-line) !important;
+  border-radius: var(--bl-r-md, 12px) !important;
   background: var(--bl-fill-card, var(--bl-card)) !important;
-  box-shadow: var(--bl-e1) !important;
+  box-shadow: none !important;
   font-family: var(--salty-font-ui, inherit) !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-card:where(:not(.custom-dem-modules *)) {
   overflow: hidden !important;
+}
+/* 원작 책갈피 리본(카드 오른쪽 위 ::before) — 열림은 머리줄 ⌄ 가 알려요 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-card:where(:not(.custom-dem-modules *))::before {
+  display: none !important;
 }
 /* 마크다운 변환이 카드 속 줄바꿈을 <br> · 빈 <p> 로 남겨 제목 줄 아래가 한두 줄 비었다 (상태 카드 약 40px) */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(details.custom-dem-card, .custom-dem-status__more) > br:where(:not(.custom-dem-modules *)),
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(details.custom-dem-card, .custom-dem-status__more) > p:empty:where(:not(.custom-dem-modules *)) {
   display: none !important;
 }
-/* 제목 줄: 모듈 색 점 · 제목 · 꼬리표 · 삼각형 */
+/* 머리줄: [점/아이콘] [제목] [꼬리표] [⌄] 네 칸 격자. 제목은 왼쪽 맞춤(철칙 §7) — 가운데 줄 격자(--bl-center-row)는 쓰지 않고,
+   세로는 checkdot-923 의 잉크 맞춤(src/center-ink.js 의 --bl-ink-dy)을 그대로 써요 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-card > summary:where(:not(.custom-dem-modules *)) {
-  display: flex !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto auto !important;
   align-items: center !important;
   gap: 8px !important;
-  min-height: 40px;
-  padding: 8px 12px 8px 12px !important;
+  min-height: 36px;
+  padding: 0 16px !important;
+  border: 0 !important;
   background: transparent !important;
+  box-shadow: none !important;
+  text-align: left !important;
+  list-style: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-card > summary:where(:not(.custom-dem-modules *))::-webkit-details-marker {
+  display: none;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-card[open] > summary:where(:not(.custom-dem-modules *)) {
-  box-shadow: inset 0 -1px 0 var(--salty-shade-2) !important;
+  border-bottom: 1px solid var(--salty-line) !important;
 }
 body.salty.salty-dem-skin.salty-regex-noicons :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-card > summary:where(:not(.custom-dem-modules *))::before {
   content: '';
-  flex: none;
-  width: 7px;
-  height: 7px;
+  grid-column: 1;
+  grid-row: 1;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--dem-accent);
 }
+/* 카드 아이콘은 20 칸 — 크기를 풀어(auto) 두면 원작 svg 가 칸을 다 채워 폰 384 에서 300×300 으로 본문을 덮었어요(10-31 demplan-924 보고) */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-card__icon:where(:not(.custom-dem-modules *)) {
-  width: auto !important;
-  height: auto !important;
+  grid-column: 1;
+  grid-row: 1;
+  display: block !important;
+  position: static !important; /* 원작은 머리줄 왼쪽 위로 삐져나오게 절대 위치(52 칸 · 그림자) */
+  filter: none; /* 원작 그림자 — 「상태창 글자」 장식 색 필터(!important)는 그대로 이겨요 */
+  line-height: 0 !important;
+  width: 20px !important;
+  height: 20px !important;
+  margin: 0 !important;
   flex: none !important;
   background: none !important;
   box-shadow: none !important;
-  font-size: 1em;
+  transform: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-card__icon:where(:not(.custom-dem-modules *)) > svg {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-card__title:where(:not(.custom-dem-modules *)) {
-  flex: 1 1 auto;
+  grid-column: 2;
+  grid-row: 1;
+  display: block !important;
+  position: relative;
+  top: var(--bl-ink-dy, 0px); /* 세로 잉크 맞춤(10-foundation 가운데 줄 · src/center-ink.js) */
   min-width: 0;
-  color: var(--salty-text) !important;
-  font-size: 0.95em !important;
-  font-weight: 650 !important;
-  letter-spacing: -0.01em;
-}
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-card__tag:where(:not(.custom-dem-modules *)) {
   margin: 0 !important;
-  padding: 1px 8px !important;
-  border-radius: 999px !important;
-  background: var(--salty-fill-shade, var(--salty-shade)) !important;
-  color: var(--salty-muted) !important;
-  font-size: 0.68em !important;
+  color: var(--salty-text) !important;
+  font-family: var(--salty-font-ui, inherit) !important;
+  font-size: 16px !important;
   font-weight: 650 !important;
-  letter-spacing: 0.02em;
+  line-height: 1.3 !important;
+  text-align: left !important;
+}
+/* 원작 제목 양옆 줄표(— 제목 —)는 걷어요 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-card__title:where(:not(.custom-dem-modules *))::before,
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-card__title:where(:not(.custom-dem-modules *))::after {
+  display: none !important;
+}
+/* 꼬리표 = 판 알약 규격(12 · 높이 20 · 1px 선 · 보조색) */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-card__tag:where(:not(.custom-dem-modules *)) {
+  grid-column: 3;
+  grid-row: 1;
+  display: inline-flex !important;
+  align-items: center;
+  height: 20px;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  border: 1px solid var(--salty-line) !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: var(--salty-muted) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  letter-spacing: inherit;
+  text-transform: none !important;
   white-space: nowrap;
 }
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-card__caret:not(#salty-none):where(:not(.custom-dem-modules *)) {
-  color: var(--salty-faint) !important;
-  border-top-width: 5px !important;
-  border-bottom-width: 5px !important;
-  border-left-width: 8px !important;
+/* 접힘 화살표: 원작 삼각형 대신 테마 접힘 ⌄ 하나(14 · 보조색) — 닫히면 오른쪽(›), 열리면 아래 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-card__caret:where(:not(.custom-dem-modules *)) {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-card > summary:where(:not(.custom-dem-modules *))::after {
+  content: '' !important;
+  grid-column: 4;
+  grid-row: 1;
+  display: block !important;
+  position: static !important;
+  width: 14px !important;
+  height: 14px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: var(--salty-muted) !important;
+  -webkit-mask: var(--bl-ui-glyph-chev, var(--salty-mi-chevdown)) center / contain no-repeat !important;
+  mask: var(--bl-ui-glyph-chev, var(--salty-mi-chevdown)) center / contain no-repeat !important;
+  transform: rotate(-90deg) !important;
+  transition: transform .15s;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-card[open] > summary:where(:not(.custom-dem-modules *))::after {
+  transform: none !important;
 }
 
 /* ---------- 카드 본문 칸 ---------- */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-scene-plan__body, .custom-dem-status__body, .custom-dem-status__offscene, .custom-dem-threads__body, .custom-dem-psychological-states__body, .custom-dem-momentum-engine__body, .custom-dem-card__body):where(:not(.custom-dem-modules *)) {
-  padding: 8px 12px 12px !important;
+  padding: 4px 16px 12px !important;
   border: 0 !important;
   background: transparent !important;
   color: var(--salty-text) !important;
-  font-size: 0.92em;
   line-height: 1.6 !important;
 }
-
-/* 장면 계획: 번호는 네모 없이 옅은 숫자, 세로 줄 없음, 칸 이름은 모듈 색 · 내용은 본문 색 */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__phase:where(:not(.custom-dem-modules *)) {
-  margin: 16px 0 2px !important;
-  padding: 0 !important;
-  color: color-mix(in srgb, var(--dem-phase-accent, var(--dem-accent)) var(--bl-dem-ink), var(--salty-text)) !important;
-  font-size: 0.68em !important;
-  font-weight: 650 !important;
-  letter-spacing: 0.08em !important;
-  text-transform: uppercase;
+/* 선택지 본문: 원작 pre-wrap 이 줄 사이 줄바꿈을 빈 줄로 남겨요 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-cyoa > .custom-dem-card__body:where(:not(.custom-dem-modules *)) {
+  white-space: normal !important;
 }
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__phase:where(:not(.custom-dem-modules *))::before { display: none !important; }
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__phase:where(:not(.custom-dem-modules *))::after { background: var(--salty-fill-shade-2, var(--salty-shade-2)) !important; }
+
+/* 장면 계획: 단계 이름(INPUTS …) · 번호 · 단계 선은 걷고, 칸마다 「이름(13 보조) / 내용」 두 줄 · 칸 사이 1px 선.
+   안쪽 스크롤 창(원작 62vh)도 풀어요 — 채팅 스크롤 안에 또 스크롤이 생기지 않게 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__body:where(:not(.custom-dem-modules *)) {
+  max-height: none !important;
+  overflow: visible !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__phase:where(:not(.custom-dem-modules *)),
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__group:empty:where(:not(.custom-dem-modules *)) {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__group:where(:not(.custom-dem-modules *)) {
+  margin: 0 !important;
+  padding: 12px 0 !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__group:not(:empty) ~ .custom-dem-scene-plan__group:where(:not(.custom-dem-modules *)) {
+  border-top: 1px solid var(--salty-line) !important;
+}
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__step:where(:not(.custom-dem-modules *)) {
-  column-gap: 10px !important;
-  padding: 8px 0 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__step + .custom-dem-scene-plan__step:where(:not(.custom-dem-modules *)) {
-  box-shadow: inset 0 1px 0 var(--salty-shade) !important;
+  margin-top: 12px !important;
 }
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__step:where(:not(.custom-dem-modules *))::after { display: none !important; }
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__step:where(:not(.custom-dem-modules *))::before {
-  width: auto !important;
-  min-width: 0 !important;
-  height: auto !important;
-  place-items: start !important;
-  padding-top: 0.3em !important;
-  border: 0 !important;
-  background: none !important;
-  color: var(--salty-faint) !important;
-  font-size: 0.72em !important;
-  font-weight: 650 !important;
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__step:where(:not(.custom-dem-modules *))::before,
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__step:where(:not(.custom-dem-modules *))::after {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-scene-plan__label, .custom-dem-scene-plan__value):where(:not(.custom-dem-modules *)) {
+  grid-column: 1 !important;
+  justify-self: start;
+  text-align: left !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__label:where(:not(.custom-dem-modules *)) {
-  color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink), var(--salty-text)) !important;
-  font-size: 0.84em !important;
-  font-weight: 650 !important;
+  color: var(--salty-muted) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-scene-plan__value:where(:not(.custom-dem-modules *)) {
   color: var(--salty-text) !important;
-  font-size: 0.95em !important;
   line-height: 1.6 !important;
 }
 
-/* 상태 · 심리: 칸 속 칸 대신 가는 줄로 나눈 목록. 항목 이름은 작은 모듈 색 글자 */
+/* 상태 · 심리(2.5 카드): 칸 속 칸 대신 1px 선으로 나눈 목록. 이름 = 본문 650, 항목 이름 = 13 보조색 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-status-row, .custom-dem-psychological-state-row):where(:not(.custom-dem-modules *)) {
-  gap: 4px 10px !important;
+  gap: 4px 12px !important;
   margin: 0 !important;
-  padding: 8px 0 !important;
+  padding: 12px 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
-  font-size: 1em !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-status-row, .custom-dem-psychological-state-row) + :is(.custom-dem-status-row, .custom-dem-psychological-state-row):where(:not(.custom-dem-modules *)) {
-  box-shadow: inset 0 1px 0 var(--salty-shade-2) !important;
+  border-top: 1px solid var(--salty-line) !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-status-row__name, .custom-dem-psychological-state-row__name):where(:not(.custom-dem-modules *)) {
   color: var(--salty-text) !important;
-  font-size: 1em;
   font-weight: 650;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-status-row__label, .custom-dem-psychological-state-row__label):where(:not(.custom-dem-modules *)) {
-  margin-right: 2px;
-  /* 색은 데우스 항목 색(몸 · 옷 · 마음 …) 그대로 — 색 통일을 켜면 08 이 포인트색으로 */
-  font-size: 0.78em !important;
-  font-weight: 650 !important;
+  margin-right: 4px;
+  color: var(--salty-muted) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  letter-spacing: inherit !important;
+  text-transform: none !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status-row__score:where(:not(.custom-dem-modules *)) {
   padding: 0 8px !important;
-  border: 0 !important;
+  border: 1px solid var(--salty-line) !important;
   border-radius: 999px !important;
-  background: var(--salty-fill-accent-13, var(--salty-accent-13)) !important;
-  color: var(--salty-accent-ink, var(--salty-accent)) !important;
-  font-size: 0.86em;
+  background: transparent !important;
+  color: var(--salty-text) !important;
   font-weight: 650;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status__more:where(:not(.custom-dem-modules *)) {
   border: 0 !important;
-  box-shadow: inset 0 1px 0 var(--salty-shade-2) !important;
+  border-top: 1px solid var(--salty-line) !important;
+  box-shadow: none !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-status__more > summary:where(:not(.custom-dem-modules *)) {
-  padding: 8px 12px !important;
+  display: flex !important;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 16px !important;
   color: var(--salty-muted) !important;
-  font-size: 0.72em !important;
-  letter-spacing: 0.04em;
+  font-size: 13px !important;
+  letter-spacing: inherit;
+  text-transform: none !important;
 }
 
-/* 스레드: 꼬리표를 알약으로 */
+/* 스레드 · 선택지 분류 · 모멘텀 이름표: 판 알약 규격 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-thread-row:where(:not(.custom-dem-modules *)) {
-  padding: 4px 0;
+  padding: 4px 0 !important;
+  text-indent: 0 !important; /* 원작 내어쓰기(-130px)는 왼쪽 여백과 짝 — 여백을 걷었으니 같이(PC 1280 에서 선택지 앞 글자가 잘리던 것) */
 }
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-thread-tag:where(:not(.custom-dem-modules *)) {
-  padding: 1px 8px !important;
-  border: 0 !important;
-  border-radius: 999px !important;
-  background: color-mix(in srgb, var(--dem-thread-color, var(--salty-accent)) 18%, transparent) !important;
-  color: color-mix(in srgb, var(--dem-thread-color, var(--salty-accent)) var(--bl-dem-ink), var(--salty-text)) !important;
-  font-size: 0.74em !important;
-  font-weight: 650 !important;
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-thread-tag, .custom-dem-choice__category, .custom-dem-momentum-engine__label):where(:not(.custom-dem-modules *)) {
+  display: inline-flex !important;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px !important;
+  border: 1px solid var(--salty-line) !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: var(--salty-muted) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  letter-spacing: inherit !important;
+  text-transform: none !important;
 }
 
-/* 모멘텀 · 선택지: 안쪽 칸은 옅은 면, 번호는 동그라미 */
+/* 모멘텀 · 선택지: 안쪽 상자 대신 1px 나눔 선, 번호는 선만 있는 24 원 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-momentum-branch, .custom-dem-choice, .custom-dem-momentum-engine__notice):where(:not(.custom-dem-modules *)) {
+  margin: 0 !important;
+  padding: 12px 0 !important;
   border: 0 !important;
-  border-radius: 10px !important;
-  background: var(--salty-fill-shade, var(--salty-shade)) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-momentum-branch, .custom-dem-choice) ~ :is(.custom-dem-momentum-branch, .custom-dem-choice):where(:not(.custom-dem-modules *)) {
+  border-top: 1px solid var(--salty-line) !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-momentum-branch__label, .custom-dem-choice__num):where(:not(.custom-dem-modules *)) {
-  border: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  border: 1px solid var(--salty-line) !important;
   border-radius: 50% !important;
-  background: color-mix(in srgb, var(--dem-accent) 18%, transparent) !important;
-  color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink), var(--salty-text)) !important;
-}
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-choice__category, .custom-dem-momentum-engine__label):where(:not(.custom-dem-modules *)) {
-  border: 0 !important;
-  border-radius: 999px !important;
-  background: color-mix(in srgb, var(--dem-accent) 14%, transparent);
-  color: color-mix(in srgb, var(--dem-accent) var(--bl-dem-ink), var(--salty-text)) !important;
-}
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-momentum-engine__label:where(:not(.custom-dem-modules *)) {
-  display: inline-block !important;
-  padding: 0 8px;
+  background: transparent !important;
+  color: var(--salty-text) !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  line-height: 1 !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-choice__title, .custom-dem-momentum-branch__title):where(:not(.custom-dem-modules *)) {
   color: var(--salty-text) !important;
@@ -244,15 +320,14 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
   color: var(--salty-muted) !important;
 }
 
-/* ---------- 트래커: 한 판 안에 시간 · 날짜 · 날씨 · 장소 ---------- */
+/* ---------- 2.5 트래커: 한 판 안에 시간 · 날짜 · 날씨 · 장소 ---------- */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track, .custom-dem-track-recovery):where(:not(:has(> .custom-dem-track__grid))) {
-  gap: 2px 16px !important;
-  padding: 8px 12px !important;
-  font-size: 0.86em !important;
+  gap: 4px 16px !important;
+  padding: 12px 16px !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track__item, .custom-dem-track-recovery__item):where(:not(.custom-dem-track__grid *)) {
   gap: 4px !important;
-  padding: 2px 0 !important;
+  padding: 0 !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track__icon, .custom-dem-track-recovery__icon):where(:not(.custom-dem-track__grid *)) {
   width: auto !important;
@@ -267,183 +342,615 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.cu
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track__item--location .custom-dem-track__value:where(:not(.custom-dem-track__grid *)) {
   color: var(--salty-muted) !important;
-  font-weight: 500 !important;
+  font-weight: 400 !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track__temp, .custom-dem-track-recovery__temp):where(:not(.custom-dem-track__grid *)) {
   padding: 0 8px !important;
-  border: 0 !important;
+  border: 1px solid var(--salty-line) !important;
   border-radius: 999px !important;
-  background: var(--salty-fill-accent-13, var(--salty-accent-13)) !important;
-  color: var(--salty-accent-ink, var(--salty-accent)) !important;
+  background: transparent !important;
+  color: var(--salty-text) !important;
 }
 
-/* ---------- 8.0.6 데우스 V3: 원작의 모양 · 배치 · 그림(시계 · 하늘 · 해/달 · 기온 칩 · 구분선 · 리본)은 그대로, 색 · 글꼴은 블루레몬에이드 ----------
-   사용자: 「원작 모양은 살리되 블루레몬에이드 색과 글꼴이 눈에 보이게 조금 더」. 위의 2.5 카드 스킨은 :where(:not(…)) 로 V3 에 닿지 않아요
-   (V3 카드는 늘 .dem-modules 묶음 안, V3 트래커 뿌리는 바로 아래 .dem-track__grid). 2.5 규칙의 무게 · 결과는 8.0.4 와 같아요.
-   원작이 쓰는 색 변수(--dem-paper · --dem-rule · --dem-ink …)를 테마 팔레트 토큰으로 바꿔 밤/낮 · 사용자가 고른 팔레트를 그대로 따라가요.
-   글꼴: 원작 세리프 자리(--dem-serif)와 본문을 테마 UI 글꼴로 — 「상태창 글자」 설정이 있으면 그쪽이 이겨요(!important 없음). 숫자는 고정 폭 숫자 그대로. */
+/* ---------- 8.0.6 데우스 V3 → 1.0.0 시안 A: 원작의 배치(시계 · 날씨 · 장소 · 묶음 · 탭 · 인물 칩 · 인물 페이지)는 그대로, 모양은 위 카드와 같은 테마 카드 ----------
+   1.0.0(시안 A): 8.0.9 「테두리 빛」(포인트 2px 테두리 · 빛무리 · 포인트 24% 바탕)과 원작 하늘 띠(고정 남색 · 보라) · 별 · 해/달 빛무리 · 리본 · 무지개 띠를 걷었어요.
+   해 궤도는 1px 테마 선 점선 하나 + 강조색 해 점 하나만 남겨요(시간 흐름은 그대로 보이게). 원작 색 변수(--dem-paper …)는 팔레트 변수로.
+   위 2.5 카드 규칙은 :where(:not(…)) 로 묶음 안 · V3 트래커에 닿지 않아요. 인물 페이지(묶음 안 상태 · 관계 · 심리 · 물밑을 인물별로 섞는 판)는
+   원작이 카드를 display:contents 로 풀고 order 로 줄을 섞어요 — 그 구조는 건드리지 않고 겉모양만. */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track:has(> .custom-dem-track__grid), .custom-dem-modules, .custom-dem-modules .custom-dem-card) {
-  /* 8.0.9 사용자 「블루레몬에이드 색채가 더 강하게」 → 시안 「테두리 빛」 채택: 카드 바탕 포인트 24% · 테두리 2px 포인트 · 바깥 빛무리(설정 「테두리 빛」 0~100, --bl-dem-glow 0~1) */
-  --dem-paper: color-mix(in srgb, var(--salty-accent) 24%, var(--bl-fill-card, var(--bl-card, var(--salty-surface))));
-  --dem-raised: color-mix(in srgb, var(--salty-accent) 32%, var(--bl-fill-card, var(--bl-card, var(--salty-surface))));
-  --dem-tray: color-mix(in srgb, var(--salty-accent) 12%, var(--salty-fill-surface, var(--salty-surface)));
-  --dem-rule: color-mix(in srgb, var(--salty-accent) 55%, var(--salty-line));
-  --bl-dem-glow-ring: color-mix(in srgb, var(--salty-accent) calc(26% * var(--bl-dem-glow, .35)), transparent);
-  --bl-dem-glow-halo: color-mix(in srgb, var(--salty-accent) calc(48% * var(--bl-dem-glow, .35)), transparent);
+  --dem-paper: var(--bl-fill-card, var(--bl-card, var(--salty-surface)));
+  --dem-raised: var(--bl-hover, var(--salty-shade));
+  --dem-tray: var(--bl-fill-card, var(--bl-card, var(--salty-surface)));
+  --dem-rule: var(--salty-line);
   --dem-rule-soft: var(--salty-line);
   --dem-ink: var(--salty-text);
   --dem-ink-2: var(--salty-muted);
-  --dem-ink-3: color-mix(in srgb, var(--salty-muted) 80%, transparent);
+  --dem-ink-3: var(--salty-faint);
   --dem-serif: var(--salty-font-ui, inherit);
   font-family: var(--salty-font-ui, inherit);
 }
-/* 테마 카드 규격: 모서리 14 · 트래커 · 상태창 묶음은 테두리 2px 포인트색 + 바깥 빛무리(「테두리 빛」 0 이면 고리 · 빛무리 0) · 묶음 안 카드는 1px 포인트 기운 */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track > .custom-dem-track__grid, .custom-dem-modules, .custom-dem-modules details.custom-dem-card) {
-  border-radius: 14px !important;
-  box-shadow: var(--bl-e1);
-}
+/* 판: 트래커 · 묶음 = 카드 하나(면 · 1px 선 · 모서리 12 · 그림자 없음) */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track > .custom-dem-track__grid, details.custom-dem-modules:not(#salty-none)) {
-  border: 2px solid var(--salty-accent) !important;
-  box-shadow:
-    0 0 0 calc(4px * var(--bl-dem-glow, .35)) var(--bl-dem-glow-ring),
-    0 0 calc(22px * var(--bl-dem-glow, .35)) var(--bl-dem-glow-halo);
-}
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid {
-  padding-inline: 14px !important;
-  /* 하늘 띠 · 해/달 · 별 · 지평선 빛무리 · 날씨 층은 원작 값 그대로(같은 순서), 하늘 아래 「땅」 그늘만 포인트색 14% 로 — 밤 · 낮 같음.
-     변수가 없을 때(장면 정규식 끔)도 배경이 무효가 되지 않게 모든 var() 에 원작과 같은 빈 값 대체. 「장면 숨기기」 정규식(!important)은 그대로 이겨요 */
-  background:
-    linear-gradient(var(--wx-veil, #0000), var(--wx-veil, #0000)),
-    radial-gradient(circle 1px, var(--st, #0000) 45%, #0000) 0 0 / 97px 41px,
-    radial-gradient(circle 0.8px, var(--st, #0000) 50%, #0000) 71px 9px / 67px 29px,
-    linear-gradient(90deg, #0000 4%, var(--hz-c, var(--arc-c, #0000)) 18% 82%, #0000 96%) 0 var(--hz, 2px) / 100% 1px no-repeat,
-    radial-gradient(40% 56px at var(--gx, 50%) var(--hz, 2px), color-mix(in srgb, var(--s3, #0000) var(--ga, 70%), #0000), #0000 72%),
-    linear-gradient(var(--s1, #0000), var(--s2, #0000) var(--hz, 2px), color-mix(in srgb, var(--salty-accent) 14%, #0000) var(--hz, 2px)),
-    var(--dem-paper);
-}
-/* 8.1.1 답장을 받는 동안: 실리태번은 토큰마다 마지막 메시지 본문을 통째로 다시 그리고, V3 답장은 트래커가 맨 앞에 와서 트래커 · 상태창이 매번 다시 칠해져요.
-   그동안만 마지막 메시지의 비싼 층(빛무리 그림자 · 하늘 배경 7층 · 묶음 바탕)을 쉬게 하고(색은 같은 팔레트 변수 --dem-paper · --dem-tray),
-   끝나면 src/dem-sky.js 가 html.salty-dem-streaming 을 떼어(8.2.7: body 대신 html — body class 기록마다 실리태번 keyboard.js 가 body 아래를 다시 훑었어요) 원래 모양으로 돌아가요. 트래커 · 묶음은 layout · paint 담기(contain)로 다시 그릴 때 영향 범위를 카드 안으로 */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track > .custom-dem-track__grid, details.custom-dem-modules:not(#salty-none)) {
+  border: 1px solid var(--salty-line) !important;
+  border-radius: var(--bl-r-md, 12px) !important;
+  background: var(--dem-paper) !important;
+  box-shadow: none !important;
   contain: layout paint;
 }
-html.salty-dem-streaming body.salty.salty-dem-skin #chat .mes.last_mes .mes_text :is(.custom-dem-track > .custom-dem-track__grid, details.custom-dem-modules:not(#salty-none), .custom-dem-modules details.custom-dem-card) {
-  box-shadow: none !important;
+/* 원작 묶음 리본(::after) · 무지개 띠(::before) */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none)::before,
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none)::after {
+  display: none !important;
 }
-html.salty-dem-streaming body.salty.salty-dem-skin #chat .mes.last_mes .mes_text .custom-dem-track > .custom-dem-track__grid {
-  background: var(--dem-paper) !important;
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) {
+  margin: 0 0 16px !important;
 }
-html.salty-dem-streaming body.salty.salty-dem-skin #chat .mes.last_mes .mes_text details.custom-dem-modules:not(#salty-none) > summary {
-  background: var(--dem-tray) !important;
-  box-shadow: none !important;
+
+/* ---------- 트래커 ---------- */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid {
+  gap: 4px 12px !important;
+  padding: calc(12px + var(--band, 0px)) 16px 12px !important;
 }
-/* 강조색 네 곳 — 시각 숫자 · 기온 칩 · 장소 마지막 칸 · 구분선 별 */
+/* 별 · 날씨 그림 층 · 행성 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid::before,
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid::after,
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__scene::after {
+  display: none !important;
+}
+/* 해 궤도: 1px 테마 선 점선, 해/달 = 강조색 점 10 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__scene {
+  border-color: var(--salty-line) !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__scene::before {
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  background: var(--salty-accent) !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  rotate: 0deg !important;
+  opacity: 1 !important;
+  animation: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__time {
+  padding-right: 0 !important;
+  border: 0 !important;
+}
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__clock {
-  color: var(--salty-accent-ink, var(--salty-accent));
+  color: var(--salty-accent-ink, var(--salty-accent)) !important;
+  font-family: var(--salty-font-ui, inherit);
+  font-size: 20px !important;
+  font-weight: 650 !important;
 }
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__temp {
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--salty-fill-accent-13, var(--salty-accent-13));
-  color: var(--salty-accent-ink, var(--salty-accent));
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__date {
+  color: var(--salty-muted) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  letter-spacing: inherit !important;
+  text-transform: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid :is(.custom-dem-track__place, .custom-dem-track__sky) {
+  color: var(--salty-muted) !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__crumb:last-child {
-  color: var(--salty-accent-ink, var(--salty-accent));
+  color: var(--salty-text) !important;
+  font-weight: 650 !important;
 }
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__sep {
+  color: var(--salty-faint) !important;
+}
+/* 기온 = 판 알약 결(1px 선 · 본문색 650). 「색 통일」(08, !important)보다 무겁게 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__temp:not(#salty-none) {
+  padding: 0 8px !important;
+  border: 1px solid var(--salty-line) !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--salty-text) !important;
+  font-weight: 650 !important;
+}
+/* 블록 사이 ✦: 양옆 1px 테마 선 · 별은 옅은 글자색(「상태창 글자」 장식 색이 켜져 있으면 그 색) · 위 12 아래 16 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__rule {
-  color: var(--salty-accent);
+  margin: 12px auto 16px !important;
+  color: var(--salty-faint);
+  font-size: 13px;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__rule::before,
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__rule::after {
-  border-top: 2px solid var(--salty-accent);
+  border-top: 1px solid var(--salty-line) !important;
 }
-/* 장소 마지막 칸은 굵게, 앞 칸은 포인트 잉크 기운 — 트래커 글자도 테마 결로 */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__crumb:last-child {
-  font-weight: 700;
-}
-/* 상태창 묶음 · 카드 제목도 포인트색 잉크로(원작 모듈 색 점 · 리본 그림은 그대로) */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-card__title, .custom-dem-status-row__name, .custom-dem-psychological-state-row__name) {
-  color: var(--salty-accent-ink, var(--salty-accent));
-}
-/* 묶음 탭 · 인물 칩은 원작이 세리프를 글자로 박아 둬서(--dem-serif 를 안 거침) 따로 UI 글꼴로 — 역시 !important 없음 */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-tab, .custom-dem-chip) {
-  font-family: var(--salty-font-ui, inherit);
-}
-/* 묶음 틀: 원작은 바탕(--dem-tray) · 테두리 1px · 머리줄 여백 10px 56px 인데, 「접기 상자 막대」 마크다운 규칙(61-markdown, details 전부)이
-   V3 묶음까지 테두리 0 · 바탕 투명 · 머리 여백 .4em 으로 눌러 틀이 사라졌어요. 스킨이 켜져 있으면 원작 틀을 되살리고 색만 테마로 —
-   테두리는 포인트색 기운, 머리줄은 포인트색 틴트(원작은 바탕 없음 · 마우스 올림만 --dem-raised). :not(#salty-none) 은 그 규칙보다 무겁게 하려는 것 */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) {
-  background: var(--dem-tray);
-}
-/* 머리줄 · 탭 · 항목 이름표 · 유대 막대도 트래커와 같은 결(10-27 사용자 「하단 상태창도 같은 테마 느낌」): 머리줄은 알약처럼 포인트 20% 투명 띠,
-   탭의 고유 색(--tab)은 포인트색 하나로, 항목 이름표(PHYSICAL …)는 포인트 잉크 기운, 유대 막대 채움은 포인트색 */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary {
-  margin-block-end: 0;
-  padding: 10px 56px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--salty-accent) 20%, transparent);
-  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--salty-accent) 45%, transparent);
+
+/* ---------- 묶음 머리줄 · 묶음 안 카드 머리줄: 36 · 왼쪽 맞춤 · 오른쪽 ⌄ ---------- */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(details.custom-dem-modules:not(#salty-none), .custom-dem-modules details.custom-dem-card) > summary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  min-height: 36px !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-align: left !important;
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules[open]:not(#salty-none) > summary {
-  border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid var(--salty-line) !important;
 }
-/* 탭 · 인물 칩의 고유 색은 원작이 인라인(style="--tab:#…")으로 박아 둬서 「카드 색 통일」이 켜져 있을 때만 포인트색 하나로(!important 가 인라인을 이김). 끄면 원작 탭 색 그대로 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(details.custom-dem-modules:not(#salty-none), .custom-dem-modules details.custom-dem-card) > summary::after {
+  content: '' !important;
+  display: block !important;
+  flex: none !important;
+  position: static !important;
+  width: 14px !important;
+  height: 14px !important;
+  margin: 0 0 0 auto !important;
+  border: 0 !important;
+  font-size: 0 !important;
+  background: var(--salty-muted) !important;
+  -webkit-mask: var(--bl-ui-glyph-chev, var(--salty-mi-chevdown)) center / contain no-repeat !important;
+  mask: var(--bl-ui-glyph-chev, var(--salty-mi-chevdown)) center / contain no-repeat !important;
+  transform: rotate(-90deg) !important;
+  transition: transform .15s;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(details.custom-dem-modules[open]:not(#salty-none), .custom-dem-modules details.custom-dem-card[open]) > summary::after {
+  transform: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules summary .custom-dem-card__tag + * { margin-left: 0; }
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules summary:has(.custom-dem-card__tag)::after {
+  margin-left: 0 !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-modules__icon, .custom-dem-modules .custom-dem-card__icon) {
+  position: static !important;
+  display: block !important;
+  line-height: 0 !important;
+  flex: none !important;
+  filter: none;
+  width: 20px !important;
+  height: 20px !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-modules__icon, .custom-dem-modules .custom-dem-card__icon) > svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+/* 「카드 이모티콘」을 끄면 묶음 · 묶음 안 카드도 그림 대신 점 하나(묶음 밖 카드와 같게) — 점과 그림이 같이 나오던 것 */
+body.salty.salty-dem-skin.salty-regex-noicons :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-modules__icon, .custom-dem-modules .custom-dem-card__icon) {
+  display: none !important;
+}
+body.salty.salty-dem-skin.salty-regex-noicons :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--salty-accent);
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-modules__title, .custom-dem-modules .custom-dem-card__title) {
+  display: block !important;
+  position: relative;
+  top: var(--bl-ink-dy, 0px); /* 세로 잉크 맞춤(src/center-ink.js) */
+  flex: 1 1 auto !important;
+  min-width: 0;
+  margin: 0 !important;
+  color: var(--salty-text) !important;
+  font-family: var(--salty-font-ui, inherit);
+  font-size: 16px !important;
+  font-weight: 650 !important;
+  line-height: 1.3 !important;
+  letter-spacing: inherit !important;
+  text-align: left !important;
+  text-transform: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules details.custom-dem-card > summary .custom-dem-card__title {
+  font-size: var(--bl-fs-body, 15px) !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-modules__title, .custom-dem-modules .custom-dem-card__title)::before,
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-modules__title, .custom-dem-modules .custom-dem-card__title)::after {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-card__tag {
+  display: inline-flex !important;
+  align-items: center;
+  height: 20px;
+  margin: 0 0 0 auto !important;
+  padding: 0 8px !important;
+  border: 1px solid var(--salty-line) !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: var(--salty-muted) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  letter-spacing: inherit !important;
+  text-transform: none !important;
+}
+@media (hover: hover) {
+  body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary:hover {
+    background: var(--dem-raised) !important;
+  }
+}
+
+/* ---------- 탭 · 인물 칩 = 테마 칩(34 · 1px 선 · 모서리 8). 고름 = 옅은 면 + 색 글자 650(칩은 + 체크) ---------- */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tabs {
+  margin: 0 !important;
+  padding: 12px 16px 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* 탭 줄: 한 줄 · 가로 스크롤 · 왼쪽부터(가운데 정렬이면 넘친 앞 탭이 왼쪽 밖으로 밀려 못 닿았어요) · 오른쪽 끝 흐림 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tabs__rail {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  overflow-x: auto !important;
+  scrollbar-width: none;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-mask-image: linear-gradient(90deg, var(--salty-text) calc(100% - 24px), transparent);
+  mask-image: linear-gradient(90deg, var(--salty-text) calc(100% - 24px), transparent);
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tabs__rail::after {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-tab, .custom-dem-chip) {
+  container-type: normal !important; /* 원작은 탭을 inline-size 담기로 둬 글자 폭을 못 받아 겹쳤어요 */
+  display: inline-flex !important;
+  flex: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--salty-line) !important;
+  border-radius: var(--bl-r-sm, 8px) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  font-family: var(--salty-font-ui, inherit);
+  font-size: var(--bl-fs-ctl, 14px) !important;
+  font-weight: 400 !important;
+  letter-spacing: inherit !important;
+  text-transform: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-chip {
+  color: var(--salty-text) !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-tab, .custom-dem-chip) > span {
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  font: inherit !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tab__label {
+  display: inline !important;
+  flex: none !important;
+  margin: 0 !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tab__icon {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-tab, .custom-dem-chip) input {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-tab, .custom-dem-chip):has(input:checked) {
+  border-color: transparent !important;
+  background: var(--bl-ui-pick-face, var(--bl-selected, var(--salty-tint-18))) !important;
+  color: var(--bl-ui-pick-ink, var(--salty-accent-ink, var(--salty-accent))) !important;
+  font-weight: 650 !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-chip:has(input:checked)::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  height: 14px;
+  background: currentColor;
+  -webkit-mask: var(--bl-ui-glyph-check, var(--salty-mi-check, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 10.5l3.5 3.5 7.5-8'/%3E%3C/svg%3E"))) center / contain no-repeat;
+  mask: var(--bl-ui-glyph-check, var(--salty-mi-check, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 10.5l3.5 3.5 7.5-8'/%3E%3C/svg%3E"))) center / contain no-repeat;
+}
+/* 빈 인물 칩(원작이 12칸을 미리 만들어 둠) · 묶음 칩의 점선 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-chip:has(> span:empty) {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-chip--group {
+  border-style: solid !important;
+}
+/* 탭 · 칩 고유 색(원작 인라인 --tab)은 「카드 색 통일」이 켜져 있을 때 포인트색 하나로 — 끄면 원작 색은 고른 칩에만 쓰이지 않아요(면 · 글자 = 고른 항목 공용) */
 body.salty.salty-dem-skin.salty-unify-regex :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-tab, .custom-dem-chip, .custom-dem-tabs__rail) {
   --tab: var(--salty-accent) !important;
 }
-/* 고른 탭의 알약은 레일의 ::after(anchor 배치)가 --pill 변수로 그려요(원작 기본은 연보라 고정값) — :is() 안에는 가상 요소를 못 넣으니 따로 */
 body.salty.salty-dem-skin.salty-unify-regex :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tabs__rail,
 body.salty.salty-dem-skin.salty-unify-regex :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tabs__rail::after {
   --pill: var(--salty-accent) !important;
 }
-/* 인물 이름(원작은 <strong>)에는 본문 강조의 레몬 형광펜 띠를 깔지 않고 포인트 잉크로 — 카드 안에서 띠만 튀던 것(10-27 사진) */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row__name, .custom-dem-bond-row__name, .custom-dem-psychological-state-row__name, .custom-dem-meanwhile-row__title, .custom-dem-truth-row__title) {
-  color: var(--salty-accent-ink, var(--salty-accent));
-  box-shadow: none;
-  font-weight: 700;
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-cast {
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 12px 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row__label, .custom-dem-bond-row__label, .custom-dem-psychological-state-row__label) {
-  color: color-mix(in srgb, var(--salty-accent-ink, var(--salty-accent)) 70%, var(--salty-muted));
+
+/* ---------- 묶음 본문 ---------- */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-modules__body {
+  margin: 0 !important;
+  padding: 0 16px 8px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-bond__fill {
-  background: var(--salty-accent);
+/* 묶음 안 상자 카드(갈래 · 줄거리 · 모멘텀 · 메모 …): 상자 대신 판 끝까지 1px 나눔 선 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) {
+  margin: 0 -16px !important;
+  border: 0 !important;
+  border-top: 1px solid var(--salty-line) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules details.custom-dem-card {
-  border: 1px solid color-mix(in srgb, var(--salty-accent) 45%, var(--salty-line));
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > details.custom-dem-card::before {
+  display: none !important;
 }
-/* 원작 묶음 규칙(summary ~ *)이 카드 본문의 좌우 여백을 0으로 덮어요. 직접 자식 본문 가운데 원래 여백을 가진 칸만 복구해요.
-   인물별 합친 화면의 상태 · 관계 · 심리 · 속내는 행 자체에 여백이 있어 제외해요. 다른 장면 · 숨은 진실 · 장외 인물은 하위 접기 안에 이미 여백이 있어 그대로 두어요. */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-card > :is(.custom-dem-status__body, .custom-dem-relationships__body, .custom-dem-psychological-states__body, .custom-dem-undercurrents__body),
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > .custom-dem-card > :is(.custom-dem-threads__body, .custom-dem-momentum-engine__body) {
-  padding-inline: 12px;
+/* 원작 묶음 규칙(summary ~ *)이 카드 본문의 좌우 여백을 0 으로 덮어요 — 본문 칸은 16 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) > :is(.custom-dem-status__body, .custom-dem-relationships__body, .custom-dem-psychological-states__body, .custom-dem-undercurrents__body, .custom-dem-threads__body, .custom-dem-momentum-engine__body, .custom-dem-plotlines__body, .custom-dem-scratchpad__body, .custom-dem-card__body, .custom-dem-meanwhile__body, .custom-dem-hidden-truths__body) {
+  margin: 0 !important;
+  padding: 4px 16px 12px !important;
+  border: 0 !important;
+  background: transparent !important;
 }
-/* 줄거리 · 메모장은 원작 안쪽 여백 14px을 유지해요. 내부 목록의 들여쓰기는 건드리지 않아요. */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > .custom-dem-card > :is(.custom-dem-plotlines__body, .custom-dem-scratchpad__body) {
-  padding-inline: 14px;
+/* 행: 칸 속 칸 없이 1px 나눔 선 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent) {
+  margin: 0 !important;
+  padding: 12px 0 !important;
+  text-indent: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent) ~ :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent) {
+  border-top: 1px solid var(--salty-line) !important;
+}
+/* 이름 = 본문 650 글자색(원작 <strong> 에 본문 강조 형광 띠를 깔지 않음) */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row__name, .custom-dem-bond-row__name, .custom-dem-psychological-state-row__name, .custom-dem-undercurrents__name, .custom-dem-meanwhile-row__title, .custom-dem-truth-row__title) {
+  color: var(--salty-text) !important;
+  background: none !important;
+  box-shadow: none !important;
+  font-weight: 650 !important;
+}
+/* 항목 이름표(Physical · Unspoken · Trigger …) = 13 보조색 · 대문자 · 벌린 자간 없음 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row__label, .custom-dem-bond-row__label, .custom-dem-bond-field__label, .custom-dem-bond-meter__label, .custom-dem-psychological-state-row__label, .custom-dem-plotlines__label, .custom-dem-undercurrents__label, .custom-dem-momentum-engine__label) {
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  letter-spacing: inherit !important;
+  text-transform: none !important;
+}
+/* 심리 고리 표식(이름표 왼쪽 점 · 세로선) — 이름표 여백을 걷었으니 같이 걷어요(단계는 줄 순서) */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-psychological-state-f--step > .custom-dem-psychological-state-row__label::before,
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-psychological-state-f--step > .custom-dem-psychological-state-row__label::after {
+  display: none !important;
+}
+/* 꼬리표(Current · Seed · 단계 · 물밑) = 판 알약 규격 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-thread-tag, .custom-dem-undercurrent__tag, .custom-dem-meanwhile-tag, .custom-dem-truth-tag, .custom-dem-bond-arc__stage) {
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 20px !important;
+  padding: 0 8px !important;
+  border: 1px solid var(--salty-line) !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--salty-muted) !important;
+  font-size: 12px !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  letter-spacing: inherit !important;
+  text-transform: none !important;
+}
+/* 유대 막대: 길 = 선색 · 채움 = 강조색 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-bond-meter__track {
+  border: 0 !important;
+  background: var(--salty-line) !important;
+  box-shadow: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-bond__fill,
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-bond-meter__fill {
+  background: var(--salty-accent) !important;
+  box-shadow: none !important;
+}
+/* 모멘텀 갈래: 상자 대신 나눔 선 · 글자 번호는 선만 있는 24 원 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-momentum-branch, .custom-dem-momentum-engine__notice) {
+  margin: 0 !important;
+  padding: 12px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-momentum-branch ~ .custom-dem-momentum-branch {
+  border-top: 1px solid var(--salty-line) !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-momentum-branch__label {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  border: 1px solid var(--salty-line) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  color: var(--salty-text) !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  line-height: 1 !important;
+}
+
+/* ---------- 인물 페이지(묶음 안 「캐릭터」) ---------- */
+/* 인물 페이지는 상태 · 관계 · 심리 카드를 풀어(display:contents) 인물별로 섞어요 — 그 카드 머리는 원작처럼 숨김(묶음 안 카드 머리줄 규칙이 되살리던 것) */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states) > summary:not(#salty-none) {
+  display: none !important;
+}
+/* 머리(인물 행 전체를 접는 단추 — 숨기지 않아요): 36 줄 · 원작 큰 가면 그림(제목을 덮던 것) 숨김 · ⌄ */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-charpage > details.custom-dem-charpage__head {
+  margin: 0 !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-charpage__head > summary {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-charpage__head > summary::before {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-charpage__head > summary::after {
+  content: '' !important;
+  width: 14px !important;
+  height: 14px !important;
+  margin-left: auto !important;
+  font-size: 0 !important;
+  background: var(--salty-muted) !important;
+  -webkit-mask: var(--bl-ui-glyph-chev, var(--salty-mi-chevdown)) center / contain no-repeat !important;
+  mask: var(--bl-ui-glyph-chev, var(--salty-mi-chevdown)) center / contain no-repeat !important;
+  transform: rotate(-90deg) !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-charpage__head[open] > summary::after {
+  transform: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-charpage__head .custom-dem-card__title {
+  font-size: var(--bl-fs-body, 15px) !important;
+}
+/* 칸 이름(상태 · 관계 · 심리 · 물밑 · 페르소나) = 13 · 650 · 보조색, 큰 색 아이콘(카드 왼쪽 밖으로 삐져나오던 ::after) 숨김 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-charpage :is(.custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-undercurrents__char, .custom-dem-status-row__fields)::after {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-charpage :is(.custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-undercurrents__char, .custom-dem-status-row__fields)::before,
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-status-row__head::after {
+  display: block !important;
+  margin: 0 0 4px !important;
+  padding: 0 !important;
+  background: none !important;
+  color: var(--salty-muted) !important;
+  font-family: var(--salty-font-ui, inherit);
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  line-height: 1.4 !important;
+  letter-spacing: inherit !important;
+  text-transform: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-status-row__head::after {
+  display: inline !important;
+  margin: 0 0 0 8px !important;
+  font-weight: 400 !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-charpage :is(.custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-undercurrents__char, .custom-dem-status-row__fields, .custom-dem-status-row) {
+  position: relative;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+/* 물밑(인물 페이지) 머리 · 「다른 인물」 줄 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-charpage > details.custom-dem-undercurrents > summary:not(#salty-none) {
+  margin: 0 !important;
+  padding: 0 !important;
+  border-top: 1px solid var(--salty-line) !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-status__more > summary .custom-dem-card__caret {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-status__more > summary::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  background: var(--salty-muted);
+  -webkit-mask: var(--bl-ui-glyph-chev, var(--salty-mi-chevdown)) center / contain no-repeat;
+  mask: var(--bl-ui-glyph-chev, var(--salty-mi-chevdown)) center / contain no-repeat;
+  transform: rotate(-90deg);
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-status__more[open] > summary::after {
+  transform: none;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-status__more > summary {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-top: 1px solid var(--salty-line) !important;
+  color: var(--salty-muted) !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  letter-spacing: inherit !important;
+  text-transform: none !important;
+}
+
+/* ---------- 테마 ▲ 접기 단추(src/fold.js): 묶음 안 카드에는 숨기고(머리줄이 이미 접기), 바깥 판 맨 아래 것만 상자 없는 36 줄 ---------- */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body :is(details, div) > .thk-fold:not(#salty-none),
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-charpage__head > .thk-fold:not(#salty-none) {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(details.custom-dem-modules, details.custom-dem-card:not(.custom-dem-modules *)) > .thk-fold {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  height: 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--salty-line) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  font-size: 0 !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(details.custom-dem-modules, details.custom-dem-card:not(.custom-dem-modules *)) > .thk-fold::before {
+  display: none !important;
+}
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(details.custom-dem-modules, details.custom-dem-card:not(.custom-dem-modules *)) > .thk-fold::after {
+  content: '' !important;
+  display: block !important;
+  position: static !important;
+  width: 14px !important;
+  height: 14px !important;
+  border: 0 !important;
+  background: var(--salty-muted) !important;
+  -webkit-mask: var(--bl-ui-glyph-chev, var(--salty-mi-chevdown)) center / contain no-repeat !important;
+  mask: var(--bl-ui-glyph-chev, var(--salty-mi-chevdown)) center / contain no-repeat !important;
+  transform: rotate(180deg) !important;
 }
 @container (max-width: 420px) {
   body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary {
-    padding-inline: 46px;
+    padding-inline: 16px !important;
   }
-}
-@media (hover: hover) {
-  body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text details.custom-dem-modules:not(#salty-none) > summary:hover {
-    background: var(--dem-raised);
-  }
-}
-/* 밝은 팔레트: 원작 하늘 띠 아래 「땅」 그늘(하늘 아래색 50%)이 밝은 카드를 회색으로 덮어 글자가 흐렸어요.
-   그늘만 8% 로 옅게 — 하늘 띠 · 해/달 · 별 · 지평선 빛무리 · 호 · 날씨 그림은 원작 층 그대로(같은 순서 · 같은 값), 본문 바탕은 포인트색 기운 카드.
-   변수가 없을 때(장면 정규식 끔)도 배경이 무효가 되지 않게 모든 var() 에 원작과 같은 빈 값 대체를 달았어요. 「장면 숨기기」 정규식(!important)은 그대로 이겨요. */
-body.salty.salty-light.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text :is(.custom-dem-track:has(> .custom-dem-track__grid), .custom-dem-modules, .custom-dem-modules .custom-dem-card) {
-  --dem-ink-2: color-mix(in srgb, var(--salty-muted) 72%, var(--salty-text)); /* 날짜 · 장소 · 날씨 글이 틴트 바탕에서도 4.5:1 넘게 */
-}
-/* 기온 칩은 포인트색 20% 틴트만 투명하게 깔고(카드색을 다시 칠하지 않아 해 · 달의 빛무리가 비쳐요) 가는 포인트 고리 + 포인트 잉크 —
-   사용자 10-27 「알약만 눈에 튀어요 · 빛 효과 받게」 → 시안 「알약 투명」 채택. 밤 · 낮 모두 4.5:1 넘게.
-   「색 통일」(08-regex-unify, !important)이 켜져 있어도 같은 포인트색 계열이라 이 칩만은 읽히는 쪽이 이겨요 */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-track > .custom-dem-track__grid .custom-dem-track__temp:not(#salty-none) {
-  background: color-mix(in srgb, var(--salty-accent) 20%, transparent) !important;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--salty-accent) 45%, transparent);
-  color: var(--salty-accent-ink, var(--salty-accent)) !important;
 }
 
 /* ---------- 폰 접기 ---------- */

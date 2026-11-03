@@ -4,7 +4,9 @@
 
    설정 창 안에 그린 표본(.salty-preview)에 테마의 채팅 · 에셋 규칙을 먹이는 사본을 만든다.
    테마 규칙은 거의 전부 `body.salty … #chat …` 로 스코프돼 있어서 설정 창 안에서는 하나도 안 먹는다
-   → 선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본을 style.css 안에 끼워 넣는다.
+   → 선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본을 css/23-preview.gen.css 에 둔다.
+   9.0.1: 사본은 전부 미리보기 전용이라(#chat 없는 :is() 갈래는 뗀다 — pruneAlts) 빌드가 style.css 에 넣지 않고
+   src/preview.gen.css 로 따로 써 두며, src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (안 열면 0KB).
    :is() 의 특이도는 인자 중 가장 높은 것을 따르므로 아이디 하나짜리 특이도가 그대로 유지되고
    (#salty-nochat 은 문서에 없는 아이디다) 실제 매칭은 .salty-preview 클래스로 된다.
    앞머리(body.salty.salty-edge-prism … )는 손대지 않으므로 지금 설정이 미리보기에 저절로 반영된다.
@@ -218,6 +220,46 @@ function dropNots(sel) {
         const close = endParen(s, open);
         s = s.slice(0, m.index) + ' ' + s.slice(close + 1);
     }
+}
+
+// 9.0.1: :is() · :where() 목록 가운데 #chat 이 든 갈래만 남긴다 (`:is(#chat .mes, .cg-root) .mes_text` → `:is(#chat .mes) .mes_text`).
+// 원래 규칙(채팅 · .cg-root 둘 다)은 style.css 에 그대로 있으니 사본은 미리보기 쪽 갈래만 있으면 된다 — 이렇게 하면 사본이 전부
+// 「미리보기 전용」이 되어 빌드(tools/css-park.cjs)가 통째로 지연 시트(src/preview.gen.css)로 떼어 둘 수 있다(예전엔 사본 498개 중 207개가
+// .cg-root · #top-bar 같은 다른 갈래를 물고 있어 style.css 에 남았다 — 약 125KB). :not() · :has() 안은 조건이라 건드리지 않는다.
+// 특이도가 달라지면(남긴 갈래보다 뗀 갈래가 더 무거웠으면) 떼지 않는다 — pick() 에서 spec 으로 확인한다.
+function pruneAlts(sel, hooked) {
+    let out = '';
+    let i = 0;
+    while (i < sel.length) {
+        const c = sel[i];
+        if (c === '"' || c === "'") { const e = endString(sel, i); out += sel.slice(i, e); i = e; continue; }
+        if (c === '[') { const e = endBracket(sel, i) + 1; out += sel.slice(i, e); i = e; continue; }
+        if (c === ':') {
+            let j = i + 1;
+            if (sel[j] === ':') j++;
+            const s0 = j;
+            j = skipIdent(sel, j);
+            const name = sel.slice(s0, j).toLowerCase();
+            if (sel[j] === '(') {
+                const close = endParen(sel, j);
+                const inner = sel.slice(j + 1, close);
+                if (name === 'is' || name === 'where' || name === 'matches') {
+                    const args = topSplit(inner);
+                    const kept = args.filter(hooked);
+                    if (kept.length && kept.length < args.length) out += sel.slice(i, j + 1) + kept.map(a => pruneAlts(a, hooked)).join(', ') + ')';
+                    else out += sel.slice(i, j + 1) + pruneAlts(inner, hooked) + ')';
+                } else out += sel.slice(i, close + 1);
+                i = close + 1;
+                continue;
+            }
+            out += sel.slice(i, j);
+            i = j;
+            continue;
+        }
+        out += c;
+        i++;
+    }
+    return out;
 }
 
 // 이 가지가 노리는 것이 미리보기 뿌리 자체인가 (자손이 아니라).
@@ -496,15 +538,22 @@ function pick(rules, rep) {
                 const deny = hasAny(pos, DENY);
                 if (deny) { rep.dropped.push(`${deny.padEnd(24)} ${br}`); continue; }
             }
-            const sel = br.replace(CHAT, HOOK);
-            const s0 = spec(br);
+            // 9.0.1: #chat 이 없는 :is() 갈래(.cg-root · #top-bar …)는 사본에서 뗀다 — 특이도가 그대로일 때만
+            let base = br;
+            const pruned = pruneAlts(br, a => HAS_CHAT.test(dropNots(a)));
+            if (pruned !== br) {
+                if (cmpSpec(spec(br), spec(pruned)) === 0) { base = pruned; rep.pruned = (rep.pruned || 0) + 1; }
+                else rep.unpruned.push(br);
+            }
+            const sel = base.replace(CHAT, HOOK);
+            const s0 = spec(base);
             const s1 = spec(sel);
             if (cmpSpec(s0, s1) !== 0) {
                 rep.badSpec.push(`(${s0}) → (${s1})  ${br}`);
                 continue;
             }
             out.push(sel);
-            srcs.push(br);
+            srcs.push(base);
         }
         if (!out.length) continue;
         kept.push({ chain: r.chain, branches: out, srcs, lines: bodyLines(r.body), body: r.body, src: r.sel });
@@ -653,7 +702,7 @@ function verify(file, out, rep) {
     }
 
     // 8. 멱등 — 한 번 더 돌려 바이트가 같아야 한다
-    const rep2 = { dropped: [], notOnly: [], badSpec: [] };
+    const rep2 = { dropped: [], notOnly: [], badSpec: [], unpruned: [] };
     const twice = build(out, rep2);
     if (twice !== out) bad.push('멱등하지 않다 (두 번 돌리면 결과가 달라진다)');
     rep.twice = twice === out;
@@ -704,6 +753,7 @@ function report(file, out, rep, quiet) {
     console.log(`  줄 끝          : ${rep.eol}`);
     console.log(`  스캔한 규칙    : ${rep.scanned}개 (자기 블록 제외) · 선택자에 #chat: ${rep.withChat}개`);
     console.log(`  복사           : ${rep.kept}개 · 뺀 가지 ${rep.dropped.length}개 · :not() 안에만 있어 안 옮긴 규칙 ${rep.notOnly.length}개`);
+    console.log(`  갈래 떼기      : #chat 없는 :is() 갈래를 뗀 가지 ${rep.pruned || 0}개 · 특이도가 달라져 못 뗀 가지 ${rep.unpruned.length}개`);
     console.log(`  생성 블록      : ${kb(rep.blockBytes)} · ${rep.blockLines}줄`);
     console.log(`  파일           : ${kb(Buffer.byteLength(file, 'utf8'))} → ${kb(Buffer.byteLength(out, 'utf8'))} (+${kb(grow)}, +${(grow / Buffer.byteLength(file, 'utf8') * 100).toFixed(1)}%)`);
     console.log(`  멱등           : ${rep.twice ? '같음' : '다름!'}`);
@@ -724,6 +774,7 @@ function report(file, out, rep, quiet) {
         console.log(`   ※ 새 이름이 나타났다: ${rep.newRootProps.join(' · ')} → 보정 블록에 한 줄 더 넣을 것`);
     }
 
+    if (rep.unpruned.length && !quiet) for (const s of rep.unpruned) console.log(`   · 못 뗀 가지: ${s.length > 150 ? s.slice(0, 150) + '…' : s}`);
     if (rep.escapes.length) {
         console.log(`\n  [미리보기 밖에도 걸리는 사본 가지 ${rep.escapes.length}개] — 원래부터 여러 곳을 노리던 :is() 규칙`);
         console.log('   선언을 원문 그대로 옮기고 특이도도 같아서 값은 달라지지 않는다 (사본이 뒤에서 같은 값을 한 번 더 쓴다).');
@@ -762,8 +813,9 @@ function mainModules(argv) {
     const names = modules();
     if (!names.includes(GEN_MODULE)) throw new Error(`css/${GEN_MODULE} 가 없음`);
     const texts = names.map(n => fs.readFileSync(path.join(CSS_DIR, n), 'utf8'));
+    texts.push(fs.readFileSync(path.join(CSS_DIR, '../src/chat-appearance.css'), 'utf8'));
     const file = texts.join('\n');
-    const rep = { dropped: [], notOnly: [], badSpec: [], madeMarks: false };
+    const rep = { dropped: [], notOnly: [], badSpec: [], unpruned: [], madeMarks: false };
     const out = build(file, rep);
     notices(rep);
     const bad = verify(file, out, rep);
@@ -813,7 +865,7 @@ function main(argv) {
     const target = path.resolve(argv[fi + 1]);
 
     const file = fs.readFileSync(target, 'utf8');
-    const rep = { dropped: [], notOnly: [], badSpec: [], madeMarks: false };
+    const rep = { dropped: [], notOnly: [], badSpec: [], unpruned: [], madeMarks: false };
     const out = build(file, rep);
     notices(rep);
     const bad = verify(file, out, rep);

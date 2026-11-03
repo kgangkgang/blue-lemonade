@@ -6,7 +6,7 @@ import {promptLinkMarkup} from './prompt-link.js';
 import {fruitTypographyMarkup,bindFruitTypography} from './fruit-type-ui.js';
 
 const GROUPS={
-    deus:[['deus-qr','빠른 설정','입력창에서 데우스 V3 · 2.5 옵션을 바로 골라요.'],['deus','프롬프트 이름 한글화','프롬프트와 정규식의 이름을 한글로 보여요.']],
+    deus:[['deus-qr','빠른 설정','입력창에서 데우스 V3 · 2.5 · 솔라 옵션을 바로 골라요. 지금 프리셋에 맞는 창이 열려요.'],['deus','프롬프트 이름 한글화','프롬프트와 정규식의 이름을 한글로 보여요.']],
     // 8.0.1 과일 계열(과일 · 야한과일 · 청과)의 한글화는 토글 하나 — 과일의 마음 창 · 프롬프트·정규식 이름 · 청과 문장 점검 화면이 함께 켜져요
     fruit:[['fruit-style','과일의 마음 꾸미기','글꼴·색·QR 카드와 버튼을 블루레몬에이드에 맞춰요.'],['fruit-family','과일 계열 한글화','과일 · 야한과일 · 청과의 프롬프트·정규식 이름과 과일의 마음 창을 한 번에 한글로 보여요.']],
 };
@@ -24,6 +24,12 @@ export function promptToolsMarkup(kind){
     return `<div class="bl-prompt-tools" data-prompt-tools="${kind}"><div class="salty-group">${items.map(([id,title,note])=>`<div class="salty-row bl-prompt-tool-row"><span>${title}</span><label class="salty-switch"><input type="checkbox" data-prompt-script="${id}" aria-label="${title}" ${scriptEnabled(state,id)?'checked':''}><span></span></label><small>${note}</small></div>${nameMarkup(id,state)}`).join('')}</div><div class="bl-prompt-tools-actions"><button type="button" class="salty-btn" data-prompt-open="${kind}">${kind==='deus'?'빠른 설정 열기':'과일의 마음 열기'}</button></div><p class="salty-note" data-prompt-tools-status role="status" aria-live="polite"></p></div>`;
 }
 
+// 1.0.x 솔라 화면 맨 위: 솔라 빠른 설정은 데우스 화면의 「빠른 설정」 스위치(deus-qr) 하나로 켜요 — 같은 스위치를 두 화면에 그리지 않고(설정 중복 0) 그 화면으로 가는 줄만 둬요
+export function solaQuickShortcutMarkup(){
+    const on=scriptEnabled(scriptSettings(),'deus-qr');
+    return `<div class="bl-prompt-tools" data-prompt-shortcut="sola"><div class="salty-group"><div class="salty-row bl-prompt-tool-row" data-search-anchor="솔라 빠른 설정"><span>빠른 설정</span><button type="button" class="salty-btn" data-act="editor-route" data-tab="prompt" data-sub="deus">데우스 화면에서 ${on?'보기':'켜기'}</button><small>지금 ${on?'켜져':'꺼져'} 있어요. 데우스 화면의 「빠른 설정」 스위치 하나로 데우스 · 솔라 창을 같이 켜요. 입력창에서 지금 프리셋에 맞는 창이 열려요.</small></div></div></div>`;
+}
+
 // 상태창 글자 설정은 페이지 끝의 자기 접기 묶음 — 다른 설정 묶음과 같은 모양, 과일 · 데우스 같은 자리
 export function fruitTypographyGroup(kind){
     return `<div class="salty-label" data-search-anchor="상태창 글자">상태창 글자</div>${fruitTypographyMarkup(kind)}`;
@@ -34,8 +40,9 @@ export function fruitPromptMarkup(){
 }
 
 export function bindPromptTools(root){
-    const box=root.querySelector('[data-prompt-tools]');if(!box)return()=>{};
+    // 상태창 글자 편집기는 스위치 묶음이 없는 화면(솔라)에도 있어요 — 먼저 묶고, 스위치 묶음이 없으면 그것만 풀어요
     const stopTypography=bindFruitTypography(root);
+    const box=root.querySelector('[data-prompt-tools]');if(!box)return stopTypography;
     let alive=true,runtime=null,unsubscribe=()=>{};
     const status=box.querySelector('[data-prompt-tools-status]');
     const say=text=>{if(alive&&box.isConnected)status.textContent=text;};

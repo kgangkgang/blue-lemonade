@@ -13,9 +13,9 @@ import { spawnSync } from 'node:child_process';
 const root = path.resolve(process.argv[2] || '.');
 const scenario = process.argv[3];
 // 던지게 해 볼 시작 함수(앞 · 가운데 · 끝, 인수 있는 것 · 없는 것)
-const THROWERS = ['installCredits', 'widenSelectorCache', 'startMenuOpenMark', 'startAnchorGate', 'startAssetWatcher', 'startPromptList', 'startIconTextMark', 'startNaturalSlash', 'startLongpressHelp', 'startStreamFollow', 'classifyAll', 'startMainChatRules'];
+const THROWERS = ['widenSelectorCache', 'startMenuOpenMark', 'startAnchorGate', 'startAssetWatcher', 'startPromptList', 'startIconTextMark', 'startNaturalSlash', 'startLongpressHelp', 'startStreamFollow', 'classifyAll', 'startMainChatRules'];
 // 던진 것 말고 나머지는 다 불려야 하는 시작 함수
-const MUST = [...new Set([...THROWERS, 'deferPreviewRules', 'deferPanelHasRules', 'syncAddonIcons', 'startCurrentMark', 'startDangerMark', 'startPopupGuard', 'installWheelX', 'startNumberWidth', 'startGroupGrid', 'startCompactLayout', 'startNameMarquee', 'startGutterWatch', 'startDraftKeep', 'installedTouchMode', 'startWorldInfoHelp', 'startWebSearchMarks', 'startWorldInfoLinkMark', 'startCardInk', 'startSwipePickerTranslation', 'startSelectPop', 'startAddonTouchSliders', 'startColorPop', 'startChatGraph', 'startInlineTone', 'startStreamFade', 'startReadingResume', 'startAddons'])];
+const MUST = [...new Set([...THROWERS, 'deferPanelHasRules', 'syncAddonIcons', 'startCurrentMark', 'startDangerMark', 'startPopupGuard', 'installWheelX', 'startNumberWidth', 'startGroupGrid', 'startCompactLayout', 'startNameMarquee', 'startGutterWatch', 'startDraftKeep', 'installedTouchMode', 'startWorldInfoHelp', 'startWebSearchMarks', 'startWorldInfoLinkMark', 'startCardInk', 'startSwipePickerTranslation', 'startSelectPop', 'startAddonTouchSliders', 'startColorPop', 'startChatGraph', 'startInlineTone', 'startStreamFade', 'startReadingResume', 'startAddons'])];
 
 if (!scenario) {
     let failed = 0;
@@ -31,23 +31,27 @@ if (!scenario) {
     const indexUrl = pathToFileURL(path.join(root, 'index.js')).href;
     const source = fs.readFileSync(path.join(root, 'index.js'), 'utf8');
     // index.js 의 정적 import 마다 같은 이름을 내는 가짜 모듈
-    const CONSTS = { FRESH_SETTINGS: 'false', COPYRIGHT_ICON: "''", DEVICE_QUERY: "'(max-width: 1px)'" };
+    const CONSTS = { DEVICE_QUERY: "'(max-width: 1px)'" };
     const stubs = {};
     for (const m of source.matchAll(/^import\s*(?:\{([^}]*)\}\s*from\s*)?'(\.\/[^']+)'/gm)) {
         const names = (m[1] || '').split(',').map(x => x.trim().split(/\s+as\s+/)[0]).filter(Boolean);
         stubs[m[2]] = names.map(n => CONSTS[n] ? `export const ${n} = ${CONSTS[n]};` : `export function ${n}(...a) { return globalThis.__stReady.call(${JSON.stringify(n)}, a); }`).join('\n');
     }
     // 10-30: 시작 그래프 상한 때문에 startSafe 안에서 `import('./…').then(m => { m.이름(); })` 로 부르는 시작 함수도 같은 가짜로
-    for (const m of source.matchAll(/import\('(\.\/[^']+)'\)\.then\(m => \{ m\.(\w+)\(/g)) {
-        const line = `export function ${m[2]}(...a) { return globalThis.__stReady.call(${JSON.stringify(m[2])}, a); }`;
-        if (!(stubs[m[1]] || '').includes(`function ${m[2]}(`)) stubs[m[1]] = ((stubs[m[1]] || '') + '\n' + line).trim();
+    //   9.0.2 부팅 2 · 3층 표의 줄 `['이름', () => import('./…'), m => { m.이름(…); }]` 도 (부팅 층 자체 boot-layers.js 는 진짜로 — 층이 실제로 도는지 봐요)
+    const dynamicStarts = [...source.matchAll(/import\('(\.\/[^']+)'\)\.then\(m => \{ m\.(\w+)\(/g)].map(m => [m[1], m[2]])
+        .concat([...source.matchAll(/\['\w+', \(\) => [^\n]*?import\('(\.\/[^']+)'\)[^\n]*?, m => (?:\{\s*)?(?:lazy\.\w+ = m; )?m\??\.(\w+)\(/g)].map(m => [m[1], m[2]]));
+    for (const [spec, name] of dynamicStarts) {
+        const line = `export function ${name}(...a) { return globalThis.__stReady.call(${JSON.stringify(name)}, a); }`;
+        if (!(stubs[spec] || '').includes(`function ${name}(`)) stubs[spec] = ((stubs[spec] || '') + '\n' + line).trim();
     }
+    delete stubs['./src/boot-layers.js'];
     const js = code => `data:text/javascript,${encodeURIComponent(code)}`;
     register(js(`
 let index, stubs;
 export function initialize(d) { ({ index, stubs } = d); }
 export async function resolve(spec, ctx, next) {
-    if (ctx.parentURL === index && spec.startsWith('./')) return { url: 'data:text/javascript,' + encodeURIComponent(stubs[spec] ?? ''), shortCircuit: true };
+    if (ctx.parentURL === index && spec.startsWith('./') && spec !== './src/boot-layers.js') return { url: 'data:text/javascript,' + encodeURIComponent(stubs[spec] ?? ''), shortCircuit: true };
     return next(spec, ctx);
 }`), { data: { index: indexUrl, stubs } });
 
@@ -94,14 +98,18 @@ export async function resolve(spec, ctx, next) {
     try { await import(indexUrl); } catch (error) { importError = error; }
     for (const fn of ready) { try { fn(); } catch (error) { readyError = error; } }
     // 10-30: 시작 그래프 상한 때문에 몇몇 시작 함수는 startSafe 안에서 동적 import 로 불러요 — 그 import 가 끝날 때까지 한 박자 기다려 세요
-    await new Promise(resolve => setTimeout(resolve, 200));
+    //   9.0.2 부팅 2층(첫 프레임 뒤 — rAF 가 없으면 150ms) · 3층(유휴 — requestIdleCallback 이 없으면 300ms)까지 기다려요
+    // 1.0.0 극한 최적화 ④: 서랍 · 입력칸을 처음 쓸 때만 받는 3층 모듈(문)은 가짜 DOM 에 단추가 없어 직접 열어요
+    globalThis.Salty?.gate?.('drawer'); globalThis.Salty?.gate?.('input');
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     assert.equal(importError, null, `index.js 가 끝까지 실행돼야 해요: ${importError?.message}`);
     assert.equal(readyError, null, `준비 콜백이 중간에 끊기면 안 돼요: ${readyError?.message}`);
     for (const name of MUST) if (name !== throwOn) assert.ok(T.calls.includes(name), `${name} 가 시작돼야 해요${throwOn ? `(${throwOn} 가 던진 뒤에도)` : ''}`);
     assert.ok(T.ids.includes('extensions_settings2'), '테마 서랍을 붙이러 가야 해요(mountDrawer)');
     assert.ok(T.ids.includes('extensionsMenu'), '요술봉 메뉴 줄을 붙이러 가야 해요(addMenuItem)');
-    assert.ok(T.observed >= 1, '테마 강제 감시(body class)가 붙어야 해요');
+    // 9.0.4: 테마 강제 감시(body class)는 테마가 아직 시작하지 않았을 때만 붙고 시작하면 끊어요 — 이미 시작했으면(1층 startCompactLayout 을 불렀으면) 감시 없이
+    assert.ok(T.observed >= 1 || T.calls.includes('startCompactLayout'), '테마 강제 감시(body class)가 붙거나, 테마가 이미 시작했어야 해요');
     assert.ok(T.jqOn.some(s => String(s).includes('#openai_show_thoughts')), '추론 숨김 리스너가 붙어야 해요');
     assert.ok(T.jqOn.some(s => String(s).includes('#chat_display')), '실리태번 설정 바뀜 리스너가 붙어야 해요');
     assert.ok(T.on.includes(TYPES.CHAT_CHANGED), '채팅 바뀜 → 그림 분류 리스너가 붙어야 해요');

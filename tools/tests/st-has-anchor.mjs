@@ -68,7 +68,7 @@ function sheet(rules, href = 'http://st.localhost/style.css') {
 
 await test('모듈을 불러와요', () => { assert.ok(!mod.loadError, `src/st-has-anchor.js 를 못 불러옴: ${mod.loadError?.message}`); });
 if (mod.loadError) { console.log(`\nst-has-anchor: ${pass} 통과 · ${fail} 실패`); process.exit(1); }
-const { rebaseSelector, rebaseSelectorList, rebaseSheet, rebaseBodyHasRules } = mod;
+const { rebaseSelector, rebaseSelectorList, rebaseSheet, rebaseBodyHasRules, syncRaises, RAISES } = mod;
 
 await test('실리태번 원래 규칙은 body 를 비주체 :has() 기준으로 삼아요(고치기 전 상태 확인)', () => {
     assert.equal(bodyAnchors(ST_RULE).length, 3);
@@ -80,7 +80,7 @@ await test('옮긴 규칙: body 기준 0개 · holder 가 주체 · 세 조건 �
     const parts = splitTop(next, ',').map(s => s.trim());
     assert.equal(parts.length, 3);
     for (const [k, arg] of ['.drawer-content.maximized', '.drawer-content.open', '#character_popup.open'].entries()) {
-        assert.equal(parts[k], `${B}:is(:has(${arg}), :has(~ ${arg}), :has(~ * ${arg})):is(body *)`);
+        assert.equal(parts[k], `#top-settings-holder:where(.bl-center-drawer)${B.slice('#top-settings-holder'.length)}:is(:has(${arg}), :has(~ ${arg}), :has(~ * ${arg})):is(body *)`);
         assert.equal(compounds(parts[k]).length, 1, '복합 선택자 하나(주체)여야 해요');
     }
 });
@@ -89,6 +89,31 @@ await test('우선순위가 원래와 같아요(1,6,1)', () => {
     const after = splitTop(rebaseSelectorList(ST_RULE), ',').map(s => specificity(s.trim()));
     assert.deepEqual(after, before);
     assert.deepEqual(before[0], [1, 6, 1]);
+    const raised = splitTop(rebaseSelectorList(ST_RULE, 'bl-st-raise-9'), ',').map(s => specificity(s.trim()));
+    assert.deepEqual(raised, before, 'class 꼴도 :is 의 가장 큰 인자로 같아요');
+});
+await test('1.0.0 퇴행 고침: class 꼴은 :has() 가 없고 holder 하나가 주체 · 뒤 인자는 holder 에 맞을 수 없는 서랍 칸 선택자', () => {
+    const next = rebaseSelectorList(ST_RULE, 'bl-st-raise-9');
+    assert.ok(next); assert.doesNotMatch(next, /:has\(/, ':has 없음'); assert.doesNotMatch(next, /bl-center-drawer/, '가운데 서랍 표식 없음');
+    const parts = splitTop(next, ',').map(x => x.trim());
+    for (const [k, arg] of ['.drawer-content.maximized', '.drawer-content.open', '#character_popup.open'].entries()) {
+        assert.equal(parts[k], `#top-settings-holder:is(.bl-st-raise-9, :is(${arg}):is(.drawer-content.openDrawer:not(.fillLeft):not(.fillRight))):is(body *)`);
+        assert.equal(compounds(parts[k]).length, 1);
+    }
+    // 지켜볼 수 없는 A(서랍 칸 · 인물 창이 아님)나 B 가 :has(복합 하나)가 아니면 예전 표식 꼴
+    assert.match(rebaseSelector(`body:has(.x-open) ${B}`, 'c'), /:where\(\.bl-center-drawer\)/);
+    assert.match(rebaseSelector('body:has(.drawer-content.open) #top-settings-holder:hover', 'c'), /:where\(\.bl-center-drawer\)/);
+});
+await test('syncRaises: A 가 문서에 있고 holder 가 B 에 맞을 때만 class — 바뀔 때만 붙이고 떼요 · A 가 없으면 B 는 견주지 않아요', () => {
+    const cls = new Set(); let toggles = 0, matched = 0; let haveA = false, centerOpen = true;
+    const holder = { classList: { contains: c => cls.has(c), toggle: (c, on) => { toggles++; on ? cls.add(c) : cls.delete(c); } }, matches: b => { matched++; assert.equal(b, B); return centerOpen; } };
+    const doc = { querySelector: a => (a === '.drawer-content.maximized' && haveA) ? {} : null };
+    const raises = [{ cls: 'bl-st-raise-0', conds: [{ a: '.drawer-content.maximized', b: B }, { a: '#character_popup.open', b: B }] }];
+    assert.deepEqual(syncRaises(doc, holder, raises), []); assert.equal(matched, 0, 'A 가 없으면 holder.matches(:has) 를 부르지 않아요'); assert.equal(toggles, 0);
+    haveA = true; assert.deepEqual(syncRaises(doc, holder, raises), ['bl-st-raise-0']); assert.equal(toggles, 1);
+    syncRaises(doc, holder, raises); assert.equal(toggles, 1, '같은 상태는 다시 안 써요');
+    centerOpen = false; assert.deepEqual(syncRaises(doc, holder, raises), []); assert.equal(toggles, 2); assert.equal(cls.size, 0);
+    assert.deepEqual(syncRaises(doc, null, raises), [], 'holder 가 없으면 아무것도 안 해요');
 });
 await test('모양이 다르면 손대지 않아요(null)', () => {
     for (const sel of ['body:has(.a .b) #top-settings-holder', 'body:has(.a > .b) #top-settings-holder', 'body:has(.a, .b) #top-settings-holder', 'body:has(.a):has(.b) #top-settings-holder',
@@ -100,10 +125,13 @@ await test('모양이 다르면 손대지 않아요(null)', () => {
 await test('시트: 같은 자리에 넣고 원래 것을 지워요 · 선언 그대로 · @media 안도 · 두 번 해도 그대로', () => {
     const inner = sheet([rule('.a'), rule(ST_RULE, '{ z-index: 4005; }'), rule('.b')]);
     const s = sheet([rule('.first'), rule(ST_RULE, '{ z-index: 4005; }'), rule('.last'), { type: 4, cssRules: inner.cssRules, insertRule: inner.insertRule, deleteRule: inner.deleteRule }]);
+    const n0 = RAISES.length;
     assert.equal(rebaseSheet(s), 2);
-    assert.deepEqual(s.cssRules.slice(0, 3).map(r => r.selectorText), ['.first', rebaseSelectorList(ST_RULE), '.last']);
+    const raised = k => rebaseSelectorList(ST_RULE, `bl-st-raise-${k}`);
+    assert.deepEqual(s.cssRules.slice(0, 3).map(r => r.selectorText), ['.first', raised(n0 + 1), '.last'], '규칙마다 class 하나(뒤에서부터 옮겨 @media 안이 먼저 번호를 받아요)');
     assert.match(s.cssRules[1].cssText, /\{ z-index: 4005; \}$/);
-    assert.equal(inner.cssRules[1].selectorText, rebaseSelectorList(ST_RULE));
+    assert.equal(inner.cssRules[1].selectorText, raised(n0));
+    assert.equal(RAISES.length, n0 + 2); assert.deepEqual(RAISES[n0].conds.map(c => c.a), ['.drawer-content.maximized', '.drawer-content.open', '#character_popup.open']);
     assert.equal(rebaseSheet(s), 0, '이미 옮긴 규칙은 다시 안 건드려요');
 });
 await test('insertRule 이 실패하면(옛 브라우저) 원래 규칙을 그대로 둬요', () => {
@@ -114,15 +142,17 @@ await test('insertRule 이 실패하면(옛 브라우저) 원래 규칙을 그�
 await test('문서: 실리태번 style.css 만 바꿔요(테마 style.css · 다른 시트는 그대로)', () => {
     const st = sheet([rule(ST_RULE)]); const theme = sheet([rule(ST_RULE)], 'http://st.localhost/scripts/extensions/third-party/blue-lemonade/style.css'); const other = sheet([rule(ST_RULE)], 'http://st.localhost/css/mobile-styles.css');
     assert.equal(rebaseBodyHasRules({ styleSheets: [theme, other, st] }, 0), 1);
-    assert.equal(st.cssRules[0].selectorText, rebaseSelectorList(ST_RULE));
+    assert.match(st.cssRules[0].selectorText, /^#top-settings-holder:is\(\.bl-st-raise-\d+, /);
     assert.equal(theme.cssRules[0].selectorText, ST_RULE); assert.equal(other.cssRules[0].selectorText, ST_RULE);
 });
 await test('index.js 가 시작할 때(테마 켜짐과 따로) 불러요', () => {
     const index = fs.readFileSync(path.join(root, 'index.js'), 'utf8');
-    // 10-30: 시작 그래프 상한(boot-graph 111개) 때문에 startSafe 안에서 동적 import 로 불러요
-    assert.match(index, /import\('\.\/src\/st-has-anchor\.js'\)\.then\(m => \{ m\.rebaseBodyHasRules\(\); \}\)/);
-    const ready = index.indexOf('jQuery(() => {'); const call = index.indexOf('m.rebaseBodyHasRules();'); const theme = index.indexOf('const startThemeRuntime');
-    assert.ok(ready > 0 && call > ready && call < theme, 'jQuery 준비 블록 안 · 테마 실행부 앞에서 불러야 해요');
+    // 9.0.2 부팅 2층 표(BOOT_FRAME — 테마 켜짐과 따로 · 첫 프레임 뒤)에서 동적 import 로 불러요
+    assert.match(index, /\['rebaseBodyHasRules', \(\) => import\('\.\/src\/st-has-anchor\.js'\), m => \{ m\.rebaseBodyHasRules\(\); \}\]/);
+    const table = index.indexOf('const BOOT_FRAME'), call = index.indexOf('m.rebaseBodyHasRules();'), next = index.indexOf('const BOOT_IDLE');
+    assert.ok(table > 0 && call > table && call < next, 'BOOT_FRAME 표 안에 있어야 해요');
+    const ready = index.indexOf('jQuery(() => {'), start = index.indexOf("afterFirstFrame(() => withReplay('2층', () => startLayer(2, BOOT_FRAME)))"), theme = index.indexOf('const startThemeRuntime');
+    assert.ok(ready > 0 && start > ready && start < theme, 'jQuery 준비 블록 안 · 테마 실행부 앞에서 시작해요');
 });
 await test('상한: 테마 CSS 에도 body · html 을 비주체 :has() 기준으로 삼는 선택자 0개', () => {
     const files = ['style.css', 'style-ext.css', 'src/lazy-panel.gen.css'].map(f => path.join(root, f)).filter(f => fs.existsSync(f));

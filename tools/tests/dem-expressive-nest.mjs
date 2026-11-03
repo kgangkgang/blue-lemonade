@@ -41,7 +41,7 @@ check('CSS: an effect box inside a character colour box inherits that colour (no
     // 대사 잉크 색 규칙보다 뒤 (같은 !important 끼리도 위 규칙보다 구체적)
     assert.ok(css.search(rule) > css.indexOf('color: var(--salty-marker-ink, var(--salty-dialogue)) !important;\n}\n/* 6.7.9'));
 });
-// 10-27 감정 태그가 붙은 대사도 같은 인물 색 (사용자 제보 10-27: <deadpan> 대사만 형광펜 띠 · 글자가 회색빛).
+// 10-27 감정 태그가 붙은 대사도 같은 인물 색 (<deadpan> 대사만 형광펜 띠 · 글자가 회색빛이던 것).
 // 데우스 V3 프리셋 <style>(DEM - UI module accents)이 감정 칸에 고정 채도 필터를 줘 칸 안 띠 · 글자를 다시 칠했다.
 // 실리태번이 메시지 <style> 을 바꾼 꼴(.mes_text + custom- 접두어, 특이도 0,2,0)보다 테마 규칙이 무거워야 한다 — 문장은 지어낸 것
 const PRESET_FILTERS = { deadpan: 'saturate(.25) brightness(.92)', crying: 'saturate(.8)', hurt: 'saturate(.75)', intoxicated: 'saturate(1.15)' };

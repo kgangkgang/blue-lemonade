@@ -3,7 +3,7 @@
 // 가짜 fetch · 가짜 DOM(문서 capture 클릭 · .mes.selected) · 가짜 eventSource(실리태번처럼 등록 차례대로 하나씩 await, makeFirst 는 맨 앞)로 본다.
 //   1) 성능 보조 꺼짐: 빈 저장 막힘(409 · 알림 하나) · 정상 저장 통과(동기) · 저장 아닌 요청은 그대로(같은 인자 · 같은 약속)
 //   2) 성능 보조 켜짐: 진짜 savededupe.js 를 실리태번 스텁으로 불러 — 표식을 넘겨받고, 독립 모듈은 무동작(판정 1겹 · 다시 설치해도 감싸지 않음)
-//   3) 설정 끔(chat.emptyGuard · save_dedupe.emptyGuard 어느 쪽이든) → 통과 · 옛 설정 보정(없으면 켬 · 저장 정리에서 끈 사람은 끔)
+//   3) 설정 끔(chat.emptyGuard · save_dedupe.emptyGuard 어느 쪽이든) → 통과 · 옛 설정 보정(없으면 켬)
 //   4) 직접 지움: 하나씩 다 지움 · 여러 개 고르기로 다 지움 · /del 로 다 지움 → 통과 / 채팅 열기 실패 · 지운 직후 다른 채팅으로 바뀜 · 일부만 지운 뒤 빈 저장 → 막힘
 // 지어낸 캐릭터 · 파일 이름 · 문장만 쓴다.
 import assert from 'node:assert/strict';
@@ -180,7 +180,7 @@ await test('설정 끔: chat.emptyGuard false 이거나 저장 정리 save_dedup
     assert.equal(G.guardWanted({ salty: { chat: {} }, save_dedupe: {} }), true);
 });
 
-await test('옛 설정 보정: 칸이 없으면 켬 · 저장 정리에서 끈 사람은 처음 한 번 끔 · 직접 끈 값 · "false" 문자열은 끔 · 동작 값 목록에도 있음', async () => {
+await test('옛 설정 보정: 칸이 없으면 켬 · 직접 끈 값 · "false" 문자열은 끔 · 동작 값 목록에도 있음', async () => {
     const ctx = { extensionSettings: {}, powerUserSettings: {}, characters: [], characterId: undefined, saveSettingsDebounced() {} };
     globalThis.SillyTavern = { getContext: () => ctx };
     const { getSettings, DEFAULTS } = await import(url('src/settings.js'));
@@ -189,10 +189,8 @@ await test('옛 설정 보정: 칸이 없으면 켬 · 저장 정리에서 끈 �
     const old = structuredClone(DEFAULTS); delete old.chat.emptyGuard;
     assert.equal(load(old).chat.emptyGuard, true, '8.2.5 설정 → 켬');
     assert.equal(load({ version: 1, chat: { user: 'line' } }).chat.emptyGuard, true, '아주 옛 설정 → 켬');
-    assert.equal(load(old, { save_dedupe: { emptyGuard: false } }).chat.emptyGuard, false, '저장 정리에서 끈 사람 → 끔');
-    assert.equal(load(old, { save_dedupe: { emptyGuard: true } }).chat.emptyGuard, true);
     const on = structuredClone(DEFAULTS); on.chat.emptyGuard = true;
-    assert.equal(load(on, { save_dedupe: { emptyGuard: false } }).chat.emptyGuard, true, '칸이 이미 있으면 보정하지 않는다 (실행 때 둘 중 하나라도 끄면 끔)');
+    assert.equal(load(on, { save_dedupe: { emptyGuard: false } }).chat.emptyGuard, true, '설정 칸은 그대로 (실행 때 둘 중 하나라도 끄면 끔)');
     const off = structuredClone(DEFAULTS); off.chat.emptyGuard = 'false';
     assert.equal(load(off).chat.emptyGuard, false);
     delete globalThis.SillyTavern;
@@ -394,20 +392,20 @@ await test('연결: features.js(chat.emptyGuard · 기본 켬 · 확장만 모�
     assert.match(features, /load\('emptyguard','\.\/empty-guard-boot\.js'\)\.then\(m=>m\?\.syncEmptyGuard\(emptyGuard\)\)/);
     const addons = read('src/addons.js');
     assert.match(addons, /export const perfStarted=new Promise/);
-    assert.match(addons, /try\{await startAddonsOnce\(\);\}finally\{settlePerf\(\);\}/);
+    assert.match(addons, /try\{await startAddonsOnce\(layers\);\}finally\{settlePerf\(\);\}/);
     assert.match(addons, /if\(ids\.includes\('perf'\)\)\{await startOne\('perf'\);[^\n]*\n    settlePerf\(\);/);
     const settings = read('src/settings.js');
     assert.match(settings, /chat: \{[^\n]*, emptyGuard: true,/);
     assert.match(settings, /s\.chat\.emptyGuard = flag\(s\.chat\.emptyGuard, true\);/);
-    assert.match(settings, /if \(guardUnset && isObj\(s\.chat\) && ext\.save_dedupe\?\.emptyGuard === false\) s\.chat\.emptyGuard = false;/);
     assert.match(settings, /'mesPins'[^\]]*'emptyGuard'[^\]]*\]\) \{/);   // 초기화가 남기는 동작 값 목록 (사이 · 뒤에 다른 키가 붙어도 된다)
     assert.match(read('src/styles.js'), /'mesPins'[^\]]*'emptyGuard'[^\]]*\];/);
-    assert.match(read('src/panel.js'), /row\('빈 채팅 덮어쓰기 막기', toggle\('chat\.emptyGuard', s\.chat\.emptyGuard !== false\),/);
+    // 성능 보조를 꺼도 쓰는 보호라 설정 창 › 채팅 › 기타에 줄이 있어요 (성능 보조 › 저장 정리 체크와 같은 설정)
+    assert.match(read('src/panel.js'), /toggle\('chat\.emptyGuard'/);
+    assert.match(read('src/settings-differences.js'), /if \(scope === 'chat' && key === 'emptyGuard'\) return \{tab:'chat',sub:'etc'\};/);
     assert.match(read('src/settings-labels.js'), /"chat\.emptyGuard":"빈 채팅 덮어쓰기 막기"/);
-    const search = read('src/settings-search.js').split('\n').find(line => line.includes("'chat.emptyGuard'"));
-    assert.ok(search, '검색 항목');
+    const search = read('src/settings-search.js').split('\n').find(line => line.includes("'빈 채팅 덮어쓰기 막기'"));
+    assert.ok(search && search.includes("['chat','etc',"), '검색 항목(채팅 › 기타로)');
     for (const word of ['빈 채팅', '날아감', '덮어쓰기', '저장 막기', '채팅 사라짐']) assert.ok(search.includes(word), word);
-    assert.match(read('src/faq-data.js'), /8\.2\.6 부터는 성능 보조를 켜지 않아도 설정 › 채팅 › 기타 「빈 채팅 덮어쓰기 막기」/);
     const boot = read('src/empty-guard-boot.js');
     assert.match(boot, /from '\.\/addons\/perf\/emptyguard\.js';/, '판정은 emptyguard.js 재사용');
     assert.ok(!/function messagesInBody|function createEmptyGuard/.test(boot), '판정을 베끼지 않음');

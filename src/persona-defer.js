@@ -1,4 +1,4 @@
-// 입력 중 목록 갱신 미루기 (10-29 perf-persona · 커뮤니티 제보 「모바일 기준 유저 페르소나 편집하는데 많이 버벅거림 · 300챗 장기 챗」)
+// 입력 중 목록 갱신 미루기 (10-29 perf-persona — 긴 채팅에서 페르소나 편집이 버벅이던 것)
 //
 // 왜: 페르소나 설명 칸에 글자를 칠 때마다 실리태번 personas.js 의 onPersonaDescriptionInput 이
 //   (1) power_user 에 설명을 적고 (2) 토큰 수 세기(1초 디바운스) (3) 목록 카드의 .ch_description 글을 다시 쓰고 (4) 저장(디바운스) (5) PERSONA_UPDATED 를 알린다.

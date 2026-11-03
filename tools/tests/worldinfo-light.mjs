@@ -41,7 +41,8 @@ t('목록이 아직 없으면 켜도 걸지 않는다 · 다음 켜기에 생기
 });
 
 // ---- CSS · 연결
-const read = f => fs.readFileSync(path.join(root, f), 'utf8');
+// 1.0.0 두 장 빌드: 서랍 모듈은 둘째 장(src/style-lazy.gen.css)에 실려요 — style.css 를 읽을 땐 둘째 장도 이어 읽어요
+const read = f => fs.readFileSync(path.join(root, f), 'utf8') + (f === 'style.css' && fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? fs.readFileSync(path.join(root, 'src/style-lazy.gen.css'), 'utf8') : '');
 t('CSS: .bl-wi-light 의 접힌 항목에만 content-visibility:auto + contain-intrinsic-size · 펼친 항목(아이콘 .up) · 드래그 중 · 자리표시는 제외 · style.css 에 들어 있다', () => {
     const css = read('css/12-worldinfo.css');
     const rule = css.match(/body\.salty #WorldInfo #world_popup_entries_list\.bl-wi-light > \.world_entry([^{]*)\{([^}]*)\}/);
@@ -56,7 +57,7 @@ t('설정 chat.worldInfoLight 기본 켬 · 보정 · 초기화에서 남김 · 
     const settings = read('src/settings.js');
     assert.match(settings, /codePlain: false, worldInfoLight: true,/); assert.match(settings, /s\.chat\.worldInfoLight = flag\(s\.chat\.worldInfoLight, true\)/); assert.match(settings, /'codePlain', 'worldInfoLight'[^\]]*\]\) \{/);
     assert.match(read('src/styles.js'), /'codePlain', 'worldInfoLight'[^\]]*\];/);
-    assert.match(read('src/features.js'), /const worldInfoLight = on && s\.chat\?\.worldInfoLight !== false && !restingFor\('worldInfoLight'\);\n\s+if \(worldInfoLight \|\| modules\.wilight\) load\('wilight', '\.\/worldinfo-light\.js'\)\.then\(m => m\?\.syncWorldInfoLight\(worldInfoLight\)\)/);
+    assert.match(read('src/features.js'), /const worldInfoLight = on && s\.chat\?\.worldInfoLight !== false && !restingFor\('worldInfoLight'\);\n\s+if \(worldInfoLight \|\| modules\.wilight\) onGate\('drawer', \(\) => load\('wilight', '\.\/worldinfo-light\.js'\)\.then\(m => m\?\.syncWorldInfoLight\(worldInfoLight\)\), 'wilight'\)/);
     const panel = read('src/panel.js'); assert.ok(panel.includes("toggle('chat.worldInfoLight', s.chat.worldInfoLight !== false)") && panel.includes("restNote('worldInfoLight')"));
     assert.ok(read('src/settings-labels.js').includes('"chat.worldInfoLight":"월드인포 긴 목록 가볍게"'));
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/worldinfo-light\.mjs \./);

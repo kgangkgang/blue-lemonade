@@ -73,7 +73,7 @@ export function groupOn(rows, group, isOn) {
 }
 
 /** 6.7.5 「검열되면」 단추가 눌린 상태 = 고를 수 있는 검열되면 줄이 모두 골라졌고 켜진 일반 줄은 없음.
- *  (전엔 검열되면 줄만 보고 판정해 일반 줄과 같이 켜진 기본 상태에서 누르면 검열되면 줄이 꺼지고 일반 줄만 남았다 — 사용자 요청은 「검열되면 쓸 애들만 전체선택」) */
+ *  (전엔 검열되면 줄만 보고 판정해 일반 줄과 같이 켜진 기본 상태에서 누르면 검열되면 줄이 꺼지고 일반 줄만 남았다 — 바라는 동작은 「검열되면 쓸 줄만 모두 고르기」) */
 export function fallbackOnly(rows, isOn, pickable = rowActive) {
     const list = Array.isArray(rows) ? rows : [];
     const picks = list.filter(target => isFallbackRow(target) && pickable(target));

@@ -8,7 +8,8 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 const root = path.resolve(process.argv[2] || fileURLToPath(new URL('../..', import.meta.url)));
-const read = f => fs.readFileSync(path.join(root, f), 'utf8');
+// 1.0.0 두 장 빌드: 서랍 모듈은 둘째 장(src/style-lazy.gen.css)에 실려요 — style.css 를 읽을 땐 둘째 장도 이어 읽어요
+const read = f => fs.readFileSync(path.join(root, f), 'utf8') + (f === 'style.css' && fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? fs.readFileSync(path.join(root, 'src/style-lazy.gen.css'), 'utf8') : '');
 let n = 0; const t = (name, fn) => { fn(); n++; console.log(`ok ${n} - ${name}`); };
 const P = 'body.salty #right-nav-panel .group_member';
 /** 줄 맨 앞에서 시작하는 그 선택자 규칙의 선언들을 모두 이어 붙인다 */

@@ -1,6 +1,6 @@
 // 가로 스크롤 칸은 Shift 없이 휠로 (8.2.3): 가로로만 넘치는 칸(캐릭터 즐겨찾기 줄 · 글꼴 묶음 태그 줄 · 실리태번 원본의 가로 칸 …)에서
 // 세로 휠을 돌리면 그 칸을 좌우로 굴려요. 왜: 탭 줄(tab-scroll.js)과 퀵 리플라이 줄(layout.js qrWheel)만 됐고, 나머지 가로 칸은 Shift+휠이어야 했어요
-// (사용자 지시 10-29 「스크롤 가능한 곳은 다 마우스 휠이나 모바일 제스처로」). 모바일은 overflow-x 칸을 손가락으로 원래 밀 수 있어 JS 가 필요 없어요.
+// (스크롤 가능한 곳은 모두 마우스 휠 · 손가락으로). 모바일은 overflow-x 칸을 손가락으로 원래 밀 수 있어 JS 가 필요 없어요.
 // 방식: 문서에 wheel 리스너 하나(passive:false). 이벤트 대상에서 올라가며 「가로로 넘치고(scrollWidth > clientWidth+1) 세로로는 안 넘치는
 // (scrollHeight <= clientHeight+1) 첫 조상」을 찾아 굴려요. getComputedStyle 은 그 후보에만 — 매 휠마다 문서를 훑지 않아요.
 // 건너뛰는 것: Ctrl · Meta · Shift(브라우저 기본) · 가로 델타가 큰 트랙패드 손짓 · 이미 처리된 이벤트(defaultPrevented — 탭 줄 · 퀵 리플라이 줄이

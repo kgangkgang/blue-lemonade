@@ -1,6 +1,6 @@
 // 10-29 상태창 영어 손질(프리셋 상시 손질 status-english)이 얹힌 항목도 길게 누르기 도움말이 「확인된 설명」으로 떠요.
 //   손질은 상태창 지시에 「영어로 써요」 한 줄만 더해서 본문 지문이 바뀌었고, 도움말은 「기본판과 달라 실제 효과가 다를 수 있어요」 경고로 떨어졌어요
-//   (야한 과일 2.0 · 청과 2.1 의 Top-题记, 데우스 3 의 「| Status |」). 원문 본문은 넣지 않고 지문만 적어요(손질 뒤 설치-ZIP 판에서 잰 값).
+//   (야한 과일 2.0 · 청과 2.1 의 Top-题记, 데우스 3 의 「| Status |」). 원문 본문은 넣지 않고 지문만 적어요(손질 뒤 판에서 잰 값).
 //   node tools/tests/option-help-standing.mjs <테마 루트>
 import assert from 'node:assert/strict';
 import path from 'node:path';

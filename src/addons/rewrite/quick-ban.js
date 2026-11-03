@@ -1,3 +1,4 @@
+import { booting } from '../../boot-gate.js';
 // 1.9.0 — 채팅에서 낱말을 고르면(길게 눌러 선택 · 드래그) 그 옆에 작은 금지 칩이 뜬다. 누르면 그 말이 규칙이 된다.
 // 설정 창을 열지 않고도 "이 말 그만"을 그 자리에서 — 규칙 이름 · 낱말은 고른 글 그대로, 설명은 core 가 프롬프트에 쓸 한 줄.
 // 선택은 브라우저에 맡긴다(폰은 길게 누르면 낱말이 골라진다): 우리는 selectionchange 만 듣고, 칩은 선택 아래에 둔다(안드로이드 선택 메뉴는 위에 뜬다).
@@ -87,6 +88,7 @@ function show({ text, rect, lines = [] }) {
 
 function check() {
     if (!enabled) { hide(); return; }
+    if (booting()) return;   // 1.0.0 극한 최적화: 시작 덮개 동안 실리태번이 채팅을 그리며 selectionchange 를 수천 번 내요(폰 4배 부팅 131ms) — 덮개가 걷히면 그때부터
     const found = selectedText();
     if (!found) { hide(); return; }
     // 편집 중인 글이나 입력칸 안의 선택은 아니다 (편집 칸은 .mes_text 가 아니라 textarea 라 위 검사에서 이미 빠진다)

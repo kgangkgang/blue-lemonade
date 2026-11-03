@@ -9,7 +9,7 @@ const {insertDirection,insertInstructions,CONTINUE_DIRECTION}=prompt;
 const ext={};const probe={ext,insertInstructions,saves:0,subs:0,macro:null};
 probe.context={substituteParams(text){probe.subs++;if(probe.subFails)throw new Error('macro engine failed');let out=String(text).replace(/\{\{user\}\}|<USER>/gi,()=>'Alice').replace(/\{\{char\}\}/gi,()=>'Robin');if(probe.macro)out=out.replace(/\{\{direction\}\}/gi,()=>probe.macro());return out;}};globalThis.__directionTest=probe;globalThis.window={matchMedia:()=>({matches:false})};
 const source=(await fs.readFile(path.join(root,'src/addons/direction/index.js'),'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm,'');
-const prelude='const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const getChatCompletionModel=()=>globalThis.__directionTest.model||"example-model";const oai_settings={};';
+const prelude='const addonRunning=()=>true;const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const getChatCompletionModel=()=>globalThis.__directionTest.model||"example-model";const oai_settings={};';
 const m=await import('data:text/javascript;base64,'+Buffer.from(prelude+source+'\nexport {initSettings,settings,injectDirection,trackGeneration,remember,savePreset,isSaved,alwaysActive,directionMacroText,KINDS,HISTORY_MAX,PRESET_MAX};').toString('base64'));
 ext['Direction-Manager-Lite']={extensionEnabled:false,direction:{enabled:true,content:'literal $& direction'},directionPrompt:'Custom {{direction}}',promptDepth:3};
 m.initSettings();assert.equal(m.settings().extensionEnabled,false);assert.equal(m.settings().direction.content,'literal $& direction');assert.equal(m.settings().promptDepth,3);
@@ -86,7 +86,7 @@ m.initSettings();assert.equal(m.settings().presets.length,4,'두 번 불러도 �
 const src=await fs.readFile(path.join(root,'src/addons/direction/index.js'),'utf8'),css=await fs.readFile(path.join(root,'src/addons/direction/style.css'),'utf8');
 assert.ok(!/jj-favs|fav-add|fav-use|FAVORITE_MAX|addFavorite/.test(src)&&!/jj-fav/.test(css),'칩 · ☆ 화면 코드 없음');
 ext.jeongaejisi=before;m.initSettings();}
-const {knownConflicts}=await import(new URL('src/assist/core.js',url));
+const {knownConflicts}=await import(new URL('src/extension-folder.js',url));
 for(const folder of ['story-direction','Direction-Manager','Direction-Manager-Lite','jeongaejisi']){const key='third-party/'+folder;assert.equal(knownConflicts([key],[],{direction:true}).length,1);assert.equal(knownConflicts([key],[key],{direction:true}).length,0);assert.equal(knownConflicts([key],[],{direction:false}).length,0);}
 const {DEFAULTS}=await import(new URL('src/settings.js',url));assert.equal(DEFAULTS.addons.direction,false);
 delete globalThis.__directionTest;delete globalThis.window;

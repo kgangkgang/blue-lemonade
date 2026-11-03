@@ -171,7 +171,7 @@ await test('캐릭터 이름 바꾸기 — 용어집 범위 · 새 이름 제안
     assert.deepEqual(out, { moved: 1, suggest: true });
     assert.equal(set.glossary_entries[0].scope, '코르빈.png'); assert.equal(set.glossary_entries[0].updated, NOW);
     assert.equal(set.glossary_entries[1].scope, 'global'); assert.ok(set.glossary_suggest['코르빈.png'] && !set.glossary_suggest['Corvin.png']);
-    assert.match(read('src/addons/translator/index.js'), /eventSource\.on\(event_types\.CHARACTER_RENAMED, \(oldAvatar, newAvatar\) => \{\n\s+try \{\n\s+const out = renameGlossaryScope\(extensionSettings/);
+    assert.match(read('src/addons/translator/index.js'), /listen\(event_types\.CHARACTER_RENAMED, \(oldAvatar, newAvatar\) => \{\n\s+try \{\n\s+const out = renameGlossaryScope\(extensionSettings/);
 });
 
 await test('캐릭터 이름 바꾸기 — 캐릭터 에셋: 설정 열쇠 옮기기 · 그림이 있으면 묻고 옮김(전부 올린 뒤 옛 것 지움) · 그대로 두기 · 실패하면 치움', async () => {
@@ -325,12 +325,12 @@ await test('북마크: 다른 채팅 저장 본문이 실리태번 차례 → �
 await test('판 · CI 등록', () => {
     const v = (rel, re) => (read(rel).match(re) || [])[1];
     assert.equal(v('src/addons/notes/version.js', /NOTES_VERSION = '([\d.]+)'/), '1.3.8');
-    assert.equal(v('src/addons/translator/manifest.json', /"version": "([\d.]+)"/), '3.1.6');   // 7.5.1 · 8.0.6 프리셋 호환 · 3.1.3 검열되면 대신 쓸 모델 카드 · 8.0.8 V3 상태창 · 모듈 · 3.1.4 이야기 속 알림 줄 · 3.1.5 밑줄 이름표 · 괄호 뒤 기호 · 번역 중 상태창 틀 · 3.1.6 프롬프트 기본값 · DB 단추 켬끔
+    assert.equal(v('src/addons/translator/manifest.json', /"version": "([\d.]+)"/), '3.1.8');   // 7.5.1 · 8.0.6 프리셋 호환 · 3.1.3 검열되면 대신 쓸 모델 카드 · 8.0.8 V3 상태창 · 모듈 · 3.1.4 이야기 속 알림 줄 · 3.1.5 밑줄 이름표 · 괄호 뒤 기호 · 번역 중 상태창 틀 · 3.1.6 프롬프트 기본값 · DB 단추 켬끔 · 3.1.7 코드 칸 울타리 줄 · 다른 확장 용어 파일
     assert.equal(v('src/addons/assets/state.js', /VERSION = '([\d.]+)'/), '1.7.6');   // 7.0.7 · 1.7.6 그림 확장 그림을 에셋으로
     assert.equal(v('src/addons/prompt/manifest.json', /"version": "([\d.]+)"/), '1.4.0');   // 도구줄 간격을 공통값으로 맞춰요
-    assert.equal(v('src/addons/rewrite/index.js', /const VERSION = '([\d.]+)'/), '2.1.9');   // 7.1.5
-    assert.equal(v('src/addons/direction/index.js', /const VERSION = '([\d.]+)'/), '1.4.2');   // 7.9.9 테마 고르기 목록을 누를 때 창이 닫히지 않게
-    assert.equal(v('src/addons/bookmarks/state.js', /VERSION = '([\d.]+)'/), '1.7.5');   // 7.2.7 그림 원본 비율 · 보기 고르기 · 생각 숨김 · 7.3.1 그림만 격자 읽는 차례
+    assert.equal(v('src/addons/rewrite/index.js', /const VERSION = '([\d.]+)'/), '2.2.0');   // 7.1.5
+    assert.equal(v('src/addons/direction/index.js', /const VERSION = '([\d.]+)'/), '1.4.3');   // 7.9.9 테마 고르기 목록을 누를 때 창이 닫히지 않게
+    assert.equal(v('src/addons/bookmarks/state.js', /VERSION = '([\d.]+)'/), '1.7.6');   // 7.2.7 그림 원본 비율 · 보기 고르기 · 생각 숨김 · 7.3.1 그림만 격자 읽는 차례
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/bughunt2-addons\.mjs \./);
     assert.equal(fetches, 0);
 });

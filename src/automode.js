@@ -1,8 +1,9 @@
 // 화이트 · 나이트 자동 (3.2.0) — 기기의 다크 모드를 따라가거나, 정한 시간에 팔레트 밝기를 바꾼다.
 // 고른 팔레트 묶음(블루 레몬에이드 · 멜론 …)은 그대로 두고 그 묶음의 화이트 ↔ 나이트만 갈아 끼운다.
 // 켜 두었을 때만 불러온다 (features.js). 해/달 단추를 직접 누르면 자동은 꺼진다 (panel.js).
+// 1.0.0 되살림(9.0.0 c7f8705b 에서 걷었던 것): 다른 에이드 색 정의는 처음 쓸 때 받으니 밝기는 paletteMode(id 표)로 읽어요.
 import { getSettings } from './settings.js';
-import { PALETTES, paletteFamily, paletteVariant } from './palettes.js';
+import { paletteMode, paletteFamily, paletteVariant } from './palettes.js';
 
 const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
 let hooks = { applyAll: null, refreshPanels: null };
@@ -32,7 +33,7 @@ export function check() {
     const s = getSettings();
     if (!s.enabled || !s.auto?.on) return false;
     const want = wantMode(s.auto);
-    if ((PALETTES[s.palette]?.mode || 'light') === want) return false;
+    if (paletteMode(s.palette) === want) return false;
     s.palette = paletteVariant(paletteFamily(s.palette), want);
     hooks.applyAll?.();
     hooks.refreshPanels?.();

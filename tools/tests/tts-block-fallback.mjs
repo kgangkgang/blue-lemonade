@@ -1,6 +1,6 @@
 // TTS 1.7.1 (테마 6.1.8) 대사 분석 — 검열되면 다른 모델로 · 화자 찾기 보강 · 「모르는 화자」 목소리
 //   src/addons/tts/src/block-fallback.js (순수) · analysis.js (callProvider 차단 표시 · doAnalyze 한 번만 다시) · player.js (analysisNeeds · lineJobs) · voices.js (unknownVoice)
-//   사용자 제보: 수위 높은 답장에서 대사 분석이 거절돼(Gemini PROHIBITED_CONTENT / 중계의 맨 'Bad Request') 분석이 없음 → 색 없는 엑스트라 대사가 「목소리를 먼저 정해요」.
+//   수위 높은 답장에서 대사 분석이 거절돼(Gemini PROHIBITED_CONTENT / 중계의 맨 'Bad Request') 분석이 없음 → 색 없는 엑스트라 대사가 「목소리를 먼저 정해요」.
 //   node tools/tests/tts-block-fallback.mjs <테마 루트>
 // 실리태번 모듈은 data: 스텁, 분석 요청은 가짜 fetch (/api/backends/chat-completions/generate 만 받음).
 import assert from 'node:assert/strict';

@@ -59,7 +59,7 @@ await test('다시 그려진 같은 생김새의 칩은 재지 않고 MutationOb
     const chip = new El('button', { cls: 'fsc-chip on', parent: list, text: '자유' });
     const tab = new El('button', { cls: 'fsc-modetab', parent: list, text: '본편 반응' });
     const stop = mod.watchSquaredButtons(doc, host);
-    host.timers[0].fn(); host.frames[0]();
+    host.timers[0].fn(); host.frames[0](); host.timers.at(-1).fn();   // 1.0.0: 재기는 rAF → setTimeout(배치 뒤)
     assert.ok(chip.hasAttribute('data-bl-squared') && tab.hasAttribute('data-bl-squared'), '첫 번째는 예전처럼 재서 표시');
     // 확장이 목록을 innerHTML 로 다시 그림: 새 요소들 (같은 클래스, 상태 클래스는 다름)
     list.children = [];
@@ -75,7 +75,7 @@ await test('다시 그려진 같은 생김새의 칩은 재지 않고 MutationOb
     assert.equal(inSend.hasAttribute('data-bl-squared'), false, '건너뛸 영역은 바로 표시하지 않는다');
     assert.equal(chip2.offsetReads + tab2.offsetReads, 0, '바로 표시할 때는 레이아웃을 묻지 않는다');
     assert.equal(host.timers.length, timersBefore + 1, '잰 적 없는 요소를 위해 타이머는 예전처럼');
-    host.timers.at(-1).fn(); host.frames.at(-1)();
+    host.timers.at(-1).fn(); host.frames.at(-1)(); host.timers.at(-1).fn();   // 1.0.0: rAF → setTimeout(배치 뒤)
     assert.equal(fresh.hasAttribute('data-bl-squared'), true, '처음 보는 생김새는 프레임에서 재서 표시');
     assert.equal(host.frames.length, framesBefore + 1);
     stop();

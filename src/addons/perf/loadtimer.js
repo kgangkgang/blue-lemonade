@@ -327,7 +327,7 @@ function buildDrawer() {
     drawer.innerHTML = `
         <div class="inline-drawer">
             <div class="inline-drawer-toggle inline-drawer-header">
-                <b><i class="fa-solid fa-stopwatch"></i> ${TITLE} <span class="lt-version ext-version">v${VERSION}</span></b>
+                <b><i class="fa-solid fa-stopwatch"></i> ${TITLE}</b>
                 <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
             </div>
             <div class="inline-drawer-content">

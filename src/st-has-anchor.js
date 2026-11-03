@@ -19,8 +19,25 @@
 //   · 주체 :has() 는 holder 자신만 다시 계산하므로(z-index 는 물려받지 않음) 채팅이 통째로 다시 계산되지 않는다.
 //   · 선언 글은 원래 규칙의 cssText 그대로. A 가 복합 선택자 하나(공백 · 결합자 없음)가 아니면 그 규칙은 손대지 않는다.
 // 테마 화면 켜짐과 따로(확장만 모드에서도) 돈다 — 뜻이 같은 규칙이라 켜고 끌 때 되돌릴 것이 없다.
+// 1.0.0 극한 최적화: 옮겨 적은 규칙의 :has(~ * A) 는 #top-settings-holder 뒤 문서 전체(채팅 포함)를 훑어서, 메시지 · 서랍 어디든 요소가 바뀔 때마다 #top-settings-holder 를
+//   다시 계산했어요(폰 리그 CPU 4배: 요소 5개짜리 재계산 한 번 50~140ms · 채팅 전환 한 번에 20번 안팎). 규칙은 가운데 서랍이 열려 있을 때만 맞으니,
+//   #top-settings-holder.bl-center-drawer 표식을 :where 로 맨 앞에 두어(특이도 0 · 왼쪽부터 견줌) 닫혀 있을 때는 :has 를 아예 견주지 않게 해요. 표식은 서랍 칸의 class 만 봐요.
+//   :where 안 맨 오른쪽은 #top-settings-holder 로 — `*` 이면 표식이 바뀔 때마다 문서 전체를 다시 계산했어요(서랍을 열 때마다 요소 3,700개)
+// 1.0.0 퇴행 고침(실리태번 설정 서랍): 그 표식은 가운데 서랍(사용자 설정 · 확장 · 월드인포)을 열 때마다 켜져, 켜지는 순간 :has(~ * A) 사슬을 새로 견줬어요 —
+//   월드인포를 한 번 연 뒤 실리태번 설정 서랍 열기가 8.2.5 416 → 1,187ms(폰 4배 · 같은 리그, 표식만 빼면 622). 조건 A(.drawer-content.maximized · .drawer-content.open ·
+//   #character_popup.open)는 드물게만 참이라, 이제 :has() 를 아예 쓰지 않고 JS 가 「A 가 문서에 있고 holder 가 B 에 맞음」을 서랍 칸 · 인물 창의 class 가 바뀔 때만 계산해
+//   holder 에 bl-st-raise-N 을 달아요(N = 규칙 차례). 선택자는 #top-settings-holder:is(.bl-st-raise-N, :is(A):is(B 안))…:is(body *) — 뜻(맞는 경우)은 같고
+//   우선순위도 :is 의 가장 큰 인자라 원래와 같아요(뒤 인자는 holder 에 맞을 수 없는 서랍 칸 선택자). A 가 서랍 칸 · 인물 창이 아니거나 B 가 :has(복합 하나)가 아니면 예전 표식 꼴 그대로.
 
 const HOLDER = '#top-settings-holder';
+export const CENTER_OPEN = 'bl-center-drawer';
+export const RAISE = 'bl-st-raise';
+/** JS 가 지켜볼 수 있는 조건 A — 서랍 칸 · 인물 창(class 만 바뀌어요) */
+const WATCHABLE = /^(?:\.drawer-content|#character_popup)(?![\w-])/;
+const HAS_ONE = /^:has\((.+)\)$/;
+/** 옮겨 적은 규칙마다 { cls, conds: [{ a, b }] } — b = holder 가 맞아야 하는 원래 오른쪽 칸 */
+export const RAISES = [];
+const CENTER_DRAWER = '.drawer-content.openDrawer:not(.fillLeft):not(.fillRight)';
 const BODY_HAS = /^body:has\((.+)\)$/;
 
 /** 괄호 · 따옴표 밖에서 글자 하나로 나누기 */
@@ -56,7 +73,7 @@ function singleCompound(arg) {
  * @param {string} selector
  * @returns {string|null}
  */
-export function rebaseSelector(selector) {
+export function rebaseSelector(selector, cls = null) {
     const parts = twoCompounds(String(selector || ''));
     if (!parts) return null;
     const [left, right] = parts;
@@ -65,7 +82,15 @@ export function rebaseSelector(selector) {
     const arg = match[1].trim();
     if (!singleCompound(arg)) return null;
     if (!right.startsWith(HOLDER) || /^[\w-]/.test(right.slice(HOLDER.length))) return null;
-    return `${right}:is(:has(${arg}), :has(~ ${arg}), :has(~ * ${arg})):is(body *)`;
+    const rest = right.slice(HOLDER.length), one = HAS_ONE.exec(rest);
+    if (cls && WATCHABLE.test(arg) && one && balanced(one[1]) && singleCompound(one[1])) return `${HOLDER}:is(.${cls}, :is(${arg}):is(${one[1].trim()})):is(body *)`;
+    return `${HOLDER}:where(.${CENTER_OPEN})${rest}:is(:has(${arg}), :has(~ ${arg}), :has(~ * ${arg})):is(body *)`;
+}
+/** rebaseSelector 가 class 꼴로 옮겼을 때 그 조건 { a, b } (아니면 null) */
+function raiseCond(selector) {
+    const parts = twoCompounds(String(selector || '')); if (!parts) return null;
+    const match = BODY_HAS.exec(parts[0]); if (!match) return null;
+    return { a: match[1].trim(), b: parts[1] };
 }
 function balanced(text) {
     let depth = 0;
@@ -74,10 +99,10 @@ function balanced(text) {
 }
 
 /** 규칙 하나(선택자 목록)를 옮겨 적은 선택자 목록 — 목록 중 하나라도 맞지 않으면 null(규칙을 그대로 둔다) */
-export function rebaseSelectorList(selectorText) {
+export function rebaseSelectorList(selectorText, cls = null) {
     const list = splitTop(String(selectorText || ''), ',').map(part => part.trim()).filter(Boolean);
     if (!list.length) return null;
-    const next = list.map(rebaseSelector);
+    const next = list.map(sel => rebaseSelector(sel, cls));
     return next.every(Boolean) ? next.join(', ') : null;
 }
 
@@ -92,7 +117,8 @@ export function rebaseSheet(sheet) {
         if (rule?.cssRules && !rule.selectorText) { changed += rebaseSheet(rule); continue; }
         const selector = rule?.selectorText;
         if (typeof selector !== 'string' || !selector.includes('body:has(') || !selector.includes(HOLDER)) continue;
-        const next = rebaseSelectorList(selector);
+        const cls = `${RAISE}-${RAISES.length}`;
+        const next = rebaseSelectorList(selector, cls);
         const css = String(rule.cssText || '');
         const open = css.indexOf('{');
         if (!next || open < 0) continue;
@@ -100,9 +126,63 @@ export function rebaseSheet(sheet) {
             sheet.insertRule(`${next} ${css.slice(open)}`, index);   // 먼저 넣고(실패해도 원래 규칙은 남게) 원래 것을 지운다
             sheet.deleteRule(index + 1);
             changed++;
+            // class 꼴로 옮긴 선택자의 조건만 JS 가 계산해요(예전 표식 꼴로 남은 선택자는 아래 watchCenterDrawers 가 맡아요)
+            const conds = splitTop(selector, ',').map(part => part.trim()).filter(part => rebaseSelector(part, cls)?.includes(`.${cls}`)).map(raiseCond).filter(Boolean);
+            if (conds.length) RAISES.push({ cls, conds });
         } catch { /* 이 브라우저가 :is(:has()) 를 못 읽으면 원래 규칙 그대로 */ }
     }
     return changed;
+}
+
+/** 예전 표식 꼴(:where(.bl-center-drawer))로 옮긴 규칙이 실리태번 style.css 에 남았나 — 없으면 표식 감시도 안 걸어요 */
+function needsCenterMark(doc) {
+    const has = rules => { try { for (const r of rules || []) { if (r.cssRules && !r.selectorText ? has(r.cssRules) : String(r.selectorText || '').includes(`.${CENTER_OPEN}`)) return true; } } catch { /* 읽을 수 없는 시트 */ } return false; };
+    for (const sheet of doc.styleSheets || []) { const href = String(sheet.href || ''); if (!/\/third-party\//.test(href) && /\/style\.css(?:[?#]|$)/.test(href) && has(sheet.cssRules)) return true; }
+    return false;
+}
+/** 가운데 서랍이 열려 있는 동안만 html 에 표식 — 서랍 칸의 class 와 서랍이 더 붙는 것만 봐요 */
+export function watchCenterDrawers(doc = globalThis.document) {
+    const holder = doc?.querySelector?.(HOLDER);
+    const mark = holder;   // 표식은 #top-settings-holder 자신에 — html 에 달면 바뀔 때마다 문서 전체를 다시 계산했어요(서랍을 열 때마다 요소 3,700개)
+    if (!holder || !mark || typeof MutationObserver !== 'function') { mark?.classList?.add(CENTER_OPEN); return null; }   // 볼 수 없으면 언제나 견줘요(예전과 같음)
+    const sync = () => mark.classList.toggle(CENTER_OPEN, !!holder.querySelector(CENTER_DRAWER));
+    const seen = new WeakSet();
+    const classes = new MutationObserver(sync);
+    const attach = () => { for (const el of holder.querySelectorAll('.drawer-content')) if (!seen.has(el)) { seen.add(el); classes.observe(el, { attributes: true, attributeFilter: ['class'] }); } };
+    const kids = new MutationObserver(() => { attach(); sync(); });
+    for (const el of [holder, ...holder.children]) kids.observe(el, { childList: true });
+    attach(); sync();
+    return { stop: () => { classes.disconnect(); kids.disconnect(); } };
+}
+
+/** RAISES 조건을 지금 계산해 holder 의 bl-st-raise-N 을 바뀔 때만 붙이고 떼요. 돌려줌: 붙은 class 목록 */
+export function syncRaises(doc = globalThis.document, holder = doc?.querySelector?.(HOLDER), raises = RAISES) {
+    if (!holder) return [];
+    const on = [];
+    for (const { cls, conds } of raises) {
+        const want = conds.some(({ a, b }) => { try { return !!doc.querySelector(a) && holder.matches(b); } catch { return false; } });   // 드문 A 부터 — 없으면 B(:has)는 견주지 않아요
+        if (holder.classList.contains(cls) !== want) holder.classList.toggle(cls, want);
+        if (want) on.push(cls);
+    }
+    return on;
+}
+/** 서랍 칸 · 인물 창의 class 와 그런 칸이 붙고 떨어지는 것(문서 · holder · 이동 칸 바로 아래)만 봐요 — body 전체 감시는 없어요 */
+export function watchRaises(doc = globalThis.document) {
+    const holder = doc?.querySelector?.(HOLDER);
+    if (!holder || !RAISES.length || typeof MutationObserver !== 'function') return null;
+    let queued = false;
+    const sync = () => { queued = false; syncRaises(doc, holder); };
+    const soon = () => { if (!queued) { queued = true; queueMicrotask(sync); } };
+    const seen = new WeakSet();
+    const classes = new MutationObserver(soon);
+    const WATCH = '.drawer-content, #character_popup';
+    const watchOne = el => { if (!seen.has(el)) { seen.add(el); classes.observe(el, { attributes: true, attributeFilter: ['class'] }); } };
+    const attach = (root = doc) => { if (root.matches?.(WATCH)) watchOne(root); for (const el of root.querySelectorAll?.(WATCH) || []) watchOne(el); };
+    // 붙은 가지 안만 훑어요(토스트 · 창이 body 에 붙을 때마다 문서 전체를 훑지 않게)
+    const kids = new MutationObserver(records => { let touched = false; for (const r of records) { for (const n of r.addedNodes) if (n.nodeType === 1) { attach(n); touched = true; } if (r.removedNodes.length) touched = true; } if (touched) soon(); });
+    for (const el of new Set([doc.body, holder, ...holder.children, doc.getElementById?.('movingDivs')].filter(Boolean))) kids.observe(el, { childList: true });
+    attach(); sync();
+    return { stop: () => { classes.disconnect(); kids.disconnect(); } };
 }
 
 let done = 0;
@@ -116,7 +196,7 @@ export function rebaseBodyHasRules(doc = globalThis.document, tries = 25) {
         found = true;
         changed += rebaseSheet(sheet);
     }
-    if (changed) done = changed;
+    if (changed) { done = changed; watchRaises(doc); if (needsCenterMark(doc)) watchCenterDrawers(doc); }
     else if (!found && tries > 0) setTimeout(() => rebaseBodyHasRules(doc, tries - 1), 200);
     return changed;
 }

@@ -137,15 +137,65 @@ await test('(8.2.7) 한 프레임의 여러 칸은 전부 읽은 다음에 써�
     assert.ok(log.length >= 6); assert.equal(log.join('').replace(/r+w+/, ''), '', '읽기 다 → 쓰기 다: ' + log.join(''));
     for (const b of boxes) { assert.equal(b.dataset.blFadeY, 'bottom'); fade.unbind(b); }
 });
-await test('CSS: 세로 흐림은 data-bl-fade-y 로(가로 data-bl-fade 와 따로) · 서랍까지 mask(가상 요소 없음) · 끄기 길 같음 · 스크롤바 규칙은 안 건드림', () => {
+const cssRules = css => css.replace(/\/\*[\s\S]*?\*\//g, '').split(String.fromCharCode(10)).map(l => l.trim()).filter(l => l.includes('{'));
+await test('CSS: 세로 흐림은 data-bl-fade-y 로(가로 data-bl-fade 와 따로) · 모두 mask(스크롤 칸 안에 가상 요소 없음) · 끄기 길 같음 · 스크롤바 규칙은 안 건드림', () => {
     const css = fs.readFileSync(path.join(root, 'css/73-scroll-fade.css'), 'utf8');
     for (const side of ['top', 'bottom', 'both']) assert.ok(css.includes(`[data-bl-fade-y="${side}"]`), side);
-    // 서랍도 mask — 가상 요소(sticky 덮개)는 확장 설정 서랍 스크롤에 긴 작업을 만들었다(리그 10-29). 가상 요소 · 높이 · 글꼴 규칙이 없어야 한다
-    assert.doesNotMatch(css, /::before|::after|position: sticky|(?:font(?:-size|-family|-weight)?|(?:min-)?height)\s*:/);
-    for (const line of css.split('8.2.3')[1].split(String.fromCharCode(10)).filter(l => /background:/.test(l))) assert.doesNotMatch(line, /#[0-9a-f]{3,8}|rgb|hsl/i, '그라데이션은 팔레트 변수만: ' + line.slice(0, 80));
+    const rules = cssRules(css);
+    const masks = rules.filter(l => /mask-image: linear-gradient/.test(l));
+    assert.equal(masks.length, 3, 'mask 규칙은 넘친 쪽 셋');
+    for (const line of masks) assert.doesNotMatch(line, /(?:font(?:-size|-family|-weight)?|(?:min-)?height)\s*:|::(before|after)|position: sticky/);
+    // 스크롤 칸(서랍 포함) 안에 가상 요소를 두면 있기만 해도 스크롤에 긴 작업이 생긴다(리그 10-29 · 10-30) · #top-settings-holder 의 가상 요소는 서랍 안이 바뀔 때마다 다시 맞춰져
+    //   토글 · 서랍이 느려졌다(1.0.0 퇴행) — 이 파일에는 가상 요소가 하나도 없다(받침은 실제 요소 .bl-drawer-backing)
+    for (const line of rules.filter(l => /::(before|after)/.test(l))) assert.fail('흐림 CSS 의 가상 요소 금지: ' + line.slice(0, 90));
+    for (const line of rules.filter(l => /background:/.test(l))) assert.doesNotMatch(line, /#[0-9a-f]{3,8}|rgb|hsl/i, '바탕은 팔레트 변수만: ' + line.slice(0, 80));
     assert.doesNotMatch(css, /scrollbar/);
     assert.ok(css.includes('html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y]'));
     const built = fs.readFileSync(path.join(root, 'style.css'), 'utf8'); assert.ok(built.includes('[data-bl-fade-y="both"]'), 'style.css 에 들어감');
+    const lazy = fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? fs.readFileSync(path.join(root, 'src/style-lazy.gen.css'), 'utf8') : '';
+    assert.ok((built + lazy).includes('#top-settings-holder > .bl-drawer-backing') && (built + lazy).includes('anchor-name: --bl-drawer'), '만든 CSS 에 서랍 받침도 들어감');
+    assert.ok(!(built + lazy).includes('#top-settings-holder::after'), '만든 CSS 에 옛 받침 가상 요소가 없음');
+});
+await test('CSS: 흐림 영역에서 칸의 바탕이 투명해지지 않는다 — 자기 바탕을 칠하는 서랍 뒤에 같은 자리(앵커 위치) · 같은 색(01-smear 의 서랍 바탕 식)의 받침, 앵커가 없는 브라우저는 서랍 흐림만 끔', () => {
+    const css = fs.readFileSync(path.join(root, 'css/73-scroll-fade.css'), 'utf8');
+    const smear = fs.readFileSync(path.join(root, 'css/01-smear-topbar-drawers.css'), 'utf8');
+    const sheet = /body\.salty \.drawer-content \{[^}]*background:\s*(var\([^;]*\))\s*!important/.exec(smear);
+    assert.ok(sheet, '01-smear 의 서랍 바탕 규칙');
+    const rules = cssRules(css);
+    const anchor = rules.find(l => /anchor-name: --bl-drawer;/.test(l) && !l.startsWith('@supports'));
+    assert.ok(anchor, '서랍에 앵커 이름'); assert.match(anchor, /#top-settings-holder \.drawer-content:is\(\[data-bl-fade-y="top"\], \[data-bl-fade-y="bottom"\], \[data-bl-fade-y="both"\]\)/, '위 막대 묶음 안 · 넘친 서랍만(off 값 제외)');
+    const backdrop = rules.find(l => /#top-settings-holder > \.bl-drawer-backing \{/.test(l));
+    assert.ok(backdrop, '받침 규칙');
+    assert.match(backdrop, /display: block/); assert.match(backdrop, /position: fixed/); assert.match(backdrop, /z-index: -1/); assert.match(backdrop, /pointer-events: none/);
+    assert.ok(backdrop.includes(`background: ${sheet[1]}`), `받침 색 = 서랍 바탕 식 ${sheet[1]}`);
+    for (const side of ['top', 'left']) assert.ok(backdrop.includes(`${side}: anchor(--bl-drawer ${side}, 0px)`), side + ' 는 서랍 자리');
+    for (const dim of ['width', 'height']) assert.ok(backdrop.includes(`${dim}: anchor-size(--bl-drawer ${dim}, 0px)`), dim + ' 는 서랍 크기 · 넘친 서랍이 없으면 0');
+    assert.match(backdrop, /border-radius: 0 0 var\(--bl-r-lg\) var\(--bl-r-lg\)/, '서랍 아래 둥글기와 같게');
+    assert.doesNotMatch(backdrop, /box-shadow|transition|will-change/, '받침은 바탕만(그림자를 겹치지 않음 · 층을 만들지 않음)');
+    // 두 규칙 다 앵커 위치 @supports 안, 폴백(@supports not)은 서랍 mask 를 끈다
+    const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');   // 머리 주석에도 같은 말이 있어 위치는 주석을 뺀 글에서 본다
+    const sup = bare.indexOf('@supports (anchor-name: --bl-drawer)'), nsup = bare.indexOf('@supports not ((anchor-name: --bl-drawer)');
+    assert.ok(sup > 0 && nsup > sup, '@supports 두 묶음');
+    assert.ok(bare.indexOf('anchor-name: --bl-drawer;') > sup && bare.indexOf('.bl-drawer-backing') > sup && bare.indexOf('.bl-drawer-backing') < nsup, '받침이 보이는 규칙(display: block)은 앵커 위치 @supports 안에만 — 밖에서는 hidden 그대로');
+    const off = rules.find(l => /\.drawer-content\[data-bl-fade-y\] \{/.test(l) && /mask-image: none/.test(l));
+    assert.ok(off && bare.indexOf(off) > nsup, '앵커 없는 브라우저: 서랍 흐림 끔');
+    // 다른 모듈이 같은 앵커 이름 · 받침을 쓰지 않고, 어느 모듈도 #top-settings-holder 에 가상 요소를 두지 않는다(1.0.0 퇴행 — 서랍 안이 바뀔 때마다 다시 맞춰짐)
+    for (const f of fs.readdirSync(path.join(root, 'css')).filter(f => f.endsWith('.css'))) {
+        const text = fs.readFileSync(path.join(root, 'css', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+        assert.doesNotMatch(text, /#top-settings-holder(?:[.:#\[][^\s,{>~+]*)?::(?:before|after)/, f + ' 가 #top-settings-holder 에 가상 요소를 둬요');
+        if (!f.startsWith('73-')) assert.doesNotMatch(text, /bl-drawer-backing|anchor-name: --bl-drawer/, f + ' 가 받침을 써요');
+    }
+});
+await test('받침 요소: #top-settings-holder 맨 끝에 hidden · aria-hidden 으로 한 번만 붙고, 묶음이 없으면 아무것도 안 해요', () => {
+    const made = [];
+    const holder = { children: [], append(c) { this.children.push(c); } };
+    const fakeDoc = { getElementById: id => id === 'top-settings-holder' ? holder : null, createElement: tag => { const attrs = {}; const c = { tag, className: '', hidden: false, attrs, setAttribute: (k, v) => { attrs[k] = v; }, classList: { contains: n => c.className.split(' ').includes(n) } }; made.push(c); return c; } };
+    const el = M.ensureDrawerBacking(fakeDoc);
+    assert.equal(el.tag, 'div'); assert.equal(el.className, M.BACKING_CLASS); assert.equal(el.hidden, true); assert.equal(el.attrs['aria-hidden'], 'true');
+    assert.equal(holder.children.at(-1), el, '맨 끝(옛 ::after 와 같은 쌓임 차례)');
+    assert.equal(M.ensureDrawerBacking(fakeDoc), el, '두 번째는 같은 요소'); assert.equal(made.length, 1);
+    assert.equal(M.ensureDrawerBacking({ getElementById: () => null, createElement: () => assert.fail('묶음이 없으면 안 만든다') }), null);
+    assert.equal(M.ensureDrawerBacking(null), null);
 });
 await test('index.js: 팝업 감시자(onPopupAdded)에 얹고, 바이바이 감지로 월드인포만 쉬게 연결했어요', () => {
     const index = fs.readFileSync(path.join(root, 'index.js'), 'utf8');

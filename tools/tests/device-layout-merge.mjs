@@ -21,6 +21,7 @@ const ctx = {
 };
 globalThis.SillyTavern = { getContext: () => ctx };
 const S = await import(pathToFileURL(path.join(root, 'src/settings.js')).href);
+await import(pathToFileURL(path.join(root, 'src/chat-appearance.js')).href);
 const sync = await import(pathToFileURL(path.join(root, 'src/settings-sync.js')).href);
 const merge = await import(pathToFileURL(path.join(root, 'src/settings-merge.js')).href);
 
@@ -67,11 +68,11 @@ await test('PC 로 열면 PC 배치(16px), 폰 배치(20px)는 그대로', () =>
 });
 
 await test('폰이 다른 값(팔레트)을 바꿔 저장한 뒤 PC 탭으로 돌아오면: 팔레트는 받고 PC 글자 크기 · 폭은 PC 것 그대로', async () => {
-    remote = otherDevice(true, s => { assert.equal(s.type.size, 20, '폰은 폰 배치'); s.palette = 'melon-night'; });
+    remote = otherDevice(true, s => { assert.equal(s.type.size, 20, '폰은 폰 배치'); s.palette = 'night'; });
     assert.equal(remote.type.size, 20, '서버 위 칸은 폰 값');
     await comeBack();
     const s = S.getSettings();
-    assert.equal(s.palette, 'melon-night', '다른 기기가 바꾼 모양 값은 받아요');
+    assert.equal(s.palette, 'night', '다른 기기가 바꾼 모양 값은 받아요');
     assert.equal(s.type.size, 15, 'PC 위 칸에 폰 글자 크기가 들어오면 안 돼요');
     assert.equal(s.type.measure, 900);
     S.saveSettings();

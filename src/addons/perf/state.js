@@ -2,12 +2,12 @@
 // 설정 키(request_log)와 폴더 이름(request-log)은 바꾸지 않는다. 가격표가 여기 들어 있다.
 import { extension_settings } from '../../../../../../extensions.js';
 import { saveSettingsDebounced } from '../../../../../../../script.js';
-import { safeOrigin } from './pricing.js';
+import { safeOrigin } from './pricing-origin.js';   // 1.0.0 극한 최적화: pricing.js(→ 가격표 235KB)를 시작 경로에서 끊어요
 import { folderBase } from '../../extension-folder.js';   // 6.4.2 판 번호가 붙은 설치 폴더 이름도 이름표로
 
 export const MODULE = 'request_log';
 export const FOLDER = 'blue-lemonade'; // 2.0.0 성능 보조로 합침
-export const VERSION = '1.6.0';
+export const VERSION = '1.6.1';
 export const TITLE = '요청 로그';
 
 const DEFAULTS = Object.freeze({

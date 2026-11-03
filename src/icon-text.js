@@ -1,4 +1,6 @@
 import { refreshPopupMarks } from './popup-marks.js';
+import { watchDom } from './dom-watch.js';
+import { addMessageDecorator } from './message-decor.js';
 // 아이콘 단추 표식 — CSS :has() 대신 JS 가 .menu_button · 체크 줄 label 에 표식을 단다
 // 1) data-bl-icon-text: css/02-controls.css 의 '아이콘만 있는 버튼' 규칙은 `> i` 하나뿐인 .menu_button 을 면 없는 아이콘으로 칠한다.
 //    CSS 는 글자 노드를 못 봐서 `<i class="fa-…"></i> 독서 패널 열기` 같은 다른 확장의 글자 버튼도 거기 걸려
@@ -219,17 +221,27 @@ function checkReasoning(details) {
     if (want !== details.hasAttribute(R_EDIT)) { if (want) details.setAttribute(R_EDIT, ''); else details.removeAttribute(R_EDIT); }
 }
 
+// 1.0.0 극한 최적화: 닫힌 서랍(.drawer-content:not(.openDrawer)) 안은 시작 때 훑지 않고 열리는 순간(class 변화 콜백 · 그리기 전)에 훑어요 — 부팅 후보 6,659개 대부분이 닫힌 서랍 안이었어요(폰 4배 265ms)
+const CLOSED_DRAWER = '.drawer-content:not(.openDrawer)';
+const deferredDrawers = new WeakSet();
+const inClosedDrawer = el => !!el.closest(CLOSED_DRAWER);
+export function scanOpenedDrawers(targets) {
+    for (const el of targets) if (el.nodeType === 1 && el.classList.contains('drawer-content') && el.classList.contains('openDrawer') && deferredDrawers.has(el)) { deferredDrawers.delete(el); scan(el); }
+}
 function scan(node) {
+    if (node.matches?.(CLOSED_DRAWER)) { deferredDrawers.add(node); return; }
+    const skip = node === document.body || node.querySelector?.(CLOSED_DRAWER) ? inClosedDrawer : null;
+    if (skip) for (const d of node.querySelectorAll(CLOSED_DRAWER)) deferredDrawers.add(d);
     if (node.classList?.contains('menu_button')) check(node);
     else if (node.localName === 'label') checkLabel(node);
     if (node.classList?.contains('mes')) checkMes(node);
     if (node.classList?.contains('mes_reasoning_details')) checkReasoning(node);
     if (!node.firstElementChild) { if (node.hasAttribute(ROW) && isRowHost(node) && !inMessage(node)) checkRow(node); return; }
-    for (const el of node.getElementsByClassName('menu_button')) check(el);
-    for (const el of node.getElementsByTagName('label')) checkLabel(el);
+    for (const el of node.getElementsByClassName('menu_button')) if (!skip || !skip(el)) check(el);
+    for (const el of node.getElementsByTagName('label')) if (!skip || !skip(el)) checkLabel(el);
     for (const el of node.getElementsByClassName('mes')) checkMes(el);
     for (const el of node.getElementsByClassName('mes_reasoning_details')) checkReasoning(el);
-    scanRows(node);
+    scanRows(node, skip);
 }
 // 8.0.5: 서랍 줄 표식은 채팅 메시지(.mes) 안을 보지 않아요 — 표식을 쓰는 CSS 는 전부 설정 서랍 · 확장 창 쪽이라 메시지 안 요소엔 맞는 규칙이 없고,
 //   메시지를 그릴 때마다 모든 자손에 35가지 검사를 돌던 것이 폰 메시지 5개 그리기 감시자를 76 → 1,070ms 로 늘렸어요(성능 판별 10-27).
@@ -251,9 +263,9 @@ export function rowHosts(root) {
     for (const el of root.querySelectorAll('[' + ROW + ']')) hosts.add(el);
     return hosts;
 }
-function scanRows(root) {
+function scanRows(root, skip = null) {
     if (inMessage(root)) return;
-    for (const el of rowHosts(root)) if (isRowHost(el) && !inMessage(el)) checkRow(el);
+    for (const el of rowHosts(root)) if (isRowHost(el) && !inMessage(el) && !(skip && skip(el))) checkRow(el);
 }
 
 // 바뀐 요소들 — .menu_button 이면 단추 표식, label 이면 체크 줄 표식, input 이 바뀌었으면 그 부모 label
@@ -333,12 +345,17 @@ export function startIconTextMark() {
     scan(document.body);
     refreshPopupMarks(null, document.body);
     // 붙은 요소 속 .menu_button · label · .mes 와, 자식(글자 · 아이콘 · 편집칸 · 타이머 글자)이 바뀐 요소, 클래스(menu_button_icon) · type 이 바뀐 요소만 본다.
-    new MutationObserver((all) => {
+    // 9.0.4: 공용 감시 허브 구독 — 채팅(#chat) 밖만(body 구역 · 채팅 가지는 감시도 안 걸어요). 콜백은 예전처럼 그리기 전(when 'now')
+    //   채팅 메시지 안(단추 · 체크 줄 · 편집칸 표식 · 생각 편집칸)은 메시지 꾸미기(src/message-decor.js)가 메시지가 그려지거나 바뀐 프레임에 그 메시지만 훑어요
+    //   (편집칸 열기처럼 이벤트가 없는 변화도 메시지 꾸미기의 #chat 자식 목록 구독이 잡아요 · 답이 오는 동안에도 바로 — live)
+    addMessageDecorator('아이콘 단추 표식', list => { for (const mes of list) scan(mes); }, { live: true, settle: 0, order: 90 });
+    watchDom(document.body, { childList: true, subtree: true, characterData: true, attributes: ['class', 'type', 'id'], attributeOldValue: true, exclude: '#chat', name: '아이콘 단추 표식' }, (all) => {
         const records = relevantRecords(all);
         if (!records.length) return;
         const work = mutationWork(records);
+        scanOpenedDrawers(work.targets);   // 열린 서랍은 통째로 먼저(미뤄 둔 것)
         for (const node of work.roots) scan(node);
         touchedAll(work.targets);
         refreshPopupMarks(records);
-    }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeOldValue: true, attributeFilter: ['class', 'type', 'id'] });
+    });
 }

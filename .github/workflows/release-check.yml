@@ -1,9 +1,9 @@
 name: Release consistency
 on:
   push:
-    paths: ['server-plugin/**', 'src/**', 'css/**', 'index.js', 'style.css', 'style-ext.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
+    paths: ['server-plugin/**', 'src/**', 'css/**', 'index.js', 'style.css', 'style-ext.css', 'manifest.json', 'README.md', 'CHANGELOG.md', 'DEVELOPERS.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
   pull_request:
-    paths: ['server-plugin/**', 'src/**', 'css/**', 'index.js', 'style.css', 'style-ext.css', 'manifest.json', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
+    paths: ['server-plugin/**', 'src/**', 'css/**', 'index.js', 'style.css', 'style-ext.css', 'manifest.json', 'README.md', 'CHANGELOG.md', 'DEVELOPERS.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'tools/**', '.github/workflows/release-check.yml']
   release:
     types: [published]
   workflow_dispatch:
@@ -14,12 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      # The website lives on the gh-pages branch; some tests read its files from docs/.
+      # 8.3.0: 소개 사이트(gh-pages → docs/)는 내렸다. docs/ 를 읽던 시험(appearance-workflow · preferences-safety)도 함께 뺐고 faq.mjs 는 docs/ 가 없으면 건너뛴다.
       # The downloadable ZIP is a GitHub Release asset (5.8.0~), checked in the last step.
-      - uses: actions/checkout@v5
-        with:
-          ref: gh-pages
-          path: docs
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -29,9 +25,42 @@ jobs:
       - name: Check failure cases and settings preservation
         run: |
           node --test tools/tests/pull-to-refresh.mjs
+          node tools/tests/module-syntax-links.mjs .
+          node tools/tests/module-undeclared.mjs .
           python -m unittest discover -s tools/tests -p 'test_release_gate.py'
+          node tools/tests/version-series.mjs .
+          # 1.0.0 전수조사 고침 (필수 14 · 먼저 3 · 작은 권장)
+          node tools/tests/bookmarks-per-page-words.mjs .
+          node tools/tests/direction-addon-off.mjs .
+          node tools/tests/light-threshold-words.mjs .
+          node tools/tests/log-copy-fav-limit.mjs .
+          node tools/tests/master-switch-reload.mjs .
+          node tools/tests/perf-log-keep-blank.mjs .
+          node tools/tests/perf-log-no-body.mjs .
+          node tools/tests/perf-storage-owners.mjs .
+          node tools/tests/regexlink-skip-words.mjs .
+          node tools/tests/rewrite-addon-off.mjs .
+          node tools/tests/rewrite-guide-cost.mjs .
+          node tools/tests/search-brightness.mjs .
+          node tools/tests/search-quick-labels.mjs .
+          node tools/tests/settings-defaults-complete.mjs .
+          node tools/tests/settings-fresh-no-changes.mjs .
+          node tools/tests/settings-restored-rows.mjs .
+          node tools/tests/translator-context-slot.mjs .
+          node tools/tests/translator-preset-null-default.mjs .
+          node tools/tests/tts-fallback-prompt-cache.mjs .
+          node tools/tests/tts-read-labels.mjs .
+          node tools/tests/tts-stream-max-chars.mjs .
+          node tools/tests/tts-thought-whisper.mjs .
+          # 1.0.0 바탕: 공지 창 · 출처 창 · 판 알약 · 새 판 확인 되살림 (계열 짝 비교 · 시작 그래프 밖)
+          node tools/tests/update-check.mjs .
+          node tools/tests/notice-credits-restore.mjs .
           node tools/pricing/test-client.mjs
           node tools/tests/settings-upgrade.mjs .
+          node tools/tests/palettes-restored.mjs .
+          node tools/tests/automode-restore.mjs .
+          node tools/tests/custompalette-http-id.mjs .
+          node tools/tests/user-fonts-first-open.mjs .
           node tools/tests/settings-render-layout.mjs .
           node tools/tests/tts-custom-tags.mjs .
           node tools/tests/bookmark-search-lifecycle.mjs .
@@ -61,9 +90,25 @@ jobs:
           node tools/tests/stream-watchdog.mjs .
           node tools/tests/perf-bundle-645.mjs .
           node tools/tests/selection-typing.mjs .
+          node tools/tests/log-copy.mjs .
           node tools/tests/perf-start.mjs .
+          node tools/tests/perf-storage.mjs .
           node tools/tests/boot-graph.mjs .
+          node tools/tests/gradients-core.mjs .
+          node tools/tests/chat-appearance.mjs .
+          node tools/tests/appearance-lifecycle.mjs .
+          node tools/tests/device-layout-merge.mjs .
+          node tools/tests/reader-bars-root.mjs .
+          node tools/tests/reader-form-safe-area.mjs .
+          node tools/tests/reader-sync-strip.mjs .
+          node tools/tests/local-fonts.mjs .
+          node tools/tests/addon-style-bundle.mjs .
+          node tools/tests/addon-css-boot.mjs
+          node tools/tests/css-has-guard.mjs
+          node tools/tests/boot-idle-late-task.mjs
+          node tools/css-cascade-diff.mjs .
           node tools/tests/boot-dynamic.mjs .
+          node tools/tests/boot-layers.mjs .
           node tools/tests/chat-switch-leak.mjs .
           node tools/tests/perf-list-shown.mjs .
           node tools/tests/prompt-toggle-echo.mjs .
@@ -96,7 +141,6 @@ jobs:
           node tools/tests/translator-edit-while-translating.mjs .
           node tools/tests/translator-remote.mjs .
           node tools/tests/translator-cache-read-once.mjs .
-          node tools/tests/diag-copy.mjs .
           node tools/tests/chat-sync-local.mjs .
           node tools/tests/translator-preview-frames.mjs .
           node tools/tests/translator-preview-steady.mjs .
@@ -128,6 +172,8 @@ jobs:
           node tools/tests/assets-shrink.mjs .
           node tools/tests/customstyle-css-save.mjs .
           node tools/tests/customstyle-values.mjs .
+          node tools/tests/prompt-template.mjs .
+          node tools/tests/prompt-template-card.mjs .
           node tools/tests/direction-migrate.mjs .
           node tools/tests/direction-saved-list.mjs .
           node tools/tests/direction-typing.mjs .
@@ -136,6 +182,7 @@ jobs:
           node tools/tests/persona-defer.mjs .
           node tools/tests/chat-cover.mjs .
           node tools/tests/chat-light-warm.mjs .
+          node tools/tests/chat-light-layout.mjs .
           node tools/tests/model-register-panel.mjs .
           node tools/tests/model-register-picks.mjs .
           node tools/tests/model-register-state.mjs .
@@ -172,6 +219,10 @@ jobs:
           node tools/tests/translator-after-work.mjs .
           node tools/tests/perf-request-label.mjs .
           node tools/tests/usage-unknown-tokens.mjs .
+          node tools/tests/capture-pricing-failure.mjs
+          node tools/tests/tts-shell-lifecycle.mjs .
+          node tools/tests/translator-lazy-tools.mjs .
+          node tools/tests/split-css-lifecycle.mjs .
           node tools/tests/prompt-cache.mjs .
           node tools/tests/tts-ambient-skip.mjs .
           node tools/tests/tts-color-rename.mjs .
@@ -185,7 +236,6 @@ jobs:
           node tools/tests/bughunt2-addons.mjs .
           node tools/tests/assets-rename-unreadable.mjs .
           node tools/tests/fa-free-icons.mjs .
-          node tools/tests/reader-sync-strip.mjs .
           node tools/tests/prompt-history-label.mjs .
           node tools/tests/prompt-injected-source.mjs .
           node tools/tests/prompt-translated-name.mjs .
@@ -205,7 +255,6 @@ jobs:
           node tools/tests/tts-extras.mjs .
           node tools/tests/tts-user-macro.mjs .
           node tools/tests/tts-cast-scope.mjs .
-          node tools/tests/theme-update-753.mjs .
           node tools/tests/squared-buttons-754.mjs .
           node tools/tests/squared-area-walk.mjs .
           node tools/tests/tts-onboarding.mjs .
@@ -221,6 +270,7 @@ jobs:
           node tools/tests/tts-sfx-credits.mjs .
           node tools/tests/tts-sfx-level.mjs .
           node tools/tests/tts-mute.mjs .
+          node tools/tests/tts-mute-words.mjs .
           node tools/tests/tts-highlight-colors.mjs .
           node tools/tests/rewrite-tts-keep.mjs .
           node tools/tests/rewrite-tts-slots.mjs .
@@ -232,6 +282,8 @@ jobs:
           node tools/tests/ko-locale-quiet.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/preview-park.mjs .
+          node tools/tests/css-split.mjs .
+          node tools/tests/css-compat.mjs .
           node tools/tests/preview-measure-batch.mjs .
           node tools/tests/theme-sheet-ext.mjs .
           node tools/tests/fruit-shortcut-frames.mjs .
@@ -255,7 +307,10 @@ jobs:
           node tools/tests/bookmark-view-727.mjs .
           node tools/tests/wi-help-data.mjs .
           node tools/tests/worldinfo-title-help.mjs .
+          node tools/tests/help-buttons.mjs .
+          node tools/tests/settings-simplify.mjs .
           node tools/tests/websearch-mark.mjs .
+          node tools/tests/send-textarea-hide.mjs .
           node tools/tests/wi-link.mjs .
           node tools/tests/cutout-edge.mjs .
           node tools/tests/assets-watch-leaf.mjs .
@@ -269,8 +324,10 @@ jobs:
           node tools/tests/param-dimensions.mjs .
           node tools/tests/touch-targets.mjs .
           node tools/tests/addon-touch-targets.mjs .
+          node tools/tests/ui-parts-static.mjs .
           node tools/tests/perf-help-touch.mjs .
           node tools/tests/align-check.mjs .
+          node tools/tests/check-mark-center.mjs .
           node tools/tests/control-ink.mjs .
           node tools/tests/fruit-deus-control-ink.mjs .
           node tools/tests/tab-scroll.mjs .
@@ -278,9 +335,13 @@ jobs:
           node tools/tests/wheel-x-nested.mjs .
           node tools/tests/scroll-fade.mjs .
           node tools/tests/dom-watch.mjs .
+          node tools/tests/dom-watch-hub.mjs .
+          node tools/tests/theme-look.mjs .
+          node tools/tests/message-decor.mjs .
+          node tools/tests/observer-budget.mjs .
           node tools/tests/apply-class-batch.mjs .
           node tools/tests/dem-streaming-root.mjs .
-          node tools/tests/reader-bars-root.mjs .
+          node tools/tests/dem-skin-flat.mjs .
           node tools/tests/preview-view-touch.mjs .
           node tools/tests/tts-reanalysis-guard.mjs .
           node tools/tests/addon-note-master-off.mjs .
@@ -327,10 +388,7 @@ jobs:
           node tools/tests/prompt-response-text.mjs .
           node tools/tests/modelswitch-models.mjs .
           node tools/tests/modelswitch-state.mjs .
-          node tools/tests/update-check.mjs .
-          node tools/tests/update-summary.mjs .
           node tools/tests/chat-sync.mjs .
-          node tools/tests/diag-file.mjs .
           node tools/tests/translation-cache-loading.mjs .
           node tools/tests/translation-segments.mjs .
           node tools/tests/translation-segments-edges.mjs .
@@ -356,13 +414,15 @@ jobs:
           node tools/tests/translator-preset-compat.mjs .
           node tools/tests/translator-fallback-card.mjs .
           node tools/tests/translator-v3-modules.mjs .
+          node tools/tests/translator-statcard-recover.mjs .
+          node tools/tests/translator-code-fences.mjs .
           node tools/tests/translator-rp-lines.mjs .
           node tools/tests/translator-whole-stream.mjs .
           node tools/tests/translator-stream-idle.mjs .
           node tools/tests/translator-han-in-word.mjs .
-          node tools/tests/conversation-assist.mjs .
           node tools/tests/addon-menu-routing.mjs .
           node tools/tests/order-menus.mjs .
+          node tools/tests/order-inline-visibility.mjs .
           node tools/tests/name-row-align.mjs .
           node tools/tests/character-assets.mjs .
           node tools/tests/character-assets-prompt.mjs .
@@ -381,14 +441,13 @@ jobs:
           node tools/tests/st-has-anchor.mjs .
           node tools/tests/dem-sky.mjs .
           node tools/tests/dem-skin-perf.mjs .
-          node tools/tests/mix-selection.mjs .
+          node tools/tests/status-type-blocks.mjs .
           node tools/tests/capture-motion.mjs .
           node tools/tests/capture-filter.mjs .
           node tools/tests/capture-editor.mjs .
           node tools/tests/capture-resources.mjs
           node tools/tests/capture-paint.mjs
           node tools/tests/capture-pages.mjs
-          node tools/tests/notice-screen-actions.mjs
           node tools/tests/capture-picker.mjs
           node tools/tests/capture-open.mjs
           node tools/tests/translator-style-profiles.mjs
@@ -418,9 +477,7 @@ jobs:
           node tools/tests/squared-fast-select.mjs .
           node tools/tests/same-value-hidden.mjs .
           node tools/tests/longpress-fab-drag.mjs .
-          node tools/tests/reader-form-safe-area.mjs .
           node tools/tests/perf-copy-http.mjs .
-          node tools/tests/custompalette-http-id.mjs .
           node tools/tests/assets-shrink-http-hash.mjs .
           node tools/tests/addon-touch-sliders.mjs .
           node tools/tests/progress-badge-retypeset.mjs .
@@ -434,9 +491,6 @@ jobs:
           node tools/tests/model-register-offer.mjs .
           node tools/tests/models-parse-media.mjs .
           node tools/tests/preset-sharing.mjs .
-          node tools/tests/first-run.mjs .
-          node tools/tests/first-run-css.mjs .
-          node tools/tests/faq.mjs .
           node tools/tests/translator-segment-cap.mjs .
           node tools/tests/translator-prompt-reset-db-qr.mjs .
           node tools/tests/bookmark-masonry-731.mjs .
@@ -449,21 +503,26 @@ jobs:
           node tools/tests/call-trim-726.mjs .
           node tools/tests/tts-continue-reuse.mjs .
           node tools/tests/settings-search.mjs .
-          node tools/tests/appearance-workflow.mjs .
+          node tools/tests/settings-intents.mjs .
+          node tools/tests/settings-ai.mjs .
+          node tools/tests/mes-pin-names.mjs .
           node tools/tests/markdown-settings.mjs .
           node tools/tests/chat-graph.mjs .
           node tools/tests/chat-library.mjs
           node tools/tests/audit-regressions.mjs .
           node tools/tests/optimization-cache.mjs
-          node tools/tests/integrity-recheck.mjs .
-          node tools/tests/preferences-safety.mjs .
           node tools/tests/appearance-comfort.mjs .
-          node tools/tests/gradients-core.mjs .
           node tools/tests/regexlink-engine.mjs .
           node tools/tests/regexlink-fruit.mjs .
           node tools/tests/mermaid-addon.mjs .
           node tools/tests/mermaid-dos-guard.mjs .
           node tools/tests/fruit-localization.mjs
+          node tools/tests/localization-override-tools.mjs .
+          node tools/tests/diag-copy.mjs .
+          node tools/tests/diag-file.mjs .
+          node tools/tests/first-run.mjs .
+          node tools/tests/first-run-css.mjs .
+          node tools/tests/integrity-recheck.mjs .
           node tools/tests/fruit-family.mjs .
           node tools/tests/prompt-choice-guard.mjs .
           node tools/tests/fruit-status.mjs .
@@ -487,6 +546,7 @@ jobs:
           node tools/tests/fruit-watch-scope.mjs .
           node tools/tests/fruit-watch-records.mjs .
           node tools/tests/script-watch-records.mjs .
+          node tools/tests/scripts-same-window.mjs .
           node tools/tests/fruit-option-help.mjs .
           node tools/tests/fruit-option-coverage.mjs .
           node tools/tests/option-help-standing.mjs .
@@ -502,26 +562,27 @@ jobs:
           node tools/tests/fruit-cards-removed.mjs .
           node tools/tests/settings-dialog.mjs
           node tools/tests/deus-qr.mjs
+          node tools/tests/sola-qr.mjs .
+          node tools/tests/sola-quick-shortcut.mjs .
           node tools/tests/deus-dictionary.mjs .
+          node tools/tests/preset-text-short.mjs .
           node tools/tests/sola-dictionary.mjs .
           node tools/tests/fruit-style.mjs
           node tools/tests/fruit-style-idle-scan.mjs .
           node tools/tests/fruit-skin-contrast.mjs .
           node tools/tests/role-icons.mjs .
           node tools/tests/fruit-entry-rows.mjs .
-          node tools/tests/prompt-template.mjs .
           node tools/tests/manifest-reuse.mjs .
           node tools/tests/boot-gate.mjs .
-          node tools/tests/prompt-template-card.mjs .
           node tools/tests/usage-ledger-core-edges.mjs .
           node tools/tests/usage-ledger-store.mjs .
           node tools/tests/pricing-quote-edges.mjs .
           node tools/tests/relay-prices-edges.mjs .
           node tools/tests/addon-save-verify.mjs .
           node tools/tests/addon-off-cost.mjs .
+          node tools/tests/private-addons.mjs .
           node tools/tests/settings-merge-edges.mjs .
           node tools/tests/settings-held.mjs .
-          node tools/tests/device-layout-merge.mjs .
           node tools/tests/settings-changes-map.mjs .
           node tools/tests/settings-new-keys.mjs .
           node tools/tests/settings-sync-race.mjs .
@@ -540,22 +601,28 @@ jobs:
           node tools/tests/tts-group-turn.mjs .
           node tools/tests/tts-sfx-preview-url.mjs .
           node tools/tests/fault-models.mjs .
+          node tools/tests/bundle-fresh.mjs
           node tools/build-integrity.mjs . --check
       - name: Check that generated files match their sources
         # Regenerate in the throwaway checkout, then fail if anything changed:
-        # css/43-user-profile.gen.css, css/23-preview.gen.css (check mode fails on new root declarations),
-        # src/scripts/bundled/korean.js (from tools/scripts-src/korean.js, precomputed dictionary checked against the source),
-        # src/scripts/bundled/{fruit,qingguo,fruit-heart}.js (from tools/scripts-src/fruit-family/, the fruit-family dictionary),
-        # src/scripts/plain/*, style.css, src/lazy-panel.gen.css and src/preview-park.gen.css.
+        # css/23-preview.gen.css (check mode fails on new root declarations),
+        # src/scripts/plain/korean.js + src/ko-ui-text.index.gen.js · ko-ui-text.<조각>.gen.js (9.0.7 · 1.0.0 조각: from tools/scripts-src/korean.js minus tools/scripts-src/korean-prune.json, precomputed dictionary checked against the source),
+        # src/scripts/plain/{fruit,qingguo,fruit-heart}.js (from tools/scripts-src/fruit-family/, the fruit-family dictionary),
+        # src/scripts/plain/fruit-style.js keeps its rule-bucket keys (tools/key-bundled-css.mjs --check; the keys were missing from 8.2.5 and earlier),
+        # src/scripts/plain/* module headers (9.0.7: one copy, run in the page without iframes), style.css, src/lazy-panel.gen.css and src/preview.gen.css (9.0.1: settings-preview rules, loaded only when the settings window opens).
+        # src/compat-browser.gen.css + src/compat-width.gen.css (1.0.0: rules for non-Chromium engines and widths other than phone 384 / PC 1280, split out of style.css by tools/css-compat.cjs and attached by src/lite.js only when they can match).
+        # src/addons/style-addons.css (9.0.9: every addon stylesheet in start order as one sheet — tools/build-addon-css.mjs, run by build-css.cjs; cascade checked by tools/css-cascade-diff.mjs).
         run: |
-          node tools/gen-user-profile.cjs
           node tools/gen-preview-css.js --quiet
           node tools/build-korean-dict.mjs --check
           node tools/build-korean-dict.mjs
           node tools/build-fruit-family.mjs --check
+          node tools/key-bundled-css.mjs --check
           node tools/build-fruit-family.mjs
           node tools/build-plain-scripts.mjs
           node tools/build-css.cjs
+          (cd tools && npm ci --no-audit --no-fund)
+          node tools/build-bundle.mjs
           git status --porcelain
           git diff --exit-code --stat
           test -z "$(git status --porcelain)"
@@ -565,6 +632,8 @@ jobs:
           out="$RUNNER_TEMP/bl-built/blue-lemonade-$v.zip"
           python tools/release_gate.py --kind theme --source . --build "$out" > "$RUNNER_TEMP/bl-gate.json"
           sha256sum "$out"
+          # 8.3.0 내장 개인 확장 파일이 ZIP 에 다 들어갔는지 (설치 뒤 404 를 막는 마지막 확인)
+          node tools/tests/private-addons.mjs . --zip "$out"
           echo "BL_VERSION=$v" >> "$GITHUB_ENV"
           echo "BL_ZIP=$out" >> "$GITHUB_ENV"
       - name: Verify the release asset against this tree

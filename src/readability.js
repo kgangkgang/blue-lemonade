@@ -1,5 +1,6 @@
-import { paletteColors, parseColor, toRgba, mixColor } from './palettes.js';
 import { gradientFor, gradientSample } from './gradients.js';
+import { paletteColors, parseColor, toRgba, mixColor } from './palettes.js';
+import './palette-data.js';   // 1.0.0 팔레트 11벌 · 커스텀 색 정의 (시작 그래프 밖 — 이 모듈은 지연으로 받아요)
 export function composite(fg,bg){const a=fg[3]??1;return fg.slice(0,3).map((n,i)=>n*a+bg[i]*(1-a)).concat(1);}
 const luminance=c=>c.slice(0,3).map(n=>{n/=255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4;}).reduce((sum,n,i)=>sum+n*[.2126,.7152,.0722][i],0);
 export function contrast(fg,bg){const a=luminance(composite(fg,bg)),b=luminance(bg);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);}

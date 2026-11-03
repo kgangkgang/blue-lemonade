@@ -1,11 +1,12 @@
 // 7.2.4 바깥 확장(quiet-notes 일코 모드 2.5.0)이 body.salty 를 붙였다 뗐다 해도 확장만 모드의 채팅 · 서랍 배경이 사라지지 않는지.
 // - window.Salty.getSettings().enabled 는 테마가 화면에 켜져 있는지(사용 모드까지) — 확장만 모드면 false (usage-mode.js publicSettings)
-// - 테마가 빠진 모드에서 바깥이 붙인 salty 는 뗀다, 뗀 것은 되돌리지 않는다, 끝없이 싸우지 않는다 (usage-mode.js forcedThemeGuard)
+// - 테마가 빠진 모드에서 바깥이 붙인 salty 는 뗀다, 뗀 것은 되돌리지 않는다, 끝없이 싸우지 않는다 (forced-theme-guard.js forcedThemeGuard)
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import path from 'node:path';
 const root=pathToFileURL(path.resolve(process.argv[2]||'.')+'/');
-const {themeEnabled,publicSettings,forcedThemeGuard}=await import(new URL('src/usage-mode.js',root));
+const {themeEnabled,publicSettings}=await import(new URL('src/usage-mode.js',root));
+const {forcedThemeGuard}=await import(new URL('src/forced-theme-guard.js',root));   // 1.0.0: 시작 그래프 밖 모듈로 떼어 냄
 const {DEFAULTS}=await import(new URL('src/settings.js',root));
 
 // quiet-notes 2.5.0 index.js syncBlue 와 같은 계산 — 테마가 돌려준 enabled 와 일코 상태로 body.salty 를 어디에 둘지

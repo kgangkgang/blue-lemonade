@@ -37,7 +37,7 @@ export function installReadingResume({getContext,getAccount,isEnabled=()=>true,d
         const target=readingAnchorTarget(chat,now,job.entry);
         if(target.missing){
             if(target.missing==='unloaded'&&Date.now()<job.until){clearTimeout(job.timer);job.timer=setTimeout(()=>attempt(job),200);return;}
-            // 7.2.1 복귀하지 못해도 알림은 띄우지 않는다 (사용자 요청) — 콘솔 기록만
+            // 7.2.1 복귀하지 못해도 알림은 띄우지 않는다 — 콘솔 기록만
             if(target.missing==='unloaded'&&!notified.has(job.key)){notified.add(job.key);console.debug('[Blue Lemonade] 읽던 메시지가 아직 불러와지지 않아 위치를 옮기지 않았어요.');}
             stop();return;
         }

@@ -1,0 +1,30 @@
+/* 생성 파일 — tools/build-addon-css.mjs (애드온 창 밖 규칙만 · 전체는 style.css) */
+:root { --eh-css-version: "1.7.6"; }
+#chat .mes_text img.eh-img {
+    display: block;
+    max-width: min(100%, 520px);
+    max-height: 62vh;
+    width: auto;
+    height: auto;
+    margin: .6em auto;
+    border-radius: 12px;
+    object-fit: contain;
+    box-shadow: 0 8px 24px -12px rgba(0, 0, 0, .6);
+}
+.mes_text img.eh-img { -webkit-touch-callout: none; }
+#chat .mes_text [data-asset-slot] { display: block; }
+#chat .mes_text [data-asset-slot]:empty { display: none; }
+#chat .mes_text [data-asset-was] { display: none; }
+#chat .mes_text p[data-eh-slot-only]:not(:has(> [data-asset-slot]:not(:empty))) { display: none; }
+#chat .mes_text [data-asset-slot] > img.eh-img { margin-block: .6em; }
+#chat .mes_text .eh-slot-retry {
+    display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    min-height: 36px; max-width: 100%; margin: .4em 0; padding: 6px 12px;
+    border: 1px dashed currentColor; border-radius: var(--bl-r-sm, 8px);
+    background: transparent; color: var(--SmartThemeBodyColor, inherit); opacity: .62;
+    font: inherit; font-size: .85em; line-height: 1.4; cursor: pointer; text-align: left;
+}
+#chat .mes_text .eh-slot-retry:hover, #chat .mes_text .eh-slot-retry:focus-visible { border-style: solid; opacity: 1; }
+#chat .mes_text .eh-slot-retry small { font-size: .92em; opacity: .8; }
+@keyframes bl-addon-css{from{--bl-addon-css:0}to{--bl-addon-css:1}}
+.eh-root,.eh-viewer,#char_assets_settings{animation:bl-addon-css 1ms}

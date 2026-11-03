@@ -136,7 +136,7 @@ try {
     const events = { on: (name, fn) => listeners.set(name, [...(listeners.get(name) || []), fn]), removeListener: (name, fn) => listeners.set(name, (listeners.get(name) || []).filter(f => f !== fn)), emit: name => (listeners.get(name) || []).forEach(fn => fn()) };
     const order = ids => [{ character_id: 100001, order: prompts.filter(p => !p.marker).map(p => ({ identifier: p.identifier, enabled: ids.includes(p.identifier) })) }];
     const oai = { preset_settings_openai: 'Fruit', prompts: structuredClone(prompts), prompt_order: order(['body', 'top', 'stageC']), extensions: { regex_scripts: structuredClone(scripts) } };
-    const extension_settings = { regex: [], preset_allowed_regex: { openai: ['Fruit'] }, salty: {} };
+    const extension_settings = { regex: [], preset_allowed_regex: { openai: ['Fruit'] }, salty: { addons: { regexlink: true } } };   // 1.1.2 테마 설정에서 켜져 있어야 돈다
     let stored = structuredClone(oai.extensions.regex_scripts), written = null;
     const presetManager = { getCompletionPresetByName: () => ({ extensions: { regex_scripts: stored } }), writePresetExtensionField: async ({ value }) => { written = structuredClone(value); stored = written; } };
     const promptManager = { activeCharacter: { id: 100001 }, getPromptOrderForCharacter: () => oai.prompt_order.find(o => o.character_id === 100001).order };
@@ -171,9 +171,9 @@ try {
     oai.extensions.regex_scripts.find(s => s.id === 'profile').disabled = true;   // 사용자가 정규식 화면에서 직접 끔
     RL.sync();
     await heartToggle(['body', 'top', 'profile', 'stageC']);
-    ok('sync: 손으로 꺼 둔 것은 과일의 마음이 프롬프트를 켜도 존중', () => {
+    ok('sync: 손으로 꺼 둔 것은 과일의 마음이 프롬프트를 켜도 존중 (1.1.2 직접 바꿈 · 새 목록 배열이어도)', () => {
         const d = disabled();
-        assert.equal(d.profile, true); assert.equal(RL.store().origin.profile, true);
+        assert.equal(d.profile, true); assert.equal(RL.store().manual.profile, true); assert.equal('profile' in RL.store().origin, false);
         assert.equal(d.top, false); assert.equal(d.topmini, true); assert.equal(d.ccd, false);
     });
     extension_settings.salty.promptLink = { on: true, name: '개인' };

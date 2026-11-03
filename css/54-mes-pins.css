@@ -37,7 +37,7 @@ body.salty:not(.expandMessageActions) #chat .mes .bl-menu-empty > .extraMesButto
 }
 
 /* 선 아이콘: 메뉴 안에서 쓰던 그림(css/11-chrome.css 의 --salty-mi-*)을 꺼낸 버튼에도 */
-body.salty.salty-icons-line #chat .mes .bl-pinned:is(.mes_legacy_translate, .mes_llm_translate, .mes_toggle_original, .mes_edit_translation, .mes_paragraph_correction, .mes_delete_translation, .mes_translate, .sd_message_gen, .mes_narrate, .mes_prompt, .mes_hide, .mes_unhide, .mes_media_gallery, .mes_media_list, .mes_embed, .mes_swipe_picker, .mes_create_bookmark, .mes_create_branch, .mes_copy, .mes_to_image)::before {
+body.salty.salty-icons-line #chat .mes .bl-pinned:is(.mes_legacy_translate, .mes_llm_translate, .mes_toggle_original, .mes_edit_translation, .mes_paragraph_correction, .mes_delete_translation, .mes_translate, .sd_message_gen, .mes_narrate, .mes_prompt, .mes_hide, .mes_unhide, .mes_media_gallery, .mes_media_list, .mes_embed, .mes_swipe_picker, .mes_create_bookmark, .mes_create_branch, .mes_copy)::before {
   content: "" !important;
   display: inline-block;
   width: 1em;
@@ -69,11 +69,10 @@ body.salty.salty-icons-line #chat .mes .bl-pinned.mes_swipe_picker { --salty-mi:
 body.salty.salty-icons-line #chat .mes .bl-pinned.mes_create_bookmark { --salty-mi: var(--salty-mi-flag); }
 body.salty.salty-icons-line #chat .mes .bl-pinned.mes_create_branch { --salty-mi: var(--salty-mi-branch); }
 body.salty.salty-icons-line #chat .mes .bl-pinned.mes_copy { --salty-mi: var(--salty-mi-copy); }
-body.salty.salty-icons-line #chat .mes .bl-pinned.mes_to_image { --salty-mi: var(--salty-mi-camera); }
 
 /* 눈 아이콘 길게 누르기 (src/mes-fold.js): 꺼내기 · 접기 두 줄. 고르기 목록 팝업(.salty-pick-float, css/72)의 모양을 그대로 쓰고
    폭만 글자에 맞춘다. 층(.bl-eye-layer)은 popover 라 기본 테두리 · 바탕을 스크립트가 인라인으로 지운다 */
-/* 5.4.4: 두 줄뿐이라 목록 팝업의 42px 줄은 컸다 (사용자: 글자 크기에 맞춰 슬림하게) — 줄 높이를 글자 + 위아래 여백으로.
+/* 5.4.4: 두 줄뿐이라 목록 팝업의 42px 줄은 컸다 (글자 크기에 맞춰 얇게) — 줄 높이를 글자 + 위아래 여백으로.
    폰 412 에서 13.5px 글자 → 줄 33px (누르는 칸이 이름 줄 버튼 32px 보다 작아지지 않게 여백 8px) */
 body.salty .bl-eye-pick {
   width: max-content;

@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const BASELINE = 101;   // 주어 아닌 :has 규칙 수(7.9.4 313 → B3 P2 311 → B4 P4 295 → B6 P3 243 → 144 → P5 101)
+const BASELINE = 93;   // 주어 아닌 :has 규칙 수(7.9.4 313 → B3 P2 311 → B4 P4 295 → B6 P3 243 → 144 → P5 101 → 8.3.x 개인 확장 내장 +28 = 129 → 9.0.1 미리보기 분리 · 모양 갈래 걷기 · ··· 메뉴 표식 = 122 → 1.0.0 개인 확장 넷을 테마 밖으로 = 88 → 1.0.0 되살린 메모(notes/style.css, 8.2.5 그대로 · 메모 창 안에서만) +5 = 93)
 const root = path.resolve(process.argv[2] || '.');
 let pass = 0, fail = 0;
 async function test(name, fn) {
@@ -17,10 +17,10 @@ async function test(name, fn) {
 }
 const walk = dir => fs.existsSync(dir) ? fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]) : [];
 const rel = f => path.relative(root, f).replace(/\\/g, '/');
-// 검사할 CSS 글: style.css 는 css/ 의 합본이라 css/ 만 보고, 생성 사본(*.gen.css)은 원본과 겹치니 뺀다
+// 검사할 CSS 글: style.css 는 css/ 의 합본이라 css/ 만 보고, 생성 사본(*.gen.css · 9.0.9 애드온 CSS 한 장 src/addons/style-addons.css)은 원본과 겹치니 뺀다
 const sources = [
     ...walk(path.join(root, 'css')).filter(f => f.endsWith('.css') && !f.endsWith('.gen.css')),
-    ...walk(path.join(root, 'src')).filter(f => f.endsWith('.css') && !f.endsWith('.gen.css') && !/[\\/](vendor|node_modules)[\\/]/.test(f)),
+    ...walk(path.join(root, 'src')).filter(f => f.endsWith('.css') && !f.endsWith('.gen.css') && rel(f) !== 'src/addons/style-addons.css' && !/[\\/](vendor|node_modules)[\\/]/.test(f)),
 ].map(f => ({ file: rel(f), text: fs.readFileSync(f, 'utf8') }));
 for (const f of walk(path.join(root, 'src/scripts/plain')).filter(f => f.endsWith('.js'))) {
     const t = fs.readFileSync(f, 'utf8'); let css = '';

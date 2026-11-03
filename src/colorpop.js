@@ -64,7 +64,7 @@ export function startColorPop() {
     document.addEventListener('scroll', (e) => {
         if (!picker?.isColorPickOpen() || (e.target instanceof Element && e.target.closest('.bl-cp-layer')) || picker.colorPickAge() <= 700) return;
         if (e.target !== document && !picker.colorPickAnchorIn(e.target)) return;
-        // 4.1.2: 색 코드 칸을 누르면 폰은 자판을 올리면서 그 칸이 보이게 뒤 화면을 굴린다 — 그 스크롤에 창이 꺼져 코드를 칠 수 없었다 (사용자 제보).
+        // 4.1.2: 색 코드 칸을 누르면 폰은 자판을 올리면서 그 칸이 보이게 뒤 화면을 굴린다 — 그 스크롤에 창이 꺼져 코드를 칠 수 없었다.
         // 코드 칸에 글을 치는 중이면 닫지 않고 자리만 다시 잡는다.
         if (document.activeElement instanceof Element && document.activeElement.closest('.bl-cp-layer input')) { picker.repositionColorPick(); return; }
         picker.closeColorPick();

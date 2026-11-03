@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { scriptCode } from './script-code.mjs';
 const root = path.resolve(process.argv[2] || '.');
-const bundled = (await import(pathToFileURL(path.join(root,'src/scripts/bundled/deus-qr.js')))).default;
+const bundled = await scriptCode(root,'deus-qr');
 const plain = fs.readFileSync(path.join(root,'src/scripts/plain/deus-qr.js'),'utf8');
 assert.equal(plain.split('/*BL-SCRIPT-START*/\n')[1].split('\n/*BL-SCRIPT-END*/')[0],bundled);
-new Function('BlueLemonade',bundled);
+new Function('BlueLemonade','window',bundled);
 const { groups, toggles, groupsV3, togglesV3, variant, marker, create, matches, quickName } = new Function(bundled.split('// INSTALL')[0]+'\nreturn { groups:DEUS_QUICK_GROUPS,toggles:DEUS_QUICK_TOGGLES,groupsV3:DEUS_QUICK_GROUPS_V3,togglesV3:DEUS_QUICK_TOGGLES_V3,variant:deusVariant,marker:DEUS_QUICK_MARKER,create:createDeusQuickController,matches:deusMatches,quickName:deusQuickName };')();
 let passed=0;
 async function test(name, fn) { await fn(); console.log('PASS',name); passed++; }
@@ -41,7 +42,7 @@ await test('초장편은 아주 길게와 배타적이고 기존 프리셋에 �
  await assert.rejects(old.controller.change(group.key,ultra));assert.equal(old.writes.length,0);
 });
 await test('초장편과 민속 공포의 한글 이름·도움말을 번역 사전에서 찾을 수 있어요',async()=>{
- const code=(await import(pathToFileURL(path.join(root,'src/scripts/bundled/deus.js')))).default;
+ const code=await scriptCode(root,'deus');
  let dictionary;new Function('BlueLemonade',code)({translate:value=>{dictionary=value;}});
  const ultra=dictionary.prompts.find(x=>x.id==='bl-deus-length-ultra-long');
  assert.equal(ultra.title,'「 초장편 」');assert.ok(ultra.desc.includes('본문 첫 줄'),'판마다 단어 수가 달라 숫자 대신 본문을 보게 해요');assert.ok(!/\d,?\d{3}/.test(ultra.desc));

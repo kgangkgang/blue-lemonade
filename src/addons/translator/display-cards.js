@@ -9,8 +9,21 @@ const OPAQUE = new Set(['head','script','style','textarea','pre','code','templat
 const VOID = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
 const TAG = /<!--[\s\S]*?-->|<![^>]*>|<\/?[^\s<>/]+(?:[^>"']|"[^"]*"|'[^']*')*>/g;
 const KNOWN_KEY = /^(?:日期|时间|天气|地点|位置|题记|之间|serial|time|scene|plot|echo|seeds|Physical|Clothes|Mental|Location|Relationship(?:\s*\([^)]*\))?|Inventory|Inner[- ]state|Motivations?|Main Plot|Subplots|Context|CYOA|OOC|Prose Plan|Response Structure|Story progression)\s*[:：]/i;
-const FRAMING = /\[\[__VAR_\d+__\]\]|(?:https?|ftp):\/\/[^\s<>"']+|(?:data|javascript|file|mailto|tel):[^\s<>"']+|`[^`\r\n]*`|&(?:#\d+|#x[\da-f]+|[a-z][\da-z]+);|\{\{[\s\S]*?\}\}|\[\/?(?:CHAP|TITLE|CP|LOC|TAGS|PREFACE|Current|Unresolved|Possible|Seed)\]|[\[\]()]|\*\*|__|~~|[|｜]|[→⟶➜➞]|->|[-+]?\d+(?:\.\d+)?\s*(?:[°º][CF]|℃|℉)|(?:\*\*|__)?(?:Physical|Clothes|Mental|Location|Relationship(?:\s*\([^)]*\))?|Inventory|Inner[- ]state|Motivations?|Main Plot|Subplots)(?:\*\*|__)?\s*[:：]/gi;
+const FRAMING = /\[\[__VAR_\d+__\]\]|(?:https?|ftp):\/\/[^\s<>"']+|(?:data|javascript|file|mailto|tel):[^\s<>"']+|`[^`\r\n]*`|&(?:#\d+|#x[\da-f]+|[a-z][\da-z]+);|\{\{[\s\S]*?\}\}|\[\/?(?:CHAP|TITLE|CP|LOC|TAGS|PREFACE|Current|Unresolved|Possible|Seed)\]|[\[\]()]|\*\*|__|~~|[|｜]|[→⟶➜➞]|->|[-+]?\d+(?:\.\d+)?\s*(?:[°º][CF]|℃|℉)|;[ \t]*urge[ \t]*:|;[ \t]*(?:helps|fights)\b(?:[ \t]+Want\b)?|\b\d{1,3}[ \t]*\/[ \t]*100\b(?:[ \t]*[-–—](?=[ \t]))?|(?:\*\*|__)?(?:Physical|Clothes|Mental|Location|Relationship(?:\s*\([^)]*\))?|Inventory|Inner[- ]state|Motivations?|Main Plot|Subplots)(?:\*\*|__)?\s*[:：]/gi;
 const REPLY_DIVIDER = '\n\n[Translated Text]:\n';
+// 카드 정규식이 그리는 한 줄 상태창(<stat>Date=…|Location=…|Track=…</stat> 꼴): 이름을 모르는 태그라도 안이 「열쇠=값」 칸 둘 이상이면 카드로 본다.
+//   열쇠 · | · 숫자 값(날짜 · 시각 · 수치)은 이 기기에 두고 글자 값(장소 · 곡명 …)만 보낸다 — 전에는 줄째 보내 모델이 데이터 줄로 보고 원문 그대로 뒀다(번역 점검 「원문 그대로」).
+//   1.0.0 칸 둘(<stat>Location=…|Track=…</stat>) · 줄 끝에 남은 | · 여는 태그 뒤 · 닫는 태그 앞 줄바꿈 · 칸마다 한 줄도 (keyedFields) — 빈 줄 · 열쇠 없는 칸이 끼면 카드가 아니다
+const KEYED_FIELD = /^\s*\p{L}[\p{L}\p{N}_ .-]{0,31}=/u;
+const KEYED_KEY = /^\p{L}[\p{L}\p{N}_ .-]{0,31}?\s*=/u;
+const KEYED_BLOCK = /<([A-Za-z][\w-]{0,31})>([^<>`]{1,2000}?)<\/\1\s*>/g;
+function keyedFields(inner) {
+    const lines = inner.replace(/^[ \t]*\r?\n|\r?\n[ \t]*$/g, '').split(/\r?\n/);
+    if (lines.length > 24 || lines.some(line => !line.trim())) return null;
+    const fields = lines.flatMap(line => line.replace(/[|｜][ \t]*$/, '').split(/[|｜]/));
+    return fields.length >= 2 && fields.every(f => KEYED_FIELD.test(f)) ? fields : null;
+}
+const HTML_NAMES = new Set(['a','abbr','b','bdi','bdo','big','blockquote','button','caption','center','cite','dd','del','details','dfn','div','dl','dt','em','figcaption','font','h1','h2','h3','h4','h5','h6','i','ins','kbd','label','legend','li','mark','ol','option','p','q','rp','rt','ruby','s','samp','small','span','strike','strong','sub','summary','sup','td','th','time','tt','u','ul','var']);
 const fail = () => Object.assign(new Error('상태 카드의 번역 항목이 빠지거나 구조가 달라 원문을 유지했어요. 다시 번역해 주세요.'), { format: true, structuredCard: true });
 const hasWords = text => /\p{L}/u.test(text);
 const escapeDisplay = (text, context) => {
@@ -106,6 +119,15 @@ function scanOuterCards(text) {
     while ((m = legacy.exec(text))) if (![...ranges,...fences,...opaqueRanges].some(r=>m.index<r.end && legacy.lastIndex>r.start)) {
         ranges.push({name:'legacy_top',start:m.index,innerStart:m.index+1,innerEnd:legacy.lastIndex-1,end:legacy.lastIndex});
     }
+    // 한 줄 「열쇠=값|열쇠=값|…」 상태창 (KEYED_FIELD 위 설명). 알려진 카드 · 코드 · 다른 카드와 겹치면 건너뛴다
+    const keyed = new RegExp(KEYED_BLOCK.source,'g');
+    while ((m = keyed.exec(text))) {
+        const name = m[1].toLowerCase(), end = keyed.lastIndex;
+        if (CARD_NAMES.has(name) || OPAQUE.has(name) || HTML_NAMES.has(name) || VOID.has(name) || !keyedFields(m[2])) continue;
+        if ([...ranges,...fences,...opaqueRanges].some(r=>m.index<r.end && end>r.start)) continue;
+        const innerStart = m.index + m[1].length + 2;
+        ranges.push({name,start:m.index,innerStart,innerEnd:innerStart+m[2].length,end,keyed:true});
+    }
     return ranges.sort((a,b)=>a.start-b.start);
 }
 function visibleSpans(block, card) {
@@ -147,7 +169,11 @@ function visibleSpans(block, card) {
                 // Keep literal parser labels at the start of each pipe-separated field.
                 // 8.0.8 V3 모듈은 영어 열쇠면 다 (Closeness: · Stage: · Unspoken: …) — 단 [표지] 바로 뒤 「이름: …」 은 값이에요 (Undercurrents)
                 let label = text.match(KNOWN_KEY);
+                // 열쇠=값 상태창: 칸 첫머리의 「열쇠=」는 정규식이 읽는 이름이라 그대로 (칸 안 괄호 뒤 글은 값)
+                if (!label && card.keyed && /(?:^|[|｜])\s*$/.test(value.slice(0,a))) label = text.match(KEYED_KEY);
                 if (!label && module && !/\]\s*$/.test(value.slice(0,a))) label = text.match(MODULE_KEY);
+                // 1.0.0 데우스 3 저류(Undercurrents) 길 「[Overt] External: …」 의 External 은 이름이 아니라 정해진 낱말 (인물 이름 「Rex:」 는 예전처럼 값)
+                if (!label && card.name === 'undercurrents') label = text.match(/^External[ \t]*[:：]/);
                 const skip = label?.[0].length || 0;
                 const rest = text.slice(skip), ws = rest.match(/^\s*/)[0].length;
                 if (module && moduleKeepsLocal(rest.slice(ws),{before:value.slice(0,a),after:value.slice(b),card:card.name})) return;
@@ -244,7 +270,7 @@ function correctionMaskNumbers(source,translation,protectionValue) {
 export function prepareDisplayCards(text,{reserve,isRetranslation=false,protectionValue,localValue,learn}={}) {
     const source = String(text ?? ''), split = isRetranslation && source.startsWith('[Original Text]:\n') ? source.indexOf(REPLY_DIVIDER) : -1;
     const primaryText = split >= 0 ? source.slice(0,split) : source, primary = describe(primaryText);
-    if (!primary.length) return {text:source,count:0,compare:value=>value,restore:value=>value,cacheable:()=>true};
+    if (!primary.length) return {text:source,count:0,compare:value=>value,restore:value=>value,cacheable:()=>true,lost:()=>[],fallbackCount:()=>0};
     if (typeof reserve !== 'function') throw new TypeError('Card masks require a reserve callback');
     const localOf = (field,card) => {
         // 8.0.8 V3 관계 단계(Stage: Strangers)는 정해진 낱말이라 이 기기에서 채운다 (v3-modules.js) — 한국어로 옮길 때만(localValue 가 있을 때)
@@ -260,7 +286,9 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
             const wholeText = patch(card.raw,card.fields,local.map((v,i)=>escapeDisplay(v,card.fields[i].context)));
             return {...card,local,whole:true,wholeText,tokens:[reserve(wholeText)]};
         }
-        return {...card,local,tokens:Array.from({length:local.filter(v => v === null).length+2},()=>reserve(''))};
+        // 1.0.0 own = 카드가 앞뒤 빈 줄로 문단 하나를 다 차지한다 (데우스 모듈 · 아드리안 <stat>) — 여닫는 자리표가 빠진 답에서 그 문단 끝까지를 카드 자리로 읽는다 (readOpenCard)
+        const own = /(?:^|\n[ \t]*\n)[ \t]*$/.test(primaryText.slice(0,card.start)) && /^[ \t]*(?:\r?\n[ \t]*\r?\n|\s*$)/.test(primaryText.slice(card.end));
+        return {...card,local,own,tokens:Array.from({length:local.filter(v => v === null).length+2},()=>reserve(''))};
     });
     const encode = (card,record) => { if (record.whole) return record.tokens[0]; let n = 0; return record.tokens[0]+'\n'+card.fields.flatMap((f,i)=>record.local[i] !== null ? [] : [record.tokens[++n]+f.text]).join('\n')+'\n'+record.tokens.at(-1); };
     const transform = (part,cards=describe(part)) => {
@@ -280,6 +308,7 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
         return output;
     };
     const prepared = transform(primaryText,primary)+(split >= 0 ? REPLY_DIVIDER+correction(source.slice(split+REPLY_DIVIDER.length)) : '');
+    let lastFallback = 0;
     return {
         text:prepared,count:records.length,
         wholeBlocks:new Set(records.filter(r=>r.whole).map(r=>r.wholeText)),   // 8.0.6 모델이 빠뜨려도 제자리에 되돌릴 카드
@@ -307,38 +336,129 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
             }
             return true;
         },
+        // 1.0.0 값이 하나도 오지 않은 카드(자리표가 답에 하나도 없음)의 여는 자리표 — 번역기가 빠진 보호 블록처럼 원문 문단 자리에 되돌린 뒤 restore 가 원문 카드로 채운다
+        lost(value) { const output = String(value ?? ''); return records.filter(r => !r.whole && !r.tokens.some(t => output.includes(t))).map(r => r.tokens[0]); },
+        /** 보낸 글(layout)에서 openers 카드를 여는 자리표 하나로 줄인 글 — 빠진 카드를 원문 문단 자리에 되돌릴 때 견줄 원문 */
+        lostLayout(layout,openers) {
+            let out = String(layout ?? '');
+            for (const r of records) if (!r.whole && openers.includes(r.tokens[0])) {
+                const a = out.indexOf(r.tokens[0]), b = out.indexOf(r.tokens.at(-1));
+                if (a >= 0 && b > a) out = out.slice(0,a+r.tokens[0].length)+out.slice(b+r.tokens.at(-1).length);
+            }
+            return out;
+        },
+        /** 1.0.0 마지막 restore 에서 모델 답에 없거나 읽을 수 없어 원문으로 둔 칸 수 (0 = 모든 칸을 번역했다). 0 이 아니면 부른 쪽이 캐시하지 않는다 */
+        fallbackCount() { return lastFallback; },
         // 2.5.1 quiet: 번역 중 미리 보기 — 값 기억(learn)에 넣지 않는다 (아직 번역 안 된 값이 섞여 있다)
+        // 1.0.0 칸 하나가 빠지거나 · 비거나 · 차례가 어긋났다고 카드 · 메시지 전체를 원문으로 되돌리지 않는다 — 그 칸만 원문, 나머지 칸은 번역 (readOpenCard).
+        //   카드 구조 · 열쇠 · 기호는 언제나 원문(record.raw)에서 다시 짓고 답에서는 값 글자만 고른다. 같은 자리표가 떨어져 두 번 나오거나 ·
+        //   다른 카드의 자리표가 섞이거나 · 카드 차례가 바뀐 답은 예전처럼 거절해요 (어느 글이 어느 칸인지 믿을 수 없다)
         restore(value, { quiet = false } = {}) {
-            let output = String(value ?? ''), replacements = [], heard = [];
+            let output = String(value ?? ''), replacements = [], heard = [], fallback = 0;
+            const owner = new Map(records.flatMap(r => r.tokens.map(t => [t, r])));
+            for (const record of records) if (!record.whole) output = collapseRepeats(output,record.tokens);   // 자리를 읽기 전에 한 번에 (앞 카드 자리가 밀리지 않게)
             for (const record of records) {
                 if (record.whole) {   // 8.0.6 다 채운 카드: 자리표시 하나를 채운 카드로 (없으면 번역기의 빠진 보호 블록 되돌리기가 먼저 제자리에 넣어요)
                     const at = output.indexOf(record.tokens[0]);
                     if (at >= 0 && output.indexOf(record.tokens[0],at+record.tokens[0].length) < 0) replacements.push({start:at,end:at+record.tokens[0].length,text:record.wholeText});
                     continue;
                 }
-                const positions = record.tokens.map(token => { const at = output.indexOf(token); if (at < 0 || output.indexOf(token,at+token.length)>=0) throw fail(); return at; });
-                if (positions.some((at,i)=>i>0 && at <= positions[i-1])) throw fail();
-                if (output.slice(positions[0]+record.tokens[0].length,positions[1]).trim()) throw fail();
+                const read = readOpenCard(output,record,owner);
+                if (!read) { if (quiet) continue; throw fail(); }   // 미리 보기: 아직 안 온 카드는 건너뛴다
                 let n = 0;
                 const values = record.fields.map((field,i)=> {
                     if (record.local[i] !== null) return escapeDisplay(record.local[i],field.context);
-                    n++;
-                    const raw = output.slice(positions[n]+record.tokens[n].length,positions[n+1]).trim();
-                    if (!raw || /\[\[__VAR_\d+__\]\]/.test(raw)) throw fail();
-                    const clean = raw.replace(/[\r\n]+/g,' ');
-                    heard.push([field.text,clean]);
+                    const clean = read.values.get(++n);
+                    if (clean === undefined) { fallback++; return field.text; }   // 이 칸만 원문
+                    if (read.exact) heard.push([field.text,clean]);   // 값 기억은 자리표가 다 맞은 카드에서만 (줄 차례로 짐작한 값은 이 답에만)
                     return clean === field.text ? field.text : escapeDisplay(clean,field.context);
                 });
-                replacements.push({start:positions[0],end:positions.at(-1)+record.tokens.at(-1).length,text:patch(record.raw,record.fields,values)});
+                replacements.push({start:read.start,end:read.end,text:patch(record.raw,record.fields,values)+(read.stray.length ? '\n'+read.stray.join('\n') : '')});
             }
             // Moving a complete card can change which prose or scene it describes. Preserve
             // the original card order as well as the order of the values inside each card.
             if (replacements.some((r,i)=>i>0 && r.start < replacements[i-1].end)) throw fail();
             for (let i=replacements.length-1;i>=0;i--) { const r=replacements[i]; output=output.slice(0,r.start)+r.text+output.slice(r.end); }
             if (typeof learn === 'function' && !quiet) for (const [source,heardValue] of heard) learn(source,heardValue);
+            if (!quiet) lastFallback = fallback;
             return output;
         }
     };
+}
+/** 바로 붙어 되풀이된 같은 자리표(「[[__VAR_7__]][[__VAR_7__]]」 · 사이에 빈칸뿐)는 하나로 */
+function collapseRepeats(output,tokens) {
+    for (const token of tokens) {
+        const at = output.indexOf(token); if (at < 0) continue;
+        for (let next = output.indexOf(token,at+token.length); next >= 0 && !output.slice(at+token.length,next).trim(); next = output.indexOf(token,at+token.length))
+            output = output.slice(0,at+token.length)+output.slice(next+token.length);
+    }
+    return output;
+}
+/** 차례가 맞는 가장 긴 줄(오름차순 부분열)의 자리 — 하나가 엉뚱한 곳에 가도 나머지 칸은 산다 */
+function rising(list) {
+    const tails = [], prev = [];
+    for (let i = 0; i < list.length; i++) {
+        let lo = 0, hi = tails.length;
+        while (lo < hi) { const mid = (lo+hi) >> 1; if (list[tails[mid]] < list[i]) lo = mid+1; else hi = mid; }
+        prev[i] = lo ? tails[lo-1] : -1; tails[lo] = i;
+    }
+    const out = []; for (let i = tails.length ? tails[tails.length-1] : -1; i >= 0; i = prev[i]) out.push(i);
+    return out.reverse();
+}
+/** 1.0.0 열린 카드 하나를 모델 답에서 읽는다 → { start, end, values: Map(값 자리표 번호 → 글), stray: 카드 자리 안에 있던 남의 보호 자리표 } · 자리표가 하나도 없으면 null.
+ *  자리표 [0] 여는 표시 · [1..k] 칸 값 · [k+1] 닫는 표시. 값 자리표가 빠졌는데 그 줄은 남았으면(줄 수가 빠진 칸 수와 딱 맞을 때만) 줄 차례대로 그 칸에,
+ *  모자라거나 남으면 그 칸들은 원문. 여닫는 표시가 빠지면 카드가 문단 하나를 다 차지하던 때(own)만 그 문단 끝 · 처음까지를 카드 자리로 본다 */
+function readOpenCard(output,record,owner) {
+    const tokens = record.tokens, last = tokens.length-1;
+    const at = tokens.map(token => { const i = output.indexOf(token); if (i >= 0 && output.indexOf(token,i+token.length) >= 0) throw fail(); return i; });
+    const present = at.map((p,i)=>i).filter(i => at[i] >= 0);
+    if (!present.length) return null;
+    const keep = rising(present.map(i => at[i])).map(k => present[k]);
+    const values = new Map();
+    let tangled = false;   // 이 카드의 다른 자리표(차례가 어긋나 버린 것)가 끼어 있으면 그 글은 어느 칸 것인지 모른다
+    const lines = (from,to) => { tangled = false; return output.slice(from,to).replace(/\[\[__VAR_\d+__\]\]/g, token => {
+        const who = owner.get(token);
+        if (who && who !== record) throw fail();   // 다른 카드의 자리표가 이 카드 값 사이에 — 두 카드가 엉켰다
+        if (who) tangled = true;   // (남의 보호 자리표는 값에서 빼고 카드 뒤에 — 끝에서 카드 자리 안의 것만 모은다)
+        return '\n';
+    }).split(/\r?\n/).map(line => line.trim()).filter(Boolean); };
+    // 값 자리표 first … first+slots-1 이 덮는 글 줄: 하나면 그 칸(여러 줄이면 이어 붙임) · 줄 수가 칸 수와 같으면 차례대로 · 한 줄뿐이면 첫 칸 · 그 밖은 모두 원문
+    const fill = (first,slots,list) => {
+        if (slots <= 0 || !list.length || tangled) return false;
+        if (slots === 1) values.set(first,list.join(' '));
+        else if (list.length === slots) list.forEach((line,j)=>values.set(first+j,line));
+        else if (list.length === 1) values.set(first,list[0]);
+        else return false;
+        return true;
+    };
+    const blank = /\r?\n[ \t]*\r?\n/;
+    const paraEnd = from => { const m = blank.exec(output.slice(from)); return m ? from+m.index : output.length; };
+    const lineEnd = from => { const i = output.indexOf('\n',from); return i < 0 ? output.length : i; };
+    let start = at[keep[0]], end = -1;
+    if (keep[0] > 1 && keep[0] !== last && record.own) {   // 여는 표시 · 앞 칸 자리표가 빠짐: 같은 문단의 앞 줄이 그 칸들 값과 딱 맞으면 그 줄부터 카드
+        const head = output.slice(0,start), cut = head.split(blank), from = head.length-cut[cut.length-1].length, text = output.slice(from,start);
+        if (!/\[\[__/.test(text) && text.trim()) {
+            const list = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+            if (list.length === keep[0]-1 || keep[0]-1 === 1) { fill(1,keep[0]-1,list); start = from+text.match(/^\s*/)[0].length; }
+        }
+    }
+    for (let k = 0; k < keep.length; k++) {
+        const n = keep[k], from = at[n]+tokens[n].length, next = keep[k+1];
+        if (n === last) { end = from; break; }
+        const first = n === 0 ? 1 : n;
+        if (next !== undefined) { fill(first,Math.min(next,last)-first,lines(from,at[next])); continue; }
+        // 닫는 표시가 빠졌다: 남은 칸 수(slots)와 맞는 만큼만 카드 자리로 — 문단 하나를 다 차지하던 카드면 그 문단 끝까지, 아니면 그 줄 끝까지
+        const slots = last-first, wide = record.own ? paraEnd(from) : lineEnd(from);
+        const others = (output.slice(from,wide).match(/\[\[__VAR_\d+__\]\]/g) || []).some(token => owner.has(token) && owner.get(token) !== record);
+        if (wide > lineEnd(from) && !others && (slots === 1 || lines(from,wide).length === slots)) { fill(first,slots,lines(from,wide)); end = wide; }
+        else { end = lineEnd(from); fill(first,slots,lines(from,end)); }
+    }
+    end = Math.max(end,start);
+    // 여닫는 자리표가 빠지면 그 자리표 줄의 줄바꿈이 빈 줄 하나로 남는다 — 카드 앞뒤가 이미 빈 줄(또는 글 처음 · 끝)일 때만 그 한 줄을 카드 자리에 넣는다
+    if (keep[0] !== 0) { const m = /(?:^|\n)(\r?\n)$/.exec(output.slice(0,start)); if (m) start -= m[1].length; }
+    if (keep[keep.length-1] !== last) { const m = /^(\r?\n)(?=[ \t]*(?:\r?\n|$))/.exec(output.slice(end)); if (m && (end+m[1].length >= output.length || /^\r?\n[ \t]*\r?\n[ \t]*\r?\n/.test(output.slice(end)))) end += m[1].length; }
+    const stray = (output.slice(start,end).match(/\[\[__VAR_\d+__\]\]/g) || []).filter(token => !owner.has(token));   // 사용자 보호 블록 · 다 채운 카드 — 버리지 않고 카드 바로 뒤에
+    return {start,end,values,stray,exact:keep.length === tokens.length && values.size === tokens.length-2};
 }
 
 /** Keep already translated card values and their exact structure out of later prose cleanup.
@@ -359,7 +479,7 @@ export function withDisplayCardsProtected(text, transform) {
 
 /** 8.0.8 사용자 「보호할 텍스트」의 <tracker>…</tracker> 규칙은 칸(|) 둘 이상인 시간 상태창에는 걸지 않는다.
  * 카드 번역(6.5.4) 전에 데우스 상태창이 깨지지 않게 넣던 줄인데, 지금은 카드가 열쇠 · 기호 · 구조를 이 기기에 두고 값만 옮기니
- * 이 줄이 남아 있으면 시간 상태창만 영어로 남았다(10-27 제보). 다른 꼴의 <tracker>(칸 없는 글)는 예전처럼 보호해요.
+ * 이 줄이 남아 있으면 시간 상태창만 영어로 남았다. 다른 꼴의 <tracker>(칸 없는 글)는 예전처럼 보호해요.
  * 규칙 앞에 「카드 꼴이면 여기서 시작하지 않음」 조건만 붙인다 — 같은 규칙 글자 · 순서라 다른 보호 블록 번호는 그대로예요. */
 export function cardAwareUserRule(regex) {
     if (!(regex instanceof RegExp) || !/^\^?<tracker(?:\b|>|\\b)/i.test(regex.source)) return regex;

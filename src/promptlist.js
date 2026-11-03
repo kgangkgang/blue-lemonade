@@ -1,4 +1,5 @@
 import { groupedNumber } from './numbers.js';
+import { watchDom } from './dom-watch.js';
 import { alignHistory, chatCandidates, labelOf, collectSources, findSources, insertedLabel } from './prompt-history-label.js';
 // 검사 창 "프롬프트 목록" 줄 다시 짜기
 //
@@ -38,7 +39,7 @@ function rewrite(span) {
     const tok = document.createElement('b');
     tok.className = 'bl-prow-tok';
     tok.textContent = groupedNumber(parts.tokens);
-    // 숫자만 노랗게 있으면 그게 뭔지 모른다 (사용자 지적) → 뒤에 작은 t 를 붙여 토큰임을 밝힌다
+    // 숫자만 노랗게 있으면 그게 뭔지 모른다 → 뒤에 작은 t 를 붙여 토큰임을 밝힌다
     const unit = document.createElement('small');
     unit.className = 'bl-prow-t';
     unit.textContent = 't';
@@ -157,11 +158,12 @@ export function startPromptList() {
         watcher.disconnect(); scope = list;
         watcher.observe(list, {childList:true, subtree:true, characterData:true});
         sweep(list); watcher.takeRecords();
-        discovery?.disconnect(); discovery = null;
+        discovery?.(); discovery = null;
     };
     attach();
     if (!scope) {
-        discovery = new MutationObserver(attach);
-        discovery.observe(document.getElementById('completion_prompt_manager') || document.body, {childList:true, subtree:true});
+        // 9.0.4: 공용 감시 허브 구독 — 프롬프트 관리자가 있으면 그 안만, 아직 없으면 채팅 밖 문서(body 구역 · 채팅 가지는 감시도 안 걸어요)
+        const host = document.getElementById('completion_prompt_manager');
+        discovery = watchDom(host || document.body, { childList: true, subtree: true, exclude: host ? undefined : '#chat', name: '프롬프트 검사 목록 찾기' }, attach);
     }
 }

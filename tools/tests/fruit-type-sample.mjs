@@ -87,12 +87,12 @@ check('표본 문서는 바깥 주소를 막고 TavernHelper 와 같은 겉문�
     const shim=read('src/fruit-type-sample.js');
     assert(shim.includes("frame.setAttribute('sandbox','allow-scripts')")&&!/allow-same-origin['"]\)/.test(shim.slice(shim.indexOf('renderSampleStage'),shim.indexOf('sampleRegexLists'))),'다른 출처 격리 iframe');
 });
-check('15종 모두 표본 글 · 기본 표본이 있고, 기본 시간 표시는 V3 모양이에요',()=>{
-    assert.equal(FRUIT_TYPES.length,15);
+check('54종 모두 표본 글 · 기본 표본이 있고, 기본 시간 표시는 V3 모양이에요',()=>{
+    assert.equal(FRUIT_TYPES.length,54);
     for(const type of FRUIT_TYPES){
         assert(sample.SAMPLE_INPUTS[type.id]?.length,type.id);
         const b=sample.builtinSample(type);assert(b.html.length>100&&b.origin==='builtin',type.id);
-        assert.equal(b.fragment,type.owner==='deus',type.id);
+        assert.equal(b.fragment,['deus','sola'].includes(type.owner),type.id);
     }
     assert(sample.builtinSample(FRUIT_TYPES.find(t=>t.id==='deus-tracker')).html.includes('dem-track__grid'));
     const text=read('src/fruit-type-sample.js');
@@ -112,7 +112,7 @@ check('채팅 안 데우스 카드 아래에는 바로가기 단추를 새로 �
     const shortcuts=read('src/fruit-type-shortcuts.js');
     assert(shortcuts.includes("const DEUS=FRUIT_TYPES.filter(t=>t.owner==='qingguo')"));
 });
-check('데우스 2.5 스킨은 그대로, V3 는 원작 모양 · 그림을 살리고 색 · 글꼴만 블루레몬에이드로',()=>{
+check('데우스 2.5 · V3 스킨 = 같은 테마 카드(1.0.0 시안 A), V3 배치는 원작 그대로',()=>{
     const skin=read('css/30-dem-skin.css');
     const CARD=':where(:not(.custom-dem-modules *))',TRACK=':where(:not(:has(> .custom-dem-track__grid)))',ITEM=':where(:not(.custom-dem-track__grid *))';
     assert(skin.includes(`.mes_text details.custom-dem-card${CARD},`)&&skin.includes(`:is(.custom-dem-track, .custom-dem-track-recovery)${TRACK}`)&&skin.includes(ITEM),'2.5 규칙은 무게 0 의 덧붙임으로만 V3 를 빼요');
@@ -120,8 +120,9 @@ check('데우스 2.5 스킨은 그대로, V3 는 원작 모양 · 그림을 살�
     for(const rule of bare.split('}')){const head=rule.slice(0,rule.lastIndexOf('{'));if(!/custom-dem-/.test(head)||/8\.0\.6|\.custom-dem-modules|custom-dem-track > \.custom-dem-track__(?:grid|rule)|custom-dem-track:has/.test(rule))continue;
         for(const sel of head.split(/,(?![^(]*\))/))if(/custom-dem-/.test(sel)&&!/:where\(:not\(/.test(sel))assert.fail('V3 에 닿을 수 있는 2.5 규칙: '+sel.trim().slice(-80));}
     const v3=skin.slice(skin.indexOf('/* ---------- 8.0.6 데우스 V3'),skin.indexOf('/* ---------- 폰 접기'));
-    assert(!/display:\s*none/.test(v3)&&!/background:\s*transparent/.test(v3),'V3 의 그림 · 종이 · 장면은 지우지 않아요');
-    assert(v3.includes('border-radius: 14px !important')&&v3.includes('--dem-ink: var(--salty-text)')&&v3.includes('--dem-serif: var(--salty-font-ui')&&v3.includes('border-top: 2px solid var(--salty-accent)'),'원작 색 변수 · 글꼴 자리를 테마 토큰으로 · 테마 카드 규격');
+    assert(v3.includes('.custom-dem-track > .custom-dem-track__grid .custom-dem-track__scene {')&&/custom-dem-track__scene::before \{[^}]*background: var\(--salty-accent\)/.test(v3),'해 궤도 · 해 점은 남겨요(시간 흐름)');
+    assert(v3.includes('border-radius: var(--bl-r-md, 12px) !important')&&v3.includes('border: 1px solid var(--salty-line) !important')&&v3.includes('--dem-ink: var(--salty-text)')&&v3.includes('--dem-serif: var(--salty-font-ui'),'원작 색 변수 · 글꼴 자리를 테마 토큰으로 · 테마 카드 규격(면 · 1px 선 · 모서리 12)');
+    assert(!/color-mix|box-shadow:\s*0 0|border:\s*2px/.test(v3),'빛무리 · 2px 테두리 · 이름 없는 혼색 없음');
     assert(!/--dem-serif[^;]*!important|font-family[^;]*!important/.test(v3.replace(/\/\*[\s\S]*?\*\//g,'')),'글꼴은 !important 없이 — 상태창 글자 설정이 이겨요');
     assert(!skin.includes('custom-dem-track:not(.bl-dem-shown) > .custom-dem-track__grid'),'V3 트래커는 폰에서도 원작 배치(한 줄 접기 없음)');
 });
@@ -205,11 +206,12 @@ check('미리보기 판 고르기: 테마 고르기 부품 그대로, 설정 하
 });
 check('테두리 빛 · 카드 스킨 · 이모티콘 · 색 통일을 바꾸면 표본이 바로 바뀌어요(body class · 테마 변수 감시, 닫으면 뗌)',()=>{
     const ui=read('src/fruit-type-ui.js');
-    assert.ok(ui.includes("lookWatch?.observe(document.body,{attributes:true,attributeFilter:['class','data-bl-dem-fold']})"),'body 클래스와 폰 접기 속성');
+    assert.ok(ui.includes("onThemeLook(onLook,{watch:'body.class vars'")&&ui.includes("watchDom(document.body,{attributes:['data-bl-dem-fold']"),'body 클래스와 폰 접기 속성(9.0.4 테마 색 따라가기 한 구독 · 공용 감시 허브)');
     assert.ok(ui.includes("['salty-vars','salty-dem-vars']"),'테마 변수 style 과 테두리 빛 시트(--bl-dem-glow, src/dem-glow.js) 둘 다');
     assert.ok(ui.includes("getSettings().chat?.demGlow")&&!ui.includes("getPropertyValue('--bl-dem-glow')"),'테두리 빛은 설정값으로(계산 스타일을 읽지 않음)');
-    assert.ok(ui.includes('lookWatch?.disconnect();clearTimeout(lookTimer);'),'창을 닫으면 감시를 떼요');
-    for(const cls of ['salty-dem-skin','salty-regex-noicons','salty-unify-regex']){const css=read('style.css');assert.ok(new RegExp(`body\\.salty\\.${cls}[^{]*\\.salty-preview`).test(css),`${cls} 규칙이 미리보기 자리(.salty-preview)에도 닿아요`);}
+    assert.ok(ui.includes('for(const off of lookOffs)off();clearTimeout(lookTimer);'),'창을 닫으면 감시를 떼요');
+    for(const cls of ['salty-dem-skin','salty-regex-noicons','salty-unify-regex']){const css=read('style.css')+read('src/preview.gen.css');   // 9.0.1 미리보기 전용 규칙은 src/preview.gen.css 로 떼어 둬요
+        assert.ok(new RegExp(`body\\.salty\\.${cls}[^{]*\\.salty-preview`).test(css),`${cls} 규칙이 미리보기 자리(.salty-preview)에도 닿아요`);}
     const host=read('src/fruit-type-sample.js');assert.ok(host.includes("host.className='salty-preview bl-ft-sample-host'"));
 });
 console.log(`fruit-type-sample: ${passed} passed`);

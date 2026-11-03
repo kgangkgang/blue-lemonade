@@ -21,7 +21,8 @@ export function describeDeusOption(key, preset) {
     return {title:group?.label||rows[0].data.label,text:group?rows.map(r=>`${r.data.label}: ${r.data.text}${r.same?'':' (기본 설명·현재 원문 수정됨)'}`).join('\n\n'):rows[0].data.text,
         original:rows.map(r=>`${r.data.label}\n${r.prompt.content||''}`).join('\n\n'),verified:!changed,baseline:changed};
 }
-export function installDeusOptionHelp(doc,host,readPreset) {
+// describeOther(key): 데우스가 아닌 프리셋(솔라)의 설명 — 없으면 null 을 돌려 데우스 설명으로 넘어가요.
+export function installDeusOptionHelp(doc,host,readPreset,describeOther) {
     return installFruitOptionHelp(doc,host,{scope:'#bl-deus-popover',label:'데우스 옵션 설명',
         targetOf(node){
             // Native select menus belong to the OS. Hold the row's label to read all choices.
@@ -30,6 +31,6 @@ export function installDeusOptionHelp(doc,host,readPreset) {
             if(target?.querySelector('[data-dq-focus^="entry-"]'))return null;
             return target?.closest('#bl-deus-popover')&&target.querySelector('[data-dq-focus]')?target:null;
         },
-        describe(target){return describeDeusOption(target.querySelector('[data-dq-focus]')?.dataset.dqFocus,readPreset?.());},
+        describe(target){const key=target.querySelector('[data-dq-focus]')?.dataset.dqFocus;return describeOther?.(key)||describeDeusOption(key,readPreset?.());},
     });
 }

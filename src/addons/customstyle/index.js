@@ -6,7 +6,8 @@ import { eventSource, event_types, saveSettingsDebounced } from '../../../../../
 import { extension_settings } from '../../../../../../extensions.js';
 import { ask } from '../../ask.js';   // 7.0.1 테마 확인 창 (기본 confirm 대신)
 import { isMainChatGenerating, whenMainChatIdle } from '../../main-chat-rules.js';
-import { headSignature } from './head-signature.js';   // 7.2.8 답을 받는 동안은 :root 를 읽지 않는다
+import { headSignature } from './head-signature.js';
+const VERSION = '0.1.3';   // 1.0.0 되살림: 다른 애드온 창처럼 머리에 판 알약 — manifest.json 의 원작 판과 같아요   // 7.2.8 답을 받는 동안은 :root 를 읽지 않는다
 
 // Constants and Types
 const CSS_THEME_STYLE_VAR = '--custom-theme-style-inputs';
@@ -657,8 +658,8 @@ export function openPanel(){
  customThemeManager.boot?.();
  const drawer=document.getElementById('ctsi-drawer');customThemeManager.buildUI();customThemeManager.updateCSSVariables(customThemeManager.settings.entries||{});
  const dialog=document.createElement('dialog');currentDialog=dialog;dialog.className='bl-ctsi-dialog';dialog.setAttribute('aria-label','커스텀 CSS 조절');
- dialog.innerHTML='<header><b><i class="fa-solid fa-sliders" aria-hidden="true"></i> 커스텀 CSS 조절 <span class="ext-version" hidden></span></b><button type="button" aria-label="커스텀 CSS 조절 닫기">×</button></header><p>CSS에 정의된 색·크기·텍스트 값을 입력칸으로 조절해요.</p><div class="bl-ctsi-body"></div><small>Copyright © 2025 <a href="https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs" target="_blank" rel="noopener noreferrer">IceFog72</a> · <a href="https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a></small>';
- document.body.append(dialog);fetch(new URL('./manifest.json',import.meta.url)).then(r=>r.ok?r.json():null).then(m=>{const v=dialog.querySelector('header .ext-version');if(v&&m?.version){v.textContent=`v${m.version}`;v.hidden=false;}}).catch(()=>{});/* 7.0.3 창 머리 통일: 판 알약(판은 manifest 에만) */dialog.querySelector('.bl-ctsi-body').append(drawer);dialog.querySelector('header button').onclick=()=>dialog.close();
+ dialog.innerHTML='<header><b><i class="fa-solid fa-sliders" aria-hidden="true"></i> 커스텀 CSS 조절 <span class="ext-version">v'+VERSION+'</span></b><button type="button" aria-label="커스텀 CSS 조절 닫기">×</button></header><p>CSS에 정의된 색·크기·텍스트 값을 입력칸으로 조절해요.</p><div class="bl-ctsi-body"></div><small>Copyright © 2025 <a href="https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs" target="_blank" rel="noopener noreferrer">IceFog72</a> · <a href="https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a></small>';
+ document.body.append(dialog);dialog.querySelector('.bl-ctsi-body').append(drawer);dialog.querySelector('header button').onclick=()=>dialog.close();
  dialog.addEventListener('close',()=>{holder.append(drawer);dialog.remove();currentDialog=null;},{once:true});showThemeModal(dialog);
 }
 export function mountInline(host){const button=document.createElement('button');button.type='button';button.className='salty-btn';button.textContent='커스텀 CSS 조절 열기';button.onclick=openPanel;host.replaceChildren(button);return()=>host.replaceChildren();}

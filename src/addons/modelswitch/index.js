@@ -51,7 +51,7 @@ const isOn = target => rowActive(target) ? (store().targets[target.id] ?? !(targ
 const canPick = target => rowActive(target) || canArm(target);
 const fallbackPickable = targets => targets.filter(target => isFallbackRow(target) && canPick(target));
 
-/** 6.7.2 「검열되면」 단추 (사용자 10-15 「검열되면 버튼 누르면 검열되면 쓸 애들만 전체선택」): 검열되면 줄만 모두 고르고 일반 줄은 뺀다. 이미 모두 골랐으면 모두 끈다 */
+/** 6.7.2 「검열되면」 단추: 검열되면 줄만 모두 고르고 일반 줄은 뺀다. 이미 모두 골랐으면 모두 끈다 */
 async function pickFallbacks() {
     const rows = fallbackPickable(shownTargets()), s = store();
     if (!rows.length) return;
@@ -411,7 +411,7 @@ function mount() {
         if (act === 'fallback-save') { commitFallback(); return; }
         if (act === 'fallback-cancel') { configuring = null; render(); return; }
         if (act === 'apply') applyNow();
-        // 체크 반전 (사용자 10-12 「선택된 상태로 반전 선택 가능하게 — 누르면 안 선택한 애들 선택되고 선택한 애 안 선택되게」): 지금 보이는 확장만 뒤집는다
+        // 체크 반전 (고른 것과 안 고른 것을 뒤집어요): 지금 보이는 확장만 뒤집는다
         else if (act === 'invert') { const s = store(); for (const target of shownTargets()) if (rowActive(target)) s.targets[target.id] = !isOn(target); note = ''; saveSettingsDebounced(); syncLocks(); render(); }
         else if (act === 'save') savePreset();
         else if (act === 'snap') saveState();

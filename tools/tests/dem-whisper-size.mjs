@@ -1,6 +1,6 @@
 // 10-27 속삭임 · 조용히 대사 크기 (css/55-dem-expressive.css).
 // 데우스 V3 프리셋 <style> 이 감정 칸 --whispering 에 font-size .9em · letter-spacing .04em, --quiet 에 letter-spacing .01em 을 줘서
-// 한 줄짜리 속삭임 대사가 다른 대사 · 본문보다 작고 성겨 보였다(사용자 제보). 테마는 칸의 크기 · 자간을 둘레 그대로 되돌린다.
+// 한 줄짜리 속삭임 대사가 다른 대사 · 본문보다 작고 성겨 보였다. 테마는 칸의 크기 · 자간을 둘레 그대로 되돌린다.
 // node tools/tests/dem-whisper-size.mjs <테마 루트>
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

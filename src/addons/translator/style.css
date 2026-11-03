@@ -713,7 +713,7 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons:has(> .mes_llm_tran
 .bl-translator-mounted > .inline-drawer > .inline-drawer-content{display:block!important;max-height:none!important;overflow:visible!important}
 .bl-translator-dialog{color:var(--salty-text,var(--SmartThemeBodyColor,#e1eaff));background:var(--salty-surface,#192534);border:1px solid var(--salty-line,#426180);border-radius:20px;width:min(760px,calc(100vw - 24px));max-width:calc(100vw - 24px);height:min(850px,calc(100dvh - 24px));max-height:calc(100dvh - 24px);padding:0;box-sizing:border-box;overflow:hidden}
 .bl-translator-dialog[open]{display:flex;flex-direction:column}
-.bl-translator-dialog::backdrop{background:#07101db3}
+.bl-translator-dialog::backdrop{background:var(--bl-scrim,rgba(0,6,14,.6))}
 .bl-translator-dialog > header{display:flex;align-items:center;justify-content:space-between;flex:none;padding:8px 16px;border-bottom:1px solid var(--salty-line,#426180)}
 .bl-translator-dialog > header button{width:44px;height:44px;color:inherit;background:transparent;border:0;font-size:24px;cursor:pointer}
 .bl-translator-dialog-body{overflow:auto;min-height:0;padding:12px;overscroll-behavior:contain}
@@ -737,7 +737,7 @@ body.salty .bl-translator-dialog .bl-hs-row .bl-hs-switch:focus-visible { outlin
 .llmt-settings .prompt-select-container select { flex: 1 1 11em; min-width: 0; }
 /* 용어집: 원문 칸이 반(412 에서 124px)이라 여러 표기를 늘어놓은 원문이 말줄임됐다 → 원문 1.4 : 번역 1 (줄마다 열은 그대로 맞음) */
 .llmt-gl-row, .llmt-gl-add { grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr) auto auto; }
-/* 6.2.5 고르기 창 줄은 맨 앞이 체크칸이라 따로 — 위 규칙에 같이 묶였더니 폰에서 체크칸 자리가 1.4fr 로 제일 넓어지고 원문 · 번역 칸이 오른쪽으로 밀려 잘렸다 (사용자 10-13 「용어집 UI UX 깨짐」) */
+/* 6.2.5 고르기 창 줄은 맨 앞이 체크칸이라 따로 — 위 규칙에 같이 묶였더니 폰에서 체크칸 자리가 1.4fr 로 제일 넓어지고 원문 · 번역 칸이 오른쪽으로 밀려 잘렸다 (용어집 화면이 깨지던 것) */
 @media (min-width: 601px) { .llmt-gl-pick-row { grid-template-columns: auto minmax(0, 1.4fr) auto minmax(0, 1fr) auto; } }
 @media (max-width: 600px) { .llmt-gl-pick-row { grid-template-columns: auto auto minmax(0, 1fr); } }
 
@@ -954,6 +954,9 @@ body.salty .llmt-remote-menu { border: 0; border-radius: var(--bl-r-menu, 12px);
 #llm_remote_options { display: flex; flex-direction: column; gap: 8px; }
 #llm_remote_options[hidden] { display: none; }
 #llm_remote_reset { align-self: flex-start; width: auto; }
+.llmt-context-unused { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin: 4px 0 8px; }
+.llmt-context-unused[hidden] { display: none; }
+.llmt-context-unused .menu_button { width: auto; margin: 0; }
 .llmt-remote-rest { color: var(--salty-accent, var(--SmartThemeQuoteColor)); }
 .llmt-remote-credit { display: block; margin-top: 4px; color: var(--salty-faint, var(--salty-muted, inherit)); font-size: var(--bl-fs-sub, 13px); }
 

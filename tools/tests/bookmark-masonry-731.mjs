@@ -1,5 +1,5 @@
 // 7.3.1 (북마크 1.7.1) — 그림만 격자를 읽는 차례대로: 왼쪽 → 오른쪽, 위 → 아래로 읽은 차례가 정렬 차례(처음부터 · 최근부터)와 같다.
-//   1.7.0 의 CSS columns 는 세로 먼저 차서 #3 #14 / #7 #15 / #13 처럼 보였다 (사용자 폰 화면). 비율은 그대로 · lazy · 2:3 자리 · 크게 보기 넘기는 차례 유지.
+//   1.7.0 의 CSS columns 는 세로 먼저 차서 #3 #14 / #7 #15 / #13 처럼 보였다 (폰). 비율은 그대로 · lazy · 2:3 자리 · 크게 보기 넘기는 차례 유지.
 //   node tools/tests/bookmark-masonry-731.mjs [테마 뿌리, 기본 .]
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -15,7 +15,7 @@ async function test(name, fn) {
     catch (e) { fail++; console.log('  FAIL ' + name + '\n       ' + String(e.stack || e.message || e).split('\n').slice(0, 6).join('\n       ')); }
 }
 
-// 사용자 화면과 같은 꼴: 메시지 번호 3 · 7 · 13 · 14 · 15 … 에 붙은 그림, 비율은 세로 · 가로 · 정사각 · 아주 긴 그림이 섞임
+// 실제 화면과 같은 꼴: 메시지 번호 3 · 7 · 13 · 14 · 15 … 에 붙은 그림, 비율은 세로 · 가로 · 정사각 · 아주 긴 그림이 섞임
 const RATIOS = [1.5, 0.66, 1, 1.78, 1.33, 0.56, 1.5, 2.4, 0.75, 1, 1.5, 1.25, 0.6, 1.5, 3, 1.1, 0.8, 1.5, 1.4, 0.7];
 const INDEX = [3, 7, 13, 14, 15, 18, 22, 25, 31, 33, 40, 41, 47, 52, 58, 60, 66, 71, 72, 80];
 // 칸 높이 = 그림(줄 너비 × 비율, 받기 전엔 2:3) + 테두리 2px
@@ -33,7 +33,7 @@ await test('줄 수: 폰 375 = 2줄, 좁은 폰 280 = 1줄, PC 1440 창 = 4줄 (
     assert.equal(tileColumns(0, false), 1);
 });
 
-await test('사용자 화면: 「처음부터」 #3 #7 #13 #14 #15 → 첫 줄 #3 #7, 그다음 #13 … (예전: 왼쪽 줄 3 · 7 · 13, 오른쪽 14 · 15)', () => {
+await test('실제 화면 꼴: 「처음부터」 #3 #7 #13 #14 #15 → 첫 줄 #3 #7, 그다음 #13 … (예전: 왼쪽 줄 3 · 7 · 13, 오른쪽 14 · 15)', () => {
     const { places } = layout(343, false, RATIOS.slice(0, 5));
     assert.deepEqual(places.slice(0, 2).map(p => [p.col, p.top]), [[0, 0], [1, 0]], 'the first two sit side by side at the top');
     assert.deepEqual(readingOrder(places), [0, 1, 2, 3, 4]);
@@ -75,8 +75,8 @@ await test('연결: panel.js 가 격자를 그린 뒤 놓고, 그림이 실리�
     assert.ok(!/(?:^|[\s;{])columns\s*:/.test(block) && !/break-inside/.test(block), 'no CSS columns');
     assert.match(block, /\.cg-root \.cg-tile-open img \{[^}]*width: 100%; height: auto; aspect-ratio: auto 2 \/ 3;/);
     assert.match(block, /\.cg-root \.cg-tiles\.is-masonry > \.cg-tile \{ position: absolute; \}/);
-    assert.match(read('src/addons/bookmarks/state.js'), /export const VERSION = '1\.7\.5';/);
-    assert.match(css, /--cg-css-version: "1\.7\.5";/);
+    assert.match(read('src/addons/bookmarks/state.js'), /export const VERSION = '1\.7\.6';/);
+    assert.match(css, /--cg-css-version: "1\.7\.6";/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/bookmark-masonry-731\.mjs \./);
 });
 

@@ -1,6 +1,6 @@
 import { showThemeModal } from '../../modal.js';
 import { getSettings } from '../../settings.js';
-import { ready, duplicate } from './index.js';
+import { ready, duplicate, ensureBody, bodyLoaded } from './shell.js';   // 1.0.0 극한 최적화: 껍데기 — 본체(index.js)는 처음 쓸 때
 export { ready, duplicate };
 let root, anchor, dialog, owner = null;
 function findRoot() {
@@ -34,8 +34,12 @@ function take(host) {
         anchor.after(node); owner = null; syncVisibility();
     };
 }
+// 1.0.0 극한 최적화: 본체를 처음 쓸 때 받으면 설정 칸이 확장 칸에 막 붙은 참이라 「확장 탭에 보이기」 줄(headswitch.js — 확장 칸만 훑어요)이 아직 없어요.
+//   창으로 옮기기 전에 한 번 붙여 둬요(전에는 부팅 때 붙어 있었어요). 헤드 스위치가 꺼져 있으면 아무 일도 안 해요
+const settleHeadRows = () => import('../../headswitch.js').then(m => m.refresh()).catch(() => {});
 export async function openPanel() {
-    await ready;
+    await ensureBody('설정 열기');
+    await settleHeadRows();
     if (dialog?.open) return;
     if (owner) { owner.scrollIntoView({block:'nearest'}); return; }
     if (!findRoot()) { globalThis.toastr?.error('번역 설정을 찾지 못했어요. 새로고침해 주세요.', 'LLM 번역'); return; }
@@ -51,8 +55,14 @@ export async function openPanel() {
     showThemeModal(dialog);
 }
 export function mountInline(host) {
-    const release = take(host);
-    if (release) return release;
-    host.innerHTML='<p class="salty-note">번역 설정 창이 열려 있어요. 닫은 뒤 이 탭을 다시 열어 주세요.</p>';
-    return () => host.replaceChildren();
+    if (bodyLoaded()) {
+        const release = take(host);
+        if (release) return release;
+        host.innerHTML='<p class="salty-note">번역 설정 창이 열려 있어요. 닫은 뒤 이 탭을 다시 열어 주세요.</p>';
+        return () => host.replaceChildren();
+    }
+    let cancelled = false, release = null;
+    ensureBody('설정 창').then(settleHeadRows).then(() => { if (cancelled) return; release = take(host); if (!release) host.innerHTML='<p class="salty-note">번역 설정 창이 열려 있어요. 닫은 뒤 이 탭을 다시 열어 주세요.</p>'; })
+        .catch(() => { if (!cancelled) host.innerHTML='<p class="salty-note">번역 설정을 불러오지 못했어요. 새로고침 후 다시 확인해 주세요.</p>'; });
+    return () => { cancelled = true; if (release) release(); else host.replaceChildren(); };
 }

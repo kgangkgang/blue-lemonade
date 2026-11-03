@@ -1,0 +1,11 @@
+{
+"note": "부팅 첫 화면(리그 PC 1280 · 폰 384, 고정물 full)에서 한글화 스크립트가 바로 찾은 열쇠 — tools/ko-dict-parts.mjs 가 boot 조각으로 옮겨요. outputs/opt-1000/probe-dom.mjs(__blKoDebug) 로 모았어요",
+"keys": [
+"API 연결",
+"OK",
+"SillyTavern Logo",
+"TTS 재생",
+"TTS 재생/일시정지",
+"World Info - Inclusion Group"
+]
+}

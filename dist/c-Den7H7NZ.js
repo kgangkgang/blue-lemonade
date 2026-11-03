@@ -1,0 +1,9 @@
+const d=()=>!!globalThis.document?.body?.classList?.contains("cg-previewing"),E={"“":"”",'"':'"',"「":"」","『":"』","«":"»","＂":"＂","‘":"’","„":"“"},f=new Set(['"',"＂"]),u=/[\p{L}\p{N}]/u,l=/(?:^|\s)#([0-9a-fA-F]{6})[ \t]*$/,p=new Set(["SCRIPT","STYLE","TEMPLATE","NOSCRIPT","CODE","PRE","TEXTAREA","BUTTON","SELECT","INPUT","DETAILS","SVG"]),T=new Set(["P","DIV","LI","UL","OL","DL","DT","DD","TR","TABLE","H1","H2","H3","H4","H5","H6","BLOCKQUOTE","HR","SECTION","ARTICLE","HEADER","FOOTER","ASIDE","NAV","MAIN","FIGURE","FIGCAPTION"]),L=5,S=1,h=2;function I(n){if(n.hidden===!0||n.style?.display==="none")return!0;if(typeof getComputedStyle=="function")try{return getComputedStyle(n).display==="none"}catch{}return!1}function C(n,{computed:s=!0}={}){const i=[];let e="";const o=s?I:t=>!!t.hidden||t.style?.display==="none",r=document.createTreeWalker(n,L,t=>t.nodeType===1&&(p.has(t.tagName)||o(t))?h:S);for(let t;t=r.nextNode();){if(t.nodeType===1){t.tagName==="BR"?e+=`
+`:T.has(t.tagName)&&e&&!e.endsWith(`
+
+`)&&(e+=e.endsWith(`
+`)?`
+`:`
+
+`);continue}t.nodeType===3&&(i.push({node:t,start:e.length}),e+=String(t.nodeValue||""))}return{nodes:i,flat:e}}function O(n,s){const i=/\n[ \t]*\n/g;i.lastIndex=s;const e=i.exec(n);return e?e.index:-1}function R(n,s,i,e){for(let o=n.indexOf(s,i);o>=0&&o<e;o=n.indexOf(s,o+1))if(!(s==="’"&&u.test(n[o+1]||"")))return o;return-1}function A(n){const s=[],i=n.length;let e=0;for(;e<i;){const o=n[e],r=E[o];if(!r||o==="‘"&&u.test(n[e-1]||"")){e++;continue}const t=f.has(o);let c=t?n.indexOf(`
+`,e):O(n,e);c<0&&(c=i);const a=R(n,r,e+1,c);if(a>=0){s.push({start:e,end:a+1,is:e+1,ie:a,opener:o}),e=a+1;continue}if(!/\S/.test(n.slice(c))){s.push({start:e,end:i,is:e+1,ie:i,opener:o});break}if(t){e++;continue}s.push({start:e,end:c,is:e+1,ie:c,opener:o}),e=c}return s}function N(n,s){const i=l.exec(n.slice(Math.max(0,s-12),s));return i?`#${i[1].toLowerCase()}`:null}export{T as B,E as C,u as L,N as c,d as p,A as s,C as t};

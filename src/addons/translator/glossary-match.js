@@ -1,6 +1,6 @@
 // [2.2.9] 용어집 찾기 — 원문에 나온 항목만 골라 프롬프트 줄로 만든다. index.js 에서 떼어 낸 순수 함수 (실리태번 없이 tools/tests/translator-glossary.mjs 가 부른다)
 // 2.2.9 새 것: 가타카나 표기 흔들림. 모델이 같은 이름을 クラインスタイン · クラインシュタイン 처럼 그때그때 다르게 적는데 용어집에는 한 표기만 있어서,
-// 다른 표기가 나오면 그 줄이 빠지고 그 안에 든 짧은 말(クライン → 클라인)만 들어가 「클라인슈타인」으로 옮겨졌다 (2026-10-08 사용자 제보).
+// 다른 표기가 나오면 그 줄이 빠지고 그 안에 든 짧은 말(クライン → 클라인)만 들어가 「클라인슈타인」으로 옮겨졌다.
 
 /**
  * [1.8.1] 찾기용 정규화: 소문자로, 하이픈·밑줄·가운뎃점·연속 공백은 한 칸으로.
@@ -165,10 +165,8 @@ export function glossaryLines(entries, text, { reverse = false, maxLines = 60 } 
     // [2.1.3] 긴 말 밖에서도 따로 나오면 남긴다 — "庁長室 … 庁長" 에서 庁長 줄이 빠져 짧은 말을 제멋대로 옮겼다.
     // [2.2.9] 표기 흔들림으로 찾은 긴 이름(クラインシュタイン)도 여기 들어가 그 안의 クライン 줄을 뺀다
     const longest = hits.flatMap(hit => hit.matched.map(glossaryFold)).sort((a, b) => b.length - a.length);
-    const lines = [];
-    let hasChoice = false;
+    const rows = [];
     for (const hit of hits) {
-        if (lines.length >= maxLines) break;
         const covered = hit.matched.every((form) => {
             const folded = glossaryFold(form);
             const containing = longest.filter(other => other.length > folded.length && other.includes(folded)); // 긴 것부터
@@ -180,10 +178,12 @@ export function glossaryLines(entries, text, { reverse = false, maxLines = 60 } 
         if (covered) continue;
         const from = hit.matched.join(' / ');
         const to = (reverse ? hit.sources : hit.targets);
-        if (to.length > 1) hasChoice = true;
-        lines.push(`${from} → ${to.join(' / ')}`);
+        rows.push({ line: `${from} → ${to.join(' / ')}`, choice: to.length > 1, reach: Math.max(...hit.matched.map(form => form.length)) });
     }
-    return { lines, hasChoice };
+    // 한도를 넘으면 목록 뒤쪽(전체 범위 항목)이 통째로 빠지지 않게 긴 표기부터 남겨요. 한도 안이면 순서 그대로라 문단 캐시 열쇠가 그대로예요
+    const keep = rows.length > maxLines ? new Set(rows.map((row, index) => ({ reach: row.reach, index })).sort((a, b) => b.reach - a.reach || a.index - b.index).slice(0, maxLines).map(row => row.index)) : null;
+    const kept = keep ? rows.filter((_, index) => keep.has(index)) : rows;
+    return { lines: kept.map(row => row.line), hasChoice: kept.some(row => row.choice), dropped: rows.length - kept.length };
 }
 
 /** 문단 캐시 서명에 붙일 표시: 표기 흔들림으로 찾은 이름이 있으면 '표기>항목' 목록, 없으면 '' (예전 캐시 키 그대로) */
@@ -230,11 +230,11 @@ export function glossaryLinesFor(entries, text, target, { maxLines = 60 } = {}) 
 }
 
 // ── 6.4.0 번역문 마무리 (번역기 2.4.2) ─────────────────────────────────────────────
-// 사용자 10-14 제보: Claude Haiku 5.5 가 용어집 줄(영문 이름 → 한글 이름)을 받고도 문단 묶음 하나에서 영문 이름 그대로 남겼고,
+// 10-14: Claude Haiku 5.5 가 용어집 줄(영문 이름 → 한글 이름)을 받고도 문단 묶음 하나에서 영문 이름 그대로 남겼고,
 // 속마음 줄 끝에 원문에 없는 여는 꺽쇠 「 하나를 붙였다. 프롬프트로는 100% 안 막혀 저장 전에 · 저장된 번역을 보여 줄 때 정리한다.
 // 이름 지키기는 「내 캐릭터 · 지금 캐릭터」 이름 항목만 — 일반 낱말 항목은 영어로 둔 외침 · 괄호 병기를 망가뜨려서 (독립 검증) 손대지 않는다.
 // 2.6.7 원문 칸에 라틴 이름꼴과 가타카나 표기가 같이 있는 항목(Corvin, コルヴィン → 코르빈)도 이름 — 음역이라 일반 낱말이 아니다.
-//   여러 인물이 든 카드(카드 이름 ≠ 인물 이름) · 메신저 이름표(**Corvin:** `…`)에서 영어로 남던 것 (사용자 10-16). Hell · Nectar 같은 항목은 그대로 대상 아님.
+//   여러 인물이 든 카드(카드 이름 ≠ 인물 이름) · 메신저 이름표(**Corvin:** `…`)에서 영어로 남던 것. Hell · Nectar 같은 항목은 그대로 대상 아님.
 const HANGUL_ALL = /[가-힣]/g;
 const LATIN_ALL = /[A-Za-z]/g;
 /** 라틴 이름꼴: 대문자로 시작하는 낱말(들) — Mina · Mina Park */

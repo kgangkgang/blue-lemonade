@@ -1,6 +1,6 @@
 import { maskTranslatorNotes } from './translation-notes.js';
 export { maskTranslatorNotes } from './translation-notes.js';
-import { checkpointKey } from './translation-resume.js';
+import { checkpointKey } from './resume-loader.js';
 
 // 7.3.1 문단 캐시 크기: 400문단은 70~90문단 답 4~5개뿐이라 조금 전 채팅도 밀려나 처음부터 다시 번역했다.
 //   저장소는 4000문단 · 글자 200만 자(어느 쪽이든 먼저 닿는 쪽) 안에서 최근에 쓴 것부터 남긴다(LRU — 꺼내 쓴 문단도 시각을 새로).
@@ -87,7 +87,7 @@ export async function clearSegmentCache() {
 
 const paragraphKey = (signature, body) => checkpointKey(JSON.stringify(['paragraph-v2', signature, body]));
 // 3.0.1 자리표시자([[__VAR_n__]]) 번호는 메시지 전체에서 매겨져, 앞 문단에서 보호 글(색 span · 그림 자리 …)이 하나 늘거나 줄면 뒤 문단의 번호가 모두 밀려
-//   열쇠가 바뀌었다 — 대사 한 문단을 지웠는데 뒤 문단이 전부 다시 번역됨(사용자 제보). 열쇠는 문단 안 차례(0, 1, …)로 고쳐 쓴 글 + 그 자리에 든 보호 글(protection)로 만들고,
+//   열쇠가 바뀌었다 — 대사 한 문단을 지웠는데 뒤 문단이 전부 다시 번역되던 것. 열쇠는 문단 안 차례(0, 1, …)로 고쳐 쓴 글 + 그 자리에 든 보호 글(protection)로 만들고,
 //   저장할 때 번호를 문단 안 차례로, 꺼낼 때 지금 번호로 되돌린다. 자리표시자가 없는 문단은 예전 열쇠(paragraph-v2) 그대로라 쌓인 캐시가 산다
 const VAR_RE = /\[\[__VAR_(\d+)__\]\]/g;
 export function localizePlaceholders(body) {
@@ -323,7 +323,7 @@ export function restoreParagraphBreaks(source, output) {
 
 // ── 5.6.2 원문 병기 보기(접기 · 원문 먼저 · 펼침)의 블록 마크다운 ──
 // 이 보기들은 번역문을 줄마다 <details>/<span> 으로 감싸는데, 줄 머리의 블록 표시(# 제목 · > 인용 · - 목록 · 1. 목록)와 가로줄 · 표까지
-// 감싸 버려 마크다운이 풀리고 표시가 글자 그대로 보였다 (커뮤니티 제보). 표시는 감싸개 밖에 두고(splitBlockPrefix), 줄 전체가 구조인 것
+// 감싸 버려 마크다운이 풀리고 표시가 글자 그대로 보였다. 표시는 감싸개 밖에 두고(splitBlockPrefix), 줄 전체가 구조인 것
 // (가로줄 · 제목 밑줄 · 표 · 인용 속 빈 줄)은 감싸지 않는다(structureLines). 판정은 실리태번 마크다운(showdown 2.1) 규칙을 따른다 — 보통 화면과 같은 결과가 나오게:
 //  · 목록은 줄 머리 어디서든 시작한다 (빈 줄이 없어도). 맨 바깥에서는 표시 앞 공백이 3칸까지, 열린 목록 안에서는 4칸 · 탭 들여쓰기도 하위 목록이 된다
 //  · 제목(#)은 0열에서만 (인용 표시 바로 뒤는 0열), 목록 표시 뒤의 # 는 제목이 아니다. 줄 끝의 닫는 # 들은 떼어 낸다
@@ -518,7 +518,7 @@ export function stripTrailingNote(text, source) {
     }
     return stripped ? blocks.join('').replace(/\s+$/, '') : blocks.join('');
 }
-// 6.5.3 번역 모델의 작업 메모 (사용자 10-15): 답 가운데에 「她 → 그녀. Kaito uses っす speech → Korean casual-polite … I'll use 해요체 …
+// 6.5.3 번역 모델의 작업 메모: 답 가운데에 「她 → 그녀. Kaito uses っす speech → Korean casual-polite … I'll use 해요체 …
 //   The inner thoughts (VAR_0..3) … keep as is.」 같은 계획 문단 · 줄이 섞여 번역문에 그대로 보였다. 화살표가 있고, 라틴 글자가 반 넘고,
 //   말투 · 번역 이야기 낱말이 둘 이상(또는 하나 + 한국어 말투 이름)인 덩이 · 줄만 걷는다 — 원문에 같은 꼴(화살표 + 그런 낱말)이 있으면 두지 않는다.
 const PLAN_ARROW = /→|⇒|->|=>/;
@@ -526,7 +526,7 @@ const PLAN_WORDS = /\b(?:speech|speaks?|style|tone|polite|casual|honorifics?|for
 const KO_REGISTER = /해요체|하십시오체|합쇼체|반말|존댓말|존대|높임말/;
 const planHits = text => (String(text).match(PLAN_WORDS) || []).length;
 const planLike = text => PLAN_ARROW.test(text) && (planHits(text) >= 2 || (planHits(text) >= 1 && KO_REGISTER.test(text)));
-// 2.6.8 작업 메모 줄 셋 더 (사용자 10-16 — 문단 사이에 「…sounded… translate.」 · 「… → 해요체 / 합쇼체 mix.」 · 「Keep spans and placeholders.」 가 보였고,
+// 2.6.8 작업 메모 줄 셋 더 (문단 사이에 「…sounded… translate.」 · 「… → 해요체 / 합쇼체 mix.」 · 「Keep spans and placeholders.」 가 보였고,
 //       영어 남은 줄 다시 번역이 말투 메모를 「… → 해요체 / 합쇼체 혼용. … → 반말 속마음.」 한국어 메모로 바꿔 놓았다). 번역문이 라틴 글자가 아니고 원문에 같은 글이 없을 때만:
 //   ① 반쪽 원문 + 「… translate.」 꼬리 — 꼬리 앞이 원문 글 그대로(라틴)인 줄
 //   ② 지시문 되풀이 — 「Keep spans and placeholders.」 · 「Preserve the tags as-is.」 처럼 keep · preserve · don't translate … + 태그 · 자리표시 · 서식 낱말인 라틴 줄
@@ -543,7 +543,7 @@ const foreignOut = text => {
     const other = (plain.match(/[\p{Script=Hangul}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Cyrillic}\p{Script=Thai}\p{Script=Arabic}]/gu) || []).length;
     return other >= 8 && other >= letters * 0.2;
 };
-// 2.6.9 자리표시 · 서식 지키기 메모 (사용자 10-16 — 대사 뒤에 「부분 앞뒤 placeholder 유지.」 가 붙어 보였다: 모델이 감싸개 자리표시를 빠뜨리고 메모를 붙임).
+// 2.6.9 자리표시 · 서식 지키기 메모 (대사 뒤에 「부분 앞뒤 placeholder 유지.」 가 붙어 보였다: 모델이 감싸개 자리표시를 빠뜨리고 메모를 붙임).
 //       번역 작업 낱말(placeholder · 자리표시자 · VAR · span · 마크업 …) + 지키기 낱말(유지 · 그대로 · keep …) · 대사 괄호 없음 — 줄(120자 안)은 통째로, 닫는 괄호 · 문장 끝 뒤 꼬리(80자 안)는 꼬리만
 const FORMAT_WORD = /placeholders?|플레이스\s?홀더|자리\s?표시자|\bVAR(?:_\d+)?\b|\bspans?\b|마크업|\bmarkup\b|\bhtml\b/i;
 const KEEP_WORD = /유지|보존|그대로|\bkeep\b|\bpreserve\b|\bretain\b|\bintact\b|\bas[- ]is\b|\bunchanged\b/i;
@@ -615,7 +615,7 @@ export function stripReplyWrapping(text, source) {
     return source == null ? out : stripDraftLeaks(removeSourceEcho(source, out).trim(), source).trim(); // 5.4.1 · 6.6.5 초안 · 감싸개
 }
 
-// 6.6.5 번역 모델의 초안 · 혼잣말 · 감싸개 (사용자 제보 10-15): 답 가운데에
+// 6.6.5 번역 모델의 초안 · 혼잣말 · 감싸개: 답 가운데에
 //   「쳐다보는 그녀의 정수리가 카운터 너머로 들썩이는 걸」 — let me write properly.⏎⏎<output>⏎<진짜 번역></output>
 //   처럼 초안 줄 + 영어 혼잣말 꼬리를 남기고, 다시 쓴 문단을 지어낸 <output> 태그로 감싸 보냈다. 그대로 붙어 초안 · 영어가 보였고
 //   <output> 요소가 문단을 깨뜨려 다음 대사 앞 간격 · 들여쓰기가 사라졌다. 원문과 견줘 걷는다 —
@@ -654,7 +654,7 @@ const latinMeta = (text, srcKey) => {
     const key = echoKey(plain);
     return key.length > 0 && !srcKey.includes(key);
 };
-// 2.6.4 생각 블록 · 메모 태그 (사용자 10-16 「<think>Rex uses casual-polite → Korean 해요체 …</think>렉스는 …」 처럼 말투 메모가 문단 앞에 붙어 보였다).
+// 2.6.4 생각 블록 · 메모 태그 (「<think>Rex uses casual-polite → Korean 해요체 …</think>렉스는 …」 처럼 말투 메모가 문단 앞에 붙어 보였다).
 //       원문에 그 태그가 없을 때만. 낯선 태그(원문에 없고 HTML · 감정 태그가 아닌 이름)는 안이 원문에 없는 영어 메모일 때만 걷는다.
 const THINK_NAMES = ['think', 'thinking', 'thought', 'reasoning', 'analysis', 'scratchpad', 'reflection', 'plan', 'planning', 'notes', 'note', 'translator_note', 'translation_note', 'tl_note', 'comment', 'meta'];
 const HTML_NAMES = new Set('a abbr b bdi bdo blockquote br caption cite code col colgroup dd del details dfn div dl dt em figcaption figure font h1 h2 h3 h4 h5 h6 hr i img ins kbd li mark ol p pre q rp rt ruby s samp section small span strong style sub summary sup table tbody td tfoot th thead time tr u ul var wbr center big tt strike'.split(' '));
@@ -1138,7 +1138,7 @@ const PLACEHOLDER_VARIANT = /\[{1,2}[ \t]*\/?[ \t]*_{1,2}[ \t]*(?:VAR|VARIABLE|[
 export function fixPlaceholderVariants(text) {
     return String(text ?? '').replace(PLACEHOLDER_VARIANT, (_, n) => `[[__VAR_${n}__]]`);
 }
-// 6.2.4 번역 모델이 원문에 없는 로마자 낱말 하나를 줄에 혼자 끼워 넣는다 (사용자 10-13 「Valladolid 이건 어디서 나온 거냐」 —
+// 6.2.4 번역 모델이 원문에 없는 로마자 낱말 하나를 줄에 혼자 끼워 넣는다 (원문에 없는 「Valladolid」 같은 낱말 —
 //       영어 원문 답에는 없고 한국어 번역에만 "…있었다.\n\nValladolid\n층수 표시등에…"). 번역문이 주로 한글 · 가나 · 한자일 때만,
 //       줄 전체가 로마자 낱말 하나이고 그 낱말이 원문 어디에도 없을 때만 그 줄을 지운다. 영어로 옮긴 글 · 원문에 있는 낱말(이름 · 약어)은 그대로.
 //       지운 줄 때문에 빈 줄이 겹치거나 맨 앞 · 맨 끝에 남으면 빈 줄 하나도 같이 지워 문단 수가 원문과 같게 남는다.
@@ -1288,7 +1288,7 @@ export function dropWrapQuotes(text, source) {
     });
     return changed ? lines.join('\n') : value;
 }
-// 2.5.2 빠진 대사 괄호 되살리기 (사용자 10-15): 원문 색 대사 <span style="color:…">「…」</span> 29개 중 10개를 모델이 괄호를 빼고 옮겨(프롬프트에
+// 2.5.2 빠진 대사 괄호 되살리기: 원문 색 대사 <span style="color:…">「…」</span> 29개 중 10개를 모델이 괄호를 빼고 옮겨(프롬프트에
 //   「」 를 지키라고 적혀 있어도) 테마가 대사로 못 알아봐 형광펜 · 밝은 글자색이 빠지고 원래 인라인 색(어두운 배경에서 안 보임)이 그대로 나왔다.
 //   원문과 같은 자리 줄 · 색 span 끼리 맞춰, 원문 쪽이 「…」 / 『…』 한 쌍으로 통째 감싸였는데 번역문 쪽 머리 · 끝에 그 괄호가 없으면 같은 괄호를 다시 붙인다.
 //   dropWrapQuotes(원문에 없는 감싼 괄호를 벗김)의 거울 — 원문에 없는 괄호는 만들지 않는다. 맞추는 법(둘 중 되는 것):

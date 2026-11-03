@@ -54,14 +54,16 @@ function recordVoice(job, chars, model) {
 }
 import { segmentMessage, pairSegments, colorsClash, detectLang, parseRegexLines, speechDisplay, markJoins, joinSpeech, italicCandidates } from './text.js';
 import { resolveSpeaker, canon, knownNames as learnedNames, colorOfName, ownerOfColor } from './speakers.js';
-import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned, setPersonaAuto, personaKnown, ensureStock, extraEngine, hasOwnVoice, unknownVoice, shownVoices } from './voices.js';
+import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned, setPersonaAuto, personaKnown, ensureStock, extraEngine, hasOwnVoice, unknownVoice } from './voices.js';
+export { voiceOfName, voiceListPublic } from './voice-public.js';
 import { usesTags } from './providers/elevenlabs.js';   // 6.1.8 다른 확장용 synth — 글 속 오디오 태그를 받는 모델인가
 import { isQuotaError, fallbackVoiceOf, quotaOut, tripQuota, setQuotaUntil, takeNotice, clearQuota, QF_FROM, QUOTA_NOTICE } from './quota-fallback.js';   // 8.2.5 ElevenLabs 한도가 다 차면 MiniMax 로
 import { isPaidProvider, pregenPaid } from './paid.js';   // 8.2.5 대신 읽는 줄도 미리 만들기 규칙 그대로 (유료 엔진은 pregen_paid 를 켠 사람만)
 import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../../popup.js';
 import * as cache from './cache.js';
+import { onThemeLook } from '../../../shared/theme-look.js';
 import { prepare } from './loudness.js';
-import { muteWords, muteText, mutedBlob, muteSig } from './mute.js';   // 1.6.3 단어 음소거
+import { muteTerms, muteText, mutedBlob, muteSig } from './mute.js';   // 1.6.3 단어 음소거 · 원문 ↔ 번역 표기도 같이 (muteTerms)
 import { log, scrub } from './log.js';
 import { getProvider } from './providers/index.js';
 import * as analysis from './analysis.js';
@@ -77,6 +79,9 @@ import { mixScene } from './scene-mix.js';
 import { createKeepAlive } from './keep-alive.js';   // 1.9.9 (7.0.2) 숨었을 때 줄 사이 무음으로 이어 잡기 · 뒷일 다리
 import { paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey, barNameChoice, alphaOf, luminance } from './highlight-colors.js';
 import { widenToQuotes } from './highlight-colors.js';   // 1.9.1 읽는 대사 강조를 따옴표부터 따옴표까지 (findRange)
+import { sub, msg, stripRegexes, skipTagSet, chatCtx, knownNames, segOpts, sourcesOf, safeSegment, nameKey, canonKey, mappedUid, ownerOf, sameOwnerInfo, sameOwner, lenOf, lenScore, dialogueScore, thoughtScore, alignSeq, alignLists, analysisCfg, analysisReady, cachedAnalysis, normText, looseText, analysisLookup, dialogueSpeakers, safeResolve, bindAnalysis } from './message-segments.js';   // 1.0.0 극한 최적화: 채팅 맥락 · 조각 짝 · 저장된 분석 조회 · 화자(paint.js 가 재생기 없이도 씀)
+export { alignSeq, sameOwner, dialogueSpeakers };
+bindAnalysis(analysis);   // 저장된 분석 · 바깥 메시지 · 기울임은 analysis.js 가 있을 때만(화자 색만 쓰는 가벼운 길은 없이)
 
 const TITLE = 'TTS';
 // 7.0.2 비 세 단계(1.9.8)의 가랑비 · 장대비(daily_rain_light · daily_rain_heavy)도 다리에는 빗소리(daily_rain)로 한 번 더 묻는다 — 테마 쪽 표가 새 id 를 몰라도 겹치지 않게
@@ -112,7 +117,7 @@ const listenText = (srcs = null) => {
     const from = langs.size === 1 && !langs.has('?') ? `${listen.langName([...langs][0])} ` : '';
     return `${from}${srcs.length}줄 ${to}`;
 };
-// 1.9.1 듣는 언어만 남은 준비의 첫 막대 글 — 옮길 줄이 정해지기 전엔 「번역 중」이라 하지 않는다 (사용자: 「이미 일본어인데 일본어로 번역은 왜 뜨는겨」)
+// 1.9.1 듣는 언어만 남은 준비의 첫 막대 글 — 옮길 줄이 정해지기 전엔 「번역 중」이라 하지 않는다 (이미 그 언어인데 「번역 중」이 뜨던 것)
 const PREP_TEXT = '읽을 준비 중…';
 
 // ---------- 작은 도구
@@ -163,7 +168,6 @@ function interruptible() {
     const o = { promise, fired: false, fire: () => { o.fired = true; fire(undefined); } };
     return o;
 }
-function sub(text) { try { return substituteParams(String(text || '')); } catch { return String(text || ''); } }
 function sortedJson(obj) {
     const o = {};
     for (const k of Object.keys(obj || {}).sort()) o[k] = obj[k];
@@ -190,8 +194,8 @@ export function onEnded(fn) {
 let tapRun = null;   // { gen, mesId, segs, played } — 지금 큐가 누른 줄의 것일 때 (speakSegments 가 넣고, stop · 스트리밍 덧붙임이 지운다)
 // 1.5.5 번호 → 메시지: 음수는 다른 확장이 넘긴 글(analysis.registerExternal), 그 밖엔 채팅
 // 1.5.7 효과음 넓이(sfx.level): 저장된 신호를 재생 때 거른다 — 바꿔도 분석을 다시 하거나 음성을 다시 만들지 않는다.
-//   few = 분명한 소리(strength 1)만 · normal = 1~2 · many = 전부 (3 = 불확실·비슷한 소리, 과해석일 수 있음). WAV 저장은 적어도 normal (사용자: 저장엔 효과음까지).
-//   1.6.3 개수로는 자르지 않는다 (사용자: 1,000자 채팅과 5,000자 지문이 달라 12개는 적을 수 있다) — 분석 쪽 저장 한도가 지문 길이를 따른다(analysis.sfxCap)
+//   few = 분명한 소리(strength 1)만 · normal = 1~2 · many = 전부 (3 = 불확실·비슷한 소리, 과해석일 수 있음). WAV 저장은 적어도 normal (저장에는 효과음까지).
+//   1.6.3 개수로는 자르지 않는다 (1,000자 채팅과 5,000자 지문이 달라 12개는 적을 수 있다) — 분석 쪽 저장 한도가 지문 길이를 따른다(analysis.sfxCap)
 const SFX_LEVELS = { few: { strength: 1 }, normal: { strength: 2 }, many: { strength: 3 } };
 function sfxCues(mesId, { forExport = false } = {}) {
     const saved = cachedAnalysis(mesId);
@@ -205,7 +209,6 @@ function sfxCues(mesId, { forExport = false } = {}) {
     const manual = analysis.manualSfx(mesId).filter(m => !auto.some(c => c.after === m.after && c.id === m.id));
     return manual.length ? [...auto, ...manual].sort((a, b) => a.after - b.after) : auto;
 }
-const msg = (id) => (Number.isInteger(id) && id < 0 ? analysis.externalMessage(id) : chat[id]);
 const nowMs = () => (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now());
 function emitState() {
     try { document.dispatchEvent(new CustomEvent('lemon-voice:state', { detail: { playing: isPlaying(), paused, mesId: currentMesId() } })); } catch { /* 무시 */ }
@@ -239,20 +242,8 @@ function applyPron(text, s) {
     for (const r of pronRules(s.pron_dict)) t = t.replace(r.re, r.to);
     return t;
 }
-let stripMemo = { src: null, list: [] };
-function stripRegexes(src) {
-    src = String(src || '');
-    if (stripMemo.src === src) return stripMemo.list;
-    stripMemo = { src, list: parseRegexLines(src) };   // index.js · speakers.js 와 같은 해석
-    return stripMemo.list;
-}
-let skipMemo = { src: null, set: new Set() };
-function skipTagSet(src) {
-    src = String(src || '');
-    if (skipMemo.src === src) return skipMemo.set;
-    skipMemo = { src, set: new Set(src.split(',').map(x => x.trim().toLowerCase()).filter(Boolean)) };
-    return skipMemo.set;
-}
+/** 단어 음소거가 읽는 글(발음 사전 뒤)의 표기도 찾게 — mute.js muteTerms 에 넘기는 발음 사전 함수 */
+const pronOf = (s) => (t) => applyPron(t, s);
 
 // ---------- 채팅 맥락
 /** 1.9.7 /sys 해설의 보낸 쪽 이름이 기본값인가 — 실리태번 기본 'System' · 이 채팅의 내레이터 이름(chat_metadata.narrator_name) · 빈 이름 · 'Narrator' · '내레이터' */
@@ -263,222 +254,7 @@ function isNarratorName(name) {
     try { meta = String(getContext()?.chatMetadata?.narrator_name || '').trim().toLowerCase(); } catch { meta = ''; }
     return n === 'system' || n === 'narrator' || n === '내레이터' || (!!meta && n === meta);
 }
-function chatCtx(mes) {
-    const ctx = getContext();
-    const userName = ctx.name1 || 'User';
-    const charName = mes?.is_user ? (ctx.name2 || '') : (mes?.name || ctx.name2 || '');
-    return { ctx, userName, charName };
-}
-function knownNames(ctx, s) {
-    const set = new Set();
-    for (const n of Object.keys(s.char_map || {})) set.add(n);
-    for (const v of s.voices || []) { set.add(v.name); for (const a of v.aliases || []) set.add(a); }
-    if (ctx.name1) set.add(ctx.name1);
-    if (ctx.name2) set.add(ctx.name2);
-    if (ctx.groupId) {
-        const g = (ctx.groups || []).find(x => x.id == ctx.groupId);
-        for (const av of g?.members || []) { const c = (ctx.characters || []).find(x => x.avatar === av); if (c?.name) set.add(c.name); }
-    }
-    try { for (const n of learnedNames() || []) set.add(n); } catch { /* 채팅 메타가 없으면 넘어감 */ }   // 이 채팅에서 배운 이름·팔레트 별명
-    return [...set].filter(Boolean);
-}
-/**
- * 조각 나누기 설정. readThoughts: 속마음 길이 '건너뛰기'여도 속마음 글을 조각으로 (누른 속마음 읽기 전용 — speakSegments 만 씀).
- * 자동 읽기·이어쓰기·스트리밍은 늘 설정의 길 그대로 (index.js segOpts 와 조각 수가 같아야 이어쓰기 자리가 맞음)
- */
-function segOpts(mes, s, final, readThoughts = false) {
-    const { ctx, userName, charName } = chatCtx(mes);
-    const routes = s.routes || {};
-    return {
-        skipTags: skipTagSet(s.skip_tags), skipCode: !!s.skip_codeblocks, stripRegex: stripRegexes(s.strip_regex),
-        userName, charName, knownNames: knownNames(ctx, s), final, paragraphs: s.join_paragraph !== false,   // 1.9.1 문단 정보 (한 문단 이어 읽기 — 조각 수는 그대로, 끄면 1.9.0 그대로)
-        routes: readThoughts && (!routes.thought || routes.thought === 'skip') ? { ...routes, thought: 'character' } : routes,
-    };
-}
-/** 메시지의 글 두 벌: 원문 세그먼트 + 번역문 세그먼트(있으면, 원문과 짝 맞춤). 스트리밍 중엔 원문만.
- *  6.9.6 preview (대사 누르기 · 이어 듣기만): 번역 중 미리 보기가 그려져 있으면 그 글을 번역문으로 (translation.shownDisplay) → 돌려주는 preview: true */
-function sourcesOf(mes, s, { final = true, text = null, readThoughts = false, preview = false } = {}) {
-    const original = sub(text != null ? text : mes.mes);
-    const opts = segOpts(mes, s, final, readThoughts);
-    const orig = safeSegment(original, opts);
-    let disp = null, shownPreview = false;
-    if (final && text == null) {
-        const shown = typeof translation.shownDisplay === 'function' ? translation.shownDisplay(mes, { preview }) : { text: mes.extra?.display_text, preview: false };
-        const d = shown.text;
-        if (typeof d === 'string' && d.trim() && d !== mes.mes) {
-            try { disp = pairSegments(orig, safeSegment(sub(speechDisplay(d)), opts)); } catch { disp = null; }
-            shownPreview = !!disp && shown.preview;
-        }
-    }
-    // 1.9.1 같은 문단에서 서술로만 끊긴 대사 · 말 기울임 묶음 (finishJobs join 이 같은 목소리일 때 잇는다). 원문 · 번역문 표시가 섞이지 않게 앞글자를 달리
-    if (s.join_paragraph !== false) {
-        if (text == null) { try { analysis.applyMessageItalics(mes, orig, disp); } catch { /* 분석 없음 */ } }   // 대사 분석이 가른 기울임(말 · 속마음 · 서술 + 주인) — 없으면 이름 규칙
-        markJoins(orig, s.routes || {}, 'o');
-        if (disp) markJoins(disp, s.routes || {}, 'd');
-    }
-    return { orig, disp, preview: shownPreview };
-}
-function safeSegment(text, opts) {
-    try { return segmentMessage(text, opts) || []; } catch (e) { log('err', `세그먼트 실패: ${String(e?.message || e).slice(0, 40)}`); return []; }
-}
-/** 이름 비교용: 소문자 · 빈칸 없음 · 별명표를 거친 이름 */
-const nameKey = (n) => String(n || '').trim().toLowerCase().replace(/\s+/g, '');
-function canonKey(n) { try { return nameKey(canon(n) || n); } catch { return nameKey(n); } }
-/** 이름에 정해 둔 목소리 uid (연결표 → 목소리 이름·다른 이름 — 기본 목소리로 새지 않게) */
-function mappedUid(n) {
-    const s = settings();
-    const map = s.char_map || {};
-    for (const k of [nameKey(n), canonKey(n)]) {
-        if (!k) continue;
-        const key = Object.keys(map).find(x => nameKey(x) === k || canonKey(x) === k);
-        if (key && map[key]) return String(map[key]);
-        const v = (s.voices || []).find(x => [x.name, ...(x.aliases || [])].some(y => nameKey(y) === k));
-        if (v?.uid) return String(v.uid);
-    }
-    return '';
-}
-/** 이름 → 비교할 것 (이름 · 별명표 이름 · 연결표 목소리). 이름이 없으면 null */
-function ownerOf(n) {
-    const k = nameKey(n);
-    return k ? { k, c: canonKey(n), u: mappedUid(n) } : null;
-}
-/** 두 주인이 같은 사람인가: true · false · null (한쪽이라도 이름이 없음) — 이름 · 별명표 · 연결표의 같은 목소리 (이름 = 별명) */
-function sameOwnerInfo(x, y) {
-    if (!x || !y) return null;
-    return x.k === y.k || x.c === y.c || (!!x.u && x.u === y.u);
-}
-export const sameOwner = (a, b) => sameOwnerInfo(ownerOf(a), ownerOf(b));
-const lenOf = (x) => String(x?.text || '').length;
-/** 길이 점수: 이 메시지의 번역문/원문 길이 비로 고른 뒤 0.5~2 배 안이면 +1, 0.33~3 배 밖이면 −2 */
-function lenScore(o, d, ratio) {
-    const a = lenOf(o) * ratio, b = lenOf(d);
-    if (!a || !b) return 0;
-    const r = b / a;
-    return r >= 0.5 && r <= 2 ? 1 : r < 1 / 3 || r > 3 ? -2 : 0;
-}
-/** 대화문 짝 점수: 같은 색 +3 · 다른 색 −4 · 둘 다 색 없음 +1 · 같은 이름 힌트 +1 · 길이 */
-function dialogueScore(o, d, ratio, own) {
-    let sc = 0;
-    if (o.color && d.color) sc += o.color === d.color ? 3 : -4;
-    else if (!o.color && !d.color) sc += 1;
-    if (sameOwnerInfo(own(o), own(d)) === true) sc += 1;
-    return sc + lenScore(o, d, ratio);
-}
-/** 속마음 짝 점수: 같은 주인 +3 · 다른 주인 −4 · 길이 */
-function thoughtScore(o, d, ratio, own) {
-    const same = sameOwnerInfo(own(o), own(d));
-    return (same === true ? 3 : same === false ? -4 : 0) + lenScore(o, d, ratio);
-}
-/**
- * 1.2.4: 개수가 다른 갈래의 짝 — 차례를 지키는 맞춤 (Needleman–Wunsch, 빈칸 −1). 점수가 0 보다 큰 짝만 [원문 번호, 번역문 번호].
- * 원문에만 있는 영어 표지판 "for private rest only" · 번역문에만 생긴 ‘…’ 같은 한두 줄 때문에 그 메시지의 모든 대사가 번역 글로 읽히지 않게
- */
-export function alignSeq(a, b, score, gap = -1) {
-    const n = a.length, m = b.length;
-    const F = Array.from({ length: n + 1 }, () => new Float64Array(m + 1));
-    const P = Array.from({ length: n + 1 }, () => new Uint8Array(m + 1));   // 1 짝 · 2 원문만 · 3 번역문만
-    const S = Array.from({ length: n }, (_, i) => Array.from({ length: m }, (_, j) => score(a[i], b[j])));
-    for (let i = 1; i <= n; i++) { F[i][0] = i * gap; P[i][0] = 2; }
-    for (let j = 1; j <= m; j++) { F[0][j] = j * gap; P[0][j] = 3; }
-    for (let i = 1; i <= n; i++) {
-        for (let j = 1; j <= m; j++) {
-            const d = F[i - 1][j - 1] + S[i - 1][j - 1], u = F[i - 1][j] + gap, l = F[i][j - 1] + gap;
-            if (d >= u && d >= l) { F[i][j] = d; P[i][j] = 1; } else if (u >= l) { F[i][j] = u; P[i][j] = 2; } else { F[i][j] = l; P[i][j] = 3; }
-        }
-    }
-    const out = [];
-    for (let i = n, j = m; i > 0 || j > 0;) {
-        const p = P[i][j];
-        if (p === 1) { if (S[i - 1][j - 1] > 0) out.push([i - 1, j - 1]); i--; j--; } else if (p === 2) i--; else j--;
-    }
-    return out.reverse();
-}
-/**
- * 원문↔번역문 세그먼트 짝: text.js 가 seg.src 를 붙여 줬으면 그대로, 없으면 갈래별 순번(개수가 같을 때).
- * 1.2.4: 대화문 · 속마음은 개수가 달라도 (대화문은 같은데 차례 짝이 색과 부딪칠 때도) 색 · 주인 · 길이로 차례를 지켜 맞춘다 (alignSeq) — 서술 · 행동은 전처럼 같을 때만
- */
-function alignLists(orig, disp) {
-    const dispOf = new Map(), origOf = new Map();
-    if (!disp) return { dispOf, origOf };
-    let any = false;
-    for (const d of disp) {
-        if (d?.src && typeof d.src === 'object') { any = true; dispOf.set(d.src, d); origOf.set(d, d.src); }
-    }
-    if (any) return { dispOf, origOf };
-    for (const kind of ['dialogue', 'narration', 'action', 'thought']) {
-        const a = orig.filter(x => x.kind === kind && x.text), b = disp.filter(x => x.kind === kind && x.text);
-        const memo = new Map();
-        const own = (x) => { if (!memo.has(x)) memo.set(x, ownerOf(x.speakerHint)); return memo.get(x); };
-        // 수가 같아도 대화문의 차례 짝이 색과 부딪치면 한 줄씩 밀린 것 → 맞춤으로. 속마음은 수가 같으면 차례대로 (번역기가 이름을 바꿔도 — 화면 "캐릭터" → Character)
-        const clash = a.length === b.length && kind === 'dialogue' && colorsClash(a, b);
-        if (a.length === b.length && !clash) { a.forEach((o, i) => { dispOf.set(o, b[i]); origOf.set(b[i], o); }); continue; }
-        if (!a.length || !b.length || (kind !== 'dialogue' && kind !== 'thought')) continue;
-        const la = a.reduce((n, x) => n + lenOf(x), 0), lb = b.reduce((n, x) => n + lenOf(x), 0);
-        const ratio = la && lb ? lb / la : 1;
-        const fn = kind === 'dialogue' ? dialogueScore : thoughtScore;
-        for (const [i, j] of alignSeq(a, b, (o, d) => fn(o, d, ratio, own))) { dispOf.set(a[i], b[j]); origOf.set(b[j], a[i]); }
-    }
-    return { dispOf, origOf };
-}
 
-// ---------- 대사 분석 (analysis.js) · 번역 기다리기 (translation.js)
-function analysisCfg(s) { return s.analysis && typeof s.analysis === 'object' ? s.analysis : null; }
-/** 분석 엔진이 쓸 수 있는 상태인가: analysis.engineReady 가 있으면 그 판단(compat 은 주소·키·모델, st 는 generateRaw, provider 는 공급자·모델·키), 없으면 키만 봄 */
-function analysisReady(s) {
-    const a = analysisCfg(s);
-    if (!a) return false;
-    if (typeof analysis.engineReady === 'function') { try { return !!analysis.engineReady(a); } catch { return false; } }
-    return (a.engine || 'compat') !== 'compat' || String(a.key || '').trim() !== '';
-}
-/** 저장된 분석만 (네트워크 없음). 글이 바뀌었으면 analysis 쪽이 null 을 준다 */
-function cachedAnalysis(mesId) {
-    if (!Number.isInteger(mesId) || !msg(mesId)) return null;
-    try { const a = analysis.getAnalysis(mesId); return a && Array.isArray(a.segs) ? a : null; } catch { return null; }
-}
-// 6.3.8 '...' 와 '…'(실리태번 마크다운이 화면에 바꿔 그림) · 줄임표 여럿을 같게 — 누른 화면 글이 원문 짝을 찾게
-const normText = (t) => String(t || '').replace(/\.\.\./g, '…').replace(/[…⋯]+/g, '…').replace(/[\s"“”「」『』«»‘’＂~〜～]+/g, '').toLowerCase();   // 1.9.1 물결표 (마크다운 · 조판이 화면에서 바꾸거나 지움)
-/** 1.9.1 느슨한 비교: 문장부호 · 기호를 모두 뺀 글 — 누른 화면 글과 저장된 글이 문장부호만 다를 때 (그래도 원문 짝을 찾아 번역문을 다시 옮겨 읽지 않게) */
-const looseText = (t) => normText(t).replace(/[\p{P}\p{S}]/gu, '');
-/**
- * 조각 → 분석 결과 한 줄. 분석의 i 는 원문 대화문 순번.
- * 원문 조각은 (순번, 원문 글)로 analysis.findSeg 에 묻는다 (대사 해시 → 순번; findSeg 가 없으면 개수가 같을 때 순번, 아니면 글 일치).
- * 번역문 조각은 짝(origOf)으로 원문을 찾고, 즉석 조각(대사 클릭)은 글로 화면·원문 조각을 찾는다 (못 찾으면 seg.dialogueIndex 순번)
- */
-function analysisLookup(a, orig, disp, origOf) {
-    if (!a) return () => null;
-    const dial = (orig || []).filter(x => x?.kind === 'dialogue' && x.text);
-    const idxOf = new Map(dial.map((d, i) => [d, i]));
-    const dispDial = (disp || []).filter(x => x?.kind === 'dialogue' && x.text);
-    const byIndex = a.segs.length === dial.length;
-    const at = new Map();
-    for (const g of a.segs) if (g && Number.isInteger(g.i)) at.set(g.i, g);
-    const byText = (n) => {
-        for (const g of a.segs) {
-            if (!g) continue;
-            const cands = [g.src, g.orig, g.text?.src, ...Object.values(g.text && typeof g.text === 'object' ? g.text : {})];
-            if (cands.some(c => typeof c === 'string' && normText(c) === n)) return g;
-        }
-        return null;
-    };
-    const find = (i, text) => {
-        if (typeof analysis.findSeg === 'function') { try { return analysis.findSeg(a, i, text) || null; } catch { return null; } }
-        if (byIndex && Number.isInteger(i)) return at.get(i) || null;
-        const n = normText(text);
-        return n ? byText(n) : null;
-    };
-    return (seg) => {
-        if (!seg || seg.kind !== 'dialogue' || !seg.text) return null;
-        let o = idxOf.has(seg) ? seg : (origOf?.get(seg) || null);
-        const n = normText(seg.text);
-        if (!o && n) {
-            const d = dispDial.find(x => normText(x.text) === n);
-            o = (d && origOf?.get(d)) || dial.find(x => normText(x.text) === n) || null;
-        }
-        if (o) return find(idxOf.get(o), o.text);
-        const di = Number.isInteger(seg.dialogueIndex) && seg.dialogueIndex >= 0 ? seg.dialogueIndex : undefined;
-        return find(di, seg.text);
-    };
-}
 /** 이 메시지의 대사 작업에 분석을 얹기: 감정(태그보다 우선) · 목소리 원어 번역문(합성 글만). 1.4.4 듣는 언어를 골랐으면(listening) 원어 번역문은 쓰지 않는다 */
 function applyAnalysis(job, aseg, an, s, listening = false) {
     if (!aseg || !an) return;
@@ -572,43 +348,6 @@ async function runAnalysis(mesId, mes, { signal, cancelled, force = false } = {}
 const gaveUp = new WeakMap();
 const swipeOf = (mes) => Number(mes?.swipe_id) || 0;
 
-/**
- * 6.2.3 색 없는 대사에 화자 색 (paint.js): 화면 목록(번역문이 있으면 번역문)의 대화문마다 재생기와 같은 화자 [{ text, color, name, source }].
- * source = resolveSpeaker 의 것('learned' · 'palette' · 'user' · 'hint' · 'sender'), 'analysis' = 대사 분석의 화자 찾기가 고른 화자.
- * 'sender' = 색 · 이름표 · 분석으로 못 정해 보낸 쪽 이름으로 떨어진 줄. 저장된 분석만 본다 (통신 없음)
- */
-export function dialogueSpeakers(mesId) {
-    const s = settings();
-    const mes = msg(mesId);
-    if (!mes || mes.is_user || mes.is_system) return [];
-    const { orig, disp } = sourcesOf(mes, s, { final: true });
-    const { origOf } = alignLists(orig, disp);
-    const an = analysisCfg(s);
-    const aseg = an?.enabled && an.speaker !== false ? analysisLookup(cachedAnalysis(mesId), orig, disp, origOf) : () => null;
-    const { charName, userName } = chatCtx(mes);
-    const rctx = { mes, charName, userName };
-    const out = [];
-    for (const seg of disp || orig) {
-        if (!seg || seg.kind !== 'dialogue' || !seg.text) continue;
-        const r = safeResolve(seg, rctx);
-        let { name, source } = r, flag = typeof r.isUser === 'boolean' ? r.isUser : null;
-        if (source === 'sender') {
-            const g = aseg(seg);
-            const sp = typeof g?.speaker === 'string' ? g.speaker.trim() : '';
-            if (sp && sp !== '?') { name = sp; source = 'analysis'; flag = null; }
-        }
-        // 1.9.1 그래도 보낸 쪽이면 그 문단 서술에 처음 나온 아는 이름 (재생기 buildJobs 와 같게. 화면용이라 목소리는 고르지 않는다 — 엑스트라 배정이 생기지 않게)
-        if (source === 'sender' && seg.paraName) {
-            const p = safeResolve({ speakerHint: seg.paraName }, rctx);
-            if (p.source === 'hint' && p.name) { name = p.name; source = 'paragraph'; flag = typeof p.isUser === 'boolean' ? p.isUser : null; }
-        }
-        // 6.3.6 뒤 고침: 재생이 「나」로 읽는 줄인가 — 읽을 때(speakSegments 의 isUser)와 같은 판단 (색 · 별명 · 이름 다리로 찾은 내 다른 이름도). 이름 창은 이 줄을 뺀다
-        const said = /^\{\{user\}\}$/i.test(String(name || '')) ? String(userName || '') : String(name || '');
-        const isUser = flag ?? (source === 'user' || said.toLowerCase() === String(userName || '').toLowerCase());
-        out.push({ text: seg.text, color: seg.color || null, name: String(name || ''), source, isUser });
-    }
-    return out;
-}
 
 /**
  * 6.2.3 색 없는 대사에 화자 색 (paint.js): 화자를 모르는 색 없는 대사가 있는 답장의 대사 분석. 저장된 게 있으면 그것, 없으면 재생기가 읽을 때와
@@ -699,8 +438,8 @@ function needsWait(mesId, mes, s, { force, noWait }) {
 
 // ---------- 작업 만들기
 function emotionFor(seg, s) {
+    if (seg.kind === 'thought') return s.thought_emotion === 'auto' ? '' : 'whisper';   // 1.3.1 속마음 '일반' = 엔진이 글을 보고 · 대사 태그 스위치와 따로 먹어요
     if (!s.emotion_from_tags) return '';
-    if (seg.kind === 'thought') return s.thought_emotion === 'auto' ? '' : 'whisper';   // 1.3.1 속마음 '일반' = 엔진이 글을 보고
     const tags = Array.isArray(seg.tags) ? seg.tags : [];
     for (let i = tags.length - 1; i >= 0; i--) {           // 안쪽 태그가 우선
         const t = String(tags[i]).toLowerCase();
@@ -716,10 +455,6 @@ function routeFor(kind, isUser, ownMessage, routes) {
         return r === 'skip' ? 'skip' : r === 'narrator' ? 'narrator' : 'user';
     }
     return routes[kind] || 'skip';
-}
-function safeResolve(seg, ctx) {
-    try { const r = resolveSpeaker(seg, ctx); if (r?.name) return r; } catch { /* 아래 기본값 */ }
-    return { name: ctx.mes?.name || ctx.charName, source: 'sender' };
 }
 /**
  * 기준 목록과 시작 번호. startSeg 는 원문 조각 번호 → 번역문을 읽을 때는 짝이 되는 번역문 번호로 옮긴다.
@@ -963,7 +698,7 @@ function fitShout(j) {
  *   (속삭임 속마음 · 2.6 모델 · 태그 없는 감정은 요청이 '보통'과 같으니 키도 같게 — 이미 만든 소리를 다시 사지 않게)
  */
 function fitStrength(j, s) {
-    // 1.4.0 목소리마다 감정 세기 (목소리 편집 → 감정 세기) — 없으면 전체 설정 (사용자: 다른 애들은 차분하게, 몇 사람은 감정 표현 확실하게)
+    // 1.4.0 목소리마다 감정 세기 (목소리 편집 → 감정 세기) — 없으면 전체 설정 (인물마다 차분하게 · 감정 표현 크게를 따로)
     const own = j.voice && j.voice.strength;
     const k = own === 'weak' || own === 'normal' || own === 'strong' ? own : s.emotion_strength;
     if (k === 'weak' && j.emotion !== 'whisper') j.emotion = '';
@@ -1024,12 +759,12 @@ function cutAtSentence(text, room) {
  * merge=false: 줄마다 따로 (6.4.2 모든 읽기 — 탭 · 미리 만들기와 같은 키), quiet = 안내 없이 (미리 만들기)
  * join=true: 1.9.1 같은 문단 묶음만 잇는다 (canJoin · joinSpeech — 쉼표로 끝난 조각 뒤는 띄어쓰기 하나)
  */
-function finishJobs(jobs, s, { merge = true, quiet = false, join = false } = {}) {
+function finishJobs(jobs, s, { merge = true, quiet = false, join = false, budget = null } = {}) {   // budget: 답장 오는 동안 읽기가 쓰고 남은 글자
     const ready = [];
     for (const j of jobs) {
         j.provider = getProvider(j.voice.provider) || null;
         if (!j.provider) { if (!quiet) toastOnce(`엔진을 찾을 수 없어요: ${j.voice.provider}`, 'error'); continue; }
-        { const w = muteWords(s.mute_words); if (w.length && (s.mute_mode === 'text' || j.provider.caps?.blob === false)) j.text = muteText(j.text, w); }   // 1.6.3 다시 만들기(text) · 브라우저 내장(소리 파일 없음): 글에서 뺀다 → 캐시 열쇠(아래 keyOf)가 바뀌어 그 줄만 새로. 모든 길(자동 읽기 · 누름 · 소리 대본 · 시험)이 여길 지난다
+        { const w = muteTerms(s, pronOf(s)); if (w.length && (s.mute_mode === 'text' || j.provider.caps?.blob === false)) j.text = muteText(j.text, w); }   // 1.6.3 다시 만들기(text) · 브라우저 내장(소리 파일 없음): 글에서 뺀다 → 캐시 열쇠(아래 keyOf)가 바뀌어 그 줄만 새로. 모든 길(자동 읽기 · 누름 · 소리 대본 · 시험)이 여길 지난다
         j.params = paramsFor(j.provider, j.voice);
         if (j.emotion0 === undefined) { j.emotion0 = j.emotion; j.loud0 = !!j.loud; }   // 8.2.5 엔진에 맞추기 전 감정 (한도 초과로 MiniMax 로 바꿀 때 다시 맞춤 — swapToAlt)
         fitShout(j);
@@ -1060,7 +795,8 @@ function finishJobs(jobs, s, { merge = true, quiet = false, join = false } = {})
         const pieces = splitByLimit(j.text, Number(j.provider.maxChars) || 5000);
         for (const p of pieces) chunks.push(pieces.length === 1 ? j : { ...j, text: p, parts: partsIn(j.parts, p), audio: null, ctrl: null });
     }
-    const max = Math.max(0, Number(s.max_chars) || 0);
+    const cap = Math.max(0, Number(s.max_chars) || 0), max = budget ?? cap;
+    if (budget !== null && budget <= 0) { if (chunks.length && !quiet) toastOnce(`${cap}자를 넘는 뒷부분은 읽지 않아요`, 'warning'); return []; }
     const out = [];
     let total = 0, cut = false;
     for (const j of chunks) {
@@ -1073,7 +809,7 @@ function finishJobs(jobs, s, { merge = true, quiet = false, join = false } = {})
         total += j.text.length;
         out.push(j);
     }
-    if (cut && !quiet) toastOnce(`${max}자를 넘는 뒷부분은 읽지 않아요`, 'warning');
+    if (cut && !quiet) toastOnce(`${cap}자를 넘는 뒷부분은 읽지 않아요`, 'warning');
     for (const j of out) j.key = keyOf(j);
     return out;
 }
@@ -1247,13 +983,13 @@ let lastTapMs = null;
  */
 export function prepOpts(job, s) {
     const v = job.voice || {};
-    return { normalize: !!s.normalize, targetLufs: Number(s.target_lufs) || -16, gainDb: Number(v.gainDb) || 0, autoGainDb: Number(v.autoGainDb) || 0, dethump: s.dethump !== false, mute: muteSig(job.text, s) };   // mute: 1.6.3 이 글에 걸리는 음소거 목록의 서명 ('' = 없음)
+    return { normalize: !!s.normalize, targetLufs: Number(s.target_lufs) || -16, gainDb: Number(v.gainDb) || 0, autoGainDb: Number(v.autoGainDb) || 0, dethump: s.dethump !== false, mute: muteSig(job.text, s, pronOf(s)) };   // mute: 1.6.3 이 글에 걸리는 음소거 목록의 서명 ('' = 없음)
 }
 export const prepKey = (key, o) => `${key}|${o.normalize ? 1 : 0}|${o.targetLufs}|${o.gainDb}|${o.autoGainDb}|${o.dethump === false ? 0 : 1}|${o.mute || ''}`;
 /** 1.6.3 소리에서 말을 지운다 (설정 mute_words · audio 모드 · 이 글에 그 말이 있을 때만). 시간표(align)가 있으면 정확히, 없으면 어림. 못 하면 원본 */
 async function muteInto(job, blob, align, s = settings(), key = job.key) {
-    if (!muteSig(job.text, s)) return blob;
-    try { return (await mutedBlob(blob, { text: job.text, words: muteWords(s.mute_words), align: align || null, key })) || blob; } catch { return blob; }
+    if (!muteSig(job.text, s, pronOf(s))) return blob;
+    try { return (await mutedBlob(blob, { text: job.text, words: muteTerms(s, pronOf(s)), align: align || null, key })) || blob; } catch { return blob; }
 }
 /** 음량을 골라 prepared 에 (이미 있으면 그대로) → { blob, lufs } */
 async function prepareInto(job, raw, lufs, s = settings(), align = null) {
@@ -1521,17 +1257,6 @@ export const isInflight = (key) => inflight.has(key);
 // 다른 확장이 자기 화면에서 TTS 목소리로 소리만 받는다 (일반 API). 재생 · 막대 · 강조 없음.
 // TTS 의 엔진 · 키 · 목소리별 설정(세기 · 모델) · 발음 사전 · 음소거 낱말 · 음량 고르기 · 캐시를 그대로 쓴다 (채팅 읽기와 같은 finishJobs → ensureAudio).
 const bridgeErr = (code, message) => Object.assign(new Error(message), { code });
-const pubVoice = (v) => (v ? { uid: v.uid, name: v.name, provider: v.provider, lang: v.lang || '' } : null);
-/** 화자 이름 → 목소리 (연결표 · 엑스트라 자동 · 내 목소리 · 기본 목소리 — 채팅 읽기와 같은 규칙). 없으면 null */
-export function voiceOfName({ name = '', isUser = false } = {}) {
-    if (!runtimeEnabled()) return null;
-    try { return pubVoice(voiceFor(String(name || '').trim(), { isUser: !!isUser, kind: 'dialogue' })); } catch { return null; }
-}
-/** 목록 보기용: 지금 쓸 수 있는 목소리 [{ uid, name, provider, lang, group }] */
-export function voiceListPublic() {
-    if (!runtimeEnabled()) return [];
-    try { return shownVoices().map(v => ({ ...pubVoice(v), group: v.group || '' })); } catch { return []; }
-}
 /**
  * 글 → 소리 (재생하지 않음). → { audio: ArrayBuffer, type, voice: { uid, name, provider } }
  * 실패: Error.code = 'disabled'(TTS 꺼짐) | 'no-voice'(목소리 없음) | 'engine'(엔진 · 키 · 네트워크 · 소리 파일을 못 주는 엔진) | 'aborted'
@@ -1795,7 +1520,7 @@ async function playAudio(a, job, ir) {
     }
 }
 // 1.3.8 이번 읽기에서 안 되는 엔진 (키 문제 · 직접 입력 서버가 꺼짐): 그 엔진 줄만 건너뛰고 다른 엔진 줄은 읽는다.
-//   사용자 제보 (10-08): MiniMax 직접 입력 서버(집 PC)가 꺼져 한 줄이 실패하자 메시지 전체가 멈춰 ElevenLabs 줄도 안 읽혔다.
+//   MiniMax 직접 입력 서버가 꺼져 한 줄이 실패하자 메시지 전체가 멈춰 ElevenLabs 줄도 안 읽혔다.
 //   stop() · 새 읽기 · 큐가 끝나면 비운다
 const deadEngines = new Set();
 // 1.3.8 스트리밍 읽기: 조각(청크)마다 큐가 비었다 다시 차서 위 표가 지워진다 → 그 답장 동안은 따로 기억 (꺼진 서버를 조각마다 다시 기다리지 않게).
@@ -2262,7 +1987,7 @@ function speakNow(mesId, mes, { swipe, text, from, exclude, force, fromStream, h
     const s = settings();
     const built = buildJobs(mesId, mes, sourcesOf(mes, s, { final: true }), { startSeg: from, final: true, exclude });
     const staged = resolveScript(mes, []) !== null || (s.sfx?.enabled && s.sfx?.auto && sfxCues(mesId).length);
-    let jobs = staged ? sceneJobs(mesId, scriptRows(mesId).filter(r => from <= 0 || r.sourceIndex >= from), { effects: s.sfx?.enabled === true }) : finishJobs(built.jobs, s, { merge: false, join: true });
+    let jobs = staged ? sceneJobs(mesId, scriptRows(mesId).filter(r => from <= 0 || r.sourceIndex >= from), { effects: s.sfx?.enabled === true }) : finishJobs(built.jobs, s, { merge: false, join: true, budget: fromStream && s.max_chars > 0 && readState.get(mesId)?.spent ? s.max_chars - readState.get(mesId).spent : null });
     if (head) {
         const cut = listenHead(jobs);
         if (!cut) return -1;
@@ -2654,7 +2379,7 @@ export function speakText(text, voiceUid) {
 /**
  * 1.9.2 차례 맞춤(alignLists)에 짝이 없는 줄 → 같은 색 같은 갈래 가운데 같은 번째 (그 색의 줄 수가 양쪽에서 같고 글 길이가 1/4~4 배 안일 때만).
  * 원문에만 있는 서술 속 영어 인용 · 숨김 칸 · 번역기가 바꾼 줄 차례 때문에 수가 어긋나도 색별 순번은 그대로라 — 원문 짝을 못 찾으면 번역문을 듣는 언어로
- * 다시 옮겨 읽었다 (일 → 한 → 일, 사용자: 「아직도 원문 한국어로 떠 일본어인데」)
+ * 다시 옮겨 읽었다 (일 → 한 → 일)
  */
 function byColorOrder(x, from, to) {
     if (!x?.color) return null;
@@ -3048,7 +2773,7 @@ export function onStreamProgress(mesId, text) {
     if (!stream || stream.mesId !== mesId || stream.swipe !== swipe) {
         const prev = readState.get(mesId);                        // 이어쓰기: 읽은 자리부터
         const start = prev && prev.swipe === swipe && src.startsWith(prev.text) ? prev.count : 0;
-        stream = { mesId, swipe, queued: start, jobs: 0, muted: false, done: new Set(), deferredAt: -1 };
+        stream = { mesId, swipe, queued: start, jobs: 0, chars: 0, muted: false, done: new Set(), deferredAt: -1 };
         streamDead = null;                                        // 1.3.8 새 답장(다시 생성 · 스와이프 포함) = 엔진도 다시 시도
     }
     if (stream.muted) return;
@@ -3058,12 +2783,19 @@ export function onStreamProgress(mesId, text) {
     if (n && orig[n - 1].kind !== 'dialogue' && !/\n\s*$/.test(src)) n--;
     if (n <= stream.queued) return;
     const built = buildJobs(mesId, mes, { orig: orig.slice(0, n), disp: null }, { startSeg: stream.queued, final: false });
-    const jobs = finishJobs(built.jobs, s, { merge: false });   // 6.4.2 줄마다
+    const jobs = streamJobs(stream, built.jobs, s);   // 6.4.2 줄마다
     stream.queued = n;
     stream.jobs += jobs.length;
     if (built.deferredAt >= 0 && (stream.deferredAt < 0 || built.deferredAt < stream.deferredAt)) stream.deferredAt = built.deferredAt;
     for (const j of built.jobs) stream.done.add(j.segIndex);
     enqueue(jobs, { append: true });
+}
+/** 답장 오는 동안 읽기: 「한 번에 최대 글자」는 줄마다가 아니라 답장 하나의 합계예요 (일반 읽기와 같아요). 넘는 만큼 사지 않아요 */
+function streamJobs(st, input, s) {
+    const cap = Math.max(0, Number(s.max_chars) || 0);
+    const jobs = finishJobs(input, s, { merge: false, budget: cap ? cap - st.chars : null });
+    st.chars += jobs.reduce((n, j) => n + j.text.length, 0);
+    return jobs;
 }
 /**
  * 스트리밍 끝: 나머지를 원문으로 읽는다. 번역문을 기다리는 목소리가 있으면 읽지 않고 true 를 돌려주며,
@@ -3084,11 +2816,11 @@ export function onStreamEnd(mesId) {
     const idleDead = () => { if (!running && streamDead && streamDead.mesId === mesId) streamDead = null; };   // 1.3.8 더 읽을 게 없으면 '안 되는 엔진' 표도 끝
     if (st.muted || swipe !== st.swipe) { readState.set(mesId, { swipe, text, count: orig.length, streamed }); idleDead(); return false; }
     // 미룬 조각이 있으면 그 자리부터 (이미 읽은 번호는 exclude 로 뺌); 아직 하나도 못 읽었으면 처음부터 (대화문 없는 답장 대비)
-    if (st.deferredAt >= 0) { readState.set(mesId, { swipe, text: '', count: st.deferredAt, exclude: st.done, streamed }); return true; }
+    if (st.deferredAt >= 0) { readState.set(mesId, { swipe, text: '', count: st.deferredAt, exclude: st.done, streamed, spent: st.chars }); return true; }
     const from = st.jobs ? st.queued : 0;
     readState.set(mesId, { swipe, text, count: orig.length, streamed });
     if (orig.length <= from) { idleDead(); return false; }
-    const jobs = finishJobs(buildJobs(mesId, mes, { orig, disp: null }, { startSeg: from, final: true }).jobs, s, { merge: false });   // 6.4.2 줄마다
+    const jobs = streamJobs(st, buildJobs(mesId, mes, { orig, disp: null }, { startSeg: from, final: true }).jobs, s);   // 6.4.2 줄마다
     if (!jobs.length) { idleDead(); return false; }
     enqueue(jobs, { append: true });
     return false;
@@ -3235,7 +2967,7 @@ function highlightJob(job) {
     const root = paintHighlight(job);
     if (root) watchHighlight(job, root);
 }
-// 1.7.0 읽는 줄의 메시지를 지켜본다 — 사용자: 「어떤 건 밑줄이 생기고 어떤 건 안 생긴다??」, 「잠깐 무지개색처럼 보였다가 글자색으로 바뀌는데」.
+// 1.7.0 읽는 줄의 메시지를 지켜본다 — 어떤 줄은 밑줄이 안 생기고, 잠깐 무지개색으로 보였다가 글자색으로 바뀌던 것.
 //   읽는 동안 메시지가 다시 그려지면(번역이 붙음 · 다시 쓰기 · 편집 · 스트림 뒤 정리 · 테마 후처리) 범위가 무너져 그 줄의 밑줄이 끝까지 사라졌다
 //   (시험대: 누른 뒤 updateMessageBlock → 범위가 빈 채로). → 글 · 꾸밈이 바뀌면 다음 프레임에 그 자리에서 다시 찾아 칠한다.
 //   칠한 뒤 SETTLE_MS 에 한 번씩 더 칠한다 — 그리기 직후 · 효과가 움직이는 중에 읽은 색은 잠깐 다를 수 있다 (같은 색이면 보이는 변화 없음).
@@ -3250,6 +2982,7 @@ function stopHighlightWatch() {
     hlWatch = null;
     if (!w) return;
     try { w.mo?.disconnect(); } catch { /* 없음 */ }
+    w.offLook?.();
     for (const id of w.timers) clearTimeout(id);
     if (w.raf) cancelAnimationFrame(w.raf);
     if (w.gap) clearTimeout(w.gap);
@@ -3275,8 +3008,8 @@ function watchHighlight(job, root) {
     try {
         w.mo = new MutationObserver(later);
         w.mo.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class', 'style', 'color'] });
-        w.mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });   // 팔레트 · 형광펜 모양 · 꾸밈을 바꿈
     } catch { w.mo = null; }
+    w.offLook = onThemeLook(later, { watch: 'body.class', name: 'TTS 읽는 줄' });   // 팔레트 · 형광펜 모양 · 꾸밈을 바꿈 — 9.0.4 테마 색 따라가기 한 구독(src/shared/theme-look.js)
     w.timers = SETTLE_MS.map(ms => setTimeout(later, ms));
     hlWatch = w;
 }
@@ -3307,7 +3040,7 @@ function rangesFor(job, root) {
     }
     return ranges;
 }
-// 1.7.1 재생 막대의 이름 색 — 사용자: 「tts 밑에 이름 뜨는 것도 대사 색깔이랑 맞춰 주삼 대사 색 있는 애들은」 (막대의 이름은 테마 파랑, 그 인물의 속마음은 청록이었다).
+// 1.7.1 재생 막대의 이름 색 — 대사 색이 있는 인물은 막대 이름도 그 색으로 (막대의 이름은 테마 파랑, 그 인물의 속마음은 청록이었다).
 //   읽는 줄의 화면 글자색(highlight-colors.speakerColor) — 본문색과 테마가 정한 글자색(대사 · 형광펜 잉크 · 기울임 · 굵게, 실리태번의 기울임 · 인용 · 본문)은
 //   「색 없음」이라 지금처럼 테마 색 (색 없는 인물의 속마음 · 기울임 · 굵은 글이 테마의 기울임 · 굵게 색으로 이름을 물들이지 않게).
 //   화면에서 못 찾으면(다른 확장이 넘긴 글 · 아직 안 그려짐) 원문의 색 표시(<span style="color"> · <font color> · 데우스 #hex "…")로. 강조를 꺼도 같다.
@@ -3334,7 +3067,7 @@ function speakerPalette(job) {
     } catch { return ''; }
 }
 function barNameColor(job) {
-    // 6.5.4 화자 자신의 색이 먼저 — 화면에 보이든 말든 · 테마 잉크와 가깝든 말든 (사용자 제보: 어두운 슬레이트 #424c59 인물의 줄이 옆 인물의 빨강으로 칠해져 막대 이름도 빨강).
+    // 6.5.4 화자 자신의 색이 먼저 — 화면에 보이든 말든 · 테마 잉크와 가깝든 말든 (어두운 슬레이트 #424c59 인물의 줄이 옆 인물의 빨강으로 칠해져 막대 이름도 빨강이던 것).
     //   막대 배경에서 안 읽히는 색은 밝기만 조절한 변형(highlight-colors.readableOn). 자신의 색이 없는 화자는 줄의 색을 쓰되, 그 색이 다른 알려진 인물의 것이면 테마 색 (barNameChoice).
     //   6.3.9 「팔레트 색이 그 줄에 보이면 그 색」은 이 규칙에 들어 있다 — 제 색은 보이지 않아도 쓴다.
     const own = speakerPalette(job);
@@ -3490,7 +3223,7 @@ function buildBar() {
     barEl.takes = bar.querySelector('.lv-bar-takes');   // 6.4.5
     barEl.takes.style.display = 'none';
     barEl.takes.addEventListener('click', guard(() => { revertCurrent().catch(() => { /* 무시 */ }); }));
-    // 1.6.3 요술봉: 바로 다시 분석하지 않고 「재생성 · 효과음」 고르기 (사용자: 내려받기처럼)
+    // 1.6.3 요술봉: 바로 다시 분석하지 않고 「재생성 · 효과음」 고르기 (내려받기처럼)
     barEl.wandmenu = bar.querySelector('.lv-bar-wandmenu');
     barEl.sfxpick = bar.querySelector('.lv-bar-sfxpick');
     barEl.wordpick = bar.querySelector('.lv-bar-wordpick');   // 6.3.6

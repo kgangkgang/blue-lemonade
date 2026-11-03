@@ -17,7 +17,7 @@ const CONFIGS = {
     // 기본 설정 (새로 깐 사람)
     defaults: { enabled: true },
     // 애드온 전부 켬 (테마 안 확장 18개)
-    addons: { enabled: true, addons: Object.fromEntries(['zipinstall', 'tts', 'direction', 'assets', 'order', 'perf', 'models', 'modelswitch', 'regexlink', 'rewrite', 'bookmarks', 'notes', 'translator', 'prompt', 'customstyle', 'mermaid', 'prompt-template', 'conflicts'].map(id => [id, true])) },
+    addons: { enabled: true, addons: Object.fromEntries(['zipinstall', 'tts', 'direction', 'assets', 'order', 'perf', 'models', 'modelswitch', 'regexlink', 'rewrite', 'bookmarks', 'notes', 'translator', 'prompt', 'customstyle', 'mermaid'].map(id => [id, true])) },
     // 켜야 쓰는 기능 (몰입 읽기 · 한 손 · 자동 화이트/나이트 · 답 알림 · 새 답 첫 줄 · 데우스 스킨 · 감정 대사 · 코드 색 끄기)
     features: { enabled: true, reader: { autoHide: true }, onehand: { on: true }, auto: { on: true }, replyNotify: { on: true }, deus: { on: true, fx: { on: true } }, chat: { replyTop: true, demSkin: true, codePlain: true, mesPins: ['mes_edit'] } },
 };
@@ -100,6 +100,8 @@ async function streamReply() {
 }
 const snapshot = () => { globalThis.gc(); const l = dom.listenerCounts(eventSource), o = dom.observerCounts(); return { eventSource: l.eventSource, window: l.window, document: l.document, intervals: l.intervals, mo: o.mo, moDetached: o.moDetached, roOn: o.ro.on, roOff: o.ro.off, ioOn: o.io.on, ioOff: o.io.off }; };
 async function aliveOld(keepChat) {
+    // 1.0.0 극한 최적화 ④: 서랍 · 입력칸용 3층 모듈(문)을 여기서 열어요 — 알약의 업데이트 확인(8초 뒤 visibilitychange 리스너)이 기준 스냅숏 뒤에 걸리지 않게
+    globalThis.Salty?.gate?.('drawer'); globalThis.Salty?.gate?.('input');
     for (let i = 0; i < 6; i++) { await settle(3000); globalThis.gc(); await new Promise(r => setImmediate(r)); }
     const alive = {};
     for (const { n, ref } of refs) if (n < keepChat && ref.deref()) alive[n] = (alive[n] || 0) + 1;
@@ -231,11 +233,6 @@ async function cycleWindows(name, openFn, { mustOpen = true } = {}) {
     same(base, after, `${name} 10번 뒤`);
 }
 const srcUrl = rel => pathToFileURL(path.join(root, 'src', rel)).href;
-await test('공지사항 · 출처 창을 10번씩 열고 닫아도 늘지 않고 남지 않아요', async () => {
-    const notice = await import(srcUrl('notice.js')), credits = await import(srcUrl('credits.js'));
-    await cycleWindows('공지사항', () => notice.openNotice(() => {}));
-    await cycleWindows('출처', () => credits.openCredits());
-});
 await test('이전 메시지 더 보기 20번 뒤 채팅을 바꾸면 그 메시지들도 남지 않아요', async () => {
     await openChat(10);
     const more = async () => {
@@ -311,7 +308,7 @@ await test('테마 고르기 목록(select)을 20번 열고 닫아도 늘지 않
 });
 
 // 애드온 창 (애드온을 켠 설정에서만)
-const ADDON_PANELS = [['tts', 'tts/index.js'], ['direction', 'direction/index.js'], ['assets', 'assets/index.js'], ['prompt', 'prompt/index.js'], ['mermaid', 'mermaid/index.js'], ['prompt-template', 'prompt-template/index.js'],
+const ADDON_PANELS = [['tts', 'tts/index.js'], ['direction', 'direction/index.js'], ['assets', 'assets/index.js'], ['prompt', 'prompt/index.js'], ['mermaid', 'mermaid/index.js'],
     ['customstyle', 'customstyle/index.js'], ['translator', 'translator/bridge.js'], ['modelswitch', 'modelswitch/index.js'], ['regexlink', 'regexlink/index.js'], ['rewrite', 'rewrite/index.js'], ['bookmarks', 'bookmarks/index.js'], ['zipinstall', 'zipinstall/index.js'], ['notes', 'notes/index.js']];
 for (const [id, file] of configName === 'addons' ? ADDON_PANELS : []) {
     await test(`애드온 창(${id})을 10번 열고 닫아도 리스너 · 관찰자가 늘지 않고, 닫은 창 DOM 이 남지 않아요`, async () => {

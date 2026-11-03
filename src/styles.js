@@ -1,5 +1,4 @@
 import { preserveLocks } from './setting-locks.js';
-import { FRAME_PRESETS } from './frame-presets.js';
 // 스타일 (3.1.0) — 지금 모습(팔레트 · 색 · 글꼴 · 글자 · 채팅 모양 · 이미지 모양)을 이름 붙여 저장하고, 코드 · 파일로 나누고,
 // 완성된 스타일(소설책 · 메신저 …)을 입힌다. 캐릭터별 연결은 charstyle.js.
 //
@@ -9,7 +8,7 @@ import { getSettings, DEFAULTS, FONT_SET, isCssColor, safeFont } from './setting
 
 export const STYLE_KEYS = ['gradients', 'palette', 'nightTint', 'lightTint', 'customName', 'colorOverrides', 'fonts', 'type', 'markdown', 'dialogue', 'ui', 'code', 'em', 'strong', 'shadow', 'outline', 'strike', 'deus', 'chat', 'image', 'profile', 'userProfile'];
 // 2026-10-06: 퀵 리플라이 배치(qrScroll · qrRows · qrPlace) · ··· 메뉴 고정 버튼(mesPins)도 쓰는 방식 — 초기화(settings.js resetSettings)처럼 스타일에 담지도 덮지도 않는다
-const CHAT_BEHAVIOR = ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'qrFind', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard'];
+const CHAT_BEHAVIOR = ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'hideSendTextarea', 'qrFind', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard'];
 export const MAX_STYLES = 20;
 const CODE_PREFIX = 'BLS1.';     // deflate-raw + base64url
 const PLAIN_PREFIX = 'BLS0.';    // 압축 못 하는 브라우저: base64url 만
@@ -45,7 +44,7 @@ export function captureStyle(s = getSettings()) {
     // and library frames byte-for-byte; this only changes the captured copy.
     for (const owner of ['image', 'profile', 'userProfile']) {
         const decor = data[owner]?.decor;
-        if (decor?.presetId && !decor.libraryId && FRAME_PRESETS.some(([id]) => id === decor.presetId)) {
+        if (decor?.presetId && !decor.libraryId) {   // 9.0.2 기본 프리셋 액자 그림 그리기(frame-presets.js)는 걷었다 — 담는 사본에서 그림만 빼는 것은 그대로
             decor.art = ''; decor.mask = ''; delete decor.presetVersion;
         }
     }

@@ -17,7 +17,7 @@ module.initSettings();assert.equal(module.settings(),existing);assert.equal(exis
 module.pruneDisabled('Example',[]);assert.deepEqual(existing.disabled.Example,['hidden.png']);
 assert.equal(module.currentFolder(),'Example');globalThis.__assetTest.context.groupId='group';assert.equal(module.currentFolder(),'');
 const url=pathToFileURL(root+'/');
-const {knownConflicts}=await import(new URL('src/assist/core.js',url));
+const {knownConflicts}=await import(new URL('src/extension-folder.js',url));
 for(const folder of ['char-assets','character-assets','esetham']){
  const key='third-party/'+folder;
  assert.equal(knownConflicts([key],[],{assets:true}).length,1);

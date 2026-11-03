@@ -72,7 +72,7 @@ async function test(name, fn) {
 }
 
 const RELAY = 'https://relay.test/v1';
-// 평소: 번역만 중계(custom) · 나머지는 deepseek (사용자 설정과 같은 꼴, 이름은 일반 예시)
+// 평소: 번역만 중계(custom) · 나머지는 deepseek (흔한 설정 꼴, 이름은 일반 예시)
 function usual() {
     return {
         salty: { addons: { translator: true, rewrite: true, prompt: true, assets: true } },

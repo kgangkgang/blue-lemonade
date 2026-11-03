@@ -1,5 +1,8 @@
 export const themeEnabled = s => s.enabled !== false && s.usageMode !== 'extensions';
 export const addonsEnabled = s => s.enabled !== false && s.usageMode !== 'theme';
+// 처리기마다 저장값을 읽어요(끄면 새로고침 전에도 멈춤)
+export const addonRunning = (s, id) => !s || (addonsEnabled(s) && s.addons?.[id] !== false);
+export const switchNeedsReload = (s, running, ids) => ids.some(id => running.has(id) !== (addonsEnabled(s) && !!s.addons?.[id]));
 export const usageMode = s => ['both','theme','extensions'].includes(s.usageMode) ? s.usageMode : 'both';
 // 7.7.4 볼록 단추 표식(7.8.6 볼록 두께는 걷어냄 — 지금은 css/90-press.css · 91-switch-knob · 전개 지시 끌기 그림자가 이 표식을 씀): 테마가 켜져 있으면(확장만 모드 포함) <html data-bl-puffy> 의 값 light | dark — 두께 색을 고르는 데만 쓴다.
 //   테마를 끄면 null(속성 없음 = 규칙 0). 시험 tools/tests/press-flat.mjs. 예전에 저장된 puffyButtons 값은 읽지 않는다
@@ -11,22 +14,6 @@ export const puffyMode = (s, mode) => s.enabled !== false ? (mode === 'dark' ? '
 export function publicSettings(s) {
     if (themeEnabled(s) || s.enabled === false) return s;
     return new Proxy(s, { get: (target, key, receiver) => key === 'enabled' ? false : Reflect.get(target, key, receiver) });
-}
-
-// 7.2.4 테마가 빠진 모드(확장만 · 테마 끔)에서 바깥이 body.salty 를 붙이면 뗀다 — 떼기만 한다 (일코 ON 처럼 테마를 잠시 끄려고 떼는 건 그대로).
-// 서로 붙였다 뗐다 하면(2초 안 6번) 멈추고 한 번 알린다 — 끝없이 싸우며 화면을 다시 그리지 않게. classList 만 받아 시험할 수 있다.
-export function forcedThemeGuard({ themeOn, now = () => Date.now(), warn = () => {} }) {
-    const hits = [];
-    let stopped = false;
-    return classList => {
-        if (stopped || themeOn() || !classList.contains('salty')) return false;
-        const t = now();
-        while (hits.length && t - hits[0] > 2000) hits.shift();
-        hits.push(t);
-        if (hits.length > 6) { stopped = true; warn('다른 확장이 테마 클래스(body.salty)를 계속 붙여요. 이번 세션은 그대로 둡니다.'); return false; }
-        classList.remove('salty');
-        return true;
-    };
 }
 
 // Only owned checkbox colors are exposed outside the theme; host controls never use these names.

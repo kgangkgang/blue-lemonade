@@ -498,7 +498,7 @@ await test('설정: join_paragraph 기본 켬 · 읽을 부분 카드에 스위�
 });
 await test('가볍게: 바뀐 파일에 새 상주 관찰자 · 타이머 없음 (text.js · clickplay.js 는 하나도 없음)', () => {
     for (const f of ['text.js', 'clickplay.js']) assert.ok(!/MutationObserver|setInterval|setTimeout|requestAnimationFrame/.test(fs.readFileSync(path.join(root, f), 'utf8')), f);
-    const p = fs.readFileSync(path.join(root, 'player.js'), 'utf8');
+    const p = fs.readFileSync(path.join(root, 'player.js'), 'utf8') + fs.readFileSync(path.join(root, 'message-segments.js'), 'utf8');   // 1.0.0 극한 최적화: sourcesOf 는 message-segments.js
     const part = (a, b) => p.slice(p.indexOf(a), p.indexOf(b, p.indexOf(a)));
     for (const body of [part('function sourcesOf', 'function safeSegment'), part('function buildJobs', 'function paramsFor'), part('const canJoin', 'function fitShout'),
         part('function finishJobs', '// ---------- 합성'), part('function tapJobs', 'export function lineJobs'), part('export function lineJobs', 'function tapSfxJobs')]) {

@@ -1,3 +1,4 @@
+import { watchDom } from './dom-watch.js';
 // Built-in chat folding, adapted from the existing Blue Lemonade fold implementation.
 let active=false;
 export function syncFold(on){
@@ -246,11 +247,11 @@ ${B}:focus-visible::before {
     style.setAttribute(STYLE, '');
     style.textContent = CSS + (doc === stDoc ? HIDE_OLD : '');
     (doc.head ?? doc.documentElement).append(style);
-    const observer = new MutationObserver(onMutations);
-    observer.observe(doc.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['open'] });
+    // 9.0.4: 공용 감시 허브 구독(그 문서의 html 구역 — head 는 안 봐요)
+    const unwatch = watchDom(doc.documentElement, { childList: true, subtree: true, attributes: ['open'], exclude: 'head', name: '접기 ▲' }, onMutations);
     doc.addEventListener('toggle', onToggle, true);
     docs.set(doc, () => {
-      observer.disconnect();
+      unwatch();
       doc.removeEventListener('toggle', onToggle, true);
       style.remove();
       doc.querySelectorAll(`[${BTN}]`).forEach(button => button.remove());

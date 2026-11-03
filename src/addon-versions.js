@@ -1,6 +1,7 @@
 // 6.7.0 내장 애드온 판 한눈에 (업데이트 탭 · 진단 파일). 애드온마다 판을 적는 곳이 달라서 그 파일의 앞부분(4KB)만 읽어 찾는다.
 // 업데이트 탭을 열 때 · 진단 파일을 만들 때만 부르고, 한 번 읽으면 새로고침 전까지 기억한다 (설치 파일은 새로고침해야 바뀐다).
 // 새 애드온을 더하면 여기에 한 줄 — tools/tests/addon-versions.mjs 가 빠진 폴더와 못 찾는 판을 잡는다.
+import { PRIVATE_ADDONS } from './private-addons.js';
 export const ADDON_VERSION_FILES = Object.freeze({
     translator: ['LLM 번역', 'translator/manifest.json'],
     tts: ['TTS', 'tts/version.js'],
@@ -19,6 +20,8 @@ export const ADDON_VERSION_FILES = Object.freeze({
     mermaid: ['Mermaid 도표', 'mermaid/index.js'],
     'prompt-template': ['프롬프트 템플릿', 'prompt-template/index.js'],
     zipinstall: ['ZIP 설치', 'zipinstall/index.js'],
+    // 8.3.0 테마 안으로 들인 단독 확장 — 판은 각 확장 자기 파일에(private-addons.js version · 1.0.0 은 빈 표)
+    ...Object.fromEntries(Object.entries(PRIVATE_ADDONS).filter(([, p]) => p.embedded).map(([id, p]) => [id, [p.label, p.version]])),
 });
 const HEAD = 4096;
 

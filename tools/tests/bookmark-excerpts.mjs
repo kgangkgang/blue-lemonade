@@ -227,16 +227,16 @@ if (typeof ex.updateExcerpt === 'function') {
 
     test('a wider new selection never swallows a hand-edited excerpt', () => {
         const fav = { id: 'f' };
-        ex.appendExcerpt(fav, { text: '나이트가 고개를 들었다. "안녕, 에이드." 그는 조용히 웃었다.' }, { id: 'a', now: 1 });
+        ex.appendExcerpt(fav, { text: '세라피나가 고개를 들었다. "안녕, 여행자." 그녀는 조용히 웃었다.' }, { id: 'a', now: 1 });
         ex.updateExcerpt(fav, 'a', { text: '안녕', html: '<p>안녕</p>' }, { now: 2 });
-        const added = ex.appendExcerpt(fav, { text: '"안녕, 나이트." 에이드가 대답했다.' }, { id: 'b', now: 3 });
+        const added = ex.appendExcerpt(fav, { text: '"안녕, 세라피나." 내가 대답했다.' }, { id: 'b', now: 3 });
         assert.equal(added.added, true);
         assert.equal(added.replaced, 0);
         assert.deepEqual(fav.excerpts.map(item => item.id), ['a', 'b']);
         // 고치지 않은 발췌는 예전처럼 넓혀 다시 고르면 바뀐다
         const plain = { id: 'g' };
         ex.appendExcerpt(plain, { text: '안녕' }, { id: 'p' });
-        assert.equal(ex.appendExcerpt(plain, { text: '안녕, 에이드' }, { id: 'q' }).replaced, 1);
+        assert.equal(ex.appendExcerpt(plain, { text: '안녕, 여행자' }, { id: 'q' }).replaced, 1);
         assert.deepEqual(plain.excerpts.map(item => item.id), ['q']);
     });
 }

@@ -9,9 +9,10 @@ import { paintPreview, previewShown, adoptPainted, createFrameSwapGuard } from '
 import { typesetRoot } from '../../typography.js';   // 6.9.6 미리 보기가 넣은 문단을 그 자리에서 조판
 import { dressBody } from '../../dem-expressive.js';   // 6.9.6 · 감정 대사 칸
 import { AUTO_CONTEXT, hasAutoContext, markAutoContext, captureAutoContextGuard, prepareTranslatorAutoContext } from './context-auto.js';
+import { usesContextSlot, withContextSlot } from './context-slot.js';
 import { prepareDisplayCards, withDisplayCardsProtected, withoutDisplayCards, displayCardBlocks, matchesDisplayCardStructure, cardAwareUserRule } from './display-cards.js';   // 8.0.8 cardAwareUserRule: 사용자 <tracker> 보호 줄이 시간 상태창 번역을 막지 않게
 import { cardValues } from './card-values.js';   // 6.5.4 상태 카드 고정 값은 보내지 않고 바로 채움
-import { checkpointKey, translateChunks, clearCheckpoints, readCheckpoint, writeCheckpoint } from './translation-resume.js';
+import { checkpointKey, translateChunks, clearCheckpoints, readCheckpoint, writeCheckpoint } from './resume-loader.js';
 import { restoreDroppedPlaceholders, droppedPlaceholders, dropTokens, segmentParagraphs, translateSegments, clearSegmentCache, forgetSegments, batchPayload, parseBatchResult, batchGroups, restoreParagraphBreaks, stripReplyWrapping, stripDraftLeaks, BATCH_HEADER, hasSourceEcho, splitBlockPrefix, structureLines, isHeadingUnderline, isBareQuote, paragraphBlocks, splitCrossLineEmphasis, fixPlaceholderVariants, dropLeftoverPlaceholders as dropProseLeftoverPlaceholders, repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStrayWords, dropWrapQuotes } from './translation-segments.js';
 import { hideOpenComments, looksCutShort, restoreDialogueBrackets } from './translation-segments.js';   // 2.5.1 숨긴 주석 표시 보정 · 끊긴 답 · 2.5.2 빠진 대사 괄호
 import { keepKorean } from './korean-keep.js';   // 2.7.9 이미 한국어인 문단 · 대사는 번역 요청에 보내지 않기
@@ -39,7 +40,10 @@ import { fixPairs, leftoverNameWords, markPairs, textKey, mergeSuggestions, show
 import { nameFold as suggestFold } from './names-bridge.js';
 import { publishNames } from './names-bridge.js';   // 6.3.5 이름 다리 — 용어집의 이름 짝을 TTS · 다른 확장이 쓰게 전역으로 // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림) · [2.3.0] TTS 듣는 언어용 줄
 import { SPEECH_LANGS, speechPrompt, speechPayload, speechLine, parseSpeechBatch, unwrapQuotes, cutEchoLine } from './speech-translate.js'; // [2.3.0] TTS 듣는 언어
-import { requestCurrentConnection } from './current-connection.js';
+// 현재 연결의 요청 조립·재시도 코드는 실제 번역 요청에서만 받아요. 초기 화면과 저장 번역 복원에는 필요하지 않아요.
+async function requestCurrentConnection(...args) {
+    return (await import('./current-connection.js')).requestCurrentConnection(...args);
+}
 import { fallbackOf, sameTarget } from '../modelswitch/fallback.js';   // 6.2.9 검열되면 다른 모델로
 import { mountFallbackField } from '../modelswitch/fallback-field.js';   // 6.4.5 「검열당했을 때」 칸 (모델 탭)
 import { createGenerationParameters, getChatCompletionModel } from '../../../../../../openai.js';
@@ -65,6 +69,7 @@ import {
 //       있으면 그것, 없으면 1.16 의 getMaxContextSize(전체 문맥 − 응답 길이)로 같은 값을 만든다
 import * as stHost from '../../../../../../../script.js';
 import { picturesOnlyChanged, swapPictures } from './picture-swap.js';   // 7.9.5 그림 확장이 그림 표시만 바꾼 답은 다시 번역하지 않는다
+import { maskFences, restoreFenceLines, FENCE_NOTE } from './code-fences.js';   // 3.1.7 코드 칸 울타리 줄은 보내지 않고 제자리에 글자 그대로
 function getMaxPromptTokens(overrideResponseLength = null) {
     return typeof stHost.getMaxPromptTokens === 'function' ? stHost.getMaxPromptTokens(overrideResponseLength) : stHost.getMaxContextSize(overrideResponseLength);
 }
@@ -121,6 +126,25 @@ const registerCommand = command => { if (!duplicate) SlashCommandParser.addComma
 
 // 번역 진행 상태 추적 (단순화)
 const translationInProgress = {};
+// 1.0.0 극한 최적화: 껍데기(shell.js)가 본체를 받는 동안 쌓아 둔 사건을 본체의 제 리스너(listen 으로 건 것)에만 다시 넘겨요 — 그려짐 완료 감시(renderCapture)까지
+const ownListeners = {}; let renderCapture = null;
+const listen = (type, fn) => { eventSource.on(type, fn); if (type) (ownListeners[type] ||= []).push(fn); return fn; };
+export async function replayEvent(type, args = []) {
+    let finish = null;
+    try { finish = renderCapture?.(type, ...args); } catch (error) { console.warn('[LLM Translator] 쌓아 둔 사건(그려짐)', error); }
+    for (const fn of ownListeners[type] || []) { try { await fn(...args); } catch (error) { console.warn('[LLM Translator] 쌓아 둔 사건', error); } }
+    if (typeof finish === 'function') finish(true);
+}
+/** 껍데기가 받아 둔 메시지 단추 누름 — 아래 delegated 핸들러와 같은 일 */
+export function clickButton(kind, messageId) {
+    if (kind === 'legacy') return translateMessage(messageId, true, 'manual');
+    if (kind === 'translate') return handleTranslateButtonClick(messageId);
+    if (kind === 'toggle') return toggleOriginalText(messageId);
+    if (kind === 'edit') return editTranslation(messageId);
+    if (kind === 'paragraph') return retranslateMessage(messageId, 'paragraph', true);
+    if (kind === 'delete') return deleteTranslationById(messageId).catch(error => { console.error('Delete translation error:', error); toastr.error('번역문 삭제 중 오류가 발생했습니다.'); });
+    return undefined;
+}
 const guards = createGuards(getContext);
 let inputTranslationRunning = false;
 let batchRun = null;
@@ -1944,6 +1968,11 @@ async function translate(text, options = {}) {
             reserve(block) { const token = createPlaceholder(protectedBlocks.length); protectedBlocks.push(block); return token; },
         });
         maskedText = displayCards.text;
+        // 3.1.7 코드 칸 울타리 줄(```html · ~~~)은 보내지 않고 자리표로 — 모델이 빼거나 언어 이름을 바꿔도 제자리에 글자 그대로 (code-fences.js).
+        //   상태 카드 · 보호 블록 뒤 번호라 앞 번호 · 캐시 열쇠는 그대로. 메시지 번역만 (입력 번역 · 다시 번역 · 점검 원문 견주기는 예전처럼)
+        const fences = typeof maskFences === 'function' && !options.isInputTranslation && !options.isRetranslation && options.checkSource === undefined
+            ? maskFences(maskedText, line => { const token = createPlaceholder(protectedBlocks.length); protectedBlocks.push(line); return token; }) : null;
+        if (fences?.tokens.length) maskedText = fences.text;
 
         let compareText = options.checkSource ?? maskedText;
         if (options.checkSource !== undefined) {
@@ -1992,7 +2021,8 @@ async function translate(text, options = {}) {
         }
         // [1.8.0] 용어집: 원문에 실제로 나오는 항목만 골라 프롬프트 앞에 붙인다 (보내기·입력 번역은 방향을 뒤집어서)
         const glossaryBlock = buildGlossaryBlock(maskedText, { reverse: isInputTranslation });
-        const paragraphParts = options.segmentCache && !isInputTranslation && !isRetranslation && !options.noChunks ? segmentParagraphs(maskedText) : null;
+        // 3.1.7 울타리를 가린 글도 예전처럼 문단 묶음으로 쪼개지 않는다 (전엔 ``` 가 보여 segmentParagraphs 가 null)
+        const paragraphParts = options.segmentCache && !isInputTranslation && !isRetranslation && !options.noChunks && !fences?.tokens.length ? segmentParagraphs(maskedText) : null;
 
         // [2.0.4] 배치 0 = 예전 그대로. 1 · 2 는 입력 필터에 막혔을 때만 쓰는 다시 보내기용 (내용은 같고 순서 · 머리말만 다르다)
         // 7.7.2 프롬프트 캐시(기본 켬): 채팅 번역은 배치 1(규칙 · 지시문이 맨 앞, 용어집 · 본문은 뒤)부터 — 묶음 · 메시지마다 같은 앞부분이라
@@ -2025,6 +2055,8 @@ async function translate(text, options = {}) {
             if (/[「『]/.test(body) && !/「」|『』/.test(`${finalPrompt}\n${rulePrompt}\n${additionalGuidance}`)) built += `\n\n${BRACKET_NOTE}`;
             // 3.1.4 본문에 이야기 속 알림 줄(【 … 】 · [ … ] 한 줄)이 있을 때만 「그것도 번역」 한 줄 — 모델이 화면 UI 글로 보고 영어 그대로 두었다 (10-27 제보). 없으면 요청 글자 그대로
             if (typeof hasNoticeLines === 'function' && hasNoticeLines(body)) built += `\n\n${NOTICE_NOTE}`;
+            // 3.1.7 울타리 자리표가 든 요청에만 — 그 사이가 코드 칸 안이라는 것 (없으면 요청 글자 그대로 · typeof: 이 함수만 잘라 도는 시험)
+            if (typeof fences !== 'undefined' && fences?.tokens.some(token => body.includes(token))) built += `\n\n${FENCE_NOTE}`;
             // 2.7.8 글자로 붙여 쓴 숫자: "two hundred-and-ninety-centimeter towers" 는 190센티미터인 둘 (290 이 아님). 이런 꼴이 원문에 있을 때만 한 줄 붙인다
             if (/\b[a-z]+\s+hundred-(?:and-)?[a-z]+(?:-[a-z]+)*-(?:centimet|millimet|met(?:er|re)|kilo|gram|pound|foot|feet|inch|mile|year|ton)/i.test(body)) {
                 built += '\n\n[Numbers: copy every number from the source exactly. A spelled-out number joined by hyphens to a unit is one compound adjective, and a word right before it is a separate count. "two hundred-and-ninety-centimeter guards" means two guards who are 190 cm tall, not 290 cm. If a height, age or similar number would be implausible for the character, re-read the hyphenation before translating.]';
@@ -2160,7 +2192,8 @@ async function translate(text, options = {}) {
             const result = await translateChunks({ key, chunks, check: watcher.check, progress,
                 request: async body => {
                     const out = await chunkRequest(body);
-                    if (!displayCards.cacheable(body, out)) throw Object.assign(new Error('상태 카드의 번역 항목이 빠지거나 구조가 달라 원문을 유지했어요. 다시 번역해 주세요.'), { format: true, structuredCard: true });
+                    // 1.0.0 상태 카드 칸이 빠지거나 어긋난 덩이 답도 메시지 전체를 원문으로 되돌리지 않는다 — 끝의 restore 가 그 칸만 원문으로 두고(report.cardFallback) 캐시하지 않는다.
+                    //   전엔 여기서 던져 데우스 3 처럼 칸이 수십 개인 카드에서 하나만 빠져도 「번역 실패 — 상태 카드의 번역 항목이 빠지거나…」로 메시지가 통째로 원문이었다
                     return out;
                 }, blockedMarker: BLOCKED_CHUNK_MARK,
                 partial: showPreview ? parts => { if (parts.some(part => typeof part === 'string')) showPreview(parts.map((part, i) => part ?? chunks[i]).join('\n\n')); } : undefined });
@@ -2458,17 +2491,31 @@ async function translate(text, options = {}) {
             const marker = '\n\n[Translated Text]:\n';
             const layoutSource = isRetranslation && maskedText.startsWith('[Original Text]:\n') && maskedText.includes(marker)
                 ? maskedText.slice('[Original Text]:\n'.length, maskedText.indexOf(marker)) : maskedText;
-            const dropped = droppedPlaceholders(protectedBlocks, layoutSource, translatedText, block => keptKorean.has(block) || isProtectedBlock(block, keepRules) || /^<!--[\s\S]*-->$/.test(block) || displayCards.wholeBlocks?.has(block) || isHiddenBlock(block));   // 2.5.1 숨긴 주석도 · 2.7.9 가려 둔 한국어도 · 8.0.6 다 채운 카드 · 숨는 블록도 잃지 않는다
-            if (dropped.length) {
-                translatedText = restoreDroppedPlaceholders(layoutSource, translatedText, dropped);
-                if (report) report.restoredBlocks = dropped.length;
-                console.warn(`[LLM Translator] 모델이 빠뜨린 보호 블록 ${dropped.length}개를 제자리에 되돌렸어요 (이 번역은 캐시하지 않아요)`);
+            // 1.0.0 답에 자리표가 하나도 없는(통째로 빠진) 상태 카드는 여는 자리표만 원문 문단 자리에 — restore 가 그 자리를 원문 카드로 채운다 (전엔 메시지 전체가 원문).
+            //   자리는 그 카드를 여는 자리표 하나로 줄인 원문으로 찾는다 (카드 문단이 통째로 빠진 답과 문단 수가 맞게)
+            // 3.1.7 빠진 울타리 자리표는 먼저 원문과 같은 줄 자리에 (문단 가운데 줄이어도) — 못 맞춘 것은 아래 보호 블록 되돌리기가
+            const fenceFix = fences?.tokens.length ? restoreFenceLines(layoutSource, translatedText, fences.tokens) : { text: translatedText, restored: 0 };
+            translatedText = fenceFix.text;
+            const lostCards = displayCards.lost?.(translatedText) ?? [];
+            if (lostCards.length) translatedText = restoreDroppedPlaceholders(displayCards.lostLayout(layoutSource, lostCards), translatedText, lostCards);
+            const dropped = droppedPlaceholders(protectedBlocks, layoutSource, translatedText, block => keptKorean.has(block) || isProtectedBlock(block, keepRules) || /^<!--[\s\S]*-->$/.test(block) || displayCards.wholeBlocks?.has(block) || isHiddenBlock(block) || !!fences?.lines.has(block));   // 3.1.7 울타리 줄도 · 2.5.1 숨긴 주석도 · 2.7.9 가려 둔 한국어도 · 8.0.6 다 채운 카드 · 숨는 블록도 잃지 않는다
+            if (dropped.length) translatedText = restoreDroppedPlaceholders(layoutSource, translatedText, dropped);
+            if (dropped.length || lostCards.length || fenceFix.restored) {
+                if (report) report.restoredBlocks = dropped.length + lostCards.length + fenceFix.restored;
+                console.warn(`[LLM Translator] 모델이 빠뜨린 보호 블록 ${dropped.length + lostCards.length + fenceFix.restored}개를 제자리에 되돌렸어요 (이 번역은 캐시하지 않아요)`);
             }
         }
 
         // Validate every display field before restoring exact original card structure.
         // A malformed card reply fails before anything is persisted or shown.
         translatedText = displayCards.restore(translatedText);
+        // 1.0.0 모델 답에서 빠지거나 읽을 수 없던 칸은 그 칸만 원문으로 뒀다 — 알리고 캐시하지 않는다 (다시 번역하면 그 칸도 다시 받는다)
+        const cardFallback = displayCards.fallbackCount?.() ?? 0;
+        if (cardFallback) {
+            if (report) report.cardFallback = cardFallback;
+            console.warn(`[LLM Translator] 상태 카드 칸 ${cardFallback}개가 모델 답에서 빠져 그 칸만 원문으로 뒀어요 (이 번역은 캐시하지 않아요)`);
+            if (globalThis.toastr && !isInputTranslation) toastr.warning(`상태 카드 칸 ${cardFallback}개는 모델 답에서 빠져 원문으로 뒀어요 (나머지 칸은 번역했어요). 다시 번역하면 그 칸도 다시 받아요.`, 'LLM 번역', { timeOut: 7000 });
+        }
 
         // [신규 기능 유지] 2차 수리: 번역 후 보호된 텍스트 복구 (Unmasking)
         // [1.9.2] 뒤 번호부터 되돌린다: 나중 정규식이 앞서 가린 자리표시자를 품은 블록을 가리면(예: 사용자 <status>…</status> 안의 <think>)
@@ -2945,7 +2992,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         //         addTranslationToDB 가 이제 같은 원문의 줄을 고쳐 쓴다.
         // [2.1.3] 일부 문단이 차단돼 원문으로 남았으면 캐시에 넣지 않는다 (translateMessage 와 같게)
         if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
-        else if (!report.restoredBlocks) await storeTranslationQuietly(originalText, retranslation, report); // 6.1.8 빠진 보호 블록을 되돌린 답은 캐시하지 않는다
+        else if (!report.restoredBlocks && !report.cardFallback) await storeTranslationQuietly(originalText, retranslation, report); // 6.1.8 빠진 보호 블록을 되돌린 답은 캐시하지 않는다
 
         // [1.9.2] 재번역하는 동안 채팅 · 스와이프 · 글이 바뀌었으면 붙이지 않는다 (캐시에는 남음)
         const targetIndex = runToken.guard.index();
@@ -3268,7 +3315,7 @@ async function runCheckAction(kind, id, index, row, { auto = false, expectedStat
         if (message.extra?.display_text !== state.translation) { toastr.warning('그 사이 번역문이 바뀌어서 붙이지 않았어요.', '번역 점검'); return; }
         const next = kind === 'fill' ? insertAfterParagraph(state.translation, index, out, state.protect) : replaceParagraph(state.translation, index, out, state.protect);
         if (!next) throw new Error('번역 답이 비어 있어요.');
-        await saveCheckedTranslation(id, message, state, next, { cache: !report.restoredBlocks, guard: reviewGuard });
+        await saveCheckedTranslation(id, message, state, next, { cache: !report.restoredBlocks && !report.cardFallback, guard: reviewGuard });
         toastr.success(kind === 'fill' ? `빠진 문단을 ${auto ? '자동으로 ' : ''}번역해 넣었어요.` : auto ? `이상한 ${index + 1}번째 문단을 자동으로 다시 번역했어요.` : '이 문단을 다시 번역했어요.', '번역 점검');
     } catch (error) {
         runToken.error = error;
@@ -3420,7 +3467,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 }
                 translation = dropStrayWords(translation, originalText); // 6.2.4 원문에 없는 낱말 한 줄 — 캐시에도 걷은 글을
                 if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
-                else if (!report.restoredBlocks) { await storeTranslationQuietly(originalText, translation, report); cacheReport = report; } // 6.1.8 빠진 보호 블록을 되돌린 답은 캐시하지 않는다
+                else if (!report.restoredBlocks && !report.cardFallback) { await storeTranslationQuietly(originalText, translation, report); cacheReport = report; } // 6.1.8 빠진 보호 블록을 되돌린 답 · 1.0.0 칸 몇 개를 원문으로 둔 상태 카드 답은 캐시하지 않는다
                 // 5.4.2: 문단이 모두 캐시에서 왔으면(요청 0) 알린다 — 전엔 '번역을 시작합니다' 뒤 같은 글만 조용히 다시 붙었다
                 if (source !== 'auto' && source !== 'batch' && !report.partial && report.reusedParagraphs > 0 && !report.translatedParagraphs) toastr.info('IndexedDB에서 번역문을 가져왔습니다.');
             }
@@ -4508,7 +4555,7 @@ jQuery(async () => {
         const html = await getPart('index.html');
         const buttonHtml = await getPart('buttons.html');
 
-        $('#translate_wand_container').append(buttonHtml);
+        if (!document.getElementById('llm_translate_chat')) $('#translate_wand_container').append(buttonHtml);   // 껍데기(shell.js)가 먼저 붙였으면 그대로
         $('#translation_container').append(html);
         initSettingsTabs();
 
@@ -4517,7 +4564,7 @@ jQuery(async () => {
             type: 'text/css',
             href: `${extensionFolderPath}/style.css`
         });
-        $('head').append(cssLink);
+        if (!document.querySelector('link[href$="/addons/translator/style.css"]')) $('head').append(cssLink);   // 껍데기가 먼저 붙였으면 그대로
 
         // html 완전 로드 후 설정 불러오기
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -4851,7 +4898,7 @@ let stopAutoRenderCompletion = null;
 function installAutoRenderCompletion() {
     stopAutoRenderCompletion?.();
     const pending = new WeakMap();
-    stopAutoRenderCompletion = observeEventCompletion(eventSource, (type, messageId) => {
+    renderCapture = (type, messageId) => {
         const swipe = type === event_types.MESSAGE_SWIPED;
         const incoming = type === event_types.CHARACTER_MESSAGE_RENDERED || swipe;
         const outgoing = type === event_types.USER_MESSAGE_RENDERED;
@@ -4882,7 +4929,8 @@ function installAutoRenderCompletion() {
             // This begins the existing strict queue/edit/display guard on the completed text.
             job.handler(id);
         };
-    }, error => console.warn('[LLM Translator] Render completion observer failed', error));
+    };
+    stopAutoRenderCompletion = observeEventCompletion(eventSource, renderCapture, error => console.warn('[LLM Translator] Render completion observer failed', error));
 }
 
 function hasCurrentSwipeTranslation(message) {
@@ -5040,6 +5088,15 @@ function glossaryMemberCount() {
     return activeGlossaryEntries(keys).filter(entry => members.has(entry.scope)).length;
 }
 
+// 한 요청에 넣는 용어집 줄 상한을 넘으면 알려요 — 같은 채팅에서는 한 번만
+let glossaryCutChat = null;
+function noteGlossaryCut(sent, dropped) {
+    const chat = getContext()?.getCurrentChatId?.() ?? '';
+    if (glossaryCutChat === chat) return;
+    glossaryCutChat = chat;
+    toastr.warning(`이 글에 나온 용어집 항목 ${sent + dropped}개 중 ${sent}개만 보냈어요. 긴 표기부터 남겼어요.`, '번역 용어집');
+}
+
 /**
  * 원문에 나오는 항목만 골라 프롬프트 블록을 만든다. 찾는 규칙은 glossary-match.js (2.2.9 에서 떼어 냄 + 가타카나 표기 흔들림).
  * reverse: 한국어 → 외국어(보내기·입력 번역)라 dst 로 찾고 "dst → src" 로 적는다.
@@ -5048,8 +5105,9 @@ function buildGlossaryBlock(text, { reverse = false } = {}) {
     const s = extensionSettings;
     if (s.glossary_enabled === false) return '';
     if (reverse && s.glossary_apply_send === false) return '';
-    const { lines, hasChoice } = glossaryLines(activeGlossaryEntries(), text, { reverse, maxLines: GLOSSARY_MAX_LINES });
+    const { lines, hasChoice, dropped } = glossaryLines(activeGlossaryEntries(), text, { reverse, maxLines: GLOSSARY_MAX_LINES });
     if (!lines.length) return '';
+    if (dropped) noteGlossaryCut(lines.length, dropped);
     const rule = hasChoice
         ? 'Render these terms exactly as given below (keep the given spelling; Korean particles may attach naturally). Where several options are separated by " / ", pick the one that fits the context and use only options from the list:'
         : 'Render these terms exactly as given below (keep the given spelling; Korean particles may attach naturally):';
@@ -6156,7 +6214,7 @@ function initializeEventHandlers() {
     });
     // [1.6.2] 번역해서 보낸 내 메시지가 화면에 그려진 뒤, '다시 번역' 이면 보낸 글(번역문)을 채팅 번역 프롬프트로 한국어로 되돌려 보여 준다
     // — AI 답변과 같은 번역체라 나중에 읽어도 말투가 이어진다. translateMessage 의 진행 중 가드가 자동 번역 모드와의 중복을 막는다
-    eventSource.on(event_types.USER_MESSAGE_RENDERED, onUserRenderedBackTranslate);
+    listen(event_types.USER_MESSAGE_RENDERED, onUserRenderedBackTranslate);
     for (const key of SEND_CTX_KEYS) {
         $(`#llm_${key}`).off('change').on('change', function () {
             extensionSettings[key] = $(this).is(':checked');
@@ -6164,7 +6222,7 @@ function initializeEventHandlers() {
         });
     }
     // 보내는 메시지를 채팅에 넣은 직후(프롬프트 만들기 전)에 번역 — emit 이 기다려 주므로 번역이 끝난 뒤 생성이 이어진다
-    eventSource.on(event_types.MESSAGE_SENT, onMessageSentTranslate);
+    listen(event_types.MESSAGE_SENT, onMessageSentTranslate);
     // 번역 리모컨: 채팅을 바꾸면 열린 메뉴를 닫고 단추 자리 · 모양을 다시 맞춘다 (켜 둔 사람만 — remote 가 없으면 아무 일 없음)
     eventSource.on(event_types.CHAT_CHANGED, () => { remote?.closeMenu(); remote?.sync(); });
 	
@@ -6241,7 +6299,7 @@ function initializeEventHandlers() {
 
     // 이벤트 핸들러 등록 (SillyTavern 스타일)
     installAutoRenderCompletion();
-    eventSource.on(event_types.MESSAGE_SWIPED, (messageId) => {
+    listen(event_types.MESSAGE_SWIPED, (messageId) => {
         // 스와이프시 이전 번역 진행 상태 정리
         if (translationInProgress[messageId]) {
             translationInProgress[messageId] = false;
@@ -6271,7 +6329,7 @@ function initializeEventHandlers() {
 
         // Automatic translation is queued by installAutoRenderCompletion after every swipe listener finishes.
     });
-    eventSource.on(event_types.MESSAGE_UPDATED, handleMessageEdit);
+    listen(event_types.MESSAGE_UPDATED, handleMessageEdit);
 
     // 메세지에 자동 번역버튼 추가
     if (!window.llmTranslatorObserver) {
@@ -6347,7 +6405,7 @@ function initializeEventHandlers() {
     installSkyAttrsHook();   // 8.0.6 번역한 시간 상태창의 하늘 장면 (sky-attrs.js)
     installCheckHooks();   // 2.6.0 번역 점검 표시 · 생각 블록 번역
     // 7.0.2 캐릭터 이름을 바꾸면 그 캐릭터 용어집 범위(아바타 파일 이름)도 새 파일로 (glossary-sync renameGlossaryScope)
-    if (event_types.CHARACTER_RENAMED) eventSource.on(event_types.CHARACTER_RENAMED, (oldAvatar, newAvatar) => {
+    if (event_types.CHARACTER_RENAMED) listen(event_types.CHARACTER_RENAMED, (oldAvatar, newAvatar) => {
         try {
             const out = renameGlossaryScope(extensionSettings, String(oldAvatar || ''), String(newAvatar || ''));
             if (out.moved || out.suggest) { saveSettingsDebounced(); setTimeout(() => { try { renderGlossary(); } catch { /* 다음 채팅 바꾸기에서 */ } }, 0); }   // renderGlossary 가 이름 다리도 다시 낸다
@@ -9043,6 +9101,7 @@ class PromptManager {
         $(document).off('click', '#llm_prompt_reset_button').on('click', '#llm_prompt_reset_button', () => {
             this.resetSelectedPrompt();
         });
+        $(document).off('click', '#llm_context_slot_insert').on('click', '#llm_context_slot_insert', () => this.insertContextSlot());
         $(document).off('input', '#llm_prompt_editor').on('input', '#llm_prompt_editor', () => {
             this.updatePromptButtons();
         });
@@ -9182,6 +9241,26 @@ class PromptManager {
         show(resetBtn, state.visible);
         show(deleteBtn, !state.visible);
         if (resetBtn) { resetBtn.disabled = !state.enabled; resetBtn.setAttribute('aria-disabled', String(!state.enabled)); }
+        this.syncContextSlotNotice();
+    }
+
+    // 지금 채팅 번역에 쓰는 프롬프트에 {{llmContext}} 가 없으면 「참고할 최근 대화」가 쓰이지 않아요 — 카드에 알리고 넣기 단추를 보여요
+    syncContextSlotNotice() {
+        const notice = document.getElementById('llm_context_unused');
+        if (notice) notice.hidden = usesContextSlot(liveChatPrompt()) || usesContextSlot(document.getElementById('llm_rule_prompt')?.value);   // 채팅별 규칙 프롬프트의 자리도 치환돼요
+    }
+
+    insertContextSlot() {
+        const next = withContextSlot(liveChatPrompt());
+        const custom = this.customPrompts.find(p => p.id === extensionSettings.selected_translation_prompt_id);
+        if (custom) {
+            custom.content = next;
+            extensionSettings.selected_translation_prompt = next;
+            this.saveToSettings();
+        } else extensionSettings.llm_prompt_chat = next;
+        saveSettingsDebounced();
+        this.loadPromptToEditor();
+        toastr.success('번역 프롬프트 끝에 최근 대화 자리를 넣었어요.');
     }
 
     async resetSelectedPrompt() {

@@ -38,7 +38,7 @@ check('labels, search rows and routes: card design entries gone, QR row and frui
   assert.ok(read('src/settings-differences.js').includes("if (scope === 'fruit') return {tab:'prompt',sub:'fruit'};"),'route to the fruit sub-tab stays');
 });
 check('fruit window styling script and translator card preservation stay',()=>{
-  for(const rel of ['src/scripts/bundled/fruit-style.js','src/scripts/plain/fruit-style.js','src/addons/translator/display-cards.js'])assert.ok(fs.existsSync(path.join(root,rel)),rel);
+  for(const rel of ['src/scripts/plain/fruit-style.js','src/addons/translator/display-cards.js'])assert.ok(fs.existsSync(path.join(root,rel)),rel);
   assert.ok(read('src/scripts/plain/fruit-style.js').includes('installFruitHelp'),'fruit window help stays');
 });
 check('release workflow runs this test',()=>assert.ok(read('.github/workflows/release-check.yml').includes('node tools/tests/fruit-cards-removed.mjs')));

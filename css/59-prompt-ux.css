@@ -85,7 +85,6 @@ body.salty #left-nav-panel #pro-settings-block > :is(#amount_gen_block,#max_cont
 
 /* Chat Completion도 2열을 강제하지 않고 큰 글씨일 때 한 칸으로 내려온다. */
 body.salty #left-nav-panel #range_block_openai:not([style*="display: none"]):not([style*="display:none"]) {
-  grid-template-columns:repeat(auto-fit,minmax(min(100%,11em),1fr));
   gap:var(--bl-param-gap);
 }
 body.salty #left-nav-panel #range_block_openai > .range-block:where(:is([data-bl-row~="oai-ctx-unl"], [data-bl-row~="stream"], [data-bl-row~="oai-ctx"], [data-bl-row~="oai-tok"], [data-bl-row~="n-openai"])):is(#bl-s, *) {
@@ -97,7 +96,6 @@ body.salty #left-nav-panel .range-block-title {
   overflow-wrap:anywhere;
 }
 body.salty #left-nav-panel #range_block_openai > .range-block:where([data-bl-row~="resp"]):is(#bl-s, *) > .wide100p {
-  width:var(--bl-num-w)!important;
   max-width:100%;
 }
 body.salty #left-nav-panel #openai_settings .inline-drawer-header > .flex-container {
@@ -174,7 +172,7 @@ body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager
   }
 }
 /* 7.7.0 컨테이너 쿼리를 모르는 브라우저(옛 삼성 인터넷 · 웹뷰, Chromium 105 이전)에서는 위 두 줄 배치가 안 걸려
-   좁은 화면의 이름 칸이 토큰 · 조작 칸에 밀려 한두 글자씩 세로로 쪼개졌다(제보 10-22) → 같은 배치를 화면 폭(24em ≈ 384px)으로 건다.
+   좁은 화면의 이름 칸이 토큰 · 조작 칸에 밀려 한두 글자씩 세로로 쪼개졌다 → 같은 배치를 화면 폭(24em ≈ 384px)으로 건다.
    컨테이너 쿼리를 아는 브라우저는 이 묶음을 통째로 건너뛴다 */
 @supports not (container-type: inline-size) {
   @media (max-width: 24em) {

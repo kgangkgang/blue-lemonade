@@ -1,3 +1,4 @@
+import { watchDom } from './dom-watch.js';   // 9.0.4 공용 감시 허브 — body · html 자기 감시는 문서마다 감시자 하나
 // 지우기 확인 창 표시: 실리태번은 확인 창에 표시를 안 붙임 (모든 창의 data-i18n 이 'OK', 글자는 '네')
 // → 로어북 지우기처럼 되돌릴 수 없는 창이 그냥 묻는 창과 CSS 로 구별이 안 됨.
 //   방금 누른 것이 지우기 컨트롤이었으면 그때 뜬 확인 창에 .salty-danger-confirm 을 붙여 준다.
@@ -46,11 +47,11 @@ export function startDangerMark() {
         if (ev.key === 'Enter' || ev.key === ' ') arm(ev);
     }, true);
     // 실리태번은 창을 열 때 dialog 를 body 에 새로 붙임
-    new MutationObserver((muts) => {
+    watchDom(document.body, { childList: true, name: '지우기 확인 창 표시' }, (muts) => {
         for (const mut of muts) {
             for (const node of mut.addedNodes) {
                 if (node.nodeType === 1 && node.matches?.('dialog.popup')) markNew(node);
             }
         }
-    }).observe(document.body, { childList: true });
+    });
 }

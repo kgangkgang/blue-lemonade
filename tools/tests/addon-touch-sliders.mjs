@@ -58,15 +58,14 @@ test('선택자가 가리키는 창 · 슬라이더가 실제로 있어요', () 
     assert.match(read('src/addons/tts/src/ui.js'), /el\.className = 'lv-editor';/);
     assert.match(read('src/addons/customstyle/index.js'), /const CTS_CONTENT_ID = 'ctsi-drawer-content';/);
     assert.match(read('src/addons/notes/index.js'), /lookDialog\.className = 'bl-notes-dialog bl-notes-look';/);
-    assert.match(read('src/frame-editor.js'), /dialog\.className = 'bl-frame-editor';/);
     assert.match(read('src/addons/prompt/index.js'), /type="range" class="pt-param-slider"/);
     assert.match(read('src/addons/prompt/settings-ui.js'), /pt-orig-size/);
     assert.match(read('src/capture-options.js'), /type="range"[^`]*data-capture-option|data-capture-option[^`]*type="range"/);
 });
 test('index.js 가 시작할 때 한 번 걸어요 (시작 경계 startSafe 로 감싸도)', () => {
     const src = read('index.js');
-    // 10-30: 시작 그래프 상한(boot-graph 111개) 때문에 startSafe 안에서 동적 import 로 한 번 불러요
-    assert.equal((src.match(/startSafe\('startAddonTouchSliders', \(\) => \{ import\('\.\/src\/touch-sliders\.js'\)\.then\(m => \{ m\.startAddonTouchSliders\(\); \}\)/g) || []).length, 1);
+    // 9.0.2 부팅 3층 표(IDLE_LAYER)에서 동적 import 로 한 번 불러요 (startLayer 가 startSafe 로 감싸요)
+    assert.equal((src.match(/\['startAddonTouchSliders', \(\) => import\('\.\/src\/touch-sliders\.js'\), m => \{ m\.startAddonTouchSliders\(\); \}, 'drawer'\]/g) || []).length, 1);
     assert.ok(!/import \{ startAddonTouchSliders \}/.test(src), '정적 import 는 없어요');
 });
 assert.ok(read('.github/workflows/release-check.yml').includes('node tools/tests/addon-touch-sliders.mjs .'), 'release-check.yml 에 등록');

@@ -14,7 +14,7 @@ const probe = { ext, insertInstructions, saves: 0, model: 'example-model',
 globalThis.__directionTest = probe; globalThis.window = { matchMedia: () => ({ matches: false }) };
 const js = await read('src/addons/direction/index.js');
 const source = js.split('// ── 시작')[0].replace(/^import .*;$/gm, '');
-const prelude = 'const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>globalThis.__directionTest.model;const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
+const prelude = 'const addonRunning=()=>true;const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>globalThis.__directionTest.model;const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
 const m = await import('data:text/javascript;base64,' + Buffer.from(prelude + source + '\nexport {initSettings,settings,injectDirection,trackGeneration,promptsActive,sendLevel,enabledPrompts,stateText,kindActive,KINDS,TEXT_KINDS,PROMPT_MAX};').toString('base64'));
 
 let pass = 0, fail = 0;
@@ -100,7 +100,7 @@ await test('화면 · 설정 카드 · 합치기 · CSS · CI', async () => {
     assert.match(js, /lines\.push\(`프롬프트 \$\{prompts\.length\}개 켜짐/, 'button tooltip line');
     assert.doesNotMatch(js, /promptList: \[\{/, 'no shipped example prompts');
     const css = await read('src/addons/direction/style.css');
-    assert.match(css, /--jj-css-version: "1\.4\.2";/); assert.match(js, /const VERSION = '1\.4\.2';/);
+    assert.match(css, /--jj-css-version: "1\.4\.3";/); assert.match(js, /const VERSION = '1\.4\.3';/);
     assert.match(css, /\.jj-pitem-head \{[^}]*min-height: 44px/, 'row is a 44px target');
     assert.match(css, /#jj-popup \.jj-padd \{[^}]*min-height: 44px/);
     assert.match(css, /@media \(pointer: coarse\) \{\s*#jj-popup \.jj-pbtn::after \{[^}]*width: max\(100%, 44px\); height: max\(100%, 44px\)/, '36px buttons get a 44px hit box on touch');
@@ -123,7 +123,7 @@ await test('7.4.2 (1.3.1) 깃털 단계 = 보내는 것의 수 (테두리 · 채
     assert.doesNotMatch(js, /partnerColor|gradientColors|setProperty\('--jj-grad-/, 'no gradient code');
     const css = await read('src/addons/direction/style.css'), theme = await read('css/04-send-form.css');
     for (const text of [css, theme]) assert.doesNotMatch(text, /--jj-grad-|is-always/, 'no gradient rules');
-    // 사용자 10-20 고른 모양: 1 테두리만(안은 12%) · 2 채움 · 3 채움 + 은은한 빛 — 테마 · 테마 없음 둘 다
+    // 고른 모양: 1 테두리만(안은 12%) · 2 채움 · 3 채움 + 은은한 빛 — 테마 · 테마 없음 둘 다
     for (const text of [css, theme]) {
         assert.match(text, /\[data-jj-level="1"\][^{]*\{[^}]*color: color-mix\(in srgb, var\(--jj-on\) 12%, transparent\);[^}]*-webkit-text-stroke: 1\.3px var\(--jj-stroke[^}]*paint-order: stroke fill;/, 'level 1 = thin outline (7.4.5: fixed 1.3px = the line-icon weight at any icon size)');
         assert.doesNotMatch(text, /-webkit-text-stroke(?:-width)?: 0\.[0-9]+em/, '7.4.5 no em-scaled outline (grew on the phone)');

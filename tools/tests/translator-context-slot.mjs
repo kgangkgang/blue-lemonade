@@ -1,0 +1,25 @@
+// 지금 번역 프롬프트에 {{llmContext}} 가 없으면 「참고할 최근 대화」 카드가 알리고, 단추 하나로 넣어 줘요.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+const dir = path.resolve(process.argv[2] || '.');
+const root = pathToFileURL(dir + '/');
+const { usesContextSlot, withContextSlot, CONTEXT_SLOT } = await import(new URL('src/addons/translator/context-slot.js', root));
+assert.equal(usesContextSlot('Please translate the following text to korean:'), false);
+assert.equal(usesContextSlot(`앞 ${CONTEXT_SLOT} 뒤`), true);
+assert.equal(usesContextSlot(null), false);
+const added = withContextSlot('Please translate the following text to korean:');
+assert.ok(added.startsWith('Please translate the following text to korean:\n\n'), '원래 프롬프트는 그대로 앞에 남아요');
+assert.equal(usesContextSlot(added), true);
+assert.equal(withContextSlot(added), added, '두 번 눌러도 한 번만 들어가요');
+assert.equal(added.split(CONTEXT_SLOT).length - 1, 1);
+const html = fs.readFileSync(path.join(dir, 'src/addons/translator/index.html'), 'utf8');
+const src = fs.readFileSync(path.join(dir, 'src/addons/translator/index.js'), 'utf8');
+assert.match(html, /id="llm_context_unused"[^>]*hidden/, '평소에는 숨은 알림 줄이 카드에 있어요');
+assert.match(html, /id="llm_context_slot_insert"/, '넣기 단추');
+assert.match(html, /\{\{llmContext\}\}<\/code> 자리가 없어/, '왜 안 쓰이는지 적어요');
+assert.match(src, /updatePromptButtons\(\) \{[\s\S]{0,1400}syncContextSlotNotice\(\)/, '프롬프트를 고르거나 고칠 때마다 다시 판단해요');
+assert.match(src, /syncContextSlotNotice\(\) \{[\s\S]{0,300}usesContextSlot\(liveChatPrompt\(\)\)/, '실제 번역에 쓰는 프롬프트로 판단해요');
+assert.match(src, /'#llm_context_slot_insert'[\s\S]{0,120}insertContextSlot\(\)/, '단추 연결');
+console.log('PASS 자리표가 없는 프롬프트를 알리고 단추로 넣어요');

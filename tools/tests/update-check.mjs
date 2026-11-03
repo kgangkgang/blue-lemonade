@@ -1,4 +1,4 @@
-// 5.7.0 새 버전 알림 · 업데이트 흐름 — src/update-check.js
+// 5.7.0 새 버전 알림 · 업데이트 흐름 — src/update-check.js (1.0.0 바탕에서 되살림: 판 비교는 (계열, 판) 짝 · 알약 칠하기는 version-pill.js)
 //   node tools/tests/update-check.mjs <테마 루트>   (공개 저장소는 '.', 개발본은 'salty-ext')
 // 실리태번 · 브라우저 없이: fetch · localStorage · document 를 흉내 내고, 업데이트 흐름(runUpdate)은 가짜 서버 응답으로 차례를 본다.
 import assert from 'node:assert/strict';
@@ -33,7 +33,7 @@ globalThis.fetch = async (u) => {
 
 const U = await import(mod('src/update-check.js'));
 const { getSettings } = await import(mod('src/settings.js'));
-const { compareVersions } = await import(mod('src/notice.js'));
+const { compareRelease } = await import(mod('src/version-series.js'));
 
 let pass = 0, fail = 0;
 async function test(name, fn) {
@@ -41,8 +41,8 @@ async function test(name, fn) {
     catch (e) { fail++; console.log('  FAIL ' + name + '\n       ' + String(e.stack || e.message || e).split('\n').slice(0, 5).join('\n       ')); }
 }
 
-await test('compareVersions · notesBetween: 지금보다 새롭고 최신까지만, 새것 먼저, 이상한 줄은 버림', () => {
-    assert.ok(compareVersions('5.7.0', '5.6.9') > 0 && compareVersions('5.6.10', '5.6.9') > 0 && compareVersions('5.6.9', '5.6.9') === 0);
+await test('compareRelease · notesBetween: 지금보다 새롭고 최신까지만, 새것 먼저, 이상한 줄은 버림', () => {
+    assert.ok(compareRelease('5.7.0', '5.6.9') > 0 && compareRelease('5.6.9', '5.6.9') === 0);
     const notes = [
         { version: '5.6.9', date: '2026-10-07', items: ['c'] }, { version: '5.7.0', date: '2026-10-07', items: ['d'] },
         { version: '5.6.4', date: '2026-10-06', items: ['old'] }, { version: '5.6.5', date: '2026-10-06', items: ['b'] },
@@ -56,6 +56,18 @@ await test('compareVersions · notesBetween: 지금보다 새롭고 최신까지
     assert.match(html, /salty-notice-item open/);
 });
 
+await test('1.0.0 계열: 원격 manifest 의 bl_series 를 읽어 s2:1.0.0 — 8.x 보다 새 판 · 공지도 series 칸으로 견줘요', async () => {
+    REMOTE = { manifest: { status: 200, body: { version: '1.0.0', bl_series: 2 } }, notes: { status: 200, body: [] } };
+    assert.equal(await U.fetchLatest(), 's2:1.0.0');
+    REMOTE.manifest = new Error('blocked');
+    REMOTE.notes = { status: 200, body: [{ version: '1.0.1', series: 2, items: [] }] };
+    assert.equal(await U.fetchLatest(), 's2:1.0.1', 'Pages 공지 맨 위도 series 칸까지');
+    const notes = [{ version: '1.0.1', series: 2, items: ['b'] }, { version: '1.0.0', series: 2, items: ['a'] }, { version: '8.2.5', items: ['old'] }, { version: '8.2.4', items: ['older'] }];
+    assert.deepEqual(U.notesBetween(notes, '8.2.4', 's2:1.0.1').map(n => n.version), ['1.0.1', '1.0.0', '8.2.5']);
+    assert.deepEqual(U.notesBetween(notes, 's2:1.0.0', 's2:1.0.1').map(n => n.version), ['1.0.1']);
+    assert.ok(compareRelease('s2:1.0.0', '8.2.5') > 0, '1.0.0(계열 2) > 8.2.5(계열 1)');
+});
+
 await test('fetchLatest: GitHub manifest → 버전 · 막히거나 이상하면 Pages 공지 맨 위 · 둘 다 안 되면 던짐', async () => {
     REMOTE = { manifest: { status: 200, body: { version: '5.7.0' } }, notes: { status: 200, body: [{ version: '5.6.9', items: [] }] } };
     assert.equal(await U.fetchLatest(), '5.7.0');
@@ -63,6 +75,8 @@ await test('fetchLatest: GitHub manifest → 버전 · 막히거나 이상하면
     assert.equal(await U.fetchLatest(), '5.6.9');
     REMOTE.manifest = { status: 200, body: { version: 'abc' } };
     assert.equal(await U.fetchLatest(), '5.6.9');
+    REMOTE.manifest = { status: 200, body: { version: '5.7.0', bl_series: 0 } };
+    assert.equal(await U.fetchLatest(), '5.7.0', '이상한 계열 칸은 계열 1');
     REMOTE.manifest = { status: 404, body: {} };
     REMOTE.notes = { status: 500, body: [] };
     await assert.rejects(U.fetchLatest(), /HTTP 500/);
@@ -106,6 +120,15 @@ await test('checkForUpdate: 새 버전이면 알약 has-update + 업데이트 �
     U.clearUpdate();
     assert.equal(U.hasUpdate(), false); assert.ok(!b1.cls.has('has-update')); assert.equal(b1.attrs['aria-label'], '공지사항');
     getSettings().updateCheck = true;
+});
+
+await test('checkForUpdate: 설치 5.6.4(계열 1) · 원격 1.0.0(계열 2) → 새 판으로 빛남 · 라벨은 맨 판 글자', async () => {
+    store.clear(); badges.length = 0; const b = mkBadge(); badges.push(b);
+    REMOTE = { manifest: { status: 200, body: { version: '1.0.0', bl_series: 2 } }, notes: { status: 200, body: [] } };
+    assert.equal(await U.checkForUpdate({ force: true }), 's2:1.0.0');
+    assert.equal(U.hasUpdate(), true); assert.equal(U.latestVersion(), '1.0.0');
+    assert.ok(b.cls.has('has-update')); assert.equal(b.attrs['aria-label'], '업데이트 v1.0.0');
+    assert.equal(JSON.parse(store.get('bl_update_check')).latest, 's2:1.0.0');
 });
 
 await test('checkForUpdate: 지금 버전이 최신이거나 더 새것이면 빛 없음 · 못 받으면 조용히(던지지 않음)', async () => {

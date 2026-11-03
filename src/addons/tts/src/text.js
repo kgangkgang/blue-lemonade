@@ -632,7 +632,7 @@ export const innerLike = (text) => INNER_RE.test(String(text || '').trim());
 /**
  * 문단마다 speech · paraName 을 붙인다 (조각을 고쳐 씀).
  * 1.9.2 산문체 메시지(기울이지 않은 서술이 어딘가 있음)에서 문단 전체가 기울임인 조각이 속마음처럼 보이면(innerLike) 속마음 — speech · inner,
- *   주인 후보(paraName)는 앞 서술 문단에 처음 나오는 아는 이름 (없으면 재생기가 보낸 쪽 = 내 캐릭터). 사용자: 「속마음 안 읽는디?」 — 서술 문단 사이 한 줄 기울임이 가장 흔한 꼴
+ *   주인 후보(paraName)는 앞 서술 문단에 처음 나오는 아는 이름 (없으면 재생기가 보낸 쪽 = 내 캐릭터). 서술 문단 사이 한 줄 기울임이 가장 흔한 꼴
  *   povName = 모든 기울임의 시점 인물 후보 (그 문단 · 앞 서술 문단의 이름) — 눌러서 읽을 때만 쓴다 (player buildJobs tapped)
  */
 function markParagraphs(segs, names) {

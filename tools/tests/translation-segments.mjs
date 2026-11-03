@@ -38,7 +38,7 @@ assert.deepEqual(parseBatchResult('<think>plan ⟦9⟧</think>Sure, here it is:\
 assert.throws(()=>parseBatchResult('<think>x</think>⟦0⟧ a',2));
 console.log('PASS partial batch failure keeps successful paragraphs; tolerant batch parsing');
 // 5.2.4: 통짜 경로에서 빠진 문단 빈 줄 되살리기 — 문단 수 == 줄 수일 때만
-assert.equal(restoreParagraphBreaks('깡통이 말했다.\n\n블루레몬에이드 최고.','A.\nB.'),'A.\n\nB.');
+assert.equal(restoreParagraphBreaks('하늘이 말했다.\n\n블루레몬에이드 최고.','A.\nB.'),'A.\n\nB.');
 assert.equal(restoreParagraphBreaks('a\n\nb\n\nc','1\n2\n3'),'1\n\n2\n\n3');
 assert.equal(restoreParagraphBreaks('a\n\nb','1\n\n2'),'1\n\n2');
 assert.equal(restoreParagraphBreaks('a\nb','1\n2'),'1\n2');
@@ -89,7 +89,7 @@ console.log('PASS cross-line emphasis is closed and reopened per line inside one
 }
 {
 const {dropStrayWords}=await import(new URL('src/addons/translator/translation-segments.js',root));
-// 6.2.4 사용자 10-13 실제 사례: 영어 원문에는 없고 한국어 번역에만 「Valladolid」 한 줄
+// 6.2.4 실제 사례 꼴: 영어 원문에는 없고 한국어 번역에만 「Valladolid」 한 줄
 const src='The right shoe still clings to her other foot, glossy and guilty.\n\nThe floor indicator glows 7, then 6, then 5.';
 assert.equal(dropStrayWords('오른쪽 구두만 다른 쪽 발에 매달려 있었다.\n\nValladolid\n층수 표시등에 7, 6, 그리고 5가 차례로 켜졌다.',src),'오른쪽 구두만 다른 쪽 발에 매달려 있었다.\n\n층수 표시등에 7, 6, 그리고 5가 차례로 켜졌다.');
 assert.equal(dropStrayWords('가나다.\n\nValladolid\n\n라마바.','A.\n\nB.'),'가나다.\n\n라마바.','빈 줄 사이에 혼자 있으면 빈 줄 하나도 같이 — 문단 수 그대로');
@@ -209,7 +209,7 @@ assert.ok(/repairTagPairs as repairProseTagPairs, dropStrayWords as dropProseStr
 console.log('PASS 6.4.5 a translated line wrapped whole in 「」 loses the wrap only when its source line has no quotes');
 }
 {
-// 6.5.3 번역 모델의 작업 메모 (사용자 10-15 실제 답 두 개) — 문단 · 줄 모두 걷고, 원문 · 보통 글은 둔다
+// 6.5.3 번역 모델의 작업 메모 (실제 답 두 개의 꼴) — 문단 · 줄 모두 걷고, 원문 · 보통 글은 둔다
 const S653=await import(new URL('src/addons/translator/translation-segments.js',root));
 const noteA='她 → 그녀. Kaito uses っす speech → Korean casual-polite with "~습다/~거든요" style; I\'ll use 해요체 with slight slang. The inner thoughts (VAR_0..3) are Kaito\'s, likely monologue, no brackets in source — keep as is.';
 const noteB='Mina→미나. Kaito speaks ~っす (casual polite junior style) → "~잖아요/~거든요" with a 체육계 tone, like "~습다". Rin is playful 반말. Mina is polite 해요체.';

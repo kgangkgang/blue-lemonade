@@ -68,7 +68,6 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_swipe_picker::bef
 body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_create_bookmark::before,
 body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_create_branch::before,
 body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_copy::before,
-body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_to_image::before,
 body.salty.salty-icons-line #chat .mes .mes_buttons > .mes_bookmark::before,
 body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-star::before,
 body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-star.is-marked::before,
@@ -129,7 +128,7 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_swipe_picker { --
 body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_create_bookmark { --salty-mi: var(--salty-mi-flag); }
 body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_create_branch { --salty-mi: var(--salty-mi-branch); }
 body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_copy { --salty-mi: var(--salty-mi-copy); }
-body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_to_image { --salty-mi: var(--salty-mi-camera); }
+
 body.salty.salty-icons-line #chat .mes .mes_buttons > .mes_bookmark { --salty-mi: var(--salty-mi-flagfill); }
 body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-star { --salty-mi: var(--salty-mi-star); }
 body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-star.is-marked { --salty-mi: var(--salty-mi-starfill); }

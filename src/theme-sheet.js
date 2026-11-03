@@ -7,6 +7,12 @@ const OWN_SHEET = new URL('../style.css', import.meta.url).href;
 const EXT_SHEET = new URL('../style-ext.css', import.meta.url).href;
 export const EXT_SHEET_ID = 'salty-ext-css';
 let failed = false;
+// 전체 교체 시트가 오기 전에는 첫 시트, 온 뒤에는 전체 시트 한 벌만 켜요. 확장만 모드에는 둘 다 꺼요.
+const lazyLink = () => document.getElementById('salty-lazy-css');
+const fullReady = () => { const l = lazyLink(); return l?.dataset?.blFullTheme === 'ready' && !!l.sheet?.cssRules.length; };
+const setLazy = disabled => { const l = lazyLink(); const off = disabled || !fullReady(); if (l?.sheet && l.sheet.disabled !== off) l.sheet.disabled = off; };
+// 전체 시트가 준비되면 첫 시트는 메타/99꼬리의 원본으로만 남고 다시 켜지 않아요.
+const enableTheme = main => { main.sheet.disabled = fullReady(); setLazy(false); };
 
 /** 실리태번이 manifest 로 붙인 테마 style.css 의 <link> (폴더 이름이 달라도 이 파일 기준 주소가 먼저) */
 function mainLink() {
@@ -20,7 +26,7 @@ export function syncThemeSheet(themeOn) {
     if (!main?.sheet) return;   // 아직 안 붙었으면 다음 applyAll 때
     let ext = document.getElementById(EXT_SHEET_ID);
     if (themeOn || failed) {   // 테마를 켜면 큰 시트를 먼저 켜고 사본을 떼요(사본만 남아 잠깐 빠지는 규칙이 없게)
-        if (main.sheet.disabled) main.sheet.disabled = false;
+        enableTheme(main);
         ext?.remove();
         return;
     }
@@ -28,16 +34,20 @@ export function syncThemeSheet(themeOn) {
         ext = document.createElement('link');
         ext.id = EXT_SHEET_ID; ext.rel = 'stylesheet'; ext.href = EXT_SHEET;
         // 다 받은 뒤에 큰 시트를 꺼요 — 그 사이엔 둘 다 켜져 있어 화면이 비지 않아요. 큰 시트 바로 뒤라 다른 확장 CSS 와의 차례도 같아요
-        ext.addEventListener('load', () => { if (document.getElementById(EXT_SHEET_ID) === ext && ext.sheet?.cssRules?.length) main.sheet.disabled = true; }, { once: true });
-        ext.addEventListener('error', () => { failed = true; ext.remove(); main.sheet.disabled = false; console.info('[Blue Lemonade] 가벼운 테마 사본(style-ext.css)을 못 받아 큰 시트를 그대로 써요'); }, { once: true });
+        ext.addEventListener('load', () => { if (document.getElementById(EXT_SHEET_ID) === ext && ext.sheet?.cssRules?.length) { main.sheet.disabled = true; setLazy(true); } }, { once: true });
+        ext.addEventListener('error', () => { if (document.getElementById(EXT_SHEET_ID) !== ext) return; failed = true; ext.remove(); enableTheme(main); console.info('[Blue Lemonade] 가벼운 테마 사본(style-ext.css)을 못 받아 큰 시트를 그대로 써요'); }, { once: true });
         main.after(ext);
+        enableTheme(main);   // 사본을 받는 동안 첫 시트 또는 준비된 전체 시트 한 벌만 유지해요.
         return;
     }
     if (ext.sheet?.cssRules?.length && !main.sheet.disabled) main.sheet.disabled = true;
+    if (ext.sheet?.cssRules?.length) setLazy(true);   // 둘째 장이 큰 시트를 끈 뒤에 붙었을 수도 있어요
+    else enableTheme(main);
 }
 
 /** 진단용: 지금 어느 쪽이 켜져 있나 */
 export function themeSheetState() {
     const main = mainLink(), ext = document.getElementById(EXT_SHEET_ID);
-    return { main: !!main?.sheet && !main.sheet.disabled, ext: !!ext?.sheet, failed };
+    const boot = !!main?.sheet && !main.sheet.disabled, full = fullReady() && !lazyLink().sheet.disabled;
+    return { main: boot || full, boot, full, ext: !!ext?.sheet && !ext.sheet.disabled, failed };
 }

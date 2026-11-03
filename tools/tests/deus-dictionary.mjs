@@ -1,10 +1,11 @@
-// 데우스 프롬프트 번역 사전(src/scripts/bundled/deus.js)이 V3 프롬프트·정규식 이름을 모두 한글로 보여 주고, 옛 2.5 항목도 남아 있는지
+// 데우스 프롬프트 번역 사전(src/scripts/plain/deus.js)이 V3 프롬프트·정규식 이름을 모두 한글로 보여 주고, 옛 2.5 항목도 남아 있는지
 //   목록에 칠하는 것과 같은 lookup(src/scripts/prompt-engine.js)으로 확인해요. 고정 자료는 V3 원본의 이름과 id 만(본문 없음).
 //   node tools/tests/deus-dictionary.mjs <테마 루트>
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { scriptCode } from './script-code.mjs';
 
 const root = path.resolve(process.argv[2] || '.');
 const load = rel => import(pathToFileURL(path.join(root, rel)).href);
@@ -13,7 +14,7 @@ const t = async (name, fn) => { await fn(); n++; console.log(`  PASS  ${name}`);
 globalThis.MutationObserver = class { observe() {} disconnect() {} };
 const doc = { getElementById: () => null, body: { contains: () => false, children: [] }, querySelectorAll: () => [], addEventListener() {}, removeEventListener() {} };
 const { createPromptEngine } = await load('src/scripts/prompt-engine.js');
-const code = (await load('src/scripts/bundled/deus.js')).default;
+const code = await scriptCode(root, 'deus');
 let dict; new Function('BlueLemonade', code)({ translate: v => { dict = v; } });
 const plain = fs.readFileSync(path.join(root, 'src/scripts/plain/deus.js'), 'utf8');
 const v3 = JSON.parse(fs.readFileSync(path.join(root, 'tools/tests/deus-v3-names.json'), 'utf8'));
@@ -21,7 +22,7 @@ const engine = createPromptEngine(doc); engine.register('deus', dict);
 const hangul = /[가-힣]/;
 const decorative = name => !/[\p{L}\p{N}]/u.test(name);
 
-await t('plain 사본이 bundled 와 같은 코드예요', () => {
+await t('모듈(plain)에서 꺼낸 코드가 함수 몸통으로 돌아요 (9.0.7 bundled 사본은 걷음)', () => {
     assert.equal(plain.split('/*BL-SCRIPT-START*/\n')[1].split('\n/*BL-SCRIPT-END*/')[0], code);
 });
 await t('형식: 항목마다 이름 · 한글 제목 · 설명이 있고 같은 id+이름이 겹치지 않아요', () => {

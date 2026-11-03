@@ -1,0 +1,146 @@
+/* src/compat-browser.gen.css — tools/build-css.cjs 가 css/ 에서 크로미움 밖 브라우저 · 강제 색 · 옛 크로미움용 규칙 33개만 떼어 적은 것(고치지 말 것 · tools/css-compat.cjs). src/lite.js loadCompatCss 가 조건이 맞을 때만 테마 시트 뒤에 붙인다 (build ec2250a96e93) */
+body.salty input[type="range"]:where(:not(.salty-panel *))::-moz-range-thumb {
+width:var(--bl-knob-size);
+height:var(--bl-knob-size);
+border:0;
+border-radius:50%;
+}
+body.salty input[type="range"]:where(:not(.salty-panel *)):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::-moz-range-thumb {
+background:var(--bl-knob-face);
+box-shadow:var(--bl-knob);
+}
+@supports not selector(:has(a)) {
+body.salty #send_form:focus-within {
+    box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e3) !important;
+  }
+}
+@supports not selector(:has(a)) {
+@media (max-width: 1000px) {
+body.salty #send_form:focus-within {
+      box-shadow: var(--bl-e4) !important;
+    }
+}
+}
+@supports not (scrollbar-gutter: stable) {
+body.salty .scrollableInner {
+    padding-right: max(0px, calc(14px - var(--bl-sbw)));
+  }
+}
+@supports not (font-synthesis: style) {
+.salty-md-i {
+    display: inline-block;
+    font-style: normal;
+    transform: skewX(-12deg);
+  }
+}
+.salty-slider input[type="range"]::-moz-range-track {
+  height: var(--bl-track-h, 5px);
+  border-radius: 999px;
+  background: var(--shade-2);
+}
+.salty-slider input[type="range"]::-moz-range-progress {
+  height: var(--bl-track-h, 5px);
+  border-radius: 999px;
+  background: var(--salty-fill-accent, var(--salty-accent));
+}
+.salty-slider input[type="range"]::-moz-range-thumb {
+  width: var(--bl-knob-size, 22px);
+  height: var(--bl-knob-size, 22px);
+  border: 0;
+  border-radius: 50%;
+  background: var(--bl-knob-face);
+  box-shadow: var(--bl-knob);
+}
+@supports not (-webkit-mask-clip: text) {
+body.salty.salty-dem-ink.salty-dem-ink-marker:not(.salty-dlg-full) :is(:is(#chat,.bl-chat-like) .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
+    -webkit-text-fill-color: currentColor;
+    background: none !important;
+    padding: 0;
+  }
+}
+:root.bl-apple-webkit body.salty.salty-dem-ink.salty-dem-ink-marker :is(:is(#chat,.bl-chat-like) .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q,
+:root.bl-apple-webkit body.salty.salty-tone.salty-dem-ink.salty-dem-ink-marker :is(:is(#chat,.bl-chat-like) .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"])[style*="--bl-hue"] q:not(q q) {
+  -webkit-mask: none !important;
+  mask: none !important;
+  background-color: color-mix(in srgb, currentColor 34%, transparent) !important;
+  background-image: none !important;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+:root.bl-apple-webkit body.salty.salty-dem-ink.salty-dem-ink-marker :is(:is(#chat,.bl-chat-like) .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q q {
+  background-color: transparent !important;
+}
+.bl-mask-customize input[type=range]::-moz-range-track, .bl-capture-filter input[type=range]::-moz-range-track { height:var(--bl-track-h,5px); border:0; border-radius:999px; background:var(--salty-line); }
+.bl-mask-customize input[type=range]::-moz-range-progress, .bl-capture-filter input[type=range]::-moz-range-progress { height:var(--bl-track-h,5px); border-radius:999px; background:var(--salty-accent); }
+.bl-mask-customize input[type=range]::-moz-range-thumb, .bl-capture-filter input[type=range]::-moz-range-thumb { width:var(--bl-knob-size,22px); height:var(--bl-knob-size,22px); border:0; border-radius:50%; background:#fff; box-shadow:var(--bl-knob,0 1px 4px #0003); }
+.bl-capture-filter input[type=range]::-moz-range-track { background:linear-gradient(to right,var(--salty-line) var(--fill-a,0%),var(--salty-accent) var(--fill-a,0%) var(--fill-b,0%),var(--salty-line) var(--fill-b,0%)); }
+.bl-capture-filter input[type=range]::-moz-range-progress { background:transparent; }
+.bl-mask-color input[type=color]::-moz-color-swatch { border:0; border-radius:5px; }
+:root.bl-apple-webkit body.salty :is(:is(#chat,.bl-chat-like), .cg-root) .custom-dem-expressive.bl-fx-long,
+:root.bl-apple-webkit body.salty :is(:is(#chat,.bl-chat-like), .cg-root) :where(.custom-dem-expressive):is(.bl-fx-long .custom-dem-expressive),
+:root.bl-apple-webkit body.salty:not(.salty-demfx-go) :is(:is(#chat,.bl-chat-like), .cg-root) .custom-dem-expressive,
+:root.bl-apple-webkit body.salty .cg-root .custom-dem-expressive {
+  background-image: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  color: var(--salty-marker-ink, var(--salty-dialogue)) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+html body.salty input[type="color"]:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::-moz-color-swatch {
+border:1px solid var(--salty-line);
+}
+html body.salty input[type="color"]:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)::-moz-color-swatch {
+border-width:1px;
+border-style:solid;
+}
+html body.salty input[type="color"]::-moz-color-swatch {
+border-radius:50%;
+}
+@supports not (container-type: inline-size) {
+@media (max-width: 24em) {
+body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt {
+      grid-template-columns:minmax(0,1fr) auto!important;
+      gap:8px 10px!important;
+    }
+    body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > .completion_prompt_manager_prompt_name {
+      grid-column:1 / -1;
+      grid-row:1;
+      flex-wrap:wrap;
+      gap:4px 10px;
+      overflow:visible!important;
+      white-space:normal!important;
+    }
+    body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name > a.prompt-manager-inspect-action,
+body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list .completion_prompt_manager_prompt_name > span:not([class]) {
+      white-space:normal;
+      overflow-wrap:anywhere;
+      text-overflow:clip;
+    }
+    body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > .prompt_manager_prompt_tokens {
+      grid-column:1;
+      grid-row:2;
+      justify-self:start;
+      padding-left:var(--pm-icon);
+    }
+    body.salty #left-nav-panel #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt > span[data-bl-row~="pmc"] {
+      grid-column:2;
+      grid-row:2;
+    }
+}
+}
+@supports not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px))) {
+html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y] { -webkit-mask-image: none; mask-image: none; }
+}
+@media (forced-colors:active) {
+html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *),
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)) { forced-color-adjust:auto; border-color:ButtonText!important; background:Canvas!important; color:CanvasText!important; box-shadow:none!important; }
+ html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *):is(:checked,:indeterminate),
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(:checked,:indeterminate) { background:Highlight!important; color:HighlightText!important; }
+ html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *):is(:checked,:indeterminate)::after,
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(:checked,:indeterminate)::after { forced-color-adjust:none; background:HighlightText!important; }
+ html:root:not(#bl-check-native) body.salty input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):is(bl-s, *):focus-visible,
+html:root:not(#bl-check-native) body :is(.salty-panel,html[data-bl-controls] :where(.pa-hub,#lv_settings,.bwr_settings,#pt-panel,#model_register_settings,#model-switch-settings,.po-dialog,.rl-root,#regex-link-settings,.bl-translator-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.bl-direction-dialog,.blzi-dialog,.bl-mermaid-dialog,.blpt-dialog,.bl-notes-dialog,.cg-root)) input[type="checkbox"]:where(:not(.salty-switch input,.bwr_switch_row input,[role=switch],[class*="-switch"],[class*="-toggle"],[class*="-switch"] > input,[class*="-toggle"] > input:not(.lv-toggle input,.bl-addon-toggle input,.po-visible-toggle input),#WorldInfo #wiCheckboxes input,:where(#user-settings-block,#left-nav-panel,#rm_api_block,#AdvancedFormatting,#PersonaManagement,#Backgrounds,#rm_extensions_block .extensions_block > .flex-container,.popup .popup-inputs) label.checkbox_label > input:where(:not(.salty-panel *, .world_entry *, .menu_button *, .del_checkbox, .displayNone, #extensions_settings *, #extensions_settings2 *)),[hidden],.displayNone)):focus-visible { outline-color:Highlight!important; }
+}
+@supports not (grid-template-rows: subgrid) {
+body.salty #left-nav-panel #range_block_openai > .range-block[data-bl-row~="title"] { grid-row: auto; align-self: baseline; }
+}

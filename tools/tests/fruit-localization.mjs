@@ -3,8 +3,10 @@ import path from 'node:path';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
+import { scriptCode } from './script-code.mjs';
 const root=path.resolve(process.argv[2]||path.join(path.dirname(fileURLToPath(import.meta.url)),'../..'));
-const codeOf=name=>JSON.parse(fs.readFileSync(path.join(root,`src/scripts/bundled/${name}.js`),'utf8').slice(15).trim().replace(/;$/,''));
+const codes={};for(const name of ['fruit','fruit-heart','qingguo','fruit-style','deus','deus-qr','helper','korean'])codes[name]=await scriptCode(root,name);
+const codeOf=name=>codes[name];
 let passed=0;function check(name,fn){fn();passed++;console.log('ok',name)}
 class Element {
   constructor(tag='div',attrs={},text=''){this.nodeType=1;this.tagName=tag.toUpperCase();this.attrs=new Map(Object.entries(attrs));this.children=[];this.dataset={};this.value='';if(text)this.append({nodeType:3,nodeValue:text});}
@@ -45,7 +47,7 @@ let dictionary;vm.runInNewContext(codeOf('fruit'),{BlueLemonade:{translate:data=
  check('every entry has a name and a title and only the known fields',()=>{for(const item of [...dictionary.prompts,...dictionary.regex]){assert.ok(item.name&&item.title);for(const k of Object.keys(item))assert.ok(['id','name','title','desc'].includes(k),k)}});
  check('every source-file name is in the bundle (common and each preset file)',()=>{const names=new Set(dictionary.prompts.map(e=>norm(e.name))),regex=new Set(dictionary.regex.map(e=>norm(e.name)));for(const part of parts){for(const e of part.prompts)assert.ok(names.has(norm(e.name)),e.name);for(const e of part.regex)assert.ok(regex.has(norm(e.name)),e.name)}});
  check('per-preset files do not repeat a common name',()=>{const common=new Set(parts[0].prompts.map(e=>norm(e.name)+'|'+(e.id||'')));for(const part of parts.slice(1))for(const e of part.prompts)assert.ok(!common.has(norm(e.name)+'|'+(e.id||'')),e.name)});}
-check('both plain copies execute the exact bundled code',()=>{for(const name of ['fruit','fruit-heart']){const s=fs.readFileSync(path.join(root,`src/scripts/plain/${name}.js`),'utf8');assert.equal(s.slice(s.indexOf('/*BL-SCRIPT-START*/')+19,s.lastIndexOf('/*BL-SCRIPT-END*/')).trim(),codeOf(name).trim())}});
+check('fruit · fruit-heart modules take (BlueLemonade, window) and their code runs as a function body',()=>{for(const name of ['fruit','fruit-heart']){const s=fs.readFileSync(path.join(root,`src/scripts/plain/${name}.js`),'utf8');assert.ok(s.includes('export default function blueLemonadeScript(BlueLemonade, window) {'),name);new Function('BlueLemonade','window',codeOf(name));}});
 const e=environment(),panel=add(e.html,'div',{id:'fruit-heart-v6',class:'open'}),home=add(panel,'button',{'data-nav':'overview'},'首页'),close=add(panel,'button',{title:'关闭'},'×');
 const prompt=add(panel,'input',{placeholder:'搜索全部条目…'});prompt.value='首页';prompt.checked=true;
 const area=add(panel,'textarea',{},'首页'),code=add(panel,'code',{},'{{输入}}'),chat=add(e.body,'div',{id:'chat'},'首页');
@@ -118,7 +120,7 @@ tz.mutate();
 check('model-tag toasts translate without a click in either colon width, keeping the #tag',()=>{assert.equal(halfWidth.text,'모델 태그를 바꿨어요: #DS');assert.equal(fullWidth.text,'모델 태그를 바꿨어요: #GEMINI');assert.equal(localBuild.text,'모델 태그를 바꿨어요: #CLAUDE')});
 check('other Fruit toasts still wait for a recent click in the panel',()=>{assert.equal(otherToast.text,'预设已切换，请重新打开面板')});
 check('the always-on toast list holds only the model-tag notices, each a toast pattern or entry',()=>{const data=JSON.parse('{'+codeOf('fruit-heart').split('installFruitHeartKorean(BlueLemonade,{')[1].trim().replace(/\);\s*$/,''));assert.deepEqual(data.toastAnytime,['已切换模型标签：# {0}','已切换模型标签:#{0}','已切换模型标签：#{0}']);for(const zh of data.toastAnytime)assert.ok(data.entries.some(e=>e.zh===zh&&e.kind==='pattern'&&e.ko==='모델 태그를 바꿨어요: #{0}'),zh)});
-check('catalog version moved with the dictionary change',()=>{assert.match(fs.readFileSync(path.join(root,'src/scripts/catalog.js'),'utf8'),/\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.0\.9'/)});
+check('catalog version moved with the dictionary change',()=>{assert.match(fs.readFileSync(path.join(root,'src/scripts/catalog.js'),'utf8'),/\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.1\.0'/)});
 // 8.0.7 후보(10-27 제보 「야한 과일 · 청과 한글화 안 됨」): 과일의 마음 창은 프롬프트 이름을 줄여 보여요(果实之心 창 스크립트의 규칙 그대로 옮김).
 //   선택 단추 · 목록 · 칩 · 항목 이름 = 「｜」 앞 제목에서 앞 이모지를 뗀 것, 항목 꼬리표 = 「｜」 뒤 칸들, 목록 풀이 = 택1·필수 칸을 뺀 칸을 「 · 」로, 분류 = 구분선 제목 · 풀이.
 //   과일 6.4 · 야한 과일 2.0 · 청과 2.0 의 모든 이름(사전 원본 = 공통 + 프리셋별)을 그 꼴로 창에 그려 한자가 남지 않는지 봐요.

@@ -1,7 +1,7 @@
 // 10-30 perf-icon: src/icon-text.js 의 서랍 줄 표식 훑기가 「모든 요소를 TreeWalker 로 돌기」에서 「바뀔 수 있는 요소만 선택자로 모으기」(rowHosts)로 바뀐 뒤에도
 //   ① 끝 표식이 예전 훑기와 같은지(무작위 나무 400개 · 표식이 미리 붙은 요소 · #chat · .mes · svg 가지 포함) ② 뿌리 자신도 후보가 되는지,
 //   ③ 줄 검사는 그 자식 특징이 있는 것만 도는지(35가지를 다 돌리지 않음)
-//   ④ 감시 콜백 하나에서 같은 메시지를 여러 번 재지 않는지(메시지 안 30곳이 바뀌어도 checkMes 1번 · 같은 값 기록은 0번)
+//   ④ 같은 메시지를 여러 번 재지 않는지(9.0.4: 채팅 메시지는 메시지 꾸미기가 메시지마다 한 번 — body 감시는 채팅 안 기록을 안 받아요)
 //   ⑤ 팝업 표식 조상 오르기가 겹치지 않는지 봐요(가짜 DOM, 브라우저 없음)
 //   node tools/tests/icon-text-hosts.mjs <테마 루트>
 import assert from 'node:assert/strict';
@@ -107,7 +107,7 @@ await test('걸릴 자식이 input 하나뿐인 줄은 그 특징이 필요한 �
 });
 
 // ---------------------------------------------------------------- 감시 콜백: 같은 메시지는 한 번만
-await test('메시지 안 30곳이 한 콜백에서 바뀌어도 그 메시지는 한 번만 재요', async () => {
+await test('9.0.4 채팅 메시지 안 30곳이 바뀌어도 그 메시지는 메시지 꾸미기가 한 번만 재요 — body 감시는 채팅 안 기록을 안 받아요', async () => {
     let cb = null;
     globalThis.MutationObserver = class { constructor(f) { cb = f; } observe() {} };
     const body = new El('body'); const chat = new El('div', '', { id: 'chat' });
@@ -116,17 +116,17 @@ await test('메시지 안 30곳이 한 콜백에서 바뀌어도 그 메시지�
     text.append(...spans); block.append(text); mes.append(block); chat.append(mes); body.append(chat);
     globalThis.document = { body };
     mod.startIconTextMark();
-    assert.ok(cb, '감시자를 걸어요');
+    assert.ok(cb, '감시자를 걸어요(채팅 밖 · 공용 감시 허브)');
     counts.editing = 0;
     cb(spans.map(s => ({ type: 'attributes', attributeName: 'class', target: s, addedNodes: [] })));
-    assert.equal(counts.editing, 1, `checkMes(edit_textarea 찾기) ${counts.editing}번 — 1번이어야 해요`);
-    // 같은 값으로 다시 쓴 class 기록(실리태번 refreshSwipeButtons 의 없는 클래스 빼기)은 아예 재지 않아요
+    assert.equal(counts.editing, 0, `채팅 안 기록에 body 감시가 checkMes ${counts.editing}번 — 0번이어야 해요(메시지 꾸미기 몫)`);
+    const { decorateMessages } = await import(pathToFileURL(path.join(root, 'src/message-decor.js')).href);
     counts.editing = 0;
-    cb(spans.map(s => ({ type: 'attributes', attributeName: 'class', oldValue: s.getAttribute('class'), target: s, addedNodes: [] })));
-    assert.equal(counts.editing, 0, `값이 같은 기록에 checkMes ${counts.editing}번`);
-    // 편집칸이 생기면 표식은 그대로 따라와요
+    decorateMessages([mes]);
+    assert.equal(counts.editing, 1, `메시지 꾸미기가 checkMes(edit_textarea 찾기) ${counts.editing}번 — 1번이어야 해요`);
+    // 편집칸이 생기면(이벤트 없는 변화 → 메시지 꾸미기의 #chat 자식 목록 구독) 표식은 그대로 따라와요
     const ta = new El('textarea', 'edit_textarea'); text.append(ta);
-    cb([{ type: 'childList', target: text, addedNodes: [ta] }, { type: 'attributes', attributeName: 'class', target: spans[3], addedNodes: [] }]);
+    decorateMessages([mes]);
     assert.equal(mes.getAttribute('data-bl-editing'), 'deep text');
 });
 

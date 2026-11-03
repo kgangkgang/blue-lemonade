@@ -84,7 +84,7 @@ await test('③ ④ ⑤ 연결 줄 · CI 등록', () => {
     assert.ok(!/document\.styleSheets\.length\]/.test(dir), '③ the cheap signature no longer counts every sheet');
     assert.match(read('src/headswitch.js'), /b\.closest\('\.drawer-content'\)\?\.classList\.contains\('openDrawer'\) === false\) return; if \(b\.offsetParent !== null\) sync\(\);/);
     assert.match(read('src/addons/translator/selection/translation.js'), /if \(!selected\?\.rangeCount \|\| selected\.getRangeAt\(0\)\.collapsed\) return null;/);
-    assert.match(read('src/addons/bookmarks/selection-chip.js'), /selection\.rangeCount !== 1 \|\| selection\.getRangeAt\(0\)\.collapsed\) return null;/);
+    assert.match(read('src/selection-bar.js'), /selection\.rangeCount !== 1 \|\| selection\.getRangeAt\(0\)\.collapsed\) return null;/);
     assert.match(read('src/dem-selection.js'), /selection\.rangeCount > 0 && !selection\.getRangeAt\(0\)\.collapsed &&/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/perf-bundle-645\.mjs \./);
 });

@@ -5,7 +5,7 @@
 //              Message.fromPromptAsync → ChatCompletion.add, injectToMain, 채팅 안 @깊이) → getChat
 //   텍스트 완성: getExtensionPrompt(앞 · 뒤 · 채팅 안) → renderStoryString(Handlebars.compile(noEscape)) → 채팅
 //   본체 작가 노트: setFloatingPrompt(삽입 빈도) → 월드 인포 AN 위 항목 합치기 → 페르소나 TOP_AN/BOTTOM_AN 합치기 (모두 extension_prompts 를 다시 씀)
-// 실제 요청 본문은 리그(가짜 API)에서 따로 확인한다 — W/outputs/an-persona-pos/실제요청-확인표.md
+// 실제 요청 본문은 리그(가짜 API)에서 따로 확인한다
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -400,11 +400,11 @@ await test('라디오 · 문구 · CSS · CI 등록', async () => {
     assert.match(noteJs, /label\.className = 'checkbox_label bl-note-anchor'/, '본체 라디오와 같은 줄 모양(checkbox_label)');
     assert.match(anchorsJs, /persona: '페르소나 위치', char: '캐릭터 설명 위치'/);
     assert.match(noteJs, /input\.name = RADIO;/, '본체 라디오와 다른 이름 — 본체 change 처리기가 붙지 않음');
-    assert.match(await read('index.js'), /import\('\.\/src\/an-anchor\.js'\)\.then\(m => m\.startNoteAnchor\(\)\)/);
+    assert.match(await read('index.js'), /\['startNoteAnchor', \(\) => import\('\.\/src\/an-anchor\.js'\), m => \{ m\.startNoteAnchor\(\); \}\]/);   // 9.0.2 부팅 2층 표(BOOT_FRAME)
     assert.match(await read('.github/workflows/release-check.yml'), /node tools\/tests\/prompt-anchors\.mjs \./, 'CI 등록');
 });
 
-// 8.0.8 사용자 제보: 두 칸이 묶음 끝에 붙어 「삽입 빈도」 줄과 간격 없이 붙었다 → 「메인 프롬프트 뒤」와 「채팅 안 @ 깊이」 사이에
+// 8.0.8 두 칸이 묶음 끝에 붙어 「삽입 빈도」 줄과 간격 없이 붙었다 → 「메인 프롬프트 뒤」와 「채팅 안 @ 깊이」 사이에
 await test('라디오 자리: 깊이 줄 앞(깊이 줄이 묶음 끝 — 삽입 빈도 위 간격 본체 그대로) · 두 번 불러도 한 벌', async () => {
     class El {
         constructor(tag, attrs = {}) { Object.assign(this, { tagName: tag.toUpperCase(), children: [], parentElement: null, className: '', id: '', name: '', value: '', htmlFor: '', hidden: false, checked: false, textContent: '', style: { display: '' } }, attrs); }

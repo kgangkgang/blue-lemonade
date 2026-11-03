@@ -43,7 +43,7 @@ body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #e
 body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container), .list-group > .list-group-item):active {
   background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
 }
-/* 6.8.8 ✦ 확장 메뉴: 왼쪽(아이콘 + 간격)에 비해 오른쪽 여백이 10px 라 가장 긴 항목(Blue Lemonade 등)이 끝에 붙어 보였다 (커뮤니티 제보) */
+/* 6.8.8 ✦ 확장 메뉴: 왼쪽(아이콘 + 간격)에 비해 오른쪽 여백이 10px 라 가장 긴 항목(Blue Lemonade 등)이 끝에 붙어 보였다 */
 html body.salty #extensionsMenu#extensionsMenu .list-group-item,
 html body.salty #extensionsMenu#extensionsMenu > .extension_container > div,
 html body.salty #extensionsMenu#extensionsMenu > div:not(.extension_container) {
@@ -158,7 +158,7 @@ body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG
 body.salty .popup .popup-controls .menu_button.popup-button-ok:not(.redWarningBG):focus-visible {
   box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-accent-lift) !important;
 }
-/* 7.7.9 안내 창(.bl-info-dialog, popup-guard.js): 취소 없음 · 닫기는 테마 포인트 색 — :has 를 모르는 옛 브라우저와 다른 실리태번 판에서도(사용자 폰 10-23) */
+/* 7.7.9 안내 창(.bl-info-dialog, popup-guard.js): 취소 없음 · 닫기는 테마 포인트 색 — :has 를 모르는 옛 브라우저와 다른 실리태번 판에서도 */
 html body dialog.popup.bl-info-dialog .popup-controls .popup-button-cancel { display: none !important; }
 html body dialog.popup .popup-controls .menu_button.popup-button-ok.bl-info-ok {
   background: var(--salty-fill-accent, var(--salty-accent, var(--bl-fb-2477d3))) !important;

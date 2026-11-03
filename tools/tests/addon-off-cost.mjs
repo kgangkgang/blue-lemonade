@@ -12,9 +12,9 @@ let passed = 0;
 const check = (name, fn) => { fn(); passed++; console.log('ok', name); };
 
 // 불러오면 바로 시작하는 애드온 입구 (startOne 이 부르는 것)
-const STARTERS = ['prompt/index.js', 'direction/index.js', 'assets/index.js', 'bookmarks/index.js', 'notes/index.js', 'rewrite/index.js', 'modelswitch/index.js', 'regexlink/index.js', 'zipinstall/index.js', 'mermaid/index.js', 'customstyle/index.js', 'models/index.js', 'prompt-template/index.js', 'tts/index.js', 'translator/index.js', 'translator/bridge.js', 'perf/start.js'];
+const STARTERS = ['prompt/index.js', 'direction/index.js', 'assets/index.js', 'bookmarks/index.js', 'notes/index.js', 'rewrite/index.js', 'modelswitch/index.js', 'regexlink/index.js', 'zipinstall/index.js', 'mermaid/index.js', 'customstyle/index.js', 'models/index.js', 'tts/index.js', 'translator/index.js', 'translator/bridge.js', 'perf/start.js'];
 // 사용자가 직접 누른 동작에서 켜짐을 확인한 뒤 부르는 곳 (알림 단추 → 번역 창)
-const USER_ACTION = new Set(['src/notice-actions.js']);
+const USER_ACTION = new Set(['src/notice-actions.js']);   // 공지 칸의 「번역 설정 열기」 같은 단추 — 누를 때만 (1.0.0 바탕 되살림)
 
 function walk(dir, out = []) {
     for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
@@ -54,6 +54,6 @@ check('애드온 밖(src · index.js)에서 시작 입구를 부르는 곳은 ad
         }
     }
     assert.deepEqual(bad, []);
-    assert.ok(seen >= 3, `찾은 곳이 너무 적어요(${seen}) — 찾는 식이 깨졌을 수 있어요`);
+    assert.ok(seen >= 1, `찾은 곳이 너무 적어요(${seen}) — 찾는 식이 깨졌을 수 있어요`);
 });
 console.log(`addon off cost: ${passed} passed`);

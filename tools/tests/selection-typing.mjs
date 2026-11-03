@@ -133,7 +133,7 @@ test('당겨서 새로고침: selectionchange 에서 isCollapsed 는 당기는 �
 
 test('다시 쓰기 · 북마크 · 번역 지우기 · 데우스 선택: selectionchange 리스너 전부에 입력칸 지킴이가 있다', () => {
     assert.match(read('src/addons/rewrite/quick-ban.js'), /if \(typingInField\(\)\) \{ if \(current\) hide\(\); return; \}/);
-    assert.match(read('src/addons/bookmarks/selection-chip.js'), /if \(!held && typingInField\(\)\) return;/);
+    assert.match(read('src/selection-bar.js'), /if \(!held && typingInField\(\)\) return;/);
     assert.match(read('src/addons/translator/selection/delete.js'), /const onSelection = \(\) => \{ if \(!held && typingInField\(\)\) return; schedule\(\); \};/);
     assert.match(read('src/dem-selection.js'), /if \(typingOutside\(document\.activeElement\)\) return false;/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/selection-typing\.mjs \./);

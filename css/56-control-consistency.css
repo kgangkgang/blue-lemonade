@@ -4,26 +4,11 @@
 /* 칸 이름 옆 작은 ? (선 동그라미 아이콘, 포인트 색): 월드인포 칸 이름 옆 .bl-wi-help(src/wi-help.js) · TTS 스크립트 편집기 .lvs-help-button.
    절 제목 옆 ? (.bl-help-btn · .lv-help-btn · .bwr_help · .bl-word-help · .blzi-help)는 76-help-button.css 가 전부 그리므로 여기 목록에서 뺐다(7.9.9) —
    예전엔 같은 목록에 있어 그 단추들의 ::after(1em 포인트 색 아이콘)가 87-addon-touch 의 44px 누르는 칸(::after)보다 세서 폰에서 누르는 칸이 안 생겼다.
-   7.9.9 (사용자 제보 「월드인포 ? 동그라미 글이랑 간격 너무 벌어짐 · 크기도 글자 크기랑 맞춰줘」): 상자 max(24px,1em) · 여백 4px → 아이콘 1em 이 24px 상자 가운데라 글자 끝에서 아이콘까지 10px 가 비었다
+   7.9.9 (월드인포 ? 동그라미가 글자와 멀고 크기가 글자와 다르던 것): 상자 max(24px,1em) · 여백 4px → 아이콘 1em 이 24px 상자 가운데라 글자 끝에서 아이콘까지 10px 가 비었다
    → 상자 = 아이콘 = 옆 글자의 1.25em(동그라미 선 자체는 그 0.7 ≈ 0.9em, 한글 글자 높이와 비슷), 여백 0.2em(아이콘 안쪽 빈 테 0.18em 을 더하면 눈에 보이는 간격 ≈ 0.38em).
    폰(손가락 화면)의 누르는 칸은 ::before 투명 상자 — 세로 44, 가로는 월드인포 항목 머리줄(숫자 칸이 2px 옆)에서는 32 까지만(옆 칸을 덮지 않게), 나머지는 44. */
-html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) {
-  align-items:center!important; justify-content:center!important;
-  position:relative; flex:0 0 auto!important; box-sizing:border-box!important;
-  width:1.25em!important; min-width:1.25em!important; max-width:none!important;
-  height:1.25em!important; min-height:1.25em!important; max-height:none!important;
-  margin:0 0 0 0.2em!important; padding:0!important; border:0!important; border-radius:50%!important;
-  background:transparent!important; box-shadow:none!important; font:inherit!important; line-height:1!important;
-  vertical-align:middle!important; text-indent:0!important;
-  color:transparent!important;
-  transform:translateY(-1.5px);   /* 글자 중심에 맞춤 — 보정 전 실측 +1.4px 아래(76-help-button 과 같은 값) */
-}
-html body.salty :is(.lvs-dialog.lv-editor button.lvs-button.lvs-help-button) { display:inline-flex!important; }
-html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::after {
-  content:''; display:block; position:absolute; left:0; top:0; width:100%; height:100%;
-  background:var(--salty-accent,currentColor); -webkit-mask:var(--salty-mi-help) center/contain no-repeat; mask:var(--salty-mi-help) center/contain no-repeat;
-  pointer-events:none;
-}
+/* 1.0.0 도움말 하나로(10-31): 월드인포 칸 ? (.bl-wi-help) · TTS 대본 편집기 ? (.lvs-help-button.bl-help-btn)의 모양(선 원 · 포인트 색)은 걷고 76-help-button 의 H3 하나로 그려요.
+   여기는 폰 누르는 칸(::before)과 숨김만 남겨요. */
 html body.salty .bl-wi-help::before { content:none; }
 @media (pointer: coarse) {
   html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)::before {
@@ -35,7 +20,7 @@ html body.salty .bl-wi-help::before { content:none; }
 html body.salty :is(.bl-wi-help,.lvs-dialog.lv-editor button.lvs-button.lvs-help-button)[hidden],
 html body.salty.salty-help-off .bl-wi-help { display:none!important; }
 html body.salty :is(.bl-wi-help,.lvs-help-button):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:2px!important; }
-/* ---------- 실리태번 원본 ? (8.1.0 전수조사 · 사용자 제보 「페르소나 관리 옆 ? 는 왜 그대로지」) ----------
+/* ---------- 실리태번 원본 ? (8.1.0 전수조사 · 페르소나 관리 옆 ? 가 옛 모양이던 것) ----------
    원본 index.html 의 fa-circle-question · note-link-span 32곳 + 연결 프로필(connection-manager) · 정규식 편집 창을 전부 테마의 선 원 ? (--salty-mi-help, 포인트 색)로 그린다.
    8.0.2 는 #WorldInfo h3 > a.notes-link 하나만 공용 목록에 :where 로 넣었는데, 페르소나 관리 제목 링크는 notes-link 클래스가 없고(<a href target>)
    12-worldinfo 의 ID 규칙(32px 상자 · margin -8px!important · 16px 회색 글리프)이 더 세서 옛 모양이 남았다. 그래서 원본용 목록은 :where 없이(ID 특이도 그대로) 따로 둔다.
@@ -44,35 +29,37 @@ html body.salty :is(.bl-wi-help,.lvs-help-button):focus-visible { outline:2px so
          W(월드인포 항목 「포함 그룹」) = 같은 항목의 칸 이름 ? (.bl-wi-help) 와 같은 1.25em · 0.2em
    툴팁만 있는 ? (span · small · i, 링크 아님)는 폰 누르는 칸 44 를 주지 않는다 — 옆 체크 줄 · 라벨의 탭을 가로채지 않게.
    AI 응답 설정 오른쪽 위 문서 링크(#left-nav-panel > a.topRightInset)는 목록에 넣지 않는다 — 스크롤 칸 밖에 absolute 로 떠서
-   맨 위 프리셋 머리의 단추(지우기) 위에 겹치고 스크롤해도 그 자리에 남는다. 14-prompt 가 숨기는데 여기 display:inline-flex!important 가 되살렸다(8.1.0 사용자 제보 10-28). */
+   맨 위 프리셋 머리의 단추(지우기) 위에 겹치고 스크롤해도 그 자리에 남는다. 14-prompt 가 숨기는데 여기 display:inline-flex!important 가 되살렸다(8.1.0). */
 html body.salty :is(
   #WorldInfo h3 > a.notes-link, #PersonaManagement h3 > a, #user-settings-block h3 > a.notes-link, #AdvancedFormatting h3 > a.notes-link,
   #rm_api_block a.notes-link[href*="connection-profiles"], #groupControlsToggle a.notes-link, #selectChatPopupHeaderText > a,
   #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link, #character_popup :is(h4, h5) > a.notes-link,
   #novel_api-presets strong > a.notes-link, #left-nav-panel a.note-link-span[href], #left-nav-panel h4 > a:has(> small > .note-link-span), label[for="openai_reasoning_effort"] > a.fa-circle-question,
-  #rm_api_block a:has(> .note-link-span, > i.fa-circle-question), #AdvancedFormatting a.notes-link, #AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span),
-  #user-settings-block a.notes-link, .regex_editor :is(small, span) > .note-link-span, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"]
+  #rm_api_block a:has(> .note-link-span, > i.fa-circle-question), #AdvancedFormatting a.notes-link,
+  #user-settings-block a.notes-link, .regex_editor :is(small, span) > .note-link-span, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"],
+  :is(#extensions_settings, #extensions_settings2) a.notes-link:has(> .note-link-span)   /* 1.0.0 도움말 하나로: 확장 서랍의 원본 ? (이미지 생성 머리 등) */
 ) {
   display:inline-flex!important; align-items:center!important; justify-content:center!important;
   position:relative; flex:0 0 auto!important; box-sizing:border-box!important;
-  width:1.25em!important; min-width:1.25em!important; max-width:none!important;
-  height:1.25em!important; min-height:1.25em!important; max-height:none!important;
+  width:var(--bl-help-d)!important; min-width:var(--bl-help-d)!important; max-width:none!important;
+  height:var(--bl-help-d)!important; min-height:var(--bl-help-d)!important; max-height:none!important;
   margin:0!important; padding:0!important; border:0!important; border-radius:50%!important;
-  background:transparent!important; box-shadow:none!important; font:inherit!important; line-height:1!important;
+  background:var(--bl-control)!important; box-shadow:none!important; font:inherit!important; line-height:1!important;   /* 1.0.0 도움말 하나로: 76 H3 와 같은 면 원 1.3em */
   vertical-align:middle!important; text-indent:0!important; opacity:1!important;
   color:transparent!important;   /* 자신이 FA 글리프인 ? (span · small · i · a.fa-circle-question)는 글리프를 투명하게 — 선 원은 ::after */
-  transform:translateY(-1.5px);
+  transform:translateY(var(--bl-help-y));
 }
 html body.salty :is(
   #WorldInfo h3 > a.notes-link, #PersonaManagement h3 > a, #user-settings-block h3 > a.notes-link, #AdvancedFormatting h3 > a.notes-link,
   #rm_api_block a.notes-link[href*="connection-profiles"], #groupControlsToggle a.notes-link, #selectChatPopupHeaderText > a,
   #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link, #character_popup :is(h4, h5) > a.notes-link,
   #novel_api-presets strong > a.notes-link, #left-nav-panel a.note-link-span[href], #left-nav-panel h4 > a:has(> small > .note-link-span), label[for="openai_reasoning_effort"] > a.fa-circle-question,
-  #rm_api_block a:has(> .note-link-span, > i.fa-circle-question), #AdvancedFormatting a.notes-link, #AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span),
-  #user-settings-block a.notes-link, .regex_editor :is(small, span) > .note-link-span, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"]
+  #rm_api_block a:has(> .note-link-span, > i.fa-circle-question), #AdvancedFormatting a.notes-link,
+  #user-settings-block a.notes-link, .regex_editor :is(small, span) > .note-link-span, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"],
+  :is(#extensions_settings, #extensions_settings2) a.notes-link:has(> .note-link-span)   /* 1.0.0 도움말 하나로: 확장 서랍의 원본 ? (이미지 생성 머리 등) */
 )::after {
-  content:''; display:block; position:absolute; left:0; top:0; width:100%; height:100%;
-  background:var(--salty-accent,currentColor); -webkit-mask:var(--salty-mi-help) center/contain no-repeat; mask:var(--salty-mi-help) center/contain no-repeat;
+  content:""; display:block; position:absolute; left:0; top:0; width:100%; height:100%;
+  background:var(--salty-muted); -webkit-mask:var(--bl-help-mask) center/var(--bl-help-glyph) no-repeat; mask:var(--bl-help-mask) center/var(--bl-help-glyph) no-repeat;   /* 1.0.0 도움말 하나로: 선 원 마스크(포인트 색) → H3 의 ? 글리프(보조 글자색) */
   pointer-events:none;
 }
 /* 품은 회색 글리프(span · small > div · i)는 자리만 두고 숨긴다 — 링크 · 툴팁 · 누르는 동작은 그대로 */
@@ -82,6 +69,7 @@ html body.salty :is(
   #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link, #character_popup :is(h4, h5) > a.notes-link,
   #novel_api-presets strong > a.notes-link, #AdvancedFormatting a.notes-link, #user-settings-block a.notes-link, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"]
 ) > *,
+html body.salty :is(#extensions_settings, #extensions_settings2) a.notes-link > .note-link-span,   /* 1.0.0: 확장 서랍 원본 ? 의 글자 ? */
 html body.salty #left-nav-panel h4 > a > small,   /* GBNF 문법 · JSON 스키마(a > small > div) — :has 를 주어 아닌 자리에 쓰지 않으려고 자식 쪽에서 고른다(has-guard) */
 html body.salty #rm_api_block a > :is(.note-link-span, i.fa-circle-question) { opacity:0!important; margin:0!important; width:0!important; min-width:0!important; height:0!important; font-size:0!important; overflow:hidden!important; pointer-events:none; }
 /* 폰 누르는 칸 44 — 링크(a[href])인 ? 만 */
@@ -91,7 +79,8 @@ html body.salty #rm_api_block a > :is(.note-link-span, i.fa-circle-question) { o
     #rm_api_block a.notes-link[href*="connection-profiles"], #groupControlsToggle a.notes-link, #selectChatPopupHeaderText > a,
     #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link, #character_popup :is(h4, h5) > a.notes-link,
     #novel_api-presets strong > a.notes-link, #left-nav-panel a.note-link-span[href], #left-nav-panel h4 > a:has(> small > .note-link-span), label[for="openai_reasoning_effort"] > a.fa-circle-question,
-    #rm_api_block a:has(> .note-link-span, > i.fa-circle-question), #AdvancedFormatting a.notes-link, #user-settings-block a.notes-link, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"]
+    #rm_api_block a:has(> .note-link-span, > i.fa-circle-question), #AdvancedFormatting a.notes-link, #user-settings-block a.notes-link, #WorldInfo .world_entry a.notes-link[href*="inclusion-group"],
+    :is(#extensions_settings, #extensions_settings2) a.notes-link:has(> .note-link-span)
   )::before {
     content:''; position:absolute; left:50%; top:50%; right:auto; bottom:auto; width:max(100%,44px); height:max(100%,44px); transform:translate(-50%,-50%);
     background:none; border:0; box-shadow:none;
@@ -107,7 +96,7 @@ html body.salty :is(
 /* L 라벨 옆: 한 단계 작게(1.25 × 보조 글자) · 여백 2px(앞 공백 글자 ≈ 4px 와 합쳐 6px 안팎) */
 html body.salty :is(
   #novel_api-presets strong > a.notes-link, #left-nav-panel a.note-link-span[href], #left-nav-panel h4 > a:has(> small > .note-link-span), label[for="openai_reasoning_effort"] > a.fa-circle-question,
-  #rm_api_block a:has(> .note-link-span, > i.fa-circle-question), #AdvancedFormatting a.notes-link, #AdvancedFormatting :is(label, summary, small) > :is(.fa-circle-question, .fa-question-circle):not(.note-link-span),
+  #rm_api_block a:has(> .note-link-span, > i.fa-circle-question), #AdvancedFormatting a.notes-link,
   #user-settings-block a.notes-link, .regex_editor :is(small, span) > .note-link-span, #character_popup h5 > a.notes-link
 ) { font-size:var(--bl-fs-sub)!important; margin:0 0 0 2px!important; }
 /* T 제목 옆: 1.25 × 본문 글자, 제목에서 6px(머리줄이 flex 면 gap 으로, 아니면 margin 으로) */
@@ -122,19 +111,16 @@ html body.salty :is(#WorldInfo > .flex-container > h3, #PersonaManagement h3, #u
 html body.salty :is(#WorldInfo > .flex-container > h3, #PersonaManagement h3, #user-settings-block h3:has(> a.notes-link), #AdvancedFormatting h3:has(> a.notes-link), #character_popup h4:has(> a.notes-link)) { display:flex; }
 html body.salty #selectChatPopupHeaderText > a { margin-left:6px!important; }   /* 채팅 서재 제목: 글자 줄 안이라 margin */
 html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link { margin-left:4px!important; }   /* 줄 gap 2px + 4 = 6 */
+html body.salty :is(#extensions_settings, #extensions_settings2) a.notes-link:has(> .note-link-span) { font-size:var(--bl-fs-body)!important; margin:0 0 0 6px!important; }   /* 1.0.0: 확장 서랍 머리 제목 옆(T) */
 /* W 월드인포 항목 「포함 그룹」: 같은 항목의 칸 이름 ? (.bl-wi-help 1.25em · 0.2em)와 같은 규격 */
 html body.salty #WorldInfo .world_entry a.notes-link[href*="inclusion-group"] { font-size:inherit!important; margin:0 0 0 0.2em!important; }
-/* 옆 칸 이름 ? (.bl-wi-help, 51-integrations opacity .5)와 같은 조용함 — 둘이 나란히 있어 하나만 진하면 튄다.
-   위 공통 규칙의 :is() 는 ID 둘짜리 선택자(#rm_ch_create_block … #description_div) 특이도라 opacity:1 을 이기려면 ID 조상 둘(#WorldInfo #world_popup_entries_list)이 필요하다 */
-html body.salty #WorldInfo #world_popup_entries_list .world_entry a.notes-link[href*="inclusion-group"] { opacity:.5!important; }
-html body.salty #WorldInfo #world_popup_entries_list .world_entry a.notes-link[href*="inclusion-group"]:is(:hover, :focus-visible) { opacity:1!important; }
+/* 1.0.0 도움말 하나로: 옆 칸 이름 ? 와 같은 H3 라 흐리게(.5) 하던 규칙은 걷었어요 */
 html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark {
   position:relative; display:block; width:15px; height:15px; min-width:15px; flex:none; border:0; border-radius:0; background:none;   /* 7.9.1: 옆 작업 단추 아이콘(FA 15px)과 같은 크기 · 같은 글자색 — 1em(11px) · 포인트 색 · 선 아이콘 설정일 때만 그려지던 것 */
   font-size:0; line-height:1; color:inherit;
 }
-html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark::before { content:"\f059"; display:block; font:900 15px/1 "Font Awesome 6 Free"; color:inherit; }
-html body.salty.salty-icons-line #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark { background:currentColor; -webkit-mask:var(--salty-mi-help) center/contain no-repeat; mask:var(--salty-mi-help) center/contain no-repeat; }
-html body.salty.salty-icons-line #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark::before { content:none; }
+html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark::before { content:"\f128"; display:block; font:900 15px/1 "Font Awesome 6 Free"; color:inherit; }
+/* 1.0.0 도움말 하나로: 「? 설명」 작업 단추의 표시도 선 원(\f059 · 선 아이콘 마스크) 대신 ? 글리프 하나 */
 /* 7.9.1 「? 설명」도 줄의 다른 작업 단추(번역본 · 제목)와 같은 면 · 1px 선 · 글자색 */
 html body.salty #pt-panel .pt-page-fixed .pt-act-row > .pt-qhelp.pt-act { background:var(--pt-bg-item) !important; color:var(--pt-text) !important; border:1px solid var(--pt-border) !important; }
 .salty-panel {
@@ -252,6 +238,7 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-setting-locks > :not(.salty-row) { grid-column:1 / -1; }
 .salty-panel .bl-setting-locks .salty-row { flex-wrap:wrap; }
 
+/* 1.0.0 되살림: 설치 · 충돌 점검 (src/install-health.js · 테마 › 설치 점검) */
 /* 점검의 실행 버튼과 결과는 별도 행으로 유지한다. */
 .salty-panel .bl-install-health { display:grid; gap:16px; padding:16px; margin:16px 0; border:1px solid var(--salty-line); border-radius:12px; background:var(--salty-panel-card,var(--salty-surface)); min-width:0; }
 .salty-panel .bl-install-health > [data-health-result]:empty { display:none; } /* 7.8.2: 결과가 없을 때 빈 줄 + 간격 16 이 칸을 키웠다(사용자 사진 「박스가 왤케 큼」) */
@@ -277,7 +264,6 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .bl-health-versions > div { display:grid; gap:4px; padding:10px; background:var(--salty-fill-shade,var(--salty-shade)); border-radius:8px; min-width:0; }
 .salty-panel .bl-health-versions dt { font-size:calc(12 * var(--sp)); color:var(--salty-muted); }
 .salty-panel .bl-health-versions dd { margin:0; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
-
 .salty-panel .bl-usage-mode { display:block; padding:12px; margin:0 0 16px; border:1px solid var(--salty-line); border-radius:10px; }
 .salty-panel .bl-usage-mode label { display:grid; gap:8px; font-weight:650; }
 .salty-panel .bl-usage-mode select { width:100%; min-width:0; min-height:44px; font:inherit; }
@@ -390,9 +376,74 @@ html body.salty #WorldInfo .bl-wi-actions > summary::before {
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='black'%3E%3Ccircle cx='4' cy='10' r='1.7'/%3E%3Ccircle cx='10' cy='10' r='1.7'/%3E%3Ccircle cx='16' cy='10' r='1.7'/%3E%3C/svg%3E") center / contain no-repeat;
   pointer-events: none;
 }
-/* 7.9.1 한글화 패널 선택 줄(전체 선택 체크 · 「N개 · 토큰」 칩 · 검색) — 사용자 폰 10-24 「검색 밑 줄이랑 붙음 · 체크표시랑 20개 나오는 거 여백 안 맞음」:
+/* 7.9.1 한글화 패널 선택 줄(전체 선택 체크 · 「N개 · 토큰」 칩 · 검색) — 검색 아래 줄과 붙고 체크 · 개수 칩 여백이 어긋나던 것:
    검색칸이 줄 높이를 꽉 채워 바로 밑 구분선에 붙었다 → 아래 안쪽 여백 8. 체크 ↔ 칩 간격이 바깥 여백(3) + 간격(8) = 11 로 칩 ↔ 검색(8)과 달랐다 → 체크 오른쪽 · 위아래 바깥 여백 0, 간격 8 하나.
    체크 왼쪽 선은 아래 목록 행의 체크와 같은 선(행 테두리 1 + 머리 안쪽 여백 10 = 11, 그다음 체크 왼쪽 바깥 여백은 목록 체크와 같은 값) */
 html body.salty:not(#bl-pt-a):not(#bl-pt-b) #pt-panel .pt-page-fixed .pt-select-row { padding: 0 0 8px !important; margin-bottom: 8px !important; gap: 8px !important; align-items: center !important; }   /* 줄 묶음 규칙(padding 0 !important, id 둘)보다 무겁게 */
 html body.salty:not(#bl-pt-a):not(#bl-pt-b) #pt-panel .pt-page-fixed .pt-select-row:has(> .pt-checkbox) { padding-left: 12px !important; }
 html body.salty #pt-panel .pt-page-fixed .pt-select-row > .pt-checkbox { margin-top: 0 !important; margin-right: 0 !important; margin-bottom: 0 !important; flex: none; }   /* 왼쪽 바깥 여백은 목록 행 체크와 같은 규칙을 그대로 받는다(창 4 · 서랍 10) */
+
+/* ---------- 1.0.0 도움말 하나로(10-31 사용자 승인 「실리태번 원래 ? · ⓘ 도 테마가 덮어 H3 하나로」) ----------
+   실리태번이 그리는 맨 아이콘 ? · ⓘ (i · span · div · small 에 fa-circle-question · fa-question-circle · fa-circle-info · fa-info-circle)를 테마가 꾸미는 서랍 · 창 안에서
+   H3 와 같은 면 원으로: 옆 글자의 1.3em 원 · --bl-control 면 · 선 없음 · 글리프 0.75em ? (원본 ⓘ 도 칸 설명 말풍선이라 같은 뜻 — 10-31 조정 「같은 뜻이면 ? 하나로」) · 보조 글자색 · 흐림(opacity50p) 없음 · 앞 글자와 0.35em.
+   아이콘 자신이 글리프라 글자 크기를 0.75em 으로 줄이고 상자는 1.3em ÷ 0.75 로 되돌려요. 단추 · 링크 안 아이콘(그 단추의 그림)은 건드리지 않아요. 링크 ? (a.notes-link)는 위 목록이 맡아요. */
+html body.salty :is(#WorldInfo, #left-nav-panel, #rm_api_block, #user-settings-block, #AdvancedFormatting, #rm_extensions_block, #PersonaManagement, #right-nav-panel, #character_popup, .regex_editor) :is(i, span, div, small):is(.fa-circle-question, .fa-question-circle, .fa-circle-info, .fa-info-circle):not(:is(a, button, .menu_button, .menu_button_icon, .bl-wi-help) *):not(.menu_button) {
+  box-sizing:border-box!important; display:inline-flex!important; align-items:center!important; justify-content:center!important; flex:0 0 auto!important;
+  font-size:inherit!important; line-height:1!important; width:var(--bl-help-d)!important; height:var(--bl-help-d)!important; min-width:var(--bl-help-d)!important; min-height:var(--bl-help-d)!important;
+  margin:0 0 0 var(--bl-help-gap)!important; padding:0!important; border:0!important; border-radius:50%!important; align-self:center!important;
+  background:var(--bl-control)!important; color:var(--salty-muted)!important; opacity:1!important; box-shadow:none!important; vertical-align:middle!important; transform:translateY(var(--bl-help-y));
+  -webkit-mask:none!important; mask:none!important;
+}
+html body.salty :is(#WorldInfo, #left-nav-panel, #rm_api_block, #user-settings-block, #AdvancedFormatting, #rm_extensions_block, #PersonaManagement, #right-nav-panel, #character_popup, .regex_editor) :is(i, span, div, small):is(.fa-circle-question, .fa-question-circle):not(:is(a, button, .menu_button, .menu_button_icon, .bl-wi-help) *):not(.menu_button)::before { content:""!important; display:block!important; width:var(--bl-help-glyph)!important; height:var(--bl-help-glyph)!important; font:0/0 a!important; background:currentColor!important; -webkit-mask:var(--bl-help-mask) center/contain no-repeat!important; mask:var(--bl-help-mask) center/contain no-repeat!important; }
+html body.salty :is(#WorldInfo, #left-nav-panel, #rm_api_block, #user-settings-block, #AdvancedFormatting, #rm_extensions_block, #PersonaManagement, #right-nav-panel, #character_popup, .regex_editor) :is(i, span, div, small):is(.fa-circle-info, .fa-info-circle):not(:is(a, button, .menu_button, .menu_button_icon, .bl-wi-help) *):not(.menu_button)::before { content:""!important; display:block!important; width:var(--bl-help-glyph)!important; height:var(--bl-help-glyph)!important; font:0/0 a!important; background:currentColor!important; -webkit-mask:var(--bl-help-mask) center/contain no-repeat!important; mask:var(--bl-help-mask) center/contain no-repeat!important; }
+/* 같은 자리에 둘이 붙은 곳(월드 인포 「포함 그룹」 ? ? · 「우선」 ? ⓘ)은 테마 ? 하나만 — src/wi-help.js 가 옆 원본 ? · ⓘ 에 bl-wi-dup 를 붙여요(「설명 ? 단추」를 끄면 원본이 다시 보여요) */
+html body.salty:not(.salty-help-off):not(#bl-h1):not(#bl-h2) .bl-wi-dup.bl-wi-dup { display:none!important; }   /* 원본 ? 덮개(ID 둘 특이도)의 display:inline-flex 를 이기게 */
+
+/* ---------- 1.0.0 도움말 ? 한 규격(10-31 사용자 확대 사진 — 「원이 글자보다 커요 · 위로 떠요 · 제목에서 멀어요 · 원 안 ? 가 가운데가 아니에요」) ----------
+   모든 ? (테마 · 애드온 · 빠른 설정 · 실리태번 원본)이 이 값 하나를 써요: 원 지름 --bl-help-d(옆 글자의 1.1em) · 제목 글자 끝에서 --bl-help-gap ·
+   세로는 줄 가운데(flex 면 align-self:center, 글 줄이면 vertical-align:middle) + --bl-help-y · 원 안 ? 는 글꼴이 아니라 마스크(--bl-help-mask — 「?」 잉크 상자(맨 위 ~ 맨 아래 · 왼 ~ 오른 끝)의 가운데가 24 칸 가운데(12, 12.01)에 오게 그리고, 원 위에 그려졌을 때 잰 치우침(4배 사진 평균 왼 0.13 · 위 0.19px)만큼 오른 0.2 · 아래 0.3 칸 옮겼어요. 무게 중심이 아니라 잉크 상자 기준 — 10-31 사용자 「너무 밑으로 쳐졌네」, center-marks help-* 가 4배 사진 잉크 상자로 재요)라 글꼴 · 크기가 바뀌어도 가운데. */
+html { --bl-help-d: 1.1em; --bl-help-gap: clamp(5px, 0.35em, 6.8px); --bl-help-glyph: 88%; --bl-help-y: -0.085em; --bl-help-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23000'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cg%20transform%3D'translate(0.2%200.3)'%3E%3Cpath%20d%3D'M8.7%208.9a3.3%203.3%200%201%201%204.9%202.9c-1%20.6-1.6%201.2-1.6%202.3v.6'%20stroke-width%3D'2.6'%2F%3E%3Ccircle%20cx%3D'12'%20cy%3D'18.2'%20r%3D'1.5'%20fill%3D'%23000'%20stroke%3D'none'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"); }
+/* 월드 인포 칸 이름 옆 💬(실리태번 「말풍선 설명」 아이콘)도 ? 와 같은 줄 규격 — 상자 지름 · 제목과 간격 · 세로 가운데가 같아요(면 없이 아이콘만, 보조 글자색) */
+html body.salty #WorldInfo :is(small, label) > .fa-comments {
+  display:inline-flex!important; align-items:center!important; justify-content:center!important; flex:0 0 auto!important; box-sizing:border-box!important;
+  width:var(--bl-help-d)!important; height:var(--bl-help-d)!important; min-width:var(--bl-help-d)!important; margin:0 0 0 var(--bl-help-gap)!important; padding:0!important;
+  font-size:inherit!important; line-height:1!important; vertical-align:middle!important; align-self:center!important; transform:translateY(var(--bl-help-y));
+  color:var(--salty-muted)!important; opacity:1!important;
+}
+html body.salty #WorldInfo :is(small, label) > .fa-comments::before { font-size:0.72em; line-height:1; }
+/* ---------- 1.0.0 ? 간격 하나(제목 글자 끝 ~ ? = --bl-help-gap) — 부모가 flex gap · 글자 사이 공백을 더하던 곳을 덮어요 ----------
+   부모의 gap 은 그대로 두고(다른 칸 간격이 바뀌지 않게) ? 쪽 margin 에서 그만큼 빼요. 자리마다 잰 값(help-shape 「제목과 간격」 ±1px 가 지켜요). */
+html body .salty-panel.bl-editor .bl-editor-group-head:has(> .bl-help-btn) { column-gap:0!important; }
+/* 월드 인포 칸 이름(flex · gap 8): ? · 💬 · ⓘ 가 든 칸은 gap 8 로 고정하고 ? 는 그만큼 당겨요. 체크 줄은 글자 칸이 늘어나 ? 가 끝으로 밀리던 것 → 글자 칸은 글자만큼 */
+html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes, #wiSliders) :is(small, label, .inline-drawer-toggle):has(> :is(.bl-wi-help, .fa-comments, .fa-circle-info, .fa-info-circle)) { column-gap:8px!important; }
+html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes, #wiSliders) :is(small, label, .inline-drawer-toggle) > :is(.bl-wi-help, .fa-comments, .fa-circle-info, .fa-info-circle) { margin-left:calc(var(--bl-help-gap) - 8px)!important; }
+html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > :is(span, small, strong, b):not(.bl-wi-help):has(~ .bl-wi-help) { flex:0 1 auto!important; }   /* :has 는 고를 칸에(has-invalidation-scope) */
+html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > .bl-wi-help:not(:has(~ .bl-wi-help)) { margin-right:auto!important; }
+html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo .world_entry_form_control > .bl-wi-help { margin-left:calc(var(--bl-help-gap) - 2px)!important; }
+/* 실리태번 서랍의 맨 아이콘 ? · ⓘ: 부모 flex gap 만큼 */
+html body.salty:not(#bl-h1):not(#bl-h2) #left-nav-panel .flex-container > :is(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) { margin-left:calc(var(--bl-help-gap) - 10px)!important; }
+html body.salty:not(#bl-h1):not(#bl-h2) #user-settings-block small > :is(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) { margin-left:calc(var(--bl-help-gap) - 4px)!important; }
+html body.salty:not(#bl-h1):not(#bl-h2) #AdvancedFormatting summary > :is(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) { margin-left:calc(var(--bl-help-gap) - 8px)!important; }
+html body.salty:not(#bl-h1):not(#bl-h2) :is(#AdvancedFormatting, #user-settings-block, #left-nav-panel) label.checkbox_label > :is(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle, a.notes-link) { margin-left:calc(var(--bl-help-gap) - 12px)!important; }
+/* 글 줄(block) 안: 앞 공백 글자(≈0.17em) 만큼 */
+html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) .blzi :is(h2, h3, h4) > .blzi-help { margin-left:calc(var(--bl-help-gap) - 0.17em)!important; }
+html body.salty:not(#bl-h1):not(#bl-h2) #AdvancedFormatting small > :is(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) { margin-left:calc(var(--bl-help-gap) - 0.17em)!important; }
+/* 원본 링크 ? 의 제목(T) 줄 gap 도 같은 값, 라벨 옆(L)은 앞 공백만큼 */
+html body.salty:not(#bl-h1):not(#bl-h2) :is(#WorldInfo > .flex-container > h3, #PersonaManagement h3, #user-settings-block h3:has(> a.notes-link), #AdvancedFormatting h3:has(> a.notes-link), h3:has(> a.notes-link[href*="connection-profiles"]), #character_popup h4:has(> a.notes-link), :is(#extensions_settings, #extensions_settings2) b:has(> a.notes-link)) { column-gap:0!important; }
+html body.salty:not(#bl-h1):not(#bl-h2) :is(#WorldInfo > .flex-container > h3, #PersonaManagement h3, #user-settings-block h3, #AdvancedFormatting h3, h3:has(> a.notes-link[href*="connection-profiles"]), #character_popup h4, :is(#extensions_settings, #extensions_settings2) b) > a.notes-link { margin-left:var(--bl-help-gap)!important; }   /* 제목(T) 옆: ? 글자 크기 기준 간격 */
+html body.salty:not(#bl-h1):not(#bl-h2) :is(#AdvancedFormatting, #rm_api_block, #left-nav-panel) :is(h4, h5) > a.notes-link { margin-left:calc(var(--bl-help-gap) - 0.17em)!important; }
+html body.salty:not(#bl-h1):not(#bl-h2) :is(#rm_api_block h4, #AdvancedFormatting h4.range-block-title) > a.notes-link { margin-left:calc(var(--bl-help-gap) - 0.18em)!important; }   /* 제목 글자 칸 끝의 공백(≈0.18em)만큼 */
+html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo small:has(> span[data-i18n="Global World Info/Lorebook activation settings"], > span[data-i18n="Active World(s) for all chats"]) > .bl-wi-help { margin-left:calc(var(--bl-help-gap) - 0.18em)!important; }
+/* 데우스 빠른 설정 머리줄: 제목 · 판 알약 다음 ? 는 머리줄 칸 간격(8, 철칙 7)만 — ? 의 제목 간격 margin 은 빼요 */
+html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #bl-deus-popover .dq-head > .dq-help-button { margin-left:0!important; transform:none!important; }   /* 알약과 같은 칸 가운데 */
+/* ---------- 1.0.0 ? 세로 자리(자리별 --bl-help-y) — 원 잉크 가운데 = 그 줄 글꼴의 한글 잉크 띠 가운데(±0.5px, help-shape 사진 재기 · 규칙 33) ----------
+   기본(html)은 글 줄 · 월드 인포 칸처럼 「줄 가운데 + 조금 위」. 줄 높이 · 글자 크기가 다른 자리만 따로(4배 사진으로 잰 값을 em 으로). */
+html body .salty-panel.bl-editor :is(.bl-editor-group-head, .bl-help-head) > .bl-help-btn { --bl-help-y: 0em; }   /* 설정창 묶음 제목(15 · 650) — 4배 사진: 원 면 가운데 = 제목 잉크 가운데 */
+html body .salty-panel.bl-editor .bl-advanced .bl-editor-group-head > .bl-help-btn { --bl-help-y: -0.058em; }   /* 고급 안 작은 제목(13) */
+html body.salty :is(#WorldInfo > .flex-container > h3, #PersonaManagement h3, #user-settings-block h3, #AdvancedFormatting h3, h3:has(> a.notes-link[href*="connection-profiles"]), #character_popup h4, :is(#extensions_settings, #extensions_settings2) b, label[for="openai_reasoning_effort"]) > :is(a.notes-link, a.fa-circle-question) { --bl-help-y: 0em; }   /* 실리태번 제목(T) 옆 */
+html body.salty #left-nav-panel :is(.flex-container, label) > :is(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) { --bl-help-y: 0em; }
+html body.salty #AdvancedFormatting small > :is(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) { --bl-help-y: -0.14em; }   /* 글 줄(block) 속 작은 글자 */
+html body.salty .bl-tool-label > b > .bl-word-help { --bl-help-y: -0.15em; }   /* 성능 보조 「별 두 개 메뉴」 */
+html body.salty .cg-page-title > .bl-help-btn { --bl-help-y: -0.126em; }   /* 북마크 설정 머리 */
+html body.salty #WorldInfo :is(small.flex-container, .inline-drawer-toggle) > .bl-wi-help, html body.salty .blzi h3 > i:first-child ~ .blzi-help { --bl-help-y: 0em; }   /* 월드 인포 「지속 · 재사용 대기 · 지연」 줄 · 「추가로 찾을 곳」 펼침 머리 · ZIP 설치 아이콘 붙은 제목 */
+html body.salty :is(#rm_api_block h4, #AdvancedFormatting h4.standoutHeader:not(.range-block-title)) > a.notes-link { --bl-help-y: -0.125em; }   /* 실리태번 작은 제목(h4) 옆 */

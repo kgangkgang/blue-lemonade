@@ -1,0 +1,124 @@
+/* 개인 확장 공용 컬러 팔레트 v2 (2026-10-22)
+ * 정해 둔 팔레트 색만 쓰고, 테마 색을 바꾸면 따라와요. 주황은 없어요.
+ * 규칙
+ *  - 모든 개인 확장은 이 파일의 --lp-* 변수만 쓴다. 다른 색 글자(#xxxxxx · rgb() · hsl() · 색 이름)는 쓰지 않는다(검사: palette-lint.mjs).
+ *    옅게/진하게는 color-mix(in oklab, var(--lp-…) N%, transparent | var(--lp-…)) 로만.
+ *  - 값은 블루레몬에이드 테마 변수(--salty-*)를 그대로 따른다 → 사용자가 테마 팔레트 · 색 직접 고침 · 내 테마를 바꾸면
+ *    새로고침 없이 바로 따라온다(테마가 :root 에 변수를 다시 쓰는 순간).
+ *  - 확장의 색 고르기: 자동(기본) = 테마 그대로. 라이트/나이트를 테마와 **같은 쪽**으로 고르면 역시 테마 그대로.
+ *    테마와 **반대쪽**으로 고르면 테마 변수는 반대 밝기라 쓸 수 없으니 아래 고정 묶음(블루 레몬에이드 화이트 / 블루 아워)을 쓴다.
+ *  - 테마가 없을 때(블루레몬에이드를 안 쓰는 사용자)도 고정 묶음.
+ *  - iframe · shadow DOM 안 화면은 변수가 이어지지 않는다 → 확장이 palette-bridge(아래 주석)로 --salty-* 를 복사하고 바뀔 때 다시 복사.
+ * 루트: 각 확장은 자기 루트에 class="lp-root" 와 data-lp-mode="auto|light|night" 를 둔다.
+ */
+
+/* 1) 테마 그대로 (자동 · 또는 테마와 같은 쪽을 고름) */
+.lp-root {
+    --lp-blue:      var(--salty-accent, #93C9FF);
+    --lp-on-blue:   var(--salty-on-accent, #141F2E);
+    --lp-white:     #FFFFFF;   /* 10-23 체크 A3 흰 꺽쇠 — 플롯 팔레트의 고정 흰색과 같은 역할(라이트·나이트 공통) */
+    /* 노랑은 둘: 면(칩 · 배지 · 진행 막대 · 노란 판) = --lp-lemon,
+       흰 바탕 위 얇은 선 · 노란 글자 · 아이콘 = --lp-lemon-ink. 나이트는 둘 다 테마 레몬(밝음).
+       라이트 면은 테마 팔레트의 gold(형광 레몬)에서 투명도만 뺀 색 — 팔레트를 바꾸면 따라감(rgb(from …) 미지원이면 고정값) */
+    --lp-lemon:     var(--salty-lemon, #FFE973);
+    --lp-lemon-ink: var(--salty-lemon, #FFE973);
+    --lp-on-lemon:  var(--salty-on-pop, #141F2E);
+    --lp-red:       var(--salty-danger, #FF6F62);
+    --lp-on-red:    var(--salty-danger-ink, #141F2E);
+    /* 꽉 찬 빨강 단추 면(확인 창 지우기 · 초기화) = 테마 빨강 그대로. 라이트에선 아래 묶음에서 흰 글자 대비 4.5 가 되게 아주 조금 진하게 (10-23) */
+    --lp-red-fill:    var(--lp-red);
+    --lp-on-red-fill: var(--lp-on-red);
+    /* 초록: 테마 팔레트에 초록이 없어 테마 파랑에 라임을 섞음 → 팔레트를 바꾸면 초록도 그 쪽으로 살짝 기운다 */
+    --lp-green:     color-mix(in oklab, #9BE37A 82%, var(--lp-blue));
+    --lp-on-green:  var(--salty-bg, #141F2E);
+    --lp-bg:        var(--salty-bg, #141F2E);
+    --lp-surface:   var(--salty-surface, #1C293B);
+    --lp-raised:    var(--salty-raised, #28384D);
+    --lp-control: color-mix(in oklab, var(--lp-raised), var(--lp-text) 7%);   /* 10-23 입력칸 I2: 담는 면보다 한 단계 밝은 면 (나이트) */
+    --lp-text:      var(--salty-text, #DBE2EB);
+    --lp-muted:     var(--salty-muted, #ABBACE);
+    --lp-line:      var(--salty-line, rgba(184, 201, 224, 0.08));
+    --lp-shadow:    var(--salty-palette-shadow, rgba(0, 0, 0, 0.6));
+    --lp-icon:      var(--lp-text);
+    /* 10-30 글자용 잉크(다른 개인 확장과 같은 토큰): 흰 면 위 파랑 · 빨강 글자는 4.5 가 안 돼(파랑 4.47 · 빨강 4.25)
+       파랑 = 테마가 흰 면 위 4.5 로 맞춰 둔 accent-ink(없으면 파랑 그대로), 빨강 = 라이트에서만 글자색 쪽으로 15% 섞음. 나이트는 둘 다 원색 */
+    --lp-blue-ink:  var(--salty-accent-ink, var(--lp-blue));
+    --lp-red-ink:   var(--lp-red);
+    /* 뜻별 이름 */
+    --bl-c-info: var(--lp-blue);
+    --bl-c-lemon: var(--lp-lemon);
+    --bl-c-warn: var(--lp-lemon);
+    --bl-c-danger: var(--lp-red);
+    --bl-c-ok: var(--lp-green);
+}
+
+/* 1-b) 테마가 라이트일 때(자동 · 라이트를 고름): 면 노랑은 테마 gold 의 밝은 레몬, 선 · 글자 노랑은 테마 레몬(#E9BE00 계열) */
+body.salty:not(.salty-dark) .lp-root:not([data-lp-mode="night"]) {
+    --lp-control: var(--lp-white);   /* 10-23 입력칸 I2: 담는 면보다 한 단계 밝은 면 (라이트) */
+    --lp-shadow: var(--salty-palette-shadow, rgba(35, 62, 92, 0.12));
+    --lp-lemon: #FFE23C;
+    --lp-lemon: rgb(from var(--salty-gold, #FFE23C) r g b / 1);   /* gold 는 투명도 0.62 라 / 1 로 불투명하게 (22:22 design-life 지적) */
+    --lp-lemon-ink: var(--salty-lemon, #E9BE00);
+    --lp-on-lemon: #222D3A;
+    /* 라이트 초록: 흰 바탕 위 아이콘 · 글자 대비 4.5 이상이 되게 진한 초록(테마 멜론 화이트 accent 계열)에 테마 파랑을 조금 섞음 */
+    --lp-green: color-mix(in oklab, #3F8A2A 85%, var(--lp-blue));
+    --lp-on-green: #FFFFFF;
+    --lp-red-fill: color-mix(in oklab, var(--lp-red) 94%, var(--lp-text));   /* 흰 글자 대비 4.29 → 4.6 (팔레트 변수끼리 섞음) */
+    --lp-red-ink: color-mix(in oklab, var(--lp-red) 85%, var(--lp-text));   /* 흰 면 위 빨강 글자 4.25 → 5.1 · 올린 면 4.6 (10-30) */
+}
+
+/* Shadow is a color role. Legacy half-alpha palette colors recover the original alpha. */
+@supports (color: rgb(from currentColor r g b / calc(alpha * 2))) {
+    body.salty:not(.salty-dark) .lp-root:not([data-lp-mode="night"]) {
+        --lp-shadow: var(--salty-palette-shadow, rgb(from var(--salty-shadow-50, rgba(35, 62, 92, 0.06)) r g b / calc(alpha * 2)));
+    }
+    body.salty.salty-dark .lp-root:not([data-lp-mode="light"]) {
+        --lp-shadow: var(--salty-palette-shadow, rgb(from var(--salty-shadow-50, rgba(0, 0, 0, 0.3)) r g b / calc(alpha * 2)));
+    }
+}
+
+/* 2) 테마는 나이트인데 확장만 라이트 — 고정 「블루 레몬에이드 · 화이트」 */
+body.salty-dark .lp-root[data-lp-mode="light"],
+body:not(.salty) .lp-root[data-lp-mode="light"] {
+    --lp-blue: #2477D3;  --lp-on-blue: #FFFFFF;
+    --lp-lemon: #FFE23C; --lp-lemon-ink: #E9BE00; --lp-on-lemon: #222D3A;
+    --lp-red: #E23B2E;   --lp-on-red: #FFFFFF;
+    --lp-red-fill: color-mix(in oklab, var(--lp-red) 94%, var(--lp-text));
+    --lp-green: #3F8A2A; --lp-on-green: #FFFFFF;
+    --lp-bg: #F9FCFF; --lp-surface: #FDFEFF; --lp-raised: #E5F1FF;
+    --lp-text: #222D3A; --lp-muted: #566B83;
+    --lp-control: var(--lp-white);   /* 10-23 입력칸 I2: 담는 면보다 한 단계 밝은 면 (라이트) */
+    --lp-line: rgba(31, 50, 71, 0.07); --lp-shadow: rgba(35, 62, 92, 0.12);
+    --lp-blue-ink: #2363AA;   /* 테마가 같은 파랑(#2477D3)에서 흰 면 위 4.5 로 계산해 주는 accent-ink 와 같은 값(테마가 어두워 변수를 못 빌릴 때) — 흰 면 6.0 · 올린 면 5.3 */
+    --lp-red-ink: color-mix(in oklab, var(--lp-red) 85%, var(--lp-text));
+}
+
+/* 3) 테마는 라이트인데 확장만 나이트 — 고정 「블루 아워」 */
+body.salty:not(.salty-dark) .lp-root[data-lp-mode="night"],
+body:not(.salty) .lp-root[data-lp-mode="night"] {
+    --lp-blue: #93C9FF;  --lp-on-blue: #141F2E;
+    --lp-lemon: #FFE973; --lp-lemon-ink: #FFE973; --lp-on-lemon: #141F2E;
+    --lp-red: #FF6F62;   --lp-on-red: #141F2E;
+    --lp-green: #A9E68A; --lp-on-green: #141F2E;
+    --lp-bg: #141F2E; --lp-surface: #1C293B; --lp-raised: #28384D;
+    --lp-text: #DBE2EB; --lp-muted: #ABBACE;
+    --lp-control: color-mix(in oklab, var(--lp-raised), var(--lp-text) 7%);   /* 10-23 입력칸 I2: 담는 면보다 한 단계 밝은 면 (나이트) */
+    --lp-line: rgba(184, 201, 224, 0.08); --lp-shadow: rgba(0, 0, 0, 0.6);
+    --lp-blue-ink: var(--lp-blue); --lp-red-ink: var(--lp-red);   /* 테마는 라이트라 accent-ink 가 진한 파랑 — 어두운 면에선 원색 그대로 */
+}
+
+/* palette-bridge (iframe · shadow DOM 안 화면용, JS — 각 확장이 자기 코드에 옮겨 씀):
+ *   const KEYS = ['accent','on-accent','lemon','on-pop','danger','danger-ink','bg','surface','raised','text','muted','line','palette-shadow','shadow-50'];
+ *   function copyTheme(target) {            // target = iframe.contentDocument.documentElement 또는 shadowRoot.host
+ *     const cs = getComputedStyle(document.documentElement);
+ *     for (const k of KEYS) { const v = cs.getPropertyValue('--salty-' + k).trim(); if (v) target.style.setProperty('--salty-' + k, v); else target.style.removeProperty('--salty-' + k); }
+ *     target.ownerDocument.body?.classList.toggle('salty', document.body.classList.contains('salty'));
+ *     target.ownerDocument.body?.classList.toggle('salty-dark', document.body.classList.contains('salty-dark'));
+ *   }
+ *   // 테마가 색을 바꿀 때: :root style 속성 · body class 가 바뀜 → 다시 복사 (한 프레임에 한 번)
+ *   new MutationObserver(() => requestAnimationFrame(() => copyTheme(target)))
+ *     .observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class'] });
+ *   new MutationObserver(() => requestAnimationFrame(() => copyTheme(target)))
+ *     .observe(document.body, { attributes: true, attributeFilter: ['class'] });
+ *   // 테마가 변수를 <style> 로 넣는 판이면 그 style 요소의 글자 변화도 observe(characterData · childList)
+ */

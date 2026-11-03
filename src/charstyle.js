@@ -8,7 +8,7 @@ import { preserveLocks } from './setting-locks.js';
 // 이어 둔 캐릭터가 없으면 이 파일은 불러오지도 않는다 (features.js).
 import { getSettings, saveSettings, invalidateSettings } from './settings.js';
 import { captureStyle, applyStyleData, sameStyle, currentKey } from './styles.js';
-import { deviceKind, LAYOUT_PATHS } from './device-layouts.js';
+import { deviceKind, LAYOUT_PATHS } from './device-layout-options.js';
 
 let listening = false;
 let commitTimer = 0;

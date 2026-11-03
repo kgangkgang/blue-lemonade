@@ -12,6 +12,15 @@ export function syncPerfMenu(){
         button.innerHTML=`<div class="fa-solid ${tab.icon} extensionsMenuExtensionButton"></div><span>${tab.title}</span>`;
         button.onclick=()=>openHub(tab.id);button.onkeydown=event=>{if(event.key===' '){event.preventDefault();openHub(tab.id);}};container.append(button);
     }
+    // 2026-10-31 저장 공간 창(성능 보조 storage/) — 요술봉 「저장 공간」(perfMenu.storage, 기본 켬)
+    const storageId='bl-perf-menu-storage';let storage=document.getElementById(storageId);
+    if(cfg.storage===false)storage?.remove();
+    else if(!storage){
+        storage=document.createElement('div');storage.id=storageId;storage.className='list-group-item flex-container flexGap5 interactable';storage.tabIndex=0;storage.setAttribute('role','button');
+        storage.innerHTML='<div class="fa-solid fa-hard-drive extensionsMenuExtensionButton"></div><span>저장 공간</span>';
+        const go=()=>{import('./storage/boot.js').then(m=>m.openStorage()).catch(error=>console.error('[성능 보조] 저장 공간',error));};
+        storage.onclick=go;storage.onkeydown=event=>{if(event.key===' '||event.key==='Enter'){event.preventDefault();go();}};container.append(storage);
+    }
     // 8.2.7 표식은 body 대신 html 에 — body class 기록마다 실리태번 keyboard.js 가 body 아래 전부를 다시 훑었어요(CSS: html.표식 #단추 = 예전 body.표식 #단추 와 같은 특이도)
     document.documentElement.classList.toggle('bl-hide-perf-timer',!cfg.timer);
     document.documentElement.classList.toggle('bl-hide-perf-log',!cfg.log);

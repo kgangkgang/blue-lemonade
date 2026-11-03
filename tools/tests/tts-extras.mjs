@@ -650,7 +650,7 @@ if (A && typeof V.userAuto === 'function') {
     });
 }
 
-// 1.4.0 사용자 제보 (10-08): 두 사람이 같은 대사(「다릅니다.」)를 하면 아래 줄을 눌러도 위 캐릭터 목소리로 — 같은 글이면 늘 첫째 조각을 골랐다
+// 1.4.0 두 사람이 같은 대사(「다릅니다.」)를 하면 아래 줄을 눌러도 위 캐릭터 목소리로 — 같은 글이면 늘 첫째 조각을 골랐다
 let CP = null;
 try { CP = await import(pathToFileURL(path.join(root, 'clickplay.js')).href); } catch (e) { console.log('  (clickplay.js 를 못 불러와 같은 대사 시험은 건너뜀:', String(e && e.message || e).slice(0, 80), ')'); }
 if (CP && TX) {

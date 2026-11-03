@@ -1,5 +1,5 @@
 /* ===== css/33-panel-columns.css =====
-   3.3.0 설정 창 두 열 (사용자: "PC는 짧은 것들 세로 2줄로, 채도 · 밝기 같은 파라미터는 모바일도 2줄로").
+   3.3.0 설정 창 두 열 (PC 는 짧은 줄을 두 열로, 채도 · 밝기 같은 파라미터는 폰도 두 열로).
    - 폰 · 좁은 화면: 묶음 안의 슬라이더(이름 · 숫자칸 · 막대)끼리 두 열. 스위치 줄 · 고르기 · 설명은 전체 폭 그대로
    - PC 팝업(화면 1001px 이상의 테마 설정 팝업): 스위치 · 버튼 줄(.salty-row)과 슬라이더를 두 열. 확장 서랍 속 설정 창은 폭이 좁아 그대로
    - 혼자 떨어진 짧은 칸(앞뒤에 짝이 없는 것)은 전체 폭 — 오른쪽 반이 비지 않게
@@ -24,7 +24,7 @@
   }
   /* 4.1.2: 전체 폭 규칙은 css/99-lazy-panel.css 로 */
   /* 3.5.0 슬라이더와 한 줄에 선 짧은 줄(색 칸 · 스위치)은 칸 가운데가 아니라 위 — 옆 슬라이더의 이름 줄과 나란히
-     (사용자: "PC 색깔 팔레트 위치가 애매" — 그림자 색 칸이 투명도 슬라이더 옆에서 이름 · 막대 사이에 떠 있었다) */
+     (PC 에서 그림자 색 칸이 투명도 슬라이더 옆에서 이름 · 막대 사이에 떠 있었다) */
   .salty-panel.in-popup .salty-group:has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-row {
     align-self: start;
   }
@@ -49,7 +49,7 @@ body.salty :is(#salty-nochat, .salty-preview):not([data-prev="img"]),
   scrollbar-color: color-mix(in srgb, var(--salty-text) 26%, transparent) transparent;
 }
 
-/* 3.3.0 숫자칸이 값 길이에 맞게 (사용자: "자간 -0.0075 로 했는데 숫자가 잘려 보인다") — 고정 폭(5.2 · 3.8em)이
+/* 3.3.0 숫자칸이 값 길이에 맞게 (자간을 좁히면 숫자가 잘려 보이던 것) — 고정 폭(5.2 · 3.8em)이
    소수 넷째 자리 음수를 못 담았다. panel.js 가 값 글자 수를 --num-ch 로 적고 폭은 그만큼 (1ch = 숫자 한 칸, 양옆 여백 9px 씩).
    field-sizing: content 는 숫자칸에서 값이 바뀐 폭을 따라가지 않아 쓰지 않는다 */
 .salty-panel .salty-num input[type="number"][data-num] {

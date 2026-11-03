@@ -6,7 +6,7 @@
 .bl-fruit-type-editor *{box-sizing:border-box}
 /* 파라미터 칸(고르기) — 슬라이더(.salty-slider)와 같은 위아래 여백 */
 .bl-ft-param{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;padding:8px 0 6px}
-/* 8.1.0 영역 본문의 파라미터는 2열 격자(사용자 10-27 「파라미터는 웬만하면 다 세로 2열」, 철칙 §5) — 공개 테마 97-param-inline 과 같은 19em 문턱 · 같은 간격 토큰.
+/* 8.1.0 영역 본문의 파라미터는 2열 격자(철칙 §5) — 공개 테마 97-param-inline 과 같은 19em 문턱 · 같은 간격 토큰.
    글꼴 고르기(긴 목록) · 줄바꿈 고르기(「한 줄 · 넘치면 스크롤」이 반 칸에서 잘려요)는 한 줄 전체(.bl-ft-wide).
    짝은 같은 종류끼리(크기|굵기 · 자간|줄간격 · 기울임|정렬)라 같은 행의 이름 줄 · 조작부 위가 맞아요.
    본문 폭이 19em 아래(큰 글씨 · 320 폰 대화상자)면 1열 — 이름이 꺾이거나 조작부가 떨어지는 2열은 만들지 않아요. 설정 창 · 바로가기 대화상자 어느 쪽이든 자기 본문 폭(컨테이너)을 봐요 */
@@ -15,7 +15,7 @@
 .bl-ft-params>*{min-width:0}
 .bl-ft-params>.bl-ft-wide{grid-column:1 / -1}
 @container bl-ft-body (width >= 19em){.bl-ft-params{grid-template-columns:repeat(2,minmax(0,1fr))}}
-/* 8.1.2 맨 위 「정보 배치 · 하단 반복 문구」도 2열(사용자 10-28 시안 B) — 두 칸 모두 「이름 위 · 고르기 아래」(높이 36)라 같은 행의 이름 줄 · 조작부 위가 맞아요.
+/* 8.1.2 맨 위 「정보 배치 · 하단 반복 문구」도 2열(시안 B) — 두 칸 모두 「이름 위 · 고르기 아래」(높이 36)라 같은 행의 이름 줄 · 조작부 위가 맞아요.
    영역 파라미터와 같은 19em 부터 2열(320 폰 반 칸 140px 에도 이름 한 줄 · 「보임 | 숨김」 64px 씩), 더 좁으면(큰 글씨) 1열. 한 개뿐이면(데우스) 전체 폭 */
 .bl-fruit-type-editor{container:bl-ft-editor / inline-size}
 .bl-ft-top{display:grid;grid-template-columns:minmax(0,1fr);gap:0 var(--bl-param-col-gap,8px);align-items:start}
@@ -23,13 +23,13 @@
 .bl-ft-top>:only-child{grid-column:1 / -1}
 /* 하단 문구 「보임 | 숨김」: 칸 폭을 둘이 나눠 꽉. 높이는 옆 고르기와 같게 — 값을 적지 않고, 2열일 때 두 칸이 한 행을 나눠 써(subgrid) 고르기 높이(PC 36 · 폰 44)를 따라가요.
    제 키(안쪽 2px + 글자)는 고르기보다 작게 두고 행에 맞춰 늘어나요. 1열일 때는 36 */
-.bl-fruit-type-editor .bl-ft-seg{display:flex;width:100%;max-width:none;min-height:36px;margin:0;padding:2px;box-sizing:border-box;align-items:stretch}
+.bl-fruit-type-editor .bl-ft-seg{display:flex;width:100%;max-width:none;min-height:36px;margin:0;padding:2px;box-sizing:border-box;}
 .bl-fruit-type-editor .bl-ft-seg>button{flex:1 1 0;min-width:0;min-height:var(--bl-ft-chip,32px);white-space:nowrap}
 /* 8.2.0 조정자: 바깥 칸은 옆 고르기와 같은 행 높이(줄 맞춤) · 안쪽 단추는 크기표 칩(PC 32 · 폰 34) 그대로 가운데 — 8.1.2 는 단추가 행 높이로 늘어나 40px 이었어요(측정 settings-prompt-fruit-group1) */
 .bl-fruit-type-editor .bl-ft-seg{align-items:center}
 .bl-fruit-type-editor{--bl-ft-chip:32px}
 @media (max-width: 760px), (pointer: coarse){.bl-fruit-type-editor{--bl-ft-chip:34px}}
-@container bl-ft-editor (width >= 19em){.bl-ft-top{grid-template-columns:repeat(2,minmax(0,1fr))}.bl-ft-top>.bl-ft-param{display:grid;grid-row:span 2;grid-template-rows:subgrid;row-gap:6px}}
+@container bl-ft-editor (width >= 19em){.bl-ft-top{grid-template-columns:repeat(2,minmax(0,1fr))}.bl-ft-top>.bl-ft-param{display:grid;grid-row:span 2;grid-template-rows:subgrid;row-gap:6px}.bl-ft-top>.bl-ft-param>select{align-self:center}}   /* 11-01: 옆 칸 고르기 묶음(38)에 늘어나 38 이던 고르기 칸을 크기표 36 그대로 · 가운데 */
 .bl-ft-param>span{min-width:0;overflow-wrap:anywhere}
 .bl-ft-param>select{display:block;width:100%;min-width:0;max-width:100%;min-height:36px;margin:0;border-radius:8px;font:inherit}
 .bl-ft-slider{min-width:0}
@@ -44,9 +44,11 @@ html body .bl-fruit-type-editor .bl-ft-reset[hidden]{display:none!important}
 @media (max-width:760px),(pointer:coarse){html body .bl-fruit-type-editor .bl-ft-reset{width:32px;min-width:32px;height:32px;min-height:32px;border:0;border-radius:var(--bl-settings-radius,8px)}}
 .bl-fruit-type-editor .bl-ft-row>span:first-child>small{display:block}
 /* 8.0.6 대화에 그 종류의 상태창이 없을 때 미리보기 아래 안내 앞에 붙는 작은 표시(누르는 것이 아님) — 미리보기를 가리지 않아요 */
-.bl-fruit-type-editor .bl-ft-sample-badge{display:inline-block;margin:0 6px 0 0;padding:0 6px;border-radius:6px;background:var(--salty-fill-shade,var(--salty-shade, var(--bl-fb-8882)));color:var(--salty-text,inherit);font-size:11px;font-weight:600;line-height:18px;vertical-align:1px;white-space:nowrap}
+.bl-fruit-type-editor .bl-ft-sample-badge{display:inline-block;margin:0 6px 0 0;padding:0 6px;border-radius:6px;background:var(--salty-fill-shade,var(--salty-shade, var(--bl-fb-8882)));color:var(--salty-text,inherit);font-size:var(--bl-ts-meta,13px);font-weight:650;line-height:20px;vertical-align:1px;white-space:nowrap}
 .bl-fruit-type-editor .bl-ft-sample-badge[hidden]{display:none}
-.bl-fruit-type-editor .salty-btn,.bl-ft-dialog-head .salty-btn{min-height:32px;height:auto;padding:4px 12px;border-radius:8px;line-height:1.4;white-space:nowrap}
+/* 11-01 화면 점검: 글자 단추는 공용 크기표 하나(88-ui-parts 토큰 — 높이 36 · 글자 14 · 굵기 400 · 가로 여백 10). 32 · 15.5 · 550 이던 것 */
+.bl-fruit-type-editor .salty-btn,.bl-ft-dialog-head .salty-btn{min-height:var(--bl-ui-ctl,36px);height:auto;padding:0 10px;border-radius:var(--bl-ui-radius,8px);font-size:var(--bl-ui-btn-fs,14px);font-weight:400;line-height:1.4;white-space:nowrap}
+.bl-ft-dialog .bl-ft-seg>button{font-size:var(--bl-ui-tab-fs,13px);padding:0 10px}
 /* 미리보기: 테마 미리보기 칸 그대로(따라옴 · 접기 · 높이 · 확대). 보이는 높이는 data-pv-max 로 작게 */
 .bl-ft-prevbox{margin-top:4px;background:var(--salty-fill-surface,var(--salty-surface,var(--SmartThemeBlurTintColor, var(--bl-fb-222))))}
 .bl-ft-prevbox .bl-ft-preview{display:block;width:100%;max-width:100%;min-width:0;border:1px solid var(--salty-line,var(--SmartThemeBorderColor, var(--bl-fb-8885)));border-radius:8px;background:var(--salty-bg, var(--bl-fb-fff))}
@@ -67,7 +69,7 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 .bl-ft-support{margin:4px 0 0;padding-left:1.2em;font-size:.9em;color:var(--salty-muted,inherit)}
 .bl-ft-support li{overflow-wrap:anywhere}
 /* 데우스 페이지: 상태창 글자 묶음을 펼친 동안 위 카드 미리보기는 쉰다 — 폰에서 미리보기 두 개가 화면을 덮지 않게 (나란히 놓는 넓은 화면은 그대로) */
-@container bl-editor (max-width:799px){.bl-editor-workspace:has(> .salty-sec .bl-editor-group-body:not([hidden]) > .bl-fruit-type-editor) > .bl-editor-stage{display:none}}
+/* 1.0.0 묶음 접기를 없애 「과일 글자 묶음이 열리면 폰에서 위 미리보기 숨김」은 늘 숨김이 돼 걷었어요 — 위 미리보기는 꺾쇠로 접어요 */
 /* 과일 창 바로가기 → 대화상자 */
 .bl-ft-dialog{box-sizing:border-box;width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:0 16px 16px;border:1px solid var(--salty-line,var(--SmartThemeBorderColor, var(--bl-fb-8885)));border-radius:12px;background:var(--salty-bg,var(--SmartThemeBlurTintColor, var(--bl-fb-222)));color:var(--salty-text,var(--SmartThemeBodyColor, var(--bl-fb-ddd)));font:inherit;text-align:left}
 .bl-ft-dialog::backdrop{background:var(--bl-scrim)}

@@ -1,51 +1,39 @@
-import { gradientFor, gradientCss, gradientSvg, gradientCap, gradientFills, gradientTextCss } from './gradients.js';
-import { syncFrameShadows } from './frame-shadow.js';
+import { appearance } from './device-layouts.js';
 import { syncMessageMenus } from './menu-position.js';
-import { syncProfileClip } from './profile-clip.js';
-import { decorVars, syncDecor, prepareDecor } from './decor.js';
 import { frameVars } from './frames.js';
-import { syncProfile } from './profile.js';
 // 설정 → :root CSS 변수(--salty-*) + 실리태번 색 변수 덮기 + body 클래스 + 글꼴 합치기
 import { getSettings, fontSet, FONT_SLOTS, DEFAULTS } from './settings.js';
-import { PALETTES, LEGACY, TOKEN_KEYS, paletteColors, parseColor, sameColor, onColor, toRgba, mixColor } from './palettes.js';
-import { buildComposite, slotStack, findFont } from './fonts.js';
+import { PALETTES, TOKEN_KEYS, paletteColors, paletteMode, ensurePalettes, rememberPalette, parseColor, sameColor, onColor, toRgba, mixColor } from './palettes.js';
+import { buildComposite, slotStack, findFont, preloadFonts } from './fonts.js';
+import { loadFullCatalog, catalogReady } from './catalog.js';
 import { iconsCss } from './icons.js';
-import { classifyAll } from './assets.js';
 import { cutEdgeVars, cutEdgeClasses, syncCutEdge, imageFrameOn, darkBackground } from './cutedge.js';
 import { comparisonView } from './appearance-compare.js';
 import { weatherReadability } from './weather-readability.js';
 import { themeEnabled, addonsEnabled, puffyMode, checkboxTokens } from './usage-mode.js';
 import { syncFeatures } from './features.js';
-import { syncSplash, syncFavicon } from './splash.js';
 import { markdownClasses, markdownVariables } from './markdown.js';
-import { syncExtensionColors } from './extension-colors.js';
-import { syncControlInk } from './control-ink.js';
-import { syncTagInk } from './tag-ink.js';
-import { syncRoleIcons } from './role-icons.js';
-import { syncPicks } from './role-icons-pick.js';
-import { syncThemeSheet } from './theme-sheet.js';   // 8.2.1 테마 꺼짐이면 가벼운 사본   // 화면에서 고른 단추
+import { frameReady, trackLate } from './boot-layers.js';
+// 그리기 모듈은 첫 프레임 뒤에 받고, 도착하면 가장 최근 설정을 적용해요.
+const late = new Map();
+function lateSync(name, load, want, call) {
+    let slot = late.get(name);
+    if (!slot) late.set(name, slot = { module: null, job: null, call: null });
+    slot.call = call;
+    if (slot.module) { call(slot.module); return; }
+    if (!want || slot.job) return;
+    slot.job = trackLate(frameReady.then(load)).then(m => { slot.module = m; slot.call?.(m); }).catch(error => { slot.job = null; console.warn(`[Blue Lemonade] 그리기 모듈을 못 받았어요(${name})`, error); });
+}
+/** 시험 · 진단: 2층 그리기 모듈이 다 붙을 때까지 */
+export const lateApplyReady = () => Promise.allSettled([...late.values()].map(slot => slot.job));
 import { syncDemGlow } from './dem-glow.js';   // 데우스 「테두리 빛」 — :root 가 아니라 상태창 요소에만 (문서 전체 재계산 없이)
 
-function profileVars(p, pal, user = false) {
-    const vars = Object.assign(frameVars(p, 'profile', pal.accent), decorVars(p.decor, 'profile', p.radius), {
-        '--bl-name-size': `${p.nameSize}px`, '--bl-name-weight': String(p.nameWeight), '--bl-name-spacing': `${p.nameSpacing / 100}em`,
-        '--bl-name-height': String(p.nameHeight), '--bl-name-color': p.nameAuto ? pal.text : p.nameColor,
-        '--bl-name-align': p.nameAlign, '--bl-name-justify': p.nameAlign === 'left' ? 'start' : p.nameAlign === 'right' ? 'end' : 'center',
-        '--bl-meta-leading': p.nameAlign === 'left' ? '0px' : '1fr', '--bl-meta-trailing': p.nameAlign === 'right' ? '0px' : '1fr',
-        '--bl-name-style': p.nameItalic ? 'italic' : 'normal', '--bl-name-decoration': p.nameUnderline ? 'underline' : 'none',
-        '--bl-header-gap': `${p.headerGap}px`, '--bl-meta-size': `${p.metaSize}px`, '--bl-meta-opacity': String(p.metaOpacity / 100), '--bl-button-gap': `${p.buttonGap}px`,
-        '--bl-name-outline': `${p.nameOutline}px ${p.nameOutlineColor}`,
-        '--bl-name-shadow': p.nameShadow ? `0 ${p.nameShadowY}px ${p.nameShadowBlur}px rgba(0,0,0,${p.nameShadowAlpha / 100})` : 'none',
-        '--bl-profile-width': `${p.width}%`, '--bl-profile-height': p.sizing === 'screen' ? `${p.screenHeight}svh` : `${p.height}px`,
-        '--bl-profile-max-height': `${p.maxHeight}svh`,
-        '--bl-profile-crop': `inset(${(100 - p.visibleHeight) * p.positionY / 100}% 0 ${(100 - p.visibleHeight) * (100 - p.positionY) / 100}% 0)`,
-        '--bl-profile-fit': p.fit, '--bl-profile-position': `${p.positionX}% ${p.positionY}%`,
-        '--bl-profile-radius': `${p.radius}px`, '--bl-profile-gap': `${p.gap}px`,
-        '--bl-profile-blur': `${p.blur}px`, '--bl-profile-opacity': String(p.opacity / 100),
-        '--bl-profile-fade-y': `${p.fadeY}%`, '--bl-profile-fade-x': `${p.fadeX}%`,
-    });
-    return user ? Object.fromEntries(Object.entries(vars).map(([key, value]) => [key.replace('--bl-', '--bl-user-'), value])) : vars;
-}
+const gradientFor = (...args) => appearance?.gradientFor(...args);
+const gradientSvg = (...args) => appearance?.gradientSvg(...args) || '';
+const gradientFills = (...args) => appearance?.gradientFills(...args) || {};
+const gradientTextCss = (...args) => appearance?.gradientTextCss(...args) || '';
+const decorVars = (...args) => appearance?.decorVars(...args) || {};
+const profileVars = (...args) => appearance?.profileVars(...args) || {};
 
 function styleTag(id) {
     let el = document.getElementById(id);
@@ -118,38 +106,6 @@ function codeInks(backs) {
     return Object.fromEntries(Object.entries(HLJS).map(([key, base]) => [key, readableInk(base, toward, backs)]));
 }
 
-// 2026-10-06: LEGACY 내용으로 만든 지문 — LEGACY 에 예전 기본값을 더하면 저절로 바뀌어 그 값을 한 번 더 지움 (손으로 올릴 숫자를 두면 잊는다)
-const LEGACY_REV = [...JSON.stringify(LEGACY)].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0, 2166136261);
-/** 1.0.0 버그로 저장된 "직접 고친 색" 중 그때 기본값과 같은 것은 지움 (안 지우면 새 기본 색이 안 보임) */
-export function dropStaleOverrides(s = getSettings()) {
-    let changed = false;
-    // 커스텀 에이드의 흐림 글자: 예전 비율(글자 54%)로 만든 값 그대로면 새 비율로 (custompalette.js makeCustomPalette 와 같은 값 · 색 고치기로 직접 고친 값은 그대로)
-    const customSets = [['custom-light', s.colorOverrides?.['custom-light']], ['custom-night', s.colorOverrides?.['custom-night']], ...(Array.isArray(s.customPalettes) ? s.customPalettes : []).flatMap(item => [['custom-light', item?.light], ['custom-night', item?.dark]])];
-    for (const [id, colors] of customSets) {
-        if (!colors?.faint) continue;
-        const { text, surface } = { ...PALETTES[id], ...colors };
-        const next = toRgba(parseColor(mix(text, surface, id === 'custom-night' ? 0.56 : 0.68)));
-        if (sameColor(colors.faint, next) || !sameColor(colors.faint, mix(text, surface, 0.54))) continue;
-        colors.faint = next;
-        changed = true;
-    }
-    // 2026-10-06: 예전 기본값(LEGACY)과 같은 값 지우기는 표시(legacyColorsRev)가 지금 LEGACY 지문과 다를 때 한 번만 —
-    // 매번 지우면 나이트 #000000 바탕 · 화이트 #FFFFFF 카드처럼 직접 고른 같은 색이 새로고침마다 사라졌다
-    const legacyPass = s.legacyColorsRev !== LEGACY_REV;
-    for (const [pal, colors] of Object.entries(s.colorOverrides || {})) {
-        for (const [token, value] of Object.entries(colors || {})) {
-            const legacy = legacyPass ? (LEGACY[pal] || []).map(old => old[token]).filter(Boolean) : [];
-            const current = PALETTES[pal]?.[token];
-            if (legacy.some(old => sameColor(value, old)) || (current && sameColor(value, current))) {
-                delete colors[token];
-                changed = true;
-            }
-        }
-        if (!Object.keys(colors || {}).length) delete s.colorOverrides[pal];
-    }
-    if (legacyPass) { s.legacyColorsRev = LEGACY_REV; changed = true; } // 한 번 지운 뒤 저장 (index.js 가 changed 면 저장)
-    return changed;
-}
 
 // ───────── 글꼴 ─────────
 let fontGen = 0;
@@ -201,8 +157,12 @@ async function applyFonts(s) {
         return;
     }
     const sets = slotSets(s);
+    // 1.0.0 고른 글꼴이 시작 목록(4개) 밖이면 전체 목록(catalog-full.js)을 받은 뒤 한 번 더 — 그동안은 기본 글꼴로 이어 그려요
+    if (!catalogReady() && Object.values(sets).some(set => set && Object.values(set).some(id => id && id !== 'auto' && !findFont(id)))) void loadFullCatalog().then(ok => { if (ok) applyAll(); });
+    // 9.0.9 첫 화면 글꼴(본문 · 메뉴 칸의 한국어 글꼴)은 합치기를 기다리지 않고 먼저 받기 시작 — 로컬 조각 글꼴만 (fonts.js preloadFonts)
+    preloadFonts([sets.text?.ko, (sets.ui || sets.text)?.ko]);
     const jobs = Object.entries(sets).filter(([, set]) => set).map(([slot, set]) => {
-        const key = `${slot}|${JSON.stringify(set)}|${s.fonts.hanja}|${s.customFonts.map(f => f.id + ':' + (f.google || f.css || f.file || '') + (f.cors === false ? '!' : '')).join(',')}`;
+        const key = `${catalogReady() ? 'F' : ''}${slot}|${JSON.stringify(set)}|${s.fonts.hanja}|${s.customFonts.map(f => f.id + ':' + (f.google || f.css || f.file || '') + (f.cors === false ? '!' : '')).join(',')}`;
         if (compositeFailedAt.has(key) && Date.now() - compositeFailedAt.get(key) >= 3000) { compositeCache.delete(key); compositeFailedAt.delete(key); }
         if (!compositeCache.has(key)) {
             const p = buildComposite(slot, set, s.fonts.hanja);
@@ -218,7 +178,7 @@ async function applyFonts(s) {
     if (css !== lastFaces) {
         styleTag('salty-fontfaces').textContent = css;
         lastFaces = css;
-        syncSplash(s); // 3.5.2 새로고침 첫 화면 파일에 메뉴 글꼴도 (글꼴 CSS 는 applyAll 보다 늦게 옴)
+        lateSync('splashFonts', () => import('./splash.js'), true, m => m.syncSplash(s)); // 3.5.2 새로고침 첫 화면 파일에 메뉴 글꼴도 (1.0.0 되살림: splash.js 는 첫 프레임 뒤)
     }
     const failed = [...new Set(results.flatMap(r => r.failed))];
     if (failed.length && !applyFonts.warned) {
@@ -284,17 +244,17 @@ export function markerGeometry(d) {
 }
 
 export function markerBackground(s, color) {
-    const gradient=gradientFor(s,'marker');
+    const gradient = gradientFor(s, 'marker');
     const { T, l, r } = markerGeometry(['rectangle','pill'].includes(s.dialogue.markerShape) ? {...s.dialogue, tilt:'flat'} : s.dialogue);
     const lb = l + T;
     const rb = r + T;
     const w = Math.min(1.8, T * 0.07); // 위아래 물결 — 얇은 획은 덜 출렁이게
     const [cr, cg, cb, ca] = parseColor(color);
-    const rgb = gradient?'url(#blend)':`rgb(${cr},${cg},${cb})`;
-    const op = gradient?1:Math.min(1, ca);
+    const rgb = gradient ? 'url(#blend)' : `rgb(${cr},${cg},${cb})`;
+    const op = gradient ? 1 : Math.min(1, ca);
     const n = v => Number(v.toFixed(2));
     if (s.dialogue.markerShape === 'pill') {
-        // 4.1.2: 도형 하나로 그린다 — 예전엔 반원 · 띠 · 반원 세 겹이라 이음매가 실금으로 보이고 오른쪽 반원이 빠져 끝이 잘려 보였다 (사용자 제보).
+        // 4.1.2: 도형 하나로 그린다 — 예전엔 반원 · 띠 · 반원 세 겹이라 이음매가 실금으로 보이고 오른쪽 반원이 빠져 끝이 잘려 보였다.
         // 줄이 바뀌면 조각마다(box-decoration-break: clone) 온전한 알약 하나.
         // 양 끝 반원은 높이에 맞춰 같은 비율로(meet) 그려 반지름이 늘 띠 높이의 절반, 가운데는 반원에 붙은 긴 네모를 반쪽 칸이 잘라 낸다.
         // 셋을 마스크 하나로 합친 뒤 색은 한 번만 칠하므로 반투명 색이 겹쳐 진해지는 자리도 없다.
@@ -335,7 +295,7 @@ function textShadow(shadow) {
 
 /**
  * 3.7.2 커스텀 CSS 끄기: 실리태번이 사용자 설정 › 커스텀 CSS 를 넣는 <style id="custom-style"> 을 media 로 끈다.
- * 다른 테마를 쓰다 넘어오면 그 CSS 가 남아 월드북 · 버튼 모양을 덮는 일이 있어서 (제보 2026-09-18: 월드북 항목 제목이 안 보이고
+ * 다른 테마를 쓰다 넘어오면 그 CSS 가 남아 월드북 · 버튼 모양을 덮는 일이 있어서 (월드북 항목 제목이 안 보이고
  * 누르면 켜기만 토글됨). 내용은 건드리지 않으니 끄면 그대로 돌아온다. 칸이 나중에 생기면 한 번 지켜봤다가 맞춘다.
  */
 let customCssMuted = false;
@@ -444,8 +404,8 @@ function autocompleteVars(pal, mode, ink = {}) {
 
 function appearanceForRender(s) {
     s = comparisonView(s);
-    const protection = weatherReadability(s, (PALETTES[s.palette] || PALETTES.salt).mode);
-    if (protection.active && !s.shadow.on) s = {...s, shadow: {...s.shadow, on:true, targets:{text:true,dialogue:true,em:true,strong:true,code:true}, color: PALETTES[s.palette]?.mode === "dark" ? "#000000" : "#ffffff", alpha:85, angle:90, distance:1, blur:2}};
+    const protection = weatherReadability(s, paletteMode(s.palette));
+    if (protection.active && !s.shadow.on) s = {...s, shadow: {...s.shadow, on:true, targets:{text:true,dialogue:true,em:true,strong:true,code:true}, color: paletteMode(s.palette) === "dark" ? "#000000" : "#ffffff", alpha:85, angle:90, distance:1, blur:2}};
     return s;
 }
 
@@ -469,10 +429,14 @@ export function syncReasoningOff() {
 export function applyAll() {
     const rendered = appearanceForRender(getSettings());
     const s = themeEnabled(rendered) ? rendered : {...rendered, enabled:false};
-    syncThemeSheet(!!s.enabled);   // 8.2.1 테마가 꺼진 모드면 큰 style.css 대신 style-ext.css (src/theme-sheet.js)
-    prepareDecor(s);
+    // 8.2.1 테마가 꺼진 모드(확장만 · 테마 끔)면 큰 style.css 대신 가벼운 사본 style-ext.css (theme-sheet.js · 1.0.0 되살림: 꺼졌을 때만 받아요)
+    { const on = !!s.enabled; lateSync('themeSheet', () => import('./theme-sheet.js'), !on, m => m.syncThemeSheet(on)); }
+    appearance?.prepareDecor(s);
     const pal = paletteColors(s);
-    const mode = (PALETTES[s.palette] || PALETTES.salt).mode;
+    const mode = paletteMode(s.palette);
+    // 1.0.0 밤 · 낮 밖의 팔레트: 데이터(palette-data.js)가 아직이면 기억해 둔 계산값으로 칠하고, 받은 뒤 한 번 더 · 칠한 값은 다음 시작용으로 기억
+    if (!PALETTES[s.palette]) { const id = s.palette; void ensurePalettes().then(ok => { if (ok && PALETTES[id]) applyAll(); }); }
+    else rememberPalette(s.palette);
     // 7.3.0 투명 그림 외곽선 「자동」 · 네온: 채팅 바탕 밝기 · 테마 포인트 색 (cutedge.js resolveCutEdge)
     const edgeTheme = { dark: /^#[0-9a-f]{6}$/i.test(String(pal.bg)) ? darkBackground(pal.bg) : mode === 'dark', accent: pal.accent }; // 바탕색을 못 읽으면 팔레트의 밝음/어두움
 
@@ -668,7 +632,7 @@ export function applyAll() {
     let css = `${s.enabled ? ':root' : '.salty-panel, .bl-capture-dialog, .bl-tool-dialog, .bl-credits-dialog'} {\n${declarations(vars)}\n}`;
     if (rendered.enabled !== false) css += `\nhtml[data-bl-controls] {\n${declarations(checkboxTokens(vars, true))}\n}`;
     // 어두운 팔레트면 그 창들의 체크 칸 · 스크롤바 · 목록도 어둡게 (body.salty-dark 가 없는 상태라 style.css 의 어두운 쪽 규칙이 안 걸린다)
-    if (!s.enabled) css += `\ndialog.bl-capture-dialog, dialog.bl-tool-dialog, dialog.bl-credits-dialog { color-scheme: ${mode === 'dark' ? 'dark' : 'light'}; }`;
+    if (!s.enabled) css += `\ndialog.bl-capture-dialog, dialog.bl-tool-dialog { color-scheme: ${mode === 'dark' ? 'dark' : 'light'}; }`;
 
     if (s.enabled) {
         const [ar, ag, ab] = parseColor(pal.accent);
@@ -714,8 +678,12 @@ export function applyAll() {
     const iconText = s.enabled ? iconsCss() : '';
     if (icons && icons.textContent !== iconText) icons.textContent = iconText;
     // 7.9.3 단추 아이콘 바꾸기: 테마를 꺼도(확장만) 테마 창의 단추는 그대로 테마 것이라 켬/끔과 상관없이. 바꾼 역할이 없으면 <style> 도 없다
-    syncRoleIcons(s.roleIcons ?? getSettings().roleIcons, s.pickedIcons ?? getSettings().pickedIcons);
-    syncPicks(s.pickedIcons ?? getSettings().pickedIcons);   // 화면에서 고른 단추에 표식(고른 게 없으면 아무 일도 없다)
+    {
+        const roleIcons = s.roleIcons ?? getSettings().roleIcons, picks = s.pickedIcons ?? getSettings().pickedIcons;
+        const hasIcons = [roleIcons, picks].some(v => v && typeof v === 'object' && Object.keys(v).length > 0);
+        lateSync('roleIcons', () => import('./role-icons.js'), hasIcons, m => m.syncRoleIcons(roleIcons, picks));
+        lateSync('picks', () => import('./role-icons-pick.js'), hasIcons, m => m.syncPicks(picks));   // 화면에서 고른 단추에 표식(고른 게 없으면 아무 일도 없다)
+    }
 
     const want = new Set();
     if (s.enabled) {
@@ -726,6 +694,7 @@ export function applyAll() {
         if (s.chat.qrFind === false) want.add('salty-qr-find-off');
         if (s.chat.qrCtxNames === true) want.add('salty-qr-ctx-names');   // 7.9.7 QR ⋮ 자리에 하위 세트 이름 (layout.js syncQrTitles)
         if (s.chat.personaTall) want.add('salty-persona-tall');
+        if (s.chat.hideSendTextarea) want.add('salty-send-textarea-off'); // 8.2.5 채팅 입력칸 숨기기 — 단추 줄만 남김 (css/04-send-form.css)
         if (s.chat.helpMarks === false) want.add('salty-help-off'); // 6.1.5 설명 ? 단추 숨기기
         if (s.chat.webSearchMarks === false) want.add('salty-websearch-off'); // 6.2.6 웹 검색 · 출처 표시 끄기 (지구 아이콘 숨김 · 칩은 JS 가 안 띄움)
         want.add(`salty-profile-mode-${s.profile.mode}`);
@@ -784,11 +753,11 @@ export function applyAll() {
         // assets.js 는 이 클래스와 무관하게 그림마다 --salty-pick-* 를 미리 칠해 두므로, 켜는 순간 다시 훑을 필요가 없다
         if (s.image.edge !== 'none' && s.image.edgeAuto && s.image.shape === 'rect') want.add('salty-edge-auto');
     }
-    syncProfile(s);
+    appearance?.syncProfile(s);
     syncMessageMenus();
-    syncProfileClip(s);
-    syncDecor(s);
-    syncFrameShadows(s);
+    appearance?.syncProfileClip(s);
+    appearance?.syncDecor(s);
+    appearance?.syncFrameShadows(s);
     syncCutEdge(s.image.cutEdge, !!s.enabled && !imageFrameOn(s.image), edgeTheme); // 외곽선 SVG 필터 정의 (값이 그대로면 손대지 않음)
     // 바뀐 클래스만 만지기 (전부 뗐다 붙이면 매번 화면 전체를 다시 그림)
     const cls = document.body.classList;
@@ -812,15 +781,15 @@ export function applyAll() {
     const puffy = puffyMode(getSettings(), mode);
     if (document.documentElement.getAttribute('data-bl-puffy') !== puffy) { if (puffy) document.documentElement.setAttribute('data-bl-puffy', puffy); else document.documentElement.removeAttribute('data-bl-puffy'); }
     // 컷 취급이 바뀌면 이미 분류한 그림의 .salty-cutout 을 다시 정해야 한다 (스위치를 누른 순간 채팅에 바로 보이게)
-    if (cutoutBefore !== cls.contains('salty-cutout-same')) classifyAll();
+    if (cutoutBefore !== cls.contains('salty-cutout-same')) lateSync('classify', () => import('./assets.js'), true, m => m.classifyAll());
 
     syncSamples(s);
     syncCustomCss(!!(s.enabled && s.compat?.muteCustomCss));
-    syncExtensionColors(!!(s.enabled && s.compat?.preserveExtensionColors), s.compat?.extensionColorsOff);
-    syncFavicon(!!s.enabled);   // 5.5.0 탭 아이콘 레몬 (끄면 실리태번 아이콘)
+    { const on = !!s.enabled; lateSync('favicon', () => import('./splash.js'), on, m => m.syncFavicon(on)); }   // 5.5.0 탭 아이콘 레몬 (끄면 실리태번 아이콘 · 1.0.0 되살림)
+    { const keep = !!(s.enabled && s.compat?.preserveExtensionColors), off = s.compat?.extensionColorsOff; lateSync('extensionColors', () => import('./extension-colors.js'), keep, m => m.syncExtensionColors(keep, off)); }
 
     applyFonts(s);
-    syncControlInk(!!s.enabled, JSON.stringify([s.fonts, s.type, s.ui]));
-    syncTagInk(!!s.enabled);   // 7.9.1 바탕색만 정한 태그의 글자색 (tag-ink.js)
+    { const on = !!s.enabled, key = JSON.stringify([s.fonts, s.type, s.ui]); lateSync('controlInk', () => import('./control-ink.js'), on, m => m.syncControlInk(on, key)); }
+    { const on = !!s.enabled; lateSync('tagInk', () => import('./tag-ink.js'), on, m => m.syncTagInk(on)); }   // 7.9.1 바탕색만 정한 태그의 글자색 (tag-ink.js)
     syncFeatures(s, addonsEnabled(getSettings())); // 3.1.0 켤 때만 불러오는 기능 (features.js)
 }

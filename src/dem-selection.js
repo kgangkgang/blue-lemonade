@@ -1,3 +1,4 @@
+import { watchDom } from './dom-watch.js';
 // Keep the native selection handles/menu anchored while dialogue is animated.
 let bound = false, pressing = false, releaseTimer = 0;
 const scope = '#chat .mes_text, .cg-root, .salty-preview';
@@ -49,12 +50,12 @@ function pauseRoots(on) {
         if (!rootObserver) {
             // 선택 중 새 창이 열리거나 루트가 이동/교체돼도 같은 프레임에서 멈춘다.
             // rAF는 숨은 탭에서 미뤄지므로 관찰자에서 바로 반영하며, 우리 표시 속성은 관찰하지 않는다.
-            rootObserver = new MutationObserver(syncRoots);
-            rootObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'id'] });
+            // 9.0.4: 공용 감시 허브 구독(body 구역 · 채팅 포함 — 대사 칸이 채팅 안에 있어요)
+            rootObserver = watchDom(document.body, { childList: true, subtree: true, attributes: ['class', 'id'], name: '데우스 선택 중 멈춤' }, syncRoots);
         }
         syncRoots();
     } else {
-        rootObserver?.disconnect();
+        rootObserver?.();
         rootObserver = null;
         for (const root of pausedRoots) root.removeAttribute(PAUSED); // 떨어진 칸도 다시 붙기 전에 해제
         pausedRoots.clear();

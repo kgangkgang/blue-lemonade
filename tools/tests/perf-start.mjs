@@ -34,7 +34,6 @@ if (!scenario) {
         'addons/tts/version.js': 'export const TTS_VERSION="1.0.0";',
         'addons/tts/credits.js': 'export function ttsCreditsSummaryHtml(){}',
         'addon-save.js': 'export async function restorePendingAddons(){return false;} export async function saveAddonsNow(){}',
-        'assist/core.js': 'export const IDS=[],LABELS={},DUPLICATES={};',
         'addons/perf/hub.js': G + (scenario === 'hub-cycle' ? `import {failures} from ${JSON.stringify(src + 'addons/perf/start.js')}; T.cycleRead=failures.length;\n` : '') + (scenario === 'hub-export' ? `import {missing} from ${JSON.stringify(js('export const other=1;'))};\n` : '') + `export function markOff(id){T.off.push(id);} export function markLegacy(id){T.legacy.push(id);} export function markBroken(id,error){T.broken.push(id);}`,
     };
     if (scenario === 'old-settings') {

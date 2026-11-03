@@ -1,5 +1,5 @@
 // 고르기 목록 팝업 (2.5.0) — 실리태번의 <select> 를 누르면 OS 가 띄우는 회색 목록 대신
-// 테마가 그린 목록 팝업(설정창 소분류 팝업과 같은 모양)이 뜬다. 사용자: "팝업 형식으로 된 거 다 저렇게".
+// 테마가 그린 목록 팝업(설정창 소분류 팝업과 같은 모양)이 뜬다. 팝업 꼴 고르기는 모두 이 모양.
 //
 // 방식: 문서에 갈고리를 걸어 select 가 열리기 전에 막고(pointerdown · touchend · click · keydown),
 // 그 자리 밑(또는 위)에 목록을 그린다. 고르면 select 의 값을 바꾸고 input · change 를 쏘아
@@ -7,11 +7,12 @@
 //
 // 빼는 것: multiple · size>1(목록형) · select2 가 대신 그리는 것(.select2-hidden-accessible) · 비활성 · 항목 0개 · 목록 자신(.salty-pick-layer).
 // 10-30 고르기 통일: 「테마 설정 창 안(.salty-panel)」 예외를 걷었어요 — 2.7.9 에 넣을 땐 설정 창이 직접 그린 세그먼트뿐이었지만, 지금은 사용 모드 · 상태창 글자(데우스 · 과일) ·
-//   확장 설정 묶음(TTS · 캡처 · 단어 치환 …)에 진짜 <select> 가 들어가 그 칸만 OS 목록으로 떨어졌어요(사용자 「모든 선택창 통일」). 화면의 모든 select 가 같은 목록이에요.
+//   확장 설정 묶음(TTS · 캡처 · 단어 치환 …)에 진짜 <select> 가 들어가 그 칸만 OS 목록으로 떨어졌어요. 화면의 모든 select 가 같은 목록이에요.
 //   통일 목록을 일부러 안 쓰는 건 위 다섯 가지뿐 — 다중 선택 · 목록형은 한 줄 고르기가 아니고, select2 는 실리태번이 제 목록을 그리며, 비활성은 열리면 안 돼요.
 // 실리태번 팝업(dialog) 안의 select 는 목록을 그 dialog 안에 꽂는다 — 최상위 층(top layer)
 // 밖의 요소는 inert 라 body 에 두면 눌리지 않는다.
 import { getSettings, readSettings } from './settings.js';
+import { watchDom } from './dom-watch.js';
 
 const SEARCH_FROM = 12; // 항목이 이보다 많으면 찾기칸
 let layer = null;       // 열린 팝업 (한 번에 하나)
@@ -57,8 +58,8 @@ function rowsHtml(sel, query = '') {
     return out.length ? out.join('') : '<div class="salty-pick-empty">없음</div>';
 }
 
-// 10-27 목록 모양 하나로(사용자 「라디오 목록 선택창 디자인이 다 달라요」). 모양은 css/72-pick.css.
-// 10-28 사용자 정정 「내가 누른 칸 바로 밑에 뜨는 게 좋다」 — 폰도 PC 처럼 누른 칸 바로 밑(모자라면 위) 드롭다운이다.
+// 10-27 목록 모양 하나로(라디오 목록 선택창 모양이 제각각이던 것). 모양은 css/72-pick.css.
+// 10-28 누른 칸 바로 아래 — 폰도 PC 처럼 누른 칸 바로 밑(모자라면 위) 드롭다운이다.
 // 폰 아래 시트(.sheet · css/72 의 시트 규칙)는 꺼 둔 경로로 남긴다: PHONE_SHEET 를 켜야만 ≤1000px 에서 시트가 된다
 export const SHEET_MAX_WIDTH = 1000;
 export const PHONE_SHEET = false;
@@ -150,10 +151,11 @@ let closedAt = 0;       // 닫은 시각 — 바깥을 눌러 닫은 직후의 c
 
 let closeWatch = null;  // 7.0.6 목록이 열린 동안의 CloseWatcher (뒤로 가기 = 목록만 닫기)
 
-const ownerWatch = new MutationObserver(() => { if (owner && !owner.isConnected) close(); });
+// 9.0.4: 목록이 열린 동안만 공용 감시 허브 구독(body 구역) — 주인 select 가 문서에서 빠지면 닫아요
+let ownerWatch = null;
 
 function close() {
-    ownerWatch.disconnect();
+    ownerWatch?.(); ownerWatch = null;
     unwatchHost?.();
     unwatchHost = null;
     const watch = closeWatch; closeWatch = null; watch?.destroy();   // 7.0.6 목록이 닫히면 뒤로 가기는 다시 창 몫
@@ -195,7 +197,7 @@ function open(sel, anchor = null) {
     // 어디에 꽂나: 실리태번 팝업(dialog) 안이면 그 안(top layer 밖은 inert), 아니면 body.
     // 2.8.0: 전에는 열린 서랍 안에 꽂았는데(실리태번은 문서 click 이 .openDrawer 밖에 떨어지면 서랍을 닫음), 서랍은
     // 스크롤 상자라 폰에서 fixed 층이 서랍 좌표에 묶여 칸이 화면 끝에 걸치면 목록이 잘리거나 엉뚱한 곳에 그려졌다
-    // (사용자: "칸이 다 보여야 열림"). 이제 body 에 두고, 층 안의 click 은 문서로 올려 보내지 않아 서랍이 닫히지 않는다.
+    // (칸이 다 보여야 열리던 것). 이제 body 에 두고, 층 안의 click 은 문서로 올려 보내지 않아 서랍이 닫히지 않는다.
     const hostSelector = window.CSS?.supports?.('selector(:popover-open)')
         ? 'dialog[open], [popover]:popover-open' : 'dialog[open]';
     const host = sel.closest(hostSelector) || document.body;
@@ -219,7 +221,7 @@ function open(sel, anchor = null) {
     // 바깥(반투명 층)을 누르면 닫힘 — 목록 안은 그대로
     layer.addEventListener('pointerdown', (e) => { if (e.target === layer) { e.preventDefault(); close(); } });
     // 2.8.3: 실리태번은 html 의 touchstart · mousedown 에서 ".openDrawer 밖"을 누르면 서랍을 닫는다 (script.js "autocloses
-    // open drawers"). 층은 body 에 있으니 목록을 굴리려는 손가락만 닿아도 서랍이 닫혔다 (사용자: "목록에서 스크롤 한 번 하면
+    // open drawers"). 층은 body 에 있으니 목록을 굴리려는 손가락만 닿아도 서랍이 닫혔다 ("목록에서 스크롤 한 번 하면
     // 바깥 화면으로 나가버림"). 층 안에서 난 누름은 문서로 올려 보내지 않는다 (기본 동작은 그대로 — 스크롤은 된다)
     for (const type of ['touchstart', 'touchend', 'mousedown', 'mouseup', 'pointerdown', 'pointerup']) {
         layer.addEventListener(type, (e) => e.stopPropagation());
@@ -274,7 +276,7 @@ function open(sel, anchor = null) {
         const prev = unwatchHost;
         unwatchHost = () => { prev?.(); document.removeEventListener('cancel', onCancel, true); };
     }
-    ownerWatch.observe(document.body, { childList: true, subtree: true });
+    ownerWatch?.(); ownerWatch = watchDom(document.body, { childList: true, subtree: true, name: '고르기 목록 주인' }, () => { if (owner && !owner.isConnected) close(); });
     if (!sheet) place(box, anchorEl || sel);   // 시트는 CSS 가 자리를 잡는다(아래 고정 · 가로 전체)
     // 고른 줄이 보이게 — 목록 칸만 굴린다. scrollIntoView 는 조상(서랍)까지 굴려서, 항목이 많은 목록(번역기 모델 칸)이
     // 폰에서 서랍을 튕기고 scroll 로 스스로 닫혔다 (2.7.10). 폰(손가락 · 자판)에서는 찾기칸에 초점을 주지 않음

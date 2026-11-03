@@ -1,13 +1,14 @@
-// 「과일 프롬프트 번역」 사전(src/scripts/bundled/fruit.js)의 한글 제목에 한자가 남지 않는지 — 남겨도 되는 것은 사전의 원래 방식대로
+// 「과일 프롬프트 번역」 사전(src/scripts/plain/fruit.js)의 한글 제목에 한자가 남지 않는지 — 남겨도 되는 것은 사전의 원래 방식대로
 //   ① 만든 사람 표시(@이름 · #모델 꼬리표) ② 괄호 속 원문 풀이(「번화(繁花)」) ③ 작가 이름을 딴 이름(아래 CREATORS, 원문 그대로 둔다).
 //   새 항목을 넣을 때 번역을 빠뜨리면 이 시험이 막는다. node tools/tests/fruit-dictionary-han.mjs <테마 루트>
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { scriptCode } from './script-code.mjs';
 
 const root = path.resolve(process.argv[2] || '.');
-const code = (await import(pathToFileURL(path.join(root, 'src/scripts/bundled/fruit.js')).href)).default;
+const code = await scriptCode(root, 'fruit');
 let data = null;
 new Function('BlueLemonade', code)({ translate: d => { data = d; } });
 // 작가 · 원작자 이름 그대로 두는 것. 8.0.7 까지는 「日月西 원작」 「汐见 극장」 「小回 극장」 을 한자로 두었지만

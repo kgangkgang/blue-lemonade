@@ -1,17 +1,21 @@
+import { watchDom } from './dom-watch.js';
 // Center short control labels using the font that actually rendered, including fallback fonts.
 // Only padding is redistributed: the face, hit area, font and spacing retain their sizes.
-const ROOTS = '.salty-panel, .bl-roomy-dialog, .bl-tool-dialog, .bl-credits-dialog, .bl-ft-dialog, .bl-assets-dialog, .bl-notes-dialog, .bl-direction-dialog, .bl-ctsi-dialog, .bl-mermaid-dialog, .blpt-dialog, .blzi-dialog, .bl-translator-dialog, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, #regex-link-settings, .po-dialog, .pa-hub, .rl-root, #cg-panel, #pt-panel, .popup-controls, .pt-help-dialog, .llmt-settings, .cg-root, #fruit-heart-v6, #bl-deus-popover';
+const ROOTS = '.salty-panel, .bl-roomy-dialog, .bl-tool-dialog, .bl-credits-dialog, .bl-ft-dialog, .bl-assets-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .bl-direction-dialog, .bl-mermaid-dialog, .blzi-dialog, .bl-translator-dialog, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, #regex-link-settings, .po-dialog, .pa-hub, .rl-root, #cg-panel, #pt-panel, .popup-controls, .pt-help-dialog, .llmt-settings, .cg-root, #fruit-heart-v6, #bl-deus-popover';
 // 7.8.6: 한글화 패널 사용법 창 · LLM 번역 서랍 설정 · 북마크 창도 — 그 단추들은 윈도우에서 잰 글꼴 표(--bl-text-nudge)만 따라가고 있었다
 // 7.9.9: 과일의 마음 창(프리셋 스크립트가 그림 · body 밖 html 자식) · 데우스 빠른 설정 창도 — 고르기 단추 · 글자 단추 · 하단 탭의 글자 잉크가 1~2.7px 아래로 처져 있었다(10-26 리그 실측)
 const BUTTONS = 'button, .menu_button, [role="button"]';
-const WATCH = { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class', 'open', 'aria-pressed', 'aria-expanded'] };
+// 9.0.4: html 구역 구독 하나(공용 감시 허브) — body 와 과일의 마음 창처럼 html 바로 아래 붙는 창까지. 채팅(#chat) · head 는 감시도 안 걸어요
+const WATCH = { subtree: true, childList: true, characterData: true, attributes: ['class', 'open', 'aria-pressed', 'aria-expanded'], exclude: ['#chat', 'head'], name: '단추 글자 세로 맞춤' };
 const saved = new WeakMap();
 const metrics = new Map();
 const baselineCache = new Map();   // 7.8.2: 글꼴 · 크기 · 줄 높이별 줄 위 → 기준선 거리
-let canvas, observer, frame = 0, enabled = false;
+let canvas, observer, onRecords = null, frame = 0, enabled = false;
 let appearanceKey = null;
 const pending = new Set();
 
+/** 글자 잉크 위 · 아래(기준선에서 px, 위가 −) — center-ink.js(가운데 줄 세로 맞춤)도 같은 측정을 써요 */
+export { ink as inkOf };
 function ink(text, style) {
     const font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
     const key = `${font}|${style.letterSpacing}|${text}`;
@@ -118,7 +122,7 @@ function readControl(el) {
         const measure = ink(node.textContent.replace(/\s+/g, ' '), ps);
         if (!measure) continue;
         // 7.8.2: 기준선은 글꼴 표(fontBoundingBoxAscent)로 추정하지 않고 화면에서 직접 잰다 — 안드로이드는 같은 글꼴 파일의
-        // ascent 를 윈도우와 다른 표에서 읽어, 추정 기준선이 1~1.5px 어긋나 폰에서만 글자가 아래로 처져 보였다(사용자 폰 사진 10-23).
+        // ascent 를 윈도우와 다른 표에서 읽어, 추정 기준선이 1~1.5px 어긋나 폰에서만 글자가 아래로 처져 보였다.
         // 같은 글꼴 · 크기 · 줄 높이면 줄 위 → 기준선 거리가 같으니 한 번만 잰다
         const bkey = `${ps.fontStyle} ${ps.fontWeight} ${ps.fontSize} ${ps.fontFamily}|${ps.lineHeight}`;
         runs.push({ rect, measure, bkey, text: node.textContent, ps });
@@ -215,14 +219,11 @@ function onFontsLoaded(event) {
     }
 }
 
+// 7.9.9: 과일의 마음 창은 body 밖(html 의 자식)이라 body 감시로는 안 보인다 → html 구역(html 바로 아래 · 그 창 안쪽)도 본다(head 안 변화는 안 본다)
 function watch() {
-    observer.observe(document.body, WATCH);
-    // 7.9.9: 과일의 마음 창은 body 밖(html 의 자식)이라 body 감시로는 안 보인다 → html 바로 아래의 추가 · 삭제와, 거기 있는 창 안쪽을 따로 본다(head 안 변화는 안 본다)
-    const html = document.documentElement;
-    if (!html) return;
-    observer.observe(html, { childList: true });
-    for (const root of html.children) if (root !== document.body && root.nodeType === 1 && root.matches?.(ROOTS)) observer.observe(root, WATCH);
+    if (!observer) observer = watchDom(document.documentElement || document.body, WATCH, onRecords);
 }
+function unwatch() { observer?.(); observer = null; }
 
 function queue(root) {
     if (!enabled || !root) return;
@@ -230,19 +231,21 @@ function queue(root) {
     for (const child of pending) if (root.contains(child)) pending.delete(child);
     pending.add(root);
     if (frame) return;
-    frame = requestAnimationFrame(() => {
-        frame = 0; observer.disconnect();
+    // 1.0.0 극한 최적화: 읽기(getBoundingClientRect · getClientRects)는 그 프레임 배치가 끝난 뒤(setTimeout 0)에 — rAF 안에서 읽으면 문서 전체 배치를 강제했어요
+    const afterLayout = fn => (typeof globalThis.setTimeout === 'function' ? globalThis.setTimeout(fn, 0) : fn());   // 시험의 가짜 창에는 setTimeout 이 없어요
+    frame = requestAnimationFrame(() => afterLayout(() => {
+        frame = 0;
         alignRoots([...pending].filter(el => el.isConnected));
-        pending.clear(); watch();
-    });
+        pending.clear(); observer?.quiet();   // 맞추면서 바꾼 padding 기록은 이 구독만 버려요(예전: 끊고 다시 걸기)
+    }));
 }
 
 export function syncControlInk(active, key = '') {
     if (enabled === !!active && appearanceKey === key) return;
     appearanceKey = key;
     enabled = !!active;
-    if (!observer) {
-        observer = new MutationObserver(records => {
+    if (!onRecords) {
+        onRecords = records => {
             if (!enabled) return;
             for (const record of records) {
                 const target = record.target.nodeType === 1 ? record.target : record.target.parentElement;
@@ -256,13 +259,13 @@ export function syncControlInk(active, key = '') {
                     node.querySelectorAll(ROOTS).forEach(queue);
                 }
             }
-        });
+        };
         document.fonts?.addEventListener('loadingdone', onFontsLoaded);
         window.addEventListener('resize', () => document.querySelectorAll(ROOTS).forEach(queue), { passive: true });   // 안 보이는 창은 alignRoots 가 건너뜀
         watch();
     }
     if (!enabled) {
-        cancelAnimationFrame(frame); frame = 0; pending.clear(); observer.disconnect();
+        cancelAnimationFrame(frame); frame = 0; pending.clear(); unwatch();
         document.querySelectorAll(ROOTS).forEach(root => root.querySelectorAll(BUTTONS).forEach(restore));
         return;
     }

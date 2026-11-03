@@ -8,7 +8,8 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 const root = path.resolve(process.argv[2] || fileURLToPath(new URL('../..', import.meta.url)));
-const read = f => fs.readFileSync(path.join(root, f), 'utf8');
+// 1.0.0 두 장 빌드: 서랍 모듈은 둘째 장(src/style-lazy.gen.css)에 실려요 — style.css 를 읽을 땐 둘째 장도 이어 읽어요
+const read = f => fs.readFileSync(path.join(root, f), 'utf8') + (f === 'style.css' && fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? fs.readFileSync(path.join(root, 'src/style-lazy.gen.css'), 'utf8') : '');
 let n = 0; const t = (name, fn) => { fn(); n++; console.log(`ok ${n} - ${name}`); };
 
 const EXCLUDE = ':not(:has(> form > .inline-drawer > .inline-drawer-header > .bl-wi-actions[open]))';

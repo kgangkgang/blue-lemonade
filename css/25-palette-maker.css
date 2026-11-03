@@ -49,7 +49,6 @@
 .salty-panel .salty-custom-color input[type="color"] { display: block; appearance: none; width: 100%; height: var(--bl-settings-chip, 32px); min-height: 0; padding: 0; border: 0; border-radius: 5px; background: transparent; cursor: pointer; }
 .salty-panel .salty-custom-color input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
 .salty-panel .salty-custom-color input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 5px; }
-.salty-panel .salty-custom-color input[type="color"]::-moz-color-swatch { border: 0; border-radius: 5px; }
 .salty-panel .salty-custom-color input[type="text"] { width: 100%; min-width: 0; height: 28px; padding: 4px 0 0; border: 0; background: transparent; color: var(--salty-text); text-align: center; font: 12px/1.4 monospace; }
 .salty-panel .salty-custom-color input[aria-invalid="true"] { color: var(--salty-danger); outline: 1px solid var(--salty-danger); border-radius: 5px; }
 .salty-panel .salty-custom-foot { display: flex; justify-content: space-between; gap: 4px; margin: 8px 1px; color: var(--salty-muted); font-size: 12px; }

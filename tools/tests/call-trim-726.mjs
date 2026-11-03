@@ -1,4 +1,4 @@
-// 7.2.6 미룬 API 과호출 · 번역 항목 (outputs/bl-724/audit-proposals.md): #1 chat-sync 폴링 주기 · #4 그룹 분기 지도 메모 · #5 번역 점검 자동 재번역 토글 기본값 ·
+// 7.2.6 미룬 API 과호출 · 번역 항목: #1 chat-sync 폴링 주기 · #4 그룹 분기 지도 메모 · #5 번역 점검 자동 재번역 토글 기본값 ·
 //   #6 자동 번역 SPLIT_CAP · #7 TTS 분석 저장 디바운스 · #10 스와이프 저장 · 사용량 저장 간격 · #12 북마크 목록 캐시 · #13 에셋 · 프롬프트 템플릿 · 모델 저장 · 토큰 어림 · 가격 타이머 · 번역 1 글자 없는 문단
 //   node tools/tests/call-trim-726.mjs <테마 루트>
 import assert from 'node:assert/strict';
@@ -70,11 +70,7 @@ await test('#13 에셋: 같은 캐릭터 폴더면 채팅을 바꿔도(CHAT_CHAN
     assert.equal((panel.match(/await reload\(\);/g) || []).length, 10, '패널의 새로고침 · 올리기 · 지우기는 전처럼 다시 받는다');
     assert.match(read('src/addons/assets/prompt.js'), /CHAT_CHANGED, \(\) => \{[\s\S]{0,400}return reload\(\{ keep: true \}\);/);
 });
-await test('#13 프롬프트 템플릿: 창을 열 때마다가 아니라 5분에 한 번 refresh · 모델 등록: 바뀐 게 있을 때만 저장 · 가격 타이머: 끄면 멈춤', async () => {
-    const pt = read('src/addons/prompt-template/index.js');
-    assert.match(pt, /const REFRESH_TTL = 5 \* 60 \* 1000;/);
-    assert.match(pt, /if \(!state\.busy && \(state\.installed === null \|\| Date\.now\(\) - state\.refreshedAt > REFRESH_TTL\)\) refresh\(\)\.catch/);
-    assert.match(pt, /state\.refreshedAt = probeGit [?] Date\.now\(\) : 0;/);   // 1029 git 을 안 본 가벼운 다시 읽기는 시각을 남기지 않아요(창이 다시 읽게)
+await test('#13 모델 등록: 바뀐 게 있을 때만 저장 · 가격 타이머: 끄면 멈춤', async () => {
     assert.match(read('src/addons/models/offer.js'), /if \(changed\.length\) saveSettings\(\);/);
     // 가격 타이머: 설정에 따라 켜고 끈다
     const timers = [];

@@ -1,3 +1,4 @@
+import { watchDom } from './dom-watch.js';   // 9.0.4 공용 감시 허브 — body · html 자기 감시는 문서마다 감시자 하나
 // Keep chat file management native; load the branch map only when requested.
 let started = false;
 let openLibraryAction=null;
@@ -77,7 +78,7 @@ export function startChatGraph() {
     new MutationObserver(() => {
         if (!visible()) { clearTimeout(refreshTimer); select('list'); }
     }).observe(shadow, { attributes: true, attributeFilter: ['style'] });
-    new MutationObserver(() => { if (!enabled()) select('list'); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    watchDom(document.body, { attributes: ['class'], name: '채팅 가지 지도 (테마 켜짐)' }, () => { if (!enabled()) select('list'); });
     new MutationObserver(() => {
         if (mode !== 'map' || !visible()) return;
         clearTimeout(refreshTimer);

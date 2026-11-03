@@ -7,7 +7,8 @@
 //   어느 쪽이든 「블루레몬에이드 사용」은 켠다. 답한 CSS 묶음의 지문을 compat.cssAsked 에 적어 다시 묻지 않는다.
 //   이미 쓰던 사람도 테마 + 확장 + 다른 CSS 켜짐이면 같은 장을 한 번만(openCssPromptWhenFree) — 「그대로 두기」가 하나 더 있다.
 import { getSettings, saveSettings, FONT_SET } from './settings.js';
-import { PALETTES, PALETTE_FAMILIES, paletteFamily, paletteVariant, paletteColors, safeColor } from './palettes.js';
+import { PALETTES, PALETTE_FAMILIES, paletteFamily, paletteVariant, paletteColors, safeColor, ensurePalettes } from './palettes.js';
+import { loadFullCatalog } from './catalog.js';   // 1.0.0 되살림: 팔레트 11벌 · 글꼴 전체 목록은 늦게 받는 데이터라 창을 열기 전에 받아요
 import { PRESETS, applyStyleData } from './styles.js';
 import { findFont, previewStack, queuePreview, isPreviewReady, isPreviewBlank } from './fonts.js';
 import { rememberAppearance } from './appearance-archive.js';
@@ -115,6 +116,7 @@ export function openCssPromptWhenFree() {
 
 export async function openFirstRun({ auto = false, cssOnly = false } = {}) {
     if (open?.isConnected) { open.querySelector('[data-fr="next"]')?.focus(); return; }
+    await Promise.all([ensurePalettes(), Promise.resolve(loadFullCatalog()).catch(() => null), import('./lite.js').then(m => m.splitCssReady()).catch(() => null)]);   // 1.0.0 두 장 빌드: 첫 실행 창(80-first-run)은 둘째 장에 있어요 — 열기 전에 붙여 두고
     const [{ showThemeModal }, panel] = await Promise.all([import('./modal.js'), import('./panel.js').catch(error => { console.warn('[Blue Lemonade] 처음 설정: 설정 창 모듈', error); return null; })]);
     if (open?.isConnected) return;
     if (auto) saveSettings();   // 첫 실행 표시는 테마 설정 칸이 생기는 것 — 저장해 두면 다음 새로고침엔 안 뜨고 (건너뛰어도) 다른 CSS 가 있으면 7.2.6 의 「쓰던 테마」 장만 한 번 더 묻는다
@@ -182,7 +184,7 @@ export async function openFirstRun({ auto = false, cssOnly = false } = {}) {
             <div class="bl-fr-css-choices">
                 ${choice('theme', '블루레몬에이드 테마로 쓰기', '다른 CSS 를 끄고 「테마 + 확장」으로 써요. 끈 CSS 는 지우지 않아요 — 설정 창 채팅 › 기타 › 다른 CSS 에서 되돌릴 수 있어요.', true)}
                 ${choice('other', '쓰던 테마 유지', 'CSS 는 그대로 두고 「확장만」으로 저장한 뒤 새로고침해요. 번역 · TTS 같은 내장 확장만 써요.')}
-                ${cssOnly ? choice('leave', '그대로 두기', '지금처럼 둬요. 이 CSS 묶음은 다시 묻지 않아요 — 글자가 깨지면 설정 창 › 자주 묻는 질문에서 고칠 수 있어요.') : ''}
+                ${cssOnly ? choice('leave', '그대로 두기', '지금처럼 둬요. 이 CSS 묶음은 다시 묻지 않아요 — 글자가 깨지면 설정 창 채팅 › 기타 › 다른 CSS 에서 고칠 수 있어요.') : ''}
             </div></div>`;
     };
     const paletteStep = st => {

@@ -193,7 +193,7 @@ await test('manual timing is bounded and cannot leak into voice or pause rows',(
     assert.deepEqual(out.map(plain),[{repeats:4,durationMs:8000},{repeats:1,durationMs:0},{repeats:2,durationMs:3500},{repeats:1,durationMs:0},{repeats:1,durationMs:0}]);
     assert.throws(()=>Store.normalizeRows([{kind:'sfx',durationMs:Infinity}]),/숫자/);
 });
-// 1.7.1 (테마 6.1.8) 질척이는 리듬 — freesound 589456 MrFossy CC0, 반복용. 사용자: 「꿀럭 꿀렁 찔걱에 다 잘 어울리는군」
+// 1.7.1 (테마 6.1.8) 질척이는 리듬 — freesound 589456 MrFossy CC0, 반복용.
 await test('1.7.1 squelch rhythm: 꿀럭 · 꿀렁 · 찔걱 (and repeats) call it; 찔꺽 words keep their old sound and list both; offered to the analysis; sustainable',()=>{
     for(const phrase of ['꿀럭 소리가 났다.','꿀렁꿀렁 움직였다.','찔걱찔걱 소리가 이어졌다.','꿀럭꿀럭','찔걱']) assert.equal(L.matchSfx(phrase)?.id,'daily_squelch_pulse',phrase);
     assert.equal(L.matchSfx('찔꺽')?.id,'daily_squelch','a single 찔꺽 keeps its one-shot sound');

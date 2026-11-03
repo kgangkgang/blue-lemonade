@@ -2,6 +2,8 @@
 //   node tools/tests/chat-cover.mjs <테마 루트>
 // 가짜 DOM · 가짜 타이머: 덮는 판정(자리 · 불투명 · 여는 중 변환) · 닫히면 바로 뗌 · 뗄 때 스크롤(바닥 → 바닥, 중간 → 그 자리) · 숨긴 동안 채팅이 바뀌면 바로 떼고 다시 안 숨김
 //   · 반만 덮는 서랍(PC 옆 패널) · 반투명 서랍은 그대로 · 끄면 감시자 · 리스너 · 클래스를 다 뗀다 · CSS 규칙 · 미리보기 DENY.
+// (9.0.3) 강제 배치 없이: 닫는 클릭(서랍 class 감시 콜백) 안에서는 class 만 빼고 자리 · 크기를 읽지 않으며, 스크롤 되돌리기 · 덮였는지 재기는 다음 프레임의
+//   배치가 끝난 뒤(ResizeObserver 첫 알림 · 칠하기 전)에 읽고 쓴다. 가짜 프레임: rAF 와 ResizeObserver 첫 알림은 16ms 뒤(브라우저처럼 rAF 가 먼저).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -18,23 +20,31 @@ const advance = ms => { const end = now + ms; for (;;) { const next = [...timers
 const observers = [];
 class FakeMO { constructor(cb) { this.cb = cb; this.live = true; this.targets = []; observers.push(this); } observe(el, opts) { this.targets.push(el); this.opts = opts; } disconnect() { this.live = false; } }
 globalThis.MutationObserver = FakeMO;
+globalThis.requestAnimationFrame = fn => setTimeout(() => fn(now), 16);
+globalThis.cancelAnimationFrame = id => clearTimeout(id);
+let roMade = 0;
+class FakeRO { constructor(cb) { this.cb = cb; this.live = true; roMade++; } observe(el) { setTimeout(() => { if (this.live) this.cb([{ target: el }]); }, 16); } disconnect() { this.live = false; } }
+globalThis.ResizeObserver = FakeRO;
+let geomReads = 0;   // 자리 · 크기 · 계산된 스타일 읽기(쓰기 뒤 같은 작업 안에서 읽으면 강제 배치)
 
 function el(id, rect, style = {}) {
     const e = { id, rect, style: { visibility: 'visible', opacity: '1', transform: 'none', backgroundColor: 'rgb(250, 250, 250)', ...style }, classes: new Set() };
     e.classList = { contains: c => e.classes.has(c), add: c => { if (e.classes.has(c)) return; const old = [...e.classes].join(' '); e.classes.add(c); notify(e, old); }, remove: c => { if (!e.classes.has(c)) return; const old = [...e.classes].join(' '); e.classes.delete(c); notify(e, old); } };
-    e.getBoundingClientRect = () => ({ ...e.rect });
+    e.getBoundingClientRect = () => { geomReads++; return { ...e.rect }; };
     return e;
 }
 function notify(target, oldValue) { for (const o of observers) if (o.live && o.targets.includes(target) && o.opts?.attributes) o.cb([{ type: 'attributes', target, attributeName: 'class', oldValue }]); }
 const W = 384, H = 798;
 const chat = el('chat', { left: 0, top: 50, right: 384, bottom: 700 });
-chat.scrollHeight = 60000; chat.clientHeight = 650; chat.scrollTop = 59350; chat.childWrites = 0;
+Object.defineProperty(chat, 'scrollHeight', { get: () => { geomReads++; return 60000; } });
+Object.defineProperty(chat, 'clientHeight', { get: () => { geomReads++; return 650; } });
+chat.scrollTop = 59350; chat.childWrites = 0;
 const persona = el('persona-management-block', { left: 0, top: 46, right: 384, bottom: 798 });
 const side = el('right-nav-panel', { left: 200, top: 46, right: 384, bottom: 798 });
 const glass = el('AdvancedFormatting', { left: 0, top: 46, right: 384, bottom: 798 }, { backgroundColor: 'rgba(250, 250, 250, 0.8)' });
 const drawers = [persona, side, glass];
 const winListeners = new Map();
-globalThis.window = { innerWidth: W, innerHeight: H, getComputedStyle: e => e.style, addEventListener: (t, f) => winListeners.set(t, f), removeEventListener: t => winListeners.delete(t) };
+globalThis.window = { innerWidth: W, innerHeight: H, getComputedStyle: e => { geomReads++; return e.style; }, addEventListener: (t, f) => winListeners.set(t, f), removeEventListener: t => winListeners.delete(t) };
 globalThis.document = { getElementById: id => (id === 'chat' ? chat : null), querySelectorAll: sel => (sel === '.drawer-content' ? drawers : []) };
 const es = { l: new Map(), on(ev, fn) { if (!this.l.has(ev)) this.l.set(ev, []); this.l.get(ev).push(fn); }, removeListener(ev, fn) { const a = this.l.get(ev) || []; const i = a.indexOf(fn); if (i >= 0) a.splice(i, 1); }, emit(ev) { for (const fn of [...(this.l.get(ev) || [])]) fn(); } };
 globalThis.SillyTavern = { getContext: () => ({ eventSource: es, eventTypes: { GENERATION_STARTED: 'gs', CHAT_CHANGED: 'cc', MESSAGE_SWIPED: 'ms' } }) };
@@ -66,14 +76,17 @@ test('폰 페르소나 서랍(화면 가득 · 불투명)을 열면 전환 뒤 #
     advance(1200); assert.equal(chat.classes.has(C), true);
     assert.deepEqual(M._cover.state().saved, { top: 59350, bottom: true });
     chat.scrollTop = 0;   // 숨긴 동안 범위가 줄어 0 으로 밀렸다고 치자
+    const reads = geomReads;
     close(persona); assert.equal(chat.classes.has(C), false, '닫는 순간');
-    assert.equal(chat.scrollTop, chat.scrollHeight - chat.clientHeight, '바닥으로');
+    assert.equal(geomReads, reads, '닫는 클릭 안에서는 자리 · 크기를 읽지 않는다(class 만 뺌 — 강제 배치 없음)');
+    advance(16);   // 다음 프레임의 배치 뒤(칠하기 전)
+    assert.equal(chat.scrollTop, 60000 - 650, '바닥으로');
 });
 test('중간을 읽던 중이면 그 자리로 되돌린다 · 같으면 쓰지 않는다', () => {
     chat.scrollTop = 20000; open(persona); advance(1200); assert.equal(chat.classes.has(C), true);
-    chat.scrollTop = 0; close(persona); assert.equal(chat.scrollTop, 20000);
+    chat.scrollTop = 0; close(persona); advance(16); assert.equal(chat.scrollTop, 20000);
     let writes = 0; let v = 20000; Object.defineProperty(chat, 'scrollTop', { get: () => v, set: x => { writes++; v = x; }, configurable: true });
-    open(persona); advance(1200); close(persona); assert.equal(writes, 0, '자리가 그대로면 scrollTop 을 쓰지 않는다');
+    open(persona); advance(1200); close(persona); advance(200); assert.equal(writes, 0, '자리가 그대로면 scrollTop 을 쓰지 않는다');
     delete chat.scrollTop; chat.scrollTop = 20000;
 });
 test('여는 중(변환 · 페이드)이면 기다렸다가 끝난 뒤 덮는다', () => {
@@ -96,14 +109,15 @@ test('숨긴 동안 채팅이 바뀌면(새 메시지 · 다른 채팅 · 생성
         close(persona);
     }
 });
-test('덮인 동안과 뗀 직후 두 프레임은 #chat 의 scroll 이벤트를 창 캡처에서 멈춘다(숨길 때 scrollTop 0 이 읽던 자리 저장에 닿지 않게) · 다른 요소 scroll 은 그대로', () => {
+test('덮인 동안과 되돌린 뒤 두 프레임은 #chat 의 scroll 이벤트를 창 캡처에서 멈춘다(숨길 때 scrollTop 0 이 읽던 자리 저장에 닿지 않게) · 다른 요소 scroll 은 그대로', () => {
     const onScroll = winListeners.get('scroll'); assert.ok(onScroll, '창 scroll 캡처 리스너');
     const ev = target => { const e = { target, stopped: false, stopImmediatePropagation() { this.stopped = true; } }; onScroll(e); return e.stopped; };
-    advance(40); assert.equal(ev(chat), false, '덮이기 전에는 그대로');
+    advance(60); assert.equal(ev(chat), false, '덮이기 전에는 그대로(앞 시험에서 뗀 뒤 되돌림 · 두 프레임이 지남)');
     open(persona); advance(1200); assert.equal(chat.classes.has(C), true);
     assert.equal(ev(chat), true, '덮인 동안 멈춤'); assert.equal(ev(persona), false, '서랍 안 scroll 은 그대로');
     close(persona); assert.equal(ev(chat), true, '뗀 직후(되돌리는 scroll) 도 멈춤');
-    advance(40); assert.equal(ev(chat), false, '두 프레임 뒤에는 그대로');
+    advance(16); assert.equal(ev(chat), true, '되돌린 프레임(배치 뒤)에도 아직 멈춤');
+    advance(40); assert.equal(ev(chat), false, '되돌린 뒤 두 프레임이 지나면 그대로');
 });
 test('끄면 감시자 · 리스너 · 덮개를 다 뗀다 · 다시 켜도 한 벌', () => {
     open(persona); advance(1200); assert.equal(chat.classes.has(C), true);
@@ -117,6 +131,25 @@ test('끄면 감시자 · 리스너 · 덮개를 다 뗀다 · 다시 켜도 한
     M.syncChatCover(true); M.syncChatCover(true);
     assert.equal(observers.filter(o => o.live).length, 2, '서랍 감시 하나 · 채팅 감시 하나');
     assert.equal(es.l.get('gs').length, 1);
+});
+test('(9.0.3) 덮였는지 재기는 타이머에서 바로 읽지 않고 다음 프레임의 배치 뒤(ResizeObserver 첫 알림)에 읽는다 — 읽은 뒤에 쓴다', () => {
+    const made = roMade, reads = geomReads;
+    open(persona);
+    advance(1); assert.equal(geomReads, reads, '여는 클릭 · 0ms 타이머에서는 읽지 않는다');
+    assert.ok(roMade > made, '배치 뒤 알림을 기다린다');
+    advance(16); assert.ok(geomReads > reads, '배치 뒤에 잰다');
+    advance(1200); assert.equal(chat.classes.has(C), true);
+    close(persona); advance(200);
+});
+test('(9.0.3) 떼고 되돌리기 전에 다시 덮여도 처음 적어 둔 자리로 이어 되돌린다', () => {
+    chat.scrollTop = 30000; open(persona); advance(1200); assert.equal(chat.classes.has(C), true);
+    chat.scrollTop = 0;
+    close(persona); assert.equal(M._cover.state().restoring, true, '되돌리기는 배치 뒤로 미뤄 둠');
+    open(persona); M._cover.evaluate();   // 같은 프레임 안에서 다시 덮였다고 치자
+    assert.equal(chat.classes.has(C), true);
+    assert.deepEqual(M._cover.state().saved, { top: 30000, bottom: false }, '뗀 사이의 0 이 아니라 처음 자리');
+    close(persona); advance(16); assert.equal(chat.scrollTop, 30000);
+    advance(200);
 });
 test('CSS: body.salty #chat.bl-chat-covered { content-visibility: hidden } · style.css 에 빌드 · 미리보기 DENY · syncChatLight 가 같은 설정으로 켠다', () => {
     assert.match(read('css/05-chat.css'), /^body\.salty #chat\.bl-chat-covered \{\s*content-visibility: hidden;\s*\}/m);

@@ -25,9 +25,9 @@ async function test(name, fn) {
 
 await test('scrub: 다른 서버 주소 · 키 · 토큰은 가리고, 같은 서버 경로는 물음표 앞까지만', () => {
     const key = 'AIza' + 'Sy0123456789abcdefghijKLMNOP';
-    const out = E.scrub(`실패 https://generativelanguage.googleapis.com/v1beta/models/x:generate?key=${key} · http://127.0.0.1:8000/scripts/extensions/third-party/blue-lemonade/src/a.js?v=3 · Bearer sk-abcdefghijklmnop1234 · api_key=supersecret99 · ${'a1'.repeat(20)}`);
+    const out = E.scrub(`실패 https://generativelanguage.googleapis.com/v1beta/models/x:generate?key=${key} · http://127.0.0.1:8000/scripts/extensions/third-party/blue-lemonade/src/a.js?v=3 · Bearer ${'sk-' + 'abcdefghijklmnop1234'} · api_key=supersecret99 · ${'a1'.repeat(20)}`);
     assert.ok(!out.includes('googleapis'), out);
-    assert.ok(!out.includes(key) && !out.includes('sk-abcdefghijklmnop1234') && !out.includes('supersecret99'), out);
+    assert.ok(!out.includes(key) && !out.includes('sk-' + 'abcdefghijklmnop1234') && !out.includes('supersecret99'), out);
     assert.ok(out.includes('/scripts/extensions/third-party/blue-lemonade/src/a.js') && !out.includes('v=3'), out);
     assert.ok(!out.includes('a1'.repeat(20)), out);
     assert.ok(E.scrub('x'.repeat(1000)).length <= 400);
@@ -37,9 +37,9 @@ await test('scrub: 다른 서버 주소 · 키 · 토큰은 가리고, 같은 �
 
 // 6.7.5 (회귀검사 6.7.4): 진단 복사 글은 공개 댓글에 붙는다 — 메일 · 사용자 이름 경로 · JSON 꼴 키가 남았고, 「Missing key …」 같은 평범한 글은 가려졌다
 await test('scrub: 메일 · 사용자 이름이 든 경로 · JSON 키 값은 가리고, 평범한 낱말은 그대로', () => {
-    const out = E.scrub('a.b+c@example.com 계정 · C:\\Users\\Someone\\Downloads\\x.log · /home/someone/st/x · /Users/someone/x · {"apiKey":"abc12345","url":"x"} · key: hunter2secret');
+    const out = E.scrub('a.b+c@example.com 계정 · C:' + '\\Users\\Someone\\Downloads\\x.log · /home/someone/st/x · /Users/someone/x · {"apiKey":"abc12345","url":"x"} · key: hunter2secret');
     assert.ok(!/example\.com|Someone|someone|abc12345|hunter2secret/.test(out), out);
-    assert.ok(out.includes('<메일>') && out.includes('C:\\Users\\<이름>\\Downloads') && out.includes('/home/<이름>/st') && out.includes('"apiKey":"<가림>"'), out);
+    assert.ok(out.includes('<메일>') && out.includes('C:' + '\\Users\\<이름>\\Downloads') && out.includes('/home/<이름>/st') && out.includes('"apiKey":"<가림>"'), out);
     assert.equal(E.scrub('Missing key translation_settings in config'), 'Missing key translation_settings in config');
     assert.equal(E.scrub('token count 12345 over limit'), 'token count 12345 over limit');
 });
@@ -132,7 +132,6 @@ await test('화면 규칙: 메시지 번호 세로 2줄 · 꺼진 애드온 칸�
     assert.match(css, /\.bl-diag-file input\[type="number"\] \{ width: 100%;/);
     assert.ok(!/div\.is-off \{[^}]*opacity/.test(css), '꺼진 칸에 opacity 없음');
     assert.match(css, /div\.is-off \{[^}]*border: 1px dashed/);
-    assert.ok(fs.readFileSync(path.join(root, 'src/theme-update.js'), 'utf8').includes('점선 칸은 꺼 둔 애드온이에요.'));
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

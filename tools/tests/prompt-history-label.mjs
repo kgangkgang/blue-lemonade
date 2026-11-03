@@ -18,7 +18,7 @@ const chat = Array.from({ length: 23 }, (_, i) => ({ is_user: i % 2 === 0, is_sy
 const asSent = i => ({ role: chat[i].is_user ? 'user' : 'assistant', content: chat[i].mes });
 const inserted = text => ({ role: 'system', content: text });
 
-t('숨긴 메시지 + 깊이로 끼운 글: 보이는 9개는 #14~#22, 끼운 3개는 「끼운 글」 (사용자 상황)', () => {
+t('숨긴 메시지 + 깊이로 끼운 글: 보이는 9개는 #14~#22, 끼운 3개는 「끼운 글」 (실제 상황 꼴)', () => {
     // 실리태번 차례: 깊이 20(보이는 수보다 깊음) → 맨 앞, 깊이 4 → 뒤에서 넷째 앞, 깊이 0 → 맨 뒤
     const items = [inserted('[Deep lore note]'), asSent(14), asSent(15), asSent(16), asSent(17), asSent(18), inserted('[Author note: keep it calm]'), asSent(19), asSent(20), asSent(21), asSent(22), inserted('[Scene: night]')];
     assert.deepEqual(labels(items, chat), ['끼운 글', '#14', '#15', '#16', '#17', '#18', '끼운 글', '#19', '#20', '#21', '#22', '끼운 글']);

@@ -74,7 +74,7 @@ await t('배선: preferences-safety 가 recheckInstalled 로 보고 · 낡으면
     assert.ok(!src.includes('assert.equal(installed.failures.length,0)'), '바로 assert 하지 않는다 — 다른 검사도 돌고 까닭을 남긴다');
     assert.match(src, /if\(stale\)\{console\.error\(stale\);[^\n]*process\.exitCode=1;\}/);
     const ci = fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8').replace(/\r\n/g, '\n');
-    assert.match(ci, /node tools\/tests\/integrity-recheck\.mjs \.\n\s+node tools\/tests\/preferences-safety\.mjs \./);
+    assert.match(ci, /node tools\/tests\/integrity-recheck\.mjs \./);   // 8.3.0 preferences-safety 는 docs/(gh-pages) 를 읽어 사이트를 내린 뒤 CI 에서 뺐다
 });
 
 console.log(`integrity-recheck: ${n} passed, 0 failed`);

@@ -718,7 +718,7 @@ function sfxTiming(cue, built, sound) {
     return { repeats: durationMs > 0 ? 1 : Math.min(repeats, count), durationMs };
 }
 
-/** 1.6.3 저장 한도: 개수가 아니라 지문 길이로 — 120자마다 하나, 12~64 (사용자: 1,000자 채팅과 5,000자 지문이 달라 12개는 적을 수 있다) */
+/** 1.6.3 저장 한도: 개수가 아니라 지문 길이로 — 120자마다 하나, 12~64 (1,000자 채팅과 5,000자 지문이 달라 12개는 적을 수 있다) */
 export function sfxCap(built) {
     const chars = (built?.sfxScene || []).reduce((n, g) => n + String(g?.text || '').length, 0);
     return Math.max(12, Math.min(64, Math.ceil(chars / 120)));
@@ -1145,7 +1145,7 @@ const textHash = (mes) => hash(String(mes?.mes ?? ''));
 /**
  * 7.2.9 소리로 읽는 글만 (분석 열쇠용): 그림 자리 표시(text.js SLOT_RE) · <img> · 그림 요청 태그(<pic …>) · 마크다운 그림은 읽지 않으니 빼고,
  * 그 자리에 남는 빈 줄 · 줄 끝 빈칸은 하나로. 그림 확장이 답이 끝난 뒤(재생 중에도) 자리 표시를 붙이거나 요청 태그를 그림으로 바꾸면
- * mes.mes 해시가 바뀌어 다 받은 분석을 버렸고, 다음 대사를 누를 때 「분석 중…」으로 같은 답을 다시(유료) 물었다 (사용자 10-20).
+ * mes.mes 해시가 바뀌어 다 받은 분석을 버렸고, 다음 대사를 누를 때 「분석 중…」으로 같은 답을 다시(유료) 물었다.
  */
 export function speechText(text) {
     return String(text ?? '').replace(/\r\n?/g, '\n')
@@ -1504,7 +1504,7 @@ export function removeManualSfx(mesId, after, id) {
 
 /** 저장된 분석 (같은 글이면 쓴다 — 1.6.4: 프롬프트 지문(profile)은 더 맞춰 보지 않는다).
  *  전엔 목소리를 하나 더하거나 효과음을 넣거나 우선 ★ 을 켜거나 모델을 바꾸면 프롬프트가 달라져 채팅의 모든 분석이 무효가 됐고,
- *  분명 들었던 문장을 누를 때마다 다시(유료) 분석했다 (사용자 10-11: "분명 들었던 문장인데 계속 분석 다시하는 오류 … 왜 또 분석하는거지?").
+ *  분명 들었던 문장을 누를 때마다 다시(유료) 분석했다.
  *  다시 받는 때: 글이 바뀜 · 감정이 필요한데 빠짐 · 필요한 언어가 빠짐(부르는 쪽의 covers) · 효과음을 켰는데 효과음 없이 받은 분석(한 번). 새로 받고 싶으면 요술봉 › 재생성(force). */
 export function getAnalysis(mesId) {
     const mes = msgOf(Number(mesId));

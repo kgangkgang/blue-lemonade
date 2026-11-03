@@ -31,10 +31,11 @@ export let duplicate = false;
 let holder = null, root = null, inlineHost = null, opening = false, initialized = false;
 let nativeAnchor = null, placement = 'holder', nativeDisplay = '';
 const OWNER = Symbol.for('blue-lemonade.tts.owner');
+const SHELL = Symbol.for('blue-lemonade.tts.shell');   // 1.0.0 극한 최적화: 껍데기(shell.js)가 부팅 때 슬래시 명령 · 단추 · 요술봉 줄을 맡고, 본체는 처음 쓸 때 와요
 function hasOtherOwner() {
     const disabled = extension_settings.disabledExtensions || [];
     return ['tts', 'lemon-voice', 'lemon-tts'].some(name => extensionNames.includes(`third-party/${name}`) && !disabled.includes(`third-party/${name}`))
-        || !!window.LemonVoice || !!document.getElementById('lv_settings') || !!globalThis[OWNER];
+        || (!!window.LemonVoice && !window.LemonVoice.blShell) || !!document.getElementById('lv_settings') || (!!globalThis[OWNER] && globalThis[OWNER] !== 'builtin');   // 1.0.0 극한 최적화: 껍데기(shell.js)가 먼저 주인 표시 · LemonVoice 자리를 잡아요
 }
 function nativeHome() {
     if (nativeAnchor?.isConnected) return nativeAnchor;
@@ -90,7 +91,7 @@ export function syncEnabled() {
     return on;
 }
 export async function openPanel() {
-    await ready;
+    await ensureReady();
     if (duplicate || !root) return;
     if (inlineHost?.isConnected && inlineHost.offsetParent) { root.scrollIntoView({ block: 'nearest' }); return; }
     if (opening) return; opening = true;
@@ -102,7 +103,7 @@ export async function openPanel() {
 export function mountInline(host) {
     inlineHost = host;
     let cancelled = false;
-    ready.then(() => {
+    ensureReady().then(() => {
         if (cancelled || inlineHost !== host || duplicate || !root) return;
         if (opening) host.textContent = '열린 설정창을 닫으면 여기에 표시돼요.';
         else { prepareEmbedded(); host.replaceChildren(root); placement = 'inline'; ui.ensureFresh(); }
@@ -409,6 +410,28 @@ function onPlayClick(el) {
     else player.speakMessage(id, { force: true });         // 꺼져 있어도 손으로 누르면 읽음
 }
 
+function openScript(el) { if (!runtimeEnabled()) return; const id = Number(el.closest('.mes')?.getAttribute('mesid')); if (!chat[id]) return; import('./src/script-editor.js').then(m => m.openScriptEditor(id)).catch(e => toast(e?.message || '소리 대본을 열지 못했어요', 'error')); }
+// 1.0.0 극한 최적화: 껍데기(shell.js)가 본체가 오기 전에 받은 단추 누름 · 사건을 그대로 넘겨요
+export function playButton(el) { onPlayClick(el); }
+export function scriptButton(el) { openScript(el); }
+export function stopPlayback() { player.stop(); }
+/** 껍데기가 본체를 받는 동안 쌓아 둔 실리태번 사건을 같은 처리기로 (등록 순서와 같게) */
+export function replayEvent(type, args = [], captured = null) {
+    const T = event_types;
+    if (type === T.CHAT_CHANGED) return onChatChanged();
+    if (type === T.CHARACTER_MESSAGE_RENDERED) return onRendered(Number(args[0]), false, args[1]);
+    if (type === T.USER_MESSAGE_RENDERED) return onRendered(Number(args[0]), true, '');
+    if (type === T.STREAM_TOKEN_RECEIVED) return onStreamToken(args[0]);
+    if (type === T.GENERATION_STARTED) return onGenStarted(...args);
+    if (type === T.GENERATION_ENDED || type === T.GENERATION_STOPPED) return onGenEnded();
+    if (T.GROUP_WRAPPER_STARTED && type === T.GROUP_WRAPPER_STARTED) { groupTurnFrom = args[0]?.type === 'quiet' || args[0]?.type === 'impersonate' ? -1 : captured?.chatLength ?? chat.length; return; }
+    if (T.GROUP_WRAPPER_FINISHED && type === T.GROUP_WRAPPER_FINISHED) { groupTurnFrom = -1; return; }
+    if (type === T.MESSAGE_SWIPED) { onSwiped(Number(args[0])); return onMessageChanged(args[0]); }
+    if (type === T.MESSAGE_DELETED) return onDeleted();
+    if (T.CHARACTER_RENAMED && type === T.CHARACTER_RENAMED) return onCharacterRenamed(...args);
+    if (type === T.MESSAGE_EDITED || type === T.MESSAGE_UPDATED) return onMessageChanged(args[0]);
+}
+
 // ---------- 지팡이 메뉴 (설정 wand_menu: 끄면 두 줄을 뺀다 · 'tts:wand' 로 바로 반영)
 // "TTS" 줄은 켜고 끄지 않고 빛나지도 않는다 — 누르면 확장 창을 열고 우리 설정 서랍으로 간다. "TTS 정지" 는 그대로 정지
 /**
@@ -458,55 +481,73 @@ function resolveVoiceUid(v) {
     const hit = voices.allVoices().find(x => norm(x.name) === nq || norm(x.voiceId) === nq || (x.aliases || []).some(a => norm(a) === nq));
     return hit ? hit.uid : null;
 }
+const commandCallbacks = {
+    lv: (args, value) => {
+        const text = String(value ?? '').trim();
+        if (!text) return '';
+        const uid = resolveVoiceUid(args.voice);
+        if (uid === null) { toast(`목소리를 못 찾았어요: ${args.voice}`, 'warning'); return ''; }
+        // 다 읽을 때까지 기다리지 않는다 (스크립트가 막히지 않게); 실패는 재생기가 토스트로 알림
+        Promise.resolve(player.speakText(text, uid)).catch(() => { /* 재생기가 알림 */ });
+        return '';
+    },
+    'lv-stop': () => { player.stop(); return ''; },
+    'lv-read': (_args, value) => {
+        const raw = String(value ?? '').trim();
+        const id = raw ? Number(raw) : chat.length - 1;
+        if (!Number.isInteger(id) || !chat[id]) { toast('없는 메시지 번호예요', 'warning'); return ''; }
+        player.speakMessage(id, { force: true, noWait: true });   // 명령은 번역을 기다리지 않음
+        return '';
+    },
+    'lv-analyze': (_args, value) => {
+        const raw = String(value ?? '').trim();
+        const id = raw ? Number(raw) : chat.length - 1;
+        if (!Number.isInteger(id) || !chat[id]) { toast('없는 메시지 번호예요', 'warning'); return ''; }
+        Promise.resolve(player.reanalyze(id)).catch(() => { /* 재생기가 알림 */ });
+        return '';
+    },
+};
+/** 1.0.0 극한 최적화: 껍데기가 먼저 등록한 슬래시 명령이 본체를 받은 뒤 같은 콜백으로 넘겨요 */
+export function runCommand(name, args, value) { const fn = commandCallbacks[name]; return fn ? fn(args || {}, value) : ''; }
 function addSlashCommands() {
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'lv',
-        callback: (args, value) => {
-            const text = String(value ?? '').trim();
-            if (!text) return '';
-            const uid = resolveVoiceUid(args.voice);
-            if (uid === null) { toast(`목소리를 못 찾았어요: ${args.voice}`, 'warning'); return ''; }
-            // 다 읽을 때까지 기다리지 않는다 (스크립트가 막히지 않게); 실패는 재생기가 토스트로 알림
-            Promise.resolve(player.speakText(text, uid)).catch(() => { /* 재생기가 알림 */ });
-            return '';
-        },
+        callback: commandCallbacks.lv,
         namedArgumentList: [SlashCommandNamedArgument.fromProps({ name: 'voice', description: '목소리 uid 또는 이름', typeList: [ARGUMENT_TYPE.STRING] })],
         unnamedArgumentList: [SlashCommandArgument.fromProps({ description: '읽을 글', typeList: [ARGUMENT_TYPE.STRING], isRequired: true })],
         helpString: 'TTS로 글 읽기. 예: <code>/lv voice=안내 안녕</code>',
     }));
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'lv-stop',
-        callback: () => { player.stop(); return ''; },
+        callback: commandCallbacks['lv-stop'],
         helpString: 'TTS 정지',
     }));
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'lv-read',
-        callback: (_args, value) => {
-            const raw = String(value ?? '').trim();
-            const id = raw ? Number(raw) : chat.length - 1;
-            if (!Number.isInteger(id) || !chat[id]) { toast('없는 메시지 번호예요', 'warning'); return ''; }
-            player.speakMessage(id, { force: true, noWait: true });   // 명령은 번역을 기다리지 않음
-            return '';
-        },
+        callback: commandCallbacks['lv-read'],
         unnamedArgumentList: [SlashCommandArgument.fromProps({ description: '메시지 번호 (비우면 마지막)', typeList: [ARGUMENT_TYPE.NUMBER] })],
         helpString: '메시지를 TTS로 읽기. 예: <code>/lv-read 12</code>',
     }));
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'lv-analyze',
-        callback: (_args, value) => {
-            const raw = String(value ?? '').trim();
-            const id = raw ? Number(raw) : chat.length - 1;
-            if (!Number.isInteger(id) || !chat[id]) { toast('없는 메시지 번호예요', 'warning'); return ''; }
-            Promise.resolve(player.reanalyze(id)).catch(() => { /* 재생기가 알림 */ });
-            return '';
-        },
+        callback: commandCallbacks['lv-analyze'],
         unnamedArgumentList: [SlashCommandArgument.fromProps({ description: '메시지 번호 (비우면 마지막)', typeList: [ARGUMENT_TYPE.NUMBER] })],
         helpString: '메시지의 대사를 다시 분석 (감정 · 원어 읽기). 예: <code>/lv-analyze 12</code>',
     }));
 }
 
 // ---------- 시작
-export const ready = new Promise((resolve, reject) => jQuery(() => { (async () => {
+let initializing = null;
+export function ensureReady() {
+    if (!initializing) initializing = initialize().catch(error => {
+        // 파일·HTML 오류는 전역 듣기를 붙이기 전이라 안전하게 다시 시작할 수 있어요.
+        // 이미 전역 초기화를 시작한 뒤의 예외는 실패를 보존해 이중 등록하지 않아요.
+        if (!initialized) { holder?.remove(); holder = null; root = null; initializing = null; }
+        throw error;
+    });
+    return initializing;
+}
+function initialize() { return new Promise((resolve, reject) => jQuery(() => { (async () => {
     if (hasOtherOwner()) { duplicate = true; setRuntimeEnabled(false); return; }
     globalThis[OWNER] = 'builtin';
     syncEnabled();
@@ -518,8 +559,9 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
     catch (e) { console.error('[tts] settings.html 로드 실패', e); log('err', 'settings.html 로드 실패'); }
     if (!html) throw new Error('TTS 설정 화면을 불러오지 못했어요.');
     holder = document.createElement('div'); holder.id = 'bl-tts-holder'; holder.hidden = true;
-    document.body.append(holder); holder.innerHTML = html; root = holder.querySelector('#lv_settings');
-    if (!root) throw new Error('TTS 설정 화면 형식이 달라요.');
+    holder.innerHTML = html; root = holder.querySelector('#lv_settings');
+    if (!root || !root.querySelector('.inline-drawer-content')) throw new Error('TTS 설정 화면 형식이 달라요.');
+    document.body.append(holder);
     root.querySelector('.lv-version')?.addEventListener('click', event => {
         event.preventDefault(); event.stopPropagation();
         import('./guide.js').then(module => module.showTtsGuide()).catch(error => console.error('[TTS] 사용법 열기 실패', error));
@@ -545,13 +587,14 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
     // 메시지 버튼
     $(document).on('click', '#chat .mes .lv_play', function () { onPlayClick(this); });
     $(document).on('keydown', '#chat .mes .lv_play', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPlayClick(this); } });
-    const openScript = el => { if (!runtimeEnabled()) return; const id = Number(el.closest('.mes')?.getAttribute('mesid')); if (!chat[id]) return; import('./src/script-editor.js').then(m => m.openScriptEditor(id)).catch(e => toast(e?.message || '소리 대본을 열지 못했어요', 'error')); };
     $(document).on('click', '#chat .mes .lv_script', function (e) { e.stopPropagation(); openScript(this); });
     $(document).on('keydown', '#chat .mes .lv_script', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); openScript(this); } });
     const chatEl = document.getElementById('chat');
     if (chatEl) new MutationObserver(addButtonsFor).observe(chatEl, { childList: true });
     addButtons();
 
+    // 껍데기가 있으면 사건 전달은 그 한 곳에서만 맡아요. 본체 로딩 중 두 벌이 겹쳐 재생하지 않아요.
+    if (!globalThis[SHELL]?.managesEvents) {
     // 이벤트
     eventSource.makeLast(event_types.CHARACTER_MESSAGE_RENDERED, (id, type) => onRendered(Number(id), false, type));
     eventSource.makeLast(event_types.USER_MESSAGE_RENDERED, (id) => onRendered(Number(id), true, ''));
@@ -570,8 +613,9 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
     eventSource.on(event_types.MESSAGE_EDITED, onMessageChanged);
     eventSource.on(event_types.MESSAGE_SWIPED, onMessageChanged);
     eventSource.on(event_types.MESSAGE_UPDATED, onMessageChanged);
+    }
 
-    addSlashCommands();
+    if (!globalThis[SHELL]?.commands) addSlashCommands();   // 1.0.0 극한 최적화: 껍데기가 이미 등록했으면(runCommand 로 넘어와요) 두 번 걸지 않아요
 
     // 다른 스크립트용
     window.LemonVoice = Object.freeze({
@@ -579,7 +623,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
         speakText: (text, voice) => player.speakText(String(text ?? ''), resolveVoiceUid(voice) || ''),
         // 1.5.5 다른 확장의 글을 채팅 메시지와 똑같은 길로 (분석 · 효과음 · 듣는 언어까지 TTS 설정 그대로) — { text, name?, isUser?, only?: { text, index } } 또는 글 하나
         readText: (opts) => player.speakExternal(opts && typeof opts === 'object' ? opts : { text: opts }),
-        stop: () => player.stop(),
+        stop: () => { globalThis[SHELL]?.cancelPendingPlayback?.(); player.stop(); },
         // 6.1.8 다른 확장용: 화자의 목소리 · 소리만 받기(재생 없음, ArrayBuffer) · 목소리 목록. 실패는 Error.code (disabled · no-voice · engine · aborted)
         voiceOf: (opts) => player.voiceOfName(opts && typeof opts === 'object' ? opts : { name: opts }),
         synth: (opts) => player.synthForExternal(opts && typeof opts === 'object' ? opts : { text: opts }),
@@ -591,4 +635,5 @@ export const ready = new Promise((resolve, reject) => jQuery(() => { (async () =
     // 7.0.2 발음 사전 · 음소거 낱말을 다른 기기의 옛 설정 저장에 잃지 않게 — 칸마다 고친 시각(field_stamps)이 늦은 쪽 (../list-sync.js)
     try { registerAddonMerge('tts', { module: 'lemon_voice', store: () => extension_settings.lemon_voice, text: SYNC_TEXT_FIELDS, stampKey: 'field_stamps', save: saveSettingsDebounced, onChange: () => { invalidatePeople(); try { ui.refreshChat?.(); } catch { /* 설정 화면 없음 */ } } }); }
     catch (e) { log('err', `기기 간 합치기 실패: ${String(e?.message || e).slice(0, 40)}`); }
-})().then(resolve, reject); }));
+})().then(resolve, reject); })); }
+export const ready = ensureReady();

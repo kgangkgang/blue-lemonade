@@ -6,12 +6,13 @@
 // 이 파일은 그 값들을 지금 팔레트에 맞춰 한 번에 맞춰 주고, 같은 값을 실리태번 테마로도 저장한다.
 //
 // 5.5.6: 맞춘 값은 실리태번 자체 설정이라 테마를 끄거나 '확장만' 으로 바꿔도 남는다 — 테마가 덮고 있을 땐 안 보이다가
-// 테마가 빠지는 순간 채팅 바탕 투명 · 테두리/그림자 없음 · 팔레트 글자색이 그대로 드러났다 (제보: "확장만인데 창이 전부 투명").
+// 테마가 빠지는 순간 채팅 바탕 투명 · 테두리/그림자 없음 · 팔레트 글자색이 그대로 드러났다 (확장만 쓸 때 창이 전부 투명하던 것).
 // 그래서 맞추기 전 값을 따로 적어 두고(백업), 되돌리기로 그 값을 실리태번의 제 핸들러를 거쳐 다시 입힌다.
 import { power_user, applyPowerUserSettings } from '../../../../power-user.js';
 import { saveSettingsDebounced, saveSettings as saveSillyTavernSettings } from '../../../../../script.js';
 import { getRequestHeaders } from '../../../../../script.js';
 import { paletteColors, parseColor } from './palettes.js';
+import './palette-data.js';   // 1.0.0 팔레트 11벌 · 커스텀 색 정의 (시작 그래프 밖 — 이 모듈은 지연으로 받아요)
 import { getSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
 
@@ -211,13 +212,6 @@ export async function applyStockTheme(name) {
     return changed.length;
 }
 
-/** 확인 없이 그대로 두기로 했을 때 — 시작 알림을 다시 띄우지 않는다 */
-export function dismissRestoreNotice() {
-    const st = store();
-    if (st.noticeSeen) return;
-    st.noticeSeen = true;
-    saveSettingsDebounced();
-}
 
 /**
  * 되돌릴지 묻는 창. 돌려주는 값: 'restored' | 'kept' | 'none'(되돌릴 것 없음)
@@ -260,18 +254,6 @@ export async function offerRestore() {
     return 'restored';
 }
 
-/** 시작할 때 한 번: 테마가 꺼져 있는데(확장만 · 테마 끔) 맞춘 값이 남아 있으면 알린다. 누르면 되돌리기 창 */
-let noticed = false;
-export function noticeRestoreIfNeeded() {
-    if (noticed || themeEnabled(getSettings()) || store().noticeSeen || !restoreState()) return false;
-    noticed = true;
-    toastr.info('테마를 껐는데 실리태번에 ‘맞추기’ 값이 남아 있어요. 여기를 누르면 원래 모습으로 되돌려요.', 'Blue Lemonade', {
-        timeOut: 0, extendedTimeOut: 0, closeButton: true,
-        onclick: () => { offerRestore().then(result => { if (result === 'restored') toastr.success('실리태번 모습을 되돌렸어요', 'Blue Lemonade'); }).catch(error => toastr.error(error.message || String(error), 'Blue Lemonade')); },
-        onCloseClick: dismissRestoreNotice, // × 로 닫으면 다시 알리지 않는다 (설정 › 테마 › 백업의 되돌리기는 남는다)
-    });
-    return true;
-}
 
 /** 지금 팔레트로 실리태번 설정을 맞춘다. 바꾼 항목 수를 돌려준다 */
 export function applySillyTavernTheme() {

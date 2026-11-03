@@ -7,7 +7,7 @@ const prompts = [
     P('「 Momentum Engine 」', 'me', 'Output @Momentum Engine block'), P('! Momentum Engine Router !', 'router'),
     P('| Status |', 'status', '@Status'), P('「 Choices List 」', 'cyoa', 'Print @CYOA'), P('「 Conflict 」', 'conflict'),
     P('! Scene Plan !', 'plan', 'mentions @Status @Conflict @CYOA @Momentum Engine too'), P('| Dialogue Color |', 'dc'), P('| Dialogue Color (custom) |', 'dc2'),
-    P('「 Time Window 」', 'tw'), P('「 Exact Time 」', 'et'), P('「 Visible 」', 'vis'), P('「 Hidden 」', 'hid'), P('! Thinking ! (FALLBACK)', 'think'),
+    P('「 Time Window 」', 'tw'), P('「 Exact Time 」', 'et'), P('「 Visible 」', 'vis'), P('「 Hidden 」', 'hid'), P('| Hidden Truths |', 'ht'), P('! Thinking ! (FALLBACK)', 'think'),
     P('| Response Directives ⚠️ |', 'rd', '@Status @Conflict @CYOA @Momentum Engine @Plotlines'),
     { name: 'marker', identifier: 'main', marker: true },
 ];
@@ -41,11 +41,13 @@ ok('주인 찾기: 이름 → 별칭 → 내용(6개 이하일 때만)', () => {
     assert.deepEqual(o.get('status'), ['status']);
     assert.deepEqual(o.get('cyoa'), ['cyoa'], '별칭 Choices List');
     assert.deepEqual(o.get('tracker'), ['tw', 'et']);
-    assert.deepEqual(o.get('true thoughts'), ['vis', 'hid']);
+    assert.deepEqual(o.get('true thoughts'), ['vis', 'hid'], '별칭 hidden 은 이름이 똑같은 「 Hidden 」만(| Hidden Truths | 는 아님)');
     assert.deepEqual(o.get('thinking'), ['think']);
     assert.deepEqual(o.get('dialogue color'), ['dc', 'dc2'], '이름에 든 것은 둘 다');
     assert.deepEqual(o.get('plotlines'), ['rd'], '이름 없음 → 내용에 @Plotlines 가 든 프롬프트');
     assert.deepEqual(o.get('story threads'), [], '아무 데도 없음');
+    assert.deepEqual(ownersFor(['hidden truths'], prompts).get('hidden truths'), ['ht'], '제 이름의 모듈은 그대로');
+    assert.deepEqual(ownersFor(['true thoughts'], prompts.filter(p => p.identifier !== 'vis' && p.identifier !== 'hid')).get('true thoughts'), ['ht'], '똑같은 이름이 없을 때만 낱말 포함으로 물러나요');
 });
 const run = (enabledIds, extra = {}) => Object.fromEntries(plan({ scripts, prompts, enabled: new Set(enabledIds), ...extra }).map(r => [r.id, r.want]));
 ok('켜진 프롬프트의 정규식만 켜고, 꺼진 모듈은 끈다', () => {
@@ -80,6 +82,16 @@ ok('최근 메시지에 모듈이 남아 있으면 켜 둔다', () => {
     assert.equal(textHasModule('! Scene Plan !', ['scene plan']), true);
     assert.equal(textHasModule('<thinking>', ['thinking']), true);
     assert.equal(textHasModule('a conflict of interest', ['conflict']), false, '@ 없는 보통 낱말은 아님');
+});
+ok('1.1.2 직접 바꿈: 사용자가 정규식 화면에서 바꾼 것은 프롬프트 · 모듈 지정과 상관없이 손대지 않는다 (태그 있는 것만)', () => {
+    const manual = new Set(['r1', 'r4', 'r13']);
+    const rows = plan({ scripts, prompts, enabled: new Set(), manual, overrides: { status: 'on' } });
+    const row = id => rows.find(r => r.id === id);
+    assert.equal(row('r1').want, null, '주인(Momentum Engine) 꺼짐이어도 끄지 않는다'); assert.equal(row('r1').reason, '직접 바꿈'); assert.equal(row('r1').manual, true);
+    assert.deepEqual(row('r1').keys, ['momentum engine']); assert.ok(row('r1').owners.includes('me'), '패널에서 모듈 칸에 묶이게 주인은 적는다');
+    assert.equal(row('r4').want, null, '늘 켜기 지정보다 직접 바꿈이 먼저');
+    assert.equal(row('r13').reason, '모듈 태그 없음', '태그 없는 정규식은 원래대로 「태그 없음」');
+    assert.equal(row('r2').want, false, '나머지는 그대로 연동');
 });
 ok('키 정규화', () => {
     assert.equal(keyOf('@Status UI - Collapsed'), 'status collapsed');

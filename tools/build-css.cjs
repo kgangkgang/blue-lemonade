@@ -10,6 +10,7 @@
      node tools/build-css.cjs            css/ → style.css
      node tools/build-css.cjs --check    다시 만들면 style.css 와 같은가만 본다 (다르면 종료 코드 1)
      node tools/build-css.cjs --force    style.css 를 손으로 고친 흔적이 있어도 덮어쓴다 (그 고친 것은 사라진다)
+     node tools/build-css.cjs --one      한 장 빌드(1.0.0 부터 기본은 두 장: 첫 화면에 안 쓰는 모듈(SPLIT_LAZY)을 src/style-lazy.gen.css 둘째 장으로 — src/lite.js 가 쉴 때 · 서랍을 누를 때 붙인다)
 
    지키는 것
    · style.css 를 직접 고치면 다음 빌드가 그걸 지운다 → 머리 주석의 해시로 알아채고 멈춘다.
@@ -30,12 +31,25 @@ const OUT = path.join(ROOT, 'style.css');
 // 예전에는 1.8KB 를 얻으려고 style.css 842KB 를 다시 받아 통째로 문자열로 풀었다.
 // src/ 아래여야 한다 — release_gate 의 inventory 는 최상위 4개 + src/**.{js,css} 만 담는다.
 const LAZY_OUT = path.join(ROOT, 'src', 'lazy-panel.gen.css');
-// 10-28 미리보기 전용 덩어리(`@media not all`)를 한 벌 더 — src/lite.js 가 시작할 때 이것을 꺼 둔 작은 <style> 로 붙여 두고 설정 창을 열 때 그 <style> 만 켠다.
-// style.css 안의 덩어리 수백 개를 켜면 1.7MB 시트 전체가 바뀐 것으로 쳐져 문서 전체를 다시 계산했다(긴 채팅 · 폰 4배에서 설정 창 처음 열기 약 6초).
-const PREVIEW_OUT = path.join(ROOT, 'src', 'preview-park.gen.css');
-// 8.2.1 「확장만」 · 테마 끔에서 큰 style.css 대신 켜는 가벼운 사본(src/theme-sheet.js) — extText() 참고
+// 9.0.1 설정 창 미리보기 전용 규칙은 style.css 에 넣지 않고 이 파일로만 — src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다(안 열면 0KB).
+// (10-28 까지는 style.css 안에 `@media not all` 로 꺼 둔 채 싣고 같은 덩어리를 src/preview-park.gen.css 로 한 벌 더 썼다.)
+const PREVIEW_OUT = path.join(ROOT, 'src', 'preview.gen.css');
+// 8.2.1 「확장만」 · 테마 끔에서 큰 style.css 대신 켜는 가벼운 사본(src/theme-sheet.js) — extText() 참고 (1.0.0 사용 모드와 함께 되살림)
 const EXT_OUT = path.join(ROOT, 'style-ext.css');
 const LAZY = '99-lazy-panel.css';
+// 9.0.1 --split 두 번째 장(쉴 때 받는 시트) — 기본 빌드는 한 장 그대로이고, 4단계(9.0.3)에서 사진 비교와 함께 켠다. 고른 기준: 채팅 · 입력판 · 서랍 겉 · 메뉴가 아닌 설정 창 · 애드온 창 · 편집 화면.
+// 9.0.2 부팅 3층(src/boot-layers.js · index.js IDLE_LAYER)과 맞춰 더해요: 그 화면을 그리는 JS 가 3층(유휴 · 처음 쓸 때)에 붙는 모듈의 CSS — 프롬프트 목록 줄(22) · 채팅 지도(60) ·
+//   프롬프트 귀속 줄(63, 프롬프트 편집 시트) · 확장 위 스위치(64, 확장 서랍 머리) · 판 알약(75, 서랍 · 애드온 창 머리) · 도움말 ? 단추(76) · 탭 줄(98, 애드온 창) · 프롬프트 템플릿 블록(82) ·
+//   설정 창 조각(49 단추 아이콘 · 51 애드온 켜기 · 53 스크립트 · 67 마크다운 · 78 카드 고르기 · 79 상태창 글자 · 81 장면 소리) · 여러 장 프로필 창(71).
+//   채팅 위에 그려지는 것(69 웹 검색 지구 · 70 다른 기기 띠)과 2층에서 열리는 고르기 팝업(72) · 왼쪽 서랍 프롬프트 관리자(14 · 59)는 첫 장에 남겨요(덮개가 걷히자마자 쓸 수 있어서).
+// 주의: 이 모듈의 규칙이 style.css 뒤로 옮겨 가므로, 같은 특이도로 같은 요소를 겨루는 앞 모듈 규칙과의 차례가 바뀔 수 있다 — 켜기 전에 사진 비교로 확인한다.
+// 1.0.0 극한 최적화: 서랍 모듈(14 프롬프트 관리자 · 15 그 밖 서랍 · 59 프롬프트 편집)도 둘째 장으로 — 상단 서랍 아이콘을 누르는 순간(pointerdown · click 캡처) 둘째 장을 붙여요(index.js)
+// 1.0.0 커버리지(cand PC · 부팅 때 쓴 규칙 0)로 더: 52 도구 창 · 51 연동 · 80 첫 실행 · 83 테마 끔 · 84 단추 묶음 · 18 밀도(70 동기화 띠는 채팅 위 띠라 첫 장에) · 24 미리보기 틀 · 66 리듬 (26-rounds 는 99-lazy-panel 과 같은 선택자 !important 충돌이라 첫 장에 남김)
+const SPLIT_LAZY = new Set(['12-worldinfo.css', '13-characters.css', '14-prompt.css', '15-drawers.css', '59-prompt-ux.css', '52-tool-editor.css', '51-integrations.css', '80-first-run.css', '83-theme-off.css', '84-button-groups.css', '18-density.css', '24-previewbox.css', '66-ui-rhythm.css', '20-panel.css', '21-witidy.css', '22-promptlist.css', '31-styles-panel.css', '33-panel-columns.css', '34-color-pick.css', '44-settings-search.css', '45-preview-view.css', '46-settings-window.css', '47-settings-editor.css', '48-settings-favorites.css', '50-settings-screens.css', '49-role-icons.css', '51-integrations.css', '52-tool-editor.css', '53-script-tools.css', '58-quick-reply-editor.css', '60-chat-graph.css', '63-promptbind.css', '64-headswitch.css', '67-markdown-controls.css', '71-multi-avatar.css', '75-version-pill.css', '76-help-button.css', '78-prompt-card-picker.css', '79-fruit-type.css', '81-scene-sound.css', '82-prompt-template.css', '85-addon-unify.css', '87-addon-touch.css', '96-param-stack.css', '97-param-inline.css', '98-tab-strips.css']);
+const SPLIT_OUT = path.join(ROOT, 'src', 'style-lazy.gen.css');
+// 1.0.0 크로미움 밖 · 다른 폭 규칙은 첫 시트에 싣지 않고 따로 — 조건이 맞을 때만 src/lite.js loadCompatCss 가 붙인다 (tools/css-compat.cjs)
+const COMPAT_BROWSER_OUT = path.join(ROOT, 'src', 'compat-browser.gen.css');
+const COMPAT_WIDTH_OUT = path.join(ROOT, 'src', 'compat-width.gen.css');
 const LAZY_SENTINEL = '#salty-lazy-panel-start';
 const HASH_SLOT = '@@HASH@@';
 
@@ -124,7 +138,7 @@ const CHAT_ALIAS = ':is(#chat,.bl-chat-like)';
 const NOT_CHAT = '\u0000NOTCHAT\u0000';
 function aliasChat(text) { return text.replace(/:not\(#chat\)/g, NOT_CHAT).replace(/#chat(?![\w-])/g, CHAT_ALIAS).split(NOT_CHAT).join(':where(:not(.bl-chat-like)):not(#chat)'); }
 
-function build(dir = CSS_DIR, { bucket = true, key = true } = {}) {
+function build(dir = CSS_DIR, { bucket = true, key = true, split = true } = {}) {   // 1.0.0: 두 장이 기본(--one 이면 split:false)
     const names = modules(dir);
     const raw = [];
     const parts = [];
@@ -148,24 +162,69 @@ function build(dir = CSS_DIR, { bucket = true, key = true } = {}) {
         parts.push(`/* css/${name} */\n${s.text}\n`);
         const guarded = require('./extension-color-guard.cjs').guard(s.text, { moduleName: name });
         for (const key of Object.keys(extensionColors)) extensionColors[key] += guarded.stats[key];
-        guardedParts.push(`/* css/${name} */\n${guarded.text}\n`);
+        guardedParts.push({ name, text: `/* css/${name} */\n${guarded.text}\n` });
     }
     const stripped = parts.join('');
     const bad = sameStructure(raw.join('\n'), stripped);
     if (bad) throw new Error(`주석을 뺀 결과가 원본과 구조가 다름 — ${bad}`);
-    // 3.6.0: 맨 오른쪽 칸이 여러 갈래 :is( … ) 인 선택자를 펼쳐 크롬 규칙 묶음에 넣는다 (tools/css-bucket.cjs — 스스로 뜻 · 특이도를 확인)
-    const paintGuarded = guardedParts.join('');
-    const expanded = bucket ? require('./css-bucket.cjs').bucketize(paintGuarded).text : paintGuarded;
-    // 4.8.4: 미리보기 전용 규칙은 `@media not all { }` 로 감싸 꺼 둔 채 싣는다 (tools/css-park.cjs — src/lite.js 가 설정창을 열 때 켠다)
-    const parked = require('./css-park.cjs').park(expanded);
-    // 8.0.8: 맨 오른쪽 칸에 이름이 드러나지 않은 갈래(`:is(#chat,.bl-chat-like)` 여러 갈래 · `:is(.a .b)` 한 갈래 결합자 등)에 `:where(키)` 를 달아
-    // 크롬 규칙 바구니에 넣는다 (tools/css-key.cjs — 특이도 · 뜻 · 규칙 순서 · 선언이 같은지 스스로 확인). #chat 바꿔 쓰기 뒤에 — 그 바꿔 쓰기가 전체 바구니 갈래를 만들므로
-    const keyed = key ? require('./css-key.cjs').keyize(aliasChat(parked.text)) : { text: aliasChat(parked.text), stats: null };
-    const body = keyed.text;
-    const head = `/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 ${names.length}개를 이어 붙여 만든 파일(설명 주석은 css/ 에만). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ${HASH_SLOT}) */\n`;
+    // 9.0.1 --split: 첫 화면에 안 쓰는 모듈(SPLIT_LAZY — 설정 창 · 애드온 창 · 월드인포 · 캐릭터 편집 …)은 두 번째 장(src/style-lazy.gen.css)으로
+    const isLazy = n => split && SPLIT_LAZY.has(n);
+    const pipe = (guardedText) => {
+        // 3.6.0: 맨 오른쪽 칸이 여러 갈래 :is( … ) 인 선택자를 펼쳐 크롬 규칙 묶음에 넣는다 (tools/css-bucket.cjs — 스스로 뜻 · 특이도를 확인)
+        const expanded = bucket ? require('./css-bucket.cjs').bucketize(guardedText).text : guardedText;
+        // 9.0.1: 미리보기 전용 규칙은 통째로 떼어 src/preview.gen.css 로 (tools/css-park.cjs — src/lite.js 가 설정 창을 처음 열 때 받는다)
+        const previewParked = require('./css-park.cjs').extract(expanded);
+        // 1.0.0: 크로미움 최신 · 폰 384 · PC 1280 에서 절대 안 맞는 규칙(되살린 브라우저 대체 · 다른 폭)은 따로 받는 시트 둘로 (tools/css-compat.cjs)
+        const compat = require('./css-compat.cjs').extract(previewParked.text);
+        const parked = { ...previewParked, text: compat.text };
+        // 8.0.8: 맨 오른쪽 칸에 이름이 드러나지 않은 갈래(`:is(#chat,.bl-chat-like)` 여러 갈래 · `:is(.a .b)` 한 갈래 결합자 등)에 `:where(키)` 를 달아
+        // 크롬 규칙 바구니에 넣는다 (tools/css-key.cjs — 특이도 · 뜻 · 규칙 순서 · 선언이 같은지 스스로 확인). #chat 바꿔 쓰기 뒤에 — 그 바꿔 쓰기가 전체 바구니 갈래를 만들므로
+        const keyed = key ? require('./css-key.cjs').keyize(aliasChat(parked.text)) : { text: aliasChat(parked.text), stats: null };
+        const previewKeyed = key ? require('./css-key.cjs').keyize(aliasChat(parked.preview)) : { text: aliasChat(parked.preview), stats: null };
+        const compatKey = t => (key ? require('./css-key.cjs').keyize(aliasChat(t)).text : aliasChat(t));
+        // 1.0.0: :has() 앞 지킴(tools/css-has-guard.cjs) — 앞 칸이 안 맞는 요소는 :has() 를 견주지 않아요
+        keyed.text = require('./css-has-guard.cjs').guardHas(keyed.text).text;
+        return { parked, keyed, previewText: previewKeyed.text, compat: { ...compat, browser: compat.browser && compatKey(compat.browser), width: compat.width && compatKey(compat.width) } };
+    };
+    // 1.0.0: 둘째 장 모듈에 든 문서 뿌리 변수 규칙(body.salty · :root · html 에 --변수만)은 첫 장에도 같은 자리(모듈 차례)에 둬요 —
+    //   빼 두면 서랍을 열기 전까지 폰의 --bl-gutter · --bl-inset 같은 값이 전체 시트와 달랐어요(21-witidy 의 폰 여백 · 사진 비교 「새 판 확인 창」 1px)
+    const core = pipe(guardedParts.map(x => (isLazy(x.name) ? rootVarRules(x.text) : x.text)).join(''));
+    const lazyNames = names.filter(isLazy);
+    const rest = lazyNames.length ? pipe(guardedParts.filter(x => isLazy(x.name)).map(x => x.text).join('')) : null;
+    // 1.0.0 두 장 빌드: 미리보기 시트 · 호환 시트는 한 장일 때와 똑같은 차례여야 해요(모듈을 둘로 나눠 돌리면 둘째 장 모듈의 미리보기 규칙이 뒤로 몰려요) — 전체를 한 번 더 돌려 그쪽에서 가져와요
+    const whole = rest ? pipe(guardedParts.map(x => x.text).join('')) : core;
+    const parked = whole.parked;
+    const keyed = core.keyed;
+    // 나눈 빌드 표시: 맨 앞 변수 하나 — src/lite.js loadSplitCss 가 쉴 때 이 값을 보고 두 번째 장을 붙인다
+    // 떼어 낸 크로미움 밖 · 다른 폭 규칙(전체 차례 그대로)
+    const compat = { browser: whole.compat.browser, width: whole.compat.width, rules: { browser: whole.compat.rules.browser, width: whole.compat.rules.width },
+        supports: [...new Set(whole.compat.supports)].sort(), media: [...new Set(whole.compat.media)].sort() };   // 정렬 — 한 장 · 두 장 빌드가 같은 표식을 쓰게
+    for (const v of [...compat.supports, ...compat.media]) if (/["\\|]/.test(v)) throw new Error(`떼어 낸 조건에 따옴표 · 역사선 · | 가 있어 표식에 못 적음: ${v}`);
+    // 맨 앞 :root 표식 — src/lite.js 가 테마 시트의 첫 규칙에서 읽는다: --bl-css-split(나눈 빌드면 쉴 때 두 번째 장) ·
+    //   --bl-compat-supports(이 중 하나라도 CSS.supports 가 참이면 브라우저 시트) · --bl-compat-media(이 중 하나라도 맞으면 폭 시트, | 로 나누고 & 는 그리고)
+    const marks = [rest ? '--bl-css-split:1' : '', compat.supports.length ? `--bl-compat-supports:"${compat.supports.join('|')}"` : '', compat.media.length ? `--bl-compat-media:"${compat.media.join('|')}"` : ''].filter(Boolean);
+    // 1.0.0 극한 최적화: 두 장 빌드면 첫 장에서 닫힌 서랍 · 테마 창 안에서만 맞는 규칙을 빼요(tools/css-scope-defer.cjs) — 전체 시트(둘째 장)는 그대로
+    //   99 꼬리(#salty-lazy-panel-start 뒤 · src/lite.js 가 따로 떼어 켜고 끄는 서랍 전용 칸)는 그대로 둬요
+    const scoped = (() => {
+        if (!rest) return { text: keyed.text, stats: null };
+        const at = keyed.text.lastIndexOf(`${LAZY_SENTINEL} {}`);
+        const head = at >= 0 ? keyed.text.slice(0, at) : keyed.text, tail = at >= 0 ? keyed.text.slice(at) : '';
+        const out = require('./css-scope-defer.cjs').deferScoped(head, require('./css-scope-defer.cjs').scopeTokens(ROOT));
+        return { text: out.text + tail, stats: out.stats };
+    })();
+    const body = (marks.length ? `:root{${marks.join(';')}}\n` : '') + scoped.text;
+    const head = `/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 ${names.length - lazyNames.length}개를 이어 붙여 만든 파일(설명 주석은 css/ 에만${rest ? ` · --split: 나머지 ${lazyNames.length}개는 src/style-lazy.gen.css` : ''}). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ${HASH_SLOT}) */\n`;
     const draft = head + body;
     const digest = hashOf(draft);
-    return { text: draft.replace(HASH_SLOT, digest), names, digest, kept, parked, extensionColors, keyed: keyed.stats };
+    const preview = `/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 ${parked.rules}개(덩어리 ${parked.blocks}개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build ${digest}) */\n${whole.previewText}\n`;
+    // 둘째 파일은 빠진 모듈만 뒤에 덧붙이지 않고 원래 모듈 순서 전체를 담아요.
+    // 처음 사용할 때 lite.js가 원문에서99꼬리를 나눈 뒤 이 전체 시트로 첫 시트를 교체해요.
+    const lazyText = rest ? `/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build ${digest}) */\n${marks.length ? `:root{${marks.join(';')}}\n` : ''}${whole.keyed.text.replace(/^[ \t]+$/gm, '')}` : null;
+    if (lazyText) assertInlineSafe(lazyText);
+    const compatHead = (file, what) => `/* ${file} — tools/build-css.cjs 가 css/ 에서 ${what}만 떼어 적은 것(고치지 말 것 · tools/css-compat.cjs). src/lite.js loadCompatCss 가 조건이 맞을 때만 테마 시트 뒤에 붙인다 (build ${digest}) */\n`;
+    const compatBrowser = compatHead('src/compat-browser.gen.css', `크로미움 밖 브라우저 · 강제 색 · 옛 크로미움용 규칙 ${compat.rules.browser}개`) + (compat.browser ? `${compat.browser}\n` : '');
+    const compatWidth = compatHead('src/compat-width.gen.css', `폰 384 · PC 1280 밖 화면 폭 규칙 ${compat.rules.width}개`) + (compat.width ? `${compat.width}\n` : '');
+    return { text: draft.replace(HASH_SLOT, digest), preview, lazyText, compatBrowser, compatWidth, compat, names, digest, kept, parked, extensionColors, keyed: keyed.stats, scoped: scoped.stats };
 }
 function hashOf(textWithSlot) {
     return crypto.createHash('sha1').update(textWithSlot, 'utf8').digest('hex').slice(0, 12);
@@ -177,6 +236,43 @@ function untouched(text) {
     return hashOf(text.replace(`(build ${m[1]})`, `(build ${HASH_SLOT})`)) === m[1];
 }
 
+// 1.0.0 극한 최적화: 채팅 모양 시트(src/chat-appearance.css · 손으로 고치는 원본)는 브라우저에 주석 없이 · 바구니 열쇠 · :has 지킴을 단 사본(.gen.css)으로 줘요(dist 가 이 사본을 가리켜요)
+const APPEARANCE_IN = path.join(ROOT, 'src', 'chat-appearance.css');
+const APPEARANCE_OUT = path.join(ROOT, 'src', 'chat-appearance.gen.css');
+function appearanceText() {
+    const raw = fs.readFileSync(APPEARANCE_IN, 'utf8').replace(/\r\n/g, '\n');
+    const plain = stripCss(raw).text.replace(/\n[ \t]+/g, '\n').replace(/\n{2,}/g, '\n');
+    const expanded = require('./css-bucket.cjs').bucketize(plain).text;
+    const keyed = require('./css-key.cjs').keyize(expanded).text;
+    return `/* 생성 파일 — tools/build-css.cjs (원본 src/chat-appearance.css) */\n${require('./css-has-guard.cjs').guardHas(keyed).text}`;
+}
+
+/** 문서 뿌리(body.salty · body · :root · html …)에 사용자 정의 속성(--x)만 적은 규칙과 그 @media/@supports 겉만 남겨요 */
+function rootVarRules(text) {
+    const ROOT = /^(?:html|:root|body)(?:[.#][\w-]+|:not\([^()]*\)|\[[^\]]*\])*$/;
+    const walk = src => {
+        let out = '', i = 0;
+        while (i < src.length) {
+            const open = src.indexOf('{', i); if (open < 0) break;
+            let depth = 1, k = open + 1, quote = null;
+            while (k < src.length && depth) { const c = src[k]; if (quote) { if (c === quote && src[k - 1] !== '\\') quote = null; } else if (c === '"' || c === "'") quote = c; else if (c === '{') depth++; else if (c === '}') depth--; k++; }
+            const head = src.slice(i, open); const cut = Math.max(head.lastIndexOf(';'), head.lastIndexOf('}'));
+            const prelude = (cut >= 0 ? head.slice(cut + 1) : head).replace(/\/\*[\s\S]*?\*\//g, '').trim();
+            const body = src.slice(open + 1, k - 1);
+            if (/^@(media|supports)\b/.test(prelude)) { const inner = walk(body); if (inner.trim()) out += `${prelude} {\n${inner}}\n`; }
+            else if (!prelude.startsWith('@') && prelude.split(',').every(part => ROOT.test(part.trim()))) {
+                const decls = body.split(';').map(d => d.trim()).filter(Boolean);
+                if (decls.length && decls.every(d => d.startsWith('--'))) out += `${prelude} {${body}}\n`;
+            }
+            i = k;
+        }
+        return out;
+    };
+    const head = /^\/\* css\/[\w.-]+ \*\/\n/.exec(text);
+    const rules = walk(text);
+    return rules ? `${head ? head[0] : ''}${rules}` : '';
+}
+
 function firstDiff(a, b) {
     const la = a.split('\n'), lb = b.split('\n');
     for (let i = 0; i < Math.max(la.length, lb.length); i++) if (la[i] !== lb[i]) return { line: i + 1, was: la[i], now: lb[i] };
@@ -186,16 +282,38 @@ function firstDiff(a, b) {
 function main(argv) {
     const check = argv.includes('--check');
     const force = argv.includes('--force');
-    const { text, names, parked, keyed } = build();
+    // 1.0.0: 두 장이 기본(첫 화면에 안 쓰는 모듈은 src/style-lazy.gen.css — src/lite.js 가 쉴 때 · 서랍을 누를 때 붙여요). --one 이면 예전처럼 한 장
+    const split = !argv.includes('--one');
+    // 9.0.9 애드온 CSS 한 장(src/addons/style-addons.css · tools/build-addon-css.mjs)도 같이 만들거나(--check 면 확인만) — 생성물 한 번에 다시 쓰기 · 게이트 확인이 같이 잡게
+    const addon = require('child_process').spawnSync(process.execPath, [path.join(__dirname, 'build-addon-css.mjs'), ...(check ? ['--check'] : [])], { cwd: ROOT, encoding: 'utf8' });
+    if (addon.stdout) process.stdout.write(addon.stdout);
+    if (addon.stderr) process.stderr.write(addon.stderr);
+    if (addon.status !== 0) return 1;
+    {
+        const want = appearanceText(), had = fs.existsSync(APPEARANCE_OUT) ? fs.readFileSync(APPEARANCE_OUT, 'utf8') : null;
+        if (want !== had) {
+            if (check) { console.error('[다름] src/chat-appearance.gen.css 가 원본과 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
+            fs.writeFileSync(APPEARANCE_OUT, want, 'utf8'); console.log(`[씀] src/chat-appearance.gen.css (${(Buffer.byteLength(want) / 1024).toFixed(1)}KB)`);
+        }
+    }
+    const { text, preview, lazyText, compatBrowser, compatWidth, compat, names, parked, keyed } = build(CSS_DIR, { split });
+    const readOr = file => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null);
+    const compatOk = () => readOr(COMPAT_BROWSER_OUT) === compatBrowser && readOr(COMPAT_WIDTH_OUT) === compatWidth;
+    const writeCompat = () => { fs.writeFileSync(COMPAT_BROWSER_OUT, compatBrowser, 'utf8'); fs.writeFileSync(COMPAT_WIDTH_OUT, compatWidth, 'utf8'); console.log(`[씀] src/compat-browser.gen.css ${(Buffer.byteLength(compatBrowser) / 1024).toFixed(1)}KB(규칙 ${compat.rules.browser}) · src/compat-width.gen.css ${(Buffer.byteLength(compatWidth) / 1024).toFixed(1)}KB(규칙 ${compat.rules.width})`); };
+    const splitOk = () => (fs.existsSync(SPLIT_OUT) ? fs.readFileSync(SPLIT_OUT, 'utf8') : null) === lazyText;
+    const writeSplit = () => { if (lazyText != null) { fs.writeFileSync(SPLIT_OUT, lazyText, 'utf8'); console.log(`[씀] src/style-lazy.gen.css (${(Buffer.byteLength(lazyText) / 1024).toFixed(1)}KB, --split)`); } else if (fs.existsSync(SPLIT_OUT)) { fs.unlinkSync(SPLIT_OUT); console.log('[지움] src/style-lazy.gen.css (한 장 빌드)'); } };
+    const ext = extText(text, lazyText);
+    const extOk = () => (fs.existsSync(EXT_OUT) ? fs.readFileSync(EXT_OUT, 'utf8') : null) === ext;
+    const writeExt = () => { fs.writeFileSync(EXT_OUT, ext, 'utf8'); console.log(`[씀] style-ext.css (${(Buffer.byteLength(ext) / 1024).toFixed(1)}KB)`); };
     const current = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : null;
     if (check) {
         if (current === text) {
-            // 10-28: 미리보기 덩어리 한 벌도 같은가 — 다르면 다시 만들게(게시 regen 이 이 결과로 다시 빌드해요)
-            const park = previewParkText(text);
-            const hadPark = fs.existsSync(PREVIEW_OUT) ? fs.readFileSync(PREVIEW_OUT, 'utf8') : null;
-            const hadExt = fs.existsSync(EXT_OUT) ? fs.readFileSync(EXT_OUT, 'utf8') : null;
-            if (hadExt !== extText(text)) { console.error('[다름] style-ext.css 가 style.css 와 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
-            if (hadPark !== park) { console.error('[다름] src/preview-park.gen.css 가 style.css 의 미리보기 덩어리와 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
+            // 9.0.1: 미리보기 시트도 같은가 — 다르면 다시 만들게
+            const hadPreview = fs.existsSync(PREVIEW_OUT) ? fs.readFileSync(PREVIEW_OUT, 'utf8') : null;
+            if (hadPreview !== preview) { console.error('[다름] src/preview.gen.css 가 css/ 의 미리보기 전용 규칙과 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
+            if (!compatOk()) { console.error('[다름] src/compat-browser.gen.css · src/compat-width.gen.css 가 css/ 의 크로미움 밖 · 다른 폭 규칙과 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
+            if (!splitOk()) { console.error(`[다름] src/style-lazy.gen.css 가 ${split ? '--split 빌드와 어긋났다' : '한 장 빌드인데 남아 있다'} — node tools/build-css.cjs${split ? ' --split' : ''} 로 다시 만들 것`); return 1; }
+            if (!extOk()) { console.error('[다름] style-ext.css 가 style.css 와 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
             console.log(`[같음] style.css = css/ 모듈 ${names.length}개`); return 0;
         }
         const d = current == null ? null : firstDiff(current, text);
@@ -208,12 +326,11 @@ function main(argv) {
         const tail = lazyTail(text);
         const had = fs.existsSync(LAZY_OUT) ? fs.readFileSync(LAZY_OUT, 'utf8') : null;
         if (had !== tail) { fs.writeFileSync(LAZY_OUT, tail, 'utf8'); console.log(`[씀] src/lazy-panel.gen.css (${(Buffer.byteLength(tail) / 1024).toFixed(1)}KB)`); }
-        const park = previewParkText(text);
-        const hadPark = fs.existsSync(PREVIEW_OUT) ? fs.readFileSync(PREVIEW_OUT, 'utf8') : null;
-        const ext = extText(text);
-        const hadExt = fs.existsSync(EXT_OUT) ? fs.readFileSync(EXT_OUT, 'utf8') : null;
-        if (hadExt !== ext) { fs.writeFileSync(EXT_OUT, ext, 'utf8'); console.log(`[씀] style-ext.css (${(Buffer.byteLength(ext) / 1024).toFixed(1)}KB)`); }
-        if (hadPark !== park) { fs.writeFileSync(PREVIEW_OUT, park, 'utf8'); console.log(`[씀] src/preview-park.gen.css (${(Buffer.byteLength(park) / 1024).toFixed(1)}KB)`); }
+        const hadPreview = fs.existsSync(PREVIEW_OUT) ? fs.readFileSync(PREVIEW_OUT, 'utf8') : null;
+        if (hadPreview !== preview) { fs.writeFileSync(PREVIEW_OUT, preview, 'utf8'); console.log(`[씀] src/preview.gen.css (${(Buffer.byteLength(preview) / 1024).toFixed(1)}KB)`); }
+        if (!splitOk()) writeSplit();
+        if (!compatOk()) writeCompat();
+        if (!extOk()) writeExt();
         console.log(`[그대로] style.css 가 이미 최신 (모듈 ${names.length}개)`);
         return 0;
     }
@@ -226,9 +343,11 @@ function main(argv) {
     }
     fs.writeFileSync(OUT, text, 'utf8');
     fs.writeFileSync(LAZY_OUT, lazyTail(text), 'utf8');
-    fs.writeFileSync(PREVIEW_OUT, previewParkText(text), 'utf8');
-    fs.writeFileSync(EXT_OUT, extText(text), 'utf8');
-    console.log(`[씀] style.css ← css/ 모듈 ${names.length}개 (${(Buffer.byteLength(text) / 1024).toFixed(1)}KB) · src/lazy-panel.gen.css ${(Buffer.byteLength(lazyTail(text)) / 1024).toFixed(1)}KB · 미리보기 전용 규칙 ${parked.rules}개를 not all 덩어리 ${parked.blocks}개로 꺼 둠${keyed ? ` · 바구니 열쇠 ${keyed.keyed}갈래(전체 바구니 ${keyed.universal} 중, 남음 ${keyed.universal - keyed.keyed})` : ''}`);
+    fs.writeFileSync(PREVIEW_OUT, preview, 'utf8');
+    writeSplit();
+    writeCompat();
+    writeExt();
+    console.log(`[씀] style.css ← css/ 모듈 ${names.length}개 (${(Buffer.byteLength(text) / 1024).toFixed(1)}KB) · src/lazy-panel.gen.css ${(Buffer.byteLength(lazyTail(text)) / 1024).toFixed(1)}KB · 미리보기 전용 규칙 ${parked.rules}개(덩어리 ${parked.blocks}개)를 src/preview.gen.css ${(Buffer.byteLength(preview) / 1024).toFixed(1)}KB 로 떼어 둠${keyed ? ` · 바구니 열쇠 ${keyed.keyed}갈래(전체 바구니 ${keyed.universal} 중, 남음 ${keyed.universal - keyed.keyed})` : ''}`);
     return 0;
 }
 
@@ -245,36 +364,6 @@ function lazyTail(text) {
 }
 
 /**
- * 10-28 style.css 의 미리보기 전용 `@media not all { … }` 덩어리를 차례대로 모아 한 덩어리씩 `@media all { … }` 로 싸서 이어 붙인다.
- * 덩어리가 @media · @supports 같은 묶음 안에 있으면 그 겉 조건으로 다시 싼다. src/lite.js 가 시트의 덩어리와 하나씩 견준 뒤 쓴다(안 맞으면 예전처럼 제자리에서 켬).
- */
-function previewParkText(text) {
-    const lib = require('./css-lib.cjs');
-    const PREVIEW = /#salty-nochat|\.salty-preview|\.salty-sample/;
-    const tree = lib.parse(text);
-    if (tree.problems.length) throw new Error(`미리보기 덩어리 읽기 문제: ${tree.problems.slice(0, 3).join(' / ')}`);
-    const out = [];
-    const visit = nodes => {
-        for (const n of nodes) {
-            if (n.type !== 'at' || !n.block) continue;
-            if (n.name === 'media' && /^@media\s+not\s+all$/i.test(n.prelude)) {
-                const first = (n.children || []).find(c => c.type === 'rule');
-                if (first && PREVIEW.test(first.selector)) {
-                    let block = `@media all {${text.slice(n.bodyStart, n.bodyEnd)}}`;
-                    for (const outer of [...n.ctx].reverse()) block = `${outer} {\n${block}\n}`;
-                    out.push(block);
-                }
-                continue;
-            }
-            if (n.children) visit(n.children);
-        }
-    };
-    visit(tree.children);
-    return `/* src/preview-park.gen.css — tools/build-css.cjs 가 style.css 의 미리보기 전용 덩어리 ${out.length}개를 옮겨 적은 것(고치지 말 것) */\n${out.join('\n')}\n`;
-}
-
-
-/**
  * 8.2.1 「확장만」 · 테마 끔용 가벼운 사본(style-ext.css). 확장만 모드에서는 body 에서 salty 를 떼서(src/usage-mode.js) style.css 규칙의 9할이
  * 하나도 맞지 않는데도, 브라우저는 다시 계산할 때마다 그 규칙들을 견줬다(폰 4배: 부팅 스타일 재계산 순정 0.5초 → 1.5초 · 10-29 커뮤니티 제보).
  * 그래서 테마가 꺼진 동안은 큰 시트를 끄고 이 사본을 켠다(src/theme-sheet.js). 빼는 것은 셋 — 그 모드에서 원래 하나도 맞지 않던 것만:
@@ -282,11 +371,12 @@ function previewParkText(text) {
  *   ② 미리보기 전용 덩어리(@media not all — src/lite.js 가 preview-park.gen.css 로 따로 켬)  ③ 게으른 칸 꼬리(lite.js 가 lazy-panel.gen.css 로 따로 켬)
  * 남는 규칙은 원문 그대로 · 같은 차례예요(갈래 일부만 빠진 규칙은 남은 갈래만 다시 적음).
  */
-function extText(text) {
+function extText(text, lazyText = null) {
     const lib = require('./css-lib.cjs');
-    const cut = text.lastIndexOf(`${LAZY_SENTINEL} {}`);
+    const full = lazyText || text;
+    const cut = full.lastIndexOf(`${LAZY_SENTINEL} {}`);
     if (cut < 0) throw new Error(`style.css 에 게으른 칸 표시가 없음`);
-    const body = text.slice(0, cut);
+    let body = full.slice(0, cut);
     const tree = lib.parse(body);
     if (tree.problems.length) throw new Error(`가벼운 사본 읽기 문제: ${tree.problems.slice(0, 3).join(' / ')}`);
     const splitTop = sel => { const out = []; let depth = 0, from = 0; for (let i = 0; i < sel.length; i++) { const c = sel[i]; if (c === '(' || c === '[') depth++; else if (c === ')' || c === ']') depth--; else if (c === ',' && depth === 0) { out.push(sel.slice(from, i).trim()); from = i + 1; } } out.push(sel.slice(from).trim()); return out.filter(Boolean); };
@@ -315,4 +405,15 @@ function extText(text) {
     return `/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 ${kept} · 뺀 규칙 ${dropped} (style.css ${digest}) */\n${rules.join('\n')}\n`;
 }
 
-module.exports = { build, modules, untouched, LAZY, LAZY_SENTINEL, CSS_DIR, lazyTail, LAZY_OUT, previewParkText, PREVIEW_OUT, extText, EXT_OUT };
+// 원문을 <style>로 넣는 교체 시트에는 주소 기준이 바뀌는 상대 URL과 @import가 없어야 해요.
+function assertInlineSafe(text) {
+    const lib = require('./css-lib.cjs');
+    if (/@import\b/i.test(lib.stripComments(text))) throw new Error('전체 교체 시트에 @import를 넣을 수 없어요');
+    const urls = /url\(\s*(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'|([^)]*))\s*\)/gi;
+    for (const match of text.matchAll(urls)) {
+        const url = (match[1] ?? match[2] ?? match[3]).trim();
+        if (!/^(?:[a-z][a-z\d+.-]*:|\/)/i.test(url)) throw new Error(`전체 교체 시트에 상대 URL을 넣을 수 없어요: ${url}`);
+    }
+}
+
+module.exports = { build, modules, untouched, LAZY, LAZY_SENTINEL, CSS_DIR, lazyTail, LAZY_OUT, PREVIEW_OUT, SPLIT_LAZY, SPLIT_OUT, COMPAT_BROWSER_OUT, COMPAT_WIDTH_OUT, extText, EXT_OUT, assertInlineSafe };

@@ -1,3 +1,4 @@
+import { watchDom } from './dom-watch.js';
 // 큰 프로필에서만, 화면 가까이에 온 캐릭터 사진을 원본으로 교체한다.
 // 작은 프로필·테마 끄기에서는 관찰자를 해제하고 기존 주소로 되돌린다.
 const SELECTOR = '.mes:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
@@ -60,7 +61,7 @@ function zoomIn(event) {
     window.addEventListener('click', () => { if (swapped.get(img) === previous && img.getAttribute('src') === previous.thumb) img.src = previous.full; }, { once: true });
 }
 function stop() {
-    changes?.disconnect(); visible?.disconnect(); flags?.disconnect(); changes = visible = flags = null;
+    changes?.(); visible?.disconnect(); flags?.(); changes = visible = flags = null;
     chat?.removeEventListener('load', load, true); chat?.removeEventListener('error', error, true); chat?.removeEventListener('click', zoomIn, true);
     for (const [img, previous] of swapped) if (img.src === previous.full) img.src = previous.thumb;
     swapped.clear(); failed = new WeakMap(); chat = null;
@@ -79,7 +80,7 @@ function start() {
             img.src = full;
         }
     }, { root: chat, rootMargin: '160px' });
-    changes = new MutationObserver(records => {
+    changes = watchDom(chat, { childList: true, name: '큰 프로필 메시지' }, records => {
         for (const record of records) {
             for (const node of record.addedNodes) scan(node);
             for (const node of record.removedNodes) {
@@ -93,9 +94,7 @@ function start() {
         }
     });
     // 본문 스트림은 감시하지 않고 메시지 추가·삭제만 받는다.
-    changes.observe(chat, { childList: true });
-    flags = new MutationObserver(toggle);
-    flags.observe(chat, { subtree: true, attributes: true, attributeFilter: ['is_system'] });
+    flags = watchDom(chat, { subtree: true, attributes: ['is_system'], name: '큰 프로필 숨김' }, toggle);
     chat.addEventListener('load', load, true); chat.addEventListener('error', error, true); chat.addEventListener('click', zoomIn, true);
     scan(chat);
 }

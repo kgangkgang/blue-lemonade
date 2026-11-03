@@ -19,7 +19,7 @@ const probe = { ext, placeInstructions, saves: 0, model: 'example-model', extPro
 globalThis.__directionPlaceTest = probe; globalThis.window = { matchMedia: () => ({ matches: false }) };
 const js = await read('src/addons/direction/index.js');
 const source = js.split('// ── 시작')[0].replace(/^import .*;$/gm, '');
-const prelude = 'const P=globalThis.__directionPlaceTest;const {ext:extension_settings,placeInstructions}=P;const getContext=()=>P.context;'
+const prelude = 'const addonRunning=()=>true;const P=globalThis.__directionPlaceTest;const {ext:extension_settings,placeInstructions}=P;const getContext=()=>P.context;'
     + 'const setExtensionPrompt=(...args)=>{P.extPrompts.push(args);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};'
     + 'const saveSettingsDebounced=()=>{P.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};'
     + 'const getChatCompletionModel=()=>P.model;const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};const anchorAvailable=(a,api)=>P.available(a,api);';

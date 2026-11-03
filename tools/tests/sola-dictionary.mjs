@@ -1,4 +1,4 @@
-// 솔라 프롬프트 번역 사전(src/scripts/bundled/sola.js)이 Sola V4 공개 프리셋의 프롬프트·정규식 이름을 모두 한글로 보여 주는지
+// 솔라 프롬프트 번역 사전(src/scripts/plain/sola.js)이 Sola V4 공개 프리셋의 프롬프트·정규식 이름을 모두 한글로 보여 주는지
 //   목록에 칠하는 것과 같은 lookup(src/scripts/prompt-engine.js)으로 확인해요. 고정 자료는 공개 프리셋의 이름과 id 만(본문 없음).
 //   사전은 표시용이라 저장 이름·본문을 건드리지 않아야 하고, 카탈로그 판과 사전 머리의 판이 같이 움직여야 해요.
 //   node tools/tests/sola-dictionary.mjs <테마 루트>
@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { scriptCode } from './script-code.mjs';
 
 const root = path.resolve(process.argv[2] || '.');
 const load = rel => import(pathToFileURL(path.join(root, rel)).href);
@@ -16,7 +17,7 @@ globalThis.MutationObserver = class { observe() {} disconnect() {} };
 const doc = { getElementById: () => null, body: { contains: () => false, children: [] }, querySelectorAll: () => [], addEventListener() {}, removeEventListener() {} };
 const { createPromptEngine } = await load('src/scripts/prompt-engine.js');
 const { SCRIPT_CATALOG } = await load('src/scripts/catalog.js');
-const code = (await load('src/scripts/bundled/sola.js')).default;
+const code = await scriptCode(root, 'sola');
 const plain = read('src/scripts/plain/sola.js');
 const names = JSON.parse(read('tools/tests/sola-v4-names.json'));
 const hangul = /[가-힣]/;
@@ -31,7 +32,7 @@ new Function('BlueLemonade', 'document', 'window', 'globalThis', code)(api, unde
 const engine = createPromptEngine(doc); engine.register('sola', dict);
 const item = SCRIPT_CATALOG.find(e => e.id === 'sola');
 
-await t('plain 사본이 bundled 와 같은 코드예요', () => {
+await t('모듈(plain)에서 꺼낸 코드가 함수 몸통으로 돌아요 (9.0.7 bundled 사본은 걷음)', () => {
     assert.equal(plain.split('/*BL-SCRIPT-START*/\n')[1].split('\n/*BL-SCRIPT-END*/')[0], code);
 });
 await t('사전은 translate 를 한 번만 부르고, 우선순위 20 · 부분 일치 없음이에요', () => {

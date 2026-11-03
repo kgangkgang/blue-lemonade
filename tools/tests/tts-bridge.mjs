@@ -50,6 +50,8 @@ const mod = (name) => import(pathToFileURL(path.join(root, name)).href);
 const S = await mod('settings.js');
 const P = await mod('player.js');
 const PR = await mod('providers/index.js');
+const INFO = await mod('providers/info.js');
+const VOICES = await mod('voices.js');
 const { settings } = S;
 
 let pass = 0, fail = 0;
@@ -86,6 +88,27 @@ await test('voices: the usable voice list for pickers', () => {
     const list = P.voiceListPublic();
     assert.deepEqual(list.map(v => v.uid).sort(), ['elevenlabs:el_a', 'minimax:mm_a']);
     assert.equal(list.find(v => v.uid === 'minimax:mm_a').group, '하늘');
+});
+await test('가벼운 엔진 정보는 실제 엔진의 키·계정·기본 목소리 계약과 같아요', () => {
+    assert.deepEqual([...INFO.providerIds].sort(), Object.keys(PR.PROVIDERS).sort());
+    for (const [id, provider] of Object.entries(PR.PROVIDERS)) {
+        const info = INFO.getProviderInfo(id);
+        assert.equal(info.needsKey, provider.needsKey, id);
+        assert.equal(info.accountNames, !!provider.accountNames, id);
+        assert.equal(info.caps.account, !!provider.caps?.account, id);
+        assert.deepEqual([...(info.stockIds?.() || [])].sort(), [...(provider.stockIds?.() || [])].sort(), id);
+    }
+    assert.equal(INFO.getProviderInfo('__proto__'), null);
+});
+await test('기본 목소리 목록은 요청할 때 실제 엔진에서 한 번 받고 동시에 쓰는 쪽이 공유해요', async () => {
+    reset();
+    const original = PR.PROVIDERS.minimax.listVoices;
+    let asked = 0;
+    PR.PROVIDERS.minimax.listVoices = async () => { asked++; return [{ voiceId: 'sample-stock', name: '표본 남성', gender: 'male' }]; };
+    try {
+        await Promise.all([VOICES.ensureStock('minimax'), VOICES.ensureStock('minimax')]);
+        assert.equal(asked, 1);
+    } finally { PR.PROVIDERS.minimax.listVoices = original; }
 });
 await test('synth: sound only (ArrayBuffer), pronunciation dictionary applied, nothing played, the second call is served from the cache', async () => {
     reset();

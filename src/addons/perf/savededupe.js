@@ -24,7 +24,7 @@ import { createCodeGuard, isClickTrigger, CODE_SWITCH_KEYS } from './switchcode.
 import { createEmptyGuard, createSaveFailMute, guardWanted, guardSlot, guardResponse, notifyBlocked, notifySuspect, createServerCount, bindGuardEvents, quickLiveFrom } from './emptyguard.js';
 
 const MODULE = 'save_dedupe';
-const VERSION = '1.1.7'; // 1.1.6 빈 채팅 덮어쓰기 막기 · 1.1.7 막은 뒤 실리태번의 저장 실패 알림은 숨김 (style.css 의 --sv-css-version 도 함께)
+const VERSION = '1.1.8'; // 1.1.6 빈 채팅 덮어쓰기 막기 · 1.1.7 막은 뒤 실리태번의 저장 실패 알림은 숨김 (style.css 의 --sv-css-version 도 함께)
 const TITLE = '저장 정리';
 const SAVE_PATHS = ['/api/chats/save', '/api/chats/group/save'];
 
@@ -858,7 +858,15 @@ function buildDrawer() {
     bind('#sv_defer', 'deferPromptRender');
     bind('#sv_flush', 'flushOnSwitch');
     bind('#sv_guard', 'guardGeneration');
-    bind('#sv_empty', 'emptyGuard');
+    // 빈 채팅 막기는 설정 창 줄(chat.emptyGuard)과 같은 뜻 — 어느 쪽이 꺼도 꺼진 상태로 보이고, 여기서 바꾸면 두 칸을 함께 맞춰요
+    const empty = drawer.querySelector('#sv_empty');
+    empty.checked = guardWanted(extensions.extension_settings);
+    empty.addEventListener('change', () => {
+        settings().emptyGuard = empty.checked;
+        const salty = extensions.extension_settings.salty;
+        if (salty?.chat) salty.chat.emptyGuard = empty.checked;
+        script.saveSettingsDebounced?.();
+    });
     if (!switchFlush) drawer.querySelector('#sv_flush').disabled = true;
     if (!switchGuard) drawer.querySelector('#sv_guard').disabled = true;
     refreshStats();

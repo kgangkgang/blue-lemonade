@@ -31,7 +31,7 @@ export function attachUndo(toast, onUndo, { label = '되돌리기' } = {}) {
     button.type = 'button';
     button.className = 'bl-toast-undo';
     button.setAttribute('aria-label', label);
-    // 7.0.2 사용자: 「되돌리기 단추가 너무 크고 눈에 띔」 → 테두리 없는 작은 아이콘 (누르는 자리는 28px 유지)
+    // 7.0.2 되돌리기 단추가 너무 크고 눈에 띄던 것 → 테두리 없는 작은 아이콘 (누르는 자리는 28px 유지)
     button.style.cssText = 'margin-left:4px;min-width:28px;min-height:28px;padding:2px 6px;border:0;border-radius:8px;background:none;color:inherit;opacity:.7;cursor:pointer;font-size:.9em;line-height:1;vertical-align:middle';
     button.innerHTML = '<i class="fa-solid fa-rotate-left" aria-hidden="true"></i>';
     let used = false;

@@ -205,7 +205,7 @@ test('removeGone: 계정에 없는 목소리를 지우되 캐릭터 · 기본 ·
     assert.equal('gone' in toVoice({ voiceId: 'x' }, 'minimax'), false);
 });
 
-// ---------- 1.3.8 (TTS 5.7.2 검증 · 사용자 제보 10-08) — 이 판에만 있는 함수는 없으면 건너뛴다 (공개 저장소의 1.3.7 로 돌릴 때)
+// ---------- 1.3.8 (TTS 5.7.2 검증) — 이 판에만 있는 함수는 없으면 건너뛴다 (공개 저장소의 1.3.7 로 돌릴 때)
 const has138 = typeof V.charKeyOf === 'function' && typeof V.isPinned === 'function';
 if (!has138) console.log('  (1.3.8 시험 건너뜀: 이 트리는 1.3.7)');
 if (has138) {

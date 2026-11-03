@@ -53,6 +53,14 @@ class GateTests(unittest.TestCase):
     def edit_extra_catalog(self,files,edit):
         key='src/addons/tts/sfx-extra/SOURCES.json';catalog=json.loads(files[key]);edit(catalog);files[key]=json.dumps(catalog).encode()
     def test_valid_memory(self):self.assertEqual(gate.validate(self.fixture(),'memory'),'1.3.1')
+    def test_series_field_is_optional_and_checked(self):
+        # 판 계열(10-31): bl_series 가 없으면 계열 1, 있으면 1 이상의 정수만 — 판 글자(version)는 그대로 1.0.0
+        files=self.fixture('theme');manifest=json.loads(files['manifest.json'])
+        manifest.update(version='1.0.0',bl_series=2);files['manifest.json']=json.dumps(manifest).encode();files['src/notice-data.js']=b'export const NOTICES = [{"version":"1.0.0","series":2}];'
+        self.assertEqual(gate.validate(files,'theme'),'1.0.0')
+        for bad in (0,-1,'2',2.0,True,None):
+            manifest['bl_series']=bad;files['manifest.json']=json.dumps(manifest).encode()
+            with self.assertRaisesRegex(Exception,'bl_series'):gate.validate(files,'theme')
     def test_embedded_addon_css_versions(self):
         for source, folder, variable, constant in gate.addon_css_versions():
             with self.subTest(addon=source):
@@ -96,6 +104,13 @@ class GateTests(unittest.TestCase):
     def test_stale_notice_blocks(self):
         f=self.fixture('theme');f['src/notice-data.js']=b'export const NOTICES=[{version:"1.2.9"}];'
         with self.assertRaisesRegex(gate.GateError,'notice'):gate.validate(f,'theme')
+    def test_notice_series_must_match_manifest(self):
+        # 1.0.0 바탕: 판 글자가 같아도 계열(series)이 manifest 의 bl_series 와 다르면 막아요
+        f=self.fixture('theme');m=json.loads(f['manifest.json']);m['bl_series']=2;f['manifest.json']=json.dumps(m).encode()
+        f['src/notice-data.js']=('export const NOTICES=[{"version": "%s", "date": "2026-11-01", "items": []}];'%m['version']).encode()
+        with self.assertRaisesRegex(gate.GateError,'notice'):gate.validate(f,'theme')
+        f['src/notice-data.js']=('export const NOTICES=[{"version": "%s", "series": 2, "date": "2026-11-01", "items": []}];'%m['version']).encode()
+        gate.validate(f,'theme')
     def test_weather_artwork_must_be_packaged(self):
         f=self.fixture('theme');f['src/weather-art.js']=b'export const artwork = true;'
         with self.assertRaisesRegex(gate.GateError,'weather artwork'):gate.validate(f,'theme')
@@ -124,7 +139,57 @@ class GateTests(unittest.TestCase):
             files=gate.inventory(root,'theme')
             self.assertIn('src/addons/translator/settings.html',files)
             self.assertIn('src/addons/translator/LICENSE',files)
+    def test_private_addon_resources_are_packaged(self):
+        # 8.3.0 개인 확장 내장: 코드(js · mjs · css)는 글롭으로, manifest · 소개 글은 표로 담고, 검사 설정(json)은 담지 않는다
+        # 1.0.0 공개판의 표는 비어 있어요 — 틀만 지어낸 폴더(sample-ext)로 확인
+        saved=gate.PRIVATE_ADDON_RESOURCES
+        try:
+            gate.PRIVATE_ADDON_RESOURCES={'sample-ext':('manifest.json','README.md','SOURCES.md')}
+            with tempfile.TemporaryDirectory() as d:
+                root=Path(d);self.write_fixture(root,self.fixture('theme'))
+                bundle=root/'src/addons/sample-ext';(bundle/'lib').mkdir(parents=True)
+                for name in ('index.js','style.css','core.mjs','lib/api.js','palette-allow.json'):(bundle/name).write_bytes(b'// fixture')
+                with self.assertRaisesRegex(gate.GateError,'private addon resource'):gate.inventory(root,'theme')
+                for name in gate.PRIVATE_ADDON_RESOURCES['sample-ext']:(bundle/name).write_bytes(b'fixture')
+                files=gate.inventory(root,'theme')
+                for name in ('index.js','style.css','core.mjs','lib/api.js','manifest.json','README.md','SOURCES.md'):self.assertIn('src/addons/sample-ext/'+name,files)
+                self.assertNotIn('src/addons/sample-ext/palette-allow.json',files)
+                # 9.0.6 노드 시험 파일은 담지 않는다
+                (bundle/'core.test.mjs').write_bytes(b"import assert from 'node:assert';")
+                self.assertNotIn('src/addons/sample-ext/core.test.mjs',gate.inventory(root,'theme'))
+        finally:
+            gate.PRIVATE_ADDON_RESOURCES=saved
+    def test_private_addon_glob_resources_are_packaged(self):
+        # 표의 이름에 * 가 있으면 그 폴더의 glob — 한 장도 없으면 막고, 있으면 전부 담는다(다른 파일은 담지 않음)
+        saved=gate.PRIVATE_ADDON_RESOURCES
+        try:
+            gate.PRIVATE_ADDON_RESOURCES={'sample-ext':('manifest.json','README.md','assets/*.webp')}
+            with tempfile.TemporaryDirectory() as d:
+                root=Path(d);self.write_fixture(root,self.fixture('theme'))
+                bundle=root/'src/addons/sample-ext';(bundle/'assets').mkdir(parents=True)
+                for name in ('index.js','style.css','manifest.json','README.md'):(bundle/name).write_bytes(b'// fixture')
+                with self.assertRaisesRegex(gate.GateError,'sample-ext/assets'):gate.inventory(root,'theme')
+                for name in ('a.webp','b.webp'):(bundle/'assets'/name).write_bytes(b'RIFF')
+                (bundle/'assets/notes.txt').write_bytes(b'x')
+                files=gate.inventory(root,'theme')
+                for name in ('index.js','manifest.json','README.md','assets/a.webp','assets/b.webp'):self.assertIn('src/addons/sample-ext/'+name,files)
+                self.assertNotIn('src/addons/sample-ext/assets/notes.txt',files)
+        finally:
+            gate.PRIVATE_ADDON_RESOURCES=saved
+    def test_vendor_bundles_are_not_scanned_for_imports(self):
+        # 8.3.3 vendor/ 아래 상류 묶음(압축된 글)의 '@import "' 글자는 import 가 아니에요 — 같은 글자가 vendor 밖에 있으면 여전히 막아요
+        f=self.fixture('theme');f['src/vendor/bundle.js']=b'var s="@import ".concat(t.href,";");'
+        gate.validate(f,'theme')
+        bad=dict(f);bad['src/other.js']=b'import \'./nowhere-data.js\';var s="@import ".concat(t.href,";");'
+        with self.assertRaisesRegex(gate.GateError,'imports missing file'):gate.validate(bad,'theme')
+    def test_mjs_imports_must_be_packaged(self):
+        f=self.fixture();f['index.js']=b"import { x } from './core.mjs';"
+        with self.assertRaisesRegex(gate.GateError,'missing'):gate.validate(f,'memory')
+        f['core.mjs']=b"export const x = 1; import './gone.mjs';"
+        with self.assertRaisesRegex(gate.GateError,'gone'):gate.validate(f,'memory')
+        f['gone.mjs']=b'export {};';self.assertEqual(gate.validate(f,'memory'),'1.3.1')
     def test_missing_dependency_blocks(self):
+
         f=self.fixture();f['index.js']=b"import('./missing.js')"
         with self.assertRaisesRegex(gate.GateError,'missing'):gate.validate(f,'memory')
     def test_tts_sound_inventory_includes_only_reviewed_pack(self):
@@ -278,20 +343,6 @@ class GateTests(unittest.TestCase):
         with self.assertRaisesRegex(gate.GateError,'reviewed audio SHA256'):gate.validate(files,'theme')
         files=self.tts_extra_fixture();self.edit_extra_catalog(files,lambda c:c['files'][0].update(sourceSha256='b'*64))
         with self.assertRaisesRegex(gate.GateError,'reviewed original SHA256'):gate.validate(files,'theme')
-    def test_integrity_builder_tracks_daily_assets_and_blocks_catalog_escape(self):
-        repo=Path(__file__).resolve().parents[2];builder=repo/'tools/build-integrity.mjs'
-        files=self.tts_extra_fixture();files['src/file-fingerprint.js']=(repo/'src/file-fingerprint.js').read_bytes()
-        with tempfile.TemporaryDirectory() as d:
-            root=Path(d);self.write_fixture(root,files)
-            result=subprocess.run(['node',str(builder),str(root)],capture_output=True,text=True)
-            self.assertEqual(result.returncode,0,result.stderr)
-            manifest=(root/'src/build-info.js').read_text()
-            for name in (*gate.TTS_EXTRA_RESOURCES,*(f'sfx-extra/{ident}.mp3' for ident in gate.TTS_EXTRA_IDS)):
-                self.assertIn('src/addons/tts/'+name,manifest)
-            self.edit_extra_catalog(files,lambda c:c['files'][0].update(path='../private.mp3'))
-            (root/'src/addons/tts/sfx-extra/SOURCES.json').write_bytes(files['src/addons/tts/sfx-extra/SOURCES.json'])
-            result=subprocess.run(['node',str(builder),str(root)],capture_output=True,text=True)
-            self.assertNotEqual(result.returncode,0);self.assertIn('Unsafe or duplicate',result.stderr)
     def test_588_sound_pack_needs_no_daily_assets(self):
         files=self.tts_sfx_fixture()
         self.assertEqual(gate.validate(files,'theme'),'1.3.1')

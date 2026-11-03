@@ -3,7 +3,7 @@ import {mountMenuOrdering} from './menus.js';
 // 확장 순서 — 위쪽 버튼 줄의 아이콘과, 눌렀을 때 뜨는 순서 창
 //
 // 설정 서랍을 따로 두지 않는다. 서랍을 두면 이 확장도 목록에 한 줄을 차지해서,
-// 정작 줄 세우려던 목록을 스스로 어지럽힌다. (사용자: "밑에있으니까 얘도 확장프로그램같아서 별로네")
+// 정작 줄 세우려던 목록을 스스로 어지럽힌다. (아래에 있으면 이것도 확장 하나처럼 보였다)
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { settings, saveSettings, resetSettings, VERSION, TITLE } from './state.js';
 import { scan, desired, applyNow, onPanelsChange } from './order.js';
@@ -120,7 +120,7 @@ function buildContent() {
 }
 
 export async function openDialog() {
-    const embedded=[...inlineRoots].find(root=>root.isConnected);
+    const embedded=[...inlineRoots].find(root=>root.isConnected&&(root.checkVisibility?.()??!!root.getClientRects().length));
     if(embedded){embedded.scrollIntoView({block:'nearest'});return;}
     if(dialogRoot)return;
     const content = buildContent();

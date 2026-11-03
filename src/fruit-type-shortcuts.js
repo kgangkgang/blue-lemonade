@@ -1,7 +1,9 @@
 import {fruitStructureChanged} from './fruit-type-mutations.js';
 import {FRUIT_TYPES,typeMatch} from './fruit-type-schema.js';
 import {optionFamily} from './scripts/fruit-option-help.js';
-import {openFruitTypography} from './fruit-type-ui.js';
+// 1.0.0 극한 최적화: 글꼴 설정 창(fruit-type-ui → 표본 64KB · 전체 글꼴 목록 160KB · 미리보기)은 바로가기 단추를 누를 때 받아요 — 내장 스크립트 실행기가 이 모듈을 시작 때 끌어와 부팅 자원에 300KB 가 들어갔어요
+const openFruitTypography = id => import('./fruit-type-ui.js').then(m => m.openFruitTypography(id));
+import {watchWith} from './dom-watch.js';
 const leases=new WeakMap();
 export function installFruitTypeShortcuts(doc=document,host=window){
     let lease=leases.get(doc);if(!lease){lease={count:0,stop:startShortcuts(doc,host)};leases.set(doc,lease);}lease.count++;let released=false;return()=>{if(released)return;released=true;if(--lease.count===0){lease.stop();leases.delete(doc);}};
@@ -53,7 +55,8 @@ function startShortcuts(doc,host){
     //   iframe 이 통째로 빠진 것은 1.5초 타이머(frameSig)가 예전처럼 알아채요
     const orphaned=()=>{for(const [anchor,button]of buttons)if(!anchor.isConnected||!button.isConnected)return true;return false;};
     const WATCH=DEUS_ROOT+',iframe,#chat,#fruit-heart-v6,#bl-deus-popover',PANELS='#fruit-heart-v6,#bl-deus-popover';
-    const observer=new host.MutationObserver(records=>{const streaming=!!doc.body.dataset.generating,skip=new Map(),left=[];for(const r of records){if(r.attributeName==='data-generating'){if(!streaming)schedule();continue;}const t=r.target;let out=skip.get(t);if(out===undefined){out=!!t.closest?.('.drawer-content,select')||(streaming&&!!t.closest?.('.mes_text'));skip.set(t,out);}if(!out)left.push(r);}if(left.length&&(fruitStructureChanged(left,WATCH,PANELS,false)||(left.some(r=>r.removedNodes?.length)&&orphaned())))schedule();});
-    observer.observe(doc.documentElement||doc.body,{childList:true,subtree:true});observer.observe(doc.body,{attributes:true,attributeFilter:['data-generating']});const timer=host.setInterval(()=>{if(windowOpen()||frameSig(true)!==lastSig)schedule();},1500);flush();
-    return()=>{stopped=true;host.clearInterval(timer);doc.removeEventListener('click',click,true);observer.disconnect();host.cancelAnimationFrame(frame);for(const b of buttons.values())b.remove();buttons.clear();};
+    // 9.0.4 공용 감시 허브 구독(html 구역 — 과일의 마음 창은 body 밖 html 의 자식 · head 는 안 봐요) + body 자기 data-generating. 시험의 가짜 창은 그 창 감시자 하나
+    const unwatch=watchWith(host,[[doc.documentElement||doc.body,{childList:true,subtree:true,exclude:'head',name:'과일 글자 바로가기'}],[doc.body,{attributes:['data-generating'],name:'과일 글자 바로가기 (답 끝)'}]],records=>{const streaming=!!doc.body.dataset.generating,skip=new Map(),left=[];for(const r of records){if(r.attributeName==='data-generating'){if(!streaming)schedule();continue;}const t=r.target;let out=skip.get(t);if(out===undefined){out=!!t.closest?.('.drawer-content,select')||(streaming&&!!t.closest?.('.mes_text'));skip.set(t,out);}if(!out)left.push(r);}if(left.length&&(fruitStructureChanged(left,WATCH,PANELS,false)||(left.some(r=>r.removedNodes?.length)&&orphaned())))schedule();});
+    const timer=host.setInterval(()=>{if(windowOpen()||frameSig(true)!==lastSig)schedule();},1500);flush();
+    return()=>{stopped=true;host.clearInterval(timer);doc.removeEventListener('click',click,true);unwatch();host.cancelAnimationFrame(frame);for(const b of buttons.values())b.remove();buttons.clear();};
 }

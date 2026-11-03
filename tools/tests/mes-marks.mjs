@@ -62,6 +62,7 @@ await test('표식 선택자의 특이도 보정 — text (0,3,0) · 머리 (0,3
         for (const m of t.matchAll(/\[data-bl-meta~="(?:id|timer|tok)"\]((?::is\(\.bl-s, \*\))*)/g)) { n++; assert.equal(m[1], ':is(.bl-s, *):is(.bl-s, *)', `${f}: ${m[0]}`); }
         for (const m of t.matchAll(/:not\(\[data-bl-editing~="text"\]((?::is\(\.bl-s, \*\))*)\)/g)) { n++; assert.equal(m[1], ':is(.bl-s, *):is(.bl-s, *)', `${f}: ${m[0]}`); }
     }
-    assert.ok(n >= 14, `표식 쓰는 곳 ${n}`);
+    // 9.0.1 말풍선 · 카드 갈래를 걷어 이 표식을 쓰는 규칙이 남지 않았어요(0) — 다시 쓰게 되면 위 보정이 그대로 지켜요
+    assert.ok(n >= 0, `표식 쓰는 곳 ${n}`);
 });
 console.log(`\n${passed} passed`);

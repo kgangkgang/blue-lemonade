@@ -1,0 +1,8 @@
+/* 생성 파일 — tools/build-addon-css.mjs (애드온 창 밖 규칙만 · 전체는 style.css) */
+:root { --sw-css-version: "1.1.4"; }
+:root { --pa-css-version: "1.0.2"; }
+:root { --rl-css-version: "1.6.1"; }
+:root { --sv-css-version: "1.1.8"; }
+:root { --pa-hub-css-version: "2.3.4"; }
+@keyframes bl-addon-css{from{--bl-addon-css:0}to{--bl-addon-css:1}}
+.rl-root,.rl-settings,.lt-root,.lt-drawer,.pa-hub,.pa-settings,.sv-settings,.sw-settings{animation:bl-addon-css 1ms}

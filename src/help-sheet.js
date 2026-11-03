@@ -1,4 +1,5 @@
-// 작은 설명 창 (6.1.5) — 월드인포 ? · 한글화 패널 작업 줄 ? 가 같이 쓴다. help = { title, body: [문단], list: [[이름, 설명]], rec: 추천 }
+// 작은 설명 창 (6.1.5) — 월드인포 ? · 한글화 패널 작업 줄 ? 가 같이 쓴다. help = { title, body: [문단], list: [[이름, 설명]], rec: 추천, html: 테마가 만든 마크업(믿는 글만) }
+// 1.0.0 도움말 하나로(10-31 사용자 「곳곳에 ? 랑 i 토글 약간 디자인 다른 애들」): 설정창 묶음 ? · TTS · ZIP 설치 · 성능 보조 · 다시 쓰기 · 대본 편집기의 ? 도 모두 이 창으로 열어요.
 import { showThemeModal } from './modal.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -7,7 +8,8 @@ export function helpSheetHtml(help) {
     const body = (help.body || []).map(p => `<p>${esc(p)}</p>`).join('');
     const list = help.list?.length ? `<dl class="bl-wi-help-list">${help.list.map(([term, text]) => `<dt>${esc(term)}</dt><dd>${esc(text)}</dd>`).join('')}</dl>` : '';
     const rec = help.rec ? `<p class="bl-wi-help-rec"><b>추천</b>${esc(help.rec)}</p>` : '';
-    return `<h3>${esc(help.title)}</h3>${body}${list}${rec}<div class="bl-wi-help-actions"><button type="button" class="salty-btn">닫기</button></div>`;
+    const html = help.html ? `<div class="bl-help-html">${help.html}</div>` : '';
+    return `<h3>${esc(help.title)}</h3>${body}${html}${list}${rec}<div class="bl-wi-help-actions"><button type="button" class="salty-btn">닫기</button></div>`;
 }
 
 export function openHelpSheet(help) {

@@ -429,7 +429,7 @@ await test('모델 대조 없음: 번역문 문단 전체를 골라도 원문 �
     await X.applyNow(snap, plan, 'translation');
     assert.equal(db.get(source), `그가 고개를 들었다.\n\n${img}`, '그림은 남는다');
     assert.equal(message.mes, `He looked up.\n\nShe smiles and leaves.<br>${img}`);
-    // <prose> 로 감싼 첫 문단 (사용자 채팅 꼴)
+    // <prose> 로 감싼 첫 문단 (흔한 채팅 꼴)
     ({ message, source } = setup({ mes: '<prose>The heavy doors slide apart. Rex looks up.\n\nHe sets the cup down.</prose>', trans: '<prose>묵직한 문이 열린다. 렉스가 고개를 든다.\n\n그는 컵을 내려놓는다.</prose>' }));
     snap = snapOf(message, source, 'translation', '묵직한 문이 열린다. 렉스가 고개를 든다.');
     plan = await X.planOf(snap);
@@ -1029,7 +1029,7 @@ await test('배선: 스위치(기본 켬 · 프리셋에 안 담김) · 범위 �
     assert.ok(check.indexOf('currentSelection()') > 0 && check.indexOf('currentSelection()') < check.indexOf('translatorOn()'), '선택이 없으면 테마 설정을 읽지 않는다');
     assert.match(del, /getElementById\(RETRANSLATE_BAR\)\?\.remove\(\)/);
     assert.match(del, /import \{ trimToRoot, paragraphEnd \} from '\.\.\/\.\.\/\.\.\/selection-range\.js';/);
-    assert.match(read('src/addons/bookmarks/selection-chip.js'), /const range = trimToRoot\(selection\.getRangeAt\(0\), textRoot\) \?\? selection\.getRangeAt\(0\);/);
+    assert.match(read('src/selection-bar.js'), /const range = trimToRoot\(selection\.getRangeAt\(0\), textRoot\) \?\? selection\.getRangeAt\(0\);/);
     const css = read('src/addons/translator/selection/style.css');
     assert.match(css, /#llmt-select-delete \{[^}]*border:1\.5px solid var\(--bl-danger[^}]*background:var\(--salty-panel-surface/, '외곽선형 · 바탕은 팔레트 면 색');
     assert.match(css, /\.llmt-delete \.llmt-delete-note \{/);

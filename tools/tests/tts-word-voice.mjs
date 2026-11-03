@@ -135,13 +135,13 @@ test('배선: 이름 창 — 보이기는 재생 열쇠(charKeyOf), 쓰기는 �
     assert.equal(write('Nick', 'Owner'), 'Nick', '옛 별명으로 다른 사람 열쇠에 걸리면 이 이름으로 새 열쇠 (그 사람 목소리를 안 건드림)');
 });
 test('배선: dialogueSpeakers 가 isUser 를 준다 (읽을 때와 같은 판단) · 이름 창은 그 줄을 빼고 내 이름을 canon 으로 견준다', () => {
-    const p = read('src/player.js');
-    const ds = p.slice(p.indexOf('export function dialogueSpeakers'), p.indexOf('export async function analyzeForPaint'));
+    const p = read('src/message-segments.js');   // 1.0.0 극한 최적화: player.js 에서 message-segments.js 로 옮김(동작 그대로)
+    const ds = p.slice(p.indexOf('export function dialogueSpeakers'));
     assert.match(ds, /flag = typeof r\.isUser === 'boolean' \? r\.isUser : null;/);
     assert.match(ds, /name = sp; source = 'analysis'; flag = null;/, '분석이 화자를 고르면 색 판단은 버린다 (읽을 때와 같게)');
     assert.match(ds, /const isUser = flag \?\? \(source === 'user' \|\| said\.toLowerCase\(\) === String\(userName \|\| ''\)\.toLowerCase\(\)\);/);
     assert.match(ds, /source, isUser \}\);/);
-    assert.match(p, /const isUser = flag \?\? \(source === 'user' \|\| name\.toLowerCase\(\) === userName\.toLowerCase\(\)\);/, '읽을 때의 판단이 그대로 있다 (둘이 어긋나지 않게)');
+    assert.match(read('src/player.js'), /const isUser = flag \?\? \(source === 'user' \|\| name\.toLowerCase\(\) === userName\.toLowerCase\(\)\);/, '읽을 때의 판단이 그대로 있다 (둘이 어긋나지 않게)');
     assert.match(read('src/name-voice-core.js'), /if \(line\?\.isUser !== true\) push\(line\?\.name\);/);
     const nv = read('src/name-voice.js');
     assert.match(nv, /import \{ canon \} from '\.\/speakers\.js';/);

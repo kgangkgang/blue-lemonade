@@ -421,7 +421,8 @@ export const windowLite = globalThis;
 const storage = () => { const m = new Map(); return { getItem: k => m.has(String(k)) ? m.get(String(k)) : null, setItem: (k, v) => m.set(String(k), String(v)), removeItem: k => m.delete(String(k)), clear: () => m.clear(), key: i => [...m.keys()][i] ?? null, get length() { return m.size; } }; };
 
 /** 전역에 가짜 브라우저를 깐다. 실리태번 흉내 ctx 를 돌려준다 */
-export function installBrowser({ settings = {}, extensionSettings = {} } = {}) {
+// autoFire: 실리태번 eventSource 처럼 APP_READY · APP_INITIALIZED 를 낸 뒤 늦게 건 리스너에도 바로 불러요 (9.0.2 부팅 층 시험)
+export function installBrowser({ settings = {}, extensionSettings = {}, autoFire = false } = {}) {
     const g = globalThis;
     const winListeners = new EventTargetLite(); winListeners._track = 'window';
     Object.assign(g, {
@@ -472,15 +473,17 @@ export function installBrowser({ settings = {}, extensionSettings = {} } = {}) {
     const pm = el('div', 'completion_prompt_manager'); pm.append(el('ul', 'completion_prompt_manager_list'));
     body.append(el('div', 'rm_print_characters_block'), el('div', 'user_avatar_block'), charTemplate, pm, el('input', 'character_search_bar'));
     // 실리태번 eventSource 흉내
-    const handlers = new Map();
+    const handlers = new Map(), fired = new Map(), AUTO = new Set(autoFire ? ['app_ready', 'app_initialized'] : []);
     const eventSource = {
-        on(type, fn) { if (!type) return; (handlers.get(type) || handlers.set(type, []).get(type)).push(fn); },
+        on(type, fn) { if (!type) return; (handlers.get(type) || handlers.set(type, []).get(type)).push(fn); if (AUTO.has(type) && fired.has(type)) fn(...fired.get(type)); },
+        /** 실리태번 EventEmitter 처럼 사건 이름 → 리스너 배열 (같은 배열 — 부팅 층이 늦게 걸린 리스너를 찾을 때 봐요) */
+        get events() { return Object.fromEntries(handlers); },
         once(type, fn) { const w = (...a) => { this.removeListener(type, w); return fn(...a); }; this.on(type, w); },
         makeFirst(type, fn) { (handlers.get(type) || handlers.set(type, []).get(type)).unshift(fn); },
         makeLast(type, fn) { this.on(type, fn); },
         removeListener(type, fn) { const list = handlers.get(type); const i = list?.indexOf(fn) ?? -1; if (i >= 0) list.splice(i, 1); },
         off(type, fn) { this.removeListener(type, fn); },
-        async emit(type, ...args) { for (const fn of [...(handlers.get(type) || [])]) { try { await fn(...args); } catch (error) { errors.push(error); } } },
+        async emit(type, ...args) { if (AUTO.has(type)) fired.set(type, args); for (const fn of [...(handlers.get(type) || [])]) { try { await fn(...args); } catch (error) { errors.push(error); } } },
         async emitAndWait(type, ...args) { return this.emit(type, ...args); },
         count: () => { let n = 0; for (const list of handlers.values()) n += list.length; return n; },
         byType: () => Object.fromEntries([...handlers].map(([k, v]) => [k, v.length]).filter(([, n]) => n)),

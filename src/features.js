@@ -1,8 +1,6 @@
-import { syncTypography } from './typography.js';
-// 켜야 쓰는 기능 (3.1.0): 몰입 읽기 · 한 손 버튼 줄 · 데우스 카드 스킨 · 캐릭터별 스타일 · (3.2.0) 화이트/나이트 자동의 코드는 켤 때 처음 불러온다.
-// 꺼 두면 파일도 받지 않고 이벤트도 걸지 않는다 — 테마가 무거워지지 않게. 한 번 불러온 뒤 끄면 그 모듈이 스스로 정리한다.
-import { syncSplash } from './splash.js';
-// 칵테일 · 바이바이가 켜져 있으면 같은 일을 하는 성능 기능은 쉰다 (ext-presence.js — 토글 값은 그대로, 그 확장을 지우면 바로 다시 켜진다)
+import { frameReady, trackLate, onGate } from './boot-layers.js';
+// 선택 기능은 첫 프레임 뒤에 받아요. 끄면 모듈이 듣기와 화면을 정리해요.
+// 겹치는 성능 기능은 설치된 다른 확장에 맡겨요.
 import { startPresence, onPresenceChange, restingFor } from './ext-presence.js';
 let presenceBound = false;
 
@@ -13,7 +11,9 @@ let hooks = { applyAll: null, refreshPanels: null };
 export function setFeatureHooks(next) {
     hooks = next;
 }
-const load = (name, url) => (modules[name] ??= import(url).catch((error) => {
+// 9.0.2 부팅 2층: 켜 둔 기능 모듈도 첫 프레임 뒤(시작 덮개 아래)에 받아요 — 실리태번이 확장 정적 묶음을 다 평가하길 기다리는 동안 끼어들지 않게.
+//   받기 전에 syncFeatures 가 여러 번 불려도 받은 뒤 then 이 차례로 돌아 마지막 값이 남아요
+const load = (name, url) => (modules[name] ??= trackLate(frameReady.then(() => import(url))).catch((error) => {
     delete modules[name];
     console.warn(`[Blue Lemonade] ${name} 기능을 불러오지 못했어요`, error);
     return null;
@@ -56,14 +56,20 @@ function startScripts(tries=4){
 export function syncFeatures(s, addonsOn = !!s.enabled) {
     const on = !!s.enabled;
     if (!presenceBound) { presenceBound = true; onPresenceChange(() => { hooks.applyAll?.(); hooks.refreshPanels?.(); }); startPresence(); }
-    if (['conflicts'].some(id=>s.addons?.[id]) || modules.assist) load('assist','./assist/index.js').then(m=>m?.syncAssist());
-    syncTypography(on);
-    if (on || modules.promptchoices) load('promptchoices', './prompt-choice.js').then(m => m?.syncPromptChoices(on));
+    if (on || modules.appearance) load('appearance', './chat-appearance.js').then(m => {
+        if (!m) return;
+        m.syncAppearanceSheet(on); m.bindDeviceChanges(hooks);
+        if (!modules.appearanceReady) { modules.appearanceReady = true; hooks.applyAll?.(); }
+    });
+    // 9.0.2 들여쓰기 · 대사 줄 · 에셋 줄바꿈(typography.js 와 대사 감싸기 묶음 약 50KB)은 채팅 본문용이라 2층으로
+    if (on || modules.typography) load('typography', './typography.js').then(m => m?.syncTypography(on));
+    // 서랍 안에만 있는 것은 문 drawer 뒤에(onGate)
+    if (on || modules.promptchoices) onGate('drawer', () => load('promptchoices', './prompt-choice.js').then(m => m?.syncPromptChoices(on)), 'promptchoices');
     // 8.2.4 프롬프트 관리자 「Chat History」 줄 경고 △ 를 누르면 이유 · 숫자 · 해결 방법 (history-warning.js, 늘 켬 · 테마를 끄면 리스너를 뗀다)
-    if (on || modules.historywarning) load('historywarning', './history-warning.js').then(m => m?.syncHistoryWarning(on));
+    if (on || modules.historywarning) onGate('drawer', () => load('historywarning', './history-warning.js').then(m => m?.syncHistoryWarning(on)), 'historywarning');
     // 7.0.4 글꼴 설정과 상관없이 테마가 켜져 있으면 — 채팅 iframe 과일 상태창의 낱말 꺾임 막기 (fruit-type-runtime wrapCss)
     if((on&&s.usageMode!=='extensions')||modules.fruittype)load('fruittype','./fruit-type-runtime.js').then(m=>m?.syncFruitTypography(s.fruitTypography,on && s.usageMode!=='extensions'));
-    // 6.6.5 다른 확장 · 실리태번의 두꺼운 알약 · 동그라미 글자 버튼을 얇은 둥근 네모로 (사용자: "큰 알약 싫어")
+    // 6.6.5 다른 확장 · 실리태번의 두꺼운 알약 · 동그라미 글자 버튼을 얇은 둥근 네모로 (큰 알약이 무거워 보이던 것)
     const squared=on&&s.usageMode!=='extensions'&&s.squareButtons!==false;
     if(squared||modules.squared)load('squared','./squared-buttons.js').then(m=>m?.syncSquaredButtons(squared));
     // 6.6.9 다른 기기(Syncthing · 다른 탭)에서 지금 채팅이 바뀌면 띠 + 덮어쓰기 전에 묻기 (chat-sync.js, 기본 켬)
@@ -83,6 +89,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 5.3.4: applyAll 마다(슬라이더를 끌면 프레임마다) 되살림 타이머 일곱 개를 지우고 다시 걸었다 — 처음 · 스크립트 켜고 끔이 바뀔 때만
     const key=`${scriptsWanted}|${JSON.stringify(scriptsEnabled)}`;
     if((scriptsRequested||modules.scripts)&&key!==scriptsKey){scriptsKey=key;startScripts();}
+    // 3.2.0 화이트 · 나이트 자동 (automode.js — 켤 때만 받아요 · 1.0.0 되살림)
+    const auto = on && !!s.auto?.on;
+    if (auto || modules.auto) load('auto', './automode.js').then(m => m?.syncAutoMode(auto, hooks));
     const reader = on && !!s.reader?.autoHide;
     if (reader || modules.reader) load('reader', './reader.js').then(m => m?.syncReader(reader));
     const bgWindow = on && !!s.bgWindow?.on;
@@ -95,7 +104,7 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (chatLight || modules.chatlight) load('chatlight', './chat-light.js').then(m => m?.syncChatLight(chatLight));
     // (10-29 perf-persona) 입력 중 목록 갱신 미루기 (persona-defer.js, 기본 켬) — 페르소나 설명 글자마다 실리태번이 목록 카드 글을 다시 써 문서 전체가 재계산되던 것을 손을 멈출 때 · 칸을 떠날 때 한 번으로
     const personaDefer = on && s.chat?.personaDefer !== false;
-    if (personaDefer || modules.personadefer) load('personadefer', './persona-defer.js').then(m => m?.syncPersonaDefer(personaDefer));
+    if (personaDefer || modules.personadefer) onGate('drawer', () => load('personadefer', './persona-defer.js').then(m => m?.syncPersonaDefer(personaDefer)), 'personadefer');
     // 7.9.9 단추를 손으로 누르면 불러온 메시지를 보여 준다 (show-more-tap.js, 자동 더 보기와 상관없이 · 테마가 켜져 있을 때)
     if (on || modules.showmoretap) load('showmoretap', './show-more-tap.js').then(m => (on ? m?.installShowMoreTap() : m?.uninstallShowMoreTap()));
     // 아바타는 가까워질 때 받기 (lazy-avatars.js, 기본 켬) — 캐릭터 · 페르소나 목록의 화면 밖 썸네일을 미룬다
@@ -104,13 +113,13 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 검색은 글자 조합이 끝난 뒤 (search-ime.js, 기본 켬) — 캐릭터 · 월드인포 · 페르소나 · 채팅 파일 · 그룹 멤버 검색 칸의 한글 조합 중 검색을 미룬다
     //   바이바이가 켜져 있으면 캐릭터 검색 칸만 그쪽에 맡긴다(바이바이는 캐릭터 검색만 같은 일을 한다)
     const searchIme = on && s.chat?.searchIme !== false;
-    if (searchIme || modules.searchime) load('searchime', './search-ime.js').then(m => m?.syncSearchIme(searchIme, { skip: restingFor('searchIme') ? [m.INPUT_ID] : [] }));
+    if (searchIme || modules.searchime) onGate('drawer', () => load('searchime', './search-ime.js').then(m => m?.syncSearchIme(searchIme, { skip: restingFor('searchIme') ? [m.INPUT_ID] : [] })), 'searchime');
     // 코드 색 입히기 끄기 (code-plain.js, 기본 끔) — 메시지 코드블록의 hljs 를 건너뛴다 · 칵테일이 켜져 있으면 쉰다
     const codePlain = on && !!s.chat?.codePlain && !restingFor('codePlain');
     if (codePlain || modules.codeplain) load('codeplain', './code-plain.js').then(m => m?.syncCodePlain(codePlain));
     // 월드인포 긴 목록 가볍게 (worldinfo-light.js, 기본 켬) — 항목 80개 이상이면 접힌 화면 밖 항목에 content-visibility:auto (CSS) · 바이바이가 켜져 있으면 쉰다
     const worldInfoLight = on && s.chat?.worldInfoLight !== false && !restingFor('worldInfoLight');
-    if (worldInfoLight || modules.wilight) load('wilight', './worldinfo-light.js').then(m => m?.syncWorldInfoLight(worldInfoLight));
+    if (worldInfoLight || modules.wilight) onGate('drawer', () => load('wilight', './worldinfo-light.js').then(m => m?.syncWorldInfoLight(worldInfoLight)), 'wilight');
     const replyTop = on && !!s.chat?.replyTop;
     if (replyTop || modules.replytop) load('replytop', './reply-top.js').then(m => m?.syncReplyTop(replyTop));
     // 7.0.3 메시지 토큰 — 7.0.4 부터 토큰 수를 누르면 내역 (sent-tokens.js, 기본 켬)
@@ -120,8 +129,6 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (replyNotify || modules.replynotify) load('replynotify', './reply-notify.js').then(m => m?.syncReplyNotify(replyNotify));
     const onehand = on && !!s.onehand?.on;
     if (onehand || modules.onehand) load('onehand', './onehand.js').then(m => m?.syncOneHand(onehand, s.onehand));
-    const auto = on && !!s.auto?.on;
-    if (auto || modules.auto) load('auto', './automode.js').then(m => m?.syncAutoMode(auto, hooks));
     // 3.3.0 날씨 효과 (weather.js — 그리기는 워커)
     // 트래커 따라는 데우스 호환이 켜졌을 때만 (3.4.0)
     const weatherChat = s.chat?.weather === 'tracker' && !s.deus?.on ? { ...s.chat, weather: 'off' } : s.chat;
@@ -134,7 +141,7 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     const numComma = on && s.chat?.numComma !== false;
     // 8.2.3 뒤: 칸 글꼴 · 글자 · 색이 그대로면(서명 같음) 다시 재지 않는다 (numcomma.js syncNumComma)
     const numKey = JSON.stringify([s.palette, s.colorOverrides?.[s.palette], s.nightTint, s.lightTint, s.fonts, s.type, s.ui, s.usageMode, s.squareButtons, s.density]);
-    if (numComma || modules.numcomma) load('numcomma', './numcomma.js').then(m => m?.syncNumComma(numComma, numKey));
+    if (numComma || modules.numcomma) onGate('press', () => load('numcomma', './numcomma.js').then(m => m?.syncNumComma(numComma, numKey)), 'numcomma');
     // 6.6.9 글자색 대비 맞추기: 메시지에 적힌 글자색이 바탕에 묻히면 밝기만 옮겨 보여 준다 (ink-contrast.js — 끄면 덧씌운 표시를 모두 뗀다)
     const ink = on && s.usageMode !== 'extensions' && s.chat?.inkContrast !== false;
     if (ink || modules.inkcontrast) load('inkcontrast', './ink-contrast.js').then(m => m?.syncInkContrast(ink));
@@ -152,8 +159,10 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (dem || modules.dem) load('dem', './demskin.js').then(m => m?.syncDemSkin(dem, s.chat));
     // 8.0.9 데우스 V3 하늘: 트래커 시각으로 해 · 달 자리, 날짜로 달 위상 (dem-sky.js — 카드 스킨을 끄면 덧씌운 값을 모두 뗀다)
     if (dem || modules.demsky) load('demsky', './dem-sky.js').then(m => m?.syncDemSky(dem));
-    // 3.5.1 새로고침 첫 화면 파일 (user.css 에 줄이 있을 때만 씀 — splash.js)
-    syncSplash(s, () => hooks.refreshPanels?.());
+    // 3.5.1 새로고침 첫 화면 파일 (user.css 에 줄이 있을 때만 씀 — splash.js · 1.0.0 되살림)
+    load('splash', './splash.js').then(m => m?.syncSplash(s, () => hooks.refreshPanels?.()));
+    // 10-31 가운데 줄 세로 잉크 맞춤: 데우스 카드 제목 글자를 그 글꼴의 잉크 가운데로(center-ink.js — 글꼴이 바뀌면 다시 잼)
+    if (dem || modules.centerink) load('centerink', './center-ink.js').then(m => m?.syncCenterInk(dem));
     // 캐릭터별 스타일: 이어 둔 캐릭터가 있을 때만. 입혀 둔 동안 바꾼 모습은 그 스타일에 적음
     const chars = Object.keys(s.charStyles || {}).length > 0 || !!s.activeStyle;
     if (on && (chars || modules.charstyle)) {

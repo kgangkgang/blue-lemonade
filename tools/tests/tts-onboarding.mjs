@@ -1,4 +1,4 @@
-// TTS 1.3.8 (테마 5.7.2) — 키를 넣고 첫 대사가 읽히기까지 · 2026-10-08 사용자 제보(ElevenLabs 키를 넣었는데 목소리가 안 들어오고
+// TTS 1.3.8 (테마 5.7.2) — 키를 넣고 첫 대사가 읽히기까지 · 2026-10-08 (ElevenLabs 키를 넣었는데 목소리가 안 들어오고
 //   MiniMax 직접 입력 서버(집 PC — 꺼짐)로 가서 「인증 실패」) 검증에서 나온 고침 · 새 기능(도움말 · 말투 칩 · 「나」 자동 · 엔진 고정)의 화면 길
 //   node tools/tests/tts-onboarding.mjs <테마 루트>   (공개 저장소는 '.', 개발본은 'salty-ext')
 // 진짜 ui.js · voices.js · player.js · settings.js · 엔진 모듈에 실리태번 스텁 · 작은 가짜 DOM · 가짜 엔진 서버(fetch). 네트워크 없음 · 키는 모두 가짜.
@@ -639,14 +639,13 @@ await test("'?' 도움말(7.7.9): 항목마다 ? 를 붙이지 않고 카드 제
     const ed = F.edParam(stab, {}, cfg, { params: {} });
     assert.doesNotMatch(ed, /lv-help/);
     assert.ok(F.HELP_LINES.splice(0).length === 1, '편집 팝업 머리로 모을 줄');
-    const note = { hidden: true };
-    const attrs = {};
-    const btn = { closest: (q) => (q === '[data-lv-help]' ? { querySelector: () => note } : null), setAttribute: (k, v) => { attrs[k] = v; } };
-    F.toggleHelp(btn);
-    assert.equal(note.hidden, false);
-    assert.equal(attrs['aria-expanded'], 'true');
-    F.toggleHelp(btn);
-    assert.equal(note.hidden, true);
+    // 1.0.0 도움말 하나로: ? 는 제자리 펼침 대신 테마 공용 도움말 창(help-sheet.js)을 열어요 — 글은 그 카드의 「이름: 설명」 묶음 그대로
+    const note = { hidden: true, innerHTML: '안정감: 보통 0.5' };
+    const opened = [];
+    const btn = { closest: (q) => (q === '[data-lv-help]' ? { querySelector: () => note } : q === '.lv-card-head,.lv-ed-head' ? { querySelector: () => ({ textContent: ' 엔진 ' }) } : null), setAttribute: () => {} };
+    F.toggleHelp(btn, h => opened.push(h));
+    assert.deepEqual(opened, [{ title: '엔진', html: '안정감: 보통 0.5' }]);
+    assert.equal(note.hidden, true, '제자리에서 펼치지 않아요');
     const strength = F.whenFields ? null : null;
     void strength;
 });

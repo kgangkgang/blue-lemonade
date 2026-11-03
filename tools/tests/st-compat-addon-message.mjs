@@ -21,7 +21,7 @@ if (!scenario) {
     const src = pathToFileURL(path.join(root, 'src/')).href;
     const js = code => `data:text/javascript,${encodeURIComponent(code)}`;
     const stubs = {
-        'usage-mode.js': 'export const addonsEnabled = () => true;',
+        'usage-mode.js': 'export const addonsEnabled = () => true; export const switchNeedsReload = () => false;',
         'settings.js': 'export function getSettings(){ return { addons: {} }; } export function saveSettings(){}',
         'addon-layout.js': 'export function toolSection(){}',
         'settings-dialog.js': 'export function leaveSettingsDialog(){}',
@@ -29,7 +29,6 @@ if (!scenario) {
         'addons/tts/version.js': 'export const TTS_VERSION="1.0.0";',
         'addons/tts/credits.js': 'export function ttsCreditsSummaryHtml(){}',
         'addon-save.js': 'export async function restorePendingAddons(){return false;} export async function saveAddonsNow(){}',
-        'assist/core.js': 'export const IDS=[],LABELS={},DUPLICATES={};',
         'addons/perf/start-error.js': 'export function perfErrorText(){ return "PERF-X"; }',
         // 실리태번 모듈에 없는 이름을 가져오는 애드온(크롬 · 노드와 같은 연결 오류) / 그냥 던지는 애드온
         'addons/regexlink/index.js': scenario === 'missing-export'

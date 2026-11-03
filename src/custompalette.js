@@ -1,5 +1,6 @@
 // 커스텀 에이드 작업대. 미리보기만 바꾸다가 '완성 · 적용'에서 두 모드의 레시피를 저장한다.
 import { PALETTES, paletteFamily, paletteVariant, parseColor, safeColor, onColor, sameColor, paletteColors } from './palettes.js';
+import './palette-data.js';   // 1.0.0 씨앗 · 커스텀 바탕이 밤 · 낮 밖 에이드를 읽어요 (색 정의는 지연 모듈)
 // 8.2.7 http:// 로 연 폰(LAN)은 보안 컨텍스트가 아니라 crypto.randomUUID 가 없어요 — 「지금 에이드 담기」 · 새 에이드 저장이 TypeError 로 멈췄어요.
 //   없으면 시각 + 무작위 글자로 (아이디는 문자열이면 돼요 — settings.js 정리 규칙)
 const newPaletteId = () => globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -21,7 +22,7 @@ export function makeCustomPalette(colors, mode) {
         bg, surface, text, accent, pop: accent, brand: accent,
         raised: mix(accent, surface, dark ? 0.13 : 0.09),
         dialogue: text, strong: dark ? accent : text,
-        em: mix(text, bg, 0.70), muted: mix(text, surface, 0.72), faint: mix(text, surface, dark ? 0.56 : 0.68), // 흐림: 바탕 · 패널 위 4.5:1 (예전 0.54 로 만든 값은 apply.js dropStaleOverrides 가 옮김)
+        em: mix(text, bg, 0.70), muted: mix(text, surface, 0.72), faint: mix(text, surface, dark ? 0.56 : 0.68), // 흐림: 바탕 · 패널 위 4.5:1
         marker: alpha(accent, dark ? 0.25 : 0.18), gold: alpha(accent, dark ? 0 : 0.18),
         line: alpha(text, 0.08), shadow: alpha(dark ? '#000000' : text, dark ? 0.72 : 0.14),
     };
@@ -77,7 +78,7 @@ export function saveCurrentPalette(settings) {
     useCustomPalette(settings,id);
 }
 // 2026-10-06: 보관함에 없는 지금 커스텀 색(4.0 전 에이드 · 색 고치기로 바꾼 것 · 프리셋으로 받은 것)을 덮어쓰기 전에 보관함에 먼저 담는다 — 그냥 덮어 영구히 잃었다
-// 같은지는 기본값을 채운 실제 색으로 (dropStaleOverrides 가 기본값과 같은 칸을 지워도 같은 에이드로 보게)
+// 같은지는 기본값을 채운 실제 색으로 (기본값과 같은 칸이 비어 있어도 같은 에이드로 보게)
 const isColor = value => typeof value === 'string' && /^(#|rgba?\(|hsla?\()/i.test(value.trim());
 function sameCustom(slot, saved, id) {
     const a = { ...PALETTES[id], ...(slot || {}) }, b = { ...PALETTES[id], ...(saved || {}) };
@@ -88,7 +89,7 @@ function orphanCustom(settings) {
     if (!Object.keys(light || {}).length && !Object.keys(dark || {}).length) return null;
     const same = item => sameCustom(light, item.light, 'custom-light') && sameCustom(dark, item.dark, 'custom-night');
     if (settings.customPalettes.some(same)) return null;
-    // 사용자가 '삭제'한 에이드 색이면 다시 담지 않는다 (deleteCustomPalette 가 남긴 표시 · 새로고침 뒤에도)
+    // '삭제'한 에이드 색이면 다시 담지 않는다 (deleteCustomPalette 가 남긴 표시 · 새로고침 뒤에도)
     if (settings.deletedCustomSlot && typeof settings.deletedCustomSlot === 'object' && same(settings.deletedCustomSlot)) return null;
     const active = settings.customPalettes.find(item => item.id === settings.activeCustomPalette);
     // '(수정)'은 지금 이름이 그 에이드 이름일 때만 (남의 스타일 · 캐릭터 스타일로 바뀐 색은 그 스타일의 에이드 이름으로)

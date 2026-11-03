@@ -104,12 +104,13 @@ t('light hook',()=>{
   assert.match(srcText,/themeEnabled\(getSettings\(\)\)/);
   assert.doesNotMatch(srcText,/setInterval/);
   const index=fs.readFileSync(path.join(root,'index.js'),'utf8');
-  const runtime=index.slice(index.indexOf('const startThemeRuntime'),index.indexOf('startThemeRuntime();'));
-  assert.match(runtime,/startSwipePickerTranslation\(\)/,'started with the theme runtime');
+  const runtime=index.slice(index.indexOf('const IDLE_LAYER'),index.indexOf('const BOOT_FRAME'));   // 9.0.2 테마 런타임 3층 표
+  assert.match(runtime,/m\.startSwipePickerTranslation\(\)/,'started with the theme runtime');
+  assert.match(index,/whenIdle\('테마 3층', \(\) => withReplay\('테마 3층', async \(\) => \{ await startLayer\(3, IDLE_LAYER\);/);
 });
 
 // 닫기 × : 실리태번이 보일 때 인라인 display:block 을 박으니 flex 가운데가 안 먹는다 → 줄 높이 = 단추 높이 (display 는 건드리지 않음 — 숨기는 창 규칙과 안 다툼)
-const css=fs.readFileSync(path.join(root,'style.css'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+const css=(fs.readFileSync(path.join(root,'style.css'),'utf8')+(fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? fs.readFileSync(path.join(root, 'src/style-lazy.gen.css'), 'utf8') : '')).replace(/\/\*[\s\S]*?\*\//g,'');
 const rule=sel=>{const out=[];for(let i=css.indexOf(sel+' {');i>=0;i=css.indexOf(sel+' {',i+1))if(i===0||/[}\n]\s*$/.test(css.slice(Math.max(0,i-2),i)))out.push(css.slice(i,css.indexOf('}',i)));assert.ok(out.length,'rule '+sel);return out.join('\n')};
 t('close glyph centered by line height',()=>{
   assert.match(rule('body.salty .popup .popup-button-close'),/line-height:\s*30px !important[\s\S]*text-align:\s*center !important|text-align:\s*center !important[\s\S]*line-height:\s*30px !important/);

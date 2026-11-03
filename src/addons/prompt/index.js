@@ -52,6 +52,8 @@ const SELF_DIR_URL = (() => {
     try { return new URL('./', import.meta.url).href; } catch(e) { return ''; }
 })();
 const CSS_URL = SELF_DIR_URL ? (SELF_DIR_URL + 'style.css') : '';
+// 9.0.9 테마의 애드온 CSS 한 장(src/addons/style-addons.css · link[data-bl-addons] 에 prompt 가 들었으면)에 이 패널 CSS 가 이미 있어요 — 한 벌 더 붙이면 맨 뒤로 가 규칙 순서가 바뀌어요
+const hasPanelCss = doc => Array.from(doc.querySelectorAll('link[rel="stylesheet"]')).some(link => link.href === CSS_URL || String(link.dataset?.blAddons ?? '').split(' ').includes('prompt'));
 
 // Status Tray / QR Floating 방식: parent.document
 const PAR  = (function(){ try { return window.parent || window; } catch(e){ return window; } })();
@@ -1423,7 +1425,7 @@ function applyPresetRegexTitles(presetObj, ns) {
 }
 
 // ── World Info ────────────────────────────────────────────────────────
-// 숨긴 월드인포 (사용자 10-16 — 다른 확장이 쓰는 내부 자료 같은 것은 이 목록에서 안 보이게). 이름은 설정에만 둔다.
+// 숨긴 월드인포 (다른 확장이 쓰는 내부 자료 같은 것은 이 목록에서 안 보이게). 이름은 설정에만 둔다.
 const hiddenWorlds = () => { const c = cfg(); if (!Array.isArray(c.hiddenWorlds)) c.hiddenWorlds = []; return c.hiddenWorlds; };
 function listAllWorldInfos() {
     const items=[];
@@ -3865,7 +3867,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                     <button class="pt-btn pt-btn-stop pt-act"    id="${idPfx}-stop" disabled><i class="fa-solid fa-stop" aria-hidden="true"></i><span>중단</span></button>
                     <button class="pt-btn pt-btn-danger pt-act"  id="${idPfx}-clr" aria-label="번역 캐시 비우기"><i class="fa-solid fa-trash-can" aria-hidden="true"></i><span>비우기</span></button>
                     <button class="pt-btn pt-btn-eye pt-act" id="${idPfx}-eye" aria-label="번역본으로 보기"><i class="fa-solid fa-eye" aria-hidden="true"></i><span>번역본</span></button>
-                    <button class="pt-btn pt-act pt-qhelp" id="${idPfx}-qhelp" aria-label="작업 줄 단추 설명"><span class="pt-qhelp-mark" aria-hidden="true">?</span><span>설명</span></button>
+                    <button class="pt-btn pt-act pt-qhelp" id="${idPfx}-qhelp" aria-label="작업 줄 단추 설명"><span class="pt-qhelp-mark" aria-hidden="true"><i class="fa-solid fa-question"></i></span><span>설명</span></button>
                 </div>
             </div>
             ${selectable ? `<div class="pt-select-row" id="${idPfx}-sarow" style="display:none;">
@@ -4980,7 +4982,7 @@ function buildPanel() {
     } catch(e){}
 
     // 패널 내 CSS 로드
-    if (CSS_URL && !Array.from(PDOC.querySelectorAll('link[rel="stylesheet"]')).some(link=>link.href===CSS_URL)) {
+    if (CSS_URL && !hasPanelCss(PDOC)) {
         const link=PDOC.createElement('link');
         link.id='pt-panel-css'; link.rel='stylesheet'; link.href=CSS_URL;
         PDOC.head.appendChild(link);
@@ -5104,7 +5106,7 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
         console.error(`[${EXT}] buildSettingsHTML failed`, e);
         throw e;
     }
-    if (CSS_URL && !Array.from(PDOC.querySelectorAll('link[rel="stylesheet"]')).some(link=>link.href===CSS_URL)) {
+    if (CSS_URL && !hasPanelCss(PDOC)) {
         $('<link>',{id:'pt-main-css',rel:'stylesheet',href:CSS_URL}).appendTo('head');
     }
 
