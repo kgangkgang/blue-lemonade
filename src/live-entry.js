@@ -23,7 +23,9 @@ const LIVE_MODULES = {
     'log-copy-sanitize': () => import('./log-copy-sanitize.js'),
     'log-copy-motion': () => import('./log-copy-motion.js'),   // 1.0.1 글꾸 움직임(openBox 는 창이 아니라 눌러 접는 상자 HTML 을 만들어요)
     'mart-import-ui': () => import('./mart-import-ui.js'),   // 1.0.1 「마트에서 가져오기」 창
+    'extcheck/index': () => import('./extcheck/index.js'),   // 1.0.3 확장 충돌 검사 창(누를 때만 받는 도구)
     'fonts': () => import('./fonts.js'),   // 1.0.2 테마 글꼴 목록 — 개인 확장(글꼴 고르기)이 src/fonts.js 를 주소로 받으면 테마 모듈 묶음이 한 벌 더 생겨요(두 번째 인스턴스). 이 길로 같은 인스턴스를 받아요
+    'quick/shared': () => import('./quick/shared.js'),   // 1.0.3 편의 기능 공용 떠 있는 메뉴(openMenu) · 이름 묻기
     // 검사 도구가 값 · 순수 함수를 읽는 모듈(여는 함수는 없어요)
     'addons': () => import('./addons.js'),
     'private-addons': () => import('./private-addons.js'),
@@ -49,6 +51,7 @@ const LIVE_MODULES = {
     'multi-avatar/dialog': () => import('./multi-avatar/dialog.js'),
     'prompt-card-picker': () => import('./prompt-card-picker.js'),
     'qrfind': () => import('./qrfind.js'),
+    'qr-shelf': () => import('./qr-shelf.js'),   // 1.0.3 QR 책장 창(openQrShelf)
     'selects': () => import('./selects.js'),
     // 애드온 안 창(본체 index.js 는 Salty.addon(id))
     'addons/assets/index': () => addonRunning('assets') ? import('./addons/assets/index.js') : notRunning('assets'),

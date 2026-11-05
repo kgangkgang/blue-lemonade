@@ -308,6 +308,12 @@
 .salty-phonemock .pm-onehand span {
   flex: 1;
 }
+.salty-phonemock .pm-onehand.is-many {
+  gap: 3px;
+}
+.salty-phonemock .pm-onehand.is-many b {
+  width: 10px;
+}
 .salty-phonemock .pm-input {
   display: flex;
   align-items: center;

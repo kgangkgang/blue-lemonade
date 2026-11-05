@@ -75,6 +75,22 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     const co = on && s.usageMode !== 'extensions' && s.chatOrganizer?.on === true && !restingFor('chatOrganizer');
     if (co || modules.chatorganizer) onGate('drawer', () => load('chatorganizer', './chat-organizer.js').then(m => m?.syncChatOrganizer(co)), 'chatorganizer');
     else onGate('drawer', () => {}, 'chatorganizer');
+    // 1.0.3 API 서버 상태 (기본 끔) — 켤 때만 받아요 · 점은 API 연결 서랍 안이라 문 drawer 뒤에(쉴 때도 열려요)
+    const apiStatus = on && s.usageMode !== 'extensions' && s.apiStatus?.on === true;
+    if (apiStatus || modules.apistatus) onGate('drawer', () => load('apistatus', './api-status.js').then(m => m?.syncApiStatus(apiStatus)), 'apistatus');
+    else onGate('drawer', () => {}, 'apistatus');
+    // 1.0.3 편의 기능 (src/quick/ — 켤 때만 받음 · 서랍 안 것은 문 drawer 뒤에)
+    const qx = on && s.usageMode !== 'extensions', q = s.quick || {};
+    const selEdit = qx && q.selEdit === true && !restingFor('quickSelEdit');
+    if (selEdit || modules.seledit) load('seledit', './quick/sel-edit.js').then(m => m?.syncSelectionEdit(selEdit));
+    const mesDelete = qx && q.mesDelete === true && !restingFor('quickMesDelete');
+    if (mesDelete || modules.mesdelete) load('mesdelete', './quick/mes-delete.js').then(m => m?.syncMesDelete(mesDelete));
+    const rangeDelete = qx && q.rangeDelete !== false && !restingFor('quickRangeDelete');
+    if (rangeDelete || modules.rangedelete) load('rangedelete', './quick/range-delete.js').then(m => m?.syncRangeDelete(rangeDelete));
+    const promptSaves = qx && s.promptSaves?.on === true && !restingFor('promptSaves');
+    onGate('drawer', promptSaves || modules.promptsaves ? () => load('promptsaves', './quick/prompt-saves.js').then(m => m?.syncPromptSaves(promptSaves)) : () => {}, 'promptsaves');
+    const presetFolders = qx && s.presetFolders?.on === true && !restingFor('presetFolders');
+    onGate('drawer', presetFolders || modules.presetfolders ? () => load('presetfolders', './quick/preset-folders.js').then(m => m?.syncPresetFolders(presetFolders)) : () => {}, 'presetfolders');
     // 8.2.4 프롬프트 관리자 「Chat History」 줄 경고 △ 를 누르면 이유 · 숫자 · 해결 방법 (history-warning.js, 늘 켬 · 테마를 끄면 리스너를 뗀다)
     if (on || modules.historywarning) onGate('drawer', () => load('historywarning', './history-warning.js').then(m => m?.syncHistoryWarning(on)), 'historywarning');
     // 7.0.4 글꼴 설정과 상관없이 테마가 켜져 있으면 — 채팅 iframe 과일 상태창의 낱말 꺾임 막기 (fruit-type-runtime wrapCss)

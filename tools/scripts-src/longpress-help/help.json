@@ -4521,6 +4521,357 @@
       "texts": [],
       "scope": "",
       "evidence": "src/addons/translator/index.html (llm_db_tool_qr); src/addons/translator/db-tool-qr.js; src/addons/translator/index.js (syncDbToolQr · prepareDbToolOnce)"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "채팅 › 고른 글 도구 줄",
+      "title": "고른 글 고치기",
+      "text": "고른 부분의 원래 글(꾸밈 표시 그대로)만 작은 창에서 고쳐요. 메시지 전체 편집을 열지 않아도 되고, 자리가 확실하지 않으면 고치지 않고 알려 줘요. 고친 뒤 알림의 ↶ 로 되돌려요. 번역문이 있는 메시지에는 안 떠요.",
+      "ids": [],
+      "classes": [],
+      "texts": [
+        "고른 글 고치기"
+      ],
+      "scope": "#cg-select-chip",
+      "evidence": "src/quick/sel-edit.js · src/quick/sel-edit-core.js"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "메시지 › 이름 줄 단추",
+      "title": "메시지 지우기",
+      "text": "이 메시지를 바로 지워요(연필 → 휴지통 두 번 대신 한 번). 늘 실리태번 확인 창이 뜨고, 다른 답이 여럿인 마지막 AI 메시지면 지금 스와이프만 지울지 메시지 전체를 지울지 골라요. 답을 만드는 중에는 안 지워요. 기본은 꺼져 있어 설정 › 채팅 › 기타 › 메시지 편의에서 켜요.",
+      "ids": [],
+      "classes": [
+        "bl_mes_del"
+      ],
+      "texts": [],
+      "scope": ".mes",
+      "evidence": "src/quick/mes-delete.js; ST public/script.js:1639-1675, 11984-11991"
+    },
+    {
+      "area": "입력줄 · 메시지 · 확장",
+      "where": "입력줄 › 옵션 메뉴",
+      "title": "범위 지우기",
+      "text": "처음 메시지와 끝 메시지를 차례로 누르면 그 사이(양 끝 포함)만 골라 지워요. 실리태번 「메시지 삭제」는 누른 메시지부터 끝까지라 중간 몇 개만 지울 때 써요. 입력줄 자리의 「지우기」를 누르면 몇 개인지 한 번 더 묻고, 「취소」 · Esc 로 그냥 나와요. 지운 메시지는 되돌릴 수 없어요.",
+      "ids": [
+        "option_bl_range_delete"
+      ],
+      "classes": [],
+      "texts": [],
+      "scope": "",
+      "evidence": "src/quick/range-delete.js; ST public/script.js:1639-1675"
+    },
+    {
+      "area": "입력줄 · 메시지 · 확장",
+      "where": "입력줄 › 범위 지우기 줄",
+      "title": "범위 지우기 · 지우기",
+      "text": "고른 범위의 메시지를 지워요. 누르면 몇 번부터 몇 번까지 몇 개인지 확인 창이 먼저 떠요. 지운 메시지는 되돌릴 수 없어요.",
+      "ids": [],
+      "classes": [
+        "bl-rd-ok"
+      ],
+      "texts": [],
+      "scope": "#bl-range-del",
+      "evidence": "src/quick/range-delete.js confirmDelete"
+    },
+    {
+      "area": "입력줄 · 메시지 · 확장",
+      "where": "입력줄 › 범위 지우기 줄",
+      "title": "범위 지우기 · 취소",
+      "text": "아무것도 지우지 않고 고르기를 그만둬요. 입력줄이 다시 나와요.",
+      "ids": [],
+      "classes": [
+        "bl-rd-cancel"
+      ],
+      "texts": [],
+      "scope": "#bl-range-del",
+      "evidence": "src/quick/range-delete.js leave"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "입력창 위 한 손 단추 줄",
+      "title": "맨 위로",
+      "text": "이 채팅의 첫 메시지(#0)로 가요. 아직 안 불러온 옛 메시지는 실리태번이 불러와 보여 줘요. 입력창 명령 「/맨 위로」와 같아요.",
+      "ids": [],
+      "classes": [],
+      "texts": [
+        "맨 위로"
+      ],
+      "scope": "#bl-onehand",
+      "evidence": "src/onehand.js goTo · src/natural-slash.js runNaturalSlash; ST /chat-jump"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "입력창 위 한 손 단추 줄",
+      "title": "맨 아래로",
+      "text": "채팅 맨 아래(마지막 메시지 끝)로 부드럽게 내려가요. 입력창 명령 「/맨 아래로」와 같아요.",
+      "ids": [],
+      "classes": [],
+      "texts": [
+        "맨 아래로"
+      ],
+      "scope": "#bl-onehand",
+      "evidence": "src/onehand.js toBottom"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "입력창 위 한 손 단추 줄",
+      "title": "번호로 가기",
+      "text": "메시지 번호를 물어보고 그 메시지로 가요. 없는 번호면 이 채팅의 번호 범위를 알려 줘요. 입력창 명령 「/240번」과 같아요.",
+      "ids": [],
+      "classes": [],
+      "texts": [
+        "번호로 가기"
+      ],
+      "scope": "#bl-onehand",
+      "evidence": "src/onehand.js askJump · src/natural-slash.js"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "입력창 위 한 손 단추 줄",
+      "title": "마지막 메시지 지우기",
+      "text": "채팅의 마지막 메시지를 지워요. 늘 실리태번 확인 창이 뜨고, 다른 답이 여럿인 AI 답이면 지금 스와이프만 지울지도 골라요. 답을 만드는 중에는 안 지워요.",
+      "ids": [],
+      "classes": [],
+      "texts": [
+        "마지막 메시지 지우기"
+      ],
+      "scope": "#bl-onehand",
+      "evidence": "src/onehand.js deleteLast · src/quick/mes-delete.js deleteWithAsk"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "프롬프트 관리자 › 켜짐 묶음 줄",
+      "title": "켜짐 묶음",
+      "text": "저장해 둔 켜짐 상태로 프롬프트 항목을 한 번에 켜고 꺼요. 지금 상태와 같은 묶음은 눌린 모양이고, 바꾼 뒤 알림의 ↶ 로 되돌려요.",
+      "ids": [],
+      "classes": [
+        "bl-ps-chip"
+      ],
+      "texts": [],
+      "scope": ".bl-ps-row",
+      "evidence": "src/quick/prompt-saves.js apply · src/quick/prompt-saves-core.js planApply"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "프롬프트 관리자 › 켜짐 묶음 줄",
+      "title": "켜짐 묶음 저장",
+      "text": "지금 프롬프트 항목의 켜고 끈 상태를 이름 붙여 묶음으로 저장해요. 묶음은 프리셋마다 따로 기억하고 프리셋 파일은 안 건드려요.",
+      "ids": [],
+      "classes": [],
+      "texts": [
+        "지금 켜짐 상태를 묶음으로 저장"
+      ],
+      "scope": ".bl-ps-row",
+      "evidence": "src/quick/prompt-saves.js addSet"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "프롬프트 관리자 › 켜짐 묶음 줄",
+      "title": "켜짐 묶음 고치기",
+      "text": "묶음을 골라 지금 상태로 덮어쓰거나 이름을 바꾸고, 앞 · 뒤로 옮기거나 지워요. 지울 때는 한 번 더 물어요.",
+      "ids": [],
+      "classes": [],
+      "texts": [
+        "켜짐 묶음 고치기"
+      ],
+      "scope": ".bl-ps-row",
+      "evidence": "src/quick/prompt-saves.js manageMenu · setMenu"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "프리셋 고르기 목록 › 폴더 머리",
+      "title": "프리셋 폴더 접고 펴기",
+      "text": "이 폴더의 프리셋을 접거나 펼쳐요. 접은 상태는 기억하고, 지금 쓰는 프리셋이 든 폴더는 열 때마다 펼쳐져 있어요.",
+      "ids": [],
+      "classes": [
+        "bl-pfo-fold"
+      ],
+      "texts": [],
+      "scope": ".bl-pfo-menu",
+      "evidence": "src/quick/preset-folders.js setOpen · rowsHtml"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "프리셋 고르기 목록 › 폴더 머리",
+      "title": "프리셋 폴더 메뉴",
+      "text": "폴더 이름과 넣을 프리셋을 고치거나, 위 · 아래로 옮기거나, 폴더를 지워요. 폴더를 지워도 프리셋 파일은 그대로이고 폴더 밖으로 나와요.",
+      "ids": [],
+      "classes": [
+        "bl-pfo-more"
+      ],
+      "texts": [],
+      "scope": ".bl-pfo-menu",
+      "evidence": "src/quick/preset-folders.js folderMenu · dropFolder"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "프리셋 고르기 목록 › 맨 아래",
+      "title": "새 프리셋 폴더",
+      "text": "새 폴더를 만들어 이름을 붙이고 넣을 프리셋을 골라요. 다른 폴더에 있던 프리셋을 고르면 이 폴더로 옮겨 와요.",
+      "ids": [],
+      "classes": [
+        "bl-pfo-new"
+      ],
+      "texts": [],
+      "scope": ".bl-pfo-menu",
+      "evidence": "src/quick/preset-folders.js openEditor"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "입력줄 › 퀵 리플라이 줄 앞 책",
+      "title": "QR 책장",
+      "text": "모든 퀵 리플라이를 즐겨찾기 · 최근 · 이 봇 · 세계관 · 카테고리 칸으로 모아 보고 찾아서 눌러요. QR 마다 이름 · 설명 · 카테고리를 붙이거나 숨길 수 있어요(QR 원본은 그대로). 줄을 접어도 이 단추는 남아요. 설정 › 채팅 › 화면 › 퀵 리플라이에서 켜요.",
+      "ids": [
+        "bl-qr-shelf"
+      ],
+      "classes": [],
+      "texts": [],
+      "scope": "",
+      "evidence": "src/layout.js syncQrShelf; src/qr-shelf.js; src/qr-shelf-core.js"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "QR 책장 › 찾기 줄",
+      "title": "AI 정리",
+      "text": "이름 · 설명 · 카테고리가 빈 QR 을 모아 지금 연결된 모델에 한 번 보내 채워요. 보내기 전에 개수와 대략 토큰을 묻고, 받은 답은 미리 보기에서 고치거나 버릴 수 있어요. 누를 때만 보내요(요금이 들 수 있어요).",
+      "ids": [],
+      "classes": [
+        "bl-qrs-ai"
+      ],
+      "texts": [],
+      "scope": ".bl-qrs",
+      "evidence": "src/qr-shelf.js organize; src/qr-shelf-core.js aiMessages · aiParse"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "QR 책장 › QR 줄 별",
+      "title": "즐겨찾기",
+      "text": "이 QR 을 즐겨찾기 칸에 넣거나 빼요. 테마 설정에만 적어요.",
+      "ids": [],
+      "classes": [
+        "bl-qrs-fav"
+      ],
+      "texts": [],
+      "scope": ".bl-qrs",
+      "evidence": "src/qr-shelf.js toggleFav"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "QR 책장 › QR 줄 연필",
+      "title": "QR 이름 · 설명 고치기",
+      "text": "책장에서 보일 이름 · 한 줄 설명 · 카테고리를 적고, 책장에서 숨길지 정해요. 실리태번 QR 원본(이름표 · 내용)은 바꾸지 않아요. 결과 보관함을 연 확장이 있으면 답을 채팅 대신 보관함으로 보낼지도 골라요.",
+      "ids": [],
+      "classes": [
+        "bl-qrs-edit-btn"
+      ],
+      "texts": [],
+      "scope": ".bl-qrs",
+      "evidence": "src/qr-shelf.js editHtml · saveEdit"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "설정 › 확장 › 성능 보조 › 확장 충돌 검사",
+      "title": "확장 충돌 검사 열기",
+      "text": "설치된 확장끼리 같은 슬래시 명령 · 전역 이름 · 설정 칸 · 단추 id 를 쓰는지, 같은 함수를 덮어쓰는지 찾는 창을 열어요. 켜 둘 필요 없이 누를 때만 받아요. 입력창 /extconflict 로도 열려요.",
+      "ids": [],
+      "classes": [],
+      "texts": [
+        "검사 열기"
+      ],
+      "scope": ".bl-extcheck-card",
+      "evidence": "src/addons.js EXTCHECK_CARD · bindAddons; src/extcheck/index.js openExtCheck"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "확장 충돌 검사 창",
+      "title": "다시 검사",
+      "text": "켜진 확장의 JS · CSS 를 이 실리태번 서버에서 다시 읽어 겹치는 이름을 찾아요. 읽기만 하고 바깥으로 보내지 않아요. 링크 검사 중이었으면 설치된 것 전체 결과로 돌아가요.",
+      "ids": [],
+      "classes": [
+        "bl-xc-run"
+      ],
+      "texts": [],
+      "scope": ".bl-xc",
+      "evidence": "src/extcheck/index.js runLocal; src/extcheck/source.js readInstalled"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "확장 충돌 검사 창",
+      "title": "결과 복사",
+      "text": "걸린 항목을 문의 글로 복사해요. 확장 이름 · 파일 · 줄 번호와 설명만 들어가고 설정 · 채팅 · 코드 글은 들어가지 않아요.",
+      "ids": [],
+      "classes": [
+        "bl-xc-copy"
+      ],
+      "texts": [],
+      "scope": ".bl-xc",
+      "evidence": "src/extcheck/core.js reportText"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "확장 충돌 검사 창 › 링크로 설치 전 검사",
+      "title": "받을 곳 보기",
+      "text": "넣은 GitHub 주소에서 무엇을 어디서 받을지 먼저 보여 줘요. 이 단추는 아무것도 받지 않아요.",
+      "ids": [],
+      "classes": [
+        "bl-xc-plan"
+      ],
+      "texts": [],
+      "scope": ".bl-xc",
+      "evidence": "src/extcheck/source.js linkPlan"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "확장 충돌 검사 창 › 링크로 설치 전 검사",
+      "title": "받아서 검사",
+      "text": "GitHub(api.github.com · raw.githubusercontent.com)에서 그 확장의 manifest · JS · CSS 를 받아 지금 깔린 확장과 맞대 봐요. 설치는 하지 않고, 받은 코드는 실행하지 않아요.",
+      "ids": [],
+      "classes": [
+        "bl-xc-fetch"
+      ],
+      "texts": [],
+      "scope": ".bl-xc",
+      "evidence": "src/extcheck/source.js readGithub"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "확장 충돌 검사 창 › AI 검토",
+      "title": "AI 검토 보내기",
+      "text": "걸린 항목 주변 코드 조각만(최대 15건 · 약 3만 자) 고른 연결로 한 번 보내 항목마다 판정 · 쉬운 설명 · 해결 방법을 받아요. 프리셋 · 카드 · 채팅 · 키는 보내지 않고, 연결한 서비스 요금이 한 번 들어요. 처음 한 번은 동의 칸을 켜야 눌려요.",
+      "ids": [],
+      "classes": [
+        "bl-xc-ai"
+      ],
+      "texts": [],
+      "scope": ".bl-xc",
+      "evidence": "src/extcheck/index.js sendAi; src/extcheck/core.js aiRequest · parseAi"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "확장 충돌 검사 창",
+      "title": "코드 보기",
+      "text": "걸린 자리의 앞뒤 몇 줄을 펼쳐 보여 줘요. 이미 읽어 둔 파일에서 보여 주고, 바깥으로 보내지 않아요.",
+      "ids": [],
+      "classes": [
+        "bl-xc-code"
+      ],
+      "texts": [],
+      "scope": ".bl-xc",
+      "evidence": "src/extcheck/index.js showCode"
+    },
+    {
+      "area": "블루레몬에이드 애드온 단추",
+      "where": "API 연결 서랍 › 연결 상태 줄 끝 점",
+      "title": "API 서버 상태",
+      "text": "지금 연결(Chat Completion 소스 · 모델)의 회사 공식 상태 페이지가 알려 주는 서버 상태예요. 점 색: 포인트 = 정상 · 레몬 = 느림 · 점검 · 레몬에 빨간 테두리 = 부분 장애 · 빨강 = 큰 장애 · 회색 = 모름. 누르면 구성 요소 · 진행 중 사고 · 공식 상태 페이지 · 다른 공급자를 보여 줘요. 설정 › 채팅 › 기타 › API 연결에서 켜요.",
+      "ids": [
+        "bl-apistatus-dot"
+      ],
+      "classes": [],
+      "texts": [],
+      "scope": "",
+      "evidence": "src/api-status.js mount · render · openDialog; src/api-status-core.js"
     }
   ],
   "excluded": [

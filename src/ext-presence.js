@@ -13,9 +13,12 @@ export const OTHERS = {
     baibai: { label: '바이바이', folders: ['ST-BaiBai-Tools'], names: [/柏宝箱/, /baibai/i] },
     promptgroups: { label: '프롬프트 그룹', folders: ['SillyTavern-PromptFolders'], names: [/^프롬프트 그룹$/, /^Prompt Folders$/i] },
     chatsplus: { label: 'ChatsPlus', folders: ['SillyTavern-ChatPlus', 'stjchatMod'], names: [/^ChatsPlus\b/i] },
+    qrshelf: { label: 'QR 책장 확장', folders: ['kkangtong-QR-shelf'], names: [/^QR 책장$/] },   // 1.0.3
+    quickactions: { label: '편의성 모음', folders: ['ST-QuickActions'], names: [/^QuickActions\b/i, /^편의성 모음/] },   // 1.0.3 편의 기능과 같은 일을 하는 확장
 };
 /** 우리 기능 → 그 기능과 겹치는 확장 (켜져 있으면 쉰다) */
-export const OVERLAP = { lazyAvatars: ['baibai'], worldInfoLight: ['baibai'], searchIme: ['baibai'], codePlain: ['cocktail'], promptFolders: ['promptgroups'], chatOrganizer: ['chatsplus'] };
+export const OVERLAP = { lazyAvatars: ['baibai'], worldInfoLight: ['baibai'], searchIme: ['baibai'], codePlain: ['cocktail'], promptFolders: ['promptgroups'], chatOrganizer: ['chatsplus'], qrShelf: ['qrshelf'],
+    quickSelEdit: ['quickactions'], quickMesDelete: ['quickactions'], quickRangeDelete: ['quickactions'], promptSaves: ['quickactions'], presetFolders: ['quickactions'] };
 
 /**
  * 순수 판정: 설치돼 있고 꺼져 있지 않은 확장. names = extensionNames · disabled = disabledExtensions · manifestOf(폴더) → manifest 또는 null

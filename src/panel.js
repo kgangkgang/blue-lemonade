@@ -16,11 +16,14 @@ import { bindAddonLayout } from './addon-layout.js';
 import { markPopup } from './popup-marks.js';
 import { titleBadgesHtml } from './version-pill.js';   // 1.0.0 바탕: 제목 옆 판 알약 · ⓒ (공지 · 새 판 · 출처 창)
 import { typesetRoot } from './typography.js';
-import { addonMarkup, addonsNeedReload, bindAddons, syncRegexlinkFlag, syncAddonIcons, setAddonCredits, setNotesVersion } from './addons.js';
+import { addonMarkup, addonsNeedReload, bindAddons, syncRegexlinkFlag, syncAddonIcons, setAddonCredits, setNotesVersion, setPerfTail } from './addons.js';
 import { NOTES_VERSION } from './addons/notes/version.js';   // 1.0.0 되살림: 메모 카드 판 알약
 setNotesVersion(NOTES_VERSION);
 import { addonCreditHtml } from './addon-credits.js';   // 1.0.0 바탕: 애드온 카드 꼬리 출처 줄
 setAddonCredits(addonCreditHtml);
+// 1.0.3 확장 충돌 검사(src/extcheck/) — 9.0.0 에 걷은 「확장 충돌 진단」 자리. 켜 두는 기능이 아니라 누를 때만 받는 도구라 켜기 스위치 · 상태 줄이 없어요
+const EXTCHECK_CARD = `<section class="bl-addon-group-tool bl-extcheck-card" data-search-anchor="확장 충돌 검사"><div class="bl-addon-header"><h3><i class="fa-solid fa-puzzle-piece" aria-hidden="true"></i> 확장 충돌 검사</h3></div><p class="salty-note">설치된 확장끼리 같은 슬래시 명령 · 전역 이름 · 설정 칸 · 단추 id 를 쓰는지, 같은 함수를 덮어쓰는지 찾아요. 켜 둘 필요 없이 누를 때만 받아요. GitHub 주소로 설치 전 검사 · AI 검토(선택)도 돼요. 입력창 /extconflict 로도 열려요.</p><button type="button" class="salty-btn bl-tool-primary" data-extcheck-open><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> 검사 열기</button></section>`;
+setPerfTail(EXTCHECK_CARD);
 import { wordToolsMarkup, bindWordTools } from './word-tools.js';   // 1.0.0 되살림: 단어 치환 · 잠시 가리기 · 채팅 캡처 페이지(8.2.5 그대로 한 모듈)
 import { bindEditor, openEditorCatalog, arrangeEditor, revealEditorTarget, selectEditorGroup } from './settings-editor.js';
 import { openFoldsFor } from './settings-advanced.js';
@@ -871,11 +874,13 @@ function regexStage() {
 // 한 손 버튼 줄을 켜면 입력창 위에 버튼 알약이 선다. 모양은 팔레트 변수만 (css/31-styles-panel.css)
 function phoneMock(s) {
     const lines = widths => `<p>${widths.map(w => (w < 0 ? `<i class="q" style="width:${-w}%"></i>` : `<i style="width:${w}%"></i>`)).join('')}</p>`;
-    const buttons = s.onehand?.on ? ['swipe', 'swipe', '', 'imp', 'cont', 'regen'].filter(key => !key || s.onehand[key] !== false).map(key => (key ? '<b></b>' : '<span></span>')).join('') : '';
+    const keys = ['swipe', 'swipe', '', 'top', 'bottom', 'jump', 'delLast', '', 'imp', 'cont', 'regen'].filter(key => !key || s.onehand?.[key] !== false);
+    const buttons = s.onehand?.on ? keys.map(key => (key ? '<b></b>' : '<span></span>')).join('') : '';
+    const many = keys.filter(Boolean).length > 7;
     return `<div class="salty-phonemock${s.reader?.autoHide ? ' is-reader' : ''}${s.onehand?.on ? ' is-onehand' : ''}" aria-hidden="true" inert>
         <div class="pm-body"><div class="pm-scroll">${lines([96, 90, 62])}${lines([-84, -58])}${lines([94, 88, 91, 40])}${lines([-76])}${lines([92, 86, 70])}${lines([95, 60])}</div></div>
         <div class="pm-top"><i></i><i></i><i></i><i></i><i></i></div>
-        <div class="pm-form">${buttons ? `<div class="pm-onehand">${buttons}</div>` : ''}<div class="pm-input"><i></i><u></u></div></div>
+        <div class="pm-form">${buttons ? `<div class="pm-onehand${many ? ' is-many' : ''}">${buttons}</div>` : ''}<div class="pm-input"><i></i><u></u></div></div>
     </div>`;
 }
 
@@ -1572,12 +1577,22 @@ function tabChat(s, sub) {
         </div>
         ${cap('프롬프트 관리자')}<div class="salty-group">
             ${row('프롬프트 폴더', toggle('promptFolders.on', s.promptFolders?.on !== false), `프롬프트 목록 아래 도구 줄의 폴더 단추로 항목을 폴더로 묶어 접고 펼쳐요 · 머리 줄에서 켜진 수 · 토큰 합 · 모두 켜기 · 하나만 켜기(택1) · 구분선으로 자동 만들기 · 줄과 보내는 순서는 그대로이고 끌어 옮기면 놓인 자리의 폴더로 들어가요 · 폴더는 프리셋마다 따로 기억해요${restNote('promptFolders')}`)}
+            ${row('프롬프트 켜짐 묶음', toggle('promptSaves.on', s.promptSaves?.on === true), `프롬프트 목록 위에 칩 줄 · 「＋」로 지금 켜고 끈 상태를 이름 붙여 저장하고, 칩을 누르면 한 번에 그 상태로 돌아가요(알림의 ↶ 로 되돌리기) · ✎ 로 덮어쓰기 · 이름 바꾸기 · 순서 · 지우기 · 묶음은 프리셋마다 따로 기억하고 프리셋 파일은 안 건드려요${restNote('promptSaves')}`)}
+            ${row('프리셋 목록 폴더', toggle('presetFolders.on', s.presetFolders?.on === true), `프리셋 고르기 칸(채팅 완성)을 누르면 폴더로 묶인 목록이 떠요 · 폴더 머리를 눌러 접고 펴고, ⋯ 로 이름 · 넣을 프리셋 · 순서 · 폴더 지우기 · 맨 아래 「새 폴더」 · 프리셋 파일은 그대로이고 폴더만 테마 설정에 기억해요${restNote('presetFolders')}`)}
         </div>
         ${cap('캐릭터 관리')}<div class="salty-group">
             ${row('최근 채팅 · 채팅 폴더', toggle('chatOrganizer.on', s.chatOrganizer?.on === true), `캐릭터 관리 서랍 위에 「캐릭터 · 최근 채팅 · 폴더」 탭을 더해요 · 캐릭터를 넘나드는 최근 대화를 찾고 고정하고, 채팅을 폴더로 묶고(하위 폴더 3단), 여러 채팅을 골라 폴더로 옮기거나 지워요 · 지울 때는 두 번 물어요 · 켤 때만 불러와요${restNote('chatOrganizer')}`)}
         </div>
+        ${cap('API 연결')}<div class="salty-group">
+            ${row('API 서버 상태', toggle('apiStatus.on', s.apiStatus?.on === true), `API 연결 서랍의 연결 상태 줄 끝에 지금 연결(Chat Completion 소스 · 모델)의 공식 서버 상태를 작은 점으로 보여 줘요 · 누르면 구성 요소 · 진행 중 사고 · 공식 상태 페이지 · 다른 공급자를 한눈에 · 생성이 실패했을 때 공식 상태도 나쁘면 알림에 한 줄을 붙여요 · 켜 두면 각 회사 공식 상태 페이지(status.claude.com 등 바깥 주소)를 창을 열 때 · 생성이 실패했을 때 · 10분마다(탭이 숨으면 쉼) 읽어요 — 대화 · 키 · 사용자 정보는 보내지 않아요`)}
+        </div>
         ${cap('로그 복사')}<div class="salty-group">
             ${row('로그 복사', toggle('logCopy.on', s.logCopy?.on !== false), '채팅에서 글을 끌어 고르면 뜨는 줄에 「로그 복사」 · 받는 쪽에 같은 글꼴이 없으면 비슷한 기본 글꼴로 보여요')}
+        </div>
+        ${cap('메시지 편의')}<div class="salty-group">
+            ${row('고른 글 고치기', toggle('quick.selEdit', s.quick?.selEdit === true), `채팅에서 글을 끌어 고르면 뜨는 줄에 「고치기」 · 고른 부분의 원래 글만 작은 창에서 고쳐요(메시지 전체 편집을 안 열어도 돼요) · 자리가 확실하지 않으면 고치지 않고 알려 줘요 · 번역문이 있는 메시지는 번역기의 「번역문 수정」으로 · 고친 뒤 알림의 ↶ 로 되돌려요${restNote('quickSelEdit')}`)}
+            ${row('연필 옆 지우기 단추', toggle('quick.mesDelete', s.quick?.mesDelete === true), `메시지 이름 줄의 연필(편집) 앞에 휴지통을 둬요 · 확인 창을 거쳐 지워요 · 한 번 누르면 실리태번 확인 창이 뜨고, 다른 답이 여럿인 마지막 답이면 스와이프만 지울지도 골라요 · 답을 만드는 중에는 안 지워요${restNote('quickMesDelete')}`)}
+            ${row('메시지 범위 지우기', toggle('quick.rangeDelete', s.quick?.rangeDelete !== false), `옵션 메뉴(☰)의 「메시지 삭제」 아래에 「범위 지우기」 · 처음 메시지와 끝 메시지를 누르면 그 사이만 지워요(실리태번 기본은 누른 메시지부터 끝까지) · 지우기 전에 몇 개인지 한 번 더 물어요${restNote('quickRangeDelete')}`)}
         </div>
         ${cap('단추 설명')}<div class="salty-group">
             ${row('단추 길게 누르면 설명 보기', toggle('longpressHelp', s.longpressHelp !== false), '실리태번 · 테마 단추를 꾹 누르면 무슨 기능인지 작은 창으로 알려 줘요 · PC 는 마우스를 올려 두면 풍선 글로 보여요 · 짧게 누르면 원래 동작 그대로예요')}
@@ -1645,6 +1660,7 @@ function tabChat(s, sub) {
             ${row('하위 목록 단추에 세트 이름', toggle('chat.qrCtxNames', s.chat.qrCtxNames === true), '하위 세트를 묶은 QR 은 오른쪽 ⋮ 를 누르면 목록이 열려요. 켜면 ⋮ 대신 그 세트 이름을 보여요')}
             ${row('QR 검색 버튼', toggle('chat.qrFind', s.chat.qrFind !== false), '실리태번의 QR 사용하기를 켰을 때만 보여요. 과일·데우스 빠른 설정은 이 조건에 포함하지 않아요')}
             ${row('QR 접기 단추', toggle('chat.qrFold', s.chat.qrFold !== false), '줄 앞에 접기 · 펴기 단추를 둬요. 접으면 단추만 남고 퀵 리플라이 버튼은 숨어요 · 접힌 상태는 기억해요')}
+            ${row('QR 책장', toggle('qrShelf.on', s.qrShelf?.on === true), `줄 앞에 책 단추를 둬요 · 누르면 모든 QR 을 즐겨찾기 · 최근 · 이 봇 · 세계관 · 카테고리 칸으로 모아 찾고 눌러요(줄을 접어도 책 단추는 남아요) · QR 마다 이름 · 설명 · 카테고리를 붙이고 숨길 수 있어요(테마 설정에만 적고 QR 원본은 그대로) · 「AI 정리」는 누를 때만, 보낼 개수 · 토큰을 묻고 지금 연결로 한 번 보내요 · 다른 확장이 결과 보관함을 열어 두면 답을 채팅 대신 보관함으로 보낼 수도 있어요${restNote('qrShelf')}`)}
             ${stack('자리', seg('chat.qrPlace', [['bottom', '입력창 아래'], ['top', '입력창 위']], 'bottom'), '입력창 옆에 아이콘이 많으면 위가 넓어요')}
             ${stack('넘기기', seg('chat.qrScroll', [['x', '가로 스크롤'], ['y', '세로 스크롤']]))}
             ${s.chat.qrScroll === 'y' ? slider('chat.qrRows', '보이는 줄', 1, 4, 1, 2) : ''}
@@ -1691,8 +1707,8 @@ function tabChat(s, sub) {
         ${cap('폰')}<div class="salty-group">
             <div class="bl-inline-preview" data-pv="phone">${phoneMock(s)}</div>
             ${row('스크롤하면 바 숨기기', toggle('reader.autoHide', !!s.reader?.autoHide), '아래로 읽으면 숨고, 위로 올리거나 누르면 나와요')}
-            ${row('한 손 버튼 줄', toggle('onehand.on', !!s.onehand?.on), '입력창 위에 스와이프 · 사칭 · 이어 쓰기 · 다시 생성')}
-            ${s.onehand?.on ? stack('버튼', chips([['onehand.swipe', '스와이프'], ['onehand.imp', '사칭'], ['onehand.cont', '이어 쓰기'], ['onehand.regen', '다시 생성']], 'bl-seg-2col')) : ''}
+            ${row('한 손 버튼 줄', toggle('onehand.on', !!s.onehand?.on), '입력창 위에 스와이프 · 맨 위 · 맨 아래 · 번호로 가기 · 마지막 메시지 지우기 · 사칭 · 이어 쓰기 · 다시 생성')}
+            ${s.onehand?.on ? stack('버튼', chips([['onehand.swipe', '스와이프'], ['onehand.top', '맨 위로'], ['onehand.bottom', '맨 아래로'], ['onehand.jump', '번호로 가기'], ['onehand.delLast', '마지막 지우기'], ['onehand.imp', '사칭'], ['onehand.cont', '이어 쓰기'], ['onehand.regen', '다시 생성']], 'bl-seg-2col')) : ''}
             ${stack('백그라운드에서도 계속 (실험)', segMulti('bgWindow.on', [['off', '끔', { 'bgWindow.on': false }], ['audio', '소리 없이', { 'bgWindow.on': true, 'bgWindow.mode': 'audio' }], ['pip', '작은 창', { 'bgWindow.on': true, 'bgWindow.mode': 'pip' }]], !s.bgWindow?.on ? 'off' : s.bgWindow.mode === 'pip' ? 'pip' : 'audio'), '답을 기다리는 동안 다른 앱을 봐도 생성 · 번역이 멈추지 않게 해요. 보내기 · 스와이프를 누를 때 켜지고 끝나면 꺼져요. 소리 없이: 귀에 안 들리는 아주 작은 소리로 브라우저가 탭을 재우지 못하게 해요(폰에 따라 안 통할 수 있어요). 작은 창: 진행 상황이 보이는 작은 창(PIP)이 떠요 — 가장 확실하지만 창이 화면에 남아요')}
             ${row('답이 오면 알려 주기', toggle('replyNotify.on', !!s.replyNotify?.on && globalThis.Notification?.permission === 'granted'), '다른 앱을 보고 있을 때 답이 끝나면 알림 · 진동으로 알려요. 처음 켤 때 브라우저가 알림 허용을 물어요. 화면을 보고 있을 땐 알리지 않아요')}
         </div>`;
@@ -2177,6 +2193,8 @@ function render(root) {
     for(const stage of Object.values(root._pv || {}))if(!stage.isConnected)stage._blWeather?.destroy();
     typesetRoot(root);
     bindAddons(root, refreshPanels);
+    // 1.0.3 확장 충돌 검사: 누를 때만 검사 창 모듈을 받아요(켜고 끄기 없음 · 열기 전에는 받는 모듈 · 리스너 0)
+    for (const button of root.querySelectorAll('[data-extcheck-open]')) button.onclick = async () => { try { (await import('./extcheck/index.js')).openExtCheck(); } catch (error) { console.warn('[Blue Lemonade] 확장 충돌 검사', error); globalThis.toastr?.warning('확장 충돌 검사 창을 열지 못했어요.'); } };
     root._scriptsCleanup=bindPromptTools(root);
     bindWordTools(root, refreshPanels);
     bindSceneSound(root, update, refreshPanels);   // 6.9.8 장면 소리: 들어 보기 · 내 파일 올리기 · 스위치를 켜면 아래 줄 그리기

@@ -9,7 +9,7 @@ export const zeroSkips = (s, name) => zeroMode(s) && !ZERO_LOOK.has(name);
 export function zeroView(s) {
     if (!zeroMode(s)) return s;
     const off = (o, key = 'on') => ({ ...(o || {}), [key]: false });
-    return { ...s, deus: off(s.deus), reader: off(s.reader, 'autoHide'), onehand: off(s.onehand), sceneSound: off(s.sceneSound), replyNotify: off(s.replyNotify), bgWindow: off(s.bgWindow), multiAvatar: off(s.multiAvatar), logCopy: off(s.logCopy), searchAi: off(s.searchAi), fruitTypography: off(s.fruitTypography),
+    return { ...s, deus: off(s.deus), reader: off(s.reader, 'autoHide'), onehand: off(s.onehand), sceneSound: off(s.sceneSound), replyNotify: off(s.replyNotify), bgWindow: off(s.bgWindow), multiAvatar: off(s.multiAvatar), logCopy: off(s.logCopy), searchAi: off(s.searchAi), qrShelf: off(s.qrShelf), fruitTypography: off(s.fruitTypography),
         chat: { ...(s.chat || {}), weather: 'off', demSkin: false, triangleFold: false, streamFade: false, toneInline: false, mesPins: [] } };
 }
 // 처리기마다 저장값을 읽어요(끄면 새로고침 전에도 멈춤)

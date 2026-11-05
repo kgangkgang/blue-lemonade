@@ -165,7 +165,7 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list.bl-pf-on >
   background: var(--pm-alt);
 }
 
-/* 편집 창: 공용 고르기 창(css/78)에 이름 칸 하나 — 찾기 칸과 같은 폭 · 여백, 면 · 선은 입력칸 I2(css/95) */
+/* 편집 창(1.0.3 폴더 창도 같은 틀): 공용 고르기 창(css/78)에 이름 칸 하나 — 찾기 칸과 같은 폭 · 여백, 면 · 선은 입력칸 I2(css/95) */
 dialog.bl-prompt-card-picker.bl-pf-editor [data-pf-name] {
   width: 100%;
   min-width: 0;
@@ -207,3 +207,146 @@ dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-place > select {
   min-width: 0;
   margin: 0;
 }
+
+/* ===== 1.0.3 폴더 창: 한 창 두 목록 — 「폴더」(넓으면 왼쪽 · 좁으면 위) · 「모든 항목」(넓으면 오른쪽 · 좁으면 아래)
+   창 높이는 고정(찾기 · 접기로 창이 들썩이지 않게), 두 목록이 각자 스크롤. 면 · 선 · 고른 줄은 공용 고르기 창(css/78) 그대로, 색은 팔레트 변수만 */
+dialog.bl-prompt-card-picker.bl-pf-editor {
+  height: min(calc(100dvh - 24px), 720px);
+  max-height: calc(100dvh - 24px);
+}
+@media (min-width: 720px) {
+  dialog.bl-prompt-card-picker.bl-pf-editor { width: min(56rem, calc(100vw - 48px)); }
+}
+/* 제목: 긴 폴더 이름은 줄을 바꿔 다 보여요(위 · 아래가 잘리지 않게 줄 높이 그대로) — 닫기 × 는 첫 줄 끝 */
+dialog.bl-prompt-card-picker.bl-pf-editor > header { align-items: flex-start; }
+dialog.bl-prompt-card-picker.bl-pf-editor > header > h3 {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-top: 6px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-fields {
+  display: flex;
+  align-items: center;
+  gap: var(--bl-s2);
+  flex: none;
+  min-width: 0;
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-fields > [data-pf-name] { flex: 1 1 0; width: auto; }
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bl-s2);
+  flex: none;
+  min-height: var(--bl-h-ctl, 36px);
+  margin: 0;
+  white-space: nowrap;
+  cursor: pointer;
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-pick > input { margin: 0; }
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--bl-s3);
+}
+@media (min-width: 720px) {
+  dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  min-height: 0;
+  padding: 6px;
+  border: 1px solid var(--salty-line);
+  border-radius: var(--bl-r-sm, 8px);
+  box-sizing: border-box;
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-pane > .bl-prompt-card-list { flex: 1 1 0; scrollbar-width: none; }
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-pane > .bl-prompt-card-list::-webkit-scrollbar { display: none; }
+/* 폴더 줄(접는 줄): 누르면 그 폴더를 골라요 · 고른 폴더를 다시 누르면 접고 펼쳐요. 고른 폴더 = 고른 줄과 같은 옅은 면 + 색 선 */
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-sec {
+  display: flex;
+  align-items: center;
+  gap: var(--bl-s2);
+  width: 100%;
+  flex: none;
+  min-height: var(--bl-h-ctl, 36px);
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--bl-r-sm, 8px);
+  background: var(--salty-raised);
+  color: var(--salty-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-sec[aria-current="true"] { background: var(--salty-accent-10, var(--salty-raised)); border-color: var(--salty-accent); }
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-sec > i { flex: none; width: 12px; font-size: 12px; color: var(--salty-faint); }
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-sec > b { flex: 1 1 auto; min-width: 0; font-weight: 650; overflow-wrap: anywhere; }
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-sec > small {
+  flex: none;
+  font-size: var(--bl-fs-sub);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--salty-muted);
+}
+/* 항목 줄: 이름 + 아이콘만 단추 셋(위 · 아래 · 빼기, 34 · 상자 없음) — 폴더 안이라 한 칸(12) 들여요 */
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  min-height: var(--bl-h-ctl, 36px);
+  padding-left: calc(10px + var(--bl-s3));
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-sec.bl-pf-d1 { width: calc(100% - var(--bl-s3)); margin-left: var(--bl-s3); }
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-item.bl-pf-d1 { padding-left: calc(10px + var(--bl-s6, 24px)); }
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-item > span { flex: 1 1 auto; min-width: 0; margin-right: var(--bl-s2); overflow-wrap: anywhere; }
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-item > span.bl-pf-rule { margin-right: 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; overflow-wrap: normal; }   /* 1.0.3 구분선 이름은 한 줄(폰 360 에서 선이 두 줄로 꺾이던 것) */
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-ib {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--bl-ui-icon, 34px);
+  height: var(--bl-ui-icon, 34px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--bl-ui-radius, 8px);
+  background: transparent;
+  box-shadow: none;
+  color: var(--salty-muted);
+  font-size: var(--bl-ui-ink-fa, 12.5px);
+  cursor: pointer;
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-ib[disabled] { opacity: 0.35; cursor: default; }
+@media (hover: hover) {
+  dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-ib:not([disabled]):hover { background: var(--bl-fill-hover, var(--bl-hover)); color: var(--salty-text); }
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-ib:not([disabled]):active { background: var(--bl-fill-press-bg, var(--bl-press-bg)); }
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-left > p {
+  margin: 0;
+  padding: 4px 10px 8px calc(10px + var(--bl-s3));
+  font-size: var(--bl-fs-sub);
+  color: var(--salty-muted);
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--bl-s2);
+  flex: none;
+  align-self: flex-start;
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-place[hidden] { display: none; }
+/* 1.0.3 메뉴 줄이 화면 아래 남은 칸보다 많아 스크롤될 때도 스크롤 칸이 글 폭을 먹지 않게(스크롤바 숨김 규칙) */
+body.salty .bl-pf-menu { scrollbar-width: none; }
+body.salty .bl-pf-menu::-webkit-scrollbar { display: none; }

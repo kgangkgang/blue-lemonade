@@ -231,7 +231,7 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 
 /* Group related tools without changing their saved settings. */
 .bl-addon-group { display:flex; flex-direction:column; gap:12px; min-width:0; }
-.bl-addon-group-tool { padding:12px; border:0; border-radius:var(--bl-r-md,12px); background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:var(--bl-e1); }
+.bl-addon-group-tool { padding:10px; border:1px solid var(--salty-line); border-radius:var(--bl-r-md,12px); background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:none; }   /* 1.0.3 확장 충돌 검사 카드 — 설정 안 다른 카드와 같은 모양(UI 전수조사 부품 변형) */
 .bl-addon-group-tool .bl-addon-header { border:0; margin-bottom:10px; }
 .bl-addon-group-tool .salty-note { margin:6px 0 16px; }
 

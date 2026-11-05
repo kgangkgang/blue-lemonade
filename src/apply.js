@@ -12,6 +12,7 @@ import { comparisonView } from './appearance-compare.js';
 import { weatherReadability } from './weather-readability.js';
 import { themeEnabled, addonsEnabled, puffyMode, checkboxTokens, zeroSkips, zeroView } from './usage-mode.js';
 import { syncFeatures } from './features.js';
+import { restingFor } from './ext-presence.js';
 import { markdownClasses, markdownVariables } from './markdown.js';
 import { frameReady, trackLate } from './boot-layers.js';
 // 그리기 모듈은 첫 프레임 뒤에 받고, 도착하면 가장 최근 설정을 적용해요.
@@ -695,6 +696,7 @@ export function applyAll() {
         if (s.chat.qrFold === false) want.add('salty-qr-fold-off');   // 1.0.1 QR 줄 접기 단추 끔 (layout.js syncQrFold)
         if (s.chat.qrFolded === true) want.add('salty-qr-folded');   // 1.0.1 QR 줄 접힘 — 접기 단추만 남고 버튼은 숨김 (css/35-qr-bar.css)
         if (s.chat.qrCtxNames === true) want.add('salty-qr-ctx-names');   // 7.9.7 QR ⋮ 자리에 하위 세트 이름 (layout.js syncQrTitles)
+        if (s.qrShelf?.on === true && s.usageMode !== 'extensions' && !restingFor('qrShelf')) want.add('salty-qr-shelf');   // 1.0.3 QR 책장 (layout.js syncQrShelf)
         if (s.chat.personaTall) want.add('salty-persona-tall');
         if (s.chat.hideSendTextarea) want.add('salty-send-textarea-off'); // 8.2.5 채팅 입력칸 숨기기 — 단추 줄만 남김 (css/04-send-form.css)
         if (s.chat.helpMarks === false) want.add('salty-help-off'); // 6.1.5 설명 ? 단추 숨기기

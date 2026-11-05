@@ -1,0 +1,159 @@
+/* 1.0.3 API 서버 상태 (src/api-status.js) — 켤 때만 받아요. 색은 팔레트 변수만:
+   정상 = 포인트(테마의 「연결됨」 점과 같은 색) · 느림 · 점검 = 레몬 · 부분 장애 = 레몬 + 위험 테두리 · 큰 장애 = 위험 · 모름 = 흐린 글자색 */
+
+/* ── 연결 상태 줄 끝의 점 ── */
+#openai_api .online_status > .bl-apistatus-dot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 0 auto;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--bl-r-sm, 8px);
+  background: transparent;
+  box-shadow: none;
+  color: var(--salty-muted);
+  font: inherit;
+  font-size: var(--bl-fs-ctl, inherit);
+  line-height: 1.3;
+  white-space: nowrap;
+  cursor: pointer;
+  flex: 0 1 auto;
+  max-width: 55%;
+}
+/* 이름이 둘 붙은 긴 표시(「Claude · Google AI Studio · 부분 장애」)는 점 칸이 줄을 다 먹어 왼쪽 상태 글이 글자 단위로 꺾였어요 → 점 칸은 줄 폭 절반 남짓까지, 넘는 이름은 … (전체는 누르면 창에) */
+#openai_api .online_status > .bl-apistatus-dot > .bl-as-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* 누르는 칸 44px (보이는 칸은 34) */
+#openai_api .online_status > .bl-apistatus-dot::before {
+  content: "";
+  position: absolute;
+  inset: -5px 0;
+}
+#openai_api .online_status > .bl-apistatus-dot:hover { background: var(--bl-hover, var(--salty-shade)); color: var(--salty-text); }
+#openai_api .online_status > .bl-apistatus-dot:focus-visible { outline: 1px solid var(--salty-accent); outline-offset: 1px; }
+#openai_api .online_status > .bl-apistatus-dot:not([data-level="ok"], [data-level="unknown"]) { color: var(--salty-text); font-weight: 650; }
+
+/* ── 점 ── */
+.bl-as-pip {
+  flex: none;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  background: var(--salty-faint);
+}
+:is(.bl-apistatus-dot, .bl-as-card, .bl-as-other)[data-level="ok"] > .bl-as-pip, .bl-as-pip[data-level="ok"] { background: var(--salty-accent); }
+:is(.bl-apistatus-dot, .bl-as-card, .bl-as-other)[data-level="slow"] > .bl-as-pip, .bl-as-pip[data-level="slow"],
+:is(.bl-apistatus-dot, .bl-as-card, .bl-as-other)[data-level="maint"] > .bl-as-pip, .bl-as-pip[data-level="maint"] { background: var(--salty-lemon); }
+:is(.bl-apistatus-dot, .bl-as-card, .bl-as-other)[data-level="partial"] > .bl-as-pip, .bl-as-pip[data-level="partial"] { background: var(--salty-lemon); border: 2px solid var(--salty-danger); }
+:is(.bl-apistatus-dot, .bl-as-card, .bl-as-other)[data-level="major"] > .bl-as-pip, .bl-as-pip[data-level="major"] { background: var(--salty-danger); }
+
+/* 정상일 때만 아주 작게 숨 쉬어요 (움직임 줄이기 · 실리태번 「애니메이션 끄기」면 멈춰요) */
+@keyframes bl-as-breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .55; transform: scale(.82); }
+}
+.bl-apistatus-dot[data-level="ok"]:not([data-still]) > .bl-as-pip { animation: bl-as-breathe 3.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .bl-apistatus-dot > .bl-as-pip { animation: none !important; }
+}
+
+/* ── 위 막대 플러그 아이콘: 나쁠 때만 작은 점 ── */
+#API-status-top[data-bl-apistatus] { position: relative; }
+#API-status-top[data-bl-apistatus]::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  right: 1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--salty-bg);
+  background: var(--salty-lemon);
+  pointer-events: none;
+}
+#API-status-top[data-bl-apistatus="partial"]::after { border: 2px solid var(--salty-danger); }
+#API-status-top[data-bl-apistatus="major"]::after { background: var(--salty-danger); }
+
+/* ── 작은 창 ── */
+.bl-tool-dialog.bl-apistatus-dialog { width: min(420px, calc(100vw - 24px)); padding: 12px; }
+.bl-apistatus-dialog .bl-as-title { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+.bl-apistatus-dialog .bl-as-title > i { color: var(--salty-muted); font-size: 0.9em; }
+.bl-apistatus-dialog .bl-as-body { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: calc(100dvh - 140px); scrollbar-width: none; }
+.bl-apistatus-dialog .bl-as-body::-webkit-scrollbar { display: none; }
+.bl-apistatus-dialog p { margin: 0; line-height: 1.55; }
+
+.bl-as-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--salty-line);
+  border-radius: var(--bl-r-sm, 8px);
+  background: var(--bl-card, var(--salty-surface));
+}
+.bl-as-card .bl-as-head { display: flex; align-items: center; gap: 8px; }
+.bl-as-card .bl-as-head > .bl-as-pip { width: 10px; height: 10px; }
+.bl-as-card .bl-as-line { color: var(--salty-text); }
+.bl-as-card:is([data-level="partial"], [data-level="major"]) .bl-as-line { font-weight: 650; }
+.bl-as-comps, .bl-as-incs ul, .bl-as-others { list-style: none; margin: 0; padding: 0; }
+.bl-as-comps { display: flex; flex-direction: column; gap: 2px; }
+.bl-as-comps li { display: flex; align-items: center; gap: 8px; min-height: 24px; font-size: var(--bl-fs-ctl, 0.92em); }
+.bl-as-comps .bl-as-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.bl-as-comps small, .bl-as-others small { color: var(--salty-muted); white-space: nowrap; }
+.bl-as-incs li { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; }
+.bl-as-incs li > .bl-as-pip { margin-top: 0.45em; }
+.bl-as-incs li > div { display: flex; flex-direction: column; min-width: 0; }
+.bl-as-incs b { font-weight: 650; overflow-wrap: anywhere; }
+.bl-as-incs small { color: var(--salty-muted); }
+.bl-apistatus-dialog .bl-as-cap { color: var(--salty-muted); font-size: var(--bl-fs-ctl, 0.92em); font-weight: 650; }
+.bl-apistatus-dialog .bl-as-note { color: var(--salty-muted); font-size: var(--bl-fs-ctl, 0.92em); }
+.bl-as-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; color: var(--salty-muted); font-size: var(--bl-fs-ctl, 0.92em); }
+.bl-apistatus-dialog a.bl-as-page {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  margin-left: auto;
+  color: var(--salty-accent);
+  font-weight: 650;
+  text-decoration: none;
+}
+.bl-apistatus-dialog a.bl-as-page::before { content: ""; position: absolute; inset: -5px 0; }
+.bl-apistatus-dialog a.bl-as-page > i { font-size: 0.8em; }
+
+/* 다른 공급자: 같은 폭 2열 */
+.bl-as-others { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 8px; }
+.bl-as-others a.bl-as-other {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--salty-line);
+  border-radius: var(--bl-r-sm, 8px);
+  background: var(--bl-control, var(--salty-surface));
+  box-shadow: none;
+  color: var(--salty-text);
+  text-decoration: none;
+}
+.bl-as-others a.bl-as-other:hover { background: var(--bl-control-hover, var(--salty-shade)); }
+.bl-as-others .bl-as-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (pointer: coarse) {
+  .bl-as-others a.bl-as-other { min-height: 44px; }
+}
+.bl-apistatus-dialog .bl-as-foot { color: var(--salty-faint); font-size: var(--bl-fs-ctl, 0.88em); }
+.bl-apistatus-dialog .bl-as-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.bl-apistatus-dialog .bl-as-actions .salty-btn { min-height: 40px; }
+@media (pointer: fine) {
+  .bl-apistatus-dialog .bl-as-actions .salty-btn { min-height: 44px; }
+}
+
+/* ── 생성 실패 알림에 붙는 한 줄 ── */
+.bl-apistatus-toastline { margin-top: 6px; font-weight: 650; }

@@ -248,9 +248,11 @@ export function setAddonCredits(fn) { creditOf = typeof fn === 'function' ? fn :
 const RELOAD_ADDONS=['order','perf','models','modelswitch','regexlink','rewrite','direction','bookmarks','notes','zipinstall','assets','translator','prompt','prompt-template','customstyle','mermaid','tts',...EMBEDDED_PRIVATE];
 // 처음 쓸 때 시작하는 애드온(LATE_ADDONS)은 아직 안 돌아도 켜진 애드온이에요 — 첫 사용 전에 「새로고침 필요」로 세지 않아요
 export const addonsNeedReload = s => switchNeedsReload(s, new Set([...running, ...(lateStarted ? [] : lateIds)]), RELOAD_ADDONS);
+let perfTail='';   // 1.0.3 성능 보조 맨 아래 칸 — 설정 창(panel.js)이 넘겨요
+export function setPerfTail(html){perfTail=String(html||'');}
 export function addonMarkup(s,id,nested=false){
     if(!nested && id==='models') return `<div class="bl-addon-group"><h3>모델 관리</h3>${addonMarkup(s,'models',true)}${addonMarkup(s,'modelswitch',true)}</div>`;
-    if(!nested && id==='perf') return `<div class="bl-addon-group">${addonMarkup(s,'perf',true)}${addonMarkup(s,'regexlink',true)}</div>`;
+    if(!nested && id==='perf') return `<div class="bl-addon-group">${addonMarkup(s,'perf',true)}${addonMarkup(s,'regexlink',true)}${perfTail}</div>`;
     const on=!!s.addons[id],needsReload=RELOAD_ADDONS.includes(id)&&on!==(running.has(id)||!lateStarted&&lateIds.includes(id));
     // 7.0.5 프롬프트 템플릿: 켜 두기만 하고 확장을 설치하지 않았으면 「사용 중」 대신 설치 상태 · 한 줄 안내 · 「설치」 — 머리 바로 뒤 칸을 그 애드온이 채운다(mountCard)
     const ptCard=id==='prompt-template'&&on&&running.has(id)&&!needsReload&&addonsEnabled(s)?'<div class="blpt-card" data-pt-card></div>':'';

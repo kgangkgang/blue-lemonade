@@ -1,0 +1,4 @@
+/* 시험용 가짜 확장 */
+#send_form { background: red !important; }
+.mes .dice { color: blue !important; }
+@media (max-width: 600px) { #quick-panel { width: 100% !important; } }

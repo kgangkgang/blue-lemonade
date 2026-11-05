@@ -1,0 +1,1 @@
+{ "display_name": "차분한 도우미", "loading_order": 40, "requires": [], "optional": [], "js": "index.js", "css": "style.css", "author": "fixture", "version": "2.0.0" }

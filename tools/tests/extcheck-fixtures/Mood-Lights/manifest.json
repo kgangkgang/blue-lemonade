@@ -1,0 +1,1 @@
+{ "display_name": "분위기 조명", "loading_order": 20, "requires": [], "optional": [], "js": "index.js", "css": "style.css", "author": "fixture", "version": "0.1.0" }

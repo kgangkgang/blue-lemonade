@@ -10,8 +10,8 @@ const read = (obj, path) => path.split('.').reduce((v, k) => v != null && Object
 const SETTLED_DEFAULTS = { 'chat.weatherAmount': 100, 'chat.weather2Amount': 100 };
 const equal = (a, b) => a === b || (!!a && !!b && typeof a === 'object' && typeof b === 'object' && Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(k => equal(a[k], b[k])));
 const omitted = new Set(['appearanceHistory',   /* 9.0.2 그라데이션 · 기기별 배치는 걷어 「변경한 설정」에서도 뺀다 */
-    'version','noticeSeen','addonCarry','frameLibrary','customFonts','styles','charStyles','promptBinds','headSwitches','activeStyle','baseStyle','weatherImages','customPalettes','activeCustomPalette','wordTools','multiAvatar']);
-const omittedPaths = new Set(['promptFolders.presets','chatOrganizer.folders','chatOrganizer.chats','deviceLayouts.pc','deviceLayouts.mobile','image.masks','image.maskId','chat.weatherImageId','compat.cssAsked','logCopy.shape','logCopy.palette','logCopy.category','logCopy.recent','logCopy.fav','logCopy.custom','logCopy.tagsOff']);   // cssAsked: 「쓰던 테마가 있어요」에 답한 지문 (설정이 아니라 기억) · logCopy.*: 로그 복사 시트가 기억하는 마지막 모양 · 색 · 최근 · 즐겨찾기 · 내 글꾸 (켜기만 설정)
+    'version','noticeSeen','addonCarry','frameLibrary','customFonts','styles','charStyles','promptBinds','headSwitches','activeStyle','baseStyle','weatherImages','customPalettes','activeCustomPalette','wordTools','multiAvatar','extcheck']);   // extcheck: 1.0.3 확장 충돌 검사의 AI 전송 동의 · 고른 연결(기억)
+const omittedPaths = new Set(['promptFolders.presets','promptSaves.presets','presetFolders.folders','chatOrganizer.folders','chatOrganizer.chats','qrShelf.items','qrShelf.recent','deviceLayouts.pc','deviceLayouts.mobile','image.masks','image.maskId','chat.weatherImageId','compat.cssAsked','logCopy.shape','logCopy.palette','logCopy.category','logCopy.recent','logCopy.fav','logCopy.custom','logCopy.tagsOff']);   // cssAsked: 「쓰던 테마가 있어요」에 답한 지문 (설정이 아니라 기억) · logCopy.*: 로그 복사 시트가 기억하는 마지막 모양 · 색 · 최근 · 즐겨찾기 · 내 글꾸 (켜기만 설정)
 const safe = path => typeof path === 'string' && !path.split('.').some(k => ['__proto__','constructor','prototype'].includes(k));
 export function settingDefault(settings, path) {
     if (!safe(path) || omitted.has(path.split('.')[0]) || omittedPaths.has(path)) return { allowed: false };
@@ -109,7 +109,7 @@ export function settingRoute(path) {
     if (['dialogue','em','strong','ui','code','strike'].includes(scope)) return {tab:'text',sub:scope};
     if (scope === 'usageMode') return {tab:'theme',sub:'etc'};
     if (scope === 'updateCheck') return {tab:'theme',sub:'etc'};   // 새 버전 자동 확인 스위치는 기타 설정 화면 (1.0.0 바탕 — 옛 업데이트 · 설치 점검 탭은 없음)
-    if (['headSwitchRows','koUi','longpressHelp','searchAi','logCopy','syncWatch','chatOrganizer','promptFolders'].includes(scope)) return {tab:'chat',sub:'etc'};   // 채팅 › 기타의 스위치 · searchAi(10-31 「AI 로 설정 바꾸기」) (예전엔 아래 끝 줄로 떨어져 채팅 › 화면으로 갔어요)
+    if (['headSwitchRows','koUi','longpressHelp','searchAi','logCopy','syncWatch','chatOrganizer','quick','promptSaves','presetFolders','apiStatus','promptFolders'].includes(scope)) return {tab:'chat',sub:'etc'};   // 채팅 › 기타의 스위치 · searchAi(10-31 「AI 로 설정 바꾸기」) (예전엔 아래 끝 줄로 떨어져 채팅 › 화면으로 갔어요)
     if (scope === 'fruitTypography' || scope.startsWith('fruitEntry')) return {tab:'prompt',sub:'fruit'};
     if (['shadow','outline'].includes(scope)) return {tab:'text',sub:'shadow'};
     if (scope === 'image' && key === 'cutEdge') return {tab:'image',sub:'cutedge'}; // 6.1.6 투명 그림 외곽선 · 그림자

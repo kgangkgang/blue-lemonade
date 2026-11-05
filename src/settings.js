@@ -117,8 +117,9 @@ export const DEFAULTS = {
         perfLoad: { watchdog:true, timer:true, perf:true, log:true, dedupe:true } },
     wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true, maskWords: '' }, // maskWords: 6.0.4 잠시 가리기 낱말(한 줄에 하나 · 쉼표) — 스위치는 세션 안에서만, 저장하지 않는다 (wordmask.js) · 1.0.0 되살림(9.0.0 5357f89e 에서 걷었던 단어 치환)
     captureTools: { replace: false, replaceRules: [], preset: '', redact: false, names: [], mask: 'auto', maskWord: '○○', maskStyles: {}, format:'image', imagePages:false, duration:6, maxMB:8, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true, filterPreset:'none', grain:0, brightness:0, contrast:0, saturation:0, temperature:0, vignette:0 }, // filterPreset · grain … vignette: 5.5.3 캡처 필터 (프리셋 none|mono|film|vintage|cool|warm|custom · 전부 0 이면 결과 픽셀 그대로)
-    onehand: { on: false, swipe: true, imp: true, cont: true, regen: true },
+    onehand: { on: false, swipe: true, imp: true, cont: true, regen: true, top: true, bottom: true, jump: true, delLast: true },
     logCopy: { on: true, shape: 'card', palette: '', category: 'basic', recent: [], fav: [], custom: [], tagsOff: false },   // 로그 복사: 채팅에서 고른 글을 보이는 그대로 (selection-bar.js · log-copy*.js) — on 만 설정 창에, 나머지는 시트가 마지막 고른 것을 기억 · custom = 내 글꾸 [{ id, name, html(소독한 것), slot }] · 1.0.1 마트 글꾸는 { template, colors, messages, tail, emoji }
+    extcheck: { aiConsent: false, profileId: '' },   // 1.0.3 확장 충돌 검사 AI 전송 동의 · 연결(기억)
     searchAi: { on: false, profileId: '' }, // 10-31 검색창 「AI 에게 맡기기」: 켠 사람만 · 단추를 눌렀을 때만 요청 한 번 · 미리보기 뒤 「적용」 (settings-search.js · settings-ai.js). profileId '' = 실리태번 지금 연결
     replyNotify: { on: false }, // 4.8.7 답 완료 알림: 다른 앱을 보고 있을 때 답이 끝나면 폰 알림 · 진동 (reply-notify.js)
     bgWindow: { on: false, mode: 'audio' }, // 4.3.2 백그라운드 창 (실험): 답을 기다리는 동안 PIP 작은 창을 띄워 다른 앱을 봐도 생성 · 번역이 이어지게
@@ -133,6 +134,9 @@ export const DEFAULTS = {
     fruitTypography: {on:false,kind:'status',types:{}},
     promptFolders: { on: true, presets: {} },   // 1.0.1 다듬기는 prompt-folders.js
     chatOrganizer: { on: false, folders: [], chats: {} },
+    apiStatus: { on: false },   // 1.0.3 API 서버 상태 — 켜면 회사 공식 상태 페이지(바깥 주소)를 읽어요 (api-status.js)
+    qrShelf: { on: false, items: {}, recent: [] },   // 1.0.3 QR 책장 (모양은 qr-shelf-core.js tidyStore)
+    promptSaves: { on: false, presets: {} }, presetFolders: { on: false, folders: [] }, quick: { selEdit: false, mesDelete: false, rangeDelete: true },   // 1.0.3 편의 기능 (src/quick/)
     promptLink: { on: false, rows: [] },   // 6.5.2 캐릭터 이름 연동 — 이름이 든 프롬프트·정규식을 그 캐릭터 채팅에서만 켜고 「기본」 짝은 반대로 · 6.7.5 여러 줄 rows [{ word, cards: [아바타] }] (prompt-link.js · promptbind.js)
     longpressHelp: true,   // 8.1.2 단추 길게 누르면 설명 (longpress-help.js — 끄면 길게 눌러도 원래 동작만)
     koUi: true,   // 6.9.0 실리태번 한국어 화면 다듬기 (ko-ui.js — 언어가 ko-kr 일 때만, 바꾸면 새로고침 뒤)
@@ -404,11 +408,23 @@ function tidyFlags(s) {
     if (!isObj(s.onehand)) s.onehand = structuredClone(DEFAULTS.onehand);
     if (!isObj(s.bgWindow)) s.bgWindow = structuredClone(DEFAULTS.bgWindow);
     s.replyNotify = { on: isObj(s.replyNotify) && s.replyNotify.on === true };
+    s.apiStatus = { on: isObj(s.apiStatus) && s.apiStatus.on === true };   // 1.0.3
     s.logCopy = tidyLogCopy(s.logCopy);
+    const xc = isObj(s.extcheck) ? s.extcheck : {}; s.extcheck = { aiConsent: xc.aiConsent === true, profileId: typeof xc.profileId === 'string' ? xc.profileId.slice(0, 120) : '' };
+    const q = isObj(s.qrShelf) ? s.qrShelf : {};   // 1.0.3 QR 책장 (칸 안쪽은 열 때 tidyStore)
+    s.qrShelf = { ...q, on: q.on === true, items: isObj(q.items) ? q.items : {}, recent: Array.isArray(q.recent) ? q.recent : [] };
     s.searchAi = { on: isObj(s.searchAi) && s.searchAi.on === true, profileId: isObj(s.searchAi) && typeof s.searchAi.profileId === 'string' ? s.searchAi.profileId.slice(0, 120) : '' };   // 10-31
     s.bgWindow = { on: s.bgWindow.on === true, mode: s.bgWindow.mode === 'pip' ? 'pip' : 'audio' };
     s.sceneSound = tidySceneSound(s.sceneSound);   // 6.9.8 장면 소리
     for (const key of Object.keys(DEFAULTS.onehand)) s.onehand[key] = flag(s.onehand[key], DEFAULTS.onehand[key]);
+    if (!isObj(s.quick)) s.quick = {};
+    for (const key of Object.keys(DEFAULTS.quick)) s.quick[key] = flag(s.quick[key], DEFAULTS.quick[key]);
+    if (!isObj(s.promptSaves)) s.promptSaves = {};
+    s.promptSaves.on = flag(s.promptSaves.on, false);
+    if (!isObj(s.promptSaves.presets)) s.promptSaves.presets = {};
+    if (!isObj(s.presetFolders)) s.presetFolders = {};
+    s.presetFolders.on = flag(s.presetFolders.on, false);
+    if (!Array.isArray(s.presetFolders.folders)) s.presetFolders.folders = [];
     if (isObj(s.chat)) {
         s.chat.demSkin = flag(s.chat.demSkin, false);
         s.chat.demFold = flag(s.chat.demFold, true);
@@ -776,7 +792,7 @@ export function saveSettings() {
 // 내 글꼴 · 본 공지 · 내 스타일 · 캐릭터 연결은 늘 남긴다 (입혀 둔 캐릭터 스타일 상태는 비움)
 const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools', 'captureTools'], library: ['frameLibrary', 'customPalettes', 'weatherImages'] };
 // 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS)은 '테마 모습' 초기화에 남긴다
-const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'promptFolders', 'chatOrganizer', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'searchAi', 'logCopy', 'sceneSound'];
+const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'promptFolders', 'chatOrganizer', 'quick', 'promptSaves', 'presetFolders', 'qrShelf', 'apiStatus', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'searchAi', 'extcheck', 'logCopy', 'sceneSound'];
 export function resetSettings(groups = { look: true }) {
     const ext = SillyTavern.getContext().extensionSettings;
     const old = ext[KEY] || {};

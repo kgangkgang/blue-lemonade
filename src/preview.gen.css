@@ -1,4 +1,4 @@
-/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 644개(덩어리 41개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build 61432e299b61) */
+/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 648개(덩어리 43개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build 65be85aa0c2f) */
 .salty-sample q::before,
 .salty-sample q::after {
   content: none;
@@ -1079,6 +1079,7 @@ body.salty.salty-regex-noicons :is(:is(#salty-nochat, .salty-preview)) .mes_text
   display: none !important;
 }
 body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes .mes_buttons > .mes_bookmark::before,
+body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes .mes_buttons > .bl_mes_del::before,
 body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes .mes_buttons > .cg-mes-btn.fa-star::before,
 body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes .mes_buttons > .cg-mes-btn.fa-star.is-marked::before,
 body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes .mes_buttons > .cg-mes-btn.fa-bookmark::before,
@@ -1094,6 +1095,20 @@ body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes .me
 }
 body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes .mes_buttons > .mes_bookmark {
   --salty-mi: var(--salty-mi-flagfill);
+}
+body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes .mes_buttons > .bl_mes_del {
+  --salty-mi: var(--salty-mi-trash);
+}
+body.salty :where(.salty-preview):is(#salty-nochat, *) .mes .mes_buttons > .bl_mes_del {
+  color: inherit !important;
+}
+body.salty :where(.salty-preview):is(#salty-nochat, *) .mes .mes_buttons > .bl_mes_del:active {
+  color: var(--bl-danger) !important;
+}
+@media (hover: hover) {
+body.salty :where(.salty-preview):is(#salty-nochat, *) .mes .mes_buttons > .bl_mes_del:hover {
+    color: var(--bl-danger) !important;
+  }
 }
 body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes .mes_buttons > .cg-mes-btn.fa-star {
   --salty-mi: var(--salty-mi-star);

@@ -58,10 +58,10 @@ await test('layout.js: 접기 단추를 돋보기 옆에 붙이고, 누르면 �
 
 await test('CSS: 접힌 줄은 단추만 남김 · 단추 모양 · 빌드된 style.css 에도 들어감', () => {
     const css = read('css/35-qr-bar.css');
-    assert.match(css, /body\.salty\.salty-qr-folded #send_form #qr--bar > :not\(#bl-qr-fold\) \{ display: none !important; \}/);
+    assert.match(css, /body\.salty\.salty-qr-folded #send_form #qr--bar > :not\(#bl-qr-fold, #bl-qr-shelf\) \{ display: none !important; \}/);   // 1.0.3 QR 책장 단추도 남아요
     assert.match(css, /body\.salty #send_form #qr--bar #bl-qr-fold \{[^}]*position: sticky;[^}]*order: -1;/);
     const built = read('style.css') + read('src/style-lazy.gen.css');
-    assert.match(built, /body\.salty\.salty-qr-folded #send_form #qr--bar > :not\(#bl-qr-fold\)/, 'build-css 로 다시 만들어야 함');
+    assert.match(built, /body\.salty\.salty-qr-folded #send_form #qr--bar > :not\(#bl-qr-fold, ?#bl-qr-shelf\)/, 'build-css 로 다시 만들어야 함');
 });
 
 await test('설정 창 스위치 · 되돌리기 라벨 · 검색 목록', () => {

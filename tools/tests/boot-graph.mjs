@@ -127,7 +127,12 @@ await test('시작 그래프 크기 상한 (모듈 수 · 바이트)', () => {
     // 1.0.2 블루레몬에이드 제로(usage-mode.js zeroMode · zeroView · ZERO_LOOK 와 index.js · features.js · apply.js 의 문 · +3.3KB) — 664KB.
     //   제로를 고르면 시작 때 받는 모듈이 165 → 68개로 줄어요(tools/tests/zero-mode.mjs)
     // 1.0.2 채팅 정리(기본 끔 — 기본값 한 줄 · features.js 문 세 줄 · ChatsPlus 감지 한 줄, 본체는 켤 때만 동적 import · +0.6KB) — 665KB
-    assert.ok(bytes <= 665 * 1024, `${bytes} 바이트`);
+    // 1.0.3 QR 책장(기본 끔 — layout.js 책 단추 · 기본값 한 줄 · 같은 확장 감지 · +1.3KB, 창 · 계산 · CSS 는 처음 누를 때 받음) — 667KB
+    // 1.0.3 편의 기능 6개(기본값 한 줄 · features.js 문 한 묶음 · 다른 확장 감지 한 줄 · 파일 지문 표 줄, 본체는 켤 때만 동적 import · +2.5KB 원본) — 667KB.
+    //   브라우저가 받는 정적 묶음(dist)은 bundle-fresh.mjs 상한 안 그대로예요
+    // 1.0.3 합침: 위 둘 + API 서버 상태(기본값 한 줄 · features.js 문 네 줄) + 확장 충돌 검사(설정 창 카드 · 명령 이름) + 청과 2.1X 사전 · 프롬프트 폴더 창을 한 사본에 모으면 670KB(686,053 바이트) — 671KB
+    //   본체는 모두 켤 때 · 누를 때만 받는 동적 import 이고, 브라우저가 받는 정적 묶음은 bundle-fresh.mjs 상한 안이에요
+    assert.ok(bytes <= 671 * 1024, `${bytes} 바이트`);
 });
 
 await test('9.0.2 부팅 2 · 3층 모듈은 시작 그래프 밖이에요 (첫 프레임 뒤 · 유휴 · 처음 쓸 때 받아요)', () => {

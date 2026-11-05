@@ -165,6 +165,7 @@ export function startCompactLayout() {
         }
         syncQrFind(bar, enabled);
         syncQrFold(bar, enabled);
+        syncQrShelf(bar, enabled);
         syncQrTitles(enabled);
         scheduleQrEdges();
     }
@@ -237,6 +238,19 @@ export function startCompactLayout() {
         fold.setAttribute('aria-expanded', folded ? 'false' : 'true');
         const icon = folded ? 'fa-angles-right' : 'fa-angles-left';
         if (!fold.firstElementChild || !fold.firstElementChild.classList.contains(icon)) fold.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i>`;
+    }
+    // 1.0.3 QR 책장 단추(기본 끔 · body.salty-qr-shelf) — 접기 뒤. 창(qr-shelf.js)은 처음 누를 때 받아요
+    function syncQrShelf(bar, enabled) {
+        let b = bar.querySelector(':scope > #bl-qr-shelf');
+        if (!enabled || globalThis.quickReplyApi?.settings?.isEnabled !== true || !document.body.classList.contains('salty-qr-shelf')) return b?.remove();
+        if (!b) {
+            b = document.createElement('button');
+            b.type = 'button'; b.id = 'bl-qr-shelf'; b.className = 'menu_button'; b.title = 'QR 책장'; b.setAttribute('aria-label', 'QR 책장');
+            b.innerHTML = '<i class="fa-solid fa-book-bookmark" aria-hidden="true"></i>';
+            b.onclick = e => { e.stopPropagation(); import('./qr-shelf.js').then(m => m.openQrShelf()).catch(err => console.warn('[Blue Lemonade] QR 책장', err)); };
+        }
+        const a = ['#bl-qr-fold', '#bl-qr-find', '#qr--popoutTrigger'].map(id => bar.querySelector(':scope > ' + id)).find(Boolean);
+        if ((a ? a.nextElementSibling : bar.firstElementChild) !== b) a ? a.after(b) : bar.prepend(b);
     }
     // 3.5.3 QR 줄 앞 돋보기: 모든 퀵 리플라이를 목록으로 찾기 (qrfind.js — 처음 누를 때 불러옴). 확장이 줄을 다시 그리면 다시 붙임
     let qrFinderModule = null;
@@ -360,18 +374,20 @@ export function startCompactLayout() {
     let wasQrTop = document.body.classList.contains('salty-qr-top');
     let wasQrVertical = document.body.classList.contains('salty-qr-y');
     let wasFindOff = document.body.classList.contains('salty-qr-find-off');
+    let wasShelf = document.body.classList.contains('salty-qr-shelf');
     let wasCtxNames = document.body.classList.contains('salty-qr-ctx-names');
     watchDom(document.body, { attributes: ['class'], name: '입력판 배치 (body class)' }, () => {
         const enabled = document.body.classList.contains('salty');
         const qrTop = document.body.classList.contains('salty-qr-top');
         const qrVertical = document.body.classList.contains('salty-qr-y');
         const findOff = document.body.classList.contains('salty-qr-find-off');
+        const shelfOn = document.body.classList.contains('salty-qr-shelf');
         const themeChanged = enabled !== wasEnabled;
-        if (themeChanged || qrTop !== wasQrTop || qrVertical !== wasQrVertical || findOff !== wasFindOff) placeQuickReplies();
+        if (themeChanged || qrTop !== wasQrTop || qrVertical !== wasQrVertical || findOff !== wasFindOff || shelfOn !== wasShelf) placeQuickReplies();
         if (themeChanged) { refreshWorld(); refreshPersonaTitle(); }
         const ctxNames = document.body.classList.contains('salty-qr-ctx-names');
         if (ctxNames !== wasCtxNames) syncQrTitles();   // 7.9.7
-        wasEnabled = enabled; wasQrTop = qrTop; wasQrVertical = qrVertical; wasFindOff = findOff; wasCtxNames = ctxNames;
+        wasEnabled = enabled; wasQrTop = qrTop; wasQrVertical = qrVertical; wasFindOff = findOff; wasShelf = shelfOn; wasCtxNames = ctxNames;
     });
     mobile.addEventListener('change', placeQuickReplies);
     document.addEventListener('change', event => { if (event.target?.id === 'qr--isEnabled') placeQuickReplies(); });
@@ -434,7 +450,11 @@ export function updateQrEdges(bar) {
     const max = bar.scrollWidth - bar.clientWidth;
     bar.classList.toggle('bl-qr-more-left', max > 2 && bar.scrollLeft > 2);
     bar.classList.toggle('bl-qr-more-right', max > 2 && bar.scrollLeft < max - 2);
-    const leads = [...bar.querySelectorAll(QR_LEADS)];
+    // 1.0.3 돋보기가 없으면 붙어 있는 « 접기(#bl-qr-fold · sticky)도 앞 단추로 세요 — 안 세면 스냅 여백이 0 이라 책장 단추 · 첫 QR 이 « 밑에 깔려요
+    const finder = bar.querySelector(':scope > #bl-qr-find, :scope > .bl-qr-find-sample');
+    const leads = [...bar.querySelectorAll(QR_LEADS + (finder ? '' : ', :scope > #bl-qr-fold'))].filter(el => el.id !== 'bl-qr-fold' || el.getClientRects().length);
+    // css/35: 돋보기가 있으면 « 는 붙지 않고 스냅 자리(:has 대신 상태 클래스). 돋보기를 막 켠 순간엔 줄을 왼쪽 끝으로(안 그러면 « · 책 단추가 돋보기 밑에 선 채 남아요)
+    if (bar.classList.contains('bl-qr-has-find') !== !!finder) { bar.classList.toggle('bl-qr-has-find', !!finder); if (finder && bar.scrollLeft) bar.scrollLeft = 0; }
     // sticky 의 left 는 줄의 안쪽 여백 안쪽부터 잰다 → 여백 · 테두리를 뺌 (폰 줄은 좌우 4px — 안 빼면 4px 틈으로 글자가 보임)
     const cs = getComputedStyle(bar);
     const box = bar.getBoundingClientRect();

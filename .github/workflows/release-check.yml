@@ -394,6 +394,18 @@ jobs:
           node tools/tests/prompt-choice.mjs .
           node tools/tests/prompt-folders.mjs .
           node tools/tests/chat-organizer.mjs .
+          node tools/tests/api-status.mjs .
+          # 1.0.3 확장 충돌 검사: 규칙마다 가짜 확장 두 개로 걸림 · 안 걸림 · 오탐 표 · 같은 출처 읽기 · 링크 받기 흉내 · 열기 전 모듈 0
+          node tools/tests/extcheck.mjs .
+          # 1.0.3 QR 책장(src/qr-shelf*.js — 누를 때만 받음)
+          node tools/tests/qr-shelf.mjs .
+          # 1.0.3 편의 기능(src/quick/*.js — 켤 때만 받음)
+          node tools/tests/quick-sel-edit.mjs .
+          node tools/tests/quick-mes-delete.mjs .
+          node tools/tests/quick-range-delete.mjs .
+          node tools/tests/quick-onehand-nav.mjs .
+          node tools/tests/quick-prompt-saves.mjs .
+          node tools/tests/quick-preset-folders.mjs .
           node tools/tests/bughunt2-core.mjs .
           node tools/tests/dem-expressive-nest.mjs .
           node tools/tests/dem-expressive-scope.mjs .
@@ -578,6 +590,7 @@ jobs:
           node tools/tests/option-help-standing.mjs .
           node tools/tests/longpress-help.mjs .
           node tools/build-longpress-help.mjs . --check
+          node tools/build-extcheck-self.mjs . --check
           node tools/tests/fruit-typography.mjs .
           node tools/tests/fruit-type-sample.mjs .
           node tools/tests/fruit-type-snapshot.mjs .

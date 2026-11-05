@@ -3,6 +3,7 @@
 //   · 접기 · 프리셋을 바꿨다 돌아와도 폴더가 남는지 · 끌어 옮기면 놓인 자리의 폴더로 · 모두 켜기는 택1 묶음을 지키고 저장 한 번
 //   · 폴더 택1이 택1 클릭 연결(prompt-choice)에 더해지는지 · 끄면 흔적 없이 정리
 //   · 1.0.2: 접기는 제자리에서(머리 줄 그대로) · 폴더째 위 · 아래로 · 하위 폴더를 풀면 항목은 위 폴더로 · 모두 켜기 · 하나만 켜기 되돌리기 · 다 꺼진 폴더 옅게
+//   · 1.0.3: 폴더 창 하나(모든 폴더 · 이 폴더 · 새 폴더) — 접는 하위 줄 · 위 · 아래 · 빼기 · 모든 항목에서 넣기 · 창 안 하나만 켜기 · 끝 표시로 구역 닫기
 //   node tools/tests/prompt-folders.mjs <테마 루트>
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -120,6 +121,27 @@ await test('구분선으로 폴더 계획: 장식 이름 + 빈 내용 · 🔻PIC
     assert.equal(core.isDivider(P.main), false); assert.equal(core.isDivider(P.s1), false); assert.equal(core.isDivider({ name: '-----', content: '' }), true);
     assert.equal(core.isDivider({ name: 'Plain', content: '' }), false, '장식 없는 빈 줄은 아님');
     assert.equal(core.dividerTitle('◆◇ 상태창 (선택) ◇◆'), '상태창 (선택)');
+});
+await test('1.0.3 폴더 창 계산: 항목 한 칸 위 · 아래(같은 폴더 직속끼리 자리만 바꿈) · 보일 폴더(전부 / 그 폴더와 하위, 실제 순서대로 · 빈 폴더는 끝)', () => {
+    const A = F('A', ['a1', 'a2', 'a3']);
+    assert.deepEqual(core.shiftInFolder(['a1', 'a2', 'x', 'a3'], A, 'a2', 1), ['a1', 'a3', 'x', 'a2'], '사이 줄은 그대로');
+    assert.deepEqual(core.shiftInFolder(['a1', 'a2', 'a3'], A, 'a2', -1), ['a2', 'a1', 'a3']);
+    assert.equal(core.shiftInFolder(['a1', 'a2', 'a3'], A, 'a1', -1), null, '맨 앞');
+    assert.equal(core.shiftInFolder(['a1', 'a2', 'a3'], A, 'a3', 1), null, '맨 끝');
+    assert.equal(core.shiftInFolder(['a1', 'q'], A, 'q', 1), null, '폴더 밖 항목');
+    const list = [F('B', ['b1']), F('E', []), { ...F('S', ['s1']), parent: 'A' }, A];
+    const order = ['s1', 'a1', 'a2', 'a3', 'b1'];
+    assert.deepEqual(core.scopeFolders(list, '', order).map(f => f.id), ['S', 'A', 'B', 'E'], '먼저 나오는 폴더부터 · 빈 폴더 끝');
+    assert.deepEqual(core.scopeFolders(list, 'A', order).map(f => f.id), ['S', 'A'], '그 폴더와 하위만');
+    assert.deepEqual(core.scopeFolders(list, 'S', order).map(f => f.id), ['S']);
+});
+await test('1.0.3 자동 초안: 같은 이름의 끝 표시(「━━ 문체 끝 ━━」)는 새 폴더를 열지 않고 그 구역을 닫아요 · 이름이 다른 「끝」 글자는 그대로 구분선', () => {
+    const P = { d1: { name: '━━ 🔹 문체 🔹 ━━', content: '' }, a: { name: 'A', content: 'x' }, b: { name: 'B', content: 'x' }, end: { name: '━━ 문체 끝 ━━', content: '' },
+        x: { name: 'X', content: 'x' }, d2: { name: '◆ 끝맺음 ◆', content: '' }, c: { name: 'C', content: 'x' }, e: { name: 'E', content: 'x' } };
+    assert.deepEqual(core.planFromDividers(Object.keys(P), id => P[id]), [
+        { name: '문체', ids: ['d1', 'a', 'b', 'end'], children: [] },
+        { name: '끝맺음', ids: ['d2', 'c', 'e'], children: [] },
+    ], 'X 는 폴더 밖');
 });
 await test('폴더 택1 → 택1 묶음(prompt-choice-core)에 더해져 같은 규칙으로 꺼요 · 메타 모양 그대로', () => {
     const prompts = ['a', 'b', 'c'].map(identifier => ({ identifier, name: identifier }));
@@ -348,7 +370,7 @@ await test('폴더 메뉴(공용 고르기 목록 팝업) → 「폴더 풀기�
     const layer = document.querySelector('.salty-pick-layer.bl-pf-layer');
     assert.ok(layer, '메뉴 층'); assert.equal(layer.querySelector('[role="menu"]')?.classList.contains('salty-pick-float'), true);
     const labels = [...layer.querySelectorAll('button')].map(b => b.textContent);
-    assert.deepEqual(labels, ['이름 · 항목 고치기', '안에 새 폴더', '하나만 켜기', '한곳에 모으기', '폴더 풀기'], '떨어진 폴더라 「한곳에 모으기」가 있어요');
+    assert.deepEqual(labels, ['이 폴더 고치기', '안에 새 폴더', '하나만 켜기', '한곳에 모으기', '폴더 풀기'], '떨어진 폴더라 「한곳에 모으기」가 있어요');
     assert.equal(layer.querySelector('[role="menuitemcheckbox"]').getAttribute('aria-checked'), 'false');
     [...layer.querySelectorAll('button')].find(b => b.textContent === '폴더 풀기').dispatchEvent(new Event('click', { bubbles: true }));
     await settle();
@@ -406,7 +428,7 @@ const idsNow = () => order.map(e => e.identifier);
 await test('1.0.2 폴더째 위 · 아래로: 옮길 수 있을 때만 메뉴에 · 보이는 한 칸과 자리 바꿈 · 실리태번 저장 한 번 · 되돌리기', async () => {
     const start = idsNow(), s0 = calls.save;
     const labels = menuOf('fa').map(b => b.textContent);
-    assert.deepEqual(labels, ['이름 · 항목 고치기', '안에 새 폴더', '하나만 켜기', '위로 옮기기', '아래로 옮기기', '폴더 풀기']);
+    assert.deepEqual(labels, ['이 폴더 고치기', '안에 새 폴더', '하나만 켜기', '위로 옮기기', '아래로 옮기기', '폴더 풀기']);
     const t = toastOf();
     pick(menuOf('fa'), '위로 옮기기'); await settle();
     assert.deepEqual(idsNow().slice(0, 7), ['p0', 'p2', 'p3', 'p4', 'p5', 'p1', 'p6'], '바로 위 p1 과 자리 바꿈');
@@ -461,19 +483,114 @@ await test('1.0.2 다 꺼진 폴더 머리는 옅게 · 모두 켜기 되돌리�
 await test('1.0.2 편집 창: 바뀐 게 없이 저장을 누르면 설정을 저장하지 않고 닫기만 · 바꾸면 저장', async () => {
     let saves = 0; const keep = ctx.saveSettingsDebounced; ctx.saveSettingsDebounced = () => { saves++; };
     const was = JSON.stringify(settings.promptFolders.presets.P1.folders);
-    pick(menuOf('fa'), '이름 · 항목 고치기');
+    pick(menuOf('fa'), '이 폴더 고치기');
     let dlg = document.querySelector('dialog.bl-pf-editor');
     assert.ok(dlg?.open, '편집 창이 열려요');
     dlg.querySelector('[data-card-done]').dispatchEvent(new Event('click', { bubbles: true })); await settle();
     assert.equal(saves, 0, '저장 안 함'); assert.ok(!document.querySelector('dialog.bl-pf-editor'), '닫혀요');
     assert.equal(JSON.stringify(settings.promptFolders.presets.P1.folders), was);
-    pick(menuOf('fa'), '이름 · 항목 고치기');
+    pick(menuOf('fa'), '이 폴더 고치기');
     dlg = document.querySelector('dialog.bl-pf-editor');
     dlg.querySelector('[data-pf-name]').value = '문체 새 이름';
     dlg.querySelector('[data-card-done]').dispatchEvent(new Event('click', { bubbles: true })); await settle();
     assert.equal(saves, 1, '이름을 바꾸면 저장');
     settings.promptFolders.presets.P1.folders.find(f => f.id === 'fa').name = '문체';
     ctx.saveSettingsDebounced = keep; drawList(); await settle();
+});
+const win = () => document.querySelector('dialog.bl-pf-editor');
+const click = el => el.dispatchEvent(new Event('click', { bubbles: true }));
+const secs = () => [...win().querySelectorAll('.bl-pf-sec')];
+const itemIds = folder => [...win().querySelectorAll(`.bl-pf-item[data-folder="${folder}"]`)].map(el => el.dataset.id);
+const rightRow = id => win().querySelector(`.bl-pf-right .bl-prompt-card-choice[data-id="${id}"]`);
+const toolsMenu = () => { footer.querySelector('.bl-pf-tools').dispatchEvent(new Event('click', { bubbles: true })); return [...document.querySelectorAll('.bl-pf-layer button')]; };
+await test('1.0.3 도구 줄 「모든 폴더 고치기」: 모든 폴더를 한 창에(실제 순서대로 접는 줄) · 「모든 항목」은 프롬프트 전부 · 눌러 넣으면 다른 폴더에서 옮겨 와요 · 순서가 그대로면 알림 없이 저장', async () => {
+    const menuButtons = toolsMenu();
+    assert.deepEqual(menuButtons.map(b => b.textContent).slice(0, 3), ['새 폴더', '모든 폴더 고치기', '구분선으로 폴더 만들기']);
+    pick(menuButtons, '모든 폴더 고치기');
+    assert.ok(win()?.open); assert.equal(win().querySelector('h3').textContent, '모든 폴더 고치기');
+    assert.deepEqual(secs().map(b => b.dataset.pfSec), ['fa', 'fb', 'fc']);
+    assert.equal(secs()[0].getAttribute('aria-current'), 'true', '첫 폴더를 골라 둬요');
+    assert.deepEqual(itemIds('fa'), ['p2', 'p3', 'p4', 'p5']);
+    assert.equal(win().querySelectorAll('.bl-pf-right .bl-prompt-card-choice').length, N, '모든 항목');
+    assert.equal(win().querySelector('.bl-pf-item[data-id="p2"] > span').className, '', '보통 이름은 전처럼 줄을 바꿔 다 보여요');
+    const css = fs.readFileSync(path.join(root, 'src/prompt-folders.css'), 'utf8');
+    assert.match(css, /\.bl-pf-item > span\.bl-pf-rule \{[^}]*white-space: nowrap;[^}]*text-overflow: ellipsis;/, '구분선 이름은 한 줄(폰 360 에서 선이 두 줄로 꺾이던 것)');
+    assert.match(rightRow('p9').textContent, /지금 「시점」 폴더/);
+    click(secs()[2]);   // 「떨어짐」을 고르고
+    assert.equal(win().querySelector('[data-pf-name]').value, '떨어짐');
+    click(rightRow('p5'));   // 「문체」에 있던 p5 를 넣으면 옮겨 와요
+    assert.deepEqual(itemIds('fc'), ['p5', 'p20', 'p22']); assert.deepEqual(itemIds('fa'), ['p2', 'p3', 'p4']);
+    assert.equal(win().querySelector('[role="status"]').textContent, '「떨어짐」에 넣어요');
+    assert.match(secs()[2].querySelector('small').textContent, /^3( · 택1)?$/, '목록 머리와 같은 수');
+    const t = toastOf(); t.text = '';
+    click(win().querySelector('[data-card-done]')); await settle();
+    assert.ok(!win(), '닫혀요');
+    const saved = settings.promptFolders.presets.P1.folders;
+    assert.deepEqual(saved.find(f => f.id === 'fc').ids, ['p5', 'p20', 'p22']); assert.deepEqual(saved.find(f => f.id === 'fa').ids, ['p2', 'p3', 'p4']);
+    assert.equal(t.text, '', '순서가 그대로면 알림 없음');
+    saved.find(f => f.id === 'fc').ids = ['p20', 'p22']; saved.find(f => f.id === 'fa').ids = ['p2', 'p3', 'p4', 'p5'];
+    drawList(); await settle();
+});
+await test('1.0.3 「이 폴더 고치기」: 그 폴더와 안의 하위 폴더만 · 하위 폴더는 같은 창 안의 접는 줄 · 이름 · 하나만 켜기 · 빼기 · 되돌리기', async () => {
+    const folders = settings.promptFolders.presets.P1.folders;
+    folders.push({ id: 'fs', name: '안쪽', ids: ['p6', 'p7'], open: true, pick: false, parent: 'fa' });
+    drawList(); await settle();
+    pick(menuOf('fa'), '이 폴더 고치기');
+    assert.equal(win().querySelector('h3').textContent, '「문체」 고치기');
+    assert.deepEqual(secs().map(b => [b.dataset.pfSec, b.classList.contains('bl-pf-d1')]), [['fa', false], ['fs', true]], '하위는 들여 쓴 접는 줄');
+    assert.ok(!win().querySelector('[data-pf-sec="fb"]'), '다른 폴더는 안 보여요');
+    assert.equal(win().querySelectorAll('.bl-pf-right .bl-prompt-card-choice').length, N, '「모든 항목」은 그대로 전부');
+    click(secs()[1]);   // 하위 고름
+    assert.equal(secs()[1].getAttribute('aria-current'), 'true'); assert.equal(win().querySelector('.bl-pf-place').hidden, true, '하위는 이 창에서 넣을 곳을 안 바꿔요');
+    click(secs()[1]);   // 다시 누르면 접힘
+    assert.equal(secs()[1].getAttribute('aria-expanded'), 'false'); assert.deepEqual(itemIds('fs'), []);
+    click(secs()[0]);
+    const name = win().querySelector('[data-pf-name]'); name.value = '문체 2'; name.dispatchEvent(new Event('input', { bubbles: true }));
+    assert.equal(secs()[0].querySelector('b').textContent, '문체 2', '이름이 줄에 바로');
+    click(win().querySelector('.bl-pf-item[data-id="p4"] [data-pf-item="out"]'));
+    assert.deepEqual(itemIds('fa'), ['p2', 'p3', 'p5']);
+    const box = win().querySelector('[data-pf-pick]'); box.checked = true; box.dispatchEvent(new Event('change', { bubbles: true }));
+    const lit = () => ['p2', 'p3', 'p5', 'p6', 'p7'].filter(id => order.find(e => e.identifier === id).enabled);
+    const was = lit();
+    assert.ok(was.length > 1, '켜진 항목이 여럿');
+    const t = toastOf();
+    click(win().querySelector('[data-card-done]')); await settle();
+    const fa = settings.promptFolders.presets.P1.folders.find(f => f.id === 'fa');
+    assert.equal(fa.name, '문체 2'); assert.equal(fa.pick, true); assert.deepEqual(fa.ids, ['p2', 'p3', 'p5']);
+    assert.deepEqual(lit(), [was[0]], '하나만 켜기: 실제 순서 첫 켜진 항목만');
+    assert.match(t.text, /하나만 켜기로 \d+개를 껐어요/);
+    t.undo(); await settle();
+    const back = settings.promptFolders.presets.P1.folders.find(f => f.id === 'fa');
+    assert.equal(back.name, '문체'); assert.equal(back.pick, false); assert.deepEqual(back.ids, ['p2', 'p3', 'p4', 'p5']); assert.deepEqual(lit(), was, '되돌리면 켬 · 폴더 그대로');
+    settings.promptFolders.presets.P1.folders = settings.promptFolders.presets.P1.folders.filter(f => f.id !== 'fs');
+    drawList(); await settle();
+});
+await test('1.0.3 폴더 창 위 · 아래: 저장하면 보내는 순서가 바뀌고(실리태번 저장 한 번) 되돌리기로 돌아와요 · 모든 폴더 창의 새 폴더 · 빈 폴더는 안 남아요', async () => {
+    const start = idsNow();
+    pick(menuOf('fa'), '이 폴더 고치기');
+    const first = win().querySelector('.bl-pf-item[data-id="p2"]');
+    assert.equal(first.querySelector('[data-pf-item="up"]').disabled, true, '맨 앞은 위로 없음');
+    click(first.querySelector('[data-pf-item="down"]'));
+    assert.deepEqual(itemIds('fa'), ['p3', 'p2', 'p4', 'p5']);
+    const s0 = calls.save, t = toastOf();
+    click(win().querySelector('[data-card-done]')); await settle();
+    assert.deepEqual(idsNow().slice(0, 6), ['p0', 'p1', 'p3', 'p2', 'p4', 'p5']); assert.deepEqual(toArray(), idsNow());
+    assert.equal(calls.save - s0, 1, '순서 저장 한 번');
+    assert.match(t.text, /보내는 순서도 바뀌었어요/);
+    t.undo(); await settle();
+    assert.deepEqual(idsNow(), start, '되돌리기');
+    pick(toolsMenu(), '모든 폴더 고치기');
+    click(win().querySelector('[data-pf-add]'));
+    assert.equal(secs().at(-1).getAttribute('aria-current'), 'true', '새 폴더를 골라 둬요');
+    click(rightRow('p30')); click(rightRow('p31'));
+    const name = win().querySelector('[data-pf-name]'); name.value = '새로'; name.dispatchEvent(new Event('input', { bubbles: true }));
+    click(win().querySelector('[data-pf-add]'));   // 빈 폴더 하나 더
+    click(win().querySelector('[data-card-done]')); await settle();
+    const made = settings.promptFolders.presets.P1.folders;
+    assert.deepEqual(made.filter(f => !['fa', 'fb', 'fc'].includes(f.id)).map(f => [f.name, f.ids]), [['새로', ['p30', 'p31']]], '빈 폴더는 안 남아요');
+    assert.ok(heads().some(h => h.querySelector('.bl-pf-title').textContent === '새로'));
+    settings.promptFolders.presets.P1.folders = made.filter(f => ['fa', 'fb', 'fc'].includes(f.id));
+    drawList(); await settle();
 });
 await test('끄면 흔적 없이: 머리 · 클래스 · 도구 단추 · CSS 링크를 떼고 택1 출처도 뺌', async () => {
     await pf.syncPromptFolders(false); await settle();

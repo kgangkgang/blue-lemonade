@@ -233,6 +233,7 @@ const BOOT_FRAME = [
     ['rebaseBodyHasRules', () => import('./src/st-has-anchor.js'), m => { m.rebaseBodyHasRules(); }],
 ];
 const BOOT_IDLE = [
+    ['registerExtcheckCommand', () => import('./src/natural-slash.js'), m => { m.registerExtcheckCommand(); }, 'input'],   // 1.0.3 /extconflict
     // 1.0.0 바탕: 확장 서랍 머리의 판 알약(공지 · 새 판) · ⓒ(출처 · 라이선스) — 문서 단위 누름 받기와 8초 뒤 새 판 확인 (src/version-pill.js)
     ['startVersionPill', () => import('./src/version-pill.js'), m => { m.startVersionPill(); }, 'drawer'],
     ['startTabScroll', () => import('./src/tab-scroll-init.js'), () => {}, 'drawer'],   // 애드온 창 · 도구 창의 가로 탭 줄 스크롤 (불러오면 걸어요)

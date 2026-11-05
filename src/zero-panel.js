@@ -6,7 +6,7 @@ import { zeroMode } from './usage-mode.js';
 // 제로에서 꺼지는 기능의 설정 경로 머리 — 이 경로이거나 '머리.' 로 시작하면 기능 칸이에요
 export const ZERO_OFF_PATHS = [
     'addons', 'addonUI', 'wordTools', 'captureTools', 'deus', 'sceneSound', 'reader', 'onehand', 'replyNotify', 'bgWindow', 'searchAi', 'logCopy', 'multiAvatar',
-    'syncWatch', 'longpressHelp', 'koUi', 'headSwitchRows', 'fruitTypography', 'squareButtons', 'promptFolders', 'chatOrganizer', 'promptLink',
+    'syncWatch', 'longpressHelp', 'koUi', 'headSwitchRows', 'fruitTypography', 'squareButtons', 'promptFolders', 'chatOrganizer', 'quick', 'promptSaves', 'presetFolders', 'qrShelf', 'apiStatus', 'promptLink',
     'chat.weather', 'chat.demSkin', 'chat.demFold', 'chat.demInk', 'chat.demGlow', 'chat.triangleFold', 'chat.mesPins', 'chat.selectPop', 'chat.colorPop', 'chat.numComma',
     'chat.webSearchMarks', 'chat.showMoreAuto', 'chat.lazyAvatars', 'chat.searchIme', 'chat.codePlain', 'chat.worldInfoLight', 'chat.chatLight', 'chat.personaDefer',
     'chat.emptyGuard', 'chat.replyTop', 'chat.sentTokens', 'chat.streamFade', 'chat.inkContrast', 'chat.toneInline', 'chat.dialogueOnly', 'chat.qrFind', 'chat.qrFold', 'chat.qrCtxNames',

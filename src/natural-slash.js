@@ -265,3 +265,16 @@ export function startNaturalSlash({ isEnabled = () => true } = {}) {
     new MutationObserver(refresh).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     refresh();
 }
+
+// 1.0.3 확장 충돌 검사 /extconflict [GitHub 주소] — 입력칸을 처음 쓸 때(index.js BOOT_IDLE · 문 input) 명령 이름만 걸어요.
+//   검사 창 모듈(src/extcheck/)은 명령을 부를 때 받아요. 리스너 · 감시 없음
+export function registerExtcheckCommand() {
+    const { SlashCommandParser, SlashCommand, SlashCommandArgument, ARGUMENT_TYPE } = SillyTavern.getContext();
+    if (!SlashCommandParser?.addCommandObject || !SlashCommand?.fromProps || SlashCommandParser.commands?.extconflict) return;
+    SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+        name: 'extconflict',
+        helpString: '확장 충돌 검사 창을 열어요. GitHub 저장소 주소를 붙이면 설치 전 검사 칸을 채워요(받기는 창에서 눌러야 해요).',
+        unnamedArgumentList: SlashCommandArgument?.fromProps && ARGUMENT_TYPE ? [SlashCommandArgument.fromProps({ description: 'GitHub 저장소 주소', typeList: [ARGUMENT_TYPE.STRING], isRequired: false })] : [],
+        callback: (_args, value) => { import('./extcheck/index.js').then(m => m.openExtCheck({ url: String(value ?? '').trim() })).catch(error => console.warn('[Blue Lemonade] 확장 충돌 검사', error)); return ''; },
+    }));
+}

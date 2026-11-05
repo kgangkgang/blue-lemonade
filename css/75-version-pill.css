@@ -60,9 +60,9 @@ html body.salty .llmt-settings .llmt-card-head > .llmt-gl-enable { display: inli
 html body.salty .llmt-settings .llmt-card-head > .llmt-gl-enable > input { margin: 0 !important; }
 /* 애드온 창 머리(번역 · 에셋 … header, 성능 보조 h3.pa-hub-title, 한글화 패널 머리): [아이콘] 8 [제목] 8 [판 알약] … [×] */
 
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart) > header > :is(i, b, span, h2, h3) { margin: 0 !important; }
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart) > header > button:last-child { margin-left: auto !important; }
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart) > header > button:last-child { margin-left: auto !important; }
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart, dialog.bl-xc) > header > :is(i, b, span, h2, h3) { margin: 0 !important; }
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart, dialog.bl-xc) > header > button:last-child { margin-left: auto !important; }
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart, dialog.bl-xc) > header > button:last-child { margin-left: auto !important; }
 html body.salty .pa-hub .pa-hub-title, html body.salty .po-dialog .po-title, html body.salty #pt-panel #pt-panel-header h3 { display: flex !important; align-items: center !important; gap: 8px !important; }
 html body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-panel-header h3) > :is(i, span, .ext-version, [class*="-version"]) { margin: 0 !important; }
 /* 카드 머리 아이콘(TTS .lv-card-head): 글자 중심보다 1.6px 아래로 재져 보정

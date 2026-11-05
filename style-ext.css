@@ -1,8 +1,8 @@
-/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1863 · 뺀 규칙 4060 (style.css 0b0a96f051d3) */
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 61432e299b61) */
+/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1865 · 뺀 규칙 4071 (style.css b5d31d09863a) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 65be85aa0c2f) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)"}
 /* css/00-base.css */
-:root{--bl-release:"1.0.2";}
+:root{--bl-release:"1.0.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)) {
 :root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}
@@ -2115,6 +2115,12 @@ body.salty-dark .salty-shapes button.on {
 .salty-phonemock .pm-onehand span {
   flex: 1;
 }
+.salty-phonemock .pm-onehand.is-many {
+  gap: 3px;
+}
+.salty-phonemock .pm-onehand.is-many b {
+  width: 10px;
+}
 .salty-phonemock .pm-input {
   display: flex;
   align-items: center;
@@ -3254,7 +3260,7 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .salty-panel .bl-spot.on{background:var(--salty-accent);color:var(--salty-on-accent, var(--bl-fb-fff));box-shadow:inset 0 0 0 1px var(--salty-accent), var(--bl-e2);}
 .salty-panel .bl-spot-side{min-width:0;flex:1;display:grid;gap:8px;}
 .bl-addon-group { display:flex; flex-direction:column; gap:12px; min-width:0; }
-.bl-addon-group-tool { padding:12px; border:0; border-radius:var(--bl-r-md,12px); background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:var(--bl-e1); }
+.bl-addon-group-tool { padding:10px; border:1px solid var(--salty-line); border-radius:var(--bl-r-md,12px); background:var(--salty-fill-surface,var(--salty-surface)); box-shadow:none; }
 .bl-addon-group-tool .bl-addon-header { border:0; margin-bottom:10px; }
 .bl-addon-group-tool .salty-note { margin:6px 0 16px; }
 .bl-word-rule button.bl-rule-swap, .bl-extension-page .bl-word-rule button.bl-rule-swap { min-width:0; min-height:0; width:100%; padding:0; border:0; background:none; color:inherit; font:inherit; align-self:stretch; cursor:pointer; }

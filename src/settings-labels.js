@@ -36,3 +36,9 @@ Object.assign(SETTING_VALUES, {'image.cutEdge.outline.colorMode:custom':'직접'
 // 7.0.1 분위기 음악 (장면 소리 안)
 Object.assign(SETTING_LABELS, {'sceneSound.music.on':'분위기 음악','sceneSound.music.volume':'분위기 음악 크기','sceneSound.music.mood':'분위기 음악 분위기','sceneSound.music.files':'분위기 음악 내 곡'});
 Object.assign(SETTING_VALUES, {'sceneSound.music.mood:auto':'자동','sceneSound.music.mood:daily':'일상','sceneSound.music.mood:tense':'긴장','sceneSound.music.mood:battle':'전투','sceneSound.music.mood:romance':'로맨스','sceneSound.music.mood:sad':'슬픔','sceneSound.music.mood:mystic':'신비','sceneSound.music.mood:festive':'축제'});
+// 1.0.3 API 서버 상태 (src/api-status.js)
+Object.assign(SETTING_LABELS, {'apiStatus.on':'API 서버 상태'});
+// 1.0.3 QR 책장 (src/qr-shelf.js)
+Object.assign(SETTING_LABELS, {'qrShelf.on':'QR 책장'});
+// 1.0.3 편의 기능 (src/quick/)
+Object.assign(SETTING_LABELS, {'quick.selEdit':'고른 글 고치기','quick.mesDelete':'연필 옆 지우기 단추','quick.rangeDelete':'메시지 범위 지우기','onehand.top':'한 손 맨 위로','onehand.bottom':'한 손 맨 아래로','onehand.jump':'한 손 번호로 가기','onehand.delLast':'한 손 마지막 메시지 지우기','promptSaves.on':'프롬프트 켜짐 묶음','presetFolders.on':'프리셋 목록 폴더'});

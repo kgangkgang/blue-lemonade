@@ -1,0 +1,1 @@
+{ "display_name": "새 판 필요", "loading_order": 50, "requires": [], "optional": [], "js": "index.js", "minimum_client_version": "9.0.0", "dependencies": ["third-party/Missing-Ext", "third-party/Off-Ext"], "author": "fixture", "version": "1.0.0" }

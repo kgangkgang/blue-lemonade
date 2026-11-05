@@ -1,4 +1,4 @@
-// 프롬프트 폴더 (1.0.1, 1.0.2 더함) — 순수 계산만. 화면은 prompt-folders.js 가 맡아요.
+// 프롬프트 폴더 (1.0.1, 1.0.2 · 1.0.3 더함) — 순수 계산만. 화면은 prompt-folders.js 가 맡아요.
 // 폴더 = 이름 + 항목 id 목록. 줄은 옮기지 않고, 실제 순서(prompt_order)에서 같은 폴더 항목이 이어지는 구간마다 머리 줄 하나를 끼워요.
 // 그래서 순서의 주인은 언제나 실리태번이에요(끌기 저장 · 생성 순서 그대로). 저장: 테마 설정 promptFolders.presets[프리셋 이름].folders
 // 폴더 택1 묶음(folderChoiceGroups · withFolderChoices)은 택1 규칙과 함께 prompt-choice-core.js 에 있어요.
@@ -200,6 +200,26 @@ export function moveFolderBlock(order, folders, id, dir) {
         : [...order.slice(0, run.start), ...next, ...block, ...order.slice(b + 1)];
 }
 
+/** 폴더 창(1.0.3)에서 항목 한 칸 위 · 아래로 → 새 순서(id 배열) 또는 null.
+ *  같은 폴더 직속 항목 중 실제 순서로 바로 앞(dir -1) · 뒤(dir 1) 항목과 자리만 바꿔요 — 그 사이 줄(하위 폴더 · 다른 항목)은 그대로 */
+export function shiftInFolder(order, folder, id, dir) {
+    if (!folder || (dir !== -1 && dir !== 1)) return null;
+    const own = new Set(folder.ids);
+    if (!own.has(id)) return null;
+    const mine = order.filter(x => own.has(x)), at = mine.indexOf(id), other = mine[at + dir];
+    if (at < 0 || other === undefined) return null;
+    const next = order.slice(), i = next.indexOf(id), j = next.indexOf(other);
+    [next[i], next[j]] = [next[j], next[i]];
+    return next;
+}
+/** 폴더 창에 보일 폴더(1.0.3): scope 가 없으면 전부, 있으면 그 폴더와 안의 하위 폴더. 실제 순서에서 먼저 나오는 폴더부터(빈 폴더는 끝에) */
+export function scopeFolders(folders, scope, order = []) {
+    const list = scope ? folders.filter(f => f.id === scope || f.parent === scope) : folders.slice();
+    const rank = new Map(order.map((id, i) => [id, i]));
+    const first = f => Math.min(1e9, ...f.ids.map(id => rank.get(id) ?? 1e9), ...folders.filter(c => c.parent === f.id).flatMap(c => c.ids.map(id => rank.get(id) ?? 1e9)));
+    return list.map((f, i) => ({ f, i, at: first(f) })).sort((a, b) => (a.at - b.at) || (a.i - b.i)).map(x => x.f);
+}
+
 /** 머리 줄 숫자 */
 export function runStats(ids, enabled, tokens = new Map()) {
     let on = 0, sum = 0;
@@ -306,6 +326,12 @@ export function planFromDividers(order, promptOf) {
             if (top?.head === opener) { top.ids.push(id); top = sub = null; continue; }
         }
         if (isDivider(prompt) && !plain.has(id)) {
+            // 1.0.3 끝 표시(「━━ 문체 끝 ━━」)가 지금 구역과 같은 이름이면 새 구역을 열지 않고 그 구역을 닫아요(끝 줄도 그 구역에)
+            if (markOf(prompt.name) === 'close' && pairKey(prompt.name)) {
+                const key = pairKey(prompt.name), same = node => !!node && pairKey(promptOf(node.head)?.name) === key;
+                if (same(sub)) { sub.ids.push(id); sub = null; continue; }
+                if (same(top)) { top.ids.push(id); top = sub = null; continue; }
+            }
             const title = dividerTitle(prompt.name);
             if (title) start(id, title, false);
             else if (top?.paired) { sub = null; top.ids.push(id); }

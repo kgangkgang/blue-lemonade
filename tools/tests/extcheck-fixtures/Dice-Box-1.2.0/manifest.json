@@ -1,0 +1,1 @@
+{ "display_name": "주사위 상자", "loading_order": 10, "requires": [], "optional": [], "js": "index.js", "css": "style.css", "author": "fixture", "version": "1.2.0" }

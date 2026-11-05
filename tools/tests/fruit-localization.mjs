@@ -120,7 +120,7 @@ tz.mutate();
 check('model-tag toasts translate without a click in either colon width, keeping the #tag',()=>{assert.equal(halfWidth.text,'모델 태그를 바꿨어요: #DS');assert.equal(fullWidth.text,'모델 태그를 바꿨어요: #GEMINI');assert.equal(localBuild.text,'모델 태그를 바꿨어요: #CLAUDE')});
 check('other Fruit toasts still wait for a recent click in the panel',()=>{assert.equal(otherToast.text,'预设已切换，请重新打开面板')});
 check('the always-on toast list holds only the model-tag notices, each a toast pattern or entry',()=>{const data=JSON.parse('{'+codeOf('fruit-heart').split('installFruitHeartKorean(BlueLemonade,{')[1].trim().replace(/\);\s*$/,''));assert.deepEqual(data.toastAnytime,['已切换模型标签：# {0}','已切换模型标签:#{0}','已切换模型标签：#{0}']);for(const zh of data.toastAnytime)assert.ok(data.entries.some(e=>e.zh===zh&&e.kind==='pattern'&&e.ko==='모델 태그를 바꿨어요: #{0}'),zh)});
-check('catalog version moved with the dictionary change',()=>{assert.match(fs.readFileSync(path.join(root,'src/scripts/catalog.js'),'utf8'),/\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.1\.0'/)});
+check('catalog version moved with the dictionary change',()=>{assert.match(fs.readFileSync(path.join(root,'src/scripts/catalog.js'),'utf8'),/\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.1\.1'/)});
 // 8.0.7 후보(10-27 제보 「야한 과일 · 청과 한글화 안 됨」): 과일의 마음 창은 프롬프트 이름을 줄여 보여요(果实之心 창 스크립트의 규칙 그대로 옮김).
 //   선택 단추 · 목록 · 칩 · 항목 이름 = 「｜」 앞 제목에서 앞 이모지를 뗀 것, 항목 꼬리표 = 「｜」 뒤 칸들, 목록 풀이 = 택1·필수 칸을 뺀 칸을 「 · 」로, 분류 = 구분선 제목 · 풀이.
 //   과일 6.4 · 야한 과일 2.0 · 청과 2.0 의 모든 이름(사전 원본 = 공통 + 프리셋별)을 그 꼴로 창에 그려 한자가 남지 않는지 봐요.
@@ -156,6 +156,20 @@ check('catalog version moved with the dictionary change',()=>{assert.match(fs.re
   check('the reported labels read as short Korean (특별 조정 · 일반 사고 과정 · 미니 웹 극장)',()=>{const data=JSON.parse('{'+codeOf('fruit-heart').split('installFruitHeartKorean(BlueLemonade,{')[1].trim().replace(/\);\s*$/,''));const t=new Map(data.titles);assert.equal(t.get('特调版推剧情 含扩写'),'특별 조정 밀기+확장');assert.equal(t.get('常规 COT改'),'일반 사고 과정 · 수정판');assert.equal(t.get('汐见剧场'),'미니 웹 극장');assert.equal(t.get('小回剧场'),'번외 꾸밈 극장')});
 }
 
+// 1.0.3 후보(11-05 제보 「과일의 마음 일반 설정에 世界基调与RP难度 · 🌿默认自然态(不干预) 가 중국어로 보여요」): 청과 2.1X 의 과일의 마음 창이 새로 그리는 世界基调 칸 ·
+//   선택 단추(전부 끔 · 간단 표시 · 하나 켬) · 고르기 창 첫 줄 · 묶음 이름을 그대로 그려 한글로 바뀌는지 봐요.
+check('청과 2.1X 世界基调 칸: 제목 · 풀이 · 선택 단추 · 고르기 창 · 묶음 이름이 한글이에요',()=>{
+  const env=environment(),panel=add(env.html,'div',{id:'fruit-heart-v6',class:'open'});
+  const ck=add(panel,'span',{class:'fh-ck'},'世界基调与RP难度'),em=add(ck,'em',{},'全关即为默认自然态');
+  const off=add(panel,'button',{class:'fh-sel','data-pick-group':'基调','aria-label':'基调',title:'基调：🌿 默认自然态（不干预）'}),offT=add(off,'span',{class:'fh-sel-t'},'🌿 默认自然态（不干预）');
+  const mini=add(panel,'button',{class:'fh-sel','data-pick-group':'基调','aria-label':'基调',title:'基调：基调：自然态'}),miniT=add(mini,'span',{class:'fh-sel-t'},'基调：自然态');
+  const one=add(panel,'button',{class:'fh-sel on','data-pick-group':'基调',title:'基调：路边一条'}),oneT=add(one,'span',{class:'fh-sel-t'},'路边一条');
+  const sheet=add(panel,'div',{class:'fh-sheet'}),head=add(sheet,'b',{},'基调'),first=add(sheet,'span',{},'🌿 默认自然态（全部关闭·原生态）'),note=add(sheet,'em',{},'主角光环·万千偏爱');
+  env.run();
+  assert.deepEqual([ck.text,em.text,offT.text,off.getAttribute('title'),off.getAttribute('aria-label'),miniT.text,mini.getAttribute('title'),oneT.text,head.text,first.text,note.text],
+    ['세계 기조와 RP 난이도','모두 끄면 기본(자연) 상태','🌿 기본 자연 상태 (손대지 않음)','세계 기조: 🌿 기본 자연 상태 (손대지 않음)','세계 기조','세계 기조: 자연 상태','세계 기조: 자연 상태','길바닥 인생','세계 기조','🌿 기본 자연 상태 (모두 끄기 · 원래대로)','주인공 보정·모두의 편애']);
+  env.cleanups.at(-1)();
+});
 check('유휴 발견은 문서 전체를 훑지 않고 늦게 들어온 창과 입구를 찾아요',()=>{
   const env=environment();
   env.doc.getElementsByClassName=name=>({[Symbol.iterator]:function*(){yield* env.html.querySelectorAll('.'+name)}});

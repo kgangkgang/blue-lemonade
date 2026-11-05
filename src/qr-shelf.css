@@ -1,0 +1,147 @@
+/* ===== src/qr-shelf.css — 1.0.3 QR 책장 창 (src/qr-shelf.js 가 창을 처음 열 때 <link> 로 받아요) =====
+   창은 실리태번 Popup(.bl-qrs-dialog) · 입력칸 · 단추 · 체크박스는 테마 공용 규칙 그대로(.text_pole · .menu_button · A3).
+   칸 줄은 채팅 정리 탭(src/chat-organizer.css)과 같은 평평한 모양 — 고른 칸 = 면 + 굵기 650, 그림자 없음 · 한 줄 가로 스크롤 + 넘친 쪽 흐림(tab-scroll.js).
+   줄(QR 하나)은 캐릭터 목록 카드와 같은 면 --bl-card · 모서리 --bl-r-md. 색은 팔레트 변수만(새 색 · 혼색 없음). 폰 누르는 칸 44. */
+
+dialog.popup.bl-qrs-dialog { width: min(560px, calc(100dvw - 12px)) !important; max-width: calc(100dvw - 12px) !important; }
+dialog.popup.bl-qrs-dialog .popup-content { scrollbar-width: none; }
+dialog.popup.bl-qrs-dialog .popup-content::-webkit-scrollbar { display: none; }
+
+.bl-qrs { display: flex; flex-direction: column; gap: var(--bl-s2, 8px); min-width: 0; text-align: left; }
+.bl-qrs-head { display: flex; align-items: center; gap: var(--bl-s2, 8px); min-height: var(--bl-h-ctl, 36px); color: var(--salty-text); }
+.bl-qrs-head > i { color: var(--salty-text); font-size: 13px; }
+.bl-qrs-head > b { font-weight: 650; }
+.bl-qrs-head > small { color: var(--salty-muted); font-variant-numeric: tabular-nums; }
+
+.bl-qrs-bar { display: flex; align-items: center; gap: var(--bl-s2, 8px); min-width: 0; }
+.bl-qrs-bar .bl-qrs-search { flex: 1 1 auto; min-width: 0; min-height: var(--bl-h-ctl, 36px); margin: 0; }
+.bl-qrs-bar .bl-qrs-ai { flex: none; display: inline-flex; align-items: center; gap: var(--bl-s2, 8px); min-height: var(--bl-h-ctl, 36px); margin: 0; padding: 0 10px; white-space: nowrap; }
+
+/* ── 칸 줄 ── */
+.bl-qrs-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  min-width: 0;
+  padding: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  border-radius: var(--bl-r-md, 12px);
+  background: var(--salty-fill-shade, var(--salty-shade));
+}
+.bl-qrs-tabs::-webkit-scrollbar { display: none; }
+.bl-qrs-tabs > button {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  margin: 0;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--bl-r-sm, 8px);
+  background: transparent;
+  box-shadow: none;
+  color: var(--salty-muted);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.bl-qrs-tabs > button > i { font-size: 12px; }
+.bl-qrs-tabs > button > small { font-size: var(--bl-fs-sub, 12px); font-variant-numeric: tabular-nums; opacity: .8; }
+.bl-qrs-tabs > button[aria-selected="true"] { background: var(--bl-fill-card, var(--salty-surface)); color: var(--salty-accent-ink, var(--salty-accent)); box-shadow: var(--bl-e1); }   /* 1.0.3 대화 목록 탭(css/60 .bl-chat-view-tabs)과 같은 고름 모양 — UI 전수조사 부품 변형 하나로
+.bl-qrs-tabs > button:focus-visible { outline: 1px solid var(--salty-accent); outline-offset: -1px; }
+@media (hover: hover) { .bl-qrs-tabs > button[aria-selected="false"]:hover { color: var(--salty-text); } }
+
+/* ── 목록 ── */
+.bl-qrs-list { display: flex; flex-direction: column; gap: var(--bl-s1, 4px); min-width: 0; }
+.bl-qrs-empty, .bl-qrs-ai-note { padding: var(--bl-s3, 12px) var(--bl-s2, 8px); color: var(--salty-muted); font-size: var(--bl-fs-sub, 13px); }
+.bl-qrs-row { display: flex; align-items: center; gap: var(--bl-s1, 4px); min-width: 0; padding: 0 var(--bl-s1, 4px) 0 0; border: 1px solid var(--salty-line, transparent); border-radius: var(--bl-r-md, 12px); background: var(--bl-card, var(--salty-surface)); }
+.bl-qrs-row.bl-qrs-hidden .bl-qrs-run { opacity: .6; }
+.bl-qrs-run {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 48px;
+  margin: 0;
+  padding: var(--bl-s2, 8px) var(--bl-s1, 4px) var(--bl-s2, 8px) var(--bl-s3, 12px);
+  border: 0;
+  border-radius: var(--bl-r-md, 12px);
+  background: transparent;
+  box-shadow: none;
+  color: var(--salty-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.bl-qrs-run:focus-visible { outline: 1px solid var(--salty-accent); outline-offset: -1px; }
+@media (hover: hover) { .bl-qrs-row:not(.bl-qrs-editing):hover { background: var(--bl-control-hover, var(--bl-card)); } }
+.bl-qrs-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bl-qrs-name > b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
+.bl-qrs-name > i { flex: none; color: var(--salty-muted); font-size: 12px; }
+.bl-qrs-desc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; color: var(--salty-muted); font-size: var(--bl-fs-sub, 13px); overflow-wrap: anywhere; }
+.bl-qrs-where { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--salty-muted); font-size: var(--bl-fs-micro, 11px); opacity: .85; }
+
+/* 아이콘만 단추: 상자 · 면 · 선 없음, 잉크 12.5 · 누름 칸 34 (폰 44 — 투명 ::after) */
+.bl-qrs-icon {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--bl-r-sm, 8px);
+  background: transparent;
+  box-shadow: none;
+  color: var(--salty-muted);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+/* 1.0.3 즐겨찾기 아닌 별은 흐리게(opacity) 대신 빈 별(fa-regular) — 흐린 별은 대비 3:1 밑이었어요(UI 전수조사) */
+.bl-qrs-icon[aria-pressed="true"] { color: var(--salty-accent); }
+.bl-qrs-icon:focus-visible { outline: 1px solid var(--salty-accent); outline-offset: -1px; }
+@media (hover: hover) { .bl-qrs-icon:hover { color: var(--salty-text); } }
+
+/* ── 고치기 · 미리 보기 ── */
+.bl-qrs-row.bl-qrs-editing { padding: 0; }
+.bl-qrs-edit { display: flex; flex-direction: column; gap: var(--bl-s2, 8px); flex: 1 1 auto; min-width: 0; padding: var(--bl-s3, 12px); }
+.bl-qrs-edit-head { display: flex; align-items: baseline; gap: var(--bl-s2, 8px); min-width: 0; }
+.bl-qrs-edit-head > b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
+.bl-qrs-edit-head > small { flex: none; color: var(--salty-muted); font-size: var(--bl-fs-sub, 13px); }
+.bl-qrs-field { display: grid; grid-template-columns: 4.5em minmax(0, 1fr); align-items: center; gap: var(--bl-s2, 8px); margin: 0; }
+.bl-qrs-field > span { color: var(--salty-muted); font-size: var(--bl-fs-sub, 13px); }
+.bl-qrs-field > input, .bl-qrs-prev > input { min-width: 0; min-height: var(--bl-h-ctl, 36px); margin: 0; }
+.bl-qrs-checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(12em, 1fr)); gap: var(--bl-s2, 8px); }
+.bl-qrs-checks > .checkbox_label { min-height: var(--bl-h-ctl, 36px); margin: 0; }
+.bl-qrs-btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bl-s2, 8px); }
+.bl-qrs-btns > .menu_button { display: flex; align-items: center; justify-content: center; width: auto; min-width: 0; min-height: var(--bl-h-ctl, 36px); margin: 0; white-space: nowrap; }
+.bl-qrs-prev { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--bl-s1, 4px); padding: var(--bl-s2, 8px) var(--bl-s3, 12px); border: 1px solid var(--salty-line, transparent); border-radius: var(--bl-r-md, 12px); background: var(--bl-card, var(--salty-surface)); }
+.bl-qrs-prev > .checkbox_label { min-height: var(--bl-h-ctl, 36px); margin: 0; }
+.bl-qrs-prev > .checkbox_label > b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
+.bl-qrs-prev.bl-qrs-off > input { opacity: .5; }
+
+.bl-qrs-foot { display: flex; justify-content: flex-start; }
+.bl-qrs-foot > .menu_button { display: inline-flex; align-items: center; gap: var(--bl-s2, 8px); min-height: var(--bl-h-ctl, 36px); margin: 0; padding: 0 10px; }
+.bl-qrs-foot > .menu_button[hidden] { display: none; }
+
+@media (pointer: coarse) {
+  .bl-qrs :is(.bl-qrs-tabs > button, .bl-qrs-icon)::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
+  .bl-qrs-run { min-height: 52px; }
+  .bl-qrs-tabs > button { min-height: 36px; }   /* 1.0.3 폰은 대화 목록 탭(css/60)과 같은 36 */
+}
+@media (min-width: 640px) {
+  .bl-qrs-prev { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .bl-qrs-prev > .checkbox_label { grid-column: 1 / -1; }
+  .bl-qrs-prev > input[data-ai="d"] { grid-column: 1 / -1; grid-row: 3; }
+}
+/* 1.0.3 창 안 글자 단추는 400(UI 전수조사 「글자 단추 글자 한 단계」 — 실리태번 Popup 안이라 테마 기본 500 이 남았어요) */
+body.salty .bl-qrs .menu_button { font-weight: 400; }

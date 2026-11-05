@@ -779,6 +779,24 @@ body.salty #bl-onehand .bl-onehand-btn:focus-visible {
 body.salty #bl-onehand.is-busy .bl-onehand-btn {
   opacity: 0.45;
 }
+/* 1.0.3 가운데 이동 · 지우기 묶음까지 켜서 단추가 7개를 넘으면(최대 9개) 좁은 화면(폰 폭 384)에 한 줄로 들어가게 조금 좁게 · 사이도 4px.
+   누르는 넓이는 css/86-touch-targets.css 의 투명 상자(44×44)가 받쳐요. 넓은 화면은 그대로 40px */
+@media (max-width: 480px) {
+  body.salty #bl-onehand.is-many,
+  body.salty #bl-onehand.is-many .bl-onehand-group {
+    gap: 4px;
+  }
+  body.salty #bl-onehand.is-many .bl-onehand-group {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  body.salty #bl-onehand.is-many .bl-onehand-btn {
+    flex: 0 1 36px;
+    width: 36px;
+    min-width: 28px;
+  }
+}
+/* 1.0.3 폰 360(줄 안쪽 336px)에서는 9개 × 36 + 사이가 356px 라 「다시 생성」이 8px 잘렸어요 → 위 규칙으로 단추가 같이 조금씩 줄어 한 줄에 들어가요(최소 28px) */
 
 
 /* css/41-decor.css */

@@ -69,6 +69,7 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_create_bookmark::
 body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_create_branch::before,
 body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_copy::before,
 body.salty.salty-icons-line #chat .mes .mes_buttons > .mes_bookmark::before,
+body.salty.salty-icons-line #chat .mes .mes_buttons > .bl_mes_del::before,
 body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-star::before,
 body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-star.is-marked::before,
 body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-bookmark::before,
@@ -130,6 +131,11 @@ body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_create_branch { -
 body.salty.salty-icons-line #chat .mes .extraMesButtons > .mes_copy { --salty-mi: var(--salty-mi-copy); }
 
 body.salty.salty-icons-line #chat .mes .mes_buttons > .mes_bookmark { --salty-mi: var(--salty-mi-flagfill); }
+body.salty.salty-icons-line #chat .mes .mes_buttons > .bl_mes_del { --salty-mi: var(--salty-mi-trash); }   /* 1.0.3 연필 옆 지우기(src/quick/mes-delete.js) */
+/* 1.0.3 연필 옆 휴지통은 쉴 때 연필과 같은 색(css/05 의 color: inherit) — 메시지마다 빨간 아이콘이 늘 떠 있지 않게. 마우스를 올리거나 누를 때만 빨강(css/17 「지우기는 빨강」을 여기서만 덮어요) */
+body.salty #chat .mes .mes_buttons > .bl_mes_del { color: inherit !important; }
+body.salty #chat .mes .mes_buttons > .bl_mes_del:active { color: var(--bl-danger) !important; }
+@media (hover: hover) { body.salty #chat .mes .mes_buttons > .bl_mes_del:hover { color: var(--bl-danger) !important; } }
 body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-star { --salty-mi: var(--salty-mi-star); }
 body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-star.is-marked { --salty-mi: var(--salty-mi-starfill); }
 body.salty.salty-icons-line #chat .mes .mes_buttons > .cg-mes-btn.fa-bookmark { --salty-mi: var(--salty-mi-bookmark); }

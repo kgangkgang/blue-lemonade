@@ -1,4 +1,4 @@
-// 프롬프트 폴더 (1.0.1, 1.0.2 더함) — 프롬프트 관리자 목록의 항목을 폴더로 묶어 접고 펼쳐요.
+// 프롬프트 폴더 (1.0.1, 1.0.2 · 1.0.3 더함) — 프롬프트 관리자 목록의 항목을 폴더로 묶어 접고 펼쳐요.
 // 계산은 prompt-folders-core.js(순수). 여기는 화면 · 저장 · 실리태번 연결만.
 //
 // 줄은 옮기지도 복제하지도 않아요: 실제 순서에서 같은 폴더 항목이 이어지는 구간마다 머리 줄(li.bl-pf-head) 하나를 그 구간 앞에 끼우고,
@@ -9,6 +9,8 @@
 // 프리셋 파일의 extensions.blPromptFolders 는 읽기만 해요: 내 폴더가 없는 프리셋의 초깃값이고, 고치면 테마 설정이 우선이에요. 테마가 프리셋 파일에 쓰지는 않아요(tools/preset-folders.mjs 가 넣어요).
 // 1.0.2: 접고 펼치기는 머리 줄을 다시 만들지 않고 제자리에서(refold) · 폴더째 위 · 아래로 옮기기 · 하위 폴더를 풀면 항목은 위 폴더로 ·
 //   모두 켜기 · 끄기와 「하나만 켜기」에 되돌리기 · 다 꺼진 폴더 머리는 꺼진 줄처럼 옅게 · 바뀐 게 없으면 저장 안 함.
+// 1.0.3: 폴더 창 하나로 — 도구 줄 「모든 폴더 고치기」(모든 폴더) · 폴더 메뉴 「이 폴더 고치기」(그 폴더와 안의 하위 폴더) · 「새 폴더」가 같은 창이에요.
+//   두 목록(폴더 · 모든 항목)을 넓으면 좌우 · 좁으면 위아래로, 하위 폴더는 같은 창 안의 접는 줄, 항목은 위 · 아래 · 빼기, 창 안에서 「하나만 켜기」.
 import { getSettings, saveSettings } from './settings.js';
 import { watchDom } from './dom-watch.js';
 import { groupedNumber } from './numbers.js';
@@ -18,7 +20,7 @@ import { showThemeModal } from './modal.js';
 import { mouseDevice } from './prompt-card-picker.js';
 import { promptChoiceGroups, withFolderChoices } from './prompt-choice-core.js';
 import { setFolderSource } from './prompt-choice.js';
-import { tidyFolders, newFolderId, folderRuns, detectMove, adoptMove, assignIds, gatherOrder, runStats, planToggleAll, planFromDividers, isDivider, folderItems, dropEmpty, remapFolders, presetStem, readPresetFolders, folderIndex, ungroupFolder, moveFolderBlock } from './prompt-folders-core.js';
+import { LIMITS, tidyFolders, newFolderId, folderRuns, detectMove, adoptMove, assignIds, gatherOrder, runStats, planToggleAll, planFromDividers, isDivider, folderItems, dropEmpty, remapFolders, presetStem, readPresetFolders, folderIndex, ungroupFolder, moveFolderBlock, shiftInFolder, scopeFolders } from './prompt-folders-core.js';
 
 const CONTAINER = 'completion_prompt_manager';
 const LIST = 'completion_prompt_manager_list';
@@ -301,7 +303,8 @@ function openMenu(anchor, items) {
         const vv = window.visualViewport;
         const v = vv && vv.height > 0 ? { x: vv.offsetLeft, y: vv.offsetTop, w: vv.width, h: vv.height } : { x: 0, y: 0, w: window.innerWidth, h: window.innerHeight };
         box.style.width = 'max-content';
-        const r = pickRect(anchor.getBoundingClientRect(), v, { w: box.offsetWidth, h: box.scrollHeight });
+        // 높이는 테두리까지(1.0.3): 안쪽 높이만 재면 2px 모자라 세로 스크롤 칸이 생기고 그만큼 글이 「…」로 잘렸어요(메뉴 줄이 다섯일 때)
+        const r = pickRect(anchor.getBoundingClientRect(), v, { w: box.offsetWidth, h: box.scrollHeight + box.offsetHeight - box.clientHeight });
         box.style.width = `${r.width}px`; box.style.left = `${r.left}px`; box.style.top = `${r.top}px`; box.style.maxHeight = `${r.maxHeight}px`;
         box.classList.toggle('up', r.up);
     }
@@ -312,7 +315,8 @@ function openToolsMenu(anchor) {
     const list = folders();
     const anyOpen = list.some(f => f.open !== false);
     openMenu(anchor, [
-        { label: '새 폴더', run: () => openEditor(null) },
+        { label: '새 폴더', run: () => openEditor({ fresh: true }) },
+        ...(list.length ? [{ label: '모든 폴더 고치기', run: () => openEditor() }] : []),
         { label: '구분선으로 폴더 만들기', run: autoFolders },
         ...(importable().length ? [{ label: '다른 프리셋에서 가져오기', run: () => openImportMenu(anchor) }] : []),
         ...(list.length ? [{ label: anyOpen ? '모두 접기' : '모두 펼치기', run: () => setAllOpen(!anyOpen) }, { label: '폴더 모두 풀기', run: ungroupAll }] : []),
@@ -326,8 +330,8 @@ function openFolderMenu(id, anchor) {
     // 위 · 아래로: 옮길 수 있을 때만(맨 끝 · 떨어진 폴더는 없음)
     const moves = [[-1, '위로 옮기기'], [1, '아래로 옮기기']].filter(([dir]) => moveFolderBlock(order, list, id, dir)).map(([dir, label]) => ({ label, run: () => moveFolder(id, dir) }));
     openMenu(anchor, [
-        { label: '이름 · 항목 고치기', run: () => openEditor(id) },
-        ...(f.parent ? [] : [{ label: '안에 새 폴더', run: () => openEditor(null, id) }]),
+        { label: '이 폴더 고치기', run: () => openEditor({ scope: id }) },
+        ...(f.parent ? [] : [{ label: '안에 새 폴더', run: () => openEditor({ fresh: true, parent: id }) }]),
         { label: '하나만 켜기', check: !!f.pick, run: () => setPick(id, !f.pick) },
         ...moves,
         ...(split ? [{ label: '한곳에 모으기', run: () => gather(id) }] : []),
@@ -397,15 +401,21 @@ async function ungroupAll() {
     save(slot); apply();
     offerUndo(before, `폴더 ${before.length}개를 풀었어요.`);
 }
-/** 실제 순서를 바꿔 쓰고(실리태번 저장 한 번) 되돌리기 알림 — 한곳에 모으기 · 폴더째 옮기기 */
-function rewriteOrder(order, next, message) {
-    const pm = manager(), ids = order.map(e => e.identifier), key = presetName();
-    const byId = new Map(order.map(e => [e.identifier, e]));
-    const write = list => { pm.removePromptOrderForCharacter(pm.activeCharacter); pm.addPromptOrderForCharacter(pm.activeCharacter, list.map(x => byId.get(x))); pm.render(); pm.saveServiceSettings(); };
+/** 실제 순서를 id 배열대로 바꿔 써요(실리태번 저장 한 번). 배열에 없는 항목은 뒤에 그대로 */
+function writeOrder(ids) {
+    const pm = manager(), entries = hostOrder();
+    if (!pm || !entries) return;
+    const byId = new Map(entries.map(e => [e.identifier, e])), want = new Set(ids);
+    const next = [...ids.filter(x => byId.has(x)).map(x => byId.get(x)), ...entries.filter(e => !want.has(e.identifier))];
     lastIds = null;   // 우리가 바꾼 순서 — 「끌어 옮김」으로 보지 않아요
-    write(next);
+    pm.removePromptOrderForCharacter(pm.activeCharacter); pm.addPromptOrderForCharacter(pm.activeCharacter, next); pm.render(); pm.saveServiceSettings();
+}
+/** 실제 순서를 바꿔 쓰고 되돌리기 알림 — 한곳에 모으기 · 폴더째 옮기기 */
+function rewriteOrder(order, next, message) {
+    const ids = order.map(e => e.identifier), key = presetName();
+    writeOrder(next);
     const toast = globalThis.toastr?.info?.(message, 'Blue Lemonade');
-    attachUndo(toast, () => { if (presetName() !== key) return; lastIds = null; write(ids); });
+    attachUndo(toast, () => { if (presetName() === key) writeOrder(ids); });
 }
 function gather(id) {
     const pm = manager(), order = hostOrder();
@@ -466,112 +476,231 @@ async function importFrom(key) {
     offerUndo(before, `폴더 ${made.length}개를 가져왔어요.`);
 }
 
-// ───────── 편집 창 (공용 고르기 창 틀 · css/78 + 이 기능 css) ─────────
-function openEditor(id, parentId = '') {
+// ───────── 폴더 창 (1.0.3 — 공용 고르기 창 틀 · css/78 + 이 기능 css) ─────────
+// 한 창 두 목록: 「폴더」(넓으면 왼쪽 · 좁으면 위) = 보이는 폴더와 그 항목 — 폴더는 접는 줄, 항목은 위 · 아래 · 빼기,
+//   「모든 항목」(넓으면 오른쪽 · 좁으면 아래) = 프롬프트 전부 — 누르면 고른 폴더에 넣고 빼요(다른 폴더에 있던 것은 옮겨 와요). 창 높이는 고정.
+// scope 없음 = 모든 폴더(도구 줄 「모든 폴더 고치기」) · scope = 그 폴더와 안의 하위 폴더(폴더 메뉴 「이 폴더 고치기」) · fresh = 새 폴더 하나.
+// 저장 전까지는 사본만 고쳐요. 바뀐 게 없으면 저장 안 함(1.0.2), 보내는 순서가 바뀌거나 「하나만 켜기」로 꺼진 항목이 있으면 되돌리기 알림.
+const ICON = (act, icon, label, off = false) => `<button type="button" class="bl-pf-ib fa-solid ${icon}" data-pf-item="${act}" aria-label="${label}" title="${label}"${off ? ' disabled' : ''}></button>`;
+function openEditor({ scope = '', fresh = false, parent = '' } = {}) {
     const list = document.getElementById(LIST);
-    if (!list) return;
-    const old = document.querySelector('dialog.bl-pf-editor');
-    if (old?.open) return;
+    if (!list || document.querySelector('dialog.bl-pf-editor')?.open) return;
     const rows = rowsOf(list);
-    const items = rows.map(row => ({ id: row.dataset.pmIdentifier, name: shownName(row) }));
-    const order = items.map(x => x.id);
-    const current = id ? folders().find(f => f.id === id) : null;
+    const names = new Map(rows.map(row => [row.dataset.pmIdentifier, shownName(row)]));
+    const order0 = rows.map(row => row.dataset.pmIdentifier);
+    let order = order0.slice();
+    const key = presetName(), had = Object.hasOwn(store().presets, key);
+    const saved = bucket().folders, was = JSON.stringify(saved);
+    const work = structuredClone(saved), picked0 = new Map(work.map(f => [f.id, f.pick]));
+    const byId = id => work.find(f => f.id === id) || null;
+    if (fresh) {
+        const f = { id: newFolderId(new Set(work.map(x => x.id))), name: '', ids: [], open: true, pick: false, parent: work.some(x => x.id === parent && !x.parent) ? parent : '' };
+        work.push(f); scope = f.id;
+    }
+    if (scope && !byId(scope)) return;
+    let target = scope || scopeFolders(work, '', order)[0]?.id || '';
+    const shut = new Set();   // 창 안에서만 접은 폴더(저장 안 함)
     const present = new Set(order);
-    const chosen = new Set((current ? current.ids : []).filter(x => present.has(x)));   // 이 프리셋에 없는 항목은 세지 않고 그대로 둬요
-    const absent = (current ? current.ids : []).filter(x => !present.has(x));
-    // 넣을 곳: 맨 위 폴더만 고를 수 있어요(2단까지). 하위 폴더가 있는 폴더는 맨 위에 남아요
-    const tops = folders().filter(f => !f.parent && f.id !== id);
-    const place = current ? current.parent : parentId;
-    const canPlace = tops.length && !(current && folders().some(f => f.parent === id));
-    const owner = new Map();
-    for (const f of folders()) if (f.id !== id) for (const x of f.ids) owner.set(x, f.name);
+    const rank = () => new Map(order.map((x, i) => [x, i]));
+    const label = f => String(f?.name || '').replace(/\s+/g, ' ').trim() || '새 폴더';
+
     const dialog = document.createElement('dialog');
     dialog.className = 'bl-tool-dialog bl-prompt-card-picker bl-pf-editor';
-    dialog.setAttribute('aria-label', current ? '폴더 고치기' : '새 폴더');
-    dialog.innerHTML = `<header><h3>${current ? '폴더 고치기' : '새 폴더'}</h3><button type="button" data-card-close aria-label="닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>`
-        + `<input type="text" data-pf-name maxlength="40" placeholder="폴더 이름" aria-label="폴더 이름" autocomplete="off" value="${esc(current?.name || '')}">`
-        + (canPlace ? `<label class="bl-pf-place"><span>넣을 곳</span><select data-pf-parent aria-label="넣을 곳"><option value="">맨 위</option>${tops.map(f => `<option value="${esc(f.id)}"${f.id === place ? ' selected' : ''}>${esc(f.name)}</option>`).join('')}</select></label>` : '')
-        + `<input type="search" data-card-search placeholder="프롬프트 찾기" aria-label="프롬프트 찾기" autocomplete="off">`
-        + '<div class="bl-prompt-card-list" aria-label="프롬프트 목록"></div>'
+    const title = fresh ? '새 폴더' : scope ? `「${label(byId(scope))}」 고치기` : '모든 폴더 고치기';
+    dialog.setAttribute('aria-label', title);
+    dialog.innerHTML = `<header><h3>${esc(title)}</h3><button type="button" data-card-close aria-label="닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>`
+        + '<div class="bl-pf-fields"><input type="text" data-pf-name maxlength="40" placeholder="폴더 이름" aria-label="폴더 이름" autocomplete="off">'
+        + '<label class="bl-pf-pick"><input type="checkbox" data-pf-pick><span>하나만 켜기</span></label></div>'
+        + '<label class="bl-pf-place"><span>넣을 곳</span><select data-pf-parent aria-label="넣을 곳"></select></label>'
+        + '<div class="bl-pf-body"><section class="bl-pf-pane" aria-label="폴더"><div class="bl-prompt-card-list bl-pf-left"></div></section>'
+        + '<section class="bl-pf-pane" aria-label="모든 항목"><input type="search" data-card-search placeholder="모든 항목에서 찾기" aria-label="모든 항목에서 찾기" autocomplete="off"><div class="bl-prompt-card-list bl-pf-right" aria-label="모든 항목"></div></section></div>'
         + '<footer><small role="status" aria-live="polite"></small><span class="bl-prompt-card-actions"><button type="button" data-card-clear>취소</button><button type="button" data-card-done>저장</button></span></footer>';
-    const name = dialog.querySelector('[data-pf-name]'), search = dialog.querySelector('[data-card-search]');
-    const box = dialog.querySelector('.bl-prompt-card-list'), status = dialog.querySelector('[role="status"]'), done = dialog.querySelector('[data-card-done]');
+    const $ = sel => dialog.querySelector(sel);
+    const name = $('[data-pf-name]'), pick = $('[data-pf-pick]'), place = $('.bl-pf-place'), parentField = $('[data-pf-parent]');
+    const left = $('.bl-pf-left'), right = $('.bl-pf-right'), search = $('[data-card-search]'), status = $('[role="status"]'), done = $('[data-card-done]');
     const fold = text => String(text || '').normalize('NFKC').toLocaleLowerCase();
-    function render() {
-        const words = fold(search.value).trim().split(/\s+/).filter(Boolean);
+
+    // 고른 폴더의 칸: 이름 · 하나만 켜기 · 넣을 곳(맨 위 폴더만 위 폴더가 될 수 있어요 — 2단까지. 「이 폴더 고치기」에서는 그 폴더만 옮길 수 있어요)
+    function drawFields() {
+        const f = byId(target);
+        name.disabled = pick.disabled = !f;
+        name.value = f?.name || ''; pick.checked = !!f?.pick;
+        const tops = work.filter(x => !x.parent && x.id !== target);
+        const can = !!f && tops.length && !work.some(x => x.parent === f.id) && (!scope || f.id === scope);
+        place.hidden = !can;
+        if (can) parentField.innerHTML = `<option value="">맨 위</option>${tops.map(x => `<option value="${esc(x.id)}"${x.id === f.parent ? ' selected' : ''}>${esc(label(x))}</option>`).join('')}`;
+    }
+    function drawLeft() {
+        const top = left.scrollTop, shown = scopeFolders(work, scope, order), ids = new Set(shown.map(f => f.id)), r = rank();
         const fragment = document.createDocumentFragment();
-        for (const item of items) {
-            if (words.length && !words.every(w => fold(item.name).includes(w))) continue;
+        const section = (f, depth) => {
+            const items = f.ids.filter(x => present.has(x)).sort((a, b) => r.get(a) - r.get(b));
+            const kids = shown.filter(c => c.parent === f.id), open = !shut.has(f.id);
+            const head = document.createElement('button');
+            head.type = 'button'; head.className = `bl-pf-sec${depth ? ' bl-pf-d1' : ''}`; head.dataset.pfSec = f.id;
+            head.setAttribute('aria-expanded', String(open));
+            if (f.id === target) head.setAttribute('aria-current', 'true');
+            head.innerHTML = `<i class="fa-solid ${open ? 'fa-chevron-down' : 'fa-chevron-right'}" aria-hidden="true"></i><b>${esc(label(f))}</b><small>${folderItems(f, work).filter(x => present.has(x) && counted(x)).length}${f.pick ? ' · 택1' : ''}</small>`;   // 목록 머리 줄과 같은 수(하위까지 · 구분선 빼고)
+            fragment.append(head);
+            if (!open) return;
+            items.forEach((x, i) => {
+                const row = document.createElement('div');
+                row.className = `bl-pf-item${depth ? ' bl-pf-d1' : ''}`; row.dataset.id = x; row.dataset.folder = f.id;
+                const nm = names.get(x) || x;
+                // 구분선 이름(━ ◆ 문체 ◆ ━ 같은 선 · 도형 글자)은 꺾이면 선이 두 줄로 갈라져 보여요 → 한 줄 · 넘치면 … (이름 전체는 title)
+                const rule = /[─-╿■-◿]/.test(nm) ? ' class="bl-pf-rule"' : '';
+                row.innerHTML = `<span${rule} title="${esc(nm)}">${esc(nm)}</span>${ICON('up', 'fa-arrow-up', '위로', i === 0)}${ICON('down', 'fa-arrow-down', '아래로', i === items.length - 1)}${ICON('out', 'fa-xmark', '폴더에서 빼기')}`;
+                fragment.append(row);
+            });
+            if (!items.length && !kids.length) { const empty = document.createElement('p'); empty.textContent = '비어 있어요. 「모든 항목」에서 눌러 더해요.'; fragment.append(empty); }
+            for (const c of kids) section(c, depth + 1);
+        };
+        for (const f of shown) if (!f.parent || !ids.has(f.parent)) section(f, 0);
+        // 새 폴더: 모든 폴더 창이면 맨 위에, 맨 위 폴더 하나 창이면 그 안에(하위 폴더 창 · 새 폴더 창에는 없음)
+        const host = scope ? byId(scope) : null;
+        if (!fresh && (!scope || (host && !host.parent)) && work.length < LIMITS.folders) {
+            const add = document.createElement('button');
+            add.type = 'button'; add.className = 'bl-prompt-card-more bl-pf-add'; add.dataset.pfAdd = scope;
+            add.innerHTML = `<i class="fa-solid fa-plus" aria-hidden="true"></i><span>${scope ? '안에 새 폴더' : '새 폴더'}</span>`;
+            fragment.append(add);
+        }
+        left.replaceChildren(fragment);
+        left.scrollTop = top;
+    }
+    function drawRight() {
+        const top = right.scrollTop, words = fold(search.value).trim().split(/\s+/).filter(Boolean);
+        const f = byId(target), mine = new Set(f?.ids || []), owner = folderIndex(work);
+        const fragment = document.createDocumentFragment();
+        for (const x of order) {
+            const text = names.get(x) || x;
+            if (words.length && !words.every(w => fold(text).includes(w))) continue;
             const row = document.createElement('button');
-            row.type = 'button'; row.className = 'bl-prompt-card-choice'; row.dataset.id = item.id;
-            row.setAttribute('aria-pressed', String(chosen.has(item.id)));
-            const copy = document.createElement('span'), title = document.createElement('b');
-            title.textContent = item.name; copy.append(title);
-            if (owner.has(item.id)) { const small = document.createElement('small'); small.textContent = `지금 「${owner.get(item.id)}」 폴더`; copy.append(small); }
-            const check = document.createElement('i'); check.className = 'fa-solid fa-check'; check.setAttribute('aria-hidden', 'true'); check.hidden = !chosen.has(item.id);
+            row.type = 'button'; row.className = 'bl-prompt-card-choice'; row.dataset.id = x;
+            row.setAttribute('aria-pressed', String(mine.has(x)));
+            const copy = document.createElement('span'), b = document.createElement('b');
+            b.textContent = text; copy.append(b);
+            const other = owner.get(x);
+            if (other && other !== f) { const small = document.createElement('small'); small.textContent = `지금 「${label(other)}」 폴더`; copy.append(small); }
+            const check = document.createElement('i'); check.className = 'fa-solid fa-check'; check.setAttribute('aria-hidden', 'true'); check.hidden = !mine.has(x);
             row.append(copy, check);
             fragment.append(row);
         }
-        if (!fragment.childNodes.length) { const empty = document.createElement('p'); empty.textContent = items.length ? '찾는 프롬프트가 없어요.' : '프롬프트가 없어요.'; fragment.append(empty); }
-        box.replaceChildren(fragment);
-        count();
+        if (!fragment.childNodes.length) { const empty = document.createElement('p'); empty.textContent = order.length ? '찾는 프롬프트가 없어요.' : '프롬프트가 없어요.'; fragment.append(empty); }
+        right.replaceChildren(fragment);
+        right.scrollTop = top;
     }
-    function count() { status.textContent = `${chosen.size}개 골랐어요`; done.disabled = !chosen.size; }
-    const mark = row => {
-        const on = chosen.has(row.dataset.id);
-        row.setAttribute('aria-pressed', String(on));
-        row.querySelector('i').hidden = !on;
+    function count() {
+        // 「모든 항목」에서 누르면 어디로 가는지
+        const f = byId(target), n = f ? f.ids.filter(x => present.has(x)).length : 0;
+        status.textContent = f ? `「${label(f)}」에 넣어요` : '폴더가 없어요';
+        done.disabled = fresh && !n;
+    }
+    const draw = () => { drawLeft(); drawRight(); count(); };
+    // 목록 칸 안에서만 스크롤해서 보여 줘요(창 · 화면은 그대로): 고른 폴더 줄은 위에, 「모든 항목」은 그 폴더 첫 항목을 가운데로
+    const reveal = (box, el, middle) => {
+        if (!el) return;
+        const b = box.getBoundingClientRect(), r = el.getBoundingClientRect();
+        if (!middle && r.top >= b.top && r.bottom <= b.bottom) return;
+        box.scrollTop = Math.max(0, box.scrollTop + r.top - b.top - (middle ? box.clientHeight / 2 : 6));
     };
-    let lastRow = null;
-    box.addEventListener('click', event => {
-        const row = event.target.closest?.('.bl-prompt-card-choice');
-        if (!row) return;
-        const x = row.dataset.id, on = !chosen.has(x);
-        // Shift+클릭: 지난번 누른 줄부터 이 줄까지 같은 상태로
-        const rows = [...box.querySelectorAll('.bl-prompt-card-choice')], from = rows.indexOf(lastRow), to = rows.indexOf(row);
-        const range = event.shiftKey && from >= 0 ? rows.slice(Math.min(from, to), Math.max(from, to) + 1) : [row];
-        for (const item of range) { if (on) chosen.add(item.dataset.id); else chosen.delete(item.dataset.id); mark(item); }
-        lastRow = row;
-        count();
-    });
-    search.addEventListener('input', () => { box.scrollTop = 0; lastRow = null; render(); });
-    dialog.querySelector('[data-card-close]').addEventListener('click', () => dialog.close());
-    dialog.querySelector('[data-card-clear]').addEventListener('click', () => dialog.close());
-    done.addEventListener('click', () => {
-        if (!chosen.size) return;
-        // 바뀐 게 없으면(1.0.2) 설정을 저장하지 않고 닫기만 — 프리셋 초깃값을 테마 설정에 옮겨 적지도 않아요
-        const key = presetName(), had = Object.hasOwn(store().presets, key), was = JSON.stringify(bucket().folders);
-        const slot = bucket(true);
-        let f = id ? slot.folders.find(x => x.id === id) : null;
-        if (!f) {
-            f = { id: newFolderId(new Set(slot.folders.map(x => x.id))), name: '', ids: [], open: true, pick: false, parent: parentId };
-            slot.folders.push(f);
+    const choose = id => {
+        target = id; shut.delete(id); drawFields(); draw();
+        reveal(left, left.querySelector('[aria-current="true"]'));
+        reveal(right, right.querySelector('[aria-pressed="true"]'), true);
+    };
+
+    left.addEventListener('click', event => {
+        const sec = event.target.closest?.('[data-pf-sec]');
+        if (sec) {
+            const id = sec.dataset.pfSec;
+            if (id !== target) return choose(id);
+            if (shut.has(id)) shut.delete(id); else shut.add(id);
+            return drawLeft();
         }
-        const parentField = dialog.querySelector('[data-pf-parent]');
-        if (parentField) f.parent = parentField.value;
-        for (const up of slot.folders) if (up.id === f.parent) up.open = true;
-        f.name = String(name.value || '').replace(/\s+/g, ' ').trim().slice(0, 40) || `폴더 ${slot.folders.length}`;
-        assignIds(slot.folders, f, [...chosen, ...absent], order);
-        slot.folders = dropEmpty(slot.folders);
-        if (JSON.stringify(slot.folders) === was) {
+        const add = event.target.closest?.('[data-pf-add]');
+        if (add) {
+            const f = { id: newFolderId(new Set(work.map(x => x.id))), name: '', ids: [], open: true, pick: false, parent: add.dataset.pfAdd || '' };
+            work.push(f); choose(f.id);
+            if (mouseDevice()) name.focus();
+            return;
+        }
+        const button = event.target.closest?.('[data-pf-item]');
+        const row = button?.closest('.bl-pf-item'), f = byId(row?.dataset.folder);
+        if (!button || button.disabled || !f) return;
+        const x = row.dataset.id, act = button.dataset.pfItem;
+        if (act === 'out') f.ids = f.ids.filter(y => y !== x);
+        else { const next = shiftInFolder(order, f, x, act === 'up' ? -1 : 1); if (!next) return; order = next; }
+        if (f.id !== target) { target = f.id; drawFields(); }
+        draw();
+        // 옮긴 항목의 같은 단추에 초점을 남겨요(키보드로 여러 칸 옮길 때)
+        if (act !== 'out') left.querySelector(`.bl-pf-item[data-id="${CSS.escape(x)}"] [data-pf-item="${act}"]:not([disabled])`)?.focus({ preventScroll: false });
+    });
+    let lastId = '';
+    right.addEventListener('click', event => {
+        const row = event.target.closest?.('.bl-prompt-card-choice'), f = byId(target);
+        if (!row || !f) return;
+        const x = row.dataset.id, on = !f.ids.includes(x);
+        // Shift+클릭: 지난번 누른 줄부터 이 줄까지 같은 상태로(보이는 줄만)
+        const seen = [...right.querySelectorAll('.bl-prompt-card-choice')].map(el => el.dataset.id), from = seen.indexOf(lastId), to = seen.indexOf(x);
+        const range = event.shiftKey && from >= 0 ? seen.slice(Math.min(from, to), Math.max(from, to) + 1) : [x];
+        if (on) assignIds(work, f, [...f.ids, ...range], order); else f.ids = f.ids.filter(y => !range.includes(y));
+        lastId = x;
+        draw();
+    });
+    name.addEventListener('input', () => { const f = byId(target); if (f) { f.name = name.value; drawLeft(); count(); } });
+    pick.addEventListener('change', () => { const f = byId(target); if (f) { f.pick = pick.checked; drawLeft(); } });
+    parentField.addEventListener('change', () => { const f = byId(target); if (f) { f.parent = parentField.value; drawLeft(); } });
+    search.addEventListener('input', () => { right.scrollTop = 0; lastId = ''; drawRight(); });
+    $('[data-card-close]').addEventListener('click', () => dialog.close());
+    $('[data-card-clear]').addEventListener('click', () => dialog.close());
+    done.addEventListener('click', () => {
+        const f0 = byId(target);
+        if (f0 && !name.disabled) f0.name = name.value;   // 입력 이벤트 없이 바뀐 값(붙여넣기 · 자동 완성)도
+        if (fresh && !f0?.ids.some(x => present.has(x))) return;
+        const r = rank();
+        work.forEach((f, i) => {
+            f.name = String(f.name || '').replace(/\s+/g, ' ').trim().slice(0, 40) || `폴더 ${i + 1}`;
+            f.ids.sort((a, b) => (r.get(a) ?? 1e9) - (r.get(b) ?? 1e9));
+        });
+        if (fresh && f0?.parent) for (const up of work) if (up.id === f0.parent) up.open = true;
+        const next = dropEmpty(tidyFolders(work));
+        const moved = order.some((x, i) => x !== order0[i]), changed = JSON.stringify(next) !== was;
+        // 「하나만 켜기」를 새로 켠 폴더에 켜진 항목이 둘 이상이면 실제 순서 첫 항목만 남겨요(메뉴 「하나만 켜기」와 같은 규칙)
+        const lit = new Set((hostOrder() || []).filter(e => e.enabled).map(e => e.identifier)), offs = [];
+        for (const f of next) if (f.pick && !picked0.get(f.id)) { const items = new Set(folderItems(f, next).filter(counted)); offs.push(...order.filter(x => items.has(x) && lit.has(x)).slice(1)); }
+        if (!changed && !moved) {
             if (!had) delete store().presets[key];
             dialog.close();
             return;
         }
-        store().presets[presetName()] = slot;
-        save(slot); dialog.close(); apply();
+        const before = structuredClone(saved);
+        if (changed) { const slot = store().presets[key] = { folders: next }; save(slot); }
+        if (moved) writeOrder(order);
+        if (offs.length) writeEnabled(offs.map(x => [x, false]));
+        dialog.close(); apply();
+        if (!moved && !offs.length) return;
+        const message = ['폴더를 고쳤어요.', moved ? '보내는 순서도 바뀌었어요.' : '', offs.length ? `하나만 켜기로 ${offs.length}개를 껐어요.` : ''].filter(Boolean).join(' ');
+        const toast = globalThis.toastr?.info?.(message, 'Blue Lemonade');
+        attachUndo(toast, () => {
+            if (presetName() !== key) return;
+            const slot = store().presets[key] = { folders: before };
+            save(slot);
+            if (moved) writeOrder(order0);
+            if (offs.length) writeEnabled(offs.map(x => [x, true]));
+            apply();
+        });
     });
     let backdrop = false;
-    const outside = e => { const r = dialog.getBoundingClientRect(); return e.target === dialog && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom); };
+    const outside = e => { const b = dialog.getBoundingClientRect(); return e.target === dialog && (e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom); };
     dialog.addEventListener('pointerdown', e => { backdrop = outside(e); });
     dialog.addEventListener('click', e => { if (backdrop && outside(e)) dialog.close(); backdrop = false; });
     dialog.addEventListener('close', () => dialog.remove(), { once: true });
-    render();
+    drawFields(); draw();
     document.body.append(dialog);
     showThemeModal(dialog);
-    // 고친 폴더의 첫 항목이 보이게(목록이 길면 고른 줄이 화면 아래에 있었어요)
-    box.querySelector('[aria-pressed="true"]')?.scrollIntoView?.({ block: 'center' });
-    if (mouseDevice()) name.focus();
+    // 「모든 항목」은 고른 폴더의 첫 항목이 보이게(목록이 길면 고른 줄이 아래에 있어요) — 창 밖은 스크롤하지 않아요
+    reveal(right, right.querySelector('[aria-pressed="true"]'), true);
+    if (mouseDevice()) name.focus({ preventScroll: true });
 }
 
 // ───────── 켜고 끄기 ─────────

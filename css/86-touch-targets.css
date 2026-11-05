@@ -43,7 +43,8 @@
     #left-nav-panel .editor_maximize,
     :is(#left-nav-panel, #rm_extensions_block) .menu_button,
     #rm_extensions_block .editor_maximize,
-    #rm_extensions_block .right_menu_button
+    #rm_extensions_block .right_menu_button,
+    #bl-onehand .bl-onehand-btn
   ) {
     position: relative;
   }
@@ -88,7 +89,8 @@
     #left-nav-panel .editor_maximize,
     :is(#left-nav-panel, #rm_extensions_block) .menu_button,
     #rm_extensions_block .editor_maximize,
-    #rm_extensions_block .right_menu_button
+    #rm_extensions_block .right_menu_button,
+    #bl-onehand .bl-onehand-btn
   )::after {
     content: '';
     position: absolute;

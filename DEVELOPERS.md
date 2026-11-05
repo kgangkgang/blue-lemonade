@@ -26,6 +26,29 @@
 </details>
 
 <details>
+<summary>결과 보관함 창구 — <code>Symbol.for('blue-lemonade.result-keeper.v1')</code> (1.0.3)</summary>
+
+QR 책장에서 「답을 보관함으로」를 고른 QR 을 누르면, 그 QR 이 만든 다음 AI 답 하나를 이 창구로 넘겨요. 보관함을 가진 확장이 창구를 열어 두면 책장에 그 칸이 생기고, 없으면 아무것도 보이지 않아요.
+
+```js
+globalThis[Symbol.for('blue-lemonade.result-keeper.v1')] = {
+  label: '내 보관함',                 // 책장 화면에 「답을 내 보관함으로」로 보여요 (30자까지)
+  available: () => true,              // (선택) 지금 받을 수 있는지 — false 면 책장이 칸을 숨겨요
+  async keep({ text, title, source, qr, speaker, chatId, at }) {
+    // text: 답 본문 그대로 · title: 책장에 적은 QR 이름 · source: 'blue-lemonade.qr-shelf' · qr: QR 이름표
+    // 저장했으면 true 또는 { id } — 그때만 블루레몬에이드가 채팅에서 그 메시지를 실리태번 삭제 함수로 빼요
+    return true;
+  },
+};
+```
+
+- 창구는 QR 을 누를 때마다 다시 읽어요. 나중에 열어도, 바꿔 끼워도 돼요.
+- `keep` 이 false · 오류면 답은 채팅에 그대로 남고 알림만 떠요.
+- 기다리는 동안 블루레몬에이드는 실리태번 사건 두 개(새 답 그림 · 채팅 바뀜)만 듣고, 첫 답 · 채팅 바뀜 · 2분 중 먼저 오는 것에서 떼요.
+
+</details>
+
+<details>
 <summary>사용량 장부 — <code>Symbol.for('blue-lemonade.usage')</code> (7.4.0)</summary>
 
 확장마다 「무슨 기능이 얼마 썼나」를 한 곳에 모으는 장부예요. 블루레몬에이드가 켜져 있으면 `globalThis[Symbol.for('blue-lemonade.usage')]` 가 있어요. 없으면(꺼짐 · 옛 판) 아무것도 하지 말고 그냥 넘어가면 돼요. 기록은 이 기기 IndexedDB(`BlueLemonadeUsage`)에만 90일 남고, 밖으로 보내지 않아요.

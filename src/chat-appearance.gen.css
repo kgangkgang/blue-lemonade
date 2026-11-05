@@ -704,6 +704,21 @@ box-shadow: inset 0 0 0 1px var(--salty-accent), var(--bl-e2);
 body.salty #bl-onehand.is-busy .bl-onehand-btn {
 opacity: 0.45;
 }
+@media (max-width: 480px) {
+body.salty #bl-onehand.is-many,
+body.salty #bl-onehand.is-many .bl-onehand-group {
+gap: 4px;
+}
+body.salty #bl-onehand.is-many .bl-onehand-group {
+flex: 0 1 auto;
+min-width: 0;
+}
+body.salty #bl-onehand.is-many .bl-onehand-btn {
+flex: 0 1 36px;
+width: 36px;
+min-width: 28px;
+}
+}
 .bl-art-frame[data-bl-frame="image"] {
 --bl-art-shadow: var(--bl-art-shadow-image, none);
 --bl-decor-art: var(--bl-image-decor-art); --bl-decor-mask: var(--bl-image-decor-mask);

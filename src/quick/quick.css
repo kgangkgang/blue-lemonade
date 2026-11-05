@@ -1,0 +1,61 @@
+/* 1.0.3 편의 기능 모양 — 켠 기능이 처음 쓸 때 한 번 받아요(src/quick/shared.js ensureQuickCss). 색은 팔레트 변수만.
+   창은 프롬프트 폴더 · 카드 고르기 창과 같은 틀(dialog.bl-prompt-card-picker, css/78)을 그대로 써요. */
+
+/* ── 고른 글 고치기 ── */
+.bl-qe-dialog .bl-qe-context { margin: 0; color: var(--salty-muted); font-size: var(--fs-small, .875em); line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 6.5em; overflow-y: auto; }
+.bl-qe-dialog .bl-qe-context mark { background: var(--salty-accent-13, var(--salty-raised)); color: var(--salty-text); border-radius: 4px; padding: 0 2px; }
+.bl-qe-dialog .bl-qe-text { width: 100%; min-height: 7.5em; max-height: 45dvh; margin: 0; box-sizing: border-box; resize: vertical; font: inherit; line-height: 1.5; }
+
+/* ── 범위 지우기: 실리태번 삭제 줄(#dialogue_del_mes, css/04 · 21)과 같은 꼴 — 입력줄 자리의 떠 있는 판 + 알약 둘 ── */
+#bl-range-del { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin: 0; padding: 8px 10px; border-radius: 12px; background: var(--salty-fill-surface, var(--salty-surface)); box-shadow: var(--bl-e3); color: var(--salty-text); font-family: var(--salty-font-ui, inherit); }
+#bl-range-del .bl-rd-note { color: var(--salty-muted); font-size: 13px; line-height: 1.4; text-align: center; overflow-wrap: anywhere; }
+#bl-range-del .bl-rd-actions { display: flex; justify-content: center; gap: 8px; }
+/* 테마 공용 단추 규칙(css/02-controls)이 면 · 글자색 · 그림자를 !important 로 칠해요 — 삭제 줄(css/04)처럼 여기서도 !important 로 덮어요 */
+#bl-range-del .menu_button { display: inline-flex; align-items: center; justify-content: center; flex: 0 1 140px; min-width: 0; min-height: var(--bl-h-btn, 36px); height: var(--bl-h-btn, 36px); margin: 0; padding: 0 16px !important; border: 0 !important; border-radius: 8px !important; box-shadow: none !important; filter: none; background: var(--bl-fill-control, var(--bl-control)) !important; color: var(--salty-text) !important; font-size: 13px; font-weight: 500; letter-spacing: 0; cursor: pointer; }
+#bl-range-del .bl-rd-ok { background: var(--salty-danger-soft) !important; color: var(--bl-danger) !important; }
+#bl-range-del .bl-rd-ok.disabled { opacity: .45 !important; pointer-events: none; }
+@media (hover: hover) {
+  #bl-range-del .bl-rd-cancel:hover { background: var(--bl-fill-control-hover, var(--bl-control-hover)) !important; }
+  #bl-range-del .bl-rd-ok:hover { background: var(--bl-danger) !important; color: var(--bl-danger-ink) !important; }
+}
+@media (max-width: 1000px) { #bl-range-del .menu_button { flex: 1 1 0; } }
+@media (pointer: coarse) {
+  #bl-range-del .menu_button { position: relative; }
+  #bl-range-del .menu_button::before { content: ''; position: absolute; inset: -4px 0; }
+}
+body.bl-range-picking #chat > .mes { cursor: pointer; }
+
+/* ── 프롬프트 켜짐 묶음: 프롬프트 관리자 목록 바로 위 칩 줄 ── */
+body.salty .bl-ps-row { margin: 6px 0 8px; }
+body.salty .bl-ps-row .bl-ps-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+body.salty .bl-ps-row :is(.bl-ps-chip, .bl-ps-btn) { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 32px; margin: 0; border: 1px solid var(--salty-line); border-radius: 999px; background: var(--bl-field, var(--salty-field)); color: var(--salty-text); font: inherit; font-size: 13px; line-height: 1.3; letter-spacing: 0; box-shadow: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+body.salty .bl-ps-row .bl-ps-chip { max-width: 100%; padding: 4px 12px; overflow-wrap: anywhere; text-align: center; }
+body.salty .bl-ps-row .bl-ps-btn { width: 32px; padding: 0; color: var(--salty-muted); }
+body.salty .bl-ps-row .bl-ps-chip.on { border-color: var(--salty-accent); background: var(--salty-accent-13, var(--salty-raised)); color: var(--salty-text); font-weight: 600; }
+body.salty .bl-ps-row .bl-ps-first { color: var(--salty-muted); border-style: dashed; }
+body.salty .bl-ps-row :is(.bl-ps-chip, .bl-ps-btn):disabled { opacity: .45; cursor: default; }
+body.salty .bl-ps-row :is(.bl-ps-chip, .bl-ps-btn):focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 1px; }
+@media (hover: hover) { body.salty .bl-ps-row :is(.bl-ps-chip, .bl-ps-btn):not(:disabled):hover { background: var(--salty-raised); color: var(--salty-text); } body.salty .bl-ps-row .bl-ps-chip.on:hover { background: var(--salty-accent-13, var(--salty-raised)); } }
+@media (pointer: coarse) {
+  body.salty .bl-ps-row :is(.bl-ps-chip, .bl-ps-btn) { position: relative; }
+  body.salty .bl-ps-row :is(.bl-ps-chip, .bl-ps-btn)::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
+}
+/* 떠 있는 메뉴의 위험 줄(지우기) */
+body.salty .bl-quick-layer .bl-quick-menu button.bl-quick-danger { color: var(--bl-danger); }
+
+/* ── 프리셋 고르기 목록 폴더: 공용 고르기 목록(css/72)에 폴더 머리 줄 · 들여 쓴 프리셋 · 새 폴더 줄 ── */
+body.salty .bl-pfo-menu .bl-pfo-head { display: flex; align-items: center; gap: 2px; flex: none; }
+body.salty .bl-pfo-menu .bl-pfo-head > button { display: flex; align-items: center; min-height: var(--bl-pick-row); margin: 0; border: 0; border-radius: var(--bl-pick-row-radius); background: transparent; box-shadow: none; color: var(--bl-pick-text); font: inherit; letter-spacing: inherit; cursor: pointer; }
+body.salty .bl-pfo-menu .bl-pfo-fold { flex: 1 1 auto; min-width: 0; gap: 8px; padding: 0 8px 0 12px; font-weight: 650; text-align: left; }
+body.salty .bl-pfo-menu .bl-pfo-fold > i { flex: none; width: 12px; font-size: 11px; color: var(--bl-pick-muted); }
+body.salty .bl-pfo-menu .bl-pfo-fold > span { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+body.salty .bl-pfo-menu .bl-pfo-fold > small { flex: none; color: var(--bl-pick-muted); font-weight: 400; font-size: var(--bl-ts-meta, 13px); }
+body.salty .bl-pfo-menu .bl-pfo-more { flex: none; justify-content: center; width: var(--bl-pick-row); padding: 0; color: var(--bl-pick-muted); }
+body.salty .bl-pfo-menu .salty-pick-rows > button.bl-pfo-item[data-depth="1"] { padding-left: 32px; }
+body.salty .bl-pfo-menu .bl-pfo-item small { display: block; margin-top: 1px; color: var(--bl-pick-muted); font-size: var(--bl-ts-meta, 12px); font-weight: 400; }
+body.salty .bl-pfo-menu .salty-pick-rows > button.bl-pfo-new { justify-content: flex-start; margin-top: 4px; color: var(--bl-pick-muted); }
+body.salty .bl-pfo-menu .bl-pfo-new i { margin-right: 6px; }
+@media (hover: hover) { body.salty .bl-pfo-menu .bl-pfo-head > button:hover { background: var(--bl-pick-hover); } }
+body.salty .bl-pfo-menu .bl-pfo-head > button:active { background: var(--bl-pick-press); }
+body.salty .bl-pfo-menu .bl-pfo-head > button:focus-visible { outline: 1px solid var(--salty-accent); outline-offset: -1px; }
+body.salty .bl-pfo-editor [data-pfo-name] { width: 100%; margin: 0; flex: none; box-sizing: border-box; font: inherit; }
