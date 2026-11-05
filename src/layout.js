@@ -1,4 +1,5 @@
 import { watchDom } from './dom-watch.js';
+import { getSettings, saveSettings } from './settings.js';
 import { booting, afterBoot } from './boot-gate.js';   // 7.7.4 시작 덮개 동안은 퀵 리플라이 줄을 재지 않는다
 // 원래 클릭 대상은 유지하고, 즐겨찾기 이름과 항목 도구 묶음만 보탠다.
 /**
@@ -25,6 +26,42 @@ export function swipeStripOf(target, selector = SWIPE_STRIPS) {
     const strip = target?.closest?.(selector);
     if (!strip) return null;
     return strip.id === 'qr--bar' || strip.id === 'qr--popout' || strip.scrollWidth > strip.clientWidth + 1 ? strip : null;
+}
+
+/** 캐릭터 머리 즐겨찾기 줄의 「★ 즐겨찾기 · 수」 머리 · 아바타 이름표 (모양 — 1.0.2 제로도 index.js 가 따로 불러요) */
+let favoritesStarted = false;
+export function startFavoritesHeading() {
+    if (favoritesStarted) return;
+    favoritesStarted = true;
+    const favorites = document.querySelector('#HotSwapWrapper');
+    function refreshFavorites() {
+        if (!favorites) return;
+        let heading = favorites.querySelector('.bl-favorites-heading');
+        if (!heading) {
+            heading = document.createElement('div');
+            heading.className = 'bl-favorites-heading';
+            heading.innerHTML = '<i class="fa-solid fa-star" aria-hidden="true"></i><span>즐겨찾기</span><small></small>';
+            favorites.prepend(heading);
+        }
+        const avatars = favorites.querySelectorAll('.hotswap > .avatar');
+        const count = heading.querySelector('small');
+        if (count.textContent !== String(avatars.length)) count.textContent = String(avatars.length);
+        for (const avatar of avatars) {
+            // (hunt-world) 그룹은 실리태번이 그림을 콜라주(alt 「img1」) · alt 없는 그림으로 바꿔 끼워 이름표가 「img1」 · 「[Group] 이름」이었다 →
+            //   그룹은 title(「[Group] 이름」)에서, 캐릭터 · 페르소나는 그림 alt 에서 읽고, 앞머리 [Character] · [Group] · [Persona] 는 뗀다
+            const titled = avatar.title.split('\n')[0].replace(/^\[(?:Character|Group|Persona)\]\s*/, '');
+            const name = avatar.dataset.type === 'group' ? titled : (avatar.querySelector('img')?.alt || titled);
+            let label = avatar.querySelector('.bl-fav-name');
+            if (!label) {
+                label = document.createElement('span');
+                label.className = 'bl-fav-name';
+                avatar.append(label);
+            }
+            if (label.textContent !== name) label.textContent = name;
+        }
+    }
+    refreshFavorites();
+    if (favorites) new MutationObserver(refreshFavorites).observe(favorites, { childList: true, subtree: true });
 }
 
 export function startCompactLayout() {
@@ -71,34 +108,7 @@ export function startCompactLayout() {
         }
     }
     refreshPersonaTitle();
-    const favorites = document.querySelector('#HotSwapWrapper');
     const world = document.querySelector('#WorldInfo');
-    function refreshFavorites() {
-        if (!favorites) return;
-        let heading = favorites.querySelector('.bl-favorites-heading');
-        if (!heading) {
-            heading = document.createElement('div');
-            heading.className = 'bl-favorites-heading';
-            heading.innerHTML = '<i class="fa-solid fa-star" aria-hidden="true"></i><span>즐겨찾기</span><small></small>';
-            favorites.prepend(heading);
-        }
-        const avatars = favorites.querySelectorAll('.hotswap > .avatar');
-        const count = heading.querySelector('small');
-        if (count.textContent !== String(avatars.length)) count.textContent = String(avatars.length);
-        for (const avatar of avatars) {
-            // (hunt-world) 그룹은 실리태번이 그림을 콜라주(alt 「img1」) · alt 없는 그림으로 바꿔 끼워 이름표가 「img1」 · 「[Group] 이름」이었다 →
-            //   그룹은 title(「[Group] 이름」)에서, 캐릭터 · 페르소나는 그림 alt 에서 읽고, 앞머리 [Character] · [Group] · [Persona] 는 뗀다
-            const titled = avatar.title.split('\n')[0].replace(/^\[(?:Character|Group|Persona)\]\s*/, '');
-            const name = avatar.dataset.type === 'group' ? titled : (avatar.querySelector('img')?.alt || titled);
-            let label = avatar.querySelector('.bl-fav-name');
-            if (!label) {
-                label = document.createElement('span');
-                label.className = 'bl-fav-name';
-                avatar.append(label);
-            }
-            if (label.textContent !== name) label.textContent = name;
-        }
-    }
     function refreshWorld() {
         if (!world) return;
         if (!document.body.classList.contains("salty")) {
@@ -154,6 +164,7 @@ export function startCompactLayout() {
             bar.setAttribute('aria-label', '빠른 답장');
         }
         syncQrFind(bar, enabled);
+        syncQrFold(bar, enabled);
         syncQrTitles(enabled);
         scheduleQrEdges();
     }
@@ -192,6 +203,40 @@ export function startCompactLayout() {
             if (booting()) { afterBoot(scheduleQrEdges); return; }   // 7.7.4 시작 덮개 동안은 재지 않는다 (boot-gate.js)
             updateQrEdges(sendForm?.querySelector('#qr--bar'));
         });
+    }
+    // 1.0.1 QR 줄 앞 접기 · 펴기 단추 — body.salty-qr-folded 토글 + chat.qrFolded 에 기억 (css/35-qr-bar.css)
+    function syncQrFold(bar, enabled) {
+        let fold = bar.querySelector(':scope > #bl-qr-fold');
+        const hasButtons = !!bar.querySelector('.qr--button:not([data-bl-fruit-native-entry])');
+        const qrEnabled = globalThis.quickReplyApi?.settings?.isEnabled === true;
+        if (!enabled || !qrEnabled || !hasButtons || document.body.classList.contains('salty-qr-fold-off')) { fold?.remove(); return; }
+        const folded = document.body.classList.contains('salty-qr-folded');
+        if (!fold) {
+            fold = document.createElement('button');
+            fold.type = 'button';
+            fold.id = 'bl-qr-fold';
+            fold.className = 'menu_button';
+            fold.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const s = getSettings();
+                s.chat.qrFolded = !document.body.classList.contains('salty-qr-folded');
+                document.body.classList.toggle('salty-qr-folded', s.chat.qrFolded);
+                saveSettings();
+                paintQrFold(fold, s.chat.qrFolded);
+                scheduleQrEdges();
+            });
+        }
+        paintQrFold(fold, folded);
+        const anchor = bar.querySelector(':scope > #bl-qr-find') || bar.querySelector(':scope > #qr--popoutTrigger');
+        const wanted = anchor ? anchor.nextElementSibling : bar.firstElementChild;
+        if (wanted !== fold) (anchor ? anchor.after(fold) : bar.prepend(fold));
+    }
+    function paintQrFold(fold, folded) {
+        const label = folded ? '퀵 리플라이 펴기' : '퀵 리플라이 접기';
+        if (fold.getAttribute('aria-label') !== label) { fold.setAttribute('aria-label', label); fold.title = label; }
+        fold.setAttribute('aria-expanded', folded ? 'false' : 'true');
+        const icon = folded ? 'fa-angles-right' : 'fa-angles-left';
+        if (!fold.firstElementChild || !fold.firstElementChild.classList.contains(icon)) fold.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i>`;
     }
     // 3.5.3 QR 줄 앞 돋보기: 모든 퀵 리플라이를 목록으로 찾기 (qrfind.js — 처음 누를 때 불러옴). 확장이 줄을 다시 그리면 다시 붙임
     let qrFinderModule = null;
@@ -363,9 +408,8 @@ export function startCompactLayout() {
     if (chat) watchDom(chat, { childList: true, subtree: true, exclude: '.mes', name: '환영 화면 판 표시' }, mutations => {
         if (mutations.some(m => [...m.addedNodes].some(n => n.nodeType === 1 && (n.matches?.('.welcomePanel, .welcomeHeaderVersionDisplay') || n.querySelector?.('.welcomeHeaderVersionDisplay'))))) refreshWelcome();
     });
-    refreshFavorites();
+    startFavoritesHeading();
     refreshWorld();
-    if (favorites) new MutationObserver(refreshFavorites).observe(favorites, { childList: true, subtree: true });
     if (world) new MutationObserver(refreshWorld).observe(world, { childList: true, subtree: true });
     document.addEventListener('click', event => {
         for (const menu of document.querySelectorAll('.bl-wi-actions[open]')) {

@@ -17,24 +17,31 @@ export function streamFamily(source) {
     return OPENAI_LIKE.has(s) ? 'openai' : '';
 }
 
-/** 흘려받다 실패 — 예전 요청으로. unsupported = 이 연결은 흘려받기를 못 하는 듯 (이 세션 동안 다시 시도하지 않는다) */
+/** 흘려받다 실패 — 예전 요청으로. unsupported = 이 연결은 흘려받기를 못 하는 듯 (1.0.1: 곧장 끄지 않는다 — 부르는 쪽이 두 번 거듭될 때만 이 세션 동안 끈다) */
 export function streamFailed(why, unsupported = false) {
-    return Object.assign(new Error(`흘려받기 실패: ${why}`), { streamFailed: true, unsupported });
+    return Object.assign(new Error(`흘려받기 실패: ${why}`), { streamFailed: true, unsupported, why });
 }
 
 const textOf = parts => (Array.isArray(parts) ? parts.filter(p => !p?.type || p.type === 'text').map(p => p?.text ?? '').join('') : typeof parts === 'string' ? parts : '');
 
-/** SSE 이벤트 하나(JSON)를 모은다. 알아본 꼴이면 true */
+/** SSE 이벤트 하나(JSON)를 모은다. 알아본 꼴이면 true — 모르는 꼴은 false 로 지나간다(실패가 아님). 생각 중이면 state.thinking */
 function take(json, state) {
     const { family } = state;
     if (family === 'claude') {
         if (json?.type === 'error') { state.error = json.error ?? json; return true; }
-        if (json?.type === 'content_block_start') { state.blocks[json.index ?? state.blocks.length] = { ...json.content_block }; return true; }
+        if (json?.type === 'content_block_start') {
+            const block = { ...json.content_block };
+            state.blocks[json.index ?? state.blocks.length] = block;
+            if (/thinking/.test(String(block.type ?? ''))) state.thinking = true;   // thinking · redacted_thinking (adaptive 생각은 글 없이 서명만 오기도 한다)
+            return true;
+        }
         if (json?.type === 'content_block_delta') {
-            const block = state.blocks[json.index] ??= { type: json.delta?.type === 'thinking_delta' ? 'thinking' : 'text' };
-            const delta = json.delta ?? {};
-            if (delta.type === 'text_delta') { block.text = (block.text ?? '') + (delta.text ?? ''); state.text += delta.text ?? ''; }
-            else if (delta.type === 'thinking_delta') block.thinking = (block.thinking ?? '') + (delta.thinking ?? '');
+            // 1.0.1 글 · 생각 델타만 칸을 만든다 — 시작 없이 온 다른 델타(signature_delta · 새 델타)가 빈 「글」 칸을 만들지 않게. 모르는 델타는 그냥 지나간다
+            const delta = json.delta ?? {}, kind = delta.type === 'text_delta' ? 'text' : /^(?:thinking|signature)_delta$/.test(String(delta.type)) ? 'thinking' : '';
+            const block = state.blocks[json.index] ?? (kind ? (state.blocks[json.index] = { type: kind }) : null);
+            if (delta.type === 'text_delta') { if (block) block.text = (block.text ?? '') + (delta.text ?? ''); state.text += delta.text ?? ''; }
+            else if (delta.type === 'thinking_delta') { if (block) block.thinking = (block.thinking ?? '') + (delta.thinking ?? ''); state.thinking = true; }
+            else if (kind === 'thinking') state.thinking = true;
             return true;
         }
         if (json?.type === 'message_stop') { state.done = true; return true; }
@@ -47,7 +54,7 @@ function take(json, state) {
         const candidate = json.candidates?.[0];
         if (Array.isArray(json.candidates) && json.candidates.length) state.candidates = true;
         for (const part of candidate?.content?.parts ?? []) {
-            if (part?.thought) continue;
+            if (part?.thought) { state.thinking = true; continue; }
             if (typeof part?.text === 'string') state.text += part.text;
         }
         if (candidate?.finishReason) state.done = true;
@@ -64,6 +71,7 @@ function take(json, state) {
     const choice = json?.choices?.[0];
     if (!choice) return Array.isArray(json?.choices);
     const piece = choice.delta ? choice.delta.content : choice.message?.content ?? choice.text;
+    if (choice.delta && (choice.delta.reasoning_content || choice.delta.reasoning || choice.delta.reasoning_details?.length)) state.thinking = true;   // 중계 · DeepSeek · OpenRouter 의 생각 글
     state.text += textOf(piece);
     if (choice.finish_reason) { state.finish = choice.finish_reason; state.done = true; }
     return true;
@@ -88,19 +96,21 @@ function replyOf(state, source) {
 /**
  * 응답 본문을 읽는다 (response.ok 일 때). 돌려줌: { data } = 실리태번이 stream:false 로 줬을 꼴 · { raw } = 흘려받기 대신 통째로 온 본문(서버가 stream 을 무시함).
  * onText(지금까지 모인 글) — 글이 는 네트워크 조각마다 한 번 (부르는 쪽이 문단이 닫혔을 때만 일한다).
+ * 1.0.1 onThinking() — 글이 오기 전에 모델이 생각하는 표시(생각 칸 · 생각 글)가 처음 왔을 때 한 번 (진행 표시의 「생각 중 n초」).
  */
-export async function readStream(response, { family, source, onText }) {
+export async function readStream(response, { family, source, onText, onThinking }) {
     const reader = response?.body?.getReader?.();
     if (!reader) throw streamFailed('본문이 없어요', true);
     const decoder = new TextDecoder();
-    const state = { family, text: '', blocks: [], done: false, finish: null, error: null, candidates: false, blockReason: '', known: 0 };
-    let mode = null, buffer = '', whole = '';
+    const state = { family, text: '', blocks: [], done: false, finish: null, error: null, candidates: false, blockReason: '', known: 0, junk: 0, thinking: false };
+    let mode = null, buffer = '', whole = '', told = false;
     const event = block => {
         const data = block.split(/\r\n|\r|\n/).filter(line => line.startsWith('data:')).map(line => line.slice(line.startsWith('data: ') ? 6 : 5)).join('\n');
         if (!data.trim()) return;
         if (data.trim() === '[DONE]') { state.done = true; return; }
         let json;
-        try { json = JSON.parse(data); } catch { throw streamFailed('읽을 수 없는 조각'); }
+        // 1.0.1 JSON 이 아닌 조각(중계의 keep-alive 글 등) 하나로 흘려받기 전체를 버리지 않는다 — 건너뛰고, 끝까지 알아본 조각이 없을 때만 실패
+        try { json = JSON.parse(data); } catch { state.junk++; return; }
         if (take(json, state)) state.known++;
         if (state.error) throw streamFailed(`오류 이벤트 (${String(state.error?.message ?? state.error?.type ?? '').slice(0, 80)})`);
     };
@@ -123,6 +133,7 @@ export async function readStream(response, { family, source, onText }) {
                 buffer = buffer.slice(cut.index + cut[0].length);
             }
             if (done) { event(buffer); break; }
+            if (state.thinking && !told && !state.text) { told = true; try { onThinking?.(); } catch { /* 보여 주기는 받기를 막지 않는다 */ } }
             if (state.text.length > before) try { onText?.(state.text); } catch { /* 보여 주기는 받기를 막지 않는다 */ }
         }
     } catch (error) {
@@ -130,7 +141,7 @@ export async function readStream(response, { family, source, onText }) {
         throw error;
     }
     if (mode === null) throw streamFailed('빈 답');
-    if (!state.known) throw streamFailed('알아볼 수 있는 조각이 없어요', true);
+    if (!state.known) throw streamFailed(state.junk ? '읽을 수 없는 조각뿐이에요' : '알아볼 수 있는 조각이 없어요', true);
     if (!state.done) throw streamFailed('끝 표시 없이 끊겼어요');
     return { data: replyOf(state, source) };
 }

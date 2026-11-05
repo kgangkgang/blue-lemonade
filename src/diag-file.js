@@ -79,7 +79,7 @@ async function collect(ctx) {
         versions: { blueLemonade: currentVersion() || '', style: css, sillyTavern: stVersion, addons: Object.fromEntries(addons.map(a => [a.id, a.version])) },
         environment: { browser: short(navigator.userAgent), mobile: /Android|iPhone|iPad/i.test(navigator.userAgent), screen: `${innerWidth}x${innerHeight}@${devicePixelRatio}`, standalone: matchMedia('(display-mode: standalone)').matches },
         features: {
-            usageMode: ['both', 'theme', 'extensions'].includes(s.usageMode) ? s.usageMode : 'both',
+            usageMode: ['both', 'theme', 'extensions', 'zero'].includes(s.usageMode) ? s.usageMode : 'both',
             addonsOn: addons.filter(a => a.on).map(a => a.id).concat(Object.keys(s.addons || {}).filter(id => s.addons[id] === true && !addons.some(a => a.id === id))),
             scriptsOn: Object.entries(ctx.extensionSettings?.blue_lemonade_scripts?.enabled || {}).filter(([, on]) => on === true).map(([id]) => id),
             switchesOn: enabledPaths(s).filter(path => !path.startsWith('addons.')),

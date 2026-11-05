@@ -308,7 +308,7 @@ dialog.popup #model_register_settings > .inline-drawer > .inline-drawer-header .
 @media (hover:hover) and (pointer:fine){#regex-link-settings .rl-manual .rl-auto{min-height:34px}}
 :root {
     --jj-on: var(--jj-on-color, var(--SmartThemeQuoteColor, #e18a24));
-    --jj-css-version: "1.4.3";
+    --jj-css-version: "1.4.4";
 }
 #jj-button {
     -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;

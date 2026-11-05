@@ -16,7 +16,7 @@ body.salty :is(#salty-nochat,.salty-preview):not(.cg-chatlike,.bl-notes-view,.bl
 .bl-inline-preview { min-width:0; width:100%; }
 .bl-view-resize { display:grid; grid-template-columns:32px minmax(0,1fr) 32px; align-items:center; gap:4px; height:28px; }
 .bl-view-grip { grid-column:2; display:grid; place-items:center; height:28px; touch-action:none; cursor:ns-resize; }
-.bl-view-grip i { display:block; width:42px; height:4px; border-radius:5px; background:var(--salty-muted); opacity:.45; }
+.bl-view-grip i { display:block; width:42px; height:4px; border-radius:5px; background:var(--salty-muted); opacity:.8; } /* 1.0.1 손잡이 막대 대비 3:1(비텍스트) — .45 는 밤 2.7 · 낮 1.9:1 이었어요. .8 = 팔레트 26벌의 바탕 · 면 · 돋운 면 위 모두 3.26:1 이상 */
 .bl-view-grip:is(:hover,:focus-visible) i { opacity:1; background:var(--salty-fill-accent, var(--salty-accent)); }
 .salty-panel .bl-view-resize button { width:32px; height:34px; min-height:0; padding:0; margin:0; border:0; border-radius:8px; background:transparent; color:var(--salty-muted); font:var(--bl-deco-glyph-18)/1 sans-serif; }
 .bl-view-tools[hidden] { display:none !important; }

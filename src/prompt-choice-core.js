@@ -83,3 +83,23 @@ export function choiceGroupLabel(names = []) {
     const common = tails[0].find(piece => tails.every(t => t.includes(piece)));
     return common || '';
 }
+
+// ───────── 1.0.1 프롬프트 폴더의 「하나만 켜기」 ─────────
+// 폴더(prompt-folders.js)에서 택1을 켠 폴더는 프리셋 메타(blPromptChoices)와 같은 모양의 묶음으로 더해져요 —
+// 클릭 연결 · 택1 지킴이 · 전체 켜기가 같은 규칙 하나로 처리해요(따로 끄는 코드 없음). 저장된 값을 그대로 받아도 되게 모양을 확인해요.
+export function folderChoiceGroups(folders) {
+    const out = [];
+    for (const folder of Array.isArray(folders) ? folders.slice(0, 100) : []) {
+        if (folder?.pick !== true || typeof folder.id !== 'string' || !Array.isArray(folder.ids)) continue;
+        const ids = [...new Set(folder.ids.filter(id => typeof id === 'string' && id))].slice(0, 100);
+        if (ids.length >= 2) out.push({ id: `bl-folder:${folder.id}`, ids });
+    }
+    return out;
+}
+/** 프리셋 메타에 폴더 묶음을 더한 메타. 더할 게 없으면 원래 메타 그대로(같은 객체) */
+export function withFolderChoices(metadata, folders) {
+    const extra = folderChoiceGroups(folders);
+    if (!extra.length) return metadata;
+    const base = metadata?.version === 1 && Array.isArray(metadata.groups) ? metadata.groups : [];
+    return { version: 1, groups: [...base, ...extra] };
+}

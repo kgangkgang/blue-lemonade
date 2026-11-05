@@ -166,7 +166,7 @@ html:not(#bl-ui-parts-off) body .bwr_settings .bwr_tab { flex: 1 0 auto !importa
 
 /* ---------- 닫기 ✕: 설정 창 닫기와 같은 선 그림 · 상자 없음 ---------- */
 html:not(#bl-ui-parts-off) body.salty :is(
-  :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog) > header > button:last-child,
+  :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.bl-mart) > header > button:last-child,
   #pt-panel #pt-panel-close, #cg-panel .cg-icon-btn[data-act="close"], #bl-deus-popover .dq-close, .bls-panel-head > [data-bls-close], #fruit-heart-v6 .fh-close,
   dialog.popup:not(.bl-settings-dialog) > .popup-button-close
 ) {
@@ -175,12 +175,12 @@ html:not(#bl-ui-parts-off) body.salty :is(
   color: var(--salty-text) !important; -webkit-text-fill-color: transparent !important; font-size: 0 !important; line-height: 0 !important; text-shadow: none !important; filter: none !important;
 }
 html:not(#bl-ui-parts-off) body.salty :is(
-  :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog) > header > button:last-child,
+  :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.bl-mart) > header > button:last-child,
   #pt-panel #pt-panel-close, #cg-panel .cg-icon-btn[data-act="close"], #bl-deus-popover .dq-close, .bls-panel-head > [data-bls-close], #fruit-heart-v6 .fh-close,
   dialog.popup:not(.bl-settings-dialog) > .popup-button-close
 ) > * { visibility: hidden !important; }
 html:not(#bl-ui-parts-off) body.salty :is(
-  :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog) > header > button:last-child,
+  :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.bl-mart) > header > button:last-child,
   #pt-panel #pt-panel-close, #cg-panel .cg-icon-btn[data-act="close"], #bl-deus-popover .dq-close, .bls-panel-head > [data-bls-close], #fruit-heart-v6 .fh-close,
   dialog.popup:not(.bl-settings-dialog) > .popup-button-close
 )::before {

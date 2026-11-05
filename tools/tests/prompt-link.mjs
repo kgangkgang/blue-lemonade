@@ -14,20 +14,25 @@ const tick=()=>new Promise(r=>setTimeout(r,0));
 const plain=v=>JSON.parse(JSON.stringify(v));   // vm 안에서 만든 객체는 원형이 달라 JSON 으로 견준다
 function environment(){
   const settings={promptLink:{on:false,rows:[]}},calls=[],listeners=new Map();
-  let report=rows=>({prompts:2,twins:1,regex:2,rows:rows.map(r=>r.word?{prompts:2,twins:1,regex:2}:{prompts:0,twins:0,regex:0})}),changed=3,fail=false,pickerFail=false,picked=null,focused=null;
-  const promptbind={syncPromptBinds:async reason=>{calls.push('sync:'+reason);if(fail)throw Error('no manager');return changed;},linkReport:async rows=>{calls.push('report:'+rows.length);return report(rows);}};
+  let report=rows=>({prompts:2,twins:1,regex:2,manual:manual.length,rows:rows.map(r=>r.word?{prompts:2,twins:1,regex:2}:{prompts:0,twins:0,regex:0})}),changed=3,fail=false,pickerFail=false,picked=null,focused=null;
+  const manual=[];   // 1.0.1 정규식 창에서 직접 바꾼(말이 든) 정규식 id — promptbind 의 linkedManualRegex · forgetLinkedManual 흉내
+  const promptbind={syncPromptBinds:async reason=>{calls.push('sync:'+reason);if(fail)throw Error('no manager');return changed;},linkReport:async rows=>{calls.push('report:'+rows.length);return report(rows);},
+    linkedManualRegex:()=>manual.slice(),forgetLinkedManual:()=>{calls.push('forget:'+manual.length);const n=manual.length;manual.length=0;return n;}};
   const picker={openPromptCardPicker:options=>{calls.push('picker');picked=options;}};
   const el=(extra={})=>({textContent:'',hidden:false,value:'',disabled:false,isConnected:true,focus(){focused=this;},...extra});
   const status=el();
   const rows=[];
+  const manualText=el();const manualLine=el({hidden:true,querySelector:sel=>sel==='[data-link-manual-text]'?manualText:null});
   const box={isConnected:true,querySelector:sel=>{
     if(sel==='[data-prompt-link-status]')return status;
     if(sel==='[data-link-rows]')return list;
     if(sel==='[data-link-add]')return add;
+    if(sel==='[data-link-manual]')return manualLine;
     const m=/^\[data-link-row="(\d+)"\]$/.exec(sel);return m?rows[+m[1]]??null:null;}};
   const button=(attr,row)=>el({hasAttribute:n=>n===attr,closest:sel=>sel.includes(`[${attr}]`)?button.self:sel==='[data-prompt-link]'?box:sel==='[data-link-row]'?row:null});
   const add=(()=>{const b=button('data-link-add',null);button.self=b;return b;})();
   add.closest=sel=>sel.includes('[data-link-add]')?add:sel==='[data-prompt-link]'?box:null;
+  const auto=button('data-link-auto',null);auto.closest=sel=>sel.includes('[data-link-auto]')?auto:sel==='[data-prompt-link]'?box:null;
   function makeRow(i,html){
     const text=re=>(re.exec(html)?.[1]??'').replace(/&quot;/g,'"').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
     const row={getAttribute:n=>n==='data-link-row'?String(i):null};
@@ -45,7 +50,7 @@ function environment(){
   const paint=()=>{list.innerHTML=/<div class="bl-link-rows" data-link-rows>([\s\S]*)<\/div><div class="bl-link-actions">/.exec(context.api.promptLinkMarkup())[1];};
   paint();
   const change=target=>listeners.get('change')({target});
-  return{settings,calls,status,rows,list,context,listeners,paint,add,
+  return{settings,calls,status,rows,list,context,listeners,paint,add,auto,manual,manualLine,manualText,
     get focused(){return focused},get picked(){return picked},
     setReport:fn=>{report=fn},setChanged:n=>{changed=n},setFail:()=>{fail=true},setPickerFail:()=>{pickerFail=true},
     toggle:checked=>change({checked,hasAttribute:n=>n==='data-prompt-link-on',closest:sel=>sel==='[data-prompt-link]'?box:null}),
@@ -127,6 +132,17 @@ await check('picking cards opens the multi picker with the row cards and saves t
 await check('a failed picker or promptbind import is reported, not thrown',async()=>{
   const e=environment();e.setPickerFail();const pick=e.rows[0].parts.pick;await e.click(pick);assert.match(e.status.textContent,/카드 목록을 열지 못했어요/);assert.equal(pick.disabled,false);
   const f=environment();f.settings.promptLink.rows=[{word:'Mina',cards:[]}];f.setFail();await f.toggle(true);assert.match(f.status.textContent,/프롬프트 관리자를 읽지 못했어요/);
+});
+await check('1.0.1 regex the user toggled in the regex screen are reported with an auto button; auto forgets them and resyncs',async()=>{
+  const e=environment();e.settings.promptLink={on:true,rows:[{word:'Mina',cards:[]}]};e.paint();
+  assert.ok(e.context.api.promptLinkMarkup().includes('data-link-manual hidden')&&e.context.api.promptLinkMarkup().includes('data-link-auto'),'the line starts hidden');
+  await e.toggle(true);assert.equal(e.manualLine.hidden,true,'nothing toggled by hand → hidden');assert.equal(e.manualText.textContent,'');
+  e.manual.push('rx-1','rx-2');await e.toggle(true);
+  assert.equal(e.manualLine.hidden,false);assert.match(e.manualText.textContent,/직접 바꾼 정규식 2개는 자동으로 켜고 끄지 않아요/);
+  e.calls.length=0;await e.click(e.auto);
+  assert.deepEqual(e.calls,['forget:2','save','sync:ui','report:1'],'forget first, then the usual apply');assert.equal(e.manualLine.hidden,true,'hidden again once forgotten');assert.equal(e.auto.disabled,false);
+  const f=environment();f.settings.promptLink={on:true,rows:[{word:'Mina',cards:[]}]};f.paint();f.manual.push('rx-1');f.setFail();await f.click(f.auto);
+  assert.match(f.status.textContent,/프롬프트 관리자를 읽지 못했어요/);assert.equal(f.auto.disabled,false,'the button is usable after a failure');
 });
 await check('events outside the block and repeated installs are ignored',async()=>{
   const e=environment();await e.other();assert.deepEqual(e.calls,[]);

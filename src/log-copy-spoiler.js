@@ -30,6 +30,17 @@ const make = (doc, tag, cls, style) => {
     return el;
 };
 
+const labelStyle = (c, ui) => `display:inline-block;padding:0 8px;border:1px solid ${c.line};border-radius:6px;background-color:${c.raised};color:${c.muted};font-family:${String(ui.family).replace(/"/g, "'")};font-size:13px;font-style:normal;font-weight:650;line-height:1.6;letter-spacing:${ui.tracking};text-indent:0`;
+const escText = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+
+/** 1.0.1 숨긴 글 마크업을 글자로 — 미리보기에서 숨긴 글을 틀 · 색을 바꿔 다시 그릴 때(log-copy-render.js nodesHtml · kind 'spoiler'). wrapSpoiler 와 같은 모양 */
+export function spoilerHtml(inner, sp, inline = true) {
+    const c = { line: sp?.line || '#8884', raised: sp?.raised || 'transparent', muted: sp?.muted || 'inherit' }, ui = { family: sp?.family || 'inherit', tracking: sp?.tracking || '0' };
+    const details = `display:${inline ? 'inline-block;max-width:100%;vertical-align:baseline' : 'block;margin:8px 0'}`;
+    const blur = inline ? 'span' : 'div', content = inline ? 'span' : 'div';
+    return `<details class="${inline ? 'blsp-s' : 'blsp-s blsp-k'}" data-bl-spoiler="" style="${details}"><summary class="blsp-h" style="display:${inline ? 'inline' : 'block'};list-style:none;cursor:pointer"><span class="blsp-l" style="${escText(labelStyle(c, ui))}">${SPOILER_LABEL}</span><${blur} class="blsp-b" aria-hidden="true" style="display:none">${inner}</${blur}></summary><${content} class="blsp-c">${inner}</${content}></details>`;
+}
+
 /** 고른 글 → 숨긴 글. c = 팔레트 값(line · raised · muted), ui = { family, tracking }. 감싼 <details> 또는 null */
 export function wrapSpoiler(doc, range, c, ui) {
     if (!range || range.collapsed) return null;
@@ -41,7 +52,7 @@ export function wrapSpoiler(doc, range, c, ui) {
     const details = make(doc, 'details', inline ? 'blsp-s' : 'blsp-s blsp-k', inline ? 'display:inline-block;max-width:100%;vertical-align:baseline' : 'display:block;margin:8px 0');   // 글줄 안 숨긴 글: 펼침 칸(details 내용 칸)이 블록이라 inline 이면 줄이 끊겨요 → 인라인 블록
     details.setAttribute('data-bl-spoiler', '');
     const summary = make(doc, 'summary', 'blsp-h', `display:${inline ? 'inline' : 'block'};list-style:none;cursor:pointer`);
-    const label = make(doc, 'span', 'blsp-l', `display:inline-block;padding:0 8px;border:1px solid ${c.line};border-radius:6px;background-color:${c.raised};color:${c.muted};font-family:${String(ui.family).replace(/"/g, "'")};font-size:13px;font-style:normal;font-weight:650;line-height:1.6;letter-spacing:${ui.tracking};text-indent:0`);
+    const label = make(doc, 'span', 'blsp-l', labelStyle(c, ui));
     label.textContent = SPOILER_LABEL;
     const blur = make(doc, inline ? 'span' : 'div', 'blsp-b', 'display:none');
     blur.setAttribute('aria-hidden', 'true');
@@ -89,7 +100,8 @@ export function previewModel(doc) {
             if (node.tagName === 'BR') { out.push({ t: 'br' }); continue; }
             if (node.matches('[data-bl-spoiler]')) {
                 const content = node.querySelector(':scope > .blsp-c');
-                out.push({ t: 'el', block: false, tag: 'span', kind: 'spoiler', style: {}, children: content ? convert(content, base) : [] });
+                const blockSp = node.classList.contains('blsp-k');   // 1.0.1 문단 여러 개를 숨긴 블록 숨김은 블록으로
+                out.push({ t: 'el', block: blockSp, tag: blockSp ? 'div' : 'span', kind: 'spoiler', style: {}, children: content ? convert(content, base) : [] });
                 continue;
             }
             const style = view.getComputedStyle(node);

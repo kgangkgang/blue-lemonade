@@ -292,7 +292,7 @@ export function scopeCss(css,prefix,{custom=false,doc=document}={}){
 // 실제 상태창과 같은 방법(copyFruitPreview)으로 미리보기에 옮겨요. 이 자리는 화면에 보이지 않고 누를 수 없어요.
 // textStyle: 채팅의 실제 메시지 본문(.mes_text) 글자 · 폭을 그대로 맞춰요(설정 창 미리보기용 옛 규칙과 크기가 달라서).
 export function mountFragmentHost(type,sample,{width=360,doc=document,textStyle=null}={}){
-    const host=doc.createElement('div');host.className='salty-preview bl-ft-sample-host';host.setAttribute('aria-hidden','true');host.inert=true;
+    const host=doc.createElement('div');host.className='salty-preview bl-ft-sample-host';host.setAttribute('aria-hidden','true');host.inert=true;host.setAttribute('data-bl-dem-paused','');   // 1.0.0 숨은 표본의 감정 대사 효과(bl-fx-*)는 멈춰 둬요 — 보이지 않는 자리에서 매 프레임 스타일 재계산을 돌리던 것(css/55 멈춤 규칙)
     host.style.cssText=`position:fixed;right:100vw;top:0;width:${Math.round(width)+160}px;opacity:0;pointer-events:none;z-index:-1`;   // 8.0.9 버그: left:0 이면 화면 폭 + 126px 의 숨은 자리가 html 가로 스크롤을 만들었어요(폰 320~384) → 화면 왼쪽 밖(음수 x)에 두면 스크롤 넘침에 안 들어가요
     host.innerHTML='<div class="mes" is_user="false" is_system="false"><div class="mes_block"><div class="mes_text"></div></div></div>';
     const text=host.querySelector('.mes_text'),style=doc.createElement('style'),typo=doc.createElement('style');

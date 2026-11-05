@@ -1,17 +1,20 @@
-import { drawPreset, FRAME_PRESETS, FRAME_PRESET_VERSION } from './frame-presets.js';
-export const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100 };
+import { drawPreset, FRAME_PRESETS, FRAME_PRESET_VERSION, tidyPresetLabel, retirePreset } from './frame-presets.js';
+export const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100, presetTilt: 0 };
 const validated = new WeakMap();
 export function tidyDecor(owner) {
     const d = owner.decor;
     if (!d || typeof d !== 'object' || Array.isArray(d)) { owner.decor = { ...DECOR_DEFAULTS }; return; }
     for (const [key, def] of Object.entries(DECOR_DEFAULTS)) if (d[key] === undefined) d[key] = def;
+    retirePreset(d, !!d.libraryId);   // 1.0.2 걷은 기본 프리셋 6종 → 가장 가까운 심플 액자 (보관함에서 고른 액자는 그림 그대로)
     d.on = d.on === true || d.on === 'true';
     const previous = validated.get(d);
     for (const key of ['art', 'mask']) if (d[key] !== previous?.[key] && (typeof d[key] !== 'string' || d[key].length > 4000000 || !/^data:image\/png;base64,[a-z\d+/=]+$/i.test(d[key]))) d[key] = '';
     if (!previous || previous.art !== d.art || previous.mask !== d.mask) validated.set(d, { art: d.art, mask: d.mask });
-    for (const [key, lo, hi] of [['frameWidth', 50, 200], ['frameHeight', 50, 200], ['ratio', 0.1, 10], ['opacity', 0, 100], ['zoom', 100, 200], ['x', 0, 100], ['y', 0, 100]]) {
+    for (const [key, lo, hi] of [['frameWidth', 50, 200], ['frameHeight', 50, 200], ['ratio', 0.1, 10], ['opacity', 0, 100], ['zoom', 100, 200], ['x', 0, 100], ['y', 0, 100], ['presetTilt', -10, 10]]) {
         const n = Number(d[key]); d[key] = Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : DECOR_DEFAULTS[key];
     }
+    // 1.0.1 칩 글자(최대 12자) — 글자가 아니면 지워요(칩이 있는 프리셋은 다시 그릴 때 기본 글자를 받아요)
+    if (typeof d.presetLabel === 'string') d.presetLabel = tidyPresetLabel(d.presetLabel); else delete d.presetLabel;
     if (!['cover', 'contain'].includes(d.fit)) d.fit = 'cover';
     if (d.radius !== null) { const n = Number(d.radius); d.radius = Number.isFinite(n) ? Math.max(0, Math.min(120, n)) : null; }
 }
@@ -29,12 +32,14 @@ export const hasDecor = d => !!(d?.on && d.art && d.mask);
 export const decorEnabled = settings => ({image:!!(settings.enabled && hasDecor(settings.image?.decor)),profile:!!(settings.enabled && settings.profile?.mode === 'banner' && hasDecor(settings.profile?.decor)),userProfile:!!(settings.enabled && settings.userProfile?.mode === 'banner' && hasDecor(settings.userProfile?.decor))});
 export function decorVars(d, prefix, radius = 0) {
     return { [`--bl-${prefix}-decor-ratio`]: String(d.ratio * (d.frameWidth || 100) / (d.frameHeight || 100)), [`--bl-${prefix}-decor-opacity`]: String(d.opacity / 100),
-        [`--bl-${prefix}-decor-zoom`]: String(d.zoom / 100), [`--bl-${prefix}-decor-position`]: `${d.x}% ${d.y}%`, [`--bl-${prefix}-decor-fit`]: d.fit, [`--bl-${prefix}-decor-radius`]: `${d.radius ?? radius}px` };
+        [`--bl-${prefix}-decor-zoom`]: String(d.zoom / 100), [`--bl-${prefix}-decor-position`]: `${d.x}% ${d.y}%`, [`--bl-${prefix}-decor-fit`]: d.fit, [`--bl-${prefix}-decor-radius`]: `${d.radius ?? radius}px`,
+        [`--bl-${prefix}-decor-tilt`]: `${d.presetTilt || 0}deg` };   // 1.0.1 기울기: 액자와 사진을 함께(css/41-decor.css rotate)
 }
 export function prepareDecor(settings) {
     const owners = ['image', 'profile', 'userProfile'];
     if (settings.enabled) for (const owner of owners) {
         const d = settings[owner]?.decor;
+        retirePreset(d, !!d?.libraryId);   // 정리를 거치지 않고 입힌 스타일(옛 id)도 여기서 옮겨요
         // 꺼진 프리셋은 그리지 않는다 (slimDecor 가 비워 둠). 켜졌는데 그림이 없거나 판이 바뀌었으면 다시 그린다 — 같은 모양은 drawPreset 캐시에서 바로 나온다
         if (d?.on && (!d.art || !d.mask || d.presetVersion !== FRAME_PRESET_VERSION) && isPresetFrame(d)) {
             const next = drawPreset(d.presetId, d);

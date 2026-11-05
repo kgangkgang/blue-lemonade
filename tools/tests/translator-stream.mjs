@@ -203,7 +203,7 @@ function directFixture({ provider = 'claude', serve }) {
         extensionSettings: settings, document: { getElementById: () => null }, secret_state: new Proxy({}, { get: () => 'key' }), SECRET_KEYS: new Proxy({}, { get: (_, k) => String(k) }),
         getProviderSpecificParams: () => ({}), LiveModels, withPromptCache: KOREAN_KEEP_ENV.withPromptCache, prepareAutoTranslationPayload: async payload => payload, oai_settings: {}, getRequestHeaders: () => ({ 'X-CSRF-Token': 't' }),
         getCustomEndpointConfig: () => ({ url: 'http://relay.invalid/v1', inheritExtras: false }), getCustomModelName: () => 'test-model', substituteParams: x => x, Request: FakeRequest,
-        streamParts: stream, noStream: new Set(), STREAM_IDLE_MS: 90000,   // 2.9.3 흘려받기 멈춤 시간 (index.js 맨 위 상수)
+        streamParts: stream, noStream: new Set(), streamTrouble: new Map(), STREAM_IDLE_MS: 90000,   // 2.9.3 흘려받기 멈춤 시간 (index.js 맨 위 상수)
         console: { warn: (...a) => warnings.push(a.join(' ')), info() {}, debug() {}, error() {} },
         fetch: async (input, init) => {
             const request = input instanceof FakeRequest ? input : { url: input, ...init };
@@ -257,7 +257,10 @@ await check('callLLMAPI 직접: 400 · 404 는 예전 요청으로 (404 는 이 
     assert.deepEqual(f.fetches.map(x => x.body.stream), [false], 'remembered');
     const g = directFixture({ provider: 'custom', serve: () => jsonResponse(FAMILY_JSON.openai(TEXT)) });   // 서버가 stream 을 무시
     assert.equal(await g.env.callLLMAPI('p', { onStream() {} }), TEXT.trim());
-    assert.equal(g.fetches.length, 1); assert.equal(g.env.noStream.size, 1);
+    // 1.0.1 통째로 온 본문은 다시 보내지 않으니(값이 안 듦) 세션 동안 끄지 않는다 — 다음 번역도 흘려받기를 다시 해 본다
+    assert.equal(g.fetches.length, 1); assert.equal(g.env.noStream.size, 0);
+    await g.env.callLLMAPI('p', { onStream() {} });
+    assert.deepEqual(g.fetches.map(x => x.body.stream), [true, true], 'tries streaming again');
 });
 await check('callLLMAPI 직접: 429 · 5xx 는 곧장 또 보내지 않고 예전과 같은 오류 (일시 오류 표시 그대로)', async () => {
     for (const [status, flag] of [[429, 'transient'], [500, 'transient'], [529, 'transient'], [524, 'timeout']]) {
@@ -448,6 +451,154 @@ await check('translate: 번역 중단 감시(채팅 바뀜)가 흘려받는 중�
     const seen = [a.T.progress.length, a.T.previews.length];
     flushFrames(); await new Promise(resolve => setTimeout(resolve, 30)); flushFrames();
     assert.deepEqual([a.T.progress.length, a.T.previews.length], seen, 'nothing after the stop');
+});
+
+// ── ⑤ 1.0.1 「왜 또 문단별 번역 안 되냐 · 왜 통짜 번역 되지?」 (11-03 제보: 「캐시 0개 · 수정 문단 0/86 묶음 번역 중 · 46초」에 멈췄다가 끝에 한꺼번에) ──
+//   (a) adaptive 생각이 한참 이어진 뒤 글이 한꺼번에 — 생각하는 동안 「모델이 생각 중 n초」 · 글이 오면 문단마다 · 번역 요청은 생각을 가장 짧게(low)
+//   (b) redacted_thinking · 시작 없는 signature_delta · 모르는 델타 · 모르는 이벤트 · JSON 아닌 조각 — 흘려받기를 버리지 않는다
+//   (c) 흘려받기 실패 한 번이 세션 내내 통째로 묶지 않는다 (404 · 405 · 415 · 501 만 곧장, 알아볼 수 없는 흘림은 두 번 거듭될 때만)
+const progressLabel = new Function(`return (${cut('progressLabel')});`)();
+/** 조각마다 기다릴 수 있는 가짜 스트림 — steps: [글 | { wait: ms }] */
+function timedStream(steps) {
+    let i = 0;
+    return new ReadableStream({ async pull(controller) {
+        while (i < steps.length && typeof steps[i] === 'object') await new Promise(resolve => setTimeout(resolve, steps[i++].wait));
+        if (i >= steps.length) return controller.close();
+        controller.enqueue(encoder.encode(steps[i++]));
+    } });
+}
+const claudeEvents = list => list.map(e => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join('');
+const PASSAGES = Array.from({ length: 12 }, (_, n) => `⟦${n}⟧ ${n}번째 문단, 창가의 등불이 깜박였다.`);
+const ADAPTIVE = (text, thinkMs = 40) => [
+    claudeEvents([{ type: 'message_start', message: { id: 'm', content: [] } }, { type: 'content_block_start', index: 0, content_block: { type: 'thinking', thinking: '' } }]),
+    { wait: thinkMs }, claudeEvents([{ type: 'ping' }]), { wait: thinkMs },
+    claudeEvents([{ type: 'content_block_delta', index: 0, delta: { type: 'signature_delta', signature: 'EqQB' } }, { type: 'content_block_stop', index: 0 }, { type: 'content_block_start', index: 1, content_block: { type: 'text', text: '' } }]),
+    ...text.match(/[\s\S]{1,40}/g).map(t => claudeEvents([{ type: 'content_block_delta', index: 1, delta: { type: 'text_delta', text: t } }])),
+    claudeEvents([{ type: 'content_block_stop', index: 1 }, { type: 'message_delta', delta: { stop_reason: 'end_turn' }, usage: { output_tokens: 9 } }, { type: 'message_stop' }]),
+];
+await check('1.0.1 (a) adaptive 생각 뒤 글: 생각 표시가 글보다 먼저 한 번 · 상태 waiting → thinking → writing · 글은 조각마다 · 답은 stream:false 와 같다', async () => {
+    const text = PASSAGES.join('\n\n'), seen = [], order = [];
+    const read = await stream.readStream(new Response(timedStream(ADAPTIVE(text))), { family: 'claude', source: 'claude', onText: t => { seen.push(t); order.push('text'); }, onThinking: () => order.push('thinking') });
+    assert.equal(order[0], 'thinking'); assert.equal(order.filter(x => x === 'thinking').length, 1);
+    assert(seen.length >= 5 && seen.every((t, i) => !i || t.length > seen[i - 1].length), 'text arrives in growing pieces: ' + seen.length);
+    const extract = new Function('env', `with(env){return (${cut('extractTranslationResult')});}`)({ LiveModels, blockedReasonOf: new Function(`return (${cut('blockedReasonOf')});`)() });
+    assert.equal(extract(read.data, 'claude'), text);
+    // streamedReply 상태 · 같은 상태 객체에 마지막 글 시각
+    const states = [];
+    const f = directFixture({ serve: (body, signal) => body.stream ? new Response(timedStream(ADAPTIVE(text))) : jsonResponse(FAMILY_JSON.claude(text)) });
+    f.settings.llm_model = 'claude-opus-5-5';
+    assert.equal(await f.env.callLLMAPI('p', { onStream() {}, onStreamState: s => states.push(s && { ...s }) }), text);
+    assert.deepEqual(states.map(s => s.phase), ['waiting', 'thinking', 'writing']);
+    assert(states.every(s => s.since === states[0].since), 'one clock from the request start');
+    assert.equal(f.fetches.length, 1);
+    assert.equal(f.fetches[0].body.reasoning_effort, 'low', 'direct: shortest thinking the SillyTavern server allows for Claude 5');
+});
+await check('1.0.1 (a) 진행 문구: 생각 중 n초 · 첫 글 기다림(3초부터) · 글이 15초 멈춤 · 흘려받기 안 됨 → 통째로 · 번호 없이 통째로 다시 · note 가 없으면 예전 글 그대로', () => {
+    const now = Date.now(), started = now - 46000, stage = { stage: 'segments', reused: 0, pending: 86, batch: 86, finished: 0, translated: 0 };
+    assert.equal(progressLabel(stage, started), '캐시 0개 · 수정 문단 0/86 묶음 번역 중 · 46초', 'unchanged without a note');
+    assert.equal(progressLabel(stage, started, { phase: 'thinking', since: now - 41000 }), '캐시 0개 · 수정 문단 0/86 · 모델이 생각 중 41초 · 46초');
+    assert.equal(progressLabel(stage, started, { phase: 'waiting', since: now - 1000 }), '캐시 0개 · 수정 문단 0/86 묶음 번역 중 · 46초', 'first seconds: nothing to say');
+    assert.equal(progressLabel(stage, started, { phase: 'waiting', since: now - 7000 }), '캐시 0개 · 수정 문단 0/86 · 첫 글 기다리는 중 7초 · 46초');
+    assert.equal(progressLabel({ ...stage, finished: 42 }, started, { phase: 'writing', since: now - 40000, last: now - 2000 }), '캐시 0개 · 수정 문단 42/86 묶음 번역 중 · 46초');
+    assert.equal(progressLabel({ ...stage, finished: 42 }, started, { phase: 'writing', since: now - 40000, last: now - 20000 }), '캐시 0개 · 수정 문단 42/86 · 글이 20초째 안 와요 · 46초');
+    assert.equal(progressLabel(stage, started, { phase: 'fallback', reason: '끝 표시 없이 끊겼어요' }), '캐시 0개 · 수정 문단 0/86 · 흘려받기 안 됨: 끝 표시 없이 끊겼어요 → 통째로 받는 중 · 46초');
+    assert.equal(progressLabel(stage, started, { phase: 'plain', reason: '답의 문단 번호가 어긋나서' }), '캐시 0개 · 수정 문단 0/86 · 답의 문단 번호가 어긋나서 번호 없이 통째로 다시 받는 중 · 46초');
+    assert.equal(progressLabel({ stage: 'segments', reused: 3, pending: 47, batch: 47, finished: 3, translated: 0 }, started, { phase: 'thinking', since: now - 9000 }), '문단 47개 번역 · 3/47 · 캐시 3개 · 모델이 생각 중 9초 · 46초');
+    assert.equal(progressLabel({ stage: 'chunks', done: 1, total: 6 }, started, { phase: 'thinking', since: now - 9000 }), '번역 중 · 문단 2/6 · 모델이 생각 중 9초 · 46초');
+    assert.equal(progressLabel({ stage: 'whole' }, started, { phase: 'thinking', since: now - 9000 }), '번역 중 · 모델이 생각 중 9초 · 46초');
+    assert.equal(progressLabel({ stage: 'kana' }, started, { phase: 'thinking', since: now - 9000 }), '번역 중 · 마무리 · 46초');
+});
+await check('1.0.1 (a) 현재 연결의 번역 요청도 생각은 짧게: Claude 5 · Fable 의 auto · medium 이상 → low, min · low 는 그대로, 다른 공급자 · 옛 모델은 손대지 않음', () => {
+    const lower = new Function('env', `with(env){return (${cut('lowerTranslationThinking')});}`)({ LiveModels });
+    const run = (source, model, effort) => lower({ chat_completion_source: source, model, ...(effort === undefined ? {} : { reasoning_effort: effort }) }).reasoning_effort;
+    assert.equal(run('claude', 'claude-opus-5-5', 'auto'), 'low');
+    assert.equal(run('claude', 'claude-opus-5-5', 'high'), 'low');
+    assert.equal(run('claude', 'claude-fable-5-1', undefined), 'low');
+    assert.equal(run('claude', 'claude-opus-5-5', 'min'), 'min');
+    assert.equal(run('claude', 'claude-sonnet-5', 'low'), 'low');
+    assert.equal(run('claude', 'claude-3-5-sonnet-20241022', 'auto'), 'auto', 'no thinking model: as before');
+    assert.equal(run('openai', 'gpt-4o', 'auto'), 'auto', 'other providers: as before');
+    assert.equal(run('vertexai', 'gemini-3-pro', 'high'), 'high');
+    assert.equal(lower(null), null);
+    assert(/preparePayload: async payload => withPromptCache\(await prepareAutoTranslationPayload\(lowerTranslationThinking\(payload\),/.test(source), 'wired into the current-connection payload');
+});
+await check('1.0.1 (b) 새 클로드 이벤트 꼴: redacted_thinking · 시작 없는 signature_delta · 모르는 델타 · 모르는 이벤트 · JSON 아닌 조각은 지나가고 답은 같다', async () => {
+    const text = PASSAGES.slice(0, 4).join('\n\n');
+    const body = claudeEvents([{ type: 'message_start', message: { id: 'm', content: [] } },
+        { type: 'content_block_start', index: 0, content_block: { type: 'redacted_thinking', data: 'EuYB' } }, { type: 'content_block_stop', index: 0 },
+        { type: 'content_block_delta', index: 1, delta: { type: 'signature_delta', signature: 'EqQB' } },
+        { type: 'content_block_delta', index: 1, delta: { type: 'thinking_summary_delta', summary: '문단을 센다' } }, { type: 'content_block_stop', index: 1 },
+        { type: 'message_metadata', metadata: { stage: 'text' } }]) + 'data: keep-alive\n\n' + ': comment\n\n'
+        + claudeEvents([{ type: 'content_block_start', index: 2, content_block: { type: 'text', text: '' } }, { type: 'content_block_delta', index: 2, delta: { type: 'citations_delta', citation: {} } },
+            ...text.match(/[\s\S]{1,25}/g).map(t => ({ type: 'content_block_delta', index: 2, delta: { type: 'text_delta', text: t } })),
+            { type: 'content_block_stop', index: 2 }, { type: 'message_delta', delta: { stop_reason: 'end_turn' }, usage: {}, context_management: { applied_edits: [] } }, { type: 'message_stop' }]);
+    let thinking = 0;
+    const read = await stream.readStream(new Response(byteStream(body, { pieces: 9 })), { family: 'claude', source: 'claude', onText() {}, onThinking: () => thinking++ });
+    const extract = new Function('env', `with(env){return (${cut('extractTranslationResult')});}`)({ LiveModels, blockedReasonOf: new Function(`return (${cut('blockedReasonOf')});`)() });
+    assert.equal(extract(read.data, 'claude'), text);
+    assert.equal(thinking, 1);
+    assert.deepEqual(read.data.content.map(block => block.type), ['redacted_thinking', 'thinking', 'text'], 'no empty text block from a bare signature_delta');
+    // 같은 꼴을 callLLMAPI 로: 요청 한 번, 예전 요청으로 다시 보내지 않음
+    const f = directFixture({ serve: (b, signal) => b.stream ? new Response(byteStream(body, { pieces: 5, signal })) : jsonResponse(FAMILY_JSON.claude('예전 요청의 답')) });
+    assert.equal(await f.env.callLLMAPI('p', { onStream() {} }), text);
+    assert.deepEqual(f.fetches.map(x => x.body.stream), [true]);
+});
+await check('1.0.1 (c) 흘려받기 실패 뒤 다음 번역은 다시 흘려받는다: 끊김 · 오류 이벤트 · 400 은 그 요청만 · 모르는 꼴은 두 번 거듭될 때만 · 성공하면 셈을 비움 · 404 는 곧장', async () => {
+    const unknown = 'event: message_begin\ndata: {"type":"message_begin"}\n\nevent: done\ndata: {"type":"done"}\n\n';
+    const full = FAMILY_STREAMS.claude(TEXT), cutBody = full.slice(0, full.indexOf('⟦2⟧'));
+    let mode = 'cut';
+    const states = [];
+    const f = directFixture({ serve: (b, signal) => {
+        if (!b.stream) return jsonResponse(FAMILY_JSON.claude(TEXT));
+        if (mode === 'cut') return new Response(byteStream(cutBody, { signal }));
+        if (mode === 'error') return new Response(byteStream(sse([{ type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }]), { signal }));
+        if (mode === 'bad') return jsonResponse({ error: { message: 'bad' } }, 400);
+        if (mode === 'unknown') return new Response(byteStream(unknown, { signal }));
+        if (mode === '404') return jsonResponse({ error: { message: 'no' } }, 404);
+        return new Response(byteStream(full, { signal }));
+    } });
+    const call = async m => { mode = m; f.fetches.length = 0; states.length = 0; await f.env.callLLMAPI('p', { onStream() {}, onStreamState: s => states.push(s && { ...s }) }); return f.fetches.map(x => x.body.stream); };
+    for (const m of ['cut', 'error', 'bad']) {
+        assert.deepEqual(await call(m), [true, false], m);
+        assert.equal(states.at(-1).phase, 'fallback', m); assert(states.at(-1).reason, m);
+        assert.deepEqual(await call('ok'), [true], `after ${m}: streams again`);
+    }
+    assert.equal((await call('cut', 0), states.at(-1).reason), '끝 표시 없이 끊겼어요');
+    assert.deepEqual(await call('unknown'), [true, false]);
+    assert.equal(states.at(-1).reason, '알아볼 수 있는 조각이 없어요');
+    assert.deepEqual(await call('ok'), [true], 'one unknown-shape failure does not stop streaming');
+    assert.deepEqual(await call('unknown'), [true, false]);
+    assert.deepEqual(await call('ok'), [true], 'a success in between resets the count');
+    assert.deepEqual(await call('unknown'), [true, false]); assert.deepEqual(await call('unknown'), [true, false]);
+    assert.deepEqual(await call('ok'), [false], 'two in a row: this session sends plain requests');
+    assert.equal(states.at(-1).phase, 'fallback'); assert.equal(states.at(-1).reason, '알아볼 수 있는 조각이 없어요', 'the chip says why');
+    const g = directFixture({ serve: b => b.stream ? jsonResponse({ error: { message: 'no' } }, 405) : jsonResponse(FAMILY_JSON.claude(TEXT)) });
+    const why = [];
+    await g.env.callLLMAPI('p', { onStream() {}, onStreamState: s => why.push(s) });
+    assert.equal(g.env.noStream.size, 1, '405 locks at once');
+    assert.equal(why.at(-1).reason, '서버가 흘려받기를 못 한대요 (405)');
+});
+await check('1.0.1 (c) translate(): 진행 표시에 상태를 넘기고 요청이 끝나면 지운다 · 번호 없이 통째로 다시 보낼 때도 까닭을 · 진행 알림 차례는 그대로', async () => {
+    frames.clear();
+    await seg.clearSegmentCache();
+    const a = translateEnv(), notes = [];
+    a.T.onSend = async (_body, overrides) => { overrides.onStreamState?.({ phase: 'thinking', since: Date.now() }); };
+    const out = await a.env.translate(MESSAGE, { ...options(a.T), onStreamNote: n => notes.push(n && n.phase) });
+    await seg.clearSegmentCache();
+    const b = translateEnv();
+    assert.equal(await b.env.translate(MESSAGE, options(b.T)), out, 'same result');
+    assert.deepEqual(a.T.progress, b.T.progress, 'progress events unchanged');
+    assert.equal(notes[0], 'thinking'); assert.equal(notes.at(-1), null, 'cleared at the end');
+    // 번호가 어긋난 답 → 번호 없이 통짜로 다시 (그 요청은 흘려받지 않는다): 그동안 「plain」
+    await seg.clearSegmentCache();
+    const c = translateEnv(), seenNotes = [];
+    let first = true;
+    const realCall = c.env.callLLMAPI;
+    c.env.callLLMAPI = async (prompt, overrides = {}) => { if (first && typeof overrides.onStream === 'function') { first = false; return '번호 없는 답'; } seenNotes.push(lastNote); return realCall(prompt, overrides); };
+    let lastNote;
+    await c.env.translate(MESSAGE, { ...options(c.T), onStreamNote: n => { lastNote = n; } }).catch(() => null);
+    assert(seenNotes.some(n => n?.phase === 'plain' && /번호/.test(n.reason)), JSON.stringify(seenNotes));
+    assert.equal(lastNote, null);
 });
 
 // ── 연결 ──

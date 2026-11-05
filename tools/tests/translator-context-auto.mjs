@@ -45,7 +45,7 @@ function fixture() {
     context.saveChat = async () => saved.push(true);
     context.ChatCompletionService = { processRequest: async payload => { sent.push(structuredClone(payload)); return { text: '번역한 입력' }; } };
     context.TextCompletionService = { processRequest: async payload => { sent.push(structuredClone(payload)); return { text: '번역한 입력' }; } };
-    for (const name of ['substituteCustomPlaceholders', 'prepareAutoTranslationPayload', 'callLLMAPI', 'buildSendReference', 'onMessageSentTranslate']) env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env);
+    for (const name of ['substituteCustomPlaceholders', 'prepareAutoTranslationPayload', 'lowerTranslationThinking', 'callLLMAPI', 'buildSendReference', 'onMessageSentTranslate']) env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env);
     env.translate = async (text, options) => env.callLLMAPI(env.substituteCustomPlaceholders(options.prompt, true) + '\n\n' + text);
     return { env, settings, context, sent, counted, saved, logs };
 }

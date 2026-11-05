@@ -86,7 +86,8 @@ html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .s
 
 /* ---------- 3. 매개변수 묶음은 세로 2열 (19em 부터) ---------- */
 @container bl-controls (width >= 19em) {
-  html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) {
+  /* 11-04 장식 액자 묶음(.bl-decor-controls)은 제 묶음 간격(--bl-s4)을 지켜요 — 액자를 고르면 슬라이더가 들어와 이 격자(줄 간격 0)가 걸려 액자 격자 · 고르기 단추 · 사용 스위치 줄이 딱 붙던 것 */
+  html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks, .bl-decor-controls) {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     column-gap: var(--bl-s3);

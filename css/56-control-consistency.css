@@ -402,7 +402,13 @@ html body.salty:not(.salty-help-off):not(#bl-h1):not(#bl-h2) .bl-wi-dup.bl-wi-du
 /* ---------- 1.0.0 도움말 ? 한 규격(10-31 사용자 확대 사진 — 「원이 글자보다 커요 · 위로 떠요 · 제목에서 멀어요 · 원 안 ? 가 가운데가 아니에요」) ----------
    모든 ? (테마 · 애드온 · 빠른 설정 · 실리태번 원본)이 이 값 하나를 써요: 원 지름 --bl-help-d(옆 글자의 1.1em) · 제목 글자 끝에서 --bl-help-gap ·
    세로는 줄 가운데(flex 면 align-self:center, 글 줄이면 vertical-align:middle) + --bl-help-y · 원 안 ? 는 글꼴이 아니라 마스크(--bl-help-mask — 「?」 잉크 상자(맨 위 ~ 맨 아래 · 왼 ~ 오른 끝)의 가운데가 24 칸 가운데(12, 12.01)에 오게 그리고, 원 위에 그려졌을 때 잰 치우침(4배 사진 평균 왼 0.13 · 위 0.19px)만큼 오른 0.2 · 아래 0.3 칸 옮겼어요. 무게 중심이 아니라 잉크 상자 기준 — 10-31 사용자 「너무 밑으로 쳐졌네」, center-marks help-* 가 4배 사진 잉크 상자로 재요)라 글꼴 · 크기가 바뀌어도 가운데. */
-html { --bl-help-d: 1.1em; --bl-help-gap: clamp(5px, 0.35em, 6.8px); --bl-help-glyph: 88%; --bl-help-y: -0.085em; --bl-help-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23000'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cg%20transform%3D'translate(0.2%200.3)'%3E%3Cpath%20d%3D'M8.7%208.9a3.3%203.3%200%201%201%204.9%202.9c-1%20.6-1.6%201.2-1.6%202.3v.6'%20stroke-width%3D'2.6'%2F%3E%3Ccircle%20cx%3D'12'%20cy%3D'18.2'%20r%3D'1.5'%20fill%3D'%23000'%20stroke%3D'none'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"); }
+html { --bl-help-d: 1.1em; --bl-help-gap: clamp(5px, 0.35em, 6.8px); --bl-help-glyph: 88%; --bl-help-y: -0.085em; --bl-help-y-line: -0.092em; --bl-help-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23000'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cg%20transform%3D'translate(0.2%200.3)'%3E%3Cpath%20d%3D'M8.7%208.9a3.3%203.3%200%201%201%204.9%202.9c-1%20.6-1.6%201.2-1.6%202.3v.6'%20stroke-width%3D'2.6'%2F%3E%3Ccircle%20cx%3D'12'%20cy%3D'18.2'%20r%3D'1.5'%20fill%3D'%23000'%20stroke%3D'none'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"); }
+/* 1.0.1 도움말 원 세로 맞춤 — 글 줄(block) 속 ? 의 세로 값 하나(--bl-help-y-line): vertical-align:middle 이 원 가운데를 「기준선 − 0.5ex」에 두니, 0.5ex − 0.5cap 만큼 옮겨 「기준선 − 0.5cap」에 둬요.
+   한글 잉크 띠(맨 위 ~ 맨 아래)의 가운데는 기준선 위 0.5cap 와 거의 같아요(11-03 리그 canvas 실측, em: Salty UI 0.363 ↔ 0.5cap 0.360 · Pretendard 0.362 ↔ 0.355 · SUIT 0.367 ↔ 0.365 · Noto Sans 0.378 ↔ 0.373 · 갈무리 0.458 ↔ 0.468).
+   ex · cap 은 원 자신의 글꼴로 풀려서(var 는 쓰는 자리에서 계산) 글꼴 · 크기 · 굵기 · 줄 높이 · 화면 배율이 바뀌어도 자리별 상수 없이 맞아요 — 원 글꼴은 76 이 제목을 따르게 해요(font-family:inherit).
+   옮기기는 transform 이 아니라 position:relative 의 top 이에요 — transform 의 소수 px 이동은 면을 장치 화소에 맞춘 뒤에 옮겨 위아래 끝이 반 화소씩 번져(4배 사진 면 ↔ 상자 ±0.3~0.44px) 0.5px 기준을 흔들었어요. top 은 그리기 전에 옮겨 면 끝이 또렷해요.
+   cap 단위가 없는 브라우저는 Salty UI 650 의 값(-0.092em)을 그대로 써요. */
+@supports (height: 1cap) { html { --bl-help-y-line: calc(0.5ex - 0.5cap); } }
 /* 월드 인포 칸 이름 옆 💬(실리태번 「말풍선 설명」 아이콘)도 ? 와 같은 줄 규격 — 상자 지름 · 제목과 간격 · 세로 가운데가 같아요(면 없이 아이콘만, 보조 글자색) */
 html body.salty #WorldInfo :is(small, label) > .fa-comments {
   display:inline-flex!important; align-items:center!important; justify-content:center!important; flex:0 0 auto!important; box-sizing:border-box!important;
@@ -413,7 +419,7 @@ html body.salty #WorldInfo :is(small, label) > .fa-comments {
 html body.salty #WorldInfo :is(small, label) > .fa-comments::before { font-size:0.72em; line-height:1; }
 /* ---------- 1.0.0 ? 간격 하나(제목 글자 끝 ~ ? = --bl-help-gap) — 부모가 flex gap · 글자 사이 공백을 더하던 곳을 덮어요 ----------
    부모의 gap 은 그대로 두고(다른 칸 간격이 바뀌지 않게) ? 쪽 margin 에서 그만큼 빼요. 자리마다 잰 값(help-shape 「제목과 간격」 ±1px 가 지켜요). */
-html body .salty-panel.bl-editor .bl-editor-group-head:has(> .bl-help-btn) { column-gap:0!important; }
+html body .salty-panel.bl-editor .bl-editor-group-head:has(> .bl-help-btn) { column-gap:0!important; display:block; }   /* 1.0.1 도움말 원 세로 맞춤: ? 가 든 묶음 제목은 flex 가 아니라 글 줄 — flex 가운데는 줄 상자 가운데인데, 글자는 크로미움이 반행간을 정수 px 로 내림해 위로 붙어(16px · 줄 1.4 → 0.7px) 원이 0.7~1.2px 처졌어요. 글 줄이면 원도 글자와 같은 기준선에서 재요(아래 --bl-help-y-line) */
 /* 월드 인포 칸 이름(flex · gap 8): ? · 💬 · ⓘ 가 든 칸은 gap 8 로 고정하고 ? 는 그만큼 당겨요. 체크 줄은 글자 칸이 늘어나 ? 가 끝으로 밀리던 것 → 글자 칸은 글자만큼 */
 html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes, #wiSliders) :is(small, label, .inline-drawer-toggle):has(> :is(.bl-wi-help, .fa-comments, .fa-circle-info, .fa-info-circle)) { column-gap:8px!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes, #wiSliders) :is(small, label, .inline-drawer-toggle) > :is(.bl-wi-help, .fa-comments, .fa-circle-info, .fa-info-circle) { margin-left:calc(var(--bl-help-gap) - 8px)!important; }
@@ -434,16 +440,22 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(#WorldInfo > .flex-container > h3, #
 html body.salty:not(#bl-h1):not(#bl-h2) :is(#AdvancedFormatting, #rm_api_block, #left-nav-panel) :is(h4, h5) > a.notes-link { margin-left:calc(var(--bl-help-gap) - 0.17em)!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) :is(#rm_api_block h4, #AdvancedFormatting h4.range-block-title) > a.notes-link { margin-left:calc(var(--bl-help-gap) - 0.18em)!important; }   /* 제목 글자 칸 끝의 공백(≈0.18em)만큼 */
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo small:has(> span[data-i18n="Global World Info/Lorebook activation settings"], > span[data-i18n="Active World(s) for all chats"]) > .bl-wi-help { margin-left:calc(var(--bl-help-gap) - 0.18em)!important; }
+/* 1.0.1 페르소나 「임시 페르소나 사용 중 ⓘ」(실리태번이 임시일 때만 그리는 안내 줄 div.flex-container.alignItemsBaseline): flex gap 5 가 ⓘ 간격에 더해져 5px 멀었어요 → 글 줄로 바꿔 간격은 ⓘ margin 하나, 세로는 글 줄 식 하나(--bl-help-y-line) */
+html body.salty #PersonaManagement #persona_connections_info_block > .flex-container:has(> :is(.fa-circle-info, .fa-info-circle)) { display:block!important; }
+html body.salty #PersonaManagement #persona_connections_info_block > .flex-container > :is(.fa-circle-info, .fa-info-circle) { --bl-help-y: 0em; position:relative; top: var(--bl-help-y-line); font-family:inherit!important; }   /* FA 글꼴의 ex · cap 이 아니라 안내 글자 글꼴로 풀리게(글리프는 ::before 마스크) */
 /* 데우스 빠른 설정 머리줄: 제목 · 판 알약 다음 ? 는 머리줄 칸 간격(8, 철칙 7)만 — ? 의 제목 간격 margin 은 빼요 */
 html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #bl-deus-popover .dq-head > .dq-help-button { margin-left:0!important; transform:none!important; }   /* 알약과 같은 칸 가운데 */
 /* ---------- 1.0.0 ? 세로 자리(자리별 --bl-help-y) — 원 잉크 가운데 = 그 줄 글꼴의 한글 잉크 띠 가운데(±0.5px, help-shape 사진 재기 · 규칙 33) ----------
-   기본(html)은 글 줄 · 월드 인포 칸처럼 「줄 가운데 + 조금 위」. 줄 높이 · 글자 크기가 다른 자리만 따로(4배 사진으로 잰 값을 em 으로). */
-html body .salty-panel.bl-editor :is(.bl-editor-group-head, .bl-help-head) > .bl-help-btn { --bl-help-y: 0em; }   /* 설정창 묶음 제목(15 · 650) — 4배 사진: 원 면 가운데 = 제목 잉크 가운데 */
-html body .salty-panel.bl-editor .bl-advanced .bl-editor-group-head > .bl-help-btn { --bl-help-y: -0.058em; }   /* 고급 안 작은 제목(13) */
+   기본(html)은 글 줄 · 월드 인포 칸처럼 「줄 가운데 + 조금 위」. 줄 높이 · 글자 크기가 다른 자리만 따로(4배 사진으로 잰 값을 em 으로).
+   1.0.1: 테마가 만든 글 줄 제목(설정창 묶음 제목 · 낱말 가림 · 성능 보조 · 북마크 설정 · ZIP 설치)은 자리별 상수 대신 식 하나(--bl-help-y-line, 위). */
+html body .salty-panel.bl-editor :is(.bl-editor-group-head, .bl-help-head) > .bl-help-btn { --bl-help-y: 0em; top: var(--bl-help-y-line); }   /* 설정창 묶음 제목(15 · 16 · 고급 13 — 위에서 글 줄로 바꿈) */
 html body.salty :is(#WorldInfo > .flex-container > h3, #PersonaManagement h3, #user-settings-block h3, #AdvancedFormatting h3, h3:has(> a.notes-link[href*="connection-profiles"]), #character_popup h4, :is(#extensions_settings, #extensions_settings2) b, label[for="openai_reasoning_effort"]) > :is(a.notes-link, a.fa-circle-question) { --bl-help-y: 0em; }   /* 실리태번 제목(T) 옆 */
 html body.salty #left-nav-panel :is(.flex-container, label) > :is(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) { --bl-help-y: 0em; }
 html body.salty #AdvancedFormatting small > :is(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) { --bl-help-y: -0.14em; }   /* 글 줄(block) 속 작은 글자 */
-html body.salty .bl-tool-label > b > .bl-word-help { --bl-help-y: -0.15em; }   /* 성능 보조 「별 두 개 메뉴」 */
-html body.salty .cg-page-title > .bl-help-btn { --bl-help-y: -0.126em; }   /* 북마크 설정 머리 */
-html body.salty #WorldInfo :is(small.flex-container, .inline-drawer-toggle) > .bl-wi-help, html body.salty .blzi h3 > i:first-child ~ .blzi-help { --bl-help-y: 0em; }   /* 월드 인포 「지속 · 재사용 대기 · 지연」 줄 · 「추가로 찾을 곳」 펼침 머리 · ZIP 설치 아이콘 붙은 제목 */
+html body.salty :is(.bl-tool-label > b > .bl-word-help, .cg-page-title > .bl-help-btn, .blzi :is(h2, h3, h4) > .blzi-help) { --bl-help-y: 0em; top: var(--bl-help-y-line); }   /* 글 줄(block) 제목 옆: 낱말 가림 「치환 규칙」 · 성능 보조 「별 두 개 메뉴」 · 북마크 설정 머리 · ZIP 설치 제목 */
+/* ZIP 설치 머리 「📦 ZIP으로 간편 설치 ?」: 맨 앞 그림 아이콘(FA 글리프)도 같은 글 줄 식으로 — 기준선에 그대로 서면 글리프 잉크가 한글 잉크보다 0.8px 아래라 제목 전체가 처져 보였어요.
+   아이콘 상자를 1em 가운데 맞춤 상자로 두고(글리프 em 상자 = 상자) 원과 같은 middle + top. 상자 글꼴은 제목을 따라 ex · cap 이 제목 글꼴로 풀리고, 글리프는 ::before 가 FA 글꼴로 그려요 */
+html body.salty .blzi :is(h2, h3, h4) > i:first-child { display:inline-flex!important; align-items:center; justify-content:center; height:1em; line-height:1; vertical-align:middle; position:relative; top:calc(var(--bl-help-y-line) - 0.05em); font-family:inherit!important; }
+html body.salty .blzi :is(h2, h3, h4) > i:first-child::before { font-family:var(--fa-style-family, "Font Awesome 6 Free"); line-height:1; }
+html body.salty #WorldInfo :is(small.flex-container, .inline-drawer-toggle) > .bl-wi-help { --bl-help-y: 0em; }   /* 월드 인포 「지속 · 재사용 대기 · 지연」 줄 · 「추가로 찾을 곳」 펼침 머리 */
 html body.salty :is(#rm_api_block h4, #AdvancedFormatting h4.standoutHeader:not(.range-block-title)) > a.notes-link { --bl-help-y: -0.125em; }   /* 실리태번 작은 제목(h4) 옆 */

@@ -60,18 +60,32 @@ html body.salty .llmt-settings .llmt-card-head > .llmt-gl-enable { display: inli
 html body.salty .llmt-settings .llmt-card-head > .llmt-gl-enable > input { margin: 0 !important; }
 /* 애드온 창 머리(번역 · 에셋 … header, 성능 보조 h3.pa-hub-title, 한글화 패널 머리): [아이콘] 8 [제목] 8 [판 알약] … [×] */
 
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog) > header > :is(i, b, span, h2, h3) { margin: 0 !important; }
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog) > header > button:last-child { margin-left: auto !important; }
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog) > header > button:last-child { margin-left: auto !important; }
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart) > header > :is(i, b, span, h2, h3) { margin: 0 !important; }
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart) > header > button:last-child { margin-left: auto !important; }
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart) > header > button:last-child { margin-left: auto !important; }
 html body.salty .pa-hub .pa-hub-title, html body.salty .po-dialog .po-title, html body.salty #pt-panel #pt-panel-header h3 { display: flex !important; align-items: center !important; gap: 8px !important; }
 html body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-panel-header h3) > :is(i, span, .ext-version, [class*="-version"]) { margin: 0 !important; }
-/* 카드 머리 아이콘(TTS .lv-card-head · 다시 쓰기 .bwr_card_title): 글자 중심보다 1.6px 아래로 재져 보정 */
-html body.salty :is(#lv_settings .lv-card-head, .bwr_settings .bwr_card_title) > i:first-child { transform: translateY(-0.75px); }   /* 측정: 보정 전 +1.6 · -1.5 보정 뒤 -1.3 → 중간값 */
+/* 카드 머리 아이콘(TTS .lv-card-head): 글자 중심보다 1.6px 아래로 재져 보정
+   1.0.1 다시 쓰기 .bwr_card_title 은 따로(아래) — 이 −0.75px 그림 이동으로 토글 아이콘(fa-toggle-on)이 기본 글자 15.5 에서 1.07px 위에 떴어요(화소 기준 · 문턱 0.5) */
+html body.salty #lv_settings .lv-card-head > i:first-child { transform: translateY(-0.75px); }   /* 측정: 보정 전 +1.6 · -1.5 보정 뒤 -1.3 → 중간값 */
+/* 1.0.1 다시 쓰기 카드 머리 토글 아이콘: 그림 이동(transform)은 배율 3.75 에서 0.27 · 0.53px 계단으로 붙어 크기마다 −1.07 ~ +0.86 으로 갈렸어요.
+   배치 이동(top)은 글자처럼 정수 px 로 붙어 글자와 같은 계단을 타요 — 제 글자 크기의 0.058em(15.5 → 0.9px) 위로.
+   잰 값(아이콘 잉크 − 제목 글자 잉크, 384×3.75): 글자 13 −0.22 · 15.5 −0.27 · 17 −0.26 · 19 −0.24 · 22 0.78(전 1.84) / 1280 · 15.5 −0.15 */
+html body.salty .bwr_settings .bwr_card_title > i:first-child { position: relative; top: -.058em; }
+/* 1.0.1 TTS 카드 머리 오른쪽 모델 이름(.lv-card-note, 「gpt-4o-mini」 .85em): 영문 소문자 잉크(x 높이 띠)가 제목 한글 잉크보다 0.95px(384) · 2.2px(1280) 아래 —
+   제 글자 크기의 0.1em 올려요(글자 크기를 바꿔도 같은 비율). 뒤(384): 글자 13 0.37 · 15.5 −0.12 · 17 −0.42 · 19 −0.23 / 1280 · 15.5 0.22(전 1.71 · 1.22 · 1.18 · 1.37) */
+html body.salty #lv_settings .lv-card-head > .lv-card-note { translate: 0 -.1em; }
 html body.salty :is(#lv_settings .lv-card-head, .bwr_settings .bwr_card_title) { gap: 8px !important; }
 html body.salty :is(#lv_settings .lv-card-head, .bwr_settings .bwr_card_title) > :is(i, span) { margin: 0 !important; }
 /* 창 머리의 제목 묶음(<b>: 아이콘 · 이름 · 알약)과 도구 줄도 8 — 번역 · ZIP 설치 · 메모 창 header > b, 메모 머리 도구 줄 */
 html body.salty dialog > header > b, html body.salty dialog.popup .inline-drawer-header > b { display: inline-flex !important; align-items: center !important; gap: 8px !important; min-width: 0; }
 html body.salty dialog > header > b > :is(i, svg, span, .ext-version, [class*="-version"], button) { margin: 0 !important; }
+/* 1.0.1 애드온 창 머리 제목 묶음 세로: 크롬은 제목 줄의 위쪽 반행간 소수점을 버려(24.025 줄 · 글자 칸 19 → 2.51 → 2) 제목 글자가 0.5px 위에 뜨고,
+   한글 잉크 가운데는 글자 칸 가운데보다 0.0142em 위예요 → 닫기 ✕(머리 가운데)보다 제목 잉크가 0.6~0.9px(384) · 0.9~1.0px(1280) 위였어요(groups-survey 화소 기준 · 문턱 0.5).
+   버린 소수점(--bl-text-nudge-frac, 56 의 공용 식 · 글꼴 비율로 계산) + 0.0142em 만큼 묶음을 내려 잉크 가운데를 머리 가운데에 — 글자 크기 · 줄 높이가 바뀌어도 같은 식.
+   0.0142em 은 제목 17px 미만에서만 더해요: 17 이상은 이 몫이 0.24px 를 넘어 상자 차이가 0.25 를 넘고, 글자가 정수 px 로 붙는 것과 겹쳐 1px 가까이 내려갔어요(19 · 22 실측).
+   뒤(384 · 7창): 글자 15.5 −0.45 ~ −0.17 · 13 상자 −0.17 · 17 · 19 · 22 상자 0 / 1280 · 15.5 −0.07 ~ 0.03. 상자 크기 · 자리는 그대로(position: relative) */
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog) > header > b { position: relative; top: calc(var(--bl-text-nudge-frac, 0px) + clamp(0px, (17px - 1em) * 100, .0142em)); }
 html body.salty dialog.bl-notes-dialog > header { flex-wrap: nowrap !important; }
 html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools { display: inline-flex !important; align-items: center !important; gap: 8px !important; margin-left: auto !important; }
 html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools > * { margin: 0 !important; }

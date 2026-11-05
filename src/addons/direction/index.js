@@ -20,7 +20,10 @@ import { registerAnchorSource, anchorAvailable } from '../../prompt-anchors.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.4.3';
+const VERSION = '1.4.4';
+// 1.4.4: 「채팅방마다 따로」(기본 꺼짐) — 켜면 전개 지시 · 항상 지시(켜짐 · 글)와 프롬프트 줄 켜짐을 지금 채팅 파일(chat_metadata)에 따로 기억한다.
+//        처음 여는 채팅방은 마지막으로 쓴 상태에서 시작(전개 지시 글만 빈칸 — 이번 장면 지시라서). 넣는 곳 · 저장 · 최근 · 프롬프트 목록 자체는 모든 채팅방 공용.
+//        꺼져 있으면 chat_metadata 를 읽지 않는다(예전 그대로). 아이디어 참고: https://github.com/DenBzs/Direction-Manager-DB (채팅방 단위 저장 — 코드 · 글은 가져오지 않고 이 구조로 새로 씀)
 // 1.4.2: 넣는 곳에 「페르소나 위치」(페르소나 설명 바로 위) · 「캐릭터 설명 위치」({{char}} 설명 바로 위) — 작가 노트와 같은 공용 틀(prompt-anchors).
 //        채팅 완성 · 텍스트 완성 둘 다. 같은 자리에서는 작가 노트 → 항상 지시 → 켠 프롬프트(목록 순서) → 전개 지시 → 원래 설명. 붙일 곳이 없으면(표식 꺼짐 · 스토리 문자열에 칸 없음) 메인 프롬프트 뒤
 // 1.4.0: 전개 지시 · 항상 지시 · 프롬프트 줄마다 넣는 곳(프롬프트 맨 처음 · 메인 프롬프트 앞/뒤 · 채팅 안 @깊이 · 프롬프트 맨 끝)과 역할(시스템 · 사용자 · AI 어시스턴트)을 따로 고른다
@@ -59,14 +62,21 @@ const DEFAULTS = Object.freeze({
     history: { direction: [], always: [] }, // 1.1.5 실제로 보낸 지시 [{ content, at }] (최근이 앞)
     prompts: { enabled: true },      // 1.3.0 프롬프트 쪽 전체 스위치 (줄마다 켜고 끄는 것은 promptList 의 enabled)
     promptList: [],                  // 1.3.0 [{ id, title, content, enabled, at, updated }] (보이는 순서 = 보내는 순서)
+    perChat: false,                  // 1.4.4 채팅방마다 따로 (전개 지시 · 프롬프트 켜짐). 켜져 있을 때 위 direction · promptList[].enabled 는 「마지막 상태」
 });
 
 function settings() {
     return extension_settings[MODULE];
 }
 
+let chatDirty = false;     // 1.4.4 채팅방 기록을 고쳤으니 채팅 파일도 저장
+let chatUnflushed = false; // 창을 닫을 때 바로 한 번 저장 (미뤄 둔 저장은 캐릭터가 바뀌면 실리태번이 버린다)
 function save() {
     saveSettingsDebounced();
+    if (!chatDirty) return;
+    chatDirty = false;
+    chatUnflushed = true;
+    try { getContext().saveMetadataDebounced?.(); } catch (error) { console.warn('[전개 지시] 채팅방 기록을 저장하지 못했어요:', error); }
 }
 
 function clampDepth(value) {
@@ -162,6 +172,7 @@ function initSettings() {
     for (const item of store.promptList) item.place = normalizePlace(item.place, store.promptDepth);
     store.extensionEnabled = store.extensionEnabled !== false;
     store.onColor = parseColorCode(store.onColor) ?? '';
+    store.perChat = store.perChat === true;   // 1.4.4 예전 설정은 꺼짐
 }
 
 /** 프롬프트 한 줄 모양 다듬기. 제목도 글도 없으면 버린다 */
@@ -181,28 +192,137 @@ function newId() {
     return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 }
 
+// ── 1.4.4 채팅방마다 따로 ───────────────────────────────────
+// 켜면 전개 지시 · 항상 지시(켜짐 · 글) · 프롬프트 줄 켜짐을 지금 채팅 파일의 chat_metadata[MODULE] = { direction: { enabled, content }, always: { enabled, content }, promptsOn: [줄 id] } 에 둔다 —
+// 채팅 이름을 바꿔도 따라가고, 채팅을 지우면 같이 지워진다(가지치기 · 사본은 같이 복사된다). 기록이 없는 채팅방은 「마지막 상태(전역 값) · 전개 지시 글만 빈칸」으로 보이고,
+// 처음 고칠 때 그 모습 그대로 기록을 만든다. 고칠 때마다 전역 값(켜짐 · 항상 지시 글)도 같이 바꿔 「마지막 상태」로 둔다 — 다음에 처음 여는 채팅방이 이어받는다.
+// 채팅방을 안 연 첫 화면에서는 전역 값을 쓴다. 꺼져 있으면 getContext() 를 더 부르지 않는다(타자마다 드는 값 없음 · 예전과 같은 길).
+const perChatOn = () => settings().perChat === true;
+
+function chatMeta() {
+    if (!perChatOn()) return null;
+    try {
+        const ctx = getContext();
+        const meta = ctx?.chatMetadata;
+        return ctx?.chatId && meta && typeof meta === 'object' ? meta : null;
+    } catch { return null; }
+}
+
+const onIdsNow = () => settings().promptList.filter(item => item.enabled).map(item => item.id);
+const PER_CHAT_KINDS = new Set(['direction', 'always']);   // 글 칸이 채팅방마다 (프롬프트 쪽은 줄 켜짐 promptsOn)
+const lastAlways = () => ({ enabled: settings().always.enabled, content: settings().always.content });
+
+/** 지금 채팅방 기록 (없으면 null). create: 없으면 지금 보이는 모습(마지막 상태 · 전개 지시 글만 빈칸)으로 만든다. 손으로 고친 기록 · 항상 지시 칸이 없던 기록은 제자리에서 다듬는다 */
+function chatRecord(create = false) {
+    const meta = chatMeta();
+    if (!meta) return null;
+    let record = meta[MODULE];
+    if (!record || typeof record !== 'object' || Array.isArray(record)) {
+        if (!create) return null;
+        record = meta[MODULE] = { direction: { enabled: settings().direction.enabled, content: '' }, always: lastAlways(), promptsOn: onIdsNow() };
+    }
+    if (!record.direction || typeof record.direction !== 'object') record.direction = { enabled: settings().direction.enabled, content: '' };
+    if (!record.always || typeof record.always !== 'object') record.always = lastAlways();
+    for (const kind of PER_CHAT_KINDS) {
+        const slot = record[kind];
+        if (typeof slot.enabled !== 'boolean') slot.enabled = slot.enabled === true;
+        if (typeof slot.content !== 'string') slot.content = String(slot.content ?? '');
+    }
+    if (!Array.isArray(record.promptsOn)) record.promptsOn = onIdsNow();
+    return record;
+}
+
+/** 읽기용 { enabled, content } — 전개 지시 · 항상 지시는 채팅방 기록을 본다(기록 없으면 마지막 상태 · 전개 지시 글만 빈칸). 고칠 때는 setEnabled · setContent 로 */
+function slotOf(kind) {
+    const store = settings();
+    if (!PER_CHAT_KINDS.has(kind) || !chatMeta()) return store[kind];
+    const record = chatRecord();
+    if (record) return record[kind];
+    return kind === 'direction' ? { enabled: store.direction.enabled, content: '' } : store[kind];
+}
+
+function setEnabled(kind, on) {
+    const record = PER_CHAT_KINDS.has(kind) ? chatRecord(true) : null;
+    if (record) { record[kind].enabled = on; chatDirty = true; }
+    settings()[kind].enabled = on;   // 채팅방마다 따로일 때는 「마지막 상태」
+}
+
+function setContent(kind, value) {
+    const record = PER_CHAT_KINDS.has(kind) ? chatRecord(true) : null;
+    if (record) { record[kind].content = value; chatDirty = true; }
+    // 전개 지시 글은 이번 장면 것이라 전역에 남기지 않는다(새 채팅방은 빈칸). 항상 지시 글은 「마지막 상태」로 전역에도
+    if (!record || kind === 'always') settings()[kind].content = value;
+}
+
+/** 프롬프트 줄이 켜져 있나 — 채팅방 기록이 있으면 그 채팅방 것 */
+function promptOn(item, record = chatRecord()) {
+    return record ? record.promptsOn.includes(item.id) : item.enabled;
+}
+
+function setPromptOn(item, on) {
+    const record = chatRecord(true);
+    if (record) {
+        const ids = new Set(settings().promptList.map(entry => entry.id));   // 지운 줄의 id 는 같이 걷는다
+        record.promptsOn = record.promptsOn.filter(id => id !== item.id && ids.has(id));
+        if (on) record.promptsOn.push(item.id);
+        chatDirty = true;
+    }
+    item.enabled = on;
+}
+
+/** 확장 설정의 「채팅방마다 따로」. 켜면 지금 채팅방은 보이던 그대로 이어 가고, 끄면 지금 채팅방의 상태가 모든 채팅방 공용이 된다(채팅방 기록은 남아서 다시 켜면 돌아온다) */
+function setPerChat(on) {
+    const store = settings();
+    if (store.perChat === on) return;
+    if (on) {
+        store.perChat = true;
+        const meta = chatMeta();
+        if (meta && !chatRecord()) {
+            meta[MODULE] = { direction: { enabled: store.direction.enabled, content: store.direction.content }, always: lastAlways(), promptsOn: onIdsNow() };
+            chatDirty = true;
+        }
+    } else {
+        const record = chatRecord();
+        if (record) {
+            for (const kind of PER_CHAT_KINDS) {
+                store[kind].enabled = record[kind].enabled;
+                store[kind].content = record[kind].content;
+            }
+            const now = Date.now();
+            for (const item of store.promptList) {
+                const was = item.enabled;
+                item.enabled = record.promptsOn.includes(item.id);
+                if (item.enabled !== was) item.updated = now;
+            }
+        }
+        store.perChat = false;
+    }
+    save();
+}
+
 /** 애드온 스위치 · 「블루레몬에이드 사용」 · 사용 모드를 끄면 새로고침 전에도 프롬프트에 넣지 않아요 */
 const addonLive = () => addonRunning(extension_settings.salty, 'direction');
 
 /** 실제로 보낼 때 들어가는 상태인지 (전개 지시 — 비어 있어도 'AI가 알아서 전개'로 들어간다) */
 function isActive() {
     const store = settings();
-    return addonLive() && store.extensionEnabled && store.direction.enabled;
+    return addonLive() && store.extensionEnabled && slotOf('direction').enabled;
 }
 
 function hasContent(kind = 'direction') {
-    return settings()[kind].content.trim() !== '';
+    return slotOf(kind).content.trim() !== '';
 }
 
 /** 항상 지시는 적은 글 그대로라 비어 있으면 보낼 것이 없다 */
 function alwaysActive() {
     const store = settings();
-    return addonLive() && store.extensionEnabled && store.always.enabled && hasContent('always');
+    return addonLive() && store.extensionEnabled && slotOf('always').enabled && hasContent('always');
 }
 
 /** 1.3.0 켜 둔 프롬프트 (목록 순서, 글이 있는 것만) */
 function enabledPrompts() {
-    return settings().promptList.filter(item => item.enabled && item.content.trim() !== '');
+    const record = chatRecord();
+    return settings().promptList.filter(item => promptOn(item, record) && item.content.trim() !== '');
 }
 
 /** 프롬프트 쪽은 항상 지시처럼: 입력창 버튼 + 쪽 스위치가 켜져 있고, 켠 줄이 하나라도 있어야 보낸다 */
@@ -374,9 +494,9 @@ function instructionParts() {
     const parts = [];
     const template = store.directionPrompt;
     // 틀의 {{direction}} 자리를 먼저 채운 뒤 글 전체의 매크로를 한 번에 바꾼다 (최근 목록에는 적은 그대로 남는다)
-    if (alwaysActive()) parts.push({ kind: 'always', content: substituteMacros(store.always.content), ...normalizePlace(store.always.place, store.promptDepth) });
+    if (alwaysActive()) parts.push({ kind: 'always', content: substituteMacros(slotOf('always').content), ...normalizePlace(store.always.place, store.promptDepth) });
     if (promptsActive()) for (const item of enabledPrompts()) parts.push({ kind: 'prompt', content: substituteMacros(item.content), ...normalizePlace(item.place, store.promptDepth) });
-    if (isActive() && template?.trim()) parts.push({ kind: 'direction', content: substituteMacros(template.replace(/\{\{direction\}\}/gi, () => store.direction.content)), ...normalizePlace(store.direction.place, store.promptDepth) });
+    if (isActive() && template?.trim()) parts.push({ kind: 'direction', content: substituteMacros(template.replace(/\{\{direction\}\}/gi, () => slotOf('direction').content)), ...normalizePlace(store.direction.place, store.promptDepth) });
     return parts.filter(part => typeof part.content === 'string' && part.content.trim());
 }
 
@@ -445,8 +565,8 @@ function injectDirection(eventData) {
     // 프롬프트 관리자의 토큰 계산(dry run — 답을 받거나 메시지를 고칠 때마다 돈다)은 보낸 것이 아니다: 적다 만 글이 최근에 쌓였다
     if (eventData.dryRun) return;
     let changed = false;
-    if (always) changed = remember('always', store.always.content) || changed;
-    if (direction && hasContent('direction') && /\{\{direction\}\}/i.test(template)) changed = remember('direction', store.direction.content) || changed; // 틀에 자리가 없으면 글은 안 들어간다
+    if (always) changed = remember('always', slotOf('always').content) || changed;
+    if (direction && hasContent('direction') && /\{\{direction\}\}/i.test(template)) changed = remember('direction', slotOf('direction').content) || changed; // 틀에 자리가 없으면 글은 안 들어간다
     if (changed) {
         save();
         if (popup && listView === 'history') renderList();
@@ -459,7 +579,7 @@ function injectDirection(eventData) {
 let expandingMacro = false;
 function directionMacroText() {
     if (!isActive()) return '';
-    const text = settings().direction.content;
+    const text = slotOf('direction').content;
     if (expandingMacro) return text;
     expandingMacro = true;
     try { return substituteMacros(text); } finally { expandingMacro = false; }
@@ -515,8 +635,8 @@ function refreshButton() {
     setAttr(button, 'aria-pressed', String(level > 0));
     const lines = [!on
         ? '전개 지시 꺼짐'
-        : filled ? `전개 지시 켜짐 · ${preview(settings().direction.content)}` : '전개 지시 켜짐 · 내용이 비어 있어 AI가 알아서 전개해요'];
-    if (always) lines.push(`항상 지시 켜짐 · ${preview(settings().always.content)}`);
+        : filled ? `전개 지시 켜짐 · ${preview(slotOf('direction').content)}` : '전개 지시 켜짐 · 내용이 비어 있어 AI가 알아서 전개해요'];
+    if (always) lines.push(`항상 지시 켜짐 · ${preview(slotOf('always').content)}`);
     if (prompts.length) lines.push(`프롬프트 ${prompts.length}개 켜짐 · ${preview(prompts.map(promptTitle).join(' · '))}`);
     const title = `${lines.join('\n')}\n눌러서 열기 · 길게 누르면 전개 지시 켜기/끄기`;
     if (button.title !== title) button.title = title;
@@ -548,8 +668,7 @@ function ensureButton(attempt = 0) {
         pressTimer = setTimeout(() => {
             longPressed = true;
             navigator.vibrate?.(20);
-            const store = settings();
-            store.direction.enabled = !store.direction.enabled;
+            setEnabled('direction', !slotOf('direction').enabled);
             save();
             refreshButton();
         }, 550);
@@ -603,20 +722,21 @@ const PLACEHOLDER = {
 
 function footText() {
     const store = settings();
+    const here = chatMeta() ? '이 채팅방에서 ' : '';   // 1.4.4 채팅방마다 따로
     if (page === 'prompts') {
         if (!store.extensionEnabled || !store.prompts.enabled) return '꺼져 있어서 보내지 않아요. 켜면 줄마다 켜 둔 프롬프트가 같이 들어가요.';
         const count = enabledPrompts().length;
-        return count ? `켜 둔 ${count}개가 줄마다 정한 자리에 들어가요. 넣는 곳은 고치기에서 바꿔요.` : '줄 오른쪽 스위치로 켠 프롬프트만 보내요.';
+        return count ? `${here}켜 둔 ${count}개가 줄마다 정한 자리에 들어가요. 넣는 곳은 고치기에서 바꿔요.` : '줄 오른쪽 스위치로 켠 프롬프트만 보내요.';
     }
     if (page === 'always') {
-        if (!store.extensionEnabled || !store.always.enabled) return '꺼져 있어서 보내지 않아요. 켜면 적은 글이 그대로 매번 들어가요.';
-        return hasContent('always') ? `보낼 때마다 이 글이 그대로 ${placePhrase(store.always.place)} 들어가요.` : '비어 있어서 보내지 않아요.';
+        if (!store.extensionEnabled || !slotOf('always').enabled) return '꺼져 있어서 보내지 않아요. 켜면 적은 글이 그대로 매번 들어가요.';
+        return hasContent('always') ? `${here}보낼 때마다 이 글이 그대로 ${placePhrase(store.always.place)} 들어가요.` : '비어 있어서 보내지 않아요.';
     }
     if (!isActive()) return '꺼져 있어서 보내지 않아요. 켜면 적어 둔 내용이 들어가요.';
     const where = placePhrase(store.direction.place);
     return hasContent()
-        ? `보낼 때마다 이 지시가 ${where} 들어가요.`
-        : `비워 두면 'AI가 알아서 전개'로 ${where} 들어가요.`;
+        ? `${here}보낼 때마다 이 지시가 ${where} 들어가요.`
+        : `비워 두면 ${here}'AI가 알아서 전개'로 ${where} 들어가요.`;
 }
 
 /** 1.4.0 넣는 곳 고르기: 위치 · 역할 · (채팅 안일 때만) 깊이. 설정 카드와 프롬프트 고치기 칸이 같이 쓴다 */
@@ -662,7 +782,7 @@ function stateText(kind) {
         return count ? `${count}개 켜짐` : store.promptList.length ? '켠 것 없음' : '비어 있음';
     }
     if (kindActive(kind)) return '켜짐';
-    return kind === 'always' && store.extensionEnabled && store.always.enabled ? '비어 있음' : '꺼짐';
+    return kind === 'always' && store.extensionEnabled && slotOf('always').enabled ? '비어 있음' : '꺼짐';
 }
 
 function refreshPopup() {
@@ -670,7 +790,7 @@ function refreshPopup() {
     setData(popup, 'page', page);
     popup.classList.toggle('is-on', kindActive(page));
     const toggle = popup.querySelector('.jj-switch');
-    setAttr(toggle, 'aria-checked', String(store[page].enabled));
+    setAttr(toggle, 'aria-checked', String(slotOf(page).enabled));
     setAttr(toggle, 'aria-label', `${KIND_LABEL[page]} 켜기/끄기`);
     setText(popup.querySelector('.jj-title-text'), KIND_LABEL[page]);
     setText(popup.querySelector('.jj-state'), stateText(page));
@@ -1056,7 +1176,8 @@ function promptEditor(item) {
 function promptRow(item, index, total) {
     const row = makeEl('li', 'jj-pitem');
     row.dataset.id = item.id;
-    row.classList.toggle('is-on', item.enabled);
+    const on = promptOn(item);   // 1.4.4 채팅방마다 따로
+    row.classList.toggle('is-on', on);
     if (promptEdit?.id === item.id) {
         row.classList.add('is-editing');
         row.append(promptEditor(item));
@@ -1076,7 +1197,7 @@ function promptRow(item, index, total) {
     toggleSwitch.type = 'button';
     toggleSwitch.dataset.pact = 'switch';
     toggleSwitch.setAttribute('role', 'switch');
-    toggleSwitch.setAttribute('aria-checked', String(item.enabled));
+    toggleSwitch.setAttribute('aria-checked', String(on));
     toggleSwitch.setAttribute('aria-label', `${promptTitle(item)} 켜기/끄기`);
     toggleSwitch.innerHTML = '<span></span>';
     head.append(toggle, makeEl('span', 'jj-ptok'), toggleSwitch);   // 1.3.2 토큰 수 (제목이 먼저 줄어든다)
@@ -1203,11 +1324,12 @@ async function onPromptsClick(event) {
         openPromptId = openPromptId === id ? null : id;   // 한 줄만 펼친다
         renderPrompts(`.jj-pitem[data-id="${id}"] [data-pact="expand"]`);
     } else if (act === 'switch') {
-        item.enabled = !item.enabled;
+        const on = !promptOn(item);
+        setPromptOn(item, on);   // 1.4.4 채팅방마다 따로면 이 채팅방 기록에도
         item.updated = Date.now();
-        if (item.enabled && !store.prompts.enabled) store.prompts.enabled = true;   // 쪽 스위치가 꺼져 있으면 줄을 켤 때 같이 켠다 (켰는데 안 가는 일이 없게)
-        target.setAttribute('aria-checked', String(item.enabled));
-        target.closest('.jj-pitem')?.classList.toggle('is-on', item.enabled);
+        if (on && !store.prompts.enabled) store.prompts.enabled = true;   // 쪽 스위치가 꺼져 있으면 줄을 켤 때 같이 켠다 (켰는데 안 가는 일이 없게)
+        target.setAttribute('aria-checked', String(on));
+        target.closest('.jj-pitem')?.classList.toggle('is-on', on);
         save();
         refreshButton();
         void fillPromptTokens();   // 켠 것 합계
@@ -1493,6 +1615,7 @@ async function fillPromptTokens() {
     if (!box) return;
     const run = ++promptTokenRun;
     const list = settings().promptList;
+    const record = chatRecord();   // 1.4.4 이 채팅방에서 켠 것
     let total = 0, approx = false, any = false;
     for (const item of list) {
         const span = box.querySelector(`.jj-pitem[data-id="${item.id}"] .jj-ptok`);
@@ -1505,7 +1628,7 @@ async function fillPromptTokens() {
             const now = box.querySelector(`.jj-pitem[data-id="${item.id}"] .jj-ptok`);
             if (now) { now.dataset.key = key; now.dataset.n = String(value.n); now.dataset.approx = value.approx ? '1' : ''; now.textContent = tokenNumber(value); now.title = tokenLabel(value); now.setAttribute('aria-label', tokenLabel(value)); }   // 1.3.3 줄에는 숫자만 (제목 자리를 덜 먹게)
         }
-        if (item.enabled && item.content.trim()) { total += value.n; approx ||= value.approx; any = true; }
+        if (promptOn(item, record) && item.content.trim()) { total += value.n; approx ||= value.approx; any = true; }
     }
     const sum = box.querySelector('.jj-ptotal');
     if (sum) { sum.hidden = !any; sum.textContent = any ? `켜진 프롬프트 ${tokenLabel({ n: total, approx })}` : ''; }
@@ -1561,7 +1684,7 @@ async function onListClick(event) {
     const store = settings();
     const act = target.dataset.act;
     if (act === 'save-preset') {
-        const result = savePreset(page, store[page].content);
+        const result = savePreset(page, slotOf(page).content);
         if (result === 'full') toastr.warning(`저장은 ${PRESET_MAX}개까지예요. 안 쓰는 것을 지워 주세요.`, KIND_LABEL[page]);
         renderList();
         return;
@@ -1570,10 +1693,10 @@ async function onListClick(event) {
     const entry = view ? listEntries(view)[Number(target.dataset.index)] : null;
     if (!entry) return;
     if (act === 'use') {
-        const slot = store[page];
+        const slot = slotOf(page);
         // 덮어쓰기 전에 적어 둔 글이 저장에도 최근에도 없으면 최근에 남긴다 (실수로 눌러도 되찾게)
         if (slot.content.trim() && slot.content.trim() !== entry.content && !isSaved(page, slot.content)) remember(page, slot.content);
-        slot.content = entry.content;
+        setContent(page, entry.content);
         const textarea = pageTextarea(page);
         if (textarea) textarea.value = entry.content;
         save();
@@ -1655,17 +1778,17 @@ function openPopup() {
         <div class="jj-popup-foot"><span class="bl-info" aria-hidden="true"><i class="fa-solid fa-info"></i></span><span class="jj-foot-text"></span></div>`;
     for (const kind of TEXT_KINDS) {
         const textarea = pageTextarea(kind);
-        textarea.value = store[kind].content;
+        textarea.value = slotOf(kind).content;
         // (10-29) 글자마다 refreshButton() → refreshPopup() 이 창의 글 · class 를 다시 쓰고 배치를 강제해 글자가 뚝뚝 끊기고, 한글 조합 중에 끼면
         //   조합이 깨졌다(「미안」→「ㅣ안」). 값은 바로 적고, 창 · 단추 다시 그리기는 조합이 끝난 뒤 · 타자가 잠깐 멈춘 뒤 한 번만 (typing.js)
         typingRefreshers.push(attachTypingRefresh(textarea, {
-            onValue: value => { store[kind].content = value; save(); },
+            onValue: value => { setContent(kind, value); save(); },
             refresh: () => { if (popup) refreshButton(); },
         }));
     }
 
     popup.querySelector('.jj-switch').addEventListener('click', () => {
-        store[page].enabled = !store[page].enabled;
+        setEnabled(page, !slotOf(page).enabled);
         save();
         refreshButton();
     });
@@ -1699,12 +1822,12 @@ function openPopup() {
     popup.querySelector('[data-act="clear"]').addEventListener('click', async () => {
         const kind = page;
         if (!TEXT_KINDS.includes(kind)) return;
-        const slot = store[kind];
-        if (!slot.content) return;
+        const text = slotOf(kind).content;
+        if (!text) return;
         const confirmed = await callGenericPopup(`${KIND_LABEL[kind]} 내용을 모두 지울까요?`, POPUP_TYPE.CONFIRM);
         if (!confirmed) return;
-        remember(kind, slot.content); // 지운 글은 최근에서 되찾을 수 있다
-        slot.content = '';
+        remember(kind, text); // 지운 글은 최근에서 되찾을 수 있다
+        setContent(kind, '');
         const textarea = pageTextarea(kind);
         if (textarea) textarea.value = '';
         save();
@@ -1751,6 +1874,11 @@ function closePopup() {
     sendWatch = null;
     promptsResize?.disconnect();
     promptsResize = null;
+    // 1.4.4 이 창에서 채팅방 기록을 고쳤으면 바로 저장 — 다른 캐릭터로 넘어가면 실리태번이 미뤄 둔 저장을 버린다
+    if (chatUnflushed) {
+        chatUnflushed = false;
+        try { void getContext().saveMetadata?.(); } catch (error) { console.warn('[전개 지시] 채팅방 기록을 저장하지 못했어요:', error); }
+    }
 }
 
 function togglePopup() {
@@ -1793,14 +1921,15 @@ function refreshSettingsStatus() {
         setText(card.querySelector('.jj-status-text'), !store.extensionEnabled
             ? (kind === 'direction' ? '아래 ‘입력창 버튼’을 켜면 쓸 수 있어요' : '입력창 버튼이 꺼져 있으면 보내지 않아요')
             : kind === 'prompts' ? promptsStatusText()
-            : hasContent(kind) ? preview(store[kind].content, 70)
+            : hasContent(kind) ? preview(slotOf(kind).content, 70)
                 : kind === 'always' ? '깃털 창을 옆으로 넘기거나 제목을 눌러 적어요'
                     : on ? '비어 있어요 · AI가 알아서 전개해요' : '입력창의 깃털 버튼으로 지시를 적어요');
         const toggle = card.querySelector('.jj-switch');
-        setAttr(toggle, 'aria-checked', String(store[kind].enabled));
+        setAttr(toggle, 'aria-checked', String(slotOf(kind).enabled));
         if (toggle.disabled !== !store.extensionEnabled) toggle.disabled = !store.extensionEnabled;
     }
     setAttr(settingsRoot.querySelector('#jj_extension_switch'), 'aria-checked', String(store.extensionEnabled));
+    setAttr(settingsRoot.querySelector('#jj_per_chat_switch'), 'aria-checked', String(store.perChat));
 }
 
 // 캐릭터 에셋 확장과 같은 카드 모양으로, 세로로 짧게: 상태 카드 → 설정 세 줄 → 접어 둔 프롬프트
@@ -1849,6 +1978,10 @@ function buildSettings() {
                     <div class="jj-row">
                         <div class="jj-row-label"><b>입력창 버튼</b><small>끄면 버튼이 숨고 보내지 않아요</small></div>
                         <button type="button" class="jj-switch" id="jj_extension_switch" role="switch" aria-label="입력창 버튼 쓰기"><span></span></button>
+                    </div>
+                    <div class="jj-row">
+                        <div class="jj-row-label"><b>채팅방마다 따로</b><small>전개 · 항상 지시 · 프롬프트 켜짐</small></div>
+                        <button type="button" class="jj-switch" id="jj_per_chat_switch" role="switch" aria-label="채팅방마다 따로 기억"><span></span></button>
                     </div>
                     <div class="jj-row">
                         <div class="jj-row-label"><b>켜짐 표시 색</b><small>비우면 테마 색</small></div>
@@ -1925,11 +2058,16 @@ function buildSettings() {
 
     for (const kind of KINDS) {
         wrapper.querySelector(`.jj-status[data-kind="${kind}"] .jj-switch`).addEventListener('click', () => {
-            store[kind].enabled = !store[kind].enabled;
+            setEnabled(kind, !slotOf(kind).enabled);
             save();
             refreshButton();
         });
     }
+    wrapper.querySelector('#jj_per_chat_switch').addEventListener('click', () => {   // 1.4.4
+        setPerChat(!store.perChat);
+        closePopup();   // 열린 창의 글은 바뀌기 전 칸 것
+        refreshButton();
+    });
     wrapper.querySelector('#jj_extension_switch').addEventListener('click', () => {
         store.extensionEnabled = !store.extensionEnabled;
         if (!store.extensionEnabled) closePopup();
@@ -2032,6 +2170,8 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
     eventSource.on(event_types.GENERATION_STARTED, trackGeneration);
     for (const name of ['GENERATION_ENDED', 'GENERATION_STOPPED']) if (event_types[name]) eventSource.on(event_types[name], () => { generationType = null; });
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, injectDirection);
+    // 1.4.4 채팅방마다 따로: 채팅방을 바꾸면 깃털 · 상태 카드를 그 채팅방 것으로 (열린 창의 글은 앞 채팅방 것이라 닫는다). 꺼져 있으면 아무것도 안 한다
+    if (event_types.CHAT_CHANGED) eventSource.on(event_types.CHAT_CHANGED, () => { if (!perChatOn()) return; closePopup(); refreshButton(); });
     // 테마를 바꾸면 테마 색을 쓰는 경우의 글자색(켜짐 배지)도 다시 계산한다.
     // 5.1.3: 저장마다 계산 스타일을 읽지 않고 값싼 서명이 바뀔 때만
     // 경량화(10-15): 부팅 중 저장(확장들이 수십 번)도 아래 감시처럼 앱 준비 뒤 한 번으로 — 시트 · <html style> 이 늘 바뀌어 서명이 매번 달라져 계산 스타일을 강제로 읽었다 (폰 리그 4배 부팅 수 초)
@@ -2069,7 +2209,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
 }));
 
 export function showHelp() {
-    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;).</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 문체 다듬기처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 같이 들어가요. 같은 자리에서는 항상 지시 다음, 전개 지시 앞이에요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요. 줄을 꾹 누른 채 위아래로 끌어도 순서가 바뀌어요(마우스는 끌기, 키보드는 Alt+↑/↓). 위에 있는 것부터 차례로 들어가요. 줄 옆 숫자는 지금 모델 기준 토큰 수예요. 제목 옆 점을 누르면 그 쪽으로 바로 가요.</p><p><b>넣는 곳</b>: 전개 지시 · 항상 지시는 확장 설정 카드에서, 프롬프트는 줄마다 고치기에서 따로 골라요. 프롬프트 맨 처음 · 메인 프롬프트(스토리 문자열) 앞 · 메인 프롬프트 뒤 · 페르소나 위치(페르소나 설명 바로 위) · 캐릭터 설명 위치({{char}} 설명 바로 위) · 채팅 안 @깊이(0이면 채팅 맨 끝, 1이면 마지막 메시지 앞) · 프롬프트 맨 끝(프리필처럼 맨 끝에 붙는 자리) 가운데 하나예요. 페르소나 · 캐릭터 설명 위치는 작가 노트와 같은 자리에 작가 노트 다음으로 들어가고, 텍스트 완성에서도 들어가요. 역할은 시스템 · 사용자 · AI 어시스턴트 가운데 골라요. 메인 프롬프트 앞 · 뒤는 채팅 완성(Chat Completion) API에서만 들어가요.</p><p>깃털 모양으로 지금 보내는 것을 알 수 있어요. 아무것도 안 보내면 회색, 전개 지시 · 항상 지시 · 켠 프롬프트 중 하나면 켜짐 색 테두리, 둘이면 안까지 채움, 셋 다면 채움에 은은한 빛이에요. 전개 지시를 꺼 둬도 다른 것을 보내는 중이면 켜진 모양으로 남아요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
+    return callGenericPopup('<h3>전개 지시 사용방법</h3><p>깃털 버튼을 길게 누르면 전개 지시를 켜고 끌 수 있어요. 창 안의 종이비행기 단추를 누르면 창을 닫고 바로 보내요. </p><p>입력창 옆 깃털 버튼을 눌러 다음 장면이나 이야기의 방향을 적어요. 켜짐 스위치를 켜면 이후 대화 요청마다 지시가 들어가요.</p><p>깃털 창을 옆으로 넘기거나 제목을 누르면 <b>항상 지시</b> 쪽이에요. 여기 적은 글은 틀 없이 그대로 매번 들어가요 (예: &lt;OOC: 캐릭터 에셋 이미지를 2장 이상 출력하시오.&gt;).</p><p>한 번 더 넘기면 <b>프롬프트</b> 쪽이에요. 문체 다듬기처럼 가끔 쓰는 프롬프트를 제목 한 줄씩 모아 두고, 줄을 누르면 내용이 펼쳐져요. 줄 오른쪽 스위치로 켠 것만 같이 들어가요. 같은 자리에서는 항상 지시 다음, 전개 지시 앞이에요. {{char}} · {{user}} 도 이름으로 바뀌어요. 펼친 줄에서 고치기 · 지우기 · 순서 옮기기를 해요. 줄을 꾹 누른 채 위아래로 끌어도 순서가 바뀌어요(마우스는 끌기, 키보드는 Alt+↑/↓). 위에 있는 것부터 차례로 들어가요. 줄 옆 숫자는 지금 모델 기준 토큰 수예요. 제목 옆 점을 누르면 그 쪽으로 바로 가요.</p><p><b>넣는 곳</b>: 전개 지시 · 항상 지시는 확장 설정 카드에서, 프롬프트는 줄마다 고치기에서 따로 골라요. 프롬프트 맨 처음 · 메인 프롬프트(스토리 문자열) 앞 · 메인 프롬프트 뒤 · 페르소나 위치(페르소나 설명 바로 위) · 캐릭터 설명 위치({{char}} 설명 바로 위) · 채팅 안 @깊이(0이면 채팅 맨 끝, 1이면 마지막 메시지 앞) · 프롬프트 맨 끝(프리필처럼 맨 끝에 붙는 자리) 가운데 하나예요. 페르소나 · 캐릭터 설명 위치는 작가 노트와 같은 자리에 작가 노트 다음으로 들어가고, 텍스트 완성에서도 들어가요. 역할은 시스템 · 사용자 · AI 어시스턴트 가운데 골라요. 메인 프롬프트 앞 · 뒤는 채팅 완성(Chat Completion) API에서만 들어가요.</p><p>깃털 모양으로 지금 보내는 것을 알 수 있어요. 아무것도 안 보내면 회색, 전개 지시 · 항상 지시 · 켠 프롬프트 중 하나면 켜짐 색 테두리, 둘이면 안까지 채움, 셋 다면 채움에 은은한 빛이에요. 전개 지시를 꺼 둬도 다른 것을 보내는 중이면 켜진 모양으로 남아요.</p><p>책갈피 단추의 <b>저장</b>에는 자주 쓰는 지시를 모아 두고, <b>최근</b>에는 실제로 보낸 지시가 쌓여요. 누르면 입력칸에 불러와요.</p><p>한 번만 보내는 기능이 아니에요. 원하는 장면이 끝나면 끄거나 내용을 고쳐 주세요. 꺼도 적어 둔 내용은 남아요.</p><p>삽입 위치 0은 프롬프트 맨 끝, 1은 마지막 메시지 앞이에요. 세 쪽 모두 같은 자리에 들어가요. 프롬프트의 {{direction}} 자리에 전개 지시가 들어가요. 이 도구는 별도 모델을 호출하지 않고 현재 대화 요청에 지시를 추가해요.</p><p><b>채팅방마다 따로</b>(확장 설정 카드, 처음엔 꺼짐)를 켜면 전개 지시 · 항상 지시(켜짐 · 글)와 프롬프트 줄 켜짐을 채팅방마다 그 채팅 파일에 따로 기억해요. 처음 여는 채팅방은 마지막으로 쓴 상태에서 시작하고, 전개 지시 글만 빈칸이에요. 넣는 곳 · 저장 · 최근 · 프롬프트 목록은 모든 채팅방이 같이 써요. 끄면 지금 채팅방의 상태가 모든 채팅방 공용이 되고, 다시 켜면 채팅방마다 적어 둔 것이 돌아와요.</p><p>입력창 버튼을 끄면 버튼과 지시 삽입이 함께 꺼져요. 기존 단독 전개 지시 확장과 동시에 켜지 마세요.</p>', POPUP_TYPE.TEXT, '', {okButton:'닫기'});
 }
 let settingsDialog = null;
 export async function openPanel() {

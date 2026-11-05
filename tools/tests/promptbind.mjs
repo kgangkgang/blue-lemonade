@@ -228,7 +228,7 @@ await test('6.5.2 캐릭터 이름 연동: 이름이 든 프롬프트·정규식
     ctx.characterId = 1; assert.equal(B.linkMatches('하루', ctx), false, '다른 캐릭터');
     ctx.groupId = 'g1'; ctx.groups[0].members = ['haru.png']; assert.equal(B.linkMatches('하루', ctx), true, '그룹 구성원'); ctx.groups[0].members = ['selene.png']; assert.equal(B.linkMatches('하루', ctx), false); delete ctx.groups[0].members; ctx.groupId = null;
     ctx.characterId = 0;
-    assert.deepEqual(await B.linkReport(), { prompts: 3, twins: 2, regex: 1, rows: [{ prompts: 3, twins: 2, regex: 1 }] }, '안내: 이름 든 프롬프트 3 (color_haru · dc_haru · bound) · 짝 2 · 정규식 1');
+    assert.deepEqual(await B.linkReport(), { prompts: 3, twins: 2, regex: 1, manual: 0, rows: [{ prompts: 3, twins: 2, regex: 1 }] }, '안내: 이름 든 프롬프트 3 (color_haru · dc_haru · bound) · 짝 2 · 정규식 1 · 직접 바꾼 것 0');
     assert.equal(await B.syncPromptBinds(), 6, '하루: 이름 든 셋(color_haru · dc_haru · bound) 켜고 짝 둘 끄고 정규식 하나 켠다');
     assert.equal(on2('color_haru'), true); assert.equal(on2('color_base'), false); assert.equal(on2('dc_haru'), true); assert.equal(on2('dc_plain'), false);
     assert.equal(on2('dc_other'), true, '다른 이름의 변형은 그대로'); assert.equal(on2('main'), true); assert.equal(on2('bound'), true, '묶음이 없으니 이름 규칙으로 켜진다');
@@ -244,8 +244,8 @@ await test('6.5.2 캐릭터 이름 연동: 이름이 든 프롬프트·정규식
     // 끄면 아무것도 안 바꾼다
     ctx.extensionSettings.salty.promptLink = { on: false, name: '하루' }; invalidateSettings();
     order2[1].enabled = true; assert.equal(await B.syncPromptBinds(), 0); assert.equal(on2('color_haru'), true, '꺼져 있으면 손대지 않는다'); assert.deepEqual(B.linkRows(), []);
-    assert.deepEqual(await B.linkReport('하루'), { prompts: 3, twins: 2, regex: 1, rows: [{ prompts: 3, twins: 2, regex: 1 }] }, '안내는 말을 직접 받아도 된다');
-    B.setPromptManager({ activeCharacter: null }); assert.deepEqual(await B.linkReport('하루'), { prompts: 0, twins: 0, regex: 0, rows: [{ prompts: 0, twins: 0, regex: 0 }] });
+    assert.deepEqual(await B.linkReport('하루'), { prompts: 3, twins: 2, regex: 1, manual: 0, rows: [{ prompts: 3, twins: 2, regex: 1 }] }, '안내는 말을 직접 받아도 된다');
+    B.setPromptManager({ activeCharacter: null }); assert.deepEqual(await B.linkReport('하루'), { prompts: 0, twins: 0, regex: 0, manual: 0, rows: [{ prompts: 0, twins: 0, regex: 0 }] });
     B.setPromptManager(pm); ctx.extensionSettings.salty.promptLink = { on: false, name: '' }; ctx.extensionSettings.regex = []; invalidateSettings(); ctx.characterId = 0;
 });
 await test('6.5.2 설정 정리: promptLink 는 켜짐 불리언 · 6.7.5 줄 { 말 80자 · 카드 } · 예전 이름은 첫 줄로 · 테마 모습 초기화에도 남는다', () => {
@@ -364,6 +364,34 @@ await test('테마를 끄거나 「확장만」이면 채팅을 바꿔도 프롬
     assert.equal(await B.syncPromptBinds('chat'), 1, '켜면 다시 맞춰요');
     assert.equal(on(id), false);
     B.clearBinds(id); ctx.characterId = 0;
+});
+
+await test('1.0.1 정규식 창에서 직접 바꾼 정규식(regex_link.manual)은 묶음 · 이름 연동 맞추기가 덮지 않는다 · 다시 붙이기 · 「자동으로」가 다시 맡긴다 (11-03 제보)', async () => {
+    const RM = await import(pathToFileURL(path.join(root, 'src/regex-manual.js')));
+    ctx.characterId = 0; ctx.chatId = 'chat-a'; ctx.groupId = null;
+    const names = { main: '메인', bluelock_colors: '블루록 색', dialogue_colors: '대사 색' };
+    const pm3 = { ...pm, getPromptOrderForCharacter: () => order, getPromptById: id => ({ identifier: id, name: names[id] || id }) };
+    B.setPromptManager(pm3);
+    const regex = ctx.extensionSettings.regex = [{ id: 'rx-b', scriptName: '묶은 정규식', disabled: false }, { id: 'rx-n', scriptName: '하루 색', disabled: false }];
+    ctx.extensionSettings.salty.promptBinds = { bluelock_colors: { keys: ['c:haru.png'], regex: ['rx-b'] } };
+    ctx.extensionSettings.salty.promptLink = { on: true, rows: [{ word: '하루', cards: [] }] }; invalidateSettings();
+    order.find(e => e.identifier === 'bluelock_colors').enabled = true;
+    delete ctx.extensionSettings.regex_link;
+    assert.equal(await B.syncPromptBinds(), 0, '하루 채팅: 묶은 것 · 말이 든 것 둘 다 켜져 있어 그대로');
+    // 사용자가 정규식 창에서 둘을 끈다 — 실리태번이 disabled 를 바꾸고, regex-manual 이 누른 순간 적는다 (실리태번은 그 뒤 채팅을 다시 그려 CHAT_CHANGED 맞추기가 돈다)
+    regex[0].disabled = true; regex[1].disabled = true;
+    assert.equal(RM.markManual(['rx-b', 'rx-n']), 2); assert.deepEqual(ctx.extensionSettings.regex_link.manual, { 'rx-b': true, 'rx-n': true }, '프롬프트 연동 정규식과 같은 자리');
+    assert.equal(await B.syncPromptBinds('chat'), 0, '직접 바꾼 것은 되돌리지 않는다'); assert.equal(regex[0].disabled, true); assert.equal(regex[1].disabled, true);
+    assert.equal(await B.syncPromptBinds('settle'), 0, '설정 저장 뒤 되맞춤도 그대로');
+    assert.deepEqual(B.linkedManualRegex(), ['rx-n'], '말이 든 것만 이름 연동의 직접 바꿈'); assert.equal((await B.linkReport()).manual, 1, '안내에 개수');
+    // 프롬프트 편집 창에서 정규식을 다시 붙이면 묶음이 다시 맡는다
+    assert.equal(B.setBindRegex('bluelock_colors', 'rx-b', true), true); assert.equal(RM.isManual('rx-b'), false, '다시 붙이면 표시가 지워진다');
+    assert.equal(await B.syncPromptBinds(), 1); assert.equal(regex[0].disabled, false, '묶음이 다시 켠다'); assert.equal(regex[1].disabled, true, '이름 연동 것은 아직 직접 바꿈');
+    // 「자동으로」
+    assert.equal(B.forgetLinkedManual(), 1); assert.deepEqual(ctx.extensionSettings.regex_link.manual, {});
+    assert.equal(await B.syncPromptBinds(), 1); assert.equal(regex[1].disabled, false, '이름 연동이 다시 켠다');
+    assert.equal(RM.forgetManual(['없는 것']), 0); assert.equal(RM.markManual(['', 7, null]), 0, '빈 id 는 적지 않는다');
+    ctx.extensionSettings.salty.promptBinds = {}; ctx.extensionSettings.salty.promptLink = { on: false, rows: [] }; invalidateSettings(); B.setPromptManager(pm); delete ctx.extensionSettings.regex_link;
 });
 
 console.log(`\npromptbind: ${passed} passed, 0 failed`);

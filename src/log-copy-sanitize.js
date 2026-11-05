@@ -2,6 +2,8 @@
 // 걷는 것: 실행 · 끼워 넣기 요소(script · iframe · object · embed · form · meta · link · base …), on* 속성, srcdoc · formaction,
 //   javascript: · vbscript: · data:(그림 말고) 주소, style 의 expression() · behavior · -moz-binding · @import · 나쁜 url().
 // 미리보기용 표시(data-f · data-bl-slot · contenteditable)도 복사 결과에서는 걷는다.
+// 1.0.1 그림 부품: style 의 url('data:image/svg+xml,…') 은 svg 가 그림만일 때(log-copy-template.js safeSvgData) 남기고, 아니면 통째로 none.
+import { SVG_DATA_URL, safeSvgData } from './log-copy-template.js';
 
 const DROP = 'script, iframe, frame, frameset, object, embed, applet, form, input, button, textarea, select, option, optgroup, datalist, keygen, meta, link, base, noscript, template, portal, param, audio, video, source, track, foreignObject, set, dialog';
 const URL_ATTRS = new Set(['href', 'src', 'xlink:href', 'action', 'background', 'poster', 'cite', 'longdesc', 'lowsrc', 'dynsrc', 'data', 'codebase', 'manifest', 'ping']);
@@ -21,10 +23,12 @@ export function safeUrl(value) {
 
 /** CSS 글 하나(style 속성 · <style> 안)에서 위험한 조각을 걷는다 */
 export function safeCss(text) {
-    let out = String(text ?? '').replace(/\/\*[\s\S]*?\*\//g, '');
+    const keep = [];
+    let out = String(text ?? '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\u0001/g, '')
+        .replace(SVG_DATA_URL, (all, data) => (safeSvgData(data) ? `\u0001${keep.push(all) - 1}\u0001` : 'none'));   // 그림 부품은 잠시 맡겨 두기
     for (let i = 0; i < 3 && BAD_CSS.test(out); i++) out = out.replace(BAD_CSS, '');   // 걷은 뒤 다시 붙는 조각까지
     BAD_CSS.lastIndex = 0;
-    return out.replace(/<\/?\s*style/gi, '');
+    return out.replace(/<\/?\s*style/gi, '').replace(/\u0001(\d+)\u0001/g, (_, i) => keep[Number(i)] ?? '');
 }
 
 /** 요소 나무를 그 자리에서 소독 (root 자신은 남긴다) */
@@ -37,7 +41,7 @@ export function sanitizeTree(root, { keepPreviewMarks = false } = {}) {
         for (const attr of [...element.attributes]) {
             const name = attr.name.toLowerCase();
             if (name.startsWith('on') || DROP_ATTRS.has(name)) { element.removeAttribute(attr.name); continue; }
-            if (!keepPreviewMarks && (name === 'data-f' || name.startsWith('data-bl-'))) { element.removeAttribute(attr.name); continue; }
+            if (!keepPreviewMarks && (name === 'data-f' || (name.startsWith('data-bl-') && name !== 'data-bl-egg'))) { element.removeAttribute(attr.name); continue; }   // 1.0.1 누르면 반응(data-bl-egg)은 모양이라 남겨요
             if (URL_ATTRS.has(name) && !safeUrl(attr.value)) { element.removeAttribute(attr.name); continue; }
             if (name === 'srcset' && attr.value.split(',').some(part => !safeUrl(part.trim().split(/\s+/)[0]))) { element.removeAttribute(attr.name); continue; }
             if (name === 'style') {

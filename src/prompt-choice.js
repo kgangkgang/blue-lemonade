@@ -1,4 +1,15 @@
-import { preparePromptChoice, promptChoiceGroups, choiceSnapshot, resolveChoiceConflicts, choiceGroupLabel } from './prompt-choice-core.js';
+import { preparePromptChoice, promptChoiceGroups, choiceSnapshot, resolveChoiceConflicts, choiceGroupLabel, withFolderChoices } from './prompt-choice-core.js';
+
+// 1.0.1 프롬프트 폴더의 「하나만 켜기」 묶음 — 지금 프리셋의 폴더(테마 설정 promptFolders)를 프리셋 메타에 더해요.
+//   폴더 기능이 꺼졌거나 쉬는 중(같은 일을 하는 다른 확장)이면 더하지 않아요. 시험 · 이른 시점(설정 없음)에는 프리셋 메타 그대로예요.
+let folderSource = null;
+/** prompt-folders.js 가 켜질 때 꽂아요: () => 지금 프리셋의 폴더 목록 */
+export function setFolderSource(fn) { folderSource = typeof fn === 'function' ? fn : null; }
+function choiceMeta(settings) {
+    const meta = settings?.extensions?.blPromptChoices;
+    if (!folderSource) return meta;
+    try { return withFolderChoices(meta, folderSource()); } catch { return meta; }
+}
 
 let wanted = false, binding = null, loading = null;
 
@@ -12,7 +23,7 @@ export function bindPromptChoices(doc, getManager) {
         const settings = manager.serviceSettings;
         if (!selected || !settings || !manager.activeCharacter) return;
         const order = manager.getPromptOrderForCharacter(manager.activeCharacter);
-        const changed = preparePromptChoice(settings.prompts, order, settings.extensions?.blPromptChoices, selected);
+        const changed = preparePromptChoice(settings.prompts, order, choiceMeta(settings), selected);
         if (changed.length) {
             const counts = manager.getTokenHandler?.()?.getCounts?.();
             if (counts) for (const id of changed) counts[id] = null;
@@ -76,7 +87,7 @@ function current(manager) {
     const settings = manager?.serviceSettings;
     if (!settings || !manager.activeCharacter) return null;
     const order = manager.getPromptOrderForCharacter(manager.activeCharacter) || [];
-    return { settings, order, groups: promptChoiceGroups(settings.prompts, order, settings.extensions?.blPromptChoices) };
+    return { settings, order, groups: promptChoiceGroups(settings.prompts, order, choiceMeta(settings)) };
 }
 async function displayName(manager, id) {
     const raw = String(manager.getPromptById?.(id)?.name || id);

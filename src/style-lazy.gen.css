@@ -1,7 +1,7 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build ec2250a96e93) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 50284aa60f0c) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)"}
 /* css/00-base.css */
-:root{--bl-release:"1.0.0";}
+:root{--bl-release:"1.0.1";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -8450,12 +8450,14 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list li.complet
   color: transparent !important;
   font-size: 0 !important;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::before {
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::before,
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.bl-pf-head .bl-pf-all::before {
   content: '' !important;
   position: absolute;
   top: 50%;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::after {
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::after,
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.bl-pf-head .bl-pf-all::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -13205,6 +13207,10 @@ body.salty-dark .salty-shapes button.on {
 }
 .salty-panel .bl-frame-library { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); }
 .salty-panel .bl-frame-library > button { padding-inline: 6px; }
+.salty-panel .bl-frame-item { position: relative; display: grid; min-width: 0; }
+.salty-panel .bl-frame-item > .bl-pick-card { padding-inline: 6px; }
+.salty-panel .bl-frame-x { position: absolute; top: 4px; left: 4px; z-index: 1; box-sizing: border-box; min-width: 32px; height: 32px; margin: 0; padding: 0 8px; border: 1px solid var(--salty-line); border-radius: 16px; background: var(--salty-surface); color: var(--salty-muted); font: inherit; font-size: 13px; line-height: 30px; cursor: pointer; }
+.salty-panel .bl-frame-x.is-armed { border-color: var(--salty-danger, currentColor); color: var(--salty-danger, inherit); font-weight: 650; }
 .salty-panel .bl-prompt-tools{min-width:0}
 .salty-panel .bl-prompt-tools .bl-prompt-tool-row{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;row-gap:4px}
 .salty-panel .bl-prompt-tools .salty-row>span{min-width:0;overflow-wrap:anywhere}
@@ -13219,6 +13225,8 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .bl-prompt-tools .bl-prompt-name-row>span{flex:0 0 auto;min-width:0}
 .salty-panel .bl-prompt-source{overflow-wrap:anywhere;word-break:normal}
 .salty-panel .salty-row > span small .bl-rest-note { font-weight: 600; color: var(--salty-accent, inherit); }
+.salty-panel .bl-zero-off { opacity: .55; }
+.salty-panel .bl-zero-banner { border-left: 3px solid var(--salty-accent, currentColor); padding-left: .6em; }
 /* css/21-witidy.css */
 body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header {
   display: grid !important;
@@ -14156,11 +14164,11 @@ body.salty #completion_prompt_manager .completion_prompt_manager_footer > select
   margin: 0 4px 0 0 !important;
 }
 body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_button {
-  width: 34px !important;
-  height: 34px !important;
+  width: var(--bl-ui-icon, 34px) !important;
+  height: var(--bl-ui-icon, 34px) !important;
   min-width: 0 !important;
   padding: 0 !important;
-  font-size: 13px !important;
+  font-size: var(--bl-ui-ink-fa, 12.5px) !important;
 }
 body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_button:last-child {
   margin-right: -4px !important;
@@ -14174,24 +14182,26 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list li.complet
 body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt_manager_prompt_controls > .prompt-manager-toggle-action {
   width: 30px !important;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::before {
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::before, body.salty #completion_prompt_manager #completion_prompt_manager_list li.bl-pf-head .bl-pf-all::before {
 left:4px;
 width:var(--bl-deco-pm-toggle);
 height:var(--bl-deco-pm-toggle);
 margin-top:calc(var(--bl-deco-pm-toggle) / -2);
 border-radius:50%;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.bl-pf-head .bl-pf-all:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
 background:transparent;
 box-shadow:inset 0 0 0 1px var(--salty-faint);
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::before {
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::before, body.salty #completion_prompt_manager #completion_prompt_manager_list li.bl-pf-head .bl-pf-all::before {
 transition:background-color 0.18s ease, box-shadow 0.18s ease;
 }
-body.salty:not(.salty-dark) #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+body.salty:not(.salty-dark) #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+body.salty:not(.salty-dark) #completion_prompt_manager #completion_prompt_manager_list li.bl-pf-head .bl-pf-all:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
 background:transparent;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::after {
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::after, body.salty #completion_prompt_manager #completion_prompt_manager_list li.bl-pf-head .bl-pf-all::after {
 left:4px;
 box-sizing:border-box;
 font-size:var(--bl-deco-pm-toggle);
@@ -14201,22 +14211,25 @@ margin-top:-0.5em;
 border:0;
 border-radius:0;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after {
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after,
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.bl-pf-head .bl-pf-all:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::after {
 background:var(--salty-on-accent, var(--bl-fb-fff));
 box-shadow:none;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::after {
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::after, body.salty #completion_prompt_manager #completion_prompt_manager_list li.bl-pf-head .bl-pf-all::after {
 -webkit-mask:var(--bl-check-mask);
 mask:var(--bl-check-mask);
 transform:none;
 opacity:0;
 transition:opacity 0.15s ease;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action.fa-toggle-on:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action.fa-toggle-on:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before,
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.bl-pf-head .bl-pf-all.bl-pf-lit:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *))::before {
 background:var(--salty-fill-accent, var(--salty-accent));
 box-shadow:none;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action.fa-toggle-on::after {
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action.fa-toggle-on::after,
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.bl-pf-head .bl-pf-all.bl-pf-lit::after {
   opacity: 1;
 }
 body.salty #rm_api_block #openai_api:not([style*="display: none"]):not([style*="display:none"]),
@@ -16907,6 +16920,11 @@ body.salty .bl-cp.pic-loading .bl-cp-drop[data-act="pic"] i {
   scroll-snap-align: start;
   user-select: none;
 }
+body.salty #send_form #qr--bar #bl-qr-fold { position: sticky; left: 0; z-index: 1; flex-shrink: 0; order: -1; display: grid; place-items: center; min-width: 34px; min-height: 34px; margin: 0; padding: 0 8px; border: 0; border-radius: 8px; background: var(--bl-fill-card, var(--bl-card)); color: var(--salty-muted, var(--salty-text)); box-shadow: none; font-size: 12px; }
+body.salty #send_form #qr--bar #bl-qr-fold:hover { color: var(--salty-text); }
+body.salty.salty-qr-folded #send_form #qr--bar > :not(#bl-qr-fold) { display: none !important; }
+body.salty.salty-qr-folded #send_form #qr--bar { width: max-content; max-width: 100%; overflow: visible; }
+body.salty.salty-qr-folded.salty-qr-y #send_form #qr--bar { height: auto; min-height: 0; }
 body.salty :is(#send_form #qr--bar, #qr--popout > .qr--body) > .qr--buttons.qr--color { background-color: color-mix(in srgb, var(--qr--color) 16%, transparent); }
 body.salty :is(#send_form #qr--bar, #qr--popout > .qr--body) > .qr--buttons.qr--color.bl-qr-color-none { background-color: transparent; }
 .salty-panel .bl-qr-sample .qr--button.qr--hasCtx { padding-right: 0; }
@@ -17347,7 +17365,7 @@ body.salty.salty-user-profile-mode-none :is(#chat,.bl-chat-like) .mes[is_user="t
 .bl-inline-preview { min-width:0; width:100%; }
 .bl-view-resize { display:grid; grid-template-columns:32px minmax(0,1fr) 32px; align-items:center; gap:4px; height:28px; }
 .bl-view-grip { grid-column:2; display:grid; place-items:center; height:28px; touch-action:none; cursor:ns-resize; }
-.bl-view-grip i { display:block; width:42px; height:4px; border-radius:5px; background:var(--salty-muted); opacity:.45; }
+.bl-view-grip i { display:block; width:42px; height:4px; border-radius:5px; background:var(--salty-muted); opacity:.8; }
 .bl-view-grip:is(:hover,:focus-visible) i { opacity:1; background:var(--salty-fill-accent, var(--salty-accent)); }
 .salty-panel .bl-view-resize button { width:32px; height:34px; min-height:0; padding:0; margin:0; border:0; border-radius:8px; background:transparent; color:var(--salty-muted); font:var(--bl-deco-glyph-18)/1 sans-serif; }
 .bl-view-tools[hidden] { display:none !important; }
@@ -18042,7 +18060,7 @@ dialog.popup.bl-roomy-dialog .popup-content { margin-left:0 !important; margin-r
 .salty-panel .bl-weather-cats>button.open:not(.on){box-shadow:none;color:var(--salty-text);background:color-mix(in srgb,var(--salty-text) 8%,transparent);}
 .salty-panel .bl-weather-mix{margin-top:8px;}
 .salty-panel .bl-weather-skip-fold{margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;}
-.salty-panel .salty-btn.bl-weather-skip-fold{padding-block:calc(6.75px + var(--bl-text-nudge, 0px)) calc(5.25px - var(--bl-text-nudge, 0px));}
+.salty-panel .salty-btn.bl-weather-skip-fold{padding-block:calc(6px + var(--bl-text-nudge, 0px)) calc(6px - var(--bl-text-nudge, 0px));}
 .salty-panel .bl-weather-skip{margin-top:6px;}
 .salty-panel .bl-spot-row{display:flex;gap:16px;align-items:flex-start;}
 .salty-panel .bl-spot-pad{position:relative;flex:none;width:min(42%,150px);border-radius:12px;background:var(--salty-shade);box-shadow:inset 0 0 0 1px var(--salty-line);overflow:visible;}
@@ -18337,7 +18355,7 @@ body.salty .cg-root .custom-dem-expressive {
 
 body.salty.salty-demfx-go.salty-demfx-glow :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none),
 body.salty.salty-demfx-go.salty-demfx-glow :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) * {
-  text-shadow: 0 0 calc(var(--bl-fx-glow, 0) * .55em) currentColor !important;
+  text-shadow: 0 0 .3em currentColor !important;
 }
 body.salty.salty-demfx-go:not(.salty-demfx-flow) :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none) {
   color: var(--salty-marker-ink, var(--salty-dialogue)) !important;
@@ -18377,25 +18395,25 @@ body.salty.salty-demfx-mflow.salty-dlg-full :is(:is(#chat,.bl-chat-like), .cg-ro
   to { background-position: 100% 50%; }
 }
 @keyframes bl-fx-impact {
-  from { scale: 1; --bl-fx-glow: 0; filter: brightness(1); }
-  to { scale: calc(1 + .03 * var(--bl-fx-k, 1)); --bl-fx-glow: 1; filter: brightness(1.3) saturate(1.25); }
+  from { scale: 1; filter: brightness(1); }
+  to { scale: calc(1 + .03 * var(--bl-fx-k, 1)); filter: brightness(1.3) saturate(1.25); }
 }
 @keyframes bl-fx-angry {
-  from { scale: 1; rotate: calc(-.25deg * var(--bl-fx-k, 1)); --bl-fx-glow: 0; filter: brightness(1); }
-  to { scale: calc(1 + .025 * var(--bl-fx-k, 1)); rotate: calc(.25deg * var(--bl-fx-k, 1)); --bl-fx-glow: .7; filter: brightness(1.14) saturate(1.08); }
+  from { scale: 1; rotate: calc(-.25deg * var(--bl-fx-k, 1)); filter: brightness(1); }
+  to { scale: calc(1 + .025 * var(--bl-fx-k, 1)); rotate: calc(.25deg * var(--bl-fx-k, 1)); filter: brightness(1.14) saturate(1.08); }
 }
 @keyframes bl-fx-excited {
-  0%, 100% { translate: 0 0; rotate: 0deg; --bl-fx-glow: 0; }
+  0%, 100% { translate: 0 0; rotate: 0deg; }
   25% { translate: 0 calc(-.06em * var(--bl-fx-k, 1)); rotate: calc(-.4deg * var(--bl-fx-k, 1)); }
-  75% { translate: 0 calc(.04em * var(--bl-fx-k, 1)); rotate: calc(.4deg * var(--bl-fx-k, 1)); --bl-fx-glow: .85; }
+  75% { translate: 0 calc(.04em * var(--bl-fx-k, 1)); rotate: calc(.4deg * var(--bl-fx-k, 1)); }
 }
 @keyframes bl-fx-dizzy {
   0%, 100% { rotate: calc(-.6deg * var(--bl-fx-k, 1)); filter: hue-rotate(0deg); }
   50% { rotate: calc(.6deg * var(--bl-fx-k, 1)); translate: 0 calc(-.05em * var(--bl-fx-k, 1)); filter: hue-rotate(18deg); }
 }
 @keyframes bl-fx-crying {
-  from { opacity: .72; translate: 0 0; --bl-fx-glow: .2; }
-  to { opacity: 1; translate: 0 calc(.03em * var(--bl-fx-k, 1)); --bl-fx-glow: .65; }
+  from { opacity: .72; translate: 0 0; }
+  to { opacity: 1; translate: 0 calc(.03em * var(--bl-fx-k, 1)); }
 }
 @keyframes bl-fx-shake {
   0%, 100% { translate: 0 0; }
@@ -18408,8 +18426,8 @@ body.salty.salty-demfx-mflow.salty-dlg-full :is(:is(#chat,.bl-chat-like), .cg-ro
   to { opacity: .92; filter: brightness(1.05); }
 }
 @keyframes bl-fx-hurt {
-  from { filter: saturate(.65) brightness(.88); --bl-fx-glow: 0; }
-  to { filter: saturate(1.05) brightness(1.08); --bl-fx-glow: .6; }
+  from { filter: saturate(.65) brightness(.88); }
+  to { filter: saturate(1.05) brightness(1.08); }
 }
 @keyframes bl-fx-intoxicated {
   from { rotate: calc(-.35deg * var(--bl-fx-k, 1)); filter: hue-rotate(-48deg) saturate(1.45) brightness(.88); }
@@ -19074,7 +19092,8 @@ html body.salty :is(#WorldInfo, #left-nav-panel, #rm_api_block, #user-settings-b
 mask:var(--bl-help-mask) center/contain no-repeat !important;
 }
 html body.salty:not(.salty-help-off):not(#bl-h1):not(#bl-h2) .bl-wi-dup.bl-wi-dup { display:none!important; }
-html { --bl-help-d: 1.1em; --bl-help-gap: clamp(5px, 0.35em, 6.8px); --bl-help-glyph: 88%; --bl-help-y: -0.085em; --bl-help-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23000'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cg%20transform%3D'translate(0.2%200.3)'%3E%3Cpath%20d%3D'M8.7%208.9a3.3%203.3%200%201%201%204.9%202.9c-1%20.6-1.6%201.2-1.6%202.3v.6'%20stroke-width%3D'2.6'%2F%3E%3Ccircle%20cx%3D'12'%20cy%3D'18.2'%20r%3D'1.5'%20fill%3D'%23000'%20stroke%3D'none'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"); }
+html { --bl-help-d: 1.1em; --bl-help-gap: clamp(5px, 0.35em, 6.8px); --bl-help-glyph: 88%; --bl-help-y: -0.085em; --bl-help-y-line: -0.092em; --bl-help-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23000'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cg%20transform%3D'translate(0.2%200.3)'%3E%3Cpath%20d%3D'M8.7%208.9a3.3%203.3%200%201%201%204.9%202.9c-1%20.6-1.6%201.2-1.6%202.3v.6'%20stroke-width%3D'2.6'%2F%3E%3Ccircle%20cx%3D'12'%20cy%3D'18.2'%20r%3D'1.5'%20fill%3D'%23000'%20stroke%3D'none'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"); }
+@supports (height: 1cap) { html { --bl-help-y-line: calc(0.5ex - 0.5cap); } }
 html body.salty #WorldInfo :is(small, label) > .fa-comments {
 display:inline-flex !important;
 align-items:center !important;
@@ -19099,7 +19118,7 @@ html body.salty #WorldInfo :is(small, label) > .fa-comments {
 opacity:1 !important;
 }
 html body.salty #WorldInfo :is(small, label) > .fa-comments::before { font-size:0.72em; line-height:1; }
-html body .salty-panel.bl-editor .bl-editor-group-head:where(html body .salty-panel.bl-editor .bl-editor-group-head):has(> .bl-help-btn) { column-gap:0!important; }
+html body .salty-panel.bl-editor .bl-editor-group-head:where(html body .salty-panel.bl-editor .bl-editor-group-head):has(> .bl-help-btn) { column-gap:0!important; display:block; }
 html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes, #wiSliders) :where(small):is(.bl-s, *):where(html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes, #wiSliders) *):has(> :is(.bl-wi-help, .fa-comments, .fa-circle-info, .fa-info-circle)), html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes, #wiSliders) :where(label):is(.bl-s, *):where(html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes, #wiSliders) *):has(> :is(.bl-wi-help, .fa-comments, .fa-circle-info, .fa-info-circle)), html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes, #wiSliders) .inline-drawer-toggle:where(html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes, #wiSliders) .inline-drawer-toggle):has(> :is(.bl-wi-help, .fa-comments, .fa-circle-info, .fa-info-circle)) { column-gap:8px!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes, #wiSliders) :is(small, label, .inline-drawer-toggle) > .bl-wi-help,
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes, #wiSliders) :is(small, label, .inline-drawer-toggle) > .fa-comments,
@@ -19135,9 +19154,11 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(#WorldInfo > .flex-container > h3, #
 html body.salty:not(#bl-h1):not(#bl-h2) :is(#AdvancedFormatting, #rm_api_block, #left-nav-panel) :is(h4, h5) > a.notes-link { margin-left:calc(var(--bl-help-gap) - 0.17em)!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) :is(#rm_api_block h4, #AdvancedFormatting h4.range-block-title) > a.notes-link { margin-left:calc(var(--bl-help-gap) - 0.18em)!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo small:where(html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo small):has(> span[data-i18n="Global World Info/Lorebook activation settings"], > span[data-i18n="Active World(s) for all chats"]) > .bl-wi-help { margin-left:calc(var(--bl-help-gap) - 0.18em)!important; }
+html body.salty #PersonaManagement #persona_connections_info_block > .flex-container:where(html body.salty #PersonaManagement #persona_connections_info_block > .flex-container):has(> :is(.fa-circle-info, .fa-info-circle)) { display:block!important; }
+html body.salty #PersonaManagement #persona_connections_info_block > .flex-container > .fa-circle-info,
+html body.salty #PersonaManagement #persona_connections_info_block > .flex-container > .fa-info-circle { --bl-help-y: 0em; position:relative; top: var(--bl-help-y-line); font-family:inherit!important; }
 html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #bl-deus-popover .dq-head > .dq-help-button { margin-left:0!important; transform:none!important; }
-html body .salty-panel.bl-editor :is(.bl-editor-group-head, .bl-help-head) > .bl-help-btn { --bl-help-y: 0em; }
-html body .salty-panel.bl-editor .bl-advanced .bl-editor-group-head > .bl-help-btn { --bl-help-y: -0.058em; }
+html body .salty-panel.bl-editor :is(.bl-editor-group-head, .bl-help-head) > .bl-help-btn { --bl-help-y: 0em; top: var(--bl-help-y-line); }
 html body.salty :is(#WorldInfo > .flex-container > h3, #PersonaManagement h3, #user-settings-block h3, #AdvancedFormatting h3, h3:has(> a.notes-link[href*="connection-profiles"]), #character_popup h4, :is(#extensions_settings, #extensions_settings2) b, label[for="openai_reasoning_effort"]) > a.notes-link, html body.salty :is(#WorldInfo > .flex-container > h3, #PersonaManagement h3, #user-settings-block h3, #AdvancedFormatting h3, h3:has(> a.notes-link[href*="connection-profiles"]), #character_popup h4, :is(#extensions_settings, #extensions_settings2) b, label[for="openai_reasoning_effort"]) > a.fa-circle-question { --bl-help-y: 0em; }
 html body.salty #left-nav-panel :is(.flex-container, label) > .fa-circle-info,
 html body.salty #left-nav-panel :is(.flex-container, label) > .fa-info-circle,
@@ -19147,9 +19168,12 @@ html body.salty #AdvancedFormatting small > .fa-circle-info,
 html body.salty #AdvancedFormatting small > .fa-info-circle,
 html body.salty #AdvancedFormatting small > .fa-circle-question,
 html body.salty #AdvancedFormatting small > .fa-question-circle { --bl-help-y: -0.14em; }
-html body.salty .bl-tool-label > b > .bl-word-help { --bl-help-y: -0.15em; }
-html body.salty .cg-page-title > .bl-help-btn { --bl-help-y: -0.126em; }
-html body.salty #WorldInfo :is(small.flex-container, .inline-drawer-toggle) > .bl-wi-help, html body.salty .blzi h3 > i:first-child ~ .blzi-help { --bl-help-y: 0em; }
+html body.salty .bl-tool-label > b > .bl-word-help,
+html body.salty :where(.bl-help-btn):is(.cg-page-title > .bl-help-btn):is(bl-s, *),
+html body.salty .blzi :is(h2, h3, h4) > .blzi-help { --bl-help-y: 0em; top: var(--bl-help-y-line); }
+html body.salty .blzi :is(h2, h3, h4) > i:first-child { display:inline-flex!important; align-items:center; justify-content:center; height:1em; line-height:1; vertical-align:middle; position:relative; top:calc(var(--bl-help-y-line) - 0.05em); font-family:inherit!important; }
+html body.salty .blzi :is(h2, h3, h4) > i:first-child::before { font-family:var(--fa-style-family, "Font Awesome 6 Free"); line-height:1; }
+html body.salty #WorldInfo :is(small.flex-container, .inline-drawer-toggle) > .bl-wi-help { --bl-help-y: 0em; }
 html body.salty :is(#rm_api_block h4, #AdvancedFormatting h4.standoutHeader:not(.range-block-title)) > a.notes-link { --bl-help-y: -0.125em; }
 /* css/57-native-ux.css */
 body.salty #PersonaManagement,
@@ -21646,6 +21670,8 @@ html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="both"] { -webkit-mask-i
   html:not(#bl-tab-scroll-off) body.salty #top-settings-holder > .bl-drawer-backing { display: block; position: fixed; z-index: -1; pointer-events: none; top: anchor(--bl-drawer top, 0px); left: anchor(--bl-drawer left, 0px); width: anchor-size(--bl-drawer width, 0px); height: anchor-size(--bl-drawer height, 0px); background: var(--bl-fill-page, var(--bl-page)); border-radius: 0 0 var(--bl-r-lg) var(--bl-r-lg); }
 }
 
+/* css/74-log-copy-motion.css */
+@keyframes bl-fall{0%{transform:translate(0,-20px) rotate(0deg);opacity:0}10%{opacity:var(--bl-o,1)}85%{opacity:var(--bl-o,1)}100%{transform:translate(var(--bl-x2,0px),var(--bl-fall,260px)) rotate(var(--bl-r,220deg));opacity:0}}@keyframes bl-float{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(var(--bl-float,4px) * -2))}}@keyframes bl-drift{0%,100%{transform:translateX(0)}50%{transform:translateX(var(--bl-drift,24px))}}@keyframes bl-twinkle{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}@keyframes bl-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.08)}}@keyframes bl-sway{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}@keyframes bl-spin{to{transform:rotate(360deg)}}@keyframes bl-flicker{0%,100%{opacity:1}8%{opacity:var(--bl-lo,.35)}12%{opacity:.9}20%{opacity:.5}24%{opacity:1}60%{opacity:.85}64%{opacity:var(--bl-lo,.4)}68%{opacity:1}}@keyframes bl-wave{0%,100%{transform:translate(0,0)}25%{transform:translate(calc(var(--bl-wave,-12px) / 2),3px)}50%{transform:translate(var(--bl-wave,-12px),0)}75%{transform:translate(calc(var(--bl-wave,-12px) / 2),-3px)}}@keyframes bl-rise{0%{transform:translateY(var(--bl-from,10px));opacity:0}25%{opacity:var(--bl-o,1)}100%{transform:translateY(var(--bl-to,-90px));opacity:var(--bl-end,0)}}@keyframes bl-shimmer{0%{background-position:-150% 0}100%{background-position:250% 0}}@keyframes bl-ticker{0%{transform:translateX(var(--bl-tick-from,var(--bl-from-x,100%)))}100%{transform:translateX(var(--bl-tick-to,var(--bl-to-x,-100%)))}}@keyframes bl-bounce{0%,100%{transform:translateY(0);animation-timing-function:ease-out}50%{transform:translateY(var(--bl-hop,-14px));animation-timing-function:ease-in}}@keyframes bl-breathe{0%,100%{opacity:var(--bl-lo,.55);filter:brightness(1)}50%{opacity:1;filter:brightness(1.25)}}@keyframes bl-s-fall{0%{transform:translate(0,0) rotate(0deg);opacity:0}8%{opacity:var(--bl-o,1)}50%{transform:translate(var(--bl-x,0px),calc(var(--bl-fall,140px) * .5)) rotate(calc(var(--bl-r,0deg) * .5))}92%{opacity:var(--bl-o,1)}100%{transform:translate(var(--bl-x2,0px),var(--bl-fall,140px)) rotate(var(--bl-r,0deg));opacity:0}}@keyframes bl-s-float{0%,100%{transform:translateY(calc(var(--bl-float,6px) * -1))}50%{transform:translateY(var(--bl-float,6px))}}@keyframes bl-s-twinkle{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.2;transform:scale(.55)}}@keyframes bl-s-sway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}@keyframes bl-s-flicker{0%,100%{opacity:1}6%{opacity:var(--bl-lo,.55)}9%{opacity:1}38%{opacity:.9}41%{opacity:var(--bl-lo,.55)}43%{opacity:1}72%{opacity:var(--bl-lo,.55)}75%{opacity:1}}@keyframes bl-s-wave{0%,100%{transform:translateX(0)}50%{transform:translateX(var(--bl-wave,-14px))}}@keyframes bl-s-rise{0%{transform:translateY(var(--bl-from,16px));opacity:0}30%{opacity:var(--bl-o,1)}100%{transform:translateY(var(--bl-to,0px));opacity:var(--bl-end,1)}}@keyframes bl-s-ticker{0%{transform:translateX(var(--bl-from-x,100%))}100%{transform:translateX(var(--bl-to-x,-100%))}}@keyframes bl-s-bounce{0%,100%{transform:translateY(0) scale(1,1)}30%{transform:translateY(var(--bl-hop,-8px)) scale(.96,1.04)}55%{transform:translateY(0) scale(1.05,.95)}70%{transform:translateY(0) scale(1,1)}}@keyframes bl-s-breathe{0%,100%{opacity:var(--bl-lo,.7);filter:brightness(1)}50%{opacity:1;filter:brightness(1.15)}}@keyframes bl-hue{to{filter:hue-rotate(360deg)}}@keyframes bl-blink{0%,86%,100%{transform:scaleY(1)}90%{transform:scaleY(.08)}94%{transform:scaleY(1)}}@keyframes bl-wag{0%,100%{transform:rotate(-16deg)}50%{transform:rotate(16deg)}}@keyframes bl-lean{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}@keyframes bl-lift{0%,72%,100%{transform:translateY(0) rotate(0deg)}80%{transform:translateY(-4px) rotate(-2deg)}88%{transform:translateY(0) rotate(0deg)}}@keyframes bl-egg-hint{0%,80%,100%{transform:scale(1);filter:none}88%{transform:scale(1.05);filter:drop-shadow(0 0 3px #fff3a0b0)}}@keyframes bl-egg-glow{0%,80%,100%{filter:none}88%{filter:drop-shadow(0 0 3px #fff3a0b0) brightness(1.06)}}[data-bl-egg]{cursor:pointer;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .35s,filter .35s;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}summary[data-bl-egg]{list-style:none;display:inline-block}summary[data-bl-egg]::-webkit-details-marker{display:none}[data-bl-egg]:not([style*="animation"]):not([style*="transform"]){animation:bl-egg-hint 6s ease-in-out 1s 3}[data-bl-egg][style*="transform"]:not([style*="animation"]){animation:bl-egg-glow 6s ease-in-out 1s 3}[data-bl-egg]:nth-child(2n):not([style*="animation"]){animation-delay:3s}[data-bl-egg]:nth-child(3n):not([style*="animation"]){animation-delay:5s}[data-bl-egg="bounce"]:active,details[open]>summary[data-bl-egg="bounce"]{transform:scale(1.25) translateY(-6px)!important}[data-bl-egg="spin"]:active,details[open]>summary[data-bl-egg="spin"]{transform:rotate(360deg)!important}[data-bl-egg="vanish"]:active,details[open]>summary[data-bl-egg="vanish"]{opacity:0!important}[data-bl-egg="grow"]:active,details[open]>summary[data-bl-egg="grow"]{transform:scale(1.6)!important}[data-bl-egg="shrink"]:active,details[open]>summary[data-bl-egg="shrink"]{transform:scale(.5)!important}[data-bl-egg="wiggle"]:active,details[open]>summary[data-bl-egg="wiggle"]{animation:bl-sway .3s ease-in-out infinite!important}[data-bl-egg="flip"]:active,details[open]>summary[data-bl-egg="flip"]{transform:rotateY(180deg)!important}[data-bl-egg="fly"]:active,details[open]>summary[data-bl-egg="fly"]{transform:translate(60px,-60px) rotate(20deg)!important;opacity:0!important}[data-bl-egg="glow"]:active,details[open]>summary[data-bl-egg="glow"]{filter:drop-shadow(0 0 6px #fff6b0) drop-shadow(0 0 14px #ffd84d)!important}[data-bl-egg="rainbow"]:active,details[open]>summary[data-bl-egg="rainbow"]{animation:bl-hue 1.2s linear infinite!important}[data-bl-egg="wink"]:active,details[open]>summary[data-bl-egg="wink"]{transform:scaleY(.1)!important}[data-bl-egg="drop"]:active,details[open]>summary[data-bl-egg="drop"]{transform:translateY(26px)!important}[data-bl-egg="poof"]:active,details[open]>summary[data-bl-egg="poof"]{opacity:1!important}[style*="--bl-poof"]{transition:opacity .45s}[style*="--bl-poof"]:has([data-bl-egg="poof"]:active), [style*="--bl-poof"]:has([data-bl-egg="poof"]:hover) {opacity:0!important}@media (hover:hover),(hover:none){[data-bl-egg="bounce"]:hover{transform:scale(1.25) translateY(-6px)!important}[data-bl-egg="spin"]:hover{transform:rotate(360deg)!important}[data-bl-egg="vanish"]:hover{opacity:0!important}[data-bl-egg="grow"]:hover{transform:scale(1.6)!important}[data-bl-egg="shrink"]:hover{transform:scale(.5)!important}[data-bl-egg="wiggle"]:hover{animation:bl-sway .3s ease-in-out infinite!important}[data-bl-egg="flip"]:hover{transform:rotateY(180deg)!important}[data-bl-egg="fly"]:hover{transform:translate(60px,-60px) rotate(20deg)!important;opacity:0!important}[data-bl-egg="glow"]:hover{filter:drop-shadow(0 0 6px #fff6b0) drop-shadow(0 0 14px #ffd84d)!important}[data-bl-egg="rainbow"]:hover{animation:bl-hue 1.2s linear infinite!important}[data-bl-egg="wink"]:hover{transform:scaleY(.1)!important}[data-bl-egg="drop"]:hover{transform:translateY(26px)!important}[data-bl-egg="poof"]:hover{opacity:1!important}}summary[style*="list-style:none"]::-webkit-details-marker{display:none}@media (prefers-reduced-motion:reduce){[style*="animation:bl-"],[style*="animation: bl-"],[style*="animation-name:bl-"],[style*="animation-name: bl-"],[data-bl-egg],[data-bl-egg]:is(:active,:hover),details[open]>summary[data-bl-egg]{animation:none!important}}
 /* css/75-version-pill.css */
 html:not(#bl-pill-off) body.salty :where(.ext-version):is(#rm_extensions_block :is(.ext-version, .bl-version, .pt-drawer-version, .rl-version, .sv-version)):not([hidden]),
 html:not(#bl-pill-off) body.salty :where(.bl-version):is(#rm_extensions_block :is(.ext-version, .bl-version, .pt-drawer-version, .rl-version, .sv-version)):not([hidden]),
@@ -21714,19 +21740,21 @@ html body.salty .llmt-settings .llmt-card-head > label { margin: 0 !important; }
 html body.salty .llmt-settings .llmt-card-head > .llmt-head-action { margin-left: auto !important; }
 html body.salty .llmt-settings .llmt-card-head > .llmt-gl-enable { display: inline-flex !important; align-items: center !important; gap: 8px !important; }
 html body.salty .llmt-settings .llmt-card-head > .llmt-gl-enable > input { margin: 0 !important; }
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog) > header > i,
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog) > header > b,
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog) > header > span,
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog) > header > h2,
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog) > header > h3 { margin: 0 !important; }
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog) > header > button:last-child { margin-left: auto !important; }
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog) > header > button:last-child { margin-left: auto !important; }
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart) > header > i,
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart) > header > b,
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart) > header > span,
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart) > header > h2,
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart) > header > h3 { margin: 0 !important; }
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart) > header > button:last-child { margin-left: auto !important; }
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart) > header > button:last-child { margin-left: auto !important; }
 html body.salty .pa-hub .pa-hub-title, html body.salty .po-dialog .po-title, html body.salty #pt-panel #pt-panel-header h3 { display: flex !important; align-items: center !important; gap: 8px !important; }
 html body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-panel-header h3) > :where(i):is(.bl-s, *),
 html body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-panel-header h3) > :where(span):is(.bl-s, *),
 html body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-panel-header h3) > .ext-version,
 html body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-panel-header h3) > [class*="-version"] { margin: 0 !important; }
-html body.salty :is(#lv_settings .lv-card-head, .bwr_settings .bwr_card_title) > i:first-child { transform: translateY(-0.75px); }
+html body.salty #lv_settings .lv-card-head > i:first-child { transform: translateY(-0.75px); }
+html body.salty .bwr_settings .bwr_card_title > i:first-child { position: relative; top: -.058em; }
+html body.salty #lv_settings .lv-card-head > .lv-card-note { translate: 0 -.1em; }
 html body.salty #lv_settings .lv-card-head,
 html body.salty :where(.bwr_card_title):where(.bwr_settings .bwr_card_title):is(#bl-s, *):is(.bl-s, *) { gap: 8px !important; }
 html body.salty :is(#lv_settings .lv-card-head, .bwr_settings .bwr_card_title) > i,
@@ -21738,6 +21766,7 @@ html body.salty dialog > header > b > :where(span):is(.bl-s, *),
 html body.salty dialog > header > b > .ext-version,
 html body.salty dialog > header > b > [class*="-version"],
 html body.salty dialog > header > b > :where(button):is(.bl-s, *) { margin: 0 !important; }
+html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog) > header > b { position: relative; top: calc(var(--bl-text-nudge-frac, 0px) + clamp(0px, (17px - 1em) * 100, .0142em)); }
 html body.salty dialog.bl-notes-dialog > header { flex-wrap: nowrap !important; }
 html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools { display: inline-flex !important; align-items: center !important; gap: 8px !important; margin-left: auto !important; }
 html body.salty dialog.bl-notes-dialog > header > .bl-notes-head-tools > * { margin: 0 !important; }
@@ -21787,6 +21816,7 @@ html body.salty:not(#bl-h1):not(#bl-h2) #bl-deus-popover .dq-help-button {
   opacity: 1 !important;
   font-size: inherit !important;
   line-height: 1 !important;
+  font-family: inherit !important;
   cursor: pointer;
   position: relative;
   align-self: center;
@@ -23048,7 +23078,7 @@ html:not(#bl-ui-parts-off) body :where(button):where(.jj-seg[role="tablist"] > b
 html:not(#bl-ui-parts-off) body .bwr_settings .bwr_tab > span:not(.bwr_badge) { overflow: visible !important; text-overflow: clip !important; max-width: none !important; }
 html:not(#bl-ui-parts-off) body .bwr_settings .bwr_tab .bwr_badge { position: static !important; inset: auto !important; flex: none !important; margin: 0 !important; }
 html:not(#bl-ui-parts-off) body .bwr_settings .bwr_tab { flex: 1 0 auto !important; min-width: max-content !important; }
-html:not(#bl-ui-parts-off) body.salty :where(button):where(:is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog) > header > button:last-child):is(#bl-s, *):is(#bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(button):where(:is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.bl-mart) > header > button:last-child):is(#bl-s, *):is(#bl-s, *),
 html:not(#bl-ui-parts-off) body.salty #pt-panel #pt-panel-close,
 html:not(#bl-ui-parts-off) body.salty :where(.cg-icon-btn):where(#cg-panel .cg-icon-btn[data-act="close"]):is(#bl-s, *):is(#bl-s, *),
 html:not(#bl-ui-parts-off) body.salty :where(.dq-close):where(#bl-deus-popover .dq-close):is(#bl-s, *):is(#bl-s, *),
@@ -23060,11 +23090,11 @@ html:not(#bl-ui-parts-off) body.salty :where(.popup-button-close):where(dialog.p
   color: var(--salty-text) !important; -webkit-text-fill-color: transparent !important; font-size: 0 !important; line-height: 0 !important; text-shadow: none !important; filter: none !important;
 }
 html:not(#bl-ui-parts-off) body.salty :is(
-  :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog) > header > button:last-child,
+  :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.bl-mart) > header > button:last-child,
   #pt-panel #pt-panel-close, #cg-panel .cg-icon-btn[data-act="close"], #bl-deus-popover .dq-close, .bls-panel-head > [data-bls-close], #fruit-heart-v6 .fh-close,
   dialog.popup:not(.bl-settings-dialog) > .popup-button-close
 ) > * { visibility: hidden !important; }
-html:not(#bl-ui-parts-off) body.salty :where(button):where(:is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog) > header > button:last-child):is(#bl-s, *):is(#bl-s, *)::before,
+html:not(#bl-ui-parts-off) body.salty :where(button):where(:is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-direction-dialog, dialog.bl-notes-dialog, dialog.bl-ctsi-dialog, dialog.blpt-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.bl-mart) > header > button:last-child):is(#bl-s, *):is(#bl-s, *)::before,
 html:not(#bl-ui-parts-off) body.salty #pt-panel #pt-panel-close::before,
 html:not(#bl-ui-parts-off) body.salty :where(.cg-icon-btn):where(#cg-panel .cg-icon-btn[data-act="close"]):is(#bl-s, *):is(#bl-s, *)::before,
 html:not(#bl-ui-parts-off) body.salty :where(.dq-close):where(#bl-deus-popover .dq-close):is(#bl-s, *):is(#bl-s, *)::before,
@@ -24025,7 +24055,7 @@ html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .s
 html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt > .salty-row > .salty-sizeopt-ctl > .salty-num { grid-column: 2; grid-row: 1; }
 html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt .salty-seg.salty-mini > button { flex: 1 1 auto !important; min-width: max-content !important; white-space: nowrap; }
 @container bl-controls (width >= 19em) {
-  html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) {
+  html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks, .bl-decor-controls) {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     column-gap: var(--bl-s3);

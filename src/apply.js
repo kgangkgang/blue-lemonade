@@ -10,7 +10,7 @@ import { iconsCss } from './icons.js';
 import { cutEdgeVars, cutEdgeClasses, syncCutEdge, imageFrameOn, darkBackground } from './cutedge.js';
 import { comparisonView } from './appearance-compare.js';
 import { weatherReadability } from './weather-readability.js';
-import { themeEnabled, addonsEnabled, puffyMode, checkboxTokens } from './usage-mode.js';
+import { themeEnabled, addonsEnabled, puffyMode, checkboxTokens, zeroSkips, zeroView } from './usage-mode.js';
 import { syncFeatures } from './features.js';
 import { markdownClasses, markdownVariables } from './markdown.js';
 import { frameReady, trackLate } from './boot-layers.js';
@@ -21,7 +21,7 @@ function lateSync(name, load, want, call) {
     if (!slot) late.set(name, slot = { module: null, job: null, call: null });
     slot.call = call;
     if (slot.module) { call(slot.module); return; }
-    if (!want || slot.job) return;
+    if (!want || slot.job || zeroSkips(getSettings(), name)) return;   // 1.0.2 제로: 모양 모듈(usage-mode.js ZERO_LOOK)만
     slot.job = trackLate(frameReady.then(load)).then(m => { slot.module = m; slot.call?.(m); }).catch(error => { slot.job = null; console.warn(`[Blue Lemonade] 그리기 모듈을 못 받았어요(${name})`, error); });
 }
 /** 시험 · 진단: 2층 그리기 모듈이 다 붙을 때까지 */
@@ -403,7 +403,7 @@ function autocompleteVars(pal, mode, ink = {}) {
 }
 
 function appearanceForRender(s) {
-    s = comparisonView(s);
+    s = zeroView(comparisonView(s));   // 1.0.2 제로: JS 가 그리는 기능(데우스 카드 · 날씨 …)은 그리는 값에서만 끔
     const protection = weatherReadability(s, paletteMode(s.palette));
     if (protection.active && !s.shadow.on) s = {...s, shadow: {...s.shadow, on:true, targets:{text:true,dialogue:true,em:true,strong:true,code:true}, color: paletteMode(s.palette) === "dark" ? "#000000" : "#ffffff", alpha:85, angle:90, distance:1, blur:2}};
     return s;
@@ -692,6 +692,8 @@ export function applyAll() {
         shadowClasses(s).forEach(c => want.add(c)); // 글자 그림자 대상별 클래스 (style.css 끝 규칙)
         if (s.chat.bgImage) want.add('salty-bgimg');
         if (s.chat.qrFind === false) want.add('salty-qr-find-off');
+        if (s.chat.qrFold === false) want.add('salty-qr-fold-off');   // 1.0.1 QR 줄 접기 단추 끔 (layout.js syncQrFold)
+        if (s.chat.qrFolded === true) want.add('salty-qr-folded');   // 1.0.1 QR 줄 접힘 — 접기 단추만 남고 버튼은 숨김 (css/35-qr-bar.css)
         if (s.chat.qrCtxNames === true) want.add('salty-qr-ctx-names');   // 7.9.7 QR ⋮ 자리에 하위 세트 이름 (layout.js syncQrTitles)
         if (s.chat.personaTall) want.add('salty-persona-tall');
         if (s.chat.hideSendTextarea) want.add('salty-send-textarea-off'); // 8.2.5 채팅 입력칸 숨기기 — 단추 줄만 남김 (css/04-send-form.css)

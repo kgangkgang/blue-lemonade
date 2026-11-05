@@ -3,9 +3,12 @@
 // FRAME_LAYER는 첫 프레임 뒤, IDLE_LAYER는 덮개가 걷힌 뒤나 처음 쓸 때 받아요.
 // 늦은 채팅 사건은 withReplay로 보완해요. 첫 화면 순서의 근거는 tools/tests/boot-layers.mjs에 있어요.
 import { installUsageLedger } from './src/usage-ledger.js';   // 7.4.0 사용량 장부 허브 — 다른 확장이 읽기 전에 (가볍다: 장부 · 가격표는 처음 쓸 때 연다)
-installUsageLedger();
+// 1.0.2 블루레몬에이드 제로(usage-mode.js zeroMode): 모양(CSS · 색 · 글꼴 · 말풍선)만 — 아래 ZERO 가 서 있으면 기능 모듈 · 감시자 · 요청 훅을 받지도 걸지도 않아요.
+//   모드를 바꾸면 새로고침해요(설정 › 테마 › 기타 › 사용 모드). 시험 tools/tests/zero-mode.mjs
+const ZERO = (() => { try { return zeroMode(getSettings()); } catch { return false; } })();
+if (!ZERO) installUsageLedger();
 // 6.6.9 진단 파일용 최근 오류 20줄 (diag-errors.js — 시작 그래프 밖)
-import('./src/diag-errors.js').then(m => m.startErrorLog()).catch(() => {});
+if (!ZERO) import('./src/diag-errors.js').then(m => m.startErrorLog()).catch(() => {});
 // 실리태번 판 호환: getContext().event_types 는 실리태번이 「옛 이름」으로 표시해 둔 것(새 이름 eventTypes). 그 이름이 빠진 판이 오면 새 이름을 옛 이름으로도
 //   이어 붙여, 테마 모듈 30여 곳이 거는 사건 리스너(채팅 바뀜 · 설정 저장 · 생성 시작 …)가 조용히 빠지거나 시작 함수가 던지지 않게 한다. 둘 다 있는 지금 판에서는 아무것도 안 바꾼다.
 try {
@@ -20,17 +23,21 @@ try {
 } catch { /* 그대로 */ }
 // 공용 모델 목록(live-models.js)은 맨 위 await(실리태번 모듈 · 모델 등록 상태 받기)가 있어 정적 import 하면 테마 시작 전체가 그만큼 기다렸다 —
 //   기다리지 않고 바로 받는다. 실리태번이 연결하며 받은 목록을 받아 두는 훅은 예전처럼 시작할 때 걸린다 (연결은 확장을 다 실은 뒤)
-import('./src/live-models.js').catch(error => console.warn('[Blue Lemonade] 모델 목록', error));
-import { themeEnabled, publicSettings } from './src/usage-mode.js';
+if (!ZERO) import('./src/live-models.js').catch(error => console.warn('[Blue Lemonade] 모델 목록', error));
+import { themeEnabled, publicSettings, zeroMode } from './src/usage-mode.js';
 import { bindSettingsDialog } from './src/settings-dialog.js';
 import { loadRemainingFaces } from './src/fonts.js';
 import { startAddons, syncAddonIcons, startLateAddons, lateReason, waitAddonModule } from './src/addons.js';
+// 1.0.1 자동화 입구: 묶음 판에서 테마 모듈을 같은 인스턴스로(src/ 직접 import 는 두 번째 인스턴스) — 표는 처음 물을 때 받아요(시작 그래프 밖 · 사용자 화면은 안 써요)
+const liveEntry = () => import('./src/live-entry.js');
+const liveModule = name => liveEntry().then(m => m.liveModule(name));
+const liveModuleNames = () => liveEntry().then(m => m.liveModuleNames());
 import { installGenerateInterceptor } from './src/private-addons.js';
 import { getSettings, saveSettings, invalidateSettings, FRESH_SETTINGS } from './src/settings.js';
 // 설치 점검(판만): 처음 누르거나 칠 때(늦어도 60초) — build-info 48KB 가 부팅에서 빠져요
-{ let done = false; const go = () => { if (done) return; done = true; import('./src/install-health.js').then(m => m.checkInstallation()).catch(() => {}); }; const t = setTimeout(go, 60000); for (const type of ['pointerdown', 'keydown']) document.addEventListener(type, e => { if (booting()) return; clearTimeout(t); go(); }, { once: true, capture: true, passive: true }); }
+if (!ZERO) { let done = false; const go = () => { if (done) return; done = true; import('./src/install-health.js').then(m => m.checkInstallation()).catch(() => {}); }; const t = setTimeout(go, 60000); for (const type of ['pointerdown', 'keydown']) document.addEventListener(type, e => { if (booting()) return; clearTimeout(t); go(); }, { once: true, capture: true, passive: true }); }
 import { applyAll, syncReasoningOff } from './src/apply.js';
-import { startCompactLayout } from './src/layout.js';
+import { startCompactLayout, startFavoritesHeading } from './src/layout.js';
 import { watchDom } from './src/dom-watch.js';   // 9.0.4 공용 감시 허브(lite.js 가 이미 시작 그래프에 올려요)
 import { startMainChatRules } from './src/main-chat-rules.js';   // 1층: 본채팅 fetch 감싸기 — 성능 보조의 fetch 감싸기보다 먼저(예전 차례 그대로)
 import { installedTouchMode } from './src/device-layouts.js';
@@ -128,14 +135,17 @@ startThemeSettingsSync({ getSalty: () => SillyTavern.getContext().extensionSetti
 const settings = getSettings();
 // 6.9.0 실리태번 한국어 화면 다듬기 (ko-ui.js) — 언어가 한국어(ko · ko-kr, 7.7.9: 브라우저 언어가 'ko' 인 폰도)일 때만 표를 받는다. 끄기: 설정 koUi=false
 //   1층: 실리태번이 화면을 그리기 전에 addLocaleData 로 표를 넣어야 해서 기다리지 않고 바로 받아요
+//   제로는 공식 ko-kr.json 만 이어요(ko-locale-bridge.js)
 try {
-    if (settings.koUi !== false && /^ko(?:[-_]|$)/i.test(String(SillyTavern.getContext().getCurrentLocale?.() ?? ''))) import('./src/ko-ui.js').then(m => m.startKoreanUi()).catch(error => console.warn('[Blue Lemonade] 한국어 화면', error));
+    const ko = /^ko(?:[-_]|$)/i.test(String(SillyTavern.getContext().getCurrentLocale?.() ?? ''));
+    if (ZERO && ko) import('./src/ko-locale-bridge.js').then(m => m.startKoLocaleBridge()).catch(error => console.warn('[Blue Lemonade] 한국어 표', error));
+    else if (ko && settings.koUi !== false) import('./src/ko-ui.js').then(m => m.startKoreanUi()).catch(error => console.warn('[Blue Lemonade] 한국어 화면', error));
 } catch { /* 언어를 못 읽으면 그대로 */ }
 // 5.3.4: 적용이 죽어도 아래 서랍 · 메뉴는 붙게 — 예전에는 값 하나가 깨지면 설정 창까지 안 떠 고칠 길이 없었다
 try { applyAll(); } catch (error) { console.error('[Blue Lemonade] 시작할 때 설정 적용', error); }
 
 // 콘솔·테스트용 (streamFadeState 는 streamfade.js 가 2층에 붙은 뒤부터 값이 있어요)
-window.Salty = { lateAddons: () => lateReason, gate: name => fireGate(name), addon: id => waitAddonModule(id), ensureDrawerPanel: () => document.getElementById('salty-drawer')?._blEnsurePanel?.(), getSettings: () => publicSettings(getSettings()), themeOn: () => themeEnabled(getSettings()), applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount, panelHasRuleCount, panelCssEnabled, streamFadeState: () => lazy.streamfade?.streamFadeState() ?? null, bootLayers: { idleReady, kickIdle, log: layerLog } };
+window.Salty = { lateAddons: () => lateReason, gate: name => fireGate(name), addon: id => waitAddonModule(id), module: liveModule, modules: liveModuleNames, ensureDrawerPanel: () => document.getElementById('salty-drawer')?._blEnsurePanel?.(), getSettings: () => publicSettings(getSettings()), themeOn: () => themeEnabled(getSettings()), applyAll, refreshPanels, openPopup, restorePreviewRules, deferredPreviewRuleCount, panelHasRuleCount, panelCssEnabled, streamFadeState: () => lazy.streamfade?.streamFadeState() ?? null, bootLayers: { idleReady, kickIdle, log: layerLog } };
 window.addEventListener('bl:addons-state', () => refreshPanels());
 
 // 실리태번 판 호환: 시작 함수 하나가 던져도(실리태번이 이름 · DOM 을 바꾼 판) 서랍 · 메뉴 · 나머지 기능 · 아래 감시와 안내는 그대로 시작한다.
@@ -145,7 +155,10 @@ const isEnabled = () => themeEnabled(getSettings());
 // [이름, 받기, 시작] — 받기는 같은 층 안에서 한꺼번에, 시작은 표 차례대로(예전 시작 차례 그대로). 하나가 못 받거나 던져도 나머지는 그대로 시작해요
 //   시작이 약속을 돌려주면(로어북 연결 점검처럼 안에서 기다림) 그 끝까지(늦어도 3초) 이 층 다시 알림 창을 열어 둬요
 // 표의 넷째 칸 = 문(drawer · input · press): 그 문을 처음 쓸 때만 받는 모듈(boot-layers onGate)
+// 1.0.2 제로: 표에서 :has() 비용 고침 · 판 알약(자동 확인은 설정대로)만 — 나머지 2 · 3층 모듈은 받지 않아요
+const ZERO_START = new Set(['rebaseBodyHasRules', 'startVersionPill']);
 async function startLayer(layer, table) {
+    if (ZERO) table = table.filter(e => ZERO_START.has(e[0]));
     const later = table.filter(e => e[3] && !gateFired(e[3]));
     if (later.length) {
         const byGate = new Map();
@@ -240,7 +253,7 @@ jQuery(() => {
         }, 1500);
     }
     // 1층 — 서랍 · 메뉴 입구와 CSS 바로잡기(:has 미루기 · 메뉴 열림 표식)는 바로
-    startSafe('widenSelectorCache', () => { widenSelectorCache(); }); // 실리태번의 위임 핸들러 선택자를 jQuery 가 매번 다시 컴파일하지 않게 (2.9.4, lite.js)
+    if (!ZERO) startSafe('widenSelectorCache', () => { widenSelectorCache(); }); // 실리태번의 위임 핸들러 선택자를 jQuery 가 매번 다시 컴파일하지 않게 (2.9.4, lite.js)
     startSafe('loadCompatCss', () => { if (!loadCompatCss()) setTimeout(() => startSafe('loadCompatCss', loadCompatCss), 1500); });   // 1.0.0 다른 브라우저 · 폭 규칙은 조건이 맞을 때만 (src/compat-css.js)
     // 11-03: 3층 뒤 쉴 때 서랍 문 → 늦은 애드온 → 누름 문 → 남은 글꼴 조각(fonts.js) 차례로(처음 여는 서랍이 떠안던 것)
     const idleLater = fn => { if (typeof requestIdleCallback === 'function') requestIdleCallback(fn, { timeout: 4000 }); else setTimeout(fn, 1500); };
@@ -256,8 +269,8 @@ jQuery(() => {
     // 상단 서랍 아이콘을 눌러도 둘째 장을 붙여요
     for (const type of ['pointerdown', 'click']) document.getElementById('top-settings-holder')?.addEventListener(type, e => { if (booting()) return; loadSplitCss(); kickIdle('서랍'); startLateAddons('상단 서랍'); fireGate('drawer'); }, { capture: true, passive: true });   // 늦은 애드온(재작성 · 한글화 패널 · 모델 전환)도 처음 쓸 때
     // 9.0.2 입력칸을 누르거나 치기 시작하면 3층을 당겨요 — 보내기 전에 애드온(정규식 연동 · 생성 전 훅 …)이 붙게 (실리태번이 시작할 때 거는 포커스로는 당기지 않아요)
-    for (const type of ['pointerdown', 'keydown']) document.getElementById('send_textarea')?.addEventListener(type, e => { if (booting()) return; kickIdle('입력'); startLateAddons('입력'); fireGate('input'); }, { passive: true });
-    for (const type of ['pointerdown', 'keydown']) document.addEventListener(type, () => { if (booting() || gateFired('press')) return; fireGate('press'); }, { capture: true, passive: true });
+    if (!ZERO) for (const type of ['pointerdown', 'keydown']) document.getElementById('send_textarea')?.addEventListener(type, e => { if (booting()) return; kickIdle('입력'); startLateAddons('입력'); fireGate('input'); }, { passive: true });
+    if (!ZERO) for (const type of ['pointerdown', 'keydown']) document.addEventListener(type, () => { if (booting() || gateFired('press')) return; fireGate('press'); }, { capture: true, passive: true });
     startSafe('syncAddonIcons', () => { syncAddonIcons(); });
     startSafe('addMenuItem', () => { addMenuItem(); });
     afterFirstFrame(() => withReplay('2층', () => startLayer(2, BOOT_FRAME)));
@@ -268,13 +281,14 @@ jQuery(() => {
     const startThemeRuntime = () => {
         if (themeRuntimeStarted || !themeEnabled(getSettings())) return;
         themeRuntimeStarted = true;
-        startSafe('startCompactLayout', () => { startCompactLayout(); });   // 1층: 입력판 · 서랍 · 퀵 리플라이 배치
+        if (!ZERO) startSafe('startCompactLayout', () => { startCompactLayout(); });   // 제로: 입력판 · 서랍 배치(DOM 옮기기 · 슬라이더 붙이기)는 실리태번 그대로   // 1층: 입력판 · 서랍 · 퀵 리플라이 배치
+        else startSafe('startFavoritesHeading', () => { startFavoritesHeading(); });   // 제로도 즐겨찾기 머리 줄(모양)
         // 2층 다시 알림 창은 켜 둔 기능 모듈(features.js · apply.js 가 첫 프레임 뒤 받음)의 시작까지 덮어요
         afterFirstFrame(() => withReplay('테마 2층', async () => { await startLayer(2, FRAME_LAYER); await lateSettled(); }));
         whenIdle('테마 3층', () => withReplay('테마 3층', async () => { await startLayer(3, IDLE_LAYER); await lateSettled(); }));
     };
     $(document).on('change', 'input[data-toggle="chat.toneInline"], input[data-toggle="chat.unifyInline"]', () => setTimeout(retoneAll, 50));
-    startSafe('classifyOnChatChanged', () => {
+    if (!ZERO) startSafe('classifyOnChatChanged', () => {
         const { eventSource, eventTypes, event_types = eventTypes } = SillyTavern.getContext();   // event_types 는 실리태번이 옛 이름으로 표시해 둔 것 — 빠진 판이면 새 이름으로
         eventSource.on(event_types.CHAT_CHANGED, () => setTimeout(() => lazy.assets?.classifyAll(), 300));   // 그림 분류(assets.js)가 2층에 붙기 전이면 붙을 때 전체를 한 번 분류해요
     });
@@ -294,13 +308,13 @@ jQuery(() => {
     });
 });
 
-// 5.8.0 본채팅 요청의 Claude 5 세대 규칙 (본체가 claude-haiku-5-5 를 Claude 5 로 모르는 동안) — 테마 화면 켜짐과 상관없이
+// 5.8.0 본채팅 요청의 Claude 5 세대 규칙 (본체가 claude-haiku-5-5 를 Claude 5 로 모르는 동안) — 테마 화면 켜짐 · 제로와 상관없이
 try { startMainChatRules(); } catch (error) { console.error('[Blue Lemonade] 본채팅 규칙 시작', error); }   // 던져도 아래 애드온 시작은 그대로
 
 /// 8.3.0 생성 전 훅 창구(manifest generate_interceptor) — 내장 확장이 Symbol.for('blue-lemonade.generate') Set 에 넣은 훅을 차례로 부른다
 //   9.0.2 애드온 본체가 3층(유휴)에 붙기 전에 생성이 시작되면 3층을 당겨 훅이 다 걸린 뒤(늦어도 8초) 부른다
 const ADDON_WAIT_MS = 8000;
-try { installGenerateInterceptor(globalThis, { before: () => Promise.race([kickIdle('생성').then(() => startLateAddons('생성')), new Promise(resolve => setTimeout(resolve, ADDON_WAIT_MS))]) }); } catch (error) { console.error('[Blue Lemonade] 생성 전 훅 창구', error); }
+if (!ZERO) try { installGenerateInterceptor(globalThis, { before: () => Promise.race([kickIdle('생성').then(() => startLateAddons('생성')), new Promise(resolve => setTimeout(resolve, ADDON_WAIT_MS))]) }); } catch (error) { console.error('[Blue Lemonade] 생성 전 훅 창구', error); }
 // Host modules finish evaluating after extensions load; do not hold that cycle open.
 //   9.0.2 성능 보조는 바로(fetch 감싸기 · 요청 로그), 애드온 스타일은 2층, 나머지 애드온 본체는 3층
 startAddons({ afterFirstFrame, whenIdle, withReplay, lateSettled }).catch(error => console.error('[Blue Lemonade] 확장 기능 시작', error));

@@ -14,6 +14,7 @@ const rows = [
  ['image','frame','액자 진하기 (%)','액자 진하기 투명도'],
  ['image','frame','액자 가로 비율 (%)','액자 가로 비율 크기'],
  ['image','frame','액자 세로 비율 (%)','액자 세로 비율 크기'],
+ ['image','frame','액자 기울기 (도)','액자 기울기 각도 회전 비스듬히 기울이기'],   // 1.0.1 심플 액자 기울기(-10~10도)
  ['image','frame','장식 액자 사용','장식 액자 사용'],
  ['image','frame','에셋 장식 액자','사진 액자 프리셋 보관함 저장 그림','장식 액자'],
  ['prompt','deus','데우스 빠른 설정','데우스 2.5 V3 솔라 Sola QR 퀵리플라이 옵션 프리셋 토글 선택 한글화 빠른 토글'],
@@ -58,6 +59,7 @@ const rows = [
  ['chat','message','말풍선 나누기','말풍선 나누기 통으로 하나로 엔터 두 번 빈 줄 문단마다 따로 카톡 카카오톡 메신저 내 메시지 캐릭터 메시지 버블','','chat.bubbleSplit'],
  ['chat','screen','퀵 리플라이 · QR','qr 큐알 퀵리플라이 퀵 리플라이 quick reply 빠른답장 빠른 답장 단축답장 편집 검색 돋보기 숨기기 끄기 켜기 토글 자리 위치 입력창 위 아래 가로 세로 스크롤 줄 검색 버튼 보이는 줄 넘기기','퀵 리플라이'],
  ['chat','screen','QR 검색 버튼','퀵리플라이 검색 버튼 돋보기','','chat.qrFind'],
+ ['chat','screen','QR 접기 단추','퀵리플라이 접기 펴기 숨기기 토글 단추 줄 접힘 간이 바 토글','','chat.qrFold'],
  ['chat','screen','하위 목록 단추에 세트 이름','퀵리플라이 QR 세트 이름 ⋮ 하위 목록 묶음','','chat.qrCtxNames'],
  ['chat','screen','채팅 화면·아이콘','아이콘 선 기본 배경 이미지 비치기 채팅 바탕 농도 불투명 투명 메시지 버튼 고정 꺼내기 번역 버튼 점 세 개 메뉴 고르기 목록 팝업 색 고르기 팝업 모델 프리셋 선택창'],
  ['chat','screen','새로고침 화면','새로고침 시작 로딩 레몬 로고 뇌 splash', '새로고침 화면'],
@@ -82,6 +84,7 @@ const rows = [
  ['chat','etc','「확장 탭에 보이기」 줄','확장 탭 보이기 줄 확장 창 맨 위 제목 줄 스위치 꺼내기 확장 위 스위치 숨기기 끄기 켜기','','headSwitchRows'],
  ['chat','etc','로그 복사','로그 복사 서식 복사 그대로 복사 보이는 그대로 복사 글꾸 글 꾸미기 커뮤니티 게시판 붙여넣기 HTML 코드 마크다운 대화 색 글꼴 자간 메신저 말풍선 카드 탭 드래그 선택','','logCopy.on'],
  ['chat','etc','단추 길게 누르면 설명 보기','길게 누르기 꾹 누르기 단추 설명 도움말 무슨 기능 뭐하는 버튼 툴팁 풍선 마우스 올리기','','longpressHelp'],
+ ['chat','etc','프롬프트 폴더','프롬프트 폴더 그룹 묶기 묶음 접기 펼치기 프롬프트 관리자 토글 정리 구분선 자동 하나만 켜기 택1 전체 켜기 끄기 prompt folders','','promptFolders.on'],
  ['chat','etc','한국어 화면 다듬기','실리태번 한국어 한글 한글화 영어로 남은 글 어색한 말 화면 글 다듬기','','koUi'],
  ['chat','etc','빈 채팅 덮어쓰기 막기','빈 채팅 날아감 덮어쓰기 저장 막기 채팅 사라짐 메시지 사라짐 없어짐 비었어요 불러오기 실패 보호 저장 정리 성능 보조','채팅 저장','chat.emptyGuard'],   // 1.0.0 중복 정리: 성능 보조 › 저장 정리 하나로
  ['chat','etc','AI 로 설정 바꾸기','AI 인공지능 자연어 말로 설정 바꾸기 검색창 맡기기 연결 프로필 토큰 요청','설정 찾기','searchAi.on'],
@@ -122,6 +125,7 @@ rows.push(['extensions','words','단어 치환','단어 바꾸기 낱말 치환 
  ['extensions','perf','프롬프트 연동 정규식','정규식 프롬프트 연동 모듈 모멘텀 엔진 상태창 선택지 끄기 켜기 자동 스트리밍 가볍게 데우스 regex'],
  ['extensions','rewrite','다시 쓰기','금지 묘사 금지어 밴 단어 문장 고치기 다시 쓰기 안경 수염 외모 묘사 씬 플랜 리롤 장면 계획 예외 캐릭터 AI 프롬프트 규칙 사용법'],
  ['extensions','perf','확장 충돌 진단','충돌 오류 중복 확장 점검 보고서'],
+ ['theme','update','테마 업데이트','업데이트 확인 새 판 새 버전 판 번호 버전 목록 설치된 판 애드온 판 확장 버전 새로고침 GitHub 최신'],
  ['theme','update','설치 · 충돌 점검','설치 점검 파일 상태 무결성 충돌 다시 검사 설치 ZIP 새 판 파일 버전 섞임 설치 오류 재설치'],
  ['theme','etc','처음 설정 다시 보기','처음 설정 첫 실행 시작 안내 온보딩 튜토리얼 따라하기 단계 팔레트 글꼴 폰트 읽기 방식 다시 고르기','처음 설정 다시 보기'],
  ['chat','etc','진단 복사 · 진단 파일','진단 복사 진단 파일 제보 오류 버전 켜진 기능 JSON 최근 오류 번역 중단 이유'],
@@ -149,7 +153,7 @@ for (const { key, label, options } of MARKDOWN_CONTROLS) rows.push(['text','mark
 for (const {key,label,group} of MARKDOWN_TUNING) rows.push(['text','markdown',`마크다운 · ${MARKDOWN_CONTROLS.find(c=>c.key===group).label} · ${label}`,`마크다운 꾸미기 ${markdownAliases[group]} ${label}`,'',`markdown.${key}`]);
 rows.push(['text','markdown','마크다운 · 장식 색 직접 고르기','마크다운 꾸미기 색 색상 포인트 직접 선택','','markdown.accentOwn'],['text','markdown','마크다운 · 장식 색','마크다운 꾸미기 색 색상 포인트','','markdown.accentColor']);
 const tabs={extensions:'확장',theme:'테마',text:'글자',chat:'채팅',image:'이미지',prompt:'프롬프트'};
-const subs={mermaid:'Mermaid 도표',cutedge:'투명 그림',zipinstall:'ZIP 설치',tts:'TTS',notes:'메모',strike:'취소선',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절','prompt-template':'프롬프트 템플릿',translator:'LLM 번역',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'설치 점검',changes:'변경한 설정',palette:'색',colors:'색 고치기',icons:'단추 아이콘',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',sola:'솔라',fruit:'과일 계열',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
+const subs={mermaid:'Mermaid 도표',cutedge:'투명 그림',zipinstall:'ZIP 설치',tts:'TTS',notes:'메모',strike:'취소선',direction:'전개 지시',assets:'캐릭터 에셋',prompt:'한글화 패널',customstyle:'커스텀 CSS 조절','prompt-template':'프롬프트 템플릿',translator:'LLM 번역',words:'단어 치환',capture:'채팅 캡처',order:'확장 순서',perf:'성능 보조',models:'모델 관리',modelswitch:'모델 전환',regexlink:'프롬프트 연동 정규식',rewrite:'다시 쓰기',bookmarks:'북마크',scripts:'스크립트',update:'업데이트',changes:'변경한 설정',palette:'색',colors:'색 고치기',icons:'단추 아이콘',custom:'직접 테마 만들기',styles:'스타일',backup:'백업',text:'본문',dialogue:'대사',ui:'메뉴',em:'속마음',strong:'강조',code:'코드',para:'문단',shadow:'그림자 · 외곽선',message:'메시지',screen:'화면',etc:'기타',layout:'배치',shape:'모양',frame:'테두리',size:'크기',fade:'흐림',deus:'데우스 엑스 마키나',sola:'솔라',fruit:'과일 계열',profile:'캐릭터 프로필','user-profile':'내 프로필',name:'캐릭터 이름·시간','user-name':'내 이름·시간'};
 subs.markdown = '마크다운';
 const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/^\s*(?:\*\s*){3,}$/,'구분선').replace(/퀵\s*리플라이|quick\s*repl(?:y|ies)|큐알|\bqr\b/g,'퀵리플라이').replace(/프사|아바타/g,'프로필').replace(/글씨|글자\s*간격/g,m=>m==='글씨'?'글자':'자간').replace(/확대\s*축소/g,'확대 축소').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 // 한글을 초성 · 자모로 풀어 둔다: 'ㅂㄱ' → 배경, '배겨'(치다 만 글자) → 배경, 한 글자 틀린 말도 찾는다.

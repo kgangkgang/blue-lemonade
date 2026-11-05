@@ -322,9 +322,18 @@ export function captureLog(target, { context = globalThis.SillyTavern?.getContex
     }
     const ctx = context ?? {};
     const character = ctx.characters?.[ctx.characterId];
+    // 채팅 파일 이름이 실리태번 자동 이름(「캐릭터 - 2026-11-04@12h30m05s」)이면 제목으로 쓰지 않아요
+    function chatTitleOf(c) {
+        let id = '';
+        try { id = String(c.getCurrentChatId?.() ?? c.chatId ?? ''); } catch { id = ''; }
+        id = id.replace(/\.jsonl$/i, '').trim();
+        return /\s-\s\d{4}-\d{1,2}-\d{1,2}\s*@\s*\d{1,2}h\s*\d{1,2}m/i.test(id) ? '' : id.slice(0, 80);
+    }
     const group = ctx.groupId ? ctx.groups?.find?.(g => g.id === ctx.groupId) : null;
     return {
         chatName: String(group?.name || character?.name || ctx.name2 || '').trim(),
+        charName: String(character?.name || ctx.name2 || group?.name || '').trim(),   // 1.0.1 머리 「깡통」 알약
+        chatTitle: chatTitleOf(ctx),   // 1.0.1 머리 큰 제목(지금 채팅 이름 · 자동 이름이면 빈칸 → 「Title」)
         userName: String(ctx.name1 || '').trim(),
         base: { bg: chatBg, ...baseFont },
         messages,

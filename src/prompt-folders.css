@@ -1,0 +1,205 @@
+/* ===== src/prompt-folders.css — 1.0.1 프롬프트 폴더 (src/prompt-folders.js 가 기능이 켜질 때만 <link> 로 받아요) =====
+   머리 줄은 프롬프트 줄과 같은 격자(이름 · 토큰 · 조작 = css/14-prompt.css 의 --pm-* 토큰)라 ⋮ 는 고치기 칸, 「모두 켜기」는 켜기 칸과 세로로 맞아요.
+   면 = 프리셋 구분 줄과 같은 --pm-group(밝은 테마: 한 톤 깊은 면 · 어두운 테마: 시트 톤). 켜기 동그라미 모양은 css/27-compact.css 의 공용 규칙(.bl-pf-all 을 같은 규칙에).
+   색은 팔레트 변수만(새 색 · 혼색 없음). 메뉴는 공용 고르기 목록 팝업(css/72), 편집 창은 공용 고르기 창(css/78) 그대로. */
+
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--pm-tok) var(--pm-ctl);
+  column-gap: var(--pm-gap);
+  align-items: center;
+  min-height: var(--bl-h-row);
+  margin: 0;
+  padding: 0 var(--pm-x);
+  border: 0;
+  list-style: none;
+  background: var(--pm-group);
+  color: var(--salty-text);
+}
+@media (hover: hover) {
+  body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head:hover {
+    box-shadow: inset 0 0 0 100vmax var(--bl-hover);
+  }
+}
+/* 이름 칸 전체가 접기 단추(누르는 칸 = 줄 높이). 꺾쇠는 프롬프트 줄의 종류 아이콘 칸(--pm-icon)에 — 이름 글자 시작이 프롬프트 이름과 같은 선 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head > .bl-pf-name {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: var(--bl-h-row);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--bl-fs-body);
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head .bl-pf-caret {
+  flex: none;
+  width: var(--pm-icon);
+  margin: 0;
+  font-size: 12px;
+  text-align: left;
+  color: var(--salty-faint);
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head .bl-pf-title {
+  min-width: 0;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head .bl-pf-count {
+  flex: none;
+  margin-left: var(--bl-s2);
+  font-size: var(--bl-fs-sub);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--salty-muted);
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head > .bl-pf-tok {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  padding: 0 2px 0 6px;
+  font-size: var(--bl-fs-sub);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--salty-muted);
+}
+/* 조작 칸: 프롬프트 줄의 빼기 40 · 고치기 34 · 켜기 30 칸(css/27-compact.css)과 같은 세 칸 — ⋮ 는 고치기 칸, 모두 켜기는 켜기 칸 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head > .bl-pf-ctl {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  display: grid;
+  grid-template-columns: 40px 34px 30px;
+  align-items: center;
+  width: var(--pm-ctl);
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head .bl-pf-more {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--bl-ui-icon, 34px);
+  height: var(--bl-ui-icon, 34px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--bl-ui-radius, 8px);
+  background: transparent;
+  box-shadow: none;
+  color: var(--salty-muted);
+  font-size: var(--bl-ui-ink-fa, 12.5px);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head .bl-pf-more:hover {
+    background: var(--bl-fill-hover, var(--bl-hover));
+    color: var(--salty-text);
+  }
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head .bl-pf-more:active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg));
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head .bl-pf-all {
+  grid-column: 3;
+  position: relative;
+  width: 30px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: transparent;
+  font-size: 0;
+  cursor: pointer;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head .bl-pf-all[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: default;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head :is(.bl-pf-name, .bl-pf-more, .bl-pf-all):focus-visible {
+  outline: 1px solid var(--salty-accent);
+  outline-offset: -1px;
+}
+
+/* 폴더 안 줄: 이름을 한 칸(12) 들여 — ☰ 손잡이(폰)는 제자리 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt.bl-pf-in {
+  padding-left: calc(var(--pm-x) + var(--bl-s3)) !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt.bl-pf-in:has(> .drag-handle.ui-sortable-handle) {
+  padding-left: calc(var(--pm-x) + var(--pm-handle) + var(--bl-s3)) !important;
+}
+/* 하위 폴더: 머리는 한 칸, 안 줄은 두 칸 — 넓이를 지키려고 2단까지만 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head.bl-pf-sub {
+  padding-left: calc(var(--pm-x) + var(--bl-s3));
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt.bl-pf-in2 {
+  padding-left: calc(var(--pm-x) + var(--bl-s6)) !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.completion_prompt_manager_prompt.bl-pf-in2:has(> .drag-handle.ui-sortable-handle) {
+  padding-left: calc(var(--pm-x) + var(--pm-handle) + var(--bl-s6)) !important;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li:is(.completion_prompt_manager_prompt, .bl-pf-head).bl-pf-hide {
+  display: none !important;
+}
+/* 한 줄 걸러 톤: 머리 · 접힌 줄 때문에 nth-child 짝이 어긋나므로 폴더가 있을 때는 스크립트가 매긴 .bl-pf-alt 로 (구분 줄의 면은 그대로) */
+body.salty #completion_prompt_manager #completion_prompt_manager_list.bl-pf-on > li.completion_prompt_manager_prompt:nth-child(even) {
+  background: transparent;
+}
+body.salty #completion_prompt_manager #completion_prompt_manager_list.bl-pf-on > li.completion_prompt_manager_prompt.bl-pf-alt {
+  background: var(--pm-alt);
+}
+
+/* 편집 창: 공용 고르기 창(css/78)에 이름 칸 하나 — 찾기 칸과 같은 폭 · 여백, 면 · 선은 입력칸 I2(css/95) */
+dialog.bl-prompt-card-picker.bl-pf-editor [data-pf-name] {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  flex: none;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  font: inherit;
+}
+dialog.bl-prompt-card-picker.bl-pf-editor [data-card-done][disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-prompt-card-list > p {
+  margin: 0;
+  padding: 12px;
+  color: var(--salty-muted);
+}
+
+/* 메뉴(공용 고르기 목록 팝업 css/72): 항목 글이 짧아 한 줄로 — 「…만들기」의 「기」 한 글자만 다음 줄로 넘어가던 것(폰 384) */
+body.salty .bl-pf-menu .salty-pick-rows > button > span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* 넣을 곳: 이름 · 고르기 칸 한 줄(공용 고르기 칸 I2 · ▾ 그대로) */
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-place {
+  display: flex;
+  align-items: center;
+  gap: var(--bl-s2);
+  flex: none;
+  min-width: 0;
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-place > span {
+  flex: none;
+}
+dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-place > select {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+}

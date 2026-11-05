@@ -50,6 +50,13 @@
   scroll-snap-align: start;
   user-select: none;
 }
+/* 1.0.1 QR 줄 접기 · 펴기 단추(#bl-qr-fold · layout.js syncQrFold): 돋보기와 같은 모양으로 앞에 붙어요.
+   접힌 줄(body.salty-qr-folded)은 단추만 남기고 나머지(세트 묶음 · 창 띄우기 · 돋보기)를 숨겨요 — 줄은 단추 폭만큼만 */
+body.salty #send_form #qr--bar #bl-qr-fold { position: sticky; left: 0; z-index: 1; flex-shrink: 0; order: -1; display: grid; place-items: center; min-width: 34px; min-height: 34px; margin: 0; padding: 0 8px; border: 0; border-radius: 8px; background: var(--bl-fill-card, var(--bl-card)); color: var(--salty-muted, var(--salty-text)); box-shadow: none; font-size: 12px; }
+body.salty #send_form #qr--bar #bl-qr-fold:hover { color: var(--salty-text); }
+body.salty.salty-qr-folded #send_form #qr--bar > :not(#bl-qr-fold) { display: none !important; }
+body.salty.salty-qr-folded #send_form #qr--bar { width: max-content; max-width: 100%; overflow: visible; }
+body.salty.salty-qr-folded.salty-qr-y #send_form #qr--bar { height: auto; min-height: 0; }
 /* 7.9.7 QR 세트 색: 실리태번은 세트 색으로 묶음 뒤 띠를 꽉 칠해, 색 고르기 기본값(검정)이 저장된 세트가 새까만 띠로 보였다
    → 테마에서는 고른 색을 16% 만 섞은 옅은 바탕으로, 검정이면 칠하지 않는다(src/layout.js 가 bl-qr-color-none). 테두리만 쓰기(onlyBorderColor)는 실리태번 그대로 */
 body.salty :is(#send_form #qr--bar, #qr--popout > .qr--body) > .qr--buttons.qr--color { background-color: color-mix(in srgb, var(--qr--color) 16%, transparent); }

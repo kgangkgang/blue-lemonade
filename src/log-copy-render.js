@@ -2,6 +2,7 @@
 // HTML 은 전부 인라인 style 만: class · <style> · <script> · CSS 변수 · 외부 파일 없이 (커뮤니티 편집기가 지워도 모양이 남게).
 // 틀(글꾸 모양)은 log-copy-presets.js — 여기는 로그 본문(「그대로」)과 마크다운 · 글.
 import { contrast, parseColor, compose } from './shared/ink-paint.js';
+import { spoilerHtml } from './log-copy-spoiler.js';   // 1.0.1 미리보기에서 숨긴 글을 틀을 바꿔 다시 그릴 때
 
 export const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
 const cleanValue = value => String(value ?? '').replace(/"/g, "'").replace(/[<>{};\\]/g, '').trim();
@@ -25,7 +26,8 @@ export const tag = (name, style, inner) => {
 // ── 글자색은 요소마다 인라인으로 (사용자 규칙: 붙인 곳 바탕 · 글자색 · <style> 이 무엇이든 안 보이는 글자 0) ──
 // 바탕을 칠한 요소든 글자만 든 요소든, color 가 없는 요소에 부모의 실제 글자색을 적어요 — 상속 · 꾸밈 블록에 기대는 글자색 0개.
 const VOID_TAGS = new Set(['img', 'br', 'col', 'hr', 'input', 'meta', 'wbr', 'source', 'link']);
-export function inkEverywhere(html, rootInk, { bg: rootBg = null, candidates = [] } = {}) {
+export function inkEverywhere(html, rootInk, { bg: rootBg = null, candidates = [], keepOwn = false } = {}) {
+    // keepOwn(1.0.1 받은 글꾸 틈 템플릿): 틀이 적어 둔 글색은 바꾸지 않아요 — 그림(svg · 그러데이션) 위 글은 바탕을 몰라 잘못 고쳐지던 것. 색 없는 글만 채워요
     // 바탕도 따라가며(인라인 background-color — 반투명은 섞어서) 글자색 대비가 4.5 아래면 읽히는 색으로 바꿔요
     // (화면에서 일부러 옅게 칠한 글자 — 예: 취소선 글자 채움 55% — 도 붙인 곳에서는 안 보일 수 있어요. 사용자 규칙이 「보이는 그대로」보다 먼저)
     const stack = [{ ink: rootInk, bg: parseColor(rootBg) }];
@@ -46,7 +48,7 @@ export function inkEverywhere(html, rootInk, { bg: rootBg = null, candidates = [
         const bg = ownBg && ownBg.a > 0.01 ? (ownBg.a >= 0.999 || !parent.bg ? ownBg : compose(ownBg, parent.bg)) : parent.bg;
         let color = own ? own[1].trim() : parent.ink;
         const masked = own && bgValue && own[1].trim() === bgValue.trim();   // 이름 가림 칸(글자 = 바탕) 은 그대로
-        if (!masked && bg && color && contrast(color, bg) < 4.5) color = pick(bg);
+        if (!masked && !(keepOwn && own) && bg && color && contrast(color, bg) < 4.5) color = pick(bg);
         let next = attrs;
         if (own && color !== own[1].trim()) next = attrs.replace(m[0], ` style="${style.replace(own[0], `${own[0].startsWith(';') ? ';' : ''}color:${color}`)}"`);
         else if (!own && color) next = m ? attrs.replace(m[0], ` style="color:${color};${style}"`) : `${attrs} style="color:${color}"`;
@@ -80,6 +82,7 @@ export function nodesHtml(nodes, { inkFix = null, trimEdges = false, relayout = 
             if (node.tag === 'ul' || node.tag === 'ol') style = { margin: '0', 'padding-left': style['padding-left'] || '1.5em', ...style };
         } else if (inkFix && style?.color && contrast(style.color, inkFix.bg) < 4.5) style = { ...style, color: inkFix.ink };
         const inner = node.children.map((child, i) => one(child, node.block && edge ? { first: edge.first && i === 0, last: edge.last && i === node.children.length - 1 } : null)).join('');
+        if (node.kind === 'spoiler') return spoilerHtml(inner, node.sp, !node.block);   // 1.0.1 미리보기에서 숨긴 글(log-copy-spoiler.js previewModel) — sp 는 시트가 지금 팔레트로 채워요
         return tag(node.tag === 'ul' || node.tag === 'ol' || node.tag === 'li' ? node.tag : node.block ? 'div' : 'span', style, inner);
     };
     return nodes.map((node, i) => one(node, trimEdges ? { first: i === 0, last: i === nodes.length - 1 } : null)).join('');

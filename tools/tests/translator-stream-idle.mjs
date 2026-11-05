@@ -33,7 +33,7 @@ const sse = ({ pieces, every, stallAfter = Infinity }) => {
     });
 };
 function makeEnv(stream) {
-    const env = { streamParts, noStream: new Set(), getRequestHeaders: () => ({}), console: { warn() {} }, Request: function (url, init) { return new globalThis.Request(new URL(url, 'http://localhost/'), init); },
+    const env = { streamParts, noStream: new Set(), streamTrouble: new Map(), getRequestHeaders: () => ({}), console: { warn() {} }, Request: function (url, init) { return new globalThis.Request(new URL(url, 'http://localhost/'), init); },
         fetch: async (req) => { const signal = req.signal; const body = stream();
             const reader = body.getReader();
             const guarded = new ReadableStream({ async pull(ctrl) { if (signal.aborted) { ctrl.error(signal.reason ?? Object.assign(Error('aborted'), { name: 'AbortError' })); return; }

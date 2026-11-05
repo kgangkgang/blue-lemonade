@@ -710,6 +710,7 @@ opacity: 0.45;
 --bl-decor-ratio: var(--bl-image-decor-ratio); --bl-decor-opacity: var(--bl-image-decor-opacity);
 --bl-decor-window: var(--bl-image-decor-window, 0%); --bl-decor-radius: var(--bl-image-decor-radius);
 --bl-decor-zoom: var(--bl-image-decor-zoom); --bl-decor-position: var(--bl-image-decor-position); --bl-decor-fit: var(--bl-image-decor-fit);
+--bl-decor-tilt: var(--bl-image-decor-tilt, 0deg);
 }
 .bl-art-frame[data-bl-frame="profile"] {
 --bl-art-shadow: var(--bl-art-shadow-profile, none);
@@ -717,6 +718,7 @@ opacity: 0.45;
 --bl-decor-ratio: var(--bl-profile-decor-ratio); --bl-decor-opacity: var(--bl-profile-decor-opacity);
 --bl-decor-window: var(--bl-profile-decor-window, 0%); --bl-decor-radius: var(--bl-profile-decor-radius);
 --bl-decor-zoom: var(--bl-profile-decor-zoom); --bl-decor-position: var(--bl-profile-decor-position); --bl-decor-fit: var(--bl-profile-decor-fit);
+--bl-decor-tilt: var(--bl-profile-decor-tilt, 0deg);
 }
 body.salty #chat .mes_text .bl-art-frame {
 display: block; position: relative; isolation: isolate;
@@ -766,7 +768,7 @@ background: var(--salty-bg, var(--bl-fb-202936)); color: var(--salty-text, var(-
 .bl-decor-controls > .salty-note { margin: 0; }
 body.salty.salty-profile-banner.salty-profile-sizing-ratio #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar.bl-art-frame { width: min(var(--bl-profile-width), calc(var(--bl-profile-max-height) * var(--bl-decor-ratio))) !important; }
 body.salty.salty-profile-banner.salty-profile-layout-bleed #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar.bl-art-frame { width: min(calc(100% + var(--salty-gutter) * 2), calc(var(--bl-profile-max-height) * var(--bl-decor-ratio))) !important; }
-.salty-panel .salty-group.bl-decor-controls { padding: 16px var(--pad); gap: 16px; }
+.salty-panel .salty-group.bl-decor-controls { padding: var(--bl-s4) var(--pad); gap: var(--bl-s4); }
 .bl-frame-upload-row, .bl-frame-save-row, .bl-frame-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-width: 0; }
 .bl-frame-upload-row > .bl-decor-upload { min-height: 44px; max-width: 100%; margin: 0; line-height: 1.4; white-space: normal; }
 .bl-frame-save-row > input { flex: 1 1 140px; min-width: 0; width: 100%; box-sizing: border-box; min-height: var(--bl-h-ctl, 36px); margin: 0; padding: 0 12px; border: 0; border-radius: 8px; background: var(--bl-fill-field, var(--salty-field)); color: var(--salty-text); font: inherit; }
@@ -778,6 +780,7 @@ body.salty.salty-profile-banner.salty-profile-layout-bleed #chat .mes:not([is_us
 .bl-frame-library span { font-size: var(--bl-fs-sm, 13px); overflow-wrap: anywhere; }
 body.salty #chat .mes:is([is_system="true"], .smallSysMes) > .mesAvatarWrapper > .avatar.bl-art-frame { position: relative !important; overflow: hidden !important; }
 body.salty #chat .bl-art-frame { filter: var(--bl-art-shadow, none) !important; }
+body.salty #chat .bl-art-frame { rotate: var(--bl-decor-tilt, 0deg); }
 body.salty.salty-profile-banner #chat .mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) .ch_name {
 display: grid !important; grid-template-columns: var(--bl-meta-leading) minmax(0, max-content) auto auto var(--bl-meta-trailing);
 align-items: center; gap: var(--bl-header-gap) 0; width: 100%;
@@ -948,6 +951,7 @@ body.salty.salty-user-profile-banner.salty-header-none #chat .mes[is_user="true"
 --bl-decor-ratio: var(--bl-user-profile-decor-ratio); --bl-decor-opacity: var(--bl-user-profile-decor-opacity);
 --bl-decor-window: var(--bl-user-profile-decor-window, 0%); --bl-decor-radius: var(--bl-user-profile-decor-radius);
 --bl-decor-zoom: var(--bl-user-profile-decor-zoom); --bl-decor-position: var(--bl-user-profile-decor-position); --bl-decor-fit: var(--bl-user-profile-decor-fit);
+--bl-decor-tilt: var(--bl-user-profile-decor-tilt, 0deg);
 }
 body.salty.salty-user-profile-banner #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar.bl-art-frame {
 width: min(var(--bl-user-profile-width), calc(min(var(--bl-user-profile-height), var(--bl-user-profile-max-height)) * var(--bl-decor-ratio))) !important;

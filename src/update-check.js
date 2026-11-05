@@ -3,7 +3,7 @@
 // 1.0.0 바탕: 9.0.0 정리에서 걷었던 것을 되살려요. 시작 그래프 밖 — 판 알약(version-pill.js)이 부팅 8초 뒤에 받아요.
 //   판 비교는 (계열, 판) 짝(src/version-series.js): 원격 manifest 의 bl_series 를 같이 읽어 「s2:1.0.0」 꼴로 들고,
 //   1.0.0(계열 2) 이 8.2.5(계열 1) 보다 새 판이에요. 공지(release-notes.json) 항목도 series 칸(없으면 계열 1)으로 견줘요.
-//   설정 창 「테마 › 업데이트」 상자 · 맨 위 한 줄은 되살리지 않았어요 — 알약 · 업데이트 창 · 공지 창의 자동 확인 스위치만.
+//   설정 창 맨 위 한 줄은 되살리지 않았어요. 「테마 › 업데이트」 상자는 1.0.1 에 되살렸어요(src/theme-update.js — 이 모듈의 checkForUpdate · openUpdate 를 써요).
 //
 // 확인: 6시간에 한 번 GitHub 의 manifest.json(365 B)만 받아 버전을 비교한다 (설정 updateCheck — 기본 켬; 끄면 업데이트 탭의 버튼을 누를 때만).
 //   결과는 이 브라우저의 localStorage(bl_update_check)에 — 새로고침 · 탭 전환마다 다시 묻지 않는다. 못 받으면 조용히 (다음 기회에).
@@ -75,6 +75,9 @@ export async function fetchLatest(fetcher = fetch, now = Date.now()) {
     return v;
 }
 
+let failed = false;
+/** 1.0.1 마지막으로 GitHub 에 물은 것이 실패했나 (테마 › 업데이트 상자의 「업데이트 확인」 문장 — theme-update.js) */
+export const checkFailed = () => failed;
 /** 새 버전 확인 (6시간에 한 번 · force 면 바로). 결과 버전 문자열(없으면 '') */
 export function checkForUpdate({ force = false } = {}) {
     if (checking) return checking;
@@ -86,9 +89,10 @@ export function checkForUpdate({ force = false } = {}) {
         if (!force && cached && age >= 0 && age < EVERY) { setLatest(cached.latest); return latest; }
         try {
             const v = await fetchLatest();
+            failed = false;
             writeStore({ at: Date.now(), latest: v });
             setLatest(v);
-        } catch { writeStore({ at: Date.now() - EVERY + 30 * 60 * 1000, latest: cached?.latest || '' }); setLatest(cached?.latest || ''); }   // 7.2.4 실패 뒤 30분은 다시 묻지 않는다 — 전엔 탭이 보일 때마다 15s+20s 요청 둘을 또 보냈다 (api-audit)
+        } catch { failed = true; writeStore({ at: Date.now() - EVERY + 30 * 60 * 1000, latest: cached?.latest || '' }); setLatest(cached?.latest || ''); }   // 7.2.4 실패 뒤 30분은 다시 묻지 않는다 — 전엔 탭이 보일 때마다 15s+20s 요청 둘을 또 보냈다 (api-audit)
         return latest;
     })().finally(() => { checking = null; });
     return checking;

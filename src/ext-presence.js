@@ -11,16 +11,17 @@ import { folderBase } from './extension-folder.js';
 export const OTHERS = {
     cocktail: { label: '칵테일', folders: ['cocktail'], names: [/鸡尾酒/] },
     baibai: { label: '바이바이', folders: ['ST-BaiBai-Tools'], names: [/柏宝箱/, /baibai/i] },
+    promptgroups: { label: '프롬프트 그룹', folders: ['SillyTavern-PromptFolders'], names: [/^프롬프트 그룹$/, /^Prompt Folders$/i] },
 };
 /** 우리 기능 → 그 기능과 겹치는 확장 (켜져 있으면 쉰다) */
-export const OVERLAP = { lazyAvatars: ['baibai'], worldInfoLight: ['baibai'], searchIme: ['baibai'], codePlain: ['cocktail'] };
+export const OVERLAP = { lazyAvatars: ['baibai'], worldInfoLight: ['baibai'], searchIme: ['baibai'], codePlain: ['cocktail'], promptFolders: ['promptgroups'] };
 
 /**
  * 순수 판정: 설치돼 있고 꺼져 있지 않은 확장. names = extensionNames · disabled = disabledExtensions · manifestOf(폴더) → manifest 또는 null
- * @returns {{cocktail: boolean, baibai: boolean}}
+ * @returns {{cocktail: boolean, baibai: boolean, promptgroups: boolean}}
  */
 export function detectPresence(names, disabled, manifestOf = () => null) {
-    const found = { cocktail: false, baibai: false };
+    const found = Object.fromEntries(Object.keys(OTHERS).map(id => [id, false]));
     if (!Array.isArray(names)) return found;
     const off = new Set(Array.isArray(disabled) ? disabled : []);
     for (const name of names) {
@@ -40,7 +41,8 @@ export function restingFor(feature, found = cached) {
     return '';
 }
 
-let cached = { cocktail: false, baibai: false }, host = null, started = false, pending = 0;
+const none = () => Object.fromEntries(Object.keys(OTHERS).map(id => [id, false]));
+let cached = none(), host = null, started = false, pending = 0;
 const listeners = new Set();
 /** 마지막으로 잰 결과 (동기) */
 export const presence = () => cached;
@@ -50,7 +52,7 @@ export async function refreshPresence(hostOverride) {
     if (hostOverride) host = hostOverride;
     if (!host) { try { host = await import('../../../../extensions.js'); } catch { return cached; } }
     const next = detectPresence(host.extensionNames, host.extension_settings?.disabledExtensions, f => host.getExtensionManifest?.(f));
-    if (next.cocktail === cached.cocktail && next.baibai === cached.baibai) return cached;
+    if (Object.keys(OTHERS).every(id => next[id] === cached[id])) return cached;
     cached = next;
     for (const fn of listeners) { try { fn(cached); } catch (e) { console.warn('[Blue Lemonade] 다른 확장 감지 콜백', e); } }
     return cached;
@@ -70,4 +72,4 @@ export function startPresence() {
 }
 
 /** 시험용 */
-export const _forTest = { reset() { cached = { cocktail: false, baibai: false }; host = null; started = false; listeners.clear(); } };
+export const _forTest = { reset() { cached = none(); host = null; started = false; listeners.clear(); } };

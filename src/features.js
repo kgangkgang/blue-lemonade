@@ -2,7 +2,8 @@ import { frameReady, trackLate, onGate } from './boot-layers.js';
 // 선택 기능은 첫 프레임 뒤에 받아요. 끄면 모듈이 듣기와 화면을 정리해요.
 // 겹치는 성능 기능은 설치된 다른 확장에 맡겨요.
 import { startPresence, onPresenceChange, restingFor } from './ext-presence.js';
-let presenceBound = false;
+import { zeroMode, zeroSkips } from './usage-mode.js';   // 1.0.2 제로: ZERO_LOOK 밖의 기능 모듈은 받지 않아요
+let presenceBound = false, zeroNow = null;
 
 const modules = {};
 let hooks = { applyAll: null, refreshPanels: null };
@@ -13,7 +14,7 @@ export function setFeatureHooks(next) {
 }
 // 9.0.2 부팅 2층: 켜 둔 기능 모듈도 첫 프레임 뒤(시작 덮개 아래)에 받아요 — 실리태번이 확장 정적 묶음을 다 평가하길 기다리는 동안 끼어들지 않게.
 //   받기 전에 syncFeatures 가 여러 번 불려도 받은 뒤 then 이 차례로 돌아 마지막 값이 남아요
-const load = (name, url) => (modules[name] ??= trackLate(frameReady.then(() => import(url))).catch((error) => {
+const load = (name, url) => zeroSkips(zeroNow, name) && !modules[name] ? Promise.resolve(null) : (modules[name] ??= trackLate(frameReady.then(() => import(url))).catch((error) => {
     delete modules[name];
     console.warn(`[Blue Lemonade] ${name} 기능을 불러오지 못했어요`, error);
     return null;
@@ -55,7 +56,8 @@ function startScripts(tries=4){
 /** apply.js applyAll 끝에서 부른다 */
 export function syncFeatures(s, addonsOn = !!s.enabled) {
     const on = !!s.enabled;
-    if (!presenceBound) { presenceBound = true; onPresenceChange(() => { hooks.applyAll?.(); hooks.refreshPanels?.(); }); startPresence(); }
+    zeroNow = s;   // 제로는 새로고침해야 바뀌어요 — 지금 그리는 값으로 판정
+    if (!presenceBound && !zeroMode(s)) { presenceBound = true; onPresenceChange(() => { hooks.applyAll?.(); hooks.refreshPanels?.(); }); startPresence(); }
     if (on || modules.appearance) load('appearance', './chat-appearance.js').then(m => {
         if (!m) return;
         m.syncAppearanceSheet(on); m.bindDeviceChanges(hooks);
@@ -65,6 +67,10 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (on || modules.typography) load('typography', './typography.js').then(m => m?.syncTypography(on));
     // 서랍 안에만 있는 것은 문 drawer 뒤에(onGate)
     if (on || modules.promptchoices) onGate('drawer', () => load('promptchoices', './prompt-choice.js').then(m => m?.syncPromptChoices(on)), 'promptchoices');
+    // 1.0.1 프롬프트 폴더 (기본 켬) — 프롬프트 관리자 서랍 안이라 문 drawer 뒤에
+    const promptFolders = on && s.usageMode !== 'extensions' && s.promptFolders?.on !== false && !restingFor('promptFolders');
+    if (promptFolders || modules.promptfolders) onGate('drawer', () => load('promptfolders', './prompt-folders.js').then(m => m?.syncPromptFolders(promptFolders)), 'promptfolders');
+    else onGate('drawer', () => {}, 'promptfolders');   // 쉼: 묵은 대기 덮기
     // 8.2.4 프롬프트 관리자 「Chat History」 줄 경고 △ 를 누르면 이유 · 숫자 · 해결 방법 (history-warning.js, 늘 켬 · 테마를 끄면 리스너를 뗀다)
     if (on || modules.historywarning) onGate('drawer', () => load('historywarning', './history-warning.js').then(m => m?.syncHistoryWarning(on)), 'historywarning');
     // 7.0.4 글꼴 설정과 상관없이 테마가 켜져 있으면 — 채팅 iframe 과일 상태창의 낱말 꺾임 막기 (fruit-type-runtime wrapCss)
@@ -88,7 +94,7 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     scriptsWanted=addonsOn&&scriptsRequested;
     // 5.3.4: applyAll 마다(슬라이더를 끌면 프레임마다) 되살림 타이머 일곱 개를 지우고 다시 걸었다 — 처음 · 스크립트 켜고 끔이 바뀔 때만
     const key=`${scriptsWanted}|${JSON.stringify(scriptsEnabled)}`;
-    if((scriptsRequested||modules.scripts)&&key!==scriptsKey){scriptsKey=key;startScripts();}
+    if((scriptsRequested||modules.scripts)&&key!==scriptsKey&&!zeroSkips(s,'scripts')){scriptsKey=key;startScripts();}
     // 3.2.0 화이트 · 나이트 자동 (automode.js — 켤 때만 받아요 · 1.0.0 되살림)
     const auto = on && !!s.auto?.on;
     if (auto || modules.auto) load('auto', './automode.js').then(m => m?.syncAutoMode(auto, hooks));
@@ -120,6 +126,7 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 월드인포 긴 목록 가볍게 (worldinfo-light.js, 기본 켬) — 항목 80개 이상이면 접힌 화면 밖 항목에 content-visibility:auto (CSS) · 바이바이가 켜져 있으면 쉰다
     const worldInfoLight = on && s.chat?.worldInfoLight !== false && !restingFor('worldInfoLight');
     if (worldInfoLight || modules.wilight) onGate('drawer', () => load('wilight', './worldinfo-light.js').then(m => m?.syncWorldInfoLight(worldInfoLight)), 'wilight');
+    else onGate('drawer', () => {}, 'wilight');
     const replyTop = on && !!s.chat?.replyTop;
     if (replyTop || modules.replytop) load('replytop', './reply-top.js').then(m => m?.syncReplyTop(replyTop));
     // 7.0.3 메시지 토큰 — 7.0.4 부터 토큰 수를 누르면 내역 (sent-tokens.js, 기본 켬)
@@ -181,7 +188,7 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 7.9.9 프로필 여러 개: 켜져 있고 등록한 캐릭터가 있을 때만 모듈을 받는다 (이벤트 · 훑기 없음). 캐릭터 편집 화면의 단추는 등록이 없어도 보여야 하니 여기서 바로 붙인다
     const multi = on && s.multiAvatar?.on !== false && Object.keys(s.multiAvatar?.chars || {}).length > 0;
     if (multi || modules.multiavatar) load('multiavatar', './multi-avatar/index.js').then(m => m?.syncMultiAvatar(multi, s.multiAvatar));
-    syncMultiAvatarButton(on && s.multiAvatar?.on !== false);
+    syncMultiAvatarButton(on && !zeroMode(s) && s.multiAvatar?.on !== false);
 }
 function syncMultiAvatarButton(show) {
     const existing = document.getElementById('bl-mav-button');

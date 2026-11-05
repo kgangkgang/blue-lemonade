@@ -662,13 +662,15 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list li.complet
   color: transparent !important;
   font-size: 0 !important;
 }
-body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::before {
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::before,
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.bl-pf-head .bl-pf-all::before {
   content: '' !important;
   position: absolute;
   top: 50%;
 }
 /* 레몬에이드: 흰 줄 · 옅은 파랑 줄 어느 쪽에서도 꺼진 칸이 보이게 한 단 진하게 (켜짐 규칙이 뒤에 있어 켜진 색은 그대로) */
-body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::after {
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.completion_prompt_manager_prompt .prompt-manager-toggle-action::after,
+body.salty #completion_prompt_manager #completion_prompt_manager_list li.bl-pf-head .bl-pf-all::after {
   content: '';
   position: absolute;
   top: 50%;

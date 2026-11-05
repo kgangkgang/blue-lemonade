@@ -46,16 +46,39 @@ const rowsMarkup = () => { const rows = link().rows; return rows.length ? rows.m
 /** 프롬프트 › 과일 묶음 아래에 들어가는 설정 (스위치 줄은 bl-prompt-tools 의 격자 규칙, 연동 줄은 이름 위 · 칸 아래 세로 2줄) */
 export function promptLinkMarkup() {
     const s = link();
-    return `<div class="bl-prompt-tools bl-prompt-link" data-prompt-link><div class="salty-group">`
+    const html = `<div class="bl-prompt-tools bl-prompt-link" data-prompt-link><div class="salty-group">`
         + `<div class="salty-row bl-prompt-tool-row" data-search-anchor="캐릭터 이름 연동"><span>캐릭터 이름 연동</span><label class="salty-switch"><input type="checkbox" data-prompt-link-on aria-label="캐릭터 이름 연동" ${s.on ? 'checked' : ''}><span></span></label>`
         + `<small>줄마다 적은 말이 이름에 든 프롬프트·정규식은 고른 카드의 채팅에서만 켜져요. 이름 자리가 「기본」이거나 말만 빠진 짝 프롬프트는 어느 줄에도 안 맞을 때 켜져요. 지금 고른 채팅 완성 프리셋에 적용돼요.</small></div>`
         + `<div class="bl-link-rows" data-link-rows>${rowsMarkup()}</div>`
         + `<div class="bl-link-actions"><button type="button" class="salty-btn bl-link-mini" data-link-add>+ 연동 줄 추가</button></div>`
+        // 1.0.1 정규식 창에서 직접 켜고 끈(말이 든) 정규식은 이름 연동이 다시 덮지 않는다 — 「자동으로」가 그 표시를 지운다 (promptbind.js linkedManualRegex · forgetLinkedManual)
+        + `<div class="bl-link-actions" data-link-manual hidden><small data-link-manual-text></small><button type="button" class="salty-btn bl-link-mini" data-link-auto>자동으로</button></div>`
         + `</div><p class="salty-note" data-prompt-link-status role="status" aria-live="polite"></p></div>`;
+    Promise.resolve().then(refreshManual);
+    return html;
 }
 
+const promptbind = () => import('./promptbind.js');
 function resync(rows) {
-    return import('./promptbind.js').then(async m => ({ changed: await m.syncPromptBinds('ui'), found: await m.linkReport(rows) })).catch(() => null);
+    return promptbind().then(async m => ({ changed: await m.syncPromptBinds('ui'), found: await m.linkReport(rows) })).catch(() => null);
+}
+/** 1.0.1 「직접 바꾼 정규식 N개」 줄 — 0 이면 숨긴다 */
+function paintManual(box, count) {
+    const line = box?.querySelector?.('[data-link-manual]');
+    if (!line) return;
+    const n = Number(count) || 0;
+    line.hidden = !n;
+    const text = line.querySelector?.('[data-link-manual-text]');
+    if (text) text.textContent = n ? `정규식 창에서 직접 바꾼 정규식 ${n}개는 자동으로 켜고 끄지 않아요.` : '';
+}
+/** 설정 창이 그려진 뒤 지금 값으로 채운다 (markup 은 동기라 promptbind 를 기다릴 수 없다) */
+function refreshManual() {
+    try {
+        if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return;
+        const box = document.querySelector('[data-prompt-link]');
+        if (!box || !link().on) return;
+        promptbind().then(m => { if (box.isConnected !== false) paintManual(box, m.linkedManualRegex?.(link().rows)?.length || 0); }).catch(() => { /* 프롬프트 귀속 없음 */ });
+    } catch { /* 문서 없음 */ }
 }
 const sayIn = box => text => { const status = box.querySelector('[data-prompt-link-status]'); if (status?.isConnected) status.textContent = text; };
 const rowBox = (box, i) => box.querySelector(`[data-link-row="${i}"]`);
@@ -80,6 +103,7 @@ async function apply(box) {
     const result = await resync(s.rows);
     if (!result) { say('프롬프트 관리자를 읽지 못했어요. 채팅 완성 프리셋을 고른 뒤 다시 켜 주세요.'); return; }
     const { found, changed } = result;
+    paintManual(box, found.manual);
     (found.rows || []).forEach((count, i) => {
         const el = rowBox(box, i)?.querySelector('[data-link-found]');
         if (!el?.isConnected) return;
@@ -109,10 +133,18 @@ async function onChange(event) {
     await apply(box);
 }
 async function onClick(event) {
-    const button = event.target?.closest?.('[data-link-add], [data-link-remove], [data-link-pick]');
+    const button = event.target?.closest?.('[data-link-add], [data-link-remove], [data-link-pick], [data-link-auto]');
     const box = button?.closest?.('[data-prompt-link]');
     if (!box || button.disabled) return;
     const s = link(), say = sayIn(box);
+    if (button.hasAttribute('data-link-auto')) {
+        // 1.0.1 직접 바꾼 표시를 지우고 지금 채팅에 다시 맞춘다
+        button.disabled = true;
+        try { const m = await promptbind(); m.forgetLinkedManual?.(s.rows); await apply(box); }
+        catch { say('프롬프트 관리자를 읽지 못했어요. 채팅 완성 프리셋을 고른 뒤 다시 눌러 주세요.'); }
+        finally { button.disabled = false; }
+        return;
+    }
     if (button.hasAttribute('data-link-add')) {
         if (s.rows.length >= MAX_ROWS) { say(`연동 줄은 ${MAX_ROWS}개까지예요.`); return; }
         if (!s.rows.length) s.rows.push(blank());   // 화면에만 있던 빈 첫 줄도 함께 넣는다

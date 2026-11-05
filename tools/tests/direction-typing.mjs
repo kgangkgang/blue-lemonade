@@ -76,7 +76,7 @@ test('flush 는 미뤄 둔 것을 지금 · 조합 중이면 하지 않는다 ·
 test('index.js: 글 쪽 입력칸 둘에 attachTypingRefresh 를 붙이고, input 마다 refreshButton() 을 바로 부르는 줄은 없다 · 창을 닫을 때 stop', () => {
     const idx = read('src/addons/direction/index.js');
     assert.match(idx, /import \{ attachTypingRefresh \} from '\.\/typing\.js';/);
-    assert.match(idx, /typingRefreshers\.push\(attachTypingRefresh\(textarea, \{\n\s+onValue: value => \{ store\[kind\]\.content = value; save\(\); \},\n\s+refresh: \(\) => \{ if \(popup\) refreshButton\(\); \},\n\s+\}\)\);/);
+    assert.match(idx, /typingRefreshers\.push\(attachTypingRefresh\(textarea, \{\n\s+onValue: value => \{ setContent\(kind, value\); save\(\); \},\n\s+refresh: \(\) => \{ if \(popup\) refreshButton\(\); \},\n\s+\}\)\);/);
     assert.doesNotMatch(idx, /textarea\.addEventListener\('input', \(\) => \{\n\s+store\[kind\]\.content = textarea\.value;/, '예전 input 핸들러가 남아 있다');
     assert.match(idx, /for \(const t of typingRefreshers\.splice\(0\)\) t\.stop\(\);/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/direction-typing\.mjs \./);

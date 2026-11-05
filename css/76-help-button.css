@@ -32,6 +32,7 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_set
   opacity: 1 !important;
   font-size: inherit !important;    /* 옆 글자 크기를 그대로 받아 em 의 기준으로 (글자 ? 는 아래 > span 숨김으로 가린다) */
   line-height: 1 !important;
+  font-family: inherit !important;  /* 1.0.1: 원 안 ? 는 마스크라 글꼴이 안 보이지만, 세로 값(56 --bl-help-y-line 의 ex · cap)이 제목 글꼴로 풀리게 — 낱말 가림 ? 는 sans-serif 를 받고 있었어요 */
   cursor: pointer;
   position: relative;
   align-self: center;

@@ -1412,6 +1412,11 @@ body.salty-dark .salty-shapes button.on {
    → 안쪽 좌우 6 · 칸 최소 104 (폰 3칸 그대로, PC 3칸 × 2줄 = 기본 6개가 딱 맞음) */
 .salty-panel .bl-frame-library { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); }
 .salty-panel .bl-frame-library > button { padding-inline: 6px; }
+/* 1.0.1 보관함 카드마다 보이는 ✕ (누르면 「지우기」로 바뀌고 한 번 더 누르면 지워요) — 고른 표시(오른쪽 위)와 안 겹치게 왼쪽 위 */
+.salty-panel .bl-frame-item { position: relative; display: grid; min-width: 0; }
+.salty-panel .bl-frame-item > .bl-pick-card { padding-inline: 6px; }
+.salty-panel .bl-frame-x { position: absolute; top: 4px; left: 4px; z-index: 1; box-sizing: border-box; min-width: 32px; height: 32px; margin: 0; padding: 0 8px; border: 1px solid var(--salty-line); border-radius: 16px; background: var(--salty-surface); color: var(--salty-muted); font: inherit; font-size: 13px; line-height: 30px; cursor: pointer; }
+.salty-panel .bl-frame-x.is-armed { border-color: var(--salty-danger, currentColor); color: var(--salty-danger, inherit); font-weight: 650; }
 
 /* Preset tools share the existing script settings; long labels stay inside the panel. */
 .salty-panel .bl-prompt-tools{min-width:0}
@@ -1432,3 +1437,6 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .bl-prompt-source{overflow-wrap:anywhere;word-break:normal}
 /* 「가볍게」 줄 안내 (panel.js restNote): 칵테일 · 바이바이가 같은 기능을 켜고 있어 쉬는 동안 — 토글 값은 그대로 */
 .salty-panel .salty-row > span small .bl-rest-note { font-weight: 600; color: var(--salty-accent, inherit); }
+/* 1.0.2 블루레몬에이드 제로 (src/zero-panel.js): 제로가 불러오지 않는 기능 칸은 흐리게 — 값은 그대로 보관 */
+.salty-panel .bl-zero-off { opacity: .55; }
+.salty-panel .bl-zero-banner { border-left: 3px solid var(--salty-accent, currentColor); padding-left: .6em; }

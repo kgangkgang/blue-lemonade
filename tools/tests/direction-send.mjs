@@ -70,8 +70,9 @@ chat=[{role:'user',content:'u'}];m.trackGeneration('normal');m.injectDirection({
 assert.deepEqual(chat.map(x=>x.content),['u','<OOC: keep this>'],'back on: the kept text is sent again');
 t.always.enabled=true;t.always.content='';assert.equal(m.alwaysActive(),false);assert.equal(m.stateText('always'),'비어 있음','on but empty');
 // 스위치 손잡이는 글을 건드리지 않는다 (창 · 설정 카드 모두 enabled 만 뒤집는다)
-assert.match(js,/popup\.querySelector\('\.jj-switch'\)\.addEventListener\('click', \(\) => \{\s*store\[page\]\.enabled = !store\[page\]\.enabled;\s*save\(\);\s*refreshButton\(\);\s*\}\);/,'popup switch flips enabled only');
-assert.match(js,/\.jj-status\[data-kind="\$\{kind\}"\] \.jj-switch`\)\.addEventListener\('click', \(\) => \{\s*store\[kind\]\.enabled = !store\[kind\]\.enabled;\s*save\(\);\s*refreshButton\(\);\s*\}\);/,'settings card switch flips enabled only');
+assert.match(js,/popup\.querySelector\('\.jj-switch'\)\.addEventListener\('click', \(\) => \{\s*setEnabled\(page, !slotOf\(page\)\.enabled\);\s*save\(\);\s*refreshButton\(\);\s*\}\);/,'popup switch flips enabled only');   // 1.4.4 채팅방마다 따로: 읽기 slotOf · 고치기 setEnabled
+assert.match(js,/\.jj-status\[data-kind="\$\{kind\}"\] \.jj-switch`\)\.addEventListener\('click', \(\) => \{\s*setEnabled\(kind, !slotOf\(kind\)\.enabled\);\s*save\(\);\s*refreshButton\(\);\s*\}\);/,'settings card switch flips enabled only');
+assert.match(js,/function setEnabled\(kind, on\) \{\s*const record = PER_CHAT_KINDS\.has\(kind\) \? chatRecord\(true\) : null;\s*if \(record\) \{ record\[kind\]\.enabled = on; chatDirty = true; \}\s*settings\(\)\[kind\]\.enabled = on;/,'setEnabled only flips enabled (and the chat record for direction · always)');
 
 delete globalThis.__directionTest;delete globalThis.window;
 console.log('PASS direction send button (once, hidden while generating, ST path), always switch keeps the text');

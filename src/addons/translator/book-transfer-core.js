@@ -40,7 +40,30 @@ export function exportCandidates(terms = [], styles = []) {
     return out;
 }
 
+// 3.1.7 다른 번역 확장(Interpres 계열)이 내보낸 용어·말투 파일(format interpres-book · version 1 · glossary [{src,dst}] · voiceCards [{name,style}])도 읽는다.
+//   파일 꼴만 읽고 그 확장의 코드는 쓰지 않는다. 용어는 표기마다 한 줄로, 말투 카드는 그 인물의 「직접 지침」(custom)으로.
+//   이 확장의 규칙(이름 80자 · 용어 100자 · 지침 300자 · 꺾쇠 없음)에 맞지 않는 항목은 통째로 거절하지 않고 빼서 센다(omitted) — 미리 보기에 남은 것만 보인다.
+export const OTHER_BOOK_FORMAT = 'interpres-book';
+function readOtherBook(raw) {
+    const glossary = raw.glossary ?? [], voices = raw.voiceCards ?? [];
+    if (!Array.isArray(glossary) || !Array.isArray(voices)) throw Error('용어·말투 파일의 목록 형식이 올바르지 않아요.');
+    if (glossary.length > 1000 || voices.length > 200) throw Error('파일의 항목이 너무 많아요. 용어 1,000개·말투 200개 이하로 나눠 주세요.');
+    const terms = [], styles = [];
+    let omitted = 0;
+    for (const row of glossary) {
+        const forms = typeof row?.src === 'string' && typeof row?.dst === 'string' ? glossaryAlternatives(row.src) : [];
+        if (!forms.length) { omitted++; continue; }
+        for (const src of forms) { try { terms.push(term({ src, dst: row.dst })); } catch { omitted++; } }
+    }
+    for (const row of voices) {
+        try { styles.push(style({ speaker: row?.name, listener: '', mutual: false, mode: 'custom', note: row?.style })); } catch { omitted++; }
+    }
+    const keptTerms = distinct(terms, termKey), keptStyles = distinct(styles, styleKey);
+    return { terms: keptTerms, styles: keptStyles, duplicates: terms.length + styles.length - keptTerms.length - keptStyles.length, omitted };
+}
+
 export function readBook(raw) {
+    if (object(raw) && raw.format === OTHER_BOOK_FORMAT && raw.version === 1) return readOtherBook(raw);
     if (!object(raw) || raw.kind !== BOOK_KIND || raw.version !== 1 || !Array.isArray(raw.terms) || !Array.isArray(raw.styles)) throw Error('블루레몬 용어·말투 파일이 아니에요.');
     if (raw.terms.length > 1000 || raw.styles.length > 200) throw Error('파일의 항목이 너무 많아요. 용어 1,000개·말투 200개 이하로 나눠 주세요.');
     // Validate every item before returning any data to the caller.

@@ -35,7 +35,8 @@ export function versionIn(text, file = '') {
 
 let cache = null;
 /** [{ id, label, version, on }] — 못 읽은 것은 version '' */
-export function addonVersions(enabled = {}, { fetcher = fetch, base = new URL('./addons/', import.meta.url) } = {}) {
+export function addonVersions(enabled = {}, { fetcher = fetch, base = new URL('./addons/', import.meta.url), fresh = false } = {}) {
+    if (fresh) cache = null;   // 1.0.1 테마 › 업데이트 상자의 「새로고침」: 판 목록을 다시 읽어요
     cache ??= Promise.all(Object.entries(ADDON_VERSION_FILES).map(async ([id, [label, file]]) => {
         try {
             const r = await fetcher(new URL(file, base), { headers: { Range: `bytes=0-${HEAD - 1}` }, cache: 'no-cache', signal: AbortSignal.timeout(8000) });

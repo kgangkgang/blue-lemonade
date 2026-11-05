@@ -47,7 +47,7 @@ function inlineOnly(html, label) {
     assert.ok(!/javascript:/i.test(bare), `${label}: javascript: 없음`);
     for (const m of bare.matchAll(/<([a-z]+)((?:\s[^>]*)?)>/g)) {
         const attrs = m[2].replace(/\sstyle="[^"]*"/, '').trim();
-        assert.ok(!attrs || /^(?:open|aria-hidden="true")?$/.test(attrs), `${label}: <${m[1]}> 는 style 만 (${attrs})`);
+        assert.ok(!attrs || /^(?:open(?:="")?|aria-hidden="true")?$/.test(attrs), `${label}: <${m[1]}> 는 style 만 (${attrs})`);   // 1.0.1 눌러 접는 상자는 open=""
     }
     return bare;
 }
@@ -85,13 +85,15 @@ await test('글꼴: 화면 글꼴 이름 그대로 + 일반 대체 글꼴', () =
 });
 
 await test(`글꾸 틀 ${PRESETS.length}가지: 인라인만 · 폭 100% 안 · 안쪽만 스크롤 · 팔레트 값만`, () => {
-    assert.ok(PRESETS.length >= 16 && PRESETS.length <= 48, `프리셋 ${PRESETS.length}개`);
+    assert.ok(PRESETS.length >= 16 && PRESETS.length <= 80, `프리셋 ${PRESETS.length}개`);
     assert.equal(new Set(PRESETS.map(p => p.id)).size, PRESETS.length);
     for (const preset of PRESETS) {
         for (const [name, colors] of [['밤', night], ['낮', salt]]) {
             const html = renderLog(model, { shape: preset.id, colors: preset.id === 'plain' ? null : colors, ui, fields });
             const bare = inlineOnly(html, `${preset.label}/${name}`);
-            assert.match(bare, /^<div style="(?:color:[^;]+;)?box-sizing:border-box;max-width:100%/, `${preset.label}: 맨 바깥은 화면 폭을 안 넘어요`);
+            // 내장 심플 글꾸(틈 템플릿 · 1.0.1 11-04)는 마트 글꾸와 같은 자료라 바깥 칸 꼴은 시안 그대로 — 폭은 max-width 로 화면 안(마트 시험 mart-geulkku-64 가 살균 · 대비를 봐요)
+            if (preset.template) assert.match(bare, /^<div style="[^"]*max-width:\d+px/, `${preset.label}: 맨 바깥은 최대 폭이 있어요`);
+            else assert.match(bare, /^<div style="(?:color:[^;]+;)?box-sizing:border-box;max-width:100%/, `${preset.label}: 맨 바깥은 화면 폭을 안 넘어요`);
             assert.ok(bare.includes('어서 와요, 숲의 손님.'), `${preset.label}: 로그가 들어가요`);
             if (preset.id === 'plain' || preset.own) continue;   // 할로윈(전용 색)은 아래 할로윈 시험이
             assert.ok(/overflow-y:auto/.test(bare), `${preset.label}: 안쪽 스크롤`);
@@ -155,7 +157,7 @@ await test('연결: 시작 그래프 밖 · 도구 줄 · 설정 · 검색 사�
     assert.match(index, /\['startLogCopy', \(\) => import\('\.\/src\/log-copy\.js'\)/, '3층(유휴)에서 받아요');
     assert.match(read('src/log-copy.js'), /import\('\.\/log-copy-sheet\.js'\)/, '시트는 처음 쓸 때');
     assert.match(read('src/log-copy-sheet.js'), /sandbox="allow-same-origin"/, '미리보기는 스크립트 없는 sandbox');
-    assert.match(read('src/log-copy-sheet.js'), /writeClipboard\(html, html\)/, '복사 = 서식 + 그 HTML 코드 글자');
+    assert.match(read('src/log-copy-sheet.js'), /writeClipboard\(html, prettyLogHtml\(result\(\{ marks: true \}\)/, '복사 = 서식 + 그 HTML 코드 글자(1.0.1 사람이 고치기 쉬운 꼴 — log-copy-pretty.mjs)');
     assert.match(read('src/settings.js'), /logCopy: \{ on: true, shape: 'card'/);
     assert.match(read('src/panel.js'), /toggle\('logCopy\.on'/);
     assert.match(read('src/settings-search.js'), /'로그 복사','로그 복사 서식 복사 그대로 복사/);
@@ -258,12 +260,13 @@ await test('숨긴 글: 마크다운은 「(숨긴 글: …)」 · 서식 유지
     assert.match(src, /make\(doc, inline \? 'span' : 'div', 'blsp-b', 'display:none'\)/, '꾸밈 블록이 지워져도 흐린 사본은 안 보여요(원래 글 새지 않음)');
 });
 
-await test('분류: 칩 하나에 그 분류 모양만 · 할로윈은 「할로윈」에서만 · 내 글꾸는 「내 글꾸」 · 모든 프리셋에 분류', async () => {
+await test('분류: 칩 하나에 그 분류 모양만 · 할로윈은 1.0.1 에 글꾸 마트로(내 글꾸) · 내 글꾸는 「내 글꾸」 · 모든 프리셋에 분류', async () => {
     const { CATEGORIES, presetsIn, categoryOf } = await load('src/log-copy-presets.js');
-    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'halloween', 'gallery', 'mine']);
+    // 1.0.1(11-04): 틀이 있는 분류만 칩 — 내장 심플 30(기념일 7 · 사물 11 · 장르 12)이라 세 칩이 모두 서요
+    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'gallery', 'mine']);
     for (const p of PRESETS) assert.ok(CATEGORIES.some(c => c.id === p.category && c.id !== 'mine'), `${p.id} 분류`);
-    assert.deepEqual(presetsIn('halloween'), ['halloween', 'halloween-mummy', 'halloween-coffin', 'halloween-ghost', 'halloween-bat', 'halloween-note', 'halloween-witch', 'halloween-candy', 'halloween-mirror', 'halloween-forest', 'halloween-house', 'halloween-cat', 'halloween-tomb']);
-    for (const c of CATEGORIES.filter(c => c.id !== 'halloween')) assert.ok(!presetsIn(c.id, []).some(id => id.startsWith('halloween')), `${c.label} 에는 할로윈 없음`);
+    assert.deepEqual(presetsIn('halloween'), [], '할로윈 13종은 테마 기본에서 빠졌어요(글꾸 마트 → 내 글꾸)');
+    for (const c of CATEGORIES) assert.ok(!presetsIn(c.id, []).some(id => id.startsWith('halloween')), `${c.label} 에는 할로윈 없음`);
     assert.equal(presetsIn('basic')[0], 'plain', '「기본」 첫 칩은 그대로');
     assert.deepEqual(presetsIn('mine', [{ id: 'c1' }, { id: 'c2' }]), ['c1', 'c2']);
     assert.equal(categoryOf('c1'), 'mine', '분류 없는 저장 글꾸는 내 글꾸');
@@ -274,15 +277,22 @@ await test('분류: 칩 하나에 그 분류 모양만 · 할로윈은 「할로
     assert.match(read('src/settings.js'), /category: 'basic'/, '처음은 「기본」');
 });
 
-await test('할로윈 컨셉 틀: 데이터 한 줄 + 모양 조각 · 안쪽 글자 · 바탕까지 컨셉 색 · 역할 대비 · 지워진 꼴 · 인라인 · 외부 주소 없음', async () => {
-    const { CONCEPT_COLORS, CONCEPT_FRAMES, SHAPES, drawConcept, conceptModel } = await load('src/log-copy-presets.js');
-    const src = read('src/log-copy-presets.js');
+await test('할로윈 31종(1.0.1 글꾸 마트 · 10월 31일 · 틈 템플릿으로 그려요): 데이터 한 줄 + 모양 조각 · 안쪽 글자 · 바탕까지 컨셉 색 · 역할 대비 · 지워진 꼴 · 인라인 · 외부 주소 없음', async () => {
+    const { conceptModel } = await load('src/log-copy-presets.js');
+    const { MART_CONCEPT_COLORS: BUILT_IN, drawConcept } = await load('tools/mart/geulkku-concept30.mjs');   // 옛 내장 컨셉 30(1.0.1 11-04 마트 「일러스트」로)
+    const { MART_HALLOWEEN_COLORS, MART_HALLOWEEN_SHAPES, MART_HALLOWEEN_FRAMES } = await load('tools/mart/geulkku-halloween.mjs');
+    const { checkTemplate, withoutSvgData } = await load('src/log-copy-template.js');
+    const CONCEPT_COLORS = { ...BUILT_IN, ...MART_HALLOWEEN_COLORS }, CONCEPT_FRAMES = MART_HALLOWEEN_FRAMES, SHAPES = MART_HALLOWEEN_SHAPES;
+    const SLOT = { head: '{{head}}', body: '{{body}}', info: '{{info}}', tail: '{{tail}}' };
+    const asTemplate = f => { const template = SHAPES[f.shape](CONCEPT_COLORS[f.colors], SLOT, ui); assert.ok(checkTemplate(template).ok, `${f.id}: 틈 템플릿이 가져오기 검사를 통과 ${checkTemplate(template).reason ?? ''}`); return { id: f.id, template, colors: CONCEPT_COLORS[f.colors], messages: f.messages, tail: f.tail }; };
+    const src = read('tools/mart/geulkku-concept30.mjs');
     assert.match(src, /전용 색은 이 분류들에만 — 사용자 결정 「할로윈만 할로윈색」/);
     assert.match(src, /export function drawConcept\(model, o, frame\)/, '컨셉 틀은 데이터 한 줄 + 공용 그리기 하나');
-    const hw = PRESETS.filter(p => p.category === 'halloween');
-    assert.equal(hw.length, CONCEPT_FRAMES.length);
-    assert.ok(hw.length >= 11, `할로윈 ${hw.length}개`);
-    assert.ok(PRESETS.filter(p => p.category !== 'halloween').every(p => !p.own), '다른 분류는 전용 색 없음');
+    const hw = CONCEPT_FRAMES.map(f => ({ id: f.id, own: f.colors }));
+    assert.equal(hw.length, 31, '할로윈 31종(10월 31일)');
+    assert.equal(new Set(hw.map(f => f.id)).size, 31, '할로윈 id 겹침 없음');
+    assert.ok(PRESETS.filter(p => !['event', 'thing', 'genre'].includes(p.category)).every(p => !p.own), '컨셉 분류 밖은 전용 색 없음');
+    assert.ok(PRESETS.filter(p => p.own).every(p => p.template), '전용 색 틀은 내장 심플 글꾸(틈 템플릿)뿐');
     const L = (hex) => { const n = hex.replace('#', ''); const v = [0, 2, 4].map(i => Number.parseInt(n.slice(i, i + 2), 16) / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
     const ratio = (a, b) => { const [h, l] = [L(a), L(b)].sort((x, y) => y - x); return (h + 0.05) / (l + 0.05); };
     for (const [name, k] of Object.entries(CONCEPT_COLORS)) {
@@ -300,10 +310,11 @@ await test('할로윈 컨셉 틀: 데이터 한 줄 + 모양 조각 · 안쪽 �
     for (const p of hw) {
         const frame = CONCEPT_FRAMES.find(f => f.id === p.id);
         assert.ok(SHAPES[frame.shape], `${p.id}: 모양 조각 ${frame.shape}`);
-        const html = renderLog(model, { shape: p.id, colors: null, ui, fields, screen: nightT });
+        const html = renderLog(model, { template: asTemplate(frame), ui, fields, screen: nightT });
         outputs.set(p.id, html);
         inlineOnly(html.replace(/ aria-hidden="true"/g, ''), p.id);
-        assert.ok(!/https?:|url\(/.test(html), `${p.id}: 외부 그림 · 글꼴 주소 없음`);
+        const plain = withoutSvgData(html);   // 1.0.1 그림 부품 url('data:image/svg+xml,…')(그림만)은 허용 — 그 밖의 주소는 0
+        assert.ok(plain !== null && !/https?:|url\(/.test(plain), `${p.id}: 외부 그림 · 글꼴 주소 없음(그림 부품은 svg 데이터 주소만)`);
         assert.ok(!/해피 할로윈|hw-/.test(html), `${p.id}: 받은 글꾸 문구 · 클래스 없음`);
         const k = CONCEPT_COLORS[p.own];
         assert.ok(html.includes('어서 와요, 숲의 손님.'), `${p.id}: 글 내용 그대로`);
@@ -324,10 +335,10 @@ await test('할로윈 컨셉 틀: 데이터 한 줄 + 모양 조각 · 안쪽 �
     assert.match(outputs.get('halloween-candy'), /polygon\(0 0, 100% 35%/, '사탕: 메시지마다 사탕 포장');
     assert.match(outputs.get('halloween-coffin'), /clip-path:polygon\(24% 0/, '관: 육각 관 윤곽');
     // 데이터 한 줄만 더하면 그려져요 (1.0.1 기념일 길)
-    const extra = { id: 'x-test', label: '시험', emoji: '🎂', category: 'halloween', colors: 'candy', shape: 'candy', messages: 'wrap', tail: '🎉' };
+    const extra = { id: 'x-test', label: '시험', emoji: '🎂', category: 'event', colors: 'birthday', shape: 'birthday', messages: 'wrap', tail: '🎉' };
     const drawn = drawConcept(model, { ui, fields, height: 420, names: true, gap: true }, extra);
     inlineOnly(drawn.replace(/ aria-hidden="true"/g, ''), 'x-test');
-    assert.ok(drawn.includes('polygon(0 0, 100% 35%') && drawn.includes('어서 와요'), '데이터 한 줄로 사탕 모양 · 포장 메시지');
+    assert.ok(drawn.includes('polygon(0 0, 100% 35%') && drawn.includes('어서 와요'), '데이터 한 줄로 생일 모양 · 사탕 포장 메시지');
     assert.equal(conceptModel(model, CONCEPT_COLORS.mummy, null).base.bg, CONCEPT_COLORS.mummy.panel, '메시지 칸 바탕 = 컨셉 칸 색');
     assert.match(read('src/log-copy-sheet.js'), /const plain = !!custom\(\) \|\| !!ownColors\(state\.shape\)/, '할로윈 틀에서는 에이드 색 칩을 숨겨요');
 });
@@ -353,7 +364,8 @@ await test('줄 끊김은 화면 값 그대로 (keep-all 을 덧대지 않아요
     for (const m of normal.messages) m.font['word-break'] = 'normal';
     for (const p of PRESETS) {
         const html = renderLog(normal, { shape: p.id, colors: p.id === 'plain' ? null : night, ui, fields, images: [{ src: 'https://example.com/a.png', alt: '' }] });
-        assert.ok(!/word-break:keep-all/.test(html), `${p.label}: keep-all 없음`);
+        // 1.0.1 대개편: 머리 제목 · 꼬리말 · 날짜 같은 틀 글에는 keep-all(한국어 낱말 중간 꺾임 막기)을 줘요 — 메시지 글에는 덧대지 않아요
+        assert.ok(!/data-bl-msg[^>]*style="[^"]*word-break:keep-all|word-break:keep-all[^"]*"[^>]*>(?:<[^>]+>)*[^<]*(?:어서 와요|조금 쉬어요|숲속 오두막에서)/.test(html), `${p.label}: 메시지 글에 keep-all 없음`);
     }
     assert.match(logHtml(normal), /word-break:normal/, '화면의 word-break 를 옮겨요');
     assert.match(read('src/log-copy-capture.js'), /'word-break': \/\^\(normal\|keep-all\|break-all\|break-word\)\$\/\.test\(style\.wordBreak\)/);
@@ -409,7 +421,8 @@ await test('붙인 곳 네 조건(어두운 바탕 + 흰 글자 · 밝은 바탕
     // 화면에서 일부러 옅게 칠한 글자(취소선 채움 55% 같은 것)도 붙인 곳에서는 4.5 이상으로
     const faint = structuredClone(model);
     faint.messages[1].nodes[0].children.push({ t: 'el', block: false, tag: 'span', kind: 'del', style: { color: 'rgb(70, 80, 95)', 'text-decoration-line': 'line-through' }, children: [{ t: 'text', text: '옅은 글' }] });
-    for (const preset of PRESETS) for (const [pname, colors] of [['밤', night], ['낮', salt]]) {
+    // 내장 심플 글꾸(틈 템플릿)는 마트 글꾸와 같은 자료 — 장식 글(트랙 시간 · 도장 글)은 시안의 옅은 색 그대로라 여기서 빼고, 역할 색 대비는 mart-geulkku-64 가 봐요
+    for (const preset of PRESETS.filter(p => !p.template)) for (const [pname, colors] of [['밤', night], ['낮', salt]]) {
         const html = renderLog(faint, { shape: preset.id, colors: preset.id === 'plain' ? null : colors, ui, fields, images: [{ src: 'https://example.com/a.png', alt: '세라피나' }] });
         for (const host of hosts) for (const strip of [false, true]) {
             const bad = audit(html, host, { strip });
@@ -421,7 +434,9 @@ await test('붙인 곳 네 조건(어두운 바탕 + 흰 글자 · 밝은 바탕
     for (const preset of PRESETS) {
         const html = renderLog(model, { shape: preset.id, colors: night, ui, fields });
         for (const m of html.matchAll(/<(div|span|td|summary|details|tr|table)( [^>]*)?>/g)) assert.match(m[0], /style="(?:[^"]*;)?color:/, `${preset.label}: 글자색 없는 요소 ${m[0].slice(0, 60)}`);
-        assert.ok(!/opacity:|-webkit-text-fill-color|background-clip:\s*text/.test(html), `${preset.label}: 투명 · 흐린 글자 없음`);
+        // 내장 심플(틈 템플릿)의 글 없는 장식 조각(aria-hidden · 빈 요소 — 소인 · 도장 고리)은 옅어도 돼요(글자가 아니에요)
+        const glyphs = preset.template ? html.replace(/<(span|div|i) aria-hidden="true"[^>]*><\/\1>/g, '') : html;
+        assert.ok(!/opacity:|-webkit-text-fill-color|background-clip:\s*text/.test(glyphs), `${preset.label}: 투명 · 흐린 글자 없음`);
     }
 });
 

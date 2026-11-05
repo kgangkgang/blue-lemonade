@@ -329,7 +329,7 @@ await test('판 · CI 등록', () => {
     assert.equal(v('src/addons/assets/state.js', /VERSION = '([\d.]+)'/), '1.7.6');   // 7.0.7 · 1.7.6 그림 확장 그림을 에셋으로
     assert.equal(v('src/addons/prompt/manifest.json', /"version": "([\d.]+)"/), '1.4.0');   // 도구줄 간격을 공통값으로 맞춰요
     assert.equal(v('src/addons/rewrite/index.js', /const VERSION = '([\d.]+)'/), '2.2.0');   // 7.1.5
-    assert.equal(v('src/addons/direction/index.js', /const VERSION = '([\d.]+)'/), '1.4.3');   // 7.9.9 테마 고르기 목록을 누를 때 창이 닫히지 않게
+    assert.equal(v('src/addons/direction/index.js', /const VERSION = '([\d.]+)'/), '1.4.4');   // 7.9.9 테마 고르기 목록을 누를 때 창이 닫히지 않게
     assert.equal(v('src/addons/bookmarks/state.js', /VERSION = '([\d.]+)'/), '1.7.6');   // 7.2.7 그림 원본 비율 · 보기 고르기 · 생각 숨김 · 7.3.1 그림만 격자 읽는 차례
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/bughunt2-addons\.mjs \./);
     assert.equal(fetches, 0);

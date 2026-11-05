@@ -56,7 +56,7 @@ await test('시작 그래프 밖: 공지 · 공지 데이터 · 출처 창 · �
     for (const f of ['src/notice.js', 'src/notice-data.js', 'src/notice-actions.js', 'src/credits.js', 'src/version-pill.js', 'src/update-check.js', 'src/version-series.js']) assert.ok(!g.has(f), f);
     const index = read('index.js');
     assert.match(index, /\['startVersionPill', \(\) => import\('\.\/src\/version-pill\.js'\)/, '판 알약은 3층(BOOT_IDLE)');
-    assert.ok(index.indexOf("'startVersionPill'") > index.indexOf('const BOOT_IDLE'), 'BOOT_IDLE 안');
+    assert.ok(index.indexOf("['startVersionPill'") > index.indexOf('const BOOT_IDLE'), 'BOOT_IDLE 안');   // (제로 목록 ZERO_START 의 이름은 표 칸이 아니라 빼요)
     assert.match(read('src/notice.js'), /import\('\.\/notice-data\.js'\)/, '공지 데이터는 창을 열 때');
     assert.match(read('src/version-pill.js'), /import\('\.\/update-check\.js'\)/);
     assert.match(read('src/version-pill.js'), /import\('\.\/credits\.js'\)/);

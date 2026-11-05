@@ -223,7 +223,8 @@ await test('허브: Symbol.for(blue-lemonade.usage) 에 record · query · summa
 await test('연결: index.js 가 시작 때 허브를 건다 · 요청 로그가 BL 몫을 적는다 · 예산이 중계 장부를 맞춘다 · TTS 음성 · 대사 분석 · 번역 다시 표시 · README', () => {
     const index = read('index.js');
     // 9.0.2: 맨 위 설명 주석 다음 첫 import 가 사용량 장부 허브 (탭 줄 스크롤은 3층으로 옮겼어요)
-    assert.match(index.replace(/^\/\/.*\n/gm, ''), /^import \{ installUsageLedger \} from '\.\/src\/usage-ledger\.js';[^\n]*\ninstallUsageLedger\(\);/);
+    // 1.0.2 블루레몬에이드 제로(usageMode 'zero')만 허브를 걸지 않아요 — 그 밖의 모드는 시작 맨 위에서 그대로(tools/tests/zero-mode.mjs)
+    assert.match(index.replace(/^\/\/.*\n/gm, ''), /^import \{ installUsageLedger \} from '\.\/src\/usage-ledger\.js';[^\n]*\nconst ZERO = [^\n]*\nif \(!ZERO\) installUsageLedger\(\);/);
     assert.match(index, /\['registerStorageReport', \(\) => import\('\.\/src\/storage-report\.js'\), m => \{ m\.registerStorageReport\(\); \}, 'drawer'\]/);   // 9.0.2 부팅 3층 표(BOOT_IDLE)
     const rl = read('src/addons/perf/requestlog.js');
     assert.match(rl, /onEntry\(\(entry\) => \{\n\s+const raw = ledgerEntryFromLog\(entry\);/);

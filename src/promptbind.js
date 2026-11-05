@@ -18,6 +18,8 @@ import { themeEnabled } from './usage-mode.js';
 import { watchDom } from './dom-watch.js';
 import { currentKey, keyLabel } from './styles.js';
 import { promptChoiceGroups } from './prompt-choice-core.js';
+// 1.0.1 정규식 창에서 직접 바꾼 정규식은 맞추기가 덮지 않는다 (11-03 제보: 끄기 단추를 눌러도 CHAT_CHANGED 맞추기가 0.2초 뒤 되돌렸다) — regex-manual.js
+import { isManual, manualIds, forgetManual, watchRegexScreen } from './regex-manual.js';
 
 const POPUP_FORM = 'completion_prompt_manager_popup_edit';
 const SAVE_BUTTON = 'completion_prompt_manager_popup_entry_form_save';
@@ -142,6 +144,7 @@ export function setBindRegex(identifier, scriptId, on) {
     b.regex = [...set];
     prune(identifier);
     saveSettings();
+    if (on) forgetManual([sid]);   // 1.0.1 다시 붙이면 다시 묶음이 맡는다 (정규식 창에서 직접 바꾼 표시를 지운다)
     return true;
 }
 export function clearBinds(identifier) { const all = binds(); if (!all[identifier]) return false; delete all[identifier]; saveSettings(); return true; }
@@ -254,14 +257,24 @@ function linkRule(m, rows, matches = []) {
 /** 설정 창 안내용: 지금 프리셋에서 이름 규칙이 잡는 개수 { prompts, twins, regex, rows: 줄마다 { prompts, twins, regex } } — 줄은 받은 차례 그대로(말이 빈 줄은 0) */
 export async function linkReport(rows = linkRows()) {
     const list = (Array.isArray(rows) ? rows : [rows]).map(asRow);
-    const none = { prompts: 0, twins: 0, regex: 0, rows: list.map(() => ({ prompts: 0, twins: 0, regex: 0 })) };
+    const none = { prompts: 0, twins: 0, regex: 0, manual: 0, rows: list.map(() => ({ prompts: 0, twins: 0, regex: 0 })) };
     const m = await manager();
     if (!list.some(r => squash(r.word)) || !m?.activeCharacter) return none;
     const rule = linkRule(m, list);
     const keys = list.map(r => squash(r.word)), hits = allRegexScripts().map(s => rowsIn(s.scriptName, keys));
-    return { prompts: rule.linked.size, twins: rule.twins.size, regex: hits.filter(h => h.length).length,
+    return { prompts: rule.linked.size, twins: rule.twins.size, regex: hits.filter(h => h.length).length, manual: linkedManualRegex(list).length,
         rows: list.map((_, i) => ({ ...rule.counts[i], regex: hits.filter(h => h.includes(i)).length })) };
 }
+/** 1.0.1 이름 연동의 말이 든 정규식 중 사용자가 정규식 창에서 직접 바꿔 자동에서 빠진 것(id) — 전역 · 카드 · 프리셋 */
+export function linkedManualRegex(rows = linkRows()) {
+    const keys = (Array.isArray(rows) ? rows : [rows]).map(asRow).map(r => squash(r.word)).filter(Boolean);
+    if (!keys.length) return [];
+    const manual = new Set(manualIds());
+    if (!manual.size) return [];
+    return allRegexScripts().filter(s => manual.has(s.id) && rowsIn(s.scriptName, keys).length).map(s => s.id);
+}
+/** 1.0.1 「자동으로」: 말이 든 정규식의 직접 바꿈 표시를 지운다 → 지운 개수 (다음 맞추기부터 이름 연동이 다시 켜고 끈다) */
+export function forgetLinkedManual(rows = linkRows()) { return forgetManual(linkedManualRegex(rows)); }
 
 // ───────── 맞추기 ─────────
 /** 이 묶음이 지금 열린 곳에서 켜져야 하나 (캐릭터 열쇠가 하나도 없으면 null = 판단하지 않음 — 정규식만 붙인 묶음) */
@@ -348,6 +361,7 @@ export async function syncPromptBinds(reason = 'ui') {
             }
         }
         for (const [sid, want] of wantRegex) {
+            if (isManual(sid)) continue;   // 1.0.1 정규식 창에서 직접 켜고 끈 것은 사용자 값 그대로 (「자동으로」 · 다시 붙이기까지)
             const sc = scripts.find(s => s && s.id === sid);
             if (sc && (sc.disabled === true) !== !want) { sc.disabled = !want; regexChanged++; reflectRow(sid, !want); }
             const sp = scoped.find(s => s && s.id === sid);   // 6.0.5 카드 안 정규식 (지금 캐릭터 것만 보인다 — 다른 캐릭터에선 어차피 안 돈다)
@@ -551,6 +565,8 @@ export function startPromptBinds() {
         if (renameChatKeys(data, here ? (ctx.chatId ?? ctx.getCurrentChatId?.()) : null)) syncPromptBinds('chat');
     });
     if (typeof document !== 'undefined') {
+        // 1.0.1 정규식 창 누르기를 캡처 단계로 — 직접 켜고 끈 정규식을 맞추기(CHAT_CHANGED · SETTINGS_UPDATED)가 되돌리지 않게 적어 둔다
+        watchRegexScreen(document, () => [regexScripts(), scopedRegexScripts(), presetRegexScripts()]);
         watchPopup();
         if (!observer) {   // 프롬프트 관리자 창이 아직 없으면 생길 때 붙는다
             // 9.0.4: 공용 감시 허브 구독 — 채팅 밖(창은 body 아래에 붙어요) · 다음 프레임에 한 번

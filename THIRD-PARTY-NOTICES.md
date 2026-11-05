@@ -105,3 +105,7 @@ zonde306 · [ST-Prompt-Template](https://github.com/zonde306/ST-Prompt-Template)
 고정 커밋 d6f520d149aba146305b0b781ddd691d449c28d2 (2026-09-06, manifest 1.17.9).
 2026-10-17 Blue Lemonade: 원본을 수정 없이 ZIP([src/addons/prompt-template/ST-Prompt-Template.zip](src/addons/prompt-template/ST-Prompt-Template.zip), 그 커밋의 git 추적 파일 245개 중 소스맵 96개만 뺀 149개 · 바이트 동일)으로 담고, 실리태번 `extensions/third-party/ST-Prompt-Template` 에 설치 · 업데이트 · 삭제하는 테마 쪽 도구와 설정 화면 한국어 표를 더했습니다. 원본은 테마 안에서 실행하지 않습니다. ZIP 안에는 원본의 TypeScript 소스 · 빌드 설정과, 원본이 묶어 배포하는 라이브러리(monaco-editor · EJS · @faker-js/faker 등, 각자의 라이선스)가 원본 그대로 들어 있습니다.
 [파일별 SHA-256](src/addons/prompt-template/SOURCE.json) · [반영 범위와 변경 고지](src/addons/prompt-template/NOTICE.md) · [AGPL 전문](src/addons/prompt-template/LICENSE). ZIP 다시 만들기: `node tools/prompt-template-bundle.mjs <원본 체크아웃>`, 확인: `--check`.
+
+## 프롬프트 폴더 (아이디어 참고)
+
+아이디어 참고: [URMIIE/SillyTavern-PromptFolders](https://github.com/URMIIE/SillyTavern-PromptFolders)(AGPL-3.0) — 코드는 옮기지 않음.

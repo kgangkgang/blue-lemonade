@@ -1,7 +1,7 @@
 import { deviceKind } from './device-layout-options.js';
 import { gradientControls, mixControls, gradientAction, bindGradientColors } from './gradient-ui.js';
 import { syncProfileClip } from './profile-clip.js';
-import { refreshPreset, FRAME_PRESETS, FRAME_LIMIT, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
+import { refreshPreset, FRAME_PRESETS, FRAME_LIMIT, PRESET_LABELS, PRESET_LABEL_MAX, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
 import { syncDecor, hasFrame } from './decor.js';
 import './chat-appearance.js';
 import { addonsEnabled, themeEnabled, usageMode } from './usage-mode.js';
@@ -37,6 +37,7 @@ import { FRAME_RANGE } from './frames.js';
 import { getSettings, invalidateSettings, saveSettings, resetSettings, FONT_SET, FONT_SLOTS, IMAGE_RANGE, PROFILE_RANGE, TEXT_LIMIT, isDataImage } from './settings.js';
 import { PALETTES, PALETTE_FAMILIES, paletteFamily, paletteVariant, paletteBrightness, withBrightness, TOKEN_GROUPS, paletteColors, parseColor, sameColor, safeColor } from './palettes.js';
 import './palette-data.js';   // 1.0.0 에이드 11벌 · 커스텀 (설정 창과 함께 받아요)
+import { markZeroOff } from './zero-panel.js';   // 1.0.2 제로: 제로가 받지 않는 기능 칸은 회색 + 「제로 모드에서 꺼짐」
 import './catalog-full.js';   // 1.0.0 글꼴 목록 전체(8.2.5 와 같은 1,016개) — 설정 창과 함께 받아요
 import { customLibrary, newCustomPalette, useCustomPalette, openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette, saveCurrentPalette, deleteCustomPalette } from './custompalette.js';
 import { GROUPS, LANGS, SAMPLES, fontsFor, findFont, previewStack, queuePreview, isPreviewReady, isPreviewBlank, addGoogleFont, addCssFont, uploadFont, removeCustomFont } from './fonts.js';
@@ -72,7 +73,7 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 // 2.7.0: 글꼴 탭을 글자 탭에 합침 — 역할(본문 · 대사 · 메뉴 · 속마음 · 강조 · 코드)마다 한 화면에서 글꼴 · 크기 · 굵기 · 자간을 다 만짐
 const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['image', '이미지'], ['prompt', '프롬프트'], ['extensions', '확장']];
 const SUBS = {
-    theme: [['palette', '색'], ['colors', '색 고치기'], ['icons', '단추 아이콘'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['update', '설치 점검'], ['etc', '기타 설정']],
+    theme: [['palette', '색'], ['colors', '색 고치기'], ['icons', '단추 아이콘'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['update', '업데이트'], ['etc', '기타 설정']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strike', '취소선'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['markdown', '마크다운'], ['shadow', '그림자 · 외곽선']],
     chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
     // 1.0.0: 「흐림」 화면은 걷음 — 흰 배경 지우기는 「모양」(옛 id image/fade 로 오면 모양)
@@ -469,6 +470,8 @@ function safeApply(committed = false) {
 // 슬라이더 · 색 고르기 틱: applyAll(변수 계산 · SVG · 기능 12개)은 프레임마다 한 번 — 설정 값은 틱마다 바로 고쳐 두고 그리기만 모은다.
 // 끌기가 끝나도 마지막 틱이 잡아 둔 프레임이 마지막 값으로 그린다 (놓치는 틱 없음). 보통 update 가 끼어들면 그 자리에서 바로 그린다
 let applyFrame = 0;
+let frameArmed = '';   // 1.0.1 보관함 카드 ✕ 로 지울 준비가 된 액자 id
+const fromMart = id => /^(mart|simple)-/.test(id);   // 액자 마트에서 받은 것(tools/mart-build.mjs id 꼴 — 직접 저장한 것은 frame-…)
 function applySoon() {
     if (applyFrame) return;
     applyFrame = requestAnimationFrame(() => { applyFrame = 0; if (safeApply()) saveSoon(); });
@@ -514,10 +517,12 @@ function seg(path, options, fallback, cls = '') {
 }
 
 // 여러 개를 동시에 켜는 칩 줄 (seg 는 하나만 고르는 것) — 테두리를 그릴 면 고르기에 씀
-function chips(items) {
+// 1.0.1 cls 'bl-seg-2col' = seg 와 같은 같은 폭 2열(글자 한 줄 · 좁으면 … + title) — 한 손 버튼 줄 칩 넷이 한 줄을 나눠 「스와이프」가 두 줄로 꺾여 45px(다른 칩 34)였어요
+function chips(items, cls = '') {
     const s = getSettings();
-    return `<div class="salty-seg">${items.map(([path, label]) =>
-        `<button data-act="chip" data-path="${path}" aria-pressed="${!!getPath(s,path)}" class="${getPath(s, path) ? 'on' : ''}">${label}</button>`).join('')}</div>`;
+    const two = /(^|\s)bl-seg-2col(\s|$)/.test(cls);
+    return `<div class="salty-seg${cls ? ` ${cls}` : ''}">${items.map(([path, label]) =>
+        `<button data-act="chip" data-path="${path}" aria-pressed="${!!getPath(s,path)}" class="${getPath(s, path) ? 'on' : ''}"${two ? ` title="${esc(label.replace(/<[^>]*>/g, ''))}"` : ''}>${two ? `<span class="bl-seg-label">${label}</span>` : label}</button>`).join('')}</div>`;
 }
 
 // 1.0.0 간단화 ⓒ: 「켬/끔 + 고르기」 두 줄을 고르기 하나로 — 저장 키 · 값은 그대로(고른 칸이 여러 키를 한 번에 써요).
@@ -594,7 +599,10 @@ function qrSample(showFind = true, ctxNames = false) {
 /** 「가볍게」 줄: 같은 기능을 켠 다른 확장이 있어 쉬면 그 안내를 설명 끝에 붙인다 (토글 값은 그대로) */
 function restNote(feature, part = '') {
     const who = restingFor(feature);
-    return who ? ` · <b class="bl-rest-note">${part}${who}가 같은 기능을 켜고 있어 지금은 쉬어요</b>` : '';
+    // 1.0.1 받침 따라 이/가(칵테일이 · 바이바이가 · 프롬프트 그룹이)
+    const code = who ? who.charCodeAt(who.length - 1) - 0xAC00 : -1;
+    const ga = code >= 0 && code < 11172 && code % 28 ? '이' : '가';
+    return who ? ` · <b class="bl-rest-note">${part}${who}${ga} 같은 기능을 켜고 있어 지금은 쉬어요</b>` : '';
 }
 
 function row(label, control, note = '') {
@@ -1092,11 +1100,12 @@ function fontBlock(s, slot) {
 
 // ───────── 테마 ─────────
 function tabTheme(s, sub) {
-    if(sub==='etc')return `<div class="salty-group">${row('새 버전 자동 확인', toggle('updateCheck', s.updateCheck !== false), 'GitHub 에 6시간에 한 번 새 판이 있는지 물어요. 끄면 판 알약이 노랗게 빛나지 않아요')}</div><div class="bl-etc-grid"><details class="bl-usage-mode"><summary>사용 모드: <strong>${({both:'테마 + 확장',theme:'테마만',extensions:'확장만'})[usageMode(s)]}</strong></summary><div class="bl-usage-mode-body"><label>사용 모드<select data-usage-mode aria-label="사용 모드">${[['both','테마 + 확장'],['theme','테마만'],['extensions','확장만']].map(([v,label])=>`<option value="${v}" ${usageMode(s)===v?'selected':''}>${label}</option>`).join('')}</select></label><p>선택한 모드만 실행해요. 기존 설정은 보관해요.</p><button type="button" class="salty-btn" data-usage-apply>저장하고 새로고침</button><span role="status" data-usage-status></span></div></details>
+    if(sub==='etc')return `<div class="salty-group">${row('새 버전 자동 확인', toggle('updateCheck', s.updateCheck !== false), 'GitHub 에 6시간에 한 번 새 판이 있는지 물어요. 끄면 판 알약이 노랗게 빛나지 않아요')}</div><div class="bl-etc-grid"><details class="bl-usage-mode"><summary>사용 모드: <strong>${({both:'테마 + 확장',theme:'테마만',extensions:'확장만',zero:'블루레몬에이드 제로'})[usageMode(s)]}</strong></summary><div class="bl-usage-mode-body"><label>사용 모드<select data-usage-mode aria-label="사용 모드">${[['both','테마 + 확장'],['theme','테마만'],['extensions','확장만'],['zero','블루레몬에이드 제로 (모양만 · 빠르게)']].map(([v,label])=>`<option value="${v}" ${usageMode(s)===v?'selected':''}>${label}</option>`).join('')}</select></label><p>선택한 모드만 실행해요. 기존 설정은 보관해요.</p><p>제로는 색 · 글꼴 · 말풍선 같은 모양만 켜요. 내장 도구 · 확장 기능 · 성능 보조는 불러오지 않아 가장 가벼워요.</p><button type="button" class="salty-btn" data-usage-apply>저장하고 새로고침</button><span role="status" data-usage-status></span></div></details>
         <div class="salty-group bl-ext-colors">${row('다른 확장 색 유지', toggle('compat.preserveExtensionColors', !!s.compat?.preserveExtensionColors), '확장 설정창과 지원되는 팝업이 원래 색을 써요')}${s.compat?.preserveExtensionColors ? extColorList(s) : ''}</div>
         <div class="salty-group bl-first-run-row" data-search-anchor="처음 설정 다시 보기">${row('처음 설정 다시 보기', '<button type="button" class="salty-btn salty-btn-icon" data-act="first-run" aria-label="처음 설정 다시 보기"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></button>', '팔레트 · 글꼴 · 읽기 방식')}</div></div>`;
     // 8.2.5 설치 · 충돌 점검 — 1.0.0 되살림: 무결성표(build-info.js)가 커서 그 화면을 열 때만 받아요(bindHealthSlot)
-    if(sub==='update')return '<div data-health-slot aria-busy="true"></div>';
+    // 1.0.1 테마 업데이트 상자(판 목록 · 업데이트 · 새로고침)를 설치 점검 위에 되살려요(bindUpdateSlot)
+    if(sub==='update')return '<div data-update-slot aria-busy="true"></div><div data-health-slot aria-busy="true"></div>';
     if (sub === 'changes') return settingsChanges(s);
     if (sub === 'icons') return roleIconsMarkup(s, { cap, row });   // 7.9.3 단추 아이콘 (role-icons-ui.js)
     if (sub === 'custom') return customBuilder(s);
@@ -1432,15 +1441,17 @@ function decorControls(prefix, o) {
     const selected = settings.frameLibrary.find(item => item.id === d.libraryId);
     const thumb = (art, name) => `<img src="${esc(art)}" alt="" loading="lazy"><span>${esc(name)}</span>`;
     return `${cap('장식 액자', '테두리 그림을 그대로 얹고 안쪽에만 사진을 넣어요')}<div class="salty-group bl-decor-controls">
-        <span class="bl-frame-label">기본 프리셋</span>
-        <div class="bl-frame-library" role="group" aria-label="액자 프리셋">${FRAME_PRESETS.map(([id, name]) => `<button type="button" data-act="frame-preset" data-owner="${prefix}" data-id="${id}" class="bl-pick-card ${d.on && d.presetId === id ? 'on' : ''}" aria-pressed="${d.on && d.presetId === id}">${thumb(presetFrame(id).art, name)}</button>`).join('')}</div>
+        <span class="bl-frame-label">심플 액자</span>
+        <div class="bl-frame-library" role="group" aria-label="심플 액자">${FRAME_PRESETS.map(([id, name]) => `<button type="button" data-act="frame-preset" data-owner="${prefix}" data-id="${id}" class="bl-pick-card ${d.on && d.presetId === id ? 'on' : ''}" aria-pressed="${d.on && d.presetId === id}">${thumb(presetFrame(id).art, name)}</button>`).join('')}</div>
         <div class="bl-frame-upload-row"><button type="button" class="salty-btn bl-decor-upload" data-act="frame-upload" data-owner="${prefix}">${framed ? '다른 액자 고르기' : '액자 그림 고르기'}</button><input type="file" data-frame-file="${prefix}" accept="${IMAGE_ACCEPT}" hidden></div>
         ${framed ? row('장식 액자 사용', toggle(`${prefix}.decor.on`, d.on), '끄면 보통 테두리 설정으로 돌아와요') : '<p class="salty-note">투명 PNG · 배경색 있는 그림 모두 가능해요. 안쪽 공간을 자동으로 찾고 직접 보정할 수 있어요.</p>'}
         ${framed && d.on ? `${slider(`${prefix}.decor.opacity`, '액자 진하기 (%)', 0, 100, 1)}
             ${d.presetId ? frameColor(`${prefix}.decor.presetColor`, '액자 바탕색', d.presetColor) + frameColor(`${prefix}.decor.presetAccent`, '액자 포인트색', d.presetAccent) : ''}
+            ${d.presetId && Object.hasOwn(PRESET_LABELS, d.presetId) ? `<div class="bl-frame-save-row"><input type="text" data-frame-label="${prefix}" aria-label="칩 글자" maxlength="${PRESET_LABEL_MAX}" placeholder="칩 글자 (비우면 없음)" value="${esc(d.presetLabel ?? PRESET_LABELS[d.presetId])}"><span class="bl-frame-label">칩 글자</span></div>` : ''}
             ${slider(`${prefix}.decor.frameWidth`, '액자 가로 비율 (%)', 50, 200, 1)}
             ${slider(`${prefix}.decor.frameHeight`, '액자 세로 비율 (%)', 50, 200, 1)}
-            <p class="salty-note">색과 가로·세로를 따로 조절해요. 색 고르기를 닫거나 비율 조절을 마치면 프리셋 장식을 다시 그려요. 불러온 그림은 전체를 늘이거나 줄여요.</p>
+            ${slider(`${prefix}.decor.presetTilt`, '액자 기울기 (도)', -10, 10, 0.5)}
+            <p class="salty-note">색과 가로·세로를 따로 조절해요. 색 고르기를 닫거나 비율 조절을 마치면 프리셋 장식을 다시 그려요. 불러온 그림은 전체를 늘이거나 줄여요. 기울기는 액자와 사진을 함께 돌려요.</p>
             ${slider(`${prefix}.decor.radius`, '안쪽 사진 모서리 (px)', 0, 120, 1, o.radius)}
             ${stack('안쪽 사진', seg(`${prefix}.decor.fit`, [['cover', '가득 채우기'], ['contain', '전체 보이기']]))}
             ${slider(`${prefix}.decor.zoom`, '사진 확대 (%)', 100, 200, 1)}
@@ -1448,8 +1459,9 @@ function decorControls(prefix, o) {
             <button class="salty-btn" data-act="frame-remove" data-owner="${prefix}">액자 지우기</button>` : ''}
         ${framed ? `<div class="bl-frame-save-row"><input type="text" data-frame-name="${prefix}" aria-label="액자 이름" maxlength="40" placeholder="액자 이름" value="${esc(selected?.name || '')}"><button type="button" class="salty-btn" data-act="frame-save" data-owner="${prefix}">새 액자로 저장</button></div>` : ''}
         <span class="bl-frame-label">내 액자 ${settings.frameLibrary.length} / ${FRAME_LIMIT}</span>
-        <p class="salty-note">불러온 액자는 보관함에 저장돼요. 프로필과 에셋에서 함께 골라 쓸 수 있어요.</p>
-        ${settings.frameLibrary.length ? `<div class="bl-frame-library" role="group" aria-label="저장한 액자">${settings.frameLibrary.map(item => `<button type="button" data-act="frame-use" data-owner="${prefix}" data-id="${esc(item.id)}" class="bl-pick-card ${d.libraryId === item.id ? 'on' : ''}" aria-pressed="${d.libraryId === item.id}">${thumb(item.decor.art, item.name)}</button>`).join('')}</div>` : ''}
+        <div class="bl-frame-upload-row"><button type="button" class="salty-btn" data-act="mart-import"><i class="fa-solid fa-store" aria-hidden="true"></i><span>마트에서 가져오기</span></button></div>
+        <p class="salty-note">불러온 액자는 보관함에 저장돼요. 프로필과 에셋에서 함께 골라 쓸 수 있어요. 그림 액자 · 색을 바꾼 심플 액자는 액자 마트에서 받아요.</p>
+        ${settings.frameLibrary.length ? `<div class="bl-frame-library" role="group" aria-label="저장한 액자">${settings.frameLibrary.map(item => { const armed = frameArmed === item.id; return `<div class="bl-frame-item"><button type="button" data-act="frame-use" data-owner="${prefix}" data-id="${esc(item.id)}" class="bl-pick-card ${d.libraryId === item.id ? 'on' : ''}" aria-pressed="${d.libraryId === item.id}">${thumb(item.decor.art, (fromMart(item.id) ? '🛒 ' : '') + item.name)}</button><button type="button" class="bl-frame-x${armed ? ' is-armed' : ''}" data-act="frame-x" data-id="${esc(item.id)}" aria-label="${esc(item.name)} ${armed ? '정말 지우기' : '지우기'}" title="${armed ? '한 번 더 누르면 보관함에서 지워요' : '보관함에서 지우기'}">${armed ? '지우기' : '✕'}</button></div>`; }).join('')}</div>` : ''}
         ${selected ? `<div class="bl-frame-actions"><button type="button" class="salty-btn" data-act="frame-rename" data-owner="${prefix}" data-id="${esc(selected.id)}">이름 바꾸기</button><button type="button" class="salty-btn" data-act="frame-delete" data-id="${esc(selected.id)}">보관함에서 삭제</button></div>` : ''}
     </div>`;
 }
@@ -1558,6 +1570,9 @@ function tabChat(s, sub) {
         ${cap('확장 탭')}<div class="salty-group">
             ${row('「확장 탭에 보이기」 줄', toggle('headSwitchRows', s.headSwitchRows !== false), '확장 창 맨 위에 생기는 줄이에요 · 끄면 줄만 사라지고, 이미 제목 줄에 꺼내 둔 스위치는 그대로예요')}
         </div>
+        ${cap('프롬프트 관리자')}<div class="salty-group">
+            ${row('프롬프트 폴더', toggle('promptFolders.on', s.promptFolders?.on !== false), `프롬프트 목록 아래 도구 줄의 폴더 단추로 항목을 폴더로 묶어 접고 펼쳐요 · 머리 줄에서 켜진 수 · 토큰 합 · 모두 켜기 · 하나만 켜기(택1) · 구분선으로 자동 만들기 · 줄과 보내는 순서는 그대로이고 끌어 옮기면 놓인 자리의 폴더로 들어가요 · 폴더는 프리셋마다 따로 기억해요${restNote('promptFolders')}`)}
+        </div>
         ${cap('로그 복사')}<div class="salty-group">
             ${row('로그 복사', toggle('logCopy.on', s.logCopy?.on !== false), '채팅에서 글을 끌어 고르면 뜨는 줄에 「로그 복사」 · 받는 쪽에 같은 글꼴이 없으면 비슷한 기본 글꼴로 보여요')}
         </div>
@@ -1626,6 +1641,7 @@ function tabChat(s, sub) {
             <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false && globalThis.quickReplyApi?.settings?.isEnabled === true, s.chat.qrCtxNames === true)}</div>
             ${row('하위 목록 단추에 세트 이름', toggle('chat.qrCtxNames', s.chat.qrCtxNames === true), '하위 세트를 묶은 QR 은 오른쪽 ⋮ 를 누르면 목록이 열려요. 켜면 ⋮ 대신 그 세트 이름을 보여요')}
             ${row('QR 검색 버튼', toggle('chat.qrFind', s.chat.qrFind !== false), '실리태번의 QR 사용하기를 켰을 때만 보여요. 과일·데우스 빠른 설정은 이 조건에 포함하지 않아요')}
+            ${row('QR 접기 단추', toggle('chat.qrFold', s.chat.qrFold !== false), '줄 앞에 접기 · 펴기 단추를 둬요. 접으면 단추만 남고 퀵 리플라이 버튼은 숨어요 · 접힌 상태는 기억해요')}
             ${stack('자리', seg('chat.qrPlace', [['bottom', '입력창 아래'], ['top', '입력창 위']], 'bottom'), '입력창 옆에 아이콘이 많으면 위가 넓어요')}
             ${stack('넘기기', seg('chat.qrScroll', [['x', '가로 스크롤'], ['y', '세로 스크롤']]))}
             ${s.chat.qrScroll === 'y' ? slider('chat.qrRows', '보이는 줄', 1, 4, 1, 2) : ''}
@@ -1673,7 +1689,7 @@ function tabChat(s, sub) {
             <div class="bl-inline-preview" data-pv="phone">${phoneMock(s)}</div>
             ${row('스크롤하면 바 숨기기', toggle('reader.autoHide', !!s.reader?.autoHide), '아래로 읽으면 숨고, 위로 올리거나 누르면 나와요')}
             ${row('한 손 버튼 줄', toggle('onehand.on', !!s.onehand?.on), '입력창 위에 스와이프 · 사칭 · 이어 쓰기 · 다시 생성')}
-            ${s.onehand?.on ? stack('버튼', chips([['onehand.swipe', '스와이프'], ['onehand.imp', '사칭'], ['onehand.cont', '이어 쓰기'], ['onehand.regen', '다시 생성']])) : ''}
+            ${s.onehand?.on ? stack('버튼', chips([['onehand.swipe', '스와이프'], ['onehand.imp', '사칭'], ['onehand.cont', '이어 쓰기'], ['onehand.regen', '다시 생성']], 'bl-seg-2col')) : ''}
             ${stack('백그라운드에서도 계속 (실험)', segMulti('bgWindow.on', [['off', '끔', { 'bgWindow.on': false }], ['audio', '소리 없이', { 'bgWindow.on': true, 'bgWindow.mode': 'audio' }], ['pip', '작은 창', { 'bgWindow.on': true, 'bgWindow.mode': 'pip' }]], !s.bgWindow?.on ? 'off' : s.bgWindow.mode === 'pip' ? 'pip' : 'audio'), '답을 기다리는 동안 다른 앱을 봐도 생성 · 번역이 멈추지 않게 해요. 보내기 · 스와이프를 누를 때 켜지고 끝나면 꺼져요. 소리 없이: 귀에 안 들리는 아주 작은 소리로 브라우저가 탭을 재우지 못하게 해요(폰에 따라 안 통할 수 있어요). 작은 창: 진행 상황이 보이는 작은 창(PIP)이 떠요 — 가장 확실하지만 창이 화면에 남아요')}
             ${row('답이 오면 알려 주기', toggle('replyNotify.on', !!s.replyNotify?.on && globalThis.Notification?.permission === 'granted'), '다른 앱을 보고 있을 때 답이 끝나면 알림 · 진동으로 알려요. 처음 켤 때 브라우저가 알림 허용을 물어요. 화면을 보고 있을 땐 알리지 않아요')}
         </div>`;
@@ -2068,6 +2084,13 @@ function restorePanelScroll(root) {
     });
 }
 
+// 1.0.1 되살림: 테마 업데이트 상자(판 목록 · 업데이트 · 새로고침)도 업데이트 화면을 열 때만 theme-update.js 를 받아요(시작 그래프 밖)
+function bindUpdateSlot(root) {
+    const slot = root.querySelector('[data-update-slot]');
+    if (!slot) return;
+    import('./theme-update.js').then(m => { if (!slot.isConnected) return; slot.outerHTML = m.updateMarkup(); m.bindThemeUpdate(root); }).catch(error => { console.error('[Blue Lemonade] 테마 업데이트', error); slot.textContent = '테마 업데이트 상자를 불러오지 못했어요. 화면을 다시 열어 주세요.'; });
+}
+
 // 1.0.0 되살림: 설치 점검 화면은 열 때만 install-health.js(무결성표 포함)를 받아 칸을 채워요
 function bindHealthSlot(root) {
     const slot = root.querySelector('[data-health-slot]');
@@ -2142,6 +2165,7 @@ function render(root) {
         try{await syncRegexlinkFlag();await saveAddonsNow();location.reload();}catch(error){s.usageMode=previous;await syncRegexlinkFlag({resume:true});refreshPanels();say(error.message);const again=root.querySelector('[data-usage-apply]');if(again)again.disabled=false;}
     });
     bindCustomBuilder(root);
+    bindUpdateSlot(root);
     bindHealthSlot(root);
     for (const item of root.querySelectorAll('details[data-md-fold]')) if (root._mdFolds.has(item.dataset.mdFold)) item.open=root._mdFolds.get(item.dataset.mdFold);
     paintSettingsSearch(root);
@@ -2156,6 +2180,7 @@ function render(root) {
     bindAddonLayout(root);
     syncSamples(s); // 미리보기 문단 클래스 맞추기
     installSettingResets(root);
+    markZeroOff(root, s);
     // Finish class and control writes before measuring the preview once.
     bindPreviewViews(root, `${ui.tab}/${sub}`);
     // Preview sizing changes the available scroll height; restore after it is measured.
@@ -2462,8 +2487,18 @@ function bind(root) {
                 case 'frame-delete':
                     update(st => deleteFrame(st, el.dataset.id));
                     break;
+                case 'frame-x': {   // 1.0.1 보관함 카드 ✕: 처음엔 지울 준비(「지우기」) · 한 번 더 누르면 지워요
+                    const id = el.dataset.id, sure = frameArmed === id;
+                    frameArmed = sure ? '' : id;
+                    update(st => { if (sure) deleteFrame(st, id); });
+                    if (sure) toastr.info('보관함에서 지웠어요', '', { timeOut: 1200 });
+                    break;
+                }
                 case 'frame-upload':
                     root.querySelector(`[data-frame-file="${el.dataset.owner}"]`)?.click();
+                    break;
+                case 'mart-import':   // 1.0.1 액자 마트에서 복사 · 받은 JSON → 보관함 (mart-import-ui.js)
+                    import('./mart-import-ui.js').then(m => m.openMartImport({ kind: 'frames', apply: fn => update(fn) })).catch(error => toastr.error(error.message, '마트에서 가져오기'));
                     break;
                 case 'frame-remove':
                     update(st => { st[el.dataset.owner].decor = { on: false, art: '', mask: '' }; });
@@ -3007,6 +3042,11 @@ function bind(root) {
         const designPath = target.dataset.range || target.dataset.colorPath;
         if (designPath && /^(image|profile|userProfile)\.decor\.(frameWidth|frameHeight|presetColor|presetAccent)$/.test(designPath)) {
             update(st => refreshPreset(st[designPath.split('.')[0]].decor), false);
+            return;
+        }
+        if (target.matches('input[data-frame-label]')) {   // 1.0.1 칩 글자: 입력을 마치면 프리셋 장식을 다시 그려요
+            const owner = target.dataset.frameLabel, value = target.value;
+            update(st => { st[owner].decor.presetLabel = value; refreshPreset(st[owner].decor); }, false);
             return;
         }
         if (target.matches('input[data-frame-file]') && target.files?.[0]) {

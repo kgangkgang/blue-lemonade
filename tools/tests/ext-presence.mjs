@@ -18,36 +18,47 @@ const FEATURES = ['lazyAvatars', 'worldInfoLight', 'searchIme', 'codePlain'];
 
 t('없음: 아무 확장도 없으면 네 기능 모두 켜진다', () => {
     const p = ep.detectPresence(['third-party/other', 'translate'], [], manifestOf);
-    assert.deepEqual(p, { cocktail: false, baibai: false });
+    assert.deepEqual(p, { cocktail: false, baibai: false, promptgroups: false });
     for (const f of FEATURES) assert.equal(ep.restingFor(f, p), '', f);
 });
 t('설치됨(정확한 폴더 이름): 바이바이 → 아바타 · 월드인포 · 검색 쉼, 코드 하이라이트는 유지 · 칵테일 → 코드 하이라이트만 쉼', () => {
     const b = ep.detectPresence(['third-party/ST-BaiBai-Tools'], []);
-    assert.deepEqual(b, { cocktail: false, baibai: true });
+    assert.deepEqual(b, { cocktail: false, baibai: true, promptgroups: false });
     assert.deepEqual(FEATURES.map(f => ep.restingFor(f, b)), ['바이바이', '바이바이', '바이바이', '']);
     const c = ep.detectPresence(['third-party/cocktail'], []);
-    assert.deepEqual(c, { cocktail: true, baibai: false });
+    assert.deepEqual(c, { cocktail: true, baibai: false, promptgroups: false });
     assert.deepEqual(FEATURES.map(f => ep.restingFor(f, c)), ['', '', '', '칵테일']);
     const both = ep.detectPresence(['third-party/cocktail', 'third-party/ST-BaiBai-Tools'], []);
     assert.deepEqual(FEATURES.map(f => ep.restingFor(f, both)), ['바이바이', '바이바이', '바이바이', '칵테일']);
 });
 t('꺼짐(disabledExtensions): 설치만 돼 있으면 없음과 같다', () => {
     const p = ep.detectPresence(['third-party/cocktail', 'third-party/ST-BaiBai-Tools'], ['third-party/cocktail', 'third-party/ST-BaiBai-Tools'], manifestOf);
-    assert.deepEqual(p, { cocktail: false, baibai: false });
+    assert.deepEqual(p, { cocktail: false, baibai: false, promptgroups: false });
     for (const f of FEATURES) assert.equal(ep.restingFor(f, p), '');
     const half = ep.detectPresence(['third-party/cocktail', 'third-party/ST-BaiBai-Tools'], ['third-party/cocktail'], manifestOf);
-    assert.deepEqual(half, { cocktail: false, baibai: true });
+    assert.deepEqual(half, { cocktail: false, baibai: true, promptgroups: false });
 });
 t('폴더 이름이 달라도(판 번호 · main · 전혀 다른 이름) manifest display_name 의 鸡尾酒 · 柏宝箱 · BaiBai 로 알아본다 · 대소문자 무시', () => {
-    assert.deepEqual(ep.detectPresence(['third-party/cocktail-main'], [], manifestOf), { cocktail: true, baibai: false });
-    assert.deepEqual(ep.detectPresence(['third-party/ST-BaiBai-Tools-1.1.5'], [], manifestOf), { cocktail: false, baibai: true });
-    assert.deepEqual(ep.detectPresence(['third-party/some-tools'], [], manifestOf), { cocktail: false, baibai: true });
-    assert.deepEqual(ep.detectPresence(['third-party/Cocktail'], [], () => { throw new Error('manifest 없음'); }), { cocktail: true, baibai: false });
-    assert.deepEqual(ep.detectPresence(['third-party/some-tools'], [], () => null), { cocktail: false, baibai: false }, 'manifest 가 없으면 폴더 이름만');
+    assert.deepEqual(ep.detectPresence(['third-party/cocktail-main'], [], manifestOf), { cocktail: true, baibai: false, promptgroups: false });
+    assert.deepEqual(ep.detectPresence(['third-party/ST-BaiBai-Tools-1.1.5'], [], manifestOf), { cocktail: false, baibai: true, promptgroups: false });
+    assert.deepEqual(ep.detectPresence(['third-party/some-tools'], [], manifestOf), { cocktail: false, baibai: true, promptgroups: false });
+    assert.deepEqual(ep.detectPresence(['third-party/Cocktail'], [], () => { throw new Error('manifest 없음'); }), { cocktail: true, baibai: false, promptgroups: false });
+    assert.deepEqual(ep.detectPresence(['third-party/some-tools'], [], () => null), { cocktail: false, baibai: false, promptgroups: false }, 'manifest 가 없으면 폴더 이름만');
 });
 t('깨진 입력(배열 아님 · 글 아닌 항목 · 내장 확장)은 없음', () => {
-    assert.deepEqual(ep.detectPresence(undefined, undefined), { cocktail: false, baibai: false });
-    assert.deepEqual(ep.detectPresence([null, 7, 'cocktail', 'third-party/x'], 'nope', manifestOf), { cocktail: false, baibai: false });
+    assert.deepEqual(ep.detectPresence(undefined, undefined), { cocktail: false, baibai: false, promptgroups: false });
+    assert.deepEqual(ep.detectPresence([null, 7, 'cocktail', 'third-party/x'], 'nope', manifestOf), { cocktail: false, baibai: false, promptgroups: false });
+});
+
+t('1.0.1 프롬프트 그룹 확장(PromptFolders): 켜져 있으면 프롬프트 폴더만 쉬고 다른 기능은 그대로 · 꺼져 있으면 없음', () => {
+    const p = ep.detectPresence(['third-party/SillyTavern-PromptFolders'], []);
+    assert.deepEqual(p, { cocktail: false, baibai: false, promptgroups: true });
+    assert.equal(ep.restingFor('promptFolders', p), '프롬프트 그룹');
+    for (const f of FEATURES) assert.equal(ep.restingFor(f, p), '', f);
+    assert.equal(ep.restingFor('promptFolders', ep.detectPresence(['third-party/SillyTavern-PromptFolders'], ['third-party/SillyTavern-PromptFolders'])), '');
+    assert.equal(ep.detectPresence(['third-party/pf-fork'], [], () => ({ display_name: '프롬프트 그룹' })).promptgroups, true, '폴더 이름이 달라도 표시 이름으로');
+    assert.equal(ep.detectPresence(['third-party/pf-fork2'], [], () => ({ display_name: 'Prompt Folders' })).promptgroups, true);
+    assert.equal(ep.detectPresence(['third-party/other'], [], () => ({ display_name: '프롬프트 그룹 도우미' })).promptgroups, false, '비슷한 이름은 아님');
 });
 
 // ---- 실행 시: 가짜 호스트로 한 번 재고 · 바뀔 때만 콜백 · 확장 설정 읽힘 · 켜고 끔 때 다시 잰다
@@ -55,10 +66,10 @@ const host = { extensionNames: ['third-party/other'], extension_settings: { disa
 const calls = [];
 ep.onPresenceChange(p => calls.push({ ...p }));
 await ep.refreshPresence(host);
-t('처음엔 없음 → 콜백 없음 · presence() 는 동기로 마지막 값', () => { assert.deepEqual(calls, []); assert.deepEqual(ep.presence(), { cocktail: false, baibai: false }); });
+t('처음엔 없음 → 콜백 없음 · presence() 는 동기로 마지막 값', () => { assert.deepEqual(calls, []); assert.deepEqual(ep.presence(), { cocktail: false, baibai: false, promptgroups: false }); });
 host.extensionNames.push('third-party/ST-BaiBai-Tools');
 await ep.refreshPresence();
-t('바이바이가 들어오면 한 번 알리고 restingFor(기본 인자) 가 쉬라고 답한다', () => { assert.deepEqual(calls, [{ cocktail: false, baibai: true }]); assert.equal(ep.restingFor('lazyAvatars'), '바이바이'); assert.equal(ep.restingFor('codePlain'), ''); });
+t('바이바이가 들어오면 한 번 알리고 restingFor(기본 인자) 가 쉬라고 답한다', () => { assert.deepEqual(calls, [{ cocktail: false, baibai: true, promptgroups: false }]); assert.equal(ep.restingFor('lazyAvatars'), '바이바이'); assert.equal(ep.restingFor('codePlain'), ''); });
 await ep.refreshPresence();
 t('같으면 다시 알리지 않는다', () => assert.equal(calls.length, 1));
 host.extension_settings.disabledExtensions.push('third-party/ST-BaiBai-Tools');
@@ -88,7 +99,7 @@ t('features.js: startPresence 한 번 · 바뀌면 applyAll + refreshPanels · �
 });
 t('panel.js: restNote 가 쉬는 확장 이름을 설명에 붙이고 토글은 설정 값 그대로', () => {
     const p = read('src/panel.js');
-    assert.match(p, /function restNote\(feature(, part = '')?\)/); assert.ok(p.includes("가 같은 기능을 켜고 있어 지금은 쉬어요"));
+    assert.match(p, /function restNote\(feature(, part = '')?\)/); assert.ok(p.includes(" 같은 기능을 켜고 있어 지금은 쉬어요")); assert.match(p, /이' : '가'/);
     assert.ok(p.includes("toggle('chat.lazyAvatars', s.chat.lazyAvatars !== false)") && p.includes("restNote('lazyAvatars')"));
     assert.match(read('css/20-panel.css'), /\.bl-rest-note/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/ext-presence\.mjs \./);

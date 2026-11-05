@@ -54,6 +54,8 @@ jobs:
           node tools/tests/tts-thought-whisper.mjs .
           # 1.0.0 바탕: 공지 창 · 출처 창 · 판 알약 · 새 판 확인 되살림 (계열 짝 비교 · 시작 그래프 밖)
           node tools/tests/update-check.mjs .
+          # 1.0.1 테마 › 업데이트 상자 되살림 (판 목록 · 업데이트 확인 · 새로고침 · 시작 그래프 밖)
+          node tools/tests/update-box.mjs .
           node tools/tests/notice-credits-restore.mjs .
           node tools/pricing/test-client.mjs
           node tools/tests/settings-upgrade.mjs .
@@ -78,12 +80,15 @@ jobs:
           node tools/tests/dom-work-batches.mjs .
           node tools/tests/fruit-content-gap.mjs .
           node tools/tests/wordmask.mjs .
+          # 1.0.1 성능 퇴행 재정비(L): 내장 스크립트가 숨은 iframe 으로 돌아가면 성능 관문의 긴 작업 비교가 다시 어긋나요
+          node tools/tests/scripts-no-hidden-iframe.mjs .
           node tools/tests/wordmask-quote-lead.mjs .
           node tools/tests/reply-top-generation-types.mjs .
           node tools/tests/weather-tracker-swipe.mjs .
           node tools/tests/promptbind.mjs .
           node tools/tests/headswitch.mjs .
           node tools/tests/usage-mode.mjs .
+          node tools/tests/zero-mode.mjs .
           node tools/tests/forced-theme-class.mjs .
           node tools/tests/multi-avatar-pick.mjs .
           node tools/tests/stream-follow.mjs .
@@ -199,6 +204,7 @@ jobs:
           node tools/tests/prompt-apply-live.mjs .
           node tools/tests/prompt-translation-cache.mjs .
           node tools/tests/regexlink-restore.mjs .
+          node tools/tests/regex-manual.mjs .
           node tools/tests/rewrite-apply-message.mjs .
           node tools/tests/rewrite-settings-migrate.mjs .
           node tools/tests/zipinstall-archive.mjs .
@@ -280,6 +286,7 @@ jobs:
           node tools/tests/dialogue-only.mjs .
           node tools/tests/ko-ui.mjs .
           node tools/tests/ko-locale-quiet.mjs .
+          node tools/tests/ko-locale-bridge.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/preview-park.mjs .
           node tools/tests/css-split.mjs .
@@ -311,6 +318,21 @@ jobs:
           node tools/tests/settings-simplify.mjs .
           node tools/tests/websearch-mark.mjs .
           node tools/tests/send-textarea-hide.mjs .
+          node tools/tests/qr-fold.mjs .
+          node tools/tests/log-copy-edit-keep.mjs .
+          # 1.0.1 액자 마트 · 글꾸 마트: 받은 JSON 살균 · 중복 · 상한 · 잘못된 JSON 거절 · 틈 템플릿 렌더 · 마트 산출물을 만들 수 있나(그림 팩 없으면 건너뜀)
+          node tools/tests/mart-import.mjs .
+          # 1.0.2 액자 기본 프리셋 6종 걷기: 옛 id 는 비슷한 심플 액자로 옮겨요(설정 · 보관함 · 마트 가져오기)
+          node tools/tests/frame-presets-retired.mjs .
+          node tools/tests/frame-presets-simple.mjs .
+          node tools/tests/log-copy-concept-30.mjs .
+          # 1.0.1 「HTML 복사」 편집용 꼴: 줄 나눔은 안 보이는 자리에만 · 주석(메시지 시작 ~ 끝 · 이름 · 본문 · 머리 칸) · 덩어리 복사로 메시지 늘리기 · 모든 틀 × 1 · 9개
+          node tools/tests/log-copy-pretty.mjs .
+          # 글꾸 마트 시안 64종(세계관 24 · 캐릭터 40) 틈 템플릿: 살균 통과 · 네 자리 한 번씩 · 64KB · 그리기 · 글자 대비
+          node tools/tests/mart-geulkku-64.mjs .
+          node tools/mart-build.mjs --check
+          # 1.0.1(11-04) 테마 내장 심플 글꾸(src/log-copy-builtin.gen.js)가 마트 심플 자료와 같은가
+          node tools/mart/build-builtin.mjs --check
           node tools/tests/wi-link.mjs .
           node tools/tests/cutout-edge.mjs .
           node tools/tests/assets-watch-leaf.mjs .
@@ -369,6 +391,7 @@ jobs:
           node tools/tests/group-member-layout.mjs .
           node tools/tests/show-more-tap.mjs .
           node tools/tests/prompt-choice.mjs .
+          node tools/tests/prompt-folders.mjs .
           node tools/tests/bughunt2-core.mjs .
           node tools/tests/dem-expressive-nest.mjs .
           node tools/tests/dem-expressive-scope.mjs .
@@ -433,6 +456,7 @@ jobs:
           node tools/tests/story-direction.mjs .
           node tools/tests/direction-send.mjs .
           node tools/tests/direction-prompts.mjs .
+          node tools/tests/direction-per-chat.mjs .
           node tools/tests/direction-reorder.mjs .
           node tools/tests/direction-translate.mjs .
           node tools/tests/direction-place.mjs .
@@ -601,6 +625,7 @@ jobs:
           node tools/tests/tts-group-turn.mjs .
           node tools/tests/tts-sfx-preview-url.mjs .
           node tools/tests/fault-models.mjs .
+          node tools/tests/live-entry.mjs .
           node tools/tests/bundle-fresh.mjs
           node tools/build-integrity.mjs . --check
       - name: Check that generated files match their sources

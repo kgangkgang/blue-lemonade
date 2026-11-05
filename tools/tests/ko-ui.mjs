@@ -217,7 +217,8 @@ test('가벼움: 이 파일엔 감시자 · 반복 타이머 없음(더 보기 �
     assert.ok(!/MutationObserver|setInterval|ResizeObserver|IntersectionObserver/.test(code));
     assert.ok(!/addEventListener\(['"](scroll|wheel|touchmove|pointermove)/.test(code));
     const index = read('index.js');
-    assert.match(index, /\/\^ko\(\?:\[-_\]\|\$\)\/i\.test\(String\(SillyTavern\.getContext\(\)\.getCurrentLocale\?\.\(\) \?\? ''\)\)\) import\('\.\/src\/ko-ui\.js'\)/, '한국어(ko · ko-kr)일 때만 파일을 받는다');
+    assert.match(index, /const ko = \/\^ko\(\?:\[-_\]\|\$\)\/i\.test\(String\(SillyTavern\.getContext\(\)\.getCurrentLocale\?\.\(\) \?\? ''\)\);/, '한국어(ko · ko-kr)인지 한 번 봐요');
+    assert.ok(index.includes("else if (ko && settings.koUi !== false) import('./src/ko-ui.js')"), '한국어(ko · ko-kr)일 때만 파일을 받는다(1.0.2 제로는 대신 ko-locale-bridge.js)');
     assert.ok(!/^import .*ko-ui/m.test(index), '처음부터 불러오지 않는다');
     const bytes = fs.statSync(path.join(root, 'src/ko-ui-data.js')).size;
     assert.ok(bytes < 280_000, `표가 너무 커요: ${bytes}B`);

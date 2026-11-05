@@ -15,7 +15,10 @@ import { rememberAppearance } from './appearance-archive.js';
 import { themeEnabled, usageMode } from './usage-mode.js';
 import { otherCssReport, otherCssFingerprint } from './diagnose.js';
 
-export const STEPS = [['palette', '팔레트', 'fa-palette'], ['font', '글꼴', 'fa-font'], ['reading', '읽기 방식', 'fa-book-open']];
+// 1.0.2 마지막 장 「쓰는 방식」: 다 쓰기(테마 + 확장) · 블루레몬에이드 제로(모양만 · 빠르게 — 저장하고 새로고침)
+export const STEPS = [['palette', '팔레트', 'fa-palette'], ['font', '글꼴', 'fa-font'], ['reading', '읽기 방식', 'fa-book-open'], ['mode', '쓰는 방식', 'fa-gauge-high']];
+/** 제로로 쓰기: 「블루레몬에이드 사용」을 켜고 사용 모드만 제로로 (다른 칸은 그대로 — 새로고침해야 바뀐다) */
+export function chooseZero(st) { st.enabled = true; st.usageMode = 'zero'; }
 export const CSS_STEP = ['css', '쓰던 테마가 있어요', 'fa-layer-group'];
 // 카탈로그의 한국어 글꼴 가운데 결이 다른 여섯 (고딕 둘 · 명조 둘 · 둥근 고딕 · 손글씨). 더 많은 글꼴은 설정 창 › 글자
 export const FONT_CHOICES = ['pretendard', 'suit', 'ridibatang', 'maruburi', 'gowun-dodum', 'nanum-pen-script'];
@@ -219,6 +222,15 @@ export async function openFirstRun({ auto = false, cssOnly = false } = {}) {
                 <span class="bl-fr-read-sample${bubble ? ' is-bubble' : ''}${type.indent ? ' is-indent' : ''}" style="${css}"><q class="is-${esc(style)}">${SAMPLE}</q> 소금 한 꼬집이면 충분해.</span><span class="bl-fr-name">${esc(preset.name)}</span></button>`;
         }).join('')}</div>`;
     };
+    const modeStep = st => {
+        const choice = (id, title, note, pressed) => `<button type="button" class="bl-fr-choice${pressed ? ' is-primary' : ''}" data-fr-use="${id}" aria-pressed="${pressed}"><b>${title}</b><span>${note}</span></button>`;
+        const zero = usageMode(st) === 'zero';
+        return `<div class="bl-fr-css"><p class="bl-fr-css-lead">기기가 느리면 모양만 쓰는 「블루레몬에이드 제로」가 가벼워요. 나중에 설정 창 테마 › 기타 설정 › 사용 모드에서 바꿀 수 있어요.</p>
+            <div class="bl-fr-css-choices">
+                ${choice('both', '다 쓰기', '모양과 로그 복사 · 대사만 보기 같은 내장 도구를 모두 써요. 번역 · TTS 같은 확장은 설정 창에서 켜요.', !zero)}
+                ${choice('zero', '블루레몬에이드 제로 — 빠르게', '색 · 글꼴 · 말풍선 같은 모양만 켜요. 내장 도구와 확장은 불러오지 않아요. 저장하고 새로고침해요.', zero)}
+            </div></div>`;
+    };
     const render = (focus = false) => {
         const st = getSettings(), [id, label, icon] = steps[step];
         dialog.dataset.step = id;
@@ -234,7 +246,7 @@ export async function openFirstRun({ auto = false, cssOnly = false } = {}) {
         const keep = body.scrollTop;
         // 6.9.6 다시 그려도 키보드 초점은 같은 카드에 (글꼴을 다 받아 읽기 방식 화면을 다시 그릴 때 초점이 사라졌다)
         const had = !focus && body.contains(document.activeElement) ? [...document.activeElement.attributes].find(a => a.name.startsWith('data-fr-')) : null;
-        body.innerHTML = id === 'css' ? cssStep() : id === 'palette' ? paletteStep(st) : id === 'font' ? fontStep(st) : readingStep(st);
+        body.innerHTML = id === 'css' ? cssStep() : id === 'mode' ? modeStep(st) : id === 'palette' ? paletteStep(st) : id === 'font' ? fontStep(st) : readingStep(st);
         if (focus) { body.scrollTop = 0; (body.querySelector('[aria-pressed="true"]') || body.querySelector('.bl-fr-choice') || next).focus({ preventScroll: true }); }
         else {
             body.scrollTop = keep;
@@ -269,8 +281,10 @@ export async function openFirstRun({ auto = false, cssOnly = false } = {}) {
         event.stopPropagation();   // 확장 서랍 · 실리태번의 바깥 누름 처리로 새지 않게
         const el = event.target.closest('button');
         if (!el || !dialog.contains(el)) return;
-        const { fr, frPalette, frMode, frFont, frReading, frCss } = el.dataset;
+        const { fr, frPalette, frMode, frFont, frReading, frCss, frUse } = el.dataset;
         if (frCss) { void answerCss(frCss); return; }
+        if (frUse === 'zero') { decide(chooseZero); say('블루레몬에이드 제로로 저장했어요. 새로고침할게요.', 'info'); dialog.close(); void saveAndReload(); return; }
+        if (frUse === 'both') { if (usageMode(getSettings()) === 'zero') { decide(st => { st.usageMode = 'both'; }); dialog.close(); void saveAndReload(); return; } return dialog.close(); }
         if (fr === 'skip') return dialog.close();
         if (fr === 'back') { step = Math.max(0, step - 1); return render(true); }
         if (fr === 'next') { if (step === steps.length - 1) return dialog.close(); step++; return render(true); }

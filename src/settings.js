@@ -9,7 +9,7 @@ import { syncWeatherProfile } from './weather-profiles.js';
 import { tidySceneSound } from './scene-sound-rules.js';   // 6.9.8 장면 소리 설정 정리 (순수 모듈)
 import { tidyMultiAvatar } from './multi-avatar/pick.js';   // 7.9.9 프로필 여러 개 (순수)
 // 추가 모양의 정리 코드는 첫 프레임 뒤에 연결하고 저장 키는 그대로 둬요.
-const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100 };
+const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100, presetTilt: 0 };   // presetTilt: 1.0.1 액자 기울기(도, -10~10)
 const MIX_DEFAULT = { on: false, families: ['blue', 'strawberry'], angle: 90, weights: [50, 50, 50], blend: 50 };
 import { FRAME_DEFAULTS, FRAME_RANGE, tidyFrame } from './frames.js';
 import { cutEdgeDefaults, tidyCutEdge } from './cutedge.js';
@@ -84,7 +84,7 @@ export const DEFAULTS = {
     em: { italic: true, weight: 400, size: null, letterSpacing: null },
     strike: { line: true, own: false, color: '#ff7a7a', thickness: 2, fade: 55, italic: false },   // ~~취소선~~ — own: 선 색을 따로(false 면 글자 색), thickness px, fade: 지워진 글자를 남기는 정도 %   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
     strong: { weight: 650, size: null, letterSpacing: null },              // **강조**
-    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], inkContrast: true, triangleFold: false, weatherBubble: 70, qrCtxNames: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: true, helpMarks: true, webSearchMarks: true, personaTall: false, hideSendTextarea: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, emptyGuard: true, replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // hiddenFade: 5.6.8 숨긴 메시지(컨텍스트에서 뺀 것, is_system) 흐리게 · hiddenOpacity 진하기 % · hiddenGray 흑백 % · hiddenHover 마우스 올리면(폰은 누르면) 원래대로 (apply.js 변수 · 클래스, css/05-chat.css) · streamFade: 스트리밍 중 새 글자만 가볍게 페이드 인 (2.9.5, streamfade.js — 실리태번 페이드 인이 켜져 있으면 쉼) · tone: 톤 맞추기의 채도 · 밝기(%) 화이트/나이트 따로 (2.6.1) · toneInline: 본문 글자색의 색상만 두고 채도 · 밝기를 테마에 맞춤 (2.6.0, unifyInline 이 꺼져 있을 때) · selectPop: 실리태번 select 를 테마가 그린 목록 팝업으로 (2.5.0) · colorPop: 설정 창 밖 색 칸도 테마 색 고르기로 (3.5.0, colorpop.js) · regexIcons: 정규식 카드 제목 앞 이모티콘 보이기 · unifyRegex: 프리셋 정규식 카드(DEM 등)의 모듈별 색 → 포인트색 하나 · unifyInline: 메시지에 적힌 글자색(<font color> · style) 무시
+    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], inkContrast: true, triangleFold: false, weatherBubble: 70, qrCtxNames: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: true, helpMarks: true, webSearchMarks: true, personaTall: false, hideSendTextarea: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, emptyGuard: true, replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrFold: true, qrFolded: false, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // 칸 뜻은 쓰는 모듈 머리 주석에(hiddenFade 5.6.8 숨긴 메시지 흐리게 · streamFade 2.9.5 · tone 2.6.1 · toneInline 2.6.0 · selectPop 2.5.0 · colorPop 3.5.0 · unifyRegex/unifyInline 포인트색 하나로) — 1.0.1 시작 그래프 상한 때문에 줄였어요
     // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
     reader: { autoHide: false },
     // 3.4.0 프롬프트 호환: 데우스 엑스 마키나 — 끄면 카드 스킨 · 폰 접기 · 카드 색 통일 · 카드 이모티콘 · 트래커 날씨가 모두 쉰다 (값은 남음)
@@ -118,7 +118,7 @@ export const DEFAULTS = {
     wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true, maskWords: '' }, // maskWords: 6.0.4 잠시 가리기 낱말(한 줄에 하나 · 쉼표) — 스위치는 세션 안에서만, 저장하지 않는다 (wordmask.js) · 1.0.0 되살림(9.0.0 5357f89e 에서 걷었던 단어 치환)
     captureTools: { replace: false, replaceRules: [], preset: '', redact: false, names: [], mask: 'auto', maskWord: '○○', maskStyles: {}, format:'image', imagePages:false, duration:6, maxMB:8, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true, filterPreset:'none', grain:0, brightness:0, contrast:0, saturation:0, temperature:0, vignette:0 }, // filterPreset · grain … vignette: 5.5.3 캡처 필터 (프리셋 none|mono|film|vintage|cool|warm|custom · 전부 0 이면 결과 픽셀 그대로)
     onehand: { on: false, swipe: true, imp: true, cont: true, regen: true },
-    logCopy: { on: true, shape: 'card', palette: '', category: 'basic', recent: [], fav: [], custom: [] },   // 로그 복사: 채팅에서 고른 글을 보이는 그대로 (selection-bar.js · log-copy*.js) — on 만 설정 창에, 나머지는 시트가 마지막 고른 것을 기억 · custom = 내 글꾸 [{ id, name, html(소독한 것), slot }]
+    logCopy: { on: true, shape: 'card', palette: '', category: 'basic', recent: [], fav: [], custom: [], tagsOff: false },   // 로그 복사: 채팅에서 고른 글을 보이는 그대로 (selection-bar.js · log-copy*.js) — on 만 설정 창에, 나머지는 시트가 마지막 고른 것을 기억 · custom = 내 글꾸 [{ id, name, html(소독한 것), slot }] · 1.0.1 마트 글꾸는 { template, colors, messages, tail, emoji }
     searchAi: { on: false, profileId: '' }, // 10-31 검색창 「AI 에게 맡기기」: 켠 사람만 · 단추를 눌렀을 때만 요청 한 번 · 미리보기 뒤 「적용」 (settings-search.js · settings-ai.js). profileId '' = 실리태번 지금 연결
     replyNotify: { on: false }, // 4.8.7 답 완료 알림: 다른 앱을 보고 있을 때 답이 끝나면 폰 알림 · 진동 (reply-notify.js)
     bgWindow: { on: false, mode: 'audio' }, // 4.3.2 백그라운드 창 (실험): 답을 기다리는 동안 PIP 작은 창을 띄워 다른 앱을 봐도 생성 · 번역이 이어지게
@@ -131,6 +131,7 @@ export const DEFAULTS = {
     fruitEntryDisplay: 'both',
     fruitEntryIcon: 'fa-apple-whole',
     fruitTypography: {on:false,kind:'status',types:{}},
+    promptFolders: { on: true, presets: {} },   // 1.0.1 다듬기는 prompt-folders.js
     promptLink: { on: false, rows: [] },   // 6.5.2 캐릭터 이름 연동 — 이름이 든 프롬프트·정규식을 그 캐릭터 채팅에서만 켜고 「기본」 짝은 반대로 · 6.7.5 여러 줄 rows [{ word, cards: [아바타] }] (prompt-link.js · promptbind.js)
     longpressHelp: true,   // 8.1.2 단추 길게 누르면 설명 (longpress-help.js — 끄면 길게 눌러도 원래 동작만)
     koUi: true,   // 6.9.0 실리태번 한국어 화면 다듬기 (ko-ui.js — 언어가 ko-kr 일 때만, 바꾸면 새로고침 뒤)
@@ -141,7 +142,7 @@ export const DEFAULTS = {
     activeStyle: null,
     baseStyle: null,
     profile: { decor: { ...DECOR_DEFAULTS }, nameSize: 24, nameWeight: 650, nameSpacing: 0, nameHeight: 1.3, nameColor: '#91a5ba', nameAuto: true, nameAlign: 'center', nameRowAlign: 'left', nameItalic: false, nameUnderline: false, headerLayout: 'below-two', headerGap: 8, metaSize: 12, metaOpacity: 70, buttonGap: 8, nameOutline: 0, nameOutlineColor: '#000000', nameShadow: false, nameShadowBlur: 4, nameShadowY: 1, nameShadowAlpha: 25, ...FRAME_DEFAULTS, mode: 'small', layout: 'column', sizing: 'pixels', screenHeight: 45, maxHeight: 70, visibleHeight: 100, width: 100, height: 320, fit: 'cover', positionX: 50, positionY: 35, radius: 18, gap: 20, blur: 0, opacity: 100, fadeY: 0, fadeX: 0, original: true },
-    image: { decor: { ...DECOR_DEFAULTS }, ...FRAME_DEFAULTS, layout: 'bleed', shape: 'rect', fit: 'ratio', maxh: 78, height: 40, blendWhite: true, cutoutSame: true, fade: 'soft', fadeY: 10, fadeX: 0, angle: 3, radius: 14, cornerCut: 10, scratchAmount: 45, scratchDirection: 'straight', scratchTexture: 'sharp', edge: 'none', edgeAuto: true, edgeSideTop: true, edgeSideRight: true, edgeSideBottom: true, edgeSideLeft: true, edgeThick: 1, edgeAlpha: 30, edgeGlow: 0, mask: '', maskFit: 'stretch', masks: [], maskId: '', cutEdge: cutEdgeDefaults() }, // cutEdge: 6.1.6 투명 그림 외곽선 · 그림자 (cutedge.js) · shape: rect | custom(mask = 투명 PNG data URL, maskFit: stretch | contain) — angle · cornerCut · scratch* 는 뺀 모양의 옛 값(CSS 는 남아 있음) · fit(크기): ratio 비율 유지(maxh = 최대 높이) | fixed 높이 맞춤(height = 높이), 둘 다 화면 높이 % · fade(흐림): off | soft | medium | strong · angle: 대각선 기울기(도)
+    image: { decor: { ...DECOR_DEFAULTS }, ...FRAME_DEFAULTS, layout: 'bleed', shape: 'rect', fit: 'ratio', maxh: 78, height: 40, blendWhite: true, cutoutSame: true, fade: 'soft', fadeY: 10, fadeX: 0, angle: 3, radius: 14, cornerCut: 10, scratchAmount: 45, scratchDirection: 'straight', scratchTexture: 'sharp', edge: 'none', edgeAuto: true, edgeSideTop: true, edgeSideRight: true, edgeSideBottom: true, edgeSideLeft: true, edgeThick: 1, edgeAlpha: 30, edgeGlow: 0, mask: '', maskFit: 'stretch', masks: [], maskId: '', cutEdge: cutEdgeDefaults() }, // cutEdge 6.1.6(cutedge.js) · shape rect|custom · fit ratio|fixed · fade off|soft|medium|strong — angle · cornerCut · scratch* 는 옛 값
 };
 
 DEFAULTS.userProfile = { ...structuredClone(DEFAULTS.profile), mode: 'none', side: 'auto', metaSide: 'auto' }; // auto = 말풍선이면 오른쪽(메신저처럼), 나머지 모양은 왼쪽
@@ -463,6 +464,8 @@ function tidyFlags(s) {
         // 3.5.4 퀵 리플라이 줄: x 가로 스크롤 · y 세로 스크롤(보이는 줄 1~4)
         if (!['x', 'y'].includes(s.chat.qrScroll)) s.chat.qrScroll = 'x';
         s.chat.qrFind = flag(s.chat.qrFind, true);
+        s.chat.qrFold = flag(s.chat.qrFold, true);     // 1.0.1 퀵 리플라이 줄 앞 접기 · 펴기 단추 (layout.js syncQrFold · css/35-qr-bar.css)
+        s.chat.qrFolded = flag(s.chat.qrFolded, false); // 1.0.1 접힌 상태 기억 (apply.js salty-qr-folded)
         s.chat.qrCtxNames = flag(s.chat.qrCtxNames, false);   // 7.9.7 하위 세트를 묶은 QR 의 ⋮ 자리에 세트 이름 (기본 ⋮ 만 — 제보: 미리보기와 달리 세트 이름이 이중으로 보였다)
         s.chat.personaTall = flag(s.chat.personaTall, false);
         s.chat.hideSendTextarea = flag(s.chat.hideSendTextarea, false); // 8.2.5 채팅 입력칸 숨기기 (단추 줄만 남김 · apply.js salty-send-textarea-off)
@@ -585,11 +588,14 @@ let memo = null;
 function tidyLogCopy(value) {
     const v = isObj(value) ? value : {};
     const id = x => typeof x === 'string' && /^[a-z0-9-]{1,24}$/i.test(x);
-    const custom = (Array.isArray(v.custom) ? v.custom : []).filter(c => isObj(c) && id(c.id) && typeof c.html === 'string' && c.html.length <= 60000).slice(0, 20)
-        .map(c => ({ id: c.id, name: typeof c.name === 'string' && c.name.trim() ? c.name.trim().slice(0, 40) : '내 글꾸', html: c.html,
+    const str = (x, n) => (typeof x === 'string' ? x.slice(0, n) : '');
+    // 1.0.1 글꾸 마트에서 받은 것은 html 대신 template(네 자리 틈 템플릿 · 가져올 때 검사) + 색 묶음 · 메시지 배치 · 꼬리 · 이모지
+    const custom = (Array.isArray(v.custom) ? v.custom : []).filter(c => isObj(c) && id(c.id) && (typeof c.template === 'string' ? c.template.length <= 65536 : typeof c.html === 'string' && c.html.length <= 60000)).slice(0, 20)
+        .map(c => ({ id: c.id, name: typeof c.name === 'string' && c.name.trim() ? c.name.trim().slice(0, 40) : '내 글꾸', html: str(c.html, 60000),
+            ...(typeof c.template === 'string' ? { template: c.template, colors: isObj(c.colors) ? c.colors : {}, messages: str(c.messages, 12) || 'box', tail: str(c.tail, 60), emoji: str(c.emoji, 8), ...(isObj(c.type) ? { type: c.type } : {}) } : {}),
             slot: c.slot === 'auto' ? 'auto' : Array.isArray(c.slot) && c.slot.length <= 64 && c.slot.every(n => Number.isInteger(n) && n >= 0 && n < 10000) ? c.slot : null }));
     const ids = (list, max = 24) => [...new Set((Array.isArray(list) ? list : []).filter(id))].slice(0, max);
-    return { on: v.on !== false, shape: id(v.shape) ? v.shape : 'card', palette: isPaletteId(v.palette) ? v.palette : '', category: id(v.category) ? v.category : 'basic', recent: ids(v.recent).slice(0, 5), fav: ids(v.fav, 48), custom };
+    return { on: v.on !== false, shape: id(v.shape) ? v.shape : 'card', palette: isPaletteId(v.palette) ? v.palette : '', category: id(v.category) ? v.category : 'basic', recent: ids(v.recent).slice(0, 5), fav: ids(v.fav, 96), custom, tagsOff: v.tagsOff === true };
 }
 export function invalidateSettings() { memo = null; }
 export const settingsStats = { tidy: 0 };   // 정리를 몇 번 했나 (시험 · 진단용)
@@ -769,7 +775,7 @@ export function saveSettings() {
 // 내 글꼴 · 본 공지 · 내 스타일 · 캐릭터 연결은 늘 남긴다 (입혀 둔 캐릭터 스타일 상태는 비움)
 const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools', 'captureTools'], library: ['frameLibrary', 'customPalettes', 'weatherImages'] };
 // 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS)은 '테마 모습' 초기화에 남긴다
-const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'searchAi', 'logCopy', 'sceneSound'];
+const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'promptFolders', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'searchAi', 'logCopy', 'sceneSound'];
 export function resetSettings(groups = { look: true }) {
     const ext = SillyTavern.getContext().extensionSettings;
     const old = ext[KEY] || {};
@@ -781,7 +787,7 @@ export function resetSettings(groups = { look: true }) {
         next.deviceLayouts = { on: old.deviceLayouts?.on === true, pc: {}, mobile: {} };
         // 5.2.3: chat 안의 동작 값과 고정 메시지(데이터)도 모습이 아니다 — 남긴다 (styles.js CHAT_BEHAVIOR 와 같은 목록 + QR 배치 · 고정)
         if (old.chat && typeof old.chat === 'object') {
-            for (const key of ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'hideSendTextarea', 'qrFind', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard']) {
+            for (const key of ['triangleFold', 'weatherAutoRest', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'hideSendTextarea', 'qrFind', 'qrFold', 'qrFolded', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard']) {
                 if (key in old.chat) next.chat[key] = structuredClone(old.chat[key]);
             }
         }

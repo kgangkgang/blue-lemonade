@@ -1,7 +1,7 @@
 /* 생성 파일 — tools/build-addon-css.mjs (애드온 창 밖 규칙만 · 전체는 style.css) */
 :root {
     --jj-on: var(--jj-on-color, var(--SmartThemeQuoteColor, #e18a24));
-    --jj-css-version: "1.4.3";
+    --jj-css-version: "1.4.4";
 }
 #jj-button {
     -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;

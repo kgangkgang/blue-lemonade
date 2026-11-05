@@ -1837,7 +1837,7 @@ body.salty .bwr_settings #bwr_fallback_field .bl-fb-note { color: var(--salty-mu
 /* direction/style.css */
 :root {
     --jj-on: var(--jj-on-color, var(--SmartThemeQuoteColor, #e18a24));
-    --jj-css-version: "1.4.3";
+    --jj-css-version: "1.4.4";
 }
 #jj-button {
     -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;

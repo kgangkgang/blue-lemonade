@@ -1,13 +1,14 @@
 import { tidyDecor, isPresetFrame } from './decor.js';
-export const FRAME_LIMIT = 12;
+export const FRAME_LIMIT = 30;   // 1.0.1: 12 → 30 (용량 상한은 그대로 12MB)
 const BYTE_LIMIT = 12 * 1024 * 1024;
-import { drawPreset, FRAME_PRESETS } from './frame-presets.js';
-export { FRAME_PRESETS };
+import { drawPreset, FRAME_PRESETS, PRESET_LABELS, PRESET_LABEL_MAX, retirePreset } from './frame-presets.js';
+export { FRAME_PRESETS, PRESET_LABELS, PRESET_LABEL_MAX };
 export function tidyFrameLibrary(s) {
     if (!Array.isArray(s.frameLibrary)) s.frameLibrary = [];
     let size = 0; const seen = new Set();
     s.frameLibrary = s.frameLibrary.filter(item => {
         if (!item || typeof item !== 'object' || typeof item.id !== 'string' || !/^[a-z\d-]{1,80}$/i.test(item.id) || seen.has(item.id) || seen.size >= FRAME_LIMIT) return false;
+        retirePreset(item.decor, true);   // 1.0.2 걷은 기본 프리셋 6종으로 저장한 액자는 그림 그대로 · 프리셋 표시만 떼요 (decor.js tidyDecor 보다 먼저)
         tidyDecor(item);
         if (!item.decor.art || !item.decor.mask) return false;
         size += item.decor.art.length + item.decor.mask.length;
@@ -42,4 +43,5 @@ export function refreshPreset(decor) {
     if (!FRAME_PRESETS.some(([id]) => id === decor.presetId)) return;
     const rendered = drawPreset(decor.presetId, decor);
     for (const key of ['art', 'mask', 'ratio', 'presetVersion', 'presetColor', 'presetAccent', 'frameWidth', 'frameHeight']) decor[key] = rendered[key];
+    if (rendered.presetLabel !== undefined) decor.presetLabel = rendered.presetLabel; else delete decor.presetLabel;   // 칩 글자는 칩이 있는 프리셋에만
 }
