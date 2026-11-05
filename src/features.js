@@ -71,6 +71,10 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     const promptFolders = on && s.usageMode !== 'extensions' && s.promptFolders?.on !== false && !restingFor('promptFolders');
     if (promptFolders || modules.promptfolders) onGate('drawer', () => load('promptfolders', './prompt-folders.js').then(m => m?.syncPromptFolders(promptFolders)), 'promptfolders');
     else onGate('drawer', () => {}, 'promptfolders');   // 쉼: 묵은 대기 덮기
+    // 1.0.2 채팅 정리
+    const co = on && s.usageMode !== 'extensions' && s.chatOrganizer?.on === true && !restingFor('chatOrganizer');
+    if (co || modules.chatorganizer) onGate('drawer', () => load('chatorganizer', './chat-organizer.js').then(m => m?.syncChatOrganizer(co)), 'chatorganizer');
+    else onGate('drawer', () => {}, 'chatorganizer');
     // 8.2.4 프롬프트 관리자 「Chat History」 줄 경고 △ 를 누르면 이유 · 숫자 · 해결 방법 (history-warning.js, 늘 켬 · 테마를 끄면 리스너를 뗀다)
     if (on || modules.historywarning) onGate('drawer', () => load('historywarning', './history-warning.js').then(m => m?.syncHistoryWarning(on)), 'historywarning');
     // 7.0.4 글꼴 설정과 상관없이 테마가 켜져 있으면 — 채팅 iframe 과일 상태창의 낱말 꺾임 막기 (fruit-type-runtime wrapCss)

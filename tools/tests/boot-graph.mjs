@@ -126,7 +126,8 @@ await test('시작 그래프 크기 상한 (모듈 수 · 바이트)', () => {
     // 1.0.1 QR 줄 접기 단추(layout.js syncQrFold · 설정 두 칸 · +2KB) — 660KB
     // 1.0.2 블루레몬에이드 제로(usage-mode.js zeroMode · zeroView · ZERO_LOOK 와 index.js · features.js · apply.js 의 문 · +3.3KB) — 664KB.
     //   제로를 고르면 시작 때 받는 모듈이 165 → 68개로 줄어요(tools/tests/zero-mode.mjs)
-    assert.ok(bytes <= 664 * 1024, `${bytes} 바이트`);
+    // 1.0.2 채팅 정리(기본 끔 — 기본값 한 줄 · features.js 문 세 줄 · ChatsPlus 감지 한 줄, 본체는 켤 때만 동적 import · +0.6KB) — 665KB
+    assert.ok(bytes <= 665 * 1024, `${bytes} 바이트`);
 });
 
 await test('9.0.2 부팅 2 · 3층 모듈은 시작 그래프 밖이에요 (첫 프레임 뒤 · 유휴 · 처음 쓸 때 받아요)', () => {

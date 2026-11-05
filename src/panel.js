@@ -1573,6 +1573,9 @@ function tabChat(s, sub) {
         ${cap('프롬프트 관리자')}<div class="salty-group">
             ${row('프롬프트 폴더', toggle('promptFolders.on', s.promptFolders?.on !== false), `프롬프트 목록 아래 도구 줄의 폴더 단추로 항목을 폴더로 묶어 접고 펼쳐요 · 머리 줄에서 켜진 수 · 토큰 합 · 모두 켜기 · 하나만 켜기(택1) · 구분선으로 자동 만들기 · 줄과 보내는 순서는 그대로이고 끌어 옮기면 놓인 자리의 폴더로 들어가요 · 폴더는 프리셋마다 따로 기억해요${restNote('promptFolders')}`)}
         </div>
+        ${cap('캐릭터 관리')}<div class="salty-group">
+            ${row('최근 채팅 · 채팅 폴더', toggle('chatOrganizer.on', s.chatOrganizer?.on === true), `캐릭터 관리 서랍 위에 「캐릭터 · 최근 채팅 · 폴더」 탭을 더해요 · 캐릭터를 넘나드는 최근 대화를 찾고 고정하고, 채팅을 폴더로 묶고(하위 폴더 3단), 여러 채팅을 골라 폴더로 옮기거나 지워요 · 지울 때는 두 번 물어요 · 켤 때만 불러와요${restNote('chatOrganizer')}`)}
+        </div>
         ${cap('로그 복사')}<div class="salty-group">
             ${row('로그 복사', toggle('logCopy.on', s.logCopy?.on !== false), '채팅에서 글을 끌어 고르면 뜨는 줄에 「로그 복사」 · 받는 쪽에 같은 글꼴이 없으면 비슷한 기본 글꼴로 보여요')}
         </div>

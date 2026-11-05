@@ -17,7 +17,10 @@
   }
   /* 캐릭터 서랍(폰): 위 규칙들이 왼쪽 여백을 --bl-sbw 로 주고 오른쪽은 스크롤바 홈으로 맞추던 구조라, 홈이 0 이 되자 여백이 통째로 사라졌다
      (좌우 여백이 사라지던 것) → 양쪽 6px 로 못 박음. 서랍 6 + 목록 6 = 카드 좌우 12px, 전과 같은 값 */
-  body.salty #right-nav-panel:not(#salty-none) > .scrollableInner,
+  body.salty #right-nav-panel:not(#salty-none) .scrollableInner:where(:not(.scrollableInner .scrollableInner)) {   /* 1.0.2 목록을 다른 칸으로 옮겨도(09 참고) */
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
   body.salty #right-nav-panel:not(#salty-none) #form_create,
   body.salty #right-nav-panel:not(#salty-none) #rm_print_characters_block {
     padding-left: 6px !important;

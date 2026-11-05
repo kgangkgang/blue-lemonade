@@ -26,6 +26,43 @@ export async function optionEffect(content, crypto = globalThis.crypto, identifi
     return {text:'과일 · 야한 과일 · 청과 프리셋의 표준 항목 목록에 없는 항목이에요(직접 만들었거나 다른 프리셋에서 가져온 항목). 이름만으로 효과를 추측하지 않도록 현재 원문을 함께 확인해 주세요.',verified:false};
 }
 
+// 11-05 설명 창 본문 나누기: 고르기 칸 설명은 선택지마다 한 문단(「이름: 설명」)이에요. 선택지마다 같은 문장(「마음은 하나만 켭니다.」 같은 것)은
+// 맨 위에 한 번만 두고, 각 선택지는 이름(콜론까지)을 굵게 · 설명은 보통 굵기로 이어 써요. items 를 주면 그대로, 없으면 빈 줄로 나뉜 「이름: 설명」 문단을 읽어요.
+const helpSentences = text => String(text || '').split(/(?<=[.!?。])\s+/u).map(s => s.trim()).filter(Boolean);
+export function splitOptionHelp(text, items) {
+    let list = Array.isArray(items) && items.length
+        ? items.map(x => ({label:String(x?.label || '').trim(), text:String(x?.text || '').trim()}))
+        : String(text || '').split(/\n\s*\n/).map(part => {
+            const m = /^([^:\n]{1,40}?):\s+([\s\S]+)$/u.exec(part.trim());
+            return m && !/[.!?。]/u.test(m[1]) ? {label:m[1].trim(), text:m[2].trim()} : {label:'', text:part.trim()};
+        });
+    list = list.filter(x => x.label || x.text);
+    const named = list.filter(x => x.label);
+    let common = '';
+    if (named.length >= 2) {
+        const shared = helpSentences(named[0].text).filter(s => named.every(x => helpSentences(x.text).includes(s)));
+        if (shared.length) {
+            common = shared.join(' ');
+            list = list.map(x => x.label ? {...x, text:helpSentences(x.text).filter(s => !shared.includes(s)).join(' ')} : x);
+        }
+    }
+    return {common, items:list};
+}
+function renderOptionHelp(doc, text, items) {
+    const {common, items:list} = splitOptionHelp(text, items);
+    const box = doc.createElement('div');box.className = 'bl-fruit-option-desc';
+    const para = (value, className) => { const p = doc.createElement('p'); if (className) p.className = className; if (value) p.textContent = value; return p; };
+    if (common) box.append(para(common, 'bl-fruit-option-common'));
+    for (const item of list) {
+        const p = para('', item.label ? 'bl-fruit-option-item' : '');
+        if (item.label) { const name = doc.createElement('strong'); name.textContent = `${item.label}:`; p.append(name); if (item.text) p.append(` ${item.text}`); }
+        else p.textContent = item.text;
+        box.append(p);
+    }
+    if (!box.childElementCount) box.append(para(String(text || '')));
+    return box;
+}
+
 /** Hold to inspect; normal taps retain their original behavior. No writes or requests. */
 export function installFruitOptionHelp(doc = document, host = window, config = {}) {
     const scope = config.scope || SCOPE;
@@ -57,14 +94,14 @@ export function installFruitOptionHelp(doc = document, host = window, config = {
         return null;
     }
     function close() { const old=modal;modal=null;if(old){old.close?.();old.remove();} }
-    function show(target, title, text, original, verified, baseline = false) {
+    function show(target, title, text, original, verified, baseline = false, items) {
         if (stopped || !target.isConnected) return;
         close();
         const dialog = doc.createElement('dialog');dialog.className='bl-fruit-option-help';dialog.setAttribute('aria-label',config.label || '과일 옵션 설명');
         const head=doc.createElement('header'),heading=doc.createElement('h3'),button=doc.createElement('button');
         heading.textContent=title || '옵션 설명';button.type='button';button.textContent='닫기';button.setAttribute('aria-label','옵션 설명 닫기');
         button.addEventListener('click',close);head.append(heading,button);
-        const description=doc.createElement('p');description.textContent=text;
+        const description=renderOptionHelp(doc,text,items);
         const note=doc.createElement('p');note.className='bl-fruit-option-note';note.textContent=baseline?'기본 옵션의 효과 설명이에요. 현재 내용이 확인한 기본판과 달라 실제 효과가 다를 수 있어요. 아래에서 수정된 원문을 확인할 수 있어요.':verified?'이 옵션이 더하는 지시의 뜻이에요. 끈다고 반대 행동을 강제하지는 않으며, 다른 옵션과 모델에 따라 실제 응답은 달라질 수 있어요.':'원문은 이 기기에서만 읽어요. 자동 번역 API를 호출하지 않아요.';
         dialog.append(head,description,note);
         if (original !== undefined) {
@@ -81,7 +118,7 @@ export function installFruitOptionHelp(doc = document, host = window, config = {
             if (config.describe) {
                 const detail = await config.describe(target);
                 if (stopped || ticket !== sequence || !target.isConnected || !detail) return;
-                show(target,detail.title,detail.text,detail.original,detail.verified,detail.baseline);return;
+                show(target,detail.title,detail.text,detail.original,detail.verified,detail.baseline,detail.items);return;
             }
             const preset=getPreset(), prompt=findPrompt(target,preset);
             const title=target.querySelector('span')?.textContent?.trim() || target.getAttribute('aria-label') || target.textContent.trim();
@@ -138,7 +175,7 @@ export function installFruitOptionHelp(doc = document, host = window, config = {
     const style=doc.createElement('style');style.textContent=`:root{--bl-fruit-help-fallback-0008:#0008;--bl-fruit-help-fallback-222:#222;--bl-fruit-help-fallback-777:#777;--bl-fruit-help-fallback-7773:#7773;--bl-fruit-help-fallback-ddd:#ddd;}
 
 .bl-fruit-option-help{box-sizing:border-box;width:min(520px,calc(100vw - 24px));max-height:calc(100dvh - 32px);margin:auto;padding:18px;border:1px solid var(--SmartThemeBorderColor,var(--bl-fruit-help-fallback-777));border-radius:12px;background:var(--salty-bg,var(--SmartThemeBlurTintColor,var(--bl-fruit-help-fallback-222)));color:var(--salty-text,var(--SmartThemeBodyColor,var(--bl-fruit-help-fallback-ddd)));font:inherit;line-height:1.55;overflow:auto;text-align:left}
-.bl-fruit-option-help::backdrop{background:var(--bl-fruit-help-fallback-0008)}.bl-fruit-option-help header{display:flex;align-items:flex-start;gap:12px}.bl-fruit-option-help h3{flex:1;min-width:0;margin:0;font-size:1em;word-break:keep-all;overflow-wrap:anywhere}.bl-fruit-option-help button{flex:none;min-height:36px;padding:6px 12px;font:inherit;color:inherit;background:var(--bl-fill-control,var(--bl-fruit-help-fallback-7773));border:0;border-radius:8px}.bl-fruit-option-help p{margin:14px 0;word-break:keep-all;overflow-wrap:anywhere}.bl-fruit-option-help .bl-fruit-option-note,.bl-fruit-option-help small{font-size:.88em;opacity:.8}.bl-fruit-option-help summary{cursor:pointer;min-height:36px;padding-block:6px}.bl-fruit-option-help pre{font:inherit;font-size:.88em;white-space:pre-wrap;overflow-wrap:anywhere;max-height:35dvh;overflow:auto}.bl-fruit-option-help small{display:block;margin-top:14px}`;
+.bl-fruit-option-help::backdrop{background:var(--bl-fruit-help-fallback-0008)}.bl-fruit-option-help header{display:flex;align-items:flex-start;gap:12px}.bl-fruit-option-help h3{flex:1;min-width:0;margin:0;font-size:1em;word-break:keep-all;overflow-wrap:anywhere}.bl-fruit-option-help button{flex:none;min-height:36px;padding:6px 12px;font:inherit;color:inherit;background:var(--bl-fill-control,var(--bl-fruit-help-fallback-7773));border:0;border-radius:8px}.bl-fruit-option-help .bl-fruit-option-desc{margin:14px 0}.bl-fruit-option-help .bl-fruit-option-desc>p{margin:0;white-space:pre-line}.bl-fruit-option-help .bl-fruit-option-desc>p+p{margin-top:10px}.bl-fruit-option-help .bl-fruit-option-desc strong{font-weight:700}.bl-fruit-option-help p{margin:14px 0;word-break:keep-all;overflow-wrap:anywhere}.bl-fruit-option-help .bl-fruit-option-note,.bl-fruit-option-help small{font-size:.88em;opacity:.8}.bl-fruit-option-help summary{cursor:pointer;min-height:36px;padding-block:6px}.bl-fruit-option-help pre{font:inherit;font-size:.88em;white-space:pre-wrap;overflow-wrap:anywhere;max-height:35dvh;overflow:auto}.bl-fruit-option-help small{display:block;margin-top:14px}`;
     doc.head.append(style);
     return()=>{if(stopped)return;stopped=true;sequence++;cancel();suppress=null;for(const [name,fn] of listeners)doc.removeEventListener(name,fn,true);host.removeEventListener('blur',cancel);close();style.remove();};
 }

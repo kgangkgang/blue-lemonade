@@ -20,9 +20,17 @@ function deusOrder(preset) {
 // V3 표지 = 관계 택1 · 상태창 범위 택1 · 대사 소리 · 친구들 택1 (둘 이상 있으면 V3). 2.5 지원은 그대로 남겨요.
 const DEUS_QUICK_V3_SIGNS = ['cb1fa811-516f-4a61-aa93-092bb94d5ba3','0f47d870-2bb8-4c25-b6fe-c3d4c9b4e626','279618e4-d961-489f-9d2b-56503e0d6067','8b648af7-db80-4402-9536-58a5d82a6fe2'];
 const DEUS_QUICK_VARIANTS = [
-  { key:'v3', label:'V3', title:'데우스 엑스 마키나', groups:DEUS_QUICK_GROUPS_V3, toggles:DEUS_QUICK_TOGGLES_V3, version: v => /^3(?:\.\d+)?$/.test(v) },
-  { key:'2.5', label:'2.5', title:'데우스 엑스 마키나', groups:DEUS_QUICK_GROUPS, toggles:DEUS_QUICK_TOGGLES, version: v => v === '2.5' }
+  { key:'v3', label:'V3', title:'데우스 엑스 마키나', mark:'deus', groups:DEUS_QUICK_GROUPS_V3, toggles:DEUS_QUICK_TOGGLES_V3, version: v => /^3(?:\.\d+)?$/.test(v) },
+  { key:'2.5', label:'2.5', title:'데우스 엑스 마키나', mark:'deus', groups:DEUS_QUICK_GROUPS, toggles:DEUS_QUICK_TOGGLES, version: v => v === '2.5' }
 ];
+// 11-05 입력줄 단추 · 창 머리 표지는 원작 표시를 따라요: 데우스 = 시작 표시 「🔹DEUS EX MACHINA V3🔹」의 🔹(설정 제목 fa-diamond 와 같은 모양),
+// 솔라 V4 Flame = 원작 안내(Pyrxpia/sola-hub README)의 「🔥 Flame V4」, 솔라 킨들링 = 같은 안내의 「🧡 Kindling V2」를 차분한 선(가는 선 · 흐린 글자색)으로.
+const QUICK_MARKS = {
+  deus: '<path d="M12 2.8 21.2 12 12 21.2 2.8 12Z"/><path class="dq-mark-fill" d="M12 8.4 15.6 12 12 15.6 8.4 12Z"/>',
+  flame: '<path d="M12 2.6c.4 2.9 2.2 4.6 3.9 6.5 1.6 1.8 2.6 3.6 2.6 5.8a6.5 6.5 0 0 1-13 0c0-2.4 1.1-4.3 2.7-5.8.3 1.5.9 2.6 2 3.3-.2-3.4.6-6.8 1.8-9.8Z"/><path d="M12 21.4c-1.8 0-3-1.3-3-3 0-1.6 1-2.7 2.2-3.8.3 1 .8 1.6 1.5 2 .2-1 .7-1.8 1.4-2.4.8 1 1.3 2.2 1.3 3.5 0 2.2-1.5 3.7-3.4 3.7Z"/>',
+  kindling: '<path d="M12 19.8c-.4 0-7.6-4.3-7.6-9.9A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.6 2.5c0 5.6-7.2 9.9-7.6 9.9Z"/>'
+};
+const quickMarkSvg = mark => `<svg viewBox="0 0 24 24" aria-hidden="true" data-mark="${QUICK_MARKS[mark] ? mark : 'deus'}">${QUICK_MARKS[mark] || QUICK_MARKS.deus}</svg>`;
 // 시작 표시에 판 번호(V2.3 · V2.50 · V4 …)가 적혀 있으면 아는 판일 때만 받아요. 번호가 없으면 구조로만 판단해요.
 const deusNamedVersion = name => (String(name || '').match(/(?:^|[^A-Za-z])V\s?(\d+(?:\.\d+)*)(?![\d.])/i) || [])[1] || '';
 function deusVariant(preset) {
@@ -152,7 +160,7 @@ const solaText = value => String(value || '').replace(/\{\{user\}\}/gi,'내 캐�
 function solaClean(name) {
   const ko = solaKoPick(name);
   const text = ko && !solaPick(name) ? ko[2] : String(name || '');
-  return solaText(text).normalize('NFC').replace(/\[\s*(?:PICK|택)\s*1\s*:[^\]]*\]/giu,' ').replace(/[━═]+/gu,' ')
+  return solaText(text).normalize('NFC').replace(/\[\s*(?:PICK|택)\s*1\s*:[^\]]*\]/giu,' ').replace(/\[\s*(?:OPTIONAL|선택)\s*\]/giu,' ').replace(/[━═]+/gu,' ')
     .replace(/^[^\p{L}\p{N}({]+/u,'').replace(/[^\p{L}\p{N})\]]+$/u,'').replace(/\s{2,}/g,' ').trim();
 }
 const solaSectionOf = name => { const hit = SOLA_SECTIONS.find(([re]) => re.test(String(name).replace(/^[^\p{L}\p{N}]*\d*\.?\s*/u,''))); return hit ? { tab:hit[1], card:hit[2] } : { tab:'추가', card:'', unknown:true }; };
@@ -183,23 +191,38 @@ function solaMatches(preset) {
   const listed = order.map(x => names.get(x.identifier) || '');
   return listed.filter(solaHeader).length >= 3 && listed.filter(name => /\bSola\b|솔라/i.test(name)).length >= 2;
 }
+// 11-05 솔라 킨들링(원작 「🧡 Kindling V2」): 구역 머리 없이 블록 17개가 바로 지시문이라 솔라 V4 규칙(구역 머리 3개)에 안 걸려요.
+// 원작 블록 이름(영어 · 한국어 표시 이름) 다섯 가운데 넷 이상 + 솔라 이름이 있으면 킨들링이에요. 빠른 설정에는 원작이 [OPTIONAL] 로 표시한 항목 ·
+// 택1 묶음 · 블루레몬에이드가 더한 선택 항목(bl-kindling-…)만 보여요. 맹세 · 번개 검토 · 시점 같은 뼈대는 프롬프트 관리자에서만 바꿔요.
+const KINDLING_NAMES = [/\bOath\b|맹세/i, /Lightning Review|번개 검토/i, /Feeling Engine|감정 엔진/i, /Sola Easel|솔라의 이젤/i, /Post History|대화 기록 뒤 지시/i];
+const KINDLING_TABS = [[/Language|언어/i,'진행'],[/Colou?r|색상|Header|장면 머리|Feeling|감정 엔진|Easel|이젤|Inner|속마음/i,'표현'],[/Romantic|로맨스/i,'친밀'],[/Therapy|상담사|Speech|말투|대사/i,'문체']];
+function kindlingMatches(preset) {
+  const prompts = preset?.prompts, order = deusOrder(preset);
+  if (!Array.isArray(prompts) || !order || new Set(prompts.map(x => x.identifier)).size !== prompts.length) return false;
+  const names = new Map(prompts.map(x => [x.identifier, String(x.name || '')]));
+  const listed = order.map(x => names.get(x.identifier) || '');
+  return KINDLING_NAMES.filter(re => listed.some(name => re.test(name))).length >= 4 && listed.some(name => /\bSola\b|솔라/i.test(name));
+}
+const kindlingTab = name => KINDLING_TABS.find(([re]) => re.test(name))?.[1] || '추가';
 /** 지금 프리셋 → 솔라 빠른 설정 지도. 같은 이름 · 순서 · 묶음이면 같은 객체(저장본 · 화면 값 비교용). */
 const solaCache = new Map();
 function solaVariant(preset) {
-  if (!solaMatches(preset)) return null;
+  const kind = solaMatches(preset) ? 'flame' : kindlingMatches(preset) ? 'kindling' : '';
+  if (!kind) return null;
   const order = deusOrder(preset), byId = new Map(preset.prompts.map(x => [x.identifier, x]));
   const metadata = preset.extensions?.blPromptChoices;
-  const signature = JSON.stringify([solaDictionaryRevision, order.map(x => [x.identifier, String(byId.get(x.identifier)?.name || ''), !!byId.get(x.identifier)?.marker]), metadata || null]);
+  const signature = JSON.stringify([kind, solaDictionaryRevision, order.map(x => [x.identifier, String(byId.get(x.identifier)?.name || ''), !!byId.get(x.identifier)?.marker]), metadata || null]);
   if (solaCache.has(signature)) return solaCache.get(signature);
-  const variant = solaMap(preset.prompts, order, metadata);
+  const variant = solaMap(preset.prompts, order, metadata, kind);
   variant.signature = signature;
   if (solaCache.size > 6) solaCache.delete(solaCache.keys().next().value);
   solaCache.set(signature, variant);
   return variant;
 }
-function solaMap(prompts, order, metadata) {
+function solaMap(prompts, order, metadata, kind = 'flame') {
   const byId = new Map(prompts.map(x => [x.identifier, x]));
-  const rows = [];
+  const rows = [], kindling = kind === 'kindling';
+  const chosen = kindling ? new Set(solaMetaGroups(prompts, order, metadata).flatMap(g => g.ids)) : null;
   let section = { tab:'추가', card:'', unknown:true, header:'' }, run = null;
   // 1) 순서대로 훑어 구역 · 쓸 수 있는 항목 · 이름 규칙 묶음을 모아요.
   const ruleGroups = new Map(); // key → { label, ids }
@@ -207,7 +230,11 @@ function solaMap(prompts, order, metadata) {
   for (const entry of order) {
     const prompt = byId.get(entry.identifier); if (!prompt) continue;
     const name = String(prompt.name || '');
-    if (solaHeader(name)) { section = { ...solaSectionOf(name), header:prompt.identifier }; run = null; continue; }
+    if (!kindling && solaHeader(name)) { section = { ...solaSectionOf(name), header:prompt.identifier }; run = null; continue; }
+    if (kindling) {
+      if (!(chosen.has(prompt.identifier) || /\[\s*(?:OPTIONAL|선택)\s*\]/i.test(name) || solaKoPick(name) || String(prompt.identifier).startsWith('bl-kindling-'))) continue;
+      section = { tab:kindlingTab(name), card:'', header:'' };
+    }
     if (!section.tab || prompt.marker || SOLA_BUILTINS.has(prompt.identifier) || solaLocked(name) || !name.trim()) continue;
     const row = { id:prompt.identifier, name, tab:section.tab, card:section.card, unknown:!!section.unknown, header:section.header };
     rows.push(row);
@@ -243,17 +270,20 @@ function solaMap(prompts, order, metadata) {
   for (const x of singles) { if (!cardsByTab.has(x.tab)) cardsByTab.set(x.tab, new Set()); cardsByTab.get(x.tab).add(x.unknown ? '' : x.card); }
   const toggles = singles.map(x => { const card = x.unknown || (cardsByTab.get(x.tab)?.size || 0) < 2 ? '' : x.card; return { id:x.id, tab:x.tab, label:solaLabel(x.id, x.name), ...(card ? { card } : {}) }; });
   const tabs = SOLA_TABS.filter(tab => groups.some(g => g.tab === tab) || toggles.some(t => t.tab === tab));
-  return { key:'sola', label:'', title:'솔라', groups, toggles, tabs };
+  return { key:'sola', kind, mark:kind, label:'', title:kindling ? '솔라 킨들링' : '솔라', groups, toggles, tabs };
 }
 /** 길게 눌러 효과 보기: 사전의 짧은 설명(블루레몬에이드가 쓴 글) + 지금 프리셋 원문(이 기기에서 읽기만). */
 function solaDescribe(key, preset) {
   const variant = solaVariant(preset); if (!variant) return null;
   const group = variant.groups.find(x => x.key === key), toggle = variant.toggles.find(x => x.id === key);
   if (!group && !toggle) return null;
-  const rows = (group ? group.options : [toggle]).map(item => { const prompt = preset.prompts.find(p => p.identifier === item.id); return { label:item.label, prompt, desc:solaText(solaEntry(item.id, prompt?.name)?.desc || '') }; }).filter(x => x.prompt);
+  // 사전에 없는 항목은 본문 맨 앞의 도움말 주석({{// 도움말: …}} · 모델에는 안 가요)을 설명으로 써요 — 킨들링에 더한 선택 항목이 이 꼴이에요.
+  const helpNote = content => (String(content || '').match(/^\s*\{\{\/\/\s*도움말\s*:\s*([\s\S]*?)\}\}/u) || [])[1]?.replace(/\s+/g,' ').trim() || '';
+  const rows = (group ? group.options : [toggle]).map(item => { const prompt = preset.prompts.find(p => p.identifier === item.id); return { label:item.label, prompt, desc:solaText(solaEntry(item.id, prompt?.name)?.desc || helpNote(prompt?.content)) }; }).filter(x => x.prompt);
   if (!rows.length) return null;
   const missing = '이 항목의 설명이 사전에 없어요. 아래 현재 원문을 확인해 주세요.';
   return { title:group?.label || toggle.label, text:group ? rows.map(r => `${r.label}: ${r.desc || missing}`).join('\n\n') : rows[0].desc || missing,
+    items:group ? rows.map(r => ({ label:r.label, text:r.desc || missing })) : undefined,
     original:rows.map(r => `${r.label}\n${r.prompt.content || ''}`).join('\n\n'), verified:rows.every(r => r.desc) };
 }
 const quickVariant = preset => deusVariant(preset) || solaVariant(preset);
@@ -270,11 +300,18 @@ const solaBadge = name => { const n = (String(name || '').match(/(?:\bSola|솔�
   let stopped = false, panel = null, controller = null, loading = null, tab = '진행', tick = 0, frame = 0, signature = '', status = '', eventCleanup = [], tabObserver = null, entryAvailable = false, helpOpen = false, pendingFocus = null;
   const stopOptionHelp = BlueLemonade.deusOptionHelp?.(() => controller?.read?.()?.live, key => { let live = null; try { live = controller?.read?.()?.live; } catch { return null; } return live ? solaDescribe(key, live) : null; });
   // 입력줄 단추 · 창 제목은 지금 프리셋을 따라요(데우스 엑스 마키나 · 솔라). 둘 다 아니면 단추가 숨어요.
-  let entryTitle = '데우스 엑스 마키나', dictionaryLoading = null;
+  let entryTitle = '데우스 엑스 마키나', entryMark = 'deus', dictionaryLoading = null;
   const button = doc.createElement('button');
   button.type = 'button'; button.id = 'bl-deus-quick'; button.className = 'interactable';
   button.title = '데우스 엑스 마키나 빠른 설정'; button.setAttribute('aria-label', '데우스 엑스 마키나 빠른 설정'); button.setAttribute('aria-expanded', 'false'); button.setAttribute('aria-haspopup', 'dialog'); button.setAttribute('aria-controls', 'bl-deus-popover');
-  button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.8 6.6L22 12l-7.2 3.4L12 22l-2.8-6.6L2 12l7.2-3.4Z"/><path d="m8 12 4-4 4 4-4 4Z"/></svg>';
+  button.innerHTML = quickMarkSvg(entryMark); button.dataset.mark = entryMark;
+  // 단추 · 창 머리 표지를 지금 프리셋 원작 표시로 바꿔요(이름표 span 은 그대로 둬요).
+  function syncMark(mark) {
+    if (!QUICK_MARKS[mark] || mark === entryMark) return; entryMark = mark; button.dataset.mark = mark;
+    const old = button.querySelector('svg'), tmp = doc.createElement('span'); tmp.innerHTML = quickMarkSvg(mark);
+    if (old) old.replaceWith(tmp.firstChild); else button.prepend(tmp.firstChild);
+    const head = panel?.querySelector('.dq-head .dq-mark'); if (head) { head.innerHTML = quickMarkSvg(mark); head.dataset.mark = mark; }
+  }
   // The entry stays an icon until the user names it in 프롬프트 → 데우스; the name is display only.
   const entryLabel = doc.createElement('span'); entryLabel.className = 'dq-entry-label';
   function syncName() {
@@ -292,13 +329,13 @@ const solaBadge = name => { const n = (String(name || '').match(/(?:\bSola|솔�
 
   #bl-deus-quick{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:var(--jj-icon-size,32px);height:var(--jj-icon-size,32px);padding:4px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--SmartThemeBodyColor,var(--bl-deus-quick-fallback-ddd));cursor:pointer}
   #bl-deus-quick.dq-name-only svg{display:none}
-  #bl-deus-quick svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round}#bl-deus-quick[aria-expanded=true]{color:var(--SmartThemeQuoteColor,var(--bl-deus-quick-fallback-8dcfff))}
+  #bl-deus-quick svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round}#bl-deus-quick svg .dq-mark-fill,#bl-deus-popover .dq-mark .dq-mark-fill{fill:currentColor}#bl-deus-quick[data-mark=kindling]:not([aria-expanded=true]){color:var(--salty-muted,var(--SmartThemeBodyColor,var(--bl-deus-quick-fallback-ddd)))}#bl-deus-quick[data-mark=kindling] svg,#bl-deus-popover .dq-mark[data-mark=kindling] svg{stroke-width:1.4}#bl-deus-quick[aria-expanded=true]{color:var(--SmartThemeQuoteColor,var(--bl-deus-quick-fallback-8dcfff))}
   #bl-deus-quick .dq-entry-label{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--salty-ui-size,var(--mainFontSize,16px));line-height:1.3}
   body #bl-deus-quick.dq-has-name{border-color:var(--SmartThemeBorderColor,var(--bl-deus-quick-fallback-8884));background:var(--bl-fill-control,var(--salty-fill-field,var(--bl-deus-quick-fallback-8882)))}#bl-deus-quick.dq-has-name{width:auto;max-width:min(12em,45vw);flex:0 1 auto;gap:5px;padding:4px 8px;border-radius:8px}#bl-deus-quick.dq-has-name svg{flex:0 0 1.1em;width:1.1em;height:1.1em}
   #bl-deus-popover{position:fixed;inset:auto;margin:0;left:var(--dq-left);top:var(--dq-top);transform:translateY(-100%);width:var(--dq-width);max-width:calc(100vw - 16px);max-height:min(58dvh,500px,var(--dq-height));display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;z-index:31020;padding:0;border:1px solid var(--SmartThemeBorderColor,var(--bl-deus-quick-fallback-59606b));border-radius:14px;background:var(--SmartThemeBlurTintColor,var(--bl-deus-quick-fallback-25272d));color:var(--SmartThemeBodyColor,var(--bl-deus-quick-fallback-eee));box-shadow:none;font:inherit;backdrop-filter:none;text-align:start}
   #bl-deus-popover{container:bl-deus-quick/inline-size}
   #bl-deus-popover *{box-sizing:border-box;min-width:0}#bl-deus-popover button,#bl-deus-popover select{font:inherit;color:inherit;max-width:100%}#bl-deus-popover button{cursor:pointer}
-  #bl-deus-popover .dq-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:10px 12px;flex:none}#bl-deus-popover .dq-head strong{white-space:normal;word-break:keep-all;overflow-wrap:anywhere;line-height:1.35}#bl-deus-popover .dq-version[hidden]{display:none}#bl-deus-popover .dq-version{display:inline-block;vertical-align:middle;margin-inline-start:6px;font-size:.75em;font-weight:normal;background:var(--bl-deus-quick-fallback-ffffff0a);border-radius:6px;padding:1px 5px}#bl-deus-popover .dq-close{border:0;background:transparent;min-width:36px;min-height:36px;border-radius:8px;font-size:1.2em;line-height:1;padding:4px}
+  #bl-deus-popover .dq-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:10px 12px;flex:none}#bl-deus-popover .dq-head strong{white-space:normal;word-break:keep-all;overflow-wrap:anywhere;line-height:1.35}#bl-deus-popover .dq-version[hidden]{display:none}#bl-deus-popover .dq-mark{display:inline-flex;vertical-align:-.15em;width:1.1em;height:1.1em;margin-inline-end:6px;color:var(--salty-accent-ink,var(--SmartThemeQuoteColor,var(--bl-deus-quick-fallback-8dcfff)))}#bl-deus-popover .dq-mark svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}#bl-deus-popover .dq-version{display:inline-block;vertical-align:middle;margin-inline-start:6px;font-size:.75em;font-weight:normal;background:var(--bl-deus-quick-fallback-ffffff0a);border-radius:6px;padding:1px 5px}#bl-deus-popover .dq-close{border:0;background:transparent;min-width:36px;min-height:36px;border-radius:8px;font-size:1.2em;line-height:1;padding:4px}
   #bl-deus-popover .dq-help-button{display:inline-flex;align-items:center;justify-content:center;width:max(28px,1em);height:max(28px,1em);padding:0;border:0;background:transparent;color:var(--salty-accent-ink,var(--SmartThemeQuoteColor,var(--bl-deus-quick-fallback-8dcfff)));font-size:inherit;line-height:1}#bl-deus-popover .dq-help-glyph{display:inline-flex;align-items:center;justify-content:center;width:1em;height:1em;border:1px solid currentColor;border-radius:50%;font:inherit;line-height:1}
   #bl-deus-popover .dq-help{padding:10px;line-height:1.6;overflow-wrap:anywhere}#bl-deus-popover .dq-help h3{font:inherit;font-weight:650;line-height:1.5;margin:0 0 6px}#bl-deus-popover .dq-help p{font:inherit;line-height:inherit;margin:0 0 8px}#bl-deus-popover .dq-help small{display:block;font-size:.85em;line-height:1.5;opacity:.8;margin:0 0 8px}#bl-deus-popover .dq-help summary{display:flex;gap:8px;align-items:center;min-height:36px;padding:6px 0;line-height:1.5}#bl-deus-popover .dq-help details{border-top:1px solid var(--SmartThemeBorderColor,var(--bl-deus-quick-fallback-59606b));padding-top:4px}#bl-deus-popover .dq-help-links{display:flex;flex-wrap:wrap;gap:8px 12px;font-size:.85em;line-height:1.5}#bl-deus-popover .dq-help a{color:var(--salty-accent-ink,var(--SmartThemeQuoteColor,var(--bl-deus-quick-fallback-8dcfff)));text-decoration:underline;text-underline-offset:2px}
   #bl-deus-popover .dq-tabs{display:flex;flex-wrap:nowrap;gap:6px;padding:0 10px 8px;flex:none;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scroll-padding-inline:10px;scrollbar-width:thin}
@@ -332,7 +369,7 @@ const solaBadge = name => { const n = (String(name || '').match(/(?:\bSola|솔�
     syncName();
     const wasAvailable = entryAvailable;
     try { entryAvailable = controller?.isAvailable() === true || (wasAvailable && controller?.isPendingTarget() === true); } catch { entryAvailable = false; }
-    if (entryAvailable) { try { const title = controller?.variant?.()?.title; if (title && title !== entryTitle) { entryTitle = title; syncName(); } } catch {} mount(); }
+    if (entryAvailable) { try { const v = controller?.variant?.(), title = v?.title; if (title && title !== entryTitle) { entryTitle = title; syncName(); } syncMark(v?.mark); } catch {} mount(); }
     else { button.remove(); if (wasAvailable) close(); }
   }
   function scheduleRefresh() {
@@ -381,12 +418,20 @@ const solaBadge = name => { const n = (String(name || '').match(/(?:\bSola|솔�
     '친밀': ['관계 · 친밀한 장면의 묘사 항목을 켜고 꺼요. 노골적인 항목은 성인 이야기에서만 켜 주세요.'],
     '추가': ['상태 트래커 · HUD · 검토처럼 본문 밖에 붙는 항목을 켜고 꺼요.', '이름 규칙으로 자리를 못 찾은 항목도 여기 「개별 설정」에 모여요.']
   };
+  // 솔라 킨들링 탭 안내 — 블루레몬에이드가 쓴 짧은 글이에요. 킨들링은 [선택] 항목 · 언어 택1 · 블루레몬에이드가 더한 항목만 여기 보여요.
+  const helpCopyKindling = {
+    '진행': ['출력 언어는 서술과 대사의 언어를 하나 골라요.'],
+    '문체': ['대사 말투에 붙는 규칙을 켜고 꺼요.'],
+    '표현': ['대사 색 · 속마음 · 장면 머리 · 감정 엔진 · 이젤처럼 화면에 보이는 항목을 켜고 꺼요.'],
+    '친밀': ['친밀한 긴장 · 접촉 · 구애 묘사를 켜고 꺼요.'],
+    '추가': ['본문 밖에서 거드는 선택 항목을 켜고 꺼요.', '맹세 · 번개 검토 · 시점 같은 킨들링의 뼈대는 프롬프트 관리자에서만 바꿔요.']
+  };
   function helpCard(expanded) {
     const sola = variant?.key === 'sola';
     const card = node('section',null,'dq-card dq-help'); card.id = 'bl-deus-help'; card.setAttribute('aria-labelledby','bl-deus-help-title');
     const title = node('h3',`${tab} 도움말`); title.id = 'bl-deus-help-title'; title.tabIndex = -1;
     card.append(title,node('small',sola ? '블루레몬에이드가 쓴 안내 · 솔라 프리셋은 테마에 들어 있지 않아요' : '원작 안내 요약 · lsennn'));
-    for (const text of sola ? helpCopySola[tab] || [] : (variant?.key === 'v3' && helpCopyV3[tab]) || helpCopy[tab] || []) card.append(node('p',text));
+    for (const text of sola ? (variant?.kind === 'kindling' ? helpCopyKindling : helpCopySola)[tab] || [] : (variant?.key === 'v3' && helpCopyV3[tab]) || helpCopy[tab] || []) card.append(node('p',text));
     const details = node('details'); details.dataset.section = 'help-basics'; details.open = expanded.has('help-basics');
     details.append(node('summary','빠른 설정 쓰는 법'),node('small','블루레몬에이드 동작 안내'),node('p',`선택하면 현재 ${sola ? '솔라' : '데우스'} 프리셋에 바로 저장돼요. 선택 목록은 하나만, 개별 설정은 여러 개 켤 수 있어요.`),node('p','본문을 수정한 채 저장하지 않았다면 먼저 본체에서 프리셋을 저장해 주세요. 이 창은 API 연결이나 모델을 바꾸지 않아요.'));
     if (sola) { card.append(details,node('small','항목 이름 · 묶음은 지금 프리셋에서 읽고, 설명은 블루레몬에이드 사전에서 가져와요.')); return card; }
@@ -415,7 +460,9 @@ const solaBadge = name => { const n = (String(name || '').match(/(?:\bSola|솔�
     if (!names.includes(tab)) tab = '진행';
     const badge = panel.querySelector('.dq-version'), label = current?.badge ?? current?.variant?.label ?? '';
     const heading = panel.querySelector('.dq-head strong'), family = current?.variant?.title;
-    if (family && heading?.firstChild?.nodeType === 3 && heading.firstChild.nodeValue !== family) { heading.firstChild.nodeValue = family; panel.setAttribute('aria-label',`${family} 빠른 설정`); panel.querySelector('.dq-help-button')?.setAttribute('aria-label',`${family} 도움말`); }
+    const titleText = heading?.querySelector('.dq-title');
+    if (current?.variant?.mark) syncMark(current.variant.mark);
+    if (family && titleText && titleText.textContent !== family) { titleText.textContent = family; panel.setAttribute('aria-label',`${family} 빠른 설정`); panel.querySelector('.dq-help-button')?.setAttribute('aria-label',`${family} 도움말`); }
     if (badge && badge.textContent !== label) { badge.textContent = label; badge.hidden = !label; }
     if ([...rail.children].map(x => x.dataset.tab).join('|') === names.join('|')) return;
     rail.replaceChildren(...names.map(name => { const b = node('button'); b.append(icon(tabIcons[name]),node('span',name)); b.type = 'button'; b.dataset.tab = name; b.setAttribute('aria-pressed',String(name === tab)); b.addEventListener('click',() => { tab = name; status = ''; render(true); revealTab(); }); tabObserver?.observe(b); return b; }));
@@ -556,8 +603,8 @@ const solaBadge = name => { const n = (String(name || '').match(/(?:\bSola|솔�
   async function open() {
     if (stopped) return false;
     if (panel) { render(); revealTab(); return true; }
-    panel = node('section'); panel.id = 'bl-deus-popover'; panel.setAttribute('role','dialog'); panel.setAttribute('aria-modal','false'); panel.setAttribute('aria-label','데우스 엑스 마키나 빠른 설정');
-    const head = node('div',null,'dq-head'), x = node('button','×','dq-close'); x.type = 'button'; x.setAttribute('aria-label','닫기'); x.addEventListener('click',close); const help = node('button',null,'dq-help-button'); help.append(node('i',null,'fa-solid fa-question'));   /* 1.0.0 도움말 하나로: H3 공용 아이콘 */  help.type = 'button'; help.setAttribute('aria-label','데우스 엑스 마키나 도움말'); help.setAttribute('aria-expanded','false'); help.setAttribute('aria-controls','bl-deus-help'); help.addEventListener('click',toggleHelp); const title = node('strong','데우스 엑스 마키나'), badge = node('span','','dq-version'); badge.hidden = true; title.append(badge); head.append(title,help,x);
+    panel = node('section'); panel.id = 'bl-deus-popover'; panel.setAttribute('role','dialog'); panel.setAttribute('aria-modal','false'); panel.setAttribute('aria-label',`${entryTitle} 빠른 설정`);
+    const head = node('div',null,'dq-head'), x = node('button','×','dq-close'); x.type = 'button'; x.setAttribute('aria-label','닫기'); x.addEventListener('click',close); const help = node('button',null,'dq-help-button'); help.append(node('i',null,'fa-solid fa-question'));   /* 1.0.0 도움말 하나로: H3 공용 아이콘 */  help.type = 'button'; help.setAttribute('aria-label',`${entryTitle} 도움말`); help.setAttribute('aria-expanded','false'); help.setAttribute('aria-controls','bl-deus-help'); help.addEventListener('click',toggleHelp); const title = node('strong'), mark = node('span',null,'dq-mark'), badge = node('span','','dq-version'); mark.innerHTML = quickMarkSvg(entryMark); mark.dataset.mark = entryMark; badge.hidden = true; title.append(mark,node('span',entryTitle,'dq-title'),badge); head.append(title,help,x);
     const tabs = node('nav',null,'dq-tabs'); tabs.setAttribute('aria-label','설정 분류');
     tabs.addEventListener('focusin', event => revealTab(event.target));
     // 탭 단추는 판을 확인한 뒤 syncTabs 가 만들어요(V3 는 「친구들」 탭이 더 있어요).

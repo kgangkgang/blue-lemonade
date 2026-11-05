@@ -54,6 +54,10 @@ body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf
   font-weight: 650;
   overflow-wrap: anywhere;
 }
+/* 1.0.2 다 꺼진 폴더(0/n): 꺼진 프롬프트 줄(css/59)과 같은 옅은 이름 — 굵기 · 면은 그대로라 폴더 머리인 건 그대로 보여요 */
+body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head.bl-pf-off .bl-pf-title {
+  color: var(--salty-muted);
+}
 body.salty #completion_prompt_manager #completion_prompt_manager_list > li.bl-pf-head .bl-pf-count {
   flex: none;
   margin-left: var(--bl-s2);

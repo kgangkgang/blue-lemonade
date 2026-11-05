@@ -1,4 +1,4 @@
-// 프롬프트 폴더 (1.0.1) — 순수 계산만. 화면은 prompt-folders.js 가 맡아요.
+// 프롬프트 폴더 (1.0.1, 1.0.2 더함) — 순수 계산만. 화면은 prompt-folders.js 가 맡아요.
 // 폴더 = 이름 + 항목 id 목록. 줄은 옮기지 않고, 실제 순서(prompt_order)에서 같은 폴더 항목이 이어지는 구간마다 머리 줄 하나를 끼워요.
 // 그래서 순서의 주인은 언제나 실리태번이에요(끌기 저장 · 생성 순서 그대로). 저장: 테마 설정 promptFolders.presets[프리셋 이름].folders
 // 폴더 택1 묶음(folderChoiceGroups · withFolderChoices)은 택1 규칙과 함께 prompt-choice-core.js 에 있어요.
@@ -162,6 +162,42 @@ export function gatherOrder(order, folder) {
     const before = order.slice(0, first).filter(id => !set.has(id)).length;
     const next = [...rest.slice(0, before), ...members, ...rest.slice(before)];
     return next.every((id, i) => id === order[i]) ? null : next;
+}
+
+/** 폴더 풀기(1.0.2) → 새 폴더 목록. 하위 폴더면 항목이 위 폴더로 올라가요(실제 순서대로) — 폴더 밖으로 빠져 위 폴더가 비던 것.
+ *  맨 위 폴더면 항목은 폴더 밖으로, 그 안의 하위 폴더는 맨 위로 */
+export function ungroupFolder(folders, id, order = []) {
+    const folder = folders.find(f => f.id === id);
+    if (!folder) return folders;
+    const rest = folders.filter(f => f !== folder);
+    for (const f of rest) if (f.parent === folder.id) f.parent = '';
+    const up = folder.parent ? rest.find(f => f.id === folder.parent) : null;
+    if (up) assignIds(rest, up, [...up.ids, ...folder.ids], order);
+    return rest;
+}
+
+/** 폴더째 한 칸 옮기기(1.0.2) → 새 순서(id 배열) 또는 null.
+ *  한 구간으로 붙어 있는 폴더를 바로 위(dir -1) · 아래(dir 1)에 보이는 한 칸과 자리를 바꿔요 — 한 칸 = 폴더 밖 항목 하나, 또는 같은 단의 폴더 하나 통째.
+ *  하위 폴더는 위 폴더 구간 안에서만 움직여요. 떨어진 폴더(구간 둘 이상)는 먼저 「한곳에 모으기」 */
+export function moveFolderBlock(order, folders, id, dir) {
+    const runs = folderRuns(order, folders);
+    const own = runs.filter(r => r.folder.id === id);
+    if (own.length !== 1 || (dir !== -1 && dir !== 1)) return null;
+    const run = own[0];
+    let lo = 0, hi = order.length - 1;
+    if (run.depth) {
+        const host = runs.find(r => r.depth === 0 && r.folder.id === run.folder.parent && r.start <= run.start && r.end >= run.end);
+        if (!host) return null;
+        lo = host.start; hi = host.end;
+    }
+    const at = dir < 0 ? run.start - 1 : run.end + 1;
+    if (at < lo || at > hi) return null;
+    const other = runs.find(r => r.depth === run.depth && r.start <= at && r.end >= at);
+    const [a, b] = other ? [other.start, other.end] : [at, at];
+    const block = order.slice(run.start, run.end + 1), next = order.slice(a, b + 1);
+    return dir < 0
+        ? [...order.slice(0, a), ...block, ...next, ...order.slice(run.end + 1)]
+        : [...order.slice(0, run.start), ...next, ...block, ...order.slice(b + 1)];
 }
 
 /** 머리 줄 숫자 */

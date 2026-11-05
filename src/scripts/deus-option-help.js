@@ -19,6 +19,8 @@ export function describeDeusOption(key, preset) {
     }
     if(!rows.length)return {title:'데우스 옵션 설명',text:'현재 프리셋에서 이 항목을 찾지 못했어요. 프리셋이 열린 뒤 다시 확인해 주세요.',verified:false};
     return {title:group?.label||rows[0].data.label,text:group?rows.map(r=>`${r.data.label}: ${r.data.text}${r.same?'':' (기본 설명·현재 원문 수정됨)'}`).join('\n\n'):rows[0].data.text,
+        // 11-05 설명 창이 선택지마다 줄을 나누고 이름을 굵게 써요(같은 문장은 맨 위 한 번) — 글은 그대로, 나눔만 items 로 넘겨요
+        items:group?rows.map(r=>({label:r.data.label,text:`${r.data.text}${r.same?'':' (기본 설명·현재 원문 수정됨)'}`})):undefined,
         original:rows.map(r=>`${r.data.label}\n${r.prompt.content||''}`).join('\n\n'),verified:!changed,baseline:changed};
 }
 // describeOther(key): 데우스가 아닌 프리셋(솔라)의 설명 — 없으면 null 을 돌려 데우스 설명으로 넘어가요.

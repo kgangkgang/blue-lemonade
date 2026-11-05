@@ -62,8 +62,15 @@ body.salty:not(#salty-none) #AdvancedFormatting:not(#salty-none) {
 /* 양쪽에 잡아 둔 스크롤바 자리만큼 안쪽 여백을 줄여, 보이는 여백은 그대로 두고 폭은 안 잃게 */
 /* 기반 규칙이 #left-nav-panel > .scrollableInner 에 --bl-gutter 로 여백을 주므로(id 우선순위),
    같은 우선순위로 좌우만 스크롤바 폭만큼 줄임 — 보이는 여백은 --bl-gutter 그대로, 폭은 안 잃음 */
-body.salty :is(#left-nav-panel, #right-nav-panel, #user-settings-block, #WorldInfo, #rm_api_block, #AdvancedFormatting, #Backgrounds, #PersonaManagement, #rm_extensions_block):not(#salty-none) > .scrollableInner,
+body.salty :is(#left-nav-panel, #user-settings-block, #WorldInfo, #rm_api_block, #AdvancedFormatting, #Backgrounds, #PersonaManagement, #rm_extensions_block):not(#salty-none) > .scrollableInner,
 body.salty .drawer-content:not(#salty-none) > .scrollableInner {
+  padding-left: max(0px, calc(var(--bl-gutter, 14px) - var(--bl-sbw))) !important;
+  padding-right: max(0px, calc(var(--bl-gutter, 14px) - var(--bl-sbw))) !important;
+}
+/* 1.0.2 캐릭터 서랍은 「서랍 바로 아래 목록」이 아니라 「서랍 안 가장 바깥 목록」으로 찾아요 — 다른 확장(채팅 탭 확장 등)이 목록을 제 탭 칸으로
+   옮기면 `> .scrollableInner` 가 안 맞아 여백이 0 이 됐어요. 우선순위는 그대로((2,2,1) — :where 는 0), 목록 안의 목록은 빼요.
+   다른 선택자와 한 규칙에 두지 않아요(:not 안 복합 선택자를 모르는 브라우저가 규칙째 버려도 다른 서랍 여백은 남게) */
+body.salty #right-nav-panel:not(#salty-none) .scrollableInner:where(:not(.scrollableInner .scrollableInner)) {
   padding-left: max(0px, calc(var(--bl-gutter, 14px) - var(--bl-sbw))) !important;
   padding-right: max(0px, calc(var(--bl-gutter, 14px) - var(--bl-sbw))) !important;
 }

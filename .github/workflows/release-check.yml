@@ -214,6 +214,7 @@ jobs:
           node tools/tests/translation-tag-pairs.mjs .
           node tools/tests/translator-auto-skip.mjs .
           node tools/tests/translator-buttons-template.mjs .
+          node tools/tests/translator-send-button-keys.mjs .
           node tools/tests/tts-buttons-added.mjs .
           node tools/tests/head-signature-watch.mjs .
           node tools/tests/tts-ui-lazy.mjs .
@@ -392,6 +393,7 @@ jobs:
           node tools/tests/show-more-tap.mjs .
           node tools/tests/prompt-choice.mjs .
           node tools/tests/prompt-folders.mjs .
+          node tools/tests/chat-organizer.mjs .
           node tools/tests/bughunt2-core.mjs .
           node tools/tests/dem-expressive-nest.mjs .
           node tools/tests/dem-expressive-scope.mjs .

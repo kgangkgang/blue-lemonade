@@ -4131,7 +4131,8 @@ async function editTranslation(messageId) {
         .attr({ title: '원문 같이 보기', 'aria-label': '원문 같이 보기', role: 'button', tabindex: '0', 'aria-pressed': String(editShowsSource) });
     const sourceBox = $('<div>').addClass('translation_edit_source').text(originalMessageText).prop('hidden', !editShowsSource);
     const flipSource = () => { editShowsSource = !editShowsSource; sourceBox.prop('hidden', !editShowsSource); sourceButton.attr('aria-pressed', String(editShowsSource)); };
-    sourceButton.on('click', flipSource).on('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); flipSource(); } });
+    // 1.0.2: Enter 를 실리태번 전역 처리까지 올려보내면 한 번 더 눌려 펴졌다 바로 접혀요 → 처리한 키는 여기서 멈춰요
+    sourceButton.on('click', flipSource).on('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); flipSource(); } });
     editButtons.append(saveButton, cancelButton, sourceButton);
 
     // UI 배치
@@ -4426,7 +4427,10 @@ function refreshSendButton() {
 }
 
 function setSendButtonBusy(busy) {
-    document.getElementById('llm_translate_input_button')?.classList.toggle('is-busy', busy);
+    const btn = document.getElementById('llm_translate_input_button');
+    if (!btn) return;
+    btn.classList.toggle('is-busy', busy);
+    if (busy) btn.setAttribute('aria-busy', 'true'); else btn.removeAttribute('aria-busy');   // 1.0.2: 화면 읽기에도 번역 중임을 알려요(깜빡임은 눈으로만 보여서)
 }
 
 function toggleSendTranslate(force) {
@@ -4458,9 +4462,12 @@ function bindSendButton(btn) {
         if (longPressed) { longPressed = false; return; }
         toggleSendTranslate();
     });
+    // 1.0.2: 실리태번은 문서 전체에서 Enter 를 받아 초점 둔 .interactable 을 한 번 더 누르게 해요(keyboard.js).
+    //   여기서 멈추지 않으면 Enter 한 번에 켜졌다가 바로 꺼져서 아무 일도 안 일어난 것처럼 보였어요 → 우리가 처리한 키는 위로 올려보내지 않아요
     btn.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter' && e.key !== ' ') return;
         e.preventDefault();
+        e.stopPropagation();
         toggleSendTranslate();
     });
 }

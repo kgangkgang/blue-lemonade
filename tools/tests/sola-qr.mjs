@@ -111,4 +111,34 @@ await test('빠른 설정에 없는 항목(🚫 뼈대 · 구역 머리)은 바�
     await assert.rejects(f.controller.change('sola:없는-묶음', ''));
     assert.equal(f.writes.length, 0);
 });
+// 11-05 솔라 킨들링(구역 머리 없는 작은 솔라) · 원작 표지(데우스 🔹 · Flame 🔥 · Kindling 🧡) — 이름 · 본문 모두 지어낸 합성 자료예요.
+function kindlingFixture() {
+    const rows = [['k-oath', '🚫 맹세 시험 뼈대', true], ['k-lang-a', '🌐 언어 택1: 가 서술 · 가 대사', true], ['k-lang-b', '🌐 언어 택1: 나 서술 · 나 대사', false],
+        ['k-opt', '🎙️ 시험 말투 규칙 [선택]', true], ['k-review', '⚡ 번개 검토 시험', true], ['chatHistory', '대화 기록', true], ['k-feel', '📊 감정 엔진 시험 [선택]', false],
+        ['k-easel', '🎭 솔라의 이젤 시험 [선택]', false], ['bl-kindling-extra', '💭 시험 속마음', true], ['k-post', '대화 기록 뒤 지시 시험', true]];
+    const content = { 'k-lang-a': '{{// 도움말: 가 언어로 써요. 하나만 켜요.}}{{trim}} 합성 본문', 'k-lang-b': '{{// 도움말: 나 언어로 써요. 하나만 켜요.}}{{trim}} 합성 본문' };
+    return { prompts: rows.map(([identifier, name]) => ({ identifier, name, content: content[identifier] || '합성 본문이에요.', ...(identifier === 'chatHistory' ? { marker: true } : {}) })),
+        prompt_order: [{ character_id: 100001, order: rows.map(([identifier, , enabled]) => ({ identifier, enabled })) }],
+        extensions: { blPromptChoices: { version: 1, groups: [{ id: 'k-lang', ids: ['k-lang-a', 'k-lang-b'] }] } } };
+}
+await test('킨들링: 구역 머리가 없어도 원작 블록 이름으로 알아보고, [선택] · 택1 · 더한 항목만 보여요', () => {
+    const p = kindlingFixture(), v = api.quickVariant(p);
+    assert.equal(v?.key, 'sola'); assert.equal(v.kind, 'kindling'); assert.equal(v.mark, 'kindling'); assert.equal(v.title, '솔라 킨들링');
+    assert.deepEqual(v.groups.map(g => `${g.tab}:${g.label}:${g.options.map(o => o.label).join('/')}`), ['진행:출력 언어:가 서술 · 가 대사/나 서술 · 나 대사']);
+    assert.deepEqual(v.toggles.map(t => `${t.tab}:${t.label}`), ['문체:시험 말투 규칙', '표현:감정 엔진 시험', '표현:솔라의 이젤 시험', '표현:시험 속마음']);
+    assert.equal(api.solaBadge('[Gemini] Sola Kindling 2'), 'V2');
+    const plain = structuredClone(p); for (const x of plain.prompts) x.name = x.name.replace(/맹세|번개 검토|감정 엔진|이젤/g, '시험');
+    assert.equal(api.quickVariant(plain), null, '원작 블록 이름이 없으면 다른 프리셋');
+});
+await test('킨들링 설명: 사전에 없으면 본문 맨 앞 도움말 주석을 쓰고, 선택지별 나눔(items)을 같이 넘겨요', () => {
+    const p = kindlingFixture(), v = api.quickVariant(p), d = api.solaDescribe(v.groups[0].key, p);
+    assert.deepEqual(d.items, [{ label: '가 서술 · 가 대사', text: '가 언어로 써요. 하나만 켜요.' }, { label: '나 서술 · 나 대사', text: '나 언어로 써요. 하나만 켜요.' }]);
+    assert.equal(d.verified, true);
+});
+await test('입력줄 단추 · 창 머리 표지: 데우스 🔹 · 솔라 V4 Flame 🔥 · 킨들링 🧡(가는 선)', () => {
+    assert.equal(api.solaVariant(solaFixturePreset()).mark, 'flame');
+    assert.equal(api.quickVariant(kindlingFixture()).mark, 'kindling');
+    assert.ok(/mark:'deus'/.test(bundled) && /deus: '<path/.test(bundled) && /flame: '<path/.test(bundled) && /kindling: '<path/.test(bundled));
+    assert.ok(bundled.includes('#bl-deus-quick[data-mark=kindling] svg') && bundled.includes("node('span',null,'dq-mark')"), '킨들링은 가는 선 · 창 머리에 같은 표지');
+});
 console.log(`Sola quick settings: ${passed} passed`);

@@ -1,7 +1,7 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 51개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 50284aa60f0c) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 51개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 61432e299b61) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)"}
 /* css/00-base.css */
-:root{--bl-release:"1.0.1";}
+:root{--bl-release:"1.0.2";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -317,22 +317,20 @@ border:0 !important;
 }
 /* css/02-controls.css */
 body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) {
-min-height:var(--bl-h-btn, var(--bl-h-ctl));
-gap:var(--bl-s2);
-padding:0 var(--bl-inset) !important;
-border:0 !important;
-border-radius:var(--bl-r-sm) !important;
+  min-height: var(--bl-h-btn, var(--bl-h-ctl));
+  gap: var(--bl-s2);
+  padding: 0 var(--bl-inset) !important;
+  border: 0 !important;
+  border-radius: var(--bl-r-sm) !important;
+  opacity: 1 !important;
+  font-size: var(--bl-fs-ctl);
+  font-weight: 500;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
-body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, [style*="color:"], [style*="background:"])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-fill-control, var(--bl-control)) !important;
 box-shadow:var(--bl-e2) !important;
 color:var(--salty-text) !important;
-}
-body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) {
-opacity:1 !important;
-font-size:var(--bl-fs-ctl);
-font-weight:500;
-transition:background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
 body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) > :where(i):is(.bl-s, *),
 body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) > .fa-solid,
@@ -348,18 +346,18 @@ body.salty .expression_buttons .menu_button {
   align-items: center;
 }
 @media (hover: hover) {
-  body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)):hover:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+  body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, [style*="color:"], [style*="background:"])):hover:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-fill-control-hover, var(--bl-control-hover)) !important;
 }
 }
-body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)):active:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)):active {
+  transform: translateY(1px);
+}
+body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, [style*="color:"], [style*="background:"])):active:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
 box-shadow:var(--bl-press) !important;
 }
-body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)):active {
-transform:translateY(1px);
-}
-body.salty .menu_button:is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, [style*="color:"], [style*="background:"])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-fill-selected, var(--bl-selected)) !important;
 box-shadow:var(--bl-well-in) !important;
 color:var(--salty-accent-ink, var(--salty-accent)) !important;
@@ -370,17 +368,15 @@ body.salty .menu_button:is(.toggleEnabled, .active, .toggled):where(:not(.redWar
 color:var(--salty-accent-ink, var(--salty-accent));
 }
 body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])) {
-min-width:var(--bl-h-icon);
-min-height:var(--bl-h-icon);
-padding:0 !important;
+  min-width: var(--bl-h-icon);
+  min-height: var(--bl-h-icon);
+  padding: 0 !important;
+  font-size: var(--bl-ic) !important;
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text], [style*="color:"], [style*="background:"])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:transparent !important;
 box-shadow:none !important;
 color:var(--salty-muted) !important;
-}
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])) {
-font-size:var(--bl-ic) !important;
 }
 body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])) > i {
 font-size:var(--bl-ic);
@@ -389,24 +385,24 @@ body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-onl
 color:inherit;
 }
 @media (hover: hover) {
-  body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):hover:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+  body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text], [style*="color:"], [style*="background:"])):hover:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-fill-hover, var(--bl-hover)) !important;
 color:var(--salty-text) !important;
 }
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):active:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):active {
+  transform: none;
+}
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text], [style*="color:"], [style*="background:"])):active:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
 color:var(--salty-text) !important;
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):active {
-transform:none;
-}
 body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])) {
-min-width:var(--bl-h-icon);
-min-height:var(--bl-h-icon);
-padding:0 !important;
+  min-width: var(--bl-h-icon);
+  min-height: var(--bl-h-icon);
+  padding: 0 !important;
 }
-body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text], [style*="color:"], [style*="background:"])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--salty-fill-accent-10, var(--salty-accent-10)) !important;
 box-shadow:none !important;
 color:var(--salty-accent) !important;
@@ -3276,7 +3272,7 @@ body.salty #cfgConfig:not(#salty-none),
 body.salty #logprobsViewer:not(#salty-none) {
   scrollbar-gutter: auto;
 }
-body.salty :is(#left-nav-panel, #right-nav-panel, #user-settings-block, #WorldInfo, #rm_api_block, #AdvancedFormatting, #Backgrounds, #PersonaManagement, #rm_extensions_block):not(#salty-none) > .scrollableInner,
+body.salty :is(#left-nav-panel, #user-settings-block, #WorldInfo, #rm_api_block, #AdvancedFormatting, #Backgrounds, #PersonaManagement, #rm_extensions_block):not(#salty-none) > .scrollableInner,
 body.salty .drawer-content:not(#salty-none) > .scrollableInner {
   padding-left: max(0px, calc(var(--bl-gutter, 14px) - var(--bl-sbw))) !important;
   padding-right: max(0px, calc(var(--bl-gutter, 14px) - var(--bl-sbw))) !important;
@@ -5434,28 +5430,33 @@ body.salty :is(.danger, .redWarningBG, .red_button, .is-danger, [class*="-danger
 body.salty :is(.danger, .redWarningBG, .red_button, .is-danger, [class*="-danger"], [class*="_danger"], .primary, .is-primary, [class*="-primary"], [class*="_primary"]) > .fa-skull:not(#bl-danger-ink-a):not(#bl-danger-ink-b):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:inherit !important;
 }
-body.salty .menu_button:is(.redWarningBG, .red_button, .danger):where(:not(#nonQRFormItems *, .salty-panel *)):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger, .is-danger, [class*="-danger"], [class*="_danger"]):where(:not(#nonQRFormItems *, .salty-panel *)):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-fill-control, var(--bl-control)) !important;
 box-shadow:var(--bl-e2) !important;
 color:var(--bl-danger) !important;
 }
-body.salty .menu_button:is(.redWarningBG, .red_button, .danger):is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(#nonQRFormItems *, .salty-panel *, [data-bl-icon-text])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger, .is-danger, [class*="-danger"], [class*="_danger"]):is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(#nonQRFormItems *, .salty-panel *, [data-bl-icon-text])):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:transparent !important;
 box-shadow:none !important;
 }
 @media (hover: hover) {
-  body.salty .menu_button:is(.redWarningBG, .red_button, .danger):where(:not(#nonQRFormItems *, .salty-panel *)):hover:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+  body.salty .menu_button:is(.redWarningBG, .red_button, .danger, .is-danger, [class*="-danger"], [class*="_danger"]):where(:not(#nonQRFormItems *, .salty-panel *)):hover:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-fill-hover, var(--bl-hover)) !important;
 color:var(--bl-danger) !important;
 }
 }
-body.salty .menu_button:is(.redWarningBG, .red_button, .danger):where(:not(#nonQRFormItems *, .salty-panel *)):active:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger, .is-danger, [class*="-danger"], [class*="_danger"]):where(:not(#nonQRFormItems *, .salty-panel *)):active:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 background:var(--bl-danger) !important;
 box-shadow:var(--bl-press) !important;
 color:var(--bl-danger-ink) !important;
 }
-body.salty .menu_button:is(.redWarningBG, .red_button, .danger):where(:not(#nonQRFormItems *, .salty-panel *)):focus-visible {
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger, .is-danger, [class*="-danger"], [class*="_danger"]):where(:not(#nonQRFormItems *, .salty-panel *)):focus-visible {
   box-shadow: var(--bl-danger-ring) !important;
+}
+body.salty .menu_button:is(.danger, .is-danger, [class*="-danger"], [class*="_danger"]):where(:not(#nonQRFormItems *, .salty-panel *)) > :where(i):is(.bl-s, *):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty .menu_button:is(.danger, .is-danger, [class*="-danger"], [class*="_danger"]):where(:not(#nonQRFormItems *, .salty-panel *)) > .fa-solid:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
+body.salty .menu_button:is(.danger, .is-danger, [class*="-danger"], [class*="_danger"]):where(:not(#nonQRFormItems *, .salty-panel *)) > .fa-regular:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
+color:inherit;
 }
 body.salty #character_context_menu_delete:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--bl-danger) !important;
@@ -6313,7 +6314,10 @@ body.salty :where(.rm_tag_controls):is(#bl-s, *)::-webkit-scrollbar,
 body.salty #world_popup_entries_list::-webkit-scrollbar {
     display: none !important;
   }
-  body.salty #right-nav-panel:not(#salty-none) > .scrollableInner,
+  body.salty #right-nav-panel:not(#salty-none) .scrollableInner:where(:not(.scrollableInner .scrollableInner)) {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
   body.salty #right-nav-panel:not(#salty-none) #form_create,
   body.salty #right-nav-panel:not(#salty-none) #rm_print_characters_block {
     padding-left: 6px !important;
@@ -10674,15 +10678,15 @@ html:not(#bl-checkrow-off) body.salty :where(.pa-hub-load):is(.pa-hub .pa-hub-lo
 html:not(#bl-checkrow-off) body.salty :is(.pa-hub .pa-hub-load, .pt-help-dialog .pt-check) > span { font-size: inherit !important; }
 html:not(#bl-checkrow-off) body.salty .pt-help-dialog .pt-check > input[type="checkbox"] { width: 20px !important; height: 20px !important; flex: 0 0 20px !important; }
 /* css/93-night-surfaces.css */
-html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-btn):where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary,.salty-btn-icon,.bl-mermaid-again)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]),
-html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,[data-bl-icon-only~="i"],[data-bl-icon-only~="svg"],[data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]) {
+html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-btn):where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary,.salty-btn-icon,.bl-mermaid-again)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,:where(.menu_button:is(.is-danger,[class*="-danger"],[class*="_danger"],[style*="color:"],[style*="background:"])),.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]),
+html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,[data-bl-icon-only~="i"],[data-bl-icon-only~="svg"],[data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,:where(.menu_button:is(.is-danger,[class*="-danger"],[class*="_danger"],[style*="color:"],[style*="background:"])),.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]) {
  background:var(--salty-raised,var(--salty-control,var(--salty-surface)))!important; color:var(--salty-text)!important; border-color:var(--salty-line)!important;
  box-shadow:none!important;
 }
-html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-btn):where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary,.salty-btn-icon,.bl-mermaid-again)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):active,
-html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,[data-bl-icon-only~="i"],[data-bl-icon-only~="svg"],[data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):active { box-shadow:none!important; }
-html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-btn):where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary,.salty-btn-icon,.bl-mermaid-again)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):focus-visible,
-html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,[data-bl-icon-only~="i"],[data-bl-icon-only~="svg"],[data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:3px!important; }
+html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-btn):where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary,.salty-btn-icon,.bl-mermaid-again)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,:where(.menu_button:is(.is-danger,[class*="-danger"],[class*="_danger"],[style*="color:"],[style*="background:"])),.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):active,
+html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,[data-bl-icon-only~="i"],[data-bl-icon-only~="svg"],[data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,:where(.menu_button:is(.is-danger,[class*="-danger"],[class*="_danger"],[style*="color:"],[style*="background:"])),.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):active { box-shadow:none!important; }
+html:root:not(#bl-surface-off) body.salty.salty-dark :where(.salty-btn):where(.salty-panel .salty-btn:not(.primary,.bl-tool-primary,.salty-btn-icon,.bl-mermaid-again)):is(#bl-s, *):is(.bl-s, *):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,:where(.menu_button:is(.is-danger,[class*="-danger"],[class*="_danger"],[style*="color:"],[style*="background:"])),.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):focus-visible,
+html:root:not(#bl-surface-off) body.salty.salty-dark .menu_button:not(.salty-panel *,#nonQRFormItems *,[data-bl-native-ext-colors] *,.fa-solid,.fa-regular,.fa-brands,[data-bl-icon-only~="i"],[data-bl-icon-only~="svg"],[data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *),.welcomePanel *,#rm_buttons_container *,.popup-button-ok,[role=tab]):not(:disabled,[aria-disabled=true],.disabled,.primary,.danger,:where(.menu_button:is(.is-danger,[class*="-danger"],[class*="_danger"],[style*="color:"],[style*="background:"])),.redWarningBG,.red_button,.toggleEnabled,.active,.toggled,.on,.is-on,[aria-pressed=true],[aria-selected=true],[aria-checked=true]):focus-visible { outline:2px solid var(--salty-accent)!important; outline-offset:3px!important; }
 /* css/94-density-c.css */
 html:not(#bl-density-off):not(#bl-density-off2) body .salty-btn:not(.salty-btn-icon, .bl-mermaid-again),
 html:not(#bl-density-off):not(#bl-density-off2) body.salty .menu_button:not(.salty-panel *, #nonQRFormItems *, .welcomePanel *, #rm_buttons_container *, #Backgrounds #bg-header-fixed *, #Backgrounds #bg_tabs *, :is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):not([data-bl-icon-text])),

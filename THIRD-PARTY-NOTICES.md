@@ -18,6 +18,7 @@ Blue Lemonade는 GNU Affero General Public License v3.0 조건으로 배포합�
 | 설정 창 그림 표본 5장(src/preview-art/sample-*.webp) | 실리태번 기본 캐릭터 화면을 찍은 그림 — [SillyTavern](https://github.com/SillyTavern/SillyTavern) 기본 캐릭터 세라피나 표정 그림(`default/content/Seraphina/*.png`)과 기본 배경(`default/content/backgrounds/` 의 tavern day · landscape beach day · japan path cherry blossom · cityscape medieval night · landscape winter lake house)을 실리태번 화면에 띄워 찍고 webp 로 담음(그림 편집 없음) | [AGPL-3.0](LICENSE) |
 | 날씨 그림 6장(src/weather-art/*.webp) | Blue Lemonade 작업 중 이미지 생성 도구로 만든 그림(원작 그림 없음 · 원본과 만든 지시문은 비공개 작업 기록에 보관) | 테마와 같은 조건 [AGPL-3.0](LICENSE) |
 | 설정 창 투명 그림 표본(src/preview-art/character.webp) | [SillyTavern](https://github.com/SillyTavern/SillyTavern) 기본 캐릭터 세라피나 표정 그림(`default/content/Seraphina/joy.png`, webp 로 다시 담음) | [AGPL-3.0](LICENSE) |
+| 채팅 정리 — 최근 채팅 · 채팅 폴더 · 여러 채팅 지우기(src/chat-organizer.js · src/chat-organizer-core.js · src/chat-organizer.css, 1.0.2) | [ChatsPlus](https://github.com/SoFizzticated/SillyTavern-ChatPlus)(SoFizzticated · 확인한 커밋 `ca5e6a8463e9a09c473d2a25967b6262def1d263`) · 한국어판 [ChatsPlus (Mod) 1.2.0-mod](https://github.com/sdafaff346/stjchatMod)(sdafaff346 · 커밋 `e8db163c7b98e991a8c4c63375a1d76a895463d2`). 원작이 감사를 밝힌 [RivelleDays](https://github.com/RivelleDays)(모양 다듬기 · SillyTavern-FriendlyUI 참고) · [Cohee1207](https://github.com/Cohee1207)(Extension-TopInfoBar 를 바탕으로 함) | 원작 모두 [AGPL-3.0](LICENSE). 기능 구성(캐릭터 관리 탭 · 최근 채팅 한 번 요청 · 고정 · 폴더 · 여러 개 지우기 흐름)과 날짜 이름표 규칙(Mod 의 ui-helpers.js)을 참고해 우리 구조 · 이름 · 디자인 규격으로 다시 썼어요. 원작 파일을 그대로 넣지 않았어요 |
 | CustomThemeStyleInputs (커스텀 CSS 조절) | Copyright (c) 2025 [IceFog72](https://github.com/IceFog72/SillyTavern-CustomThemeStyleInputs) | [MIT 전문](src/addons/customstyle/LICENSE) |
 | 장면 소리 · 분위기 음악 곡 8개 | OpenGameArt — cynicmusic · omfgdude · yd · Emma_MA · Joth · RandomMind | 음원 CC0 · [곡별 출처](src/scene-music/SOURCES.json) · [CC0 전문](src/scene-music/LICENSE-CC0.txt) |
 
@@ -109,3 +110,4 @@ zonde306 · [ST-Prompt-Template](https://github.com/zonde306/ST-Prompt-Template)
 ## 프롬프트 폴더 (아이디어 참고)
 
 아이디어 참고: [URMIIE/SillyTavern-PromptFolders](https://github.com/URMIIE/SillyTavern-PromptFolders)(AGPL-3.0) — 코드는 옮기지 않음.
+참고한 원본 커밋 8cd30867c2db421b492bb1cae8b32cb5a5258a85 (2026-11-04, manifest 1.2.6).

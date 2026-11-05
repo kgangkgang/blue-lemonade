@@ -1,4 +1,4 @@
-// 프롬프트 폴더 (1.0.1) — 프롬프트 관리자 목록의 항목을 폴더로 묶어 접고 펼쳐요.
+// 프롬프트 폴더 (1.0.1, 1.0.2 더함) — 프롬프트 관리자 목록의 항목을 폴더로 묶어 접고 펼쳐요.
 // 계산은 prompt-folders-core.js(순수). 여기는 화면 · 저장 · 실리태번 연결만.
 //
 // 줄은 옮기지도 복제하지도 않아요: 실제 순서에서 같은 폴더 항목이 이어지는 구간마다 머리 줄(li.bl-pf-head) 하나를 그 구간 앞에 끼우고,
@@ -7,6 +7,8 @@
 // 모양: src/prompt-folders.css(이 기능이 켜질 때만 받음) + css/27-compact.css 의 프롬프트 켜기 동그라미(.bl-pf-all 을 같은 규칙에).
 // 같은 일을 하는 다른 확장(PromptFolders · 「프롬프트 그룹」)이 켜져 있으면 features.js 가 이 기능을 쉬게 해요(ext-presence.js).
 // 프리셋 파일의 extensions.blPromptFolders 는 읽기만 해요: 내 폴더가 없는 프리셋의 초깃값이고, 고치면 테마 설정이 우선이에요. 테마가 프리셋 파일에 쓰지는 않아요(tools/preset-folders.mjs 가 넣어요).
+// 1.0.2: 접고 펼치기는 머리 줄을 다시 만들지 않고 제자리에서(refold) · 폴더째 위 · 아래로 옮기기 · 하위 폴더를 풀면 항목은 위 폴더로 ·
+//   모두 켜기 · 끄기와 「하나만 켜기」에 되돌리기 · 다 꺼진 폴더 머리는 꺼진 줄처럼 옅게 · 바뀐 게 없으면 저장 안 함.
 import { getSettings, saveSettings } from './settings.js';
 import { watchDom } from './dom-watch.js';
 import { groupedNumber } from './numbers.js';
@@ -16,7 +18,7 @@ import { showThemeModal } from './modal.js';
 import { mouseDevice } from './prompt-card-picker.js';
 import { promptChoiceGroups, withFolderChoices } from './prompt-choice-core.js';
 import { setFolderSource } from './prompt-choice.js';
-import { tidyFolders, newFolderId, folderRuns, detectMove, adoptMove, assignIds, gatherOrder, runStats, planToggleAll, planFromDividers, isDivider, folderItems, dropEmpty, remapFolders, presetStem, readPresetFolders } from './prompt-folders-core.js';
+import { tidyFolders, newFolderId, folderRuns, detectMove, adoptMove, assignIds, gatherOrder, runStats, planToggleAll, planFromDividers, isDivider, folderItems, dropEmpty, remapFolders, presetStem, readPresetFolders, folderIndex, ungroupFolder, moveFolderBlock } from './prompt-folders-core.js';
 
 const CONTAINER = 'completion_prompt_manager';
 const LIST = 'completion_prompt_manager_list';
@@ -119,22 +121,50 @@ function apply() {
         const head = document.createElement('li');
         const open = run.folder.open !== false;
         const shut = run.depth > 0 && list2.find(f => f.id === run.folder.parent)?.open === false;   // 접힌 위 폴더 안의 머리
-        head.className = `bl-pf-head${open ? '' : ' bl-pf-closed'}${run.depth ? ' bl-pf-sub' : ''}${shut ? ' bl-pf-hide' : ''}`;
+        const stats = totals.get(run.folder);
+        // 다 꺼진 폴더(0/n)는 꺼진 프롬프트 줄처럼 이름을 옅게(css/59 의 꺼진 줄 규칙과 같은 색)
+        head.className = `bl-pf-head${open ? '' : ' bl-pf-closed'}${run.depth ? ' bl-pf-sub' : ''}${shut ? ' bl-pf-hide' : ''}${stats.total && !stats.on ? ' bl-pf-off' : ''}`;
         head.dataset.pfId = run.folder.id;
         head.dataset.pfPart = String(run.part);
-        head.innerHTML = headMarkup(run, totals.get(run.folder));
+        head.innerHTML = headMarkup(run, stats);
         rows[run.start].before(head);
         for (let i = run.start; i <= run.end; i++) rows[i].classList.add(run.depth ? 'bl-pf-in2' : 'bl-pf-in');
         if (!open) for (let i = run.start; i <= run.end; i++) rows[i].classList.add('bl-pf-hide');
     }
-    // 한 줄 걸러 톤: 머리 · 숨긴 줄 때문에 nth-child 짝이 어긋나 보이는 줄만 다시 매겨요(css 가 bl-pf-on 일 때 nth-child 톤을 끔)
+    retone(list);
+    note(t0, rows.length, runs.length);
+}
+/** 한 줄 걸러 톤: 머리 · 숨긴 줄 때문에 nth-child 짝이 어긋나 보이는 줄만 다시 매겨요(css 가 bl-pf-on 일 때 nth-child 톤을 끔) */
+function retone(list) {
     let n = 0;
     for (const el of list.children) {
         if (el.classList.contains('bl-pf-head')) { n = 0; continue; }
-        if (!el.matches(ROW) || el.classList.contains('bl-pf-hide')) continue;
-        if (n++ % 2 === 1) el.classList.add('bl-pf-alt');
+        if (!el.matches(ROW)) continue;
+        const alt = !el.classList.contains('bl-pf-hide') && n++ % 2 === 1;
+        if (el.classList.contains('bl-pf-alt') !== alt) el.classList.toggle('bl-pf-alt', alt);
     }
-    note(t0, rows.length, runs.length);
+}
+/** 접힘만 바뀌었을 때(1.0.2): 머리 줄은 그대로 두고 클래스만 — 누른 단추에 초점이 남고 목록을 다시 만들지 않아요. 모양이 맞지 않으면 다시 입혀요 */
+function refold() {
+    const list = document.getElementById(LIST);
+    if (!list?.classList.contains('bl-pf-on')) return apply();
+    const all = folders(), byId = new Map(all.map(f => [f.id, f])), of = folderIndex(all);
+    const shut = f => !!f && (f.open === false || (!!f.parent && byId.get(f.parent)?.open === false));
+    for (const el of list.children) {
+        if (el.classList.contains('bl-pf-head')) {
+            const f = byId.get(el.dataset.pfId);
+            if (!f) return apply();
+            const open = f.open !== false;
+            el.classList.toggle('bl-pf-closed', !open);
+            el.classList.toggle('bl-pf-hide', !!f.parent && byId.get(f.parent)?.open === false);
+            el.querySelector('.bl-pf-name')?.setAttribute('aria-expanded', String(open));
+            const caret = el.querySelector('.bl-pf-caret');
+            caret?.classList.toggle('fa-chevron-down', open); caret?.classList.toggle('fa-chevron-right', !open);
+        } else if (el.matches(ROW) && (el.classList.contains('bl-pf-in') || el.classList.contains('bl-pf-in2'))) {
+            el.classList.toggle('bl-pf-hide', shut(of.get(el.dataset.pmIdentifier)));
+        }
+    }
+    retone(list);
 }
 function note(t0, rows, heads) {
     timings.push({ ms: Math.round((performance.now() - t0) * 100) / 100, rows, heads });
@@ -176,12 +206,12 @@ function setOpen(id, open) {
     const slot = bucket(true), f = slot.folders.find(x => x.id === id);
     if (!f) return;
     f.open = open;
-    save(slot); apply();
+    save(slot); refold();
 }
 function setAllOpen(open) {
     const slot = bucket(true);
     for (const f of slot.folders) f.open = open;
-    save(slot); apply();
+    save(slot); refold();
 }
 
 /** 실리태번 순서 · 켜짐 */
@@ -226,7 +256,13 @@ function toggleAll(id) {
     const on = f.pick ? false : !allOn;
     if (f.pick && !usable.some(x => enabled.has(x))) return;
     const plan = planToggleAll(ids, enabled, on, { groups: choiceGroupsNow(order, f.id), allowed, pick: f.pick });
-    if (plan?.length) writeEnabled(plan);
+    if (!plan?.length) return;
+    writeEnabled(plan);
+    // 둘 이상 바뀌면 되돌리기(하나는 그 줄 켜기 동그라미를 다시 누르면 돼요)
+    if (plan.length < 2) return;
+    const before = plan.map(([x]) => [x, enabled.has(x)]), key = presetName();
+    const toast = globalThis.toastr?.info?.(`「${f.name}」 ${plan.length}개를 ${on ? '켰어요' : '껐어요'}.`, 'Blue Lemonade');
+    attachUndo(toast, () => { if (presetName() === key) writeEnabled(before); });
 }
 
 // ───────── 메뉴 (공용 고르기 목록 팝업 · css/72) ─────────
@@ -287,10 +323,13 @@ function openFolderMenu(id, anchor) {
     if (!f) return;
     const order = (hostOrder() || []).map(e => e.identifier);
     const split = folderRuns(order, list).filter(run => run.folder === f).length > 1;
+    // 위 · 아래로: 옮길 수 있을 때만(맨 끝 · 떨어진 폴더는 없음)
+    const moves = [[-1, '위로 옮기기'], [1, '아래로 옮기기']].filter(([dir]) => moveFolderBlock(order, list, id, dir)).map(([dir, label]) => ({ label, run: () => moveFolder(id, dir) }));
     openMenu(anchor, [
         { label: '이름 · 항목 고치기', run: () => openEditor(id) },
         ...(f.parent ? [] : [{ label: '안에 새 폴더', run: () => openEditor(null, id) }]),
         { label: '하나만 켜기', check: !!f.pick, run: () => setPick(id, !f.pick) },
+        ...moves,
         ...(split ? [{ label: '한곳에 모으기', run: () => gather(id) }] : []),
         { label: '폴더 풀기', run: () => ungroup(id) },
     ]);
@@ -321,9 +360,15 @@ function setPick(id, on) {
             const keep = lit[0].identifier;
             const before = lit.map(e => e.identifier);
             writeEnabled(lit.slice(1).map(e => [e.identifier, false]));
-            const keepName = shownNameById(keep);
+            const keepName = shownNameById(keep), key = presetName();
             const toast = globalThis.toastr?.info?.(`「${f.name}」에서 「${keepName}」만 남기고 껐어요.`, 'Blue Lemonade');
-            attachUndo(toast, () => writeEnabled(before.map(x => [x, true])));
+            // 되돌리면 「하나만 켜기」도 풀어요 — 켠 줄만 되살리면 택1 지킴이가 다음 클릭에 다시 꺼요
+            attachUndo(toast, () => {
+                if (presetName() !== key) return;
+                const now = bucket(true), g = now.folders.find(x => x.id === id);
+                if (g) { g.pick = false; save(now); }
+                writeEnabled(before.map(x => [x, true]));
+            });
             return;
         }
     }
@@ -337,11 +382,12 @@ function ungroup(id) {
     const before = snapshot();
     const slot = bucket(true), f = slot.folders.find(x => x.id === id);
     if (!f) return;
-    slot.folders = slot.folders.filter(x => x !== f);
-    for (const child of slot.folders) if (child.parent === f.id) child.parent = '';   // 하위 폴더는 맨 위로
+    const up = f.parent ? slot.folders.find(x => x.id === f.parent) : null;
+    // 하위 폴더는 맨 위로 · 하위 폴더를 풀면 항목은 위 폴더로(1.0.2)
+    slot.folders = ungroupFolder(slot.folders, id, (hostOrder() || []).map(e => e.identifier));
     store().presets[presetName()] = slot;
     save(slot); apply();
-    offerUndo(before, `「${f.name}」 폴더를 풀었어요. 항목은 그대로예요.`);
+    offerUndo(before, up ? `「${f.name}」 폴더를 풀었어요. 항목은 「${up.name}」 폴더로 올라갔어요.` : `「${f.name}」 폴더를 풀었어요. 항목은 그대로예요.`);
 }
 async function ungroupAll() {
     const before = snapshot();
@@ -351,19 +397,30 @@ async function ungroupAll() {
     save(slot); apply();
     offerUndo(before, `폴더 ${before.length}개를 풀었어요.`);
 }
+/** 실제 순서를 바꿔 쓰고(실리태번 저장 한 번) 되돌리기 알림 — 한곳에 모으기 · 폴더째 옮기기 */
+function rewriteOrder(order, next, message) {
+    const pm = manager(), ids = order.map(e => e.identifier), key = presetName();
+    const byId = new Map(order.map(e => [e.identifier, e]));
+    const write = list => { pm.removePromptOrderForCharacter(pm.activeCharacter); pm.addPromptOrderForCharacter(pm.activeCharacter, list.map(x => byId.get(x))); pm.render(); pm.saveServiceSettings(); };
+    lastIds = null;   // 우리가 바꾼 순서 — 「끌어 옮김」으로 보지 않아요
+    write(next);
+    const toast = globalThis.toastr?.info?.(message, 'Blue Lemonade');
+    attachUndo(toast, () => { if (presetName() !== key) return; lastIds = null; write(ids); });
+}
 function gather(id) {
     const pm = manager(), order = hostOrder();
     const f = folders().find(x => x.id === id);
     if (!pm || !order || !f) return;
-    const ids = order.map(e => e.identifier);
-    const next = gatherOrder(ids, { ids: folderItems(f, folders()) });
-    if (!next) return;
-    const byId = new Map(order.map(e => [e.identifier, e]));
-    const write = list => { pm.removePromptOrderForCharacter(pm.activeCharacter); pm.addPromptOrderForCharacter(pm.activeCharacter, list.map(x => byId.get(x))); pm.render(); pm.saveServiceSettings(); };
-    write(next);
-    lastIds = null;   // 우리가 바꾼 순서 — 「끌어 옮김」으로 보지 않아요
-    const toast = globalThis.toastr?.info?.(`「${f.name}」 항목을 한곳에 모았어요. 보내는 순서도 바뀌었어요.`, 'Blue Lemonade');
-    attachUndo(toast, () => { lastIds = null; write(ids); });
+    const next = gatherOrder(order.map(e => e.identifier), { ids: folderItems(f, folders()) });
+    if (next) rewriteOrder(order, next, `「${f.name}」 항목을 한곳에 모았어요. 보내는 순서도 바뀌었어요.`);
+}
+/** 폴더째 한 칸 위 · 아래로(1.0.2) — 보이는 한 칸(폴더 밖 항목 하나, 또는 같은 단의 폴더 통째)과 자리를 바꿔요. 보내는 순서가 바뀌어요 */
+function moveFolder(id, dir) {
+    const pm = manager(), order = hostOrder();
+    const list = folders(), f = list.find(x => x.id === id);
+    if (!pm || !order || !f) return;
+    const next = moveFolderBlock(order.map(e => e.identifier), list, id, dir);
+    if (next) rewriteOrder(order, next, `「${f.name}」 폴더를 ${dir < 0 ? '위로' : '아래로'} 옮겼어요. 보내는 순서도 바뀌었어요.`);
 }
 async function autoFolders() {
     const pm = manager(), order = hostOrder();
@@ -482,6 +539,8 @@ function openEditor(id, parentId = '') {
     dialog.querySelector('[data-card-clear]').addEventListener('click', () => dialog.close());
     done.addEventListener('click', () => {
         if (!chosen.size) return;
+        // 바뀐 게 없으면(1.0.2) 설정을 저장하지 않고 닫기만 — 프리셋 초깃값을 테마 설정에 옮겨 적지도 않아요
+        const key = presetName(), had = Object.hasOwn(store().presets, key), was = JSON.stringify(bucket().folders);
         const slot = bucket(true);
         let f = id ? slot.folders.find(x => x.id === id) : null;
         if (!f) {
@@ -494,6 +553,11 @@ function openEditor(id, parentId = '') {
         f.name = String(name.value || '').replace(/\s+/g, ' ').trim().slice(0, 40) || `폴더 ${slot.folders.length}`;
         assignIds(slot.folders, f, [...chosen, ...absent], order);
         slot.folders = dropEmpty(slot.folders);
+        if (JSON.stringify(slot.folders) === was) {
+            if (!had) delete store().presets[key];
+            dialog.close();
+            return;
+        }
         store().presets[presetName()] = slot;
         save(slot); dialog.close(); apply();
     });
@@ -572,4 +636,4 @@ export async function syncPromptFolders(on) {
 }
 
 /** 시험용 */
-export const _forTest = { apply, headMarkup, setApi(next) { api = next; }, setWanted(v) { wanted = v; }, reset() { lastIds = null; lastPreset = null; } };
+export const _forTest = { apply, refold, headMarkup, setApi(next) { api = next; }, setWanted(v) { wanted = v; }, reset() { lastIds = null; lastPreset = null; } };

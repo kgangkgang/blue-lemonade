@@ -198,30 +198,36 @@ body.salty :is(.fa-trash, .fa-trash-can, .fa-trash-alt, .fa-skull, :has(> :is(i,
 body.salty :is(.danger, .redWarningBG, .red_button, .is-danger, [class*="-danger"], [class*="_danger"], .primary, .is-primary, [class*="-primary"], [class*="_primary"]) > :is(.fa-trash, .fa-trash-can, .fa-trash-alt, .fa-skull):not(#bl-danger-ink-a):not(#bl-danger-ink-b) {
   color: inherit !important;
 }
-/* 실리태번 빨강 버튼 클래스: 글자가 있으면 떠 있는 칩에 빨간 글자 */
-body.salty .menu_button:is(.redWarningBG, .red_button, .danger):where(:not(#nonQRFormItems *, .salty-panel *)) {
+/* 실리태번 빨강 버튼 클래스: 글자가 있으면 떠 있는 칩에 빨간 글자
+   1.0.2 다른 확장의 위험 단추 이름(.is-danger · ○○-danger · ○○_danger — 위 휴지통 규칙과 같은 꼴)도 같은 가족이에요.
+   예전엔 공용 단추 규칙(02)의 보통 글자색 !important 가 이 단추들의 빨강을 덮었어요(채팅 탭 확장의 폴더 지우기 등) */
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger, .is-danger, [class*="-danger"], [class*="_danger"]):where(:not(#nonQRFormItems *, .salty-panel *)) {
   background: var(--bl-fill-control, var(--bl-control)) !important;
   box-shadow: var(--bl-e2) !important;
   color: var(--bl-danger) !important;
 }
 /* 아이콘만이면 면 없이 빨간 아이콘 (다른 아이콘 버튼과 같은 자리 · 같은 크기) */
-body.salty .menu_button:is(.redWarningBG, .red_button, .danger):is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(#nonQRFormItems *, .salty-panel *, [data-bl-icon-text])) {
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger, .is-danger, [class*="-danger"], [class*="_danger"]):is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(#nonQRFormItems *, .salty-panel *, [data-bl-icon-text])) {
   background: transparent !important;
   box-shadow: none !important;
 }
 @media (hover: hover) {
-  body.salty .menu_button:is(.redWarningBG, .red_button, .danger):where(:not(#nonQRFormItems *, .salty-panel *)):hover {
+  body.salty .menu_button:is(.redWarningBG, .red_button, .danger, .is-danger, [class*="-danger"], [class*="_danger"]):where(:not(#nonQRFormItems *, .salty-panel *)):hover {
     background: var(--bl-fill-hover, var(--bl-hover)) !important;
     color: var(--bl-danger) !important;
   }
 }
-body.salty .menu_button:is(.redWarningBG, .red_button, .danger):where(:not(#nonQRFormItems *, .salty-panel *)):active {
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger, .is-danger, [class*="-danger"], [class*="_danger"]):where(:not(#nonQRFormItems *, .salty-panel *)):active {
   background: var(--bl-danger) !important;
   box-shadow: var(--bl-press) !important;
   color: var(--bl-danger-ink) !important;
 }
-body.salty .menu_button:is(.redWarningBG, .red_button, .danger):where(:not(#nonQRFormItems *, .salty-panel *)):focus-visible {
+body.salty .menu_button:is(.redWarningBG, .red_button, .danger, .is-danger, [class*="-danger"], [class*="_danger"]):where(:not(#nonQRFormItems *, .salty-panel *)):focus-visible {
   box-shadow: var(--bl-danger-ring) !important;
+}
+/* 1.0.2 위험 단추 안 아이콘은 단추 글자색(빨강)을 따라요 — 공용 단추 규칙(02)이 안쪽 아이콘을 흐린 색으로 칠해 아이콘만 회색이었어요 */
+body.salty .menu_button:is(.danger, .is-danger, [class*="-danger"], [class*="_danger"]):where(:not(#nonQRFormItems *, .salty-panel *)) > :is(i, .fa-solid, .fa-regular) {
+  color: inherit;
 }
 
 /* ---------- 화면별로 예전 규칙(서랍 id) 덮어쓰기 ---------- */

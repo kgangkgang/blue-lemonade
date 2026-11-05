@@ -23,6 +23,7 @@ const LIVE_MODULES = {
     'log-copy-sanitize': () => import('./log-copy-sanitize.js'),
     'log-copy-motion': () => import('./log-copy-motion.js'),   // 1.0.1 글꾸 움직임(openBox 는 창이 아니라 눌러 접는 상자 HTML 을 만들어요)
     'mart-import-ui': () => import('./mart-import-ui.js'),   // 1.0.1 「마트에서 가져오기」 창
+    'fonts': () => import('./fonts.js'),   // 1.0.2 테마 글꼴 목록 — 개인 확장(글꼴 고르기)이 src/fonts.js 를 주소로 받으면 테마 모듈 묶음이 한 벌 더 생겨요(두 번째 인스턴스). 이 길로 같은 인스턴스를 받아요
     // 검사 도구가 값 · 순수 함수를 읽는 모듈(여는 함수는 없어요)
     'addons': () => import('./addons.js'),
     'private-addons': () => import('./private-addons.js'),

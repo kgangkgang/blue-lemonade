@@ -104,7 +104,7 @@ export function renderSettingsPage(page, viewingChat, onBack) {
             </section>
 
             <section class="cg-section">
-                <h3 class="cg-section-title"><i class="fa-solid fa-masks-theater"></i>데우스 엑스 마키나</h3>
+                <h3 class="cg-section-title"><i class="fa-solid fa-diamond"></i>데우스 엑스 마키나</h3>
                 <div class="cg-setting">
                     <div class="cg-setting-text"><b>본문만 보기</b><small>카드에 본문만 보여요. 끄면 장면 계획 · 트래커 같은 정규식 카드도 같이 보여요.</small></div>
                     <button type="button" class="cg-switch" role="switch" data-setting="deusProseOnly" aria-checked="${store.deusProseOnly !== false}"><span></span></button>

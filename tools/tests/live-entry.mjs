@@ -23,6 +23,9 @@ test('입구 표가 비어 있지 않고 이름 = 파일 경로(.js 없이)예�
     for (const { name, file } of names) assert.equal(name + '.js', file, `${name} ↔ ${file}`);
     assert.equal(new Set(names.map(n => n.name)).size, names.length, '같은 이름 둘');
 });
+test('글꼴 목록(fonts)도 입구 표에 있어요 — 개인 확장이 src/fonts.js 를 주소로 받으면 두 번째 인스턴스가 생겨요(1.0.2)', () => {
+    assert.ok(names.some(n => n.name === 'fonts' && n.file === 'fonts.js'), '표에 fonts 줄이 없어요');
+});
 test('표의 파일이 전부 있어요(없으면 묶음이 멈춰요)', () => {
     const missing = names.filter(n => !fs.existsSync(path.join(root, 'src', n.file)));
     assert.deepEqual(missing.map(n => n.file), []);

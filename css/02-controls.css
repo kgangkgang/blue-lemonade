@@ -9,13 +9,17 @@ body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #
   padding: 0 var(--bl-inset) !important;
   border: 0 !important;
   border-radius: var(--bl-r-sm) !important;
-  background: var(--bl-fill-control, var(--bl-control)) !important;
-  box-shadow: var(--bl-e2) !important;
-  color: var(--salty-text) !important;
   opacity: 1 !important;
   font-size: var(--bl-fs-ctl);
   font-weight: 500;
   transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+/* 1.0.2 칠하기(면 · 그림자 · 글자색)는 따로 — 다른 확장이 단추에 직접(인라인 style) 글자색 · 바탕을 칠했으면 그 색을 덮지 않아요.
+   예전엔 이 !important 가 확장의 빨간 지우기 단추 · 직접 고른 색 단추를 보통 글자색으로 덮었어요. 모양(높이 · 여백 · 모서리)은 그대로 맞춰요 */
+body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, [style*="color:"], [style*="background:"])) {
+  background: var(--bl-fill-control, var(--bl-control)) !important;
+  box-shadow: var(--bl-e2) !important;
+  color: var(--salty-text) !important;
 }
 body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) > :is(i, .fa-solid, .fa-regular) {
   font-size: 15px;
@@ -26,17 +30,19 @@ body.salty .expression_buttons .menu_button {
   align-items: center;
 }
 @media (hover: hover) {
-  body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)):hover {
+  body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, [style*="color:"], [style*="background:"])):hover {
     background: var(--bl-fill-control-hover, var(--bl-control-hover)) !important;
   }
 }
 body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)):active {
-  background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
-  box-shadow: var(--bl-press) !important;
   transform: translateY(1px);
 }
+body.salty .menu_button:where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, [style*="color:"], [style*="background:"])):active {
+  background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
+  box-shadow: var(--bl-press) !important;
+}
 /* 켜진 버튼: 옅은 포인트 면으로 눌려 들어간 상태 */
-body.salty .menu_button:is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *)) {
+body.salty .menu_button:is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, [style*="color:"], [style*="background:"])) {
   background: var(--bl-fill-selected, var(--bl-selected)) !important;
   box-shadow: var(--bl-well-in) !important;
   color: var(--salty-accent-ink, var(--salty-accent)) !important;
@@ -50,30 +56,36 @@ body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-onl
   min-width: var(--bl-h-icon);
   min-height: var(--bl-h-icon);
   padding: 0 !important;
+  font-size: var(--bl-ic) !important;
+}
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text], [style*="color:"], [style*="background:"])) {
   background: transparent !important;
   box-shadow: none !important;
   color: var(--salty-muted) !important;
-  font-size: var(--bl-ic) !important;
 }
 body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])) > i {
   font-size: var(--bl-ic);
   color: inherit;
 }
 @media (hover: hover) {
-  body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):hover {
+  body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text], [style*="color:"], [style*="background:"])):hover {
     background: var(--bl-fill-hover, var(--bl-hover)) !important;
     color: var(--salty-text) !important;
   }
 }
 body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text])):active {
+  transform: none;
+}
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, .toggleEnabled, .active, .toggled, [data-bl-icon-text], [style*="color:"], [style*="background:"])):active {
   background: var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
   color: var(--salty-text) !important;
-  transform: none;
 }
 body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text])) {
   min-width: var(--bl-h-icon);
   min-height: var(--bl-h-icon);
   padding: 0 !important;
+}
+body.salty .menu_button:is(.fa-solid, .fa-regular, .fa-brands, [data-bl-icon-only~="i"], [data-bl-icon-only~="svg"], [data-bl-icon-only~="mbi"]:is(bl-s, *):is(bl-s, *)):is(.toggleEnabled, .active, .toggled):where(:not(.redWarningBG, .red_button, .salty-panel *, #nonQRFormItems *, .popup-controls *, [data-bl-icon-text], [style*="color:"], [style*="background:"])) {
   background: var(--salty-fill-accent-10, var(--salty-accent-10)) !important;
   box-shadow: none !important;
   color: var(--salty-accent) !important;

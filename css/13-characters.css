@@ -209,7 +209,7 @@ body.salty #right-nav-panel #charListFixedTop {
    서랍 padding 8 + 카드 margin 14 = 22px 씩 먹어서 360~390px 화면에서 답답했다 */
 @media (max-width: 1000px) {
   /* 기반 규칙(2918줄)이 :not(#salty-none) 으로 아이디 둘을 쓰므로 같은 방법으로 이겨야 한다 */
-  body.salty #right-nav-panel:not(#salty-none) > .scrollableInner {
+  body.salty #right-nav-panel:not(#salty-none) .scrollableInner:where(:not(.scrollableInner .scrollableInner)) {   /* 1.0.2 목록을 다른 칸으로 옮겨도(09 참고) */
     /* 스크롤바 자리는 오른쪽 한 쪽만 (양쪽이면 왼쪽 6px 이 그냥 버려진다).
        그만큼 왼쪽에 여백을 주어 눈으로 보이는 좌우를 맞춘다 — 실측 카드 x=12 / 오른쪽 12 */
     scrollbar-gutter: stable;

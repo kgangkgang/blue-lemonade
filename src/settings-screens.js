@@ -64,7 +64,7 @@ export const SCREEN_ICONS = {
     'text/text': 'fa-font', 'text/para': 'fa-paragraph', 'text/markdown': 'fa-hashtag', 'text/shadow': 'fa-clone',
     'chat/message': 'fa-message', 'chat/profile': 'fa-id-badge', 'chat/name': 'fa-signature', 'chat/screen': 'fa-display', 'chat/etc': 'fa-ellipsis',
     'image/layout': 'fa-table-cells-large', 'image/shape': 'fa-shapes', 'image/frame': 'fa-vector-square', 'image/size': 'fa-maximize', 'image/cutedge': 'fa-scissors',
-    'prompt/deus': 'fa-masks-theater', 'prompt/fruit': 'fa-apple-whole', 'prompt/sola': 'fa-sun',
+    'prompt/deus': 'fa-diamond', 'prompt/fruit': 'fa-apple-whole', 'prompt/sola': 'fa-sun',
     'extensions/tts': 'fa-volume-high', 'extensions/assets': 'fa-images', 'extensions/capture': 'fa-camera', 'extensions/order': 'fa-arrow-down-short-wide', 'extensions/perf': 'fa-gauge-high', 'extensions/models': 'fa-circle-plus', 'extensions/bookmarks': 'fa-bookmark', 'extensions/zipinstall': 'fa-file-zipper', 'extensions/translator': 'fa-language', 'extensions/prompt': 'fa-table-list', 'extensions/mermaid': 'fa-diagram-project', 'extensions/rewrite': 'fa-glasses', 'extensions/direction': 'fa-feather-pointed',
     // 11-03(사용자 제보): 1.0.0 에서 되살린 화면 · 확장도 아이콘 — 설치 점검 · 단어 치환 · 메모 · 커스텀 CSS 조절 · 프롬프트 템플릿 · 모델 전환 · 정규식 연결(addons.js icons 와 같은 이름)
     'theme/update': 'fa-stethoscope', 'extensions/words': 'fa-arrow-right-arrow-left', 'extensions/notes': 'fa-note-sticky', 'extensions/customstyle': 'fa-sliders', 'extensions/prompt-template': 'fa-code', 'extensions/modelswitch': 'fa-shuffle', 'extensions/regexlink': 'fa-link',

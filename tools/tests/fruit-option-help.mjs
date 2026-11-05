@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 const root=path.resolve(process.argv[2]||'.');
-const {optionFamily,optionEffect}=await import(pathToFileURL(path.join(root,'src/scripts/fruit-option-help.js')));
+const {optionFamily,optionEffect,splitOptionHelp}=await import(pathToFileURL(path.join(root,'src/scripts/fruit-option-help.js')));
 const {FRUIT_OPTION_EFFECTS,FRUIT_OPTION_BASELINES}=await import(pathToFileURL(path.join(root,'src/scripts/fruit-option-effects.js')));
 assert.equal(optionFamily({id:'a',name:'👁️ 示例｜人称单选 #MODEL @Author'}),'人称');
 assert.equal(optionFamily({id:'b',name:'⌨️ 示例'}),'文风');
@@ -45,4 +45,12 @@ context.document.body.classList.contains=()=>false;buttons=false;context.sync(ba
 const help=fs.readFileSync(path.join(root,'src/scripts/fruit-option-help.js'),'utf8');
 assert(!/fetch\(|updatePreset|saveSettings|triggerSlash|executeSlash/.test(help));
 assert(help.includes("['pointercancel',cancel]")&&help.includes("['scroll',cancel]")&&help.includes('e.isPrimary===false'));
+// 11-05 설명 창 나누기: 선택지마다 「이름:」 굵게 + 설명, 선택지마다 같은 문장은 맨 위 한 번만(합성 글)
+{const s=splitOptionHelp('',[{label:'시험 가',text:'가 설명이에요. 하나만 켜요.'},{label:'시험 나',text:'나 설명 1.5배예요. 하나만 켜요.'}]);
+assert.equal(s.common,'하나만 켜요.');assert.deepEqual(s.items,[{label:'시험 가',text:'가 설명이에요.'},{label:'시험 나',text:'나 설명 1.5배예요.'}]);}
+{const s=splitOptionHelp('시험 가: 가 설명이에요. 같이 붙는 말.\n\n시험 나: 나 설명이에요. 같이 붙는 말.');
+assert.equal(s.common,'같이 붙는 말.');assert.deepEqual(s.items.map(x=>x.label),['시험 가','시험 나']);}
+{const s=splitOptionHelp('콜론 없는 한 문단 설명이에요. 끝.');assert.equal(s.common,'');assert.deepEqual(s.items,[{label:'',text:'콜론 없는 한 문단 설명이에요. 끝.'}]);}
+{const s=splitOptionHelp('',[{label:'시험 가',text:'다른 말이에요.'},{label:'시험 나',text:'또 다른 말이에요.'}]);assert.equal(s.common,'');assert.equal(s.items[1].text,'또 다른 말이에요.');}
+assert(help.includes("name.textContent = `${item.label}:`"),'이름은 콜론까지 굵게(strong)');
 console.log('Fruit option help: exact-content descriptions, unknown/changed fallback, group matching, QR visibility gates and read-only wiring passed');
