@@ -1,0 +1,23 @@
+/* 홈페이지 첫 화면의 마트 입구 카드 2장 (mart/) */
+.mart-section{scroll-margin-top:90px}
+.mart-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:16px}
+.mart-cards a{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:12px;background:var(--surface);color:var(--text);text-decoration:none;box-shadow:var(--card-shadow);transition:translate .15s}
+.mart-cards a:hover{translate:0 -2px}
+.mart-cards .mart-art{position:relative;height:150px;border-radius:8px;overflow:hidden;background:var(--tint)}
+.mart-cards .mart-art.frames{background:url(data/frames/picnic-clay-portrait-t-10fc6aa8.webp) 36% 55%/auto 88% no-repeat,url(data/frames/rainbow-illustrated-portrait-t-70408717.webp) 64% 55%/auto 88% no-repeat,linear-gradient(165deg,#e3eefa,#f6e9f2)}
+/* 글꾸 마트 표지: 실제 글꾸 틀(비 · 호박 · 메신저 말풍선) 미리보기를 겹친 몽타주(cover-geulkku.webp · 1120×300 · 마트-모바일/gen-cover.mjs 로 만들어요) */
+.mart-cards .mart-art.geulkku{background:url(cover-geulkku.webp) 50% 0/cover no-repeat,linear-gradient(165deg,#f6efe2,#efe9f6)}
+.mart-cards b{font-size:16px;font-weight:650;line-height:1.4}
+.mart-cards p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
+.mart-cards .mart-go{margin-top:auto;font-size:14px;font-weight:650;color:var(--blue-strong)}
+/* 「🎲 오늘의 글꾸 · 액자」 — 마트로 가서 바로 하나를 무작위로 열어요(mart/geulkku/?random=1 · mart/frames/?random=1) */
+.mart-random-links{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:16px 0 0;color:var(--muted);font-size:14px}
+/* 시안6 규격: 글자 단추 36 · 14/400 · 모서리 8 · 면 surface + 1px 선 */
+.mart-random-links a{position:relative;display:inline-flex;align-items:center;gap:4px;height:36px;padding:0 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--text);font-size:14px;font-weight:400;line-height:1;text-decoration:none}
+.mart-random-links a:hover{background:var(--tint)}
+@media (pointer:coarse){.mart-random-links a::before{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}}
+/* 넓은 화면(1200 이상): 홈도 마트와 같은 최대 폭 1400(머리줄 · 첫 화면 · 칸 · 묶음 줄) */
+@media (min-width:1200px){
+  body.home-guide .top-inner,body.home-guide .hero,body.home-guide .section,body.home-guide .fresh{max-width:1400px}
+  body.home-guide .essentials,body.home-guide .install-inner{max-width:1336px}
+}

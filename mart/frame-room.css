@@ -1,0 +1,115 @@
+/* 액자 마트(frame-room.js) — 내 사진 넣어 보기 · 거르기 · 수백 종 · 크게 보기. mart.css 위에 얹어요(액자 페이지만) */
+/* 테마 css/41-decor.css 와 같은 규칙: 액자 그림(.bl-art)은 사진 위에 100% 100% · 진하기 · 사진(.bl-photo)은 마스크 + 사진창 clip-path(round 모서리) 안에서 object-fit · object-position · scale · 기울기는 액자째 rotate */
+:root{--mart-photo:none;--mart-opacity:1;--mart-zoom:1;--mart-pos:50% 50%;--mart-fit:cover;--mart-radius:14px;--mart-tilt:0deg}
+.bl-frame{position:relative;display:block;isolation:isolate;aspect-ratio:var(--ratio,.75);width:min(100cqw,100cqh * var(--ratio,.75));rotate:var(--mart-tilt)}
+.bl-frame>.bl-art{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:fill;opacity:var(--mart-opacity);pointer-events:none;-webkit-user-drag:none;user-select:none}
+.bl-frame>.bl-photo{position:absolute;inset:0;display:block;overflow:hidden;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;clip-path:inset(var(--win,0%) round calc(var(--mart-radius) * var(--k,1)))}
+.bl-photo-img{display:block;width:100%;height:100%;background-image:var(--mart-photo);background-position:var(--mart-pos);background-size:var(--mart-fit);background-repeat:no-repeat;transform:scale(var(--mart-zoom))}
+.bl-photo-real{display:block;width:100%;height:100%;max-width:none;object-fit:var(--mart-fit);object-position:var(--mart-pos);transform:scale(var(--mart-zoom));-webkit-user-drag:none;user-select:none;pointer-events:none}
+.bl-frame.has-shadow{filter:url(#mart-art-shadow)}
+body[data-mart=frames] .mart-preview.frame{display:block;width:100%;padding:0;border:0;cursor:zoom-in;font:inherit;color:inherit}
+.mart-stage{position:absolute;inset:12px;display:grid;place-items:center;container-type:size;--k:.55}
+/* 「🔍 맞춰 보기」 꼬리표 · 초점 테두리는 공용(mart.css .mart-zoom-hint) */
+
+/* 내 사진 넣기 띠(시안6: 그라데이션 → 단색 tint-2 · 글자 토큰 · 단추 36 · 모서리 12) */
+.mart-tryon{display:flex;align-items:center;gap:12px;margin:0 0 8px;padding:12px 16px;border-radius:var(--r-card);background:var(--tint-2);color:var(--text)}
+.mart-tryon-photo{flex:none;width:64px;height:64px;border-radius:var(--r-ctl);overflow:hidden;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.mart-tryon-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.mart-tryon-body{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.mart-tryon-body>b{font-size:var(--ts-h);font-weight:var(--strong);line-height:1.4;color:var(--ink)}
+.mart-tryon-body>small{font-size:var(--ts-meta);line-height:1.5;color:var(--muted)}
+.mart-tryon-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:4px}
+.mart-tryon-clear[hidden]{display:none}
+.mart-tryon-clear{color:var(--danger)}
+body.mart-dropping::after{content:"여기에 놓으면 모든 액자에 내 사진이 들어가요";position:fixed;inset:12px;z-index:80;display:grid;place-items:center;border:3px dashed var(--blue);border-radius:24px;background:color-mix(in srgb,var(--tint-2) 88%,transparent);color:var(--ink);font-size:20px;font-weight:650;pointer-events:none}
+
+/* 거르기(찾기 · 묶음 탭 · 분류 칩 · 방향 · 그림체 세그 · 개수)는 글꾸 마트와 같은 공용 부품 — mart.css .mart-tools · .mart-groups · .mart-chips · .mart-filters */
+.mart-more{height:1px}
+
+/* 폰은 두 줄(수백 종이라 한 줄은 너무 길어요) · 카드 여백 8 · 글자는 단계 그대로(제목 16 · 설명 13) */
+@media (max-width:639px){
+  body[data-mart=frames] .mart-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  body[data-mart=frames] .mart-card{padding:8px}
+  .mart-stage{inset:4px;--k:.4}
+  body[data-mart=frames] .mart-title{flex-direction:column;align-items:flex-start;gap:4px}
+  body[data-mart=frames] .mart-title b{max-width:100%}
+  body[data-mart=frames] .mart-title b .t{white-space:normal;overflow:visible}   /* 11-05 긴 이름(「미카엘 · 천지합동청 · 2D · 세로」)은 두 칸 카드에서 잘리지 않게 줄바꿈 */
+  body[data-mart=frames] .mart-tags{margin-left:0}
+  body[data-mart=frames] .mart-actions{grid-template-columns:1.3fr 1fr}
+  /* 내 사진 띠: 폰은 사진 · 이름 · 단추 · 표본 고르기를 짧게(안내 글은 한 줄) */
+  .mart-tryon{padding:12px;gap:8px}
+  .mart-tryon-photo{width:48px;height:48px}
+  .mart-tryon-note{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .mart-tryon select{max-width:9.5em}
+}
+
+/* 크게 보기 · 맞춰 보기 */
+.mart-room{width:min(1180px,calc(100vw - 32px));height:min(820px,calc(100dvh - 32px));max-width:none;max-height:none;padding:0;border:0;border-radius:var(--r-sheet);background:var(--bg);color:var(--text);overflow:hidden;box-shadow:0 30px 80px -30px rgba(18,24,38,.6)}
+.mart-room[open]{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,1fr)}
+.mart-room::backdrop{background:rgba(18,24,38,.55)}
+.room-stage-wrap{display:flex;flex-direction:column;min-height:0;background:var(--tint)}
+.room-stage{flex:1;min-height:0;display:grid;place-items:center;padding:24px;touch-action:none;background:repeating-conic-gradient(rgba(28,41,59,.05) 0 25%,transparent 0 50%) 0 0/22px 22px,#f6f8fb}
+.room-stage[data-bg=dark]{background:repeating-conic-gradient(rgba(255,255,255,.04) 0 25%,transparent 0 50%) 0 0/22px 22px,#141F2E}
+.room-stage[data-bg=chat]{background:linear-gradient(160deg,#2a3346,#3b3147 60%,#43363a)}
+.room-frame-box{width:100%;height:100%;display:grid;place-items:center;container-type:size}
+.room-frame{cursor:grab;--k:1}
+.room-frame:active{cursor:grabbing}
+.room-stage-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--line)}
+.room-stage-bar [data-room-pos]{min-width:72px;text-align:center;font-size:var(--ts-meta);color:var(--muted);font-variant-numeric:tabular-nums}
+.room-hint{margin-left:auto;font-size:12px;color:var(--muted)}
+.room-side{display:flex;flex-direction:column;min-height:0;border-left:1px solid var(--line)}
+.room-head{display:flex;align-items:flex-start;gap:8px;padding:16px 16px 8px}
+.room-head>div{flex:1;min-width:0}
+.room-head h2{display:flex;align-items:center;min-height:34px;margin:0;font-size:var(--ts-win);font-weight:var(--strong);line-height:1.3}
+.room-desc{margin:4px 0 0;font-size:var(--ts-meta);color:var(--muted);line-height:1.5}
+.room-photo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:4px 16px 8px}
+.room-controls{flex:1;min-height:0;overflow:auto;padding:0 16px 8px;overscroll-behavior:contain}
+.room-group{padding:12px 0;border-top:1px solid var(--line)}
+.room-group h3{margin:0 0 8px;font-size:var(--ts-h);font-weight:var(--strong);line-height:1.4}
+.room-group h3 small{font-weight:400;color:var(--muted);font-size:12px}
+.room-range{display:grid;grid-template-columns:minmax(0,9.5em) minmax(0,1fr) 4.6em;align-items:center;gap:12px;min-height:36px;font-size:var(--ts-meta)}
+.room-range input{width:100%;min-width:0;height:28px;accent-color:var(--ink)}
+.room-range output{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+/* 안쪽 사진 채우기 = 칩 한 줄(공용 .chip · 고름 = 옅은 면 + 체크) */
+.room-seg{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0}
+.room-preset{display:flex;flex-wrap:wrap;gap:8px 12px;margin:4px 0 8px}
+.room-preset[hidden],.room-label[hidden],.room-shadow-more[hidden]{display:none}
+.room-color{position:relative;display:inline-flex;align-items:center;gap:8px;font-size:var(--ts-meta)}
+@media (pointer:coarse){.room-color::before{content:"";position:absolute;left:50%;top:50%;width:max(100%,var(--touch));height:max(100%,var(--touch));transform:translate(-50%,-50%);background:none;border:0}}
+.room-color input[type=color]{width:36px;height:36px;padding:0;border:1px solid var(--line-strong);border-radius:var(--r-ctl);background:none;cursor:pointer}
+.room-color input[type=text]{width:9em}
+.room-note{margin:8px 0 0;font-size:12px;line-height:1.55;color:var(--muted)}
+.room-actions{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:8px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--surface)}
+/* 넷(처음 값 · 담기 · 복사 · 그림 받기) — 칸이 좁으면(폰 · 좁은 PC 창) 두 줄 격자 */
+.room-side{container:room-side/inline-size}
+.room-actions{grid-template-columns:1fr 1.3fr 1fr 1.3fr}
+.room-actions .btn{padding:0 8px}
+/* 내장(심플 20): 처음 값 · 「이미 테마에 들어 있어요」 · 그림 받기 셋 — 좁으면 안내가 맨 위 한 줄 */
+.room-actions.is-builtin{grid-template-columns:1fr 2fr 1.3fr}
+.room-builtin{justify-content:center;text-align:center}
+.room-actions [hidden]{display:none}
+@container room-side (max-width:460px){.room-actions{grid-template-columns:1fr 1fr}}
+@container room-side (max-width:460px){.room-actions.is-builtin{grid-template-columns:1fr 1fr}.room-actions.is-builtin .room-builtin{grid-column:1/-1;order:-1}}
+.room-source .mart-source{margin-top:4px}
+.mart-source.is-plain{border-bottom:0}   /* 링크 없는 원작 봇 이름(센티넬버스) */
+@media (max-width:820px){
+  .mart-room{width:100vw;height:100dvh;border-radius:0}
+  .mart-room[open]{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,46dvh) minmax(0,1fr)}
+  .room-stage{padding:12px}
+  .room-stage-bar{padding:4px 8px}
+  .room-side{border-left:0}
+  .room-head{padding:12px 12px 4px}
+  .room-photo{padding:4px 12px 8px}
+  .room-controls{padding:0 12px 8px}
+  .room-range{grid-template-columns:minmax(0,7.6em) minmax(0,1fr) 3.8em;gap:8px;min-height:44px}
+  .room-range input{height:32px}
+  .room-hint{display:none}
+  .room-actions{padding:8px 12px calc(8px + env(safe-area-inset-bottom))}
+}
+.mart-room{text-align:left}
+.mart-room p{text-align:left}
+/* 사진 위치 슬라이더: 그 축에 여유가 없으면 옅게 + 안내(frame-room.js syncSlack) */
+.room-range.is-idle{opacity:.45}
+.room-range.is-idle input{cursor:not-allowed}
+.room-idle{margin:-4px 0 8px;padding:8px 12px;border-radius:var(--r-ctl);background:var(--tint);color:var(--muted);font-size:12px;font-weight:500;line-height:1.5;text-align:left}
+.room-idle[hidden]{display:none}

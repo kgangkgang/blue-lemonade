@@ -1,0 +1,57 @@
+/* 머리줄 「마트」 단추 + 「어느 마트로 갈까요?」 메뉴 — 홈 · 액자 마트 · 글꾸 마트 공용(top-mart.js). 색은 site.css 팔레트 토큰만 써요(시안6 규격: 36 · 14/400 · ⌄ 마스크 · 메뉴 모서리 12).
+   단추는 설치(파란 채움)와 구분되는 보조 단추(바탕 surface + 테두리 line-strong). PC 는 단추 아래 작은 메뉴, 폰(640 이하)은 아래에서 올라오는 시트. */
+.top-mart{position:relative;display:inline-flex;align-items:center;gap:4px;height:36px;padding:0 10px 0 12px;border:0;border-radius:999px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px;font-weight:400;line-height:1;letter-spacing:-.01em;white-space:nowrap;box-shadow:inset 0 0 0 1px var(--line-strong);cursor:pointer;transition:background-color .2s}
+/* 꺾쇠 = 공용 ⌄ 선 그림 마스크 14(「자세히」 · 칩 접기와 같은 그림) · 펼치면 뒤집혀요 */
+.top-mart::after{content:"";flex:none;width:14px;height:14px;background:var(--muted);-webkit-mask:var(--glyph-chev) center/contain no-repeat;mask:var(--glyph-chev) center/contain no-repeat;transition:transform .2s}
+.top-mart[aria-expanded=true]::after{transform:rotate(180deg)}
+@media (pointer:coarse){
+  .top nav a,.top-actions .button.small,.top .brand{position:relative}
+  .top-mart::before,.top nav a::before,.top-actions .button.small::before,.top .brand::before{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+}
+.top-mart:hover,.top-mart[aria-expanded=true]{background:var(--tint)}
+.top-mart:focus-visible{outline:2px solid var(--blue,#2f6fd6);outline-offset:2px}
+.top nav .top-mart{margin-left:4px;align-self:center}
+
+.mart-menu-scrim{position:fixed;inset:0;z-index:58;background:rgba(18,24,38,.32)}
+.mart-menu-scrim[hidden],.mart-menu[hidden]{display:none}
+.mart-menu{position:fixed;z-index:59;width:320px;padding:12px;border-radius:12px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line),0 24px 60px -24px rgba(18,24,38,.55);animation:mart-menu-in .16s ease-out}
+.mart-menu-grip{display:none}
+.mart-menu-title{margin:0 4px 8px;font-size:16px;font-weight:650;line-height:1.4;color:var(--ink)}
+.mart-menu-go{display:flex;align-items:center;gap:12px;min-height:64px;padding:8px;border-radius:8px;color:var(--text);text-decoration:none}
+.mart-menu-go+.mart-menu-go{margin-top:4px}
+.mart-menu-go:hover,.mart-menu-go:focus-visible{background:var(--tint);outline:none}
+.mart-menu-go:focus-visible{box-shadow:inset 0 0 0 2px var(--blue,#2f6fd6)}
+.mart-menu-go[aria-current=page]{background:var(--pick-face)}
+.mart-menu-go[aria-current=page] b{color:var(--pick-ink)}
+.mart-menu-cover{flex:none;width:80px;height:56px;border-radius:8px;background:var(--tint);box-shadow:inset 0 0 0 1px var(--line)}
+.mart-menu-cover.is-frames{background:url(data/frames/picnic-clay-portrait-t-10fc6aa8.webp) 26% 58%/auto 90% no-repeat,url(data/frames/rainbow-illustrated-portrait-t-70408717.webp) 76% 58%/auto 90% no-repeat,linear-gradient(165deg,#e3eefa,#f6e9f2)}
+.mart-menu-cover.is-genie{display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#fff3c4,#ffd54a 70%,#f5b800);font-size:30px}
+.mart-menu-cover.is-genie::before{content:"🧞";font-family:'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif}
+.mart-menu-cover.is-geulkku{background:url(cover-geulkku.webp) 50% 0/cover no-repeat,#f3f1ec}
+.mart-menu-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.mart-menu-text b{font-size:15px;line-height:1.4;color:var(--ink)}
+.mart-menu-text small{font-size:13px;line-height:1.45;color:var(--muted)}
+.mart-menu-text small b{font-size:inherit;color:var(--ink);font-variant-numeric:tabular-nums}
+.mart-menu-arrow{flex:none;width:14px;height:14px;font-size:0;background:var(--muted);-webkit-mask:var(--glyph-chev) center/contain no-repeat;mask:var(--glyph-chev) center/contain no-repeat;transform:rotate(-90deg)}
+@keyframes mart-menu-in{from{opacity:0;transform:translateY(-4px)}}
+
+/* 마트 페이지 머리줄: 폰에서도 「홈」 · 「마트」가 보이게(브랜드 글자는 레몬만) */
+@media (max-width:900px){
+  body[data-mart] .top nav{display:flex;align-items:center;gap:4px;margin-left:auto}
+  body[data-mart] .top nav a{padding:0 8px}
+  body[data-mart] .top-actions{margin-left:0}
+}
+@media (max-width:640px){
+  .top-mart{padding:0 10px 0 12px}
+  .top nav .top-mart{margin-left:0}
+  .mart-menu{left:0!important;right:0;top:auto!important;bottom:0;width:auto;padding:24px 16px calc(16px + env(safe-area-inset-bottom));border-radius:16px 16px 0 0;box-shadow:0 -18px 40px -20px rgba(18,24,38,.45);animation:mart-menu-up .24s cubic-bezier(.3,.9,.3,1)}
+  .mart-menu-grip{display:block;position:absolute;top:8px;left:50%;width:40px;height:4px;margin-left:-20px;border-radius:999px;background:var(--line-strong)}
+  .mart-menu-title{margin:0 4px 12px}
+  .mart-menu-go{min-height:76px;padding:8px}
+  .mart-menu-cover{width:92px;height:64px}
+  .mart-menu-text b{font-size:16px}
+  .mart-menu-text small{font-size:13px}
+  body[data-mart] .brand-text{display:none}
+}
+@keyframes mart-menu-up{from{transform:translateY(60%);opacity:.5}}
+@media (prefers-reduced-motion:reduce){.mart-menu{animation:none}}
