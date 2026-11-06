@@ -31,6 +31,7 @@ import { styleProfileBlock, styleProfileSignature } from './style-profile.js';
 import { glossaryPriority } from './glossary-priority.js';
 import { saveTermChat } from './selection/term-save.js';
 const chatTermCachePolicy = createChatTermCachePolicy();
+import { GLOSSARY_MAX_LINES, glossaryScopeKeyOf, glossaryScopeKeysOf, pickGlossaryEntries, glossaryBlockText } from './glossary-prompt.js';   // 1.0.5 한글화 패널과 같은 항목 · 같은 지시 꼴
 import { glossarySignature, glossaryGone, mergeGlossary, glossaryMessage, renameGlossaryScope, GONE_KEY as GLOSSARY_GONE } from './glossary-sync.js';   // 2.7.5 다른 기기의 옛 설정 저장에 덮이지 않게 (updated · 지운 기록 · 합치기)
 import { registerSettingsMerge, startSettingsMerge } from '../../settings-merge.js';
 import { builtinTranslateState, builtinTranslateNotice, rescuePlan } from './builtin-translate.js';   // 7.9.9 실리태번 기본 「번역」 확장이 켜져 있을 때: 알림 · 지워진 번역문 되살리기
@@ -2665,14 +2666,18 @@ function progressBadge(messageId, message = null, sourceMes = message?.mes, chat
     const swipeId = message?.swipe_id ?? 0;
     let stage = { stage: 'whole' }, el = null, streamNote = null;
     const text = () => progressLabel(stage, started, streamNote);
+    // 1.0.5 진행 줄을 뗄 때도 읽던 자리 보호 안에서 (대상이 바뀌어 떼거나 · 끝나서 떼거나)
+    const drop = () => { const line = el; el = null; if (line?.isConnected) keepChatReadingPosition(line, () => line.remove()); else line?.remove(); };
     const paint = () => {
         // [2.1.3] 번호가 아니라 그 메시지 · 그 스와이프 · 그 글에 붙인다. 번호로만 찾아 스와이프 뒤 새 '...' 에 다시 붙었고,
         //         그러면 isGeneratingSwipe 가 생성 중인 줄 몰라 옛 글을 한 번 더 번역했다. 대상이 바뀌면 떼고, 돌아오면 다시 붙인다.
         const index = guard ? guard.index() : message ? resolveTranslationTarget(message, messageId, sourceMes, chatId) : messageId;
-        if (index === -1 || (message && (getContext().chat?.[index]?.swipe_id ?? 0) !== swipeId)) { el?.remove(); el = null; return; }
+        if (index === -1 || (message && (getContext().chat?.[index]?.swipe_id ?? 0) !== swipeId)) { drop(); return; }
         const host = document.querySelector(`#chat .mes[mesid="${index}"] .mes_text`);
         if (!host) return;
-        if (!el || !el.isConnected) { el = document.createElement('div'); el.className = 'llmt-progress'; host.prepend(el); }
+        // 1.0.5 진행 줄(한 줄 · 약 20px)은 읽는 자리 위(메시지 맨 위)에 들고 나요 — 읽던 자리 보호 안에서 넣고 뗀다. 실리태번이 메시지를 통째로
+        //       다시 그린 직후(자동 번역은 늘 그 뒤에 시작)엔 브라우저 스크롤 앵커가 없어, 그냥 넣으면 읽던 줄이 그만큼 아래로 밀렸다(11-06 제보 「조금씩 밑으로」)
+        if (!el || !el.isConnected) { const line = el = document.createElement('div'); line.className = 'llmt-progress'; line.textContent = text(); keepChatReadingPosition(host, () => host.prepend(line)); return; }
         else if (readerRestsIn(host) > 0) return;   // 7.7.4 손으로 굴리는 동안엔 글자(초 · 문단 수)를 바꾸지 않는다 — 바꿀 때마다 긴 답의 배치를 다시 해 scroll 이 버벅였다. 1초 뒤 다시
         el.textContent = text();
     };
@@ -2681,7 +2686,7 @@ function progressBadge(messageId, message = null, sourceMes = message?.mes, chat
     return {
         update(info) { if (info && typeof info === 'object') stage = info; paint(); },
         note(info) { streamNote = info && typeof info === 'object' ? info : null; paint(); },   // 1.0.1 흘려받는 요청의 지금 상태 (translate 의 onStreamNote)
-        remove() { clearInterval(timer); el?.remove(); el = null; },
+        remove() { clearInterval(timer); drop(); },
     };
 }
 
@@ -2777,7 +2782,7 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
             if (stopped) return;
             const now = target(), view = now < 0 ? null : hostOf(now);
             if (!frameGuard.settled({ notified, shown: view ? previewShown(view, { keep: isProgressBadge }) : null })) return;
-            try { if (badge && view && badge.parentNode !== view && ![...view.childNodes].some(isProgressBadge)) { const first = view.childNodes[0]; if (first) view.insertBefore(badge, first); else view.appendChild(badge); } } catch { /* 진행 줄은 1초 타이머가 다시 붙인다 */ }   // 진행 줄도 1초 기다리지 않고 제자리에 (줄이 한 번 더 들썩이지 않게)
+            try { if (badge && view && badge.parentNode !== view && ![...view.childNodes].some(isProgressBadge)) { keepChatReadingPosition(view, () => { const first = view.childNodes[0]; if (first) view.insertBefore(badge, first); else view.appendChild(badge); }); } } catch { /* 진행 줄은 1초 타이머가 다시 붙인다 */ }   // 진행 줄도 1초 기다리지 않고 제자리에 (줄이 한 번 더 들썩이지 않게)
             paint();
         }).catch(() => {});
         cost = performance.now() - started; lastEnd = Date.now();
@@ -5070,7 +5075,6 @@ function migrateOriginalCopies(chat) {
 // 프롬프트에는 원문에 실제로 나오는 항목만 넣어서 용어집이 커져도 토큰이 늘지 않는다.
 // ═══════════════════════════════════════════════════════════════════════════
 
-const GLOSSARY_MAX_LINES = 60;
 /**
  * [1.8.9] 월드인포 뽑기 요청 설정.
  * 실제로 재 보고 정한 값이다 (gemini-3.8-flash + 중계 서버):
@@ -5091,10 +5095,7 @@ let glossaryEditingKey = null;    // [2.1.3] 고치기를 시작한 캐릭터 �
 
 /** 지금 열려 있는 캐릭터(또는 그룹)의 용어집 키. 아무것도 안 열려 있으면 null */
 function glossaryScopeKey() {
-    const ctx = getContext();
-    if (ctx?.groupId) return `group:${ctx.groupId}`;
-    const avatar = ctx?.characters?.[ctx.characterId]?.avatar;
-    return avatar ? String(avatar) : null;
+    return glossaryScopeKeyOf(getContext());
 }
 
 function glossaryEntries() {
@@ -5117,32 +5118,12 @@ function publishGlossaryNames() {
  * 전체(global)는 늘 맨 뒤 (activeGlossaryEntries 가 붙인다). 멤버 것도 쓰니 그룹에서 TTS 화자 이름 · 한자 보존(이름 다리)도 같이 맞는다.
  */
 function glossaryScopeKeys() {
-    const own = glossaryScopeKey();
-    if (!own) return [];
-    const ctx = getContext();
-    if (!ctx?.groupId) return [own];
-    const group = (ctx.groups || []).find(item => item && item.id === ctx.groupId);
-    const members = (Array.isArray(group?.members) ? group.members : []).map(String).filter(member => member && member !== 'global');
-    return [own, ...members.filter((member, index) => members.indexOf(member) === index)];
+    return glossaryScopeKeysOf(getContext());
 }
 
 /** 범위 차례대로(문자열 하나도 됨) 항목을 고른다 — 표기가 하나라도 겹치면 먼저 온 범위가 이기고, 전체 범위는 맨 뒤 */
 function activeGlossaryEntries(scopes = glossaryScopeKeys()) {
-    const keys = Array.isArray(scopes) ? scopes : scopes ? [scopes] : [];
-    const entries = glossaryEntries();
-    const chosen = [];
-    const claimed = new Set();
-    const take = entry => {
-        if (!entry?.src || !entry?.dst) return;
-        const forms = glossaryAlternatives(entry.src).map(glossaryFold).filter(Boolean);
-        if (!forms.length || forms.some(form => claimed.has(form))) return;
-        for (const form of forms) claimed.add(form);
-        chosen.push(entry);
-    };
-    if (arguments.length === 0) for (const entry of chatGlossaryEntries(getContext().chatMetadata)) take(entry);
-    for (const key of keys) { if (key === 'global') continue; for (const entry of entries) if (entry?.scope === key) take(entry); }
-    for (const entry of entries) if (entry?.scope === 'global') take(entry);
-    return chosen;
+    return pickGlossaryEntries(glossaryEntries(), scopes, arguments.length === 0 ? chatGlossaryEntries(getContext().chatMetadata) : []);
 }
 
 /** [2.7.4] 그룹 채팅에서 지금 쓰이는 멤버 캐릭터 용어집 항목 수 (그룹 것과 겹쳐 밀린 것은 빼고) — 용어집 창의 「멤버 것 N개도 쓰는 중」 */
@@ -5173,10 +5154,7 @@ function buildGlossaryBlock(text, { reverse = false } = {}) {
     const { lines, hasChoice, dropped } = glossaryLines(activeGlossaryEntries(), text, { reverse, maxLines: GLOSSARY_MAX_LINES });
     if (!lines.length) return '';
     if (dropped) noteGlossaryCut(lines.length, dropped);
-    const rule = hasChoice
-        ? 'Render these terms exactly as given below (keep the given spelling; Korean particles may attach naturally). Where several options are separated by " / ", pick the one that fits the context and use only options from the list:'
-        : 'Render these terms exactly as given below (keep the given spelling; Korean particles may attach naturally):';
-    return `[Glossary]\n${rule}\n` + lines.join('\n');
+    return glossaryBlockText(lines, hasChoice);   // 1.0.5 지시 꼴은 glossary-prompt.js 한 곳(한글화 패널도 같은 글)
 }
 
 /** [2.2.9] 문단 캐시 서명: 표기 흔들림으로 찾은 이름이 있는 문단만 키가 바뀐다 (예전 번역 — 클라인슈타인 — 을 캐시에서 다시 꺼내지 않게). 없으면 예전 키 그대로 */

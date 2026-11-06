@@ -19,7 +19,8 @@ function cut(name) {
     return src.slice(at + 1, src.indexOf('\n}', at + 1) + 2);
 }
 const { chatGlossaryEntries } = await import(pathToFileURL(path.join(root, 'src/addons/translator/chat-glossary.js')).href);
-const env = { chatGlossaryEntries, getContext: () => CTX.current, extensionSettings: { glossary_entries: [] }, glossaryFold, glossaryAlternatives };
+const shared = await import(pathToFileURL(path.join(root, 'src/addons/translator/glossary-prompt.js')).href);   // 1.0.5 범위 · 고르기는 공용(한글화 패널과 같은 것)
+const env = { chatGlossaryEntries, getContext: () => CTX.current, extensionSettings: { glossary_entries: [] }, glossaryFold, glossaryAlternatives, glossaryScopeKeyOf: shared.glossaryScopeKeyOf, glossaryScopeKeysOf: shared.glossaryScopeKeysOf, pickGlossaryEntries: shared.pickGlossaryEntries };
 const api = new Function('env', `with (env) {
     ${cut('glossaryScopeKey')}
     ${cut('glossaryEntries')}

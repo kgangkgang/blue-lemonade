@@ -9,7 +9,7 @@ import { extension_settings, getContext } from '../../../../../../extensions.js'
 import { SlashCommandParser } from '../../../../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../../../../slash-commands/SlashCommand.js';
 import { withReplay, onGate } from '../../boot-layers.js';
-import { glossaryFold, glossaryAlternatives } from './glossary-match.js';
+import { glossaryScopeKeyOf, glossaryScopeKeysOf, pickGlossaryEntries } from './glossary-prompt.js';
 import { chatGlossaryEntries } from './chat-glossary.js';
 import { publishNames } from './names-bridge.js';
 import { syncTranslatorMenus } from './menu-visibility.js';
@@ -80,10 +80,7 @@ function updateButtonVisibility(root = document) {
     }
 }
 function glossaryScopeKey() {
-    const ctx = getContext();
-    if (ctx?.groupId) return `group:${ctx.groupId}`;
-    const avatar = ctx?.characters?.[ctx.characterId]?.avatar;
-    return avatar ? String(avatar) : null;
+    return glossaryScopeKeyOf(getContext());
 }
 function glossaryEntries() {
     if (!Array.isArray(extensionSettings.glossary_entries)) extensionSettings.glossary_entries = [];
@@ -93,30 +90,10 @@ function publishGlossaryNames() {
     publishNames(extensionSettings.glossary_enabled === false ? [] : activeGlossaryEntries());
 }
 function glossaryScopeKeys() {
-    const own = glossaryScopeKey();
-    if (!own) return [];
-    const ctx = getContext();
-    if (!ctx?.groupId) return [own];
-    const group = (ctx.groups || []).find(item => item && item.id === ctx.groupId);
-    const members = (Array.isArray(group?.members) ? group.members : []).map(String).filter(member => member && member !== 'global');
-    return [own, ...members.filter((member, index) => members.indexOf(member) === index)];
+    return glossaryScopeKeysOf(getContext());
 }
 function activeGlossaryEntries(scopes = glossaryScopeKeys()) {
-    const keys = Array.isArray(scopes) ? scopes : scopes ? [scopes] : [];
-    const entries = glossaryEntries();
-    const chosen = [];
-    const claimed = new Set();
-    const take = entry => {
-        if (!entry?.src || !entry?.dst) return;
-        const forms = glossaryAlternatives(entry.src).map(glossaryFold).filter(Boolean);
-        if (!forms.length || forms.some(form => claimed.has(form))) return;
-        for (const form of forms) claimed.add(form);
-        chosen.push(entry);
-    };
-    if (arguments.length === 0) for (const entry of chatGlossaryEntries(getContext().chatMetadata)) take(entry);
-    for (const key of keys) { if (key === 'global') continue; for (const entry of entries) if (entry?.scope === key) take(entry); }
-    for (const entry of entries) if (entry?.scope === 'global') take(entry);
-    return chosen;
+    return pickGlossaryEntries(glossaryEntries(), scopes, arguments.length === 0 ? chatGlossaryEntries(getContext().chatMetadata) : []);
 }
 // ── 같은 글 끝 ──
 

@@ -55,11 +55,12 @@ await test('never-settled readback times out as unknown and late response cannot
  try{const before=JSON.stringify(f.msg);const result=await saveTermChat(f.ctx,f.job);assert.equal(result.confirmed,false);assert.equal(signal.aborted,true);release({ok:true,json:async()=>[{chat_metadata:f.meta},f.msg]});await Promise.resolve();assert.equal(JSON.stringify(f.msg),before);assert.equal(cleared,1);}finally{globalThis.setTimeout=oldSet;globalThis.clearTimeout=oldClear;}
 });
 
+const shared=await import(new URL('../../src/addons/translator/glossary-prompt.js',import.meta.url).href);// 1.0.5 고르기 · 지시 꼴은 공용
 const indexSource=fs.readFileSync(new URL('../../src/addons/translator/index.js',import.meta.url),'utf8');
 const cut=name=>{const at=indexSource.search(new RegExp(`\\n(?:async )?function ${name}\\(`));return indexSource.slice(at+1,indexSource.indexOf('\n}',at+1)+2);};
 await test('next translation prompt uses chat rule before character/global rules',()=>{
  let current={chatMetadata:metadata('Mina','민아')};const settings={glossary_enabled:true,glossary_entries:[{scope:'char',src:'Mina',dst:'미나'},{scope:'global',src:'Rex',dst:'렉스'}]};
- const env={getContext:()=>current,extensionSettings:settings,glossaryEntries:()=>settings.glossary_entries,glossaryScopeKeys:()=>['char'],chatGlossaryEntries,glossaryFold,glossaryAlternatives,glossaryLines,GLOSSARY_MAX_LINES:60};
+ const env={getContext:()=>current,extensionSettings:settings,glossaryEntries:()=>settings.glossary_entries,glossaryScopeKeys:()=>['char'],chatGlossaryEntries,glossaryFold,glossaryAlternatives,glossaryLines,GLOSSARY_MAX_LINES:60,pickGlossaryEntries:shared.pickGlossaryEntries,glossaryBlockText:shared.glossaryBlockText};
  const api=new Function('env',`with(env){${cut('activeGlossaryEntries')}\n${cut('buildGlossaryBlock')}\nreturn{activeGlossaryEntries,buildGlossaryBlock};}`)(env);
  const block=api.buildGlossaryBlock('Mina met Rex.');assert.match(block,/민아/);assert.doesNotMatch(block,/미나/);assert.match(block,/렉스/);
  current={chatMetadata:{}};const other=api.buildGlossaryBlock('Mina met Rex.');assert.match(other,/미나/);assert.doesNotMatch(other,/민아/);

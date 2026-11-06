@@ -29,6 +29,8 @@ import { validateTranslationMemory } from './translation-memory.js';
 import { createTranslationProgress, translationSummary, renderTranslationResult } from './translation-progress.js';
 import { isTransientFailure, responseError } from './request-errors.js';
 import { completionText } from './response-text.js';
+import { panelGlossaryBlock } from './glossary.js';   // 1.0.5 실시간 번역기 용어집을 패널 요청에도
+import { GLOSSARY_SETTINGS_KEY } from '../translator/glossary-prompt.js';
 import { fallbackOf, withFallback } from '../modelswitch/fallback.js';   // 6.2.9 검열되면 다른 모델로
 import { mountFallbackField } from '../modelswitch/fallback-field.js';   // 6.4.5 「검열당했을 때」 칸 (설정 › 연결)
 // Modified 2026-09-24: Blue Lemonade personal preview 1.1.0; based on supplied 개인개조+++ ZIP.
@@ -1151,6 +1153,18 @@ function stripNoteWrapper(text) {
     return unwrapNoteBody(m ? (m[1] || '') : t);
 }
 
+// ── Glossary ─────────────────────────────────────────────────────
+// 1.0.5 실시간 번역기(LLM 번역) 용어집을 같은 [Glossary] 꼴로 붙인다 — 이번 글에 나온 항목만. ns 로 범위를 고른다(prompt/glossary.js).
+// 용어집이 없거나 꺼져 있으면 '' 라 요청이 예전과 같다. 어떤 까닭으로든 못 읽으면 용어집 없이 보낸다(번역은 막지 않음).
+function glossaryFor(text, ns, lang) {
+    try {
+        const ctx = getContext?.() ?? null;
+        return panelGlossaryBlock(extension_settings?.[GLOSSARY_SETTINGS_KEY], text, {
+            ns, lang, ctx, characters: ctx?.characters ?? characters ?? [], charLore: world_info?.charLore ?? [],
+        });
+    } catch (e) { console.warn(`[${EXT}] glossary skipped`, e); return ''; }
+}
+
 // ── Translation ─────────────────────────────────────────────────
 // opts:
 //   mode         'body' (default) → target language is 본문; 'note' → 주석 language.
@@ -1158,6 +1172,7 @@ function stripNoteWrapper(text) {
 //                has to produce two different renderings in one response.
 //   includeTitle false → do not send/translate the title, because a 제목
 //                translation already exists and must be preserved.
+//   ns           패널 이름표(pt-wi::월드 · pt-char::아바타 …) — 용어집 범위를 고른다 (1.0.5)
 async function translateText(name, text, extraNonce, opts = {}) {
     const mode         = opts.mode === 'note' ? 'note' : 'body';
     const includeTitle = opts.includeTitle !== false;
@@ -1190,6 +1205,8 @@ async function translateText(name, text, extraNonce, opts = {}) {
     const headline = dualLang
         ? `Translate the following text: the "### " title line into ${titleLang}, and everything after it into ${lang}.`
         : `Translate the following text into ${lang}.`;
+    const glossary = glossaryFor(combined, opts.ns, lang);
+    const terms = glossary ? `${glossary}\n\n` : '';
 
     const prompt =
 `${headline}
@@ -1203,7 +1220,7 @@ RULES:${titleRule}
 6. Never echo the source text back unchanged. Even if the source is already close to ${lang}, produce a proper ${lang} rendering.
 7. If a line starts with "**Keys:**" or "**Filters:**", keep that exact prefix and the comma-separated list format, and keep it on its own line at the top. Translate each item into ${lang}. These are trigger keywords, so render them as the natural word a reader would actually type, not as a literal gloss.${noteRule}
 
---- SOURCE ---
+${terms}--- SOURCE ---
 ${combined}
 --- END ---
 
@@ -1961,7 +1978,7 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
             const active = progress.start([b]);
             try {
                 const nonce=forceRetranslate?Math.random().toString(36).slice(2,10):null;
-                const res=await translateText(b.name,b.content,nonce,{ mode:runMode, includeTitle });
+                const res=await translateText(b.name,b.content,nonce,{ mode:runMode, includeTitle, ns });
                 if (stopReq) throw stopError();
                 if (res && res.trim()) {
                     let newTitle = existingTitle || '';
@@ -3652,9 +3669,10 @@ function parseNumberedTitles(raw, expectedCount) {
     return out;
 }
 
-async function translateTitleBatch(names) {
+async function translateTitleBatch(names, ns = '') {
     const lang = effLang('title');
     const numbered = names.map((n, i) => `${i + 1}. ${n}`).join('\n');
+    const glossary = glossaryFor(names.join('\n'), ns, lang);
     const prompt =
 `Translate each of the following ${names.length} short labels into ${lang}.
 
@@ -3667,7 +3685,7 @@ RULES:
 6. Output ONLY those lines — no preamble, no commentary, no blank lines between items.
 7. Never echo a label back unchanged. Even if a label is already close to ${lang}, produce a proper ${lang} rendering.
 
---- LABELS ---
+${glossary ? `${glossary}\n\n` : ''}--- LABELS ---
 ${numbered}
 --- END ---
 
@@ -3749,7 +3767,7 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
             budget.left--;
             const active = progress.start(batch);
             try {
-                const t = await translateTitleBatch(batch.map(b => b.name));
+                const t = await translateTitleBatch(batch.map(b => b.name), ns);
                 if (stopReq) return null;
                 if (t) return t;
                 for (const row of batch) reasons.set(row, '응답의 제목 수·번호가 요청과 달라요.');
@@ -4845,7 +4863,7 @@ export async function translatePlainText(text) {
     if (isBusy) throw Object.assign(new Error('한글화 패널에서 다른 번역이 진행 중이에요. 끝난 뒤 다시 눌러 주세요.'), { userMessage: true });
     isBusy = true; stopReq = false;
     try {
-        const result = await translateText('', source, null, { includeTitle: false });
+        const result = await translateText('', source, null, { includeTitle: false, ns: SHARED_TEXT_NS });
         if (!result.trim()) throw new Error('빈 번역');
         setCache(SHARED_TEXT_NS, sharedTextId(source), result);
         return result;
@@ -5250,7 +5268,7 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
     buildPanel();
     installLocalizationPage({doc:PDOC});
     let regexOwnsRequest=false;
-    installRegexPage({doc:PDOC,cfg,save:saveSettingsDebounced,
+    installRegexPage({doc:PDOC,cfg,save:saveSettingsDebounced,glossary:text=>glossaryFor(text,'regex','Korean'),
         list:async()=>{const module=await import(new URL('../../../../../../extensions/regex/engine.js',import.meta.url).href);return module.getRegexScripts({allowedOnly:false});},
         translate:async(prompt)=>{if(isBusy)throw Error('다른 번역이 진행 중이에요. 완료 후 다시 시도해 주세요.');isBusy=true;regexOwnsRequest=true;stopReq=false;try{return await runCompletion([{role:'user',content:prompt}]);}finally{isBusy=false;regexOwnsRequest=false;releaseIdlePages();}},
         cancel:()=>{if(regexOwnsRequest)requestStop();},

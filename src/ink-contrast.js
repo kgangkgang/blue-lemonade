@@ -8,6 +8,7 @@
 // · 읽기(계산 스타일)를 모두 한 뒤 쓰기(클래스)를 한꺼번에 — 요소마다 스타일 재계산을 강제하지 않는다. 같은 색 · 같은 바탕의 답은 캐시에서.
 import { setTypesetHook } from './typography.js';
 import { parseColor, sourceColor, sameRgb, stack, bandOf, BAND_MIN, makeInkCache } from './ink-contrast-core.js';
+import { hiddenQueue, mayHide } from './hidden-details.js';
 
 const SEL = 'font[color], [style*="color" i]';
 const BOX = '.mes_text, .salty-sample';
@@ -109,8 +110,11 @@ function bgAt(el, box, memo, styleOf) {
     return stack(layers, under(box.parentElement, memo, styleOf));
 }
 
+// 1.0.4 닫힌 <details> 안 색 글자(데우스 접힌 모듈)는 읽을 때마다 그 묶음만 따로 강제 계산돼요 — 쉴 때 · 열리는 순간에 그 상자를 다시 봐요(hidden-details.js).
+//   미룬 요소는 「본 것」으로 적지 않아서 그때 그대로 재요. 결과는 같아요.
+const hidden = hiddenQueue(els => run(els.map(el => el.closest(BOX)).filter(Boolean), { force: true }), { enabled: () => active });
 /** 상자들 안의 색 글자를 재고(읽기) 클래스를 붙인다(쓰기). 이번 세대에 이미 본 요소는 건너뛴다 */
-function run(roots) {
+function run(roots, { force = false } = {}) {
     if (!active) return;
     const t0 = performance.now();
     const boxes = new Set();
@@ -124,11 +128,13 @@ function run(roots) {
     const writes = [];   // [요소, 클래스 | '']
     let count = 0;
     for (const box of boxes) {
+        const check = !force && mayHide(box);
         for (const el of box.querySelectorAll(SEL)) {
             const src = sourceColor(el.getAttribute('color'), el.getAttribute('style'));
             // 대사 수도 넣는다 — 조판이 뒤에 대사(q)를 새로 감싸면(여러 줄 대사) 그 대사도 봐야 한다
             const sig = src + '|' + gen + '|' + el.getElementsByTagName('q').length;
             if (seen.get(el) === sig) continue;
+            if (check && hidden.defer(el)) continue;
             seen.set(el, sig);
             count++;
             const want = src && colorOf(src);
@@ -210,6 +216,7 @@ export function syncInkContrast(on) {
     active = false;
     clearTimeout(timer); timer = 0;
     setTypesetHook(null);
+    hidden.clear();
     clearMarks();
     sheet?.remove(); sheet = null;
     classes.clear(); hexOf.clear(); cache.clear(); key = mode = null; gen++;

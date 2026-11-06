@@ -1,7 +1,7 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 5d1ac565fc89) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 75a21253e162) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)"}
 /* css/00-base.css */
-:root{--bl-release:"1.0.4";}
+:root{--bl-release:"1.0.5";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -2198,6 +2198,11 @@ body.salty :is(#chat,.bl-chat-like) .mes .mes_buttons {
   min-width: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+body.salty:is([data-generating="true"], [data-swiping="true"]) :is(#chat,.bl-chat-like) .last_mes .mes_buttons {
+  display: flex !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 html body.salty :is(#chat,.bl-chat-like) .mes {
   box-sizing: border-box !important;

@@ -128,8 +128,8 @@ await test('reading note first leaves canonical cache, editing and export text u
 await test('regex names show active batch, preserve previous successful batch, and report malformed remainder',async()=>{
     const buttons=new Map(),status=new Element(),page=new Element(),selected=rows(12),history=[];status.onText=t=>history.push(t);let calls=0;
     page.querySelector=selector=>selector==='.pt-run-result'?page.children.find(x=>x.className==='pt-run-result')||null:(buttons.get(selector)||buttons.set(selector,{}).get(selector));
-    const ctx={...helpers,rows:selected.map(r=>({...r,selected:true})),status,page,doc:{createElement:t=>new Element(t)},busy:false,stopped:false,progress:null,controls(){},paint(){},cancel(){},translate:async()=>{calls++;if(calls===2)return '[]';return JSON.stringify(Array.from({length:10},(_,i)=>({index:i,title:'번역 '+i})));}};
-    vm.createContext(ctx);vm.runInContext(regex.slice(regex.indexOf('export function parseNameTranslations'),regex.indexOf('export function installRegexPage')).replace('export ',''),ctx);
+    const ctx={...helpers,rows:selected.map(r=>({...r,selected:true})),status,page,doc:{createElement:t=>new Element(t)},busy:false,stopped:false,progress:null,controls(){},paint(){},cancel(){},glossary:()=>'',translate:async()=>{calls++;if(calls===2)return '[]';return JSON.stringify(Array.from({length:10},(_,i)=>({index:i,title:'번역 '+i})));}};
+    vm.createContext(ctx);vm.runInContext(regex.slice(regex.indexOf('export function parseNameTranslations'),regex.indexOf('export function installRegexPage')).replace(/export /g,''),ctx);
     vm.runInContext(regex.slice(regex.indexOf(" page.querySelector('[data-regex-translate]').onclick="),regex.indexOf(" page.querySelector('[data-regex-apply]')")),ctx);
     await buttons.get('[data-regex-translate]').onclick();assert(history.some(t=>/Fixture-01, Fixture-02 외 8개/.test(t)));assert(history.some(t=>/Fixture-11, Fixture-12 번역 중/.test(t)));assert.match(status.textContent,/성공 10.*실패 2/);assert.doesNotMatch(status.textContent,/Fixture-/);assert.equal(ctx.rows.filter(r=>r.title).length,10);assert.equal(page.querySelectorAll('li').length,2);
 });

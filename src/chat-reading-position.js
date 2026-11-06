@@ -24,6 +24,8 @@ function readerScrollRun(chat, now = Date.now()) {
     return true;
 }
 function writeScrollTop(chat, value) { chat.scrollTop = value; selfScrollAt.set(chat, { at: Date.now(), value: chat.scrollTop }); }
+const LINGER_MS = 30000;
+const LINGER_EVENTS = ['wheel', 'touchstart', 'pointerdown', 'mousedown', 'keydown'];
 const navigationKey = event => /^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End|Enter| )$/.test(event.key);
 const CONTROL = 'button,a,input,select,textarea,label,[role=button],.mes_button,.mes_buttons,.extraMesButtons,.swipe_left,.swipe_right';
 
@@ -124,8 +126,32 @@ export function keepChatReadingPosition(element, draw) {
         if (frame !== undefined) win.cancelAnimationFrame?.(frame);
         observer?.disconnect();
         if (!soft) for (const type of events) doc.removeEventListener(type, cancel, true);   // soften() already removed them
+        if (lingering) for (const type of LINGER_EVENTS) doc.removeEventListener(type, leave, true);
         doc.removeEventListener('scroll', onScroll, true);
         if (pending.get(chat) === stop) pending.delete(chat);
+    }
+    // 1.0.5 (11-06 「번역 다 끝나면 화면이 조금씩 밑으로」) After a message is re-rendered as a whole, Chrome's own scroll anchoring
+    // stops compensating anything above the reader in that message until the reader scrolls by hand again — a scripted scroll does
+    // not bring it back (리그 폰 384: 다시 그린 뒤 맨 위에 20px 칸 → 읽던 문단 20px 아래로 · 스크립트로 +1 · +5 · −1 굴려도 그대로).
+    // So when the window runs out and the reader has not touched the chat since, the guard stays on quietly instead of letting go:
+    // soft mode only (layout shifts of the reading paragraph are undone, scrolling is never fought), until the reader's next own
+    // gesture (then the browser anchors again), a new message, another chat, the next guarded paint, or LINGER_MS.
+    // Not at the bottom: following there belongs to ST's auto-scroll setting (and stream-follow), not to this guard.
+    let lingering = false, chatLength = 0;
+    function leave(event) {
+        if (event.type === 'keydown' && !navigationKey(event)) return;
+        stop();
+    }
+    function expire() {
+        if (!active) return;
+        if (bottom || !anchor || Date.now() < (userUntil.get(chat) ?? 0) || !valid()) { stop(); return; }
+        lingering = true;
+        chatLength = globalThis.SillyTavern?.getContext?.()?.chat?.length ?? 0;
+        soften();
+        for (const type of LINGER_EVENTS) doc.addEventListener(type, leave, { capture: true, passive: true });
+        clearTimeout(timer);
+        timer = setTimeout(stop, LINGER_MS);
+        timer?.unref?.();   // node tests: a quiet guard must not keep the process alive
     }
     function soften() {
         if (!active || soft) return;
@@ -140,6 +166,7 @@ export function keepChatReadingPosition(element, draw) {
         const now = globalThis.SillyTavern?.getContext?.();
         const current = [now?.characterId, now?.groupId, now?.getCurrentChatId?.() ?? now?.chatId].join(':');
         if (!chat.isConnected || chat !== doc.getElementById('chat') || current !== key || (mes && !mes.isConnected)) return false;
+        if (lingering && (now?.chat?.length ?? 0) !== chatLength) return false;   // a new message: ST's own scrolling takes over
         return !(message && (now?.chat?.[mesId] !== message || message.swipe_id !== swipe));
     }
     const layoutTop = node => node.getBoundingClientRect().top - (chat.getBoundingClientRect().top + chat.clientTop) + chat.scrollTop;
@@ -234,7 +261,7 @@ export function keepChatReadingPosition(element, draw) {
         // Media/iframe layout can settle after the render event. Stop at the next
         // paint, navigation, or bounded timeout (a gesture only softens); never hold a reader.
         clearTimeout(timer);
-        timer = setTimeout(stop, 1200);
+        timer = setTimeout(expire, 1200);
     };
     try {
         const result = draw();

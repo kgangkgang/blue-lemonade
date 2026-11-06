@@ -3,6 +3,7 @@
 // Switches, dots, badges, progress bars, avatars and icon-only round buttons keep their shape.
 import { booting, afterBoot } from './boot-gate.js';
 import { watchWith } from './dom-watch.js';
+import { hiddenQueue, mayHide } from './hidden-details.js';
 
 const ATTR = 'data-bl-squared';
 const CANDIDATES = 'button,a,summary,label,[role="button"],[role="tab"],[tabindex],.menu_button,.qr--button,[class*="btn"],[class*="chip"],[class*="tab"],[class*="pill"]';
@@ -210,17 +211,26 @@ export function watchSquaredButtons(doc, host) {
         for (const c of got.list) if (seen.has(shapeKey(c)) && !cheapSkip(c, host, got.areas)) c.setAttribute(ATTR, '');
     };
     let timer = 0, frame = 0, stopped = false;
+    // 1.0.4 닫힌 <details>(데우스 접힌 모듈) 안 후보는 재면 그 묶음만 따로 강제 배치돼요(데우스 상태창 30개 · 폰 4배 15번 · 0.9초) —
+    //   쉴 때 · 열리는 순간(열리기 전)에 같은 판정으로 재서 붙여요(hidden-details.js). 판정 · 표시는 같아요.
+    const hidden = hiddenQueue(els => {
+        const found = [];
+        for (const el of els) if (!cheapSkip(el, host, null) && el.offsetParent !== null && isRoundTextButton(el, host, null)) found.push(el);
+        for (const el of found) { el.setAttribute(ATTR, ''); remember(el); }
+    }, { enabled: () => !stopped });
     // Measure every candidate first, then mark: marking between reads re-dirtied style and forced one recalc per button.
     function scan(root, found) {
         if (!root?.isConnected) return;
         const got = candidates(root); if (!got) return;
         const { areas, list } = got;
         const light = !doc.getElementById?.('chat')?.classList?.contains('bl-chat-covered'), cache = new Map();
-        const rootMes = light ? root.closest?.(LIGHT_MES) || null : null;   // 메시지 하나를 훑을 때는 후보마다 그 메시지를 다시 찾지 않아요
+        const rootMes = light ? root.closest?.(LIGHT_MES) || null : null;
+        const check = mayHide(root);   // 1.0.4 닫힌 details 가 없으면 후보마다 조상을 오르지 않아요   // 메시지 하나를 훑을 때는 후보마다 그 메시지를 다시 찾지 않아요
         for (const el of list) {
             if (cheapSkip(el, host, areas)) continue;
             const mes = light ? skippedMessageOf(el, host, cache, lockState, rootMes) : null;
             if (mes) { skippedMes.add(mes); continue; }   // 화면 가까이 오면(onLightState) 그 메시지만 재요
+            if (check && hidden.defer(el)) continue;   // 닫힌 묶음 안 — 조용할 때 · 열릴 때
             if (el.offsetParent !== null && isRoundTextButton(el, host, areas)) found.push(el);
         }
     }
@@ -298,7 +308,7 @@ export function watchSquaredButtons(doc, host) {
     doc.addEventListener?.('contentvisibilityautostatechange', onLightState, true);
     queue(doc.body);
     return () => {
-        stopped = true; unwatch(); host.clearTimeout(timer); if (frame) host.cancelAnimationFrame?.(frame); host.removeEventListener('resize', resize);
+        stopped = true; hidden.dispose(); unwatch(); host.clearTimeout(timer); if (frame) host.cancelAnimationFrame?.(frame); host.removeEventListener('resize', resize);
         doc.removeEventListener?.('contentvisibilityautostatechange', onLightState, true); skippedMes.clear();
         for (const el of doc.querySelectorAll(`[${ATTR}]`)) el.removeAttribute(ATTR);
         style.remove();

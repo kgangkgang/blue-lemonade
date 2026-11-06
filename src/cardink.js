@@ -1,4 +1,5 @@
 import { watchDom } from './dom-watch.js';   // 9.0.4 공용 감시 허브 — body · html 자기 감시는 문서마다 감시자 하나
+import { hiddenQueue, mayHide } from './hidden-details.js';   // 1.0.4 닫힌 details 안 카드는 쉴 때 · 열릴 때
 // 메시지 안 HTML 카드의 글자색 — 프리셋이 AI 에게 "매번 HTML/CSS 를 직접 만들라" 고 시키면(데우스의
 // 시각적 연출 등) AI 는 카드 배경만 칠하고 글자색은 안 정하는 일이 잦다. 그러면 테마 글자색을 물려받아,
 // 밝은 팔레트에서 어두운 카드 위에 어두운 글자가 얹힌다 — 실측 대비 1.23(사실상 안 보임).
@@ -103,22 +104,40 @@ function writeInk(el, ink) {
     el.dataset[MARK] = '1';
 }
 
-function fixRoot(root) {
-    if (!root || root.nodeType !== 1) return;
-    for (const text of root.matches?.('.mes_text') ? [root] : root.querySelectorAll('.mes_text')) {
-        const candidates=[...text.querySelectorAll(CANDIDATES)],set=new Set(candidates),levels=[];
-        for (const el of candidates) restoreOne(el);
-        for (const el of candidates) {
-            let depth=0;
-            for(let p=el.parentElement;p&&p!==text;p=p.parentElement)if(set.has(p))depth++;
-            (levels[depth]??=[]).push(el);
-        }
-        // Read siblings together; a nested card must still see its parent's final ink.
-        for (const level of levels) {
-            const plans=level.map(el=>[el,plannedInk(el)]);
-            for(const [el,ink] of plans)writeInk(el,ink);
-        }
+// 1.0.4: 메시지마다 단계(겉 카드 → 안 카드)를 따로 돌던 것을 모든 메시지의 같은 단계끼리 한 번에 읽고 한 번에 써요 — 메시지끼리는 서로 조상이 아니라
+//   읽는 값이 섞이지 않아요. 같은 본문이 두 뿌리에 겹쳐 오면(채팅 전체 + 그 메시지) 한 번만 봐요(두 번 봐도 같은 값이었어요).
+//   닫힌 <details> 안 카드(데우스 접힌 모듈)는 그려지지 않아 읽을 때마다 그 묶음만 따로 강제 계산돼요(데우스 상태창 30개 · 폰 4배 120번 · 2초) —
+//   hidden-details.js 로 쉴 때 · 열리는 순간에 같은 계산을 해요. 결과(어느 요소에 어떤 글자색)는 그대로예요.
+function textsOf(roots) {
+    const texts = new Set();
+    for (const root of roots) {
+        if (!root || root.nodeType !== 1) continue;
+        for (const text of root.matches?.('.mes_text') ? [root] : root.querySelectorAll('.mes_text')) texts.add(text);
     }
+    return [...texts];
+}
+// Read siblings together; a nested card must still see its parent's final ink.
+function inkByLevels(els) {
+    const set = new Set(els), levels = [];
+    for (const el of els) {
+        let depth = 0;
+        for (let p = el.parentElement; p && !p.classList?.contains('mes_text'); p = p.parentElement) if (set.has(p)) depth++;
+        (levels[depth] ??= []).push(el);
+    }
+    for (const level of levels) {
+        if (!level) continue;
+        const plans = level.map(el => [el, plannedInk(el)]);
+        for (const [el, ink] of plans) writeInk(el, ink);
+    }
+}
+const hidden = hiddenQueue(els => inkByLevels(els), { enabled: () => document.body.classList.contains('salty') });
+function fixRoots(roots) {
+    const now = [];
+    for (const text of textsOf(roots)) {
+        const check = mayHide(text);
+        for (const el of text.querySelectorAll(CANDIDATES)) { restoreOne(el); if (!check || !hidden.defer(el)) now.push(el); }
+    }
+    inkByLevels(now);
 }
 
 let queued = false;
@@ -136,7 +155,7 @@ function schedule(root) {
         whole = false;
         pending.clear();
         if (!document.body.classList.contains('salty')) return;
-        for (const r of roots) fixRoot(r);
+        fixRoots(roots);
     });
 }
 
@@ -171,7 +190,7 @@ export function startCardInk() {
         if(next===active)return;
         active=next;
         if(active)schedule(null);
-        else for(const el of document.querySelectorAll('[data-bl-ink]'))restoreOne(el);
+        else{hidden.clear();for(const el of document.querySelectorAll('[data-bl-ink]'))restoreOne(el);}
     });
     schedule(null);
 }

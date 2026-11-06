@@ -361,6 +361,7 @@ jobs:
           node tools/tests/dom-watch-hub.mjs .
           node tools/tests/theme-look.mjs .
           node tools/tests/message-decor.mjs .
+          node tools/tests/hidden-details.mjs .
           node tools/tests/observer-budget.mjs .
           node tools/tests/apply-class-batch.mjs .
           node tools/tests/dem-streaming-root.mjs .
@@ -422,6 +423,7 @@ jobs:
           node tools/tests/rewrite-owner.mjs .
           node tools/tests/prompt-models.mjs .
           node tools/tests/prompt-progress.mjs .
+          node tools/tests/prompt-glossary.mjs .
           node tools/tests/prompt-response-text.mjs .
           node tools/tests/modelswitch-models.mjs .
           node tools/tests/modelswitch-state.mjs .

@@ -309,7 +309,7 @@ await test('설정의 전개 지시 프롬프트: 번역본 상자가 칸 위 ·
 
 await test('엔진 재사용 · 아이콘 · 모양(아이콘 단추 규격 · 1px 선 · 스크롤바 숨김 · 새 색 없음) · CI', async () => {
     const panel = await read('src/addons/prompt/index.js');
-    assert.match(panel, /export async function translatePlainText\(text\) \{[\s\S]*?await translateText\('', source, null, \{ includeTitle: false \}\)[\s\S]*?setCache\(SHARED_TEXT_NS, sharedTextId\(source\), result\)/, 'panel translateText + panel cache');
+    assert.match(panel, /export async function translatePlainText\(text\) \{[\s\S]*?await translateText\('', source, null, \{ includeTitle: false(?:, ns: SHARED_TEXT_NS)? \}\)[\s\S]*?setCache\(SHARED_TEXT_NS, sharedTextId\(source\), result\)/, 'panel translateText + panel cache');
     assert.match(panel, /export function cachedTextTranslation\(text\) \{[\s\S]*?getCached\(SHARED_TEXT_NS, sharedTextId\(source\)\)/);
     assert.match(panel, /if \(isBusy\) throw Object\.assign\(new Error\('한글화 패널에서 다른 번역이 진행 중이에요/, 'never overlaps a panel run');
     assert.match(panel, /if \(duplicate\) throw/, 'stays off when a standalone panel owns the cache files');

@@ -220,4 +220,80 @@ await check('다른 채팅으로 옮기면 손댄 뒤 지키기도 멈춤', asyn
     const before = w.chat.scrollTop; w.s.card += 2000; w.layout(); finish(); await result;
     assert.equal(w.chat.scrollTop, before);
 });
+// 1.0.5 (11-06 제보 「번역 다 끝나면 화면이 조금씩 밑으로」): 실리태번이 메시지를 통째로 다시 그리면 크롬은 그 메시지 안의 높이 변화를 스크롤 앵커로
+//   보정하지 않는다 — 손으로 다시 굴리기 전까지(스크립트로 굴려도 그대로 · 리그 확인). 그래서 보호 창(1.2초)이 끝난 뒤의 높이 변화(늦게 자리 잡는
+//   상태창 · 진행 줄)만큼 읽던 줄이 밀렸다. 이제 창이 끝나도 손대기 전까지는 조용히(배치 변화만 되돌리는 soft 로) 남는다.
+async function withTimers(run) {
+    const originalSet = globalThis.setTimeout, originalClear = globalThis.clearTimeout;
+    const timers = new Map(); let id = 0;
+    globalThis.setTimeout = (fn, ms) => { timers.set(++id, { fn, ms }); return id; };
+    globalThis.clearTimeout = n => timers.delete(n);
+    try { await run(ms => { for (const [n, t] of [...timers]) if (t.ms === ms) { timers.delete(n); t.fn(); } }); }
+    finally { globalThis.setTimeout = originalSet; globalThis.clearTimeout = originalClear; }
+}
+await check('1.0.5 창이 끝난 뒤 손대기 전까지 위쪽 높이 변화(늦은 상태창 · 진행 줄)를 되돌림 · 읽던 줄 0px', () => withTimers(async fire => {
+    for (const late of [30, -20, 600]) {
+        const w = world({ paragraphs: 80, card: 400 });
+        w.read(40, 37);
+        keep(w.body, () => {});
+        fire(1200);
+        w.s.card += late; w.layout();
+        assert.ok(Math.abs(w.screen(40) - 37) <= 1, `late ${late}: screen ${w.screen(40)}`);
+        w.s.heights[10] += 50; w.layout();   // 읽던 문단 위 문단이 길어져도
+        assert.ok(Math.abs(w.screen(40) - 37) <= 1, `late ${late} + 문단: screen ${w.screen(40)}`);
+        fire(30000);
+    }
+}));
+await check('1.0.5 남아 있는 동안 사용자가 굴리는 만큼은 그대로 · 손대면 놓음', () => withTimers(async fire => {
+    const w = world({ paragraphs: 80, card: 400 });
+    w.read(40);
+    keep(w.body, () => {});
+    fire(1200);
+    w.scrollBy(-300);                       // 스크립트 · 관성 없이 옮겨진 자리도 따라 기억
+    w.s.card += 40; w.layout();
+    assert.ok(Math.abs(w.screen(40) - 300) <= 1, `screen ${w.screen(40)}`);
+    w.touch('touchstart');                 // 손대면 놓는다 — 그 뒤는 브라우저 앵커
+    assert.ok(w.observers.every(o => o.off));
+    const before = w.chat.scrollTop; w.s.card += 500; w.layout();
+    assert.equal(w.chat.scrollTop, before);
+}));
+await check('1.0.5 바닥 · 손대는 중 · 새 메시지 · 30초 · 다른 채팅이면 남지 않음', () => withTimers(async fire => {
+    const off = w => w.observers.every(o => o.off);
+    {   const w = world({ paragraphs: 80 }); w.chat.scrollTop = w.chat.scrollHeight; keep(w.body, () => {}); fire(1200); assert.ok(off(w), '바닥'); }
+    {   const w = gestures(world({ paragraphs: 80 })); w.read(40); w.touch('touchend'); keep(w.body, () => {}); fire(1200); assert.ok(off(w), '손대는 중'); for (const s of stops.splice(0)) s(); }
+    {   const w = world({ paragraphs: 80 }); w.read(40); keep(w.body, () => {}); fire(1200); assert.ok(!off(w));
+        fire(30000); assert.ok(off(w), '30초'); }
+    {   const w = world({ paragraphs: 80 }); w.read(40); keep(w.body, () => {}); fire(1200);
+        globalThis.SillyTavern = { getContext: () => ({ chatId: 'c', chat: { length: 1 }, powerUserSettings: {} }) };
+        const before = w.chat.scrollTop; w.s.card += 300; w.layout();
+        assert.equal(w.chat.scrollTop, before, '새 메시지'); assert.ok(off(w)); }
+    {   const w = world({ paragraphs: 80 }); w.read(40); keep(w.body, () => {}); fire(1200);
+        globalThis.SillyTavern = { getContext: () => ({ chatId: 'other', powerUserSettings: {} }) };
+        const before = w.chat.scrollTop; w.s.card += 300; w.layout();
+        assert.equal(w.chat.scrollTop, before, '다른 채팅'); }
+    {   const w = world({ paragraphs: 80 }); w.read(40); keep(w.body, () => {}); fire(1200); assert.ok(!off(w));
+        keep(w.body, () => {}); assert.ok(w.observers.slice(0, 1).every(o => o.off), '다음 그림이 넘겨받음'); fire(30000); }
+}));
+await check('1.0.5 번역기 진행 줄은 넣고 뗄 때 읽던 자리 보호 안에서', async () => {
+    const fs = await import('node:fs');
+    const src = fs.readFileSync(path.resolve(process.argv[2] || '.', 'src/addons/translator/index.js'), 'utf8');
+    const badge = src.slice(src.indexOf('function progressBadge('), src.indexOf('const PREVIEW_GAP_MS'));
+    assert.match(badge, /keepChatReadingPosition\(host, \(\) => host\.prepend\(line\)\)/);
+    assert.match(badge, /const drop = \(\) => \{[^\n]*keepChatReadingPosition\(line, \(\) => line\.remove\(\)\)/);
+    assert.match(badge, /remove\(\) \{ clearInterval\(timer\); drop\(\); \}/);
+    assert.match(badge, /swipeId\)\) \{ drop\(\); return; \}/);   // 대상이 바뀌어 뗄 때도
+    assert.doesNotMatch(badge, /el\?\.remove\(\)/);
+    assert.doesNotMatch(badge, /host\.prepend\(el\)/);
+    const preview = src.slice(src.indexOf('function translationPreview('), src.indexOf('async function settleGuard('));
+    assert.match(preview, /keepChatReadingPosition\(view, \(\) => \{ const first = view\.childNodes\[0\]; if \(first\) view\.insertBefore\(badge, first\)/);
+});
+await check('1.0.5 생성 · 스와이프 동안 마지막 메시지 버튼 줄은 자리를 두고 숨김(이름 줄 높이 그대로)', async () => {
+    const fs = await import('node:fs');
+    const css = fs.readFileSync(path.resolve(process.argv[2] || '.', 'css/05-chat.css'), 'utf8');
+    const rule = /body\.salty:is\(\[data-generating="true"\], \[data-swiping="true"\]\) #chat \.last_mes \.mes_buttons \{([^}]*)\}/.exec(css);
+    assert.ok(rule, '규칙 없음');
+    assert.match(rule[1], /display: flex !important/);
+    assert.match(rule[1], /visibility: hidden !important/);
+    assert.match(rule[1], /pointer-events: none !important/);
+});
 console.log(`translate-scroll: ${count} passed`);

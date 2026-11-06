@@ -6,6 +6,7 @@
 //   글꼴을 바꾸거나(설정 반영) 웹 글꼴이 늦게 들어오면 다시 재요. 채팅은 메시지 꾸미기 허브(message-decor.js) 하나로만 봐요.
 import { addMessageDecorator } from './message-decor.js';
 import { inkOf } from './control-ink.js';
+import { hiddenQueue, mayHide } from './hidden-details.js';
 
 // 가운데 줄 제목(장식이 같은 줄에 있는 것만): 데우스 카드 제목. 새 가운데 줄을 만들면 여기 한 줄 + CSS 에 var(--bl-ink-dy)
 export const CENTER_INK = [
@@ -49,6 +50,18 @@ export function inkShift(el) {
     return Math.round((mid - inkMid) * 4) / 4;   // 0.25px 단위
 }
 
+// 읽기 먼저 → 쓰기. 보정은 position: relative 의 top 이라 상자와 글자가 같이 움직여 재는 값은 보정과 무관하고, 다른 제목 자리에도 영향 없어요
+function measure(els) {
+    const shift = els.map(el => inkShift(el));
+    els.forEach((el, i) => {
+        const s = shift[i];
+        if (s === null || Math.abs(s) < 0.25) el.style.removeProperty('--bl-ink-dy');
+        else el.style.setProperty('--bl-ink-dy', `${s}px`);
+    });
+}
+// 1.0.4 닫힌 <details> 안 제목(접힌 데우스 모듈)은 그려지지 않아 잴 때마다 그 묶음만 따로 강제 배치돼요(데우스 상태창 30개 · 폰 4배 17번 · 1초 남짓) —
+//   보이는 제목은 바로, 닫힌 묶음 안 제목은 쉴 때 · 열리는 순간(열리기 전에) 같은 계산을 해요(hidden-details.js). 잰 값은 그대로예요.
+const hidden = hiddenQueue(els => measure(els), { enabled: () => active });
 function apply(list) {
     const els = [];
     for (const root of list) {
@@ -56,13 +69,8 @@ function apply(list) {
         root.querySelectorAll?.(SEL).forEach(el => els.push(el));
     }
     if (!els.length) return;
-    // 읽기 먼저 → 쓰기. 보정은 position: relative 의 top 이라 상자와 글자가 같이 움직여 재는 값은 보정과 무관하고, 다른 제목 자리에도 영향 없어요
-    const shift = els.map(el => inkShift(el));
-    els.forEach((el, i) => {
-        const s = shift[i];
-        if (s === null || Math.abs(s) < 0.25) el.style.removeProperty('--bl-ink-dy');
-        else el.style.setProperty('--bl-ink-dy', `${s}px`);
-    });
+    const check = list.some(root => mayHide(root));
+    measure(check ? els.filter(el => !hidden.defer(el)) : els);
 }
 
 function all() { if (active) apply([document.body]); }
@@ -72,7 +80,7 @@ export function syncCenterInk(on) {
     active = !!on;
     if (active && !off) off = addMessageDecorator('가운데 줄 잉크', list => apply(list), { settle: 400, order: 90 });
     if (!active && off) { off(); off = null; }
-    if (!active) { document.querySelectorAll(SEL).forEach(el => el.style.removeProperty('--bl-ink-dy')); return; }
+    if (!active) { hidden.clear(); document.querySelectorAll(SEL).forEach(el => el.style.removeProperty('--bl-ink-dy')); return; }
     if (!fontsBound && document.fonts?.addEventListener) { document.fonts.addEventListener('loadingdone', () => requestAnimationFrame(all)); fontsBound = true; }
     requestAnimationFrame(all);
 }
