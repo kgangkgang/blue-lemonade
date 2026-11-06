@@ -10,6 +10,7 @@ import {dressDemSky} from './dem-sky.js';
 import {syncFruitTypography} from './fruit-type-runtime.js';
 import {bindTouchSliders} from './touch-sliders.js';
 import {bindPreviewViews} from './preview-view.js';
+import {bindSnapshotDetails} from './preview-details.js';
 import {onThemeLook} from './shared/theme-look.js';
 import {watchDom} from './dom-watch.js';
 
@@ -26,6 +27,14 @@ export function bindFruitTypography(root){
     const current=()=>{const s=tidyFruitType(getSettings().fruitTypography);s.kind=s.ownerKinds[owner];return s;};
     let portWatch=null;
     let alive=true, previewTimer=0, previewFrame=0, previewKind='', previewSignature='', autoPreviewScale=null;
+    const previewFolds=new Map();let detailsOff=null,detailsFrame=0,realSource=null;
+    function fitDetails(){if(detailsFrame)return;detailsFrame=requestAnimationFrame(()=>{detailsFrame=0;if(alive&&box.isConnected)fitFrame();});}
+    function connectDetails(frame){
+        detailsOff?.();detailsOff=null;
+        const d=frame?.contentDocument;if(!d)return;
+        detailsOff=bindSnapshotDetails(d,{state:previewFolds,scope:`${owner}/${current().kind}/${demVersion()}`,demSkin:owner==='deus'&&skinOn(),onToggle:fitDetails});
+        fitDetails();
+    }
     // 8.1.0 데우스 미리보기 판(2.5 · V3) — 데우스 전체에 하나(chat.demPreviewVersion, 기본 V3). 과일 계열은 쓰지 않아요.
     const demVersion=()=>tidyDemVersion(getSettings().chat?.demPreviewVersion);
     const versionLabel=v=>DEUS_VERSIONS.find(([k])=>k===v)?.[1]||v;
@@ -72,6 +81,7 @@ ${owner==='deus'?choice('data-ft-demver','미리보기 판',DEUS_VERSIONS,demVer
 ${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('data-ft-layout','정보 배치',layoutChoices(type),layoutChoices(type).some(([value])=>value===config.layout)?config.layout:'original'):''}${type.decor?choice('data-ft-decor','장식 색',DECOR_CHOICES,config.decor||'accent'):''}${footer?`<div class="bl-ft-param bl-ft-seg-param" role="group" aria-label="${esc(footer)}"><span>${footer}</span>${footerSeg(config.hideFooter)}</div>`:''}</div>`:''}
 <div class="bl-ft-groups">${regions}${unsupported}</div>`;
         const frame=box.querySelector('iframe');
+        detailsOff?.();detailsOff=null;realSource=null;
         dropHost();lastCss='';previewKind='';previewSignature='';autoPreviewScale=null;docMode='';sampleKey='';sampleToken++;
         frame.addEventListener('load',()=>capturePreview());
         bindPreviewViews(box,'fruit-type');
@@ -118,7 +128,7 @@ ${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('
     function shareDecorFilters(d){d.querySelector('svg[data-bl-fruit-decor-filters]')?.remove();const st=getComputedStyle(document.body),box=d.createElement('div');box.innerHTML=decorFilterMarkup(k=>st.getPropertyValue(`--salty-${k}`).trim());if(box.firstElementChild)d.body.append(box.firstElementChild);}
     function copySampleHost(){
         const frame=box.querySelector('iframe'),d=frame?.contentDocument,root=fragHost?.root;if(!root||!d?.querySelector('[data-bl-fruit-preview]'))return;
-        if(!copyFruitPreview(root,d))return;shareDecorFilters(d);
+        if(!copyFruitPreview(root,d))return;shareDecorFilters(d);connectDetails(frame);
         const style=getComputedStyle(root),rect=root.getBoundingClientRect();
         d.body.style.backgroundColor=sampleBackdrop;d.body.style.colorScheme=style.colorScheme;
         d.getElementById('custom').textContent='';lastCss='';
@@ -193,6 +203,7 @@ ${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('
         d.documentElement.style.backgroundColor=backdrop;d.documentElement.style.colorScheme=getComputedStyle(document.documentElement).colorScheme;
         if(sample.fragment&&message){const m=getComputedStyle(message);Object.assign(d.body.style,{fontFamily:m.fontFamily,fontSize:m.fontSize,lineHeight:m.lineHeight,color:m.color,letterSpacing:m.letterSpacing});}
         docMode='sample';sampleKey=key;previewKind=type.id;previewSignature='';lastCss='';say();
+        connectDetails(frame);
         placeFrame(frame,width,parseFloat(frame.style.height)||120);
         updatePreview();
         requestAnimationFrame(fitSample);d.fonts?.ready?.then(()=>{if(alive)fitSample();});
@@ -211,7 +222,8 @@ ${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('
         // 11-03 설정 값(JSON)은 서명에서 빼요 — 글자 · 배치 규칙은 !important 라 복제본 위에 CSS 로 덮으면 같은 결과예요. 구조가 바뀌는 변경은 commit(force) 가 서명을 비워 다시 복제해요
         const signature=[s.kind,source.outerHTML,imageState,sourceStyle.color,sourceStyle.backgroundColor,backdrop,sourceStyle.fontFamily,sourceStyle.fontSize,rect.width,[...source.ownerDocument.fonts||[]].filter(f=>f.status==='loaded').length].join('|');
         if(signature===previewSignature){refit();return;}
-        if(!copyFruitPreview(source,d)){d.querySelector('[data-bl-fruit-preview]').replaceChildren();note.textContent='상태창이 너무 복잡해 미리보기를 만들 수 없어요. 설정은 저장돼요.';previewKind='';previewSignature='';return;}shareDecorFilters(d);previewKind=s.kind;previewSignature=signature;docMode='real';
+        if(realSource!==source){previewFolds.clear();realSource=source;}
+        if(!copyFruitPreview(source,d)){d.querySelector('[data-bl-fruit-preview]').replaceChildren();note.textContent='상태창이 너무 복잡해 미리보기를 만들 수 없어요. 설정은 저장돼요.';previewKind='';previewSignature='';return;}shareDecorFilters(d);previewKind=s.kind;previewSignature=signature;docMode='real';connectDetails(frame);
         const previewHost=d.querySelector('[data-bl-fruit-preview]'),unavailable=Number(previewHost.getAttribute('data-bl-preview-unavailable-images')||0)+Number(previewHost.getAttribute('data-bl-preview-unavailable-art')||0);
         const unavailableFonts=Number(previewHost.getAttribute('data-bl-preview-unavailable-fonts')||0);
         note.textContent='현재 대화 상태창을 너비에 맞춰 보여요.'+(unavailable?' 그림·배경 '+unavailable+'곳은 다시 요청하지 않고 같은 크기의 자리로 보여요.':'')+(unavailableFonts?' 브라우저에서 공유하지 못한 글꼴 '+unavailableFonts+'종은 대체 글꼴로 보여요.':'');
@@ -297,7 +309,7 @@ ${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('
         if(fold){const shut=!fold.parentElement.classList.contains('folded');fold.parentElement.classList.toggle('folded',shut);fold.setAttribute('aria-expanded',String(!shut));fold.setAttribute('aria-label',shut?'미리보기 펼치기':'미리보기 접기');try{localStorage.setItem('bl_ft_pvfold',shut?'1':'0');}catch{}box.dispatchEvent(new Event('bl:preview-resize'));return;}if(e.target.closest('[data-ft-all-reset]')){const s=current();s.types[s.kind]=tidyFruitType({}).types[s.kind];commit(s);paint();return;}const el=e.target.closest('[data-ft-reset]');if(!el)return;const s=current();s.types[s.kind].regions[el.dataset.ftReset]={...REGION_DEFAULT};commit(s);paint();}
     box.addEventListener('change',change);box.addEventListener('input',input);box.addEventListener('click',click);paint();
     const timer=setInterval(()=>{if(box.isConnected&&box.getClientRects().length&&!folded())schedulePreview();},1500);
-    return()=>{alive=false;dropHost();portWatch?.disconnect();for(const off of lookOffs)off();clearTimeout(lookTimer);clearInterval(timer);clearTimeout(previewTimer);cancelAnimationFrame(previewFrame);cancelAnimationFrame(lightFrame);clearTimeout(idleTimer);box._previewCleanup?.();box.removeEventListener('change',change);box.removeEventListener('input',input);box.removeEventListener('click',click);};
+    return()=>{alive=false;detailsOff?.();cancelAnimationFrame(detailsFrame);dropHost();portWatch?.disconnect();for(const off of lookOffs)off();clearTimeout(lookTimer);clearInterval(timer);clearTimeout(previewTimer);cancelAnimationFrame(previewFrame);cancelAnimationFrame(lightFrame);clearTimeout(idleTimer);box._previewCleanup?.();box.removeEventListener('change',change);box.removeEventListener('input',input);box.removeEventListener('click',click);};
 }
 export async function openFruitTypography(kind){
     const s=current();if(FRUIT_TYPES.some(t=>t.id===kind)){s.kind=kind;s.ownerKinds[typeOwner(FRUIT_TYPES.find(t=>t.id===kind))]=kind;getSettings().fruitTypography=s;saveSettings();}

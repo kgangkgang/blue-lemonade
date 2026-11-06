@@ -37,10 +37,12 @@ test('켜면 #chat 에만 childList 감시자(subtree 없음) · 60개 미만이
 });
 test('메시지가 60개 이상 되면(감시자 콜백) 클래스를 붙이고, 59개로 내려가면 뗀다', () => {
     chat.count = 60; fire(); assert.equal(chat.classes.has('bl-chat-light'), true);
+    chat.count = 50; fire(); assert.equal(chat.classes.has('bl-chat-light'), false, '50개 표시는 미리 그리기 비용을 더하지 않아요');
     chat.count = 300; fire(); assert.equal(chat.classes.has('bl-chat-light'), true);
     chat.count = 59; fire(); assert.equal(chat.classes.has('bl-chat-light'), false);
 });
 test('같은 상태면 classList 를 건드리지 않는다 (속성 변경 기록을 만들지 않게)', () => {
+    chat.count = 50; fire(); assert.equal(chat.classes.has('bl-chat-light'), false, '50개 표시는 미리 그리기 비용을 더하지 않아요');
     chat.count = 300; fire(); classWrites = 0; fire(); fire(); fire(); assert.equal(classWrites, 0);
     chat.count = 5; fire(); assert.equal(classWrites, 1); fire(); assert.equal(classWrites, 1);
 });
@@ -49,6 +51,7 @@ test('채팅 칸이 바뀌면(다시 그림) 새 칸을 감시한다 · 끄면 �
     assert.equal(observers.filter(o => o.live).length, 1); assert.equal(observers.filter(o => o.live)[0].target, chat); assert.equal(chat.classes.has('bl-chat-light'), true);
     M.syncChatLight(false);
     assert.equal(observers.filter(o => o.live).length, 0); assert.equal(chat.classes.has('bl-chat-light'), false); assert.equal(M._test.state().watching, false);
+    chat.count = 50; fire(); assert.equal(chat.classes.has('bl-chat-light'), false, '50개여도 설정을 끄면 적용하지 않아요');
     chat.count = 300; fire(); assert.equal(chat.classes.has('bl-chat-light'), false, '끈 뒤에는 세지 않는다');
 });
 test('CSS: html.bl-chat-light(:where) 아래 #chat 의 메시지에 content-visibility:auto · contain-intrinsic-size auto · 마지막 · 바닥 10개 · 메뉴 · 고른 메시지 제외 · :has 없음 · [style 없음 · style.css 에 들어 있다', () => {

@@ -45,7 +45,8 @@ export function cleanUpMessage({ getMessage }) { return getMessage; }
 export function extractMessageFromData() { return ''; }
 export function hideSwipeButtons() {}
 export function showSwipeButtons() {}
-export function setSendButtonState(v) { T.sendStates.push(v); }
+export let is_send_press = false;
+export function setSendButtonState(v) { is_send_press = v; T.sendStates.push(v); }
 export function syncMesToSwipe() {}`),
     'extensions.js': js(G + 'export const extension_settings = T.ext;\nexport function getContext() { return T.ctx; }'),
     'custom-request.js': js(G + 'export const ChatCompletionService = { async processRequest(request, _options, _extract, signal) { T.directCalls.push(request); return T.direct(request, signal); } };'),
@@ -76,6 +77,7 @@ globalThis.document = Object.assign(new EventTarget(), {
     body: { dataset: {}, classList: { contains: () => false } },
     createElement: () => ({ hidden: false, style: {}, append() {}, replaceChildren() {} }),
     getElementById: () => null,
+    querySelectorAll: () => [],
     // 편집 창(guards.js isEditingMessage)
     querySelector: (sel) => ([...T.editing].some(id => sel === `#chat .mes[mesid="${id}"] .edit_textarea`) ? {} : null),
 });

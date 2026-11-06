@@ -55,6 +55,27 @@ export function readPresetFolders(extensions) {
     return value?.version === 1 && Array.isArray(value.folders) ? tidyFolders(value.folders) : [];
 }
 
+/** 다른 도구가 프리셋에 저장한 그룹을 현재 항목 순서로 읽어요. 원본 프리셋은 바꾸지 않아요. */
+export function readBoxPresetFolders(extensions, order = []) {
+    const value = extensions?.baibaiToolkit?.presetPromptGroups;
+    if (!isObj(value) || !Array.isArray(value.groups) || !isObj(value.prompts)) return [];
+    const entries = [], bySource = new Map();
+    for (const [index, row] of value.groups.entries()) {
+        if (!isObj(row) || !['string', 'number'].includes(typeof row.id)) continue;
+        const key = String(row.id);
+        if (!safeKey(key) || bySource.has(key) || entries.length >= LIMITS.folders) continue;
+        const item = { id: `box-${index.toString(36)}`, name: cleanName(row.name) || '폴더', ids: [], parent: '', pick: false, open: row.collapsed === false,
+            rank: Number.isFinite(Number(row.order)) ? Number(row.order) : index };
+        entries.push(item); bySource.set(key, item);
+    }
+    for (const id of order) {
+        if (typeof id !== 'string' || !Object.hasOwn(value.prompts, id)) continue;
+        const group = bySource.get(String(value.prompts[id]?.groupId ?? ''));
+        if (group && group.ids.length < LIMITS.ids) group.ids.push(id);
+    }
+    return tidyFolders(entries.filter(group => group.ids.length).sort((a, b) => a.rank - b.rank));
+}
+
 /** id → 폴더 */
 export function folderIndex(folders) {
     const map = new Map();

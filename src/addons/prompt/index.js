@@ -1184,7 +1184,7 @@ async function translateText(name, text, extraNonce, opts = {}) {
     // 제목 always uses its own configured language, independently of whether this
     // run is producing 본문 or 주석.
     const titleLang = effLang('title');
-    const lang = hasContent ? (mode === 'note' ? effLang('note') : effLang()) : titleLang;
+    const lang = opts.language === 'Korean' ? 'Korean' : hasContent ? (mode === 'note' ? effLang('note') : effLang()) : titleLang;
     const dualLang = hasName && hasContent && titleLang !== lang;
     const nonce = extraNonce ? `\n<!--retry:${extraNonce}-->` : '';
     // Compose what we send to the model:
@@ -4848,6 +4848,19 @@ export function translatedPromptTitle(identifier, presetName = '') {
 // 캐시 열쇠는 글 자체(해시 + 길이) · 본문 언어라서, 같은 글이면 요청 없이 캐시에서 바로 돌려준다. 제목은 보내지 않는다.
 // 패널의 번역이 도는 중이면 겹쳐 보내지 않고 알린다(정규식 쪽과 같은 규칙). 따로 설치한 패널이 돌고 있으면(duplicate) 캐시 파일이 그쪽 것이라 쓰지 않는다.
 const SHARED_TEXT_NS = 'pt-ext::text';
+/** 폴더 이름만 한 번에 한국어로 옮겨요. 패널의 본문 언어 설정·기존 본문 캐시는 바꾸지 않아요. */
+export async function translateFolderLabels(names) {
+    const { folderLabelsJson, parseFolderLabels } = await import('../../prompt-folder-labels.js');
+    const text = folderLabelsJson(names);
+    if (!names.length) return [];
+    if (duplicate) throw new Error('따로 설치한 한글화 패널이 켜져 있어 여기서는 번역할 수 없어요');
+    if (isBusy) throw new Error('한글화 패널의 번역이 끝난 뒤 다시 눌러 주세요');
+    isBusy = true; stopReq = false;
+    try {
+        const result = await translateText('', text, null, { includeTitle: false, ns: 'pt-ext::folder-labels', language: 'Korean' });
+        return parseFolderLabels(names, result);
+    } finally { isBusy = false; releaseIdlePages(); }
+}
 const sharedTextId = text => `${hashNS(text)}-${text.length.toString(36)}`;
 export function cachedTextTranslation(text) {
     const source = String(text ?? '').trim();

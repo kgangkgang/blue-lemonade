@@ -48,8 +48,16 @@ assert.match(src, /failed = true; ext\.remove\(\); enableTheme\(main\)/, 'a miss
 assert.match(src, /if \(themeOn \|\| failed\) \{[^}]*enableTheme\(main\);[^}]*ext\?\.remove\(\)/, 'turning the theme on enables the full or boot sheet before removing the copy');
 assert.match(src, /main\.after\(ext\)/, 'the copy sits right after the big sheet (same order against other CSS)');
 const apply = fs.readFileSync(path.join(root, 'src/apply.js'), 'utf8');
-// 1.0.0 되살림: theme-sheet.js 는 테마가 꺼졌을 때만 받아요(lateSync — 시작 그래프 밖). 한 번 받은 뒤에는 켜질 때도 불러 큰 시트로 돌려요
-assert.match(apply, /const s = themeEnabled\(rendered\) \? rendered : \{\.\.\.rendered, enabled:false\};\n(?:\s*\/\/[^\n]*\n)?\s+\{ const on = !!s\.enabled; lateSync\('themeSheet', \(\) => import\('\.\/theme-sheet\.js'\), !on, m => m\.syncThemeSheet\(on\)\); \}/, 'applyAll switches sheets from the rendered theme state');
+// 현재 그리는 모드로 시트를 고르고, 꺼짐 또는 데우스 규칙이 필요한 때만 관리자를 받아요.
+assert.match(apply, /const s = themeEnabled\(rendered\) \? rendered : \{\.\.\.rendered, enabled:false\};/);
+const sheetLine = apply.split(/\r?\n/).find(line => line.includes("lateSync('themeSheet'"));
+assert.ok(sheetLine);
+const sync = new Function('s', 'lateSync', sheetLine);
+for (const [settings, wanted] of [[{ enabled: false }, true], [{ enabled: true }, false], [{ enabled: true, deus: { on: true } }, true]]) {
+    let load, shown;
+    sync(settings, (_name, _loader, need, call) => { load = need; call({ syncThemeSheet(on) { shown = on; } }); });
+    assert.equal(load, wanted); assert.equal(shown, settings.enabled);
+}
 assert.doesNotMatch(apply, /^import [^\n]*theme-sheet\.js/m, 'theme-sheet.js stays out of the start graph');
 const lite = fs.readFileSync(path.join(root, 'src/lite.js'), 'utf8');
 // 1.0.0: 미리보기는 따로 받는 <link>(9.0.1) — 게으른 칸 <style> 만 sheetTail 로 사본 뒤에 붙어요

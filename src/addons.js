@@ -10,7 +10,7 @@ import { DUPLICATES } from './extension-folder.js';
 import { PRIVATE_ADDONS, EMBEDDED_PRIVATE, ADDON_CARRY } from './private-addons.js';
 import { legacyFolders } from './extension-folder.js';
 import { perfErrorText } from './addons/perf/start-error.js';
-import { ADDON_STYLE_BUNDLE, ADDON_BOOT_BUNDLE, ADDON_BOOT_CSS, ADDON_CSS_SENTINEL, LATE_STYLE_IDS, bootSheetOf, bundleFits } from './addon-style-bundle.js';
+import { ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, ADDON_BOOT_CSS, ADDON_CSS_SENTINEL, LATE_STYLE_IDS, bootSheetOf, gatedBundleFits, syncAddonStyleFlags } from './addon-style-bundle.js';
 import { onGate } from './boot-layers.js';
 import { afterBoot } from './boot-gate.js';
 const running=new Set(),failed=new Map(),loading=new Set(),waiting=new Set();
@@ -78,6 +78,7 @@ const addonUrl=rel=>new URL(`./addons/${rel}`,import.meta.url).href;
 const fullSheet=id=>addonUrl(`${id}/${PRIVATE_ADDONS[id]?.css||'style.css'}`);
 // 1.0.0 극한 최적화: 첫 장 → 전체 시트. pendingSheets = 아직 전체로 안 바꾼 <link> → 전체 주소. 같은 자리에 붙여 규칙 순서가 그대로예요
 const pendingSheets=new Map();
+let bundledStyleIds=[];
 let upgrading=Promise.resolve();
 function swapSheet(link,href){
     return new Promise(resolve=>{
@@ -105,13 +106,14 @@ async function stylesheet(id){
     pendingSheets.set(link,fullSheet(id));link.href=addonUrl(bootSheetOf(id,PRIVATE_ADDONS[id]?.css));
     try{await attachStyle(link);}catch(error){pendingSheets.delete(link);const whole=document.createElement('link');whole.rel='stylesheet';whole.href=fullSheet(id);await attachStyle(whole);}   // 첫 장을 못 받으면 예전처럼 전체
 }
-// 9.0.9 애드온 CSS 한 장: 켜진 애드온이 src/addon-style-bundle.js 목록과 꼭 같으면(순서까지) style-addons.css 한 장만 — 시트 19장 + @import 조각 42장 요청이 1개로.
-//   한 장은 각 시트를 읽는 순서대로 이은 것이라 규칙 순서 · 특이도가 같아요(tools/css-cascade-diff.mjs). data-bl-addons 에 든 애드온 id 로 「이 애드온 CSS 가 이미 붙었나」를 알아봐요
-//   (한글화 패널 · 파일 어긋남 다시 받기). 못 받으면 예전처럼 한 장씩 · 1.0.0: 첫 장을 먼저 붙이고 전체 한 장으로 바꿔요
+// 1.0.6 조건부 애드온 CSS: 켜진 목록이 지원하는 순서의 부분 집합이면 한 장을 쓰고, 뿌리 표식으로 끈 애드온의 규칙을 막아요.
+//   data-bl-addons는 실제 켜진 항목만 적어 한글화 패널·파일 검사기가 CSS를 중복으로 붙이지 않게 해요.
+//   못 받으면 개별 시트로 돌아가요. 첫 장→전체 장 교체는 같은 자리에서 하므로 규칙 순서가 유지돼요.
 function stylesheetBundle(ids){
-    const link=document.createElement('link');link.rel='stylesheet';link.dataset.blAddons=ids.filter(id=>!LATE_STYLE_IDS.includes(id)).join(' ');link.href=addonUrl(ADDON_BOOT_BUNDLE);
-    pendingSheets.set(link,addonUrl(ADDON_STYLE_BUNDLE));
-    return attachStyle(link).catch(error=>{pendingSheets.delete(link);throw error;}).then(()=>{link.dataset.blAddonsAll=ids.join(' ');});
+    bundledStyleIds=[...ids];syncAddonStyleFlags(document,ids);
+    const link=document.createElement('link');link.rel='stylesheet';link.dataset.blAddons=ids.filter(id=>!LATE_STYLE_IDS.includes(id)).join(' ');link.href=addonUrl(ADDON_GATED_BOOT_BUNDLE);
+    pendingSheets.set(link,addonUrl(ADDON_GATED_BUNDLE));
+    return attachStyle(link).catch(error=>{pendingSheets.delete(link);bundledStyleIds=[];syncAddonStyleFlags(document,[]);throw error;}).then(()=>{link.dataset.blAddonsAll=ids.join(' ');});
 }
 async function persist(){saving++;saveError='';changed();try{await saveAddonsNow();saveError='';}catch(error){saveError=error.message;throw error;}finally{saving--;changed();}}
 // 확장은 실리태번이 설정을 다 읽기 전에 시작한다 (settingsReady 전엔 saveSettings 가 미루기만 해서 저장 확인이 실패로 남았다) — 저장은 APP_READY 뒤에
@@ -209,14 +211,11 @@ async function startAddonsOnce(layers){
         loading.add(id);ids.push(id);
     }
     changed();
-    // 스타일은 한꺼번에 먼저 (느린 하나가 나머지를 줄 세우지 않게). 못 읽어도 JS 는 올린다 — 파일 어긋남은 verifyAddonCss 가 따로 알린다
-    //   9.0.2 첫 프레임 뒤(2층)에 붙여요 — 시작 덮개 아래라 모양이 바뀌는 게 보이지 않고, 실리태번 시작 단계는 기다리지 않아요
+    // 같은 단계의 스타일은 함께 받아요. 못 받은 파일은 개별 읽기와 파일 검사기가 처리해요.
     const styled=ids.filter(id=>id!=='translator');
     const styleEach=()=>Promise.allSettled(styled.map(stylesheet)).then(results=>results.forEach((outcome,i)=>{if(outcome.status==='rejected')console.warn('[Blue Lemonade]',names[styled[i]],'스타일:',outcome.reason?.message||outcome.reason);}));
-    const styleAll=()=>bundleFits(styled)?stylesheetBundle(styled).catch(error=>{console.warn('[Blue Lemonade] 애드온 스타일 한 장:',error?.message||error,'— 한 장씩 다시 받아요');return styleEach();}):styleEach();
-    // 1.0.0: 애드온 CSS(403KB · 규칙 3,372 — 전부 애드온이 만드는 요소만)는 애드온 본체 바로 앞(3층)에 붙여요.
-    //   첫 화면 · 덮개 동안 그 시트를 파싱 · 견주지 않게. 2층에서는 fetch 로 미리 받아만 둬요(파싱 없음) — 3층에서 붙일 때 캐시에서 바로
-    const styleUrls=()=>bundleFits(styled)?[new URL(`./addons/${ADDON_STYLE_BUNDLE}`,import.meta.url).href]:styled.map(id=>new URL(`./addons/${id}/${PRIVATE_ADDONS[id]?.css||'style.css'}`,import.meta.url).href);
+    const styleAll=()=>gatedBundleFits(styled)?stylesheetBundle(styled).catch(error=>{console.warn('[Blue Lemonade] 애드온 스타일 한 장:',error?.message||error,'— 한 장씩 다시 받아요');return styleEach();}):styleEach();
+    // 애드온 CSS는 본체 시작 직전에 붙여요. 별도 미리 받기로 요청을 중복하지 않아요.
     watchUpgrade();
     let styling=null;const ensureStyling=()=>styling||=styleAll();lateStyling=()=>ensureStyling().then(upgradeAddonStyles);
     if(!layers)ensureStyling();   // 미리 받기(fetch) 없음 — 두 번 받혀 바이트만 늘어요. 3층에서 붙일 때 받아요
@@ -359,6 +358,7 @@ export function bindAddons(root,refresh){
 }
 export async function syncAddonIcons(){
     const s=getSettings();
+    if(bundledStyleIds.length)syncAddonStyleFlags(document,bundledStyleIds.filter(id=>addonsEnabled(s)&&s.addons[id]));
     if(running.has('tts'))(await import('./addons/tts/shell.js')).syncEnabled();
     if(running.has('translator'))(await import('./addons/translator/bridge.js')).syncVisibility();
     const menu=document.getElementById('extensionsMenu');

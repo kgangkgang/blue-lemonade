@@ -15,6 +15,8 @@
 .ms-form label[hidden]{display:none}
 .ms-row{display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;gap:8px}
 .ms-model{display:flex;align-items:center;gap:4px;min-width:0}
+/* 끝 아이콘의 투명한 44px 터치 칸도 폼 안에 들어가게 해요. */
+@media (pointer:coarse){#model-switch-settings .ms-model{padding-inline-end:max(0px,calc((var(--bl-ui-touch,44px) - var(--bl-h-icon,34px))/2))}}
 .ms-model .text_pole{flex:1}
 .ms-icon{flex:none;width:40px;height:40px;border:0;border-radius:10px;background:var(--salty-shade,var(--SmartThemeBlurTintColor,#3333));color:inherit;cursor:pointer}
 .ms-icon[hidden]{display:none}

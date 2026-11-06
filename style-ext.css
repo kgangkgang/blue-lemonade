@@ -1,8 +1,8 @@
-/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1865 · 뺀 규칙 4072 (style.css bd37dc40bc29) */
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 75a21253e162) */
-:root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)"}
+/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1865 · 뺀 규칙 3906 (style.css 1387f4754974) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 431acff9516b) */
+:root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"b974befb6a5d2d79"}
 /* css/00-base.css */
-:root{--bl-release:"1.0.5";}
+:root{--bl-release:"1.0.6";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)) {
 :root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}
@@ -1798,13 +1798,13 @@ body.salty-dark .salty-shapes button.on {
   font-weight: var(--salty-code-weight, inherit);
   letter-spacing: var(--salty-code-ls, inherit);
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) details[class*="custom-dem-card"],
+:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) details:is(.custom-dem-card, .custom-dem-card__body, .custom-dem-card__caret, .custom-dem-card__icon, .custom-dem-card__tag, .custom-dem-card__title),
 :is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) .custom-dem-track:is(bl-s, *),
 :is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) .custom-dem-track-recovery:is(bl-s, *) {
   text-align: start;
   word-break: keep-all;
 }
-:is(body.salty.salty-indent :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample.salty-indent) :is(details[class*="custom-dem-card"], .custom-dem-track, .custom-dem-track-recovery) p {
+:is(body.salty.salty-indent :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample.salty-indent) :is(details:is(.custom-dem-card, .custom-dem-card__body, .custom-dem-card__caret, .custom-dem-card__icon, .custom-dem-card__tag, .custom-dem-card__title), .custom-dem-track, .custom-dem-track-recovery) p {
   text-indent: 0;
 }
 .salty-fontinfo b em.salty-blank {
@@ -4043,7 +4043,7 @@ dialog.bl-prompt-card-picker::backdrop { background: var(--salty-scrim, var(--bl
 .bl-prompt-card-picker footer small { color: var(--salty-muted); }
 .bl-prompt-card-actions { display: flex; gap: 8px; flex: none; }
 .bl-prompt-card-picker [data-card-done] { border: 0; border-radius: var(--bl-r-sm, 8px); min-height: 36px; padding: 6px 12px; background: var(--salty-fill-accent, var(--salty-accent)); color: var(--salty-on-accent, var(--bl-fb-fff)); font: inherit; font-weight: 650; cursor: pointer; }
-.bl-prompt-card-picker [data-card-clear],.bl-prompt-card-more { border: 0; border-radius: var(--bl-r-sm, 8px); min-height: 36px; padding: 6px 12px; background: var(--salty-raised); color: var(--salty-text); font: inherit; cursor: pointer; }
+.bl-prompt-card-picker [data-card-clear],.bl-prompt-card-picker [data-pf-translate],.bl-prompt-card-more { border: 0; border-radius: var(--bl-r-sm, 8px); min-height: 36px; padding: 6px 12px; background: var(--salty-raised); color: var(--salty-text); font: inherit; cursor: pointer; }
 .bl-prompt-card-picker button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: -2px; }
 @media (hover:hover) {
 .bl-prompt-card-choice:hover { background: var(--salty-raised); }

@@ -303,7 +303,7 @@ html:not(#bl-ui-parts-off) body.salty.salty-dem-skin :is(#chat, .cg-root, .salty
 }
 /* 「DEM Active Modules」 안 카드 테두리가 왼쪽만 남아 반쯤 잘린 괄호처럼 보이던 것(10-31 사용자 사진): 05-chat 의 「프리셋 카드는 위 · 오른쪽 · 아래 테 투명, 왼쪽 색 띠만」
    (굵은 왼쪽 띠를 가진 옛 DEM 카드용)이 V3 묶음 안 카드(테 1px 한 겹 · 둥근 모서리 14)에도 걸려 1px 왼쪽 선과 모서리 곡선만 보였어요 — 묶음 안 카드는 네 변 같은 1px 선(이름 있는 팔레트 색) */
-html:not(#bl-ui-parts-off) body.salty :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules details[class*="custom-dem-card"] {
+html:not(#bl-ui-parts-off) body.salty :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules details:is(.custom-dem-card, .custom-dem-card__body, .custom-dem-card__caret, .custom-dem-card__icon, .custom-dem-card__tag, .custom-dem-card__title) {
   border: 1px solid var(--salty-accent-28, var(--bl-ui-line)) !important;
 }
 

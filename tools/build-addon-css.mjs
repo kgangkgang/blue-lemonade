@@ -153,7 +153,43 @@ export async function build(root = ROOT) {
         if (kept.length) parts.push(`/* ${sheet.file.slice(BUNDLE_DIR.length + 1)} */\n${kept.map(n => n.text).join('\n')}`);
     }
     const head = `@charset "UTF-8";\n/* Blue Lemonade 애드온 CSS 한 장 — tools/build-addon-css.mjs 가 src/addon-style-bundle.js 의 애드온 ${t.ADDON_STYLE_IDS.length}개 시트(@import 펼침 ${sheets.length}장)를 읽는 순서대로 이은 파일. 뒤에 똑같은 규칙이 있는 앞 규칙 ${dropped}개와 주석은 뺐어요. 여기서 고치지 말고 각 애드온 CSS 를 고친 뒤 node tools/build-addon-css.mjs (tools/css-cascade-diff.mjs 가 전후 같은지 확인) */\n`;
-    return { text: head + parts.join('\n') + '\n', sheets: sheets.length, dropped, target: path.join(root, BUNDLE_DIR, t.ADDON_STYLE_BUNDLE), boots: await bootSheets(root, sheets) };
+    return { text: head + parts.join('\n') + '\n', sheets: sheets.length, dropped, target: path.join(root, BUNDLE_DIR, t.ADDON_STYLE_BUNDLE), boots: [...await bootSheets(root, sheets), ...await gatedSheets(root, sheets)] };
+}
+
+/** 일부 켬 묶음은 소유자 사이의 중복을 지우지 않아요. 어떤 소유자가 꺼져도 원래 폭포 순서를 지켜요. */
+export async function gatedSheets(root, sheets) {
+    const t = await tables(root), { gateCss } = require('./css-addon-gate.cjs');
+    const { deferAddon } = require('./css-scope-defer.cjs');
+    const globals = new Map();
+    for (const sheet of sheets) for (const node of sheet.nodes) {
+        const walk = nodes => { for (const n of nodes) {
+            if (n.children) walk(n.children);
+            else if (n.type === 'at') {
+                if (!['keyframes', 'property'].includes(n.name)) throw Error(`조건부 묶음의 전역 규칙을 검토해야 해요: ${n.prelude}`);
+                const key = n.prelude, value = squash(node.text.slice(n.start, n.end));
+                if (globals.has(key) && globals.get(key) !== value) throw Error(`애드온 전역 이름이 충돌해요: ${key}`);
+                globals.set(key, value);
+            }
+        }};
+        walk(lib.parse(node.text).children);
+    }
+    const full = [], boot = [];
+    for (const sheet of sheets) {
+        // 기존 전체 켬 묶음의 drop 표시는 무시해요. 다른 애드온의 공용 규칙도 제자리에 남겨야 해요.
+        const source = sheet.nodes.map(n => n.text).join('\n');
+        full.push(gateCss(source, t.addonStyleMark(sheet.id)));
+        if (!t.LATE_STYLE_IDS.includes(sheet.id)) {
+            const rule = t.ADDON_BOOT_CSS[sheet.id];
+            boot.push(gateCss(rule ? deferAddon(source, rule.panel, rule.keep).text : source, t.addonStyleMark(sheet.id)));
+        }
+    }
+    const sentinels = t.ADDON_STYLE_IDS.flatMap(id => (t.ADDON_BOOT_CSS[id]?.roots || []).map(sel =>
+        gateCss(`${sel}{animation:${t.ADDON_CSS_SENTINEL} 1ms}`, t.addonStyleMark(id))));
+    const head = '/* 생성 파일 — 켜진 애드온만 적용해요. tools/build-addon-css.mjs에서 만들어요. */\n';
+    return [
+        { target: path.join(root, BUNDLE_DIR, t.ADDON_GATED_BUNDLE), text: head + full.join('\n') + '\n' },
+        { target: path.join(root, BUNDLE_DIR, t.ADDON_GATED_BOOT_BUNDLE), text: head + boot.join('\n') + `\n@keyframes ${t.ADDON_CSS_SENTINEL}{from{--bl-addon-css:0}to{--bl-addon-css:1}}\n` + sentinels.join('\n') + '\n' },
+    ];
 }
 
 async function main(argv) {

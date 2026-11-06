@@ -11,7 +11,7 @@ globalThis.window = globalThis; globalThis.addEventListener = () => {};
 globalThis.document = { createElement: () => ({ style: {} }), addEventListener() {}, querySelector() { return null; }, querySelectorAll() { return []; }, head: { append() {} }, body: { classList: { add() {}, remove() {}, toggle() {}, contains: () => false }, dataset: {} }, documentElement: { style: { setProperty() {}, removeProperty() {} }, dataset: {}, classList: { add() {}, remove() {}, toggle() {}, contains: () => false } } };
 const S = await import(new URL('src/settings.js', root));
 const D = await import(new URL('src/settings-differences.js', root));
-const expected = { 'chat.inkContrast': true, syncWatch: true, 'chat.triangleFold': false, 'chat.weatherBubble': 70, 'chat.qrCtxNames': false };
+const expected = { 'chat.inkContrast': true, syncWatch: false, 'chat.triangleFold': false, 'chat.weatherBubble': 70, 'chat.qrCtxNames': false };
 const read = (from, key) => key.split('.').reduce((o, k) => o?.[k], from);
 for (const [key, value] of Object.entries(expected)) assert.equal(read(S.DEFAULTS, key), value, `${key} 기본값`);
 // 8.2.5 저장값 유지: 끈 값은 그대로 남고, 키가 없던 사람은 지금 동작과 같은 값을 받아요
@@ -21,7 +21,7 @@ let s = S.getSettings();
 assert.equal(s.chat.inkContrast, false); assert.equal(s.syncWatch, false); assert.equal(s.chat.weatherBubble, 40); assert.equal(s.chat.qrCtxNames, false);
 // 변경한 설정에 뜨고 항목별로 복원돼요
 const raw = structuredClone(S.DEFAULTS);
-Object.assign(raw.chat, { inkContrast: false, triangleFold: true, weatherBubble: 40, qrCtxNames: true }); raw.syncWatch = false;
+Object.assign(raw.chat, { inkContrast: false, triangleFold: true, weatherBubble: 40, qrCtxNames: true }); raw.syncWatch = true;
 ctx.extensionSettings = { salty: raw };
 S.invalidateSettings(); s = S.getSettings();
 const listed = D.changedSettings(s).map(c => c.path);

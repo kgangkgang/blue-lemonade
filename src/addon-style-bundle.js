@@ -1,16 +1,31 @@
-// 9.0.9 애드온 CSS 한 장 (순수 모듈 · 빌드 tools/build-addon-css.mjs · 비교 tools/css-cascade-diff.mjs · 시험 tools/tests/addon-style-bundle.mjs)
-// 애드온마다 <link> 하나씩(+ 애드온의 @import 조각들) 받던 스타일을, 켜진 애드온이 아래 목록과 꼭 같을 때(같은 순서) src/addons/style-addons.css 한 장으로 받아요.
-//   목록 = addons.js startAddonsOnce 의 시작 순서에서 스타일을 따로 붙이는 번역(translator)만 뺀 것 — 내장 애드온을 전부 켠 설정과 같아요.
-//   하나라도 꺼져 있거나(대기 중인 개인 애드온 포함) 순서가 다르면 예전처럼 한 장씩 — 끈 애드온의 규칙이 화면에 들어오면 안 되니까요.
-// 한 장은 각 시트를 브라우저가 읽는 순서(@import 먼저 · 제자리)대로 이은 것에서 「뒤에 똑같은 규칙이 또 있는 앞 규칙」(공용 조각 checks-common · size · palette · num-comma 의 여러 벌)과
-// 주석만 뺀 것이라, 규칙 순서 · 특이도가 그대로예요. css-cascade-diff 가 선택자별 최종 선언과 규칙 순서가 전후 같은지 확인해요(차이 0 이어야 빌드 · CI 통과).
+// 애드온 CSS의 시작 순서·묶음 조건·첫 장 분리표예요. 번역기는 자기 시트를 써요.
+// build-addon-css.mjs가 만들고, css-cascade-diff와 addon-gated-bundle 시험이 순서·선택 결과를 확인해요.
 export const ADDON_STYLE_BUNDLE = 'style-addons.css';   // src/addons/ 아래
 export const ADDON_STYLE_IDS = Object.freeze(['perf', 'order', 'models', 'modelswitch', 'regexlink', 'rewrite', 'direction', 'bookmarks', 'notes', 'zipinstall', 'assets', 'prompt', 'prompt-template', 'customstyle', 'mermaid', 'tts']);
-/** 스타일을 붙일 애드온 id 목록(시작 순서)이 한 장 목록과 꼭 같은가 */
-export const bundleFits = ids => Array.isArray(ids) && ids.length === ADDON_STYLE_IDS.length && ids.every((id, i) => id === ADDON_STYLE_IDS[i]);
+// 기능 이름으로 상위를 찾는 코드와 겹치지 않는 번호 표식이에요.
+export const addonStyleMark = id => `bl-asc-${ADDON_STYLE_IDS.indexOf(id)}`;
+// 1.0.6 후보: 16개 중 15개 이상 켜면 조건부 묶음을 써요. 적게 켠 조합은 큰 묶음을 받지 않게 개별 시트로 남겨요.
+export const ADDON_GATED_BUNDLE = 'style-addons.gated.gen.css';
+export const ADDON_GATED_BOOT_BUNDLE = 'style-addons.gated.boot.gen.css';
+export function gatedBundleFits(ids) {
+    if (!Array.isArray(ids) || ids.length < ADDON_STYLE_IDS.length - 1) return false;
+    let previous = -1;
+    for (const id of ids) { const at = ADDON_STYLE_IDS.indexOf(id); if (at <= previous) return false; previous = at; }
+    return true;
+}
+/** 실제 붙인 묶음의 활성 표식만 맞춰요. 같은 설정이면 DOM에 쓰지 않아요. */
+export function syncAddonStyleFlags(doc, ids) {
+    const active = new Set(ids), list = doc?.documentElement?.classList;
+    if (!list) return;
+    for (const id of ADDON_STYLE_IDS) {
+        const key = addonStyleMark(id), on = active.has(id);
+        if (list.contains(key) !== on) list.toggle(key, on);
+    }
+}
 // 1.0.0 극한 최적화: 애드온 창 안에서만 쓰는 규칙을 뺀 첫 장(<시트>.boot.gen.css · 빌드 tools/build-addon-css.mjs)을 먼저 붙이고, 처음 누르거나 창이 뜨면(또는 서랍 · 창이 열리면) 전체 시트로 바꿔요.
 //   id → 창 안 표시(바깥 사슬에 있으면 뺌) · 지킴(있으면 남김). 표에 없는 애드온은 작아서 그대로 전체 시트를 붙여요
 export const ADDON_BOOT_CSS = Object.freeze({
+    notes: { panel: '[.]bl-notes?-[\\w-]+', keep: '#chat|#extensionsMenu', roots: ['.bl-notes-dialog', '.bl-notes-mini', '.bl-notes-settings'] },
     perf: { panel: '[.](?:rl|lt|pa|sv)-(?!wand-button)[\\w-]+|[.]sw-settings|[.]sw-body', keep: '#chat|[.]mes(?![\\w-])', roots: ['.rl-root', '.rl-settings', '.lt-root', '.lt-drawer', '.pa-hub', '.pa-settings', '.sv-settings', '.sw-settings'] },
     direction: { panel: '[.]jj-[\\w-]+|#jj-popup|#jj-settings|[.]bl-direction-dialog', keep: '#jj-button|#chat|#leftSendForm|[.]jj-popup-host', roots: ['#jj-popup', '#jj-settings', '.jj-settings'] },
     bookmarks: { panel: '[.]cg-(?!mes-btn|pop|wand-button|ribbon)[\\w-]+|#cg-[\\w-]+', keep: '#chat|#form_sheld|[.]mes(?![\\w-])', roots: ['.cg-root', '.cg-window', '.cg-overlay', '.cg-sheet-overlay', '.cg-scrim', '#cg-preview-bar'] },

@@ -859,7 +859,7 @@ function regexStage() {
     const head = (icon, title, tag) => `<summary><span class="custom-dem-card__icon">${icon}</span><span class="custom-dem-card__title">${title}</span>${tag ? `<span class="custom-dem-card__tag">${tag}</span>` : ''}<span class="custom-dem-card__caret">▸</span></summary>`;
     const step = (phase, phaseName, label, value) => `<div class="custom-dem-scene-plan__phase custom-dem-scene-plan__phase--${phase}"><span>${phaseName}</span></div><div class="custom-dem-scene-plan__step custom-dem-scene-plan__step--${phase}"><span class="custom-dem-scene-plan__label">${label}</span><span class="custom-dem-scene-plan__value">${value}</span></div>`;
     const item = (kind, icon, value, extra = '') => `<div class="custom-dem-track__item custom-dem-track__item--${kind}"><span class="custom-dem-track__icon">${icon}</span><span class="custom-dem-track__value">${value}</span>${extra}</div>`;
-    return `<div class="salty-preview" data-prev="regex" aria-hidden="true" inert>
+    return `<div class="salty-preview" data-prev="regex" aria-label="데우스 상태창 미리보기">
         ${prevMes('false', '세라피나', `<div class="custom-dem-track">${item('time', '🕐', '오후 4:12')}${item('date', '🗓️', '3일째 · 목요일')}${item('location', '📍', '항구 → 등대 아래 찻집')}${item('weather', '⛅', '맑음', '<span class="custom-dem-track__temp">18°C</span>')}</div>
         <p class="bl-fx-line"><span class="custom-dem-expressive custom-dem-expressive--shout bl-fx-lead"><font color="#e64553" class="bl-ink-sample" style="--bl-ink:#e64553"><q>「거기 서!」</q></font></span> <span class="custom-dem-expressive custom-dem-expressive--trembling"><q>「…무, 무서워.」</q></span> <span class="custom-dem-expressive custom-dem-expressive--crying"><font color="#1e88c7" class="bl-ink-sample" style="--bl-ink:#1e88c7"><q>「가지 마…」</q></font></span> 감정 대사예요.</p>
         <details class="custom-dem-card custom-dem-scene-plan" open>${head('🗺️', '장면 계획', '흐름도')}<div class="custom-dem-scene-plan__body">${step('inputs', 'Inputs', '상황 맥락', '숲 오두막, 세라피나는 다친 여행자를 돌본다.')}${step('constraints', 'Constraints', 'Character Realism', '들뜬 마음을 쉽게 드러내지 않는다.')}${step('plan', 'Plan', 'Prose Plan', '편지 이야기는 마지막 문단까지 아껴 둔다.')}</div></details>
@@ -970,6 +970,8 @@ function fillPreviews(root) {
                 const holder = document.createElement('div');
                 holder.innerHTML = kind === 'markdown' ? markdownStage() : kind === 'chat' ? chatStage() : kind === 'regex' ? regexStage() : kind === 'color' ? colorStage() : imgStage(kind);
                 stage = root._pv[kind] = holder.firstElementChild;
+                if (kind === 'regex') for (const detail of stage.querySelectorAll('details.custom-dem-card')) detail.classList.toggle('bl-dem-shown', detail.open);
+                if (kind === 'regex') for (const fake of stage.querySelectorAll('.mes_buttons,.avatar,button,input,select,textarea,a')) { fake.inert = true; fake.tabIndex = -1; }
                 if (kind === 'markdown') stage.addEventListener('click', event => { if (event.target.closest('a')) event.preventDefault(); });
             }
             // 표본 고르기가 바뀌면 그림만 갈아 끼운다 (무대는 그대로 — 깜빡임 없음).

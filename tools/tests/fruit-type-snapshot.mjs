@@ -28,6 +28,19 @@ const cross=element('iframe');Object.defineProperty(cross,'contentDocument',{get
 const scope={querySelectorAll:q=>q==='iframe'?[cross]:[source]};
 assert.equal(findFruitPreviewSource({querySelector:()=>scope},'#statusBar'),source);
 source.getClientRects=()=>[];assert.equal(findFruitPreviewSource({querySelector:()=>scope},'#statusBar'),null);
+{
+    let reads=0;
+    const cards=Array.from({length:300},(_,id)=>({id,closest:()=>null,getClientRects:()=>{reads++;return[{}];},checkVisibility:()=>true}));
+    const chat={querySelectorAll:q=>q==='iframe'?[]:cards};
+    assert.equal(findFruitPreviewSource({querySelector:()=>chat},'.card'),cards.at(-1));
+    assert.equal(reads,1,'마지막 카드가 보이면 앞선 299개 카드의 배치를 읽지 않아요');
+    cards.at(-1).checkVisibility=()=>false;reads=0;
+    assert.equal(findFruitPreviewSource({querySelector:()=>chat},'.card'),cards.at(-2));assert.equal(reads,2);
+    cards.pop();assert.equal(findFruitPreviewSource({querySelector:()=>chat},'.card'),cards.at(-1),'삭제된 마지막 항목을 다시 쓰지 않아요');
+    const next={id:'다음 채팅',closest:()=>null,getClientRects:()=>[{}],checkVisibility:()=>true};
+    assert.equal(findFruitPreviewSource({querySelector:()=>({querySelectorAll:q=>q==='iframe'?[]:[next]})},'.card'),next,'채팅을 바꾸면 새 뿌리에서 찾아요');
+    assert.equal(findFruitPreviewSource({querySelector:()=>null},'.card'),null,'채팅이 없어지면 이전 항목을 재사용하지 않아요');
+}
 console.log('상태창 복제의 실행·외부주소 차단, 설정 덮어쓰기, 종류·출처·표시 경계를 확인했어요.');
 
 assert(safePreviewStyleValue('url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M0%200%20L1%201%22%2F%3E%3C%2Fsvg%3E")'));

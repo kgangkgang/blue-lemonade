@@ -431,7 +431,7 @@ export function applyAll() {
     const rendered = appearanceForRender(getSettings());
     const s = themeEnabled(rendered) ? rendered : {...rendered, enabled:false};
     // 8.2.1 테마가 꺼진 모드(확장만 · 테마 끔)면 큰 style.css 대신 가벼운 사본 style-ext.css (theme-sheet.js · 1.0.0 되살림: 꺼졌을 때만 받아요)
-    { const on = !!s.enabled; lateSync('themeSheet', () => import('./theme-sheet.js'), !on, m => m.syncThemeSheet(on)); }
+    { const on = !!s.enabled; lateSync('themeSheet', () => import('./theme-sheet.js'), !on || s.deus?.on === true || s.deus?.fx?.flow === true, m => m.syncThemeSheet(on)); }
     appearance?.prepareDecor(s);
     const pal = paletteColors(s);
     const mode = paletteMode(s.palette);

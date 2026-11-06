@@ -39,7 +39,8 @@ export const DEFAULTS = {
     gradients: { light: structuredClone(MIX_DEFAULT), dark: structuredClone(MIX_DEFAULT), overrides: {} },
     frameLibrary: [],
     noticeSeen: '', // 3.0.0: 공지사항을 열어 본 마지막 버전 — 지금 버전이 더 새것이면 버전 알약이 빛난다 (notice.js)
-    syncWatch: true,
+    syncWatch: false, // 첫 설정에서 여러 기기 사용 여부를 골라요.
+    squareButtons: false,
     updateCheck: true, // 5.7.0 새 버전 자동 확인 (src/update-check.js — 1.0.0 바탕에서 되살림, 스위치는 테마 › 기타 설정)
     palette: 'salt',
     nightTint: 1,                // Stock night surfaces: theme-color mix, 1–20%.
@@ -84,7 +85,7 @@ export const DEFAULTS = {
     em: { italic: true, weight: 400, size: null, letterSpacing: null },
     strike: { line: true, own: false, color: '#ff7a7a', thickness: 2, fade: 55, italic: false },   // ~~취소선~~ — own: 선 색을 따로(false 면 글자 색), thickness px, fade: 지워진 글자를 남기는 정도 %   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
     strong: { weight: 650, size: null, letterSpacing: null },              // **강조**
-    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], inkContrast: true, triangleFold: false, weatherBubble: 70, qrCtxNames: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: true, helpMarks: true, webSearchMarks: true, personaTall: false, hideSendTextarea: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, emptyGuard: true, replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrFold: true, qrFolded: false, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // 칸 뜻은 쓰는 모듈 머리 주석에(hiddenFade 5.6.8 숨긴 메시지 흐리게 · streamFade 2.9.5 · tone 2.6.1 · toneInline 2.6.0 · selectPop 2.5.0 · colorPop 3.5.0 · unifyRegex/unifyInline 포인트색 하나로) — 1.0.1 시작 그래프 상한 때문에 줄였어요
+    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], inkContrast: true, triangleFold: false, weatherBubble: 70, qrCtxNames: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: false, helpMarks: true, webSearchMarks: true, personaTall: false, hideSendTextarea: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, emptyGuard: true, replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrFold: true, qrFolded: false, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // 칸 뜻은 쓰는 모듈 머리 주석에(hiddenFade 5.6.8 숨긴 메시지 흐리게 · streamFade 2.9.5 · tone 2.6.1 · toneInline 2.6.0 · selectPop 2.5.0 · colorPop 3.5.0 · unifyRegex/unifyInline 포인트색 하나로) — 1.0.1 시작 그래프 상한 때문에 줄였어요
     // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
     reader: { autoHide: false },
     // 3.4.0 프롬프트 호환: 데우스 엑스 마키나 — 끄면 카드 스킨 · 폰 접기 · 카드 색 통일 · 카드 이모티콘 · 트래커 날씨가 모두 쉰다 (값은 남음)
@@ -140,7 +141,7 @@ export const DEFAULTS = {
     promptLink: { on: false, rows: [] },   // 6.5.2 캐릭터 이름 연동 — 이름이 든 프롬프트·정규식을 그 캐릭터 채팅에서만 켜고 「기본」 짝은 반대로 · 6.7.5 여러 줄 rows [{ word, cards: [아바타] }] (prompt-link.js · promptbind.js)
     longpressHelp: true,   // 8.1.2 단추 길게 누르면 설명 (longpress-help.js — 끄면 길게 눌러도 원래 동작만)
     koUi: true,   // 6.9.0 실리태번 한국어 화면 다듬기 (ko-ui.js — 언어가 ko-kr 일 때만, 바꾸면 새로고침 뒤)
-    headSwitchRows: true,   // 6.8.8 확장 창 안 「확장 탭에 보이기」 줄 보이기 (끄면 줄만 사라짐 — headswitch.js)
+    headSwitchRows: false,   // 새 설치에서는 확장 위 스위치 안내 줄을 꺼 두어요.
     roleIcons: {},   // 7.9.3 단추 아이콘 바꾸기 { <역할 id>: 'fa:s:이름:번호' | 'tx:글자' | 'im:data:…' } — 바꾼 역할만 (role-icons-core.js)
     pickedIcons: {},   // 화면에서 고른 단추 { <열쇠 해시>: { key, label, icon?, value? } } — 확장이 더한 단추(role-icons-pick.js)
     headSwitches: {},   // 6.0.4 확장 위 스위치 { <창 열쇠 id:…|cls:…>: true } — 창 안 「확장 탭에 보이기」로 고른 확장 창 (headswitch.js)
@@ -346,6 +347,12 @@ function tidyClassValues(s) {
 }
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
 const flag = (v, def) => (v === true || v === 'true' ? true : v === false || v === 'false' ? false : def);
+// 새 설치 기본값과 달리, 기존 설정의 생략·잘못된 값은 예전 켬 동작으로 이어받아요.
+function preserveLegacyLightFlags(saved) {
+    for (const key of ['syncWatch', 'squareButtons', 'headSwitchRows']) saved[key] = flag(saved[key], true);
+    if (!isObj(saved.chat)) saved.chat = {};
+    saved.chat.numComma = flag(saved.chat.numComma, true);
+}
 // 6.7.5 캐릭터 이름 연동 줄: 말은 다듬은 80자, 카드는 아바타 파일 이름 50장까지 중복 없이, 20줄까지 · 예전 한 줄 { name } 은 첫 줄로 옮긴다 (말 · 카드는 설정에만 있다)
 const linkText = v => typeof v === 'string' ? Array.from(v.trim()).slice(0, 80).join('') : '';
 function tidyLinkRows(link) {
@@ -385,7 +392,7 @@ function tidyStyles(s) {
     if (!isObj(s.headSwitches)) s.headSwitches = {};
     for (const [k, v] of Object.entries(s.headSwitches)) if (!k || v !== true) delete s.headSwitches[k];
     for (const k of Object.keys(s.headSwitches).slice(100)) delete s.headSwitches[k];
-    s.headSwitchRows = s.headSwitchRows !== false;   // 6.8.8
+    s.headSwitchRows = flag(s.headSwitchRows, DEFAULTS.headSwitchRows);
     s.koUi = s.koUi !== false;   // 6.9.0
     s.longpressHelp = s.longpressHelp !== false;   // 8.1.2
     if (s.baseStyle !== null && !isObj(s.baseStyle)) s.baseStyle = null;
@@ -398,6 +405,8 @@ function tidyStyles(s) {
 
 /** 3.1.0 켜고 끄는 값: 가져온 파일의 "false" 문자열 · 깨진 값 거르기 */
 function tidyFlags(s) {
+    s.squareButtons = flag(s.squareButtons, DEFAULTS.squareButtons);
+    s.syncWatch = flag(s.syncWatch, DEFAULTS.syncWatch);
     if (!isObj(s.reader)) s.reader = structuredClone(DEFAULTS.reader);
     s.reader.autoHide = flag(s.reader.autoHide, false);
     if (!isObj(s.deus)) s.deus = structuredClone(DEFAULTS.deus);
@@ -430,7 +439,7 @@ function tidyFlags(s) {
         s.chat.demFold = flag(s.chat.demFold, true);
         s.chat.demGlow = Number.isFinite(Number(s.chat.demGlow)) ? Math.min(100, Math.max(0, Math.round(Number(s.chat.demGlow)))) : 35; // 8.0.9 데우스 V3 테두리 빛 (css/30-dem-skin.css --bl-dem-glow)
         s.chat.demPreviewVersion = s.chat.demPreviewVersion === '2.5' ? '2.5' : 'v3'; // 8.1.0 상태창 글자 미리보기의 데우스 표본 판 (fruit-type-ui.js, 데우스 전체에 하나)
-        s.chat.numComma = flag(s.chat.numComma, true); // 5.3.7 큰 숫자는 쉼표로 (numcomma.js) — 예전 설정에는 없으니 켬
+        s.chat.numComma = flag(s.chat.numComma, DEFAULTS.chat.numComma);
         s.chat.chatLight = flag(s.chat.chatLight, true); // (10-29) 긴 채팅의 화면 밖 메시지 가볍게 (chat-light.js) — 예전 설정에는 없으니 켬
         s.chat.personaDefer = flag(s.chat.personaDefer, true); // (10-29 perf-persona) 입력 중 목록 갱신 미루기 (persona-defer.js) — 예전 설정에는 없으니 켬
         s.chat.emptyGuard = flag(s.chat.emptyGuard, true); // 8.2.6 빈 채팅 덮어쓰기 막기 (empty-guard-boot.js · 성능 보조 없이도) — 예전 설정에는 없으니 켬 (저장 정리에서 끈 사람은 getSettings 가 먼저 끔으로)
@@ -633,6 +642,7 @@ export function getSettings() {
     if (memo && ext[KEY] === memo) return memo;
     settingsStats.tidy++;
     if (!isObj(ext[KEY])) ext[KEY] = structuredClone(DEFAULTS);
+    else preserveLegacyLightFlags(ext[KEY]);
     // 5.1.2: 칸 자체가 깨진 값(fonts: "pretendard" · colorOverrides: "salt" …)이면 그 칸을 기본값으로 — fill() 은 있는 값을 안 건드려 아래 정리 · apply 가 죽었다 (매 시작마다)
     for (const [key, value] of Object.entries(DEFAULTS)) {
         if (isObj(value) ? !isObj(ext[KEY][key]) : Array.isArray(value) ? !Array.isArray(ext[KEY][key]) : false) ext[KEY][key] = structuredClone(value);
@@ -792,7 +802,7 @@ export function saveSettings() {
 // 내 글꼴 · 본 공지 · 내 스타일 · 캐릭터 연결은 늘 남긴다 (입혀 둔 캐릭터 스타일 상태는 비움)
 const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools', 'captureTools'], library: ['frameLibrary', 'customPalettes', 'weatherImages'] };
 // 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS)은 '테마 모습' 초기화에 남긴다
-const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'promptFolders', 'chatOrganizer', 'quick', 'promptSaves', 'presetFolders', 'qrShelf', 'apiStatus', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'searchAi', 'extcheck', 'logCopy', 'sceneSound'];
+const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'syncWatch', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'promptFolders', 'chatOrganizer', 'quick', 'promptSaves', 'presetFolders', 'qrShelf', 'apiStatus', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'searchAi', 'extcheck', 'logCopy', 'sceneSound'];
 export function resetSettings(groups = { look: true }) {
     const ext = SillyTavern.getContext().extensionSettings;
     const old = ext[KEY] || {};

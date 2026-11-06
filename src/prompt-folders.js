@@ -20,7 +20,8 @@ import { showThemeModal } from './modal.js';
 import { mouseDevice } from './prompt-card-picker.js';
 import { promptChoiceGroups, withFolderChoices } from './prompt-choice-core.js';
 import { setFolderSource } from './prompt-choice.js';
-import { LIMITS, tidyFolders, newFolderId, folderRuns, detectMove, adoptMove, assignIds, gatherOrder, runStats, planToggleAll, planFromDividers, isDivider, folderItems, dropEmpty, remapFolders, presetStem, readPresetFolders, folderIndex, ungroupFolder, moveFolderBlock, shiftInFolder, scopeFolders } from './prompt-folders-core.js';
+import { LIMITS, tidyFolders, newFolderId, folderRuns, detectMove, adoptMove, assignIds, gatherOrder, runStats, planToggleAll, planFromDividers, isDivider, folderItems, dropEmpty, remapFolders, presetStem, readPresetFolders, readBoxPresetFolders, folderIndex, ungroupFolder, moveFolderBlock, shiftInFolder, scopeFolders } from './prompt-folders-core.js';
+import { planFolderNames, applyFolderNamePlan } from './prompt-folder-labels.js';
 
 const CONTAINER = 'completion_prompt_manager';
 const LIST = 'completion_prompt_manager_list';
@@ -61,6 +62,15 @@ function bucket(create = false) {
 const folders = () => bucket().folders;
 /** 프리셋 파일에 든 폴더(지금 프리셋) — 내 폴더가 없을 때의 초깃값 */
 function presetSeed() { return readPresetFolders(manager()?.serviceSettings?.extensions); }
+function boxFolders() {
+    let data = manager()?.serviceSettings?.extensions?.baibaiToolkit;
+    if (!data) try { data = SillyTavern.getContext().getPresetManager?.('openai')?.readPresetExtensionField?.({ path: 'baibaiToolkit' }); } catch { /* 저장 형식이 없으면 메뉴를 만들지 않아요. */ }
+    return readBoxPresetFolders({ baibaiToolkit: data }, (hostOrder() || []).map(item => item.identifier));
+}
+function importBoxFolders() {
+    const imported = boxFolders();
+    if (imported.length) openEditor({ imported });
+}
 function save(slot) {
     // 다 푼 뒤에도 프리셋 초깃값이 되살아나지 않게, 프리셋에 폴더가 들어 있으면 빈 칸을 남겨요
     if (slot && !slot.folders.length && !presetSeed().length) delete store().presets[presetName()];
@@ -183,7 +193,8 @@ function ensureToolButton() {
     button.setAttribute('role', 'button'); button.tabIndex = 0;
     button.title = '프롬프트 폴더'; button.setAttribute('aria-label', '프롬프트 폴더');
     button.dataset.pfAct = 'tools';
-    const before = footer.querySelector(':scope > #prompt-manager-import');
+    let before = footer.querySelector('#prompt-manager-import');
+    while (before && before.parentElement !== footer) before = before.parentElement;
     if (before) before.before(button); else footer.append(button);
 }
 
@@ -319,6 +330,7 @@ function openToolsMenu(anchor) {
         ...(list.length ? [{ label: '모든 폴더 고치기', run: () => openEditor() }] : []),
         { label: '구분선으로 폴더 만들기', run: autoFolders },
         ...(importable().length ? [{ label: '다른 프리셋에서 가져오기', run: () => openImportMenu(anchor) }] : []),
+        ...(boxFolders().length ? [{ label: '보물상자 그룹 가져오기', run: importBoxFolders }] : []),
         ...(list.length ? [{ label: anyOpen ? '모두 접기' : '모두 펼치기', run: () => setAllOpen(!anyOpen) }, { label: '폴더 모두 풀기', run: ungroupAll }] : []),
     ]);
 }
@@ -482,7 +494,7 @@ async function importFrom(key) {
 // scope 없음 = 모든 폴더(도구 줄 「모든 폴더 고치기」) · scope = 그 폴더와 안의 하위 폴더(폴더 메뉴 「이 폴더 고치기」) · fresh = 새 폴더 하나.
 // 저장 전까지는 사본만 고쳐요. 바뀐 게 없으면 저장 안 함(1.0.2), 보내는 순서가 바뀌거나 「하나만 켜기」로 꺼진 항목이 있으면 되돌리기 알림.
 const ICON = (act, icon, label, off = false) => `<button type="button" class="bl-pf-ib fa-solid ${icon}" data-pf-item="${act}" aria-label="${label}" title="${label}"${off ? ' disabled' : ''}></button>`;
-function openEditor({ scope = '', fresh = false, parent = '' } = {}) {
+function openEditor({ scope = '', fresh = false, parent = '', imported = null } = {}) {
     const list = document.getElementById(LIST);
     if (!list || document.querySelector('dialog.bl-pf-editor')?.open) return;
     const rows = rowsOf(list);
@@ -491,7 +503,8 @@ function openEditor({ scope = '', fresh = false, parent = '' } = {}) {
     let order = order0.slice();
     const key = presetName(), had = Object.hasOwn(store().presets, key);
     const saved = bucket().folders, was = JSON.stringify(saved);
-    const work = structuredClone(saved), picked0 = new Map(work.map(f => [f.id, f.pick]));
+    const importBefore = imported ? snapshot() : null;
+    const work = structuredClone(imported ? tidyFolders(imported) : saved), picked0 = new Map(work.map(f => [f.id, f.pick]));
     const byId = id => work.find(f => f.id === id) || null;
     if (fresh) {
         const f = { id: newFolderId(new Set(work.map(x => x.id))), name: '', ids: [], open: true, pick: false, parent: work.some(x => x.id === parent && !x.parent) ? parent : '' };
@@ -506,7 +519,7 @@ function openEditor({ scope = '', fresh = false, parent = '' } = {}) {
 
     const dialog = document.createElement('dialog');
     dialog.className = 'bl-tool-dialog bl-prompt-card-picker bl-pf-editor';
-    const title = fresh ? '새 폴더' : scope ? `「${label(byId(scope))}」 고치기` : '모든 폴더 고치기';
+    const title = imported ? '보물상자 그룹 가져오기' : fresh ? '새 폴더' : scope ? `「${label(byId(scope))}」 고치기` : '모든 폴더 고치기';
     dialog.setAttribute('aria-label', title);
     dialog.innerHTML = `<header><h3>${esc(title)}</h3><button type="button" data-card-close aria-label="닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>`
         + '<div class="bl-pf-fields"><input type="text" data-pf-name maxlength="40" placeholder="폴더 이름" aria-label="폴더 이름" autocomplete="off">'
@@ -514,10 +527,11 @@ function openEditor({ scope = '', fresh = false, parent = '' } = {}) {
         + '<label class="bl-pf-place"><span>넣을 곳</span><select data-pf-parent aria-label="넣을 곳"></select></label>'
         + '<div class="bl-pf-body"><section class="bl-pf-pane" aria-label="폴더"><div class="bl-prompt-card-list bl-pf-left"></div></section>'
         + '<section class="bl-pf-pane" aria-label="모든 항목"><input type="search" data-card-search placeholder="모든 항목에서 찾기" aria-label="모든 항목에서 찾기" autocomplete="off"><div class="bl-prompt-card-list bl-pf-right" aria-label="모든 항목"></div></section></div>'
-        + '<footer><small role="status" aria-live="polite"></small><span class="bl-prompt-card-actions"><button type="button" data-card-clear>취소</button><button type="button" data-card-done>저장</button></span></footer>';
+        + '<footer><small role="status" aria-live="polite"></small><span class="bl-prompt-card-actions"><button type="button" data-pf-translate hidden>이름 한국어로</button><button type="button" data-card-clear>취소</button><button type="button" data-card-done>저장</button></span></footer>';
     const $ = sel => dialog.querySelector(sel);
     const name = $('[data-pf-name]'), pick = $('[data-pf-pick]'), place = $('.bl-pf-place'), parentField = $('[data-pf-parent]');
     const left = $('.bl-pf-left'), right = $('.bl-pf-right'), search = $('[data-card-search]'), status = $('[role="status"]'), done = $('[data-card-done]');
+    const translate = $('[data-pf-translate]'); let translating = false;
     const fold = text => String(text || '').normalize('NFKC').toLocaleLowerCase();
 
     // 고른 폴더의 칸: 이름 · 하나만 켜기 · 넣을 곳(맨 위 폴더만 위 폴더가 될 수 있어요 — 2단까지. 「이 폴더 고치기」에서는 그 폴더만 옮길 수 있어요)
@@ -592,8 +606,11 @@ function openEditor({ scope = '', fresh = false, parent = '' } = {}) {
     function count() {
         // 「모든 항목」에서 누르면 어디로 가는지
         const f = byId(target), n = f ? f.ids.filter(x => present.has(x)).length : 0;
-        status.textContent = f ? `「${label(f)}」에 넣어요` : '폴더가 없어요';
-        done.disabled = fresh && !n;
+        status.textContent = (imported ? `폴더 ${work.length}개를 확인한 뒤 저장해요. ` : '') + (f ? `「${label(f)}」에 넣어요` : '폴더가 없어요');
+        translate.hidden = !translating && !planFolderNames(scopeFolders(work, scope, order)).names.length;
+        translate.disabled = translating;
+        dialog.classList.toggle('bl-pf-has-translate', !translate.hidden);
+        done.disabled = translating || (fresh && !n);
     }
     const draw = () => { drawLeft(); drawRight(); count(); };
     // 목록 칸 안에서만 스크롤해서 보여 줘요(창 · 화면은 그대로): 고른 폴더 줄은 위에, 「모든 항목」은 그 폴더 첫 항목을 가운데로
@@ -651,9 +668,32 @@ function openEditor({ scope = '', fresh = false, parent = '' } = {}) {
     pick.addEventListener('change', () => { const f = byId(target); if (f) { f.pick = pick.checked; drawLeft(); } });
     parentField.addEventListener('change', () => { const f = byId(target); if (f) { f.parent = parentField.value; drawLeft(); } });
     search.addEventListener('input', () => { right.scrollTop = 0; lastId = ''; drawRight(); });
+    translate.addEventListener('click', async () => {
+        if (translating) return;
+        const plan = planFolderNames(scopeFolders(work, scope, order));
+        if (!plan.names.length) return;
+        translating = true; count();
+        status.textContent = `폴더 이름 ${plan.names.length}개를 한글화 패널의 연결로 번역하고 있어요.`;
+        let message = '';
+        try {
+            const { waitAddonModule } = await import('./addons.js');
+            const panel = await waitAddonModule('prompt');
+            if (!dialog.isConnected) return;
+            if (presetName() !== key) throw Error('프리셋이 바뀌어서 적용하지 않았어요. 편집창을 다시 열어 주세요');
+            if (typeof panel?.translateFolderLabels !== 'function') throw Error('한글화 패널을 켜고 번역 연결을 설정해 주세요');
+            const names = await panel.translateFolderLabels(plan.names);
+            if (!dialog.isConnected) return;
+            if (presetName() !== key) throw Error('프리셋이 바뀌어서 적용하지 않았어요. 편집창을 다시 열어 주세요');
+            const changed = applyFolderNamePlan(work, plan, names);
+            message = `이름 ${changed}개를 바꿨어요. 확인한 뒤 저장해 주세요.`;
+        } catch (error) { message = error?.message || '이름을 번역하지 못했어요'; }
+        finally { translating = false; if (dialog.isConnected) { drawFields(); draw(); status.textContent = message; } }
+    });
     $('[data-card-close]').addEventListener('click', () => dialog.close());
     $('[data-card-clear]').addEventListener('click', () => dialog.close());
     done.addEventListener('click', () => {
+        if (translating) return;
+        if (presetName() !== key) { globalThis.toastr?.info?.('프리셋이 바뀌어서 저장하지 않았어요. 편집창을 다시 열어 주세요.'); dialog.close(); return; }
         const f0 = byId(target);
         if (f0 && !name.disabled) f0.name = name.value;   // 입력 이벤트 없이 바뀐 값(붙여넣기 · 자동 완성)도
         if (fresh && !f0?.ids.some(x => present.has(x))) return;
@@ -678,7 +718,7 @@ function openEditor({ scope = '', fresh = false, parent = '' } = {}) {
         if (moved) writeOrder(order);
         if (offs.length) writeEnabled(offs.map(x => [x, false]));
         dialog.close(); apply();
-        if (!moved && !offs.length) return;
+        if (!moved && !offs.length) { if (importBefore) offerUndo(importBefore, `폴더 ${next.length}개를 가져왔어요.`); return; }
         const message = ['폴더를 고쳤어요.', moved ? '보내는 순서도 바뀌었어요.' : '', offs.length ? `하나만 켜기로 ${offs.length}개를 껐어요.` : ''].filter(Boolean).join(' ');
         const toast = globalThis.toastr?.info?.(message, 'Blue Lemonade');
         attachUndo(toast, () => {

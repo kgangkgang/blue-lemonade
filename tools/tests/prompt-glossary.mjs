@@ -71,6 +71,14 @@ function panelEnv({ entries = ENTRIES, enabled = true, ctx = { characterId: 1, c
 }
 const glossaryOf = prompt => { const m = prompt.match(/\[Glossary\]\n[^\n]*\n((?:[^\n]+\n?)*?)\n*--- (?:SOURCE|LABELS) ---/); return m ? m[1].trim().split('\n') : null; };
 
+await t('폴더 이름은 본문 언어 설정을 바꾸지 않고 한국어로 요청해요', async () => {
+    const { api, calls } = panelEnv({ lang: 'Japanese' });
+    await api.translateText('', '{"n0":"分组甲"}', null, { includeTitle: false, language: 'Korean', ns: 'pt-ext::folder-labels' });
+    assert.ok(calls[0].startsWith('Translate the following text into Korean.'));
+    await api.translateText('', '다음 본문', null, { includeTitle: false });
+    assert.ok(calls[1].startsWith('Translate the following text into Japanese.'));
+});
+
 await t('제보 그대로: 월드인포 탭(pt-wi::테스트 월드) 번역 요청에 「メルスタイン → 메르스타인」 — 지금 열린 채팅이 다른 카드여도 그 월드를 쓰는 카드 범위', async () => {
     const { api, calls } = panelEnv();
     await api.translateText('メルスタイン', SOURCE, null, { ns: `pt-wi::${WORLD}` });

@@ -328,6 +328,12 @@ dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-ib {
   cursor: pointer;
 }
 dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-ib[disabled] { opacity: 0.35; cursor: default; }
+dialog.bl-prompt-card-picker.bl-pf-editor [data-pf-translate][hidden] { display: none !important; }
+@media (max-width: 600px) {
+  dialog.bl-prompt-card-picker.bl-pf-editor.bl-pf-has-translate > footer { flex-wrap: wrap; gap: var(--bl-s2, 8px); }
+  dialog.bl-prompt-card-picker.bl-pf-editor.bl-pf-has-translate > footer > small { flex: 1 1 100%; }
+  dialog.bl-prompt-card-picker.bl-pf-editor.bl-pf-has-translate .bl-prompt-card-actions { margin-left: auto; }
+}
 @media (hover: hover) {
   dialog.bl-prompt-card-picker.bl-pf-editor .bl-pf-ib:not([disabled]):hover { background: var(--bl-fill-hover, var(--bl-hover)); color: var(--salty-text); }
 }

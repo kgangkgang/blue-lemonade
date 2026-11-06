@@ -15,6 +15,7 @@
    ========================================================= */
 'use strict';
 const lib = require('./css-lib.cjs');
+const { isDemSlotNode, isDemSlotRule } = require('./css-dem-slots.cjs');
 
 // 검사 기준 두 기기(규칙 24): 폰 384 · PC 1280. 높이는 판정하지 않는다
 const PROFILES = [
@@ -82,7 +83,10 @@ function browserOnly(rule) {
     return BROWSER_SEL.test(rule.selector);
 }
 function widthOnly(rule) { return rule.ctx.some(c => /^@media\b/i.test(c)) && PROFILES.every(p => falseOn(rule.ctx, p)); }
-function kindOf(rule) { return browserOnly(rule) ? 'browser' : widthOnly(rule) ? 'width' : null; }
+function kindOf(rule) {
+    if (isDemSlotRule(rule) && /^@media\s+not\s+all$/i.test(rule.ctx?.at(-1) || '')) return null;
+    return browserOnly(rule) ? 'browser' : widthOnly(rule) ? 'width' : null;
+}
 
 function allRules(nodes, out = []) {
     for (const n of nodes) {
@@ -100,7 +104,7 @@ function spans(nodes, out) {
         if (k && (!run.length || k === kind)) { run.push(n); kind = k; continue; }
         flush();
         if (k) { run.push(n); kind = k; continue; }
-        if (n.type === 'at' && n.children) spans(n.children, out);
+        if (n.type === 'at' && n.children && !isDemSlotNode(n)) spans(n.children, out);
     }
     flush();
 }

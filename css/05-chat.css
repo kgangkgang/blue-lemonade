@@ -806,7 +806,7 @@ body.salty.salty-reasoning-off #sheld > [id="chat"] .mes_reasoning_details:not([
 }
 
 /* 프리셋 카드(DEM 등): 가는 테두리는 지우고 생각 칸과 같은 카드(e1)로, 왼쪽 색 띠는 그대로 */
-body.salty #chat .mes_text details[class*="custom-dem-card"] {
+body.salty #chat .mes_text details:is(.custom-dem-card, .custom-dem-card__body, .custom-dem-card__caret, .custom-dem-card__icon, .custom-dem-card__tag, .custom-dem-card__title) {
   background: var(--bl-fill-card, var(--bl-card)) !important;
   border-top-color: transparent !important;
   border-right-color: transparent !important;
@@ -815,7 +815,7 @@ body.salty #chat .mes_text details[class*="custom-dem-card"] {
   box-shadow: var(--bl-e1) !important;
   margin-bottom: 1.2em !important;
 }
-body.salty #chat .mes_text details[class*="custom-dem-card"] * {
+body.salty #chat .mes_text details:is(.custom-dem-card, .custom-dem-card__body, .custom-dem-card__caret, .custom-dem-card__icon, .custom-dem-card__tag, .custom-dem-card__title) * {
   border-color: transparent !important;
 }
 

@@ -7,6 +7,36 @@ const OWN_SHEET = new URL('../style.css', import.meta.url).href;
 const EXT_SHEET = new URL('../style-ext.css', import.meta.url).href;
 export const EXT_SHEET_ID = 'salty-ext-css';
 let failed = false;
+let demModule = null, demSyncQueued = false, demThemeOn = false;
+const pendingMainLoads = new WeakSet();
+export function demStyleKey(sheet) {
+    const value = sheet?.cssRules?.[0]?.style?.getPropertyValue?.('--bl-dem-style-key')?.trim().replace(/^["']|["']$/g, '') || '';
+    return /^[a-f0-9]{16}$/.test(value) ? value : '';
+}
+export function demStylesEnabled(doc = document) {
+    const list = doc.body?.classList;
+    if (!list?.contains('salty')) return false;
+    return [...list].some(name => /^salty-(?:dem(?:-|ink-|fx-)|unify-regex$|regex-noicons$)/.test(name));
+}
+const loadDemModule = () => demModule ||= import('./dem-style-loader.js').catch(error => { demModule = null; throw error; });
+/** 전체 시트를 켜기 전에 필요한 분리 규칙부터 준비해요. 기존 시트·꺼진 모드는 받지 않아요. */
+export async function prepareDemThemeSheet(sheet, options = {}) {
+    if (options.signal?.aborted) return false;
+    if (!demStyleKey(sheet) || !(options.enabled || demStylesEnabled)()) return true;
+    try { return await (await loadDemModule()).prepareDemStyleSheets([sheet], options); }
+    catch (error) { console.info('[블루레몬에이드] 데우스 꾸밈을 준비하지 못했어요', error?.message || error); return false; }
+}
+function queueDemSync(main, themeOn) {
+    demThemeOn = !!themeOn;
+    if (demSyncQueued || (!demModule && !demStyleKey(main.sheet))) return;
+    demSyncQueued = true;
+    // applyAll이 body 표식을 모두 바꾼 뒤 현재 상태를 읽어요. 켬→끔 도중의 옛 값을 붙잡지 않아요.
+    queueMicrotask(() => {
+        demSyncQueued = false;
+        if (!demModule && (!demThemeOn || !demStylesEnabled())) return;
+        loadDemModule().then(m => m.syncDemStyles({ enabled: () => demThemeOn && demStylesEnabled() })).catch(error => console.info('[블루레몬에이드] 데우스 꾸밈 연결을 다시 시도할 수 있어요', error?.message || error));
+    });
+}
 // 전체 교체 시트가 오기 전에는 첫 시트, 온 뒤에는 전체 시트 한 벌만 켜요. 확장만 모드에는 둘 다 꺼요.
 const lazyLink = () => document.getElementById('salty-lazy-css');
 const fullReady = () => { const l = lazyLink(); return l?.dataset?.blFullTheme === 'ready' && !!l.sheet?.cssRules.length; };
@@ -22,8 +52,16 @@ function mainLink() {
 
 /** 테마가 화면에 켜져 있는지에 맞춰 큰 시트 · 가벼운 사본 중 하나만 켜요(applyAll 마다 불려도 바뀐 게 없으면 아무것도 안 해요) */
 export function syncThemeSheet(themeOn) {
+    demThemeOn = !!themeOn;
     const main = mainLink();
-    if (!main?.sheet) return;   // 아직 안 붙었으면 다음 applyAll 때
+    if (!main?.sheet) {
+        if (main && !pendingMainLoads.has(main)) {
+            pendingMainLoads.add(main);
+            main.addEventListener('load', () => { pendingMainLoads.delete(main); if (mainLink() === main) syncThemeSheet(demThemeOn); }, { once: true });
+        }
+        return;
+    }
+    queueDemSync(main, themeOn);
     let ext = document.getElementById(EXT_SHEET_ID);
     if (themeOn || failed) {   // 테마를 켜면 큰 시트를 먼저 켜고 사본을 떼요(사본만 남아 잠깐 빠지는 규칙이 없게)
         enableTheme(main);

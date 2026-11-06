@@ -13,6 +13,7 @@ const require = createRequire(import.meta.url);
 const P = require(path.join(root, 'tools/css-park.cjs'));
 const B = require(path.join(root, 'tools/build-css.cjs'));
 const L = require(path.join(root, 'tools/css-lib.cjs'));
+const { isDemSlotNode } = require(path.join(root, 'tools/css-dem-slots.cjs'));
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
 
@@ -43,7 +44,12 @@ const css = read('style.css') + (fs.existsSync(path.join(root, 'src/style-lazy.g
 const tree = L.parse(css);
 const left = L.flatRules(tree).filter(x => P.previewOnly(x.selector));
 ok(left.length === 0, `style.css 에 미리보기 전용 규칙이 없어요 — ${left.length}개 (${left.slice(0, 2).map(x => x.selector.slice(0, 60)).join(' / ')})`);
-ok(!/@media\s+not\s+all\s*\{/.test(css), 'style.css 에 꺼 둔 @media not all 덩어리가 없어요');
+const offGroups = [];
+const collectOff = nodes => { for (const node of nodes) { if (/^@media\s+not\s+all$/i.test(node.prelude || '')) offGroups.push(node); if (node.children) collectOff(node.children); } };
+collectOff(tree.children);
+ok(offGroups.every(isDemSlotNode), '꺼진 미디어는 원문이 따로 있는 데우스 칸만 허용해요');
+const demData = JSON.parse(read('src/dem-style-data.gen.js').match(/export default ([\s\S]*);\s*$/)[1]);
+ok(offGroups.every(node => Object.hasOwn(demData.slots, node.children[0].selector.slice('#bl-dem-slot-'.length))), '모든 칸이 실제 분리 내용과 이어져요');
 ok(!fs.existsSync(path.join(root, 'src/preview-park.gen.css')), '옛 한 벌(src/preview-park.gen.css)은 없어요');
 const built = B.build();
 ok(read('src/preview.gen.css') === built.preview, 'src/preview.gen.css 가 지금 css/ 로 만든 것과 같아요(node tools/build-css.cjs)');

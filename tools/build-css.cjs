@@ -50,6 +50,8 @@ const SPLIT_OUT = path.join(ROOT, 'src', 'style-lazy.gen.css');
 // 1.0.0 크로미움 밖 · 다른 폭 규칙은 첫 시트에 싣지 않고 따로 — 조건이 맞을 때만 src/lite.js loadCompatCss 가 붙인다 (tools/css-compat.cjs)
 const COMPAT_BROWSER_OUT = path.join(ROOT, 'src', 'compat-browser.gen.css');
 const COMPAT_WIDTH_OUT = path.join(ROOT, 'src', 'compat-width.gen.css');
+const DEM_DATA_OUT = path.join(ROOT, 'src', 'dem-style-data.gen.js');
+const DEM_FALLBACK_OUT = path.join(ROOT, 'src', 'dem-style-data.fallback.gen.css');
 const LAZY_SENTINEL = '#salty-lazy-panel-start';
 const HASH_SLOT = '@@HASH@@';
 
@@ -212,19 +214,21 @@ function build(dir = CSS_DIR, { bucket = true, key = true, split = true } = {}) 
         const out = require('./css-scope-defer.cjs').deferScoped(head, require('./css-scope-defer.cjs').scopeTokens(ROOT));
         return { text: out.text + tail, stats: out.stats };
     })();
-    const body = (marks.length ? `:root{${marks.join(';')}}\n` : '') + scoped.text;
+    const dem = require('./css-dem-slots.cjs').compileDemSheets(scoped.text, rest ? whole.keyed.text.replace(/^[ \t]+$/gm, '') : null);
+    if (dem.count) marks.push(`--bl-dem-style-key:"${dem.key}"`);
+    const body = (marks.length ? `:root{${marks.join(';')}}\n` : '') + dem.boot;
     const head = `/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 ${names.length - lazyNames.length}개를 이어 붙여 만든 파일(설명 주석은 css/ 에만${rest ? ` · --split: 나머지 ${lazyNames.length}개는 src/style-lazy.gen.css` : ''}). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ${HASH_SLOT}) */\n`;
     const draft = head + body;
     const digest = hashOf(draft);
     const preview = `/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 ${parked.rules}개(덩어리 ${parked.blocks}개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build ${digest}) */\n${whole.previewText}\n`;
     // 둘째 파일은 빠진 모듈만 뒤에 덧붙이지 않고 원래 모듈 순서 전체를 담아요.
     // 처음 사용할 때 lite.js가 원문에서99꼬리를 나눈 뒤 이 전체 시트로 첫 시트를 교체해요.
-    const lazyText = rest ? `/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build ${digest}) */\n${marks.length ? `:root{${marks.join(';')}}\n` : ''}${whole.keyed.text.replace(/^[ \t]+$/gm, '')}` : null;
+    const lazyText = rest ? `/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build ${digest}) */\n${marks.length ? `:root{${marks.join(';')}}\n` : ''}${dem.full}` : null;
     if (lazyText) assertInlineSafe(lazyText);
     const compatHead = (file, what) => `/* ${file} — tools/build-css.cjs 가 css/ 에서 ${what}만 떼어 적은 것(고치지 말 것 · tools/css-compat.cjs). src/lite.js loadCompatCss 가 조건이 맞을 때만 테마 시트 뒤에 붙인다 (build ${digest}) */\n`;
     const compatBrowser = compatHead('src/compat-browser.gen.css', `크로미움 밖 브라우저 · 강제 색 · 옛 크로미움용 규칙 ${compat.rules.browser}개`) + (compat.browser ? `${compat.browser}\n` : '');
     const compatWidth = compatHead('src/compat-width.gen.css', `폰 384 · PC 1280 밖 화면 폭 규칙 ${compat.rules.width}개`) + (compat.width ? `${compat.width}\n` : '');
-    return { text: draft.replace(HASH_SLOT, digest), preview, lazyText, compatBrowser, compatWidth, compat, names, digest, kept, parked, extensionColors, keyed: keyed.stats, scoped: scoped.stats };
+    return { text: draft.replace(HASH_SLOT, digest), preview, lazyText, compatBrowser, compatWidth, compat, dem, names, digest, kept, parked, extensionColors, keyed: keyed.stats, scoped: scoped.stats };
 }
 function hashOf(textWithSlot) {
     return crypto.createHash('sha1').update(textWithSlot, 'utf8').digest('hex').slice(0, 12);
@@ -296,8 +300,10 @@ function main(argv) {
             fs.writeFileSync(APPEARANCE_OUT, want, 'utf8'); console.log(`[씀] src/chat-appearance.gen.css (${(Buffer.byteLength(want) / 1024).toFixed(1)}KB)`);
         }
     }
-    const { text, preview, lazyText, compatBrowser, compatWidth, compat, names, parked, keyed } = build(CSS_DIR, { split });
+    const { text, preview, lazyText, compatBrowser, compatWidth, compat, dem, names, parked, keyed } = build(CSS_DIR, { split });
     const readOr = file => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null);
+    const demOk = () => readOr(DEM_DATA_OUT) === dem.data && readOr(DEM_FALLBACK_OUT) === dem.fallback;
+    const writeDem = () => { fs.writeFileSync(DEM_DATA_OUT, dem.data, 'utf8'); fs.writeFileSync(DEM_FALLBACK_OUT, dem.fallback, 'utf8'); console.log(`[씀] 데우스 분리 규칙 ${dem.count}칸과 대체 파일을 만들었어요`); };
     const compatOk = () => readOr(COMPAT_BROWSER_OUT) === compatBrowser && readOr(COMPAT_WIDTH_OUT) === compatWidth;
     const writeCompat = () => { fs.writeFileSync(COMPAT_BROWSER_OUT, compatBrowser, 'utf8'); fs.writeFileSync(COMPAT_WIDTH_OUT, compatWidth, 'utf8'); console.log(`[씀] src/compat-browser.gen.css ${(Buffer.byteLength(compatBrowser) / 1024).toFixed(1)}KB(규칙 ${compat.rules.browser}) · src/compat-width.gen.css ${(Buffer.byteLength(compatWidth) / 1024).toFixed(1)}KB(규칙 ${compat.rules.width})`); };
     const splitOk = () => (fs.existsSync(SPLIT_OUT) ? fs.readFileSync(SPLIT_OUT, 'utf8') : null) === lazyText;
@@ -308,6 +314,7 @@ function main(argv) {
     const current = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : null;
     if (check) {
         if (current === text) {
+            if (!demOk()) { console.error('[다름] 데우스 분리 내용이 테마 시트와 어긋났어요'); return 1; }
             // 9.0.1: 미리보기 시트도 같은가 — 다르면 다시 만들게
             const hadPreview = fs.existsSync(PREVIEW_OUT) ? fs.readFileSync(PREVIEW_OUT, 'utf8') : null;
             if (hadPreview !== preview) { console.error('[다름] src/preview.gen.css 가 css/ 의 미리보기 전용 규칙과 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
@@ -322,6 +329,7 @@ function main(argv) {
         return 1;
     }
     if (current === text) {
+        if (!demOk()) writeDem();
         // style.css 가 이미 최신이어도 꼬리 파일은 없거나 어긋날 수 있다 (처음 도입 · 손으로 지움)
         const tail = lazyTail(text);
         const had = fs.existsSync(LAZY_OUT) ? fs.readFileSync(LAZY_OUT, 'utf8') : null;
@@ -344,6 +352,7 @@ function main(argv) {
     fs.writeFileSync(OUT, text, 'utf8');
     fs.writeFileSync(LAZY_OUT, lazyTail(text), 'utf8');
     fs.writeFileSync(PREVIEW_OUT, preview, 'utf8');
+    writeDem();
     writeSplit();
     writeCompat();
     writeExt();

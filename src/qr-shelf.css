@@ -108,6 +108,7 @@ dialog.popup.bl-qrs-dialog .popup-content::-webkit-scrollbar { display: none; }
 }
 /* 1.0.3 즐겨찾기 아닌 별은 흐리게(opacity) 대신 빈 별(fa-regular) — 흐린 별은 대비 3:1 밑이었어요(UI 전수조사) */
 .bl-qrs-icon[aria-pressed="true"] { color: var(--salty-accent); }
+.bl-qrs-fav .bl-state-star { width: 1em; height: 1em; display: block; pointer-events: none; }
 .bl-qrs-icon:focus-visible { outline: 1px solid var(--salty-accent); outline-offset: -1px; }
 @media (hover: hover) { .bl-qrs-icon:hover { color: var(--salty-text); } }
 

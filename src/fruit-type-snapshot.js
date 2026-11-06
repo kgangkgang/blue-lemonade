@@ -1,4 +1,5 @@
 // 표시된 상태창만 메모리에서 복제해요. 채팅·프리셋을 저장하거나 밖으로 보내지 않아요.
+import {createPhoneFoldDisplayReader} from './preview-fold-display.js';
 const OMIT = new Set(['SCRIPT','STYLE','LINK','META','BASE','IFRAME','OBJECT','EMBED','AUDIO','VIDEO','SOURCE']);
 // 부모에서 물려받는 속성 — 복제한 부모와 같은 값이면 자식에 쓰지 않아도 같은 모양 (CSS 규격의 inherited: yes 가운데 계산 값이 절대값으로 풀리는 것만)
 const INHERITED = new Set(['color','cursor','direction','font-family','font-size','font-style','font-weight','font-stretch','font-variant','font-variant-ligatures','font-variant-caps','font-variant-numeric','font-variant-east-asian','font-variant-alternates','font-variant-position','font-kerning','font-feature-settings','font-variation-settings','font-optical-sizing','font-synthesis-weight','font-synthesis-style','font-synthesis-small-caps','letter-spacing','line-height','list-style-type','list-style-position','list-style-image','quotes','tab-size','text-align','text-align-last','text-indent','text-shadow','text-transform','text-rendering','text-underline-position','visibility','white-space','white-space-collapse','text-wrap','text-wrap-mode','text-wrap-style','word-break','word-spacing','overflow-wrap','word-wrap','line-break','hyphens','writing-mode','text-orientation','caption-side','border-collapse','border-spacing','empty-cells','orphans','widows','color-scheme','caret-color','image-rendering','-webkit-text-fill-color','-webkit-text-stroke-color','-webkit-text-stroke-width','-webkit-font-smoothing','-webkit-text-size-adjust','-webkit-locale','-webkit-rtl-ordering','-webkit-text-emphasis-color','-webkit-text-emphasis-position','-webkit-text-emphasis-style','text-decoration-skip-ink','ruby-position','text-combine-upright','print-color-adjust','paint-order','stroke','stroke-width','stroke-opacity','stroke-linecap','stroke-linejoin','fill','fill-opacity','fill-rule','clip-rule','color-interpolation','color-rendering','shape-rendering','dominant-baseline','text-anchor','marker-start','marker-mid','marker-end','speak','math-style','math-shift','math-depth']);
@@ -24,19 +25,21 @@ export function findFruitPreviewSource(doc, selector) {
     const found=[],seen=new Set();
     function visit(d, scope, depth) {
         if(!scope||seen.has(d)||depth>3)return;seen.add(d);
-        for(const el of scope.querySelectorAll(selector)) {
-            if(!el.closest('[data-bl-fruit-preview]')&&el.getClientRects().length&&(!el.checkVisibility||el.checkVisibility({checkVisibilityCSS:true})))found.push(el);
-        }
+        for(const el of scope.querySelectorAll(selector))found.push(el);
         for(const frame of scope.querySelectorAll('iframe'))try{
             if(frame.classList.contains('bl-ft-preview')||!frame.getClientRects().length)continue;
             const inner=frame.contentDocument;
             if(inner?.body)visit(inner,inner.body,depth+1);
         }catch{/* 다른 출처 문서는 읽지 않아요. */}
     }
-    visit(doc,doc.querySelector('#chat'),0);return found.at(-1)||null;
+    visit(doc,doc.querySelector('#chat'),0);
+    // 앞선 카드들까지 배치를 읽지 않고, 예전과 같은 순서의 마지막 유효 항목부터 확인해요.
+    for(let i=found.length-1;i>=0;i--){const el=found[i];if(!el.closest('[data-bl-fruit-preview]')&&el.getClientRects().length&&(!el.checkVisibility||el.checkVisibility({checkVisibilityCSS:true})))return el;}
+    return null;
 }
 export function copyFruitPreview(source, target) {
     const view=source.ownerDocument.defaultView, rules=[],usedFamilies=new Set();let count=0,unavailableImages=0,unavailableArt=0;
+    const foldedCards=new WeakSet(),foldDisplay=createPhoneFoldDisplayReader(source.ownerDocument);
     function imageSource(node) {
         const src=node.currentSrc||node.getAttribute('src')||'';
         if(src.startsWith('data:image/')&&safePreviewStyleValue(`url("${src}")`))return src;
@@ -78,6 +81,8 @@ export function copyFruitPreview(source, target) {
         const key=String(count);el.setAttribute('data-bl-preview-node',key);
         const own=declarations(node,undefined,UA_INHERITED_TAGS.has(String(node.tagName).toUpperCase())?null:inherited);
         el.style.cssText=own.text;el.style.pointerEvents='none';
+        const unfoldedDisplay=own.style.getPropertyValue('display')==='none'?foldDisplay(node):null;
+        if(unfoldedDisplay!==null){el.style.setProperty('display',unfoldedDisplay);foldedCards.add(node.parentElement);}
         if(node.tagName==='IMG')el.setAttribute('src',imageSource(node));
         if(node.tagName==='INPUT'){
             el.setAttribute('type',node.type||'text');el.disabled=!!node.disabled;el.inert=true;el.tabIndex=-1;
@@ -91,6 +96,7 @@ export function copyFruitPreview(source, target) {
             if(!data.empty)rules.push(`[data-bl-preview-node="${key}"]${pseudo}{${data.text}}`);
         }
         for(const child of node.childNodes){const copy=clone(child,own.map);if(copy)el.append(copy);}
+        if(foldedCards.has(node))el.removeAttribute('open');
         if(node.tagName==='SELECT'){el.selectedIndex=node.selectedIndex;el.disabled=!!node.disabled;el.inert=true;el.tabIndex=-1;}
         return el;
     }

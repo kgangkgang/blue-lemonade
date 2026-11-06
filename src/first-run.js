@@ -16,7 +16,13 @@ import { themeEnabled, usageMode } from './usage-mode.js';
 import { otherCssReport, otherCssFingerprint } from './diagnose.js';
 
 // 1.0.2 마지막 장 「쓰는 방식」: 다 쓰기(테마 + 확장) · 블루레몬에이드 제로(모양만 · 빠르게 — 저장하고 새로고침)
-export const STEPS = [['palette', '팔레트', 'fa-palette'], ['font', '글꼴', 'fa-font'], ['reading', '읽기 방식', 'fa-book-open'], ['mode', '쓰는 방식', 'fa-gauge-high']];
+export const STEPS = [['palette', '팔레트', 'fa-palette'], ['font', '글꼴', 'fa-font'], ['reading', '읽기 방식', 'fa-book-open'], ['devices', '기기 알림', 'fa-desktop'], ['mode', '쓰는 방식', 'fa-gauge-high']];
+/** 새 설치의 다른 기기 채팅 변경 알림을 고르는 기존 설정 칸이에요. */
+export function chooseDeviceUse(st, choice) { if (choice === 'single' || choice === 'multiple') st.syncWatch = choice === 'multiple'; }
+export function deviceStep(st) {
+    const choice = (id, title, note, active) => `<button type="button" class="bl-fr-choice${active ? ' is-primary' : ''}" data-fr-device="${id}" aria-pressed="${active}"><b>${title}</b><span>${note}</span></button>`;
+    return `<div class="bl-fr-css"><p class="bl-fr-css-lead">채팅을 여러 기기에서 쓰세요?</p><div class="bl-fr-css-choices">${choice('single', '한 기기에서 써요', '변경 알림을 꺼 두고 시작해요.', st.syncWatch !== true)}${choice('multiple', '여러 기기에서 써요', '다른 기기에서 채팅이 바뀌면 띠로 알려요.', st.syncWatch === true)}</div></div>`;
+}
 /** 제로로 쓰기: 「블루레몬에이드 사용」을 켜고 사용 모드만 제로로 (다른 칸은 그대로 — 새로고침해야 바뀐다) */
 export function chooseZero(st) { st.enabled = true; st.usageMode = 'zero'; }
 export const CSS_STEP = ['css', '쓰던 테마가 있어요', 'fa-layer-group'];
@@ -246,7 +252,7 @@ export async function openFirstRun({ auto = false, cssOnly = false } = {}) {
         const keep = body.scrollTop;
         // 6.9.6 다시 그려도 키보드 초점은 같은 카드에 (글꼴을 다 받아 읽기 방식 화면을 다시 그릴 때 초점이 사라졌다)
         const had = !focus && body.contains(document.activeElement) ? [...document.activeElement.attributes].find(a => a.name.startsWith('data-fr-')) : null;
-        body.innerHTML = id === 'css' ? cssStep() : id === 'mode' ? modeStep(st) : id === 'palette' ? paletteStep(st) : id === 'font' ? fontStep(st) : readingStep(st);
+        body.innerHTML = id === 'css' ? cssStep() : id === 'mode' ? modeStep(st) : id === 'devices' ? deviceStep(st) : id === 'palette' ? paletteStep(st) : id === 'font' ? fontStep(st) : readingStep(st);
         if (focus) { body.scrollTop = 0; (body.querySelector('[aria-pressed="true"]') || body.querySelector('.bl-fr-choice') || next).focus({ preventScroll: true }); }
         else {
             body.scrollTop = keep;
@@ -281,7 +287,7 @@ export async function openFirstRun({ auto = false, cssOnly = false } = {}) {
         event.stopPropagation();   // 확장 서랍 · 실리태번의 바깥 누름 처리로 새지 않게
         const el = event.target.closest('button');
         if (!el || !dialog.contains(el)) return;
-        const { fr, frPalette, frMode, frFont, frReading, frCss, frUse } = el.dataset;
+        const { fr, frPalette, frMode, frFont, frReading, frCss, frUse, frDevice } = el.dataset;
         if (frCss) { void answerCss(frCss); return; }
         if (frUse === 'zero') { decide(chooseZero); say('블루레몬에이드 제로로 저장했어요. 새로고침할게요.', 'info'); dialog.close(); void saveAndReload(); return; }
         if (frUse === 'both') { if (usageMode(getSettings()) === 'zero') { decide(st => { st.usageMode = 'both'; }); dialog.close(); void saveAndReload(); return; } return dialog.close(); }
@@ -292,6 +298,7 @@ export async function openFirstRun({ auto = false, cssOnly = false } = {}) {
         if (frMode) return pick(st => chooseMode(st, frMode), `[data-fr-mode="${CSS.escape(frMode)}"]`);
         if (frFont) return pick(st => chooseFont(st, frFont), `[data-fr-font="${CSS.escape(frFont)}"]`);
         if (frReading) return pick(st => chooseReading(st, frReading), `[data-fr-reading="${CSS.escape(frReading)}"]`);
+        if (frDevice) return pick(st => chooseDeviceUse(st, frDevice), `[data-fr-device="${CSS.escape(frDevice)}"]`);
     });
     // 6.9.6 누름 · 키도 문서로 올려 보내지 않는다 — 실리태번은 html 의 touchstart · mousedown 으로 열린 서랍을 닫고(mes-fold.js 와 같은 막기),
     //   문서 keydown 으로 ← → 넘기기 · 새 답 만들기 · Esc 서랍 닫기를 한다(이 창은 실리태번 Popup 이 아니라 못 알아본다). Esc 로 이 창 닫기는 브라우저 기본 동작이라 그대로

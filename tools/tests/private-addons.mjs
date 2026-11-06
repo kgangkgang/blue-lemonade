@@ -98,7 +98,13 @@ await test('addons.js · settings.js · panel.js · 검색 색인 · addon-off-c
     assert.match(addons, /\[data-legacy-off\]/);
     assert.match(addons, /s\.addonCarry\|0\)<ADDON_CARRY/, '플래그 이어받기 한 번');
     assert.match(addons, /\['perf','order',[^\]]*'tts',\.\.\.EMBEDDED_PRIVATE\]\)\{/, '시작 순서: 성능 보조 맨 앞, 표에 든 확장은 끝(1.0.0 은 없음)');
-    assert.ok(addons.includes("new URL(`./addons/${id}/${PRIVATE_ADDONS[id]?.css||'style.css'}`,import.meta.url)"), 'stylesheet() 는 표의 css 이름(없으면 style.css)');
+    const urlSource = addons.match(/^const addonUrl=.+$/m)?.[0];
+    const sheetSource = addons.match(/^const fullSheet=.+$/m)?.[0];
+    assert.ok(urlSource && sheetSource, '시트 주소 도우미가 있어요');
+    const sheetOf = new Function('PRIVATE_ADDONS', `${urlSource.replace('import.meta.url', JSON.stringify('https://example.invalid/theme/src/addons.js'))}\n${sheetSource}\nreturn fullSheet;`)({ sample: { css: 'screen.css' }, plain: {} });
+    assert.equal(sheetOf('sample'), 'https://example.invalid/theme/src/addons/sample/screen.css', '표에 적힌 시트 이름을 써요');
+    assert.equal(sheetOf('plain'), 'https://example.invalid/theme/src/addons/plain/style.css', '시트 이름이 없으면 기본 이름을 써요');
+    assert.equal(sheetOf('other'), 'https://example.invalid/theme/src/addons/other/style.css', '표 밖 내장 애드온도 기본 이름을 써요');
     const panel = read('src/panel.js'), search = read('src/settings-search.js'), offCost = read('tools/tests/addon-off-cost.mjs'), gate = read('tools/release_gate.py');
     for (const id of EMBEDDED_PRIVATE) {
         assert.equal(settings.DEFAULTS.addons[id], false, `DEFAULTS.addons.${id}`);

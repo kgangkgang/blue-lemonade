@@ -10,6 +10,7 @@
 // (8.2.7) 표식은 html 에 단다(html.bl-chat-light) — #chat 의 class 를 바꾸면 기록마다 실리태번 keyboard.js 가 #chat 아래 전부(메시지 300개면 요소 2~3만 개)를
 //   선택자 31개로 다시 훑고, body 전체를 보는 테마 감시자도 #chat 을 다시 봤다(긴 채팅을 열 때 뗐다 붙이며 두 번). html 은 그 감시자들이 안 본다. 모양은 같다.
 // 여기서는 #chat 에만 childList 감시자(subtree 없음)를 걸어 .mes 수를 센다. 설정: 채팅 › 화면 「긴 채팅의 화면 밖 메시지 가볍게」(chat.chatLight · 기본 켬).
+// 1.0.6 실측: 30~50개에도 적용하면 미리 그리기와 스타일 재계산이 늘어 기존 60개 문턱을 유지해요.
 export const THRESHOLD = 60;
 export const CLASS = 'bl-chat-light';
 let on = false, mo = null, chat = null;

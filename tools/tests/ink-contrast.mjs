@@ -318,6 +318,22 @@ await test('가볍게: 같은 팔레트로 설정 적용이 여러 번 와도 �
     assert.ok(computeCalls > 0 && computeCalls < 12, `새 메시지만 읽음 (${computeCalls})`);
     assert.ok(R.inkContrastState().classes <= 8, '색마다 클래스 하나');
 });
+await test('서로 다른 새 색도 스타일을 모두 읽은 뒤 규칙을 한 번만 붙여요', () => {
+    const els = ['#112255', '#552211', '#225511'].map(color => new Node('span', { style: `color:${color}` }).append('합성 색 글자'));
+    const row = message(...els), events = [];
+    const original = globalThis.getComputedStyle;
+    const desc = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent');
+    globalThis.getComputedStyle = el => { events.push('읽기'); return original(el); };
+    Object.defineProperty(Node.prototype, 'textContent', { ...desc, set(value) {
+        if (this.nodeName === 'STYLE') events.push('시트 쓰기');
+        desc.set.call(this, value);
+    } });
+    try { R.inkContrastRun([row]); }
+    finally { globalThis.getComputedStyle = original; Object.defineProperty(Node.prototype, 'textContent', desc); }
+    assert.equal(events.filter(v => v === '시트 쓰기').length, 1);
+    assert.ok(events.lastIndexOf('읽기') < events.indexOf('시트 쓰기'), '읽기 사이에 규칙을 쓰지 않아요');
+    for (const el of els) assert.ok(el.classList.contains('bl-ink') && shownOn(el) >= 4.5, '각 색의 대비를 유지해요');
+});
 await test('끄면 원복: 표시 클래스 · 색 시트가 모두 사라지고 원래 색이 보인다', async () => {
     R.syncInkContrast(false);
     assert.equal(doc.getElementsByClassName('bl-ink').length, 0);

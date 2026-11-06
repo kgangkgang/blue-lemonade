@@ -62,14 +62,14 @@ function ensureSheet() {
     return sheet;
 }
 // 색마다 클래스 하나. 인라인 style 을 이기려면 !important
-function classFor(hexColor) {
+function classFor(hexColor, rules) {
     let n = classes.get(hexColor);
     if (n === undefined) {
         n = classes.size;
         classes.set(hexColor, n);
         // :not(#…) 둘 = id 두 개 무게 — 테마의 id 하나짜리 !important(데우스 대사의 color: inherit 등)보다 무겁게.
         // 그런 규칙이 이미 다른 색으로 덮은 글자에는 애초에 표시를 붙이지 않는다 (run)
-        ensureSheet().textContent += `body.salty .${MARK}-${n}:not(#bl-ink-a):not(#bl-ink-b){color:${hexColor}!important}\n`;
+        rules.push(`body.salty .${MARK}-${n}:not(#bl-ink-a):not(#bl-ink-b){color:${hexColor}!important}\n`);
         hexOf.set(`${MARK}-${n}`, hexColor);
     }
     return `${MARK}-${n}`;
@@ -125,7 +125,8 @@ function run(roots, { force = false } = {}) {
     }
     const styles = new Map(), memo = new Map();
     const styleOf = n => { let cs = styles.get(n); if (!cs) { cs = getComputedStyle(n); styles.set(n, cs); } return cs; };
-    const writes = [];   // [요소, 클래스 | '']
+    const writes = [];   // [요소, 보정 색 | ''] — 읽기가 끝나면 클래스 이름으로 바꿔요.
+    const rules = [];   // 새 색 규칙도 읽기가 끝난 뒤 한 번에 붙여요.
     let count = 0;
     for (const box of boxes) {
         const check = !force && mayHide(box);
@@ -143,7 +144,7 @@ function run(roots, { force = false } = {}) {
             // 테마 규칙이 이미 다른 색으로 덮었다(색 통일 · 톤 · 데우스) — 손대지 않는다. 글자 채움(-webkit-text-fill-color)이 따로면(그라데이션 글자) 그것도
             if (!sameRgb(seenColor(el, color, want), want) || !drawnBy(cs, color)) { writes.push([el, '']); continue; }
             const fix = cache.get(want, bgAt(el, box, memo, styleOf));
-            writes.push([el, fix ? classFor(fix.hex) : '']);
+            writes.push([el, fix?.hex || '']);
             // 이 색을 물려받은 대사(<font color> 안 · 데우스 '프롬프트 색 그대로'): 바탕이 다르면 따로 맞춘다.
             // · 글자를 그 색으로 그리면: 형광펜 띠 위라면 띠를 바탕으로 — 메시지 바탕용으로 밝힌 색이 띠에서 묻히거나, 띠 위에선 원래 색이 충분할 수 있다
             // · 글자는 따로 그리고(-webkit-text-fill-color, 데우스 '형광펜 색') 그 색은 띠 칠에만 쓰면: 띠 색이 바뀌지 않게 원래 색으로 묶어 둔다
@@ -156,11 +157,14 @@ function run(roots, { force = false } = {}) {
                 seen.set(q, sig);
                 const drawn = drawnBy(qs, qc);
                 const own = drawn ? cache.get(want, bgAt(q, box, memo, styleOf)) : null;
-                const cls = drawn ? (own?.hex === fix?.hex ? '' : own ? classFor(own.hex) : fix ? classFor(paint(want)) : '') : fix ? classFor(paint(want)) : '';
-                if (cls || markOf(q)) writes.push([q, cls]);
+                const paintColor = drawn ? (own?.hex === fix?.hex ? '' : own ? own.hex : fix ? paint(want) : '') : fix ? paint(want) : '';
+                if (paintColor || markOf(q)) writes.push([q, paintColor]);
             }
         }
     }
+    // 색마다 시트를 고치면 다음 글자의 계산 스타일을 읽을 때 강제 재계산돼요.
+    for (const entry of writes) if (entry[1]) entry[1] = classFor(entry[1], rules);
+    if (rules.length) ensureSheet().textContent += rules.join('');
     for (const [el, cls] of writes) setMark(el, cls);
     const ms = performance.now() - t0;
     stats.runs++; stats.elements += count; stats.fixed += writes.filter(w => w[1]).length; stats.ms += ms; stats.last = ms;

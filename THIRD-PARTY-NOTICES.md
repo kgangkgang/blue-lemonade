@@ -111,3 +111,4 @@ zonde306 · [ST-Prompt-Template](https://github.com/zonde306/ST-Prompt-Template)
 
 아이디어 참고: [URMIIE/SillyTavern-PromptFolders](https://github.com/URMIIE/SillyTavern-PromptFolders)(AGPL-3.0) — 코드는 옮기지 않음.
 참고한 원본 커밋 8cd30867c2db421b492bb1cae8b32cb5a5258a85 (2026-11-04, manifest 1.2.6).
+1.4.0(d6329e44)의 프리셋 그룹 가져오기·이름 한글화 아이디어와 저장 형식을 참고했어요. 가져오기 편집창·번역 연결·검증은 이 테마의 기존 구조로 따로 구현했어요.

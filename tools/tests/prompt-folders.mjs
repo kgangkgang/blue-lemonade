@@ -592,6 +592,35 @@ await test('1.0.3 폴더 창 위 · 아래: 저장하면 보내는 순서가 바
     settings.promptFolders.presets.P1.folders = made.filter(f => ['fa', 'fb', 'fc'].includes(f.id));
     drawList(); await settle();
 });
+await test('1.0.6 다른 도구 그룹은 편집창에서 확인하고 저장해요 · 취소·되돌리기·원본 보존', async () => {
+    const before = structuredClone(settings.promptFolders.presets.P1.folders), originalOrder = structuredClone(order), saves = calls.save;
+    const foreign = { presetPromptGroups: { groups: [{ id: 'g1', name: '分组甲', order: 0, collapsed: false }, { id: 'g2', name: '분류 나', order: 1 }], prompts: { p1: { groupId: 'g1' }, p8: { groupId: 'g1' }, p17: { groupId: 'g2' }, missing: { groupId: 'g1' } } } };
+    pmStub.serviceSettings.extensions = { baibaiToolkit: foreign };
+    const originalFile = JSON.stringify(pmStub.serviceSettings.extensions);
+    pick(toolsMenu(), '보물상자 그룹 가져오기');
+    assert.ok(win()?.open); assert.equal(win().querySelector('h3').textContent, '보물상자 그룹 가져오기');
+    assert.equal(win().querySelector('[data-pf-translate]').hidden, false);
+    assert.deepEqual(settings.promptFolders.presets.P1.folders, before, '미리 보기만으로 저장하지 않아요');
+    click(win().querySelector('[data-card-clear]')); await settle();
+    assert.deepEqual(settings.promptFolders.presets.P1.folders, before);
+    const toast = toastOf(); pick(toolsMenu(), '보물상자 그룹 가져오기');
+    const input = win().querySelector('[data-pf-name]'); input.value = '고친 이름'; input.dispatchEvent(new Event('input', { bubbles: true }));
+    click(win().querySelector('[data-card-done]')); await settle();
+    assert.deepEqual(settings.promptFolders.presets.P1.folders.map(f => [f.name, f.ids]), [['고친 이름', ['p1', 'p8']], ['분류 나', ['p17']]]);
+    assert.deepEqual(order, originalOrder); assert.equal(calls.save, saves, '보내는 순서와 켬/끔은 그대로예요');
+    assert.equal(JSON.stringify(pmStub.serviceSettings.extensions), originalFile);
+    toast.undo(); await settle(); assert.deepEqual(settings.promptFolders.presets.P1.folders, before);
+    pmStub.serviceSettings.extensions = {}; drawList(); await settle();
+});
+await test('1.0.6 다른 확장이 도구 줄을 감싸도 폴더 단추는 그 묶음 앞에 한 번만 붙어요', async () => {
+    footer.querySelector('.bl-pf-tools').remove();
+    const native = document.getElementById('prompt-manager-import'), wrapper = document.createElement('div');
+    native.before(wrapper); wrapper.append(native); drawList(); await settle();
+    const button = footer.querySelector('.bl-pf-tools');
+    assert.equal(button.parentElement, footer); assert.equal(button.nextElementSibling, wrapper);
+    drawList(); await settle(); assert.equal(footer.querySelectorAll('.bl-pf-tools').length, 1);
+    wrapper.before(native); wrapper.remove();
+});
 await test('끄면 흔적 없이: 머리 · 클래스 · 도구 단추 · CSS 링크를 떼고 택1 출처도 뺌', async () => {
     await pf.syncPromptFolders(false); await settle();
     assert.equal(heads().length, 0); assert.ok(!list.querySelector('[class*="bl-pf-"]')); assert.ok(!list.classList.contains('bl-pf-on'));

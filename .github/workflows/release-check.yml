@@ -40,6 +40,17 @@ jobs:
           node tools/tests/perf-storage-owners.mjs .
           node tools/tests/regexlink-skip-words.mjs .
           node tools/tests/rewrite-addon-off.mjs .
+          node tools/tests/rewrite-ui-hold.mjs .
+          node tools/tests/addon-gated-bundle.mjs .
+          node tools/tests/addon-gated-loading.mjs .
+          node tools/tests/settings-light-defaults.mjs .
+          node tools/tests/dem-selector-classes.mjs .
+          node tools/tests/dem-style-slots.mjs .
+          node tools/tests/dem-style-slot-runtime.mjs .
+          node tools/tests/dem-style-loader.mjs .
+          node tools/tests/dem-style-build.mjs .
+          node tools/tests/dem-style-lifecycle.mjs .
+          node tools/tests/prompt-folder-import-labels.mjs .
           node tools/tests/rewrite-guide-cost.mjs .
           node tools/tests/search-brightness.mjs .
           node tools/tests/search-quick-labels.mjs .
@@ -367,6 +378,7 @@ jobs:
           node tools/tests/dem-streaming-root.mjs .
           node tools/tests/dem-skin-flat.mjs .
           node tools/tests/preview-view-touch.mjs .
+          node tools/tests/preview-details.mjs .
           node tools/tests/tts-reanalysis-guard.mjs .
           node tools/tests/addon-note-master-off.mjs .
           node tools/tests/popup-outside-close.mjs .

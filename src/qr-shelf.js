@@ -11,6 +11,7 @@ import { hardenInfoPopup } from './popup-guard.js';
 import { installTabScroll, applyFade, revealTab } from './tab-scroll.js';
 import * as core from './qr-shelf-core.js';
 import { keeper, keeperLabel, toward, watchReply } from './qr-shelf-keep.js';
+import { starIconSvg } from './state-icons.js';
 
 const TAB_KEY = 'bl-qrs-tab';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -54,7 +55,7 @@ function rowHtml(st, item, keep) {
     if (state.editing === item.key) return editHtml(st, item, keep);
     return `<div class="bl-qrs-row${m.h ? ' bl-qrs-hidden' : ''}" role="listitem" data-key="${esc(encodeURIComponent(item.key))}">
         <button type="button" class="bl-qrs-run" data-act="run"><span class="bl-qrs-name">${icon}<b>${esc(core.nameOf(st, item))}</b>${marks}</span>${desc ? `<small class="bl-qrs-desc">${esc(desc)}</small>` : ''}<small class="bl-qrs-where">${esc(where)}</small></button>
-        <button type="button" class="bl-qrs-icon bl-qrs-fav" data-act="fav" aria-pressed="${m.f ? 'true' : 'false'}" aria-label="${m.f ? '즐겨찾기 빼기' : '즐겨찾기'}" title="${m.f ? '즐겨찾기 빼기' : '즐겨찾기'}"><i class="${m.f ? 'fa-solid' : 'fa-regular'} fa-star" aria-hidden="true"></i></button>
+        <button type="button" class="bl-qrs-icon bl-qrs-fav" data-act="fav" aria-pressed="${m.f ? 'true' : 'false'}" aria-label="${m.f ? '즐겨찾기 빼기' : '즐겨찾기'}" title="${m.f ? '즐겨찾기 빼기' : '즐겨찾기'}">${starIconSvg(m.f)}</button>
         <button type="button" class="bl-qrs-icon bl-qrs-edit-btn" data-act="edit" aria-label="이름 · 설명 고치기" title="이름 · 설명 고치기"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
     </div>`;
 }

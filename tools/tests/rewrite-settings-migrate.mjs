@@ -36,7 +36,8 @@ export function cleanUpMessage({ getMessage }) { return getMessage; }
 export function extractMessageFromData() { return ''; }
 export function hideSwipeButtons() {}
 export function showSwipeButtons() {}
-export function setSendButtonState() {}
+export let is_send_press = false;
+export function setSendButtonState(value) { is_send_press = value; }
 export function syncMesToSwipe() {}`),
     'extensions.js': js(G + 'export const extension_settings = T.ext;\nexport function getContext() { return { chat: [], name1: "User", name2: "Char" }; }'),
     'custom-request.js': js('export const ChatCompletionService = { async processRequest() { throw new Error("시험 중 모델 요청"); } };'),
