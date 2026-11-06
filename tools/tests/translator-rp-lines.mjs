@@ -176,4 +176,26 @@ await test('알림 줄이 없는 답은 요청 글자 그대로 (안내 한 줄 
     assert.equal((source.match(/notices: noticeFix/g) || []).length, 3, '문단 캐시 판정 · 묶음 다시 번역 · 통짜 다시 번역 세 곳');
 });
 
+await test('1.0.4 기호가 길게 이어진 줄도 바로 끝남 (11-06 제보 「화면이 멈추고 실시간 번역이 안 돼요」 — 별 100개 줄에서 주 스레드가 끝나지 않았음)', async () => {
+    // 제보 꼴: 대사 줄 끝에 모델이 별을 100개 이어 씀(글은 지어냄). 예전 꼴은 별 30개에 1초 · 32개에 4초가 넘었고 100개는 끝나지 않았어요
+    const lines = [
+        '<span style="color:#9b8ec4">「明日の予定はまた今度にしよう。この椅子から一' + '*'.repeat(100),
+        'She paused.' + '*'.repeat(120) + ' and then',
+        '[ SYSTEM ALERT: CORE BREACH ]' + '_'.repeat(90) + 'x',
+        '~'.repeat(200) + '[ SYSTEM ALERT ]' + '~'.repeat(150) + '!',
+        '**' + '*~_'.repeat(60) + '[ SYSTEM ALERT ] tail',
+        ' \t'.repeat(150) + '*'.repeat(90) + 'z',
+    ];
+    for (const line of lines) {
+        const at = performance.now();
+        rp.noticeInner(line); rp.noticeLines(line + '\n' + line);
+        assert.ok(performance.now() - at < 100, `오래 걸림 ${Math.round(performance.now() - at)}ms: ${line.slice(0, 40)}…`);
+    }
+    // 맞는 글은 예전과 같아요 — 기호 몇 개든 앞뒤 꾸밈이에요
+    assert.equal(rp.noticeInner('***【 DRAW — DOUBLE KNOCKOUT 】*****'), 'DRAW — DOUBLE KNOCKOUT');
+    assert.equal(rp.noticeInner('> __~~[ SYSTEM ALERT: CORE BREACH ]~~__ ⚠'), 'SYSTEM ALERT: CORE BREACH');
+    assert.equal(rp.noticeInner('⟦3⟧ <span class="x">*[ Text from Gabriel ]*</span>'), 'Text from Gabriel');
+    assert.equal(rp.noticeInner('*'.repeat(100) + '[ SYSTEM ALERT ]' + '*'.repeat(100)), 'SYSTEM ALERT');
+});
+
 console.log(`translator-rp-lines: ${passed} passed`);

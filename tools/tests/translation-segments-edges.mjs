@@ -341,5 +341,20 @@ await test('repairTagPairs: 문단 수가 다르면 문단 안에서만 쓰던 �
     assert.equal(S.repairTagPairs('<prose><i>a</i>\n\nb</prose>', '<prose><i>가\n\n나\n\n다</prose>'), '<prose><i>가</i>\n\n나\n\n다</prose>', '문단을 넘는 바깥 태그는 두고 안쪽만');
 });
 
+await test('1.0.4 보호 블록이 길게 이어진 뒤 글이 와도 바로 끝남 (예전 꼴은 20개에 30초가 넘었어요) · 판정은 그대로', async () => {
+    for (const gap of ['\n\n', '\n', ' \n \n']) {
+        const body = '[[__VAR_1__]]' + gap;
+        const at = performance.now();
+        assert.equal(S.skipsBody(body.repeat(60) + 'She smiled.'), false);
+        assert.equal(S.skipsBody(body.repeat(60)), true);
+        assert.equal(S.skipsBody('  \n' + body.repeat(60)), true);
+        assert.ok(performance.now() - at < 100, `오래 걸림 ${Math.round(performance.now() - at)}ms`);
+    }
+    // index.js 의 같은 판정 두 곳(보호 블록만 있는 반쪽 · 한국어 남기기)도 같은 꼴
+    const src = (await import('node:fs')).readFileSync(path.join(root, 'src/addons/translator/index.js'), 'utf8');
+    assert.ok(!src.includes('(?:\\s*\\[\\[__VAR_\\d+__\\]\\]\\s*)'), '묶음마다 앞뒤 \\s* 를 두는 꼴이 남지 않음');
+    assert.equal((src.match(/\/\^\\s\*\(\?:\\\[\\\[__VAR_\\d\+__\\\]\\\]\\s\*\)[+*]\$\//g) || []).length, 2);
+});
+
 console.log(`translation-segments-edges: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

@@ -2233,7 +2233,7 @@ async function translate(text, options = {}) {
             if (depth >= 2 || paras.length < 2) throw cutError();
             console.warn('[LLM Translator] 덩이 답이 중간에 끊겨 반으로 나눠 다시 보내요');
             const mid = Math.ceil(paras.length / 2), half = list => list.join('\n\n');
-            const piece = text => /^(?:\s*\[\[__VAR_\d+__\]\]\s*)+$/.test(text) ? text : chunkRequest(text, depth + 1);   // 보호 블록만 있는 반쪽은 보내지 않는다
+            const piece = text => /^\s*(?:\[\[__VAR_\d+__\]\]\s*)+$/.test(text) ? text : chunkRequest(text, depth + 1);   // 보호 블록만 있는 반쪽은 보내지 않는다
             return `${await piece(half(paras.slice(0, mid)))}\n\n${await piece(half(paras.slice(mid)))}`;
         };
         const runChunks = async () => {
@@ -2258,7 +2258,7 @@ async function translate(text, options = {}) {
             : Number(limitSettings.profile_max_tokens) || (limitLive?.mainApi === 'openai' ? Number(limitLive.chatCompletionSettings?.openai_max_tokens) : textOutputLimit()) || 0; // 2026-10-06: 텍스트 완성은 없는 max_length 대신 실제 한도
         const groupLimit = outputTokens > 0 ? Math.max(400, Math.round(outputTokens * 1.2)) : CHUNK_TARGET * 2;
         // 2.7.9 가리고 나니 자리표시자뿐(문단이 모두 한국어)이면 요청하지 않는다
-        if (koreanKept?.paragraphs && /^(?:\s*\[\[__VAR_\d+__\]\]\s*)*$/.test(maskedText)) {
+        if (koreanKept?.paragraphs && /^\s*(?:\[\[__VAR_\d+__\]\]\s*)*$/.test(maskedText)) {
             translatedText = maskedText;
             if (report) { report.keptKorean = koreanKept.paragraphs + koreanKept.quotes; report.chunks = 0; }
         } else if (paragraphParts) {
