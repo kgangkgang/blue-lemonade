@@ -39,14 +39,14 @@ export const charOf = model => { const name = String(model?.charName ?? '').trim
 /** 그릴 머리 칸 — 비운 칸은 표본 값(깡통은 로그의 깡통 이름 먼저) · 알약 빼기면 알약(LOG · 깡통 · 모델 · 프롬프트)만 빼고 제목은 늘 남아 머리 칸이 비지 않아요 */
 export function headFields(head = {}, date = '', charName = '') {
     const pick = key => String(head[key] ?? '').trim() || (key === 'char' && charName) || HEAD_SAMPLE[key];
-    const out = { title: head.hideTitle ? '' : pick('title'), date: String(date ?? '') };   // 11-07 「제목 빼기」(완전 심플)
-    return head.hidePills ? out : { ...out, mark: 'LOG', char: pick('char'), model: pick('model'), prompt: pick('prompt') };
+    // 11-07 제목 · 알약 빼기는 칸을 비우지 않고 그린 뒤 걷어요(cutOf drop — 칸만 비우면 그 칸을 담던 머리 박스가 빈 채로 남았어요)
+    return { title: pick('title'), date: String(date ?? ''), mark: 'LOG', char: pick('char'), model: pick('model'), prompt: pick('prompt') };
 }
 // 11-07 「보일 것」 칩(사용자 「위 아래 글자들 … 부가적인 것들 빼는 것도 다 버튼 · 완전 심플」 — 테마 1.0.7 로그 복사 창과 같은 칩): 켬 = 보여요
 const HIDES = ['hideTitle', 'hidePills', 'hideTop', 'hideBottom'];
 const SHOW_LABEL = { hideTitle: '제목', hidePills: '알약', hideTop: '위 글', hideBottom: '아래 글' };
 /** 위 글 · 아래 글 빼기(테마 log-copy-bare.js 사본이 틀에 박힌 머리 표 · 부제 · 도장 · 꼬리말 · 서명을 걷어요) */
-export const cutOf = head => ({ top: !!head?.hideTop, bottom: !!head?.hideBottom });
+export const cutOf = head => ({ top: !!head?.hideTop, bottom: !!head?.hideBottom, drop: [...(head?.hideTitle ? ['title'] : []), ...(head?.hidePills ? ['mark', 'char', 'model', 'prompt'] : [])] });
 /** 머리 칸 서명 — 그 자리에서 고친 미리보기(edit)가 지금 머리 칸으로 그린 것인지 견줘요 */
 const headSig = head => JSON.stringify([...HEAD_KEYS.map(k => String(head?.[k] ?? '').trim()), ...HIDES.map(k => !!head?.[k])]);
 /** 저장된 머리 칸(예전 판이 이 탭에 남긴 제목도 이어받아요) */
