@@ -372,6 +372,9 @@ html.mart-cart-on{overflow:hidden}
 /* 머리 칸(제목 · 날짜 / 깡통 · 모델 · 프롬프트 알약): 6칸 격자 — PC 는 2 · 3 칸, 폰은 2칸씩(프롬프트는 한 줄) · 빈 칸은 흐린 표본 값을 써요 */
 .mart-taste-headbar{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
 .mart-taste-head-note{flex:1 1 auto;min-width:0;color:var(--muted);font-size:12px;line-height:1.5}
+/* 11-07 보일 것 칩(제목 · 알약 · 위 글 · 아래 글) — 켬 ✔ · 빼면 흐린 글씨 */
+.mart-taste-shows{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+.mart-taste-show[aria-pressed=false]{color:var(--muted)}
 .mart-taste-fields{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .mart-taste-fields label{display:flex;grid-column:span 3;align-items:center;gap:8px;min-width:0;color:var(--muted);font-size:var(--ts-meta);white-space:nowrap}
 .mart-taste-fields label.is-pill{grid-column:span 2}

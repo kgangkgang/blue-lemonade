@@ -1,6 +1,6 @@
 // 글꾸 마트 「🍽️ 시식하기」 창 — 글꾸 상세 창(크게 보기 시트)에서 열어요. 큰 글칸에 채팅 로그를 붙여 넣으면 해석(taste-parse.js)해서 고른 글꾸 틀에 끼워 미리보기(taste-render.js · 테마 모듈 사본)로 보여 주고,
 //   「📋 HTML 복사」(깡싸 글쓰기 HTML 칸에 붙이는 완성 HTML) · 「⬇ 내려받기」(.html)로 가져가요. 창 위 칩: 깡통 · 나로 추정한 이름(고칠 수 있어요) · 「🔁 바꾸기」 하나로 뒤집어요.
-//   틀 머리 칸은 제목 · 날짜 · 알약(깡통 · 모델 · 프롬프트 — 비우면 표본 값 · 「알약 빼기」로 제목만)이에요(머리 칸은 localStorage 에 오래 남아요). 그 밖의 글씨(틀에 박힌 머리 · 꼬리 · 장식 글 · 로그의 이름 · 문장)는 미리보기에서 눌러 그 자리에서 고쳐요(글이 든 요소에만 contenteditable · 붙여 넣기는 글만 · Enter 는 <br>) —
+//   틀 머리 칸은 제목 · 날짜 · 알약(깡통 · 모델 · 프롬프트 — 비우면 표본 값)이에요 · 11-07 「보일 것」 칩(제목 · 알약 · 위 글 · 아래 글 빼기 — 위 · 아래 글은 틀에 박힌 머리 표 · 꼬리말)(머리 칸은 localStorage 에 오래 남아요). 그 밖의 글씨(틀에 박힌 머리 · 꼬리 · 장식 글 · 로그의 이름 · 문장)는 미리보기에서 눌러 그 자리에서 고쳐요(글이 든 요소에만 contenteditable · 붙여 넣기는 글만 · Enter 는 <br>) —
 //   고친 것은 HTML 복사 · 내려받기에 그대로 들어가요. 「↶ 되돌리기 · ↷ 다시하기」는 미리보기 HTML 스냅샷(연속 타자는 0.5초 묶음 · 50개까지 · 새로 그리기 · 바꾸기도 한 칸)으로 블록 통째 삭제도 되살려요.
 //   붙여 넣은 글 · 바꾸기 · 제목 · 날짜 · 마지막 미리보기 상태는 이 탭 안(sessionStorage)에 남아요. 스크립트 없는 결과 · 외부 의존 없음. 마트 공용 시트 · 단추 규격(mart.css .mart-sheet · .mart-actions)을 써요.
 import { parseLog, buildModel, DEFAULT_NAMES } from './taste-parse.js';
@@ -39,13 +39,18 @@ export const charOf = model => { const name = String(model?.charName ?? '').trim
 /** 그릴 머리 칸 — 비운 칸은 표본 값(깡통은 로그의 깡통 이름 먼저) · 알약 빼기면 알약(LOG · 깡통 · 모델 · 프롬프트)만 빼고 제목은 늘 남아 머리 칸이 비지 않아요 */
 export function headFields(head = {}, date = '', charName = '') {
     const pick = key => String(head[key] ?? '').trim() || (key === 'char' && charName) || HEAD_SAMPLE[key];
-    const out = { title: pick('title'), date: String(date ?? '') };
+    const out = { title: head.hideTitle ? '' : pick('title'), date: String(date ?? '') };   // 11-07 「제목 빼기」(완전 심플)
     return head.hidePills ? out : { ...out, mark: 'LOG', char: pick('char'), model: pick('model'), prompt: pick('prompt') };
 }
+// 11-07 「보일 것」 칩(사용자 「위 아래 글자들 … 부가적인 것들 빼는 것도 다 버튼 · 완전 심플」 — 테마 1.0.7 로그 복사 창과 같은 칩): 켬 = 보여요
+const HIDES = ['hideTitle', 'hidePills', 'hideTop', 'hideBottom'];
+const SHOW_LABEL = { hideTitle: '제목', hidePills: '알약', hideTop: '위 글', hideBottom: '아래 글' };
+/** 위 글 · 아래 글 빼기(테마 log-copy-bare.js 사본이 틀에 박힌 머리 표 · 부제 · 도장 · 꼬리말 · 서명을 걷어요) */
+export const cutOf = head => ({ top: !!head?.hideTop, bottom: !!head?.hideBottom });
 /** 머리 칸 서명 — 그 자리에서 고친 미리보기(edit)가 지금 머리 칸으로 그린 것인지 견줘요 */
-const headSig = head => JSON.stringify([...HEAD_KEYS.map(k => String(head?.[k] ?? '').trim()), !!head?.hidePills]);
+const headSig = head => JSON.stringify([...HEAD_KEYS.map(k => String(head?.[k] ?? '').trim()), ...HIDES.map(k => !!head?.[k])]);
 /** 저장된 머리 칸(예전 판이 이 탭에 남긴 제목도 이어받아요) */
-const loadHead = saved => { const h = headStore.load(); return { title: h.title ?? saved?.fields?.title ?? '', char: h.char ?? '', model: h.model ?? '', prompt: h.prompt ?? '', hidePills: !!h.hidePills }; };
+const loadHead = saved => { const h = headStore.load(); return { title: h.title ?? saved?.fields?.title ?? '', char: h.char ?? '', model: h.model ?? '', prompt: h.prompt ?? '', ...Object.fromEntries(HIDES.map(k => [k, !!h[k]])) }; };
 
 let dialog = null, state = null;
 export const store = {
@@ -74,7 +79,7 @@ export function renderWithLog(item) {
     if (saved.edit?.id === item.id && saved.edit.html && saved.edit.head === headSig(head)) return saved.edit.html;
     if (parsedCache.text !== text) parsedCache = { text, parsed: parseLog(text) };
     if (!parsedCache.parsed.turns.length) return '';
-    try { const model = buildModel(parsedCache.parsed, { swap: !!saved.swap, names: saved.names ?? {} }); return tasteHtml(item, model, headFields(head, saved.fields?.date, charOf(model)), { names: namesOn(saved.showNames, parsedCache.parsed) }); } catch { return ''; }
+    try { const model = buildModel(parsedCache.parsed, { swap: !!saved.swap, names: saved.names ?? {} }); return tasteHtml(item, model, headFields(head, saved.fields?.date, charOf(model)), { names: namesOn(saved.showNames, parsedCache.parsed), ...cutOf(head) }); } catch { return ''; }
 }
 
 // ── 미리보기 그 자리에서 고치기 ──
@@ -143,7 +148,8 @@ function build() {
       <button type="button" class="btn mart-taste-sample" data-taste="sample">표본 글 넣기</button>
       <small class="mart-taste-mode" aria-live="polite"></small>
     </div>
-    <div class="mart-taste-headbar"><small class="mart-taste-head-note">머리 칸 — 비워 두면 흐린 글씨(표본 값)가 들어가요</small><button type="button" class="chip mart-taste-pills" data-taste="pills" aria-pressed="true" title="제목 아래 알약(깡통 · 모델 · 프롬프트)을 보일지 — 빼면 제목만 남아요">알약 보이기</button></div>
+    <div class="mart-taste-headbar"><small class="mart-taste-head-note">머리 칸 — 비워 두면 흐린 글씨(표본 값)가 들어가요</small></div>
+    <div class="mart-taste-shows" role="group" aria-label="보일 것 — 빼면 완전 심플해요"><button type="button" class="chip mart-taste-show" data-taste="show" data-hide="hideTitle" aria-pressed="true" title="틀 머리의 제목">제목 보이기</button><button type="button" class="chip mart-taste-pills mart-taste-show" data-taste="show" data-hide="hidePills" aria-pressed="true" title="제목 아래 알약(깡통 · 모델 · 프롬프트)">알약 보이기</button><button type="button" class="chip mart-taste-show" data-taste="show" data-hide="hideTop" aria-pressed="true" title="첫 메시지 위의 틀 글(머리 표 · 부제 · 능력치 칩 · 도장 …) — 제목 · 알약은 따로">위 글 보이기</button><button type="button" class="chip mart-taste-show" data-taste="show" data-hide="hideBottom" aria-pressed="true" title="마지막 메시지 아래의 틀 글(꼬리말 · 서명 · 보낸 이 …)">아래 글 보이기</button></div>
     <div class="mart-taste-fields">
       <label class="is-wide">제목 <input type="text" class="field" data-head="title" maxlength="80" placeholder="${esc(HEAD_SAMPLE.title)}"></label>
       <label class="is-wide">날짜 <input type="text" class="field" data-field="date" maxlength="60" placeholder="비우면 없음"></label>
@@ -189,7 +195,7 @@ function build() {
         else if (act === 'swap') { state.swap = !state.swap; render(); }
         else if (act === 'sample') { area.value = SAMPLE; state.text = SAMPLE; state.names = {}; state.showNames = null; parse(); }
         else if (act === 'names') { state.showNames = !namesOn(state.showNames, state.parsed); render(); }   // 새로 그리니 스냅샷 한 칸
-        else if (act === 'pills') { state.head.hidePills = !state.head.hidePills; render(); }
+        else if (act === 'show' && HIDES.includes(b.dataset.hide)) { state.head[b.dataset.hide] = !state.head[b.dataset.hide]; render(); }   // 11-07 보일 것 칩(새로 그리니 스냅샷 한 칸)
         else if (act === 'copy') copy();
         else if (act === 'download') download();
         else if (act === 'undo') travel(-1);
@@ -221,11 +227,11 @@ function paintRoles() {
     const namesBtn = dialog.querySelector('[data-taste="names"]');
     namesBtn.setAttribute('aria-pressed', String(on)); namesBtn.textContent = on ? '이름 보이기' : '이름 빼기';   // 켬 ✔ 는 aria-pressed 로 CSS 가 namesBtn.disabled = !state.model;
     // 머리 칸: 깡통 알약의 흐린 안내는 로그에서 찾은 깡통 이름(없으면 표본) · 알약을 빼면 알약 세 칸은 쉬어요
+    for (const btn of dialog.querySelectorAll('[data-taste="show"]')) { const on = !state.head[btn.dataset.hide]; btn.setAttribute('aria-pressed', String(on)); btn.textContent = `${SHOW_LABEL[btn.dataset.hide]} ${on ? '보이기' : '빼기'}`; }
     const pills = !state.head.hidePills;
-    const pillsBtn = dialog.querySelector('[data-taste="pills"]');
-    pillsBtn.setAttribute('aria-pressed', String(pills)); pillsBtn.textContent = pills ? '알약 보이기' : '알약 빼기';
     dialog.querySelector('[data-head="char"]').placeholder = charOf(state.model) || HEAD_SAMPLE.char;
     for (const key of ['char', 'model', 'prompt']) dialog.querySelector(`[data-head="${key}"]`).disabled = !pills;
+    dialog.querySelector('[data-head="title"]').disabled = !!state.head.hideTitle;
 }
 /** 그릴 머리 칸(제목 · 날짜 · 알약) */
 const drawFields = () => headFields(state.head, state.fields.date, charOf(state.model));
@@ -242,7 +248,7 @@ function render() {
         state.html = ''; sync();
         return;
     }
-    try { show(tasteHtml(state.item, state.model, drawFields(), { names: namesOn(state.showNames, state.parsed) })); }
+    try { show(tasteHtml(state.item, state.model, drawFields(), { names: namesOn(state.showNames, state.parsed), ...cutOf(state.head) })); }
     catch (error) { preview.innerHTML = `<p class="mart-sheet-wait">못 그렸어요 · ${esc(error.message)}</p>`; state.html = ''; sync(); }
 }
 function sync() {
