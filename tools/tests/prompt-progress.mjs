@@ -8,6 +8,7 @@ const root = path.resolve(process.argv[2] || '.');
 const src = fs.readFileSync(path.join(root, 'src/addons/prompt/index.js'), 'utf8');
 const regex = fs.readFileSync(path.join(root, 'src/addons/prompt/regex-ui.js'), 'utf8');
 const helpers = await import(pathToFileURL(path.join(root, 'src/addons/prompt/translation-progress.js')));
+const reuseKit = await import(pathToFileURL(path.join(root, 'src/addons/prompt/paragraph-reuse.js')));   // 1.0.7 바뀐 줄만 다시 번역
 const section = (start, end) => { const a=src.indexOf(start),b=src.indexOf(end,a); assert(a>=0&&b>a,start); return src.slice(a,b); };
 class Element {
     constructor(tag='div') { this.tagName=tag; this.children=[]; this.style={}; this.dataset={}; this.className=''; this._text=''; this.classes=new Set(); this.classList={add:v=>this.classes.add(v),remove:v=>this.classes.delete(v)}; }
@@ -20,10 +21,10 @@ class Element {
 }
 const rows = n => Array.from({length:n},(_,i)=>({id:String(i),name:`Fixture-${String(i+1).padStart(2,'0')}`,content:`Source ${i}`}));
 const tick = async () => { for(let i=0;i<12;i++) await Promise.resolve(); };
-function setup({items=rows(3),lanes=1,reply=async()=> 'Translated body',titleReply=async names=>names.map(n=>'제목 '+n),cache=new Map(),titles=new Map()}={}) {
+function setup({items=rows(3),lanes=1,reply=async()=> 'Translated body',titleReply=async names=>names.map(n=>'제목 '+n),cache=new Map(),titles=new Map(),sources=new Map()}={}) {
     const history=[],status=new Element(),dot=new Element(),wrap=new Element(),bar=new Element(),label=new Element(),list=new Element(),stop=new Element();
     status.onText=text=>history.push(text); const rendered=new Map();
-    const ctx={...helpers,console:{warn(){},error(){}},clearTimeout(){},setTimeout(){throw Error('Unexpected auto-reset');},
+    const ctx={...helpers,...reuseKit,getSource:(_ns,id)=>sources.get(id)??null,setSource:(_ns,id,value)=>sources.set(id,String(value).trim()),console:{warn(){},error(){}},clearTimeout(){},setTimeout(){throw Error('Unexpected auto-reset');},
         PDOC:{getElementById:id=>id==='pt-status-text'?status:dot,createElement:tag=>new Element(tag)},
         getCached:(_ns,id)=>cache.get(id),getTranslatedTitle:(_ns,id)=>titles.get(id),setCache:(_ns,id,value)=>cache.set(id,value),setCacheTitle:(_ns,id,value)=>titles.set(id,value),
         setBlockHTML:(_list,id,html)=>rendered.set(id,html),esc:text=>String(text).replaceAll('<','&lt;'),translateText:(...args)=>reply(...args),
@@ -38,7 +39,7 @@ function setup({items=rows(3),lanes=1,reply=async()=> 'Translated body',titleRep
         section('async function runTranslation(', '// ── Export Module')+
         section('async function runTitleTranslation(', '// ── Page factory'),ctx);
     const args={items,list,ns:'pt-preset::Synthetic',pBar:bar,pLabel:label,pWrap:wrap,btnStop:stop,forceRetranslate:false,mode:'body'};
-    return {ctx,args,history,status,bar,label,wrap,stop,cache,titles,rendered,run:extra=>ctx.runTranslation({...args,...extra}),title:extra=>ctx.runTitleTranslation({...args,...extra})};
+    return {ctx,args,history,status,bar,label,wrap,stop,cache,titles,sources,rendered,run:extra=>ctx.runTranslation({...args,...extra}),title:extra=>ctx.runTitleTranslation({...args,...extra})};
 }
 let passed=0;
 async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
@@ -132,5 +133,26 @@ await test('regex names show active batch, preserve previous successful batch, a
     vm.createContext(ctx);vm.runInContext(regex.slice(regex.indexOf('export function parseNameTranslations'),regex.indexOf('export function installRegexPage')).replace(/export /g,''),ctx);
     vm.runInContext(regex.slice(regex.indexOf(" page.querySelector('[data-regex-translate]').onclick="),regex.indexOf(" page.querySelector('[data-regex-apply]')")),ctx);
     await buttons.get('[data-regex-translate]').onclick();assert(history.some(t=>/Fixture-01, Fixture-02 외 8개/.test(t)));assert(history.some(t=>/Fixture-11, Fixture-12 번역 중/.test(t)));assert.match(status.textContent,/성공 10.*실패 2/);assert.doesNotMatch(status.textContent,/Fixture-/);assert.equal(ctx.rows.filter(r=>r.title).length,10);assert.equal(page.querySelectorAll('li').length,2);
+});
+await test('1.0.7 원문이 바뀐 항목만 다시 번역 · 그 안에서도 바뀐 줄만 보내요 · 원문을 적어 두지 않은 옛 번역은 지금 원문을 적어 두고 건너뛰어요',async()=>{
+    const items=[{id:'a',name:'Aria',content:'- Name: Aria\n- Likes: tea\n- Fears: storms'},{id:'b',name:'Bo',content:'Bo is quiet.'},{id:'c',name:'Cy',content:'Cy sings.'}];
+    const cache=new Map([['a','### 아리아\n\n- 이름: 아리아\n- 좋아함: 차\n- 두려움: 폭풍'],['b','### 보\n\n보는 조용하다.'],['c','### 사이\n\n사이는 노래한다.']]);
+    const sources=new Map([['a','- Name: Aria\n- Likes: tea\n- Fears: storms'],['b','Bo is quiet.']]);
+    const sent=[];
+    const h=setup({items,cache,sources,titles:new Map([['a','아리아'],['b','보'],['c','사이']]),reply:async(name,text,nonce,opts)=>{sent.push({name,text,includeTitle:opts.includeTitle});return '- 좋아함: 커피';}});
+    items[0].content='- Name: Aria\n- Likes: coffee\n- Fears: storms';
+    const result=await h.run();
+    assert.deepEqual(sent,[{name:'Aria',text:'- Likes: coffee',includeTitle:false}]);
+    assert.equal(result.success,1);assert.equal(result.cached,2);
+    assert.equal(h.cache.get('a'),'### 아리아\n\n- 이름: 아리아\n- 좋아함: 커피\n- 두려움: 폭풍');
+    assert.equal(h.sources.get('a'),items[0].content);assert.equal(h.sources.get('c'),'Cy sings.');
+    // 줄 수가 다르게 오면 통째로 다시 번역해요
+    items[0].content='- Name: Aria\n- Likes: juice\n- Fears: storms';sent.length=0;
+    h.ctx.translateText=async(name,text,nonce,opts)=>{sent.push(text);return opts.includeTitle===false&&text==='- Likes: juice'?'- 좋아함:\n주스':'- 이름: 아리아\n- 좋아함: 주스\n- 두려움: 폭풍';};
+    await h.run();
+    assert.deepEqual(sent,['- Likes: juice',items[0].content]);assert.match(h.cache.get('a'),/주스/);
+    // 「원본에 적용」으로 원문이 번역문이 된 항목은 다시 보내지 않아요
+    items[1].content='보는 조용하다.';sent.length=0;
+    const r3=await h.run();assert.deepEqual(sent,[]);assert.equal(r3.cached,3);
 });
 console.log(`PASS ${passed} translation progress/result scenarios (API 0)`);

@@ -26,6 +26,7 @@ import { installLocalizationPage } from './localization-ui.js';
 import { presence as extPresence } from '../../ext-presence.js';   // 8.2.7 바이바이가 켜져 있을 때만 그룹 이름
 import { forEachLimited } from './cache-loading.js';
 import { validateTranslationMemory } from './translation-memory.js';
+import { planReuse, missingText, fillPlan, worthReusing } from './paragraph-reuse.js';   // 1.0.7 원문이 바뀐 항목은 바뀐 줄 · 문단만 다시 번역
 import { createTranslationProgress, translationSummary, renderTranslationResult } from './translation-progress.js';
 import { isTransientFailure, responseError } from './request-errors.js';
 import { completionText } from './response-text.js';
@@ -751,10 +752,28 @@ const setCacheTitle  = (ns, id, t) => {
     cachePut(ns, ckT(ns, id), t);
 };
 
+// 1.0.7 번역할 때의 원문(11-08 사용자 「월드인포 내용 바뀌면 캐시 저장해서 바뀐 문단만 다시 번역 · 지금은 다 삭제했다가 다시 해야 해서 힘들다」):
+//   전에는 번역이 있으면 원문이 바뀌어도 「이미 번역됨」으로 건너뛰어, 바뀐 항목을 고치려면 캐시를 지우고 전부 다시 번역해야 했다.
+//   이제 원문이 바뀐 항목만 다시 번역하고, 그 안에서도 글자 그대로 남은 줄 · 문단은 지난 번역을 다시 쓴다(paragraph-reuse.js).
+//   키는 본문 번역 키 뒤에 `::src` — 앞 두 마디가 ns 라 같은 조각 파일에 들어가요.
+const ckS = (ns, id) => `${ck(ns, id)}::src`;
+const getSource = (ns, id) => translationMap.get(ckS(ns, id)) ?? null;
+const setSource = (ns, id, text) => { const v = String(text ?? '').trim(); if (v && translationMap.get(ckS(ns, id)) !== v) cachePut(ns, ckS(ns, id), v); };
+/** 원문을 적어 두지 않은 옛 번역: 지금 원문을 그 번역의 원문으로 적어요(다음 수정부터 바뀐 줄만 다시 번역) — 본문 번역이 진짜 있을 때만 */
+function baselineSource(ns, block) {
+    if (block.titleOnly || getSource(ns, block.id) !== null) return;
+    const full = getCached(ns, block.id);
+    if (!full) return;
+    const body = splitBodyAndNote(splitTitleAndBody(full).body).body;
+    const orig = (block.content || '').trim();
+    if (body && orig && body !== orig) setSource(ns, block.id, orig);
+}
+
 const clearNS = (ns, ids) => {
     ids.forEach(id => {
         cacheDelete(ck(ns, id));
         cacheDelete(ckT(ns, id));
+        cacheDelete(ckS(ns, id));
     });
 };
 
@@ -1688,6 +1707,7 @@ function makeBlockItem(block, ns, selectable, onEdited) {
         ? getCachedTitle(ns, block.id)
         : (getCached(ns, block.id)
             ?? (block.injectedNote ? joinBodyAndNote(block.content || '', block.injectedNote) : null));
+    baselineSource(ns, block);   // 1.0.7 옛 번역에 원문 적어 두기(바뀐 줄만 다시 번역하려고)
     const tokens = estimateTokens(block.content||'');
     el.dataset.searchText = (block.name+' '+(block.content||'')+' '+(cached||'')).toLowerCase();
 
@@ -1831,6 +1851,7 @@ function makeBlockItem(block, ns, selectable, onEdited) {
             } else {
                 const combined = `### ${newTitle || block.name || block.id}\n\n${newBody}`;
                 setCache(ns, id, combined);
+                setSource(ns, id, (block.content || '').trim());   // 1.0.7 손으로 고친 번역도 지금 원문의 번역
                 clearCachedTitle(ns, id); // full translation now wins over any stale title-only entry
                 trTextEl.innerHTML = esc(translationForReading(combined, block.content));
             }
@@ -1967,8 +1988,15 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
         // 떼어낸 것)을 존재하는 주석으로 인정하고 그대로 보존한다.
         const prevNote      = prevParts.note || (b.injectedNote || '');
         const havePart = runMode === 'note' ? !!prevNote : haveBody;
+        // 1.0.7 원문이 바뀐 본문: 지난번 원문과 맞대어 바뀐 줄 · 문단만 다시 번역(reuse = 계획 · false = 맞댈 수 없어 통째로 · null = 바뀌지 않음)
+        let reuse = null;
+        if (runMode === 'body' && !forceRetranslate && haveBody) {
+            const was = getSource(ns, b.id);
+            if (was === null) setSource(ns, b.id, origBody);
+            else if (was !== origBody && origBody !== prevParts.body) reuse = planReuse(was, prevParts.body, origBody) ?? false;   // 원문이 지금 번역과 같으면 「원본에 적용」한 것 — 다시 보내지 않아요
+        }
 
-        if (!forceRetranslate && havePart) {
+        if (!forceRetranslate && havePart && reuse === null) {
             setBlockHTML(list,b.id,shownPrev?esc(translationForReading(shownPrev, b.content)):'<span class="pt-no-trans">번역 전</span>');
             progress.settle(b, 'cached');
         } else if (!sentTitle && !origBody) {
@@ -1978,6 +2006,25 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
             const active = progress.start([b]);
             try {
                 const nonce=forceRetranslate?Math.random().toString(36).slice(2,10):null;
+                let partBody = null;
+                if (reuse) {
+                    if (!reuse.missing.length) partBody = fillPlan(reuse, '');   // 줄을 지우거나 옮기기만 했어요 — 요청 없이
+                    else if (worthReusing(reuse)) {
+                        const got = await translateText(b.name, missingText(reuse), nonce, { mode: 'body', includeTitle: false, ns });
+                        if (stopReq) throw stopError();
+                        partBody = fillPlan(reuse, got || '');   // 받은 줄 수가 다르면 null → 아래에서 통째로
+                    }
+                }
+                if (partBody) {
+                    const keepTitle = existingTitle || prevSplit.title || '';
+                    const bodyPart = joinBodyAndNote(partBody, prevNote);
+                    const combined = keepTitle ? `### ${keepTitle}\n\n${bodyPart}` : bodyPart;
+                    setBlockHTML(list,b.id,esc(translationForReading(combined, b.content)));
+                    setCache(ns,b.id,combined);
+                    setSource(ns,b.id,origBody);
+                    progress.settle(b, 'success');
+                    return;
+                }
                 const res=await translateText(b.name,b.content,nonce,{ mode:runMode, includeTitle, ns });
                 if (stopReq) throw stopError();
                 if (res && res.trim()) {
@@ -2004,6 +2051,7 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
                     const combined = newTitle ? `### ${newTitle}\n\n${bodyPart}` : bodyPart;
                     setBlockHTML(list,b.id,esc(translationForReading(combined, b.content)));
                     setCache(ns,b.id,combined);
+                    if (runMode === 'body') setSource(ns,b.id,origBody);   // 1.0.7 이 번역의 원문
                     // A freshly translated title becomes the authoritative one;
                     // an existing 제목 번역 is left exactly as it was.
                     if (sentTitle && newTitle) setCacheTitle(ns,b.id,newTitle);

@@ -275,6 +275,7 @@ const { DECOR_DEFAULTS } = await load('src/decor.js');
 const { FRAME_DEFAULTS, FRAME_RANGE } = await load('src/frames.js');
 const DECOR_SLIDERS = [
     ['opacity', '액자 진하기 (%)', 0, 100, 1], ['frameWidth', '액자 가로 비율 (%)', 50, 200, 1], ['frameHeight', '액자 세로 비율 (%)', 50, 200, 1], ['presetTilt', '액자 기울기 (도)', -10, 10, 0.5],
+    ['frameHue', '액자 색상 돌리기 (도)', -180, 180, 1], ['frameSat', '액자 채도 (%)', 0, 200, 1], ['frameBright', '액자 밝기 (%)', 50, 150, 1],   // 1.0.7 액자 색감
     ['radius', '안쪽 사진 모서리 (px)', 0, 120, 1], ['zoom', '사진 확대 (%)', 100, 200, 1], ['x', '사진 좌우 (%)', 0, 100, 1], ['y', '사진 위아래 (%)', 0, 100, 1],
 ];
 const SHADOW_SLIDERS = [['edgeShadowAlpha', '진하기'], ['edgeShadowX', '좌우 거리'], ['edgeShadowY', '위아래 거리'], ['edgeShadowBlur', '번짐'], ['edgeShadowSpread', '확장']];

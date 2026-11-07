@@ -158,7 +158,12 @@ await test('panel.js 연결: 같은 update(되돌리기 한 단계) · 채팅 �
     assert.match(panel, /bindSettingsSearch\(root, navigate, \{\s*read: path => path === 'palette' \? paletteBrightness\(getSettings\(\)\.palette\) : getPath\(getSettings\(\), path\),\s*write: changes => update\(st => \{ for \(const \[path, value\] of changes\) \{ if \(path === 'palette'\) st\.palette = withBrightness\(st\.palette, value\); else setPath\(st, path, value\); \} \}\),/);
     assert.match(panel, /row\('AI 로 설정 바꾸기', toggle\('searchAi\.on', !!s\.searchAi\?\.on\)/);
     assert.match(panel, /data-search-ai-tokens/);
-    assert.match(panel, /select\[data-search-ai-profile\]/);
+    assert.match(panel, /import\('\.\/settings-ai-connection\.js'\)/, '연결 UI는 보일 때 불러와요');
+    assert.match(panel, /m\.mountSettingsAiConnection\(slot,/, '연결 슬롯에 공용 선택기를 붙여요');
+    assert.match(panel, /write: mutate => update\(st => mutate\(st\.searchAi\), false\)/, '연결 변경도 기존 되돌리기 경로를 써요');
+    const connection = read('src/settings-ai-connection.js');
+    assert.match(connection, /select data-search-ai-connection-choice/, '현재 연결·프로필·직접 연결을 한 선택기로 고르게 해요');
+    assert.match(connection, /getSupportedProfiles/, '기존 연결 프로필도 선택기에 남겨요');
     assert.match(read('css/44-settings-search.css'), /\.bl-search-results button:not\(\.bl-search-ctl\)/, '결과 줄 단추 모양이 조작 단추에 번지지 않게');
 });
 

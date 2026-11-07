@@ -56,28 +56,28 @@ export const SAMPLE_INPUTS={
     'fruit-theater':['<ccd>\n세라피나가 찻잔을 내려놓았다.\n"차가 식기 전에 마셔요."\n『조금 쑥스럽네.』\n〔딸깍〕\n> 난롯불이 낮게 탄다\n||오늘의 한 줄: 숲은 조용했다\n</ccd>'],
     'fruit-reverie':['<prologue>\n模式：memory\n가상력 12년 봄 · 숲 오두막\n난롯불 옆에서 처음 들은 이야기\n세라피나는 찻잔을 두 손으로 감쌌다.\n</prologue>'],
     'fruit-summary':['<meow_FM>\nserial: 12\ntime: 가상력 12년 5월 3일 저녁\nscene: 숲 오두막\nplot: 세라피나가 다친 손님에게 약초 차를 건넸어요.\nseeds: <li>낡은 숲길 지도</li><li>창밖의 그림자</li>\n</meow_FM>'],
-    'sola-tempo':['<tempo>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</tempo>'],
-    'sola-feeling':['<fengine>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</fengine>'],
-    'sola-bond':['<bond>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</bond>'],
-    'sola-cabinet':['<cabinet>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</cabinet>'],
-    'sola-thought-engine':['<thought_engine>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</thought_engine>'],
-    'sola-calendar':['<date>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</date>'],
-    'sola-wardrobe':['<wardrobe>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</wardrobe>'],
-    'sola-inventory':['<inventory>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</inventory>'],
-    'sola-cast':['<scene_cast>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</scene_cast>'],
-    'sola-notebook':['<story_notes>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</story_notes>'],
-    'sola-trait':['<solatag>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</solatag>'],
-    'sola-matrix':['<char_matrix>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</char_matrix>'],
-    'sola-heart':['<heart>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</heart>'],
-    'sola-current':['<current>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</current>'],
-    'sola-arrow':['<arrow>\n세라피나 | 숲 오두막의 저녁 | 약초 차를 건네며 손님을 살펴요\n</arrow>'],
+    'sola-tempo':['<tempo>STEADY</tempo>'],
+    'sola-feeling':["<fengine>\nGuide:\nIW=2↑ | T=2 | F=3↑ | D=1 | Y=2\nMood: 손님을 향한 경계가 조금 누그러졌어요.\n</fengine>"],
+    'sola-bond':["<bond>\nPair: Guide / Traveler\nDynamic: 서로를 조심스럽게 알아가요.\nShift: +작은 신뢰 / -남은 망설임\n</bond>"],
+    'sola-cabinet':["<cabinet>\nMask: 침착한 숲지기예요.\nInternal: 손님의 이야기가 궁금해요.\nBoundary: 이름을 먼저 묻지는 않아요.\n</cabinet>"],
+    'sola-thought-engine':["<thought_engine char=\"Guide\">\n찻잔을 두 손으로 감싸 쥔 모습을 보고 긴장이 풀렸다는 걸 알아챘어요. 다음에는 숲길 이야기를 꺼내 보려 해요.\n</thought_engine>"],
+    'sola-calendar':["<date>\nDay: 가상력 12년 봄의 셋째 날\nTime: 오후 7시 20분\nElapsed: 만난 뒤 두 시간\n</date>"],
+    'sola-wardrobe':["<wardrobe>\nLayers: 회색 외투와 얇은 목도리예요.\nCondition: 소매 끝이 빗물에 조금 젖었어요.\nTells: 찻잔을 건네는 손끝이 조금 떨려요.\n</wardrobe>"],
+    'sola-inventory':["<inventory>\nIn-Hand: 따뜻한 찻잔을 들고 있어요.\nCarried: 약초 주머니와 낡은 지도가 있어요.\nConcealed: 안주머니에 작은 열쇠를 넣어 뒀어요.\n</inventory>"],
+    'sola-cast':["<scene_cast>\nLocation: 숲 오두막의 난롯가예요.\nActive Speakers: 숲지기와 여행자가 있어요.\nAmbient NPCs: 창밖의 새들이 잠들었어요.\nObservable Facts: 젖은 외투에서 물이 조금씩 떨어져요.\n</scene_cast>"],
+    'sola-notebook':["<story_notes>\nThreads: 낡은 지도에 표시된 길이 남아 있어요.\nSeeds: 창밖에서 작은 종소리가 들렸어요.\nMotives: 손님이 길을 잃은 이유를 알아보려 해요.\nHorizon: 날이 밝으면 숲길을 함께 살펴봐요.\n</story_notes>"],
+    'sola-trait':["<solatag>\nTraits: 신중하고 세심해요.\nVoice: 낮고 차분하게 말해요.\nBoundary: 대답을 재촉하지 않아요.\n</solatag>"],
+    'sola-matrix':["<char_matrix>\nGuide\nOrientation: 낯선 손님을 살피고 있어요.\nKnowledge: 오두막 주변 길을 잘 알아요.\nStatus: 차를 마시며 쉬고 있어요.\n</char_matrix>"],
+    'sola-heart':["<heart>\nEgo: 손님을 돕기로 했어요.\nNerve: 낯선 소리에 아직 조심스러워요.\nBody: 긴장이 조금 풀렸어요.\nPsyche: 지도의 사연이 궁금해요.\n</heart>"],
+    'sola-current':["<current>\nCadence: 천천히 대화를 이어가요.\nFocus: 손님이 꺼낸 지도를 보고 있어요.\nState: Gathering\n</current>"],
+    'sola-arrow':["<arrow>\nGamble: 먼저 길을 안내하겠다고 말해요.\nTrajectory: 오두막 밖으로 대화가 이어져요.\nFriction: 비가 아직 그치지 않았어요.\n</arrow>"],
     'sola-ooc':['((OOC: 세라피나 장면은 조금 더 천천히 갈게요.))'],
     'sola-user-ooc':['((OOC: 세라피나의 말투를 부드럽게.))'],
     'sola-easel':['<sola_easel>\n세라피나 장면 점검: 속도 보통\n</sola_easel>'],
     'sola-hud':['<sola_hud>\n<details>\n<summary>숲 오두막 | 저녁</summary>\n</details>\n</sola_hud>'],
     'sola-chatterbox':['<chatterbox>\n<sola_text>세라피나가 찻잔을 내밀었어요!</sola_text>\n<user_text>고마워요.</user_text>\n</chatterbox>'],
     'sola-capsule':['<thought>세라피나는 손님이 이름을 말해 줄지 조용히 기다렸다.</thought>'],
-    'sola-micro':['세라피나가 숲의 약초를 꺼냈다.'],
+    'sola-micro':['세라피나가 <tell note="손끝이 조금 떨려요.">찻잔</tell>을 건넸어요. <lore entry="숲에서 자라는 향긋한 약초예요.">은잎 풀</lore>과 <translate meaning="어서 와요.">옛 인사말</translate>을 소개했어요.'],
     status:['<status_bar>\n日期：가상력 12년 5월 3일 목요일\n时间：오후 3:20\n天气：맑음 · 산들바람 22℃\n地点：오래된 도서관 · 동쪽 창가\n题记：바람이 책장을 넘기면 이야기는 다시 시작된다.\n之间：반걸음 거리 · 아직 펼치지 않은 우산\n</status_bar>',
         '<status_bar>\n[Info|가상력 12년 5월 3일 목요일|오후 3:20|맑음 · 산들바람 22℃|오래된 도서관 · 동쪽 창가]\n[Quote|바람이 책장을 넘기면 이야기는 다시 시작된다.]\n[Outfit|회색 목도리와 긴 코트|파란 겉옷과 운동화]\n</status_bar>'],
     compact:['◸가상력 12년 5월 3일 · 15:20｜오래된 도서관 · 동쪽 창가<present>맑음 · 호박색 오후 빛｜책장 사이로 오후의 빛이 들어왔다◹'],
@@ -135,7 +135,7 @@ export function runSampleScript(script,text){
 }
 // 원작이 기본으로 꺼 두는 선택 규칙 이름(「Hide @Tracker scene backdrop (enable for settings it cannot fit)」 · 「… Collapsed (Enable for collapsed)」)
 const OPTION_RULE=/\(\s*enable\b/i;
-const placementOk=s=>!Array.isArray(s?.placement)||!s.placement.length||s.placement.includes(2);
+const placementOk=(s,type)=>!Array.isArray(s?.placement)||!s.placement.length||s.placement.includes(type.id==='sola-user-ooc'?1:2);
 // 이 종류를 그리는 정규식 묶음 — 원작 뿌리 class 를 내는 정규식이 든 목록 하나를 골라, 그 목록의 관련 정규식을 순서대로.
 //   8.1.0 그 종류의 카드를 내는 규칙이 켜져 있으면 실리태번처럼 켜진 규칙만 써요(꺼 둔 「장면 배경 숨기기」 같은 규칙이 섞이면 해 · 달이 사라졌어요).
 //   카드 규칙이 전부 꺼져 있으면(그 모듈을 안 쓰는 설정 · 통째로 꺼 둔 사본) 모양을 보여 주려고 관련 규칙을 다 쓰되,
@@ -150,7 +150,7 @@ export function pickSampleChain(type,lists,version='v3'){
     const ranked=lists.filter(({list})=>fits(list)).sort((a,b)=>(b.list.some(s=>has(s)&&!s.disabled)?1:0)-(a.list.some(s=>has(s)&&!s.disabled)?1:0));
     for(const {where,list} of ranked){
         if(!list.some(has))continue;
-        const usable=list.filter(s=>s&&!s.promptOnly&&placementOk(s)&&tokens.some(t=>String(s.replaceString||'').includes(t)));
+        const usable=list.filter(s=>s&&!s.promptOnly&&placementOk(s,type)&&tokens.some(t=>String(s.replaceString||'').includes(t)));
         const chain=usable.some(s=>!s.disabled&&makes(s))?usable.filter(s=>!s.disabled):usable.filter(s=>!s.disabled||!OPTION_RULE.test(String(s.scriptName||'')));
         if(chain.length)return {where,chain};
     }

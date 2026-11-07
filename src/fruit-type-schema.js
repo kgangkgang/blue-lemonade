@@ -135,7 +135,7 @@ export function fruitTypeCss(value, fontFamily = ()=>'') {
             if(r.wrap==='nowrap')declarations.push('overflow-x:auto!important');
             rules.push(`${targets}{${declarations.join(';')}}`);
             // 상태창 인용문 위 작은 제목(.movie-deco-eng · 「장면」 「메아리」)은 원작처럼 작은 글자로 첫 글자 위에 — 본문 크기를 물려주면 첫 줄에 겹쳐요
-            const inner=key==='quote'&&type.id==='status'?':is(span,p,b,i,em,strong):not(.movie-deco-eng)':':is(span,p,b,i,em,strong)';
+            const inner=key==='quote'&&type.id==='status'?':is(span,p,b,i,em,strong):not(.movie-deco-eng)':typeOwner(type)==='sola'?':is(div,span,p,b,i,em,strong,li,dt,dd)':':is(span,p,b,i,em,strong)';
             rules.push(`${splitList(selector).map(x=>`${inRoot(base,x)} ${inner}`).join(',')}{${family?'font-family:inherit!important;':''}font-size:inherit!important;font-weight:inherit!important;font-style:inherit!important;letter-spacing:inherit!important;line-height:inherit!important;text-align:inherit!important}`);
             if(key==='info'&&type.id==='status')rules.push(`${type.root} .fate-grid-value,${type.root} .fate-grid-label{font-size:inherit!important;line-height:inherit!important;font-weight:inherit!important;font-style:inherit!important;letter-spacing:inherit!important;white-space:inherit!important;overflow-wrap:inherit!important;word-break:inherit!important;${family?'font-family:inherit!important;':''}text-align:inherit!important}`);
             // 8.1.0 원작은 글자마다 flex 칸이라 첫 줄이 「짧은 선 · 첫 글자 · …」로 이어지고 작은 제목(.movie-deco-eng)이 그 첫 글자 위에 와요.

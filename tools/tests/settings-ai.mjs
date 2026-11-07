@@ -182,13 +182,14 @@ await test('실리태번으로 보내기: 프로필이 없으면 generateRaw(프
 });
 
 await test('설정 키 searchAi: 기본 꺼짐 · 깨진 값 정리 · 「테마 모습」 초기화에 남음 · 이름표 · 채팅 › 기타 · 스타일에 안 담김', async () => {
-    assert.deepEqual(Settings.DEFAULTS.searchAi, { on: false, profileId: '' });
+    const directDefaults = { provider: '', models: {}, customModels: {}, customUrl: '' };
+    assert.deepEqual(Settings.DEFAULTS.searchAi, { on: false, profileId: '', ...directDefaults });
     for (const [bad, want] of [[null, { on: false, profileId: '' }], ['x', { on: false, profileId: '' }], [{ on: 'true', profileId: 5 }, { on: false, profileId: '' }], [{ on: true, profileId: 'p' }, { on: true, profileId: 'p' }]]) {
         ctx.extensionSettings = { salty: { ...structuredClone(Settings.DEFAULTS), searchAi: bad } }; Settings.invalidateSettings();
-        assert.deepEqual(Settings.getSettings().searchAi, want, JSON.stringify(bad));
+        assert.deepEqual(Settings.getSettings().searchAi, { ...want, ...directDefaults }, JSON.stringify(bad));
     }
     const next = Settings.resetSettings({ look: true });
-    assert.deepEqual(next.searchAi, { on: true, profileId: 'p' });
+    assert.deepEqual(next.searchAi, { on: true, profileId: 'p', ...directDefaults });
     assert.equal(SETTING_LABELS['searchAi.on'], 'AI 로 설정 바꾸기');
     assert.deepEqual(D.settingRoute('searchAi.on'), { tab: 'chat', sub: 'etc' });
     const styles = await import(url('src/styles.js'));
@@ -199,6 +200,25 @@ await test('설정 키 searchAi: 기본 꺼짐 · 깨진 값 정리 · 「테마
 
 await test('연결: CI 목록에 이 시험', () => {
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/settings-ai\.mjs \./);
+});
+
+await test('직접 연결도 클릭 시점의 회사를 쓰고, 미리보기 취소는 설정을 바꾸지 않아요', async () => {
+    const s=state();s.searchAi={...s.searchAi,on:true,provider:'google',models:{google:'설정전용-검사모델'},customUrl:'https://설정에만-있는-주소.invalid'};
+    const calls=[];const f=fakeRoot(s,{send:async(messages,opts)=>{calls.push({messages,opts});return '{"changes":[{"key":"type.size","value":18},{"key":"searchAi.provider","value":"custom"}]}';}});
+    f.type('글씨 크게');f.click('[data-search-ai]');s.searchAi.provider='custom';s.searchAi.models.google='나중에 바꾼 모델';
+    await sleep(30);assert.equal(calls.length,1);assert.equal(calls[0].opts.connection.provider,'google');assert.equal(calls[0].opts.connection.models.google,'설정전용-검사모델');
+    assert.doesNotMatch(JSON.stringify(calls[0].messages),/설정전용-검사모델|설정에만-있는-주소|searchAi\.provider|비밀 대화/);
+    assert.equal(f.writes.length,0);f.click('[data-search-ai-cancel]');assert.equal(f.writes.length,0);assert.equal(s.type.size,16);
+});
+
+await test('회사별 모델 기억은 보존하고 사용 시 잘못된 지도 키를 버려요',async()=>{
+    const ai={on:true,profileId:'old-profile',provider:'google',models:JSON.parse('{"google":" model-a ","constructor":"bad","__proto__":{"polluted":1}}'),customModels:{custom:' local-model '},customUrl:' https://example.invalid/v1 '};
+    ctx.extensionSettings={salty:{...state(),searchAi:ai}};Settings.invalidateSettings();
+    const stored=Settings.getSettings().searchAi;
+    const {normalizeModelConfig}=await import(url('src/settings-ai-connection.js'));
+    const saved=normalizeModelConfig(stored);
+    assert.deepEqual(saved,{on:true,profileId:'old-profile',provider:'google',models:{google:'model-a'},customModels:{custom:'local-model'},customUrl:'https://example.invalid/v1'});
+    assert.equal({}.polluted,undefined);assert.deepEqual(normalizeModelConfig(Settings.resetSettings({look:true}).searchAi),saved);
 });
 
 console.log(`settings-ai: ${pass} passed, ${fail} failed`);

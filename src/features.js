@@ -12,13 +12,18 @@ let hooks = { applyAll: null, refreshPanels: null };
 export function setFeatureHooks(next) {
     hooks = next;
 }
-// 9.0.2 부팅 2층: 켜 둔 기능 모듈도 첫 프레임 뒤(시작 덮개 아래)에 받아요 — 실리태번이 확장 정적 묶음을 다 평가하길 기다리는 동안 끼어들지 않게.
-//   받기 전에 syncFeatures 가 여러 번 불려도 받은 뒤 then 이 차례로 돌아 마지막 값이 남아요
+// 첫 프레임 뒤에 받아요. 겹친 적용은 호출 순서대로 끝나 마지막 설정이 남아요.
 const load = (name, url) => zeroSkips(zeroNow, name) && !modules[name] ? Promise.resolve(null) : (modules[name] ??= trackLate(frameReady.then(() => import(url))).catch((error) => {
     delete modules[name];
     console.warn(`[Blue Lemonade] ${name} 기능을 불러오지 못했어요`, error);
     return null;
 }));
+
+// 편집기에서 켠 시트도 설정 복원·테마 끄기로 정리해요.
+export function syncSolaStyle(s) {
+    const on=s.enabled!==false&&s.usageMode!=='extensions'&&s.chat?.solaStyle==='lemon';
+    return on||modules.solaskin?load('solaskin','./sola-skin.js').then(m=>m?.syncSolaSkin(on)):Promise.resolve(false);
+}
 
 // 스크립트 런타임: 시작할 때 파일을 못 받으면(폰에서 가끔) 예전에는 다음 설정 변경 때까지 다섯 개가 전부 '꺼짐'으로 남았다 — 몇 번 다시 받는다
 const ignoredHan=new Set(); let pendingHan=null;
@@ -95,6 +100,7 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (on || modules.historywarning) onGate('drawer', () => load('historywarning', './history-warning.js').then(m => m?.syncHistoryWarning(on)), 'historywarning');
     // 7.0.4 글꼴 설정과 상관없이 테마가 켜져 있으면 — 채팅 iframe 과일 상태창의 낱말 꺾임 막기 (fruit-type-runtime wrapCss)
     if((on&&s.usageMode!=='extensions')||modules.fruittype)load('fruittype','./fruit-type-runtime.js').then(m=>m?.syncFruitTypography(s.fruitTypography,on && s.usageMode!=='extensions'));
+    syncSolaStyle(s);
     // 6.6.5 다른 확장 · 실리태번의 두꺼운 알약 · 동그라미 글자 버튼을 얇은 둥근 네모로 (큰 알약이 무거워 보이던 것)
     const squared=on&&s.usageMode!=='extensions'&&s.squareButtons!==false;
     if(squared||modules.squared)load('squared','./squared-buttons.js').then(m=>m?.syncSquaredButtons(squared));

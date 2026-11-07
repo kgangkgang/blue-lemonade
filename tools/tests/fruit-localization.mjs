@@ -41,6 +41,16 @@ function environment(){
 }
 const add=(parent,tag,attrs,text)=>{const x=new Element(tag,attrs,text);parent.append(x);return x};
 let dictionary;vm.runInNewContext(codeOf('fruit'),{BlueLemonade:{translate:data=>dictionary=data}},{timeout:1000});
+const qingguoV2=JSON.parse(fs.readFileSync(path.join(root,'tools/tests/fixtures/qingguo-hesperides-v2-names.json'),'utf8')).rows;
+check('청과 V2 새 이름과 이전 이름의 사전 항목을 함께 보존해요',()=>{
+  assert.equal(qingguoV2.filter(r=>r.kind==='new').length,9);
+  assert.equal(qingguoV2.filter(r=>r.kind==='alias').length,18);
+  for(const row of qingguoV2){
+    const entry=dictionary.prompts.find(p=>p.id===row.id&&p.name===row.name);
+    assert.ok(entry,row.name);assert.equal(entry.title,row.title);assert.ok(entry.desc);
+    if(row.legacyName)assert.equal(dictionary.prompts.find(p=>p.id===row.id&&p.name===row.legacyName)?.title,row.legacyTitle,'이전 판 이름도 지원해요');
+  }
+});
 {const src=path.join(root,'tools/scripts-src/fruit-family'),read=n=>JSON.parse(fs.readFileSync(path.join(src,n),'utf8'));
  const parts=['common','fruit','qingguo','sese'].map(n=>read(`prompts-${n}.json`)),norm=v=>String(v||'').normalize('NFKC').replace(/[︎️\s]/g,'');
  check('family dictionary: priority 20, partial, at least 460 prompt and 48 regex titles',()=>{assert.equal(dictionary.priority,20);assert.equal(dictionary.partial,true);assert.ok(dictionary.prompts.length>=460);assert.ok(dictionary.regex.length>=48)});
@@ -58,7 +68,22 @@ const edit=add(panel,'div',{contenteditable:'true'},'首页'),svg=add(panel,'svg
 const version=add(panel,'small',{},'脚本 v20261003.1 · 本地测试 · 果实 V6+');
 const reasoning=add(e.body,'select',{id:'reasoning_select'}),option=add(reasoning,'option',{value:'果实之心'},'果实之心'),foreign=add(reasoning,'option',{value:'custom'},'首页');
 const qr=add(panel,'button',{'data-qr':'synthetic','data-qr-label':'推进剧情'},'推进剧情');
+const firstPart=text=>text.replace(/\s*#.*$/,'').replace(/\s*@[^\s@#]+/g,'').split('｜')[0].trim();
+const qingguoV2Nodes=qingguoV2.map(row=>({row,node:add(panel,'span',{class:'fh-item-name','data-prompt-id':row.id},firstPart(row.name))}));
+const qingguoV2Hints=qingguoV2.flatMap(row=>row.name.split('｜').slice(1).filter(text=>/\p{Script=Han}/u.test(text)).map(text=>({text,node:add(panel,'span',{class:'fh-item-meta'},text)})));
 e.run();
+check('과일의 마음에서 청과 V2의 짧은 항목 이름을 한글로 보여 주고 식별자는 유지해요',()=>{
+  for(const {row,node}of qingguoV2Nodes){
+    // 같은 짧은 원문에 이전 판의 한글 별칭이 있으면 그 표시를 유지할 수 있어요.
+    const expected=new Set(dictionary.prompts.filter(p=>p.id===row.id&&firstPart(p.name)===firstPart(row.name)).map(p=>firstPart(p.title)));
+    assert.ok(expected.has(node.text),`${row.name}: ${node.text}`);assert.doesNotMatch(node.text,/\p{Script=Han}/u);
+    assert.equal(node.getAttribute('data-prompt-id'),row.id);
+  }
+});
+check('청과 V2의 선택 꼬리표와 항목 풀이도 한글로 보여요',()=>{
+  assert.ok(qingguoV2Hints.length>20);
+  for(const {text,node}of qingguoV2Hints){assert.notEqual(node.text,text);assert.doesNotMatch(node.text,/\p{Script=Han}/u,text);}
+});
 check('home text and close hint use their correct contexts',()=>{assert.equal(home.text,'홈');assert.equal(close.getAttribute('title'),'닫기')});
 check('inputs keep original values and toggle state',()=>{assert.equal(prompt.value,'首页');assert.equal(prompt.checked,true);assert.equal(prompt.getAttribute('placeholder'),'전체 항목 검색…');assert.equal(area.text,'首页')});
 check('chat, code, editable content, keywords, profiles and preview stay original',()=>{for(const node of [chat,profile,word,preview,edit,svg])assert.equal(node.text,'首页');assert.equal(code.text,'{{输入}}');assert.equal(author.text,'@喵喵电波MoM')});

@@ -15,9 +15,13 @@ const rows = [
  ['image','frame','액자 가로 비율 (%)','액자 가로 비율 크기'],
  ['image','frame','액자 세로 비율 (%)','액자 세로 비율 크기'],
  ['image','frame','액자 기울기 (도)','액자 기울기 각도 회전 비스듬히 기울이기'],   // 1.0.1 심플 액자 기울기(-10~10도)
+ ['image','frame','액자 색상 돌리기 (도)','액자 색상 색감 색조 돌리기 색 바꾸기 hue'],   // 1.0.7 액자 색감
+ ['image','frame','액자 채도 (%)','액자 채도 색감 진하게 흐리게 선명 saturate'],
+ ['image','frame','액자 밝기 (%)','액자 밝기 밝게 어둡게 색감 brightness'],
  ['image','frame','장식 액자 사용','장식 액자 사용'],
  ['image','frame','에셋 장식 액자','사진 액자 프리셋 보관함 저장 그림','장식 액자'],
  ['prompt','deus','데우스 빠른 설정','데우스 2.5 V3 솔라 Sola QR 퀵리플라이 옵션 프리셋 토글 선택 한글화 빠른 토글'],
+ ['prompt','sola','솔라 카드 스타일','솔라 Sola 상태창 카드 원작 블루레몬 테마 모양 접기 색 글꼴','상태창 글자'],
  ['prompt','fruit','과일 계열 (과일 · 야한과일 · 청과)','과일 과일계열 야한과일 涩果 청과 青果 과일의 마음 QR 퀵리플라이 꾸미기 스크립트 글꼴 줄바꿈 버튼 한글화 출처'],
  ['prompt','fruit','캐릭터 이름 연동','캐릭터 이름 연동 프롬프트 정규식 자동 켜기 끄기 기본 짝 채팅 프리셋 대사 색상','캐릭터 이름 연동'],
  ['extensions','tts','TTS','음성 읽기 목소리 API 감정 대사 재생 색깔 밑줄 확장 탭 설정 표시 요술봉 MiniMax OpenAI ElevenLabs Gemini Azure'],
@@ -372,14 +376,14 @@ function quickChange(root, path, value) {
 }
 async function askAi(root) {
  const ops = root._searchOps || {}, query = root._settingsQuery || '';
- const ai = typeof ops.ai === 'function' ? ops.ai() : null;
+ const ai = typeof ops.ai === 'function' ? structuredClone(ops.ai()) : null;
  if (!ai?.on || !query.trim() || typeof ops.read !== 'function') return;   // 꺼 두면 요청 0
  root._searchAi?.controller?.abort();
  const controller = new AbortController(), state = { query, state: 'asking', controller };
  root._searchAi = state; paintSettingsSearch(root);
  try {
   const m = await import('./settings-ai.js');
-  const result = await m.askSettingsAi({ sentence: query, read: ops.read, profileId: ai.profileId || '', send: ops.send, signal: controller.signal, onTokens: n => { state.tokens = n; if (root._searchAi === state) paintSettingsSearch(root); } });
+  const result = await m.askSettingsAi({ sentence: query, read: ops.read, profileId: ai.profileId || '', connection: ai, send: ops.send, signal: controller.signal, onTokens: n => { state.tokens = n; if (root._searchAi === state) paintSettingsSearch(root); } });
   if (root._searchAi !== state) return;
   Object.assign(state, { state: 'preview', changes: result.changes, dropped: result.dropped, tokens: result.tokens ?? state.tokens });
  } catch (error) {
@@ -388,7 +392,7 @@ async function askAi(root) {
  }
  keepPlace(root, () => paintSettingsSearch(root), '[data-search-ai-apply]');
 }
-/** ops: { read(path), write([[path, value]]) — 한 번에 한 단계로 저장 · 되돌리기, ai() → { on, profileId }, send?(messages, { profileId, signal }) — 시험용 } */
+/** ops: { read(path), write([[path, value]]) — 한 번에 한 단계로 저장 · 되돌리기, ai() → 연결 설정, send?(messages, { profileId, connection, signal }) — 시험용 } */
 export function bindSettingsSearch(root,navigate,ops={}) {
  root._searchOps=ops;
  let typingTimer=0;

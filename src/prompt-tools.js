@@ -32,7 +32,7 @@ export function solaQuickShortcutMarkup(){
 
 // 상태창 글자 설정은 페이지 끝의 자기 접기 묶음 — 다른 설정 묶음과 같은 모양, 과일 · 데우스 같은 자리
 export function fruitTypographyGroup(kind){
-    return `<div class="salty-label" data-search-anchor="상태창 글자">상태창 글자</div>${fruitTypographyMarkup(kind)}`;
+    return `<div class="salty-label" data-search-anchor="상태창 글자">${kind==='sola'?'상태창 모양 · 글자':'상태창 글자'}</div>${fruitTypographyMarkup(kind)}`;
 }
 
 export function fruitPromptMarkup(){

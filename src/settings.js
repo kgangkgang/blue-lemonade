@@ -9,13 +9,13 @@ import { syncWeatherProfile } from './weather-profiles.js';
 import { tidySceneSound } from './scene-sound-rules.js';   // 6.9.8 장면 소리 설정 정리 (순수 모듈)
 import { tidyMultiAvatar } from './multi-avatar/pick.js';   // 7.9.9 프로필 여러 개 (순수)
 // 추가 모양의 정리 코드는 첫 프레임 뒤에 연결하고 저장 키는 그대로 둬요.
-const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100, presetTilt: 0 };   // presetTilt: 1.0.1 액자 기울기(도, -10~10)
+const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100, presetTilt: 0, frameHue: 0, frameSat: 100, frameBright: 100 };   // presetTilt: 1.0.1 액자 기울기(도, -10~10)
 const MIX_DEFAULT = { on: false, families: ['blue', 'strawberry'], angle: 90, weights: [50, 50, 50], blend: 50 };
 import { FRAME_DEFAULTS, FRAME_RANGE, tidyFrame } from './frames.js';
 import { cutEdgeDefaults, tidyCutEdge } from './cutedge.js';
 // 설정 저장 칸: extension_settings.salty
 import { PALETTE_ALIASES, isPaletteId } from './palettes.js';
-import { PRIVATE_FLAGS } from './private-addons.js';   // 8.3.0 테마 안으로 들인 단독 확장의 켜고 끄기 플래그(1.0.0 은 빈 표)
+import { PRIVATE_FLAGS } from './private-addons.js';   // 내장 단독 확장 플래그(공개판은 빈 표)
 
 export const KEY = 'salty';
 // 6.9.5 처음 설정 안내(first-run.js): 이 모듈을 읽는 순간 테마 설정 칸이 없었나 — getSettings() 가 칸을 만들기 전에 잰다 (기존 사용자는 늘 false · 1.0.0 되살림)
@@ -85,7 +85,7 @@ export const DEFAULTS = {
     em: { italic: true, weight: 400, size: null, letterSpacing: null },
     strike: { line: true, own: false, color: '#ff7a7a', thickness: 2, fade: 55, italic: false },   // ~~취소선~~ — own: 선 색을 따로(false 면 글자 색), thickness px, fade: 지워진 글자를 남기는 정도 %   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
     strong: { weight: 650, size: null, letterSpacing: null },              // **강조**
-    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], inkContrast: true, triangleFold: false, weatherBubble: 70, qrCtxNames: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: false, helpMarks: true, webSearchMarks: true, personaTall: false, hideSendTextarea: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, emptyGuard: true, replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrFold: true, qrFolded: false, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // 칸 뜻은 쓰는 모듈 머리 주석에(hiddenFade 5.6.8 숨긴 메시지 흐리게 · streamFade 2.9.5 · tone 2.6.1 · toneInline 2.6.0 · selectPop 2.5.0 · colorPop 3.5.0 · unifyRegex/unifyInline 포인트색 하나로) — 1.0.1 시작 그래프 상한 때문에 줄였어요
+    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], inkContrast: true, triangleFold: false, weatherBubble: 70, qrCtxNames: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: false, helpMarks: true, webSearchMarks: true, personaTall: false, hideSendTextarea: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, emptyGuard: true, replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, solaStyle: 'original', demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrFold: true, qrFolded: false, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // 채팅 설정 뜻은 각 기능 모듈의 머리 주석에 있어요.
     // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
     reader: { autoHide: false },
     // 3.4.0 프롬프트 호환: 데우스 엑스 마키나 — 끄면 카드 스킨 · 폰 접기 · 카드 색 통일 · 카드 이모티콘 · 트래커 날씨가 모두 쉰다 (값은 남음)
@@ -119,9 +119,9 @@ export const DEFAULTS = {
     wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true, maskWords: '' }, // maskWords: 6.0.4 잠시 가리기 낱말(한 줄에 하나 · 쉼표) — 스위치는 세션 안에서만, 저장하지 않는다 (wordmask.js) · 1.0.0 되살림(9.0.0 5357f89e 에서 걷었던 단어 치환)
     captureTools: { replace: false, replaceRules: [], preset: '', redact: false, names: [], mask: 'auto', maskWord: '○○', maskStyles: {}, format:'image', imagePages:false, duration:6, maxMB:8, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true, filterPreset:'none', grain:0, brightness:0, contrast:0, saturation:0, temperature:0, vignette:0 }, // filterPreset · grain … vignette: 5.5.3 캡처 필터 (프리셋 none|mono|film|vintage|cool|warm|custom · 전부 0 이면 결과 픽셀 그대로)
     onehand: { on: false, swipe: true, imp: true, cont: true, regen: true, top: true, bottom: true, jump: true, delLast: true },
-    logCopy: { on: true, shape: 'card', palette: '', category: 'basic', recent: [], fav: [], custom: [], tagsOff: false },   // 로그 복사: 채팅에서 고른 글을 보이는 그대로 (selection-bar.js · log-copy*.js) — on 만 설정 창에, 나머지는 시트가 마지막 고른 것을 기억 · custom = 내 글꾸 [{ id, name, html(소독한 것), slot }] · 1.0.1 마트 글꾸는 { template, colors, messages, tail, emoji }
+    logCopy: { on: true, shape: 'card', palette: '', category: 'basic', recent: [], fav: [], custom: [], tagsOff: false, titleOff: false, dateOff: false, namesOff: false, topOff: false, bottomOff: false },   // 로그 복사 — on 만 설정 창 · 나머지는 시트가 기억(custom: 내 글꾸 · 마트 글꾸)
     extcheck: { aiConsent: false, profileId: '' },   // 1.0.3 확장 충돌 검사 AI 전송 동의 · 연결(기억)
-    searchAi: { on: false, profileId: '' }, // 10-31 검색창 「AI 에게 맡기기」: 켠 사람만 · 단추를 눌렀을 때만 요청 한 번 · 미리보기 뒤 「적용」 (settings-search.js · settings-ai.js). profileId '' = 실리태번 지금 연결
+    searchAi: { on: false, profileId: '', provider: '', models: {}, customModels: {}, customUrl: '' },
     replyNotify: { on: false }, // 4.8.7 답 완료 알림: 다른 앱을 보고 있을 때 답이 끝나면 폰 알림 · 진동 (reply-notify.js)
     bgWindow: { on: false, mode: 'audio' }, // 4.3.2 백그라운드 창 (실험): 답을 기다리는 동안 PIP 작은 창을 띄워 다른 앱을 봐도 생성 · 번역이 이어지게
     sceneSound: { on: false, volume: 40, thunder: true, background: true, files: {}, music: { on: false, volume: 30, mood: 'auto', files: {} } }, // 6.9.8 장면 소리: 날씨 효과에 맞춘 배경 소리 (scene-sound.js) — volume %, thunder 비에 천둥, background 숨은 탭에서도, files { rain | wind | hush | water: '/user/files/…' }
@@ -419,10 +419,15 @@ function tidyFlags(s) {
     s.replyNotify = { on: isObj(s.replyNotify) && s.replyNotify.on === true };
     s.apiStatus = { on: isObj(s.apiStatus) && s.apiStatus.on === true };   // 1.0.3
     s.logCopy = tidyLogCopy(s.logCopy);
-    const xc = isObj(s.extcheck) ? s.extcheck : {}; s.extcheck = { aiConsent: xc.aiConsent === true, profileId: typeof xc.profileId === 'string' ? xc.profileId.slice(0, 120) : '' };
+    const profile = v => typeof v === 'string' ? v.slice(0,120) : '';
+    const xc = isObj(s.extcheck) ? s.extcheck : {}; s.extcheck = { aiConsent: xc.aiConsent === true, profileId: profile(xc.profileId) };
     const q = isObj(s.qrShelf) ? s.qrShelf : {};   // 1.0.3 QR 책장 (칸 안쪽은 열 때 tidyStore)
     s.qrShelf = { ...q, on: q.on === true, items: isObj(q.items) ? q.items : {}, recent: Array.isArray(q.recent) ? q.recent : [] };
-    s.searchAi = { on: isObj(s.searchAi) && s.searchAi.on === true, profileId: isObj(s.searchAi) && typeof s.searchAi.profileId === 'string' ? s.searchAi.profileId.slice(0, 120) : '' };   // 10-31
+    {
+        const ai = s.searchAi, text = (v,n) => typeof v === 'string' ? v.trim().slice(0,n) : '';
+        const modelMap = v => isObj(v) ? v : {};
+        s.searchAi = { on: ai.on === true, profileId: profile(ai.profileId), provider: text(ai.provider,32), models: modelMap(ai.models), customModels: modelMap(ai.customModels), customUrl: text(ai.customUrl,2048) };
+    }
     s.bgWindow = { on: s.bgWindow.on === true, mode: s.bgWindow.mode === 'pip' ? 'pip' : 'audio' };
     s.sceneSound = tidySceneSound(s.sceneSound);   // 6.9.8 장면 소리
     for (const key of Object.keys(DEFAULTS.onehand)) s.onehand[key] = flag(s.onehand[key], DEFAULTS.onehand[key]);
@@ -436,6 +441,7 @@ function tidyFlags(s) {
     if (!Array.isArray(s.presetFolders.folders)) s.presetFolders.folders = [];
     if (isObj(s.chat)) {
         s.chat.demSkin = flag(s.chat.demSkin, false);
+        s.chat.solaStyle = s.chat.solaStyle === 'lemon' ? 'lemon' : 'original';
         s.chat.demFold = flag(s.chat.demFold, true);
         s.chat.demGlow = Number.isFinite(Number(s.chat.demGlow)) ? Math.min(100, Math.max(0, Math.round(Number(s.chat.demGlow)))) : 35; // 8.0.9 데우스 V3 테두리 빛 (css/30-dem-skin.css --bl-dem-glow)
         s.chat.demPreviewVersion = s.chat.demPreviewVersion === '2.5' ? '2.5' : 'v3'; // 8.1.0 상태창 글자 미리보기의 데우스 표본 판 (fruit-type-ui.js, 데우스 전체에 하나)
@@ -485,7 +491,7 @@ function tidyFlags(s) {
         if(!['left','right'].includes(s.chat.weatherOrbitDirection))s.chat.weatherOrbitDirection='right';
         range('weatherSway', 0, 300, 100); range('weatherSpin', 0, 300, 100);
         if (!['natural', 'straight', 'flutter', 'streak'].includes(s.chat.weatherMotion)) s.chat.weatherMotion = 'natural';
-        // 날씨 값을 전부 다듬은 뒤에 프로필에 적는다 — 먼저 적으면 새 값이 빈 채로 저장됐다가 다음 불러오기에서 채워져, 저장 · 불러오기를 되풀이한 결과가 달라진다
+        // 날씨 값을 다 다듬은 뒤에 프로필에 적어요(먼저 적으면 저장 · 불러오기 결과가 달라져요)
         syncWeatherProfile(s.chat);
         // 3.5.4 퀵 리플라이 줄: x 가로 스크롤 · y 세로 스크롤(보이는 줄 1~4)
         if (!['x', 'y'].includes(s.chat.qrScroll)) s.chat.qrScroll = 'x';
@@ -621,7 +627,7 @@ function tidyLogCopy(value) {
             ...(typeof c.template === 'string' ? { template: c.template, colors: isObj(c.colors) ? c.colors : {}, messages: str(c.messages, 12) || 'box', tail: str(c.tail, 60), emoji: str(c.emoji, 8), ...(isObj(c.type) ? { type: c.type } : {}) } : {}),
             slot: c.slot === 'auto' ? 'auto' : Array.isArray(c.slot) && c.slot.length <= 64 && c.slot.every(n => Number.isInteger(n) && n >= 0 && n < 10000) ? c.slot : null }));
     const ids = (list, max = 24) => [...new Set((Array.isArray(list) ? list : []).filter(id))].slice(0, max);
-    return { on: v.on !== false, shape: id(v.shape) ? v.shape : 'card', palette: isPaletteId(v.palette) ? v.palette : '', category: id(v.category) ? v.category : 'basic', recent: ids(v.recent).slice(0, 5), fav: ids(v.fav, 96), custom, tagsOff: v.tagsOff === true };
+    return { on: v.on !== false, shape: id(v.shape) ? v.shape : 'card', palette: isPaletteId(v.palette) ? v.palette : '', category: id(v.category) ? v.category : 'basic', recent: ids(v.recent).slice(0, 5), fav: ids(v.fav, 96), custom, tagsOff: v.tagsOff === true, titleOff: v.titleOff === true, dateOff: v.dateOff === true, namesOff: v.namesOff === true, topOff: v.topOff === true, bottomOff: v.bottomOff === true };   // 1.0.7 빼기 칩(제목 · 날짜 · 이름 줄 · 위 글 · 아래 글)
 }
 export function invalidateSettings() { memo = null; }
 export const settingsStats = { tidy: 0 };   // 정리를 몇 번 했나 (시험 · 진단용)
@@ -643,7 +649,7 @@ export function getSettings() {
     settingsStats.tidy++;
     if (!isObj(ext[KEY])) ext[KEY] = structuredClone(DEFAULTS);
     else preserveLegacyLightFlags(ext[KEY]);
-    // 5.1.2: 칸 자체가 깨진 값(fonts: "pretendard" · colorOverrides: "salt" …)이면 그 칸을 기본값으로 — fill() 은 있는 값을 안 건드려 아래 정리 · apply 가 죽었다 (매 시작마다)
+    // 5.1.2: 칸 자체가 깨진 값이면 기본값으로(fill() 은 있는 값을 안 건드려 정리 · apply 가 죽었다)
     for (const [key, value] of Object.entries(DEFAULTS)) {
         if (isObj(value) ? !isObj(ext[KEY][key]) : Array.isArray(value) ? !Array.isArray(ext[KEY][key]) : false) ext[KEY][key] = structuredClone(value);
     }

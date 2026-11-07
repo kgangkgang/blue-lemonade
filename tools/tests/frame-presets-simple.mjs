@@ -121,6 +121,12 @@ test('⑤ decor 정리: presetTilt -10~10 · 글자 아닌 presetLabel 지움 ·
     assert.equal(vars['--bl-image-decor-tilt'], '-2.5deg');
     assert.equal(decorVars({ ...DECOR_DEFAULTS }, 'profile')['--bl-profile-decor-tilt'], '0deg');
     const legacy = { decor: { on: true, art: '', mask: '' } }; tidyDecor(legacy); assert.equal(legacy.decor.presetTilt, 0, '옛 설정은 0 으로 채워요');
+    // 1.0.7 액자 색감: 기본값이면 filter 없음(예전 그대로) · 범위 밖은 잘라요 · 액자 그림 층 변수만
+    assert.deepEqual([legacy.decor.frameHue, legacy.decor.frameSat, legacy.decor.frameBright], [0, 100, 100]);
+    assert.equal(decorVars({ ...DECOR_DEFAULTS }, 'image')['--bl-image-decor-filter'], 'none');
+    const tinted = { decor: { ...DECOR_DEFAULTS, frameHue: 400, frameSat: -5, frameBright: '120' } }; tidyDecor(tinted);
+    assert.deepEqual([tinted.decor.frameHue, tinted.decor.frameSat, tinted.decor.frameBright], [180, 0, 120]);
+    assert.equal(decorVars({ ...DECOR_DEFAULTS, frameHue: 45, frameSat: 80, frameBright: 95 }, 'profile')['--bl-profile-decor-filter'], 'hue-rotate(45deg) saturate(80%) brightness(95%)');
 });
 
 test('⑥ 보관함 상한 30 · 문구의 숫자도 상수 · refreshPreset 이 칩 글자를 옮겨요', () => {

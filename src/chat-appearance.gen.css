@@ -725,7 +725,7 @@ min-width: 28px;
 --bl-decor-ratio: var(--bl-image-decor-ratio); --bl-decor-opacity: var(--bl-image-decor-opacity);
 --bl-decor-window: var(--bl-image-decor-window, 0%); --bl-decor-radius: var(--bl-image-decor-radius);
 --bl-decor-zoom: var(--bl-image-decor-zoom); --bl-decor-position: var(--bl-image-decor-position); --bl-decor-fit: var(--bl-image-decor-fit);
---bl-decor-tilt: var(--bl-image-decor-tilt, 0deg);
+--bl-decor-tilt: var(--bl-image-decor-tilt, 0deg); --bl-decor-filter: var(--bl-image-decor-filter, none);
 }
 .bl-art-frame[data-bl-frame="profile"] {
 --bl-art-shadow: var(--bl-art-shadow-profile, none);
@@ -733,7 +733,7 @@ min-width: 28px;
 --bl-decor-ratio: var(--bl-profile-decor-ratio); --bl-decor-opacity: var(--bl-profile-decor-opacity);
 --bl-decor-window: var(--bl-profile-decor-window, 0%); --bl-decor-radius: var(--bl-profile-decor-radius);
 --bl-decor-zoom: var(--bl-profile-decor-zoom); --bl-decor-position: var(--bl-profile-decor-position); --bl-decor-fit: var(--bl-profile-decor-fit);
---bl-decor-tilt: var(--bl-profile-decor-tilt, 0deg);
+--bl-decor-tilt: var(--bl-profile-decor-tilt, 0deg); --bl-decor-filter: var(--bl-profile-decor-filter, none);
 }
 body.salty #chat .mes_text .bl-art-frame {
 display: block; position: relative; isolation: isolate;
@@ -748,6 +748,7 @@ border: 0 !important; outline: 0 !important; box-shadow: none !important;
 body.salty #chat .bl-art-frame::after {
 content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
 background: var(--bl-decor-art) center / 100% 100% no-repeat; opacity: var(--bl-decor-opacity);
+filter: var(--bl-decor-filter, none);
 }
 body.salty #chat .bl-art-frame > .bl-art-photo {
 position: absolute; inset: 0; display: block; overflow: hidden;
@@ -966,7 +967,7 @@ body.salty.salty-user-profile-banner.salty-header-none #chat .mes[is_user="true"
 --bl-decor-ratio: var(--bl-user-profile-decor-ratio); --bl-decor-opacity: var(--bl-user-profile-decor-opacity);
 --bl-decor-window: var(--bl-user-profile-decor-window, 0%); --bl-decor-radius: var(--bl-user-profile-decor-radius);
 --bl-decor-zoom: var(--bl-user-profile-decor-zoom); --bl-decor-position: var(--bl-user-profile-decor-position); --bl-decor-fit: var(--bl-user-profile-decor-fit);
---bl-decor-tilt: var(--bl-user-profile-decor-tilt, 0deg);
+--bl-decor-tilt: var(--bl-user-profile-decor-tilt, 0deg); --bl-decor-filter: var(--bl-user-profile-decor-filter, none);
 }
 body.salty.salty-user-profile-banner #chat .mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar.bl-art-frame {
 width: min(var(--bl-user-profile-width), calc(min(var(--bl-user-profile-height), var(--bl-user-profile-max-height)) * var(--bl-decor-ratio))) !important;

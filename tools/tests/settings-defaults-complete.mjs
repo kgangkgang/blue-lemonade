@@ -11,7 +11,7 @@ globalThis.window = globalThis; globalThis.addEventListener = () => {};
 globalThis.document = { createElement: () => ({ style: {} }), addEventListener() {}, querySelector() { return null; }, querySelectorAll() { return []; }, head: { append() {} }, body: { classList: { add() {}, remove() {}, toggle() {}, contains: () => false }, dataset: {} }, documentElement: { style: { setProperty() {}, removeProperty() {} }, dataset: {}, classList: { add() {}, remove() {}, toggle() {}, contains: () => false } } };
 const S = await import(new URL('src/settings.js', root));
 const D = await import(new URL('src/settings-differences.js', root));
-const expected = { 'chat.inkContrast': true, syncWatch: false, 'chat.triangleFold': false, 'chat.weatherBubble': 70, 'chat.qrCtxNames': false };
+const expected = { 'chat.solaStyle': 'original', 'chat.inkContrast': true, syncWatch: false, 'chat.triangleFold': false, 'chat.weatherBubble': 70, 'chat.qrCtxNames': false };
 const read = (from, key) => key.split('.').reduce((o, k) => o?.[k], from);
 for (const [key, value] of Object.entries(expected)) assert.equal(read(S.DEFAULTS, key), value, `${key} 기본값`);
 // 8.2.5 저장값 유지: 끈 값은 그대로 남고, 키가 없던 사람은 지금 동작과 같은 값을 받아요
@@ -21,7 +21,7 @@ let s = S.getSettings();
 assert.equal(s.chat.inkContrast, false); assert.equal(s.syncWatch, false); assert.equal(s.chat.weatherBubble, 40); assert.equal(s.chat.qrCtxNames, false);
 // 변경한 설정에 뜨고 항목별로 복원돼요
 const raw = structuredClone(S.DEFAULTS);
-Object.assign(raw.chat, { inkContrast: false, triangleFold: true, weatherBubble: 40, qrCtxNames: true }); raw.syncWatch = true;
+Object.assign(raw.chat, { solaStyle: 'lemon', inkContrast: false, triangleFold: true, weatherBubble: 40, qrCtxNames: true }); raw.syncWatch = true;
 ctx.extensionSettings = { salty: raw };
 S.invalidateSettings(); s = S.getSettings();
 const listed = D.changedSettings(s).map(c => c.path);
@@ -30,6 +30,7 @@ for (const key of Object.keys(expected)) {
     assert.equal(D.resetSetting(s, key), true, `${key} 복원`);
     assert.equal(read(s, key), expected[key]);
 }
+assert.deepEqual(D.settingRoute('chat.solaStyle'), { tab: 'prompt', sub: 'sola' });
 assert.deepEqual(D.settingRoute('syncWatch'), { tab: 'chat', sub: 'etc' });
 assert.deepEqual(D.settingRoute('chat.triangleFold'), { tab: 'chat', sub: 'etc' });
 assert.deepEqual(D.settingRoute('chat.inkContrast'), { tab: 'chat', sub: 'screen' });
@@ -42,3 +43,8 @@ for (const [old, want] of [[true, true], [false, false], [undefined, false]]) {
     assert.equal(S.getSettings().chat.triangleFold, want, `옛 값 ${old}`);
 }
 console.log('PASS 스위치 있는 키가 기본값 표 · 변경 목록 · 복원에 다 들어가요');
+
+// 솔라 새 스타일은 사용자가 고른 값만 이어받고, 모르는 값은 원작으로 돌아가요.
+for (const [saved,want] of [[undefined,'original'],[null,'original'],['unknown','original'],['lemon','lemon']]) {
+ const raw=structuredClone(S.DEFAULTS);raw.chat.solaStyle=saved;ctx.extensionSettings.salty=raw;S.invalidateSettings();assert.equal(S.getSettings().chat.solaStyle,want);
+}

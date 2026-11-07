@@ -49,7 +49,11 @@ await test('시트: 고친 글을 거둬(harvest) 다음 그리기부터 쓰고,
     assert.match(sheet, /edited: null,/); assert.match(sheet, /dirty: false,/);
     assert.match(sheet, /const harvest = \(\) => \{\s*if \(!state\.dirty\) return;\s*state\.dirty = false;/);
     assert.match(sheet, /got\.messages\.length !== base\.messages\.length\) return;/, '메시지 수가 다르면 못 잇기');
-    assert.match(sheet, /textOf\(got\.messages\[i\]\.nodes\)\.trim\(\) === textOf\(m\.nodes\)\.trim\(\) \? m : \{ \.\.\.m, nodes: got\.messages\[i\]\.nodes \}/, '글이 같은 메시지는 원래 노드');
+    // 1.0.7: 원래 글이 아니라 「막 그린 미리보기 글」과 견줘요 — 이름 숨김 · 바꾸기 · 틀이 바꾼 글자 때문에 안 고친 메시지가 서식 없는 노드로 바뀌던 것(사용자 제보: 분류 · 모양 칩을 누르면 서식이 사라짐)
+    assert.match(sheet, /drawnTexts: null,/);
+    assert.match(sheet, /state\.drawnTexts = \(previewModel\(doc\)\?\.messages \?\? \[\]\)\.map\(m => textOf\(m\.nodes\)\.trim\(\)\);/, '막 그린 글을 기록');
+    assert.match(sheet, /drawn\?\.length === got\.messages\.length \? now !== drawn\[i\] : now !== textOf\(m\.nodes\)\.trim\(\)/, '막 그린 글과 견줌');
+    assert.match(sheet, /edited\(m, i\) \? \{ \.\.\.m, nodes: got\.messages\[i\]\.nodes \} : m/, '글이 같은 메시지는 원래 노드');
     assert.match(sheet, /const draw = \(\) => \{\s*harvest\(\);/, '그리기 전에 거둠');
     assert.match(sheet, /transformLog\(state\.edited \?\? model, \{/, 'view 는 고친 모델');
     assert.match(sheet, /doc\.addEventListener\('input', \(\) => \{\s*state\.dirty = true;/, '미리보기 입력 → dirty');

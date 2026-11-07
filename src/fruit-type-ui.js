@@ -13,6 +13,7 @@ import {bindPreviewViews} from './preview-view.js';
 import {bindSnapshotDetails} from './preview-details.js';
 import {onThemeLook} from './shared/theme-look.js';
 import {watchDom} from './dom-watch.js';
+import {syncSolaStyle} from './features.js';
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const current=()=>tidyFruitType(getSettings().fruitTypography);
@@ -64,7 +65,7 @@ export function bindFruitTypography(root){
     function paint(){
         const s=current(),type=FRUIT_TYPES.find(t=>t.id===s.kind),config=s.types[s.kind],ownerName=owner==='deus'?'데우스':owner==='sola'?'솔라':'과일 계열';
         const regions=Object.entries(type.regions).map(([key,[label]])=>{const r=config.regions[key];return fold(key,label,regionSummary(r),`${switchRow('이 영역 조절','',`data-ft-reset="${key}"`,`${label} · 기본값으로`,toggle(`data-region="${key}" data-ft="on"`,`${label} 조절`,r.on),regionChanged(r))}
-<div class="bl-ft-params">${field(key,'font','글꼴',`<select>${option('original','원작 글꼴',r.font)}${allFonts().filter(f=>!f.unusable).map(f=>option(f.id,f.label,r.font)).join('')}</select>`,true)}
+<div class="bl-ft-params">${field(key,'font','글꼴',`<select>${option('original',owner==='sola'?'스타일 기본 글꼴':'원작 글꼴',r.font)}${allFonts().filter(f=>!f.unusable).map(f=>option(f.id,f.label,r.font)).join('')}</select>`,true)}
 ${slider(key,'size','크기',r.size,8,64,1,'px')}${slider(key,'weight','굵기',r.weight,100,900,100,'')}
 ${slider(key,'spacing','자간',r.spacing,-2,12,.1,'px')}${slider(key,'line','줄간격',r.line,.8,4,.05,'배')}
 ${field(key,'italic','기울임',`<select>${option('false','보통',String(r.italic))}${option('true','기울임',String(r.italic))}</select>`)}
@@ -73,7 +74,8 @@ ${field(key,'wrap','줄바꿈',`<select>${[['original','원작 그대로'],['wor
         const unsupported=owner==='fruit'?fold('support','지원 범위',`${types.length}종`,`<p class="salty-note">위 ${types.length}종만 조절해요. 구조가 정해지지 않은 상태창은 덮어쓰지 않아요.</p><ul class="bl-ft-support">${FRUIT_UNSUPPORTED.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`):'';
         const footer=type.regions.footer?(type.id==='status'?'하단 반복 문구':type.regions.footer[0]):'';
         box.innerHTML=`${choice('data-ft-kind','상태창 종류',types.map(t=>[t.id,t.name]),s.kind)}
-${switchRow(`${ownerName} 글자 설정 사용`,'끄면 원작 표시로 돌아가요','data-ft-all-reset','이 상태창 글자 설정 · 기본값으로',toggle('data-ft-on',`${ownerName} 글자 설정 사용`,ownerEnabled(s,owner)),typeChanged(s,s.kind))}
+${owner==='sola'?choice('data-ft-skin','카드 스타일',[['original','원작'],['lemon','블루레몬']],getSettings().chat?.solaStyle||'original'):''}
+${switchRow(`${ownerName} 글자 설정 사용`,owner==='sola'?'끄면 고른 카드 스타일의 기본 글자로 돌아가요':'끄면 원작 표시로 돌아가요','data-ft-all-reset','이 상태창 글자 설정 · 기본값으로',toggle('data-ft-on',`${ownerName} 글자 설정 사용`,ownerEnabled(s,owner)),typeChanged(s,s.kind))}
 ${owner==='deus'?choice('data-ft-demver','미리보기 판',DEUS_VERSIONS,demVersion()):''}
 <div class="salty-prevbox bl-ft-prevbox${folded()?' folded':''}" data-pv-max="160"><button type="button" class="salty-pvfold" data-ft-pvfold aria-expanded="${!folded()}" aria-label="${folded()?'미리보기 펼치기':'미리보기 접기'}"><i aria-hidden="true"></i></button><iframe class="bl-ft-preview" title="상태창 미리보기" sandbox="allow-same-origin"></iframe></div>
 <p class="salty-note bl-ft-font-note" data-ft-font-status role="status"><span class="bl-ft-sample-badge" data-ft-sample-badge hidden>표본이에요</span><span data-ft-note-text></span></p>
@@ -113,13 +115,15 @@ ${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('
     //   숨은 표본 자리는 채팅과 같은 테마 규칙을 받으므로 하늘만 다시 입히고 복제만 새로 해요(표본을 다시 만들지 않음).
     //   테두리 빛은 :root 변수가 아니라 상태창 요소의 변수(#salty-dem-vars, src/dem-glow.js) — 값은 설정에서 읽어요(계산 스타일을 읽어 문서 전체 재계산을 당기지 않게).
     //   폰 접기는 body 의 data-bl-dem-fold 속성(apply.js). 끌어서 움직이는 동안(demGlowPreviewing)은 표본만 따라가고 채팅은 손을 떼면 바뀌어요.
-    const lookSignature=()=>{const st=getComputedStyle(document.body);return `${document.body.className}|${document.body.hasAttribute('data-bl-dem-fold')}|${getSettings().chat?.demGlow}|${st.getPropertyValue('--salty-accent')}|${st.getPropertyValue('--salty-text')}`;};
+    const lookSignature=()=>{const st=getComputedStyle(document.body);return `${document.body.className}|${document.body.hasAttribute('data-bl-dem-fold')}|${getSettings().chat?.demGlow}|${getSettings().chat?.solaStyle}|${st.getPropertyValue('--salty-accent')}|${st.getPropertyValue('--salty-text')}`;};
     function onLook(){clearTimeout(lookTimer);lookTimer=setTimeout(()=>{
         if(!alive||!box.isConnected||!box.getClientRects().length)return;const sig=lookSignature();if(sig===lookSig)return;lookSig=sig;
         if(docMode==='sample'&&fragHost){dressDemSky(fragHost.host,skinOn());requestAnimationFrame(()=>{if(alive)copySampleHost();});}else if(docMode)schedulePreview(true);
     },60);}
     // 9.0.4: body class · 테마 변수 글(['salty-vars','salty-dem-vars'] — theme-look 의 vars)은 테마 색 따라가기 한 구독(src/shared/theme-look.js), 폰 접기(body data-bl-dem-fold)는 공용 감시 허브
     const lookOffs=[onThemeLook(onLook,{watch:'body.class vars',name:'과일 글자 설정 표본'}),watchDom(document.body,{attributes:['data-bl-dem-fold'],name:'과일 글자 설정 폰 접기'},onLook)];
+    const solaLook=()=>{if(owner!=='sola')return;const select=box.querySelector('[data-ft-skin]');if(select)select.value=getSettings().chat?.solaStyle||'original';lookSig='';onLook();};
+    if(owner==='sola'){document.addEventListener('bl:sola-skin',solaLook);lookOffs.push(()=>document.removeEventListener('bl:sola-skin',solaLook));}
     const dropHost=()=>{fragHost?.remove();fragHost=null;};
     // 미리보기 문서는 실제 복제 · 표본 중 한 가지로만 써요. 바뀌면 빈 문서로 다시 읽고(load 가 다시 부름) 남은 모양을 섞지 않아요.
     function switchMode(frame,want){if(!docMode||docMode===want)return false;dropHost();docMode='';sampleKey='';previewKind='';previewSignature='';lastCss='';frame.srcdoc=FRUIT_SNAPSHOT_DOCUMENT;return true;}
@@ -172,6 +176,7 @@ ${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('
         if(docMode==='sample'&&key===sampleKey&&previewKind===type.id){if(!fragHost)fitSample();refit();return;}
         const token=++sampleToken;
         let localize=false;try{localize=typeOwner(type)==='fruit'&&addonsEnabled(getSettings())&&scriptEnabled(scriptSettings(),'fruit-family');}catch{localize=false;}
+        if(owner==='sola'&&getSettings().chat?.solaStyle==='lemon')await syncSolaStyle(getSettings());
         const sample=await buildFruitSample(type,{width,vars,localize,version});
         if(!alive||token!==sampleToken||current().kind!==type.id||!box.isConnected||box.querySelector('iframe')!==frame)return;
         const d=frame.contentDocument,host=d?.querySelector('[data-bl-fruit-preview]');if(!host)return;
@@ -266,6 +271,7 @@ ${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('
     }
     function change(e){
         const el=e.target,s=current();
+        if(el.hasAttribute('data-ft-skin')){if(owner!=='sola')return;getSettings().chat.solaStyle=el.value==='lemon'?'lemon':'original';saveSettings();void syncSolaStyle(getSettings()).then(()=>{if(alive){sampleKey='';previewSignature='';schedulePreview(true);}});return;}
         if(el.hasAttribute('data-ft-kind')){if(!types.some(t=>t.id===el.value))return;s.kind=el.value;commit(s);paint();return;}
         // 미리보기 판은 글자 설정이 아니라 미리보기만 바꿔요 — 표본을 그 판으로 다시 만들어요
         if(el.hasAttribute('data-ft-demver')){const settings=getSettings();settings.chat.demPreviewVersion=tidyDemVersion(el.value);saveSettings();sampleKey='';previewSignature='';schedulePreview(true);return;}
@@ -313,9 +319,10 @@ ${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('
 }
 export async function openFruitTypography(kind){
     const s=current();if(FRUIT_TYPES.some(t=>t.id===kind)){s.kind=kind;s.ownerKinds[typeOwner(FRUIT_TYPES.find(t=>t.id===kind))]=kind;getSettings().fruitTypography=s;saveSettings();}
-    const dialog=document.createElement('dialog');dialog.className='bl-ft-dialog';dialog.setAttribute('aria-label','블루레몬에이드 상태창 글자 설정');
+    const sola=typeOwner(FRUIT_TYPES.find(t=>t.id===s.kind)||{})==='sola';
+    const dialog=document.createElement('dialog');dialog.className='bl-ft-dialog'+(sola?' bl-ft-sola-dialog':'');dialog.setAttribute('aria-label',sola?'블루레몬에이드 솔라 상태창 모양과 글자 설정':'블루레몬에이드 상태창 글자 설정');
     // 머리 한 줄: 제목 · 닫기
-    const head=document.createElement('div');head.className='bl-ft-dialog-head';head.innerHTML='<b>상태창 글자</b><button type="button" class="salty-btn">닫기</button>';const close=head.lastElementChild;close.addEventListener('click',()=>dialog.close());
+    const head=document.createElement('div');head.className='bl-ft-dialog-head';head.innerHTML=`<b>${sola?'솔라 상태창 모양 · 글자':'상태창 글자'}</b><button type="button" class="salty-btn">닫기</button>`;const close=head.lastElementChild;close.addEventListener('click',()=>dialog.close());
     const content=document.createElement('div');content.innerHTML=fruitTypographyMarkup(typeOwner(FRUIT_TYPES.find(t=>t.id===s.kind)||{}));dialog.append(head,content);document.body.append(dialog);bindTouchSliders(dialog);const cleanup=bindFruitTypography(content);
     dialog.addEventListener('close',()=>{cleanup();dialog.remove();},{once:true});dialog.showModal();close.focus();
 }

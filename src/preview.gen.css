@@ -1,4 +1,4 @@
-/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 649개(덩어리 43개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build 431acff9516b) */
+/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 649개(덩어리 43개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build 64d0b224ebb7) */
 .salty-sample q::before,
 .salty-sample q::after {
   content: none;
@@ -3425,6 +3425,7 @@ body.salty.salty-profile-banner :where(.salty-preview):is(#salty-nochat, *) .mes
 body.salty :where(.salty-preview):is(#salty-nochat, *) .bl-art-frame::after {
   content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
   background: var(--bl-decor-art) center / 100% 100% no-repeat; opacity: var(--bl-decor-opacity);
+  filter: var(--bl-decor-filter, none);
 }
 body.salty :where(.salty-preview):is(#salty-nochat, *) .bl-art-frame > .bl-art-photo {
   position: absolute; inset: 0; display: block; overflow: hidden;

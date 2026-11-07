@@ -272,7 +272,7 @@
 :where(html.bl-asc-2) .mr-offer-group { display: flex; flex-direction: column; gap: 2px; }
 :where(html.bl-asc-2) .mr-offer-source { color: var(--salty-muted, inherit); font-size: var(--bl-ts-meta, 12.5px); }
 :where(html.bl-asc-2) .mr-offer-row { gap: 8px; overflow-wrap: anywhere; }
-:where(html.bl-asc-4) #regex-link-settings {--rl-version:"1.1.3"}
+:where(html.bl-asc-4) #regex-link-settings {--rl-version:"1.2.0"}
 :where(html.bl-asc-4) #regex-link-settings .inline-drawer-content {display:flex;flex-direction:column;gap:12px;text-align:left}
 :where(html.bl-asc-4) .rl-summary {margin:0}
 :where(html.bl-asc-4) .rlk-empty {margin:0;opacity:.75}
@@ -306,6 +306,11 @@
 :where(html.bl-asc-4) #regex-link-settings .rl-manual small {flex:1 1 auto;min-width:0;font-size:var(--bl-ts-meta,12.5px);line-height:1.5;color:var(--salty-muted,inherit);overflow-wrap:anywhere}
 :where(html.bl-asc-4) #regex-link-settings .rl-manual .rl-auto {flex:0 0 auto;min-height:36px;margin:0;padding:0 10px;white-space:nowrap}
 @media (hover:hover) and (pointer:fine){:where(html.bl-asc-4) #regex-link-settings .rl-manual .rl-auto {min-height:34px}}
+:where(html.bl-asc-4) #regex-link-settings .rlk-performance { border: 1px solid var(--salty-line); border-radius: var(--bl-r-md,12px); padding: 10px 12px; min-width: 0; }
+:where(html.bl-asc-4) #regex-link-settings .rlk-performance > summary { cursor: pointer; font-weight: 650; }
+:where(html.bl-asc-4) #regex-link-settings .rlk-performance > :not(summary) { margin-top: 10px; }
+:where(html.bl-asc-4) #regex-link-settings [data-performance-panel] { min-width: 0; max-width: 100%; }
+:where(html.bl-asc-4) #regex-link-settings [data-performance-panel][hidden] { display: none !important; }
 :root:where(.bl-asc-6) {
     --jj-on: var(--jj-on-color, var(--SmartThemeQuoteColor, #e18a24));
     --jj-css-version: "1.4.4";

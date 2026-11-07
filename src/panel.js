@@ -397,6 +397,7 @@ export function unmountPanel(root) {
     root._scriptsCleanup?.(); root._scriptsCleanup=null;
     root._healthCleanup?.();
     root._updateCleanup?.(); root._updateCleanup=null;
+    root._aiConnectionCleanup?.(); root._aiConnectionCleanup=null;
     root._previewCleanup?.();
     for (const key of ['_fontIO', '_rowsRO', '_mainStickRO']) { root[key]?.disconnect(); root[key] = null; }
     root.remove(); panels.delete(root); root._pv = {}; root._previewViews?.clear();
@@ -547,12 +548,18 @@ function mesPinPicker(s) {
         <p class="salty-note">누른 버튼은 메뉴를 열지 않아도 이름 줄에 보여요. 최대 ${PIN_LIMIT}개.</p>`;
 }
 
-// 10-31 AI 로 설정 바꾸기 · 연결: 실리태번 지금 연결 또는 연결 프로필(Connection Manager) 하나
-function searchAiProfiles(current = '') {
-    let profiles = [];
-    try { profiles = SillyTavern.getContext().ConnectionManagerRequestService?.getSupportedProfiles?.() || []; } catch { /* Connection Manager 꺼짐 */ }
-    const known = profiles.some(p => p.id === current);
-    return `<select data-search-ai-profile aria-label="AI 로 설정 바꾸기 연결"><option value="">실리태번 지금 연결</option>${profiles.map(p => `<option value="${esc(p.id)}" ${p.id === current ? 'selected' : ''}>${esc(p.name || p.id)}</option>`).join('')}${current && !known ? `<option value="${esc(current)}" selected>찾을 수 없는 프로필</option>` : ''}</select>`;
+// 연결 선택 코드는 이 칸이 보일 때만 받아요. 회사별 모델 목록은 번역기와 같은 공용 목록이에요.
+function fillSearchAiConnection(root) {
+    const slot = root.querySelector('[data-search-ai-connection]');
+    if (!slot) return;
+    import('./settings-ai-connection.js').then(m => {
+        if (!slot.isConnected || root.querySelector('[data-search-ai-connection]') !== slot) return;
+        root._aiConnectionCleanup?.();
+        root._aiConnectionCleanup = m.mountSettingsAiConnection(slot, {
+            read: () => getSettings().searchAi,
+            write: mutate => update(st => mutate(st.searchAi), false), stack, esc,
+        });
+    }).catch(() => { if (slot.isConnected) slot.textContent = '연결 설정을 불러오지 못했어요. 창을 다시 열어 주세요.'; });
 }
 /** 「요청 한 번 약 N 토큰」 — 그 줄이 보일 때만 settings-ai.js 를 받아 세요 */
 function fillSearchAiTokens(root) {
@@ -1458,6 +1465,9 @@ function decorControls(prefix, o) {
             ${slider(`${prefix}.decor.frameWidth`, '액자 가로 비율 (%)', 50, 200, 1)}
             ${slider(`${prefix}.decor.frameHeight`, '액자 세로 비율 (%)', 50, 200, 1)}
             ${slider(`${prefix}.decor.presetTilt`, '액자 기울기 (도)', -10, 10, 0.5)}
+            ${slider(`${prefix}.decor.frameHue`, '액자 색상 돌리기 (도)', -180, 180, 1)}
+            ${slider(`${prefix}.decor.frameSat`, '액자 채도 (%)', 0, 200, 1)}
+            ${slider(`${prefix}.decor.frameBright`, '액자 밝기 (%)', 50, 150, 1)}
             <p class="salty-note">색과 가로·세로를 따로 조절해요. 색 고르기를 닫거나 비율 조절을 마치면 프리셋 장식을 다시 그려요. 불러온 그림은 전체를 늘이거나 줄여요. 기울기는 액자와 사진을 함께 돌려요.</p>
             ${slider(`${prefix}.decor.radius`, '안쪽 사진 모서리 (px)', 0, 120, 1, o.radius)}
             ${stack('안쪽 사진', seg(`${prefix}.decor.fit`, [['cover', '가득 채우기'], ['contain', '전체 보이기']]))}
@@ -1607,7 +1617,7 @@ function tabChat(s, sub) {
         </div>
         ${cap('설정 찾기')}<div class="salty-group">
             ${row('AI 로 설정 바꾸기', toggle('searchAi.on', !!s.searchAi?.on), `검색창에 「AI 에게 맡기기」가 생겨요 · 누를 때만 요청 한 번(설정 목록 + 검색 문장, 대화는 안 보내요) · 요청 한 번 약 <b data-search-ai-tokens>…</b> 토큰`)}
-            ${s.searchAi?.on ? stack('연결', searchAiProfiles(s.searchAi.profileId)) : ''}
+            ${s.searchAi?.on ? '<div data-search-ai-connection><p class="salty-note">연결 설정을 불러오는 중…</p></div>' : ''}
         </div>
         ${cap('다른 기기')}<div class="salty-group">
             ${row('다른 기기 변경 알림', toggle('syncWatch', s.syncWatch !== false), '이 채팅이 다른 기기에서 바뀌면 위에 띠를 띄우고, 덮어쓰기 전에 물어요')}
@@ -1804,7 +1814,7 @@ function tabExtensions(s, sub) { if(!addonsEnabled(s))return s.enabled===false ?
 function tabPrompt(s,sub) {
     if(sub==='fruit')return fruitPromptMarkup();
     // 1.0.x 솔라 4 — 서랍 카드 · 쪽지 글자(상태창 글자와 같은 편집기). 프리셋 본문은 담지 않아요
-    if(sub==='sola')return `${cap('솔라')}${solaQuickShortcutMarkup()}<p class="salty-note">솔라 프리셋의 서랍 카드 · 쪽지 글자를 꾸며요. 끄면 원작 표시로 돌아가요.</p>${fruitTypographyGroup('sola')}`;
+    if(sub==='sola')return `${cap('솔라')}${solaQuickShortcutMarkup()}<p class="salty-note">솔라 프리셋의 서랍 카드와 쪽지에 적용해요. 카드 스타일과 글자 조절을 따로 고를 수 있어요.</p>${fruitTypographyGroup('sola')}`;
     const on = !!s.deus?.on;
     const ink = s.deus?.ink || {};
     const dio = ink.outline || { on: false, color: '#000000', width: 0.6, alpha: 100 };  // 데우스 대사 가독성: 외곽선
@@ -2133,6 +2143,7 @@ function render(root) {
     root._previewCleanup?.(); root._previewCleanup=null;
     root._healthCleanup?.();
     root._updateCleanup?.(); root._updateCleanup=null;
+    root._aiConnectionCleanup?.(); root._aiConnectionCleanup=null;
     const oldSection = root.querySelector('.salty-sec');
     if (oldSection && root._editorRoute) root._editorScroll?.set(root._editorRoute, oldSection.scrollTop);
     root._addonScroll ??= new Map();
@@ -2191,6 +2202,7 @@ function render(root) {
     for (const item of root.querySelectorAll('details[data-md-fold]')) if (root._mdFolds.has(item.dataset.mdFold)) item.open=root._mdFolds.get(item.dataset.mdFold);
     paintSettingsSearch(root);
     fillSearchAiTokens(root);
+    fillSearchAiConnection(root);
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)
     for(const stage of Object.values(root._pv || {}))if(!stage.isConnected)stage._blWeather?.destroy();
     typesetRoot(root);
@@ -3114,7 +3126,6 @@ function bind(root) {
             }
             return;
         }
-        if (target.matches('select[data-search-ai-profile]')) { update(st => { st.searchAi.profileId = target.value; }, false); return; }   // 10-31 AI 로 설정 바꾸기 · 연결
         if (target.matches('input[data-toggle]')) {
             const path = target.dataset.toggle;
             if (path === 'updateCheck') import('./update-check.js').then(m => { if (target.checked) void m.checkForUpdate({ force: true }); else m.clearUpdate(); }).catch(() => {});   // 5.7.0 · 1.0.0 바탕 되살림

@@ -10,13 +10,14 @@
 //   패널의 「자동으로」가 그 표시를 지운다. 테마 설정에서 이 기능이 꺼져 있으면(불러오기만 됐어도) 정규식을 읽지도 쓰지도 않는다.
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { extension_settings } from '../../../../../../extensions.js';
+import * as hostExtensions from '../../../../../../extensions.js';
 import { getPresetManager } from '../../../../../../preset-manager.js';
 import { saveSettingsDebounced, eventSource, event_types } from '../../../../../../../script.js';
 import { oai_settings, promptManager } from '../../../../../../openai.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { plan, textHasModuleLow, modulesOf } from './engine.js';
 
-const VERSION = '1.1.3';
+const VERSION = '1.2.0';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const holder = document.createElement('div'); holder.hidden = true; document.body.append(holder);
 let root, inlineHost = null, opening = false, timer = 0, lastRows = [], lastNote = '', applied = new Map(), stopped = false;
@@ -36,8 +37,65 @@ function store() {
     if (!s.modules || typeof s.modules !== 'object') s.modules = {};     // 모듈 키 → 'on' | 'off' (없으면 자동)
     if (typeof s.keepRecent !== 'boolean') s.keepRecent = true;          // 최근 메시지에 그 모듈이 있으면 켜 둔다
     if (!s.manual || typeof s.manual !== 'object' || Array.isArray(s.manual)) s.manual = {};   // 1.1.2 정규식 id → true: 사용자가 직접 바꿈 · 자동 안 함
+    if (typeof s.performanceOn !== 'boolean') s.performanceOn = false;
     s.recent = Math.min(200, Math.max(1, Number(s.recent) || 30));
     return s;
+}
+
+// 실행 계측·최적화는 같은 설정 창에서 켜요. 끈 상태에서는 큰 엔진을 받지 않아요.
+let performanceModule = null, performanceLoading = null, performanceEpoch = 0;
+const performanceWanted = () => !stopped && featureOn() && store().performanceOn;
+function standalonePerformance() {
+    const names = Array.isArray(hostExtensions.extensionNames) ? hostExtensions.extensionNames : [];
+    const off = new Set((Array.isArray(extension_settings.disabledExtensions) ? extension_settings.disabledExtensions : []).map(n => String(n).toLowerCase()));
+    return names.some(n => /^third-party\/st-regex-perf(?:[-_].*)?$/i.test(String(n)) && !off.has(String(n).toLowerCase()));
+}
+function performanceNote(text) { const el = root?.querySelector('[data-performance-status]'); if (el && el.textContent !== text) el.textContent = text; }
+function hidePerformanceSlot(slot, hidden) { if (slot && slot.hidden !== hidden) slot.hidden = hidden; }
+async function syncPerformance(show = false) {
+    const epoch = ++performanceEpoch, slot = root?.querySelector('[data-performance-panel]');
+    if (!performanceWanted()) {
+        performanceModule?.setRuntimeEnabled(false);
+        hidePerformanceSlot(slot, true);
+        performanceNote('꺼짐 · 정규식 실행은 원래 엔진을 따라요.');
+        return;
+    }
+    if (standalonePerformance()) {
+        performanceModule?.setRuntimeEnabled(false);
+        hidePerformanceSlot(slot, true);
+        performanceNote('별도로 설치한 Regex Perf Kit가 켜져 있어 여기서는 적용하지 않아요. 하나만 켜 주세요.');
+        return;
+    }
+    try {
+        if (!performanceModule) {
+            performanceNote('실행 계측과 최적화 도구를 불러와요…');
+            performanceLoading ||= import('./regexperf.js').then(m => {
+                performanceModule = m;
+                m.setScriptChangeListener((ids, patch) => {
+                    if (!Object.hasOwn(patch, 'disabled')) return;
+                    const s = store();
+                    // 이 표에서 직접 켜고 끈 규칙도 프롬프트 자동 연동이 되돌리지 않아요.
+                    for (const id of ids) { s.manual[id] = true; delete s.origin[id]; applied.delete(id); }
+                    saveSettingsDebounced();
+                });
+                return m;
+            });
+            await performanceLoading;
+        }
+        if (epoch !== performanceEpoch || !performanceWanted()) return;
+        const active = performanceModule.regexPerfStatus().enabled || performanceModule.setRuntimeEnabled(true);
+        const state = performanceModule.regexPerfStatus();
+        performanceNote(active ? '켜짐 · 실제로 실행된 규칙의 시간과 생략·캐시 횟수를 모아요.' : state.wrapperWarning || '현재 실리태번의 정규식 엔진에서는 적용하지 못해요.');
+        hidePerformanceSlot(slot, !active);
+        if (active && (show || root?.querySelector('[data-performance-details]')?.open)) await performanceModule.mountPanel(slot);
+        if (epoch !== performanceEpoch || !performanceWanted()) hidePerformanceSlot(slot, !performanceWanted());
+    } catch (error) {
+        performanceLoading = null;
+        performanceModule?.setRuntimeEnabled(false);
+        hidePerformanceSlot(slot, true);
+        performanceNote('도구를 불러오지 못했어요. 새로고침한 뒤 다시 켜 주세요.');
+        console.warn('[Blue Lemonade] 정규식 성능 도구', error);
+    }
 }
 
 /** 지금 실제로 쓰이는 정규식 목록들 (전역 · 허용된 프리셋). 캐릭터 카드 목록은 되돌릴 길이 없어 넣지 않는다 (origin 에도 적지 않는다) */
@@ -156,7 +214,7 @@ export function sync({ restore = false, keep = null } = {}) {
     }
     // 우리가 쓴 값은 사진에도 적는다 — 다음 sync 가 「사용자가 바꿈」으로 잘못 보지 않게
     if (userEdit) for (const script of scripts) if (userEdit.before.has(script.id)) userEdit.before.set(script.id, !!script.disabled);
-    if (changed) saveSettingsDebounced();
+    if (changed) { performanceModule?.notifyScriptsChanged(); saveSettingsDebounced(); }
     render();
 }
 
@@ -231,6 +289,9 @@ function render() {
     root.querySelector('[data-keep]').checked = s.keepRecent;
     root.querySelector('[data-recent]').value = s.recent;
     root.querySelector('.rl-modules').innerHTML = moduleTable();
+    const performanceToggle = root.querySelector('[data-performance]');
+    if (performanceToggle) performanceToggle.checked = s.performanceOn;
+    void syncPerformance();
 }
 
 function mount() {
@@ -241,6 +302,13 @@ function mount() {
   <p class="rl-summary" role="status"></p>
   <p class="salty-note">프롬프트 모듈을 끄면 연결된 정규식도 쉬어요. 다음 답변부터 반영되며, 직접 바꾼 설정은 유지해요.</p>
   <label class="rlk-keep"><input type="checkbox" data-keep><span><b>최근 메시지에 그 모듈이 있으면 켜 둠</b><small>이전 답에 남은 상태창 · 선택지가 날것으로 보이지 않게</small></span><input type="number" class="text_pole" data-recent min="1" max="200" aria-label="최근 메시지 수"></label>
+  <details class="rlk-performance" data-performance-details>
+    <summary>실행 시간 · 최적화</summary>
+    <label class="checkbox_label"><input type="checkbox" data-performance><span>정규식 성능 보조</span></label>
+    <p class="salty-note" data-performance-status role="status"></p>
+    <p class="salty-note">프롬프트 연동은 필요 없는 규칙을 쉬게 하고, 성능 보조는 남은 규칙의 실행 비용을 줄여요. 저장한 검색식과 치환식은 자동으로 고치지 않아요.</p>
+    <div data-performance-panel hidden></div>
+  </details>
   <div class="rl-modules"></div>
 </div>`;
     holder.append(root);
@@ -248,8 +316,10 @@ function mount() {
         const el = event.target;
         if ('keep' in el.dataset) { store().keepRecent = el.checked; saveSettingsDebounced(); sync(); }
         else if ('recent' in el.dataset) { store().recent = Number(el.value) || 30; saveSettingsDebounced(); sync(); }
+        else if ('performance' in el.dataset) { store().performanceOn = el.checked; saveSettingsDebounced(); void syncPerformance(true); }
         else if (el.dataset.module) { const s = store(); if (el.value === 'auto') delete s.modules[el.dataset.module]; else s.modules[el.dataset.module] = el.value; saveSettingsDebounced(); sync(); }
     });
+    root.querySelector('[data-performance-details]')?.addEventListener('toggle', event => { if (event.target.open) void syncPerformance(true); });
     root.addEventListener('click', event => {
         const key = event.target?.closest?.('[data-auto]')?.dataset?.auto;
         if (!key) return;
@@ -281,6 +351,8 @@ const SCREEN_EVENTS = ['click', 'input', 'change'];
 /** 테마가 기능을 끌 때 (addons.js) — 원래 상태로 되돌리고 감시를 멈춘다 */
 export async function stop() {
     stopped = true;
+    performanceEpoch++;
+    performanceModule?.setRuntimeEnabled(false);
     unlisten(); clearTimeout(timer);
     // 정규식 화면 · 프리셋 저장으로 우리가 쓴 값이 프리셋 파일에 들어갔으면 되돌린 목록으로 파일도 고친다 (origin 은 저장한 뒤 지운다)
     const s = store(), list = oai_settings.extensions?.regex_scripts, name = oai_settings.preset_settings_openai;
@@ -323,5 +395,11 @@ export function mountInline(host) {
     return () => { if (inlineHost !== host) return; inlineHost = null; root.classList.remove('bl-embedded-settings'); if (!opening) holder.append(root); };
 }
 
+/** 같은 실행 인스턴스의 상태만 읽어요. 검사기가 엔진을 두 번 불러오지 않게 해요. */
+export function performanceState() {
+    return { configured: store().performanceOn, loaded: !!performanceModule,
+        ...(performanceModule?.regexPerfStatus() || { enabled: false, patched: false, wrapperWarning: '', persistAvailable: false }) };
+}
+
 // 콘솔 · 검사용
-globalThis.RegexLink = { sync, stop, rows: () => lastRows, store };
+globalThis.RegexLink = { sync, stop, rows: () => lastRows, store, performanceState };

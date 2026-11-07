@@ -99,7 +99,7 @@ body.salty.salty-demfx-flow :is(#chat, .cg-root, .salty-preview) .custom-dem-exp
   background-image: none !important;
 }
 /* 5.3.1 긴 감정 대사: 프리셋 칸은 inline-block 이라 줄 중간에 못 들어가면 통째로 아랫줄로 넘어가고, 양끝 맞춤이면 윗줄 낱말 사이가 크게 벌어졌다.
-   14자 이상(.bl-fx-long, dem-expressive.js)은 inline 으로 — 움직임(translate · rotate)만 못 받고 색 흐름 · 빛 · 흐림은 그대로. 문단 앞 칸은 문단 들여쓰기 그대로 */
+   14자 이상(.bl-fx-long, dem-expressive.js)은 inline 으로 — translate · rotate 는 못 받아 1.0.7 부터 아래 상대 위치 움직임(-line)으로 · 색 흐름 · 빛 · 흐림은 그대로. 문단 앞 칸은 문단 들여쓰기 그대로 */
 body.salty :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-long,
 body.salty :is(#chat, .cg-root) .bl-fx-long .custom-dem-expressive {
   display: inline !important;
@@ -107,6 +107,33 @@ body.salty :is(#chat, .cg-root) .bl-fx-long .custom-dem-expressive {
 body.salty.salty-indent :is(#chat, .cg-root) .custom-dem-expressive.bl-fx-lead.bl-fx-long {
   margin-left: 0;
   text-indent: inherit;
+}
+/* 1.0.7 긴 감정 대사도 움직여요(11-07 사용자 「긴 대사도 움직여」 — 번역이 끝나면 긴 대사가 안 흔들려 효과가 사라진 것처럼 보였다).
+   inline 칸은 translate · rotate · scale 을 못 받지만 상대 위치(top · left)는 줄마다 조각째 받는다 — 줄바꿈 · 양끝 맞춤은 그대로 두고
+   같은 감정의 움직임을 위치로 옮겨요(회전 · 크기는 위아래 · 옆 흔들림으로). 채팅 안의 바깥 감정 칸만 · 효과를 켰을 때만(애니메이션 줄이기 존중) */
+body.salty.salty-demfx-go #chat .custom-dem-expressive.bl-fx-long:not(.custom-dem-expressive--):not(#salty-none) {
+  position: relative;
+}
+body.salty.salty-demfx-go #chat .custom-dem-expressive.bl-fx-long.custom-dem-expressive--shout:not(#salty-none) {
+  animation: bl-fx-gradient 2.75s linear infinite, bl-fx-impact-line .9s ease-in-out infinite alternate !important;
+}
+body.salty.salty-demfx-go #chat .custom-dem-expressive.bl-fx-long.custom-dem-expressive--angry:not(#salty-none) {
+  animation: bl-fx-gradient 2.75s linear infinite, bl-fx-angry-line .9s ease-in-out infinite alternate !important;
+}
+body.salty.salty-demfx-go #chat .custom-dem-expressive.bl-fx-long.custom-dem-expressive--excited:not(#salty-none) {
+  animation: bl-fx-gradient 2.75s linear infinite, bl-fx-excited-line .85s ease-in-out infinite !important;
+}
+body.salty.salty-demfx-go #chat .custom-dem-expressive.bl-fx-long.custom-dem-expressive--dizzy:not(#salty-none) {
+  animation: bl-fx-gradient 2.75s linear infinite, bl-fx-dizzy-line 1.5s ease-in-out infinite !important;
+}
+body.salty.salty-demfx-go #chat .custom-dem-expressive.bl-fx-long.custom-dem-expressive--crying:not(#salty-none) {
+  animation: bl-fx-gradient 2.75s linear infinite, bl-fx-crying-line 1.55s ease-in-out infinite alternate !important;
+}
+body.salty.salty-demfx-go #chat .custom-dem-expressive.bl-fx-long:is(.custom-dem-expressive--anxious, .custom-dem-expressive--trembling):not(#salty-none) {
+  animation: bl-fx-gradient 2.75s linear infinite, bl-fx-shake-line .8s steps(2, end) infinite !important;
+}
+body.salty.salty-demfx-go #chat .custom-dem-expressive.bl-fx-long.custom-dem-expressive--intoxicated:not(#salty-none) {
+  animation: bl-fx-gradient 2.75s linear infinite, bl-fx-intoxicated-line 1.1s ease-in-out infinite alternate !important;
 }
 /* 5.3.2: 감정 효과를 꺼 두면 테마가 칸을 훑지 않아 .bl-fx-long 표시가 없다 — 그때는 프리셋 칸을 전부 inline 으로 (움직임은 어차피 안 씀).
    북마크 창(.cg-root)의 카드도 같은 규칙 — 북마크 인용에서 긴 대사 앞줄이 벌어지던 것 */
@@ -217,6 +244,38 @@ body.salty.salty-demfx-mflow.salty-dlg-full :is(#chat, .cg-root, .salty-preview)
   25% { translate: calc(-.055em * var(--bl-fx-k, 1)) calc(-.035em * var(--bl-fx-k, 1)); }
   50% { translate: calc(.045em * var(--bl-fx-k, 1)) calc(.05em * var(--bl-fx-k, 1)); }
   75% { translate: calc(-.04em * var(--bl-fx-k, 1)) calc(.025em * var(--bl-fx-k, 1)); }
+}
+/* 1.0.7 긴 감정 대사(inline)용 — 위 키프레임과 같은 크기의 움직임을 상대 위치로 */
+@keyframes bl-fx-impact-line {
+  from { top: 0; filter: brightness(1); }
+  to { top: calc(-.04em * var(--bl-fx-k, 1)); filter: brightness(1.3) saturate(1.25); }
+}
+@keyframes bl-fx-angry-line {
+  from { left: calc(-.03em * var(--bl-fx-k, 1)); filter: brightness(1); }
+  to { left: calc(.03em * var(--bl-fx-k, 1)); filter: brightness(1.14) saturate(1.08); }
+}
+@keyframes bl-fx-excited-line {
+  0%, 100% { top: 0; }
+  25% { top: calc(-.06em * var(--bl-fx-k, 1)); }
+  75% { top: calc(.04em * var(--bl-fx-k, 1)); }
+}
+@keyframes bl-fx-dizzy-line {
+  0%, 100% { left: calc(-.04em * var(--bl-fx-k, 1)); top: 0; filter: hue-rotate(0deg); }
+  50% { left: calc(.04em * var(--bl-fx-k, 1)); top: calc(-.05em * var(--bl-fx-k, 1)); filter: hue-rotate(18deg); }
+}
+@keyframes bl-fx-crying-line {
+  from { opacity: .72; top: 0; }
+  to { opacity: 1; top: calc(.03em * var(--bl-fx-k, 1)); }
+}
+@keyframes bl-fx-shake-line {
+  0%, 100% { left: 0; top: 0; }
+  25% { left: calc(-.055em * var(--bl-fx-k, 1)); top: calc(-.035em * var(--bl-fx-k, 1)); }
+  50% { left: calc(.045em * var(--bl-fx-k, 1)); top: calc(.05em * var(--bl-fx-k, 1)); }
+  75% { left: calc(-.04em * var(--bl-fx-k, 1)); top: calc(.025em * var(--bl-fx-k, 1)); }
+}
+@keyframes bl-fx-intoxicated-line {
+  from { left: calc(-.04em * var(--bl-fx-k, 1)); filter: hue-rotate(-48deg) saturate(1.45) brightness(.88); }
+  to { left: calc(.04em * var(--bl-fx-k, 1)); filter: hue-rotate(58deg) saturate(1.9) brightness(1.16); }
 }
 @keyframes bl-fx-whisper {
   from { opacity: .7; filter: brightness(.9); } /* 4.7.0: .5 는 형광펜 띠 위에서 안 읽혔다 */

@@ -57,7 +57,8 @@ html body .bl-fruit-type-editor .bl-ft-reset[hidden]{display:none!important}
 .bl-ft-groups{margin-top:6px}
 .bl-ft-group{border-top:1px solid var(--bl-editor-line,var(--salty-line, var(--bl-fb-8884)))}
 .bl-ft-group:last-child{border-bottom:1px solid var(--bl-editor-line,var(--salty-line, var(--bl-fb-8884)))}
-html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100%;min-height:40px;margin:0;padding:8px 0;border:0;border-radius:0;background:transparent;color:var(--salty-text,inherit);font:inherit;font-weight:650;text-align:left;cursor:pointer;box-shadow:none}
+/* 1.0.7 묶음 펼침 단추 = 크기표의 줄 단추(글자 14 · 보통 굵기 · 가로 여백 10 · 손가락 화면 44 — 89-form-metrics) */
+html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100%;min-height:40px;margin:0;padding:8px 10px;border:0;border-radius:0;background:transparent;color:var(--salty-text,inherit);font:inherit;font-size:var(--bl-ts-ctl);font-weight:400;text-align:left;cursor:pointer;box-shadow:none}
 .bl-ft-group-toggle>span{flex:0 1 auto;min-width:0;overflow-wrap:anywhere}
 .bl-ft-group-summary{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;font-size:.85em;font-weight:500;color:var(--salty-muted,inherit)}
 .bl-ft-group-toggle::after{content:'+';flex:none;width:14px;text-align:center;color:var(--salty-muted,inherit);font-size:1.25em;font-weight:400;line-height:1}
@@ -87,6 +88,20 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 /* 과일 창 · 데우스 빠른 설정 안 바로가기 단추: 8px 얇은 네모 */
 .bl-ft-shortcut{font:inherit!important;font-size:.8em!important;min-height:32px!important;padding:4px 10px!important;border-radius:8px!important;white-space:normal!important;overflow-wrap:anywhere!important;max-width:100%!important}
 @media(max-width:360px){.bl-ft-dialog{padding:0 12px 12px}.bl-ft-dialog-head{margin:0 -12px 4px;padding:8px 12px}}
+
+/* 솔라의 새 모양 선택 창도 PC에서는 왼쪽 미리보기와 오른쪽 설정을 함께 보아요. */
+@media(min-width:1001px){
+  .bl-ft-sola-dialog{width:min(1100px,calc(100vw - 48px))}
+  .bl-ft-sola-dialog .bl-fruit-type-editor{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.85fr);grid-template-rows:auto auto auto auto minmax(0,1fr) auto;column-gap:24px;height:min(720px,calc(100dvh - 160px));min-height:0}
+  .bl-ft-sola-dialog .bl-fruit-type-editor>*{grid-column:2;min-width:0}
+  .bl-ft-sola-dialog .bl-fruit-type-editor>.bl-ft-param:first-child{grid-row:1}
+  .bl-ft-sola-dialog .bl-fruit-type-editor>.bl-ft-param:nth-child(2){grid-row:2}
+  .bl-ft-sola-dialog .bl-fruit-type-editor>.bl-ft-row{grid-row:3}
+  .bl-ft-sola-dialog .bl-fruit-type-editor>.bl-ft-top{grid-row:4}
+  .bl-ft-sola-dialog .bl-fruit-type-editor>.bl-ft-groups{grid-row:5;min-height:0;overflow:auto;overscroll-behavior:contain}
+  .bl-ft-sola-dialog .bl-fruit-type-editor>.bl-ft-prevbox{grid-column:1;grid-row:1 / 6;position:relative;top:auto;align-self:start}
+  .bl-ft-sola-dialog .bl-fruit-type-editor>.bl-ft-font-note{grid-column:1;grid-row:6}
+}
 
 /* 원본의 8px 문자 꺾쇠 대신 공통 고르기 화살표를 같은 크기로 보여요. */
 :is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel { position:relative; padding-right:28px!important; }

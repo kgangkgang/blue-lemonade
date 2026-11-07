@@ -303,7 +303,8 @@ await test('머리(1.0.1 · 11-04): 큰 제목 「Title」 + 알약 셋 「깡�
     }
     const sheet = read('src/log-copy-sheet.js');
     assert.ok(sheet.includes("title: model.chatTitle || 'Title', mark: 'LOG', char: model.charName || model.chatName, model: names.model, prompt: names.prompt"), '확장은 지금 채팅 값으로 채워요');
-    assert.ok(sheet.includes('data-lc="tags" aria-pressed="true"'), '알약 셋 끄고 켜기');
+    // 1.0.7: 알약 셋 켜고 끄기는 「보일 것」 칩 줄의 한 칩(tagsOff)으로 옮겼어요
+    assert.ok(sheet.includes("['tagsOff', ") && sheet.includes('data-lc-show="${key}" aria-pressed="true"'), '알약 셋 끄고 켜기');
     assert.ok(read('src/log-copy-capture.js').includes('charName: String(character?.name'), '깡통 = 캐릭터 이름');
 });
 

@@ -161,7 +161,7 @@ await test('화면: 보관함 · 내 글꾸 두 곳의 「마트에서 가져오
     const panel = read('src/panel.js'), sheet = read('src/log-copy-sheet.js'), ui = read('src/mart-import-ui.js');
     assert.match(panel, /data-act="mart-import"/); assert.match(panel, /case 'mart-import':[\s\S]{0,200}import\('\.\/mart-import-ui\.js'\)/, '설정 창은 누를 때 받아요');
     assert.match(sheet, /data-lc="mart"/); assert.match(sheet, /if \(\/\^\\\{\[\\s\\S\]\*"bl-mart"\/\.test\(raw\)\) \{ openMart\(raw\); return; \}/, '붙여넣기 칸에 마트 글을 넣어도 알아서');
-    assert.match(sheet, /if \(mine && !mine\.template\) html = mine\.html;/); assert.match(sheet, /template: mine \}\)/);
+    assert.match(sheet, /if \(mine && !mine\.template\) html = mine\.html;/); assert.match(sheet, /template: mine(?:, names: !s3\.namesOff)? \}\)/);   // 1.0.7 이름 줄 칩
     assert.match(ui, /target="_blank" rel="noopener noreferrer"/); assert.match(ui, /accept="\.json,application\/json"/);
     assert.match(ui, /덮어쓸까요\?/); assert.match(ui, /decodes\(item\.decor\.art\)/); assert.match(ui, /summary\(result/);
     assert.ok(!/\beval\(|new Function|innerHTML = [^`]*item\./.test(ui), '받은 글을 실행 · HTML 로 꽂지 않아요');

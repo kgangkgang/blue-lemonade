@@ -1,0 +1,212 @@
+{
+ "about": "이름·표시·도움말 검사용이에요. 원작 본문이나 개인 프리셋 자료는 담지 않아요.",
+ "rows": [
+  {
+   "id": "fruit-v65-plot-anti-coincidence",
+   "name": "🎬 防强行巧合｜巧合合理性校验",
+   "title": "🎬 억지 우연 방지｜우연의 개연성 확인",
+   "contentHash": "925a712ffd1db6cd85b3345e2ecc7e65dbb67dfbcc3b6865b98e8da0db605d37",
+   "kind": "new"
+  },
+  {
+   "id": "fruit-v66-plot-undertone-bittersweet",
+   "name": "🎬 余韵·青柠酸涩｜落差与克制｜余韵选开",
+   "title": "🎬 씁쓸한 여운｜기대와 현실 · 절제｜여운 선택",
+   "contentHash": "f22fa6c16d2b4438aa62cbfe09cdd3ba61b25feb377cd292c12630197928b5c3",
+   "kind": "new"
+  },
+  {
+   "id": "fruit-v66-plot-undertone-lovehate",
+   "name": "🎬 余韵·恨海情天｜宿怨与骨血纠缠｜余韵选开",
+   "title": "🎬 애증의 여운｜오랜 원한과 얽힌 관계｜여운 선택",
+   "contentHash": "35ba92c95a8a0c6acf07502f42b101e18a2276e5be2861b81a79c096f26e45e7",
+   "kind": "new"
+  },
+  {
+   "id": "fruit-v67-dark-nature-anti-simp",
+   "name": "👤 阴暗人性与防恋爱脑｜去圣母与反无脑倒贴｜选开",
+   "title": "👤 어두운 본성 유지｜무조건적 호감·헌신 방지｜선택 사용",
+   "contentHash": "52b9f7e1d6ba58e9d6faaf117fb4f9a97e502a6e76dc9af3664ba058c1038635",
+   "kind": "new"
+  },
+  {
+   "id": "fruit-v67-shuraba-competition",
+   "name": "👤 修罗场·雄竞雌竞｜独占交锋与暗流角力｜多人单选",
+   "title": "👤 관계 경쟁 · 신경전｜독점과 물밑 경쟁｜다인 관계 택1",
+   "contentHash": "37a981d19de7dcbbe7188458d4c8116496ea8683c7ae1d4fc7c8da536bed7d94",
+   "kind": "new"
+  },
+  {
+   "id": "fruit-v65-nsfw-manga-lens",
+   "name": "🥵 漫画分镜与肉感张力｜缝合增强",
+   "title": "🥵 성인 장면의 만화식 구도｜추가 보강",
+   "contentHash": "45a22e132fe91daba76e0e28e43845ef7d68ab2fddd1b42253fe446f5bfabcde",
+   "kind": "new"
+  },
+  {
+   "id": "fruit-v65-nsfw-play-menu",
+   "name": "🥵 把玩与侍奉微动作库｜缝合增强",
+   "title": "🥵 성인 장면 세부 동작 보강｜추가 보강",
+   "contentHash": "6c6b27c1be16798afc6bc637fd3aec292f0fb0f7bb9f9ac600b06dee3d284b4b",
+   "kind": "new"
+  },
+  {
+   "id": "fruit-v66-write-setting-integration",
+   "name": "📖 设定入文｜剥离九大说明书腔",
+   "title": "📖 설정을 장면에 녹이기｜설명문 같은 서술 억제",
+   "contentHash": "749332668bcbec20ed74b821c0f602e3f906efbad6e486d8400e0c70be44b1d6",
+   "kind": "new"
+  },
+  {
+   "id": "fruit-v66-cot-inline-tasting",
+   "name": "🧠 正文穿插校准｜三节点防偏自检｜选开",
+   "title": "🧠 본문 중간 점검｜처음·중간·끝 일관성 확인｜선택 사용",
+   "contentHash": "5a39d742699ce44b728a0fb4b366fcc267fe3c03a7bc286da50a47210a69b81b",
+   "kind": "new"
+  },
+  {
+   "id": "810a046a-0096-4caa-a2d8-ca00a55dbda5",
+   "name": "🍏 青果·赫斯帕里得斯（拉刻西斯缝合优化版）说明｜别开",
+   "title": "🍏 청과 헤스페리데스 V2.0 안내｜켜지 마세요",
+   "legacyName": "🍏 青涩果轻量化预设说明｜别开",
+   "legacyTitle": "🍏 청과 경량 프리셋 안내｜켜지 마세요",
+   "kind": "alias"
+  },
+  {
+   "id": "c966ae89-6110-4f28-a55d-e870533fdc69",
+   "name": "👤 和谐后宫｜反修罗场｜多人单选",
+   "title": "👤 조화로운 관계｜갈등 억제｜다인 관계 택1",
+   "legacyName": "👤 修罗场指导 @mukamuka",
+   "legacyTitle": "👤 수라장 지침 @mukamuka",
+   "kind": "alias"
+  },
+  {
+   "id": "a6b68a17-2d4d-4890-be25-df0bba808239",
+   "name": "🔞 平等｜关系单选",
+   "title": "🔞 대등｜관계 택1",
+   "legacyName": "🔞 平等｜关系单选 @顶呱呱",
+   "legacyTitle": "🔞 대등｜관계 택1 @顶呱呱",
+   "kind": "alias"
+  },
+  {
+   "id": "25cb080c-bf51-48d4-920b-02c839f0944c",
+   "name": "🔞 背德与不平等｜关系单选",
+   "title": "🔞 배덕과 불평등｜관계 택1",
+   "legacyName": "🔞 背德与不平等｜关系单选 @姜狸",
+   "legacyTitle": "🔞 배덕과 불평등｜관계 택1 @姜狸",
+   "kind": "alias"
+  },
+  {
+   "id": "4d4c20f4-50fc-46ae-af9b-0e4556a4611b",
+   "name": "🔞 媚 user｜关系单选",
+   "title": "🔞 user 에게 아양｜관계 택1",
+   "legacyName": "🔞 媚 user｜关系单选 @村妹儿",
+   "legacyTitle": "🔞 user 에게 아양｜관계 택1 @村妹儿",
+   "kind": "alias"
+  },
+  {
+   "id": "5383262f-7024-40f6-94f5-9d819471c34a",
+   "name": "🔞 丁丁美化",
+   "title": "🔞 남성기 묘사 다듬기",
+   "legacyName": "🔞 丁丁美化 @鸦唳",
+   "legacyTitle": "🔞 남성기 묘사 다듬기 @鸦唳",
+   "kind": "alias"
+  },
+  {
+   "id": "e5fdc6cc-4171-490d-aad9-c01d37e587dd",
+   "name": "🔞 射精描写",
+   "title": "🔞 사정 묘사",
+   "legacyName": "🔞 射精描写 @柑橘",
+   "legacyTitle": "🔞 사정 묘사 @柑橘",
+   "kind": "alias"
+  },
+  {
+   "id": "9d760b48-1911-4876-b8e6-819dc147d7b9",
+   "name": "🔞 ASMR 对白",
+   "title": "🔞 ASMR 대사",
+   "legacyName": "🔞 ASMR 对白 @小纱的Phantasm预设",
+   "legacyTitle": "🔞 ASMR 대사 @小纱的Phantasm预设",
+   "kind": "alias"
+  },
+  {
+   "id": "ac26a9fe-8d6a-4c12-802b-13b85271b653",
+   "name": "🔞 DirtyTalk调教蜜语｜淫语单选",
+   "title": "🔞 DirtyTalk 길들이는 달콤한 말｜음담 택1",
+   "legacyName": "🔞 DirtyTalk调教蜜语｜淫语单选 @村妹儿",
+   "legacyTitle": "🔞 DirtyTalk 길들이는 달콤한 말｜음담 택1 @村妹儿",
+   "kind": "alias"
+  },
+  {
+   "id": "962e06ff-039f-4a69-9b56-75d3a9da5e5c",
+   "name": "🔞 DirtyTalk粗俗淫语｜淫语单选",
+   "title": "🔞 DirtyTalk 거친 음담｜음담 택1",
+   "legacyName": "🔞 DirtyTalk粗俗淫语｜淫语单选 @村妹儿",
+   "legacyTitle": "🔞 DirtyTalk 거친 음담｜음담 택1 @村妹儿",
+   "kind": "alias"
+  },
+  {
+   "id": "1484d2f7-aff6-496b-ad3a-0f5b8db60f17",
+   "name": "🔞 DirtyTalk淫语特化｜淫语单选",
+   "title": "🔞 DirtyTalk 음담 특화｜음담 택1",
+   "legacyName": "🔞 DirtyTalk淫语特化｜淫语单选 @omomini",
+   "legacyTitle": "🔞 DirtyTalk 음담 특화｜음담 택1 @omomini",
+   "kind": "alias"
+  },
+  {
+   "id": "d5d02521-c0f9-40f4-af6c-ee4e946528f4",
+   "name": "🔞 BG 柔和｜描写单选",
+   "title": "🔞 BG 부드럽게｜묘사 택1",
+   "legacyName": "🔞 BG 柔和｜描写单选 @YUKI",
+   "legacyTitle": "🔞 BG 부드럽게｜묘사 택1 @YUKI",
+   "kind": "alias"
+  },
+  {
+   "id": "cfdf95f9-6960-43b0-a921-cc5108c48ab8",
+   "name": "🔞 BG 粗俗｜描写单选",
+   "title": "🔞 BG 거칠게｜묘사 택1",
+   "legacyName": "🔞 BG 粗俗｜描写单选 @村妹儿 @yuki",
+   "legacyTitle": "🔞 BG 거칠게｜묘사 택1 @村妹儿 @yuki",
+   "kind": "alias"
+  },
+  {
+   "id": "102d2ee7-f8bf-451e-b66b-6ee630142209",
+   "name": "🔞 BL｜描写单选",
+   "title": "🔞 BL｜묘사 택1",
+   "legacyName": "🔞 BL｜描写单选 @natami @吱吱",
+   "legacyTitle": "🔞 BL｜묘사 택1 @natami @吱吱",
+   "kind": "alias"
+  },
+  {
+   "id": "e6cdb449-02f9-4626-82b4-fcf558b4a408",
+   "name": "🔞 GL｜描写单选",
+   "title": "🔞 GL｜묘사 택1",
+   "legacyName": "🔞 GL｜描写单选 @Yuki",
+   "legacyTitle": "🔞 GL｜묘사 택1 @Yuki",
+   "kind": "alias"
+  },
+  {
+   "id": "18d29e66-59c2-40b9-af2a-f5297d82fb91",
+   "name": "🔞 素股 BG+BL｜描写单选",
+   "title": "🔞 스마타 BG+BL｜묘사 택1",
+   "legacyName": "🔞 素股 BG+BL｜描写单选 @村妹儿 @NUE @小无",
+   "legacyTitle": "🔞 스마타 BG+BL｜묘사 택1 @村妹儿 @NUE @小无",
+   "kind": "alias"
+  },
+  {
+   "id": "fruit-heart-ds-8376672a4e9842f6f9a5",
+   "name": "🔞 性爱主动 #DS #CLAUDE",
+   "title": "🔞 성관계 주도 #DS #CLAUDE",
+   "legacyName": "🔞 性爱主动 @小夜 #DS #CLAUDE",
+   "legacyTitle": "🔞 성관계 주도 @小夜 #DS #CLAUDE",
+   "kind": "alias"
+  },
+  {
+   "id": "fruit-heart-ds-190126c69bb53b458dc2",
+   "name": "🚫 缄默准则4.0｜实态白描与句法提纯总纲",
+   "title": "🚫 침묵 원칙 4.0｜구체적 묘사와 문장 정리 지침",
+   "legacyName": "🚫 缄默准则3.5｜实态白描总纲",
+   "legacyTitle": "🚫 침묵 원칙 3.5｜절제된 사실 묘사 지침",
+   "kind": "alias"
+  }
+ ]
+}

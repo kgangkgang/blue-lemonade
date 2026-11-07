@@ -61,7 +61,48 @@ function messageRoots(range, chat) {
     return roots;
 }
 
-/** 채팅 화면 글 안에서 고른 글이면 { range, root, roots, index, single } */
+// 1.0.7 고른 글자 자리를 적어 두고, 글이 다시 그려졌으면 다시 세워요(폰 제보)
+function charOffset(root, node, offset) {
+    try {
+        const before = document.createRange();
+        before.setStart(root, 0);
+        before.setEnd(node, offset);
+        return before.toString().length;
+    } catch { return -1; }
+}
+function pointAt(root, chars) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let left = chars, last = null;
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (left <= node.data.length) return [node, left];
+        left -= node.data.length;
+        last = node;
+    }
+    return last && left === 0 ? [last, last.data.length] : null;
+}
+function anchorsOf(range, startRoot, endRoot) {
+    const text = range.toString();
+    const start = charOffset(startRoot, range.startContainer, range.startOffset);
+    const end = charOffset(endRoot, range.endContainer, range.endOffset);
+    return start < 0 || end < 0 ? null : { text, startRoot, endRoot, start, end };
+}
+export function restoreSelection(target) {
+    const a = target?.anchors;
+    if (!a || !target.range) return target;
+    try { if (target.range.toString() === a.text) return target; } catch { /* 끊긴 범위 */ }
+    if (!a.startRoot.isConnected || !a.endRoot.isConnected) return target;
+    const from = pointAt(a.startRoot, a.start), to = pointAt(a.endRoot, a.end);
+    if (!from || !to) return target;
+    const range = document.createRange();
+    try { range.setStart(...from); range.setEnd(...to); } catch { return target; }
+    if (range.collapsed || range.toString() !== a.text) return target;
+    if (target.single) return { ...target, range };
+    const chat = document.getElementById('chat');
+    const roots = chat ? messageRoots(range, chat) : [];
+    return roots.length ? { ...target, range, root: roots[0], roots } : target;
+}
+
+/** 채팅 화면 글 안에서 고른 글이면 { range, root, roots, index, single, anchors } */
 export function currentSelection() {
     if (typingInField()) return null;
     const selection = document.getSelection();
@@ -74,7 +115,7 @@ export function currentSelection() {
         const index = Number.parseInt(mes.getAttribute('mesid') ?? '', 10);
         if (!Number.isInteger(index) || index < 0) return null;
         if (!selection.toString().trim()) return null;
-        return { range: range.cloneRange(), root, roots: [root], index, single: true };
+        return { range: range.cloneRange(), root, roots: [root], index, single: true, anchors: anchorsOf(range, root, root) };
     }
     // 여러 메시지에 걸친 선택 (이름 줄에서 시작한 끌기도) — 채팅 칸 안이어야 한다
     const chat = document.getElementById('chat');
@@ -82,7 +123,8 @@ export function currentSelection() {
     if (!chat || !chat.contains(wide.commonAncestorContainer)) return null;
     const roots = messageRoots(wide, chat);
     if (!roots.length || !selection.toString().trim()) return null;
-    return { range: wide.cloneRange(), root: roots[0], roots, index: null, single: false };
+    const startRoot = textRoot(wide.startContainer), endRoot = textRoot(wide.endContainer);
+    return { range: wide.cloneRange(), root: roots[0], roots, index: null, single: false, anchors: startRoot && endRoot ? anchorsOf(wide, startRoot, endRoot) : null };
 }
 
 const visibleTools = target => [...tools.values()]
@@ -149,6 +191,7 @@ function renderButtons(list) {
 
 function safeCapture(tool, target) {
     if (!tool.capture) return null;
+    target = restoreSelection(target);
     try {
         if (!target?.root?.isConnected || !target.range.startContainer.isConnected || !target.range.endContainer.isConnected) return null;
         return tool.capture(target);

@@ -112,3 +112,36 @@ zonde306 · [ST-Prompt-Template](https://github.com/zonde306/ST-Prompt-Template)
 아이디어 참고: [URMIIE/SillyTavern-PromptFolders](https://github.com/URMIIE/SillyTavern-PromptFolders)(AGPL-3.0) — 코드는 옮기지 않음.
 참고한 원본 커밋 8cd30867c2db421b492bb1cae8b32cb5a5258a85 (2026-11-04, manifest 1.2.6).
 1.4.0(d6329e44)의 프리셋 그룹 가져오기·이름 한글화 아이디어와 저장 형식을 참고했어요. 가져오기 편집창·번역 연결·검증은 이 테마의 기존 구조로 따로 구현했어요.
+
+
+## Regex Perf Kit (정규식 성능)
+
+- 원본: https://github.com/Penterson/st-regex-perf
+- 원본 판/커밋: 0.3.0 / e21e666bface5dca6c0ea83bcbce0c6e8fe03824
+- 저작권자: Copyright (c) 2026 Penterson
+- 사용 범위: 정규식 계측·사전 검사·캐시·분석 및 화면 코드와 한국어 사전예요. 프롬프트 연동 정규식·초기 꺼짐·스타일·엔진 중복 적용 방지와 원상 복구를 연결했어요.
+- 원본 MIT 허가문을 그대로 보존해요.
+
+```text
+MIT License
+
+Copyright (c) 2026 Penterson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```

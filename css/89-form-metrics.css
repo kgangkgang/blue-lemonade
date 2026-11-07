@@ -70,7 +70,7 @@ html body.salty #pt-panel .pt-page:has(> .pt-page-fixed) > .pt-page-scroll { min
   :where(.salty-panel,.bl-ft-dialog,.bl-roomy-dialog,.bl-notes-dialog,.bl-assets-dialog,.bl-ctsi-dialog,.blpt-dialog,.bl-direction-dialog,.bl-mermaid-dialog,.blzi-dialog,.bl-translator-dialog,#cg-panel,#pt-panel,.rl-root,.pa-hub,.bwr_settings,#lv_settings,#model_register_settings,#model-switch-settings,.po-dialog,#regex-link-settings) {
     --bl-form-height:var(--bl-ui-ctl, 36px); /* 1.0.0: 손가락 화면에서도 보이는 칸은 36 — 누르는 넓이는 칸을 키우지 않고 바깥으로 */
   }
-  html body .salty-panel :is(.salty-fontrow,.bl-ft-group-toggle) {
+  html body .salty-panel :is(.salty-fontrow,.bl-ft-group-toggle), html body .bl-ft-group-toggle {   /* 1.0.7 묶음 펼침 단추는 어느 창에서나 44 */
     min-height:44px !important;
   }
   /* 1.0.0 보이는 크기는 크기표(글자 단추 · 탭 36, 아이콘 34) — 누르는 넓이 44 는 88-ui-parts 의 투명 상자 */

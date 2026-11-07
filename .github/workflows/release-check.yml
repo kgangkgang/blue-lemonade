@@ -216,6 +216,9 @@ jobs:
           node tools/tests/prompt-translation-cache.mjs .
           node tools/tests/regexlink-restore.mjs .
           node tools/tests/regex-manual.mjs .
+          node tools/tests/regexlink-performance.mjs .
+          node tools/tests/regex-perf.mjs .
+          node tools/tests/regex-perf.mjs . other-wrapper
           node tools/tests/rewrite-apply-message.mjs .
           node tools/tests/rewrite-settings-migrate.mjs .
           node tools/tests/zipinstall-archive.mjs .
@@ -557,6 +560,7 @@ jobs:
           node tools/tests/settings-search.mjs .
           node tools/tests/settings-intents.mjs .
           node tools/tests/settings-ai.mjs .
+          node tools/tests/settings-ai-connection.mjs .
           node tools/tests/mes-pin-names.mjs .
           node tools/tests/markdown-settings.mjs .
           node tools/tests/chat-graph.mjs .
@@ -617,6 +621,7 @@ jobs:
           node tools/tests/deus-qr.mjs
           node tools/tests/sola-qr.mjs .
           node tools/tests/sola-quick-shortcut.mjs .
+          node tools/tests/sola-skin.mjs .
           node tools/tests/deus-dictionary.mjs .
           node tools/tests/preset-text-short.mjs .
           node tools/tests/sola-dictionary.mjs .

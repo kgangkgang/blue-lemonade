@@ -11,7 +11,7 @@ const SETTLED_DEFAULTS = { 'chat.weatherAmount': 100, 'chat.weather2Amount': 100
 const equal = (a, b) => a === b || (!!a && !!b && typeof a === 'object' && typeof b === 'object' && Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(k => equal(a[k], b[k])));
 const omitted = new Set(['appearanceHistory',   /* 9.0.2 그라데이션 · 기기별 배치는 걷어 「변경한 설정」에서도 뺀다 */
     'version','noticeSeen','addonCarry','frameLibrary','customFonts','styles','charStyles','promptBinds','headSwitches','activeStyle','baseStyle','weatherImages','customPalettes','activeCustomPalette','wordTools','multiAvatar','extcheck']);   // extcheck: 1.0.3 확장 충돌 검사의 AI 전송 동의 · 고른 연결(기억)
-const omittedPaths = new Set(['promptFolders.presets','promptSaves.presets','presetFolders.folders','chatOrganizer.folders','chatOrganizer.chats','qrShelf.items','qrShelf.recent','deviceLayouts.pc','deviceLayouts.mobile','image.masks','image.maskId','chat.weatherImageId','compat.cssAsked','logCopy.shape','logCopy.palette','logCopy.category','logCopy.recent','logCopy.fav','logCopy.custom','logCopy.tagsOff']);   // cssAsked: 「쓰던 테마가 있어요」에 답한 지문 (설정이 아니라 기억) · logCopy.*: 로그 복사 시트가 기억하는 마지막 모양 · 색 · 최근 · 즐겨찾기 · 내 글꾸 (켜기만 설정)
+const omittedPaths = new Set(['promptFolders.presets','promptSaves.presets','presetFolders.folders','chatOrganizer.folders','chatOrganizer.chats','qrShelf.items','qrShelf.recent','deviceLayouts.pc','deviceLayouts.mobile','image.masks','image.maskId','chat.weatherImageId','compat.cssAsked','logCopy.shape','logCopy.palette','logCopy.category','logCopy.recent','logCopy.fav','logCopy.custom','logCopy.tagsOff','logCopy.titleOff','logCopy.dateOff','logCopy.namesOff','logCopy.topOff','logCopy.bottomOff']);   // cssAsked: 「쓰던 테마가 있어요」에 답한 지문 (설정이 아니라 기억) · logCopy.*: 로그 복사 시트가 기억하는 마지막 모양 · 색 · 최근 · 즐겨찾기 · 내 글꾸 (켜기만 설정)
 const safe = path => typeof path === 'string' && !path.split('.').some(k => ['__proto__','constructor','prototype'].includes(k));
 export function settingDefault(settings, path) {
     if (!safe(path) || omitted.has(path.split('.')[0]) || omittedPaths.has(path)) return { allowed: false };
@@ -117,6 +117,7 @@ export function settingRoute(path) {
     // 카드 · 색 통일 · 톤 값은 데우스 화면에 있다 (채팅 › 기타에는 커스텀 CSS 끄기만)
     if (scope === 'fruit') return {tab:'prompt',sub:'fruit'};
     if (scope === 'promptLink') return {tab:'prompt',sub:'fruit'};   // 6.5.2 캐릭터 이름 연동 (프롬프트 › 과일)
+    if (path === 'chat.solaStyle') return {tab:'prompt',sub:'sola'};
     if (scope === 'deus' || scope === 'chat' && /^(dem|unify|tone|markerTone|regexIcons)/.test(key)) return {tab:'prompt',sub:'deus'};
     if (scope === 'deviceLayouts') return {tab:'text',sub:'para'};
     if (scope === 'settingLocks') return {tab:'theme',sub:'backup'};

@@ -2606,6 +2606,7 @@ body.salty.salty-profile-banner :is(#salty-nochat, .salty-preview) .mes:not([is_
 body.salty :is(#salty-nochat, .salty-preview) .bl-art-frame::after {
   content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
   background: var(--bl-decor-art) center / 100% 100% no-repeat; opacity: var(--bl-decor-opacity);
+  filter: var(--bl-decor-filter, none);
 }
 body.salty :is(#salty-nochat, .salty-preview) .bl-art-frame > .bl-art-photo {
   position: absolute; inset: 0; display: block; overflow: hidden;

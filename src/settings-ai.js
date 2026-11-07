@@ -95,7 +95,11 @@ export async function countTokens(messages) {
 export const requestTokens = read => countTokens(buildMessages('글씨를 조금 크게, 밤에 눈부시지 않게', allowList(read), read));
 
 // 실리태번 지금 연결(generateRaw) 또는 고른 연결 프로필로 한 번 — 프리셋 · 대화는 붙이지 않아요
-async function sendToSillyTavern(messages, { profileId, signal }) {
+async function sendToSillyTavern(messages, { profileId, signal, connection }) {
+    if (connection?.provider) {
+        const { sendSettingsAiDirect } = await import('./settings-ai-connection.js');
+        return sendSettingsAiDirect(messages, { connection, signal, maxTokens: RESPONSE_TOKENS });
+    }
     const ctx = globalThis.SillyTavern?.getContext?.();
     if (!ctx) throw new Error('실리태번 연결을 찾지 못했어요');
     let request;
@@ -109,16 +113,20 @@ async function sendToSillyTavern(messages, { profileId, signal }) {
         request = ctx.generateRaw({ prompt: messages, responseLength: RESPONSE_TOKENS, trimNames: false });
     }
     // 지금 연결(generateRaw)은 끊을 수 없어 멈추면 기다리지만 않아요
-    return await Promise.race([request, new Promise((_, reject) => signal?.addEventListener('abort', () => reject(new Error('멈췄어요')), { once: true }))]);
+    let stop;
+    const cancelled = new Promise((_, reject) => { stop = () => reject(new Error('멈췄어요')); if (signal?.aborted) stop(); else signal?.addEventListener('abort', stop, { once: true }); });
+    try { return await Promise.race([request, cancelled]); }
+    finally { signal?.removeEventListener('abort', stop); }
 }
 
 /** 검색창 문장 하나로 AI 에게 한 번 묻기 — 바꾸지는 않아요(미리보기 거리만 돌려줘요) */
-export async function askSettingsAi({ sentence, read, profileId = '', send = null, signal = null, onTokens = null }) {
+export async function askSettingsAi({ sentence, read, profileId = '', connection = null, send = null, signal = null, onTokens = null }) {
+    const selectedConnection = connection ? structuredClone(connection) : null;
     const list = allowList(read);
     const messages = buildMessages(sentence, list, read);
     const tokens = await countTokens(messages);
     onTokens?.(tokens);
     signal?.throwIfAborted?.();
-    const text = await (send || sendToSillyTavern)(messages, { profileId, signal });
+    const text = await (send || sendToSillyTavern)(messages, { profileId: selectedConnection?.profileId ?? profileId, signal, connection: selectedConnection });
     return { ...parseChanges(text, list, read), tokens };
 }

@@ -20,13 +20,27 @@ import { applyFade, revealTab } from './tab-scroll.js';
 import { transformLog, recolorLog } from './log-copy-words.js';   // 이름 숨김 · 단어 바꾸기 (채팅 캡처 「로그 공유 · 이름 가림」 설정을 같이 써요) · 고른 에이드로 역할 색 다시 계산
 import { withNameAliases } from './name-aliases.js';
 import { wrapSpoiler, unwrapSpoiler, spoilerAt, ensureStyle as ensureSpoilerStyle, previewModel } from './log-copy-spoiler.js';   // 숨긴 글 · 미리보기에서 고친 글로 마크다운
-import { prettyLogHtml } from './log-copy-pretty.js';   // 1.0.1 「HTML 복사」 코드를 사람이 고치기 쉬운 꼴로 (줄 나눔 · 주석 — 모양은 그대로)
+import { prettyLogHtml } from './log-copy-pretty.js';
+import { bareLog } from './log-copy-bare.js';   // 1.0.7 위 글 · 아래 글 빼기(틀에 박힌 머리 표 · 꼬리말 …)   // 1.0.1 「HTML 복사」 코드를 사람이 고치기 쉬운 꼴로 (줄 나눔 · 주석 — 모양은 그대로)
+import { fitBare } from './log-copy-bare-fit.js';   // 1.0.7 빼고 나서 글을 덮게 된 떠 있는 장식 걷기(11-07 사용자 「컴퓨터가 내려와 글을 덮어」)
 import { TOKEN_KEYS } from './palettes.js';   // 가로 칩 줄: 넘치는 쪽 가장자리 흐림 · 고른 칩 보이기 (탭 줄과 같은 부품)
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
 const HOLD_MS = 520;
 const CUSTOM_MAX = 20;
 const CUSTOM_BYTES = 60000;
+// 1.0.7 「보일 것」 칩 줄(사용자 「위 아래 글자들 … 부가적인 것들 빼는 것도 다 버튼 · 완전 심플한 게 좋을 때도 있음」) — 켬 = 보여요 · 끄면 빼요. 저장 칸 logCopy.<key>
+const SHOWS = [
+    ['titleOff', 'fa-heading', '제목', '틀 머리의 제목'],
+    ['dateOff', 'fa-calendar', '날짜', '틀의 날짜'],
+    ['tagsOff', 'fa-tags', '깡통 · 모델 · 프롬프트', '머리의 깡통 · 모델 · 프롬프트 알약'],
+    ['namesOff', 'fa-user', '이름 줄', '메시지마다 이름 줄 — 끄면 본문만(간격은 그대로)'],
+    ['topOff', 'fa-arrow-up', '위 글', '첫 메시지 위의 틀 글(머리 표 · 부제 · 능력치 칩 · 도장 …) — 제목 · 날짜 · 알약은 따로'],
+    ['bottomOff', 'fa-arrow-down', '아래 글', '마지막 메시지 아래의 틀 글(꼬리말 · 서명 · 보낸 이 …)'],
+];
+// 1.0.7 「머리 칸」(글꾸 마트 시식 창과 같은 칸) — 미리보기에서 눌러 고친 것과 서로 따라가요
+const FIELD_INPUTS = [['title', '제목', '제목'], ['date', '날짜', '비우면 없음'], ['char', '깡통', '깡통 이름'], ['model', '모델', '비우면 없음'], ['prompt', '프롬프트', '비우면 없음']];
+const SNAP_MAX = 50, SNAP_WAIT = 500;
 
 /** 테마 설정 logCopy (settings.js 가 모양을 정리해요) */
 const store = () => getSettings().logCopy;
@@ -110,6 +124,7 @@ export async function openLogSheet(model) {
         armed: null,   // 길게 눌러 지울 준비가 된 내 글꾸 id
         edited: null,   // 1.0.1 미리보기에서 고친 글(메시지 노드만 바꾼 모델) — 틀 · 색을 바꿔 다시 그려도 그대로
         dirty: false,   // 마지막으로 그린 뒤 미리보기 글을 고쳤나 (고쳤을 때만 거둬요 — 안 고친 메시지는 그림 · 링크가 있는 원래 노드 그대로)
+        drawnTexts: null,   // 1.0.7 막 그린 미리보기의 메시지별 글 — 거둘 때 이것과 달라진 메시지만 「고친 것」(이름 숨김 · 바꾸기 · 틀이 바꾼 글자는 고친 것이 아니에요)
         order: chipOrder(s),
     };
     if (!PRESETS.some(p => p.id === state.shape) && !s.custom.some(c => c.id === state.shape)) state.shape = 'card';
@@ -124,14 +139,17 @@ export async function openLogSheet(model) {
             <div class="bl-lc-chips bl-chip-row" role="radiogroup" aria-label="모양" data-lc-shapes></div>
             <div class="bl-lc-gallery" data-lc-gallery hidden><textarea rows="3" placeholder="이미지 코드(&lt;img …&gt;)나 이미지 주소를 붙여 넣어요" aria-label="갤러리 사진 코드" data-lc-images></textarea><span class="bl-lc-note" data-lc-images-count></span></div>
             <div class="bl-lc-colors" data-lc-colors><div class="bl-lc-mode" role="group" aria-label="밝기">${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><div class="bl-lc-pals bl-chip-row" role="radiogroup" aria-label="색" data-lc-pals></div></div>
-            <div class="bl-lc-tools bl-chip-row" role="group" aria-label="이름 숨김 · 바꾸기"><button type="button" class="bl-lc-chip" data-lc="hide" aria-pressed="false"><i class="fa-solid fa-user-secret" aria-hidden="true"></i><span>이름 숨김</span></button><button type="button" class="bl-lc-chip" data-lc="words" aria-pressed="false"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>바꾸기</span><small data-lc-words-count></small></button><button type="button" class="bl-lc-chip" data-lc="tags" aria-pressed="true" title="머리의 깡통 · 모델 · 프롬프트 알약 — 값은 미리보기에서 눌러 고쳐요"><i class="fa-solid fa-tags" aria-hidden="true"></i><span>깡통 · 모델 · 프롬프트</span></button><button type="button" class="bl-lc-chip" data-lc="spoiler" disabled title="미리보기에서 글을 고르면 눌러요"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>숨기기</span></button></div>
+            <div class="bl-lc-tools bl-chip-row" role="group" aria-label="이름 숨김 · 바꾸기"><button type="button" class="bl-lc-chip" data-lc="hide" aria-pressed="false"><i class="fa-solid fa-user-secret" aria-hidden="true"></i><span>이름 숨김</span></button><button type="button" class="bl-lc-chip" data-lc="words" aria-pressed="false"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>바꾸기</span><small data-lc-words-count></small></button><button type="button" class="bl-lc-chip" data-lc="fields" aria-pressed="false" title="제목 · 날짜 · 깡통 · 모델 · 프롬프트 칸을 글칸으로 고쳐요"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>머리 칸</span></button><button type="button" class="bl-lc-chip" data-lc="spoiler" disabled title="미리보기에서 글을 고르면 눌러요"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>숨기기</span></button></div>
+            <div class="bl-lc-shows bl-chip-row" role="group" aria-label="보일 것 — 끄면 빼요" data-lc-shows>${SHOWS.map(([key, icon, label, title]) => `<button type="button" class="bl-lc-chip" data-lc-show="${key}" aria-pressed="true" title="${esc(title)}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${esc(label)}</span></button>`).join('')}</div>
+            <div class="bl-lc-fields" data-lc-fields hidden>${FIELD_INPUTS.map(([key, label, hint]) => `<label class="bl-lc-field"><span>${esc(label)}</span><input type="text" maxlength="${key === 'title' ? 80 : 60}" placeholder="${esc(hint)}" data-lc-field="${key}"></label>`).join('')}</div>
             <div class="bl-lc-names" data-lc-names hidden><div class="bl-lc-name-list" data-lc-name-list></div><div class="bl-lc-row2"><input type="text" maxlength="40" placeholder="더 가릴 이름" aria-label="더 가릴 이름" data-lc-name-input><button type="button" class="salty-btn bl-lc-icon" data-lc="name-add" aria-label="가릴 이름 더하기"><i class="fa-solid fa-plus" aria-hidden="true"></i></button></div></div>
             <div class="bl-lc-words" data-lc-words hidden><div data-lc-rules></div><button type="button" class="salty-btn bl-lc-add-rule" data-lc="rule-add"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>줄 더하기</span></button></div>
             <div class="bl-lc-pick" data-lc-pick hidden><span>로그 넣을 곳을 눌러요</span><button type="button" class="salty-btn" data-lc="auto">자동으로</button></div>
+            <div class="bl-lc-bar" data-lc-bar><span class="bl-lc-note"><i class="fa-solid fa-pen" aria-hidden="true"></i> 미리보기 글씨를 눌러 바로 고쳐요</span><button type="button" class="salty-btn bl-lc-icon" data-lc="undo" aria-label="되돌리기" title="되돌리기 (지운 블록도 돌아와요)" disabled><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon" data-lc="redo" aria-label="다시하기" title="다시하기" disabled><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button></div>
             <div class="bl-lc-stage" data-lc-stage><div class="bl-lc-egg" data-lc-egg hidden>✨ 장식을 눌러 보세요</div><iframe sandbox="allow-same-origin" title="미리보기 — 글자를 눌러 바로 고쳐요" data-lc-frame></iframe></div>
             <div class="bl-lc-paste" data-lc-paste hidden><button type="button" class="salty-btn bl-lc-mart" data-lc="mart"><i class="fa-solid fa-store" aria-hidden="true"></i><span>마트에서 가져오기</span></button><textarea rows="8" placeholder="공유받은 글꾸 HTML 이나 글꾸 마트에서 복사한 글을 붙여 넣어요" aria-label="글꾸 HTML"></textarea><div class="bl-lc-row"><button type="button" class="salty-btn" data-lc="paste-cancel">취소</button><button type="button" class="salty-btn bl-tool-primary" data-lc="paste-save">저장</button></div></div>
         </div>
-        <footer class="bl-lc-foot"><button type="button" class="salty-btn" data-lc="md" title="틀 · 색 없이 글만 마크다운으로">글만 복사</button><button type="button" class="salty-btn bl-tool-primary" data-lc="copy" title="보이는 모양 그대로(틀 · 색 · 글꼴) HTML 로"><i class="fa-solid fa-copy" aria-hidden="true"></i> HTML 복사</button></footer>`;
+        <footer class="bl-lc-foot"><button type="button" class="salty-btn" data-lc="md" title="틀 · 색 없이 글만 마크다운으로">글만 복사</button><button type="button" class="salty-btn" data-lc="download" title="보이는 모양 그대로 .html 파일로 받아요">내려받기</button><button type="button" class="salty-btn bl-tool-primary" data-lc="copy" title="보이는 모양 그대로(틀 · 색 · 글꼴) HTML 로"><i class="fa-solid fa-copy" aria-hidden="true"></i> HTML 복사</button></footer>`;
     document.body.append(dialog);
     const $ = selector => dialog.querySelector(selector);
     const frame = $('[data-lc-frame]');
@@ -151,8 +169,47 @@ export async function openLogSheet(model) {
         if (!doc?.querySelector('[data-bl-msg]')) return;
         const got = previewModel(doc);
         const base = state.edited ?? model;
+        const drawn = state.drawnTexts;
         if (!got || got.messages.length !== base.messages.length) return;   // 틀이 메시지를 합치거나 나눴으면 못 잇기 — 원래 글로
-        state.edited = { ...base, messages: base.messages.map((m, i) => textOf(got.messages[i].nodes).trim() === textOf(m.nodes).trim() ? m : { ...m, nodes: got.messages[i].nodes }) };
+        // 1.0.7: 원래 글이 아니라 막 그린 미리보기 글과 견줘요 — 이름 숨김 · 바꾸기가 켜져 있거나 틀이 글자를 바꾸면
+        // 손대지 않은 메시지도 원래 글과 달라 서식 없는 미리보기 노드로 갈아 끼워졌어요(분류 · 모양 칩을 누르면 대사 색 · 기울임이 사라짐)
+        const edited = (m, i) => {
+            const now = textOf(got.messages[i].nodes).trim();
+            return drawn?.length === got.messages.length ? now !== drawn[i] : now !== textOf(m.nodes).trim();
+        };
+        if (!base.messages.some((m, i) => edited(m, i))) return;
+        state.edited = { ...base, messages: base.messages.map((m, i) => edited(m, i) ? { ...m, nodes: got.messages[i].nodes } : m) };
+    };
+    // 1.0.7 「↶ 되돌리기 · ↷ 다시하기」(글꾸 마트 시식 창과 같은 길) — 미리보기 HTML 스냅샷 · 다시 그리면 새로 시작(그 전에 고친 것은 거둬 이어져요)
+    const hist = { stack: [], at: -1, timer: 0 };
+    const drawHist = () => { $('[data-lc="undo"]').disabled = hist.at <= 0; $('[data-lc="redo"]').disabled = hist.at >= hist.stack.length - 1; };
+    const snapNow = () => {
+        const body = frame.contentDocument?.body;
+        if (!body) return;
+        const html = body.innerHTML;
+        if (hist.stack[hist.at] === html) return;
+        hist.stack.length = hist.at + 1;
+        hist.stack.push(html);
+        if (hist.stack.length > SNAP_MAX) hist.stack.shift();
+        hist.at = hist.stack.length - 1;
+        drawHist();
+    };
+    const resetHist = (doc) => { clearTimeout(hist.timer); hist.timer = 0; hist.stack = doc?.body ? [doc.body.innerHTML] : []; hist.at = hist.stack.length - 1; drawHist(); };
+    const travel = (dir) => {
+        if (hist.timer) { clearTimeout(hist.timer); hist.timer = 0; snapNow(); }
+        const next = hist.at + dir, doc = frame.contentDocument;
+        if (!doc?.body || next < 0 || next >= hist.stack.length) return;
+        hist.at = next;
+        doc.body.innerHTML = hist.stack[next];
+        state.dirty = true;
+        state.spoilerRange = null;
+        readFields(doc);
+        drawHist();
+    };
+    /** 미리보기의 칸(data-f) → state.fields · 머리 칸 글칸 */
+    const readFields = (doc) => {
+        for (const element of doc.querySelectorAll('[data-f]')) state.fields[element.getAttribute('data-f')] = element.textContent;
+        for (const input of dialog.querySelectorAll('[data-lc-field]')) if (document.activeElement !== input) input.value = state.fields[input.dataset.lcField] ?? '';
     };
     const spoilerColors = (nodes, sp) => { for (const n of nodes || []) { if (n.kind === 'spoiler') n.sp = sp; if (n.children) spoilerColors(n.children, sp); } };
     const view = () => {
@@ -162,10 +219,20 @@ export async function openLogSheet(model) {
         if (target && target !== nowPalette()) out.model = recolorLog(out.model, tokensOf(nowPalette()), tokensOf(target));
         return out;
     };
+    // 1.0.7 「보일 것」 칩 · 머리 칸 글칸 — 틀을 그릴 때마다(직접 붙인 글꾸는 틀 칸이 없어 이름 줄만)
+    const drawShows = () => {
+        const s3 = store(), mine = custom(), raw = !!mine && !mine.template;   // 직접 붙인 글꾸(HTML)는 틀 칸이 없어요 — 이름 줄만
+        for (const [key] of SHOWS) { const chip = $(`[data-lc-show="${key}"]`); chip.setAttribute('aria-pressed', String(!s3[key])); chip.disabled = raw && key !== 'namesOff'; }
+        for (const input of dialog.querySelectorAll('[data-lc-field]')) {
+            const key = input.dataset.lcField;
+            input.disabled = raw || (key === 'title' && s3.titleOff) || (key === 'date' && s3.dateOff) || (['char', 'model', 'prompt'].includes(key) && s3.tagsOff);
+            if (document.activeElement !== input) input.value = state.fields[key] ?? '';
+        }
+        $('[data-lc="fields"]').setAttribute('aria-pressed', String(!$('[data-lc-fields]').hidden));
+    };
     const drawTools = () => {
         const ct = tools();
         $('[data-lc="hide"]').setAttribute('aria-pressed', String(ct.redact));
-        $('[data-lc="tags"]').setAttribute('aria-pressed', String(!store().tagsOff));
         $('[data-lc="words"]').setAttribute('aria-pressed', String(ct.replace));
         const rules = ct.replaceRules.filter(r => r.from.trim()).length;
         $('[data-lc-words-count]').textContent = rules ? String(rules) : '';
@@ -234,21 +301,26 @@ export async function openLogSheet(model) {
     const pageBg = () => (own()?.bg ?? (custom() || (state.shape === 'plain' && state.palette === nowPalette()) ? getComputedStyle(dialog).backgroundColor : colorsOf(paletteFor(state.shape, state.palette)).bg));
     const draw = () => {
         harvest();
+        drawShows();
         const mine = custom();
         let html;
         const shown = view();
         if (state.edited) { const c = own() ?? colorsOf(paletteFor(state.shape, state.palette)); for (const m of shown.model.messages) spoilerColors(m.nodes, { line: c.line, raised: c.raised, muted: c.muted, family: ui.family, tracking: ui.tracking }); }
         const fields = shown.rewriteFields(state.fields);
-        if (store().tagsOff) Object.assign(fields, { char: '', model: '', prompt: '' });   // 1.0.1 「깡통 · 모델 · 프롬프트」 칩을 끄면 알약 셋을 숨겨요
+        const s3 = store();
+        // 1.0.1 「깡통 · 모델 · 프롬프트」 칩 · 1.0.7 「보일 것」 칩 — 칸을 비워 그리지 않고 그린 뒤 걷어요(log-copy-bare.js):
+        // 칸만 비우면 그 칸을 담던 머리 박스 · 구분선이 빈 채로 남았어요(11-07 사용자 「제목 · 위 글 · 알약 다 빼면 가로 박스도 사라져야지」)
+        const drop = [...(s3.titleOff ? ['title'] : []), ...(s3.dateOff ? ['date'] : []), ...(s3.tagsOff ? ['mark', 'char', 'model', 'prompt'] : [])];
         if (mine && !mine.template) html = mine.html;
-        else html = renderLog(shown.model, { shape: state.shape, colors: state.shape === 'plain' ? null : colorsOf(paletteFor(state.shape, state.palette)), ui, fields, images: shown.rewriteImages(state.images), screen: tokensOf(nowPalette()), template: mine });
+        else html = renderLog(shown.model, { shape: state.shape, colors: state.shape === 'plain' ? null : colorsOf(paletteFor(state.shape, state.palette)), ui, fields, images: shown.rewriteImages(state.images), screen: tokensOf(nowPalette()), template: mine, names: !s3.namesOff });
+        if (!mine || mine.template) { const full = html; html = fitBare(full, bareLog(full, { top: s3.topOff, bottom: s3.bottomOff, drop })); }   // 1.0.7 위 글 · 아래 글 · 칸 빼기 → 글을 덮게 된 장식 걷기
         $('[data-lc-pick]').hidden = !(mine && !mine.template && (state.picking || !mine.slot));
         frame.onload = () => {
             const doc = frame.contentDocument;
             if (!doc) return;
             if (mine && !mine.template) {   // 마트 글꾸(template)는 자리가 정해져 있어 고르지 않아요
                 const slot = state.picking ? null : (Array.isArray(mine.slot) && fromPath(doc.body, mine.slot)) || guessSlot(doc.body);
-                if (slot) { slot.innerHTML = logHtml(shown.model, { frameless: false }); slot.setAttribute('data-bl-slot', ''); }
+                if (slot) { slot.innerHTML = logHtml(shown.model, { frameless: false, names: !s3.namesOff }); slot.setAttribute('data-bl-slot', ''); }
                 if (state.picking) {
                     doc.body.style.cursor = 'crosshair';
                     doc.addEventListener('click', (event) => {
@@ -265,6 +337,7 @@ export async function openLogSheet(model) {
                 }
             }
             ensureSpoilerStyle(doc);
+            state.drawnTexts = (previewModel(doc)?.messages ?? []).map(m => textOf(m.nodes).trim());   // 1.0.7 거둘 때 견줄 「막 그린 글」
             const syncSpoiler = () => {
                 const sel = doc.getSelection();
                 const range = sel?.rangeCount ? sel.getRangeAt(0) : null;
@@ -288,11 +361,23 @@ export async function openLogSheet(model) {
             try { doc.execCommand('styleWithCSS', false, true); } catch { /* 옛 브라우저 */ }
             doc.addEventListener('input', () => {
                 state.dirty = true;   // 1.0.1 고친 글은 다음 그리기 전에 거둬 틀을 바꿔도 이어요
-                for (const element of doc.querySelectorAll('[data-f]')) state.fields[element.getAttribute('data-f')] = element.textContent;
+                readFields(doc);
+                clearTimeout(hist.timer); hist.timer = setTimeout(() => { hist.timer = 0; snapNow(); }, SNAP_WAIT);   // 1.0.7 연속 타자는 0.5초 묶음
+            });
+            // 1.0.7 글꾸 마트 시식 창과 같게: 붙여 넣기는 글만(서식 · 태그 없이) · Enter 는 줄바꿈 <br>(문단 칸이 새로 생기지 않게)
+            doc.addEventListener('paste', (event) => {
+                const text = event.clipboardData?.getData('text/plain') ?? '';
+                event.preventDefault();
+                if (text) doc.execCommand('insertText', false, text.replace(/\r\n?/g, '\n'));
             });
             doc.addEventListener('keydown', (event) => {   // 미리보기 안 Esc 도 창 닫기
-                if (event.key === 'Escape') dialog.close();
+                if (event.key === 'Escape') { dialog.close(); return; }
+                const key = event.key.toLowerCase();
+                if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); if (!doc.execCommand('insertLineBreak')) doc.execCommand('insertHTML', false, '<br>'); }
+                else if ((event.ctrlKey || event.metaKey) && !event.shiftKey && key === 'z') { event.preventDefault(); travel(-1); }
+                else if ((event.ctrlKey || event.metaKey) && (key === 'y' || (event.shiftKey && key === 'z'))) { event.preventDefault(); travel(1); }
             });
+            resetHist(doc);
         };
         $('[data-lc-egg]').hidden = !/\sdata-bl-egg="/.test(html);   // 1.0.1 누르면 반응하는 장식이 있는 틀: 미리보기 머리에 한 줄
         frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>html{scrollbar-width:none}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}${motionCss()}</style></head><body style="margin:0;padding:12px;background-color:${esc(pageBg())};-webkit-text-size-adjust:100%;overflow-wrap:anywhere">${html}</body></html>`;
@@ -307,7 +392,14 @@ export async function openLogSheet(model) {
         const win = frame.contentWindow;
         for (const el of doc.body.querySelectorAll('*')) {
             if (el.matches('style, script, br, img, col, colgroup')) continue;
-            if (!el.style.color) el.style.color = win.getComputedStyle(el).color;
+            const cs = win.getComputedStyle(el);
+            if (!el.style.color) el.style.color = cs.color;
+            // 1.0.7 일부 커뮤니티 사이트는 다크 모드에 맞춘다며 글의 color 를 인라인 !important 로 덮어써요(파랑 대사가 검정 · 남색 제목이 흰색으로 바뀌어 안 보임 — 사용자 제보).
+            // 실제로 칠하는 색(-webkit-text-fill-color)은 건드리지 않아서 같은 색을 함께 적어 둬요. 글자를 투명하게 칠한 장식(그라데이션 글씨)은 그대로
+            if (!el.style.webkitTextFillColor) {
+                const fill = cs.webkitTextFillColor;
+                el.style.webkitTextFillColor = /^(transparent|rgba\(0, 0, 0, 0\))$/.test(fill || '') ? fill : el.style.color;
+            }
         }
         const body = doc.body.cloneNode(true);
         sanitizeTree(body, { keepPreviewMarks: marks });
@@ -435,7 +527,7 @@ export async function openLogSheet(model) {
             }
             case 'md': {
                 const fromPreview = frame.contentDocument ? previewModel(frame.contentDocument) : null;   // 미리보기에서 고친 글 · 숨긴 글까지
-                const ok = await writeClipboard(null, logMarkdown(fromPreview ?? view().model));
+                const ok = await writeClipboard(null, logMarkdown(fromPreview ?? view().model, { names: !store().namesOff }));
                 toast(ok, '글만 마크다운으로 복사했어요');
                 if (ok) { remember(); dialog.close(); }
                 break;
@@ -460,11 +552,27 @@ export async function openLogSheet(model) {
                 doc.getSelection()?.removeAllRanges();
                 state.spoilerRange = null;
                 state.dirty = true;   // 1.0.1 숨긴 글도 틀을 바꿔 다시 그릴 때 그대로
+                snapNow();   // 1.0.7 숨기기 · 풀기도 되돌리기 한 칸
                 target.disabled = true; target.setAttribute('aria-pressed', 'false'); target.querySelector('span').textContent = '숨기기';
                 break;
             }
             case 'hide': { const ct = tools(); ct.redact = !ct.redact; saveSettings(); drawTools(); draw(); break; }
-            case 'tags': { const s2 = store(); s2.tagsOff = !s2.tagsOff; saveSettings(); drawTools(); draw(); break; }
+            case 'fields': { const box = $('[data-lc-fields]'); box.hidden = !box.hidden; drawShows(); if (!box.hidden) box.querySelector('input:not(:disabled)')?.focus(); break; }
+            case 'undo': travel(-1); break;
+            case 'redo': travel(1); break;
+            case 'download': {
+                const shown = result();
+                if (!shown) return;
+                const name = PRESETS.find(p => p.id === state.shape)?.label ?? custom()?.name ?? '로그';
+                // 1.0.7 「⬇ 내려받기」(글꾸 마트 시식 창과 같은 꼴) — 복사한 HTML 을 따로 열어도 같은 모양
+                const doc = `<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${esc(state.fields.title || name)}</title>\n</head>\n<body style="margin:0;padding:16px;background:${esc(pageBg())};-webkit-text-size-adjust:100%">\n${motionStyleFor(shown)}${shown}\n</body>\n</html>\n`;
+                const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([doc], { type: 'text/html' })), download: `로그-${String(name).replace(/[\\/:*?"<>|#%]+/g, '').replace(/\s+/g, '-')}.html`, hidden: true });
+                document.body.append(a); a.click();
+                setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+                toastr.success('받았어요 — 열면 복사한 것과 같은 모양이에요', '', { timeOut: 1800 });
+                remember();
+                break;
+            }
             case 'words': { const ct = tools(); ct.replace = !ct.replace; saveSettings(); drawTools(); draw(); if (ct.replace) $('[data-lc-rules] input')?.focus(); break; }
             case 'rule-add': { readRules(); const ct = tools(); if (ct.replaceRules.length < 50) { ct.replaceRules = [...ct.replaceRules, { from: '', to: '' }]; saveSettings(); } drawTools(); [...dialog.querySelectorAll('[data-rule-from]')].pop()?.focus(); break; }
             case 'name-add': {
@@ -474,7 +582,8 @@ export async function openLogSheet(model) {
                 input.value = ''; drawTools(); draw(); break;
             }
             default:
-                if (target.dataset.lcRuleRemove !== undefined) { const i = Number(target.dataset.lcRuleRemove); const ct = tools(); ct.replaceRules = ct.replaceRules.filter((_, n) => n !== i); saveSettings(); drawTools(); draw(); }
+                if (target.dataset.lcShow) { const s2 = store(), key = target.dataset.lcShow; s2[key] = !s2[key]; saveSettings(); draw(); }   // 1.0.7 「보일 것」 칩
+                else if (target.dataset.lcRuleRemove !== undefined) { const i = Number(target.dataset.lcRuleRemove); const ct = tools(); ct.replaceRules = ct.replaceRules.filter((_, n) => n !== i); saveSettings(); drawTools(); draw(); }
                 else if (target.dataset.lcNameRemove !== undefined) { const i = Number(target.dataset.lcNameRemove); const ct = tools(); ct.names = ct.names.filter((_, n) => n !== i); saveSettings(); drawTools(); draw(); }
                 break;
         }
@@ -485,6 +594,10 @@ export async function openLogSheet(model) {
             clearTimeout(imageTimer);
             imageTimer = setTimeout(() => { state.images = imagesFromCode(event.target.value); drawShapes(); draw(); }, 300);
             return;
+        }
+        if (event.target.matches?.('[data-lc-field]')) {   // 1.0.7 머리 칸 글칸 → 그 칸 값 · 미리보기
+            state.fields[event.target.dataset.lcField] = event.target.value;
+            clearTimeout(ruleTimer); ruleTimer = setTimeout(draw, 300); return;
         }
         if (event.target.matches?.('[data-lc-maskword]')) {   // 11-03: 가림 글자(기본 ○○)를 직접 정해요 — 치는 동안 칸은 다시 그리지 않고 미리보기만
             const ct = tools(); ct.maskWord = event.target.value.trim().slice(0, 12) || '○○'; saveSettings();
@@ -595,7 +708,21 @@ const STYLE = `
 .bl-lc-paste textarea { box-sizing:border-box; width:100%; min-height:200px; padding:8px; border:1px solid var(--salty-line); border-radius:8px; background:var(--salty-field, var(--salty-raised)); color:var(--salty-text); font-family:var(--salty-font-code, monospace); font-size:13px; scrollbar-width:none; }
 .bl-lc-paste textarea:focus { outline:1px solid var(--salty-accent); }
 .bl-lc-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.bl-lc-tools { display:flex; gap:8px; padding:5px 16px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
+.bl-lc-tools, .bl-lc-shows { display:flex; gap:8px; padding:5px 16px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
+.bl-lc-tools::-webkit-scrollbar, .bl-lc-shows::-webkit-scrollbar { display:none; }
+/* 1.0.7 「보일 것」 칩: 끈 칩(뺀 것)은 흐린 글씨 + 가운데 줄 — 켬 = 보여요 */
+.bl-lc-shows .bl-lc-chip[aria-pressed="false"] > span { color:var(--salty-muted); text-decoration:line-through; }
+.bl-lc-fields[hidden], .bl-lc-bar[hidden] { display:none; }
+.bl-lc-fields { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap:8px; margin:0 16px; }
+.bl-lc-field { display:flex; align-items:center; gap:8px; min-width:0; color:var(--salty-muted); font-size:13px; }
+.bl-lc-field > span { flex:none; }
+.bl-lc-field input { box-sizing:border-box; flex:1; width:100%; min-width:0; min-height:36px; padding:0 10px; border:1px solid var(--salty-line); border-radius:8px; background:var(--salty-field, var(--salty-raised)); color:var(--salty-text); font:inherit; font-size:var(--bl-ts-ctl, 14px); }
+.bl-lc-field input:focus { outline:1px solid var(--salty-accent); }
+.bl-lc-field input:disabled { opacity:.5; }
+.bl-lc-bar { display:flex; align-items:center; gap:4px; margin:0 16px -4px; min-width:0; }
+.bl-lc-bar > .bl-lc-note { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
+.bl-lc-bar > .bl-lc-note > i { font-size:11px; }
+.bl-lc .bl-lc-bar .bl-lc-icon:disabled { opacity:.4; }
 .bl-lc-names[hidden], .bl-lc-words[hidden] { display:none; }
 .bl-lc-names, .bl-lc-words { display:grid; gap:8px; margin:0 16px; }
 .bl-lc-name-list { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; }
@@ -609,10 +736,10 @@ const STYLE = `
 .bl-lc-maskword-row { display:inline-flex; align-items:center; gap:4px; }
 .bl-lc-names input.bl-lc-maskword { width:6em; min-height:30px; padding:0 8px; text-align:center; font-size:13px; }
 .bl-lc .bl-lc-add-rule { justify-self:start; min-height:36px; }
-@media (min-width: 769px) and (pointer: fine) { .bl-lc-names input, .bl-lc-rule input, .bl-lc .bl-lc-add-rule { min-height:34px; } }
-.bl-lc-foot { display:grid; grid-template-columns:auto 1fr; gap:8px; padding:12px 16px 16px; border-top:1px solid var(--salty-line); }
+@media (min-width: 769px) and (pointer: fine) { .bl-lc-names input, .bl-lc-rule input, .bl-lc .bl-lc-add-rule, .bl-lc-field input { min-height:34px; } }
+.bl-lc-foot { display:grid; grid-template-columns:auto auto 1fr; gap:8px; padding:12px 16px 16px; border-top:1px solid var(--salty-line); }
 .bl-lc-foot .salty-btn { min-height:40px; }
-.bl-lc-foot .bl-tool-primary { border-color:var(--salty-accent); background:var(--salty-accent); color:var(--salty-on-accent, #fff); font-weight:650; }   /* 화면당 하나 큰 주요 단추 = 포인트 면 (볼록 · 그림자 없음) */
+.bl-lc-foot .bl-tool-primary { border-color:var(--salty-accent); background:var(--salty-accent); color:var(--salty-on-accent, #fff); font-weight:650; padding:0 16px; border-radius:12px; }   /* 화면당 하나 큰 주요 단추 = 포인트 면 (볼록 · 그림자 없음) · 1.0.7 크기표 큰 주요 단추(여백 16 · 모서리 12 — 새 판 확인 창 · 입력 창 큰 단추와 같은 모양) */
 @media (min-width: 769px) and (pointer: fine) { .bl-lc-chip { min-height:32px; } .bl-lc-foot .salty-btn { min-height:44px; } }
 @media (pointer: coarse) { .bl-lc .salty-seg.bl-lc-cats > button { position:relative; } .bl-lc-chip::before, .bl-lc-mode button::before, .bl-lc .salty-seg.bl-lc-cats > button::before { content:''; position:absolute; left:50%; top:50%; width:max(100%, 44px); height:max(100%, 44px); transform:translate(-50%, -50%); } .bl-lc-mode button { position:relative; } }   /* 누르는 칸 44 (철칙 §1 투명 ::before) */
 `;
