@@ -212,6 +212,23 @@ function setPhoto(url, label, own) {
     if (name) name.textContent = own ? `내 사진 · ${label}` : `표본 사진 · ${label}`;
     for (const b of document.querySelectorAll('[data-photo="clear"]')) b.hidden = !own;
     for (const s of document.querySelectorAll('select[data-photo="sample"]')) if (own) s.value = '';
+    syncSampleBtn();
+}
+// 11-08 방 안 표본 사진 고르기는 테마식 펼침 목록 — 일부 폰 브라우저(삼성 인터넷 등)는 모달 창(<dialog>) 안의 기본 고르기 목록을 띄우지 않았어요
+//   (사용자 「세라피나 · 선술집 눌러도 아무것도 안 떠」). 값은 숨긴 <select> 가 그대로 들고 같은 change 길로 바꿔요
+function syncSampleBtn() {
+    const text = room?.querySelector('.room-sample-text');
+    if (text) text.textContent = photo.own ? `내 사진 · ${photo.label}` : (photo.label || '표본 사진');
+}
+function toggleSampleList(open) {
+    const list = room.querySelector('.room-sample-list'), btn = room.querySelector('.room-sample-btn');
+    const show = open ?? list.hidden;
+    if (show) {
+        const cur = room.querySelector('.room-sample-native').value;
+        list.innerHTML = (data.samples || []).map(s => `<button type="button" role="option" class="room-sample-opt" data-room="sample-pick" data-src="${api.esc(s.src)}" aria-selected="${!photo.own && s.src === cur}">${api.esc(s.label)}</button>`).join('');
+    }
+    list.hidden = !show;
+    btn.setAttribute('aria-expanded', String(show));
 }
 async function usePhotoFile(file) {
     if (!file || !/^image\//.test(file.type)) { api.say('그림 파일만 넣을 수 있어요'); return; }
@@ -381,7 +398,7 @@ function buildRoom() {
     </div>
     <div class="room-side">
       <header class="room-head"><div><h2 id="mart-room-title"></h2><p class="room-desc"></p><div class="room-source"></div></div><button type="button" class="ibtn x room-x" data-room="close" aria-label="닫기"></button></header>
-      <div class="room-photo"><button type="button" class="btn primary mart-tryon-pick" data-photo="pick"><span class="em" aria-hidden="true">📷</span>내 사진 넣기</button><label class="field-wrap"><select class="field" data-photo="sample" aria-label="표본 사진 고르기"></select></label><button type="button" class="btn mart-tryon-clear" data-photo="clear" hidden>지우기</button></div>
+      <div class="room-photo"><button type="button" class="btn primary mart-tryon-pick" data-photo="pick"><span class="em" aria-hidden="true">📷</span>내 사진 넣기</button><div class="room-sample"><select class="room-sample-native" data-photo="sample" aria-hidden="true" tabindex="-1"></select><button type="button" class="field room-sample-btn" data-room="sample-menu" aria-haspopup="listbox" aria-expanded="false" aria-label="표본 사진 고르기"><span class="room-sample-text"></span></button><div class="room-sample-list" role="listbox" aria-label="표본 사진" hidden></div></div><button type="button" class="btn mart-tryon-clear" data-photo="clear" hidden>지우기</button></div>
       <div class="room-controls">
         <section class="room-group" data-group="frame"><h3>액자</h3>
           <div class="room-preset" hidden><span class="room-color"><label>액자 바탕색 <input type="color" data-p="presetColor"></label>${undoBtn('presetColor', '액자 바탕색')}</span><span class="room-color"><label>액자 포인트색 <input type="color" data-p="presetAccent"></label>${undoBtn('presetAccent', '액자 포인트색')}</span><label class="room-color room-label">칩 글자 <input type="text" class="field" data-p="presetLabel" maxlength="12" placeholder="비우면 없음"></label></div>
@@ -409,6 +426,7 @@ function buildRoom() {
     sel.innerHTML = document.querySelector('.mart-tryon select[data-photo="sample"]')?.innerHTML || '';
     sel.value = photo.own ? '' : (document.querySelector('.mart-tryon select[data-photo="sample"]')?.value || '');
     room.querySelector('[data-photo="clear"]').hidden = !photo.own;
+    syncSampleBtn();
     room.addEventListener('input', onRoomInput);
     room.addEventListener('click', onRoomClick);
     room.addEventListener('close', () => { current = null; if (location.hash) history.replaceState(null, '', location.pathname + location.search); });
@@ -575,7 +593,17 @@ function saveRoomArt(st) {
 }
 function onRoomClick(e) {
     if (e.target === room) { room.close(); return; }   // 바깥(배경) 누르기
+    if (!e.target.closest('.room-sample')) toggleSampleList(false);   // 목록 밖을 누르면 닫혀요
     const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.room === 'sample-menu') { toggleSampleList(); return; }
+    if (b.dataset.room === 'sample-pick') {
+        const sel = room.querySelector('.room-sample-native');
+        sel.value = b.dataset.src;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+        toggleSampleList(false);
+        room.querySelector('.room-sample-btn').focus();
+        return;
+    }
     if (b.dataset.undo || b.dataset.undoP) { undoOne(b.dataset.undo || b.dataset.undoP, !!b.dataset.shadow); return; }
     const act = b.dataset.room;
     if (b.dataset.fit) { view.fit = b.dataset.fit; paintView(); saveView(); syncRoomControls(); return; }
