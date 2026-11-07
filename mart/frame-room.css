@@ -67,9 +67,27 @@ body.mart-dropping::after{content:"여기에 놓으면 모든 액자에 내 사�
 .room-group{padding:12px 0;border-top:1px solid var(--line)}
 .room-group h3{margin:0 0 8px;font-size:var(--ts-h);font-weight:var(--strong);line-height:1.4}
 .room-group h3 small{font-weight:400;color:var(--muted);font-size:12px}
-.room-range{display:grid;grid-template-columns:minmax(0,9.5em) minmax(0,1fr) 4.6em;align-items:center;gap:12px;min-height:36px;font-size:var(--ts-meta)}
-.room-range input{width:100%;min-width:0;height:28px;accent-color:var(--ink)}
-.room-range output{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+/* 11-08 테마 설정 창처럼 세로 2열 — 칸: 윗줄 이름 + ↺ + 값, 아랫줄 슬라이더 · 색 · 고르기 · 메모는 한 줄 전체 · 홀수로 남는 마지막 칸도 전체(widenOdd) */
+.room-group,.room-shadow-more{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;row-gap:4px;align-items:start}
+.room-group>*,.room-shadow-more>*{grid-column:1/-1}
+.room-group>.room-range,.room-shadow-more>.room-range{grid-column:auto}
+.room-group>.room-range.is-wide,.room-shadow-more>.room-range.is-wide{grid-column:1/-1}
+.room-range{display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0;min-height:56px;font-size:var(--ts-meta)}
+.room-range-top{display:flex;align-items:center;gap:4px;min-width:0;min-height:28px}
+.room-range-name{display:inline-flex;align-items:center;min-width:0;flex:1 1 auto;line-height:1.35}
+.room-range input{width:100%;min-width:0;height:28px;margin:0;accent-color:var(--ink)}
+.room-range output{flex:none;margin-inline-start:auto;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.room-undo{display:inline-grid;place-items:center;flex:none;width:28px;height:28px;margin:0 0 0 2px;padding:0;border:0;border-radius:999px;background:none;color:var(--muted);font:inherit;font-size:15px;line-height:1;cursor:pointer}
+.room-undo:hover{background:var(--tint);color:var(--ink)}
+.room-undo:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.room-undo[hidden]{display:none}
+/* 11-08 미리보기 높이 손잡이(테마 css/45-preview-view .bl-view-resize 와 같은 꼴) — 좁은 화면(위아래 배치)에서만 */
+.room-resize{display:none;grid-template-columns:32px minmax(0,1fr) 32px;align-items:center;gap:4px;height:28px;padding:0 8px;border-top:1px solid var(--line)}
+.room-grip{grid-column:2;display:grid;place-items:center;height:28px;touch-action:none;cursor:ns-resize}
+.room-grip i{display:block;width:42px;height:4px;border-radius:5px;background:var(--muted);opacity:.8}
+.room-grip:is(:hover,:focus-visible) i{opacity:1;background:var(--ink)}
+.room-grip:focus-visible{outline:2px solid var(--ink);outline-offset:-2px;border-radius:6px}
+.room-resize-reset{grid-column:3}
 /* 안쪽 사진 채우기 = 칩 한 줄(공용 .chip · 고름 = 옅은 면 + 체크) */
 .room-seg{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0}
 .room-preset{display:flex;flex-wrap:wrap;gap:8px 12px;margin:4px 0 8px}
@@ -80,29 +98,43 @@ body.mart-dropping::after{content:"여기에 놓으면 모든 액자에 내 사�
 .room-color input[type=text]{width:9em}
 .room-note{margin:8px 0 0;font-size:12px;line-height:1.55;color:var(--muted)}
 .room-actions{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:8px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--surface)}
-/* 넷(처음 값 · 담기 · 복사 · 그림 받기) — 칸이 좁으면(폰 · 좁은 PC 창) 두 줄 격자 */
+/* 넷(처음 값 · 담기 · 복사 · 그림 받기) — 칸이 좁아도 한 줄(아래 room-side 쿼리) */
 .room-side{container:room-side/inline-size}
 .room-actions{grid-template-columns:1fr 1.3fr 1fr 1.3fr}
 .room-actions .btn{padding:0 8px}
-/* 내장(심플 20): 처음 값 · 「이미 테마에 들어 있어요」 · 그림 받기 셋 — 좁으면 안내가 맨 위 한 줄 */
+/* 내장(심플 20): 처음 값 · 「이미 테마에 들어 있어요」 · 그림 받기 셋 — 좁아도 한 줄 */
 .room-actions.is-builtin{grid-template-columns:1fr 2fr 1.3fr}
 .room-builtin{justify-content:center;text-align:center}
 .room-actions [hidden]{display:none}
-@container room-side (max-width:460px){.room-actions{grid-template-columns:1fr 1fr}}
-@container room-side (max-width:460px){.room-actions.is-builtin{grid-template-columns:1fr 1fr}.room-actions.is-builtin .room-builtin{grid-column:1/-1;order:-1}}
+/* 11-08 좁은 화면도 한 줄(사용자 「처음 값 · 담기 · 그림 받기 쓸데없이 2줄 · 모바일 답답해」) — 단추 안 그림 문자만 빼고 글자는 그대로 */
+@container room-side (max-width:460px){
+  .room-actions{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+  .room-actions.is-builtin{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr)}
+  .room-actions .btn{padding:0 4px;white-space:nowrap}
+  .room-actions .btn .em{display:none}
+  .room-actions .room-builtin{font-size:12px;line-height:1.3;white-space:normal}
+}
 .room-source .mart-source{margin-top:4px}
 .mart-source.is-plain{border-bottom:0}   /* 링크 없는 원작 봇 이름(센티넬버스) */
 @media (max-width:820px){
   .mart-room{width:100vw;height:100dvh;border-radius:0}
-  .mart-room[open]{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,46dvh) minmax(0,1fr)}
+  .mart-room[open]{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,var(--room-stage-h,46dvh)) minmax(0,1fr)}
+  .room-resize{display:grid}
   .room-stage{padding:12px}
   .room-stage-bar{padding:4px 8px}
   .room-side{border-left:0}
-  .room-head{padding:12px 12px 4px}
-  .room-photo{padding:4px 12px 8px}
+  /* 11-08 머리 · 사진 줄 압축(사용자 「내 사진 넣기랑 표본 사진도 압축해서 한 줄 더 넓게」) — 설명 한 줄 · 사진 단추와 고르기는 한 줄 36px */
+  .room-head{padding:8px 12px 0}
+  .room-head h2{min-height:32px;font-size:17px}
+  .room-desc{margin:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .room-photo{flex-wrap:nowrap;gap:6px;padding:4px 12px 6px}
+  .room-photo .btn{flex:none;height:36px;min-height:36px;padding:0 10px;font-size:13px}
+  .room-photo .field-wrap{flex:1 1 auto;min-width:0}
+  .room-photo .field{width:100%;height:36px;min-height:36px;font-size:13px}
   .room-controls{padding:0 12px 8px}
-  .room-range{grid-template-columns:minmax(0,7.6em) minmax(0,1fr) 3.8em;gap:8px;min-height:44px}
+  .room-group,.room-shadow-more{column-gap:12px}
   .room-range input{height:32px}
+  .room-undo{width:32px;height:32px;margin-block:-2px}
   .room-hint{display:none}
   .room-actions{padding:8px 12px calc(8px + env(safe-area-inset-bottom))}
 }

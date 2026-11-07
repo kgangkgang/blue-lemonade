@@ -293,9 +293,74 @@ function restorePhoto(samples) {
 }
 
 // ── 크게 보기 · 맞춰 보기(테마 장식 액자 설정과 같은 칸) ──
+// 11-08 테마 설정 창처럼(사용자 「세로 2열로 파라미터 정렬 · 하나 바꿀 때마다 옆에 되돌리기」): 윗줄 이름 + ↺ + 값, 아랫줄 슬라이더 · ↺ 는 바꾼 칸에만
 function slider(s, value, extra = '') {
-    const shown = value ?? '';
-    return `<label class="room-range"><span>${api.esc(s.label)}</span><input type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${value ?? spec.radiusFallback}" data-k="${s.key}" ${extra}><output>${shown === '' ? '칸 기본' : shown}</output></label>`;
+    const shown = value ?? '', name = api.esc(s.label);
+    return `<div class="room-range"><div class="room-range-top"><span class="room-range-name">${name}<button type="button" class="room-undo" data-undo="${s.key}" ${extra} title="${name} · 처음 값으로" aria-label="${name} · 처음 값으로" hidden>↺</button></span><output>${shown === '' ? '칸 기본' : shown}</output></div><input type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${value ?? spec.radiusFallback}" data-k="${s.key}" aria-label="${name}" ${extra}></div>`;
+}
+const undoBtn = (key, label) => `<button type="button" class="room-undo" data-undo-p="${key}" title="${label} · 처음 값으로" aria-label="${label} · 처음 값으로" hidden>↺</button>`;
+/** 그 칸의 처음 값 — 맞춤 값은 테마 기본값, 가로 · 세로 비율 · 색은 이 액자의 처음 값, 그림자는 그림자 기본값 */
+function defaultOf(k, isShadow) {
+    if (isShadow) return spec.shadow.defaults[k];
+    if (k === 'frameWidth' || k === 'frameHeight' || k.startsWith('preset') && k !== 'presetTilt') return current?.base()[k];
+    return spec.defaults[k] ?? null;
+}
+function valueOf(k, isShadow) {
+    if (isShadow) return shadow[k];
+    if (k === 'frameWidth' || k === 'frameHeight' || k.startsWith('preset') && k !== 'presetTilt') return current?.values[k];
+    return view[k] ?? null;
+}
+const same = (a, b) => (a ?? null) === (b ?? null) || (typeof a === 'string' && typeof b === 'string' && a.toLowerCase() === b.toLowerCase());
+/** ↺ 를 바꾼 칸에만 보여요 */
+function syncUndo() {
+    if (!room || !current) return;
+    for (const b of room.querySelectorAll('.room-undo[data-undo], .room-undo[data-undo-p]')) {
+        const k = b.dataset.undo || b.dataset.undoP, sh = !!b.dataset.shadow;
+        const hide = same(valueOf(k, sh), defaultOf(k, sh));
+        if (b.hidden !== hide) b.hidden = hide;
+    }
+}
+/** 그 칸만 처음 값으로 */
+function undoOne(k, isShadow) {
+    const st = current, d = defaultOf(k, isShadow);
+    if (isShadow) { shadow[k] = d; paintShadow(); }
+    else if (k === 'frameWidth' || k === 'frameHeight' || k.startsWith('preset') && k !== 'presetTilt') { st.values[k] = d; frameChanged(st); }
+    else { view[k] = d; paintView(); }
+    saveView(); syncRoomControls();
+}
+// 11-08 미리보기 높이(사용자 「액자 미리보기 너무 커 · 실리태번 블루레몬처럼 줄이게」) — 테마 미리보기의 손잡이 막대 · ↺ 와 같게. 위아래로 놓이는 좁은 화면에서만 보여요
+const STAGE_KEY = 'bl-mart-room-stage-h';
+function setStageHeight(px, save = true) {
+    const box = room.getBoundingClientRect().height || window.innerHeight;
+    const h = px === null ? null : Math.round(clamp(px, 120, box * 0.8));
+    if (h === null) room.style.removeProperty('--room-stage-h'); else room.style.setProperty('--room-stage-h', `${h}px`);
+    room.querySelector('.room-resize-reset').hidden = h === null;
+    if (save) store.set(STAGE_KEY, h);
+    syncSlack();
+}
+function wireResize() {
+    const grip = room.querySelector('.room-grip'), wrap = room.querySelector('.room-stage-wrap');
+    let start = null;
+    grip.addEventListener('pointerdown', (e) => { if (e.button > 0) return; start = { id: e.pointerId, y: e.clientY, h: wrap.getBoundingClientRect().height }; grip.setPointerCapture(e.pointerId); e.preventDefault(); });
+    grip.addEventListener('pointermove', (e) => { if (start?.id !== e.pointerId) return; setStageHeight(start.h + e.clientY - start.y, false); e.preventDefault(); });
+    const end = (e) => { if (start?.id !== e.pointerId) return; start = null; const v = room.style.getPropertyValue('--room-stage-h'); store.set(STAGE_KEY, v ? parseFloat(v) : null); };
+    grip.addEventListener('pointerup', end);
+    grip.addEventListener('pointercancel', end);
+    grip.addEventListener('keydown', (e) => {
+        if (e.key === 'Home') setStageHeight(null);
+        else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') setStageHeight(wrap.getBoundingClientRect().height + (e.key === 'ArrowUp' ? -16 : 16));
+        else return;
+        e.preventDefault();
+    });
+    const saved = Number(store.get(STAGE_KEY));
+    if (saved > 0) { room.style.setProperty('--room-stage-h', `${saved}px`); room.querySelector('.room-resize-reset').hidden = false; }
+}
+/** 칸 묶음마다 슬라이더 수가 홀수면 마지막 칸은 한 줄 전체(테마 설정 창과 같게) */
+function widenOdd() {
+    for (const box of room.querySelectorAll('.room-group, .room-shadow-more')) {
+        const ranges = [...box.children].filter(el => el.classList.contains('room-range'));
+        ranges.forEach((el, i) => el.classList.toggle('is-wide', ranges.length % 2 === 1 && i === ranges.length - 1));
+    }
 }
 function buildRoom() {
     const esc = api.esc;
@@ -312,21 +377,20 @@ function buildRoom() {
         <button type="button" class="btn" data-room="random" title="지금 거르기 안에서 하나 더 무작위로"><span class="em" aria-hidden="true">🎲</span>다른 거</button>
         <span class="room-hint">끌어서 옮기고 · 두 손가락(휠)로 확대</span>
       </div>
+      <div class="room-resize"><div class="room-grip" role="separator" tabindex="0" aria-label="미리보기 높이 조절" aria-orientation="horizontal" title="위아래로 끌어서 높이 조절"><i></i></div><button type="button" class="room-undo room-resize-reset" data-room="stage-h" aria-label="미리보기 기본 높이" title="기본 높이로" hidden>↺</button></div>
     </div>
     <div class="room-side">
       <header class="room-head"><div><h2 id="mart-room-title"></h2><p class="room-desc"></p><div class="room-source"></div></div><button type="button" class="ibtn x room-x" data-room="close" aria-label="닫기"></button></header>
       <div class="room-photo"><button type="button" class="btn primary mart-tryon-pick" data-photo="pick"><span class="em" aria-hidden="true">📷</span>내 사진 넣기</button><label class="field-wrap"><select class="field" data-photo="sample" aria-label="표본 사진 고르기"></select></label><button type="button" class="btn mart-tryon-clear" data-photo="clear" hidden>지우기</button></div>
       <div class="room-controls">
         <section class="room-group" data-group="frame"><h3>액자</h3>
-          ${slider(s.opacity, view.opacity)}
-          <div class="room-preset" hidden><label class="room-color">액자 바탕색 <input type="color" data-p="presetColor"></label><label class="room-color">액자 포인트색 <input type="color" data-p="presetAccent"></label><label class="room-color room-label">칩 글자 <input type="text" class="field" data-p="presetLabel" maxlength="12" placeholder="비우면 없음"></label></div>
-          ${slider(s.frameWidth, 100)}${slider(s.frameHeight, 100)}${slider(s.presetTilt, view.presetTilt)}
+          <div class="room-preset" hidden><span class="room-color"><label>액자 바탕색 <input type="color" data-p="presetColor"></label>${undoBtn('presetColor', '액자 바탕색')}</span><span class="room-color"><label>액자 포인트색 <input type="color" data-p="presetAccent"></label>${undoBtn('presetAccent', '액자 포인트색')}</span><label class="room-color room-label">칩 글자 <input type="text" class="field" data-p="presetLabel" maxlength="12" placeholder="비우면 없음"></label></div>
+          ${slider(s.opacity, view.opacity)}${slider(s.presetTilt, view.presetTilt)}${slider(s.frameWidth, 100)}${slider(s.frameHeight, 100)}
           ${slider(s.frameHue, view.frameHue)}${slider(s.frameSat, view.frameSat)}${slider(s.frameBright, view.frameBright)}
         </section>
         <section class="room-group" data-group="photo"><h3>안쪽 사진</h3>
-          ${slider(s.radius, view.radius)}
           <div class="room-seg" role="group" aria-label="안쪽 사진">${spec.fit.map(([v, l]) => `<button type="button" class="chip" data-fit="${v}" aria-pressed="${view.fit === v}">${esc(l)}</button>`).join('')}</div>
-          ${slider(s.zoom, view.zoom)}${slider(s.x, view.x)}${slider(s.y, view.y)}
+          ${slider(s.radius, view.radius)}${slider(s.zoom, view.zoom)}${slider(s.x, view.x)}${slider(s.y, view.y)}
         </section>
         <section class="room-group" data-group="shadow"><h3>그림자 <small>테마 › 테두리 칸 · 받기에는 안 담겨요</small></h3>
           <label class="check room-toggle"><input type="checkbox" data-sh="edgeShadow">그림자</label>
@@ -338,6 +402,8 @@ function buildRoom() {
       <footer class="room-actions"><button type="button" class="btn" data-room="reset">처음 값</button><button type="button" class="btn mart-pick" data-room="pick"><span class="em" aria-hidden="true">🛒</span>담기</button><button type="button" class="btn" data-room="copy">복사</button><span class="mart-builtin room-builtin" hidden title="${BUILTIN_TITLE}">✓ 이미 테마에 들어 있어요</span><button type="button" class="btn room-art" data-room="art" title="원본 그림 파일 받기 — 테마 없이 실리태번 순정에서 쓸 때"><span class="em" aria-hidden="true">🖼️</span>그림 받기</button></footer>
     </div>`;
     document.body.append(room);
+    widenOdd();
+    wireResize();
     paintShadow();
     const sel = room.querySelector('select[data-photo="sample"]');
     sel.innerHTML = document.querySelector('.mart-tryon select[data-photo="sample"]')?.innerHTML || '';
@@ -399,6 +465,7 @@ function syncRoomControls() {
     }
     syncRoomPick();
     syncSlack();
+    syncUndo();
 }
 function syncRoomPick() {
     if (!current) return;
@@ -492,6 +559,7 @@ function onRoomInput(e) {
     } else if (t.dataset.sh === 'edgeShadowColor') {
         shadow.edgeShadowColor = t.value; paintShadow(); saveView();
     }
+    syncUndo();
 }
 // 그림 받기 — 그림 액자는 원본 webp 그대로(액자-<콘셉트>-<디자인>-<세로|가로>.webp), 심플 액자는 지금 색 그대로 그린 PNG
 function saveRoomArt(st) {
@@ -508,6 +576,7 @@ function saveRoomArt(st) {
 function onRoomClick(e) {
     if (e.target === room) { room.close(); return; }   // 바깥(배경) 누르기
     const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.undo || b.dataset.undoP) { undoOne(b.dataset.undo || b.dataset.undoP, !!b.dataset.shadow); return; }
     const act = b.dataset.room;
     if (b.dataset.fit) { view.fit = b.dataset.fit; paintView(); saveView(); syncRoomControls(); return; }
     if (act === 'close') room.close();
@@ -515,6 +584,7 @@ function onRoomClick(e) {
     else if (act === 'next') step(1);
     else if (act === 'random') pickRandom();
     else if (act === 'bg') { const s = room.querySelector('.room-stage'); s.dataset.bg = { light: 'dark', dark: 'chat', chat: 'light' }[s.dataset.bg] || 'light'; }
+    else if (act === 'stage-h') setStageHeight(null);
     else if (act === 'pick') { pick(current, b); }
     else if (act === 'copy') { if (api.isBuiltin(current.item)) api.say(BUILTIN_SAY, 3200); else api.copyEntries([api.entryOf(current)]); }
     else if (act === 'art') saveRoomArt(current);
