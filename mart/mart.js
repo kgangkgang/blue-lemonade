@@ -6,7 +6,8 @@ const kind = document.body.dataset.mart;              // 'frames' | 'geulkku'
 const grid = document.querySelector('.mart-grid');
 const search = document.querySelector('.mart-tools input[type=search]');
 const chips = document.querySelector('.mart-chips');
-import { cart, say, onCheckout, artName, saveArt } from './cart.js?v=20261107e';
+import { cart, say, onCheckout, artName, saveArt } from './cart.js?v=20261108a';
+import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 let styleActive = 'all', drawPreset = null, picker = null;
 const states = [];   // 만든 카드만(글꾸) — 늦게 만들기(lazyGrid)라 처음엔 첫 화면 몫뿐이에요
 const stateById = new Map();
@@ -287,7 +288,7 @@ function receipt(state) {
         if (changed) { out.id = `${item.id}-${hash(JSON.stringify(v))}`; out.name = `${item.name} · 내 색`; }   // 바꾼 것은 따로 보관(기본 것을 덮지 않게)
         return out;
     }
-    if (item.kind === 'geulkku') return { kind: 'geulkku', id: item.id, label: item.label, emoji: item.emoji, template: item.template, colors: item.colors, messages: item.messages, tail: item.tail, ...(item.type ? { type: item.type } : {}) };   // type: 제목 꼴(테마 mart-import 가 읽어요)
+    if (item.kind === 'geulkku') return { kind: 'geulkku', id: item.id, label: item.label, emoji: item.emoji, template: item.template, colors: colorsOf(item), messages: item.messages, tail: item.tail, ...(item.type ? { type: item.type } : {}) };   // type: 제목 꼴(테마 mart-import 가 읽어요)
     return null;   // 그림 액자: 받기 파일을 그대로
 }
 /** 장바구니 한 줄 — 받을 데이터(receipt) 또는 그림 액자 받기 파일 주소, 서랍에 보일 이름 · 크기 */
@@ -371,7 +372,7 @@ async function copyEntries(entries, quiet = false, place = where) {
  *  서식(text/html) + 그 코드 글자(text/plain)를 같이 넣어요 — 보통 편집기엔 모양 그대로, HTML 칸엔 코드로 붙어요 */
 async function copyHtml(state) {
     const item = state.item;
-    const ready = ensureItem(item).then(() => previewOf(state));   // 「📝 내 로그로 보기」가 켜져 있으면 내 로그가 든 완성 HTML   // 조각을 아직 안 받았으면 받은 뒤(클립보드는 누른 순간에 열어요)
+    const ready = ensureItem(item).then(() => (inkChanged(item) && !tasteLoaded ? loadTaste().then(() => { delete state.inkHtml; return previewOf(state); }) : previewOf(state)));   // 「📝 내 로그로 보기」가 켜져 있으면 내 로그가 든 완성 HTML   // 조각을 아직 안 받았으면 받은 뒤(클립보드는 누른 순간에 열어요)
     ready.catch(() => { /* 아래에서 알려요 */ });
     const done = () => say('복사됐어요 · 깡싸 글쓰기 HTML 칸에 붙여요', 3600);
     try {
@@ -505,7 +506,8 @@ function doAct(state, act, b) {
 }
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261107e').catch((error) => { tasteModule = null; throw error; }));
+let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261108a').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
@@ -538,10 +540,23 @@ const mylog = { on: false, mod: null };
 /** 그 카드에 보일 미리보기 HTML — 내 로그가 켜져 있고 그려지면 그것, 아니면 표본 글 */
 function previewOf(state) {
     const item = state.item;
-    if (!mylog.on || !mylog.mod || !(item.template || item.shape)) return item.preview || '';   // shape: 로그 복사 기본 틀(테마 renderLog 그대로)
+    if (!mylog.on || !mylog.mod || !(item.template || item.shape)) {
+        // 11-08 글자색을 바꾼 글꾸: 바꾼 색으로 표본 글을 다시 그려요(시식 모듈을 받기 전에는 원래 미리보기 · 받으면 다시 칠해요)
+        if (item.preview && inkChanged(item)) {
+            if (tasteLoaded) { if (state.inkHtml === undefined) state.inkHtml = tasteLoaded.sampleHtml(item) || ''; if (state.inkHtml) return state.inkHtml; }
+            else loadTaste().then(() => repaintInks(item.id), () => {});
+        }
+        return item.preview || '';
+    }   // shape: 로그 복사 기본 틀(테마 renderLog 그대로)
     if (state.myHtml === undefined) state.myHtml = mylog.mod.renderWithLog(item);
     return state.myHtml || item.preview || '';
 }
+/** 11-08 글자색을 바꾼 글꾸의 카드 · 상세 창 미리보기와 칩을 다시 칠해요 */
+function repaintInks(id) {
+    for (const s of states) { if (s.item.id !== id) continue; delete s.myHtml; delete s.inkHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = previewOf(s); } }
+    if (sheet?.open && sheetState?.item.id === id && sheetState.item.preview) { sheet.querySelector('.mart-sheet-preview').innerHTML = previewOf(sheetState); syncInks(sheet.querySelector('.mart-sheet-inks'), sheetState.item); }
+}
+document.addEventListener('bl-inks-change', e => repaintInks(e.detail?.id));
 function repaintMylog() {
     for (const s of states) { delete s.myHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = previewOf(s); } }
     if (sheet?.open && sheetState?.item.preview) sheet.querySelector('.mart-sheet-preview').innerHTML = previewOf(sheetState);
@@ -587,6 +602,9 @@ function openSheet(state) {
             if (b.dataset.sheet === 'close') sheet.close();
             else if (b.dataset.act && sheetState) doAct(sheetState, b.dataset.act, b);
         });
+        let inkTimer = 0;   // 11-08 글자색: 색 고르기를 움직이는 동안 칩 점은 바로 · 다시 그리기는 0.15초 묶음
+        sheet.addEventListener('input', (e) => { const t = e.target; if (!t.matches?.('[data-ink]') || !sheetState) return; paintDot(t); clearTimeout(inkTimer); const item = sheetState.item; inkTimer = setTimeout(() => setInk(item, t.dataset.ink, t.value), 150); });
+        sheet.addEventListener('click', (e) => { if (e.target.closest?.('[data-ink-reset]') && sheetState) resetInks(sheetState.item); });
         sheet.addEventListener('close', () => { const st = sheetState; sheetState = null; sheet.querySelector('.mart-sheet-body').replaceChildren(); st?.el.querySelector('.mart-preview')?.focus({ preventScroll: true }); });
     }
     sheetState = state;
@@ -595,13 +613,14 @@ function openSheet(state) {
     if (item.accent) sheet.style.setProperty('--accent', item.accent); else sheet.style.removeProperty('--accent');   // 담기 단추 색 = 그 글꾸 강조색
     sheet.querySelector('.mart-sheet-meta').innerHTML = `${tagsHtml(item)}<p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}`;
     const body = sheet.querySelector('.mart-sheet-body');
-    body.innerHTML = `<div class="mart-sheet-preview">${item.preview ? previewOf(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div>`;
+    body.innerHTML = `<div class="mart-sheet-preview">${item.preview ? previewOf(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div><div class="mart-sheet-inks">${item.preview ? inksHtml(item) : ''}</div>`;   // 11-08 글자색 칩
     if (!item.preview) {
         body.setAttribute('aria-busy', 'true');
         ensureItem(item).then(() => {
             fillCard(state);
             if (sheetState !== state) return;
             body.querySelector('.mart-sheet-preview').innerHTML = previewOf(state);
+            syncInks(body.querySelector('.mart-sheet-inks'), item);
             body.scrollTop = 0;
         }, () => { if (sheetState === state) body.querySelector('.mart-sheet-preview').innerHTML = `<p class="mart-sheet-wait">${LOAD_FAIL}</p>`; })
             .finally(() => body.removeAttribute('aria-busy'));
@@ -795,7 +814,7 @@ async function main() {
 }
 // 액자 마트: 수백 종 · 내 사진 넣어 보기 · 거르기 · 조금씩 그리기(frame-room.js) — 받기 · 장바구니는 여기 것을 그대로 써요
 const start = kind === 'frames'
-    ? import('./frame-room.js?v=20261107e').then(m => m.start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
+    ? import('./frame-room.js?v=20261108a').then(m => m.start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
     : kind === 'geulkku' ? main() : null;   // 그 밖의 페이지(지니)는 아래 부품만 빌려 써요
 start?.catch(e => { grid.innerHTML = `<p class="mart-empty">목록을 못 불러왔어요 · ${esc(e.message)}</p>`; });
 
@@ -814,6 +833,6 @@ export async function geulkkuList() {
     return data;
 }
 /** 프레임 방(frame-room.js)의 지니용 준비 — 마트 액자 카드와 같은 그림 · 같은 담기 값 */
-export const frameKit = () => import('./frame-room.js?v=20261107e').then(m => m.kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
+export const frameKit = () => import('./frame-room.js?v=20261108a').then(m => m.kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
 export const mylogOn = () => mylog.on;
 export { isBuiltin, BUILTIN_TAG, cart, say, esc, asset, ensureItem, previewOf, tagsHtml, glyphHtml, iconSrc, descOf, catLabel, styleOf, entryOf, receipt, doAct, copyEntries, copyHtml, sourceLinks, LOAD_FAIL };

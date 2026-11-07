@@ -1,8 +1,8 @@
 /* 액자 마트(frame-room.js) — 내 사진 넣어 보기 · 거르기 · 수백 종 · 크게 보기. mart.css 위에 얹어요(액자 페이지만) */
 /* 테마 css/41-decor.css 와 같은 규칙: 액자 그림(.bl-art)은 사진 위에 100% 100% · 진하기 · 사진(.bl-photo)은 마스크 + 사진창 clip-path(round 모서리) 안에서 object-fit · object-position · scale · 기울기는 액자째 rotate */
-:root{--mart-photo:none;--mart-opacity:1;--mart-zoom:1;--mart-pos:50% 50%;--mart-fit:cover;--mart-radius:14px;--mart-tilt:0deg}
+:root{--mart-photo:none;--mart-opacity:1;--mart-zoom:1;--mart-pos:50% 50%;--mart-fit:cover;--mart-radius:14px;--mart-tilt:0deg;--mart-filter:none}
 .bl-frame{position:relative;display:block;isolation:isolate;aspect-ratio:var(--ratio,.75);width:min(100cqw,100cqh * var(--ratio,.75));rotate:var(--mart-tilt)}
-.bl-frame>.bl-art{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:fill;opacity:var(--mart-opacity);pointer-events:none;-webkit-user-drag:none;user-select:none}
+.bl-frame>.bl-art{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:fill;opacity:var(--mart-opacity);filter:var(--mart-filter,none);pointer-events:none;-webkit-user-drag:none;user-select:none}
 .bl-frame>.bl-photo{position:absolute;inset:0;display:block;overflow:hidden;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;clip-path:inset(var(--win,0%) round calc(var(--mart-radius) * var(--k,1)))}
 .bl-photo-img{display:block;width:100%;height:100%;background-image:var(--mart-photo);background-position:var(--mart-pos);background-size:var(--mart-fit);background-repeat:no-repeat;transform:scale(var(--mart-zoom))}
 .bl-photo-real{display:block;width:100%;height:100%;max-width:none;object-fit:var(--mart-fit);object-position:var(--mart-pos);transform:scale(var(--mart-zoom));-webkit-user-drag:none;user-select:none;pointer-events:none}

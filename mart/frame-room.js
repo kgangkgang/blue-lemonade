@@ -4,7 +4,7 @@
 // 사진은 이 브라우저 안에서만 써요(object URL · 캔버스) — 서버로 보내지 않아요. 「이 기기에 기억」을 켜면 작게 줄여 localStorage 에만 둬요.
 const VIEW_KEY = 'bl-mart-view-v1', PHOTO_KEY = 'bl-mart-photo-v1';
 const CHUNK = 24;
-const VIEW_KEYS = ['opacity', 'zoom', 'x', 'y', 'fit', 'radius', 'presetTilt'];   // 모든 액자에 같이(내 사진 맞춤) · frameWidth · frameHeight 는 액자마다
+const VIEW_KEYS = ['opacity', 'zoom', 'x', 'y', 'fit', 'radius', 'presetTilt', 'frameHue', 'frameSat', 'frameBright'];   // 11-08 액자 색감(테마 1.0.7 과 같은 칸)   // 모든 액자에 같이(내 사진 맞춤) · frameWidth · frameHeight 는 액자마다
 let api, data, spec, items = [];
 let list = [], room = null, current = null, drawPreset = null;
 const filters = { style: 'all', orient: 'all', q: '' };
@@ -55,6 +55,9 @@ function paintView() {
     root.style.setProperty('--mart-fit', view.fit);
     root.style.setProperty('--mart-radius', `${radiusOf()}px`);
     root.style.setProperty('--mart-tilt', `${view.presetTilt || 0}deg`);
+    // 11-08 액자 색감(사용자 11-04 「코발트 액자가 루시퍼 보라 넥타이와 안 맞아」) — 테마 decor.js frameFilter 와 같은 식 · 액자 그림만
+    const hue = Number(view.frameHue) || 0, sat = view.frameSat ?? 100, bright = view.frameBright ?? 100;
+    root.style.setProperty('--mart-filter', !hue && Number(sat) === 100 && Number(bright) === 100 ? 'none' : `hue-rotate(${hue}deg) saturate(${sat}%) brightness(${bright}%)`);
     paintShadow();
 }
 let saveTimer = 0;
@@ -318,6 +321,7 @@ function buildRoom() {
           ${slider(s.opacity, view.opacity)}
           <div class="room-preset" hidden><label class="room-color">액자 바탕색 <input type="color" data-p="presetColor"></label><label class="room-color">액자 포인트색 <input type="color" data-p="presetAccent"></label><label class="room-color room-label">칩 글자 <input type="text" class="field" data-p="presetLabel" maxlength="12" placeholder="비우면 없음"></label></div>
           ${slider(s.frameWidth, 100)}${slider(s.frameHeight, 100)}${slider(s.presetTilt, view.presetTilt)}
+          ${slider(s.frameHue, view.frameHue)}${slider(s.frameSat, view.frameSat)}${slider(s.frameBright, view.frameBright)}
         </section>
         <section class="room-group" data-group="photo"><h3>안쪽 사진</h3>
           ${slider(s.radius, view.radius)}
@@ -329,7 +333,7 @@ function buildRoom() {
           <div class="room-shadow-more"><label class="room-color">그림자 색 <input type="color" data-sh="edgeShadowColor"></label>
           ${spec.shadow.sliders.map(x => slider(x, shadow[x.key], 'data-shadow="1"')).join('')}</div>
         </section>
-        <p class="room-note">이름 · 범위 · 기본값은 테마 설정 › 장식 액자 칸과 같아요. 사진 맞춤(진하기 · 기울기 · 모서리 · 채우기 · 확대 · 위치)은 모든 액자에 같이 쓰고, 가로 · 세로 비율은 액자마다 따로예요.</p>
+        <p class="room-note">이름 · 범위 · 기본값은 테마 설정 › 장식 액자 칸과 같아요. 사진 맞춤(진하기 · 기울기 · 색감 · 모서리 · 채우기 · 확대 · 위치)은 모든 액자에 같이 쓰고, 가로 · 세로 비율은 액자마다 따로예요. 색감은 미리 보기용이라 받기에는 안 담겨요 — 테마 설정 › 장식 액자의 같은 칸으로 맞춰요.</p>
       </div>
       <footer class="room-actions"><button type="button" class="btn" data-room="reset">처음 값</button><button type="button" class="btn mart-pick" data-room="pick"><span class="em" aria-hidden="true">🛒</span>담기</button><button type="button" class="btn" data-room="copy">복사</button><span class="mart-builtin room-builtin" hidden title="${BUILTIN_TITLE}">✓ 이미 테마에 들어 있어요</span><button type="button" class="btn room-art" data-room="art" title="원본 그림 파일 받기 — 테마 없이 실리태번 순정에서 쓸 때"><span class="em" aria-hidden="true">🖼️</span>그림 받기</button></footer>
     </div>`;

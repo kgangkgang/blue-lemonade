@@ -4,7 +4,8 @@
 //   고친 것은 HTML 복사 · 내려받기에 그대로 들어가요. 「↶ 되돌리기 · ↷ 다시하기」는 미리보기 HTML 스냅샷(연속 타자는 0.5초 묶음 · 50개까지 · 새로 그리기 · 바꾸기도 한 칸)으로 블록 통째 삭제도 되살려요.
 //   붙여 넣은 글 · 바꾸기 · 제목 · 날짜 · 마지막 미리보기 상태는 이 탭 안(sessionStorage)에 남아요. 스크립트 없는 결과 · 외부 의존 없음. 마트 공용 시트 · 단추 규격(mart.css .mart-sheet · .mart-actions)을 써요.
 import { parseLog, buildModel, DEFAULT_NAMES } from './taste-parse.js';
-import { tasteHtml, tasteDocument, canTaste, isConcept, conceptReady, loadConcept } from './taste-render.js?v=20261107e';   // 11-07 판 꼬리표: 옛 캐시와 섞이지 않게
+import { tasteHtml, tasteDocument, canTaste, isConcept, conceptReady, loadConcept } from './taste-render.js?v=20261108a';
+import { withInks, setInk, resetInks, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글자색 팔레트   // 11-07 판 꼬리표: 옛 캐시와 섞이지 않게
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 /** 그릴 수 있는 틀인지 — 받은 글꾸(틈 템플릿 template) · 테마 로그 복사 기본 틀(shape · 내장) · 11-07 받아 둔 일러스트 컨셉(concept-*) */
@@ -86,7 +87,7 @@ export function renderWithLog(item) {
     if (saved.edit?.id === item.id && saved.edit.html && saved.edit.head === headSig(head)) return saved.edit.html;
     if (parsedCache.text !== text) parsedCache = { text, parsed: parseLog(text) };
     if (!parsedCache.parsed.turns.length) return '';
-    try { const model = buildModel(parsedCache.parsed, { swap: !!saved.swap, names: saved.names ?? {} }); return tasteHtml(item, model, headFields(head, saved.fields?.date, charOf(model)), { names: namesOn(saved.showNames, parsedCache.parsed), ...cutOf(head) }); } catch { return ''; }
+    try { const model = buildModel(parsedCache.parsed, { swap: !!saved.swap, names: saved.names ?? {} }); return tasteHtml(withInks(item), model, headFields(head, saved.fields?.date, charOf(model)), { names: namesOn(saved.showNames, parsedCache.parsed), ...cutOf(head) }); } catch { return ''; }
 }
 
 // ── 미리보기 그 자리에서 고치기 ──
@@ -157,6 +158,7 @@ function build() {
     </div>
     <div class="mart-taste-headbar"><small class="mart-taste-head-note">머리 칸 — 비워 두면 흐린 글씨(표본 값)가 들어가요</small></div>
     <div class="mart-taste-shows" role="group" aria-label="보일 것 — 빼면 완전 심플해요"><button type="button" class="chip mart-taste-show" data-taste="show" data-hide="hideTitle" aria-pressed="true" title="틀 머리의 제목">제목 보이기</button><button type="button" class="chip mart-taste-pills mart-taste-show" data-taste="show" data-hide="hidePills" aria-pressed="true" title="제목 아래 알약(깡통 · 모델 · 프롬프트)">알약 보이기</button><button type="button" class="chip mart-taste-show" data-taste="show" data-hide="hideTop" aria-pressed="true" title="첫 메시지 위의 틀 글(머리 표 · 부제 · 능력치 칩 · 도장 …) — 제목 · 알약은 따로">위 글 보이기</button><button type="button" class="chip mart-taste-show" data-taste="show" data-hide="hideBottom" aria-pressed="true" title="마지막 메시지 아래의 틀 글(꼬리말 · 서명 · 보낸 이 …)">아래 글 보이기</button></div>
+    <div class="mart-taste-inks"></div>
     <div class="mart-taste-fields">
       <label class="is-wide">제목 <input type="text" class="field" data-head="title" maxlength="80" placeholder="${esc(HEAD_SAMPLE.title)}"></label>
       <label class="is-wide">날짜 <input type="text" class="field" data-field="date" maxlength="60" placeholder="비우면 없음"></label>
@@ -174,8 +176,10 @@ function build() {
     const preview = dialog.querySelector('.mart-taste-preview');
     let timer = 0;
     area.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { state.text = area.value; state.names = {}; state.showNames = null; parse(); }, 220); });   // 새 글은 이름 줄 기본값도 새로
+    let inkTimer = 0;
     dialog.addEventListener('input', (e) => {
         const t = e.target;
+        if (t.matches('[data-ink]')) { paintDot(t); clearTimeout(inkTimer); const item = state?.item; inkTimer = setTimeout(() => setInk(item, t.dataset.ink, t.value), 150); return; }   // 11-08 글자색(색 고르기를 움직이는 동안 0.15초 묶음)
         if (t.matches('[data-field]')) { state.fields[t.dataset.field] = t.value; schedule(); }
         else if (t.matches('[data-head]')) { state.head[t.dataset.head] = t.value; schedule(); }
         else if (t.matches('.mart-taste-name')) { const i = t.dataset.side === 'user' ? userIndex() : charIndex(); if (i >= 0) state.names[i] = t.value; schedule(); }
@@ -196,6 +200,7 @@ function build() {
     });
     dialog.addEventListener('click', (e) => {
         if (e.target === dialog) { dialog.close(); return; }
+        if (e.target.closest('[data-ink-reset]')) { if (state?.item) resetInks(state.item); return; }
         const b = e.target.closest('[data-taste]'); if (!b) return;
         const act = b.dataset.taste;
         if (act === 'close') dialog.close();
@@ -255,7 +260,7 @@ function render() {
         state.html = ''; sync();
         return;
     }
-    try { show(tasteHtml(state.item, state.model, drawFields(), { names: namesOn(state.showNames, state.parsed), ...cutOf(state.head) })); }
+    try { show(tasteHtml(withInks(state.item), state.model, drawFields(), { names: namesOn(state.showNames, state.parsed), ...cutOf(state.head) })); }
     catch (error) { preview.innerHTML = `<p class="mart-sheet-wait">못 그렸어요 · ${esc(error.message)}</p>`; state.html = ''; sync(); }
 }
 function sync() {
@@ -321,6 +326,8 @@ export async function openTaste(cardState, { ready = null, say = null, text, swa
     for (const input of dialog.querySelectorAll('[data-field]')) input.value = state.fields[input.dataset.field] ?? '';
     for (const input of dialog.querySelectorAll('[data-head]')) input.value = state.head[input.dataset.head] ?? '';
     state.parsed = parseLog(state.text);
+    dialog.querySelector('.mart-taste-inks').replaceChildren();
+    if (!setup) syncInks(dialog.querySelector('.mart-taste-inks'), item);   // 11-08 글자색 칩(틀을 아직 안 받았으면 받은 뒤에)
     // 같은 글꾸 · 같은 로그를 다시 열면 마지막 미리보기(그 자리에서 고친 것)부터 — 아니면 새로 그려요
     const keep = !setup && text === undefined && saved.edit?.id === item.id && saved.edit.html && saved.edit.head === headSig(state.head) && saved.text === state.text && drawable(item);
     if (keep) { state.model = buildModel(state.parsed, { swap: state.swap, names: state.names }); paintRoles(); show(saved.edit.html); }
@@ -331,7 +338,7 @@ export async function openTaste(cardState, { ready = null, say = null, text, swa
     if (!setup && !drawable(item) && ready) {
         const mine = state;
         try { await ready; } catch { if (state === mine) state.preview.innerHTML = '<p class="mart-sheet-wait">틀을 못 받았어요 · 잠시 뒤 다시 열어 주세요</p>'; return; }
-        if (state === mine) render();
+        if (state === mine) { syncInks(dialog.querySelector('.mart-taste-inks'), state.item); render(); }
     }
     // 11-07 일러스트 컨셉(concept-*)은 자료를 받은 뒤에도 그리는 모듈이 더 필요해요 — 받으면 다시 그리고, 못 받으면 그렇다고 알려요
     if (!setup && state.item && !drawable(state.item)) {
@@ -354,3 +361,16 @@ export const tasteTest = {
         return state.html;
     },
 };
+
+// 11-08 글자색 팔레트: 바꾼 색으로 표본 글(카드 · 상세 창 미리보기 · 카드 HTML 복사)을 그려요 — 마트 빌드 미리보기와 같은 표본 글 · 머리 칸
+let sampleModel = null;
+export function sampleHtml(item) {
+    if (!drawable(item)) return '';
+    sampleModel ||= buildModel(parseLog(SAMPLE));
+    try { return tasteHtml(withInks(item), sampleModel, headFields(HEAD_SAMPLE, '', charOf(sampleModel)), { names: true }); } catch { return ''; }
+}
+document.addEventListener('bl-inks-change', (e) => {
+    if (!dialog?.open || !state || state.setup || state.item?.id !== e.detail?.id) return;
+    syncInks(dialog.querySelector('.mart-taste-inks'), state.item);
+    render();
+});

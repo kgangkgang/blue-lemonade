@@ -120,7 +120,7 @@ const unbox = node => restyle(node, decls => decls.filter(d => !BOX.test(prop(d)
 const keepDecorOnly = (node) => {
     node.kids = node.kids.filter(k => (k.tag === undefined ? k.raw || !k.letters : k.msg || content(k) || decor(k)));
 };
-// 11-07 사용자 「글꾸마트에서 복사해 오면 오른쪽 위 컴퓨터가 내려와 글을 덮어 · 이런 찐빠들 없애줘」:
+// 11-07 사용자 「글꾸마트에서 복사해 오면 오른쪽 위 컴퓨터가 내려와 글을 덮어 · 이런 것들 없애줘」:
 //   글이 빠져 높이를 잃은 상자에 떠 있는(absolute) 장식만 남으면, 장식이 그 자리에 그대로 떠서 아래 글을 덮어요 → 장식이 차지하던 높이만큼 상자 자리를 남겨요
 const POSITION = css => cssValue(css, 'position')?.toLowerCase() ?? 'static';
 const floating = node => isEl(node) && ['absolute', 'fixed'].includes(POSITION(styleText(node)));

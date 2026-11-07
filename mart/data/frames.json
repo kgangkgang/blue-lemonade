@@ -103,7 +103,10 @@
    "radius": null,
    "frameWidth": 100,
    "frameHeight": 100,
-   "presetTilt": 0
+   "presetTilt": 0,
+   "frameHue": 0,
+   "frameSat": 100,
+   "frameBright": 100
   },
   "sliders": [
    {
@@ -133,6 +136,27 @@
     "min": -10,
     "max": 10,
     "step": 0.5
+   },
+   {
+    "key": "frameHue",
+    "label": "액자 색상 돌리기 (도)",
+    "min": -180,
+    "max": 180,
+    "step": 1
+   },
+   {
+    "key": "frameSat",
+    "label": "액자 채도 (%)",
+    "min": 0,
+    "max": 200,
+    "step": 1
+   },
+   {
+    "key": "frameBright",
+    "label": "액자 밝기 (%)",
+    "min": 50,
+    "max": 150,
+    "step": 1
    },
    {
     "key": "radius",
