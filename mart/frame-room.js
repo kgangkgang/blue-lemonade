@@ -55,7 +55,7 @@ function paintView() {
     root.style.setProperty('--mart-fit', view.fit);
     root.style.setProperty('--mart-radius', `${radiusOf()}px`);
     root.style.setProperty('--mart-tilt', `${view.presetTilt || 0}deg`);
-    // 11-08 액자 색감(사용자 11-04 「코발트 액자가 루시퍼 보라 넥타이와 안 맞아」) — 테마 decor.js frameFilter 와 같은 식 · 액자 그림만
+    // 11-08 액자 색감(사용자 11-04 「코발트 액자가 사진 속 보라 넥타이와 안 맞아」) — 테마 decor.js frameFilter 와 같은 식 · 액자 그림만
     const hue = Number(view.frameHue) || 0, sat = view.frameSat ?? 100, bright = view.frameBright ?? 100;
     root.style.setProperty('--mart-filter', !hue && Number(sat) === 100 && Number(bright) === 100 ? 'none' : `hue-rotate(${hue}deg) saturate(${sat}%) brightness(${bright}%)`);
     paintShadow();
