@@ -8,7 +8,8 @@ import { renderLog, dateLabel } from './lib/log-copy/log-copy-presets.js';
 import { prettyLogHtml } from './lib/log-copy/log-copy-pretty.js';
 import { motionStyleFor } from './lib/log-copy/log-copy-motion.js';
 import { withoutSvgData } from './lib/log-copy/log-copy-template.js';
-import { bareLog } from './lib/log-copy/log-copy-bare.js?v=20261107d';
+import { bareLog } from './lib/log-copy/log-copy-bare.js?v=20261107e';
+import { fitBare } from './lib/log-copy/log-copy-bare-fit.js?v=20261107e';   // 11-07 빼고 나서 글을 덮게 된 떠 있는 장식 걷기(사용자 「컴퓨터가 내려와 글을 덮어 · 이런 찐빠들 없애줘」)
 import { SCREEN } from './taste-parse.js';
 
 export { dateLabel };
@@ -21,7 +22,7 @@ let concept = null, conceptLoading = null;
 export const isConcept = item => !item?.template && !item?.shape && /^concept-[a-z0-9-]+$/.test(String(item?.id ?? ''));
 export const conceptReady = () => !!concept;
 export function loadConcept() {
-    conceptLoading ||= import('./lib/log-copy/log-copy-concept30.js?v=20261107d').then((m) => { concept = m; return m; }, (error) => { conceptLoading = null; throw error; });
+    conceptLoading ||= import('./lib/log-copy/log-copy-concept30.js?v=20261107e').then((m) => { concept = m; return m; }, (error) => { conceptLoading = null; throw error; });
     return conceptLoading;
 }
 /** 지금 시식으로 그릴 수 있나 — 받은 글꾸(template) · 기본 틀(shape) · 받아 둔 일러스트 컨셉 */
@@ -53,7 +54,7 @@ export function tasteHtml(item, model, fields = {}, { names = true, top = false,
         ? renderLog(model, { ...(item.template ? { template: item } : { shape: item.shape, colors: item.palette, images: item.images || [] }), ui: UI, fields: clean, size: 'm', screen: SCREEN, names: !!names })
         : concept.renderConcept(model, { id: item.id, ui: UI, fields: clean, size: 'm', screen: SCREEN, names: !!names });
     // 11-07 위 글 · 아래 글 빼기: 미리보기 표시(data-f · data-bl-msg)가 남아 있을 때 걷어요(테마 1.0.7 로그 복사 창과 같은 길)
-    const raw = bareLog(drawn, { top, bottom, drop });
+    const raw = fitBare(drawn, bareLog(drawn, { top, bottom, drop }));
     if (!raw) return '';
     // 테마 마트 빌드 previewOf 와 같은 검사: 미리보기 표시는 걷고 반응(data-bl-egg)만 남겨요 · 실행 · 주소 · class 가 있으면 내보내지 않아요
     const body = raw.replace(/ data-f="[a-z]+"/g, '').replace(/ data-bl-(?!egg=)[a-z]+(?:="[^"]*")?/g, '');

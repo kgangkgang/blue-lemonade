@@ -108,6 +108,7 @@ function ownDecor(node) {
     if (/url\(|gradient\(|(?:^|;)\s*animation\s*:/i.test(css)) return true;
     if (!painted(css)) return false;
     const w = px(cssValue(css, 'width')), h = px(cssValue(css, 'height'));
+    if (w !== null && h !== null && w <= 6 && h <= 6 && !/\saria-hidden="true"/.test(node.open)) return false;   // 11-08 꼬리표 구멍 · 글머리 점 — 글이 빠진 꼬리표에 혼자 남으면 글 위에 뜬 점이 돼요(「1980 가을」 꼬리표) · 꾸밈 표시(aria-hidden)가 붙은 나사 · 별 점은 장식
     return (w !== null && h !== null && w <= 80 && h <= 80) || /\saria-hidden="true"/.test(node.open) || /(?:^|;)\s*position\s*:\s*absolute/i.test(css);
 }
 /** 장식을 품었나(이모지 · 기호 글 포함) */
@@ -119,6 +120,26 @@ const unbox = node => restyle(node, decls => decls.filter(d => !BOX.test(prop(d)
 const keepDecorOnly = (node) => {
     node.kids = node.kids.filter(k => (k.tag === undefined ? k.raw || !k.letters : k.msg || content(k) || decor(k)));
 };
+// 11-07 사용자 「글꾸마트에서 복사해 오면 오른쪽 위 컴퓨터가 내려와 글을 덮어 · 이런 찐빠들 없애줘」:
+//   글이 빠져 높이를 잃은 상자에 떠 있는(absolute) 장식만 남으면, 장식이 그 자리에 그대로 떠서 아래 글을 덮어요 → 장식이 차지하던 높이만큼 상자 자리를 남겨요
+const POSITION = css => cssValue(css, 'position')?.toLowerCase() ?? 'static';
+const floating = node => isEl(node) && ['absolute', 'fixed'].includes(POSITION(styleText(node)));
+/** 떠 있는 장식의 아래 끝(상자 위에서부터 px) — 높이를 모르면 null */
+function reach(node) {
+    const css = styleText(node);
+    const h = px(cssValue(css, 'height'));
+    if (h === null) return null;
+    const top = px(cssValue(css, 'top')), bottom = px(cssValue(css, 'bottom'));
+    return (top ?? bottom ?? 0) + h;
+}
+function hold(node) {
+    const css = styleText(node);
+    if (!['relative', 'sticky'].includes(POSITION(css)) || cssValue(css, 'height') !== null || cssValue(css, 'min-height') !== null) return;   // 자리를 차지하는 기준 상자만(떠 있는 상자는 자리가 없고 · static 이면 장식이 다른 상자에 붙어요) · 높이를 이미 정했으면 그대로
+    const kids = node.kids.filter(k => isEl(k) || (k.tag === undefined && !k.raw && /\S/.test(k.text)));
+    if (!kids.length || !kids.every(floating)) return;   // 자리를 차지하는 것이 남아 있으면 그대로
+    const need = Math.max(0, ...kids.map(reach).filter(n => n !== null));
+    if (need > 0) restyle(node, decls => [...decls, `min-height:${need}px`]);
+}
 /** 펼쳐 둔 상자의 빈 머리는 숨겨요(지우면 브라우저가 「자세히」를 그려요) · 닫힌 상자의 머리는 여는 손잡이라 그대로 */
 function quietSummary(summary, parent) {
     if (parent?.tag === 'details' && /\sopen(?:="[^"]*")?(?=[\s>/])/.test(parent.open)) restyle(summary, decls => [...decls.filter(d => prop(d) !== 'display'), 'display:none']);
@@ -164,10 +185,11 @@ export function bareLog(source, { top = false, bottom = false, drop = [] } = {})
             if (!isEl(kid) || kid.msg) return true;
             settle(kid);
             if (!kid.had || content(kid)) return true;
-            if (kid.tag === 'summary') { if (kid.kids.some(decor)) { keepDecorOnly(kid); unbox(kid); } else quietSummary(kid, node); return true; }   // 장식 든 머리는 남겨요
+            if (kid.tag === 'summary') { if (kid.kids.some(decor)) { keepDecorOnly(kid); unbox(kid); hold(kid); } else quietSummary(kid, node); return true; }   // 장식 든 머리는 남겨요
             if (!kid.kids.some(decor)) return false;
             keepDecorOnly(kid);
             unbox(kid);
+            hold(kid);
             return true;
         });
     };
@@ -193,7 +215,7 @@ export function bareLog(source, { top = false, bottom = false, drop = [] } = {})
             for (const k of sideOf(s, first)) {
                 if (k.tag === 'summary') continue;   // 접힘 머리는 ①에서 정리했어요(여는 손잡이 · 장식)
                 if (k.tag === undefined) { if (!k.raw && !decor(k) && !/^\s*$/.test(k.text)) gone.add(k); continue; }
-                if (decor(k)) { if (k.had) { keepDecorOnly(k); unbox(k); } continue; }   // 장식(단풍 · 그림 · 테이프)은 남겨요
+                if (decor(k)) { if (k.had) { keepDecorOnly(k); unbox(k); hold(k); } continue; }   // 장식(단풍 · 그림 · 테이프)은 남겨요
                 gone.add(k);   // 빈 상자 · 가는 선 · 구분선
             }
             s.node.kids = s.node.kids.filter(k => !gone.has(k));
@@ -211,6 +233,26 @@ export function bareLog(source, { top = false, bottom = false, drop = [] } = {})
             });
         }
     }
+    return html(root);
+}
+/**
+ * 고른 요소 걷기 — log-copy-bare-fit.js 가 그려 보고 고른 「빼고 나서 글을 덮게 된 장식」
+ * @param {string} source
+ * @param {{ path: number[], tag: string }[]} picks path: 맨 위부터 요소만 센 자식 번호 · tag 가 안 맞으면 그 길은 건너뛰어요(브라우저가 다르게 읽은 HTML)
+ * @returns {string} 걷은 HTML(걷을 게 없으면 받은 그대로)
+ */
+export function dropPaths(source, picks) {
+    const text = String(source ?? '');
+    if (!picks?.length) return text;
+    const root = parse(text);
+    const hits = [];
+    for (const { path, tag } of picks) {
+        let node = root, parent = null;
+        for (const i of path) { parent = node; node = node.kids.filter(isEl)[i]; if (!node) break; }
+        if (node && parent && node.tag === String(tag).toLowerCase() && !node.msg && !node.msgs) hits.push([parent, node]);
+    }
+    if (!hits.length) return text;
+    for (const [parent, node] of hits) parent.kids = parent.kids.filter(k => k !== node);
     return html(root);
 }
 /** 읽고 다시 쓴 HTML(시험용 — 받은 것과 같아야 해요) */
