@@ -8,12 +8,24 @@ import { renderLog, dateLabel } from './lib/log-copy/log-copy-presets.js';
 import { prettyLogHtml } from './lib/log-copy/log-copy-pretty.js';
 import { motionStyleFor } from './lib/log-copy/log-copy-motion.js';
 import { withoutSvgData } from './lib/log-copy/log-copy-template.js';
-import { bareLog } from './lib/log-copy/log-copy-bare.js';
+import { bareLog } from './lib/log-copy/log-copy-bare.js?v=20261107d';
 import { SCREEN } from './taste-parse.js';
 
 export { dateLabel };
 /** 테마 마트 빌드와 같은 화면 글꼴 값(틀 부품 글씨 — 제목 · 알약 · 꼬리) */
 export const UI = { family: "'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif", tracking: '-0.025em' };
+
+// ── 11-07 일러스트 컨셉 30종(concept-* · 틀(template) 없이 미리보기만 있던 글꾸 — 시식 창이 「틀을 받는 중이에요…」에서 멈췄어요) ──
+// 그리는 모듈(테마 tools/mart/geulkku-concept30.mjs 사본 · 240KB)은 그 글꾸를 열 때만 받아요
+let concept = null, conceptLoading = null;
+export const isConcept = item => !item?.template && !item?.shape && /^concept-[a-z0-9-]+$/.test(String(item?.id ?? ''));
+export const conceptReady = () => !!concept;
+export function loadConcept() {
+    conceptLoading ||= import('./lib/log-copy/log-copy-concept30.js?v=20261107d').then((m) => { concept = m; return m; }, (error) => { conceptLoading = null; throw error; });
+    return conceptLoading;
+}
+/** 지금 시식으로 그릴 수 있나 — 받은 글꾸(template) · 기본 틀(shape) · 받아 둔 일러스트 컨셉 */
+export const canTaste = item => !!(item?.template || item?.shape || (isConcept(item) && concept?.MART_CONCEPT_FRAMES.some(f => f.id === item.id)));
 
 /** 인라인 style 의 color 옆에 -webkit-text-fill-color 를 같은 값으로 (background-color · border-color 는 안 건드려요) */
 export function inkForKkangsa(html) {
@@ -32,13 +44,16 @@ export function inkForKkangsa(html) {
  * @returns {string} 완성 HTML(빈 로그면 빈 글)
  */
 export function tasteHtml(item, model, fields = {}, { names = true, top = false, bottom = false, drop = [] } = {}) {
-    if (!(item?.template || item?.shape) || !model?.messages?.length) return '';
+    if (!canTaste(item) || !model?.messages?.length) return '';
     const cut = (key, max) => String(fields[key] ?? '').trim().slice(0, max);
     const clean = { title: cut('title', 80), date: cut('date', 60), mark: cut('mark', 24), char: cut('char', 40), model: cut('model', 40), prompt: cut('prompt', 40) };
     // 기본 틀은 테마 로그 복사 창과 같은 길: renderLog(shape · 기본 에이드 색) — 갤러리 틀은 표본 사진(절대 주소 · 마트 ensureItem)을 같이 넣어요
-    const look = item.template ? { template: item } : { shape: item.shape, colors: item.palette, images: item.images || [] };
+    // 11-07 일러스트 컨셉 30종(틀 없이 미리보기만 있던 글꾸)은 테마 마트 빌드와 같은 renderConcept 로 그려요
+    const drawn = item.template || item.shape
+        ? renderLog(model, { ...(item.template ? { template: item } : { shape: item.shape, colors: item.palette, images: item.images || [] }), ui: UI, fields: clean, size: 'm', screen: SCREEN, names: !!names })
+        : concept.renderConcept(model, { id: item.id, ui: UI, fields: clean, size: 'm', screen: SCREEN, names: !!names });
     // 11-07 위 글 · 아래 글 빼기: 미리보기 표시(data-f · data-bl-msg)가 남아 있을 때 걷어요(테마 1.0.7 로그 복사 창과 같은 길)
-    const raw = bareLog(renderLog(model, { ...look, ui: UI, fields: clean, size: 'm', screen: SCREEN, names: !!names }), { top, bottom, drop });
+    const raw = bareLog(drawn, { top, bottom, drop });
     if (!raw) return '';
     // 테마 마트 빌드 previewOf 와 같은 검사: 미리보기 표시는 걷고 반응(data-bl-egg)만 남겨요 · 실행 · 주소 · class 가 있으면 내보내지 않아요
     const body = raw.replace(/ data-f="[a-z]+"/g, '').replace(/ data-bl-(?!egg=)[a-z]+(?:="[^"]*")?/g, '');

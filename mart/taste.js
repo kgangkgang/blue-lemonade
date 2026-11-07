@@ -4,11 +4,17 @@
 //   고친 것은 HTML 복사 · 내려받기에 그대로 들어가요. 「↶ 되돌리기 · ↷ 다시하기」는 미리보기 HTML 스냅샷(연속 타자는 0.5초 묶음 · 50개까지 · 새로 그리기 · 바꾸기도 한 칸)으로 블록 통째 삭제도 되살려요.
 //   붙여 넣은 글 · 바꾸기 · 제목 · 날짜 · 마지막 미리보기 상태는 이 탭 안(sessionStorage)에 남아요. 스크립트 없는 결과 · 외부 의존 없음. 마트 공용 시트 · 단추 규격(mart.css .mart-sheet · .mart-actions)을 써요.
 import { parseLog, buildModel, DEFAULT_NAMES } from './taste-parse.js';
-import { tasteHtml, tasteDocument } from './taste-render.js';
+import { tasteHtml, tasteDocument, canTaste, isConcept, conceptReady, loadConcept } from './taste-render.js?v=20261107d';   // 11-07 판 꼬리표: 옛 캐시와 섞이지 않게
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-/** 그릴 수 있는 틀인지 — 받은 글꾸(틈 템플릿 template) 또는 테마 로그 복사 기본 틀(shape · 내장) */
-const drawable = item => !!(item?.template || item?.shape);
+/** 그릴 수 있는 틀인지 — 받은 글꾸(틈 템플릿 template) · 테마 로그 복사 기본 틀(shape · 내장) · 11-07 받아 둔 일러스트 컨셉(concept-*) */
+const drawable = canTaste;
+/** 일러스트 컨셉 그리기 모듈을 받고 나면 시식 창 · 카드 미리보기를 다시 그려요 */
+function needConcept(item, after) {
+    if (!isConcept(item) || conceptReady()) return false;
+    loadConcept().then(() => { after?.(); document.dispatchEvent(new CustomEvent('bl-taste-change')); }, () => { after?.(true); });
+    return true;
+}
 const KEY = 'bl-mart-taste-v1';
 const SNAP_MAX = 50, SNAP_WAIT = 500;
 const MODE_LABEL = { names: '「이름:」 줄로 나눴어요', screen: '실리태번 화면 복사로 읽었어요', alternate: '이름이 없어 빈 줄마다 번갈아 나눴어요' };
@@ -74,7 +80,8 @@ export function hasLog() { const saved = store.load(); return !!String(saved.tex
 export function renderWithLog(item) {
     const saved = store.load();
     const text = String(saved.text ?? '');
-    if (!text.trim() || !drawable(item)) return '';
+    if (!text.trim()) return '';
+    if (!drawable(item)) { needConcept(item); return ''; }   // 11-07 일러스트 컨셉: 모듈을 받으면 카드를 다시 그려요(bl-taste-change)
     const head = loadHead(saved);
     if (saved.edit?.id === item.id && saved.edit.html && saved.edit.head === headSig(head)) return saved.edit.html;
     if (parsedCache.text !== text) parsedCache = { text, parsed: parseLog(text) };
@@ -325,6 +332,11 @@ export async function openTaste(cardState, { ready = null, say = null, text, swa
         const mine = state;
         try { await ready; } catch { if (state === mine) state.preview.innerHTML = '<p class="mart-sheet-wait">틀을 못 받았어요 · 잠시 뒤 다시 열어 주세요</p>'; return; }
         if (state === mine) render();
+    }
+    // 11-07 일러스트 컨셉(concept-*)은 자료를 받은 뒤에도 그리는 모듈이 더 필요해요 — 받으면 다시 그리고, 못 받으면 그렇다고 알려요
+    if (!setup && state.item && !drawable(state.item)) {
+        const mine = state;
+        needConcept(state.item, (failed) => { if (state !== mine) return; if (failed) state.preview.innerHTML = '<p class="mart-sheet-wait">틀을 못 받았어요 · 잠시 뒤 다시 열어 주세요</p>'; else render(); });
     }
 }
 /** 시험(?mart-test) — 결과 HTML · 해석 결과를 밖에서 읽고, 미리보기 편집을 흉내 내요: [['edit', 찾을 글, 새 글], ['clear', 찾을 글], ['undo'], ['redo']] */
