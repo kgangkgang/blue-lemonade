@@ -234,7 +234,10 @@ function detach(flush = true) {
     if (left.length) setTimeout(() => unwrap(left), duration + 150);
 }
 
+let started = false;
 export function startStreamFade() {
+    if (started) return;
+    started = true;
     const { eventSource, event_types } = SillyTavern.getContext();
     eventSource.on(event_types.GENERATION_STARTED, (_type, _params, dryRun) => {
         if (!dryRun) decided = false;

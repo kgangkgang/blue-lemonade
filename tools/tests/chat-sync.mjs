@@ -37,7 +37,7 @@ function world({ answer = 'reload', hidden = false, integrity = 'aaa' } = {}) {
         getContext: () => w.ctx, fetcher: w.fetcher, now: () => w.now,
         setTimer: (fn, ms) => { const t = { fn, at: w.now + ms, done: false }; w.timers.push(t); return t; },
         clearTimer: (t) => { if (t) t.done = true; },
-        hidden: () => w.hidden, ask: async () => { w.asked++; return w.answer; }, strip: (show) => w.strip.push(show), busy: () => w.busy,
+        hidden: () => w.hidden, ask: async () => { w.asked++; if (w.answer instanceof Error) throw w.answer; return w.answer; }, strip: (show) => w.strip.push(show), busy: () => w.busy,
     });
     /** 시계를 ms 만큼 돌리며 때가 된 타이머를 부른다 */
     w.tick = async (ms) => {
@@ -179,6 +179,18 @@ await test('창을 닫으면 이번 저장만 미루고 띠는 남는다 → 다
     assert.ok(stale(w));
     await w.save();
     assert.equal(w.asked, 2);
+});
+
+await test('1.0.9 묻는 창이 열리지 못하면(예외) 미루지 않고 순정처럼 저장한다', async () => {
+    const w = world({ answer: new Error('창 못 엶') });
+    w.sync.setOn(true);
+    await w.tick(1600);
+    w.server.last_mes = 9000;
+    await w.tick(S.PERIOD);
+    const warn = console.warn; console.warn = () => {};
+    try { await w.save(); } finally { console.warn = warn; }
+    assert.equal(w.asked, 1);
+    assert.equal(w.sends, 1, '이 기기의 새 메시지를 보냄');
 });
 
 await test('같이 온 저장은 한 번만 묻는다', async () => {

@@ -1107,7 +1107,13 @@ function saveParameterValues(provider) {
         
         // 값 읽기 및 저장
         // 7.0.7 빈 칸은 NaN(저장하면 null)이 되어 그 뒤로 칸이 계속 비었다 — 숫자가 아니면 지금 값 · 기본값을 둔다
-        const value = parseFloat($(this).val());
+        // 1.0.9 칸의 min · max 밖 값(직접 친 0 · 큰 온도)은 끝값으로 — Claude 출력 길이 0 이 저장되면 max_tokens 가 빠져 요청마다 실패했어요
+        let value = parseFloat($(this).val());
+        if (Number.isFinite(value)) {
+            const lo = parseFloat(this.min), hi = parseFloat(this.max);
+            if (Number.isFinite(lo) && value < lo) value = lo;
+            if (Number.isFinite(hi) && value > hi) value = hi;
+        }
         params[paramName] = Number.isFinite(value) ? value : isParamNumber(params[paramName]) ? Number(params[paramName]) : defaultSettings.parameters[provider]?.[paramName] ?? params[paramName];
     });
 
@@ -1664,6 +1670,8 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
 
     if (params.max_length > 0) {
         parameters.max_tokens = params.max_length;
+    } else if (provider === 'claude') {
+        parameters.max_tokens = defaultSettings.parameters.claude.max_length;   // 1.0.9 예전에 0 으로 저장된 값 — Claude 는 max_tokens 가 꼭 있어야 해요
     }
     // [1.8.7] 호출별 덮어쓰기 (용어집 뽑기: 짧은 출력·낮은 온도)
     if (Number.isFinite(overrides.maxTokens) && overrides.maxTokens > 0) parameters.max_tokens = overrides.maxTokens;
@@ -4198,8 +4206,8 @@ async function editTranslation(messageId) {
         // 수정 로직
         else if (newText !== originalDbTranslation) {
             try {
-                // DB 업데이트
-                await addTranslationToDB(originalTextForDbKey, newText);
+                // DB 업데이트 — 1.0.9 DB 가 실패해도(사생활 창 · 용량 초과) 고친 글은 메시지에 남겨요. 전엔 수정창이 이미 닫혀 쓴 글이 그대로 사라졌어요
+                await addTranslationToDB(originalTextForDbKey, newText).catch(error => console.warn(`[LLM Translator] 고친 번역문 캐시 저장 실패 — 메시지에는 남겨요`, error));
                 message.extra.translation_edited = originalHashOf(originalTextForDbKey); // 6.2.4 손으로 고친 번역은 낱말 걷기를 하지 않는다
 
                 // 화면 표시 업데이트
@@ -5571,21 +5579,21 @@ function initGlossaryUI() {
         saveSettingsDebounced();
         renderGlossary();
     });
-    card.querySelector('#llm_glossary_extract').addEventListener('click', () => {
-        extractGlossaryWithLLM().catch((error) => {
-            console.error('[LLM Translator] 용어집 뽑기 실패', error);
+    // 1.0.9 뽑는 중(수십 초)에 다시 누르면 모델 요청이 겹쳐 나가고 고르기 창이 두 번 떴어요 — 두 단추 함께 한 번에 하나만
+    const extractOnce = (run, label) => () => {
+        if (glossaryExtractBusy) { toastr.info('용어를 뽑는 중이에요. 끝나면 다시 눌러 주세요.', '용어집 뽑기'); return; }
+        glossaryExtractBusy = true;
+        run().catch((error) => {
+            console.error(`[LLM Translator] ${label} 실패`, error);
             toastr.error(error?.message || String(error), '용어집 뽑기 실패', { timeOut: 8000 });
-        });
-    });
-    card.querySelector('#llm_glossary_from_wi')?.addEventListener('click', () => {
-        extractGlossaryFromWorldInfo().catch((error) => {
-            console.error('[LLM Translator] 월드인포 용어집 뽑기 실패', error);
-            toastr.error(error?.message || String(error), '용어집 뽑기 실패', { timeOut: 8000 });
-        });
-    });
+        }).finally(() => { glossaryExtractBusy = false; });
+    };
+    card.querySelector('#llm_glossary_extract').addEventListener('click', extractOnce(extractGlossaryWithLLM, '용어집 뽑기'));
+    card.querySelector('#llm_glossary_from_wi')?.addEventListener('click', extractOnce(extractGlossaryFromWorldInfo, '월드인포 용어집 뽑기'));
     renderGlossary();
 }
 
+let glossaryExtractBusy = false;
 /**
  * 지금 캐릭터의 카드와, 이미 번역된 최근 메시지(원문 ↔ 번역문)에서 이름·호칭을 뽑아 제안한다.
  * 번역 모델을 한 번 부르고, 고른 항목만 이 캐릭터 범위에 넣는다.
@@ -7327,8 +7335,9 @@ async function restoreTranslationsFromMetadata() {
 
                 if (!localTranslationExists) {
                     // logDebug(`Item ${i} not found locally. Adding...`); // 개별 추가 로그
-                    await addTranslationToDB(item.originalText, item.translation /*, item.provider, item.model, item.date */);
-                    addedCount++;
+                    // 1.0.9 실제로 넣은 것만 「추가」로 세요 — 채팅 전용 용어가 있는 채팅 · 실패 표시 글은 넣지 않는데도 추가로 세던 것
+                    const added = await addTranslationToDB(item.originalText, item.translation /*, item.provider, item.model, item.date */);
+                    if (added === 'add success') addedCount++; else skippedCount++;
                 } else {
                     // logDebug(`Item ${i} already exists locally. Skipping.`); // 개별 스킵 로그
                     skippedCount++;

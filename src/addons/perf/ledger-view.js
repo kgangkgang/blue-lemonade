@@ -22,7 +22,9 @@ export function ledgerMarkup() {
 
 /** 최근 기록에서 본 연결마다 결제 수단 고르기 */
 async function renderPay(box) {
-    const rows = await query({ from: Date.now() - 30 * 86400000 }).catch(() => []);
+    // 1.0.9 장부를 못 읽은 것을 「아직 적힌 요청이 없어요」로 보이지 않게 따로 알려요
+    const rows = await query({ from: Date.now() - 30 * 86400000 }).catch(error => { console.warn('[Blue Lemonade] 사용 장부 읽기 실패', error); return null; });
+    if (!rows) { box.innerHTML = '<small class="rl-hint">장부를 읽지 못했어요. 창을 닫았다 다시 열어 주세요.</small>'; return; }
     const seen = new Map();
     for (const row of rows) {
         const key = payKeyFor(row);

@@ -629,6 +629,7 @@ function paintNote(el, color, ink) {
     if (ink !== undefined) { if (HEX6.test(ink)) el.style.setProperty('--salty-text-20', `${ink}33`); else el.style.removeProperty('--salty-text-20'); }
 }
 function colorButton(id) { return `<span class="bl-note-fmt-h bl-note-colorwrap"><button type="button" class="bl-note-btn bl-note-colorbtn" data-note-color="${id}" title="메모지 색" aria-label="메모지 색"><span class="bl-note-colordot"></span></button><span class="bl-note-fmt-hs bl-note-colorpop" hidden></span></span>`; }
+let colorPopOpen = false;   // 1.0.9 색 팝업을 연 적이 있을 때만 누름마다 열린 팝업을 찾아요(전엔 누를 때마다 문서 전체를 훑었어요)
 /** 색 고르기 팝업 — 메모지(기본 · 테마 팔레트 · 내 색) / 글자(기본 · 흰색 · 검정 · 테마 팔레트 · 내 색) */
 function openColorPop(button, id) {
     const pop = button.nextElementSibling, note = notes().find(n => n.id === id); if (!pop || !note) return;
@@ -639,7 +640,7 @@ function openColorPop(button, id) {
         + [...extra, ...NOTE_COLORS(), ...custom.map(c => [c, `내 색 ${c}`])].map(([c, name]) => `<button type="button" class="bl-note-swatch${same(cur, c) ? ' on' : ''}" data-set-${kind}="${c}" title="${name}" aria-label="${name}" style="--sw:${c}"></button>`).join('')
         + `<label class="bl-note-swatch bl-note-swatch-add" title="내 색 고르기"><i class="fa-solid fa-plus"></i><input type="color" data-pick="${kind}" value="${cur || (kind === 'color' ? '#f5d547' : '#ffffff')}" aria-label="내 색 고르기"></label></div>`;
     pop.innerHTML = row('color', note.color, []) + row('ink', note.ink, [['#ffffff', '흰색'], ['#1b1a1f', '검정']]);
-    pop.hidden = false; placePop(pop);
+    pop.hidden = false; colorPopOpen = true; placePop(pop);
     const apply = (kind, c) => {
         updateNote(id, kind === 'color' ? { color: c } : { ink: c });
         const n = notes().find(x => x.id === id);
@@ -653,7 +654,7 @@ function openColorPop(button, id) {
         input.onchange = () => { store().look.customColors = [input.value, ...(look().customColors || []).filter(c => !same(c, input.value))].slice(0, 6); save(); };
     });
 }
-document.addEventListener('pointerdown', e => { if (!e.target.closest?.('.bl-note-colorwrap')) document.querySelectorAll('.bl-note-colorpop:not([hidden])').forEach(p => { p.hidden = true; placePop(p); }); }, true);
+document.addEventListener('pointerdown', e => { if (!colorPopOpen || e.target.closest?.('.bl-note-colorwrap')) return; colorPopOpen = false; document.querySelectorAll('.bl-note-colorpop:not([hidden])').forEach(p => { p.hidden = true; placePop(p); }); }, true);
 document.addEventListener('click', e => { const b = e.target.closest?.('[data-note-color]'); if (!b) return; e.preventDefault(); e.stopPropagation(); openColorPop(b, b.dataset.noteColor); }, true);
 
 // ── 귀속 표시 · 바꾸기 ──────────────────────────────────────

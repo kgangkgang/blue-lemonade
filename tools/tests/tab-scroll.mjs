@@ -53,4 +53,35 @@ test('독립 공통 스타일도 기존 방향 표식의 세 흐림을 제공해
     assert.match(css,/--bl-tab-reveal-inset:var\(--bl-fade\)/);
     assert.doesNotMatch(css,/pointer-events|z-index|::before|::after|overflow\s*:/);
 });
+// 1.0.9 공용 모듈 약속(tab-scroll v1): 스타일 링크는 문서마다 하나 · 등록부가 있으면 줄만 보탬
+const fakeDoc = pre => {
+    const made = [];
+    class MO { observe() {} disconnect() {} takeRecords() { return []; } }
+    const el = () => ({ nodeType: 1, append() {}, appendChild() {}, querySelectorAll: () => [], matches: () => false, closest: () => null, children: [], dataset: {}, addEventListener() {} });
+    const de = el(), head = el(); head.append = n => made.push(n);
+    const win = { MutationObserver: MO, requestAnimationFrame: () => 0, cancelAnimationFrame() {}, setTimeout: () => 0, clearTimeout() {}, AbortController };
+    const doc = { documentElement: de, head, body: el(), defaultView: win, listeners: 0,
+        getElementById: id => pre === 'id' && id === 'bl-tab-scroll-style' ? {} : null,
+        querySelector: s => pre === 'data' && s === 'link[data-bl-tab-scroll]' ? {} : null,
+        querySelectorAll: () => [], createElement: () => ({ dataset: {} }), addEventListener() { doc.listeners++; } };
+    de.ownerDocument = doc; win.document = doc;
+    return { doc, made };
+};
+test('1.0.9 공용 약속: 링크가 없을 때만 넣고(id · data-bl-tab-scroll · 주인 표시) · id 든 data 표시든 먼저 있으면 그것을 같이 써요', () => {
+    const none = fakeDoc('none'); installTabScroll(['.x'], none.doc);
+    assert.equal(none.made.length, 1);
+    assert.equal(none.made[0].id, 'bl-tab-scroll-style');
+    assert.deepEqual({ ...none.made[0].dataset }, { blTabScroll: 'v1', blOwner: 'blue-lemonade', blVer: '1' });
+    for (const pre of ['id', 'data']) { const d = fakeDoc(pre); installTabScroll(['.x'], d.doc); assert.equal(d.made.length, 0, pre); }
+});
+test('1.0.9 공용 약속: 등록부가 이미 있으면 새 감시 · 리스너 · 링크 없이 .add 만', () => {
+    const d = fakeDoc('none'), got = [];
+    d.doc[Symbol.for('blue-lemonade.tab-scroll.v1')] = { owner: 'other-ext', ver: 1, add: list => got.push(...list) };
+    installTabScroll(['.a', '.b'], d.doc);
+    assert.deepEqual(got, ['.a', '.b']); assert.equal(d.made.length, 0); assert.equal(d.doc.listeners, 0);
+    const own = fakeDoc('none'); installTabScroll(['.x'], own.doc);
+    const reg = own.doc[Symbol.for('blue-lemonade.tab-scroll.v1')];
+    assert.equal(reg.owner, 'blue-lemonade'); assert.equal(reg.ver, 1); assert.equal(typeof reg.add, 'function');
+    const n = own.doc.listeners; installTabScroll(['.y'], own.doc); assert.equal(own.doc.listeners, n, '두 번째 부름은 리스너를 더 걸지 않음');
+});
 console.log(`탭 스크롤: ${pass}개 통과했어요.`);

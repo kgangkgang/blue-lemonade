@@ -231,6 +231,7 @@ const MANUAL = '__lv_manual__';  // 모델 목록의 「직접 입력…」 값
 const modelFetches = new Map();  // 모델 목록 키 → 받아 오는 중인 약속
 const autoTried = new Set();     // 저절로 받아 본 모델 목록 키 (세션마다 한 번)
 let logTimer = 0;
+let akeySeq = 0;   // 1.0.9 확인 중에 엔진 · 공급자 · 모델을 바꾸면 늦게 온 옛 결과를 새 칸에 그리지 않아요(엔진 쪽 testSeq 와 같은 꼴)
 
 // ---------- 잡동사니
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[c]));
@@ -507,6 +508,8 @@ const COLORS_HELP = [
 function coerce(f, el) {
     if (el.type === 'checkbox') return !!el.checked;
     if (el.type === 'range' || el.type === 'number') {
+        // 1.0.9 「비우면 끔」인 숫자 칸(기본값 '' — 시드 등)은 빈 채로 둬요. 전엔 Number('') = 0 이라 시드 0 이 늘 붙었어요
+        if (el.type === 'number' && f && f.default === '' && String(el.value).trim() === '') return '';
         let n = Number(el.value);
         if (!Number.isFinite(n)) n = Number(f && f.default) || 0;
         if (f && f.min !== undefined) n = Math.max(Number(f.min), n);
@@ -892,7 +895,7 @@ const ACTIONS = {
     unpin: (b) => { unpinChar(b.dataset.name || ''); },   // 1.3.8 캐릭터 엔진 고정 풀기
     'qf-fill': () => fillQuotaVoices(),   // 8.2.5 같은 이름 MiniMax 목소리로 채우기
     'qf-return': () => { player.quotaReturn(); renderQuotaNote(); toast('다시 ElevenLabs 로 읽어요', 'success'); },   // 8.2.5 ElevenLabs 로 돌아가기
-    'cache-clear': async () => { await Promise.all([cache.clear(), listen.clearCache()]); toast('캐시를 비웠어요', 'success'); renderData(); },   // 1.4.4 듣는 언어 번역도
+    'cache-clear': async () => { const [ok] = await Promise.all([cache.clear(), listen.clearCache()]); toast(ok ? '캐시를 비웠어요' : '캐시를 비우지 못했어요. 다른 탭이 쓰고 있으면 닫고 다시 눌러 주세요', ok ? 'success' : 'error'); renderData(); },   // 1.0.9 못 지운 것을 성공으로 알리지 않아요   // 1.4.4 듣는 언어 번역도
     export: () => exportSettings(),
     import: () => q('#lv_import_file')?.click(),
 };
@@ -1211,11 +1214,14 @@ function warnCustomCleartext() {
 // ---------- 대사 분석 키 · 연결 확인 (analysis.testEngine)
 async function akeyTest() {
     showTestResult('확인 중…', '', 'lv_atest_result');
+    const my = ++akeySeq;
     try {
         // testEngine 은 실패도 글로 돌려준다 ('실패 · …', '주소와 키를 먼저 …') — '됐어요' 로 시작할 때만 성공 색
         const msg = String(await analysis.testEngine(analysisCfg()) || '');
+        if (my !== akeySeq) return;
         showTestResult(msg || '실패', /^됐어요/.test(msg) ? 'ok' : 'bad', 'lv_atest_result');
     } catch (e) {
+        if (my !== akeySeq) return;
         showTestResult((e && e.message) || '실패', 'bad', 'lv_atest_result');
         log('err', `대사 분석 연결 확인 실패: ${(e && e.message) || e}`);
     }
@@ -2489,6 +2495,7 @@ function rerenderEngineCard(p) {
     if (engineShown()) void loadBalance(p);   // 1.3.8 보일 때만 (닫힌 서랍에서 모델 목록이 와 카드를 다시 그려도 잔액은 안 물음)
 }
 function showTestResult(text, cls, id = 'lv_test_result') {
+    if (id === 'lv_atest_result' && !text) akeySeq++;   // 1.0.9 결과를 지우는 때(엔진 · 공급자 · 모델 바꿈) = 앞 확인은 낡음
     const out = q(`#${id}`);
     if (!out) return;
     out.textContent = text;

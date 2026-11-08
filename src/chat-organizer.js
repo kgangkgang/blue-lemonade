@@ -81,9 +81,12 @@ async function fetchRecent(limit) {
     return { rows: out, all: !Number.isFinite(limit) || (Array.isArray(list) ? list.length : 0) < limit + body.pinned.length };
 }
 /** 최근 채팅 받기(같은 때 두 번 안 받음). full 이면 한도 없이 전부 */
+let loadingFull = false;
 function refresh({ full = false } = {}) {
-    if (loading) return loading;
+    // 1.0.9: 짧은 목록을 받는 중에 전체 목록(이름 바뀐 채팅 찾기)을 부르면 그 짧은 결과로 「없음」을 판정하던 것 → 끝난 뒤 전체로 한 번 더
+    if (loading) return full && !loadingFull ? loading.then(() => refresh({ full: true })) : loading;
     const limit = full ? Infinity : max;
+    loadingFull = full;
     loading = (async () => {
         try {
             const got = await fetchRecent(limit);
@@ -93,21 +96,22 @@ function refresh({ full = false } = {}) {
         } catch (error) {
             warn(error);
             globalThis.toastr?.warning?.('최근 채팅을 불러오지 못했어요. 잠시 뒤 다시 눌러 주세요.', 'Blue Lemonade');
-        } finally { loading = null; }
+        } finally { loading = null; loadingFull = false; }
         render();
     })();
     render();
     return loading;
 }
-/** 열기 전에 파일이 있는지(없는 이름으로 열면 실리태번이 빈 채팅을 새로 만들어요) */
+/** 열기 전에 파일이 있는지(없는 이름으로 열면 실리태번이 빈 채팅을 새로 만들어요) — true · false · null(서버에 못 물어봄) */
 async function exists(r) {
     if (byKey.has(core.rowKey(r)) && Date.now() - fetchedAt < FRESH_MS) return true;
     if (r.k === 'g') return !!ownerOf(r)?.group?.chats?.includes?.(r.f);
     try {
         const res = await fetch('/api/characters/chats', { method: 'POST', headers: ctx().getRequestHeaders(), body: JSON.stringify({ avatar_url: r.o, simple: true }) });
-        const list = res.ok ? await res.json() : [];
+        if (!res.ok) return null;   // 1.0.9: 통신 실패를 「파일 없음」으로 보면 멀쩡한 채팅을 목록에서 빼라고 안내했어요
+        const list = await res.json();
         return Array.isArray(list) && list.some(x => core.fileIdOf(x?.file_id ?? x?.file_name) === r.f);
-    } catch { return false; }
+    } catch (error) { warn(error); return null; }
 }
 /** 이름이 밖에서 바뀐 채팅 찾기 — 저장해 둔 integrity 로 전체 목록에서 */
 async function repair(r) {
@@ -125,7 +129,9 @@ async function openChat(r) {
     if (!ownerOf(r)) { globalThis.toastr?.warning?.('이 채팅의 캐릭터 · 그룹을 찾지 못했어요.', 'Blue Lemonade'); return; }
     busy = true;
     try {
-        if (!(await exists(r))) {
+        const found = await exists(r);
+        if (found === null) { globalThis.toastr?.warning?.('채팅 목록을 서버에서 받지 못했어요. 연결을 확인하고 다시 눌러 주세요.', 'Blue Lemonade'); return; }
+        if (!found) {
             const fixed = await repair(r);
             if (!fixed) { globalThis.toastr?.warning?.(`「${r.f}」 채팅 파일을 찾지 못했어요. 지워졌으면 ⋮ 메뉴에서 목록에서 빼 주세요.`, 'Blue Lemonade'); return; }
             r = fixed;

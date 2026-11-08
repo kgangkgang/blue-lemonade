@@ -276,11 +276,13 @@ function mini(model, o) {
     return tag('div', { ...box, 'font-family': ui.family, 'letter-spacing': ui.tracking }, sheet(head + scroller(screenLog(model, o), Math.round(o.height * 0.5)), c, { 'max-width': '520px', margin: '0' }));
 }
 
-/** 레몬: 팔레트 카드(색 고르기 견본)의 두 번째 포인트 막대 · 🍋 */
+// 1.0.9 제목 앞 레몬은 🍋 이모지 대신 테마 레몬(fa-lemon · splash.js LEMON_PATH · 탭 아이콘과 같은 면 #FFE23C + 테두리 #E9BE00) 그림 — 붙여 넣는 곳에 글꼴 아이콘이 없어서 그림 부품(svg 주소)으로
+const LEMON_MARK = tag('span', { display: 'inline-block', width: '0.95em', height: '0.95em', 'margin-right': '0.3em', 'vertical-align': '-0.1em', background: `${svgUrl(svgDoc(472, 472, `<path fill="#FFE23C" fill-rule="evenodd" stroke="#E9BE00" stroke-width="18" stroke-linejoin="round" transform="translate(12 428) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/>`))} center/100% 100% no-repeat` }, '');
+/** 레몬: 팔레트 카드(색 고르기 견본)의 두 번째 포인트 막대 · 레몬 그림 */
 function lemon(model, o) {
     const { c, ui, fields } = o;
     const bar = tag('div', { height: '4px', width: '46%', 'border-radius': '2px', 'background-color': c.pop, margin: '0 0 12px' }, '');
-    const head = tag('div', { padding: '16px 16px 12px' }, bar + tag('div', { color: c.text, ...font(ui, 20, '650'), 'line-height': '1.4', 'overflow-wrap': 'anywhere' }, `🍋 ${F('title', fields.title || '')}`) + (pills(fields, c, ui) ? gap(8) + pills(fields, c, ui) : ''));
+    const head = tag('div', { padding: '16px 16px 12px' }, bar + tag('div', { color: c.text, ...font(ui, 20, '650'), 'line-height': '1.4', 'overflow-wrap': 'anywhere' }, `${LEMON_MARK}${F('title', fields.title || '')}`) + (pills(fields, c, ui) ? gap(8) + pills(fields, c, ui) : ''));
     const body = tag('div', { margin: '0 12px', 'border-radius': '8px', overflow: 'hidden' }, scroller(screenLog(model, o), o.height));
     return outer(sheet(head + body + gap(12) + info(fields, c, ui, '0 16px 12px') + foot(fields, c, ui, { 'border-top': `1px solid ${c.line}` }), c), c, ui);
 }
@@ -474,6 +476,7 @@ const ALL_CATEGORIES = [
     { id: 'event', label: '기념일' },
     { id: 'thing', label: '사물' },
     { id: 'genre', label: '장르' },
+    { id: 'react', label: '반응' },   // 1.0.9 누르면 반응하는 글꾸(봉투 열기 · 초대장 · 쪽 넘기기 · 통통 카드 — tools/mart/react-geulkku.mjs)
     { id: 'gallery', label: '갤러리' },
     { id: 'mine', label: '내 글꾸' },
 ];

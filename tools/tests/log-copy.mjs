@@ -263,7 +263,8 @@ await test('숨긴 글: 마크다운은 「(숨긴 글: …)」 · 서식 유지
 await test('분류: 칩 하나에 그 분류 모양만 · 할로윈은 1.0.1 에 글꾸 마트로(내 글꾸) · 내 글꾸는 「내 글꾸」 · 모든 프리셋에 분류', async () => {
     const { CATEGORIES, presetsIn, categoryOf } = await load('src/log-copy-presets.js');
     // 1.0.1(11-04): 틀이 있는 분류만 칩 — 내장 심플 30(기념일 7 · 사물 11 · 장르 12)이라 세 칩이 모두 서요
-    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'gallery', 'mine']);
+    // 1.0.9: 반응 글꾸 4종(봉투 열기 · 초대장 · 쪽 넘기기 · 통통 카드)이 「반응」 칩으로
+    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'react', 'gallery', 'mine']);
     for (const p of PRESETS) assert.ok(CATEGORIES.some(c => c.id === p.category && c.id !== 'mine'), `${p.id} 분류`);
     assert.deepEqual(presetsIn('halloween'), [], '할로윈 13종은 테마 기본에서 빠졌어요(글꾸 마트 → 내 글꾸)');
     for (const c of CATEGORIES) assert.ok(!presetsIn(c.id, []).some(id => id.startsWith('halloween')), `${c.label} 에는 할로윈 없음`);
@@ -291,7 +292,7 @@ await test('할로윈 31종(1.0.1 글꾸 마트 · 10월 31일 · 틈 템플릿�
     const hw = CONCEPT_FRAMES.map(f => ({ id: f.id, own: f.colors }));
     assert.equal(hw.length, 31, '할로윈 31종(10월 31일)');
     assert.equal(new Set(hw.map(f => f.id)).size, 31, '할로윈 id 겹침 없음');
-    assert.ok(PRESETS.filter(p => !['event', 'thing', 'genre'].includes(p.category)).every(p => !p.own), '컨셉 분류 밖은 전용 색 없음');
+    assert.ok(PRESETS.filter(p => !['event', 'thing', 'genre', 'react'].includes(p.category)).every(p => !p.own), '컨셉 분류(+ 1.0.9 반응) 밖은 전용 색 없음');
     assert.ok(PRESETS.filter(p => p.own).every(p => p.template), '전용 색 틀은 내장 심플 글꾸(틈 템플릿)뿐');
     const L = (hex) => { const n = hex.replace('#', ''); const v = [0, 2, 4].map(i => Number.parseInt(n.slice(i, i + 2), 16) / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
     const ratio = (a, b) => { const [h, l] = [L(a), L(b)].sort((x, y) => y - x); return (h + 0.05) / (l + 0.05); };
@@ -440,6 +441,16 @@ await test('붙인 곳 네 조건(어두운 바탕 + 흰 글자 · 밝은 바탕
     }
 });
 
+await test('1.0.9 「레몬」 틀 제목 앞은 🍋 이모지가 아니라 테마 레몬 그림(fa-lemon 윤곽 svg) — 소독을 지나도 남아요', async () => {
+    const { safeCss } = await load('src/log-copy-sanitize.js');
+    const html = renderLog(model, { shape: 'lemon', colors: night, ui, fields });
+    assert.ok(!html.includes('🍋'), '이모지 없음');
+    const style = html.match(/<span style="([^"]*FFE23C[^"]*)"><\/span>/i)?.[1];
+    assert.ok(style, '레몬 그림 칸');
+    assert.ok(html.indexOf(style) < html.indexOf('Seraphina'), '제목 앞에 와요');
+    assert.match(style, /url\('data:image\/svg\+xml,/);
+    assert.equal(safeCss(style), style, '붙여 넣기 소독에서 그대로');
+});
 console.log(`log-copy: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);
 

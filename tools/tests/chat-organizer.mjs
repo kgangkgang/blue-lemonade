@@ -353,6 +353,28 @@ await test('폴더에 든 채팅 파일이 밖에서 이름이 바뀌어 있으�
     current = 'Ann now'; ctx.characterId = 0;
     delete s.chats.k9; s.folders = s.folders.filter(f => f.id !== 'fx'); org._forTest.render();
 });
+await test('1.0.9 열기 전 확인에서 서버가 답하지 못하면: 「파일 없음 · 목록에서 빼기」 안내 대신 연결 안내 · 열지 않음 · 이름 그대로', async () => {
+    const s = settings.chatOrganizer;
+    s.folders.push({ id: 'fy', name: '보관2', parent: '', open: true });
+    s.chats.k8 = { k: 'c', o: 'ann.png', f: 'Ann beach', i: 'i-beach', in: 'fy' };
+    org._forTest.render();
+    click(tabBtn('folders')); await settle();
+    await dom.clock.advance(70_000);
+    const real = globalThis.fetch, warned = [], toastr = globalThis.toastr, opened0 = opened.length;
+    globalThis.fetch = async (input, init) => input === '/api/characters/chats' ? { ok: false, json: async () => ({}) } : real(input, init);
+    globalThis.toastr = { ...(toastr || {}), warning: m => warned.push(m), info: () => ({}) };
+    try {
+        current = 'Bob shop';
+        click(rowEl('Ann beach').querySelector('[data-co-act="open"]')); await settle();
+        assert.equal(opened.length, opened0, '열지 않음');
+        assert.equal(warned.length, 1); assert.match(warned[0], /서버에서 받지 못했어요/); assert.doesNotMatch(warned[0], /목록에서 빼/);
+        assert.equal(s.chats.k8.f, 'Ann beach');
+    } finally {
+        globalThis.fetch = real; globalThis.toastr = toastr;
+        current = 'Ann now'; ctx.characterId = 0;
+        delete s.chats.k8; s.folders = s.folders.filter(f => f.id !== 'fy'); org._forTest.render();
+    }
+});
 await test('더 불러오기: 50개를 넘으면 단추 · 누르면 100개로 다시 받음', async () => {
     const extra = Array.from({ length: 60 }, (_, i) => ({ file_name: `More ${i}.jsonl`, avatar: 'bob.png', chat_items: 1, mes: '', last_mes: now - 86_400_000 * 10 - i }));
     serverRows = [...serverRows, ...extra];

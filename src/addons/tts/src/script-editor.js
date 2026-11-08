@@ -110,8 +110,10 @@ async function openEditor(mesId, { soundId } = {}) {
     function valueControl(row, key, control, numeric = false) {
         control.value = row[key]; let before = null;
         control.addEventListener('focus', () => { before = copy(rows); });
-        control.addEventListener('input', () => { if (busy) return; row[key] = numeric ? Number(control.value) : control.value; updateControls(); });
-        control.addEventListener('change', () => { if (busy) return; const previous = before || copy(rows); row[key] = numeric ? Number(control.value) : control.value; snapshot(previous); before = copy(rows); });
+        // 1.0.9 숫자 칸을 비우면 '' 그대로(저장할 때 기본값) — 전엔 Number('') = 0 이라 음량 0 · 쉼 0 이 됐어요
+        const read = () => numeric ? (String(control.value).trim() === '' ? '' : Number(control.value)) : control.value;
+        control.addEventListener('input', () => { if (busy) return; row[key] = read(); updateControls(); });
+        control.addEventListener('change', () => { if (busy) return; const previous = before || copy(rows); row[key] = read(); snapshot(previous); before = copy(rows); });
         return control;
     }
     function input(row, key, type = 'text', min, max) { const control = element('input'); control.type = type; if (min != null) control.min = String(min); if (max != null) control.max = String(max); return valueControl(row, key, control, type === 'number'); }

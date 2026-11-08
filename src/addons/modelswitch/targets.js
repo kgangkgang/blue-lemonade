@@ -271,14 +271,14 @@ function candidateKeys() {
 }
 
 // 파일마다 5초 — 느린 서버(폰)에서 한 파일이 멈춰도 찾기 전체가 멈추지 않게. 크기를 먼저 보고 남은 한도보다 크면 받지 않는다
-async function fetchText(url, budget = Infinity) {
+async function fetchText(url, budget = Infinity, job = null) {
     try {
         const response = await fetch(url, { cache: 'no-cache', signal: AbortSignal.timeout(5000) });
-        if (!response.ok) return null;
+        if (!response.ok) { if (job && response.status >= 500) job.missed = true; return null; }
         const size = Number(response.headers.get('content-length'));
         if (size > budget) { response.body?.cancel?.().catch(() => {}); return null; }
         return await response.text();
-    } catch { return null; }
+    } catch { if (job) job.missed = true; return null; }   // 1.0.9 시간 넘김 · 통신 오류만 「못 읽음」(없는 파일 404 · 큰 파일은 다시 해도 같아요)
 }
 
 /** 주인 찾기를 (필요하면) 시작한다. 끝나면 대상 목록이 바뀌었다고 알린다. */
@@ -287,12 +287,13 @@ export function discoverTargets() {
     const folders = extensionNames.filter(name => name.startsWith('third-party/')).map(name => name.slice(12))
         .filter(folder => enabled(folder) && folder !== THEME_FOLDER && !KNOWN_FOLDERS.has(folderBase(folder)));   // 6.4.2 판 번호 붙은 아는 확장도 자동 찾기에서 뺀다
     const sig = `${folders.join('|')}#${keys.join('|')}`;
-    if (scan?.sig === sig) return scan.promise;
+    // 1.0.9 한 확장이라도 못 읽었으면(5초 넘김 · 통신 오류) 1분 뒤 다음 부름에서 다시 찾아요 — 전엔 새로고침 전까지 그 확장이 목록에서 빠진 채였어요
+    if (scan?.sig === sig && !(scan.retryAt && Date.now() >= scan.retryAt)) return scan.promise;
     const job = { sig, done: !keys.length || !folders.length, owners: new Map(), made: new Map() };
     scan = job;
     job.promise = job.done ? Promise.resolve() : (async () => {
         const read = await Promise.all(folders.map(async folder => {
-            const got = await crawl(`/scripts/extensions/third-party/${encodeURIComponent(folder)}/`, fetchText).catch(() => null);
+            const got = await crawl(`/scripts/extensions/third-party/${encodeURIComponent(folder)}/`, (url, budget) => fetchText(url, budget, job)).catch(() => null);
             return got && { folder, name: String(got.manifest?.display_name || folder), texts: got.texts, refs: settingsRefs(got.texts) };
         }));
         const extensions = read.filter(Boolean);
@@ -303,6 +304,7 @@ export function discoverTargets() {
         // 주인이 아닌 확장의 소스는 들고 있지 않는다
         for (const ext of extensions) ext.texts = null;
         job.done = true;
+        if (job.missed) job.retryAt = Date.now() + 60000;
         if (scan === job) window.dispatchEvent(new Event('bl:model-switch-targets'));
     })();
     return job.promise;

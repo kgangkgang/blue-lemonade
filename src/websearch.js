@@ -196,6 +196,8 @@ function decorate(id, el = mesElement(id)) {
 function decorateAll() {
     const chat = ctx()?.chat;
     if (!Array.isArray(chat)) return;
+    // 1.0.9 표시도 대상도 없으면 건너뜀
+    if (!document.getElementById('chat')?.getElementsByClassName(GLOBE_CLASS).length && !chat.some(m => m?.extra?.[WEBSEARCH_KEY] === true)) return;
     for (const el of document.querySelectorAll('#chat .mes[mesid]')) {
         const id = Number(el.getAttribute('mesid'));
         if (chat[id]?.extra?.[WEBSEARCH_KEY] === true) decorate(id, el);

@@ -215,7 +215,8 @@ export function createChatSync(env) {
             const mine = ctx().chatMetadata?.integrity, server = (await stat(target, { metadata: true })).integrity;
             if (mine && server && mine !== server) { st.passKey = target.key; return 'save'; }
         } catch { /* 못 보면 우리가 묻는다 */ }
-        st.asking ??= Promise.resolve().then(() => env.ask()).catch(() => 'later').finally(() => { st.asking = null; });
+        // 1.0.9 묻기 실패 → 순정처럼 저장(미루면 새 메시지를 잃어요)
+        st.asking ??= Promise.resolve().then(() => env.ask()).catch(error => { console.warn('[Blue Lemonade] 다른 기기 변경 묻기 실패 — 그대로 저장해요', error); return 'save'; }).finally(() => { st.asking = null; });
         const answer = await st.asking;
         if (answer === 'save') { st.passKey = target.key; return 'save'; }
         if (answer === 'reload') { void reloadNow(); return 'skip'; }

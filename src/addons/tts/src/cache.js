@@ -396,7 +396,7 @@ export async function remove(key) {
 export async function clear() {
     for (const fn of clearSubs) { try { fn(); } catch { /* 구독자 오류는 무시 */ } }
     const ok = await tx('readwrite', (st) => { st.clear(); });
-    est = { count: 0, bytes: 0 };
+    est = ok ? { count: 0, bytes: 0 } : null;   // 1.0.9 못 지웠으면 「0개」로 적지 않고 다음에 다시 재요
     return !!ok;
 }
 /** 비우기 알림 받기 → 떼는 함수 */

@@ -5151,12 +5151,16 @@ function buildParamsUI() {
     html+=`<button class="pt-ui-button" id="pt-params-reset" >기본값으로 재설정</button>`;
     wrap.innerHTML=html;
     wrap.querySelectorAll('.pt-param-slider,.pt-param-num').forEach(el=>{
+        // 1.0.9 숫자 칸을 비우면 NaN 이 저장돼 요청에 null 로 나갔어요 — 숫자가 아니면 저장하지 않고, 범위 밖은 끝값으로(칸은 다 친 뒤 change 때 맞춤)
+        const read=()=>{const k=el.dataset.pkey, r=PARAM_RANGES[k]||{min:0,max:1}, v=parseFloat(el.value); return Number.isFinite(v)?{k,v:Math.min(r.max,Math.max(r.min,v))}:null;};
         el.addEventListener('input',()=>{
-            const k=el.dataset.pkey, v=parseFloat(el.value), {params}=getCurrentParams();
+            const got=read(); if(!got) return;
+            const {k,v}=got, {params}=getCurrentParams();
             params[k]=v;
             wrap.querySelectorAll(`[data-pkey="${k}"]`).forEach(o=>{if(o!==el)o.value=v;});
             saveSettingsDebounced();
         });
+        el.addEventListener('change',()=>{const k=el.dataset.pkey, v=getCurrentParams().params[k]; if(Number.isFinite(v)&&String(v)!==el.value) el.value=v;});
     });
     document.getElementById('pt-params-reset')?.addEventListener('click',()=>{
         const {provider}=getCurrentParams(); cfg().parameters[provider]={...DEFAULT_PARAMS[provider]}; saveSettingsDebounced(); buildParamsUI();

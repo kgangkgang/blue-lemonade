@@ -134,4 +134,25 @@ await test('저장 공간 창: 겹쳐 열어도 한 번 재고 제목 · 누름 
     await assert.rejects(f.run()); assert.equal(f.scans, 2); assert.equal(f.holds, 1);
 });
 
+await test('1.0.9 console.error 감싸기: 원래 함수로 이어 부름 · 남이 감싼 위에 사슬 · 같은 주인 표시면 다시 안 감쌈 · 기록이 실패해도 원래 함수는 불림', async () => {
+    const { installErrorRing } = await import(url('src/addons/perf/storage/errors.js'));
+    const WRAP = Symbol.for('blue-lemonade.console-error.wrap');
+    const seen = [];
+    const base = function (...a) { seen.push(['base', this?.tag, ...a]); };
+    const other = function (...a) { seen.push(['other', ...a]); return base.apply(this, a); }; other[WRAP] = 'other-ext';
+    const g = { console: { tag: 'c', error: other }, addEventListener() {} };
+    const ring = installErrorRing(g);
+    assert.notEqual(g.console.error, other); assert.equal(g.console.error[WRAP], 'blue-lemonade');
+    g.console.error('하나', Error('둘'));
+    assert.deepEqual(seen.map(x => x[0]), ['other', 'base']); assert.equal(seen[1][1], 'c', 'this 를 그대로 넘김');
+    assert.equal(ring.list().length, 1); assert.match(ring.list()[0].text, /하나 Error: 둘/);
+    // 같은 주인이 이미 감싼 console 이면(다른 전역에서 한 번 더) 다시 감싸지 않아요
+    const mine = g.console.error, h = { console: { error: mine }, addEventListener() {} };
+    installErrorRing(h); assert.equal(h.console.error, mine);
+    // 기록할 값이 글로 안 풀려도 원래 함수는 불려요
+    seen.length = 0;
+    const bad = { get message() { throw Error('x'); } };
+    g.console.error(bad); assert.equal(seen.at(-1)[0], 'base');
+});
+
 console.log(`perf storage: ${passed} passed`);

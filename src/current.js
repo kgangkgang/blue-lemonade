@@ -30,7 +30,10 @@ function schedule() {
     });
 }
 
+let started = false;
 export function startCurrentMark() {
+    if (started) return;
+    started = true;
     const { eventSource, event_types } = SillyTavern.getContext();
     eventSource.on(event_types.CHAT_CHANGED, schedule);
     if (event_types.GROUP_UPDATED) eventSource.on(event_types.GROUP_UPDATED, schedule);

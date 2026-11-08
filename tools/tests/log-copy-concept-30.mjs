@@ -80,16 +80,16 @@ await test('30종이 마트 도구에 다 있어요: 분류 기념일 7 · 사�
     for (const t of BUILTIN_TEMPLATES) {
         const preset = PRESETS.find(p => p.id === t.id);
         assert.ok(preset.own === t.id && OWN_COLORS[t.id]?.bg && preset.emoji && preset.label, `${t.id}: 내장 심플 글꾸 · 전용 색`);
-        assert.equal(movedShape(t.was), t.id, `${t.was} → ${t.id}`);
+        if (t.category !== 'react') assert.equal(movedShape(t.was), t.id, `${t.was} → ${t.id}`);   // 1.0.9 반응 글꾸 4종은 옮겨 온 옛 id 가 없어요
         const html = themeRender(model, { shape: t.id, colors: null, ui, fields, screen: nightT });
         for (const text of ['어서 와요, 숲의 손님.', 'Seraphina', '#세라피나 #숲', '숲속 오두막에서']) assert.ok(html.includes(text), `${t.id}: 「${text}」`);
     }
     // 11-04 내장 심플 30: 옛 내장 컨셉 30 은 빠짐없이 같은 주제 · 같은 차례의 심플 틀(concept-sp-<원본 열쇠>)로 옮겨져요 · 기본 틀 id 는 그대로
     assert.deepEqual(IDS.map(movedShape), IDS.map(id => id.replace(/^concept-/, 'concept-sp-')));
-    assert.deepEqual(BUILTIN_TEMPLATES.map(t => [t.label, t.category]), CONCEPT_FRAMES.map(f => [f.label, f.category]), '내장 심플 30 은 옛 내장 30 과 같은 차례 · 이름 · 분류');
+    assert.deepEqual(BUILTIN_TEMPLATES.filter(t => t.category !== 'react').map(t => [t.label, t.category]), CONCEPT_FRAMES.map(f => [f.label, f.category]), '내장 심플 30 은 옛 내장 30 과 같은 차례 · 이름 · 분류');
     for (const id of ['card', 'plain', 'concept-nope']) assert.equal(movedShape(id), id);
     // 분류 칩은 틀이 있는 것만 — 내장 심플 30 으로 기념일 · 사물 · 장르가 모두 서요
-    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'gallery', 'mine']);
+    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'react', 'gallery', 'mine']);   // 1.0.9 반응 글꾸 칩
     // 즐겨찾기 · 최근에 남은 옛 id 도 시트가 처음 열릴 때 같은 길로 옮겨요(시작 그래프 밖 — settings.js 는 모양 표를 몰라요)
     assert.match(read('src/log-copy-sheet.js'), /s\.fav = moved\(s\.fav\)/);
     // 1.0.1 2단계: 할로윈 13종은 PRESETS 에서 빠지고 글꾸 마트(tools/mart)로 — 받으면 「내 글꾸」 틈 템플릿

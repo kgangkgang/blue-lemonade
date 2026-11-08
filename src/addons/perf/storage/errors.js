@@ -2,6 +2,7 @@
 // 글은 이 페이지 메모리에만 30개(가린 글은 보일 때 · 복사할 때 다시 가린다). 어디로도 보내지 않고, 네트워크는 보지 않는다. 두 번 걸리지 않게 전역 한 벌.
 import { ERRORS_KEY, createErrorRing, errorSource } from './core.js';
 
+const WRAP = Symbol.for('blue-lemonade.console-error.wrap'), WRAP_OWNER = 'blue-lemonade';
 const textOf = v => {
     try {
         if (v instanceof Error) return `${v.name}: ${v.message}\n${String(v.stack || '').split('\n').slice(1, 4).join('\n')}`;
@@ -25,9 +26,12 @@ export function installErrorRing(g = globalThis) {
     try {
         g.addEventListener?.('error', e => add('오류', [e.error || e.message || '오류', e.filename ? `@ ${e.filename}:${e.lineno}` : '']));
         g.addEventListener?.('unhandledrejection', e => add('거부', [e.reason ?? '처리 안 된 거부']));
+        // 1.0.9 사슬 감싸기 · 내가 감싼 것은 다시 안 감쌈
         const original = g.console?.error;
-        if (typeof original === 'function') {
-            g.console.error = function (...args) { add('console', args); return original.apply(this, args); };
+        if (typeof original === 'function' && original[WRAP] !== WRAP_OWNER) {
+            const wrapped = function (...args) { add('console', args); return original.apply(this, args); };
+            wrapped[WRAP] = WRAP_OWNER;
+            g.console.error = wrapped;
         }
     } catch { /* 듣기를 못 걸면 고리는 빈 채로 */ }
     return api;

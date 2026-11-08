@@ -360,7 +360,7 @@ export function startCompactLayout() {
     // 8.2.3 (폰에서 QR 즐겨찾기 줄을 옆으로 넘기다 대사가 다시 생성되던 것) 가드를 #send_form 에서 body 로 올리고 줄을 넓힌다:
     //   QR 줄이 #send_form 밖에 있는 판 · 팝아웃(#qr--popout)과, 캐릭터 즐겨찾기 줄 · 탭 줄([data-bl-fade]) · 글꼴 묶음 줄 · QR 미리보기 줄처럼 가로로 넘치는 줄 전부.
     //   QR 줄은 예전처럼 touchstart 부터 막고, 다른 줄은 7.0.2 와 같이 touchstart 는 올리고(바깥 누르면 서랍 닫기) touchmove · touchend 만 막는다 — 스크롤은 브라우저 몫이라 그대로.
-    //   리그(폰 384px · 빠른 끌기 150px)에서 QR 줄 · 입력창 위 자리 모두 스와이프 0회였고 마지막 메시지 위 끌기는 swiped-left → .swipe_right 클릭이 났다(계측 검증, 10-29).
+    //   리그(폰 384px · 빠른 끌기)에서 QR 줄 · 입력창 위 스와이프 0회 확인(10-29).
     document.body.addEventListener('touchstart', event => { stripGesture = !!swipeStripOf(event.target); if (stripGesture && event.target.closest?.('#qr--bar')) event.stopPropagation(); }, { passive: true });
     for (const type of ['touchmove', 'touchend', 'touchcancel']) document.body.addEventListener(type, event => { if (stripGesture) event.stopPropagation(); if (type !== 'touchmove') stripGesture = false; }, { passive: true });
     // 7.0.2 채팅 속 넓은 표 · 코드 · 상태창(칸 안 가로 스크롤)을 손가락으로 가로로 밀어도 같은 손짓이 걸려 마지막 답이 넘어가거나 새 답이 생성됐다.
@@ -427,14 +427,14 @@ export function startCompactLayout() {
     startFavoritesHeading();
     refreshWorld();
     if (world) new MutationObserver(refreshWorld).observe(world, { childList: true, subtree: true });
-    document.addEventListener('click', event => {
-        for (const menu of document.querySelectorAll('.bl-wi-actions[open]')) {
+    if (world) document.addEventListener('click', event => {
+        for (const menu of world.querySelectorAll('.bl-wi-actions[open]')) {
             if (!menu.contains(event.target)) menu.open = false;
         }
     });
-    document.addEventListener('keydown', event => {
+    if (world) document.addEventListener('keydown', event => {
         if (event.key !== 'Escape') return;
-        for (const menu of document.querySelectorAll('.bl-wi-actions[open]')) {
+        for (const menu of world.querySelectorAll('.bl-wi-actions[open]')) {
             menu.open = false;
             menu.querySelector('summary').focus();
         }

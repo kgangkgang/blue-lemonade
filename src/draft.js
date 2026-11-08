@@ -62,7 +62,10 @@ function write(id, text) {
         let t = text;
         if (t.length > MAX) { t = t.slice(0, MAX); if (/[\uD800-\uDBFF]$/.test(t)) t = t.slice(0, -1); }   // 이모지 반쪽은 떼고
         all[id] = text.length > MAX ? { t, at: Date.now(), cut: true } : { t, at: Date.now() };
-    } else delete all[id];
+    } else {
+        if (!(id in all)) return;   // 1.0.9 지울 것 없으면 안 씀
+        delete all[id];
+    }
     save();
 }
 
@@ -177,9 +180,12 @@ function onCharacterRenamed(oldAvatar, newAvatar) {
     if (currentId?.startsWith(from)) currentId = to + currentId.slice(from.length);
 }
 
+let started = false;
 export function startDraftKeep() {
+    if (started) return;
     const el = box();
     if (!el) return;
+    started = true;
     const { eventSource, event_types } = SillyTavern.getContext();
     currentId = chatKey();
 

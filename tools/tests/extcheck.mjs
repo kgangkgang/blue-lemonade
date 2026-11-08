@@ -139,6 +139,41 @@ await test('같은 단축키 — 걸림(Ctrl+Shift+K 두 꼴) / 안 걸림(Esc �
     const d = ext('d', { 'i.js': "if (e.ctrlKey && e.shiftKey && e.key === 'k') go();" });
     assert.ok(!has(run([a, c]), /단축키/)); assert.ok(!has(run([a, d]), /단축키/));
 });
+await test('1.0.9 공용 모듈 · 사슬 · 칸 안 단축키 — 참고로 낮춤 / 그대로 위험 · 주의', () => {
+    // 같은 id 를 「있으면 건너뜀」으로 넣는 공용 모듈 사본들 → 참고, 한쪽이라도 그냥 넣으면 그대로 위험
+    const mod = folder => ext(folder, { 'tab-scroll.js': "if (!doc.getElementById('bl-tab-scroll-style')) {\n  const link = doc.createElement('link');\n  link.id = 'bl-tab-scroll-style';\n}" });
+    const plain = ext('plain', { 'i.js': "const el = document.createElement('style');\nel.id = 'bl-tab-scroll-style';" });
+    assert.equal(has(run([mod('a'), mod('b'), mod('c')]), /id #bl-tab-scroll-style/).level, 'info');
+    assert.equal(has(run([mod('a'), plain]), /id #bl-tab-scroll-style/).level, 'danger');
+    // 여러 선택자로 찾는 꼴(`link[data-bl-tab-scroll], #id`)도 「있으면 건너뜀」 — 이름 앞부분만 같은 다른 id 는 아님
+    const multi = ext('multi', { 'tab-scroll.js': "if (!doc.querySelector('link[data-bl-tab-scroll], #bl-tab-scroll-style')) {\n  const link = doc.createElement('link');\n  link.id = 'bl-tab-scroll-style';\n}" });
+    assert.equal(has(run([mod('a'), multi]), /id #bl-tab-scroll-style/).level, 'info');
+    // 남의 칸 · 지역 이름 history 는 브라우저 history 덮어쓰기가 아님 · 진짜 덮어쓰기는 그대로
+    assert.deepEqual(scanJs("store.history.length = Math.min(store.history.length, 9);").filter(s => s.k === 'patch'), []);
+    assert.deepEqual(scanJs("let history = [];\nhistory.length = 0;").filter(s => s.k === 'patch'), []);
+    assert.deepEqual(scanJs("history.pushState = function () {};").filter(s => s.k === 'patch').map(s => s.key), ['history.pushState']);
+    // SVG 정의 id 끼리는 참고, 보통 요소 id 와 섞이면 그대로
+    const svgA = ext('svga', { 'i.js': 'const a = `<svg xmlns="http://www.w3.org/2000/svg"><defs><filter id="s"></filter></defs></svg>`;' });
+    const svgB = ext('svgb', { 'i.js': 'const b = `<svg><linearGradient id="s"></linearGradient></svg>`;' });
+    const divS = ext('divs', { 'i.js': 'const c = `<div id="s"></div>`;' });
+    assert.equal(has(run([svgA, svgB]), /id #s\b/).level, 'info');
+    assert.notEqual(has(run([svgA, divS]), /id #s\b/).level, 'info');
+    const near = ext('near', { 'i.js': "if (!document.querySelector('#bl-tab-scroll-style-old')) {\n  el.id = 'bl-tab-scroll-style';\n}" });
+    assert.equal(has(run([mod('a'), near]), /id #bl-tab-scroll-style/).level, 'danger');
+    // g.console?.error 를 받아 두고 이어 부르면 「이어 부름」
+    const ring = folder => ext(folder, { 'errors.js': "const original = g.console?.error;\nif (typeof original === 'function') g.console.error = function (...a) { return original.apply(this, a); };" });
+    const swap = ext('swap', { 'i.js': "console.error = () => {};" });
+    assert.equal(has(run([ring('r1'), ring('r2')]), /console\.error/).level, 'info');
+    assert.equal(has(run([ring('r1'), swap]), /console\.error/).level, 'warn');
+    // ctrlKey || metaKey 는 Ctrl+Enter · Meta+Enter 두 조합(「Ctrl+Meta+Enter」 아님) · 칸에 건 keydown 은 참고
+    const box = ext('box', { 'i.js': "editor.addEventListener('keydown', (event) => {\n  if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) save();\n});" });
+    const glob = ext('glob', { 'i.js': "document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.ctrlKey) send(); });" });
+    const glob2 = ext('glob2', { 'i.js': "window.addEventListener('keydown', e => { if (e.ctrlKey && e.key === 'Enter') go(); });" });
+    assert.ok(!has(run([box, glob]), /Ctrl\+Meta/));
+    assert.equal(has(run([box, glob]), /단축키 Ctrl\+Enter/).level, 'info');
+    assert.equal(has(run([glob, glob2]), /단축키 Ctrl\+Enter/).level, 'warn');
+    assert.deepEqual(scanJs("editor.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) x(); });").filter(s => s.k === 'hotkey').map(s => [s.key, s.how]), [['Ctrl+Enter', 'element'], ['Meta+Enter', 'element']]);
+});
 await test('같은 선택자 !important — 주의(값 다름) / 오탐 표(같은 값) / 안 걸림(다른 속성 · !important 없음)', () => {
     const a = ext('a', { 's.css': '/* x */\n#send_form { background: red !important; color: red; }\n@media (max-width: 600px) { .mes  >  .x, #y { width: 1px !important } }' });
     const b = ext('b', { 's.css': '#send_form{background:blue!important}\n.mes>.x{width:1px !important}' });

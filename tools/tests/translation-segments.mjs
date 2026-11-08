@@ -116,7 +116,7 @@ assert.ok(/translation = await translate\(originalText,[^\n]*\n[^\n]*\} finally 
 assert.ok(/retranslation = dropStrayWords\(retranslation, originalText\);[^\n]*\n[\s\S]{0,600}storeTranslationQuietly\(originalText, retranslation, report\)/.test(idx),'다시 번역도 캐시에 넣기 전에 걷고 요청의 채팅 범위를 함께 전달');
 assert.ok(/if \(cachedTranslation && !editedByHand\) translation = tidyGlossaryOutput\(originalText, dropStrayWords\(translation, originalText\)\);/.test(idx),'캐시에서 온 옛 번역도 (손으로 고친 것 빼고) · 6.4.0 용어집 이름까지');
 assert.ok(/extra\.translation_edited === extra\.original_text_hash \? shown : tidyGlossaryOutput\(original, dropStrayWords\(shown, original\)\)/.test(idx),'보여 줄 때 고치기 — 손으로 고친 번역은 그대로 · 6.4.0 용어집 이름까지');
-assert.ok(/addTranslationToDB\(originalTextForDbKey, newText\);\n[\t ]*message\.extra\.translation_edited = originalHashOf\(originalTextForDbKey\);/.test(idx),'손으로 고치면 표시');
+assert.ok(/addTranslationToDB\(originalTextForDbKey, newText\)(?:\.catch\([^\n]*\))?;\n[\t ]*message\.extra\.translation_edited = originalHashOf\(originalTextForDbKey\);/.test(idx),'손으로 고치면 표시');
 assert.ok(/translation_edited === originalHashOf\(originalText\) \? cached : tidyGlossaryOutput\(originalText, dropStrayWords\(cached, originalText\)\)/.test(idx),'교정 · 수정 창에 들어가는 캐시 번역도 · 6.4.0 용어집 이름까지');
 assert.ok(/return dropStrayWords\(translatedText, textToTranslate\);/.test(idx),'/llmTranslate (북마크 번역)');
 assert.ok(/processTranslationText\(originalTextForDbKey, newText\)/.test(idx),'손으로 고친 글은 그대로 보인다');

@@ -1,6 +1,7 @@
 // Horizontal navigation only. Callers explicitly register strips, never option grids.
 import { watchWith } from './dom-watch.js';
 const KEY = Symbol.for('blue-lemonade.tab-scroll.v1');
+const OWNER = 'blue-lemonade';
 const ACTIVE = '[aria-selected="true"], [aria-pressed="true"], .active, .on, .is-active, .ui-tabs-active';
 
 export function revealTab(bar, tab) {
@@ -30,14 +31,16 @@ export function applyFade(bar) {
 
 export function installTabScroll(selectors, doc = globalThis.document) {
     if (!doc?.documentElement || !selectors?.length) return;
-    // 기능 창만 열어도 같은 흐림 규칙을 쓰도록 문서마다 한 번만 연결해요.
-    if (!doc.getElementById('bl-tab-scroll-style')) {
+    // 1.0.9 공용 약속 v1: 등록부가 있으면 줄만 더함
+    if (doc[KEY]) { doc[KEY].add(selectors); return; }
+    // 링크는 문서마다 하나(먼저 넣은 쪽 것을 같이 씀 · id 또는 data 표시)
+    if (!doc.getElementById('bl-tab-scroll-style') && !doc.querySelector('link[data-bl-tab-scroll]')) {
         const link = doc.createElement('link');
         link.id = 'bl-tab-scroll-style'; link.rel = 'stylesheet';
+        link.dataset.blTabScroll = 'v1'; link.dataset.blOwner = OWNER; link.dataset.blVer = '1';
         link.href = new URL('./tab-scroll.css', import.meta.url).href;
         (doc.head || doc.documentElement).append(link);
     }
-    if (doc[KEY]) { doc[KEY].add(selectors); return; }
     const win = doc.defaultView, names = new Set(), states = new Map();
     let selector = '', frame = 0;
     const pending = new Set();
@@ -111,7 +114,7 @@ export function installTabScroll(selectors, doc = globalThis.document) {
             states.delete(bar); pending.delete(bar);
         }
     };
-    const api = { add(list) {
+    const api = { owner: OWNER, ver: 1, add(list) {
         const fresh = list.filter(s => !names.has(s));
         if (!fresh.length) return;
         fresh.forEach(s => names.add(s)); selector = [...names].join(',');

@@ -94,7 +94,8 @@ async function readRange(from, to) {
 // ── 가격 (BL 가격표 — 처음 물을 때 읽는다. 큰 표라 시작 때 읽지 않는다) ──
 async function pricingModules() {
     if (!pricing) pricing = Promise.all([import('./addons/perf/pricing-live.js'), import('./addons/perf/pricing-sync.js'), import('./addons/perf/pricing-providers.js')])
-        .then(([live, sync, providers]) => { try { sync.loadPriceCache(); } catch { /* 저장된 표 없음 — 함께 실린 표 */ } return { live, providers }; });
+        .then(([live, sync, providers]) => { try { sync.loadPriceCache(); } catch { /* 저장된 표 없음 — 함께 실린 표 */ } return { live, providers }; })
+        .catch(error => { pricing = null; throw error; });
     return pricing;
 }
 function lookupWith({ live, providers }) {
@@ -109,7 +110,7 @@ function lookupWith({ live, providers }) {
         if (snap.format === 'anthropic') rates = { input: row[0], output: row[1], cacheRead: row[2] };
         else if (snap.format === 'openai') rates = { input: row.standard?.[0], output: row.standard?.[3], cacheRead: row.standard?.[1] ?? undefined };
         else {
-            if (row.expires && at > Date.parse(row.expires)) return null;   // 기간이 끝난 할인 단가는 쓰지 않는다 (날짜별 표가 대신)
+            if (row.expires && at > Date.parse(row.expires)) return null;   // 끝난 할인 단가는 안 씀(1.0.9 가격표 못 읽으면 다음에 다시)
             rates = { ...row.rates };
         }
         if (!Number.isFinite(rates.input) || !Number.isFinite(rates.output)) return null;

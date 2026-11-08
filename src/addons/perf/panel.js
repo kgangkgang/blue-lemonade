@@ -718,6 +718,11 @@ async function loadMore(state) {
         const more = (await listEntries({ limit: PAGE + ties, before: last ? last.at : null, inclusive: true })).filter(entry => !seen.has(entry.id));
         state.entries = mergeEntries(state.entries, more);
         state.exhausted = more.length < PAGE;
+    } catch (error) {
+        // 1.0.9 못 읽으면(IndexedDB 오류) 처리 안 된 거부로 콘솔에 남기지 않고 알려요 — 다시 누르면 다시 읽어요
+        console.warn('[Blue Lemonade] 요청 기록 더 읽기 실패', error);
+        globalThis.toastr?.warning?.('요청 기록을 더 읽지 못했어요. 잠시 뒤 다시 눌러 주세요.', 'Blue Lemonade');
+        return;
     } finally {
         state.loading = false;
     }

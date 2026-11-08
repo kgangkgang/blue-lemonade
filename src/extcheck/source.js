@@ -5,7 +5,9 @@
 import { profileOf, referencedFiles } from './core.js';
 import { SELF_ROWS } from './self.gen.js';
 
-export const LIMITS = Object.freeze({ files: 40, bytes: 2.5 * 1024 * 1024, file: 1.2 * 1024 * 1024, link: 3 * 1024 * 1024 });
+export const LIMITS = Object.freeze({ files: 40, bytes: 2.5 * 1024 * 1024, file: 1.2 * 1024 * 1024, link: 3 * 1024 * 1024,
+    // 1.0.9 설치된 확장(같은 서버에서 읽음 · 누를 때 한 번): 확장마다 파일 40개 상한에 걸려 큰 확장의 뒤쪽 파일을 못 보던 것(실측 9개 확장 중 4개 · 137개) → 넓혀요
+    local: Object.freeze({ files: 240, bytes: 10 * 1024 * 1024, file: 4 * 1024 * 1024 }) });
 const EXT_ROOT = new URL('../../../../', import.meta.url);          // /scripts/extensions/
 const THEME_ROOT = new URL('../../', import.meta.url);              // 이 테마 폴더
 /** 이 테마의 실리태번 이름('third-party/<폴더>') */
@@ -23,19 +25,19 @@ async function readText(url, max, signal) {
 /** manifest 의 js · css 에서 시작해 부르는 파일을 따라가요(폴더 안만 · 상한) */
 export async function collect(entry, get, { files = LIMITS.files, bytes = LIMITS.bytes } = {}) {
     const queue = [...new Set(entry.filter(Boolean).map(p => String(p).replace(/^\.?\//, '')))], seen = new Set(queue), out = [];
-    let used = 0, skipped = 0, missing = 0;
+    let used = 0, skipped = 0, missing = 0, big = 0;
     while (queue.length && out.length < files) {
         const path = queue.shift();
         let got;
         try { got = await get(path); } catch (error) { if (error?.name === 'AbortError') throw error; got = { text: null }; }
-        if (got.big) { skipped++; continue; }
+        if (got.big) { skipped++; big++; continue; }
         if (got.text == null) { missing++; continue; }
         if (used + got.text.length > bytes) { skipped++; continue; }
         used += got.text.length;
         out.push({ path, text: got.text });
         if (/\.m?js$/i.test(path)) for (const next of referencedFiles(got.text, path)) if (!seen.has(next)) { seen.add(next); queue.push(next); }
     }
-    return { files: out, used, skipped: skipped + queue.length, missing };
+    return { files: out, used, skipped: skipped + queue.length, big, missing };
 }
 function selfSignals() {
     return SELF_ROWS.map(([k, key, file, line, addon, how, chained]) => ({ k, key, file, line, addon, how: how || undefined, chained: !!chained }));
@@ -61,7 +63,7 @@ export async function readInstalled({ signal, onProgress = () => {} } = {}) {
     const names = [...(ext.extensionNames || [])].map(String), disabled = [...(ext.extension_settings?.disabledExtensions || [])].map(String);
     const third = names.filter(n => n.startsWith('third-party/'));
     const eventNames = eventNameMap(), texts = new Map(), profiles = [];
-    const stats = { extensions: third.length, files: 0, skipped: 0, bytes: 0 };
+    const stats = { extensions: third.length, files: 0, skipped: 0, big: 0, bytes: 0 };
     let done = 0;
     const one = async name => {
         const folder = name.slice(12), base = new URL(`${name.split('/').map(encodeURIComponent).join('/')}/`, EXT_ROOT);
@@ -70,11 +72,11 @@ export async function readInstalled({ signal, onProgress = () => {} } = {}) {
         if (!manifest) { try { manifest = JSON.parse((await readText(pathUrl(base, 'manifest.json'), 200000, signal)).text || 'null'); } catch (error) { if (error?.name === 'AbortError') throw error; } }
         manifest = manifest && typeof manifest === 'object' ? manifest : {};
         const self = name === OWN;
-        const get = path => readText(pathUrl(base, path), LIMITS.file, signal);
+        const get = path => readText(pathUrl(base, path), LIMITS.local.file, signal);
         // 자신: JS 는 신호표, CSS 는 style.css(+ 애드온 한 장)
         const entry = self ? [manifest.css || 'style.css', 'src/addons/style-addons.css'] : [manifest.js, manifest.css];
-        const got = await collect(entry, get);
-        stats.files += got.files.length; stats.skipped += got.skipped; stats.bytes += got.used;
+        const got = await collect(entry, get, LIMITS.local);
+        stats.files += got.files.length; stats.skipped += got.skipped; stats.big += got.big; stats.bytes += got.used;
         texts.set(folder, new Map(got.files.map(f => [f.path, f.text])));
         profiles.push(profileOf({ folder, manifest, files: got.files, enabled: !disabled.includes(name), self, signals: self ? selfSignals() : null, eventNames, name: self ? `블루레몬에이드 (이 테마)` : '' }));
         onProgress(++done, third.length, folder);

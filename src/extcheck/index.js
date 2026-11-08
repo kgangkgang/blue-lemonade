@@ -2,7 +2,7 @@
 //   누를 때만 받는 도구예요: 창을 열기 전에는 이 폴더의 모듈을 하나도 받지 않고 리스너 · 감시도 없어요(명령 이름만 index.js 가 걸어 둬요).
 //   창을 닫으면 읽어 온 파일 글 · 결과를 버려요. 바깥 요청은 「받아서 검사」(GitHub) · 「AI 검토 보내기」(지금 연결 · 고른 프로필)를 누를 때 한 번씩뿐이에요.
 import { compare, reportText, twinRows, LEVELS, aiRequest, parseAi, AI_VERDICTS, AI_LIMITS, parseGithubUrl, snippet, place } from './core.js';
-import { readInstalled, readGithub, linkPlan, sourceText, clientVersion, OWN } from './source.js';
+import { readInstalled, readGithub, linkPlan, sourceText, clientVersion, OWN, LIMITS } from './source.js';
 import { knownConflicts } from '../extension-folder.js';
 import { showThemeModal } from '../modal.js';
 import { getSettings, saveSettings } from '../settings.js';
@@ -99,9 +99,9 @@ export async function openExtCheck({ url = '' } = {}) {
             state.meta.st = await clientVersion();
             state.local = await readInstalled({ signal: controller.signal, onProgress: (n, all, folder) => status(`확장 ${all}개 중 ${n}개 읽었어요 · ${folder}`) });
             const st = state.local.stats;
-            state.meta = { ...state.meta, count: state.local.profiles.filter(p => p.enabled).length, files: st.files, skipped: st.skipped, link: '' };
+            state.meta = { ...state.meta, count: state.local.profiles.filter(p => p.enabled).length, files: st.files, skipped: st.skipped, big: st.big, link: '' };
             judge();
-            status(`켜진 확장 ${state.meta.count}개 · 파일 ${st.files}개(${(st.bytes / 1024 / 1024).toFixed(1)}MB)를 읽었어요${st.skipped ? ` · 상한을 넘은 큰 파일 ${st.skipped}개는 건너뛰었어요` : ''}.`);
+            status(`켜진 확장 ${state.meta.count}개 · 파일 ${st.files}개(${(st.bytes / 1024 / 1024).toFixed(1)}MB)를 읽었어요${st.skipped ? ` · 상한으로 못 읽은 파일 ${st.skipped}개(그중 ${Math.round(LIMITS.local.file / 1024 / 1024)}MB 넘는 큰 파일 ${st.big || 0}개)` : ''}.`);
         } catch (error) {
             if (error?.name !== 'AbortError') status(`검사하지 못했어요 — ${error?.message || error}`);
         } finally { busy(false); }

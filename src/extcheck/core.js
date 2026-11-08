@@ -130,7 +130,15 @@ export function scanJs(text, { eventNames = null } = {}) {
     }
     for (const re = /(?:^|[^\w$.])(?:\$|jQuery)\s*\.\s*fn\s*\.\s*([A-Za-z_$][\w$]*)\s*=(?!=)/g; (m = re.exec(code));) push('patch', `$.fn.${m[1]}`, m.index, { chained: chainedOriginal(code, [`$.fn.${m[1]}`, `jQuery.fn.${m[1]}`]) });
     for (const re = /(?:^|[^\w$.])(?:\$|jQuery)\s*\.\s*(ajax|ajaxSetup|get|post|getJSON)\s*=(?!=)/g; (m = re.exec(code));) push('patch', `$.${m[1]}`, m.index, { chained: chainedOriginal(code, [`$.${m[1]}`, `jQuery.${m[1]}`]) });
-    for (const re = /\b(history|localStorage|sessionStorage|console|JSON|navigator\.clipboard)\s*\.\s*([A-Za-z_$][\w$]*)\s*=(?!=)/g; (m = re.exec(code));) push('patch', `${m[1]}.${m[2]}`, m.index, { chained: chainedOriginal(code, [`${m[1]}.${m[2]}`]) });
+    // 1.0.9: `store.history.length = n` 같은 남의 칸(앞에 .) · 이 파일이 지역 이름으로 만든 history 는 브라우저 것이 아니에요
+    const shadowed = name => new RegExp(`\\b(?:const|let|var)\\s+${name}\\b`).test(code);
+    for (const re = /\b(history|localStorage|sessionStorage|console|JSON|navigator\.clipboard)\s*\.\s*([A-Za-z_$][\w$]*)\s*=(?!=)/g; (m = re.exec(code));) {
+        if (!m[1].includes('.') && shadowed(m[1])) continue;
+        // history 는 흔한 칸 이름이라(store.history) 앞 객체가 창(window · globalThis · self)일 때만 · length 는 브라우저에선 못 바꿔요
+        const owner = /([\w$]+)\s*\??\.\s*$/.exec(code.slice(Math.max(0, m.index - 40), m.index))?.[1];
+        if (m[1] === 'history' && (m[2] === 'length' || (owner && !/^(?:window|globalThis|self|top|parent)$/.test(owner)))) continue;
+        push('patch', `${m[1]}.${m[2]}`, m.index, { chained: chainedOriginal(code, [`${m[1]}.${m[2]}`]) });
+    }
     for (const re = /\beventSource\s*\.\s*(emit|emitAndWait|on|once|makeFirst|makeLast|removeListener)\s*=(?!=)/g; (m = re.exec(code));) push('patch', `eventSource.${m[1]}`, m.index, { chained: chainedOriginal(code, [`eventSource.${m[1]}`]) });
     for (const re = /\bSillyTavern\s*(?:\.\s*getContext\s*\(\s*\))?\s*\.\s*([A-Za-z_$][\w$]*)\s*=(?!=)/g; (m = re.exec(code));) push('patch', `SillyTavern.${m[1]}`, m.index, { chained: chainedOriginal(code, [`SillyTavern.${m[1]}`, `SillyTavern.getContext().${m[1]}`]) });
     // extension_settings 키 (상수 이름도 이 파일에서 풀어요). extensionSettings 는 실리태번 맥락(ctx.extensionSettings · { extensionSettings } = getContext())일 때만 —
@@ -145,8 +153,10 @@ export function scanJs(text, { eventNames = null } = {}) {
     for (const re = new RegExp(`\\b${holder}\\s*\\[\\s*([A-Za-z_$][\\w$]*)\\s*\\]\\s*${W}`, 'g'); (m = re.exec(code));) if (consts.has(m[1])) setKey(consts.get(m[1]), m.index, m[2]);
     // HTML id (글 안의 태그 · .id = · setAttribute)
     out.push(...scanIds(code, lineOf));
-    for (const re = /\.\s*id\s*=\s*(['"`])([A-Za-z_][\w:-]{0,80})\1/g; (m = re.exec(code));) push('id', m[2], m.index);
-    for (const re = /\b(?:setAttribute|attr)\s*\(\s*(['"])id\1\s*,\s*(['"`])([A-Za-z_][\w:-]{0,80})\2/g; (m = re.exec(code));) push('id', m[3], m.index);
+    // 1.0.9: 넣기 전에 같은 id 를 찾아 보고 있으면 건너뛰는 꼴(공용 모듈 · 「문서에 한 번」)은 how: 'guarded' — 화면에 하나만 생겨요
+    const idGuarded = (id, index) => new RegExp(`(?:getElementById\\s*\\(\\s*['"\`]|querySelector(?:All)?\\s*\\(\\s*['"\`][^'"\`]{0,160}#)${id.replace(/[-:]/g, '\\$&')}(?![\\w-])`).test(code.slice(Math.max(0, index - 600), index));
+    for (const re = /\.\s*id\s*=\s*(['"`])([A-Za-z_][\w:-]{0,80})\1/g; (m = re.exec(code));) push('id', m[2], m.index, idGuarded(m[2], m.index) ? { how: 'guarded' } : {});
+    for (const re = /\b(?:setAttribute|attr)\s*\(\s*(['"])id\1\s*,\s*(['"`])([A-Za-z_][\w:-]{0,80})\2/g; (m = re.exec(code));) push('id', m[3], m.index, idGuarded(m[3], m.index) ? { how: 'guarded' } : {});
     // 단축키: keydown 을 듣는 파일에서 Ctrl · Alt · Meta 와 같이 보는 키만 (Esc · Enter 하나는 세지 않아요)
     if (/\b(?:keydown|keyup|keypress)\b/.test(code)) {
         const seen = new Set();
@@ -159,9 +169,14 @@ export function scanJs(text, { eventNames = null } = {}) {
             const parts = [mod('ctrlKey') && 'Ctrl', mod('altKey') && 'Alt', mod('shiftKey') && 'Shift', mod('metaKey') && 'Meta'].filter(Boolean);
             const key = keyName(kind, value);
             if (!parts.some(p => p !== 'Shift') && !/^F\d{1,2}$/.test(key)) continue;
-            const combo = [...parts, key].join('+');
-            if (seen.has(combo)) continue;
-            seen.add(combo); push('hotkey', combo, m.index);
+            // 1.0.9: `ctrlKey || metaKey` 는 둘 중 하나(맥 ⌘ 대신) — 「Ctrl+Meta」 한 조합이 아니라 Ctrl+… · Meta+… 두 조합이에요
+            const either = parts.includes('Ctrl') && parts.includes('Meta') && /ctrlKey\s*\|\|\s*(?:[\w$]+\.)?metaKey|metaKey\s*\|\|\s*(?:[\w$]+\.)?ctrlKey/.test(near);
+            const scope = keyScope(code, m.index);
+            for (const set of either ? [parts.filter(p => p !== 'Meta'), parts.filter(p => p !== 'Ctrl')] : [parts]) {
+                const combo = [...set, key].join('+');
+                if (seen.has(combo)) continue;
+                seen.add(combo); push('hotkey', combo, m.index, scope ? { how: scope } : {});
+            }
         }
     }
     // 실리태번 사건: 듣는 것 · 맨 앞 · 맨 뒤
@@ -175,9 +190,20 @@ export function scanJs(text, { eventNames = null } = {}) {
     for (const re = /\bsetExtensionPrompt\s*\(/g; (m = re.exec(code));) { push('prompt', 'setExtensionPrompt', m.index); break; }
     return out;
 }
+/** 1.0.9 그 키 비교가 든 keydown 을 어디에 걸었는지 — 문서 · 창이 아니라 요소(입력 칸 · 창)면 'element'(그 칸에 초점이 있을 때만 들어요) */
+function keyScope(code, index) {
+    let at = -1;
+    for (const re = /\b(?:addEventListener|on)\s*\(\s*(['"])keydown\1/g, m = []; (m[0] = re.exec(code)) && m[0].index < index;) at = m[0].index;
+    if (at < 0 || index - at > 4000) return '';
+    const recv = /([\w$]+(?:\s*\(\s*[\w$]+\s*\))?)\s*\??\.\s*$/.exec(code.slice(Math.max(0, at - 80), at))?.[1]?.replace(/\s+/g, '') || '';
+    if (!recv) return '';
+    return /^(?:document|window|globalThis|self|doc|win|body|ownerDocument|\$\((?:document|window)\)|jQuery\((?:document|window)\))$/.test(recv) ? '' : 'element';
+}
 /** 덮어쓰기 전에 원래 것을 받아 두는지(이어 부르는 감싸기) — `x = window.fetch` · `.bind(` 꼴 */
 function chainedOriginal(code, names) {
-    return names.some(name => new RegExp(`[=(,:]\\s*${name.replace(/[.$()[\]]/g, '\\$&')}\\s*(?:[;,)\\n]|\\.bind\\b|\\.call\\b|\\.apply\\b|$)`, 'm').test(code));
+    // 1.0.9: `g.console?.error` · `window.console.error` 꼴(앞 객체 · ?.)도 같은 받아 두기로 봐요
+    const pat = name => name.split('.').map(part => part.replace(/[$()[\]]/g, '\\$&')).join('\\s*\\??\\.\\s*');
+    return names.some(name => new RegExp(`[=(,:]\\s*(?:[\\w$]+\\s*\\??\\.\\s*)?${pat(name)}\\s*(?:[;,)\\n]|\\.bind\\b|\\.call\\b|\\.apply\\b|$)`, 'm').test(code));
 }
 /** 글 안의 HTML 태그 id="…" (태그 안에 있을 때만) */
 function scanIds(code, lineOf) {
@@ -185,7 +211,9 @@ function scanIds(code, lineOf) {
     for (const re = /\sid\s*=\s*\\?(["'])([A-Za-z_][\w:-]{0,80})\\?\1/g, m0 = []; (m0[0] = re.exec(code));) {
         const m = m0[0], lt = code.lastIndexOf('<', m.index), gt = code.lastIndexOf('>', m.index);
         if (lt < 0 || lt < gt || m.index - lt > 800 || !/^<[a-zA-Z]/.test(code.slice(lt, lt + 2))) continue;
-        out.push({ k: 'id', key: m[2], line: lineOf(m.index) });
+        // 1.0.9 SVG 정의(필터 · 그러데이션 · 자르기 …)의 id 는 그림 안에서 url(#…) 로만 써요 — 그림 주소(data:)로 쓰면 문서 id 와 겹치지 않아요
+        const svgDef = /^<(?:filter|linearGradient|radialGradient|clipPath|mask|pattern|marker|symbol)\b/i.test(code.slice(lt, lt + 20));
+        out.push({ k: 'id', key: m[2], line: lineOf(m.index), ...(svgDef ? { how: 'svg' } : {}) });
     }
     return out;
 }
@@ -371,6 +399,9 @@ export function compare(profiles, { clientVersion = '', names = [], disabled = [
         const twin = pairs.every(([a, b]) => twinWith(a.p, b.p, a.s) || twinWith(b.p, a.p, b.s));
         let level = def.level, text = def.text;
         if (kind === 'patch' && sides.every(s => s.chained)) { level = 'info'; text = '둘 다 원래 함수를 받아 두고 이어 불러서 같이 돌아요. 순서만 달라요 — 요청 · 저장이 이상할 때 먼저 볼 자리예요.'; }
+        if (kind === 'id' && sides.every(s => s.how === 'svg')) { level = 'info'; text = '모두 SVG 그림 안의 정의(필터 · 그러데이션 등) id 예요. 그림을 문서에 바로 넣을 때만 겹치고, 그림 주소(data:)로 쓰면 겹치지 않아요 — 그림 효과가 엉뚱하게 보이면 먼저 볼 자리예요.'; }
+        if (kind === 'id' && sides.every(s => s.how === 'guarded')) { level = 'info'; text = '모두 「이미 있으면 건너뜀」으로 넣는 공용 id 예요. 먼저 넣은 쪽 하나만 생기고 나머지는 그것을 같이 써요.'; }
+        if (kind === 'hotkey' && sides.some(s => s.how === 'element')) { level = 'info'; text = '한쪽(또는 둘 다)이 자기 입력 칸 · 창 안에서만 듣는 단축키예요. 그 칸에 초점이 있을 때만 반응해서 보통 겹치지 않아요 — 단축키가 엉뚱하게 들으면 먼저 볼 자리예요.'; }
         add({ level, code: kind, k: kind, key, title: def.title(key), text, sides, twin });
     }
     // 참고: 둘 다 프롬프트 가로채기 · 공통 이벤트 다수
@@ -408,7 +439,7 @@ const at = place;
 /** 문의용 글 (확장 이름 · 파일 · 줄만 — 설정 · 채팅 · 코드 글은 넣지 않아요) */
 export function reportText({ findings, removed = [] }, meta = {}) {
     const head = [`블루레몬에이드 확장 충돌 검사${meta.theme ? ` (테마 ${meta.theme})` : ''}${meta.at ? ` · ${meta.at}` : ''}`];
-    if (meta.st || meta.count != null) head.push(`실리태번 ${meta.st || '?'} · 켜진 확장 ${meta.count ?? '?'}개 · 읽은 파일 ${meta.files ?? '?'}개${meta.skipped ? ` · 건너뛴 큰 파일 ${meta.skipped}개` : ''}`);
+    if (meta.st || meta.count != null) head.push(`실리태번 ${meta.st || '?'} · 켜진 확장 ${meta.count ?? '?'}개 · 읽은 파일 ${meta.files ?? '?'}개${meta.skipped ? ` · 상한으로 못 읽은 파일 ${meta.skipped}개${meta.big ? `(큰 파일 ${meta.big}개)` : ''}` : ''}`);
     if (meta.link) head.push(`링크로 미리 검사: ${meta.link}`);
     const lines = findings.map(f => `[${LEVELS[f.level]}] ${f.title}${f.ai ? ` — AI: ${AI_VERDICTS[f.ai.verdict] || f.ai.verdict}` : ''}\n${f.sides.length ? f.sides.map(s => `  · ${at(s)}`).join('\n') + '\n' : ''}  ${f.text}`);
     if (!findings.length) lines.push('걸린 것이 없어요. (같은 이름만 찾는 검사라 모든 충돌을 찾지는 못해요.)');
