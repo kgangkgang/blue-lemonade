@@ -7,7 +7,7 @@
 // 옮기며 바꾼 것은 이름(CONCEPT_PALETTES → MART_CONCEPT_COLORS · CONCEPT_SHAPES → MART_CONCEPT_SHAPES · CONCEPT_FRAMES → MART_CONCEPT_FRAMES)과 import 뿐이에요 — 그림은 바이트 그대로.
 import { esc, tag, mark, inkEverywhere } from './log-copy-render.js';
 import { box, font, hide, deco, at, lane, dot, star, bat, al, WHITE, STAR, BAT, centerAt, gap10, wrapOuter, svgDoc, svgUrl, art } from './log-copy-concept-kit.js';
-import { conceptParts, clockLabel, HEIGHTS } from './log-copy-presets.js';
+import { conceptParts, clockLabel, HEIGHTS } from './log-copy-presets.js?v=20261109b';
 import { addMotion, openBox } from './log-copy-motion.js';
 
 // 1.0.1(11-04) 컨셉 30 은 틀이 가진 그림 부품이 직접 움직이고 눌려요 — live(조각, { anim, origin, vars, egg }): 첫 태그에 움직임(공용 bl- 키프레임) · 축 · 변수 · 누르면 반응(data-bl-egg)
