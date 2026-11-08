@@ -1,7 +1,7 @@
 {
  "_": "글꾸 마트 목록 — 테마 tools/mart-build.mjs 산출물을 split-geulkku.mjs 로 나눈 것(고치지 말고 다시 만들어요) · tools/geulkku-accent.mjs 가 accent · icon 을 덧붙여요 · tools/geulkku-builtin.mjs 가 테마 1.0.1 로그 복사 기본 틀 19종(내장)을 덧붙여요",
  "built": "2026-11-05",
- "count": 1479,
+ "count": 1483,
  "categories": [
   {
    "id": "event",
@@ -154,6 +154,11 @@
   {
    "id": "sentinel-char",
    "label": "센티넬버스 · 인물"
+  },
+  {
+   "id": "react",
+   "label": "반응 글꾸",
+   "group": "concept"
   },
   {
    "id": "lc-basic",
@@ -939,6 +944,11 @@
    "file": "lc-builtin.411a9281.json",
    "n": 19,
    "bytes": 169331
+  },
+  "sp-react": {
+   "file": "sp-react.daa7ae8d.json",
+   "n": 4,
+   "bytes": 96801
   }
  },
  "items": [
@@ -1322,6 +1332,10 @@
   {"id":"char-eunseol-sp-2","name":"은설 · 후드 주머니 속 사탕","emoji":"🍬","category":"sentinel-char","style":"심플","desc":"센가 아카데미 인물 글꾸 · 꼬리 「고맙다고는 — 안 했음」","c":"sp-sentinel-char","source":"[실리/1차] 센티넬버스 아카데미","bytes":8935,"fx":"me","bg":"#ffffff","ink":"#221c1a","accent":"#6a4330","icon":"icon/fa5b5934a6.svg"},
   {"id":"char-shinjaeyi-sp-1","name":"신재이 · 타르타로스 경고장","emoji":"⚠️","category":"sentinel-char","style":"심플","desc":"센가시뮬 인물 글꾸 · 꼬리 「누적 — 2 / 3」","c":"sp-sentinel-char","source":"[실리/1차] 센티넬버스 시뮬레이션(센가시뮬) v1.3","bytes":6637,"fx":"me","bg":"#fff7cf","ink":"#1f2230","accent":"#2f55b8","icon":"icon/7d23a04749.svg"},
   {"id":"char-shinjaeyi-sp-2","name":"신재이 · 기숙사 벽 운동 달력","emoji":"🥊","category":"sentinel-char","style":"심플","desc":"센가 아카데미 인물 글꾸 · 꼬리 「오늘도 — X 하나」","c":"sp-sentinel-char","source":"[실리/1차] 센티넬버스 아카데미","bytes":22958,"fx":"me","bg":"#ffffff","ink":"#1f2230","accent":"#2f55b8","icon":"icon/ad3968cb9a.svg"},
+  {"id":"c-react-sp-1","name":"봉투 열기","emoji":"💌","category":"react","style":"심플","desc":"봉투를 누르면 닫히고 다시 누르면 덮개가 젖혀지며 편지가 올라와요 · 봉랍을 누르면 통 · 겉면을 누르면 접혀요","c":"sp-react","bytes":5081,"fx":"me","bg":"#efe4d0","ink":"#3d3128","accent":"#b8343a","icon":null},
+  {"id":"c-react-sp-2","name":"초대장","emoji":"🎫","category":"react","style":"심플","desc":"남색 두 문 · 금빛 테 · 누르면 문이 열리고 별이 반짝이며 본문이 펼쳐져요 · 겉면을 누르면 접혀요","c":"sp-react","bytes":6013,"fx":"me","bg":"#141a33","ink":"#1d2442","accent":"#8a6510","icon":null},
+  {"id":"c-react-sp-3","name":"쪽 넘기기","emoji":"📖","category":"react","style":"심플","desc":"표지 · 로그 · 맺음 세 쪽을 옆으로 넘겨요 · 쪽마다 「n / 3」 · 모서리 귀를 누르면 들썩","c":"sp-react","bytes":5284,"fx":"e","bg":"#e9eef4","ink":"#2b3a4e","accent":"#2f5f8f","icon":null},
+  {"id":"c-react-sp-4","name":"통통 카드","emoji":"🃏","category":"react","style":"심플","desc":"캐릭터 색 카드 여섯 장 · 누르면 통통 · 반짝 · 흔들 · 빙글 · 뒤집 · 쑥","c":"sp-react","bytes":5648,"fx":"e","bg":"#f1eef8","ink":"#1d1f27","accent":"#6a4aa8","icon":"icon/809a84b08b.svg"},
   {"id":"concept-birthday","name":"생일","emoji":"🎂","category":"event","style":"일러스트","desc":"HTML 복사로 써요(테마로 받기는 준비 중) · 꼬리 「생일 축하해요」","c":"il-event","copyOnly":true,"fx":"me","accent":"#2264a5","icon":"icon/6119fb9c78.svg"},
   {"id":"concept-xmas","name":"크리스마스","emoji":"🎄","category":"event","style":"일러스트","desc":"HTML 복사로 써요(테마로 받기는 준비 중) · 꼬리 「메리 크리스마스」","c":"il-event","copyOnly":true,"fx":"me","accent":"#2264a5","icon":"icon/8130b37c15.svg"},
   {"id":"concept-pepero","name":"빼빼로데이","emoji":"🍫","category":"event","style":"일러스트","desc":"HTML 복사로 써요(테마로 받기는 준비 중) · 꼬리 「하나 줄게요」","c":"il-event","copyOnly":true,"fx":"me","accent":"#2264a5","icon":"icon/a2364b7b7f.svg"},
