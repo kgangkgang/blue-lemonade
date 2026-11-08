@@ -41,6 +41,8 @@ const SHOWS = [
 // 1.0.7 「머리 칸」(글꾸 마트 시식 창과 같은 칸) — 미리보기에서 눌러 고친 것과 서로 따라가요
 const FIELD_INPUTS = [['title', '제목', '제목'], ['date', '날짜', '비우면 없음'], ['char', '깡통', '깡통 이름'], ['model', '모델', '비우면 없음'], ['prompt', '프롬프트', '비우면 없음']];
 const SNAP_MAX = 50, SNAP_WAIT = 500;
+// 1.0.8 글자색(글꾸 마트 사이트와 같은 역할 — 사용자 「로그 복사 실리태번판도 글자색 바꾸는 거 · 바꾼 판을 내 글꾸에 저장」) — 틈 템플릿 글꾸(내장 심플 · 마트에서 받은 내 글꾸)만
+const INK_ROLES = [['name', '이름'], ['text', '본문'], ['dialogue', '대사'], ['thought', '속마음'], ['emphasis', '강조'], ['mark', '형광펜']];
 
 /** 테마 설정 logCopy (settings.js 가 모양을 정리해요) */
 const store = () => getSettings().logCopy;
@@ -126,7 +128,10 @@ export async function openLogSheet(model) {
         dirty: false,   // 마지막으로 그린 뒤 미리보기 글을 고쳤나 (고쳤을 때만 거둬요 — 안 고친 메시지는 그림 · 링크가 있는 원래 노드 그대로)
         drawnTexts: null,   // 1.0.7 막 그린 미리보기의 메시지별 글 — 거둘 때 이것과 달라진 메시지만 「고친 것」(이름 숨김 · 바꾸기 · 틀이 바꾼 글자는 고친 것이 아니에요)
         order: chipOrder(s),
+        inks: {}, inkShape: null,   // 1.0.8 이번 창에서 바꾼 글자색(모양을 바꾸면 비워요) · 내 글꾸에 저장하면 그 글꾸 색이 돼요
     };
+    // 1.0.8 비워 둔 머리 칸(깡통 · 모델 · 프롬프트 알약 · 날짜 · 제목)은 다음에 열어도 빈 채로 — 전엔 열 때마다 지금 연결 이름으로 다시 채워 지운 알약이 돌아왔어요(사용자 「없애 뒀으면 없는 상태로 시작」)
+    for (const key of s.blank || []) state.fields[key] = '';
     if (!PRESETS.some(p => p.id === state.shape) && !s.custom.some(c => c.id === state.shape)) state.shape = 'card';
     const ui = uiFont();
 
@@ -139,6 +144,7 @@ export async function openLogSheet(model) {
             <div class="bl-lc-chips bl-chip-row" role="radiogroup" aria-label="모양" data-lc-shapes></div>
             <div class="bl-lc-gallery" data-lc-gallery hidden><textarea rows="3" placeholder="이미지 코드(&lt;img …&gt;)나 이미지 주소를 붙여 넣어요" aria-label="갤러리 사진 코드" data-lc-images></textarea><span class="bl-lc-note" data-lc-images-count></span></div>
             <div class="bl-lc-colors" data-lc-colors><div class="bl-lc-mode" role="group" aria-label="밝기">${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><div class="bl-lc-pals bl-chip-row" role="radiogroup" aria-label="색" data-lc-pals></div></div>
+            <div class="bl-lc-inks bl-chip-row" role="group" aria-label="글자색 — 눌러서 바꿔요" data-lc-inks hidden></div>
             <div class="bl-lc-tools bl-chip-row" role="group" aria-label="이름 숨김 · 바꾸기"><button type="button" class="bl-lc-chip" data-lc="hide" aria-pressed="false"><i class="fa-solid fa-user-secret" aria-hidden="true"></i><span>이름 숨김</span></button><button type="button" class="bl-lc-chip" data-lc="words" aria-pressed="false"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>바꾸기</span><small data-lc-words-count></small></button><button type="button" class="bl-lc-chip" data-lc="fields" aria-pressed="false" title="제목 · 날짜 · 깡통 · 모델 · 프롬프트 칸을 글칸으로 고쳐요"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>머리 칸</span></button><button type="button" class="bl-lc-chip" data-lc="spoiler" disabled title="미리보기에서 글을 고르면 눌러요"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>숨기기</span></button></div>
             <div class="bl-lc-shows bl-chip-row" role="group" aria-label="보일 것 — 끄면 빼요" data-lc-shows>${SHOWS.map(([key, icon, label, title]) => `<button type="button" class="bl-lc-chip" data-lc-show="${key}" aria-pressed="true" title="${esc(title)}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${esc(label)}</span></button>`).join('')}</div>
             <div class="bl-lc-fields" data-lc-fields hidden>${FIELD_INPUTS.map(([key, label, hint]) => `<label class="bl-lc-field"><span>${esc(label)}</span><input type="text" maxlength="${key === 'title' ? 80 : 60}" placeholder="${esc(hint)}" data-lc-field="${key}"></label>`).join('')}</div>
@@ -156,6 +162,50 @@ export async function openLogSheet(model) {
     const custom = () => store().custom.find(c => c.id === state.shape) ?? null;
     // 1.0.1 마트 글꾸(template)는 받은 고정 색 — 전용 색 틀처럼 다뤄요(미리보기 바탕 · 숨긴 글 색)
     const own = () => { const mine = custom(); if (!mine?.template) return ownColors(state.shape); const k = templateColors(mine.colors); return { ...k, raised: k.panel2 }; };
+    // 1.0.8 글자색 — 바꿀 수 있는 글꾸(틈 템플릿)와 바꾼 색을 얹은 판
+    const inkBase = () => { const mine = custom(); return mine ? (mine.template ? mine : null) : (PRESETS.find(p => p.id === state.shape)?.template ?? null); };
+    const inkTemplate = () => { const base = inkBase(); return base && Object.keys(state.inks).length ? { ...base, colors: { ...templateColors(base.colors), ...state.inks } } : null; };
+    const drawInks = () => {
+        const row = $('[data-lc-inks]'), base = inkBase();
+        if (state.inkShape !== state.shape) { state.inks = {}; state.inkShape = state.shape; }
+        row.hidden = !base;
+        if (!base) { row.replaceChildren(); return; }
+        const k = { ...templateColors(base.colors), ...state.inks }, changed = Object.keys(state.inks).length > 0;
+        const key = INK_ROLES.map(([role]) => k[role]).join() + changed;
+        requestAnimationFrame(() => applyFade(row));   // 처음엔 숨어 있어 여는 때 흐림 계산을 건너뛰어요 — 보일 때마다 다시
+        if (row.dataset.key === key) return;
+        row.dataset.key = key;
+        const save = custom() ? '내 글꾸 색 저장' : '내 글꾸에 저장', off = changed ? '' : ' disabled';
+        row.innerHTML = `<i class="fa-solid fa-palette bl-lc-ink-title" aria-hidden="true" title="글자색"></i><button type="button" class="bl-lc-chip bl-lc-ink-act" data-lc="ink-reset" aria-label="원래 색" title="원래 색"${off}><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button><button type="button" class="bl-lc-chip bl-lc-ink-act" data-lc="ink-save" aria-label="${save}" title="${save}"${off}><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button><i class="bl-lc-ink-sep" aria-hidden="true"></i>${INK_ROLES.map(([role, label]) => `<button type="button" class="bl-lc-chip bl-lc-ink" data-lc-ink="${role}" style="--ink:${esc(k[role])}" aria-label="${esc(label)} 색 바꾸기"><i class="bl-lc-ink-dot" aria-hidden="true"></i><span>${esc(label)}</span></button>`).join('')}`;
+    };
+    let inkTimer = 0;
+    const pickInk = async (button) => {
+        const role = button.dataset.lcInk, base = inkBase();
+        if (!base) return;
+        const { openColorPick } = await import('./colorpick.js');
+        openColorPick({ anchor: button, value: state.inks[role] ?? templateColors(base.colors)[role], onInput: (css) => {
+            state.inks[role] = String(css).toLowerCase();
+            button.style.setProperty('--ink', css);
+            clearTimeout(inkTimer); inkTimer = setTimeout(draw, 120);
+        }, onClose: () => { clearTimeout(inkTimer); draw(); } });
+    };
+    /** 바꾼 글자색을 내 글꾸로 — 받은 내 글꾸면 그 글꾸 색을 고치고, 내장 글꾸면 「이름 · 내 색」 새 내 글꾸로 */
+    const saveInks = () => {
+        const base = inkBase(), mine = custom(), s2 = store();
+        if (!base || !Object.keys(state.inks).length) return;
+        const colors = { ...templateColors(base.colors), ...state.inks };
+        if (mine?.template) { mine.colors = colors; state.inks = {}; saveSettings(); toastr.success('내 글꾸 색을 저장했어요', '', { timeOut: 1600 }); draw(); return; }
+        if (s2.custom.length >= CUSTOM_MAX) { toastr.warning(`내 글꾸는 ${CUSTOM_MAX}개까지예요 — 칩 옆 ✕ 나 길게 눌러 지워요`, '', { timeOut: 2500 }); return; }
+        const label = PRESETS.find(p => p.id === state.shape)?.label || '글꾸', used = new Set(s2.custom.map(c => c.name));
+        let name = `${label} · 내 색`.slice(0, 40), n = 2;
+        while (used.has(name)) name = `${label} · 내 색 ${n++}`.slice(0, 40);
+        const item = { id: `c${Date.now().toString(36)}`, name, html: '', template: base.template, colors, messages: base.messages || 'box', tail: base.tail || '', emoji: base.emoji || '', ...(base.type ? { type: base.type } : {}), slot: null };
+        s2.custom = [...s2.custom, item];
+        state.shape = item.id; state.category = 'mine'; state.picking = false; state.inks = {}; state.inkShape = item.id;
+        saveSettings();
+        toastr.success(`「${name}」로 내 글꾸에 저장했어요`, '', { timeOut: 2000 });
+        drawShapes(); drawColors(); draw();
+    };
 
     // 이름 숨김 · 바꾸기 — 채팅 캡처 설정 그대로
     const tools = () => getSettings().captureTools;
@@ -210,6 +260,13 @@ export async function openLogSheet(model) {
     const readFields = (doc) => {
         for (const element of doc.querySelectorAll('[data-f]')) state.fields[element.getAttribute('data-f')] = element.textContent;
         for (const input of dialog.querySelectorAll('[data-lc-field]')) if (document.activeElement !== input) input.value = state.fields[input.dataset.lcField] ?? '';
+        rememberBlank();
+    };
+    /** 1.0.8 비운 머리 칸을 설정에 적어요(다시 채우면 빼요) — 바뀐 게 있을 때만 저장 */
+    const rememberBlank = () => {
+        const s4 = store(), before = (s4.blank || []).join();
+        const next = FIELD_INPUTS.map(([key]) => key).filter(key => !String(state.fields[key] ?? '').trim());
+        if (next.join() !== before) { s4.blank = next; saveSettings(); }
     };
     const spoilerColors = (nodes, sp) => { for (const n of nodes || []) { if (n.kind === 'spoiler') n.sp = sp; if (n.children) spoilerColors(n.children, sp); } };
     const view = () => {
@@ -302,6 +359,7 @@ export async function openLogSheet(model) {
     const draw = () => {
         harvest();
         drawShows();
+        drawInks();
         const mine = custom();
         let html;
         const shown = view();
@@ -312,7 +370,7 @@ export async function openLogSheet(model) {
         // 칸만 비우면 그 칸을 담던 머리 박스 · 구분선이 빈 채로 남았어요(11-07 사용자 「제목 · 위 글 · 알약 다 빼면 가로 박스도 사라져야지」)
         const drop = [...(s3.titleOff ? ['title'] : []), ...(s3.dateOff ? ['date'] : []), ...(s3.tagsOff ? ['mark', 'char', 'model', 'prompt'] : [])];
         if (mine && !mine.template) html = mine.html;
-        else html = renderLog(shown.model, { shape: state.shape, colors: state.shape === 'plain' ? null : colorsOf(paletteFor(state.shape, state.palette)), ui, fields, images: shown.rewriteImages(state.images), screen: tokensOf(nowPalette()), template: mine, names: !s3.namesOff });
+        else html = renderLog(shown.model, { shape: state.shape, colors: state.shape === 'plain' ? null : colorsOf(paletteFor(state.shape, state.palette)), ui, fields, images: shown.rewriteImages(state.images), screen: tokensOf(nowPalette()), template: inkTemplate() ?? mine, names: !s3.namesOff });
         if (!mine || mine.template) { const full = html; html = fitBare(full, bareLog(full, { top: s3.topOff, bottom: s3.bottomOff, drop })); }   // 1.0.7 위 글 · 아래 글 · 칸 빼기 → 글을 덮게 된 장식 걷기
         $('[data-lc-pick]').hidden = !(mine && !mine.template && (state.picking || !mine.slot));
         frame.onload = () => {
@@ -359,6 +417,14 @@ export async function openLogSheet(model) {
             syncSpoiler();
             doc.designMode = 'on';
             try { doc.execCommand('styleWithCSS', false, true); } catch { /* 옛 브라우저 */ }
+            // 1.0.8 장식(data-bl-egg)을 누를 땐 편집을 잠깐 꺼요 — 문서 전체가 편집 모드라 폰에서 장식을 눌러도 자판이 올라오고 편집으로 넘어가 움직임이 안 보였어요(사용자 제보)
+            let eggTimer = 0;
+            doc.addEventListener('pointerdown', (event) => {
+                if (!event.target?.closest?.('[data-bl-egg]')) return;
+                doc.designMode = 'off';
+                clearTimeout(eggTimer);
+                eggTimer = setTimeout(() => { doc.designMode = 'on'; try { doc.execCommand('styleWithCSS', false, true); } catch { /* 옛 브라우저 */ } }, 900);
+            }, true);
             doc.addEventListener('input', () => {
                 state.dirty = true;   // 1.0.1 고친 글은 다음 그리기 전에 거둬 틀을 바꿔도 이어요
                 readFields(doc);
@@ -495,10 +561,13 @@ export async function openLogSheet(model) {
             drawShapes();
             return;
         }
+        if (target.dataset.lcInk) { pickInk(target); return; }   // 1.0.8 글자색
         if (target.dataset.palette) { state.palette = target.dataset.palette; state.picked = true; drawColors(); draw(); return; }
         if (target.dataset.lcMode) { state.palette = paletteVariant(paletteFamily(state.palette), target.dataset.lcMode); state.picked = true; drawColors(); draw(); return; }
         switch (target.dataset.lc) {
             case 'close': dialog.close(); break;
+            case 'ink-reset': state.inks = {}; draw(); break;
+            case 'ink-save': saveInks(); break;
             case 'auto': { const mine = custom(); if (mine) { mine.slot = 'auto'; state.picking = false; saveSettings(); draw(); } break; }   // 'auto' = 고르지 않고 guessSlot 으로
             case 'paste': showPaste(true); break;
             case 'paste-cancel': showPaste(false); break;
@@ -597,7 +666,7 @@ export async function openLogSheet(model) {
         }
         if (event.target.matches?.('[data-lc-field]')) {   // 1.0.7 머리 칸 글칸 → 그 칸 값 · 미리보기
             state.fields[event.target.dataset.lcField] = event.target.value;
-            clearTimeout(ruleTimer); ruleTimer = setTimeout(draw, 300); return;
+            clearTimeout(ruleTimer); ruleTimer = setTimeout(() => { rememberBlank(); draw(); }, 300); return;
         }
         if (event.target.matches?.('[data-lc-maskword]')) {   // 11-03: 가림 글자(기본 ○○)를 직접 정해요 — 치는 동안 칸은 다시 그리지 않고 미리보기만
             const ct = tools(); ct.maskWord = event.target.value.trim().slice(0, 12) || '○○'; saveSettings();
@@ -680,6 +749,15 @@ const STYLE = `
 .bl-lc-chip[aria-pressed="true"] > i:first-child { color:var(--salty-accent-ink, var(--salty-accent)); }
 .bl-lc-chip small { font-size:12px; color:var(--salty-muted); }
 .bl-lc-chip:disabled { opacity:.5; cursor:default; }
+.bl-lc-inks[hidden] { display:none; }
+.bl-lc .bl-lc-inks { flex-wrap:nowrap; gap:6px; }
+.bl-lc-ink-title { flex:none; color:var(--salty-muted); font-size:13px; }
+.bl-lc-inks .bl-lc-chip { min-height:30px; padding:0 8px 0 7px; gap:4px; font-size:12px; }
+.bl-lc-ink-dot { flex:none; width:12px; height:12px; border-radius:50%; background:var(--ink); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--salty-text) 22%, transparent); }
+.bl-lc-inks .bl-lc-chip.bl-lc-ink-act { justify-content:center; min-width:30px; padding:0; }
+.bl-lc-inks .bl-lc-chip.bl-lc-ink-act:not(:disabled) > i { color:var(--salty-accent-ink, var(--salty-accent)); }
+.bl-lc-inks .bl-lc-chip.bl-lc-ink-act:disabled { opacity:.35; }
+.bl-lc-ink-sep { flex:none; width:1px; height:18px; background:var(--salty-line); }
 .bl-lc-chip[aria-checked="true"] > i:first-child { color:var(--salty-accent-ink, var(--salty-accent)); }
 .bl-lc-chip .bl-lc-fav { font-size:10px; color:var(--salty-accent-ink, var(--salty-accent)); }
 .bl-lc-chip.is-armed { border-color:var(--salty-danger, currentColor); color:var(--salty-danger, inherit); }
@@ -708,8 +786,8 @@ const STYLE = `
 .bl-lc-paste textarea { box-sizing:border-box; width:100%; min-height:200px; padding:8px; border:1px solid var(--salty-line); border-radius:8px; background:var(--salty-field, var(--salty-raised)); color:var(--salty-text); font-family:var(--salty-font-code, monospace); font-size:13px; scrollbar-width:none; }
 .bl-lc-paste textarea:focus { outline:1px solid var(--salty-accent); }
 .bl-lc-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.bl-lc-tools, .bl-lc-shows { display:flex; gap:8px; padding:5px 16px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
-.bl-lc-tools::-webkit-scrollbar, .bl-lc-shows::-webkit-scrollbar { display:none; }
+.bl-lc-tools, .bl-lc-shows, .bl-lc-inks { display:flex; align-items:center; gap:8px; padding:5px 16px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
+.bl-lc-tools::-webkit-scrollbar, .bl-lc-shows::-webkit-scrollbar, .bl-lc-inks::-webkit-scrollbar { display:none; }
 /* 1.0.7 「보일 것」 칩: 끈 칩(뺀 것)은 흐린 글씨 + 가운데 줄 — 켬 = 보여요 */
 .bl-lc-shows .bl-lc-chip[aria-pressed="false"] > span { color:var(--salty-muted); text-decoration:line-through; }
 .bl-lc-fields[hidden], .bl-lc-bar[hidden] { display:none; }

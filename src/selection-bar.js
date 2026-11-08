@@ -294,6 +294,32 @@ function check() {
     place();
 }
 
+// 1.0.8 채팅에서 끌어 고르다 아래 입력창(위로는 머리줄)에 닿으면 크롬이 고른 끝을 채팅 밖으로 옮겨 채팅 끝까지 다 골라졌다(실리태번 원래 동작).
+// 시작이 채팅 안인데 끝이 밖이면 끝을 채팅 칸에 보이는 맨 아래(위) 줄로 붙잡는다 — 화면이 따라 내려가면 한 줄씩 늘어난다
+let dragX = null;
+const caretAt = (x, y) => {
+    const p = document.caretPositionFromPoint?.(x, y);
+    if (p) return [p.offsetNode, p.offset];
+    const r = document.caretRangeFromPoint?.(x, y);
+    return r ? [r.startContainer, r.startOffset] : null;
+};
+export function keepInChat() {
+    const selection = document.getSelection();
+    const chat = document.getElementById('chat');
+    const anchor = selection?.anchorNode, focus = selection?.focusNode;
+    if (!chat || !anchor || !focus || selection.rangeCount !== 1 || !chat.contains(anchor) || chat.contains(focus)) return false;
+    const down = !!(anchor.compareDocumentPosition(focus) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const box = chat.getBoundingClientRect();
+    const x = Math.min(Math.max(dragX ?? box.left + box.width / 2, box.left + 12), box.right - 12);
+    for (let step = 0; step < 12; step++) {   // 그 자리가 메시지 사이 · 떠 있는 도구 줄이면 안쪽으로 조금씩
+        const point = caretAt(x, down ? box.bottom - 6 - step * 14 : box.top + 6 + step * 14);
+        if (point && chat.contains(point[0])) {
+            try { selection.extend(point[0], point[1]); return true; } catch { return false; }
+        }
+    }
+    return false;
+}
+
 /** 스크롤 · 화면 크기 변화 때 자리만 다시 잡는다 (숨은 탭에서는 requestAnimationFrame 이 안 도니 타이머도 함께) */
 function reposition() {
     if (!held || !bar || frame) return;
@@ -353,8 +379,10 @@ function start() {
     document.addEventListener('selectionchange', () => {
         // 보내기 칸에 글을 칠 때마다 오는 알림은 줄이 없으면 아무것도 하지 않는다
         if (!held && typingInField()) return;
+        keepInChat();
         schedule();
     });
+    document.addEventListener('pointermove', (event) => { if (event.buttons === 1) dragX = event.clientX; }, { passive: true, capture: true });
     document.getElementById('chat')?.addEventListener('scroll', reposition, { passive: true });
     window.addEventListener('resize', reposition);
     window.visualViewport?.addEventListener('resize', reposition);

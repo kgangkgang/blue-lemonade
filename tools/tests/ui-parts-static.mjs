@@ -102,4 +102,10 @@ t('고른 썸네일 카드도 그림 위·이름 아래를 유지하고 체크�
     assert.match(card, /--bl-ui-pick-check-margin:\s*0/);
     assert.doesNotMatch(card, /(?:min-|max-)?width:/, '카드별 임시 폭으로 문구를 맞추지 않아요');
 });
+t('묶음 꺾쇠는 도는 효과 없이 바로 바뀌어요(1.0.8 폰에서 회전 중간에 멈춘 채 남음)', () => {
+    const chev = R.filter(r => r.sel.includes('> summary::after') && r.decl.includes('--bl-ui-glyph-chev'));
+    assert.ok(chev.length, '공용 꺾쇠 규칙 없음');
+    assert.ok(chev.some(r => /transition:\s*none !important/.test(r.decl)), '공용 꺾쇠에 transition: none 없음');
+    for (const r of chev) assert.doesNotMatch(r.decl, /transition:(?!\s*none)/, '꺾쇠에 회전 전환이 다시 붙었어요');
+});
 console.log(`PASS ui-parts static: ${n} checks`);

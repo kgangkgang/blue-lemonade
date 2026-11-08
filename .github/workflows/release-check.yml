@@ -106,6 +106,7 @@ jobs:
           node tools/tests/stream-watchdog.mjs .
           node tools/tests/perf-bundle-645.mjs .
           node tools/tests/selection-typing.mjs .
+          node tools/tests/selection-keep-in-chat.mjs .
           node tools/tests/log-copy.mjs .
           node tools/tests/perf-start.mjs .
           node tools/tests/perf-storage.mjs .

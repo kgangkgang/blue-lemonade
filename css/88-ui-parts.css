@@ -251,7 +251,7 @@ html:not(#bl-ui-parts-off) body :is(.bl-tool-dialog, .bl-roomy-dialog, .bl-trans
   box-sizing: border-box; width: var(--bl-ui-chev) !important; height: var(--bl-ui-chev) !important; min-width: 0 !important; min-height: 0 !important; margin: calc(var(--bl-ui-chev) / -2) 0 0 !important; padding: 0 !important;
   border: 0 !important; border-radius: 0 !important; background: var(--salty-muted) !important; box-shadow: none !important; font-size: 0 !important; opacity: 1 !important;
   -webkit-mask: var(--bl-ui-glyph-chev) center / contain no-repeat !important; mask: var(--bl-ui-glyph-chev) center / contain no-repeat !important;
-  transform: none !important; transition: transform .15s ease; pointer-events: none;
+  transform: none !important; transition: none !important; pointer-events: none;   /* 1.0.8 도는 효과 없이 바로 — 폰에서 열고 닫을 때 회전 중간(비스듬한 ㄱ)에 멈춘 채 남았어요 */
 }
 html:not(#bl-ui-parts-off) body :is(.salty-panel details:not(.salty-style-more, :is(.salty-prevbox, .bl-md-preview, .mes_text) *), .eh-guide, #bl-deus-popover details, #fruit-heart-v6 details, .bls-panel details)[open] > summary::after,
 html:not(#bl-ui-parts-off) body :is(.bl-tool-dialog, .bl-roomy-dialog, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-mermaid-dialog, #pt-panel, #cg-panel, .cg-root, .bwr_settings, #lv_settings, .po-dialog, .pa-hub, .rl-root, #char_assets_settings, .jj-settings-body, .llmt-settings, #model_register_settings, #model-switch-settings, #regex-link-settings) details[open]:not(.bl-wi-actions, .pt-more-actions, .rl-msg, .rl-pricing-preview, .eh-guide) > summary::before {
