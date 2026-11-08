@@ -6,7 +6,8 @@ const kind = document.body.dataset.mart;              // 'frames' | 'geulkku'
 const grid = document.querySelector('.mart-grid');
 const search = document.querySelector('.mart-tools input[type=search]');
 const chips = document.querySelector('.mart-chips');
-import { cart, say, onCheckout, artName, saveArt } from './cart.js?v=20261108a';
+import { cart, say, onCheckout, artName, saveArt } from './cart.js?v=20261109a';
+import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
 let styleActive = 'all', drawPreset = null, picker = null;
@@ -226,7 +227,7 @@ const GEULKKU_GROUPS = [{ id: 'series', label: '시리즈' }, { id: 'world', lab
 const BUILTIN_MORE = 'builtin-more';
 /** 테마(1.0.1)에 이미 들어 있는 것 — 글꾸는 자료의 builtin(내장 심플 30 · 로그 복사 기본 틀 19 · tools/geulkku-builtin.mjs), 액자는 심플 액자(frame-preset) 20 전부(테마 src/frame-presets.js FRAME_PRESETS 와 같아요) */
 const isBuiltin = item => !!(item?.builtin || item?.kind === 'frame-preset');
-const BUILTIN_TAG = '<span class="mart-tag tag is-builtin" title="블루레몬에이드 테마에 이미 들어 있어요 · 마트에서 가져오지 않아도 돼요">🍋 테마 내장</span>';
+const BUILTIN_TAG = '<span class="mart-tag tag is-builtin" title="블루레몬에이드 테마에 이미 들어 있어요 · 마트에서 가져오지 않아도 돼요">' + lemonHtml() + ' 테마 내장</span>';
 const ID_GROUP = { s: 'series', c: 'concept', concept: 'concept', world: 'world', char: 'char', halloween: 'halloween' };
 // 11-05 새 컨셉(id 머리는 모두 s-) — 크리스마스 · 연말은 할로윈처럼 제 묶음(시즌) · 앱 · 게임 · 레트로 · 점 · 덕질 · 학교는 「컨셉」(음식 · 취미 · 옛날 매체 · 상태창과 같은 결) · 계절 3~8 은 기존 계절 칩 그대로(시리즈)
 //   헌시뮬 · 인물 · 아드리안 · 인물은 id 머리(char-)로 「인물」
@@ -476,7 +477,7 @@ const hasEgg = item => (item.fx !== undefined || item.c ? String(item.fx || '').
 let showStyle = false;   // 그림체가 둘 이상일 때만 「기본」까지 꼬리표로 보여요
 /** 글꾸 이름 앞 그림 — 그 글꾸 틀의 우리 아이콘(목록 icon/…svg · 목록에 없으면 조각의 data URI), 없으면 이모지(아이콘 없는 184종) */
 const iconSrc = item => (item?.icon ? (String(item.icon).startsWith('data:') ? item.icon : asset(`data/geulkku/${item.icon}`)) : '');
-const glyphHtml = (item, fallback = '') => { const src = iconSrc(item); const emoji = item?.emoji || fallback; return src ? `<img class="mart-ico" src="${esc(src)}" alt="" aria-hidden="true" decoding="async">` : emoji ? `<span class="em" aria-hidden="true">${esc(emoji)}</span>` : ''; };
+const glyphHtml = (item, fallback = '') => { const src = iconSrc(item); const emoji = item?.emoji || fallback; return src ? `<img class="mart-ico" src="${esc(src)}" alt="" aria-hidden="true" decoding="async">` : emoji ? `<span class="em" aria-hidden="true">${lemonize(esc(emoji))}</span>` : ''; };
 /** 이름 옆 꼬리표: 분류 · 그림체 · ✨ 움직임 · 👆 반응 */
 function tagsHtml(item) {
     const style = item.kind === 'geulkku' && (showStyle || styleOf(item) !== STYLE_DEFAULT) ? `<span class="mart-tag tag is-style" title="디자인">${esc(styleOf(item))}</span>` : '';

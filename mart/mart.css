@@ -234,7 +234,7 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:32px;backgrou
 .mart-actions .btn{padding:0 4px}
 .mart-note{margin:0;font-size:var(--ts-meta);font-weight:var(--strong);line-height:1.4;color:var(--text)}
 .mart-builtin{display:flex;align-items:center;min-height:var(--ctl);padding:0 8px;border-radius:var(--r-ctl);background:var(--tint);color:var(--muted);font-size:var(--ts-meta);line-height:1.3}
-/* 「🍋 테마 내장」 꼬리표(블루레몬에이드에 이미 든 글꾸 · 심플 액자) — 정보 꼬리표 모양 그대로 · 레몬 선 + 옅은 레몬 면 */
+/* 「(레몬 그림) 테마 내장」 꼬리표(블루레몬에이드에 이미 든 글꾸 · 심플 액자) — 정보 꼬리표 모양 그대로 · 레몬 선 + 옅은 레몬 면 */
 .tag.is-builtin{border-color:var(--lemon-deep);background:color-mix(in srgb,var(--lemon) 28%,var(--surface));color:var(--ink)}
 .mart-howto{margin:24px 0 0;padding:16px;border-radius:var(--r-card);background:var(--tint)}
 .mart-howto h2{margin:0 0 8px;font-size:var(--ts-h);font-weight:var(--strong)}

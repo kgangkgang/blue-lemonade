@@ -2,7 +2,8 @@
 // 자료는 마트가 읽는 파일 그대로예요: 글꾸 data/geulkku/index.json(가벼운 목록 · 미리보기는 그 틀의 조각만 나중에) · 액자 data/frames.json. 고른 쪽만 받아요.
 // 결과 카드는 마트 부품을 빌려 써요(mart.js 의 조각 받기 · 미리보기 · 담기 · HTML 복사, frame-room.js 의 액자 그림 · 담기) — 그래서 담기 · 복사 내용이 마트와 똑같아요.
 // 주소: ?kind=frames 면 액자부터 · 캡처용 ?scene=hello|ask|guess|result|party&seed=숫자&answers=0,1,0,0,0
-import { geulkkuList, frameKit, mylogOn, cart, esc, ensureItem, previewOf, tagsHtml, glyphHtml, descOf, entryOf, doAct, sourceLinks, LOAD_FAIL, isBuiltin, BUILTIN_TAG } from './mart.js?v=20261108d';
+import { geulkkuList, frameKit, mylogOn, cart, esc, ensureItem, previewOf, tagsHtml, glyphHtml, descOf, entryOf, doAct, sourceLinks, LOAD_FAIL, isBuiltin, BUILTIN_TAG } from './mart.js?v=20261109a';
+import { lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
 
 const Q = new URLSearchParams(location.search);
 const seed = Number(Q.get('seed')) || 0;
@@ -136,7 +137,7 @@ const instant = !!Q.get('scene');   // 캡처 장면은 뜸 들이지 않아요
 function setMood(m) { genie.dataset.mood = m; }
 function say(html, lead) { bubble.innerHTML = (lead ? `<small>${lead}</small>` : '') + `<span class="q">${html.replace(/\n/g, '<br>')}</span>`; bubble.style.animation = 'none'; void bubble.offsetWidth; bubble.style.animation = ''; }
 function buttons(list) {
-    choices.innerHTML = list.map((b, i) => `<button type="button" class="${b.cls || ''}" data-i="${i}">${b.i ? `<span class="ico" aria-hidden="true">${b.i}</span>` : ''}${esc(b.t)}</button>`).join('');
+    choices.innerHTML = list.map((b, i) => `<button type="button" class="${b.cls || ''}" data-i="${i}">${b.i ? `<span class="ico" aria-hidden="true">${lemonize(b.i)}</span>` : ''}${esc(b.t)}</button>`).join('');
     choices.onclick = (e) => { const btn = e.target.closest('button'); if (btn) list[+btn.dataset.i].on(); };
     choices.hidden = !list.length;
 }
@@ -258,7 +259,7 @@ function martHref(item) { return kind === 'geulkku' ? `../geulkku/?view=1#${enco
 function whyHtml() {
     const bits = [];
     for (const st of activeSteps()) { const o = st.opts[answers[st.id]]; if (o) bits.push(`${o.i} ${o.t}`); }
-    return `<div class="gn-why"><b>지니의 근거</b> · ${bits.map(esc).join(' · ')}${guessCat ? ` · 촉 「${esc(catLabel(guessCat))}」` : ''}</div>`;
+    return `<div class="gn-why"><b>지니의 근거</b> · ${bits.map(x => lemonize(esc(x))).join(' · ')}${guessCat ? ` · 촉 「${esc(catLabel(guessCat))}」` : ''}</div>`;
 }
 function renderCard(item) {
     result.hidden = false;

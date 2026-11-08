@@ -2,6 +2,7 @@
 // 머리줄 🛒(담긴 수 배지) → 옆 서랍(폰은 아래에서 올라오는 시트): 담은 것 목록 · 합계 → 「🧾 계산하기 — 복사」 · 「📦 받기(.bl-mart.json)」 → 「담아 갔어요 🍋」 + 비우기.
 // 「🖼️ 그림만 받기」는 테마 없이 실리태번 순정에서 쓸 사람용 — 담긴 액자의 원본 그림 파일을 하나씩 내려받아요(글꾸는 그림이 아니라 건너뛰어요 · 외부 라이브러리 없이 <a download>).
 // 바구니에는 받을 데이터(테마가 읽는 칸)만 둬요. 그림 액자는 그림 주소(art · mask)만 두고 계산할 때 PNG 로 만들어요(mart.js frameReceipt).
+import { lemonHtml, lemonize, setLemonText } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
 const KEY = 'bl-mart-cart-v1';
 const MAX = 60;   // 테마 가져오기 한 번 상한과 같아요
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -98,7 +99,7 @@ async function thumb(entry) {
         try { drawPreset ||= (await import('./frame-presets.js')).drawPreset; const r = entry.receipt; const out = drawPreset(r.presetId, { ...r }); return `<span class="mart-cart-thumb is-frame"><img alt="" src="${out.art}"></span>`; } catch { return '<span class="mart-cart-thumb">🖼️</span>'; }
     }
     // 글꾸: 그 틀 바탕색 위에 틀의 우리 아이콘(없으면 이모지)
-    return `<span class="mart-cart-thumb"${entry.bg ? ` style="background:${esc(entry.bg)}"` : ''}>${entry.icon ? `<img class="mart-ico" alt="" src="${esc(asset(entry.icon))}">` : `<span class="em">${esc(entry.emoji || '📝')}</span>`}</span>`;
+    return `<span class="mart-cart-thumb"${entry.bg ? ` style="background:${esc(entry.bg)}"` : ''}>${entry.icon ? `<img class="mart-ico" alt="" src="${esc(asset(entry.icon))}">` : `<span class="em">${lemonize(esc(entry.emoji || '📝'))}</span>`}</span>`;
 }
 let renderId = 0;
 async function render() {
@@ -145,6 +146,7 @@ function fly(from, entry) {
     const a = from.getBoundingClientRect(), b = btn.getBoundingClientRect();
     const dot = Object.assign(document.createElement('span'), { className: 'mart-fly em', textContent: emoji });
     if (entry.icon) dot.innerHTML = `<img alt="" src="${esc(asset(entry.icon))}">`;   // 글꾸는 그 틀의 아이콘이 날아가요
+    else if (emoji.includes('🍋')) dot.innerHTML = lemonHtml();   // 레몬은 테마 레몬 그림으로
     dot.setAttribute('aria-hidden', 'true');
     dot.style.left = `${a.left + a.width / 2}px`; dot.style.top = `${a.top + a.height / 2}px`;
     document.body.append(dot);
@@ -157,7 +159,7 @@ function fly(from, entry) {
     anim.onfinish = () => { dot.remove(); bump(); };
 }
 export function say(text, ms = 2400) {
-    bubble.textContent = text;
+    setLemonText(bubble, text);   // 「담아 갔어요 🍋」의 레몬도 테마 레몬 그림으로
     if (btn) { const b = btn.getBoundingClientRect(); bubble.style.top = `${b.bottom + 10}px`; bubble.style.right = `${Math.max(12, innerWidth - b.right - 6)}px`; }
     bubble.classList.remove('show'); void bubble.offsetWidth; bubble.classList.add('show');
     clearTimeout(say.t); say.t = setTimeout(() => bubble.classList.remove('show'), ms);
