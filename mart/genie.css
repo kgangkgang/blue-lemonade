@@ -17,7 +17,7 @@
 .gn-head h1{margin:0;font-size:17px;font-weight:800;letter-spacing:-.01em;display:flex;align-items:center;gap:6px;color:var(--ink)}
 /* 글꾸 · 액자 전환 = 마트 탭(시안6 규격: 36 · 13 · 1px 선 · 옅은 면 · 고름 = 옅은 파랑 면 + 파란 글자 + 650) */
 .gn-seg{display:flex;gap:4px;margin-left:auto}
-.gn-seg button{position:relative;display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--tint);color:var(--muted);font:inherit;font-size:13px;font-weight:400;line-height:1;cursor:pointer}
+.gn-seg button{position:relative;display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--tint);color:var(--muted);font:inherit;font-size:14px;font-weight:400;line-height:1;cursor:pointer}
 .gn-seg button:hover{color:var(--ink)}
 .gn-seg button[aria-pressed=true]{background:var(--pick-face);color:var(--pick-ink);font-weight:650}
 .gn-seg button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}

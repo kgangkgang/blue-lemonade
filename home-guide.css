@@ -5,6 +5,7 @@
 .home-guide .top-inner{max-width:1264px;height:72px}
 .home-guide .top nav{margin-left:auto}
 .home-guide .top .brand{font-size:17px}
+.home-guide .top-actions .button.small{border-radius:999px;box-shadow:0 10px 24px -12px var(--blue)}
 .home-guide .section{max-width:1200px;padding:76px 32px}
 .home-guide .section-head{margin-bottom:30px}
 .home-guide .section-head h2{font-size:clamp(28px,3.1vw,38px);line-height:1.35;letter-spacing:-.045em}
@@ -140,8 +141,8 @@ html.device-mobile .home-guide .showcase-screen video{aspect-ratio:9/19.5}
  .install-steps{gap:12px}.install-steps li{padding:18px}.install-steps h3{font-size:18px}
 }
 @media(max-width:760px){
- html{scroll-padding-top:74px}.home-guide .top-inner{height:62px;padding-inline:18px;gap:10px}.home-guide .top .brand{font-size:15px;gap:7px}.home-guide .top .brand .lemon{width:22px;height:22px}
- .home-guide .top nav{display:flex;margin-left:auto}.home-guide .top nav a{display:none}.home-guide .top nav a[href="#features"]{display:block;font-size:12px;padding:12px 5px;white-space:nowrap}.home-guide .top-actions{margin-left:0}.home-guide .top-actions .button{min-height:42px;font-size:13px;padding-inline:14px}
+ html{scroll-padding-top:74px}.home-guide .top-inner{height:62px;padding-inline:16px;gap:12px}.home-guide .top .brand{font-size:15px;gap:7px}.home-guide .top .brand .lemon{width:22px;height:22px}
+ .home-guide .top nav{display:flex;margin-left:auto}.home-guide .top nav a{display:none}.home-guide .top nav a[href="#features"]{display:inline-flex;font-size:14px;padding:0 8px;white-space:nowrap}.home-guide .top-actions{margin-left:0}
  .home-guide .hero{display:flex;padding:32px 20px 26px;gap:26px}.intro-kicker{font-size:12px;margin-right:8px}.home-guide .hero h1{font-size:clamp(36px,10.5vw,49px);margin:19px 0;line-height:1.28}.home-guide .hero .lead{font-size:17px;line-height:1.75}
  .intro-context{font-size:13px;margin-top:12px}.home-guide .hero .actions{display:flex;flex-wrap:wrap;margin-top:22px}.home-guide .hero .actions .button{width:auto;flex:1;font-size:14px;min-height:48px;padding-inline:14px}
  .home-guide .hero .device-pick{margin-top:16px}.home-guide .hero-art.showcase{width:100%;padding:12px;max-width:500px}.showcase-top{font-size:11px}.showcase-switch button{min-height:42px;font-size:12px;padding-inline:12px}

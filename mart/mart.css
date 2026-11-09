@@ -53,8 +53,9 @@
 .tab:hover{color:var(--ink)}
 .tab[aria-current=page],.tab[aria-pressed=true]{background:var(--pick-face);color:var(--pick-ink);font-weight:var(--strong)}
 .tabset{display:inline-flex;align-items:center;gap:4px;flex:none}
-/* 잉크 가운데 맞춤(≤0.5px · 리그 화소 측정으로 맞춘 값): 숫자가 든 위 분류 탭은 잉크가 0.7px 떠서 위 여백 1 */
-.mart-groups .tab{padding-top:1px}
+/* 위 분류 탭: 글자를 <span class="tab-t"> 로 감싸 숫자 꼬리와 같은 줄 상자에 두면 잉크가 0.5px 안에 들어와요(11-09 리그 화소 측정) — 위 여백 1px 보정은 뺐어요 */
+/* 액자 마트 PC 만 탭 줄이 반 화소 자리에 놓여 잉크가 0.7px 떠요 → 글자만 0.5px(배율 2 에서 꼭 1 화소) 내려요 */
+@media (min-width:640px){body[data-mart=frames] .mart-groups .tab>.tab-t,body[data-mart=frames] .mart-groups .tab>.n{translate:0 .5px}}
 /* 이모지 아이콘의 그림이 칸 아래로 처져 그려지는 것(🛒 · 🧞 · 🍽️)을 1px 올려요 */
 .mart-cart-icon,.mart-genie .em,.mart-taste-open .em{translate:0 -1px}
 /* 정보 꼬리표(분류 · 디자인 · 크게 보기 힌트) — 누르는 것 아님: 24 알약 · 1px 선 · 12/400 · 보조색 하나(디자인만 파란 글자) */

@@ -72,7 +72,7 @@ function chipGroups({ groupsEl, chipsEl, cats, groups = [], total, onChange }) {
     const groupOf = new Map(cats.map(c => [c.id, c.group]));
     const withGroups = !!groupsEl && used.length >= 2;
     if (groupsEl) groupsEl.hidden = !withGroups;
-    const btn = (attr, id, label, n, on) => `<button type="button" class="${attr === 'group' ? 'tab' : 'chip'}" data-${attr}="${esc(id)}" aria-pressed="${on}">${esc(label)}${numHtml(n)}</button>`;
+    const btn = (attr, id, label, n, on) => `<button type="button" class="${attr === 'group' ? 'tab' : 'chip'}" data-${attr}="${esc(id)}" aria-pressed="${on}">${attr === 'group' ? `<span class="tab-t">${esc(label)}</span>` : esc(label)}${numHtml(n)}</button>`;
     let paintChips = () => {
         const g = used.find(x => x.id === sel.group);
         const list = g ? [['all', '모두', sum(g.cats)], ...g.cats.map(c => [c.id, c.label, c.n])] : [['all', '전체', total], ...cats.map(c => [c.id, c.label, c.n])];

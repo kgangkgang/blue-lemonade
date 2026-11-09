@@ -4,7 +4,7 @@
 :root[data-weather=stars]{--scene-ink:#F3F7FC;--scene-muted:#A4C7ED;--scene-wash:rgba(9,27,55,.82);--scene-filter:saturate(.7) brightness(.45);--scene-accent:#FFE873}
 .top{border-bottom:1px solid var(--line)}
 .top-inner{max-width:1320px;height:76px}
-.top nav a{font-size:13px}
+.top nav a{font-size:14px}
 .hero{max-width:none;position:relative;isolation:isolate;grid-template-columns:minmax(0,1fr) minmax(0,1.14fr);min-height:740px;padding:76px max(40px,calc((100vw - 1200px)/2)) 100px;gap:52px;color:var(--scene-ink)}
 .hero-sky,.scene-sky{position:absolute;inset:0;z-index:-2;overflow:hidden;background:#A4C7ED}
 .hero-sky::before,.scene-sky::before{content:"";position:absolute;inset:-2%;background:url('media/atmosphere-sky.webp') center/cover;filter:var(--scene-filter);transition:filter 1.2s ease}
