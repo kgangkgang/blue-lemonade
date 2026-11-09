@@ -9,7 +9,7 @@ const DROP = 'script, iframe, frame, frameset, object, embed, applet, form, inpu
 const URL_ATTRS = new Set(['href', 'src', 'xlink:href', 'action', 'background', 'poster', 'cite', 'longdesc', 'lowsrc', 'dynsrc', 'data', 'codebase', 'manifest', 'ping']);
 const DROP_ATTRS = new Set(['srcdoc', 'formaction', 'contenteditable', 'spellcheck', 'autofocus', 'is', 'nonce']);
 const IMAGE_DATA = /^data:image\/(?:png|gif|jpe?g|webp|avif|bmp);/i;
-const BAD_CSS = /expression\s*\(|behavior\s*:|-moz-binding|javascript\s*:|vbscript\s*:|@import|url\s*\(\s*['"]?\s*(?!https?:|data:image\/(?:png|gif|jpe?g|webp|avif)|#|\/(?!\/)|\.)/gi;
+const BAD_CSS = /expression\s*\(|behavior\s*:|-moz-binding|javascript\s*:|vbscript\s*:|@import|url\s*\(\s*(?!['"]?\s*(?:https?:|data:image\/(?:png|gif|jpe?g|webp|avif)|#|\/(?!\/)|\.))['"]?\s*/gi;   // 1.1.0 허용 주소 검사를 따옴표 뒤에서 — 전엔 ['"]? 가 물러나 따옴표 낀 url('https://…') · url("data:image/png…") · url('/a.png') 의 url( 이 지워져 선언이 깨졌어요
 
 /** 주소 하나가 안전한가: http(s) · mailto · tel · # · 상대 경로 · 그림 data: 만 */
 export function safeUrl(value) {

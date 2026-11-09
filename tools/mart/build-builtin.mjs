@@ -16,6 +16,8 @@ const { checkTemplate } = await import(pathToFileURL(path.join(ROOT, 'src', 'log
 const { checkItem } = await import(pathToFileURL(path.join(ROOT, 'src', 'mart-import.js')).href);
 // 1.0.9 반응 글꾸 4종(누르면 반응하는 틈 템플릿 — 봉투 열기 · 초대장 · 쪽 넘기기 · 통통 카드): 마트와 같은 자료(tools/mart/react-geulkku.mjs) · 분류 「반응」(react)
 const { REACT_FRAMES } = await import(pathToFileURL(path.join(ROOT, 'tools', 'mart', 'react-geulkku.mjs')).href);
+// 1.1.0 장면 글꾸 8종(서류 · 화면 한 장면 — 사랑 재판 · 속보 방송 · 탑승권 · 레시피 카드 · 타로 리딩 · 터미널 · 학적부 · 전보): 마트와 같은 자료(tools/mart/scene-geulkku.mjs) · 분류 「장면」(scene)
+const { SCENE_FRAMES } = await import(pathToFileURL(path.join(ROOT, 'tools', 'mart', 'scene-geulkku.mjs')).href);
 
 // [마트 심플 틀 id, 테마 분류(칩), 칩 이름, 옛 내장 컨셉 id(같은 주제)]
 export const BUILTIN_SIMPLE = [
@@ -61,11 +63,11 @@ const items = BUILTIN_SIMPLE.map(([id, category, label, was]) => {
     if (!item) throw new Error(`${id}: ${reason}`);
     return { id, label, emoji: f.emoji, category, was, template: item.template, colors: item.colors, messages: item.messages, tail: item.tail, ...(item.type ? { type: item.type } : {}) };
 });
-for (const f of REACT_FRAMES) {
-    if (!checkTemplate(f.template).ok) throw new Error(`${f.id}: 반응 글꾸 틈 템플릿이 테마 검사를 못 통과해요`);
+for (const [category, f] of [...REACT_FRAMES.map(f => ['react', f]), ...SCENE_FRAMES.map(f => ['scene', f])]) {
+    if (!checkTemplate(f.template).ok) throw new Error(`${f.id}: ${category === 'react' ? '반응' : '장면'} 글꾸 틈 템플릿이 테마 검사를 못 통과해요`);
     const { item, reason } = checkItem({ kind: 'geulkku', id: f.id, label: f.label, emoji: f.emoji, template: f.template, colors: f.colors, messages: f.messages || 'box', tail: f.tail || '', ...(f.type ? { type: f.type } : {}) });
     if (!item) throw new Error(`${f.id}: ${reason}`);
-    items.push({ id: f.id, label: f.label, emoji: f.emoji, category: 'react', template: item.template, colors: item.colors, messages: item.messages, tail: item.tail, ...(item.type ? { type: item.type } : {}) });
+    items.push({ id: f.id, label: f.label, emoji: f.emoji, category, template: item.template, colors: item.colors, messages: item.messages, tail: item.tail, ...(item.type ? { type: item.type } : {}) });
 }
 const text = `// 생성물 — tools/mart/build-builtin.mjs 가 글꾸 마트 「심플」 그림체 자료(convert-sian 산출물)에서 만들어요. 고치지 말고 다시 만들어요.
 // 테마 내장 심플 글꾸(틈 템플릿) — log-copy-presets.js 가 받은 글꾸와 같은 길(drawTemplate)로 그려요. was: 같은 주제의 옛 내장 컨셉 id(1.0.1 시험판에서 고른 모양 옮김)

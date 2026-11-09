@@ -409,10 +409,16 @@ function cMessages(model, o, k, style) {
     return scroller(tag('div', { padding: style === 'wrap' ? '10px 0 2px' : '12px 4px 2px', 'background-color': k.panel, 'border-radius': '12px' }, items), o.height + 40);
 }
 
+/** 1.0.9+ 닫힌 채 시작하는 틀(반응 글꾸 봉투 · 초대장): 미리보기에서는 로그가 보이게 펼쳐요 — 틀에 박힌 닫힌 <details> 에 open + data-bl-peek(미리보기 표시).
+ *  복사할 땐 shutPeek 로 다시 닫아요(테마 log-copy-sheet.js result · 글꾸 마트 HTML 복사 · 시식 복사). 자리에 끼운 부품(접는 추가 정보 등)은 건드리지 않아요 */
+//   1.1.0: 값 없는 `<details open>` · `<details class="a" open>` 도 이미 열린 상자예요 — 표시를 붙이면 복사할 때 원래 열린 상자까지 닫혔어요
+export const peekTemplate = template => String(template ?? '').replace(/<details(?![^>]*\sopen(?=[\s=>/]))(?=[\s>])/g, '<details open="" data-bl-peek=""');
+/** 미리보기로만 펼친 상자를 다시 닫은 HTML 글 */
+export const shutPeek = html => String(html ?? '').replace(/<details\b[^>]*\sdata-bl-peek=""[^>]*>/g, tag => tag.replace(/\sopen(?:="[^"]*")?(?=[\s>])/, '').replace(/\sdata-bl-peek=""/, ''));
 /** 1.0.1 글꾸 마트 글꾸(내 글꾸 template) — 받은 고정 색 묶음 + 틈 템플릿의 네 자리에 컨셉 틀과 같은 부품을 끼워요 */
 export function drawTemplate(model, o, item) {
     const k = templateColors(item.colors);
-    return fillTemplate(item.template, conceptParts(model, o, k, { messages: item.messages, tail: item.tail, type: item.type }));
+    return fillTemplate(peekTemplate(item.template), conceptParts(model, o, k, { messages: item.messages, tail: item.tail, type: item.type }));
 }
 /** 컨셉 틀 · 틈 템플릿이 함께 쓰는 부품 (frame: messages · tail · top) */
 export function conceptParts(model, o, k, frame) {
@@ -476,7 +482,8 @@ const ALL_CATEGORIES = [
     { id: 'event', label: '기념일' },
     { id: 'thing', label: '사물' },
     { id: 'genre', label: '장르' },
-    { id: 'react', label: '반응' },   // 1.0.9 누르면 반응하는 글꾸(봉투 열기 · 초대장 · 쪽 넘기기 · 통통 카드 — tools/mart/react-geulkku.mjs)
+    { id: 'react', label: '반응' },
+    { id: 'scene', label: '장면' },   // 1.1.0 장면 글꾸 8종(사랑 재판 · 속보 방송 · 탑승권 · 레시피 카드 · 타로 리딩 · 터미널 · 학적부 · 전보 — tools/mart/scene-geulkku.mjs)   // 1.0.9 누르면 반응하는 글꾸(봉투 열기 · 초대장 · 쪽 넘기기 · 통통 카드 — tools/mart/react-geulkku.mjs)
     { id: 'gallery', label: '갤러리' },
     { id: 'mine', label: '내 글꾸' },
 ];

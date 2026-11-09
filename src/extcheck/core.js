@@ -137,6 +137,10 @@ export function scanJs(text, { eventNames = null } = {}) {
         // history 는 흔한 칸 이름이라(store.history) 앞 객체가 창(window · globalThis · self)일 때만 · length 는 브라우저에선 못 바꿔요
         const owner = /([\w$]+)\s*\??\.\s*$/.exec(code.slice(Math.max(0, m.index - 40), m.index))?.[1];
         if (m[1] === 'history' && (m[2] === 'length' || (owner && !/^(?:window|globalThis|self|top|parent)$/.test(owner)))) continue;
+        // 1.1.0: 다른 이름도 `this.console.error =` · `a.b.localStorage.x =` 처럼 남의 칸 사슬 안이면 브라우저 것이 아니에요(`g.console.error =` 같은 창 별명 한 단은 그대로 세요)
+        const winLike = n => /^(?:window|globalThis|self|top|parent)$/.test(n);
+        const chainHead = /([\w$\])]+)\s*\??\.\s*[\w$]+\s*\??\.\s*$/.exec(code.slice(Math.max(0, m.index - 80), m.index))?.[1];
+        if (owner && (owner === 'this' || (chainHead && !(winLike(owner) && winLike(chainHead))))) continue;
         push('patch', `${m[1]}.${m[2]}`, m.index, { chained: chainedOriginal(code, [`${m[1]}.${m[2]}`]) });
     }
     for (const re = /\beventSource\s*\.\s*(emit|emitAndWait|on|once|makeFirst|makeLast|removeListener)\s*=(?!=)/g; (m = re.exec(code));) push('patch', `eventSource.${m[1]}`, m.index, { chained: chainedOriginal(code, [`eventSource.${m[1]}`]) });
@@ -205,12 +209,22 @@ function chainedOriginal(code, names) {
     const pat = name => name.split('.').map(part => part.replace(/[$()[\]]/g, '\\$&')).join('\\s*\\??\\.\\s*');
     return names.some(name => new RegExp(`[=(,:]\\s*(?:[\\w$]+\\s*\\??\\.\\s*)?${pat(name)}\\s*(?:[;,)\\n]|\\.bind\\b|\\.call\\b|\\.apply\\b|$)`, 'm').test(code));
 }
+/** i 자리가 그림 주소로 쓰는 SVG 글 안인지 — 가장 가까운 `<svg` 가 아직 안 닫혔고 바로 앞(120자 안)에 `data:image/svg+xml` 이 있을 때 */
+function inDataSvg(code, i) {
+    const open = code.lastIndexOf('<svg', i);
+    if (open < 0 || i - open > 20000 || code.lastIndexOf('</svg', i) > open) return false;
+    // 앞 SVG 가 끝난 곳 · 줄 끝 뒤로만, 그 안에서도 문장 끝(「; 」 — 주소 안 `;utf8,` 은 아님) 뒤로만 봐요 — 같은 줄의 다른 그림 주소가 뒤 SVG 를 덮지 않게
+    const near = code.slice(Math.max(0, open - 120, code.lastIndexOf('</svg', open) + 1, code.lastIndexOf('\n', open) + 1), open);
+    return /data:image\/svg\+xml(?![^]*;\s)/i.test(near);
+}
 /** 글 안의 HTML 태그 id="…" (태그 안에 있을 때만) */
 function scanIds(code, lineOf) {
     const out = [];
     for (const re = /\sid\s*=\s*\\?(["'])([A-Za-z_][\w:-]{0,80})\\?\1/g, m0 = []; (m0[0] = re.exec(code));) {
         const m = m0[0], lt = code.lastIndexOf('<', m.index), gt = code.lastIndexOf('>', m.index);
         if (lt < 0 || lt < gt || m.index - lt > 800 || !/^<[a-zA-Z]/.test(code.slice(lt, lt + 2))) continue;
+        // 1.1.0: 그림 주소(data:image/svg+xml …<svg …>) 안의 id 는 문서에 들어가지 않아요 — 정의든 보통 요소든 세지 않아요
+        if (inDataSvg(code, m.index)) continue;
         // 1.0.9 SVG 정의(필터 · 그러데이션 · 자르기 …)의 id 는 그림 안에서 url(#…) 로만 써요 — 그림 주소(data:)로 쓰면 문서 id 와 겹치지 않아요
         const svgDef = /^<(?:filter|linearGradient|radialGradient|clipPath|mask|pattern|marker|symbol)\b/i.test(code.slice(lt, lt + 20));
         out.push({ k: 'id', key: m[2], line: lineOf(m.index), ...(svgDef ? { how: 'svg' } : {}) });

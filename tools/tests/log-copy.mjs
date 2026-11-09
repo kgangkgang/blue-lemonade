@@ -264,7 +264,7 @@ await test('분류: 칩 하나에 그 분류 모양만 · 할로윈은 1.0.1 에
     const { CATEGORIES, presetsIn, categoryOf } = await load('src/log-copy-presets.js');
     // 1.0.1(11-04): 틀이 있는 분류만 칩 — 내장 심플 30(기념일 7 · 사물 11 · 장르 12)이라 세 칩이 모두 서요
     // 1.0.9: 반응 글꾸 4종(봉투 열기 · 초대장 · 쪽 넘기기 · 통통 카드)이 「반응」 칩으로
-    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'react', 'gallery', 'mine']);
+    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'react', 'scene', 'gallery', 'mine']);
     for (const p of PRESETS) assert.ok(CATEGORIES.some(c => c.id === p.category && c.id !== 'mine'), `${p.id} 분류`);
     assert.deepEqual(presetsIn('halloween'), [], '할로윈 13종은 테마 기본에서 빠졌어요(글꾸 마트 → 내 글꾸)');
     for (const c of CATEGORIES) assert.ok(!presetsIn(c.id, []).some(id => id.startsWith('halloween')), `${c.label} 에는 할로윈 없음`);
@@ -292,7 +292,7 @@ await test('할로윈 31종(1.0.1 글꾸 마트 · 10월 31일 · 틈 템플릿�
     const hw = CONCEPT_FRAMES.map(f => ({ id: f.id, own: f.colors }));
     assert.equal(hw.length, 31, '할로윈 31종(10월 31일)');
     assert.equal(new Set(hw.map(f => f.id)).size, 31, '할로윈 id 겹침 없음');
-    assert.ok(PRESETS.filter(p => !['event', 'thing', 'genre', 'react'].includes(p.category)).every(p => !p.own), '컨셉 분류(+ 1.0.9 반응) 밖은 전용 색 없음');
+    assert.ok(PRESETS.filter(p => !['event', 'thing', 'genre', 'react', 'scene'].includes(p.category)).every(p => !p.own), '컨셉 분류(+ 1.0.9 반응 · 1.1.0 장면) 밖은 전용 색 없음');
     assert.ok(PRESETS.filter(p => p.own).every(p => p.template), '전용 색 틀은 내장 심플 글꾸(틈 템플릿)뿐');
     const L = (hex) => { const n = hex.replace('#', ''); const v = [0, 2, 4].map(i => Number.parseInt(n.slice(i, i + 2), 16) / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
     const ratio = (a, b) => { const [h, l] = [L(a), L(b)].sort((x, y) => y - x); return (h + 0.05) / (l + 0.05); };
@@ -451,8 +451,34 @@ await test('1.0.9 「레몬」 틀 제목 앞은 🍋 이모지가 아니라 테
     assert.match(style, /url\('data:image\/svg\+xml,/);
     assert.equal(safeCss(style), style, '붙여 넣기 소독에서 그대로');
 });
-console.log(`log-copy: ${passed} passed, ${failed} failed`);
-if (failed) process.exit(1);
+await test('11-09 닫힌 채 시작하는 반응 글꾸(봉투 · 초대장): 틀 원본은 닫힘 · 미리보기만 펼침(data-bl-peek) · 복사 글(shutPeek · 소독)은 다시 닫힘', async () => {
+    const { shutPeek, peekTemplate } = await load('src/log-copy-presets.js');
+    const { BUILTIN_TEMPLATES } = await load('src/log-copy-builtin.gen.js');
+    const { checkTemplate } = await load('src/log-copy-template.js');
+    for (const id of ['c-react-sp-1', 'c-react-sp-2']) {
+        const t = BUILTIN_TEMPLATES.find(x => x.id === id);
+        assert.ok(t && /<details style="/.test(t.template) && !/<details[^>]*\sopen=/.test(t.template), `${id}: 원본(복사 · 테마용 · 담기)은 닫힌 채`);
+        assert.ok(checkTemplate(t.template).ok, `${id}: 받은 글꾸 규칙 그대로`);
+        const html = renderLog(model, { shape: id, ui, fields });
+        assert.equal((html.match(/<details open="" data-bl-peek=""/g) ?? []).length, 1, `${id}: 미리보기는 펼침`);
+        const out = shutPeek(html);
+        assert.ok(!shutPeek(html.replace('<details open="" data-bl-peek=""', '<details data-bl-peek=""')).includes('data-bl-peek'), `${id}: 미리보기에서 닫은 뒤 복사해도 표시가 안 남아요`);
+        assert.ok(!/<details[^>]*\sopen=/.test(out) && !out.includes('data-bl-peek'), `${id}: 복사 글은 닫힘`);
+    }
+    // 처음부터 펼친 틀(편지 · 소포)과 자리에 끼운 부품은 그대로
+    for (const id of ['concept-sp-letter', 'concept-sp-parcel']) assert.ok(!renderLog(model, { shape: id, ui, fields }).includes('data-bl-peek'), `${id}: 펼친 채 그대로`);
+    assert.equal(peekTemplate('<div>{{info}}</div>'), '<div>{{info}}</div>');
+    assert.equal(peekTemplate('<details open="" style="a">'), '<details open="" style="a">');
+    // 1.1.0 값 없는 open(이미 열린 상자)에는 표시를 붙이지 않아요 — 붙이면 복사(result · shutPeek)에서 원래 열린 상자가 닫혔어요 · data-open 은 open 이 아니에요
+    for (const t of ['<details open><summary>a</summary></details>', '<details class="e" open>x</details>', '<details\nopen>x</details>', '<details open/>']) assert.equal(peekTemplate(t), t, t);
+    assert.equal(peekTemplate('<details data-open="1">x</details>'), '<details open="" data-bl-peek="" data-open="1">x</details>');
+    // 복사 소독은 미리보기 표시(data-bl-peek)를 걷어요 — 혹시 남아도 붙인 곳엔 안 가요
+    const sheet = fs.readFileSync(path.join(root, 'src/log-copy-sheet.js'), 'utf8');
+    assert.match(sheet, /details\[data-bl-peek\][\s\S]{0,120}removeAttribute\('open'\)/, '로그 복사 창 결과(result)에서 다시 닫아요');
+    // 1.1.0 창을 닫을 때 남은 대기(규칙 · 그림 주소 · 글자색 · 되돌리기)를 모두 걷어요
+    const onClose = /dialog\.addEventListener\('close', \(\) => \{([^\n]*)\}, \{ once: true \}\)/.exec(sheet)?.[1] ?? '';
+    for (const t of ['ruleTimer', 'imageTimer', 'inkTimer', 'hist.timer']) assert.ok(onClose.includes(`clearTimeout(${t})`), `닫을 때 ${t} 를 걷어요`);
+});
 
 await test('이름 숨김: 가림 글자를 직접 정해요(word) · 제목 · 보낸 이 칸이 숨긴 이름이면 비워요', () => {
     const named = { ...model, chatName: 'Seraphina', userName: 'Lemon' };
@@ -463,3 +489,5 @@ await test('이름 숨김: 가림 글자를 직접 정해요(word) · 제목 · 
     assert.equal(maskNode('세라', { mask: 'auto', word: '아무개' }).text, '아무개');
     assert.equal(maskNode('세라', { mask: 'auto', word: '' }).text, '○○', '빈 글자면 기본 ○○');
 });
+console.log(`log-copy: ${passed} passed, ${failed} failed`);
+if (failed) process.exit(1);

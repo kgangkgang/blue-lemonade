@@ -261,7 +261,7 @@ export function syncControlInk(active, key = '') {
             }
         };
         document.fonts?.addEventListener('loadingdone', onFontsLoaded);
-        window.addEventListener('resize', () => document.querySelectorAll(ROOTS).forEach(queue), { passive: true });   // 안 보이는 창은 alignRoots 가 건너뜀
+        window.addEventListener('resize', () => { if (enabled) document.querySelectorAll(ROOTS).forEach(queue); }, { passive: true });   // 안 보이는 창은 alignRoots 가 건너뜀 · 1.1.0 꺼져 있으면 문서를 훑지 않아요
         watch();
     }
     if (!enabled) {

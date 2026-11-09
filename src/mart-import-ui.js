@@ -85,7 +85,10 @@ export function openMartImport({ kind = 'frames', text = '', apply, done } = {})
         event.target.value = '';
         if (!file) return;
         if (file.size > MART_TEXT_MAX) { show('파일이 너무 커요(40MB 까지)'); return; }
-        run(await file.text());
+        // 1.1.0 읽기가 막히면(지워진 파일 · 권한) 처리 안 된 거절로 조용히 끝났어요 — 결과 칸에 알려요
+        let raw;
+        try { raw = await file.text(); } catch (error) { show(`파일을 읽지 못했어요 — ${error?.message || error}`); return; }
+        run(raw);
     });
     dialog.addEventListener('close', () => dialog.remove());
     showThemeModal(dialog);

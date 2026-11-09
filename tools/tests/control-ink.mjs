@@ -23,9 +23,10 @@ const nested = { ...panel, contains: e => e === nested };
 const fontEvents = {}, winEvents = {};
 const context2d = { measureText: () => ({ fontBoundingBoxAscent: 14, width: 60, actualBoundingBoxLeft: 0, actualBoundingBoxAscent: 40, actualBoundingBoxDescent: 0 }),
     fillText() {}, getImageData() { const data = new Uint8ClampedArray(76 * 56 * 4); for (let y = 8; y < 48; y++) data[(y * 76 + 8) * 4 + 3] = 255; return { data }; } };
+let docScans = 0;   // 1.1.0 문서 전체 훑기(창 크기 바뀜 등) 횟수
 const document = {
     body: {}, fonts: { addEventListener: (k, f) => { fontEvents[k] = f; } },
-    querySelectorAll: () => [panel, nested],
+    querySelectorAll: () => { docScans++; return [panel, nested]; },
     createElement: () => ({ width: 76, height: 56, getContext: () => context2d }),
     createTreeWalker: () => { let once = false; return { nextNode: () => once ? null : (once = true, node) }; },
     createRange: () => ({ selectNodeContents() {}, getClientRects: () => [{ width: 40, height: 14, top: 10 + parseFloat(style.getPropertyValue('padding-top')) - 8 }] }),
@@ -52,6 +53,7 @@ test('text changes outside controls (slider readouts) do not rescan; changes ins
 test('hidden root is skipped before control collection', () => { panel.hidden = true; sandbox.sync(true, 'font-b'); flush(); assert.equal(reads, 1); panel.hidden = false; });
 test('font loading and resize coalesce; style writes cannot feed back', () => { fontEvents.loadingdone(); winEvents.resize(); assert.equal(frames.size, 1); flush(); assert.equal(reads, 2); assert.ok(!(observer.options.attributeFilter || observer.options.attributes).includes('style')); });
 test('disable cancels queued work, disconnects, and restores inline priorities', () => { winEvents.resize(); sandbox.sync(false); assert.equal(frames.size, 0); assert.equal(observer.active, false); assert.equal(style.getPropertyValue('padding-top'), '8px'); assert.equal(style.getPropertyValue('padding-bottom'), '8px'); assert.equal(style.getPropertyPriority('padding-top'), ''); fontEvents.loadingdone(); assert.equal(frames.size, 0); });
+test('1.1.0 disabled: resize does not scan the document', () => { const before = docScans; for (let i = 0; i < 30; i++) winEvents.resize(); assert.equal(docScans, before); assert.equal(frames.size, 0); });
 test('reenable resumes once without adding more listeners', () => { sandbox.sync(true, 'font-a'); flush(); assert.equal(observer.active, true); assert.deepEqual(Object.keys(fontEvents), ['loadingdone']); assert.deepEqual(Object.keys(winEvents), ['resize']); });
 test('7.8.5 font loading only realigns visible roots that use the loaded family', () => { flush(); const before = reads; fontEvents.loadingdone({ fontfaces: [{ family: '"Unrelated Font"' }] }); assert.equal(frames.size, 0, 'unrelated font: no rescan'); fontEvents.loadingdone({ fontfaces: [{ family: 'sans-serif' }] }); assert.equal(frames.size, 1); flush(); assert.equal(reads, before + 1); panel.hidden = nested.hidden = true; const hiddenBefore = reads; fontEvents.loadingdone({ fontfaces: [{ family: 'sans-serif' }] }); flush(); assert.equal(reads, hiddenBefore, 'hidden root: controls are not collected'); panel.hidden = nested.hidden = false; });
 console.log(`control-ink: ${count} passed`);

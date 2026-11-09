@@ -179,10 +179,11 @@ function structural(node, container) {
     return container === 'any' && node.children.filter(c => c.type === 'el').length > 1;
 }
 
-const MARK_ATTR = /\s+data-bl-(?!egg\b)[\w-]*(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?/gi;   // 못 읽은 HTML 을 한 줄로 돌려줄 때만
-/** 여는 태그 글 그대로 — 미리보기 표시(data-bl-*)만 빼고 (1.0.1 누르면 반응 data-bl-egg 는 모양이라 남겨요) */
+const MARK_ATTR = /\s+data-bl-(?!egg\b|peek\b)[\w-]*(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?/gi;   // 못 읽은 HTML 을 한 줄로 돌려줄 때만
+/** 여는 태그 글 그대로 — 미리보기 표시(data-bl-*)만 빼고 (1.0.1 누르면 반응 data-bl-egg 는 모양이라 남겨요)
+ *  11-09 data-bl-peek(미리보기로만 펼친 상자)도 남겨요 — 글꾸 마트는 이 글을 미리보기로 보여 주고 복사할 때 shutPeek 로 닫아요(테마 로그 복사 창은 result 에서 먼저 닫아 이 표시가 오지 않아요) */
 function openTag(node) {
-    const marks = attrsOf(node).filter(a => a.name.startsWith('data-bl-') && a.name !== 'data-bl-egg');
+    const marks = attrsOf(node).filter(a => a.name.startsWith('data-bl-') && a.name !== 'data-bl-egg' && a.name !== 'data-bl-peek');
     if (!marks.length) return node.open;
     let out = node.open;
     for (const a of marks.reverse()) out = out.slice(0, a.start) + out.slice(a.end);

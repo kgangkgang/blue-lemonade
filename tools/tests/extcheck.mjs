@@ -152,6 +152,16 @@ await test('1.0.9 공용 모듈 · 사슬 · 칸 안 단축키 — 참고로 낮
     assert.deepEqual(scanJs("store.history.length = Math.min(store.history.length, 9);").filter(s => s.k === 'patch'), []);
     assert.deepEqual(scanJs("let history = [];\nhistory.length = 0;").filter(s => s.k === 'patch'), []);
     assert.deepEqual(scanJs("history.pushState = function () {};").filter(s => s.k === 'patch').map(s => s.key), ['history.pushState']);
+    // 1.1.0: 다른 이름도 남의 칸 사슬(this. · a.b.) 안이면 브라우저 것이 아님 · 창 별명 한 단(g.) · window.parent. 는 그대로 덮어쓰기
+    const patches = c => scanJs(c).filter(s => s.k === 'patch').map(s => s.key);
+    assert.deepEqual(patches("this.console.error = f;"), []);
+    assert.deepEqual(patches("a.b.localStorage.x = 1;"), []);
+    assert.deepEqual(patches("g.console.error = f;"), ['console.error']);
+    assert.deepEqual(patches("window.parent.console.error = f;"), ['console.error']);
+    // 1.1.0: 그림 주소(data:image/svg+xml) 안의 id 는 정의가 아니어도 문서 id 가 아님 · 문서에 넣는 SVG 의 보통 요소 id 는 그대로
+    const ids = c => scanJs(c).filter(s => s.k === 'id').map(s => s.key);
+    assert.deepEqual(ids('const u = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="x"><g id="q"></g></svg>`);'), []);
+    assert.deepEqual(ids('const u = `data:image/svg+xml;utf8,<svg><g id="q"></g></svg>`; const d = `<svg><g id="z"></g></svg>`;'), ['z']);
     // SVG 정의 id 끼리는 참고, 보통 요소 id 와 섞이면 그대로
     const svgA = ext('svga', { 'i.js': 'const a = `<svg xmlns="http://www.w3.org/2000/svg"><defs><filter id="s"></filter></defs></svg>`;' });
     const svgB = ext('svgb', { 'i.js': 'const b = `<svg><linearGradient id="s"></linearGradient></svg>`;' });

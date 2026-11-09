@@ -575,7 +575,12 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
     document.addEventListener('keydown', escKey, true);
     const dialog = host.matches?.('dialog') ? host : null;
     dialog?.addEventListener('cancel', escCancel);
-    session.stopEsc = () => { document.removeEventListener('keydown', escKey, true); dialog?.removeEventListener('cancel', escCancel); };
+    // 1.1.0 띄운 창(로그 복사 · 설정 창)이 먼저 닫히면(코드가 닫음 · 창을 새로 엶) 층은 창과 함께 빠지는데 이 모듈은 열린 줄 알았어요 —
+    //   문서 Esc 가로채기(다음 Esc 한 번을 삼킴) · 창 크기 리스너 · onInput 이 붙든 그 창의 클로저가 다음 색 고르기 때까지 남았어요. 창이 닫히면 같이 닫아요
+    const hostClosed = () => { if (session?.host === dialog) closeColorPick(); };
+    dialog?.addEventListener('close', hostClosed);
+    session.host = dialog;
+    session.stopEsc = () => { document.removeEventListener('keydown', escKey, true); dialog?.removeEventListener('cancel', escCancel); dialog?.removeEventListener('close', hostClosed); };
     host.append(layer);
     // 실리태번 팝업(dialog) 안이나 transform 걸린 조상 밑에서는 fixed 기준이 화면이 아닐 수 있음 → 층을 화면 원점으로 되돌림
     const origin = layer.getBoundingClientRect();

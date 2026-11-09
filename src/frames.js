@@ -18,7 +18,7 @@ export function tidyFrame(o) {
         if (typeof def === 'boolean') o[key] = o[key] === true || o[key] === 'true';
     }
     for (const [key, [min, max]] of Object.entries(FRAME_RANGE)) {
-        const n = Number(o[key]);
+        const n = `${o[key] ?? ''}`.trim() ? +o[key] : NaN;
         o[key] = Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : FRAME_DEFAULTS[key];
     }
     for (const key of ['edgeColor', 'edgeShadowColor']) if (!/^#[a-f\d]{6}$/i.test(o[key])) o[key] = FRAME_DEFAULTS[key];

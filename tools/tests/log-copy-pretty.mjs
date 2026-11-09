@@ -58,7 +58,7 @@ function cases(n) {
 const ALL = [1, 9].flatMap(n => cases(n).map(c => ({ ...c, n })));
 
 // ── 따로 짠 판단(log-copy-pretty.js 를 안 써요) ──
-const stripMarks = html => html.replace(/ data-bl-(?!egg=)[a-z]+(?:="[^"]*")?/g, '');   // 1.0.1 누르면 반응(data-bl-egg)은 모양이라 남아요
+const stripMarks = html => html.replace(/ data-bl-(?!egg=|peek=)[a-z]+(?:="[^"]*")?/g, '');   // 11-09 data-bl-peek(미리보기로만 펼친 상자)도 남아요   // 1.0.1 누르면 반응(data-bl-egg)은 모양이라 남아요
 const unbreak = html => html.replace(/<!--[\s\S]*?-->/g, '').replace(/\n */g, '');
 const styleOf = el => Object.fromEntries((el.open.match(/\sstyle="([^"]*)"/)?.[1] ?? '').replace(/&quot;/g, '"').split(';').map(p => p.split(':')).filter(p => p.length > 1).map(([k, ...v]) => [k.trim(), v.join(':').trim()]));
 const BLOCKS = { div: 'block', p: 'block', ul: 'block', ol: 'block', li: 'list-item', details: 'block', summary: 'block', blockquote: 'block', hr: 'block',
@@ -103,7 +103,8 @@ await test(`틀 ${ALL.length / 2}개(테마 ${PRESETS.length} · 마트 컨셉 $
         c.pretty = pretty;
         assert.ok(pretty.startsWith('<!-- 블루레몬에이드 로그 복사 · 「'), `${c.id}/${c.n}: 맨 앞 안내 주석 (편집용으로 못 만들어 한 줄로 돌아왔어요)`);
         assert.ok(pretty.split('\n').length > 10, `${c.id}/${c.n}: 여러 줄`);
-        assert.ok(!/data-bl-(?!egg=)/.test(pretty), `${c.id}: data-bl-* 표시는 걷어요(누르면 반응 data-bl-egg 만 남아요)`);
+        assert.ok(!/data-bl-(?!egg=|peek=)/.test(pretty), `${c.id}: data-bl-* 표시는 걷어요(누르면 반응 data-bl-egg · 펼침 표시 data-bl-peek 만 남아요)`);
+        assert.equal((pretty.match(/data-bl-peek=/g) ?? []).length, (c.html.match(/data-bl-peek=/g) ?? []).length, `${c.id}: 펼침 표시(data-bl-peek)는 그대로`);
         assert.equal((pretty.match(/data-bl-egg=/g) ?? []).length, (c.html.match(/data-bl-egg=/g) ?? []).length, `${c.id}: 누르면 반응(data-bl-egg)은 그대로`);
     }
 });

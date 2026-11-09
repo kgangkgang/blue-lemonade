@@ -159,13 +159,30 @@ export async function openLogSheet(model) {
     document.body.append(dialog);
     const $ = selector => dialog.querySelector(selector);
     const frame = $('[data-lc-frame]');
+    // 1.1.0 칩 줄(모양 · 분류 · 색 · 글자색 · 가릴 이름 · 바꾸기 줄)은 누를 때마다 innerHTML 로 다시 그려요 — 누른 칩에 있던 초점이 함께 사라져 body 로 떨어지면
+    //   키보드 · 화면 읽기 사용자는 창 맨 앞부터 다시 Tab 해야 했어요. 다시 그린 줄에서 같은 열쇠(data-*)의 칩으로 초점을 돌려줘요 ·
+    //   그 칩이 없어졌으면(지운 내 글꾸 · 뺀 이름 · 지운 줄) 같은 줄의 고른 칩이나 첫 단추로
+    const FOCUS_KEYS = ['data-shape', 'data-lc-del', 'data-cat', 'data-palette', 'data-lc-mode', 'data-lc-ink', 'data-lc-name-remove', 'data-lc-rule-remove', 'data-lc'];
+    const FOCUS_ROWS = '[data-lc-shapes], [data-lc-cats], [data-lc-pals], [data-lc-inks], [data-lc-name-list], [data-lc-rules]';
+    function keepFocus(paint) {
+        return (...args) => {
+            const active = document.activeElement;
+            if (!active || active === dialog || !dialog.contains(active)) return paint(...args);
+            const attr = FOCUS_KEYS.find(name => active.hasAttribute(name));
+            const key = attr ? `[${attr}="${CSS.escape(active.getAttribute(attr))}"]` : null;
+            const row = active.closest(FOCUS_ROWS);
+            const out = paint(...args);
+            if (!active.isConnected) ((key && dialog.querySelector(key)) || row?.querySelector('[aria-checked="true"], button:not(:disabled)'))?.focus({ preventScroll: true });
+            return out;
+        };
+    }
     const custom = () => store().custom.find(c => c.id === state.shape) ?? null;
     // 1.0.1 마트 글꾸(template)는 받은 고정 색 — 전용 색 틀처럼 다뤄요(미리보기 바탕 · 숨긴 글 색)
     const own = () => { const mine = custom(); if (!mine?.template) return ownColors(state.shape); const k = templateColors(mine.colors); return { ...k, raised: k.panel2 }; };
     // 1.0.8 글자색 — 바꿀 수 있는 글꾸(틈 템플릿)와 바꾼 색을 얹은 판
     const inkBase = () => { const mine = custom(); return mine ? (mine.template ? mine : null) : (PRESETS.find(p => p.id === state.shape)?.template ?? null); };
     const inkTemplate = () => { const base = inkBase(); return base && Object.keys(state.inks).length ? { ...base, colors: { ...templateColors(base.colors), ...state.inks } } : null; };
-    const drawInks = () => {
+    const drawInks = keepFocus(() => {
         const row = $('[data-lc-inks]'), base = inkBase();
         if (state.inkShape !== state.shape) { state.inks = {}; state.inkShape = state.shape; }
         row.hidden = !base;
@@ -177,7 +194,7 @@ export async function openLogSheet(model) {
         row.dataset.key = key;
         const save = custom() ? '내 글꾸 색 저장' : '내 글꾸에 저장', off = changed ? '' : ' disabled';
         row.innerHTML = `<i class="fa-solid fa-palette bl-lc-ink-title" aria-hidden="true" title="글자색"></i><button type="button" class="bl-lc-chip bl-lc-ink-act" data-lc="ink-reset" aria-label="원래 색" title="원래 색"${off}><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button><button type="button" class="bl-lc-chip bl-lc-ink-act" data-lc="ink-save" aria-label="${save}" title="${save}"${off}><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button><i class="bl-lc-ink-sep" aria-hidden="true"></i>${INK_ROLES.map(([role, label]) => `<button type="button" class="bl-lc-chip bl-lc-ink" data-lc-ink="${role}" style="--ink:${esc(k[role])}" aria-label="${esc(label)} 색 바꾸기"><i class="bl-lc-ink-dot" aria-hidden="true"></i><span>${esc(label)}</span></button>`).join('')}`;
-    };
+    });
     let inkTimer = 0;
     const pickInk = async (button) => {
         const role = button.dataset.lcInk, base = inkBase();
@@ -287,7 +304,7 @@ export async function openLogSheet(model) {
         }
         $('[data-lc="fields"]').setAttribute('aria-pressed', String(!$('[data-lc-fields]').hidden));
     };
-    const drawTools = () => {
+    const drawTools = keepFocus(() => {
         const ct = tools();
         $('[data-lc="hide"]').setAttribute('aria-pressed', String(ct.redact));
         $('[data-lc="words"]').setAttribute('aria-pressed', String(ct.replace));
@@ -300,7 +317,7 @@ export async function openLogSheet(model) {
         if (box.querySelector('input:focus')) return;   // 치는 중에는 줄을 다시 그리지 않아요
         const rows = ct.replaceRules.length ? ct.replaceRules : [{ from: '', to: '' }];
         box.innerHTML = rows.map((rule, i) => `<div class="bl-lc-rule" data-rule="${i}"><input type="text" maxlength="100" placeholder="찾을 말" aria-label="찾을 말 ${i + 1}" data-rule-from value="${esc(rule.from)}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><input type="text" maxlength="100" placeholder="바꿀 말" aria-label="바꿀 말 ${i + 1}" data-rule-to value="${esc(rule.to)}"><button type="button" class="salty-btn bl-lc-icon" data-lc-rule-remove="${i}" aria-label="${i + 1}번 줄 지우기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>`).join('');
-    };
+    });
     let ruleTimer = 0;
     const readRules = () => {
         const ct = tools();
@@ -310,7 +327,7 @@ export async function openLogSheet(model) {
     };
 
     // ① 모양 칩
-    const drawShapes = () => {
+    const drawShapes = keepFocus(() => {
         const s2 = store();
         const shown = new Set(presetsIn(state.category, s2.custom));
         $('[data-lc-cats]').innerHTML = CATEGORIES.map(c => `<button type="button" class="${state.category === c.id ? 'on' : ''}" aria-pressed="${state.category === c.id}" data-cat="${c.id}">${esc(c.label)}</button>`).join('');
@@ -333,9 +350,9 @@ export async function openLogSheet(model) {
         const preset = PRESETS.find(x => x.id === state.shape);
         $('[data-lc-gallery]').hidden = !preset?.images;
         $('[data-lc-images-count]').textContent = preset?.images ? `사진 ${(model.images?.length ?? 0) + state.images.length}장` : '';
-    };
+    });
     // ② 색 칩 — 테마 「색」 화면의 에이드 카드(.salty-pal) 그대로, 작게
-    const drawColors = () => {
+    const drawColors = keepFocus(() => {
         const mode = modeOf(state.palette);
         const plain = !!custom() || !!ownColors(state.shape);   // 내 글꾸 · 전용 색 틀(할로윈)은 에이드 색 칩이 없어요
         $('[data-lc-colors]').hidden = plain;
@@ -352,7 +369,7 @@ export async function openLogSheet(model) {
         const pals = $('[data-lc-pals]');
         revealTab(pals, pals.querySelector('.on'));
         applyFade(pals);
-    };
+    });
 
     // ③ 미리보기 (눌러서 고침)
     const pageBg = () => (own()?.bg ?? (custom() || (state.shape === 'plain' && state.palette === nowPalette()) ? getComputedStyle(dialog).backgroundColor : colorsOf(paletteFor(state.shape, state.palette)).bg));
@@ -453,21 +470,11 @@ export async function openLogSheet(model) {
     const result = ({ marks = false } = {}) => {
         const doc = frame.contentDocument;
         if (!doc?.body) return '';
-        // 글자색 굳히기: 미리보기에서 고친 글 · 숨긴 글 · 내 글꾸까지, color 가 인라인으로 없는 요소에 지금 보이는 글자색을 적어요
-        // (붙인 곳의 바탕 · 글자색 · <style> 이 무엇이든 안 보이는 글자 0 — 사용자 규칙)
-        const win = frame.contentWindow;
-        for (const el of doc.body.querySelectorAll('*')) {
-            if (el.matches('style, script, br, img, col, colgroup')) continue;
-            const cs = win.getComputedStyle(el);
-            if (!el.style.color) el.style.color = cs.color;
-            // 1.0.7 일부 커뮤니티 사이트는 다크 모드에 맞춘다며 글의 color 를 인라인 !important 로 덮어써요(파랑 대사가 검정 · 남색 제목이 흰색으로 바뀌어 안 보임 — 사용자 제보).
-            // 실제로 칠하는 색(-webkit-text-fill-color)은 건드리지 않아서 같은 색을 함께 적어 둬요. 글자를 투명하게 칠한 장식(그라데이션 글씨)은 그대로
-            if (!el.style.webkitTextFillColor) {
-                const fill = cs.webkitTextFillColor;
-                el.style.webkitTextFillColor = /^(transparent|rgba\(0, 0, 0, 0\))$/.test(fill || '') ? fill : el.style.color;
-            }
-        }
+        // 글자색 굳히기: 미리보기에서 고친 글 · 숨긴 글 · 내 글꾸까지 (붙인 곳의 바탕 · 글자색 · <style> 이 무엇이든 안 보이는 글자 0 — 사용자 규칙) — pinColors
+        pinColors(doc.body, frame.contentWindow);
         const body = doc.body.cloneNode(true);
+        // 1.0.9+ 미리보기로만 펼친 상자(닫힌 채 시작하는 틀 · data-bl-peek)는 복사 글에서 다시 닫아요 — 붙인 곳에서는 닫힌 채 시작해 누르면 열려요
+        for (const box of body.querySelectorAll('details[data-bl-peek]')) { box.removeAttribute('open'); box.removeAttribute('data-bl-peek'); }
         sanitizeTree(body, { keepPreviewMarks: marks });
         return body.innerHTML.trim();
     };
@@ -483,7 +490,10 @@ export async function openLogSheet(model) {
 
     // 1.0.1 마트에서 가져오기 — 새 창으로 글꾸 마트 열기 · 붙여넣기 · 파일 (받은 글꾸는 「내 글꾸」로, 액자는 보관함으로)
     const openMart = async (text) => {
-        const { openMartImport } = await import('./mart-import-ui.js');
+        // 1.1.0 창 모듈을 못 받으면(연결 끊김 · 새 판 올라온 뒤 옛 조각) 누른 것이 조용히 끝났어요 — 설정 창 쪽처럼 알려요
+        let openMartImport;
+        try { ({ openMartImport } = await import('./mart-import-ui.js')); }
+        catch (error) { toastr.error(`마트 창을 열지 못했어요 — ${error?.message || error}`, '마트에서 가져오기'); return; }
         openMartImport({ kind: 'geulkku', text, apply: (fn) => { fn(getSettings()); saveSettings(); }, done: (result) => {
             const first = result.geulkku[0];
             if (!first) return;
@@ -679,7 +689,8 @@ export async function openLogSheet(model) {
     dialog.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && event.target.matches?.('[data-lc-name-input]')) { event.preventDefault(); $('[data-lc="name-add"]').click(); }
     });
-    dialog.addEventListener('close', () => { clearTimeout(ruleTimer); if (open === dialog) open = null; dialog.remove(); }, { once: true });
+    // 1.1.0: 닫을 때 남은 대기(규칙 · 그림 주소 · 글자색 · 되돌리기 묶음 · 길게 누르기)를 모두 걷어요 — 닫힌 직후 떨어진 창을 다시 그리지 않게
+    dialog.addEventListener('close', () => { clearTimeout(ruleTimer); clearTimeout(imageTimer); clearTimeout(inkTimer); clearTimeout(hist.timer); clearTimeout(hold); hist.timer = 0; if (open === dialog) open = null; dialog.remove(); }, { once: true });
     open = dialog;
     drawShapes();
     drawColors();
@@ -692,6 +703,28 @@ export async function openLogSheet(model) {
         revealTab(shapes, shapes.querySelector('[aria-checked="true"]'));
         for (const strip of dialog.querySelectorAll('.bl-chip-row')) applyFade(strip);
     });
+}
+
+/**
+ * 글자색 굳히기(로그 복사 창 result): color 가 인라인으로 없는 요소에 지금 보이는 글자색 · 칠하는 색(-webkit-text-fill-color)을 적어요.
+ * 1.0.7 일부 커뮤니티 사이트는 다크 모드에 맞춘다며 글의 color 를 인라인 !important 로 덮어써요(파랑 대사가 검정 · 남색 제목이 흰색으로 바뀌어 안 보임 — 사용자 제보).
+ *   실제로 칠하는 색은 건드리지 않아서 같은 색을 함께 적어 둬요. 글자를 투명하게 칠한 장식(그라데이션 글씨)은 그대로.
+ * 1.1.0 읽기를 다 하고 나서 써요 — 전엔 요소마다 쓰고 바로 다음 요소의 getComputedStyle 을 읽어 요소 수만큼 스타일 다시 계산을 강제했어요
+ *   (복사 한 번에 result 가 두 번 · 긴 로그는 요소 수천 개). 조상에 적는 값은 그 조상의 계산값 그대로라 자식이 읽는 값은 같아요.
+ */
+export function pinColors(body, win) {
+    const todo = [];
+    for (const el of body.querySelectorAll('*')) {
+        if (el.matches('style, script, br, img, col, colgroup')) continue;
+        const color = !el.style.color, fill = !el.style.webkitTextFillColor;
+        if (!color && !fill) continue;
+        const cs = win.getComputedStyle(el);
+        todo.push([el, color ? cs.color : null, fill ? cs.webkitTextFillColor : null]);
+    }
+    for (const [el, color, fill] of todo) {
+        if (color !== null) el.style.color = color;
+        if (fill !== null) el.style.webkitTextFillColor = /^(transparent|rgba\(0, 0, 0, 0\))$/.test(fill || '') ? fill : el.style.color;
+    }
 }
 
 function toast(ok, message) {
