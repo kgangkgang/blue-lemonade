@@ -1,4 +1,4 @@
-// 원본 omni-next 953c439a 의 src/log-copy-pretty.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」가 테마 로그 복사와 같은 모양으로 그리려고 써요)
+// 원본 codex/react-geulkku-2 1122fac1 의 src/log-copy-pretty.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」가 테마 로그 복사와 같은 모양으로 그리려고 써요)
 // 로그 복사 — 「HTML 복사」 코드를 사람이 읽고 고치기 쉬운 꼴로 (1.0.1 · 11-03 사용자 요구: 「사이트에 올리기 전에 수정하고 싶을 수도 있으니 인간 친화적으로」)
 // ① 줄 나눔 · 2칸 들여쓰기는 띄어쓰기가 생겨도 화면에 안 나오는 자리에서만 넣어요 — 블록 칸의 맨 앞 · 맨 끝 · 블록 요소 바로 앞뒤(줄 끝 · 줄 머리 공백은 브라우저가 지워요),
 //    flex · grid · 표 칸 사이(공백만 든 글은 그리지 않아요). 인라인 글 · 인라인 블록(알약 등) 사이에는 절대 안 넣고, white-space:pre* 가 걸린 요소 안은 손대지 않아요
@@ -180,10 +180,11 @@ function structural(node, container) {
     return container === 'any' && node.children.filter(c => c.type === 'el').length > 1;
 }
 
-const MARK_ATTR = /\s+data-bl-(?!egg\b)[\w-]*(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?/gi;   // 못 읽은 HTML 을 한 줄로 돌려줄 때만
-/** 여는 태그 글 그대로 — 미리보기 표시(data-bl-*)만 빼고 (1.0.1 누르면 반응 data-bl-egg 는 모양이라 남겨요) */
+const MARK_ATTR = /\s+data-bl-(?!egg\b|peek\b)[\w-]*(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?/gi;   // 못 읽은 HTML 을 한 줄로 돌려줄 때만
+/** 여는 태그 글 그대로 — 미리보기 표시(data-bl-*)만 빼고 (1.0.1 누르면 반응 data-bl-egg 는 모양이라 남겨요)
+ *  11-09 data-bl-peek(미리보기로만 펼친 상자)도 남겨요 — 글꾸 마트는 이 글을 미리보기로 보여 주고 복사할 때 shutPeek 로 닫아요(테마 로그 복사 창은 result 에서 먼저 닫아 이 표시가 오지 않아요) */
 function openTag(node) {
-    const marks = attrsOf(node).filter(a => a.name.startsWith('data-bl-') && a.name !== 'data-bl-egg');
+    const marks = attrsOf(node).filter(a => a.name.startsWith('data-bl-') && a.name !== 'data-bl-egg' && a.name !== 'data-bl-peek');
     if (!marks.length) return node.open;
     let out = node.open;
     for (const a of marks.reverse()) out = out.slice(0, a.start) + out.slice(a.end);

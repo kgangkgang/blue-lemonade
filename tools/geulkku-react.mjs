@@ -34,7 +34,7 @@ const { SAMPLE, SAMPLE_SCREEN, UI, FIELDS } = await load('tools/mart/sample.mjs'
 const STYLE = '심플', KEY = `sp-${REACT_CATEGORY.id}`;
 // 테마 tools/mart-build.mjs previewOf 와 같은 셈(「HTML 복사」 글)
 function previewOf(html, id, label) {
-    const body = html.replace(/ data-f="[a-z]+"/g, '').replace(/ data-bl-(?!egg=)[a-z]+(?:="[^"]*")?/g, '');
+    const body = html.replace(/ data-f="[a-z]+"/g, '').replace(/ data-bl-(?!egg=|peek=)[a-z]+(?:="[^"]*")?/g, '');   // 11-09 data-bl-peek: 미리보기로만 펼친 상자(복사할 때 마트 shutPeek 가 닫아요)
     const plain = withoutSvgData(body);
     if (plain === null) throw new Error(`${id}: 그림(svg) 부품에 쓸 수 없는 것이 있어요`);
     if (/<script|<style|\sclass=|\son[a-z]+=|javascript:|url\(|var\(--/i.test(plain.replace(/curl/g, ''))) throw new Error(`${id}: 미리보기(HTML 복사)에 실행 · 주소 · class 가 있어요`);
@@ -58,7 +58,7 @@ for (const f of REACT_FRAMES) {
     heavy[f.id] = { preview, template: entry.template, colors: entry.colors, messages: entry.messages, tail: entry.tail, ...(entry.type ? { type: entry.type } : {}) };
     const body = preview.replace(/<style>[\s\S]*?<\/style>/g, '');
     const fx = `${/style="[^"]*animation\s*:/.test(body) ? 'm' : ''}${/ data-bl-egg="/.test(preview) ? 'e' : ''}`;
-    rows.push({ id: f.id, name: f.label, emoji: f.emoji, category: REACT_CATEGORY.id, style: STYLE, desc: `${f.desc}${/<details/.test(f.template) ? ' · 겉면을 누르면 접혀요' : ''}`, c: KEY, bytes: Buffer.byteLength(JSON.stringify({ 'bl-mart': 1, items: [entry] })), ...(fx ? { fx } : {}), bg: f.colors.bg, ink: f.colors.text });
+    rows.push({ id: f.id, name: f.label, emoji: f.emoji, category: REACT_CATEGORY.id, style: STYLE, desc: `${f.desc}${/<details/.test(f.template) ? ' · 붙이면 닫힌 채 시작해요(미리보기만 펼쳐 보여요)' : ''}`, c: KEY, bytes: Buffer.byteLength(JSON.stringify({ 'bl-mart': 1, items: [entry] })), ...(fx ? { fx } : {}), bg: f.colors.bg, ink: f.colors.text });
 }
 
 const raw = fs.readFileSync(INDEX, 'utf8');

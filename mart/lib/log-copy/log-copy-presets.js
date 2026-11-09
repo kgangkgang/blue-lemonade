@@ -1,4 +1,4 @@
-// 원본 1.0.9 c5038e7b 의 src/log-copy-presets.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」가 테마 로그 복사와 같은 모양으로 그리려고 써요)
+// 원본 codex/react-geulkku-2 1122fac1 의 src/log-copy-presets.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」가 테마 로그 복사와 같은 모양으로 그리려고 써요)
 // 로그 복사 — 글꾸 틀(모양) 모음. 모두 블루 레몬에이드 디자인 언어로 새로 그렸다 (평평한 면 + 1px 선 · 모서리 12(작은 칸 8) · 판 알약 · 여백 16 · 사이 8 ·
 // 제목 20/650 · 소제목 16/650 · 보조 13 · 알약 12). 색은 고른 에이드 팔레트의 실제 값(c.*)만 — 새 색 · 섞은 색 · 그라데이션 없음(종이 결 하나만 예외: 노트 모눈 = 팔레트 선 색 한 겹).
 // 글꼴은 테마 화면 글꼴(ui.family) · 자간(ui.tracking, em), 로그 글은 화면에 보이던 모양 그대로(log-copy-capture.js).
@@ -410,10 +410,15 @@ function cMessages(model, o, k, style) {
     return scroller(tag('div', { padding: style === 'wrap' ? '10px 0 2px' : '12px 4px 2px', 'background-color': k.panel, 'border-radius': '12px' }, items), o.height + 40);
 }
 
+/** 1.0.9+ 닫힌 채 시작하는 틀(반응 글꾸 봉투 · 초대장): 미리보기에서는 로그가 보이게 펼쳐요 — 틀에 박힌 닫힌 <details> 에 open + data-bl-peek(미리보기 표시).
+ *  복사할 땐 shutPeek 로 다시 닫아요(테마 log-copy-sheet.js result · 글꾸 마트 HTML 복사 · 시식 복사). 자리에 끼운 부품(접는 추가 정보 등)은 건드리지 않아요 */
+export const peekTemplate = template => String(template ?? '').replace(/<details(?![^>]*\sopen=)(?=[\s>])/g, '<details open="" data-bl-peek=""');
+/** 미리보기로만 펼친 상자를 다시 닫은 HTML 글 */
+export const shutPeek = html => String(html ?? '').replace(/<details\b[^>]*\sdata-bl-peek=""[^>]*>/g, tag => tag.replace(/\sopen(?:="[^"]*")?(?=[\s>])/, '').replace(/\sdata-bl-peek=""/, ''));
 /** 1.0.1 글꾸 마트 글꾸(내 글꾸 template) — 받은 고정 색 묶음 + 틈 템플릿의 네 자리에 컨셉 틀과 같은 부품을 끼워요 */
 export function drawTemplate(model, o, item) {
     const k = templateColors(item.colors);
-    return fillTemplate(item.template, conceptParts(model, o, k, { messages: item.messages, tail: item.tail, type: item.type }));
+    return fillTemplate(peekTemplate(item.template), conceptParts(model, o, k, { messages: item.messages, tail: item.tail, type: item.type }));
 }
 /** 컨셉 틀 · 틈 템플릿이 함께 쓰는 부품 (frame: messages · tail · top) */
 export function conceptParts(model, o, k, frame) {

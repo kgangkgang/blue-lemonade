@@ -4,7 +4,7 @@
 //   고친 것은 HTML 복사 · 내려받기에 그대로 들어가요. 「↶ 되돌리기 · ↷ 다시하기」는 미리보기 HTML 스냅샷(연속 타자는 0.5초 묶음 · 50개까지 · 새로 그리기 · 바꾸기도 한 칸)으로 블록 통째 삭제도 되살려요.
 //   붙여 넣은 글 · 바꾸기 · 제목 · 날짜 · 마지막 미리보기 상태는 이 탭 안(sessionStorage)에 남아요. 스크립트 없는 결과 · 외부 의존 없음. 마트 공용 시트 · 단추 규격(mart.css .mart-sheet · .mart-actions)을 써요.
 import { parseLog, buildModel, DEFAULT_NAMES } from './taste-parse.js';
-import { tasteHtml, tasteDocument, canTaste, isConcept, conceptReady, loadConcept } from './taste-render.js?v=20261109b';
+import { tasteHtml, tasteDocument, canTaste, isConcept, conceptReady, loadConcept, shutPeek } from './taste-render.js?v=20261109c';
 import { withInks, setInk, resetInks, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글자색 팔레트   // 11-07 판 꼬리표: 옛 캐시와 섞이지 않게
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -274,7 +274,7 @@ const footSetup = on => `<div class="mart-actions is-geulkku is-taste is-setup">
 
 async function copy() {
     flushSnap();
-    const html = state.html; if (!html) return;
+    const html = shutPeek(state.html); if (!html) return;   // 11-09 미리보기로만 펼친 상자는 닫아서 복사
     const done = () => state.say?.('복사됐어요 · 깡싸 글쓰기 HTML 칸에 붙여요', 3600);
     try {
         if (globalThis.ClipboardItem && navigator.clipboard?.write) await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([html], { type: 'text/plain' }) })]);
@@ -293,7 +293,7 @@ async function copy() {
 }
 function download() {
     flushSnap();
-    const html = state.html; if (!html) return;
+    const html = shutPeek(state.html); if (!html) return;   // 11-09 내려받기도 복사와 같게 닫힌 채
     const name = String(state.item.name || state.item.label || '글꾸').replace(/[\\/:*?"<>|#%]+/g, '').replace(/\s+/g, '-');
     const blob = new Blob([tasteDocument(html, `${state.item.name || state.item.label} · 시식`)], { type: 'text/html' });
     const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `글꾸-시식-${name}.html`, hidden: true });

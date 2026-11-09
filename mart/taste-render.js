@@ -4,8 +4,8 @@
 // 사이트용 어댑터(깡싸 규칙): 스크립트 없음 · 인라인 <svg> · <img data:> 없음(그림은 전부 CSS background-image — 틀 자료가 이미 그래요) ·
 //   글자색은 깡싸 다크 모드가 color 를 덮어도 보이게 인라인 color 옆에 -webkit-text-fill-color 를 같은 값으로 덧써요(커뮤니티 편집기가 class 를 지워 선택자 규칙은 못 써요 — 인라인이 제일 세요).
 // DOM 없는 순수 함수예요(node 로 시험).
-import { renderLog, dateLabel } from './lib/log-copy/log-copy-presets.js?v=20261109b';
-import { prettyLogHtml } from './lib/log-copy/log-copy-pretty.js';
+import { renderLog, dateLabel } from './lib/log-copy/log-copy-presets.js?v=20261109c';
+import { prettyLogHtml } from './lib/log-copy/log-copy-pretty.js?v=20261109c';   // 11-09 미리보기 펼침 표시(data-bl-peek)를 남기는 판
 import { motionStyleFor } from './lib/log-copy/log-copy-motion.js';
 import { withoutSvgData } from './lib/log-copy/log-copy-template.js';
 import { bareLog } from './lib/log-copy/log-copy-bare.js?v=20261108a';
@@ -22,7 +22,7 @@ let concept = null, conceptLoading = null;
 export const isConcept = item => !item?.template && !item?.shape && /^concept-[a-z0-9-]+$/.test(String(item?.id ?? ''));
 export const conceptReady = () => !!concept;
 export function loadConcept() {
-    conceptLoading ||= import('./lib/log-copy/log-copy-concept30.js?v=20261109b').then((m) => { concept = m; return m; }, (error) => { conceptLoading = null; throw error; });
+    conceptLoading ||= import('./lib/log-copy/log-copy-concept30.js?v=20261109c').then((m) => { concept = m; return m; }, (error) => { conceptLoading = null; throw error; });
     return conceptLoading;
 }
 /** 지금 시식으로 그릴 수 있나 — 받은 글꾸(template) · 기본 틀(shape) · 받아 둔 일러스트 컨셉 */
@@ -57,7 +57,7 @@ export function tasteHtml(item, model, fields = {}, { names = true, top = false,
     const raw = fitBare(drawn, bareLog(drawn, { top, bottom, drop }));
     if (!raw) return '';
     // 테마 마트 빌드 previewOf 와 같은 검사: 미리보기 표시는 걷고 반응(data-bl-egg)만 남겨요 · 실행 · 주소 · class 가 있으면 내보내지 않아요
-    const body = raw.replace(/ data-f="[a-z]+"/g, '').replace(/ data-bl-(?!egg=)[a-z]+(?:="[^"]*")?/g, '');
+    const body = raw.replace(/ data-f="[a-z]+"/g, '').replace(/ data-bl-(?!egg=|peek=)[a-z]+(?:="[^"]*")?/g, '');
     const plain = withoutSvgData(body);
     if (plain === null) throw new Error('그림(svg) 부품에 쓸 수 없는 것이 있어요');
     if (/<script|<style|\sclass=|\son[a-z]+=|javascript:|url\(|var\(--/i.test(plain.replace(/curl/g, ''))) throw new Error('결과에 실행 · 주소 · class 가 있어요');
@@ -66,6 +66,9 @@ export function tasteHtml(item, model, fields = {}, { names = true, top = false,
     const pretty = prettyLogHtml(raw, { label: item.label || item.name || '', head: style, fields: false });
     return inkForKkangsa(pretty);
 }
+
+/** 11-09 미리보기로만 펼친 상자(data-bl-peek · 닫힌 채 시작하는 반응 글꾸)를 복사 · 내려받기 글에서 다시 닫아요 — 시식 미리보기는 펼친 채 보여요 */
+export const shutPeek = html => String(html ?? '').replace(/<details\b[^>]*\sdata-bl-peek=""[^>]*>/g, tag => tag.replace(/\sopen(?:="[^"]*")?(?=[\s>])/, '').replace(/\sdata-bl-peek=""/, ''));
 
 /** 내려받기(.html) 문서 — 복사한 HTML 을 따로 열어도 같은 모양 */
 export function tasteDocument(html, title = '글꾸 시식') {
