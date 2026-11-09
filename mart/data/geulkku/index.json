@@ -986,9 +986,9 @@
    "bytes": 170076
   },
   "sp-xmas": {
-   "file": "sp-xmas.5ffefde1.json",
+   "file": "sp-xmas.54e92dad.json",
    "n": 9,
-   "bytes": 237827
+   "bytes": 237915
   },
   "sg-kara": {
    "file": "sg-kara.b3579c47.json",
@@ -1267,8 +1267,8 @@
   {"id":"s-christmas-sp-24","name":"올해의 필름","emoji":"🎞️","category":"christmas","style":"심플","desc":"크리스마스 · 연말 글꾸 · 꼬리 「올해도 잘 찍혔어요」","c":"sp-christmas","bytes":5752,"fx":"me","bg":"#fdf8ee","ink":"#26201a","accent":"#a84f16","icon":"icon/87298dfc43.svg"},
   {"id":"c-xmas-sp-1","name":"스노우볼","emoji":"❄️","category":"christmas","style":"심플","desc":"밤 바탕 위 유리 공 속에 눈이 흩날리고(작은 집 · 트리 · 달) 나무 받침 아래 편지지에 로그를 적어요 · 공 속 달을 누르면 반짝","c":"sp-xmas","bytes":4546,"fx":"me","bg":"#101a2e","ink":"#26283a","accent":"#1f3f73","icon":null},
   {"id":"c-xmas-sp-2","name":"성탄 카드","emoji":"🎅","category":"christmas","style":"심플","desc":"붉은 크리스마스 카드 겉면(금빛 테 · 트리 · Merry Christmas) — 누르면 펼쳐져 크림색 안쪽 면에 로그 · 트리 꼭대기 별을 누르면 빙글 · 붙이면 닫힌 채 시작해요(미리보기만 펼쳐 보여요)","c":"sp-xmas","bytes":3510,"fx":"me","bg":"#efe3d0","ink":"#2d2420","accent":"#8e1b24","icon":null},
-  {"id":"c-xmas-sp-3","name":"오너먼트 대화","emoji":"✨","category":"christmas","style":"심플","desc":"짙은 전나무 바탕 위 줄에 걸린 오너먼트 다섯(누르면 통 · 빙글 · 반짝 · 흔들 · 쑥) · 금빛 테 칸에 로그","c":"sp-xmas","bytes":6240,"fx":"me","bg":"#0f2a1f","ink":"#eef6ee","accent":"#1e4a37","icon":null},
-  {"id":"c-xmas-sp-4","name":"겨울 기차표","emoji":"🚂","category":"christmas","style":"심플","desc":"두꺼운 종이 겨울 열차 승차권 — 오늘 → 눈의 나라 · 열차 · 호차 · 좌석 · 출발 칸, 선로를 달리는 기차(누르면 휙) · 점선 아래 로그 · 검표 도장을 누르면 빙글","c":"sp-xmas","bytes":6850,"fx":"me","bg":"#e6edf2","ink":"#2a2724","accent":"#1d5b8f","icon":null},
+  {"id":"c-xmas-sp-3","name":"오너먼트 대화","emoji":"✨","category":"christmas","style":"심플","desc":"짙은 전나무 바탕 위 줄에 걸린 오너먼트 다섯(누르면 통 · 빙글 · 반짝 · 흔들 · 쑥) · 금빛 테 칸에 로그","c":"sp-xmas","bytes":6256,"fx":"me","bg":"#0f2a1f","ink":"#eef6ee","accent":"#1e4a37","icon":null},
+  {"id":"c-xmas-sp-4","name":"겨울 기차표","emoji":"🚂","category":"christmas","style":"심플","desc":"두꺼운 종이 겨울 열차 승차권 — 오늘 → 눈의 나라 · 열차 · 호차 · 좌석 · 출발 칸, 선로를 달리는 기차(누르면 휙) · 점선 아래 로그 · 검표 도장을 누르면 빙글","c":"sp-xmas","bytes":6878,"fx":"me","bg":"#e6edf2","ink":"#2a2724","accent":"#1d5b8f","icon":null},
   {"id":"c-xmas-sp-5","name":"연말 정산","emoji":"🧾","category":"christmas","style":"심플","desc":"올해를 계산한 긴 영수증 — 톱니 가장자리 · 일시 · 손님, 같이 웃은 날 ×365 같은 품목 줄과 합계, 상세 내역(로그) · 바코드 · 「정산 완료」 도장을 누르면 통","c":"sp-xmas","bytes":6998,"fx":"e","bg":"#d9e2dc","ink":"#24221f","accent":"#24221f","icon":null},
   {"id":"c-xmas-sp-6","name":"소원 부적","emoji":"📜","category":"christmas","style":"심플","desc":"한지 위 노란 새해 부적 — 붉은 겹테 · 所願成就 큰 글씨, 소원(로그) 칸 · 붉은 「福」 도장을 누르면 빙글","c":"sp-xmas","bytes":3060,"fx":"e","bg":"#efe6cf","ink":"#3a2208","accent":"#9e1b1b","icon":null},
   {"id":"xmas-gallery","name":"크리스마스 화보","emoji":"🎄","category":"christmas","style":"심플","desc":"밤하늘에 눈이 흐르고 꼬마전구가 깜박이는 화보 — 금빛 액자에 한 장씩(두 장 · 가로 장), 위 「이전 · 다음」과 「03 / 12」 · 사진 번호 · 코멘트 칸 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"bytes":66322,"fx":"e","bg":"#0e1a33","ink":"#f4f1ea","accent":"#c8323a"},
