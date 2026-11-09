@@ -12,6 +12,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+const { polishHtml } = (await import('node:module')).createRequire(import.meta.url)('./geulkku-polish/polish.cjs');   // 11-10 공통 다듬기(정화기 맞춤)
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = path.join(ROOT, 'mart', 'data', 'geulkku');
 const INDEX = path.join(DIR, 'index.json');
@@ -83,7 +84,7 @@ for (const p of list) {
     const html = renderLog(SAMPLE, { shape: p.id, colors: PALETTE, ui: UI, fields: FIELDS, size: 'm', screen: SAMPLE_SCREEN, images: images.map(x => ({ ...x, src: `../${x.src}` })) });
     if (!html) throw new Error(`${id}: 그려지지 않았어요`);
     const preview = previewOf(html, id, p.label);
-    rows[id] = { preview, shape: p.id, palette: PALETTE, ...(images.length ? { images } : {}) };
+    rows[id] = { preview: polishHtml(preview), shape: p.id, palette: PALETTE, ...(images.length ? { images } : {}) };
     const body = preview.replace(/<style>[\s\S]*?<\/style>/g, '');
     const fx = `${/style="[^"]*animation\s*:/.test(body) ? 'm' : ''}${/ data-bl-egg="/.test(preview) ? 'e' : ''}`;
     items.push({ id, name: p.label, emoji: EMOJI[p.id] || '📝', category: cat.id, style: '심플', desc: `테마에 들어 있어요 · ${DESC[p.id] || p.label}${images.length ? ' · 사진은 표본(내 사진 주소로 바꿔요)' : ''} · 에이드 색을 따라가요`, c: 'lc-builtin', builtin: true, ...(fx ? { fx } : {}), bg: PALETTE.bg, ink: PALETTE.text, accent: accentOf(PALETTE) });

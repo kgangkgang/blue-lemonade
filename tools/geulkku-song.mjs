@@ -21,9 +21,9 @@ const KEY = 'sg-song';
 const AFTER = 'hwabo';
 const COMMON = '그림 · mp3 주소와 제목 · 이름을 바꿔 깡싸 글 HTML 칸에 붙여요 · 곡 · 그림 · mp3 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 트랙 · 그림 번호는 저절로 · 곡마다 색(t1~t6) · 곡 사이 코멘트 칸';
 const DEFS = [
-  { id: 'song-album', name: '다크 앨범', emoji: '💿', fn: album, bg: '#0b0b0f', ink: '#f3f3f5', accent: '#c4364a', desc: `곡마다 큰 메인 그림 · 제목 · 캐릭터 칩 · 그림을 흐리게 깐 유리 mp3 카드 · 아래 그림 띠(폰은 손가락 · PC 는 휠 · 방향키) · ${COMMON}` },
+  { id: 'song-album', name: '다크 앨범', emoji: '💿', fn: album, bg: '#0b0b0f', ink: '#f3f3f5', accent: '#c4364a', desc: `판 하나로 이어진 포스터 — 곡마다 판 끝까지 찬 메인 그림 위에 제목 · 춤추는 막대(누르면 하트) · 그림을 흐리게 깐 유리 mp3 카드 · 아래 그림 띠(폰은 손가락 · PC 는 휠 · 방향키) · ${COMMON}` },
   { id: 'song-single', name: '밝은 싱글', emoji: '🎼', fn: single, bg: '#f7f2ea', ink: '#1d1a17', accent: '#b3242c', desc: `종이빛 싱글 재킷 · 살짝 기운 액자 그림 · 세리프 제목 · 트랙 줄(ver. A · B …) · 아래 그림 격자 · ${COMMON}` },
-  { id: 'song-playlist', name: '플레이리스트', emoji: '🎧', fn: playlist, bg: '#121318', ink: '#f1f2f5', accent: '#3f6fd8', desc: `음악 앱 목록처럼 한 줄에 한 곡 · 작은 그림 · 번호 · 제목 · mp3 · 「그림 ▾」를 누르면 그 곡 그림이 펼쳐져요 · ${COMMON}` },
+  { id: 'song-playlist', name: '플레이리스트', emoji: '🎧', fn: playlist, bg: '#121318', ink: '#f1f2f5', accent: '#3f6fd8', desc: `음악 앱 목록처럼 한 줄에 한 곡 · 작은 그림 · 번호 · 제목 · mp3 · 줄 끝 화살표를 누르면 그 곡 그림이 펼쳐져요 · ${COMMON}` },
 ];
 
 const serial = ({ items, ...head }) => `${JSON.stringify(head, null, 1).replace(/\n}$/, '')},\n "items": [\n${items.map(x => `  ${JSON.stringify(x)}`).join(',\n')}\n ]\n}\n`;

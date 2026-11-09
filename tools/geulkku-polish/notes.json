@@ -1,0 +1,17 @@
+{
+ "song-album": { "deep": true, "weak": "카드 안 카드(머리 카드 · 코멘트 카드 · 곡 카드 · 플레이어 카드), 영어 부제(ALBUM · TRACK · 영문 줄), 알약 칩, 안내 글이 화면에 보임, 그라데이션만 깐 바탕 · 인라인 색 없는 글자", "done": "포스터 방향으로 다시 그림 — 판 하나로 잇고 그림은 판 끝까지, 제목을 그림 아래에 겹침, 영어 부제 · 안내 글 · 알약 테두리 뺌, 춤추는 막대(누르면 하트), 단색 바탕 + 글자마다 인라인 색, 회전 띠 조건 820px" },
+ "song-single": { "deep": true, "weak": "코멘트를 카드로 꾸밈, 영어 부제(SINGLE No. · 영문 줄 · Play), 색 알약 칩", "done": "코멘트 카드 · 영어 부제 뺌, 번호 + 춤추는 막대(누르면 하트), 칩은 색 점 + 이름, 기운 액자가 누르면 반듯해짐, 단색 바탕 + 인라인 색" },
+ "song-playlist": { "deep": true, "weak": "영어 부제(PLAYLIST · 영문 줄), 머리 안 안내 글, 「그림 ▾」 알약 단추", "done": "제목만 크게, 알약 단추 → 화살표 하나(누르면 돌고 작은 그림이 삐딱해짐), 영문 줄 · 안내 글 뺌, 단색 바탕 + 인라인 색" },
+ "hwabo-book": { "weak": "코멘트를 카드로 꾸미고 안내 글이 보임, b 선택자에만 건 색(게시 뒤 안 먹을 수 있음), 아래 넘김 단추가 for 에 기댐", "done": "코멘트 카드 뺌(내 글은 틀 밖에 그냥), b → strong + :is(b,strong), 글자마다 인라인 색, for 가 지워지면 죽는 단추는 숨김" },
+ "hwabo-story": { "weak": "b 선택자에만 건 색 · 굵기, 넘김 영역이 for 에 기댐, 하이라이트 띠는 PC 휠로 안 넘어감", "done": "b → strong + :is(b,strong), 글자마다 인라인 색, for 가 지워지면 죽는 영역은 숨김" },
+ "hwabo-table": { "weak": "b 선택자에만 건 글꼴, 롤 띠는 PC 휠로 안 넘어감", "done": "b → strong + :is(b,strong), 글자마다 인라인 색" },
+ "xmas-gallery": { "weak": "영어 부제(MERRY CHRISTMAS · Christmas Night), 코멘트를 카드로 꾸미고 안내 글이 보임, b 선택자 색", "done": "영어 부제 · 코멘트 카드 뺌, 제목 한글 견본으로, b → strong, 글자마다 인라인 색" },
+ "xmas-recap": { "weak": "영어 부제(YEAR IN REVIEW), 코멘트를 카드로 꾸밈", "done": "영어 부제 · 코멘트 카드 뺌, b → strong, 글자마다 인라인 색" },
+ "xmas-carol": { "weak": "영어 부제(CAROL PLAYLIST · MERRY CHRISTMAS), 머리 안 안내 글", "done": "영어 부제 · 안내 글 뺌, 글자마다 인라인 색" },
+ "kara-ign": { "weak": "영어 표시(TRACK 01 · SAMPLE SONG) — 어제 실제 글에서 확인한 틀이라 모양은 그대로 둠" },
+ "kara-mes": { "weak": "영어 표시(TRACK 01 · SAMPLE SONG) — 어제 실제 글에서 확인한 틀이라 모양은 그대로 둠" },
+ "kara-tale": { "weak": "영어 표시(TRACK 01 · SAMPLE SONG) — 어제 실제 글에서 확인한 틀이라 모양은 그대로 둠" },
+ "kara-meme": { "weak": "영어 표시(TRACK 01 · SAMPLE SONG) — 어제 실제 글에서 확인한 틀이라 모양은 그대로 둠" },
+ "kara-tom": { "weak": "영어 표시(TRACK 01 · SAMPLE SONG) — 어제 실제 글에서 확인한 틀이라 모양은 그대로 둠" },
+ "kara-snow": { "weak": "영어 표시(TRACK 01 · SAMPLE SONG) — 어제 실제 글에서 확인한 틀이라 모양은 그대로 둠" }
+}

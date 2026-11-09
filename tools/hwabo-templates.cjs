@@ -10,7 +10,9 @@ const BASE = process.env.HB_BASE || 'https://kgangkgang.github.io/blue-lemonade/
 // ── 견본 ──
 const CAST = [['Aster', '#79A9D8'], ['Blair', '#e9b949'], ['Cyan', '#3ccfbf'], ['Dahlia', '#ff5fa2'], ['Eden', '#7fbf3c'], ['Fern', '#b799e8']];
 const SAY = ['여기에 사진 코멘트를 적어요.', '코멘트 칸이에요. 글이 길어지면 말풍선도 같이 늘어나요.', '마음에 드는 한 장에 한마디를 붙여요.', '두 줄 세 줄이 되어도 괜찮아요. 줄바꿈은 그대로 이어져요.', '이 말풍선이 필요 없으면 블록째 지워도 돼요.'];
-const PIN = '맨 위 글 칸이에요. 올리면서 하고 싶은 말을 여기에 적어요.';
+// 11-10 다듬기: 내 글(코멘트)은 꾸미지 않아요 — 틀 밖 맨 위에 그냥 적게 주석으로만 알려요(화면에 안내 글 없음)
+const PIN_NOTE = '<!-- 내 글(코멘트)은 이 줄 위에 그냥 적어요 — 틀이 꾸미지 않아요 -->';
+const { finish } = require('./geulkku-polish/post.cjs');
 const two = i => String(i).padStart(2, '0');
 // 사진 n(1부터): 6장마다 한 장은 가로(l1 · l2), 나머지는 세로 견본(p01~p12)을 돌려 써요
 const isLand = n => n % 7 === 0;
@@ -39,6 +41,8 @@ ${P},${P} *{color:var(--ink)!important;-webkit-text-fill-color:var(--ink)!import
 ${P} div{background:transparent!important;border:0;margin:0;padding:0}
 ${P} p{margin:0!important;padding:0!important}
 ${P} b{font-weight:700}
+/* 11-10: 사이트가 for 를 지우면 체크박스 없는 넘김 단추는 눌러도 안 움직여요 — 그런 단추는 숨겨요(체크박스가 든 위쪽 단추는 그대로) */
+${P} label:not([for]):not(:has(input)){display:none!important}
 ${P} i{font-style:normal}`;
 // 체크박스 사슬(radio name 이 지워져도 동작): k(n) 체크 = n번째 쪽을 넘김. n번째 쪽 표시 = k(n-1) 체크 && k(n) 미체크.
 const SN = (P, k, n) => n === 1 ? `${P}:not(:has(.${k}1:checked))` : `${P}:has(.${k}${n - 1}:checked):not(:has(.${k}${n}:checked))`;
@@ -110,10 +114,8 @@ ${g.map(x => (x.k === 'post' ? G.post(x.ns, x.x) : G[x.k](x.ns))).join('\n')}
     r.push(`${P}${LAST(PG, i)} .hb-tot::before{content:"${two(i)}"}`);
     return r.join('\n');
   }).join('\n');
-  const css = `${baseCss(P, '--ink:#1b1a1f;--mute:#77726b;--paper:#f3efe7;--red:#b3242c;', 'max-width:880px')}
+  const css = `${baseCss(P, '--ink:#1b1a1f;--mute:#6a655e;--paper:#f3efe7;--red:#b3242c;', 'max-width:880px')}
 ${colorsCss(P)}
-${P} .hb-pin{display:block!important;margin:0 0 12px!important;padding:14px 16px!important;border-radius:16px;background:#fbfaf7!important;box-shadow:0 1px 0 #00000014,0 8px 22px #0000002e}
-${P} .hb-pin-txt{font:400 15px/1.65 ${SANS};word-break:keep-all;overflow-wrap:anywhere}
 ${P} .hb-book{counter-reset:hbn hbp;display:grid!important;grid-template-columns:100%;border-radius:6px;box-shadow:3px 3px 0 -1px #f3efe7,3px 3px 0 0 #cfc7b5,6px 6px 0 -1px #f3efe7,6px 6px 0 0 #c4bba7,12px 16px 30px #0000004d}
 ${P} .hb-pg{grid-area:1/1!important;min-width:0;display:block!important;visibility:hidden;max-height:0;padding:0!important;border-radius:6px;overflow:clip;background:var(--paper)!important;box-shadow:inset 10px 0 18px -14px #00000040;counter-increment:hbp}
 ${P} .hb-in{display:flex!important;flex-direction:column;gap:22px;padding:18px 16px 18px!important}
@@ -214,10 +216,10 @@ ${P} .hb-txt{font-size:16px}
 ${P} .hb-cvpost{max-width:560px}
 }`.trim();
   const html = `${GUIDE('책장 넘김', `  · 사진 더하기: 한 쪽 안의 사진 칸(<div class="hb-fig">…</div> 같은 덩어리)을 복사해 옆에 붙여요. 쪽을 더하거나 빼려면 「▼ 쪽 시작」~「▲ 쪽 끝」을 통째로 복사 · 지워요(${MAX}쪽까지). 쪽 번호 · 「01 / 05」는 저절로 맞춰져요.`)}
+${PIN_NOTE}
 <div class="hbt1"><style>
 ${css}
 </style>
-<div class="hb-pin"><p class="hb-pin-txt">${PIN}</p></div>
 <div class="hb-ctl">${bar(true)}</div>
 <div class="hb-book">
 ${cover}
@@ -226,7 +228,7 @@ ${pagesHtml}
 <div class="hb-ctl hb-ctl-b">${bar(false)}</div>
 </div>
 `;
-  return { html, css, pages: pages.length + 1 };
+  return { html: finish(html, '#1b1a1f'), css, pages: pages.length + 1 };
 }
 
 // ════════ 2. 스토리 뷰어 ════════
@@ -355,7 +357,7 @@ ${P} .s-iss{display:flex!important;gap:.8em;font:600 .66em/1 ${MONO};letter-spac
 ${P} .s-cvph{margin-top:.6em;width:70%!important;box-shadow:0 0 0 1px #9fb6ef66,0 14px 40px #000a}
 ${P} .s-cvname{font:italic 400 1.35em/1 ${SERIF};margin-top:.3em!important}
 ${P} .s-bub{display:flex!important;flex-direction:column;align-items:flex-end}
-${P} .s-say{display:block!important;max-width:88%;padding:.6em .9em .65em!important;border-radius:1.2em 1.2em .35em 1.2em;background:linear-gradient(135deg,#5b7fd1,#8b6fd6)!important;box-shadow:0 6px 18px #0008;word-break:keep-all;overflow-wrap:anywhere}
+${P} .s-say{display:block!important;max-width:88%;padding:.6em .9em .65em!important;border-radius:1.2em 1.2em .35em 1.2em;background-color:#4a58b3!important;background-image:linear-gradient(135deg,#3f5fae,#6a4fb8)!important;box-shadow:0 6px 18px #0008;word-break:keep-all;overflow-wrap:anywhere}
 ${P} .s-txt{font:600 1em/1.45 ${SANS}}
 ${P} .s-bar{display:flex!important;align-items:center;gap:.7em}
 ${P} .s-hint{flex:1}
@@ -367,6 +369,7 @@ ${P} .s-prof{padding:24px 28px 16px!important}
 }
 @media (prefers-reduced-motion:reduce){${P} .s-stage{animation:none!important}}`.trim();
   const html = `${GUIDE('스토리 뷰어', `  · 사진 더하기: 한 장 안의 사진 칸(<div class="s-cell">…</div>)을 복사하거나, 「▼ 장 시작」~「▲ 장 끝」을 통째로 복사 · 지워요(${MAX}장까지). 위 진행 막대 · 「03/12」는 장 수에 맞춰 저절로 바뀌어요.\n  · 장 왼쪽 · 오른쪽을 누르거나 아래 단추로 넘겨요.`)}
+${PIN_NOTE}
 <div class="hbt2"><style>
 ${css}
 </style>
@@ -381,7 +384,7 @@ ${zones}
 ${ctl}
 </div>
 `;
-  return { html, css, pages: S.length };
+  return { html: finish(html, '#eef1f8'), css, pages: S.length };
 }
 
 // ════════ 3. 라이트 테이블(밀착 인화지) ════════
@@ -406,7 +409,7 @@ ${ns.map((n, j) => ((j % 6 === 4) ? print(n) : frame(n))).join('\n')}
   }
   const cover = `<div class="l-cover ${cc(1)}"><div class="l-mast"><p class="l-logo">LOOKBOOK</p><p class="l-iss"><span>No.03</span></p></div>
 <div class="l-cvwrap"><div class="l-pw l-cvpw"><span class="l-tape"></span>${ph(1, ' l-pph')}<p class="l-pcap"><b>${nameOf(1)}</b></p></div>${bubble()}</div></div>`;
-  const css = `${baseCss(P, '--ink:#24201b;--mute:#857c70;--amber:#e8a34a;--grease:#d7262e;', 'max-width:940px')}
+  const css = `${baseCss(P, '--ink:#24201b;--mute:#6f675c;--amber:#e8a34a;--grease:#d7262e;', 'max-width:940px')}
 ${colorsCss(P)}
 ${P} .l-in{counter-reset:hbn hbr;display:flex!important;flex-direction:column;gap:26px;padding:22px 14px 28px!important;border-radius:10px;background-color:#f8f6f0!important;background-image:linear-gradient(#e9e4d955 1px,transparent 1px),linear-gradient(90deg,#e9e4d955 1px,transparent 1px),radial-gradient(120% 80% at 50% 0%,#fffef9,#efebe2)!important;background-size:24px 24px,24px 24px,100% 100%!important;box-shadow:0 0 0 1px #00000010,0 16px 40px #0000003d}
 ${P} .l-cover{display:flex!important;flex-direction:column;align-items:center;gap:18px}
@@ -483,6 +486,7 @@ ${P} .l-cover .l-tail{width:10px;height:16px;margin:0 0 0 -9px;clip-path:polygon
 ${P} .l-cover .l-txt{font-size:20px}
 }`.trim();
   const html = `${GUIDE('라이트 테이블', `  · 사진 더하기: 롤 안의 프레임(<div class="l-fr …">…</div>)을 복사해 붙여요. 코멘트를 붙일 사진은 인화 칸(<div class="l-print …">…</div>)으로 써요. 롤은 「▼ 롤 시작」~「▲ 롤 끝」을 통째로 복사 · 지워요.\n  · 프레임을 누르면 크게, 다시 누르면 작게 · 롤 머리를 누르면 한 줄 필름 띠로 접혀요.`)}
+${PIN_NOTE}
 <div class="hbt3"><style>
 ${css}
 </style>
@@ -492,7 +496,7 @@ ${rolls.join('\n')}
 </div>
 </div>
 `;
-  return { html, css, pages: rolls.length };
+  return { html: finish(html, '#24201b'), css, pages: rolls.length };
 }
 
 const KINDS = [['1', '책장넘김', book], ['2', '스토리', story], ['3', '라이트테이블', table]];

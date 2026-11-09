@@ -14,7 +14,9 @@ const IMG = ROOT_URL + 'hwabo/', AUD = ROOT_URL + 'song/';
 // ── 견본 ──
 const CAST = [['Aster', '#79A9D8'], ['Blair', '#e9b949'], ['Cyan', '#3ccfbf'], ['Dahlia', '#ff5fa2'], ['Eden', '#7fbf3c'], ['Fern', '#b799e8']];
 const SAY = ['여기에 사진 코멘트를 적어요.', '코멘트 칸이에요. 글이 길어지면 칸도 같이 늘어나요.', '마음에 드는 한 장에 한마디를 붙여요.', '필요 없으면 이 줄은 지워도 돼요.'];
-const PIN = '맨 위 글 칸이에요. 올리면서 하고 싶은 말을 여기에 적어요.';
+// 11-10 다듬기: 내 글(코멘트)은 꾸미지 않아요 — 틀 밖 맨 위에 그냥 적게 주석으로만 알려요(화면에 안내 글 없음)
+const PIN_NOTE = '<!-- 내 글(코멘트)은 이 줄 위에 그냥 적어요 — 틀이 꾸미지 않아요 -->';
+const { finish } = require('./geulkku-polish/post.cjs');
 const two = i => String(i).padStart(2, '0');
 const isLand = n => n % 7 === 0;
 const srcOf = n => isLand(n) ? `${IMG}l${(Math.floor(n / 7) - 1) % 2 + 1}.svg` : `${IMG}p${two((n - 1) % 12 + 1)}.svg`;
@@ -98,16 +100,14 @@ function gallery(N = 12) {
   const bulbs = Array.from({ length: 11 }, () => '<span class="x-b"></span>').join('');
   const css = fixH(`${baseCss(P, '--ink:#f4f1ea;--mute:#b9c3d8;--gold:#e9c46a;--red:#c8323a;', 'max-width:820px;color-scheme:dark')}
 ${colorsCss(P)}
-${P} .x-box{display:block!important;border-radius:22px;overflow:hidden;clip-path:inset(0 round 22px);background:#0e1a33!important;background-image:radial-gradient(circle,#ffffffd9 0 1.2px,transparent 1.8px),radial-gradient(circle,#ffffff8c 0 1px,transparent 1.6px),linear-gradient(180deg,#0b1430,#15284d 60%,#1d3560)!important;background-size:46px 46px,29px 29px,100% 100%!important;background-position:0 0,13px 17px,0 0!important;animation:xm1snow 26s linear infinite;box-shadow:0 18px 40px -22px #000}
+${P} .x-box{display:block!important;border-radius:22px;overflow:hidden;clip-path:inset(0 round 22px);background:#0e1a33!important;background-image:radial-gradient(circle,#ffffffd9 0 1.2px,transparent 1.8px),radial-gradient(circle,#ffffff8c 0 1px,transparent 1.6px),linear-gradient(180deg,#0b1430,#15284d 60%,#1d3560)!important;background-size:46px 46px,29px 29px,100% 100%!important;background-position:0 0,13px 17px,0 0!important;animation:xm1snow 26s linear infinite}
 ${P} .x-lights{display:flex!important;justify-content:space-around;align-items:flex-start;height:30px;padding:0 6px!important;border-top:2px solid #2f4a35!important;margin:10px 10px 0!important}
 ${P} .x-b{display:block;width:10px;height:15px;margin-top:2px;border-radius:50% 50% 46% 46%/40% 40% 60% 60%;background:#ff5a5f;box-shadow:0 0 10px 2px #ff5a5f99;animation:xm1tw 1.8s ease-in-out infinite alternate}
 ${P} .x-b:nth-child(4n+2){background:#ffd166;box-shadow:0 0 10px 2px #ffd16699;animation-delay:.45s}
 ${P} .x-b:nth-child(4n+3){background:#4cc9f0;box-shadow:0 0 10px 2px #4cc9f099;animation-delay:.9s}
 ${P} .x-b:nth-child(4n){background:#7ae582;box-shadow:0 0 10px 2px #7ae58299;animation-delay:1.35s}
 ${P} .x-head{display:flex!important;flex-direction:column;align-items:center;gap:4px;padding:6px 18px 14px!important;text-align:center}
-${P} .x-kick{font:600 11px/1.4 ${MONO};letter-spacing:.34em;--ink:var(--gold)}
 ${P} .x-ti{font:400 clamp(30px,9cqw,52px)/1.1 ${DIDOT};letter-spacing:.01em}
-${P} .x-pin{display:block!important;max-width:560px;margin-top:8px!important;padding:12px 14px!important;border-radius:14px;background:#0b1430b3!important;box-shadow:inset 0 0 0 1px #ffffff1f;font:400 14.5px/1.65 ${SANS};word-break:keep-all;overflow-wrap:anywhere;text-align:left;--ink:#e6e9f2}
 /* 넘김 단추(체크박스를 품은 label) */
 ${P} .x-ctl{display:grid!important;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:0 12px!important;padding:8px 10px!important;border-radius:999px;background:#0b1430cc!important;box-shadow:inset 0 0 0 1px #e9c46a40}
 ${P} .x-t,${P} .x-btn{display:none;grid-row:1;align-items:center;justify-content:center;height:38px;padding:0 16px;border-radius:999px;font:700 13.5px/1 ${SANS};white-space:nowrap;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;box-shadow:inset 0 0 0 1px #ffffff47}
@@ -143,21 +143,21 @@ ${P} .x-cap{font-size:19px}
 }`.trim());
   const ctl = `<div class="x-ctl">${Array.from({ length: MAX - 1 }, (_, k) => `<label class="x-t x-t${k + 1}"><input type="checkbox" class="x-k ${K}${k + 1}" aria-label="${k + 1}번째 장 넘기기"><span class="x-pv">‹ 이전</span><span class="x-nx">다음 ›</span></label>`).join('')}<span class="x-btn x-off x-o0">‹ 이전</span><span class="x-btn x-off x-oN">다음 ›</span><span class="x-ct"><b class="x-cur"></b> / <span class="x-tot"></span></span></div>`;
   const html = `${GUIDE('크리스마스 화보', `  · 장 더하기: 「▼ 장 시작」~「▲ 장 끝」을 통째로 복사 · 지워요(${MAX}장까지). 한 장에 사진 두 장을 나란히 두려면 x-fr 에 x-duo 를 붙이고 사진 칸(<div class="x-ph">…</div>)을 하나 더 넣어요. 「03 / 12」와 사진 번호는 저절로 맞춰져요.\n  · 위 단추로 넘겨요(폰 · PC 같음).`)}
+${PIN_NOTE}
 <div class="xmt1"><style>
 ${css}
 </style>
 <div class="x-box">
 <p class="x-lights">${bulbs}</p>
-<div class="x-head"><p class="x-kick">MERRY CHRISTMAS</p><p class="x-ti">Christmas Night</p><p class="x-pin">${PIN}</p></div>
+<div class="x-head"><p class="x-ti">크리스마스 밤</p></div>
 ${ctl}
 <div class="x-book">
 ${slides}
 </div>
-<p class="x-foot">Merry Christmas &amp; Happy New Year</p>
 </div>
 </div>
 `;
-  return { html, css, pages: S.length };
+  return { html: finish(html, '#f4f1ea'), css, pages: S.length };
 }
 
 // ════════ 2. 연말 결산 앨범 ════════ 종이 앨범: 올해의 한 장 · 달마다 사진 묶음(달 블록 복사 · 지우기) · 끝에 「사진 NN장 · 달 NN개」 합계가 저절로
@@ -174,10 +174,8 @@ function recap(months = MONTHS) {
 ${colorsCss(P)}
 ${P} .r-box{counter-reset:rph rmo;display:block!important;padding:18px 14px 20px!important;border-radius:18px;background:#efe9dd!important;background-image:radial-gradient(#d9cfbd 1px,transparent 1.4px)!important;background-size:16px 16px!important;box-shadow:inset 0 0 0 1px #e1d8c6}
 ${P} .r-head{display:flex!important;flex-direction:column;align-items:center;gap:2px;padding:6px 6px 18px!important;text-align:center}
-${P} .r-kick{font:600 11px/1.4 ${MONO};letter-spacing:.34em;--ink:var(--red)}
 ${P} .r-year{font:400 clamp(64px,20cqw,128px)/.9 ${DIDOT};letter-spacing:-.02em;--ink:#24201b}
 ${P} .r-ti{font:700 18px/1.4 ${SERIF};letter-spacing:.2em;margin-top:2px!important}
-${P} .r-pin{display:block!important;width:100%;max-width:580px;margin-top:14px!important;padding:12px 14px!important;border-radius:10px;background:var(--paper)!important;box-shadow:0 1px 0 #0000000f,0 6px 16px -8px #0000003d;font:400 14.5px/1.65 ${SANS};text-align:left;word-break:keep-all;overflow-wrap:anywhere}
 /* 올해의 한 장 */
 ${P} .r-best{display:flex!important;flex-direction:column;align-items:center;gap:10px;margin:0 auto 22px!important;padding:14px 14px 16px!important;max-width:460px;background:var(--paper)!important;border-radius:4px;box-shadow:0 2px 0 #0000000d,0 16px 30px -14px #0000005c;transform:rotate(-1deg)}
 ${P} .r-lb{display:inline-flex!important;align-items:center;gap:6px;padding:5px 12px 4px!important;border-radius:999px;background:var(--red)!important;font:800 12px/1 ${SANS};letter-spacing:.18em;--ink:#fff7ea}
@@ -210,11 +208,12 @@ ${P} .r-grid .land{grid-column:span 2}
 ${P} .r-mo{padding:18px 18px 14px!important}
 }`.trim());
   const html = `${GUIDE('연말 결산 앨범', '  · 달 더하기 · 빼기: 「▼ 달 시작」~「▲ 달 끝」을 통째로 복사 · 지워요. 달 숫자 · 영문 · 한 줄 제목은 글자만 바꿔요. 사진 칸(<div class="r-ph">…</div>)을 복사하면 사진이 늘어요.\n  · 맨 아래 「사진 NN장 · 달 NN개」와 사진 번호는 저절로 세어져요. 맨 위 「올해의 한 장」 사진도 함께 세어요.')}
+${PIN_NOTE}
 <div class="xmt2"><style>
 ${css}
 </style>
 <div class="r-box">
-<div class="r-head"><p class="r-kick">YEAR IN REVIEW</p><p class="r-year">2026</p><p class="r-ti">올해의 앨범</p><p class="r-pin">${PIN}</p></div>
+<div class="r-head"><p class="r-year">2026</p><p class="r-ti">올해의 앨범</p></div>
 <div class="r-best"><p class="r-lb">★ 올해의 한 장</p>${ph(1, true)}<p class="r-cap">한 줄 소감을 적어요</p></div>
 <div class="r-months">
 ${months.map(mo).join('\n')}
@@ -223,7 +222,7 @@ ${months.map(mo).join('\n')}
 </div>
 </div>
 `;
-  return { html, css };
+  return { html: finish(html, '#24201b'), css };
 }
 
 // ════════ 3. 캐롤 플레이리스트 ════════ 전나무 밤 · 사탕 줄무늬 띠 · 도는 레코드 · 곡 줄(작은 그림 · 번호 · 제목 · 칩 · mp3) · 「그림 ▾」를 누르면 그 곡 그림이 펼쳐져요
@@ -252,14 +251,12 @@ function carol(songs = SONGS) {
   const css = fixH(`${baseCss(P, '--ink:#f4efe2;--mute:#b5c7ba;--acc:#e8c766;--line:#ffffff1c;', 'max-width:760px;color-scheme:dark')}
 ${toneCss(P, ['#ff8a8a', '#e8c766', '#7fe0c8', '#ff9ccf', '#a8e07a', '#c9b0ff'])}
 ${colorsCss(P)}
-${P} .k-box{display:block!important;border-radius:20px;overflow:hidden;clip-path:inset(0 round 20px);background:#0f2a1f!important;background-image:radial-gradient(circle,#ffffff2e 0 1px,transparent 1.6px),linear-gradient(180deg,#14382a,#0f2a1f 280px)!important;background-size:22px 22px,100% 100%!important;box-shadow:0 18px 40px -24px #000}
+${P} .k-box{display:block!important;border-radius:20px;overflow:hidden;clip-path:inset(0 round 20px);background:#0f2a1f!important;background-image:radial-gradient(circle,#ffffff2e 0 1px,transparent 1.6px),linear-gradient(180deg,#14382a,#0f2a1f 280px)!important;background-size:22px 22px,100% 100%!important}
 ${P} .k-stripe{display:block!important;height:12px;background:repeating-linear-gradient(-45deg,#c8323a 0 10px,#fbf4e6 10px 20px,#2f7d4f 20px 30px,#fbf4e6 30px 40px)!important}
 ${P} .k-head{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 14px;padding:18px 16px 14px!important}
 ${P} .k-ht{display:flex!important;flex-direction:column;gap:4px;min-width:0}
-${P} .k-kick{font:700 11px/1 ${MONO};letter-spacing:.26em;--ink:var(--acc)}
 ${P} .k-pt{font:800 clamp(24px,7cqw,38px)/1.15 ${SANS};letter-spacing:-.01em;word-break:keep-all}
 ${P} .k-vinyl{display:block;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle,#c8323a 0 9px,#fbf4e6 9.5px 11px,#c8323a 11.5px 17px,transparent 17.5px),repeating-radial-gradient(circle,#111 0 2px,#262626 2px 3px)!important;box-shadow:0 0 0 2px #e8c76699,0 8px 18px -6px #000;animation:xm3spin 6s linear infinite}
-${P} .k-pin{grid-column:1/-1;display:block!important;font:400 14.5px/1.65 ${SANS};word-break:keep-all;overflow-wrap:anywhere;--ink:#dfe7df}
 ${P} .k-list{display:flex!important;flex-direction:column;counter-reset:ktrk;margin:0 10px!important;border-top:1px solid var(--line)!important}
 ${P} .k-memo{display:block!important;min-height:2.2em;margin:0 6px!important;padding:6px 4px!important;font:400 14.5px/1.7 ${SANS};white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;--ink:#dfe7df}
 /* 곡 줄 */
@@ -319,20 +316,21 @@ ${P} .k-ti{font-size:18px}
   const html = `${GUIDE('캐롤 플레이리스트', `  · mp3: 「견본 mp3」 표시가 붙은 <audio src="…"> 의 주소를 내 mp3 주소로 바꿔요(깡싸는 한 글에 mp3 10개까지). 한 곡에 mp3 를 여럿 두려면 mp3 칸을 복사해요.
   · 곡 더하기 · 빼기: 「▼ 곡 시작」~「▲ 곡 끝」을 통째로 복사 · 지워요. 트랙 번호와 그림 번호는 저절로 매겨져요. 곡 색은 곡 블록 class 의 t1~t6.
   · 줄 왼쪽 동그란 그림이 그 곡 메인 그림이에요. 「그림 ▾」를 누르면 그 곡 그림(<div class="k-more">)이 펼쳐져요. 그림이 없으면 단추도 숨어요. 곡 사이 코멘트 칸은 <br> 자리에 적어요.`)}
+${PIN_NOTE}
 <div class="xmt3"><style>
 ${css}
 </style>
 <div class="k-box">
 <p class="k-stripe"></p>
-<div class="k-head"><div class="k-ht"><p class="k-kick">CAROL PLAYLIST</p><p class="k-pt">캐롤 플레이리스트</p></div><span class="k-vinyl"></span><p class="k-pin">${PIN}</p></div>
+<div class="k-head"><div class="k-ht"><p class="k-pt">캐롤 플레이리스트</p></div><span class="k-vinyl"></span></div>
 <div class="k-list">
 ${songs.map(song).join(`\n${memo}\n`)}
 </div>
-<p class="k-foot">♪ MERRY CHRISTMAS ♪</p>
+<p class="k-foot">♪</p>
 </div>
 </div>
 `;
-  return { html, css };
+  return { html: finish(html, '#f4efe2'), css };
 }
 
 const KINDS = [['1', '크리스마스화보', gallery], ['2', '연말결산앨범', recap], ['3', '캐롤플레이리스트', carol]];

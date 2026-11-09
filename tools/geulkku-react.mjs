@@ -14,6 +14,7 @@ import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+const { polishHtml } = (await import('node:module')).createRequire(import.meta.url)('./geulkku-polish/polish.cjs');   // 11-10 공통 다듬기(정화기 맞춤)
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = path.join(ROOT, 'mart', 'data', 'geulkku');
 const INDEX = path.join(DIR, 'index.json');
@@ -55,7 +56,7 @@ for (const f of REACT_FRAMES) {
     const { item, reason } = checkItem(entry);
     if (!item) throw new Error(`${f.id}: ${reason}`);
     const preview = previewOf(renderLog(SAMPLE, { template: item, ui: UI, fields: FIELDS, size: 'm', screen: SAMPLE_SCREEN }), f.id, f.label);
-    heavy[f.id] = { preview, template: entry.template, colors: entry.colors, messages: entry.messages, tail: entry.tail, ...(entry.type ? { type: entry.type } : {}) };
+    heavy[f.id] = { preview: polishHtml(preview), template: polishHtml(entry.template, { preview: false }), colors: entry.colors, messages: entry.messages, tail: entry.tail, ...(entry.type ? { type: entry.type } : {}) };
     const body = preview.replace(/<style>[\s\S]*?<\/style>/g, '');
     const fx = `${/style="[^"]*animation\s*:/.test(body) ? 'm' : ''}${/ data-bl-egg="/.test(preview) ? 'e' : ''}`;
     rows.push({ id: f.id, name: f.label, emoji: f.emoji, category: REACT_CATEGORY.id, style: STYLE, desc: `${f.desc}${/<details/.test(f.template) ? ' · 붙이면 닫힌 채 시작해요(미리보기만 펼쳐 보여요)' : ''}`, c: KEY, bytes: Buffer.byteLength(JSON.stringify({ 'bl-mart': 1, items: [entry] })), ...(fx ? { fx } : {}), bg: f.colors.bg, ink: f.colors.text });

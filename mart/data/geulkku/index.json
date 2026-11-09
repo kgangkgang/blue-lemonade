@@ -1,5 +1,5 @@
 {
- "_": "글꾸 마트 목록 — 테마 tools/mart-build.mjs 산출물을 split-geulkku.mjs 로 나눈 것(고치지 말고 다시 만들어요) · tools/geulkku-accent.mjs 가 accent · icon 을 덧붙여요 · tools/geulkku-builtin.mjs 가 테마 1.0.9 로그 복사 기본 틀 19종(내장)을 덧붙여요",
+ "_": "글꾸 마트 목록 — 테마 tools/mart-build.mjs 산출물을 split-geulkku.mjs 로 나눈 것(고치지 말고 다시 만들어요) · tools/geulkku-accent.mjs 가 accent · icon 을 덧붙여요 · tools/geulkku-builtin.mjs 가 테마 1.0.9 로그 복사 기본 틀 19종(내장)을 덧붙여요 · tools/geulkku-polish.mjs 가 정화기 맞춤(overflow:clip · block-size · 스크롤바 숨김)을 걸어요",
  "built": "2026-11-05",
  "count": 1512,
  "categories": [
@@ -221,774 +221,774 @@
  ],
  "chunks": {
   "sp-season": {
-   "file": "sp-season.5627016e.json",
+   "file": "sp-season.0d7d39e0.json",
    "n": 8,
-   "bytes": 158710
+   "bytes": 162790
   },
   "sp-weather": {
-   "file": "sp-weather.f5cbd990.json",
+   "file": "sp-weather.989487e0.json",
    "n": 7,
-   "bytes": 128247
+   "bytes": 131406
   },
   "sp-event": {
-   "file": "sp-event.9dc67713.json",
+   "file": "sp-event.b22ad968.json",
    "n": 14,
-   "bytes": 275841
+   "bytes": 282285
   },
   "sp-daytime": {
-   "file": "sp-daytime.515ec21d.json",
+   "file": "sp-daytime.841c8aad.json",
    "n": 5,
-   "bytes": 94915
+   "bytes": 97232
   },
   "sp-transport": {
-   "file": "sp-transport.c760e95a.json",
+   "file": "sp-transport.ac3764e5.json",
    "n": 7,
-   "bytes": 155577
+   "bytes": 159474
   },
   "sp-paper": {
-   "file": "sp-paper.6d62c336.json",
+   "file": "sp-paper.a4ff6f70.json",
    "n": 5,
-   "bytes": 101000
+   "bytes": 103555
   },
   "sp-place": {
-   "file": "sp-place.992b2062.json",
+   "file": "sp-place.535f1941.json",
    "n": 12,
-   "bytes": 228113
+   "bytes": 233647
   },
   "sp-animal": {
-   "file": "sp-animal.7c3196cf.json",
+   "file": "sp-animal.1fe403e9.json",
    "n": 8,
-   "bytes": 153801
+   "bytes": 157799
   },
   "sp-halloween": {
-   "file": "sp-halloween.f0b907c3.json",
+   "file": "sp-halloween.2c7f49fc.json",
    "n": 31,
-   "bytes": 578137
+   "bytes": 592578
   },
   "sp-food": {
-   "file": "sp-food.393d9833.json",
+   "file": "sp-food.8b0bcdef.json",
    "n": 8,
-   "bytes": 160843
+   "bytes": 164613
   },
   "sp-hobby": {
-   "file": "sp-hobby.dc6fe4a9.json",
+   "file": "sp-hobby.42fdd9e5.json",
    "n": 8,
-   "bytes": 165555
+   "bytes": 169437
   },
   "sp-job": {
-   "file": "sp-job.cb857d54.json",
+   "file": "sp-job.c2d8d278.json",
    "n": 8,
-   "bytes": 165764
+   "bytes": 169404
   },
   "sp-media": {
-   "file": "sp-media.74f29b00.json",
+   "file": "sp-media.f3695936.json",
    "n": 6,
-   "bytes": 118377
+   "bytes": 121023
   },
   "sp-nature": {
-   "file": "sp-nature.e247d5da.json",
+   "file": "sp-nature.aa15ce22.json",
    "n": 8,
-   "bytes": 161414
+   "bytes": 165146
   },
   "sp-fantasy": {
-   "file": "sp-fantasy.e2f77ed4.json",
+   "file": "sp-fantasy.2e9ba008.json",
    "n": 8,
-   "bytes": 157882
+   "bytes": 161730
   },
   "sp-mood": {
-   "file": "sp-mood.04262c3b.json",
+   "file": "sp-mood.796fccdf.json",
    "n": 5,
-   "bytes": 97209
+   "bytes": 100316
   },
   "sp-sport": {
-   "file": "sp-sport.6ccf0c94.json",
+   "file": "sp-sport.fbf3cc8d.json",
    "n": 6,
-   "bytes": 140723
+   "bytes": 143379
   },
   "sp-hud": {
-   "file": "sp-hud.812b5ee6.json",
+   "file": "sp-hud.745924f3.json",
    "n": 4,
-   "bytes": 89188
+   "bytes": 91344
   },
   "sp-love": {
-   "file": "sp-love.c6020a03.json",
+   "file": "sp-love.b094fffb.json",
    "n": 5,
-   "bytes": 100675
+   "bytes": 102924
   },
   "sp-thing": {
-   "file": "sp-thing.93b1a3cf.json",
+   "file": "sp-thing.5b374323.json",
    "n": 11,
-   "bytes": 240137
+   "bytes": 245580
   },
   "sp-genre": {
-   "file": "sp-genre.9973038a.json",
+   "file": "sp-genre.fe55fd1b.json",
    "n": 12,
-   "bytes": 251197
+   "bytes": 257023
   },
   "sp-halo": {
-   "file": "sp-halo.16cdeb97.json",
+   "file": "sp-halo.6c40402f.json",
    "n": 6,
-   "bytes": 123153
+   "bytes": 126029
   },
   "sp-hunter": {
-   "file": "sp-hunter.3ceaa028.json",
+   "file": "sp-hunter.079ab904.json",
    "n": 6,
-   "bytes": 122989
+   "bytes": 126019
   },
   "sp-adrian": {
-   "file": "sp-adrian.b333f4a9.json",
+   "file": "sp-adrian.7cd2ce8e.json",
    "n": 6,
-   "bytes": 113613
+   "bytes": 116177
   },
   "sp-gangho": {
-   "file": "sp-gangho.d72e76d4.json",
+   "file": "sp-gangho.f8c5a099.json",
    "n": 6,
-   "bytes": 117004
+   "bytes": 119706
   },
   "sp-halo-char": {
-   "file": "sp-halo-char.718e6247.json",
+   "file": "sp-halo-char.a72039a1.json",
    "n": 26,
-   "bytes": 553512
+   "bytes": 565854
   },
   "sp-gangho-char": {
-   "file": "sp-gangho-char.91a050b5.json",
+   "file": "sp-gangho-char.a6db0397.json",
    "n": 14,
-   "bytes": 300129
+   "bytes": 306547
   },
   "sp-christmas": {
-   "file": "sp-christmas.5c157878.json",
+   "file": "sp-christmas.10e44630.json",
    "n": 24,
-   "bytes": 596013
+   "bytes": 613337
   },
   "sp-app": {
-   "file": "sp-app.45b7f30a.json",
+   "file": "sp-app.09a6ef46.json",
    "n": 12,
-   "bytes": 376365
+   "bytes": 386165
   },
   "sp-game": {
-   "file": "sp-game.84789515.json",
+   "file": "sp-game.b220e44e.json",
    "n": 8,
-   "bytes": 187596
+   "bytes": 192504
   },
   "sp-retro": {
-   "file": "sp-retro.851df628.json",
+   "file": "sp-retro.6c2429a4.json",
    "n": 8,
-   "bytes": 189985
+   "bytes": 194635
   },
   "sp-fortune": {
-   "file": "sp-fortune.44e238d7.json",
+   "file": "sp-fortune.c9b6f0f4.json",
    "n": 8,
-   "bytes": 186365
+   "bytes": 190785
   },
   "sp-fandom": {
-   "file": "sp-fandom.1a920fd6.json",
+   "file": "sp-fandom.ae592876.json",
    "n": 8,
-   "bytes": 178631
+   "bytes": 183121
   },
   "sp-school": {
-   "file": "sp-school.b7f0a36c.json",
+   "file": "sp-school.e8b4d48e.json",
    "n": 8,
-   "bytes": 182035
+   "bytes": 186303
   },
   "sp-hunter-char": {
-   "file": "sp-hunter-char.1c06b431.json",
+   "file": "sp-hunter-char.f4759a5b.json",
    "n": 16,
-   "bytes": 392784
+   "bytes": 401916
   },
   "sp-adrian-char": {
-   "file": "sp-adrian-char.c6663327.json",
+   "file": "sp-adrian-char.6d96f2d5.json",
    "n": 4,
-   "bytes": 94378
+   "bytes": 96556
   },
   "sp-sentinel-world": {
-   "file": "sp-sentinel-world.8ad5b4ab.json",
+   "file": "sp-sentinel-world.299d8052.json",
    "n": 12,
-   "bytes": 354462
+   "bytes": 362658
   },
   "sp-sentinel-char": {
-   "file": "sp-sentinel-char.1556e7db.json",
+   "file": "sp-sentinel-char.878f33ed.json",
    "n": 22,
-   "bytes": 681758
+   "bytes": 699350
   },
   "il-event": {
-   "file": "il-event.47c79f89.json",
+   "file": "il-event.6a4b3c82.json",
    "n": 14,
-   "bytes": 394092
+   "bytes": 403841
   },
   "il-thing": {
-   "file": "il-thing.9b6e3142.json",
+   "file": "il-thing.8da17bb0.json",
    "n": 11,
-   "bytes": 296686
+   "bytes": 302601
   },
   "il-genre": {
-   "file": "il-genre.6c56dbcf.json",
+   "file": "il-genre.9c30179a.json",
    "n": 12,
-   "bytes": 317710
+   "bytes": 324133
   },
   "il-halloween": {
-   "file": "il-halloween.513cc664.json",
+   "file": "il-halloween.ad1aef09.json",
    "n": 31,
-   "bytes": 1691928
+   "bytes": 1724779
   },
   "il-halo": {
-   "file": "il-halo.740faab8.json",
+   "file": "il-halo.dc73d669.json",
    "n": 6,
-   "bytes": 128127
+   "bytes": 131747
   },
   "il-hunter": {
-   "file": "il-hunter.3cfe9466.json",
+   "file": "il-hunter.f159cd9a.json",
    "n": 6,
-   "bytes": 123012
+   "bytes": 126805
   },
   "il-adrian": {
-   "file": "il-adrian.2c6c24b7.json",
+   "file": "il-adrian.56af230f.json",
    "n": 6,
-   "bytes": 123434
+   "bytes": 126554
   },
   "il-gangho": {
-   "file": "il-gangho.b42ddd0f.json",
+   "file": "il-gangho.2c985b0e.json",
    "n": 6,
-   "bytes": 122439
+   "bytes": 125629
   },
   "il-halo-char": {
-   "file": "il-halo-char.e7423b47.json",
+   "file": "il-halo-char.fd13ff0b.json",
    "n": 26,
-   "bytes": 600224
+   "bytes": 616504
   },
   "il-gangho-char": {
-   "file": "il-gangho-char.dada94d0.json",
+   "file": "il-gangho-char.20ceeb78.json",
    "n": 14,
-   "bytes": 328604
+   "bytes": 337004
   },
   "il-season": {
-   "file": "il-season.3efeace2.json",
+   "file": "il-season.0c173d70.json",
    "n": 8,
-   "bytes": 334884
+   "bytes": 343658
   },
   "il-weather": {
-   "file": "il-weather.51aaabe3.json",
+   "file": "il-weather.41036086.json",
    "n": 7,
-   "bytes": 257015
+   "bytes": 266138
   },
   "il-daytime": {
-   "file": "il-daytime.bd8a4518.json",
+   "file": "il-daytime.b2951b70.json",
    "n": 5,
-   "bytes": 137176
+   "bytes": 143677
   },
   "il-transport": {
-   "file": "il-transport.f0d13df0.json",
+   "file": "il-transport.a5ba458f.json",
    "n": 7,
-   "bytes": 183589
+   "bytes": 189710
   },
   "il-paper": {
-   "file": "il-paper.f77b2e18.json",
+   "file": "il-paper.def6c6bb.json",
    "n": 5,
-   "bytes": 111764
+   "bytes": 115201
   },
   "il-place": {
-   "file": "il-place.4d2c41b3.json",
+   "file": "il-place.0b67cabf.json",
    "n": 12,
-   "bytes": 325812
+   "bytes": 335532
   },
   "il-animal": {
-   "file": "il-animal.c5f84f06.json",
+   "file": "il-animal.a4cf6266.json",
    "n": 8,
-   "bytes": 188867
+   "bytes": 194015
   },
   "il-food": {
-   "file": "il-food.c9cce494.json",
+   "file": "il-food.1e3a9c2c.json",
    "n": 8,
-   "bytes": 189419
+   "bytes": 193441
   },
   "il-hobby": {
-   "file": "il-hobby.5325720b.json",
+   "file": "il-hobby.0009fb58.json",
    "n": 8,
-   "bytes": 180688
+   "bytes": 186288
   },
   "il-job": {
-   "file": "il-job.a1df749e.json",
+   "file": "il-job.9b5ad130.json",
    "n": 8,
-   "bytes": 192992
+   "bytes": 196960
   },
   "il-media": {
-   "file": "il-media.446d56fd.json",
+   "file": "il-media.f7907c69.json",
    "n": 6,
-   "bytes": 132359
+   "bytes": 136535
   },
   "il-nature": {
-   "file": "il-nature.0a962ca3.json",
+   "file": "il-nature.cbb7f10d.json",
    "n": 8,
-   "bytes": 193803
+   "bytes": 198323
   },
   "il-fantasy": {
-   "file": "il-fantasy.b2e6c688.json",
+   "file": "il-fantasy.660ebc30.json",
    "n": 8,
-   "bytes": 200571
+   "bytes": 205501
   },
   "il-mood": {
-   "file": "il-mood.b762309c.json",
+   "file": "il-mood.79141a20.json",
    "n": 5,
-   "bytes": 115025
+   "bytes": 118292
   },
   "il-sport": {
-   "file": "il-sport.61968a92.json",
+   "file": "il-sport.2508e249.json",
    "n": 6,
-   "bytes": 134639
+   "bytes": 137687
   },
   "il-hud": {
-   "file": "il-hud.051cc6c5.json",
+   "file": "il-hud.7e0ed387.json",
    "n": 4,
-   "bytes": 113030
+   "bytes": 117498
   },
   "il-love": {
-   "file": "il-love.bd2ca752.json",
+   "file": "il-love.1b67f0e0.json",
    "n": 5,
-   "bytes": 115703
+   "bytes": 118206
   },
   "il-christmas": {
-   "file": "il-christmas.6ebc1a3a.json",
+   "file": "il-christmas.cffe6bba.json",
    "n": 24,
-   "bytes": 1000035
+   "bytes": 1030337
   },
   "il-app": {
-   "file": "il-app.e8fde71a.json",
+   "file": "il-app.8bc4f0be.json",
    "n": 12,
-   "bytes": 482121
+   "bytes": 494087
   },
   "il-game": {
-   "file": "il-game.6f15f595.json",
+   "file": "il-game.0fbabdb0.json",
    "n": 8,
-   "bytes": 285066
+   "bytes": 292880
   },
   "il-retro": {
-   "file": "il-retro.4de21f37.json",
+   "file": "il-retro.01ce57b9.json",
    "n": 8,
-   "bytes": 320802
+   "bytes": 328546
   },
   "il-fortune": {
-   "file": "il-fortune.4e3c9760.json",
+   "file": "il-fortune.e35baf44.json",
    "n": 8,
-   "bytes": 312206
+   "bytes": 319282
   },
   "il-fandom": {
-   "file": "il-fandom.72847125.json",
+   "file": "il-fandom.f4bb8649.json",
    "n": 8,
-   "bytes": 281305
+   "bytes": 289325
   },
   "il-school": {
-   "file": "il-school.7c4679bd.json",
+   "file": "il-school.315a7766.json",
    "n": 8,
-   "bytes": 306577
+   "bytes": 314061
   },
   "il-hunter-char": {
-   "file": "il-hunter-char.769b1046.json",
+   "file": "il-hunter-char.8d1a09c5.json",
    "n": 16,
-   "bytes": 702765
+   "bytes": 719441
   },
   "il-adrian-char": {
-   "file": "il-adrian-char.b8305b15.json",
+   "file": "il-adrian-char.7a5b896c.json",
    "n": 4,
-   "bytes": 146828
+   "bytes": 150448
   },
   "il-sentinel-world": {
-   "file": "il-sentinel-world.ee6c8206.json",
+   "file": "il-sentinel-world.07b00582.json",
    "n": 12,
-   "bytes": 476297
+   "bytes": 486845
   },
   "il-sentinel-char": {
-   "file": "il-sentinel-char.a6351ada.json",
+   "file": "il-sentinel-char.82b6d8f0.json",
    "n": 22,
-   "bytes": 932051
+   "bytes": 955695
   },
   "dk-season": {
-   "file": "dk-season.a6439c54.json",
+   "file": "dk-season.8d60f90f.json",
    "n": 8,
-   "bytes": 444706
+   "bytes": 456014
   },
   "dk-weather": {
-   "file": "dk-weather.c5a21752.json",
+   "file": "dk-weather.15d55eb1.json",
    "n": 7,
-   "bytes": 387208
+   "bytes": 400049
   },
   "dk-event": {
-   "file": "dk-event.65780986.json",
+   "file": "dk-event.04d2cc20.json",
    "n": 7,
-   "bytes": 343687
+   "bytes": 353488
   },
   "dk-daytime": {
-   "file": "dk-daytime.9a3139af.json",
+   "file": "dk-daytime.ff4c31c4.json",
    "n": 5,
-   "bytes": 236509
+   "bytes": 243194
   },
   "dk-transport": {
-   "file": "dk-transport.eea7bc8a.json",
+   "file": "dk-transport.a2e25135.json",
    "n": 7,
-   "bytes": 352597
+   "bytes": 362430
   },
   "dk-paper": {
-   "file": "dk-paper.f9279529.json",
+   "file": "dk-paper.c7cfd30c.json",
    "n": 5,
-   "bytes": 220422
+   "bytes": 226643
   },
   "dk-place": {
-   "file": "dk-place.e3aec612.json",
+   "file": "dk-place.2be9401c.json",
    "n": 12,
-   "bytes": 555091
+   "bytes": 570419
   },
   "dk-animal": {
-   "file": "dk-animal.564cdbc5.json",
+   "file": "dk-animal.aac573da.json",
    "n": 8,
-   "bytes": 425750
+   "bytes": 438026
   },
   "dk-halloween": {
-   "file": "dk-halloween.05b2fc77.json",
+   "file": "dk-halloween.02d33eed.json",
    "n": 31,
-   "bytes": 1615762
+   "bytes": 1659279
   },
   "dk-food": {
-   "file": "dk-food.c4c1e59f.json",
+   "file": "dk-food.d6b2f88f.json",
    "n": 8,
-   "bytes": 380269
+   "bytes": 391055
   },
   "dk-hobby": {
-   "file": "dk-hobby.a5c4874c.json",
+   "file": "dk-hobby.51d7a928.json",
    "n": 8,
-   "bytes": 381723
+   "bytes": 392537
   },
   "dk-job": {
-   "file": "dk-job.860fdadc.json",
+   "file": "dk-job.366d3b03.json",
    "n": 8,
-   "bytes": 376060
+   "bytes": 386576
   },
   "dk-media": {
-   "file": "dk-media.c0af4d8c.json",
+   "file": "dk-media.26fbdf68.json",
    "n": 6,
-   "bytes": 295763
+   "bytes": 303729
   },
   "dk-nature": {
-   "file": "dk-nature.afb390e4.json",
+   "file": "dk-nature.9aa1dddb.json",
    "n": 8,
-   "bytes": 394292
+   "bytes": 405678
   },
   "dk-fantasy": {
-   "file": "dk-fantasy.37380cdb.json",
+   "file": "dk-fantasy.29b734d8.json",
    "n": 8,
-   "bytes": 405311
+   "bytes": 416499
   },
   "dk-mood": {
-   "file": "dk-mood.e4f88e3c.json",
+   "file": "dk-mood.f2c13380.json",
    "n": 5,
-   "bytes": 241782
+   "bytes": 248929
   },
   "dk-sport": {
-   "file": "dk-sport.aeef0292.json",
+   "file": "dk-sport.57eade02.json",
    "n": 6,
-   "bytes": 285504
+   "bytes": 293502
   },
   "dk-hud": {
-   "file": "dk-hud.a1c61f91.json",
+   "file": "dk-hud.cea6c2af.json",
    "n": 4,
-   "bytes": 203592
+   "bytes": 209022
   },
   "dk-love": {
-   "file": "dk-love.c8369bf7.json",
+   "file": "dk-love.daee2c56.json",
    "n": 5,
-   "bytes": 241007
+   "bytes": 247918
   },
   "dk-halo": {
-   "file": "dk-halo.c0d95361.json",
+   "file": "dk-halo.a80f34bc.json",
    "n": 6,
-   "bytes": 276757
+   "bytes": 284813
   },
   "dk-hunter": {
-   "file": "dk-hunter.8c58f83a.json",
+   "file": "dk-hunter.c3310df3.json",
    "n": 6,
-   "bytes": 294708
+   "bytes": 302608
   },
   "dk-adrian": {
-   "file": "dk-adrian.20dfa64a.json",
+   "file": "dk-adrian.b73f5ea0.json",
    "n": 6,
-   "bytes": 277939
+   "bytes": 285693
   },
   "dk-gangho": {
-   "file": "dk-gangho.665373f5.json",
+   "file": "dk-gangho.06064bc2.json",
    "n": 6,
-   "bytes": 306385
+   "bytes": 314829
   },
   "dk-halo-char": {
-   "file": "dk-halo-char.1b64f35c.json",
+   "file": "dk-halo-char.e209e51b.json",
    "n": 26,
-   "bytes": 1263318
+   "bytes": 1298400
   },
   "dk-gangho-char": {
-   "file": "dk-gangho-char.9d186d09.json",
+   "file": "dk-gangho-char.1d25ffb6.json",
    "n": 14,
-   "bytes": 682318
+   "bytes": 701874
   },
   "dk-christmas": {
-   "file": "dk-christmas.192935ee.json",
+   "file": "dk-christmas.54eb7600.json",
    "n": 24,
-   "bytes": 1083198
+   "bytes": 1113934
   },
   "dk-app": {
-   "file": "dk-app.4b7e469a.json",
+   "file": "dk-app.bcfa5bc4.json",
    "n": 12,
-   "bytes": 530877
+   "bytes": 545491
   },
   "dk-game": {
-   "file": "dk-game.b6401a7e.json",
+   "file": "dk-game.ca9e0618.json",
    "n": 8,
-   "bytes": 256000
+   "bytes": 261288
   },
   "dk-retro": {
-   "file": "dk-retro.3b28afb8.json",
+   "file": "dk-retro.01d92ecb.json",
    "n": 8,
-   "bytes": 378694
+   "bytes": 389904
   },
   "dk-fortune": {
-   "file": "dk-fortune.d42634e4.json",
+   "file": "dk-fortune.e80cab1b.json",
    "n": 8,
-   "bytes": 359732
+   "bytes": 370214
   },
   "dk-fandom": {
-   "file": "dk-fandom.278dcfd1.json",
+   "file": "dk-fandom.7b91dec6.json",
    "n": 8,
-   "bytes": 378531
+   "bytes": 389961
   },
   "dk-school": {
-   "file": "dk-school.7b8f127a.json",
+   "file": "dk-school.6def3c04.json",
    "n": 8,
-   "bytes": 351274
+   "bytes": 359226
   },
   "dk-hunter-char": {
-   "file": "dk-hunter-char.70a5c666.json",
+   "file": "dk-hunter-char.2af80a4f.json",
    "n": 16,
-   "bytes": 695868
+   "bytes": 713526
   },
   "dk-adrian-char": {
-   "file": "dk-adrian-char.01eb4eb2.json",
+   "file": "dk-adrian-char.bb91490b.json",
    "n": 4,
-   "bytes": 162393
+   "bytes": 166633
   },
   "dk-sentinel-world": {
-   "file": "dk-sentinel-world.7537383c.json",
+   "file": "dk-sentinel-world.3812d69a.json",
    "n": 12,
-   "bytes": 588376
+   "bytes": 603120
   },
   "dk-sentinel-char": {
-   "file": "dk-sentinel-char.7cbd0537.json",
+   "file": "dk-sentinel-char.e9e3281b.json",
    "n": 22,
-   "bytes": 1077491
+   "bytes": 1103943
   },
   "mt-animal": {
-   "file": "mt-animal.11ebb757.json",
+   "file": "mt-animal.54eb4997.json",
    "n": 8,
-   "bytes": 218096
+   "bytes": 224394
   },
   "mt-weather": {
-   "file": "mt-weather.e63a4a93.json",
+   "file": "mt-weather.a06bc24a.json",
    "n": 7,
-   "bytes": 192473
+   "bytes": 197950
   },
   "mt-season": {
-   "file": "mt-season.9ba92cdc.json",
+   "file": "mt-season.4af3b899.json",
    "n": 8,
-   "bytes": 299030
+   "bytes": 306684
   },
   "mt-event": {
-   "file": "mt-event.8ce30de4.json",
+   "file": "mt-event.17ea4bca.json",
    "n": 7,
-   "bytes": 192000
+   "bytes": 197093
   },
   "mt-daytime": {
-   "file": "mt-daytime.b5993491.json",
+   "file": "mt-daytime.5ecdead8.json",
    "n": 5,
-   "bytes": 127581
+   "bytes": 131660
   },
   "mt-transport": {
-   "file": "mt-transport.fd61394d.json",
+   "file": "mt-transport.fcf94f1c.json",
    "n": 7,
-   "bytes": 201696
+   "bytes": 207401
   },
   "mt-paper": {
-   "file": "mt-paper.7bc47420.json",
+   "file": "mt-paper.5482cce0.json",
    "n": 5,
-   "bytes": 125669
+   "bytes": 128798
   },
   "mt-place": {
-   "file": "mt-place.f9b2bf8f.json",
+   "file": "mt-place.a6c43e45.json",
    "n": 12,
-   "bytes": 332290
+   "bytes": 342354
   },
   "mt-halloween": {
-   "file": "mt-halloween.51af2c83.json",
+   "file": "mt-halloween.af7d1dcc.json",
    "n": 31,
-   "bytes": 1119919
+   "bytes": 1158126
   },
   "mt-food": {
-   "file": "mt-food.9c23c211.json",
+   "file": "mt-food.1475e087.json",
    "n": 8,
-   "bytes": 212354
+   "bytes": 218150
   },
   "mt-hobby": {
-   "file": "mt-hobby.3ac1405a.json",
+   "file": "mt-hobby.0594c803.json",
    "n": 8,
-   "bytes": 200029
+   "bytes": 205173
   },
   "mt-job": {
-   "file": "mt-job.a9c2a29e.json",
+   "file": "mt-job.9b2086ad.json",
    "n": 8,
-   "bytes": 214047
+   "bytes": 219479
   },
   "mt-media": {
-   "file": "mt-media.0a0a210e.json",
+   "file": "mt-media.66f5610c.json",
    "n": 6,
-   "bytes": 159170
+   "bytes": 163296
   },
   "mt-nature": {
-   "file": "mt-nature.03ea37e4.json",
+   "file": "mt-nature.f210530f.json",
    "n": 8,
-   "bytes": 259164
+   "bytes": 268614
   },
   "mt-fantasy": {
-   "file": "mt-fantasy.dcb9754e.json",
+   "file": "mt-fantasy.eccc7e4c.json",
    "n": 8,
-   "bytes": 237221
+   "bytes": 244605
   },
   "mt-mood": {
-   "file": "mt-mood.269b8b68.json",
+   "file": "mt-mood.525bb9e8.json",
    "n": 5,
-   "bytes": 139578
+   "bytes": 143723
   },
   "mt-sport": {
-   "file": "mt-sport.48f35b1b.json",
+   "file": "mt-sport.003adc6a.json",
    "n": 6,
-   "bytes": 171103
+   "bytes": 175899
   },
   "mt-hud": {
-   "file": "mt-hud.9054c7de.json",
+   "file": "mt-hud.e9cfc053.json",
    "n": 4,
-   "bytes": 127451
+   "bytes": 131767
   },
   "mt-love": {
-   "file": "mt-love.d4afb660.json",
+   "file": "mt-love.48dbdede.json",
    "n": 5,
-   "bytes": 156386
+   "bytes": 160125
   },
   "mt-halo": {
-   "file": "mt-halo.475414b9.json",
+   "file": "mt-halo.40e81b28.json",
    "n": 6,
-   "bytes": 182903
+   "bytes": 188681
   },
   "mt-hunter": {
-   "file": "mt-hunter.42e8b9dd.json",
+   "file": "mt-hunter.f5f220f4.json",
    "n": 6,
-   "bytes": 201598
+   "bytes": 207984
   },
   "mt-adrian": {
-   "file": "mt-adrian.3bf97f1e.json",
+   "file": "mt-adrian.0b2ff195.json",
    "n": 6,
-   "bytes": 181510
+   "bytes": 186936
   },
   "mt-gangho": {
-   "file": "mt-gangho.436adeb3.json",
+   "file": "mt-gangho.13cf86da.json",
    "n": 6,
-   "bytes": 176163
+   "bytes": 181299
   },
   "mt-halo-char": {
-   "file": "mt-halo-char.a5618edc.json",
+   "file": "mt-halo-char.3a9990a6.json",
    "n": 26,
-   "bytes": 904849
+   "bytes": 933745
   },
   "mt-gangho-char": {
-   "file": "mt-gangho-char.51bf813a.json",
+   "file": "mt-gangho-char.ea03e1c4.json",
    "n": 14,
-   "bytes": 465437
+   "bytes": 480701
   },
   "mt-christmas": {
-   "file": "mt-christmas.013bc40b.json",
+   "file": "mt-christmas.d1b2c8e5.json",
    "n": 24,
-   "bytes": 920442
+   "bytes": 951548
   },
   "mt-app": {
-   "file": "mt-app.b3fbd8aa.json",
+   "file": "mt-app.01c1bb50.json",
    "n": 12,
-   "bytes": 532520
+   "bytes": 547666
   },
   "mt-game": {
-   "file": "mt-game.1b9687e4.json",
+   "file": "mt-game.91fcf14a.json",
    "n": 8,
-   "bytes": 231611
+   "bytes": 238165
   },
   "mt-retro": {
-   "file": "mt-retro.5939889e.json",
+   "file": "mt-retro.8e489ad6.json",
    "n": 8,
-   "bytes": 296973
+   "bytes": 304681
   },
   "mt-fortune": {
-   "file": "mt-fortune.25c44176.json",
+   "file": "mt-fortune.f8e7bbc5.json",
    "n": 8,
-   "bytes": 307885
+   "bytes": 318067
   },
   "mt-fandom": {
-   "file": "mt-fandom.0e96d524.json",
+   "file": "mt-fandom.85dfd7dc.json",
    "n": 8,
-   "bytes": 250338
+   "bytes": 258454
   },
   "mt-school": {
-   "file": "mt-school.9715063c.json",
+   "file": "mt-school.d38d61cd.json",
    "n": 8,
-   "bytes": 225088
+   "bytes": 231330
   },
   "mt-hunter-char": {
-   "file": "mt-hunter-char.e3b368dd.json",
+   "file": "mt-hunter-char.6f38e7d6.json",
    "n": 16,
-   "bytes": 569609
+   "bytes": 587043
   },
   "mt-adrian-char": {
-   "file": "mt-adrian-char.1ad59c91.json",
+   "file": "mt-adrian-char.b0904d2f.json",
    "n": 4,
-   "bytes": 121758
+   "bytes": 125532
   },
   "mt-sentinel-world": {
-   "file": "mt-sentinel-world.caa4546a.json",
+   "file": "mt-sentinel-world.a5e29b2e.json",
    "n": 12,
-   "bytes": 414813
+   "bytes": 426605
   },
   "mt-sentinel-char": {
-   "file": "mt-sentinel-char.03fab7dc.json",
+   "file": "mt-sentinel-char.779237f4.json",
    "n": 22,
-   "bytes": 880147
+   "bytes": 907485
   },
   "lc-builtin": {
-   "file": "lc-builtin.08beecdd.json",
+   "file": "lc-builtin.740ad399.json",
    "n": 19,
-   "bytes": 170284
+   "bytes": 176420
   },
   "sp-react": {
-   "file": "sp-react.25f1c332.json",
+   "file": "sp-react.82ffd5a6.json",
    "n": 4,
-   "bytes": 98157
+   "bytes": 100241
   },
   "hb-hwabo": {
-   "file": "hb-hwabo.3add1011.json",
+   "file": "hb-hwabo.6d64bd95.json",
    "n": 3,
-   "bytes": 189863
+   "bytes": 207117
   },
   "sg-song": {
-   "file": "sg-song.bca741d8.json",
+   "file": "sg-song.adaa634c.json",
    "n": 3,
-   "bytes": 61660
+   "bytes": 71441
   },
   "sp-scene": {
-   "file": "sp-scene.d48bebcf.json",
+   "file": "sp-scene.cea4ea40.json",
    "n": 8,
-   "bytes": 170076
+   "bytes": 172918
   },
   "sp-xmas": {
-   "file": "sp-xmas.54e92dad.json",
+   "file": "sp-xmas.ef6aa7d5.json",
    "n": 9,
-   "bytes": 237915
+   "bytes": 245066
   },
   "sg-kara": {
    "file": "sg-kara.b3579c47.json",
@@ -1271,9 +1271,9 @@
   {"id":"c-xmas-sp-4","name":"겨울 기차표","emoji":"🚂","category":"christmas","style":"심플","desc":"두꺼운 종이 겨울 열차 승차권 — 오늘 → 눈의 나라 · 열차 · 호차 · 좌석 · 출발 칸, 선로를 달리는 기차(누르면 휙) · 점선 아래 로그 · 검표 도장을 누르면 빙글","c":"sp-xmas","bytes":6878,"fx":"me","bg":"#e6edf2","ink":"#2a2724","accent":"#1d5b8f","icon":null},
   {"id":"c-xmas-sp-5","name":"연말 정산","emoji":"🧾","category":"christmas","style":"심플","desc":"올해를 계산한 긴 영수증 — 톱니 가장자리 · 일시 · 손님, 같이 웃은 날 ×365 같은 품목 줄과 합계, 상세 내역(로그) · 바코드 · 「정산 완료」 도장을 누르면 통","c":"sp-xmas","bytes":6998,"fx":"e","bg":"#d9e2dc","ink":"#24221f","accent":"#24221f","icon":null},
   {"id":"c-xmas-sp-6","name":"소원 부적","emoji":"📜","category":"christmas","style":"심플","desc":"한지 위 노란 새해 부적 — 붉은 겹테 · 所願成就 큰 글씨, 소원(로그) 칸 · 붉은 「福」 도장을 누르면 빙글","c":"sp-xmas","bytes":3060,"fx":"e","bg":"#efe6cf","ink":"#3a2208","accent":"#9e1b1b","icon":null},
-  {"id":"xmas-gallery","name":"크리스마스 화보","emoji":"🎄","category":"christmas","style":"심플","desc":"밤하늘에 눈이 흐르고 꼬마전구가 깜박이는 화보 — 금빛 액자에 한 장씩(두 장 · 가로 장), 위 「이전 · 다음」과 「03 / 12」 · 사진 번호 · 코멘트 칸 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"bytes":66322,"fx":"e","bg":"#0e1a33","ink":"#f4f1ea","accent":"#c8323a"},
-  {"id":"xmas-recap","name":"연말 결산 앨범","emoji":"📔","category":"christmas","style":"심플","desc":"종이 앨범 — 큰 연도 · 올해의 한 장 · 달마다 사진 묶음(01 JAN …)과 메모 · 맨 아래 「사진 NN장 · 달 NN개」 합계가 저절로 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"bytes":14658,"fx":"e","bg":"#efe9dd","ink":"#24201b","accent":"#a8272d"},
-  {"id":"xmas-carol","name":"캐롤 플레이리스트","emoji":"🎶","category":"christmas","style":"심플","desc":"전나무 밤 · 사탕 줄무늬 띠 · 도는 레코드 — 한 줄에 한 곡(동그란 그림 · ♪ 번호 · 제목 · 캐릭터 칩 · mp3), 「그림 ▾」를 누르면 그 곡 그림이 펼쳐져요 · 곡마다 색 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"audio":true,"bytes":17662,"fx":"e","bg":"#0f2a1f","ink":"#f4efe2","accent":"#e8c766"},
+  {"id":"xmas-gallery","name":"크리스마스 화보","emoji":"🎄","category":"christmas","style":"심플","desc":"밤하늘에 눈이 흐르고 꼬마전구가 깜박이는 화보 — 금빛 액자에 한 장씩(두 장 · 가로 장), 위 「이전 · 다음」과 「03 / 12」 · 사진 번호 · 코멘트 칸 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"bytes":69597,"fx":"e","bg":"#0e1a33","ink":"#f4f1ea","accent":"#c8323a"},
+  {"id":"xmas-recap","name":"연말 결산 앨범","emoji":"📔","category":"christmas","style":"심플","desc":"종이 앨범 — 큰 연도 · 올해의 한 장 · 달마다 사진 묶음(01 JAN …)과 메모 · 맨 아래 「사진 NN장 · 달 NN개」 합계가 저절로 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"bytes":14863,"fx":"e","bg":"#efe9dd","ink":"#24201b","accent":"#a8272d"},
+  {"id":"xmas-carol","name":"캐롤 플레이리스트","emoji":"🎶","category":"christmas","style":"심플","desc":"전나무 밤 · 사탕 줄무늬 띠 · 도는 레코드 — 한 줄에 한 곡(동그란 그림 · ♪ 번호 · 제목 · 캐릭터 칩 · mp3), 「그림 ▾」를 누르면 그 곡 그림이 펼쳐져요 · 곡마다 색 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"audio":true,"bytes":18241,"fx":"e","bg":"#0f2a1f","ink":"#f4efe2","accent":"#e8c766"},
   {"id":"s-app-sp-1","name":"단톡방","emoji":"💬","category":"app","style":"심플","desc":"앱 · SNS 글꾸 · 꼬리 「모두 읽었어요」","c":"sp-app","bytes":6453,"fx":"me","bg":"#f1f5f9","ink":"#191919","accent":"#3a3a3a","icon":"icon/cd7959ae26.svg"},
   {"id":"s-app-sp-2","name":"인스타 스토리","emoji":"📸","category":"app","style":"심플","desc":"앱 · SNS 글꾸 · 꼬리 「답장은 대화로 보내져요」","c":"sp-app","bytes":7156,"fx":"me","bg":"#ffffff","ink":"#262626","accent":"#c13584","icon":"icon/18d771f29b.svg"},
   {"id":"s-app-sp-3","name":"X 타래","emoji":"🧵","category":"app","style":"심플","desc":"앱 · SNS 글꾸 · 꼬리 「답글 3개 더 보기」","c":"sp-app","bytes":8112,"fx":"me","bg":"#ffffff","ink":"#0f1419","accent":"#0f1419","icon":"icon/ebccd93c47.svg"},
@@ -1390,12 +1390,12 @@
   {"id":"c-react-sp-2","name":"초대장","emoji":"🎫","category":"react","style":"심플","desc":"닫힌 남색 두 문 · 금빛 테 · 누르면 문이 열리고 별이 반짝이며 본문이 펼쳐져요 · 붙이면 닫힌 채 시작해요(미리보기만 펼쳐 보여요)","c":"sp-react","bytes":6003,"fx":"me","bg":"#141a33","ink":"#1d2442","accent":"#8a6510","icon":null},
   {"id":"c-react-sp-3","name":"쪽 넘기기","emoji":"📖","category":"react","style":"심플","desc":"표지 · 로그 · 맺음 세 쪽을 옆으로 넘겨요 · 쪽마다 「n / 3」 · 모서리 귀를 누르면 쑥","c":"sp-react","bytes":5356,"fx":"e","bg":"#e9eef4","ink":"#2b3a4e","accent":"#2f5f8f","icon":null},
   {"id":"c-react-sp-4","name":"통통 카드","emoji":"🃏","category":"react","style":"심플","desc":"캐릭터 색 카드 여섯 장 · 누르면 통통 · 반짝 · 흔들 · 빙글 · 뒤집 · 쑥","c":"sp-react","bytes":5996,"fx":"e","bg":"#f1eef8","ink":"#1d1f27","accent":"#6a4aa8","icon":"icon/809a84b08b.svg"},
-  {"id":"hwabo-book","name":"책장 넘김","emoji":"📖","category":"hwabo","style":"심플","desc":"잡지처럼 한 쪽씩 넘겨요 · 위 · 아래 「이전 · 다음」과 「03 / 05」 · 표지 · SNS 카드 · 폴라로이드 · 필름 묶음 · 사진 · 이름 · 코멘트를 바꿔 깡싸 글 HTML 칸에 붙여요 · 사진 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 사진 번호는 저절로","c":"hb-hwabo","copyOnly":true,"photo":true,"bytes":66224,"fx":"e","bg":"#f3efe7","ink":"#1b1a1f","accent":"#b3242c"},
-  {"id":"hwabo-story","name":"스토리 뷰어","emoji":"📱","category":"hwabo","style":"심플","desc":"SNS 스토리처럼 한 장씩 · 장 왼쪽 · 오른쪽을 누르거나 아래 단추로 넘겨요 · 위 진행 막대 · 하이라이트 동그라미 · 말풍선 답장 · 사진 · 이름 · 코멘트를 바꿔 깡싸 글 HTML 칸에 붙여요 · 사진 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 사진 번호는 저절로","c":"hb-hwabo","copyOnly":true,"photo":true,"bytes":99604,"fx":"e","bg":"#0a0d16","ink":"#eef1f8","accent":"#3f5fb5"},
-  {"id":"hwabo-table","name":"라이트 테이블","emoji":"🎞️","category":"hwabo","style":"심플","desc":"밀착 인화지 위 프레임 · 누르면 크게(다시 누르면 작게) · 롤 머리를 누르면 한 줄 필름 띠로 접혀요 · 코멘트 사진은 인화 + 말풍선 · 사진 · 이름 · 코멘트를 바꿔 깡싸 글 HTML 칸에 붙여요 · 사진 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 사진 번호는 저절로","c":"hb-hwabo","copyOnly":true,"photo":true,"bytes":19316,"fx":"e","bg":"#f8f6f0","ink":"#24201b","accent":"#9a3b12"},
-  {"id":"song-album","name":"다크 앨범","emoji":"💿","category":"song","style":"심플","desc":"곡마다 큰 메인 그림 · 제목 · 캐릭터 칩 · 그림을 흐리게 깐 유리 mp3 카드 · 아래 그림 띠(폰은 손가락 · PC 는 휠 · 방향키) · 그림 · mp3 주소와 제목 · 이름을 바꿔 깡싸 글 HTML 칸에 붙여요 · 곡 · 그림 · mp3 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 트랙 · 그림 번호는 저절로 · 곡마다 색(t1~t6) · 곡 사이 코멘트 칸","c":"sg-song","copyOnly":true,"photo":true,"bytes":24074,"fx":"e","bg":"#0b0b0f","ink":"#f3f3f5","accent":"#c4364a"},
-  {"id":"song-single","name":"밝은 싱글","emoji":"🎼","category":"song","style":"심플","desc":"종이빛 싱글 재킷 · 살짝 기운 액자 그림 · 세리프 제목 · 트랙 줄(ver. A · B …) · 아래 그림 격자 · 그림 · mp3 주소와 제목 · 이름을 바꿔 깡싸 글 HTML 칸에 붙여요 · 곡 · 그림 · mp3 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 트랙 · 그림 번호는 저절로 · 곡마다 색(t1~t6) · 곡 사이 코멘트 칸","c":"sg-song","copyOnly":true,"photo":true,"bytes":17364,"fx":"e","bg":"#f7f2ea","ink":"#1d1a17","accent":"#b3242c"},
-  {"id":"song-playlist","name":"플레이리스트","emoji":"🎧","category":"song","style":"심플","desc":"음악 앱 목록처럼 한 줄에 한 곡 · 작은 그림 · 번호 · 제목 · mp3 · 「그림 ▾」를 누르면 그 곡 그림이 펼쳐져요 · 그림 · mp3 주소와 제목 · 이름을 바꿔 깡싸 글 HTML 칸에 붙여요 · 곡 · 그림 · mp3 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 트랙 · 그림 번호는 저절로 · 곡마다 색(t1~t6) · 곡 사이 코멘트 칸","c":"sg-song","copyOnly":true,"photo":true,"bytes":17896,"fx":"e","bg":"#121318","ink":"#f1f2f5","accent":"#3f6fd8"},
+  {"id":"hwabo-book","name":"책장 넘김","emoji":"📖","category":"hwabo","style":"심플","desc":"잡지처럼 한 쪽씩 넘겨요 · 위 · 아래 「이전 · 다음」과 「03 / 05」 · 표지 · SNS 카드 · 폴라로이드 · 필름 묶음 · 사진 · 이름 · 코멘트를 바꿔 깡싸 글 HTML 칸에 붙여요 · 사진 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 사진 번호는 저절로","c":"hb-hwabo","copyOnly":true,"photo":true,"bytes":71933,"fx":"e","bg":"#f3efe7","ink":"#1b1a1f","accent":"#b3242c"},
+  {"id":"hwabo-story","name":"스토리 뷰어","emoji":"📱","category":"hwabo","style":"심플","desc":"SNS 스토리처럼 한 장씩 · 장 왼쪽 · 오른쪽을 누르거나 아래 단추로 넘겨요 · 위 진행 막대 · 하이라이트 동그라미 · 말풍선 답장 · 사진 · 이름 · 코멘트를 바꿔 깡싸 글 HTML 칸에 붙여요 · 사진 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 사진 번호는 저절로","c":"hb-hwabo","copyOnly":true,"photo":true,"bytes":107570,"fx":"e","bg":"#0a0d16","ink":"#eef1f8","accent":"#3f5fb5"},
+  {"id":"hwabo-table","name":"라이트 테이블","emoji":"🎞️","category":"hwabo","style":"심플","desc":"밀착 인화지 위 프레임 · 누르면 크게(다시 누르면 작게) · 롤 머리를 누르면 한 줄 필름 띠로 접혀요 · 코멘트 사진은 인화 + 말풍선 · 사진 · 이름 · 코멘트를 바꿔 깡싸 글 HTML 칸에 붙여요 · 사진 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 사진 번호는 저절로","c":"hb-hwabo","copyOnly":true,"photo":true,"bytes":21579,"fx":"e","bg":"#f8f6f0","ink":"#24201b","accent":"#9a3b12"},
+  {"id":"song-album","name":"다크 앨범","emoji":"💿","category":"song","style":"심플","desc":"판 하나로 이어진 포스터 — 곡마다 판 끝까지 찬 메인 그림 위에 제목 · 춤추는 막대(누르면 하트) · 그림을 흐리게 깐 유리 mp3 카드 · 아래 그림 띠(폰은 손가락 · PC 는 휠 · 방향키) · 그림 · mp3 주소와 제목 · 이름을 바꿔 깡싸 글 HTML 칸에 붙여요 · 곡 · 그림 · mp3 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 트랙 · 그림 번호는 저절로 · 곡마다 색(t1~t6) · 곡 사이 코멘트 칸","c":"sg-song","copyOnly":true,"photo":true,"bytes":28290,"fx":"e","bg":"#0b0b0f","ink":"#f3f3f5","accent":"#c4364a"},
+  {"id":"song-single","name":"밝은 싱글","emoji":"🎼","category":"song","style":"심플","desc":"종이빛 싱글 재킷 · 살짝 기운 액자 그림 · 세리프 제목 · 트랙 줄(ver. A · B …) · 아래 그림 격자 · 그림 · mp3 주소와 제목 · 이름을 바꿔 깡싸 글 HTML 칸에 붙여요 · 곡 · 그림 · mp3 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 트랙 · 그림 번호는 저절로 · 곡마다 색(t1~t6) · 곡 사이 코멘트 칸","c":"sg-song","copyOnly":true,"photo":true,"bytes":20563,"fx":"e","bg":"#f7f2ea","ink":"#1d1a17","accent":"#b3242c"},
+  {"id":"song-playlist","name":"플레이리스트","emoji":"🎧","category":"song","style":"심플","desc":"음악 앱 목록처럼 한 줄에 한 곡 · 작은 그림 · 번호 · 제목 · mp3 · 줄 끝 화살표를 누르면 그 곡 그림이 펼쳐져요 · 그림 · mp3 주소와 제목 · 이름을 바꿔 깡싸 글 HTML 칸에 붙여요 · 곡 · 그림 · mp3 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 트랙 · 그림 번호는 저절로 · 곡마다 색(t1~t6) · 곡 사이 코멘트 칸","c":"sg-song","copyOnly":true,"photo":true,"bytes":19844,"fx":"e","bg":"#121318","ink":"#f1f2f5","accent":"#3f6fd8"},
   {"id":"kara-ign","name":"비 오는 밤 노래방","emoji":"🌧️","category":"kara","style":"심플","desc":"비 오는 밤의 방 · 폰 알림 가사창 · 달 · 떨어지는 빗방울 · 플레이어를 누르면 가사 · 레코드판이 같이 움직여요(스크립트 없음) · 「🎤 내 곡으로 만들기」에서 mp3 주소 · 제목 · 이름 · 색 · [분:초] 가사를 넣으면 복사할 HTML 이 바로 나와요 · 여러 곡이면 곡 사이에 코멘트 칸 · 깡싸 정화기 대응(인라인 글자색 · 단색 바탕 · id/for/name 없음 · 진짜 img · audio)","c":"sg-kara","copyOnly":true,"photo":true,"audio":true,"bytes":28684,"fx":"me","bg":"#08101f","ink":"#eef3ff","accent":"#86a8f0"},
   {"id":"kara-mes","name":"하늘 팝 노래방","emoji":"🪙","category":"kara","style":"심플","desc":"파란 하늘 팝 · 두꺼운 남색 테두리 · 흔들리는 코인 · 색종이 · 플레이어를 누르면 가사 · 레코드판이 같이 움직여요(스크립트 없음) · 「🎤 내 곡으로 만들기」에서 mp3 주소 · 제목 · 이름 · 색 · [분:초] 가사를 넣으면 복사할 HTML 이 바로 나와요 · 여러 곡이면 곡 사이에 코멘트 칸 · 깡싸 정화기 대응(인라인 글자색 · 단색 바탕 · id/for/name 없음 · 진짜 img · audio)","c":"sg-kara","copyOnly":true,"photo":true,"audio":true,"bytes":24781,"fx":"me","bg":"#36b2ee","ink":"#0b2f57","accent":"#ffd400"},
   {"id":"kara-tale","name":"어두운 동화 노래방","emoji":"🍎","category":"kara","style":"심플","desc":"어두운 동화책 · 붉은 유리 빛 · 금테 · 세리프 가사 · 플레이어를 누르면 가사 · 레코드판이 같이 움직여요(스크립트 없음) · 「🎤 내 곡으로 만들기」에서 mp3 주소 · 제목 · 이름 · 색 · [분:초] 가사를 넣으면 복사할 HTML 이 바로 나와요 · 여러 곡이면 곡 사이에 코멘트 칸 · 깡싸 정화기 대응(인라인 글자색 · 단색 바탕 · id/for/name 없음 · 진짜 img · audio)","c":"sg-kara","copyOnly":true,"photo":true,"audio":true,"bytes":21700,"fx":"me","bg":"#0d0507","ink":"#fff1f2","accent":"#e0b25a"},
