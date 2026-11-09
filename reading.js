@@ -163,9 +163,9 @@
   const toggle = (path, on) => `<label class="st-switch"><input type="checkbox" data-path="${path}" ${on ? 'checked' : ''}><span></span></label>`;
   const slider = (path, label, min, max, step, unit, fallback) => {
     const v = get(path), same = fallback !== undefined, value = v === null ? fallback : v;
-    return `<div class="st-slider${same && v === null ? ' is-same' : ''}"><div class="st-slider-head"><span>${label}</span>${same ? seg(path + '#same', [['same', '본문과 같게'], ['own', '직접']], v === null ? 'same' : 'own') : ''}<label class="st-num"><input type="number" data-path="${path}" min="${min}" max="${max}" step="${step}" value="${value}" ${same && v === null ? 'disabled' : ''}><i>${unit}</i></label></div><input type="range" data-path="${path}" min="${min}" max="${max}" step="${step}" value="${value}" ${same && v === null ? 'disabled' : ''}></div>`;
+    return `<div class="st-slider${same && v === null ? ' is-same' : ''}"><div class="st-slider-head"><span>${label}</span>${same ? seg(path + '#same', [['same', '본문과 같게'], ['own', '직접']], v === null ? 'same' : 'own') : ''}<label class="st-num"><input type="number" data-path="${path}" aria-label="${label}" min="${min}" max="${max}" step="${step}" value="${value}" ${same && v === null ? 'disabled' : ''}><i>${unit}</i></label></div><input type="range" data-path="${path}" aria-label="${label}" min="${min}" max="${max}" step="${step}" value="${value}" ${same && v === null ? 'disabled' : ''}></div>`;
   };
-  const color = (path, label) => row(label, '', `<input type="color" class="st-color" data-path="${path}" value="${get(path)}">`);
+  const color = (path, label) => row(label, '', `<input type="color" class="st-color" data-path="${path}" aria-label="${label}" value="${get(path)}">`);
   let picker = null, fontQuery = '', fontTag = 'sans';
   const sizeBadge = f => (f.size >= 1000 ? `${(f.size / 1000).toFixed(1)}MB` : f.size ? `${f.size}KB` : '');
   const fontsFor = lang => (fonts || []).filter(f => f.lang === lang || (lang === 'en' && f.latin));

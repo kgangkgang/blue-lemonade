@@ -353,14 +353,14 @@ html.mart-cart-on{overflow:hidden}
   .mart-sheet-foot{padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
 }
 /* 11-08 상세 창 아래 단추(시식하기 · 다른 거 추천 · 담기 · 테마용 복사 · HTML 복사)를 한 줄로(사용자 「밑에 5개 버튼들 한 줄로」) — 폭은 글자 길이만큼 나눠요 · 좁으면 그림 문자 · 작은 설명만 빼요 */
-.mart-sheet:not(.mart-taste) .mart-sheet-foot{display:flex;gap:6px}
+.mart-sheet:not(.mart-taste) .mart-sheet-foot{display:flex;gap:8px}
 .mart-sheet:not(.mart-taste) .mart-sheet-foot>:is(.mart-sheet-extra,.mart-actions){display:contents}
 .mart-sheet:not(.mart-taste) .mart-sheet-foot :is(.btn,.mart-builtin){flex:1 1 auto;min-width:0;margin:0;padding:0 8px;white-space:nowrap}
 .mart-sheet:not(.mart-taste) .mart-sheet-foot .mart-builtin{justify-content:center;white-space:normal;text-align:center;line-height:1.3}
 .mart-sheet:not(.mart-taste) .mart-sheet-foot .btn small{display:none}
 @media (max-width:639px){
   .mart-sheet:not(.mart-taste) .mart-sheet-foot{gap:4px}
-  .mart-sheet:not(.mart-taste) .mart-sheet-foot :is(.btn,.mart-builtin){padding:0 4px;font-size:12px;letter-spacing:-.02em}
+  .mart-sheet:not(.mart-taste) .mart-sheet-foot :is(.btn,.mart-builtin){padding:0 4px;font-size:var(--ts-ctl);letter-spacing:-.02em}
   .mart-sheet:not(.mart-taste) .mart-sheet-foot .mart-pick{min-width:max-content}
   .mart-sheet:not(.mart-taste) .mart-sheet-foot .btn .em{display:none}
   .mart-sheet:not(.mart-taste) .mart-sheet-foot .mart-builtin{font-size:11.5px}
@@ -394,7 +394,7 @@ html.mart-cart-on{overflow:hidden}
 .mart-ink{position:relative;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px 0 8px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface,transparent);color:var(--ink,inherit);cursor:pointer}
 .mart-ink:focus-within{outline:2px solid var(--blue-strong,#2f6fb0);outline-offset:2px}
 .mart-ink input[type=color]{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;opacity:0;cursor:pointer}
-.mart-ink-dot{width:20px;height:20px;border-radius:50%;border:1px solid rgba(0,0,0,.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);flex:none}
+.mart-ink-dot{width:20px;height:20px;border-radius:50%;border:1px solid var(--line-strong);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);flex:none}
 .mart-sheet-inks:not(:empty),.mart-taste-inks:not(:empty){margin:12px 0 0}
 .mart-taste-fields{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .mart-taste-fields label{display:flex;grid-column:span 3;align-items:center;gap:8px;min-width:0;color:var(--muted);font-size:var(--ts-meta);white-space:nowrap}

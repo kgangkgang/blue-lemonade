@@ -52,7 +52,7 @@
       if (i >= 0) { const n = document.createElement('b'); n.textContent = i + 1; b.append(n); }
       return b;
     }));
-    const slider = (key, label, min, max, value) => `<div class="st-slider"><div class="st-slider-head"><span>${label}</span><label class="st-num"><input type="number" data-mix="${key}" min="${min}" max="${max}" step="1" value="${value}"><i></i></label></div><input type="range" data-mix="${key}" min="${min}" max="${max}" step="1" value="${value}" aria-label="${label}"></div>`;
+    const slider = (key, label, min, max, value) => `<div class="st-slider"><div class="st-slider-head"><span>${label}</span><label class="st-num"><input type="number" data-mix="${key}" aria-label="${label}" min="${min}" max="${max}" step="1" value="${value}"><i></i></label></div><input type="range" data-mix="${key}" min="${min}" max="${max}" step="1" value="${value}" aria-label="${label}"></div>`;
     mixSliders.innerHTML = slider('angle', '혼합 방향 (°)', 0, 360, m.angle) + slider('blend', '번짐', 0, 100, m.blend) + m.families.map((f, i) => slider('w' + i, families.find(x => x.id === f).label + ' 비중', 1, 100, m.weights[i])).join('');
     mixSliders.querySelectorAll('input[type=range]').forEach(fillRange);
   }

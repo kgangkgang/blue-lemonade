@@ -88,6 +88,8 @@ body.mart-dropping::after{content:"여기에 놓으면 모든 액자에 내 사�
 .room-sample-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .room-sample-btn::after{content:"";flex:none;width:7px;height:7px;margin:-3px 2px 0;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);opacity:.7}
 .room-sample-btn[aria-expanded=true]::after{transform:rotate(225deg);margin-top:3px}
+/* 11-09 누르는 넓이 44: 보이는 칸은 36 그대로, 손가락 화면에서만 투명 상자(mart.css .btn::before 와 같은 꼴 · ::after 는 ⌄ 라 ::before) */
+@media (pointer:coarse){.room-sample-btn{position:relative}.room-sample-btn::before{content:"";position:absolute;left:50%;top:50%;width:max(100%,var(--touch));height:max(100%,var(--touch));transform:translate(-50%,-50%);background:none;border:0}}
 .room-sample-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:5;display:grid;padding:4px;border:1px solid var(--line-strong);border-radius:var(--r-ctl);background:var(--surface);box-shadow:0 12px 28px -12px rgba(18,24,38,.45)}
 .room-sample-list[hidden]{display:none}
 .room-sample-opt{min-height:40px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--text);font:inherit;font-size:var(--ts-meta);text-align:left;cursor:pointer}
@@ -121,7 +123,7 @@ body.mart-dropping::after{content:"여기에 놓으면 모든 액자에 내 사�
 .room-actions [hidden]{display:none}
 /* 11-08 좁은 화면도 한 줄(사용자 「처음 값 · 담기 · 그림 받기 쓸데없이 2줄 · 모바일 답답해」) — 단추 안 그림 문자만 빼고 글자는 그대로 */
 @container room-side (max-width:460px){
-  .room-actions{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+  .room-actions{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
   .room-actions.is-builtin{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr)}
   .room-actions .btn{padding:0 4px;white-space:nowrap}
   .room-actions .btn .em{display:none}
@@ -138,11 +140,11 @@ body.mart-dropping::after{content:"여기에 놓으면 모든 액자에 내 사�
   .room-side{border-left:0}
   /* 11-08 머리 · 사진 줄 압축(사용자 「내 사진 넣기랑 표본 사진도 압축해서 한 줄 더 넓게」) — 설명 한 줄 · 사진 단추와 고르기는 한 줄 36px */
   .room-head{padding:8px 12px 0}
-  .room-head h2{min-height:32px;font-size:17px}
+  .room-head h2{min-height:32px;font-size:var(--ts-h)}
   .room-desc{margin:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .room-photo{flex-wrap:nowrap;gap:6px;padding:4px 12px 6px}
-  .room-photo .btn{flex:none;height:36px;min-height:36px;padding:0 10px;font-size:13px}
-  .room-photo .field{width:100%;height:36px;min-height:36px;font-size:13px}
+  .room-photo{flex-wrap:nowrap;gap:8px;padding:4px 12px 8px}
+  .room-photo .btn{flex:none;height:36px;min-height:36px;padding:0 12px;font-size:var(--ts-ctl)}
+  .room-photo .field{width:100%;height:36px;min-height:36px;font-size:var(--ts-ctl)}
   .room-controls{padding:0 12px 8px}
   .room-group,.room-shadow-more{column-gap:12px}
   .room-range input{height:32px}

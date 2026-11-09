@@ -6,8 +6,8 @@
   if (window.__siteCollect) return true;
   const R = v => Math.round(v);
   const H = v => Math.round(v * 2) / 2;
-  // ── 미리보기 틀 안(글꾸 · 액자 · 지니 캐릭터 · 표지 그림)은 사이트 부품이 아니라 검사에서 빼요 ──
-  const SKIP_IN = '.mart-preview-in, .mart-sheet-preview, .mart-taste-preview, .bl-frame, .mart-stage, .mart-fit, .mart-ph, .mart-art, .mart-menu-cover, .gn-genie, .gn-sky, .mart-cart-thumb, .mart-tryon-photo, .room-frame-box, .room-stage, svg, #mart-shadow-svg';
+  // ── 미리보기 틀 안(글꾸 · 액자 · 지니 캐릭터 · 표지 그림 · 글자색 칩의 색 점(그 글꾸 자체 색))은 사이트 부품이 아니라 검사에서 빼요 ──
+  const SKIP_IN = '.mart-preview-in, .mart-sheet-preview, .mart-taste-preview, .bl-frame, .mart-stage, .mart-fit, .mart-ph, .mart-art, .mart-menu-cover, .gn-genie, .gn-sky, .mart-cart-thumb, .mart-tryon-photo, .room-frame-box, .room-stage, .mart-ink-dot, svg, #mart-shadow-svg';
   // ── 팔레트 색 지도: :root · body · 뿌리의 사용자 정의 속성 중 색으로 풀리는 것 ──
   const probe = document.createElement('i'); probe.style.cssText = 'position:absolute;left:-9999px;top:0;';
   function paletteOf(scope) {
