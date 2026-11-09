@@ -493,7 +493,7 @@ function actionsHtml(item) {
     // 테마에 들어 있는 글꾸(내장 심플 30 · 로그 복사 기본 틀 19): 받을 것 없음 — 담기 · 테마용 복사 대신 안내 + HTML 복사(시식은 크게 보기에서 그대로)
     if (item.builtin) return `<div class="mart-actions is-geulkku is-builtin"><span class="mart-builtin" title="블루레몬에이드 로그 복사에 이미 있어요 · 마트에서 가져오지 않아도 돼요">✓ 이미 테마에 들어 있어요</span>${html}</div>`;
     // 오리지널 컨셉 30 · 화보 갤러리 · 노래 앨범(copyOnly): 테마로 받지 않는 틀 — 「담기」 · 「테마용 복사」 없이 HTML 복사만
-    if (item.copyOnly) return `<div class="mart-actions is-geulkku is-builtin is-copyonly"><span class="mart-builtin" title="${item.photo ? (item.category === 'song' ? '커뮤니티 글에 붙이는 노래 앨범 틀이에요 · 그림 · mp3 주소와 글을 바꿔 HTML 칸에 붙여요' : '커뮤니티 글에 붙이는 사진 화보 틀이에요 · 사진 주소 · 글을 바꿔 HTML 칸에 붙여요') : '테마로 받기는 준비 중이에요 · 커뮤니티 글에 HTML 로 붙여 써요'}">HTML 복사로 써요</span>${html}</div>`;
+    if (item.copyOnly) return `<div class="mart-actions is-geulkku is-builtin is-copyonly"><span class="mart-builtin" title="${item.photo ? (item.category === 'song' || item.audio ? '커뮤니티 글에 붙이는 노래 앨범 틀이에요 · 그림 · mp3 주소와 글을 바꿔 HTML 칸에 붙여요' : '커뮤니티 글에 붙이는 사진 화보 틀이에요 · 사진 주소 · 글을 바꿔 HTML 칸에 붙여요') : '테마로 받기는 준비 중이에요 · 커뮤니티 글에 HTML 로 붙여 써요'}">HTML 복사로 써요</span>${html}</div>`;
     return `<div class="mart-actions${item.kind === 'geulkku' ? ' is-geulkku' : ''}"><button type="button" class="btn mart-pick" data-act="pick" aria-pressed="false"><span class="em" aria-hidden="true">🛒</span>담기</button><button type="button" class="btn" data-act="copy" title="이것 하나만 바로 복사(테마 「마트에서 가져오기」용)">${item.kind === 'geulkku' ? '테마용 복사' : '바로 복사'}</button>${html}</div>`;
 }
 function doAct(state, act, b) {

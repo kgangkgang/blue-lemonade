@@ -1,7 +1,7 @@
 {
  "_": "글꾸 마트 목록 — 테마 tools/mart-build.mjs 산출물을 split-geulkku.mjs 로 나눈 것(고치지 말고 다시 만들어요) · tools/geulkku-accent.mjs 가 accent · icon 을 덧붙여요 · tools/geulkku-builtin.mjs 가 테마 1.0.9 로그 복사 기본 틀 19종(내장)을 덧붙여요",
  "built": "2026-11-05",
- "count": 1497,
+ "count": 1506,
  "categories": [
   {
    "id": "event",
@@ -976,9 +976,14 @@
    "bytes": 61660
   },
   "sp-scene": {
-   "file": "sp-scene.66d28307.json",
+   "file": "sp-scene.d48bebcf.json",
    "n": 8,
-   "bytes": 170097
+   "bytes": 170076
+  },
+  "sp-xmas": {
+   "file": "sp-xmas.5ffefde1.json",
+   "n": 9,
+   "bytes": 237827
   }
  },
  "items": [
@@ -1250,6 +1255,15 @@
   {"id":"s-christmas-sp-22","name":"새해 띠 · 양","emoji":"🐑","category":"christmas","style":"심플","desc":"크리스마스 · 연말 글꾸 · 꼬리 「포근한 한 해 되세요」","c":"sp-christmas","bytes":4781,"fx":"me","bg":"#fffaf2","ink":"#3a2c24","accent":"#b04060","icon":"icon/11cc535833.svg"},
   {"id":"s-christmas-sp-23","name":"떡국","emoji":"🥣","category":"christmas","style":"심플","desc":"크리스마스 · 연말 글꾸 · 꼬리 「한 살 더 먹었어요」","c":"sp-christmas","bytes":6082,"fx":"me","bg":"#fdf9f1","ink":"#2e2418","accent":"#8a5a1a","icon":"icon/f2e4989190.svg"},
   {"id":"s-christmas-sp-24","name":"올해의 필름","emoji":"🎞️","category":"christmas","style":"심플","desc":"크리스마스 · 연말 글꾸 · 꼬리 「올해도 잘 찍혔어요」","c":"sp-christmas","bytes":5752,"fx":"me","bg":"#fdf8ee","ink":"#26201a","accent":"#a84f16","icon":"icon/87298dfc43.svg"},
+  {"id":"c-xmas-sp-1","name":"스노우볼","emoji":"❄️","category":"christmas","style":"심플","desc":"밤 바탕 위 유리 공 속에 눈이 흩날리고(작은 집 · 트리 · 달) 나무 받침 아래 편지지에 로그를 적어요 · 공 속 달을 누르면 반짝","c":"sp-xmas","bytes":4546,"fx":"me","bg":"#101a2e","ink":"#26283a","accent":"#1f3f73","icon":null},
+  {"id":"c-xmas-sp-2","name":"성탄 카드","emoji":"🎅","category":"christmas","style":"심플","desc":"붉은 크리스마스 카드 겉면(금빛 테 · 트리 · Merry Christmas) — 누르면 펼쳐져 크림색 안쪽 면에 로그 · 트리 꼭대기 별을 누르면 빙글 · 붙이면 닫힌 채 시작해요(미리보기만 펼쳐 보여요)","c":"sp-xmas","bytes":3510,"fx":"me","bg":"#efe3d0","ink":"#2d2420","accent":"#8e1b24","icon":null},
+  {"id":"c-xmas-sp-3","name":"오너먼트 대화","emoji":"✨","category":"christmas","style":"심플","desc":"짙은 전나무 바탕 위 줄에 걸린 오너먼트 다섯(누르면 통 · 빙글 · 반짝 · 흔들 · 쑥) · 금빛 테 칸에 로그","c":"sp-xmas","bytes":6240,"fx":"me","bg":"#0f2a1f","ink":"#eef6ee","accent":"#1e4a37","icon":null},
+  {"id":"c-xmas-sp-4","name":"겨울 기차표","emoji":"🚂","category":"christmas","style":"심플","desc":"두꺼운 종이 겨울 열차 승차권 — 오늘 → 눈의 나라 · 열차 · 호차 · 좌석 · 출발 칸, 선로를 달리는 기차(누르면 휙) · 점선 아래 로그 · 검표 도장을 누르면 빙글","c":"sp-xmas","bytes":6850,"fx":"me","bg":"#e6edf2","ink":"#2a2724","accent":"#1d5b8f","icon":null},
+  {"id":"c-xmas-sp-5","name":"연말 정산","emoji":"🧾","category":"christmas","style":"심플","desc":"올해를 계산한 긴 영수증 — 톱니 가장자리 · 일시 · 손님, 같이 웃은 날 ×365 같은 품목 줄과 합계, 상세 내역(로그) · 바코드 · 「정산 완료」 도장을 누르면 통","c":"sp-xmas","bytes":6998,"fx":"e","bg":"#d9e2dc","ink":"#24221f","accent":"#24221f","icon":null},
+  {"id":"c-xmas-sp-6","name":"소원 부적","emoji":"📜","category":"christmas","style":"심플","desc":"한지 위 노란 새해 부적 — 붉은 겹테 · 所願成就 큰 글씨, 소원(로그) 칸 · 붉은 「福」 도장을 누르면 빙글","c":"sp-xmas","bytes":3060,"fx":"e","bg":"#efe6cf","ink":"#3a2208","accent":"#9e1b1b","icon":null},
+  {"id":"xmas-gallery","name":"크리스마스 화보","emoji":"🎄","category":"christmas","style":"심플","desc":"밤하늘에 눈이 흐르고 꼬마전구가 깜박이는 화보 — 금빛 액자에 한 장씩(두 장 · 가로 장), 위 「이전 · 다음」과 「03 / 12」 · 사진 번호 · 코멘트 칸 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"bytes":66322,"fx":"e","bg":"#0e1a33","ink":"#f4f1ea","accent":"#c8323a"},
+  {"id":"xmas-recap","name":"연말 결산 앨범","emoji":"📔","category":"christmas","style":"심플","desc":"종이 앨범 — 큰 연도 · 올해의 한 장 · 달마다 사진 묶음(01 JAN …)과 메모 · 맨 아래 「사진 NN장 · 달 NN개」 합계가 저절로 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"bytes":14658,"fx":"e","bg":"#efe9dd","ink":"#24201b","accent":"#a8272d"},
+  {"id":"xmas-carol","name":"캐롤 플레이리스트","emoji":"🎶","category":"christmas","style":"심플","desc":"전나무 밤 · 사탕 줄무늬 띠 · 도는 레코드 — 한 줄에 한 곡(동그란 그림 · ♪ 번호 · 제목 · 캐릭터 칩 · mp3), 「그림 ▾」를 누르면 그 곡 그림이 펼쳐져요 · 곡마다 색 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"audio":true,"bytes":17662,"fx":"e","bg":"#0f2a1f","ink":"#f4efe2","accent":"#e8c766"},
   {"id":"s-app-sp-1","name":"단톡방","emoji":"💬","category":"app","style":"심플","desc":"앱 · SNS 글꾸 · 꼬리 「모두 읽었어요」","c":"sp-app","bytes":6453,"fx":"me","bg":"#f1f5f9","ink":"#191919","accent":"#3a3a3a","icon":"icon/cd7959ae26.svg"},
   {"id":"s-app-sp-2","name":"인스타 스토리","emoji":"📸","category":"app","style":"심플","desc":"앱 · SNS 글꾸 · 꼬리 「답장은 대화로 보내져요」","c":"sp-app","bytes":7156,"fx":"me","bg":"#ffffff","ink":"#262626","accent":"#c13584","icon":"icon/18d771f29b.svg"},
   {"id":"s-app-sp-3","name":"X 타래","emoji":"🧵","category":"app","style":"심플","desc":"앱 · SNS 글꾸 · 꼬리 「답글 3개 더 보기」","c":"sp-app","bytes":8112,"fx":"me","bg":"#ffffff","ink":"#0f1419","accent":"#0f1419","icon":"icon/ebccd93c47.svg"},
@@ -1378,7 +1392,7 @@
   {"id":"c-scene-sp-4","name":"레시피 카드","emoji":"🍳","category":"scene","style":"심플","desc":"줄 친 색인 카드 레시피 — 조리 시간 · 인분 · 난이도, 재료 목록, 만드는 법(로그) · 셰프의 한마디 · 프라이팬을 누르면 흔들","c":"sp-scene","bytes":3887,"fx":"e","bg":"#f4e6cf","ink":"#3a2a1e","accent":"#b23a2e","icon":null},
   {"id":"c-scene-sp-5","name":"타로 리딩","emoji":"🔮","category":"scene","style":"심플","desc":"금테 별 카드(XVII) · 과거 · 현재 · 미래 작은 카드 셋을 누르면 뒤집혀요 · 로그는 오늘의 리딩","c":"sp-scene","bytes":4819,"fx":"me","bg":"#17112a","ink":"#f1ebff","accent":"#2e2350","icon":null},
   {"id":"c-scene-sp-6","name":"터미널","emoji":"💻","category":"scene","style":"심플","desc":"어두운 터미널 창 — 신호등 세 점 · $ cat ./tonight.log 로 로그가 출력되고, 끝 줄 커서가 깜박(누르면 찡긋)","c":"sp-scene","bytes":3482,"fx":"me","bg":"#0d1117","ink":"#d8dee6","accent":"#1f2630","icon":null},
-  {"id":"c-scene-sp-7","name":"생활기록부","emoji":"📋","category":"scene","style":"심플","desc":"학교생활기록부 서식 — 출결 · 특기 · 행동 특성 표, 담임 의견(로그) · 분홍 「참 잘했어요」 도장을 누르면 통","c":"sp-scene","bytes":4064,"fx":"e","bg":"#e3ece4","ink":"#22302a","accent":"#2f6b4f","icon":null},
+  {"id":"c-scene-sp-7","name":"학적부","emoji":"📋","category":"scene","style":"심플","desc":"학교 학적부 서식 — 출결 · 특기 · 행동 특성 표, 담임 의견(로그) · 분홍 「참 잘했어요」 도장을 누르면 통","c":"sp-scene","bytes":4053,"fx":"e","bg":"#e3ece4","ink":"#22302a","accent":"#2f6b4f","icon":null},
   {"id":"c-scene-sp-8","name":"전보","emoji":"📠","category":"scene","style":"심플","desc":"누런 전보 용지 — 빨강 · 파랑 줄무늬 테, 수신 · 발신 · 접수 칸, 타자 글 로그 · 소인을 누르면 빙글 · 끝은 STOP","c":"sp-scene","bytes":5315,"fx":"e","bg":"#e7d9a6","ink":"#2e2a1c","accent":"#9c2a1c","icon":null},
   {"id":"concept-birthday","name":"생일","emoji":"🎂","category":"event","style":"일러스트","desc":"HTML 복사로 써요(테마로 받기는 준비 중) · 꼬리 「생일 축하해요」","c":"il-event","copyOnly":true,"fx":"me","accent":"#2264a5","icon":"icon/6119fb9c78.svg"},
   {"id":"concept-xmas","name":"크리스마스","emoji":"🎄","category":"event","style":"일러스트","desc":"HTML 복사로 써요(테마로 받기는 준비 중) · 꼬리 「메리 크리스마스」","c":"il-event","copyOnly":true,"fx":"me","accent":"#2264a5","icon":"icon/8130b37c15.svg"},
