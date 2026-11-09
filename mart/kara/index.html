@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>document.documentElement.dataset.theme="light";</script>
+  <title>노래방 글꾸 만들기 — Blue Lemonade</title>
+  <meta name="description" content="mp3 주소 · 제목 · 이름 · 색 · [분:초] 가사를 넣으면 커뮤니티 글에 붙이는 노래방 글꾸 HTML 이 나와요. 전부 이 화면 안에서만 돼요(서버 없음).">
+  <link rel="icon" href="../../lemon.svg?v=20261109a" type="image/svg+xml"><link rel="apple-touch-icon" href="../../lemon-touch.png?v=20261109a">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="../../site.css?v=20261109a">
+  <link rel="stylesheet" href="../mart.css?v=20261109g">
+  <link rel="stylesheet" href="../top-mart.css?v=20261108a">
+  <link rel="stylesheet" href="kara.css?v=20261109i">
+</head>
+<body data-mart="kara">
+  <header class="top"><div class="top-inner"><a class="brand" href="../../" aria-label="Blue Lemonade 홈"><span class="lemon" aria-hidden="true"><img src="../../lemon.svg?v=20261109a" alt="" width="24" height="24"></span><span class="brand-text"> Blue Lemonade</span></a><nav aria-label="바로가기"><a href="../../#tour">홈</a><button type="button" class="top-mart" data-mart-base="../">마트</button></nav><div class="top-actions"><a class="button primary small" href="../../#start">설치</a></div></div></header>
+  <main class="mart-main kb-main">
+    <div class="mart-head">
+      <h1>노래방 글꾸 만들기</h1>
+      <div class="mart-tabs"><span class="tabset" role="group" aria-label="마트"><a class="tab" href="../frames/">액자</a><a class="tab" href="../geulkku/">글꾸</a></span></div>
+      <p class="mart-lede kb-lede">커뮤니티 글에 붙이는 <b>노래방 글꾸</b>(플레이어를 누르면 가사가 흐르는 노래 카드)를 여기서 바로 만들어요. 글에 올린 <b>mp3 주소</b>, 제목, 부르는 이름, 캐릭터 색, <b>[분:초] 가사</b>를 넣고 테마를 고른 뒤 <b>만들기</b> → <b>복사</b> → 글쓰기 HTML 칸에 붙여요. 곡을 여러 개 넣으면 한 글에 카드가 차례로 들어가고 곡 사이에 코멘트 칸이 생겨요. 전부 이 화면 안에서만 돌아가요(어디로도 보내지 않아요). 테마 여섯 가지 모양은 글꾸 마트의 「노래방 글꾸」 칩에서 미리 볼 수 있어요(위 「글꾸」 탭).</p>
+    </div>
+    <form class="kb-form" autocomplete="off">
+      <div class="kb-songs" aria-live="polite"></div>
+      <div class="kb-row kb-row-add">
+        <button type="button" class="btn" data-act="add"><span class="em" aria-hidden="true">➕</span>곡 더하기</button>
+        <label class="check"><input type="checkbox" name="gaps" checked>곡 사이에 코멘트 칸(빈 줄)을 둬요</label>
+      </div>
+      <div class="kb-row kb-row-make">
+        <button type="submit" class="btn primary" data-act="make"><span class="em" aria-hidden="true">🎤</span>만들기</button>
+        <button type="button" class="btn" data-act="copy" disabled><span class="em" aria-hidden="true">📋</span>HTML 복사</button>
+        <button type="button" class="btn" data-act="download" disabled><span class="em" aria-hidden="true">💾</span>파일로 받기</button>
+        <span class="kb-status" role="status" aria-live="polite"></span>
+      </div>
+    </form>
+    <section class="kb-out" hidden>
+      <h2 class="kb-h2">만든 글</h2>
+      <ul class="kb-warn" hidden></ul>
+      <div class="kb-view">
+        <div class="kb-view-head"><span class="mart-seg" role="group" aria-label="미리보기 폭" data-filter="width"><button type="button" class="chip" aria-pressed="true" data-w="390">폰 390</button><button type="button" class="chip" aria-pressed="false" data-w="760">PC 760</button></span><span class="kb-view-note">사이트 흉내 미리보기 — 플레이어 ▶ 를 누르면 가사가 흘러요</span></div>
+        <div class="kb-frame-wrap"><iframe class="kb-frame" title="글꾸 미리보기" width="390" height="760" loading="lazy" sandbox="allow-same-origin"></iframe></div>
+      </div>
+      <label class="kb-code-wrap"><span class="kb-label">복사할 HTML</span><textarea class="kb-code" readonly rows="8" spellcheck="false" aria-label="복사할 HTML"></textarea></label>
+    </section>
+    <section class="mart-howto"><h2>쓰는 법</h2><ol>
+      <li>커뮤니티 글쓰기에서 mp3 · 그림을 먼저 올리고(수정 › HTML 에서 <code>https://img.kkangtong.xyz/post-audios/uploads/….mp3</code> 주소를 복사) 여기 <b>mp3 주소</b> 칸에 붙여요. 표지 그림 주소는 없어도 돼요(레코드판만 돌아요).</li>
+      <li>가사는 한 줄에 <code>[0:12] 가사</code> 꼴로 적어요(LRC 파일 내용을 그대로 붙여도 돼요). 시간 없는 줄은 바로 위 줄의 작은 글(번역 · 원문)이 돼요.</li>
+      <li>곡 길이는 mp3 주소를 넣으면 저절로 읽어요(못 읽으면 <code>3:24</code> 처럼 직접 적어요). 비우면 마지막 가사 + 5초로 잡아요.</li>
+      <li><b>만들기</b> 뒤 <b>HTML 복사</b> → 글쓰기 HTML 칸에 통째로 붙여요. 화면 글에 「원곡 · 커버」 같은 말은 쓰지 않아요.</li>
+    </ol><p>만든 HTML 은 스크립트 없이 CSS 만으로 움직여요 — 플레이어를 누르면(초점이 오면) 가사 · 레코드판 · 시계가 같이 돌아요. 가사가 안 움직이면 카드 오른쪽 아래 「가사가 안 움직이면 ▸」, 멈추려면 가사창 위 ❚❚ 를 눌러요. 적은 내용은 이 브라우저에만 임시로 남고(다른 곳으로 보내지 않아요) 「비우기」로 지워요.</p></section>
+  </main>
+  <script type="module" src="kara.js?v=20261109i"></script>
+  <script src="../top-mart.js?v=20261109i" defer></script>
+</body>
+</html>
