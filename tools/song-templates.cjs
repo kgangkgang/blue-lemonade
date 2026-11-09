@@ -54,7 +54,7 @@ const baseCss = (P, ink, extra, divBg = 'background-color') => `
 ${P}{${ink}display:block!important;box-sizing:border-box;container-type:inline-size;margin:14px auto!important;padding:0!important;border:0!important;background:transparent!important;font-family:${SANS};line-height:1.55;text-align:left;-webkit-text-size-adjust:100%;${extra}}
 ${P},${P} *{color:var(--ink)!important;-webkit-text-fill-color:var(--ink)!important;box-sizing:border-box}
 ${P} div{${divBg}:transparent!important;border:0;margin:0;padding:0}
-${P} p{margin:0!important;padding:0!important}
+${P} p{margin:0!important;padding:0!important;text-align:inherit}
 ${P} label{margin:0;padding:0}
 ${P} b{font-weight:700}`;
 // 정화기가 height:% 를 auto 로 바꿔도 남게 — 같은 값의 block-size 를 바로 뒤에
@@ -108,7 +108,7 @@ ${P} .a-kick{font:700 11px/1 ${MONO};letter-spacing:.32em;--ink:#9a9aa6}
 ${P} .a-at{font:900 clamp(30px,9cqw,54px)/1.08 ${SERIF};letter-spacing:-.02em;word-break:keep-all}
 ${P} .a-by{font:500 13px/1.3 ${SANS};letter-spacing:.08em;--ink:#b4b4bf}
 ${P} .a-head .a-chips{justify-content:center;margin-top:8px!important}
-${P} .a-pin{display:block!important;padding:4px 6px!important;font:400 15px/1.7 ${SANS};white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
+${P} .a-pin{display:block!important;padding:14px 16px!important;border-radius:14px;background:#15151b!important;box-shadow:inset 0 0 0 1px #ffffff14;--ink:#e9e9ee;font:400 15px/1.7 ${SANS};white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
 ${P} .a-memo{display:block!important;min-height:2.4em;margin:2px 4px!important;padding:6px 4px!important;font:400 15px/1.7 ${SANS};white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
 /* 곡 블록 */
 ${P} .a-song{display:flex!important;flex-direction:column;gap:16px;padding:16px 14px 18px!important;border-radius:16px;counter-reset:sgn;counter-increment:trk;overflow:hidden;background:var(--bg)!important}
