@@ -412,7 +412,8 @@ function cMessages(model, o, k, style) {
 
 /** 1.0.9+ 닫힌 채 시작하는 틀(반응 글꾸 봉투 · 초대장): 미리보기에서는 로그가 보이게 펼쳐요 — 틀에 박힌 닫힌 <details> 에 open + data-bl-peek(미리보기 표시).
  *  복사할 땐 shutPeek 로 다시 닫아요(테마 log-copy-sheet.js result · 글꾸 마트 HTML 복사 · 시식 복사). 자리에 끼운 부품(접는 추가 정보 등)은 건드리지 않아요 */
-export const peekTemplate = template => String(template ?? '').replace(/<details(?![^>]*\sopen=)(?=[\s>])/g, '<details open="" data-bl-peek=""');
+//   1.1.0: 값 없는 `<details open>` · `<details class="a" open>` 도 이미 열린 상자예요 — 표시를 붙이면 복사할 때 원래 열린 상자까지 닫혔어요(테마 c711b94f 와 같은 고침)
+export const peekTemplate = template => String(template ?? '').replace(/<details(?![^>]*\sopen(?=[\s=>/]))(?=[\s>])/g, '<details open="" data-bl-peek=""');
 /** 미리보기로만 펼친 상자를 다시 닫은 HTML 글 */
 export const shutPeek = html => String(html ?? '').replace(/<details\b[^>]*\sdata-bl-peek=""[^>]*>/g, tag => tag.replace(/\sopen(?:="[^"]*")?(?=[\s>])/, '').replace(/\sdata-bl-peek=""/, ''));
 /** 1.0.1 글꾸 마트 글꾸(내 글꾸 template) — 받은 고정 색 묶음 + 틈 템플릿의 네 자리에 컨셉 틀과 같은 부품을 끼워요 */

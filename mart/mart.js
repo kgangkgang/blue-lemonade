@@ -451,7 +451,7 @@ const CHAR_SOURCES = {
 };
 // 보이는 분류 이름 — 「강호유람록」은 실제 봇 이름 「무협시뮬」로 보여 주되, 옛 이름으로도 찾아지게 검색어에 남겨요
 const LABEL_FIX = { 'gangho': '무협시뮬', 'gangho-char': '무협시뮬 · 인물' };
-const SEARCH_ALSO = { 'gangho': '강호유람록 무협 시뮬 무협시뮬', 'gangho-char': '강호유람록 무협 시뮬 무협시뮬' };
+const SEARCH_ALSO = { 'hwabo': '화보 사진 갤러리 사진첩 앨범 깡싸 커뮤니티 게시글 글꾸', 'gangho': '강호유람록 무협 시뮬 무협시뮬', 'gangho-char': '강호유람록 무협 시뮬 무협시뮬' };
 const catLabel = (id, label) => LABEL_FIX[id] || label || '';
 // 세계관 액자의 원작 봇 — 콘셉트 id 로 묶어요(url 이 빈 칸이면 링크를 안 보여요)
 const FRAME_SOURCES = {
@@ -492,8 +492,8 @@ function actionsHtml(item) {
     const html = item.kind === 'geulkku' ? `<button type="button" class="btn" data-act="html" title="${HTML_TITLE}"><span class="em" aria-hidden="true">📋</span>HTML 복사</button>` : '';
     // 테마에 들어 있는 글꾸(내장 심플 30 · 로그 복사 기본 틀 19): 받을 것 없음 — 담기 · 테마용 복사 대신 안내 + HTML 복사(시식은 크게 보기에서 그대로)
     if (item.builtin) return `<div class="mart-actions is-geulkku is-builtin"><span class="mart-builtin" title="블루레몬에이드 로그 복사에 이미 있어요 · 마트에서 가져오지 않아도 돼요">✓ 이미 테마에 들어 있어요</span>${html}</div>`;
-    // 오리지널 컨셉 30(copyOnly): 그림 곳곳에 글을 쓰는 틀이라 테마로 받기는 준비 중 — 「담기」 · 「테마용 복사」 없이 HTML 복사만
-    if (item.copyOnly) return `<div class="mart-actions is-geulkku is-builtin is-copyonly"><span class="mart-builtin" title="테마로 받기는 준비 중이에요 · 커뮤니티 글에 HTML 로 붙여 써요">HTML 복사로 써요</span>${html}</div>`;
+    // 오리지널 컨셉 30 · 화보 갤러리(copyOnly): 테마로 받지 않는 틀 — 「담기」 · 「테마용 복사」 없이 HTML 복사만
+    if (item.copyOnly) return `<div class="mart-actions is-geulkku is-builtin is-copyonly"><span class="mart-builtin" title="${item.photo ? '커뮤니티 글에 붙이는 사진 화보 틀이에요 · 사진 주소 · 글을 바꿔 HTML 칸에 붙여요' : '테마로 받기는 준비 중이에요 · 커뮤니티 글에 HTML 로 붙여 써요'}">HTML 복사로 써요</span>${html}</div>`;
     return `<div class="mart-actions${item.kind === 'geulkku' ? ' is-geulkku' : ''}"><button type="button" class="btn mart-pick" data-act="pick" aria-pressed="false"><span class="em" aria-hidden="true">🛒</span>담기</button><button type="button" class="btn" data-act="copy" title="이것 하나만 바로 복사(테마 「마트에서 가져오기」용)">${item.kind === 'geulkku' ? '테마용 복사' : '바로 복사'}</button>${html}</div>`;
 }
 function doAct(state, act, b) {
@@ -511,7 +511,7 @@ function doAct(state, act, b) {
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
 let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261109c').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261109d').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
@@ -558,12 +558,12 @@ function previewOf(state) {
 /** 11-08 글자색을 바꾼 글꾸의 카드 · 상세 창 미리보기와 칩을 다시 칠해요 */
 function repaintInks(id) {
     for (const s of states) { if (s.item.id !== id) continue; delete s.myHtml; delete s.inkHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = previewOf(s); } }
-    if (sheet?.open && sheetState?.item.id === id && sheetState.item.preview) { sheet.querySelector('.mart-sheet-preview').innerHTML = previewOf(sheetState); syncInks(sheet.querySelector('.mart-sheet-inks'), sheetState.item); }
+    if (sheet?.open && sheetState?.item.id === id && sheetState.item.preview) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); syncInks(sheet.querySelector('.mart-sheet-inks'), sheetState.item); }
 }
 document.addEventListener('bl-inks-change', e => repaintInks(e.detail?.id));
 function repaintMylog() {
     for (const s of states) { delete s.myHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = previewOf(s); } }
-    if (sheet?.open && sheetState?.item.preview) sheet.querySelector('.mart-sheet-preview').innerHTML = previewOf(sheetState);
+    if (sheet?.open && sheetState?.item.preview) sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState);
     paintMylogChip();
 }
 function paintMylogChip() {
@@ -590,7 +590,9 @@ async function openMylog() {
 }
 document.addEventListener('bl-taste-change', () => { if (mylog.on) repaintMylog(); else paintMylogChip(); });
 const TASTE_TITLE = '내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고, 완성 HTML 을 복사 · 내려받아요';
-const tasteHtml = item => (item.kind === 'geulkku' ? `<button type="button" class="btn mart-taste-open" data-act="taste" title="${TASTE_TITLE}"><span class="em" aria-hidden="true">🍽️</span>시식하기<small>내 로그를 넣어 봐요</small></button>` : '');
+const tasteHtml = item => (item.kind === 'geulkku' && !item.photo ? `<button type="button" class="btn mart-taste-open" data-act="taste" title="${TASTE_TITLE}"><span class="em" aria-hidden="true">🍽️</span>시식하기<small>내 로그를 넣어 봐요</small></button>` : '');
+/** 11-09 화보 갤러리(photo): 상세 창 미리보기는 체크박스 id · label for 에 꼬리를 붙여요 — 같은 틀이 카드에도 있어 for= 가 카드(inert) 쪽 체크박스를 가리키지 않게. 복사 글은 원래 id 그대로 */
+const sheetPreview = state => (state.item.photo ? previewOf(state).replace(/ (id|for)="([^"]+)"/g, ' $1="$2-view"') : previewOf(state));
 // ── 글꾸 크게 보기 시트(폰은 아래에서 올라오고 PC 는 가운데) — 전체 미리보기 · 장식 누르기 · 스크롤은 여기서만 ──
 let sheet = null, sheetState = null;
 function openSheet(state) {
@@ -617,13 +619,13 @@ function openSheet(state) {
     if (item.accent) sheet.style.setProperty('--accent', item.accent); else sheet.style.removeProperty('--accent');   // 담기 단추 색 = 그 글꾸 강조색
     sheet.querySelector('.mart-sheet-meta').innerHTML = `${tagsHtml(item)}<p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}`;
     const body = sheet.querySelector('.mart-sheet-body');
-    body.innerHTML = `<div class="mart-sheet-preview">${item.preview ? previewOf(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div><div class="mart-sheet-inks">${item.preview ? inksHtml(item) : ''}</div>`;   // 11-08 글자색 칩
+    body.innerHTML = `<div class="mart-sheet-preview">${item.preview ? sheetPreview(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div><div class="mart-sheet-inks">${item.preview ? inksHtml(item) : ''}</div>`;   // 11-08 글자색 칩
     if (!item.preview) {
         body.setAttribute('aria-busy', 'true');
         ensureItem(item).then(() => {
             fillCard(state);
             if (sheetState !== state) return;
-            body.querySelector('.mart-sheet-preview').innerHTML = previewOf(state);
+            body.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(state);
             syncInks(body.querySelector('.mart-sheet-inks'), item);
             body.scrollTop = 0;
         }, () => { if (sheetState === state) body.querySelector('.mart-sheet-preview').innerHTML = `<p class="mart-sheet-wait">${LOAD_FAIL}</p>`; })
