@@ -133,7 +133,7 @@ ${audioCss(P, '.a-pl')}
 /* 그림 칸 · 번호 꾸밈(counter · 사이트 번호표는 숨김) */
 ${photoCss(P, 'a-ph', '#0006', 'sgn')}
 ${P} .a-ph{border-radius:10px}
-${P} .a-ph::after{content:counter(sgn,decimal-leading-zero);grid-area:1/1;justify-self:end;align-self:start;z-index:2;margin:7px 7px 0 0;padding:3px 6px 2px;border-radius:5px;background:#0009;font:700 10px/1 ${MONO};letter-spacing:.08em;color:var(--acc);-webkit-text-fill-color:var(--acc);pointer-events:none}
+${P} .a-ph::after{content:counter(sgn,decimal-leading-zero);grid-area:1/1;justify-self:end;align-self:start;margin:7px 7px 0 0;padding:3px 6px 2px;border-radius:5px;background:#0009;font:700 10px/1 ${MONO};letter-spacing:.08em;color:var(--acc);-webkit-text-fill-color:var(--acc);pointer-events:none}
 ${P} .a-main .a-ph{box-shadow:0 18px 40px -20px #000d}
 ${P} .a-main .a-ph::after{margin:10px 10px 0 0;padding:4px 8px 3px;font-size:11px}
 /* 가로 스크롤 띠(폰 = 스와이프 · 그림이 없으면 띠도 숨김) */
@@ -238,7 +238,7 @@ ${audioCss(P, '.b-tk', 40)}
 /* 그림 칸 · 번호 꾸밈 */
 ${photoCss(P, 'b-ph', '#e6e0d6', 'sbn')}
 ${P} .t6 .b-ph{background:#2a2b30!important}
-${P} .b-ph::after{content:counter(sbn,decimal-leading-zero);grid-area:1/1;justify-self:end;align-self:start;z-index:2;margin:6px 6px 0 0;padding:3px 6px 2px;border-radius:999px;background:#fffefbd9;font:700 10px/1 ${MONO};letter-spacing:.06em;color:var(--acc);-webkit-text-fill-color:var(--acc);pointer-events:none}
+${P} .b-ph::after{content:counter(sbn,decimal-leading-zero);grid-area:1/1;justify-self:end;align-self:start;margin:6px 6px 0 0;padding:3px 6px 2px;border-radius:999px;background:#fffefbd9;font:700 10px/1 ${MONO};letter-spacing:.06em;color:var(--acc);-webkit-text-fill-color:var(--acc);pointer-events:none}
 ${P} .b-cv::after{margin:8px 8px 0 0;padding:4px 8px 3px;font-size:11px}
 /* 그림 격자(장 수 자유 · 가로 그림은 두 칸 · 그림이 없으면 숨김) */
 ${P} .b-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:start}
@@ -326,7 +326,7 @@ ${P} .c-song:has(.c-k:checked) .c-more{display:grid!important;grid-template-colu
 ${P} .c-more .land{grid-column:span 2}
 ${photoCss(P, 'c-ph', '#0a0b0e', 'scn')}
 ${P} .c-more .c-ph{border-radius:8px}
-${P} .c-ph::after{content:counter(scn,decimal-leading-zero);grid-area:1/1;justify-self:end;align-self:start;z-index:2;margin:6px 6px 0 0;padding:3px 6px 2px;border-radius:5px;background:#000a;font:700 10px/1 ${MONO};letter-spacing:.08em;color:var(--acc);-webkit-text-fill-color:var(--acc);pointer-events:none}
+${P} .c-ph::after{content:counter(scn,decimal-leading-zero);grid-area:1/1;justify-self:end;align-self:start;margin:6px 6px 0 0;padding:3px 6px 2px;border-radius:5px;background:#000a;font:700 10px/1 ${MONO};letter-spacing:.08em;color:var(--acc);-webkit-text-fill-color:var(--acc);pointer-events:none}
 @container (max-width:420px){
 ${P} .c-aus{padding-left:0!important}
 }
