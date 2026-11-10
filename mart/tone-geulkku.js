@@ -257,7 +257,9 @@ function bandify(map, html) {
         const m = css.match(/(?:^|;)\s*color\s*:\s*([^;]+)/i); if (!m) return all;
         const c = parseColor(m[1].trim()); if (!c) return all;
         const h = hexOf(c);
-        const own = (map.dialogueFrom && h === map.dialogueFrom) || h === map.dialogueInk;   // 틀의 대사 역할 색(다시 칠하기 전 · 뒤)
+        // 틀의 대사 역할 색(다시 칠하기 전 · 뒤). 뒤의 색은 글자 대비 맞춤(4.8)에서 명도만 한 번 더 옮겨질 수 있어요(낮 판) — 색상 · 채도가 같으면 같은 색으로 봐요
+        const sameInk = () => { if (!map.dialogueInk) return false; const a = oklchOf(h), b = oklchOf(map.dialogueInk); if (b.c < 0.004) return false; const d = Math.abs(a.h - b.h) % 360; return Math.abs(a.c - b.c) < Math.max(0.004, b.c * 0.25) && Math.min(d, 360 - d) < 4; };
+        const own = (map.dialogueFrom && h === map.dialogueFrom) || h === map.dialogueInk || sameInk();
         const lead = whole.slice(offset + all.length, offset + all.length + 40);
         const quoted = QUOTE.test(lead) || /^\s*(?:&quot;|&#39;|&#x27;)/.test(lead);
         if (!quoted || !(own || oklchOf(h).c >= 0.06) || /background-image\s*:\s*linear-gradient/i.test(css)) return all;
