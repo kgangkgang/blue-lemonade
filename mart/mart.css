@@ -462,3 +462,10 @@ html.mart-cart-on{overflow:hidden}
 .mart-cast-head{margin:0}
 .mart-cast-panel{margin:8px 0 0}
 .mart-cast{padding:8px 10px}
+
+/* 11-10 혼합 스위치 · 바탕(종이 색 · 질감) 줄 */
+.mart-cast-head{flex-wrap:wrap;gap:6px}
+.mart-cast-head .mart-cast-mode{margin-left:auto}
+.mart-cast-mix{height:32px}
+.mart-cast-sub2{margin:8px 0 0;font-size:var(--ts-meta);color:var(--muted)}
+#mart-paper-panel .mart-cast-list{margin-top:4px}

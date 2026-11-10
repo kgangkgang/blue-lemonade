@@ -11,7 +11,7 @@ import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
 import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110b';   // 11-10 대사색 하나로 다시 칠하기 · 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
-import { toneState, toned } from './tone-state.js?v=20261110b';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
+import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261110b';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
 import { mountCast } from './cast.js?v=20261110b';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
 let styleActive = 'all', drawPreset = null, picker = null;
 const states = [];   // 만든 카드만(글꾸) — 늦게 만들기(lazyGrid)라 처음엔 첫 화면 몫뿐이에요
@@ -246,6 +246,7 @@ function geulkkuGroup(c, items) {
 }
 // 글꾸 그림체(테마 tools/mart/geulkku-style.mjs) — 항목 style 칸이 없으면 「일러스트」(옛 「기본」)
 const STYLE_DEFAULT = '일러스트';
+const SHOW_ALL_DESIGNS = new URLSearchParams(location.search).has('all-designs');   // 11-10 숨긴 디자인까지 보기(관리용 · ?all-designs)
 const STYLE_ORDER = ['심플', '일러스트', '다꾸', '무테'];
 const STYLE_ALIAS = { 기본: '일러스트' };
 const styleOf = item => STYLE_ALIAS[item.style] || item.style || STYLE_DEFAULT;
@@ -295,7 +296,7 @@ function receipt(state) {
         return out;
     }
     // 11-10 대사색을 골랐으면 그 색으로 다시 칠한 틀을 받아요(기본 것을 덮지 않게 id 꼬리)
-    const tn = item.kind === 'geulkku' && toned(item) && item.template ? toneItem({ ...item, colors: colorsOf(item) }, toneState.k, { mode: toneState.mode }) : null;
+    const tn = item.kind === 'geulkku' && toned(item) && item.template ? toneItem({ ...item, colors: colorsOf(item) }, toneState.k, { mode: toneState.mode, paper: toneState.paper }) : null;
     if (tn) return { kind: 'geulkku', id: `${item.id}-k${toneState.k ? toneState.k.slice(1) : 'none'}${toneState.mode[0]}`, label: item.label, emoji: item.emoji, template: tn.template, colors: tn.colors, messages: item.messages, tail: item.tail, ...(item.type ? { type: item.type } : {}) };
     if (item.kind === 'geulkku') return { kind: 'geulkku', id: item.id, label: item.label, emoji: item.emoji, template: item.template, colors: colorsOf(item), messages: item.messages, tail: item.tail, ...(item.type ? { type: item.type } : {}) };   // type: 제목 꼴(테마 mart-import 가 읽어요)
     return null;   // 그림 액자: 받기 파일을 그대로
@@ -556,8 +557,8 @@ const mylog = { on: false, mod: null };
 function previewOf(state) {
     const raw = rawPreviewOf(state);
     if (!raw || !toned(state.item)) return raw;
-    const key = `${toneState.k}|${toneState.mode}|${raw.length}|${raw.slice(-40)}`;
-    if (state.toneKey !== key) { state.toneKey = key; state.toneHtml = toneHtml(raw, state.item.colors || state.item.palette || null, toneState.k, { mode: toneState.mode }); }
+    const key = `${toneKey()}|${raw.length}|${raw.slice(-40)}`;
+    if (state.toneKey !== key) { state.toneKey = key; state.toneHtml = toneOut(state.item, raw); }
     return state.toneHtml;
 }
 function rawPreviewOf(state) {
@@ -587,9 +588,10 @@ function repaintTone() {
 document.addEventListener('bl-tone-change', repaintTone);
 // 11-10 컨셉 하나 = 카드 하나 — 같은 이름의 디자인(심플 · 일러스트 · 다꾸 · 무테 · 내장)은 카드 · 크게 보기 안에서 넘겨 봐요(사용자 「한 컨셉 들어가서 디자인 바꾸는식」)
 const conceptPick = new Map();   // 컨셉 이름 → 고른 디자인 id
+// 11-10 사용자 「심플만 남기돼」 — 디자인 넘기기는 뺐어요(무테 · 일러스트 · 다꾸는 자료로만 남아요)
 const designsHtml = (item) => {
     const sibs = item._sibs || [];
-    if (sibs.length < 2) return '';
+    if (sibs.length < 2 || !SHOW_ALL_DESIGNS) return '';
     return `<div class="mart-designs mart-seg" role="group" aria-label="디자인">${sibs.map(x => `<button type="button" class="chip" data-act="design" data-id="${esc(x.id)}" aria-pressed="${x.id === item.id}">${esc(x.builtin ? '내장' : styleOf(x))}</button>`).join('')}</div>`;
 };
 function switchDesign(state, id) {
@@ -808,13 +810,18 @@ async function main() {
         const labels = new Map((data.categories || []).map(c => [c.id, c.label]));
         for (const x of items) Object.assign(x, { kind: 'geulkku', label: x.label || x.name, categoryLabel: x.categoryLabel || labels.get(x.category) || '' });
     }
+    // 11-10 사용자 「심플만 남기돼」 — 컨셉마다 심플 하나만 목록 · 찾기에(무테 · 일러스트 · 다꾸는 자료로 남겨 두고 숨겨요 · 주소 #id 로는 열려요)
+    const keepIds = new Set();
+    { const by = new Map(); for (const x of items) { const a = by.get(x.name) ?? []; a.push(x); by.set(x.name, a); } for (const a of by.values()) { const s = a.filter(x => styleOf(x) === '심플' || x.builtin || x.photo || x.copyOnly); (s.length ? s : [a[0]]).forEach(x => keepIds.add(x.id)); } }
+    const hashId = decodeURIComponent(location.hash.slice(1));
+    const shownItems = SHOW_ALL_DESIGNS || kind !== 'geulkku' ? items : items.filter(x => keepIds.has(x.id) || x.id === hashId);
     // 분류 두 단계(공용 부품): 묶음 탭(시리즈 · 세계관 · 인물 · 컨셉 · 할로윈 · 크리스마스 · 내장) + 하위 칩
-    const cats = (data.categories || []).map(c => ({ id: c.id, label: catLabel(c.id, c.label), n: items.filter(x => x.category === c.id).length, group: kind === 'geulkku' ? geulkkuGroup(c, items) : (c.group || 'etc') })).filter(c => c.n);
+    const cats = (data.categories || []).map(c => ({ id: c.id, label: catLabel(c.id, c.label), n: shownItems.filter(x => x.category === c.id).length, group: kind === 'geulkku' ? geulkkuGroup(c, shownItems) : (c.group || 'etc') })).filter(c => c.n);
     // 「내장」 묶음에 다른 분류 안의 내장 글꾸(내장 심플 30)도 한 칩으로 — 가짜 칩 BUILTIN_MORE
     const builtinCats = new Set(cats.filter(c => c.group === 'builtin').map(c => c.id));
-    const moreBuiltin = items.filter(x => x.builtin && !builtinCats.has(x.category)).length;
+    const moreBuiltin = shownItems.filter(x => x.builtin && !builtinCats.has(x.category)).length;
     if (moreBuiltin) cats.push({ id: BUILTIN_MORE, label: '내장 심플', n: moreBuiltin, group: 'builtin' });
-    picker = chipGroups({ groupsEl: document.querySelector('.mart-groups'), chipsEl: chips, cats, groups: GEULKKU_GROUPS, total: items.length, onChange: applyFilter });
+    picker = chipGroups({ groupsEl: document.querySelector('.mart-groups'), chipsEl: chips, cats, groups: GEULKKU_GROUPS, total: shownItems.length, onChange: applyFilter });
     // 그림체(글꾸): 둘 이상일 때만 칩 줄을 보여요 — 하나뿐(지금은 기본만)이면 줄째 숨겨요
     const styleSeg = document.querySelector('[data-filter="style"]');
     if (styleSeg) {
@@ -822,6 +829,7 @@ async function main() {
         const styles = (data.styles || []).map(s => ({ ...s, id: STYLE_ALIAS[s.id] || s.id, label: STYLE_ALIAS[s.label] || s.label })).filter(s => items.some(x => styleOf(x) === s.id)).map((s, i) => [s, STYLE_ORDER.includes(s.id) ? STYLE_ORDER.indexOf(s.id) : STYLE_ORDER.length + i]).sort((a, b) => a[1] - b[1]).map(([s]) => s);
         const row = styleSeg.closest('.mart-filters') || styleSeg;
         row.hidden = styles.length < 2;
+        if (!SHOW_ALL_DESIGNS) styleSeg.hidden = true;   // 11-10 심플만 — 디자인 고르기 칩은 숨겨요(개수는 그대로 보여요)
         showStyle = styles.length >= 2;
         if (styles.length >= 2) {
             styleSeg.innerHTML = segHtml([['all', '모든 디자인'], ...styles.map(s => [s.id, s.label])], 'all');
@@ -837,7 +845,7 @@ async function main() {
     document.querySelector('.mart-mylog')?.addEventListener('click', openMylog);
     let mylogOn = false; try { mylogOn = sessionStorage.getItem(MYLOG_KEY) === '1'; } catch { /* 저장이 막힌 창 */ }
     if (mylogOn) await setMylog(true); else loadTaste().then(m => { mylog.mod = m; paintMylogChip(); }, () => {});
-    allItems = items;
+    allItems = shownItems;
     for (const x of items) x._text = textOf(x);
     // 11-10 컨셉(같은 이름) 묶기 — 디자인 차례는 심플 → 일러스트 → 다꾸 → 무테 → 그 밖
     const byName = new Map();

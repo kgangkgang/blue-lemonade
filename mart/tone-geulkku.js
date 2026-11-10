@@ -14,6 +14,48 @@ import { pasteReady } from './lib/log-copy/log-copy-lift.js';
 
 export { tone, speakerColor };
 export const FRAME_WIDTH = 640;   // 확정 규칙: 640 고정(메모리 log-post-layout-rules)
+/** 11-10 종이 색 — 사용자 「색깔도 약간 은은한것들중에 선택가능하게」. [틀 면, 로그 면] 낮 · 밤 짝(밤은 같은 색 계열의 어두운 판) */
+export const PAPER_COLORS = Object.freeze({
+    white: { label: '흰색', light: ['#ffffff', '#f5f5f6'], dark: ['#25272b', '#1c1e21'] },
+    ivory: { label: '미색', light: ['#fffdf6', '#f8f4e8'], dark: ['#2a2822', '#201f1a'] },
+    gray: { label: '연회색', light: ['#f7f7f8', '#eeeef0'], dark: ['#2a2b2e', '#202124'] },
+    sky: { label: '연하늘', light: ['#f6fafe', '#ecf3fa'], dark: ['#222833', '#1a1f28'] },
+    pink: { label: '연분홍', light: ['#fef7f9', '#f9ecf0'], dark: ['#2d2329', '#231b20'] },
+    mint: { label: '연민트', light: ['#f5fbf8', '#eaf5ef'], dark: ['#212b27', '#1a221f'] },
+    lavender: { label: '연라벤더', light: ['#f9f7fe', '#f0ecf9'], dark: ['#26232f', '#1e1b26'] },
+    lemon: { label: '연레몬', light: ['#fffdf0', '#f8f4dc'], dark: ['#2a2920', '#212019'] },
+    apricot: { label: '연살구', light: ['#fff8f3', '#f8ece3'], dark: ['#2c2521', '#221d1a'] },
+    kraft: { label: '크라프트', light: ['#f6efe4', '#ece2d2'], dark: ['#2c2720', '#221e19'] },
+});
+/** 11-10 종이 질감 — 사용자 「뒤에 배경 질감 바꿀수있는걸추가하자 그냥 흰종이, 모눈종이, 줄종이, 등등」. 그림 파일 없이 CSS 그라데이션 · 무채 옅은 선 */
+export const TEXTURES = Object.freeze({
+    plain: { label: '민무늬' },
+    grid: { label: '모눈', css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:16px 16px` },
+    lined: { label: '줄 노트', css: L => `background-image:repeating-linear-gradient(transparent 0 25px,${L} 25px 26px)` },
+    dot: { label: '도트', css: L => `background-image:radial-gradient(${L} 1.1px,transparent 1.4px);background-size:14px 14px` },
+    manuscript: { label: '원고지', css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:24px 24px;background-position:-1px -1px` },
+    section: { label: '방안지', css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px),linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:40px 40px,40px 40px,8px 8px,8px 8px` },
+});
+const TEXTURE_LINE = { light: 'rgba(30, 32, 48, 0.08)', dark: 'rgba(255, 255, 255, 0.06)' };
+/** 종이 면(틀 면 · 로그 면 색을 칠한 상자)에 질감 클래스를 달고, 맨 앞 <style> 에 규칙을 넣어요(인라인 url 없음) */
+function addTexture(html, t, mode, texture) {
+    const tx = TEXTURES[texture];
+    if (!tx?.css) return html;
+    const cls = `blp-${texture}${mode === 'light' ? '' : '-d'}`;
+    const rule = `.${cls}{${tx.css(TEXTURE_LINE[mode === 'light' ? 'light' : 'dark'])}}`;
+    const surf = new RegExp(`background-color\\s*:\\s*(?:${t.card}|${t.log})(?=[;"]|$)`, 'i');
+    let n = 0;
+    const out = html.replace(/<style>[\s\S]*?<\/style>|<!--[\s\S]*?-->|<([a-zA-Z][a-zA-Z0-9-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/g, (all, tag, attrs) => {
+        if (!tag) return all;
+        const m = attrs.match(/\sstyle="([^"]*)"/);
+        if (!m || !surf.test(m[1]) || /background-image/i.test(m[1])) return all;
+        n++;
+        return /\sclass="/.test(attrs) ? all.replace(/\sclass="/, ` class="${cls} `) : `<${tag} class="${cls}"${attrs}>`;
+    });
+    if (!n) return html;
+    return /<style>/.test(out) ? out.replace(/<style>/, `<style>${rule}`) : `<style>${rule}</style>${out}`;
+}
+const isC = plan => plan === 'C' || plan === 'P';
 const TEXT_TARGET = 4.8;          // 틀에 박힌 글자의 대비 목표(덮임 문턱 4.5 · 규칙 4.6 에 겹친 바탕 차이 여유)
 const NEAR_GREY = 0.035;         // 이보다 채도가 낮으면 무채로 봐요
 const NEAR_BG = 0.16;             // 바탕과 밝기 자리가 이만큼 가까우면 무채 면으로(「무채 바탕」)
@@ -38,8 +80,15 @@ function sourceInks(html, roles) {
  * @param {string|null} K 주인공 대사색
  * @param {{ mode?: 'light'|'dark', plan?: 'A'|'B'|'C', html?: string }} options
  */
-export function toneMap(roles, K, { mode = 'dark', plan = 'B', html = '' } = {}) {
-    const t = tone(K, { mode, plan });
+export function toneMap(roles, K, { mode = 'dark', plan = 'B', html = '', paper = 'white' } = {}) {
+    // P = 오린 종이(C 처럼 대사색으로 물든 종이 · 밤에는 종이를 조금 밝게 — 깡통 밤 바탕 #171717 위에서 윤곽이 보이게)
+    const t0 = tone(K, { mode, plan: isC(plan) ? 'C' : plan });
+    const kk = speakerColor(K), ok0 = kk ? oklchOf(kk) : null;
+    //   낮에는 종이를 조금 더 물들이고(흰 바탕 위에서 윤곽이 보이게) 안쪽 글 칸은 거의 흰색
+    const pc = PAPER_COLORS[paper] && paper !== 'white' && !isC(plan) ? PAPER_COLORS[paper][mode === 'light' ? 'light' : 'dark'] : null;   // 11-10 종이 색(은은한 색) — 면 두 장만 바꿔요
+    const t = pc ? { ...t0, card: pc[0], log: pc[1] } : plan !== 'P' || !ok0 ? t0
+        : mode === 'dark' ? { ...t0, card: oklchHex(0.34, Math.min(ok0.c * 0.5, 0.08), ok0.h) }
+            : { ...t0, card: oklchHex(0.925, Math.min(ok0.c * 0.4, 0.07), ok0.h), log: oklchHex(0.988, Math.min(ok0.c * 0.08, 0.01), ok0.h) };
     const k = speakerColor(K), ko = k ? oklchOf(k) : null;
     const src = sourceInks(html, roles);
     const Lb = lightOf(src.bg) ?? 1, Lt = lightOf(src.text) ?? 0.2;
@@ -53,15 +102,15 @@ export function toneMap(roles, K, { mode = 'dark', plan = 'B', html = '' } = {})
         const L = Math.max(0, Math.min(1, Lcard + s * (Ltext - Lcard)));
         let C = 0, H = o.h;
         if (o.c >= NEAR_GREY && Math.abs(s) > NEAR_BG) {
-            if (plan === 'C' && ko) { C = Math.min(o.c, ko.c); H = ko.h; }
+            if (isC(plan) && ko) { C = Math.min(o.c, ko.c); H = ko.h; }
             else if (ko && ko.c >= NEAR_GREY) { C = Math.min(o.c, ko.c); H = ko.h; }
-        } else if (plan === 'C' && ko) { C = Math.min(o.c * 0.3, ko.c * 0.3, 0.03); H = ko.h; }
+        } else if (isC(plan) && ko) { C = Math.min(o.c * 0.3, ko.c * 0.3, 0.03); H = ko.h; }
         return { hex: oklchHex(L, C, H), a: c.a };
     };
     const pick = (value) => { const s = shift(value); return s?.hex ?? value; };
     // 역할 색(틈 템플릿 colors 이름 · 내장 palette 이름 둘 다)
     const out = {};
-    const face = plan === 'C' ? t.card : Lb > 0.5 === (mode === 'light') ? t.card : t.card;
+    const face = isC(plan) ? t.card : Lb > 0.5 === (mode === 'light') ? t.card : t.card;
     const panelOf = name => (roles?.[name] ? pick(roles[name]) : t.log);
     const surface = { bg: t.card, face: t.card, panel: t.log, panel2: panelOf('panel2'), surface: t.log, raised: panelOf('raised'), chip: panelOf('chip') };
     const ink = (c, ...bgs) => bgs.reduce((x, b) => fitInk(x, b) ?? x, c);
@@ -289,9 +338,9 @@ function widen(html) {
  * @param {string|null} K 주인공 대사색
  * @param {{ mode?: 'light'|'dark', plan?: 'A'|'B'|'C', width?: boolean, band?: boolean }} [options]
  */
-export function toneHtml(html, roles, K, { mode = 'dark', plan = 'B', width = true, band = true } = {}) {
+export function toneHtml(html, roles, K, { mode = 'dark', plan = 'B', width = true, band = true, paper = 'white', texture = 'plain' } = {}) {
     const src = String(html ?? '');
-    const map = toneMap(roles, K, { mode, plan, html: src });
+    const map = toneMap(roles, K, { mode, plan, html: src, paper });
     const ctx = [map.t.card, map.t.log];
     let out = src.replace(/(<style>)([\s\S]*?)(<\/style>)/gi, (all, a, body, b) => a + body.replace(SVG_HEX, (x, h) => { const p = parseColor(mapColor(map, `#${h}`)); return p ? `%23${hexOf(p).slice(1)}` : x; }).replace(/(url\([^)]*\))|#[0-9a-fA-F]{8}\b|#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|rgba?\(\s*\d[^)]*\)/g, (m, u) => (u ? u : mapColor(map, m))) + b);
     // 바깥 바탕이 틀 면 · 로그 면 근처면 둘 다에 맞춰요(어느 면 위에 놓일지 틀마다 달라요)
@@ -300,14 +349,14 @@ export function toneHtml(html, roles, K, { mode = 'dark', plan = 'B', width = tr
     out = out.replace(/\s(fill|stroke|stop-color)="(#[0-9a-fA-F]{3,8})"/g, (all, a, v) => ` ${a}="${mapColor(map, v)}"`);
     if (band) out = bandify(map, out);
     if (width) out = widen(out);
-    return out;
+    return addTexture(out, map.t, mode, texture);
 }
 
 /**
  * 11-10 비교안 (가) — 컨셉 원래 색 조합은 살리고, 탁한 색(채도 낮은 가운데 밝기)만 무채 쪽으로 · 대비 낮은 글자만 4.8 까지.
  *  캐릭터 색은 대사 띠(.18)와 이름표에만 써요.
  */
-export function keepHtml(html, roles, K, { width = true } = {}) {
+export function keepHtml(html, roles, K, { width = true, clean = true } = {}) {   // clean:false = 색은 하나도 안 바꾸고(탁한 색 그대로) 대비 낮은 글자만
     const src = String(html ?? '');
     const k = speakerColor(K);
     const bg = roles?.panel || roles?.surface || roles?.bg || sourceInks(src, roles).bg;
@@ -320,7 +369,7 @@ export function keepHtml(html, roles, K, { width = true } = {}) {
         const h = hexOf(c);
         if (name && h === nameFrom) return fmt(name, c.a);
         const o = oklchOf(h);
-        if (o.c >= 0.03 && o.c < 0.09 && o.l > 0.3 && o.l < 0.6) return fmt(oklchHex(o.l, 0.1, o.h), c.a);   // 탁한 색(채도 낮은 가운데 밝기) → 같은 색상에서 맑게(무채로 빼면 컨셉 분위기가 사라져요)
+        if (clean && o.c >= 0.03 && o.c < 0.09 && o.l > 0.3 && o.l < 0.6) return fmt(oklchHex(o.l, 0.1, o.h), c.a);   // 탁한 색(채도 낮은 가운데 밝기) → 같은 색상에서 맑게(무채로 빼면 컨셉 분위기가 사라져요)
         return value;
     };
     const map = { exact: new Map(), shift: v => { const t = tidy(v); const p = parseColor(t); return p ? { hex: hexOf(p), a: p.a } : null; }, K: k, mode: light ? 'light' : 'dark', dialogueFrom: roles?.dialogue ? hexOf(parseColor(roles.dialogue)) : null, dialogueInk: null, t: { dialogue: text } };
@@ -331,19 +380,77 @@ export function keepHtml(html, roles, K, { width = true } = {}) {
     return out;
 }
 
+/**
+ * 11-10 혼합(그라데이션) — 사용자 「여기글꾸에도 똑같이 블루레몬에이드처럼 혼합 주자 그라데이션가능하게」 · 「최대 3개색깔까지」
+ *  블루레몬 gradients.js 와 같은 기본값: 90deg · 몫(weights) 50 씩 · 번짐(blend) 50 → 2색 25% · 75% / 3색 16.667% · 50% · 83.333%.
+ */
+export function mixStops(colors) {
+    const n = colors.length;
+    return colors.map((color, i) => ({ color, at: Number((((i + 0.5) / n) * 100).toFixed(3)) }));
+}
+export const mixCss = colors => `linear-gradient(90deg, ${mixStops(colors).map(s => `${s.color} ${s.at}%`).join(', ')})`;
+/**
+ * 대사색 2~3개로 다시 칠하기 — 첫 색으로 칠한 뒤(toneHtml) 틀 바탕 물 · 강조 막대 · 대사 띠를 색들의 그라데이션으로 바꿔요.
+ *  글자색은 그대로라 대비는 단색과 같아요(바탕 물은 10% 라 본문 · 이름 대비 4.6 을 넘는지 끝색마다 다시 봐요).
+ */
+export function toneMixHtml(html, roles, Ks, { mode = 'dark', plan = 'B', paper = 'white', texture = 'plain' } = {}) {
+    const ks = (Ks || []).map(speakerColor).filter(Boolean).slice(0, 3);
+    if (ks.length < 2) return toneHtml(html, roles, ks[0] || null, { mode, plan, paper, texture });
+    const maps = ks.map(k => toneMap(roles, k, { mode, plan, html, paper }));
+    let out = toneHtml(html, roles, ks[0], { mode, plan, paper, texture });
+    const t = maps[0].t;
+    // 바탕(무채 면)은 그대로 — 사용자 「포인트 자리에 그라데이션」. C(물든 종이)일 때만 종이도 끝색마다의 종이색으로
+    if (isC(plan)) {
+        const wash = maps.map(m => m.t.card);
+        const cardRe = new RegExp(`background-color\\s*:\\s*${t.card}(?=[;"])`, 'gi');
+        out = out.replace(cardRe, m => `${m};background-image:${mixCss(wash)}`);
+    }
+    // 포인트 자리: 강조 막대 · 아래 띠(강조 바탕) → 끝색마다의 같은 역할 색 그라데이션 · 위 줄 · 밑줄(강조 테두리) → border-image 그라데이션
+    const solid = (from, list) => { if (!from) return; const re = new RegExp(`background-color\\s*:\\s*${from}(?=[;"])`, 'gi'); out = out.replace(re, m => `${m};background-image:${mixCss(list)}`); };
+    solid(maps[0].roles.quoteBar, maps.map(m => m.roles.quoteBar));
+    solid(maps[0].accentInk, maps.map(m => m.accentInk));
+    const accents = maps.map(m => m.accentInk);
+    out = out.replace(new RegExp(`(border(?:-top|-bottom|-left|-right)?\\s*:\\s*[\\d.]+px\\s+(?:solid|double|dashed|dotted)\\s+)(#[0-9a-f]{6})(?=[;"])`, 'gi'), (m, lead, hex) => {
+        // 강조색 계열 테두리(위 줄 · 밑줄)만 — 무채 선은 그대로
+        const o = oklchOf(hex); const k0 = oklchOf(maps[0].accentInk);
+        return o.c >= 0.06 && Math.abs(o.h - k0.h) < 30 ? `${m};border-image:${mixCss(accents)} 1` : m;
+    });
+    // 대사 띠 → 끝색마다의 띠 색 그라데이션
+    const band0 = bandColor(ks[0], mode);
+    const bands = ks.map(k => bandColor(k, mode));
+    out = out.split(`linear-gradient(transparent 5%, ${band0} 5%, ${band0} 100%, transparent 100%)`).join(mixCss(bands));
+    return out;
+}
+const L_rgba = (hex, a) => { const c = parseColor(hex); return `rgba(${c.r}, ${c.g}, ${c.b}, ${a})`; };
+
+/**
+ * 11-10 새 기본 — 사용자 「헉 ㅅㅂ 캐릭터색들어가니까 급 구려짐」: 컨셉 원래 색은 살리고(keepHtml) 캐릭터 색은 대사 띠 · 이름표에만.
+ *  색을 2~3개 고르면 대사 띠만 그 색들의 그라데이션(블루레몬 기본값 90° · 정지점 고르게)이에요. 이름표는 첫 색(대비 4.8 맞춤).
+ */
+export function keepMixHtml(html, roles, Ks, options = {}) {
+    const ks = (Ks || []).map(speakerColor).filter(Boolean).slice(0, 3);
+    const out = keepHtml(html, roles, ks[0] || null, options);
+    if (ks.length < 2) return out;
+    const src = String(html ?? '');
+    const bg = roles?.panel || roles?.surface || roles?.bg || sourceInks(src, roles).bg;
+    const mode = (lightOf(bg) ?? 1) > 0.6 ? 'light' : 'dark';
+    const b0 = bandColor(ks[0], mode);
+    return out.split(`linear-gradient(transparent 5%, ${b0} 5%, ${b0} 100%, transparent 100%)`).join(mixCss(ks.map(k => bandColor(k, mode))));
+}
+
 /** 표본 글의 틀 속 이름(실리태번 기본 캐릭터) → 일반 낱말 — 공개 글에 사람 이름이 남지 않게 */
 export const plainSample = html => String(html ?? '').replace(/세라피나 님/g, '상대').replace(/세라피나|Seraphina/g, '상대');
 
 /** 틈 템플릿 글꾸 하나를 다시 칠한 새 항목(테마용 복사 · 담기 · 시식이 같이 써요) — template · colors · preview 를 바꿔요 */
-export function toneItem(item, K, { mode = 'dark', plan = 'B' } = {}) {
+export function toneItem(item, K, { mode = 'dark', plan = 'B', paper = 'white' } = {}) {
     if (!item) return item;
     const roles = item.colors || item.palette || null;
-    const map = toneMap(roles, K, { mode, plan, html: item.template || item.preview || '' });
+    const map = toneMap(roles, K, { mode, plan, html: item.template || item.preview || '', paper });
     const next = { ...item, tone: { K: map.K, mode, plan } };
     if (item.colors) next.colors = { ...item.colors, ...map.roles };
     if (item.palette) next.palette = { ...item.palette, ...map.roles };
-    if (item.template) next.template = toneHtml(item.template, roles, K, { mode, plan, band: false });
-    if (item.preview) next.preview = toneHtml(item.preview, roles, K, { mode, plan });
+    if (item.template) next.template = toneHtml(item.template, roles, K, { mode, plan, band: false, paper });
+    if (item.preview) next.preview = toneHtml(item.preview, roles, K, { mode, plan, paper });
     return next;
 }
 
