@@ -420,12 +420,51 @@ await test('site-rig: 글꾸 화면은 새 틀로 열려요(아무 카드나 크
     assert.match(rig, /const openSheetBy = [^\n]*'\.mart-card:not\(\[hidden\]\) \.mart-preview'/);
 });
 
-await test('새 틀 다시 칠하기 갈래: tone-state.js 가 새 틀(simple)을 캐릭터 색 · 낮밤으로 칠하고 원래 색(꺼짐)이면 그대로', async () => {
+await test('기본 = 원래 색: 캐릭터를 안 골랐으면 스물여덟 틀이 이식판 글자 그대로(원래 판) · 반대 판은 원래 색 그대로 낮밤만 · 캐릭터를 고르면 그 색 · 「캐릭터 없음(무채)」을 고르면 무채', async () => {
     const neu = await imp(path.join(MART, 'tone-state.js'));
-    for (const on of [true, false]) for (const [k, mode] of [['#3aa7ff', 'dark'], ['#3ccfbf', 'light'], [null, 'dark']]) {
-        neu.setTone({ k, mode, on });
-        for (const row of six.items) { const it = { ...row, ...sfx[row.id], kind: 'geulkku' }; assert.equal(neu.toned(it), on); assert.equal(neu.toneOut(it, it.preview), on ? sf.toneSimple(it.preview, k, { mode }) : it.preview); }
+    assert.equal(neu.toneState.on, false, '저장된 것이 없으면 원래 색');
+    for (const row of six.items) {
+        const it = { ...row, ...sfx[row.id], kind: 'geulkku' }, info = sf.simpleFrameInfo(it.preview), orig = info.base === 'gk-tl' ? 'light' : 'dark', alt = orig === 'light' ? 'dark' : 'light';
+        assert.equal(neu.toned(it), true);
+        neu.setTone({ mode: orig });
+        assert.equal(neu.toneState.on, false);
+        assert.equal(neu.toneOut(it, it.preview), it.preview, `${row.id} 원래 판 = 이식판 글자 그대로`);
+        neu.setTone({ mode: alt });
+        const a = neu.toneOut(it, it.preview);
+        assert.equal(a.split(`gk-cv-${info.cvName}`).join(`gk-cv-${info.K0.slice(1)}`), sf.toneSimple(it.preview, info.K0, { mode: alt }), `${row.id} 반대 판 = 원래 색 그대로 낮밤만`);
+        assert.match(rootOf(a), new RegExp(`gk-cv-${info.cvName}(\\s|$)`));
     }
+    for (const [k, mode] of [['#3ccfbf', 'light'], ['#3aa7ff', 'dark']]) {
+        neu.setTone({ k, mode, on: true });
+        assert.equal(neu.toneState.none, false);
+        for (const row of six.items) { const it = { ...row, ...sfx[row.id], kind: 'geulkku' }; assert.equal(neu.toneOut(it, it.preview), sf.toneSimple(it.preview, k, { mode })); }
+    }
+    neu.setTone({ k: null, on: true });
+    assert.equal(neu.toneState.none, true, '무채를 직접 고른 것은 기억해요');
+    const it = { ...six.items[0], ...sfx[six.items[0].id], kind: 'geulkku' };
+    assert.match(rootOf(neu.toneOut(it, it.preview)), /gk-cv-none/);
+    neu.setTone({ on: false });
+    assert.equal(neu.toneState.none, false);
+});
+
+await test('기억한 값 읽기: 예전 기본(on · 캐릭터 없음)은 원래 색으로 · 무채를 직접 고른 것 · 캐릭터를 고른 것 · 원래 색은 그대로', async () => {
+    const cases = [[{ on: true, k: null, mode: 'dark' }, false], [{ on: true, k: null, none: true }, true], [{ on: true, k: '#3ccfbf' }, true], [{ on: false, k: '#3ccfbf' }, false], [{}, false]];
+    for (const [i, [saved, on]] of cases.entries()) {
+        globalThis.localStorage = { getItem: key => (key === 'bl-mart-tone-v1' ? JSON.stringify(saved) : null), setItem() { }, removeItem() { } };
+        const m = await import(`${pathToFileURL(path.join(MART, 'tone-state.js')).href}?read=${i}`);
+        assert.equal(m.toneState.on, on, JSON.stringify(saved));
+    }
+    delete globalThis.localStorage;
+});
+
+await test('캐릭터 줄: 「원래 색(틀마다 정해 둔 색)」이 첫 항목 · 「바탕(종이 색 · 질감)」 칸은 숨김(PAPER_ENABLED = false · 코드는 그대로) · site-rig 바탕 펼침 화면은 쉼', () => {
+    const cast = fs.readFileSync(path.join(MART, 'cast.js'), 'utf8');
+    assert.match(cast, /const PAPER_ENABLED = false;/);
+    assert.ok(cast.indexOf('원래 색(틀마다 정해 둔 색)') < cast.indexOf('캐릭터 없음(무채)'));
+    assert.match(cast, /\$\{PAPER_ENABLED \? `<button type="button" class="mart-cast-toggle" data-paper/);
+    assert.match(cast, /const paperPanel = PAPER_ENABLED && paperOpen \?/);
+    const rig = fs.readFileSync(path.join(ROOT, 'tools/site-rig/site-rig.mjs'), 'utf8');
+    assert.ok(!rig.split('\n').filter(l => /^\s*\{ group:/.test(l)).some(l => l.includes("'글꾸 · 바탕 펼침'")));
 });
 
 console.log(`\n${pass} 통과 · ${fail} 실패`);
