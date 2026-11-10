@@ -1,21 +1,21 @@
-// 원본 블루레몬 logcopy-b-113 분기(f9260b16 + 작업 중 판)의 src/shared/char-tone.js 를 2026-11-10 에 그대로 복사한 것이에요(주석 속 사람 이름 예시만 뺐어요) · 고치지 말고 다시 복사해요(글꾸 마트가 테마 로그 복사와 같은 색 규칙 · 붙여 넣을 꼴을 쓰려고)
+// 원본 블루레몬 codex/tone-ladder-113 분기(4564922f)의 src/shared/char-tone.js 를 2026-11-11 에 그대로 복사한 것이에요(앞 사본 logcopy-b-113 판 + 톤 사다리 toneLadder · LADDER_SLOTS · ladderSlots — 기존 함수는 한 글자도 안 바뀌었고 주석만 원본을 따라요) · 고치지 말고 다시 복사해요(글꾸 마트가 테마 로그 복사와 같은 색 규칙 · 붙여 넣을 꼴을 쓰려고)
 // 1.1.3 글꾸 색 규칙 — 캐릭터 대사색 하나(K)에서 틀 색 전부를 뽑아요. 로그 복사(log-copy-*)와 글꾸 마트가 같이 써요.
-//   사용자 「일단 내가 대사색깔지정해둔애들은 그 색깔바탕으로 글꾸해주면좋겠음」 · 「지금 너무 글꾸 산만하달까 색많아서」 · B안 확정(「오 B안좋다 ㄱㄱ」)
-//   - 무채 바탕 + 강조색은 대사색 하나. 대사색은 글자가 아니라 대사 뒤 띠(틴트 .18)에 써요(161057).
-//   - 글자에 대사색을 쓸 때는 같은 색상 · 채도에서 명도만 옮겨 그 바탕 대비 4.6 이상(깡통은 4.5 미만 글자색을 덮어요 — 4.41 덮임 · 4.79 유지 실측).
+//   사용자가 캐릭터마다 정해 둔 대사색을 틀 색의 바탕으로 쓰고, 한 틀에 쓰는 색 수를 줄여요(B안이 기본).
+//   - 무채 바탕 + 강조색은 대사색 하나. 대사색은 글자가 아니라 대사 뒤 띠(틴트 .18)에 써요.
+//   - 글자에 대사색을 쓸 때는 같은 색상 · 채도에서 명도만 옮겨 그 바탕 대비 4.6 이상(커뮤니티 글 화면은 대비 4.5 미만 글자색을 덮어요).
 //   - plan 'A' 무채 + 띠만 · 'B' 무채 + 이름표 · 제목 밑줄만 대사색(기본 「깡통 로그」) · 'C' 대사색으로 물든 바탕(「진한 바탕」).
 //   - 레몬: 노랑 #FFE23C(테두리 #E9BE00) 기본, 진한 색 바탕(C 밤)일 때만 대표색.
-// 설계 문서: W/outputs/지시-1110/글꾸-색감/색-규칙.md · 색감-설계.md. DOM 없는 순수 모듈(시험 tools/tests/char-tone.mjs).
+// DOM 없는 순수 모듈(시험 tools/tests/char-tone.mjs).
 import { parseColor, contrast } from './ink-paint.js';
 
 export const TONE_PLANS = ['A', 'B', 'C'];
 export const TONE_MODES = ['light', 'dark'];
 export const INK_TARGET = 4.6;           // 글자 대비 목표(덮임 문턱 4.5 에 여유)
-export const BAND_ALPHA = 0.18;          // 대사 띠 틴트(사용자 확정 11-10)
+export const BAND_ALPHA = 0.18;          // 대사 띠 틴트
 export const LEMON_YELLOW = Object.freeze({ fill: '#FFE23C', stroke: '#E9BE00' });
-const GREY_CHROMA = 0.04;                // 이보다 채도가 낮으면 회색 계열(#c9d1dc 같은 것)
+const GREY_CHROMA = 0.04;                // 이보다 채도가 낮으면 회색 계열(옅은 회청색 대사색 같은 것)
 
-// 무채 바탕(161057 실측 · 낮은 같은 결)
+// 무채 바탕(밤 · 낮)
 const NEUTRAL = Object.freeze({
     dark: Object.freeze({ card: '#25272b', log: '#1c1e21', line: 'rgba(224, 224, 228, 0.09)', text: '#e1e1e5', dialogue: '#f5f5f7' }),
     light: Object.freeze({ card: '#ffffff', log: '#f5f5f6', line: 'rgba(20, 20, 24, 0.08)', text: '#26272b', dialogue: '#111113' }),
@@ -130,7 +130,107 @@ export function tone(K, { mode = 'dark', plan = 'B' } = {}) {
     return Object.freeze({ plan: p, mode: m, ...base, line, band: bandColor(k, m), name: fitInk(k, base.log), title: fitInk(k, base.card), rule: null, lemon });
 }
 
-/** 한 틀에 쓰는 서로 다른 색 수(레몬 칠 포함 · 테두리 칠 제외) — 「색 많아서 산만」 점검용 */
+// ── 톤 사다리 ─────────────────────────────────────────────────
+// 소품 · 포인트 자리에 쓰는 다섯 단계. 대사색 K 를 가운데(c500)로 두고 같은 색상에서 채도 · 명도만 옮겨요.
+//   식은 HSL(시안에서 확정한 두 색의 값을 그대로 지키려고 — OKLCH 고정 색상으로는 진한 분홍 단계가 채널 12 만큼 어긋나요):
+//   c100 채도×0.80 · 명도+(1−명도)×0.85 / c300 채도×0.95 · 명도+(1−명도)×0.45 / c500 = K / c700 채도×0.85 · 명도×0.62 / c900 채도×0.70 · 명도×0.34
+//   그 뒤 OKLCH 명도로 밝기 순을 지키고, 이웃 단계가 LADDER_GAP 보다 붙으면 그 단계의 HSL 명도만 바깥쪽으로 더 옮겨요
+//   (위 · 아래 여유가 모자라면 남은 여유의 1/3 씩). 이름 글자는 fitInk · 대사 띠는 bandColor 가 정본이고 사다리를 쓰지 않아요.
+export const LADDER_STEPS = Object.freeze(['c100', 'c300', 'c500', 'c700', 'c900']);
+export const LADDER_GAP = 0.04;          // 이웃 단계 사이 최소 OKLCH 명도 차
+export const NEUTRAL_LADDER = Object.freeze({ c100: '#f1f1f3', c300: '#c9cacf', c500: '#8b8e96', c700: '#4c4e55', c900: '#26272b' });
+const LADDER_RULE = Object.freeze({
+    c100: { sat: 0.8, up: 0.85 }, c300: { sat: 0.95, up: 0.45 },
+    c700: { sat: 0.85, down: 0.62 }, c900: { sat: 0.7, down: 0.34 },
+});
+
+function hslOf({ r, g, b }) {
+    const [x, y, z] = [r, g, b].map(v => v / 255), mx = Math.max(x, y, z), mn = Math.min(x, y, z), l = (mx + mn) / 2, d = mx - mn;
+    if (!d) return { h: 0, s: 0, l };
+    const s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    const h = mx === x ? (y - z) / d + (y < z ? 6 : 0) : mx === y ? (z - x) / d + 2 : (x - y) / d + 4;
+    return { h: h * 60, s, l };
+}
+function hslHex(h, s, l) {
+    const f = n => { const k = (n + h / 30) % 12, a = s * Math.min(l, 1 - l); return 255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))); };
+    return toHex(f(0), f(8), f(4));
+}
+// HSL 명도만 0.005씩 옮겨 OKLCH 명도가 want 이상(up) / 이하가 되는 첫 색
+function nudgeLadder(h, s, l, want, up) {
+    let hex = hslHex(h, s, l);
+    for (let i = 0; i < 200 && (up ? oklchOf(hex).l < want : oklchOf(hex).l > want); i++) {
+        l = up ? Math.min(1, l + 0.005) : Math.max(0, l - 0.005);
+        hex = hslHex(h, s, l);
+        if (l === 0 || l === 1) break;
+    }
+    return hex;
+}
+
+/**
+ * 대사색 K 의 톤 사다리(낮 · 밤 같은 값 — 어느 자리에 어느 단계를 쓰는지는 LADDER_SLOTS).
+ * K 가 없거나 잘못된 값 · 거의 투명 · 회색 계열(OKLCH 채도 < 0.04)이면 무채 사다리.
+ * @returns {{ c100, c300, c500, c700, c900 }} 소문자 '#rrggbb' · 얼린 객체
+ */
+export function toneLadder(K) {
+    const k = speakerColor(K);
+    if (!k || oklchOf(k).c < GREY_CHROMA) return NEUTRAL_LADDER;
+    const { h, s, l } = hslOf(parseColor(k)), mid = oklchOf(k).l;
+    const raw = step => {
+        const rule = LADDER_RULE[step];
+        return { s: s * rule.sat, l: rule.up ? l + (1 - l) * rule.up : l * rule.down };
+    };
+    const upGap = Math.min(LADDER_GAP, (1 - mid) / 3), downGap = Math.min(LADDER_GAP, mid / 3);
+    const at = (step, want, up) => { const r = raw(step); return nudgeLadder(h, r.s, r.l, want, up); };
+    const c300 = at('c300', mid + upGap, true);
+    const c100 = at('c100', oklchOf(c300).l + upGap, true);
+    const c700 = at('c700', mid - downGap, false);
+    const c900 = at('c900', oklchOf(c700).l - downGap, false);
+    return Object.freeze({ c100, c300, c500: k, c700, c900 });
+}
+
+// 심플 틀 자리 → 단계(시안 2-3절 표 그대로). 틀 번호 → 밝기 → 자리 이름 → 단계. null = 그 판은 사다리를 안 써요(틀이 가진 고정값).
+//   01 은 이름 · 밑줄 맞춤(fitInk)만 쓰고 소품 톤이 없어서 표에 없어요.
+const slots = o => Object.freeze(o);
+export const LADDER_SLOTS = Object.freeze({
+    '02': Object.freeze({
+        light: slots({ face: 'c100', innerLine: 'c300', dots: 'c300', back: 'c300', rim: 'c500', topBand: 'c700' }),
+        dark: slots({ face: 'c900', rim: 'c500', topBand: 'c300', innerLine: 'c700', dots: 'c700', back: 'c700' }),
+    }),
+    '03': Object.freeze({
+        light: slots({ marginLine: 'c300', arrow: 'c500', spine: 'c700', underline: 'c700' }),
+        dark: slots({ spine: 'c500', marginLine: 'c700', underline: 'c300', arrow: 'c500' }),
+    }),
+    '04': Object.freeze({
+        light: slots({ rulerBase: 'c300', cursor: 'c500', tick5: 'c500', triangle: 'c700' }),
+        dark: slots({ cursor: 'c500', tick5: 'c500', triangle: 'c300', rulerBase: 'c700' }),
+    }),
+    '05': Object.freeze({
+        light: slots({ clearWater: 'c100', tagFace: 'c100', saucerShadow: 'c100', sparkle: 'c300', steam: 'c300', tea: 'c500', teabag: 'c700', tagRim: 'c700' }),
+        dark: slots({ tea: 'c500', sparkle: 'c300', steam: 'c300', tagRim: 'c300', teabag: 'c700', clearWater: 'c900', tagFace: 'c900' }),
+    }),
+    '06': Object.freeze({
+        light: slots({ filledBar: 'c700', restBar: 'c300', recDot: 'c500' }),
+        dark: slots({ filledBar: 'c100', restBar: 'c700', recDot: 'c500' }),
+    }),
+    '07': Object.freeze({
+        light: slots({ flameOuter: 'c700', flameMid: 'c500', wick: 'c300', glow: 'c300', litBorder: 'c500', rule: 'c500', head: 'c900' }),
+        dark: slots({ flameOuter: 'c500', flameMid: 'c300', wick: 'c100', glow: 'c500', litBorder: 'c700', rule: 'c500', head: 'c900' }),
+    }),
+    '08': Object.freeze({
+        light: slots({ shade: 'c100', slat: 'c300', bottomBar: 'c500', cord: 'c500', weight: 'c700' }),
+        dark: null,
+    }),
+});
+
+/** 틀 · 밝기의 자리 → 색('#rrggbb') · 모르는 틀이거나 사다리를 안 쓰는 판이면 null */
+export function ladderSlots(K, frame, mode = 'dark') {
+    const table = LADDER_SLOTS[frame]?.[mode === 'light' ? 'light' : 'dark'];
+    if (!table) return null;
+    const t = toneLadder(K);
+    return Object.freeze(Object.fromEntries(Object.entries(table).map(([slot, step]) => [slot, t[step]])));
+}
+
+/** 한 틀에 쓰는 서로 다른 색 수(레몬 칠 포함 · 테두리 칠 제외) — 색을 줄였는지 보는 점검용 */
 export function toneColorCount(t) {
     const values = [t.card, t.log, t.line, t.text, t.dialogue, t.band, t.name, t.title, t.rule, t.lemon?.fill].filter(Boolean).map(v => String(v).toLowerCase());
     return new Set(values).size;
