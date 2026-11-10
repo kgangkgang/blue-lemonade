@@ -264,7 +264,8 @@ function bandify(map, html) {
         const quoted = QUOTE.test(lead) || /^\s*(?:&quot;|&#39;|&#x27;)/.test(lead);
         if (!quoted || !(own || oklchOf(h).c >= 0.06) || /background-image\s*:\s*linear-gradient/i.test(css)) return all;
         const who = own ? map.K : h;
-        const next = css.replace(/(^|;)\s*color\s*:\s*[^;]+/i, `$1color:${map.t.dialogue}`).replace(/;?\s*$/, '') + `;${band(who)}`;
+        // 내장 틀은 처음부터 fill 이 같이 적혀 있어요 — color 만 바꾸면 fill(보이는 색)이 대사색 글자로 남아 다른 틀(무채 글자 + 띠)과 달라져요
+        const next = css.replace(/(^|;)\s*color\s*:\s*[^;]+/i, `$1color:${map.t.dialogue}`).replace(/(^|;)\s*-webkit-text-fill-color\s*:\s*[^;]+/i, `$1-webkit-text-fill-color:${map.t.dialogue}`).replace(/;?\s*$/, '') + `;${band(who)}`;
         return `<${tagName}${pre} style="${next}"${post}>`;
     });
 }
