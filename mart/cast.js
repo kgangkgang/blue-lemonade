@@ -46,7 +46,7 @@ export function mountCast(box, { say = () => {} } = {}) {
                 return `<div class="mart-cast-list" id="mart-cast-${g.id}" role="radiogroup" aria-label="${esc(g.label)}">
                     <label class="mart-cast-r"><input type="radio" name="bl-cast" value="" data-name=""${toneState.on && !toneState.k ? ' checked' : ''}><i class="is-none" aria-hidden="true"></i><span>캐릭터 없음(무채)</span></label>
                     <label class="mart-cast-r"><input type="radio" name="bl-cast" value="off" data-name=""${!toneState.on ? ' checked' : ''}><i class="is-off" aria-hidden="true"></i><span>원래 색(다시 칠하지 않음)</span></label>
-                    <form class="mart-cast-form"><input type="text" class="field" name="name" maxlength="20" placeholder="이름" aria-label="캐릭터 이름" required><input type="color" name="color" value="${esc(toneState.k || '#3aa7ff')}" aria-label="대사색"><button type="submit" class="btn">기억하고 고르기</button></form>
+                    <form class="mart-cast-form"><label class="field-wrap"><input type="text" class="field" name="name" maxlength="20" placeholder="이름" aria-label="캐릭터 이름" required></label><input type="color" name="color" value="${esc(toneState.k || '#3aa7ff')}" aria-label="대사색"><button type="submit" class="btn">기억하고 고르기</button></form>
                     <label class="mart-cast-paste"><span>채팅 붙여 넣어 대사색 찾기</span><textarea class="field" rows="1" placeholder="실리태번 화면에서 복사한 채팅을 붙여 넣어요" aria-label="채팅 붙여 넣기"></textarea></label></div>`;
             }
             return `<div class="mart-cast-list" id="mart-cast-${g.id}" role="radiogroup" aria-label="${esc(g.label)}">${g.cast.map(x => radio(g, x)).join('')}</div>`;
