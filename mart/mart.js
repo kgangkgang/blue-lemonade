@@ -10,9 +10,9 @@ import { cart, say, onCheckout, artName, saveArt } from './cart.js?v=20261109a';
 import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
-import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110b';   // 11-10 대사색 하나로 다시 칠하기 · 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
-import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261110b';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
-import { mountCast } from './cast.js?v=20261110b';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
+import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110v';   // 11-10 대사색 하나로 다시 칠하기 · 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
+import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261110v';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
+import { mountCast } from './cast.js?v=20261110v';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
 let styleActive = 'all', drawPreset = null, picker = null;
 const states = [];   // 만든 카드만(글꾸) — 늦게 만들기(lazyGrid)라 처음엔 첫 화면 몫뿐이에요
 const stateById = new Map();
@@ -522,7 +522,7 @@ function doAct(state, act, b) {
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
 let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261110t').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261110v').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
