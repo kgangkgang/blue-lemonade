@@ -784,7 +784,7 @@
 :where(html.bl-asc-9) .blzi-item small { font-size:var(--bl-ts-meta, 12.5px); overflow-wrap:anywhere; }
 :where(html.bl-asc-9) .blzi-tag { font-size:var(--bl-ts-meta, 12.5px); padding:0 6px; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:var(--bl-r-sm, 8px); color:var(--salty-muted, var(--SmartThemeBodyColor)); }
 :where(html.bl-asc-9) .blzi-bad .blzi-tag { color:var(--salty-accent-ink, var(--SmartThemeBodyColor)); border-color:currentColor; }
-:root:where(.bl-asc-10) { --eh-css-version: "1.7.6"; }
+:root:where(.bl-asc-10) { --eh-css-version: "1.7.7"; }
 :where(html.bl-asc-10) #chat .mes_text img.eh-img {
     display: block;
     max-width: min(100%, 520px);

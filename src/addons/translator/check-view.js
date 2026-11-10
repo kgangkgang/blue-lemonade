@@ -77,14 +77,18 @@ export function createCheckView({ stateOf, rerender, act, scope, autoFixOn = () 
     }
 
     // ── 2.6.6 자동으로 고치기: 의심 문단 하나씩(고친 뒤 다시 점검 → 남으면 다음 것) · 같은 메시지 같은 원문에 3번까지 · 고칠 수 없는 꼴은 표시만 ──
+    // [1.1.2 감사 T7] 센 수를 200칸 LRU 로 밀어내면 의심 메시지가 200개를 넘을 때 앞 메시지가 0부터 다시 세어 유료 다시 번역이 끝없이 나갔어요.
+    //   밀어내지 않고, 채팅이 바뀌면(scope 가 달라지면) 통째로 비워요 — 한 채팅의 메시지 수만큼만 커져요
     const AUTO_MAX = 3, autoTries = new Map();
+    let triesOwner = scope?.();
+    const syncTries = () => { const next = scope?.(); if (next !== triesOwner) { autoTries.clear(); triesOwner = next; } };
     function autoFix(id, state, result) {
+        syncTries();
         const key = `${id}\u0001${state.source}`, tries = autoTries.get(key) || 0;
         if (tries >= AUTO_MAX) return;
         const pick = result.paragraphs.map(row => ({ row, plan: actionFor(state, row) })).find(x => x.plan);
         if (!pick) return;
-        autoTries.delete(key); autoTries.set(key, tries + 1);
-        while (autoTries.size > 200) autoTries.delete(autoTries.keys().next().value);
+        autoTries.set(key, tries + 1);
         Promise.resolve(act(pick.plan[0], id, pick.row.index, pick.row, { auto: true })).catch(error => console.warn('[Blue Lemonade · LLM 번역] 자동 다시 번역 실패', error));
     }
     /** 이 의심 문단에 할 일 ['clean' | 'fill' | 'retry', 단추 글] 또는 null — 작은 창의 주 단추와 같은 규칙 */
@@ -242,8 +246,8 @@ export function createCheckView({ stateOf, rerender, act, scope, autoFixOn = () 
         // A board action is one explicit repair. Its rerender must not enqueue
         // the existing automatic follow-up repairs for this same source.
         if (options.manualReview) {
+            syncTries();
             autoTries.set(`${id}\u0001${options.expectedState.source}`, AUTO_MAX);
-            while (autoTries.size > 200) autoTries.delete(autoTries.keys().next().value);
         }
         return act(kind, id, index, row, options);
     } });

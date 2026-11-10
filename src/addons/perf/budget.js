@@ -80,6 +80,8 @@ function toast(kind, message, options = {}) {
  * 중계 서버 주소. 비어 있으면 실리태번의 사용자 지정 API 주소에서 서버 부분을 쓴다.
  * [1.2.1] 물려받은 주소는 "키를 처음 넣었을 때의 주소"(keyHost)와 같을 때만 쓴다.
  * 그러지 않으면 본체 API 주소를 다른 업체로 바꿨을 때 이 서버의 키가 그 업체로 날아간다.
+ * [1.1.2 감사 K1] keyHost 가 빈 설정(그 칸이 생기기 전에 넣은 키 · 본체 주소가 빌 때 넣은 키)도 보내지 않아요.
+ * 지금 주소를 주인으로 알아서 적으면, 이미 다른 서버로 바뀐 뒤라면 그 서버로 키가 가요. 설정 화면에서 한 번 확인받아요.
  */
 export function baseUrl() {
     const budget = config();
@@ -87,7 +89,7 @@ export function baseUrl() {
     if (own) return own.replace(/\/+$/, '');
     const inherited = originOf(oai_settings?.custom_url);
     if (!inherited) return '';
-    if (budget.keyHost && budget.keyHost !== inherited) return '';
+    if (budget.keyHost !== inherited) return '';
     return inherited;
 }
 
@@ -102,7 +104,8 @@ function originOf(url) {
 /** 물려받은 주소가 키를 넣을 때와 달라졌나 (설정 화면에서 알려 주려고) */
 export function inheritedHostChanged() {
     const budget = config();
-    if (budget.baseUrl?.trim() || !budget.keyHost) return false;
+    // [1.1.2 감사 K1] keyHost 가 빈 키도 보내지 않으니 알려요(키가 없으면 알릴 것도 없어요)
+    if (budget.baseUrl?.trim() || !budget.key) return false;
     const inherited = originOf(oai_settings?.custom_url);
     return !!inherited && inherited !== budget.keyHost;
 }

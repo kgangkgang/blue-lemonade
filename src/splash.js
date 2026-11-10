@@ -50,13 +50,19 @@ export function syncFavicon(on) {
 export const FAVICON_FILE = 'blue-lemonade-favicon.ico';
 // 5.5.2: 같은 명령이 홈 화면 아이콘(public/img/apple-icon-*.png — index.html 의 apple-touch-icon · manifest.json)도 바꾼다.
 // 표식을 BLLEMON2 로 바꿔서 5.5.1 명령만 실행한 기기에도 버튼이 다시 뜬다.
-const FAVICON_MARK = 'BLLEMON2';   // 파일 끝 표식 — 기기마다 PNG 바이트가 달라도 '이미 레몬' 을 알아본다
+// 1.1.2 홈 화면 아이콘 모양(chat.homeIcon — 레몬만(투명 바탕) · 어두운 네모)을 표식에 담아요: BLLEMON3L · BLLEMON3S. 모양을 바꾸면(또는 옛 BLLEMON2 파일이면) 버튼이 다시 떠요.
+//   자동(기본)은 안드로이드 = 레몬만 · iOS = 어두운 네모(투명 PNG 는 iOS 가 검게 채워요).
+const markFor = shape => `BLLEMON3${shape === 'square' ? 'S' : 'L'}`;   // 파일 끝 표식 — 기기마다 PNG 바이트가 달라도 '이미 레몬' 을 알아본다
+const isIOS = () => { try { return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); } catch { return false; } };
+/** 실제로 쓸 모양: 'lemon' | 'square' (설정 'auto' 면 기기에 따라) */
+export const homeIconShape = value => (value === 'lemon' || value === 'square' ? value : isIOS() ? 'square' : 'lemon');
 const HOME_SIZES = [57, 72, 114, 144, 192, 512];
 const homeFile = (n) => `blue-lemonade-apple-icon-${n}x${n}.png`;
-let faviconFileNow = null, faviconChecking = null;
-export function faviconFileState() { return faviconFileNow; }
-const endsWithMark = (buf) => {
-    const b = new Uint8Array(buf), m = new TextEncoder().encode(FAVICON_MARK);
+let faviconBuf, faviconChecking = null;   // faviconBuf: undefined 모름 · null 못 읽음 · ArrayBuffer
+/** 'on'(지금 고른 모양의 레몬 파일) · 'off' · null(아직 모름) */
+export function faviconFileState(shape = 'lemon') { return faviconBuf === undefined ? null : faviconBuf && endsWithMark(faviconBuf, markFor(shape)) ? 'on' : 'off'; }
+const endsWithMark = (buf, mark) => {
+    const b = new Uint8Array(buf), m = new TextEncoder().encode(mark);
     return b.length > m.length && m.every((x, i) => b[b.length - m.length + i] === x);
 };
 /** 실리태번 public/favicon.ico 가 이미 우리 레몬인지 (페이지마다 한 번) */
@@ -64,21 +70,15 @@ export function checkFaviconFile(onChange) {
     faviconChecking ??= fetch('/favicon.ico', { cache: 'no-store' })
         .then(res => (res.ok ? res.arrayBuffer() : null))
         .catch(() => null)
-        .then((buf) => {
-            const next = buf && endsWithMark(buf) ? 'on' : 'off';
-            const changed = next !== faviconFileNow;
-            faviconFileNow = next;
-            if (changed) onChange?.();
-            return faviconFileNow;
-        });
+        .then((buf) => { faviconBuf = buf; onChange?.(); return buf; });
     return faviconChecking;
 }
 // PNG 한 장을 담은 ICO (브라우저는 ICO 안의 PNG 를 읽는다) + 끝 표식
-function lemonIcoBytes() {
+function lemonIcoBytes(shape) {
     const url = lemonFavicon();
     if (!url.startsWith('data:image/png')) return null;
     const png = Uint8Array.from(atob(url.split(',')[1]), c => c.charCodeAt(0));
-    const mark = new TextEncoder().encode(FAVICON_MARK);
+    const mark = new TextEncoder().encode(markFor(shape));
     const out = new Uint8Array(22 + png.length + mark.length), v = new DataView(out.buffer);
     v.setUint16(2, 1, true); v.setUint16(4, 1, true);                       // ICONDIR: 종류 1(아이콘) · 1개
     out[6] = 64; out[7] = 64; v.setUint16(10, 1, true); v.setUint16(12, 32, true);
@@ -87,11 +87,13 @@ function lemonIcoBytes() {
     return out;
 }
 // 홈 화면 아이콘: 원래 ST 아이콘처럼 꽉 찬 어두운 네모(46,46,46) 위에 레몬 — 투명하면 iOS 가 검게 채우고, 안드로이드 원형 마스크에도 안 잘리게 가운데 62%
-function lemonHomePng(n) {
+// 1.1.2 lemon: 투명 바탕에 레몬만 크게(80%) — 테두리는 같은 그림 단위(18)라 크기에 맞춰 같이 커져요 · square: 위 설명 그대로
+function lemonHomePng(n, shape = 'square') {
     const c = document.createElement('canvas'); c.width = c.height = n;
     const g = c.getContext('2d'), p = new Path2D(LEMON_PATH);
-    g.fillStyle = '#2E2E2E'; g.fillRect(0, 0, n, n);
-    g.translate(n * 0.19, n * 0.19); g.scale(n * 0.62 / 472, n * 0.62 / 472);
+    const k = shape === 'lemon' ? 0.8 : 0.62, off = (1 - k) / 2;
+    if (shape !== 'lemon') { g.fillStyle = '#2E2E2E'; g.fillRect(0, 0, n, n); }
+    g.translate(n * off, n * off); g.scale(n * k / 472, n * k / 472);
     g.translate(12, -20); g.translate(0, 448); g.scale(1, -1);
     g.fillStyle = '#FFE23C'; g.fill(p, 'evenodd');
     g.lineWidth = 18; g.lineJoin = 'round'; g.strokeStyle = '#E9BE00'; g.stroke(p);
@@ -106,13 +108,13 @@ async function uploadUserFile(name, data) {
     if (!res.ok) throw new Error(`아이콘 파일을 못 올림 (${res.status})`);
 }
 /** 명령 복사 전에: 사용자 파일에 레몬 아이콘(탭 + 홈 화면)을 올리고, 한 번 실행할 명령을 돌려준다 */
-export async function prepareFaviconCommand() {
-    const bytes = lemonIcoBytes();
+export async function prepareFaviconCommand(shape = 'lemon') {
+    const bytes = lemonIcoBytes(shape);
     if (!bytes) throw new Error('레몬 아이콘을 못 그림');
     let bin = '';
     for (const x of bytes) bin += String.fromCharCode(x);
     // 하나라도 못 올리면 여기서 멈추고 명령을 복사하지 않는다
-    for (const n of HOME_SIZES) await uploadUserFile(homeFile(n), lemonHomePng(n));
+    for (const n of HOME_SIZES) await uploadUserFile(homeFile(n), lemonHomePng(n, shape));
     await uploadUserFile(FAVICON_FILE, btoa(bin));
     let handle = 'default-user';
     try { handle = (await import('/scripts/user.js')).getCurrentUserHandle() || handle; } catch { /* 옛 실리태번 */ }

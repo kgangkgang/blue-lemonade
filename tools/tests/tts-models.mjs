@@ -68,6 +68,7 @@ const AUDIO = () => new Response(new Uint8Array([0xff, 0xf3, 1, 2]), { status: 2
 const WAV_B64 = 'UklGRiQAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAAAAA=';
 const SYNTH = (c) => {
     if (c.url.includes('/t2a_v2')) return J({ data: { audio: 'fff3' }, base_resp: { status_code: 0 }, extra_info: { usage_characters: 3 } });
+    if (c.url.includes('/with-timestamps')) return J({ audio_base64: 'AQIDBA==', alignment: null });   // 1.1.2 감사 V2 진짜 업체처럼 JSON (전엔 소리 본문을 줘 예전 주소로 두 번째 POST 가 나갔어요)
     if (c.url.includes(':generateContent')) return J({ candidates: [{ content: { parts: [{ inlineData: { data: WAV_B64, mimeType: 'audio/wav' } }] } }] });
     return AUDIO();
 };

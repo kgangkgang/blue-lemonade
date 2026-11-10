@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { createRewriteUiHold, REWRITE_ACTION_SELECTOR } from '../../src/addons/rewrite/ui-hold.js';
+import { createRewriteUiHold, REWRITE_ACTION_SELECTOR, REWRITE_FORM_SELECTOR } from '../../src/addons/rewrite/ui-hold.js';
 
 function element(initial = {}) {
     const values = new Map(Object.entries(initial).map(([k, v]) => [k, [v, '']]));
@@ -20,9 +20,9 @@ function harness({ send = false, generating } = {}) {
         set() { throw Error('body에 쓰면 안 돼요'); }, deleteProperty() { throw Error('body에서 지우면 안 돼요'); },
     });
     const doc = { body: { dataset }, querySelectorAll(selector) {
-        assert.equal(selector, REWRITE_ACTION_SELECTOR);
+        assert.ok([REWRITE_ACTION_SELECTOR, REWRITE_FORM_SELECTOR].includes(selector));
         assert.equal(state.send, true, '조작부를 건드리기 전에 전송부터 막아요');
-        return controls;
+        return selector === REWRITE_FORM_SELECTOR ? controls.slice(0, 1) : controls;
     }, getElementById: id => id === 'mes_stop' ? stop : null };
     const acquire = createRewriteUiHold({ document: doc,
         getSendLocked: () => state.send, setSendLocked: value => { state.send = value; state.writes++; },
@@ -37,8 +37,11 @@ check('전송 차단과 조작부 숨김을 즉시 적용하고 기존 값을 �
     assert.equal(h.state.send, true);
     for (const el of h.controls) assert.equal(el.style.getPropertyValue('visibility'), 'hidden');
     assert.equal(h.stop.style.getPropertyValue('display'), 'flex');
+    assert.equal(h.controls[0].style.getPropertyValue('display'), 'none', '입력판 단추는 칸까지 접어요');
+    assert.equal(h.controls[1].style.getPropertyValue('display'), '', '채팅 쪽 조작부는 칸을 남겨요');
     release();
     assert.equal(h.state.send, false);
+    assert.equal(h.controls[0].style.getPropertyValue('display'), '');
     assert.equal(h.controls[0].style.getPropertyValue('visibility'), '');
     assert.equal(h.controls[1].style.getPropertyValue('visibility'), 'collapse');
     assert.equal(h.stop.style.getPropertyValue('display'), 'none');

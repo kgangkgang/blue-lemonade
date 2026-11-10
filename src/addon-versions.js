@@ -2,6 +2,7 @@
 // 업데이트 탭을 열 때 · 진단 파일을 만들 때만 부르고, 한 번 읽으면 새로고침 전까지 기억한다 (설치 파일은 새로고침해야 바뀐다).
 // 새 애드온을 더하면 여기에 한 줄 — tools/tests/addon-versions.mjs 가 빠진 폴더와 못 찾는 판을 잡는다.
 import { PRIVATE_ADDONS } from './private-addons.js';
+import { zeroMode } from './usage-mode.js';
 export const ADDON_VERSION_FILES = Object.freeze({
     translator: ['LLM 번역', 'translator/manifest.json'],
     tts: ['TTS', 'tts/version.js'],
@@ -20,10 +21,16 @@ export const ADDON_VERSION_FILES = Object.freeze({
     mermaid: ['Mermaid 도표', 'mermaid/index.js'],
     'prompt-template': ['프롬프트 템플릿', 'prompt-template/index.js'],
     zipinstall: ['ZIP 설치', 'zipinstall/index.js'],
+    qrtoggle: ['퀵 리플라이 줄 접기', 'qrtoggle/core.js'],   // 1.1.2 — 애드온 카드가 아니라 채팅 › 기타 스위치(quick.qrFold)로 켜요
     // 8.3.0 테마 안으로 들인 단독 확장 — 판은 각 확장 자기 파일에(private-addons.js version · 1.0.0 은 빈 표)
     ...Object.fromEntries(Object.entries(PRIVATE_ADDONS).filter(([, p]) => p.embedded).map(([id, p]) => [id, [p.label, p.version]])),
 });
 const HEAD = 4096;
+
+/** 판 목록의 켜짐 표시에 쓸 표 — 애드온 스위치(s.addons)에, 애드온 카드가 아닌 스위치로 켜는 것(퀵 리플라이 줄 접기 = quick.qrFold · 제로에서는 꺼짐)을 더해요 */
+export function versionFlags(s) {
+    return { ...(s?.addons || {}), qrtoggle: s?.quick?.qrFold === true && s?.usageMode !== 'extensions' && !zeroMode(s) };
+}
 
 /** 파일 앞부분에서 판 번호 (manifest 의 "version" · 첫 *VERSION = '…'). 없으면 '' */
 export function versionIn(text, file = '') {

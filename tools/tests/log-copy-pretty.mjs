@@ -199,8 +199,8 @@ await test('못 읽는 HTML · 주석을 깨는 글 · DOM 이 쓴 표시(data-b
 await test('연결: 시트 「HTML 복사」 = 텍스트(HTML 칸)는 편집용 · 서식은 한 줄 · 마트 미리보기도 편집용 · 시작 그래프 밖', () => {
     const sheet = read('src/log-copy-sheet.js');
     assert.match(sheet, /import \{ prettyLogHtml \} from '\.\/log-copy-pretty\.js'/);
-    assert.match(sheet, /writeClipboard\(html, prettyLogHtml\(/);
-    assert.match(sheet, /head: motionStyleFor\(shown\)/, '편집용 글에도 움직임 <style>(글꾸 마트 1.0.1)');
+    assert.match(sheet, /writeClipboard\(html, withCommentSlots\(prettyLogHtml\(/);
+    assert.match(sheet, /const lifted = liftForCopy\(shown, motionStyleFor\(shown\)\);[\s\S]*insertHead\(copyBody\(result\(\{ marks: true \}\)\)\.html, lifted\.head\)/, '편집용 글에도 움직임 <style>(글꾸 마트 1.0.1 · 1.1.2 그림 규칙과 한 <style>)');
     const mart = read('tools/mart-build.mjs');
     assert.match(mart, /prettyLogHtml\(html, \{ label, head: style, fields: false \}\)/, '마트 미리보기도 편집용 꼴(움직임 <style> 은 안내 주석 아래 · 「📋 HTML 복사」라 data-f 는 걷어요)');
     // 1.0.1 「보이는 글씨는 전부 바꿔도 돼요」: 안내 주석 한 줄 · 고칠 칸 「(글자만 바꿔요)」 · 틀이 그리는 꾸밈 글도 주석 · fields:false 면 data-f 없음

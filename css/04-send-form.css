@@ -572,10 +572,13 @@ body.salty #jj-popup .jj-empty {
   color: var(--salty-faint);
 }
 
-/* 생성 멈춤은 기존 포인트색 동그라미를 유지해요. */
+/* 생성 멈춤은 기존 포인트색 동그라미를 유지해요.
+   양옆 여백: 34px 동그라미를 보내기와 같은 폭(--bottomFormBlockSize)의 칸 가운데에 놓아요 → 보내기가 멈춤으로 바뀌어도 중심이 그대로예요
+   (글자 크기를 키우면 칸이 34px 보다 넓어져 그 차이의 반만큼 옆으로 갔어요). 아래 명령 실행 단추도 같아요. */
 body.salty #rightSendForm > #mes_stop {
   width: 34px !important;
   height: 34px !important;
+  margin-inline: calc((var(--bottomFormBlockSize) - 34px) / 2) !important;
   padding: 0 !important;
   border-radius: 50%;
   background: var(--salty-fill-accent, var(--salty-accent)) !important;
@@ -628,6 +631,7 @@ body.salty #form_sheld.isExecutingCommandsFromChatInput :is(#send_but, #mes_cont
 body.salty #rightSendForm > .stscript_btn {
   width: 34px !important;
   height: 34px !important;
+  margin-inline: calc((var(--bottomFormBlockSize) - 34px) / 2) !important;
   padding: 0 !important;
 }
 body.salty #rightSendForm > .stscript_btn > .fa-solid {

@@ -63,8 +63,8 @@ let reading = null;
 export function readVersions(fresh = false) {
     reading ??= (async () => {
         await loadVersion();
-        const [{ addonVersions }, disk] = await Promise.all([import('./addon-versions.js'), readDisk()]);
-        const addons = await addonVersions(getSettings().addons || {}, { fresh }).catch(() => []);
+        const [{ addonVersions, versionFlags }, disk] = await Promise.all([import('./addon-versions.js'), readDisk()]);
+        const addons = await addonVersions(versionFlags(getSettings()), { fresh }).catch(() => []);
         state.disk = disk;
         return versionCells(currentVersion(), disk, addons);
     })().finally(() => { reading = null; });

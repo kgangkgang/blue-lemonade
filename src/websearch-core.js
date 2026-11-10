@@ -76,6 +76,19 @@ export function normalizeText(text) {
     return str(text).replace(/\s+/g, ' ').trim();
 }
 
+// 1.1.2 출처 후보 글의 이름 자리만 채워요 — 실리태번 매크로 엔진(substituteParams)은 돌리지 않아요.
+//   변수 매크로({{incvar}} · {{addvar}} · {{setvar}})는 풀 때 실제로 실행돼서, 후보마다 한 번 더 풀면 생성마다 두 번 돌아요.
+//   보낸 글과 앞머리(서명)가 맞도록, 풀면 빈 글이 되는 매크로(주석 · noop · trim · 변수 적기)는 실행 없이 지우기만 해요. 값이 나오는 매크로는 그대로 둬요.
+const MACRO_BODY = '(?:(?!\\{\\{|\\}\\})[\\s\\S])*';
+const EMPTY_MACRO = new RegExp(`\\{\\{(?:\\/\\/${MACRO_BODY}|noop|(?:set|add)(?:global)?var::${MACRO_BODY})\\}\\}`, 'gi');
+export function fillNames(text, { user, char } = {}) {
+    return str(text)
+        .replace(/(?:\r?\n)*\{\{trim\}\}(?:\r?\n)*/gi, '')
+        .replace(EMPTY_MACRO, '')
+        .replace(/\{\{user\}\}|<USER>/gi, all => str(user) || all)
+        .replace(/\{\{char\}\}|<BOT>/gi, all => str(char) || all);
+}
+
 /** 메시지 content(문자열 · 조각 배열) → 글. 그림 같은 조각은 뺀다 */
 export function textOf(content) {
     if (typeof content === 'string') return content;

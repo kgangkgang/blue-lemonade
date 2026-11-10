@@ -5,7 +5,7 @@
 import { getSettings } from './settings.js';
 import { currentVersion } from './notice.js';
 import { recentErrors } from './diag-errors.js';
-import { addonVersions } from './addon-versions.js';
+import { addonVersions, versionFlags } from './addon-versions.js';
 
 const SCHEMA = 1;
 
@@ -67,7 +67,7 @@ const short = (ua) => String(ua || '').match(/(?:Edg|OPR|SamsungBrowser|Firefox|
 async function collect(ctx) {
     const s = getSettings();
     const stVersion = await fetch('/version').then(r => r.ok ? r.json() : null).then(v => v?.pkgVersion || '').catch(() => '');
-    const addons = await addonVersions(s.addons || {});
+    const addons = await addonVersions(versionFlags(s));
     let extensions = [];
     try {
         const ext = await import('/scripts/extensions.js');

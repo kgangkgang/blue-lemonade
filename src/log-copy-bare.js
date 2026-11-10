@@ -78,7 +78,8 @@ function restyle(node, edit) {
     const next = edit(decls);
     if (next.length === decls.length && next.every((d, i) => d === decls[i])) return;   // 바뀐 게 없으면 글자 하나 안 건드려요
     const css = next.join(';');
-    node.open = m ? node.open.replace(m[0], ` style="${css}"`) : node.open.replace(/^<([a-zA-Z][\w-]*)/, `<$1 style="${css}"`);
+    // 함수 치환(1.1.2) — 남은 선언 글에 $ 가 있어도 그대로
+    node.open = m ? node.open.replace(m[0], () => ` style="${css}"`) : node.open.replace(/^<([a-zA-Z][\w-]*)/, (_, name) => `<${name} style="${css}"`);
 }
 const prop = decl => decl.split(':')[0].trim().toLowerCase();
 // 11-07 사용자 「단풍은 남아야지 · 박스만 사라지고」 — 장식(글이 한 번도 안 들었던 그림 · 이모지 · 테이프 · 움직임 · 누르면 반응)은 남기고 빈 박스 · 선만 걷어요

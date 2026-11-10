@@ -24,7 +24,7 @@ const breakpoints = b => JSON.stringify(b).split('"cache_control"').length - 1;
 
 // ── ① 모듈 ──
 await check('minimum cacheable length per model (Anthropic table): 5-generation 512, Sonnet 5 1024, Opus 4.6/4.5 · Haiku 4.5 4096, Opus 4.7 2048, unknown 1024', () => {
-    for (const m of ['claude-opus-5-5', 'claude-opus-5', 'claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-fable-5-1', 'claude-fable-5', 'claude-mythos-5-1']) assert.equal(PC.minCacheTokens(m), 512, m);
+    for (const m of ['claude-opus-5-5', 'claude-opus-5', 'claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-fable-5-2', 'claude-mythos-5-2', 'claude-fable-5-1', 'claude-fable-5', 'claude-mythos-5-1']) assert.equal(PC.minCacheTokens(m), 512, m);
     for (const m of ['claude-sonnet-5', 'claude-opus-4-8', 'claude-sonnet-4-6', 'claude-sonnet-4-5', 'claude-opus-4-1', 'some-model', '']) assert.equal(PC.minCacheTokens(m), 1024, m);
     for (const m of ['claude-opus-4-6', 'claude-opus-4-5', 'claude-haiku-4-5']) assert.equal(PC.minCacheTokens(m), 4096, m);
     for (const m of ['claude-opus-4-7', 'claude-mythos-preview']) assert.equal(PC.minCacheTokens(m), 2048, m);

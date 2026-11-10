@@ -1,5 +1,5 @@
 // 프롬프트 연동 정규식 — 과일 꼴 프리셋 검사 (1.0.8) — node tools/tests/regexlink-fruit.mjs [저장소]
-// 합성 프리셋만 쓴다 (사용자 자료 · 개인 항목 이름 없음). 앞은 계산부, 뒤는 index.js sync 를 가짜 실리태번에 얹어
+// 합성 프리셋만 쓴다 (사용자 자료 · 개인 항목 이름 없음). 정규식의 찾기 식도 원작 것이 아니라 같은 꼬리표를 잡도록 새로 쓴 것이다(원작 식은 저장소에 담지 않는다). 앞은 계산부, 뒤는 index.js sync 를 가짜 실리태번에 얹어
 // 과일의 마음 패널처럼 프리셋을 통째로 바꾼 뒤(SETTINGS_UPDATED) 정규식이 따라가는지 본다.
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -29,20 +29,20 @@ const prompts = [
 ];
 const R = (scriptName, id, findRegex, extra = {}) => ({ id, scriptName, findRegex, replaceString: '', disabled: false, markdownOnly: true, promptOnly: false, ...extra });
 const scripts = [
-    R('MoM必选-[1]清除多余内容', 'clean', '/^[\\s\\S]*\\[finire\\]\\s?|\\s?<finish>[\\s\\S]*</finish>|(?<=<p style)-/gi', { promptOnly: true }),
-    R('MoM必选-[2]只发送摘要', 'onlysum', '/^[\\s\\S]*(<meow_FM>[\\s\\S]*$)/i', { markdownOnly: false, promptOnly: true }),
+    R('MoM必选-[1]清除多余内容', 'clean', '/\\s?<finish>[\\s\\S]*?<\\/finish>|\\s?<!--[\\s\\S]*?-->/gi', { promptOnly: true }),
+    R('MoM必选-[2]只发送摘要', 'onlysum', '/^[\\s\\S]*?(<meow_FM>[\\s\\S]*)$/i', { markdownOnly: false, promptOnly: true }),
     R('祛除八股词', 'cliche', '/极其|不容置疑/g', { promptOnly: true }),
-    R('MoM必选-[9]显示修复', 'fixshow', '/<content>\\s+/g'),
-    R('MoM美化-[17]TOP题记状态栏@AUTHOR（1003）', 'top', '/<status_bar>([\\s\\S]*?)<\\/status_bar>/i'),
-    R('MoM美化-[10]顶部状态栏@AUTHOR@HELPER', 'topmini', '◸(.*?)<(.*?)>(.*?)｜(.*?)◹'),
-    R('MoM美化-[9]开篇序言@AUTHOR@KKK', 'prologue', '/<prologue>([\\s\\S]+?)</[^>]*>/i'),
-    R('MoM美化-[9]开篇序言双色版@AUTHOR', 'prologue2', '/<prologue>([\\s\\S]+?)</[^>]*>/i', { disabled: true }),
-    R('MoM美化-[13]角色表美化@AUTHOR', 'profile', '/<profile>\\s*([\\s\\S]*?)</[^>]*>/i'),
-    R('MoM美化-[11]摘要幽灵模式@fawn', 'ghost', '/<meow_FM>\\s+serial[:：](.+?)\\s*</[^bp>]*>/si'),
-    R('MoM美化-[12]选择器@AUTHOR', 'branches', '<branches>\\s+(?:<details>[\\s\\S]*?</summary>\\s*)?([\\s\\S]+?)(?:</details>\\s*)?</branches>'),
-    R('MoM美化-[13.5]围栏守卫（必须排在 [14] 之前）', 'fence', '/```(?=(?:(?!<ccd>)[\\s\\S])*?<\\/ccd>)/g'),
-    R('MoM美化-[14]纯文字剧场美化@AUTHOR', 'ccd', '/<ccd>\\s+([\\s\\S]*?)</ccd>/gi'),
-    R('MoM可选-[5]小剧场修复@AUTHOR', 'snow', '/(<snow>[\\s\\S]*?body\\s*\\{[^}]*?)height:\\s*\\d+(?:vh|%)?/'),
+    R('MoM必选-[9]显示修复', 'fixshow', '/<content>[ \\t\\r\\n]+/g'),
+    R('MoM美化-[17]TOP题记状态栏@AUTHOR（1003）', 'top', '/<status_bar\\b[^>]*>([\\s\\S]*?)<\\/status_bar\\s*>/i'),
+    R('MoM美化-[10]顶部状态栏@AUTHOR@HELPER', 'topmini', '◸([^<◹]*)<([^>◹]*)>([^｜◹]*)｜([^◹]*)◹'),
+    R('MoM美化-[9]开篇序言@AUTHOR@KKK', 'prologue', '/<prologue>\\s*([\\s\\S]+?)\\s*<\\/prologue>/i'),
+    R('MoM美化-[9]开篇序言双色版@AUTHOR', 'prologue2', '/<prologue>\\s*([\\s\\S]+?)\\s*<\\/prologue>/i', { disabled: true }),
+    R('MoM美化-[13]角色表美化@AUTHOR', 'profile', '/<profile>\\s*([\\s\\S]*?)\\s*<\\/profile>/i'),
+    R('MoM美化-[11]摘要幽灵模式@fawn', 'ghost', '/<meow_FM>\\s*serial\\s*[:：]([\\s\\S]+?)<\\/meow_FM>/i'),
+    R('MoM美化-[12]选择器@AUTHOR', 'branches', '<branches>\\s*(?:<details>[\\s\\S]*?<\\/summary>)?\\s*([\\s\\S]+?)\\s*(?:<\\/details>)?\\s*<\\/branches>'),
+    R('MoM美化-[13.5]围栏守卫（必须排在 [14] 之前）', 'fence', '/```(?=(?:[^<]|<(?!ccd>))*<\\/ccd>)/g'),
+    R('MoM美化-[14]纯文字剧场美化@AUTHOR', 'ccd', '/<ccd>\\s*([\\s\\S]*?)\\s*<\\/ccd>/gi'),
+    R('MoM可选-[5]小剧场修复@AUTHOR', 'snow', '/(<snow\\b[^>]*>[\\s\\S]*?\\bbody\\s*\\{[^}]*?)\\bheight\\s*:\\s*[\\d.]+(?:vh|%|px)?/'),
     R('MoM美化-[7]COT美化@AUTHOR', 'cot', '/(^[\\s\\S]+$)/m', { placement: [] }),
     R('MoM美化-[20]段落美化', 'para', '/<p>(.*?)<\\/p>/g'),
     R('MoM美化-[21]命名组', 'named', '/(?<head>\\d+)\\k<head>/'),
@@ -57,10 +57,10 @@ const rows = (enabledIds, extra = {}) => Object.fromEntries(plan({ scripts, prom
 ok('출력 표시 뽑기: 첫 여는 태그 · 없으면 ASCII 밖 기호 · 정규식 문법은 태그 아님', () => {
     assert.equal(markOf('/<status_bar>([\\s\\S]*?)<\\/status_bar>/i'), '<status_bar>');
     assert.equal(markOf('/<meow_FM>\\s+serial/si'), '<meow_fm>', '소문자 키');
-    assert.equal(markOf('/```(?=(?:(?!<ccd>)[\\s\\S])*?<\\/ccd>)/g'), '<ccd>', '앞보기 안의 태그도 태그');
+    assert.equal(markOf('/```(?=[^`]*<ccd>)/g'), '<ccd>', '앞보기 안의 태그도 태그');
     assert.equal(markOf('/<\\/ccd>/'), '<ccd>', '닫는 태그만 있어도');
     assert.equal(markOf('/<角色状态面板>\\s*<日期>(.*?)<\\/日期>/s'), '<角色状态面板>', '한자 태그 · 첫 태그만');
-    assert.equal(markOf('◸(.*?)<(.*?)>(.*?)｜(.*?)◹'), '◸', '태그가 없으면 첫 기호 (◸ 는 Sm)');
+    assert.equal(markOf('◸([^<◹]*)<([^>◹]*)>([^｜◹]*)｜([^◹]*)◹'), '◸', '태그가 없으면 첫 기호 (◸ 는 Sm)');
     assert.equal(markOf('/(?<head>\\d+)\\k<head>/'), '', '이름 붙은 묶음 · 되부름은 태그가 아님');
     assert.equal(markOf('/(?<!\\S)#([0-9a-f]{6})/'), '', '뒤보기 (?<! 도 아님');
     assert.equal(markOf('/(^[\\s\\S]+$)/m'), '');

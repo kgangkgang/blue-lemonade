@@ -29,6 +29,12 @@ function load() {
     } catch { drafts = {}; }   // 사생활 보호 창 · 저장 공간 막힘 — 기능만 조용히 쉰다
     return drafts;
 }
+// [1.1.2 감사 G1] 같은 브라우저의 다른 탭 · 창도 이 칸에 적어요. 메모리 사본을 통째로 쓰면 다른 탭이 적은 초안이 지워져서,
+//   고치기 직전에는 저장값을 다시 읽고(그 채팅 칸만 바꿈) 다른 탭이 적으면(storage 사건) 메모리 사본을 버려요
+function fresh() {
+    drafts = null;
+    return load();
+}
 
 function save() {
     const all = load();
@@ -57,7 +63,7 @@ function chatKey() {
 
 function write(id, text) {
     if (!id) return;
-    const all = load();
+    const all = fresh();
     if (text) {
         let t = text;
         if (t.length > MAX) { t = t.slice(0, MAX); if (/[\uD800-\uDBFF]$/.test(t)) t = t.slice(0, -1); }   // 이모지 반쪽은 떼고
@@ -159,7 +165,7 @@ function onChatRenamed(data) {
     if (!from || !to || from === to) return;
     // 2026-10-06: 키에 그룹 · 캐릭터가 붙었으니 이름 바꾸기도 같은 앞머리로 옮긴다 (예전 키도 함께)
     const owner = ownerOf(data?.groupId, data?.avatarId);
-    const all = load(), source = all[owner + from] ?? all[from];
+    const all = fresh(), source = all[owner + from] ?? all[from];
     if (!source) return;
     all[owner + to] = source; delete all[owner + from]; delete all[from]; save();
     if (currentId === owner + to && !box()?.value) restore(true);
@@ -170,7 +176,7 @@ function onCharacterRenamed(oldAvatar, newAvatar) {
     if (!oldAvatar || !newAvatar || oldAvatar === newAvatar) return;
     flush();
     const from = ownerOf(null, oldAvatar), to = ownerOf(null, newAvatar);
-    const all = load();
+    const all = fresh();
     let moved = false;
     for (const id of Object.keys(all)) {
         if (!id.startsWith(from)) continue;
@@ -193,6 +199,7 @@ export function startDraftKeep() {
     // 탭을 덮거나 창을 닫을 때도 마지막 글자까지 적는다 (폰은 pagehide 만 오는 경우가 있음)
     document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
     window.addEventListener('pagehide', flush);
+    window.addEventListener('storage', event => { if (event.key === KEY || event.key === null) drafts = null; });   // 1.1.2 감사 G1 다른 탭이 적음
 
     eventSource.on(event_types.CHAT_CHANGED, onChatChanged);
     if (event_types.CHAT_RENAMED) eventSource.on(event_types.CHAT_RENAMED, onChatRenamed);

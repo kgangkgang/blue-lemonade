@@ -14,7 +14,7 @@
 //   토스트 없음. 내 메시지 · 스트리밍 중인 답 · 누르기 전부터 글을 고르던 중에는 뜨지 않는다.
 //   1.0.0: 그 답에 출처 기록이 없으면(불러온 채팅 · 기록을 버린 뒤 · 오래돼 밀려난 답) 꾹 누르기를 아예 보지 않는다 — 진동 · 칩 · click 먹기 없이 브라우저 낱말 선택 그대로.
 //   칩을 띄우지 않은 누르기는 click 도 먹지 않는다(먹는 것은 칩을 띄운 누르기의 끝뿐).
-import { WEBSEARCH_KEY, marksEnabled, buildOrigin, makeChatIndex, wordAt, findOrigins, chipText, labelExtensionPrompt, enabledPromptIds, textOf, originSize, trimOrigins, searchKeys, normalizeText } from './websearch-core.js';
+import { WEBSEARCH_KEY, marksEnabled, buildOrigin, makeChatIndex, wordAt, findOrigins, chipText, labelExtensionPrompt, enabledPromptIds, textOf, originSize, trimOrigins, searchKeys, normalizeText, fillNames } from './websearch-core.js';
 import { getSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
 import { nameAliases } from './name-aliases.js';   // 6.3.x 이름의 다른 표기(영 · 한 · 일)로도 출처를 찾는다
@@ -62,7 +62,9 @@ function worldInfoName(entry) {
 function collectSources(c) {
     const out = [];
     const push = (kind, name, text) => { if (typeof text === 'string' && text.trim()) out.push({ kind, name, text }); };
-    const sub = text => { const raw = String(text ?? ''); try { return c.substituteParams?.(raw) ?? raw; } catch { return raw; } };
+    // 1.1.2 이름 자리만 직접 채워요 — 여기서 실리태번 매크로 엔진을 돌리면 변수 매크로({{incvar}} · {{addvar}} · {{setvar}})가 생성마다 한 번 더 실행돼요
+    const names = { user: c.name1, char: c.name2 };
+    const sub = text => fillNames(text, names);
     const chars = currentCharacters(c);
     for (const ch of chars) {
         const who = chars.length > 1 && ch.name ? `${ch.name} ` : '';

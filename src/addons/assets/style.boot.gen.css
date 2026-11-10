@@ -1,5 +1,5 @@
 /* 생성 파일 — tools/build-addon-css.mjs (애드온 창 밖 규칙만 · 전체는 style.css) */
-:root { --eh-css-version: "1.7.6"; }
+:root { --eh-css-version: "1.7.7"; }
 #chat .mes_text img.eh-img {
     display: block;
     max-width: min(100%, 520px);

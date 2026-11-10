@@ -1,7 +1,7 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build a29fa21ef8cd) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build aa9356a38608) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"03af194c93b947b0"}
 /* css/00-base.css */
-:root{--bl-release:"1.1.1";}
+:root{--bl-release:"1.1.2";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -1776,6 +1776,7 @@ body.salty #jj-popup .jj-empty {
 body.salty #rightSendForm > #mes_stop {
   width: 34px !important;
   height: 34px !important;
+  margin-inline: calc((var(--bottomFormBlockSize) - 34px) / 2) !important;
   padding: 0 !important;
   border-radius: 50%;
   background: var(--salty-fill-accent, var(--salty-accent)) !important;
@@ -1827,6 +1828,7 @@ body.salty #form_sheld.isExecutingCommandsFromChatInput #mes_continue {
 body.salty #rightSendForm > .stscript_btn {
   width: 34px !important;
   height: 34px !important;
+  margin-inline: calc((var(--bottomFormBlockSize) - 34px) / 2) !important;
   padding: 0 !important;
 }
 body.salty #rightSendForm > .stscript_btn > .fa-solid {
@@ -12287,7 +12289,7 @@ body.salty .popup[data-bl-popup~="notice"] .popup-controls .popup-button-cancel 
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  background: var(--shade-2);
+  background: var(--shade-2, #8a8a93);
   transition: background-color 0.2s ease;
   pointer-events: none;
 }
@@ -12299,12 +12301,12 @@ body.salty .popup[data-bl-popup~="notice"] .popup-controls .popup-button-cancel 
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--bl-knob-face);
-  box-shadow: var(--bl-knob);
+  background: var(--bl-knob-face, #fff);
+  box-shadow: var(--bl-knob, 0 0 0 1px rgba(0,0,0,.3));
   transition: transform 0.2s ease;
 }
 .salty-switch input:checked + span {
-  background: var(--salty-fill-accent, var(--salty-accent));
+  background: var(--salty-fill-accent, var(--salty-accent, #2f6fd0));
 }
 .salty-switch input:checked + span::after {
   transform: translateX(18px);
@@ -13222,6 +13224,7 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .salty-row > span small .bl-rest-note { font-weight: 600; color: var(--salty-accent, inherit); }
 .salty-panel .bl-zero-off { opacity: .55; }
 .salty-panel .bl-zero-banner { border-left: 3px solid var(--salty-accent, currentColor); padding-left: .6em; }
+.bl-off-hint { margin-left: 8px; font-size: 12px; line-height: 1.4; color: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; white-space: nowrap; }
 /* css/21-witidy.css */
 body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header {
   display: grid !important;
@@ -16616,6 +16619,53 @@ body.salty.salty-profile-mode-none :is(#chat,.bl-chat-like) .mes:not([is_user="t
 body.salty.salty-profile-mode-none :is(#chat,.bl-chat-like) .mes:not([is_user="true"]):not([is_system="true"]) > .mes_block { padding-left: 0 !important; }
 body.salty.salty-user-profile-mode-none :is(#chat,.bl-chat-like) .mes[is_user="true"]:not([is_system="true"]) > .mesAvatarWrapper > .avatar { display: none !important; }
 body.salty.salty-user-profile-mode-none :is(#chat,.bl-chat-like) .mes[is_user="true"]:not([is_system="true"]) > .mes_block { padding-left: 0 !important; }
+/* css/42-other-extensions.css */
+body.salty .mes_text .image-embed-expression > img {
+  border: 0 solid transparent;
+  border-radius: var(--salty-img-radius);
+  box-shadow: none;
+}
+body.salty.salty-shape-rect:is(.salty-edge-none, .salty-edge-line, .salty-edge-inset, .salty-edge-glow, .salty-edge-prism) .mes_text .image-embed-expression > img {
+  border-style: var(--bl-img-frame-style);
+  border-color: var(--bl-img-frame-color);
+  border-width: var(--bl-img-frame-top) var(--bl-img-frame-right) var(--bl-img-frame-bottom) var(--bl-img-frame-left);
+  padding: var(--bl-img-frame-gap);
+  box-sizing: border-box;
+  outline: var(--bl-img-frame-outline);
+  outline-offset: var(--bl-img-frame-offset);
+  box-shadow: var(--bl-img-frame-shadow);
+}
+body.salty.salty-shape-rect.salty-fade-off.salty-edge-none:not(.salty-blend) .mes_text .image-embed-expression > img {
+  box-shadow: var(--bl-e2);
+}
+body.salty.salty-shape-custom .mes_text .image-embed-expression > img {
+  border-radius: 0;
+  -webkit-mask-image: var(--salty-img-mask);
+  mask-image: var(--salty-img-mask);
+  -webkit-mask-size: var(--salty-img-mask-size, 100% 100%); mask-size: var(--salty-img-mask-size, 100% 100%);
+  -webkit-mask-position: center; mask-position: center;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+}
+body.salty:not(.salty-cutout-same) .mes_text .image-embed-expression > img.salty-alpha {
+  padding: 0;
+  border-width: 0;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+body.salty.salty-indent:not(#bl-other-ext-weight) .mes .mes_text p:where(body.salty.salty-indent:not(#bl-other-ext-weight) .mes .mes_text p):has(> .image-embed-expression:first-child) {
+  text-indent: 0;
+}
+body.salty.salty-indent .mes_text .image-embed-expression {
+  text-indent: 0;
+}
+body.salty .mes .mes_block > .input-feedback.inline-drawer {
+  background: var(--salty-fill-shade, var(--salty-shade));
+  border-color: var(--salty-line);
+  transition-property: opacity;
+}
 /* css/44-settings-search.css */
 .bl-settings-search { position: relative; margin: 2px 0 10px; }
 .bl-search-field { display: flex; align-items: center; gap: 6px; border: 1px solid var(--salty-line); background: var(--bl-fill-well, var(--bl-well)); border-radius: 12px; padding: 0 8px; }
@@ -22191,7 +22241,7 @@ dialog > .popup-button-close:is(#bl-s, *):is(bl-s, *)::after,
   --bl-ui-sw-knob: 14px;
   --bl-ui-sw-pad: 3px;
   --bl-ui-sw-on: var(--salty-accent);
-  --bl-ui-sw-off: var(--bl-check-off, var(--salty-shade-2));
+  --bl-ui-sw-off: var(--bl-check-off, var(--salty-shade-2, #8a8a93));
   --bl-ui-pick-face: var(--bl-selected, var(--salty-tint-18));
   --bl-ui-pick-ink: var(--salty-accent-ink, var(--salty-accent));
   --bl-ui-pill-line: var(--salty-line, var(--bl-grey-20));
@@ -22216,14 +22266,14 @@ html:not(#bl-ui-parts-off) body .bwr_settings .bwr_switch::after,
 html:not(#bl-ui-parts-off) body :where(span):where(.salty-switch > span):is(.bl-s, *):is(.bl-s, *)::after,
 html:not(#bl-ui-parts-off) body :where(span):where(.bl-look-switch > span):is(.bl-s, *):is(.bl-s, *)::after {
   top: var(--bl-ui-sw-pad) !important; left: var(--bl-ui-sw-pad) !important; width: var(--bl-ui-sw-knob) !important; height: var(--bl-ui-sw-knob) !important;
-  border-radius: 50% !important; background: var(--bl-knob-face) !important; box-shadow: var(--bl-knob, none) !important;
+  border-radius: 50% !important; background: var(--bl-knob-face, #fff) !important; box-shadow: var(--bl-knob, 0 0 0 1px rgba(0,0,0,.3)) !important;
 }
 html:not(#bl-ui-parts-off) body .cg-switch[aria-checked="true"],
 html:not(#bl-ui-parts-off) body .eh-switch[aria-checked="true"],
 html:not(#bl-ui-parts-off) body .jj-switch[aria-checked="true"],
 html:not(#bl-ui-parts-off) body .bl-hs-switch[aria-checked="true"],
 html:not(#bl-ui-parts-off) body .bwr_settings input:checked + .bwr_switch,
-html:not(#bl-ui-parts-off) body :is(.salty-switch, .bl-look-switch) > input:checked + span { background: var(--bl-ui-sw-on) !important; box-shadow: none !important; }
+html:not(#bl-ui-parts-off) body :is(.salty-switch, .bl-look-switch) > input:checked + span { background: var(--bl-ui-sw-on, #2f6fd0) !important; box-shadow: none !important; }
 html:not(#bl-ui-parts-off) body :is(.cg-switch, .eh-switch, .jj-switch, .bl-hs-switch)[aria-checked="true"] > span,
 html:not(#bl-ui-parts-off) body .bwr_settings input:checked + .bwr_switch::after,
 html:not(#bl-ui-parts-off) body :is(.salty-switch, .bl-look-switch) > input:checked + span::after { transform: translateX(calc(var(--bl-ui-sw-w) - var(--bl-ui-sw-knob) - 2 * var(--bl-ui-sw-pad))) !important; }

@@ -342,7 +342,7 @@ function template() {
                         </div>
                         <label class="eh-pick-row eh-pick-profile" hidden><span>연결 프로필</span><select data-pick-field="profileId" aria-label="고르는 모델 연결 프로필"></select></label>
                         <div class="eh-pick-fallback" hidden></div>
-                        <label class="eh-pick-row"><span>한 답에 최대</span><select data-pick-field="count" aria-label="한 답에 고를 그림 수"><option value="1">1장</option><option value="2">2장</option><option value="3">3장</option><option value="4">4장</option></select></label>
+                        <label class="eh-pick-row"><span>한 답에 최대 (1~12장 · 대사 문단 사이에 고르게)</span><input type="number" data-pick-field="count" min="1" max="12" step="1" inputmode="numeric" aria-label="한 답에 고를 그림 수 (1~12)"></label>
                         <p class="eh-pick-problem" role="status"></p>
                     </div>
                 </div>
@@ -705,7 +705,8 @@ function bindPick() {
         if (field === 'customModel') { pick.customModels[pick.provider] = value.trim(); pickChanged(); return; }
         if (field === 'customUrl') { pick.customUrl = value.trim(); pickChanged(); return; }
         if (field === 'profileId') { pick.profileId = value; pickChanged(); return; }
-        if (field === 'count') { pick.count = Math.max(1, Math.min(4, Number(value) || 2)); pickChanged(); }
+        if (field === 'count') { const n = Math.round(Number(value)); pick.count = String(value).trim() === '' || !Number.isFinite(n) ? 2 : Math.max(1, Math.min(12, n));   // 1.1.2 감사 3차 R3: 0 은 1 로(전엔 2)
+            event.target.value = String(pick.count); pickChanged(); }   // 1.1.2 숫자 칸(1~12) — 범위 밖 · 빈 값은 맞춰서 다시 보여 줘요
     });
     root.addEventListener('input', (event) => {
         const field = event.target.closest?.('[data-pick-field]')?.dataset.pickField;

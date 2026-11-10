@@ -16,8 +16,11 @@ export function styleAttr(style) {
 }
 const escAttr = value => String(value ?? '').replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 /** 맨 바깥 태그에 표시 하나 (미리보기 전용 data-bl-* — 복사할 때 소독이 걷어요) */
-export const mark = (html, attr) => html.replace(/^<([a-z]+)/, `<$1 ${attr}`);
+export const mark = (html, attr) => html.replace(/^<([a-z]+)/, (_, name) => `<${name} ${attr}`);   // 함수 치환 — 표시 값(이름)에 $ 가 있어도 그대로
+// 1.1.2 flex · grid · inline-block 칸은 첫 줄 들여쓰기를 물려받지 않게(text-indent:0) — 본문에 들여쓰기가 있으면 안쪽 이름표 · 알약 · 단추 줄 앞에 빈칸이 생겼어요(실제 글에서 확인)
+const OWN_LINE = /^(inline-block|inline-flex|flex|grid|inline-grid|inline-table|table)$/;
 export const tag = (name, style, inner) => {
+    if (style && OWN_LINE.test(String(style.display ?? '').trim()) && style['text-indent'] == null) style = { ...style, 'text-indent': '0' };
     const attr = style ? styleAttr(style) : '';
     return `<${name}${attr ? ` style="${escAttr(attr)}"` : ''}>${inner}</${name}>`;
 };
@@ -50,8 +53,9 @@ export function inkEverywhere(html, rootInk, { bg: rootBg = null, candidates = [
         const masked = own && bgValue && own[1].trim() === bgValue.trim();   // 이름 가림 칸(글자 = 바탕) 은 그대로
         if (!masked && !(keepOwn && own) && bg && color && contrast(color, bg) < 4.5) color = pick(bg);
         let next = attrs;
-        if (own && color !== own[1].trim()) next = attrs.replace(m[0], ` style="${style.replace(own[0], `${own[0].startsWith(';') ? ';' : ''}color:${color}`)}"`);
-        else if (!own && color) next = m ? attrs.replace(m[0], ` style="color:${color};${style}"`) : `${attrs} style="color:${color}"`;
+        // 치환은 함수 꼴로만(1.1.2) — 받은 글꾸의 style 값이 치환 글이 되면 값 속 $' · $& 가 풀려 뒤 속성 글이 따옴표 안으로 끌려와요
+        if (own && color !== own[1].trim()) next = attrs.replace(m[0], () => ` style="${style.replace(own[0], () => `${own[0].startsWith(';') ? ';' : ''}color:${color}`)}"`);
+        else if (!own && color) next = m ? attrs.replace(m[0], () => ` style="color:${color};${style}"`) : `${attrs} style="color:${color}"`;
         stack.push({ ink: color, bg });
         return `<${name}${next}>`;
     });

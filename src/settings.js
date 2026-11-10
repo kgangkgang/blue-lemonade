@@ -85,7 +85,7 @@ export const DEFAULTS = {
     em: { italic: true, weight: 400, size: null, letterSpacing: null },
     strike: { line: true, own: false, color: '#ff7a7a', thickness: 2, fade: 55, italic: false },   // ~~취소선~~ — own: 선 색을 따로(false 면 글자 색), thickness px, fade: 지워진 글자를 남기는 정도 %   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
     strong: { weight: 650, size: null, letterSpacing: null },              // **강조**
-    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], inkContrast: true, triangleFold: false, weatherBubble: 70, qrCtxNames: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: false, helpMarks: true, webSearchMarks: true, personaTall: false, hideSendTextarea: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, emptyGuard: true, replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, solaStyle: 'original', demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrFold: true, qrFolded: false, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // 채팅 설정 뜻은 각 기능 모듈의 머리 주석에 있어요.
+    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], inkContrast: true, triangleFold: false, weatherBubble: 70, qrCtxNames: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: false, helpMarks: true, webSearchMarks: true, personaTall: false, hideSendTextarea: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, emptyGuard: true, replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, solaStyle: 'original', homeIcon: 'auto', demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrFold: true, qrFolded: false, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // 채팅 설정 뜻은 각 기능 모듈의 머리 주석에 있어요.
     // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
     reader: { autoHide: false },
     // 3.4.0 프롬프트 호환: 데우스 엑스 마키나 — 끄면 카드 스킨 · 폰 접기 · 카드 색 통일 · 카드 이모티콘 · 트래커 날씨가 모두 쉰다 (값은 남음)
@@ -119,7 +119,7 @@ export const DEFAULTS = {
     wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true, maskWords: '' }, // maskWords: 6.0.4 잠시 가리기 낱말(한 줄에 하나 · 쉼표) — 스위치는 세션 안에서만, 저장하지 않는다 (wordmask.js) · 1.0.0 되살림(9.0.0 5357f89e 에서 걷었던 단어 치환)
     captureTools: { replace: false, replaceRules: [], preset: '', redact: false, names: [], mask: 'auto', maskWord: '○○', maskStyles: {}, format:'image', imagePages:false, duration:6, maxMB:8, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true, filterPreset:'none', grain:0, brightness:0, contrast:0, saturation:0, temperature:0, vignette:0 }, // filterPreset · grain … vignette: 5.5.3 캡처 필터 (프리셋 none|mono|film|vintage|cool|warm|custom · 전부 0 이면 결과 픽셀 그대로)
     onehand: { on: false, swipe: true, imp: true, cont: true, regen: true, top: true, bottom: true, jump: true, delLast: true },
-    logCopy: { on: true, shape: 'card', palette: '', category: 'basic', recent: [], fav: [], custom: [], tagsOff: false, titleOff: false, dateOff: false, namesOff: false, topOff: false, bottomOff: false, blank: [] },   // 로그 복사 — on 만 설정 창 · 나머지는 시트가 기억
+    logCopy: { on: true, shape: 'card', palette: '', category: 'basic', recent: [], fav: [], custom: [], tagsOff: false, titleOff: false, dateOff: false, namesOff: false, topOff: false, bottomOff: false, blank: [], lemonLink: false, lemonAt: 'auto' },   // 로그 복사 — on 만 설정 창 · 나머지는 시트가 기억
     extcheck: { aiConsent: false, profileId: '' },   // 1.0.3 확장 충돌 검사 AI 전송 동의 · 연결(기억)
     searchAi: { on: false, profileId: '', provider: '', models: {}, customModels: {}, customUrl: '' },
     replyNotify: { on: false }, // 4.8.7 답 완료 알림: 다른 앱을 보고 있을 때 답이 끝나면 폰 알림 · 진동 (reply-notify.js)
@@ -135,9 +135,10 @@ export const DEFAULTS = {
     fruitTypography: {on:false,kind:'status',types:{}},
     promptFolders: { on: true, presets: {} },   // 1.0.1 다듬기는 prompt-folders.js
     chatOrganizer: { on: false, folders: [], chats: {} },
+    inputBox: { hold: false, noCorrect: false },   // 1.1.2 입력칸 높이 고정 · 자동 수정 밑줄 끄기 (input-box.js — 켤 때만 받아요)
     apiStatus: { on: false },   // 1.0.3 API 서버 상태 — 켜면 회사 공식 상태 페이지(바깥 주소)를 읽어요 (api-status.js)
     qrShelf: { on: false, items: {}, recent: [] },   // 1.0.3 QR 책장 (모양은 qr-shelf-core.js tidyStore)
-    promptSaves: { on: false, presets: {} }, presetFolders: { on: false, folders: [] }, quick: { selEdit: false, mesDelete: false, rangeDelete: true, selEditTr: false, adeChat: false, adeDaily: false },   // 1.0.3 편의 기능 (src/quick/) · 1.1.1 시제품
+    promptSaves: { on: false, presets: {} }, presetFolders: { on: false, folders: [] }, quick: { selEdit: false, mesDelete: false, rangeDelete: true, selEditTr: false, adeChat: false, adeDaily: false, wiSkip: false, qrFold: false },   // 1.0.3 편의 기능 (src/quick/) · 1.1.1 시제품
     promptLink: { on: false, rows: [] },   // 6.5.2 캐릭터 이름 연동 — 이름이 든 프롬프트·정규식을 그 캐릭터 채팅에서만 켜고 「기본」 짝은 반대로 · 6.7.5 여러 줄 rows [{ word, cards: [아바타] }] (prompt-link.js · promptbind.js)
     longpressHelp: true,   // 8.1.2 단추 길게 누르면 설명 (longpress-help.js — 끄면 길게 눌러도 원래 동작만)
     koUi: true,   // 6.9.0 실리태번 한국어 화면 다듬기 (ko-ui.js — 언어가 ko-kr 일 때만, 바꾸면 새로고침 뒤)
@@ -431,6 +432,8 @@ function tidyFlags(s) {
     s.bgWindow = { on: s.bgWindow.on === true, mode: s.bgWindow.mode === 'pip' ? 'pip' : 'audio' };
     s.sceneSound = tidySceneSound(s.sceneSound);   // 6.9.8 장면 소리
     for (const key of Object.keys(DEFAULTS.onehand)) s.onehand[key] = flag(s.onehand[key], DEFAULTS.onehand[key]);
+    if (!isObj(s.inputBox)) s.inputBox = {};
+    for (const key of Object.keys(DEFAULTS.inputBox)) s.inputBox[key] = flag(s.inputBox[key], false);
     if (!isObj(s.quick)) s.quick = {};
     for (const key of Object.keys(DEFAULTS.quick)) s.quick[key] = flag(s.quick[key], DEFAULTS.quick[key]);
     if (!isObj(s.promptSaves)) s.promptSaves = {};
@@ -442,6 +445,7 @@ function tidyFlags(s) {
     if (isObj(s.chat)) {
         s.chat.demSkin = flag(s.chat.demSkin, false);
         s.chat.solaStyle = s.chat.solaStyle === 'lemon' ? 'lemon' : 'original';
+        s.chat.homeIcon = s.chat.homeIcon === 'lemon' || s.chat.homeIcon === 'square' ? s.chat.homeIcon : 'auto';   // 1.1.2 홈 화면 아이콘 모양(splash.js)
         s.chat.demFold = flag(s.chat.demFold, true);
         s.chat.demGlow = Number.isFinite(Number(s.chat.demGlow)) ? Math.min(100, Math.max(0, Math.round(Number(s.chat.demGlow)))) : 35; // 8.0.9 데우스 V3 테두리 빛 (css/30-dem-skin.css --bl-dem-glow)
         s.chat.demPreviewVersion = s.chat.demPreviewVersion === '2.5' ? '2.5' : 'v3'; // 8.1.0 상태창 글자 미리보기의 데우스 표본 판 (fruit-type-ui.js, 데우스 전체에 하나)
@@ -627,7 +631,7 @@ function tidyLogCopy(value) {
             ...(typeof c.template === 'string' ? { template: c.template, colors: isObj(c.colors) ? c.colors : {}, messages: str(c.messages, 12) || 'box', tail: str(c.tail, 60), emoji: str(c.emoji, 8), ...(isObj(c.type) ? { type: c.type } : {}) } : {}),
             slot: c.slot === 'auto' ? 'auto' : Array.isArray(c.slot) && c.slot.length <= 64 && c.slot.every(n => Number.isInteger(n) && n >= 0 && n < 10000) ? c.slot : null }));
     const ids = (list, max = 24) => [...new Set((Array.isArray(list) ? list : []).filter(id))].slice(0, max);
-    return { on: v.on !== false, shape: id(v.shape) ? v.shape : 'card', palette: isPaletteId(v.palette) ? v.palette : '', category: id(v.category) ? v.category : 'basic', recent: ids(v.recent).slice(0, 5), fav: ids(v.fav, 96), custom, tagsOff: v.tagsOff === true, titleOff: v.titleOff === true, dateOff: v.dateOff === true, namesOff: v.namesOff === true, topOff: v.topOff === true, bottomOff: v.bottomOff === true, blank: Array.isArray(v.blank) ? [...new Set(v.blank)].filter(k => /^(title|date|char|model|prompt)$/.test(k)) : [] };   // 1.0.7 빼기 칩 · 1.0.8 비운 머리 칸
+    return { on: v.on !== false, shape: id(v.shape) ? v.shape : 'card', palette: isPaletteId(v.palette) ? v.palette : '', category: id(v.category) ? v.category : 'basic', recent: ids(v.recent).slice(0, 5), fav: ids(v.fav, 96), custom, tagsOff: v.tagsOff === true, titleOff: v.titleOff === true, dateOff: v.dateOff === true, namesOff: v.namesOff === true, topOff: v.topOff === true, bottomOff: v.bottomOff === true, lemonLink: v.lemonLink === true, lemonAt: ['tl', 'tr', 'bl', 'br'].includes(v.lemonAt) ? v.lemonAt : 'auto', blank: Array.isArray(v.blank) ? [...new Set(v.blank)].filter(k => /^(title|date|char|model|prompt)$/.test(k)) : [] };   // 1.0.7 빼기 칩 · 1.0.8 비운 머리 칸
 }
 export function invalidateSettings() { memo = null; }
 export const settingsStats = { tidy: 0 };   // 정리를 몇 번 했나 (시험 · 진단용)

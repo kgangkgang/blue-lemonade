@@ -1,11 +1,11 @@
-// 과일 계열 화면 보조: 과일의 마음 창의 항목 이름(과일 · 야한과일 · 청과 공통 사전)과 청과 문장 점검 화면의 고정 문구를 바꿔요.
+// 과일 계열 화면 보조: 과일의 마음 창의 항목 이름(과일 · 야한과일 · 청과 공통 사전)과 청과 문장 점검 화면 · 출잔 도구 호출 창의 고정 문구를 바꿔요.
 // 저장 값·명령·프리셋 선택은 그대로 두어요. 이 파일을 고치면 node tools/build-fruit-family.mjs 로 번들을 다시 만들어요.
 function installQingguoKorean(BlueLemonade, data) {
   let host = window;
   try { while (host.parent !== host && host.parent.document) host = host.parent; } catch {}
   const doc = host.document, key = '__blueLemonadeQingguoKorean_v1';
   host[key]?.stop?.();
-  const roots = '#qg-prose-pruner-backdrop,#qg-prose-pruner-ball,#fruit-heart-v6';
+  const roots = '#qg-prose-pruner-backdrop,#qg-prose-pruner-ball,#fruit-heart-v6,#serve-anti-host';
   const skip = 'script,style,svg,code,pre,input,textarea,[contenteditable]:not([contenteditable="false"]),.qgp-diff-old,.qgp-diff-new,.qgp-hit-item,.fh-exp-preview,.fh-exp-rule,[data-profile],[data-nsfw-drop],[data-bl-fruit-user-label]';
   const normalize = value => String(value ?? '').replace(/\s+/g, ' ').trim();
   const phrases = new Map(Object.entries(data.ui).map(([a,b])=>[normalize(a),b]));
@@ -14,6 +14,28 @@ function installQingguoKorean(BlueLemonade, data) {
   const promptTitles = new Map((data.prompts||[]).map(p=>[normalize(p.name),p.title]));
   const promptTitle = core => (typeof BlueLemonade.promptTitle === 'function' ? BlueLemonade.promptTitle(null, core) : null) ?? promptTitles.get(core);
   const helpers = new Map(data.helpers);
+  // 출잔 도구 호출 창(#serve-anti-host): 고정 문구 · 「지금 모델」 줄 · 상태 기록 줄의 제목만 바꿔요. 기록의 시각 · 모델 이름 · 서버 원문은 그대로예요.
+  const serve = data.serve || {};
+  const servePhrases = new Map(Object.entries(serve.ui || {}).map(([a,b])=>[normalize(a),b]));
+  const servePatterns = (serve.patterns || []).map(([pattern,replacement])=>[new RegExp(pattern),replacement]);
+  const serveStatus = serve.status || [];
+  // 출잔 스크립트가 띄우는 알림(제목이 「出杯·工具调用」인 토스트)만 골라 바꿔요. 다른 알림은 건드리지 않아요.
+  const toast = serve.toast || {};
+  const toastTitle = toast.title ? normalize(toast.title[0]) : null;
+  const toastPhrases = new Map(Object.entries(toast.ui || {}).map(([a,b])=>[normalize(a),b]));
+  const toastPatterns = (toast.patterns || []).map(([pattern,replacement])=>[new RegExp(pattern),replacement]);
+  const toastParts = [...(toast.parts || []), ...serveStatus];
+  function toastText(value) {
+    const core = normalize(value);
+    let next = toastPhrases.get(core);
+    if (next === undefined) for (const [pattern,replacement] of toastPatterns) {
+      if (!pattern.test(core)) continue;
+      next = core.replace(pattern,replacement);
+      for (const [from,to] of toastParts) next = next.split(from).join(to);
+      break;
+    }
+    return next === undefined ? value : next;
+  }
   const texts = new Map(), attrs = new Map();
   const originalConfirm=host.confirm;
   const confirmMessage='确定要恢复全部青果内置规则默认设置并清空自定义修改吗？';
@@ -28,6 +50,18 @@ function installQingguoKorean(BlueLemonade, data) {
       if (pattern.test(core)) { next=core.replace(pattern,replacement);break; }
     }
     if (!quality && element.closest('.fh-item-name,.fh-item-meta,[data-chip],.fh-sel,.fh-sheet,.fh-sec-head')) next = promptTitle(core) ?? undefined;
+    if (!quality && element.closest('#serve-anti-host')) {
+      next = servePhrases.get(core);
+      if (next === undefined) for (const [pattern,replacement] of servePatterns) {
+        if (pattern.test(core)) { next=core.replace(pattern,replacement);break; }
+      }
+      // 상태 기록은 여러 줄(시각 · 제목 · HTTP · 모델)이라 줄바꿈을 지키고 제목 낱말만 바꿔요
+      if (next === undefined && element.closest('.serve-status')) {
+        let out = value;
+        for (const [from,to] of serveStatus) out = out.split(from).join(to);
+        return out;
+      }
+    }
     if (quality && element.closest('.qgp-score-pill')) {
       const match = /^白描纯净度 (\d+) 分 ｜ 命中 (\d+) 处$/.exec(core);
       if (match) next = `문장 점수 ${match[1]}점 · 규칙에 걸린 곳 ${match[2]}개`;
@@ -65,13 +99,20 @@ function installQingguoKorean(BlueLemonade, data) {
       if (node.nodeType !== 3) continue;
       const next=helpers.get(normalize(node.nodeValue)); if (next) paintNode(node,next);
     }
+    if (toastTitle) for (const box of doc.querySelectorAll('#toast-container .toast')) {
+      const title = box.querySelector('.toast-title'), message = box.querySelector('.toast-message');
+      const head = title && [...title.childNodes].find(node => node.nodeType === 3);
+      if (!head || !message || normalize(texts.get(head)?.before ?? head.nodeValue) !== toastTitle) continue;
+      paintNode(head, toast.title[1]);
+      for (const node of message.childNodes) if (node.nodeType === 3) paintNode(node, toastText(node.nodeValue));
+    }
     for (const node of texts.keys()) if (!node.isConnected) texts.delete(node);
     for (const node of attrs.keys()) if (!node.isConnected) attrs.delete(node);
   }
   const schedule=()=>{if(!stopped&&!frame)frame=host.requestAnimationFrame(flush);};
   // 8.0.4 속도: 바뀐 요소마다 그 아래 전체를 querySelector 로 훑으면(채팅 300개를 그릴 때 #chat 통째로) 과일 계열을 켠 모든 사용자의 화면 변화가 느려져요.
-  // 뿌리 요소(아이디 넷)를 문서에서 한 번 찾고, 바뀐 요소가 그 조상·자손·자신인지만 봐요 — 같은 판정이에요. 문서에 붙지 않은 요소·그림자 트리는 예전 방식 그대로예요.
-  const rootIds=['qg-prose-pruner-backdrop','qg-prose-pruner-ball','fruit-heart-v6','tavern_helper'];
+  // 뿌리 요소(아이디 여섯)를 문서에서 한 번 찾고, 바뀐 요소가 그 조상·자손·자신인지만 봐요 — 같은 판정이에요. 문서에 붙지 않은 요소·그림자 트리는 예전 방식 그대로예요.
+  const rootIds=['qg-prose-pruner-backdrop','qg-prose-pruner-ball','fruit-heart-v6','serve-anti-host','toast-container','tavern_helper'];
   const slowRelevant=node=>node.matches(roots+',#tavern_helper')||node.closest(roots+',#tavern_helper')||node.querySelector(roots+',#tavern_helper');
   const relevantTo=present=>node=>{
     if(node?.nodeType!==1)return false;

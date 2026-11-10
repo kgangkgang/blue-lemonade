@@ -39,7 +39,7 @@
   --bl-ui-sw-knob: 14px;
   --bl-ui-sw-pad: 3px;
   --bl-ui-sw-on: var(--salty-accent);
-  --bl-ui-sw-off: var(--bl-check-off, var(--salty-shade-2));
+  --bl-ui-sw-off: var(--bl-check-off, var(--salty-shade-2, #8a8a93));
   /* 고른 항목 · 지금 있는 곳 */
   --bl-ui-pick-face: var(--bl-selected, var(--salty-tint-18));
   --bl-ui-pick-ink: var(--salty-accent-ink, var(--salty-accent));
@@ -65,12 +65,12 @@ html:not(#bl-ui-parts-off) body .salty-switch > span { top: 50% !important; bott
 html:not(#bl-ui-parts-off) body :is(.cg-switch, .eh-switch, .jj-switch, .bl-hs-switch) > span,
 html:not(#bl-ui-parts-off) body :is(.bwr_settings .bwr_switch, .salty-switch > span, .bl-look-switch > span)::after {
   top: var(--bl-ui-sw-pad) !important; left: var(--bl-ui-sw-pad) !important; width: var(--bl-ui-sw-knob) !important; height: var(--bl-ui-sw-knob) !important;
-  border-radius: 50% !important; background: var(--bl-knob-face) !important; box-shadow: var(--bl-knob, none) !important;
+  border-radius: 50% !important; background: var(--bl-knob-face, #fff) !important; box-shadow: var(--bl-knob, 0 0 0 1px rgba(0,0,0,.3)) !important;
 }
 /* 켬 */
 html:not(#bl-ui-parts-off) body :is(.cg-switch, .eh-switch, .jj-switch, .bl-hs-switch)[aria-checked="true"],
 html:not(#bl-ui-parts-off) body .bwr_settings input:checked + .bwr_switch,
-html:not(#bl-ui-parts-off) body :is(.salty-switch, .bl-look-switch) > input:checked + span { background: var(--bl-ui-sw-on) !important; box-shadow: none !important; }
+html:not(#bl-ui-parts-off) body :is(.salty-switch, .bl-look-switch) > input:checked + span { background: var(--bl-ui-sw-on, #2f6fd0) !important; box-shadow: none !important; }
 html:not(#bl-ui-parts-off) body :is(.cg-switch, .eh-switch, .jj-switch, .bl-hs-switch)[aria-checked="true"] > span,
 html:not(#bl-ui-parts-off) body .bwr_settings input:checked + .bwr_switch::after,
 html:not(#bl-ui-parts-off) body :is(.salty-switch, .bl-look-switch) > input:checked + span::after { transform: translateX(calc(var(--bl-ui-sw-w) - var(--bl-ui-sw-knob) - 2 * var(--bl-ui-sw-pad))) !important; }

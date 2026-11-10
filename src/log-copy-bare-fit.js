@@ -14,6 +14,9 @@ function measureFrame(doc) {
     const frame = doc.createElement('iframe');
     frame.setAttribute('aria-hidden', 'true');
     frame.tabIndex = -1;
+    // 1.1.2 스크립트는 꺼 둬요(문서에 붙기 전에) — 재는 일은 전부 바깥 코드가 안쪽 문서의 DOM · 계산된 스타일 · 좌표를 읽는 것이라 안쪽 스크립트가 필요 없어요.
+    // allow-same-origin 은 바깥에서 contentDocument 를 읽으려고 남겨요. 받은 글꾸에 on… 속성이 섞여 들어와도 여기서 돌지 않아요.
+    frame.setAttribute('sandbox', 'allow-same-origin');
     // 안 보이게(투명 · 화면 밖) 두되 visibility 는 쓰지 않아요 — 안쪽 문서에서 「그 점에 무엇이 맨 위에 그려졌나」를 물어야 해요
     frame.style.cssText = 'position:fixed;left:-12000px;top:0;width:1100px;height:700px;border:0;opacity:0;pointer-events:none';
     doc.body.append(frame);

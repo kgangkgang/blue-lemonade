@@ -3,7 +3,7 @@ export const themeEnabled = s => s.enabled !== false && s.usageMode !== 'extensi
 export const addonsEnabled = s => s.enabled !== false && s.usageMode !== 'theme' && s.usageMode !== 'zero';
 export const zeroMode = s => !!s && s.enabled !== false && s.usageMode === 'zero';
 // 제로에서도 받는 모양 모듈 — features.js load 이름 · apply.js lateSync 이름. 여기 없는 이름은 제로에서 받지 않아요
-export const ZERO_LOOK = new Set(['appearance', 'auto', 'charstyle', 'splash', 'splashFonts', 'themeSheet', 'favicon', 'roleIcons', 'picks', 'extensionColors', 'tagInk', 'solaskin']);
+export const ZERO_LOOK = new Set(['appearance', 'auto', 'charstyle', 'splash', 'splashFonts', 'themeSheet', 'favicon', 'roleIcons', 'picks', 'extensionColors', 'tagInk', 'solaskin', 'inputbox']);
 export const zeroSkips = (s, name) => zeroMode(s) && !ZERO_LOOK.has(name);
 // 제로 화면: 저장값은 그대로 두고 그리는 값에서만 JS 가 그리는 기능(데우스 카드 · 날씨 · 접기 · 페이드 …)을 끈 것으로 봐요
 export function zeroView(s) {

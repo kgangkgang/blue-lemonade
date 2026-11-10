@@ -57,7 +57,7 @@ export async function buildDiagnosis() {
         extensions = (ext.extensionNames || []).filter(n => !disabled.has(n)).map(n => n.replace(/^third-party\//, '')).join(', ') || '없음';
     } catch { /* 실리태번 구조가 다르면 목록 없이 */ }
     // 6.7.1 켠 애드온은 판도 (업데이트 탭과 같은 앞 4KB 읽기, 한 번 읽으면 기억)
-    const versions = await import('./addon-versions.js').then(m => m.addonVersions(s.addons || {})).catch(() => []);
+    const versions = await import('./addon-versions.js').then(m => m.addonVersions(m.versionFlags(s))).catch(() => []);
     const versionOf = id => versions.find(item => item.id === id)?.version;
     const addons = Object.entries(s.addons || {}).filter(([, on]) => on).map(([id]) => versionOf(id) ? `${id} ${versionOf(id)}` : id).join(', ') || '없음';
     const scripts = Object.entries(ctx.extensionSettings?.blue_lemonade_scripts?.enabled || {}).filter(([, on]) => on).map(([id]) => id + (ctx.extensionSettings?.blue_lemonade_scripts?.overrides?.[id] ? '*' : '')).join(', ') || '없음';

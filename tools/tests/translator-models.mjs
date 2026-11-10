@@ -358,7 +358,7 @@ await test('목록을 받기 전: 모델 등록 → KNOWN(새것 먼저, gpt-6.1
     reset({ provider: 'openai', ext: { model_register: { sources: { openai: ['my-gpt'] }, picks: {} } }, page: { model_openai_select: ['gpt-3.5-turbo', 'gpt-6-astra'] } });
     A.updateModelList();
     const values = optionValues();
-    assert.deepEqual(values.slice(0, 3), ['my-gpt', 'gpt-6.1-sol', 'gpt-6-astra']);
+    assert.deepEqual(values.slice(0, 3), ['my-gpt', 'gpt-6.1-sol', 'gpt-6.1-terra']);   // 11-10 Terra 는 Sol 바로 다음
     assert.equal(values.includes('gpt-3.5-turbo'), false, '목록을 받을 수 있는 공급자는 실리태번의 긴 고정 목록을 붙이지 않음');
     assert.equal(values.at(-1), 'custom');
     assert.equal(doc.byId.llm_model.children.at(-1).textContent, '⚙️ 커스텀 모델 입력');

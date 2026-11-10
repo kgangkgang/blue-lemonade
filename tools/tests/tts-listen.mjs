@@ -291,6 +291,7 @@ async function bodyOf(job) {
     let body = null;
     globalThis.fetch = async (u, init = {}) => {
         body = init.body ? JSON.parse(init.body) : null;
+        if (/\/with-timestamps/.test(u)) return new Response(JSON.stringify({ audio_base64: 'AQIDBA==', alignment: null }), { status: 200, headers: { 'content-type': 'application/json' } });   // 1.1.2 감사 V2 진짜 업체처럼 JSON (전엔 소리 본문을 줘 예전 주소로 두 번째 POST 가 나갔어요)
         if (/t2a_v2/.test(u)) return new Response(JSON.stringify({ data: { audio: 'fff344c4' }, extra_info: { usage_characters: 3 }, base_resp: { status_code: 0 } }), { status: 200, headers: { 'content-type': 'application/json' } });
         return new Response(new Uint8Array([1, 2, 3, 4]), { status: 200, headers: { 'content-type': 'audio/mpeg' } });
     };

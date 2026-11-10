@@ -37,7 +37,9 @@ const isPlainObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
 // 7.2.8 색 표(st)를 고치는 곳은 모두 dirty() — 별명표 · 인물표 기억을 그 자리에서 비운다 (bump 는 st 의 표 · 이름표에만 쓴다)
 const dirty = () => invalidatePeople();
-const bump = (o, k, d) => { const v = (o[k] || 0) + d; if (v > 0) o[k] = v; else delete o[k]; dirty(); };
+// [1.1.2 감사 V5] 표 기록은 채팅 메타(받은 채팅 파일)에서 와요. "__proto__" 같은 열쇠로 Object.prototype 을 고치지 않게 걸러요
+const unsafeKey = (k) => k === '__proto__' || k === 'constructor' || k === 'prototype';
+const bump = (o, k, d) => { if (unsafeKey(String(k))) return; const v = (o[k] || 0) + d; if (v > 0) o[k] = v; else delete o[k]; dirty(); };
 
 /** 색을 '#rrggbb' 소문자로 (#rgb 늘림, rgb() 변환); 못 읽으면 null */
 export function normColor(v) {
@@ -89,7 +91,8 @@ function state() {
     return st;
 }
 function entry(st, c) {
-    const e = st.colors[c] || (dirty(), st.colors[c] = { name: null, locked: false, auto: false, votes: {}, tvotes: {}, count: 0, aliases: [] });
+    if (unsafeKey(String(c))) return { name: null, locked: false, auto: false, votes: {}, tvotes: {}, count: 0, aliases: [] };   // 1.1.2 감사 V5 저장하지 않는 빈 자리
+    const e = (Object.hasOwn(st.colors, c) && st.colors[c]) || (dirty(), st.colors[c] = { name: null, locked: false, auto: false, votes: {}, tvotes: {}, count: 0, aliases: [] });
     e.votes ||= {}; e.tvotes ||= {}; e.aliases ||= []; e.count ||= 0;
     return e;
 }

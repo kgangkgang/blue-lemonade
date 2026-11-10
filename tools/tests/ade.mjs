@@ -52,7 +52,7 @@ await test('보여 줄 가족 · 사용자 선택 적기 · 기억 지우기', (
 });
 
 await test('기본 꺼짐 · 켤 때만 받음 · 시작 그래프 밖 · 설정 창 · 찾기 · 이름표 · 설정 길', async () => {
-    assert.match(read('src/settings.js'), /quick: \{ selEdit: false, mesDelete: false, rangeDelete: true, selEditTr: false, adeChat: false, adeDaily: false \}/);
+    assert.match(read('src/settings.js'), /quick: \{ selEdit: false, mesDelete: false, rangeDelete: true, selEditTr: false, adeChat: false, adeDaily: false,/);
     const f = read('src/features.js');
     assert.match(f, /q\.adeChat === true \|\| q\.adeDaily === true/);
     assert.match(f, /load\('ade', '\.\/ade\.js'\)\.then\(m => m\?\.syncAde\(ade, q, hooks\)\)/);
@@ -172,6 +172,32 @@ await test('이 채팅방 기억 지우기 → 기본으로 돌아가요 · 라�
     assert.equal(S.getSettings().palette, 'night');
     assert.equal(mod.adeChatLabel(), '');
     assert.equal(mod.adeForgetChat(), false);
+});
+
+await test('기억한 채팅방 목록: 이름 · 에이드 · 지금 채팅방 표시 · 목록에서 지우기', async () => {
+    const st = mod._forTest.state();
+    st.chats['c:char.png'] = 'peach'; st.chats['c:gone.png'] = 'lemon';
+    ctx.characterId = 0; await chatChanged();
+    const list = mod.adeChatList();
+    assert.deepEqual(list.map(x => x.key), Object.keys(st.chats), '적힌 차례 그대로');
+    const here = list.find(x => x.key === 'c:char.png'), gone = list.find(x => x.key === 'c:gone.png');
+    assert.equal(here.here, true); assert.equal(here.label, '피치 에이드');
+    assert.equal(gone.here, false); assert.equal(gone.name, 'gone', '지워진 캐릭터는 파일 이름으로');
+    assert.equal(list.find(x => x.key === 'g:g1')?.name, ctx.groups?.find(g => String(g.id) === 'g1')?.name || '그룹');
+    const before = S.getSettings().palette;
+    assert.equal(mod.adeForgetKey('c:gone.png'), true);
+    assert.equal(S.getSettings().palette, before, '다른 방의 기억을 지워도 지금 화면은 그대로');
+    assert.equal(mod.adeForgetKey('c:gone.png'), false);
+    assert.equal(mod.adeForgetKey(''), false);
+    assert.equal(mod.adeForgetKey('c:char.png'), true);
+    assert.equal(S.getSettings().palette, 'night', '지금 채팅방 기억을 지우면 기본 에이드로');
+    assert.deepEqual(core.listChatMemory({ chats: { 'c:a.png': 'peach' } }), [{ key: 'c:a.png', family: 'peach' }]);
+    assert.deepEqual(core.listChatMemory(null), []);
+    const panel = read('src/panel.js');
+    assert.match(panel, /data-act="ade-forget-key" data-key="\$\{esc\(item\.key\)\}"/, '목록 줄의 지우기 단추');
+    assert.match(panel, /case 'ade-forget-key':/);
+    assert.match(panel, /q\.adeChat === true \? adeListRows\(\) : ''/, '채팅방 기억을 켰을 때만 목록');
+    st.chats['c:char.png'] = 'peach'; await chatChanged();
 });
 
 await test('오늘의 에이드: 오늘 처음 켜면 기본이 오늘 것으로 · 같은 날 다시 불러도 그대로 · 기억 있는 방은 그쪽이 먼저', () => {

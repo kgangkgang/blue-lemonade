@@ -3317,6 +3317,10 @@ async function openTranslationCheckBoard() {
 async function saveCheckedTranslation(id, message, state, next, { cache = true, guard = null } = {}) {
     const context = getContext();
     next = tidyGlossaryOutput(state.source, next);   // 2.7.0 문단 다시 번역 · 빠진 문단 채우기도 이름 지키기
+    // [1.1.2 감사 T1] 요청을 기다리는 사이 앞 메시지를 지우면 번호가 한 칸씩 당겨져요. 번호 대신 메시지 객체로 지금 자리를 다시 찾아요
+    const where = () => getContext().chat?.indexOf(message) ?? -1;
+    if (where() < 0) throw Object.assign(Error('그 사이 메시지가 지워져서 번역을 붙이지 않았어요.'), { cancelled: true });
+    id = where();
     guard?.assert();
     message.extra.display_text = processTranslationText(state.source, next);
     guard?.acceptDisplay();
@@ -3324,6 +3328,8 @@ async function saveCheckedTranslation(id, message, state, next, { cache = true, 
     rememberTranslation(message, state.source, next); // 6.9.5
     if (cache) await storeTranslationQuietly(state.source, next, state);
     guard?.assert();   // 원문 되풀이 · 깨진 주석이 남은 글은 storeTranslationQuietly 가 거른다
+    id = where();   // 캐시에 넣는 사이에도 지워질 수 있어요
+    if (id < 0) return;
     refreshMessageBlock(id, message);
     eventSource.emit('EXTENSION_LLM_TRANSLATE_DONE', { messageId: id, message, sourceText: message.mes, chatId: context.chatId, originalText: state.source, translatedText: message.extra.display_text, type: 'retranslation' });
     emitTranslationUIUpdate(id, 'retranslation');
@@ -3724,37 +3730,24 @@ function isTranslationCurrentlyDisplayed(messageId) {
 
 // messageId 유효성 검사 및 기본값 처리 함수
 function validateAndNormalizeMessageId(messageIdStr) {
-    // 기본값 처리
-    if (!messageIdStr) {
-        return 'last';
-    }
-
-    // 'last'는 유효한 값으로 처리
-    if (messageIdStr === 'last') {
-        return 'last';
-    }
-
-    // 숫자로 변환 시도
-    const messageId = parseInt(messageIdStr, 10);
-
-    // 숫자가 아니거나 음수면 기본값 사용
-    if (isNaN(messageId) || messageId < 0) {
-        return 'last';
-    }
-
-    // 채팅 범위 확인
+    // [1.1.2 감사 T2] 빈 값 · 'last' 만 마지막 메시지예요. 전엔 틀린 값 · 범위 밖 · 음수 · 'abc' 도 'last' 로 바꾸고 '12abc' · '4.9' 는 12 · 4 로 읽어,
+    //   지우기 명령은 마지막 메시지 번역을 지우고 다시 번역 명령은 유료 요청을 엉뚱한 메시지에 보냈어요. 이제 그런 값은 null(명령이 멈춤)이에요
+    const raw = messageIdStr === undefined || messageIdStr === null ? '' : String(messageIdStr).trim();
+    if (!raw || raw === 'last') return 'last';
+    if (!/^\d+$/.test(raw)) return null;
+    const messageId = Number(raw);
     const context = getContext();
-    if (!context || !context.chat || context.chat.length === 0) {
-        return 'last';
-    }
-
-    // 범위를 벗어나면 기본값 사용
-    if (messageId >= context.chat.length) {
-        return 'last';
-    }
-
-    // 유효한 숫자면 문자열로 반환
+    // 채팅이 비어 있으면 예전처럼 'last' — 부르는 쪽이 「채팅 메시지가 없어요」로 멈춰요
+    if (!context || !context.chat || context.chat.length === 0) return 'last';
+    if (messageId >= context.chat.length) return null;
     return String(messageId);
+}
+/** 슬래시 명령에 틀린 메시지 번호가 왔을 때 알림 + 명령 결과 글 (1.1.2 감사 T2) */
+function badMessageIdNotice(given) {
+    const count = getContext()?.chat?.length || 0;
+    const text = `메시지 ID 「${String(given ?? '').slice(0, 40)}」가 맞지 않아요. 0부터 ${Math.max(0, count - 1)} 사이의 숫자나 last 를 적어 주세요.`;
+    toastr.warning(text);
+    return text;
 }
 
 // 아이콘 표시/숨김 업데이트 함수
@@ -8687,6 +8680,7 @@ registerCommand(SlashCommand.fromProps({
     name: 'LlmRetranslateCorrection',
     callback: async (parsedArgs) => {
         const messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
+        if (messageIdStr === null) return badMessageIdNotice(parsedArgs.messageId);   // 1.1.2 감사 T2
 
         let actualMessageId = messageIdStr;
         if (messageIdStr === 'last') {
@@ -8721,6 +8715,7 @@ registerCommand(SlashCommand.fromProps({
     name: 'LlmRetranslateGuidance',
     callback: async (parsedArgs) => {
         const messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
+        if (messageIdStr === null) return badMessageIdNotice(parsedArgs.messageId);   // 1.1.2 감사 T2
 
         let actualMessageId = messageIdStr;
         if (messageIdStr === 'last') {
@@ -8755,6 +8750,7 @@ registerCommand(SlashCommand.fromProps({
     name: 'LlmRetranslateParagraph',
     callback: async (parsedArgs) => {
         const messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
+        if (messageIdStr === null) return badMessageIdNotice(parsedArgs.messageId);   // 1.1.2 감사 T2
 
         let actualMessageId = messageIdStr;
         if (messageIdStr === 'last') {
@@ -8789,6 +8785,7 @@ registerCommand(SlashCommand.fromProps({
     name: 'LlmTranslateID',
     callback: async (parsedArgs) => {
         const messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
+        if (messageIdStr === null) return badMessageIdNotice(parsedArgs.messageId);   // 1.1.2 감사 T2
 
         let actualMessageId = messageIdStr;
         if (messageIdStr === 'last') {
@@ -8873,6 +8870,7 @@ registerCommand(SlashCommand.fromProps({
         logDebug(`${DEBUG_PREFIX_CMD} Executing with args:`, parsedArgs);
 
         let messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
+        if (messageIdStr === null) return badMessageIdNotice(parsedArgs.messageId);   // 1.1.2 감사 T2
 
         // 'last' 처리
         if (messageIdStr === 'last') {
@@ -8926,6 +8924,7 @@ registerCommand(SlashCommand.fromProps({
 
         // 객체에서 messageId와 swipeNumber 추출 (값이 문자열일 수 있음에 유의)
         const messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
+        if (messageIdStr === null) return badMessageIdNotice(parsedArgs.messageId);   // 1.1.2 감사 T2
         const swipeNumberStr = parsedArgs.swipeNumber; // optional이므로 undefined일 수 있음
 
         // deleteTranslationById 함수 호출 (이 함수는 내부적으로 문자열 ID를 숫자로 변환함)
@@ -9462,6 +9461,7 @@ registerCommand(SlashCommand.fromProps({
     name: 'LlmToggleTranslation',
     callback: async (parsedArgs) => {
         const messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
+        if (messageIdStr === null) return badMessageIdNotice(parsedArgs.messageId);   // 1.1.2 감사 T2
 
         let actualMessageId = messageIdStr;
         if (messageIdStr === 'last') {

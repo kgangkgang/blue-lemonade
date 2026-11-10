@@ -108,7 +108,8 @@ async function fill(messageId, message, ids, swipe, avoid = []) {
             avoid,   // 6.5.3 ··· 메뉴 다시 고르기 — 지금 보이던 그림은 피하게
         });
         const raw = await generatePick(messages, controller.signal);
-        records = recordsFromPicks(ids, parsePicks(raw, ids.length), name => assetInfoFor(group ? folder : '', name));
+        const info = name => assetInfoFor(group ? folder : '', name);
+        records = recordsFromPicks(ids, parsePicks(raw, ids.length, name => !!info(name)), info);   // 1.1.2 감사 N1 목록에 없는 군말 줄은 자리를 덮지 않아요
     } catch (error) {
         const reason = controller.signal.aborted ? '시간 안에 답이 없어요' : String(error?.message || error || '알 수 없는 오류').slice(0, 60);
         console.warn(`[${TITLE}] 그림 고르기 실패`, error);

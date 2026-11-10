@@ -245,7 +245,7 @@ async function call(path, { key, method = 'GET', body, signal, as = 'json', time
     const headers = { 'xi-api-key': key, Accept: as === 'blob' ? 'audio/mpeg' : 'application/json' };
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     return timedFetch(BASE + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) }, async (r) => {
-        if (!r.ok) throw elError(r.status, await r.text().catch(() => ''));
+        if (!r.ok) { const e = elError(r.status, await r.text().catch(() => '')); e.rejected = r.status; throw e; }   // 1.1.2 감사 V2 업체가 거부한 HTTP 상태
         return as === 'blob' ? r.blob() : r.json();
     }, { signal, timeout, netMsg: 'ElevenLabs에 연결하지 못했어요' });
 }
@@ -362,13 +362,19 @@ export default {
         const path = `/v1/text-to-speech/${encodeURIComponent(voice.voiceId)}`;
         // 1.6.3 글자 시간표(with-timestamps — 요금 같음): 단어 음소거가 정확한 구간을 자른다 (시간표는 보낸 글 기준 — 태그 머리말 포함).
         //   모델 · 엔드포인트가 거부하면(키 · 한도 · 몰림 · 서버 오류가 아닌 4xx) 예전 엔드포인트로 한 번 물러선다
+        //   [1.1.2 감사 V2] 200 을 받았는데 JSON 이 잘렸거나 소리가 없으면, 시간 초과 · 연결 끊김이면 물러서지 않아요 — 업체가 이미 만들어 값을 셈했을 수 있어요
         let blob = null, align = null;
         try {
             const j = await call(`${path}/with-timestamps?output_format=${OUTPUT}`, { key: cfg.key, method: 'POST', body, signal, timeout: 120000 });
             blob = base64Blob(j?.audio_base64);
             align = alignOf(j?.alignment);
+            if (!blob) { const e = new Error('ElevenLabs 응답에 소리가 없어요'); e.retry = false; throw e; }
         } catch (e) {
             if ((signal && signal.aborted) || e?.fatal || e?.retry) throw e;
+            if (!(e?.rejected >= 400 && e.rejected < 500)) {
+                if (e instanceof SyntaxError) { const err = new Error('ElevenLabs 응답이 중간에 끊겼어요'); err.retry = false; throw err; }
+                throw e;
+            }
             blob = null;
         }
         if (!blob) {

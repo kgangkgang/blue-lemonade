@@ -5,7 +5,7 @@ import { saveSettingsDebounced } from '../../../../../../../script.js';
 
 export const MODULE = 'esetham';
 export const OLD_MODULE = 'character-assets';
-export const VERSION = '1.7.6';
+export const VERSION = '1.7.7';
 export const TITLE = '캐릭터 에셋';
 
 // AI에게 보내는 글이라 영어로 둔다. {{img_keywords_autogen}} 자리에 지금 캐릭터의 그림 이름 목록이 들어간다.
@@ -83,7 +83,7 @@ export const PICK_DEFAULTS = Object.freeze({
     models: {},              // 공급자마다 고른 모델 ('custom' = customModels 에 쓴 이름)
     customModels: {},
     customUrl: '',           // '' = 실리태번 본체의 Custom 주소 (그 추가 헤더 · 본문과 함께)
-    count: 2,                // 한 답에 최대 N장 (1~4)
+    count: 2,                // 한 답에 최대 N장 (1~12 — 1.1.2 전에는 1~4)
     maxTokens: 1024,
     timeoutSec: 90,
 });
@@ -98,7 +98,7 @@ export function normalizePick(store = settings()) {
     for (const key of ['models', 'customModels']) if (!pick[key] || typeof pick[key] !== 'object' || Array.isArray(pick[key])) pick[key] = {};
     pick.profileId = String(pick.profileId ?? '');
     pick.customUrl = String(pick.customUrl ?? '');
-    pick.count = Math.max(1, Math.min(4, Math.round(Number(pick.count)) || 2));
+    { const n = Math.round(Number(pick.count)); pick.count = pick.count == null || pick.count === '' || !Number.isFinite(n) ? 2 : Math.max(1, Math.min(12, n)); }   // 1.1.2 감사 3차 R3: 0 은 1 로   // 상한은 slots.js PICK_COUNT_MAX 와 같게
     pick.maxTokens = Math.max(64, Math.min(65536, Math.round(Number(pick.maxTokens)) || PICK_DEFAULTS.maxTokens));
     pick.timeoutSec = Math.max(10, Math.min(600, Math.round(Number(pick.timeoutSec)) || PICK_DEFAULTS.timeoutSec));
     store.pick = pick;

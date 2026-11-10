@@ -135,9 +135,12 @@ export function isDialogueStart(paragraph) {
     return colored || QUOTE_START.test(rest) || HEX_QUOTE.test(rest) || NAME_COLON.test(rest) || NAME_BRACKET.test(rest);
 }
 
+/** 한 답에 고를 그림 수의 상한 (1.1.2: 4 → 12 — 설정 칸에 숫자로 적어요. 4 이하는 자리 · 요청이 예전과 같아요) */
+export const PICK_COUNT_MAX = 12;
+
 /** 자리 n 개 — 대사 문단 바로 앞 경계 가운데 고르게 (대사가 없으면 모든 경계 가운데). 오름차순 위치 목록, 모자라면 적게 */
 export function slotSpots(text, count) {
-    const n = Math.max(1, Math.min(4, Math.round(Number(count)) || 1));
+    const n = Math.max(1, Math.min(PICK_COUNT_MAX, Math.round(Number(count)) || 1));
     const all = paragraphBoundaries(text);
     const dialogue = all.filter(boundary => isDialogueStart(boundary.next));
     const pool = dialogue.length ? dialogue : all;
@@ -237,11 +240,15 @@ export function rulesForPicker(prompt, folder = '') {
 /**
  * 대답 `n: 파일이름` · `n: none` → 자리마다 이름('' = 없음) · 대답이 없으면 null. 같은 번호가 여럿이면 마지막 것 (생각을 앞에 쓰는 모델).
  * {{img::이름}} · 따옴표 · 백틱 · 끝 문장부호는 벗긴다.
+ * [1.1.2 감사 N1] 자리가 5개 이상이면 두 자리 번호가 읽혀서, 답 끝 군말 줄(「12: 표정만 달리 골랐어요」)이 고른 그림을 덮어썼어요.
+ * 그래서 5개 이상일 때만: 같은 번호는 처음 것을 지키고, known(그 캐릭터 그림 목록에 있나)이 아니라는 이름 줄은 버려요. 4개 이하는 예전 그대로예요.
+ * @param {(name: string) => boolean} [known]
  * @returns {(string|null)[]}
  */
-export function parsePicks(raw, count) {
+export function parsePicks(raw, count, known) {
     const n = Math.max(0, Number(count) || 0);
     const out = new Array(n).fill(null);
+    const strict = n > 4;
     const text = String(raw ?? '').replace(/<(think|thinking|reasoning)\b[^>]*>[\s\S]*?<\/\1>/gi, '');
     for (const line of text.split(/\r?\n/)) {
         const m = /^\s*[-*]?\s*\[?(?:ASSET\s*)?(\d{1,2})\]?\s*[:：.)-]\s*(.*?)\s*$/i.exec(line);
@@ -252,7 +259,9 @@ export function parsePicks(raw, count) {
             .replace(/^\{\{\s*img::\s*/i, '').replace(/\s*\}\}$/, '')
             .replace(/^[`"'“”‘’「」『』*]+/, '').replace(/[`"'“”‘’「」『』*.,;]+$/, '')
             .trim();
-        out[i] = !name || /^(?:none|no image|없음|n\/a|-)$/i.test(name) ? '' : name;
+        const pick = !name || /^(?:none|no image|없음|n\/a|-)$/i.test(name) ? '' : name;
+        if (strict && (out[i] !== null || (pick && typeof known === 'function' && !known(pick)))) continue;
+        out[i] = pick;
     }
     return out;
 }

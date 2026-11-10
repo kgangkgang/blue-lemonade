@@ -429,7 +429,9 @@ async function lineOf(speaker, text) {
     if (job && ['minimax', 'elevenlabs'].includes(job.provider.id)) {
         const real = globalThis.fetch;
         globalThis.fetch = async (u, init = {}) => {
-            body = { url: String(u).replace(/\?.*$/, ''), body: init.body ? JSON.parse(init.body) : null };
+            // 1.1.2 감사 V2 ElevenLabs 는 같은 본문을 with-timestamps 로 한 번만 보내요(1.6.3 · 요금 같음) — 1.3.7 기준 주소와 견주려고 꼬리를 떼요
+            body = { url: String(u).replace(/\?.*$/, '').replace(/\/with-timestamps$/, ''), body: init.body ? JSON.parse(init.body) : null };
+            if (/\/with-timestamps/.test(u)) return new Response(JSON.stringify({ audio_base64: 'AQIDBA==', alignment: null }), { status: 200, headers: { 'content-type': 'application/json' } });   // 1.1.2 감사 V2 진짜 업체처럼 JSON (전엔 소리 본문을 줘 예전 주소로 두 번째 POST 가 나갔어요)
             if (/t2a_v2/.test(u)) return new Response(JSON.stringify({ data: { audio: 'fff344c4' }, extra_info: { usage_characters: 3 }, base_resp: { status_code: 0 } }), { status: 200, headers: { 'content-type': 'application/json' } });
             return new Response(new Uint8Array([1, 2, 3, 4]), { status: 200, headers: { 'content-type': 'audio/mpeg' } });
         };

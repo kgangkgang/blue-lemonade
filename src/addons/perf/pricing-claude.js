@@ -1,5 +1,7 @@
 // Reviewed USD / 1M: input, output, cache read, 5m write, 1h write.
 export const CLAUDE_RATES = {
+    'claude-fable-5-2': [8,40,.2,10,16],   // 2026-11-09 platform.claude.com/docs/en/models/fable-5-2/overview
+    'claude-mythos-5-2': [8,40,.2,10,16],   // 같은 문서 · mythos-5-2/overview (가격 · 사양이 Fable 5.2 와 같음)
     'claude-fable-5-1': [10,50,.25,12.5,20],
     'claude-mythos-5-1': [10,50,.25,12.5,20],
     'claude-fable-5': [10,50,1,12.5,20],

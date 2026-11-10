@@ -1,8 +1,8 @@
-/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1887 · 뺀 규칙 3910 (style.css 7567010656b9) */
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build a29fa21ef8cd) */
+/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1888 · 뺀 규칙 3918 (style.css 4a42dc68354c) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build aa9356a38608) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"03af194c93b947b0"}
 /* css/00-base.css */
-:root{--bl-release:"1.1.1";}
+:root{--bl-release:"1.1.2";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)) {
 :root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}
@@ -626,7 +626,7 @@ body.salty-dark .salty-panel {
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  background: var(--shade-2);
+  background: var(--shade-2, #8a8a93);
   transition: background-color 0.2s ease;
   pointer-events: none;
 }
@@ -638,12 +638,12 @@ body.salty-dark .salty-panel {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--bl-knob-face);
-  box-shadow: var(--bl-knob);
+  background: var(--bl-knob-face, #fff);
+  box-shadow: var(--bl-knob, 0 0 0 1px rgba(0,0,0,.3));
   transition: transform 0.2s ease;
 }
 .salty-switch input:checked + span {
-  background: var(--salty-fill-accent, var(--salty-accent));
+  background: var(--salty-fill-accent, var(--salty-accent, #2f6fd0));
 }
 .salty-switch input:checked + span::after {
   transform: translateX(18px);
@@ -1555,6 +1555,7 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .salty-row > span small .bl-rest-note { font-weight: 600; color: var(--salty-accent, inherit); }
 .salty-panel .bl-zero-off { opacity: .55; }
 .salty-panel .bl-zero-banner { border-left: 3px solid var(--salty-accent, currentColor); padding-left: .6em; }
+.bl-off-hint { margin-left: 8px; font-size: 12px; line-height: 1.4; color: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; white-space: nowrap; }
 /* css/21-witidy.css */
 .bl-wi-actions { display: contents; }
 .bl-wi-actions > summary, .bl-wi-actions .bl-wi-action-list span { display: none; }
@@ -2509,6 +2510,7 @@ html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(
 /* css/38-outline.css */
 /* css/39-baibai.css */
 /* css/40-profile.css */
+/* css/42-other-extensions.css */
 /* css/44-settings-search.css */
 .bl-settings-search { position: relative; margin: 2px 0 10px; }
 .bl-search-field { display: flex; align-items: center; gap: 6px; border: 1px solid var(--salty-line); background: var(--bl-fill-well, var(--bl-well)); border-radius: 12px; padding: 0 8px; }
@@ -4834,7 +4836,7 @@ html body :is(.bl-direction-dialog, .jj-settings-body, #jj-settings) .jj-stepper
   --bl-ui-sw-knob: 14px;
   --bl-ui-sw-pad: 3px;
   --bl-ui-sw-on: var(--salty-accent);
-  --bl-ui-sw-off: var(--bl-check-off, var(--salty-shade-2));
+  --bl-ui-sw-off: var(--bl-check-off, var(--salty-shade-2, #8a8a93));
   --bl-ui-pick-face: var(--bl-selected, var(--salty-tint-18));
   --bl-ui-pick-ink: var(--salty-accent-ink, var(--salty-accent));
   --bl-ui-pill-line: var(--salty-line, var(--bl-grey-20));
@@ -4859,14 +4861,14 @@ html:not(#bl-ui-parts-off) body .bwr_settings .bwr_switch::after,
 html:not(#bl-ui-parts-off) body :where(span):where(.salty-switch > span):is(.bl-s, *):is(.bl-s, *)::after,
 html:not(#bl-ui-parts-off) body :where(span):where(.bl-look-switch > span):is(.bl-s, *):is(.bl-s, *)::after {
   top: var(--bl-ui-sw-pad) !important; left: var(--bl-ui-sw-pad) !important; width: var(--bl-ui-sw-knob) !important; height: var(--bl-ui-sw-knob) !important;
-  border-radius: 50% !important; background: var(--bl-knob-face) !important; box-shadow: var(--bl-knob, none) !important;
+  border-radius: 50% !important; background: var(--bl-knob-face, #fff) !important; box-shadow: var(--bl-knob, 0 0 0 1px rgba(0,0,0,.3)) !important;
 }
 html:not(#bl-ui-parts-off) body .cg-switch[aria-checked="true"],
 html:not(#bl-ui-parts-off) body .eh-switch[aria-checked="true"],
 html:not(#bl-ui-parts-off) body .jj-switch[aria-checked="true"],
 html:not(#bl-ui-parts-off) body .bl-hs-switch[aria-checked="true"],
 html:not(#bl-ui-parts-off) body .bwr_settings input:checked + .bwr_switch,
-html:not(#bl-ui-parts-off) body :is(.salty-switch, .bl-look-switch) > input:checked + span { background: var(--bl-ui-sw-on) !important; box-shadow: none !important; }
+html:not(#bl-ui-parts-off) body :is(.salty-switch, .bl-look-switch) > input:checked + span { background: var(--bl-ui-sw-on, #2f6fd0) !important; box-shadow: none !important; }
 html:not(#bl-ui-parts-off) body :is(.cg-switch, .eh-switch, .jj-switch, .bl-hs-switch)[aria-checked="true"] > span,
 html:not(#bl-ui-parts-off) body .bwr_settings input:checked + .bwr_switch::after,
 html:not(#bl-ui-parts-off) body :is(.salty-switch, .bl-look-switch) > input:checked + span::after { transform: translateX(calc(var(--bl-ui-sw-w) - var(--bl-ui-sw-knob) - 2 * var(--bl-ui-sw-pad))) !important; }

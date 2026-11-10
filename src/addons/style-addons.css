@@ -5398,7 +5398,7 @@ html:not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:not(#bl-h3) dialog
 .blzi-tag { font-size:var(--bl-ts-meta, 12.5px); padding:0 6px; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:var(--bl-r-sm, 8px); color:var(--salty-muted, var(--SmartThemeBodyColor)); }
 .blzi-bad .blzi-tag { color:var(--salty-accent-ink, var(--SmartThemeBodyColor)); border-color:currentColor; }
 /* assets/style.css */
-:root { --eh-css-version: "1.7.6"; }
+:root { --eh-css-version: "1.7.7"; }
 .eh-root {
     --eh-text: var(--SmartThemeBodyColor, #ccc);
     --eh-accent: var(--SmartThemeQuoteColor, #a98bd9);

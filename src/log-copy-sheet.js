@@ -21,6 +21,8 @@ import { transformLog, recolorLog } from './log-copy-words.js';   // 이름 숨�
 import { withNameAliases } from './name-aliases.js';
 import { wrapSpoiler, unwrapSpoiler, spoilerAt, ensureStyle as ensureSpoilerStyle, previewModel } from './log-copy-spoiler.js';   // 숨긴 글 · 미리보기에서 고친 글로 마크다운
 import { prettyLogHtml } from './log-copy-pretty.js';
+import { liftForCopy, copyBody, insertHead, withCommentSlots } from './log-copy-lift.js';   // 1.1.2 인라인 그림 주소 → 맨 앞 <style> 클래스 · 정화기 맞춤(overflow:clip · block-size · 스크롤바 숨김)
+import { placeLemon, normCorner, CORNER_LABEL } from './log-copy-lemon.js';   // 1.1.2 「레몬 바로가기」(기본 꺼짐) — 빈 모서리에 레몬 · 누르면 블루레몬에이드 소개 글
 import { bareLog } from './log-copy-bare.js';   // 1.0.7 위 글 · 아래 글 빼기(틀에 박힌 머리 표 · 꼬리말 …)   // 1.0.1 「HTML 복사」 코드를 사람이 고치기 쉬운 꼴로 (줄 나눔 · 주석 — 모양은 그대로)
 import { fitBare } from './log-copy-bare-fit.js';   // 1.0.7 빼고 나서 글을 덮게 된 떠 있는 장식 걷기(11-07 사용자 「컴퓨터가 내려와 글을 덮어」)
 import { TOKEN_KEYS } from './palettes.js';   // 가로 칩 줄: 넘치는 쪽 가장자리 흐림 · 고른 칩 보이기 (탭 줄과 같은 부품)
@@ -146,7 +148,7 @@ export async function openLogSheet(model) {
             <div class="bl-lc-colors" data-lc-colors><div class="bl-lc-mode" role="group" aria-label="밝기">${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><div class="bl-lc-pals bl-chip-row" role="radiogroup" aria-label="색" data-lc-pals></div></div>
             <div class="bl-lc-inks bl-chip-row" role="group" aria-label="글자색 — 눌러서 바꿔요" data-lc-inks hidden></div>
             <div class="bl-lc-tools bl-chip-row" role="group" aria-label="이름 숨김 · 바꾸기"><button type="button" class="bl-lc-chip" data-lc="hide" aria-pressed="false"><i class="fa-solid fa-user-secret" aria-hidden="true"></i><span>이름 숨김</span></button><button type="button" class="bl-lc-chip" data-lc="words" aria-pressed="false"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>바꾸기</span><small data-lc-words-count></small></button><button type="button" class="bl-lc-chip" data-lc="fields" aria-pressed="false" title="제목 · 날짜 · 깡통 · 모델 · 프롬프트 칸을 글칸으로 고쳐요"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>머리 칸</span></button><button type="button" class="bl-lc-chip" data-lc="spoiler" disabled title="미리보기에서 글을 고르면 눌러요"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>숨기기</span></button></div>
-            <div class="bl-lc-shows bl-chip-row" role="group" aria-label="보일 것 — 끄면 빼요" data-lc-shows>${SHOWS.map(([key, icon, label, title]) => `<button type="button" class="bl-lc-chip" data-lc-show="${key}" aria-pressed="true" title="${esc(title)}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${esc(label)}</span></button>`).join('')}</div>
+            <div class="bl-lc-shows bl-chip-row" role="group" aria-label="보일 것 — 끄면 빼요" data-lc-shows>${SHOWS.map(([key, icon, label, title]) => `<button type="button" class="bl-lc-chip" data-lc-show="${key}" aria-pressed="true" title="${esc(title)}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${esc(label)}</span></button>`).join('')}<button type="button" class="bl-lc-chip" data-lc-lemon aria-pressed="false" title="켜면 틀의 빈 모서리에 작은 레몬을 넣어요 — 누르면 블루레몬에이드 소개 글이 새 창으로 열려요"><i class="fa-solid fa-lemon" aria-hidden="true"></i><span>레몬 바로가기</span></button><button type="button" class="bl-lc-chip" data-lc-lemon-at hidden title="레몬 자리 — 누를 때마다 자동 · 왼쪽 위 · 오른쪽 위 · 왼쪽 아래 · 오른쪽 아래"><i class="fa-solid fa-up-down-left-right" aria-hidden="true"></i><span>자동</span></button></div>
             <div class="bl-lc-fields" data-lc-fields hidden>${FIELD_INPUTS.map(([key, label, hint]) => `<label class="bl-lc-field"><span>${esc(label)}</span><input type="text" maxlength="${key === 'title' ? 80 : 60}" placeholder="${esc(hint)}" data-lc-field="${key}"></label>`).join('')}</div>
             <div class="bl-lc-names" data-lc-names hidden><div class="bl-lc-name-list" data-lc-name-list></div><div class="bl-lc-row2"><input type="text" maxlength="40" placeholder="더 가릴 이름" aria-label="더 가릴 이름" data-lc-name-input><button type="button" class="salty-btn bl-lc-icon" data-lc="name-add" aria-label="가릴 이름 더하기"><i class="fa-solid fa-plus" aria-hidden="true"></i></button></div></div>
             <div class="bl-lc-words" data-lc-words hidden><div data-lc-rules></div><button type="button" class="salty-btn bl-lc-add-rule" data-lc="rule-add"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>줄 더하기</span></button></div>
@@ -297,6 +299,7 @@ export async function openLogSheet(model) {
     const drawShows = () => {
         const s3 = store(), mine = custom(), raw = !!mine && !mine.template;   // 직접 붙인 글꾸(HTML)는 틀 칸이 없어요 — 이름 줄만
         for (const [key] of SHOWS) { const chip = $(`[data-lc-show="${key}"]`); chip.setAttribute('aria-pressed', String(!s3[key])); chip.disabled = raw && key !== 'namesOff'; }
+        { const chip = $('[data-lc-lemon]'), at = $('[data-lc-lemon-at]'); chip.setAttribute('aria-pressed', String(!!s3.lemonLink)); at.hidden = !s3.lemonLink; at.style.display = s3.lemonLink ? "" : "none"; at.querySelector('span').textContent = `레몬 · ${CORNER_LABEL[normCorner(s3.lemonAt)]}`; }   // 1.1.2 레몬 바로가기
         for (const input of dialog.querySelectorAll('[data-lc-field]')) {
             const key = input.dataset.lcField;
             input.disabled = raw || (key === 'title' && s3.titleOff) || (key === 'date' && s3.dateOff) || (['char', 'model', 'prompt'].includes(key) && s3.tagsOff);
@@ -387,7 +390,7 @@ export async function openLogSheet(model) {
         // 칸만 비우면 그 칸을 담던 머리 박스 · 구분선이 빈 채로 남았어요(11-07 사용자 「제목 · 위 글 · 알약 다 빼면 가로 박스도 사라져야지」)
         const drop = [...(s3.titleOff ? ['title'] : []), ...(s3.dateOff ? ['date'] : []), ...(s3.tagsOff ? ['mark', 'char', 'model', 'prompt'] : [])];
         if (mine && !mine.template) html = mine.html;
-        else html = renderLog(shown.model, { shape: state.shape, colors: state.shape === 'plain' ? null : colorsOf(paletteFor(state.shape, state.palette)), ui, fields, images: shown.rewriteImages(state.images), screen: tokensOf(nowPalette()), template: inkTemplate() ?? mine, names: !s3.namesOff });
+        else html = renderLog(shown.model, { shape: state.shape, colors: state.shape === 'plain' ? null : colorsOf(paletteFor(state.shape, state.palette)), ui, fields, images: shown.rewriteImages(state.images), screen: tokensOf(nowPalette()), template: inkTemplate() ?? mine, names: !s3.namesOff, lemonLink: !!s3.lemonLink });
         if (!mine || mine.template) { const full = html; html = fitBare(full, bareLog(full, { top: s3.topOff, bottom: s3.bottomOff, drop })); }   // 1.0.7 위 글 · 아래 글 · 칸 빼기 → 글을 덮게 된 장식 걷기
         $('[data-lc-pick]').hidden = !(mine && !mine.template && (state.picking || !mine.slot));
         frame.onload = () => {
@@ -412,6 +415,7 @@ export async function openLogSheet(model) {
                 }
             }
             ensureSpoilerStyle(doc);
+            if (store().lemonLink) { try { placeLemon(doc, normCorner(store().lemonAt)); } catch { /* 못 재면 레몬 없이 */ } }   // 1.1.2 레몬 바로가기: 그려진 모양을 재서 빈 모서리에(미리보기에 보이는 그대로 복사돼요)
             state.drawnTexts = (previewModel(doc)?.messages ?? []).map(m => textOf(m.nodes).trim());   // 1.0.7 거둘 때 견줄 「막 그린 글」
             const syncSpoiler = () => {
                 const sel = doc.getSelection();
@@ -614,9 +618,12 @@ export async function openLogSheet(model) {
             case 'copy': {
                 const shown = result();
                 if (!shown) return;
-                const html = motionStyleFor(shown) + shown;   // 1.0.1 글꾸 움직임 · 누르면 반응: 붙인 곳엔 테마 CSS 가 없어서 그 글꾸가 쓰는 키프레임만 맨 앞 <style> 로
-                // 1.0.1 서식(text/html)은 한 줄 그대로, 글(text/plain — HTML 칸 · 코드 편집기에 붙는 쪽)은 사람이 고치기 쉬운 꼴(줄 나눔 · 주석, 모양은 같아요 — log-copy-pretty.js) · 움직임 <style> 은 맨 앞 안내 주석 바로 아래
-                const ok = await writeClipboard(html, prettyLogHtml(result({ marks: true }), { label: PRESETS.find(p => p.id === state.shape)?.label ?? custom()?.name ?? '', head: motionStyleFor(shown) }));
+                // 1.0.1 글꾸 움직임 · 누르면 반응: 붙인 곳엔 테마 CSS 가 없어서 그 글꾸가 쓰는 키프레임만 맨 앞 <style> 로
+                // 1.1.2 인라인 style 의 그림 주소(url)는 같은 <style> 의 클래스 규칙으로 — 커뮤니티 사이트가 인라인 url(&quot; 를 지워 그림이 사라졌어요(log-copy-lift.js)
+                const lifted = liftForCopy(shown, motionStyleFor(shown));   // 1.1.2 위아래 코멘트 빈칸 · 코멘트 글줄 규칙까지
+                const html = lifted.full;   // <style> 은 감싸는 요소 안 첫 자식
+                // 1.0.1 서식(text/html)은 한 줄 그대로, 글(text/plain — HTML 칸 · 코드 편집기에 붙는 쪽)은 사람이 고치기 쉬운 꼴(줄 나눔 · 주석, 모양은 같아요 — log-copy-pretty.js) · 맨 앞 <style> 은 안내 주석 바로 아래
+                const ok = await writeClipboard(html, withCommentSlots(prettyLogHtml(insertHead(copyBody(result({ marks: true })).html, lifted.head), { label: PRESETS.find(p => p.id === state.shape)?.label ?? custom()?.name ?? '', head: '' })));
                 toast(ok, 'HTML 로 복사했어요 — 글 쓰기 창에 붙이면 모양 그대로, HTML 칸에 붙이면 주석 달린 고치기 쉬운 코드예요');
                 if (ok) { remember(); dialog.close(); }
                 break;
@@ -644,7 +651,7 @@ export async function openLogSheet(model) {
                 if (!shown) return;
                 const name = PRESETS.find(p => p.id === state.shape)?.label ?? custom()?.name ?? '로그';
                 // 1.0.7 「⬇ 내려받기」(글꾸 마트 시식 창과 같은 꼴) — 복사한 HTML 을 따로 열어도 같은 모양
-                const doc = `<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${esc(state.fields.title || name)}</title>\n</head>\n<body style="margin:0;padding:16px;background:${esc(pageBg())};-webkit-text-size-adjust:100%">\n${motionStyleFor(shown)}${shown}\n</body>\n</html>\n`;
+                const doc = `<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${esc(state.fields.title || name)}</title>\n</head>\n<body style="margin:0;padding:16px;background:${esc(pageBg())};-webkit-text-size-adjust:100%">\n${liftForCopy(shown, motionStyleFor(shown)).full}\n</body>\n</html>\n`;
                 const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([doc], { type: 'text/html' })), download: `로그-${String(name).replace(/[\\/:*?"<>|#%]+/g, '').replace(/\s+/g, '-')}.html`, hidden: true });
                 document.body.append(a); a.click();
                 setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
@@ -662,6 +669,8 @@ export async function openLogSheet(model) {
             }
             default:
                 if (target.dataset.lcShow) { const s2 = store(), key = target.dataset.lcShow; s2[key] = !s2[key]; saveSettings(); draw(); }   // 1.0.7 「보일 것」 칩
+                else if (target.dataset.lcLemon !== undefined) { const s2 = store(); s2.lemonLink = !s2.lemonLink; saveSettings(); draw(); }   // 1.1.2 레몬 바로가기 켜기 · 끄기
+                else if (target.dataset.lcLemonAt !== undefined) { const s2 = store(), order = ['auto', 'tl', 'tr', 'bl', 'br']; s2.lemonAt = order[(order.indexOf(normCorner(s2.lemonAt)) + 1) % order.length]; saveSettings(); draw(); }   // 1.1.2 레몬 자리 돌리기
                 else if (target.dataset.lcRuleRemove !== undefined) { const i = Number(target.dataset.lcRuleRemove); const ct = tools(); ct.replaceRules = ct.replaceRules.filter((_, n) => n !== i); saveSettings(); drawTools(); draw(); }
                 else if (target.dataset.lcNameRemove !== undefined) { const i = Number(target.dataset.lcNameRemove); const ct = tools(); ct.names = ct.names.filter((_, n) => n !== i); saveSettings(); drawTools(); draw(); }
                 break;

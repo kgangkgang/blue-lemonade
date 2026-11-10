@@ -94,6 +94,15 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 1.1.1 에이드 갈아입기 (ade.js, 기본 꺼짐)
     const ade = qx && (q.adeChat === true || q.adeDaily === true);
     if (ade || modules.ade) load('ade', './ade.js').then(m => m?.syncAde(ade, q, hooks));
+    // 1.1.2 입력칸 높이 고정 · 자동 수정 밑줄 끄기 (input-box.js, 기본 꺼짐 — 스타일 · 속성뿐이라 제로에서도 받아요)
+    const box = qx && s.inputBox || {}, boxOn = box.hold === true || box.noCorrect === true;
+    if (boxOn || modules.inputbox) load('inputbox', './input-box.js').then(m => m?.syncInputBox(box));
+    // 1.1.2 로어북 스캔에서 상태창 글 빼기 (wi-skip.js, 기본 꺼짐)
+    const wiSkip = qx && q.wiSkip === true;
+    if (wiSkip || modules.wiskip) load('wiskip', './wi-skip.js').then(m => m?.syncWiSkip(wiSkip));
+    // 1.1.2 퀵 리플라이 줄 접기 (addons/qrtoggle, 기본 꺼짐)
+    const qrFold = qx && q.qrFold === true;
+    if (qrFold || modules.qrfold) load('qrfold', './addons/qrtoggle/index.js').then(m => m?.syncQrToggle(qrFold));
     const selEdit = qx && q.selEdit === true && !restingFor('quickSelEdit');
     if (selEdit || modules.seledit) load('seledit', './quick/sel-edit.js').then(m => m?.syncSelectionEdit(selEdit));
     const mesDelete = qx && q.mesDelete === true && !restingFor('quickMesDelete');

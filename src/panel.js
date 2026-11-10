@@ -52,10 +52,10 @@ import { classifyAll } from './assets.js';
 import { CUT_EDGE_RANGES, CUT_EDGE_PRESETS, cutEdgeDefaults, imageFrameOn, resolveCutEdge, toCustom, ringFilterMarkup, baseInk, darkBackground, outlineVisible, shadowVisible } from './cutedge.js';
 import { restingFor } from './ext-presence.js';   // 칵테일 · 바이바이가 켜져 있어 쉬는 성능 기능의 안내
 import { customCssReport, buildDiagnosis } from './diagnose.js';
-import { splashState, checkSplash, SPLASH_COMMAND, SPLASH_IMPORT, faviconFileState, checkFaviconFile, prepareFaviconCommand } from './splash.js';   // 1.0.0 되살림: 새로고침 화면 · 탭 아이콘 명령
+import { splashState, checkSplash, SPLASH_COMMAND, SPLASH_IMPORT, faviconFileState, checkFaviconFile, prepareFaviconCommand, homeIconShape } from './splash.js';   // 1.0.0 되살림: 새로고침 화면 · 탭 아이콘 명령
 import { PRESETS, MAX_STYLES, captureStyle, applyStyleData, sameStyle, sharePayload, encodeStyle, decodeStyle, newStyleId, uniqueName, mergeFonts, currentKey, keyLabel } from './styles.js';
 import { charStyleModule } from './features.js';
-import { adeChatLabel, adeForgetChat, adeBase, adeSetBase, families as adeFamilies } from './ade.js';   // 1.1.1 시제품 에이드 갈아입기 (이 창은 시작 그래프 밖)
+import { adeChatLabel, adeForgetChat, adeBase, adeSetBase, adeChatList, adeForgetKey, families as adeFamilies } from './ade.js';   // 1.1.1 시제품 에이드 갈아입기 (이 창은 시작 그래프 밖)
 import { listExtensionColorTargets } from './extension-colors.js';
 import { decodeAnyImage, imageWidth, imageHeight, IMAGE_ACCEPT } from './imagedecode.js';
 import { bindSettingsSearch, searchMarkup, paintSettingsSearch } from './settings-search.js';
@@ -617,12 +617,20 @@ function restNote(feature, part = '') {
 }
 
 // 1.1.1 시제품 에이드 갈아입기 (ade.js · 기본 꺼짐) — 켜 두면 지금 채팅방이 기억한 에이드와 「이 채팅방 기억 지우기」. ade.js 는 이 창(시작 그래프 밖)에서 바로 불러요(상태 읽기 · 지우기만)
+let adeListOpen = false;   // 「기억한 채팅방」 목록을 펼쳤는지 (창을 다시 그려도 그대로)
+function adeListRows() {
+    const list = adeChatList();
+    if (!list.length) return '';
+    const rows = adeListOpen ? list.map(item => `<div class="salty-row"><span>${esc(item.name)}<small>${esc(item.label)}${item.here ? ' · 지금 채팅방' : ''}</small></span><button class="salty-btn" data-act="ade-forget-key" data-key="${esc(item.key)}" aria-label="${esc(item.name)} 기억 지우기">지우기</button></div>`).join('') : '';
+    return `<div class="salty-btns"><button class="salty-btn" data-act="ade-list" aria-expanded="${adeListOpen}">기억한 채팅방 ${list.length}곳 ${adeListOpen ? '접기' : '보기'}</button></div>${rows}`;
+}
 function adeRows(s) {
     const q = s.quick || {};
     const here = q.adeChat === true ? adeChatLabel() : '';
     return `${cap('에이드 갈아입기', '시제품')}<div class="salty-group">
         ${row('채팅방마다 다른 에이드', toggle('quick.adeChat', q.adeChat === true), `채팅방(캐릭터 · 그룹)마다 에이드를 기억해요 · 켠 뒤 채팅방에서 에이드를 고르면 그 방에 적히고, 다른 방으로 가면 기본 에이드로 돌아와요 · 밝기(화이트 · 나이트)는 지금 것을 따라요${here ? ` · 이 채팅방: ${esc(here)}` : ''}`)}
         ${here ? '<div class="salty-btns"><button class="salty-btn" data-act="ade-forget">이 채팅방 기억 지우기</button></div>' : ''}
+        ${q.adeChat === true ? adeListRows() : ''}
         ${q.adeChat === true || q.adeDaily === true ? row('기본 에이드', `<select data-ade-base aria-label="기본 에이드">${adeFamilies().map(f => `<option value="${f}"${f === (adeBase() || 'blue') ? ' selected' : ''}>${esc(PALETTE_FAMILIES[f]?.label || f)}</option>`).join('')}</select>`, '채팅방 기억이 없는 방에서 쓰는 에이드예요 · 오늘의 에이드를 켜 두면 날마다 이 값이 바뀌어요 · 캐릭터별 스타일이 입혀진 채팅은 그 스타일 그대로예요') : ''}
         ${row('오늘의 에이드', toggle('quick.adeDaily', q.adeDaily === true), '날마다 에이드가 차례로 바뀌어요(11벌 순서대로 · 커스텀 제외 · 같은 날은 같은 에이드) · 채팅방이 기억한 에이드가 있으면 그쪽이 먼저예요 · 오늘 직접 고른 에이드는 내일까지 그대로예요')}
     </div>`;
@@ -1290,11 +1298,14 @@ function splashRow() {
 
 // 5.5.1 탭 아이콘: 실리태번 public/favicon.ico 를 레몬 파일로 — 새로고침 화면처럼 명령 한 번 (테마가 뜨기 전 ST 로고가 안 보이게)
 function faviconRow() {
-    const state = faviconFileState();
+    const shape = homeIconShape(getSettings().chat?.homeIcon);
+    const state = faviconFileState(shape);
     if (state === null) checkFaviconFile(refreshPanels);
     return row('탭 아이콘', state === 'on'
         ? '<span class="salty-splash-on"><i class="fa-solid fa-check" aria-hidden="true"></i></span>'
-        : '<button class="salty-btn" data-act="favicon-copy">명령 복사</button>', state === 'on' ? '탭 · 홈 화면 모두 레몬' : '탭 · 홈 화면 아이콘을 처음부터 레몬으로 — 명령을 한 번 실행');
+        : '<button class="salty-btn" data-act="favicon-copy">명령 복사</button>', state === 'on' ? '탭 · 홈 화면 모두 레몬' : '탭 · 홈 화면 아이콘을 처음부터 레몬으로 — 명령을 한 번 실행')
+        // 1.1.2 홈 화면 아이콘 모양(사용자 「레몬만 남게 못 함?」) — 바꾸면 위 버튼이 다시 떠요(표식 BLLEMON3L · 3S)
+        + row('홈 화면 아이콘', seg('chat.homeIcon', [['auto', '자동'], ['lemon', '레몬만'], ['square', '어두운 네모']], 'auto'), `레몬만 = 투명 바탕 · 어두운 네모 = 지금 모양 · 자동은 이 기기에서 ${shape === 'lemon' ? '레몬만' : '어두운 네모'}. 홈 화면 아이콘은 지우고 다시 추가해야 바뀌어요`);
 }
 
 async function copyDiagnosis() {
@@ -1616,6 +1627,9 @@ function tabChat(s, sub) {
         ${cap('메시지 편의')}<div class="salty-group">
             ${row('고른 글 고치기', toggle('quick.selEdit', s.quick?.selEdit === true), `채팅에서 글을 끌어 고르면 뜨는 줄에 「고치기」 · 고른 부분의 원래 글만 작은 창에서 고쳐요(메시지 전체 편집을 안 열어도 돼요) · 자리가 확실하지 않으면 고치지 않고 알려 줘요 · 번역문이 있는 메시지는 번역기의 「번역문 수정」으로 · 고친 뒤 알림의 ↶ 로 되돌려요${restNote('quickSelEdit')}`)}
             ${row('번역문도 고치기', toggle('quick.selEditTr', s.quick?.selEditTr === true), `(시제품) 번역문이 있는 메시지에서도 「고치기」가 떠요 · 원문은 그대로 두고 화면의 번역문만 고쳐요(실리태번 내장 번역처럼 번역문을 메시지에 담는 꼴) · 번역기 확장(ST-Interpres · llm-translator)이 따로 보여 주는 번역 칸은 그대로 번역기의 「번역문 수정」으로 · 고친 뒤 편집 알림(사건)은 보내지 않아요 — 번역 확장이 다시 번역해 고친 글을 덮지 않게${restNote('quickSelEdit')}`)}
+            ${row('로어북 스캔에서 상태창 글 빼기', toggle('quick.wiSkip', s.quick?.wiSkip === true), '로어북이 키워드를 찾을 때 코드 칸(\`\`\`)과 접는 칸(details) 안의 글은 보지 않아요 · 상태창 · 트래커에 적힌 낱말 때문에 엉뚱한 항목이 켜지는 것을 막아요 · AI 에게 보내는 글은 그대로예요 · 이 테마 뒤에 도는 다른 확장은 그 사이 뺀 글을 볼 수 있어요')}
+            ${row('퀵 리플라이 줄 접기', toggle('quick.qrFold', s.quick?.qrFold === true), '입력창 요술봉 뒤 ⌃ 단추로 퀵 리플라이 줄을 통째로 접고 펼쳐요 · 접은 상태를 기억해요 · 켜 둔 동안 줄 앞의 「QR 접기 단추」(채팅 › 화면)는 쉬고, 끄면 그 단추와 접어 둔 상태가 그대로 돌아와요 · Simple QR Bar Toggle 확장을 따로 쓰고 있으면 그쪽을 써요')}
+            ${s.quick?.qrFold === true && s.usageMode !== 'zero' ? addonCreditHtml('qrtoggle') : ''}
             ${row('연필 옆 지우기 단추', toggle('quick.mesDelete', s.quick?.mesDelete === true), `메시지 이름 줄의 연필(편집) 앞에 휴지통을 둬요 · 확인 창을 거쳐 지워요 · 한 번 누르면 실리태번 확인 창이 뜨고, 다른 답이 여럿인 마지막 답이면 스와이프만 지울지도 골라요 · 답을 만드는 중에는 안 지워요${restNote('quickMesDelete')}`)}
             ${row('메시지 범위 지우기', toggle('quick.rangeDelete', s.quick?.rangeDelete !== false), `옵션 메뉴(☰)의 「메시지 삭제」 아래에 「범위 지우기」 · 처음 메시지와 끝 메시지를 누르면 그 사이만 지워요(실리태번 기본은 누른 메시지부터 끝까지) · 지우기 전에 몇 개인지 한 번 더 물어요${restNote('quickRangeDelete')}`)}
         </div>
@@ -1634,6 +1648,10 @@ function tabChat(s, sub) {
         </div>
         ${cap('다른 기기')}<div class="salty-group">
             ${row('다른 기기 변경 알림', toggle('syncWatch', s.syncWatch !== false), '이 채팅이 다른 기기에서 바뀌면 위에 띠를 띄우고, 덮어쓰기 전에 물어요')}
+        </div>
+        ${cap('입력칸')}<div class="salty-group">
+            ${row('입력칸 높이 고정', toggle('inputBox.hold', s.inputBox?.hold === true), '입력 중 자동 수정 밑줄이 잠깐 다른 줄에 보이면 켜 보세요 · 입력칸을 다섯 줄 높이로 두고 넘치면 안에서 스크롤해요')}
+            ${row('자동 수정 밑줄 끄기', toggle('inputBox.noCorrect', s.inputBox?.noCorrect === true), '입력칸에서 키보드의 자동 수정 · 맞춤법 표시를 꺼요')}
         </div>
         ${cap('진단', '지금 상태를 한 덩어리로')}<div class="salty-group">
             ${row('진단 복사', '<button class="salty-btn salty-btn-icon" data-act="diag-copy" aria-label="진단 복사"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>', '버전 · 화면 · 표시 옵션 · 커스텀 CSS · 확장 · 최근 오류(번역 중단 이유)를 글로 복사해요. 댓글에 붙여 넣으면 돼요')}
@@ -1684,7 +1702,7 @@ function tabChat(s, sub) {
             <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false && globalThis.quickReplyApi?.settings?.isEnabled === true, s.chat.qrCtxNames === true)}</div>
             ${row('하위 목록 단추에 세트 이름', toggle('chat.qrCtxNames', s.chat.qrCtxNames === true), '하위 세트를 묶은 QR 은 오른쪽 ⋮ 를 누르면 목록이 열려요. 켜면 ⋮ 대신 그 세트 이름을 보여요')}
             ${row('QR 검색 버튼', toggle('chat.qrFind', s.chat.qrFind !== false), '실리태번의 QR 사용하기를 켰을 때만 보여요. 과일·데우스 빠른 설정은 이 조건에 포함하지 않아요')}
-            ${row('QR 접기 단추', toggle('chat.qrFold', s.chat.qrFold !== false), '줄 앞에 접기 · 펴기 단추를 둬요. 접으면 단추만 남고 퀵 리플라이 버튼은 숨어요 · 접힌 상태는 기억해요')}
+            ${row('QR 접기 단추', toggle('chat.qrFold', s.chat.qrFold !== false), `${s.quick?.qrFold === true && s.usageMode !== 'zero' ? '<b class="bl-rest-note">요술봉 뒤 접기를 쓰는 동안 쉬어요</b> ' : ''}줄 앞에 접기 · 펴기 단추를 둬요. 접으면 단추만 남고 퀵 리플라이 버튼은 숨어요 · 접힌 상태는 기억해요`)}
             ${row('QR 책장', toggle('qrShelf.on', s.qrShelf?.on === true), `줄 앞에 책 단추를 둬요 · 누르면 모든 QR 을 즐겨찾기 · 최근 · 이 봇 · 세계관 · 카테고리 칸으로 모아 찾고 눌러요(줄을 접어도 책 단추는 남아요) · QR 마다 이름 · 설명 · 카테고리를 붙이고 숨길 수 있어요(테마 설정에만 적고 QR 원본은 그대로) · 「AI 정리」는 누를 때만, 보낼 개수 · 토큰을 묻고 지금 연결로 한 번 보내요 · 다른 확장이 결과 보관함을 열어 두면 답을 채팅 대신 보관함으로 보낼 수도 있어요${restNote('qrShelf')}`)}
             ${stack('자리', seg('chat.qrPlace', [['bottom', '입력창 아래'], ['top', '입력창 위']], 'bottom'), '입력창 옆에 아이콘이 많으면 위가 넓어요')}
             ${stack('넘기기', seg('chat.qrScroll', [['x', '가로 스크롤'], ['y', '세로 스크롤']]))}
@@ -2182,9 +2200,9 @@ function render(root) {
         ? `<div class="salty-head">
             <div class="salty-mark">${MARK}</div>
             <div><div class="salty-title">Blue Lemonade${titleBadgesHtml()}</div><div class="salty-sub">읽기 편한 테마</div></div>
-            <label class="salty-switch"><input type="checkbox" data-toggle="enabled" aria-label="테마 켜기" ${s.enabled ? 'checked' : ''}><span></span></label>
+            <label class="salty-switch"><input type="checkbox" id="bl-enabled-popup" data-toggle="enabled" aria-label="테마 켜기" ${s.enabled ? 'checked' : ''}><span></span></label>${s.enabled ? '' : '<label class="bl-off-hint" for="bl-enabled-popup">꺼짐 · 눌러서 켜기</label>'}
         </div>`
-        : `<div class="salty-head salty-head-slim"><span>블루레몬에이드 사용</span>${toggle('enabled', s.enabled)}</div>`;
+        : `<div class="salty-head salty-head-slim"><span>블루레몬에이드 사용</span>${s.enabled ? toggle('enabled', true) : `${toggle('enabled', false).replace('<input type="checkbox"', '<input type="checkbox" id="bl-enabled-drawer"')}<label class="bl-off-hint" for="bl-enabled-drawer">꺼짐 · 눌러서 켜기</label>`}</div>`;   // 1.1.2 꺼진 동안만 「꺼짐 · 눌러서 켜기」(「블루레몬 끄면 다시 못 켜?」 제보)
     root.innerHTML = `
         <div class="salty-nav"><div class="bl-settings-toprow">
             <button type="button" class="bl-editor-choose" data-act="editor-catalog" aria-label="설정 선택" aria-haspopup="dialog" aria-expanded="${!!root._catalogOpen}"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg><span>${subLabel}</span></button>
@@ -2480,7 +2498,7 @@ function bind(root) {
                 }
                 case 'favicon-copy': {
                     try {
-                        const { handle, command } = await prepareFaviconCommand();
+                        const { handle, command } = await prepareFaviconCommand(homeIconShape(getSettings().chat?.homeIcon));
                         if (await copyText(command)) toastr.success(`Termux 에 붙여 넣고 새로고침해 주세요. 홈 화면 아이콘은 지우고 다시 추가. PC 는 data/${handle}/user/files 의 blue-lemonade-* 를 public/favicon.ico · public/img 로 복사`, 'Blue Lemonade', { timeOut: 10000 });
                     } catch (error) { toastr.error(String(error.message || error), 'Blue Lemonade'); }
                     break;
@@ -2563,6 +2581,12 @@ function bind(root) {
                     break;
                 case 'ade-forget':   // 1.1.1 시제품 — 지금 채팅방의 에이드 기억 지우기
                     if (adeForgetChat()) refreshPanels();
+                    break;
+                case 'ade-list':   // 기억한 채팅방 목록 펼치기 · 접기
+                    adeListOpen = !adeListOpen; refreshPanels();
+                    break;
+                case 'ade-forget-key':   // 목록에서 고른 채팅방의 에이드 기억 지우기
+                    if (adeForgetKey(el.dataset.key)) refreshPanels();
                     break;
                 // 1.0.0 커스텀 에이드 (custompalette.js) — 8.2.5 와 같은 동작
                 case 'custom-keep':

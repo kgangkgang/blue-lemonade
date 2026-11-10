@@ -9,6 +9,7 @@ import { preserveLocks } from './setting-locks.js';
 import { getSettings, saveSettings, invalidateSettings } from './settings.js';
 import { captureStyle, applyStyleData, sameStyle, currentKey } from './styles.js';
 import { deviceKind, LAYOUT_PATHS } from './device-layout-options.js';
+import { paletteFamily } from './palettes.js';
 
 let listening = false;
 let commitTimer = 0;
@@ -29,6 +30,9 @@ function commit() {
     const style = s.styles.find(x => x.id === active.id);
     if (!style) return false;
     const now = captureStyle(s);
+    // 1.1.2 지금 팔레트가 에이드 갈아입기(ade.js)가 칠한 가족이면 스타일 편집이 아니에요 — 스타일에 적힌 팔레트를 그대로 둬요
+    const ade = globalThis[Symbol.for('blue-lemonade.ade-paint')];
+    if (ade && ade === paletteFamily(s.palette) && 'palette' in style.data) now.palette = style.data.palette;
     preserveLocks(now,style.data,s.settingLocks)();
     if (sameStyle(now, style.data)) return false;
     style.data = now;

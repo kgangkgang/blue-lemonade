@@ -8,7 +8,9 @@
 //       같은 opts. !ok 이거나 본문이 JSON/텍스트(오류 응답)면 koError. mime 은 content-type 앞부분 (없으면 '')
 //   timedFetch(url, init, read, { signal, timeout = 120000, netMsg }) → read(r) 의 결과
 //       fetch 를 직접 쓰는 엔진용. 시간 제한과 본문 읽기(read)까지 한 signal 로 묶는다
-//       호출자 중단 → 그대로 · 시간 초과 → koError(408, 다시 시도) · 연결·CORS 실패 → code 'network', retry (netMsg 문구)
+//       호출자 중단 → 그대로 · 시간 초과 → koError(408, 다시 보내지 않음) · 연결·CORS 실패 → code 'network', retry (netMsg 문구)
+//       [1.1.2 감사 V1] 클라이언트가 끊은 시간 초과와 응답을 받은 뒤 본문을 읽다 끊긴 것은 retry=false — 업체가 이미 만들어 값을 셈했을 수 있어요.
+//       응답 머리를 받기 전 연결 실패만 다시 보내요
 //       read 가 던진 엔진 오류는 손대지 않는다
 //   koError(status, body) → Error
 //       HTTP 상태 → 짧은 한국어 + 업체 메시지 조각(≤120자). e.status, e.code(=status), e.retry(408/429/5xx), e.fatal(401/402/403), e.lv=true
@@ -101,22 +103,32 @@ export function withAbort(signal, ms = 0) {
 /** fetch 를 직접 쓰는 엔진용: 시간 제한 + 본문 읽기(read)까지 한 signal 로 */
 export async function timedFetch(url, init, read, { signal, timeout = 120000, netMsg } = {}) {
     const ab = withAbort(signal, timeout);
+    let answered = false;
     try {
         const r = await fetch(url, { ...(init || {}), signal: ab.signal });
+        answered = true;
         return await read(r);
     } catch (e) {
         if (!runtimeEnabled()) throw stoppedError();
         if (signal && signal.aborted) throw e;                          // 호출자가 멈춤 → 그대로
-        if (ab.signal.aborted) throw koError(408, null);                // 시간 제한 → 다시 시도
+        if (ab.signal.aborted) throw clientTimeout();                   // 시간 제한 → 다시 보내지 않음 (1.1.2 감사 V1)
         if (e instanceof TypeError || (e && e.name === 'AbortError')) { // 연결·CORS 실패
             const err = new Error(netMsg || '연결 실패 (네트워크·CORS)');
-            err.status = 0; err.code = 'network'; err.retry = true; err.lv = true;
+            err.status = 0; err.code = 'network'; err.retry = !answered; err.lv = true;   // 응답을 받은 뒤 끊김은 다시 보내지 않음
             throw err;
         }
         throw e;                                                        // read 가 던진 엔진 오류
     } finally {
         ab.done();
     }
+}
+
+/** 우리가 끊은 시간 초과 — 상태는 408 그대로(문구 · 잠깐의 문제로 보는 곳은 같음), 같은 글을 다시 보내지는 않아요 */
+function clientTimeout() {
+    const e = koError(408, null);
+    e.retry = false;
+    e.clientTimeout = true;
+    return e;
 }
 
 const parse = (text) => { try { return JSON.parse(text); } catch { return undefined; } };
@@ -141,7 +153,7 @@ async function request(url, opts, read) {
         if (!runtimeEnabled()) throw stoppedError();
         if (e && e.lv) throw e;                         // 이미 koError
         if (signal && signal.aborted) throw e;          // 호출자가 멈춤 → 그대로
-        if (ab.signal.aborted) throw koError(408, null); // 시간 제한
+        if (ab.signal.aborted) throw clientTimeout();    // 시간 제한 → 다시 보내지 않음 (1.1.2 감사 V1)
         throw koError(0, e && e.message);
     } finally {
         ab.done();

@@ -84,6 +84,13 @@ function apiFor(id,cleanups){
         translate(data){cleanups.push(translations.register(id,data,titleDictionaries.has(id)?()=>promptDictionary(id):null));},
     });
 }
+// 1.1.2 실리태번 기본 프롬프트 항목 이름(World Info (before) · Chat History …): 「실리태번 한글화」를 켠 동안 프롬프트 목록에서 한글로 보여요(끄면 원문 그대로).
+//   사전(st-prompt-names.js)은 서랍을 처음 쓸 때 받아요. 프리셋 사전보다 우선순위가 낮아 프리셋 고유 번역이 먼저예요.
+function basicPromptNames(cleanups){
+    let off=null,gone=false;
+    cleanups.push(()=>{gone=true;off?.();off=null;});
+    onGate('drawer',()=>{if(!gone)import('./st-prompt-names.js').then(module=>{if(!gone)off=translations.register('st-names',module.default);}).catch(error=>console.warn('[Blue Lemonade] 기본 항목 이름 사전을 받지 못했어요',error));},'st-names');
+}
 async function startOne(item,current){
     const id=item.id;
     try{
@@ -96,6 +103,7 @@ async function startOne(item,current){
         const cleanups=[],realm=createRealm(id);
         running.set(id,{realm,cleanups,started:Date.now()});
         install(apiFor(id,cleanups),realm.window);
+        if(id==='korean')basicPromptNames(cleanups);
         if(running.has(id))status(id,'사용 중');
     }catch(error){stop(id);failedAt.set(id,Date.now());status(id,`실행 오류: ${error?.message||error}`);}
 }

@@ -901,7 +901,7 @@ export function parseBatchResult(raw, count, meta = {}, sources) {
     const squareInSource = n => Boolean(sources?.some(s => new RegExp(String.raw`^[ \t]*\[[ \t]*${n}[ \t]*\]`, 'm').test(String(s ?? ''))));
     const fail = () => { throw Object.assign(Error('문단 번호나 응답 형식이 맞지 않아 번역을 적용하지 않았어요. 다시 시도해 주세요.'), { format: true }); };
     const found = new Map();
-    let id = null, buffer = [];
+    let id = null, buffer = [], viaSquare = false;
     const flush = () => {
         if (id === null) return;
         const body = buffer.join('\n'); // 꼬리 메모는 번호를 맞춘 뒤(1부터 매긴 답) 원문 문단과 견줘 뺀다
@@ -912,7 +912,7 @@ export function parseBatchResult(raw, count, meta = {}, sources) {
         let hit = mark.exec(line);
         if (!hit && mode === 'loose' && id !== null) {
             const square = SQUARE_MARK.exec(line);
-            if (square && Number(square[1]) === id + 1 && !found.has(id + 1) && !squareInSource(square[1])) hit = square;
+            if (square && Number(square[1]) === id + 1 && !found.has(id + 1) && !squareInSource(square[1])) { hit = square; viaSquare = true; }
         }
         if (hit) { flush(); id = Number(hit[1]); buffer = [line.slice(hit[0].length)]; }
         else if (id !== null) buffer.push(line);
@@ -920,7 +920,9 @@ export function parseBatchResult(raw, count, meta = {}, sources) {
     flush();
     if (found.size !== count) fail();
     // 모델이 1부터 다시 매긴 답(1..N, 0 없음)은 한 칸 내려 받는다 — 개수 · 중복 검사는 그대로
-    if (!found.has(0) && found.has(count) && [...found.keys()].every(k => k >= 1 && k <= count)) {
+    // [1.1.2 감사 T3] ⟦n⟧ 답 안의 [n] 줄을 표시로 받은 답은 내려 받지 않아요(형식 오류로 다시 물음). 0번 문단을 빠뜨리고 지어낸 [2] 줄을 쓴 답이
+    //   「1부터 다시 매긴 답」과 같아 보여, 한 칸씩 밀린 번역(미나 문단 자리에 렉스 번역)이 오류 없이 붙었어요
+    if (!found.has(0) && found.has(count) && !viaSquare && [...found.keys()].every(k => k >= 1 && k <= count)) {
         for (let k = 1; k <= count; k++) { found.set(k - 1, found.get(k)); found.delete(k); }
         meta.renumbered = true;
     }

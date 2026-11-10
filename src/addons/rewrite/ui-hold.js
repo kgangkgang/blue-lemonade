@@ -1,5 +1,8 @@
 // 답 끝 검사 중에는 전송 상태만 잠그고 조작부만 숨겨요. body 속성과 채팅 본문은 건드리지 않아요.
 export const REWRITE_ACTION_SELECTOR = '#send_but, #mes_continue, #mes_impersonate, #chat .last_mes .mes_buttons, #chat .last_mes .mes_reasoning_actions';
+// 입력판 단추는 실리태번의 생성 중(body[data-generating])처럼 칸까지 접어요. 보이지만 않게 두면 빈 칸이 남아 멈춤 단추가 그만큼 옆으로 밀려요.
+// 채팅 쪽 조작부는 칸을 남겨요(글이 밀리지 않게).
+export const REWRITE_FORM_SELECTOR = '#send_but, #mes_continue, #mes_impersonate';
 
 /** 겹친 검사도 마지막 소유자가 끝날 때 풀어요. 본체가 이미 잠갔으면 그 상태를 그대로 빌려요. */
 export function createRewriteUiHold({ document: doc, getSendLocked, setSendLocked, hideSwipes, showSwipes }) {
@@ -33,6 +36,7 @@ export function createRewriteUiHold({ document: doc, getSendLocked, setSendLocke
                     setSendLocked(true);
                     hideSwipes();
                     for (const el of doc.querySelectorAll(REWRITE_ACTION_SELECTOR)) write(el, 'visibility', 'hidden');
+                    for (const el of doc.querySelectorAll(REWRITE_FORM_SELECTOR)) write(el, 'display', 'none');
                     write(doc.getElementById('mes_stop'), 'display', 'flex');
                 } catch (error) {
                     users = 0;

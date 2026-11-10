@@ -381,7 +381,7 @@ body.salty .popup[data-bl-popup~="notice"] .popup-controls .popup-button-cancel 
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  background: var(--shade-2);
+  background: var(--shade-2, #8a8a93); /* 1.1.2 테마를 끄면 변수가 없어 길이 투명해져 스위치가 안 보였어요 — 꺼져도 흰 · 검은 바탕 모두 3:1 넘는 회색 */
   transition: background-color 0.2s ease;
   pointer-events: none;
 }
@@ -393,12 +393,12 @@ body.salty .popup[data-bl-popup~="notice"] .popup-controls .popup-button-cancel 
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--bl-knob-face);
-  box-shadow: var(--bl-knob);
+  background: var(--bl-knob-face, #fff);
+  box-shadow: var(--bl-knob, 0 0 0 1px rgba(0,0,0,.3));
   transition: transform 0.2s ease;
 }
 .salty-switch input:checked + span {
-  background: var(--salty-fill-accent, var(--salty-accent));
+  background: var(--salty-fill-accent, var(--salty-accent, #2f6fd0));
 }
 .salty-switch input:checked + span::after {
   transform: translateX(18px);
@@ -1440,3 +1440,6 @@ body.salty-dark .salty-shapes button.on {
 /* 1.0.2 블루레몬에이드 제로 (src/zero-panel.js): 제로가 불러오지 않는 기능 칸은 흐리게 — 값은 그대로 보관 */
 .salty-panel .bl-zero-off { opacity: .55; }
 .salty-panel .bl-zero-banner { border-left: 3px solid var(--salty-accent, currentColor); padding-left: .6em; }
+
+/* 1.1.2 테마를 끈 동안 머리 스위치 옆 「꺼짐 · 눌러서 켜기」(꺼졌을 때만 · 누르면 켜져요) — 테마 변수가 없어도 보이게 색은 물려받기 */
+.bl-off-hint { margin-left: 8px; font-size: 12px; line-height: 1.4; color: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; white-space: nowrap; }

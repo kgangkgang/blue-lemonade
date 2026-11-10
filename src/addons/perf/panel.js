@@ -262,7 +262,10 @@ function renderBudgetWarning() {
     const changed = budget.inheritedHostChanged();
     box.hidden = !changed;
     if (changed) {
-        box.textContent = `본체의 API 주소가 키를 넣을 때와 달라졌어요. 다른 서버로 키가 가지 않게 조회를 멈췄어요. 같은 서버가 맞으면 API 키 칸을 한 번 저장하고, 아니면 서버 주소를 직접 적어 주세요.`;
+        // [1.1.2 감사 K1] 키를 넣을 때의 서버가 적혀 있지 않은 옛 설정도 조회를 멈춰요
+        box.textContent = budget.config().keyHost
+            ? `본체의 API 주소가 키를 넣을 때와 달라졌어요. 다른 서버로 키가 가지 않게 조회를 멈췄어요. 같은 서버가 맞으면 API 키 칸을 한 번 저장하고, 아니면 서버 주소를 직접 적어 주세요.`
+            : `이 키를 어느 서버에서 받았는지 적혀 있지 않아, 다른 서버로 키가 가지 않게 조회를 멈췄어요. 키를 받은 중계 서버 주소를 서버 주소 칸에 직접 적어 주세요.`;
     }
 }
 

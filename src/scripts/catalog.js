@@ -1,6 +1,6 @@
 // 내장 스크립트 목록. 코드는 src/scripts/plain/<file>.js 모듈이고 켤 때 처음 받아요(runtime.js). 9.0.7 부터 iframe 없이 테마 창에서 돌아요.
 export const SCRIPT_CATALOG = [
-  {id:'korean',name:'실리태번 한글화',version:'1.4.8',icon:'fa-language',description:'남아 있는 영어 메뉴와 기본 안내를 한글로 보여요. 대화와 입력한 값은 그대로예요.',match:['__sillyTavernKoreanUI_v1'],file:'korean'},
+  {id:'korean',name:'실리태번 한글화',version:'1.4.8',icon:'fa-language',description:'남아 있는 영어 메뉴와 기본 안내, 프롬프트 목록의 기본 항목 이름을 한글로 보여요. 대화와 입력한 값은 그대로예요.',match:['__sillyTavernKoreanUI_v1'],file:'korean'},
   {id:'helper',name:'실리태번 헬퍼 한글화',version:'1.4.0',icon:'fa-puzzle-piece',description:'헬퍼 메뉴·단추·스크립트 관리 화면의 짧은 이름을 한글로 보여요. 긴 도움말·공지는 원래 말 그대로예요.',match:['__tavernHelperKoreanUI_v1'],file:'helper'},
   {id:'deus',name:'데우스 프롬프트 번역',version:'3.0',icon:'fa-diamond',description:'데우스 V3 · 2.5 프롬프트·정규식 제목과 편집 힌트를 번역해요. 저장되는 이름과 본문은 바꾸지 않아요.',match:['Prompt Name Translator','데우스'],file:'deus'},
   {id:'sola',name:'솔라 프롬프트 번역',version:'1.0.0',icon:'fa-sun',description:'Sola V4 프리셋의 프롬프트·정규식 제목과 편집 힌트를 번역해요. 저장되는 이름과 본문은 바꾸지 않아요.',match:['Prompt Name Translator','Gremlin Sola'],file:'sola'},

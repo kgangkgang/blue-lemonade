@@ -47,7 +47,8 @@ function inlineOnly(html, label) {
     assert.ok(!/javascript:/i.test(bare), `${label}: javascript: 없음`);
     for (const m of bare.matchAll(/<([a-z]+)((?:\s[^>]*)?)>/g)) {
         const attrs = m[2].replace(/\sstyle="[^"]*"/, '').trim();
-        assert.ok(!attrs || /^(?:open(?:="")?|aria-hidden="true")?$/.test(attrs), `${label}: <${m[1]}> 는 style 만 (${attrs})`);   // 1.0.1 눌러 접는 상자는 open=""
+        const homeLink = m[1] === 'a' && attrs === 'href="https://kkangtong.xyz/posts/157369" target="_blank" rel="noopener noreferrer" title="블루레몬에이드"';   // 1.1.2 레몬 틀의 레몬 그림 → 블루레몬에이드 소개 글
+        assert.ok(!attrs || homeLink || /^(?:open(?:="")?|aria-hidden="true")?$/.test(attrs), `${label}: <${m[1]}> 는 style 만 (${attrs})`);   // 1.0.1 눌러 접는 상자는 open=""
     }
     return bare;
 }
@@ -157,7 +158,7 @@ await test('연결: 시작 그래프 밖 · 도구 줄 · 설정 · 검색 사�
     assert.match(index, /\['startLogCopy', \(\) => import\('\.\/src\/log-copy\.js'\)/, '3층(유휴)에서 받아요');
     assert.match(read('src/log-copy.js'), /import\('\.\/log-copy-sheet\.js'\)/, '시트는 처음 쓸 때');
     assert.match(read('src/log-copy-sheet.js'), /sandbox="allow-same-origin"/, '미리보기는 스크립트 없는 sandbox');
-    assert.match(read('src/log-copy-sheet.js'), /writeClipboard\(html, prettyLogHtml\(result\(\{ marks: true \}\)/, '복사 = 서식 + 그 HTML 코드 글자(1.0.1 사람이 고치기 쉬운 꼴 — log-copy-pretty.mjs)');
+    assert.match(read('src/log-copy-sheet.js'), /writeClipboard\(html, withCommentSlots\(prettyLogHtml\(insertHead\(copyBody\(result\(\{ marks: true \}\)\)\.html, lifted\.head\)/, '복사 = 서식 + 그 HTML 코드 글자(1.0.1 사람이 고치기 쉬운 꼴 — log-copy-pretty.mjs · 1.1.2 그림 주소는 맨 앞 <style> 로 — log-copy-lift.mjs)');
     assert.match(read('src/settings.js'), /logCopy: \{ on: true, shape: 'card'/);
     assert.match(read('src/panel.js'), /toggle\('logCopy\.on'/);
     assert.match(read('src/settings-search.js'), /'로그 복사','로그 복사 서식 복사 그대로 복사/);

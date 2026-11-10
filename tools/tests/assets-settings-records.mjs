@@ -111,7 +111,7 @@ await test('망가진 저장 값은 기본으로, 사용자가 끈 스위치 · 
     assert.equal(s.promptEnabled, false); assert.equal(s.renderEnabled, false); assert.equal(s.randomGroups, false); assert.equal(s.onceOnly, false);
     assert.equal(s.promptPlacement, 'auto'); assert.equal(s.thumbSize, 'm');
     assert.deepEqual(s.disabled, {}); assert.deepEqual(s.presets, {}); assert.deepEqual(s.links, {});
-    assert.equal(s.pick.enabled, false); assert.equal(s.pick.count, 4); assert.equal(s.pick.connection, 'current');
+    assert.equal(s.pick.enabled, false); assert.equal(s.pick.count, 12); assert.equal(s.pick.connection, 'current');
     assert.equal(s.guideOpen, false, '6.2.0: 지금 쓰는 사람도 한 번은 접는다'); assert.equal(s.guideFolded620, true);
     s.guideOpen = true; f.S.initSettings();
     assert.equal(s.guideOpen, true, '그 뒤에는 사용자가 연 대로');

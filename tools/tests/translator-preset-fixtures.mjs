@@ -1,11 +1,14 @@
-// 시험 고정물 (시험 아님): 프리셋별 모델 답 꼴 그대로 지어낸 메시지 + 그 프리셋의 표시 정규식(찾기는 원작 그대로, 바꿀 글은 style · 그림을 뺀 뼈대).
+// 시험 고정물 (시험 아님): 프리셋별 모델 답 꼴 그대로 지어낸 메시지 + 그 프리셋의 표시 정규식(데우스는 찾기가 원작 그대로 · 바꿀 글은 style · 그림을 뺀 뼈대, 과일 계열은 Blue Lemonade 가 지어낸 대체 식).
 //   인물 · 장소는 지어낸 것이에요. 데우스 2.5 · 데우스 V3 · 레모나(데우스식 시간 상태창) · 과일 6.4 · 청과 2.0 · 야한 과일 2.0.
 
 // 출처 · 라이선스: 이 파일의 표시 정규식(찾기 식 · 바꿀 글의 뼈대)은 데우스 엑스 마키나(Deus ex Machina, lsennn — 아래 데우스 2.5 · V3 정규식,
 //   https://github.com/lsennn/Deus-ex-machina) 프리셋에서 옮긴 것이에요. 원작은 CC BY-NC-SA 4.0
 //   (https://creativecommons.org/licenses/by-nc-sa/4.0/) 이라 이 파일만 테마의 다른 파일(AGPL-3.0)과 달리 CC BY-NC-SA 4.0 조건으로 배포해요
 //   — 비상업 목적으로, 같은 조건으로만 다시 나눌 수 있어요. 바꾼 것: 바꿀 글에서 style · 그림을 뺐어요. 메시지 · 인물은 지어낸 것이에요. 원작자의 보증을 뜻하지 않아요.
-//   레모나 · 과일 · 청과 · 야한 과일 프리셋 정규식의 출처: 원작 배포본(라이선스 표기 없음).
+//   과일 · 청과 · 야한 과일 줄의 찾기 식 넷(상태창 둘 · 요약 · 숨기는 칸)은 원작 정규식이 아니에요: 같은 꼬리표(<status_bar> · <meow_FM> · <disclaimer> · 주석)를
+//   같은 자리로 잡도록 Blue Lemonade 가 새로 쓴 대체 식이에요. 원작 식은 저장소에 담지 않아요(과일 원작 @KKM · 청과 「赫斯帕里德斯」의 이용 조건 — THIRD-PARTY-NOTICES.md).
+//   원작과 같은 자리를 잡는지는 원작 사본을 가진 기기에서만 봐요: tools/tests/translator-preset-local.mjs (BL_PRESET_ORIGINALS).
+//   레모나 줄은 레모나 프리셋에서 옮긴 것이 없어요: 지어낸 메시지에 위 데우스 V3 정규식을 그대로 써요(레모나는 CC BY-NC-ND 4.0 · 외부 배포 금지라 본문 · 이름 · 정규식을 담지 않아요).
 const prose = (open = '<prose>', close = '</prose>') => `${open}
 Rain needled the window. Rex leaned against the doorframe, arms folded, watching the city lights blur into long streaks of gold.
 
@@ -154,10 +157,10 @@ const D25_TRACKER = {
 };
 const D25_FALLBACK = { find: String.raw`/<tracker\b[^>]*>\s*([\s\S]*?)\s*<\/tracker\s*>/gim`, replace: '<details open class="dem-track" open><summary><span class="dem-card__title">@Tracker</span><span class="dem-card__tag">Recovered</span></summary><div class="dem-card__body">$1</div></details>' };
 const COLOR = { find: String.raw`/<span\b(?=[^>]*\bstyle\s*=\s*"[^"]*\bcolor\s*:\s*([^;"']+)[^"]*")[^>]*>([\s\S]*?)<\/span>/gi`, replace: '<font color="$1">$2</font>' };
-const FRUIT_STATUS = { find: String.raw`/<status_bar>([\s\S]*?)<\/status_bar>/i`, replace: '```html\n<!DOCTYPE html><html><body><div class="fate-status-wrapper"><div class="fate-raw" hidden>$1</div></div></body></html>\n```' };
-const INFO_STATUS = { find: String.raw`/<status_bar>\s*\[Info\|(.*?)\|(.*?)\|(.*?)\|(.*?)\]\s*\[Quote\|(.*?)\]\s*\[Outfit\|(.*?)\|(.*?)\]\s*<\/status_bar>/s`, replace: '```html\n<!DOCTYPE html><html><body><div class="fate-status-wrapper" data-date="$1" data-time="$2"><p>$3</p><p>$4</p><p>$5</p><p>$6</p><p>$7</p></div></body></html>\n```' };
-const MEOW = { find: String.raw`/<meow_FM>\s+serial[:：](.+?)\s*time[:：](.+?)\s*scene[:：](.+?)\s*plot[:：](.+?)\s*(?:seeds[:：]\s?(.+?))?\s*</[^bp>]*>/si`, replace: '<div class="meow-fm-ghost"><details><summary><span>$1</span><span>$2</span></summary><div><div>→ $3</div><div>$4</div></div></details></div>' };
-const HIDE_FRUIT = { find: String.raw`/^[\s\S]*\[finire\]\s?|\s?<finish>[\s\S]*</finish>|\s?<disclaimer>[\s\S]*</disclaimer>|\s?<!--[\s\S]*?-->|(?<=<p style)-/gi`, replace: '' };
+const FRUIT_STATUS = { find: String.raw`/<status_bar\b[^>]*>([\s\S]*?)<\/status_bar\s*>/i`, replace: '```html\n<!DOCTYPE html><html><body><div class="fate-status-wrapper"><div class="fate-raw" hidden>$1</div></div></body></html>\n```' };
+const INFO_STATUS = { find: String.raw`/<status_bar>\s*\[Info\|([^|\]]*)\|([^|\]]*)\|([^|\]]*)\|([^\]]*)\]\s*\[Quote\|([^\]]*)\]\s*\[Outfit\|([^|\]]*)\|([^\]]*)\]\s*<\/status_bar>/`, replace: '```html\n<!DOCTYPE html><html><body><div class="fate-status-wrapper" data-date="$1" data-time="$2"><p>$3</p><p>$4</p><p>$5</p><p>$6</p><p>$7</p></div></body></html>\n```' };
+const MEOW = { find: String.raw`/<meow_FM>\s*serial\s*[:：]([^\n]*?)\s*time\s*[:：]([\s\S]*?)\s*scene\s*[:：]([\s\S]*?)\s*plot\s*[:：]([\s\S]*?)\s*(?:seeds\s*[:：][\s\S]*?)?<\/meow_FM>/i`, replace: '<div class="meow-fm-ghost"><details><summary><span>$1</span><span>$2</span></summary><div><div>→ $3</div><div>$4</div></div></details></div>' };
+const HIDE_FRUIT = { find: String.raw`/\s?<(finish|disclaimer)>[\s\S]*<\/\1>|\s?<!--[\s\S]*?-->/gi`, replace: '' };
 
 export const DISPLAY_REGEX = {
     deus25: [D25_TRACKER, D25_FALLBACK, COLOR],

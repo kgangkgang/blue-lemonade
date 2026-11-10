@@ -447,6 +447,20 @@ await test('sourceOf · canList · STATUS_SOURCES · KNOWN (새것 먼저 · 중
     // 2026-10-13 Argon 출시 — 목록에는 있되 맨 앞(저장된 모델이 없을 때의 기본)은 예전 그대로
     assert.deepEqual(LM.KNOWN.makersuite.slice(0, 2), ['gemini-3.8-flash', 'gemini-4-argon']);
     assert.deepEqual(LM.KNOWN.vertexai.slice(0, 2), ['gemini-3.8-flash', 'gemini-4-argon']);
+    // 2026-11-10 Carbon 미리 — Argon 바로 다음 · 제공처 셋 모두 · 생각 짧게(Gemini 4) · 가격표는 아직 모름(지어내지 않음)
+    assert.deepEqual(LM.KNOWN.makersuite.slice(0, 3), ['gemini-3.8-flash', 'gemini-4-argon', 'gemini-4-carbon']);
+    assert.deepEqual(LM.KNOWN.vertexai.slice(0, 3), ['gemini-3.8-flash', 'gemini-4-argon', 'gemini-4-carbon']);
+    assert.equal(LM.KNOWN.openrouter[2], 'google/gemini-4-carbon');
+    // 2026-11-10 새 모델 — 같은 줄 앞 판 바로 앞 · 뒤 · 맨 앞(기본)은 그대로
+    const near = (s, id, next) => assert.equal(LM.KNOWN[s][LM.KNOWN[s].indexOf(id) + 1], next, `${s} ${id}`);
+    near('claude', 'claude-fable-5-2', 'claude-fable-5-1'); near('openai', 'gpt-6.1-sol', 'gpt-6.1-terra');
+    near('openrouter', 'anthropic/claude-fable-5.2', 'anthropic/claude-fable-5.1'); near('openrouter', 'openai/gpt-6.1-sol', 'openai/gpt-6.1-terra');
+    near('openrouter', 'moonshotai/kimi-k3.1-pro', 'moonshotai/kimi-k3');
+    assert.equal(LM.isClaude5Plus('claude-fable-5-2'), true); assert.equal(LM.lowEffort('claude', 'claude-fable-5-2'), 'low');
+    assert.deepEqual(LM.applyModelRequestRules('claude', 'claude-fable-5-2', { temperature: 1, top_p: 1, top_k: 5, max_tokens: 9 }), { max_tokens: 9 });
+    assert.deepEqual(LM.applyModelRequestRules('openai', 'gpt-6.1-terra', { temperature: 1, max_tokens: 9 }), { max_completion_tokens: 9 });
+    assert.equal(LM.lowEffort('google', 'gemini-4-carbon'), 'low');
+    assert.equal(LM.lowEffort('vertexai', 'gemini-4-carbon'), 'low');
     // 2026-10-08: 끝났거나 곧 끝나는 이름은 KNOWN 에 없음 (공급자 deprecations 문서)
     const RETIRED = {
         openai: ['o4-mini', 'gpt-4.1-nano', 'o3', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5.1', 'gpt-5.4-nano', 'gpt-5.3-chat-latest'],
@@ -580,7 +594,7 @@ await test('list: 받은 목록이 있으면 그것(새것 먼저) + 모델 등�
     try {
         let r = LM.list('openai', { saved: 'gpt-3.5-turbo' });
         assert.equal(r.live, false);
-        assert.deepEqual(r.ids.slice(0, 3), ['my-gpt', 'gpt-6.1-sol', 'gpt-6-astra']);
+        assert.deepEqual(r.ids.slice(0, 3), ['my-gpt', 'gpt-6.1-sol', 'gpt-6.1-terra']);   // 11-10 Terra 는 Sol 바로 다음
         assert.ok(r.ids.includes('gpt-3.5-turbo') && r.ids.indexOf('gpt-3.5-turbo') > r.ids.indexOf('gpt-4o-mini'), '화면 목록의 옛 이름은 뒤에');
         assert.equal(r.savedMissing, false);
         assert.deepEqual(LM.list('openai', { known: false }).ids, ['my-gpt', 'gpt-6-astra', 'gpt-3.5-turbo']);

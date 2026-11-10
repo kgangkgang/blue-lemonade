@@ -36,7 +36,7 @@ export function fruitTypographyGroup(kind){
 }
 
 export function fruitPromptMarkup(){
-    return `<div class="salty-label" data-search-anchor="과일">과일 계열 (과일 · 야한과일 · 청과)</div><p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https://discord.com/channels/1384945301780955246/1395707630302789653/1554887154583212064" target="_blank" rel="noopener noreferrer">과일 원문 보기 ↗</a> · <a href="https://github.com/kongkongmie/guoshizhixin" target="_blank" rel="noopener noreferrer">코드 ↗</a></p>${promptToolsMarkup('fruit')}${promptLinkMarkup()}<p class="salty-note">과일의 마음 스크립트가 실행 중일 때 적용돼요. 꾸미기를 끄면 과일의 원래 디자인으로 돌아가요.</p><p class="bl-prompt-source">과일의 마음 원작 표기 · KKM · AQING · ACHE</p>${fruitTypographyGroup('fruit')}`;
+    return `<div class="salty-label" data-search-anchor="과일">과일 계열 (과일 · 야한과일 · 청과)</div><p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https://discord.com/channels/1384945301780955246/1395707630302789653/1554887154583212064" target="_blank" rel="noopener noreferrer">과일 원문 보기 ↗</a> · <a href="https://discord.com/channels/1384945301780955246/1550907162287538257/1560210546773463134" target="_blank" rel="noopener noreferrer">청과 · 야한과일 원문 보기 ↗</a> · <a href="https://github.com/kongkongmie/guoshizhixin" target="_blank" rel="noopener noreferrer">코드 ↗</a></p>${promptToolsMarkup('fruit')}${promptLinkMarkup()}<p class="salty-note">과일의 마음 스크립트가 실행 중일 때 적용돼요. 꾸미기를 끄면 과일의 원래 디자인으로 돌아가요.</p><p class="bl-prompt-source">과일의 마음 원작 표기 · KKM · AQING · ACHE</p>${fruitTypographyGroup('fruit')}`;
 }
 
 export function bindPromptTools(root){

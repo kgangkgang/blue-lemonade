@@ -105,7 +105,7 @@ export function messagesInBody(path, body) {
  */
 export function createEmptyGuard(env) {
     const known = env.state?.known instanceof Map ? env.state.known : new Map();        // 키 → 이 페이지에서 본 메시지 수 (> 0)
-    const cleared = env.state?.cleared instanceof Set ? env.state.cleared : new Set();  // 사용자가 메시지를 지워 0개로 만든 채팅
+    const cleared = env.state?.cleared instanceof Set ? env.state.cleared : new Set();  // 사용자가 메시지를 지워 0개로 만든 채팅 (다시 메시지가 생기면 지워요 — 채팅을 열 때 · 메시지가 있는 저장을 볼 때)
     const suspect = env.state?.suspect instanceof Map ? env.state.suspect : new Map();  // 키 → 불러오기가 비어 끝났을 때의 아는 수
     const stats = { checked: 0, blocked: 0, asked: 0, suspects: 0, userCleared: 0 };
     const log = [];
@@ -200,6 +200,7 @@ export function createEmptyGuard(env) {
         const sameAsLive = live?.key === target;
         // 빠른 길: 지금 채팅이 그 파일이고 메시지가 있으면 본문을 읽지 않는다
         if (sameAsLive && live.length > 0) {
+            cleared.delete(target);   // 1.1.2 다시 메시지가 생겼어요 — 「사용자가 비움」 표시는 여기까지(남겨 두면 그 뒤의 0개 저장을 못 막아요)
             const hold = suspect.get(target);
             if (hold !== undefined && live.length < hold) {
                 return blocked({ path, target, reason: 'suspect', messages: live.length, had: hold });
@@ -211,6 +212,7 @@ export function createEmptyGuard(env) {
         const messages = messagesInBody(path, body);
         if (messages === null) return { block: false };
         if (messages > 0) {
+            if (!sameAsLive) cleared.delete(target);   // 1.1.2 지금 채팅이 아닌 파일도 메시지가 있는 저장을 봤으면 같아요
             const hold = suspect.get(target);
             if (hold !== undefined && messages < hold) return blocked({ path, target, reason: 'suspect', messages, had: hold });
             return { block: false };
@@ -239,6 +241,7 @@ export function createEmptyGuard(env) {
         const target = key ?? live?.key ?? null;
         if (!target) return null;
         if (live?.key === target && live.length > 0) {
+            cleared.delete(target);   // 1.1.2 check 와 같아요
             const hold = suspect.get(target);
             if (hold === undefined) { known.set(target, live.length); return null; }
             if (live.length >= hold) return null;
@@ -248,6 +251,7 @@ export function createEmptyGuard(env) {
         const messages = messagesInBody(path, body);
         if (messages === null) return null;
         const hold = suspect.get(target);
+        if (messages > 0 && live?.key !== target) cleared.delete(target);
         if (messages > 0) return hold !== undefined && messages < hold ? Promise.resolve(blocked({ path, target, reason: 'suspect', messages, had: hold })) : null;
         if (cleared.has(target)) return null;
         const had = known.get(target) ?? hold ?? 0;

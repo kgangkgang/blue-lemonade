@@ -262,7 +262,7 @@ await test('받기 전: 모델 등록 → 최신 이름(KNOWN, 새것 먼저) ·
     reset({ ext: { model_register: { sources: { openai: ['my-gpt'], claude: ['claude-x-registered'] } } } });
     pageSelects({ model_openai_select: ['my-gpt', 'gpt-6-sol', 'gpt-4-0613', 'babbage-002', 'whisper-1'], model_claude_select: ['claude-haiku-5', 'claude-3-opus-20240229', 'claude-sonnet-5-5'] });
     const openai = RW.modelChoices('openai', 'gpt-5.4-mini');
-    assert.deepEqual(openai.ids.slice(0, 3), ['my-gpt', 'gpt-6.1-sol', 'gpt-6-astra']);
+    assert.deepEqual(openai.ids.slice(0, 3), ['my-gpt', 'gpt-6.1-sol', 'gpt-6.1-terra']);   // 11-10 Terra 는 Sol 바로 다음
     assert.deepEqual(openai.ids, ['my-gpt', ...LM.KNOWN.openai], '모델 등록 + KNOWN 만 (실리태번의 긴 고정 목록 gpt-4-0613 … 은 안 붙임)');
     assert.equal(openai.live, false);
     assert.equal(openai.savedMissing, false);

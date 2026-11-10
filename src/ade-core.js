@@ -58,6 +58,11 @@ export function noteUserPick(state, key, family, flags) {
     return state;
 }
 
+/** 기억한 채팅방 목록 — 적힌 차례 그대로 [{ key, family }] (설정 창의 「기억한 채팅방」 목록) */
+export function listChatMemory(state) {
+    return Object.entries(state?.chats || {}).map(([key, family]) => ({ key, family }));
+}
+
 /** 채팅방 기억 하나 지우기 (지웠으면 true) */
 export function forgetChat(state, key) {
     if (!key || !state.chats[key]) return false;

@@ -92,7 +92,7 @@ export function startThemeSettingsSync({ getSalty, save, after } = {}) {
         const result = mergeSalty(salty, view(from), view(remote));
         view.settle();
         base = clone(remote);   // 서버 값까지는 맞췄다 — 이 탭만 가진 것은 다음 저장이 서버로
-        if (result.changed) { try { after?.(); } catch (error) { console.warn('[Blue Lemonade] 설정 합친 뒤 다시 적용', error); } }
+        if (result.changed) { try { globalThis.window?.dispatchEvent?.(new Event('bl:settings-merged')); after?.(); } catch (error) { console.warn('[Blue Lemonade] 설정 합친 뒤 다시 적용', error); } }
         return { pulled: result.changed ? 1 : 0, removed: 0, needSave: result.needSave };
     }, { begin: () => { readFrom = base; } });
     startSettingsMerge({ save });

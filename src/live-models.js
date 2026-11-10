@@ -122,23 +122,27 @@ export const canList = (source) => STATUS.has(sourceOf(source));
  */
 // 2026-10-13: gemini-4-argon 출시 (Vertex AI · Google AI Studio · OpenRouter google/gemini-4-argon) — 예전 기본 바로 다음에.
 //   맨 앞은 저장된 모델이 없을 때의 기본(번역 · 다시 쓰기 · 한글화 연결의 ids[0])이라, 값이 훨씬 비싼 새 모델을 거기 두지 않는다.
-const GEMINI = Object.freeze(['gemini-3.8-flash', 'gemini-4-argon', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite',
+// 2026-11-10: gemini-4-carbon 미리 (10-28 발표 · 아직 일부 보안 협력사만 — 공개 API · 모델 문서 · 가격표에 없음, 출시 뒤 가격 · 문맥은 가격표 갱신이 채운다)
+//   근거: https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-carbon/ — Argon 바로 다음에.
+const GEMINI = Object.freeze(['gemini-3.8-flash', 'gemini-4-argon', 'gemini-4-carbon', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite',
     'gemini-3.1-pro-preview', 'gemini-3.1-flash-lite', 'gemini-3-flash-preview', 'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+// 2026-11-10: claude-fable-5-2 (11-09 · platform.claude.com/docs/en/models/fable-5-2/overview) · gpt-6.1-terra (10-26 · developers.openai.com/api/docs/models/gpt-6.1-terra) ·
+//   OpenRouter anthropic/claude-fable-5.2 · openai/gpt-6.1-terra · moonshotai/kimi-k3.1-pro (10-23 · platform.kimi.ai/docs/pricing/chat) — 같은 줄의 앞 판 바로 앞 · 뒤에, 맨 앞(기본)은 그대로.
 // 2026-10-08: claude-haiku-5-5 (10-07) · anthropic/claude-haiku-5.5 · grok-4.6/4.5/4.3 · mistral-large-4-0 를 넣고, 끝났거나 곧 끝나는 이름을 뺌
 //   (각 공급자 deprecations 문서: o4-mini · gpt-4.1-nano 10-23 · gpt-5 · o3 12-11 · gpt-5.1 · gpt-5.4-nano 2027-04-01 · gpt-5.3-chat-latest 08-10 ·
 //   claude-sonnet-4-5 11-30 · groq llama 08-16 · grok-4 05-15 · pixtral-large · open-mistral-nemo · c4ai-aya-expanse-8b · deepseek-v4-flash ·
 //   OpenRouter gemini-2.5-pro 10-20). 이미 고른 값은 savedMissing 으로 그대로 보인다.
 export const KNOWN = Object.freeze({
-    openai: Object.freeze(['gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-sol', 'gpt-6-luna', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.6',
+    openai: Object.freeze(['gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-astra', 'gpt-6-sol', 'gpt-6-luna', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.6',
         'gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.2', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4o-mini']),
-    claude: Object.freeze(['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5', 'claude-fable-5-1', 'claude-opus-5', 'claude-sonnet-5',
+    claude: Object.freeze(['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5', 'claude-fable-5-2', 'claude-fable-5-1', 'claude-opus-5', 'claude-sonnet-5',
         'claude-fable-5', 'claude-haiku-4-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-4-6', 'claude-opus-4-5']),
     makersuite: GEMINI,
     vertexai: GEMINI,
-    openrouter: Object.freeze(['anthropic/claude-haiku-5.5', 'google/gemini-4-argon', 'mistralai/mistral-large-4-0', 'openai/gpt-6.1-sol', 'anthropic/claude-sonnet-5.5', 'z-ai/glm-5.3-prime',
+    openrouter: Object.freeze(['anthropic/claude-haiku-5.5', 'google/gemini-4-argon', 'google/gemini-4-carbon', 'mistralai/mistral-large-4-0', 'openai/gpt-6.1-sol', 'openai/gpt-6.1-terra', 'anthropic/claude-sonnet-5.5', 'z-ai/glm-5.3-prime',
         'qwen/qwen3.8-max-prime', 'anthropic/claude-opus-5.5', 'cohere/command-a-plus', 'openai/gpt-6-sol', 'openai/gpt-6-luna', 'x-ai/grok-4.7',
-        'google/gemini-3.8-flash', 'anthropic/claude-fable-5.1', 'openai/gpt-6-astra', 'google/gemini-3.7-flash', 'deepseek/deepseek-v4.1-flash',
-        'anthropic/claude-opus-5', 'anthropic/claude-sonnet-5', 'moonshotai/kimi-k3', 'z-ai/glm-5.3', 'google/gemini-3.5-flash-lite',
+        'google/gemini-3.8-flash', 'anthropic/claude-fable-5.2', 'anthropic/claude-fable-5.1', 'openai/gpt-6-astra', 'google/gemini-3.7-flash', 'deepseek/deepseek-v4.1-flash',
+        'anthropic/claude-opus-5', 'anthropic/claude-sonnet-5', 'moonshotai/kimi-k3.1-pro', 'moonshotai/kimi-k3', 'z-ai/glm-5.3', 'google/gemini-3.5-flash-lite',
         'google/gemini-3.1-pro-preview', 'openai/gpt-5.6-terra', 'openai/gpt-5.6-luna', 'qwen/qwen3.8-max-0902', 'x-ai/grok-4.6',
         'deepseek/deepseek-v4-pro', 'mistralai/mistral-medium-3-5', 'anthropic/claude-haiku-4.5']),
     deepseek: Object.freeze(['deepseek-flash', 'deepseek-v4-pro']),
