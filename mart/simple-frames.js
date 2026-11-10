@@ -205,16 +205,19 @@ function originalBase(info) {
  * @param {{ mode?: 'light'|'dark', main?: string }} [options] main: 주인공 화자 글자(없으면 M → A)
  * @returns {string} 꼴이 아니면 받은 그대로
  */
+/** 「원래 색」 표시 — toneSimple(html, ORIGINAL, { mode }) 는 틀을 만든 색 그대로(캐릭터 색 클래스 이름까지 이식판 글자 그대로) 낮 · 밤만 바꿔요 */
+export const ORIGINAL = Symbol('원래 색');
 export function toneSimple(html, K, { mode = 'dark', main } = {}) {
     const info = simpleFrameInfo(html);
     if (!info || !info.key || !info.base || info.K0 === undefined) return html;
-    const k = speakerColor(K);
+    const original = K === ORIGINAL;
+    const k = original ? info.K0 : speakerColor(K);
     const origBase = originalBase(info), faces = facesOf(info, origBase);
     const origMode = modeOf(origBase), want = mode === 'light' ? 'light' : 'dark';
     const alt = origBase === 'gk-tl' ? 'gk-td' : 'gk-tl';
     const nowBase = want === origMode ? origBase : alt;
     const nowTn = want === origMode ? null : (want === 'dark' ? 'gk-tn-n' : 'gk-tn-d');
-    const cv = `gk-cv-${cvNameOf(k)}`;
+    const cv = original && info.cvClass ? info.cvClass : `gk-cv-${cvNameOf(k)}`;
     const renameCv = s => (info.cvClass ? s.split(`.${info.cvClass}`).join(`.${cv}`) : s);
     // ① 뿌리 클래스: gk 바로 뒤에 바탕 · 낮밤, 캐릭터 색 클래스는 새 색 이름
     const kept = info.classes.filter(c => c !== 'gk' && !BASES.includes(c) && !TN.includes(c)).map(c => (c === info.cvClass ? cv : c));
