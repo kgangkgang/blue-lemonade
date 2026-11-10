@@ -1,6 +1,7 @@
 // 프리셋 고르기 목록 폴더 (1.0.3) — 순수 계산 (DOM · 실리태번 없음, tools/tests/quick-preset-folders.mjs).
 // 폴더 = { id, name, open, items: [프리셋 이름] } — 실리태번 프리셋 고르기 칸(#settings_preset_openai)의 글(이름)로 기억해요.
-// 프리셋 하나는 폴더 하나에만. 지금 없는 이름(지웠거나 이름을 바꾼 프리셋)은 목록에 안 보이고 저장값에는 남아요(되살리면 다시 보여요).
+// 프리셋 하나는 폴더 하나에만. 지금 없는 이름(지운 프리셋)은 목록에 안 보이고 저장값에는 남아요(되살리면 다시 보여요).
+// 1.1.1 시제품: 이름을 바꾼 프리셋은 폴더가 따라가요 — 마지막으로 본 이름 목록(seen)과 견줘, 폴더 안 이름 하나가 사라지고 새 이름 하나가 생겼을 때만(followRenames).
 export const MAX_FOLDERS = 50;
 export const MAX_NAME = 40;
 const MAX_ITEMS = 1000;
@@ -84,3 +85,22 @@ export const removeFolder = (folders, id) => folders.filter(f => f.id !== id);
 export function folderOf(folders, name) {
     return folders.find(f => f.items.includes(name))?.id || '';
 }
+
+export const MAX_SEEN = 2000;
+/**
+ * 이름 바뀜 따라가기 (1.1.1 시제품): seen(마지막으로 본 이름들) → names(지금 이름들)에서 사라진 이름이 꼭 하나이고 그것이 폴더 안이며, 새 이름도 꼭 하나면 그 자리에 새 이름을 적어요.
+ * 둘 이상 사라졌거나 생겼으면(지우기 · 새로 만들기가 섞임) 어느 것이 어느 것인지 알 수 없어 건드리지 않아요 — 엉뚱한 프리셋을 폴더에 넣는 것보다 그대로가 나아요.
+ * 실리태번의 이름 바꾸기는 「새 이름으로 저장 → 옛 이름 지우기」라 목록에서는 사라짐 하나 · 생김 하나로 보여요.
+ * @returns {{ folders: object[], moved: [string, string][] }}
+ */
+export function followRenames(folders, seen, names) {
+    const before = new Set(Array.isArray(seen) ? seen : []), now = new Set(names);
+    if (!before.size) return { folders, moved: [] };
+    const gone = [...before].filter(name => !now.has(name)), fresh = [...now].filter(name => !before.has(name));
+    if (gone.length !== 1 || fresh.length !== 1) return { folders, moved: [] };
+    const [from] = gone, [to] = fresh;
+    if (!folders.some(f => f.items.includes(from)) || folders.some(f => f.items.includes(to))) return { folders, moved: [] };
+    return { folders: folders.map(f => ({ ...f, items: f.items.map(name => (name === from ? to : name)) })), moved: [[from, to]] };
+}
+/** 지금 이름 목록이 마지막으로 본 것과 같은가 (차례까지) */
+export const sameNames = (seen, names) => Array.isArray(seen) && seen.length === names.length && seen.every((name, i) => name === names[i]);

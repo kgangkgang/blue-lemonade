@@ -82,6 +82,7 @@ await test('새 면의 팔레트 잉크가 이전 대비 보정보다 우선하�
  for(const rule of rules)if(rule.decls.some(d=>fontProps.test(d.lname)))assert.ok(lib.spec(rule.selector)[0]<2,'글자 편집기의 아이디 두 개보다 낮게 두어요');
  const config=tidyFruitType({on:true,ownerOn:{sola:true,deus:false,fruit:false}});
  config.types['sola-feeling'].regions.info.on=true;config.types['sola-feeling'].regions.info.size=22;
- assert.ok(fruitTypeCss(config).includes(':is(div,span,p,b,i,em,strong,li,dt,dd)'), '솔라의 표 값과 단계 목록도 고른 본문 글자를 따라요');
+ // 1.1.1 restyle2: 안쪽 태그 :is(div,span,…) 는 태그마다 한 갈래로 적혀요(크롬 규칙 바구니) — 열 태그가 모두 주어로 있어야 해요
+ {const css=fruitTypeCss(config);for(const tag of ['div','span','p','b','i','em','strong','li','dt','dd'])assert.ok(new RegExp(` ${tag}[,{]`).test(css), '솔라의 표 값과 단계 목록도 고른 본문 글자를 따라요: '+tag);}
 });
 console.log(`솔라 스타일 ${passed}개 검사를 마쳤어요.`);

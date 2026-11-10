@@ -43,7 +43,8 @@ export function attachCompat(what, win = window) {
     // 전체 교체 시트가 먼저 왔어도 그 뒤에 붙여요. 나중에 화면 폭/브라우저 조건이 맞을 때도
     // 첫 시트 → 전체 시트 → 브라우저 → 폭 순서를 유지해 전체 규칙이 호환 규칙을 다시 덮지 않아요.
     const full = doc.getElementById('salty-lazy-css');
-    const base = full?.isConnected ? full : theme;
+    const md = doc.getElementById('salty-md-css');   // 1.1.1 마크다운 모양 시트가 테마 시트 바로 뒤에 있으면 그 뒤(원래 style.css 안 자리)
+    const base = full?.isConnected ? full : md?.isConnected && md.previousElementSibling === theme ? md : theme;
     const browser = doc.getElementById('salty-compat-browser');
     if (what === 'width' && browser?.isConnected) browser.after(link);
     else if (what === 'browser' && doc.getElementById('salty-compat-width')?.isConnected) doc.getElementById('salty-compat-width').before(link);

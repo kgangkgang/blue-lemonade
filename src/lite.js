@@ -15,6 +15,42 @@ const PREVIEW_URL = new URL('./preview.gen.css', import.meta.url).href;
 let previewLink = null;   // <link id="salty-preview-css">
 let restored = false;     // 켜져 있나 (media all)
 
+// 1.1.1 가볍게: css/61-markdown.css 가운데 body.salty.salty-md-*(고른 마크다운 모양)가 있어야만 맞는 규칙은 첫 시트(style.css)에서 빼 src/markdown.gen.css 로 —
+//   기본값(고른 모양 없음)이면 받지 않아요(0KB). 하나라도 고르면 테마 시트 바로 뒤(원래 style.css 안 자리처럼 미리보기 · 전체 · 호환 · 게으른 칸 시트보다 앞)에 붙여요.
+//   전체 시트(둘째 장 style-lazy.gen.css)에는 이 규칙이 제자리에 그대로 있어, 그 시트가 켜지면 이 시트는 꺼요(src/theme-sheet.js). 뒤 모듈과 같은 요소를 같은 특이도로 겨루는 규칙이 없어
+//   첫 시트 뒤로 옮겨도 화면이 같아요(tools/tests/markdown-css-split.mjs).
+const MD_URL = new URL('./markdown.gen.css', import.meta.url).href;
+export const MD_SHEET_ID = 'salty-md-css';
+/** 테마 시트 바로 뒤에 붙은 마크다운 모양 시트 (없으면 null) */
+function markdownAfter(sheet) {
+    const md = document.getElementById(MD_SHEET_ID);
+    return md?.isConnected && sheet?.ownerNode && md.previousElementSibling === sheet.ownerNode ? md : null;
+}
+/** 고른 마크다운 모양이 있으면(on) 그 시트를 붙여 켜고, 없거나 전체 시트가 켜졌으면 꺼요. applyAll 마다 불려도 바뀐 게 없으면 아무것도 안 해요 */
+export function syncMarkdownCss(on) {
+    let link = document.getElementById(MD_SHEET_ID);
+    const full = document.getElementById('salty-lazy-css');
+    const want = !!on && !(full?.isConnected && full.dataset.blFullTheme === 'ready');
+    if (!want) { if (link && link.media !== 'not all') link.media = 'not all'; return link; }
+    if (link?.isConnected) {
+        // 테마를 껐다 켜는 사이 다른 시트가 테마 시트 바로 뒤에 들어왔으면 원래 자리로 되돌려요(가벼운 사본 뒤에 붙은 미리보기보다 앞)
+        const owner = themeSheet()?.ownerNode;
+        if (owner?.isConnected && link.previousElementSibling !== owner) owner.after(link);
+        if (link.media !== 'all') link.media = 'all';
+        return link;
+    }
+    link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.id = MD_SHEET_ID;
+    link.href = MD_URL;
+    link.media = 'all';
+    link.addEventListener('error', () => { console.info('[Blue Lemonade] 마크다운 모양 CSS 를 못 받았어요 — 다음에 바꿀 때 다시 받아요'); link.remove(); }, { once: true });
+    const sheet = themeSheet();
+    if (sheet?.ownerNode?.isConnected) sheet.ownerNode.after(link);   // 테마 시트 바로 뒤 — 가벼운 사본(salty-ext-css)은 테마를 끈 동안만이라 함께 켜지지 않아요
+    else document.head.append(link);
+    return link;
+}
+
 // 폴더 이름이 blue-lemonade 가 아니어도(blue-lemonade-main …) 제 style.css 를 찾는다 — 이 파일 기준 상대 주소가 먼저, 옛 이름 규칙은 예비
 const OWN_SHEET = new URL('../style.css', import.meta.url).href;
 function themeSheet() {
@@ -39,7 +75,7 @@ export function preloadPreviewCss() {
     // 못 받으면 떼어 두고 다음에 다시 — 그동안 표본 칸은 폴백(숨김 · 안내 한 줄)이다
     link.addEventListener('error', () => { console.info('[Blue Lemonade] 미리보기 CSS 를 못 받았어요 — 다음에 열 때 다시 받아요 (실제 채팅은 그대로)'); link.remove(); if (previewLink === link) previewLink = null; }, { once: true });
     const sheet = themeSheet();
-    if (sheet?.ownerNode?.isConnected) (document.getElementById('salty-lazy-css')?.isConnected ? document.getElementById('salty-lazy-css') : sheet.ownerNode).after(link);   // 서랍 전용 <style id="salty-panel-css"> 가 이미 붙었으면 그 앞 — 원래 차례(본문 → 나머지(--split) → 미리보기 → 서랍 전용)
+    if (sheet?.ownerNode?.isConnected) (document.getElementById('salty-lazy-css')?.isConnected ? document.getElementById('salty-lazy-css') : markdownAfter(sheet) || sheet.ownerNode).after(link);   // 서랍 전용 <style id="salty-panel-css"> 가 이미 붙었으면 그 앞 — 원래 차례(본문 → 나머지(--split) → 미리보기 → 서랍 전용)
     else document.head.append(link);
     previewLink = link;
     return link;
@@ -163,7 +199,8 @@ export function deferredPreviewRuleCount() {
 // 계산했다 (폰 리그 4배: 글 붙이기 한 번 35 → 180~210ms, 그중 테마 몫 = 다시 계산하는 요소 1,091 → 791).
 // 8.2.1 테마가 꺼진 모드면 큰 시트 바로 뒤에 가벼운 사본(<link id="salty-ext-css">)이 있어요 — 미리보기 · 게으른 칸 <style> 은 그 뒤에 붙여야 원래 차례(본문 → 미리보기 → 게으른 칸)예요
 // 전체 교체 시트(<style id="salty-lazy-css">)가 있으면 그 뒤 — 본문 → 미리보기 → 서랍 전용이에요.
-const sheetTail = sheet => { const split = document.getElementById('salty-lazy-css'); if (split?.isConnected) return split; const ext = document.getElementById('salty-ext-css'); return ext?.isConnected && ext.previousElementSibling === sheet.ownerNode ? ext : sheet.ownerNode; };
+// 1.1.1 마크다운 모양 시트(<link id="salty-md-css">)가 테마 시트 바로 뒤에 있으면 그 뒤 — 본문(마크다운 포함) → 미리보기 → 게으른 칸이에요.
+const sheetTail = sheet => { const split = document.getElementById('salty-lazy-css'); if (split?.isConnected) return split; const md = markdownAfter(sheet); if (md) return md; const ext = document.getElementById('salty-ext-css'); return ext?.isConnected && ext.previousElementSibling === sheet.ownerNode ? ext : sheet.ownerNode; };
 const LAZY_SENTINEL = '#salty-lazy-panel-start';
 const LEGACY_POPUPS = '#character_popup, #world_popup, #select_chat_popup, #shadow_popup, #dialogue_popup, #export_format_popup';
 let panelStyle = null;  // 옮겨 둔 게으른 칸 규칙이 든 <style id="salty-panel-css">

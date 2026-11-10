@@ -9,12 +9,9 @@
 
 import { CHAT_PROVIDER, PROVIDERS, providerAt } from './addons/perf/pricing-providers.js';
 
-export const LEDGER_SYMBOL = Symbol.for('blue-lemonade.usage');
-export const LEDGER_VERSION = 1;
-export const KEEP_DAYS = 90;
-export const PAY_METHODS = Object.freeze(['크레딧', '실제 결제', '중계']);
-/** 원/달러 기본값 — 사용자가 설정에서 바꾼다 (서울외국환중개 매매기준율, 돈 지도 2026-10-20) */
-export const DEFAULT_KRW = Object.freeze({ rate: 1332.1, date: '2026-10-20', source: '서울외국환중개 매매기준율 (2026-10-20)' });
+// 1.1.1 가볍게: 상수 · originOf · dayKey · dayStart 는 시작 그래프의 usage-ledger-lite.js 에 두고 여기서는 그대로 다시 내보내요 (이 모듈 · 가격 제공처 표는 처음 쓸 때 받아요)
+import { PAY_METHODS, DEFAULT_KRW, originOf, dayStart } from './usage-ledger-lite.js';
+export { LEDGER_SYMBOL, LEDGER_VERSION, KEEP_DAYS, PAY_METHODS, DEFAULT_KRW, originOf, dayKey, dayStart } from './usage-ledger-lite.js';
 
 // ── 날짜별 단가 (기록 시각으로 고른다) ──
 // BL 가격표(공식 공개 단가, 매일 갱신)에 없는 기간만 여기 둔다. approx: 공식 확인이 안 된 값 → 줄에 「≈」와 note.
@@ -33,16 +30,6 @@ const str = (value, max) => {
 };
 const int = value => { const n = Math.round(Number(value)); return Number.isFinite(n) && n > 0 ? Math.min(n, 1e10) : 0; };
 const money = value => { const n = typeof value === 'number' || (typeof value === 'string' && value.trim()) ? Number(value) : NaN; return Number.isFinite(n) && n >= 0 && n < 1e6 ? n : null; };   // 7.7.2 test-gaps: null · '' · false · [] 를 0 달러(응답이 알려 준 비용)로 적지 않는다
-
-/** 주소에서 origin 만 (경로 · 검색어 · 계정 정보 · 키는 버린다). http(s) 가 아니면 '' */
-export function originOf(value) {
-    if (typeof value !== 'string' || !value) return '';
-    try {
-        const url = new URL(value);
-        if (!['https:', 'http:'].includes(url.protocol)) return '';
-        return url.origin;
-    } catch { return ''; }
-}
 
 /**
  * 받은 기록 한 건 → 남길 모양. 모르는 칸은 버리고, 숫자는 0 이상 정수, 글은 길이 제한 · 비밀처럼 보이면 버림. 못 쓰는 기록은 null.
@@ -71,18 +58,6 @@ export function normalizeEntry(raw, now = Date.now()) {
     const requestId = str(raw.requestId, 80); if (requestId) entry.requestId = requestId;
     const provider = str(raw.provider, 40); if (provider && (PROVIDERS[provider] || provider === 'other')) entry.provider = provider;
     return entry;
-}
-
-/** 이 기기 날짜 'YYYY-MM-DD' */
-export function dayKey(at) {
-    const d = new Date(at);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-/** 'YYYY-MM-DD' (이 기기 날짜)의 시작 시각 */
-export function dayStart(day) {
-    const [y, m, d] = String(day).split('-').map(Number);
-    return new Date(y, (m || 1) - 1, d || 1).getTime();
 }
 
 /**

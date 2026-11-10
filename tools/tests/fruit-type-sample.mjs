@@ -15,7 +15,8 @@ check('class 하나하나를 원래 이름 · custom- 이름 둘 다로 받아�
     assert.equal(stSelector('.dem-track'),':is(.dem-track,.custom-dem-track)');
     assert.equal(stSelector('#statusBar.dynamic-status-container'),'#statusBar:is(.dynamic-status-container,.custom-dynamic-status-container)');
     assert.equal(stSelector('.custom-dem-track'),'.custom-dem-track');
-    assert.equal(stCss('.a .b{line-height:1.6;font-family:"A.B"}\n.c{x:0.5}'),':is(.a,.custom-a) :is(.b,.custom-b){line-height:1.6;font-family:"A.B"}\n:is(.c,.custom-c){x:0.5}');
+    // 1.1.1 restyle2: 시트의 맨 오른쪽 칸 첫 class 는 두 갈래로 나눠 적어요(크롬 규칙 바구니 · tools/tests/css-restyle2.mjs)
+    assert.equal(stCss('.a .b{line-height:1.6;font-family:"A.B"}\n.c{x:0.5}'),':is(.a,.custom-a) .b,:is(.a,.custom-a) .custom-b{line-height:1.6;font-family:"A.B"}\n.c,.custom-c{x:0.5}');
     for(const type of FRUIT_TYPES)assert.equal(typeMatch(type),stSelector(type.root));
 });
 check('데우스 꾸미기 CSS 가 채팅의 .custom-dem-* 에 닿아요(6.5.9 부터 안 닿던 것)',()=>{
@@ -34,7 +35,7 @@ check('시간 표시는 옛 모양과 데우스 V3 모양을 둘 다 알아봐�
     for(const name of ['.dem-track__value','.dem-track-recovery__value','.dem-track__clock','.dem-track__date','.dem-track__place','.dem-track__sky','.dem-track__temp'])assert(info.includes(name),name);
     const s=tidyFruitType({ownerOn:{deus:true}});s.types['deus-tracker'].layout='vertical';
     const css=fruitTypeCss(s);
-    assert(css.includes(':is(.dem-track__grid,.custom-dem-track__grid){grid-template-columns:minmax(0,1fr)!important'),'V3 세로 배치는 안쪽 격자를 한 줄씩');
+    assert(css.includes('.dem-track__grid,') && css.includes('.custom-dem-track__grid{grid-template-columns:minmax(0,1fr)!important'),'V3 세로 배치는 안쪽 격자를 한 줄씩');   // 1.1.1 restyle2: 맨 오른쪽 class 는 두 갈래
     assert(FRUIT_TYPES.find(t=>t.id==='deus-conflict').regions.info[1].includes('> :not(summary)'),'갈등 카드 본문(이름 없는 칸)');
 });
 check('날씨 효과가 V3 트래커(__sky · 복구판 __place--context)도 읽어요',()=>{

@@ -51,6 +51,19 @@ check('청과 V2 새 이름과 이전 이름의 사전 항목을 함께 보존�
     if(row.legacyName)assert.equal(dictionary.prompts.find(p=>p.id===row.id&&p.name===row.legacyName)?.title,row.legacyTitle,'이전 판 이름도 지원해요');
   }
 });
+// 11-10 청과 헤스페리데스 V3.5X · V3.5C: 새 항목 8개(+ C 판 🕷️ 이름 하나)와 이름이 바뀐 원작 항목 12개 — 이전 판 이름도 그대로 지원해요.
+const qingguoV35=JSON.parse(fs.readFileSync(path.join(root,'tools/tests/fixtures/qingguo-hesperides-v35-names.json'),'utf8')).rows;
+check('청과 V3.5X · V3.5C 새 이름과 이전 이름의 사전 항목을 함께 보존해요',()=>{
+  assert.equal(qingguoV35.filter(r=>r.kind==='new').length,9);
+  assert.equal(qingguoV35.filter(r=>r.kind==='alias').length,12);
+  for(const row of qingguoV35){
+    const entry=dictionary.prompts.find(p=>p.id===row.id&&p.name===row.name);
+    assert.ok(entry,row.name);assert.equal(entry.title,row.title);assert.ok(entry.desc,row.name);
+    assert.equal(entry.title.split('｜').length,row.name.split('｜').length,'창 꼬리표 칸 수가 원문과 같아요: '+row.name);
+    const same=v=>String(v||'').normalize('NFKC').replace(/[︎️\s]/g,'');   // 사전은 이름을 이렇게 맞춰요(띄어쓰기 · 이모지 꼬리 무시)
+    if(row.legacyName)assert.equal(dictionary.prompts.find(p=>(!p.id||p.id===row.id)&&same(p.name)===same(row.legacyName))?.title,row.legacyTitle,'이전 판 이름도 지원해요');
+  }
+});
 {const src=path.join(root,'tools/scripts-src/fruit-family'),read=n=>JSON.parse(fs.readFileSync(path.join(src,n),'utf8'));
  const parts=['common','fruit','qingguo','sese'].map(n=>read(`prompts-${n}.json`)),norm=v=>String(v||'').normalize('NFKC').replace(/[︎️\s]/g,'');
  check('family dictionary: priority 20, partial, at least 460 prompt and 48 regex titles',()=>{assert.equal(dictionary.priority,20);assert.equal(dictionary.partial,true);assert.ok(dictionary.prompts.length>=460);assert.ok(dictionary.regex.length>=48)});

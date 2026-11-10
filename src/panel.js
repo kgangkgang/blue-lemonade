@@ -55,6 +55,7 @@ import { customCssReport, buildDiagnosis } from './diagnose.js';
 import { splashState, checkSplash, SPLASH_COMMAND, SPLASH_IMPORT, faviconFileState, checkFaviconFile, prepareFaviconCommand } from './splash.js';   // 1.0.0 되살림: 새로고침 화면 · 탭 아이콘 명령
 import { PRESETS, MAX_STYLES, captureStyle, applyStyleData, sameStyle, sharePayload, encodeStyle, decodeStyle, newStyleId, uniqueName, mergeFonts, currentKey, keyLabel } from './styles.js';
 import { charStyleModule } from './features.js';
+import { adeChatLabel, adeForgetChat, adeBase, adeSetBase, families as adeFamilies } from './ade.js';   // 1.1.1 시제품 에이드 갈아입기 (이 창은 시작 그래프 밖)
 import { listExtensionColorTargets } from './extension-colors.js';
 import { decodeAnyImage, imageWidth, imageHeight, IMAGE_ACCEPT } from './imagedecode.js';
 import { bindSettingsSearch, searchMarkup, paintSettingsSearch } from './settings-search.js';
@@ -615,6 +616,17 @@ function restNote(feature, part = '') {
     return who ? ` · <b class="bl-rest-note">${part}${who}${ga} 같은 기능을 켜고 있어 지금은 쉬어요</b>` : '';
 }
 
+// 1.1.1 시제품 에이드 갈아입기 (ade.js · 기본 꺼짐) — 켜 두면 지금 채팅방이 기억한 에이드와 「이 채팅방 기억 지우기」. ade.js 는 이 창(시작 그래프 밖)에서 바로 불러요(상태 읽기 · 지우기만)
+function adeRows(s) {
+    const q = s.quick || {};
+    const here = q.adeChat === true ? adeChatLabel() : '';
+    return `${cap('에이드 갈아입기', '시제품')}<div class="salty-group">
+        ${row('채팅방마다 다른 에이드', toggle('quick.adeChat', q.adeChat === true), `채팅방(캐릭터 · 그룹)마다 에이드를 기억해요 · 켠 뒤 채팅방에서 에이드를 고르면 그 방에 적히고, 다른 방으로 가면 기본 에이드로 돌아와요 · 밝기(화이트 · 나이트)는 지금 것을 따라요${here ? ` · 이 채팅방: ${esc(here)}` : ''}`)}
+        ${here ? '<div class="salty-btns"><button class="salty-btn" data-act="ade-forget">이 채팅방 기억 지우기</button></div>' : ''}
+        ${q.adeChat === true || q.adeDaily === true ? row('기본 에이드', `<select data-ade-base aria-label="기본 에이드">${adeFamilies().map(f => `<option value="${f}"${f === (adeBase() || 'blue') ? ' selected' : ''}>${esc(PALETTE_FAMILIES[f]?.label || f)}</option>`).join('')}</select>`, '채팅방 기억이 없는 방에서 쓰는 에이드예요 · 오늘의 에이드를 켜 두면 날마다 이 값이 바뀌어요 · 캐릭터별 스타일이 입혀진 채팅은 그 스타일 그대로예요') : ''}
+        ${row('오늘의 에이드', toggle('quick.adeDaily', q.adeDaily === true), '날마다 에이드가 차례로 바뀌어요(11벌 순서대로 · 커스텀 제외 · 같은 날은 같은 에이드) · 채팅방이 기억한 에이드가 있으면 그쪽이 먼저예요 · 오늘 직접 고른 에이드는 내일까지 그대로예요')}
+    </div>`;
+}
 function row(label, control, note = '') {
     labelHistoryControl(label, control);
     return `<div class="salty-row" data-search-anchor="${esc(label)}"><span>${label}${note ? `<small>${note}</small>` : ''}</span>${control}</div>`;
@@ -1157,7 +1169,7 @@ function tabTheme(s, sub) {
             ${stack('자동 기준', seg('auto.by', [['system', '기기 다크 모드'], ['time', '시간']]))}
             ${s.auto.by === 'time' ? `<div class="salty-row"><span>나이트 시작</span><input type="time" class="salty-time" data-time-path="auto.night" value="${esc(s.auto.night)}" aria-label="나이트 시작"></div><div class="salty-row"><span>화이트 시작</span><input type="time" class="salty-time" data-time-path="auto.day" value="${esc(s.auto.day)}" aria-label="화이트 시작"></div>` : ''}
         </div>` : '';
-    return `${chatPreview()}<div class="bl-palette-tint">${slider(mode === 'dark' ? 'nightTint' : 'lightTint', '배경 테마색 농도', mode === 'dark' ? 1 : .5, 20, .5)}<small>${mode === 'dark' ? '기본 1% · 차콜' : '기본 0.5% · 화이트'}부터 20%까지. 직접 고친 배경색은 유지해요.</small></div><div class="salty-palette-toolbar"><span>${auto ? '자동 · ' : ''}${mode === 'light' ? '화이트' : '나이트'}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" aria-pressed="${!auto && mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}<button type="button" data-act="palette-auto" aria-label="자동" aria-pressed="${auto}"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button></div></div>${autoOptions}<div class="salty-palettes">${cards}${custom}</div>${customLibrary(s)}${mixControls(s,{slider,esc})}`;
+    return `${chatPreview()}<div class="bl-palette-tint">${slider(mode === 'dark' ? 'nightTint' : 'lightTint', '배경 테마색 농도', mode === 'dark' ? 1 : .5, 20, .5)}<small>${mode === 'dark' ? '기본 1% · 차콜' : '기본 0.5% · 화이트'}부터 20%까지. 직접 고친 배경색은 유지해요.</small></div><div class="salty-palette-toolbar"><span>${auto ? '자동 · ' : ''}${mode === 'light' ? '화이트' : '나이트'}</span><div class="salty-mode-switch" role="group" aria-label="테마 밝기">${['light', 'dark'].map(kind => `<button type="button" data-act="palette-mode" data-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'} 모드" aria-pressed="${!auto && mode === kind}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}<button type="button" data-act="palette-auto" aria-label="자동" aria-pressed="${auto}"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i></button></div></div>${autoOptions}<div class="salty-palettes">${cards}${custom}</div>${customLibrary(s)}${adeRows(s)}${mixControls(s,{slider,esc})}`;
 
 }
 
@@ -1603,6 +1615,7 @@ function tabChat(s, sub) {
         </div>
         ${cap('메시지 편의')}<div class="salty-group">
             ${row('고른 글 고치기', toggle('quick.selEdit', s.quick?.selEdit === true), `채팅에서 글을 끌어 고르면 뜨는 줄에 「고치기」 · 고른 부분의 원래 글만 작은 창에서 고쳐요(메시지 전체 편집을 안 열어도 돼요) · 자리가 확실하지 않으면 고치지 않고 알려 줘요 · 번역문이 있는 메시지는 번역기의 「번역문 수정」으로 · 고친 뒤 알림의 ↶ 로 되돌려요${restNote('quickSelEdit')}`)}
+            ${row('번역문도 고치기', toggle('quick.selEditTr', s.quick?.selEditTr === true), `(시제품) 번역문이 있는 메시지에서도 「고치기」가 떠요 · 원문은 그대로 두고 화면의 번역문만 고쳐요(실리태번 내장 번역처럼 번역문을 메시지에 담는 꼴) · 번역기 확장(ST-Interpres · llm-translator)이 따로 보여 주는 번역 칸은 그대로 번역기의 「번역문 수정」으로 · 고친 뒤 편집 알림(사건)은 보내지 않아요 — 번역 확장이 다시 번역해 고친 글을 덮지 않게${restNote('quickSelEdit')}`)}
             ${row('연필 옆 지우기 단추', toggle('quick.mesDelete', s.quick?.mesDelete === true), `메시지 이름 줄의 연필(편집) 앞에 휴지통을 둬요 · 확인 창을 거쳐 지워요 · 한 번 누르면 실리태번 확인 창이 뜨고, 다른 답이 여럿인 마지막 답이면 스와이프만 지울지도 골라요 · 답을 만드는 중에는 안 지워요${restNote('quickMesDelete')}`)}
             ${row('메시지 범위 지우기', toggle('quick.rangeDelete', s.quick?.rangeDelete !== false), `옵션 메뉴(☰)의 「메시지 삭제」 아래에 「범위 지우기」 · 처음 메시지와 끝 메시지를 누르면 그 사이만 지워요(실리태번 기본은 누른 메시지부터 끝까지) · 지우기 전에 몇 개인지 한 번 더 물어요${restNote('quickRangeDelete')}`)}
         </div>
@@ -2548,6 +2561,9 @@ function bind(root) {
                 case 'palette-auto':
                     update(st => { st.auto.on = !st.auto.on; });
                     break;
+                case 'ade-forget':   // 1.1.1 시제품 — 지금 채팅방의 에이드 기억 지우기
+                    if (adeForgetChat()) refreshPanels();
+                    break;
                 // 1.0.0 커스텀 에이드 (custompalette.js) — 8.2.5 와 같은 동작
                 case 'custom-keep':
                     update(st => saveCurrentPalette(st));
@@ -3074,6 +3090,7 @@ function bind(root) {
 
     root.addEventListener('change', async (event) => {
         const target = event.target;
+        if (target.matches?.('select[data-ade-base]')) { if (adeSetBase(target.value)) refreshPanels(); return; }   // 1.1.1 에이드 갈아입기 기본 에이드
         const designPath = target.dataset.range || target.dataset.colorPath;
         if (designPath && /^(image|profile|userProfile)\.decor\.(frameWidth|frameHeight|presetColor|presetAccent)$/.test(designPath)) {
             update(st => refreshPreset(st[designPath.split('.')[0]].decor), false);

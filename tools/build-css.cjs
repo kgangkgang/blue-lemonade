@@ -51,6 +51,10 @@ const SPLIT_OUT = path.join(ROOT, 'src', 'style-lazy.gen.css');
 const COMPAT_BROWSER_OUT = path.join(ROOT, 'src', 'compat-browser.gen.css');
 const COMPAT_WIDTH_OUT = path.join(ROOT, 'src', 'compat-width.gen.css');
 const DEM_DATA_OUT = path.join(ROOT, 'src', 'dem-style-data.gen.js');
+// 1.1.1 가볍게: css/61-markdown.css 가운데 body 에 마크다운 모양 클래스(body.salty.salty-md-*)가 있어야만 맞는 규칙은 첫 시트에 싣지 않고 이 파일로 —
+//   기본값(고른 모양 없음)에서는 하나도 맞지 않아요. src/lite.js syncMarkdownCss 가 고른 모양이 있을 때만 테마 시트 바로 뒤에 붙이고, 전체 시트(둘째 장)에는 제자리에 그대로 있어요
+const MD_OUT = path.join(ROOT, 'src', 'markdown.gen.css');
+const MD_MODULE = '61-markdown.css';
 const DEM_FALLBACK_OUT = path.join(ROOT, 'src', 'dem-style-data.fallback.gen.css');
 const LAZY_SENTINEL = '#salty-lazy-panel-start';
 const HASH_SLOT = '@@HASH@@';
@@ -216,7 +220,8 @@ function build(dir = CSS_DIR, { bucket = true, key = true, split = true } = {}) 
     })();
     const dem = require('./css-dem-slots.cjs').compileDemSheets(scoped.text, rest ? whole.keyed.text.replace(/^[ \t]+$/gm, '') : null);
     if (dem.count) marks.push(`--bl-dem-style-key:"${dem.key}"`);
-    const body = (marks.length ? `:root{${marks.join(';')}}\n` : '') + dem.boot;
+    const mdSplit = rest ? markdownSplit(dem.boot) : { text: dem.boot, md: '', rules: 0 };   // 1.1.1 두 장 빌드만 — 한 장이면 제자리
+    const body = (marks.length ? `:root{${marks.join(';')}}\n` : '') + mdSplit.text;
     const head = `/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 ${names.length - lazyNames.length}개를 이어 붙여 만든 파일(설명 주석은 css/ 에만${rest ? ` · --split: 나머지 ${lazyNames.length}개는 src/style-lazy.gen.css` : ''}). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ${HASH_SLOT}) */\n`;
     const draft = head + body;
     const digest = hashOf(draft);
@@ -225,10 +230,46 @@ function build(dir = CSS_DIR, { bucket = true, key = true, split = true } = {}) 
     // 처음 사용할 때 lite.js가 원문에서99꼬리를 나눈 뒤 이 전체 시트로 첫 시트를 교체해요.
     const lazyText = rest ? `/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build ${digest}) */\n${marks.length ? `:root{${marks.join(';')}}\n` : ''}${dem.full}` : null;
     if (lazyText) assertInlineSafe(lazyText);
+    const markdown = mdSplit.rules ? `/* src/markdown.gen.css — tools/build-css.cjs 가 css/${MD_MODULE} 에서 body.salty.salty-md-*(고른 마크다운 모양)가 있어야만 맞는 규칙 ${mdSplit.rules}개를 첫 시트에서 떼어 적은 것(고치지 말 것). src/lite.js syncMarkdownCss 가 고른 모양이 있을 때만 테마 시트 바로 뒤에 붙인다 (build ${digest}) */\n${mdSplit.md}\n` : null;
     const compatHead = (file, what) => `/* ${file} — tools/build-css.cjs 가 css/ 에서 ${what}만 떼어 적은 것(고치지 말 것 · tools/css-compat.cjs). src/lite.js loadCompatCss 가 조건이 맞을 때만 테마 시트 뒤에 붙인다 (build ${digest}) */\n`;
     const compatBrowser = compatHead('src/compat-browser.gen.css', `크로미움 밖 브라우저 · 강제 색 · 옛 크로미움용 규칙 ${compat.rules.browser}개`) + (compat.browser ? `${compat.browser}\n` : '');
     const compatWidth = compatHead('src/compat-width.gen.css', `폰 384 · PC 1280 밖 화면 폭 규칙 ${compat.rules.width}개`) + (compat.width ? `${compat.width}\n` : '');
-    return { text: draft.replace(HASH_SLOT, digest), preview, lazyText, compatBrowser, compatWidth, compat, dem, names, digest, kept, parked, extensionColors, keyed: keyed.stats, scoped: scoped.stats };
+    return { text: draft.replace(HASH_SLOT, digest), preview, markdown, lazyText, compatBrowser, compatWidth, compat, dem, names, digest, kept, parked, extensionColors, keyed: keyed.stats, scoped: scoped.stats };
+}
+/**
+ * 1.1.1 가볍게: 첫 시트 글에서 css/61-markdown.css 칸의 맨 위 규칙 가운데 모든 갈래가 body.salty.salty-md-* 를 요구하는 것만 떼어요(차례 그대로).
+ * 그 밖(설정 창 표본 .bl-markdown-stage · 요소 클래스 .salty-md-mark 같은 것)은 제자리에 둬요. 떼어 낸 규칙은 기본값에서 맞지 않고,
+ * 뒤 모듈 규칙과 같은 요소를 같은 특이도로 겨루지 않아요(tools/tests/markdown-css-split.mjs 가 매번 확인).
+ */
+function markdownSplit(text) {
+    const lib = require('./css-lib.cjs');
+    const mark = `/* css/${MD_MODULE} */\n`;
+    const a = text.indexOf(mark);
+    if (a < 0) return { text, md: '', rules: 0 };
+    const end = text.indexOf('\n/* css/', a + mark.length);
+    const b = end < 0 ? text.length : end + 1;
+    const section = text.slice(a, b);
+    const tree = lib.parse(section);
+    if (tree.problems.length) throw new Error(`마크다운 칸 읽기 문제: ${tree.problems.slice(0, 3).join(' / ')}`);
+    const moved = [];
+    let kept = '', at = 0;
+    for (const node of tree.children) {
+        if (node.type !== 'rule' || !lib.topSplit(node.selector).every(markdownGated)) continue;
+        let stop = node.end;
+        if (section[stop] === '\n') stop++;
+        kept += section.slice(at, node.start);
+        moved.push(section.slice(node.start, node.end));
+        at = stop;
+    }
+    kept += section.slice(at);
+    return { text: text.slice(0, a) + kept + text.slice(b), md: moved.join('\n'), rules: moved.length };
+}
+/** 선택자 한 갈래가 body.salty.salty-md-* 를 꼭 요구하나 — 괄호 밖 첫 칸이 body 이고 그 칸에 .salty 와 .salty-md-* 가 함께 */
+function markdownGated(sel) {
+    let depth = 0, outside = '';
+    for (const c of sel) { if (c === '(') depth++; else if (c === ')') depth--; else if (!depth) outside += c; }
+    const lead = outside.trim().split(/[\s>+~]+/)[0];
+    return /^body(?:[.:][\w-]+)*$/.test(lead) && /\.salty(?![\w-])/.test(lead) && /\.salty-md-[\w-]+/.test(lead);
 }
 function hashOf(textWithSlot) {
     return crypto.createHash('sha1').update(textWithSlot, 'utf8').digest('hex').slice(0, 12);
@@ -300,12 +341,14 @@ function main(argv) {
             fs.writeFileSync(APPEARANCE_OUT, want, 'utf8'); console.log(`[씀] src/chat-appearance.gen.css (${(Buffer.byteLength(want) / 1024).toFixed(1)}KB)`);
         }
     }
-    const { text, preview, lazyText, compatBrowser, compatWidth, compat, dem, names, parked, keyed } = build(CSS_DIR, { split });
+    const { text, preview, markdown, lazyText, compatBrowser, compatWidth, compat, dem, names, parked, keyed } = build(CSS_DIR, { split });
     const readOr = file => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null);
     const demOk = () => readOr(DEM_DATA_OUT) === dem.data && readOr(DEM_FALLBACK_OUT) === dem.fallback;
     const writeDem = () => { fs.writeFileSync(DEM_DATA_OUT, dem.data, 'utf8'); fs.writeFileSync(DEM_FALLBACK_OUT, dem.fallback, 'utf8'); console.log(`[씀] 데우스 분리 규칙 ${dem.count}칸과 대체 파일을 만들었어요`); };
     const compatOk = () => readOr(COMPAT_BROWSER_OUT) === compatBrowser && readOr(COMPAT_WIDTH_OUT) === compatWidth;
     const writeCompat = () => { fs.writeFileSync(COMPAT_BROWSER_OUT, compatBrowser, 'utf8'); fs.writeFileSync(COMPAT_WIDTH_OUT, compatWidth, 'utf8'); console.log(`[씀] src/compat-browser.gen.css ${(Buffer.byteLength(compatBrowser) / 1024).toFixed(1)}KB(규칙 ${compat.rules.browser}) · src/compat-width.gen.css ${(Buffer.byteLength(compatWidth) / 1024).toFixed(1)}KB(규칙 ${compat.rules.width})`); };
+    const mdOk = () => readOr(MD_OUT) === markdown;
+    const writeMd = () => { if (markdown != null) { fs.writeFileSync(MD_OUT, markdown, 'utf8'); console.log(`[씀] src/markdown.gen.css (${(Buffer.byteLength(markdown) / 1024).toFixed(1)}KB)`); } else if (fs.existsSync(MD_OUT)) { fs.unlinkSync(MD_OUT); console.log('[지움] src/markdown.gen.css (한 장 빌드)'); } };
     const splitOk = () => (fs.existsSync(SPLIT_OUT) ? fs.readFileSync(SPLIT_OUT, 'utf8') : null) === lazyText;
     const writeSplit = () => { if (lazyText != null) { fs.writeFileSync(SPLIT_OUT, lazyText, 'utf8'); console.log(`[씀] src/style-lazy.gen.css (${(Buffer.byteLength(lazyText) / 1024).toFixed(1)}KB, --split)`); } else if (fs.existsSync(SPLIT_OUT)) { fs.unlinkSync(SPLIT_OUT); console.log('[지움] src/style-lazy.gen.css (한 장 빌드)'); } };
     const ext = extText(text, lazyText);
@@ -319,6 +362,7 @@ function main(argv) {
             const hadPreview = fs.existsSync(PREVIEW_OUT) ? fs.readFileSync(PREVIEW_OUT, 'utf8') : null;
             if (hadPreview !== preview) { console.error('[다름] src/preview.gen.css 가 css/ 의 미리보기 전용 규칙과 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
             if (!compatOk()) { console.error('[다름] src/compat-browser.gen.css · src/compat-width.gen.css 가 css/ 의 크로미움 밖 · 다른 폭 규칙과 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
+            if (!mdOk()) { console.error('[다름] src/markdown.gen.css 가 css/61-markdown.css 의 마크다운 모양 규칙과 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
             if (!splitOk()) { console.error(`[다름] src/style-lazy.gen.css 가 ${split ? '--split 빌드와 어긋났다' : '한 장 빌드인데 남아 있다'} — node tools/build-css.cjs${split ? ' --split' : ''} 로 다시 만들 것`); return 1; }
             if (!extOk()) { console.error('[다름] style-ext.css 가 style.css 와 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
             console.log(`[같음] style.css = css/ 모듈 ${names.length}개`); return 0;
@@ -337,6 +381,7 @@ function main(argv) {
         const hadPreview = fs.existsSync(PREVIEW_OUT) ? fs.readFileSync(PREVIEW_OUT, 'utf8') : null;
         if (hadPreview !== preview) { fs.writeFileSync(PREVIEW_OUT, preview, 'utf8'); console.log(`[씀] src/preview.gen.css (${(Buffer.byteLength(preview) / 1024).toFixed(1)}KB)`); }
         if (!splitOk()) writeSplit();
+        if (!mdOk()) writeMd();
         if (!compatOk()) writeCompat();
         if (!extOk()) writeExt();
         console.log(`[그대로] style.css 가 이미 최신 (모듈 ${names.length}개)`);
@@ -354,6 +399,7 @@ function main(argv) {
     fs.writeFileSync(PREVIEW_OUT, preview, 'utf8');
     writeDem();
     writeSplit();
+    writeMd();
     writeCompat();
     writeExt();
     console.log(`[씀] style.css ← css/ 모듈 ${names.length}개 (${(Buffer.byteLength(text) / 1024).toFixed(1)}KB) · src/lazy-panel.gen.css ${(Buffer.byteLength(lazyTail(text)) / 1024).toFixed(1)}KB · 미리보기 전용 규칙 ${parked.rules}개(덩어리 ${parked.blocks}개)를 src/preview.gen.css ${(Buffer.byteLength(preview) / 1024).toFixed(1)}KB 로 떼어 둠${keyed ? ` · 바구니 열쇠 ${keyed.keyed}갈래(전체 바구니 ${keyed.universal} 중, 남음 ${keyed.universal - keyed.keyed})` : ''}`);
@@ -425,4 +471,4 @@ function assertInlineSafe(text) {
     }
 }
 
-module.exports = { build, modules, untouched, LAZY, LAZY_SENTINEL, CSS_DIR, lazyTail, LAZY_OUT, PREVIEW_OUT, SPLIT_LAZY, SPLIT_OUT, COMPAT_BROWSER_OUT, COMPAT_WIDTH_OUT, extText, EXT_OUT, assertInlineSafe };
+module.exports = { build, modules, untouched, LAZY, LAZY_SENTINEL, CSS_DIR, lazyTail, LAZY_OUT, PREVIEW_OUT, MD_OUT, markdownSplit, markdownGated, SPLIT_LAZY, SPLIT_OUT, COMPAT_BROWSER_OUT, COMPAT_WIDTH_OUT, extText, EXT_OUT, assertInlineSafe };

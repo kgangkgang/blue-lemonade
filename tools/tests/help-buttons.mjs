@@ -55,4 +55,6 @@ ok(/import \{ applyAdvanced, moveLongNotes \} from '\.\/settings-advanced\.js'/.
 ok(/fold\.className = 'bl-md-group bl-advanced';/.test(adv) && /fold\.dataset\.mdFold = `adv:/.test(adv), '고급은 data-md-fold 접힘(다시 그려도 상태 유지 · 검색이 펼침)');
 ok(/button\.className = 'bl-help-btn'; button\.dataset\.act = 'group-help'/.test(adv), '긴 설명은 묶음 제목 옆 H3 ? 하나');
 ok(/openFoldsFor\(root, entry\.words\)/.test(panel), '키 없는 검색 항목도 고급 안 줄이면 펼쳐요');
+// ⑦ 1.1.1: ? 가 든 설정창 묶음 제목은 칠하기 격리(contain: paint)로 한 덩어리 — 화면 자리(소수 px)에 따라 원이 1px 가까이 처지던 것
+ok(/:is\(\.bl-editor-group-head, \.bl-help-head\):has\(> \.bl-help-btn\) \{ contain: paint; overflow-clip-margin: 8px; \}/.test(strip(read('css/56-control-consistency.css'))), '? 든 묶음 제목은 contain: paint + overflow-clip-margin 8px');
 console.log(`도움말 ? · ⓘ 한 모양 검사를 통과했어요(${n}건).`);

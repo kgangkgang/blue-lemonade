@@ -14,15 +14,16 @@ const s=tidyFruitType({on:true});assert.equal(fruitTypeCss(s),'');
 s.types.status.regions.quote.on=true;s.types.status.regions.quote.size=22;s.types.status.regions.quote.spacing=0;
 const css=fruitTypeCss(s);assert(css.includes('font-size:22px'));assert(css.includes('transform:none'));assert(!css.includes('.fate-top-grid'));
 // 8.1.0 제보: 인용문은 원작 flex 배치 그대로(display:block 이면 짧은 선만 첫 줄에 남고 작은 제목이 왼쪽에 홀로 떠요) · 폭 90% 그대로 · 작은 제목(.movie-deco-eng)은 본문 크기를 안 물려받아요
-assert(!css.includes('display:block'),'Quote keeps the original flex layout');assert(!/movie-line-content\)\{[^}]*max-width:100%/.test(css),'Quote keeps the original 90% width');
-assert(/movie-line-content\) :is\(span,p,b,i,em,strong\):not\(:is\(\.movie-deco-eng,\.custom-movie-deco-eng\)\)\{/.test(css),'Deco title is excluded from inherited size');
+assert(!css.includes('display:block'),'Quote keeps the original flex layout');assert(!/custom-movie-line-content\{[^}]*max-width:100%/.test(css),'Quote keeps the original 90% width');
+// 1.1.1 restyle2: 안쪽 태그 :is(span,p,…) 는 태그마다 한 갈래로 적혀요(크롬 규칙 바구니)
+assert(/movie-line-content\) span:not\(:is\(\.movie-deco-eng,\.custom-movie-deco-eng\)\)[,{]/.test(css)&&/movie-line-content\) strong:not\(:is\(\.movie-deco-eng,\.custom-movie-deco-eng\)\)[,{]/.test(css),'Deco title is excluded from inherited size');
 // 10-27 제보: 짧은 선은 한글화가 가운데 한 줄로 그려요 — 원작 정렬이면 손대지 않고, 정렬을 고르면 선도 글과 같은 쪽
 assert(!/::before\{background-position/.test(css),'Original alignment leaves the centred rule alone');
-for(const [align,pos] of [['left','left'],['center','center'],['right','right'],['justify','left']]){const a=tidyFruitType({on:true});a.types.status.regions.quote.on=true;a.types.status.regions.quote.align=align;assert(fruitTypeCss(a).includes(`movie-line-content)::before{background-position:${pos} top!important}`),`Rule follows ${align} quote alignment`);}
+for(const [align,pos] of [['left','left'],['center','center'],['right','right'],['justify','left']]){const a=tidyFruitType({on:true});a.types.status.regions.quote.on=true;a.types.status.regions.quote.align=align;assert(fruitTypeCss(a).includes(`.custom-movie-line-content::before{background-position:${pos} top!important}`),`Rule follows ${align} quote alignment`);}
 // 8.1.0 제보: 이름 줄 아래 긴 문구(.fate-between · 옛 대화의 옷차림 두 칸)도 영역이에요
 assert.deepEqual(Object.keys(FRUIT_TYPES.find(t=>t.id==='status').regions),['info','quote','names','between','footer']);
-{const b=tidyFruitType({on:true});b.types.status.regions.between.on=true;b.types.status.regions.between.size=18;const c=fruitTypeCss(b);assert(c.includes(':is(.fate-between,.custom-fate-between)')&&c.includes('.fate-outfit-char')&&c.includes('font-size:18px'));assert(!/fate-outfit-user\)\{[^}]*max-width:100%/.test(c),'Between keeps the original 88% width');}
-s.types.status.hideFooter=true;assert(fruitTypeCss(s).includes(':is(.fate-bottom-en,.custom-fate-bottom-en){display:none'));
+{const b=tidyFruitType({on:true});b.types.status.regions.between.on=true;b.types.status.regions.between.size=18;const c=fruitTypeCss(b);assert(c.includes('.fate-between,')&&c.includes('.custom-fate-between')&&c.includes('.fate-outfit-char')&&c.includes('font-size:18px'));assert(!/custom-fate-outfit-user\{[^}]*max-width:100%/.test(c),'Between keeps the original 88% width');}
+s.types.status.hideFooter=true;assert(fruitTypeCss(s).includes('.custom-fate-bottom-en{display:none'));
 s.types.status.layout='vertical';assert(fruitTypeCss(s).includes('grid-template-columns:minmax(0,1fr)'));
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');let dictionary;
 const bundle=read('src/scripts/plain/fruit.js');vm.runInNewContext(bundle.slice(bundle.indexOf('/*BL-SCRIPT-START*/')+19,bundle.lastIndexOf('/*BL-SCRIPT-END*/')),{BlueLemonade:{translate:d=>dictionary=d}});
@@ -76,7 +77,7 @@ assert(!/ 숨기기`/.test(editorJs),'The label names the region; the choice say
  assert(/data-ft-hide="false" aria-pressed="true" class="on">보임/.test(off)&&/data-ft-hide="true" aria-pressed="false" class="">숨김/.test(off),'Saved hideFooter:false shows 보임 pressed');
  assert.equal((on.match(/<button /g)||[]).length,2,'Two choices');}
 for(const [saved,want] of [[true,true],[false,false],[undefined,false],['yes',false],[1,false]]){const t=tidyFruitType({types:{status:{hideFooter:saved}}});assert.equal(t.types.status.hideFooter,want,'Old hideFooter value '+String(saved));}
-{const t=tidyFruitType({on:true,types:{status:{hideFooter:true}}});assert(fruitTypeCss(t).includes(':is(.fate-bottom-en,.custom-fate-bottom-en){display:none'),'Old saved 켬 still hides the footer');t.types.status.hideFooter=false;assert(!fruitTypeCss(t).includes('fate-bottom-en,.custom-fate-bottom-en){display:none'),'보임 shows it');}
+{const t=tidyFruitType({on:true,types:{status:{hideFooter:true}}});assert(fruitTypeCss(t).includes('.custom-fate-bottom-en{display:none'),'Old saved 켬 still hides the footer');t.types.status.hideFooter=false;assert(!fruitTypeCss(t).includes('fate-bottom-en,.custom-fate-bottom-en){display:none'),'보임 shows it');}
 assert(/const hide=e\.target\.closest\('\[data-ft-hide\]'\)/.test(editorJs)&&!/hasAttribute\('data-ft-hide'\)/.test(editorJs),'The choice is handled on click, not as a checkbox change');assert(editorJs.includes('class="salty-switch"'));
 assert(!/<label class="bl-ft-param"><span>[^<]*<\/span><(?:input|select)[^>]*>[^<]*<(?:input|select)/.test(editorJs),'One control per parameter');
 // 과일 창 바로가기 대화상자(.bl-ft-dialog)는 설정 창(.salty-panel) 밖 — 미리보기 도구 단추가 테마 모양을 따로 받아야 한다 (없으면 브라우저 기본 흰 네모, 나이트 대비 1.14)

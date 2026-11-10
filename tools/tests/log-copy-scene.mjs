@@ -76,7 +76,7 @@ await test('주제가 다른 내장 틀(기본 · 대화 · 종이 · 심플 30 
 });
 
 await test('내장: build-builtin 이 8종을 「장면」(scene) 분류로 생성물에 실어요 · 칩은 반응 다음 · 전용 색 · 원본과 같은 틀', () => {
-    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'react', 'scene', 'gallery', 'mine']);
+    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'react', 'scene', 'xmas', 'gallery', 'mine']);
     assert.equal(CATEGORIES.find(c => c.id === 'scene').label, '장면');
     assert.deepEqual(presetsIn('scene', []), IDS, '칩 안 차례 = 원본 차례');
     for (const f of SCENE_FRAMES) {

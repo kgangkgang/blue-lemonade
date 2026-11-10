@@ -270,6 +270,35 @@ await test('installUsageLedger: 같은 판 BL 허브는 그대로, 아니면 새
     assert.equal(H.installUsageLedger(), mine);
 });
 
+await test('1.1.1 가벼운 허브(usage-ledger-lite.js): 부른 순간의 값 · 시각으로 적고, 꺼져 있으면 본체를 받지 않고 null', async () => {
+    delete globalThis[C.LEDGER_SYMBOL];
+    ext.bl_usage_ledger = { enabled: true };
+    const lite = await import(pathToFileURL(path.join(root, 'src/usage-ledger-lite.js')).href);
+    assert.equal(lite.installUsageLedger, H.installUsageLedger, '본체는 같은 함수를 다시 내보내요');
+    const hub = lite.installUsageLedger();
+    assert.equal(globalThis[C.LEDGER_SYMBOL], hub);
+    const raw = { ext: '가벼운 확장', feature: '나중에 바꿈', model: 'lite-m', input: 7 };
+    const before = Date.now();
+    const pending = hub.record(raw);
+    raw.input = 999; raw.ext = '';
+    const id = await pending;
+    assert.match(id, /^\d+-/);
+    const row = (await hub.query({ from: before - 1, to: Date.now() + 1 })).find(r => r.id === id);
+    assert.equal(row.input, 7, '부른 뒤 바꾼 값은 들어가지 않아요');
+    assert.equal(row.ext, '가벼운 확장');
+    assert.ok(row.at >= before && row.at <= Date.now(), '부른 시각');
+    ext.bl_usage_ledger.enabled = false;
+    assert.equal(await hub.record({ ext: 'a', feature: 'b' }), null);
+    ext.bl_usage_ledger.enabled = true;
+    assert.equal(await hub.record('글'), null, '객체가 아니면 null');
+    let changed = 0; const off = hub.on('change', () => changed++);
+    assert.equal(hub.setKrwRate(1500, '2026-11-09'), true);
+    assert.equal(changed, 1, '알림은 본체와 같은 목록');
+    off();
+    assert.deepEqual(hub.payMethods().choices, [...C.PAY_METHODS]);
+    for (const name of ['LEDGER_SYMBOL', 'LEDGER_VERSION', 'KEEP_DAYS', 'PAY_METHODS', 'DEFAULT_KRW', 'originOf', 'dayKey', 'dayStart']) assert.equal(C[name], lite[name], `core 의 ${name} 는 lite 것 그대로`);
+});
+
 globalThis.setTimeout = realSetTimeout;
 console.log(`usage-ledger-store: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

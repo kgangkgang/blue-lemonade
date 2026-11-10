@@ -156,18 +156,30 @@ function unwrapSubject(sel) {
     const [ls, le] = segs[segs.length - 1]; const last = sel.slice(ls, le);
     const m = /^((?::where\([^()]*\))*):is\(/.exec(last); if (!m) return null;
     const open = m[0].length - 1; const close = lib.endParen(last, open); if (close >= last.length) return null;
-    const inner = last.slice(open + 1, close).trim(); const pe = last.slice(close + 1);
+    const inner = last.slice(open + 1, close).trim();
+    // 1.1.1 restyle2: :is( … ) 뒤에 붙은 `:where(지킴)`(확장 색 지킴 `:where(:not([data-bl-native-ext-colors], …))` 등)은 특이도 0 이라 안쪽 마지막 칸에 그대로 붙인다 —
+    //   `:is(A B):where(G)` 와 `A B:where(G)` 는 같은 요소를 고른다. 그 뒤 가상 요소도 그대로
+    let guardEnd = close + 1;
+    while (/^:where\(/i.test(last.slice(guardEnd))) guardEnd = lib.endParen(last, guardEnd + 6) + 1;
+    const guard = last.slice(close + 1, guardEnd); const pe = last.slice(guardEnd);
     if (pe && !/^(::[\w-]+(\([^()]*\))?|:(before|after|first-line|first-letter))+$/i.test(pe)) return null;
     if (lib.topSplit(inner).length !== 1 || lib.compounds(inner).length < 2 || /^[>+~]/.test(inner) || RISKY.test(inner) || /:has\([^()]*:has\(/i.test(inner)) return null;
     if (!/^\s+$/.test(sel.slice(segs[segs.length - 2][1], ls))) return null;            // 머리와 주어 사이는 자손 결합자(공백)만
     const headLast = tokens(sel.slice(segs[segs.length - 2][0], segs[segs.length - 2][1]));
-    if (!headLast.length || headLast[0].kind !== 'tag' || headLast[0].text.toLowerCase() !== 'body') return null;
-    // 안쪽 첫 칸이 body 자신일 수 없어야 한다: 아이디 · 클래스 · 속성 · body/html 아닌 태그를 (한 갈래든 여러 갈래든) 반드시 가진 칸
-    const firstKeys = keysOf(lib.compounds(inner)[0]);
-    const anchored = !!firstKeys && firstKeys.every(k => /^[#.[]/.test(k) || !/^(html|body)$/i.test(k));
-    if (!anchored) return null;
+    if (!headLast.length || headLast[0].kind !== 'tag') return null;
+    const headTag = headLast[0].text.toLowerCase();
+    const firstInner = tokens(lib.compounds(inner)[0]);
+    if (headTag === 'body') {
+        // 안쪽 첫 칸이 body 자신일 수 없어야 한다: 아이디 · 클래스 · 속성 · body/html 아닌 태그를 (한 갈래든 여러 갈래든) 반드시 가진 칸
+        const firstKeys = keysOf(lib.compounds(inner)[0]);
+        const anchored = !!firstKeys && firstKeys.every(k => /^[#.[]/.test(k) || !/^(html|body)$/i.test(k));
+        if (!anchored) return null;
+    } else if (headTag === 'html') {
+        // 1.1.1 restyle2: 머리가 html 이고 안쪽 첫 칸이 body 태그면(`html:not(#x) :is(body.salty ~ #fh *)` — 77-scrollbars 과일 하트) 풀어도 같다 — body 는 늘 html 의 자식
+        if (!firstInner.length || firstInner[0].kind !== 'tag' || firstInner[0].text.toLowerCase() !== 'body') return null;
+    } else return null;
     const head = sel.slice(0, ls);
-    return { text: `${head}${inner}${pe}`, back: `${head}${last}` };
+    return { text: `${head}${inner}${guard}${pe}`, back: `${head}${last}` };
 }
 
 /** 선택자 갈래 하나 → [바꾼 갈래들] (안 바꾸면 null) */

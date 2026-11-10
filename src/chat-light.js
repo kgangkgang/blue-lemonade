@@ -13,12 +13,36 @@
 // 1.0.6 실측: 30~50개에도 적용하면 미리 그리기와 스타일 재계산이 늘어 기존 60개 문턱을 유지해요.
 export const THRESHOLD = 60;
 export const CLASS = 'bl-chat-light';
-let on = false, mo = null, chat = null;
+// (1.1.1 longchat) 바닥 10개 표식: CSS 가 :nth-last-child(-n+10) 로 고르면 #chat 이 「뒤에서 세는 자리 규칙」을 갖게 되어, 메시지가 하나 붙을 때마다
+//   크롬이 형제 메시지 전부(2,000개면 2,000개)에 nth 무효화 집합을 걸어요 — 그 집합에 다른 규칙(표의 tr:nth-child(even) td · :not(pre *) …)의 「아래 전부」가
+//   섞여 메시지 안쪽까지 훑고 다시 계산했어요(흉내 2,000개: 답 하나 스타일 58ms · 순정 1.4ms). 같은 10개를 JS 가 data 속성으로 달면 붙인 메시지 · 표식이 바뀐 둘만 다시 계산해요.
+//   셈은 nth-last-child 와 같아요(#chat 의 마지막 요소 10개 중 .mes — 「더 보기」 같은 다른 요소도 자리를 차지). class 가 아니라 data 속성이라 실리태번 keyboard.js 감시(class 만)가 다시 훑지 않아요.
+export const TAIL_ATTR = 'data-bl-tail';
+export const TAIL = 10;
+let on = false, mo = null, chat = null, tail = new Set();
 
-/** 메시지 수를 세어 클래스를 맞춘다. 돌려주는 값: 가볍게 상태인지 */
+/** #chat 바로 아래 .mes 를 need 개까지만 센다(querySelectorAll(':scope > .mes') 는 메시지 안쪽 요소까지 다 훑어요) */
+function countMes(el, need) {
+    let n = 0;
+    for (let c = el.firstElementChild; c && n < need; c = c.nextElementSibling) if (c.classList.contains('mes')) n++;
+    return n;
+}
+/** #chat 바로 아래 .mes 들(형제 차례로 — 메시지 안쪽은 훑지 않아요) */
+export function mesKids(el) { const out = []; for (let c = el.firstElementChild; c; c = c.nextElementSibling) if (c.classList.contains('mes')) out.push(c); return out; }
+/** 바닥 표식을 맞춘다 — 바뀐 메시지에만 쓴다 */
+function markTail(el, light) {
+    const want = new Set();
+    if (light) { let k = 0; for (let c = el.lastElementChild; c && k < TAIL; c = c.previousElementSibling, k++) if (c.classList.contains('mes')) want.add(c); }
+    for (const m of tail) if (!want.has(m) && m.hasAttribute(TAIL_ATTR)) m.removeAttribute(TAIL_ATTR);
+    for (const m of want) if (!m.hasAttribute(TAIL_ATTR)) m.setAttribute(TAIL_ATTR, '');
+    tail = want;
+}
+
+/** 메시지 수를 세어 클래스 · 바닥 표식을 맞춘다. 돌려주는 값: 가볍게 상태인지 */
 export function measure(el = chat) {
     if (!el) return false;
-    const light = on && el.querySelectorAll(':scope > .mes').length >= THRESHOLD;
+    const light = on && countMes(el, THRESHOLD) >= THRESHOLD;
+    markTail(el, light);   // 표식을 먼저 — class 가 붙는 같은 계산에서 바닥 10개가 이미 빠져 있게
     const mark = document.documentElement.classList;
     if (mark.contains(CLASS) !== light) mark.toggle(CLASS, light);   // 같으면 쓰지 않는다 (속성 변경 → 감시자 · 재계산)
     return light;
@@ -28,11 +52,12 @@ export function syncChatLight(enabled) {
     on = !!enabled;
     kickWarm();   // (10-30 perf-chatlight) 쉴 때 미리 그리기 — 아래
     if (typeof document !== 'undefined' && typeof document.querySelectorAll === 'function') syncChatCover(on);   // 같은 설정(긴 채팅 가볍게) — 아래 서랍 덮개
-    if (!on) { mo?.disconnect(); mo = null; if (chat && document.documentElement.classList.contains(CLASS)) document.documentElement.classList.remove(CLASS); chat = null; return; }
+    if (!on) { mo?.disconnect(); mo = null; if (chat) markTail(chat, false); if (chat && document.documentElement.classList.contains(CLASS)) document.documentElement.classList.remove(CLASS); chat = null; return; }
     const el = document.getElementById('chat');
     if (!el) { mo?.disconnect(); mo = null; chat = null; return; }
     if (el !== chat) {
         mo?.disconnect();
+        if (chat) markTail(chat, false);
         chat = el;
         mo = new MutationObserver(() => { measure(); kickWarm(); });
         mo.observe(el, { childList: true });
@@ -234,7 +259,7 @@ const WARM_RETRY_MS = 1000;   // 쉬는 조건(생성 중 · 서랍)이 풀렸�
 export const WARM_SLICE_MS = 50;
 export const WARM_BATCH_MAX = 12;   // 깨끗한 메시지(하나 1ms 남짓)로 키운 묶음이 처음 그리는 메시지(하나 4ms 안팎)를 만나도 한 묶음이 너무 길지 않게
 // css/05-chat.css 의 「긴 채팅 가볍게」 규칙과 같은 꼴(시험이 둘을 맞춰 봐요) — 이 선택자에 맞고 표식이 없는 메시지가 건너뛰는 메시지예요
-export const SKIP_SELECTOR = '.mes:not(.last_mes, .bl-menu-open, .selected):not(:nth-last-child(-n+10))';
+export const SKIP_SELECTOR = '.mes:not(.last_mes, .bl-menu-open, .selected):not([data-bl-tail])';
 let warm = { timer: 0, job: 0, look: null, list: null, i: 0, k: 4, done: 0, slices: 0, yielded: 0, cool: false };
 const bgTask = fn => {
     if (typeof scheduler !== 'undefined' && typeof scheduler?.postTask === 'function' && typeof AbortController === 'function') {
@@ -283,7 +308,7 @@ function startWarm() {
  *  돌려주는 것: { cancel } 또는 null(그 자리에서 불렀음) */
 const ANCHOR_WAIT_MS = 300;
 export function findAnchor(el, cb) {
-    const all = [...el.querySelectorAll(':scope > .mes')];
+    const all = mesKids(el);
     if (!all.length || typeof IntersectionObserver !== 'function') { cb(all.length - 1); return null; }
     const index = new Map(all.map((mes, i) => [mes, i]));
     let done = false, timer = 0, io = null;
@@ -302,7 +327,7 @@ export function findAnchor(el, cb) {
 }
 /** 건너뛰는 메시지(SKIP_SELECTOR · 표식 없음)를 anchor 에서 DOM 차례로 가까운 것부터 — 계산된 스타일 · 자리를 읽지 않아요 */
 export function warmCandidates(el, anchor = Infinity) {
-    const all = [...el.querySelectorAll(':scope > .mes')];
+    const all = mesKids(el);
     const at = Number.isFinite(anchor) && anchor >= 0 ? anchor : all.length - 1;
     const out = [];
     all.forEach((mes, i) => { if (!mes.hasAttribute(WARM_ATTR) && mes.matches(SKIP_SELECTOR)) out.push([mes, Math.abs(i - at), i]); });
@@ -354,9 +379,23 @@ function stepWarm() {
 export function coolOffscreen(doc = document) {
     stopWarm(); warm.cool = true;
     const el = doc.getElementById('chat');
-    const warmed = el ? el.querySelectorAll(':scope > .mes[' + WARM_ATTR + ']') : [];
+    const warmed = el ? mesKids(el).filter(mes => mes.hasAttribute(WARM_ATTR)) : [];
     for (const mes of warmed) mes.removeAttribute(WARM_ATTR);
     return warmed.length;
+}
+/** (1.1.1 restyle) 문서 전체 다시 계산을 앞두고 — 테마 설정 적용(src/apply.js applyAll: :root 변수 시트 · body class · html 속성)처럼 모든 요소가 다시 계산될 쓰기 직전에 불러요
+ *  (features.js coolChatForRestyle 다리). 푼(미리 그린) 메시지를 되돌려 그 계산이 화면 밖 메시지 안쪽(2,000개면 요소 14만 개)을 건너뛰게 하고, 조용해지면(WARM_QUIET_MS) 다시 미리 그려요.
+ *  보이는 메시지는 content-visibility:auto 라 그대로 그려져 모양은 같아요(coolOffscreen · 자리를 재지 않음). 흉내 2,000개(PC): 밝기 바꾸기 스타일 재계산 1,139 → 212ms.
+ *  서랍 열기 자체(openDrawer 토글)는 문서 전체를 다시 계산하지 않아요(흉내 2,000개 1.8ms · 요소 1개) — 재계산은 테마의 설정 적용 쓰기가 일으켜요.
+ *  돌려주는 값: 되돌린 메시지 수(0 이면 손댄 것이 없어요 — 꺼짐 · 짧은 채팅 · 이미 되돌린 상태). */
+export function coolForRestyle(doc = document) {
+    if (!on) return 0;
+    const el = doc.getElementById?.('chat');
+    if (!el || !lightNow(el)) return 0;
+    const busy = !!(warm.job || warm.look || warm.timer);   // 고르는 중 · 푸는 중이었으면 다시 계산이 끝난 뒤 처음부터
+    const n = coolOffscreen(doc);
+    if (n || busy) kickWarm();
+    return n;
 }
 /** 서랍이 열리면 쉬면서 화면 밖을 되돌리고, 닫히면 다시 미리 그린다 */
 export function warmOnDrawers(doc = document) {

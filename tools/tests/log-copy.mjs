@@ -264,7 +264,7 @@ await test('분류: 칩 하나에 그 분류 모양만 · 할로윈은 1.0.1 에
     const { CATEGORIES, presetsIn, categoryOf } = await load('src/log-copy-presets.js');
     // 1.0.1(11-04): 틀이 있는 분류만 칩 — 내장 심플 30(기념일 7 · 사물 11 · 장르 12)이라 세 칩이 모두 서요
     // 1.0.9: 반응 글꾸 4종(봉투 열기 · 초대장 · 쪽 넘기기 · 통통 카드)이 「반응」 칩으로
-    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'react', 'scene', 'gallery', 'mine']);
+    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'react', 'scene', 'xmas', 'gallery', 'mine']);
     for (const p of PRESETS) assert.ok(CATEGORIES.some(c => c.id === p.category && c.id !== 'mine'), `${p.id} 분류`);
     assert.deepEqual(presetsIn('halloween'), [], '할로윈 13종은 테마 기본에서 빠졌어요(글꾸 마트 → 내 글꾸)');
     for (const c of CATEGORIES) assert.ok(!presetsIn(c.id, []).some(id => id.startsWith('halloween')), `${c.label} 에는 할로윈 없음`);
@@ -292,7 +292,7 @@ await test('할로윈 31종(1.0.1 글꾸 마트 · 10월 31일 · 틈 템플릿�
     const hw = CONCEPT_FRAMES.map(f => ({ id: f.id, own: f.colors }));
     assert.equal(hw.length, 31, '할로윈 31종(10월 31일)');
     assert.equal(new Set(hw.map(f => f.id)).size, 31, '할로윈 id 겹침 없음');
-    assert.ok(PRESETS.filter(p => !['event', 'thing', 'genre', 'react', 'scene'].includes(p.category)).every(p => !p.own), '컨셉 분류(+ 1.0.9 반응 · 1.1.0 장면) 밖은 전용 색 없음');
+    assert.ok(PRESETS.filter(p => !['event', 'thing', 'genre', 'react', 'scene', 'xmas'].includes(p.category)).every(p => !p.own), '컨셉 분류(+ 1.0.9 반응 · 1.1.0 장면 · 1.1.1 연말) 밖은 전용 색 없음');
     assert.ok(PRESETS.filter(p => p.own).every(p => p.template), '전용 색 틀은 내장 심플 글꾸(틈 템플릿)뿐');
     const L = (hex) => { const n = hex.replace('#', ''); const v = [0, 2, 4].map(i => Number.parseInt(n.slice(i, i + 2), 16) / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
     const ratio = (a, b) => { const [h, l] = [L(a), L(b)].sort((x, y) => y - x); return (h + 0.05) / (l + 0.05); };

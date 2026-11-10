@@ -17,9 +17,11 @@ export function demGlowValue(raw) {
 }
 
 /** 시트 본문. preview 가 있으면 채팅은 committed 값, 설정 창 표본만 live 값 */
+// 1.1.1 restyle2: `:is(.a, .b, .c)` 한 칸이면 크롬이 규칙을 어느 바구니에도 못 넣어 문서의 모든 요소와 견줘요 — class 갈래로 나눠 적어요(특이도 · 뜻 같음)
+const scopeList = prefix => SCOPE.split(', ').map(c => `${prefix}${c}`).join(', ');
 export function demGlowCss(live, committed = live) {
-    if (committed === live) return `:is(${SCOPE}) { --bl-dem-glow: ${live}; }`;
-    return `:is(${SCOPE}) { --bl-dem-glow: ${committed}; }\n:is(${PREVIEW_HOSTS}) :is(${SCOPE}) { --bl-dem-glow: ${live}; }`;
+    if (committed === live) return `${scopeList('')} { --bl-dem-glow: ${live}; }`;
+    return `${scopeList('')} { --bl-dem-glow: ${committed}; }\n${scopeList(`:is(${PREVIEW_HOSTS}) `)} { --bl-dem-glow: ${live}; }`;
 }
 
 let committed = null;      // 채팅에 마지막으로 준 값 (끌기 중엔 이 값이 채팅에 남는다)

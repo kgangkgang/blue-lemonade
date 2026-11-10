@@ -144,6 +144,10 @@ await test('9.0.2 부팅 2 · 3층 모듈은 시작 그래프 밖이에요 (첫 
         'src/websearch.js': '웹 검색 표시 — 3층(성능 보조가 쓰면 그때)', 'src/natural-slash.js': '자연 슬래시 — 3층', 'src/chat-graph-launcher.js': '채팅 지도 — 3층', 'src/promptlist.js': '프롬프트 목록 줄 — 3층',
         'src/tab-scroll.js': '탭 줄 스크롤 — 3층', 'src/marquee.js': '긴 이름 흐르기 — 3층', 'src/cardink.js': 'HTML 카드 글자색 — 2층', 'src/reading-resume.js': '읽던 자리 — 2층',
         'src/mes-pins.js': '메시지 버튼 고정 본체 — 2층(features.js) · 설정 정리는 mes-pins-keys.js 만',
+        'src/usage-ledger.js': '사용량 장부 본체 — 허브의 record · query 를 처음 부를 때(1.1.1 가볍게, 시작에는 usage-ledger-lite.js 만)',
+        'src/usage-ledger-core.js': '장부 값 셈 — 장부 본체와 함께', 'src/addons/perf/pricing-providers.js': '가격 제공처 표 — 장부 본체와 함께',
+        'src/scene-sound-rules.js': '장면 소리 판정 — 켤 때만(설정 정리는 scene-sound-keys.js)', 'src/scene-music-rules.js': '분위기 음악 판정 — 켤 때만(설정 정리는 scene-sound-keys.js)',
+        'src/multi-avatar/pick.js': '프로필 여러 개 고르기 — 켤 때만(설정 정리는 pick-keys.js)',
     };
     for (const [rel, why] of Object.entries(LATER)) notAtBoot(rel, why);
     const index = read('index.js');

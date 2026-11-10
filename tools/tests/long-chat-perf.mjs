@@ -171,6 +171,29 @@ await test('상태창 바로가기: 알림 100회에는 재탐색하지 않고 �
     observer.fn([{target:doc.body,addedNodes:[new El(doc,'section',{class:'rumor-board'})],removedNodes:[]}]);   // 8.0.6 채팅 카드 바로가기는 청과만(데우스 카드는 빠른 설정 창 줄에서)
     assert.equal(H.frames.size,1,'새 상태창을 놓쳤어요');stop();
 });
+// ── ③ (1.1.1 restyle) 문서 전체 다시 계산 앞에 화면 밖 되돌리기 ──
+//    설정 적용(apply.js applyAll)의 쓰기(:root 변수 시트 · 규칙 시트 · body class · html 속성)는 모든 요소를 다시 계산해요 — 긴 채팅에서 미리 그린 메시지 2,000개가 다 계산에 들어
+//    흉내 2,000개 밝기 바꾸기 1,139ms(순정 꼴 134). 첫 쓰기 전에 chat-light.js coolForRestyle 로 화면 밖을 되돌리면 메시지 안쪽을 건너뛰어 212ms. 서랍 열기 자체는 1.8ms(요소 1개)라 대상이 아니에요.
+await test('(1.1.1 restyle) 설정 적용은 문서 전체를 다시 계산하는 쓰기마다 그 앞에서 coolChatForRestyle 을 한 번 부른다', () => {
+    const apply = fs.readFileSync(path.join(root, 'src/apply.js'), 'utf8');
+    assert.match(apply, /import \{[^}]*\bcoolChatForRestyle\b[^}]*\} from '\.\/features\.js'/);
+    assert.match(apply, /const restyleAhead = \(\) => \{ if \(!cooled\) \{ cooled = true; coolChatForRestyle\(\); \} \};/);
+    for (const write of [/\{ restyleAhead\(\); variables\.textContent = css; \}/, /\{ restyleAhead\(\); gradients\.textContent = gradientRules; \}/, /\{ restyleAhead\(\); icons\.textContent = iconText; \}/,
+        /\{ restyleAhead\(\); cls\.remove\(\.\.\.stale\); \}/, /\{ restyleAhead\(\); cls\.add\(\.\.\.missing\); \}/, /\{ coolChatForRestyle\(\); document\.body\.classList\.toggle\('salty-reasoning-off'/]) assert.match(apply, write);
+    // applyAll 안에서 body · html 에 직접 쓰는 줄은 모두 restyleAhead 뒤에 (쓰기가 늘면 여기도)
+    const body = apply.slice(apply.indexOf('export function applyAll()'));
+    let writes = 0;
+    for (const m of body.matchAll(/document\.(body|documentElement)\.(classList\.(add|remove|toggle)|setAttribute|removeAttribute)\(/g)) {
+        const line = body.slice(body.lastIndexOf('\n', m.index) + 1, body.indexOf('\n', m.index));
+        writes++;
+        assert.ok(/restyleAhead\(\)/.test(line), `restyleAhead 없이 쓰는 줄: ${line.trim().slice(0, 120)}`);
+    }
+    assert.ok(writes >= 6, `body · html 쓰기 ${writes}줄`);
+    const features = fs.readFileSync(path.join(root, 'src/features.js'), 'utf8');
+    assert.match(features, /export const coolChatForRestyle = \(\) => ready\.chatlight\?\.coolForRestyle\?\.\(\) \?\? 0;/);
+    assert.match(features, /ready\.chatlight = m; m\?\.syncChatLight\(chatLight\)/);
+    assert.match(fs.readFileSync(path.join(root, 'src/chat-light.js'), 'utf8'), /export function coolForRestyle\(/);
+});
 await test('CI 등록', () => {
     assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/long-chat-perf\.mjs \./);
 });

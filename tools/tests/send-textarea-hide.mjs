@@ -46,7 +46,7 @@ await test('apply.js: 켜면 body 에 클래스가 붙고 끄면 떨어진다 (w
         want.forEach(c => { if (!cls.has(c)) cls.add(c); });
     };
     // 8.2.7 뒤 경량 판: 뗄 것을 모아 한 번에 remove(...stale) — 규칙(salty · salty-* 중 want 에 없는 것)은 같아요
-    assert.match(apply, /const stale = \[\.\.\.cls\]\.filter\(c => \(c === 'salty' \|\| c\.startsWith\('salty-'\)\) && !want\.has\(c\)\);\s*if \(stale\.length\) cls\.remove\(\.\.\.stale\);/, 'salty-* 접두어 떼기 규칙이 그대로여야 클래스가 끄는 즉시 떨어짐');
+    assert.match(apply, /const stale = \[\.\.\.cls\]\.filter\(c => \(c === 'salty' \|\| c\.startsWith\('salty-'\)\) && !want\.has\(c\)\);\s*if \(stale\.length\) \{? ?(restyleAhead\(\); )?cls\.remove\(\.\.\.stale\);/, 'salty-* 접두어 떼기 규칙이 그대로여야 클래스가 끄는 즉시 떨어짐');   // (1.1.1 restyle) 쓰기 앞의 restyleAhead() 는 허용
     const body = new Set(['salty', 'other-ext']);
     const on = new Set(['salty']); addWant({ chat: { [KEY]: true } }, on); sync(on, body);
     assert.ok(body.has(CLASS), '켬 → 붙음');

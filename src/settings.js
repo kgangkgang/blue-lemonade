@@ -6,8 +6,8 @@ import { MASK_STYLES, normalizeMaskStyle, FILTER_RANGES, FILTER_PRESET_IDS, FILT
 import { MARKDOWN_DEFAULTS, tidyMarkdown } from './markdown.js';
 import { tidyPins } from './mes-pins-keys.js';
 import { syncWeatherProfile } from './weather-profiles.js';
-import { tidySceneSound } from './scene-sound-rules.js';   // 6.9.8 장면 소리 설정 정리 (순수 모듈)
-import { tidyMultiAvatar } from './multi-avatar/pick.js';   // 7.9.9 프로필 여러 개 (순수)
+import { tidySceneSound } from './scene-sound-keys.js';   // 6.9.8 장면 소리 설정 정리 (순수 모듈)
+import { tidyMultiAvatar } from './multi-avatar/pick-keys.js';   // 7.9.9 프로필 여러 개 (순수)
 // 추가 모양의 정리 코드는 첫 프레임 뒤에 연결하고 저장 키는 그대로 둬요.
 const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100, presetTilt: 0, frameHue: 0, frameSat: 100, frameBright: 100 };   // presetTilt: 1.0.1 액자 기울기(도, -10~10)
 const MIX_DEFAULT = { on: false, families: ['blue', 'strawberry'], angle: 90, weights: [50, 50, 50], blend: 50 };
@@ -137,7 +137,7 @@ export const DEFAULTS = {
     chatOrganizer: { on: false, folders: [], chats: {} },
     apiStatus: { on: false },   // 1.0.3 API 서버 상태 — 켜면 회사 공식 상태 페이지(바깥 주소)를 읽어요 (api-status.js)
     qrShelf: { on: false, items: {}, recent: [] },   // 1.0.3 QR 책장 (모양은 qr-shelf-core.js tidyStore)
-    promptSaves: { on: false, presets: {} }, presetFolders: { on: false, folders: [] }, quick: { selEdit: false, mesDelete: false, rangeDelete: true },   // 1.0.3 편의 기능 (src/quick/)
+    promptSaves: { on: false, presets: {} }, presetFolders: { on: false, folders: [] }, quick: { selEdit: false, mesDelete: false, rangeDelete: true, selEditTr: false, adeChat: false, adeDaily: false },   // 1.0.3 편의 기능 (src/quick/) · 1.1.1 시제품
     promptLink: { on: false, rows: [] },   // 6.5.2 캐릭터 이름 연동 — 이름이 든 프롬프트·정규식을 그 캐릭터 채팅에서만 켜고 「기본」 짝은 반대로 · 6.7.5 여러 줄 rows [{ word, cards: [아바타] }] (prompt-link.js · promptbind.js)
     longpressHelp: true,   // 8.1.2 단추 길게 누르면 설명 (longpress-help.js — 끄면 길게 눌러도 원래 동작만)
     koUi: true,   // 6.9.0 실리태번 한국어 화면 다듬기 (ko-ui.js — 언어가 ko-kr 일 때만, 바꾸면 새로고침 뒤)

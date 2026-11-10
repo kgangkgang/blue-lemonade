@@ -18,6 +18,8 @@ const { checkItem } = await import(pathToFileURL(path.join(ROOT, 'src', 'mart-im
 const { REACT_FRAMES } = await import(pathToFileURL(path.join(ROOT, 'tools', 'mart', 'react-geulkku.mjs')).href);
 // 1.1.0 장면 글꾸 8종(서류 · 화면 한 장면 — 사랑 재판 · 속보 방송 · 탑승권 · 레시피 카드 · 타로 리딩 · 터미널 · 학적부 · 전보): 마트와 같은 자료(tools/mart/scene-geulkku.mjs) · 분류 「장면」(scene)
 const { SCENE_FRAMES } = await import(pathToFileURL(path.join(ROOT, 'tools', 'mart', 'scene-geulkku.mjs')).href);
+// 1.1.1 연말 글꾸 6종(스노우볼 · 성탄 카드 · 오너먼트 대화 · 겨울 기차표 · 연말 정산 · 소원 부적): 마트와 같은 자료(tools/mart/xmas-geulkku.mjs) · 분류 「연말」(xmas)
+const { XMAS_FRAMES } = await import(pathToFileURL(path.join(ROOT, 'tools', 'mart', 'xmas-geulkku.mjs')).href);
 
 // [마트 심플 틀 id, 테마 분류(칩), 칩 이름, 옛 내장 컨셉 id(같은 주제)]
 export const BUILTIN_SIMPLE = [
@@ -63,8 +65,8 @@ const items = BUILTIN_SIMPLE.map(([id, category, label, was]) => {
     if (!item) throw new Error(`${id}: ${reason}`);
     return { id, label, emoji: f.emoji, category, was, template: item.template, colors: item.colors, messages: item.messages, tail: item.tail, ...(item.type ? { type: item.type } : {}) };
 });
-for (const [category, f] of [...REACT_FRAMES.map(f => ['react', f]), ...SCENE_FRAMES.map(f => ['scene', f])]) {
-    if (!checkTemplate(f.template).ok) throw new Error(`${f.id}: ${category === 'react' ? '반응' : '장면'} 글꾸 틈 템플릿이 테마 검사를 못 통과해요`);
+for (const [category, f] of [...REACT_FRAMES.map(f => ['react', f]), ...SCENE_FRAMES.map(f => ['scene', f]), ...XMAS_FRAMES.map(f => ['xmas', f])]) {
+    if (!checkTemplate(f.template).ok) throw new Error(`${f.id}: ${({ react: '반응', scene: '장면', xmas: '연말' })[category]} 글꾸 틈 템플릿이 테마 검사를 못 통과해요`);
     const { item, reason } = checkItem({ kind: 'geulkku', id: f.id, label: f.label, emoji: f.emoji, template: f.template, colors: f.colors, messages: f.messages || 'box', tail: f.tail || '', ...(f.type ? { type: f.type } : {}) });
     if (!item) throw new Error(`${f.id}: ${reason}`);
     items.push({ id: f.id, label: f.label, emoji: f.emoji, category, template: item.template, colors: item.colors, messages: item.messages, tail: item.tail, ...(item.type ? { type: item.type } : {}) });

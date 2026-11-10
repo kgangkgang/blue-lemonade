@@ -11,10 +11,11 @@ import { cutEdgeVars, cutEdgeClasses, syncCutEdge, imageFrameOn, darkBackground 
 import { comparisonView } from './appearance-compare.js';
 import { weatherReadability } from './weather-readability.js';
 import { themeEnabled, addonsEnabled, puffyMode, checkboxTokens, zeroSkips, zeroView } from './usage-mode.js';
-import { syncFeatures } from './features.js';
+import { syncFeatures, coolChatForRestyle } from './features.js';
 import { restingFor } from './ext-presence.js';
 import { markdownClasses, markdownVariables } from './markdown.js';
 import { frameReady, trackLate } from './boot-layers.js';
+import { syncMarkdownCss } from './lite.js';   // 1.1.1 마크다운 모양 시트(고른 게 있을 때만)
 // 그리기 모듈은 첫 프레임 뒤에 받고, 도착하면 가장 최근 설정을 적용해요.
 const late = new Map();
 function lateSync(name, load, want, call) {
@@ -423,13 +424,17 @@ function stReasoningOff() {
 const reasoningOff = s => themeEnabled(s) && s.chat?.reasoningFollow !== false && stReasoningOff();
 export function syncReasoningOff() {
     const on = reasoningOff(getSettings());
-    if (document.body.classList.contains('salty-reasoning-off') !== on) document.body.classList.toggle('salty-reasoning-off', on);
+    if (document.body.classList.contains('salty-reasoning-off') !== on) { coolChatForRestyle(); document.body.classList.toggle('salty-reasoning-off', on); }
 }
 
 // ───────── 전체 적용 ─────────
 export function applyAll() {
     const rendered = appearanceForRender(getSettings());
     const s = themeEnabled(rendered) ? rendered : {...rendered, enabled:false};
+    // 1.1.1 restyle: 아래 쓰기(:root 변수 시트 · 규칙 시트 · body class · html 속성)는 문서 전체를 다시 계산해요 — 긴 채팅이면 그 첫 쓰기 전에 화면 밖 미리 그린 메시지를 되돌려
+    //   그 계산이 메시지 안쪽(2,000개면 요소 14만 개)을 건너뛰게 해요(features.js coolChatForRestyle → chat-light.js coolForRestyle · 보이는 메시지는 그대로라 모양은 같아요).
+    //   흉내 2,000개(PC): 밝기 바꾸기 스타일 재계산 1,139 → 212ms. 값이 그대로여서 쓰지 않는 적용(슬라이더 틱 사이 · 채팅 바꾸기)은 부르지 않아요
+    let cooled = false; const restyleAhead = () => { if (!cooled) { cooled = true; coolChatForRestyle(); } };
     // 8.2.1 테마가 꺼진 모드(확장만 · 테마 끔)면 큰 style.css 대신 가벼운 사본 style-ext.css (theme-sheet.js · 1.0.0 되살림: 꺼졌을 때만 받아요)
     { const on = !!s.enabled; lateSync('themeSheet', () => import('./theme-sheet.js'), !on || s.deus?.on === true || s.deus?.fx?.flow === true, m => m.syncThemeSheet(on)); }
     appearance?.prepareDecor(s);
@@ -667,17 +672,17 @@ export function applyAll() {
         css += `\nbody.salty {\n${declarations(autocompleteVars(pal, mode, { accent: vars['--salty-accent-ink'], pop: vars['--salty-pop-ink'] }), true)}\n}`;
     }
     const variables = styleTag('salty-vars');
-    if (variables.textContent !== css) variables.textContent = css;
+    if (variables.textContent !== css) { restyleAhead(); variables.textContent = css; }
     syncDemGlow(s.chat.demGlow);   // 상태창 묶음 · 트래커에만 — 값이 그대로면 시트를 건드리지 않는다
     // Keep selector rules stable while sliders change only the variable sheet.
     const gradients = styleTag('salty-gradients');
     const gradientRules = gradientTextCss(s, vars['--salty-marker-bg']);
-    if (gradients.textContent !== gradientRules) gradients.textContent = gradientRules;
+    if (gradients.textContent !== gradientRules) { restyleAhead(); gradients.textContent = gradientRules; }
 
     // 아이콘 CSS(15KB)도 테마를 끄면 비움 — body.salty 밖에선 쓸 데가 없음
     const icons = s.enabled ? styleTag('salty-icons') : document.getElementById('salty-icons');
     const iconText = s.enabled ? iconsCss() : '';
-    if (icons && icons.textContent !== iconText) icons.textContent = iconText;
+    if (icons && icons.textContent !== iconText) { restyleAhead(); icons.textContent = iconText; }
     // 7.9.3 단추 아이콘 바꾸기: 테마를 꺼도(확장만) 테마 창의 단추는 그대로 테마 것이라 켬/끔과 상관없이. 바꾼 역할이 없으면 <style> 도 없다
     {
         const roleIcons = s.roleIcons ?? getSettings().roleIcons, picks = s.pickedIcons ?? getSettings().pickedIcons;
@@ -763,27 +768,29 @@ export function applyAll() {
     appearance?.syncDecor(s);
     appearance?.syncFrameShadows(s);
     syncCutEdge(s.image.cutEdge, !!s.enabled && !imageFrameOn(s.image), edgeTheme); // 외곽선 SVG 필터 정의 (값이 그대로면 손대지 않음)
+    // 1.1.1 가볍게: 고른 마크다운 모양이 있으면 그 규칙 시트를 클래스보다 먼저 붙여요(첫 시트에는 없어요 · lite.js syncMarkdownCss)
+    syncMarkdownCss([...want].some(c => c.startsWith('salty-md-')));
     // 바뀐 클래스만 만지기 (전부 뗐다 붙이면 매번 화면 전체를 다시 그림)
     const cls = document.body.classList;
     const cutoutBefore = cls.contains('salty-cutout-same');
     // 8.2.7: 떼고 붙일 것을 모아 한 번씩 — 예전엔 클래스마다 add 를 따로 불러 처음 켤 때 body class 변경 기록이 마흔 번 넘게 났고,
     //   기록마다 실리태번 keyboard.js 가 body 아래 전부(시작 때 요소 9천 개 남짓)를 선택자 31개로 다시 훑었어요(폰 리그 감사: 시작 한 번에 이 자리 기록 45번). 끝 상태는 같아요
     const stale = [...cls].filter(c => (c === 'salty' || c.startsWith('salty-')) && !want.has(c));
-    if (stale.length) cls.remove(...stale);
+    if (stale.length) { restyleAhead(); cls.remove(...stale); }
     const missing = [...want].filter(c => !cls.contains(c));
-    if (missing.length) cls.add(...missing);
+    if (missing.length) { restyleAhead(); cls.add(...missing); }
     const fold = want.has('salty-dem-skin') && s.chat.demFold !== false;
-    if (document.body.hasAttribute('data-bl-dem-fold') !== fold) { if (fold) document.body.setAttribute('data-bl-dem-fold', ''); else document.body.removeAttribute('data-bl-dem-fold'); }
+    if (document.body.hasAttribute('data-bl-dem-fold') !== fold) { restyleAhead(); if (fold) document.body.setAttribute('data-bl-dem-fold', ''); else document.body.removeAttribute('data-bl-dem-fold'); }
     // 5.3.7: html 바탕색은 클래스로 — 예전 html:has(> body.salty:not(.salty-bgimg)) 는 인라인 style 이 바뀔 때마다 html 까지 :has 를 다시 따지게 한다 (리뷰 측정: 설정 창을 연 뒤 스트리밍이 크게 느려짐)
     // 조건은 body 의 salty · salty-bgimg 와 똑같이 (테마를 끄면 둘 다 빠지듯 이것도 빠짐)
     const htmlBg = want.has('salty') && !want.has('salty-bgimg');
-    if (document.documentElement.classList.contains('salty-html-bg') !== htmlBg) document.documentElement.classList.toggle('salty-html-bg', htmlBg);
+    if (document.documentElement.classList.contains('salty-html-bg') !== htmlBg) { restyleAhead(); document.documentElement.classList.toggle('salty-html-bg', htmlBg); }
     // 7.7.4 볼록 단추: 확장만 모드에서도 테마 자신의 단추(.salty-btn)에 — 값은 팔레트 밝기(두께 색), 테마를 끄면 속성을 뗀다 (css/90-press.css 누름 · 전환 · 91-switch-knob · 전개 지시 끌기 그림자)
     // Owned addon controls keep their appearance in extensions-only mode.
     const controls = rendered.enabled !== false ? 'on' : null;
-    if (document.documentElement.getAttribute('data-bl-controls') !== controls) { if (controls) document.documentElement.setAttribute('data-bl-controls', controls); else document.documentElement.removeAttribute('data-bl-controls'); }
+    if (document.documentElement.getAttribute('data-bl-controls') !== controls) { restyleAhead(); if (controls) document.documentElement.setAttribute('data-bl-controls', controls); else document.documentElement.removeAttribute('data-bl-controls'); }
     const puffy = puffyMode(getSettings(), mode);
-    if (document.documentElement.getAttribute('data-bl-puffy') !== puffy) { if (puffy) document.documentElement.setAttribute('data-bl-puffy', puffy); else document.documentElement.removeAttribute('data-bl-puffy'); }
+    if (document.documentElement.getAttribute('data-bl-puffy') !== puffy) { restyleAhead(); if (puffy) document.documentElement.setAttribute('data-bl-puffy', puffy); else document.documentElement.removeAttribute('data-bl-puffy'); }
     // 컷 취급이 바뀌면 이미 분류한 그림의 .salty-cutout 을 다시 정해야 한다 (스위치를 누른 순간 채팅에 바로 보이게)
     if (cutoutBefore !== cls.contains('salty-cutout-same')) lateSync('classify', () => import('./assets.js'), true, m => m.classifyAll());
 

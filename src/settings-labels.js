@@ -43,7 +43,7 @@ Object.assign(SETTING_LABELS, {'apiStatus.on':'API 서버 상태'});
 // 1.0.3 QR 책장 (src/qr-shelf.js)
 Object.assign(SETTING_LABELS, {'qrShelf.on':'QR 책장'});
 // 1.0.3 편의 기능 (src/quick/)
-Object.assign(SETTING_LABELS, {'quick.selEdit':'고른 글 고치기','quick.mesDelete':'연필 옆 지우기 단추','quick.rangeDelete':'메시지 범위 지우기','onehand.top':'한 손 맨 위로','onehand.bottom':'한 손 맨 아래로','onehand.jump':'한 손 번호로 가기','onehand.delLast':'한 손 마지막 메시지 지우기','promptSaves.on':'프롬프트 켜짐 묶음','presetFolders.on':'프리셋 목록 폴더'});
+Object.assign(SETTING_LABELS, {'quick.selEditTr':'번역문도 고치기','quick.adeChat':'채팅방마다 다른 에이드','quick.adeDaily':'오늘의 에이드','quick.selEdit':'고른 글 고치기','quick.mesDelete':'연필 옆 지우기 단추','quick.rangeDelete':'메시지 범위 지우기','onehand.top':'한 손 맨 위로','onehand.bottom':'한 손 맨 아래로','onehand.jump':'한 손 번호로 가기','onehand.delLast':'한 손 마지막 메시지 지우기','promptSaves.on':'프롬프트 켜짐 묶음','presetFolders.on':'프리셋 목록 폴더'});
 
 // 솔라 상태창 모양은 기존 글자 편집기에서 골라요.
 Object.assign(SETTING_LABELS, {'chat.solaStyle':'솔라 카드 스타일'});

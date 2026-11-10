@@ -3,18 +3,11 @@
 //
 // 소리 종류(kind): rain 빗소리 · wind 바람 · hush 아주 낮은 바람(눈 · 안개) · water 물결. 천둥(thunder)은 rain 안의 선택(가끔 한 번).
 // 날씨 하나가 여러 소리를 부르지 않는다 — 겹친 날씨("안개비" = 비 + 안개)는 우선순위가 높은 소리 하나만 (rain > water > wind > hush).
-import { tidyMusic, MUSIC_DEFAULTS } from './scene-music-rules.js';   // 7.0.1 분위기 음악 (sceneSound.music)
-export const KINDS = Object.freeze(['rain', 'wind', 'hush', 'water']);
-export const KIND_LABELS = Object.freeze({ rain: '비', wind: '바람', hush: '눈 · 안개', water: '물결' });
+// 1.1.1 가볍게: 종류 · 기본값 · 파일 규칙 · 설정 정리(tidySceneSound)는 시작 그래프의 scene-sound-keys.js 에 — 여기서는 그대로 다시 내보내요 (아래 판정 · 섞기 규칙은 장면 소리를 켤 때만 받아요)
+export { KINDS, KIND_LABELS, SCENE_SOUND_DEFAULTS, FILE_URL, FILE_EXT, FILE_MAX_BYTES, tidySceneSound } from './scene-sound-keys.js';
 /** 날씨 효과(src/weather-profiles.js WEATHER_MODES) → 소리 종류. 없는 날씨는 소리 없음 */
 export const WEATHER_SOUND = Object.freeze({ rain: 'rain', breeze: 'wind', snow: 'hush', fog: 'hush', water: 'water' });
 const PRIORITY = Object.freeze({ rain: 0, water: 1, wind: 2, hush: 3 });
-/** 설정 기본값 (settings.js DEFAULTS 의 sceneSound 와 같아야 한다). volume 은 % (0~100). music = 7.0.1 분위기 음악 (기본 꺼짐) */
-export const SCENE_SOUND_DEFAULTS = Object.freeze({ on: false, volume: 40, thunder: true, background: true, files: Object.freeze({}), music: MUSIC_DEFAULTS });
-/** 내 파일: 실리태번 사용자 파일 영역의 소리 파일만 (/api/files/upload 가 돌려준 경로) */
-export const FILE_URL = /^\/?user\/files\/[A-Za-z0-9_.-]+\.(mp3|ogg|oga|wav|m4a|aac|webm|flac|opus)$/i;
-export const FILE_EXT = /\.(mp3|ogg|oga|wav|m4a|aac|webm|flac|opus)$/i;
-export const FILE_MAX_BYTES = 12 * 1024 * 1024;
 /** 6.9.9 빗소리 세기: 날씨 효과의 양(weatherAmount 0~200, 옛 세 단계 55 · 100 · 170)으로 가볍게 · 보통 · 쏟아짐.
  *  TTS 효과음 비 세 단계(가볍게 내리는 비 · 비 내리는 소리 · 쏟아지는 비)와 같은 이름 */
 export const RAIN_LEVELS = Object.freeze(['light', 'medium', 'heavy']);
@@ -29,26 +22,6 @@ export const RAIN_FILE_GAIN = Object.freeze({ light: 0.55, medium: 1, heavy: 1.3
 export const FADE = Object.freeze({ in: 1.5, swap: 1.5, out: 1.2, hide: 0.6 });
 
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
-const flag = (v, fallback) => v === true ? true : v === false ? false : fallback;
-
-/** 저장값 정리 — 깨진 값 · 모르는 열쇠를 거르고 늘 같은 모양을 돌려준다 (settings.js tidyFlags 에서 부른다) */
-export function tidySceneSound(raw) {
-    const src = isObj(raw) ? raw : {};
-    const n = Number(src.volume);
-    const files = {};
-    if (isObj(src.files)) for (const kind of KINDS) {
-        const url = src.files[kind];
-        if (typeof url === 'string' && FILE_URL.test(url.trim())) files[kind] = '/' + url.trim().replace(/^\/+/, '');
-    }
-    return {
-        on: flag(src.on, false),
-        volume: Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : SCENE_SOUND_DEFAULTS.volume,
-        thunder: flag(src.thunder, true),
-        background: flag(src.background, true),
-        files,
-        music: tidyMusic(src.music),
-    };
-}
 
 /** 지금 화면에 걸린 날씨 효과들 (앞이 주 효과). weatherChat 은 features.js 가 날씨 모듈에 주는 것과 같은 설정 조각;
  *  tracker 면 날씨 모듈이 실제로 그리는 것(weatherState().current: { mode, second: { mode } })을 받는다 — 트래커 글을 여기서 다시 읽지 않는다 */

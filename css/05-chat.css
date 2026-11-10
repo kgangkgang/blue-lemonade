@@ -75,8 +75,8 @@ body.salty #chat .last_mes {
    고른 메시지는 뺀다. 편집 중 메시지는 따로 빼지 않는다 — 초점(textarea)이 있는 내용은 브라우저가 「보이는 것」으로 쳐서 그리고, 편집 칸을 :has 로 고르면
    메시지마다 :has 주어가 되어 스트리밍 글자마다 그 메시지를 다시 훑는다(mes-marks 규칙: 편집은 data-bl-editing 표식으로). contain-intrinsic-size: 아직 못 그린 메시지는 160px 로 자리를 잡고, 한 번 그린 메시지는 그 크기를 기억한다(auto).
    마지막 10개는 늘 그대로 그린다 — 실리태번이 scrollTop = scrollHeight 로 바닥에 붙일 때 바닥 쪽이 자리표시(추정 높이)면 그려진 뒤 높이가 바뀌어 바닥에 못 닿았다
-   (리그: 바닥까지 1,700px 남음). 바닥 10개가 실제 높이면 바닥 붙이기 · 새 답 따라가기가 정확하고, 그 위는 화면에 들어올 때 그려진다. */
-:where(html.bl-chat-light) body.salty [id="chat"]:not(#salty-none) > .mes:not(.last_mes, .bl-menu-open, .selected):not(:nth-last-child(-n+10)) {
+   (리그: 바닥까지 1,700px 남음). 바닥 10개는 src/chat-light.js 가 data-bl-tail 로 달아요 — :nth-last-child 로 고르면 메시지가 붙을 때마다 형제 전부가 다시 계산돼요(1.1.1). 바닥 10개가 실제 높이면 바닥 붙이기 · 새 답 따라가기가 정확하고, 그 위는 화면에 들어올 때 그려진다. */
+:where(html.bl-chat-light) body.salty [id="chat"]:not(#salty-none) > .mes:not(.last_mes, .bl-menu-open, .selected):not([data-bl-tail]) {
   content-visibility: auto;
   contain-intrinsic-size: auto 160px;
   /* #chat 은 세로 flex 라 건너뛴 메시지(크기 격리 · 내용 없음)는 min-height:auto 가 0 이 되어 안쪽 여백만 남게 납작해졌다(리그: 20px · 바닥 못 붙음).

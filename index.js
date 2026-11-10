@@ -2,7 +2,7 @@
 // 부팅 3층(src/boot-layers.js): 정적 묶음은 설정·CSS 변수·글꼴·핵심 배치·요청 훅만 담아요.
 // FRAME_LAYER는 첫 프레임 뒤, IDLE_LAYER는 덮개가 걷힌 뒤나 처음 쓸 때 받아요.
 // 늦은 채팅 사건은 withReplay로 보완해요. 첫 화면 순서의 근거는 tools/tests/boot-layers.mjs에 있어요.
-import { installUsageLedger } from './src/usage-ledger.js';   // 7.4.0 사용량 장부 허브 — 다른 확장이 읽기 전에 (가볍다: 장부 · 가격표는 처음 쓸 때 연다)
+import { installUsageLedger } from './src/usage-ledger-lite.js';   // 7.4.0 사용량 장부 허브 — 다른 확장이 읽기 전에 (1.1.1 가볍게: 허브 · 설정 · 알림만, 장부 · 가격표 본체는 처음 쓸 때 받아요)
 // 1.0.2 블루레몬에이드 제로(usage-mode.js zeroMode): 모양(CSS · 색 · 글꼴 · 말풍선)만 — 아래 ZERO 가 서 있으면 기능 모듈 · 감시자 · 요청 훅을 받지도 걸지도 않아요.
 //   모드를 바꾸면 새로고침해요(설정 › 테마 › 기타 › 사용 모드). 시험 tools/tests/zero-mode.mjs
 const ZERO = (() => { try { return zeroMode(getSettings()); } catch { return false; } })();

@@ -2,43 +2,9 @@
 // 순수 모듈 — DOM · WebAudio 없음 (시험: tools/tests/scene-music.mjs). 실제 소리는 scene-music.js, 설정 화면은 scene-sound-ui.js.
 // AI 호출 없이 낱말 · 문장부호 · 감정 대사 태그(<crying> 같은 데우스 태그)만 센다 — 판정은 가볍고, 틀려도 유지 시간이 막아 준다.
 
-export const MOODS = Object.freeze(['daily', 'tense', 'battle', 'romance', 'sad', 'mystic', 'festive']);
-export const MOOD_LABELS = Object.freeze({ daily: '일상', tense: '긴장', battle: '전투', romance: '로맨스', sad: '슬픔', mystic: '신비', festive: '축제' });
-
-/** 담긴 곡 (src/scene-music/<id>.mp3 · 출처 src/scene-music/SOURCES.json). 분위기마다 1~2곡 — 같은 분위기로 다시 들어오면 다음 곡 */
-export const TRACKS = Object.freeze({
-    daily: Object.freeze(['daily_town', 'daily_lofi']),
-    tense: Object.freeze(['tense_pressure']),
-    battle: Object.freeze(['battle_pursuit']),
-    romance: Object.freeze(['romance_next']),
-    sad: Object.freeze(['sad_hope']),
-    mystic: Object.freeze(['mystic_shrine']),
-    festive: Object.freeze(['festive_feast']),
-});
-export const TRACK_IDS = Object.freeze(Object.values(TRACKS).flat());
-
-/** 설정 기본값 (sceneSound.music) — 기본 꺼짐. volume %, mood 'auto' = 답을 읽어 고름 · 분위기 이름 = 그 분위기로 고정, files = 분위기마다 내 곡 */
-export const MUSIC_DEFAULTS = Object.freeze({ on: false, volume: 30, mood: 'auto', files: Object.freeze({}) });
-
-const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
-/** 내 곡 경로: 장면 소리 내 파일과 같은 사용자 파일 영역 */
-const FILE_URL = /^\/?user\/files\/[A-Za-z0-9_.-]+\.(mp3|ogg|oga|wav|m4a|aac|webm|flac|opus)$/i;
-
-export function tidyMusic(raw) {
-    const src = isObj(raw) ? raw : {};
-    const n = Number(src.volume);
-    const files = {};
-    if (isObj(src.files)) for (const mood of MOODS) {
-        const url = src.files[mood];
-        if (typeof url === 'string' && FILE_URL.test(url.trim())) files[mood] = '/' + url.trim().replace(/^\/+/, '');
-    }
-    return {
-        on: src.on === true,
-        volume: Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : MUSIC_DEFAULTS.volume,
-        mood: MOODS.includes(src.mood) ? src.mood : 'auto',
-        files,
-    };
-}
+// 1.1.1 가볍게: 곡 표 · 기본값 · 설정 정리(tidyMusic)는 시작 그래프의 scene-sound-keys.js 에 — 여기서는 그대로 다시 내보내요 (판정 · 섞기 규칙은 장면 소리를 켤 때만 받아요)
+import { MOODS, TRACKS } from './scene-sound-keys.js';
+export { MOODS, MOOD_LABELS, TRACKS, TRACK_IDS, MUSIC_DEFAULTS, tidyMusic } from './scene-sound-keys.js';
 
 // ───────── 판정 ─────────
 // 낱말 표: [정규식, 무게]. 한국어는 어간 조각(「울먹」 「흐느」), 영어는 낱말 경계. 한 낱말은 답 하나에서 두 번까지만 센다(같은 말 반복에 휘둘리지 않게).

@@ -74,7 +74,7 @@ function makeMes(i) {
         i, attrs, isConnected: true, excluded: false, top: 0,
         classList: { contains: c => c === 'mes' },
         hasAttribute: a => attrs.has(a),
-        setAttribute: (a, v) => { if (!attrs.has(a)) { dirty++; paintDirty = true; } attrs.set(a, v); },
+        setAttribute: (a, v) => { if (!attrs.has(a) && a === 'data-bl-warm') { dirty++; paintDirty = true; } attrs.set(a, v); },   // 바닥 표식(data-bl-tail)은 바닥 10개라 원래 그려져요 — 비용 없음
         removeAttribute: a => { attrs.delete(a); },
         getAttribute: a => attrs.get(a) ?? null,
         matches: sel => { assert.equal(sel, SKIP); return !m.excluded; },   // 바닥 10개 · 마지막은 CSS 가 처음부터 안 건너뛴다
@@ -93,6 +93,7 @@ const chat = {
         if (sel === ':scope > .mes[data-bl-warm]') return mes.filter(m => m.attrs.has('data-bl-warm'));
         throw new Error('모르는 선택자 ' + sel);
     },
+    get firstElementChild() { return mes[0] ?? null; }, get lastElementChild() { return mes.at(-1) ?? null; },
     getBoundingClientRect: () => { rectReads++; return { top: 0, bottom: 600, height: 600 }; },
     // 배치 읽기: 낮은 우선순위 작업 안에서만 세고(묶음 끝내기), 그 자리에서 스타일 · 배치 비용을 치른다
     get offsetHeight() { if (inTask) { forcedInTask++; batchCosts.push(flushLayout()); } else forcedOutside++; return 1000; },
@@ -109,6 +110,7 @@ globalThis.IntersectionObserver = class {
 function setMessages(count, view = count - 11) {
     mes = Array.from({ length: count }, (_, i) => makeMes(i));
     for (const m of mes) { m.top = (m.i - view - 1) * 200 + 300; m.parentElement = chat; m.excluded = m.i >= count - 10; }
+    mes.forEach((m, i) => { m.nextElementSibling = mes[i + 1] ?? null; m.previousElementSibling = mes[i - 1] ?? null; });   // (1.1.1) 형제 차례로 세요
 }
 let openDrawer = null;   // { pinned }
 const docListeners = new Map();
@@ -277,6 +279,23 @@ test('서랍이 열리면 떼고 쉬며, 닫히면 다시 푼다 · 고정 서�
     assert.equal(warmCount(), 90, '고정 서랍은 그대로');
     assert.equal(M.warmPaused(), false);
     openDrawer = null;
+});
+test('(1.1.1 restyle) coolForRestyle: 문서 전체 다시 계산(설정 적용) 앞에 표식을 떼고(자리를 재지 않음) 조용해진 뒤 다시 푼다 · 가볍게가 안 걸린 채팅은 0', () => {
+    openDrawer = null; settle(); assert.equal(warmCount(), 90);
+    rectReads = 0; forcedOutside = 0;
+    assert.equal(M.coolForRestyle(), 90);
+    assert.equal(warmCount(), 0); assert.equal(rectReads, 0); assert.equal(forcedOutside, 0, '되돌리는 자리에서 자리 · 배치를 읽지 않는다');
+    advance(M.WARM_QUIET_MS - 50); assert.equal(warmCount(), 0, '바로 다시 풀지 않는다(조용해진 뒤)');
+    settle(); assert.equal(warmCount(), 90, '조용해진 뒤 다시 푼다');
+    // 푸는 중에 불리면 잡아 둔 묶음을 버리고 처음부터
+    M.coolForRestyle(); advance(M.WARM_QUIET_MS + 400);
+    const mid = warmCount(); assert.ok(mid > 0 && mid < 90, `푸는 중(${mid})`);
+    assert.equal(M.coolForRestyle(), mid); assert.equal(warmCount(), 0);
+    settle(); assert.equal(warmCount(), 90);
+    // 가볍게가 안 걸린(짧은) 채팅은 손대지 않는다
+    htmlClasses.delete('bl-chat-light');
+    assert.equal(M.coolForRestyle(), 0); assert.equal(warmCount(), 90);
+    htmlClasses.add('bl-chat-light');
 });
 test('생성이 시작되면 이미 잡아 둔 묶음도 달지 않는다(쉬는 조건은 묶음마다 다시 본다)', () => {
     setMessages(100); M._warm.stop();

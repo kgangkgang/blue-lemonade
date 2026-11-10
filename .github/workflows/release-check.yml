@@ -112,6 +112,7 @@ jobs:
           node tools/tests/perf-start.mjs .
           node tools/tests/perf-storage.mjs .
           node tools/tests/boot-graph.mjs .
+          node tools/tests/markdown-css-split.mjs .
           node tools/tests/gradients-core.mjs .
           node tools/tests/chat-appearance.mjs .
           node tools/tests/appearance-lifecycle.mjs .
@@ -345,6 +346,8 @@ jobs:
           node tools/tests/log-copy-concept-30.mjs .
           # 1.1.0 장면 글꾸 8종(tools/mart/scene-geulkku.mjs): 받은 글꾸 규칙 · 내장 생성물 · 붙인 곳 네 조건 대비 · 폰 폭
           node tools/tests/log-copy-scene.mjs .
+          # 1.1.1 연말 글꾸 6종(tools/mart/xmas-geulkku.mjs): 받은 글꾸 규칙 · 내장 생성물 · 붙인 곳 네 조건 대비 · 폰 폭 · 성탄 카드 닫힌 채 복사
+          node tools/tests/log-copy-xmas.mjs .
           # 1.0.1 「HTML 복사」 편집용 꼴: 줄 나눔은 안 보이는 자리에만 · 주석(메시지 시작 ~ 끝 · 이름 · 본문 · 머리 칸) · 덩어리 복사로 메시지 늘리기 · 모든 틀 × 1 · 9개
           node tools/tests/log-copy-pretty.mjs .
           # 글꾸 마트 시안 64종(세계관 24 · 캐릭터 40) 틈 템플릿: 살균 통과 · 네 자리 한 번씩 · 64KB · 그리기 · 글자 대비
@@ -426,6 +429,10 @@ jobs:
           node tools/tests/quick-onehand-nav.mjs .
           node tools/tests/quick-prompt-saves.mjs .
           node tools/tests/quick-preset-folders.mjs .
+          # 1.1.1 시제품(기본 꺼짐): 에이드 갈아입기 · 프리셋 폴더 이름 따라가기 · 번역문도 고치기
+          node tools/tests/ade.mjs .
+          node tools/tests/preset-folders-rename.mjs .
+          node tools/tests/sel-edit-translated.mjs .
           node tools/tests/bughunt2-core.mjs .
           node tools/tests/dem-expressive-nest.mjs .
           node tools/tests/dem-expressive-scope.mjs .
@@ -590,6 +597,8 @@ jobs:
           node tools/tests/mes-class-quiet.mjs .
           node tools/tests/body-marks-html.mjs .
           node tools/tests/long-chat-perf.mjs .
+          node tools/tests/css-restyle2.mjs .
+          node tools/tests/css-restyle3.mjs .
           node tools/tests/has-guard.mjs .
           node tools/tests/lite-forced-quiet.mjs .
           node tools/tests/lite-open-once.mjs .

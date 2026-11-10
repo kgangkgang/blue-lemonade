@@ -8,32 +8,15 @@
 //   on('change', cb)         기록이 늘거나 값이 바뀌면 → 떼는 함수
 //   payMethods()             { [연결 열쇠]: '크레딧' | '실제 결제' | '중계' } (기본값 + 사용자가 바꾼 것)
 // 값은 기록 시각 · 실제 연결의 단가로 물을 때 셈한다(날짜별 단가 · 나중에 맞춘 중계 과금이 반영된다). 키 · 비밀은 받지도 남기지도 않는다.
-import { LEDGER_SYMBOL, LEDGER_VERSION, KEEP_DAYS, DEFAULT_KRW, PAY_METHODS, normalizeEntry, costOf, summarize, matchRelayLogs, dayKey, dayStart, connectionOf, payKeyOf, payMethodOf, officialRates, originOf } from './usage-ledger-core.js';
+import { KEEP_DAYS, normalizeEntry, costOf, summarize, matchRelayLogs, dayKey, dayStart, connectionOf, payKeyOf, payMethodOf, officialRates, originOf } from './usage-ledger-core.js';
+// 1.1.1 가볍게: 허브 걸기 · 설정 · 알림은 시작 그래프의 usage-ledger-lite.js — 이 모듈은 허브의 record · query · summary · price 를 처음 부를 때 받아요
+import { ledgerSettings, ledgerEnabled, emit, relayOrigins } from './usage-ledger-lite.js';
+export { ledgerSettings, ledgerEnabled, on, payMethods, setPayMethod, setKrwRate, setRelayRate, installUsageLedger } from './usage-ledger-lite.js';
 
-const DB_NAME = 'BlueLemonadeUsage', STORE = 'entries', SETTINGS_KEY = 'bl_usage_ledger';
-const listeners = new Set();
+const DB_NAME = 'BlueLemonadeUsage', STORE = 'entries';
 let dbPromise = null, queue = [], flushTimer = 0, pricing = null, pruned = false;
 
 function context() { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } }
-/** 설정 (extension_settings.bl_usage_ledger): enabled · krw { rate, date, source } · payMethods { 열쇠: 수단 } */
-export function ledgerSettings() {
-    const ext = context()?.extensionSettings;
-    if (!ext) return { enabled: true, krw: { ...DEFAULT_KRW }, payMethods: {} };
-    const s = ext[SETTINGS_KEY] && typeof ext[SETTINGS_KEY] === 'object' ? ext[SETTINGS_KEY] : (ext[SETTINGS_KEY] = {});
-    if (typeof s.enabled !== 'boolean') s.enabled = true;
-    if (!s.krw || typeof s.krw !== 'object' || !(Number(s.krw.rate) > 0)) s.krw = { ...DEFAULT_KRW };
-    if (!s.payMethods || typeof s.payMethods !== 'object' || Array.isArray(s.payMethods)) s.payMethods = {};
-    for (const [key, value] of Object.entries(s.payMethods)) if (!PAY_METHODS.includes(value) || ['__proto__', 'constructor', 'prototype'].includes(key)) delete s.payMethods[key];
-    // 7.7.2 중계마다 「쿼터 1달러 = 몇 원」 (가격 비교에서 충전 단가 · 환율로 정한 것) { [origin]: { rate, source, date } }
-    if (!s.relayRates || typeof s.relayRates !== 'object' || Array.isArray(s.relayRates)) s.relayRates = {};
-    for (const [key, value] of Object.entries(s.relayRates)) if (!originOf(key) || originOf(key) !== key || !(Number(value?.rate) > 0 && Number(value.rate) < 1e6)) delete s.relayRates[key];
-    return s;
-}
-export const ledgerEnabled = () => ledgerSettings().enabled !== false;
-function saveLedgerSettings() { try { context()?.saveSettingsDebounced?.(); } catch { /* 저장은 다음에 */ } }
-
-function emit() { for (const fn of listeners) { try { fn(); } catch (error) { console.warn('[Blue Lemonade] 사용량 장부 알림', error); } } }
-
 function openDb() {
     if (dbPromise) return dbPromise;
     dbPromise = new Promise((resolve, reject) => {
@@ -68,11 +51,11 @@ async function prune() {
 }
 const newId = at => `${at}-${Math.random().toString(36).slice(2, 10)}`;
 
-/** 기록 한 건. 이름 · 기능 글은 기록하는 쪽이 준다. 꺼져 있거나 못 쓰는 기록이면 null */
-export function record(raw) {
+/** 기록 한 건. 이름 · 기능 글은 기록하는 쪽이 준다. 꺼져 있거나 못 쓰는 기록이면 null (now: 부른 시각 — 허브가 본체를 받기 전에 불렸을 때) */
+export function record(raw, now = Date.now()) {
     try {
         if (!ledgerEnabled()) return Promise.resolve(null);
-        const entry = normalizeEntry(raw);
+        const entry = normalizeEntry(raw, now);
         if (!entry) return Promise.resolve(null);
         entry.id = newId(entry.at);
         queue.push(entry);
@@ -130,8 +113,6 @@ function relayContext() {
     relays.delete('');
     return { relays: [...relays], relayPrices: prices, quotaPerUnit: Number(log.budget?.quotaPerUnit) || 500000 };
 }
-const relayOrigins = new Set();
-
 async function priceContext() {
     const modules = await pricingModules();
     const s = ledgerSettings();
@@ -160,42 +141,6 @@ export async function price(model, api, at = Date.now()) {
     const found = officialRates(conn.provider, String(model || ''), Number(at) || Date.now(), lookupWith(modules));
     if (!found) return null;
     return { inPerM: found.rates.input, outPerM: found.rates.output, cachedInPerM: Number.isFinite(found.rates.cacheRead) ? found.rates.cacheRead : null, currency: 'USD', source: found.source || '', date: found.date || '', approx: !!found.approx, note: found.note || '' };
-}
-export function on(event, cb) {
-    if (event !== 'change' || typeof cb !== 'function') return () => {};
-    listeners.add(cb);
-    return () => listeners.delete(cb);
-}
-export function payMethods() {
-    const s = ledgerSettings();
-    return { defaults: { vertex: '크레딧', anthropic: '크레딧', 'relay:*': '중계', '*': '실제 결제' }, set: { ...s.payMethods }, choices: [...PAY_METHODS] };
-}
-export function setPayMethod(key, method) {
-    const s = ledgerSettings();
-    const k = String(key || '').slice(0, 120);
-    if (!k || ['__proto__', 'constructor', 'prototype'].includes(k)) return false;
-    if (method === null || method === '') delete s.payMethods[k];
-    else if (PAY_METHODS.includes(method)) s.payMethods[k] = method;
-    else return false;
-    saveLedgerSettings(); emit();
-    return true;
-}
-export function setKrwRate(rate, date = dayKey(Date.now()), source = '사용자 입력') {
-    const n = Number(rate);
-    if (!(n > 0 && n < 100000)) return false;
-    ledgerSettings().krw = { rate: n, date: String(date).slice(0, 10), source: String(source).slice(0, 80) };
-    saveLedgerSettings(); emit();
-    return true;
-}
-/** 7.7.2 중계 origin 의 「쿼터 1달러 = rate 원」 (null 이면 지움) — 장부의 중계 원화 환산이 그 중계 기준이 된다 */
-export function setRelayRate(origin, rate, source = '', date = dayKey(Date.now())) {
-    const o = originOf(origin), s = ledgerSettings();
-    if (!o) return false;
-    if (rate === null) delete s.relayRates[o];
-    else if (Number(rate) > 0 && Number(rate) < 1e6) s.relayRates[o] = { rate: Math.round(Number(rate) * 100) / 100, source: String(source).slice(0, 80), date: String(date).slice(0, 10) };
-    else return false;
-    relayOrigins.add(o); saveLedgerSettings(); emit();
-    return true;
 }
 /** 7.7.2 공식 단가 (가격 비교 화면) — 제공처 id · 모델 · 시각 → { rates, source, date, note?, approx? } | null */
 export async function officialPrice(provider, model, at = Date.now()) {
@@ -230,12 +175,3 @@ export async function applyRelayLogs(origin, logs) {
     return found.size;
 }
 
-/** 허브를 건다 (BL 시작 때 — 가볍다: 장부 · 가격표는 처음 쓸 때 연다) */
-export function installUsageLedger() {
-    const existing = globalThis[LEDGER_SYMBOL];
-    if (existing && existing.version >= LEDGER_VERSION && existing.__bl) return existing;
-    const hub = Object.freeze({ version: LEDGER_VERSION, __bl: true, record, query, summary, price, on, payMethods, setPayMethod, setKrwRate });
-    try { Object.defineProperty(globalThis, LEDGER_SYMBOL, { value: hub, configurable: true, writable: false }); }
-    catch { globalThis[LEDGER_SYMBOL] = hub; }
-    return hub;
-}

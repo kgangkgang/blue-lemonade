@@ -448,7 +448,8 @@ html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #bl-deus-popover .dq-head > 
 /* ---------- 1.0.0 ? 세로 자리(자리별 --bl-help-y) — 원 잉크 가운데 = 그 줄 글꼴의 한글 잉크 띠 가운데(±0.5px, help-shape 사진 재기 · 규칙 33) ----------
    기본(html)은 글 줄 · 월드 인포 칸처럼 「줄 가운데 + 조금 위」. 줄 높이 · 글자 크기가 다른 자리만 따로(4배 사진으로 잰 값을 em 으로).
    1.0.1: 테마가 만든 글 줄 제목(설정창 묶음 제목 · 낱말 가림 · 성능 보조 · 북마크 설정 · ZIP 설치)은 자리별 상수 대신 식 하나(--bl-help-y-line, 위). */
-html body .salty-panel.bl-editor :is(.bl-editor-group-head, .bl-help-head) > .bl-help-btn { --bl-help-y: 0em; top: var(--bl-help-y-line); }   /* 설정창 묶음 제목(15 · 16 · 고급 13 — 위에서 글 줄로 바꿈) */
+html body .salty-panel.bl-editor :is(.bl-editor-group-head, .bl-help-head) > .bl-help-btn { --bl-help-y: 0em; top: var(--bl-help-y-line); }
+html body .salty-panel.bl-editor :is(.bl-editor-group-head, .bl-help-head):has(> .bl-help-btn) { contain: paint; overflow-clip-margin: 8px; }   /* 1.1.1 ? 원 자리 고정: 제목 줄이 화면에서 소수 px 자리(…​.5 근처)에 오면 글자와 원이 따로 맞춰 그려져 원이 1px 가까이 처졌어요(같은 제목도 자리만 바꾸면 0.12 → 0.62px). 칠하기 격리로 제목 줄을 한 덩어리로 그려 자리와 상관없이 같은 값(재 보니 -0.25 · -0.38px 고정) · 초점 테두리는 overflow-clip-margin 8px 안이라 안 잘려요 */   /* 설정창 묶음 제목(15 · 16 · 고급 13 — 위에서 글 줄로 바꿈) */
 html body.salty :is(#WorldInfo > .flex-container > h3, #PersonaManagement h3, #user-settings-block h3, #AdvancedFormatting h3, h3:has(> a.notes-link[href*="connection-profiles"]), #character_popup h4, :is(#extensions_settings, #extensions_settings2) b, label[for="openai_reasoning_effort"]) > :is(a.notes-link, a.fa-circle-question) { --bl-help-y: 0em; }   /* 실리태번 제목(T) 옆 */
 html body.salty #left-nav-panel :is(.flex-container, label) > :is(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) { --bl-help-y: 0em; }
 html body.salty #AdvancedFormatting small > :is(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) { --bl-help-y: -0.14em; }   /* 글 줄(block) 속 작은 글자 */

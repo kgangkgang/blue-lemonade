@@ -1,0 +1,246 @@
+{
+ "about": "이름·표시·도움말 검사용이에요. 원작 본문이나 개인 프리셋 자료는 담지 않아요. 청과 헤스페리데스 V3.5X · V3.5C(같은 항목 구성, 이름은 🕷️ 하나만 달라요).",
+ "rows": [
+  {
+   "id": "d842c110-e21e-4a22-990b-a3168db642d2",
+   "name": "🛠️ 出杯引导（工具必开）",
+   "title": "🛠️ 출잔 신호 (도구 모드면 꼭 켜기)",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "new",
+   "contentHash": "99c9e1bdb19b21ffe20cde5a268e4f9331846e7b1a5c454f114ac9731e4bba30"
+  },
+  {
+   "id": "810a046a-0096-4caa-a2d8-ca00a55dbda5",
+   "name": "🍏 青果·赫斯帕里得斯 V3.5 说明｜别开",
+   "title": "🍏 청과 헤스페리데스 V3.5 안내｜켜지 마세요",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "alias",
+   "legacyName": "🍏 青果·赫斯帕里得斯（拉刻西斯缝合优化版）说明｜别开",
+   "legacyTitle": "🍏 청과 헤스페리데스 V2.0 안내｜켜지 마세요"
+  },
+  {
+   "id": "fruit-v21-jb-kunlun-ide",
+   "name": "🏔️ 加强破甲｜改编自昆仑IDE @从前跟你一样 #GEMINI #CLAUDE",
+   "title": "🏔️ 검열 우회 강화｜곤륜 IDE 원작 개편 @从前跟你一样 #GEMINI #CLAUDE",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "new",
+   "contentHash": "26cc35a570e766a1b6c5e2283126bc20265ec63f7c06238cb41d6892d55215d2"
+  },
+  {
+   "id": "fruit-v5-tone-divider",
+   "name": "--- 🎲 世界基调与美学法则（可单选或混搭·全关为自然态） ---",
+   "title": "--- 🎲 세계 기조와 미학 법칙 (하나만 고르기 · 모두 끄면 자연 상태) ---",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "alias",
+   "legacyName": "--- 🎲 世界基调与RP难度（可全关·默认自然态） ---",
+   "legacyTitle": "--- 🎲 세계 기조와 RP 난이도 (모두 꺼도 됨 · 기본은 자연 상태) ---"
+  },
+  {
+   "id": "fruit-v5-tone-malicious",
+   "name": "🌑 恶意·泥沼深渊｜地狱模式｜基调单选",
+   "title": "🌑 악의 · 수렁 밑바닥｜지옥 난이도｜세계 기조 택1",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "new",
+   "contentHash": "b5eb8553cb013945e544313921c9a0e8f99a5257e45eb934bef637a932d96cdc"
+  },
+  {
+   "id": "fruit-v5-tone-hardcore",
+   "name": "❄️ 冷峻·寒铁法则｜困难模式｜基调单选",
+   "title": "❄️ 냉엄 · 차가운 쇠의 법칙｜어려움｜세계 기조 택1",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "alias",
+   "legacyName": "🥀 路边一条｜冷冽硬核·高难求生｜基调单选",
+   "legacyTitle": "🥀 길바닥 인생｜냉혹한 하드코어·고난도 생존｜세계 기조 택1"
+  },
+  {
+   "id": "fruit-v5-tone-balanced",
+   "name": "🎲 现实·因果无常｜普通模式｜基调单选",
+   "title": "🎲 현실 · 무상한 인과｜보통｜세계 기조 택1",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "alias",
+   "legacyName": "⚖️ 众生浮沉｜等价交换·正剧博弈｜基调单选",
+   "legacyTitle": "⚖️ 세상살이 부침｜등가 교환·정극 수싸움｜세계 기조 택1"
+  },
+  {
+   "id": "fruit-v5-tone-gentle",
+   "name": "🌤️ 温柔·春风拾遗｜简单模式｜基调单选",
+   "title": "🌤️ 다정 · 봄바람 같은 나날｜쉬움｜세계 기조 택1",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "alias",
+   "legacyName": "🌤️ 春风拾遗｜温柔日常·顺遂偏暖｜基调单选",
+   "legacyTitle": "🌤️ 봄바람 같은 나날｜따뜻한 일상·순탄하게｜세계 기조 택1"
+  },
+  {
+   "id": "fruit-v5-tone-darling",
+   "name": "👑 爽文·命运王座｜爽感模式｜基调单选",
+   "title": "👑 사이다 · 운명의 왕좌｜통쾌함｜세계 기조 택1",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "alias",
+   "legacyName": "👑 世界宠儿｜主角光环·万千偏爱｜基调单选",
+   "legacyTitle": "👑 세계의 총아｜주인공 보정·모두의 편애｜세계 기조 택1"
+  },
+  {
+   "id": "fruit-v5-tone-surreal",
+   "name": "🪐 超现实幻想·绮梦奇境｜天马行空｜基调单选",
+   "title": "🪐 초현실 환상 · 꿈결의 이상한 나라｜자유로운 상상｜세계 기조 택1",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "new",
+   "contentHash": "6b6115132cb3a7a4c5a07dcaf43321c1c79b53453aad77360bbf87413cb18fb0"
+  },
+  {
+   "id": "fruit-v5-tone-comedy",
+   "name": "🎪 喜剧与戏剧·荒诞剧场｜欢脱抓马｜基调单选",
+   "title": "🎪 희극과 드라마 · 엉뚱한 극장｜발랄한 소동｜세계 기조 택1",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "new",
+   "contentHash": "348f25c338be1a649491f60d62fd1a8f06745dc411deae9b4ea7a27607b71415"
+  },
+  {
+   "id": "21255ae4-1893-444a-949e-43f8ec9b1a89",
+   "name": "🍓 优先人设｜调色盘与活人心理",
+   "title": "🍓 인물 설정 우선｜성격 섞기와 살아 있는 심리",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "alias",
+   "legacyName": "🍓 优先人设｜调色盘与抗超雄",
+   "legacyTitle": "🍓 인물 설정 우선｜다양성과 과도한 지배성 억제"
+  },
+  {
+   "id": "prompt_1792479869697_67tdywd",
+   "name": "🕵️‍♀️千人千面｜灵魂声口与隔轮消重",
+   "title": "🕵️‍♀️ 저마다 다른 인물｜고유한 말투와 반복 쉬기",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "alias",
+   "legacyName": "🕵️‍♀️千人千面",
+   "legacyTitle": "🕵️‍♀️ 저마다 다른 인물"
+  },
+  {
+   "id": "fruit-v67-dark-nature-anti-simp",
+   "name": "👤 阴暗人性与防恋爱脑｜利益本位与反无脑倒贴｜选开",
+   "title": "👤 어두운 본성 유지｜이해관계 우선 · 무조건적 헌신 방지｜선택 사용",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "alias",
+   "legacyName": "👤 阴暗人性与防恋爱脑｜去圣母与反无脑倒贴｜选开",
+   "legacyTitle": "👤 어두운 본성 유지｜무조건적 호감·헌신 방지｜선택 사용"
+  },
+  {
+   "id": "fruit-v30-dark-suspicion-tension",
+   "name": "🕷️ 恶女恶男·猜忌防备与暗黑张力｜疯批/宿敌/背德选开 from蛛网@鸦唳",
+   "title": "🕷️ 악녀 · 악남의 의심과 경계 · 어두운 긴장｜광기 · 숙적 · 배덕 선택 사용 · 거미줄 출처 @鸦唳",
+   "versions": [
+    "X"
+   ],
+   "kind": "new",
+   "contentHash": "7c39331f996bf5ca815192d748e83eeb0546e161960068c02541961c72df1387"
+  },
+  {
+   "id": "fruit-v30-dark-suspicion-tension",
+   "name": "🕷️ 恶女恶男·猜忌防备与暗黑张力｜疯批/宿敌/背德选开",
+   "title": "🕷️ 악녀 · 악남의 의심과 경계 · 어두운 긴장｜광기 · 숙적 · 배덕 선택 사용",
+   "versions": [
+    "C"
+   ],
+   "kind": "new",
+   "contentHash": "a413e78647cb9392e7161bee53f9adbf41d297b5ccd54a35d39c2fd361047712"
+  },
+  {
+   "id": "mrgh95f72twlqmre5sm",
+   "name": "🧩 真实气场与能力边界｜抗超雄与反低级霸总 #GEMINI",
+   "title": "🧩 진짜 존재감과 능력의 한계｜과도한 지배성 · 유치한 재벌남 방지 #GEMINI",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "alias",
+   "legacyName": "🧩 神人压制 #GEMINI",
+   "legacyTitle": "🧩 과도한 인물 능력 억제 #GEMINI"
+  },
+  {
+   "id": "fruit-v30-anti-anatomy-clinical",
+   "name": "🧩 防解剖与去临床腔 #GEMINI",
+   "title": "🧩 해부 보고서 · 임상 말투 방지 #GEMINI",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "new",
+   "contentHash": "f65be455f85508f577d57ffd9573ab274461a76393599d553eb79b9b5700a275"
+  },
+  {
+   "id": "fruit-v30-nsfw-inner-sensation",
+   "name": "🥵 角色内感特化｜动作与内部体会交融｜选开",
+   "title": "🥵 인물 내부 감각 특화｜동작과 몸속 느낌을 함께｜선택 사용",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "new",
+   "contentHash": "52911e18f40773e8e454bc33ec2e2019d36f3f38247e15a767ac098669e11932"
+  },
+  {
+   "id": "00b5f3c0-d40a-4221-8117-2ceb32d86aa9",
+   "name": "🈲 禁词与烂梗黑名单",
+   "title": "🈲 금지어 · 낡은 표현 목록",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "alias",
+   "legacyName": "🈲禁词",
+   "legacyTitle": "🈲 금지어"
+  },
+  {
+   "id": "548e2eee-5858-4580-b42c-c4ed8356cd77",
+   "name": "🥵 官能分寸与隐秘癖好潜流｜选开",
+   "title": "🥵 감각 묘사의 선 · 은밀한 취향의 흐름｜선택 사용",
+   "versions": [
+    "X",
+    "C"
+   ],
+   "kind": "alias",
+   "legacyName": "🥵 官能凝视补丁",
+   "legacyTitle": "🥵 감각적 시선 보정"
+  }
+ ]
+}

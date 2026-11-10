@@ -16,9 +16,11 @@ export function toggleFavorite(entry) {
     const e=tidy(entry);if(!e)return false;
     const items=readFavorites(),key=favoriteKey(e),i=items.findIndex(item=>favoriteKey(item)===key);
     if(i>=0)items.splice(i,1);else {if(items.length>=LIMIT)throw new Error(`즐겨찾기는 ${LIMIT}개까지 고정할 수 있어요.`);items.push(e);}
-    localStorage.setItem(KEY,JSON.stringify(items));return i<0;
+    try{localStorage.setItem(KEY,JSON.stringify(items));}catch{throw new Error('즐겨찾기를 저장하지 못했어요. 브라우저 저장 공간이 막혔거나(비공개 창) 가득 찼어요.');}   // 1.1.1: 시스템 영어 오류 글 대신
+    return i<0;
 }
 export function favoriteButton(entry) {
+    if(!tidy(entry))return '';   // 1.1.1: 못 쓰는 항목이면 단추 없음(눌러서 TypeError 가 나지 않게)
     const on=readFavorites().some(e=>favoriteKey(e)===favoriteKey(entry));
     return `<button type="button" class="bl-favorite-toggle" data-favorite="${esc(JSON.stringify(tidy(entry)))}" aria-pressed="${on}" aria-label="${esc(entry.title)} 즐겨찾기 ${on?'해제':'고정'}" title="즐겨찾기 ${on?'해제':'고정'}">${STAR}</button>`;
 }
@@ -37,6 +39,6 @@ export function bindFavorites(root,navigate,refresh) {
                 const key=favoriteKey(entry);toggleFavorite(entry);refresh();
                 [...root.querySelectorAll('[data-favorite]')].find(b=>favoriteKey(JSON.parse(b.dataset.favorite))===key)?.focus({preventScroll:true});
             }else navigate(entry);
-        } catch(error){globalThis.toastr?.warning(error.message,'즐겨찾기');}
+        } catch(error){globalThis.toastr?.warning(/[가-힣]/.test(error?.message||'')?error.message:'즐겨찾기를 바꾸지 못했어요. 다시 시도해 주세요.','즐겨찾기');}   // 1.1.1: 시스템 오류 글은 한국어 안내로
     });
 }

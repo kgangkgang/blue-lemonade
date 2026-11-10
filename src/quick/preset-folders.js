@@ -12,7 +12,7 @@ import { showThemeModal } from '../modal.js';
 import { ask } from '../ask.js';
 import { splitCssReady } from '../lite.js';
 import { esc, ensureQuickCss, openMenu, closeMenu } from './shared.js';
-import { tidyFolders, newFolderId, groupPresets, searchPresets, assignPresets, moveFolder, removeFolder, folderOf, MAX_FOLDERS, MAX_NAME } from './preset-list-core.js';
+import { tidyFolders, newFolderId, groupPresets, searchPresets, assignPresets, moveFolder, removeFolder, folderOf, followRenames, sameNames, MAX_FOLDERS, MAX_NAME, MAX_SEEN } from './preset-list-core.js';
 
 const SELECT = 'settings_preset_openai';
 const SEARCH_FROM = 12;
@@ -29,6 +29,17 @@ function store() {
 }
 const folders = () => tidyFolders(store().folders);
 function writeFolders(list) { store().folders = tidyFolders(list); saveSettings(); }
+/** 1.1.1 시제품: 목록을 열 때 이름 바뀜을 따라가고(followRenames) 지금 이름들을 기억(seen)해요 — 바뀐 것이 있을 때만 저장 */
+function followList(sel) {
+    const list = names(sel), st = store();
+    const { folders: next, moved } = followRenames(folders(), st.seen, list);
+    if (moved.length) {
+        st.folders = tidyFolders(next);
+        if (typeof toastr !== 'undefined') toastr.info(`「${moved[0][0]}」 → 「${moved[0][1]}」 — 이름을 바꾼 프리셋을 같은 폴더에 두었어요.`, '프리셋 폴더', { timeOut: 4000 });
+    }
+    if (moved.length || !sameNames(st.seen, list)) { st.seen = list.slice(0, MAX_SEEN); saveSettings(); }
+    return moved;
+}
 
 // ───────── 목록 팝업 ─────────
 function close() {
@@ -87,6 +98,7 @@ function setOpen(id, open) {
 function open(sel) {
     if (layer) { close(); return; }
     ensureQuickCss();
+    followList(sel);
     openedAt = Date.now();
     const host = sel.closest('dialog[open]') || document.body;
     layer = document.createElement('div');
@@ -277,4 +289,4 @@ export function syncPresetFolders(on) {
 }
 
 /** 시험용 */
-export const _forTest = { open, close, pick, rowsHtml, openEditor, folderMenu, dropFolder, layer: () => layer, select };
+export const _forTest = { open, close, pick, rowsHtml, openEditor, folderMenu, dropFolder, followList, layer: () => layer, select };

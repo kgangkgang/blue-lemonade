@@ -5,12 +5,10 @@
 //         message(8.1.3) → 채팅 속 답변마다 따로: (아바타 · 채팅 · 메시지 번호 · 보낸 시각 · 스와이프) 해시라 다시 그려져도 · 새로고침해도 그 답변은 같은 그림, 바로 앞 답변 그림은 피함
 //   세션: 한 채팅 안에서는 같은 그림 — Session 이 아바타마다 고른 경로를 기억하고, chat · message 는 CHAT_CHANGED 마다 · list 는 목록 창이 열릴 때마다 다시 고른다.
 //         (message 모드에서도 캐릭터 목록 · 그룹 멤버 칸처럼 메시지가 아닌 자리는 chat 과 같아요)
-export const WHEN = ['message', 'chat', 'list', 'daily', 'off'];
-export const WHEN_LABEL = { message: '답변마다', chat: '채팅방 열 때마다', list: '캐릭터 목록 열 때마다', daily: '하루에 한 번', off: '끔' };
-export const MAX_FILES = 24;
-export const CARD = 'card';   // 「원본 카드 그림」을 가리키는 값 (pinned · 고른 결과)
+// 1.1.1 가볍게: 설정 정리(tidyMultiAvatar)와 그 규칙은 시작 그래프의 pick-keys.js 에 — 여기서는 그대로 다시 내보내요 (고르기 · 세션은 프로필 여러 개를 켤 때만 받아요)
+import { CARD } from './pick-keys.js';
+export { WHEN, WHEN_LABEL, MAX_FILES, CARD, isFilePath, tidyMultiAvatar } from './pick-keys.js';
 export const FOLDER_PREFIX = 'bl-avatar-';
-const FILE_PATH = /^user\/images\/bl-avatar-[0-9a-f]{16}\/[A-Za-z0-9._-]{1,120}$/;
 
 /** FNV-1a 32비트 (UTF-8) */
 function fnv(text, seed) {
@@ -22,28 +20,10 @@ const hex8 = n => n.toString(16).padStart(8, '0');
 /** 아바타 파일명 → 서버 그림 폴더 이름 (한글 · 공백 · 기기별 정규화 차이를 피해 해시로) */
 export function folderOf(avatar) { return `${FOLDER_PREFIX}${hex8(fnv(avatar, 0x811c9dc5))}${hex8(fnv(`\u0001${avatar}`, 0x050c5d1f))}`; }
 export const isFolder = name => /^bl-avatar-[0-9a-f]{16}$/.test(String(name ?? ''));
-export const isFilePath = p => typeof p === 'string' && FILE_PATH.test(p);
 /** 경로 → 화면 주소 (/user/images/… — 실리태번이 계정별로 서빙) */
 export const urlOf = p => '/' + String(p).split('/').map(encodeURIComponent).join('/');
 export const folderOfPath = p => String(p).split('/')[2] || '';
 
-/** 설정 정리 (settings.js getSettings 가 부른다) — 깨진 값은 버리고, 24장 상한, 고정값은 목록 안에 있을 때만 */
-export function tidyMultiAvatar(value, defaults = { on: true, when: 'chat', includeCard: true, chars: {} }) {
-    const isObj = x => x && typeof x === 'object' && !Array.isArray(x);
-    const s = isObj(value) ? value : {};
-    const out = { on: s.on !== false, when: WHEN.includes(s.when) ? s.when : defaults.when, includeCard: s.includeCard !== false, chars: {} };
-    if (isObj(s.chars)) {
-        for (const [avatar, rec] of Object.entries(s.chars)) {
-            if (typeof avatar !== 'string' || !avatar || avatar.length > 255 || /[/\\]/.test(avatar) || !isObj(rec)) continue;
-            const seen = new Set();
-            const files = (Array.isArray(rec.files) ? rec.files : []).filter(p => isFilePath(p) && !seen.has(p) && seen.add(p)).slice(0, MAX_FILES);
-            const pinned = rec.pinned === CARD ? CARD : files.includes(rec.pinned) ? rec.pinned : '';
-            if (!files.length && !pinned) continue;   // 빈 항목은 두지 않는다 (카드만 고정은 남긴다 — 랜덤 끈 캐릭터)
-            out.chars[avatar] = { files, pinned };
-        }
-    }
-    return out;
-}
 export const hasAny = settings => !!settings && Object.keys(settings.chars || {}).length > 0;
 
 /** 후보 목록 — includeCard 면 원본 카드(CARD)가 맨 앞 */

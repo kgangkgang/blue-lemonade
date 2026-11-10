@@ -63,8 +63,27 @@ export const FRUIT_UNSUPPORTED = ['🍏 하단 상태창｜카드에 상태창�
 export const stSelector=selector=>String(selector).replace(/\.(-?[_a-zA-Z][\w-]*)/g,(m,name)=>name.startsWith('custom-')?m:`:is(.${name},.custom-${name})`);
 const matchCache=new Map();
 export const typeMatch=type=>{let s=matchCache.get(type.root);if(!s)matchCache.set(type.root,s=stSelector(type.root));return s;};
+// 1.1.1 restyle2: 시트에 적는 선택자는 맨 오른쪽 칸의 첫 class 를 `:is(.a,.custom-a)` 로 묶지 않고 `.a` · `.custom-a` 두 갈래로 나눠 적어요 —
+//   크롬은 맨 오른쪽 칸이 여러 갈래 :is 면 규칙을 어느 바구니에도 못 넣어 문서의 모든 요소와 견줬어요(되돌린 상태 바닥의 universal 규칙 267개 중 93개 · 1/4).
+//   두 갈래는 class 하나씩이라 특이도가 :is 와 같고 합집합이 같아요. 조상 칸 · 같은 칸의 다른 class 는 그대로 :is 로.
+//   맨 오른쪽 칸이 `:is(.a,.b)` 로 시작하면(sola 쪽지 뿌리 등) 갈래마다 먼저 펼쳐요. 요소 고르기(typeMatch · 설정 창)는 예전 stSelector 그대로예요.
+const lastCompoundAt=sel=>{let i=0,start=0,depth=0;while(i<sel.length){const c=sel[i];if(c==='('||c==='[')depth++;else if(c===')'||c===']')depth--;else if(!depth&&(c===' '||c==='>'||c==='+'||c==='~'))start=i+1;i++;}return start;};
+export const stSelectorBucket=complex=>{
+    const sel=String(complex).trim();if(!sel||sel.includes('&'))return stSelector(sel);
+    const at=lastCompoundAt(sel),head=sel.slice(0,at),last=sel.slice(at);
+    if(last.startsWith(':is(')){let depth=0,close=-1;for(let i=3;i<last.length;i++){const c=last[i];if(c==='(')depth++;else if(c===')'&&--depth===0){close=i;break;}}
+        if(close>0){const args=splitList(last.slice(4,close)),rest=last.slice(close+1);
+            // class 갈래(.a,.b) 도, 태그 갈래(span,p,b,…— 안쪽 글자 규칙 · svg 도형)도 — 태그만 든 :is 는 크롬이 바구니에 못 넣어요
+            if(args.length>1&&args.every(a=>/^\s*(\.-?[_a-zA-Z][\w-]*|[a-zA-Z][\w-]*)\s*$/.test(a)))return args.map(a=>stSelectorBucket(`${head}${a.trim()}${rest}`)).join(',');}}
+    let depth=0,pos=-1;for(let i=0;i<last.length;i++){const c=last[i];if(c==='('||c==='[')depth++;else if(c===')'||c===']')depth--;else if(!depth&&c==='.'){pos=i;break;}}
+    if(pos<0)return stSelector(sel);
+    const name=/^-?[_a-zA-Z][\w-]*/.exec(last.slice(pos+1))?.[0];
+    if(!name||name.startsWith('custom-'))return stSelector(sel);
+    const before=stSelector(head+last.slice(0,pos)),after=stSelector(last.slice(pos+1+name.length));
+    return `${before}.${name}${after},${before}.custom-${name}${after}`;
+};
 // 규칙 모음(중첩 없는 CSS)의 선택자 부분만 두 이름으로 바꿔요 — 값(1.6 · 22px)은 건드리지 않아요.
-export const stCss=css=>String(css).replace(/(^|[}\n])([^{}]+)\{/g,(m,head,sel)=>`${head}${stSelector(sel)}{`);
+export const stCss=css=>String(css).replace(/(^|[}\n])([^{}]+)\{/g,(m,head,sel)=>`${head}${/^\s*/.exec(sel)[0]}${splitList(sel).map(stSelectorBucket).join(',')}{`);
 // 1.0.x 데우스 글자 규칙의 무게: :is() 는 가장 무거운 항목의 무게를 받아요(id 둘). .mes_text 는 채팅 · 숨은 표본 자리 어디에나 있어 늘 맞아요.
 //   카드 스킨의 `body.salty.salty-dem-skin :is(#chat, …) .mes_text .custom-dem-…`(id 하나 + class 넷)보다 무거워, 켠 영역은 스킨의 !important 크기 · 굵기를 이겨요.
 //   끈 영역은 규칙 자체가 없어 지금 모양 그대로예요.

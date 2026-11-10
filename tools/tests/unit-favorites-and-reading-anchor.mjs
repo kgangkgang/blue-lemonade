@@ -204,4 +204,14 @@ await test('captureReadingAnchor: 맨 아래라도 마지막 메시지가 아직
     assert.equal(a.version, 1);
 });
 
+await test('1.1.1 저장소가 막히면 한국어 안내로 던지고, 못 쓰는 항목은 단추를 그리지 않아요', () => {
+    reset(); broken = false;
+    const e = entry();
+    broken = true;
+    assert.throws(() => fav.toggleFavorite(e), err => /즐겨찾기를 저장하지 못했어요/.test(err.message) && !/quota/.test(err.message));
+    broken = false;
+    assert.equal(fav.favoriteButton(null), '');
+    assert.equal(fav.favoriteButton({ tab: 'evil', sub: 'x' }), '');
+    assert.match(fav.favoriteButton(e), /data-favorite=/);
+});
 done();

@@ -6,7 +6,12 @@ import { zeroMode, zeroSkips } from './usage-mode.js';   // 1.0.2 제로: ZERO_L
 let presenceBound = false, zeroNow = null;
 
 const modules = {};
+const ready = {};   // 받아 둔 모듈(이름 → 모듈) — 설정 적용(apply.js)이 그 자리에서 바로 부를 것만
 let hooks = { applyAll: null, refreshPanels: null };
+
+/** (1.1.1 restyle) 설정 적용(apply.js applyAll)이 문서 전체를 다시 계산할 쓰기(:root 변수 시트 · body class · html 속성) 직전에 —
+ *  긴 채팅의 미리 그린 메시지를 되돌려 그 계산이 화면 밖 메시지 안쪽을 건너뛰게(chat-light.js coolForRestyle). 모듈이 아직이면(시작 · 꺼짐) 0 */
+export const coolChatForRestyle = () => ready.chatlight?.coolForRestyle?.() ?? 0;
 
 /** index.js 가 채움 (apply.js · panel.js 를 여기서 불러오면 서로 물림) */
 export function setFeatureHooks(next) {
@@ -25,16 +30,16 @@ export function syncSolaStyle(s) {
     return on||modules.solaskin?load('solaskin','./sola-skin.js').then(m=>m?.syncSolaSkin(on)):Promise.resolve(false);
 }
 
-// 스크립트 런타임: 시작할 때 파일을 못 받으면(폰에서 가끔) 예전에는 다음 설정 변경 때까지 다섯 개가 전부 '꺼짐'으로 남았다 — 몇 번 다시 받는다
+// 스크립트 런타임: 시작할 때 파일을 못 받으면(폰에서 가끔) 몇 번 다시 받는다
 const ignoredHan=new Set(); let pendingHan=null;
 let scriptsWanted=false,scriptRetry=0,scriptHeal=[],scriptWatch=false,scriptsKey='';
 function startScripts(tries=4){
     clearTimeout(scriptRetry);
     load('scripts','./scripts/runtime.js').then((m)=>{
         if(m){
-            // 시작 직후에는 설정 적용이 여러 번 겹친다 — 끝난 뒤에도 켜 둔 스크립트가 멈춰 있으면 다시 시작한다 (5초 · 15초 · 40초 뒤 확인)
+            // 시작 직후 설정 적용이 겹친 뒤에도 켜 둔 스크립트가 멈춰 있으면 다시 시작한다
             for(const timer of scriptHeal)clearTimeout(timer);
-            // 4.3.4: 폰에서 테마를 다시 깐 뒤 한동안 파일이 빈 채로 읽히는 일이 있다 — 5분까지 간격을 벌려 가며 다시 시도한다
+            // 4.3.4: 폰에서 다시 깐 뒤 파일이 빈 채로 읽히는 일 — 5분까지 간격을 벌려 다시 시도
             scriptHeal=[5000,15000,40000,90000,150000,220000,300000].map(ms=>setTimeout(()=>m.healScripts(scriptsWanted),ms));
             // ✦ 메뉴를 열 때와 화면으로 돌아올 때도 본다 — 밖에서 닫힌 스크립트(상태는 '사용 중', 메뉴는 중국어)를 그 자리에서 되살린다
             if(!scriptWatch){scriptWatch=true;
@@ -86,6 +91,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     else onGate('drawer', () => {}, 'apistatus');
     // 1.0.3 편의 기능 (src/quick/ — 켤 때만 받음 · 서랍 안 것은 문 drawer 뒤에)
     const qx = on && s.usageMode !== 'extensions', q = s.quick || {};
+    // 1.1.1 에이드 갈아입기 (ade.js, 기본 꺼짐)
+    const ade = qx && (q.adeChat === true || q.adeDaily === true);
+    if (ade || modules.ade) load('ade', './ade.js').then(m => m?.syncAde(ade, q, hooks));
     const selEdit = qx && q.selEdit === true && !restingFor('quickSelEdit');
     if (selEdit || modules.seledit) load('seledit', './quick/sel-edit.js').then(m => m?.syncSelectionEdit(selEdit));
     const mesDelete = qx && q.mesDelete === true && !restingFor('quickMesDelete');
@@ -118,7 +126,7 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     const scriptsRequested=Object.entries(scriptsEnabled).some(([id,v])=>id!=='fold'&&v===true);
     // The editor can start the runtime before this module has imported it.
     scriptsWanted=addonsOn&&scriptsRequested;
-    // 5.3.4: applyAll 마다(슬라이더를 끌면 프레임마다) 되살림 타이머 일곱 개를 지우고 다시 걸었다 — 처음 · 스크립트 켜고 끔이 바뀔 때만
+    // 5.3.4: 되살림 타이머는 처음 · 스크립트 켬/끔이 바뀔 때만 다시 건다
     const key=`${scriptsWanted}|${JSON.stringify(scriptsEnabled)}`;
     if((scriptsRequested||modules.scripts)&&key!==scriptsKey&&!zeroSkips(s,'scripts')){scriptsKey=key;startScripts();}
     // 3.2.0 화이트 · 나이트 자동 (automode.js — 켤 때만 받아요 · 1.0.0 되살림)
@@ -131,9 +139,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 6.9.8 「이전 메시지 더 보기」 저절로 (show-more-auto.js, 기본 켬) · 새 답 첫 줄로 가는 ↑ (reply-top.js, 켤 때만)
     const showMore = on && s.chat?.showMoreAuto !== false;
     if (showMore || modules.showmore) load('showmore', './show-more-auto.js').then(m => m?.syncShowMoreAuto(showMore));
-    // (10-29) 긴 채팅 가볍게 (chat-light.js, 기본 켬) — 메시지 60개 이상이면 화면 밖 메시지에 content-visibility:auto (css/05-chat.css): 글자를 칠 때마다 도는 문서 전체 재계산을 보이는 메시지로 좁힌다
+    // (10-29) 긴 채팅 가볍게 (chat-light.js, 기본 켬) — 메시지 60개 이상이면 화면 밖 메시지에 content-visibility:auto (css/05-chat.css)
     const chatLight = on && s.chat?.chatLight !== false;
-    if (chatLight || modules.chatlight) load('chatlight', './chat-light.js').then(m => m?.syncChatLight(chatLight));
+    if (chatLight || modules.chatlight) load('chatlight', './chat-light.js').then(m => { ready.chatlight = m; m?.syncChatLight(chatLight); });
     // (10-29 perf-persona) 입력 중 목록 갱신 미루기 (persona-defer.js, 기본 켬) — 페르소나 설명 글자마다 실리태번이 목록 카드 글을 다시 써 문서 전체가 재계산되던 것을 손을 멈출 때 · 칸을 떠날 때 한 번으로
     const personaDefer = on && s.chat?.personaDefer !== false;
     if (personaDefer || modules.personadefer) onGate('drawer', () => load('personadefer', './persona-defer.js').then(m => m?.syncPersonaDefer(personaDefer)), 'personadefer');

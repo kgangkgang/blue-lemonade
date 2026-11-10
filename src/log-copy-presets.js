@@ -484,6 +484,7 @@ const ALL_CATEGORIES = [
     { id: 'genre', label: '장르' },
     { id: 'react', label: '반응' },
     { id: 'scene', label: '장면' },   // 1.1.0 장면 글꾸 8종(사랑 재판 · 속보 방송 · 탑승권 · 레시피 카드 · 타로 리딩 · 터미널 · 학적부 · 전보 — tools/mart/scene-geulkku.mjs)   // 1.0.9 누르면 반응하는 글꾸(봉투 열기 · 초대장 · 쪽 넘기기 · 통통 카드 — tools/mart/react-geulkku.mjs)
+    { id: 'xmas', label: '연말' },   // 1.1.1 연말 글꾸 6종(스노우볼 · 성탄 카드 · 오너먼트 대화 · 겨울 기차표 · 연말 정산 · 소원 부적 — tools/mart/xmas-geulkku.mjs)
     { id: 'gallery', label: '갤러리' },
     { id: 'mine', label: '내 글꾸' },
 ];

@@ -61,11 +61,18 @@ function expandOne(sel, stats, depth = 0) {
     const head = sel.slice(0, at);
     const last = sel.slice(at);
     const m = /^:(is|where)\(/i.exec(last);
-    if (!m) return [sel];
+    if (!m) return expandInner(sel, head, last, stats, depth);
     const open = m[0].length - 1;
     const close = lib.endParen(last, open);
     const args = lib.topSplit(last.slice(open + 1, close));
     const tail = last.slice(close + 1);
+    // 1.1.1 restyle2: 맨 앞 :is 가 태그 갈래만(`:is(i, span, div, small)`)이고 뒤에 이름(class · id)이 드러나 있으면 안 펼친다 — 그 칸은 이미 class 바구니라
+    //   태그로 펼치면 갈래 수만 4배로 는다(도움말 ? 아이콘 규칙). 뒤에 여러 갈래 class :is 가 있으면 그것을 먼저 펼친다(아래 expandInner)
+    if (args.length >= 2 && args.every(tagOnly)) {
+        if (hasName(tail)) return [sel];
+        const inner = expandInner(sel, head, last, stats, depth, close + 1);
+        if (inner.length !== 1 || inner[0] !== sel) return inner;
+    }
     // 7.8.5: 선택자 맨 앞이 한 갈래 :is( 결합자 있는 선택자 )면 껍데기를 벗긴다 — `:is(A B).c` 는 `A B.c` 와 뜻 · 특이도가 같다(앞에 붙은 것이 없을 때만).
     // 크롬은 맨 오른쪽 칸이 :is( A B ) 처럼 안에 결합자가 있으면 어느 묶음에도 못 넣어 모든 요소와 견줬다(92-checkboxes 가 문서 전체 다시 계산의 4분의 1 남짓)
     if (args.length === 1 && head === '' && m[1].toLowerCase() === 'is' && hasCombinator(args[0]) && !risky(args[0]) && !/^\s*[>+~]/.test(args[0])) {
@@ -96,6 +103,59 @@ function expandOne(sel, stats, depth = 0) {
     stats.expanded++;
     // 갈래가 또 여러 갈래 :is 로 시작하면 한 번 더
     return depth < 3 ? out.flatMap(x => expandOne(x, stats, depth + 1)) : out;
+}
+
+// 1.1.1 restyle2: 맨 오른쪽 칸이 `div:is(.a, .b)…` 처럼 태그 · 클래스 뒤에 여러 갈래 :is/:where 가 오는 꼴도 펼친다 — 크롬은 그 칸을 태그(div) 바구니에 넣어
+//   문서의 모든 div 와 견줬다(56-control-consistency 도움말 ? 아이콘 규칙 넷이 되돌린 상태 바닥의 1.7ms). 갈래가 모두 결합자 없는 한 칸(그리고 `*` 가 아님)일 때만:
+//   `앞:is(A, B)뒤` → `앞A보정뒤, 앞B보정뒤` (특이도는 :is 와 같은 최대치 · 뜻은 합집합 그대로 · 가상 요소 뒤는 안 봄). 갈래 8개까지.
+const INNER_MAX_ARGS = 8;
+const INNER_MAX_GROWTH = 2500;   // 한 갈래가 펼쳐져 늘어나는 글자 수 한도(머리가 긴 규칙이 통째로 복제되므로)
+const COMMON_TAGS = new Set(['div', 'span']);   // 태그 바구니가 전체 바구니와 다를 바 없는 태그 — 이 태그(또는 그것을 품은 태그 :is) 뒤의 class :is 만 펼친다
+const keyTokens = require('./css-key.cjs').tokens;
+const isTagList = t => t.kind === 'pseudo' && /^(is|where)$/.test(t.name) && t.args != null && lib.topSplit(t.args).every(tagOnly);
+const tagOnly = a => { const ts = keyTokens(a.trim()); return ts.length > 0 && ts.every(t => t.kind === 'tag' || t.kind === 'universal'); };
+const hasName = compound => keyTokens(compound.split('::')[0]).some(t => t.kind === 'id' || t.kind === 'class');
+function expandInner(sel, head, last, stats, depth, from = 0) {
+    // 칸 앞부분에 이름(class · id · 속성)이 있으면 이미 바구니에 든 칸 — 그대로. 태그는 div · span · *(또는 그것을 품은 태그 :is)일 때만, 태그가 없는 칸(:not 만 등)도 펼친다
+    const pre0 = keyTokens(last.split('::')[0]).filter(t => t.at < (from || last.length));
+    if (pre0.some(t => t.kind === 'id' || t.kind === 'class' || t.kind === 'attr' || t.kind === 'nest' || t.kind === 'other')) return [sel];
+    const tags = pre0.filter(t => t.kind === 'tag' || t.kind === 'universal' || isTagList(t));
+    const common = tags.length === 0 || tags.some(t => t.kind === 'universal' || (t.kind === 'tag' && COMMON_TAGS.has(t.text.toLowerCase())) || (isTagList(t) && lib.topSplit(t.args).some(a => COMMON_TAGS.has(a.trim().toLowerCase()) || a.trim() === '*')));
+    if (!common) return [sel];
+    let i = from;
+    while (i < last.length) {
+        const c = last[i];
+        if (c === '"' || c === "'") { i = lib.endString(last, i); continue; }
+        if (c === '\\') { i += 2; continue; }
+        if (c === '[') { i = lib.endBracket(last, i) + 1; continue; }
+        if (c === ':' && last[i + 1] === ':') break;   // 가상 요소부터는 안 본다
+        if (c === '(') { i = lib.endParen(last, i) + 1; continue; }
+        const m = /^:(is|where)\(/i.exec(last.slice(i));
+        if (!m) { i++; continue; }
+        const open = i + m[0].length - 1;
+        const close = lib.endParen(last, open);
+        const args = lib.topSplit(last.slice(open + 1, close));
+        if (args.length < 2 || args.length > INNER_MAX_ARGS || args.some(a => hasCombinator(a) || risky(a) || /(^|[^\w\\-])\*/.test(a) || !hasName(a))) { i = close + 1; continue; }
+        const pre = last.slice(0, i), post = last.slice(close + 1);
+        if (!pre) { i = close + 1; continue; }   // 맨 앞 :is 는 expandOne 이 맡는다
+        if ((args.length - 1) * (head.length + last.length) > INNER_MAX_GROWTH) { stats.innerSkipped = (stats.innerSkipped || 0) + 1; i = close + 1; continue; }
+        let out;
+        if (m[1].toLowerCase() === 'where') out = args.map(a => `${head}${pre}:where(${a.trim()})${post}`);
+        else {
+            const specs = args.map(a => lib.spec(a));
+            const max = specs.reduce((best, x) => (lib.cmpSpec(x, best) > 0 ? x : best), [0, 0, 0]);
+            const pad = d => `${PAD.id.repeat(d[0])}${PAD.cls.repeat(d[1])}${PAD.tag.repeat(d[2])}`;
+            out = args.map((a, k) => {
+                const d = [0, 1, 2].map(j => max[j] - specs[k][j]);
+                if (d.every(x => x >= 0)) return `${head}${pre}${a.trim()}${pad(d)}${post}`;
+                stats.whereWrapped++;
+                return `${head}${pre}:where(${a.trim()})${pad(max)}${post}`;
+            });
+        }
+        stats.inner = (stats.inner || 0) + 1;
+        return depth < 3 ? out.flatMap(x => expandOne(x, stats, depth + 1)) : out;
+    }
+    return [sel];
 }
 
 /** 선택자 목록 글 → 펼친 목록 글 (바뀐 게 없으면 null) */
@@ -134,7 +194,7 @@ function specOf(selectorList) {
  * @returns {{ text: string, stats: { rules: number, expanded: number, whereWrapped: number, wrapped: number, skipRisky: number, selectorsBefore: number, selectorsAfter: number } }}
  */
 function bucketize(css) {
-    const stats = { rules: 0, expanded: 0, whereWrapped: 0, wrapped: 0, skipRisky: 0, selectorsBefore: 0, selectorsAfter: 0 };
+    const stats = { rules: 0, expanded: 0, inner: 0, whereWrapped: 0, wrapped: 0, skipRisky: 0, selectorsBefore: 0, selectorsAfter: 0 };
     const tree = lib.parse(css);
     if (tree.problems.length) throw new Error(`펼치기 전 읽기 문제: ${tree.problems.slice(0, 3).join(' / ')}`);
     const rules = allRules(tree.children);

@@ -60,7 +60,8 @@ check('저장 → 불러오기: 고른 값이 그대로 돌아와요(JSON 왕복
 check('켠 영역만 그 블록에 닿고, 데우스 규칙은 카드 스킨(id 하나 + class 넷)보다 무거워요',()=>{
     const s=tidyFruitType({on:true,ownerOn:{deus:true}});Object.assign(s.types['deus-scene-plan'].regions.label,{on:true,size:19});
     const css=fruitTypeCss(s);
-    assert.ok(css.includes(':is(.dem-scene-plan,.custom-dem-scene-plan)')&&css.includes(':is(.dem-scene-plan__label,.custom-dem-scene-plan__label)')&&css.includes('font-size:19px!important'));
+    // 1.1.1 restyle2: 맨 오른쪽 class 는 .a · .custom-a 두 갈래(크롬 규칙 바구니), 조상 칸은 :is 그대로
+    assert.ok(css.includes(':is(.dem-scene-plan,.custom-dem-scene-plan)')&&css.includes(' .dem-scene-plan__label')&&css.includes(' .custom-dem-scene-plan__label')&&css.includes('font-size:19px!important'));
     assert.ok(!css.includes('dem-scene-plan__value')&&!css.includes('dem-scene-plan__phase'),'켜지 않은 영역은 없음');
     assert.ok(css.startsWith(':is(:is(.mes_text,.custom-mes_text),#bl-ft-weight#bl-ft-weight)'),'무게');
     assert.equal(DEUS_WEIGHT,':is(.mes_text,#bl-ft-weight#bl-ft-weight)');
@@ -74,11 +75,12 @@ check('켠 영역만 그 블록에 닿고, 데우스 규칙은 카드 스킨(id 
 check(':is( , ) 안 쉼표는 나누지 않아요 — 한 영역 선택자가 통째로 한 갈래',()=>{
     assert.deepEqual(splitList('.a,.b'),['.a','.b']);assert.deepEqual(splitList(':is(.a,.b) .c,.d'),[':is(.a,.b) .c','.d']);
     const s=tidyFruitType({on:true,ownerOn:{deus:true}});s.types['deus-relationships'].regions.meter.on=true;
-    const rule=fruitTypeCss(s).split('\n')[0];assert.equal((rule.match(/bl-ft-weight#bl-ft-weight/g)||[]).length,1,'갈래 하나');
+    // 1.1.1 restyle2: 맨 오른쪽 class 는 .a · .custom-a 두 갈래로 적혀 목록은 길어져도, 갈래마다 무게는 하나
+    const rule=fruitTypeCss(s).split('\n')[0];for(const branch of splitList(rule.split('{')[0]))assert.equal((branch.match(/bl-ft-weight#bl-ft-weight/g)||[]).length,1,'갈래마다 무게 하나');
 });
 check('하단 문구 숨김(물밑 흐름의 다음 턴 안내)은 예전 hideFooter 그대로',()=>{
     const s=tidyFruitType({on:true,ownerOn:{deus:true}});s.types['deus-undercurrents'].hideFooter=true;
-    assert.ok(fruitTypeCss(s).includes(':is(.dem-undercurrents__notice,.custom-dem-undercurrents__notice){display:none!important'));
+    assert.ok(fruitTypeCss(s).includes('.custom-dem-undercurrents__notice{display:none!important'));
 });
 check('표본: 대화에 없으면 지어낸 글로 — 종류마다 표본 글 · 기본 뼈대가 있고 그 블록 · 역할 class 가 나와요',()=>{
     for(const id of NEW_DEUS){const t=byId(id);assert.ok(sample.sampleInputs(t,'v3').length,id);
@@ -119,16 +121,16 @@ check('켜기만 해서는 모양이 바뀌지 않게: 손대지 않은 영역�
 check('장식 색: 기본은 강조색(글자 설정을 켜지 않아도 · 카드 스킨일 때), 켜면 종류마다 고른 팔레트 색 · 원작 색은 손대지 않아요',()=>{
     assert.deepEqual(schema.DECOR_CHOICES.map(([k])=>k),['accent','text','muted','line','original']);
     const base=schema.fruitDecorCss({});
-    assert.ok(base.includes(':is(.dem-tail,.custom-dem-tail){color:var(--salty-accent)!important'),'본문 끝 ✦ 는 인라인 갈색 대신 강조색');
+    assert.ok(base.includes('.custom-dem-tail{color:var(--salty-accent)!important'),'본문 끝 ✦ 는 인라인 갈색 대신 강조색');
     assert.ok(base.includes('body:is(.salty-dem-skin,.custom-salty-dem-skin)'),'카드 스킨일 때만(원작 그대로 모드는 손대지 않음)');
     assert.ok(/dem-card__icon,\.custom-dem-card__icon\) svg[^{]*\{filter:url\(#bl-decor-accent\)!important\}/.test(base),'카드 아이콘 그림은 팔레트 색 필터(명암은 불투명도로)');
     const f=schema.decorFilterMarkup();assert.ok(f.includes('id="bl-decor-accent"')&&f.includes('flood-color:var(--salty-accent)')&&!f.includes('bl-decor-original'),'필터는 팔레트 토큰마다 · 원작 색은 없음');
-    assert.ok(base.includes(':is(.dem-charpage__head,.custom-dem-charpage__head) > summary::before')&&base.includes(':is(.dem-modules,.custom-dem-modules)::after')&&base.includes('::after{filter:url(#bl-decor-accent)'),'가상 요소 배경 그림(인물 쪽 가면 · 인물 줄 아이콘)도');assert.ok(!/#[0-9a-f]{3,8}\b/i.test(f),'필터에 새 색 없음');
+    assert.ok(base.includes(':is(.dem-charpage__head,.custom-dem-charpage__head) > summary::before')&&base.includes('.custom-dem-modules::after')&&base.includes('::after{filter:url(#bl-decor-accent)'),'가상 요소 배경 그림(인물 쪽 가면 · 인물 줄 아이콘)도');assert.ok(!/#[0-9a-f]{3,8}\b/i.test(f),'필터에 새 색 없음');
     assert.ok(base.includes('dem-tab__icon')&&base.includes('dem-modules__icon'),'묶음 · 탭 아이콘');
     assert.ok(!/#[0-9a-f]{3,8}\b|rgb\(|color-mix/i.test(base),'새 색 · 혼색 없이 팔레트 토큰만');
-    const off=tidyFruitType({on:true,ownerOn:{deus:false},types:{'deus-tail':{decor:'muted'}}});assert.ok(schema.fruitDecorCss(off).includes('dem-tail,.custom-dem-tail){color:var(--salty-accent)'),'글자 설정을 끄면 고른 값 대신 기본(강조색)');
+    const off=tidyFruitType({on:true,ownerOn:{deus:false},types:{'deus-tail':{decor:'muted'}}});assert.ok(schema.fruitDecorCss(off).includes('.custom-dem-tail{color:var(--salty-accent)'),'글자 설정을 끄면 고른 값 대신 기본(강조색)');
     const on=tidyFruitType({ownerOn:{deus:true},types:{'deus-tail':{decor:'muted'},'deus-status':{decor:'original'}}});const css=schema.fruitDecorCss(on);
-    assert.ok(css.includes('dem-tail,.custom-dem-tail){color:var(--salty-muted)'));assert.ok(!/dem-status,\.custom-dem-status\) :is\(\.dem-card__icon/.test(css),'원작 색은 규칙 없음');
+    assert.ok(css.includes('.custom-dem-tail{color:var(--salty-muted)'));assert.ok(!/dem-status,\.custom-dem-status\) \.(custom-)?dem-card__icon/.test(css),'원작 색은 규칙 없음');
     assert.equal(tidyFruitType({types:{'deus-tail':{decor:'#ff0000'}}}).types['deus-tail'].decor,'accent','팔레트 밖 값은 기본으로');
     assert.equal(tidyFruitType({}).types.status.decor,undefined,'장식 없는 종류는 값도 없어요');
     assert.equal(fruitTypeCss(tidyFruitType({on:true,ownerOn:{deus:true}})),'','장식 색은 글자 규칙(켠 영역)과 따로');
@@ -168,9 +170,9 @@ check('솔라 4: 서랍 카드 20종 + 생각 캡슐 · 본문 속 쪽지 — �
     for(const x of SOLA){assert.ok(sample.sampleInputs(x).length,x.id);const b=sample.builtinSample(x);assert.ok(b.html.length>100&&b.fragment,x.id);}
     const s=tidyFruitType({ownerOn:{sola:true},ownerKinds:{sola:'sola-bond'}});assert.equal(s.ownerKinds.sola,'sola-bond');assert.equal(tidyFruitType({}).ownerKinds.sola,'sola-ooc');
     s.types['sola-bond'].regions.names.on=true;const css=fruitTypeCss(s);
-    assert.ok(css.startsWith(':is(:is(.mes_text,.custom-mes_text),#bl-ft-weight#bl-ft-weight) :is(.sola-card-bond,.custom-sola-card-bond) > summary :is(.sola-drawer-title,.custom-sola-drawer-title)'),'채팅 본문이라 무게, 묶음(HUD) 안 다른 카드 제목은 > summary 로 비켜요');
+    assert.ok(css.startsWith(':is(:is(.mes_text,.custom-mes_text),#bl-ft-weight#bl-ft-weight) :is(.sola-card-bond,.custom-sola-card-bond) > summary .sola-drawer-title'),'채팅 본문이라 무게, 묶음(HUD) 안 다른 카드 제목은 > summary 로 비켜요');
     assert.ok(!fruitTypeCss(tidyFruitType({on:false,ownerOn:{sola:false},types:{'sola-bond':{regions:{names:{on:true}}}}})),'솔라 글자 설정을 끄면 원작 그대로');
-    const decor=schema.fruitDecorCss({});assert.ok(decor.includes(':is(.sola-card-bond,.custom-sola-card-bond) > summary :is(:is(.track-icon,.custom-track-icon)'),'솔라 서랍 아이콘 · 화살표 장식도 강조색');
+    const decor=schema.fruitDecorCss({});assert.ok(decor.includes(':is(.sola-card-bond,.custom-sola-card-bond) > summary .track-icon')&&decor.includes(':is(.sola-card-bond,.custom-sola-card-bond) > summary .custom-track-icon'),'솔라 서랍 아이콘 · 화살표 장식도 강조색');
     assert.ok(read('src/panel.js').includes("['sola', '솔라']")&&read('src/panel.js').includes("fruitTypographyGroup('sola')"));
     assert.ok(read('src/settings-screens.js').includes("'prompt/sola': 'fa-sun'"));
     assert.ok(search.searchSettings('솔라 상태창').some(e=>e.title==='솔라 상태창 글자'));

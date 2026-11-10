@@ -1121,9 +1121,18 @@ body.salty.salty-dark #tavern_helper .inline-drawer-content > .flex-col > .borde
   background: color-mix(in srgb, var(--salty-text) 18%, var(--salty-surface));
   color: var(--bl-pop);
 }
-/* 확장이 고른 탭 글자에 흰색 · 검정을 인라인으로 박음 → 탭 색을 따르게 (안 고른 개발 탭의 연결 상태 색은 그대로) */
-body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div[class*="bg-[color-mix"] > div {
-  color: inherit !important;
+/* 확장이 고른 탭 글자에 흰색 · 검정을 인라인으로 박음 → 탭 색을 따르게 (안 고른 개발 탭의 연결 상태 색은 그대로)
+   1.1.1 restyle3: `[class*=…] > div` 처럼 class 속성이 조상 칸에 있고 주어가 맨 태그(div)면, 어느 요소든 class 가 바뀔 때마다
+   그 아래의 div 를 전부 다시 계산 대상으로 표시해요(body class 하나에 접힌 메시지 안 div 수만 개 · 2,000개 바닥 110ms 의 대부분).
+   고른 탭 자신에 물려주지 않는 표시(--bl-q-th-tab)를 달고, 자식은 부모의 표시를 style() 로 물어요 — 고르는 요소 · 특이도(:is(.bl-s, *)) 그대로 */
+@property --bl-q-th-tab { syntax: '<integer>'; inherits: false; initial-value: 0; }
+body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div[class*="bg-[color-mix"] {
+  --bl-q-th-tab: 1;
+}
+@container style(--bl-q-th-tab: 1) {
+  body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div > div:is(.bl-s, *) {
+    color: inherit !important;
+  }
 }
 
 /* 묶음 상자: 1px 테 대신 오목한 페이지 톤 칸 (팝업 체크 묶음과 같은 모양) */
