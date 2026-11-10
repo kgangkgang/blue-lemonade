@@ -17,8 +17,8 @@ const arg = (k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] 
 const OUT = path.resolve(arg('--out', path.join(HERE, 'out', 'tone-gate')));
 fs.mkdirSync(OUT, { recursive: true });
 const Ks = arg('--k', '#3aa7ff,#f0d878,#7fe03c,#ff5fa2,#c9d1dc,#424c59,none').split(',');
-// 11-10 종이 색 × 혼합 조합: --combo 종이[:혼합색+혼합색+…] 를 쉼표로(없으면 흰 종이 · 단색)
-const COMBOS = arg('--combo', 'white').split(',').map(c => { const [paper, mix] = c.split(':'); return { paper, mix: mix ? mix.split('+') : null }; });
+// 11-10 종이 색 × 질감 × 혼합 조합: --combo 종이:질감[:혼합색+혼합색+…] 를 쉼표로(없으면 흰 종이 · 민무늬 · 단색)
+const COMBOS = arg('--combo', 'white:plain').split(',').map(c => { const [paper, texture, mix] = c.split(':'); return { paper, texture, mix: mix ? mix.split('+') : null }; });
 const SIMPLE_ONLY = argv.includes('--simple');   // 공개 목록에 보이는 심플(과 내장)만
 const imp = f => import(pathToFileURL(path.join(MART, f)).href);
 const tr = await imp('taste-render.js'), tp = await imp('taste-parse.js'), tg = await imp('tone-geulkku.js');
@@ -65,7 +65,7 @@ try {
     const parts = [];
     for (const it of items) {
       const h = raw.get(it.id); if (!h) continue;
-      const opt = { mode, paper: combo.paper };
+      const opt = { mode, paper: combo.paper, texture: combo.texture };
       const out = tg.kkangtongReady(combo.mix ? tg.toneMixHtml(h, it.colors || it.palette || null, [K, ...combo.mix], opt) : tg.toneHtml(h, it.colors || it.palette || null, K === 'none' ? null : K, opt));
       const r = tg.readyReport(out);
       if (!r.ok) { staticFail++; report.fails.push({ id: it.id, K, mode, kind: 'ready', ...r }); }
@@ -74,17 +74,17 @@ try {
     // 한 쪽에 다 넣으면 움직임 · 장식이 많아 안 열려요 — 120 개씩 · 움직임은 꺼요(색만 재요)
     let foundAll = 0;
     for (let s = 0; s < parts.length; s += 120) {
-      const file = path.join(OUT, `gate-${combo.paper}-${K.replace('#', '')}-${mode}-${s}.html`);
+      const file = path.join(OUT, `gate-${combo.paper}-${combo.texture}-${K.replace('#', '')}-${mode}-${s}.html`);
       fs.writeFileSync(file, `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>*,*::before,*::after{animation:none!important;transition:none!important}</style><body style="margin:0">${parts.slice(s, s + 120).join('')}</body>`);
       await p.goto(pathToFileURL(file).href, { timeout: 120000, waitUntil: 'domcontentloaded' });
       await p.waitForTimeout(300);
       const found = await p.evaluate(PROBE);
-      for (const f of found) report.fails.push({ ...f, K, mode, paper: combo.paper, mix: !!combo.mix });
+      for (const f of found) report.fails.push({ ...f, K, mode, paper: combo.paper, texture: combo.texture, mix: !!combo.mix });
       foundAll += found.length;
       fs.rmSync(file);
     }
-    report.combos.push({ paper: combo.paper, mix: !!combo.mix, K, mode, n: parts.length, fails: foundAll });
-    console.log(combo.paper, combo.mix ? '혼합' : '단색', K, mode, parts.length, '실패', foundAll);
+    report.combos.push({ paper: combo.paper, texture: combo.texture, mix: !!combo.mix, K, mode, n: parts.length, fails: foundAll });
+    console.log(combo.paper, combo.texture, combo.mix ? '혼합' : '단색', K, mode, parts.length, '실패', foundAll);
   }
   await b.close();
 } finally {

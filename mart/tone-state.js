@@ -4,8 +4,8 @@
 //   - 블루레몬 로그 복사에서 넘어올 때: 주소 ?k=3aa7ff&name=이름&tone=dark|light → 그 캐릭터를 기억하고 골라요.
 //   - 「원래 색」을 고르면 다시 칠하기를 꺼요(지금까지의 마트 모양).
 //   목록 · 상세 창(mart.js) · 시식 창(taste.js) · 캐릭터 줄(cast.js)이 같이 읽고, 바뀌면 'bl-tone-change' 를 알려요.
-import { toneHtml, toneMixHtml, speakerColor, PAPER_COLORS } from './tone-geulkku.js?v=20261110b';
-export { PAPER_COLORS };
+import { toneHtml, toneMixHtml, speakerColor, PAPER_COLORS, TEXTURES } from './tone-geulkku.js?v=20261110b';
+export { PAPER_COLORS, TEXTURES };
 
 export const TONE_KEY = 'bl-mart-tone-v1';
 export const CAST_KEY = 'bl-mart-cast-v1';
@@ -49,17 +49,17 @@ export const toneState = (() => {
     try { q = new URLSearchParams(location.search); } catch { /* 주소 없음(시험) */ }
     const saved = read(TONE_KEY, {}) || {};
     let k = speakerColor(saved.k), name = cleanName(saved.name), on = saved.on !== false, mode = saved.mode === 'light' ? 'light' : 'dark';
-    // 11-10 혼합(최대 3색) · 종이 색
+    // 11-10 혼합(최대 3색) · 종이 색 · 질감
     let mix = saved.mix === true;
     let picks = Array.isArray(saved.picks) ? saved.picks.map(x => ({ name: cleanName(x?.name), color: speakerColor(x?.color) })).filter(x => x.color).slice(0, 3) : [];
-    const paper = Object.hasOwn(PAPER_COLORS, saved.paper) ? saved.paper : 'white';
+    const paper = Object.hasOwn(PAPER_COLORS, saved.paper) ? saved.paper : 'white', texture = Object.hasOwn(TEXTURES, saved.texture) ? saved.texture : 'plain';
     if (q.has('k')) {
         k = speakerColor(`#${String(q.get('k')).replace(/^#/, '')}`); on = true;
         name = cleanName(q.get('name')) || name;
         if (k && q.get('name')) rememberCast(q.get('name'), k);
     }
     if (q.has('tone')) { mode = q.get('tone') === 'light' ? 'light' : 'dark'; on = q.get('tone') !== 'off'; }
-    return { on, k, mode, name, mix, picks, paper };
+    return { on, k, mode, name, mix, picks, paper, texture };
 })();
 /** 캐릭터 · 밤낮 · 켬을 바꿔요(기억하고 'bl-tone-change' 를 알려요) */
 export function setTone(next = {}) {
@@ -70,7 +70,8 @@ export function setTone(next = {}) {
     if ('mix' in next) toneState.mix = !!next.mix;
     if ('picks' in next) toneState.picks = (next.picks || []).map(x => ({ name: cleanName(x?.name), color: speakerColor(x?.color) })).filter(x => x.color).slice(0, 3);
     if ('paper' in next && Object.hasOwn(PAPER_COLORS, next.paper)) toneState.paper = next.paper;
-    write(TONE_KEY, { k: toneState.k, name: toneState.name, mode: toneState.mode, on: toneState.on, mix: toneState.mix, picks: toneState.picks, paper: toneState.paper });
+    if ('texture' in next && Object.hasOwn(TEXTURES, next.texture)) toneState.texture = next.texture;
+    write(TONE_KEY, { k: toneState.k, name: toneState.name, mode: toneState.mode, on: toneState.on, mix: toneState.mix, picks: toneState.picks, paper: toneState.paper, texture: toneState.texture });
     try { document.dispatchEvent(new CustomEvent('bl-tone-change', { detail: { ...toneState } })); } catch { /* 시험 */ }
 }
 /** 다시 칠할 글꾸인가(로그 글꾸만 — 게시글 틀 photo 는 자기 색 그대로) */
@@ -78,9 +79,9 @@ export const toned = item => toneState.on && item?.kind === 'geulkku' && !item.p
 /** 다 그린 글꾸 HTML 을 고른 대사색으로(꺼져 있으면 그대로) */
 export const toneOut = (item, html) => {
     if (!html || !toned(item)) return html;
-    const roles = item.colors || item.palette || null, opt = { mode: toneState.mode, paper: toneState.paper };
+    const roles = item.colors || item.palette || null, opt = { mode: toneState.mode, paper: toneState.paper, texture: toneState.texture };
     const ks = toneState.mix ? toneState.picks.map(x => x.color) : [];
     return ks.length >= 2 ? toneMixHtml(html, roles, ks, opt) : toneHtml(html, roles, toneState.k, opt);
 };
 /** 다시 칠하기 값이 바뀌었는지 알아보는 열쇠(카드마다 그린 것을 다시 쓸지) */
-export const toneKey = () => JSON.stringify([toneState.on, toneState.k, toneState.mode, toneState.mix, toneState.picks.map(x => x.color), toneState.paper]);
+export const toneKey = () => JSON.stringify([toneState.on, toneState.k, toneState.mode, toneState.mix, toneState.picks.map(x => x.color), toneState.paper, toneState.texture]);
