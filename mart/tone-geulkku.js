@@ -418,7 +418,16 @@ export function toneMixHtml(html, roles, Ks, { mode = 'dark', plan = 'B', paper 
     // 대사 띠 → 끝색마다의 띠 색 그라데이션
     const band0 = bandColor(ks[0], mode);
     const bands = ks.map(k => bandColor(k, mode));
-    out = out.split(`linear-gradient(transparent 5%, ${band0} 5%, ${band0} 100%, transparent 100%)`).join(mixCss(bands));
+    //   낮 판은 대사 글자를 대비에 맞춰 더 어둡게 옮긴 뒤 그 색으로 띠를 만들어서 띠 색이 band0 과 글자 그대로 같지 않아요 — 첫 색과 같은 색상(±12°)의 띠도 같이 바꿔요(다른 사람 띠는 그대로)
+    const k0 = oklchOf(ks[0]);
+    const gap = (x, y) => { const d = Math.abs(x - y) % 360; return d > 180 ? 360 - d : d; };
+    out = out.replace(/linear-gradient\(transparent 5%, (rgba\([^)]*\)) 5%, \1 100%, transparent 100%\)/g, (m, c) => {
+        if (c === band0) return mixCss(bands);
+        const p = parseColor(c); if (!p) return m;
+        const o = oklchOf(hexOf(p));
+        const mine = k0.c < 0.04 ? o.c < 0.04 : o.c >= 0.04 && gap(o.h, k0.h) < 12;   // 첫 색이 무채에 가까우면 무채 띠가 그 사람 띠예요(다른 사람 띠는 채도 .06 이상일 때만 생겨요)
+        return mine ? mixCss(bands) : m;
+    });
     return out;
 }
 const L_rgba = (hex, a) => { const c = parseColor(hex); return `rgba(${c.r}, ${c.g}, ${c.b}, ${a})`; };
