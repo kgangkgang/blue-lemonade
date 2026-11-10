@@ -103,8 +103,11 @@ await test('재생 선 색 필터: simple-frames.js lineFilter = tools/song-temp
 
 
 // 시안 색 식: 심플-새틀-시안/make-isik.cjs 의 fit(HSL 명도 맞춤)을 글 그대로 꺼내 맞대 봐요(파일이 없으면 건너뛰어요)
-const ISIK = 'C:/Users/USER/Documents/Codex/2026-10-24/w/outputs/지시-1110/심플-새틀-시안/make-isik.cjs';
-const isikFit = fs.existsSync(ISIK) ? (() => { const s = fs.readFileSync(ISIK, 'utf8'); const a = s.indexOf('const h2rgb'), b = s.indexOf('const KA'); return new Function(`${s.slice(a, b)}; return fit;`)(); })() : null;
+//   원본 시안 폴더는 저장소 밖이라 자리를 환경 변수로 받아요: GK_ISIK_DIR = make-isik.cjs 가 든 폴더 · GK_OUTS_DIR = 시안 폴더 넷(심플-새틀-시안 …)이 든 폴더.
+//   값이 없으면 원본 대조만 「건너뜀」으로 알리고 나머지 시험은 그대로 돌아요.
+const ISIK = process.env.GK_ISIK_DIR ? path.join(process.env.GK_ISIK_DIR, 'make-isik.cjs') : '';
+if (!ISIK) console.log('건너뜀  시안 색 식 원본 대조(make-isik.cjs) — GK_ISIK_DIR 가 없어요');
+const isikFit = ISIK && fs.existsSync(ISIK) ? (() => { const s = fs.readFileSync(ISIK, 'utf8'); const a = s.indexOf('const h2rgb'), b = s.indexOf('const KA'); return new Function(`${s.slice(a, b)}; return fit;`)(); })() : null;
 
 const info0 = sf.simpleFrameInfo(sample);
 await test('견본 틀 읽기: 08 · 원래 판 tx · 캐릭터 색 cv-bl(#3aa7ff) · 화자 A B · 소리 카드 A · <style> 세 덩이', () => {
@@ -195,8 +198,9 @@ await test('되풀이: 다른 색으로 칠한 판을 또 다른 색으로 칠�
 
 // ── 들어간 실제 틀 스물여덟(첫 묶음 8 · 둘째 5 · 셋째 5 · 대표 10) ──
 const sfx = JSON.parse(fs.readFileSync(path.join(DIR, six.chunks['sp-simple'].file), 'utf8')).items;
-const OUTS = 'C:/Users/USER/Documents/Codex/2026-10-24/w/outputs/지시-1110';
-const ISIKS = ['심플-새틀-시안', '심플-새틀-시안-2', '심플-새틀-시안-3', '심플-기존틀-새방식'].map(d => `${OUTS}/${d}/이식판.html`);
+const OUTS = process.env.GK_OUTS_DIR || '';   // 이식판 원본 폴더(저장소 밖) — 위 GK_ISIK_DIR 설명 참고
+if (!OUTS) console.log('건너뜀  이식판 원본 글자 대조(이식판.html) — GK_OUTS_DIR 가 없어요');
+const ISIKS = OUTS ? ['심플-새틀-시안', '심플-새틀-시안-2', '심플-새틀-시안-3', '심플-기존틀-새방식'].map(d => path.join(OUTS, d, '이식판.html')) : [];
 // 틀 → [이름, 분류, 미리보기 열림] (열림은 각 이식판 설명서 표 · 분류: open 눌러서 열어요 · tap 누르면 바뀌어요 · sound 소리 카드 · still 가만히 보기)
 const WANT = {
     k1: ['낫표', 'open', true], k2: ['견출지', 'sound', false], k3: ['바인더', 'tap', false], k4: ['줄자', 'tap', false], k5: ['티백', 'tap', true], k6: ['음성 메모', 'sound', false], k7: ['성냥', 'tap', true], k8: ['블라인드', 'open', true],
