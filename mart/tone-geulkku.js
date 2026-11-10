@@ -28,9 +28,10 @@ export const PAPER_COLORS = Object.freeze({
     kraft: { label: '크라프트', light: ['#f6efe4', '#ece2d2'], dark: ['#2c2720', '#221e19'] },
 });
 /** 11-10 종이 질감 — 사용자 「뒤에 배경 질감 바꿀수있는걸추가하자 그냥 흰종이, 모눈종이, 줄종이, 등등」. 그림 파일 없이 CSS 그라데이션 · 무채 옅은 선 */
+//   11-10 밤 사용자 「모눈 종이도 구려」 — 모눈은 고르는 목록에서 빼요(hidden · 자료는 남겨 둬요). 기억된 값이 모눈이면 민무늬로 읽어요(tone-state.js)
 export const TEXTURES = Object.freeze({
     plain: { label: '민무늬' },
-    grid: { label: '모눈', css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:16px 16px` },
+    grid: { label: '모눈', hidden: true, css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:16px 16px` },
     lined: { label: '줄 노트', css: L => `background-image:repeating-linear-gradient(transparent 0 25px,${L} 25px 26px)` },
     dot: { label: '도트', css: L => `background-image:radial-gradient(${L} 1.1px,transparent 1.4px);background-size:14px 14px` },
     manuscript: { label: '원고지', css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:24px 24px;background-position:-1px -1px` },
@@ -409,7 +410,11 @@ export function toneMixHtml(html, roles, Ks, { mode = 'dark', plan = 'B', paper 
         out = out.replace(cardRe, m => `${m};background-image:${mixCss(wash)}`);
     }
     // 포인트 자리: 강조 막대 · 아래 띠(강조 바탕) → 끝색마다의 같은 역할 색 그라데이션 · 위 줄 · 밑줄(강조 테두리) → border-image 그라데이션
-    const solid = (from, list) => { if (!from) return; const re = new RegExp(`background-color\\s*:\\s*${from}(?=[;"])`, 'gi'); out = out.replace(re, m => `${m};background-image:${mixCss(list)}`); };
+    //   막대 위에 글자가 놓이는 틀이 있어요(꼬리말 띠 · 번호 딱지) — 글자색은 첫 색 막대에 맞춰져 있으니 나머지 색도 첫 색과 같은 밝기로 맞춰 색상만 흐르게 해요
+    //   「같은 밝기」는 대비 계산에 쓰는 밝기(검정과의 대비)로 맞춰요 — 그래야 막대 위 글자 대비가 첫 색일 때와 같아요
+    const lumOf = c => contrast(c, '#000000');
+    const level = (list) => { const want = lumOf(list[0]); return list.map((c, i) => { if (!i) return c; const o = oklchOf(c); let lo = 0, hi = 1; for (let n = 0; n < 22; n++) { const mid = (lo + hi) / 2; if (lumOf(oklchHex(mid, o.c, o.h)) < want) lo = mid; else hi = mid; } return oklchHex((lo + hi) / 2, o.c, o.h); }); };
+    const solid = (from, raw) => { if (!from) return; const list = level(raw); const re = new RegExp(`background-color\\s*:\\s*${from}(?=[;"])`, 'gi'); out = out.replace(re, m => `${m};background-image:${mixCss(list)}`); };
     solid(maps[0].roles.quoteBar, maps.map(m => m.roles.quoteBar));
     solid(maps[0].accentInk, maps.map(m => m.accentInk));
     const accents = maps.map(m => m.accentInk);

@@ -7,6 +7,8 @@
 import { toneHtml, toneMixHtml, speakerColor, PAPER_COLORS, TEXTURES } from './tone-geulkku.js?v=20261110b';
 export { PAPER_COLORS, TEXTURES };
 
+/** 11-10 밤 사용자 「음 그라데이션 과감하게 빼자... 구리다...」 — 혼합(2~3색 그라데이션)은 꺼 두고 스위치도 안 보여요. 코드는 남겨 둬요(true 로 바꾸면 돌아와요) */
+export const MIX_ENABLED = false;
 export const TONE_KEY = 'bl-mart-tone-v1';
 export const CAST_KEY = 'bl-mart-cast-v1';
 /** 사용자가 정해 둔 캐릭터 대사색 — 데우스 대사색 표(카드별 bl_cast_<카드> · 사용자 것)를 세계관(카드)별로 묶었어요.
@@ -50,9 +52,9 @@ export const toneState = (() => {
     const saved = read(TONE_KEY, {}) || {};
     let k = speakerColor(saved.k), name = cleanName(saved.name), on = saved.on !== false, mode = saved.mode === 'light' ? 'light' : 'dark';
     // 11-10 혼합(최대 3색) · 종이 색 · 질감
-    let mix = saved.mix === true;
+    let mix = MIX_ENABLED && saved.mix === true;
     let picks = Array.isArray(saved.picks) ? saved.picks.map(x => ({ name: cleanName(x?.name), color: speakerColor(x?.color) })).filter(x => x.color).slice(0, 3) : [];
-    const paper = Object.hasOwn(PAPER_COLORS, saved.paper) ? saved.paper : 'white', texture = Object.hasOwn(TEXTURES, saved.texture) ? saved.texture : 'plain';
+    const paper = Object.hasOwn(PAPER_COLORS, saved.paper) ? saved.paper : 'white', texture = Object.hasOwn(TEXTURES, saved.texture) && !TEXTURES[saved.texture].hidden ? saved.texture : 'plain';
     if (q.has('k')) {
         k = speakerColor(`#${String(q.get('k')).replace(/^#/, '')}`); on = true;
         name = cleanName(q.get('name')) || name;
@@ -67,10 +69,10 @@ export function setTone(next = {}) {
     if ('name' in next) toneState.name = cleanName(next.name);
     if ('mode' in next) toneState.mode = next.mode === 'light' ? 'light' : 'dark';
     if ('on' in next) toneState.on = !!next.on;
-    if ('mix' in next) toneState.mix = !!next.mix;
+    if ('mix' in next) toneState.mix = MIX_ENABLED && !!next.mix;
     if ('picks' in next) toneState.picks = (next.picks || []).map(x => ({ name: cleanName(x?.name), color: speakerColor(x?.color) })).filter(x => x.color).slice(0, 3);
     if ('paper' in next && Object.hasOwn(PAPER_COLORS, next.paper)) toneState.paper = next.paper;
-    if ('texture' in next && Object.hasOwn(TEXTURES, next.texture)) toneState.texture = next.texture;
+    if ('texture' in next && Object.hasOwn(TEXTURES, next.texture) && !TEXTURES[next.texture].hidden) toneState.texture = next.texture;
     write(TONE_KEY, { k: toneState.k, name: toneState.name, mode: toneState.mode, on: toneState.on, mix: toneState.mix, picks: toneState.picks, paper: toneState.paper, texture: toneState.texture });
     try { document.dispatchEvent(new CustomEvent('bl-tone-change', { detail: { ...toneState } })); } catch { /* 시험 */ }
 }
