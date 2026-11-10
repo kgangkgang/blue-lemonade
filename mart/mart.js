@@ -812,7 +812,7 @@ async function main() {
     }
     // 11-10 사용자 「심플만 남기돼」 — 컨셉마다 심플 하나만 목록 · 찾기에(무테 · 일러스트 · 다꾸는 자료로 남겨 두고 숨겨요 · 주소 #id 로는 열려요)
     const keepIds = new Set();
-    { const by = new Map(); for (const x of items) { const a = by.get(x.name) ?? []; a.push(x); by.set(x.name, a); } for (const a of by.values()) { const s = a.filter(x => styleOf(x) === '심플' || x.builtin || x.photo || x.copyOnly); (s.length ? s : [a[0]]).forEach(x => keepIds.add(x.id)); } }
+    { const by = new Map(); for (const x of items) { const a = by.get(x.name) ?? []; a.push(x); by.set(x.name, a); } for (const a of by.values()) { const pickOne = a.find(x => styleOf(x) === '심플' && !x.builtin) || a.find(x => x.builtin) || a.find(x => x.photo || x.copyOnly) || a[0]; keepIds.add(pickOne.id); } }   // 컨셉(이름) 하나에 하나 — 분류 숫자와 목록 개수가 같아요
     const hashId = decodeURIComponent(location.hash.slice(1));
     const shownItems = SHOW_ALL_DESIGNS || kind !== 'geulkku' ? items : items.filter(x => keepIds.has(x.id) || x.id === hashId);
     // 분류 두 단계(공용 부품): 묶음 탭(시리즈 · 세계관 · 인물 · 컨셉 · 할로윈 · 크리스마스 · 내장) + 하위 칩
@@ -829,7 +829,7 @@ async function main() {
         const styles = (data.styles || []).map(s => ({ ...s, id: STYLE_ALIAS[s.id] || s.id, label: STYLE_ALIAS[s.label] || s.label })).filter(s => items.some(x => styleOf(x) === s.id)).map((s, i) => [s, STYLE_ORDER.includes(s.id) ? STYLE_ORDER.indexOf(s.id) : STYLE_ORDER.length + i]).sort((a, b) => a[1] - b[1]).map(([s]) => s);
         const row = styleSeg.closest('.mart-filters') || styleSeg;
         row.hidden = styles.length < 2;
-        if (!SHOW_ALL_DESIGNS) styleSeg.hidden = true;   // 11-10 심플만 — 디자인 고르기 칩은 숨겨요(개수는 그대로 보여요)
+        if (!SHOW_ALL_DESIGNS) { styleSeg.hidden = true; styleSeg.style.display = 'none'; }   // 11-10 심플만 — 디자인 고르기 칩은 숨겨요(개수는 그대로 보여요)
         showStyle = styles.length >= 2;
         if (styles.length >= 2) {
             styleSeg.innerHTML = segHtml([['all', '모든 디자인'], ...styles.map(s => [s.id, s.label])], 'all');
