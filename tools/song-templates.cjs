@@ -34,7 +34,7 @@ const two = i => String(i).padStart(2, '0');
 const img = (k, eager) => `<!-- 견본 --><img src="${IMG}${k}.svg" width="${isLand(k) ? 1216 : 832}" height="${isLand(k) ? 832 : 1216}" alt="업로드 이미지" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
 
 // 11-10 밤 소리 카드 확정 조합(사용자 「오 5번 좋다」 · 「딱 저 검은 선에만」 · 「오 점 세개 잘라내기 되는구나」 — 인수인계-커뮤니티-글꾸 0-4절 「재생 막대는 거의 다 꾸밀 수 있어요」):
-//   이름표 + 막대 한 줄 · 막대 26px · 알약 바탕 투명 · 진행 선은 굵기 그대로 · 선에만 곡 색(단색 필터 — 폰에서 손잡이까지 늘어나 굵게 하기는 뺐어요) · 스피커 가운데 정렬 지정 · 점 세 개(⋮)는 잘라 내기 · 단추 색은 그대로.
+//   이름표 + 막대 한 줄 · 막대 26px · 알약 바탕 투명 · 선에만 곡 색(단색 필터) · 선 3배 굵게는 PC(pointer:fine · 560px 이상)에서만 — 폰은 손잡이까지 늘어나서 가늘게 둬요 · 스피커 가운데 정렬 지정 · 점 세 개(⋮)는 잘라 내기 · 단추 색은 그대로.
 //   깡통은 기본이 어두운 판이라 밝은 틀은 인라인 color-scheme:light 를 꼭 적어요 · 어두운 틀은 dark. zoom · 색 입히기 filter · mix-blend-mode 는 audio 에 쓰지 않아요.
 const AUDIO_INLINE = dark => `height:26px;block-size:26px;width:calc(100% + 30px);max-width:none;margin:0 -30px 0 0!important;color-scheme:${dark ? 'dark' : 'light'}`;
 const audio = (k, dark = false) => `<div class="sg-au"><!-- 견본 mp3 --><audio src="${AUD}${k}.mp3" controls="" preload="metadata" class="uploaded-audio" style="${AUDIO_INLINE(dark)}"></audio></div>`;
@@ -73,7 +73,9 @@ ${P} audio::-webkit-media-controls-panel{padding:0!important;align-items:center!
 ${P} audio::-webkit-media-controls-play-button,${P} audio::-webkit-media-controls-mute-button{min-width:24px!important;width:24px!important;height:24px!important;flex:0 0 24px!important;margin:0!important;padding:0!important;background-size:20px 20px!important;background-position:center!important}
 ${P} audio::-webkit-media-controls-mute-button{align-self:center!important;position:relative!important;top:0!important;vertical-align:middle!important}
 ${P} audio::-webkit-media-controls-volume-control-container{align-self:center!important;margin:0!important;padding:0!important}
-${P} audio::-webkit-media-controls-current-time-display,${P} audio::-webkit-media-controls-time-remaining-display{font-size:12px!important}`;
+${P} audio::-webkit-media-controls-current-time-display,${P} audio::-webkit-media-controls-time-remaining-display{font-size:12px!important}
+/* 진행 선 굵게는 마우스 기기(PC)에서만 — 터치 기기는 손잡이까지 늘어나요 */
+@media (pointer:fine) and (min-width:560px){${P} audio::-webkit-media-controls-timeline{transform:scaleY(3)!important}}`;
 const baseCss = (P, ink, extra, divBg = 'background-color') => `
 ${P}{${ink}display:block!important;box-sizing:border-box;container-type:inline-size;margin:14px auto!important;padding:0!important;border:0!important;background:transparent!important;font-family:${SANS};line-height:1.55;text-align:left;-webkit-text-size-adjust:100%;${extra}}
 ${P},${P} *{color:var(--ink)!important;-webkit-text-fill-color:var(--ink)!important;box-sizing:border-box}
