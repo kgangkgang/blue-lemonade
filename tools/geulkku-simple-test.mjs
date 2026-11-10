@@ -193,19 +193,29 @@ await test('되풀이: 다른 색으로 칠한 판을 또 다른 색으로 칠�
     assert.equal(base.size, 1);
 });
 
-// ── 들어간 실제 틀(첫 묶음 8) ──
+// ── 들어간 실제 틀 스물여덟(첫 묶음 8 · 둘째 5 · 셋째 5 · 대표 10) ──
 const sfx = JSON.parse(fs.readFileSync(path.join(DIR, six.chunks['sp-simple'].file), 'utf8')).items;
-const ISIK_HTML = 'C:/Users/USER/Documents/Codex/2026-10-24/w/outputs/지시-1110/심플-새틀-시안/이식판.html';
-await test('실제 틀 여덟: 이식판 원래 판과 한 글자도 안 다르게 들어갔고(소리 카드 src · 미리보기 열림만 다름) · 01 · 05 · 07 · 08 만 미리보기 열린 판 · 분류 · 색 칸', () => {
-    const want = { k1: ['낫표', 'simple-tap', true], k2: ['견출지', 'simple-sound', false], k3: ['바인더', 'simple-tap', false], k4: ['줄자', 'simple-tap', false], k5: ['티백', 'simple-tap', true], k6: ['음성 메모', 'simple-sound', false], k7: ['성냥', 'simple-tap', true], k8: ['블라인드', 'simple-sound', true] };
-    assert.deepEqual(six.items.map(x => x.id), Object.keys(want).map(k => `simple-${k}`));
-    assert.deepEqual(six.categories.map(c => c.label), ['누르면 바뀌어요', '소리 카드']);
-    const isik = fs.existsSync(ISIK_HTML) ? fs.readFileSync(ISIK_HTML, 'utf8').replace(/\r\n/g, '\n') : null;
+const OUTS = 'C:/Users/USER/Documents/Codex/2026-10-24/w/outputs/지시-1110';
+const ISIKS = ['심플-새틀-시안', '심플-새틀-시안-2', '심플-새틀-시안-3', '심플-기존틀-새방식'].map(d => `${OUTS}/${d}/이식판.html`);
+// 틀 → [이름, 분류, 미리보기 열림] (열림은 각 이식판 설명서 표 · 분류: open 눌러서 열어요 · tap 누르면 바뀌어요 · sound 소리 카드 · still 가만히 보기)
+const WANT = {
+    k1: ['낫표', 'open', true], k2: ['견출지', 'sound', false], k3: ['바인더', 'tap', false], k4: ['줄자', 'tap', false], k5: ['티백', 'tap', true], k6: ['음성 메모', 'sound', false], k7: ['성냥', 'tap', true], k8: ['블라인드', 'open', true],
+    k09: ['지퍼', 'open', true], k10: ['모래시계', 'open', true], k11: ['실 전화', 'sound', true], k12: ['돋보기', 'tap', false], k13: ['형광펜', 'tap', true],
+    k14: ['쥘부채', 'open', true], k15: ['뉴턴의 요람', 'sound', false], k16: ['지우개', 'tap', false], k17: ['바람개비', 'sound', false], k18: ['토스터', 'open', true],
+    q01: ['여름 바다', 'still', false], q02: ['흐림', 'sound', false], q03: ['새해 첫날', 'tap', true], q04: ['새벽', 'tap', true], q05: ['메신저', 'sound', false],
+    q06: ['편지 봉투', 'open', true], q07: ['호박', 'tap', true], q08: ['라면', 'tap', false], q09: ['카페 영수증', 'tap', true], q10: ['RPG 스탯', 'sound', false],
+};
+await test('실제 틀 스물여덟: 이식판 원래 판과 한 글자도 안 다르게 들어갔고(소리 카드 src · 미리보기 열림만 다름) · 이름 · 분류 · 미리보기 열림 · 설명이 자리 채움이 아님', () => {
+    assert.deepEqual(six.items.map(x => x.id), Object.keys(WANT).map(k => `simple-${k}`));
+    assert.equal(six.count, 28);
+    assert.deepEqual(six.categories.map(c => c.label), ['눌러서 열어요', '누르면 바뀌어요', '소리 카드', '가만히 보기']);
+    const isik = ISIKS.filter(f => fs.existsSync(f)).map(f => fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n')).join('\n');
     for (const row of six.items) {
-        const k = row.id.slice(7), [name, cat, peek] = want[k], p = sfx[row.id].preview;
-        assert.equal(row.name, name); assert.equal(row.category, cat); assert.ok(row.simple && row.copyOnly && row.photo && row.style === '심플');
+        const k = row.id.slice(7), [name, cat, peek] = WANT[k], p = sfx[row.id].preview;
+        assert.equal(row.name, name); assert.equal(row.category, `simple-${cat}`, k); assert.ok(row.simple && row.copyOnly && row.photo && row.style === '심플');
         assert.equal(/data-bl-peek/.test(p), peek, `${k} 미리보기 열림`);
         assert.equal(row.audio === true, /<audio\b/.test(p));
+        assert.ok(row.desc && !/심플 새 틀$/.test(row.desc), `${k} 설명`);
         if (isik) {   // 소리 카드 src · class · preload 와 미리보기 열림만 빼면 이식판 그 틀과 같아요
             const orig = shutPeek(p).replace(/<audio class="uploaded-audio" src="[^"]*" controls preload="metadata"/g, '<audio controls preload="none"');
             assert.ok(isik.includes(orig), `${k} 이식판과 다름`);
@@ -213,23 +223,81 @@ await test('실제 틀 여덟: 이식판 원래 판과 한 글자도 안 다르�
     }
 });
 
-await test('실제 틀 여덟: 원래 색이면 시안 그대로 · 다른 색 · 캐릭터 없음 × 낮밤에서 <style> 하나 · 되풀이 · 복사 글 <style> 하나 · 05 · 07 주인공 M 은 시안 식', () => {
+// 원래 주인공 색에서 나온 값(색 · 사다리 다섯 · rgb 셋 — # · 그림 안 %23 · rgb%28 꼴)이 다른 색으로 칠한 뒤 색 블록에 남는지(같은 색을 쓰는 다른 화자 몫은 빼요)
+const bandColors = h => { const o = {}; for (const m of styleOf(h).matchAll(/\.gk-d([A-Z])\{background-(?:color:\s*rgba?\(|image:[^}]*?rgba?%28)(\d+),\s*(\d+),\s*(\d+)/g)) o[m[1]] ??= '#' + [m[2], m[3], m[4]].map(v => (+v).toString(16).padStart(2, '0')).join(''); return o; };
+const leftovers = (p, t) => {
+    const info = sf.simpleFrameInfo(p), others = Object.values(bandColors(p)).filter(c => c !== info.K0);
+    const keep = new Set(others.flatMap(c => [c, ...Object.values(ct.toneLadder(c))]));
+    const css = partsOf(t).slice(1).join('\n').toLowerCase(), out = [];
+    for (const v of new Set([info.K0, ...Object.values(ct.toneLadder(info.K0))])) if (!keep.has(v) && (css.includes(v) || css.includes(`%23${v.slice(1)}`))) out.push(v);
+    const rgb = [1, 3, 5].map(i => parseInt(info.K0.slice(i, i + 2), 16));
+    if (!others.includes(info.K0) && [`(${rgb.join(',')},`, `(${rgb.join(', ')},`, `rgb%28${rgb.join(',')}%29`].some(x => css.includes(x))) out.push(`rgb ${rgb}`);
+    return out;
+};
+await test('실제 틀 스물여덟: 원래 색이면 낮 · 밤 모두 시안 그대로 · 다른 색 · 캐릭터 없음 × 낮밤에서 옛 주인공 색 값 0 · <style> 하나 · 기본 규칙 그대로 · 되풀이 · 복사 글 <style> 하나 · 주석 안 겹침', () => {
     for (const row of six.items) {
         const p = sfx[row.id].preview, info = sf.simpleFrameInfo(p);
         for (const mode of ['light', 'dark']) assert.equal(styleOf(sf.toneSimple(p, info.K0, { mode })), rename(styleOf(p), info.cvName, info.K0.slice(1)), `${row.id} ${mode} 시안 그대로`);
-        for (const K of ['#3ccfbf', '#f0d878', null]) for (const mode of ['light', 'dark']) {
+        for (const K of ['#3ccfbf', '#f0d878', '#d9363e', null]) for (const mode of ['light', 'dark']) {
             const t = sf.toneSimple(p, K, { mode });
+            assert.deepEqual(leftovers(p, t), [], `${row.id} ${K} ${mode} 옛 주인공 색이 남음`);
             assert.equal((t.match(/<style>/g) || []).length, 1);
             assert.equal(partsOf(t)[0], partsOf(p)[0], `${row.id} 기본 규칙 그대로`);
-            assert.equal(sf.toneSimple(sf.toneSimple(p, '#d9363e', { mode: 'dark' }), K, { mode }), t, `${row.id} 되풀이`);
+            if (K) assert.equal(sf.toneSimple(sf.toneSimple(p, '#b799e8', { mode: 'dark' }), K, { mode }), t, `${row.id} 되풀이`);
             const c = sf.simpleReady(shutPeek(t));
             assert.equal((c.match(/<style>/g) || []).length, 1); assert.ok(tg.readyReport(c).ok);
+            assert.doesNotMatch(c, /<!--\s*✎[^>]*-->\s*<!--\s*✎/, `${row.id} 주석 겹침`);
         }
     }
     // 05 티백 낮 · 민트: 주인공 M 이름 = 시안 식 fit(민트, 로그 면 #f3f1ec) — 시안 「캐릭터 색 비교 줄」과 같은 식
     const t5 = sf.toneSimple(sfx['simple-k5'].preview, '#3ccfbf', { mode: 'light' });
     assert.equal(valueOf(t5, '.gk-k5.gk-cv-3ccfbf.gk-tl .gk-nm.gk-nM', 'color'), sf.sianFit('#3ccfbf', '#f3f1ec'));
     if (isikFit) assert.equal(sf.sianFit('#3ccfbf', '#f3f1ec'), isikFit('#3ccfbf', '#f3f1ec'));
+    // 주인공: 12 돋보기 · 16 지우개 · 03 바인더 는 분홍 B, 05 · 07 은 M, 나머지는 A(틀 캐릭터 색과 같은 띠의 화자)
+    for (const [id, X] of [['simple-k12', 'B'], ['simple-k16', 'B'], ['simple-k3', 'B'], ['simple-k5', 'M'], ['simple-k09', 'A']]) assert.ok(styleOf(sf.toneSimple(sfx[id].preview, '#3ccfbf', { mode: 'light' })).includes(`.gk-d${X}{background-color:rgba(60,207,191,.18)}`), `${id} 주인공 ${X}`);
+});
+
+await test('고친 조각 넷: 09 쐐기 그림(%23) · 09 밤 안감(사다리 밖 식) · 13 형광 띠(그림으로 긋는 띠 — 원래 색 · 다른 색 모두 그림 규칙 그대로 · 바탕색 띠를 안 만듦) · 15 번쩍임 키프레임 색', () => {
+    const k09 = sfx['simple-k09'].preview, m09 = sf.toneSimple(k09, '#3ccfbf', { mode: 'dark' });
+    assert.ok(styleOf(k09).includes('#0a1b28'));
+    const deep = (K) => { const n = parseInt(K.slice(1), 16), [r, g, b] = [n >> 16, (n >> 8) & 255, n & 255].map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn, s = d / (1 - Math.abs(2 * l - 1)), h = (mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60; const S = s * 0.6, L = l * 0.16, C = (1 - Math.abs(2 * L - 1)) * S, X = C * (1 - Math.abs((h / 60) % 2 - 1)), M = L - C / 2; const [a, bb, c] = h < 60 ? [C, X, 0] : h < 120 ? [X, C, 0] : h < 180 ? [0, C, X] : h < 240 ? [0, X, C] : h < 300 ? [X, 0, C] : [C, 0, X]; return '#' + [a, bb, c].map(v => Math.round((v + M) * 255).toString(16).padStart(2, '0')).join(''); };
+    assert.equal(deep('#3aa7ff'), '#0a1b28', '식이 시안 안감 값을 다시 만들어요');
+    assert.ok(styleOf(m09).includes(`.gk-k09.gk-cv-3ccfbf.gk-tn-n .gk-gp{background-color:${deep('#3ccfbf')}}`));
+    assert.doesNotMatch(styleOf(m09), /0a1b28|%23e4f1fc|%2395cefc|%230f6ab4|%2310395a/i);
+    const k13 = sfx['simple-k13'].preview;
+    for (const [K, rgb] of [['#3aa7ff', '58,167,255'], ['#3ccfbf', '60,207,191'], [null, '139,142,150']]) for (const mode of ['light', 'dark']) {
+        const t = sf.toneSimple(k13, K, { mode });
+        assert.match(styleOf(t), new RegExp(`\\.gk-k13 \\.gk-dA\\{background-image:[^}]*rgb%28${rgb}%29`), `${K} ${mode} 형광 띠 그림`);
+        assert.match(styleOf(t), /\.gk-k13 \.gk-dB\{background-image:[^}]*rgb%28255,95,162%29/);
+        assert.doesNotMatch(styleOf(t), /\.gk-d[AB]\{background-color:rgba/, '바탕색 띠를 새로 깔지 않아요');
+        assert.match(styleOf(t), /background-size:0% 100%/, '긋는 움직임 그대로');
+    }
+    const t15 = sf.toneSimple(sfx['simple-k15'].preview, '#3ccfbf', { mode: 'light' });
+    assert.match(styleOf(t15), /@keyframes gk-ba-tl\{[^}]*rgba\(60,207,191,/);
+    assert.doesNotMatch(styleOf(t15), /rgba\(58,167,255,/);
+    assert.match(styleOf(t15), /@keyframes gk-bb-tl\{[^}]*rgba\(255,95,162,/, '다른 화자 번쩍임은 그대로');
+});
+
+await test('대표 10: 09 영수증 종이는 캐릭터 색 · 낮밤과 상관없이 흰 종이 · 틀이 단 「✎」 주석은 그대로(두 번 안 달아요) · 10 레벨 글자도 캐릭터 색으로', () => {
+    const q09 = sfx['simple-q09'].preview;
+    const paper = h => styleOf(h).split('\n').filter(l => /\.gk-q09 \.gk-pb\{/.test(l)).join();
+    assert.match(paper(q09), /#ffffff/);
+    for (const K of ['#3ccfbf', '#d9363e', null]) for (const mode of ['light', 'dark']) assert.equal(paper(sf.toneSimple(q09, K, { mode })), paper(q09), `${K} ${mode}`);
+    const c = sf.simpleReady(shutPeek(sf.toneSimple(q09, '#3ccfbf', { mode: 'dark' })));
+    const marks = s => (s.match(/<!-- ✎/g) || []).length;
+    assert.equal(c.split('<!-- ✎ 가게 이름 -->').length - 1, 1);
+    assert.ok(marks(c) >= marks(q09), '틀 주석이 다 남아요');
+    assert.doesNotMatch(c, /<!--\s*✎[^>]*-->\s*<!--\s*✎/);
+    const q10 = sf.toneSimple(sfx['simple-q10'].preview, '#3ccfbf', { mode: 'light' });
+    assert.doesNotMatch(styleOf(q10), /0075d3/i);
+    assert.match(styleOf(q10), new RegExp(`\\.gk-vA\\{color:${sf.sianFit('#3ccfbf', '#f5f5f6')}`));
+});
+
+await test('개수 · 머리말: 마트 메뉴 COUNTS.geulkku · 홈 「N종」 · 글꾸 마트 머리말 「N개」 = 새 틀 수 · 예전 수는 COUNTS.geulkkuAll(= index.json count)', () => {
+    const top = fs.readFileSync(path.join(MART, 'top-mart.js'), 'utf8'), ix = JSON.parse(fs.readFileSync(path.join(DIR, 'index.json'), 'utf8'));
+    assert.match(top, new RegExp(`const COUNTS = \\{ frames: 1448, geulkku: ${six.count}, geulkkuAll: ${ix.count} \\}`));
+    assert.match(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), new RegExp(`<b>글꾸 마트</b><p>새 글꾸 틀 ${six.count}종`));
+    assert.match(fs.readFileSync(path.join(MART, 'geulkku/index.html'), 'utf8'), new RegExp(`<p class="mart-lede">새 글꾸 틀 ${six.count}개예요\\.`));
 });
 
 await test('카드 미리보기: 08 은 details 를 열어 둔 판(data-bl-peek) · mart.js shutPeek 를 거친 복사 글은 원래 닫힌 판 · 칠해도 그대로', () => {
@@ -291,7 +359,7 @@ const baseMart = git('show', `${BASE}:mart/mart.js`).toString();
 const oldRule = baseMart.slice(baseMart.indexOf('    const keepIds = new Set();'), baseMart.indexOf('\n', baseMart.indexOf('    const shownItems ='))).replace(/\n\s*const hashId = [^\n]+/, '');   // 주소 읽기 줄만 빼고(시험이 넘겨 줘요)
 const oldStyleOf = new Function(`${baseMart.match(/const STYLE_DEFAULT = [^\n]+/)[0]}\n${baseMart.match(/const STYLE_ALIAS = [^\n]+/)[0]}\nreturn ${baseMart.match(/const styleOf = ([^\n]+);/)[1]};`)();
 const oldShown = (items, hashId = '', showAll = false) => new Function('items', 'styleOf', 'hashId', 'SHOW_ALL_DESIGNS', 'kind', `${oldRule}\nreturn shownItems;`)(items, oldStyleOf, hashId, showAll, 'geulkku');
-await test('옛날 버전: 첫 화면은 새 틀 여덟만 · 「옛날 버전」 목록은 예전 첫 화면 목록(447)과 차례까지 같아요 · 주소 #예전글꾸 로 오면 펼친 채 · 새 틀 주소는 접힌 채', async () => {
+await test('옛날 버전: 첫 화면은 새 틀(스물여덟)만 · 「옛날 버전」 목록은 예전 첫 화면 목록(447)과 차례까지 같아요 · 주소 #예전글꾸 로 오면 펼친 채 · 새 틀 주소는 접힌 채', async () => {
     const data = JSON.parse(fs.readFileSync(path.join(DIR, 'index.json'), 'utf8'));
     const merged = await sf.withSimpleFrames(JSON.parse(JSON.stringify(data)), { load: async () => six });
     const v = sf.splitView(merged.items, { styleOf: oldStyleOf });
@@ -324,8 +392,8 @@ await test('mart.js: 「옛날 버전」 단추 · 돌아가기 줄 · 예전 �
     assert.match(src, /item\.simple \? simpleReady\(h\) : item\.photo \? h : kkangtongReady\(h\)/);
 });
 
-await test('목록 자료: index.json · 기존 조각 · top-mart.js · 첫 화면 html 이 바탕 커밋과 바이트까지 같아요(새 파일은 simple-index.json · sp-simple 조각뿐)', () => {
-    const changed = git('diff', '--name-status', BASE, '--', 'mart/data', 'mart/top-mart.js', 'index.html', 'mart/geulkku/index.html').toString().trim().split('\n').filter(Boolean);
+await test('목록 자료: index.json · 기존 조각이 바탕 커밋과 바이트까지 같아요(새 파일은 simple-index.json · sp-simple 조각뿐 · 개수 글은 위 「개수 · 머리말」 시험)', () => {
+    const changed = git('diff', '--name-status', BASE, '--', 'mart/data').toString().trim().split('\n').filter(Boolean);
     const untracked = git('ls-files', '--others', '--exclude-standard', '--', 'mart/data').toString().trim().split('\n').filter(Boolean);
     const all = [...changed.map(l => l.split('\t').pop()), ...untracked];
     for (const f of all) assert.match(f, /^mart\/data\/geulkku\/(simple-index\.json|sp-simple\.[0-9a-f]{8}\.json)$/, `바뀐 파일 ${f}`);
