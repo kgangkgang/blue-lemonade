@@ -29,13 +29,14 @@ export const PAPER_COLORS = Object.freeze({
 });
 /** 11-10 종이 질감 — 사용자 「뒤에 배경 질감 바꿀수있는걸추가하자 그냥 흰종이, 모눈종이, 줄종이, 등등」. 그림 파일 없이 CSS 그라데이션 · 무채 옅은 선 */
 //   11-10 밤 사용자 「모눈 종이도 구려」 — 모눈은 고르는 목록에서 빼요(hidden · 자료는 남겨 둬요). 기억된 값이 모눈이면 민무늬로 읽어요(tone-state.js)
+//   같은 격자 무늬인 원고지 · 방안지도 같이 빼요(hidden) — 고르는 목록은 민무늬 · 줄 노트 · 도트 셋. 기억된 값이 원고지 · 방안지면 민무늬로 읽어요
 export const TEXTURES = Object.freeze({
     plain: { label: '민무늬' },
     grid: { label: '모눈', hidden: true, css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:16px 16px` },
     lined: { label: '줄 노트', css: L => `background-image:repeating-linear-gradient(transparent 0 25px,${L} 25px 26px)` },
     dot: { label: '도트', css: L => `background-image:radial-gradient(${L} 1.1px,transparent 1.4px);background-size:14px 14px` },
-    manuscript: { label: '원고지', css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:24px 24px;background-position:-1px -1px` },
-    section: { label: '방안지', css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px),linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:40px 40px,40px 40px,8px 8px,8px 8px` },
+    manuscript: { label: '원고지', hidden: true, css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:24px 24px;background-position:-1px -1px` },
+    section: { label: '방안지', hidden: true, css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px),linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:40px 40px,40px 40px,8px 8px,8px 8px` },
 });
 const TEXTURE_LINE = { light: 'rgba(30, 32, 48, 0.08)', dark: 'rgba(255, 255, 255, 0.06)' };
 /** 종이 면(틀 면 · 로그 면 색을 칠한 상자)에 질감 클래스를 달고, 맨 앞 <style> 에 규칙을 넣어요(인라인 url 없음) */
