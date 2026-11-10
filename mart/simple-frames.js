@@ -40,6 +40,8 @@ export const SIMPLE_CONTRACT = Object.freeze({
         k8: { orig: ['#13233b', '#0d1a2d'], alt: ['#ffffff', '#f5f5f6'] },
     }),
     peek: Object.freeze(['k1', 'k5', 'k7', 'k8']),
+    // 사다리 밖 단계(시안 식 — 캐릭터 색 HSL 의 채도 ×s · 명도 ×l): 09 지퍼 밤 안감(시안 ZLIN_N · 파랑 → #0a1b28) · 캐릭터 없음은 무채 c500 에 같은 식
+    extraSteps: Object.freeze([Object.freeze({ s: 0.6, l: 0.16 })]),
     tagMix: Object.freeze({ light: 0.11, dark: 0.15 }),
     mainOrder: Object.freeze(['M', 'A']),
     ink: Object.freeze({ 'gk-tl': '#26272b', 'gk-td': '#e1e1e5', 'gk-tx': '#e4e9f0' }),
@@ -51,7 +53,7 @@ const FRAME_KEY = /^gk-((?:k|q)\d+)$/;
 const SPEAKER_SEL = /\.gk-[a-z]+[A-Z](?![\w-])|media-controls-timeline/;
 const SPEAKER_CLASS = /^gk-([a-z]+)([A-Z])$/;
 const OWN_TYPES = ['n', 'd', 's', 'u'];
-const HEX6 = /#[0-9a-f]{6}(?![0-9a-f])/gi;
+const HEX6 = /(?:#|%23)[0-9a-f]{6}(?![0-9a-f])/gi;   // 그림(data-URL) 안의 %23rrggbb 도(09 지퍼 쐐기)
 
 /** 진행 선 색 필터 — tools/song-templates.cjs lineFilter 와 같은 식(시험이 두 식의 값을 맞대 봐요 · 실측 민트 · 분홍에 맞춘 계산 · 마트-설계 7-4) */
 export const lineFilter = (hex) => {
@@ -140,7 +142,7 @@ export function simpleFrameInfo(html) {
         }
     }
     const soundBy = [...rest.matchAll(/\sclass="[^"]*\bgk-sn\s+gk-s([A-Z])\b[^"]*"/g)].map(x => x[1]);
-    return { key, no, base, classes, cvClass, cvName, K0, css, parts, base_css: parts[0], color_css: parts.slice(1).join('\n'), speakers, extra, soundBy, used, audio: /<audio\b/.test(rest), match: m };
+    return { key, no, base, classes, cvClass, cvName, K0, css, parts, base_css: parts[0], color_css: parts.slice(1).join('\n'), speakers, extra, soundBy, used, imageBand: /\.gk-d[A-Z]\{background-image:/.test(parts.slice(1).join('\n')), audio: /<audio\b/.test(rest), match: m };
 }
 
 /** 원래 판 · 반대 판의 [틀 면, 로그 면] — 표(SIMPLE_CONTRACT.faces)에 없으면 그 틀 <style> 에서 읽어요 */
@@ -163,7 +165,8 @@ export function facesOf(info, origBase) {
 function speakerColorsOf(colorCss) {
     const out = {};
     for (const r of rulesOf(colorCss)) {
-        const m = r.match(/\.gk-d([A-Z])\{background-color:\s*rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);   // 띠는 알파 .18 — 색만 읽어요
+        // 띠는 알파 .18 바탕색 — 색만 읽어요 · 13 형광펜처럼 띠를 그림으로 그으면 그림 안 rgb%28r,g,b%29 에서
+        const m = r.match(/\.gk-d([A-Z])\{background-color:\s*rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/) || r.match(/\.gk-d([A-Z])\{background-image:[^}]*?rgba?%28(\d+),(\d+),(\d+)/);
         if (m && !(m[1] in out)) out[m[1]] = speakerColor(`rgb(${m[2]}, ${m[3]}, ${m[4]})`);
     }
     return out;
@@ -233,15 +236,31 @@ export function toneSimple(html, K, { mode = 'dark', main } = {}) {
     };
     const changed = info.speakers.filter(X => !same(X));
     const sel = b => `.gk-${info.key}.${cv}.${b}`;
+    // 띠를 그림으로 긋는 틀(13 형광펜)은 띠 바탕색 규칙을 새로 만들지 않아요(그림 규칙의 색만 바꿔요)
+    const used = info.imageBand ? new Set([...info.used].filter(c => !/^gk-d[A-Z]$/.test(c))) : info.used;
     const fresh = [
-        ...speakerRules({ sel: sel(origBase), base: origBase, mode: origMode, card: faces.orig[0], log: faces.orig[1], speakers: changed, colors, used: info.used, extra: info.extra }),
-        ...speakerRules({ sel: sel(alt), base: alt, mode: origMode === 'light' ? 'dark' : 'light', card: faces.alt[0], log: faces.alt[1], speakers: changed, colors, used: info.used, extra: info.extra }),
+        ...speakerRules({ sel: sel(origBase), base: origBase, mode: origMode, card: faces.orig[0], log: faces.orig[1], speakers: changed, colors, used, extra: info.extra }),
+        ...speakerRules({ sel: sel(alt), base: alt, mode: origMode === 'light' ? 'dark' : 'light', card: faces.alt[0], log: faces.alt[1], speakers: changed, colors, used, extra: info.extra }),
     ];
     if (info.audio && soundX && !same(soundX)) { const lf = lineFilter(colors[soundX]); if (lf) fresh.push(`.gk-${info.key}.gk-${info.key}.gk-${info.key}.${cv} audio::-webkit-media-controls-timeline{filter:${lf}!important}`); }
-    // ③ 소품 톤: 옛 색 사다리 → 새 색 사다리(값만) · 색 블록 안 화자 규칙(05 · 07 의 M)은 ② 와 같은 기준
-    const from = toneLadder(info.K0), to = toneLadder(k), swap = new Map();
-    for (const step of Object.keys(from)) if (!swap.has(from[step].toLowerCase())) swap.set(from[step].toLowerCase(), to[step]);
-    const chunk = css => rulesOf(css).map(r => (SPEAKER_SEL.test(selOf(r)) ? keepSpeaker(r) : renameCv(selOf(r)) + bodyOf(r).replace(HEX6, h => swap.get(h.toLowerCase()) ?? h))).filter(Boolean);
+    // ③ 소품 톤: 옛 색에서 나온 값 → 새 색에서 나온 값(값만 바꿔요 · 색 블록 안 화자 규칙(05 · 07 의 M)은 ② 와 같은 기준)
+    //    바꾸는 값: 톤 사다리 다섯 · 사다리 밖 단계(SIMPLE_CONTRACT.extraSteps — 09 밤 안감) · 바탕별 글자 맞춤 값(q10 레벨 글자) — #rrggbb 와 그림 안 %23rrggbb 둘 다
+    //    + 바뀐 화자 색의 rgb 셋(키프레임 · 그림 안 — 15 요람 띠 번쩍임 · 13 형광 띠)
+    const swap = new Map(), put = (a, b) => { if (a && b && !swap.has(a.toLowerCase())) swap.set(a.toLowerCase(), b.toLowerCase()); };
+    const from = toneLadder(info.K0), to = toneLadder(k);
+    for (const step of Object.keys(from)) put(from[step], to[step]);
+    const seed0 = info.K0 || NEUTRAL_LADDER.c500, seed1 = k || NEUTRAL_LADDER.c500;
+    for (const { s, l } of SIMPLE_CONTRACT.extraSteps) { const [h0, s0, l0] = toHsl(seed0), [h1, s1, l1] = toHsl(seed1); put(fromHsl(h0, s0 * s, l0 * l), fromHsl(h1, s1 * s, l1 * l)); }
+    for (const bg of [...faces.orig, ...faces.alt, '#ffffff']) put(sianFit(seed0, bg), sianFit(seed1, bg));
+    const rgbOf = K0 => h2rgb(K0 || NEUTRAL_LADDER.c500).join(',');
+    const swapRgb = body => changed.reduce((b, X) => (colors0[X] ? b.split(`(${rgbOf(colors0[X])},`).join(`(${rgbOf(colors[X])},`).split(`rgb%28${rgbOf(colors0[X])}%29`).join(`rgb%28${rgbOf(colors[X])}%29`) : b), body);
+    const swapHex = body => body.replace(HEX6, (h) => { const pre = h[0] === '#' ? '#' : '%23', v = swap.get(`#${h.slice(pre.length).toLowerCase()}`); return v ? pre + v.slice(1) : h; });
+    const imageBand = r => /^\{background-image:/.test(bodyOf(r)) && /\.gk-d[A-Z](?![\w-])/.test(selOf(r));
+    const chunk = css => rulesOf(css).map((r) => {
+        if (imageBand(r)) return renameCv(selOf(r)) + swapRgb(bodyOf(r));   // 그림으로 그은 띠(13 형광펜): 색만 바꿔 남겨요(긋는 움직임 그대로)
+        if (SPEAKER_SEL.test(selOf(r))) return keepSpeaker(r);
+        return renameCv(selOf(r)) + swapRgb(swapHex(bodyOf(r)));
+    }).filter(Boolean);
     const spk = [...chunk(info.parts[1] || ''), ...fresh];
     const prop = info.parts.slice(2).flatMap(chunk);
     const css = [info.base_css, spk.join('\n'), prop.join('\n')].filter(Boolean).join(SIMPLE_CONTRACT.blockSep);
@@ -289,9 +308,10 @@ export function markEdits(html) {
     if (at < 0) return text;
     const head = text.slice(0, at + 8), body = text.slice(at + 8);
     const marks = new Map(EDIT_MARKS);
-    const marked = body.replace(/<([a-z][a-z0-9]*)\b([^>]*?)\sclass="([^"]*)"/g, (all, tag, pre, cls) => {
+    const marked = body.replace(/<([a-z][a-z0-9]*)\b([^>]*?)\sclass="([^"]*)"/g, (all, tag, pre, cls, at, whole) => {
         const hit = cls.split(/\s+/).find(c => marks.has(c));
-        return hit ? `<!-- ✎ ${marks.get(hit)} -->${all}` : all;
+        if (!hit || /<!--\s*✎[^>]*-->\s*$/.test(whole.slice(Math.max(0, at - 200), at))) return all;   // 틀이 이미 단 「✎」 주석(q09 영수증 · q10)은 두 번 안 달아요
+        return `<!-- ✎ ${marks.get(hit)} -->${all}`;
     });
     return `${head}\n${MARK_HEAD}${marked.startsWith('\n') ? '' : '\n'}${marked}`;
 }
