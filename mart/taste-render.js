@@ -11,6 +11,7 @@ import { withoutSvgData } from './lib/log-copy/log-copy-template.js';
 import { bareLog } from './lib/log-copy/log-copy-bare.js?v=20261108a';
 import { fitBare } from './lib/log-copy/log-copy-bare-fit.js?v=20261108a';   // 11-07 빼고 나서 글을 덮게 된 떠 있는 장식 걷기(사용자 「컴퓨터가 내려와 글을 덮어 · 이런 것들 없애줘」)
 import { SCREEN } from './taste-parse.js';
+import { gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
 
 export { dateLabel };
 /** 테마 마트 빌드와 같은 화면 글꼴 값(틀 부품 글씨 — 제목 · 알약 · 꼬리) */
@@ -64,7 +65,7 @@ export function tasteHtml(item, model, fields = {}, { names = true, top = false,
     const style = motionStyleFor(body);
     if (/url\(|@import|<\/style[\s\S]*<style/i.test(style)) throw new Error('움직임 <style> 이 이상해요');
     const pretty = prettyLogHtml(raw, { label: item.label || item.name || '', head: style, fields: false });
-    return inkForKkangsa(pretty);
+    return gridOff(item.id, inkForKkangsa(pretty));
 }
 
 /** 11-09 미리보기로만 펼친 상자(data-bl-peek · 닫힌 채 시작하는 반응 글꾸)를 복사 · 내려받기 글에서 다시 닫아요 — 시식 미리보기는 펼친 채 보여요 */
