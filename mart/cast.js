@@ -4,7 +4,7 @@
 //   - 처음엔 고른 캐릭터가 든 묶음만 펴요. 머리에는 그 묶음에서 고른 캐릭터의 색 점 · 이름이 보여서 접어도 알 수 있어요.
 //   - 「채팅 붙여 넣어 대사색 찾기」: 실리태번 화면에서 복사한 채팅을 붙이면 대사 글자색(인라인 color)을 읽어 그 캐릭터를 골라요.
 //   - 밤 · 낮: 틀 바탕.
-import { toneState, setTone, savedCast, CAST_GROUPS, castList, rememberCast, forgetCast, PAPER_COLORS, TEXTURES } from './tone-state.js?v=20261110b';
+import { toneState, setTone, savedCast, CAST_GROUPS, castList, rememberCast, forgetCast, PAPER_COLORS } from './tone-state.js?v=20261110b';
 import { dialogueColors } from './tone-geulkku.js?v=20261110b';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -55,10 +55,10 @@ export function mountCast(box, { say = () => {} } = {}) {
         const picks = toneState.mix ? toneState.picks : [];
         const now = !toneState.on ? { name: '원래 색' } : picks.length >= 2 ? { name: picks.map(p => p.name || p.color).join(' + '), dots: picks.map(p => p.color) } : toneState.k ? { name: toneState.name || toneState.k, dots: [toneState.k] } : { name: '없음', dots: [] };
         const dots = (now.dots || []).map(c => `<i style="background:${esc(c)}" aria-hidden="true"></i>`).join('');
-        const pc = PAPER_COLORS[toneState.paper] || PAPER_COLORS.white, tx = TEXTURES[toneState.texture] || TEXTURES.plain;
+        const pc = PAPER_COLORS[toneState.paper] || PAPER_COLORS.white;
         const sw = id => { const p = PAPER_COLORS[id][toneState.mode === 'light' ? 'light' : 'dark']; return `background:${p[0]};box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)`; };
-        const paperPanel = paperOpen ? `<div class="mart-cast-panel" id="mart-paper-panel"><div class="mart-cast-sub2">종이 색</div><div class="mart-cast-list" role="radiogroup" aria-label="종이 색">${Object.entries(PAPER_COLORS).map(([id, p]) => `<label class="mart-cast-r"><input type="radio" name="bl-paper" value="${id}"${id === toneState.paper ? ' checked' : ''}><i style="${sw(id)}" aria-hidden="true"></i><span>${esc(p.label)}</span></label>`).join('')}</div><div class="mart-cast-sub2">질감</div><div class="mart-cast-list" role="radiogroup" aria-label="질감">${Object.entries(TEXTURES).map(([id, t]) => `<label class="mart-cast-r"><input type="radio" name="bl-texture" value="${id}"${id === toneState.texture ? ' checked' : ''}><span>${esc(t.label)}</span></label>`).join('')}</div></div>` : '';
-        box.innerHTML = `<div class="mart-cast-head"><button type="button" class="mart-cast-toggle" data-toggle aria-expanded="${panel}" aria-controls="mart-cast-panel"><span>캐릭터:</span>${dots}<b>${esc(now.name)}</b><span class="mart-cast-caret" aria-hidden="true">${panel ? '▴' : '▾'}</span></button><button type="button" class="chip mart-cast-mix" data-mix aria-pressed="${toneState.mix}" title="캐릭터를 2~3명 골라 포인트 색을 그라데이션으로 섞어요">혼합</button><button type="button" class="mart-cast-toggle" data-paper aria-expanded="${paperOpen}" aria-controls="mart-paper-panel"><span>바탕:</span><i style="${sw(toneState.paper)}" aria-hidden="true"></i><b>${esc(pc.label)} · ${esc(tx.label)}</b><span class="mart-cast-caret" aria-hidden="true">${paperOpen ? '▴' : '▾'}</span></button><span class="mart-seg mart-cast-mode" role="group" aria-label="밤낮"><button type="button" class="chip" data-mode="dark" aria-pressed="${toneState.mode === 'dark'}">밤</button><button type="button" class="chip" data-mode="light" aria-pressed="${toneState.mode === 'light'}">낮</button></span></div>
+        const paperPanel = paperOpen ? `<div class="mart-cast-panel" id="mart-paper-panel"><div class="mart-cast-list" role="radiogroup" aria-label="종이 색">${Object.entries(PAPER_COLORS).map(([id, p]) => `<label class="mart-cast-r"><input type="radio" name="bl-paper" value="${id}"${id === toneState.paper ? ' checked' : ''}><i style="${sw(id)}" aria-hidden="true"></i><span>${esc(p.label)}</span></label>`).join('')}</div></div>` : '';
+        box.innerHTML = `<div class="mart-cast-head"><button type="button" class="mart-cast-toggle" data-toggle aria-expanded="${panel}" aria-controls="mart-cast-panel"><span>캐릭터:</span>${dots}<b>${esc(now.name)}</b><span class="mart-cast-caret" aria-hidden="true">${panel ? '▴' : '▾'}</span></button><button type="button" class="chip mart-cast-mix" data-mix aria-pressed="${toneState.mix}" title="캐릭터를 2~3명 골라 포인트 색을 그라데이션으로 섞어요">혼합</button><button type="button" class="mart-cast-toggle" data-paper aria-expanded="${paperOpen}" aria-controls="mart-paper-panel"><span>바탕:</span><i style="${sw(toneState.paper)}" aria-hidden="true"></i><b>${esc(pc.label)}</b><span class="mart-cast-caret" aria-hidden="true">${paperOpen ? '▴' : '▾'}</span></button><span class="mart-seg mart-cast-mode" role="group" aria-label="밤낮"><button type="button" class="chip" data-mode="dark" aria-pressed="${toneState.mode === 'dark'}">밤</button><button type="button" class="chip" data-mode="light" aria-pressed="${toneState.mode === 'light'}">낮</button></span></div>
             <div class="mart-cast-panel" id="mart-cast-panel"${panel ? '' : ' hidden'}><div class="mart-cast-groups">${list.map(head).join('')}</div>${opened.map(body).join('')}</div>${paperPanel}`;
     };
     box.addEventListener('click', (e) => {
@@ -72,7 +72,6 @@ export function mountCast(box, { say = () => {} } = {}) {
     });
     box.addEventListener('change', (e) => {
         const pr = e.target.closest('input[name=bl-paper]'); if (pr) { setTone({ paper: pr.value }); draw(); box.querySelector('input[name=bl-paper]:checked')?.focus(); return; }
-        const tr = e.target.closest('input[name=bl-texture]'); if (tr) { setTone({ texture: tr.value }); draw(); box.querySelector('input[name=bl-texture]:checked')?.focus(); return; }
         const cb = e.target.closest('input[type=checkbox][name=bl-cast]');
         if (cb) {   // 혼합: 최대 3명 · 넷째를 고르면 가장 먼저 고른 사람이 빠져요
             let picks = toneState.picks.filter(p => !(same(p.color, cb.value) && p.name === cb.dataset.name));

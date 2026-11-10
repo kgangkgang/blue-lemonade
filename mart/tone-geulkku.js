@@ -27,34 +27,6 @@ export const PAPER_COLORS = Object.freeze({
     apricot: { label: '연살구', light: ['#fff8f3', '#f8ece3'], dark: ['#2c2521', '#221d1a'] },
     kraft: { label: '크라프트', light: ['#f6efe4', '#ece2d2'], dark: ['#2c2720', '#221e19'] },
 });
-/** 11-10 종이 질감 — 사용자 「뒤에 배경 질감 바꿀수있는걸추가하자 그냥 흰종이, 모눈종이, 줄종이, 등등」. 그림 파일 없이 CSS 그라데이션 · 무채 옅은 선 */
-export const TEXTURES = Object.freeze({
-    plain: { label: '민무늬' },
-    grid: { label: '모눈', css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:16px 16px` },
-    lined: { label: '줄 노트', css: L => `background-image:repeating-linear-gradient(transparent 0 25px,${L} 25px 26px)` },
-    dot: { label: '도트', css: L => `background-image:radial-gradient(${L} 1.1px,transparent 1.4px);background-size:14px 14px` },
-    manuscript: { label: '원고지', css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:24px 24px;background-position:-1px -1px` },
-    section: { label: '방안지', css: L => `background-image:linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px),linear-gradient(${L} 1px,transparent 1px),linear-gradient(90deg,${L} 1px,transparent 1px);background-size:40px 40px,40px 40px,8px 8px,8px 8px` },
-});
-const TEXTURE_LINE = { light: 'rgba(30, 32, 48, 0.08)', dark: 'rgba(255, 255, 255, 0.06)' };
-/** 종이 면(틀 면 · 로그 면 색을 칠한 상자)에 질감 클래스를 달고, 맨 앞 <style> 에 규칙을 넣어요(인라인 url 없음) */
-function addTexture(html, t, mode, texture) {
-    const tx = TEXTURES[texture];
-    if (!tx?.css) return html;
-    const cls = `blp-${texture}${mode === 'light' ? '' : '-d'}`;
-    const rule = `.${cls}{${tx.css(TEXTURE_LINE[mode === 'light' ? 'light' : 'dark'])}}`;
-    const surf = new RegExp(`background-color\\s*:\\s*(?:${t.card}|${t.log})(?=[;"]|$)`, 'i');
-    let n = 0;
-    const out = html.replace(/<style>[\s\S]*?<\/style>|<!--[\s\S]*?-->|<([a-zA-Z][a-zA-Z0-9-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/g, (all, tag, attrs) => {
-        if (!tag) return all;
-        const m = attrs.match(/\sstyle="([^"]*)"/);
-        if (!m || !surf.test(m[1]) || /background-image/i.test(m[1])) return all;
-        n++;
-        return /\sclass="/.test(attrs) ? all.replace(/\sclass="/, ` class="${cls} `) : `<${tag} class="${cls}"${attrs}>`;
-    });
-    if (!n) return html;
-    return /<style>/.test(out) ? out.replace(/<style>/, `<style>${rule}`) : `<style>${rule}</style>${out}`;
-}
 const isC = plan => plan === 'C' || plan === 'P';
 const TEXT_TARGET = 4.8;          // 틀에 박힌 글자의 대비 목표(덮임 문턱 4.5 · 규칙 4.6 에 겹친 바탕 차이 여유)
 const NEAR_GREY = 0.035;         // 이보다 채도가 낮으면 무채로 봐요
@@ -338,7 +310,7 @@ function widen(html) {
  * @param {string|null} K 주인공 대사색
  * @param {{ mode?: 'light'|'dark', plan?: 'A'|'B'|'C', width?: boolean, band?: boolean }} [options]
  */
-export function toneHtml(html, roles, K, { mode = 'dark', plan = 'B', width = true, band = true, paper = 'white', texture = 'plain' } = {}) {
+export function toneHtml(html, roles, K, { mode = 'dark', plan = 'B', width = true, band = true, paper = 'white' } = {}) {
     const src = String(html ?? '');
     const map = toneMap(roles, K, { mode, plan, html: src, paper });
     const ctx = [map.t.card, map.t.log];
@@ -349,7 +321,7 @@ export function toneHtml(html, roles, K, { mode = 'dark', plan = 'B', width = tr
     out = out.replace(/\s(fill|stroke|stop-color)="(#[0-9a-fA-F]{3,8})"/g, (all, a, v) => ` ${a}="${mapColor(map, v)}"`);
     if (band) out = bandify(map, out);
     if (width) out = widen(out);
-    return addTexture(out, map.t, mode, texture);
+    return out;
 }
 
 /**
@@ -393,11 +365,11 @@ export const mixCss = colors => `linear-gradient(90deg, ${mixStops(colors).map(s
  * 대사색 2~3개로 다시 칠하기 — 첫 색으로 칠한 뒤(toneHtml) 틀 바탕 물 · 강조 막대 · 대사 띠를 색들의 그라데이션으로 바꿔요.
  *  글자색은 그대로라 대비는 단색과 같아요(바탕 물은 10% 라 본문 · 이름 대비 4.6 을 넘는지 끝색마다 다시 봐요).
  */
-export function toneMixHtml(html, roles, Ks, { mode = 'dark', plan = 'B', paper = 'white', texture = 'plain' } = {}) {
+export function toneMixHtml(html, roles, Ks, { mode = 'dark', plan = 'B', paper = 'white' } = {}) {
     const ks = (Ks || []).map(speakerColor).filter(Boolean).slice(0, 3);
-    if (ks.length < 2) return toneHtml(html, roles, ks[0] || null, { mode, plan, paper, texture });
+    if (ks.length < 2) return toneHtml(html, roles, ks[0] || null, { mode, plan, paper });
     const maps = ks.map(k => toneMap(roles, k, { mode, plan, html, paper }));
-    let out = toneHtml(html, roles, ks[0], { mode, plan, paper, texture });
+    let out = toneHtml(html, roles, ks[0], { mode, plan, paper });
     const t = maps[0].t;
     // 바탕(무채 면)은 그대로 — 사용자 「포인트 자리에 그라데이션」. C(물든 종이)일 때만 종이도 끝색마다의 종이색으로
     if (isC(plan)) {
