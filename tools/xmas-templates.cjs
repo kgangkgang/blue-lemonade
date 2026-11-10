@@ -27,11 +27,11 @@ const img = (n, eager) => `<!-- 견본 --><img src="${srcOf(n)}" width="${isLand
 const imgK = (k, eager) => `<!-- 견본 --><img src="${IMG}${k}.svg" width="${k[0] === 'l' ? 1216 : 832}" height="${k[0] === 'l' ? 832 : 1216}" alt="업로드 이미지" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
 
 // 11-10 밤 소리 카드 확정 조합(사용자 「오 5번 좋다」 · 「딱 저 검은 선에만」 · 「오 점 세개 잘라내기 되는구나」 — 인수인계-커뮤니티-글꾸 0-4절 「재생 막대는 거의 다 꾸밀 수 있어요」):
-//   이름표 + 막대 한 줄 · 막대 26px · 알약 바탕 투명 · 진행 선만 3배 두껍게 + 선에만 곡 색(단색 필터) · 스피커 가운데 정렬 지정 · 점 세 개(⋮)는 잘라 내기 · 단추 색은 그대로.
+//   이름표 + 막대 한 줄 · 막대 26px · 알약 바탕 투명 · 진행 선은 굵기 그대로 · 선에만 곡 색(단색 필터 — 폰에서 손잡이까지 늘어나 굵게 하기는 뺐어요) · 스피커 가운데 정렬 지정 · 점 세 개(⋮)는 잘라 내기 · 단추 색은 그대로.
 //   깡통은 기본이 어두운 판이라 밝은 틀은 인라인 color-scheme:light 를 꼭 적어요 · 어두운 틀은 dark. zoom · 색 입히기 filter · mix-blend-mode 는 audio 에 쓰지 않아요.
 const AUDIO_INLINE = dark => `height:26px;block-size:26px;width:calc(100% + 30px);max-width:none;margin:0 -30px 0 0!important;color-scheme:${dark ? 'dark' : 'light'}`;
 const audio = (k, dark = false) => `<div class="sg-au"><!-- 견본 mp3 --><audio src="${AUD}${k}.mp3" controls="" preload="metadata" class="uploaded-audio" style="${AUDIO_INLINE(dark)}"></audio></div>`;
-/** 진행 선 색 필터 — 실측 두 점(민트 #3ccfbf → hue-rotate 118 · brightness .92 / 분홍 #ff5fa2 → 285 · 1.05)에 맞춘 계산: 세피아 바탕 색상(약 53°)에서 그 색의 색상까지 돌리고, 밝기는 색의 명도(HSL L)에 비례. 무채에 가까운 색은 필터 없이 굵기만 */
+/** 진행 선 색 필터 — 실측 두 점(민트 #3ccfbf → hue-rotate 118 · brightness .92 / 분홍 #ff5fa2 → 285 · 1.05)에 맞춘 계산: 세피아 바탕 색상(약 53°)에서 그 색의 색상까지 돌리고, 밝기는 색의 명도(HSL L)에 비례. 무채에 가까운 색은 필터 없이 */
 const lineFilter = (hex) => {
   const m = /^#?([0-9a-f]{6})/i.exec(String(hex || '')); if (!m) return '';
   const [r, g, b] = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, L = (mx + mn) / 2;
@@ -67,8 +67,7 @@ ${P} audio::-webkit-media-controls-panel{padding:0!important;align-items:center!
 ${P} audio::-webkit-media-controls-play-button,${P} audio::-webkit-media-controls-mute-button{min-width:24px!important;width:24px!important;height:24px!important;flex:0 0 24px!important;margin:0!important;padding:0!important;background-size:20px 20px!important;background-position:center!important}
 ${P} audio::-webkit-media-controls-mute-button{align-self:center!important;position:relative!important;top:0!important;vertical-align:middle!important}
 ${P} audio::-webkit-media-controls-volume-control-container{align-self:center!important;margin:0!important;padding:0!important}
-${P} audio::-webkit-media-controls-current-time-display,${P} audio::-webkit-media-controls-time-remaining-display{font-size:12px!important}
-${P} audio::-webkit-media-controls-timeline{transform:scaleY(3)!important}`;
+${P} audio::-webkit-media-controls-current-time-display,${P} audio::-webkit-media-controls-time-remaining-display{font-size:12px!important}`;
 const baseCss = (P, ink, extra) => `
 ${P}{${ink}display:block!important;box-sizing:border-box;container-type:inline-size;margin:14px auto!important;padding:0!important;border:0!important;background:transparent!important;font-family:${SANS};line-height:1.55;text-align:left;-webkit-text-size-adjust:100%;${extra}}
 ${P},${P} *{color:var(--ink)!important;-webkit-text-fill-color:var(--ink)!important;box-sizing:border-box}
