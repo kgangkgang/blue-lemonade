@@ -34,10 +34,10 @@ const two = i => String(i).padStart(2, '0');
 const img = (k, eager) => `<!-- 견본 --><img src="${IMG}${k}.svg" width="${isLand(k) ? 1216 : 832}" height="${isLand(k) ? 832 : 1216}" alt="업로드 이미지" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
 
 // 11-10 밤 소리 카드 확정 조합(사용자 「오 5번 좋다」 · 「딱 저 검은 선에만」 · 「오 점 세개 잘라내기 되는구나」 — 인수인계-커뮤니티-글꾸 0-4절 「재생 막대는 거의 다 꾸밀 수 있어요」):
-//   이름표 + 막대 한 줄 · 막대 26px · 알약 바탕 투명 · 선에만 곡 색(단색 필터) · 선 3배 굵게는 PC(pointer:fine · 560px 이상)에서만 — 폰은 손잡이까지 늘어나서 가늘게 둬요 · 스피커 가운데 정렬 지정 · 점 세 개(⋮)는 잘라 내기 · 단추 색은 그대로.
+//   이름표 + 막대 한 줄 · 막대 26px · 알약 바탕 투명 · 선에만 곡 색(단색 필터) · 선 굵기는 PC · 폰 모두 1배(11-10 밤 사용자 「PC 그대로 1배가 나을듯 나머진 다 너무 이상해진다 재생했을때」 — PC 전용 scaleY 규칙 뺌) · 스피커 가운데 정렬 지정 · 점 세 개(⋮)는 브라우저 기본 그대로 보여요(사용자 「그냥 점 세개 보이게해」 — 잘라 내던 overflow:clip 칸 · 오른쪽 -30px 뺌) · 단추 색은 그대로.
 //   깡통은 기본이 어두운 판이라 밝은 틀은 인라인 color-scheme:light 를 꼭 적어요 · 어두운 틀은 dark. zoom · 색 입히기 filter · mix-blend-mode 는 audio 에 쓰지 않아요.
-const AUDIO_INLINE = dark => `height:26px;block-size:26px;width:calc(100% + 30px);max-width:none;margin:0 -30px 0 0!important;color-scheme:${dark ? 'dark' : 'light'}`;
-const audio = (k, dark = false) => `<div class="sg-au"><!-- 견본 mp3 --><audio src="${AUD}${k}.mp3" controls="" preload="metadata" class="uploaded-audio" style="${AUDIO_INLINE(dark)}"></audio></div>`;
+const AUDIO_INLINE = dark => `height:26px;block-size:26px;flex:1 1 auto;min-width:0;width:auto;max-width:100%;margin:0!important;color-scheme:${dark ? 'dark' : 'light'}`;
+const audio = (k, dark = false) => `<!-- 견본 mp3 --><audio src="${AUD}${k}.mp3" controls="" preload="metadata" class="uploaded-audio" style="${AUDIO_INLINE(dark)}"></audio>`;
 /** 진행 선 색 필터 — 실측 두 점(민트 #3ccfbf → hue-rotate 118 · brightness .92 / 분홍 #ff5fa2 → 285 · 1.05)에 맞춘 계산: 세피아 바탕 색상(약 53°)에서 그 색의 색상까지 돌리고, 밝기는 색의 명도(HSL L)에 비례. 무채에 가까운 색은 필터 없이 */
 const lineFilter = (hex) => {
   const m = /^#?([0-9a-f]{6})/i.exec(String(hex || '')); if (!m) return '';
@@ -66,16 +66,13 @@ ${P} .${ph} > :not(img):not(.image-number-wrapper):not(:has(img)){display:none!i
 ${P} .image-number-badge{display:none!important}`;
 const audioCss = (P, sel) => `
 ${P} ${sel}{display:flex!important;align-items:center;gap:6px;min-width:0}
-${P} .sg-au{display:block!important;flex:1 1 auto;min-width:0;overflow:clip}
-${P} .sg-au audio{display:block;background:transparent;outline:none}
+${P} ${sel} > audio{display:block;flex:1 1 auto;min-width:0;max-width:100%;background:transparent;outline:none}
 ${P} audio::-webkit-media-controls-panel,${P} audio::-webkit-media-controls-enclosure{background:transparent!important;background-color:transparent!important}
 ${P} audio::-webkit-media-controls-panel{padding:0!important;align-items:center!important}
 ${P} audio::-webkit-media-controls-play-button,${P} audio::-webkit-media-controls-mute-button{min-width:24px!important;width:24px!important;height:24px!important;flex:0 0 24px!important;margin:0!important;padding:0!important;background-size:20px 20px!important;background-position:center!important}
 ${P} audio::-webkit-media-controls-mute-button{align-self:center!important;position:relative!important;top:0!important;vertical-align:middle!important}
 ${P} audio::-webkit-media-controls-volume-control-container{align-self:center!important;margin:0!important;padding:0!important}
-${P} audio::-webkit-media-controls-current-time-display,${P} audio::-webkit-media-controls-time-remaining-display{font-size:12px!important}
-/* 진행 선 굵게는 마우스 기기(PC)에서만 — 터치 기기는 손잡이까지 늘어나요 */
-@media (pointer:fine) and (min-width:560px){${P} audio::-webkit-media-controls-timeline{transform:scaleY(3)!important}}`;
+${P} audio::-webkit-media-controls-current-time-display,${P} audio::-webkit-media-controls-time-remaining-display{font-size:12px!important}`;
 const baseCss = (P, ink, extra, divBg = 'background-color') => `
 ${P}{${ink}display:block!important;box-sizing:border-box;container-type:inline-size;margin:14px auto!important;padding:0!important;border:0!important;background:transparent!important;font-family:${SANS};line-height:1.55;text-align:left;-webkit-text-size-adjust:100%;${extra}}
 ${P},${P} *{color:var(--ink)!important;-webkit-text-fill-color:var(--ink)!important;box-sizing:border-box}

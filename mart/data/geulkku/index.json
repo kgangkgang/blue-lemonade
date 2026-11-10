@@ -976,9 +976,9 @@
    "bytes": 194385
   },
   "sg-song": {
-   "file": "sg-song.9cc0457f.json",
+   "file": "sg-song.9e5aad78.json",
    "n": 3,
-   "bytes": 79732
+   "bytes": 78511
   },
   "sp-scene": {
    "file": "sp-scene.cea4ea40.json",
@@ -986,9 +986,9 @@
    "bytes": 172918
   },
   "sp-xmas": {
-   "file": "sp-xmas.22d95515.json",
+   "file": "sp-xmas.45dacd69.json",
    "n": 9,
-   "bytes": 247751
+   "bytes": 247344
   },
   "sg-kara": {
    "file": "sg-kara.3ffd9817.json",
@@ -1273,7 +1273,7 @@
   {"id":"c-xmas-sp-6","name":"소원 부적","emoji":"📜","category":"christmas","style":"심플","desc":"한지 위 노란 새해 부적 — 붉은 겹테 · 所願成就 큰 글씨, 소원(로그) 칸 · 붉은 「福」 도장을 누르면 빙글","c":"sp-xmas","bytes":3060,"fx":"e","bg":"#efe6cf","ink":"#3a2208","accent":"#9e1b1b","icon":null},
   {"id":"xmas-gallery","name":"크리스마스 화보","emoji":"🎄","category":"christmas","style":"심플","desc":"밤하늘에 눈이 흐르고 꼬마전구가 깜박이는 화보 — 금빛 액자에 한 장씩(두 장 · 가로 장), 위 「이전 · 다음」과 「03 / 12」 · 사진 번호 · 코멘트 칸 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"bytes":69592,"fx":"e","bg":"#0e1a33","ink":"#f4f1ea","accent":"#c8323a"},
   {"id":"xmas-recap","name":"연말 결산 앨범","emoji":"📔","category":"christmas","style":"심플","desc":"종이 앨범 — 큰 연도 · 올해의 한 장 · 달마다 사진 묶음(01 JAN …)과 메모 · 맨 아래 「사진 NN장 · 달 NN개」 합계가 저절로 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"bytes":14863,"fx":"e","bg":"#efe9dd","ink":"#24201b","accent":"#a8272d"},
-  {"id":"xmas-carol","name":"캐롤 플레이리스트","emoji":"🎶","category":"christmas","style":"심플","desc":"전나무 밤 · 사탕 줄무늬 띠 · 도는 레코드 — 한 줄에 한 곡(동그란 그림 · ♪ 번호 · 제목 · 캐릭터 칩 · mp3), 「그림 ▾」를 누르면 그 곡 그림이 펼쳐져요 · 곡마다 색 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"audio":true,"bytes":20898,"fx":"e","bg":"#0f2a1f","ink":"#f4efe2","accent":"#e8c766"},
+  {"id":"xmas-carol","name":"캐롤 플레이리스트","emoji":"🎶","category":"christmas","style":"심플","desc":"전나무 밤 · 사탕 줄무늬 띠 · 도는 레코드 — 한 줄에 한 곡(동그란 그림 · ♪ 번호 · 제목 · 캐릭터 칩 · mp3), 「그림 ▾」를 누르면 그 곡 그림이 펼쳐져요 · 곡마다 색 · 사진 · mp3 주소와 글을 바꿔 깡싸 글 HTML 칸에 붙여요 · 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 번호는 저절로","c":"sp-xmas","copyOnly":true,"photo":true,"audio":true,"bytes":20504,"fx":"e","bg":"#0f2a1f","ink":"#f4efe2","accent":"#e8c766"},
   {"id":"s-app-sp-1","name":"단톡방","emoji":"💬","category":"app","style":"심플","desc":"앱 · SNS 글꾸 · 꼬리 「모두 읽었어요」","c":"sp-app","bytes":6453,"fx":"me","bg":"#f1f5f9","ink":"#191919","accent":"#3a3a3a","icon":"icon/cd7959ae26.svg"},
   {"id":"s-app-sp-2","name":"인스타 스토리","emoji":"📸","category":"app","style":"심플","desc":"앱 · SNS 글꾸 · 꼬리 「답장은 대화로 보내져요」","c":"sp-app","bytes":7156,"fx":"me","bg":"#ffffff","ink":"#262626","accent":"#c13584","icon":"icon/18d771f29b.svg"},
   {"id":"s-app-sp-3","name":"X 타래","emoji":"🧵","category":"app","style":"심플","desc":"앱 · SNS 글꾸 · 꼬리 「답글 3개 더 보기」","c":"sp-app","bytes":8112,"fx":"me","bg":"#ffffff","ink":"#0f1419","accent":"#0f1419","icon":"icon/ebccd93c47.svg"},
@@ -1393,9 +1393,9 @@
   {"id":"hwabo-book","name":"책장 넘김","emoji":"📖","category":"hwabo","style":"심플","desc":"잡지처럼 한 쪽씩 넘겨요 · 위 · 아래 「이전 · 다음」과 「03 / 05」 · 표지 · SNS 카드 · 폴라로이드 · 필름 묶음 · 사진 · 이름 · 코멘트를 바꿔 깡싸 글 HTML 칸에 붙여요 · 사진 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 사진 번호는 저절로","c":"hb-hwabo","copyOnly":true,"photo":true,"bytes":65789,"fx":"e","bg":"#f3efe7","ink":"#1b1a1f","accent":"#b3242c"},
   {"id":"hwabo-story","name":"스토리 뷰어","emoji":"📱","category":"hwabo","style":"심플","desc":"SNS 스토리처럼 한 장씩 · 장 왼쪽 · 오른쪽을 누르거나 아래 단추로 넘겨요 · 위 진행 막대 · 하이라이트 동그라미 · 말풍선 답장 · 사진 · 이름 · 코멘트를 바꿔 깡싸 글 HTML 칸에 붙여요 · 사진 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 사진 번호는 저절로","c":"hb-hwabo","copyOnly":true,"photo":true,"bytes":101673,"fx":"e","bg":"#0a0d16","ink":"#eef1f8","accent":"#3f5fb5"},
   {"id":"hwabo-table","name":"라이트 테이블","emoji":"🎞️","category":"hwabo","style":"심플","desc":"밀착 인화지 위 프레임 · 누르면 크게(다시 누르면 작게) · 롤 머리를 누르면 한 줄 필름 띠로 접혀요 · 코멘트 사진은 인화 + 말풍선 · 사진 · 이름 · 코멘트를 바꿔 깡싸 글 HTML 칸에 붙여요 · 사진 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 사진 번호는 저절로","c":"hb-hwabo","copyOnly":true,"photo":true,"bytes":21918,"fx":"e","bg":"#f8f6f0","ink":"#24201b","accent":"#9a3b12"},
-  {"id":"song-album","name":"다크 앨범","emoji":"💿","category":"song","style":"심플","desc":"판 하나로 이어진 포스터 — 곡마다 판 끝까지 찬 메인 그림 위에 제목 · 춤추는 막대(누르면 하트) · 그림을 흐리게 깐 유리 mp3 카드 · 아래 그림 띠(폰은 손가락 · PC 는 휠 · 방향키) · 그림 · mp3 주소와 제목 · 이름을 바꿔 깡싸 글 HTML 칸에 붙여요 · 곡 · 그림 · mp3 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 트랙 · 그림 번호는 저절로 · 곡마다 색(t1~t6) · 곡 사이 코멘트 칸","c":"sg-song","copyOnly":true,"photo":true,"bytes":31064,"fx":"e","bg":"#0b0b0f","ink":"#f3f3f5","accent":"#c4364a"},
-  {"id":"song-single","name":"밝은 싱글","emoji":"🎼","category":"song","style":"심플","desc":"종이빛 싱글 재킷 · 살짝 기운 액자 그림 · 세리프 제목 · 트랙 줄(ver. A · B …) · 아래 그림 격자 · 그림 · mp3 주소와 제목 · 이름을 바꿔 깡싸 글 HTML 칸에 붙여요 · 곡 · 그림 · mp3 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 트랙 · 그림 번호는 저절로 · 곡마다 색(t1~t6) · 곡 사이 코멘트 칸","c":"sg-song","copyOnly":true,"photo":true,"bytes":23301,"fx":"e","bg":"#f7f2ea","ink":"#1d1a17","accent":"#b3242c"},
-  {"id":"song-playlist","name":"플레이리스트","emoji":"🎧","category":"song","style":"심플","desc":"음악 앱 목록처럼 한 줄에 한 곡 · 작은 그림 · 번호 · 제목 · mp3 · 줄 끝 화살표를 누르면 그 곡 그림이 펼쳐져요 · 그림 · mp3 주소와 제목 · 이름을 바꿔 깡싸 글 HTML 칸에 붙여요 · 곡 · 그림 · mp3 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 트랙 · 그림 번호는 저절로 · 곡마다 색(t1~t6) · 곡 사이 코멘트 칸","c":"sg-song","copyOnly":true,"photo":true,"bytes":22522,"fx":"e","bg":"#121318","ink":"#f1f2f5","accent":"#3f6fd8"},
+  {"id":"song-album","name":"다크 앨범","emoji":"💿","category":"song","style":"심플","desc":"판 하나로 이어진 포스터 — 곡마다 판 끝까지 찬 메인 그림 위에 제목 · 춤추는 막대(누르면 하트) · 그림을 흐리게 깐 유리 mp3 카드 · 아래 그림 띠(폰은 손가락 · PC 는 휠 · 방향키) · 그림 · mp3 주소와 제목 · 이름을 바꿔 깡싸 글 HTML 칸에 붙여요 · 곡 · 그림 · mp3 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 트랙 · 그림 번호는 저절로 · 곡마다 색(t1~t6) · 곡 사이 코멘트 칸","c":"sg-song","copyOnly":true,"photo":true,"bytes":30670,"fx":"e","bg":"#0b0b0f","ink":"#f3f3f5","accent":"#c4364a"},
+  {"id":"song-single","name":"밝은 싱글","emoji":"🎼","category":"song","style":"심플","desc":"종이빛 싱글 재킷 · 살짝 기운 액자 그림 · 세리프 제목 · 트랙 줄(ver. A · B …) · 아래 그림 격자 · 그림 · mp3 주소와 제목 · 이름을 바꿔 깡싸 글 HTML 칸에 붙여요 · 곡 · 그림 · mp3 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 트랙 · 그림 번호는 저절로 · 곡마다 색(t1~t6) · 곡 사이 코멘트 칸","c":"sg-song","copyOnly":true,"photo":true,"bytes":22907,"fx":"e","bg":"#f7f2ea","ink":"#1d1a17","accent":"#b3242c"},
+  {"id":"song-playlist","name":"플레이리스트","emoji":"🎧","category":"song","style":"심플","desc":"음악 앱 목록처럼 한 줄에 한 곡 · 작은 그림 · 번호 · 제목 · mp3 · 줄 끝 화살표를 누르면 그 곡 그림이 펼쳐져요 · 그림 · mp3 주소와 제목 · 이름을 바꿔 깡싸 글 HTML 칸에 붙여요 · 곡 · 그림 · mp3 수가 달라도 블록을 복사 · 지우기만 하면 돼요 · 트랙 · 그림 번호는 저절로 · 곡마다 색(t1~t6) · 곡 사이 코멘트 칸","c":"sg-song","copyOnly":true,"photo":true,"bytes":22128,"fx":"e","bg":"#121318","ink":"#f1f2f5","accent":"#3f6fd8"},
   {"id":"kara-ign","name":"비 오는 밤 노래방","emoji":"🌧️","category":"kara","style":"심플","desc":"비 오는 밤의 방 · 폰 알림 가사창 · 달 · 떨어지는 빗방울 · 플레이어를 누르면 가사 · 레코드판이 같이 움직여요(스크립트 없음) · 「🎤 내 곡으로 만들기」에서 mp3 주소 · 제목 · 이름 · 색 · [분:초] 가사를 넣으면 복사할 HTML 이 바로 나와요 · 여러 곡이면 곡 사이에 코멘트 칸 · 깡싸 정화기 대응(인라인 글자색 · 단색 바탕 · id/for/name 없음 · 진짜 img · audio)","c":"sg-kara","copyOnly":true,"photo":true,"audio":true,"bytes":29402,"fx":"me","bg":"#08101f","ink":"#eef3ff","accent":"#86a8f0"},
   {"id":"kara-mes","name":"하늘 팝 노래방","emoji":"🪙","category":"kara","style":"심플","desc":"파란 하늘 팝 · 두꺼운 남색 테두리 · 흔들리는 코인 · 색종이 · 플레이어를 누르면 가사 · 레코드판이 같이 움직여요(스크립트 없음) · 「🎤 내 곡으로 만들기」에서 mp3 주소 · 제목 · 이름 · 색 · [분:초] 가사를 넣으면 복사할 HTML 이 바로 나와요 · 여러 곡이면 곡 사이에 코멘트 칸 · 깡싸 정화기 대응(인라인 글자색 · 단색 바탕 · id/for/name 없음 · 진짜 img · audio)","c":"sg-kara","copyOnly":true,"photo":true,"audio":true,"bytes":25499,"fx":"me","bg":"#36b2ee","ink":"#0b2f57","accent":"#ffd400"},
   {"id":"kara-tale","name":"어두운 동화 노래방","emoji":"🍎","category":"kara","style":"심플","desc":"어두운 동화책 · 붉은 유리 빛 · 금테 · 세리프 가사 · 플레이어를 누르면 가사 · 레코드판이 같이 움직여요(스크립트 없음) · 「🎤 내 곡으로 만들기」에서 mp3 주소 · 제목 · 이름 · 색 · [분:초] 가사를 넣으면 복사할 HTML 이 바로 나와요 · 여러 곡이면 곡 사이에 코멘트 칸 · 깡싸 정화기 대응(인라인 글자색 · 단색 바탕 · id/for/name 없음 · 진짜 img · audio)","c":"sg-kara","copyOnly":true,"photo":true,"audio":true,"bytes":22450,"fx":"me","bg":"#0d0507","ink":"#fff1f2","accent":"#e0b25a"},
