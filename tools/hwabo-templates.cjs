@@ -103,7 +103,7 @@ ${g.map(x => (x.k === 'post' ? G.post(x.ns, x.x) : G[x.k](x.ns))).join('\n')}
 <div class="hb-post hb-cvpost ${cc(1)}"><div class="hb-bar">${heart}</div>${bubble('down')}</div>
 </div></div>
 <!-- ▲ 표지 -->`;
-  const btn = (n, inner) => `<label class="hb-t hb-t${n}"${inner ? '' : ` for="hbt1-k${n}"`}>${inner ? `<input type="checkbox" class="hb-k ${K}${n}" id="hbt1-k${n}" aria-label="${n}쪽 넘기기">` : ''}<span class="hb-pv">‹ 이전</span><span class="hb-nx">다음 ›</span></label>`;
+  const btn = (n, inner) => `<label class="hb-t hb-t${n}"><input type="checkbox" class="hb-k ${K}${n}" aria-label="${n}쪽 넘기기"><span class="hb-pv">‹ 이전</span><span class="hb-nx">다음 ›</span></label>`;
   const bar = inner => `${Array.from({ length: MAX - 1 }, (_, k) => btn(k + 1, inner)).join('')}<span class="hb-btn hb-off hb-o0">‹ 이전</span><span class="hb-btn hb-off hb-oN">다음 ›</span><span class="hb-ct hb-ctt"><b class="hb-cur"></b> / <span class="hb-tot"></span></span>`;
   const PG = '.hb-book > .hb-pg';
   const state = Array.from({ length: MAX }, (_, k) => {
@@ -141,7 +141,8 @@ ${P} .hb-post .hb-ph{background:#ece8e0!important}
 ${P} .hb-bar{display:block!important;padding:10px 14px 0!important}
 ${P} .hb-act{display:flex!important;align-items:center;gap:14px;height:24px}
 ${P} .hb-ic{display:inline-grid;place-items:center;font:400 22px/1 ${SANS}}
-${P} .hb-hrt{--ink:#e0313c;font-size:23px}
+${P} .hb-hrt{--ink:#c81e2c;font-size:23px}
+${P} .hb-cover .hb-hrt{--ink:#ff5a66}
 ${P} .hb-cm{width:20px;height:20px;border:2px solid #1b1a1f;border-radius:50% 50% 50% 4px}
 ${P} .hb-sh{font:600 19px/1 ${SANS}}
 ${P} .hb-sv{margin-left:auto;width:15px;height:19px;border:2px solid #1b1a1f;border-bottom:0;clip-path:polygon(0 0,100% 0,100% 100%,50% 72%,0 100%)}
@@ -172,14 +173,14 @@ ${P} .hb-feed .hb-ph{background:#ddd7cc!important}
 ${P} .hb-single{display:grid!important;grid-template-columns:100%;gap:10px}
 ${P} .hb-type{display:flex!important;align-items:baseline;justify-content:space-between;gap:10px;border-bottom:3px solid var(--c)!important;padding-bottom:6px!important}
 ${P} .hb-big-name{font:italic 400 clamp(42px,13cqw,96px)/.95 ${SERIF};letter-spacing:-.03em}
-${P} .hb-cover{--ink:#efe8dc;--mute:#9b948a;background:radial-gradient(120% 60% at 50% 0%,#2a1215 0%,#0e0d10 60%)!important}
+${P} .hb-cover{--ink:#efe8dc;--mute:#9b948a;background-color:#0e0d10!important;background-image:radial-gradient(120% 60% at 50% 0%,#2a1215 0%,#0e0d10 60%)!important}
 ${P} .hb-cover .hb-in{gap:16px}
 ${P} .hb-cover .hb-mast{border-bottom-color:#efe8dc55!important}
 ${P} .hb-logo{font:400 clamp(46px,17cqw,128px)/.86 ${SERIF};letter-spacing:.02em;text-align:center;margin:4px 0 -2px!important}
 ${P} .hb-cv{display:block!important;width:100%;margin:0 auto!important;padding:6px!important;border:1px solid #e6394666!important}
 ${P} .hb-cv .hb-ph{background:#0a090b!important}
 ${P} .hb-cvline{display:flex!important;justify-content:space-between;align-items:baseline;width:100%;margin:-4px auto 0!important}
-${P} .hb-cvno{font:italic 400 30px/1 ${SERIF};--ink:#e63946}
+${P} .hb-cvno{font:italic 400 30px/1 ${SERIF};--ink:#ff6672}
 ${P} .hb-cvname{font:italic 400 22px/1 ${SERIF}}
 ${P} .hb-cvpost{background:#1a181c!important;box-shadow:0 0 0 1px #ffffff14;--ink:#efe8dc}
 ${P} .hb-cvpost .hb-cm,${P} .hb-cvpost .hb-sv{border-color:#efe8dc}
@@ -225,7 +226,6 @@ ${css}
 ${cover}
 ${pagesHtml}
 </div>
-<div class="hb-ctl hb-ctl-b">${bar(false)}</div>
 </div>
 `;
   return { html: finish(html, '#1b1a1f'), css, pages: pages.length + 1 };
@@ -273,7 +273,7 @@ function story(N) {
   const W = 'var(--w)';
   // 좌우 탭 칸(장 위 왼쪽 · 오른쪽 22%) — 모든 장이 같이 써요. 칸 i = 체크박스 k(i): i번째 장에선 「다음」(오른쪽), i+1번째 장에선 「이전」(왼쪽)
   const zones = `<div class="s-zones">${Array.from({ length: MAX - 1 }, (_, k) => `<label for="hbt2-k${k + 1}" class="s-z s-zt${k + 1}" aria-label="넘기기"><span class="s-arw"></span></label>`).join('')}</div>`;
-  const ctl = `<div class="s-ctl">${Array.from({ length: MAX - 1 }, (_, k) => `<label class="s-t s-t${k + 1}"><input type="checkbox" class="s-k ${K}${k + 1}" id="hbt2-k${k + 1}" aria-label="${k + 1}번째 장 넘기기"><span class="s-pv">‹ 이전</span><span class="s-nx">다음 ›</span></label>`).join('')}<span class="s-t s-dis s-o0">‹ 이전</span><span class="s-t s-dis s-oN">다음 ›</span><span class="s-cct"><b class="hb-cur"></b> / <span class="hb-tot"></span></span></div>`;
+  const ctl = `<div class="s-ctl">${Array.from({ length: MAX - 1 }, (_, k) => `<label class="s-t s-t${k + 1}"><input type="checkbox" class="s-k ${K}${k + 1}" aria-label="${k + 1}번째 장 넘기기"><span class="s-pv">‹ 이전</span><span class="s-nx">다음 ›</span></label>`).join('')}<span class="s-t s-dis s-o0">‹ 이전</span><span class="s-t s-dis s-oN">다음 ›</span><span class="s-cct"><b class="hb-cur"></b> / <span class="hb-tot"></span></span></div>`;
   const state = Array.from({ length: MAX }, (_, k) => {
     const i = k + 1, s = SN(P, K, i), r = [`${s} ${ST}:nth-child(${i}){visibility:visible;animation:hb2in .45s cubic-bezier(.3,.1,.2,1) both}`, `${s} .hb-cur::before{content:"${two(i)}"}`, `${s} .s-pf{width:calc(100% * ${i} / var(--n))}`];
     if (i < MAX) r.push(`${s}:not(${LAST(ST, i)}) .s-t${i}{display:inline-flex;grid-column:3;grid-row:1;justify-self:end;background:#eef1f8!important;--ink:#0a0d16}`, `${s} .s-t${i} .s-pv{display:none}`, `${s}:not(${LAST(ST, i)}) .s-zt${i}{display:grid;grid-column:3;justify-items:end}`, `${s} .s-zt${i} .s-arw{transform:rotate(180deg)}`);
@@ -292,7 +292,9 @@ ${P} .s-me span{display:grid;place-items:center;width:100%;height:100%;border-ra
 ${P} .s-nm{display:flex!important;flex-direction:column;gap:3px;min-width:0}
 ${P} .s-nm b{font:700 17px/1.2 ${SANS};letter-spacing:.01em}
 ${P} .s-nm small{font:500 11px/1.3 ${MONO};letter-spacing:.12em;--ink:var(--mute)}
-${P} .s-hls{display:flex!important;gap:12px;margin-top:16px!important;overflow-x:auto;padding:2px 2px 4px!important;scrollbar-width:none;-ms-overflow-style:none}
+${P} .s-hls{display:flex!important;gap:12px;margin-top:16px!important;min-width:0;max-width:100%;padding:2px 2px 4px!important;scrollbar-width:none;-ms-overflow-style:none}
+@media (hover:none),(pointer:coarse),(max-width:559.98px){${P} .s-hls{overflow-x:auto}}
+@media (hover:hover) and (pointer:fine) and (min-width:560px){${P} .s-hls{flex-wrap:wrap}}
 ${P} .s-hls::-webkit-scrollbar{display:none;width:0;height:0}
 ${P} .s-hl{flex:none;display:flex;flex-direction:column;align-items:center;gap:5px;width:58px}
 ${P} .s-hlr{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;padding:2.5px;background:conic-gradient(var(--c),#ffffff,var(--c))!important}
@@ -300,7 +302,7 @@ ${P} .s-hlr span{display:grid;place-items:center;width:100%;height:100%;border-r
 ${P} .s-hl small{font:500 10.5px/1.2 ${SANS};--ink:#c4cbda;white-space:nowrap}
 ${P} .s-track{counter-reset:hbn;display:grid!important;grid-template-columns:100%;padding:12px 0 14px!important;background:#0a0d16!important}
 ${P} .s-track > *{grid-area:1/1!important;min-width:0}
-${P} .s-stages{display:grid!important;grid-template-columns:100%}
+${P} .s-stages{display:grid!important;grid-template-columns:100%;overflow-x:clip}
 ${P} .s-stage{grid-area:1/1!important;min-width:0;display:grid!important;grid-template-columns:100%;justify-items:center;visibility:hidden}
 ${P} .s-sl{width:${W};aspect-ratio:9/16;display:grid!important;grid-template-columns:100%;grid-template-rows:auto auto minmax(0,1fr) auto;border-radius:16px;overflow:hidden;font-size:calc(${W} * .036);background:#121624!important;background:radial-gradient(130% 70% at 15% 0%,color-mix(in srgb,var(--c) 34%,#121624) 0%,#0d1019 62%)!important;box-shadow:0 0 0 1px #ffffff12}
 ${P} .s-sl > *{grid-column:1;min-width:0;min-height:0}
@@ -357,7 +359,7 @@ ${P} .s-iss{display:flex!important;gap:.8em;font:600 .66em/1 ${MONO};letter-spac
 ${P} .s-cvph{margin-top:.6em;width:70%!important;box-shadow:0 0 0 1px #9fb6ef66,0 14px 40px #000a}
 ${P} .s-cvname{font:italic 400 1.35em/1 ${SERIF};margin-top:.3em!important}
 ${P} .s-bub{display:flex!important;flex-direction:column;align-items:flex-end}
-${P} .s-say{display:block!important;max-width:88%;padding:.6em .9em .65em!important;border-radius:1.2em 1.2em .35em 1.2em;background-color:#4a58b3!important;background-image:linear-gradient(135deg,#3f5fae,#6a4fb8)!important;box-shadow:0 6px 18px #0008;word-break:keep-all;overflow-wrap:anywhere}
+${P} .s-say{display:block!important;max-width:88%;padding:.6em .9em .65em!important;border-radius:1.2em 1.2em .35em 1.2em;background-color:#4a58b3!important;background-image:linear-gradient(135deg,#3f5fae,#6a4fb8)!important;box-shadow:0 3px 8px #0007;word-break:keep-all;overflow-wrap:anywhere}
 ${P} .s-txt{font:600 1em/1.45 ${SANS}}
 ${P} .s-bar{display:flex!important;align-items:center;gap:.7em}
 ${P} .s-hint{flex:1}
@@ -379,7 +381,6 @@ ${css}
 <div class="s-stages">
 ${slides}
 </div>
-${zones}
 </div>
 ${ctl}
 </div>
@@ -433,7 +434,7 @@ ${P} .l-c{display:none}
 ${P} .l-roll:has(.l-fold:checked) .l-o{display:none}
 ${P} .l-roll:has(.l-fold:checked) .l-c{display:inline}
 ${P} .l-sheet{display:block!important;padding:8px 8px 20px!important;border-radius:3px;background-color:#1a1511!important;background-image:repeating-linear-gradient(90deg,#f8f6f0 0 8px,transparent 8px 18px)!important;background-size:100% 7px!important;background-position:0 calc(100% - 7px)!important;background-repeat:no-repeat!important;box-shadow:0 8px 22px #2a20162e}
-${P} .l-edge{display:flex!important;justify-content:space-between;gap:8px;padding:2px 2px 8px!important;font:700 9.5px/1 ${MONO};letter-spacing:.16em;--ink:var(--amber);white-space:nowrap;overflow:hidden}
+${P} .l-edge{display:flex!important;justify-content:space-between;gap:8px;padding:2px 2px 8px!important;background-color:#1a1511!important;font:700 9.5px/1 ${MONO};letter-spacing:.16em;--ink:var(--amber);white-space:nowrap;overflow:hidden}
 ${P} .l-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-flow:row dense;gap:8px 6px;align-items:start}
 ${P} .l-fr{display:grid!important;grid-template-columns:100%;grid-template-rows:auto auto;min-width:0;transition:transform .25s}
 ${P} .l-fr > .l-ph,${P} .l-fr > .l-k{grid-area:1/1}
@@ -446,6 +447,7 @@ ${P} .l-fr:has(.l-k:checked){grid-column:1/-1;justify-self:center;width:min(100%
 ${P} .l-frl:has(.l-k:checked){width:min(100%,700px)}
 ${P} .l-fr:has(.l-k:checked) > .l-k{grid-area:1/1/3/2;cursor:zoom-out}
 ${P} .l-fr:has(.l-k:checked) .l-cap{display:flex!important;align-items:baseline;gap:7px;padding:9px 2px 11px!important}
+${P} .l-cap{background-color:#fffefb!important}
 ${P} .l-cap b{font:400 17px/1.2 ${HAND}}
 ${P} .l-cap i{flex:1}
 ${P} .l-dot{width:8px;height:8px;border-radius:50%;background:var(--c)!important}
@@ -461,7 +463,9 @@ ${P} .l-bub{display:flex!important;flex-direction:column;align-items:flex-start;
 ${P} .l-tail{display:block;width:16px;height:9px;margin-left:26px;background:#fffefb!important;clip-path:polygon(30% 0,100% 100%,0 100%)}
 ${P} .l-say{display:block!important;width:100%;padding:11px 15px 12px!important;border-radius:18px;background:#fffefb!important;box-shadow:0 1px 0 #0000000f,0 8px 22px #3a2f2224;word-break:keep-all;overflow-wrap:anywhere}
 ${P} .l-txt{font:500 15.5px/1.6 ${SANS}}
-${P} .l-roll:has(.l-fold:checked) .l-grid{display:flex!important;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+${P} .l-roll:has(.l-fold:checked) .l-grid{display:flex!important;gap:6px;scrollbar-width:none;-ms-overflow-style:none}
+@media (hover:none),(pointer:coarse),(max-width:559.98px){${P} .l-roll:has(.l-fold:checked) .l-grid{overflow-x:auto}}
+@media (hover:hover) and (pointer:fine) and (min-width:560px){${P} .l-roll:has(.l-fold:checked) .l-grid{flex-wrap:wrap}}
 ${P} .l-grid::-webkit-scrollbar{display:none;width:0;height:0}
 ${P} .l-roll:has(.l-fold:checked) .l-print{display:block!important}
 ${P} .l-roll:has(.l-fold:checked) .l-fr,${P} .l-roll:has(.l-fold:checked) .l-print{flex:0 0 74px;width:74px;margin:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;transform:none}

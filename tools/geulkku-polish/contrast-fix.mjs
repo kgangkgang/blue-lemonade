@@ -27,10 +27,8 @@ function openTags(html) {
     return out;
 }
 function recolor(open, color) {
-    if (/\sstyle="/i.test(open)) {
-        const had = /(\sstyle="(?:[^"]*;)?\s*)color\s*:[^;"]*/i.test(open);
-        return had ? open.replace(/(\sstyle="(?:[^"]*?;)?\s*)color\s*:[^;"]*/i, `$1color:${color}`) : open.replace(/\sstyle="/i, ` style="color:${color};`);
-    }
+    // style 안의 color 선언을 전부 바꿔요(같은 요소에 color 가 두 번 적힌 틀이 있어요 — 뒤엣것이 이겨요). background-color 등은 건드리지 않아요.
+    if (/\sstyle="/i.test(open)) return open.replace(/(\sstyle=")([^"]*)(")/i, (m, a, st, z) => { let hit = false; const out = st.replace(/(^|;)(\s*)color\s*:[^;]*/gi, (x, p, sp) => { hit = true; return `${p}${sp}color:${color}`; }); return a + (hit ? out : `color:${color};${st}`) + z; });
     return open.replace(/(\/?)>$/, ` style="color:${color}"$1>`);
 }
 let fixedItems = 0, fixedEls = 0, paletteHits = 0; const skipped = []; const onImage = {};

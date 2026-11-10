@@ -101,11 +101,11 @@ function gallery(N = 12) {
   const css = fixH(`${baseCss(P, '--ink:#f4f1ea;--mute:#b9c3d8;--gold:#e9c46a;--red:#c8323a;', 'max-width:820px;color-scheme:dark')}
 ${colorsCss(P)}
 ${P} .x-box{display:block!important;border-radius:22px;overflow:hidden;clip-path:inset(0 round 22px);background:#0e1a33!important;background-image:radial-gradient(circle,#ffffffd9 0 1.2px,transparent 1.8px),radial-gradient(circle,#ffffff8c 0 1px,transparent 1.6px),linear-gradient(180deg,#0b1430,#15284d 60%,#1d3560)!important;background-size:46px 46px,29px 29px,100% 100%!important;background-position:0 0,13px 17px,0 0!important;animation:xm1snow 26s linear infinite}
-${P} .x-lights{display:flex!important;justify-content:space-around;align-items:flex-start;height:30px;padding:0 6px!important;border-top:2px solid #2f4a35!important;margin:10px 10px 0!important}
-${P} .x-b{display:block;width:10px;height:15px;margin-top:2px;border-radius:50% 50% 46% 46%/40% 40% 60% 60%;background:#ff5a5f;box-shadow:0 0 10px 2px #ff5a5f99;animation:xm1tw 1.8s ease-in-out infinite alternate}
-${P} .x-b:nth-child(4n+2){background:#ffd166;box-shadow:0 0 10px 2px #ffd16699;animation-delay:.45s}
-${P} .x-b:nth-child(4n+3){background:#4cc9f0;box-shadow:0 0 10px 2px #4cc9f099;animation-delay:.9s}
-${P} .x-b:nth-child(4n){background:#7ae582;box-shadow:0 0 10px 2px #7ae58299;animation-delay:1.35s}
+${P} .x-lights{display:flex!important;justify-content:space-around;align-items:flex-start;height:30px;padding:0 6px!important;border-top:2px solid #2f4a35!important;margin:22px 10px 0!important}
+${P} .x-b{display:block;width:10px;height:15px;margin-top:2px;border-radius:50% 50% 46% 46%/40% 40% 60% 60%;background:#ff5a5f;box-shadow:0 0 8px 1px #ff5a5f99;animation:xm1tw 1.8s ease-in-out infinite alternate}
+${P} .x-b:nth-child(4n+2){background:#ffd166;box-shadow:0 0 8px 1px #ffd16699;animation-delay:.45s}
+${P} .x-b:nth-child(4n+3){background:#4cc9f0;box-shadow:0 0 8px 1px #4cc9f099;animation-delay:.9s}
+${P} .x-b:nth-child(4n){background:#7ae582;box-shadow:0 0 8px 1px #7ae58299;animation-delay:1.35s}
 ${P} .x-head{display:flex!important;flex-direction:column;align-items:center;gap:4px;padding:6px 18px 14px!important;text-align:center}
 ${P} .x-ti{font:400 clamp(30px,9cqw,52px)/1.1 ${DIDOT};letter-spacing:.01em}
 /* 넘김 단추(체크박스를 품은 label) */
@@ -120,7 +120,7 @@ ${P} .x-tot::before{content:"--"}
 /* 장 */
 ${P} .x-book{counter-reset:xn;display:grid!important;grid-template-columns:100%;padding:14px 12px 18px!important}
 ${P} .x-sl{grid-area:1/1!important;min-width:0;display:flex!important;flex-direction:column;align-items:center;gap:10px;visibility:hidden;max-height:0;overflow:hidden;clip-path:inset(0)}
-${P} .x-fr{display:grid!important;grid-template-columns:100%;width:min(100%,420px);padding:10px!important;border-radius:6px;background:#f7f1e3!important;box-shadow:0 0 0 2px var(--gold),0 0 0 6px #f7f1e3,0 0 0 7px #b8913c,0 16px 34px -10px #000}
+${P} .x-fr{display:grid!important;grid-template-columns:100%;width:min(100%,420px);padding:10px!important;border-radius:6px;background:#f7f1e3!important;box-shadow:0 0 0 2px var(--gold),0 0 0 6px #f7f1e3,0 0 0 7px #b8913c,0 10px 14px -8px #000}
 ${P} .x-fr:has(.land){width:min(100%,640px)}
 ${P} .x-duo{grid-template-columns:1fr 1fr;gap:8px;width:min(100%,640px)}
 ${photoCss(P, 'x-ph', '#e9e2d2', 'xn')}
@@ -256,7 +256,7 @@ ${P} .k-stripe{display:block!important;height:12px;background:repeating-linear-g
 ${P} .k-head{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 14px;padding:18px 16px 14px!important}
 ${P} .k-ht{display:flex!important;flex-direction:column;gap:4px;min-width:0}
 ${P} .k-pt{font:800 clamp(24px,7cqw,38px)/1.15 ${SANS};letter-spacing:-.01em;word-break:keep-all}
-${P} .k-vinyl{display:block;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle,#c8323a 0 9px,#fbf4e6 9.5px 11px,#c8323a 11.5px 17px,transparent 17.5px),repeating-radial-gradient(circle,#111 0 2px,#262626 2px 3px)!important;box-shadow:0 0 0 2px #e8c76699,0 8px 18px -6px #000;animation:xm3spin 6s linear infinite}
+${P} .k-vinyl{display:block;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle,#c8323a 0 9px,#fbf4e6 9.5px 11px,#c8323a 11.5px 17px,transparent 17.5px),repeating-radial-gradient(circle,#111 0 2px,#262626 2px 3px)!important;box-shadow:0 0 0 2px #e8c76699;animation:xm3spin 6s linear infinite}
 ${P} .k-list{display:flex!important;flex-direction:column;counter-reset:ktrk;margin:0 10px!important;border-top:1px solid var(--line)!important}
 ${P} .k-memo{display:block!important;min-height:2.2em;margin:0 6px!important;padding:6px 4px!important;font:400 14.5px/1.7 ${SANS};white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;--ink:#dfe7df}
 /* 곡 줄 */

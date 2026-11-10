@@ -43,6 +43,19 @@ const lum = c => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : 
 const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
 /** 색 hex 를 바탕 bg 위에서 대비 min 이상이 되게 흰/검정 쪽으로 명도만 당겨요 */
 export const fit = (h, bg, min = 4.5) => { const B = rgb(bg), to = lum(B) > 0.35 ? [0, 0, 0] : [255, 255, 255]; let c = rgb(h); for (let t = 0; t <= 1 && ratio(c, B) < min; t += 0.03) c = rgb(h).map((v, i) => v + (to[i] - v) * t); return hex(c); };
+// 11-10: 커뮤니티 사이트는 바탕 대비 4.5 미만인 글자색을 덮어써요(실제 글에서 4.41 은 덮이고 4.79 는 남음). 그래서 테마 글자색을 놓이는 자리의 바탕색에 맞춰 4.6 이상으로 당겨 둬요.
+//   머리(곡 번호 · 제목 · 부제) = HEAD_BG · 가사 카드(이름표 · 단추 · 안내 · 흐린 가사 줄) = NP_BG · 캐릭터 칩 = CHIP_BG · 플레이어 글자 = TR.bg
+const SAFE = 4.6;
+const HEAD_BG = { ign: '#0c1529', mes: '#1672bd', tale: '#150709', meme: '#000000', tom: '#fffaf2', snow: '#ffffff' };
+const NP_BG = { ign: '#0b1426', mes: '#ffffff', tale: '#1a0a0e', meme: '#000000', tom: '#fffaf2', snow: '#ffffff' };
+const PS_BG = { ign: '#16223b', mes: '#e6f5ff', tale: '#2a0d13', meme: '#1a1a1a', tom: '#ffe3d3', snow: '#e9f2fc' };
+const CHIP_BG = { ign: '#121d33', mes: '#0b2f57', tale: '#2a0d13', meme: '#151515', tom: '#ffffff', snow: '#ffffff' };
+for (const th of Object.keys(TH)) {
+  for (const k of ['title', 'orig', 'no']) TH[th][k] = fit(TH[th][k], HEAD_BG[th], SAFE);
+  for (const k of ['sub', 'meta', 'btn', 'nphC']) TH[th][k] = fit(TH[th][k], NP_BG[th], SAFE);
+  TH[th].btn = fit(TH[th].btn, PS_BG[th], SAFE);   // 일시정지 단추는 자기 동그란 바탕 위에 놓여요
+  TR[th].txt = fit(TR[th].txt, TR[th].bg, SAFE);
+}
 const xmasAt = t => { const k = Math.min(XMAS.length - 2, Math.floor(t * (XMAS.length - 1))), f = t * (XMAS.length - 1) - k, a = rgb(XMAS[k]), b = rgb(XMAS[k + 1]); return hex(a.map((v, i) => v + (b[i] - v) * f)); };
 export const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const sec = t => (Math.round(t * 1000) / 1000).toFixed(3).replace(/\.?0+$/, '') + 's';
@@ -89,9 +102,9 @@ const MOTIF = {
   snow: '<span class="kb-wnd" aria-hidden="true"></span>',
   ign: '<span class="kb-moon" aria-hidden="true"></span>',
   mes: '<span class="kb-coin" aria-hidden="true"><i></i></span>',
-  tale: '<span class="kb-apple" aria-hidden="true" style="color:#e0213a">🍎</span>',
+  tale: '<span class="kb-apple" aria-hidden="true" style="color:#ff6b7d">🍎</span>',
   meme: '<span class="kb-rec" style="color:#ff3b3b">● REC</span>',
-  tom: '<span class="kb-emo" aria-hidden="true" style="color:#d93a26">🍅</span><span class="kb-emo kb-emo2" aria-hidden="true" style="color:#3f9b3a">🦎</span>',
+  tom: '<span class="kb-emo" aria-hidden="true" style="color:#b83220">🍅</span><span class="kb-emo kb-emo2" aria-hidden="true" style="color:#2f7a2b">🦎</span>',
 };
 const fxCss = (() => {
   const rnd = seeded(11), out = {};
@@ -159,7 +172,7 @@ const COMMON_CSS = `
 .kr .kr-l{display:flex;align-items:center;justify-content:center;text-align:center;padding:0 14px;opacity:.38}
 .kr .kr-tx{display:block;max-width:100%;line-height:1.22;word-break:keep-all;overflow-wrap:anywhere}
 .kr .kr-ko{font-size:13.5px;font-weight:700}
-.kr .kr-jp{font-size:10.5px;font-weight:500;margin-left:4px;letter-spacing:.02em;opacity:.75}
+.kr .kr-jp{font-size:10.5px;font-weight:500;margin-left:4px;letter-spacing:.02em}
 .kr .kr-intro .kr-jp{margin-left:0;letter-spacing:.08em}
 .kr .kr-bar{overflow:hidden!important;overflow-x:clip!important;clip-path:inset(0 round 9px)!important}
 .kr .kr-bar i{display:block;transform:scaleX(0);transform-origin:0 50%}
@@ -173,8 +186,8 @@ const COMMON_CSS = `
 .kr .kr-btn:has(input:focus-visible){outline:2px solid currentColor;outline-offset:2px}
 .kr .kr-ps{width:22px;height:22px;block-size:22px;border-radius:50%;font-size:8px;letter-spacing:-.05em;flex:none}
 .kr .kr-fb{display:flex;justify-content:flex-end;margin-top:3px}
-.kr .kr-go{font-size:10px;font-weight:600;opacity:.75;padding:1px 2px}
-.kr .kr-go:has(input:checked){opacity:1}
+.kr .kr-go{font-size:10px;font-weight:500;padding:1px 2px}
+.kr .kr-go:has(input:checked){font-weight:800}
 .kr .kr-pl{position:relative;display:block;height:40px;block-size:40px;border-radius:99px;margin:0 0 7px;outline:none}
 .kr .kr-pl audio{position:absolute;left:0;top:0;z-index:3;display:block;width:100%;height:40px;block-size:40px;margin:0;opacity:.01;cursor:pointer;color-scheme:dark}
 .kr .kr-pl:has(audio:focus-visible){box-shadow:0 0 0 2px currentColor}
@@ -248,7 +261,7 @@ ${fxCss.ign}`,
 .kr .kb-mes{background-color:#36b2ee;background-image:radial-gradient(30% 9% at 18% 12%,#ffffff 0 60%,rgba(255,255,255,0) 61%),radial-gradient(22% 7% at 30% 10%,#ffffff 0 60%,rgba(255,255,255,0) 61%),radial-gradient(34% 10% at 84% 30%,rgba(255,255,255,.9) 0 60%,rgba(255,255,255,0) 61%),radial-gradient(40% 12% at 12% 72%,rgba(255,255,255,.85) 0 60%,rgba(255,255,255,0) 61%),linear-gradient(180deg,#76d4fb 0%,#2a9ee0 100%)}
 .kr .kb-mes .kb-cv{border-radius:16px;padding:7px;background-color:#ffffff;transform:rotate(-2deg);box-shadow:0 0 0 3px #0b2f57,6px 8px 0 3px #0b2f57}
 .kr .kb-mes .kb-cv img{border-radius:10px}
-.kr .kb-mes .kb-head{background-color:#1f8fd6;border:3px solid #0b2f57;box-shadow:5px 5px 0 #0b2f57}
+.kr .kb-mes .kb-head{background-color:#1672bd;border:3px solid #0b2f57;box-shadow:5px 5px 0 #0b2f57}
 .kr .kb-mes .kb-ti{font-size:31px;font-weight:900;font-style:italic;letter-spacing:.01em;text-shadow:3px 3px 0 #0b2f57,-1px -1px 0 #0b2f57,1px -1px 0 #0b2f57,-1px 1px 0 #0b2f57}
 .kr .kb-mes .kb-no{text-shadow:1px 1px 0 #0b2f57}
 .kr .kb-mes .kb-chip{background-color:#0b2f57;box-shadow:none}
@@ -421,7 +434,7 @@ function cardOf(S, i, no) {
 .kr.${s} .kr-bar i{background-image:linear-gradient(90deg,${a0},${a1})}
 .kr.${s} .kb-eq i{background-color:${fit(a0, EQ_BG[S.th] || '#101010', 3)}}
 `;
-  const cA = fit(a0, HL[S.th]), cB = fit(a1, HL[S.th]);
+  const cA = fit(fit(a0, HL[S.th], SAFE), NP_BG[S.th], SAFE), cB = fit(fit(a1, HL[S.th], SAFE), NP_BG[S.th], SAFE);
   const lineStyle = S.who.length > 1 ? `color:${cA};background-image:linear-gradient(90deg,${cA},${cB});-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent` : `color:${cA}`;
   const rows = L.map((l, k) => {
     const st = k ? l.s : (L[0].s > 2.5 ? L[0].s : 0), end = k + 1 < N ? L[k + 1].s : DUR;   // 전주가 2.5초 넘으면 첫 줄은 그때까지 흐리게(짧으면 처음부터 밝게)
@@ -429,11 +442,11 @@ function cardOf(S, i, no) {
   }).join('');
   const names = S.who.map(w => w.name).filter(Boolean).join(' & ');
   const intro = `<div class="kr-l kr-intro"><div class="kr-tx"><span class="kr-jp" style="color:${T.sub}">♪ ${esc(S.title || '제목')}${names ? ` — ${esc(names)}` : ''}</span></div></div>`;
-  const chips = S.who.filter(w => w.name).map(w => S.th === 'snow' ? `<span class="kb-chip" style="color:${fit(w.color, '#ffffff')};box-shadow:inset 0 -3px 0 ${w.color},inset 0 0 0 1px #dfe9f6"><i style="background-color:${w.color}"></i>${esc(w.name)}</span>` : `<span class="kb-chip" style="color:${w.color}"><i style="background-color:${w.color}"></i>${esc(w.name)}</span>`).join('');
+  const chips = S.who.filter(w => w.name).map(w => S.th === 'snow' ? `<span class="kb-chip" style="color:${fit(w.color, '#ffffff', SAFE)};box-shadow:inset 0 -3px 0 ${w.color},inset 0 0 0 1px #dfe9f6"><i style="background-color:${w.color}"></i>${esc(w.name)}</span>` : `<span class="kb-chip" style="color:${fit(w.color, CHIP_BG[S.th], SAFE)}"><i style="background-color:${w.color}"></i>${esc(w.name)}</span>`).join('');
   const ps = `<label class="kr-btn kr-ps" title="가사 일시정지" style="color:${T.btn}"><input type="checkbox" aria-label="가사 일시정지"><span class="kr-off" style="color:${T.btn}">❚❚</span><span class="kr-on" style="color:${T.btn}">▶</span></label>`;
   const top = `<div class="kb-nph"><span class="kb-lab" style="color:${T.nphC}">${T.nph}</span><span class="kb-eq" aria-hidden="true"><i class="kr-an"></i><i class="kr-an"></i><i class="kr-an"></i><i class="kr-an"></i></span>${ps}</div>`;
   const go = `<label class="kr-btn kr-go" style="color:${T.meta}"><input type="checkbox"><span class="kr-off" style="color:${T.meta}">가사가 안 움직이면 ▸</span><span class="kr-on" style="color:${T.meta}">가사 진행 중</span></label>`;
-  const title = S.th === 'snow' ? (() => { const cs = [...(S.title || '제목')].filter(ch => ch !== ' '); let n = 0; return [...(S.title || '제목')].map(ch => ch === ' ' ? ' ' : `<span class="kb-sc" style="color:${xmasAt(cs.length > 1 ? n++ / (cs.length - 1) : 0)}">${esc(ch)}</span>`).join(''); })() : esc(S.title || '제목');
+  const title = S.th === 'snow' ? (() => { const cs = [...(S.title || '제목')].filter(ch => ch !== ' '); let n = 0; return [...(S.title || '제목')].map(ch => ch === ' ' ? ' ' : `<span class="kb-sc" style="color:${fit(xmasAt(cs.length > 1 ? n++ / (cs.length - 1) : 0), HEAD_BG.snow, SAFE)}">${esc(ch)}</span>`).join(''); })() : esc(S.title || '제목');
   const orient = S.cover ? (S.cover.w && S.cover.h ? (S.cover.w > S.cover.h ? 'land' : S.cover.w < S.cover.h ? 'port' : 'sq') : 'sq') : 'nocv';
   const cover = S.cover ? `<div class="kb-cv"><img src="${esc(S.cover.src)}"${S.cover.w && S.cover.h ? ` width="${S.cover.w}" height="${S.cover.h}"` : ''} alt="업로드 이미지" loading="${i === 0 ? 'eager' : 'lazy'}" decoding="async"></div>` : '';
   const html = `<div class="kr kt-${S.th} ${s}">__STYLE__
@@ -460,7 +473,9 @@ export function buildPost(songs, opts = {}) {
   const used = [...new Set(S.map(x => x.th))];
   const css = `${COMMON_CSS}${used.map(winCss).join('\n')}\n${parts.map(p => p.css).join('')}${used.map(th => THEME_CSS[th]).join('\n')}${TAIL_CSS}\n`;
   const gap = opts.gaps === false ? '\n' : '\n<p><br></p>\n';
-  const html = parts.map((p, i) => p.html.replace('__STYLE__', i === 0 ? `<style>${css}</style>` : '')).join(gap) + '\n';
+  // 11-10: 사이트는 대비 낮은 글자의 color 만 인라인으로 덮어요. -webkit-text-fill-color 를 같은 색으로 같이 적어 두면 덮여도 화면에는 디자인 색이 그대로 그려져요(실제 글에서 확인).
+  const keepInk = h => h.replace(/style="color:(#[0-9a-fA-F]{6})("|;)(?![^"]*-webkit-text-fill-color)/g, (m, c, end) => `style="color:${c};-webkit-text-fill-color:${c}${end}`);
+  const html = keepInk(parts.map((p, i) => p.html.replace('__STYLE__', i === 0 ? `<style>${css}</style>` : '')).join(gap)) + '\n';
   const warn = S.flatMap((x, i) => x.warn.map(w => `${start + i}번 곡: ${w}`));
   if (S.some(x => !x.mp3)) warn.push('mp3 주소가 빈 곡이 있어요 — 자리표 __MP3__ 를 올린 mp3 주소로 바꿔요');
   return { html, warn, songs: S.map(x => ({ th: x.th, lines: x.L.length, dur: x.DUR })) };
