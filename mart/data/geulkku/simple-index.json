@@ -1,6 +1,11 @@
 {
- "count": 8,
+ "count": 28,
  "categories": [
+  {
+   "id": "simple-open",
+   "label": "눌러서 열어요",
+   "group": "concept"
+  },
   {
    "id": "simple-tap",
    "label": "누르면 바뀌어요",
@@ -10,23 +15,48 @@
    "id": "simple-sound",
    "label": "소리 카드",
    "group": "concept"
+  },
+  {
+   "id": "simple-still",
+   "label": "가만히 보기",
+   "group": "concept"
   }
  ],
  "chunks": {
   "sp-simple": {
-   "file": "sp-simple.c5501222.json",
-   "n": 8,
-   "bytes": 94207
+   "file": "sp-simple.8f6b0572.json",
+   "n": 28,
+   "bytes": 339604
   }
  },
  "items": [
-  {"id":"simple-k1","name":"낫표","emoji":"💬","category":"simple-tap","style":"심플","desc":"제목 줄을 누르면 가운데 붙어 있던 「 」가 모서리로 벌어지며 글이 드러나요 · 다시 누르면 닫혀요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":6686,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k1","name":"낫표","emoji":"💬","category":"simple-open","style":"심플","desc":"제목 줄을 누르면 가운데 붙어 있던 「 」가 모서리로 벌어지며 글이 드러나요 · 다시 누르면 닫혀요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":6686,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k2","name":"견출지","emoji":"🏷️","category":"simple-sound","style":"심플","desc":"제목이 견출지 한 장 — 누르면 오른쪽 아래부터 스티커처럼 뜯기고, 점선 자리를 누르면 다시 붙어요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":10232,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k3","name":"바인더","emoji":"🗂️","category":"simple-tap","style":"심플","desc":"바인더 등 · 금속 고리 셋 · 여백 줄 — 오른쪽 아래 「1 / 2」를 누르면 종이가 옆으로 밀리며 다음 장","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":8315,"fx":"e","bg":"#f8f9fa","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k4","name":"줄자","emoji":"📏","category":"simple-tap","style":"심플","desc":"위에 0~30cm 자 · 제목 끝 커서 — 자 위에서 휠(폰은 옆으로 밀기) · 세모 줄을 누르면 첫 줄 들여쓰기 켬/끔","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":15456,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k5","name":"티백","emoji":"🍵","category":"simple-tap","style":"심플","desc":"옆에서 본 찻잔 · 흔들리는 꼬리표 · 김 — 찻잔을 누르면 캐릭터 색 찻물이 차오르고 숨은 한 줄이 나와요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":14867,"fx":"e","bg":"#fbfaf7","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k6","name":"음성 메모","emoji":"🎙️","category":"simple-sound","style":"심플","desc":"말소리처럼 오르내리는 음파 막대 · 흐르는 녹음 시간 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":14241,"fx":"e","bg":"#25272b","ink":"#e1e1e5","accent":"#0075d3"},
   {"id":"simple-k7","name":"성냥","emoji":"🔥","category":"simple-tap","style":"심플","desc":"성냥 한 개비 — 누르면 불씨가 「탁」 붙고 테두리 · 가로줄이 캐릭터 색으로, 지문 글자가 또렷해져요 · 다시 누르면 연기 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":11735,"fx":"e","bg":"#1f2124","ink":"#e1e1e5","accent":"#e90061"},
-  {"id":"simple-k8","name":"블라인드","emoji":"🪟","category":"simple-sound","style":"심플","desc":"제목 · 블라인드 · 당김줄을 누르면 살이 위로 모이고 대화가 펼쳐져요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":10461,"fx":"e","bg":"#13233b","ink":"#e4e9f0","accent":"#0075d3"}
+  {"id":"simple-k8","name":"블라인드","emoji":"🪟","category":"simple-open","style":"심플","desc":"제목 · 블라인드 · 당김줄을 누르면 살이 위로 모이고 대화가 펼쳐져요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":10461,"fx":"e","bg":"#13233b","ink":"#e4e9f0","accent":"#0075d3"},
+  {"id":"simple-k09","name":"지퍼","emoji":"🤐","category":"simple-open","style":"심플","desc":"지퍼 띠를 누르면 슬라이더가 걸렸다 주르륵 내려가며 이가 V 로 벌어지고 아래 글이 따라 드러나요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":18591,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k10","name":"모래시계","emoji":"⏳","category":"simple-open","style":"심플","desc":"모래시계를 누르면 휙 뒤집혀 모래가 떨어지고, 본문 칸이 열리며 글자가 천천히 또렷해져요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":16123,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k11","name":"실 전화","emoji":"📞","category":"simple-sound","style":"심플","desc":"종이컵 둘을 잇는 늘어진 실 — 누르면 실이 팽팽해지며 떨리고 흐리던 글이 또렷해져요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":11661,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k12","name":"돋보기","emoji":"🔍","category":"simple-tap","style":"심플","desc":"돋보기를 누르면 글 쪽으로 기울며 글자가 크게 보여요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":9876,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
+  {"id":"simple-k13","name":"형광펜","emoji":"🖍️","category":"simple-tap","style":"심플","desc":"형광펜을 누르면 뚜껑이 톡 빠지고 대사 띠가 첫 줄부터 차례로 그어져요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":10134,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k14","name":"쥘부채","emoji":"🪭","category":"simple-open","style":"심플","desc":"제목 줄을 누르면 부채살이 촤락 벌어지고, 지그재그로 접힌 종이가 고르게 펴져 글 칸이 돼요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":16020,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k15","name":"뉴턴의 요람","emoji":"⚪","category":"simple-sound","style":"심플","desc":"요람을 누르면 공이 탁탁 주고받고, 공이 칠 때마다 그 화자의 대사 띠가 톡 짙어져요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":13225,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k16","name":"지우개","emoji":"🧽","category":"simple-tap","style":"심플","desc":"지우개를 누르면 내려와 쓱쓱 문지르고, 지문이 차례로 옅어져 대사만 남아요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":7840,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061"},
+  {"id":"simple-k17","name":"바람개비","emoji":"🎐","category":"simple-sound","style":"심플","desc":"늘 천천히 도는 바람개비 — 누르면 후 불어 빠르게 돌다 잦아들어요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":9994,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k18","name":"토스터","emoji":"🍞","category":"simple-open","style":"심플","desc":"레버를 누르면 눈금이 틱틱 돌고 빵이 탁 튀어 오르며 글이 같이 튀어나와요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":14565,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-q01","name":"여름 바다","emoji":"🏖️","category":"simple-still","style":"심플","desc":"물결 위에 떠 있는 비치볼 — 누르고 있는 동안 볼이 살짝 눌려요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":9686,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-q02","name":"흐림","emoji":"☁️","category":"simple-sound","style":"심플","desc":"구름을 누르면 구름이 밀려나고 해와 햇살이 드러나요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":12042,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-q03","name":"새해 첫날","emoji":"🌅","category":"simple-tap","style":"심플","desc":"해돋이를 누르면 해가 떠오르고 햇살 일곱 줄이 퍼져요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":8771,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061"},
+  {"id":"simple-q04","name":"새벽","emoji":"🌌","category":"simple-tap","style":"심플","desc":"가로등을 누르면 깜빡이다 켜지며 빛기둥이 내려와요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":8431,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-q05","name":"메신저","emoji":"💭","category":"simple-sound","style":"심플","desc":"입력 중 점 셋이 뛰는 말풍선 — 누르면 보낸 말풍선과 안 읽음 「1」이 떠요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":12827,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
+  {"id":"simple-q06","name":"편지 봉투","emoji":"✉️","category":"simple-open","style":"심플","desc":"봉투를 누르면 하트 스티커가 떨어지고 뚜껑이 젖혀지며 편지지가 올라와 글이 펼쳐져요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":11371,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061"},
+  {"id":"simple-q07","name":"호박","emoji":"🎃","category":"simple-tap","style":"심플","desc":"호박을 누르면 별 창과 골 틈으로 불빛이 켜지고 일렁여요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":10209,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
+  {"id":"simple-q08","name":"라면","emoji":"🍜","category":"simple-tap","style":"심플","desc":"김이 오르는 냄비 — 누르면 젓가락이 면발을 들어 올려요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":12662,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061"},
+  {"id":"simple-q09","name":"카페 영수증","emoji":"🧾","category":"simple-tap","style":"심플","desc":"출력기를 누르면 흰 영수증이 다 밀려 나와요 — 가게 이름 · 품목 · 합계 줄을 바꿔 써요(종이는 캐릭터 색을 안 따라요)","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":12171,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-q10","name":"RPG 스탯","emoji":"🎮","category":"simple-sound","style":"심플","desc":"HP · MP · EXP 게이지 — 누르면 EXP 가 가득 차 레벨이 오르고 HP · MP 가 회복돼요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":14144,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"}
  ]
 }

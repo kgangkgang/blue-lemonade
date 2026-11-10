@@ -24,49 +24,55 @@ const { AUD } = createRequire(import.meta.url)('./song-templates.cjs');
 const sf = await import(pathToFileURL(path.join(ROOT, 'mart', 'simple-frames.js')).href);
 const OUT = path.join(DIR, sf.SIMPLE_INDEX);
 const KEY = 'sp-simple';
-// 분류(새 틀이 스물일곱 개뿐이라 동작으로 셋만) — 소리 카드가 있으면 「소리 카드」, details 누름이 있으면 「누르면 바뀌어요」, 둘 다 없으면 「가만히 보기」
+// 분류(새 틀이 스물여덟 개뿐이라 동작으로 넷만):
+//   「눌러서 열어요」 = 닫힌 채 시작해 눌러야 글이 나오는 틀(DEFS 의 open) · 「소리 카드」 = 소리 카드가 든 틀 · 「누르면 바뀌어요」 = 그 밖에 누름이 있는 틀 · 「가만히 보기」 = 누름이 없는 틀
 export const CATS = [
+  { id: 'simple-open', label: '눌러서 열어요', group: 'concept' },
   { id: 'simple-tap', label: '누르면 바뀌어요', group: 'concept' },
   { id: 'simple-sound', label: '소리 카드', group: 'concept' },
   { id: 'simple-still', label: '가만히 보기', group: 'concept' },
 ];
-const catOf = html => (/<audio\b/.test(html) ? 'simple-sound' : /<details\b/.test(html) ? 'simple-tap' : 'simple-still');
+const catOf = (d, html) => (d.open ? 'simple-open' : /<audio\b/.test(html) ? 'simple-sound' : /<details\b/.test(html) ? 'simple-tap' : 'simple-still');
 
-// 틀 한 줄: frame(뿌리의 gk-<틀> 이름) · name(소품 이름 그대로 / 대표 10 은 컨셉 이름) · emoji · desc · peek(카드 미리보기에서 열어 둘지 — 없으면 SIMPLE_CONTRACT.peek) · values(자리표 값)
+// 틀 한 줄: frame(뿌리의 gk-<틀> 이름) · name(소품 이름 그대로 / 대표 10 은 컨셉 이름) · emoji · desc
+//   peek: 카드 미리보기에서 열어 둘지(없으면 SIMPLE_CONTRACT.peek — 첫 묶음 01 · 05 · 07 · 08) · open: 닫힌 채 시작해 눌러야 글이 나오는 틀(분류) · values: 자리표 값
 //   id 는 simple-<틀>(15자 이하 — 테마로 받을 때 대사색 꼬리 9자가 붙어도 24자 안) · 색 칸(bg · ink · accent)은 틀에서 계산해요
+//   열어 보일지 · 설명은 각 이식판 설명서(시안 설명.md 1절 · 9-1 / 시안-2 설명.md 1 · 8-1절 / 시안-3 이식판-설명.md 2절 / 기존틀-새방식 이식판-설명.md 1절)의 표를 따랐어요
 const SOUND = { 소리: ['s1.mp3', 's2.mp3', 's3.mp3'] };
 export const DEFS = [
-  // 첫 묶음 8(심플-새틀-시안/이식판.html · 11-10 23:56 판) — 설명은 설명.md 1절 표 · 미리보기 열린 판은 9-1(D4: 01 · 05 · 07 · 08)
-  { frame: 'k1', name: '낫표', emoji: '💬', desc: '제목 줄을 누르면 가운데 붙어 있던 「 」가 모서리로 벌어지며 글이 드러나요 · 다시 누르면 닫혀요' },
-  { frame: 'k2', name: '견출지', emoji: '🏷️', desc: '제목이 견출지 한 장 — 누르면 오른쪽 아래부터 스티커처럼 뜯기고, 점선 자리를 누르면 다시 붙어요 · 소리 카드 한 줄', values: SOUND },
+  // 첫 묶음 8(심플-새틀-시안/이식판.html · 11-10 23:56 판)
+  { frame: 'k1', name: '낫표', emoji: '💬', open: true, desc: '제목 줄을 누르면 가운데 붙어 있던 「 」가 모서리로 벌어지며 글이 드러나요 · 다시 누르면 닫혀요' },
+  { frame: 'k2', name: '견출지', emoji: '🏷️', desc: '제목이 견출지 한 장 — 누르면 오른쪽 아래부터 스티커처럼 뜯기고, 점선 자리를 누르면 다시 붙어요 · 소리 카드 한 줄' },
   { frame: 'k3', name: '바인더', emoji: '🗂️', desc: '바인더 등 · 금속 고리 셋 · 여백 줄 — 오른쪽 아래 「1 / 2」를 누르면 종이가 옆으로 밀리며 다음 장' },
   { frame: 'k4', name: '줄자', emoji: '📏', desc: '위에 0~30cm 자 · 제목 끝 커서 — 자 위에서 휠(폰은 옆으로 밀기) · 세모 줄을 누르면 첫 줄 들여쓰기 켬/끔' },
   { frame: 'k5', name: '티백', emoji: '🍵', desc: '옆에서 본 찻잔 · 흔들리는 꼬리표 · 김 — 찻잔을 누르면 캐릭터 색 찻물이 차오르고 숨은 한 줄이 나와요' },
-  { frame: 'k6', name: '음성 메모', emoji: '🎙️', desc: '말소리처럼 오르내리는 음파 막대 · 흐르는 녹음 시간 · 소리 카드 한 줄', values: SOUND },
+  { frame: 'k6', name: '음성 메모', emoji: '🎙️', desc: '말소리처럼 오르내리는 음파 막대 · 흐르는 녹음 시간 · 소리 카드 한 줄' },
   { frame: 'k7', name: '성냥', emoji: '🔥', desc: '성냥 한 개비 — 누르면 불씨가 「탁」 붙고 테두리 · 가로줄이 캐릭터 색으로, 지문 글자가 또렷해져요 · 다시 누르면 연기 한 줄' },
-  { frame: 'k8', name: '블라인드', emoji: '🪟', desc: '제목 · 블라인드 · 당김줄을 누르면 살이 위로 모이고 대화가 펼쳐져요 · 소리 카드 한 줄', values: SOUND },
-  // 둘째 묶음 5(심플-새틀-시안-2/이식판.html — 만드는 중) · 셋째 묶음 4(심플-새틀-시안-3/이식판.html — 만드는 중) · 설명 · 열린 판은 이식판 설명서가 나오면 맞춰요
-  { frame: 'k9', name: '지퍼', emoji: '🤐' },
-  { frame: 'k10', name: '모래시계', emoji: '⏳' },
-  { frame: 'k11', name: '실 전화', emoji: '📞' },
-  { frame: 'k12', name: '돋보기', emoji: '🔍' },
-  { frame: 'k13', name: '형광펜', emoji: '🖍️' },
-  { frame: 'k15', name: '뉴턴의 요람', emoji: '⚪' },
-  { frame: 'k16', name: '지우개', emoji: '🧽' },
-  { frame: 'k17', name: '바람개비', emoji: '🎐' },
-  { frame: 'k18', name: '토스터', emoji: '🍞' },
-  // 대표 10(심플-기존틀-새방식/이식판.html · 뿌리 gk-q01~gk-q10 — 만드는 중) · 차례는 조정자 전달 차례(이식판이 나오면 번호 ↔ 컨셉을 맞춰 봐요)
-  { frame: 'q01', name: '여름 바다', emoji: '🌊' },
-  { frame: 'q02', name: '흐림', emoji: '☁️' },
-  { frame: 'q03', name: '새해 첫날', emoji: '🌅' },
-  { frame: 'q04', name: '새벽', emoji: '🌌' },
-  { frame: 'q05', name: '메신저', emoji: '💭' },
-  { frame: 'q06', name: '편지 봉투', emoji: '✉️' },
-  { frame: 'q07', name: '호박', emoji: '🎃' },
-  { frame: 'q08', name: '라면', emoji: '🍜' },
-  { frame: 'q09', name: '카페 영수증', emoji: '🧾' },
-  { frame: 'q10', name: 'RPG 스탯', emoji: '🎮' },
-].map(d => ({ id: `simple-${d.frame}`, values: SOUND, desc: `${d.name} — 심플 새 틀`, ...d }));
+  { frame: 'k8', name: '블라인드', emoji: '🪟', open: true, desc: '제목 · 블라인드 · 당김줄을 누르면 살이 위로 모이고 대화가 펼쳐져요 · 소리 카드 한 줄' },
+  // 둘째 묶음 5(심플-새틀-시안-2/이식판.html · 뿌리 gk-k09 꼴)
+  { frame: 'k09', name: '지퍼', emoji: '🤐', open: true, peek: true, desc: '지퍼 띠를 누르면 슬라이더가 걸렸다 주르륵 내려가며 이가 V 로 벌어지고 아래 글이 따라 드러나요 · 소리 카드 한 줄' },
+  { frame: 'k10', name: '모래시계', emoji: '⏳', open: true, peek: true, desc: '모래시계를 누르면 휙 뒤집혀 모래가 떨어지고, 본문 칸이 열리며 글자가 천천히 또렷해져요 · 소리 카드 한 줄' },
+  { frame: 'k11', name: '실 전화', emoji: '📞', peek: true, desc: '종이컵 둘을 잇는 늘어진 실 — 누르면 실이 팽팽해지며 떨리고 흐리던 글이 또렷해져요 · 소리 카드 한 줄' },
+  { frame: 'k12', name: '돋보기', emoji: '🔍', desc: '돋보기를 누르면 글 쪽으로 기울며 글자가 크게 보여요' },
+  { frame: 'k13', name: '형광펜', emoji: '🖍️', peek: true, desc: '형광펜을 누르면 뚜껑이 톡 빠지고 대사 띠가 첫 줄부터 차례로 그어져요' },
+  // 셋째 묶음 5(심플-새틀-시안-3/이식판.html) — 14 쥘부채는 E안(깊은 주름)
+  { frame: 'k14', name: '쥘부채', emoji: '🪭', open: true, peek: true, desc: '제목 줄을 누르면 부채살이 촤락 벌어지고, 지그재그로 접힌 종이가 고르게 펴져 글 칸이 돼요 · 소리 카드 한 줄' },
+  { frame: 'k15', name: '뉴턴의 요람', emoji: '⚪', desc: '요람을 누르면 공이 탁탁 주고받고, 공이 칠 때마다 그 화자의 대사 띠가 톡 짙어져요 · 소리 카드 한 줄' },
+  { frame: 'k16', name: '지우개', emoji: '🧽', desc: '지우개를 누르면 내려와 쓱쓱 문지르고, 지문이 차례로 옅어져 대사만 남아요' },
+  { frame: 'k17', name: '바람개비', emoji: '🎐', desc: '늘 천천히 도는 바람개비 — 누르면 후 불어 빠르게 돌다 잦아들어요 · 소리 카드 한 줄' },
+  { frame: 'k18', name: '토스터', emoji: '🍞', open: true, peek: true, desc: '레버를 누르면 눈금이 틱틱 돌고 빵이 탁 튀어 오르며 글이 같이 튀어나와요' },
+  // 대표 10(심플-기존틀-새방식/이식판.html · 뿌리 gk-q01~gk-q10) — 기존 컨셉을 새 방식으로 다시 그린 것 · 옛날 버전의 같은 이름 틀은 그대로 둬요
+  { frame: 'q01', name: '여름 바다', emoji: '🏖️', desc: '물결 위에 떠 있는 비치볼 — 누르고 있는 동안 볼이 살짝 눌려요' },
+  { frame: 'q02', name: '흐림', emoji: '☁️', desc: '구름을 누르면 구름이 밀려나고 해와 햇살이 드러나요 · 소리 카드 한 줄' },
+  { frame: 'q03', name: '새해 첫날', emoji: '🌅', peek: true, desc: '해돋이를 누르면 해가 떠오르고 햇살 일곱 줄이 퍼져요' },
+  { frame: 'q04', name: '새벽', emoji: '🌌', peek: true, desc: '가로등을 누르면 깜빡이다 켜지며 빛기둥이 내려와요' },
+  { frame: 'q05', name: '메신저', emoji: '💭', desc: '입력 중 점 셋이 뛰는 말풍선 — 누르면 보낸 말풍선과 안 읽음 「1」이 떠요 · 소리 카드 한 줄' },
+  { frame: 'q06', name: '편지 봉투', emoji: '✉️', open: true, peek: true, desc: '봉투를 누르면 하트 스티커가 떨어지고 뚜껑이 젖혀지며 편지지가 올라와 글이 펼쳐져요' },
+  { frame: 'q07', name: '호박', emoji: '🎃', peek: true, desc: '호박을 누르면 별 창과 골 틈으로 불빛이 켜지고 일렁여요' },
+  { frame: 'q08', name: '라면', emoji: '🍜', desc: '김이 오르는 냄비 — 누르면 젓가락이 면발을 들어 올려요' },
+  { frame: 'q09', name: '카페 영수증', emoji: '🧾', peek: true, desc: '출력기를 누르면 흰 영수증이 다 밀려 나와요 — 가게 이름 · 품목 · 합계 줄을 바꿔 써요(종이는 캐릭터 색을 안 따라요)' },
+  { frame: 'q10', name: 'RPG 스탯', emoji: '🎮', desc: 'HP · MP · EXP 게이지 — 누르면 EXP 가 가득 차 레벨이 오르고 HP · MP 가 회복돼요 · 소리 카드 한 줄' },
+].map(d => ({ id: `simple-${d.frame}`, values: SOUND, ...d }));
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 /** 견본 글 자리표를 값으로 채워요(글 자리는 HTML 이스케이프 · 소리는 견본 mp3 주소) */
@@ -163,7 +169,7 @@ export function build() {
     const { html, preview, info } = frameHtml(d);
     heavy[d.id] = { preview };
     const card = sf.facesOf(info, info.base).orig[0];
-    rows.push({ id: d.id, name: d.name, emoji: d.emoji, category: catOf(html), style: '심플', desc: d.desc, c: KEY, copyOnly: true, photo: true, ...(/<audio\b/.test(html) ? { audio: true } : {}), simple: true, bytes: Buffer.byteLength(html), fx: 'e', bg: card, ink: sf.SIMPLE_CONTRACT.ink[info.base], accent: sf.sianFit(info.K0 || '#8b8e96', '#ffffff', 4.5) });
+    rows.push({ id: d.id, name: d.name, emoji: d.emoji, category: catOf(d, html), style: '심플', desc: d.desc, c: KEY, copyOnly: true, photo: true, ...(/<audio\b/.test(html) ? { audio: true } : {}), simple: true, bytes: Buffer.byteLength(html), fx: 'e', bg: card, ink: sf.SIMPLE_CONTRACT.ink[info.base], accent: sf.sianFit(info.K0 || '#8b8e96', '#ffffff', 4.5) });
   }
   const used = new Set(rows.map(x => x.category));
   const text = `${JSON.stringify({ items: heavy })}\n`;
