@@ -25,7 +25,10 @@ const nameOf = n => CAST[who(n)][0];
 const cc = n => `c${who(n) + 1}`;
 const img = (n, eager) => `<!-- 견본 --><img src="${srcOf(n)}" width="${isLand(n) ? 1216 : 832}" height="${isLand(n) ? 832 : 1216}" alt="업로드 이미지" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
 const imgK = (k, eager) => `<!-- 견본 --><img src="${IMG}${k}.svg" width="${k[0] === 'l' ? 1216 : 832}" height="${k[0] === 'l' ? 832 : 1216}" alt="업로드 이미지" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
-const audio = k => `<!-- 견본 mp3 --><audio src="${AUD}${k}.mp3" controls="" preload="metadata" class="uploaded-audio"></audio>`;
+// 11-10 밤 사용자 「mp3는 기본적으로 좀 투명한 스타일이면 좋겠음 난 저 단색 mp3 싫더라」 — 재생 막대의 알약 바탕을 안 보이게: <style> 의 가상 요소 규칙 + (그 규칙이 지워질 때를 대비해) 인라인 섞기.
+//   밝은 바탕은 multiply(밝은 알약이 바탕에 묻혀요) · 어두운 바탕은 뒤집어서 screen(어두워진 알약이 묻혀요). 섞기 계산이 늘 같게 조작부는 밝은 판(color-scheme:light)으로 고정하고, 뒤집히는 쪽은 시간 글자도 어두운 색으로 못박아요(뒤집혀 밝게 보여요)
+const AUDIO_CLEAR = dark => (dark ? 'color-scheme:light;color:#111111!important;-webkit-text-fill-color:#111111!important;filter:invert(1) hue-rotate(180deg);mix-blend-mode:screen' : 'color-scheme:light;mix-blend-mode:multiply');
+const audio = (k, dark = false) => `<!-- 견본 mp3 --><audio src="${AUD}${k}.mp3" controls="" preload="metadata" class="uploaded-audio" style="${AUDIO_CLEAR(dark)}"></audio>`;
 const SANS = 'Pretendard,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif';
 const SERIF = '"Noto Serif KR","Apple SD Gothic Neo","Nanum Myeongjo",Georgia,serif';
 const DIDOT = '"Didot","Bodoni 72","Bodoni MT","Playfair Display",Georgia,"Noto Serif KR",serif';
@@ -44,8 +47,8 @@ ${P} .${ph} > :not(img):not(.image-number-wrapper):not(:has(img)){display:none!i
 ${P} .image-number-badge{display:none!important}`;
 const audioCss = (P, sel, h = 40) => `
 ${P} ${sel} audio{display:block;width:100%;height:${h}px;margin:0;border-radius:999px;background:transparent;outline:none}
-${P} ${sel} audio::-webkit-media-controls-enclosure{border-radius:999px;background:color-mix(in srgb,var(--ink) 12%,transparent)}
-${P} ${sel} audio::-webkit-media-controls-panel{background:transparent}`;
+${P} ${sel} audio::-webkit-media-controls-enclosure{border-radius:999px;background:transparent!important}
+${P} ${sel} audio::-webkit-media-controls-panel{background:transparent!important}`;
 const baseCss = (P, ink, extra) => `
 ${P}{${ink}display:block!important;box-sizing:border-box;container-type:inline-size;margin:14px auto!important;padding:0!important;border:0!important;background:transparent!important;font-family:${SANS};line-height:1.55;text-align:left;-webkit-text-size-adjust:100%;${extra}}
 ${P},${P} *{color:var(--ink)!important;-webkit-text-fill-color:var(--ink)!important;box-sizing:border-box}
@@ -243,7 +246,7 @@ function carol(songs = SONGS) {
 <div class="k-song t${s.t}">
 <div class="k-row"><div class="k-th">${ph(s.main, i < 3)}</div><div class="k-meta"><p class="k-no"></p><p class="k-ti">${s.ti}</p><p class="k-sub">${s.ch.map(j => `<span class="k-who c${j + 1}">${CAST[j][0]}</span>`).join('')}<span class="k-en">${s.en}</span></p></div>
 <label class="k-open"><input type="checkbox" class="k-k" aria-label="그림 펼치기"><span class="k-o1">그림 ▾</span><span class="k-o2">접기 ▴</span></label></div>
-<div class="k-aus">${s.au.map(([key, a]) => `<div class="k-pl">${key ? `<p class="k-key">${key}</p>` : ''}${audio(a)}</div>`).join('')}</div>
+<div class="k-aus">${s.au.map(([key, a]) => `<div class="k-pl">${key ? `<p class="k-key">${key}</p>` : ''}${audio(a, true)}</div>`).join('')}</div>
 <div class="k-more">${s.pics.map(k => ph(k)).join('')}</div>
 </div>
 <!-- ▲ 곡 끝 -->`;
@@ -291,7 +294,6 @@ ${P} .k-key{flex:0 0 auto}
 ${P} .k-key{font:800 11.5px/1 ${MONO};letter-spacing:.08em;--ink:var(--acc)}
 ${audioCss(P, '.k-pl', 40)}
 ${P} .k-pl audio{flex:1 1 auto;min-width:0;width:auto}
-${P} .k-song .k-pl audio::-webkit-media-controls-enclosure{background:#ffffff17}
 /* 펼친 그림 */
 ${P} .k-more{display:none!important}
 ${P} .k-song:has(.k-k:checked) .k-more{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-items:start;margin-top:4px!important}

@@ -32,7 +32,10 @@ const VARIANTS = {
 const isLand = k => k[0] === 'l';
 const two = i => String(i).padStart(2, '0');
 const img = (k, eager) => `<!-- 견본 --><img src="${IMG}${k}.svg" width="${isLand(k) ? 1216 : 832}" height="${isLand(k) ? 832 : 1216}" alt="업로드 이미지" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
-const audio = k => `<!-- 견본 mp3 --><audio src="${AUD}${k}.mp3" controls="" preload="metadata" class="uploaded-audio"></audio>`;
+// 11-10 밤 사용자 「mp3는 기본적으로 좀 투명한 스타일이면 좋겠음 난 저 단색 mp3 싫더라」 — 재생 막대의 알약 바탕을 안 보이게: <style> 의 가상 요소 규칙 + (그 규칙이 지워질 때를 대비해) 인라인 섞기.
+//   밝은 바탕은 multiply(밝은 알약이 바탕에 묻혀요) · 어두운 바탕은 뒤집어서 screen(어두워진 알약이 묻혀요). 섞기 계산이 늘 같게 조작부는 밝은 판(color-scheme:light)으로 고정하고, 뒤집히는 쪽은 시간 글자도 어두운 색으로 못박아요(뒤집혀 밝게 보여요)
+const AUDIO_CLEAR = dark => (dark ? 'color-scheme:light;color:#111111!important;-webkit-text-fill-color:#111111!important;filter:invert(1) hue-rotate(180deg);mix-blend-mode:screen' : 'color-scheme:light;mix-blend-mode:multiply');
+const audio = (k, dark = false) => `<!-- 견본 mp3 --><audio src="${AUD}${k}.mp3" controls="" preload="metadata" class="uploaded-audio" style="${AUDIO_CLEAR(dark)}"></audio>`;
 const SANS = 'Pretendard,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif';
 const SERIF = '"Noto Serif KR","Apple SD Gothic Neo","Nanum Myeongjo",Georgia,serif';
 const DIDOT = '"Didot","Bodoni 72","Bodoni MT","Playfair Display",Georgia,"Noto Serif KR",serif';
@@ -50,8 +53,8 @@ ${P} .${ph} > :not(img):not(.image-number-wrapper):not(:has(img)){display:none!i
 ${P} .image-number-badge{display:none!important}`;
 const audioCss = (P, sel, h = 44) => `
 ${P} ${sel} audio{display:block;width:100%;height:${h}px;margin:0;border-radius:999px;background:transparent;outline:none}
-${P} ${sel} audio::-webkit-media-controls-enclosure{border-radius:999px;background:color-mix(in srgb,var(--ink) 12%,transparent)}
-${P} ${sel} audio::-webkit-media-controls-panel{background:transparent}`;
+${P} ${sel} audio::-webkit-media-controls-enclosure{border-radius:999px;background:transparent!important}
+${P} ${sel} audio::-webkit-media-controls-panel{background:transparent!important}`;
 const baseCss = (P, ink, extra, divBg = 'background-color') => `
 ${P}{${ink}display:block!important;box-sizing:border-box;container-type:inline-size;margin:14px auto!important;padding:0!important;border:0!important;background:transparent!important;font-family:${SANS};line-height:1.55;text-align:left;-webkit-text-size-adjust:100%;${extra}}
 ${P},${P} *{color:var(--ink)!important;-webkit-text-fill-color:var(--ink)!important;box-sizing:border-box}
@@ -98,11 +101,11 @@ function album(songs = SONGS) {
   const P = '.sgt1.sgt1.sgt1';
   const ph = (k, eager) => `<div class="a-ph${isLand(k) ? ' land' : ''}">${img(k, eager)}</div>`;
   const item = k => `<div class="a-it${isLand(k) ? ' a-il' : ''}"><label class="a-lb"><input type="checkbox" class="a-k" aria-label="그림 넘기기">${ph(k)}</label></div>`;
-  const pl = ([key, a]) => `<div class="a-pl">${key ? `<p class="a-key">${key}</p>` : ''}${audio(a)}</div>`;
+  const pl = dark => ([key, a]) => `<div class="a-pl">${key ? `<p class="a-key">${key}</p>` : ''}${audio(a, dark)}</div>`;
   const song = (s, i) => `<!-- ▼ 곡 시작 -->
 <div class="a-song t${s.t}">
 <div class="a-top${isLand(s.main) ? ' a-wide' : ''}"><div class="a-main">${ph(s.main, i === 0)}</div><div class="a-side"><div class="a-hd">${trackNo('a-no')}<p class="a-ti">${s.ti}</p><div class="a-chips">${chips(s, 'a-ch')}</div></div>
-<!-- 카드 뒤 흐린 그림: 메인 그림과 같은 주소로 바꿔요(style 을 지우면 곡 색 바탕만) --><div class="a-card" style="background-image:url('${IMG}${s.main}.svg')"><div class="a-glass">${s.au.map(pl).join('')}</div></div></div></div>
+<!-- 카드 뒤 흐린 그림: 메인 그림과 같은 주소로 바꿔요(style 을 지우면 곡 색 바탕만) --><div class="a-card" style="background-image:url('${IMG}${s.main}.svg')"><div class="a-glass">${s.au.map(pl(TONES[(s.t - 1) % TONES.length].sch !== 'light')).join('')}</div></div></div></div>
 <div class="a-fr"><div class="a-tr">${s.pics.map(item).join('')}</div></div>
 </div>
 <!-- ▲ 곡 끝 -->`;
@@ -212,12 +215,12 @@ ${memo}
 function single(songs = SONGS) {
   const P = '.sgt2.sgt2.sgt2';
   const ph = (k, x = '', eager = false) => `<div class="b-ph${isLand(k) ? ' land' : ''}${x}">${img(k, eager)}</div>`;
-  const row = ([key, a], j) => `<div class="b-tk"><p class="b-tkn">${two(j + 1)}</p><p class="b-tkt">${key}</p>${audio(a)}</div>`;
+  const row = dark => ([key, a], j) => `<div class="b-tk"><p class="b-tkn">${two(j + 1)}</p><p class="b-tkt">${key}</p>${audio(a, dark)}</div>`;
   const song = (s, i) => `<!-- ▼ 곡 시작 -->
 <div class="b-song t${s.t}">
 <div class="b-top${isLand(s.main) ? ' b-wide' : ''}"><div class="b-jk">${ph(s.main, ' b-cv', i === 0)}</div>
 <div class="b-side">${trackNo('b-kick')}<p class="b-ti">${s.ti}</p><div class="b-chips">${chips(s, 'b-ch')}</div>
-<div class="b-list">${s.au.map(row).join('')}</div></div></div>
+<div class="b-list">${s.au.map(row(TONES[(s.t - 1) % TONES.length].sch === 'dark')).join('')}</div></div></div>
 <div class="b-grid">${s.pics.map(k => ph(k)).join('')}</div>
 </div>
 <!-- ▲ 곡 끝 -->`;
@@ -300,7 +303,7 @@ function playlist(songs = SONGS) {
 <div class="c-song t${s.t}">
 <div class="c-row"><div class="c-th">${ph(s.main, i < 3)}</div><div class="c-meta"><p class="c-no"></p><p class="c-ti">${s.ti}</p><p class="c-sub">${s.ch.map(j => `<span class="c-who c${j + 1}">${CAST[j][0]}</span>`).join('')}</p></div>
 <label class="c-open" title="그림"><input type="checkbox" class="c-k" aria-label="그림 펼치기"><span class="c-o1" aria-hidden="true"></span></label></div>
-<div class="c-aus">${s.au.map(([key, a]) => `<div class="c-pl">${key ? `<p class="c-key">${key}</p>` : ''}${audio(a)}</div>`).join('')}</div>
+<div class="c-aus">${s.au.map(([key, a]) => `<div class="c-pl">${key ? `<p class="c-key">${key}</p>` : ''}${audio(a, true)}</div>`).join('')}</div>
 <div class="c-more">${s.pics.map(k => ph(k)).join('')}</div>
 </div>
 <!-- ▲ 곡 끝 -->`;
@@ -344,7 +347,6 @@ ${P} .c-key{flex:0 0 auto}
 ${P} .c-key{font:800 11.5px/1 ${MONO};letter-spacing:.08em;--ink:var(--acc)}
 ${audioCss(P, '.c-pl', 40)}
 ${P} .c-pl audio{flex:1 1 auto;min-width:0;width:auto}
-${P} .c-song .c-pl audio::-webkit-media-controls-enclosure{background:#ffffff14}
 /* 펼친 그림(누르기 전엔 접힘) */
 ${P} .c-more{display:none!important}
 ${P} .c-song:has(.c-k:checked) .c-more{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-items:start;margin-top:4px!important}
