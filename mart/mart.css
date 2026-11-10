@@ -207,6 +207,8 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:32px;backgrou
 @keyframes mart-ph-wait{from{opacity:1}to{opacity:.72}}
 @media (prefers-reduced-motion:reduce){.mart-preview.is-wait .mart-ph{animation:none}}
 .mart-sheet-wait{margin:48px 0;text-align:center;color:var(--muted);font-size:var(--ts-ctl)}
+/* 11-11 크게 보기(dialog) 안 틀 글은 틀이 정한 맞춤 그대로 — 사이트 공통 dialog p{text-align:center} 가 새 글꾸 틀의 지문 · 대사를 가운데로 몰던 것 */
+.mart-sheet-preview p{text-align:inherit}
 .mart-preview.geulkku:focus-visible,.mart-preview.frame:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .mart-zoom-hint{position:absolute;z-index:1;right:8px;bottom:8px;opacity:0;transition:opacity .15s;pointer-events:none}
 .mart-preview:hover .mart-zoom-hint,.mart-preview:focus-visible .mart-zoom-hint{opacity:1}
