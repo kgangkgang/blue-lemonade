@@ -18,7 +18,7 @@ const URL_RE = /url\s*\(/i;
 const ENT = { quot: '"', amp: '&', lt: '<', gt: '>', apos: "'", nbsp: ' ' };
 const decode = s => String(s).replace(/&(#\d+|#x[0-9a-f]+|quot|amp|lt|gt|apos|nbsp);/gi, (all, e) => {
     const k = e.toLowerCase();
-    if (k[0] === '#') { const n = k[1] === 'x' ? parseInt(k.slice(2), 16) : parseInt(k.slice(1), 10); return Number.isFinite(n) ? String.fromCodePoint(n) : all; }
+    if (k[0] === '#') { const n = k[1] === 'x' ? parseInt(k.slice(2), 16) : parseInt(k.slice(1), 10); return Number.isFinite(n) && n >= 0 && n <= 0x10FFFF ? String.fromCodePoint(n) : all; }   // 1.1.2 감사 3차 R2: 범위 밖 숫자 참조는 그대로(RangeError 없이)
     return ENT[k] ?? all;
 });
 const encode = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -117,6 +117,7 @@ export function liftInlineUrls(html) {
     };
     // 한 번 훑기: 주석 · 날 글 요소(<style> 등) 안은 그대로 · 여는 태그는 속성 값(따옴표 안 < > 포함)까지 통째로 읽어요
     let result = '', at = 0;
+    const lower = source.toLowerCase();   // 1.1.2 감사 3차 R1: 날 글 요소마다 글 전체를 다시 소문자로 바꾸던 것(제곱으로 느려짐)을 한 번만
     while (at < source.length) {
         const lt = source.indexOf('<', at);
         if (lt < 0) { result += source.slice(at); break; }
@@ -128,7 +129,7 @@ export function liftInlineUrls(html) {
         result += fix(m[0], m[1], m[2], m[3]);
         at = lt + m[0].length;
         const tagName = m[1].toLowerCase();
-        if (RAW_TAGS.has(tagName)) { const close = source.toLowerCase().indexOf(`</${tagName}`, at); const stop = close < 0 ? source.length : close; result += source.slice(at, stop); at = stop; }
+        if (RAW_TAGS.has(tagName)) { const close = lower.indexOf(`</${tagName}`, at); const stop = close < 0 ? source.length : close; result += source.slice(at, stop); at = stop; }
     }
     const css = [...rules].map(([id, rule]) => `.${id}.${id}.${id}{${rule}}`).join('');
     return { html: result, css };
@@ -182,7 +183,7 @@ export function liftForCopy(html, motionHead = '', { comments = true, width = 64
 export function pasteReady(html) {
     let text = String(html ?? '');
     if (!text.trim() || text.includes('.content>p,.blq-cm{')) return text;   // 이미 붙여 넣을 꼴
-    text = text.replace(/^<p><br><\/p>/, '').replace(/<p><br><\/p>$/, '');
+    text = text.replace(/^\s*<p><br><\/p>/, '').replace(/<p><br><\/p>\s*$/, '');   // 1.1.2 감사 3차 S8: 앞뒤 공백이 있어도 코멘트 빈칸을 떼요
     const lead = text.match(/^(\s*(?:<!--[\s\S]*?-->\s*)*)<style>((?:(?!<\/?style)[\s\S])*)<\/style>\s*/i);
     const motion = lead ? `<style>${lead[2]}</style>` : '';
     const rest = lead ? lead[1] + text.slice(lead[0].length) : text;

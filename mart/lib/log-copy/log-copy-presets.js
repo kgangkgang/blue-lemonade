@@ -283,14 +283,14 @@ function mini(model, o) {
 
 // 1.0.9 제목 앞 레몬은 🍋 이모지 대신 테마 레몬(fa-lemon · splash.js LEMON_PATH · 탭 아이콘과 같은 면 #FFE23C + 테두리 #E9BE00) 그림 — 붙여 넣는 곳에 글꼴 아이콘이 없어서 그림 부품(svg 주소)으로
 const LEMON_MARK = tag('span', { display: 'inline-block', width: '0.95em', height: '0.95em', 'margin-right': '0.3em', 'vertical-align': '-0.1em', background: `${svgUrl(svgDoc(472, 472, `<path fill="#FFE23C" fill-rule="evenodd" stroke="#E9BE00" stroke-width="18" stroke-linejoin="round" transform="translate(12 428) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/>`))} center/100% 100% no-repeat` }, '');
-// 1.1.2 레몬 그림을 누르면 블루레몬에이드 소개 글로(사용자 요청 · 레몬 틀에만)
+// 1.1.2 레몬 그림을 누르면 블루레몬에이드 소개 글로 — 「레몬 바로가기」를 켰을 때만(감사 3차 R5: 끄면 링크 0개)
 export { LEMON_HOME };
 const LEMON_LINK = `<a href="${LEMON_HOME}" target="_blank" rel="noopener noreferrer" title="블루레몬에이드" style="text-decoration:none;border:0">${LEMON_MARK}</a>`;
 /** 레몬: 팔레트 카드(색 고르기 견본)의 두 번째 포인트 막대 · 레몬 그림 */
 function lemon(model, o) {
     const { c, ui, fields } = o;
     const bar = tag('div', { height: '4px', width: '46%', 'border-radius': '2px', 'background-color': c.pop, margin: '0 0 12px' }, '');
-    const head = tag('div', { padding: '16px 16px 12px' }, bar + tag('div', { color: c.text, ...font(ui, 20, '650'), 'line-height': '1.4', 'overflow-wrap': 'anywhere' }, `${LEMON_LINK}${F('title', fields.title || '')}`) + pills(fields, c, ui, undefined, 8));
+    const head = tag('div', { padding: '16px 16px 12px' }, bar + tag('div', { color: c.text, ...font(ui, 20, '650'), 'line-height': '1.4', 'overflow-wrap': 'anywhere' }, `${o.lemonLink ? LEMON_LINK : LEMON_MARK}${F('title', fields.title || '')}`) + pills(fields, c, ui, undefined, 8));
     // 1.1.2 글 칸 아래 여백은 칸 자신의 margin 으로(빈 사이 칸은 붙여 넣은 곳에서 사라질 수 있어 아래 칸을 끄면 카드 바닥에 붙었어요) · 모서리 자르기는 clip(hidden 은 커뮤니티 사이트에서 숨은 스크롤 상자)
     const body = tag('div', { display: 'flow-root', margin: '0 12px 12px', 'border-radius': '8px', overflow: 'clip' }, scroller(screenLog(model, o), o.height));
     return outer(sheet(head + body + info(fields, c, ui, '0 16px 12px') + foot(fields, c, ui, { 'border-top': `1px solid ${c.line}` }), c), c, ui);
@@ -549,13 +549,15 @@ export const LOG_WIDTH = 640;
 // 1.1.2 틀 원본(내장 · 받은 글꾸)의 flex · inline-block 칸도 들여쓰기를 물려받지 않게(log-copy-render.js tag 와 같은 규칙)
 export const indentGuard = html => String(html ?? '').replace(/(\sstyle=")([^"]*)"/g, (all, a, st) => (/(?:^|;)\s*display\s*:\s*(?:inline-block|inline-flex|flex|grid|inline-grid|inline-table|table)\s*(?:;|$)/i.test(st) && !/(?:^|;)\s*text-indent\s*:/i.test(st) ? `${a}${st.replace(/;?\s*$/, '')};text-indent:0"` : all));
 export function fixedWidth(html) {
-    return indentGuard(html).replace(/^((?:\s*<style\b[\s\S]*?<\/style>|\s*<!--[\s\S]*?-->)*\s*<[a-zA-Z][\w-]*)((?:\s+[^\s=>]+(?:="[^"]*")?)*?)(\s*\/?>)/, (all, open, attrs, end) => {
+    // 1.1.2 감사 3차 R4: 여는 태그 속성은 큰따옴표 · 작은따옴표 · 따옴표 없는 값 모두
+    return indentGuard(html).replace(/^((?:\s*<style\b[\s\S]*?<\/style>|\s*<!--[\s\S]*?-->)*\s*<[a-zA-Z][\w-]*)((?:\s+[^\s"'>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*?)(\s*\/?>)/, (all, open, attrs, end) => {
         const add = `max-width:${LOG_WIDTH}px;margin-left:auto;margin-right:auto;box-sizing:border-box`;
-        if (/\sstyle="/.test(attrs)) return open + attrs.replace(/\sstyle="([^"]*)"/, (a, st) => ` style="${st.replace(/;?\s*$/, '')};${add}"`) + end;
+        const m = attrs.match(/\sstyle\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i);
+        if (m) { const st = (m[1] ?? m[2] ?? m[3] ?? '').replace(/;?\s*$/, ''); return open + attrs.replace(m[0], () => ` style="${st.replace(/"/g, '&quot;')}${st ? ';' : ''}${add}"`) + end; }
         return `${open}${attrs} style="${add}"${end}`;
     });
 }
-export function renderLog(model, { shape = 'plain', colors = null, ui = null, fields = {}, size = 'm', names = true, gap: blank = true, images = [], screen = null, template = null } = {}) {
+export function renderLog(model, { shape = 'plain', colors = null, ui = null, fields = {}, size = 'm', names = true, gap: blank = true, images = [], screen = null, template = null, lemonLink = false } = {}) {
     if (!model?.messages?.length) return '';
     // 1.0.1 template: 글꾸 마트에서 받은 내 글꾸(틈 템플릿 · 전용 색) — 렌더 분기는 여기 한 곳
     const found = template?.template ? null : PRESETS.find(p => p.id === shape);
@@ -564,5 +566,5 @@ export function renderLog(model, { shape = 'plain', colors = null, ui = null, fi
     if (!preset?.render || (!colors && !preset.own)) return fixedWidth(inkEverywhere(logHtml(model, { names, gap: blank }), model.base.color, { bg: model.base.bg, candidates: [colors?.text] }));
     const font = ui ?? { family: model.base['font-family'], tracking: 'normal' };
     const c = tpl ? templateColors(tpl.colors) : colors;
-    return fixedWidth(inkEverywhere(preset.render(model, { c, ui: font, fields: { count: `${model.messages.length}개`, ...fields }, size, height: HEIGHTS[size] ?? HEIGHTS.m, names, gap: blank, images: [...(model.images ?? []), ...images], screen }), c.text, { bg: c.bg, candidates: preset.own ? [c.faceText, c.panel, c.bg] : [model.base.color, c.surface, c.bg], keepOwn: !!tpl }));
+    return fixedWidth(inkEverywhere(preset.render(model, { c, ui: font, fields: { count: `${model.messages.length}개`, ...fields }, size, height: HEIGHTS[size] ?? HEIGHTS.m, names, gap: blank, images: [...(model.images ?? []), ...images], screen, lemonLink }), c.text, { bg: c.bg, candidates: preset.own ? [c.faceText, c.panel, c.bg] : [model.base.color, c.surface, c.bg], keepOwn: !!tpl }));
 }
