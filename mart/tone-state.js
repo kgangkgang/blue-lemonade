@@ -5,6 +5,7 @@
 //   - 「원래 색」을 고르면 다시 칠하기를 꺼요(지금까지의 마트 모양).
 //   목록 · 상세 창(mart.js) · 시식 창(taste.js) · 캐릭터 줄(cast.js)이 같이 읽고, 바뀌면 'bl-tone-change' 를 알려요.
 import { toneHtml, toneMixHtml, speakerColor, PAPER_COLORS, TEXTURES } from './tone-geulkku.js?v=20261110v';
+import { toneSimple } from './simple-frames.js?v=20261111a';   // 11-11 심플 새 틀(클래스 + 틀 안 <style>) — 색 블록만 갈아 끼우고 낮 · 밤은 뿌리 클래스
 export { PAPER_COLORS, TEXTURES };
 
 /** 11-10 밤 사용자 「음 그라데이션 과감하게 빼자... 구리다...」 — 혼합(2~3색 그라데이션)은 꺼 두고 스위치도 안 보여요. 코드는 남겨 둬요(true 로 바꾸면 돌아와요) */
@@ -76,11 +77,12 @@ export function setTone(next = {}) {
     write(TONE_KEY, { k: toneState.k, name: toneState.name, mode: toneState.mode, on: toneState.on, mix: toneState.mix, picks: toneState.picks, paper: toneState.paper, texture: toneState.texture });
     try { document.dispatchEvent(new CustomEvent('bl-tone-change', { detail: { ...toneState } })); } catch { /* 시험 */ }
 }
-/** 다시 칠할 글꾸인가(로그 글꾸만 — 게시글 틀 photo 는 자기 색 그대로) */
-export const toned = item => toneState.on && item?.kind === 'geulkku' && !item.photo;
+/** 다시 칠할 글꾸인가(로그 글꾸만 — 게시글 틀 photo 는 자기 색 그대로 · 단 심플 새 틀 simple 은 게시글 틀이어도 캐릭터 색으로) */
+export const toned = item => toneState.on && item?.kind === 'geulkku' && (!item.photo || !!item.simple);
 /** 다 그린 글꾸 HTML 을 고른 대사색으로(꺼져 있으면 그대로) */
 export const toneOut = (item, html) => {
     if (!html || !toned(item)) return html;
+    if (item.simple) return toneSimple(html, toneState.k, { mode: toneState.mode });   // 종이 색 · 질감은 심플 새 틀에 안 걸어요(이식-설계 1-3 「처음엔 종이 고르기에서 빼요」)
     const roles = item.colors || item.palette || null, opt = { mode: toneState.mode, paper: toneState.paper, texture: toneState.texture };
     const ks = toneState.mix ? toneState.picks.map(x => x.color) : [];
     return ks.length >= 2 ? toneMixHtml(html, roles, ks, opt) : toneHtml(html, roles, toneState.k, opt);

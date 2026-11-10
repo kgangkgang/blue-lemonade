@@ -1,0 +1,20 @@
+{
+ "count": 1,
+ "categories": [
+  {
+   "id": "simple-new",
+   "label": "심플 새 틀",
+   "group": "concept"
+  }
+ ],
+ "chunks": {
+  "sp-simple": {
+   "file": "sp-simple.d0e57c71.json",
+   "n": 1,
+   "bytes": 10729
+  }
+ },
+ "items": [
+  {"id":"simple-sample","name":"블라인드(길 시험 견본)","emoji":"🪟","category":"simple-new","style":"심플","desc":"심플 새 틀 길 시험용 견본(08 블라인드 이식판) — 제목 줄을 누르면 블라인드가 걷히고 로그가 내려와요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"sample":true,"bytes":10461,"fx":"e","bg":"#13233b","ink":"#e4e9f0","accent":"#3aa7ff"}
+ ]
+}
