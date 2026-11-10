@@ -428,7 +428,7 @@ html.mart-cart-on{overflow:hidden}
 .mart-cast-head b{font-size:var(--ts-ctl);color:var(--ink)}
 .mart-cast-mode{margin-left:auto}
 .mart-cast-groups{display:flex;flex-wrap:wrap;gap:4px 6px}
-.mart-cast-g{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px 0 6px;border:1px solid var(--line);border-radius:var(--r-ctl);background:transparent;color:var(--ink);font:inherit;font-size:var(--ts-ctl);cursor:pointer}
+.mart-cast-g{display:inline-flex;align-items:center;gap:6px;min-height:var(--ctl);padding:0 10px 0 6px;border:1px solid var(--line);border-radius:var(--r-ctl);background:transparent;color:var(--ink);font:inherit;font-size:var(--ts-ctl);cursor:pointer}
 .mart-cast-g:hover{background:var(--tint)}
 .mart-cast-g[aria-expanded=true]{border-color:var(--line-strong);background:var(--tint-2)}
 .mart-cast-g:focus-visible,.mart-cast-r:focus-within{outline:2px solid var(--blue);outline-offset:2px}
@@ -453,8 +453,8 @@ html.mart-cart-on{overflow:hidden}
 .mart-designs{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}
 .mart-designs .chip{height:28px;min-height:28px;padding:0 10px;font-size:var(--ts-meta)}
 .mart-sheet-meta .mart-designs{margin:6px 0}
-@media (max-width:639px){.mart-cast{padding:8px 10px}.mart-cast-g{min-height:30px;padding:0 8px 0 4px}.mart-cast-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.mart-cast-toggle{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;border:1px solid var(--line);border-radius:var(--r-ctl);background:transparent;color:var(--muted);font:inherit;font-size:var(--ts-ctl);cursor:pointer}
+@media (max-width:639px){.mart-cast{padding:8px 10px}.mart-cast-g{min-height:44px;padding:0 10px 0 6px}.mart-cast-r{min-height:44px}.mart-cast-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mart-cast-toggle{display:inline-flex;align-items:center;gap:6px;height:var(--ctl);min-height:var(--ctl);padding:0 12px;border:1px solid var(--line);border-radius:var(--r-ctl);background:var(--surface);color:var(--muted);font:inherit;font-size:var(--ts-ctl);cursor:pointer}
 .mart-cast-toggle b{color:var(--ink)}
 .mart-cast-toggle i{display:inline-block;width:12px;height:12px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
 .mart-cast-toggle:hover{background:var(--tint)}
@@ -466,6 +466,6 @@ html.mart-cart-on{overflow:hidden}
 /* 11-10 혼합 스위치 · 바탕(종이 색 · 질감) 줄 */
 .mart-cast-head{flex-wrap:wrap;gap:6px}
 .mart-cast-head .mart-cast-mode{margin-left:auto}
-.mart-cast-mix{height:32px}
+
 .mart-cast-sub2{margin:8px 0 0;font-size:var(--ts-meta);color:var(--muted)}
 #mart-paper-panel .mart-cast-list{margin-top:4px}
