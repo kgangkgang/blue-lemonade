@@ -4,7 +4,7 @@
 //   고친 것은 HTML 복사 · 내려받기에 그대로 들어가요. 「↶ 되돌리기 · ↷ 다시하기」는 미리보기 HTML 스냅샷(연속 타자는 0.5초 묶음 · 50개까지 · 새로 그리기 · 바꾸기도 한 칸)으로 블록 통째 삭제도 되살려요.
 //   붙여 넣은 글 · 바꾸기 · 제목 · 날짜 · 마지막 미리보기 상태는 이 탭 안(sessionStorage)에 남아요. 스크립트 없는 결과 · 외부 의존 없음. 마트 공용 시트 · 단추 규격(mart.css .mart-sheet · .mart-actions)을 써요.
 import { parseLog, buildModel, DEFAULT_NAMES } from './taste-parse.js';
-import { tasteHtml, tasteDocument, canTaste, isConcept, conceptReady, loadConcept, shutPeek } from './taste-render.js?v=20261110w';
+import { tasteHtml, tasteDocument, canTaste, isConcept, conceptReady, loadConcept, shutPeek } from './taste-render.js?v=20261111c';
 import { withInks, setInk, resetInks, paintDot, syncInks } from './inks.js?v=20261108a';
 import { kkangtongReady } from './tone-geulkku.js?v=20261110v';   // 11-10 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
 import { toneOut } from './tone-state.js?v=20261111b';
