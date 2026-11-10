@@ -1,48 +1,52 @@
 // 11-11 「심플 새 틀」(클래스 + 틀 안 <style> 하나로 된 새 글꾸 틀 · 시안 → 이식판)을 글꾸 마트가 받는 길이에요. DOM 없는 순수 모듈(node 시험 — tools/geulkku-simple-test.mjs).
 //   설계: W/outputs/지시-1110/심플-새틀-이식/이식-설계.md 1절 · 틀-계약.md · 보고 마트-길닦기.md
-//   ① 캐릭터 색 다시 칠하기(toneSimple) — 틀 <style> 의 「색 블록」(화자 색 + 소품 톤)만 캐릭터 색 K 에서 다시 계산해 갈아 끼우고, 낮 · 밤은 뿌리 클래스만 바꿔요.
-//      톤 사다리는 테마와 같은 식(lib/log-copy/shared/char-tone.js toneLadder — 테마 codex/tone-ladder-113 사본). 이름 글자 = fitInk(K, 그 칸 바탕) · 대사 띠 = bandColor(K, 낮밤).
-//   ② 「HTML 복사」(simpleReady) — 틀 <style> 과 마트가 넣는 규칙(코멘트 빈칸 · 16px 간격 · 그림 규칙)을 <style> 하나로 합쳐 감싸는 div 첫 자식으로.
-//   ③ 카드 미리보기 상태(peekSimple) — 처음엔 닫힌 틀(01 낫표 · 05 티백 · 07 성냥 · 08 블라인드)은 미리보기만 열린 판(details open + data-bl-peek).
-//      복사 글은 mart.js shutPeek 가 원래(닫힌) 상태로 되돌려요.
-//   ④ 목록에 넣기(withSimpleFrames) — 깃발 SIMPLE_FRAMES_ENABLED 가 꺼져 있으면 아무것도 안 받고 받은 목록을 그대로 돌려줘요.
+//   ① 캐릭터 색 다시 칠하기(toneSimple) — 틀 <style> 의 「색 블록」(화자 색 + 소품 톤)만 갈아 끼우고, 낮 · 밤은 뿌리 클래스만 바꿔요.
+//      화자 색: 그 화자의 색이 틀을 만든 색 그대로면 시안 규칙을 한 글자도 안 바꾸고(사용자가 합격시킨 색), 다른 색이면 시안 식(HSL 명도 맞춤 4.6 · 띠 rgba .18)으로 만들어요.
+//      소품 톤: 테마와 같은 톤 사다리(lib/log-copy/shared/char-tone.js toneLadder — 테마 codex/tone-ladder-113 사본 · 시안 tones 와 같은 값).
+//   ② 「HTML 복사」(simpleReady) — 틀 <style> 과 마트가 넣는 규칙(코멘트 빈칸 · 16px 간격 · 그림 규칙)을 <style> 하나로 합쳐 감싸는 div 첫 자식으로 · 고칠 자리에 「✎」 주석.
+//   ③ 카드 미리보기 상태(peekSimple) — 처음엔 닫힌 틀은 미리보기만 열린 판(details open + data-bl-peek). 복사 글은 mart.js shutPeek 가 원래(닫힌) 상태로.
+//   ④ 목록(withSimpleFrames · splitView) — 새 틀이 첫 화면, 예전 글꾸는 「옛날 버전」으로 접어 둬요.
 // char-tone.js 는 꼬리를 달아 불러요 — 톤 사다리가 들어가기 전 사본이 캐시에 남아 있으면 이름을 못 찾아 마트 전체가 멈추니까요(같은 파일을 꼬리 없이 부르는 tone-geulkku.js 는 그대로)
-import { toneLadder, fitInk, bandColor, over, speakerColor, tone, NEUTRAL_LADDER } from './lib/log-copy/shared/char-tone.js?v=20261111a';
+import { toneLadder, bandColor, speakerColor, tone, NEUTRAL_LADDER } from './lib/log-copy/shared/char-tone.js?v=20261111a';
 import { kkangtongReady } from './tone-geulkku.js?v=20261110v';
 
-/** 깃발: 심플 새 틀을 목록에 보일지. false = 목록 · 개수 · 기존 틀 출력이 깃발을 넣기 전과 같아요(simple-index.json 도 안 받아요) */
+/** 깃발: 심플 새 틀을 목록에 보일지. true = 새 틀이 첫 화면 · 예전 글꾸는 「옛날 버전」 / false = 깃발을 넣기 전과 같아요(simple-index.json 도 안 받아요) */
 export const SIMPLE_FRAMES_ENABLED = false;
 /** 심플 새 틀 목록(index.json 과 같은 꼴의 items · categories · chunks) — tools/geulkku-simple.mjs 가 써요 */
 export const SIMPLE_INDEX = 'simple-index.json';
 
 /**
- * 틀 계약 가운데 아직 정해지지 않은 것(이식판이 확정되면 여기만 맞춰요).
+ * 틀 계약 가운데 이식판이 정한 값 · 아직 안 정한 값(이식판이 바뀌면 여기만 맞춰요).
  *   blockSep  틀 <style> 안 「기본 규칙 / 화자 색 블록 / 소품 색 블록」 사이 구분(이식판 make-isik.cjs 는 빈 줄)
- *   cv        뿌리 gk-cv-<이름> → 그 틀을 만들 때 쓴 캐릭터 색(이식판 VAR · KA · KB) — 색 블록의 톤 값을 이 색의 사다리로 알아봐요
- *   faces     틀 번호 → 원래 판(orig) · 반대 판(alt)의 [틀 면, 로그 면] 바탕(이름 글자 · 밑줄 · 이름표 대비를 맞출 바탕) — 이식판 faces 표 · tn-n/tn-d 규칙에서 옮겼어요(04 밤 로그 면은 추정)
- *   peek      카드 미리보기에서 열어 둘 틀 번호(D4 「추천대로」: 01 열림 · 05 우린 판 · 07 켠 판 · 08 열림)
- *   tagMix    어두운 판 소리 카드 이름표 바탕 = 로그 면 위에 화자색을 이만큼 섞은 색(이식판 #1f3246 · #1c3554 에 가까운 값 · 추정) · 밝은 판은 사다리 c100
- *   speakers  화자 표시 글자(M = 주인공 · A · B …) — 주인공 자리 차례(M 이 있으면 M, 없으면 A)
+ *   cv        뿌리 gk-cv-<이름> → 그 틀을 만들 때 쓴 캐릭터 색(이식판 VAR · KA · KB)
+ *   faces     틀 이름 → 원래 판(orig) · 반대 판(alt)의 [틀 면, 로그 면] — 이식판 faces 표 · tn-n/tn-d 규칙에서 옮겼어요(04 밤 로그 면은 추정).
+ *             표에 없는 틀(09~18 · q01~q10)은 그 틀 <style> 에서 읽어요(facesOf)
+ *   peek      카드 미리보기에서 열어 둘 틀(설명서 9-1 · D4: 01 열림 · 05 우린 판 · 07 켠 판 · 08 열림) — 새 틀은 tools/geulkku-simple.mjs DEFS 의 peek 로
+ *   tagMix    다른 색 화자의 소리 이름표 바탕 = 그 판 바탕 위에 화자색을 이만큼(밝은 판 .11 · 어두운 판 .15 — 시안 파랑 · 분홍 이름표에 가까운 값 · 시안은 식 없이 손으로 맞춤)
+ *   mainOrder 주인공 화자 글자 차례(M 이 있으면 M, 없으면 A)
+ *   ink       바탕 종류별 본문 글자색(캐릭터 없음일 때 이름 글자 · 마트 카드 자리 그림)
  */
 export const SIMPLE_CONTRACT = Object.freeze({
     blockSep: '\n\n',
     cv: Object.freeze({ bl: '#3aa7ff', pk: '#ff5fa2', mt: '#3ccfbf', yl: '#f0d878', pp: '#b799e8' }),
     faces: Object.freeze({
-        1: { orig: ['#fbfbfa', '#fbfbfa'], alt: ['#25272b', '#25272b'] },
-        2: { orig: ['#ffffff', '#f5f5f6'], alt: ['#25272b', '#1c1e21'] },
-        3: { orig: ['#f8f9fa', '#f8f9fa'], alt: ['#25272b', '#25272b'] },
-        4: { orig: ['#ffffff', '#ffffff'], alt: ['#25272b', '#1c1e21'] },
-        5: { orig: ['#fbfaf7', '#f3f1ec'], alt: ['#25272b', '#1c1e21'] },
-        6: { orig: ['#25272b', '#1c1e21'], alt: ['#ffffff', '#f5f5f6'] },
-        7: { orig: ['#1f2124', '#1f2124'], alt: ['#fbfbfa', '#fbfbfa'] },
-        8: { orig: ['#13233b', '#0d1a2d'], alt: ['#ffffff', '#f5f5f6'] },
+        k1: { orig: ['#fbfbfa', '#fbfbfa'], alt: ['#25272b', '#25272b'] },
+        k2: { orig: ['#ffffff', '#f5f5f6'], alt: ['#25272b', '#1c1e21'] },
+        k3: { orig: ['#f8f9fa', '#f8f9fa'], alt: ['#25272b', '#25272b'] },
+        k4: { orig: ['#ffffff', '#ffffff'], alt: ['#25272b', '#1c1e21'] },
+        k5: { orig: ['#fbfaf7', '#f3f1ec'], alt: ['#25272b', '#1c1e21'] },
+        k6: { orig: ['#25272b', '#1c1e21'], alt: ['#ffffff', '#f5f5f6'] },
+        k7: { orig: ['#1f2124', '#1f2124'], alt: ['#fbfbfa', '#fbfbfa'] },
+        k8: { orig: ['#13233b', '#0d1a2d'], alt: ['#ffffff', '#f5f5f6'] },
     }),
-    peek: Object.freeze([1, 5, 7, 8]),
-    tagMix: 0.15,
+    peek: Object.freeze(['k1', 'k5', 'k7', 'k8']),
+    tagMix: Object.freeze({ light: 0.11, dark: 0.15 }),
     mainOrder: Object.freeze(['M', 'A']),
+    ink: Object.freeze({ 'gk-tl': '#26272b', 'gk-td': '#e1e1e5', 'gk-tx': '#e4e9f0' }),
 });
 const BASES = ['gk-tl', 'gk-td', 'gk-tx'];
 const TN = ['gk-tn-d', 'gk-tn-n'];
+const FRAME_KEY = /^gk-((?:k|q)\d+)$/;
 // 화자 표시 클래스 = gk-<소문자><대문자 한 글자>: nA 이름 · dA 띠 · sA 소리 이름표 · uA 밑줄 · 그 밖의 것(04 의 cA 커서처럼)은 「그 화자 색 포인트」
 const SPEAKER_SEL = /\.gk-[a-z]+[A-Z](?![\w-])|media-controls-timeline/;
 const SPEAKER_CLASS = /^gk-([a-z]+)([A-Z])$/;
@@ -59,16 +63,62 @@ export const lineFilter = (hex) => {
     return `invert(${L >= 0.6 ? '.5' : '.55'}) sepia(1) saturate(9) hue-rotate(${rot}deg) brightness(${Number(br.toFixed(2))})`;
 };
 
+// ── 시안 색 식(심플-새틀-시안/make-isik.cjs 의 fit 과 같은 식 — 시험이 시안 05 · 07 값으로 맞대 봐요) ──
+const h2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const rgb2h = c => '#' + c.map(v => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('');
+function toHsl(hex) {
+    const [r, g, b] = h2rgb(hex).map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    if (!d) return [0, 0, l];
+    const sat = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    const hue = mx === r ? ((g - b) / d + (g < b ? 6 : 0)) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return [hue * 60, sat, l];
+}
+function fromHsl(h, sat, l) {
+    const f = n => { const k = (n + h / 30) % 12, a = sat * Math.min(l, 1 - l); return 255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))); };
+    return rgb2h([f(0), f(8), f(4)]);
+}
+const lin = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+const lum = hex => { const [r, g, b] = h2rgb(hex); return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b); };
+const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+/** 시안 글자 맞춤: 같은 색상 · 채도에서 HSL 명도만 바탕 반대쪽으로 0.01씩 옮겨 대비 want 까지 */
+export function sianFit(C, bg, want = 4.6) {
+    let [h, sat, l] = toHsl(C); const dir = lum(bg) > 0.4 ? -0.01 : 0.01;
+    for (let i = 0; i < 100 && ratio(fromHsl(h, sat, l), bg) < want; i++) l = Math.min(1, Math.max(0, l + dir));
+    return fromHsl(h, sat, l);
+}
+const mix = (K, bg, a) => { const k = h2rgb(K), b = h2rgb(bg); return rgb2h(k.map((v, i) => v * a + b[i] * (1 - a))); };
+const sianBand = K => `rgba(${h2rgb(K).join(',')},.18)`;
+
 // 뿌리 div 여는 태그 + 바로 안 첫 <style>
 const ROOT_RE = /^(\s*)<div\b([^>]*?)\sclass="(gk(?:\s[^"]*)?)"([^>]*)>(\s*)<style>((?:(?!<\/?style)[\s\S])*)<\/style>/;
 
-/** 틀 HTML 을 읽어요: 뿌리 클래스 · 틀 번호 · 바탕(tl/td/tx) · 캐릭터 색 클래스 · <style> 세 덩이 · 화자 · 소리 카드. 심플 새 틀 꼴이 아니면 null */
+/** CSS 덩이 → 규칙 글 목록(맨 위 단계에서 나눠요 · 따옴표 안 { } 는 그대로) */
+function rulesOf(css) {
+    const out = []; let depth = 0, quote = '', start = 0;
+    for (let i = 0; i < css.length; i++) {
+        const ch = css[i];
+        if (quote) { if (ch === '\\') i++; else if (ch === quote) quote = ''; continue; }
+        if (ch === '"' || ch === "'") quote = ch;
+        else if (ch === '{') depth++;
+        else if (ch === '}') { depth--; if (depth === 0) { out.push(css.slice(start, i + 1).trim()); start = i + 1; } }
+    }
+    return out.filter(Boolean);
+}
+const selOf = rule => rule.slice(0, rule.indexOf('{'));
+const bodyOf = rule => rule.slice(rule.indexOf('{'));
+const modeOf = base => (base === 'gk-tl' ? 'light' : 'dark');
+const cvNameOf = K => (K ? K.slice(1) : 'none');
+/** 한 선택자(쉼표로 나눈 하나)가 가리키는 화자 글자들(진행 선 규칙은 소리 카드 화자) */
+const speakersOfSel = (item, soundX) => (/media-controls-timeline/.test(item) ? [soundX || '?'] : [...item.matchAll(/\.gk-[a-z]+([A-Z])(?![\w-])/g)].map(m => m[1]));
+
+/** 틀 HTML 을 읽어요: 뿌리 클래스 · 틀 이름(k1 · q01 …) · 바탕(tl/td/tx) · 캐릭터 색 클래스 · <style> 세 덩이 · 화자 · 소리 카드. 심플 새 틀 꼴이 아니면 null */
 export function simpleFrameInfo(html) {
     const text = String(html ?? '');
     const m = text.match(ROOT_RE);
     if (!m) return null;
     const classes = m[3].split(/\s+/).filter(Boolean);
-    const no = Number((classes.find(c => /^gk-k\d$/.test(c)) || '').slice(4)) || 0;
+    const key = (classes.map(c => (c.match(FRAME_KEY) || [])[1]).find(Boolean)) || '';
+    const no = /^k\d+$/.test(key) ? Number(key.slice(1)) : 0;
     const base = classes.find(c => BASES.includes(c)) || null;
     const cvClass = classes.find(c => /^gk-cv-[\w-]+$/.test(c)) || null;
     const cvName = cvClass ? cvClass.slice(6) : null;
@@ -86,30 +136,28 @@ export function simpleFrameInfo(html) {
             const t = (item.trim().match(/\.gk-([a-z]+)[A-Z]$/) || [])[1];
             if (!t || OWN_TYPES.includes(t)) continue;
             const props = extra[t] ??= new Set();
-            for (const d of r.slice(r.indexOf('{') + 1, -1).split(';')) { const k = d.split(':')[0].trim(); if (/color$/.test(k) && k !== '-webkit-text-fill-color') props.add(k); }
+            for (const d of bodyOf(r).slice(1, -1).split(';')) { const k = d.split(':')[0].trim(); if (/color$/.test(k) && k !== '-webkit-text-fill-color') props.add(k); }
         }
     }
     const soundBy = [...rest.matchAll(/\sclass="[^"]*\bgk-sn\s+gk-s([A-Z])\b[^"]*"/g)].map(x => x[1]);
-    return { no, base, classes, cvClass, cvName, K0, css, base_css: parts[0], color_css: parts.slice(1).join('\n'), speakers, extra, soundBy, used, audio: /<audio\b/.test(rest), match: m };
+    return { key, no, base, classes, cvClass, cvName, K0, css, parts, base_css: parts[0], color_css: parts.slice(1).join('\n'), speakers, extra, soundBy, used, audio: /<audio\b/.test(rest), match: m };
 }
 
-/** CSS 덩이 → 규칙 글 목록(맨 위 단계에서 나눠요 · 따옴표 안 { } 는 그대로) */
-function rulesOf(css) {
-    const out = []; let depth = 0, quote = '', start = 0;
-    for (let i = 0; i < css.length; i++) {
-        const ch = css[i];
-        if (quote) { if (ch === '\\') i++; else if (ch === quote) quote = ''; continue; }
-        if (ch === '"' || ch === "'") quote = ch;
-        else if (ch === '{') depth++;
-        else if (ch === '}') { depth--; if (depth === 0) { out.push(css.slice(start, i + 1).trim()); start = i + 1; } }
-    }
-    return out.filter(Boolean);
+/** 원래 판 · 반대 판의 [틀 면, 로그 면] — 표(SIMPLE_CONTRACT.faces)에 없으면 그 틀 <style> 에서 읽어요 */
+export function facesOf(info, origBase) {
+    if (SIMPLE_CONTRACT.faces[info.key]) return SIMPLE_CONTRACT.faces[info.key];
+    const k = info.key.replace(/[^\w-]/g, ''), all = rulesOf(info.css);
+    const find = (re) => {
+        for (const r of all) for (const item of selOf(r).split(',')) if (re.test(item.trim())) { const v = (bodyOf(r).match(/background-color:\s*(#[0-9a-f]{6})/i) || [])[1]; if (v) return v.toLowerCase(); }
+        return null;
+    };
+    const cv = '(?:\\.gk-cv-[\\w-]+)?', b = `(?:\\.${origBase})?`;
+    const oc = find(new RegExp(`^\\.gk-${k}${cv}${b}$`)), ol = find(new RegExp(`^\\.gk-${k}${cv}${b} \\.gk-lg$`));
+    const ac = find(new RegExp(`^\\.gk-${k}${cv}\\.gk-tn-[nd]$`)), al = find(new RegExp(`^\\.gk-${k}${cv}\\.gk-tn-[nd] \\.gk-lg$`));
+    const light = modeOf(origBase) === 'light';
+    const def = dark => (dark ? ['#25272b', '#1c1e21'] : ['#ffffff', '#f5f5f6']);
+    return { orig: [oc || def(!light)[0], ol || oc || def(!light)[1]], alt: [ac || def(light)[0], al || ac || def(light)[1]] };
 }
-const selOf = rule => rule.slice(0, rule.indexOf('{'));
-const modeOf = base => (base === 'gk-tl' ? 'light' : 'dark');
-const altBase = base => (base === 'gk-tl' ? 'gk-td' : 'gk-tl');
-const cvNameOf = K => (K ? K.slice(1) : 'none');
-const rgbaOf = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16}, ${(n >> 8) & 255}, ${n & 255}, ${a})`; };
 
 /** 원래 색 블록에서 화자마다 그 틀이 쓴 대사색(띠 rgba 의 색 · 없으면 null) */
 function speakerColorsOf(colorCss) {
@@ -121,21 +169,21 @@ function speakerColorsOf(colorCss) {
     return out;
 }
 
-/** 한 판(바탕 하나)의 화자 색 규칙 */
-function speakerRules({ sel, mode, card, log, speakers, colors, used, extra = {} }) {
+/** 한 판(바탕 하나)의 화자 색 규칙 — 색이 바뀐 화자만(시안 식) */
+function speakerRules({ sel, base, mode, card, log, speakers, colors, used, extra = {} }) {
     const out = [], dark = mode === 'dark';
     const neutral = tone(null, { mode });
     for (const X of speakers) {
         const K = colors[X] ?? null;
-        const name = K ? fitInk(K, log) : neutral.text;
-        const rule = fitInk(K || NEUTRAL_LADDER.c500, card);
-        const tag = dark ? over(rgbaOf(K || NEUTRAL_LADDER.c500, SIMPLE_CONTRACT.tagMix), log) : toneLadder(K).c100;
-        const tagInk = K ? fitInk(K, tag) : neutral.text;
-        if (used.has(`gk-d${X}`)) out.push(`${sel} .gk-d${X}{background-color:${bandColor(K, mode)}}`);
+        const name = K ? sianFit(K, log) : SIMPLE_CONTRACT.ink[base] || neutral.text;
+        const rule = sianFit(K || NEUTRAL_LADDER.c500, card);
+        const tag = mix(K || NEUTRAL_LADDER.c500, dark ? log : '#ffffff', SIMPLE_CONTRACT.tagMix[dark ? 'dark' : 'light']);
+        const tagInk = K ? sianFit(K, tag) : name;
+        if (used.has(`gk-d${X}`)) out.push(`${sel} .gk-d${X}{background-color:${K ? sianBand(K) : bandColor(null, mode)}}`);
         if (used.has(`gk-n${X}`)) out.push(`${sel} .gk-nm.gk-n${X}{color:${name};-webkit-text-fill-color:${name}}`);
         if (used.has(`gk-s${X}`)) out.push(`${sel} .gk-sn.gk-s${X}{color:${tagInk};-webkit-text-fill-color:${tagInk};background-color:${tag}}`);
         if (used.has(`gk-u${X}`)) out.push(`${sel} .gk-u${X}{background-color:${rule}}`);
-        // 그 밖의 화자 표시: 글자색이면 이름과 같은 값, 면 · 선 색이면 밑줄과 같은 값(틀 면 대비 4.6)
+        // 그 밖의 화자 표시: 글자색이면 이름과 같은 값, 면 · 선 색이면 밑줄과 같은 값
         for (const [t, props] of Object.entries(extra)) {
             if (!used.has(`gk-${t}${X}`) || !props.size) continue;
             out.push(`${sel} .gk-${t}${X}{${[...props].map(k => (k === 'color' ? `color:${name};-webkit-text-fill-color:${name}` : `${k}:${rule}`)).join(';')}}`);
@@ -144,60 +192,71 @@ function speakerRules({ sel, mode, card, log, speakers, colors, used, extra = {}
     return out;
 }
 
+/** 지금 뿌리 클래스에서 원래 판 바탕을 알아내요(뿌리에 tn-* 가 있으면 지금은 반대 판) */
+function originalBase(info) {
+    if (!info.classes.some(c => TN.includes(c))) return info.base;
+    if (info.base !== 'gk-tl') return 'gk-tl';
+    return new RegExp(`\\.gk-tx(?![\\w-])`).test(info.css) ? 'gk-tx' : 'gk-td';
+}
+
 /**
  * 심플 새 틀을 캐릭터 색 K 로 다시 칠해요(낮 · 밤은 뿌리 클래스만 바꿔요).
- * @param {string} html 틀 HTML(조각의 preview — 원래 판이든 이 함수가 칠한 판이든)
+ * @param {string} html 틀 HTML(조각의 preview — 원래 판)
  * @param {string|null} K 캐릭터 대사색(없으면 무채 사다리)
  * @param {{ mode?: 'light'|'dark', main?: string }} [options] main: 주인공 화자 글자(없으면 M → A)
  * @returns {string} 꼴이 아니면 받은 그대로
  */
 export function toneSimple(html, K, { mode = 'dark', main } = {}) {
     const info = simpleFrameInfo(html);
-    if (!info || !info.no || !info.base || info.K0 === undefined) return html;
+    if (!info || !info.key || !info.base || info.K0 === undefined) return html;
     const k = speakerColor(K);
-    const faces = SIMPLE_CONTRACT.faces[info.no];
-    // 원래 판 바탕: 뿌리에 tn-* 가 있으면 지금은 반대 판이에요
-    const flipped = info.classes.some(c => TN.includes(c));
-    const origBase = flipped ? (info.base === 'gk-tl' ? (info.no === 8 ? 'gk-tx' : 'gk-td') : 'gk-tl') : info.base;
+    const origBase = originalBase(info), faces = facesOf(info, origBase);
     const origMode = modeOf(origBase), want = mode === 'light' ? 'light' : 'dark';
-    const alt = origBase === 'gk-tx' ? 'gk-tl' : altBase(origBase);
+    const alt = origBase === 'gk-tl' ? 'gk-td' : 'gk-tl';
     const nowBase = want === origMode ? origBase : alt;
     const nowTn = want === origMode ? null : (want === 'dark' ? 'gk-tn-n' : 'gk-tn-d');
     const cv = `gk-cv-${cvNameOf(k)}`;
+    const renameCv = s => (info.cvClass ? s.split(`.${info.cvClass}`).join(`.${cv}`) : s);
     // ① 뿌리 클래스: gk 바로 뒤에 바탕 · 낮밤, 캐릭터 색 클래스는 새 색 이름
     const kept = info.classes.filter(c => c !== 'gk' && !BASES.includes(c) && !TN.includes(c)).map(c => (c === info.cvClass ? cv : c));
     const rootClass = ['gk', nowBase, nowTn, ...kept].filter(Boolean).join(' ');
-    // ② 색 블록: 화자 색은 새로 만들고, 소품 톤은 옛 색 사다리 → 새 색 사다리로 바꿔요
+    // ② 화자 색: 색이 그대로인 화자는 시안 규칙 그대로 · 바뀐 화자만 새로
     const colors0 = speakerColorsOf(info.color_css);
-    const mainX = main || SIMPLE_CONTRACT.mainOrder.find(x => info.speakers.includes(x)) || info.speakers[0];
+    // 주인공 = 틀을 만든 캐릭터 색(gk-cv-…)과 같은 색인 화자(03 바인더는 분홍 B) → 없으면 M → A
+    const mainX = main || info.speakers.find(X => info.K0 && colors0[X] === info.K0) || SIMPLE_CONTRACT.mainOrder.find(x => info.speakers.includes(x)) || info.speakers[0];
     const colors = Object.fromEntries(info.speakers.map(X => [X, X === mainX ? k : (colors0[X] ?? null)]));
-    const sel = b => `.gk-k${info.no}.${cv}.${b}`;
-    const spk = [
-        ...speakerRules({ sel: sel(origBase), mode: origMode, card: faces.orig[0], log: faces.orig[1], speakers: info.speakers, colors, used: info.used, extra: info.extra }),
-        ...speakerRules({ sel: sel(alt), mode: origMode === 'light' ? 'dark' : 'light', card: faces.alt[0], log: faces.alt[1], speakers: info.speakers, colors, used: info.used, extra: info.extra }),
+    const same = X => X !== '?' && (colors[X] ?? null) === (colors0[X] ?? null);
+    const soundX = info.soundBy[0];
+    const keepSpeaker = (r) => {   // 화자 규칙 하나 → 그대로 둘 선택자만 남긴 규칙(없으면 null)
+        const items = selOf(r).split(',').filter(item => speakersOfSel(item, soundX).every(same));
+        return items.length ? renameCv(items.join(',')) + bodyOf(r) : null;
+    };
+    const changed = info.speakers.filter(X => !same(X));
+    const sel = b => `.gk-${info.key}.${cv}.${b}`;
+    const fresh = [
+        ...speakerRules({ sel: sel(origBase), base: origBase, mode: origMode, card: faces.orig[0], log: faces.orig[1], speakers: changed, colors, used: info.used, extra: info.extra }),
+        ...speakerRules({ sel: sel(alt), base: alt, mode: origMode === 'light' ? 'dark' : 'light', card: faces.alt[0], log: faces.alt[1], speakers: changed, colors, used: info.used, extra: info.extra }),
     ];
-    const soundK = info.soundBy.length ? colors[info.soundBy[0]] : null;
-    const lf = info.audio ? lineFilter(soundK) : '';
-    if (lf) spk.push(`.gk-k${info.no}.gk-k${info.no}.gk-k${info.no}.${cv} audio::-webkit-media-controls-timeline{filter:${lf}!important}`);
+    if (info.audio && soundX && !same(soundX)) { const lf = lineFilter(colors[soundX]); if (lf) fresh.push(`.gk-${info.key}.gk-${info.key}.gk-${info.key}.${cv} audio::-webkit-media-controls-timeline{filter:${lf}!important}`); }
+    // ③ 소품 톤: 옛 색 사다리 → 새 색 사다리(값만) · 색 블록 안 화자 규칙(05 · 07 의 M)은 ② 와 같은 기준
     const from = toneLadder(info.K0), to = toneLadder(k), swap = new Map();
     for (const step of Object.keys(from)) if (!swap.has(from[step].toLowerCase())) swap.set(from[step].toLowerCase(), to[step]);
-    const prop = rulesOf(info.color_css).filter(r => !SPEAKER_SEL.test(selOf(r))).map((r) => {
-        const at = r.indexOf('{');
-        const s = info.cvClass ? selOf(r).split(`.${info.cvClass}`).join(`.${cv}`) : selOf(r);
-        return s + r.slice(at).replace(HEX6, h => swap.get(h.toLowerCase()) ?? h);
-    });
+    const chunk = css => rulesOf(css).map(r => (SPEAKER_SEL.test(selOf(r)) ? keepSpeaker(r) : renameCv(selOf(r)) + bodyOf(r).replace(HEX6, h => swap.get(h.toLowerCase()) ?? h))).filter(Boolean);
+    const spk = [...chunk(info.parts[1] || ''), ...fresh];
+    const prop = info.parts.slice(2).flatMap(chunk);
     const css = [info.base_css, spk.join('\n'), prop.join('\n')].filter(Boolean).join(SIMPLE_CONTRACT.blockSep);
     const m = info.match;
     let out = `${m[1]}<div${m[2]} class="${rootClass}"${m[4]}>${m[5]}<style>\n${css}\n</style>` + html.slice(m.index + m[0].length);
-    // ③ 소리 카드 단추 색(깡통 기본은 어두운 판 — 밝은 판은 light 를 꼭 적어요)
+    // ④ 소리 카드 단추 색(깡통 기본은 어두운 판 — 밝은 판은 light 를 꼭 적어요)
     out = out.replace(/(<audio\b[^>]*\sstyle="[^"]*color-scheme:)(light|dark)/g, `$1${want}`);
     return out;
 }
 
-/** 카드 미리보기용: 처음엔 닫힌 틀(SIMPLE_CONTRACT.peek)의 첫 details 를 열어 둬요 — data-bl-peek 표시라 복사 글은 mart.js shutPeek 가 다시 닫아요 */
-export function peekSimple(html) {
+/** 카드 미리보기용: 처음엔 닫힌 틀의 첫 details 를 열어 둬요(open 을 안 주면 SIMPLE_CONTRACT.peek) — data-bl-peek 표시라 복사 글은 mart.js shutPeek 가 다시 닫아요 */
+export function peekSimple(html, open) {
     const info = simpleFrameInfo(html);
-    if (!info || !SIMPLE_CONTRACT.peek.includes(info.no)) return String(html ?? '');
+    const on = open ?? (info ? SIMPLE_CONTRACT.peek.includes(info.key) : false);
+    if (!info || !on) return String(html ?? '');
     return String(html).replace(/<details\b(?![^>]*\sopen(?:=|\s|>))([^>]*)>/, '<details$1 open="" data-bl-peek="">');
 }
 
@@ -209,11 +268,39 @@ export function hoistStyle(html) {
     return `${m[1]}<style>${m[6]}</style><div${m[2]} class="${m[3]}"${m[4]}>${m[5]}` + text.slice(m.index + m[0].length).replace(/^\n/, '');
 }
 
-/** 심플 새 틀 「HTML 복사」 글: 틀 <style> + 그림 규칙 + 코멘트 빈칸 · 16px 간격 규칙을 <style> 하나로(감싸는 div 첫 자식) · 위아래 코멘트 빈칸 · 글자색 fill */
-export const simpleReady = html => kkangtongReady(hoistStyle(html));
+/**
+ * 복사 글에서 사람이 고칠 자리 — 그 클래스가 붙은 요소 바로 앞에 짧은 「✎」 주석을 달아요(화면에는 안 보여요).
+ * 새 틀(09~ · q01~)에 고칠 글자가 든 소품이 있으면 여기에 한 줄 더해요.
+ */
+export const EDIT_MARKS = Object.freeze([
+    ['gk-tt', '제목'],
+    ['gk-nr', '지문'],
+    ['gk-nm', '화자 이름'],
+    ['gk-dl', '대사'],
+    ['gk-sd', '소리 카드 — 이름표 글자 · audio 의 src(mp3 주소)'],
+    ['gk-hl', '숨은 한 줄(찻물이 차면 나와요)'],
+]);
+const MARK_HEAD = '<!-- ▲ 위 스타일 칸은 틀 모양 · 색이에요(고치지 않아도 돼요) · ▼ 아래는 글 — 「✎」 주석 바로 뒤 요소의 글자만 바꿔요 · 대사 · 지문 줄은 복사해 늘리거나 지워도 돼요 -->';
+/** 고칠 자리 주석 달기(이미 달았으면 그대로) */
+export function markEdits(html) {
+    const text = String(html ?? '');
+    if (text.includes('「✎」')) return text;
+    const at = text.indexOf('</style>');
+    if (at < 0) return text;
+    const head = text.slice(0, at + 8), body = text.slice(at + 8);
+    const marks = new Map(EDIT_MARKS);
+    const marked = body.replace(/<([a-z][a-z0-9]*)\b([^>]*?)\sclass="([^"]*)"/g, (all, tag, pre, cls) => {
+        const hit = cls.split(/\s+/).find(c => marks.has(c));
+        return hit ? `<!-- ✎ ${marks.get(hit)} -->${all}` : all;
+    });
+    return `${head}\n${MARK_HEAD}${marked.startsWith('\n') ? '' : '\n'}${marked}`;
+}
+
+/** 심플 새 틀 「HTML 복사」 글: 틀 <style> + 그림 규칙 + 코멘트 빈칸 · 16px 간격 규칙을 <style> 하나로(감싸는 div 첫 자식) · 위아래 코멘트 빈칸 · 글자색 fill · 고칠 자리 주석 */
+export const simpleReady = html => markEdits(kkangtongReady(hoistStyle(html)));
 
 /**
- * 글꾸 목록(index.json 을 읽은 것)에 심플 새 틀을 붙여요. 깃발이 꺼져 있으면 받은 data 를 그대로(같은 객체) 돌려줘요.
+ * 글꾸 목록(index.json 을 읽은 것)에 심플 새 틀을 붙여요(새 틀이 앞). 깃발이 꺼져 있으면 받은 data 를 그대로(같은 객체) 돌려줘요.
  * @param {{ items, categories, chunks, count }} data
  * @param {{ enabled?: boolean, load?: () => Promise<object> }} [options] load: simple-index.json 을 읽는 함수(시험이 바꿔 끼워요)
  */
@@ -225,14 +312,21 @@ export async function withSimpleFrames(data, { enabled = SIMPLE_FRAMES_ENABLED, 
     const rows = (extra?.items || []).filter(x => x && x.id && x.simple);
     if (!rows.length) return data;
     const ids = new Set(rows.map(x => x.id));
-    const keep = (data.items || []).filter(x => !ids.has(x.id));
-    // 차례: 노래 앨범 뒤(없으면 심플 그림체 끝) — tools/geulkku-song.mjs 의 자리 잡기와 같은 생각
-    let at = keep.map(x => x.category).lastIndexOf('song') + 1;
-    if (at <= 0) { at = keep.findIndex(x => (x.style || '일러스트') !== '심플'); if (at < 0) at = keep.length; }
-    const items = [...keep.slice(0, at), ...rows, ...keep.slice(at)];
+    const items = [...rows, ...(data.items || []).filter(x => !ids.has(x.id))];
     const newCats = (extra.categories || []).filter(c => !(data.categories || []).some(d => d.id === c.id));
-    const cats = [...(data.categories || [])];
-    const after = cats.findIndex(c => c.id === 'song');
-    cats.splice(after >= 0 ? after + 1 : cats.length, 0, ...newCats);
-    return { ...data, count: items.length, categories: cats, chunks: { ...(data.chunks || {}), ...(extra.chunks || {}) }, items };
+    return { ...data, count: items.length, categories: [...newCats, ...(data.categories || [])], chunks: { ...(data.chunks || {}), ...(extra.chunks || {}) }, items };
+}
+
+/**
+ * 목록 나누기: 새 틀(simple) = 첫 화면 · 예전 글꾸 = 「옛날 버전」(예전과 같은 규칙 — 컨셉(이름) 하나에 하나 · 주소 #id 로 온 디자인은 같이).
+ * @param {object[]} items 목록 전부(withSimpleFrames 를 거친 것)
+ * @param {{ showAll?: boolean, hashId?: string, styleOf: (item) => string }} options
+ * @returns {{ fresh: object[], old: object[], openOld: boolean }} openOld: 처음에 옛날 버전을 펼칠지(새 틀이 없거나 주소가 예전 글꾸를 가리킬 때)
+ */
+export function splitView(items, { showAll = false, hashId = '', styleOf }) {
+    const fresh = items.filter(x => x.simple), oldAll = items.filter(x => !x.simple);
+    const keepIds = new Set();
+    { const by = new Map(); for (const x of oldAll) { const a = by.get(x.name) ?? []; a.push(x); by.set(x.name, a); } for (const a of by.values()) { const pickOne = a.find(x => styleOf(x) === '심플' && !x.builtin) || a.find(x => x.builtin) || a.find(x => x.photo || x.copyOnly) || a[0]; keepIds.add(pickOne.id); } }   // 컨셉(이름) 하나에 하나 — 분류 숫자와 목록 개수가 같아요(11-10 그대로)
+    const old = showAll ? oldAll : oldAll.filter(x => keepIds.has(x.id) || x.id === hashId);
+    return { fresh, old, openOld: !fresh.length || (!!hashId && oldAll.some(x => x.id === hashId)) };
 }
