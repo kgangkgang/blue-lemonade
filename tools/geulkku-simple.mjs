@@ -102,6 +102,16 @@ const martAudio = (html) => {
     return `<audio${a}>`;
   });
 };
+/** 마우스로 누를 때 summary 둘레 파란 네모 테를 숨겨요(키보드 :focus-visible 테는 그대로) — 첫 묶음 이식판에 빠진 한 줄(둘째 · 셋째 · 대표 10 이식판과 같은 꼴) · 이미 있으면 그대로 */
+export const FOCUS_RULE = key => `.gk-${key} summary:focus:not(:focus-visible){outline:none}`;
+const focusRing = (html) => {
+  const key = (html.match(/^\s*<div\b[^>]*\sclass="gk [^"]*\bgk-((?:k|q)\d+)\b/) || [])[1];
+  if (!key || !/<summary\b/.test(html) || html.includes(FOCUS_RULE(key))) return html;
+  const at = html.indexOf(`.gk-${key} summary:focus-visible{`);
+  if (at < 0) return html;
+  const end = html.indexOf('\n', at);
+  return `${html.slice(0, end)}\n${FOCUS_RULE(key)}${html.slice(end)}`;
+};
 /** 붙이면 지워지거나 쓰면 안 되는 것 */
 function problems(html) {
   const bad = [];
@@ -132,7 +142,7 @@ export function frameHtml(d) {
   const file = fileOf(d);
   if (!file) throw new Error(`${d.id}: 틀 파일이 없어요`);
   const raw = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
-  const html = fillSlots(martAudio(stripAlias(raw.trim())), d.values);
+  const html = focusRing(fillSlots(martAudio(stripAlias(raw.trim())), d.values));
   const bad = problems(html);
   if (bad.length) throw new Error(`${d.id}: ${bad.join(' · ')}`);
   const info = sf.simpleFrameInfo(html);
