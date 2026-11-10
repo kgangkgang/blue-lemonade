@@ -28,10 +28,11 @@ async function test(name, fn) {
     catch (e) { fail++; console.log(`실패  ${name}\n      ${String(e.message).split('\n').slice(0, 6).join('\n      ')}`); }
 }
 
-// 견본 틀(생성기가 쓴 조각)
+// 견본 틀: tools/simple-frames/sample-08-blind.html 을 생성기와 같은 길로(미리보기 판 — DEFS 에서 견본을 빼도 시험은 돌아요) · 목록 자료는 생성기가 쓴 것
 const DIR = path.join(MART, 'data/geulkku');
 const six = JSON.parse(fs.readFileSync(path.join(DIR, sf.SIMPLE_INDEX), 'utf8'));
-const sample = JSON.parse(fs.readFileSync(path.join(DIR, six.chunks['sp-simple'].file), 'utf8')).items['simple-sample'].preview;
+const gen = await imp(path.join(ROOT, 'tools/geulkku-simple.mjs'));
+const sample = gen.frameHtml(gen.SAMPLE_DEF).preview;
 const styleOf = h => h.match(/<style>\n?([\s\S]*?)\n?<\/style>/)[1];
 const partsOf = h => styleOf(h).split('\n\n');
 const rootOf = h => h.match(/^<div class="([^"]*)"/)[1];
@@ -160,6 +161,18 @@ await test('화자 색: 주인공 A = 캐릭터 색(이름 fitInk 4.6 · 띠 ban
             for (const l of rulesWith(out, 'color:')) { const c = l.match(/(?:^|[{;])color:([^;}]+)/); if (c) assert.ok(l.includes(`-webkit-text-fill-color:${c[1]}`), l); }
         }
         assert.equal(rulesWith(out, 'media-controls-timeline{filter')[0].match(/filter:([^!]+)!/)[1], sf.lineFilter(K));
+    }
+});
+
+await test('그 밖의 화자 표시(04 줄자의 gk-cA 커서 같은 것)도 그 화자 색 포인트로 다시 칠해요(면 · 선 = 틀 면 대비 4.6)', () => {
+    const h = sample.replace('.gk-k8.gk-tl .gk-uA{background-color:#0a69ae}', '.gk-k8.gk-tl .gk-uA{background-color:#0a69ae}\n.gk-k8.gk-tl .gk-cA{background-color:#0a69ae}').replace('<div class="gk-ft">', '<div class="gk-ft"><span class="gk-cA"></span>');
+    assert.notEqual(h, sample);
+    assert.deepEqual([...sf.simpleFrameInfo(h).extra.c], ['background-color']);
+    for (const K of ['#3ccfbf', '#ff5fa2']) {
+        const out = sf.toneSimple(h, K, { mode: 'light' }), cv = `.gk-k8.gk-cv-${K.slice(1)}`;
+        assert.equal(valueOf(out, `${cv}.gk-tl .gk-cA`, 'background-color'), ct.fitInk(K, '#ffffff'));
+        assert.equal(valueOf(out, `${cv}.gk-tx .gk-cA`, 'background-color'), ct.fitInk(K, '#13233b'));
+        assert.equal(rulesWith(out, '#0a69ae').length, 0, '옛 값이 남지 않아요');
     }
 });
 

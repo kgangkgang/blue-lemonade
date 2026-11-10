@@ -43,7 +43,10 @@ export const SIMPLE_CONTRACT = Object.freeze({
 });
 const BASES = ['gk-tl', 'gk-td', 'gk-tx'];
 const TN = ['gk-tn-d', 'gk-tn-n'];
-const SPEAKER_SEL = /\.gk-[ndsu][A-Z](?![\w-])|media-controls-timeline/;
+// 화자 표시 클래스 = gk-<소문자><대문자 한 글자>: nA 이름 · dA 띠 · sA 소리 이름표 · uA 밑줄 · 그 밖의 것(04 의 cA 커서처럼)은 「그 화자 색 포인트」
+const SPEAKER_SEL = /\.gk-[a-z]+[A-Z](?![\w-])|media-controls-timeline/;
+const SPEAKER_CLASS = /^gk-([a-z]+)([A-Z])$/;
+const OWN_TYPES = ['n', 'd', 's', 'u'];
 const HEX6 = /#[0-9a-f]{6}(?![0-9a-f])/gi;
 
 /** 진행 선 색 필터 — tools/song-templates.cjs lineFilter 와 같은 식(시험이 두 식의 값을 맞대 봐요 · 실측 민트 · 분홍에 맞춘 계산 · 마트-설계 7-4) */
@@ -75,9 +78,19 @@ export function simpleFrameInfo(html) {
     const rest = text.slice(m.index + m[0].length);
     const used = new Set();
     for (const [, v] of rest.matchAll(/\sclass="([^"]*)"/g)) for (const c of v.split(/\s+/)) if (c) used.add(c);
-    const speakers = [...new Set([...used].map(c => (c.match(/^gk-[ndsu]([A-Z])$/) || [])[1]).filter(Boolean))].sort();
+    const speakers = [...new Set([...used].map(c => (c.match(SPEAKER_CLASS) || [])[2]).filter(Boolean))].sort();
+    // 그 밖의 화자 표시(n · d · s · u 말고): 종류 → 원래 색 블록에서 그 종류가 칠한 색 속성들
+    const extra = {};
+    for (const r of rulesOf(parts.slice(1).join('\n'))) {
+        for (const item of selOf(r).split(',')) {
+            const t = (item.trim().match(/\.gk-([a-z]+)[A-Z]$/) || [])[1];
+            if (!t || OWN_TYPES.includes(t)) continue;
+            const props = extra[t] ??= new Set();
+            for (const d of r.slice(r.indexOf('{') + 1, -1).split(';')) { const k = d.split(':')[0].trim(); if (/color$/.test(k) && k !== '-webkit-text-fill-color') props.add(k); }
+        }
+    }
     const soundBy = [...rest.matchAll(/\sclass="[^"]*\bgk-sn\s+gk-s([A-Z])\b[^"]*"/g)].map(x => x[1]);
-    return { no, base, classes, cvClass, cvName, K0, css, base_css: parts[0], color_css: parts.slice(1).join('\n'), speakers, soundBy, used, audio: /<audio\b/.test(rest), match: m };
+    return { no, base, classes, cvClass, cvName, K0, css, base_css: parts[0], color_css: parts.slice(1).join('\n'), speakers, extra, soundBy, used, audio: /<audio\b/.test(rest), match: m };
 }
 
 /** CSS 덩이 → 규칙 글 목록(맨 위 단계에서 나눠요 · 따옴표 안 { } 는 그대로) */
@@ -109,7 +122,7 @@ function speakerColorsOf(colorCss) {
 }
 
 /** 한 판(바탕 하나)의 화자 색 규칙 */
-function speakerRules({ sel, mode, card, log, speakers, colors, used }) {
+function speakerRules({ sel, mode, card, log, speakers, colors, used, extra = {} }) {
     const out = [], dark = mode === 'dark';
     const neutral = tone(null, { mode });
     for (const X of speakers) {
@@ -122,6 +135,11 @@ function speakerRules({ sel, mode, card, log, speakers, colors, used }) {
         if (used.has(`gk-n${X}`)) out.push(`${sel} .gk-nm.gk-n${X}{color:${name};-webkit-text-fill-color:${name}}`);
         if (used.has(`gk-s${X}`)) out.push(`${sel} .gk-sn.gk-s${X}{color:${tagInk};-webkit-text-fill-color:${tagInk};background-color:${tag}}`);
         if (used.has(`gk-u${X}`)) out.push(`${sel} .gk-u${X}{background-color:${rule}}`);
+        // 그 밖의 화자 표시: 글자색이면 이름과 같은 값, 면 · 선 색이면 밑줄과 같은 값(틀 면 대비 4.6)
+        for (const [t, props] of Object.entries(extra)) {
+            if (!used.has(`gk-${t}${X}`) || !props.size) continue;
+            out.push(`${sel} .gk-${t}${X}{${[...props].map(k => (k === 'color' ? `color:${name};-webkit-text-fill-color:${name}` : `${k}:${rule}`)).join(';')}}`);
+        }
     }
     return out;
 }
@@ -155,8 +173,8 @@ export function toneSimple(html, K, { mode = 'dark', main } = {}) {
     const colors = Object.fromEntries(info.speakers.map(X => [X, X === mainX ? k : (colors0[X] ?? null)]));
     const sel = b => `.gk-k${info.no}.${cv}.${b}`;
     const spk = [
-        ...speakerRules({ sel: sel(origBase), mode: origMode, card: faces.orig[0], log: faces.orig[1], speakers: info.speakers, colors, used: info.used }),
-        ...speakerRules({ sel: sel(alt), mode: origMode === 'light' ? 'dark' : 'light', card: faces.alt[0], log: faces.alt[1], speakers: info.speakers, colors, used: info.used }),
+        ...speakerRules({ sel: sel(origBase), mode: origMode, card: faces.orig[0], log: faces.orig[1], speakers: info.speakers, colors, used: info.used, extra: info.extra }),
+        ...speakerRules({ sel: sel(alt), mode: origMode === 'light' ? 'dark' : 'light', card: faces.alt[0], log: faces.alt[1], speakers: info.speakers, colors, used: info.used, extra: info.extra }),
     ];
     const soundK = info.soundBy.length ? colors[info.soundBy[0]] : null;
     const lf = info.audio ? lineFilter(soundK) : '';

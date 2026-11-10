@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // 글꾸 마트 「심플 새 틀」 자료 만들기(11-11 길 닦기) — 클래스 + 틀 안 <style> 하나로 된 새 틀(시안 → 이식판)을 마트 조각 · 목록 꼴로 써요.
 // - 실행: node tools/geulkku-simple.mjs [--check]   (node 24 · 외부 의존 없음 · 멱등)
+//         node tools/geulkku-simple.mjs --pull <이식판.html>   이식판에서 틀마다 원래 판 한 벌을 tools/simple-frames/k<번호>.html 로 꺼내요(DEFS 는 손으로)
 //   --check: 쓰지 않고 지금 자료와 같은지만 봐요(다르면 1로 끝나요).
 // - 쓰는 것: mart/data/geulkku/simple-index.json(index.json 과 같은 꼴 — items · categories · chunks) + 조각 sp-simple.<해시8>.json({ items: { <id>: { preview } } }).
 //   index.json 은 건드리지 않아요. 마트는 mart/simple-frames.js 의 깃발 SIMPLE_FRAMES_ENABLED 가 켜져 있을 때만 simple-index.json 을 받아 목록에 붙여요.
@@ -85,15 +86,44 @@ function problems(html) {
   return bad;
 }
 
+/** 틀 한 줄 → { html(복사 글의 처음 상태), preview(카드 미리보기 — 닫힘 틀은 열린 판) } · 지켜야 할 것이 어긋나면 던져요 */
+export function frameHtml(d) {
+  if (!/^[a-z0-9-]{1,15}$/.test(d.id)) throw new Error(`${d.id}: id 는 소문자 · 숫자 · - 로 15자 이하`);
+  const raw = fs.readFileSync(path.join(SRC, d.file), 'utf8').replace(/\r\n/g, '\n');
+  const html = fillSlots(martAudio(stripAlias(raw.trim())), d.values);
+  const bad = problems(html);
+  if (bad.length) throw new Error(`${d.id}: ${bad.join(' · ')}`);
+  return { html, preview: sf.peekSimple(html) };
+}
+/** 시험 · 길 확인용 견본 한 줄(DEFS 에서 빼도 시험은 이 줄로 돌아요) */
+export const SAMPLE_DEF = DEFS.find(d => d.sample) || {
+  id: 'simple-sample', file: 'sample-08-blind.html', sample: true, name: '블라인드(길 시험 견본)', emoji: '🪟', bg: '#13233b', ink: '#e4e9f0', accent: '#3aa7ff', desc: '', values: { 소리: ['s1.mp3'] },
+};
+
+/** --pull <이식판.html>: 이식판에서 틀마다 원래 판(gk-tn-* · gk-noaud 없는 판) 한 벌을 tools/simple-frames/k<번호>.html 로 꺼내요(있으면 덮어써요 · DEFS 는 손으로) */
+export function pull(file) {
+  const text = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+  const out = [];
+  for (const m of text.matchAll(/<div class="gk ([^"]*)">/g)) {
+    const cls = m[1].split(/\s+/);
+    if (cls.some(c => /^gk-tn-|^gk-noaud$/.test(c))) continue;
+    const no = (cls.find(c => /^gk-k\d$/.test(c)) || '').slice(4);
+    if (!no) continue;
+    let depth = 0, end = -1;
+    const re = /<div\b[^>]*>|<\/div>/g; re.lastIndex = m.index;
+    for (let t; (t = re.exec(text));) { depth += t[0][1] === '/' ? -1 : 1; if (!depth) { end = re.lastIndex; break; } }
+    if (end < 0) throw new Error(`k${no}: 닫는 </div> 를 못 찾았어요`);
+    const name = `k${no}.html`;
+    fs.writeFileSync(path.join(SRC, name), `${text.slice(m.index, end)}\n`);
+    out.push(name);
+  }
+  return out;
+}
+
 export function build() {
   const heavy = {}, rows = [];
   for (const d of DEFS) {
-    if (!/^[a-z0-9-]{1,15}$/.test(d.id)) throw new Error(`${d.id}: id 는 소문자 · 숫자 · - 로 15자 이하`);
-    const raw = fs.readFileSync(path.join(SRC, d.file), 'utf8').replace(/\r\n/g, '\n');
-    const html = fillSlots(martAudio(stripAlias(raw.trim())), d.values);
-    const bad = problems(html);
-    if (bad.length) throw new Error(`${d.id}: ${bad.join(' · ')}`);
-    const preview = sf.peekSimple(html);
+    const { html, preview } = frameHtml(d);
     heavy[d.id] = { preview };
     rows.push({ id: d.id, name: d.name, emoji: d.emoji, category: CAT.id, style: '심플', desc: d.desc, c: KEY, copyOnly: true, photo: true, ...(/<audio\b/.test(html) ? { audio: true } : {}), simple: true, ...(d.sample ? { sample: true } : {}), bytes: Buffer.byteLength(html), fx: 'e', bg: d.bg, ink: d.ink, accent: d.accent });
   }
@@ -104,7 +134,13 @@ export function build() {
   return { rows, heavy, text, file, indexText };
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+const MAIN = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (MAIN && process.argv.includes('--pull')) {
+  const got = pull(process.argv[process.argv.indexOf('--pull') + 1]);
+  console.log(`이식판에서 원래 판 ${got.length}틀을 꺼냈어요 → tools/simple-frames/${got.join(' · ')} — DEFS 에 줄을 더한 뒤 node tools/geulkku-simple.mjs`);
+  process.exit(0);
+}
+if (MAIN) {
   const { rows, text, file, indexText } = build();
   const base = JSON.parse(fs.readFileSync(path.join(DIR, 'index.json'), 'utf8'));
   if (CHECK) {
@@ -114,7 +150,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   }
   const oldFile = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')).chunks?.[KEY]?.file : null;
   fs.writeFileSync(path.join(DIR, file), text);
-  if (oldFile && oldFile !== file && fs.existsSync(path.join(DIR, oldFile))) fs.renameSync(path.join(DIR, oldFile), path.join(DIR, `${oldFile}.old`));   // 지우지 않고 이름만 바꿔 둬요
+  if (oldFile && oldFile !== file && fs.existsSync(path.join(DIR, oldFile))) console.log(`옛 조각 ${oldFile} 은 이제 안 써요(지우지 않았어요 · 커밋에 넣지 마세요)`);
   fs.writeFileSync(OUT, indexText);
   const real = rows.filter(x => !x.sample).length;
   console.log(`심플 새 틀 ${rows.length}종(견본 ${rows.length - real}) → ${file}(${Buffer.byteLength(text)}B) · ${sf.SIMPLE_INDEX} · 깃발 ${sf.SIMPLE_FRAMES_ENABLED ? '켜짐' : '꺼짐'}`);
