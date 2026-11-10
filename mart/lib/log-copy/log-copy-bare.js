@@ -1,4 +1,4 @@
-// 원본 omni-next(1.0.7) 의 src/log-copy-bare.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」의 보일 것 칩이 테마 로그 복사와 같은 길로 걷으려고 써요)
+// 원본 블루레몬에이드 1.1.2(codex/release-112)의 src/log-copy-bare.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」 · 「HTML 복사」가 테마 로그 복사와 같은 모양 · 같은 붙여 넣기 꼴로 내려고 써요)
 // 로그 복사 — 1.0.7 「보일 것」 빼기(사용자 「위 아래 글자들 … 부가적인 것들 빼는 것도 다 버튼 · 완전 심플한 게 좋을 때도 있음」).
 // renderLog 결과(미리보기 표시 data-f · data-bl-msg 가 붙은 HTML)에서 걷어요. 메시지(data-bl-msg) 안은 손대지 않아요.
 //   top · bottom: 첫 메시지 앞 · 마지막 메시지 뒤의 틀 글(머리 표 · 부제 · 능력치 칩 · 도장 · 꼬리말 · 서명 …) — 메시지 사이 글은 그대로
@@ -79,7 +79,8 @@ function restyle(node, edit) {
     const next = edit(decls);
     if (next.length === decls.length && next.every((d, i) => d === decls[i])) return;   // 바뀐 게 없으면 글자 하나 안 건드려요
     const css = next.join(';');
-    node.open = m ? node.open.replace(m[0], ` style="${css}"`) : node.open.replace(/^<([a-zA-Z][\w-]*)/, `<$1 style="${css}"`);
+    // 함수 치환(1.1.2) — 남은 선언 글에 $ 가 있어도 그대로
+    node.open = m ? node.open.replace(m[0], () => ` style="${css}"`) : node.open.replace(/^<([a-zA-Z][\w-]*)/, (_, name) => `<${name} style="${css}"`);
 }
 const prop = decl => decl.split(':')[0].trim().toLowerCase();
 // 11-07 사용자 「단풍은 남아야지 · 박스만 사라지고」 — 장식(글이 한 번도 안 들었던 그림 · 이모지 · 테이프 · 움직임 · 누르면 반응)은 남기고 빈 박스 · 선만 걷어요

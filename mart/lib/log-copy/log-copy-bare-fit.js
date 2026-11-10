@@ -1,10 +1,10 @@
-// 원본 omni-next(1.0.7) 의 src/log-copy-bare-fit.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(시식 창도 빼고 나서 글을 덮게 된 장식을 테마와 같은 길로 걷어요) · 바꾼 것은 아래 import 의 판 꼬리표뿐
+// 원본 블루레몬에이드 1.1.2(codex/release-112)의 src/log-copy-bare-fit.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」 · 「HTML 복사」가 테마 로그 복사와 같은 모양 · 같은 붙여 넣기 꼴로 내려고 써요)
 // 로그 복사 — 1.0.7 「보일 것」 빼기 뒤 정리(11-07 사용자 「글꾸마트에서 복사해 오면 오른쪽 위 컴퓨터가 내려와 글을 덮어 · 이런 것들 없애줘」).
 // 빼기(log-copy-bare.js)로 제목 · 위 글 · 아래 글이 빠지면, 틀 기준으로 자리를 잡은 떠 있는(absolute) 장식(제목 옆 아이콘 · 꼬리말 옆 스티커 …)
 // 밑으로 글이 올라와 장식이 글자를 덮어요. 글자만 보고는 알 수 없어 실제로 그려 봐요:
 //   폰 · 태블릿 · PC 폭 여러 개에서 빼기 전에는 글을 안 덮던 장식이 빼고 나서 글자 위를 덮으면 그 장식을 걷어요(글자가 장식 위에 오면 읽히니 그대로).
 // 메시지(data-bl-msg) 안은 손대지 않아요. 화면(DOM)이 없으면(시험 · node) 받은 그대로예요.
-import { dropPaths } from './log-copy-bare.js?v=20261108a';
+import { dropPaths } from './log-copy-bare.js?v=20261110l';
 
 const LETTER = /[\p{L}\p{N}]/u;
 const WIDTHS = [340, 384, 440, 560, 760];   // 폰 몇 가지 · 태블릿 · PC 채팅 폭 — 한 폭이라도 새로 덮으면 걷어요
@@ -15,6 +15,9 @@ function measureFrame(doc) {
     const frame = doc.createElement('iframe');
     frame.setAttribute('aria-hidden', 'true');
     frame.tabIndex = -1;
+    // 1.1.2 스크립트는 꺼 둬요(문서에 붙기 전에) — 재는 일은 전부 바깥 코드가 안쪽 문서의 DOM · 계산된 스타일 · 좌표를 읽는 것이라 안쪽 스크립트가 필요 없어요.
+    // allow-same-origin 은 바깥에서 contentDocument 를 읽으려고 남겨요. 받은 글꾸에 on… 속성이 섞여 들어와도 여기서 돌지 않아요.
+    frame.setAttribute('sandbox', 'allow-same-origin');
     // 안 보이게(투명 · 화면 밖) 두되 visibility 는 쓰지 않아요 — 안쪽 문서에서 「그 점에 무엇이 맨 위에 그려졌나」를 물어야 해요
     frame.style.cssText = 'position:fixed;left:-12000px;top:0;width:1100px;height:700px;border:0;opacity:0;pointer-events:none';
     doc.body.append(frame);

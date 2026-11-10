@@ -1,10 +1,11 @@
-// 원본 omni-next 953c439a 의 src/log-copy-template.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」가 테마 로그 복사와 같은 모양으로 그리려고 써요)
+// 원본 블루레몬에이드 1.1.2(codex/release-112)의 src/log-copy-template.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」 · 「HTML 복사」가 테마 로그 복사와 같은 모양 · 같은 붙여 넣기 꼴로 내려고 써요)
 // 로그 복사 — 1.0.1 글꾸 마트의 「틈 템플릿」: 고정 색 묶음으로 한 번 그려 둔 모양 HTML 에 네 자리({{head}} · {{body}} · {{info}} · {{tail}})만 비워 둔 것.
 // 테마가 그 자리에 컨셉 틀과 같은 부품(제목 · 알약 / 메시지 / 추가 정보 / 꼬리)을 끼워요(log-copy-presets.js drawTemplate).
 // 받은 템플릿은 코드가 아니라 데이터예요 — 여기서 고쳐 쓰지 않고 「규칙에 맞는지」만 보고, 하나라도 어긋나면 통째로 거절해요.
 //   태그: div · span · p · b · i · em · strong · br 만 / 속성: style 만(장식 표시 aria-hidden="true" 하나는 허용) — class · id · on* · href · src 없음
 //   style: url( · expression( · behavior · -moz-binding · javascript: · @import · position: fixed · 역슬래시(CSS 이스케이프) · & (글자 참조로 숨긴 글) 없음
 //   길이 64KB 이하 · 네 자리가 각각 한 번씩(속성 안은 안 됨) · 깊이 64 이하 · 주석 없음. DOM 없는 순수 함수(node 시험 tools/tests/mart-import.mjs).
+//   1.1.2: 속성 값에 $ 없음(치환 무늬 $' · $& 로 쓰일 수 있는 글) · 한 태그에 같은 속성 두 번 없음(브라우저는 첫 것만 읽어 뒤 것은 숨은 글이 돼요)
 //   1.0.1 더한 것: details · summary(속성 open="" 허용) · data-bl-egg="bounce|spin|…"(값 고정 목록) · animation 은 bl- 이름만(log-copy-motion.js)
 //   1.0.1 그림 부품(11-04): url( 은 url('data:image/svg+xml,<퍼센트 인코딩 svg>') 하나만 — 커뮤니티 글 편집기가 살리는 꼴(인라인 <svg> · <img> 는 지워져요).
 //     인코딩 글에는 따옴표 · 괄호 · < > & 역슬래시 · 조절 문자가 없어야 하고, 풀어 본 svg 에 스크립트 · on…= · href · xlink · foreignObject ·
@@ -67,8 +68,12 @@ export function checkTemplate(source) {
         } else if (open) {
             const name = open.toLowerCase();
             if (!TAGS.has(name)) return fail(`쓸 수 없는 태그예요(${name})`);
+            const seen = new Set();
             for (const [, key, value] of (attrs || '').matchAll(/\s+([a-zA-Z-]+)="([^"]*)"/g)) {
                 const attr = key.toLowerCase();
+                if (seen.has(attr)) return fail(`같은 속성을 두 번 쓸 수 없어요(${attr})`);
+                seen.add(attr);
+                if (value.includes('$')) return fail('속성 값에 $ 는 쓸 수 없어요');
                 if (value.includes('{{')) return fail('자리 표시는 속성 안에 둘 수 없어요');
                 if (attr === 'aria-hidden' && value === 'true') continue;
                 if (attr === 'open' && name === 'details' && (value === '' || value === 'open')) continue;   // 처음부터 펼친 상자

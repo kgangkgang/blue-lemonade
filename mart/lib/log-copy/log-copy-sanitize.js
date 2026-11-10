@@ -1,4 +1,4 @@
-// 원본 omni-next 953c439a 의 src/log-copy-sanitize.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」가 테마 로그 복사와 같은 모양으로 그리려고 써요)
+// 원본 블루레몬에이드 1.1.2(codex/release-112)의 src/log-copy-sanitize.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」 · 「HTML 복사」가 테마 로그 복사와 같은 모양 · 같은 붙여 넣기 꼴로 내려고 써요)
 // 로그 복사 — 붙여 넣은 글꾸 HTML(「+ 내 글꾸」)과 미리보기에서 고친 결과를 소독한다 (브라우저 DOMParser — 실행 없이 읽기만).
 // 걷는 것: 실행 · 끼워 넣기 요소(script · iframe · object · embed · form · meta · link · base …), on* 속성, srcdoc · formaction,
 //   javascript: · vbscript: · data:(그림 말고) 주소, style 의 expression() · behavior · -moz-binding · @import · 나쁜 url().
@@ -10,7 +10,7 @@ const DROP = 'script, iframe, frame, frameset, object, embed, applet, form, inpu
 const URL_ATTRS = new Set(['href', 'src', 'xlink:href', 'action', 'background', 'poster', 'cite', 'longdesc', 'lowsrc', 'dynsrc', 'data', 'codebase', 'manifest', 'ping']);
 const DROP_ATTRS = new Set(['srcdoc', 'formaction', 'contenteditable', 'spellcheck', 'autofocus', 'is', 'nonce']);
 const IMAGE_DATA = /^data:image\/(?:png|gif|jpe?g|webp|avif|bmp);/i;
-const BAD_CSS = /expression\s*\(|behavior\s*:|-moz-binding|javascript\s*:|vbscript\s*:|@import|url\s*\(\s*['"]?\s*(?!https?:|data:image\/(?:png|gif|jpe?g|webp|avif)|#|\/(?!\/)|\.)/gi;
+const BAD_CSS = /expression\s*\(|behavior\s*:|-moz-binding|javascript\s*:|vbscript\s*:|@import|url\s*\(\s*(?!['"]?\s*(?:https?:|data:image\/(?:png|gif|jpe?g|webp|avif)|#|\/(?!\/)|\.))['"]?\s*/gi;   // 1.1.0 허용 주소 검사를 따옴표 뒤에서 — 전엔 ['"]? 가 물러나 따옴표 낀 url('https://…') · url("data:image/png…") · url('/a.png') 의 url( 이 지워져 선언이 깨졌어요
 
 /** 주소 하나가 안전한가: http(s) · mailto · tel · # · 상대 경로 · 그림 data: 만 */
 export function safeUrl(value) {

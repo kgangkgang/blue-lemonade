@@ -1,4 +1,4 @@
-// 원본 codex/react-geulkku-2 1122fac1 의 src/log-copy-presets.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」가 테마 로그 복사와 같은 모양으로 그리려고 써요)
+// 원본 블루레몬에이드 1.1.2(codex/release-112)의 src/log-copy-presets.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」 · 「HTML 복사」가 테마 로그 복사와 같은 모양 · 같은 붙여 넣기 꼴로 내려고 써요)
 // 로그 복사 — 글꾸 틀(모양) 모음. 모두 블루 레몬에이드 디자인 언어로 새로 그렸다 (평평한 면 + 1px 선 · 모서리 12(작은 칸 8) · 판 알약 · 여백 16 · 사이 8 ·
 // 제목 20/650 · 소제목 16/650 · 보조 13 · 알약 12). 색은 고른 에이드 팔레트의 실제 값(c.*)만 — 새 색 · 섞은 색 · 그라데이션 없음(종이 결 하나만 예외: 노트 모눈 = 팔레트 선 색 한 겹).
 // 글꼴은 테마 화면 글꼴(ui.family) · 자간(ui.tracking, em), 로그 글은 화면에 보이던 모양 그대로(log-copy-capture.js).
@@ -9,7 +9,8 @@ import { contrast, parseColor, cssColor } from './shared/ink-paint.js';
 import { recolorLog } from './log-copy-words.js';
 import { box, font, hide, svgDoc, svgUrl } from './log-copy-concept-kit.js';   // 메시지 배치(유령 말풍선 꼬리 svg) · 컨셉 칸 공용 상자
 import { fillTemplate, templateColors, tidyType } from './log-copy-template.js';
-import { BUILTIN_TEMPLATES } from './log-copy-builtin.gen.js';   // 1.0.1(11-04) 테마 내장 심플 글꾸(틈 템플릿 · tools/mart/build-builtin.mjs 생성물)
+import { BUILTIN_TEMPLATES } from './log-copy-builtin.gen.js';
+import { LEMON_HOME } from './log-copy-lemon.js';   // 1.1.2 레몬 그림 링크 주소(레몬 틀 · 「레몬 바로가기」 칩이 같이 써요)   // 1.0.1(11-04) 테마 내장 심플 글꾸(틈 템플릿 · tools/mart/build-builtin.mjs 생성물)
 
 export { logMarkdown, logText };
 export const HEIGHTS = { s: 280, m: 420, l: 600 };
@@ -26,15 +27,17 @@ function pill(key, text, c, ui, accent = false) {
     });
 }
 /** 알약 줄 (알약 아래 8 여백을 줄이 먹는다) */
-function pills(fields, c, ui, keys = ['mark', 'model', 'prompt']) {
+// 1.1.2 top: 위 칸과의 사이(전엔 빈 사이 칸 gap — 붙여 넣은 곳에서 빈 칸이 사라지면 사이도 사라져서 padding 으로 · margin 과 달리 겹침이 없어 같은 자리)
+function pills(fields, c, ui, keys = ['mark', 'model', 'prompt'], top = 0) {
     const list = keys.filter(key => fields[key]).map(key => pill(key, fields[key], c, ui, key === 'mark'));
-    return list.length ? tag('div', { 'margin-bottom': '-8px', 'line-height': '0' }, list.join('')) : '';
+    return list.length ? tag('div', { ...(top ? { 'padding-top': `${top}px` } : {}), 'margin-bottom': '-8px', 'line-height': '0' }, list.join('')) : '';
 }
 // 1.0.1(11-04 「심플하게」): 틀 글(제목 · 날짜 · 꼬리)은 한국어 낱말 중간에서 안 꺾여요(keep-all) — 메시지 글에는 덧대지 않아요
-const title = (fields, c, ui, size = 20, key = 'title') => (fields[key] ? tag('div', { color: c.text, ...font(ui, size, '650'), 'line-height': '1.4', 'word-break': 'keep-all', 'overflow-wrap': 'anywhere' }, F(key, fields[key])) : '');
+const title = (fields, c, ui, size = 20, key = 'title', more = {}) => (fields[key] ? tag('div', { color: c.text, ...font(ui, size, '650'), 'line-height': '1.4', 'word-break': 'keep-all', 'overflow-wrap': 'anywhere', ...more }, F(key, fields[key])) : '');
 const muted = (key, text, c, ui, more = {}) => (text ? tag('div', { color: c.muted, ...font(ui, 13), 'line-height': '1.5', 'word-break': 'keep-all', 'overflow-wrap': 'anywhere', ...more }, F(key, text)) : '');
 const rule = c => tag('div', { height: '0', 'border-top': `1px solid ${c.line}` }, '');
-const gap = n => tag('div', { height: `${n}px` }, '');
+// 1.1.2 이름표 · 이름 라벨은 본문 글꼴(사용자 실리태번 글꼴 설정에서 떠 온 그 메시지의 글꼴)을 따라요 — 크기 · 굵기는 틀 그대로(사용자 「이름표 글꼴 안 바뀜」)
+const nameFont = (message, ui, size, weight = '400', more = {}) => ({ ...font(ui, size, weight, more), 'font-family': message?.font?.['font-family'] || ui.family });
 /** 글자로 쓸 색: 그 바탕에서 대비 4.5 이상이면 그 색, 아니면 팔레트 본문색 (붙인 곳 어디서나 읽히게) */
 const readable = (color, bg, fallback) => (color && contrast(color, bg) >= 4.5 ? color : fallback);
 /** 이름의 첫 글자(문자 · 숫자만 — 「[이름]」 같은 괄호는 건너뛰어요) */
@@ -52,8 +55,8 @@ const foot = (fields, c, ui, more = {}) => (fields.tail?.trim() ? tag('div', { p
 
 /** 안쪽만 스크롤되는 칸 (높이 고정 · 스크롤바 숨김) */
 const scroller = (inner, height, more = {}) => tag('div', { 'max-height': `${height}px`, 'overflow-y': 'auto', 'scrollbar-width': 'none', ...more }, inner);
-/** 바깥 배경 (팔레트 바탕) */
-const outer = (inner, c, ui) => tag('div', { ...box, padding: '16px', 'background-color': c.bg, 'border-radius': '12px', 'font-family': ui.family, 'letter-spacing': ui.tracking, 'text-align': 'left' }, inner);
+/** 바깥 감싸개 — 1.1.2 배경판(바탕 · 둥근 모서리 · 안쪽 여백 16)을 없애 640 틀만 가운데에(사용자 「꼭」 — 틀 바깥에 넓은 판이 하나 더 그려졌어요). c 는 옛 부르는 꼴 그대로 받아요 */
+const outer = (inner, c, ui) => { void c; return tag('div', { ...box, padding: '0', 'font-family': ui.family, 'letter-spacing': ui.tracking, 'text-align': 'left' }, inner); };
 /** 면 + 1px 선 카드 */
 const sheet = (inner, c, extra = {}) => tag('div', { ...box, 'max-width': '640px', margin: '0 auto', 'background-color': c.surface, border: `1px solid ${c.line}`, 'border-radius': '12px', overflow: 'hidden', ...extra }, inner);
 
@@ -66,7 +69,7 @@ function flowLog(model, o, bg, { names = o.names, nameKey = null } = {}) {
     const { c, ui } = o;
     return model.messages.map((message, i) => {
         const nameColor = message.nameStyle?.color && contrast(message.nameStyle.color, bg) >= 4.5 ? message.nameStyle.color : readable(c.accent, bg, c.text);
-        const name = names && message.name ? mark(tag('div', { color: nameColor, ...font(ui, 13, '650'), 'line-height': '1.5', margin: '0 0 4px' }, esc(message.name)), 'data-bl-name') : '';
+        const name = names && message.name ? mark(tag('div', { color: nameColor, ...nameFont(message, ui, 13, '650'), 'line-height': '1.5', margin: '0 0 4px' }, esc(message.name)), 'data-bl-name') : '';
         const ink = contrast(message.font.color, bg) >= 4.5 ? message.font.color : c.text;
         return mark(tag('div', { ...baseFont(message.font), color: ink, margin: i === model.messages.length - 1 ? '0' : `0 0 ${o.gap ? '16px' : '8px'}`, 'overflow-wrap': 'anywhere' },
             name + nodesHtml(message.nodes, { inkFix: { bg, ink }, trimEdges: true, relayout: 'justify' })), 'data-bl-msg');
@@ -92,9 +95,9 @@ export function dateLabel(ms) {
 
 function card(model, o) {
     const { c, ui, fields } = o;
-    const head = tag('div', { padding: '16px 16px 12px' }, title(fields, c, ui) + (fields.title ? gap(8) : '') + pills(fields, c, ui));
+    const head = tag('div', { padding: '16px 16px 12px' }, title(fields, c, ui, 20, 'title', { 'margin-bottom': '8px' }) + pills(fields, c, ui));
     const body = tag('div', { 'border-top': `1px solid ${c.line}` }, scroller(screenLog(model, o), o.height));
-    const end = info(fields, c, ui) + (fields.tail?.trim() ? tag('div', { 'border-top': fields.info?.trim() ? '0' : `1px solid ${c.line}` }, foot(fields, c, ui)) : fields.info?.trim() ? gap(12) : '');
+    const end = info(fields, c, ui, fields.tail?.trim() ? undefined : '12px 16px 12px') + (fields.tail?.trim() ? tag('div', { 'border-top': fields.info?.trim() ? '0' : `1px solid ${c.line}` }, foot(fields, c, ui)) : '');
     return outer(sheet(head + body + end, c), c, ui);
 }
 
@@ -107,7 +110,7 @@ function tabs(model, o) {
         ...font(ui, 13, i ? '400' : '650'), 'line-height': '31px', 'white-space': 'nowrap', overflow: 'hidden', 'text-overflow': 'ellipsis',
     })).join('');
     const head = fields.title ? tag('div', { padding: '12px 16px', 'border-bottom': `1px solid ${c.line}` }, title(fields, c, ui, 16)) : '';
-    const end = info(fields, c, ui) + (fields.tail?.trim() ? tag('div', { 'border-top': `1px solid ${c.line}` }, foot(fields, c, ui)) : fields.info?.trim() ? gap(12) : '');
+    const end = info(fields, c, ui, fields.tail?.trim() ? undefined : '12px 16px 12px') + (fields.tail?.trim() ? tag('div', { 'border-top': `1px solid ${c.line}` }, foot(fields, c, ui)) : '');
     const body = sheet(head + scroller(screenLog(model, o), o.height) + end, c, { 'border-radius': '0 12px 12px 12px', margin: '0' });
     return outer(tag('div', { 'max-width': '640px', margin: '0 auto' }, tag('div', { 'line-height': '0', 'white-space': 'nowrap', overflow: 'hidden', 'margin-bottom': '-1px' }, row) + body), c, ui);
 }
@@ -118,7 +121,7 @@ function windowFrame(model, o) {
     const right = ['model', 'prompt', 'mark'].filter(key => fields[key]).map(key => pill(key, fields[key], c, ui, key === 'mark')).join('');
     const head = tag('div', { display: 'flex', 'align-items': 'center', gap: '8px', 'min-height': '44px', padding: '0 16px', 'background-color': c.raised, 'border-bottom': `1px solid ${c.line}` },
         left + (right ? tag('div', { flex: '0 1 auto', 'min-width': '0', 'line-height': '0', 'white-space': 'nowrap', overflow: 'hidden', 'margin-bottom': '-8px' }, right) : ''));
-    const end = info(fields, c, ui) + (fields.tail?.trim() ? tag('div', { 'border-top': `1px solid ${c.line}`, 'background-color': c.raised }, foot(fields, c, ui)) : fields.info?.trim() ? gap(12) : '');
+    const end = info(fields, c, ui, fields.tail?.trim() ? undefined : '12px 16px 12px') + (fields.tail?.trim() ? tag('div', { 'border-top': `1px solid ${c.line}`, 'background-color': c.raised }, foot(fields, c, ui)) : '');
     return outer(sheet(head + scroller(screenLog(model, o), o.height) + end, c), c, ui);
 }
 
@@ -143,7 +146,7 @@ function messenger(model, o) {
         if (message.time) lastTime = message.time;
         const mine = message.user;
         const bg = mine ? c.accent : c.raised, ink = mine ? c.onAccent : c.text;
-        const label = !mine && characters.size > 1 && lastSide !== message.name ? mark(tag('div', { margin: '0 0 4px 4px', color: c.muted, ...font(ui, 12), 'line-height': '1.4' }, esc(message.name)), 'data-bl-name') : '';
+        const label = !mine && characters.size > 1 && lastSide !== message.name ? mark(tag('div', { margin: '0 0 4px 4px', color: c.muted, ...nameFont(message, ui, 12), 'line-height': '1.4' }, esc(message.name)), 'data-bl-name') : '';
         const bubble = mark(tag('div', {
             display: 'inline-block', ...box, 'max-width': '82%', padding: '10px 12px', 'text-align': 'left', 'vertical-align': 'top',
             'border-radius': mine ? '16px 16px 4px 16px' : '16px 16px 16px 4px', 'background-color': bg, ...baseFont(message.font), color: ink, 'overflow-wrap': 'anywhere',
@@ -163,7 +166,7 @@ function messenger(model, o) {
 const GRID = 20;
 function note(model, o) {
     const { c, ui, fields } = o;
-    const head = tag('div', { padding: '16px 16px 12px 40px' }, muted('date', fields.date, c, ui, { 'margin-bottom': '4px' }) + title(fields, c, ui, 16) + (fields.title ? gap(8) : '') + pills(fields, c, ui));
+    const head = tag('div', { padding: '16px 16px 12px 40px' }, muted('date', fields.date, c, ui, { 'margin-bottom': '4px' }) + title(fields, c, ui, 16, 'title', { 'margin-bottom': '8px' }) + pills(fields, c, ui));
     const paper = { 'background-image': `linear-gradient(transparent ${GRID - 1}px, ${c.line} ${GRID - 1}px), linear-gradient(90deg, transparent ${GRID - 1}px, ${c.line} ${GRID - 1}px)`, 'background-size': `${GRID}px ${GRID}px` };
     const body = scroller(tag('div', paper, tag('div', { margin: '0 16px 0 28px', padding: '12px 0 16px 12px', 'border-left': `1px solid ${c.accent}` }, flowLog(model, o, c.surface))), o.height, { 'border-top': `1px solid ${c.line}` });
     return outer(sheet(head + body + info(fields, c, ui) + foot(fields, c, ui, { 'border-top': `1px solid ${c.line}` }), c), c, ui);
@@ -177,18 +180,18 @@ function letter(model, o) {
     const to = fields.title ? tag('div', { color: c.text, ...font(ui, 18, '650'), 'line-height': '1.4', 'word-break': 'keep-all', 'overflow-wrap': 'anywhere', 'margin-bottom': '20px' }, `${lead('To.')} ${F('title', fields.title)}`) : '';
     const from = fields.from ? tag('div', { 'text-align': 'right', color: c.text, ...font(ui, 16, '650'), 'line-height': '1.4', 'word-break': 'keep-all', 'overflow-wrap': 'anywhere', 'margin-top': '20px' }, `${lead('From.')} ${F('from', fields.from)}`) : '';
     const date = muted('date', fields.date, c, ui, { 'text-align': 'right', 'margin-top': '4px' });
-    const page = tag('div', { padding: '24px' }, to + scroller(flowLog(model, o, c.surface), o.height) + from + date + (pills(fields, c, ui) ? gap(16) + pills(fields, c, ui) : ''));
+    const page = tag('div', { padding: '24px' }, to + scroller(flowLog(model, o, c.surface), o.height) + from + date + pills(fields, c, ui, undefined, 16));
     return outer(sheet(page + info(fields, c, ui, '0 24px 24px') + foot(fields, c, ui, { 'border-top': `1px solid ${c.line}` }), c, { 'max-width': '480px' }), c, ui);
 }
 
 /** 대본: 이름 칸 | 대사 칸 두 열 */
 function script(model, o) {
     const { c, ui, fields } = o;
-    const head = tag('div', { padding: '16px', 'border-bottom': `1px solid ${c.line}`, 'text-align': 'center' }, title(fields, c, ui, 16) + (fields.title ? gap(8) : '') + pills(fields, c, ui));
+    const head = tag('div', { padding: '16px', 'border-bottom': `1px solid ${c.line}`, 'text-align': 'center' }, title(fields, c, ui, 16, 'title', { 'margin-bottom': '8px' }) + pills(fields, c, ui));
     const rows = model.messages.map((message) => {
         const nameColor = message.nameStyle?.color && contrast(message.nameStyle.color, c.surface) >= 4.5 ? message.nameStyle.color : readable(c.accent, c.surface, c.text);
         const ink = contrast(message.font.color, c.surface) >= 4.5 ? message.font.color : c.text;
-        return mark(tag('tr', { 'background-color': c.surface }, mark(tag('td', { 'background-color': c.surface, 'vertical-align': 'top', padding: '0 12px 12px 0', color: nameColor, ...font(ui, 13, '650'), 'line-height': message.font['line-height'], 'text-align': 'right' }, esc(message.name)), 'data-bl-name')
+        return mark(tag('tr', { 'background-color': c.surface }, mark(tag('td', { 'background-color': c.surface, 'vertical-align': 'top', padding: '0 12px 12px 0', color: nameColor, ...nameFont(message, ui, 13, '650'), 'line-height': message.font['line-height'], 'text-align': 'right' }, esc(message.name)), 'data-bl-name')
             + mark(tag('td', { 'background-color': c.surface, 'vertical-align': 'top', padding: '0 0 12px', ...baseFont(message.font), color: ink, 'overflow-wrap': 'anywhere' }, nodesHtml(message.nodes, { inkFix: { bg: c.surface, ink }, trimEdges: true, relayout: 'justify' })), 'data-bl-body')), 'data-bl-msg');
     }).join('');
     const table = tag('table', { width: '100%', 'border-collapse': 'collapse', 'table-layout': 'fixed', 'background-color': c.surface }, `<colgroup><col style="width:76px"><col></colgroup>${rows}`);
@@ -199,7 +202,7 @@ function script(model, o) {
 function diary(model, o) {
     const { c, ui, fields } = o;
     const head = tag('div', { padding: '16px', 'border-bottom': `1px dashed ${c.line}` },
-        tag('div', { color: c.text, ...font(ui, 20, '650'), 'line-height': '1.4', 'word-break': 'keep-all' }, F('date', fields.date || '')) + muted('title', fields.title, c, ui, { 'margin-top': '4px' }) + (pills(fields, c, ui) ? gap(8) + pills(fields, c, ui) : ''));
+        tag('div', { color: c.text, ...font(ui, 20, '650'), 'line-height': '1.4', 'word-break': 'keep-all' }, F('date', fields.date || '')) + muted('title', fields.title, c, ui, { 'margin-top': '4px' }) + pills(fields, c, ui, undefined, 8));
     return outer(sheet(head + scroller(tag('div', { padding: '16px' }, flowLog(model, o, c.surface)), o.height) + info(fields, c, ui) + foot(fields, c, ui, { 'border-top': `1px solid ${c.line}` }), c), c, ui);
 }
 
@@ -209,12 +212,13 @@ function notify(model, o) {
     const cards = model.messages.map((message) => {
         const ink = contrast(message.font.color, c.surface) >= 4.5 ? message.font.color : c.text;
         const dot = tag('span', { display: 'inline-block', width: '20px', height: '20px', 'border-radius': '50%', 'background-color': message.user ? c.raised : c.accent, color: message.user ? readable(c.accent, c.raised, c.text) : c.onAccent, 'text-align': 'center', ...font(ui, 12, '650'), 'line-height': '20px', 'vertical-align': 'middle', 'margin-right': '8px' }, esc(initial(message.name)));
-        const top = tag('div', { 'margin-bottom': '4px', 'line-height': '20px', 'white-space': 'nowrap', overflow: 'hidden' }, dot + mark(tag('span', { color: c.text, ...font(ui, 13, '650'), 'vertical-align': 'middle' }, esc(message.name)), 'data-bl-name') + (message.time ? tag('span', { float: 'right', color: c.muted, ...font(ui, 12), 'line-height': '20px' }, esc(clockLabel(message.time))) : ''));
+        const top = tag('div', { 'margin-bottom': '4px', 'line-height': '20px', 'white-space': 'nowrap', overflow: 'hidden' }, dot + mark(tag('span', { color: c.text, ...nameFont(message, ui, 13, '650'), 'vertical-align': 'middle' }, esc(message.name)), 'data-bl-name') + (message.time ? tag('span', { float: 'right', color: c.muted, ...nameFont(message, ui, 12), 'line-height': '20px' }, esc(clockLabel(message.time))) : ''));
         return mark(tag('div', { ...box, margin: '0 0 8px', padding: '12px', 'background-color': c.surface, border: `1px solid ${c.line}`, 'border-radius': '12px' },
             top + mark(tag('div', { ...baseFont(message.font), color: ink, 'overflow-wrap': 'anywhere' }, nodesHtml(message.nodes, { inkFix: { bg: c.surface, ink }, trimEdges: true, relayout: true })), 'data-bl-body')), 'data-bl-msg');
     }).join('');
-    const head = tag('div', { 'text-align': 'center', 'margin-bottom': '12px' }, title(fields, c, ui, 16) + (pills(fields, c, ui) ? gap(8) + pills(fields, c, ui) : ''));
-    return outer(tag('div', { ...box, 'max-width': '400px', margin: '0 auto' }, head + scroller(cards, o.height + 60) + info(fields, c, ui, '4px 0 0') + (fields.tail?.trim() ? muted('tail', fields.tail.trim(), c, ui, { 'text-align': 'center', 'margin-top': '8px' }) : '')), c, ui);
+    const head = tag('div', { 'text-align': 'center', 'margin-bottom': '12px' }, title(fields, c, ui, 16) + pills(fields, c, ui, undefined, 8));
+    // 1.1.2 바깥 배경판을 없앴으니 알림 틀은 제 판(팔레트 바탕 · 여백 16 · 모서리 12)을 가져요 — 머리 제목이 붙인 곳 바탕 위에 놓이지 않게
+    return outer(tag('div', { ...box, 'max-width': '400px', margin: '0 auto', padding: '16px', 'background-color': c.bg, 'border-radius': '12px' }, head + scroller(cards, o.height + 60) + info(fields, c, ui, '4px 0 0') + (fields.tail?.trim() ? muted('tail', fields.tail.trim(), c, ui, { 'text-align': 'center', 'margin-top': '8px' }) : '')), c, ui);
 }
 
 /** 기사: 머리기사 · 줄 · 기자란 */
@@ -248,7 +252,7 @@ function record(model, o) {
         const ink = contrast(message.font.color, c.surface) >= 4.5 ? message.font.color : c.text;
         return mark(tag('tr', { 'background-color': c.surface }, tag('td', { 'background-color': c.surface, 'vertical-align': 'top', padding: '12px 8px 12px 0', color: c.muted, ...font(ui, 12), 'font-variant-numeric': 'tabular-nums', 'line-height': '1.6', 'white-space': 'nowrap', 'border-top': i ? `1px solid ${c.line}` : '0' }, esc(message.time ? clockLabel(message.time) : `#${message.index ?? i}`))
             + tag('td', { 'background-color': c.surface, 'vertical-align': 'top', padding: '12px 0', ...baseFont(message.font), color: ink, 'overflow-wrap': 'anywhere', 'border-top': i ? `1px solid ${c.line}` : '0' },
-                mark(tag('div', { color: nameColor, ...font(ui, 13, '650'), 'line-height': '1.5', 'margin-bottom': '4px' }, esc(message.name)), 'data-bl-name') + nodesHtml(message.nodes, { inkFix: { bg: c.surface, ink }, trimEdges: true, relayout: 'justify' }))), 'data-bl-msg');
+                mark(tag('div', { color: nameColor, ...nameFont(message, ui, 13, '650'), 'line-height': '1.5', 'margin-bottom': '4px' }, esc(message.name)), 'data-bl-name') + nodesHtml(message.nodes, { inkFix: { bg: c.surface, ink }, trimEdges: true, relayout: 'justify' }))), 'data-bl-msg');
     }).join('');
     const table = tag('table', { width: '100%', 'border-collapse': 'collapse', 'table-layout': 'fixed', 'background-color': c.surface }, `<colgroup><col style="width:44px"><col></colgroup>${rows}`);
     return outer(sheet(head + scroller(tag('div', { padding: '0 16px' }, table), o.height) + info(fields, c, ui) + foot(fields, c, ui, { 'border-top': `1px solid ${c.line}` }), c), c, ui);
@@ -279,13 +283,17 @@ function mini(model, o) {
 
 // 1.0.9 제목 앞 레몬은 🍋 이모지 대신 테마 레몬(fa-lemon · splash.js LEMON_PATH · 탭 아이콘과 같은 면 #FFE23C + 테두리 #E9BE00) 그림 — 붙여 넣는 곳에 글꼴 아이콘이 없어서 그림 부품(svg 주소)으로
 const LEMON_MARK = tag('span', { display: 'inline-block', width: '0.95em', height: '0.95em', 'margin-right': '0.3em', 'vertical-align': '-0.1em', background: `${svgUrl(svgDoc(472, 472, `<path fill="#FFE23C" fill-rule="evenodd" stroke="#E9BE00" stroke-width="18" stroke-linejoin="round" transform="translate(12 428) scale(1 -1)" d="M448 352Q447 379 429 397Q411 415 384 416Q374 416 365 413Q348 407 330 404Q311 400 294 404Q237 418 180 399Q124 379 80 336Q37 292 17 236Q-2 179 12 122Q16 105 12 86Q9 68 3 51Q0 42 0 32Q1 5 19 -13Q37 -31 64 -32Q74 -32 83 -29Q100 -23 118 -20Q137 -16 154 -20Q211 -34 268 -15Q324 5 368 48Q411 92 431 148Q450 205 436 262Q432 279 436 298Q439 316 445 333Q448 342 448 352ZM213 321Q171 308 139 277Q108 245 95 203Q90 190 76 193Q62 198 65 212Q80 262 117 299Q154 336 204 351Q218 354 223 340Q226 326 213 321Z"/>`))} center/100% 100% no-repeat` }, '');
+// 1.1.2 레몬 그림을 누르면 블루레몬에이드 소개 글로(사용자 요청 · 레몬 틀에만)
+export { LEMON_HOME };
+const LEMON_LINK = `<a href="${LEMON_HOME}" target="_blank" rel="noopener noreferrer" title="블루레몬에이드" style="text-decoration:none;border:0">${LEMON_MARK}</a>`;
 /** 레몬: 팔레트 카드(색 고르기 견본)의 두 번째 포인트 막대 · 레몬 그림 */
 function lemon(model, o) {
     const { c, ui, fields } = o;
     const bar = tag('div', { height: '4px', width: '46%', 'border-radius': '2px', 'background-color': c.pop, margin: '0 0 12px' }, '');
-    const head = tag('div', { padding: '16px 16px 12px' }, bar + tag('div', { color: c.text, ...font(ui, 20, '650'), 'line-height': '1.4', 'overflow-wrap': 'anywhere' }, `${LEMON_MARK}${F('title', fields.title || '')}`) + (pills(fields, c, ui) ? gap(8) + pills(fields, c, ui) : ''));
-    const body = tag('div', { margin: '0 12px', 'border-radius': '8px', overflow: 'hidden' }, scroller(screenLog(model, o), o.height));
-    return outer(sheet(head + body + gap(12) + info(fields, c, ui, '0 16px 12px') + foot(fields, c, ui, { 'border-top': `1px solid ${c.line}` }), c), c, ui);
+    const head = tag('div', { padding: '16px 16px 12px' }, bar + tag('div', { color: c.text, ...font(ui, 20, '650'), 'line-height': '1.4', 'overflow-wrap': 'anywhere' }, `${LEMON_LINK}${F('title', fields.title || '')}`) + pills(fields, c, ui, undefined, 8));
+    // 1.1.2 글 칸 아래 여백은 칸 자신의 margin 으로(빈 사이 칸은 붙여 넣은 곳에서 사라질 수 있어 아래 칸을 끄면 카드 바닥에 붙었어요) · 모서리 자르기는 clip(hidden 은 커뮤니티 사이트에서 숨은 스크롤 상자)
+    const body = tag('div', { display: 'flow-root', margin: '0 12px 12px', 'border-radius': '8px', overflow: 'clip' }, scroller(screenLog(model, o), o.height));
+    return outer(sheet(head + body + info(fields, c, ui, '0 16px 12px') + foot(fields, c, ui, { 'border-top': `1px solid ${c.line}` }), c), c, ui);
 }
 
 // ── 컨셉 틀 30종(기념일 · 사물 · 장르)은 11-04 글꾸 마트 그림체 「일러스트」로 옮겼어요(tools/mart/geulkku-concept30.mjs — 테마에는 안 실려요).
@@ -375,7 +383,7 @@ function cMessages(model, o, k, style) {
         const stops = model.messages.map((message, i) => {
             const mine = message.user;
             const when = mine ? '환승' : message.time ? `${clockLabel(message.time)} 도착` : '';
-            const label = o.names && message.name ? mark(tag('div', { color: k.name, ...font(ui, 12, '650'), 'line-height': '1.5', 'overflow-wrap': 'anywhere' }, `${esc(message.name)} 역 ${tag('span', { color: k.muted, ...font(ui, 11) }, esc(when))}`), 'data-bl-name') : '';
+            const label = o.names && message.name ? mark(tag('div', { color: k.name, ...nameFont(message, ui, 12, '650'), 'line-height': '1.5', 'overflow-wrap': 'anywhere' }, `${esc(message.name)} 역 ${tag('span', { color: k.muted, ...nameFont(message, ui, 11) }, esc(when))}`), 'data-bl-name') : '';
             return mark(tag('div', { position: 'relative', margin: i ? '14px 0 0' : '0' }, stop(mine) + label + mark(tag('div', { ...baseFont(message.font), color: k.text, 'margin-top': '4px', 'overflow-wrap': 'anywhere' }, flow(message, k.panel)), 'data-bl-body')), 'data-bl-msg');
         }).join('');
         const end = tag('div', { position: 'relative', 'margin-top': '14px' }, stop(false) + tag('div', { color: k.muted, ...font(ui, 11), 'line-height': '1.6' }, '종착'));
@@ -383,12 +391,12 @@ function cMessages(model, o, k, style) {
     }
     if (style === 'subtitle') {
         const lines = model.messages.map((message, i) => mark(tag('div', { margin: i ? '12px 0 0' : '0', 'text-align': 'center' },
-            (o.names && message.name ? mark(tag('div', { color: k.name, ...font(ui, 11, '650'), 'letter-spacing': '0.08em', 'line-height': '1.5', margin: '0 0 2px' }, esc(message.name)), 'data-bl-name') : '')
+            (o.names && message.name ? mark(tag('div', { color: k.name, ...nameFont(message, ui, 11, '650'), 'letter-spacing': '0.08em', 'line-height': '1.5', margin: '0 0 2px' }, esc(message.name)), 'data-bl-name') : '')
             + mark(tag('div', { ...baseFont(message.font), color: k.text, 'text-shadow': `0 1px 2px ${k.panel2}, 0 0 6px ${k.panel2}`, 'overflow-wrap': 'anywhere' }, flow(message, k.panel)), 'data-bl-body')), 'data-bl-msg')).join('');
         return scroller(tag('div', { padding: '10px 12px', 'background-color': k.panel, 'border-radius': '4px' }, lines), o.height);
     }
     const items = model.messages.map((message) => {
-        const name = o.names && message.name ? mark(tag('div', { color: k.name, ...font(ui, 13, '650'), 'line-height': '1.5', margin: '0 0 4px' }, esc(message.name)), 'data-bl-name') : '';
+        const name = o.names && message.name ? mark(tag('div', { color: k.name, ...nameFont(message, ui, 13, '650'), 'line-height': '1.5', margin: '0 0 4px' }, esc(message.name)), 'data-bl-name') : '';
         const body = name + nodesHtml(message.nodes, { inkFix: { bg: k.panel2, ink: k.text }, trimEdges: true, relayout: true });
         const textBox = { ...box, ...baseFont(message.font), color: k.text, 'background-color': k.panel2, padding: '10px 12px', 'overflow-wrap': 'anywhere' };
         if (style === 'bubble') {
@@ -400,7 +408,7 @@ function cMessages(model, o, k, style) {
         }
         if (style === 'rpg') {
             // 레트로 대사창: 3px 테 상자, 위 테에 걸친 이름표, 오른쪽 아래 ▼
-            const nameTag = o.names && message.name ? mark(tag('div', { position: 'absolute', left: '12px', top: '-11px', 'max-width': '80%', padding: '0 8px', 'background-color': k.panel2, color: k.name, ...font(ui, 11, '650'), 'letter-spacing': '0.14em', 'line-height': '1.6', 'white-space': 'nowrap', overflow: 'hidden', 'text-overflow': 'ellipsis', 'box-sizing': 'border-box' }, esc(message.name)), 'data-bl-name') : '';
+            const nameTag = o.names && message.name ? mark(tag('div', { position: 'absolute', left: '12px', top: '-11px', 'max-width': '80%', padding: '0 8px', 'background-color': k.panel2, color: k.name, ...nameFont(message, ui, 11, '650'), 'letter-spacing': '0.14em', 'line-height': '1.6', 'white-space': 'nowrap', overflow: 'hidden', 'text-overflow': 'ellipsis', 'box-sizing': 'border-box' }, esc(message.name)), 'data-bl-name') : '';
             return mark(tag('div', { ...textBox, position: 'relative', border: `3px solid ${k.line}`, padding: '14px 14px 18px', margin: '12px 0 0' }, nameTag + flow(message, k.panel2) + hide(tag('div', { position: 'absolute', right: '10px', bottom: '4px', color: k.muted, ...font(ui, 11), 'line-height': '1' }, '▼'))), 'data-bl-msg');
         }
         // wrap: 사탕 포장 — 가운데 글 칸, 양쪽 꼬인 끝(작은 리본)
@@ -412,7 +420,7 @@ function cMessages(model, o, k, style) {
 
 /** 1.0.9+ 닫힌 채 시작하는 틀(반응 글꾸 봉투 · 초대장): 미리보기에서는 로그가 보이게 펼쳐요 — 틀에 박힌 닫힌 <details> 에 open + data-bl-peek(미리보기 표시).
  *  복사할 땐 shutPeek 로 다시 닫아요(테마 log-copy-sheet.js result · 글꾸 마트 HTML 복사 · 시식 복사). 자리에 끼운 부품(접는 추가 정보 등)은 건드리지 않아요 */
-//   1.1.0: 값 없는 `<details open>` · `<details class="a" open>` 도 이미 열린 상자예요 — 표시를 붙이면 복사할 때 원래 열린 상자까지 닫혔어요(테마 c711b94f 와 같은 고침)
+//   1.1.0: 값 없는 `<details open>` · `<details class="a" open>` 도 이미 열린 상자예요 — 표시를 붙이면 복사할 때 원래 열린 상자까지 닫혔어요
 export const peekTemplate = template => String(template ?? '').replace(/<details(?![^>]*\sopen(?=[\s=>/]))(?=[\s>])/g, '<details open="" data-bl-peek=""');
 /** 미리보기로만 펼친 상자를 다시 닫은 HTML 글 */
 export const shutPeek = html => String(html ?? '').replace(/<details\b[^>]*\sdata-bl-peek=""[^>]*>/g, tag => tag.replace(/\sopen(?:="[^"]*")?(?=[\s>])/, '').replace(/\sdata-bl-peek=""/, ''));
@@ -426,7 +434,7 @@ export function conceptParts(model, o, k, frame) {
     const ui = o.ui, fields = o.fields;
     const inner = conceptModel(model, k, o.screen ?? null);
     return {
-        head: (frame.top ? emojiLine(frame.top, k, ui, 18) : '') + cTitle(fields, k, ui, typeStyle(frame.type, k)) + (cPills(fields, k, ui, tidyType(frame.type)?.align ?? 'center') ? tag('div', { height: '6px' }, '') + cPills(fields, k, ui, tidyType(frame.type)?.align ?? 'center') : ''),
+        head: (frame.top ? emojiLine(frame.top, k, ui, 18) : '') + cTitle(fields, k, ui, typeStyle(frame.type, k)) + cPills(fields, k, ui, tidyType(frame.type)?.align ?? 'center', { 'padding-top': '6px' }),   // 1.1.2 제목과의 사이는 padding(빈 사이 칸 대신 — 겹침 없이 같은 자리)
         body: cMessages(inner, o, k, frame.messages ?? 'box'),
         info: cInfo(fields, k, ui),
         tail: cTail(fields, k, ui, frame.tail ?? ''),
@@ -451,7 +459,7 @@ function galleryHead(fields, c, ui, withDate) {
     return tag('div', { padding: '16px 16px 12px' }, title(fields, c, ui, withDate ? 20 : 16)
         + (withDate && fields.subtitle ? muted('subtitle', fields.subtitle, c, ui, { 'margin-top': '4px' }) : '')
         + (withDate ? tag('div', { 'margin-top': '8px', color: c.muted, ...font(ui, 12), 'line-height': '1.5', 'border-top': `1px solid ${c.line}`, 'padding-top': '8px' }, `기록 날짜 · ${F('date', fields.date || '')}`) : '')
-        + (pills(fields, c, ui) ? gap(8) + pills(fields, c, ui) : ''));
+        + pills(fields, c, ui, undefined, 8));
 }
 function galleryFrame(model, o, kind) {
     const { c, ui, fields } = o;
@@ -483,7 +491,9 @@ const ALL_CATEGORIES = [
     { id: 'event', label: '기념일' },
     { id: 'thing', label: '사물' },
     { id: 'genre', label: '장르' },
-    { id: 'react', label: '반응' },   // 1.0.9 누르면 반응하는 글꾸(봉투 열기 · 초대장 · 쪽 넘기기 · 통통 카드 — tools/mart/react-geulkku.mjs)
+    { id: 'react', label: '반응' },
+    { id: 'scene', label: '장면' },   // 1.1.0 장면 글꾸 8종(사랑 재판 · 속보 방송 · 탑승권 · 레시피 카드 · 타로 리딩 · 터미널 · 학적부 · 전보 — tools/mart/scene-geulkku.mjs)   // 1.0.9 누르면 반응하는 글꾸(봉투 열기 · 초대장 · 쪽 넘기기 · 통통 카드 — tools/mart/react-geulkku.mjs)
+    { id: 'xmas', label: '연말' },   // 1.1.1 연말 글꾸 6종(스노우볼 · 성탄 카드 · 오너먼트 대화 · 겨울 기차표 · 연말 정산 · 소원 부적 — tools/mart/xmas-geulkku.mjs)
     { id: 'gallery', label: '갤러리' },
     { id: 'mine', label: '내 글꾸' },
 ];
@@ -534,14 +544,25 @@ export const categoryOf = id => PRESETS.find(p => p.id === id)?.category ?? 'min
  * @param {{ shape?: string, colors?: object, ui?: { family: string, tracking: string }, fields?: object, size?: 's'|'m'|'l', names?: boolean, gap?: boolean }} [options]
  * @returns {string} 인라인 style 만 쓴 HTML (data-f 고치기 표시 포함)
  */
+// 1.1.2 모든 틀의 바깥 폭을 640 으로 통일(사용자 「로그마다 화면 너비도 다르게 보이던데 — 고정 폭으로」 · 레몬 틀과 같은 max-width:640px · 가운데) — 좁은 화면에서는 100% 로 줄어요. 안쪽 여백 · 장식은 그대로
+export const LOG_WIDTH = 640;
+// 1.1.2 틀 원본(내장 · 받은 글꾸)의 flex · inline-block 칸도 들여쓰기를 물려받지 않게(log-copy-render.js tag 와 같은 규칙)
+export const indentGuard = html => String(html ?? '').replace(/(\sstyle=")([^"]*)"/g, (all, a, st) => (/(?:^|;)\s*display\s*:\s*(?:inline-block|inline-flex|flex|grid|inline-grid|inline-table|table)\s*(?:;|$)/i.test(st) && !/(?:^|;)\s*text-indent\s*:/i.test(st) ? `${a}${st.replace(/;?\s*$/, '')};text-indent:0"` : all));
+export function fixedWidth(html) {
+    return indentGuard(html).replace(/^((?:\s*<style\b[\s\S]*?<\/style>|\s*<!--[\s\S]*?-->)*\s*<[a-zA-Z][\w-]*)((?:\s+[^\s=>]+(?:="[^"]*")?)*?)(\s*\/?>)/, (all, open, attrs, end) => {
+        const add = `max-width:${LOG_WIDTH}px;margin-left:auto;margin-right:auto;box-sizing:border-box`;
+        if (/\sstyle="/.test(attrs)) return open + attrs.replace(/\sstyle="([^"]*)"/, (a, st) => ` style="${st.replace(/;?\s*$/, '')};${add}"`) + end;
+        return `${open}${attrs} style="${add}"${end}`;
+    });
+}
 export function renderLog(model, { shape = 'plain', colors = null, ui = null, fields = {}, size = 'm', names = true, gap: blank = true, images = [], screen = null, template = null } = {}) {
     if (!model?.messages?.length) return '';
     // 1.0.1 template: 글꾸 마트에서 받은 내 글꾸(틈 템플릿 · 전용 색) — 렌더 분기는 여기 한 곳
     const found = template?.template ? null : PRESETS.find(p => p.id === shape);
     const tpl = template?.template ? template : found?.template ?? null;   // 받은 글꾸 · 내장 심플 글꾸(틈 템플릿)
     const preset = template?.template ? { own: 'template', render: (m, o) => drawTemplate(m, o, template) } : found;
-    if (!preset?.render || (!colors && !preset.own)) return inkEverywhere(logHtml(model, { names, gap: blank }), model.base.color, { bg: model.base.bg, candidates: [colors?.text] });
+    if (!preset?.render || (!colors && !preset.own)) return fixedWidth(inkEverywhere(logHtml(model, { names, gap: blank }), model.base.color, { bg: model.base.bg, candidates: [colors?.text] }));
     const font = ui ?? { family: model.base['font-family'], tracking: 'normal' };
     const c = tpl ? templateColors(tpl.colors) : colors;
-    return inkEverywhere(preset.render(model, { c, ui: font, fields: { count: `${model.messages.length}개`, ...fields }, size, height: HEIGHTS[size] ?? HEIGHTS.m, names, gap: blank, images: [...(model.images ?? []), ...images], screen }), c.text, { bg: c.bg, candidates: preset.own ? [c.faceText, c.panel, c.bg] : [model.base.color, c.surface, c.bg], keepOwn: !!tpl });
+    return fixedWidth(inkEverywhere(preset.render(model, { c, ui: font, fields: { count: `${model.messages.length}개`, ...fields }, size, height: HEIGHTS[size] ?? HEIGHTS.m, names, gap: blank, images: [...(model.images ?? []), ...images], screen }), c.text, { bg: c.bg, candidates: preset.own ? [c.faceText, c.panel, c.bg] : [model.base.color, c.surface, c.bg], keepOwn: !!tpl }));
 }
