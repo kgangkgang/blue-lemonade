@@ -286,9 +286,11 @@ ${P} .k-song:has(.k-k:checked) .k-open{background:var(--acc)!important;--ink:#0f
 ${P} .k-song:not(:has(.k-more img)) .k-open{display:none!important}
 /* mp3 칸(몇 개든 auto-fit) */
 ${P} .k-aus{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding-left:76px!important}
-${P} .k-pl{display:flex!important;flex-direction:column;gap:5px;min-width:0}
+${P} .k-pl{display:flex!important;align-items:center;gap:6px;min-width:0}
+${P} .k-key{flex:0 0 auto}
 ${P} .k-key{font:800 11.5px/1 ${MONO};letter-spacing:.08em;--ink:var(--acc)}
 ${audioCss(P, '.k-pl', 40)}
+${P} .k-pl audio{flex:1 1 auto;min-width:0;width:auto}
 ${P} .k-song .k-pl audio::-webkit-media-controls-enclosure{background:#ffffff17}
 /* 펼친 그림 */
 ${P} .k-more{display:none!important}
