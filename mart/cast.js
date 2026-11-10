@@ -1,0 +1,109 @@
+// 11-10 글꾸 마트 목록 위 한 줄 「캐릭터: 없음 ▾」 — 펼쳐서 캐릭터를 고르면 그 자리에서 목록의 글꾸가 전부 그 대사색으로 다시 칠해져요(tone-state.js · 고른 것은 기억).
+//   사용자 「가브리엘 글꾸 누르고 그안에서 글꾸 디자인고르는거지」 · 「그냥 장르별로 캐릭터고를수있게하돼 너무 캐릭터창이길어지지않게 꺽쇠라디오목록식으로하는게」
+//   - 묶음(내 캐릭터 · 천지합동청 · D&H · 무협시뮬 · 센티넬버스 · 기타 · 캐릭터 없음 / 직접 색)마다 꺽쇠 머리(▸/▾) + 라디오 목록(색 점 · 이름 · 하나만).
+//   - 처음엔 고른 캐릭터가 든 묶음만 펴요. 머리에는 그 묶음에서 고른 캐릭터의 색 점 · 이름이 보여서 접어도 알 수 있어요.
+//   - 「채팅 붙여 넣어 대사색 찾기」: 실리태번 화면에서 복사한 채팅을 붙이면 대사 글자색(인라인 color)을 읽어 그 캐릭터를 골라요.
+//   - 밤 · 낮: 틀 바탕.
+import { toneState, setTone, savedCast, CAST_GROUPS, castList, rememberCast, forgetCast } from './tone-state.js?v=20261110b';
+import { dialogueColors } from './tone-geulkku.js?v=20261110b';
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const same = (a, b) => String(a || '').toLowerCase() === String(b || '').toLowerCase();
+const namesIn = text => [...new Set(String(text || '').split(/\n/).map(l => (l.match(/^\s*([^\s:：]{1,20})\s*[:：]/) || [])[1]).filter(Boolean))];
+
+/** 지금 보일 묶음들 */
+function groups() {
+    const saved = savedCast();
+    return [
+        ...(saved.length ? [{ id: 'mine', label: '내 캐릭터', sub: '이 브라우저에 기억', cast: saved.map(x => ({ ...x, saved: true })) }] : []),
+        ...CAST_GROUPS,
+        { id: 'none', label: '캐릭터 없음 · 직접 색', sub: '', cast: [], tail: true },
+    ];
+}
+const isOn = x => toneState.on && same(toneState.k, x.color) && (!toneState.name || toneState.name === x.name);
+const groupOfSelection = list => {
+    if (!toneState.on || !toneState.k) return 'none';
+    return (list.find(g => g.cast.some(isOn)) || list.find(g => g.cast.some(x => same(x.color, toneState.k))))?.id || 'none';
+};
+
+export function mountCast(box, { say = () => {} } = {}) {
+    if (!box) return;
+    const open = new Set();
+    let first = true, panel = false;   // 11-10 처음엔 「캐릭터: 없음 ▾」 한 줄만 — 누르면 세계관 묶음이 펼쳐져요(사용자 「누구 로그예요?가먼저나오는게맞나...?」 → 목록이 먼저)
+    const draw = () => {
+        const list = groups();
+        if (first) { open.add(groupOfSelection(list)); first = false; }
+        const head = (g) => {
+            const pick = g.tail ? (toneState.on ? (toneState.k ? null : { name: '캐릭터 없음' }) : { name: '원래 색' }) : g.cast.find(isOn);
+            const showPick = g.tail ? pick && groupOfSelection(list) === 'none' : !!pick;
+            return `<button type="button" class="mart-cast-g" data-group="${g.id}" aria-expanded="${open.has(g.id)}" aria-controls="mart-cast-${g.id}"><span class="mart-cast-caret" aria-hidden="true">${open.has(g.id) ? '▾' : '▸'}</span>${esc(g.label)}${showPick ? `<span class="mart-cast-pick">${pick.color ? `<i style="background:${esc(pick.color)}"></i>` : ''}${esc(pick.name)}</span>` : ''}</button>`;
+        };
+        const radio = (g, x) => `<label class="mart-cast-r"><input type="radio" name="bl-cast" value="${esc(x.color)}" data-name="${esc(x.name)}"${isOn(x) ? ' checked' : ''}><i style="background:${esc(x.color)}" aria-hidden="true"></i><span>${esc(x.name)}</span>${x.saved ? `<button type="button" class="mart-cast-x" data-forget="${esc(x.name)}" aria-label="${esc(x.name)} 잊기" title="기억에서 빼요">×</button>` : ''}</label>`;
+        const body = (g) => {
+            if (!open.has(g.id)) return '';
+            if (g.tail) {
+                return `<div class="mart-cast-list" id="mart-cast-${g.id}" role="radiogroup" aria-label="${esc(g.label)}">
+                    <label class="mart-cast-r"><input type="radio" name="bl-cast" value="" data-name=""${toneState.on && !toneState.k ? ' checked' : ''}><i class="is-none" aria-hidden="true"></i><span>캐릭터 없음(무채)</span></label>
+                    <label class="mart-cast-r"><input type="radio" name="bl-cast" value="off" data-name=""${!toneState.on ? ' checked' : ''}><i class="is-off" aria-hidden="true"></i><span>원래 색(다시 칠하지 않음)</span></label>
+                    <form class="mart-cast-form"><input type="text" class="field" name="name" maxlength="20" placeholder="이름" aria-label="캐릭터 이름" required><input type="color" name="color" value="${esc(toneState.k || '#3aa7ff')}" aria-label="대사색"><button type="submit" class="btn">기억하고 고르기</button></form>
+                    <label class="mart-cast-paste"><span>채팅 붙여 넣어 대사색 찾기</span><textarea class="field" rows="1" placeholder="실리태번 화면에서 복사한 채팅을 붙여 넣어요" aria-label="채팅 붙여 넣기"></textarea></label></div>`;
+            }
+            return `<div class="mart-cast-list" id="mart-cast-${g.id}" role="radiogroup" aria-label="${esc(g.label)}">${g.cast.map(x => radio(g, x)).join('')}</div>`;
+        };
+        const opened = list.filter(g => open.has(g.id));
+        const now = !toneState.on ? { name: '원래 색' } : toneState.k ? { name: toneState.name || toneState.k, color: toneState.k } : { name: '없음' };
+        box.innerHTML = `<div class="mart-cast-head"><button type="button" class="mart-cast-toggle" data-toggle aria-expanded="${panel}" aria-controls="mart-cast-panel"><span>캐릭터:</span>${now.color ? `<i style="background:${esc(now.color)}" aria-hidden="true"></i>` : ''}<b>${esc(now.name)}</b><span class="mart-cast-caret" aria-hidden="true">${panel ? '▴' : '▾'}</span></button><span class="mart-seg mart-cast-mode" role="group" aria-label="바탕"><button type="button" class="chip" data-mode="dark" aria-pressed="${toneState.mode === 'dark'}">밤</button><button type="button" class="chip" data-mode="light" aria-pressed="${toneState.mode === 'light'}">낮</button></span></div>
+            <div class="mart-cast-panel" id="mart-cast-panel"${panel ? '' : ' hidden'}><div class="mart-cast-groups">${list.map(head).join('')}</div>${opened.map(body).join('')}</div>`;
+    };
+    box.addEventListener('click', (e) => {
+        const x = e.target.closest('[data-forget]'); if (x) { e.preventDefault(); forgetCast(x.dataset.forget); draw(); return; }
+        const m = e.target.closest('[data-mode]'); if (m) { setTone({ mode: m.dataset.mode }); draw(); return; }
+        if (e.target.closest('[data-toggle]')) { panel = !panel; draw(); box.querySelector('[data-toggle]')?.focus(); return; }
+        const g = e.target.closest('[data-group]');
+        if (g) { const id = g.dataset.group; if (open.has(id)) open.delete(id); else open.add(id); draw(); box.querySelector(`[data-group="${id}"]`)?.focus(); }
+    });
+    box.addEventListener('change', (e) => {
+        const r = e.target.closest('input[type=radio][name=bl-cast]'); if (!r) return;
+        if (r.value === 'off') setTone({ on: false });
+        else setTone({ on: true, k: r.value || null, name: r.dataset.name || '' });
+        draw();
+        box.querySelector('input[name=bl-cast]:checked')?.focus();
+    });
+    box.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const f = e.target, saved = rememberCast(f.name.value, f.color.value);
+        if (!saved) { say('이름과 색을 넣어 주세요', 2400); return; }
+        setTone({ on: true, k: saved.color, name: saved.name });
+        open.add('mine'); draw();
+        say(`「${saved.name}」을 기억했어요 · 다음에도 「내 캐릭터」에 있어요`, 3000);
+    });
+    box.addEventListener('paste', (e) => {
+        if (!e.target.closest('.mart-cast-paste')) return;
+        const dt = e.clipboardData || globalThis.clipboardData;
+        const html = dt?.getData('text/html') || '', text = dt?.getData('text/plain') || '';
+        e.preventDefault();
+        const found = useColors(html || text, text, say);
+        if (!found) say('대사 색을 못 찾았어요 · 실리태번 화면에서 대사가 든 부분을 골라 복사해 주세요', 3600);
+        else { open.clear(); open.add(groupOfSelection(groups())); }
+        draw();
+    });
+    document.addEventListener('bl-tone-change', () => { if (!box.contains(document.activeElement)) draw(); });
+    draw();
+}
+
+/** 붙여 넣은 HTML 의 대사색으로 캐릭터 고르기 — 아는 색이면 그 이름, 모르면 글 속 이름(첫 「이름:」)으로 기억. 고른 색 | null */
+export function useColors(html, text = '', say = () => {}) {
+    const colors = dialogueColors(html);
+    if (!colors.length) return null;
+    const top = colors[0].color;
+    const known = castList().find(x => same(x.color, top));
+    let name = known?.name;
+    if (!name) {
+        const names = namesIn(text || String(html).replace(/<[^>]+>/g, '\n'));
+        name = names[0] || '붙여 넣은 색';
+        rememberCast(name, top);
+    }
+    setTone({ on: true, k: top, name });
+    say(`대사색 ${top} — 「${name}」로 칠했어요${colors.length > 1 ? ` · 다른 대사색 ${colors.length - 1}개도 있었어요` : ''}`, 3600);
+    return top;
+}

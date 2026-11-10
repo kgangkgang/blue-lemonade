@@ -422,3 +422,43 @@ html.mart-cart-on{overflow:hidden}
   .mart-taste-preview{padding:8px}
   .mart-taste-open small{display:none}
 }
+/* 11-10 목록 위 「캐릭터: 없음 ▾」 고르기(cast.js) — 세계관 묶음 꺽쇠 머리 한두 줄 + 편 묶음만 라디오 목록 · 폰에서도 몇 줄 안에 */
+.mart-cast{margin:0 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
+.mart-cast-head{display:flex;align-items:center;gap:8px;margin:0 0 8px}
+.mart-cast-head b{font-size:var(--ts-ctl);color:var(--ink)}
+.mart-cast-mode{margin-left:auto}
+.mart-cast-groups{display:flex;flex-wrap:wrap;gap:4px 6px}
+.mart-cast-g{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px 0 6px;border:1px solid var(--line);border-radius:var(--r-ctl);background:transparent;color:var(--ink);font:inherit;font-size:var(--ts-ctl);cursor:pointer}
+.mart-cast-g:hover{background:var(--tint)}
+.mart-cast-g[aria-expanded=true]{border-color:var(--line-strong);background:var(--tint-2)}
+.mart-cast-g:focus-visible,.mart-cast-r:focus-within{outline:2px solid var(--blue);outline-offset:2px}
+.mart-cast-caret{width:12px;color:var(--muted);text-align:center}
+.mart-cast-pick{display:inline-flex;align-items:center;gap:4px;padding-left:6px;border-left:1px solid var(--line);color:var(--muted);font-size:var(--ts-meta)}
+.mart-cast-pick i,.mart-cast-r i{display:inline-block;width:12px;height:12px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.mart-cast-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:2px 8px;margin:8px 0 0;padding:8px 0 0;border-top:1px solid var(--line)}
+.mart-cast-r{position:relative;display:flex;align-items:center;gap:8px;min-height:32px;padding:0 6px;border-radius:var(--r-ctl);font-size:var(--ts-ctl);color:var(--ink);cursor:pointer}
+.mart-cast-r:hover{background:var(--tint)}
+.mart-cast-r input{margin:0;accent-color:var(--blue)}
+.mart-cast-r span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mart-cast-r i.is-none{background:repeating-linear-gradient(45deg,#fff 0 3px,#d4d4d8 3px 6px)}
+.mart-cast-r i.is-off{background:conic-gradient(#e5484d,#f5d90a,#46a758,#0090ff,#8e4ec6,#e5484d)}
+.mart-cast-x{margin-left:auto;width:24px;height:24px;border:0;border-radius:50%;background:transparent;color:var(--muted);font:inherit;cursor:pointer}
+.mart-cast-x:hover{background:var(--tint);color:var(--ink)}
+.mart-cast-form{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:4px 0 0}
+.mart-cast-form .field{flex:1 1 120px;min-width:0}
+.mart-cast-form input[type=color]{width:40px;height:32px;padding:0;border:1px solid var(--line);border-radius:var(--r-ctl);background:transparent}
+.mart-cast-paste{grid-column:1/-1;display:flex;flex-direction:column;gap:4px;margin:6px 0 2px;font-size:var(--ts-meta);color:var(--muted)}
+.mart-cast-paste textarea{resize:none;min-height:36px;font:inherit;font-size:var(--ts-ctl)}
+/* 컨셉 카드 안 디자인 넘기기 */
+.mart-designs{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}
+.mart-designs .chip{height:28px;min-height:28px;padding:0 10px;font-size:var(--ts-meta)}
+.mart-sheet-meta .mart-designs{margin:6px 0}
+@media (max-width:639px){.mart-cast{padding:8px 10px}.mart-cast-g{min-height:30px;padding:0 8px 0 4px}.mart-cast-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mart-cast-toggle{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;border:1px solid var(--line);border-radius:var(--r-ctl);background:transparent;color:var(--muted);font:inherit;font-size:var(--ts-ctl);cursor:pointer}
+.mart-cast-toggle b{color:var(--ink)}
+.mart-cast-toggle i{display:inline-block;width:12px;height:12px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.mart-cast-toggle:hover{background:var(--tint)}
+.mart-cast-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.mart-cast-head{margin:0}
+.mart-cast-panel{margin:8px 0 0}
+.mart-cast{padding:8px 10px}

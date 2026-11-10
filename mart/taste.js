@@ -5,7 +5,10 @@
 //   붙여 넣은 글 · 바꾸기 · 제목 · 날짜 · 마지막 미리보기 상태는 이 탭 안(sessionStorage)에 남아요. 스크립트 없는 결과 · 외부 의존 없음. 마트 공용 시트 · 단추 규격(mart.css .mart-sheet · .mart-actions)을 써요.
 import { parseLog, buildModel, DEFAULT_NAMES } from './taste-parse.js';
 import { tasteHtml, tasteDocument, canTaste, isConcept, conceptReady, loadConcept, shutPeek } from './taste-render.js?v=20261109d';
-import { withInks, setInk, resetInks, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글자색 팔레트   // 11-07 판 꼬리표: 옛 캐시와 섞이지 않게
+import { withInks, setInk, resetInks, paintDot, syncInks } from './inks.js?v=20261108a';
+import { kkangtongReady } from './tone-geulkku.js?v=20261110b';   // 11-10 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
+import { toneOut } from './tone-state.js?v=20261110b';
+import { useColors } from './cast.js?v=20261110b';                 // 11-10 붙여 넣은 채팅 HTML 의 대사색으로 캐릭터 고르기             // 11-10 고른 대사색으로 다시 칠하기   // 11-08 글자색 팔레트   // 11-07 판 꼬리표: 옛 캐시와 섞이지 않게
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 /** 그릴 수 있는 틀인지 — 받은 글꾸(틈 템플릿 template) · 테마 로그 복사 기본 틀(shape · 내장) · 11-07 받아 둔 일러스트 컨셉(concept-*) */
@@ -176,6 +179,12 @@ function build() {
     const preview = dialog.querySelector('.mart-taste-preview');
     let timer = 0;
     area.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { state.text = area.value; state.names = {}; state.showNames = null; parse(); }, 220); });   // 새 글은 이름 줄 기본값도 새로
+    // 11-10 실리태번 화면에서 복사한 채팅이면 대사 글자색(인라인 color)을 읽어 그 캐릭터 색으로 칠해요 — 글 칸에는 글만 그대로 들어가요
+    area.addEventListener('paste', (e) => {
+        const dt = e.clipboardData || globalThis.clipboardData;
+        const html = dt?.getData('text/html') || '';
+        if (html) useColors(html, dt.getData('text/plain') || '', state?.say || (() => {}));
+    });
     let inkTimer = 0;
     dialog.addEventListener('input', (e) => {
         const t = e.target;
@@ -260,9 +269,10 @@ function render() {
         state.html = ''; sync();
         return;
     }
-    try { show(tasteHtml(withInks(state.item), state.model, drawFields(), { names: namesOn(state.showNames, state.parsed), ...cutOf(state.head) })); }
+    try { show(toneOut(state.item, tasteHtml(withInks(state.item), state.model, drawFields(), { names: namesOn(state.showNames, state.parsed), ...cutOf(state.head) }))); }   // 11-10 고른 대사색으로
     catch (error) { preview.innerHTML = `<p class="mart-sheet-wait">못 그렸어요 · ${esc(error.message)}</p>`; state.html = ''; sync(); }
 }
+document.addEventListener('bl-tone-change', () => { if (state && dialog?.open && !state.setup) render(); });   // 11-10 캐릭터를 바꾸면 시식 미리보기도
 function sync() {
     if (state.setup) { dialog.querySelector('[data-taste="apply"]').disabled = !state.model; return; }
     for (const b of dialog.querySelectorAll('.mart-sheet-foot button')) b.disabled = !state.html;
@@ -274,7 +284,7 @@ const footSetup = on => `<div class="mart-actions is-geulkku is-taste is-setup">
 
 async function copy() {
     flushSnap();
-    const html = shutPeek(state.html); if (!html) return;   // 11-09 미리보기로만 펼친 상자는 닫아서 복사
+    const html = kkangtongReady(shutPeek(state.html)); if (!html) return;   // 11-09 미리보기로만 펼친 상자는 닫아서 복사 · 11-10 깡통에 붙일 꼴
     const done = () => state.say?.('복사됐어요 · 깡싸 글쓰기 HTML 칸에 붙여요', 3600);
     try {
         if (globalThis.ClipboardItem && navigator.clipboard?.write) await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([html], { type: 'text/plain' }) })]);
@@ -293,7 +303,7 @@ async function copy() {
 }
 function download() {
     flushSnap();
-    const html = shutPeek(state.html); if (!html) return;   // 11-09 내려받기도 복사와 같게 닫힌 채
+    const html = kkangtongReady(shutPeek(state.html)); if (!html) return;   // 11-09 내려받기도 복사와 같게 닫힌 채 · 11-10 깡통에 붙일 꼴
     const name = String(state.item.name || state.item.label || '글꾸').replace(/[\\/:*?"<>|#%]+/g, '').replace(/\s+/g, '-');
     const blob = new Blob([tasteDocument(html, `${state.item.name || state.item.label} · 시식`)], { type: 'text/html' });
     const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `글꾸-시식-${name}.html`, hidden: true });

@@ -10,6 +10,9 @@ import { cart, say, onCheckout, artName, saveArt } from './cart.js?v=20261109a';
 import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
+import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110b';   // 11-10 대사색 하나로 다시 칠하기 · 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
+import { toneState, toned } from './tone-state.js?v=20261110b';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
+import { mountCast } from './cast.js?v=20261110b';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
 let styleActive = 'all', drawPreset = null, picker = null;
 const states = [];   // 만든 카드만(글꾸) — 늦게 만들기(lazyGrid)라 처음엔 첫 화면 몫뿐이에요
 const stateById = new Map();
@@ -58,6 +61,7 @@ function lazyGrid(gridEl, build, { first = LAZY_FIRST, step = LAZY_STEP, margin 
     return {
         set(next) { list = next; shown = 0; gridEl.replaceChildren(spacer); add(io ? first : list.length); size(); watch(); },
         reveal(item) { const i = list.indexOf(item); if (i < 0) return false; if (i >= shown) { add(i + 1 - shown); size(); watch(); } return true; },
+        swap(from, to) { const i = list.indexOf(from); if (i >= 0) list[i] = to; },   // 11-10 컨셉 카드 안에서 디자인을 바꿀 때 그 자리 항목만 바꿔요
         get list() { return list; },
     };
 }
@@ -290,6 +294,9 @@ function receipt(state) {
         if (changed) { out.id = `${item.id}-${hash(JSON.stringify(v))}`; out.name = `${item.name} · 내 색`; }   // 바꾼 것은 따로 보관(기본 것을 덮지 않게)
         return out;
     }
+    // 11-10 대사색을 골랐으면 그 색으로 다시 칠한 틀을 받아요(기본 것을 덮지 않게 id 꼬리)
+    const tn = item.kind === 'geulkku' && toned(item) && item.template ? toneItem({ ...item, colors: colorsOf(item) }, toneState.k, { mode: toneState.mode }) : null;
+    if (tn) return { kind: 'geulkku', id: `${item.id}-k${toneState.k ? toneState.k.slice(1) : 'none'}${toneState.mode[0]}`, label: item.label, emoji: item.emoji, template: tn.template, colors: tn.colors, messages: item.messages, tail: item.tail, ...(item.type ? { type: item.type } : {}) };
     if (item.kind === 'geulkku') return { kind: 'geulkku', id: item.id, label: item.label, emoji: item.emoji, template: item.template, colors: colorsOf(item), messages: item.messages, tail: item.tail, ...(item.type ? { type: item.type } : {}) };   // type: 제목 꼴(테마 mart-import 가 읽어요)
     return null;   // 그림 액자: 받기 파일을 그대로
 }
@@ -376,7 +383,7 @@ export const shutPeek = html => String(html ?? '').replace(/<details\b[^>]*\sdat
  *  서식(text/html) + 그 코드 글자(text/plain)를 같이 넣어요 — 보통 편집기엔 모양 그대로, HTML 칸엔 코드로 붙어요 */
 async function copyHtml(state) {
     const item = state.item;
-    const ready = ensureItem(item).then(() => (inkChanged(item) && !tasteLoaded ? loadTaste().then(() => { delete state.inkHtml; return previewOf(state); }) : previewOf(state))).then(shutPeek);   // 11-09 카드 · 상세 미리보기는 펼침, 복사 글은 닫힘   // 「📝 내 로그로 보기」가 켜져 있으면 내 로그가 든 완성 HTML   // 조각을 아직 안 받았으면 받은 뒤(클립보드는 누른 순간에 열어요)
+    const ready = ensureItem(item).then(() => (inkChanged(item) && !tasteLoaded ? loadTaste().then(() => { delete state.inkHtml; return previewOf(state); }) : previewOf(state))).then(shutPeek).then(h => (item.photo ? h : kkangtongReady(h)));   // 11-10 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)   // 11-09 카드 · 상세 미리보기는 펼침, 복사 글은 닫힘   // 「📝 내 로그로 보기」가 켜져 있으면 내 로그가 든 완성 HTML   // 조각을 아직 안 받았으면 받은 뒤(클립보드는 누른 순간에 열어요)
     ready.catch(() => { /* 아래에서 알려요 */ });
     const done = () => say('복사됐어요 · 깡싸 글쓰기 HTML 칸에 붙여요', 3600);
     try {
@@ -504,6 +511,7 @@ function doAct(state, act, b) {
     else if (act === 'html') copyHtml(state);
     else if (act === 'taste') openTaste(state);
     else if (act === 'random') pickRandom();
+    else if (act === 'design') switchDesign(state, b.dataset.id);
     else if (act === 'pick') {
         const key = entryOf(state).key;   // 열쇠는 목록만으로 정해져요 — 담는 글(받기 칸)은 조각을 받은 뒤
         if (cart.has(key)) { cart.remove(key); say('장바구니에서 뺐어요'); return; }
@@ -513,7 +521,7 @@ function doAct(state, act, b) {
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
 let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261109d').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261110t').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
@@ -544,7 +552,15 @@ const cardEl = item => stateOf(item).el;
 const MYLOG_KEY = 'bl-mart-mylog-on';
 const mylog = { on: false, mod: null };
 /** 그 카드에 보일 미리보기 HTML — 내 로그가 켜져 있고 그려지면 그것, 아니면 표본 글 */
+/** 그 카드에 보일 미리보기 HTML — 대사색을 골랐으면 그 색으로 다시 칠해요(tone-state.js · 고른 게 없으면 지금 모양 그대로) */
 function previewOf(state) {
+    const raw = rawPreviewOf(state);
+    if (!raw || !toned(state.item)) return raw;
+    const key = `${toneState.k}|${toneState.mode}|${raw.length}|${raw.slice(-40)}`;
+    if (state.toneKey !== key) { state.toneKey = key; state.toneHtml = toneHtml(raw, state.item.colors || state.item.palette || null, toneState.k, { mode: toneState.mode }); }
+    return state.toneHtml;
+}
+function rawPreviewOf(state) {
     const item = state.item;
     if (!mylog.on || !mylog.mod || !(item.template || item.shape)) {
         // 11-08 글자색을 바꾼 글꾸: 바꾼 색으로 표본 글을 다시 그려요(시식 모듈을 받기 전에는 원래 미리보기 · 받으면 다시 칠해요)
@@ -563,6 +579,29 @@ function repaintInks(id) {
     if (sheet?.open && sheetState?.item.id === id && sheetState.item.preview) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); syncInks(sheet.querySelector('.mart-sheet-inks'), sheetState.item); }
 }
 document.addEventListener('bl-inks-change', e => repaintInks(e.detail?.id));
+// 11-10 캐릭터 · 밤낮을 바꾸면 만든 카드 · 크게 보기를 다시 칠해요
+function repaintTone() {
+    for (const s of states) { delete s.toneKey; delete s.toneHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = previewOf(s); } syncCard(s); }
+    if (sheet?.open && sheetState?.item.preview) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); const inks = sheet.querySelector('.mart-sheet-inks'); if (inks) inks.innerHTML = toned(sheetState.item) ? '' : inksHtml(sheetState.item); syncSheet(); }
+}
+document.addEventListener('bl-tone-change', repaintTone);
+// 11-10 컨셉 하나 = 카드 하나 — 같은 이름의 디자인(심플 · 일러스트 · 다꾸 · 무테 · 내장)은 카드 · 크게 보기 안에서 넘겨 봐요(사용자 「한 컨셉 들어가서 디자인 바꾸는식」)
+const conceptPick = new Map();   // 컨셉 이름 → 고른 디자인 id
+const designsHtml = (item) => {
+    const sibs = item._sibs || [];
+    if (sibs.length < 2) return '';
+    return `<div class="mart-designs mart-seg" role="group" aria-label="디자인">${sibs.map(x => `<button type="button" class="chip" data-act="design" data-id="${esc(x.id)}" aria-pressed="${x.id === item.id}">${esc(x.builtin ? '내장' : styleOf(x))}</button>`).join('')}</div>`;
+};
+function switchDesign(state, id) {
+    const next = (state.item._sibs || []).find(x => x.id === id);
+    if (!next || next === state.item) return;
+    conceptPick.set(next.name, next.id);
+    const inSheet = sheet?.open && sheetState === state;
+    const old = state.el, fresh = stateOf(next);
+    if (old.isConnected) { cards.swap(state.item, next); old.replaceWith(fresh.el); fillCard(fresh); }
+    if (inSheet) openSheet(fresh);
+    else fresh.el.querySelector(`.mart-designs [data-id="${CSS.escape(id)}"]`)?.focus({ preventScroll: true });
+}
 function repaintMylog() {
     for (const s of states) { delete s.myHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = previewOf(s); } }
     if (sheet?.open && sheetState?.item.preview) sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState);
@@ -619,16 +658,16 @@ function openSheet(state) {
     const { item } = state;
     sheet.querySelector('#mart-sheet-title').innerHTML = `${glyphHtml(item)}<span>${esc(item.name || item.label)}</span>`;
     if (item.accent) sheet.style.setProperty('--accent', item.accent); else sheet.style.removeProperty('--accent');   // 담기 단추 색 = 그 글꾸 강조색
-    sheet.querySelector('.mart-sheet-meta').innerHTML = `${tagsHtml(item)}<p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}`;
+    sheet.querySelector('.mart-sheet-meta').innerHTML = `${tagsHtml(item)}${designsHtml(item)}<p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}`;   // 11-10 디자인 넘기기
     const body = sheet.querySelector('.mart-sheet-body');
-    body.innerHTML = `<div class="mart-sheet-preview">${item.preview ? sheetPreview(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div><div class="mart-sheet-inks">${item.preview ? inksHtml(item) : ''}</div>`;   // 11-08 글자색 칩
+    body.innerHTML = `<div class="mart-sheet-preview">${item.preview ? sheetPreview(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div><div class="mart-sheet-inks">${item.preview && !toned(item) ? inksHtml(item) : ''}</div>`;   // 11-08 글자색 칩 · 11-10 캐릭터 대사색으로 칠할 땐 칩 대신 그 색 하나
     if (!item.preview) {
         body.setAttribute('aria-busy', 'true');
         ensureItem(item).then(() => {
             fillCard(state);
             if (sheetState !== state) return;
             body.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(state);
-            syncInks(body.querySelector('.mart-sheet-inks'), item);
+            if (toned(item)) body.querySelector('.mart-sheet-inks').innerHTML = ''; else syncInks(body.querySelector('.mart-sheet-inks'), item);
             body.scrollTop = 0;
         }, () => { if (sheetState === state) body.querySelector('.mart-sheet-preview').innerHTML = `<p class="mart-sheet-wait">${LOAD_FAIL}</p>`; })
             .finally(() => body.removeAttribute('aria-busy'));
@@ -672,7 +711,7 @@ function card(item) {
     const size = item.bytes ? `<small>${item.bytes > 1e6 ? `${(item.bytes / 1048576).toFixed(1)}MB` : `${Math.max(1, Math.round(item.bytes / 1024))}KB`}</small>` : '';
     el.innerHTML = `${preview}${item.note ? `<p class="mart-note">${esc(item.note)}</p>` : ''}
         <div class="mart-title"><b>${glyphHtml(item)}<span class="t">${esc(item.name || item.label)}</span></b>${tagsHtml(item)}</div>
-        <p class="mart-desc">${esc(descOf(item))}${size ? ` · ${size}` : ''}</p>${sourceLinks(item)}${params}
+        ${kind === 'geulkku' ? designsHtml(item) : ''}<p class="mart-desc">${esc(descOf(item))}${size ? ` · ${size}` : ''}</p>${sourceLinks(item)}${params}
         ${actionsHtml(item)}`;
     el.addEventListener('input', (e) => {
         const k = e.target.dataset.k; if (!k) return;
@@ -740,7 +779,14 @@ cart.onChange(() => { states.forEach(syncCard); syncSheet(); });
 
 function applyFilter() {
     const q = (search.value || '').trim().toLowerCase();
-    const list = allItems.filter(item => (!picker || picker.match(item.category, !!item.builtin)) && (styleActive === 'all' || styleOf(item) === styleActive) && (!q || item._text.includes(q)));
+    let list = allItems.filter(item => (!picker || picker.match(item.category, !!item.builtin)) && (styleActive === 'all' || styleOf(item) === styleActive) && (!q || item._text.includes(q)));
+    // 11-10 「모든 디자인」이면 컨셉(같은 이름) 하나에 카드 하나 — 고른 디자인이 걸러진 안에 있으면 그것, 아니면 처음 것
+    if (kind === 'geulkku' && styleActive === 'all') {
+        const by = new Map();
+        for (const item of list) { const k = item.name; const had = by.get(k); if (!had || (conceptPick.get(k) === item.id)) by.set(k, item); }
+        const keep = new Set(by.values());
+        list = list.filter(item => keep.has(item));
+    }
     const shown = list.length;
     cards.set(list);   // 첫 화면 몫만 카드로 · 나머지는 빈 칸(스크롤 가까이 오면 묶음으로)
     const count = document.querySelector('.mart-count');
@@ -793,6 +839,13 @@ async function main() {
     if (mylogOn) await setMylog(true); else loadTaste().then(m => { mylog.mod = m; paintMylogChip(); }, () => {});
     allItems = items;
     for (const x of items) x._text = textOf(x);
+    // 11-10 컨셉(같은 이름) 묶기 — 디자인 차례는 심플 → 일러스트 → 다꾸 → 무테 → 그 밖
+    const byName = new Map();
+    for (const x of items) { const a = byName.get(x.name) ?? []; a.push(x); byName.set(x.name, a); }
+    const rank = x => (x.builtin ? -1 : STYLE_ORDER.includes(styleOf(x)) ? STYLE_ORDER.indexOf(styleOf(x)) : STYLE_ORDER.length);
+    for (const a of byName.values()) { a.sort((p, q) => rank(p) - rank(q)); for (const x of a) x._sibs = a; }
+    { const want = decodeURIComponent(location.hash.slice(1)), it = want && items.find(x => x.id === want); if (it) conceptPick.set(it.name, it.id); }   // #글꾸id 로 오면 그 디자인이 카드에 보여요
+    mountCast(document.querySelector('.mart-cast'), { say });   // 11-10 목록 위 「캐릭터: 없음 ▾」
     cards = lazyGrid(grid, cardEl);
     applyFilter();
     grid.setAttribute('aria-busy', 'false');
