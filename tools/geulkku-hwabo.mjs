@@ -6,6 +6,7 @@
 // - 로그 복사 틀이 아니라 <style> · 체크박스가 든 게시글 HTML 이에요: copyOnly(HTML 복사만) + photo(시식 · 내 로그 · 글자색 없음).
 //   테마 「마트에서 가져오기」로는 받지 않아요(테마 검사 checkTemplate 은 class · <style> 을 막아요).
 // - 순서: 다른 글꾸 도구(split-geulkku · geulkku-accent · geulkku-builtin · geulkku-react) 뒤에 돌려요. split 을 다시 돌리면 이것도 다시 돌려요.
+import { retired } from './geulkku-retired.mjs'; retired('geulkku-hwabo');   // 11-11 옛 글꾸를 마트에서 뺐어요 — 이 도구는 쉬어요(geulkku-retired.mjs)
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';

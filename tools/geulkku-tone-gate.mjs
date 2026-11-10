@@ -2,6 +2,7 @@
 //   잼: ① 글자 대비 4.5 미만(깡통이 덮는 문턱 — <style> · 이모지만 든 글은 빼요) ② 붙일 꼴의 인라인 url( ③ fill 없는 글자색 ④ 폰 390 가로 넘침
 //   PLAYWRIGHT_CORE=<playwright-core 자리> node tools/geulkku-tone-gate.mjs [--k #3aa7ff,#f0d878,...] [--out <폴더>]
 //   종료 코드 1 = 실패가 하나라도 있어요. 브라우저는 하나만 띄우고 끝나면 그 PID 만 닫아요.
+import { retired } from './geulkku-retired.mjs'; retired('geulkku-tone-gate');   // 11-11 옛 글꾸를 마트에서 뺐어요 — 이 도구는 쉬어요(geulkku-retired.mjs)
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';

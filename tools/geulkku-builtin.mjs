@@ -7,6 +7,7 @@
 // - 받기(담기 · 테마용 복사)는 없어요 — 블루레몬에이드에 이미 들어 있어서 「내장」(builtin) 표시 + 미리보기 · 크게 보기 · 시식하기 · HTML 복사만.
 // - 순서: (테마) mart-build → split-geulkku → tools/geulkku-accent.mjs → 이것. 멱등이에요(두 번 돌려도 같아요). split 을 다시 돌리면 이 조각이 지워지니 이것도 다시 돌려요.
 // - 조각 이름의 8자 해시는 내용 sha256 앞 8자예요(조각은 브라우저 캐시 · index.json 만 no-cache).
+import { retired } from './geulkku-retired.mjs'; retired('geulkku-builtin');   // 11-11 옛 글꾸를 마트에서 뺐어요 — 이 도구는 쉬어요(geulkku-retired.mjs)
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';

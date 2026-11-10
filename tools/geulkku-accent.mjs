@@ -6,6 +6,7 @@
 // - 조각 파일 이름의 8자 해시는 내용의 sha256 앞 8자예요. 내용이 바뀌면 새 해시 이름으로 바꾸고 index.json 의 chunks[c].file 도 같이 고쳐요
 //   (조각은 브라우저 캐시를 그대로 쓰고 index.json 만 no-cache 로 받으니, 이름이 안 바뀌면 옛 조각이 남을 수 있어요).
 
+import { retired } from './geulkku-retired.mjs'; retired('geulkku-accent');   // 11-11 옛 글꾸를 마트에서 뺐어요 — 이 도구는 쉬어요(geulkku-retired.mjs)
 import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync, readdirSync, unlinkSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';

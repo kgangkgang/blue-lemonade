@@ -5,15 +5,11 @@
 //      소품 톤: 테마와 같은 톤 사다리(lib/log-copy/shared/char-tone.js toneLadder — 테마 codex/tone-ladder-113 사본 · 시안 tones 와 같은 값).
 //   ② 「HTML 복사」(simpleReady) — 틀 <style> 과 마트가 넣는 규칙(코멘트 빈칸 · 16px 간격 · 그림 규칙)을 <style> 하나로 합쳐 감싸는 div 첫 자식으로 · 고칠 자리에 「✎」 주석.
 //   ③ 카드 미리보기 상태(peekSimple) — 처음엔 닫힌 틀은 미리보기만 열린 판(details open + data-bl-peek). 복사 글은 mart.js shutPeek 가 원래(닫힌) 상태로.
-//   ④ 목록(withSimpleFrames · splitView) — 새 틀이 첫 화면, 예전 글꾸는 「옛날 버전」으로 접어 둬요.
+//   11-11 사용자 「마트에 옛날것들 다 없애라」 — 글꾸 마트 목록(data/geulkku/index.json)은 이제 심플 새 틀만이에요(tools/geulkku-simple.mjs 가 써요).
 // char-tone.js 는 꼬리를 달아 불러요 — 톤 사다리가 들어가기 전 사본이 캐시에 남아 있으면 이름을 못 찾아 마트 전체가 멈추니까요(같은 파일을 꼬리 없이 부르는 tone-geulkku.js 는 그대로)
 import { toneLadder, bandColor, speakerColor, tone, NEUTRAL_LADDER } from './lib/log-copy/shared/char-tone.js?v=20261111a';
 import { kkangtongReady } from './tone-geulkku.js?v=20261110v';
 
-/** 깃발: 심플 새 틀을 목록에 보일지. true = 새 틀이 첫 화면 · 예전 글꾸는 「옛날 버전」 / false = 깃발을 넣기 전과 같아요(simple-index.json 도 안 받아요) */
-export const SIMPLE_FRAMES_ENABLED = true;
-/** 심플 새 틀 목록(index.json 과 같은 꼴의 items · categories · chunks) — tools/geulkku-simple.mjs 가 써요 */
-export const SIMPLE_INDEX = 'simple-index.json';
 
 /**
  * 틀 계약 가운데 이식판이 정한 값 · 아직 안 정한 값(이식판이 바뀌면 여기만 맞춰요).
@@ -318,35 +314,3 @@ export function markEdits(html) {
 
 /** 심플 새 틀 「HTML 복사」 글: 틀 <style> + 그림 규칙 + 코멘트 빈칸 · 16px 간격 규칙을 <style> 하나로(감싸는 div 첫 자식) · 위아래 코멘트 빈칸 · 글자색 fill · 고칠 자리 주석 */
 export const simpleReady = html => markEdits(kkangtongReady(hoistStyle(html)));
-
-/**
- * 글꾸 목록(index.json 을 읽은 것)에 심플 새 틀을 붙여요(새 틀이 앞). 깃발이 꺼져 있으면 받은 data 를 그대로(같은 객체) 돌려줘요.
- * @param {{ items, categories, chunks, count }} data
- * @param {{ enabled?: boolean, load?: () => Promise<object> }} [options] load: simple-index.json 을 읽는 함수(시험이 바꿔 끼워요)
- */
-export async function withSimpleFrames(data, { enabled = SIMPLE_FRAMES_ENABLED, load } = {}) {
-    if (!enabled || !data) return data;
-    let extra;
-    try { extra = await (load ? load() : fetch(new URL(`./data/geulkku/${SIMPLE_INDEX}`, import.meta.url), { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error(`심플 새 틀 목록 ${r.status}`); return r.json(); })); }
-    catch { return data; }   // 못 받으면 원래 목록 그대로
-    const rows = (extra?.items || []).filter(x => x && x.id && x.simple);
-    if (!rows.length) return data;
-    const ids = new Set(rows.map(x => x.id));
-    const items = [...rows, ...(data.items || []).filter(x => !ids.has(x.id))];
-    const newCats = (extra.categories || []).filter(c => !(data.categories || []).some(d => d.id === c.id));
-    return { ...data, count: items.length, categories: [...newCats, ...(data.categories || [])], chunks: { ...(data.chunks || {}), ...(extra.chunks || {}) }, items };
-}
-
-/**
- * 목록 나누기: 새 틀(simple) = 첫 화면 · 예전 글꾸 = 「옛날 버전」(예전과 같은 규칙 — 컨셉(이름) 하나에 하나 · 주소 #id 로 온 디자인은 같이).
- * @param {object[]} items 목록 전부(withSimpleFrames 를 거친 것)
- * @param {{ showAll?: boolean, hashId?: string, styleOf: (item) => string }} options
- * @returns {{ fresh: object[], old: object[], openOld: boolean }} openOld: 처음에 옛날 버전을 펼칠지(새 틀이 없거나 주소가 예전 글꾸를 가리킬 때)
- */
-export function splitView(items, { showAll = false, hashId = '', styleOf }) {
-    const fresh = items.filter(x => x.simple), oldAll = items.filter(x => !x.simple);
-    const keepIds = new Set();
-    { const by = new Map(); for (const x of oldAll) { const a = by.get(x.name) ?? []; a.push(x); by.set(x.name, a); } for (const a of by.values()) { const pickOne = a.find(x => styleOf(x) === '심플' && !x.builtin) || a.find(x => x.builtin) || a.find(x => x.photo || x.copyOnly) || a[0]; keepIds.add(pickOne.id); } }   // 컨셉(이름) 하나에 하나 — 분류 숫자와 목록 개수가 같아요(11-10 그대로)
-    const old = showAll ? oldAll : oldAll.filter(x => keepIds.has(x.id) || x.id === hashId);
-    return { fresh, old, openOld: !fresh.length || (!!hashId && oldAll.some(x => x.id === hashId)) };
-}

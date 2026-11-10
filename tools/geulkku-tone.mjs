@@ -1,6 +1,7 @@
 // 11-10 글꾸 마트 「대사색 하나」 다시 칠하기 시험 · 미리보기 자료 만들기 (DOM 없음 · node)
 //   node tools/geulkku-tone.mjs --check                 1497 로그 글꾸 × 대사색 3 × 낮/밤: 그리기 실패 0 · 붙일 꼴(인라인 url( 0 · fill 없는 글자색 0) · 한 틀 색 수
 //   node tools/geulkku-tone.mjs --dump <json> [--ids a,b] [--k #3aa7ff,#ff5fa2] [--log <json>]   지금/새 HTML 을 json 으로(미리보기 · 렌더 검사용)
+import { retired } from './geulkku-retired.mjs'; retired('geulkku-tone');   // 11-11 옛 글꾸를 마트에서 뺐어요 — 이 도구는 쉬어요(geulkku-retired.mjs)
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';

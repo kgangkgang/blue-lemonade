@@ -7,6 +7,7 @@
 //   그래서 상세 창 · 시식 창 · HTML 복사 · 테마용 복사 · 담기가 다른 심플 틀과 똑같이 돼요.
 // - 테마 1.1.0 부터는 테마에도 들어 있지만 마트에서는 「내장」 표시를 하지 않아요(1.0.8 이하 사용자도 담아 갈 수 있게).
 // - 순서: (테마) mart-build → split-geulkku → geulkku-accent → geulkku-builtin → 이것 → geulkku-accent(아이콘 · 강조색). 멱등이에요. split 을 다시 돌리면 이 조각이 지워지니 이것도 다시 돌려요.
+import { retired } from './geulkku-retired.mjs'; retired('geulkku-scene');   // 11-11 옛 글꾸를 마트에서 뺐어요 — 이 도구는 쉬어요(geulkku-retired.mjs)
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';

@@ -5,6 +5,7 @@
 // - 틀은 mart/kara/kara-core.js(만들기 화면 mart/kara/ 와 같은 모듈)로 견본 가사 · 견본 mp3(mart/data/sample/kara/tone.mp3 · 24초 합성음) · 견본 표지(cover-<테마>.svg)로 그려요.
 // - 로그 복사 틀이 아니라 <style> · <audio> 가 든 게시글 HTML 이에요: copyOnly(HTML 복사만) + photo + audio. 카드 · 상세 창의 「🎤 내 곡으로 만들기」 링크는 mart.js sourceLinks 가 붙여요.
 // - 순서: geulkku-song.mjs 뒤에 돌려요(카드 · 분류 차례가 노래 앨범 바로 뒤). split 을 다시 돌리면 이것도 다시 돌려요.
+import { retired } from './geulkku-retired.mjs'; retired('geulkku-kara');   // 11-11 옛 글꾸를 마트에서 뺐어요 — 이 도구는 쉬어요(geulkku-retired.mjs)
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';

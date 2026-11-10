@@ -3,8 +3,8 @@
 // - 실행: node tools/geulkku-simple.mjs [--check]   (node 24 · 외부 의존 없음 · 멱등)
 //         node tools/geulkku-simple.mjs --pull <이식판.html> [<이식판.html> …]   이식판에서 틀마다 원래 판 한 벌을 tools/simple-frames/<틀>.html 로 꺼낸 뒤 자료를 다시 만들어요
 //   --check: 쓰지 않고 지금 자료와 같은지만 봐요(다르면 1로 끝나요).
-// - 쓰는 것: mart/data/geulkku/simple-index.json(index.json 과 같은 꼴 — items · categories · chunks) + 조각 sp-simple.<해시8>.json({ items: { <id>: { preview } } }).
-//   index.json 은 건드리지 않아요. 마트는 mart/simple-frames.js 의 깃발 SIMPLE_FRAMES_ENABLED 가 켜져 있을 때 simple-index.json 을 받아 첫 화면에 써요.
+// - 쓰는 것: mart/data/geulkku/index.json(글꾸 마트 목록 — items · categories · chunks) + 조각 sp-simple.<해시8>.json({ items: { <id>: { preview } } }).
+//   11-11 옛 글꾸를 마트에서 뺀 뒤로 목록은 심플 새 틀만이에요(마트 · 지니가 이 목록 하나를 읽어요).
 // - 틀 하나 = DEFS 한 줄 + 틀 HTML 파일(tools/simple-frames/<틀>.html — 이식판.html 의 틀 한 벌 <div class="gk …"> ~ 닫는 </div> 그대로 · --pull 이 꺼내요).
 //   DEFS 에 있어도 파일이 아직 없으면(이식판이 안 나온 틀) 건너뛰고 알려요 — 이식판이 나오면 --pull 한 번이면 들어가요.
 //   뽑기.mjs 의 .틀.html 은 그 판에 걸리는 규칙만 추려(반대 판 낮 · 밤 규칙이 빠져요) 색 블록 사이 빈 줄도 없어서 입력으로 못 써요.
@@ -22,7 +22,7 @@ const SRC = path.join(ROOT, 'tools', 'simple-frames');
 const CHECK = process.argv.includes('--check');
 const { AUD } = createRequire(import.meta.url)('./song-templates.cjs');
 const sf = await import(pathToFileURL(path.join(ROOT, 'mart', 'simple-frames.js')).href);
-const OUT = path.join(DIR, sf.SIMPLE_INDEX);
+const OUT = path.join(DIR, 'index.json');   // 11-11 옛 글꾸를 뺀 뒤로 글꾸 마트 목록은 이 도구가 써요
 const KEY = 'sp-simple';
 // 분류(새 틀이 스물여덟 개뿐이라 동작으로 넷만):
 //   「눌러서 열어요」 = 닫힌 채 시작해 눌러야 글이 나오는 틀(DEFS 의 open) · 「소리 카드」 = 소리 카드가 든 틀 · 「누르면 바뀌어요」 = 그 밖에 누름이 있는 틀 · 「가만히 보기」 = 누름이 없는 틀
@@ -174,7 +174,7 @@ export function build() {
   const used = new Set(rows.map(x => x.category));
   const text = `${JSON.stringify({ items: heavy })}\n`;
   const file = `${KEY}.${crypto.createHash('sha256').update(text).digest('hex').slice(0, 8)}.json`;
-  const index = { count: rows.length, categories: CATS.filter(c => used.has(c.id)), chunks: { [KEY]: { file, n: rows.length, bytes: Buffer.byteLength(text) } } };
+  const index = { _: '글꾸 마트 목록 — tools/geulkku-simple.mjs 산출물(심플 새 틀 · 고치지 말고 다시 만들어요) · 옛 글꾸는 11-11 에 마트에서 뺐어요(되살리는 법은 W/outputs/지시-1110/심플-새틀-이식/마트-길닦기.md 12절)', count: rows.length, categories: CATS.filter(c => used.has(c.id)), chunks: { [KEY]: { file, n: rows.length, bytes: Buffer.byteLength(text) } } };
   const indexText = `${JSON.stringify(index, null, 1).replace(/\n}$/, '')},\n "items": [\n${rows.map(x => `  ${JSON.stringify(x)}`).join(',\n')}\n ]\n}\n`;
   return { rows, heavy, text, file, indexText, missing };
 }
@@ -189,12 +189,12 @@ if (MAIN) {
   if (missing.length) console.log(`아직 이식판이 없어 건너뛴 틀 ${missing.length}: ${missing.join(' · ')}`);
   if (CHECK) {
     const same = fs.existsSync(OUT) && fs.readFileSync(OUT, 'utf8') === indexText && fs.existsSync(path.join(DIR, file)) && fs.readFileSync(path.join(DIR, file), 'utf8') === text;
-    console.log(same ? `확인: 심플 새 틀 ${rows.length}종 그대로예요 · 깃발 ${sf.SIMPLE_FRAMES_ENABLED ? '켜짐' : '꺼짐'}` : '심플 새 틀 자료가 달라요 — node tools/geulkku-simple.mjs 로 다시 만들어요');
+    console.log(same ? `확인: 심플 새 틀 ${rows.length}종 그대로예요` : '심플 새 틀 자료가 달라요 — node tools/geulkku-simple.mjs 로 다시 만들어요');
     process.exit(same ? 0 : 1);
   }
   const oldFile = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')).chunks?.[KEY]?.file : null;
   fs.writeFileSync(path.join(DIR, file), text);
   if (oldFile && oldFile !== file && fs.existsSync(path.join(DIR, oldFile))) console.log(`옛 조각 ${oldFile} 은 이제 안 써요(지우지 않았어요)`);
   fs.writeFileSync(OUT, indexText);
-  console.log(`심플 새 틀 ${rows.length}종 → ${file}(${Buffer.byteLength(text)}B) · ${sf.SIMPLE_INDEX} · 분류 ${[...new Set(rows.map(x => x.category))].join(' · ')} · 깃발 ${sf.SIMPLE_FRAMES_ENABLED ? '켜짐' : '꺼짐'}`);
+  console.log(`심플 새 틀 ${rows.length}종 → ${file}(${Buffer.byteLength(text)}B) · index.json · 분류 ${[...new Set(rows.map(x => x.category))].join(' · ')}`);
 }

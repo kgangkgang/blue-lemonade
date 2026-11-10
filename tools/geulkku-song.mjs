@@ -5,6 +5,7 @@
 // - 틀은 tools/song-templates.cjs(견본 4곡 판), 견본 그림은 화보 견본 mart/data/sample/hwabo, 견본 mp3 는 mart/data/sample/song(직접 만든 6초 합성음).
 // - 로그 복사 틀이 아니라 <style> · <audio> 가 든 게시글 HTML 이에요: copyOnly(HTML 복사만) + photo(시식 · 내 로그 · 글자색 없음).
 // - 순서: geulkku-hwabo.mjs 뒤에 돌려요(카드 · 분류 차례가 화보 갤러리 바로 뒤). split 을 다시 돌리면 이것도 다시 돌려요.
+import { retired } from './geulkku-retired.mjs'; retired('geulkku-song');   // 11-11 옛 글꾸를 마트에서 뺐어요 — 이 도구는 쉬어요(geulkku-retired.mjs)
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';

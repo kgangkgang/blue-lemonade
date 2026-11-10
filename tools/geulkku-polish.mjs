@@ -6,6 +6,7 @@
 // - 틈 템플릿은 고친 뒤에도 테마 규칙(checkTemplate · 64KB)에 맞는지 다시 봐요. 어긋나면 그 틀은 그대로 두고 알려요.
 // - 순서: 맨 마지막에 돌려요((테마) mart-build → split → accent → builtin → react · scene · hwabo · song · xmas · kara → 이것).
 //   화보 · 노래 · 연말 · 노래방 도구는 스스로 같은 다듬기를 걸어요(그래서 그 도구들의 --check 와 어긋나지 않아요).
+import { retired } from './geulkku-retired.mjs'; retired('geulkku-polish');   // 11-11 옛 글꾸를 마트에서 뺐어요 — 이 도구는 쉬어요(geulkku-retired.mjs)
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';

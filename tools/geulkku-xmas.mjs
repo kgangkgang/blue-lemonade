@@ -5,6 +5,7 @@
 //   - 커뮤니티 글 틀 3종(크리스마스 화보 · 연말 결산 앨범 · 캐롤 플레이리스트): tools/xmas-templates.cjs — 화보 · 노래 앨범과 같이 copyOnly + photo(HTML 복사만).
 // - 실행: node tools/geulkku-xmas.mjs --theme <테마 저장소 폴더> [--check]   (node 24 · 외부 의존 없음 · 멱등)
 // - 카드는 이미 있는 「크리스마스 · 연말」(christmas) 칩에 들어가요(새 칩 없음). geulkku-scene.mjs 뒤에 돌려요. split 을 다시 돌리면 이것도 다시 돌려요.
+import { retired } from './geulkku-retired.mjs'; retired('geulkku-xmas');   // 11-11 옛 글꾸를 마트에서 뺐어요 — 이 도구는 쉬어요(geulkku-retired.mjs)
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
