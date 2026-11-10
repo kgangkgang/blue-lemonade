@@ -12,7 +12,7 @@ import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks }
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
 import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110v';   // 11-10 대사색 하나로 다시 칠하기 · 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
 import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261110v';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
-import { withSimpleFrames, simpleReady } from './simple-frames.js?v=20261111a';   // 11-11 심플 새 틀 — 깃발(SIMPLE_FRAMES_ENABLED)이 켜졌을 때만 목록에 · HTML 복사는 틀 <style> 과 마트 규칙을 하나로
+import { withSimpleFrames, simpleReady, splitView } from './simple-frames.js?v=20261111a';   // 11-11 심플 새 틀 — 깃발(SIMPLE_FRAMES_ENABLED)이 켜지면 첫 화면 · 예전 글꾸는 「옛날 버전」 · HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
 import { mountCast } from './cast.js?v=20261110v';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
 let styleActive = 'all', drawPreset = null, picker = null;
@@ -799,6 +799,30 @@ function applyFilter() {
     const narrowed = styleActive !== 'all' || (picker && (picker.sel.group !== 'all' || picker.sel.cat !== 'all'));
     if (!shown) grid.insertAdjacentHTML('beforeend', `<p class="mart-empty">맞는 것이 없어요${narrowed ? ' · 거르기를 풀어 보세요' : ''}</p>`);
 }
+// 11-11 「옛날 버전」 — 새 틀 목록 아래 단추 하나(「옛날 버전 글꾸 보기 · N개」) · 펼치면 목록 위에 「새 틀로 돌아가기」 줄.
+//   펼치면 예전 목록 · 예전 분류 칩 · 찾기가 그대로(allItems = 예전 목록) · 접으면 새 틀만. 펼침은 이 화면에서만(새로 고치면 접힌 채 — 주소 #예전글꾸id 는 펼친 채)
+let oldOpen = false;
+function wireOld(view, oldList, mountPicker) {
+    const more = Object.assign(document.createElement('div'), { className: 'mart-old-more' });
+    more.style.cssText = 'display:flex;justify-content:center;margin:24px 0 8px';
+    more.innerHTML = `<button type="button" class="btn mart-old-open" aria-expanded="false" title="예전 글꾸를 예전 분류 · 찾기 그대로 보여 줘요">옛날 버전 글꾸 보기 · ${oldList.length}개</button>`;
+    const top = Object.assign(document.createElement('div'), { className: 'mart-old-top' });
+    top.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin:0 0 16px';
+    top.innerHTML = '<span class="mart-desc">옛날 버전 글꾸를 보는 중이에요</span><button type="button" class="btn mart-old-close">새 틀로 돌아가기</button>';
+    grid.before(top); grid.after(more);
+    const paint = () => { top.style.display = oldOpen ? 'flex' : 'none'; more.style.display = oldOpen ? 'none' : 'flex'; more.querySelector('button').setAttribute('aria-expanded', String(oldOpen)); };
+    const set = (on) => {
+        oldOpen = on;
+        allItems = on ? oldList : view.fresh;
+        mountPicker(allItems, true);
+        if (!on) for (const x of view.fresh) x._text = textOf(x);   // 새 틀 분류 묶음 이름으로 찾기 글을 다시
+        paint();
+    };
+    more.addEventListener('click', (e) => { if (!e.target.closest('button')) return; set(true); applyFilter(); document.querySelector('.mart-tools')?.scrollIntoView({ block: 'start' }); });
+    top.addEventListener('click', (e) => { if (!e.target.closest('button')) return; set(false); applyFilter(); document.querySelector('.mart-tools')?.scrollIntoView({ block: 'start' }); });
+    if (view.openOld) { oldOpen = true; paint(); }   // 예전 분류 칩은 이미 그려져 있어요(main 이 먼저 그림)
+    else set(false);
+}
 async function main() {
     if (kind === 'frames') {
         try { ({ drawPreset } = await import('./frame-presets.js')); } catch { drawPreset = null; }
@@ -814,17 +838,24 @@ async function main() {
         for (const x of items) Object.assign(x, { kind: 'geulkku', label: x.label || x.name, categoryLabel: x.categoryLabel || labels.get(x.category) || '' });
     }
     // 11-10 사용자 「심플만 남기돼」 — 컨셉마다 심플 하나만 목록 · 찾기에(무테 · 일러스트 · 다꾸는 자료로 남겨 두고 숨겨요 · 주소 #id 로는 열려요)
-    const keepIds = new Set();
-    { const by = new Map(); for (const x of items) { const a = by.get(x.name) ?? []; a.push(x); by.set(x.name, a); } for (const a of by.values()) { const pickOne = a.find(x => styleOf(x) === '심플' && !x.builtin) || a.find(x => x.builtin) || a.find(x => x.photo || x.copyOnly) || a[0]; keepIds.add(pickOne.id); } }   // 컨셉(이름) 하나에 하나 — 분류 숫자와 목록 개수가 같아요
+    // 11-11 사용자 「기존에 있던 글꾸들... 아예 옛날 버전으로 좀 눌러야 찾을수있게해줘」 · 「바로보이게하고싶진않음 구 글꾸들」 — 첫 화면은 심플 새 틀만,
+    //   예전 글꾸(아래 shownItems — 11-10 규칙 그대로)는 「옛날 버전」을 눌러야 목록 · 분류 · 찾기에 나와요. 주소 #예전글꾸id 로 오면 펼친 채 시작 · 펼침은 기억하지 않아요
     const hashId = decodeURIComponent(location.hash.slice(1));
-    const shownItems = SHOW_ALL_DESIGNS || kind !== 'geulkku' ? items : items.filter(x => keepIds.has(x.id) || x.id === hashId);
+    const view = kind === 'geulkku' ? splitView(items, { showAll: SHOW_ALL_DESIGNS, hashId, styleOf }) : { fresh: [], old: items, openOld: true };
+    const shownItems = view.old;
     // 분류 두 단계(공용 부품): 묶음 탭(시리즈 · 세계관 · 인물 · 컨셉 · 할로윈 · 크리스마스 · 내장) + 하위 칩
-    const cats = (data.categories || []).map(c => ({ id: c.id, label: catLabel(c.id, c.label), n: shownItems.filter(x => x.category === c.id).length, group: kind === 'geulkku' ? geulkkuGroup(c, shownItems) : (c.group || 'etc') })).filter(c => c.n);
-    // 「내장」 묶음에 다른 분류 안의 내장 글꾸(내장 심플 30)도 한 칩으로 — 가짜 칩 BUILTIN_MORE
-    const builtinCats = new Set(cats.filter(c => c.group === 'builtin').map(c => c.id));
-    const moreBuiltin = shownItems.filter(x => x.builtin && !builtinCats.has(x.category)).length;
-    if (moreBuiltin) cats.push({ id: BUILTIN_MORE, label: '내장 심플', n: moreBuiltin, group: 'builtin' });
-    picker = chipGroups({ groupsEl: document.querySelector('.mart-groups'), chipsEl: chips, cats, groups: GEULKKU_GROUPS, total: shownItems.length, onChange: applyFilter });
+    const catsOf = (list) => {
+        const cats = (data.categories || []).map(c => ({ id: c.id, label: catLabel(c.id, c.label), n: list.filter(x => x.category === c.id).length, group: kind === 'geulkku' ? geulkkuGroup(c, list) : (c.group || 'etc') })).filter(c => c.n);
+        // 「내장」 묶음에 다른 분류 안의 내장 글꾸(내장 심플 30)도 한 칩으로 — 가짜 칩 BUILTIN_MORE
+        const builtinCats = new Set(cats.filter(c => c.group === 'builtin').map(c => c.id));
+        const moreBuiltin = list.filter(x => x.builtin && !builtinCats.has(x.category)).length;
+        if (moreBuiltin) cats.push({ id: BUILTIN_MORE, label: '내장 심플', n: moreBuiltin, group: 'builtin' });
+        return cats;
+    };
+    // 칩 줄을 다시 그릴 때는 줄을 새 빈 상자로 바꿔 끼워요(먼저 단 누름 처리가 겹치지 않게)
+    const renew = el => { const c = el.cloneNode(false); el.replaceWith(c); return c; };
+    const mountPicker = (list, again = false) => { picker = chipGroups({ groupsEl: again ? renew(document.querySelector('.mart-groups')) : document.querySelector('.mart-groups'), chipsEl: again ? renew(document.querySelector('.mart-chips')) : chips, cats: catsOf(list), groups: GEULKKU_GROUPS, total: list.length, onChange: applyFilter }); };
+    mountPicker(shownItems);
     // 그림체(글꾸): 둘 이상일 때만 칩 줄을 보여요 — 하나뿐(지금은 기본만)이면 줄째 숨겨요
     const styleSeg = document.querySelector('[data-filter="style"]');
     if (styleSeg) {
@@ -850,14 +881,15 @@ async function main() {
     if (mylogOn) await setMylog(true); else loadTaste().then(m => { mylog.mod = m; paintMylogChip(); }, () => {});
     allItems = shownItems;
     for (const x of items) x._text = textOf(x);
-    // 11-10 컨셉(같은 이름) 묶기 — 디자인 차례는 심플 → 일러스트 → 다꾸 → 무테 → 그 밖
+    // 11-10 컨셉(같은 이름) 묶기 — 디자인 차례는 심플 → 일러스트 → 다꾸 → 무테 → 그 밖 · 11-11 심플 새 틀은 이름이 같아도 예전 글꾸와 안 묶어요
     const byName = new Map();
-    for (const x of items) { const a = byName.get(x.name) ?? []; a.push(x); byName.set(x.name, a); }
+    for (const x of items) { const k = x.simple ? `\u0000새 틀\u0000${x.name}` : x.name; const a = byName.get(k) ?? []; a.push(x); byName.set(k, a); }
     const rank = x => (x.builtin ? -1 : STYLE_ORDER.includes(styleOf(x)) ? STYLE_ORDER.indexOf(styleOf(x)) : STYLE_ORDER.length);
     for (const a of byName.values()) { a.sort((p, q) => rank(p) - rank(q)); for (const x of a) x._sibs = a; }
     { const want = decodeURIComponent(location.hash.slice(1)), it = want && items.find(x => x.id === want); if (it) conceptPick.set(it.name, it.id); }   // #글꾸id 로 오면 그 디자인이 카드에 보여요
     mountCast(document.querySelector('.mart-cast'), { say });   // 11-10 목록 위 「캐릭터: 없음 ▾」
     cards = lazyGrid(grid, cardEl);
+    if (view.fresh.length) wireOld(view, shownItems, mountPicker);   // 11-11 새 틀이 있으면 「옛날 버전」 접기(없으면 예전과 똑같아요)
     applyFilter();
     grid.setAttribute('aria-busy', 'false');
     const h = decodeURIComponent(location.hash.slice(1));

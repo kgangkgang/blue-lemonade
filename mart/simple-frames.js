@@ -11,7 +11,7 @@ import { toneLadder, bandColor, speakerColor, tone, NEUTRAL_LADDER } from './lib
 import { kkangtongReady } from './tone-geulkku.js?v=20261110v';
 
 /** 깃발: 심플 새 틀을 목록에 보일지. true = 새 틀이 첫 화면 · 예전 글꾸는 「옛날 버전」 / false = 깃발을 넣기 전과 같아요(simple-index.json 도 안 받아요) */
-export const SIMPLE_FRAMES_ENABLED = false;
+export const SIMPLE_FRAMES_ENABLED = true;
 /** 심플 새 틀 목록(index.json 과 같은 꼴의 items · categories · chunks) — tools/geulkku-simple.mjs 가 써요 */
 export const SIMPLE_INDEX = 'simple-index.json';
 
