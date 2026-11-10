@@ -32,10 +32,23 @@ const VARIANTS = {
 const isLand = k => k[0] === 'l';
 const two = i => String(i).padStart(2, '0');
 const img = (k, eager) => `<!-- 견본 --><img src="${IMG}${k}.svg" width="${isLand(k) ? 1216 : 832}" height="${isLand(k) ? 832 : 1216}" alt="업로드 이미지" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
-// 11-10 밤 사용자 「mp3는 기본적으로 좀 투명한 스타일이면 좋겠음 난 저 단색 mp3 싫더라」 — 재생 막대의 알약 바탕을 안 보이게: <style> 의 가상 요소 규칙 + (그 규칙이 지워질 때를 대비해) 인라인 섞기.
-//   밝은 바탕은 multiply(밝은 알약이 바탕에 묻혀요) · 어두운 바탕은 뒤집어서 screen(어두워진 알약이 묻혀요). 섞기 계산이 늘 같게 조작부는 밝은 판(color-scheme:light)으로 고정하고, 뒤집히는 쪽은 시간 글자도 어두운 색으로 못박아요(뒤집혀 밝게 보여요)
-const AUDIO_CLEAR = dark => (dark ? 'color-scheme:light;color:#111111!important;-webkit-text-fill-color:#111111!important;filter:invert(1) hue-rotate(180deg);mix-blend-mode:screen' : 'color-scheme:light;mix-blend-mode:multiply');
-const audio = (k, dark = false) => `<!-- 견본 mp3 --><audio src="${AUD}${k}.mp3" controls="" preload="metadata" class="uploaded-audio" style="${AUDIO_CLEAR(dark)}"></audio>`;
+
+// 11-10 밤 소리 카드 확정 조합(사용자 「오 5번 좋다」 · 「딱 저 검은 선에만」 · 「오 점 세개 잘라내기 되는구나」 — 인수인계-커뮤니티-글꾸 0-4절 「재생 막대는 거의 다 꾸밀 수 있어요」):
+//   이름표 + 막대 한 줄 · 막대 26px · 알약 바탕 투명 · 진행 선만 3배 두껍게 + 선에만 곡 색(단색 필터) · 스피커 가운데 정렬 지정 · 점 세 개(⋮)는 잘라 내기 · 단추 색은 그대로.
+//   깡통은 기본이 어두운 판이라 밝은 틀은 인라인 color-scheme:light 를 꼭 적어요 · 어두운 틀은 dark. zoom · 색 입히기 filter · mix-blend-mode 는 audio 에 쓰지 않아요.
+const AUDIO_INLINE = dark => `height:26px;block-size:26px;width:calc(100% + 30px);max-width:none;margin:0 -30px 0 0!important;color-scheme:${dark ? 'dark' : 'light'}`;
+const audio = (k, dark = false) => `<div class="sg-au"><!-- 견본 mp3 --><audio src="${AUD}${k}.mp3" controls="" preload="metadata" class="uploaded-audio" style="${AUDIO_INLINE(dark)}"></audio></div>`;
+/** 진행 선 색 필터 — 실측 두 점(민트 #3ccfbf → hue-rotate 118 · brightness .92 / 분홍 #ff5fa2 → 285 · 1.05)에 맞춘 계산: 세피아 바탕 색상(약 53°)에서 그 색의 색상까지 돌리고, 밝기는 색의 명도(HSL L)에 비례. 무채에 가까운 색은 필터 없이 굵기만 */
+const lineFilter = (hex) => {
+  const m = /^#?([0-9a-f]{6})/i.exec(String(hex || '')); if (!m) return '';
+  const [r, g, b] = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, L = (mx + mn) / 2;
+  if (d < 0.08) return '';
+  const H = (mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60;
+  const rot = Math.round(((H - 53) % 360 + 360) % 360), br = Math.min(1.15, Math.max(0.8, 0.52 + 0.765 * L));
+  return `invert(${L >= 0.6 ? '.5' : '.55'}) sepia(1) saturate(9) hue-rotate(${rot}deg) brightness(${Number(br.toFixed(2))})`;
+};
+/** 곡 색(t1~t6)마다 진행 선 색 — accs: 곡 색 목록 */
+const timelineCss = (P, accs) => accs.map((c, i) => { const f = lineFilter(c); return f ? `${P} .t${i + 1} audio::-webkit-media-controls-timeline{filter:${f}!important}` : ''; }).filter(Boolean).join('\n');
 const SANS = 'Pretendard,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif';
 const SERIF = '"Noto Serif KR","Apple SD Gothic Neo","Nanum Myeongjo",Georgia,serif';
 const DIDOT = '"Didot","Bodoni 72","Bodoni MT","Playfair Display",Georgia,"Noto Serif KR",serif';
@@ -51,10 +64,17 @@ ${P} .${ph} > img,${P} .${ph} > .image-number-wrapper,${P} .${ph} :has(> img):no
 ${P} .${ph} img{display:block!important;width:100%!important;height:100%!important;max-width:none!important;object-fit:contain!important;object-position:50% 50%!important;margin:0!important;border:0!important;opacity:1!important}
 ${P} .${ph} > :not(img):not(.image-number-wrapper):not(:has(img)){display:none!important}
 ${P} .image-number-badge{display:none!important}`;
-const audioCss = (P, sel, h = 44) => `
-${P} ${sel} audio{display:block;width:100%;height:${h}px;margin:0;border-radius:999px;background:transparent;outline:none}
-${P} ${sel} audio::-webkit-media-controls-enclosure{border-radius:999px;background:transparent!important}
-${P} ${sel} audio::-webkit-media-controls-panel{background:transparent!important}`;
+const audioCss = (P, sel) => `
+${P} ${sel}{display:flex!important;align-items:center;gap:6px;min-width:0}
+${P} .sg-au{display:block!important;flex:1 1 auto;min-width:0;overflow:clip}
+${P} .sg-au audio{display:block;background:transparent;outline:none}
+${P} audio::-webkit-media-controls-panel,${P} audio::-webkit-media-controls-enclosure{background:transparent!important;background-color:transparent!important}
+${P} audio::-webkit-media-controls-panel{padding:0!important;align-items:center!important}
+${P} audio::-webkit-media-controls-play-button,${P} audio::-webkit-media-controls-mute-button{min-width:24px!important;width:24px!important;height:24px!important;flex:0 0 24px!important;margin:0!important;padding:0!important;background-size:20px 20px!important;background-position:center!important}
+${P} audio::-webkit-media-controls-mute-button{align-self:center!important;position:relative!important;top:0!important;vertical-align:middle!important}
+${P} audio::-webkit-media-controls-volume-control-container{align-self:center!important;margin:0!important;padding:0!important}
+${P} audio::-webkit-media-controls-current-time-display,${P} audio::-webkit-media-controls-time-remaining-display{font-size:12px!important}
+${P} audio::-webkit-media-controls-timeline{transform:scaleY(3)!important}`;
 const baseCss = (P, ink, extra, divBg = 'background-color') => `
 ${P}{${ink}display:block!important;box-sizing:border-box;container-type:inline-size;margin:14px auto!important;padding:0!important;border:0!important;background:transparent!important;font-family:${SANS};line-height:1.55;text-align:left;-webkit-text-size-adjust:100%;${extra}}
 ${P},${P} *{color:var(--ink)!important;-webkit-text-fill-color:var(--ink)!important;box-sizing:border-box}
@@ -146,12 +166,11 @@ ${P} .a-head .a-ch{--ink:#b4b4bf}
 ${P} .a-ch-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--c)!important}
 /* mp3 카드(그림을 흐리게 깐 유리 카드 — 떠 있는 판 없이 흐름 안에서) */
 ${P} .a-card{display:block!important;grid-area:2/1;margin:14px 14px 0!important;border-radius:14px;overflow:hidden;background-color:var(--base)!important;background-size:cover!important;background-position:50% 28%!important;background-repeat:no-repeat!important}
-${P} .a-glass{display:grid!important;border-radius:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;padding:10px 12px!important;background-color:var(--ov)!important;-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4)}
-${P} .a-pl{display:flex!important;align-items:center;gap:6px;min-width:0}
+${P} .a-glass{display:grid!important;border-radius:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:3px 10px;padding:3px 12px!important;background-color:var(--ov)!important;-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4)}
 ${P} .a-key{flex:0 0 auto}
-${P} .a-key{--ink:var(--acc);font:800 12px/1 ${MONO};letter-spacing:.08em}
+${P} .a-key{--ink:var(--acc);font:800 11px/1 ${MONO};letter-spacing:.08em}
 ${audioCss(P, '.a-pl')}
-${P} .a-pl audio{flex:1 1 auto;min-width:0;width:auto}
+${timelineCss(P, TONES.map(t => t.acc))}
 /* 그림 칸 · 번호 꾸밈(counter · 사이트 번호표는 숨김) */
 ${photoCss(P, 'a-ph', '#0006', 'sgn')}
 ${P} .a-it .a-ph{border-radius:8px}
@@ -256,13 +275,13 @@ ${P} .b-ch{display:inline-flex!important;align-items:center;gap:6px;font:600 13p
 ${P} .b-ch-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--c)!important}
 /* 트랙 줄(mp3 가 몇 개든 한 줄씩) */
 ${P} .b-list{display:flex!important;flex-direction:column;margin-top:10px!important;border-top:1.5px solid var(--ink)!important}
-${P} .b-tk{display:flex!important;align-items:center;gap:6px 12px;padding:10px 0!important;border-bottom:1px solid var(--line)!important}
-${P} .b-tkn{font:700 12px/1 ${MONO};letter-spacing:.06em;--ink:var(--acc)}
+${audioCss(P, '.b-tk')}
+${P} .b-tk{padding:3px 0!important;border-bottom:1px solid var(--line)!important}
+${P} .b-tkn{font:700 11px/1 ${MONO};letter-spacing:.06em;--ink:var(--acc)}
 ${P} .b-tkn{flex:0 0 auto}
-${P} .b-tkt{font:600 14px/1.3 ${SANS};flex:0 0 auto;min-width:0}
+${P} .b-tkt{font:600 13px/1.3 ${SANS};flex:0 0 auto;min-width:0}
 ${P} .b-tkt:empty{display:none!important}
-${audioCss(P, '.b-tk', 40)}
-${P} .b-tk audio{flex:1 1 auto;min-width:0;width:auto}
+${timelineCss(P, TONES.map(t => t.acc))}
 /* 그림 칸 · 번호 꾸밈 */
 ${photoCss(P, 'b-ph', '#e6e0d6', 'sbn')}
 ${P} .t6 .b-ph{background:#2a2b30!important}
@@ -342,11 +361,10 @@ ${P} .c-song:has(.c-k:checked) .c-o1{transform:translateY(2px) rotate(225deg);bo
 ${P} .c-song:not(:has(.c-more img)) .c-open{display:none!important}
 /* mp3 칸(몇 개든 auto-fit) */
 ${P} .c-aus{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding-left:76px!important}
-${P} .c-pl{display:flex!important;align-items:center;gap:6px;min-width:0}
 ${P} .c-key{flex:0 0 auto}
-${P} .c-key{font:800 11.5px/1 ${MONO};letter-spacing:.08em;--ink:var(--acc)}
-${audioCss(P, '.c-pl', 40)}
-${P} .c-pl audio{flex:1 1 auto;min-width:0;width:auto}
+${P} .c-key{font:800 10.5px/1 ${MONO};letter-spacing:.08em;--ink:var(--acc)}
+${audioCss(P, '.c-pl')}
+${timelineCss(P, TONES.map(t => t.acc))}
 /* 펼친 그림(누르기 전엔 접힘) */
 ${P} .c-more{display:none!important}
 ${P} .c-song:has(.c-k:checked) .c-more{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-items:start;margin-top:4px!important}
