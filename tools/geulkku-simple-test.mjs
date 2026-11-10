@@ -3,8 +3,8 @@
 //   node tools/geulkku-simple-test.mjs [--fast]
 //   ① 톤 사다리 = 테마 toneLadder(같은 식 · 같은 값) · 사본의 기존 함수 그대로 ② 색 블록 갈아 끼우기(원래 색 = 시안 그대로 · 다른 색 = 시안 식 · 낮밤 · 되풀이) ③ 재생 선 필터 = song-templates.cjs
 //   ④ 실제 틀 여덟(이식판 그대로) ⑤ 미리보기 열린 판 · 복사 글 닫힌 판 ⑥ HTML 복사 <style> 하나 · 고칠 자리 주석
-//   ⑦ 깃발 켬이 기본 — 첫 화면은 새 틀만 · 「옛날 버전」 목록 = 예전 첫 화면 목록 · 예전 목록 자료 · 기존 틀 출력이 바탕 커밋(4bc1cc4d)과 바이트까지 같아요
-//   --fast: ⑦ 의 기존 틀 다시 칠하기 비교를 대사색 하나 · 밤 하나로 줄여요
+//   ⑦ 옛 글꾸 없음(11-11 — 목록 · 자료 · 화면 · 지니 · 도구 · site-rig) · 액자 자료 그대로
+//   --fast: (예전에 쓰던 꼬리 — 지금은 같은 시험을 다 돌려요)
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -31,7 +31,7 @@ async function test(name, fn) {
 
 // 견본 틀: tools/simple-frames/sample-08-blind.html 을 생성기와 같은 길로(미리보기 판 — DEFS 에서 견본을 빼도 시험은 돌아요) · 목록 자료는 생성기가 쓴 것
 const DIR = path.join(MART, 'data/geulkku');
-const six = JSON.parse(fs.readFileSync(path.join(DIR, sf.SIMPLE_INDEX), 'utf8'));
+const six = JSON.parse(fs.readFileSync(path.join(DIR, 'index.json'), 'utf8'));   // 글꾸 마트 목록 = 심플 새 틀만(11-11 옛 글꾸를 뺐어요)
 const gen = await imp(path.join(ROOT, 'tools/geulkku-simple.mjs'));
 const sample = gen.frameHtml(gen.SAMPLE_DEF).preview;
 const styleOf = h => h.match(/<style>\n?([\s\S]*?)\n?<\/style>/)[1];
@@ -217,10 +217,21 @@ await test('실제 틀 스물여덟: 이식판 원래 판과 한 글자도 안 �
         assert.equal(row.audio === true, /<audio\b/.test(p));
         assert.ok(row.desc && !/심플 새 틀$/.test(row.desc), `${k} 설명`);
         if (isik) {   // 소리 카드 src · class · preload 와 미리보기 열림만 빼면 이식판 그 틀과 같아요
-            const orig = shutPeek(p).replace(/<audio class="uploaded-audio" src="[^"]*" controls preload="metadata"/g, '<audio controls preload="none"');
+            // 첫 묶음(k1~k8)은 이식판에 없던 포커스 테 숨김 한 줄을 마트가 더했어요(의도한 차이 — 원본에도 넣어야 해요)
+            const orig = shutPeek(p).replace(/<audio class="uploaded-audio" src="[^"]*" controls preload="metadata"/g, '<audio controls preload="none"').replace(/\n\.gk-k[1-8] summary:focus:not\(:focus-visible\)\{outline:none\}/, '');
             assert.ok(isik.includes(orig), `${k} 이식판과 다름`);
         }
     }
+});
+
+await test('포커스 테: summary 가 있는 틀은 모두 「마우스로 누를 때 테 숨김」 한 줄이 기본 규칙 덩이에 하나 · 키보드 테(:focus-visible)는 그대로 · 첫 묶음 일곱에도(06 음성 메모는 누를 곳이 없어요)', () => {
+    for (const row of six.items) {
+        const p = sfx[row.id].preview, key = sf.simpleFrameInfo(p).key, base = partsOf(p)[0];
+        if (!/<summary\b/.test(p)) { assert.ok(!base.includes('summary:focus:not'), row.id); continue; }
+        assert.equal(base.split(gen.FOCUS_RULE(key)).length - 1, 1, `${row.id} 테 숨김`);
+        assert.ok(base.includes(`.gk-${key} summary:focus-visible{outline:2px solid`), `${row.id} 키보드 테`);
+    }
+    for (const k of ['k1', 'k2', 'k3', 'k4', 'k5', 'k7', 'k8']) assert.ok(partsOf(sfx[`simple-${k}`].preview)[0].includes(gen.FOCUS_RULE(k)), k);
 });
 
 // 원래 주인공 색에서 나온 값(색 · 사다리 다섯 · rgb 셋 — # · 그림 안 %23 · rgb%28 꼴)이 다른 색으로 칠한 뒤 색 블록에 남는지(같은 색을 쓰는 다른 화자 몫은 빼요)
@@ -293,13 +304,6 @@ await test('대표 10: 09 영수증 종이는 캐릭터 색 · 낮밤과 상관�
     assert.match(styleOf(q10), new RegExp(`\\.gk-vA\\{color:${sf.sianFit('#3ccfbf', '#f5f5f6')}`));
 });
 
-await test('개수 · 머리말: 마트 메뉴 COUNTS.geulkku · 홈 「N종」 · 글꾸 마트 머리말 「N개」 = 새 틀 수 · 예전 수는 COUNTS.geulkkuAll(= index.json count)', () => {
-    const top = fs.readFileSync(path.join(MART, 'top-mart.js'), 'utf8'), ix = JSON.parse(fs.readFileSync(path.join(DIR, 'index.json'), 'utf8'));
-    assert.match(top, new RegExp(`const COUNTS = \\{ frames: 1448, geulkku: ${six.count}, geulkkuAll: ${ix.count} \\}`));
-    assert.match(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), new RegExp(`<b>글꾸 마트</b><p>새 글꾸 틀 ${six.count}종`));
-    assert.match(fs.readFileSync(path.join(MART, 'geulkku/index.html'), 'utf8'), new RegExp(`<p class="mart-lede">새 글꾸 틀 ${six.count}개예요\\.`));
-});
-
 await test('카드 미리보기: 08 은 details 를 열어 둔 판(data-bl-peek) · mart.js shutPeek 를 거친 복사 글은 원래 닫힌 판 · 칠해도 그대로', () => {
     assert.match(sample, /<details class="gk-bd" open="" data-bl-peek="">/);
     const shut = shutPeek(sample);
@@ -338,90 +342,90 @@ await test('HTML 복사: <style> 하나(감싸는 div 첫 자식 · 틀 규칙 +
     }
 });
 
-await test('깃발: SIMPLE_FRAMES_ENABLED = true(새 기본) · 새 틀이 목록 앞에 · 끄면 받은 목록 그대로(같은 객체 · 안 받아요) · 못 받으면 원래 목록', async () => {
-    assert.equal(sf.SIMPLE_FRAMES_ENABLED, true);
-    const raw = fs.readFileSync(path.join(DIR, 'index.json'), 'utf8'), data = JSON.parse(raw);
-    let called = 0;
-    const off = await sf.withSimpleFrames(data, { enabled: false, load: async () => { called++; return six; } });
-    assert.equal(off, data); assert.equal(called, 0);
-    const on = await sf.withSimpleFrames(data, { load: async () => six });
-    assert.equal(on.count, data.count + six.items.length); assert.equal(on.items.length, data.items.length + six.items.length);
-    assert.deepEqual(on.items.slice(0, six.items.length).map(x => x.id), six.items.map(x => x.id));
-    assert.deepEqual(on.items.slice(six.items.length), data.items, '예전 목록은 차례 · 내용 그대로 뒤에');
-    assert.deepEqual(on.categories.slice(0, six.categories.length), six.categories);
-    assert.ok(on.chunks['sp-simple'] && on.chunks['sg-song']);
-    assert.equal(JSON.stringify(data), JSON.stringify(JSON.parse(raw)), '원래 목록 객체는 그대로');
-    assert.equal(await sf.withSimpleFrames(data, { load: async () => { throw new Error('없음'); } }), data, '못 받으면 원래 목록');
+// ── 11-11 옛 글꾸를 마트에서 뺐어요(사용자 「마트에 옛날것들 다 없애라」) — 목록 · 자료 · 화면 · 도구 어디에도 없는지 ──
+await test('옛 글꾸 없음 · 목록: index.json 은 심플 새 틀 28 하나(모든 줄 simple · 조각은 sp-simple 하나) · 자료 폴더에는 그 둘뿐(옛 조각 · 아이콘 0)', () => {
+    assert.equal(six.count, 28); assert.equal(six.items.length, 28);
+    assert.ok(six.items.every(x => x.simple && x.c === 'sp-simple' && x.style === '심플'));
+    assert.deepEqual(Object.keys(six.chunks), ['sp-simple']);
+    assert.deepEqual(fs.readdirSync(DIR).sort(), ['index.json', six.chunks['sp-simple'].file].sort());
+    assert.ok(!six.styles, '그림 결 목록 없음');
+    // 바탕 커밋의 옛 목록 id 가 하나도 안 남았어요
+    const old = JSON.parse(git('show', `${BASE}:mart/data/geulkku/index.json`).toString());
+    const ids = new Set(six.items.map(x => x.id));
+    assert.equal(old.items.filter(x => ids.has(x.id)).length, 0);
+    // 옛 조각 파일 이름을 부르는 곳이 사이트에 없어요
+    const site = ['mart/mart.js', 'mart/genie.js', 'mart/taste.js', 'mart/taste-render.js', 'mart/cart.js', 'mart/top-mart.js', 'index.html', 'mart/geulkku/index.html', 'mart/genie/index.html'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
+    for (const c of Object.values(old.chunks)) assert.ok(!site.includes(c.file), c.file);
+    assert.doesNotMatch(site, /simple-index\.json|data\/geulkku\/icon\//);
 });
 
-// 바탕 커밋 mart.js 의 「심플만 남기돼」 목록 규칙을 글 그대로 꺼내 돌려요 — 옛날 버전 목록이 예전 첫 화면 목록과 같아야 해요
-const baseMart = git('show', `${BASE}:mart/mart.js`).toString();
-const oldRule = baseMart.slice(baseMart.indexOf('    const keepIds = new Set();'), baseMart.indexOf('\n', baseMart.indexOf('    const shownItems ='))).replace(/\n\s*const hashId = [^\n]+/, '');   // 주소 읽기 줄만 빼고(시험이 넘겨 줘요)
-const oldStyleOf = new Function(`${baseMart.match(/const STYLE_DEFAULT = [^\n]+/)[0]}\n${baseMart.match(/const STYLE_ALIAS = [^\n]+/)[0]}\nreturn ${baseMart.match(/const styleOf = ([^\n]+);/)[1]};`)();
-const oldShown = (items, hashId = '', showAll = false) => new Function('items', 'styleOf', 'hashId', 'SHOW_ALL_DESIGNS', 'kind', `${oldRule}\nreturn shownItems;`)(items, oldStyleOf, hashId, showAll, 'geulkku');
-await test('옛날 버전: 첫 화면은 새 틀(스물여덟)만 · 「옛날 버전」 목록은 예전 첫 화면 목록(447)과 차례까지 같아요 · 주소 #예전글꾸 로 오면 펼친 채 · 새 틀 주소는 접힌 채', async () => {
-    const data = JSON.parse(fs.readFileSync(path.join(DIR, 'index.json'), 'utf8'));
-    const merged = await sf.withSimpleFrames(JSON.parse(JSON.stringify(data)), { load: async () => six });
-    const v = sf.splitView(merged.items, { styleOf: oldStyleOf });
-    assert.deepEqual(v.fresh.map(x => x.id), six.items.map(x => x.id));
-    assert.equal(v.openOld, false);
-    const before = oldShown(data.items);
-    assert.equal(before.length, 447);
-    assert.deepEqual(v.old.map(x => x.id), before.map(x => x.id));
-    assert.ok(v.old.every(x => !x.simple) && v.fresh.every(x => x.simple));
-    // 숨긴 디자인(예: 다꾸) 주소로 오면 그 디자인도 옛날 버전 목록에 · 펼친 채
-    const hidden = data.items.find(x => !before.some(y => y.id === x.id));
-    const vh = sf.splitView(merged.items, { styleOf: oldStyleOf, hashId: hidden.id });
-    assert.equal(vh.openOld, true); assert.deepEqual(vh.old.map(x => x.id), oldShown(data.items, hidden.id).map(x => x.id));
-    assert.equal(sf.splitView(merged.items, { styleOf: oldStyleOf, hashId: before[5].id }).openOld, true);
-    assert.equal(sf.splitView(merged.items, { styleOf: oldStyleOf, hashId: 'simple-k5' }).openOld, false);
-    // ?all-designs(관리용)도 예전과 같아요
-    assert.deepEqual(sf.splitView(merged.items, { styleOf: oldStyleOf, showAll: true }).old.map(x => x.id), oldShown(data.items, '', true).map(x => x.id));
-    // 새 틀이 없으면(깃발 끔 · 못 받음) 예전 그대로 펼친 채 — 「옛날 버전」 단추도 안 생겨요
-    const none = sf.splitView(data.items, { styleOf: oldStyleOf });
-    assert.equal(none.openOld, true); assert.equal(none.fresh.length, 0); assert.deepEqual(none.old.map(x => x.id), before.map(x => x.id));
+await test('옛 글꾸 없음 · 화면: 「옛날 버전」 단추 · 돌아가기 줄 · 목록 나누기 · 옛 숫자 0 · 「내 로그로 보기」 단추 없음 · 옛 주소는 새 틀 목록 + 한 줄 · HTML 복사 갈래 그대로', () => {
+    const mart = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), page = fs.readFileSync(path.join(MART, 'geulkku/index.html'), 'utf8'), home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    for (const s of ['옛날 버전 글꾸 보기', '새 틀로 돌아가기', 'wireOld', 'splitView', 'withSimpleFrames', 'keepIds']) assert.ok(!mart.includes(s), s);
+    assert.match(mart, /if \(h && !hit && kind === 'geulkku'\) \{ say\('이 글꾸는 새 틀로 바뀌었어요/);
+    assert.match(mart, /item\.simple \? simpleReady\(h\) : item\.photo \? h : kkangtongReady\(h\)/);
+    assert.ok(!/옛날 버전/.test(page) && !/옛날 버전/.test(home), '머리말 · 홈에 옛날 버전 말 없음');
+    assert.ok(!page.includes('mart-mylog'), '「내 로그로 보기」 단추 없음');
+    assert.ok(!/447|1512|1483/.test(page.replace(/\?v=\d+\w*/g, '')) && !/글꾸 1483종|1512/.test(home), '옛 숫자 없음');
+    const top = fs.readFileSync(path.join(MART, 'top-mart.js'), 'utf8');
+    assert.match(top, new RegExp(`const COUNTS = \\{ frames: 1448, geulkku: ${six.count} \\};`));
+    assert.ok(!top.includes('geulkkuAll'));
+    assert.match(home, new RegExp(`<b>글꾸 마트</b><p>새 글꾸 틀 ${six.count}종`));
+    assert.match(page, new RegExp(`<p class="mart-lede">새 글꾸 틀 ${six.count}개예요\\.`));
+    // 다른 마트(액자) 목록 · 숫자는 그대로
+    assert.equal(fs.readFileSync(path.join(MART, 'data/frames.json'), 'utf8'), git('show', `${BASE}:mart/data/frames.json`).toString());
 });
 
-await test('mart.js: 「옛날 버전」 단추 · 돌아가기 줄 · 예전 목록 갈래가 들어 있고, 펼침을 저장하지 않아요', () => {
-    const src = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8');
-    assert.match(src, /옛날 버전 글꾸 보기 · \$\{oldList\.length\}개/);
-    assert.match(src, /새 틀로 돌아가기/);
-    assert.match(src, /if \(view\.fresh\.length\) wireOld\(view, shownItems, mountPicker\)/);
-    const body = src.slice(src.indexOf('function wireOld'), src.indexOf('async function main'));
-    assert.doesNotMatch(body, /localStorage|sessionStorage/);
-    assert.match(src, /item\.simple \? simpleReady\(h\) : item\.photo \? h : kkangtongReady\(h\)/);
-});
-
-await test('목록 자료: index.json · 기존 조각이 바탕 커밋과 바이트까지 같아요(새 파일은 simple-index.json · sp-simple 조각뿐 · 개수 글은 위 「개수 · 머리말」 시험)', () => {
-    const changed = git('diff', '--name-status', BASE, '--', 'mart/data').toString().trim().split('\n').filter(Boolean);
-    const untracked = git('ls-files', '--others', '--exclude-standard', '--', 'mart/data').toString().trim().split('\n').filter(Boolean);
-    const all = [...changed.map(l => l.split('\t').pop()), ...untracked];
-    for (const f of all) assert.match(f, /^mart\/data\/geulkku\/(simple-index\.json|sp-simple\.[0-9a-f]{8}\.json)$/, `바뀐 파일 ${f}`);
-    for (const l of changed) assert.match(l, /^A\t/, `기존 파일이 바뀜 ${l}`);
-    assert.equal(fs.readFileSync(path.join(DIR, 'index.json'), 'utf8'), git('show', `${BASE}:mart/data/geulkku/index.json`).toString());
-});
-
-await test(`기존 틀 출력: 새 tone-state.js 의 다시 칠하기 대상 · 결과가 바탕 커밋과 같아요(공개 목록 전부 × ${FAST ? '대사색 1 × 밤' : '대사색 3 · 없음 × 낮밤'})`, async () => {
-    const neu = await imp(path.join(MART, 'tone-state.js')), old = await imp(path.join(OLD, 'mart/tone-state.js'));
-    const ix = JSON.parse(fs.readFileSync(path.join(DIR, 'index.json'), 'utf8'));
-    const chunks = new Map();
-    const heavy = m => { if (!chunks.has(m.c)) chunks.set(m.c, JSON.parse(fs.readFileSync(path.join(DIR, ix.chunks[m.c].file), 'utf8')).items); return chunks.get(m.c)[m.id] || {}; };
-    const items = ix.items.map(m => ({ ...m, ...heavy(m), kind: 'geulkku', label: m.name }));
-    const cases = FAST ? [['#3aa7ff', 'dark']] : [['#3aa7ff', 'dark'], ['#3aa7ff', 'light'], ['#ff5fa2', 'light'], ['#c9d1dc', 'dark'], [null, 'dark'], [null, 'light']];
-    let n = 0;
-    for (const on of [true, false]) for (const [k, mode] of (on ? cases : [cases[0]])) {
-        neu.setTone({ k, mode, on }); old.setTone({ k, mode, on });
-        for (const it of items) {
-            assert.equal(neu.toned(it), old.toned(it), `${it.id} toned`);
-            if (!it.preview) continue;
-            const a = neu.toneOut(it, it.preview), b = old.toneOut(it, it.preview); n++;
-            if (a !== b) throw new Error(`${it.id} ${k} ${mode} 결과가 달라요`);
-            if (on && neu.toned(it)) assert.equal(tg.kkangtongReady(a), tg.kkangtongReady(b));
+// 지니: 글꾸 질문표를 글 그대로 꺼내 새 틀 28개에 돌려 봐요(genie.js 의 score · candidates 와 같은 셈)
+const genieSrc = fs.readFileSync(path.join(MART, 'genie.js'), 'utf8');
+const STEPS = new Function(`${genieSrc.slice(genieSrc.indexOf('const GEULKKU_STEPS = ['), genieSrc.indexOf('const FRAME_STEPS = ['))}; return GEULKKU_STEPS;`)();
+await test('지니: 글꾸 질문표가 새 틀 이름 · 분류만 써요 · 그림 결 · 세계관 질문 없음 · 모든 답 조합에서 후보가 있고 점수가 붙어요 · 스물여덟 틀이 다 한 번은 1등 후보에 들어요', () => {
+    const names = new Set(six.items.map(x => x.name)), cats = new Set(six.items.map(x => x.category));
+    for (const st of STEPS) {
+        assert.ok(!st.when, `${st.id} 갈림 질문 없음`);
+        for (const o of st.opts) {
+            assert.ok(!o.set, `${st.id} ${o.t} 거름망 없음`);
+            for (const k of Object.keys(o.w?.name || {})) assert.ok(names.has(k), `${st.id} 이름 ${k}`);
+            for (const k of Object.keys(o.w?.cat || {})) assert.ok(cats.has(k), `${st.id} 분류 ${k}`);
         }
-        // 새 틀은 캐릭터 색으로(원래 색 · 꺼짐이면 그대로)
+    }
+    const score = (item, ans) => STEPS.reduce((s, st, i) => { const w = st.opts[ans[i]].w || {}; let v = s + (w.cat?.[item.category] || 0); for (const k in (w.name || {})) if (item.name.includes(k)) v += w.name[k]; return v; }, 0);
+    const tops = new Set();
+    const combos = STEPS.reduce((acc, st) => acc.flatMap(a => st.opts.map((_, i) => [...a, i])), [[]]);
+    for (const ans of combos) {
+        const sc = six.items.map(i => [i, score(i, ans)]).sort((a, b) => b[1] - a[1]);
+        assert.ok(sc.length && sc[0][1] > 0, `답 ${ans} 점수 없음`);
+        for (const [i, s] of sc) if (s >= sc[0][1]) tops.add(i.name);
+    }
+    assert.equal(tops.size, 28, `1등 후보에 한 번도 안 드는 틀: ${[...names].filter(n => !tops.has(n)).join(' · ')}`);
+});
+
+await test('옛 글꾸 도구는 쉬어요: 자료를 만들고 점검하던 열한 도구가 --check 에서 한 줄 알리고 0 으로 끝나요(소스는 그대로) · 새 틀 생성기 --check 는 그대로 돌아요', () => {
+    for (const n of ['accent', 'builtin', 'hwabo', 'kara', 'polish', 'react', 'scene', 'song', 'xmas', 'tone', 'tone-gate']) {
+        const out = execFileSync(process.execPath, [path.join(ROOT, 'tools', `geulkku-${n}.mjs`), '--check'], { cwd: ROOT }).toString();
+        assert.match(out, /옛 글꾸는 마트에서 뺐어요 — 이 도구는 쉬어요/, n);
+        assert.ok(fs.readFileSync(path.join(ROOT, 'tools', `geulkku-${n}.mjs`), 'utf8').split('\n').length > 20, `${n} 소스 그대로`);
+    }
+    assert.match(execFileSync(process.execPath, [path.join(ROOT, 'tools/geulkku-simple.mjs'), '--check'], { cwd: ROOT }).toString(), /확인: 심플 새 틀 28종 그대로예요/);
+});
+
+await test('site-rig: 글꾸 화면은 새 틀로 열려요(아무 카드나 크게 보기 · 칩만 고름) · 시식 · 내 로그 · 담김 카드는 쉬고 장바구니는 액자 마트에서', () => {
+    const rig = fs.readFileSync(path.join(ROOT, 'tools/site-rig/site-rig.mjs'), 'utf8');
+    const live = rig.split('\n').filter(l => /^\s*\{ group:/.test(l));
+    const where = live.map(l => (l.match(/where: '([^']+)'/) || [])[1]);
+    for (const w of ['글꾸 · 시식', '글꾸 · 내 로그 설정', '글꾸 · 내 로그 켬', '글꾸 · 담김 카드']) assert.ok(!where.includes(w), w);
+    for (const w of ['글꾸 · 목록', '글꾸 · 상세', '글꾸 · 캐릭터 펼침', '지니 · 글꾸 결과', '장바구니 · 담김']) assert.ok(where.includes(w), w);
+    assert.match(live.find(l => l.includes("'장바구니 · 담김'")), /url: 'mart\/frames\/'/);
+    assert.doesNotMatch(rig.match(/const REQUIRED = [^\n]+/)[0], /시식/);
+    assert.match(rig, /const openSheetBy = [^\n]*'\.mart-card:not\(\[hidden\]\) \.mart-preview'/);
+});
+
+await test('새 틀 다시 칠하기 갈래: tone-state.js 가 새 틀(simple)을 캐릭터 색 · 낮밤으로 칠하고 원래 색(꺼짐)이면 그대로', async () => {
+    const neu = await imp(path.join(MART, 'tone-state.js'));
+    for (const on of [true, false]) for (const [k, mode] of [['#3aa7ff', 'dark'], ['#3ccfbf', 'light'], [null, 'dark']]) {
+        neu.setTone({ k, mode, on });
         for (const row of six.items) { const it = { ...row, ...sfx[row.id], kind: 'geulkku' }; assert.equal(neu.toned(it), on); assert.equal(neu.toneOut(it, it.preview), on ? sf.toneSimple(it.preview, k, { mode }) : it.preview); }
     }
-    console.log(`      ${items.length}틀 · 비교 ${n}번`);
 });
 
 console.log(`\n${pass} 통과 · ${fail} 실패`);
