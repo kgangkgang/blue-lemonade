@@ -676,5 +676,87 @@ await test('내 글꾸: 틀 + 깡통 · 깡캐 · 낮밤 + 조절 값을 이름 
     delete globalThis.localStorage;
 });
 
+// ── 11-11 글 모양(look.js — 테마 「글자」 탭 축소판) · 내 프리셋 ──
+const lookTail = fs.readFileSync(path.join(MART, 'tone-state.js'), 'utf8').match(/'\.\/look\.js(\?v=\w+)'/)[1];
+const lk = await import(pathToFileURL(path.join(MART, 'look.js')).href + lookTail);
+const FULL_LOOK = { fonts: { text: 'serif' }, type: { size: 18, weight: 500, letterSpacing: 4, lineHeight: 2, align: 'justify-word', indent: false, para: 1.2, dialogueSize: 17 }, dialogue: { style: 'marker', markerPos: 'bottom', markerThick: 40, weight: 700, letterSpacing: -2 }, shadow: { on: true, targets: { text: true, dialogue: true, title: true }, color: '#112233', alpha: 60, angle: 90, distance: 3, blur: 4 }, outline: { on: true, color: '#ffffff', width: 0.6, alpha: 80 } };
+await test('글 모양: 값이 없으면 한 글자도 안 달라요 · 테마와 같은 키 · 범위로 다듬고(범위 밖은 안으로 · 모르는 값은 버림 · 웹폰트 글꼴은 버림) · 28틀에 덮는 규칙으로만(본문 그대로 · <style> 하나 · 복사 글 정적 검사) · 그림자 식 = 테마 · 형광펜은 화자 띠마다', async () => {
+    const ts = await import(`${pathToFileURL(path.join(MART, 'tone-state.js')).href}?tune=1`);
+    assert.equal(lk.cleanLook(null), null); assert.equal(lk.cleanLook({ type: { nope: 1 }, fonts: { text: { ko: 'pretendard' } }, shadow: { on: false }, dialogue: { style: 'tint' } }), null);
+    assert.deepEqual(lk.cleanLook({ type: { size: 99, weight: '250', letterSpacing: -40, lineHeight: 1.837, align: 'justify-break', indent: false } }), { type: { size: 22, weight: 300, letterSpacing: -5, lineHeight: 1.84, align: 'justify-word', indent: false } });
+    assert.deepEqual(lk.cleanLook(FULL_LOOK), FULL_LOOK);
+    assert.equal(lk.shadowValue({}), '-1.41px 1.41px 3px rgba(0,0,0,0.45)');   // 테마 기본(135° · 2px · 3px · 45%)
+    assert.equal(lk.shadowValue(FULL_LOOK.shadow), '0px 3px 4px rgba(17,34,51,0.6)');
+    for (const f of lk.LOOK_FIELDS) if (f.kind === 'range') assert.ok(f.min < f.max && f.def >= f.min && f.def <= f.max, f.path);
+    assert.deepEqual(lk.LOOK_TABS.map(x => x[1]), ['색', '본문', '대사', '문단', '그림자', '외곽선']);
+    for (const s of lk.FONT_STACKS) assert.ok(/,(sans-serif|serif|cursive|monospace)$/.test(s.family) && !/url\(|@import/.test(s.family), s.id);
+    for (const row of six.items) {
+        const it = { ...row, ...sfx[row.id], kind: 'geulkku' }, p = it.preview, key = sf.simpleFrameInfo(p).key, K = `.gk-${key}`.repeat(3);
+        assert.equal(lk.applyLook(p, null), p); assert.equal(lk.applyLook(p, {}), p);
+        const base = sf.toneSimple(p, sf.ORIGINAL, { mode: 'light' }), out = lk.applyLook(base, FULL_LOOK);
+        assert.equal((out.match(/<style>/g) || []).length, 1, row.id);
+        assert.equal(out.slice(out.indexOf('</style>')), base.slice(base.indexOf('</style>')), `${row.id} 본문 그대로`);
+        assert.ok(out.startsWith(base.slice(0, base.indexOf('\n</style>'))), `${row.id} 틀 규칙은 그대로 두고 뒤에 덧붙여요`);
+        const add = out.slice(base.indexOf('\n</style>'), out.indexOf('\n</style>'));
+        assert.ok(add.includes(`${K} p:not(.gk-nm){font-family:"AppleMyungjo","Batang","Noto Serif KR","Noto Serif CJK KR",serif;font-size:18px;font-weight:500;letter-spacing:0.04em;line-height:2;text-align:justify;word-break:keep-all;text-indent:0;margin-bottom:1.2em}`), `${row.id} 본문 규칙`);
+        assert.ok(add.includes(`${K} .gk-d{font-size:17px;font-weight:700;letter-spacing:-0.02em}`), `${row.id} 대사 규칙`);
+        assert.ok(add.includes(`${K} p:not(.gk-nm),${K} .gk-d,${K} .gk-tt{text-shadow:0px 3px 4px rgba(17,34,51,0.6)}`), `${row.id} 그림자`);
+        assert.ok(add.includes('-webkit-text-stroke:0.6px rgba(255,255,255,0.8);paint-order:stroke fill'), `${row.id} 외곽선`);
+        assert.ok(!/url\(|@import|@font-face|filter:|opacity:/.test(add), `${row.id} 웹폰트 · filter · opacity 없음`);
+        const bands = [...base.slice(0, base.indexOf('</style>')).matchAll(/\n(\.gk-[^{}\n]*\.gk-d[A-Z])\{background-color:/g)].length;
+        const marks = (add.match(/\{background-color:transparent;background-image:linear-gradient\(transparent 60%,rgba\(/g) || []).length;
+        if (row.id === 'simple-k13') assert.equal(marks, 0, '13 형광펜은 띠가 그림이라 그대로'); else assert.ok(marks >= 2 && marks <= bands, `${row.id} 형광펜 띠 ${marks}/${bands}`);
+        assert.ok(tg.readyReport(sf.simpleReady(shutPeek(out))).ok, `${row.id} 정적 검사`);
+        // toneOut 길
+        ts.setTone({ mode: 'light', on: false, k2: null });
+        const before = ts.toneOut(it, p), key0 = ts.toneKey();
+        lk.setLook(FULL_LOOK);
+        assert.notEqual(ts.toneKey(), key0);
+        assert.equal(ts.toneOut(it, p), out, `${row.id} toneOut`);
+        lk.setLook(null);
+        assert.equal(ts.toneOut(it, p), before, `${row.id} 기본으로`);
+    }
+    // 한 칸씩: 그 칸의 선언만 나와요
+    const p = sfx['simple-k1'].preview;
+    assert.deepEqual(lk.lookRules(p, { type: { letterSpacing: -3 } }), ['.gk-k1.gk-k1.gk-k1 p:not(.gk-nm){letter-spacing:-0.03em}']);
+    assert.deepEqual(lk.lookRules(p, { shadow: { on: true } }), ['.gk-k1.gk-k1.gk-k1 .gk-d{text-shadow:-1.41px 1.41px 3px rgba(0,0,0,0.45)}']);
+    assert.deepEqual(lk.lookRules(p, { shadow: { color: '#ff0000', distance: 9 } }), [], '그림자를 안 켰으면 규칙 없음');
+    assert.deepEqual(lk.lookRules(p, { dialogue: { style: 'full' } }), [], '전체 칠 = 틀 그대로');
+});
+
+await test('내 프리셋: 색 + 글 모양을 이름 붙여 기억(틀과 따로) · 같은 이름은 덮어써요 · 이름 바꾸기 · 지우기 · 마지막 것 기억 · 글자로 내보내고 가져오기 · 테마 스타일 코드(BLS0.) · 프리셋 파일에서 글 모양만', () => {
+    const store = {};
+    globalThis.localStorage = { getItem: k => store[k] ?? null, setItem(k, v) { store[k] = v; }, removeItem(k) { delete store[k]; } };
+    assert.deepEqual(lk.presetList(), []); assert.equal(lk.presetLast(), '');
+    const data = { tone: { on: true, k: '#D19CFF', name: '백시우', k2: '#7fe03c', name2: '우리엘' }, colors: { inks: { light: { title: '#7a3cc8', bad: 'x' } }, prop: '#e0780a', own: false }, look: FULL_LOOK };
+    const a = lk.savePreset({ name: '보라 명조', ...data });
+    assert.equal(a.tone.k, '#d19cff'); assert.deepEqual(a.colors, { inks: { light: { title: '#7a3cc8' } }, prop: '#e0780a', own: false }); assert.deepEqual(a.look, FULL_LOOK);
+    assert.equal(lk.presetLast(), a.id);
+    const b = lk.savePreset({ name: '둘째', tone: { on: false }, look: null });
+    assert.equal(lk.savePreset({ name: '보라 명조', ...data, look: null }).id, a.id, '같은 이름은 덮어써요');
+    assert.deepEqual(lk.presetList().map(x => x.name), ['보라 명조', '둘째']);
+    assert.equal(lk.renamePreset(b.id, '보라 명조'), false); assert.equal(lk.renamePreset(b.id, '  '), false); assert.equal(lk.renamePreset(b.id, '새 이름'), true);
+    lk.markPreset(b.id); assert.equal(lk.presetLast(), b.id);
+    lk.forgetPreset(b.id); assert.equal(lk.presetLast(), ''); assert.equal(lk.presetList().length, 1);
+    assert.equal(lk.savePreset({ name: '', ...data }), null);
+    // 내보내기 → 가져오기
+    const code = lk.exportPreset({ name: '옮길 것', ...data });
+    assert.match(code, /^BLM1\.[A-Za-z0-9_-]+$/);
+    const got = lk.importPreset(code);
+    assert.equal(got.from, 'mart'); assert.equal(got.preset.name, '옮길 것'); assert.deepEqual(got.preset.look, FULL_LOOK); assert.deepEqual(got.preset.colors, a.colors); assert.equal(got.preset.tone.k2, '#7fe03c');
+    // 테마 스타일(내 스타일 내보내기 JSON · BLS0 코드) — 글 모양만 · 글꼴 · 색은 건너뛰어요
+    const style = { saltyStyle: 1, name: '소설책', style: { palette: 'night', fonts: { text: { ko: 'ridibatang' } }, type: { size: 17, lineHeight: 1.9, letterSpacing: -2, gutter: 24, measure: 700 }, dialogue: { style: 'tint', weight: 600, markerThick: 30 }, shadow: { on: true, targets: { dialogue: true, em: true }, alpha: 30 }, outline: { on: false }, colorOverrides: { night: { text: '#fff' } } } };
+    const want = { type: { size: 17, letterSpacing: -2, lineHeight: 1.9 }, dialogue: { markerThick: 30, weight: 600 }, shadow: { on: true, targets: { dialogue: true }, alpha: 30 } };
+    assert.deepEqual(lk.lookFromTheme(style), want);
+    const bls0 = 'BLS0.' + Buffer.from(JSON.stringify(style)).toString('base64url');
+    const th = lk.importPreset(bls0);
+    assert.equal(th.from, 'theme'); assert.equal(th.preset.name, '소설책'); assert.deepEqual(th.preset.look, want); assert.equal(th.preset.tone.on, false);
+    assert.deepEqual(lk.importPreset('', { json: JSON.stringify(style) }).preset.look, want, '풀어 둔 JSON(BLS1 을 화면이 푼 것)');
+    const file = { blueLemonadePreset: true, version: 1, groups: { text: { 'type.size': 15, 'type.para': 1.1, 'fonts.text.ko': 'pretendard' }, marker: { 'dialogue.style': 'marker', 'dialogue.markerPos': 'bottom' }, chat: { 'chat.userSize': 90 } } };
+    assert.deepEqual(lk.importPreset(JSON.stringify(file)).preset.look, { type: { size: 15, para: 1.1 }, dialogue: { style: 'marker', markerPos: 'bottom' } });
+    for (const junk of ['', 'BLM1.###', '{"a":1}', 'hello']) assert.equal(lk.importPreset(junk), null, junk);
+    delete globalThis.localStorage;
+});
+
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

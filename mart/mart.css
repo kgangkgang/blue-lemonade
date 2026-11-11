@@ -526,3 +526,22 @@ html.mart-cart-on{overflow:hidden}
 .mart-tune-load span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:var(--ts-meta)}
 .mart-tune-load .mart-ink-dot{width:14px;height:14px}
 @media (max-width:639px){.mart-tune-load{min-height:44px}.mart-tune-form .field{font-size:16px}}
+/* 11-11 조절 칸 — 테마 「글자」 탭 축소판: 묶음 칩(색 · 본문 · 대사 · 문단 · 그림자 · 외곽선) + 칸(슬라이더 · 칩 · 색) */
+.mart-tune-tabs{flex-wrap:wrap;gap:6px}
+.mart-tune-body{min-width:0}
+.mart-look{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mart-look-row{display:flex;align-items:center;gap:8px;min-width:0;min-height:var(--ctl)}
+.mart-look-row.is-wrap{flex-wrap:wrap}
+.mart-look-row[hidden]{display:none}
+.mart-look-label{flex:none;width:76px;color:var(--muted);font-size:var(--ts-meta)}
+.mart-look-range{flex:1 1 auto;min-width:0;height:var(--ctl);margin:0;accent-color:var(--blue);cursor:pointer}
+.mart-look-range:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:var(--r-ctl)}
+.mart-look-val{flex:none;width:68px;color:var(--ink);font-size:var(--ts-meta);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.mart-look-seg{flex-wrap:wrap;gap:6px;min-width:0}
+.mart-tune-h small{margin-left:6px;color:var(--muted);font-size:var(--ts-meta);font-weight:400}
+.mart-tune-h:not(:first-child){margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
+.mart-preset-io{display:flex;flex-direction:column;gap:6px}
+.mart-preset-io[hidden]{display:none}
+.mart-preset-io textarea{height:auto;min-height:56px;padding:8px 12px;resize:vertical;font:inherit;font-size:var(--ts-meta);line-height:1.4;word-break:break-all}
+.mart-tune-mine li.is-here .mart-tune-load b{color:var(--blue-strong)}
+@media (max-width:639px){.mart-look-label{width:64px}.mart-look-val{width:60px}.mart-preset-io textarea{font-size:16px}}

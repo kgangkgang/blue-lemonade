@@ -5,6 +5,7 @@
 //   - 깡통 · 깡캐 색은 목록 위 두 칸(tone-state.js)과 같은 값이라 여기에 안 들어 있어요.
 export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(탭을 닫으면 사라져요 — sessionStorage)
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
+import { cleanLook } from './look.js?v=20261111f';
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** 역할별 글자색 — 이름은 inks.js(테마 글자색 칩)와 같아요. 새 틀에 그 글자가 있는 역할만 칸이 떠요(속마음 · 강조 · 형광펜은 그 클래스를 쓰는 틀이 생기면 한 줄 더해요) */
@@ -116,14 +117,14 @@ const cleanMine = x => {
     return {
         id: /^[a-z0-9]{4,16}$/.test(x.id || '') ? x.id : Math.random().toString(36).slice(2, 10), frame: x.frame, frameName: cleanName(x.frameName), name,
         tone: { on: tone.on === true, k: hex(tone.k), name: cleanName(tone.name), k2: hex(tone.k2), name2: cleanName(tone.name2), mode: tone.mode === 'light' ? 'light' : 'dark', none: tone.none === true },
-        tune: cleanTune(x.tune), at: Number(x.at) || 0,
+        tune: cleanTune(x.tune), ...(x.look !== undefined ? { look: cleanLook(x.look) } : {}), at: Number(x.at) || 0,
     };
 };
 /** 기억한 내 글꾸(최근 것이 앞 · 최대 60) */
 export function mineList() { const list = read('local', MINE_KEY, []); return Array.isArray(list) ? list.map(cleanMine).filter(Boolean).slice(0, 60) : []; }
 /** 저장 — 같은 틀에 같은 이름이면 덮어써요 */
-export function saveMine({ frame, frameName, name, tone, tune }) {
-    const row = cleanMine({ frame, frameName, name, tone, tune, at: Date.now() });
+export function saveMine({ frame, frameName, name, tone, tune, look }) {
+    const row = cleanMine({ frame, frameName, name, tone, tune, look, at: Date.now() });
     if (!row) return null;
     const list = mineList().filter(x => !(x.frame === row.frame && x.name === row.name));
     list.unshift(row);
