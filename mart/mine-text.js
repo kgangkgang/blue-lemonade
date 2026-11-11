@@ -160,3 +160,38 @@ export function setMine({ text, on } = {}) {
 }
 /** 지금 상태로 틀 HTML 에 내 글을 넣어요(꺼져 있으면 그대로) */
 export const applyMine = html => (mineOn() ? fillMine(html, modelNow()) : html);
+
+// ── 11-11 글만 복사(마크다운) — 테마 log-copy-render.js logMarkdown 꼴(이름은 **이름** 한 줄 · 메시지 사이 빈 줄) ──
+const decodeHtml = s => String(s ?? '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+const mdInline = h => decodeHtml(String(h ?? '')
+    .replace(/<br\s*\/?>/g, '\n')
+    .replace(/<(strong|b)>([\s\S]*?)<\/\1>/g, '**$2**')
+    .replace(/<(em|i)>([\s\S]*?)<\/\1>/g, '*$2*')
+    .replace(/<s>([\s\S]*?)<\/s>/g, '~~$1~~')
+    .replace(/<span class="blsp-l"[\s\S]*?<\/span>/g, '')
+    .replace(/<[^>]+>/g, '')).replace(/[ \t]+\n/g, '\n').trim();
+/** 다 그린 틀 HTML → 글만(마크다운). 숨긴 줄의 흐린 사본 · 소품 · 소리 카드는 빼요 */
+export function frameMarkdown(html) {
+    let text = String(html ?? '');
+    const at = text.indexOf('</style>'); if (at >= 0) text = text.slice(at + 8);
+    text = text.replace(/<!--[\s\S]*?-->/g, '').replace(/<div class="blsp-b"[\s\S]*?<\/div><\/summary>/g, '</summary>');
+    const out = [];
+    // 제목은 틀마다 div · span · p 로 달라요 — 처음 하나만 따로 찾아요(div 를 아래 줄 찾기에 넣으면 글줄을 삼켜요)
+    const tm = text.match(/<(div|span|p|h[1-6])\b[^>]*class="(?:[^"]*\s)?gk-tt(?:\s[^"]*)?"[^>]*>((?:(?!<\/\1>)[\s\S])*)<\/\1>/);
+    const title = tm ? mdInline(tm[2]) : '';
+    if (title) out.push({ k: 'title', t: title });
+    for (const m of text.matchAll(/<(span|p)\b[^>]*class="((?:[^"]*\s)?gk-(?:nm|nr|dl|hl)(?:\s[^"]*)?)"[^>]*>((?:(?!<\/\1>)[\s\S])*)<\/\1>/g)) {
+        const cls = m[2].split(/\s+/), body = mdInline(m[3]);
+        if (!body) continue;
+        if (cls.includes('gk-nm')) out.push({ k: 'name', t: body });
+        else if (cls.includes('gk-nr') || cls.includes('gk-dl') || cls.includes('gk-hl')) out.push({ k: 'text', t: body });
+    }
+    let md = '', prev = null;
+    for (const x of out) {
+        if (x.k === 'title') md += `# ${x.t}\n\n`;
+        else if (x.k === 'name') md += `${prev ? '\n' : ''}**${x.t}**\n`;
+        else md += `${x.t}\n\n`;
+        prev = x.k;
+    }
+    return md.replace(/\n{3,}/g, '\n\n').trim() + '\n';
+}

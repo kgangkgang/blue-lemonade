@@ -3,12 +3,12 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone } from './tone-state.js?v=20261111q';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111q';
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111q';
-import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111q';
-import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111q';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111q';
+import { toneState, setTone } from './tone-state.js?v=20261111r';
+import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111r';
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111r';
+import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111r';
+import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111r';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111r';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -144,7 +144,8 @@ const mineHtml = (item) => {
 /** 「내 프리셋」 · 「내 글꾸」 칸(미리보기 아래) */
 export function mineBoxHtml(item) {
     if (!item?.simple || !item.preview) return '';
-    return `<section class="mart-tune-save" aria-label="내 프리셋"><h3 class="mart-tune-h">내 프리셋 <small>색 + 글 모양 · 어느 틀에든</small></h3>
+    return `<section class="mart-tune-save" aria-label="가져가기 · 내 프리셋"><h3 class="mart-tune-h">가져가기 <small>HTML 복사 말고도</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-act="download" title="복사 글과 같은 HTML 을 .html 파일로">⬇ 내려받기(.html)</button><button type="button" class="chip" data-act="text" title="틀 없이 글만(마크다운) 복사">글만 복사</button></div>
+        <h3 class="mart-tune-h">내 프리셋 <small>색 + 글 모양 · 어느 틀에든</small></h3>
         <form class="mart-tune-form" data-form="preset"><label class="field-wrap"><input type="text" class="field" name="name" maxlength="24" placeholder="프리셋 이름" aria-label="프리셋 이름" required></label><button type="submit" class="btn">프리셋 저장</button></form>
         <div class="mart-preset-list">${presetsHtml()}</div>
         <div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-preset-reset>기본으로</button><button type="button" class="chip" data-preset-export>내보내기</button><button type="button" class="chip" data-preset-io aria-expanded="false">가져오기</button></div>

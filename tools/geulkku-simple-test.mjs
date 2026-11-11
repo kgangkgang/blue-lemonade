@@ -985,5 +985,24 @@ await test('숨기기(스포일러 · 테마 블록 숨김 꼴): 지문 · 대�
     assert.deepEqual(tu.cleanTune({ spoilers: [{ i: 1 }, { i: 1 }, { i: -1 }, { i: 'x' }] }), { spoilers: [{ i: 1 }] });
 });
 
+
+await test('글만 복사(마크다운 · 테마 logMarkdown 꼴): 28틀 모두 # 제목 · **이름** 한 줄 · 태그 없음 · 속마음 *…* · 강조 **…** · 취소 ~~…~~ · 숨긴 줄은 글이 한 번만(흐린 사본 빼요) · 내려받기 · 글만 단추가 이어져요', () => {
+    const want = mt.frameMarkdown(sfx[six.items[0].id].preview);
+    for (const row of six.items) {
+        const p = sfx[row.id].preview, md = mt.frameMarkdown(sf.simpleReady(shutPeek(p)));
+        assert.match(md, /^# 비 그친 뒤, 옥상에서\n\n/, row.id);
+        assert.match(md, /\n\*\*깡통\*\*\n「/, row.id); assert.match(md, /\n\*\*깡캐\*\*\n「/, row.id);
+        assert.doesNotMatch(md, /[<>]|&(?:amp|lt|gt|nbsp);/, row.id);
+        assert.match(md, /\*또 기다렸구나\.\*/, row.id); assert.match(md, /~~화난 척~~/, row.id);
+        assert.ok(md.startsWith(want.trimEnd()), `${row.id} 틀이 달라도 글만은 같아요(틀에 따라 끝에 한 줄 더 있는 견본만 달라요)`);
+        const nr = tu.editables(p).find(e => e.cls === 'gk-nr');
+        const sp = mt.frameMarkdown(sf.simpleReady(shutPeek(tu.applyTune(p, { spoilers: [{ i: nr.i }] }))));
+        assert.equal(sp.split('젖은 바닥 냄새').length, 2, `${row.id} 숨긴 줄 한 번`);
+    }
+    const ms = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
+    assert.match(ms, /act === 'download'\) downloadHtml\(state\)/); assert.match(ms, /act === 'text'\) copyText\(state\)/);
+    assert.match(ms, /<meta charset="utf-8">/);
+    assert.match(ui, /data-act="download"/); assert.match(ui, /data-act="text"/);
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

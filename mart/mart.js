@@ -11,11 +11,12 @@ import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
 import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110v';   // 11-10 대사색 하나로 다시 칠하기 · 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
-import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261111q';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
-import { simpleReady } from './simple-frames.js?v=20261111q';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
+import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261111r';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
+import { simpleReady } from './simple-frames.js?v=20261111r';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
-import { mountCast } from './cast.js?v=20261111q';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit } from './tune-ui.js?v=20261111q';   // 11-11 크게 보기 「조절」 칸(색 칩 · 글 고치기 · 내 글꾸)
+import { mountCast } from './cast.js?v=20261111r';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
+import { frameMarkdown } from './mine-text.js?v=20261111r';   // 11-11 글만 복사(마크다운)
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit } from './tune-ui.js?v=20261111r';   // 11-11 크게 보기 「조절」 칸(색 칩 · 글 고치기 · 내 글꾸)
 let styleActive = 'all', drawPreset = null, picker = null;
 const states = [];   // 만든 카드만(글꾸) — 늦게 만들기(lazyGrid)라 처음엔 첫 화면 몫뿐이에요
 const stateById = new Map();
@@ -386,6 +387,29 @@ async function copyEntries(entries, quiet = false, place = where) {
 export const shutPeek = html => String(html ?? '').replace(/<details\b[^>]*\sdata-bl-peek=""[^>]*>/g, tag => tag.replace(/\sopen(?:="[^"]*")?(?=[\s>])/, '').replace(/\sdata-bl-peek=""/, ''));
 /** 글꾸 「HTML 복사」 — 테마 없이 커뮤니티 글(인라인 스타일만 · 스크립트 금지 편집기)에 바로 붙여 쓰는 완성 HTML. 미리보기에 보이는 것과 같아요.
  *  서식(text/html) + 그 코드 글자(text/plain)를 같이 넣어요 — 보통 편집기엔 모양 그대로, HTML 칸엔 코드로 붙어요 */
+/** 11-11 「HTML 복사」 · 내려받기 · 글만 복사가 같이 쓰는 완성 HTML(복사 글과 같은 길) */
+function readyHtml(state) {
+    const item = state.item;
+    return ensureItem(item).then(() => (inkChanged(item) && !tasteLoaded ? loadTaste().then(() => { delete state.inkHtml; return previewOf(state); }) : previewOf(state))).then(shutPeek).then(h => (item.simple ? simpleReady(h) : item.photo ? h : kkangtongReady(h)));
+}
+/** 내려받기(.html) — 복사 글과 같은 HTML 을 파일로(글자 깨짐 막는 charset 한 줄만 앞에) */
+async function downloadHtml(state) {
+    try {
+        const html = await readyHtml(state), name = String(state.item.name || state.item.label || '글꾸').replace(/[\\/:*?"<>|]+/g, ' ').trim();
+        const blob = new Blob([`<meta charset="utf-8">\n${html}\n`], { type: 'text/html' });
+        const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `글꾸-${name}.html`, hidden: true });
+        document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+        say('.html 파일로 받았어요', 2400);
+    } catch { say(LOAD_FAIL, 3200); }
+}
+/** 글만 복사(마크다운) — 틀 없이 글만 올릴 때(테마 「글만」) */
+async function copyText(state) {
+    try {
+        const md = frameMarkdown(await readyHtml(state));
+        await navigator.clipboard.writeText(md);
+        say('글만 복사했어요 · 서식 없는 칸에 붙여요', 2600);
+    } catch { say('복사가 막혔어요 · 잠시 뒤 다시 눌러 주세요', 3000); }
+}
 async function copyHtml(state) {
     const item = state.item;
     const ready = ensureItem(item).then(() => (inkChanged(item) && !tasteLoaded ? loadTaste().then(() => { delete state.inkHtml; return previewOf(state); }) : previewOf(state))).then(shutPeek).then(h => (item.simple ? simpleReady(h) : item.photo ? h : kkangtongReady(h)));   // 11-11 심플 새 틀: 틀 <style> + 코멘트 빈칸 · 16px 규칙을 <style> 하나로   // 11-10 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)   // 11-09 카드 · 상세 미리보기는 펼침, 복사 글은 닫힘   // 「📝 내 로그로 보기」가 켜져 있으면 내 로그가 든 완성 HTML   // 조각을 아직 안 받았으면 받은 뒤(클립보드는 누른 순간에 열어요)
@@ -514,6 +538,8 @@ function doAct(state, act, b) {
     if (act === 'view') openSheet(state);
     else if (act === 'copy') copyEntries(ensureItem(state.item).then(() => [entryOf(state)]));
     else if (act === 'html') copyHtml(state);
+    else if (act === 'download') downloadHtml(state);
+    else if (act === 'text') copyText(state);
     else if (act === 'taste') openTaste(state);
     else if (act === 'random') pickRandom();
     else if (act === 'design') switchDesign(state, b.dataset.id);
@@ -526,7 +552,7 @@ function doAct(state, act, b) {
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
 let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261111q').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261111r').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
