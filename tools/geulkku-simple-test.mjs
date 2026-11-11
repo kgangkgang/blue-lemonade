@@ -1110,7 +1110,7 @@ await test('이름 글자색 따로 · 대사 · 이름 글꼴(기기 글꼴) ·
     assert.equal(cu.valOk(ticket, '12A'), true); assert.equal(cu.valOk(ticket, '가나다라마'), false, '폭 상한');
     assert.deepEqual(cu.cleanVals({ 호감도: 105, 좌석: '5D' }, [love, ticket]), { 좌석: '5D' });
     assert.match(cu.valsHtml(cu.fieldsOf(items['simple-k1079'].preview), {}), /class="mart-param is-wide"[\s\S]*data-val="호감도"/);
-    assert.deepEqual(tu.cleanTune({ vals: { 호감도: 70, 'bad key': 1, t3: '<b>' } }), { vals: { 호감도: 70, t3: 'b' } });
+    assert.deepEqual(tu.cleanTune({ vals: { 호감도: 70, 'bad/key': 1, t3: '<b>' } }), { vals: { 호감도: 70, t3: 'b' } });
 });
 
 await test('독립 점검 1 · 3 · 4: 새 내 글이면 옛 글에서 고친 줄 · 숨긴 줄을 비워요(견본 글에서 고친 것은 그대로) · 실리태번 생성 시간 줄(34.2s)은 빼요 · 「이름: 글」 대사의 *속마음* 은 em', () => {
@@ -1140,6 +1140,24 @@ await test('별 개수(D2 별점 고리): st-N 규칙이 든 틀에만 「별 �
     assert.match(cu.applyVals(h, { 별: 2.5 }), /^<div class="gk gk-tl gk-k1303 gk-st-2h">/);
     assert.match(cu.applyVals(cu.applyVals(h, { 별: 2.5 }), { 별: 0 }), /^<div class="gk gk-tl gk-k1303 gk-st-0">/);
     assert.equal(cu.starOf(sfx[six.items[0].id].preview), null, '별점 틀이 아니면 칸 없음');
+});
+
+await test('기본 글꾸 18틀(마트-길닦기 17-8): 「이 틀」에 정보 칸(끔 · 칩 · 탭) · 높이(늘어남 · s · m · l) · 정보 글자(LOG · 모델 · 프롬프트 · 탭 이름) — 뿌리 class 하나씩 · 갈아 끼움 · 기본이면 그대로 · 레몬 빼기도 먹어요', async () => {
+    const cu = await import(pathToFileURL(path.join(MART, 'custom.js')).href);
+    const items = {}; for (const c of Object.values(sixAll.chunks)) Object.assign(items, JSON.parse(fs.readFileSync(path.join(DIR, c.file), 'utf8')).items);
+    const ids = Object.keys(items).filter(id => /\.gk-gi-chip/.test(items[id].preview || ''));
+    assert.equal(ids.length, 18);
+    for (const id of ids) {
+        const h = items[id].preview, keys = cu.fieldsOf(h).map(f => f.key);
+        assert.ok(keys.includes('정보 칸') && keys.includes('높이') && keys.includes('모델') && keys.includes('프롬프트'), id + ' ' + keys);
+        assert.equal(cu.applyVals(h, { '정보 칸': '끔', 높이: '늘어남' }), h, id);
+        const o = cu.applyVals(cu.applyVals(h, { '정보 칸': '칩', 높이: 's', 모델: 'Gemini' }), { '정보 칸': '탭', 높이: 'l' });
+        const root = o.match(/^<div[^>]*>/)[0];
+        assert.ok(/gk-gi-tab/.test(root) && !/gk-gi-chip/.test(root) && /gk-gh-l/.test(root) && !/gk-gh-s/.test(root), id + ' ' + root);
+        assert.ok(o.includes('>Gemini<'), id);
+        assert.doesNotMatch(lk.applyLook(h, { lemon: { off: true } }), /gk-lm/, id + ' 레몬');
+        assert.ok(tg.readyReport(sf.simpleReady(shutPeek(o))).ok, id);
+    }
 });
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

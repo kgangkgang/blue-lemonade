@@ -4,8 +4,8 @@
 //   소품 글자: 이름 고리가 안 쓰는 자리만 접힌 「소품 글자」 안에(칸 이름 = 기본 글자 · 비우면 기본).
 //   값은 조절 값(tune.js) 의 vals = { 고리 이름 | t<번호>: 값 } — 틀마다 · 되돌리기 · 내 글꾸에 같이 · 복사 글 · 내려받기에도 같은 길(applyTune → applyVals).
 //   거는 차례: 다시 칠하기(toneSimple) 뒤 · 숨긴 줄(스포일러) 앞 · 복사 글(simpleReady) 앞. 틀린 값이면 cust.js 가 throw → 바꾸지 않은 HTML 을 써요.
-import { applyCust, wid } from './lib/cust/cust.js?v=20261111y';
-import { CUST } from './lib/cust/cust-table.js?v=20261111y';
+import { applyCust, wid } from './lib/cust/cust.js?v=20261111z';
+import { CUST } from './lib/cust/cust-table.js?v=20261111z';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const keyOf = html => (String(html ?? '').match(/^\s*<div\b[^>]*\sclass="gk\s(?:[^"]*\s)?gk-(k\d+)(?=[\s"])/) || [])[1] || '';
@@ -16,16 +16,31 @@ const DATE = /^(1[0-2]|[1-9])-(3[01]|[12]\d|[1-9])$/;
 export const STAR_KEY = '별';
 export function starOf(html) { const text = String(html ?? ''), css = text.slice(0, text.indexOf('</style>')); const m = css.match(/\.((?:gk-)?)st-[0-5]h?(?![\w-])/); return m ? m[1] : null; }
 const starCls = (pre, n) => `${pre}st-${Math.floor(n)}${n % 1 ? 'h' : ''}`;
+/** 11-11 기본 글꾸(뿌리 class 로 켜는 칸 — 마트-길닦기 17-8): 정보 칸 · 높이 제한 · 정보 글자(LOG · 모델 · 프롬프트 · 탭 이름) */
+const ROOT_PICKS = [
+    { key: '정보 칸', test: /\.(?:gk-)?gi-(?:chip|tab)(?![\w-])/, options: ['끔', '칩', '탭'], labels: ['끔', '칩 「LOG · 모델 · 프롬프트」', '탭 「LOG · 프롬프트」'], cls: { 칩: 'gi-chip', 탭: 'gi-tab' }, def: '끔' },
+    { key: '높이', test: /\.(?:gk-)?gh-[sml](?![\w-])/, options: ['늘어남', 's', 'm', 'l'], labels: ['늘어남', '짧게', '보통', '길게'], cls: { s: 'gh-s', m: 'gh-m', l: 'gh-l' }, def: '늘어남' },
+];
+const GV = [['gv-log', 'LOG 글자'], ['gv-model', '모델'], ['gv-prompt', '프롬프트'], ['gv-tab-log', '첫 탭 이름'], ['gv-tab-info', '둘째 탭 이름']];
+const gvRe = (pre, c) => new RegExp('(<(\\w+)\\b[^>]*\\sclass="(?:[^"]*\\s)?' + pre + c + '(?:\\s[^"]*)?"[^>]*>)([^<]*)(</\\2>)', 'g');
+function rootFields(html) {
+    const text = String(html ?? ''), css = text.slice(0, text.indexOf('</style>')), body = text.slice(text.indexOf('</style>'));
+    const pre = /\.gk-g[ih]-/.test(css) || /class="[^"]*\bgk-gv-/.test(body) ? 'gk-' : '';
+    const out = ROOT_PICKS.filter(p => p.test.test(css)).map(p => ({ ...p, name: p.key, label: p.key, kind: 'pick', group: 'named', root: pre }));
+    for (const [c, label] of GV) { const m = gvRe(pre, c).exec(body); if (m) out.push({ key: label, name: label, label, kind: 'text', def: m[3], max: 20, group: 'named', gv: pre + c }); }
+    return out;
+}
 /** 틀이 내놓은 값 칸 — { key: '묶음:k', named: [...], slots: [...] } | null(표에 없는 틀) */
 export function custOf(html) { const k = keyOf(html); return (k && CUST[k]) || null; }
 /** 칸 목록(이름 고리 + 이름 고리가 안 쓰는 글자 자리) — 표에 없으면 빈 목록 */
 export function fieldsOf(html) {
     const star = starOf(html), starField = star == null ? [] : [{ key: STAR_KEY, name: STAR_KEY, label: '별 개수', kind: 'num', min: 0, max: 5, step: 0.5, def: 5, group: 'named', star }];
-    const c = custOf(html); if (!c) return starField;
+    const extra = [...starField, ...rootFields(html)];
+    const c = custOf(html); if (!c) return extra;
     const used = new Set(c.named.flatMap(n => [n.slot, ...(n.slots || [])]).filter(Boolean));
     const named = c.named.map(n => ({ ...n, key: n.name, group: 'named' }));
     const slots = c.slots.filter(s => !used.has(s.t)).map(s => ({ key: s.t, name: s.t, label: s.def, kind: 'text', def: s.def, max: s.max, group: 'slot' }));
-    return [...starField, ...named, ...slots];
+    return [...extra, ...named, ...slots];
 }
 /** 값 하나가 칸에 맞나(글자 폭 · 범위 · 고르기 · 날짜 꼴) */
 export function valOk(f, v) {
@@ -54,6 +69,12 @@ export function applyVals(html, vals) {
     const v = cleanVals(vals, fieldsOf(text)); if (!v) return text;
     const star = starOf(text);
     if (star != null && STAR_KEY in v) { const cls = starCls(star, Number(v[STAR_KEY])); delete v[STAR_KEY]; text = text.replace(/^(\s*<div\b[^>]*\sclass="gk\s)([^"]*)"/, (m, a, c) => `${a}${c.split(/\s+/).filter(x => !/^(?:gk-)?st-[0-5]h?$/.test(x)).join(' ')} ${cls}"`); }
+    for (const f of rootFields(text)) {
+        if (!(f.key in v)) continue;
+        const val = v[f.key]; delete v[f.key];
+        if (f.kind === 'pick') { const all = Object.values(f.cls).map(x => f.root + x), add = f.cls[val] ? f.root + f.cls[val] : ''; text = text.replace(/^(\s*<div\b[^>]*\sclass="gk\s)([^"]*)"/, (m, a, c) => a + [...c.split(/\s+/).filter(x => !all.includes(x)), add].filter(Boolean).join(' ') + '"'); }
+        else text = text.replace(gvRe('', f.gv), (m, open, tag, old, close) => open + esc(val) + close);
+    }
     const c = custOf(text);
     if (!c || !Object.keys(v).length) return text;
     try { return applyCust(text, c.key, v); } catch { return text; }
@@ -67,7 +88,7 @@ export function valsHtml(fields, vals = {}) {
         const v = Number(cur(f)), fill = `${Number((((v - f.min) / (f.max - f.min)) * 100).toFixed(1))}%`, wide = nums.length % 2 === 1 && i === nums.length - 1;
         return `<div class="mart-param${wide ? ' is-wide' : ''}"><header><span class="mart-param-name">${esc(f.label)}</span>${undo(f, vals)}<span class="mart-num"><input type="number" step="${f.step}" min="${f.min}" max="${f.max}" inputmode="numeric" data-val-num="${esc(f.key)}" value="${v}" aria-label="${esc(f.label)} 숫자"></span></header><input type="range" data-val="${esc(f.key)}" min="${f.min}" max="${f.max}" step="${f.step}" value="${v}" style="--fill:${fill}" aria-label="${esc(f.label)}"></div>`;
     }).join('');
-    const pickHtml = named.filter(f => f.kind === 'pick').map(f => `<div class="mart-look-row is-wrap"><span class="mart-look-label">${esc(f.label)}${undo(f, vals)}</span><span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="${esc(f.label)}">${f.options.map(o => `<button type="button" class="chip" data-val-pick="${esc(f.key)}" data-v="${esc(o)}" aria-pressed="${String(o) === String(cur(f))}">${esc(o)}</button>`).join('')}</span></div>`).join('');
+    const pickHtml = named.filter(f => f.kind === 'pick').map(f => `<div class="mart-look-row is-wrap"><span class="mart-look-label">${esc(f.label)}${undo(f, vals)}</span><span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="${esc(f.label)}">${f.options.map(o => `<button type="button" class="chip" data-val-pick="${esc(f.key)}" data-v="${esc(o)}" aria-pressed="${String(o) === String(cur(f))}">${esc(f.labels?.[f.options.indexOf(o)] ?? o)}</button>`).join('')}</span></div>`).join('');
     const textRow = f => `<div class="mart-look-row is-wrap"><span class="mart-look-label">${esc(f.label)}</span><label class="field-wrap mart-head-field"><input type="text" class="field" data-val="${esc(f.key)}" value="${esc(vals?.[f.key] ?? '')}" placeholder="${esc(f.def)}" ${f.kind === 'chars' ? `maxlength="${f.len}" ` : ''}aria-label="${esc(f.label)}"${hint(f)}></label>${undo(f, vals)}</div>`;
     const texts = named.filter(f => ['text', 'chars', 'date'].includes(f.kind)).map(textRow).join('');
     const slotHtml = slots.length ? `<details class="mart-vals-slots"><summary class="mart-look-row chev"><span class="mart-look-label">소품 글자</span><span class="mart-tune-hint">${slots.length}자리 · 비우면 기본 글자</span></summary>${slots.map(textRow).join('')}</details>` : '';
