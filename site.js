@@ -29,7 +29,7 @@ lightbox.querySelector('.close').onclick=()=>lightbox.close();lightbox.onclick=e
 const SHOWN_NOTES=3;
 // 업데이트 내역(400KB)은 접힌 칸을 펼칠 때 받아요 — 첫 화면에서 빼요
 let notesAsked=false;const loadNotes=()=>{if(notesAsked)return;notesAsked=true;
-fetch('release-notes.json?v=112', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
+fetch('release-notes.json?v=113', {cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('notes');return r.json();}).then(notes=>{$('#notes').replaceChildren();
   // one card per day, like the theme's own notice: a busy day reads as "v4.1.2 ~ v4.2.4 · 업데이트 13번"
   const days=[];for(const note of notes){const last=days.at(-1);if(last&&last.date===note.date)last.notes.push(note);else days.push({date:note.date,notes:[note]});}
   days.forEach((day,i)=>{const d=element('details','note');d.open=i===0;d.hidden=i>=SHOWN_NOTES;const s=element('summary'),first=day.notes.at(-1).version,latest=day.notes[0].version;
