@@ -907,7 +907,7 @@ await test('틀 넘침 손봄: k14 쥘부채 · q10 RPG 스탯에만 · 기본 �
 await test('되돌리기 · 다시하기(테마 hist 꼴): 단추 둘 · 스냅샷 50 · 0.5초 묶음 · Ctrl+Z / Ctrl+Y · Ctrl+Shift+Z · 입력칸 안에서는 그 칸 것 · 되돌리는 동안은 기록 안 함 · 다른 틀은 새로', () => {
     const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
     for (const s of ['data-hist="undo"', 'data-hist="redo"', 'const HIST_MAX = 50;', 'setTimeout(() => { histPush(item); syncHist(sheet); }, 500)', "if (e.target.closest?.('input, textarea, select')) return;", "undo(k === 'y' || e.shiftKey ? 1 : -1)", 'if (hist.restoring || hist.id !== item.id) return;', 'if (item && hist.id !== item.id) histStart(item);']) assert.ok(ui.includes(s), s);
-    assert.ok(/const snapOf = item => JSON\.stringify\(\{ tune: tuneOf\(item\.id\), look: lookNow\(\), words: wordsNow\(\), tone: \{/.test(ui), '한 칸 = 조절 값 + 글 모양 + 이름 숨김 · 단어 바꾸기 + 깡통 · 깡캐 · 밤낮');
+    assert.ok(/const snapOf = item => JSON\.stringify\(\{ tune: tuneOf\(item\.id\), look: lookNow\(\), motion: motionNow\(\), words: wordsNow\(\), tone: \{/.test(ui), '한 칸 = 조절 값 + 글 모양 + 이름 숨김 · 단어 바꾸기 + 깡통 · 깡캐 · 밤낮');
 });
 
 await test('바로 고치기 넓히기: 고쳐 쓴 글에 줄바꿈 · 굵게 · 기울임 · 강조 · 속마음 · 취소만 남기고(속성 없이) 나머지는 글자 · 붙여 넣은 줄 · 문단은 줄바꿈 · 안 닫힌 꾸밈은 닫아요 · 28틀에 넣어도 태그 짝 · 복사 글 정적 검사 · 다시 고쳐 쓸 때도 그 칸', () => {
@@ -1253,6 +1253,52 @@ await test('붙일 곳 흉내: summary 뒤 빈 줄 · id · for · name 지움 �
     assert.ok(ms.includes("['mart', '마트'], ['pc', '글 · PC'], ['phone', '글 · 폰']") && ms.includes("if (site.mode !== 'mart') { stopEdit();"));
     const css = fs.readFileSync(path.join(MART, 'mart.css'), 'utf8');
     for (const r of [':where(.mart-site) .content details{margin:.25rem 0}', '.mart-site.is-phone .mart-site-page{max-width:360px}', '.mart-site-page{box-sizing:border-box;max-width:640px;']) assert.ok(css.includes(r), r);
+});
+await test('간편(11-12 · 설계 4-2): 움직임 세기 사본(중 = 그대로 · 약 → 중 되돌림 · 407틀) · 글 크기 sizeStep(틀 크기 + n · 고정 px 이 이김) · 추천 스타일 여섯 · 간편 | 세밀 화면 칸', async () => {
+    const ms = await import(pathToFileURL(path.join(MART, 'motion-state.js')).href + '?v=20261112a');
+    const mo = await import(pathToFileURL(path.join(MART, 'lib/motion/motion.js')).href);
+    let ts = 0, ps = 0;
+    for (const [id, it] of Object.entries(allItems)) {
+        const p = it.preview, key = id.replace('simple-', '');
+        assert.equal(ms.applyMotion(p, { text: 'm', prop: 'm' }), p, id + ' 중');
+        const s = ms.applyMotion(p, { text: 's', prop: 's' });
+        if (s !== p) { assert.equal(mo.applyLevel(s, {}), p, id + ' 되돌림'); assert.equal((s.match(/<style>/g) || []).length, 1, id); }
+        const c = ms.motionCaps(p); if (c.text.s) ts++; if (c.prop.s) ps++;
+        void key;
+    }
+    assert.ok(ts > 150 && ps > 250, `글 ${ts} · 소품 ${ps}`);
+    const p = sfx[six.items[0].id].preview;
+    const big = lk.applyLook(p, { type: { sizeStep: 2 } });
+    assert.match(big, /p:not\(\.gk-nm\)\{font-size:\d+px\}/);
+    const base = Number((p.match(/\.gk-nr\{[^}]*?font(?:-size)?:[^;}]*?(\d+)px/) || [, 16])[1]);
+    assert.ok(big.includes(`p:not(.gk-nm){font-size:${base + 2}px}`), '틀 크기 + 2 ' + base);
+    assert.ok(lk.applyLook(p, { type: { sizeStep: 2, size: 15 } }).includes('p:not(.gk-nm){font-size:15px}'), '고정 px 이 이겨요');
+    const { LOOKS } = await import(pathToFileURL(path.join(MART, 'looks.js')).href + '?v=20261112a');
+    assert.deepEqual(LOOKS.map(x => x.label), ['틀 그대로', '또렷하게', '잔잔하게', '큼직하게', '책처럼', '가볍게']);
+    for (const x of LOOKS) if (x.look) assert.ok(lk.cleanLook(x.look), x.id + ' 다듬어도 남아요');
+    const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
+    for (const w of ['data-view="simple"', '더 조절하기', 'data-simple-style', 'data-simple-motion', 'data-simple-size', '세밀에서 바꾼 것', "['motion', '움직임']"]) assert.ok(ui.includes(w), w);
+});
+await test('설정 꼴 blGeulkku 2(geulkku-set.js) · 테마로 담기 꾸러미: 아무것도 안 고치면 { blGeulkku: 2 } · 지금 값 → 설정 → 다시 읽기 = 같은 값 · 꾸러미는 bl-mart 1 + geulkku-simple', async () => {
+    const gs = await import(pathToFileURL(path.join(MART, 'geulkku-set.js')).href + '?v=20261112a');
+    assert.deepEqual(gs.makeSet({ tone: { on: false, mode: 'dark', cover: true } }), { blGeulkku: 2, from: 'mart', style: { mode: 'dark' } });
+    const tone = { on: true, k: '#3AA7FF', name: '가브리엘', k2: '#7fe03c', name2: '우리엘', k3: '#ff5fa2', name3: '아스모데우스', mode: 'light', cover: false };
+    const look = { type: { size: 18, sizeStep: 2 }, lemon: { off: true }, dialogue: { style: 'full' } };
+    const tune = { vals: { 호감도: 70 }, texts: { 0: '새 제목' }, inks: { light: { title: '#123456' } }, own: false, hideNames: true, lines: 1 };
+    const set = gs.makeSet({ tone, look, motion: { text: 's', prop: 'm' }, tune, frame: 'simple-k1079', label: '시험' });
+    assert.equal(set.frame, 'k1079'); assert.deepEqual(set.style.show, { lemon: false }); assert.deepEqual(set.frames.k1079.prop, { tone: 'cast' });
+    const back = gs.readSet(JSON.stringify(set));
+    assert.deepEqual(back.tone, { mode: 'light', cover: false, on: true, k: '#3aa7ff', name: '가브리엘', k2: '#7fe03c', name2: '우리엘', k3: '#ff5fa2', name3: '아스모데우스' });
+    assert.deepEqual(back.look, lk.cleanLook(look)); assert.deepEqual(back.motion, { text: 's', prop: 'm' });
+    assert.deepEqual(back.tune, tu.cleanTune(tune)); assert.equal(back.name, '시험');
+    assert.equal(gs.readSet('{"x":1}'), null); assert.equal(gs.readSet({ blGeulkku: 1 }), null);
+    const ms = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8');
+    const packSrc = ms.match(/export function themePack\(item, set\) \{[\s\S]*?\n\}/)[0].replace('export ', '');
+    const themePack = (0, eval)(`(${packSrc})`);
+    const pack = themePack({ id: 'simple-k1079', name: '호감도 게이지', emoji: '💗', preview: '<div class="gk">x</div>' }, set);
+    assert.deepEqual(Object.keys(pack), ['bl-mart', 'items']); assert.equal(pack['bl-mart'], 1);
+    assert.deepEqual(Object.keys(pack.items[0]), ['kind', 'v', 'id', 'key', 'name', 'emoji', 'html', 'set']);
+    assert.equal(pack.items[0].kind, 'geulkku-simple'); assert.equal(pack.items[0].key, 'k1079');
 });
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

@@ -27,6 +27,8 @@ export const LOOK_FIELDS = Object.freeze([
     { tab: 'text', path: 'type.weight', label: '굵기', kind: 'range', min: 300, max: 600, step: 1, def: 400 },
     { tab: 'text', path: 'type.letterSpacing', label: '자간', kind: 'range', min: -5, max: 8, step: 1, def: -1, scale: 100, unit: 'em' },
     { tab: 'text', path: 'type.lineHeight', label: '줄 간격', kind: 'range', min: 1.4, max: 2.2, step: 0.01, def: 1.8 },
+    // 11-12 간편 「글 크기」(설계 5절 sizeStep) — 틀 값에 더하기: 본문 · 대사 +n · 이름 +n/2(올림) · 크기 칸(px)을 고정해 두었으면 그쪽이 이겨요 · 세밀 칸으로는 안 보여요(tab simple)
+    { tab: 'simple', path: 'type.sizeStep', label: '글 크기', kind: 'pick', options: [[-1, '작게'], [2, '크게']] },
     { tab: 'dialogue', path: 'fonts.dialogue', label: '대사 글꼴', kind: 'font' },   // 11-11 G8 — 기기 글꼴만(깡통은 웹폰트를 막아요)
     { tab: 'dialogue', path: 'dialogue.style', label: '표시', kind: 'pick', options: [['marker', '형광펜'], ['full', '전체 칠'], ['bold', '굵게'], ['plain', '없음']] },
     { tab: 'dialogue', path: 'dialogue.markerShape', label: '형광펜 모양', kind: 'pick', options: [['stroke', '펜 자국'], ['rectangle', '직사각형'], ['pill', '알약']], when: 'marker' },
@@ -177,8 +179,13 @@ export function lookRules(html, value) {
     const SEL = { text: `${K} p:not(.gk-nm)`, dialogue: `${K} .gk-d`, title: `${K} .gk-tt`, name: `${K} p.gk-nm` };
     const t = L.type || {}, d = L.dialogue || {};
     const body = [];
+    // 11-12 sizeStep: 틀 <style> 에서 그 자리 글 크기(px)를 읽어 더해요(못 읽으면 본문 16 · 이름 13)
+    const step = t.sizeStep || 0, css0 = step ? text.slice(0, text.indexOf('</style>')) : '';
+    const sizeIn = (re, fb) => { if (!step) return null; for (const m of css0.matchAll(/([^{}\n]+)\{([^{}]*)\}/g)) { if (!re.test(m[1])) continue; const v = m[2].match(/(?:^|;)\s*font-size:\s*(\d+(?:\.\d+)?)px/) || m[2].match(/(?:^|;)\s*font:[^;]*?(\d+(?:\.\d+)?)px/); if (v) return Number(v[1]); } return fb; };
+    const stepped = (fixed, re, fb, add = step) => (fixed != null ? fixed : step ? Math.round(sizeIn(re, fb) + add) : null);
+    const bodySize = stepped(t.size, /(?:p\.gk-nr|\.gk-nr|\.gk-lg p)\s*$/, 16), dlSize = stepped(t.dialogueSize, /\.gk-d\s*$|\.gk-dl\s*$/, bodySize ?? 16), nmSize = stepped(L.profile?.nameSize, /\.gk-nm\s*$/, 13, Math.ceil(step / 2));
     if (L.fonts?.text) body.push(`font-family:${stackOf(L.fonts.text).family}`);
-    if (t.size != null) body.push(`font-size:${t.size}px`);
+    if (bodySize != null) body.push(`font-size:${bodySize}px`);
     if (t.weight != null) body.push(`font-weight:${t.weight}`);
     if (t.letterSpacing != null) body.push(`letter-spacing:${t.letterSpacing / 100}em`);
     if (t.lineHeight != null) body.push(`line-height:${t.lineHeight}`);
@@ -189,7 +196,7 @@ export function lookRules(html, value) {
     if (t.para != null) out.push(`${K} .gk-lg>p:last-child{margin-bottom:0}`);
     const dl = [];
     if (L.fonts?.dialogue) dl.push(`font-family:${stackOf(L.fonts.dialogue).family}`);
-    if (t.dialogueSize != null) dl.push(`font-size:${t.dialogueSize}px`);
+    if (dlSize != null) dl.push(`font-size:${dlSize}px`);
     if (d.weight != null) dl.push(`font-weight:${d.weight}`); else if (d.style === 'bold') dl.push('font-weight:650');
     if (d.letterSpacing != null) dl.push(`letter-spacing:${d.letterSpacing / 100}em`);
     if (dl.length) out.push(`${SEL.dialogue}{${dl.join(';')}}`);
@@ -227,7 +234,7 @@ export function lookRules(html, value) {
     if (skr.length) out.push(`${K} s{${skr.join(';')}}`);
     const pf = L.profile || {}, nm = [];
     if (L.fonts?.name) nm.push(`font-family:${stackOf(L.fonts.name).family}`);
-    if (pf.nameSize != null) nm.push(`font-size:${pf.nameSize}px`);
+    if (nmSize != null) nm.push(`font-size:${nmSize}px`);
     if (pf.nameWeight != null) nm.push(`font-weight:${pf.nameWeight}`);
     if (pf.nameSpacing != null) nm.push(`letter-spacing:${pf.nameSpacing / 100}em`);
     if (nm.length) out.push(`${SEL.name}{${nm.join(';')}}`);

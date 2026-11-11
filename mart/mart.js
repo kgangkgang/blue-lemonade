@@ -21,6 +21,10 @@ import { simpleReady } from './simple-frames.js?v=20261112a';   // 11-11 심플 
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
 import { mountCast } from './cast.js?v=20261112a';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
 import { frameMarkdown } from './mine-text.js?v=20261112a';   // 11-11 글만 복사(마크다운)
+import { makeSet } from './geulkku-set.js?v=20261112a';   // 11-12 설정 꼴 blGeulkku 2
+import { lookNow } from './look.js?v=20261112a';
+import { motionNow } from './motion-state.js?v=20261112a';
+import { tuneOf } from './tune.js?v=20261112a';
 import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit } from './tune-ui.js?v=20261112a';
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
 import { sanitizeHtml, guessSlot, fromPath, slotPath } from './lib/log-copy/log-copy-sanitize.js';
@@ -424,6 +428,27 @@ async function downloadHtml(state) {
         noteRecent(state.item.id); say('.html 파일로 받았어요', 2400);
     } catch { say(LOAD_FAIL, 3200); }
 }
+/**
+ * 11-12 「테마로 담기」 — 심플 틀을 테마가 받는 꾸러미로(액자 마트 { "bl-mart": 1, items } 꼴 + 새 종류 geulkku-simple · 문서 지시-1111/글꾸-조절-설계/테마로-담기-꼴.md)
+ *   html = 틀 원래 판(조각의 preview — 색 · 조절 전) · set = 지금 조절 값(blGeulkku 2 · 이 틀 값까지). 테마가 제 인물표 색 · 로그로 다시 그려요.
+ */
+export function themePack(item, set) {
+    const key = (String(item.id).match(/((?:k|q)\d+)$/) || [])[1] || '';
+    return { 'bl-mart': 1, items: [{ kind: 'geulkku-simple', v: 1, id: item.id, key, name: item.name || item.label || '글꾸', ...(item.emoji ? { emoji: item.emoji } : {}), ...(item.own ? { own: true } : {}), html: item.preview || '', set }] };
+}
+async function themeTake(state, file) {
+    try {
+        await ensureItem(state.item);
+        const item = state.item, set = makeSet({ tone: toneState, look: lookNow(), motion: motionNow(), tune: tuneOf(item.id), frame: item.id });
+        const text = JSON.stringify(themePack(item, set));
+        if (file) {
+            const blob = new Blob([text], { type: 'application/json' }), name = String(item.name || '글꾸').replace(/[\\/:*?"<>|]+/g, ' ').trim();
+            const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `글꾸-${name}.bl-mart.json`, hidden: true });
+            document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+            say('테마용 파일을 받았어요 · 블루레몬 1.1.4 부터 「마트에서 가져오기」로 받아요', 3200);
+        } else { await navigator.clipboard.writeText(text); say('테마용 글을 복사했어요 · 블루레몬 1.1.4 부터 「마트에서 가져오기」에 붙여 넣어요', 3200); }
+    } catch { say('담기가 막혔어요 · 잠시 뒤 다시 눌러 주세요', 3000); }
+}
 /** 글만 복사(마크다운) — 틀 없이 글만 올릴 때(테마 「글만」) */
 async function copyText(state) {
     try {
@@ -585,6 +610,7 @@ function doAct(state, act, b) {
     else if (act === 'html') copyHtml(state);
     else if (act === 'download') downloadHtml(state);
     else if (act === 'text') copyText(state);
+    else if (act === 'theme-copy' || act === 'theme-file') themeTake(state, act === 'theme-file');
     else if (act === 'taste') openTaste(state);
     else if (act === 'random') pickRandom();
     else if (act === 'own-del') ownDelete(state, b);

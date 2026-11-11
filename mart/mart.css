@@ -666,3 +666,27 @@ html.mart-cart-on{overflow:hidden}
 .mart-sheet-site>.mart-look-label{width:auto;white-space:nowrap}
 /* 11-12 「내려받기(.html)」 칩의 ⬇ — 글자 대신 마스크 그림(잉크 가운데가 글자 기준선에 안 흔들려요) */
 .mart-dl-chip::before{content:"";flex:none;width:14px;height:14px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4v11M7 10l5 5 5-5M5 20h14'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4v11M7 10l5 5 5-5M5 20h14'/%3E%3C/svg%3E") center/contain no-repeat}
+/* 11-12 「간편 | 세밀」(설계 4-2 · 목업-마트-간편) — 두 칸 토글 · 간편 줄(스타일 카드 · 색 · 밤낮 · 움직임 · 글 크기) · 세밀에서 바꾼 것 · 더 조절하기 — 칩 · 단추는 마트 부품 그대로(새 변형 없이) */
+.mart-view{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}
+.mart-view>.chip{width:100%}
+.mart-view-n{margin-left:4px;font-weight:650;color:inherit}
+.mart-simple{display:flex;flex-direction:column;gap:16px;min-width:0;text-align:left}
+.mart-simple-row{display:flex;flex-direction:column;gap:8px;min-width:0}
+.mart-simple-h{margin:0;color:var(--ink);font-size:var(--ts-ctl);font-weight:650}
+.mart-simple-h small{margin-left:4px;color:var(--muted);font-size:var(--ts-meta);font-weight:400}
+.mart-simple-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px;min-width:0}
+.mart-simple-seg>.chip{width:100%;min-width:0;padding:0 4px}
+.mart-simple-seg>.chip:disabled{opacity:.45}
+.mart-style-cards{display:flex;gap:8px;flex-wrap:nowrap;min-width:0}
+.mart-style-card{flex:none;display:flex;flex-direction:column;align-items:center;gap:8px;width:96px;margin:0;padding:8px;border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface);color:var(--ink);font:inherit;font-size:var(--ts-meta);cursor:pointer}
+.mart-style-card[aria-pressed=true]{background:var(--pick-face);color:var(--pick-ink);font-weight:650}
+.mart-style-pic{display:block;box-sizing:border-box;width:100%;height:28px;border:1px solid var(--line);border-radius:6px;background:var(--tint)}
+.mart-style-card.is-own .mart-style-pic{border-style:dashed}
+.mart-style-card span{max-width:100%;overflow:clip;text-overflow:ellipsis;white-space:nowrap}
+.mart-simple-cast{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:0}
+.mart-simple-cast>*{flex:none}
+.mart-simple-cover{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.mart-simple-cover>.mart-seg{flex:none}
+.mart-simple-diff{display:flex;flex-direction:column;gap:8px;min-width:0}
+.mart-simple-diff>p{margin:0;color:var(--text);font-size:var(--ts-meta);overflow-wrap:anywhere}
+.mart-simple-more{width:100%}
