@@ -591,3 +591,12 @@ html.mart-cart-on{overflow:hidden}
 .mart-head-field{flex:1 1 160px;min-width:0}
 .mart-head-field .field{width:100%}
 @media (max-width:639px){.mart-head-field .field{font-size:16px}}
+/* 11-11 「도구」 묶음 — 단어 바꾸기 목록(무테 · 옅은 바탕) · 더하기 칸 */
+.mart-words-rules{display:flex;flex-direction:column;gap:4px;margin:0;padding:0;list-style:none}
+.mart-words-rules li{display:flex;align-items:center;gap:8px;min-width:0;min-height:var(--ctl);padding:0 4px 0 12px;border-radius:var(--r-ctl);background:var(--tint);font-size:var(--ts-ctl);color:var(--ink)}
+.mart-words-rules li span:not([aria-hidden]){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mart-words-rules li [aria-hidden]{color:var(--muted)}
+.mart-words-rules li .mart-cast-x{margin-left:auto}
+.mart-words-form{flex-wrap:nowrap}
+.mart-words-form .field-wrap{flex:1 1 0}
+@media (max-width:639px){.mart-words-form .field{font-size:16px}.mart-words-rules li{min-height:44px}}

@@ -3,11 +3,12 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone } from './tone-state.js?v=20261111o';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111o';
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111o';
-import { mineOn, applyMine } from './mine-text.js?v=20261111o';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111o';
+import { toneState, setTone } from './tone-state.js?v=20261111p';
+import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111p';
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111p';
+import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111p';
+import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111p';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111p';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -85,8 +86,24 @@ function headBody(item) {
     const chip = (path, label, on) => `<div class="mart-look-row is-wrap"><span class="mart-look-label">${label}</span><span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="${label}"><button type="button" class="chip" data-head-show="${path}" data-v="1" aria-pressed="${!on}">보임</button><button type="button" class="chip" data-head-show="${path}" data-v="0" aria-pressed="${on}">숨김</button></span></div>`;
     return `<div class="mart-look">${inp('title', '제목', slots.title)}${inp('hl', '숨은 한 줄', slots.hl)}${titleInPress(item.preview) ? '' : chip('hideTitle', '보일 것 · 제목', !!t.hideTitle)}${chip('hideNames', '보일 것 · 이름 줄', !!t.hideNames)}<p class="mart-tune-hint">${titleInPress(item.preview) ? '이 틀은 제목 줄을 눌러 소품을 열어서 제목은 끌 수 없어요 · ' : ''}여기서 고친 글은 「글 고치기」와 같은 자리예요</p></div>`;
 }
+/** 「도구」 묶음(테마 drawTools 꼴) — 이름 숨김(가릴 이름 · 더하기 · 가림 꼴) · 단어 바꾸기(찾을 말 → 바꿀 말) · 모든 틀에 같이 */
+function toolsBody() {
+    const w = wordsNow(), auto = mineOn() ? mineInfo()?.names || [] : ['깡통', '깡캐'], all = [...new Set([...auto, ...w.names])];
+    const seg = (label, inner) => `<div class="mart-look-row is-wrap"><span class="mart-look-label">${label}</span><span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="${label}">${inner}</span></div>`;
+    const nameChips = all.map(n => `<span class="mart-tune-chip"><button type="button" class="chip" data-words-name="${esc(n)}" aria-pressed="${!w.off.includes(n)}">${esc(n)}</button>${w.names.includes(n) && !auto.includes(n) ? `<button type="button" class="mart-cast-x" data-words-forget="${esc(n)}" aria-label="${esc(n)} 빼기" title="빼기">×</button>` : ''}</span>`).join('');
+    const rules = w.rules.map((r, i) => `<li><span>${esc(r.from)}</span><span aria-hidden="true">→</span><span>${esc(r.to) || '(지움)'}</span><button type="button" class="mart-cast-x" data-words-rule-x="${i}" aria-label="${esc(r.from)} 바꾸기 빼기" title="빼기">×</button></li>`).join('');
+    return `<div class="mart-look">${seg('이름 숨김', `<button type="button" class="chip" data-words-hide="0" aria-pressed="${!w.hide}">끔</button><button type="button" class="chip" data-words-hide="1" aria-pressed="${w.hide}">켬</button>`)}
+        ${w.hide ? `${seg('가릴 이름', nameChips || '<span class="mart-tune-hint">이름이 없어요</span>')}
+        <form class="mart-tune-form mart-words-form" data-form="words-name"><label class="field-wrap"><input type="text" class="field" name="name" maxlength="24" placeholder="가릴 이름 더하기" aria-label="가릴 이름"></label><button type="submit" class="btn">더하기</button></form>
+        ${seg('가림 꼴', MASKS.map(([id, l]) => `<button type="button" class="chip" data-words-mask="${id}" aria-pressed="${w.mask === id}">${l}</button>`).join(''))}
+        ${w.mask === 'word' ? `<div class="mart-look-row is-wrap"><span class="mart-look-label">가림 글자</span><label class="field-wrap mart-head-field"><input type="text" class="field" data-words-word maxlength="8" value="${esc(w.word)}" aria-label="가림 글자"></label></div>` : ''}` : ''}
+        <div class="mart-look-row is-wrap"><span class="mart-look-label">단어 바꾸기</span><span class="mart-tune-hint">찾을 말 → 바꿀 말 · 조사는 받침에 맞춰요 · 모든 틀에</span></div>
+        ${rules ? `<ul class="mart-words-rules">${rules}</ul>` : ''}
+        <form class="mart-tune-form mart-words-form" data-form="words-rule"><label class="field-wrap"><input type="text" class="field" name="from" maxlength="40" placeholder="찾을 말" aria-label="찾을 말"></label><label class="field-wrap"><input type="text" class="field" name="to" maxlength="40" placeholder="바꿀 말" aria-label="바꿀 말"></label><button type="submit" class="btn">더하기</button></form></div>`;
+}
 function tabBody(item) {
     if (tab === 'head') return headBody(item);
+    if (tab === 'tools') return toolsBody();
     if (tab === 'color') {
         const chips = chipsOf(item).map(c => `<span class="mart-tune-chip"><label class="mart-ink" title="${esc(c.title)}"><input type="color" data-tune="${c.key}" value="${NEUTRAL}" aria-label="${esc(c.label)} 색"><span class="mart-ink-dot" aria-hidden="true"></span>${esc(c.label)}</label>${undoBtn('data-tune-reset', c.key, c.label)}</span>`).join('');
         return `<div class="mart-inks mart-tune-colors mart-hscroll" role="group" aria-label="색 — 눌러서 바꿔요">${chips}</div>
@@ -108,7 +125,7 @@ function tabBody(item) {
 /** 조절 칸(미리보기 위) — 묶음 칩 + 펼친 묶음의 칸 + 글 고치기 · 전부 처음으로 */
 export function tuneHtml(item) {
     if (!item?.simple || !item.preview) return '';
-    return `<section class="mart-tune" aria-label="조절"><div class="mart-tune-tabs mart-seg mart-hscroll" role="group" aria-label="조절 묶음">${[LOOK_TABS[0], ['head', '머리'], ...LOOK_TABS.slice(1)].map(([id, l]) => `<button type="button" class="chip" data-tune-tab="${id}" aria-pressed="${id === tab}">${esc(l)}</button>`).join('')}</div>
+    return `<section class="mart-tune" aria-label="조절"><div class="mart-tune-tabs mart-seg mart-hscroll" role="group" aria-label="조절 묶음">${[LOOK_TABS[0], ['head', '머리'], ...LOOK_TABS.slice(1), ['tools', '도구']].map(([id, l]) => `<button type="button" class="chip" data-tune-tab="${id}" aria-pressed="${id === tab}">${esc(l)}</button>`).join('')}</div>
         <div class="mart-tune-body">${tabBody(item)}</div>
         <div class="mart-tune-line"><button type="button" class="chip mart-tune-edit" data-tune-edit aria-pressed="false">글 고치기</button><button type="button" class="chip" data-hist="undo" title="되돌리기(Ctrl+Z)" disabled>되돌리기</button><button type="button" class="chip" data-hist="redo" title="다시하기(Ctrl+Y)" disabled>다시하기</button><button type="button" class="chip mart-tune-all" data-tune-reset="all" hidden>전부 처음으로</button></div>
         <p class="mart-tune-hint" data-edit-hint hidden>미리보기의 글자를 눌러 바로 고쳐 써요 · 고치는 동안은 소품이 안 눌려요</p></section>`;
@@ -141,7 +158,7 @@ export function mineBoxHtml(item) {
 //   한 칸 = 이 틀의 조절 값(색 · 고쳐 쓴 글 · 대사 줄) + 글 모양 + 깡통 · 깡캐 · 밤낮. 크게 보기를 다른 틀로 열면 새로 시작해요
 const HIST_MAX = 50;
 const hist = { id: null, stack: [], at: -1, timer: 0, restoring: false };
-const snapOf = item => JSON.stringify({ tune: tuneOf(item.id), look: lookNow(), tone: { on: toneState.on, k: toneState.k, name: toneState.name, k2: toneState.k2, name2: toneState.name2, mode: toneState.mode } });
+const snapOf = item => JSON.stringify({ tune: tuneOf(item.id), look: lookNow(), words: wordsNow(), tone: { on: toneState.on, k: toneState.k, name: toneState.name, k2: toneState.k2, name2: toneState.name2, mode: toneState.mode } });
 function histPush(item) {
     clearTimeout(hist.timer); hist.timer = 0;
     const s = snapOf(item);
@@ -173,6 +190,7 @@ function histMove(item, step) {
     try {
         setTune(item.id, s.tune);
         setLook(s.look);
+        if (s.words) setWords(s.words);
         setTone(s.tone.on ? { on: true, k: s.tone.k, name: s.tone.name, k2: s.tone.k2, name2: s.tone.name2, mode: s.tone.mode } : { on: false, k2: s.tone.k2, name2: s.tone.name2, mode: s.tone.mode });
     } finally { hist.restoring = false; }
     hist.at = to;
@@ -234,7 +252,7 @@ export function armEdit(previewRoot, item) {
     if (!previewRoot || !item?.simple) return;
     const root = previewRoot.querySelector('.gk'); if (!root) return;
     let i = 0, inside = null;
-    const rich = el => [...el.querySelectorAll('*')].every(c => RICH_TAGS.includes(c.tagName.toLowerCase()) && !c.attributes.length);   // 안에 꾸밈 태그만(tune.js LEAF 와 같은 뜻)
+    const rich = el => [...el.querySelectorAll('*')].every(c => (RICH_TAGS.includes(c.tagName.toLowerCase()) && !c.attributes.length) || c.hasAttribute('data-bl-mask'));   // 안에 꾸밈 태그만(tune.js LEAF 와 같은 뜻)
     const walk = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
     for (let el = walk.nextNode(); el; el = walk.nextNode()) {
         if (inside?.contains(el)) { el.removeAttribute('contenteditable'); delete el.dataset.blEd; continue; }   // 한 칸 안의 꾸밈은 따로 칸이 아니에요
@@ -288,6 +306,7 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
             clearTimeout(timer); timer = setTimeout(() => applyColor(item, t.dataset.tune, t.value), 150);
             return;
         }
+        if (t.matches?.('input[data-words-word]')) { clearTimeout(lookTimer); lookTimer = setTimeout(() => setWords({ word: t.value }), 250); return; }
         if (t.matches?.('input[data-head]')) {   // 머리 칸 글칸: 글 고치기와 같은 자리(tune.texts · 내 글이면 mineTexts) · 원래 글과 같으면 지워요
             const slots = headSlots(item), s = slots[t.dataset.head]; if (!s) return;
             clearTimeout(lookTimer); lookTimer = setTimeout(() => {
@@ -369,6 +388,11 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if ((b = q('[data-hist]'))) { undo(b.dataset.hist === 'redo' ? 1 : -1); return; }
         if ((b = q('[data-tune-tab]'))) { tab = b.dataset.tuneTab; redraw(item); return; }
         if ((b = q('[data-tune-mode]'))) { setTone({ mode: b.dataset.tuneMode }); return; }
+        if ((b = q('[data-words-hide]'))) { setWords({ hide: b.dataset.wordsHide === '1' }); redraw(item); return; }
+        if ((b = q('[data-words-name]'))) { const n = b.dataset.wordsName, off = wordsNow().off; setWords({ off: off.includes(n) ? off.filter(x => x !== n) : [...off, n] }); redraw(item); return; }
+        if ((b = q('[data-words-forget]'))) { const n = b.dataset.wordsForget, w = wordsNow(); setWords({ names: w.names.filter(x => x !== n), off: w.off.filter(x => x !== n) }); redraw(item); return; }
+        if ((b = q('[data-words-mask]'))) { setWords({ mask: b.dataset.wordsMask }); redraw(item); return; }
+        if ((b = q('[data-words-rule-x]'))) { const i = Number(b.dataset.wordsRuleX); setWords({ rules: wordsNow().rules.filter((_, k) => k !== i) }); redraw(item); return; }
         if ((b = q('[data-head-show]'))) { const t = clone(tuneOf(item.id)); if (b.dataset.v === '0') t[b.dataset.headShow] = true; else delete t[b.dataset.headShow]; setTune(item.id, t); redraw(item); return; }
         if ((b = q('[data-tune-lines]'))) { const t = clone(tuneOf(item.id)), n = Number(b.dataset.tuneLines); if (n) t.lines = n; else delete t.lines; setTune(item.id, t); redraw(item); return; }
         if ((b = q('[data-tune-own]'))) { const t = clone(tuneOf(item.id)); if (b.dataset.tuneOwn === '0') t.own = false; else delete t.own; setTune(item.id, t); return; }
@@ -426,6 +450,8 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         const f = e.target.closest?.('.mart-tune-form'); if (!f) return;
         e.preventDefault();
         const item = current()?.item; if (!item) return;
+        if (f.dataset.form === 'words-name') { const n = f.name.value.trim(), w = wordsNow(); if (!n) return; if (w.names.length >= MAX_NAMES) { say(`가릴 이름은 ${MAX_NAMES}개까지예요`, 2400); return; } setWords({ names: [...w.names, n], off: w.off.filter(x => x !== n) }); redraw(item); sheet.querySelector('[data-form="words-name"] [name=name]')?.focus(); return; }
+        if (f.dataset.form === 'words-rule') { const from = f.from.value.trim(), to = f.to.value.trim(), w = wordsNow(); if (!from) return; if (w.rules.length >= MAX_RULES) { say(`바꿀 말은 ${MAX_RULES}개까지예요`, 2400); return; } setWords({ rules: [...w.rules.filter(r => r.from !== from), { from, to }] }); redraw(item); sheet.querySelector('[data-form="words-rule"] [name=from]')?.focus(); return; }
         if (f.dataset.form === 'preset') {
             if (f.dataset.rename) {
                 const ok = renamePreset(f.dataset.rename, f.name.value);

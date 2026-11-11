@@ -904,7 +904,7 @@ await test('틀 넘침 손봄: k14 쥘부채 · q10 RPG 스탯에만 · 기본 �
 await test('되돌리기 · 다시하기(테마 hist 꼴): 단추 둘 · 스냅샷 50 · 0.5초 묶음 · Ctrl+Z / Ctrl+Y · Ctrl+Shift+Z · 입력칸 안에서는 그 칸 것 · 되돌리는 동안은 기록 안 함 · 다른 틀은 새로', () => {
     const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
     for (const s of ['data-hist="undo"', 'data-hist="redo"', 'const HIST_MAX = 50;', 'setTimeout(() => { histPush(item); syncHist(sheet); }, 500)', "if (e.target.closest?.('input, textarea, select')) return;", "undo(k === 'y' || e.shiftKey ? 1 : -1)", 'if (hist.restoring || hist.id !== item.id) return;', 'if (item && hist.id !== item.id) histStart(item);']) assert.ok(ui.includes(s), s);
-    assert.ok(/const snapOf = item => JSON\.stringify\(\{ tune: tuneOf\(item\.id\), look: lookNow\(\), tone: \{/.test(ui), '한 칸 = 조절 값 + 글 모양 + 깡통 · 깡캐 · 밤낮');
+    assert.ok(/const snapOf = item => JSON\.stringify\(\{ tune: tuneOf\(item\.id\), look: lookNow\(\), words: wordsNow\(\), tone: \{/.test(ui), '한 칸 = 조절 값 + 글 모양 + 이름 숨김 · 단어 바꾸기 + 깡통 · 깡캐 · 밤낮');
 });
 
 await test('바로 고치기 넓히기: 고쳐 쓴 글에 줄바꿈 · 굵게 · 기울임 · 강조 · 속마음 · 취소만 남기고(속성 없이) 나머지는 글자 · 붙여 넣은 줄 · 문단은 줄바꿈 · 안 닫힌 꾸밈은 닫아요 · 28틀에 넣어도 태그 짝 · 복사 글 정적 검사 · 다시 고쳐 쓸 때도 그 칸', () => {
@@ -939,6 +939,34 @@ await test('머리 칸 · 보일 것: 제목이 누름 칸 안인 틀(01 · 02 �
         assert.equal(tu.editables(p).filter(e => e.cls === 'gk-hl').length, row.id === 'simple-k5' ? 1 : 0, `${row.id} 숨은 한 줄 칸`);
     }
     assert.deepEqual(tu.cleanTune({ hideTitle: true, hideNames: false, x: 1 }), { hideTitle: true });
+});
+
+await test('도구 — 이름 숨김 · 단어 바꾸기(테마 transformLog 사본): 글자만 바꾸고 <style> · 주석 · 태그 그대로 · 화자 이름표는 통째로 가림 · ○○ · ▒▒ · 테이프 칸(fill 짝) · 직접 글자 · 조사 맞춤 · 끈 이름은 그대로 · 꺼져 있으면 한 글자도 안 달라요 · 28틀 정적 검사', async () => {
+    const wd = await imp(path.join(MART, 'words.js'));
+    for (const row of six.items) {
+        const p = sfx[row.id].preview, head = h => h.slice(0, h.indexOf('</style>'));
+        assert.equal(wd.applyWords(p, { auto: ['깡통'], words: {} }), p);
+        assert.equal(wd.applyWords(p, { auto: ['깡통'], words: { hide: false, names: ['깡통'] } }), p);
+        for (const mask of ['auto', 'mosaic', 'tape', 'word']) {
+            const out = wd.applyWords(p, { auto: ['깡통', '깡캐'], words: { hide: true, off: ['깡캐'], mask, word: '★', rules: [{ from: '옥상', to: '지붕' }] } });
+            const body = out.slice(out.indexOf('</style>')), tag = `${row.id} ${mask}`;
+            assert.equal(head(out), head(p), `${tag} <style>`);
+            assert.doesNotMatch(body.replace(/<!--[\s\S]*?-->/g, ''), /깡통/, `${tag} 깡통이 남음`);
+            assert.ok(body.includes('깡캐'), `${tag} 끈 이름은 그대로`);
+            assert.doesNotMatch(body.replace(/<!--[\s\S]*?-->/g, ''), /옥상/, `${tag} 옥상이 남음`);
+            const nameLine = body.match(/<p class="gk-nm gk-n[A-Z]">((?:(?!<\/p>)[\s\S])*)<\/p>/g).find(x => !x.includes('깡캐'));
+            if (mask === 'auto') assert.ok(nameLine.includes('>○○<'), tag);
+            if (mask === 'mosaic') assert.ok(nameLine.includes('>▒▒<'), tag);
+            if (mask === 'word') assert.ok(nameLine.includes('>★<'), tag);
+            if (mask === 'tape') assert.match(nameLine, /<span data-bl-mask="" style="background-color:#[0-9a-f]{6};color:#[0-9a-f]{6};-webkit-text-fill-color:#[0-9a-f]{6};border-radius:2px">　+<\/span>/, tag);
+            for (const t of ['div', 'p', 'span']) { const bal = h => (h.match(new RegExp(`<${t}\\b`, 'g')) || []).length - (h.match(new RegExp(`</${t}>`, 'g')) || []).length; assert.equal(bal(out), bal(p), `${tag} ${t}`); }
+            assert.ok(tg.readyReport(sf.simpleReady(shutPeek(out))).ok, `${tag} 정적 검사`);
+        }
+    }
+    const p = sfx['simple-k1'].preview;
+    assert.ok(wd.applyWords(p, { words: { rules: [{ from: '깡통', to: '하린' }] } }).includes('하린은 난간에'), '조사 그대로(받침 있음)');
+    assert.ok(wd.applyWords(p, { words: { rules: [{ from: '깡통', to: '도유' }] } }).includes('도유는 난간에'), '조사 맞춤(받침 없음)');
+    assert.deepEqual(wd.cleanWords({ names: [' a ', 'a', ''], rules: [{ from: '', to: 'x' }, { from: 'b', to: '' }], mask: 'nope', word: '' }), { hide: false, names: ['a'], off: [], mask: 'auto', word: '○○', rules: [{ from: 'b', to: '' }] });
 });
 
 console.log(`\n${pass} 통과 · ${fail} 실패`);
