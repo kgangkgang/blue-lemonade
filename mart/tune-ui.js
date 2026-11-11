@@ -305,7 +305,7 @@ export function tuneHtml(item) {
     if (!item?.simple || !item.preview) return '';
     if (view === 'simple') return `<section class="mart-tune is-simple" aria-label="조절"><div class="mart-simple">${simpleInner(item)}</div>
         ${EDITS_HTML}</section>`;
-    return `<section class="mart-tune is-detail" aria-label="조절">${detailHead(item)}<div class="mart-tune-body mart-groups">${detailBody(item)}</div>
+    return `<section class="mart-tune is-detail" aria-label="조절">${detailHead(item)}<div class="mart-tune-body mart-gr-list">${detailBody(item)}</div>
         ${EDITS_HTML}</section>`;
 }
 const dotOf = p => (p.tone.on && p.tone.k ? p.tone.k : NEUTRAL);

@@ -827,7 +827,7 @@ function openSheet(state) {
     sheet.querySelector('.mart-sheet-meta').innerHTML = `${tagsHtml(item)}${designsHtml(item)}<p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}${item.own && item.warn.length ? `<details class="mart-own-check"><summary>깡통에 올리면</summary>${ownWarnHtml(item.warn)}</details>` : ''}`;   // 11-10 디자인 넘기기 · 11-12 내 글꾸 점검
     sheet.querySelector('.mart-sheet-viewbox').innerHTML = item.simple ? viewSegHtml(item) + pvFoldHtml() : '';   // 11-12 간편 | 세밀 — 창 머리(설계 4-8)
     const body = sheet.querySelector('.mart-sheet-body');
-    body.innerHTML = `<div class="mart-sheet-tune">${tuneHtml(item)}</div><div class="mart-sheet-preview${site.mode !== 'mart' && (item.simple || item.own) ? ' is-site' : ''}">${item.preview ? sheetPreview(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div>${siteRowHtml(item)}<div class="mart-sheet-inks">${item.preview && !toned(item) ? inksHtml(item) : ''}</div><div class="mart-sheet-mine">${mineBoxHtml(item)}</div>`;
+    body.innerHTML = `<div class="mart-sheet-preview${site.mode !== 'mart' && (item.simple || item.own) ? ' is-site' : ''}">${item.preview ? sheetPreview(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div><div class="mart-sheet-side">${siteRowHtml(item)}<div class="mart-sheet-tune">${tuneHtml(item)}</div><div class="mart-sheet-inks">${item.preview && !toned(item) ? inksHtml(item) : ''}</div><div class="mart-sheet-mine">${mineBoxHtml(item)}</div></div>`;   // 11-12 미리보기 · 옆 칸(PC 두 칸 · 폰은 미리보기 위)
     paintTune();   // 11-08 글자색 칩 · 11-10 캐릭터 대사색으로 칠할 땐 칩 대신 그 색 하나
     if (!item.preview) {
         body.setAttribute('aria-busy', 'true');
