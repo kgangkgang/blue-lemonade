@@ -157,7 +157,7 @@ export function shapeRules(html, value = shape, paints = null, caps = null) {
         if (s.hideUl) out.push(`${K} .gk-ul{visibility:hidden}`);
         else if (P.underline) out.push(`${K}.gk .gk-ul{background-color:${P.underline}}`);
     }
-    if (s.hideProp && i.propOnly && ok('hideProp')) out.push(`${K} details.gk-kx,${K} details.gk-kx *{visibility:hidden!important;pointer-events:none}`);   // 자리는 그대로(글 배치 · 지문 위 공백이 안 바뀌어요) · 움직임이 visibility 를 바꿔도 숨김
+    if (s.hideProp && i.propOnly && ok('hideProp')) out.push(`${K} .gk-kx,${K} .gk-kx *{visibility:hidden!important;pointer-events:none}`);   // 자리는 그대로(글 배치 · 지문 위 공백이 안 바뀌어요) · 움직임이 visibility 를 바꿔도 숨김
     return out;
 }
 /** 다 칠한 틀 HTML 에 모양을 얹어요 — 값이 없으면 받은 그대로 */

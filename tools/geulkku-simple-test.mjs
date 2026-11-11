@@ -1266,7 +1266,7 @@ await test('간편(11-12 · 설계 4-2): 움직임 세기 사본(중 = 그대로
         const c = ms.motionCaps(p); if (c.text.s) ts++; if (c.prop.s) ps++;
         void key;
     }
-    assert.ok(ts > 150 && ps > 250, `글 ${ts} · 소품 ${ps}`);
+    assert.ok(ts > 140 && ps > 160, `글 ${ts} · 소품 ${ps}`);   // 11-12 깡통 118 뒤: 약이 중과 같아 보이는 틀(정본 화면 재기 FELT)은 칩을 흐리게 — 글 153 · 소품 183
     const p = sfx[six.items[0].id].preview;
     const big = lk.applyLook(p, { type: { sizeStep: 2 } });
     assert.match(big, /p:not\(\.gk-nm\)\{font-size:\d+px\}/);
@@ -1386,7 +1386,7 @@ await test('모양 · 색 더하기(N5 · N8 · N12 ~ N18 · N23 · shape.js): �
     const k = sf.toneSimple(allItems['simple-k1079'].preview, sf.ORIGINAL, { mode: 'light' });
     assert.match(sh.applyShape(k, { bandAlpha: 30 }), /\.gk-d[AB]\{background-color:rgba\(\d+,\d+,\d+,0\.3\)\}/, '알파만');
     assert.equal(sh.applyShape(k, MAX, null, { band: false, bg: false, border: false, radius: false, pad: false, width: false, nameTag: false, underline: false, hideProp: false }), k, '못 받는 칸은 건너뜀');
-    assert.match(sh.applyShape(k, { hideProp: true }), /details\.gk-kx \*\{visibility:hidden!important;pointer-events:none\}/);
+    assert.match(sh.applyShape(k, { hideProp: true }), / \.gk-kx \*\{visibility:hidden!important;pointer-events:none\}/);   // 열어 두기의 div 꼴에도 먹게 class 만
 });
 await test('움직임 빠르기 · 처음부터 열어 두기(N3 · N4 · 마트가 걺): 기본이면 그대로 · 느리게 = 뿌리 gk-gs-s + 길이 낱말만 ×1.3(3.5초 상한) · 빠르게 ×0.75 · 열어 두기 = details.gk-kx 에 open · <style> 하나 · 정적 검사', async () => {
     const ms = await import(pathToFileURL(path.join(MART, 'motion-state.js')).href + '?v=20261112a');
@@ -1399,12 +1399,22 @@ await test('움직임 빠르기 · 처음부터 열어 두기(N3 · N4 · 마트
         if (c.speed) {
             sp++; assert.match(s.match(/^<div[^>]*>/)[0], /gk-gs-s"/); assert.match(l.match(/^<div[^>]*>/)[0], /gk-gs-l"/);
             const was = new Set(styleOf(p).split('\n')), add = styleOf(s).split('\n').filter(l => l && !was.has(l));
-            assert.ok(add.length && add.every(x => /^[^{]*\.gk-gs-s[^{]*\{(?:(?:animation|transition)-(?:duration|delay):[-\d.,s]+;?)+\}$/.test(x)), id + ' 길이 낱말만');
+            const inl = s.slice(s.indexOf('</style>')) !== p.slice(p.indexOf('</style>'));   // 11-12 인라인 움직임(13틀)은 그 값 자리만 같은 배
+            if (inl) { const ti = h => [...h.matchAll(/style="[^"]*"/g)].map(m => m[0]).join('|'); assert.notEqual(ti(s), ti(p), id + ' 인라인'); assert.equal(s.slice(s.indexOf('</style>')).replace(/style="[^"]*"/g, ''), p.slice(p.indexOf('</style>')).replace(/style="[^"]*"/g, ''), id + ' 인라인 말고는 그대로'); }
+            assert.ok((add.length || inl) && add.every(x => /^[^{]*\.gk-gs-s[^{]*\{(?:(?:animation|transition)-(?:duration|delay):[-\d.,s]+;?)+\}$/.test(x)), id + ' 길이 낱말만');
             assert.equal((s.match(/<style>/g) || []).length, 1, id);
             if (sp % 80 === 1) assert.ok(tg.readyReport(sf.simpleReady(shutPeek(s))).ok, id + ' 정적 검사');
         } else assert.equal(s, p, id);
         const o = ms.applyMotion(p, { open: true });
-        if (c.open) { op++; assert.ok(!/<details class="gk-kx"(?![^>]*\sopen="")/.test(o), id + ' 다 열림'); assert.equal(o.replace(/ open=""/g, ''), p.replace(/ open=""/g, ''), id + ' open 만'); }
+        if (c.open) {   // 11-12 깡통 118 뒤: open 속성에 기대지 않는 꼴(div.gk-det · div.gk-sum · .gk-kx[open] → .gk-kx.gk-det)
+            const cnt = (h, re) => (h.match(re) || []).length, kx = cnt(p, /<details class="gk-kx"/g);
+            op++; assert.ok(!/<details class="gk-kx"/.test(o) && cnt(o, /<summary\b/g) === cnt(p, /<summary\b/g) - kx && cnt(o, /<figure class="gk-kx gk-det"/g) === kx, id + ' 누름 칸이 figure(다른 details · 정보 탭은 그대로)');
+            assert.match(o.match(/^<div[^>]*>/)[0], /gk-op"/); assert.ok(!/\.gk-kx\[open\]/.test(o.slice(0, o.indexOf('</style>'))), id + ' 열린 규칙');
+            assert.equal(o.replace(/\sopen(?:="[^"]*")?(?=[\s>])/g, ''), o.replace(/(<figure class="gk-kx gk-det"[^>]*)\sopen(?:="[^"]*")?(?=[\s>])/g, '$1').replace(/\sopen(?:="[^"]*")?(?=[\s>])/g, ''), id);
+            const tags = s => (o.match(new RegExp(`<${s}\\b`, 'g')) || []).length - (o.match(new RegExp(`</${s}>`, 'g')) || []).length;
+            assert.equal(tags('div'), 0, id + ' div 짝'); assert.equal(tags("details"), 0, id + " details 짝"); assert.equal(tags("figure"), 0, id + " figure 짝"); assert.equal(tags("figcaption"), 0, id + " figcaption 짝"); assert.equal(cnt(o, /<figcaption\b/g), kx, id + " figcaption 수");
+            if (op % 60 === 1) assert.ok(tg.readyReport(sf.simpleReady(shutPeek(o))).ok, id + ' 정적 검사');
+        }
         else assert.equal(o, p, id);
     }
     assert.ok(sp > 400 && op > 380, `빠르기 ${sp} · 열어 두기 ${op}`);
@@ -1486,6 +1496,20 @@ await test('움직임 세기 사본(⑧ · 정본 22:20 판): 브라우저에서
     const mo = await import(pathToFileURL(path.join(MART, 'lib/motion/motion.js')).href);
     assert.equal(Object.keys(mo.CAP).length, 17); assert.ok(Object.keys(mo.CAP).every(k => /^k\d+$/.test(k) && allItems['simple-' + k]), '마트 열쇠');
     for (const [id, it] of Object.entries(allItems)) assert.equal(mo.applyLevel(it.preview, { text: 'm', prop: 'm', key: id.slice(7) }), it.preview, id);
+});
+await test('깡통 118 뒤 고침: ① 빠르기가 인라인 움직임 · 계속 도는 반복까지 같은 배(반복은 3.5초 상한 없음) ② 열어 두기는 open 속성 없이(figure 꼴) ⑨ 약 · 강이 중과 같아 보이는 틀은 칩을 안 줘요(정본 화면 재기 FELT)', async () => {
+    const ms = await import(pathToFileURL(path.join(MART, 'motion-state.js')).href + '?v=20261112a');
+    const k1 = ms.applyMotion(allItems['simple-k1'].preview, { speed: 's' }), q = ms.applyMotion(allItems['simple-q01'].preview, { speed: 's' });
+    assert.match(k1, /style="animation:gk-dl 0\.455s ease-out 0\.26s both"/, 'k1 대사 줄 .35s → .455s · 늦춤 .2s → .26s');
+    assert.match(q, /style="animation:gk-q-wv1 11\.7s linear 0s infinite"/, 'q01 반복 9s → 11.7s(상한 없음)');
+    assert.match(ms.applyMotion(allItems['simple-q01'].preview, { speed: 'l' }), /gk-q-wv1 6\.75s linear 0s infinite/);
+    const c79 = ms.motionCaps(allItems['simple-k1079'].preview), c41 = ms.motionCaps(allItems['simple-k1441'].preview);
+    assert.deepEqual([c79.text.s, c79.text.l, c79.prop.s, c79.prop.l, c79.prop[0]], [true, true, false, false, true], 'k1079 글은 약 · 강 · 소품은 끔만');
+    assert.deepEqual([c41.text.s, c41.prop.s, c41.prop.l], [false, false, false], 'k1441 끔과 중만');
+    assert.equal(ms.applyMotion(allItems['simple-k1441'].preview, { text: 's', prop: 'l' }), allItems['simple-k1441'].preview, '느낄 수 없는 세기는 걸지 않아요');
+    const o = ms.applyMotion(allItems['simple-k1079'].preview, { open: true });
+    assert.ok(o.includes('<figure class="gk-kx gk-det"') && o.includes('<figcaption class="gk-pb"') && o.includes('\n.gk figure{margin:0}') && !/\[open\]/.test(o.slice(0, o.indexOf('</style>')).replace(/details\[open\]|details:not\(\[open\]\)/g, '')), 'figure 꼴 · .gk-kx[open] 없음');
+    assert.ok(fs.readFileSync(path.join(ROOT, 'tools/geulkku-open-check.mjs'), 'utf8').includes('open 속성을 다 지움'), '깡통 흉내 화면 재기 도구');
 });
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
