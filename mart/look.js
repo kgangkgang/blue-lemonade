@@ -38,6 +38,9 @@ export const LOOK_FIELDS = Object.freeze([
     { tab: 'dialogue', path: 'type.dialogueSize', label: '크기', kind: 'range', min: 12, max: 24, step: 1, def: 16, unit: 'px' },
     { tab: 'dialogue', path: 'dialogue.weight', label: '굵기', kind: 'range', min: 300, max: 800, step: 1, def: 400 },
     { tab: 'dialogue', path: 'dialogue.letterSpacing', label: '자간', kind: 'range', min: -10, max: 20, step: 1, def: 0, scale: 100, unit: 'em' },
+    // 11-12 N20 · N21 — 대사 줄(p.gk-dl)만 따로: 줄 간격 · 들여쓰기(본문 「문단」 칸과 따로)
+    { tab: 'dialogue', path: 'dialogue.lineHeight', label: '대사 줄 간격', kind: 'range', min: 1.4, max: 2.2, step: 0.01, def: 1.8 },
+    { tab: 'dialogue', path: 'dialogue.indent', label: '대사 들여쓰기', kind: 'pick', options: [[true, '켬'], [false, '끔']] },
     // 테마 「글자 › 속마음」(em) · 「취소선」(s) · 「강조」(strong) — 견본 글 한 줄 · 「내 글 넣기」의 *속마음* · ~~취소~~ · **강조** 에 걸려요
     { tab: 'em', path: 'em.italic', label: '기울여 쓰기', kind: 'pick', options: [[true, '켬'], [false, '끔']] },
     { tab: 'em', path: 'em.color', label: '글자 색', kind: 'color', def: '#6b4fa0' },
@@ -62,6 +65,12 @@ export const LOOK_FIELDS = Object.freeze([
     { tab: 'name', path: 'profile.nameSize', label: '크기', kind: 'range', min: 10, max: 24, step: 1, def: 13, unit: 'px' },
     { tab: 'name', path: 'profile.nameWeight', label: '굵기', kind: 'range', min: 100, max: 900, step: 50, def: 700 },
     { tab: 'name', path: 'profile.nameSpacing', label: '자간', kind: 'range', min: -10, max: 30, step: 1, def: 0, scale: 100, unit: 'em' },
+    // 11-12 N19 — 제목(.gk-tt) 글 모양 · 크기 상한은 능력표(caps.json title.max)가 틀마다 좁혀요
+    { tab: 'title', path: 'fonts.title', label: '제목 글꼴', kind: 'font' },
+    { tab: 'title', path: 'title.size', label: '크기', kind: 'range', min: 16, max: 28, step: 1, def: 20, unit: 'px', cap: 'title' },
+    { tab: 'title', path: 'title.weight', label: '굵기', kind: 'range', min: 400, max: 900, step: 50, def: 700 },
+    { tab: 'title', path: 'title.letterSpacing', label: '자간', kind: 'range', min: -5, max: 10, step: 1, def: -1, scale: 100, unit: 'em' },
+    { tab: 'title', path: 'title.align', label: '정렬', kind: 'pick', options: [['left', '왼쪽'], ['center', '가운데']] },
     { tab: 'shadow', path: 'shadow.on', label: '그림자', kind: 'toggle' },
     { tab: 'shadow', path: 'shadow.targets', label: '어디에', kind: 'targets', options: [['text', '본문'], ['dialogue', '대사'], ['title', '제목'], ['name', '이름']], when: 'shadow' },
     { tab: 'shadow', path: 'shadow.color', label: '색', kind: 'color', def: '#000000', when: 'shadow' },
@@ -77,7 +86,7 @@ export const LOOK_FIELDS = Object.freeze([
     { tab: 'head', path: 'lemon.off', label: '레몬 바로가기', kind: 'toggle' },
 ].map(Object.freeze));
 /** 묶음 칩 — 테마 「글자」 탭 순서(본문 → 대사 → … → 문단 → … → 그림자 · 외곽선)에서 가져온 것만 · 맨 앞 「색」은 마트 것 */
-export const LOOK_TABS = Object.freeze([['color', '색'], ['text', '본문'], ['dialogue', '대사'], ['em', '속마음'], ['strike', '취소선'], ['strong', '강조'], ['para', '문단'], ['name', '이름'], ['shadow', '그림자'], ['outline', '외곽선']]);
+export const LOOK_TABS = Object.freeze([['color', '색'], ['text', '본문'], ['dialogue', '대사'], ['em', '속마음'], ['strike', '취소선'], ['strong', '강조'], ['para', '문단'], ['name', '이름'], ['title', '제목'], ['shadow', '그림자'], ['outline', '외곽선']]);
 const SHADOW_TARGETS = ['text', 'dialogue', 'title', 'name'];
 
 const get = (o, path) => path.split('.').reduce((a, k) => (a == null ? undefined : a[k]), o);
@@ -200,6 +209,17 @@ export function lookRules(html, value) {
     if (d.weight != null) dl.push(`font-weight:${d.weight}`); else if (d.style === 'bold') dl.push('font-weight:650');
     if (d.letterSpacing != null) dl.push(`letter-spacing:${d.letterSpacing / 100}em`);
     if (dl.length) out.push(`${SEL.dialogue}{${dl.join(';')}}`);
+    const dlp = [];   // 대사 줄 문단(p.gk-dl) — 줄 간격 · 들여쓰기
+    if (d.lineHeight != null) dlp.push(`line-height:${d.lineHeight}`);
+    if (d.indent != null) dlp.push(`text-indent:${d.indent ? '1em' : '0'}`);
+    if (dlp.length) out.push(`${K} p.gk-dl{${dlp.join(';')}}`);
+    const tt = L.title || {}, ttr = [];   // 제목
+    if (L.fonts?.title) ttr.push(`font-family:${stackOf(L.fonts.title).family}`);
+    if (tt.size != null) ttr.push(`font-size:${tt.size}px;line-height:1.4`);
+    if (tt.weight != null) ttr.push(`font-weight:${tt.weight}`);
+    if (tt.letterSpacing != null) ttr.push(`letter-spacing:${tt.letterSpacing / 100}em`);
+    if (tt.align) ttr.push(`text-align:${tt.align}`);
+    if (ttr.length) out.push(`${SEL.title}{${ttr.join(';')}}`);
     // 대사 표시: 틀의 화자 띠 규칙(.gk-d<화자>{background-color:…})마다 같은 조건으로 덮어요 — 띠를 그림으로 긋는 틀(13 형광펜)은 그대로
     if (d.style && d.style !== 'full') {
         const css = text.slice(0, text.indexOf('</style>'));

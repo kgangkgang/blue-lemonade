@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>글꾸 능력표 재기</title><link rel="icon" href="data:,">
+<style>html,body{margin:0;padding:0;background:#fff}#box{box-sizing:content-box;padding:0;margin:0}</style></head>
+<body><div id="box"></div>
+<script type="module">
+// 11-12 능력표 재는 쪽(tools/geulkku-caps.mjs 가 헤드리스로 열어요) — 틀 하나 · 폭 하나에 조절을 가장 큰 값 · 작은 값으로 걸어 화면에서 재요.
+//   받는다 = 카드가 폭을 안 넘음 · 틀 밖으로 나가는 글 상자가 안 늘어남 · 소품 상자와 글 상자 겹침이 안 늘어남 · 지문 위 공백 변화 1px 안.
+import { applyShape } from '../mart/shape.js';
+import { applyLook } from '../mart/look.js';
+const box = document.getElementById('box');
+const vis = e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden';
+function metrics(html, W) {
+    box.style.width = `${W}px`; box.innerHTML = html;
+    const root = box.firstElementChild; if (!root) return null;
+    const rr = root.getBoundingClientRect();
+    const texts = [...root.querySelectorAll('.gk-tt, p, .gk-d')].filter(vis);
+    let esc = 0; for (const e of texts) { const r = e.getBoundingClientRect(); if (r.width && (r.right > rr.right + 1 || r.left < rr.left - 1)) esc++; }
+    const props = [...root.querySelectorAll('details.gk-kx > summary')].map(e => e.getBoundingClientRect()).filter(r => r.width * r.height > 0);
+    let ov = 0;
+    for (const e of texts) { if (e.closest('details.gk-kx')) continue; for (const r of e.getClientRects()) for (const p of props) { const x = Math.min(r.right, p.right) - Math.max(r.left, p.left), y = Math.min(r.bottom, p.bottom) - Math.max(r.top, p.top); if (x > 1 && y > 1) ov++; } }
+    const first = [...root.querySelectorAll('p.gk-nr, p.gk-nm, p.gk-dl')].find(vis); let gap = null;
+    if (first) { const ft = first.getBoundingClientRect().top; let hb = rr.top; for (const e of root.querySelectorAll('.gk-tt, .gk-ul, details.gk-kx > summary')) { const r = e.getBoundingClientRect(); if (r.height && r.bottom <= ft + 0.5) hb = Math.max(hb, r.bottom); } gap = Math.round((ft - hb) * 2) / 2; }
+    const d = root.querySelector('.gk-d'), dcs = d ? getComputedStyle(d) : null;
+    return { w: Math.round(rr.width), esc, ov, gap, band: dcs ? `${dcs.backgroundColor}|${dcs.backgroundImage}` : '' };
+}
+const good = (v, b, W) => !!v && v.w <= W + 1 && v.esc <= b.esc && v.ov <= b.ov && (b.gap == null || v.gap == null || Math.abs(v.gap - b.gap) <= 1);
+/** 틀 하나(한 판) · 폭 하나 → 받는 범위 */
+window.capsMeasure = (html, W) => {
+    const b = metrics(html, W); if (!b) return null;
+    const S = v => good(metrics(applyShape(html, v), W), b, W), L = v => good(metrics(applyLook(html, v), W), b, W);
+    let pad = false; for (const [lo, hi] of [[70, 130], [80, 120], [90, 110]]) { if (S({ pad: lo }) && S({ pad: hi })) { pad = [lo, hi]; break; } }
+    const width = W >= 640 ? [560, 480].filter(w => S({ width: w })) : null;
+    let title = false; for (const t of [28, 26, 24, 22, 20]) { if (L({ title: { size: t } })) { title = t; break; } }
+    const nameTag = [['pill', 'right'], ['line', 'center']].filter(([t, a]) => S({ nameTag: t, nameAlign: a })).map(x => x[0]);
+    const after = metrics(applyShape(html, { bandAlpha: 40 }), W), bandOk = !!after && after.band !== b.band && !/url\(|gradient/.test(b.band.split('|')[1] || '');
+    return { pad, width, title, nameTag, band: bandOk, base: b };
+};
+window.capsReady = true;
+</script></body></html>

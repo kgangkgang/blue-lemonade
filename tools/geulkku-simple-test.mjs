@@ -383,7 +383,7 @@ await test('옛 글꾸 없음 · 목록: index.json 은 심플 새 틀 28 하나
     assert.equal(six.count, 28); assert.equal(six.items.length, 28);
     assert.ok(six.items.every(x => x.simple && x.c === 'sp-simple' && x.style === '심플'));
     assert.deepEqual(Object.keys(six.chunks), ['sp-simple']);
-    assert.deepEqual(fs.readdirSync(DIR).sort(), ['index.json', ...Object.values(sixAll.chunks).map(c => c.file)].sort());
+    assert.deepEqual(fs.readdirSync(DIR).sort(), ['caps.json', 'index.json', ...Object.values(sixAll.chunks).map(c => c.file)].sort());
     assert.ok(!six.styles, '그림 결 목록 없음');
     // 바탕 커밋의 옛 목록 id 가 하나도 안 남았어요
     const old = JSON.parse(git('show', `${BASE}:mart/data/geulkku/index.json`).toString());
@@ -693,7 +693,7 @@ await test('글 모양: 값이 없으면 한 글자도 안 달라요 · 테마�
     assert.equal(lk.shadowValue({}), '-1.41px 1.41px 3px rgba(0,0,0,0.45)');   // 테마 기본(135° · 2px · 3px · 45%)
     assert.equal(lk.shadowValue(FULL_LOOK.shadow), '0px 3px 4px rgba(17,34,51,0.6)');
     for (const f of lk.LOOK_FIELDS) if (f.kind === 'range') assert.ok(f.min < f.max && f.def >= f.min && f.def <= f.max, f.path);
-    assert.deepEqual(lk.LOOK_TABS.map(x => x[1]), ['색', '본문', '대사', '속마음', '취소선', '강조', '문단', '이름', '그림자', '외곽선']);
+    assert.deepEqual(lk.LOOK_TABS.map(x => x[1]), ['색', '본문', '대사', '속마음', '취소선', '강조', '문단', '이름', '제목', '그림자', '외곽선']);
     for (const s of lk.FONT_STACKS) assert.ok(/,(sans-serif|serif|cursive|monospace)$/.test(s.family) && !/url\(|@import/.test(s.family), s.id);
     for (const row of six.items) {
         const it = { ...row, ...sfx[row.id], kind: 'geulkku' }, p = it.preview, key = sf.simpleFrameInfo(p).key, K = `.gk-${key}`.repeat(3);
@@ -1332,6 +1332,85 @@ await test('움직임 끔(세기 모듈 gm-0 · gp-0): 칩 넷 · 끔이면 뿌�
         off++; assert.match(o.match(/^<div[^>]*>/)[0], /gk-g[mp]-0/); assert.equal(mo.applyLevel(o, {}), p);
     }
     assert.ok(off > 300, '끔 되는 틀 ' + off);
+});
+await test('능력표 G4(11-12 · tools/geulkku-caps.mjs → caps.json): 410틀 모두 한 줄 · 정적 칸이 지금 틀과 같음(띠는 화면에서 그림 띠로 내릴 수만) · 범위 칸 꼴 · 표에 없는 틀은 정적 검사', async () => {
+    const cp = await import(pathToFileURL(path.join(MART, 'caps.js')).href + '?v=20261112a');
+    const caps = JSON.parse(fs.readFileSync(path.join(DIR, 'caps.json'), 'utf8'));
+    assert.equal(caps.v, 1); assert.deepEqual(caps.widths, [640, 375, 320]);
+    const ids = Object.keys(allItems).map(id => id.replace(/^simple-/, ''));
+    assert.deepEqual(Object.keys(caps.frames).sort(), ids.sort(), '틀 목록');
+    for (const [id, it] of Object.entries(allItems)) {
+        const k = id.replace(/^simple-/, ''), row = caps.frames[k], st = cp.capsStatic(sf.toneSimple(it.preview, sf.ORIGINAL, { mode: 'light' }));
+        assert.ok(!row.unmeasured, k + ' 화면에서 잼');
+        for (const f of ['bg', 'border', 'radius', 'underline']) assert.equal(row[f], st[f], `${k} ${f}`);
+        assert.ok(row.band === st.band || (st.band === 'color' && row.band === 'image'), k + ' 띠');
+        assert.ok(row.pad === false || (row.pad[0] >= 70 && row.pad[1] <= 130 && row.pad[0] < row.pad[1]), k + ' 여백');
+        assert.ok(row.width === false || (row.width.at(-1) <= 640 && row.width.every(w => [480, 560, 640].includes(w) || w === row.width.at(-1))), k + ' 폭');
+        assert.ok(row.title === false || (row.title.max >= 20 && row.title.max <= 28), k + ' 제목');
+        assert.equal(row.motion.speed, !!st.motion.speed, k + ' 빠르기');
+    }
+    const cnt = f => Object.values(caps.frames).filter(f).length;
+    assert.ok(cnt(x => x.band === 'color') > 350 && cnt(x => x.pad) > 390 && cnt(x => x.hideProp) > 300, '되는 틀 수');
+    cp.setCapsTable(caps.frames);
+    assert.equal(cp.capsOf({ simple: true, preview: allItems['simple-k1079'].preview }), caps.frames.k1079);
+    assert.equal(cp.capsOf({ simple: true, own: true, preview: allItems['simple-k1079'].preview }).unmeasured, true, '내 글꾸는 정적');
+    assert.equal(cp.capWhy(caps.frames.k13, 'band'), '이 틀은 대사 띠를 그림으로 그어요');
+    assert.equal(cp.capWhy(caps.frames.k1079, 'band'), '');
+});
+await test('모양 · 색 더하기(N5 · N8 · N12 ~ N18 · N23 · shape.js): 값이 없으면 한 글자도 안 달라요 · 410틀 × 낮밤 가장 큰 값 → 덮는 규칙만(<style> 하나 · 뼈대 그대로 · 정적 검사) · 띠 진하기는 알파만 · 화자별 띠 색 · 못 받는 칸은 건너뜀', async () => {
+    const sh = await import(pathToFileURL(path.join(MART, 'shape.js')).href + '?v=20261112a');
+    const MAX = { bandAlpha: 40, borderAlpha: 30, radius: 24, pad: 130, width: 480, nameTag: 'pill', nameAlign: 'right', hideUl: true, hideProp: true };
+    assert.deepEqual(sh.cleanShape({ bandAlpha: 99, pad: 133, width: 640, nameTag: 'plain', hideProp: false, x: 1 }), { bandAlpha: 40, pad: 130 });
+    assert.equal(sh.cleanShape({ width: 640 }), null);
+    let n = 0;
+    for (const [id, it] of Object.entries(allItems)) for (const mode of ['light', 'dark']) {
+        const p = sf.toneSimple(it.preview, '#3aa7ff', { mode, other: '#ff5fa2' });
+        assert.equal(sh.applyShape(p, null, null), p, id);
+        const o = sh.applyShape(p, MAX, { card: '#123456', bandMain: '#00ff88', bandOther: '#8800ff', underline: '#ff8800' });
+        assert.equal((o.match(/<style>/g) || []).length, 1, id);
+        assert.equal(o.slice(o.indexOf('</style>')), p.slice(p.indexOf('</style>')), id + ' 뼈대 그대로');
+        const was = new Set(styleOf(p).split('\n')), add = styleOf(o).split('\n').filter(l => l && !was.has(l));
+        assert.ok(add.every(l => /^\.gk-((?:k|q)\d+)\.gk-\1/.test(l)), id + ' 겹친 열쇠');
+        const i = sh.shapeInfo(p);
+        if (i.bands.length) { n++; assert.ok(add.some(l => /\.gk-d[A-Z]\{background-color:rgba\(0,255,136,0\.4\)\}$/.test(l)), id + ' 깡통 띠'); }
+        if (n % 60 === 1 && mode === 'light') assert.ok(tg.readyReport(sf.simpleReady(shutPeek(o))).ok, id + ' 정적 검사');
+    }
+    assert.ok(n > 780, '띠 ' + n);
+    const k = sf.toneSimple(allItems['simple-k1079'].preview, sf.ORIGINAL, { mode: 'light' });
+    assert.match(sh.applyShape(k, { bandAlpha: 30 }), /\.gk-d[AB]\{background-color:rgba\(\d+,\d+,\d+,0\.3\)\}/, '알파만');
+    assert.equal(sh.applyShape(k, MAX, null, { band: false, bg: false, border: false, radius: false, pad: false, width: false, nameTag: false, underline: false, hideProp: false }), k, '못 받는 칸은 건너뜀');
+    assert.match(sh.applyShape(k, { hideProp: true }), /details\.gk-kx \*\{visibility:hidden!important;pointer-events:none\}/);
+});
+await test('움직임 빠르기 · 처음부터 열어 두기(N3 · N4 · 마트가 걺): 기본이면 그대로 · 느리게 = 뿌리 gk-gs-s + 길이 낱말만 ×1.3(3.5초 상한) · 빠르게 ×0.75 · 열어 두기 = details.gk-kx 에 open · <style> 하나 · 정적 검사', async () => {
+    const ms = await import(pathToFileURL(path.join(MART, 'motion-state.js')).href + '?v=20261112a');
+    assert.deepEqual(ms.SPEEDS.map(x => x[1]), ['느리게', '보통', '빠르게']);
+    let sp = 0, op = 0;
+    for (const [id, it] of Object.entries(allItems)) {
+        const p = it.preview;
+        assert.equal(ms.applyMotion(p, { speed: 'm', open: false }), p, id);
+        const s = ms.applyMotion(p, { speed: 's' }), l = ms.applyMotion(p, { speed: 'l' }), c = ms.motionCaps(p);
+        if (c.speed) {
+            sp++; assert.match(s.match(/^<div[^>]*>/)[0], /gk-gs-s"/); assert.match(l.match(/^<div[^>]*>/)[0], /gk-gs-l"/);
+            const was = new Set(styleOf(p).split('\n')), add = styleOf(s).split('\n').filter(l => l && !was.has(l));
+            assert.ok(add.length && add.every(x => /^[^{]*\.gk-gs-s[^{]*\{(?:(?:animation|transition)-(?:duration|delay):[-\d.,s]+;?)+\}$/.test(x)), id + ' 길이 낱말만');
+            assert.equal((s.match(/<style>/g) || []).length, 1, id);
+            if (sp % 80 === 1) assert.ok(tg.readyReport(sf.simpleReady(shutPeek(s))).ok, id + ' 정적 검사');
+        } else assert.equal(s, p, id);
+        const o = ms.applyMotion(p, { open: true });
+        if (c.open) { op++; assert.ok(!/<details class="gk-kx"(?![^>]*\sopen="")/.test(o), id + ' 다 열림'); assert.equal(o.replace(/ open=""/g, ''), p.replace(/ open=""/g, ''), id + ' open 만'); }
+        else assert.equal(o, p, id);
+    }
+    assert.ok(sp > 400 && op > 380, `빠르기 ${sp} · 열어 두기 ${op}`);
+    assert.match(ms.applyMotion(allItems['simple-k1079'].preview, { speed: 's' }), /animation-duration:1\.3s/);
+});
+await test('제목 글 모양(N19) · 대사 줄 간격 · 들여쓰기(N20 · N21): 글 모양 칸 · 다듬기 · 규칙(.gk-tt · p.gk-dl · 세 겹) · 값 없으면 그대로', () => {
+    const L = lk.cleanLook({ title: { size: 40, weight: 650, letterSpacing: 3, align: 'center' }, fonts: { title: 'serif' }, dialogue: { lineHeight: 2.5, indent: false } });
+    assert.deepEqual(L, { title: { size: 28, weight: 650, letterSpacing: 3, align: 'center' }, fonts: { title: 'serif' }, dialogue: { lineHeight: 2.2, indent: false } });
+    const p = allItems['simple-k1079'].preview, o = lk.applyLook(p, L);
+    assert.match(o, /\.gk-k1079\.gk-k1079\.gk-k1079 \.gk-tt\{font-family:[^}]*;font-size:28px;line-height:1\.4;font-weight:650;letter-spacing:0\.03em;text-align:center\}/);
+    assert.match(o, /\.gk-k1079\.gk-k1079\.gk-k1079 p\.gk-dl\{line-height:2\.2;text-indent:0\}/);
+    assert.equal(lk.applyLook(p, null), p);
+    assert.ok(lk.LOOK_FIELDS.some(f => f.tab === 'title' && f.path === 'title.size' && f.cap === 'title'));
 });
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
