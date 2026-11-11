@@ -51,8 +51,10 @@
 @keyframes gk-k1139-k27-127-bm{0%{opacity:0}30%{opacity:.6}55%{opacity:.2}100%{opacity:.6}}
 .gk-k1139:has(.gk-kx[open]) .gk-lo{opacity:1;transition:none;animation:gk-k1139-k27-127-on .4s linear .08s 1 both}
 .gk-k1139:has(.gk-kx[open]) .gk-bm{opacity:.6;transition:none;animation:gk-k1139-k27-127-bm .4s linear .08s 1 both}
-@keyframes gk-k1139-k27-127-tx{0%{opacity:1}16%{opacity:.6}34%{opacity:.92}50%{opacity:.66}100%{opacity:1}}
-.gk-k1139:has(.gk-kx[open]) .gk-lg>*{animation:gk-k1139-k27-127-tx .7s linear .08s 1}
+@keyframes gk-k1139-k27-127-tx{0%{transform:none;animation-timing-function:cubic-bezier(.2,.8,.3,1)}14%{transform:translateY(-6px)}24%{transform:translate(-3px,-5px)}34%{transform:translate(3px,-4px)}44%{transform:translate(-2px,-3px)}54%{transform:translate(2px,-2px);animation-timing-function:cubic-bezier(.4,0,.3,1)}80%{transform:translateY(1px);animation-timing-function:ease-out}100%{transform:none}}
+.gk-k1139:has(.gk-kx[open]) .gk-lg>.gk-dl{animation:gk-k1139-k27-127-tx .8s linear .08s 1}
+.gk-k1139:has(.gk-kx[open]) .gk-lg>.gk-dl~.gk-dl{animation-delay:.2s}
+.gk-k1139.gk-k1139 .gk-top>.gk-kx{margin-top:14px;margin-right:0px;margin-bottom:-4px;margin-left:0px}
 @media (prefers-reduced-motion:reduce){.gk-k1139 *{animation:none!important;transition:none!important}}
 
 .gk-k1139.gk-tl .gk-nm.gk-nA{color:#0a69ae;-webkit-text-fill-color:#0a69ae}

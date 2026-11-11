@@ -61,6 +61,11 @@
 .gk-k1244 .gk-lg .gk-d{transition:color .2s ease,-webkit-text-fill-color .2s ease,background-color .2s ease}
 .gk-k1244:has(.gk-kx[open]) .gk-lg .gk-d{background-color:transparent;transition:color .4s ease .1s,-webkit-text-fill-color .4s ease .1s,background-color .4s ease .1s}
 .gk-k1244:has(.gk-kx[open]) .gk-lg .gk-dl~.gk-dl .gk-d{transition-delay:.35s}
+.gk-k1244 .gk-lg>.gk-dl{transform-origin:0 50%}
+@keyframes gk-k1244-k149-r5a{0%{transform:none;animation-timing-function:ease-out}15%{transform:scale(1.045);animation-timing-function:ease-in-out}33.75%{transform:scale(1);animation-timing-function:ease-out}50%{transform:scale(1.03);animation-timing-function:ease-in-out}75%{transform:scale(1)}100%{transform:none}}
+.gk-k1244:has(.gk-kx[open]) .gk-lg>.gk-dl{animation:gk-k1244-k149-r5a .8s linear .1s 1}
+.gk-k1244:has(.gk-kx[open]) .gk-lg>.gk-dl~.gk-dl{animation:gk-k1244-k149-r5a .8s linear .35s 1}
+.gk-k1244.gk-k1244 .gk-top>.gk-kx{margin-top:-2px;margin-right:4px;margin-bottom:4px;margin-left:-4px}
 @media (prefers-reduced-motion:reduce){.gk-k1244 *{animation:none!important;transition:none!important}}
 
 .gk-k1244.gk-tl .gk-nm.gk-nA{color:#0a69ae;-webkit-text-fill-color:#0a69ae}

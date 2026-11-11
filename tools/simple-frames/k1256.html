@@ -57,6 +57,11 @@
 .gk-k1256 .gk-lg .gk-d{transition:background-color .15s ease}
 .gk-k1256:not(:has(.gk-kx[open])) .gk-lg .gk-d{background-color:transparent}
 .gk-k1256:has(.gk-kx[open]) .gk-lg .gk-d{transition:background-color 1.1s ease-in .5s}
+.gk-k1256 .gk-lg>.gk-dl{transform-origin:0 100%}
+@keyframes gk-k1256-k42-r5a{0%{transform:none;animation-timing-function:cubic-bezier(.4,0,.6,1)}53.85%{transform:scale(1.04,1.13);animation-timing-function:ease-in-out}76.92%{transform:scale(.995,.97);animation-timing-function:ease-in-out}100%{transform:none}}
+.gk-k1256:has(.gk-kx[open]) .gk-lg>.gk-dl{animation:gk-k1256-k42-r5a 1.3s linear .5s 1}
+.gk-k1256:has(.gk-kx[open]) .gk-lg>.gk-dl~.gk-dl{animation:gk-k1256-k42-r5a 1.3s linear .65s 1}
+.gk-k1256.gk-k1256 .gk-top>.gk-kx{margin-top:4px;margin-right:-4px;margin-bottom:2px;margin-left:4px}
 @media (prefers-reduced-motion:reduce){.gk-k1256 *{animation:none!important;transition:none!important}}
 
 .gk-k1256.gk-tl .gk-nm.gk-nA{color:#0a69ae;-webkit-text-fill-color:#0a69ae}

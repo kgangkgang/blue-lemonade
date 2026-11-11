@@ -250,7 +250,8 @@ await test('04 줄자 누를 곳: summary 하나가 자(눈금 · 숫자 줄) + 
     assert.equal((m[1].match(/<span class="gk-nb-o">/g) || []).length, 31, '숫자 0~30 이 다 누를 곳 안');
     assert.doesNotMatch(m[1], /<div\b/);
     assert.equal((p.match(/<summary\b/g) || []).length, 1);
-    assert.ok(base.includes('.gk-k4 .gk-ru{display:block}') && base.includes('.gk-k4 .gk-in{padding:15px 20px 20px;'), '11-12 새틀-28 새 판(줄자 띠 카드 위 · 양옆 빈틈 0) 규칙 그대로 — 누를 곳 높이는 새 판에서 다시 재 볼 것');
+    // 11-12 다시 뽑기: 새 판(줄자 띠 카드 위 · 양옆 빈틈 0 — 글 칸 .gk-in 이 양옆 테를 그려요)에 누를 곳 47px 를 되살려요 — summary 아래로 4px 늘리고(padding) 같은 만큼 겹쳐(margin −4) 글 칸 자리 · 양옆 테는 그대로, position:relative 라 겹친 4px 도 summary 가 받아요
+    assert.ok(base.includes('.gk-k4 .gk-ru{display:block;position:relative;padding-bottom:4px;margin-bottom:-4px}') && base.includes('.gk-k4 .gk-in{padding:15px 20px 20px;'), '누를 곳 47px 규칙(새 판 꼴)');
     for (const rule of ['.gk-k4 .gk-rl{display:block;container-type:size;height:30px', '.gk-k4 .gk-rs{display:flex;', '.gk-k4 .gk-rc{display:block;', '.gk-k4 .gk-rr{display:flex;', '.gk-k4 .gk-ms{display:flex;align-items:flex-start;height:13px']) assert.ok(base.includes(rule), rule);
 });
 
@@ -473,7 +474,7 @@ await test('기본 = 원래 색: 캐릭터를 안 골랐으면 스물여덟 틀�
     for (const [k, mode] of [['#3ccfbf', 'light'], ['#3aa7ff', 'dark']]) {
         neu.setTone({ k, mode, on: true });
         assert.equal(neu.toneState.none, false);
-        for (const row of six.items) { const it = { ...row, ...sfx[row.id], kind: 'geulkku' }; assert.equal(neu.toneOut(it, it.preview), sf.toneSimple(it.preview, k, { mode })); }
+        for (const row of six.items) { const it = { ...row, ...sfx[row.id], kind: 'geulkku' }; assert.equal(neu.toneOut(it, it.preview), sf.toneSimple(it.preview, k, { mode, own: neu.ownOf() })); }   // 11-12 새 틀 28 도 기본 색 판(gk-own) — 캐릭터를 고르면 「소품도 캐릭터 색」(기본 켬)으로 own 을 떼요
     }
     neu.setTone({ k: null, on: true });
     assert.equal(neu.toneState.none, true, '무채를 직접 고른 것은 기억해요');
@@ -548,12 +549,12 @@ await test('깡캐 기억: k2 · name2 를 깡통과 같은 저장소에 기억�
     const base = m.toneOut(it, it.preview), key0 = m.toneKey();
     m.setTone({ k2: '#7fe03c', name2: '우리엘' });
     assert.notEqual(m.toneKey(), key0);
-    assert.equal(m.toneOut(it, it.preview), sf.toneSimple(it.preview, sf.ORIGINAL, { mode: 'light', other: '#7fe03c' }));
+    assert.equal(m.toneOut(it, it.preview), sf.toneSimple(it.preview, sf.ORIGINAL, { mode: 'light', other: '#7fe03c', own: m.ownOf() }));
     assert.deepEqual([saved().k2, saved().name2], ['#7fe03c', '우리엘']);
     const again = await import(`${href}?k2=b`);
     assert.deepEqual([again.toneState.k2, again.toneState.name2, again.toneState.on], ['#7fe03c', '우리엘', false]);
     m.setTone({ on: true, k: '#d19cff', name: '백시우' });
-    assert.equal(m.toneOut(it, it.preview), sf.toneSimple(it.preview, '#d19cff', { mode: 'light', other: '#7fe03c' }));
+    assert.equal(m.toneOut(it, it.preview), sf.toneSimple(it.preview, '#d19cff', { mode: 'light', other: '#7fe03c', own: m.ownOf() }));
     m.setTone({ k2: null }); m.setTone({ on: false });
     assert.equal(m.toneState.name2, '');
     assert.equal(m.toneOut(it, it.preview), base, '둘 다 원래 색으로 돌리면 처음과 같아요');
@@ -646,7 +647,7 @@ await test('조절: 값이 없으면 한 글자도 안 달라요 · 글자색은
 });
 
 await test('기본 색 판(뿌리 sk-own): 기본 색 줄은 값이 사다리 값과 같아도 안 바뀌어요 · own:false 면 뿌리 class 만 떼요 · 그 밖에는 틀 그대로', () => {
-    const p0 = sfx['simple-k3'].preview, c300 = ct.toneLadder('#ff5fa2').c300;
+    const p0 = sfx['simple-k3'].preview.replace(/^(<div class="gk [^"]*?) gk-own"/, '$1"'), c300 = ct.toneLadder('#ff5fa2').c300;
     const p = p0.replace('<div class="gk ', '<div class="gk sk-own ').replace('\n</style>', `\n.gk-k3.sk-own .gk-zz{background-color:${c300}}\n</style>`);
     assert.ok(sf.hasOwnTone(p) && !sf.hasOwnTone(p0));
     for (const K of [sf.ORIGINAL, '#3ccfbf', null]) {
