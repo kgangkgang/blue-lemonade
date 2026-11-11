@@ -230,7 +230,12 @@ function kkGuard(html, key) {
     if (!/details\{margin:0/.test(css)) out.push(`div.gk-${key} details{margin:0}`);
     return out.length ? `\n${out.join('\n')}` : '';
 }
-export function toneSimple(html, K, { mode = 'dark', main, other, prop, own } = {}) {
+/**
+ * 11-12 셋째 화자 — 「내 글 넣기」가 셋째부터의 화자 줄에 깡캐 본 클래스와 함께 이 글자(gk-nZ · gk-dZ)를 더 달아요(틀 자료에는 Z 가 없어요).
+ *   셋째 색(third)을 안 고르면 Z 규칙을 안 만들어 깡캐 본 그대로 보여요 · 고르면 Z 만 그 색 규칙(시안 식)을 뒤에 붙여요.
+ */
+export const THIRD = 'Z';
+export function toneSimple(html, K, { mode = 'dark', main, other, prop, own, third } = {}) {
     const info = simpleFrameInfo(html);
     if (!info || !info.key || !info.base || info.K0 === undefined) return html;
     const original = K === ORIGINAL;
@@ -253,7 +258,8 @@ export function toneSimple(html, K, { mode = 'dark', main, other, prop, own } = 
     const colors0 = speakerColorsOf(info.color_css);
     // 주인공 = 틀을 만든 캐릭터 색(gk-cv-…)과 같은 색인 화자(03 바인더는 분홍 B) → 없으면 M → A
     const mainX = main || info.speakers.find(X => info.K0 && colors0[X] === info.K0) || SIMPLE_CONTRACT.mainOrder.find(x => info.speakers.includes(x)) || info.speakers[0];
-    const colors = Object.fromEntries(info.speakers.map(X => [X, X === mainX ? k : (k2 || (colors0[X] ?? null))]));
+    const k3 = speakerColor(third) || null;
+    const colors = Object.fromEntries(info.speakers.map(X => [X, X === THIRD && X !== mainX ? k3 : X === mainX ? k : (k2 || (colors0[X] ?? null))]));
     const same = X => X !== '?' && (colors[X] ?? null) === (colors0[X] ?? null);
     const soundX = info.soundBy[0];
     const keepSpeaker = (r) => {   // 화자 규칙 하나 → 그대로 둘 선택자만 남긴 규칙(없으면 null)

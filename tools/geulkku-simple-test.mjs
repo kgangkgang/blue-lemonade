@@ -247,10 +247,10 @@ await test('04 줄자 누를 곳: summary 하나가 자(눈금 · 숫자 줄) + 
     assert.ok(m, 'summary.gk-ru');
     assert.match(m[1], /^<span class="gk-rl"><span class="gk-rs"><span class="gk-rc"><span class="gk-rr" aria-hidden="true">/);
     assert.match(m[1], /<span class="gk-ms"><span class="gk-tr gk-t1"><\/span><span class="gk-tr gk-t2"><\/span><\/span>$/);
-    assert.equal((m[1].match(/<span class="gk-nb">/g) || []).length, 31, '숫자 0~30 이 다 누를 곳 안');
+    assert.equal((m[1].match(/<span class="gk-nb-o">/g) || []).length, 31, '숫자 0~30 이 다 누를 곳 안');
     assert.doesNotMatch(m[1], /<div\b/);
     assert.equal((p.match(/<summary\b/g) || []).length, 1);
-    assert.ok(base.includes('.gk-k4 .gk-ru{display:block;padding-bottom:4px}') && base.includes('.gk-k4 .gk-in{padding:10px 20px 20px}'), '자 30 + 세모 줄 13 + 아래 여백 4 = 47px · 본문 칸 위 여백 14 → 10(자리 그대로)');
+    assert.ok(base.includes('.gk-k4 .gk-ru{display:block}') && base.includes('.gk-k4 .gk-in{padding:15px 20px 20px;'), '11-12 새틀-28 새 판(줄자 띠 카드 위 · 양옆 빈틈 0) 규칙 그대로 — 누를 곳 높이는 새 판에서 다시 재 볼 것');
     for (const rule of ['.gk-k4 .gk-rl{display:block;container-type:size;height:30px', '.gk-k4 .gk-rs{display:flex;', '.gk-k4 .gk-rc{display:block;', '.gk-k4 .gk-rr{display:flex;', '.gk-k4 .gk-ms{display:flex;align-items:flex-start;height:13px']) assert.ok(base.includes(rule), rule);
 });
 
@@ -297,10 +297,10 @@ await test('실제 틀 스물여덟: 원래 색이면 낮 · 밤 모두 시안 �
     }
     // 05 티백 낮 · 민트: 주인공 M 이름 = 시안 식 fit(민트, 로그 면 #f3f1ec) — 시안 「캐릭터 색 비교 줄」과 같은 식
     const t5 = sf.toneSimple(sfx['simple-k5'].preview, '#3ccfbf', { mode: 'light' });
-    assert.equal(valueOf(t5, '.gk-k5.gk-cv-3ccfbf.gk-tl .gk-nm.gk-nM', 'color'), sf.sianFit('#3ccfbf', '#f3f1ec'));
+    assert.equal(valueOf(t5, '.gk-k5.gk-cv-3ccfbf.gk-tl .gk-nm.gk-nK', 'color'), sf.sianFit('#3ccfbf', '#f3f1ec'));
     if (isikFit) assert.equal(sf.sianFit('#3ccfbf', '#f3f1ec'), isikFit('#3ccfbf', '#f3f1ec'));
     // 주인공: 12 돋보기 · 16 지우개 · 03 바인더 는 분홍 B, 05 · 07 은 M, 나머지는 A(틀 캐릭터 색과 같은 띠의 화자)
-    for (const [id, X] of [['simple-k12', 'B'], ['simple-k16', 'B'], ['simple-k3', 'B'], ['simple-k5', 'M'], ['simple-k09', 'A']]) assert.ok(styleOf(sf.toneSimple(sfx[id].preview, '#3ccfbf', { mode: 'light' })).includes(`.gk-d${X}{background-color:rgba(60,207,191,.18)}`), `${id} 주인공 ${X}`);
+    for (const [id, X] of [['simple-k12', 'B'], ['simple-k16', 'B'], ['simple-k3', 'B'], ['simple-k5', 'K'], ['simple-k09', 'A']]) assert.ok(styleOf(sf.toneSimple(sfx[id].preview, '#3ccfbf', { mode: 'light' })).includes(`.gk-d${X}{background-color:rgba(60,207,191,.18)}`), `${id} 주인공 ${X}`);
 });
 
 await test('고친 조각 넷: 09 쐐기 그림(%23) · 09 밤 안감(사다리 밖 식) · 13 형광 띠(그림으로 긋는 띠 — 원래 색 · 다른 색 모두 그림 규칙 그대로 · 바탕색 띠를 안 만듦) · 15 번쩍임 키프레임 색', () => {
@@ -1158,6 +1158,101 @@ await test('기본 글꾸 18틀(마트-길닦기 17-8): 「이 틀」에 정보 
         assert.doesNotMatch(lk.applyLook(h, { lemon: { off: true } }), /gk-lm/, id + ' 레몬');
         assert.ok(tg.readyReport(sf.simpleReady(shutPeek(o))).ok, id);
     }
+});
+// ── 11-12 남은 넷(마트-빠진것 15): 셋째 화자 색 · 내 글꾸(남의 HTML) · 완성 프리셋 파일 · 붙일 곳 흉내 ──
+const allItems = (() => { const o = {}; for (const c of Object.values(sixAll.chunks)) Object.assign(o, JSON.parse(fs.readFileSync(path.join(DIR, c.file), 'utf8')).items); return o; })();
+await test('셋째 화자 색: 셋째부터 깡캐 본 + gk-nZ · gk-dZ · 셋째 색을 안 고르면 Z 규칙 없음(깡캐 모습 그대로) · 고르면 Z 규칙이 깡캐 규칙 뒤에 · 화자 둘이면 Z 없음 · 407틀 태그 짝 · 정적 검사', () => {
+    const three = mt.mineModel(MINE_LOGS.셋), two = mt.mineModel(MINE_LOGS.짧은);
+    assert.equal(three.names.length, 3);
+    assert.equal(sf.THIRD, 'Z');
+    let n = 0, band = 0;
+    for (const [id, it] of Object.entries(allItems)) {
+        const p = it.preview, f3 = mt.fillMine(p, three);
+        if (f3 === p) continue;   // 내 글이 안 들어가는 틀
+        n++;
+        assert.ok(f3.includes('gk-nZ') && /class="gk-d gk-d[A-Z] gk-dZ"/.test(f3), id + ' Z 표시');
+        assert.ok(!mt.fillMine(p, two).includes('gk-nZ'), id + ' 둘이면 Z 없음');
+        const plain = sf.toneSimple(f3, sf.ORIGINAL, { mode: 'light' }), colored = sf.toneSimple(f3, sf.ORIGINAL, { mode: 'light', third: '#e63946' });
+        assert.ok(!/\.gk-[a-z]+Z\{/.test(plain), id + ' 셋째 색 없으면 Z 규칙 없음');
+        if (sf.simpleFrameInfo(f3).imageBand) band++;
+        assert.ok(/\.gk-nm\.gk-nZ\{color:#[0-9a-f]{6};-webkit-text-fill-color:#[0-9a-f]{6}\}/.test(colored), id + ' Z 이름 규칙');
+        const css = colored.slice(0, colored.indexOf('</style>')), zAt = css.search(/\.gk-nm\.gk-nZ\{/), bAt = css.lastIndexOf('.gk-nm.gk-n');
+        assert.ok(zAt >= 0 && zAt >= css.lastIndexOf('.gk-nm.gk-n', zAt - 1), id + ' Z 규칙이 뒤에');
+        assert.ok(bAt >= 0);
+        const open = (colored.match(/<(div|p|span|details|summary)\b/g) || []).length, close = (colored.match(/<\/(div|p|span|details|summary)>/g) || []).length;
+        assert.equal(open, close, id + ' 태그 짝');
+        assert.ok(tg.readyReport(sf.simpleReady(shutPeek(colored))).ok, id + ' 복사 글 정적 검사');
+    }
+    assert.ok(n >= 300, '내 글이 들어간 틀 ' + n);
+    console.log(`      셋째 화자 틀 ${n} · 띠를 그림으로 긋는 틀 ${band}`);
+});
+
+const own = await import(pathToFileURL(path.join(MART, 'own.js')).href + '?v=20261112a');
+await test('내 글꾸(own.js): 마트 복사 글은 틀 꼴로 되돌려 읽혀요(407틀 · 칠하기 · 내 글 넣기 됨) · 남의 HTML 은 그대로 · 깡통 점검 · <style> 가두기 · 20개 · 60KB', () => {
+    let simple = 0;
+    for (const [id, it] of Object.entries(allItems)) {
+        const copy = sf.simpleReady(shutPeek(it.preview)), sh = own.ownShape(copy);
+        assert.ok(sh.simple && sh.key, id + ' 틀 꼴');
+        assert.ok(!sh.html.includes('<!--') && !sh.html.startsWith('<p><br></p>'), id + ' 주석 · 빈칸 뗌');
+        assert.notEqual(sf.toneSimple(sh.html, '#3aa7ff', { mode: 'light' }), sh.html, id + ' 칠하기');
+        if (mt.storyOf(it.preview)) assert.notEqual(mt.fillMine(sh.html, mt.mineModel(MINE_LOGS.짧은)), sh.html, id + ' 내 글 넣기');
+        assert.equal(own.kkLint(copy).filter(w => w.level === 'die').length, 0, id + ' 마트 복사 글은 깡통에서 죽는 것 없음 ' + JSON.stringify(own.kkLint(copy)));
+        simple++;
+    }
+    assert.equal(simple, Object.keys(allItems).length);
+    const other = '<div style="background:#fff;color:#333;padding:12px;overflow:hidden" id="a" onclick="x()"><script>alert(1)</script><svg></svg><p style="background:url(a.png)">글</p></div><style>body{margin:0}@font-face{font-family:x;src:url(a.woff)}.x{color:red;position:fixed}</style>';
+    assert.equal(own.ownShape(other).simple, false);
+    const ids = own.kkLint(other).map(w => w.id);
+    for (const k of ['script', 'on', 'hidden', 'id', 'svg', 'font', 'fixed', 'url', 'fill', 'fill-css', 'page']) assert.ok(ids.includes(k), k + ' ' + ids);
+    const sc = own.scopeCss('body{margin:0}:root{--a:1}.x,.y>p,html .w{color:red}@media (max-width:600px){.z{top:0}}@keyframes k{from{opacity:0}to{opacity:1}}@import url(a.css);', '.S');
+    assert.equal(sc, '.S{--a:1}\n.S .x,.S .y>p{color:red}\n@media (max-width:600px){.S .z{top:0}}\n@keyframes k{from{opacity:0}to{opacity:1}}', 'html · body 규칙은 빼요');
+    assert.equal(own.scopeCss(':is(.a,.b) .c{x:1}', '.S'), '.S :is(.a,.b) .c{x:1}', '괄호 안 쉼표는 그대로');
+    assert.match(own.scopePreview('<style>.a{b:c}</style><p class="a">x</p>', 'ab12'), /^<div class="mart-own-view mart-own-ab12"><style>\.mart-own-ab12 \.a\{b:c\}<\/style><p class="a">x<\/p><\/div>$/);
+    const store = {}; globalThis.localStorage = { getItem: k => store[k] ?? null, setItem(k, v) { store[k] = v; }, removeItem(k) { delete store[k]; } };
+    try {
+        const first = own.addOwn({ html: sf.simpleReady(shutPeek(allItems['simple-k1'].preview)), warn: [] });
+        assert.equal(first.name, '내 글꾸 1'); assert.equal(first.simple, true);
+        assert.equal(own.addOwn({ html: 'x'.repeat(own.OWN_BYTES + 1) }), 'big');
+        for (let i = 2; i <= own.OWN_MAX; i++) assert.equal(typeof own.addOwn({ html: `<p>${i}</p>` }), 'object');
+        assert.equal(own.addOwn({ html: '<p>21</p>' }), 'full');
+        const item = own.ownItem(own.ownList().at(-1));
+        assert.ok(item.own && item.simple && item.id === 'own-' + first.id && item.category === own.OWN_CAT);
+        own.setOwnPath(first.id, [0, 2]); assert.deepEqual(own.ownList().find(x => x.id === first.id).path, [0, 2]);
+        own.forgetOwn(first.id); assert.equal(own.ownList().length, own.OWN_MAX - 1);
+    } finally { delete globalThis.localStorage; }
+    assert.equal(own.slotHtml({ names: ['하린', '도윤'], lines: [{ type: 'nr', html: '바람.' }, { type: 'dl', who: 0, text: '안<녕' }, { type: 'dl', who: 0, text: '응' }, { type: 'dl', who: 1, text: '어' }] }), '<p>바람.</p><p><b>하린</b></p><p>안&lt;녕</p><p>응</p><p><b>도윤</b></p><p>어</p>');
+    const ms = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8');
+    assert.ok(ms.includes("viewOf(state)") && ms.includes("scopePreview(previewOf(state), state.item.ownId)"), '화면에만 가두기(복사 글은 그대로)');
+    assert.ok(/function finishHtml\(item, h\) \{\n    if \(item\.own\)/.test(ms));
+});
+
+await test('완성 프리셋 파일: 내려받은 글을 그대로 가져와요(틀 · 색 · 셋째 · 글 모양 · 값 · 고친 글) · 모르는 꼴은 빈 목록 · 화면 이름 「완성 프리셋」', () => {
+    const store = {}; globalThis.localStorage = { getItem: k => store[k] ?? null, setItem(k, v) { store[k] = v; }, removeItem(k) { delete store[k]; } };
+    try {
+        const row = tu.saveMine({ frame: 'simple-k1079', frameName: '호감도 게이지', name: '내 게이지', tone: { on: true, k: '#3AA7FF', name: '가브리엘', k2: '#7fe03c', name2: '우리엘', k3: '#ff5fa2', name3: '아스모데우스', mode: 'light' }, tune: { vals: { 호감도: 70 }, texts: { 0: '새 제목' }, inks: { light: { title: '#123456' } } }, look: { text: { size: 18 } } });
+        assert.equal(row.tone.k3, '#ff5fa2');
+        const file = tu.setsFile(tu.mineList());
+        assert.match(file, /^\{\n "bl-mart-set": 1,/);
+        tu.forgetMine(row.id); assert.equal(tu.mineList().length, 0);
+        const got = tu.addSets(tu.readSets(file));
+        assert.equal(got.length, 1);
+        const { id, at, ...a } = got[0], { id: i2, at: a2, ...b } = row;
+        assert.deepEqual(a, b, '같은 값');
+        assert.deepEqual(tu.readSets('{"x":1}'), []); assert.deepEqual(tu.readSets('나쁜 글'), []);
+        assert.equal(tu.readSets(JSON.stringify({ frame: 'simple-k1', name: '하나', tone: {} })).length, 1, '줄 하나만 든 파일');
+    } finally { delete globalThis.localStorage; }
+    const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
+    assert.ok(ui.includes('완성 프리셋 <small>이 틀 + 색 + 글 모양 + 값 + 고친 글</small>') && ui.includes('data-sets-down') && ui.includes('data-sets-pick') && ui.includes('data-mine-down'));
+});
+
+await test('붙일 곳 흉내: summary 뒤 빈 줄 · id · for · name 지움 · 스크립트 지움 · 마트 / 글 · PC / 글 · 폰 · 흉내 중엔 글 고치기 꺼짐 · 사이트 규칙은 :where 로 낮게', () => {
+    const ms = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8');
+    const simSrc = ms.match(/export const siteSim = (html => String\(html \?\? ''\)[\s\S]*?\.replace\(\/<script[^\n]*\);)\n/)[1];
+    const siteSim = (0, eval)(simSrc.replace(/;$/, ''));
+    assert.equal(siteSim('<details class="a"><summary id="s">t</summary><label for="x" class="b">y</label><input name="n" id="x"></details><script>1</script>'), '<details class="a"><summary>t</summary><div><br></div><label class="b">y</label><input></details>');
+    assert.ok(ms.includes("['mart', '마트'], ['pc', '글 · PC'], ['phone', '글 · 폰']") && ms.includes("if (site.mode !== 'mart') { stopEdit();"));
+    const css = fs.readFileSync(path.join(MART, 'mart.css'), 'utf8');
+    for (const r of [':where(.mart-site) .content details{margin:.25rem 0}', '.mart-site.is-phone .mart-site-page{max-width:360px}', '.mart-site-page{box-sizing:border-box;max-width:640px;']) assert.ok(css.includes(r), r);
 });
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

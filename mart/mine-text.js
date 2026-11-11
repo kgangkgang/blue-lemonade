@@ -5,6 +5,7 @@
 //     소리 카드 · 바인더 쪽 넘김처럼 글 사이에 낀 것은 제자리에 둬요(앞 묶음 · 뒤 묶음으로 나눠 넣어요). 제목 · 소품은 그대로예요.
 //   DOM 없는 순수 모듈(node 시험). 넣은 글은 이 브라우저에 기억(localStorage) · 켬끔도 기억.
 import { parseLog } from './taste-parse.js';
+import { THIRD } from './simple-frames.js?v=20261112a';
 
 export const MINE_TEXT_KEY = 'bl-mart-mine-text-v1';
 /** 한 틀에 넣는 줄 수 상한(지문 · 이름 · 대사 줄을 합쳐) — 넘으면 앞부분만 */
@@ -112,7 +113,9 @@ export function fillMine(html, model) {
     for (const l of model.lines) {
         if (l.type === 'nr') { pieces.push({ html: `${nrOpen}${l.html}</p>`, dl: false }); prevWho = null; continue; }
         const t = tplOf(l.who), withName = prevWho !== l.who;
-        pieces.push({ html: `${withName ? `<p class="gk-nm gk-n${t.X}">${esc(nameOf(l.who))}</p>${t.gap}` : ''}${t.open}${l.rich || esc(l.text)}${t.close}`, dl: true, head: withName });
+        // 11-12 셋째부터: 깡캐 본 클래스에 셋째 글자(THIRD — gk-nZ · gk-dZ)를 더 달아요 — 셋째 색을 안 고르면 깡캐 모습 그대로 · 고르면 그 색(simple-frames toneSimple third)
+        const z = l.who >= 2 ? ` gk-n${THIRD}` : '', open = l.who >= 2 ? t.open.replace(/(class="gk-d gk-d[A-Z])"/, `$1 gk-d${THIRD}"`) : t.open;
+        pieces.push({ html: `${withName ? `<p class="gk-nm gk-n${t.X}${z}">${esc(nameOf(l.who))}</p>${t.gap}` : ''}${open}${l.rich || esc(l.text)}${t.close}`, dl: true, head: withName });
         prevWho = l.who;
     }
     // 글 자리를 「사이에 낀 것」(소리 카드 · 쪽 넘김)으로 가른 묶음들 — 내 글도 그만큼 나눠 넣어요
@@ -147,6 +150,8 @@ let model = null, rev = 0;
 const modelNow = () => (state.on ? (model ||= mineModel(state.text)) : null);
 export const mineOn = () => state.on && !!modelNow()?.lines.length;
 export const mineText = () => state.text;
+/** 11-12 지금 넣은 내 글 줄(꺼져 있으면 null) — 마트 꼴이 아닌 「내 글꾸」(own.js fillSlot)에 넣을 때 */
+export const mineModelNow = () => (mineOn() ? modelNow() : null);
 export const mineRev = () => rev;
 export const mineInfo = () => { const m = modelNow(); return m ? { names: m.names, generic: m.generic, lines: m.lines.length, dialogue: m.lines.filter(l => l.type === 'dl').length, cut: m.cut } : null; };
 /** 내 글을 바꾸거나 켜고 꺼요 — 기억하고 'bl-tone-change' 를 알려요(카드 · 크게 보기 · 복사 글이 다시 그려져요) */

@@ -16,12 +16,17 @@ import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
 import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110v';   // 11-10 대사색 하나로 다시 칠하기 · 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
-import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261111z';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
-import { simpleReady } from './simple-frames.js?v=20261111z';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
+import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261112a';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
+import { simpleReady } from './simple-frames.js?v=20261112a';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
-import { mountCast } from './cast.js?v=20261111z';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
-import { frameMarkdown } from './mine-text.js?v=20261111z';   // 11-11 글만 복사(마크다운)
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit } from './tune-ui.js?v=20261111z';   // 11-11 크게 보기 「조절」 칸(색 칩 · 글 고치기 · 내 글꾸)
+import { mountCast } from './cast.js?v=20261112a';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
+import { frameMarkdown } from './mine-text.js?v=20261112a';   // 11-11 글만 복사(마크다운)
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit } from './tune-ui.js?v=20261112a';
+import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
+import { sanitizeHtml, guessSlot, fromPath, slotPath } from './lib/log-copy/log-copy-sanitize.js';
+import { mineModelNow } from './mine-text.js?v=20261112a';
+import { markEdits, HIDDEN_LINE_FRAMES, simpleFrameInfo } from './simple-frames.js?v=20261112a';
+import { withCommentSlots } from './lib/log-copy/log-copy-lift.js';   // 11-11 크게 보기 「조절」 칸(색 칩 · 글 고치기 · 내 글꾸)
 let styleActive = 'all', drawPreset = null, picker = null;
 const states = [];   // 만든 카드만(글꾸) — 늦게 만들기(lazyGrid)라 처음엔 첫 화면 몫뿐이에요
 const stateById = new Map();
@@ -397,7 +402,16 @@ export const shutPeek = html => String(html ?? '').replace(/<details\b[^>]*\sdat
 /** 11-11 「HTML 복사」 · 내려받기 · 글만 복사가 같이 쓰는 완성 HTML(복사 글과 같은 길) */
 function readyHtml(state) {
     const item = state.item;
-    return ensureItem(item).then(() => (inkChanged(item) && !tasteLoaded ? loadTaste().then(() => { delete state.inkHtml; return previewOf(state); }) : previewOf(state))).then(shutPeek).then(h => (item.simple ? simpleReady(h) : item.photo ? h : kkangtongReady(h)));
+    return ensureItem(item).then(() => (inkChanged(item) && !tasteLoaded ? loadTaste().then(() => { delete state.inkHtml; return previewOf(state); }) : previewOf(state))).then(shutPeek).then(h => finishHtml(item, h));
+}
+/** 11-12 복사 글 마지막 손질 — 심플 새 틀은 <style> 하나 · 내 글꾸(own)는 마트 복사 글이면 이미 다듬은 꼴 그대로(코멘트 빈칸 · ✎ 만 다시) */
+function finishHtml(item, h) {
+    if (item.own) {
+        if (!item.simple || !/\.content>p,\.blq-cm\{/.test(h)) return item.simple ? simpleReady(h) : kkangtongReady(h);
+        const key = simpleFrameInfo(h)?.key || '';
+        return withCommentSlots(markEdits(kkangtongReady(h), { skip: HIDDEN_LINE_FRAMES.includes(key) ? [] : ['gk-hl'] }));
+    }
+    return item.simple ? simpleReady(h) : item.photo ? h : kkangtongReady(h);
 }
 /** 내려받기(.html) — 복사 글과 같은 HTML 을 파일로(앞에 doctype · charset 두 줄만).
  *  doctype 이 없으면 브라우저가 옛 방식(quirks)으로 열어 클래스 이름 대소문자를 안 가려요 — gk-nb(소품 막대)가 gk-nB(깡캐 이름표)에도 걸려 이름표가 막대가 돼요(k4 · k5 · k7 · k10 · k15 · q05) */
@@ -420,7 +434,7 @@ async function copyText(state) {
 }
 async function copyHtml(state) {
     const item = state.item;
-    const ready = ensureItem(item).then(() => (inkChanged(item) && !tasteLoaded ? loadTaste().then(() => { delete state.inkHtml; return previewOf(state); }) : previewOf(state))).then(shutPeek).then(h => (item.simple ? simpleReady(h) : item.photo ? h : kkangtongReady(h)));   // 11-11 심플 새 틀: 틀 <style> + 코멘트 빈칸 · 16px 규칙을 <style> 하나로   // 11-10 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)   // 11-09 카드 · 상세 미리보기는 펼침, 복사 글은 닫힘   // 「📝 내 로그로 보기」가 켜져 있으면 내 로그가 든 완성 HTML   // 조각을 아직 안 받았으면 받은 뒤(클립보드는 누른 순간에 열어요)
+    const ready = ensureItem(item).then(() => (inkChanged(item) && !tasteLoaded ? loadTaste().then(() => { delete state.inkHtml; return previewOf(state); }) : previewOf(state))).then(shutPeek).then(h => finishHtml(item, h));   // 11-11 심플 새 틀: 틀 <style> + 코멘트 빈칸 · 16px 규칙을 <style> 하나로   // 11-10 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)   // 11-09 카드 · 상세 미리보기는 펼침, 복사 글은 닫힘   // 「📝 내 로그로 보기」가 켜져 있으면 내 로그가 든 완성 HTML   // 조각을 아직 안 받았으면 받은 뒤(클립보드는 누른 순간에 열어요)
     ready.catch(() => { /* 아래에서 알려요 */ });
     const done = () => { noteRecent(item.id); say('복사됐어요 · 깡싸 글쓰기 HTML 칸에 붙여요', 3600); };
     try {
@@ -538,12 +552,13 @@ function actionsHtml(item) {
     const html = item.kind === 'geulkku' ? `<button type="button" class="btn" data-act="html" title="${HTML_TITLE}"><span class="em" aria-hidden="true">📋</span>HTML 복사</button>` : '';
     // 테마에 들어 있는 글꾸(내장 심플 30 · 로그 복사 기본 틀 19): 받을 것 없음 — 담기 · 테마용 복사 대신 안내 + HTML 복사(시식은 크게 보기에서 그대로)
     if (item.builtin) return `<div class="mart-actions is-geulkku is-builtin"><span class="mart-builtin" title="블루레몬에이드 로그 복사에 이미 있어요 · 마트에서 가져오지 않아도 돼요">✓ 이미 테마에 들어 있어요</span>${html}</div>`;
+    if (item.own) return `<div class="mart-actions is-geulkku is-builtin is-copyonly is-own"><button type="button" class="btn mart-own-del" data-act="own-del" title="이 브라우저에서 지워요(두 번 눌러요)">지우기</button>${html}</div>`;   // 11-12 내 글꾸
     // 오리지널 컨셉 30 · 화보 갤러리 · 노래 앨범(copyOnly): 테마로 받지 않는 틀 — 「담기」 · 「테마용 복사」 없이 HTML 복사만
     if (item.copyOnly) return `<div class="mart-actions is-geulkku is-builtin is-copyonly"><span class="mart-builtin" title="${item.simple ? '커뮤니티 글에 붙이는 심플 글꾸예요 · 제목 · 이름 · 글을 바꿔 HTML 칸에 붙여요' : item.photo ? (item.category === 'kara' ? '커뮤니티 글에 붙이는 노래방 글꾸예요 · 「내 곡으로 만들기」에서 mp3 · 가사를 넣으면 완성 HTML 이 나와요' : item.category === 'song' || item.audio ? '커뮤니티 글에 붙이는 노래 앨범 틀이에요 · 그림 · mp3 주소와 글을 바꿔 HTML 칸에 붙여요' : '커뮤니티 글에 붙이는 사진 화보 틀이에요 · 사진 주소 · 글을 바꿔 HTML 칸에 붙여요') : '테마로 받기는 준비 중이에요 · 커뮤니티 글에 HTML 로 붙여 써요'}">HTML 복사로 써요</span>${html}</div>`;
     return `<div class="mart-actions${item.kind === 'geulkku' ? ' is-geulkku' : ''}"><button type="button" class="btn mart-pick" data-act="pick" aria-pressed="false"><span class="em" aria-hidden="true">🛒</span>담기</button><button type="button" class="btn" data-act="copy" title="이것 하나만 바로 복사(테마 「마트에서 가져오기」용)">${item.kind === 'geulkku' ? '테마용 복사' : '바로 복사'}</button>${html}</div>`;
 }
 /** 11-11 즐겨찾기 ☆ · ★(무테 아이콘) — 카드 이름 줄 · 크게 보기 제목 옆 */
-const favHtml = item => { if (item.kind !== 'geulkku') return ''; const on = like.fav.includes(item.id); return `<button type="button" class="ibtn mart-fav" data-act="fav" data-fav="${esc(item.id)}" aria-pressed="${on}" aria-label="${esc(item.name || item.label)} 즐겨찾기" title="${on ? '즐겨찾기에서 빼기' : '즐겨찾기'}"></button>`; };   // 별은 마스크 그림(mart.css) — 글자 단추가 아니에요
+const favHtml = item => { if (item.kind !== 'geulkku' || item.own) return ''; const on = like.fav.includes(item.id); return `<button type="button" class="ibtn mart-fav" data-act="fav" data-fav="${esc(item.id)}" aria-pressed="${on}" aria-label="${esc(item.name || item.label)} 즐겨찾기" title="${on ? '즐겨찾기에서 빼기' : '즐겨찾기'}"></button>`; };   // 별은 마스크 그림(mart.css) — 글자 단추가 아니에요
 const likeRows = items => Object.entries(LIKE_CHIPS).map(([id, label]) => [id, label, like[id].filter(x => items.some(i => i.id === x)).length]);
 function likeChanged(which) {
     for (const [id, , n] of likeRows(allItems)) picker?.count(id, n);
@@ -559,7 +574,7 @@ function toggleFav(id) {
 }
 /** 쓴 틀을 최근에(HTML 복사 · 내려받기 · 글만 복사) — 5개까지 · 마지막에 쓴 것이 앞 */
 function noteRecent(id) {
-    if (kind !== 'geulkku' || like.recent[0] === id) return;
+    if (kind !== 'geulkku' || like.recent[0] === id || String(id).startsWith('own-')) return;
     like.recent = [id, ...like.recent.filter(x => x !== id)].slice(0, 5);
     saveLike(); likeChanged('recent');
 }
@@ -572,6 +587,8 @@ function doAct(state, act, b) {
     else if (act === 'text') copyText(state);
     else if (act === 'taste') openTaste(state);
     else if (act === 'random') pickRandom();
+    else if (act === 'own-del') ownDelete(state, b);
+    else if (act === 'own-pick') ownPick(state, b);
     else if (act === 'design') switchDesign(state, b.dataset.id);
     else if (act === 'pick') {
         const key = entryOf(state).key;   // 열쇠는 목록만으로 정해져요 — 담는 글(받기 칸)은 조각을 받은 뒤
@@ -582,7 +599,7 @@ function doAct(state, act, b) {
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
 let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261111z').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261112a').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
@@ -621,8 +638,12 @@ function previewOf(state) {
     if (state.toneKey !== key) { state.toneKey = key; state.toneHtml = toneOut(state.item, raw); }
     return state.toneHtml;
 }
+/** 11-12 화면에 보일 미리보기 — 내 글꾸(own)는 붙인 글의 <style> 을 그 칸 안에만(마트 화면을 덮지 않게) · 복사 글(previewOf)은 그대로 */
+const viewOf = state => (state.item.own ? scopePreview(previewOf(state), state.item.ownId) : previewOf(state));
+const OWN_DOM = { parse: html => new DOMParser().parseFromString(`<!doctype html><html><head></head><body>${html}</body></html>`, 'text/html'), guessSlot, fromPath };
 function rawPreviewOf(state) {
     const item = state.item;
+    if (item.own && !item.simple) { const m = mineModelNow(); return m ? fillSlot(item.preview, m, item.path, OWN_DOM) : item.preview; }   // 마트 꼴이 아닌 내 글꾸: 내 글은 글 자리에
     if (!mylog.on || !mylog.mod || !(item.template || item.shape)) {
         // 11-08 글자색을 바꾼 글꾸: 바꾼 색으로 표본 글을 다시 그려요(시식 모듈을 받기 전에는 원래 미리보기 · 받으면 다시 칠해요)
         if (item.preview && inkChanged(item)) {
@@ -636,19 +657,19 @@ function rawPreviewOf(state) {
 }
 /** 11-08 글자색을 바꾼 글꾸의 카드 · 상세 창 미리보기와 칩을 다시 칠해요 */
 function repaintInks(id) {
-    for (const s of states) { if (s.item.id !== id) continue; delete s.myHtml; delete s.inkHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = previewOf(s); } }
+    for (const s of states) { if (s.item.id !== id) continue; delete s.myHtml; delete s.inkHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = viewOf(s); } }
     if (sheet?.open && sheetState?.item.id === id && sheetState.item.preview) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); syncInks(sheet.querySelector('.mart-sheet-inks'), sheetState.item); }
 }
 document.addEventListener('bl-inks-change', e => repaintInks(e.detail?.id));
 // 11-10 캐릭터 · 밤낮을 바꾸면 만든 카드 · 크게 보기를 다시 칠해요
 function repaintTone() {
-    for (const s of states) { delete s.toneKey; delete s.toneHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = previewOf(s); } syncCard(s); }
+    for (const s of states) { delete s.toneKey; delete s.toneHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = viewOf(s); } syncCard(s); }
     if (sheet?.open && sheetState?.item.preview) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); const inks = sheet.querySelector('.mart-sheet-inks'); if (inks) inks.innerHTML = toned(sheetState.item) ? '' : inksHtml(sheetState.item); syncSheet(); paintTune(); }
 }
 // 11-11 조절 값(글자색 · 소품 색 · 고쳐 쓴 글)이 바뀌면 그 틀의 카드와 크게 보기를 다시 그려요 — 글만 고친 것이면 크게 보기 미리보기는 그대로(글 쓰는 자리가 안 날아가게)
 document.addEventListener('bl-tune-change', (e) => {
     const id = e.detail?.id;
-    for (const s of states) { if (s.item.id !== id) continue; delete s.toneKey; delete s.toneHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = previewOf(s); } }
+    for (const s of states) { if (s.item.id !== id) continue; delete s.toneKey; delete s.toneHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = viewOf(s); } }
     if (!sheet?.open || sheetState?.item.id !== id || !sheetState.item.preview) return;
     if (!e.detail.textOnly) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); paintTune(); } else syncTune(sheet, sheetState.item);
     syncMine(sheet, sheetState.item);
@@ -673,7 +694,7 @@ function switchDesign(state, id) {
     else fresh.el.querySelector(`.mart-designs [data-id="${CSS.escape(id)}"]`)?.focus({ preventScroll: true });
 }
 function repaintMylog() {
-    for (const s of states) { delete s.myHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = previewOf(s); } }
+    for (const s of states) { delete s.myHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = viewOf(s); } }
     if (sheet?.open && sheetState?.item.preview) sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState);
     paintMylogChip();
 }
@@ -703,7 +724,32 @@ document.addEventListener('bl-taste-change', () => { if (mylog.on) repaintMylog(
 const TASTE_TITLE = '내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고, 완성 HTML 을 복사 · 내려받아요';
 const tasteHtml = item => (item.kind === 'geulkku' && !item.photo ? `<button type="button" class="btn mart-taste-open" data-act="taste" title="${TASTE_TITLE}"><span class="em" aria-hidden="true">🍽️</span>시식하기<small>내 로그를 넣어 봐요</small></button>` : '');
 /** 11-09 화보 갤러리(photo): 상세 창 미리보기는 체크박스 id · label for 에 꼬리를 붙여요 — 같은 틀이 카드에도 있어 for= 가 카드(inert) 쪽 체크박스를 가리키지 않게. 복사 글은 원래 id 그대로 */
-const sheetPreview = state => (state.item.photo ? previewOf(state).replace(/ (id|for)="([^"]+)"/g, ' $1="$2-view"') : previewOf(state));
+// ── 11-12 붙일 곳 흉내(테마 1.1.3 log-copy-site-sim.js 꼴) — 크게 보기 미리보기를 깡통 · 깡캐 글 화면처럼: 사이트 바탕 · 본문 글자색(밤낮) · 글 폭(PC 640 · 폰 360) · 위아래 코멘트 자리 ·
+//   깡통이 붙이는 것(summary 뒤 빈 줄 <div><br></div> · .content details 여백 · 문단 줄 간격 · id · for · name 지움)을 복사 글 그대로 위에 흉내 내요. 흉내 중에는 「글 고치기」가 꺼져요 ──
+const SITE_KEY = 'bl-mart-site-v1';
+const SITE_MODES = [['mart', '마트'], ['pc', '글 · PC'], ['phone', '글 · 폰']];
+const site = { mode: (() => { try { const v = localStorage.getItem(SITE_KEY); return SITE_MODES.some(([id]) => id === v) ? v : 'mart'; } catch { return 'mart'; } })() };
+/** 깡통 정화기 · 사이트가 붙이는 것 흉내(글자만 — 사이트 규칙은 mart.css .mart-site) */
+export const siteSim = html => String(html ?? '')
+    .replace(/<\/summary>/g, '</summary><div><br></div>')
+    .replace(/<([a-z][\w-]*)\b([^>]*)>/gi, (all, tag, attrs) => (/\s(?:id|for|name)\s*=/i.test(attrs) ? `<${tag}${attrs.replace(/\s(?:id|for|name)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')}>` : all))
+    .replace(/<script\b[\s\S]*?<\/script>/gi, '');
+function siteHtml(state) {
+    const item = state.item;
+    let h = siteSim(finishHtml(item, shutPeek(previewOf(state))));
+    if (item.own) h = scopePreview(h, item.ownId);
+    return `<div class="mart-site is-${site.mode} is-${toneState.mode === 'light' ? 'light' : 'dark'}"><div class="mart-site-page"><div class="content">${h}</div></div></div>`;
+}
+const siteRowHtml = item => (item.simple || item.own ? `<div class="mart-sheet-site"><span class="mart-look-label">붙일 곳 흉내</span><span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="붙일 곳 흉내">${SITE_MODES.map(([id, l]) => `<button type="button" class="chip" data-site="${id}" aria-pressed="${site.mode === id}">${l}</button>`).join('')}</span></div>` : '');
+function setSite(mode) {
+    if (!SITE_MODES.some(([id]) => id === mode)) return;
+    site.mode = mode; try { localStorage.setItem(SITE_KEY, mode === 'mart' ? '' : mode); } catch { /* 이 화면에서만 */ }
+    if (!sheet?.open || !sheetState) return;
+    for (const b of sheet.querySelectorAll('[data-site]')) b.setAttribute('aria-pressed', String(b.dataset.site === mode));
+    if (mode !== 'mart') stopEdit();
+    const pv = sheet.querySelector('.mart-sheet-preview'); pv.classList.toggle('is-site', mode !== 'mart'); pv.innerHTML = sheetPreview(sheetState); paintTune();
+}
+const sheetPreview = state => (site.mode !== 'mart' && (state.item.simple || state.item.own) ? siteHtml(state) : state.item.photo || state.item.own ? viewOf(state).replace(/ (id|for)="([^"]+)"/g, ' $1="$2-view"') : previewOf(state));
 // ── 글꾸 크게 보기 시트(폰은 아래에서 올라오고 PC 는 가운데) — 전체 미리보기 · 장식 누르기 · 스크롤은 여기서만 ──
 let sheet = null, sheetState = null;
 function openSheet(state) {
@@ -717,21 +763,37 @@ function openSheet(state) {
             if (e.target === sheet) { sheet.close(); return; }   // 바깥(배경) 누르기
             const b = e.target.closest('button'); if (!b) return;
             if (b.dataset.sheet === 'close') sheet.close();
+            else if (b.dataset.site) setSite(b.dataset.site);
+            else if (b.matches('[data-tune-edit]') && site.mode !== 'mart') setSite('mart');   // 글 고치기는 마트 미리보기에서(흉내 글에는 칸 번호가 달라요)
             else if (b.dataset.act && sheetState) doAct(sheetState, b.dataset.act, b);
         });
+        // 11-12 내 글꾸 「내 글 자리 고르기」: 고르는 중이면 미리보기를 누른 칸을 자리로(링크 · 소품은 안 눌려요)
+        sheet.addEventListener('click', (e) => {
+            if (!ownPicking || !sheetState?.item.own) return;
+            const view = sheet.querySelector('.mart-sheet-preview .mart-own-view'), hit = e.target.closest?.('*');
+            if (!view || !hit || !view.contains(hit) || hit === view) return;
+            e.preventDefault(); e.stopPropagation();
+            const el = hit.closest('.bl-own-slot') || hit, path = slotPath(el, view);
+            ownPicking = false;
+            if (!path?.length) { say('그 칸은 고를 수 없어요', 2400); return; }
+            const id = sheetState.item.ownId;
+            setOwnPath(id, path); refreshOwn(); applyFilter();
+            const next = ownItems.find(x => x.ownId === id); if (next) openSheet(stateOf(next));
+            say(mineModelNow() ? '그 칸에 내 글을 넣었어요' : '그 칸을 내 글 자리로 정했어요 · 목록 위 「내 글」에 글을 넣으면 들어가요', 3000);
+        }, true);
         let inkTimer = 0;   // 11-08 글자색: 색 고르기를 움직이는 동안 칩 점은 바로 · 다시 그리기는 0.15초 묶음
         sheet.addEventListener('input', (e) => { const t = e.target; if (!t.matches?.('[data-ink]') || !sheetState) return; paintDot(t); clearTimeout(inkTimer); const item = sheetState.item; inkTimer = setTimeout(() => setInk(item, t.dataset.ink, t.value), 150); });
         sheet.addEventListener('click', (e) => { if (e.target.closest?.('[data-ink-reset]') && sheetState) resetInks(sheetState.item); });
-        wireTune(sheet, { current: () => sheetState, openItem: (id) => { const s = states.find(x => x.item.id === id); if (s) openSheet(s); }, say });
+        wireTune(sheet, { current: () => sheetState, openItem: (id) => { const it = allItems.find(x => x.id === id) || ownItems.find(x => x.id === id); if (!it) return false; openSheet(stateOf(it)); return true; }, say });   // 11-12 아직 카드를 안 만든 틀도(완성 프리셋 파일에서 온 것)
         sheet.addEventListener('close', () => { const st = sheetState; sheetState = null; sheet.querySelector('.mart-sheet-body').replaceChildren(); st?.el.querySelector('.mart-preview')?.focus({ preventScroll: true }); });
     }
     sheetState = state;
     const { item } = state;
     sheet.querySelector('#mart-sheet-title').innerHTML = `${glyphHtml(item)}<span>${esc(item.name || item.label)}</span>${favHtml(item)}`;
     if (item.accent) sheet.style.setProperty('--accent', item.accent); else sheet.style.removeProperty('--accent');   // 담기 단추 색 = 그 글꾸 강조색
-    sheet.querySelector('.mart-sheet-meta').innerHTML = `${tagsHtml(item)}${designsHtml(item)}<p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}`;   // 11-10 디자인 넘기기
+    sheet.querySelector('.mart-sheet-meta').innerHTML = `${tagsHtml(item)}${designsHtml(item)}<p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}${item.own && item.warn.length ? `<details class="mart-own-check"><summary>깡통에 올리면</summary>${ownWarnHtml(item.warn)}</details>` : ''}`;   // 11-10 디자인 넘기기 · 11-12 내 글꾸 점검
     const body = sheet.querySelector('.mart-sheet-body');
-    body.innerHTML = `<div class="mart-sheet-tune">${tuneHtml(item)}</div><div class="mart-sheet-preview">${item.preview ? sheetPreview(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div><div class="mart-sheet-inks">${item.preview && !toned(item) ? inksHtml(item) : ''}</div><div class="mart-sheet-mine">${mineBoxHtml(item)}</div>`;
+    body.innerHTML = `<div class="mart-sheet-tune">${tuneHtml(item)}</div><div class="mart-sheet-preview${site.mode !== 'mart' && (item.simple || item.own) ? ' is-site' : ''}">${item.preview ? sheetPreview(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div>${siteRowHtml(item)}<div class="mart-sheet-inks">${item.preview && !toned(item) ? inksHtml(item) : ''}</div><div class="mart-sheet-mine">${mineBoxHtml(item)}</div>`;
     paintTune();   // 11-08 글자색 칩 · 11-10 캐릭터 대사색으로 칠할 땐 칩 대신 그 색 하나
     if (!item.preview) {
         body.setAttribute('aria-busy', 'true');
@@ -745,7 +807,9 @@ function openSheet(state) {
         }, () => { if (sheetState === state) body.querySelector('.mart-sheet-preview').innerHTML = `<p class="mart-sheet-wait">${LOAD_FAIL}</p>`; })
             .finally(() => body.removeAttribute('aria-busy'));
     }
-    sheet.querySelector('.mart-sheet-foot').innerHTML = `<div class="mart-sheet-extra">${tasteHtml(item)}${randomMoreHtml()}</div>` + actionsHtml(item);
+    ownPicking = false;
+    const pickBtn = item.own && !item.simple ? `<button type="button" class="btn" data-act="own-pick" aria-pressed="false" title="${item.path ? '고른 자리를 풀고 자동으로' : '미리보기에서 내 글이 들어갈 칸을 눌러 골라요'}">${item.path ? '내 글 자리 · 자동으로' : '내 글 자리 고르기'}</button>` : '';
+    sheet.querySelector('.mart-sheet-foot').innerHTML = `<div class="mart-sheet-extra">${item.own ? pickBtn : `${tasteHtml(item)}${randomMoreHtml()}`}</div>` + actionsHtml(item);
     syncSheet();
     if (!sheet.open) sheet.showModal();
     paintTune();   // 창이 뜬 뒤 한 번 더 — 가로로 미는 칩 줄의 흐림 · 고른 칩 자리는 폭이 있어야 재요
@@ -755,6 +819,7 @@ function openSheet(state) {
 /** 11-11 조절 칸을 지금 값으로 맞추고 미리보기의 글 자리를 다시 걸어요(미리보기를 새로 그린 뒤마다) */
 function paintTune() {
     if (!sheet || !sheetState?.item.simple || !sheetState.item.preview) return;
+    if (site.mode !== 'mart') { stopEdit(); syncTune(sheet, sheetState.item); return; }
     armEdit(sheet.querySelector('.mart-sheet-preview'), sheetState.item);
     syncTune(sheet, sheetState.item);
 }
@@ -840,7 +905,7 @@ function fillCard(state) {
         if (state.filled) return;
         state.filled = true;
         seen?.unobserve(box);
-        box.querySelector('.mart-preview-in').innerHTML = previewOf(state);
+        box.querySelector('.mart-preview-in').innerHTML = viewOf(state);
         box.classList.remove('is-wait', 'is-fail');
     }, () => { box.classList.add('is-fail'); box.querySelector('.mart-ph b')?.setAttribute('data-fail', '미리보기를 못 받았어요 · 눌러 다시 받아요'); });
 }
@@ -857,13 +922,85 @@ function syncCard(state) {
 }
 cart.onChange(() => { states.forEach(syncCard); syncSheet(); });
 
+// ── 11-12 「내 글꾸」 — 분류 칩 「내 글꾸 n」을 고르면 목록 맨 앞에 붙여 넣기 칸 + 내가 넣은 글꾸 카드(테마 「+ 내 글꾸」 꼴 · 20개 · 60KB) ──
+let ownItems = [], ownBox = null;
+function refreshOwn() {
+    ownItems = ownList().map(ownItem);
+    for (const x of ownItems) x._text = textOf(x);
+    for (let i = states.length - 1; i >= 0; i--) if (states[i].item.own) { stateById.delete(states[i].item.id); states.splice(i, 1); }   // 이름 · 자리가 바뀌면 카드를 새로
+    picker?.count(OWN_CAT, ownItems.length);
+}
+const ownWarnHtml = (warn) => {
+    const by = lv => warn.filter(w => w.level === lv), list = (head, cls, ws) => (ws.length ? `<p class="mart-own-warn-h">${head}</p><ul class="mart-own-warn ${cls}">${ws.map(w => `<li>${esc(w.msg)}</li>`).join('')}</ul>` : '');
+    if (!warn.length) return '<p class="mart-own-ok">깡통에 올려도 지워지는 것이 없어 보여요</p>';
+    return list(`깡통에 올리면 바뀌는 것 ${by('die').length}개`, 'is-die', by('die')) + list('살펴볼 것', 'is-check', by('check')) + list('「HTML 복사」가 고쳐 주는 것', 'is-fix', by('fix'));
+};
+function ownAddEl() {
+    if (ownBox) return ownBox;
+    ownBox = document.createElement('section');
+    ownBox.className = 'mart-own-add';
+    ownBox.setAttribute('aria-label', '내 글꾸 넣기');
+    ownBox.innerHTML = `<h2 class="mart-own-h">내 글꾸 넣기 <small>남이 만든 글꾸 · 예전에 쓰던 글꾸 · 마트에서 복사한 글</small></h2>
+        <textarea class="field mart-own-text" rows="4" placeholder="공유받은 글꾸 HTML 이나 글꾸 마트에서 복사한 글을 붙여 넣어요" aria-label="글꾸 HTML"></textarea>
+        <label class="field-wrap mart-own-name"><input type="text" class="field" maxlength="24" placeholder="이름(비우면 「내 글꾸 n」)" aria-label="내 글꾸 이름"></label>
+        <div class="mart-tune-line mart-hscroll"><button type="button" class="btn" data-own="add">넣기</button><button type="button" class="chip" data-own="file" title=".html 파일을 골라 넣어요">.html 파일 고르기</button><input type="file" accept=".html,.htm,text/html" hidden></div>
+        <div class="mart-own-msg" role="status"><p class="mart-own-note">스크립트 · 누름 스크립트는 빼고 넣어요 · 마트에서 복사한 글이면 색 · 조절 칸 · 내 글 넣기가 다 돼요 · ${OWN_MAX}개 · 한 벌 60KB 까지 · 이 브라우저에만 남아요</p></div>`;
+    const ta = ownBox.querySelector('textarea'), msg = ownBox.querySelector('.mart-own-msg'), file = ownBox.querySelector('input[type=file]'), nameIn = ownBox.querySelector('.mart-own-name input');
+    const add = (raw) => {
+        const text = String(raw ?? '').trim();
+        if (!text) { say('글꾸 HTML 을 붙여 넣어 주세요', 2400); ta.focus(); return; }
+        if (text.length > OWN_BYTES) { say(`너무 길어요 · ${Math.round(OWN_BYTES / 1000)}KB 까지예요`, 3000); return; }
+        let clean = '';
+        try { clean = cleanOwn(text, sanitizeHtml); } catch { clean = ''; }
+        if (!clean.trim() || !/<[a-z]/i.test(clean)) { say('읽을 수 있는 HTML 이 없어요', 2600); return; }
+        const warn = kkLint(text), row = addOwn({ name: nameIn.value, html: clean, warn });
+        if (row === 'full') { say(`내 글꾸는 ${OWN_MAX}개까지예요 · 안 쓰는 것을 지워 주세요`, 3200); return; }
+        if (row === 'big') { say('소독한 글이 너무 길어요', 2600); return; }
+        if (row === 'quota' || !row) { say('이 브라우저에 더 저장할 칸이 없어요', 3000); return; }
+        ta.value = ''; nameIn.value = '';
+        refreshOwn(); applyFilter();
+        ownBox.querySelector('.mart-own-msg').innerHTML = `<p class="mart-own-done">「${esc(row.name)}」을 넣었어요 · ${row.simple ? '마트 꼴이라 색 · 조절 · 내 글 넣기가 다 돼요' : '붙여 넣은 그대로 보여요 · 내 글은 크게 보기 「내 글 자리 고르기」 자리에 들어가요'}</p>${ownWarnHtml(row.warn)}`;
+        say(`「${row.name}」을 내 글꾸에 넣었어요`, 2400);
+    };
+    ownBox.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-own]'); if (!b) return;
+        if (b.dataset.own === 'add') add(ta.value);
+        else if (b.dataset.own === 'file') file.click();
+    });
+    file.addEventListener('change', () => {
+        const f = file.files?.[0]; file.value = ''; if (!f) return;
+        if (f.size > OWN_BYTES * 2) { say('파일이 너무 커요', 2600); return; }
+        f.text().then((t) => { if (!nameIn.value) nameIn.value = f.name.replace(/\.html?$/i, '').slice(0, 24); add(t); }, () => say('파일을 못 읽었어요', 2600));
+    });
+    msg.dataset.ready = '1';
+    return ownBox;
+}
+/** 지우기는 두 번 눌러요(한 번 = 준비 · 3초 안에 한 번 더) */
+function ownDelete(state, b) {
+    if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더 누르면 지워요'; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = '지우기'; } }, 3000); return; }
+    forgetOwn(state.item.ownId);
+    if (sheet?.open && sheetState === state) sheet.close();
+    refreshOwn(); applyFilter();
+    say(`「${state.item.name}」을 지웠어요`, 2400);
+}
+/** 마트 꼴이 아닌 내 글꾸: 크게 보기 미리보기에서 내 글이 들어갈 칸을 눌러 골라요(다시 누르면 자동으로) */
+let ownPicking = false;
+function ownPick(state, b) {
+    if (state.item.path && !ownPicking) { setOwnPath(state.item.ownId, null); refreshOwn(); const next = ownItems.find(x => x.ownId === state.item.ownId); if (next) openSheet(stateOf(next)); say('내 글 자리를 자동으로 돌렸어요', 2400); return; }
+    if (site.mode !== 'mart') setSite('mart');   // 흉내 글은 칸 차례가 달라요
+    ownPicking = !ownPicking;
+    sheet?.querySelector('.mart-sheet-preview')?.classList.toggle('is-picking', ownPicking);
+    b.setAttribute('aria-pressed', String(ownPicking));
+    if (ownPicking) say('미리보기에서 내 글이 들어갈 칸을 눌러요', 2600);
+}
 function applyFilter() {
     const q = (search.value || '').trim().toLowerCase();
-    let list = allItems.filter(item => (!picker || picker.match(item.category, !!item.builtin)) && (styleActive === 'all' || styleOf(item) === styleActive) && (!q || item._text.includes(q)));
+    const ownCat = picker?.sel.cat === OWN_CAT;
+    let list = (ownCat ? ownItems : allItems).filter(item => (!picker || picker.match(item.category, !!item.builtin)) && (ownCat || styleActive === 'all' || styleOf(item) === styleActive) && (!q || item._text.includes(q)));
     const likeCat = picker?.sel.cat in LIKE_CHIPS ? picker.sel.cat : '';   // 11-11 즐겨찾기(누른 차례) · 최근(마지막에 쓴 것부터)
     if (likeCat) list = like[likeCat].map(id => list.find(x => x.id === id)).filter(Boolean);
     // 11-10 「모든 디자인」이면 컨셉(같은 이름) 하나에 카드 하나 — 고른 디자인이 걸러진 안에 있으면 그것, 아니면 처음 것
-    if (kind === 'geulkku' && styleActive === 'all') {
+    if (kind === 'geulkku' && styleActive === 'all' && !ownCat) {
         const by = new Map();
         for (const item of list) { const k = item.name; const had = by.get(k); if (!had || (conceptPick.get(k) === item.id)) by.set(k, item); }
         const keep = new Set(by.values());
@@ -871,10 +1008,12 @@ function applyFilter() {
     }
     const shown = list.length;
     cards.set(list);   // 첫 화면 몫만 카드로 · 나머지는 빈 칸(스크롤 가까이 오면 묶음으로)
+    if (ownCat) grid.prepend(ownAddEl());   // 붙여 넣기 칸은 늘 맨 앞(카드는 그 뒤 · 빈 칸 앞에 붙어요)
     const count = document.querySelector('.mart-count');
     if (count) count.textContent = `${shown}개`;
     const narrowed = styleActive !== 'all' || (picker && (picker.sel.group !== 'all' || picker.sel.cat !== 'all'));
-    if (!shown) grid.insertAdjacentHTML('beforeend', `<p class="mart-empty">${likeCat === 'fav' && !q ? '아직 없어요 · 카드 이름 옆 ☆ 를 누르면 여기 모여요' : likeCat === 'recent' && !q ? '아직 없어요 · HTML 복사 · 내려받기 · 글만 복사한 틀이 5개까지 여기 남아요' : `맞는 것이 없어요${narrowed ? ' · 거르기를 풀어 보세요' : ''}`}</p>`);
+    if (ownCat && !shown) grid.insertAdjacentHTML('beforeend', `<p class="mart-empty">${q ? '맞는 내 글꾸가 없어요' : '아직 없어요 · 위 칸에 글꾸 HTML 을 붙여 넣어요'}</p>`);
+    else if (!shown) grid.insertAdjacentHTML('beforeend', `<p class="mart-empty">${likeCat === 'fav' && !q ? '아직 없어요 · 카드 이름 옆 ☆ 를 누르면 여기 모여요' : likeCat === 'recent' && !q ? '아직 없어요 · HTML 복사 · 내려받기 · 글만 복사한 틀이 5개까지 여기 남아요' : `맞는 것이 없어요${narrowed ? ' · 거르기를 풀어 보세요' : ''}`}</p>`);
 }
 async function main() {
     if (kind === 'frames') {
@@ -898,7 +1037,8 @@ async function main() {
     const builtinCats = new Set(cats.filter(c => c.group === 'builtin').map(c => c.id));
     const moreBuiltin = shownItems.filter(x => x.builtin && !builtinCats.has(x.category)).length;
     if (moreBuiltin) cats.push({ id: BUILTIN_MORE, label: '내장 심플', n: moreBuiltin, group: 'builtin' });
-    picker = chipGroups({ groupsEl: document.querySelector('.mart-groups'), chipsEl: chips, cats, groups: GEULKKU_GROUPS, total: shownItems.length, onChange: applyFilter, extra: kind === 'geulkku' ? () => likeRows(shownItems) : null });
+    if (kind === 'geulkku') refreshOwn();
+    picker = chipGroups({ groupsEl: document.querySelector('.mart-groups'), chipsEl: chips, cats, groups: GEULKKU_GROUPS, total: shownItems.length, onChange: applyFilter, extra: kind === 'geulkku' ? () => [...likeRows(shownItems), [OWN_CAT, '내 글꾸', ownItems.length]] : null });
     // 그림체(글꾸): 둘 이상일 때만 칩 줄을 보여요 — 하나뿐(지금은 기본만)이면 줄째 숨겨요
     const styleSeg = document.querySelector('[data-filter="style"]');
     if (styleSeg) {

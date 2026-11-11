@@ -4,12 +4,12 @@
 //   - 처음엔 고른 캐릭터가 든 묶음만 펴요. 머리에는 그 묶음에서 고른 캐릭터의 색 점 · 이름이 보여서 접어도 알 수 있어요.
 //   - 「채팅 붙여 넣어 대사색 찾기」: 실리태번 화면에서 복사한 채팅을 붙이면 대사 글자색(인라인 color)을 읽어 그 캐릭터를 골라요.
 //   - 밤 · 낮: 틀 바탕.
-import { toneState, setTone, castPicked, savedCast, CAST_GROUPS, castList, rememberCast, forgetCast, PAPER_COLORS, TEXTURES, MIX_ENABLED } from './tone-state.js?v=20261111z';
+import { toneState, setTone, castPicked, savedCast, CAST_GROUPS, castList, rememberCast, forgetCast, PAPER_COLORS, TEXTURES, MIX_ENABLED } from './tone-state.js?v=20261112a';
 /** 11-11 「바탕(종이 색 · 질감)」 칸은 화면에서 숨겨요 — 새 글꾸 틀에는 안 걸려 눌러도 바뀌는 게 없어서요(코드 · 자료는 그대로 · 나중에 격자 · 질감을 한꺼번에 되살릴 때 true) */
 const PAPER_ENABLED = false;
 import { dialogueColors } from './tone-geulkku.js?v=20261110v';
-import { mineOn, mineText, mineInfo, setMine as setMineRaw } from './mine-text.js?v=20261111z';
-import { dropMineEdits } from './tune.js?v=20261111z';
+import { mineOn, mineText, mineInfo, setMine as setMineRaw } from './mine-text.js?v=20261112a';
+import { dropMineEdits } from './tune.js?v=20261112a';
 /** 11-11 독립 점검 1 — 내 글이 바뀌면 옛 글에서 고친 줄 · 숨긴 줄을 먼저 비우고(칸 번호가 옛 글 것) 바꿔요 */
 const setMine = (next = {}) => { if ('text' in next && String(next.text ?? '') !== mineText()) dropMineEdits(); return setMineRaw(next); };   // 11-11 「내 글 넣기」 — 붙여 넣은 내 글로 모든 카드를 그려요
 
@@ -46,7 +46,7 @@ export function mountCast(box, { say = () => {} } = {}) {
     /** 11-11 「내 글」 칸: 붙여 넣으면 모든 카드가 내 글로(테마 · 예전 마트 「📝 내 로그로 보기」처럼) · 「견본 글로」 되돌리기 · 「지우기」 · 이 브라우저에 기억 */
     const textPanel = () => {
         const info = mineInfo(), on = mineOn();
-        const status = on ? `내 글로 보는 중 · 화자 ${esc(info.names.slice(0, 3).join(' · '))}${info.names.length > 3 ? ` 외 ${info.names.length - 3}` : ''} · 대사 ${info.dialogue}줄${info.cut ? ' · 길어서 앞부분만 넣었어요' : ''}` : mineText().trim() ? '넣어 둔 글이 있어요 · 「내 글로 보기」를 누르면 카드가 바뀌어요' : '견본 글로 보는 중';
+        const status = on ? `내 글로 보는 중 · 화자 ${esc(info.names.slice(0, 3).join(' · '))}${info.names.length > 3 ? ` 외 ${info.names.length - 3}` : ''} · 대사 ${info.dialogue}줄${info.cut ? ' · 길어서 앞부분만 넣었어요' : ''}${!info.generic && info.names.length >= 3 ? ' · 셋째 화자 색은 크게 보기 「색」의 「셋째」에서 골라요' : ''}` : mineText().trim() ? '넣어 둔 글이 있어요 · 「내 글로 보기」를 누르면 카드가 바뀌어요' : '견본 글로 보는 중';
         return `<div class="mart-cast-panel" id="mart-cast-panel" data-who="text"><p class="mart-cast-who"><b>내 글</b>을 붙여 넣으면 모든 카드가 내 글로 바뀌어요 · 「이름: 대사」 줄 · 실리태번 화면에서 복사한 채팅 · 그냥 글 모두 돼요 · 대사색이 있으면 깡통 · 깡캐 색도 찾아요</p>
             <textarea class="field mart-mine-text" rows="4" maxlength="200000" placeholder="여기에 붙여 넣어요" aria-label="내 글">${esc(mineText())}</textarea>
             <div class="mart-tune-line mart-hscroll mart-mine-btns"><button type="button" class="btn" data-mine="apply">내 글로 보기</button><button type="button" class="chip" data-mine="sample" aria-pressed="${!on}">견본 글로</button><button type="button" class="chip" data-mine="clear">지우기</button></div>

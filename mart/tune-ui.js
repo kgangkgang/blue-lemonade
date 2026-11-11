@@ -3,13 +3,13 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone, ownOf } from './tone-state.js?v=20261111z';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111z';
-import { fieldsOf, valsHtml, valOk } from './custom.js?v=20261111z';   // 11-11 「이 틀」 값 칸
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111z';
-import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111z';
-import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111z';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111z';
+import { toneState, setTone, ownOf } from './tone-state.js?v=20261112a';
+import { speakerPair, hasPropTone, hasOwnTone, simpleFrameInfo } from './simple-frames.js?v=20261112a';
+import { fieldsOf, valsHtml, valOk } from './custom.js?v=20261112a';   // 11-11 「이 틀」 값 칸
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine, setsFile, readSets, addSets } from './tune.js?v=20261112a';
+import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261112a';
+import { mineOn, mineInfo, applyMine, storyOf } from './mine-text.js?v=20261112a';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261112a';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -39,10 +39,20 @@ export function showOn(row) {
 /** 그 안의 칩 줄 전부: 흐림을 맞추고(show 면 고른 칩도 보이게) */
 export function tidyRows(root, show = false) { for (const row of root?.querySelectorAll('.mart-hscroll') || []) (show ? showOn : fadeRow)(row); }
 
+/** 11-12 셋째 화자 칸을 보일 때 — 내 글이 켜져 있고 화자가 셋 이상(이름 없는 그냥 글은 둘로 번갈아서 빼요) */
+const thirdOn = () => { const m = mineOn() && mineInfo(); return !!m && !m.generic && (m.names || []).length >= 3; };
+/** 셋째 화자를 이 틀이 어떻게 받는지 — 'none' 내 글이 안 들어가는 틀 · 'band' 대사 띠를 그림으로 그어 띠 색은 깡캐 그대로 · '' 다 받음 */
+function thirdSeat(item) {
+    const html = item.preview || '';
+    if (!storyOf(html)) return 'none';
+    const info = simpleFrameInfo(html);
+    return info?.imageBand ? 'band' : '';
+}
 /** 그 틀에 보일 색 칩 목록 — [{ key, label, title }] (틀에 있는 것만 · 틀이 못 받는 칸은 안 보여요) */
 function chipsOf(item) {
     const html = item.preview || '';
     const out = [{ key: 'k', label: '깡통', title: '깡통(첫째 화자) 색 — 목록 위 「깡통」 칸과 같은 값이에요' }, { key: 'k2', label: '깡캐', title: '깡캐(둘째 화자) 색 — 목록 위 「깡캐」 칸과 같은 값이에요' }];
+    if (thirdOn()) out.push({ key: 'k3', label: '셋째', title: '셋째 화자부터 색 — 내 글에 화자가 셋 이상일 때만 · 안 고르면 깡캐 모습 그대로예요' });
     if (hasPropTone(html)) out.push({ key: 'prop', label: '소품', title: '소품 색 — 안 고르면 깡통 색을 따라가요' });
     for (const r of TUNE_ROLES) if (new RegExp(`class="(?:[^"]*\\s)?${r.cls}(?:\\s[^"]*)?"`).test(html)) out.push({ key: r.role, label: r.label, title: `${r.label} 글자색 — 밤 · 낮 판마다 따로 기억해요` });
     return out;
@@ -51,7 +61,7 @@ function chipsOf(item) {
 function valuesOf(item, previewRoot) {
     const t = tuneOf(item.id), pair = speakerPair(item.preview || ''), mode = toneState.mode;
     const k = toneState.on ? (toneState.k || NEUTRAL) : (pair.main || NEUTRAL);
-    const out = { k: { value: k, changed: toneState.on }, k2: { value: toneState.k2 || pair.other || NEUTRAL, changed: !!toneState.k2 }, prop: { value: t?.prop || k, changed: !!t?.prop } };
+    const out = { k: { value: k, changed: toneState.on }, k2: { value: toneState.k2 || pair.other || NEUTRAL, changed: !!toneState.k2 }, k3: { value: toneState.k3 || toneState.k2 || pair.other || NEUTRAL, changed: !!toneState.k3 }, prop: { value: t?.prop || k, changed: !!t?.prop } };
     for (const r of TUNE_ROLES) {
         const own = t?.inks?.[mode]?.[r.role];
         const el = previewRoot?.querySelector(`.gk ${r.sel}`);
@@ -112,7 +122,9 @@ function tabBody(item) {
     if (tab === 'vals') return valsHtml(fieldsOf(item.preview), tuneOf(item.id)?.vals || {});
     if (tab === 'color') {
         const chips = chipsOf(item).map(c => `<span class="mart-tune-chip"><label class="mart-ink" title="${esc(c.title)}"><input type="color" data-tune="${c.key}" value="${NEUTRAL}" aria-label="${esc(c.label)} 색"><span class="mart-ink-dot" aria-hidden="true"></span>${esc(c.label)}</label>${undoBtn('data-tune-reset', c.key, c.label)}</span>`).join('');
-        return `<div class="mart-inks mart-tune-colors mart-hscroll" role="group" aria-label="색 — 눌러서 바꿔요">${chips}</div>
+        const seat = thirdOn() ? thirdSeat(item) : '';
+        const hint3 = seat === 'none' ? '<p class="mart-tune-hint">이 틀은 내 글을 넣을 자리를 몰라서 셋째 화자 색이 안 보여요 · 견본 글 그대로예요</p>' : seat === 'band' ? '<p class="mart-tune-hint">이 틀은 대사 띠를 그림으로 그어서 셋째 화자는 이름 · 글자 색만 바뀌고 띠는 깡캐 색이에요</p>' : '';
+        return `<div class="mart-inks mart-tune-colors mart-hscroll" role="group" aria-label="색 — 눌러서 바꿔요">${chips}</div>${hint3}
             <div class="mart-tune-line mart-hscroll"><span class="mart-seg" role="group" aria-label="밤낮"><button type="button" class="chip" data-tune-mode="dark" aria-pressed="false">밤</button><button type="button" class="chip" data-tune-mode="light" aria-pressed="false">낮</button></span>${hasOwnTone(item.preview) ? '<span class="mart-seg mart-tune-own" role="group" aria-label="소품 색"><button type="button" class="chip" data-tune-own="1" aria-pressed="true">소품 기본 색</button><button type="button" class="chip" data-tune-own="0" aria-pressed="false">소품 캐릭터 색</button></span>' : ''}</div>`;
     }
     const fields = LOOK_FIELDS.filter(f => f.tab === tab && whenOk(f)), html = [];
@@ -144,28 +156,35 @@ const presetsHtml = () => {
 };
 const mineHtml = (item) => {
     const list = mineList();
-    if (!list.length) return '<p class="mart-tune-empty">아직 없어요 · 틀과 고쳐 쓴 글까지 통째로 기억해요</p>';
-    return `<ul class="mart-tune-mine mart-hscroll">${list.map(x => `<li${x.frame === item.id ? ' class="is-here"' : ''}><button type="button" class="mart-tune-load" data-mine-load="${esc(x.id)}" title="불러오기"><i class="mart-ink-dot" style="background:${esc(dotOf(x))}" aria-hidden="true"></i><b>${esc(x.name)}</b><span>${esc(x.frameName || x.frame)}</span></button><button type="button" class="mart-cast-x" data-mine-forget="${esc(x.id)}" aria-label="${esc(x.name)} 지우기" title="지우기">×</button></li>`).join('')}</ul>`;
+    if (!list.length) return '<p class="mart-tune-empty">아직 없어요 · 이 틀과 색 · 글 모양 · 값 · 고쳐 쓴 글까지 통째로 기억해요</p>';
+    return `<ul class="mart-tune-mine mart-hscroll">${list.map(x => `<li${x.frame === item.id ? ' class="is-here"' : ''}><button type="button" class="mart-tune-load" data-mine-load="${esc(x.id)}" title="불러오기"><i class="mart-ink-dot" style="background:${esc(dotOf(x))}" aria-hidden="true"></i><b>${esc(x.name)}</b><span>${esc(x.frameName || x.frame)}</span></button><button type="button" class="mart-cast-x mart-set-down" data-mine-down="${esc(x.id)}" aria-label="${esc(x.name)} 파일로 내려받기" title="파일로 내려받기"></button><button type="button" class="mart-cast-x" data-mine-forget="${esc(x.id)}" aria-label="${esc(x.name)} 지우기" title="지우기">×</button></li>`).join('')}</ul>`;
 };
-/** 「내 프리셋」 · 「내 글꾸」 칸(미리보기 아래) */
+/** 11-12 완성 프리셋 파일 받기 */
+function downloadSets(rows, name) {
+    const blob = new Blob([setsFile(rows)], { type: 'application/json' });
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `완성프리셋-${String(name || '모두').replace(/[\\/:*?"<>|]+/g, ' ').trim()}.bl-mart-set.json`, hidden: true });
+    document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+/** 「내 프리셋」 · 「완성 프리셋」 칸(미리보기 아래) */
 export function mineBoxHtml(item) {
     if (!item?.simple || !item.preview) return '';
-    return `<section class="mart-tune-save" aria-label="가져가기 · 내 프리셋"><h3 class="mart-tune-h">가져가기 <small>HTML 복사 말고도</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-act="download" title="복사 글과 같은 HTML 을 .html 파일로">⬇ 내려받기(.html)</button><button type="button" class="chip" data-act="text" title="틀 없이 글만(마크다운) 복사">글만 복사</button></div>
+    return `<section class="mart-tune-save" aria-label="가져가기 · 내 프리셋"><h3 class="mart-tune-h">가져가기 <small>HTML 복사 말고도</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-act="download" title="복사 글과 같은 HTML 을 .html 파일로">내려받기(.html)</button><button type="button" class="chip" data-act="text" title="틀 없이 글만(마크다운) 복사">글만 복사</button></div>
         <h3 class="mart-tune-h">내 프리셋 <small>색 + 글 모양 · 어느 틀에든</small></h3>
         <form class="mart-tune-form" data-form="preset"><label class="field-wrap"><input type="text" class="field" name="name" maxlength="24" placeholder="프리셋 이름" aria-label="프리셋 이름" required></label><button type="submit" class="btn">프리셋 저장</button></form>
         <div class="mart-preset-list">${presetsHtml()}</div>
         <div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-preset-reset>기본으로</button><button type="button" class="chip" data-preset-export>내보내기</button><button type="button" class="chip" data-preset-io aria-expanded="false">가져오기</button></div>
         <div class="mart-preset-io" hidden><textarea class="field" rows="2" placeholder="프리셋 글자(BLM1.…)나 블루레몬 테마 스타일 코드(BLS1.…) · 프리셋 파일 내용을 붙여 넣어요" aria-label="프리셋 글자 붙여 넣기"></textarea><button type="button" class="btn" data-preset-import>가져와서 입히기</button></div>
-        <h3 class="mart-tune-h">내 글꾸 <small>이 틀 + 고쳐 쓴 글까지</small></h3>
-        <form class="mart-tune-form" data-form="mine"><label class="field-wrap"><input type="text" class="field" name="name" maxlength="24" placeholder="내 글꾸 이름" aria-label="내 글꾸 이름" required></label><button type="submit" class="btn">내 글꾸에 저장</button></form>
-        <div class="mart-tune-list">${mineHtml(item)}</div></section>`;
+        <h3 class="mart-tune-h">완성 프리셋 <small>이 틀 + 색 + 글 모양 + 값 + 고친 글</small></h3>
+        <form class="mart-tune-form" data-form="mine"><label class="field-wrap"><input type="text" class="field" name="name" maxlength="24" placeholder="완성 프리셋 이름" aria-label="완성 프리셋 이름" required></label><button type="submit" class="btn">완성 프리셋 저장</button></form>
+        <div class="mart-tune-list">${mineHtml(item)}</div>
+        <div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-sets-down title="기억한 완성 프리셋을 파일 하나로">모두 내려받기</button><button type="button" class="chip" data-sets-pick title="내려받은 완성 프리셋 파일(.json)을 골라 가져와요">파일 가져오기</button><input type="file" class="mart-sets-file" accept=".json,application/json" hidden></div></section>`;
 }
 /** 조절 칸을 지금 값으로 맞춰요 — 칸을 새로 그리지 않아요(색 고르기 창 · 끌고 있는 슬라이더가 안 날아가게) */
 // ── 11-11 되돌리기 · 다시하기 — 테마 로그 복사 편집기(hist: 스냅샷 50 · 0.5초 묶음)와 같은 꼴 ──
 //   한 칸 = 이 틀의 조절 값(색 · 고쳐 쓴 글 · 대사 줄) + 글 모양 + 깡통 · 깡캐 · 밤낮. 크게 보기를 다른 틀로 열면 새로 시작해요
 const HIST_MAX = 50;
 const hist = { id: null, stack: [], at: -1, timer: 0, restoring: false };
-const snapOf = item => JSON.stringify({ tune: tuneOf(item.id), look: lookNow(), words: wordsNow(), tone: { on: toneState.on, k: toneState.k, name: toneState.name, k2: toneState.k2, name2: toneState.name2, mode: toneState.mode } });
+const snapOf = item => JSON.stringify({ tune: tuneOf(item.id), look: lookNow(), words: wordsNow(), tone: { on: toneState.on, k: toneState.k, name: toneState.name, k2: toneState.k2, name2: toneState.name2, k3: toneState.k3, name3: toneState.name3, mode: toneState.mode } });
 function histPush(item) {
     clearTimeout(hist.timer); hist.timer = 0;
     const s = snapOf(item);
@@ -198,7 +217,7 @@ function histMove(item, step) {
         setTune(item.id, s.tune);
         setLook(s.look);
         if (s.words) setWords(s.words);
-        setTone(s.tone.on ? { on: true, k: s.tone.k, name: s.tone.name, k2: s.tone.k2, name2: s.tone.name2, mode: s.tone.mode } : { on: false, k2: s.tone.k2, name2: s.tone.name2, mode: s.tone.mode });
+        setTone({ ...(s.tone.on ? { on: true, k: s.tone.k, name: s.tone.name } : { on: false }), k2: s.tone.k2, name2: s.tone.name2, k3: s.tone.k3 ?? null, name3: s.tone.name3 ?? '', mode: s.tone.mode });
     } finally { hist.restoring = false; }
     hist.at = to;
     return true;
@@ -244,7 +263,7 @@ export function syncTune(sheet, item) {
     box.querySelector('[data-tune-edit]')?.setAttribute('aria-pressed', String(editing));
     for (const sb of box.querySelectorAll('[data-spoiler]')) sb.hidden = !editing;
     const hint = box.querySelector('[data-edit-hint]'); if (hint) hint.hidden = !editing;
-    const all = box.querySelector('[data-tune-reset="all"]'); if (all) all.hidden = !(t || toneState.on || toneState.k2 || lookNow());
+    const all = box.querySelector('[data-tune-reset="all"]'); if (all) all.hidden = !(t || toneState.on || toneState.k2 || toneState.k3 || lookNow());
     const laid = box.clientWidth > 0;   // 창이 뜨기 전(폭 0)에는 건너뛰고, 뜬 뒤 다시 맞춰요
     tidyRows(box, laid && box.dataset.shown !== tab); if (laid) box.dataset.shown = tab;   // 묶음을 바꾼 직후에만 고른 칩을 보이게(그 뒤에는 미는 대로 둬요)
 }
@@ -256,6 +275,8 @@ export const syncMine = (sheet, item) => {
     tidyRows(sheet.querySelector('.mart-tune-save'), true);
 };
 
+/** 11-12 「글 고치기」 끄기(붙일 곳 흉내로 바꿀 때 — 흉내 글은 칸 번호가 달라요) */
+export function stopEdit() { editing = false; }
 /** 미리보기의 글 자리를 고쳐 쓸 수 있게(「글 고치기」가 켜져 있을 때만) — 자리 번호는 tune.js editables 와 같은 차례 */
 export function armEdit(previewRoot, item) {
     if (!previewRoot || !item?.simple) return;
@@ -303,6 +324,7 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if (!HEX.test(hex)) return;
         if (key === 'k') setTone({ on: true, k: hex, name: '' });
         else if (key === 'k2') setTone({ k2: hex, name2: '' });
+        else if (key === 'k3') setTone({ k3: hex, name3: '' });
         else { const t = clone(tuneOf(item.id)); if (key === 'prop') t.prop = hex; else ((t.inks ??= {})[toneState.mode] ??= {})[key] = hex; setTune(item.id, t); }
     };
     const redraw = (item) => { const body = sheet.querySelector('.mart-tune-body'); if (body) body.innerHTML = tabBody(item); const box = sheet.querySelector('.mart-tune'); if (box) delete box.dataset.shown; syncTune(sheet, item); };
@@ -452,9 +474,10 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if ((b = q('[data-look-target]'))) { const cur = { ...(lookValue('shadow.targets') || { dialogue: true }) }; if (cur[b.dataset.lookTarget]) delete cur[b.dataset.lookTarget]; else cur[b.dataset.lookTarget] = true; setLookValue('shadow.targets', Object.keys(cur).length ? cur : null); return; }
         if ((b = q('[data-tune-reset]'))) {
             const key = b.dataset.tuneReset;
-            if (key === 'all') { setTune(item.id, null); setLook(null); setTone({ on: false, k2: null }); markPreset(''); syncMine(sheet, item); return; }
+            if (key === 'all') { setTune(item.id, null); setLook(null); setTone({ on: false, k2: null, k3: null }); markPreset(''); syncMine(sheet, item); return; }
             if (key === 'k') { setTone({ on: false }); return; }
             if (key === 'k2') { setTone({ k2: null }); return; }
+            if (key === 'k3') { setTone({ k3: null }); return; }
             const t = clone(tuneOf(item.id));
             if (key === 'prop') delete t.prop; else if (t.inks?.[toneState.mode]) delete t.inks[toneState.mode][key];
             setTune(item.id, t); return;
@@ -483,17 +506,32 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
             say(got.from === 'theme' ? `테마 스타일에서 글 모양을 가져와 「${row.name}」로 기억하고 입혔어요(글꼴 · 색은 빼고요)` : `프리셋 「${row.name}」을 가져와 입혔어요`, 3600);
             return;
         }
-        // ── 내 글꾸 ──
-        if ((b = q('[data-mine-load]'))) {
-            const x = mineList().find(v => v.id === b.dataset.mineLoad); if (!x) return;
-            setTune(x.frame, x.tune);
-            setTone(x.tone.on ? { on: true, k: x.tone.k, name: x.tone.name, k2: x.tone.k2, name2: x.tone.name2, mode: x.tone.mode } : { on: false, k2: x.tone.k2, name2: x.tone.name2, mode: x.tone.mode });
-            if (x.look !== undefined) setLook(x.look);
-            if (x.frame !== item.id) openItem(x.frame);
-            say(`「${x.name}」을 불러왔어요`, 2400);
-            return;
-        }
+        // ── 완성 프리셋(옛 이름 「내 글꾸」 — 기억 칸은 그대로 bl-mart-mine-v1) ──
+        if ((b = q('[data-mine-load]'))) { loadSet(item, mineList().find(v => v.id === b.dataset.mineLoad)); return; }
+        if ((b = q('[data-mine-down]'))) { const x = mineList().find(v => v.id === b.dataset.mineDown); if (x) { downloadSets([x], x.name); say(`「${x.name}」을 파일로 받았어요 · 다른 기기에서 「파일 가져오기」`, 2800); } return; }
+        if (q('[data-sets-down]')) { const list = mineList(); if (!list.length) { say('기억한 완성 프리셋이 없어요', 2400); return; } downloadSets(list, `${list.length}개`); say(`완성 프리셋 ${list.length}개를 파일 하나로 받았어요`, 2800); return; }
+        if (q('[data-sets-pick]')) { sheet.querySelector('.mart-sets-file')?.click(); return; }
         if ((b = q('[data-mine-forget]'))) { forgetMine(b.dataset.mineForget); syncMine(sheet, item); }
+    });
+    /** 완성 프리셋 불러오기 — 그 틀의 조절 값 · 깡통 · 깡캐 · 셋째 · 밤낮 · 글 모양을 그대로 · 다른 틀이면 그 틀을 열어요 */
+    const loadSet = (item, x) => {
+        if (!x) return;
+        setTune(x.frame, x.tune);
+        setTone({ ...(x.tone.on ? { on: true, k: x.tone.k, name: x.tone.name } : { on: false }), k2: x.tone.k2, name2: x.tone.name2, k3: x.tone.k3 ?? null, name3: x.tone.name3 ?? '', mode: x.tone.mode });
+        if (x.look !== undefined) setLook(x.look);
+        if (x.frame !== item.id && !openItem(x.frame)) { say(`「${x.name}」의 틀(${x.frameName || x.frame})이 지금 목록에 없어요 · 값은 기억해 두었어요`, 3400); return; }
+        say(`「${x.name}」을 불러왔어요`, 2400);
+    };
+    sheet.addEventListener('change', (e) => {
+        const input = e.target.closest?.('.mart-sets-file'); if (!input) return;
+        const f = input.files?.[0]; input.value = ''; const item = current()?.item; if (!f || !item) return;
+        if (f.size > 2e6) { say('파일이 너무 커요', 2400); return; }
+        f.text().then((text) => {
+            const rows = addSets(readSets(text));
+            if (!rows.length) { say('완성 프리셋 파일이 아니에요(.bl-mart-set.json)', 3000); return; }
+            syncMine(sheet, item);
+            if (rows.length === 1) loadSet(item, rows[0]); else say(`완성 프리셋 ${rows.length}개를 가져왔어요 · 목록에서 눌러 불러와요`, 3000);
+        }, () => say('파일을 못 읽었어요', 2400));
     });
     sheet.addEventListener('submit', (e) => {
         const f = e.target.closest?.('.mart-tune-form'); if (!f) return;
@@ -514,9 +552,9 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
             say(`프리셋 「${row.name}」을 기억했어요 · 어느 틀에서든 눌러 입혀요`, 3000);
             return;
         }
-        const row = saveMine({ frame: item.id, frameName: item.name || item.label, name: f.name.value, tone: { on: toneState.on, k: toneState.k, name: toneState.name, k2: toneState.k2, name2: toneState.name2, mode: toneState.mode, none: toneState.none }, tune: tuneOf(item.id), look: lookNow() });
+        const row = saveMine({ frame: item.id, frameName: item.name || item.label, name: f.name.value, tone: { on: toneState.on, k: toneState.k, name: toneState.name, k2: toneState.k2, name2: toneState.name2, k3: toneState.k3, name3: toneState.name3, mode: toneState.mode, none: toneState.none }, tune: tuneOf(item.id), look: lookNow() });
         if (!row) { say('이름을 넣어 주세요', 2400); return; }
         f.name.value = ''; syncMine(sheet, item);
-        say(`「${row.name}」을 내 글꾸에 기억했어요 · 이 브라우저에 남아요`, 3000);
+        say(`「${row.name}」을 완성 프리셋으로 기억했어요 · 이 브라우저에 남아요 · 파일로도 받아 가요`, 3000);
     });
 }

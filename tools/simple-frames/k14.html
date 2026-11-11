@@ -92,6 +92,10 @@
 .gk-k14.gk-k14.gk-k14 audio::-webkit-media-controls-volume-control-container{align-self:center!important;margin:0!important;padding:0!important}
 .gk-k14.gk-k14.gk-k14 audio::-webkit-media-controls-current-time-display,.gk-k14.gk-k14.gk-k14 audio::-webkit-media-controls-time-remaining-display{font-size:12px!important}
 .gk-k14.gk-noaud .gk-sd{display:none}
+.gk-k14 .gk-lg>.gk-dl{transform-origin:0 50%}
+@keyframes gk-k14-gm{0%{transform:none;opacity:1;animation-timing-function:ease-out}25%{transform:translateX(4px) rotate(-.8deg);animation-timing-function:ease-in-out}58.33%{transform:translateX(-2px) rotate(.5deg);animation-timing-function:ease-in-out}100%{transform:none;opacity:1}}
+.gk-k14:has(.gk-kx[open]) .gk-lg>.gk-dl{animation:gk-k14-gm 1.2s linear 0.5s 1}
+.gk-k14:has(.gk-kx[open]) .gk-lg>.gk-dl~.gk-dl{animation:gk-k14-gm 1.2s linear 0.75s 1}
 
 .gk-k14.gk-tl .gk-nm.gk-nA{color:#0a69ae;-webkit-text-fill-color:#0a69ae}
 .gk-k14.gk-td .gk-nm.gk-nA{color:#3aa7ff;-webkit-text-fill-color:#3aa7ff}
