@@ -4,11 +4,11 @@
 //   - 처음엔 고른 캐릭터가 든 묶음만 펴요. 머리에는 그 묶음에서 고른 캐릭터의 색 점 · 이름이 보여서 접어도 알 수 있어요.
 //   - 「채팅 붙여 넣어 대사색 찾기」: 실리태번 화면에서 복사한 채팅을 붙이면 대사 글자색(인라인 color)을 읽어 그 캐릭터를 골라요.
 //   - 밤 · 낮: 틀 바탕.
-import { toneState, setTone, savedCast, CAST_GROUPS, castList, rememberCast, forgetCast, PAPER_COLORS, TEXTURES, MIX_ENABLED } from './tone-state.js?v=20261111s';
+import { toneState, setTone, castPicked, savedCast, CAST_GROUPS, castList, rememberCast, forgetCast, PAPER_COLORS, TEXTURES, MIX_ENABLED } from './tone-state.js?v=20261111v';
 /** 11-11 「바탕(종이 색 · 질감)」 칸은 화면에서 숨겨요 — 새 글꾸 틀에는 안 걸려 눌러도 바뀌는 게 없어서요(코드 · 자료는 그대로 · 나중에 격자 · 질감을 한꺼번에 되살릴 때 true) */
 const PAPER_ENABLED = false;
 import { dialogueColors } from './tone-geulkku.js?v=20261110v';
-import { mineOn, mineText, mineInfo, setMine } from './mine-text.js?v=20261111s';   // 11-11 「내 글 넣기」 — 붙여 넣은 내 글로 모든 카드를 그려요
+import { mineOn, mineText, mineInfo, setMine } from './mine-text.js?v=20261111v';   // 11-11 「내 글 넣기」 — 붙여 넣은 내 글로 모든 카드를 그려요
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const same = (a, b) => String(a || '').toLowerCase() === String(b || '').toLowerCase();
@@ -85,7 +85,7 @@ export function mountCast(box, { say = () => {} } = {}) {
         const pc = PAPER_COLORS[toneState.paper] || PAPER_COLORS.white, tx = TEXTURES[toneState.texture] || TEXTURES.plain;
         const sw = id => { const p = PAPER_COLORS[id][toneState.mode === 'light' ? 'light' : 'dark']; return `background:${p[0]};box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)`; };
         const paperPanel = PAPER_ENABLED && paperOpen ? `<div class="mart-cast-panel" id="mart-paper-panel"><div class="mart-cast-sub2">종이 색</div><div class="mart-cast-list" role="radiogroup" aria-label="종이 색">${Object.entries(PAPER_COLORS).map(([id, p]) => `<label class="mart-cast-r"><input type="radio" name="bl-paper" value="${id}"${id === toneState.paper ? ' checked' : ''}><i class="mart-ink-dot" style="${sw(id)}" aria-hidden="true"></i><span>${esc(p.label)}</span></label>`).join('')}</div><div class="mart-cast-sub2">질감</div><div class="mart-cast-list" role="radiogroup" aria-label="질감">${Object.entries(TEXTURES).filter(([, t]) => !t.hidden).map(([id, t]) => `<label class="mart-cast-r"><input type="radio" name="bl-texture" value="${id}"${id === toneState.texture ? ' checked' : ''}><span>${esc(t.label)}</span></label>`).join('')}</div></div>` : '';
-        box.innerHTML = `<div class="mart-cast-head"><span class="mart-cast-slots">${toggle('main', '깡통', now)}${toggle('other', '깡캐', now2)}${toggle('text', '내 글', { name: mineOn() ? '넣음' : '견본', dots: [] })}</span>${MIX_ENABLED ? `<button type="button" class="chip mart-cast-mix" data-mix aria-pressed="${toneState.mix}" title="캐릭터를 2~3명 골라 포인트 색을 그라데이션으로 섞어요">혼합</button>` : ''}${PAPER_ENABLED ? `<button type="button" class="mart-cast-toggle" data-paper aria-expanded="${paperOpen}" aria-controls="mart-paper-panel"><span>바탕:</span><i class="mart-ink-dot" style="${sw(toneState.paper)}" aria-hidden="true"></i><b>${esc(pc.label)} · ${esc(tx.label)}</b><span class="mart-cast-caret" aria-hidden="true">${paperOpen ? '▴' : '▾'}</span></button>` : ''}<span class="mart-seg mart-cast-mode" role="group" aria-label="밤낮"><button type="button" class="chip" data-mode="dark" aria-pressed="${toneState.mode === 'dark'}">밤</button><button type="button" class="chip" data-mode="light" aria-pressed="${toneState.mode === 'light'}">낮</button></span></div>
+        box.innerHTML = `<div class="mart-cast-head"><span class="mart-cast-slots">${toggle('main', '깡통', now)}<button type="button" class="ibtn mart-cast-swap" data-swap aria-label="깡통 · 깡캐 바꾸기" title="깡통 · 깡캐 바꾸기 — 두 칸의 캐릭터 · 색을 맞바꿔요"></button>${toggle('other', '깡캐', now2)}${toggle('text', '내 글', { name: mineOn() ? '넣음' : '견본', dots: [] })}</span>${MIX_ENABLED ? `<button type="button" class="chip mart-cast-mix" data-mix aria-pressed="${toneState.mix}" title="캐릭터를 2~3명 골라 포인트 색을 그라데이션으로 섞어요">혼합</button>` : ''}${PAPER_ENABLED ? `<button type="button" class="mart-cast-toggle" data-paper aria-expanded="${paperOpen}" aria-controls="mart-paper-panel"><span>바탕:</span><i class="mart-ink-dot" style="${sw(toneState.paper)}" aria-hidden="true"></i><b>${esc(pc.label)} · ${esc(tx.label)}</b><span class="mart-cast-caret" aria-hidden="true">${paperOpen ? '▴' : '▾'}</span></button>` : ''}${castPicked() ? `<button type="button" class="chip mart-cast-cover" data-cover aria-pressed="${toneState.cover}" title="켜면 기본 색 틀의 소품(그림)까지 고른 캐릭터 색으로 덮어요 · 끄면 소품은 기본 색 그대로 글 쪽만 캐릭터 색">캐릭터 색 덮어쓰기</button>` : ''}<span class="mart-seg mart-cast-mode" role="group" aria-label="밤낮"><button type="button" class="chip" data-mode="dark" aria-pressed="${toneState.mode === 'dark'}">밤</button><button type="button" class="chip" data-mode="light" aria-pressed="${toneState.mode === 'light'}">낮</button></span></div>
             ${who === 'text' ? textPanel() : `<div class="mart-cast-panel" id="mart-cast-panel" data-who="${w}"${panel ? '' : ' hidden'}><p class="mart-cast-who">${other ? '<b>깡캐</b>(둘째 화자) 색을 골라요 · 안 고르면 틀마다 정해 둔 색 그대로예요' : '<b>깡통</b>(첫째 화자) 색을 골라요 · 소품 색도 이 색을 따라가요'}</p><div class="mart-cast-groups">${list.map(head).join('')}</div>${opened.map(body).join('')}</div>${paperPanel}`}`;
     };
     box.addEventListener('click', (e) => {
@@ -93,6 +93,8 @@ export function mountCast(box, { say = () => {} } = {}) {
         const m = e.target.closest('[data-mode]'); if (m) { setTone({ mode: m.dataset.mode }); draw(); return; }
         if (MIX_ENABLED && e.target.closest('[data-mix]')) { const on = !toneState.mix; setTone({ mix: on, picks: on ? (toneState.k ? [{ name: toneState.name, color: toneState.k }] : []) : toneState.picks }); if (on) { who = 'main'; say('캐릭터를 2~3명 골라요 · 포인트 색이 그라데이션으로 섞여요', 3000); } draw(); return; }
         if (e.target.closest('[data-paper]')) { paperOpen = !paperOpen; draw(); box.querySelector('[data-paper]')?.focus(); return; }
+        if (e.target.closest('[data-cover]')) { setTone({ cover: !toneState.cover }); say(toneState.cover ? '캐릭터 색으로 소품까지 덮어써요' : '소품은 기본 색 그대로 · 글 쪽만 캐릭터 색이에요', 2400); draw(); box.querySelector('[data-cover]')?.focus(); return; }
+        if (e.target.closest('[data-swap]')) { swapSpeakers(say); draw(); box.querySelector('[data-swap]')?.focus(); return; }
         const t = e.target.closest('[data-toggle]');
         if (t) { const id = ['other', 'text'].includes(t.dataset.toggle) ? t.dataset.toggle : 'main'; who = who === id ? null : id; draw(); box.querySelector(`[data-toggle="${id}"]`)?.focus(); return; }
         const mb = e.target.closest('[data-mine]');
@@ -163,6 +165,18 @@ export function mountCast(box, { say = () => {} } = {}) {
     draw();
 }
 
+/**
+ * 11-11 화자 배정 바꾸기(테마 시식 「화자 바꾸기」 꼴) — 깡통(첫째 화자) ↔ 깡캐(둘째 화자)의 캐릭터 · 색을 맞바꿔요.
+ *   한쪽이 「원래 색」이면 그대로 자리만 바뀌어요(깡통이 원래 색이 되면 틀이 정해 둔 색). 둘 다 원래 색이면 알려만 줘요.
+ */
+export function swapSpeakers(say = () => {}) {
+    const a = toneState.on && toneState.k ? { k: toneState.k, name: toneState.name } : null;
+    const b = toneState.k2 ? { k: toneState.k2, name: toneState.name2 } : null;
+    if (!a && !b) { say('깡통 · 깡캐 색을 먼저 골라요 · 둘 다 원래 색이면 바꿀 게 없어요', 2600); return false; }
+    setTone({ on: !!b, k: b?.k || null, name: b?.name || '', k2: a?.k || null, name2: a?.name || '' });
+    say(`깡통 「${b?.name || '원래 색'}」 · 깡캐 「${a?.name || '원래 색'}」로 바꿨어요`, 2400);
+    return true;
+}
 /** 붙여 넣은 HTML 의 대사색으로 캐릭터 고르기 — 아는 색이면 그 이름, 모르면 글 속 이름(첫 「이름:」)으로 기억 · 대사색이 둘 이상이면 둘째 색은 깡캐로. 고른 색 | null */
 export function useColors(html, text = '', say = () => {}) {
     const colors = dialogueColors(html);

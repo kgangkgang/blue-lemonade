@@ -602,3 +602,12 @@ html.mart-cart-on{overflow:hidden}
 @media (max-width:639px){.mart-words-form .field{font-size:16px}.mart-words-rules li{min-height:44px}}
 /* 11-11 줄 숨기기 · 풀기 — 「글 고치기」 중에만(hidden 이 칩 display 에 지지 않게) */
 .mart-tune-line [data-spoiler][hidden]{display:none}
+
+/* 11-11 즐겨찾기 ☆ · ★ — 아이콘 단추(.ibtn 34 · 면 없음 · 마스크 별 16 · 넣으면 고른 표시 면 + 찬 별) · 카드 이름 줄 끝 · 크게 보기 제목 옆 */
+.mart-fav{--glyph-star:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3.7l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 18.1l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E");font-size:0;margin:-6px -4px -6px 0}
+.mart-fav[aria-pressed=true]{--glyph-star:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3.7l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 18.1l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z' fill='%23000' stroke='%23000' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.mart-fav::after{content:"";position:absolute;inset:0;margin:auto;width:16px;height:16px;background:currentColor;-webkit-mask:var(--glyph-star) center/contain no-repeat;mask:var(--glyph-star) center/contain no-repeat;pointer-events:none}
+#mart-sheet-title .mart-fav{margin:0 0 0 4px;vertical-align:middle}
+/* 11-11 화자 배정 바꾸기 ⇄ — 깡통 · 깡캐 칸 사이 아이콘 단추(.ibtn 34 · 면 없음 · 잉크 16) */
+.mart-cast-swap{align-self:center;font-size:0}
+.mart-cast-swap::after{content:"";position:absolute;inset:0;margin:auto;width:16px;height:16px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4'/%3E%3C/svg%3E") center/contain no-repeat;pointer-events:none}   /* 화살표 둘(마스크 · 위아래 맞대칭이라 가운데 맞춤) */

@@ -6,17 +6,22 @@ const kind = document.body.dataset.mart;              // 'frames' | 'geulkku'
 const grid = document.querySelector('.mart-grid');
 const search = document.querySelector('.mart-tools input[type=search]');
 const chips = document.querySelector('.mart-chips');
+// 11-11 즐겨찾기 · 최근 틀(글꾸 · 테마 로그 복사 logCopy.fav · recent 꼴 — 즐겨찾기 96개 · 최근 5개 · 이 기기에만 기억)
+const LIKE_KEY = 'bl-mart-geulkku-like-v1';
+const like = (() => { let v = null; try { v = JSON.parse(localStorage.getItem(LIKE_KEY) || 'null'); } catch { /* 저장이 막힌 창 */ } const ids = a => (Array.isArray(a) ? [...new Set(a.filter(x => typeof x === 'string' && x && x.length < 80))] : []); return { fav: ids(v?.fav).slice(0, 96), recent: ids(v?.recent).slice(0, 5) }; })();
+const saveLike = () => { try { localStorage.setItem(LIKE_KEY, JSON.stringify(like)); } catch { /* 이 화면에서만 */ } };
+const LIKE_CHIPS = { fav: '★ 즐겨찾기', recent: '최근' };
 import { cart, say, onCheckout, artName, saveArt } from './cart.js?v=20261109a';
 import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
 import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110v';   // 11-10 대사색 하나로 다시 칠하기 · 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
-import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261111s';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
-import { simpleReady } from './simple-frames.js?v=20261111s';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
+import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261111v';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
+import { simpleReady } from './simple-frames.js?v=20261111v';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
-import { mountCast } from './cast.js?v=20261111s';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
-import { frameMarkdown } from './mine-text.js?v=20261111s';   // 11-11 글만 복사(마크다운)
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit } from './tune-ui.js?v=20261111s';   // 11-11 크게 보기 「조절」 칸(색 칩 · 글 고치기 · 내 글꾸)
+import { mountCast } from './cast.js?v=20261111v';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
+import { frameMarkdown } from './mine-text.js?v=20261111v';   // 11-11 글만 복사(마크다운)
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit } from './tune-ui.js?v=20261111v';   // 11-11 크게 보기 「조절」 칸(색 칩 · 글 고치기 · 내 글꾸)
 let styleActive = 'all', drawPreset = null, picker = null;
 const states = [];   // 만든 카드만(글꾸) — 늦게 만들기(lazyGrid)라 처음엔 첫 화면 몫뿐이에요
 const stateById = new Map();
@@ -73,7 +78,7 @@ function lazyGrid(gridEl, build, { first = LAZY_FIRST, step = LAZY_STEP, margin 
 // 글꾸 · 액자 마트가 같이 써요(mart.css). cats: [{ id, label, n, group }] · groups: [{ id, label }] — 쓰는 묶음이 둘 미만이면 탭 줄을 숨겨요.
 // 숫자는 <span class="mart-n"> 로 작고 옅게. 고른 값은 match(분류 id) 로 물어봐요.
 const numHtml = n => `<span class="mart-n n">${n}</span>`;   // 글자 뒤 흐름 안(배지 아님 · 13 · 보조색)
-function chipGroups({ groupsEl, chipsEl, cats, groups = [], total, onChange }) {
+function chipGroups({ groupsEl, chipsEl, cats, groups = [], total, onChange, extra = null }) {
     const sel = { group: 'all', cat: 'all' };
     const used = groups.map(g => ({ ...g, cats: cats.filter(c => c.group === g.id) })).filter(g => g.cats.length);
     const sum = list => list.reduce((n, c) => n + c.n, 0);
@@ -83,7 +88,7 @@ function chipGroups({ groupsEl, chipsEl, cats, groups = [], total, onChange }) {
     const btn = (attr, id, label, n, on) => `<button type="button" class="${attr === 'group' ? 'tab' : 'chip'}" data-${attr}="${esc(id)}" aria-pressed="${on}">${attr === 'group' ? `<span class="tab-t">${esc(label)}</span>` : esc(label)}${numHtml(n)}</button>`;
     let paintChips = () => {
         const g = used.find(x => x.id === sel.group);
-        const list = g ? [['all', '모두', sum(g.cats)], ...g.cats.map(c => [c.id, c.label, c.n])] : [['all', '전체', total], ...cats.map(c => [c.id, c.label, c.n])];
+        const list = g ? [['all', '모두', sum(g.cats)], ...g.cats.map(c => [c.id, c.label, c.n])] : [['all', '전체', total], ...(extra?.() || []), ...cats.map(c => [c.id, c.label, c.n])];
         chipsEl.innerHTML = list.map(([id, label, n]) => btn('cat', id, label, n, id === sel.cat)).join('');
         chipsEl.scrollLeft = 0;
     };
@@ -124,7 +129,9 @@ function chipGroups({ groupsEl, chipsEl, cats, groups = [], total, onChange }) {
         sel,
         groupLabel: id => used.find(g => g.id === groupOf.get(id))?.label || '',
         // builtin: 그 항목이 테마 내장인지 — 「내장」 묶음은 내장 분류(기본 틀) + 다른 분류 안의 내장 항목(내장 심플 30 · 가짜 칩 BUILTIN_MORE)을 같이 모아요
+        count: (id, n) => { const el = chipsEl.querySelector(`[data-cat="${id}"] .mart-n`); if (el) el.textContent = n; },   // 11-11 즐겨찾기 · 최근 숫자만 고쳐요(칩 줄을 다시 그리지 않아요)
         match: (category, builtin = false) => {
+            if (sel.cat in LIKE_CHIPS) return true;   // 즐겨찾기 · 최근은 applyFilter 가 id 로 걸러요
             if (sel.cat === BUILTIN_MORE) return builtin && groupOf.get(category) !== 'builtin';
             if (sel.cat !== 'all') return category === sel.cat;
             return sel.group === 'all' || groupOf.get(category) === sel.group || (builtin && sel.group === 'builtin');
@@ -392,14 +399,15 @@ function readyHtml(state) {
     const item = state.item;
     return ensureItem(item).then(() => (inkChanged(item) && !tasteLoaded ? loadTaste().then(() => { delete state.inkHtml; return previewOf(state); }) : previewOf(state))).then(shutPeek).then(h => (item.simple ? simpleReady(h) : item.photo ? h : kkangtongReady(h)));
 }
-/** 내려받기(.html) — 복사 글과 같은 HTML 을 파일로(글자 깨짐 막는 charset 한 줄만 앞에) */
+/** 내려받기(.html) — 복사 글과 같은 HTML 을 파일로(앞에 doctype · charset 두 줄만).
+ *  doctype 이 없으면 브라우저가 옛 방식(quirks)으로 열어 클래스 이름 대소문자를 안 가려요 — gk-nb(소품 막대)가 gk-nB(깡캐 이름표)에도 걸려 이름표가 막대가 돼요(k4 · k5 · k7 · k10 · k15 · q05) */
 async function downloadHtml(state) {
     try {
         const html = await readyHtml(state), name = String(state.item.name || state.item.label || '글꾸').replace(/[\\/:*?"<>|]+/g, ' ').trim();
-        const blob = new Blob([`<meta charset="utf-8">\n${html}\n`], { type: 'text/html' });
+        const blob = new Blob([`<!doctype html>\n<meta charset="utf-8">\n${html}\n`], { type: 'text/html' });
         const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `글꾸-${name}.html`, hidden: true });
         document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-        say('.html 파일로 받았어요', 2400);
+        noteRecent(state.item.id); say('.html 파일로 받았어요', 2400);
     } catch { say(LOAD_FAIL, 3200); }
 }
 /** 글만 복사(마크다운) — 틀 없이 글만 올릴 때(테마 「글만」) */
@@ -407,14 +415,14 @@ async function copyText(state) {
     try {
         const md = frameMarkdown(await readyHtml(state));
         await navigator.clipboard.writeText(md);
-        say('글만 복사했어요 · 서식 없는 칸에 붙여요', 2600);
+        noteRecent(state.item.id); say('글만 복사했어요 · 서식 없는 칸에 붙여요', 2600);
     } catch { say('복사가 막혔어요 · 잠시 뒤 다시 눌러 주세요', 3000); }
 }
 async function copyHtml(state) {
     const item = state.item;
     const ready = ensureItem(item).then(() => (inkChanged(item) && !tasteLoaded ? loadTaste().then(() => { delete state.inkHtml; return previewOf(state); }) : previewOf(state))).then(shutPeek).then(h => (item.simple ? simpleReady(h) : item.photo ? h : kkangtongReady(h)));   // 11-11 심플 새 틀: 틀 <style> + 코멘트 빈칸 · 16px 규칙을 <style> 하나로   // 11-10 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)   // 11-09 카드 · 상세 미리보기는 펼침, 복사 글은 닫힘   // 「📝 내 로그로 보기」가 켜져 있으면 내 로그가 든 완성 HTML   // 조각을 아직 안 받았으면 받은 뒤(클립보드는 누른 순간에 열어요)
     ready.catch(() => { /* 아래에서 알려요 */ });
-    const done = () => say('복사됐어요 · 깡싸 글쓰기 HTML 칸에 붙여요', 3600);
+    const done = () => { noteRecent(item.id); say('복사됐어요 · 깡싸 글쓰기 HTML 칸에 붙여요', 3600); };
     try {
         if (globalThis.ClipboardItem && navigator.clipboard?.write) await navigator.clipboard.write([new ClipboardItem({ 'text/html': ready.then(h => new Blob([h], { type: 'text/html' })), 'text/plain': ready.then(h => new Blob([h], { type: 'text/plain' })) })]);
         else await navigator.clipboard.writeText(await ready);
@@ -534,8 +542,30 @@ function actionsHtml(item) {
     if (item.copyOnly) return `<div class="mart-actions is-geulkku is-builtin is-copyonly"><span class="mart-builtin" title="${item.simple ? '커뮤니티 글에 붙이는 심플 글꾸예요 · 제목 · 이름 · 글을 바꿔 HTML 칸에 붙여요' : item.photo ? (item.category === 'kara' ? '커뮤니티 글에 붙이는 노래방 글꾸예요 · 「내 곡으로 만들기」에서 mp3 · 가사를 넣으면 완성 HTML 이 나와요' : item.category === 'song' || item.audio ? '커뮤니티 글에 붙이는 노래 앨범 틀이에요 · 그림 · mp3 주소와 글을 바꿔 HTML 칸에 붙여요' : '커뮤니티 글에 붙이는 사진 화보 틀이에요 · 사진 주소 · 글을 바꿔 HTML 칸에 붙여요') : '테마로 받기는 준비 중이에요 · 커뮤니티 글에 HTML 로 붙여 써요'}">HTML 복사로 써요</span>${html}</div>`;
     return `<div class="mart-actions${item.kind === 'geulkku' ? ' is-geulkku' : ''}"><button type="button" class="btn mart-pick" data-act="pick" aria-pressed="false"><span class="em" aria-hidden="true">🛒</span>담기</button><button type="button" class="btn" data-act="copy" title="이것 하나만 바로 복사(테마 「마트에서 가져오기」용)">${item.kind === 'geulkku' ? '테마용 복사' : '바로 복사'}</button>${html}</div>`;
 }
+/** 11-11 즐겨찾기 ☆ · ★(무테 아이콘) — 카드 이름 줄 · 크게 보기 제목 옆 */
+const favHtml = item => { if (item.kind !== 'geulkku') return ''; const on = like.fav.includes(item.id); return `<button type="button" class="ibtn mart-fav" data-act="fav" data-fav="${esc(item.id)}" aria-pressed="${on}" aria-label="${esc(item.name || item.label)} 즐겨찾기" title="${on ? '즐겨찾기에서 빼기' : '즐겨찾기'}"></button>`; };   // 별은 마스크 그림(mart.css) — 글자 단추가 아니에요
+const likeRows = items => Object.entries(LIKE_CHIPS).map(([id, label]) => [id, label, like[id].filter(x => items.some(i => i.id === x)).length]);
+function likeChanged(which) {
+    for (const [id, , n] of likeRows(allItems)) picker?.count(id, n);
+    if (picker?.sel.cat === which) applyFilter();
+}
+function toggleFav(id) {
+    const on = !like.fav.includes(id);
+    like.fav = on ? [id, ...like.fav].slice(0, 96) : like.fav.filter(x => x !== id);
+    saveLike();
+    for (const b of document.querySelectorAll(`.mart-fav[data-fav="${CSS.escape(id)}"]`)) { b.setAttribute('aria-pressed', String(on)); b.title = on ? '즐겨찾기에서 빼기' : '즐겨찾기'; }
+    say(on ? '즐겨찾기에 넣었어요 · 위 「★ 즐겨찾기」 칩에 모여요' : '즐겨찾기에서 뺐어요', 2200);
+    likeChanged('fav');
+}
+/** 쓴 틀을 최근에(HTML 복사 · 내려받기 · 글만 복사) — 5개까지 · 마지막에 쓴 것이 앞 */
+function noteRecent(id) {
+    if (kind !== 'geulkku' || like.recent[0] === id) return;
+    like.recent = [id, ...like.recent.filter(x => x !== id)].slice(0, 5);
+    saveLike(); likeChanged('recent');
+}
 function doAct(state, act, b) {
     if (act === 'view') openSheet(state);
+    else if (act === 'fav') toggleFav(state.item.id);
     else if (act === 'copy') copyEntries(ensureItem(state.item).then(() => [entryOf(state)]));
     else if (act === 'html') copyHtml(state);
     else if (act === 'download') downloadHtml(state);
@@ -552,7 +582,7 @@ function doAct(state, act, b) {
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
 let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261111s').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261111v').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
@@ -697,7 +727,7 @@ function openSheet(state) {
     }
     sheetState = state;
     const { item } = state;
-    sheet.querySelector('#mart-sheet-title').innerHTML = `${glyphHtml(item)}<span>${esc(item.name || item.label)}</span>`;
+    sheet.querySelector('#mart-sheet-title').innerHTML = `${glyphHtml(item)}<span>${esc(item.name || item.label)}</span>${favHtml(item)}`;
     if (item.accent) sheet.style.setProperty('--accent', item.accent); else sheet.style.removeProperty('--accent');   // 담기 단추 색 = 그 글꾸 강조색
     sheet.querySelector('.mart-sheet-meta').innerHTML = `${tagsHtml(item)}${designsHtml(item)}<p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}`;   // 11-10 디자인 넘기기
     const body = sheet.querySelector('.mart-sheet-body');
@@ -760,7 +790,7 @@ function card(item) {
     </div>` : '';
     const size = item.bytes ? `<small>${item.bytes > 1e6 ? `${(item.bytes / 1048576).toFixed(1)}MB` : `${Math.max(1, Math.round(item.bytes / 1024))}KB`}</small>` : '';
     el.innerHTML = `${preview}${item.note ? `<p class="mart-note">${esc(item.note)}</p>` : ''}
-        <div class="mart-title"><b>${glyphHtml(item)}<span class="t">${esc(item.name || item.label)}</span></b>${tagsHtml(item)}</div>
+        <div class="mart-title"><b>${glyphHtml(item)}<span class="t">${esc(item.name || item.label)}</span></b>${tagsHtml(item)}${favHtml(item)}</div>
         ${kind === 'geulkku' ? designsHtml(item) : ''}<p class="mart-desc">${esc(descOf(item))}${size ? ` · ${size}` : ''}</p>${sourceLinks(item)}${params}
         ${actionsHtml(item)}`;
     el.addEventListener('input', (e) => {
@@ -830,6 +860,8 @@ cart.onChange(() => { states.forEach(syncCard); syncSheet(); });
 function applyFilter() {
     const q = (search.value || '').trim().toLowerCase();
     let list = allItems.filter(item => (!picker || picker.match(item.category, !!item.builtin)) && (styleActive === 'all' || styleOf(item) === styleActive) && (!q || item._text.includes(q)));
+    const likeCat = picker?.sel.cat in LIKE_CHIPS ? picker.sel.cat : '';   // 11-11 즐겨찾기(누른 차례) · 최근(마지막에 쓴 것부터)
+    if (likeCat) list = like[likeCat].map(id => list.find(x => x.id === id)).filter(Boolean);
     // 11-10 「모든 디자인」이면 컨셉(같은 이름) 하나에 카드 하나 — 고른 디자인이 걸러진 안에 있으면 그것, 아니면 처음 것
     if (kind === 'geulkku' && styleActive === 'all') {
         const by = new Map();
@@ -842,7 +874,7 @@ function applyFilter() {
     const count = document.querySelector('.mart-count');
     if (count) count.textContent = `${shown}개`;
     const narrowed = styleActive !== 'all' || (picker && (picker.sel.group !== 'all' || picker.sel.cat !== 'all'));
-    if (!shown) grid.insertAdjacentHTML('beforeend', `<p class="mart-empty">맞는 것이 없어요${narrowed ? ' · 거르기를 풀어 보세요' : ''}</p>`);
+    if (!shown) grid.insertAdjacentHTML('beforeend', `<p class="mart-empty">${likeCat === 'fav' && !q ? '아직 없어요 · 카드 이름 옆 ☆ 를 누르면 여기 모여요' : likeCat === 'recent' && !q ? '아직 없어요 · HTML 복사 · 내려받기 · 글만 복사한 틀이 5개까지 여기 남아요' : `맞는 것이 없어요${narrowed ? ' · 거르기를 풀어 보세요' : ''}`}</p>`);
 }
 async function main() {
     if (kind === 'frames') {
@@ -866,7 +898,7 @@ async function main() {
     const builtinCats = new Set(cats.filter(c => c.group === 'builtin').map(c => c.id));
     const moreBuiltin = shownItems.filter(x => x.builtin && !builtinCats.has(x.category)).length;
     if (moreBuiltin) cats.push({ id: BUILTIN_MORE, label: '내장 심플', n: moreBuiltin, group: 'builtin' });
-    picker = chipGroups({ groupsEl: document.querySelector('.mart-groups'), chipsEl: chips, cats, groups: GEULKKU_GROUPS, total: shownItems.length, onChange: applyFilter });
+    picker = chipGroups({ groupsEl: document.querySelector('.mart-groups'), chipsEl: chips, cats, groups: GEULKKU_GROUPS, total: shownItems.length, onChange: applyFilter, extra: kind === 'geulkku' ? () => likeRows(shownItems) : null });
     // 그림체(글꾸): 둘 이상일 때만 칩 줄을 보여요 — 하나뿐(지금은 기본만)이면 줄째 숨겨요
     const styleSeg = document.querySelector('[data-filter="style"]');
     if (styleSeg) {

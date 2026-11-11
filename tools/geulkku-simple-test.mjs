@@ -584,7 +584,7 @@ await test('캐릭터 목록: 묶음 넷(천지합동청 13 · D&H 8 · 무협�
 
 await test('깡통 · 깡캐 두 칸 · 색 단추: 머리 줄에 칸 둘(펼친 칸 표시) · 기억한 캐릭터는 두 칸이 같이 써요 · 색 칸은 색 원 + 색 값 단추(기본 색 칸은 덮는 투명 칸)', () => {
     const cast = fs.readFileSync(path.join(MART, 'cast.js'), 'utf8'), css = fs.readFileSync(path.join(MART, 'mart.css'), 'utf8');
-    assert.ok(cast.includes("${toggle('main', '깡통', now)}${toggle('other', '깡캐', now2)}"));
+    assert.match(cast, /\$\{toggle\('main', '깡통', now\)\}<button type="button" class="ibtn mart-cast-swap" data-swap[^>]*>.*?<\/button>\$\{toggle\('other', '깡캐', now2\)\}/);   // 11-11 사이에 화자 바꾸기 ⇄
     assert.ok(!cast.includes('<span>캐릭터:</span>'));
     assert.ok(cast.includes('aria-expanded="${who === id}"') && cast.includes('name="bl-cast2" value="off"'));
     assert.ok(cast.includes('setTone(other ? { k2: saved.color, name2: saved.name } : { on: true, k: saved.color, name: saved.name })'));
@@ -657,7 +657,7 @@ await test('기본 색 판(뿌리 sk-own): 기본 색 줄은 값이 사다리 �
         assert.equal(styleOf(off), styleOf(out), '<style> 은 같고 뿌리 class 만 달라요');
     }
     assert.deepEqual(tu.cleanTune({ own: false }), { own: false });
-    assert.equal(tu.cleanTune({ own: true }), null);
+    assert.deepEqual(tu.cleanTune({ own: true }), { own: true });   // 11-11 이 틀만 소품 기본 색
 });
 
 await test('내 글꾸: 틀 + 깡통 · 깡캐 · 낮밤 + 조절 값을 이름 붙여 기억 · 같은 틀 같은 이름은 덮어써요 · 지우기 · 틀린 값은 버려요', () => {
@@ -1003,7 +1003,7 @@ await test('글만 복사(마크다운 · 테마 logMarkdown 꼴): 28틀 모두 
     }
     const ms = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
     assert.match(ms, /act === 'download'\) downloadHtml\(state\)/); assert.match(ms, /act === 'text'\) copyText\(state\)/);
-    assert.match(ms, /<meta charset="utf-8">/);
+    assert.match(ms, /<!doctype html>\\n<meta charset="utf-8">/);   // doctype 없으면 quirks — 클래스 대소문자를 안 가려요
     assert.match(ui, /data-act="download"/); assert.match(ui, /data-act="text"/);
 });
 
@@ -1050,5 +1050,32 @@ await test('전수조사 합격 틀: pass-defs.json 줄마다 틀 파일 · 목�
     }
 });
 
+
+globalThis.__ownTs = await import(`${pathToFileURL(path.join(MART, 'tone-state.js')).href}?own=1`);
+await test('기본 색 잇기(sk-own): 원래 색이면 기본 색 · 캐릭터를 고르면 「소품도 캐릭터 색」(기본 켬)이면 sk-own 을 떼고 · 끄면 둔 채 글 쪽만 · 틀마다 고른 값이 먼저 · 표시 열쇠에 켬끔', () => {
+    const ts = globalThis.__ownTs;
+    const row = six.items[0], p0 = sfx[row.id].preview;
+    const p = p0.replace(/^(\s*<div\b[^>]*\sclass="gk\s)/, '$1sk-own ');   // 기본 색 판 흉내(뿌리 class 하나)
+    assert.ok(sf.hasOwnTone(p));
+    const it = { ...row, ...sfx[row.id], preview: p, kind: 'geulkku', simple: true };
+    const rootOf = h => (h.match(/^\s*<div\b[^>]*\sclass="([^"]*)"/) || [])[1] || '';
+    ts.setTone({ on: false, k2: null, cover: true });
+    assert.equal(ts.castPicked(), false); assert.equal(ts.ownOf({}), undefined);
+    assert.match(rootOf(ts.toneOut(it, p)), /\bsk-own\b/, '원래 색 → 기본 색');
+    const k0 = ts.toneKey();
+    ts.setTone({ on: true, k: '#3aa7ff', name: '시험' });
+    assert.equal(ts.ownOf({}), false);
+    assert.doesNotMatch(rootOf(ts.toneOut(it, p)), /\bsk-own\b/, '캐릭터 + 덮기 켬 → 소품도 캐릭터 색');
+    ts.setTone({ cover: false });
+    assert.notEqual(ts.toneKey(), k0);
+    assert.match(rootOf(ts.toneOut(it, p)), /\bsk-own\b/, '덮기 끔 → 소품 기본 색');
+    assert.equal(ts.ownOf({ own: false }), false, '틀마다 캐릭터 색이 먼저');
+    ts.setTone({ cover: true });
+    assert.equal(ts.ownOf({ own: true }), undefined, '틀마다 기본 색이 먼저');
+    ts.setTone({ on: false, k2: '#ff5fa2', name2: '둘째' });
+    assert.equal(ts.ownOf({}), false, '깡캐만 골라도 캐릭터를 고른 것');
+    ts.setTone({ on: false, k: null, k2: null });
+    assert.deepEqual(tu.cleanTune({ own: true }), { own: true }); assert.deepEqual(tu.cleanTune({ own: false }), { own: false }); assert.equal(tu.cleanTune({ own: 'x' }), null);
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

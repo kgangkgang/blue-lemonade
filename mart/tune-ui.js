@@ -3,12 +3,12 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone } from './tone-state.js?v=20261111s';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111s';
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111s';
-import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111s';
-import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111s';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111s';
+import { toneState, setTone, ownOf } from './tone-state.js?v=20261111v';
+import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111v';
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111v';
+import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111v';
+import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111v';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111v';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -213,7 +213,7 @@ export function syncTune(sheet, item) {
     }
     for (const b of box.querySelectorAll('[data-tune-mode]')) b.setAttribute('aria-pressed', String(b.dataset.tuneMode === toneState.mode));
     if (tab === 'head') { const slots = headSlots(item), key = mineOn() ? 'mineTexts' : 'texts'; for (const inp of box.querySelectorAll('input[data-head]')) { const s = slots[inp.dataset.head]; if (s && document.activeElement !== inp) inp.value = plainOf(t?.[key]?.[s.i] ?? s.text); } }
-    for (const b of box.querySelectorAll('[data-tune-own]')) b.setAttribute('aria-pressed', String((b.dataset.tuneOwn === '0') === (t?.own === false)));
+    for (const b of box.querySelectorAll('[data-tune-own]')) b.setAttribute('aria-pressed', String((b.dataset.tuneOwn === '0') === (ownOf(t) === false)));   // 지금 보이는 모습(틀마다 고른 값 · 없으면 마트 칸)
     // 글 모양 칸
     for (const f of LOOK_FIELDS) {
         const cur = lookValue(f.path);
@@ -425,7 +425,7 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if ((b = q('[data-words-rule-x]'))) { const i = Number(b.dataset.wordsRuleX); setWords({ rules: wordsNow().rules.filter((_, k) => k !== i) }); redraw(item); return; }
         if ((b = q('[data-head-show]'))) { const t = clone(tuneOf(item.id)); if (b.dataset.v === '0') t[b.dataset.headShow] = true; else delete t[b.dataset.headShow]; setTune(item.id, t); redraw(item); return; }
         if ((b = q('[data-tune-lines]'))) { const t = clone(tuneOf(item.id)), n = Number(b.dataset.tuneLines); if (n) t.lines = n; else delete t.lines; setTune(item.id, t); redraw(item); return; }
-        if ((b = q('[data-tune-own]'))) { const t = clone(tuneOf(item.id)); if (b.dataset.tuneOwn === '0') t.own = false; else delete t.own; setTune(item.id, t); return; }
+        if ((b = q('[data-tune-own]'))) { const t = clone(tuneOf(item.id)); t.own = b.dataset.tuneOwn !== '0'; if (ownOf({ own: t.own }) === ownOf({})) delete t.own; setTune(item.id, t); return; }   // 마트 칸과 같아지면 이 틀 값은 지워요
         if (q('[data-tune-edit]')) { editing = !editing; armEdit(sheet.querySelector('.mart-sheet-preview'), item); syncTune(sheet, item); return; }
         if ((b = q('[data-look-reset]'))) { setLookValue(b.dataset.lookReset, null); return; }
         if ((b = q('[data-look-pick]'))) { setLookValue(b.dataset.lookPick, JSON.parse(b.dataset.v)); redraw(item); return; }

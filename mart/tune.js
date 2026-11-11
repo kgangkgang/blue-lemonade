@@ -6,7 +6,7 @@
 export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(탭을 닫으면 사라져요 — sessionStorage)
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
 import { spoilerHtml, spoilerStyle, SPOILER_LABEL } from './lib/log-copy/log-copy-spoiler.js';
-import { cleanLook } from './look.js?v=20261111s';
+import { cleanLook } from './look.js?v=20261111v';
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** 역할별 글자색 — 이름은 inks.js(테마 글자색 칩)와 같아요. 새 틀에 그 글자가 있는 역할만 칸이 떠요(속마음 · 강조 · 형광펜은 그 클래스를 쓰는 틀이 생기면 한 줄 더해요) */
@@ -63,7 +63,7 @@ export function cleanTune(t) {
     }
     if (Object.keys(inks).length) out.inks = inks;
     if (HEX.test(t.prop || '')) out.prop = t.prop.toLowerCase();   // 소품 색: 없으면 깡통 색을 따라가요(나중에 「기본 색」 켬끔이 들어올 자리 — 값 'own')
-    if (t.own === false) out.own = false;
+    if (t.own === false || t.own === true) out.own = t.own;   // 11-11 이 틀만: true = 소품 기본 색 · false = 소품 캐릭터 색 · 없으면 마트 칸(원래 색 · 「소품도 캐릭터 색」)을 따라요
     if (t.hideTitle === true) out.hideTitle = true;   // 보일 것: 제목 끔(제목이 누름 칸 안인 틀은 화면이 이 칸을 안 줘요)
     if (t.hideNames === true) out.hideNames = true;   // 보일 것: 이름 줄 끔
     // 숨긴 줄(스포일러): [{ i: 글 칸 번호 }] — 견본 글 · 내 글 따로(번호가 달라요) · 20줄까지
