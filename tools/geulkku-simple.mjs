@@ -73,6 +73,13 @@ export const DEFS = [
   { frame: 'q09', name: '카페 영수증', emoji: '🧾', peek: true, desc: '출력기를 누르면 흰 영수증이 다 밀려 나와요 — 가게 이름 · 품목 · 합계 줄을 바꿔 써요(종이는 캐릭터 색을 안 따라요)' },
   { frame: 'q10', name: 'RPG 스탯', emoji: '🎮', desc: 'HP · MP · EXP 게이지 — 누르면 EXP 가 가득 차 레벨이 오르고 HP · MP 가 회복돼요 · 소리 카드 한 줄' },
 ].map(d => ({ id: `simple-${d.frame}`, values: SOUND, ...d }));
+// 11-11 전수조사 합격 틀(묶음 생성기 01 ~ 46 · 사용자가 깡통에서 본 판) — 목록 줄은 tools/simple-frames/pass-defs.json(허브 지시-1111/출시-1111 의 변환기가 써요)
+//   틀 파일은 tools/simple-frames/k1001.html ~ (뿌리 gk-k<1000 + 통번호> — 첫 묶음 k1 ~ k18 과 안 겹쳐요) · 조각은 PASS_STEP 틀씩 나눠 sp-pass-<n> 으로(한 번에 다 받지 않게)
+export const PASS_STEP = 40;
+const PASS_FILE = path.join(SRC, 'pass-defs.json');
+export const PASS_DEFS = (fs.existsSync(PASS_FILE) ? JSON.parse(fs.readFileSync(PASS_FILE, 'utf8')) : [])
+  .map((d, i) => ({ id: `simple-${d.frame}`, values: SOUND, name: d.name, emoji: d.emoji, desc: d.desc, frame: d.frame, open: !!d.open, peek: !!d.peek, chunk: `sp-pass-${Math.floor(i / PASS_STEP)}` }));
+
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 /** 견본 글 자리표를 값으로 채워요(글 자리는 HTML 이스케이프 · 소리는 견본 mp3 주소) */
@@ -196,19 +203,23 @@ export function pull(file) {
 
 export function build() {
   const heavy = {}, rows = [], missing = [];
-  for (const d of DEFS) {
+  for (const d of [...DEFS, ...PASS_DEFS]) {
     if (!fileOf(d)) { missing.push(`${d.frame} ${d.name}`); continue; }
     const { html, preview, info } = frameHtml(d);
-    heavy[d.id] = { preview };
+    const ck = d.chunk || KEY; (heavy[ck] = heavy[ck] || {})[d.id] = { preview };
     const card = sf.facesOf(info, info.base).orig[0];
-    rows.push({ id: d.id, name: d.name, emoji: d.emoji, category: catOf(d, html), style: '심플', desc: d.desc, c: KEY, copyOnly: true, photo: true, ...(/<audio\b/.test(html) ? { audio: true } : {}), simple: true, bytes: Buffer.byteLength(html), fx: 'e', bg: card, ink: sf.SIMPLE_CONTRACT.ink[info.base], accent: sf.sianFit(info.K0 || '#8b8e96', '#ffffff', 4.5) });
+    rows.push({ id: d.id, name: d.name, emoji: d.emoji, category: catOf(d, html), style: '심플', desc: d.desc, c: d.chunk || KEY, copyOnly: true, photo: true, ...(/<audio\b/.test(html) ? { audio: true } : {}), simple: true, bytes: Buffer.byteLength(html), fx: 'e', bg: card, ink: sf.SIMPLE_CONTRACT.ink[info.base], accent: sf.sianFit(info.K0 || '#8b8e96', '#ffffff', 4.5) });
   }
   const used = new Set(rows.map(x => x.category));
-  const text = `${JSON.stringify({ items: heavy })}\n`;
-  const file = `${KEY}.${crypto.createHash('sha256').update(text).digest('hex').slice(0, 8)}.json`;
-  const index = { _: '글꾸 마트 목록 — tools/geulkku-simple.mjs 산출물(심플 새 틀 · 고치지 말고 다시 만들어요) · 옛 글꾸는 11-11 에 마트에서 뺐어요(되살리는 법은 W/outputs/지시-1110/심플-새틀-이식/마트-길닦기.md 12절)', count: rows.length, categories: CATS.filter(c => used.has(c.id)), chunks: { [KEY]: { file, n: rows.length, bytes: Buffer.byteLength(text) } } };
+  const files = {}, chunks = {};
+  for (const [ck, items] of Object.entries(heavy)) {
+    const t = `${JSON.stringify({ items })}\n`, f = `${ck}.${crypto.createHash('sha256').update(t).digest('hex').slice(0, 8)}.json`;
+    files[f] = t; chunks[ck] = { file: f, n: Object.keys(items).length, bytes: Buffer.byteLength(t) };
+  }
+  const file = chunks[KEY].file, text = files[file];
+  const index = { _: '글꾸 마트 목록 — tools/geulkku-simple.mjs 산출물(심플 새 틀 · 고치지 말고 다시 만들어요) · 옛 글꾸는 11-11 에 마트에서 뺐어요(되살리는 법은 W/outputs/지시-1110/심플-새틀-이식/마트-길닦기.md 12절)', count: rows.length, categories: CATS.filter(c => used.has(c.id)), chunks };
   const indexText = `${JSON.stringify(index, null, 1).replace(/\n}$/, '')},\n "items": [\n${rows.map(x => `  ${JSON.stringify(x)}`).join(',\n')}\n ]\n}\n`;
-  return { rows, heavy, text, file, indexText, missing };
+  return { rows, heavy, text, file, files, chunks, indexText, missing };
 }
 
 const MAIN = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
@@ -217,16 +228,16 @@ if (MAIN && process.argv.includes('--pull')) {
   for (const f of files) { const got = pull(f); console.log(`${path.basename(path.dirname(f))}/${path.basename(f)} → 원래 판 ${got.length}틀 꺼냄: ${got.join(' · ')}`); }
 }
 if (MAIN) {
-  const { rows, text, file, indexText, missing } = build();
+  const { rows, text, file, files, indexText, missing } = build();
   if (missing.length) console.log(`아직 이식판이 없어 건너뛴 틀 ${missing.length}: ${missing.join(' · ')}`);
   if (CHECK) {
-    const same = fs.existsSync(OUT) && fs.readFileSync(OUT, 'utf8') === indexText && fs.existsSync(path.join(DIR, file)) && fs.readFileSync(path.join(DIR, file), 'utf8') === text;
+    const same = fs.existsSync(OUT) && fs.readFileSync(OUT, 'utf8') === indexText && Object.entries(files).every(([f, t]) => fs.existsSync(path.join(DIR, f)) && fs.readFileSync(path.join(DIR, f), 'utf8') === t);
     console.log(same ? `확인: 심플 새 틀 ${rows.length}종 그대로예요` : '심플 새 틀 자료가 달라요 — node tools/geulkku-simple.mjs 로 다시 만들어요');
     process.exit(same ? 0 : 1);
   }
-  const oldFile = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')).chunks?.[KEY]?.file : null;
-  fs.writeFileSync(path.join(DIR, file), text);
-  if (oldFile && oldFile !== file && fs.existsSync(path.join(DIR, oldFile))) console.log(`옛 조각 ${oldFile} 은 이제 안 써요(지우지 않았어요)`);
+  const oldFiles = fs.existsSync(OUT) ? Object.values(JSON.parse(fs.readFileSync(OUT, 'utf8')).chunks || {}).map(c => c.file) : [];
+  for (const [f, t] of Object.entries(files)) fs.writeFileSync(path.join(DIR, f), t);
+  for (const f of oldFiles) if (!files[f] && fs.existsSync(path.join(DIR, f))) console.log(`옛 조각 ${f} 은 이제 안 써요(지우지 않았어요)`);
   fs.writeFileSync(OUT, indexText);
-  console.log(`심플 새 틀 ${rows.length}종 → ${file}(${Buffer.byteLength(text)}B) · index.json · 분류 ${[...new Set(rows.map(x => x.category))].join(' · ')}`);
+  console.log(`심플 새 틀 ${rows.length}종 → 조각 ${Object.keys(files).length}개(첫 조각 ${file} ${Buffer.byteLength(text)}B) · index.json · 분류 ${[...new Set(rows.map(x => x.category))].join(' · ')}`);
 }

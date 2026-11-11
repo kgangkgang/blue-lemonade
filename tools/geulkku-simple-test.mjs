@@ -31,7 +31,9 @@ async function test(name, fn) {
 
 // 견본 틀: tools/simple-frames/sample-08-blind.html 을 생성기와 같은 길로(미리보기 판 — DEFS 에서 견본을 빼도 시험은 돌아요) · 목록 자료는 생성기가 쓴 것
 const DIR = path.join(MART, 'data/geulkku');
-const six = JSON.parse(fs.readFileSync(path.join(DIR, 'index.json'), 'utf8'));   // 글꾸 마트 목록 = 심플 새 틀만(11-11 옛 글꾸를 뺐어요)
+const sixAll = JSON.parse(fs.readFileSync(path.join(DIR, 'index.json'), 'utf8'));   // 글꾸 마트 목록 = 심플 새 틀만(11-11 옛 글꾸를 뺐어요)
+// 11-11 전수조사 합격 틀(sp-pass-* 조각)이 더해졌어요 — 아래 시험들은 스물여덟 틀(sp-simple) 을 보고, 합격 틀은 맨 끝 시험이 따로 봐요
+const six = { ...sixAll, count: sixAll.items.filter(x => x.c === 'sp-simple').length, items: sixAll.items.filter(x => x.c === 'sp-simple'), chunks: { 'sp-simple': sixAll.chunks['sp-simple'] } };
 const gen = await imp(path.join(ROOT, 'tools/geulkku-simple.mjs'));
 const sample = gen.frameHtml(gen.SAMPLE_DEF).preview;
 const styleOf = h => h.match(/<style>\n?([\s\S]*?)\n?<\/style>/)[1];
@@ -380,7 +382,7 @@ await test('옛 글꾸 없음 · 목록: index.json 은 심플 새 틀 28 하나
     assert.equal(six.count, 28); assert.equal(six.items.length, 28);
     assert.ok(six.items.every(x => x.simple && x.c === 'sp-simple' && x.style === '심플'));
     assert.deepEqual(Object.keys(six.chunks), ['sp-simple']);
-    assert.deepEqual(fs.readdirSync(DIR).sort(), ['index.json', six.chunks['sp-simple'].file].sort());
+    assert.deepEqual(fs.readdirSync(DIR).sort(), ['index.json', ...Object.values(sixAll.chunks).map(c => c.file)].sort());
     assert.ok(!six.styles, '그림 결 목록 없음');
     // 바탕 커밋의 옛 목록 id 가 하나도 안 남았어요
     const old = JSON.parse(git('show', `${BASE}:mart/data/geulkku/index.json`).toString());
@@ -401,10 +403,10 @@ await test('옛 글꾸 없음 · 화면: 「옛날 버전」 단추 · 돌아가
     assert.ok(!page.includes('mart-mylog'), '「내 로그로 보기」 단추 없음');
     assert.ok(!/447|1512|1483/.test(page.replace(/\?v=\d+\w*/g, '')) && !/글꾸 1483종|1512/.test(home), '옛 숫자 없음');
     const top = fs.readFileSync(path.join(MART, 'top-mart.js'), 'utf8');
-    assert.match(top, new RegExp(`const COUNTS = \\{ frames: 1448, geulkku: ${six.count} \\};`));
+    assert.match(top, new RegExp(`const COUNTS = \\{ frames: 1448, geulkku: ${sixAll.count} \\};`));
     assert.ok(!top.includes('geulkkuAll'));
-    assert.match(home, new RegExp(`<b>글꾸 마트</b><p>새 글꾸 틀 ${six.count}종`));
-    assert.match(page, new RegExp(`<p class="mart-lede">새 글꾸 틀 ${six.count}개예요\\.`));
+    assert.match(home, new RegExp(`<b>글꾸 마트</b><p>새 글꾸 틀 ${sixAll.count}종`));
+    assert.match(page, new RegExp(`<p class="mart-lede">새 글꾸 틀 ${sixAll.count}개예요\\.`));
     // 다른 마트(액자) 목록 · 숫자는 그대로
     assert.equal(fs.readFileSync(path.join(MART, 'data/frames.json'), 'utf8'), git('show', `${BASE}:mart/data/frames.json`).toString());
 });
@@ -439,7 +441,7 @@ await test('옛 글꾸 도구는 쉬어요: 자료를 만들고 점검하던 열
         assert.match(out, /옛 글꾸는 마트에서 뺐어요 — 이 도구는 쉬어요/, n);
         assert.ok(fs.readFileSync(path.join(ROOT, 'tools', `geulkku-${n}.mjs`), 'utf8').split('\n').length > 20, `${n} 소스 그대로`);
     }
-    assert.match(execFileSync(process.execPath, [path.join(ROOT, 'tools/geulkku-simple.mjs'), '--check'], { cwd: ROOT }).toString(), /확인: 심플 새 틀 28종 그대로예요/);
+    assert.match(execFileSync(process.execPath, [path.join(ROOT, 'tools/geulkku-simple.mjs'), '--check'], { cwd: ROOT }).toString(), new RegExp(`확인: 심플 새 틀 ${sixAll.count}종 그대로예요`));
 });
 
 await test('site-rig: 글꾸 화면은 새 틀로 열려요(아무 카드나 크게 보기 · 칩만 고름) · 시식 · 내 로그 · 담김 카드는 쉬고 장바구니는 액자 마트에서', () => {
@@ -1021,5 +1023,32 @@ await test('레몬 바로가기 빼기(모든 틀 공통 · 글 모양에 기억
     assert.equal(lk.cleanPreset({ name: '레몬', look: { lemon: { off: true } } }).look.lemon.off, true);
     assert.match(fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8'), /data-lemon="0"/);
 });
+// ── 11-11 전수조사 합격 틀(sp-pass-* 조각 · 뿌리 gk-k1001 ~) ──
+await test('전수조사 합격 틀: pass-defs.json 줄마다 틀 파일 · 목록 줄 · 조각(40틀씩) · 미리보기 · 세 덩이 · 원래 색 그대로 · 다른 색 · 캐릭터 없음 × 낮밤에서 기본 덩이 그대로 · <style> 하나 · 복사 글 <style> 하나 · 열쇠는 첫 묶음과 안 겹침', () => {
+    const rows = sixAll.items.filter(x => x.c !== 'sp-simple');
+    assert.equal(rows.length, gen.PASS_DEFS.length);
+    assert.equal(sixAll.count, six.count + rows.length);
+    assert.deepEqual(rows.map(x => x.id), gen.PASS_DEFS.map(d => d.id));
+    const keys = new Set();
+    const items = {};
+    for (const [ck, c] of Object.entries(sixAll.chunks)) if (ck !== 'sp-simple') { assert.ok(c.n <= gen.PASS_STEP); Object.assign(items, JSON.parse(fs.readFileSync(path.join(DIR, c.file), 'utf8')).items); }
+    for (const row of rows) {
+        assert.match(row.c, /^sp-pass-\d+$/);
+        const { html } = gen.frameHtml(gen.PASS_DEFS.find(d => d.id === row.id));
+        const info = sf.simpleFrameInfo(html);
+        assert.ok(info && /^k1\d{3}$/.test(info.key) && !keys.has(info.key), row.id); keys.add(info.key);
+        assert.ok(items[row.id] && items[row.id].preview.includes(`gk-${info.key}`), row.id);
+        assert.equal(partsOf(html).length, 3, row.id);
+        assert.equal(sf.toneSimple(html, undefined, { mode: info.base === 'gk-tl' ? 'light' : 'dark' }).match(/<style>/g).length, 1);
+        const base = partsOf(html)[0];
+        for (const K of ['#3ccfbf', null]) for (const mode of ['light', 'dark']) {
+            const out = sf.toneSimple(html, K, { mode });
+            assert.equal((out.match(/<style>/g) || []).length, 1, `${row.id} ${K} ${mode}`);
+            assert.equal(partsOf(out)[0], base, `${row.id} ${K} ${mode} 기본 덩이`);
+        }
+        assert.equal((sf.simpleReady ? sf.simpleReady(html) : html).match(/<style>/g).length, 1, row.id);
+    }
+});
+
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
