@@ -585,3 +585,5 @@ html.mart-cart-on{overflow:hidden}
 .mart-mine-btns{margin-bottom:4px}
 .mart-mine-info{margin:4px 0 0;color:var(--muted);font-size:var(--ts-meta);line-height:1.5;text-align:left}
 @media (max-width:639px){.mart-mine-text{font-size:16px}}
+/* 11-11 되돌리기 · 다시하기 — 못 쓸 때는 흐리게(테 없이) */
+.mart-tune-line [data-hist]:disabled{opacity:.45;cursor:default}

@@ -5,7 +5,7 @@
 //   - 깡통 · 깡캐 색은 목록 위 두 칸(tone-state.js)과 같은 값이라 여기에 안 들어 있어요.
 export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(탭을 닫으면 사라져요 — sessionStorage)
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
-import { cleanLook } from './look.js?v=20261111l';
+import { cleanLook } from './look.js?v=20261111m';
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** 역할별 글자색 — 이름은 inks.js(테마 글자색 칩)와 같아요. 새 틀에 그 글자가 있는 역할만 칸이 떠요(속마음 · 강조 · 형광펜은 그 클래스를 쓰는 틀이 생기면 한 줄 더해요) */

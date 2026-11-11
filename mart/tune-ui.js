@@ -3,11 +3,11 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone } from './tone-state.js?v=20261111l';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111l';
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, LINES_RANGE, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111l';
-import { mineOn, applyMine } from './mine-text.js?v=20261111l';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111l';
+import { toneState, setTone } from './tone-state.js?v=20261111m';
+import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111m';
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, LINES_RANGE, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111m';
+import { mineOn, applyMine } from './mine-text.js?v=20261111m';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111m';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -99,7 +99,7 @@ export function tuneHtml(item) {
     if (!item?.simple || !item.preview) return '';
     return `<section class="mart-tune" aria-label="조절"><div class="mart-tune-tabs mart-seg mart-hscroll" role="group" aria-label="조절 묶음">${LOOK_TABS.map(([id, l]) => `<button type="button" class="chip" data-tune-tab="${id}" aria-pressed="${id === tab}">${esc(l)}</button>`).join('')}</div>
         <div class="mart-tune-body">${tabBody(item)}</div>
-        <div class="mart-tune-line"><button type="button" class="chip mart-tune-edit" data-tune-edit aria-pressed="false">글 고치기</button><button type="button" class="chip mart-tune-all" data-tune-reset="all" hidden>전부 처음으로</button></div>
+        <div class="mart-tune-line"><button type="button" class="chip mart-tune-edit" data-tune-edit aria-pressed="false">글 고치기</button><button type="button" class="chip" data-hist="undo" title="되돌리기(Ctrl+Z)" disabled>되돌리기</button><button type="button" class="chip" data-hist="redo" title="다시하기(Ctrl+Y)" disabled>다시하기</button><button type="button" class="chip mart-tune-all" data-tune-reset="all" hidden>전부 처음으로</button></div>
         <p class="mart-tune-hint" data-edit-hint hidden>미리보기의 글자를 눌러 바로 고쳐 써요 · 고치는 동안은 소품이 안 눌려요</p></section>`;
 }
 const dotOf = p => (p.tone.on && p.tone.k ? p.tone.k : NEUTRAL);
@@ -126,7 +126,50 @@ export function mineBoxHtml(item) {
         <div class="mart-tune-list">${mineHtml(item)}</div></section>`;
 }
 /** 조절 칸을 지금 값으로 맞춰요 — 칸을 새로 그리지 않아요(색 고르기 창 · 끌고 있는 슬라이더가 안 날아가게) */
+// ── 11-11 되돌리기 · 다시하기 — 테마 로그 복사 편집기(hist: 스냅샷 50 · 0.5초 묶음)와 같은 꼴 ──
+//   한 칸 = 이 틀의 조절 값(색 · 고쳐 쓴 글 · 대사 줄) + 글 모양 + 깡통 · 깡캐 · 밤낮. 크게 보기를 다른 틀로 열면 새로 시작해요
+const HIST_MAX = 50;
+const hist = { id: null, stack: [], at: -1, timer: 0, restoring: false };
+const snapOf = item => JSON.stringify({ tune: tuneOf(item.id), look: lookNow(), tone: { on: toneState.on, k: toneState.k, name: toneState.name, k2: toneState.k2, name2: toneState.name2, mode: toneState.mode } });
+function histPush(item) {
+    clearTimeout(hist.timer); hist.timer = 0;
+    const s = snapOf(item);
+    if (hist.stack[hist.at] === s) return;
+    hist.stack = hist.stack.slice(0, hist.at + 1); hist.stack.push(s);
+    if (hist.stack.length > HIST_MAX + 1) hist.stack.shift();
+    hist.at = hist.stack.length - 1;
+}
+/** 바뀔 때마다 부르면 0.5초 묶어 한 칸으로 */
+function histRecord(item, sheet) {
+    if (hist.restoring || hist.id !== item.id) return;
+    clearTimeout(hist.timer);
+    hist.timer = setTimeout(() => { histPush(item); syncHist(sheet); }, 500);
+}
+function histStart(item) { clearTimeout(hist.timer); hist.id = item.id; hist.stack = []; hist.at = -1; histPush(item); }
+function syncHist(sheet) {
+    const u = sheet?.querySelector('[data-hist="undo"]'), r = sheet?.querySelector('[data-hist="redo"]');
+    const pending = !!hist.timer;
+    if (u) u.disabled = !(hist.at > 0 || pending);
+    if (r) r.disabled = pending || hist.at >= hist.stack.length - 1;
+}
+/** 한 칸 앞 · 뒤로 — 칠하기 · 글 모양 · 깡통 · 깡캐를 그 칸으로 되돌려요 */
+function histMove(item, step) {
+    if (hist.timer) histPush(item);   // 묶는 중이던 것을 먼저 한 칸으로
+    const to = hist.at + step;
+    if (to < 0 || to >= hist.stack.length) return false;
+    const s = JSON.parse(hist.stack[to]);
+    hist.restoring = true;
+    try {
+        setTune(item.id, s.tune);
+        setLook(s.look);
+        setTone(s.tone.on ? { on: true, k: s.tone.k, name: s.tone.name, k2: s.tone.k2, name2: s.tone.name2, mode: s.tone.mode } : { on: false, k2: s.tone.k2, name2: s.tone.name2, mode: s.tone.mode });
+    } finally { hist.restoring = false; }
+    hist.at = to;
+    return true;
+}
 export function syncTune(sheet, item) {
+    if (item && hist.id !== item.id) histStart(item);
+    syncHist(sheet);
     const box = sheet?.querySelector('.mart-tune'); if (!box || !item) return;
     const root = sheet.querySelector('.mart-sheet-preview'), v = valuesOf(item, root), t = tuneOf(item.id);
     for (const b of box.querySelectorAll('[data-tune-tab]')) b.setAttribute('aria-pressed', String(b.dataset.tuneTab === tab));
@@ -263,6 +306,18 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         else if (t.matches?.('input[data-look-color]')) { delete t.dataset.busy; clearTimeout(lookTimer); setLookValue(t.dataset.lookColor, t.value); }
     });
     sheet.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.closest?.('.mart-sheet-preview [data-bl-ed]')) e.preventDefault(); });
+    // 되돌리기 · 다시하기: 값이 바뀔 때마다 0.5초 묶어 한 칸 · Ctrl+Z / Ctrl+Y(Ctrl+Shift+Z) — 글칸 · 입력칸 안에서는 그 칸의 되돌리기를 그대로 둬요(고쳐 쓰는 글 칸은 마트 되돌리기)
+    const onChange = () => { const item = current()?.item; if (sheet.open && item?.simple) { histRecord(item, sheet); syncHist(sheet); } };
+    document.addEventListener('bl-tune-change', onChange);
+    document.addEventListener('bl-tone-change', onChange);
+    const undo = (step) => { const item = current()?.item; if (!item) return; if (histMove(item, step)) { redraw(item); syncMine(sheet, item); say(step < 0 ? '되돌렸어요' : '다시 했어요', 1400); } syncHist(sheet); };
+    sheet.addEventListener('keydown', (e) => {
+        if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+        const k = e.key.toLowerCase(); if (k !== 'z' && k !== 'y') return;
+        if (e.target.closest?.('input, textarea, select')) return;
+        e.preventDefault();
+        undo(k === 'y' || e.shiftKey ? 1 : -1);
+    });
     // 고치는 동안 글자를 눌러도 소품(summary)이 열리고 닫히지 않게
     // 11-11 「글 고치기」 켠 동안은 소품이 안 눌려요(사용자 「글 고치는중에도 소품 눌림」): 미리보기 안 누름은 CSS(pointer-events)로 글 칸만 받고,
     //   그래도 들어온 누름(summary · label · 링크 · 단추)의 기본 동작은 막아요 — 제목 줄이 곧 누름 칸인 틀(견출지 · 낫표)에서 제목을 고쳐 써도 안 열리고 안 닫혀요
@@ -274,6 +329,7 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         const item = current()?.item; if (!item) return;
         const q = sel => e.target.closest?.(sel);
         let b;
+        if ((b = q('[data-hist]'))) { undo(b.dataset.hist === 'redo' ? 1 : -1); return; }
         if ((b = q('[data-tune-tab]'))) { tab = b.dataset.tuneTab; redraw(item); return; }
         if ((b = q('[data-tune-mode]'))) { setTone({ mode: b.dataset.tuneMode }); return; }
         if ((b = q('[data-tune-lines]'))) { const t = clone(tuneOf(item.id)), n = Number(b.dataset.tuneLines); if (n) t.lines = n; else delete t.lines; setTune(item.id, t); redraw(item); return; }
