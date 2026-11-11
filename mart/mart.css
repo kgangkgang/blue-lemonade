@@ -440,10 +440,10 @@ html.mart-cart-on{overflow:hidden}
 .mart-cast-r{position:relative;display:flex;align-items:center;gap:8px;min-height:32px;padding:0 6px;border-radius:var(--r-ctl);font-size:var(--ts-ctl);color:var(--ink);cursor:pointer}
 .mart-cast-r:hover{background:var(--tint)}
 .mart-cast-r input{margin:0;accent-color:var(--blue)}
-.mart-cast-r input[type=radio]{appearance:none;-webkit-appearance:none;display:inline-grid;place-content:center;flex:none;width:18px;height:18px;border:1px solid var(--line-strong);border-radius:50%;background:var(--surface);cursor:pointer}
-.mart-cast-r input[type=radio]::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--blue);transform:scale(0);transition:transform .12s}
-.mart-cast-r input[type=radio]:checked{border-color:var(--blue)}
-.mart-cast-r input[type=radio]:checked::before{transform:scale(1)}
+/* 11-11 고른 점을 따로 그리지 않아요 — 바깥 원 하나를 파랗게 채우고 안쪽 그림자(면 색 4px)로 둘레를 덮어 가운데 8px 만 남겨요. 그림자는 테두리 안쪽에서 사방 같은 두께라 화면 배율이 150% · 165% 여도 점이 한가운데예요(예전 ::before 점은 배율에 따라 반 화소 왼쪽 위로 밀렸어요) */
+.mart-cast-r input[type=radio]{appearance:none;-webkit-appearance:none;display:block;flex:none;width:18px;height:18px;border:1px solid var(--line-strong);border-radius:50%;background:var(--surface);box-shadow:inset 0 0 0 9px var(--surface);transition:box-shadow .12s;cursor:pointer}
+.mart-cast-r input[type=radio]:checked{border-color:var(--blue);background:var(--blue);box-shadow:inset 0 0 0 4px var(--surface)}
+@media (prefers-reduced-motion:reduce){.mart-cast-r input[type=radio]{transition:none}}
 .mart-cast-r span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mart-cast-r i.is-none{background:var(--muted)}
 .mart-cast-r i.is-off{background:transparent;box-shadow:inset 0 0 0 2px var(--line-strong)}
