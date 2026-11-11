@@ -251,6 +251,21 @@ await test('04 줄자 누를 곳: summary 하나가 자(눈금 · 숫자 줄) + 
     for (const rule of ['.gk-k4 .gk-rl{display:block;container-type:size;height:30px', '.gk-k4 .gk-rs{display:flex;', '.gk-k4 .gk-rc{display:block;', '.gk-k4 .gk-rr{display:flex;', '.gk-k4 .gk-ms{display:flex;align-items:flex-start;height:13px']) assert.ok(base.includes(rule), rule);
 });
 
+await test('「✎ 숨은 한 줄」 주석은 05 티백에만(15 요람의 gk-hl 공 빛 조각 다섯에는 안 달아요 · 테마 markEdits skip 과 같은 규칙) · 원래 색 · 다른 색 · 캐릭터 없음 × 낮밤', () => {
+    const HIDDEN = '<!-- ✎ 숨은 한 줄';
+    for (const row of six.items) for (const K of [undefined, '#3ccfbf', null]) for (const mode of ['light', 'dark']) {
+        const p = sfx[row.id].preview, info = sf.simpleFrameInfo(p);
+        const c = sf.simpleReady(shutPeek(sf.toneSimple(p, K === undefined ? info.K0 : K, { mode })));
+        assert.equal(c.split(HIDDEN).length - 1, row.id === 'simple-k5' ? 1 : 0, `${row.id} ${K} ${mode}`);
+    }
+    const k15 = sf.simpleReady(shutPeek(sfx['simple-k15'].preview));
+    assert.equal((k15.match(/<span class="gk-hl">/g) || []).length, 5, '15 공 빛 조각 다섯은 그대로');
+    assert.doesNotMatch(k15, /-->\s*<span class="gk-hl">/);
+    assert.match(sf.simpleReady(shutPeek(sfx['simple-k5'].preview)), /<!-- ✎ 숨은 한 줄\(찻물이 차면 나와요\) --><span class="gk-hl">/);
+    assert.deepEqual([...sf.HIDDEN_LINE_FRAMES], ['k5']);
+    assert.deepEqual(sf.EDIT_MARKS.map(x => x[0]), ['gk-tt', 'gk-nr', 'gk-nm', 'gk-dl', 'gk-sd', 'gk-hl'], '주석 표는 그대로(테마 fixture 와 같은 꼴)');
+});
+
 // 원래 주인공 색에서 나온 값(색 · 사다리 다섯 · rgb 셋 — # · 그림 안 %23 · rgb%28 꼴)이 다른 색으로 칠한 뒤 색 블록에 남는지(같은 색을 쓰는 다른 화자 몫은 빼요)
 const bandColors = h => { const o = {}; for (const m of styleOf(h).matchAll(/\.gk-d([A-Z])\{background-(?:color:\s*rgba?\(|image:[^}]*?rgba?%28)(\d+),\s*(\d+),\s*(\d+)/g)) o[m[1]] ??= '#' + [m[2], m[3], m[4]].map(v => (+v).toString(16).padStart(2, '0')).join(''); return o; };
 const leftovers = (p, t) => {

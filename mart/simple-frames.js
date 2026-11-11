@@ -299,14 +299,17 @@ export const EDIT_MARKS = Object.freeze([
     ['gk-hl', '숨은 한 줄(찻물이 차면 나와요)'],
 ]);
 const MARK_HEAD = '<!-- ▲ 위 스타일 칸은 틀 모양 · 색이에요(고치지 않아도 돼요) · ▼ 아래는 글 — 「✎」 주석 바로 뒤 요소의 글자만 바꿔요 · 대사 · 지문 줄은 복사해 늘리거나 지워도 돼요 -->';
-/** 고칠 자리 주석 달기(이미 달았으면 그대로) */
-export function markEdits(html) {
+/** 「숨은 한 줄」(gk-hl)이 있는 틀 — 15 요람의 gk-hl 은 공 빛 조각이라 주석을 안 달아요(테마 markEdits 의 skip 과 같은 규칙) */
+export const HIDDEN_LINE_FRAMES = Object.freeze(['k5']);
+const frameKeyOf = html => (String(html ?? '').match(/\sclass="gk\s(?:[^"]*\s)?gk-((?:k|q)\d+)(?=[\s"])/) || [])[1] || '';
+/** 고칠 자리 주석 달기(이미 달았으면 그대로) · skip: 이 틀에서는 안 달 클래스(테마 markEdits 와 같은 꼴) */
+export function markEdits(html, { skip = [] } = {}) {
     const text = String(html ?? '');
     if (text.includes('「✎」')) return text;
     const at = text.indexOf('</style>');
     if (at < 0) return text;
     const head = text.slice(0, at + 8), body = text.slice(at + 8);
-    const marks = new Map(EDIT_MARKS);
+    const marks = new Map(EDIT_MARKS.filter(([cls]) => !skip.includes(cls)));
     const marked = body.replace(/<([a-z][a-z0-9]*)\b([^>]*?)\sclass="([^"]*)"/g, (all, tag, pre, cls, at, whole) => {
         const hit = cls.split(/\s+/).find(c => marks.has(c));
         if (!hit || /<!--\s*✎[^>]*-->\s*$/.test(whole.slice(Math.max(0, at - 200), at))) return all;   // 틀이 이미 단 「✎」 주석(q09 영수증 · q10)은 두 번 안 달아요
@@ -316,4 +319,4 @@ export function markEdits(html) {
 }
 
 /** 심플 새 틀 「HTML 복사」 글: 틀 <style> + 그림 규칙 + 코멘트 빈칸 · 16px 간격 규칙을 <style> 하나로(감싸는 div 첫 자식) · 위아래 코멘트 빈칸 · 글자색 fill · 고칠 자리 주석 */
-export const simpleReady = html => markEdits(kkangtongReady(hoistStyle(html)));
+export const simpleReady = html => markEdits(kkangtongReady(hoistStyle(html)), { skip: HIDDEN_LINE_FRAMES.includes(frameKeyOf(html)) ? [] : ['gk-hl'] });
