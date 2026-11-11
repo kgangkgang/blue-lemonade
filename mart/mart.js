@@ -692,6 +692,7 @@ function openSheet(state) {
     sheet.querySelector('.mart-sheet-foot').innerHTML = `<div class="mart-sheet-extra">${tasteHtml(item)}${randomMoreHtml()}</div>` + actionsHtml(item);
     syncSheet();
     if (!sheet.open) sheet.showModal();
+    paintTune();   // 창이 뜬 뒤 한 번 더 — 가로로 미는 칩 줄의 흐림 · 고른 칩 자리는 폭이 있어야 재요
     body.scrollTop = 0;
     sheet.querySelector('.mart-sheet-x').focus({ preventScroll: true });
 }

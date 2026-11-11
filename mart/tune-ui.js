@@ -16,6 +16,25 @@ const clone = t => JSON.parse(JSON.stringify(t || {}));
 let editing = false;   // 「글 고치기」 켬 — 켜 둔 동안만 미리보기 글자를 고쳐 쓸 수 있어요(꺼져 있으면 소품 누르기 그대로)
 let tab = 'color';     // 펼친 묶음
 
+// ── 가로로 미는 칩 줄(.mart-hscroll) — 테마 설정 창의 칩 줄(panel.js fadeTags · showTag)과 같은 식 ──
+const FADE = 28;
+/** 넘치는 쪽만, 남은 거리만큼 흐려요(넘치지 않으면 흐림 없음) */
+export function fadeRow(row) {
+    const rest = row.scrollWidth - row.clientWidth - row.scrollLeft;
+    row.classList.toggle('over', row.scrollWidth > row.clientWidth + 1);
+    row.style.setProperty('--fade-l', `${Math.max(0, Math.min(FADE, row.scrollLeft))}px`);
+    row.style.setProperty('--fade-r', `${Math.max(0, Math.min(FADE, rest))}px`);
+}
+/** 고른 칩이 줄 밖이나 흐린 끝에 있으면 보이게 옮겨요 */
+export function showOn(row) {
+    if (!row.clientWidth) return;
+    const on = row.querySelector('[aria-pressed="true"], [aria-current="true"]');
+    if (on) { const left = on.offsetLeft - row.offsetLeft; row.scrollLeft = Math.min(Math.max(row.scrollLeft, left + on.offsetWidth + FADE - row.clientWidth), Math.max(0, left - FADE)); }
+    fadeRow(row);
+}
+/** 그 안의 칩 줄 전부: 흐림을 맞추고(show 면 고른 칩도 보이게) */
+export function tidyRows(root, show = false) { for (const row of root?.querySelectorAll('.mart-hscroll') || []) (show ? showOn : fadeRow)(row); }
+
 /** 그 틀에 보일 색 칩 목록 — [{ key, label, title }] (틀에 있는 것만 · 틀이 못 받는 칸은 안 보여요) */
 function chipsOf(item) {
     const html = item.preview || '';
@@ -47,18 +66,18 @@ function fieldHtml(f) {
     const p = esc(f.path), lab = `<span class="mart-look-label">${esc(f.label)}</span>`;
     const when = f.when ? ` data-when="${f.when}"` : '';
     if (f.kind === 'range') return `<div class="mart-param${f.wide ? ' is-wide' : ''}"><header><span class="mart-param-name">${esc(f.label)}</span>${undoBtn('data-look-reset', p, f.label)}<span class="mart-num"><input type="number" step="any" inputmode="decimal" data-look-num="${p}" placeholder="틀" aria-label="${esc(f.label)} 숫자"><i class="mart-unit">${esc(f.unit || '')}</i></span></header><input type="range" data-look="${p}" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.def}" style="--fill:${fillOf(f, null)}" aria-label="${esc(f.label)}"></div>`;
-    if (f.kind === 'pick') return `<div class="mart-look-row is-wrap"${when}>${lab}<span class="mart-seg mart-look-seg" role="group" aria-label="${esc(f.label)}"><button type="button" class="chip" data-look-pick="${p}" data-v="null" aria-pressed="true">틀 그대로</button>${f.options.map(([id, l]) => `<button type="button" class="chip" data-look-pick="${p}" data-v="${esc(JSON.stringify(id))}" aria-pressed="false">${esc(l)}</button>`).join('')}</span></div>`;
-    if (f.kind === 'font') return `<div class="mart-look-row is-wrap"${when}>${lab}<span class="mart-seg mart-look-seg" role="group" aria-label="${esc(f.label)}"><button type="button" class="chip" data-look-pick="${p}" data-v="null" aria-pressed="true">틀 그대로</button>${FONT_STACKS.map(s => `<button type="button" class="chip" data-look-pick="${p}" data-v="${esc(JSON.stringify(s.id))}" aria-pressed="false">${esc(s.label)}</button>`).join('')}</span></div><p class="mart-tune-hint">깡통 글에서는 기기 글꼴만 먹어요 · 읽는 사람 기기에 없는 글꼴은 기본 글꼴로 보여요</p>`;
+    if (f.kind === 'pick') return `<div class="mart-look-row is-wrap"${when}>${lab}<span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="${esc(f.label)}"><button type="button" class="chip" data-look-pick="${p}" data-v="null" aria-pressed="true">틀 그대로</button>${f.options.map(([id, l]) => `<button type="button" class="chip" data-look-pick="${p}" data-v="${esc(JSON.stringify(id))}" aria-pressed="false">${esc(l)}</button>`).join('')}</span></div>`;
+    if (f.kind === 'font') return `<div class="mart-look-row is-wrap"${when}>${lab}<span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="${esc(f.label)}"><button type="button" class="chip" data-look-pick="${p}" data-v="null" aria-pressed="true">틀 그대로</button>${FONT_STACKS.map(s => `<button type="button" class="chip" data-look-pick="${p}" data-v="${esc(JSON.stringify(s.id))}" aria-pressed="false">${esc(s.label)}</button>`).join('')}</span></div><p class="mart-tune-hint">깡통 글에서는 기기 글꼴만 먹어요 · 읽는 사람 기기에 없는 글꼴은 기본 글꼴로 보여요</p>`;
     if (f.kind === 'toggle') return `<div class="mart-look-row"${when}>${lab}<button type="button" class="chip" data-look-toggle="${p}" aria-pressed="false">켬</button></div>`;
-    if (f.kind === 'targets') return `<div class="mart-look-row is-wrap"${when}>${lab}<span class="mart-seg mart-look-seg" role="group" aria-label="${esc(f.label)}">${f.options.map(([id, l]) => `<button type="button" class="chip" data-look-target="${id}" aria-pressed="false">${esc(l)}</button>`).join('')}</span></div>`;
+    if (f.kind === 'targets') return `<div class="mart-look-row is-wrap"${when}>${lab}<span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="${esc(f.label)}">${f.options.map(([id, l]) => `<button type="button" class="chip" data-look-target="${id}" aria-pressed="false">${esc(l)}</button>`).join('')}</span></div>`;
     if (f.kind === 'color') return `<div class="mart-look-row"${when}>${lab}<label class="mart-ink" title="${esc(f.label)} 바꾸기"><input type="color" data-look-color="${p}" value="${f.def}" aria-label="${esc(f.label)}"><span class="mart-ink-dot" style="background-color:${f.def}" aria-hidden="true"></span>${esc(f.label)}</label></div>`;
     return '';
 }
 function tabBody(item) {
     if (tab === 'color') {
         const chips = chipsOf(item).map(c => `<span class="mart-tune-chip"><label class="mart-ink" title="${esc(c.title)}"><input type="color" data-tune="${c.key}" value="${NEUTRAL}" aria-label="${esc(c.label)} 색"><span class="mart-ink-dot" aria-hidden="true"></span>${esc(c.label)}</label>${undoBtn('data-tune-reset', c.key, c.label)}</span>`).join('');
-        return `<div class="mart-inks mart-tune-colors" role="group" aria-label="색 — 눌러서 바꿔요">${chips}</div>
-            <div class="mart-tune-line"><span class="mart-seg" role="group" aria-label="밤낮"><button type="button" class="chip" data-tune-mode="dark" aria-pressed="false">밤</button><button type="button" class="chip" data-tune-mode="light" aria-pressed="false">낮</button></span>${hasOwnTone(item.preview) ? '<span class="mart-seg mart-tune-own" role="group" aria-label="소품 색"><button type="button" class="chip" data-tune-own="1" aria-pressed="true">소품 기본 색</button><button type="button" class="chip" data-tune-own="0" aria-pressed="false">소품 캐릭터 색</button></span>' : ''}</div>`;
+        return `<div class="mart-inks mart-tune-colors mart-hscroll" role="group" aria-label="색 — 눌러서 바꿔요">${chips}</div>
+            <div class="mart-tune-line mart-hscroll"><span class="mart-seg" role="group" aria-label="밤낮"><button type="button" class="chip" data-tune-mode="dark" aria-pressed="false">밤</button><button type="button" class="chip" data-tune-mode="light" aria-pressed="false">낮</button></span>${hasOwnTone(item.preview) ? '<span class="mart-seg mart-tune-own" role="group" aria-label="소품 색"><button type="button" class="chip" data-tune-own="1" aria-pressed="true">소품 기본 색</button><button type="button" class="chip" data-tune-own="0" aria-pressed="false">소품 캐릭터 색</button></span>' : ''}</div>`;
     }
     const fields = LOOK_FIELDS.filter(f => f.tab === tab && whenOk(f)), html = [];
     for (let i = 0; i < fields.length; i++) {
@@ -74,7 +93,7 @@ function tabBody(item) {
 /** 조절 칸(미리보기 위) — 묶음 칩 + 펼친 묶음의 칸 + 글 고치기 · 전부 처음으로 */
 export function tuneHtml(item) {
     if (!item?.simple || !item.preview) return '';
-    return `<section class="mart-tune" aria-label="조절"><div class="mart-tune-tabs mart-seg" role="group" aria-label="조절 묶음">${LOOK_TABS.map(([id, l]) => `<button type="button" class="chip" data-tune-tab="${id}" aria-pressed="${id === tab}">${esc(l)}</button>`).join('')}</div>
+    return `<section class="mart-tune" aria-label="조절"><div class="mart-tune-tabs mart-seg mart-hscroll" role="group" aria-label="조절 묶음">${LOOK_TABS.map(([id, l]) => `<button type="button" class="chip" data-tune-tab="${id}" aria-pressed="${id === tab}">${esc(l)}</button>`).join('')}</div>
         <div class="mart-tune-body">${tabBody(item)}</div>
         <div class="mart-tune-line"><button type="button" class="chip mart-tune-edit" data-tune-edit aria-pressed="false">글 고치기</button><button type="button" class="chip mart-tune-all" data-tune-reset="all" hidden>전부 처음으로</button></div>
         <p class="mart-tune-hint" data-edit-hint hidden>미리보기의 글자를 눌러 바로 고쳐 써요 · 고치는 동안은 소품이 안 눌려요</p></section>`;
@@ -83,12 +102,12 @@ const dotOf = p => (p.tone.on && p.tone.k ? p.tone.k : NEUTRAL);
 const presetsHtml = () => {
     const list = presetList(), last = presetLast();
     if (!list.length) return '<p class="mart-tune-empty">아직 없어요 · 지금 색과 글 모양을 이름 붙여 기억해 두면 어느 틀에든 한 번에 입혀요</p>';
-    return `<ul class="mart-tune-mine">${list.map(x => `<li${x.id === last ? ' class="is-here"' : ''}><button type="button" class="mart-tune-load" data-preset-load="${esc(x.id)}" title="이 프리셋 입히기"${x.id === last ? ' aria-current="true"' : ''}><i class="mart-ink-dot" style="background:${esc(dotOf(x))}" aria-hidden="true"></i><b>${esc(x.name)}</b><span>${x.look ? '색 · 글 모양' : '색'}</span></button><button type="button" class="mart-cast-x" data-preset-rename="${esc(x.id)}" aria-label="${esc(x.name)} 이름 바꾸기" title="이름 바꾸기">✎︎</button><button type="button" class="mart-cast-x" data-preset-forget="${esc(x.id)}" aria-label="${esc(x.name)} 지우기" title="지우기">×</button></li>`).join('')}</ul>`;
+    return `<ul class="mart-tune-mine mart-hscroll">${list.map(x => `<li${x.id === last ? ' class="is-here"' : ''}><button type="button" class="mart-tune-load" data-preset-load="${esc(x.id)}" title="이 프리셋 입히기"${x.id === last ? ' aria-current="true"' : ''}><i class="mart-ink-dot" style="background:${esc(dotOf(x))}" aria-hidden="true"></i><b>${esc(x.name)}</b><span>${x.look ? '색 · 글 모양' : '색'}</span></button><button type="button" class="mart-cast-x" data-preset-rename="${esc(x.id)}" aria-label="${esc(x.name)} 이름 바꾸기" title="이름 바꾸기">✎︎</button><button type="button" class="mart-cast-x" data-preset-forget="${esc(x.id)}" aria-label="${esc(x.name)} 지우기" title="지우기">×</button></li>`).join('')}</ul>`;
 };
 const mineHtml = (item) => {
     const list = mineList();
     if (!list.length) return '<p class="mart-tune-empty">아직 없어요 · 틀과 고쳐 쓴 글까지 통째로 기억해요</p>';
-    return `<ul class="mart-tune-mine">${list.map(x => `<li${x.frame === item.id ? ' class="is-here"' : ''}><button type="button" class="mart-tune-load" data-mine-load="${esc(x.id)}" title="불러오기"><i class="mart-ink-dot" style="background:${esc(dotOf(x))}" aria-hidden="true"></i><b>${esc(x.name)}</b><span>${esc(x.frameName || x.frame)}</span></button><button type="button" class="mart-cast-x" data-mine-forget="${esc(x.id)}" aria-label="${esc(x.name)} 지우기" title="지우기">×</button></li>`).join('')}</ul>`;
+    return `<ul class="mart-tune-mine mart-hscroll">${list.map(x => `<li${x.frame === item.id ? ' class="is-here"' : ''}><button type="button" class="mart-tune-load" data-mine-load="${esc(x.id)}" title="불러오기"><i class="mart-ink-dot" style="background:${esc(dotOf(x))}" aria-hidden="true"></i><b>${esc(x.name)}</b><span>${esc(x.frameName || x.frame)}</span></button><button type="button" class="mart-cast-x" data-mine-forget="${esc(x.id)}" aria-label="${esc(x.name)} 지우기" title="지우기">×</button></li>`).join('')}</ul>`;
 };
 /** 「내 프리셋」 · 「내 글꾸」 칸(미리보기 아래) */
 export function mineBoxHtml(item) {
@@ -96,7 +115,7 @@ export function mineBoxHtml(item) {
     return `<section class="mart-tune-save" aria-label="내 프리셋"><h3 class="mart-tune-h">내 프리셋 <small>색 + 글 모양 · 어느 틀에든</small></h3>
         <form class="mart-tune-form" data-form="preset"><label class="field-wrap"><input type="text" class="field" name="name" maxlength="24" placeholder="프리셋 이름" aria-label="프리셋 이름" required></label><button type="submit" class="btn">프리셋 저장</button></form>
         <div class="mart-preset-list">${presetsHtml()}</div>
-        <div class="mart-tune-line"><button type="button" class="chip" data-preset-reset>기본으로</button><button type="button" class="chip" data-preset-export>내보내기</button><button type="button" class="chip" data-preset-io aria-expanded="false">가져오기</button></div>
+        <div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-preset-reset>기본으로</button><button type="button" class="chip" data-preset-export>내보내기</button><button type="button" class="chip" data-preset-io aria-expanded="false">가져오기</button></div>
         <div class="mart-preset-io" hidden><textarea class="field" rows="2" placeholder="프리셋 글자(BLM1.…)나 블루레몬 테마 스타일 코드(BLS1.…) · 프리셋 파일 내용을 붙여 넣어요" aria-label="프리셋 글자 붙여 넣기"></textarea><button type="button" class="btn" data-preset-import>가져와서 입히기</button></div>
         <h3 class="mart-tune-h">내 글꾸 <small>이 틀 + 고쳐 쓴 글까지</small></h3>
         <form class="mart-tune-form" data-form="mine"><label class="field-wrap"><input type="text" class="field" name="name" maxlength="24" placeholder="내 글꾸 이름" aria-label="내 글꾸 이름" required></label><button type="submit" class="btn">내 글꾸에 저장</button></form>
@@ -140,12 +159,15 @@ export function syncTune(sheet, item) {
     box.querySelector('[data-tune-edit]')?.setAttribute('aria-pressed', String(editing));
     const hint = box.querySelector('[data-edit-hint]'); if (hint) hint.hidden = !editing;
     const all = box.querySelector('[data-tune-reset="all"]'); if (all) all.hidden = !(t || toneState.on || toneState.k2 || lookNow());
+    const laid = box.clientWidth > 0;   // 창이 뜨기 전(폭 0)에는 건너뛰고, 뜬 뒤 다시 맞춰요
+    tidyRows(box, laid && box.dataset.shown !== tab); if (laid) box.dataset.shown = tab;   // 묶음을 바꾼 직후에만 고른 칩을 보이게(그 뒤에는 미는 대로 둬요)
 }
 export const syncMine = (sheet, item) => {
     if (!sheet || !item) return;
     const body = sheet.querySelector('.mart-tune-body'); if (body && tab !== 'color' && !body.contains(document.activeElement)) { body.innerHTML = tabBody(item); syncTune(sheet, item); }
     const list = sheet.querySelector('.mart-tune-list'); if (list) list.innerHTML = mineHtml(item);
     const pl = sheet.querySelector('.mart-preset-list'); if (pl) pl.innerHTML = presetsHtml();
+    tidyRows(sheet.querySelector('.mart-tune-save'), true);
 };
 
 /** 미리보기의 글 자리를 고쳐 쓸 수 있게(「글 고치기」가 켜져 있을 때만) — 자리 번호는 tune.js editables 와 같은 차례 */
@@ -191,7 +213,10 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         else if (key === 'k2') setTone({ k2: hex, name2: '' });
         else { const t = clone(tuneOf(item.id)); if (key === 'prop') t.prop = hex; else ((t.inks ??= {})[toneState.mode] ??= {})[key] = hex; setTune(item.id, t); }
     };
-    const redraw = (item) => { const body = sheet.querySelector('.mart-tune-body'); if (body) body.innerHTML = tabBody(item); syncTune(sheet, item); };
+    const redraw = (item) => { const body = sheet.querySelector('.mart-tune-body'); if (body) body.innerHTML = tabBody(item); const box = sheet.querySelector('.mart-tune'); if (box) delete box.dataset.shown; syncTune(sheet, item); };
+    // 칩 줄을 밀면 흐림을 다시 맞춰요(scroll 은 위로 안 올라와서 잡는 단계에서) · 창 크기가 바뀌어도
+    sheet.addEventListener('scroll', (e) => { if (e.target.classList?.contains('mart-hscroll')) fadeRow(e.target); }, true);
+    addEventListener('resize', () => { if (sheet.open) tidyRows(sheet); });
     sheet.addEventListener('input', (e) => {
         const t = e.target, item = current()?.item; if (!item) return;
         if (t.matches?.('input[data-tune]')) {

@@ -561,3 +561,19 @@ html.mart-cart-on{overflow:hidden}
 .mart-preset-io textarea{height:auto;min-height:56px;padding:8px 12px;resize:vertical;font:inherit;font-size:var(--ts-meta);line-height:1.4;word-break:break-all}
 .mart-tune-mine li.is-here .mart-tune-load b{color:var(--blue-strong)}
 @media (max-width:639px){.mart-look-label{width:64px}.mart-num input{font-size:16px;width:calc(4.5ch + 16px);height:44px;padding:0 6px}.mart-preset-io textarea{font-size:16px}}
+/* 11-11 고르는 칩 줄은 줄바꿈하지 않고 한 줄 가로 밀기(사용자 「선택할거있는건 다 가로스크롤해 … 블루레몬 내부 글꾸화면처럼」) — 테마 설정 창 칩 줄(css/50-settings-screens.css · 20-panel.css 의 흐림 마스크)과 같은 규칙:
+   줄바꿈 없음 · 스크롤 막대 숨김 · 옆으로 민 것이 바깥 화면으로 안 번짐 · 넘치는 쪽만 남은 거리만큼(최대 28px) 옅어짐(선 · 테 없음). 안쪽 여백 4px 은 초점 테가 잘리지 않게 */
+.mart-hscroll{display:flex;flex-wrap:nowrap;align-items:center;min-width:0;max-width:calc(100% + 8px);margin:-4px;padding:4px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:none;--fade-l:0px;--fade-r:0px}
+.mart-hscroll::-webkit-scrollbar{display:none}
+.mart-hscroll>*{flex:none;white-space:nowrap}
+.mart-hscroll.over{-webkit-mask-image:linear-gradient(to right,transparent,#000 var(--fade-l),#000 calc(100% - var(--fade-r)),transparent);mask-image:linear-gradient(to right,transparent,#000 var(--fade-l),#000 calc(100% - var(--fade-r)),transparent)}
+.mart-tune-tabs.mart-hscroll{width:calc(100% + 8px)}
+.mart-tune-tabs.mart-hscroll>.chip{flex:1 0 auto;min-width:max-content}
+.mart-look-row.is-wrap{flex-wrap:nowrap}
+.mart-look-row>.mart-hscroll{flex:1 1 0}
+.mart-tune-line.mart-hscroll{gap:8px}
+.mart-tune-line.mart-hscroll .mart-tune-all{margin-left:auto}
+.mart-tune-mine.mart-hscroll{flex-direction:row;gap:8px}
+.mart-tune-mine.mart-hscroll>li{flex:none;max-width:260px;border:1px solid var(--line);border-radius:var(--r-ctl);background:var(--surface)}
+.mart-tune-mine.mart-hscroll .mart-tune-load{flex:0 1 auto}
+.mart-tune-mine [data-preset-rename]{font-family:"Segoe UI Symbol","Apple Symbols",sans-serif}
