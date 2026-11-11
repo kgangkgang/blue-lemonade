@@ -664,3 +664,5 @@ html.mart-cart-on{overflow:hidden}
 @media (min-width:640px){.mart-sheet:not(.mart-taste) .mart-sheet-body>.mart-sheet-site{order:-1}}
 .mart-sheet-site{height:var(--ctl)}
 .mart-sheet-site>.mart-look-label{width:auto;white-space:nowrap}
+/* 11-12 「내려받기(.html)」 칩의 ⬇ — 글자 대신 마스크 그림(잉크 가운데가 글자 기준선에 안 흔들려요) */
+.mart-dl-chip::before{content:"";flex:none;width:14px;height:14px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4v11M7 10l5 5 5-5M5 20h14'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4v11M7 10l5 5 5-5M5 20h14'/%3E%3C/svg%3E") center/contain no-repeat}

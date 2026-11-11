@@ -168,7 +168,7 @@ function downloadSets(rows, name) {
 /** 「내 프리셋」 · 「완성 프리셋」 칸(미리보기 아래) */
 export function mineBoxHtml(item) {
     if (!item?.simple || !item.preview) return '';
-    return `<section class="mart-tune-save" aria-label="가져가기 · 내 프리셋"><h3 class="mart-tune-h">가져가기 <small>HTML 복사 말고도</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-act="download" title="복사 글과 같은 HTML 을 .html 파일로">내려받기(.html)</button><button type="button" class="chip" data-act="text" title="틀 없이 글만(마크다운) 복사">글만 복사</button></div>
+    return `<section class="mart-tune-save" aria-label="가져가기 · 내 프리셋"><h3 class="mart-tune-h">가져가기 <small>HTML 복사 말고도</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip mart-dl-chip" data-act="download" title="복사 글과 같은 HTML 을 .html 파일로">파일로 내려받기</button><button type="button" class="chip" data-act="text" title="틀 없이 글만(마크다운) 복사">글만 복사</button></div>
         <h3 class="mart-tune-h">내 프리셋 <small>색 + 글 모양 · 어느 틀에든</small></h3>
         <form class="mart-tune-form" data-form="preset"><label class="field-wrap"><input type="text" class="field" name="name" maxlength="24" placeholder="프리셋 이름" aria-label="프리셋 이름" required></label><button type="submit" class="btn">프리셋 저장</button></form>
         <div class="mart-preset-list">${presetsHtml()}</div>
