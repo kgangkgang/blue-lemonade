@@ -36,7 +36,9 @@ function valuesOf(item, previewRoot) {
     }
     return out;
 }
-const fmt = (f, v) => (v == null ? '틀 그대로' : `${f.scale ? Number((v / f.scale).toFixed(2)) : Number(Number(v).toFixed(2))}${f.unit && f.unit !== 'em' ? f.unit : f.unit === 'em' ? 'em' : ''}`);
+/** 숫자칸에 보일 글자(자간은 테마처럼 em 으로) · 값이 없으면 빈칸(자리 글자 「틀」 = 틀 그대로) */
+const numText = (f, v) => (v == null ? '' : String(f.scale ? Number((v / f.scale).toFixed(2)) : Number(Number(v).toFixed(2))));
+const fillOf = (f, v) => `${Number((((v ?? f.def) - f.min) / (f.max - f.min) * 100).toFixed(1))}%`;
 const whenOk = (f) => !f.when || (f.when === 'marker' ? lookValue('dialogue.style') === 'marker' : f.when === 'shadow' ? lookValue('shadow.on') === true : lookValue('outline.on') === true);
 const undoBtn = (attr, key, label) => `<button type="button" class="mart-tune-undo" ${attr}="${key}" title="${esc(label)} · 틀 그대로" aria-label="${esc(label)} · 틀 그대로" hidden>↺</button>`;
 
@@ -44,7 +46,7 @@ const undoBtn = (attr, key, label) => `<button type="button" class="mart-tune-un
 function fieldHtml(f) {
     const p = esc(f.path), lab = `<span class="mart-look-label">${esc(f.label)}</span>`;
     const when = f.when ? ` data-when="${f.when}"` : '';
-    if (f.kind === 'range') return `<div class="mart-look-row"${when}>${lab}<input type="range" class="mart-look-range" data-look="${p}" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.def}" aria-label="${esc(f.label)}"><output class="mart-look-val" data-look-val="${p}">틀 그대로</output>${undoBtn('data-look-reset', p, f.label)}</div>`;
+    if (f.kind === 'range') return `<div class="mart-param${f.wide ? ' is-wide' : ''}"><header><span class="mart-param-name">${esc(f.label)}</span>${undoBtn('data-look-reset', p, f.label)}<span class="mart-num"><input type="number" step="any" inputmode="decimal" data-look-num="${p}" placeholder="틀" aria-label="${esc(f.label)} 숫자"><i class="mart-unit">${esc(f.unit || '')}</i></span></header><input type="range" data-look="${p}" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.def}" style="--fill:${fillOf(f, null)}" aria-label="${esc(f.label)}"></div>`;
     if (f.kind === 'pick') return `<div class="mart-look-row is-wrap"${when}>${lab}<span class="mart-seg mart-look-seg" role="group" aria-label="${esc(f.label)}"><button type="button" class="chip" data-look-pick="${p}" data-v="null" aria-pressed="true">틀 그대로</button>${f.options.map(([id, l]) => `<button type="button" class="chip" data-look-pick="${p}" data-v="${esc(JSON.stringify(id))}" aria-pressed="false">${esc(l)}</button>`).join('')}</span></div>`;
     if (f.kind === 'font') return `<div class="mart-look-row is-wrap"${when}>${lab}<span class="mart-seg mart-look-seg" role="group" aria-label="${esc(f.label)}"><button type="button" class="chip" data-look-pick="${p}" data-v="null" aria-pressed="true">틀 그대로</button>${FONT_STACKS.map(s => `<button type="button" class="chip" data-look-pick="${p}" data-v="${esc(JSON.stringify(s.id))}" aria-pressed="false" style="font-family:${esc(s.family)}">${esc(s.label)}</button>`).join('')}</span></div><p class="mart-tune-hint">깡통 글에서는 기기 글꼴만 먹어요 · 읽는 사람 기기에 없는 글꼴은 기본 글꼴로 보여요</p>`;
     if (f.kind === 'toggle') return `<div class="mart-look-row"${when}>${lab}<button type="button" class="chip" data-look-toggle="${p}" aria-pressed="false">켬</button></div>`;
@@ -58,7 +60,15 @@ function tabBody(item) {
         return `<div class="mart-inks mart-tune-colors" role="group" aria-label="색 — 눌러서 바꿔요">${chips}</div>
             <div class="mart-tune-line"><span class="mart-seg" role="group" aria-label="밤낮"><button type="button" class="chip" data-tune-mode="dark" aria-pressed="false">밤</button><button type="button" class="chip" data-tune-mode="light" aria-pressed="false">낮</button></span>${hasOwnTone(item.preview) ? '<span class="mart-seg mart-tune-own" role="group" aria-label="소품 색"><button type="button" class="chip" data-tune-own="1" aria-pressed="true">소품 기본 색</button><button type="button" class="chip" data-tune-own="0" aria-pressed="false">소품 캐릭터 색</button></span>' : ''}</div>`;
     }
-    return `<div class="mart-look">${LOOK_FIELDS.filter(f => f.tab === tab).map(fieldHtml).join('')}</div>`;
+    const fields = LOOK_FIELDS.filter(f => f.tab === tab && whenOk(f)), html = [];
+    for (let i = 0; i < fields.length; i++) {
+        const f = fields[i];
+        if (f.kind !== 'range') { html.push(fieldHtml(f)); continue; }
+        let j = i; while (j < fields.length && fields[j].kind === 'range') j++;   // 이어진 슬라이더 칸 한 묶음(i ~ j-1)
+        for (let k = i; k < j; k++) html.push(fieldHtml({ ...fields[k], wide: (j - i) % 2 === 1 && k === j - 1 }));
+        i = j - 1;
+    }
+    return `<div class="mart-look">${html.join('')}</div>`;
 }
 
 /** 조절 칸(미리보기 위) — 묶음 칩 + 펼친 묶음의 칸 + 글 고치기 · 전부 처음으로 */
@@ -111,7 +121,8 @@ export function syncTune(sheet, item) {
         if (f.kind === 'range') {
             const input = box.querySelector(`input[data-look="${f.path}"]`); if (!input) continue;
             if (document.activeElement !== input) input.value = String(cur ?? f.def);
-            const out = box.querySelector(`[data-look-val="${f.path}"]`); if (out) out.textContent = fmt(f, cur);
+            input.style.setProperty('--fill', fillOf(f, document.activeElement === input ? Number(input.value) : cur));
+            const n = box.querySelector(`input[data-look-num="${f.path}"]`); if (n && document.activeElement !== n) n.value = numText(f, cur);
             const undo = box.querySelector(`[data-look-reset="${f.path}"]`); if (undo) undo.hidden = cur == null;
         } else if (f.kind === 'pick' || f.kind === 'font') {
             for (const b of box.querySelectorAll(`[data-look-pick="${f.path}"]`)) b.setAttribute('aria-pressed', String(JSON.parse(b.dataset.v) === cur));
@@ -126,13 +137,13 @@ export function syncTune(sheet, item) {
             const dot = input.parentElement.querySelector('.mart-ink-dot'); if (dot) dot.style.backgroundColor = input.value;
         }
     }
-    for (const row of box.querySelectorAll('[data-when]')) { const f = LOOK_FIELDS.find(x => x.when === row.dataset.when); row.hidden = !whenOk(f); }
     box.querySelector('[data-tune-edit]')?.setAttribute('aria-pressed', String(editing));
     const hint = box.querySelector('[data-edit-hint]'); if (hint) hint.hidden = !editing;
     const all = box.querySelector('[data-tune-reset="all"]'); if (all) all.hidden = !(t || toneState.on || toneState.k2 || lookNow());
 }
 export const syncMine = (sheet, item) => {
     if (!sheet || !item) return;
+    const body = sheet.querySelector('.mart-tune-body'); if (body && tab !== 'color' && !body.contains(document.activeElement)) { body.innerHTML = tabBody(item); syncTune(sheet, item); }
     const list = sheet.querySelector('.mart-tune-list'); if (list) list.innerHTML = mineHtml(item);
     const pl = sheet.querySelector('.mart-preset-list'); if (pl) pl.innerHTML = presetsHtml();
 };
@@ -190,8 +201,8 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
             return;
         }
         if (t.matches?.('input[data-look]')) {   // 슬라이더: 숫자는 바로 · 다시 칠하기는 0.12초 묶음
-            const f = LOOK_FIELDS.find(x => x.path === t.dataset.look), out = sheet.querySelector(`[data-look-val="${t.dataset.look}"]`);
-            if (out && f) out.textContent = fmt(f, Number(t.value));
+            const f = LOOK_FIELDS.find(x => x.path === t.dataset.look), n = sheet.querySelector(`input[data-look-num="${t.dataset.look}"]`);
+            if (f) { t.style.setProperty('--fill', fillOf(f, Number(t.value))); if (n) n.value = numText(f, Number(t.value)); }
             clearTimeout(lookTimer); lookTimer = setTimeout(() => setLookValue(t.dataset.look, Number(t.value)), 120);
             return;
         }
@@ -214,6 +225,11 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         const t = e.target, item = current()?.item; if (!item) return;
         if (t.matches?.('input[data-tune]')) { delete t.dataset.busy; clearTimeout(timer); applyColor(item, t.dataset.tune, t.value); }
         else if (t.matches?.('input[data-look]')) { clearTimeout(lookTimer); setLookValue(t.dataset.look, Number(t.value)); }
+        else if (t.matches?.('input[data-look-num]')) {   // 숫자칸: 비우면 틀 그대로 · 범위 밖은 범위 안으로(look.js 가 다듬어요)
+            const f = LOOK_FIELDS.find(x => x.path === t.dataset.lookNum), raw = t.value.trim();
+            setLookValue(f.path, raw === '' || !Number.isFinite(Number(raw)) ? null : Number(raw) * (f.scale || 1));
+            syncTune(sheet, item);
+        }
         else if (t.matches?.('input[data-look-color]')) { delete t.dataset.busy; clearTimeout(lookTimer); setLookValue(t.dataset.lookColor, t.value); }
     });
     sheet.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.closest?.('.mart-sheet-preview [data-bl-ed]')) e.preventDefault(); });
@@ -228,8 +244,8 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if ((b = q('[data-tune-own]'))) { const t = clone(tuneOf(item.id)); if (b.dataset.tuneOwn === '0') t.own = false; else delete t.own; setTune(item.id, t); return; }
         if (q('[data-tune-edit]')) { editing = !editing; armEdit(sheet.querySelector('.mart-sheet-preview'), item); syncTune(sheet, item); return; }
         if ((b = q('[data-look-reset]'))) { setLookValue(b.dataset.lookReset, null); return; }
-        if ((b = q('[data-look-pick]'))) { setLookValue(b.dataset.lookPick, JSON.parse(b.dataset.v)); return; }
-        if ((b = q('[data-look-toggle]'))) { setLookValue(b.dataset.lookToggle, lookValue(b.dataset.lookToggle) === true ? null : true); return; }
+        if ((b = q('[data-look-pick]'))) { setLookValue(b.dataset.lookPick, JSON.parse(b.dataset.v)); redraw(item); return; }
+        if ((b = q('[data-look-toggle]'))) { setLookValue(b.dataset.lookToggle, lookValue(b.dataset.lookToggle) === true ? null : true); redraw(item); return; }
         if ((b = q('[data-look-target]'))) { const cur = { ...(lookValue('shadow.targets') || { dialogue: true }) }; if (cur[b.dataset.lookTarget]) delete cur[b.dataset.lookTarget]; else cur[b.dataset.lookTarget] = true; setLookValue('shadow.targets', Object.keys(cur).length ? cur : null); return; }
         if ((b = q('[data-tune-reset]'))) {
             const key = b.dataset.tuneReset;
