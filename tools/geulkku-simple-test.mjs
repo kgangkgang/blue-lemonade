@@ -221,8 +221,8 @@ await test('실제 틀 스물여덟: 이식판 원래 판과 한 글자도 안 �
         assert.equal(row.audio === true, /<audio\b/.test(p));
         assert.ok(row.desc && !/심플 새 틀$/.test(row.desc), `${k} 설명`);
         if (isik) {   // 소리 카드 src · class · preload 와 미리보기 열림만 빼면 이식판 그 틀과 같아요
-            // 첫 묶음(k1~k8)은 이식판에 없던 포커스 테 숨김 한 줄을 마트가 더했어요(의도한 차이 — 원본에도 넣어야 해요)
-            const orig = shutPeek(p).replace(/<audio class="uploaded-audio" src="[^"]*" controls preload="metadata"/g, '<audio controls preload="none"').replace(/\n\.gk-k[1-8] summary:focus:not\(:focus-visible\)\{outline:none\}/, '');
+            // (첫 묶음 포커스 테 숨김 한 줄은 11-11 원본 make-isik.cjs 에도 들어가 이제 차이가 아니에요)
+            const orig = shutPeek(p).replace(/<audio class="uploaded-audio" src="[^"]*" controls preload="metadata"/g, '<audio controls preload="none"');
             assert.ok(isik.includes(orig), `${k} 이식판과 다름`);
         }
     }
@@ -236,6 +236,19 @@ await test('포커스 테: summary 가 있는 틀은 모두 「마우스로 누�
         assert.ok(base.includes(`.gk-${key} summary:focus-visible{outline:2px solid`), `${row.id} 키보드 테`);
     }
     for (const k of ['k1', 'k2', 'k3', 'k4', 'k5', 'k7', 'k8']) assert.ok(partsOf(sfx[`simple-${k}`].preview)[0].includes(gen.FOCUS_RULE(k)), k);
+});
+
+await test('04 줄자 누를 곳: summary 하나가 자(눈금 · 숫자 줄) + 세모 줄을 다 품어요(11-11 폰 폭 검사 — 세모 줄만 13px → 47px) · summary 안은 span 만 · 겉모습 규칙은 그대로', () => {
+    const p = sfx['simple-k4'].preview, base = partsOf(p)[0];
+    const m = p.match(/<details class="gk-kx"><summary class="gk-ru" aria-label="들여쓰기 바꾸기">([\s\S]*?)<\/summary><\/details>/);
+    assert.ok(m, 'summary.gk-ru');
+    assert.match(m[1], /^<span class="gk-rl"><span class="gk-rs"><span class="gk-rc"><span class="gk-rr" aria-hidden="true">/);
+    assert.match(m[1], /<span class="gk-ms"><span class="gk-tr gk-t1"><\/span><span class="gk-tr gk-t2"><\/span><\/span>$/);
+    assert.equal((m[1].match(/<span class="gk-nb">/g) || []).length, 31, '숫자 0~30 이 다 누를 곳 안');
+    assert.doesNotMatch(m[1], /<div\b/);
+    assert.equal((p.match(/<summary\b/g) || []).length, 1);
+    assert.ok(base.includes('.gk-k4 .gk-ru{display:block;padding-bottom:4px}') && base.includes('.gk-k4 .gk-in{padding:10px 20px 20px}'), '자 30 + 세모 줄 13 + 아래 여백 4 = 47px · 본문 칸 위 여백 14 → 10(자리 그대로)');
+    for (const rule of ['.gk-k4 .gk-rl{display:block;container-type:size;height:30px', '.gk-k4 .gk-rs{display:flex;', '.gk-k4 .gk-rc{display:block;', '.gk-k4 .gk-rr{display:flex;', '.gk-k4 .gk-ms{display:flex;align-items:flex-start;height:13px']) assert.ok(base.includes(rule), rule);
 });
 
 // 원래 주인공 색에서 나온 값(색 · 사다리 다섯 · rgb 셋 — # · 그림 안 %23 · rgb%28 꼴)이 다른 색으로 칠한 뒤 색 블록에 남는지(같은 색을 쓰는 다른 화자 몫은 빼요)

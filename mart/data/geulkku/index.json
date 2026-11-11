@@ -25,16 +25,16 @@
  ],
  "chunks": {
   "sp-simple": {
-   "file": "sp-simple.f5231b58.json",
+   "file": "sp-simple.9b92749c.json",
    "n": 28,
-   "bytes": 339996
+   "bytes": 340080
   }
  },
  "items": [
   {"id":"simple-k1","name":"낫표","emoji":"💬","category":"simple-open","style":"심플","desc":"제목 줄을 누르면 가운데 붙어 있던 「 」가 모서리로 벌어지며 글이 드러나요 · 다시 누르면 닫혀요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":6741,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k2","name":"견출지","emoji":"🏷️","category":"simple-sound","style":"심플","desc":"제목이 견출지 한 장 — 누르면 오른쪽 아래부터 스티커처럼 뜯기고, 점선 자리를 누르면 다시 붙어요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":10287,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k3","name":"바인더","emoji":"🗂️","category":"simple-tap","style":"심플","desc":"바인더 등 · 금속 고리 셋 · 여백 줄 — 오른쪽 아래 「1 / 2」를 누르면 종이가 옆으로 밀리며 다음 장","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":8370,"fx":"e","bg":"#f8f9fa","ink":"#26272b","accent":"#e90061"},
-  {"id":"simple-k4","name":"줄자","emoji":"📏","category":"simple-tap","style":"심플","desc":"위에 0~30cm 자 · 제목 끝 커서 — 자 위에서 휠(폰은 옆으로 밀기) · 세모 줄을 누르면 첫 줄 들여쓰기 켬/끔","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":15511,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k4","name":"줄자","emoji":"📏","category":"simple-tap","style":"심플","desc":"위에 0~30cm 자 · 제목 끝 커서 — 자 위에서 휠(폰은 옆으로 밀기) · 세모 줄을 누르면 첫 줄 들여쓰기 켬/끔","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":15593,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k5","name":"티백","emoji":"🍵","category":"simple-tap","style":"심플","desc":"옆에서 본 찻잔 · 흔들리는 꼬리표 · 김 — 찻잔을 누르면 캐릭터 색 찻물이 차오르고 숨은 한 줄이 나와요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":14922,"fx":"e","bg":"#fbfaf7","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k6","name":"음성 메모","emoji":"🎙️","category":"simple-sound","style":"심플","desc":"말소리처럼 오르내리는 음파 막대 · 흐르는 녹음 시간 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":14241,"fx":"e","bg":"#25272b","ink":"#e1e1e5","accent":"#0075d3"},
   {"id":"simple-k7","name":"성냥","emoji":"🔥","category":"simple-tap","style":"심플","desc":"성냥 한 개비 — 누르면 불씨가 「탁」 붙고 테두리 · 가로줄이 캐릭터 색으로, 지문 글자가 또렷해져요 · 다시 누르면 연기 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":11790,"fx":"e","bg":"#1f2124","ink":"#e1e1e5","accent":"#e90061"},
