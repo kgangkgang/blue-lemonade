@@ -1004,5 +1004,22 @@ await test('글만 복사(마크다운 · 테마 logMarkdown 꼴): 28틀 모두 
     assert.match(ms, /<meta charset="utf-8">/);
     assert.match(ui, /data-act="download"/); assert.match(ui, /data-act="text"/);
 });
+
+await test('레몬 바로가기 빼기(모든 틀 공통 · 글 모양에 기억 · 프리셋에도): 28틀 모두 레몬 링크 · 그림 규칙이 빠지고 · 레몬만 있던 머리 줄도 빠지고 · 소품이 남은 머리 줄은 오른쪽 그대로 · 복사 글 정적 검사 · 기본은 달기', () => {
+    for (const row of six.items) {
+        const p = sfx[row.id].preview, out = lk.applyLook(p, { lemon: { off: true } });
+        assert.match(p, /class="gk-lm"/, row.id);
+        assert.doesNotMatch(out, /gk-lm/, row.id + ' 레몬 다 빠짐');
+        assert.doesNotMatch(out, /<div class="gk-hd">\s*<\/div>/, row.id + ' 빈 머리 줄 없음');
+        if (/<div class="gk-hd">/.test(out)) assert.match(out, /\.gk-hd\{justify-content:flex-end\}/, row.id + ' 소품 오른쪽');
+        const ready = sf.simpleReady(shutPeek(out));
+        assert.ok(tg.readyReport(ready).ok, row.id);
+        assert.equal(lk.applyLook(p, null), p, row.id + ' 기본은 그대로');
+    }
+    assert.deepEqual(lk.cleanLook({ lemon: { off: true } }), { lemon: { off: true } });
+    assert.equal(lk.cleanLook({ lemon: { off: false } }), null);
+    assert.equal(lk.cleanPreset({ name: '레몬', look: { lemon: { off: true } } }).look.lemon.off, true);
+    assert.match(fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8'), /data-lemon="0"/);
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

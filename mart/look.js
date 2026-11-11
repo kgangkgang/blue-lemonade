@@ -69,6 +69,8 @@ export const LOOK_FIELDS = Object.freeze([
     { tab: 'outline', path: 'outline.color', label: '색', kind: 'color', def: '#000000', when: 'outline' },
     { tab: 'outline', path: 'outline.width', label: '두께', kind: 'range', min: 0.2, max: 3, step: 0.1, def: 1, unit: 'px', when: 'outline' },
     { tab: 'outline', path: 'outline.alpha', label: '진하기', kind: 'range', min: 0, max: 100, step: 1, def: 100, unit: '%', when: 'outline' },
+    // 11-11 레몬 바로가기 빼기(테마 로그 복사 「레몬 바로가기」 켬끔 꼴 · 모든 틀 공통 · 기본은 달기) — 「머리」 묶음이 따로 그려요
+    { tab: 'head', path: 'lemon.off', label: '레몬 바로가기', kind: 'toggle' },
 ].map(Object.freeze));
 /** 묶음 칩 — 테마 「글자」 탭 순서(본문 → 대사 → … → 문단 → … → 그림자 · 외곽선)에서 가져온 것만 · 맨 앞 「색」은 마트 것 */
 export const LOOK_TABS = Object.freeze([['color', '색'], ['text', '본문'], ['dialogue', '대사'], ['em', '속마음'], ['strike', '취소선'], ['strong', '강조'], ['para', '문단'], ['name', '이름'], ['shadow', '그림자'], ['outline', '외곽선']]);
@@ -232,9 +234,32 @@ export function lookRules(html, value) {
     if (L.outline?.on) out.push(`${Object.values(SEL).join(',')}{-webkit-text-stroke:${px(L.outline.width ?? 1)} ${rgba(L.outline.color || '#000000', L.outline.alpha ?? 100)};paint-order:stroke fill}`);
     return out;
 }
+/**
+ * 레몬 바로가기 빼기 — 틀 머리의 레몬 링크(a.gk-lm)를 지우고, 레몬만 있던 머리 줄(div.gk-hd)도 지워요.
+ *   레몬 · 머리 줄 바로 뒤가 제목이면 제목 위 여백(12px)도 0 으로(제목이 붕 뜨지 않게). 레몬 그림 규칙(그림 주소)도 <style> 에서 빼요.
+ *   소품이 같이 든 머리 줄(파형 · 불 켜기 · 형광펜 · 공 · 지우개)은 그대로 둬요 — 소품이 오른쪽 자리를 지켜요.
+ */
+export function dropLemon(html) {
+    let text = String(html ?? '');
+    const key = (text.match(/^\s*<div\b[^>]*\sclass="gk\s(?:[^"]*\s)?gk-((?:k|q)\d+)(?=[\s"])/) || [])[1];
+    const lm = /<a\b[^>]*\bclass="gk-lm"[^>]*>(?:(?!<\/a>)[\s\S])*<\/a>/.exec(text);
+    if (!key || !lm) return { html: text, rules: [] };
+    let at = lm.index, end = at + lm[0].length;
+    const hd = /<div class="gk-hd">\s*$/.exec(text.slice(0, at)), close = /^\s*<\/div>/.exec(text.slice(end));
+    const rules = [];
+    if (hd && close) { at = hd.index; end += close[0].length; }   // 레몬만 있던 머리 줄은 통째로
+    else if (hd) rules.push(`${`.gk-${key}`.repeat(3)} .gk-hd{justify-content:flex-end}`);   // 소품이 남은 머리 줄 — 양 끝 맞춤이라 혼자 남으면 왼쪽으로 가요 → 오른쪽 그대로
+    text = text.slice(0, at) + text.slice(end);
+    if (/^\s*<(?:div|span|p)\b[^>]*class="(?:[^"]*\s)?gk-tt(?:\s[^"]*)?"/.test(text.slice(at))) rules.push(`${`.gk-${key}`.repeat(3)} .gk-tt{margin-top:0}`);
+    const css = text.indexOf('</style>');
+    if (css > 0) text = text.slice(0, css).split('\n').filter(l => !/^[^{}]*\.gk-lmi?\b[^{}]*\{[^{}]*\}$/.test(l) || l.split('{')[0].split(',').some(s => !/\.gk-lmi?\b/.test(s))).join('\n') + text.slice(css);
+    return { html: text, rules };
+}
 /** 다 칠한 틀 HTML 에 글 모양을 얹어요 — 값이 없으면 받은 그대로 */
 export function applyLook(html, value = look) {
-    const text = String(html ?? ''), rules = lookRules(text, value);
+    let text = String(html ?? '');
+    const rules = lookRules(text, value);
+    if (cleanLook(value)?.lemon?.off) { const cut = dropLemon(text); text = cut.html; rules.push(...cut.rules); }
     if (!rules.length) return text;
     const at = text.indexOf('\n</style>');
     return at < 0 ? text : `${text.slice(0, at)}\n${rules.join('\n')}${text.slice(at)}`;

@@ -3,12 +3,12 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone } from './tone-state.js?v=20261111r';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111r';
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111r';
-import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111r';
-import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111r';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111r';
+import { toneState, setTone } from './tone-state.js?v=20261111s';
+import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111s';
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111s';
+import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111s';
+import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111s';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111s';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -79,12 +79,14 @@ function fieldHtml(f) {
 /** 「머리」 묶음(테마 머리 칸 글칸 · 보일 것) — 제목 · 숨은 한 줄 글칸(글 고치기와 같은 자리) · 제목 · 이름 줄 켬끔 */
 const headSlots = item => { const eds = editables(applyMine(item.preview)); return { title: eds.find(e => e.cls === 'gk-tt'), hl: eds.find(e => e.cls === 'gk-hl') }; };
 const plainOf = h => String(h ?? '').replace(/<br>/g, ' ').replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+/** 11-11 레몬 바로가기 달기 · 빼기(테마 로그 복사 「레몬 바로가기」 꼴) — 모든 틀 공통 · 글 모양과 같이 기억 · 내 프리셋에도 */
+const lemonRow = () => { const off = lookValue('lemon.off') === true; return `<div class="mart-look-row is-wrap"><span class="mart-look-label">레몬 바로가기</span><span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="레몬 바로가기 — 모든 틀에"><button type="button" class="chip" data-lemon="1" aria-pressed="${!off}" title="틀 머리에 작은 레몬 — 누르면 블루레몬에이드 소개 글">달기</button><button type="button" class="chip" data-lemon="0" aria-pressed="${off}" title="레몬 링크를 빼고 제목을 위로 붙여요">빼기</button></span></div>`; };
 function headBody(item) {
     const t = tuneOf(item.id) || {}, key = mineOn() ? 'mineTexts' : 'texts', slots = headSlots(item);
     const val = s => (s ? plainOf(t[key]?.[s.i] ?? s.text) : '');
     const inp = (id, label, s) => s ? `<div class="mart-look-row is-wrap"><span class="mart-look-label">${label}</span><label class="field-wrap mart-head-field"><input type="text" class="field" data-head="${id}" maxlength="200" value="${esc(val(s))}" aria-label="${label}"></label></div>` : '';
     const chip = (path, label, on) => `<div class="mart-look-row is-wrap"><span class="mart-look-label">${label}</span><span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="${label}"><button type="button" class="chip" data-head-show="${path}" data-v="1" aria-pressed="${!on}">보임</button><button type="button" class="chip" data-head-show="${path}" data-v="0" aria-pressed="${on}">숨김</button></span></div>`;
-    return `<div class="mart-look">${inp('title', '제목', slots.title)}${inp('hl', '숨은 한 줄', slots.hl)}${titleInPress(item.preview) ? '' : chip('hideTitle', '보일 것 · 제목', !!t.hideTitle)}${chip('hideNames', '보일 것 · 이름 줄', !!t.hideNames)}<p class="mart-tune-hint">${titleInPress(item.preview) ? '이 틀은 제목 줄을 눌러 소품을 열어서 제목은 끌 수 없어요 · ' : ''}여기서 고친 글은 「글 고치기」와 같은 자리예요</p></div>`;
+    return `<div class="mart-look">${inp('title', '제목', slots.title)}${inp('hl', '숨은 한 줄', slots.hl)}${titleInPress(item.preview) ? '' : chip('hideTitle', '보일 것 · 제목', !!t.hideTitle)}${chip('hideNames', '보일 것 · 이름 줄', !!t.hideNames)}${lemonRow()}<p class="mart-tune-hint">${titleInPress(item.preview) ? '이 틀은 제목 줄을 눌러 소품을 열어서 제목은 끌 수 없어요 · ' : ''}여기서 고친 글은 「글 고치기」와 같은 자리예요</p></div>`;
 }
 /** 「도구」 묶음(테마 drawTools 꼴) — 이름 숨김(가릴 이름 · 더하기 · 가림 꼴) · 단어 바꾸기(찾을 말 → 바꿀 말) · 모든 틀에 같이 */
 function toolsBody() {
@@ -427,6 +429,7 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if (q('[data-tune-edit]')) { editing = !editing; armEdit(sheet.querySelector('.mart-sheet-preview'), item); syncTune(sheet, item); return; }
         if ((b = q('[data-look-reset]'))) { setLookValue(b.dataset.lookReset, null); return; }
         if ((b = q('[data-look-pick]'))) { setLookValue(b.dataset.lookPick, JSON.parse(b.dataset.v)); redraw(item); return; }
+        if ((b = q('[data-lemon]'))) { setLookValue('lemon.off', b.dataset.lemon === '0' ? true : null); redraw(item); return; }
         if ((b = q('[data-look-toggle]'))) { setLookValue(b.dataset.lookToggle, lookValue(b.dataset.lookToggle) === true ? null : true); redraw(item); return; }
         if ((b = q('[data-look-target]'))) { const cur = { ...(lookValue('shadow.targets') || { dialogue: true }) }; if (cur[b.dataset.lookTarget]) delete cur[b.dataset.lookTarget]; else cur[b.dataset.lookTarget] = true; setLookValue('shadow.targets', Object.keys(cur).length ? cur : null); return; }
         if ((b = q('[data-tune-reset]'))) {
