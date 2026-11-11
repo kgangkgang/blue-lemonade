@@ -5,7 +5,7 @@
 //   - 깡통 · 깡캐 색은 목록 위 두 칸(tone-state.js)과 같은 값이라 여기에 안 들어 있어요.
 export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(탭을 닫으면 사라져요 — sessionStorage)
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
-import { cleanLook } from './look.js?v=20261111m';
+import { cleanLook } from './look.js?v=20261111n';
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** 역할별 글자색 — 이름은 inks.js(테마 글자색 칩)와 같아요. 새 틀에 그 글자가 있는 역할만 칸이 떠요(속마음 · 강조 · 형광펜은 그 클래스를 쓰는 틀이 생기면 한 줄 더해요) */
@@ -25,6 +25,27 @@ const DARK_BASES = ['gk-td', 'gk-tx'];
 
 const escText = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 const oneLine = s => String(s ?? '').replace(/[\r\n\t]+/g, ' ').slice(0, 600);
+/** 글 칸 안에 남겨 두는 꾸밈 — 줄바꿈 · 굵게 · 기울임 · 강조 · 속마음 · 취소(깡통 글에서 살아요) */
+export const RICH_TAGS = Object.freeze(['br', 'b', 'i', 'strong', 'em', 's']);
+/**
+ * 고쳐 쓴 글 → 글 칸에 넣을 HTML(남겨 둘 꾸밈만 · 속성 없이 · 나머지 태그는 글자만 · 글자는 이스케이프) — 2000자까지
+ *   옛 꼴(꾸밈 없는 글)도 그대로 받아요
+ */
+export function cleanRich(v) {
+    let s = String(v ?? '').slice(0, 4000).replace(/\r\n?/g, '\n');
+    const out = [], stack = [];
+    for (const m of s.matchAll(/<(\/?)([a-z][a-z0-9]*)\b[^>]*>|([^<]+)|(<)/gi)) {
+        if (m[3] != null || m[4] != null) { out.push(String(m[3] ?? m[4]).replace(/&(?!(?:amp|lt|gt|quot|#39|#x?[0-9a-f]+);)/gi, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')); continue; }
+        const close = m[1] === '/', tag = m[2].toLowerCase();
+        if (tag === 'div' || tag === 'p') { if (!close && out.length) out.push('<br>'); continue; }   // 붙여 넣은 줄 · 문단은 줄바꿈
+        if (!RICH_TAGS.includes(tag)) continue;
+        if (tag === 'br') { out.push('<br>'); continue; }
+        if (!close) { out.push(`<${tag}>`); stack.push(tag); }
+        else { const at = stack.lastIndexOf(tag); if (at < 0) continue; while (stack.length > at) out.push(`</${stack.pop()}>`); }
+    }
+    while (stack.length) out.push(`</${stack.pop()}>`);
+    return out.join('').replace(/(<br>){3,}/g, '<br><br>').replace(/^(<br>)+|(<br>)+$/g, '').slice(0, 2000);
+}
 const store = (kind) => { try { return kind === 'session' ? globalThis.sessionStorage : globalThis.localStorage; } catch { return null; } };
 const read = (kind, key, fallback) => { try { const v = JSON.parse(store(kind)?.getItem(key) || 'null'); return v ?? fallback; } catch { return fallback; } };
 const write = (kind, key, value) => { try { store(kind)?.setItem(key, JSON.stringify(value)); } catch { /* 기억 못 해도 이번 화면에서는 써요 */ } };
@@ -44,10 +65,10 @@ export function cleanTune(t) {
     if (t.own === false) out.own = false;
     const lines = Number(t.lines); if (Number.isInteger(lines) && lines !== 0 && lines >= LINES_RANGE[0] && lines <= LINES_RANGE[1]) out.lines = lines;   // 대사 줄(견본 글일 때만)   // 「기본 색」이 있는 틀: false = 소품을 캐릭터 색으로 덮어써요(없으면 기본 색 그대로)
     const texts = {};
-    for (const [i, v] of Object.entries(t.texts || {})) if (/^\d+$/.test(i) && typeof v === 'string') texts[i] = oneLine(v);
+    for (const [i, v] of Object.entries(t.texts || {})) if (/^\d+$/.test(i) && typeof v === 'string') texts[i] = cleanRich(v);
     if (Object.keys(texts).length) out.texts = texts;
     const mineTexts = {};   // 11-11 「내 글 넣기」로 넣은 글에서 고쳐 쓴 것(견본 글 자리와 번호가 달라 따로 둬요)
-    for (const [i, v] of Object.entries(t.mineTexts || {})) if (/^\d+$/.test(i) && typeof v === 'string') mineTexts[i] = oneLine(v);
+    for (const [i, v] of Object.entries(t.mineTexts || {})) if (/^\d+$/.test(i) && typeof v === 'string') mineTexts[i] = cleanRich(v);
     if (Object.keys(mineTexts).length) out.mineTexts = mineTexts;
     return Object.keys(out).length ? out : null;
 }
@@ -69,7 +90,7 @@ export function setTune(id, next, { textOnly = false } = {}) {
 }
 
 /** 틀 HTML 의 글 자리 목록(문서 차례) — [{ i, cls, text(HTML 이스케이프된 원래 글), start, end }] */
-const LEAF = /(<!--\s*✎[^>]*-->\s*)?<([a-z][a-z0-9]*)\b([^>]*)>([^<]*)<\/\2>/g;
+const LEAF = /(<!--\s*✎[^>]*-->\s*)?<([a-z][a-z0-9]*)\b([^>]*)>((?:[^<]|<br\s*\/?>|<\/?(?:b|i|strong|em|s)>)*)<\/\2>/g;
 export function editables(html) {
     const text = String(html ?? ''), at = text.indexOf('</style>');
     const from = at < 0 ? 0 : at + 8, out = [];
@@ -89,7 +110,7 @@ export function applyTexts(html, texts) {
     const keys = Object.keys(texts || {});
     if (!keys.length) return String(html ?? '');
     let text = String(html ?? '');
-    for (const e of editables(text).reverse()) if (Object.hasOwn(texts, e.i)) text = text.slice(0, e.start) + escText(oneLine(texts[e.i])) + text.slice(e.end);
+    for (const e of editables(text).reverse()) if (Object.hasOwn(texts, e.i)) text = text.slice(0, e.start) + cleanRich(texts[e.i]) + text.slice(e.end);
     return text;
 }
 /** 역할별 글자색 덮는 규칙 — 틀 <style> 끝에(그 판 뿌리 클래스에만 걸려요 · 글자색마다 fill 짝) */

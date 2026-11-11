@@ -3,11 +3,11 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone } from './tone-state.js?v=20261111m';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111m';
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, LINES_RANGE, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111m';
-import { mineOn, applyMine } from './mine-text.js?v=20261111m';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111m';
+import { toneState, setTone } from './tone-state.js?v=20261111n';
+import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111n';
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111n';
+import { mineOn, applyMine } from './mine-text.js?v=20261111n';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111n';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -221,15 +221,17 @@ export const syncMine = (sheet, item) => {
 export function armEdit(previewRoot, item) {
     if (!previewRoot || !item?.simple) return;
     const root = previewRoot.querySelector('.gk'); if (!root) return;
-    let i = 0;
+    let i = 0, inside = null;
+    const rich = el => [...el.querySelectorAll('*')].every(c => RICH_TAGS.includes(c.tagName.toLowerCase()) && !c.attributes.length);   // 안에 꾸밈 태그만(tune.js LEAF 와 같은 뜻)
     const walk = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
     for (let el = walk.nextNode(); el; el = walk.nextNode()) {
-        if (el.childElementCount || ['STYLE', 'SCRIPT', 'AUDIO'].includes(el.tagName) || [...el.childNodes].some(n => n.nodeType === 8)) continue;
+        if (inside?.contains(el)) { el.removeAttribute('contenteditable'); delete el.dataset.blEd; continue; }   // 한 칸 안의 꾸밈은 따로 칸이 아니에요
+        if (!rich(el) || ['STYLE', 'SCRIPT', 'AUDIO', 'BR'].includes(el.tagName) || [...el.childNodes].some(n => n.nodeType === 8)) continue;
         let prev = el.previousSibling; while (prev && prev.nodeType === 3 && !prev.data.trim()) prev = prev.previousSibling;
         const marked = prev?.nodeType === 8 && /^\s*✎/.test(prev.data);
         if (!marked && !EDIT_CLASSES.some(c => el.classList.contains(c)) && !EDIT_TAGS.includes(el.tagName.toLowerCase())) continue;
-        el.dataset.blEd = String(i++);
-        if (editing) { el.setAttribute('contenteditable', 'plaintext-only'); if (el.contentEditable !== 'plaintext-only') el.setAttribute('contenteditable', 'true'); el.setAttribute('spellcheck', 'false'); }
+        el.dataset.blEd = String(i++); inside = el;
+        if (editing) { el.setAttribute('contenteditable', 'true'); el.setAttribute('spellcheck', 'false'); }   // 굵게 · 기울임 · 줄바꿈을 받으려고 plaintext-only 대신 true(붙여 넣기는 아래에서 글만)
         else { el.removeAttribute('contenteditable'); el.removeAttribute('spellcheck'); }
     }
     previewRoot.classList.toggle('is-editing', editing);
@@ -289,8 +291,8 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if (ed && editing) {   // 글 고치기: 원래 글과 같아지면 그 자리 값은 지워요
             const key = mineOn() ? 'mineTexts' : 'texts', cur = clone(tuneOf(item.id)), texts = cur[key] ??= {}, i = ed.dataset.blEd;
             const base = editables(applyMine(item.preview)).map(x => x.text);   // 내 글이 켜져 있으면 내 글이 본
-            const now = ed.textContent.replace(/[\r\n]+/g, ' ');
-            if (esc(now).replace(/&quot;/g, '"').replace(/&#39;/g, "'") === base[i]) delete texts[i]; else texts[i] = now;
+            const now = cleanRich(ed.innerHTML);   // 꾸밈(줄바꿈 · 굵게 · 기울임 …)은 남기고 나머지는 글자만
+            if (now === cleanRich(base[i])) delete texts[i]; else texts[i] = now;
             setTune(item.id, cur, { textOnly: true });
         }
     });
@@ -305,7 +307,20 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         }
         else if (t.matches?.('input[data-look-color]')) { delete t.dataset.busy; clearTimeout(lookTimer); setLookValue(t.dataset.lookColor, t.value); }
     });
-    sheet.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.closest?.('.mart-sheet-preview [data-bl-ed]')) e.preventDefault(); });
+    // 바로 고치기(테마 로그 복사 편집기 꼴): Enter = 줄바꿈(제목 · 이름 · 소리 이름표는 한 줄) · Ctrl+B 굵게 · Ctrl+I 기울임 · 붙여 넣기는 글만
+    const ONE_LINE = '.gk-tt, .gk-nm, .gk-sn';
+    sheet.addEventListener('keydown', (e) => {
+        const ed = e.target.closest?.('.mart-sheet-preview [data-bl-ed]'); if (!ed || !editing) return;
+        if (e.key === 'Enter') { e.preventDefault(); if (!ed.matches(ONE_LINE) && !e.isComposing) document.execCommand('insertLineBreak'); return; }
+        if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && /^[bi]$/i.test(e.key)) { e.preventDefault(); document.execCommand(e.key.toLowerCase() === 'b' ? 'bold' : 'italic'); ed.dispatchEvent(new InputEvent('input', { bubbles: true })); }
+    });
+    sheet.addEventListener('paste', (e) => {
+        const ed = e.target.closest?.('.mart-sheet-preview [data-bl-ed]'); if (!ed || !editing) return;
+        e.preventDefault();
+        let text = (e.clipboardData || globalThis.clipboardData)?.getData('text/plain') || '';
+        if (ed.matches(ONE_LINE)) text = text.replace(/\s*\n\s*/g, ' ');
+        document.execCommand('insertText', false, text);
+    });
     // 되돌리기 · 다시하기: 값이 바뀔 때마다 0.5초 묶어 한 칸 · Ctrl+Z / Ctrl+Y(Ctrl+Shift+Z) — 글칸 · 입력칸 안에서는 그 칸의 되돌리기를 그대로 둬요(고쳐 쓰는 글 칸은 마트 되돌리기)
     const onChange = () => { const item = current()?.item; if (sheet.open && item?.simple) { histRecord(item, sheet); syncHist(sheet); } };
     document.addEventListener('bl-tune-change', onChange);

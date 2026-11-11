@@ -871,8 +871,9 @@ await test('남은 칸: 형광펜 모양 · 기울기 = 테마 markerGeometry �
     assert.deepEqual(lk.lookFromTheme(style), { dialogue: { style: 'marker', markerShape: 'rectangle', tilt: 'steep' }, em: { italic: false, size: 18, weight: 500 }, strike: { line: 'own', color: '#112233', thickness: 3 }, strong: { weight: 700 }, profile: { nameSize: 24, nameWeight: 650 } });
     assert.deepEqual(lk.lookFromTheme({ saltyStyle: 1, style: { strike: { line: false } } }), { strike: { line: 'none' } });
     // 견본 글 한 줄의 em · strong · s 는 글 칸
-    const ed = tu.editables(p).filter(e => ['em', 'strong', 's'].includes(e.cls)).map(e => e.text);
-    assert.deepEqual(ed, ['또 기다렸구나.', '따뜻한 쪽', '화난 척']);
+    // 속마음 · 강조 · 취소가 든 지문은 통째로 한 칸(안의 꾸밈은 따로 칸이 아니에요 — 11-11 바로 고치기 넓히기)
+    const ed = tu.editables(p).filter(e => e.text.includes('<em>'));
+    assert.deepEqual(ed.map(e => [e.cls, e.text]), [['gk-nr', '<em>또 기다렸구나.</em> 깡통은 <strong>따뜻한 쪽</strong>을 받아 들고 <s>화난 척</s>을 그만두었다.']]);
 });
 
 await test('대사 줄 늘리기 · 줄이기: 28틀에서 견본 대사 쌍을 번갈아 붙이거나(+1 · +2) 마지막 쌍을 빼요(-1) · 지문 · 소리 카드 · 쪽 넘김 · <style> 그대로 · 태그 짝 · 복사 글 정적 검사 · 범위 밖은 버려요 · 내 글이면 안 걸어요', () => {
@@ -904,6 +905,25 @@ await test('되돌리기 · 다시하기(테마 hist 꼴): 단추 둘 · 스냅�
     const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
     for (const s of ['data-hist="undo"', 'data-hist="redo"', 'const HIST_MAX = 50;', 'setTimeout(() => { histPush(item); syncHist(sheet); }, 500)', "if (e.target.closest?.('input, textarea, select')) return;", "undo(k === 'y' || e.shiftKey ? 1 : -1)", 'if (hist.restoring || hist.id !== item.id) return;', 'if (item && hist.id !== item.id) histStart(item);']) assert.ok(ui.includes(s), s);
     assert.ok(/const snapOf = item => JSON\.stringify\(\{ tune: tuneOf\(item\.id\), look: lookNow\(\), tone: \{/.test(ui), '한 칸 = 조절 값 + 글 모양 + 깡통 · 깡캐 · 밤낮');
+});
+
+await test('바로 고치기 넓히기: 고쳐 쓴 글에 줄바꿈 · 굵게 · 기울임 · 강조 · 속마음 · 취소만 남기고(속성 없이) 나머지는 글자 · 붙여 넣은 줄 · 문단은 줄바꿈 · 안 닫힌 꾸밈은 닫아요 · 28틀에 넣어도 태그 짝 · 복사 글 정적 검사 · 다시 고쳐 쓸 때도 그 칸', () => {
+    const c = tu.cleanRich;
+    assert.equal(c('plain'), 'plain'); assert.equal(c('a<b>굵</b>c'), 'a<b>굵</b>c'); assert.equal(c('줄\n바꿈'), '줄<br>바꿈');
+    assert.equal(c('<b class="x" onclick="y">b</b><img src=x onerror=1>'), '<b>b</b>'); assert.equal(c('<i>안 닫힘'), '<i>안 닫힘</i>');
+    assert.equal(c('x<div>y</div>z'), 'x<br>yz'); assert.equal(c('&amp; & <'), '&amp; &amp; &lt;'); assert.equal(c('<br><br><br><br>a<br>'), 'a');
+    for (const row of six.items) {
+        const p = sfx[row.id].preview, eds = tu.editables(p), nr = eds.find(e => e.cls === 'gk-nr'), dl = eds.find(e => e.cls === 'gk-d');
+        const out = tu.applyTune(p, { texts: { [nr.i]: '첫 줄<br><b>굵게</b> <i>기울임</i>', [dl.i]: '「한 줄<br>두 줄」' } });
+        assert.ok(out.includes('첫 줄<br><b>굵게</b> <i>기울임</i>') && out.includes('「한 줄<br>두 줄」'), row.id);
+        for (const t of ['div', 'p', 'span', 'b', 'i']) { const bal = h => (h.match(new RegExp(`<${t}\\b`, 'g')) || []).length - (h.match(new RegExp(`</${t}>`, 'g')) || []).length; assert.equal(bal(out), bal(p), `${row.id} ${t}`); }
+        assert.ok(tg.readyReport(sf.simpleReady(shutPeek(out))).ok, row.id);
+        const again = tu.editables(out);
+        assert.equal(again.length, eds.length, `${row.id} 고쳐 쓴 뒤에도 칸 수 그대로`);
+        assert.equal(again[nr.i].text, '첫 줄<br><b>굵게</b> <i>기울임</i>');
+    }
+    const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
+    for (const s of ["document.execCommand('insertLineBreak')", "document.execCommand(e.key.toLowerCase() === 'b' ? 'bold' : 'italic')", "document.execCommand('insertText', false, text)", "const ONE_LINE = '.gk-tt, .gk-nm, .gk-sn';"]) assert.ok(ui.includes(s), s);
 });
 
 console.log(`\n${pass} 통과 · ${fail} 실패`);
