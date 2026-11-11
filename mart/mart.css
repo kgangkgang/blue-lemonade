@@ -514,7 +514,7 @@ html.mart-cart-on{overflow:hidden}
 .mart-sheet-preview.is-editing [contenteditable]:focus{outline:1.5px solid var(--blue)}
 .mart-sheet-mine:not(:empty){margin:12px 0 0}
 .mart-tune-save{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
-.mart-tune-h{margin:0;font-size:var(--ts-ctl);font-weight:var(--strong);color:var(--ink)}
+.mart-tune-h{margin:0;font-size:16px;font-weight:650;color:var(--ink)}
 .mart-tune-form{display:flex;flex-wrap:wrap;gap:6px}
 .mart-tune-form .field-wrap{flex:1 1 140px;min-width:0}
 .mart-tune-mine{display:flex;flex-direction:column;gap:2px;margin:0;padding:0;list-style:none}
@@ -527,7 +527,7 @@ html.mart-cart-on{overflow:hidden}
 .mart-tune-load .mart-ink-dot{width:14px;height:14px}
 @media (max-width:639px){.mart-tune-load{min-height:44px}.mart-tune-form .field{font-size:16px}}
 /* 11-11 조절 칸 — 테마 「글자」 탭 축소판: 묶음 칩(색 · 본문 · 대사 · 문단 · 그림자 · 외곽선) + 칸(슬라이더 · 칩 · 색) */
-.mart-tune-tabs{flex-wrap:wrap;gap:6px}
+.mart-tune-tabs{flex-wrap:wrap;gap:8px}
 .mart-tune-body{min-width:0}
 /* 숫자 조절칸은 테마 파라미터 칸과 같은 꼴 · 치수(사용자 10-27 「파라미터는 웬만하면 다 세로 2열」 — 테마 --bl-param-* · --bl-num-w · --bl-knob-size 22 · --bl-track-h 5):
    윗줄 「이름 · ↺ · 숫자 · 단위」 · 아랫줄 슬라이더 · 두 칸씩 2열 격자(폰 320 에서도 2열 — 한 열로 내리는 규칙을 두지 않아요) · 혼자 남은 칸만 전체 폭 */
@@ -553,11 +553,11 @@ html.mart-cart-on{overflow:hidden}
 .mart-look-row{display:flex;align-items:center;gap:8px;min-width:0;min-height:var(--ctl)}
 .mart-look-row.is-wrap{flex-wrap:wrap}
 .mart-look-label{flex:none;width:76px;color:var(--muted);font-size:var(--ts-meta)}
-.mart-look-seg{flex-wrap:wrap;gap:6px;min-width:0}
+.mart-look-seg{flex-wrap:wrap;gap:8px;min-width:0}
 .mart-tune-h small{margin-left:6px;color:var(--muted);font-size:var(--ts-meta);font-weight:400}
 .mart-tune-h:not(:first-child){margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
 .mart-preset-io{display:flex;flex-direction:column;gap:6px}
 .mart-preset-io[hidden]{display:none}
 .mart-preset-io textarea{height:auto;min-height:56px;padding:8px 12px;resize:vertical;font:inherit;font-size:var(--ts-meta);line-height:1.4;word-break:break-all}
 .mart-tune-mine li.is-here .mart-tune-load b{color:var(--blue-strong)}
-@media (max-width:639px){.mart-look-label{width:64px}.mart-num input{font-size:16px;width:calc(4.5ch + 16px);padding:0 6px}.mart-preset-io textarea{font-size:16px}}
+@media (max-width:639px){.mart-look-label{width:64px}.mart-num input{font-size:16px;width:calc(4.5ch + 16px);height:44px;padding:0 6px}.mart-preset-io textarea{font-size:16px}}

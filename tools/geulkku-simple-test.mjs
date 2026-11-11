@@ -758,5 +758,26 @@ await test('내 프리셋: 색 + 글 모양을 이름 붙여 기억(틀과 따�
     delete globalThis.localStorage;
 });
 
+await test('숫자 조절칸 세로 2열(사용자 10-27 「파라미터는 웬만하면 다 세로 2열」 — 테마 param-two-columns · param-dimensions 와 같은 뜻): 2열 격자 · 한 열로 내리는 규칙 없음 · 칸은 윗줄 이름 · 되돌리기 · 숫자 · 단위 / 아랫줄 슬라이더 · 테마 칸 치수(손잡이 22 · 막대 5 · 칸 사이 8/12) · 혼자 남은 칸만 전체 폭 · site-rig 규칙', () => {
+    const css = fs.readFileSync(path.join(MART, 'mart.css'), 'utf8'), ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
+    assert.ok(css.includes('.mart-look{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;min-width:0}'));
+    // .mart-look 의 열 수를 바꾸는 규칙이 다른 곳(폰 폭 미디어 쿼리 포함)에 없어요
+    const cols = [...css.matchAll(/([^{}]*)\{([^{}]*grid-template-columns[^{}]*)\}/g)].filter(m => /\.mart-look(?![\w-])/.test(m[1]));
+    assert.equal(cols.length, 1, '.mart-look 열 규칙은 하나');
+    for (const m of css.matchAll(/([^{}]*)\{[^{}]*grid-column:\s*1\s*\/\s*-1[^{}]*\}/g)) for (const sel of m[1].split(',')) if (/\.mart-param(?![\w-])/.test(sel.replace(':not(.mart-param)', ''))) assert.ok(/\.mart-param\.is-wide/.test(sel), `전체 폭은 혼자 남은 칸만: ${sel.trim()}`);
+    assert.ok(css.includes('.mart-look>:not(.mart-param),.mart-look>.mart-param.is-wide{grid-column:1/-1}'));
+    assert.ok(css.includes('.mart-param{display:flex;flex-direction:column;gap:4px;min-width:0;padding:6px 0 4px}'), '칸 안: 위아래 6 · 4 · 줄 사이 4(테마 --bl-param-pad · --bl-param-row-gap)');
+    assert.ok(css.includes('::-webkit-slider-runnable-track{height:5px') && css.includes('::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-8.5px'), '막대 5 · 손잡이 22(테마 --bl-track-h · --bl-knob-size)');
+    assert.ok(css.includes('.mart-num input{-moz-appearance:textfield;appearance:textfield;box-sizing:border-box;width:calc(5.5ch + 18px)'), '숫자칸 폭(테마 --bl-num-w)');
+    // 칸 꼴: header(이름 → ↺ → 숫자 + 단위) 다음에 슬라이더
+    const cell = ui.match(/if \(f\.kind === 'range'\) return `([^`]+)`;/)[1];
+    const order = ['<div class="mart-param', '<header>', 'class="mart-param-name"', "undoBtn('data-look-reset'", '<span class="mart-num"><input type="number"', 'class="mart-unit"', '</header>', '<input type="range"'].map(x => cell.indexOf(x));
+    assert.ok(order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), `칸 차례 ${order}`);
+    assert.ok(ui.includes("wide: (j - i) % 2 === 1 && k === j - 1"), '이어진 슬라이더 칸이 홀수면 마지막 칸만 전체 폭');
+    const rule = fs.readFileSync(path.join(ROOT, 'tools/site-rig/rules/param-grid.mjs'), 'utf8'), rig = fs.readFileSync(path.join(ROOT, 'tools/site-rig/site-rig.mjs'), 'utf8');
+    assert.ok(rule.includes("export const id = 'param-grid'") && rule.includes('한 열로 내려감') && rule.includes('짝 없는 칸'));
+    for (const w of ['글꾸 · 조절 본문', '글꾸 · 조절 그림자']) assert.ok(rig.split('\n').some(l => /^\s*\{ group:/.test(l) && l.includes(`'${w}'`)), w);
+});
+
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
