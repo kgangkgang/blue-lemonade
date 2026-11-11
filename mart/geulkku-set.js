@@ -1,8 +1,8 @@
 // 11-12 공통 설정 꼴 `blGeulkku: 2`(설계 `지시-1111/글꾸-조절-설계/설계.md` 5절) — 마트의 지금 값(toneState · look · motion · 틀별 tune)을 그 꼴로 내고 · 받아요.
 //   쓰는 곳: 「테마로 담기」 꾸러미의 set · 설정 파일 `.bl-geulkku.json`. DOM 없는 순수 모듈(값은 부르는 쪽이 넘겨요 — node 시험).
 //   없는 키 = 틀 그대로 → 아무것도 안 고친 설정은 { blGeulkku: 2 } 이에요. 새 조절(띠 진하기 · 모양 · 질감 …)은 그 칸이 생기면 여기에 더해요.
-import { cleanLook } from './look.js?v=20261112a';
-import { cleanTune } from './tune.js?v=20261112a';
+import { cleanLook, importPreset, codeBytes } from './look.js?v=20261112a';
+import { cleanTune, readSets } from './tune.js?v=20261112a';
 import { cleanTex } from './texture.js?v=20261112a';
 import { cleanShape } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기(띠 진하기 · 테두리 진하기 · 모서리 · 여백 · 폭 · 테두리 · 이름표 · 제목 밑줄 · 소품 숨김)
 
@@ -51,6 +51,54 @@ export function makeSet({ tone = {}, look = null, motion = null, tex = null, sha
         if (Object.keys(f).length) out.frames = { [key]: f };
     }
     return out;
+}
+
+// ── 11-12 설정 파일 `.bl-geulkku.json` · 짧은 코드 `BLG1.`(설계 4-7 · 5절 — 마트 ↔ 테마 같은 꼴) ──
+//   코드 = 「BLG1.」 + base64url(deflate-raw(JSON)) · 줄일 수 없는 곳이면 「BLG0.」 + base64url(JSON). 파일은 JSON 그대로(여러 벌이면 { blGeulkku: 2, sets: [...] }).
+//   옛 꼴도 읽어요(upgrade): 마트 프리셋 글자 BLM1. · 테마 스타일 코드 BLS0. / BLS1. · 완성 프리셋 파일 .bl-mart-set.json · 테마로 담기 꾸러미 { "bl-mart": 1 }.
+export const SET_EXT = '.bl-geulkku.json';
+const B64 = {
+    enc: (bytes) => { let bin = ''; for (const b of bytes) bin += String.fromCharCode(b); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); },
+    dec: (t) => { const s = String(t).replace(/-/g, '+').replace(/_/g, '/'); return Uint8Array.from(atob(s + '='.repeat((4 - (s.length % 4)) % 4)), c => c.charCodeAt(0)); },
+};
+const flow = async (bytes, Kind) => new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new Kind('deflate-raw'))).arrayBuffer());
+/** 설정 → 짧은 코드 */
+export async function encodeSet(set) {
+    const json = new TextEncoder().encode(JSON.stringify(set));
+    try { if (globalThis.CompressionStream) return `BLG1.${B64.enc(await flow(json, CompressionStream))}`; } catch { /* 아래 */ }
+    return `BLG0.${B64.enc(json)}`;
+}
+/** 짧은 코드 → JSON 값(못 읽으면 null) */
+export async function decodeCode(text) {
+    const m = String(text ?? '').replace(/\s+/g, '').match(/^BLG([01])\.([A-Za-z0-9_-]+)$/); if (!m) return null;
+    try { const bytes = B64.dec(m[2]); return JSON.parse(new TextDecoder().decode(m[1] === '1' ? await flow(bytes, DecompressionStream) : bytes)); } catch { return null; }
+}
+/** 내려받을 파일 글(한 벌이면 그 설정 · 여러 벌이면 sets) */
+export function setFile(sets) { const list = (Array.isArray(sets) ? sets : [sets]).filter(Boolean); return `${JSON.stringify(list.length === 1 ? list[0] : { blGeulkku: SET_V, sets: list }, null, 1)}\n`; }
+/** 옛 꼴 · 다른 꼴 → 꼴 2 설정 한 벌(못 읽으면 null) */
+export function upgrade(v) {
+    if (!v || typeof v !== 'object') return null;
+    if (v.blGeulkku === SET_V) return Array.isArray(v.sets) ? v.sets.find(x => x?.blGeulkku === SET_V) || null : v;
+    if (v['bl-mart'] === 1 && Array.isArray(v.items)) { const it = v.items.find(x => x?.set?.blGeulkku === SET_V); return it ? it.set : null; }
+    if (v['bl-mart-set'] === 1 || (typeof v.frame === 'string' && v.tone)) {   // 완성 프리셋(틀 + 색 + 글 모양 + 값)
+        const r = readSets(JSON.stringify(v))[0]; if (!r) return null;
+        return makeSet({ tone: { ...r.tone, ...(r.auto ? { auto: true } : {}) }, look: r.look, motion: r.motion, shape: r.shape, tune: r.tune, frame: r.frame, label: r.name });
+    }
+    return null;
+}
+const fromPreset = p => makeSet({ tone: { ...p.tone, on: p.tone.on || p.tone.none }, look: p.look, shape: p.shape, label: p.name });
+/** 붙여 넣은 글 · 파일 글 무엇이든 → { set, from: 'code' | 'file' | 'old' | 'theme' } | null */
+export async function readAny(text) {
+    const t = String(text ?? '').replace(/^\uFEFF/, '').trim(); if (!t) return null;
+    if (/^BLG[01]\./.test(t)) { const set = upgrade(await decodeCode(t)); return set ? { set, from: 'code' } : null; }
+    if (/^BL[SM][01]\./.test(t)) {
+        let json = null;
+        if (/^BLS1\./.test(t)) { try { json = new TextDecoder().decode(await flow(codeBytes(t), DecompressionStream)); } catch { return null; } }
+        const got = importPreset(t, json ? { json } : {}); return got ? { set: fromPreset(got.preset), from: got.from === 'theme' ? 'theme' : 'old' } : null;
+    }
+    let v = null; try { v = JSON.parse(t); } catch { return null; }
+    const set = upgrade(v); if (set) return { set, from: v.blGeulkku === SET_V ? 'file' : 'old' };
+    const got = importPreset(t); return got ? { set: fromPreset(got.preset), from: got.from === 'theme' ? 'theme' : 'old' } : null;
 }
 
 /**

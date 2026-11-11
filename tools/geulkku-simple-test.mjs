@@ -1440,5 +1440,44 @@ await test('새 조절 잇기(⑥): 다시 칠하기 → 모양 → 글 모양 �
     const order = ['<div class="mart-param', '<header>', 'class="mart-param-name"', "undoBtn('data-shape-reset'", '<span class="mart-num"><input type="number"', 'class="mart-unit"', '</header>', '<input type="range"'].map(x => cell.indexOf(x));
     assert.ok(order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), `칸 차례 ${order}`);
 });
+await test('설정 파일 .bl-geulkku.json · 코드 BLG1.(⑦ · 설계 4-7 · 5절): 코드 왕복(BLG1. 줄임 · BLG0. 그대로) · 파일 한 벌 · 여러 벌 · 옛 꼴 올리기(BLM1. · BLS0. · BLS1. · .bl-mart-set.json · bl-mart 꾸러미) · 틀린 글은 null · 화면 단추', async () => {
+    const gs = await import(pathToFileURL(path.join(MART, 'geulkku-set.js')).href + '?v=20261112a');
+    const tone = { on: true, k: '#3aa7ff', name: '가브리엘', k2: '#ff5fa2', name2: '아스모데우스', mode: 'light', cover: true };
+    const set = gs.makeSet({ tone, look: { type: { weight: 500 }, title: { size: 24 } }, motion: { text: 's', prop: '0', speed: 'l', open: true }, shape: { bandAlpha: 30, radius: 8, nameTag: 'pill' }, tex: { tex: 'line', on: 'b', level: 3, margin: true }, tune: { vals: { 호감도: 70 }, inks: { light: { card: '#fafafa' } } }, frame: 'simple-k1079', label: '비 오는 날' });
+    const code = await gs.encodeSet(set);
+    assert.match(code, /^BLG1\.[A-Za-z0-9_-]+$/);
+    assert.ok(code.length < JSON.stringify(set).length, '줄었어요 ' + code.length);
+    assert.deepEqual(await gs.decodeCode(code), set);
+    const raw0 = `BLG0.${Buffer.from(JSON.stringify(set)).toString('base64url')}`;
+    assert.deepEqual(await gs.decodeCode(raw0), set, 'BLG0.');
+    assert.deepEqual((await gs.readAny(` ${code}\n`)).set, set);
+    assert.equal((await gs.readAny(code)).from, 'code');
+    const back = gs.readSet((await gs.readAny(code)).set);
+    assert.deepEqual([back.frame, back.tune.vals, back.tune.inks, back.shape, back.motion, back.tex, back.name], ['k1079', { 호감도: 70 }, { light: { card: '#fafafa' } }, { bandAlpha: 30, radius: 8, nameTag: 'pill' }, { text: 's', prop: '0', speed: 'l', open: true }, { tex: 'line', on: 'b', level: 3, margin: true }, '비 오는 날']);
+    // 파일
+    assert.deepEqual(JSON.parse(gs.setFile(set)), set);
+    const two = JSON.parse(gs.setFile([set, gs.makeSet({ tone: { on: false, mode: 'dark' } })]));
+    assert.equal(two.blGeulkku, 2); assert.equal(two.sets.length, 2);
+    assert.deepEqual((await gs.readAny(gs.setFile([set, set]))).set, set, '여러 벌이면 첫 벌');
+    assert.equal(gs.SET_EXT, '.bl-geulkku.json');
+    // 옛 꼴
+    const blm = lk.exportPreset({ name: '옛 스타일', tone: { on: true, k: '#7fe03c', name: '우리엘' }, look: { type: { weight: 600 } }, shape: { radius: 4 } });
+    const g1 = await gs.readAny(blm);
+    assert.equal(g1.from, 'old'); assert.equal(g1.set.name, '옛 스타일'); assert.deepEqual(g1.set.style.cast.main, { name: '우리엘', color: '#7fe03c' }); assert.deepEqual(g1.set.style.look, { type: { weight: 600 } }); assert.deepEqual(g1.set.style.shape, { radius: 4 });
+    const theme = { saltyStyle: 1, style: { type: { size: 17, lineHeight: 1.9 } } };
+    const bls0 = `BLS0.${Buffer.from(JSON.stringify(theme)).toString('base64url')}`;
+    assert.equal((await gs.readAny(bls0)).from, 'theme');
+    const z = await new Response(new Blob([JSON.stringify(theme)]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer();
+    const g3 = await gs.readAny(`BLS1.${Buffer.from(z).toString('base64url')}`);
+    assert.deepEqual(g3.set.style.look, { type: { size: 17, lineHeight: 1.9 } }, 'BLS1.');
+    const mineFile = tu.setsFile([{ frame: 'simple-k1079', frameName: '호감도 게이지', name: '완성', tone: { on: false, mode: 'dark', k2: '#ff5fa2' }, tune: { vals: { 호감도: 40 } }, look: null, shape: { pad: 120 } }]);
+    const g4 = await gs.readAny(mineFile);
+    assert.equal(g4.from, 'old'); assert.equal(g4.set.frame, 'k1079'); assert.deepEqual(g4.set.frames.k1079.vals, { 호감도: 40 }); assert.deepEqual(g4.set.style.shape, { pad: 120 });
+    const pack = { 'bl-mart': 1, items: [{ kind: 'geulkku-simple', v: 1, id: 'simple-k1079', key: 'k1079', html: '<div class="gk">x</div>', set }] };
+    assert.deepEqual((await gs.readAny(JSON.stringify(pack))).set, set, '꾸러미');
+    for (const bad of ['', '아무 글', 'BLG1.@@@', 'BLG1.AAAA', '{"x":1}', '[1]']) assert.equal(await gs.readAny(bad), null, bad);
+    const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
+    for (const w of ['data-setx="file"', 'data-setx="pick"', 'data-setx="code"', 'data-setx="paste"', 'data-setx="apply"', 'mart-setx-file', 'takeSet(item, got)', 'encodeSet(setNow(item))']) assert.ok(ui.includes(w), w);
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

@@ -9,7 +9,8 @@ import { fieldsOf, valsHtml, valOk } from './custom.js?v=20261112a';
 import { LOOKS, sameLook } from './looks.js?v=20261112a';   // 11-12 간편 — 추천 스타일 여섯 벌
 import { motionNow, setMotion, motionCaps, MOTION_LEVELS, SPEEDS } from './motion-state.js?v=20261112a';   // 11-12 빠르기 · 열어 두기
 import { SHAPE_FIELDS, PAINT_ROLES, shapeNow, shapeValue, setShape, setShapeValue, shapeInfo } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기
-import { capsOf, capWhy } from './caps.js?v=20261112a';   // 11-12 틀 능력표 — 못 받는 칸은 흐리게 + 까닭 한 줄   // 11-12 움직임 세기
+import { capsOf, capWhy } from './caps.js?v=20261112a';
+import { makeSet, readSet, encodeSet, readAny, setFile, SET_EXT } from './geulkku-set.js?v=20261112a';   // 11-12 설정 파일 .bl-geulkku.json · 코드 BLG1.   // 11-12 틀 능력표 — 못 받는 칸은 흐리게 + 까닭 한 줄   // 11-12 움직임 세기
 import { texNow, setTex, texInfo, TEX_ORDER, TEX_NAMES } from './texture.js?v=20261112a';   // 11-12 바탕 질감
 import { swapSpeakers } from './cast.js?v=20261112a';
 import { castPicked } from './tone-state.js?v=20261112a';   // 11-11 「이 틀」 값 칸
@@ -366,6 +367,13 @@ const mineHtml = (item) => {
     if (!list.length) return '<p class="mart-tune-empty">아직 없어요 · 이 틀과 색 · 글 모양 · 값 · 고쳐 쓴 글까지 통째로 기억해요</p>';
     return `<ul class="mart-tune-mine mart-hscroll">${list.map(x => `<li${x.frame === item.id ? ' class="is-here"' : ''}><button type="button" class="mart-tune-load" data-mine-load="${esc(x.id)}" title="불러오기"><i class="mart-ink-dot" style="background:${esc(dotOf(x))}" aria-hidden="true"></i><b>${esc(x.name)}</b><span>${esc(x.frameName || x.frame)}</span></button><button type="button" class="mart-cast-x mart-set-down" data-mine-down="${esc(x.id)}" aria-label="${esc(x.name)} 파일로 내려받기" title="파일로 내려받기"></button><button type="button" class="mart-cast-x" data-mine-forget="${esc(x.id)}" aria-label="${esc(x.name)} 지우기" title="지우기">×</button></li>`).join('')}</ul>`;
 };
+/** 11-12 지금 값 → 설정(꼴 2 · 이 틀 값까지) */
+const setNow = (item, label = '') => makeSet({ tone: toneState, look: lookNow(), motion: motionNow(), tex: texNow(), shape: shapeNow(), tune: tuneOf(item.id), frame: item.id, label });
+/** 글 파일 받기 */
+function downloadText(text, filename) {
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([text], { type: 'application/json' })), download: filename, hidden: true });
+    document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
 /** 11-12 완성 프리셋 파일 받기 */
 function downloadSets(rows, name) {
     const blob = new Blob([setsFile(rows)], { type: 'application/json' });
@@ -377,6 +385,9 @@ export function mineBoxHtml(item) {
     if (!item?.simple || !item.preview) return '';
     return `<section class="mart-tune-save" aria-label="가져가기 · 내 스타일"><h3 class="mart-tune-h">가져가기 <small>HTML 복사 말고도</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip mart-dl-chip" data-act="download" title="복사 글과 같은 HTML 을 .html 파일로">파일로 내려받기</button><button type="button" class="chip" data-act="text" title="틀 없이 글만(마크다운) 복사">글만 복사</button></div>
         <h3 class="mart-tune-h">테마로 담기 <small>블루레몬 로그 복사에 이 틀 + 지금 조절 값 그대로</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-act="theme-copy" title="테마 「마트에서 가져오기」에 붙여 넣는 글(bl-mart 꾸러미)을 복사해요">테마용 복사</button><button type="button" class="chip" data-act="theme-file" title="같은 꾸러미를 .bl-mart.json 파일로 받아요">테마용 파일 받기</button></div><p class="mart-tune-hint">테마에서 받는 것은 블루레몬 1.1.4 부터예요</p>
+        <h3 class="mart-tune-h">설정 파일 · 코드 <small>이 틀 + 지금 조절 값 · 마트와 테마가 같은 꼴</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-setx="file" title="지금 값을 ${SET_EXT} 파일로">설정 파일 받기</button><button type="button" class="chip" data-setx="pick" title="받아 둔 ${SET_EXT} 파일(예전 완성 프리셋 파일도)을 골라 입혀요">파일 가져오기</button><button type="button" class="chip" data-setx="code" title="짧은 코드(BLG1.…)를 복사해요">코드 복사</button><button type="button" class="chip" data-setx="paste" aria-expanded="false">코드 붙여 넣기</button><input type="file" class="mart-setx-file" accept=".json,application/json" hidden></div>
+        <div class="mart-setx-io" hidden><textarea class="field" rows="2" placeholder="BLG1.… 코드나 ${SET_EXT} 내용을 붙여 넣어요 · 예전 프리셋 글자(BLM1.) · 테마 스타일 코드(BLS1.)도 돼요" aria-label="설정 코드 붙여 넣기"></textarea><button type="button" class="btn" data-setx="apply">가져와서 입히기</button></div>
+        <p class="mart-tune-hint">캐릭터 이름이 받는 쪽 인물표에 없으면 색만 써요 · 「내 글 넣기」 글은 담지 않아요</p>
         <h3 class="mart-tune-h">내 스타일 <small>색 + 글 모양 · 어느 틀에든</small></h3>
         <form class="mart-tune-form" data-form="preset"><label class="field-wrap"><input type="text" class="field" name="name" maxlength="24" placeholder="스타일 이름" aria-label="스타일 이름" required></label><button type="submit" class="btn">스타일 저장</button></form>
         <div class="mart-preset-list">${presetsHtml()}</div>
@@ -777,6 +788,19 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
             say(got.from === 'theme' ? `테마 스타일에서 글 모양을 가져와 「${row.name}」로 기억하고 입혔어요(글꼴 · 색은 빼고요)` : `프리셋 「${row.name}」을 가져와 입혔어요`, 3600);
             return;
         }
+        // ── 11-12 설정 파일 · 코드(blGeulkku 2) ──
+        if ((b = q('[data-setx]'))) {
+            const k = b.dataset.setx, io = sheet.querySelector('.mart-setx-io');
+            if (k === 'file') { const name = String(item.name || item.label || '글꾸').replace(/[\\/:*?"<>|]+/g, ' ').trim(); downloadText(setFile(setNow(item, name)), `글꾸-${name}${SET_EXT}`); say(`설정 파일을 받았어요(${SET_EXT}) · 다른 기기 · 테마에서 「파일 가져오기」`, 3000); return; }
+            if (k === 'pick') { sheet.querySelector('.mart-setx-file')?.click(); return; }
+            if (k === 'code') {
+                const code = await encodeSet(setNow(item)); if (io) { io.hidden = false; sheet.querySelector('[data-setx="paste"]')?.setAttribute('aria-expanded', 'true'); const ta = io.querySelector('textarea'); ta.value = code; ta.focus(); ta.select(); }
+                try { await navigator.clipboard.writeText(code); say('코드를 복사했어요 · 다른 기기나 테마의 「코드 붙여 넣기」에', 3000); } catch { say('아래 칸의 코드를 복사해 가요', 3000); }
+                return;
+            }
+            if (k === 'paste') { if (io) { io.hidden = !io.hidden; b.setAttribute('aria-expanded', String(!io.hidden)); if (!io.hidden) io.querySelector('textarea').focus(); } return; }
+            if (k === 'apply') { const ta = io?.querySelector('textarea'); const got = await readAny(ta?.value); if (!got) { say('읽을 수 없는 코드예요 · BLG1.… 코드나 설정 파일 내용을 통째로 붙여 넣어 주세요', 3600); return; } if (ta) ta.value = ''; takeSet(item, got); return; }
+        }
         // ── 완성 프리셋(옛 이름 「내 글꾸」 — 기억 칸은 그대로 bl-mart-mine-v1) ──
         if ((b = q('[data-mine-load]'))) { loadSet(item, mineList().find(v => v.id === b.dataset.mineLoad)); return; }
         if ((b = q('[data-mine-down]'))) { const x = mineList().find(v => v.id === b.dataset.mineDown); if (x) { downloadSets([x], x.name); say(`「${x.name}」을 파일로 받았어요 · 다른 기기에서 「파일 가져오기」`, 2800); } return; }
@@ -784,6 +808,19 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if (q('[data-sets-pick]')) { sheet.querySelector('.mart-sets-file')?.click(); return; }
         if ((b = q('[data-mine-forget]'))) { forgetMine(b.dataset.mineForget); syncMine(sheet, item); }
     });
+    /** 11-12 설정(꼴 2) 입히기 — 캐릭터 · 밤낮 · 글 모양 · 움직임 · 질감 · 모양 + 틀 값(그 틀이 다르면 그 틀을 열어요) */
+    const takeSet = (item, got) => {
+        const r = readSet(got.set); if (!r) { say('읽을 수 없는 설정이에요', 3000); return; }
+        const tn = r.tone;
+        setTone({ ...(tn.on ? { on: true, k: tn.k, name: tn.name } : { on: false }), k2: tn.k2, name2: tn.name2, k3: tn.k3, name3: tn.name3, cover: tn.cover, mode: tn.auto ? 'auto' : tn.mode });
+        setLook(r.look); setMotion(r.motion); setTex(r.tex); setShape(r.shape); markPreset('');
+        const label = r.name ? `「${r.name}」` : '설정';
+        if (r.frame) {
+            const id = `simple-${r.frame}`; setTune(id, r.tune);
+            if (id !== item.id && !openItem(id)) { say(`${label}의 틀(${r.frame})이 지금 목록에 없어요 · 스타일은 입혔어요`, 3400); syncMine(sheet, item); return; }
+        }
+        syncMine(sheet, item); say(`${label}을 입혔어요${got.from === 'theme' ? '(테마 스타일 — 글 모양만)' : got.from === 'old' ? '(예전 꼴에서 올렸어요)' : ''}`, 2800);
+    };
     /** 완성 프리셋 불러오기 — 그 틀의 조절 값 · 깡통 · 깡캐 · 셋째 · 밤낮 · 글 모양을 그대로 · 다른 틀이면 그 틀을 열어요 */
     const loadSet = (item, x) => {
         if (!x) return;
@@ -796,6 +833,12 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if (x.frame !== item.id && !openItem(x.frame)) { say(`「${x.name}」의 틀(${x.frameName || x.frame})이 지금 목록에 없어요 · 값은 기억해 두었어요`, 3400); return; }
         say(`「${x.name}」을 불러왔어요`, 2400);
     };
+    sheet.addEventListener('change', (e) => {   // 11-12 설정 파일 가져오기(예전 완성 프리셋 파일도)
+        const input = e.target.closest?.('.mart-setx-file'); if (!input) return;
+        const f = input.files?.[0]; input.value = ''; const item = current()?.item; if (!f || !item) return;
+        if (f.size > 2e6) { say('파일이 너무 커요', 2400); return; }
+        f.text().then(readAny).then((got) => { if (!got) { say(`설정 파일이 아니에요(${SET_EXT})`, 3000); return; } takeSet(item, got); }, () => say('파일을 못 읽었어요', 2400));
+    });
     sheet.addEventListener('change', (e) => {
         const input = e.target.closest?.('.mart-sets-file'); if (!input) return;
         const f = input.files?.[0]; input.value = ''; const item = current()?.item; if (!f || !item) return;
