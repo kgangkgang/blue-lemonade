@@ -5,7 +5,7 @@
 //   - 「원래 색」을 고르면 다시 칠하기를 꺼요(지금까지의 마트 모양).
 //   목록 · 상세 창(mart.js) · 시식 창(taste.js) · 캐릭터 줄(cast.js)이 같이 읽고, 바뀌면 'bl-tone-change' 를 알려요.
 import { toneHtml, toneMixHtml, speakerColor, PAPER_COLORS, TEXTURES } from './tone-geulkku.js?v=20261110v';
-import { toneSimple, ORIGINAL } from './simple-frames.js?v=20261111b';   // 11-11 심플 새 틀(클래스 + 틀 안 <style>) — 색 블록만 갈아 끼우고 낮 · 밤은 뿌리 클래스
+import { toneSimple, ORIGINAL } from './simple-frames.js?v=20261111d';   // 11-11 심플 새 틀(클래스 + 틀 안 <style>) — 색 블록만 갈아 끼우고 낮 · 밤은 뿌리 클래스
 export { PAPER_COLORS, TEXTURES };
 
 /** 11-10 밤 사용자 「음 그라데이션 과감하게 빼자... 구리다...」 — 혼합(2~3색 그라데이션)은 꺼 두고 스위치도 안 보여요. 코드는 남겨 둬요(true 로 바꾸면 돌아와요) */

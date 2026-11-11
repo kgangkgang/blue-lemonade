@@ -4,7 +4,7 @@
 //   - 처음엔 고른 캐릭터가 든 묶음만 펴요. 머리에는 그 묶음에서 고른 캐릭터의 색 점 · 이름이 보여서 접어도 알 수 있어요.
 //   - 「채팅 붙여 넣어 대사색 찾기」: 실리태번 화면에서 복사한 채팅을 붙이면 대사 글자색(인라인 color)을 읽어 그 캐릭터를 골라요.
 //   - 밤 · 낮: 틀 바탕.
-import { toneState, setTone, savedCast, CAST_GROUPS, castList, rememberCast, forgetCast, PAPER_COLORS, TEXTURES, MIX_ENABLED } from './tone-state.js?v=20261111b';
+import { toneState, setTone, savedCast, CAST_GROUPS, castList, rememberCast, forgetCast, PAPER_COLORS, TEXTURES, MIX_ENABLED } from './tone-state.js?v=20261111d';
 /** 11-11 「바탕(종이 색 · 질감)」 칸은 화면에서 숨겨요 — 새 글꾸 틀에는 안 걸려 눌러도 바뀌는 게 없어서요(코드 · 자료는 그대로 · 나중에 격자 · 질감을 한꺼번에 되살릴 때 true) */
 const PAPER_ENABLED = false;
 import { dialogueColors } from './tone-geulkku.js?v=20261110v';
