@@ -622,3 +622,8 @@ html.mart-cart-on{overflow:hidden}
   .mart-sheet:not(.mart-taste) .mart-sheet-body>*{flex:none}
   .mart-sheet:not(.mart-taste) .mart-sheet-body>.mart-sheet-preview{order:-1;flex:none;position:sticky;top:-12px;z-index:2;max-height:52vh;overflow:auto;margin:-12px -12px 12px;padding:12px;background:var(--tint);box-shadow:0 1px 0 var(--line);scrollbar-width:thin}
 }
+/* 11-11 「이 틀」 소품 글자 접힘 머리 — 목록 화살표 대신 마트 꺾쇠(.chev) · 펼치면 뒤집혀요 */
+.mart-vals-slots>summary{list-style:none;cursor:pointer}
+.mart-vals-slots>summary::-webkit-details-marker{display:none}
+.mart-vals-slots[open]>summary.chev::after{transform:rotate(180deg)}
+.mart-vals-slots .field[aria-invalid],.mart-look .field[aria-invalid]{border-color:var(--red,#d93a3a)}

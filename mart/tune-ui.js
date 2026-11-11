@@ -3,13 +3,13 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone, ownOf } from './tone-state.js?v=20261111x';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111x';
-import { fieldsOf, valsHtml } from './custom.js?v=20261111x';   // 11-11 「이 틀」 값 칸
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111x';
-import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111x';
-import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111x';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111x';
+import { toneState, setTone, ownOf } from './tone-state.js?v=20261111y';
+import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111y';
+import { fieldsOf, valsHtml, valOk } from './custom.js?v=20261111y';   // 11-11 「이 틀」 값 칸
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111y';
+import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111y';
+import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111y';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111y';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -329,10 +329,13 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         }
         if (t.matches?.('[data-val], input[data-val-num]')) {   // 11-11 「이 틀」 값: 슬라이더 · 숫자 · 글자 · 날짜 — 틀 값과 같으면 지워요
             const key = t.dataset.val || t.dataset.valNum, f = fieldsOf(item.preview).find(x => x.key === key); if (!f) return;
-            const isNum = f.kind === 'range' || f.kind === 'stars', v = isNum ? Number(t.value) : t.value;
+            const isNum = f.kind === 'num', v = isNum ? Number(t.value) : t.value.trim();
             if (isNum) { const r = sheet.querySelector(`input[type=range][data-val="${key}"]`), n = sheet.querySelector(`input[data-val-num="${key}"]`); if (r && t !== r) r.value = v; if (n && t !== n) n.value = v; if (r) r.style.setProperty('--fill', `${Number((((Number(r.value) - f.min) / (f.max - f.min)) * 100).toFixed(1))}%`); }
+            const ok = valOk(f, v); t.toggleAttribute('aria-invalid', !ok);   // 상한 · 범위 · 꼴을 넘으면 저장하지 않아요(칸이 빨개요)
+            if (!ok) { if (!t.dataset.warned) { t.dataset.warned = '1'; say(f.kind === 'date' ? '월-일 꼴로 적어요(예 12-31)' : f.kind === 'chars' ? `${f.len}글자로 적어요` : isNum ? `${f.min}~${f.max} 사이로 적어요` : '글자가 길어요 · 틀 칸을 넘지 않게 줄여요', 2400); } return; }
+            delete t.dataset.warned;
             valPending[key] = { v, def: f.def };   // 칸마다 모아 두었다가 한 번에(다른 칸을 바로 이어 바꿔도 안 잃어요)
-            clearTimeout(valTimer); valTimer = setTimeout(() => { const cur = clone(tuneOf(item.id)), vals = cur.vals ??= {}; for (const [k, x] of Object.entries(valPending)) { if (x.v === x.def || x.v === '') delete vals[k]; else vals[k] = x.v; } valPending = {}; if (!Object.keys(vals).length) delete cur.vals; setTune(item.id, cur); }, 150);
+            clearTimeout(valTimer); valTimer = setTimeout(() => { const cur = clone(tuneOf(item.id)), vals = cur.vals ??= {}; for (const [k, x] of Object.entries(valPending)) { if (String(x.v) === String(x.def) || x.v === '') delete vals[k]; else vals[k] = x.v; } valPending = {}; if (!Object.keys(vals).length) delete cur.vals; setTune(item.id, cur); }, 200);
             return;
         }
         if (t.matches?.('input[data-look]')) {   // 슬라이더: 숫자는 바로 · 다시 칠하기는 0.12초 묶음
@@ -442,6 +445,8 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if (q('[data-tune-edit]')) { editing = !editing; armEdit(sheet.querySelector('.mart-sheet-preview'), item); syncTune(sheet, item); return; }
         if ((b = q('[data-look-reset]'))) { setLookValue(b.dataset.lookReset, null); return; }
         if ((b = q('[data-look-pick]'))) { setLookValue(b.dataset.lookPick, JSON.parse(b.dataset.v)); redraw(item); return; }
+        if ((b = q('[data-val-pick]'))) { const cur = clone(tuneOf(item.id)), f = fieldsOf(item.preview).find(x => x.key === b.dataset.valPick); if (!f) return; const vals = cur.vals ??= {}; const v = f.options.find(o => String(o) === b.dataset.v); if (String(v) === String(f.def)) delete vals[f.key]; else vals[f.key] = v; if (!Object.keys(vals).length) delete cur.vals; setTune(item.id, cur); redraw(item); return; }   // 11-11 「이 틀」 고르기 칩
+        if ((b = q('[data-val-reset]'))) { const cur = clone(tuneOf(item.id)); if (cur.vals) { delete cur.vals[b.dataset.valReset]; if (!Object.keys(cur.vals).length) delete cur.vals; } setTune(item.id, cur); redraw(item); return; }
         if ((b = q('[data-lemon]'))) { setLookValue('lemon.off', b.dataset.lemon === '0' ? true : null); redraw(item); return; }
         if ((b = q('[data-look-toggle]'))) { setLookValue(b.dataset.lookToggle, lookValue(b.dataset.lookToggle) === true ? null : true); redraw(item); return; }
         if ((b = q('[data-look-target]'))) { const cur = { ...(lookValue('shadow.targets') || { dialogue: true }) }; if (cur[b.dataset.lookTarget]) delete cur[b.dataset.lookTarget]; else cur[b.dataset.lookTarget] = true; setLookValue('shadow.targets', Object.keys(cur).length ? cur : null); return; }

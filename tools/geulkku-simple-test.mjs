@@ -1089,18 +1089,28 @@ await test('이름 글자색 따로 · 대사 · 이름 글꼴(기기 글꼴) ·
         assert.ok(lo.includes(`${K} .gk-d{font-family:`) && lo.includes(`${K} p.gk-nm{font-family:`), row.id + ' 글꼴');
         assert.deepEqual(cu.fieldsOf(p), [], row.id + ' 고리 없으면 칸 없음');
     }
-    const p = sfx[six.items[0].id].preview, key = sf.simpleFrameInfo(p).key;
-    const hook = '<!-- bl-vals: [{"key":"stars","label":"별 개수","kind":"stars","var":"--gk-stars","def":5},{"key":"day","label":"날짜","kind":"date","cls":"gk-tt"},{"key":"bad","kind":"x","var":"--a"}] -->';
-    const q = p.replace('</style>', '</style>' + hook);
-    const fs2 = cu.fieldsOf(q);
-    assert.deepEqual(fs2.map(f => [f.key, f.kind, f.min, f.max, f.step]), [['stars', 'stars', 0, 5, 0.5], ['day', 'date', undefined, 40, undefined]]);
-    assert.deepEqual(cu.cleanVals({ stars: 3.3, day: '2026-11-11', x: 1 }, fs2), { stars: 3.5, day: '2026-11-11' });
-    const o = tu.applyTune(q, { vals: { stars: 9, day: '2026-11-11' } });
-    assert.ok(o.includes(`${`.gk-${key}`.repeat(3)}{--gk-stars:5}`), '범위 안으로 ' + (o.match(/.{0,40}--gk-stars:.{0,10}/) || [''])[0] + ' ' + key);
-    assert.match(o, /class="gk-tt">2026-11-11</);
-    assert.equal((o.match(/<style>/g) || []).length, 1);
-    assert.match(cu.valsHtml(fs2, {}), /class="mart-param is-wide"[\s\S]*data-val="stars"[\s\S]*type="date"/);
-    assert.deepEqual(tu.cleanTune({ vals: { stars: 3, 'bad key': 1, t: '<b>' } }), { vals: { stars: 3, t: 'b' } });
+    // 11-11 커스텀 고리(지시-1111/커스텀/마트-연결.md · 표 98틀): 표에 있는 틀만 칸 · 기본값이면 그대로 · 고른 값이면 바뀌어요 · 틀린 값은 저장 안 함
+    const { CUST } = await import(pathToFileURL(path.join(MART, 'lib/cust/cust-table.js')).href);
+    const items = {}; for (const c of Object.values(sixAll.chunks)) Object.assign(items, JSON.parse(fs.readFileSync(path.join(DIR, c.file), 'utf8')).items);
+    let n = 0;
+    for (const [k, c] of Object.entries(CUST)) {
+        const it = items['simple-' + k]; assert.ok(it, k); const p = it.preview, fs2 = cu.fieldsOf(p);
+        assert.ok(fs2.length >= c.named.length, k);
+        assert.equal(cu.applyVals(p, {}), p, k + ' 기본 그대로');
+        const v = {}; for (const f of fs2.filter(x => x.group === 'named')) v[f.key] = f.kind === 'num' ? (f.def === f.min ? f.max : f.min) : f.kind === 'pick' ? f.options.find(o => String(o) !== String(f.def)) : f.kind === 'chars' ? '가'.repeat(f.len) : f.kind === 'date' ? '2-28' : '가';
+        const slot = fs2.find(x => x.group === 'slot'); if (slot) v[slot.key] = '나';
+        if (!Object.keys(v).length) continue;
+        const out = tu.applyTune(p, { vals: v }); assert.notEqual(out, p, k + ' 바뀜'); assert.equal((out.match(/<style>/g) || []).length, 1, k); n++;
+        assert.ok(tg.readyReport(sf.simpleReady(shutPeek(out))).ok, k + ' 복사 글 정적 검사');
+    }
+    assert.ok(n >= 90, '바뀐 틀 ' + n);
+    const love = cu.fieldsOf(items['simple-k1079'].preview).find(f => f.key === '호감도');
+    assert.equal(cu.valOk(love, 105), false); assert.equal(cu.valOk(love, 70), true);
+    const ticket = cu.fieldsOf(items['simple-k1208'].preview).find(f => f.key === '좌석');
+    assert.equal(cu.valOk(ticket, '12A'), true); assert.equal(cu.valOk(ticket, '가나다라마'), false, '폭 상한');
+    assert.deepEqual(cu.cleanVals({ 호감도: 105, 좌석: '5D' }, [love, ticket]), { 좌석: '5D' });
+    assert.match(cu.valsHtml(cu.fieldsOf(items['simple-k1079'].preview), {}), /class="mart-param is-wide"[\s\S]*data-val="호감도"/);
+    assert.deepEqual(tu.cleanTune({ vals: { 호감도: 70, 'bad key': 1, t3: '<b>' } }), { vals: { 호감도: 70, t3: 'b' } });
 });
 
 await test('독립 점검 1 · 3 · 4: 새 내 글이면 옛 글에서 고친 줄 · 숨긴 줄을 비워요(견본 글에서 고친 것은 그대로) · 실리태번 생성 시간 줄(34.2s)은 빼요 · 「이름: 글」 대사의 *속마음* 은 em', () => {
@@ -1118,6 +1128,18 @@ await test('독립 점검 1 · 3 · 4: 새 내 글이면 옛 글에서 고친 �
     assert.deepEqual(tu.tuneOf('drop-test'), { texts: { 0: '견본 고침' } }); assert.equal(tu.tuneOf('drop-test2'), null);
     tu.setTune('drop-test', null);
     assert.match(fs.readFileSync(path.join(MART, 'cast.js'), 'utf8'), /if \('text' in next && String\(next\.text \?\? ''\) !== mineText\(\)\) dropMineEdits\(\)/);
+});
+
+await test('별 개수(D2 별점 고리): st-N 규칙이 든 틀에만 「별 개수」 칸(0 ~ 5 · 반 별) · 뿌리 class 하나(gk- 머리 따라) · 다섯이면 그대로 · 다시 걸면 갈아 끼움', async () => {
+    const cu = await import(pathToFileURL(path.join(MART, 'custom.js')).href);
+    const h = '<div class="gk gk-tl gk-k1303"><style>\n.gk-k1303.gk-st-3 .gk-s4{visibility:hidden}\n</style><p class="gk-nr">x</p></div>';
+    const f = cu.fieldsOf(h).find(x => x.key === cu.STAR_KEY);
+    assert.ok(f && f.min === 0 && f.max === 5 && f.step === 0.5 && f.def === 5);
+    assert.equal(cu.valOk(f, 2.5), true); assert.equal(cu.valOk(f, 2.3), false); assert.equal(cu.valOk(f, 6), false);
+    assert.equal(cu.applyVals(h, { 별: 5 }), h);
+    assert.match(cu.applyVals(h, { 별: 2.5 }), /^<div class="gk gk-tl gk-k1303 gk-st-2h">/);
+    assert.match(cu.applyVals(cu.applyVals(h, { 별: 2.5 }), { 별: 0 }), /^<div class="gk gk-tl gk-k1303 gk-st-0">/);
+    assert.equal(cu.starOf(sfx[six.items[0].id].preview), null, '별점 틀이 아니면 칸 없음');
 });
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

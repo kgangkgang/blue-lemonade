@@ -6,8 +6,8 @@
 export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(탭을 닫으면 사라져요 — sessionStorage)
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
 import { spoilerHtml, spoilerStyle, SPOILER_LABEL } from './lib/log-copy/log-copy-spoiler.js';
-import { cleanLook } from './look.js?v=20261111x';
-import { applyVals } from './custom.js?v=20261111x';   // 11-11 틀별 값(점수 · 개수 · 별 · 날짜 · 소품 글자)
+import { cleanLook } from './look.js?v=20261111y';
+import { applyVals } from './custom.js?v=20261111y';   // 11-11 틀별 값(점수 · 개수 · 별 · 날짜 · 소품 글자)
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** 역할별 글자색 — 이름은 inks.js(테마 글자색 칩)와 같아요. 새 틀에 그 글자가 있는 역할만 칸이 떠요(속마음 · 강조 · 형광펜은 그 클래스를 쓰는 틀이 생기면 한 줄 더해요) */
@@ -81,7 +81,7 @@ export function cleanTune(t) {
     for (const [i, v] of Object.entries(t.mineTexts || {})) if (/^\d+$/.test(i) && typeof v === 'string') mineTexts[i] = cleanRich(v);
     if (Object.keys(mineTexts).length) out.mineTexts = mineTexts;
     const vals = {};   // 11-11 틀별 값: 칸 꼴은 틀이 알아요(custom.js fieldsOf) — 여기서는 짧은 숫자 · 글자만 남겨요
-    for (const [k, v] of Object.entries(t.vals && typeof t.vals === 'object' ? t.vals : {}).slice(0, 12)) if (/^[a-z][\w-]{0,23}$/i.test(k) && (Number.isFinite(v) || (typeof v === 'string' && v.length <= 80))) vals[k] = typeof v === 'string' ? v.replace(/[<>]/g, '') : v;
+    for (const [k, v] of Object.entries(t.vals && typeof t.vals === 'object' ? t.vals : {}).slice(0, 40)) if (/^[\p{L}\p{N}_-]{1,24}$/u.test(k) && (Number.isFinite(v) || (typeof v === 'string' && v.length <= 80))) vals[k] = typeof v === 'string' ? v.replace(/[<>]/g, '') : v;
     if (Object.keys(vals).length) out.vals = vals;
     return Object.keys(out).length ? out : null;
 }
