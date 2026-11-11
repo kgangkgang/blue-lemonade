@@ -7,7 +7,9 @@ export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(�
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
 import { spoilerHtml, spoilerStyle, SPOILER_LABEL } from './lib/log-copy/log-copy-spoiler.js';
 import { cleanLook } from './look.js?v=20261112a';
-import { applyVals } from './custom.js?v=20261112a';   // 11-11 틀별 값(점수 · 개수 · 별 · 날짜 · 소품 글자)
+import { applyVals } from './custom.js?v=20261112a';
+import { PAINT_ROLES } from './shape.js?v=20261112a';   // 11-12 낱낱 바탕 색(카드 바탕 · 깡통 띠 · 깡캐 띠 · 제목 밑줄) — 같은 inks 칸에 기억 · 규칙은 shape.js 가 내요
+import { cleanShape } from './shape.js?v=20261112a';   // 11-11 틀별 값(점수 · 개수 · 별 · 날짜 · 소품 글자)
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** 역할별 글자색 — 이름은 inks.js(테마 글자색 칩)와 같아요. 새 틀에 그 글자가 있는 역할만 칸이 떠요(속마음 · 강조 · 형광펜은 그 클래스를 쓰는 틀이 생기면 한 줄 더해요) */
@@ -60,7 +62,7 @@ export function cleanTune(t) {
     const inks = {};
     for (const m of MODES) {
         const row = {};
-        for (const { role } of TUNE_ROLES) { const v = t.inks?.[m]?.[role]; if (HEX.test(v || '')) row[role] = v.toLowerCase(); }
+        for (const { role } of [...TUNE_ROLES, ...PAINT_ROLES]) { const v = t.inks?.[m]?.[role]; if (HEX.test(v || '')) row[role] = v.toLowerCase(); }
         if (Object.keys(row).length) inks[m] = row;
     }
     if (Object.keys(inks).length) out.inks = inks;
@@ -219,6 +221,8 @@ export function applyTune(html, tune, { mine = false } = {}) {
 }
 
 // ── 「내 글꾸」: 틀 + 깡통 · 깡캐 · 낮밤 + 조절 값을 이름 붙여 기억 ──
+/** 11-12 움직임 값 다듬기(motion-state.js 와 같은 꼴 — 그 모듈은 세기 사본을 불러서 여기서는 꼴만) */
+const cleanMotion = (v) => { const L = x => (['0', 's', 'l'].includes(x) ? x : 'm'); const o = { text: L(v?.text), prop: L(v?.prop), speed: ['s', 'l'].includes(v?.speed) ? v.speed : 'm', open: v?.open === true }; return o; };
 const cleanName = s => String(s ?? '').replace(/[<>"'`]/g, '').trim().slice(0, 24);
 const cleanMine = x => {
     if (!x || typeof x !== 'object' || typeof x.frame !== 'string' || !/^[a-z0-9-]{1,40}$/.test(x.frame)) return null;
@@ -228,14 +232,14 @@ const cleanMine = x => {
     return {
         id: /^[a-z0-9]{4,16}$/.test(x.id || '') ? x.id : Math.random().toString(36).slice(2, 10), frame: x.frame, frameName: cleanName(x.frameName), name,
         tone: { on: tone.on === true, k: hex(tone.k), name: cleanName(tone.name), k2: hex(tone.k2), name2: cleanName(tone.name2), ...(hex(tone.k3) ? { k3: hex(tone.k3), name3: cleanName(tone.name3) } : {}), mode: tone.mode === 'light' ? 'light' : 'dark', none: tone.none === true },
-        tune: cleanTune(x.tune), ...(x.look !== undefined ? { look: cleanLook(x.look) } : {}), at: Number(x.at) || 0,
+        tune: cleanTune(x.tune), ...(x.look !== undefined ? { look: cleanLook(x.look) } : {}), ...(x.shape !== undefined ? { shape: cleanShape(x.shape) } : {}), ...(x.motion && typeof x.motion === 'object' ? { motion: cleanMotion(x.motion) } : {}), ...(x.tone?.auto === true ? { auto: true } : {}), at: Number(x.at) || 0,
     };
 };
 /** 기억한 내 글꾸(최근 것이 앞 · 최대 60) */
 export function mineList() { const list = read('local', MINE_KEY, []); return Array.isArray(list) ? list.map(cleanMine).filter(Boolean).slice(0, 60) : []; }
 /** 저장 — 같은 틀에 같은 이름이면 덮어써요 */
-export function saveMine({ frame, frameName, name, tone, tune, look }) {
-    const row = cleanMine({ frame, frameName, name, tone, tune, look, at: Date.now() });
+export function saveMine({ frame, frameName, name, tone, tune, look, shape, motion }) {
+    const row = cleanMine({ frame, frameName, name, tone, tune, look, shape, motion, at: Date.now() });
     if (!row) return null;
     const list = mineList().filter(x => !(x.frame === row.frame && x.name === row.name));
     list.unshift(row);

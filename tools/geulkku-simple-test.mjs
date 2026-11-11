@@ -907,7 +907,7 @@ await test('틀 넘침 손봄: k14 쥘부채 · q10 RPG 스탯에만 · 기본 �
 await test('되돌리기 · 다시하기(테마 hist 꼴): 단추 둘 · 스냅샷 50 · 0.5초 묶음 · Ctrl+Z / Ctrl+Y · Ctrl+Shift+Z · 입력칸 안에서는 그 칸 것 · 되돌리는 동안은 기록 안 함 · 다른 틀은 새로', () => {
     const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
     for (const s of ['data-hist="undo"', 'data-hist="redo"', 'const HIST_MAX = 50;', 'setTimeout(() => { histPush(item); syncHist(sheet); }, 500)', "if (e.target.closest?.('input, textarea, select')) return;", "undo(k === 'y' || e.shiftKey ? 1 : -1)", 'if (hist.restoring || hist.id !== item.id) return;', 'if (item && hist.id !== item.id) histStart(item);']) assert.ok(ui.includes(s), s);
-    assert.ok(/const snapOf = item => JSON\.stringify\(\{ tune: tuneOf\(item\.id\), look: lookNow\(\), motion: motionNow\(\), tex: texNow\(\), words: wordsNow\(\), tone: \{/.test(ui), '한 칸 = 조절 값 + 글 모양 + 이름 숨김 · 단어 바꾸기 + 깡통 · 깡캐 · 밤낮');
+    assert.ok(/const snapOf = item => JSON\.stringify\(\{ tune: tuneOf\(item\.id\), look: lookNow\(\), motion: motionNow\(\), tex: texNow\(\), shape: shapeNow\(\), words: wordsNow\(\), tone: \{/.test(ui), '한 칸 = 조절 값 + 글 모양 + 이름 숨김 · 단어 바꾸기 + 깡통 · 깡캐 · 밤낮');
 });
 
 await test('바로 고치기 넓히기: 고쳐 쓴 글에 줄바꿈 · 굵게 · 기울임 · 강조 · 속마음 · 취소만 남기고(속성 없이) 나머지는 글자 · 붙여 넣은 줄 · 문단은 줄바꿈 · 안 닫힌 꾸밈은 닫아요 · 28틀에 넣어도 태그 짝 · 복사 글 정적 검사 · 다시 고쳐 쓸 때도 그 칸', () => {
@@ -1288,8 +1288,15 @@ await test('설정 꼴 blGeulkku 2(geulkku-set.js) · 테마로 담기 꾸러미
     const set = gs.makeSet({ tone, look, motion: { text: 's', prop: 'm' }, tune, frame: 'simple-k1079', label: '시험' });
     assert.equal(set.frame, 'k1079'); assert.deepEqual(set.style.show, { lemon: false }); assert.deepEqual(set.frames.k1079.prop, { tone: 'cast' });
     const back = gs.readSet(JSON.stringify(set));
-    assert.deepEqual(back.tone, { mode: 'light', cover: false, on: true, k: '#3aa7ff', name: '가브리엘', k2: '#7fe03c', name2: '우리엘', k3: '#ff5fa2', name3: '아스모데우스' });
-    assert.deepEqual(back.look, lk.cleanLook(look)); assert.deepEqual(back.motion, { text: 's', prop: 'm' });
+    assert.deepEqual(back.tone, { mode: 'light', auto: false, cover: false, on: true, k: '#3aa7ff', name: '가브리엘', k2: '#7fe03c', name2: '우리엘', k3: '#ff5fa2', name3: '아스모데우스' });
+    assert.deepEqual(back.look, lk.cleanLook(look)); assert.deepEqual(back.motion, { text: 's', prop: 'm', speed: 'm', open: false });
+    // 11-12 새 조절(모양 · 빠르기 · 열어 두기 · 밤낮 자동) 왕복
+    const SH = { bandAlpha: 28, borderAlpha: 0, radius: 16, pad: 120, width: 560, noBorder: true, nameTag: 'pill', nameAlign: 'center', hideUl: true, hideProp: true };
+    const set2 = gs.makeSet({ tone: { on: false, mode: 'dark', auto: true }, motion: { text: '0', prop: 'l', speed: 's', open: true }, shape: SH });
+    assert.equal(set2.style.mode, 'auto'); assert.deepEqual(set2.style.colors, { bandAlpha: 28, borderAlpha: 0 }); assert.deepEqual(set2.style.prop, { show: false });
+    assert.deepEqual(set2.style.shape, { radius: 16, pad: 120, width: 560, nameTag: 'pill', nameAlign: 'center', border: false }); assert.deepEqual(set2.style.show, { underline: false });
+    const back2 = gs.readSet(set2);
+    assert.deepEqual(back2.shape, SH); assert.deepEqual(back2.motion, { text: '0', prop: 'l', speed: 's', open: true }); assert.equal(back2.tone.auto, true);
     assert.deepEqual(back.tune, tu.cleanTune(tune)); assert.equal(back.name, '시험');
     assert.equal(gs.readSet('{"x":1}'), null); assert.equal(gs.readSet({ blGeulkku: 1 }), null);
     const ms = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8');
@@ -1411,6 +1418,27 @@ await test('제목 글 모양(N19) · 대사 줄 간격 · 들여쓰기(N20 · N
     assert.match(o, /\.gk-k1079\.gk-k1079\.gk-k1079 p\.gk-dl\{line-height:2\.2;text-indent:0\}/);
     assert.equal(lk.applyLook(p, null), p);
     assert.ok(lk.LOOK_FIELDS.some(f => f.tab === 'title' && f.path === 'title.size' && f.cap === 'title'));
+});
+await test('새 조절 잇기(⑥): 다시 칠하기 → 모양 → 글 모양 차례 · 능력표로 못 받는 칸은 건너뜀 · 낱낱 바탕 색 넷은 tune.inks 에 · 추천 스타일 모양 · 내 스타일 · 완성 프리셋에 모양 · 움직임 · 세밀 칸(띠 · 테두리 · 카드 · 이름표 · 밑줄 · 소품 숨김 · 빠르기 · 열어 두기 · 자동 · 제목)', async () => {
+    const ts = fs.readFileSync(path.join(MART, 'tone-state.js'), 'utf8'), ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
+    assert.ok(/applyShape\(toneSimple\(applyMine\(html\)[\s\S]*?sp\.gate\); const shaped = applyLook\(out, lookFor\(sp\.caps\)\)/.test(ts), '다시 칠하기 → 모양 → 글 모양');
+    assert.ok(ts.includes('shapeRev(), toneState.auto, capsRev()]'), '다시 그리기 열쇠');
+    assert.deepEqual(tu.cleanTune({ inks: { light: { card: '#ABCDEF', bandMain: '#112233', bandOther: 'x', underline: '#00ff00' } } }), { inks: { light: { card: '#abcdef', bandMain: '#112233', underline: '#00ff00' } } });
+    const sh = await import(pathToFileURL(path.join(MART, 'shape.js')).href + '?v=20261112a');
+    const { LOOKS } = await import(pathToFileURL(path.join(MART, 'looks.js')).href + '?v=20261112a');
+    for (const x of LOOKS) assert.deepEqual(sh.cleanShape(x.shape), x.shape, x.id + ' 모양 다듬어도 같음');
+    const p = lk.cleanPreset({ name: '하나', look: { type: { weight: 500 } }, shape: { radius: 16, nameTag: 'pill' } });
+    assert.deepEqual(p.shape, { radius: 16, nameTag: 'pill' });
+    const row = tu.saveMine({ frame: 'simple-k1079', name: '모양 시험', tone: { mode: 'dark', auto: true }, tune: null, look: null, shape: { bandAlpha: 30 }, motion: { text: 'm', prop: 's', speed: 'l', open: true } });
+    assert.deepEqual([row.shape, row.motion, row.auto], [{ bandAlpha: 30 }, { text: 'm', prop: 's', speed: 'l', open: true }, true]);
+    tu.forgetMine(row.id);
+    for (const w of ['data-shape="', 'data-shape-num="', 'data-shape-pick="', 'data-shape-reset', 'data-motion-speed', 'data-motion-open', 'data-tune-mode="auto"', "['title', '제목']", "shapeBlock(['radius', 'pad', 'width', 'noBorder'], cp, '카드')", "shapeBlock(['nameTag', 'nameAlign'], cp, '이름표')", "shapeBlock(['hideProp']", "shapeBlock(['bandAlpha', 'borderAlpha']"]) assert.ok(ui.includes(w), w);
+    // 숫자 칸 2열: 모양 숫자 칸도 이어진 칸이 홀수면 마지막만 전체 폭
+    assert.ok(ui.includes('html.push(shapeFieldHtml(fields[k], caps, (j - i) % 2 === 1 && k === j - 1))'));
+    // 칸 꼴: header(이름 → ↺ → 숫자 + 단위) 다음에 슬라이더
+    const cell = ui.slice(ui.indexOf('function shapeFieldHtml'), ui.indexOf('function shapeBlock'));
+    const order = ['<div class="mart-param', '<header>', 'class="mart-param-name"', "undoBtn('data-shape-reset'", '<span class="mart-num"><input type="number"', 'class="mart-unit"', '</header>', '<input type="range"'].map(x => cell.indexOf(x));
+    assert.ok(order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), `칸 차례 ${order}`);
 });
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

@@ -4,6 +4,7 @@
 //   다른 점 둘: ① 값이 null 이면 「틀 그대로」(틀마다 정해 둔 글 모양 — 안 고치면 한 글자도 안 달라져요)
 //               ② 글꼴은 기기 글꼴 묶음만 — 깡통 글에서는 웹폰트(@import · <link> · @font-face)가 불러와지지 않아요(11-11 깡통 시험 162329).
 //   값은 틀 <style> 끝에 덮는 규칙 몇 줄로만 들어가요(뼈대 · 움직임 · <style> 하나 그대로). 글자색은 color 와 -webkit-text-fill-color 를 같이 써요(깡통이 color 를 !important 로 눌러요).
+import { cleanShape } from './shape.js?v=20261112a';   // 11-12 내 스타일에 모양(띠 진하기 · 모서리 · 이름표 …)도 같이
 export const LOOK_KEY = 'bl-mart-look-v1';       // 지금 글 모양(이 브라우저에 기억)
 export const PRESET_KEY = 'bl-mart-preset-v1';   // 「내 프리셋」
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -326,7 +327,7 @@ export function cleanPreset(x) {
         id: /^[a-z0-9]{4,16}$/.test(x.id || '') ? x.id : Math.random().toString(36).slice(2, 10), name,
         tone: { on: tone.on === true, k: hex(tone.k), name: cleanName(tone.name), k2: hex(tone.k2), name2: cleanName(tone.name2), none: tone.none === true },
         colors: { ...(Object.keys(inks).length ? { inks } : {}), ...(hex(c.prop) ? { prop: hex(c.prop) } : {}), ...(c.own === false ? { own: false } : {}) },
-        look: cleanLook(x.look), at: Number(x.at) || 0,
+        look: cleanLook(x.look), ...(cleanShape(x.shape) ? { shape: cleanShape(x.shape) } : {}), at: Number(x.at) || 0,
     };
 }
 const presetStore = () => { const v = read(PRESET_KEY, {}); return { list: (Array.isArray(v?.list) ? v.list : []).map(cleanPreset).filter(Boolean).slice(0, 40), last: typeof v?.last === 'string' ? v.last : '' }; };

@@ -692,6 +692,10 @@ html.mart-cart-on{overflow:hidden}
 .mart-simple-more{width:100%}
 /* 11-12 바탕 질감 — 걸지 않는 틀은 질감 칩 줄을 흐리게(칸은 그대로 · 다른 틀에서 다시 걸려요) */
 .mart-look.is-dim .chip:disabled{opacity:.45}
+/* 11-12 능력표 — 이 틀이 못 받는 칸은 흐리게(45%) · 까닭은 칸 아래 한 줄(설계 3절) */
+.mart-look>.is-dim,.mart-tune-chip.is-dim{opacity:.45}
+.mart-look .chip:disabled,.mart-param input:disabled{cursor:not-allowed}
+.mart-look>.mart-sub{margin:4px 0 -2px;text-align:left;color:var(--ink);font-size:var(--ts-meta);font-weight:650}
 .mart-simple .mart-simple-h,.mart-simple-diff>p{text-align:left}
 /* 11-12 세밀 = 갈래 여덟 접힘(설계 4-4 · 목업-마트-세밀) — 카드 한 장씩 · 머리 줄 이름 · 요약 · 바꾼 것 n · 마트 꺾쇠 */
 .mart-sheet-viewbox:empty{display:none}

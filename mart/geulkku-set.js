@@ -4,16 +4,18 @@
 import { cleanLook } from './look.js?v=20261112a';
 import { cleanTune } from './tune.js?v=20261112a';
 import { cleanTex } from './texture.js?v=20261112a';
+import { cleanShape } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기(띠 진하기 · 테두리 진하기 · 모서리 · 여백 · 폭 · 테두리 · 이름표 · 제목 밑줄 · 소품 숨김)
 
 export const SET_V = 2;
 const HEX = /^#[0-9a-f]{6}$/i;
 const hex = v => (HEX.test(v || '') ? v.toLowerCase() : null);
 const name = s => String(s ?? '').replace(/[<>"'`]/g, '').trim().slice(0, 24);
-const lv = v => (v === 's' || v === 'l' ? v : 'm');
+const lv = v => (v === '0' || v === 's' || v === 'l' ? v : 'm');
+const sp = v => (v === 's' || v === 'l' ? v : 'm');
 const frameKeyOf = id => (String(id || '').match(/(?:^|-)((?:k|q)\d+)$/) || [])[1] || '';
 
 /** 지금 값 → 설정(꼴 2) · frame: 그 틀 열쇠(주면 완성 프리셋 꼴 — 틀 값까지) */
-export function makeSet({ tone = {}, look = null, motion = null, tex = null, tune = null, frame = '', label = '' } = {}) {
+export function makeSet({ tone = {}, look = null, motion = null, tex = null, shape = null, tune = null, frame = '', label = '' } = {}) {
     const out = { blGeulkku: SET_V, from: 'mart' };
     if (name(label)) out.name = name(label);
     const style = {}, cast = {};
@@ -22,11 +24,18 @@ export function makeSet({ tone = {}, look = null, motion = null, tex = null, tun
     if (hex(tone.k3)) cast.third = { name: name(tone.name3), color: hex(tone.k3) };
     if (tone.cover === false) cast.cover = false;
     if (Object.keys(cast).length) style.cast = cast;
-    if (tone.mode === 'light' || tone.mode === 'dark') style.mode = tone.mode;
+    if (tone.auto === true) style.mode = 'auto'; else if (tone.mode === 'light' || tone.mode === 'dark') style.mode = tone.mode;
     const L = cleanLook(look);
     if (L) { const { lemon, ...rest } = L; if (Object.keys(rest).length) style.look = rest; if (lemon?.off) style.show = { lemon: false }; }
-    if (motion && (lv(motion.text) !== 'm' || lv(motion.prop) !== 'm')) style.motion = { text: lv(motion.text), prop: lv(motion.prop) };
-    const tx = cleanTex(tex); if (tx) style.shape = { texture: tx };   // 바탕 질감(N27) — { tex, on, level, margin }
+    if (motion && (lv(motion.text) !== 'm' || lv(motion.prop) !== 'm' || sp(motion.speed) !== 'm' || motion.open === true)) style.motion = { text: lv(motion.text), prop: lv(motion.prop), ...(sp(motion.speed) !== 'm' ? { speed: sp(motion.speed) } : {}), ...(motion.open === true ? { open: true } : {}) };
+    const S = cleanShape(shape) || {}, shp = {};
+    if (S.bandAlpha != null || S.borderAlpha != null) style.colors = { ...(S.bandAlpha != null ? { bandAlpha: S.bandAlpha } : {}), ...(S.borderAlpha != null ? { borderAlpha: S.borderAlpha } : {}) };
+    for (const k of ['radius', 'pad', 'width', 'nameTag', 'nameAlign']) if (S[k] != null) shp[k] = S[k];
+    if (S.noBorder) shp.border = false;
+    if (S.hideUl) style.show = { ...(style.show || {}), underline: false };
+    if (S.hideProp) style.prop = { show: false };
+    const tx = cleanTex(tex); if (tx) shp.texture = tx;   // 바탕 질감(N27) — { tex, on, level, margin }
+    if (Object.keys(shp).length) style.shape = shp;
     if (Object.keys(style).length) out.style = style;
     const key = frameKeyOf(frame);
     if (key) {
@@ -55,15 +64,16 @@ export function readSet(raw) {
     if (Array.isArray(v.sets)) v = v.sets[0];
     if (!v || v.blGeulkku !== SET_V) return null;
     const s = v.style && typeof v.style === 'object' ? v.style : {}, c = s.cast || {};
-    const tone = { mode: s.mode === 'light' ? 'light' : 'dark', cover: c.cover !== false };
+    const tone = { mode: s.mode === 'auto' ? 'auto' : s.mode === 'light' ? 'light' : 'dark', auto: s.mode === 'auto', cover: c.cover !== false };
     if (c.main?.none) Object.assign(tone, { on: true, k: null, name: '' });
     else if (hex(c.main?.color)) Object.assign(tone, { on: true, k: hex(c.main.color), name: name(c.main.name) });
     else tone.on = false;
     tone.k2 = hex(c.other?.color); tone.name2 = tone.k2 ? name(c.other.name) : '';
     tone.k3 = hex(c.third?.color); tone.name3 = tone.k3 ? name(c.third.name) : '';
     const look = cleanLook({ ...(s.look || {}), ...(s.show?.lemon === false ? { lemon: { off: true } } : {}) });
-    const motion = { text: lv(s.motion?.text), prop: lv(s.motion?.prop) }, tex = cleanTex(s.shape?.texture);
+    const motion = { text: lv(s.motion?.text), prop: lv(s.motion?.prop), speed: sp(s.motion?.speed), open: s.motion?.open === true }, tex = cleanTex(s.shape?.texture);
+    const sh = s.shape || {}, shape = cleanShape({ bandAlpha: s.colors?.bandAlpha, borderAlpha: s.colors?.borderAlpha, radius: sh.radius, pad: sh.pad, width: sh.width, nameTag: sh.nameTag, nameAlign: sh.nameAlign, noBorder: sh.border === false, hideUl: s.show?.underline === false, hideProp: s.prop?.show === false });
     const frame = frameKeyOf(v.frame), f = (frame && v.frames?.[frame]) || {};
     const tune = cleanTune({ vals: f.vals, lines: f.lines, texts: f.texts, spoilers: f.spoilers, inks: f.colors, prop: f.prop?.tone === 'pick' ? f.prop.color : undefined, own: f.prop?.tone === 'own' ? true : f.prop?.tone === 'cast' ? false : undefined, hideTitle: f.show?.title === false, hideNames: f.show?.names === false });
-    return { tone, look, motion, tex, frame, tune, name: name(v.name) };
+    return { tone, look, motion, tex, shape, frame, tune, name: name(v.name) };
 }

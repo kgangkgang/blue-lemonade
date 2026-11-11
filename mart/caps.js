@@ -7,7 +7,7 @@ import { motionCaps } from './motion-state.js?v=20261112a';
 let table = null, loading = null, rev = 0;
 export const capsRev = () => rev;
 /** caps.json 을 한 번 받아요(못 받으면 정적 검사만) — 받은 뒤 'bl-tone-change' 로 다시 그리게 해요 */
-export function loadCaps(url = new URL('../data/geulkku/caps.json', import.meta.url).href) {
+export function loadCaps(url = new URL('./data/geulkku/caps.json', import.meta.url).href) {
     if (table || loading) return loading || Promise.resolve(table);
     loading = fetch(url).then(r => (r.ok ? r.json() : null)).then((v) => { table = v?.frames || {}; rev++; try { document.dispatchEvent(new CustomEvent('bl-tone-change', { detail: { caps: true } })); } catch { /* 시험 */ } return table; }, () => { table = {}; return table; });
     return loading;

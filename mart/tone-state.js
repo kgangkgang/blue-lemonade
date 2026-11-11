@@ -7,11 +7,13 @@
 //   목록 · 상세 창(mart.js) · 시식 창(taste.js) · 캐릭터 줄(cast.js)이 같이 읽고, 바뀌면 'bl-tone-change' 를 알려요.
 import { toneHtml, toneMixHtml, speakerColor, PAPER_COLORS, TEXTURES } from './tone-geulkku.js?v=20261110v';
 import { toneSimple, ORIGINAL } from './simple-frames.js?v=20261112a';
-import { applyLook, lookRev } from './look.js?v=20261112a';   // 11-11 글 모양(테마 「글자」 탭 축소판 — 글꼴 · 크기 · 자간 · 그림자 …) — 값이 없으면 그대로
+import { applyLook, lookRev, lookNow } from './look.js?v=20261112a';   // 11-11 글 모양(테마 「글자」 탭 축소판 — 글꼴 · 크기 · 자간 · 그림자 …) — 값이 없으면 그대로
 import { tuneOf, tuneRev, applyTune } from './tune.js?v=20261112a';
 import { applyWords, wordsRev } from './words.js?v=20261112a';
 import { applyMotion, motionRev } from './motion-state.js?v=20261112a';
 import { applyTex, texRev } from './texture.js?v=20261112a';   // 11-12 바탕 질감 — 맨 마지막   // 11-12 움직임 세기(글 · 소품) — 중이면 그대로   // 11-11 「도구」 — 이름 숨김 · 단어 바꾸기(모든 틀 · 글자만)
+import { applyShape, shapeNow, shapeRev } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기(띠 진하기 · 카드 · 이름표 · 소품 숨김 · 낱낱 바탕 색) — 다시 칠하기 바로 뒤
+import { capsOf, capsRev, shapeGate, padIn, titleIn, loadCaps } from './caps.js?v=20261112a';   // 11-12 틀 능력표 — 못 받는 칸은 건너뛰어요
 import { applyMine, mineOn, mineRev, mineInfo } from './mine-text.js?v=20261112a';   // 11-11 「내 글 넣기」 — 켜져 있으면 견본 글 대신 내 글   // 11-11 조절 칸(틀 하나의 글자색 · 소품 색 · 고쳐 쓴 글) — 값이 없으면 그대로   // 11-11 심플 새 틀(클래스 + 틀 안 <style>) — 색 블록만 갈아 끼우고 낮 · 밤은 뿌리 클래스
 export { PAPER_COLORS, TEXTURES };
 
@@ -54,6 +56,8 @@ export function castList() {
     return [...savedCast().map(x => ({ ...x, saved: true })), ...CAST.map(x => ({ ...x }))];
 }
 
+/** 이 기기 밝기(자동일 때) */
+function systemMode() { try { return globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } catch { return 'dark'; } }
 export const toneState = (() => {
     let q = new URLSearchParams('');
     try { q = new URLSearchParams(location.search); } catch { /* 주소 없음(시험) */ }
@@ -76,13 +80,19 @@ export const toneState = (() => {
     const cover = saved.cover !== false;
     // 11-12 셋째 화자 색(내 글에 화자가 셋 이상일 때만 쓰여요) — 없으면 깡캐 모습 그대로
     const k3 = speakerColor(saved.k3) || null, name3 = k3 ? cleanName(saved.name3) : '';
-    return { on, k, mode, name, mix, picks, paper, texture, none, k2, name2, cover, k3, name3 };
+    // 11-12 밤낮 「자동」(N10) — 이 기기 밝기(prefers-color-scheme)를 따라 한 판을 내요(나가는 글은 늘 한 판) · 밤 · 낮을 고르면 꺼져요
+    const auto = saved.auto === true && !q.has('tone');
+    if (auto) mode = systemMode();
+    return { on, k, mode, name, mix, picks, paper, texture, none, k2, name2, cover, k3, name3, auto };
 })();
 /** 캐릭터 · 밤낮 · 켬을 바꿔요(기억하고 'bl-tone-change' 를 알려요) */
 export function setTone(next = {}) {
     if ('k' in next) toneState.k = speakerColor(next.k);
     if ('name' in next) toneState.name = cleanName(next.name);
-    if ('mode' in next) toneState.mode = next.mode === 'light' ? 'light' : 'dark';
+    if ('auto' in next) toneState.auto = next.auto === true;
+    if ('mode' in next && next.mode !== 'auto') { toneState.mode = next.mode === 'light' ? 'light' : 'dark'; if (!('auto' in next)) toneState.auto = false; }
+    if (next.mode === 'auto') toneState.auto = true;
+    if (toneState.auto) toneState.mode = systemMode();
     if ('on' in next) toneState.on = !!next.on;
     if ('k' in next || 'on' in next) toneState.none = toneState.on && !toneState.k;   // 11-11 「캐릭터 없음(무채)」을 직접 고른 것만 기억해요(아무것도 안 골랐으면 원래 색)
     if ('k2' in next) { toneState.k2 = speakerColor(next.k2) || null; if (!toneState.k2) toneState.name2 = ''; }
@@ -94,7 +104,7 @@ export function setTone(next = {}) {
     if ('paper' in next && Object.hasOwn(PAPER_COLORS, next.paper)) toneState.paper = next.paper;
     if ('texture' in next && Object.hasOwn(TEXTURES, next.texture) && !TEXTURES[next.texture].hidden) toneState.texture = next.texture;
     if ('cover' in next) toneState.cover = next.cover !== false;
-    write(TONE_KEY, { ...(toneState.cover ? {} : { cover: false }), k: toneState.k, name: toneState.name, mode: toneState.mode, on: toneState.on, none: toneState.none, mix: toneState.mix, picks: toneState.picks, paper: toneState.paper, texture: toneState.texture, ...(toneState.k2 ? { k2: toneState.k2, name2: toneState.name2 } : {}), ...(toneState.k3 ? { k3: toneState.k3, name3: toneState.name3 } : {}) });
+    write(TONE_KEY, { ...(toneState.cover ? {} : { cover: false }), ...(toneState.auto ? { auto: true } : {}), k: toneState.k, name: toneState.name, mode: toneState.mode, on: toneState.on, none: toneState.none, mix: toneState.mix, picks: toneState.picks, paper: toneState.paper, texture: toneState.texture, ...(toneState.k2 ? { k2: toneState.k2, name2: toneState.name2 } : {}), ...(toneState.k3 ? { k3: toneState.k3, name3: toneState.name3 } : {}) });
     try { document.dispatchEvent(new CustomEvent('bl-tone-change', { detail: { ...toneState } })); } catch { /* 시험 */ }
 }
 /** 다시 칠할 글꾸인가(로그 글꾸만 — 게시글 틀 photo 는 자기 색 그대로 · 단 심플 새 틀 simple 은 게시글 틀이어도 캐릭터 색으로) */
@@ -106,14 +116,23 @@ export const castPicked = () => toneState.on || !!toneState.k2;
  *   원래 색 → 기본 색 · 캐릭터를 고르면 「소품도 캐릭터 색」(toneState.cover · 기본 켬)을 따라요 · 틀마다 고른 값(tune own true/false)이 있으면 그것이 먼저.
  */
 export const ownOf = t => (t?.own === false ? false : t?.own === true ? undefined : castPicked() && toneState.cover ? false : undefined);
+// 자동이면 기기 밝기가 바뀔 때 따라가요
+try { globalThis.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', () => { if (toneState.auto) setTone({ auto: true }); }); } catch { /* 시험 */ }
+if (typeof document !== 'undefined') loadCaps();
+/** 그 틀에 지금 모양 값을 그 틀이 받는 만큼만 — 여백 · 제목 크기는 범위 안으로 */
+export function shapeFor(item) {
+    const s = shapeNow(), caps = capsOf(item);
+    return { value: s && s.pad != null ? { ...s, pad: padIn(caps, s.pad) } : s, gate: shapeGate(caps, s), caps };
+}
+const lookFor = (caps) => { const L = lookNow(); const t = L?.title?.size; if (t == null || !caps?.title || titleIn(caps, t) === t) return L; return { ...L, title: { ...L.title, size: titleIn(caps, t) } }; };
 export const toned = item => item?.kind === 'geulkku' && (item.simple ? true : toneState.on && !item.photo && !item.own);   // 11-12 마트 꼴이 아닌 「내 글꾸」(own)는 다시 칠하지 않아요(색 역할을 몰라요)
 /** 다 그린 글꾸 HTML 을 고른 대사색으로(꺼져 있으면 그대로) */
 export const toneOut = (item, html) => {
     if (!html || !toned(item)) return html;
-    if (item.simple) { const t = tuneOf(item.id), out = toneSimple(applyMine(html), toneState.on ? toneState.k : ORIGINAL, { mode: toneState.mode, other: toneState.k2, third: toneState.k3, prop: t?.prop, own: ownOf(t) }); const shaped = applyLook(out), tuned = applyMotion(t ? applyTune(shaped, t, { mine: mineOn() }) : shaped); return applyTex(applyWords(tuned, { auto: mineOn() ? mineInfo()?.names || [] : ['깡통', '깡캐'], mode: toneState.mode })); }   // 종이 색 · 질감은 심플 새 틀에 안 걸어요(이식-설계 1-3 「처음엔 종이 고르기에서 빼요」)
+    if (item.simple) { const t = tuneOf(item.id), sp = shapeFor(item), out = applyShape(toneSimple(applyMine(html), toneState.on ? toneState.k : ORIGINAL, { mode: toneState.mode, other: toneState.k2, third: toneState.k3, prop: t?.prop, own: ownOf(t) }), sp.value, t?.inks?.[toneState.mode], sp.gate); const shaped = applyLook(out, lookFor(sp.caps)), tuned = applyMotion(t ? applyTune(shaped, t, { mine: mineOn() }) : shaped); return applyTex(applyWords(tuned, { auto: mineOn() ? mineInfo()?.names || [] : ['깡통', '깡캐'], mode: toneState.mode })); }   // 종이 색 · 질감은 심플 새 틀에 안 걸어요(이식-설계 1-3 「처음엔 종이 고르기에서 빼요」)
     const roles = item.colors || item.palette || null, opt = { mode: toneState.mode, paper: toneState.paper, texture: toneState.texture };
     const ks = toneState.mix ? toneState.picks.map(x => x.color) : [];
     return ks.length >= 2 ? toneMixHtml(html, roles, ks, opt) : toneHtml(html, roles, toneState.k, opt);
 };
 /** 다시 칠하기 값이 바뀌었는지 알아보는 열쇠(카드마다 그린 것을 다시 쓸지) */
-export const toneKey = () => JSON.stringify([toneState.cover, toneState.on, toneState.k, toneState.mode, toneState.mix, toneState.picks.map(x => x.color), toneState.paper, toneState.texture, toneState.k2, toneState.k3, tuneRev(), lookRev(), mineRev(), wordsRev(), motionRev(), texRev()]);
+export const toneKey = () => JSON.stringify([toneState.cover, toneState.on, toneState.k, toneState.mode, toneState.mix, toneState.picks.map(x => x.color), toneState.paper, toneState.texture, toneState.k2, toneState.k3, tuneRev(), lookRev(), mineRev(), wordsRev(), motionRev(), texRev(), shapeRev(), toneState.auto, capsRev()]);

@@ -9,11 +9,11 @@ const HEX = /^#[0-9a-f]{6}$/i;
 /** 칸 표 — group: 세밀 갈래(color · shape · prop) · cap: 능력표(caps.js)에서 그 틀이 받는지 보는 열쇠 */
 export const SHAPE_FIELDS = Object.freeze([
     { group: 'color', path: 'bandAlpha', label: '띠 진하기', kind: 'range', min: 8, max: 40, step: 1, def: 18, unit: '%', cap: 'band' },
-    { group: 'color', path: 'borderAlpha', label: '테두리 진하기', kind: 'range', min: 0, max: 30, step: 1, def: 10, unit: '%', cap: 'border' },
+    { group: 'color', path: 'borderAlpha', label: '테두리', kind: 'range', min: 0, max: 30, step: 1, def: 10, unit: '%', cap: 'border' },
     { group: 'shape', path: 'radius', label: '모서리', kind: 'range', min: 0, max: 24, step: 1, def: 12, unit: 'px', cap: 'radius' },
     { group: 'shape', path: 'pad', label: '안쪽 여백', kind: 'range', min: 70, max: 130, step: 10, def: 100, unit: '%', cap: 'pad' },
     { group: 'shape', path: 'width', label: '폭', kind: 'pick', options: [[640, '640'], [560, '560'], [480, '480']], cap: 'width' },
-    { group: 'shape', path: 'noBorder', label: '테두리', kind: 'pick', options: [[false, '켬'], [true, '끔']], cap: 'border' },
+    { group: 'shape', path: 'noBorder', label: '테두리 선', kind: 'pick', options: [[false, '켬'], [true, '끔']], cap: 'border' },
     { group: 'shape', path: 'nameTag', label: '이름표 모양', kind: 'pick', options: [['plain', '글자만'], ['pill', '알약'], ['line', '밑줄']], cap: 'nameTag' },
     { group: 'shape', path: 'nameAlign', label: '이름표 자리', kind: 'pick', options: [['left', '왼쪽'], ['center', '가운데'], ['right', '오른쪽']], cap: 'nameTag' },
     { group: 'shape', path: 'hideUl', label: '제목 밑줄', kind: 'pick', options: [[false, '보임'], [true, '숨김']], cap: 'underline' },

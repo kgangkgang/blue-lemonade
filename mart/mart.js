@@ -25,6 +25,7 @@ import { makeSet } from './geulkku-set.js?v=20261112a';   // 11-12 설정 꼴 bl
 import { lookNow } from './look.js?v=20261112a';
 import { motionNow } from './motion-state.js?v=20261112a';
 import { texNow } from './texture.js?v=20261112a';
+import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
 import { tuneOf } from './tune.js?v=20261112a';
 import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112a';
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
@@ -440,7 +441,7 @@ export function themePack(item, set) {
 async function themeTake(state, file) {
     try {
         await ensureItem(state.item);
-        const item = state.item, set = makeSet({ tone: toneState, look: lookNow(), motion: motionNow(), tex: texNow(), tune: tuneOf(item.id), frame: item.id });
+        const item = state.item, set = makeSet({ tone: toneState, look: lookNow(), motion: motionNow(), tex: texNow(), shape: shapeNow(), tune: tuneOf(item.id), frame: item.id });
         const text = JSON.stringify(themePack(item, set));
         if (file) {
             const blob = new Blob([text], { type: 'application/json' }), name = String(item.name || '글꾸').replace(/[\\/:*?"<>|]+/g, ' ').trim();
