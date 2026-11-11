@@ -4,10 +4,11 @@
 //   - 처음엔 고른 캐릭터가 든 묶음만 펴요. 머리에는 그 묶음에서 고른 캐릭터의 색 점 · 이름이 보여서 접어도 알 수 있어요.
 //   - 「채팅 붙여 넣어 대사색 찾기」: 실리태번 화면에서 복사한 채팅을 붙이면 대사 글자색(인라인 color)을 읽어 그 캐릭터를 골라요.
 //   - 밤 · 낮: 틀 바탕.
-import { toneState, setTone, savedCast, CAST_GROUPS, castList, rememberCast, forgetCast, PAPER_COLORS, TEXTURES, MIX_ENABLED } from './tone-state.js?v=20261111i';
+import { toneState, setTone, savedCast, CAST_GROUPS, castList, rememberCast, forgetCast, PAPER_COLORS, TEXTURES, MIX_ENABLED } from './tone-state.js?v=20261111k';
 /** 11-11 「바탕(종이 색 · 질감)」 칸은 화면에서 숨겨요 — 새 글꾸 틀에는 안 걸려 눌러도 바뀌는 게 없어서요(코드 · 자료는 그대로 · 나중에 격자 · 질감을 한꺼번에 되살릴 때 true) */
 const PAPER_ENABLED = false;
 import { dialogueColors } from './tone-geulkku.js?v=20261110v';
+import { mineOn, mineText, mineInfo, setMine } from './mine-text.js?v=20261111k';   // 11-11 「내 글 넣기」 — 붙여 넣은 내 글로 모든 카드를 그려요
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const same = (a, b) => String(a || '').toLowerCase() === String(b || '').toLowerCase();
@@ -39,10 +40,19 @@ export function mountCast(box, { say = () => {} } = {}) {
     // 11-11 칸이 둘이에요 — 「깡통: ● 이름」(첫째 화자 색) · 「깡캐: ● 이름」(둘째 화자 색). 칸을 누르면 그 칸의 목록이 펼쳐져요(한 번에 하나)
     const open = { main: new Set(), other: new Set() }, first = { main: true, other: true };
     let who = null, paperOpen = false;   // 11-10 처음엔 한 줄만 — 누르면 세계관 묶음이 펼쳐져요(사용자 「누구 로그예요?가먼저나오는게맞나...?」 → 목록이 먼저)
+    /** 11-11 「내 글」 칸: 붙여 넣으면 모든 카드가 내 글로(테마 · 예전 마트 「📝 내 로그로 보기」처럼) · 「견본 글로」 되돌리기 · 「지우기」 · 이 브라우저에 기억 */
+    const textPanel = () => {
+        const info = mineInfo(), on = mineOn();
+        const status = on ? `내 글로 보는 중 · 화자 ${esc(info.names.slice(0, 3).join(' · '))}${info.names.length > 3 ? ` 외 ${info.names.length - 3}` : ''} · 대사 ${info.dialogue}줄${info.cut ? ' · 길어서 앞부분만 넣었어요' : ''}` : mineText().trim() ? '넣어 둔 글이 있어요 · 「내 글로 보기」를 누르면 카드가 바뀌어요' : '견본 글로 보는 중';
+        return `<div class="mart-cast-panel" id="mart-cast-panel" data-who="text"><p class="mart-cast-who"><b>내 글</b>을 붙여 넣으면 모든 카드가 내 글로 바뀌어요 · 「이름: 대사」 줄 · 실리태번 화면에서 복사한 채팅 · 그냥 글 모두 돼요 · 대사색이 있으면 깡통 · 깡캐 색도 찾아요</p>
+            <textarea class="field mart-mine-text" rows="4" maxlength="200000" placeholder="여기에 붙여 넣어요" aria-label="내 글">${esc(mineText())}</textarea>
+            <div class="mart-tune-line mart-hscroll mart-mine-btns"><button type="button" class="btn" data-mine="apply">내 글로 보기</button><button type="button" class="chip" data-mine="sample" aria-pressed="${!on}">견본 글로</button><button type="button" class="chip" data-mine="clear">지우기</button></div>
+            <p class="mart-mine-info" role="status">${status}</p></div>`;
+    };
     const draw = () => {
-        const panel = !!who, w = who || 'main', other = w === 'other', on = onOf(w), radioName = other ? 'bl-cast2' : 'bl-cast';
+        const panel = !!who, w = who === 'text' ? 'main' : who || 'main', other = w === 'other', on = onOf(w), radioName = other ? 'bl-cast2' : 'bl-cast';
         const list = groups(w), opened0 = open[w];
-        if (panel && first[w]) { opened0.add(groupOfSelection(list, w)); first[w] = false; }
+        if (panel && who !== 'text' && first[w]) { opened0.add(groupOfSelection(list, w)); first[w] = false; }
         const head = (g) => {
             const pick = g.tail ? (other ? (toneState.k2 ? null : { name: '원래 색' }) : toneState.on ? (toneState.k ? null : { name: '캐릭터 없음' }) : { name: '원래 색' }) : g.cast.find(on);
             const showPick = g.tail ? pick && groupOfSelection(list, w) === 'none' : !!pick;
@@ -75,8 +85,8 @@ export function mountCast(box, { say = () => {} } = {}) {
         const pc = PAPER_COLORS[toneState.paper] || PAPER_COLORS.white, tx = TEXTURES[toneState.texture] || TEXTURES.plain;
         const sw = id => { const p = PAPER_COLORS[id][toneState.mode === 'light' ? 'light' : 'dark']; return `background:${p[0]};box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)`; };
         const paperPanel = PAPER_ENABLED && paperOpen ? `<div class="mart-cast-panel" id="mart-paper-panel"><div class="mart-cast-sub2">종이 색</div><div class="mart-cast-list" role="radiogroup" aria-label="종이 색">${Object.entries(PAPER_COLORS).map(([id, p]) => `<label class="mart-cast-r"><input type="radio" name="bl-paper" value="${id}"${id === toneState.paper ? ' checked' : ''}><i class="mart-ink-dot" style="${sw(id)}" aria-hidden="true"></i><span>${esc(p.label)}</span></label>`).join('')}</div><div class="mart-cast-sub2">질감</div><div class="mart-cast-list" role="radiogroup" aria-label="질감">${Object.entries(TEXTURES).filter(([, t]) => !t.hidden).map(([id, t]) => `<label class="mart-cast-r"><input type="radio" name="bl-texture" value="${id}"${id === toneState.texture ? ' checked' : ''}><span>${esc(t.label)}</span></label>`).join('')}</div></div>` : '';
-        box.innerHTML = `<div class="mart-cast-head"><span class="mart-cast-slots">${toggle('main', '깡통', now)}${toggle('other', '깡캐', now2)}</span>${MIX_ENABLED ? `<button type="button" class="chip mart-cast-mix" data-mix aria-pressed="${toneState.mix}" title="캐릭터를 2~3명 골라 포인트 색을 그라데이션으로 섞어요">혼합</button>` : ''}${PAPER_ENABLED ? `<button type="button" class="mart-cast-toggle" data-paper aria-expanded="${paperOpen}" aria-controls="mart-paper-panel"><span>바탕:</span><i class="mart-ink-dot" style="${sw(toneState.paper)}" aria-hidden="true"></i><b>${esc(pc.label)} · ${esc(tx.label)}</b><span class="mart-cast-caret" aria-hidden="true">${paperOpen ? '▴' : '▾'}</span></button>` : ''}<span class="mart-seg mart-cast-mode" role="group" aria-label="밤낮"><button type="button" class="chip" data-mode="dark" aria-pressed="${toneState.mode === 'dark'}">밤</button><button type="button" class="chip" data-mode="light" aria-pressed="${toneState.mode === 'light'}">낮</button></span></div>
-            <div class="mart-cast-panel" id="mart-cast-panel" data-who="${w}"${panel ? '' : ' hidden'}><p class="mart-cast-who">${other ? '<b>깡캐</b>(둘째 화자) 색을 골라요 · 안 고르면 틀마다 정해 둔 색 그대로예요' : '<b>깡통</b>(첫째 화자) 색을 골라요 · 소품 색도 이 색을 따라가요'}</p><div class="mart-cast-groups">${list.map(head).join('')}</div>${opened.map(body).join('')}</div>${paperPanel}`;
+        box.innerHTML = `<div class="mart-cast-head"><span class="mart-cast-slots">${toggle('main', '깡통', now)}${toggle('other', '깡캐', now2)}${toggle('text', '내 글', { name: mineOn() ? '넣음' : '견본', dots: [] })}</span>${MIX_ENABLED ? `<button type="button" class="chip mart-cast-mix" data-mix aria-pressed="${toneState.mix}" title="캐릭터를 2~3명 골라 포인트 색을 그라데이션으로 섞어요">혼합</button>` : ''}${PAPER_ENABLED ? `<button type="button" class="mart-cast-toggle" data-paper aria-expanded="${paperOpen}" aria-controls="mart-paper-panel"><span>바탕:</span><i class="mart-ink-dot" style="${sw(toneState.paper)}" aria-hidden="true"></i><b>${esc(pc.label)} · ${esc(tx.label)}</b><span class="mart-cast-caret" aria-hidden="true">${paperOpen ? '▴' : '▾'}</span></button>` : ''}<span class="mart-seg mart-cast-mode" role="group" aria-label="밤낮"><button type="button" class="chip" data-mode="dark" aria-pressed="${toneState.mode === 'dark'}">밤</button><button type="button" class="chip" data-mode="light" aria-pressed="${toneState.mode === 'light'}">낮</button></span></div>
+            ${who === 'text' ? textPanel() : `<div class="mart-cast-panel" id="mart-cast-panel" data-who="${w}"${panel ? '' : ' hidden'}><p class="mart-cast-who">${other ? '<b>깡캐</b>(둘째 화자) 색을 골라요 · 안 고르면 틀마다 정해 둔 색 그대로예요' : '<b>깡통</b>(첫째 화자) 색을 골라요 · 소품 색도 이 색을 따라가요'}</p><div class="mart-cast-groups">${list.map(head).join('')}</div>${opened.map(body).join('')}</div>${paperPanel}`}`;
     };
     box.addEventListener('click', (e) => {
         const x = e.target.closest('[data-forget]'); if (x) { e.preventDefault(); forgetCast(x.dataset.forget); draw(); return; }
@@ -84,7 +94,15 @@ export function mountCast(box, { say = () => {} } = {}) {
         if (MIX_ENABLED && e.target.closest('[data-mix]')) { const on = !toneState.mix; setTone({ mix: on, picks: on ? (toneState.k ? [{ name: toneState.name, color: toneState.k }] : []) : toneState.picks }); if (on) { who = 'main'; say('캐릭터를 2~3명 골라요 · 포인트 색이 그라데이션으로 섞여요', 3000); } draw(); return; }
         if (e.target.closest('[data-paper]')) { paperOpen = !paperOpen; draw(); box.querySelector('[data-paper]')?.focus(); return; }
         const t = e.target.closest('[data-toggle]');
-        if (t) { const id = t.dataset.toggle === 'other' ? 'other' : 'main'; who = who === id ? null : id; draw(); box.querySelector(`[data-toggle="${id}"]`)?.focus(); return; }
+        if (t) { const id = ['other', 'text'].includes(t.dataset.toggle) ? t.dataset.toggle : 'main'; who = who === id ? null : id; draw(); box.querySelector(`[data-toggle="${id}"]`)?.focus(); return; }
+        const mb = e.target.closest('[data-mine]');
+        if (mb) {
+            const ta = box.querySelector('.mart-mine-text'), act = mb.dataset.mine;
+            if (act === 'apply') { if (!ta.value.trim()) { say('글을 붙여 넣어 주세요', 2400); ta.focus(); return; } const info = setMine({ text: ta.value, on: true }); say(info?.lines ? `내 글로 바꿨어요 · 대사 ${info.dialogue}줄` : '글에서 넣을 줄을 못 찾았어요', 2800); }
+            else if (act === 'sample') { setMine({ on: false }); say('견본 글로 돌렸어요 · 넣은 글은 남아 있어요', 2400); }
+            else if (act === 'clear') { setMine({ text: '', on: false }); say('넣은 글을 지웠어요', 2400); }
+            draw(); box.querySelector(`[data-mine="${act}"]`)?.focus(); return;
+        }
         const g = e.target.closest('[data-group]');
         if (g && who) { const id = g.dataset.group, set = open[who]; if (set.has(id)) set.delete(id); else set.add(id); draw(); box.querySelector(`[data-group="${id}"]`)?.focus(); }
     });
@@ -126,6 +144,12 @@ export function mountCast(box, { say = () => {} } = {}) {
         say(`「${saved.name}」을 기억하고 ${other ? '깡캐' : '깡통'}로 골랐어요 · 다음에도 「내 캐릭터」에 있어요`, 3000);
     });
     box.addEventListener('paste', (e) => {
+        if (e.target.closest('.mart-mine-text')) {   // 내 글: 글은 그대로 칸에 들어가고(기본 붙여 넣기) · 대사색이 든 서식이면 깡통 · 깡캐 색도 · 바로 내 글로
+            const dt = e.clipboardData || globalThis.clipboardData, html = dt?.getData('text/html') || '', plain = dt?.getData('text/plain') || '';
+            if (html) useColors(html, plain, () => {});
+            setTimeout(() => { const ta = box.querySelector('.mart-mine-text'); if (ta?.value.trim()) { const info = setMine({ text: ta.value, on: true }); draw(); say(info?.lines ? `내 글로 바꿨어요 · 대사 ${info.dialogue}줄` : '글에서 넣을 줄을 못 찾았어요', 2800); box.querySelector('.mart-mine-text')?.focus(); } }, 0);
+            return;
+        }
         if (!e.target.closest('.mart-cast-paste')) return;
         const dt = e.clipboardData || globalThis.clipboardData;
         const html = dt?.getData('text/html') || '', text = dt?.getData('text/plain') || '';

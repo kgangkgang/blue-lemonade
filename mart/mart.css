@@ -580,3 +580,8 @@ html.mart-cart-on{overflow:hidden}
 .mart-tune-mine.mart-hscroll>li{flex:none;max-width:260px;border:1px solid var(--line);border-radius:var(--r-ctl);background:var(--surface)}
 .mart-tune-mine.mart-hscroll .mart-tune-load{flex:0 1 auto}
 .mart-tune-mine [data-preset-rename]{font-family:"Segoe UI Symbol","Apple Symbols",sans-serif}
+/* 11-11 「내 글」 칸(cast.js) — 붙여 넣는 글 칸 · 단추 줄(가로 밀기) · 지금 상태 한 줄 */
+.mart-mine-text{display:block;box-sizing:border-box;width:100%;height:auto;min-height:96px;margin:0 0 8px;padding:8px 12px;resize:vertical;font:inherit;font-size:var(--ts-ctl);line-height:1.5}
+.mart-mine-btns{margin-bottom:4px}
+.mart-mine-info{margin:4px 0 0;color:var(--muted);font-size:var(--ts-meta);line-height:1.5;text-align:left}
+@media (max-width:639px){.mart-mine-text{font-size:16px}}

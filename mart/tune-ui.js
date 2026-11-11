@@ -3,10 +3,11 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone } from './tone-state.js?v=20261111i';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111i';
-import { TUNE_ROLES, EDIT_CLASSES, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111i';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111i';
+import { toneState, setTone } from './tone-state.js?v=20261111k';
+import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111k';
+import { TUNE_ROLES, EDIT_CLASSES, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111k';
+import { mineOn, applyMine } from './mine-text.js?v=20261111k';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111k';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -198,8 +199,8 @@ async function inflate(text) {
 const capture = (item) => { const t = tuneOf(item.id) || {}; return { tone: { on: toneState.on, k: toneState.k, name: toneState.name, k2: toneState.k2, name2: toneState.name2, none: toneState.none }, colors: { inks: t.inks, prop: t.prop, own: t.own }, look: lookNow() }; };
 /** 프리셋을 지금 틀에 입혀요 — 고쳐 쓴 글은 그대로 · 그 틀이 못 받는 값(없는 소품 색 등)은 아무 일도 안 해요 */
 function applyPreset(item, p) {
-    const texts = tuneOf(item.id)?.texts;
-    setTune(item.id, { ...p.colors, ...(texts ? { texts } : {}) });
+    const { texts, mineTexts } = tuneOf(item.id) || {};
+    setTune(item.id, { ...p.colors, ...(texts ? { texts } : {}), ...(mineTexts ? { mineTexts } : {}) });
     setLook(p.look);
     setTone(p.tone.on ? { on: true, k: p.tone.k, name: p.tone.name, k2: p.tone.k2, name2: p.tone.name2 } : { on: false, k2: p.tone.k2, name2: p.tone.name2 });
     markPreset(p.id);
@@ -240,8 +241,8 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         }
         const ed = t.closest?.('.mart-sheet-preview [data-bl-ed]');
         if (ed && editing) {   // 글 고치기: 원래 글과 같아지면 그 자리 값은 지워요
-            const cur = clone(tuneOf(item.id)), texts = cur.texts ??= {}, i = ed.dataset.blEd;
-            const base = current().editBase ??= editables(item.preview).map(x => x.text);
+            const key = mineOn() ? 'mineTexts' : 'texts', cur = clone(tuneOf(item.id)), texts = cur[key] ??= {}, i = ed.dataset.blEd;
+            const base = editables(applyMine(item.preview)).map(x => x.text);   // 내 글이 켜져 있으면 내 글이 본
             const now = ed.textContent.replace(/[\r\n]+/g, ' ');
             if (esc(now).replace(/&quot;/g, '"').replace(/&#39;/g, "'") === base[i]) delete texts[i]; else texts[i] = now;
             setTune(item.id, cur, { textOnly: true });
@@ -291,7 +292,7 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if ((b = q('[data-preset-load]'))) { const p = presetList().find(x => x.id === b.dataset.presetLoad); if (!p) return; applyPreset(item, p); syncMine(sheet, item); say(`프리셋 「${p.name}」을 입혔어요`, 2400); return; }
         if ((b = q('[data-preset-rename]'))) { const p = presetList().find(x => x.id === b.dataset.presetRename), f = sheet.querySelector('[data-form="preset"]'); if (!p || !f) return; f.dataset.rename = p.id; f.name.value = p.name; f.querySelector('button').textContent = '이름 바꾸기'; f.name.focus(); f.name.select(); return; }
         if ((b = q('[data-preset-forget]'))) { forgetPreset(b.dataset.presetForget); syncMine(sheet, item); return; }
-        if (q('[data-preset-reset]')) { const texts = tuneOf(item.id)?.texts; setTune(item.id, texts ? { texts } : null); setLook(null); setTone({ on: false, k2: null }); markPreset(''); syncMine(sheet, item); say('색과 글 모양을 기본으로 돌렸어요', 2400); return; }
+        if (q('[data-preset-reset]')) { const { texts, mineTexts } = tuneOf(item.id) || {}; setTune(item.id, texts || mineTexts ? { ...(texts ? { texts } : {}), ...(mineTexts ? { mineTexts } : {}) } : null); setLook(null); setTone({ on: false, k2: null }); markPreset(''); syncMine(sheet, item); say('색과 글 모양을 기본으로 돌렸어요', 2400); return; }
         if ((b = q('[data-preset-io]'))) { const io = sheet.querySelector('.mart-preset-io'); io.hidden = !io.hidden; b.setAttribute('aria-expanded', String(!io.hidden)); if (!io.hidden) io.querySelector('textarea').focus(); return; }
         if (q('[data-preset-export]')) {
             const last = presetList().find(x => x.id === presetLast());

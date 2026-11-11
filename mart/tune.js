@@ -5,7 +5,7 @@
 //   - 깡통 · 깡캐 색은 목록 위 두 칸(tone-state.js)과 같은 값이라 여기에 안 들어 있어요.
 export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(탭을 닫으면 사라져요 — sessionStorage)
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
-import { cleanLook } from './look.js?v=20261111i';
+import { cleanLook } from './look.js?v=20261111k';
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** 역할별 글자색 — 이름은 inks.js(테마 글자색 칩)와 같아요. 새 틀에 그 글자가 있는 역할만 칸이 떠요(속마음 · 강조 · 형광펜은 그 클래스를 쓰는 틀이 생기면 한 줄 더해요) */
@@ -41,6 +41,9 @@ export function cleanTune(t) {
     const texts = {};
     for (const [i, v] of Object.entries(t.texts || {})) if (/^\d+$/.test(i) && typeof v === 'string') texts[i] = oneLine(v);
     if (Object.keys(texts).length) out.texts = texts;
+    const mineTexts = {};   // 11-11 「내 글 넣기」로 넣은 글에서 고쳐 쓴 것(견본 글 자리와 번호가 달라 따로 둬요)
+    for (const [i, v] of Object.entries(t.mineTexts || {})) if (/^\d+$/.test(i) && typeof v === 'string') mineTexts[i] = oneLine(v);
+    if (Object.keys(mineTexts).length) out.mineTexts = mineTexts;
     return Object.keys(out).length ? out : null;
 }
 
@@ -98,13 +101,13 @@ export function inkRules(html, inks) {
     return out;
 }
 /** 다 칠한 틀 HTML 에 조절 값을 얹어요(글자색 규칙 + 고쳐 쓴 글) — 값이 없으면 받은 그대로 */
-export function applyTune(html, tune) {
+export function applyTune(html, tune, { mine = false } = {}) {
     const t = cleanTune(tune);
     let text = String(html ?? '');
     if (!t) return text;
     const rules = inkRules(text, t.inks);
     if (rules.length) { const at = text.indexOf('\n</style>'); if (at >= 0) text = `${text.slice(0, at)}\n${rules.join('\n')}${text.slice(at)}`; }
-    return applyTexts(text, t.texts);
+    return applyTexts(text, mine ? t.mineTexts : t.texts);
 }
 
 // ── 「내 글꾸」: 틀 + 깡통 · 깡캐 · 낮밤 + 조절 값을 이름 붙여 기억 ──

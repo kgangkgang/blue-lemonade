@@ -6,9 +6,10 @@
 //   - 11-11 「상대」(둘째 화자 · 견본 글의 「친구」) 색 k2 · name2 — 안 고르면 틀이 정해 둔 색 그대로예요.
 //   목록 · 상세 창(mart.js) · 시식 창(taste.js) · 캐릭터 줄(cast.js)이 같이 읽고, 바뀌면 'bl-tone-change' 를 알려요.
 import { toneHtml, toneMixHtml, speakerColor, PAPER_COLORS, TEXTURES } from './tone-geulkku.js?v=20261110v';
-import { toneSimple, ORIGINAL } from './simple-frames.js?v=20261111i';
-import { applyLook, lookRev } from './look.js?v=20261111i';   // 11-11 글 모양(테마 「글자」 탭 축소판 — 글꼴 · 크기 · 자간 · 그림자 …) — 값이 없으면 그대로
-import { tuneOf, tuneRev, applyTune } from './tune.js?v=20261111i';   // 11-11 조절 칸(틀 하나의 글자색 · 소품 색 · 고쳐 쓴 글) — 값이 없으면 그대로   // 11-11 심플 새 틀(클래스 + 틀 안 <style>) — 색 블록만 갈아 끼우고 낮 · 밤은 뿌리 클래스
+import { toneSimple, ORIGINAL } from './simple-frames.js?v=20261111k';
+import { applyLook, lookRev } from './look.js?v=20261111k';   // 11-11 글 모양(테마 「글자」 탭 축소판 — 글꼴 · 크기 · 자간 · 그림자 …) — 값이 없으면 그대로
+import { tuneOf, tuneRev, applyTune } from './tune.js?v=20261111k';
+import { applyMine, mineOn, mineRev } from './mine-text.js?v=20261111k';   // 11-11 「내 글 넣기」 — 켜져 있으면 견본 글 대신 내 글   // 11-11 조절 칸(틀 하나의 글자색 · 소품 색 · 고쳐 쓴 글) — 값이 없으면 그대로   // 11-11 심플 새 틀(클래스 + 틀 안 <style>) — 색 블록만 갈아 끼우고 낮 · 밤은 뿌리 클래스
 export { PAPER_COLORS, TEXTURES };
 
 /** 11-10 밤 사용자 「음 그라데이션 과감하게 빼자... 구리다...」 — 혼합(2~3색 그라데이션)은 꺼 두고 스위치도 안 보여요. 코드는 남겨 둬요(true 로 바꾸면 돌아와요) */
@@ -92,10 +93,10 @@ export const toned = item => item?.kind === 'geulkku' && (item.simple ? true : t
 /** 다 그린 글꾸 HTML 을 고른 대사색으로(꺼져 있으면 그대로) */
 export const toneOut = (item, html) => {
     if (!html || !toned(item)) return html;
-    if (item.simple) { const t = tuneOf(item.id), out = toneSimple(html, toneState.on ? toneState.k : ORIGINAL, { mode: toneState.mode, other: toneState.k2, prop: t?.prop, own: t?.own }); const shaped = applyLook(out); return t ? applyTune(shaped, t) : shaped; }   // 종이 색 · 질감은 심플 새 틀에 안 걸어요(이식-설계 1-3 「처음엔 종이 고르기에서 빼요」)
+    if (item.simple) { const t = tuneOf(item.id), out = toneSimple(applyMine(html), toneState.on ? toneState.k : ORIGINAL, { mode: toneState.mode, other: toneState.k2, prop: t?.prop, own: t?.own }); const shaped = applyLook(out); return t ? applyTune(shaped, t, { mine: mineOn() }) : shaped; }   // 종이 색 · 질감은 심플 새 틀에 안 걸어요(이식-설계 1-3 「처음엔 종이 고르기에서 빼요」)
     const roles = item.colors || item.palette || null, opt = { mode: toneState.mode, paper: toneState.paper, texture: toneState.texture };
     const ks = toneState.mix ? toneState.picks.map(x => x.color) : [];
     return ks.length >= 2 ? toneMixHtml(html, roles, ks, opt) : toneHtml(html, roles, toneState.k, opt);
 };
 /** 다시 칠하기 값이 바뀌었는지 알아보는 열쇠(카드마다 그린 것을 다시 쓸지) */
-export const toneKey = () => JSON.stringify([toneState.on, toneState.k, toneState.mode, toneState.mix, toneState.picks.map(x => x.color), toneState.paper, toneState.texture, toneState.k2, tuneRev(), lookRev()]);
+export const toneKey = () => JSON.stringify([toneState.on, toneState.k, toneState.mode, toneState.mix, toneState.picks.map(x => x.color), toneState.paper, toneState.texture, toneState.k2, tuneRev(), lookRev(), mineRev()]);

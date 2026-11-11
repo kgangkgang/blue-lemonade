@@ -779,5 +779,72 @@ await test('숫자 조절칸 세로 2열(사용자 10-27 「파라미터는 웬�
     for (const w of ['글꾸 · 조절 본문', '글꾸 · 조절 그림자']) assert.ok(rig.split('\n').some(l => /^\s*\{ group:/.test(l) && l.includes(`'${w}'`)), w);
 });
 
+// ── 11-11 「내 글 넣기」(mine-text.js) ──
+const mineTail = fs.readFileSync(path.join(MART, 'tone-state.js'), 'utf8').match(/'\.\/mine-text\.js(\?v=\w+)'/)[1];
+const mt = await import(pathToFileURL(path.join(MART, 'mine-text.js')).href + mineTail);
+const MINE_LOGS = {
+    짧은: '하린: "오늘은 일찍 왔네?"\n도윤: "네가 먼저 와 있을 줄 알았지."',
+    셋: '하린: 문이 열리자 바람이 들어왔다. "누구야?"\n도윤: "나야. 문 좀 닫아 줄래?"\n서아: *오랜만이네.* "둘 다 여기 있었구나."\n하린: "서아까지?"\n도윤: **아무 날도 아니야.** 그냥 ~~우연~~ 약속이었지. "앉아."\n서아: "그럼 나는 창가 자리."',
+    그냥글: '비가 그친 골목은 젖어 있었다. 하린은 *괜히 왔나* 하고 생각했다.\n\n"……정말 올 줄은 몰랐어."\n\n도윤은 웃었다.\n\n"들어가자. **추워.**"',
+    긴: Array.from({ length: 60 }, (_, i) => `${i % 2 ? '도윤' : '하린'}: 긴 밤이었다. "${i}번째 이야기."`).join('\n'),
+};
+await test('내 글 넣기: 붙여 넣은 글을 28틀의 글 자리(지문 · 화자 이름 · 대사)에 나눠 넣어요 — 견본 글이 안 남고 · 소리 카드 · 쪽 넘김 · 제목 · 소품 그대로 · 화자 셋이면 셋째는 둘째 본에 제 이름 · 속마음 · 강조 · 취소는 em · strong · s · 긴 글은 80줄까지 · 꺼져 있으면 한 글자도 안 달라요 · 복사 글 정적 검사', () => {
+    const m3 = mt.mineModel(MINE_LOGS.셋), mg = mt.mineModel(MINE_LOGS.그냥글), ml = mt.mineModel(MINE_LOGS.긴);
+    assert.deepEqual(m3.names, ['하린', '도윤', '서아']);
+    assert.deepEqual(m3.lines.filter(l => l.type === 'dl').map(l => l.who), [0, 1, 2, 0, 1, 2]);
+    assert.ok(m3.lines.some(l => l.type === 'nr' && l.html.includes('<strong>아무 날도 아니야.</strong>') && l.html.includes('<s>우연</s>')) && m3.lines.some(l => l.type === 'nr' && l.html.includes('<em>오랜만이네.</em>')));
+    assert.deepEqual(mg.names, ['깡통', '깡캐']); assert.deepEqual(mg.lines.filter(l => l.type === 'dl').map(l => l.who), [0, 1], '이름 없는 글은 대사를 번갈아');
+    assert.equal(ml.lines.length, mt.MAX_LINES); assert.equal(ml.cut, true);
+    assert.equal(mt.mineModel('').lines.length, 0);
+    for (const row of six.items) {
+        const p = sfx[row.id].preview;
+        assert.equal(mt.fillMine(p, null), p); assert.equal(mt.fillMine(p, mt.mineModel('')), p);
+        for (const [name, log] of Object.entries(MINE_LOGS)) {
+            const model = mt.mineModel(log), out = mt.fillMine(p, model), body = out.slice(out.indexOf('</style>')), tag = `${row.id} ${name}`;
+            assert.notEqual(out, p, tag);
+            assert.equal(out.slice(0, out.indexOf('</style>')), p.slice(0, p.indexOf('</style>')), `${tag} <style> 그대로`);
+            assert.doesNotMatch(body, /옥상 문을 밀자|깡캐는 대답 대신|여기 있을 줄 알았어/, `${tag} 견본 글이 남음`);
+            assert.equal((body.match(/<p class="gk-dl"/g) || []).length, model.lines.filter(l => l.type === 'dl').length, `${tag} 대사 줄 수`);
+            for (const k of ['class="gk-sd"', 'gk-p2', 'class="gk-tt"', '<audio', '<details', '<summary']) assert.equal((out.match(new RegExp(k, 'g')) || []).length, (p.match(new RegExp(k, 'g')) || []).length, `${tag} ${k}`);
+            for (const t of ['div', 'p', 'span']) { const bal = h => (h.match(new RegExp(`<${t}\\b`, 'g')) || []).length - (h.match(new RegExp(`</${t}>`, 'g')) || []).length; assert.equal(bal(out), bal(p), `${tag} ${t} 짝`); }
+            if (name === '셋') { assert.ok(body.includes('>서아</p>') && body.includes('<em>오랜만이네.</em>'), tag); if (/gk-sn/.test(p)) assert.match(body, /<span class="gk-sn gk-s[A-Z]">(하린|도윤)<\/span>/, `${tag} 소리 이름표`); }
+            const ready = sf.simpleReady(shutPeek(sf.toneSimple(out, '#d19cff', { mode: 'light', other: '#7fe03c' })));
+            assert.ok(tg.readyReport(ready).ok, `${tag} 정적 검사`); assert.equal((ready.match(/<style>/g) || []).length, 1);
+            assert.equal(mt.fillMine(out, model).length >= out.length * 0.5, true);
+        }
+    }
+});
+
+await test('내 글 넣기 상태: 켬 · 글을 이 브라우저에 기억 · 다시 읽어요 · 「견본 글로」는 글을 남기고 끄기 · 「지우기」 · toneOut 길과 다시 칠하기 열쇠 · 내 글에서 고쳐 쓴 글은 따로(mineTexts)', async () => {
+    const store = {};
+    globalThis.localStorage = { getItem: k => store[k] ?? null, setItem(k, v) { store[k] = v; }, removeItem(k) { delete store[k]; } };
+    const href = pathToFileURL(path.join(MART, 'mine-text.js')).href + mineTail;
+    const ts = await import(`${pathToFileURL(path.join(MART, 'tone-state.js')).href}?mine=1`);
+    const it = { ...six.items[0], ...sfx[six.items[0].id], kind: 'geulkku' };
+    ts.setTone({ mode: 'light', on: false, k2: null });
+    const base = ts.toneOut(it, it.preview), key0 = ts.toneKey();
+    assert.equal(mt.mineOn(), false);
+    mt.setMine({ text: MINE_LOGS.짧은, on: true });
+    assert.equal(mt.mineOn(), true); assert.notEqual(ts.toneKey(), key0);
+    const mine = ts.toneOut(it, it.preview);
+    assert.ok(mine.includes('하린') && !mine.includes('옥상 문을 밀자'));
+    assert.deepEqual(JSON.parse(store['bl-mart-mine-text-v1']), { on: true, text: MINE_LOGS.짧은 });
+    const again = await import(`${href}&re=1`);
+    assert.equal(again.mineOn(), true); assert.equal(again.mineText(), MINE_LOGS.짧은);
+    // 내 글에서 고쳐 쓴 글은 mineTexts — 견본 글로 돌리면 안 걸려요
+    const tuneHref = pathToFileURL(path.join(MART, 'tune.js')).href + fs.readFileSync(path.join(MART, 'tone-state.js'), 'utf8').match(/'\.\/tune\.js(\?v=\w+)'/)[1];
+    const tu2 = await import(tuneHref);
+    tu2.setTune(it.id, { mineTexts: { 0: '내 글 제목' } });
+    assert.ok(ts.toneOut(it, it.preview).includes('내 글 제목'));
+    mt.setMine({ on: false });
+    assert.equal(mt.mineText(), MINE_LOGS.짧은, '견본 글로 — 글은 남아요');
+    assert.equal(ts.toneOut(it, it.preview), base, '견본 글로 돌리면 처음과 같아요(내 글에서 고친 글도 안 걸려요)');
+    tu2.setTune(it.id, null);
+    mt.setMine({ text: '', on: false });
+    assert.equal(mt.mineText(), ''); assert.equal(mt.mineOn(), false);
+    assert.equal(mt.setMine({ text: '   ', on: true }), null, '빈 글은 안 켜져요');
+    delete globalThis.localStorage;
+});
+
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
