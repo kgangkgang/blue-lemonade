@@ -1479,5 +1479,13 @@ await test('설정 파일 .bl-geulkku.json · 코드 BLG1.(⑦ · 설계 4-7 · 
     const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
     for (const w of ['data-setx="file"', 'data-setx="pick"', 'data-setx="code"', 'data-setx="paste"', 'data-setx="apply"', 'mart-setx-file', 'takeSet(item, got)', 'encodeSet(setNow(item))']) assert.ok(ui.includes(w), w);
 });
+await test('움직임 세기 사본(⑧ · 정본 22:20 판): 브라우저에서 돌아요(맨 위 줄에 process · require · module 없음 · 노드 전용 줄은 globalThis.process?.) · 상한 표 17줄 마트 열쇠 · 중은 410틀 그대로', async () => {
+    const src = fs.readFileSync(path.join(MART, 'lib/motion/motion.js'), 'utf8');
+    const code = src.split('\n').filter(l => !/^\s*(\/\/|\/\*\*|\*)/.test(l));
+    assert.ok(!code.some(l => /(?<![\w.?])process\.|\brequire\(|module\.exports/.test(l)), '노드 전용 이름');
+    const mo = await import(pathToFileURL(path.join(MART, 'lib/motion/motion.js')).href);
+    assert.equal(Object.keys(mo.CAP).length, 17); assert.ok(Object.keys(mo.CAP).every(k => /^k\d+$/.test(k) && allItems['simple-' + k]), '마트 열쇠');
+    for (const [id, it] of Object.entries(allItems)) assert.equal(mo.applyLevel(it.preview, { text: 'm', prop: 'm', key: id.slice(7) }), it.preview, id);
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
