@@ -570,10 +570,11 @@ await test('견본 화자 이름: 스물여덟 틀의 이름표 · 소리 이름
     assert.equal(sfx['simple-q09'].preview.split('<!-- ✎ 가게 이름 -->').length - 1, 1);
 });
 
-await test('캐릭터 목록: 묶음 넷(천지합동청 13 · D&H 6 · 무협시뮬 7 · 센티넬버스 11 = 37명) · 「기타」 묶음 없음', async () => {
+await test('캐릭터 목록: 묶음 넷(천지합동청 13 · D&H 8 · 무협시뮬 7 · 센티넬버스 11 = 39명) · 「기타」 묶음 없음', async () => {
     const m = await imp(path.join(MART, 'tone-state.js'));
-    assert.deepEqual(m.CAST_GROUPS.map(g => [g.id, g.label, g.cast.length]), [['halo', '천지합동청', 13], ['dh', 'D&H · 아드리안', 6], ['gangho', '무협시뮬', 7], ['sentinel', '센티넬버스', 11]]);
-    assert.equal(m.CAST.length, 37);
+    assert.deepEqual(m.CAST_GROUPS.map(g => [g.id, g.label, g.cast.length]), [['halo', '천지합동청', 13], ['dh', 'D&H · 아드리안', 8], ['gangho', '무협시뮬', 7], ['sentinel', '센티넬버스', 11]]);
+    assert.equal(m.CAST.length, 39);
+    assert.equal(new Set(m.CAST.map(x => x.color)).size, 39, '색이 서로 달라요');
     for (const f of ['tone-state.js', 'cast.js']) assert.ok(!fs.readFileSync(path.join(MART, f), 'utf8').includes('기타'), f);
 });
 
