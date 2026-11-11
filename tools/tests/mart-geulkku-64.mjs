@@ -173,7 +173,7 @@ await test('테마 CSS: 키프레임 14(+반응용 bl-hue) · 반응 10가지(:a
     assert.match(read('tools/build-css.cjs'), /'74-log-copy-motion\.css'\]\);/, '첫 화면 밖(SPLIT_LAZY)');
     assert.ok(read('src/style-lazy.gen.css').includes('@keyframes bl-breathe') && !read('style.css').includes('@keyframes bl-breathe'), 'lazy 시트에만');
     const sheet = read('src/log-copy-sheet.js');
-    assert.match(sheet, /<style>html\{scrollbar-width:none\}[^`]*\$\{motionCss\(\)\}<\/style><\/head>/, '미리보기 칸');
+    assert.match(sheet, /<style>html\{scrollbar-width:none\}[^`]*\$\{motionCss\(\)\}(?:\$\{toneNow \? sitePreviewCss\(toneMode\) : ''\})?<\/style><\/head>/, '미리보기 칸');   // 1.1.3 깡통 로그 틀 묶음은 그 뒤에 붙일 곳 흉내 규칙
     assert.match(sheet, /const lifted = liftForCopy\(shown, motionStyleFor\(shown\)\);[^\n]*\n\s*const html = lifted\.full;/, '테마 HTML 복사도 맨 앞 <style>(1.1.2 그림 규칙과 한 <style>)');
     assert.match(read('src/log-copy-sanitize.js'), /name !== 'data-bl-egg'/, '복사 소독이 반응 표시는 남겨요');
     assert.equal(motionStyleFor('<div style="color:red">x</div>'), '', '안 쓰면 안 붙여요');

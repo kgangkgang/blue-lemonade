@@ -86,7 +86,9 @@ function ruleFinder(rules) {
     const byKey = new Map(list.map(r => [r.from.toLowerCase(), r.to]));
     return (text) => {
         const out = [];
+        let taken = 0;   // 1.1.3 감사 G3: 앞 편집이 조사까지 늘린 자리(「철수는」의 「는」)에 다른 규칙이 또 걸리면 두 편집이 겹쳐 꼬리가 남았어요 — 겹치면 앞 것만
         for (const m of text.matchAll(pattern)) {
+            if (m.index < taken) continue;
             const to = byKey.get(m[0].toLowerCase()) ?? '';
             let end = m.index + m[0].length, replace = to;
             const tail = text.slice(end).match(HANGUL_TAIL)?.[0];
@@ -95,6 +97,7 @@ function ruleFinder(rules) {
                 if (fixed !== tail) { replace = to + fixed; end += tail.length; }
             }
             out.push({ start: m.index, end, replace });
+            taken = end;
         }
         return out;
     };

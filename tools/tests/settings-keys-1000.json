@@ -343,7 +343,7 @@
   "logCopy.topOff",
   "logCopy.bottomOff",
   "logCopy.lemonLink",
-  "logCopy.lemonAt",
+  "logCopy.lemonAt", "logCopy.basicInfo", "logCopy.basicHeight",
   "logCopy.blank",
   "longpressHelp",
   "markdown.accentColor",

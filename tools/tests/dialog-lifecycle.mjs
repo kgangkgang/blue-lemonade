@@ -46,6 +46,9 @@ await test('로그 복사: 모양 · 분류 · 색 칩을 누르면 줄을 다�
     const dialog = sheetDialog();
     assert.ok(dialog, '창이 떠요');
     const pick = sel => dialog.querySelector(sel);
+    // 1.1.3 새 설정은 깡통 로그 틀로 접힌 채 열려요 — 「더 보기」로 펼쳐 분류 · 색 칩 줄을 봐요(누른 단추의 초점은 그대로)
+    const more = pick('[data-lc="more"]'); more.focus(); more.click(); await settle();
+    assert.equal(more.getAttribute('aria-expanded'), 'true', '펼쳐져요'); assert.equal(document.activeElement, more, '초점은 「더 보기」 단추에 남아요');
     const chips = [...dialog.querySelectorAll('[data-lc-shapes] [data-shape]')];
     assert.ok(chips.length > 2, '모양 칩');
     const target = chips[2], id = target.dataset.shape;
@@ -55,9 +58,9 @@ await test('로그 복사: 모양 · 분류 · 색 칩을 누르면 줄을 다�
     const cat = [...dialog.querySelectorAll('[data-lc-cats] [data-cat]')].at(-1), catId = cat.dataset.cat;
     cat.focus(); cat.click(); await settle();
     assert.equal(document.activeElement.dataset?.cat, catId, '분류 칩');
-    // 색 칩은 에이드 색을 쓰는 모양에서만 보여요 — 기본 「card」 로 돌아와서
+    // 색 칩은 에이드 색을 쓰는 모양에서만 보여요 — 기본 「status」(상태창) 로 돌아와서(1.1.3 카드는 기본 글꾸 새 틀이라 밝기만)
     pick('[data-lc-cats] [data-cat="basic"]').click(); await settle();
-    pick('[data-lc-shapes] [data-shape="card"]')?.click(); await settle();
+    pick('[data-lc-shapes] [data-shape="status"]')?.click(); await settle();
     const pal = [...dialog.querySelectorAll('[data-lc-pals] [data-palette]')].at(-1);
     assert.ok(pal, '색 칩 줄');
     const pid = pal.dataset.palette; pal.focus(); pal.click(); await settle(); assert.equal(document.activeElement.dataset?.palette, pid, '색 칩');

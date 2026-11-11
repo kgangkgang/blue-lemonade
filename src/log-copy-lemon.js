@@ -74,29 +74,82 @@ export function pickCorner(width, height, boxes, size = LEMON_SIZE, inset = LEMO
     return best;
 }
 
+// 1.1.3 감사 S2: 레몬은 모서리에서 최대 (안쪽 여백 8 + 비켜 앉기 120 + 레몬 22 + 틈 2) 안에만 앉아요 — 그 밖의 상자는 재지 않아도 결과가 같아요
+export const CORNER_REACH = 160;
+/** 상자가 네 모서리 근처(CORNER_REACH 안 네모)에 걸치나 */
+export function nearCorner(box, width, height, reach = CORNER_REACH) {
+    const xs = box.left < reach || box.right > width - reach, ys = box.top < reach || box.bottom > height - reach;
+    return xs && ys;
+}
+/** 1.1.3 감사 S3: 잘라 보이는 칸(overflow 가 visible 이 아닌 조상)과 겹치는 부분만 — 다 가려지면 null · clip 이 없으면 그대로 */
+export function clipBox(box, clip) {
+    if (!clip) return box;
+    const out = { left: Math.max(box.left, clip.left), top: Math.max(box.top, clip.top), right: Math.min(box.right, clip.right), bottom: Math.min(box.bottom, clip.bottom) };
+    return out.right > out.left && out.bottom > out.top ? out : null;
+}
+/**
+ * 1.1.3 감사 S2: 자리 고르기 — 층(바깥 상자 → 안쪽 카드)을 차례로 재고 빈 모서리를 찾은 층에서 멈춰요(전엔 층마다 먼저 다 쟀어요).
+ * levels = [{ width, height, inset }], measure(i) → 그 층의 찬 곳(한 층에 한 번만 불러요). 결과는 예전과 같아요:
+ * 빈 모서리가 있는 첫 층 → 없으면 비켜 앉을 곳이 있는 첫 층 → 그래도 없으면 바깥 층에서 덜 겹치는 모서리
+ */
+export function chooseLemonSpot(levels, measure, size = LEMON_SIZE) {
+    const seen = [];
+    const occ = i => (seen[i] ??= measure(i) ?? []);
+    for (let i = 0; i < levels.length; i++) {
+        const l = levels[i], corner = freeCorner(l.width, l.height, occ(i), size, l.inset);
+        if (corner) return { index: i, corner, shift: 0, drop: 0 };
+    }
+    for (let i = 0; i < levels.length; i++) {
+        const l = levels[i], spot = freeSpot(l.width, l.height, occ(i), size, l.inset);
+        if (spot) return { index: i, corner: spot.corner, shift: spot.shift, drop: spot.drop };
+    }
+    const l = levels[0];
+    return { index: 0, corner: pickCorner(l.width, l.height, occ(0), size, l.inset), shift: 0, drop: 0 };
+}
+
 const opaque = v => v && v !== 'transparent' && !/rgba\([^)]*,\s*0\)$/.test(v);
 /** 미리보기 문서에서 바깥 상자 안의 「차 있는 곳」(글자 줄 · 그림 · 작은 꾸밈 칸 · 안쪽 큰 칸의 테두리 · 바탕 경계) — 바깥 상자 기준 좌표 */
-export function occupied(root) {
+export function occupied(root, { all = false } = {}) {
     const doc = root.ownerDocument, win = doc.defaultView, base = root.getBoundingClientRect();
     const area = Math.max(1, base.width * base.height), rootBg = win.getComputedStyle(root).backgroundColor;
     const rel = r => ({ left: r.left - base.left, top: r.top - base.top, right: r.right - base.left, bottom: r.bottom - base.top });
+    const near = box => all || nearCorner(box, base.width, base.height);   // 1.1.3 S2: 모서리에서 먼 것은 재지 않아요(긴 로그에서 글자 · 요소 수백 개)
+    // 1.1.3 S3: 그 요소 안쪽을 잘라 보이는 칸(overflow 가 visible 이 아닌 조상 — 스크롤 칸 등)의 보이는 네모, 바깥 상자 기준 · 없으면 null
+    const clips = new Map();
+    const contentClip = (el) => {
+        if (!el || el === root || !root.contains(el)) return null;
+        if (clips.has(el)) return clips.get(el);
+        const outer = contentClip(el.parentElement), cs = win.getComputedStyle(el);
+        const own = cs.overflowX !== 'visible' || cs.overflowY !== 'visible' ? rel(el.getBoundingClientRect()) : null;
+        const clip = own ? (outer ? clipBox(own, outer) ?? { left: 0, top: 0, right: 0, bottom: 0 } : own) : outer;
+        clips.set(el, clip);
+        return clip;
+    };
     const out = [];
     const walker = doc.createTreeWalker(root, 4);
     for (let node = walker.nextNode(); node; node = walker.nextNode()) {
         if (!/\S/.test(node.data) || node.parentElement?.closest('style,script')) continue;
         const range = doc.createRange(); range.selectNodeContents(node);
-        for (const r of range.getClientRects()) if (r.width && r.height) out.push(rel(r));
+        for (const r of range.getClientRects()) {
+            if (!r.width || !r.height) continue;
+            const box = rel(r);
+            if (!near(box)) continue;
+            const shown = clipBox(box, contentClip(node.parentElement));   // 스크롤 칸 아래로 넘친(가려진) 줄은 「찬 곳」이 아니에요
+            if (shown) out.push(shown);
+        }
     }
     for (const el of root.querySelectorAll('*')) {
         if (/^(STYLE|SCRIPT|BR)$/.test(el.tagName) || el.closest(`a[href="${LEMON_HOME}"]`)) continue;
         const r = el.getBoundingClientRect();
         if (!r.width || !r.height) continue;
+        const shown = clipBox(rel(r), contentClip(el.parentElement));
+        if (!shown || !near(shown)) continue;
         const cs = win.getComputedStyle(el);
         if (cs.visibility === 'hidden' || cs.display === 'none') continue;
         const media = /^(IMG|SVG|VIDEO|CANVAS|IFRAME|INPUT|BUTTON|AUDIO|SUMMARY)$/i.test(el.tagName);
         const sides = ['Top', 'Right', 'Bottom', 'Left'].filter(s => parseFloat(cs[`border${s}Width`]) > 0 && cs[`border${s}Style`] !== 'none');
         const filled = cs.backgroundImage !== 'none' || opaque(cs.backgroundColor);
-        const box = rel(r);
+        const box = shown;
         // 작은 꾸밈(알약 · 도장 · 띠 · 창 점 · 아이콘)은 통째로
         // 꽉 찬 가로 띠(머리 줄 · 꼬리 줄 — 폭의 90% 이상)는 바탕이라 「경계」만
         const band = r.width >= base.width * 0.9;
@@ -153,12 +206,11 @@ export function placeLemon(doc, at = 'auto') {
     let host = root, corner = null, shift = 0, drop = 0;
     if (at === 'auto') {
         // 바깥 상자부터 안쪽 카드까지: 빈 모서리가 있는 첫 상자(좌상 먼저) → 없으면 모서리에서 가로로 조금 민 빈 곳 → 그래도 없으면 바깥 상자에서 덜 겹치는 모서리
-        const levels = lemonLevels(root).map(level => ({ level, box: level.getBoundingClientRect(), occ: occupied(level), inset: insetOf(level) }));
-        const exact = levels.find(l => (l.corner = freeCorner(l.box.width, l.box.height, l.occ, LEMON_SIZE, l.inset)));
-        const near = exact ? null : levels.find(l => (l.spot = freeSpot(l.box.width, l.box.height, l.occ, LEMON_SIZE, l.inset)));
-        if (exact) { host = exact.level; corner = exact.corner; }
-        else if (near) { host = near.level; corner = near.spot.corner; shift = near.spot.shift; drop = near.spot.drop; }
-        else corner = pickCorner(levels[0].box.width, levels[0].box.height, levels[0].occ, LEMON_SIZE, levels[0].inset);
+        // 1.1.3 감사 S2: 층을 차례로 재고(층마다 한 번 · 모서리 근처만) 빈 모서리를 찾은 층에서 멈춰요 — 고르는 차례 · 결과는 그대로
+        const list = lemonLevels(root);
+        const levels = list.map(level => { const b = level.getBoundingClientRect(); return { width: b.width, height: b.height, inset: insetOf(level) }; });
+        const pick = chooseLemonSpot(levels, i => occupied(list[i]));
+        host = list[pick.index]; corner = pick.corner; shift = pick.shift; drop = pick.drop;
     } else corner = normCorner(at) === 'auto' ? 'tl' : at;
     const inset = insetOf(host);
     if (win.getComputedStyle(host).position === 'static') host.style.position = 'relative';

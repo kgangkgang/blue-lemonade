@@ -88,7 +88,7 @@ await test('글꼴: 화면 글꼴 이름 그대로 + 일반 대체 글꼴', () =
 await test(`글꾸 틀 ${PRESETS.length}가지: 인라인만 · 폭 100% 안 · 안쪽만 스크롤 · 팔레트 값만`, () => {
     assert.ok(PRESETS.length >= 16 && PRESETS.length <= 80, `프리셋 ${PRESETS.length}개`);
     assert.equal(new Set(PRESETS.map(p => p.id)).size, PRESETS.length);
-    for (const preset of PRESETS) {
+    for (const preset of PRESETS.filter(p => !p.basic)) {   // 1.1.3 기본 글꾸 새 틀 18 은 클래스 + <style> 하나(시안 생성기 그림) — log-copy-basic.mjs 가 봐요
         for (const [name, colors] of [['밤', night], ['낮', salt]]) {
             const html = renderLog(model, { shape: preset.id, colors: preset.id === 'plain' ? null : colors, ui, fields });
             const bare = inlineOnly(html, `${preset.label}/${name}`);
@@ -99,6 +99,7 @@ await test(`글꾸 틀 ${PRESETS.length}가지: 인라인만 · 폭 100% 안 · 
             if (preset.id === 'plain' || preset.own) continue;   // 할로윈(전용 색)은 아래 할로윈 시험이
             assert.ok(/overflow-y:auto/.test(bare), `${preset.label}: 안쪽 스크롤`);
             assert.ok(/scrollbar-width:none/.test(bare), `${preset.label}: 스크롤바 숨김`);
+            if (preset.tone) continue;   // 1.1.3 깡통 로그 틀 묶음은 팔레트가 아니라 대사색 규칙으로 칠해요(색 수 · 대비는 char-tone.mjs · log-copy-tone.mjs · log-copy-connect-113.mjs 가 봐요)
             // 틀에 쓴 색은 그 팔레트 값 · 화면 로그의 색뿐 (새 색 없음)
             const allowed = new Set([...Object.values(colors), '#0B1216', '#FFFFFF', 'rgb(219, 226, 235)', 'rgb(243, 247, 252)', 'rgb(164, 199, 237)', 'rgb(255, 232, 115)', 'rgb(147, 201, 255)', 'rgb(171, 186, 206)', 'rgb(20, 31, 46)', 'rgb(40, 56, 77)', 'rgba(96, 169, 255, 0.35)'].map(c => c.toLowerCase()));
             for (const m of bare.matchAll(/(?:color|background-color|border(?:-[a-z]+)?):\s*(?:\d+px solid )?((?:rgba?\([^)]*\)|#[0-9a-f]{3,8}))/gi)) {
@@ -110,25 +111,26 @@ await test(`글꾸 틀 ${PRESETS.length}가지: 인라인만 · 폭 100% 안 · 
 });
 
 await test('틀 칸: 제목 · 알약(모델 · 프롬프트 · LOG) · 꼬리 · 접는 추가 정보 · 비우면 안 넣음', () => {
-    const html = renderLog(model, { shape: 'card', colors: night, ui, fields });
-    assert.match(html, /<span data-f="model" style="(?:color:[^;]+;)?display:inline-block;box-sizing:border-box;max-width:100%;height:20px;margin:0 8px 8px 0;padding:0 8px;vertical-align:middle;border:1px solid rgba\(184, 201, 224, 0\.08\);border-radius:10px;color:rgb\(171, 186, 206\);font-family:'Pretendard', sans-serif;font-size:12px;font-weight:400;letter-spacing:-0\.025em;line-height:18px/, '판 알약 규격');
-    assert.match(html, /<details style="(?:color:[^;]+;)?display:block;[^"]*"><summary style="(?:color:[^;]+;)?display:block;list-style:none;/);
-    assert.ok(html.includes('#세라피나 #숲'));
-    const empty = renderLog(model, { shape: 'card', colors: night, ui, fields: { title: 'Seraphina' } });
-    assert.ok(!/<details|data-f="model"|data-f="tail"/.test(empty), '빈 칸은 안 넣어요');
+    // 1.1.3 기본 글꾸 새 틀(카드): 정보 칸 칩 = LOG · 모델 · 프롬프트 · 꼬리 문구 · 접는 추가 정보는 사용자 결정으로 뺐어요(11-11) — 옛 판 알약은 상태창
+    const html = renderLog(model, { shape: 'card', colors: night, ui, fields, info: 'chip' });
+    assert.ok(html.includes('<span class="c gv-model">') && html.includes('<span class="c sA gv-log">LOG</span>'), '정보 칩');
+    assert.ok(!html.includes('#세라피나 #숲') && !/<details class="nf"/.test(html), '꼬리 · 추가 정보 없음');
+    const empty = renderLog(model, { shape: 'card', colors: night, ui, fields: { title: 'Seraphina' }, info: 'chip' });
+    assert.ok(!/gv-model|gv-prompt/.test(empty.split('</style>')[1]), '빈 칸은 안 넣어요');
+    const old = renderLog(model, { shape: 'status', colors: night, ui, fields });
+    assert.match(old, /<span data-f="mark" style="(?:color:[^;]+;)?display:inline-block;box-sizing:border-box;max-width:100%;height:20px;margin:0 8px 8px 0;padding:0 8px;vertical-align:middle;border:1px solid rgb\(147, 201, 255\)/, '판 알약 규격(상태창)');
+    assert.match(old, /<details style="(?:color:[^;]+;)?display:block;[^"]*"><summary style="(?:color:[^;]+;)?display:block;list-style:none;/);
+    assert.ok(old.includes('#세라피나 #숲'));
+    assert.ok(!/<details|data-f="model"|data-f="tail"/.test(renderLog(model, { shape: 'status', colors: night, ui, fields: { title: 'Seraphina' } })), '빈 칸은 안 넣어요(상태창)');
     for (const preset of PRESETS) assert.ok(renderLog(model, { shape: preset.id, colors: night, ui, fields: {} }).length > 100, `${preset.label}: 칸이 다 비어도 그려요`);
 });
 
 await test('메신저: 내 말 오른쪽 포인트 면 · 상대 왼쪽 면 · 대비 낮은 글자색은 팔레트 글자색 · 시간 줄', () => {
-    const html = renderLog(model, { shape: 'messenger', colors: salt, ui, fields });
-    const mine = html.slice(html.lastIndexOf('text-align:right'));
-    assert.match(mine, /background-color:rgb\(36, 119, 211\)/);
-    assert.match(mine, /color:#FFFFFF/);
-    const theirs = html.slice(html.indexOf('text-align:left;'));
-    assert.match(theirs, /border-radius:16px 16px 16px 4px;background-color:rgb\(229, 241, 255\)/);
-    assert.ok(!/color:rgb\(219, 226, 235\)/.test(theirs.split('text-align:right')[0]), '밤 화면 글자색(밝음)은 낮 말풍선에서 팔레트 글자색으로');
-    assert.match(html, /max-width:400px/);
-    assert.ok(html.includes(timeLabel(model.messages[0].time)), '가운데 시간 줄');
+    // 1.1.3 기본 글꾸 새 틀(메신저 435): 주인공은 왼쪽 · 상대는 오른쪽(.me) 말풍선 · 화자 색 틴트 · 폭 400 · 말풍선을 누르면 확인 표시
+    const html = renderLog(model, { shape: 'messenger', colors: salt, ui, fields, mode: 'light' });
+    assert.ok(html.includes('<div class="dl me"><details class="rx"><summary class="bb bB"') && html.includes('<div class="dl"><details class="rx"><summary class="bb bA"'), '양쪽 말풍선');
+    assert.match(html, /\.kb435\{[^}]*max-width:400px/);
+    assert.match(html, /\.kb435 \.bb\{[^}]*border-radius:16px 16px 16px 4px/);
     assert.equal(timeLabel(new Date(2026, 9, 31, 15, 7).getTime()), '10월 31일 오후 3:07');
     assert.equal(timeLabel(new Date(2026, 9, 31, 0, 5).getTime()), '10월 31일 오전 12:05');
 });
@@ -159,7 +161,7 @@ await test('연결: 시작 그래프 밖 · 도구 줄 · 설정 · 검색 사�
     assert.match(read('src/log-copy.js'), /import\('\.\/log-copy-sheet\.js'\)/, '시트는 처음 쓸 때');
     assert.match(read('src/log-copy-sheet.js'), /sandbox="allow-same-origin"/, '미리보기는 스크립트 없는 sandbox');
     assert.match(read('src/log-copy-sheet.js'), /writeClipboard\(html, withCommentSlots\(prettyLogHtml\(insertHead\(copyBody\(result\(\{ marks: true \}\)\)\.html, lifted\.head\)/, '복사 = 서식 + 그 HTML 코드 글자(1.0.1 사람이 고치기 쉬운 꼴 — log-copy-pretty.mjs · 1.1.2 그림 주소는 맨 앞 <style> 로 — log-copy-lift.mjs)');
-    assert.match(read('src/settings.js'), /logCopy: \{ on: true, shape: 'card'/);
+    assert.match(read('src/settings.js'), /logCopy: \{ on: true, shape: 'kkangtong'/);   // 1.1.3 새 설정의 기본 틀(틀이 저장된 설정은 그대로 — log-copy-connect-113.mjs)
     assert.match(read('src/panel.js'), /toggle\('logCopy\.on'/);
     assert.match(read('src/settings-search.js'), /'로그 복사','로그 복사 서식 복사 그대로 복사/);
     assert.match(read('src/addons/bookmarks/selection-chip.js'), /accepts: target => target\.single === true/, '북마크는 한 메시지 선택만');
@@ -205,7 +207,7 @@ await test('이름 숨김: 이름 줄 · 본문 속 이름 · 원래 글자 0 ·
     assert.equal(maskNode('세라', { mask: 'black', style: { customColor: true, color: '#86b5d5' } }).style['background-color'], '#86b5d5', '직접 고른 가림 색');
     const html = renderLog(transformLog(model, { hide: { names: ['Seraphina', '숲'], mask: 'black' } }).model, { shape: 'card', colors: night, ui, fields: { title: '○○' } });
     assert.ok(!html.includes('Seraphina'));
-    assert.match(html, /background-color:#111318;color:#111318;border-radius:4px">　/);
+    assert.match(html, /background-color:#111318;color:#111318;-webkit-text-fill-color:#111318;border-radius:4px">　/);   // 1.1.3 기본 글꾸 새 틀(카드)도 가림 칸 그대로
     const md = logMarkdown(transformLog(model, { hide: { names: ['Seraphina'], mask: 'auto' }, rules: [{ from: '안전', to: '편안' }] }).model);
     assert.ok(!md.startsWith('**○○**') && !/\*\*(Seraphina|○○)\*\*/.test(md) && md.includes('**편안**') && !md.includes('Seraphina'), '숨긴 이름의 이름 줄은 아예 빠져요(11-03): ' + md);
 });
@@ -269,7 +271,7 @@ await test('분류: 칩 하나에 그 분류 모양만 · 할로윈은 1.0.1 에
     for (const p of PRESETS) assert.ok(CATEGORIES.some(c => c.id === p.category && c.id !== 'mine'), `${p.id} 분류`);
     assert.deepEqual(presetsIn('halloween'), [], '할로윈 13종은 테마 기본에서 빠졌어요(글꾸 마트 → 내 글꾸)');
     for (const c of CATEGORIES) assert.ok(!presetsIn(c.id, []).some(id => id.startsWith('halloween')), `${c.label} 에는 할로윈 없음`);
-    assert.equal(presetsIn('basic')[0], 'plain', '「기본」 첫 칩은 그대로');
+    assert.deepEqual(presetsIn('basic').slice(0, 4), ['kkangtong', 'kkangtong-mini', 'kkangtong-deep', 'plain'], '「기본」 맨 앞은 1.1.3 깡통 로그 틀 셋 · 그다음 첫 칩은 그대로');
     assert.deepEqual(presetsIn('mine', [{ id: 'c1' }, { id: 'c2' }]), ['c1', 'c2']);
     assert.equal(categoryOf('c1'), 'mine', '분류 없는 저장 글꾸는 내 글꾸');
     assert.equal(categoryOf('gallery-grid'), 'gallery');
@@ -348,15 +350,15 @@ await test('할로윈 31종(1.0.1 글꾸 마트 · 10월 31일 · 틈 템플릿�
 await test('갤러리 넷: 가로 넘김(overflow-x) · 폴라로이드 · 격자 · 격자 폴라로이드(부제목 · 기록 날짜) · 사진 없으면 안내', () => {
     const images = [{ src: 'https://example.com/a.png', alt: '숲' }, { src: 'https://example.com/b.jpg', alt: '' }, { src: 'https://example.com/c.webp', alt: '"><b>x</b>' }];
     for (const id of ['gallery-strip', 'gallery-strip-polaroid', 'gallery-grid', 'gallery-grid-polaroid']) {
+        // 1.1.3 기본 글꾸 새 틀(444 ~ 447): 사진 자리에 진짜 <img class="ph"> · 가로 띠는 overflow-x 칸(PC 는 휠 — 돌린 트랙) · 격자 · 즉석 사진 카드 · 사진이 없으면 사진 칸째 없음(시트의 사진 칸 안내가 대신)
         const html = renderLog(model, { shape: id, colors: salt, ui, fields: { ...fields, subtitle: '세라피나의 기록' }, images });
-        inlineOnly(html.replace(/<img [^>]*>/g, ''), id);
         assert.equal((html.match(/<img /g) || []).length, 3, `${id}: 사진 셋`);
-        assert.ok(!/<b>/.test(html), `${id}: 사진 설명의 따옴표 · 꺾쇠가 속성 · 태그를 깨지 않아요`);
-        if (id.startsWith('gallery-strip')) assert.match(html, /display:flex;gap:8px;overflow-x:auto/, '가로 스크롤 칸 (PC 는 Shift+휠)');
-        else assert.match(html, /display:grid;grid-template-columns:repeat\(auto-fill/);
-        if (id.includes('polaroid')) assert.match(html, /padding:8px 8px 4px/);
-        if (id === 'gallery-grid-polaroid') { assert.ok(html.includes('기록 날짜 · ')); assert.ok(html.includes('세라피나의 기록')); }
-        assert.ok(renderLog(model, { shape: id, colors: salt, ui, fields }).includes('사진 코드나 주소를 붙여 넣으면'), '사진 없으면 안내');
+        assert.ok(!/<b>x/.test(html) && html.includes('alt="&quot;&gt;&lt;b&gt;x&lt;/b&gt;"'), `${id}: 사진 설명의 따옴표 · 꺾쇠가 속성 · 태그를 깨지 않아요`);
+        if (id.startsWith('gallery-strip')) assert.match(html, /\.gt\{display:flex;gap:8px;[^}]*overflow-x:auto/, '가로 스크롤 칸');
+        else assert.match(html, /\.gg\{display:grid;grid-template-columns:repeat\(/);
+        if (id.includes('polaroid')) assert.match(html, /\.pk\{display:block;grid-area:1\/1\/2\/2;padding:8px 8px 0/);
+        if (id === 'gallery-grid-polaroid') assert.ok(html.includes('<p class="sb">세라피나의 기록</p>'));
+        assert.ok(!/<img |class="g[fg]"/.test(renderLog(model, { shape: id, colors: salt, ui, fields })), '사진 없으면 사진 칸 없음');
     }
 });
 
@@ -424,7 +426,7 @@ await test('붙인 곳 네 조건(어두운 바탕 + 흰 글자 · 밝은 바탕
     const faint = structuredClone(model);
     faint.messages[1].nodes[0].children.push({ t: 'el', block: false, tag: 'span', kind: 'del', style: { color: 'rgb(70, 80, 95)', 'text-decoration-line': 'line-through' }, children: [{ t: 'text', text: '옅은 글' }] });
     // 내장 심플 글꾸(틈 템플릿)는 마트 글꾸와 같은 자료 — 장식 글(트랙 시간 · 도장 글)은 시안의 옅은 색 그대로라 여기서 빼고, 역할 색 대비는 mart-geulkku-64 가 봐요
-    for (const preset of PRESETS.filter(p => !p.template)) for (const [pname, colors] of [['밤', night], ['낮', salt]]) {
+    for (const preset of PRESETS.filter(p => !p.template && !p.basic)) for (const [pname, colors] of [['밤', night], ['낮', salt]]) {   // 1.1.3 기본 글꾸 새 틀은 <style> 이 글자색을 맡아요(log-copy-basic.mjs)
         const html = renderLog(faint, { shape: preset.id, colors: preset.id === 'plain' ? null : colors, ui, fields, images: [{ src: 'https://example.com/a.png', alt: '세라피나' }] });
         for (const host of hosts) for (const strip of [false, true]) {
             const bad = audit(html, host, { strip });
@@ -433,7 +435,7 @@ await test('붙인 곳 네 조건(어두운 바탕 + 흰 글자 · 밝은 바탕
     }
     assert.deepEqual(failures, [], `안 보이는(대비 낮은) 글자: ${failures.length}건`);
     // 글자 요소마다 인라인 color — 상속 · 꾸밈 블록에 기대는 글자 0
-    for (const preset of PRESETS) {
+    for (const preset of PRESETS.filter(p => !p.basic)) {
         const html = renderLog(model, { shape: preset.id, colors: night, ui, fields });
         for (const m of html.matchAll(/<(div|span|td|summary|details|tr|table)( [^>]*)?>/g)) assert.match(m[0], /style="(?:[^"]*;)?color:/, `${preset.label}: 글자색 없는 요소 ${m[0].slice(0, 60)}`);
         // 내장 심플(틈 템플릿)의 글 없는 장식 조각(aria-hidden · 빈 요소 — 소인 · 도장 고리)은 옅어도 돼요(글자가 아니에요)
@@ -444,11 +446,12 @@ await test('붙인 곳 네 조건(어두운 바탕 + 흰 글자 · 밝은 바탕
 
 await test('1.0.9 「레몬」 틀 제목 앞은 🍋 이모지가 아니라 테마 레몬 그림(fa-lemon 윤곽 svg) — 소독을 지나도 남아요', async () => {
     const { safeCss } = await load('src/log-copy-sanitize.js');
+    // 1.1.3 기본 글꾸 새 틀(레몬 434): 레몬 그림은 <style> 의 .lmi 규칙(테마 레몬 경로 그대로)
     const html = renderLog(model, { shape: 'lemon', colors: night, ui, fields });
     assert.ok(!html.includes('🍋'), '이모지 없음');
-    const style = html.match(/<span style="([^"]*FFE23C[^"]*)"><\/span>/i)?.[1];
+    const style = html.match(/\.kb434 \.lmi\{([^}]*FFE23C[^}]*)\}/i)?.[1];
     assert.ok(style, '레몬 그림 칸');
-    assert.ok(html.indexOf(style) < html.indexOf('Seraphina'), '제목 앞에 와요');
+    assert.ok(html.indexOf('<span class="lmi"></span>') < html.indexOf('class="tt"'), '제목 앞에 와요');
     assert.match(style, /url\('data:image\/svg\+xml,/);
     assert.equal(safeCss(style), style, '붙여 넣기 소독에서 그대로');
 });

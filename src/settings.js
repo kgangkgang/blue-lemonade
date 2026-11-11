@@ -119,7 +119,7 @@ export const DEFAULTS = {
     wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true, maskWords: '' }, // maskWords: 6.0.4 잠시 가리기 낱말(한 줄에 하나 · 쉼표) — 스위치는 세션 안에서만, 저장하지 않는다 (wordmask.js) · 1.0.0 되살림(9.0.0 5357f89e 에서 걷었던 단어 치환)
     captureTools: { replace: false, replaceRules: [], preset: '', redact: false, names: [], mask: 'auto', maskWord: '○○', maskStyles: {}, format:'image', imagePages:false, duration:6, maxMB:8, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true, filterPreset:'none', grain:0, brightness:0, contrast:0, saturation:0, temperature:0, vignette:0 }, // filterPreset · grain … vignette: 5.5.3 캡처 필터 (프리셋 none|mono|film|vintage|cool|warm|custom · 전부 0 이면 결과 픽셀 그대로)
     onehand: { on: false, swipe: true, imp: true, cont: true, regen: true, top: true, bottom: true, jump: true, delLast: true },
-    logCopy: { on: true, shape: 'card', palette: '', category: 'basic', recent: [], fav: [], custom: [], tagsOff: false, titleOff: false, dateOff: false, namesOff: false, topOff: false, bottomOff: false, blank: [], lemonLink: false, lemonAt: 'auto' },   // 로그 복사 — on 만 설정 창 · 나머지는 시트가 기억
+    logCopy: { on: true, shape: 'kkangtong', palette: '', category: 'basic', recent: [], fav: [], custom: [], tagsOff: false, titleOff: false, dateOff: false, namesOff: false, topOff: false, bottomOff: false, blank: [], lemonLink: true, lemonAt: 'auto', basicInfo: 'off', basicHeight: '' },   // 로그 복사 — on 만 설정 창 · 나머지는 시트가 기억
     extcheck: { aiConsent: false, profileId: '' },   // 1.0.3 확장 충돌 검사 AI 전송 동의 · 연결(기억)
     searchAi: { on: false, profileId: '', provider: '', models: {}, customModels: {}, customUrl: '' },
     replyNotify: { on: false }, // 4.8.7 답 완료 알림: 다른 앱을 보고 있을 때 답이 끝나면 폰 알림 · 진동 (reply-notify.js)
@@ -620,6 +620,15 @@ function tidyFontSlot(fonts, slot) {
 //   돌려주는 것은 늘 저장 칸 그 객체라 제자리에서 고친 값은 바로 보이고, 늦어지는 것은 정리(범위 · 형식 맞추기)뿐이에요 —
 //   고친 뒤 정리된 값을 바로 받아야 하는 곳(설정 창 update · 스타일 입히기 · 여러 장 프로필)은 예전처럼 invalidateSettings() 를 불러요.
 let memo = null;
+/**
+ * 1.1.3 로그 복사 새 기본(틀 「깡통 로그」 · 레몬 바로가기 켬)은 저장된 틀이 없는 설정에만 줘요 — 기본값 채우기(fill) 앞에서 불러요.
+ * 틀이 저장돼 있으면(값이 깨졌어도) 옛 설정이에요: 틀은 그 값 그대로 두고, 레몬 바로가기 칸이 없던 판(1.1.1 까지)에서 온 설정은 끈 채로 채워요(새 기본이 덮지 않게).
+ */
+function keepOldLogCopy(s) {
+    const lc = s?.logCopy;
+    if (!isObj(lc) || lc.shape === undefined) return;
+    if (lc.lemonLink === undefined) lc.lemonLink = false;
+}
 /** 로그 복사 설정 정리 — 모양 id 는 짧은 글자만(모르는 id 는 시트가 「카드」로), 내 글꾸는 20개 · 60KB 까지 (html 은 시트가 소독해 넣은 것) */
 function tidyLogCopy(value) {
     const v = isObj(value) ? value : {};
@@ -631,7 +640,8 @@ function tidyLogCopy(value) {
             ...(typeof c.template === 'string' ? { template: c.template, colors: isObj(c.colors) ? c.colors : {}, messages: str(c.messages, 12) || 'box', tail: str(c.tail, 60), emoji: str(c.emoji, 8), ...(isObj(c.type) ? { type: c.type } : {}) } : {}),
             slot: c.slot === 'auto' ? 'auto' : Array.isArray(c.slot) && c.slot.length <= 64 && c.slot.every(n => Number.isInteger(n) && n >= 0 && n < 10000) ? c.slot : null }));
     const ids = (list, max = 24) => [...new Set((Array.isArray(list) ? list : []).filter(id))].slice(0, max);
-    return { on: v.on !== false, shape: id(v.shape) ? v.shape : 'card', palette: isPaletteId(v.palette) ? v.palette : '', category: id(v.category) ? v.category : 'basic', recent: ids(v.recent).slice(0, 5), fav: ids(v.fav, 96), custom, tagsOff: v.tagsOff === true, titleOff: v.titleOff === true, dateOff: v.dateOff === true, namesOff: v.namesOff === true, topOff: v.topOff === true, bottomOff: v.bottomOff === true, lemonLink: v.lemonLink === true, lemonAt: ['tl', 'tr', 'bl', 'br'].includes(v.lemonAt) ? v.lemonAt : 'auto', blank: Array.isArray(v.blank) ? [...new Set(v.blank)].filter(k => /^(title|date|char|model|prompt)$/.test(k)) : [] };   // 1.0.7 빼기 칩 · 1.0.8 비운 머리 칸
+    // 1.1.3 틀: 저장값이 없을 때만 새 기본 「깡통 로그」 — 저장된 값이 깨졌으면 예전처럼 「카드」(옛 설정의 틀을 새 기본으로 바꾸지 않아요)
+    return { on: v.on !== false, shape: id(v.shape) ? v.shape : v.shape === undefined ? 'kkangtong' : 'card', palette: isPaletteId(v.palette) ? v.palette : '', category: id(v.category) ? v.category : 'basic', recent: ids(v.recent).slice(0, 5), fav: ids(v.fav, 96), custom, tagsOff: v.tagsOff === true, titleOff: v.titleOff === true, dateOff: v.dateOff === true, namesOff: v.namesOff === true, topOff: v.topOff === true, bottomOff: v.bottomOff === true, lemonLink: v.lemonLink === true || (v.lemonLink === undefined && v.shape === undefined), lemonAt: ['tl', 'tr', 'bl', 'br'].includes(v.lemonAt) ? v.lemonAt : 'auto', basicInfo: ['chip', 'tab'].includes(v.basicInfo) ? v.basicInfo : 'off', basicHeight: ['s', 'm', 'l'].includes(v.basicHeight) ? v.basicHeight : '', blank: Array.isArray(v.blank) ? [...new Set(v.blank)].filter(k => /^(title|date|char|model|prompt)$/.test(k)) : [] };   // 1.0.7 빼기 칩 · 1.0.8 비운 머리 칸
 }
 export function invalidateSettings() { memo = null; }
 export const settingsStats = { tidy: 0 };   // 정리를 몇 번 했나 (시험 · 진단용)
@@ -652,7 +662,7 @@ export function getSettings() {
     if (memo && ext[KEY] === memo) return memo;
     settingsStats.tidy++;
     if (!isObj(ext[KEY])) ext[KEY] = structuredClone(DEFAULTS);
-    else preserveLegacyLightFlags(ext[KEY]);
+    else { preserveLegacyLightFlags(ext[KEY]); keepOldLogCopy(ext[KEY]); }
     // 5.1.2: 칸 자체가 깨진 값이면 기본값으로(fill() 은 있는 값을 안 건드려 정리 · apply 가 죽었다)
     for (const [key, value] of Object.entries(DEFAULTS)) {
         if (isObj(value) ? !isObj(ext[KEY][key]) : Array.isArray(value) ? !Array.isArray(ext[KEY][key]) : false) ext[KEY][key] = structuredClone(value);

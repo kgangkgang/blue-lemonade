@@ -153,16 +153,48 @@ export function insertHead(html, head) {
     const text = String(html ?? '');
     if (!head) return text;
     const m = text.match(/^((?:\s*<!--[\s\S]*?-->)*\s*<(?!style\b|script\b|br\b|img\b|hr\b|input\b)[a-zA-Z][\w-]*(?:\s+[^\s=>]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*\s*>)/);
-    return m ? m[1] + head + text.slice(m[1].length) : head + text;
+    if (!m) return head + text;
+    // 1.1.3 감사 S4: 코멘트 글줄 규칙이 든 head 면 감싸는 요소에 로그 틀 표시(blq-log)를 달아요 — 규칙이 그 틀이 든 본문에만 걸리게
+    const open = head.includes(SCOPE) ? markOpenTag(m[1]) : m[1];
+    const rest = text.slice(m[1].length);
+    // 1.1.3 심플 새 틀: 틀이 감싸는 요소 첫 자식으로 자기 <style> 을 들고 와요 — head 를 그 <style> 앞쪽에 합쳐 <style> 이 하나로 남게(그 밖의 틀은 그대로)
+    const own = frameRooted(m[1]) ? rest.match(/^(\s*)<style>((?:(?!<\/?style)[\s\S])*)<\/style>/i) : null;
+    const one = own ? head.match(/^\s*<style>((?:(?!<\/?style)[\s\S])*)<\/style>\s*$/i) : null;
+    if (own && one) return `${open}${own[1]}<style>${one[1]}${own[2]}</style>${rest.slice(own[0].length)}`;
+    return open + head + rest;
+}
+/** 1.1.3 심플 새 틀의 뿌리 표시: 감싸는 요소 class 에 gk-k<번호> · gk-q<번호> · 기본 글꾸 새 틀 kb<번호>(log-copy-simple.js 가 그리는 틀 · 글꾸 마트 새 틀 같은 꼴 — q 는 대표 10) */
+export const FRAME_ROOT = /^(?:gk-[kq]\d+|kb\d{3})$/;   // 1.1.3 기본 글꾸 새 틀(kb429 …)도 같은 꼴(감싸는 div 첫 자식 <style> 하나)
+function frameRooted(open) {
+    const tagText = open.slice(open.lastIndexOf('<'));
+    const cls = tagText.match(/\sclass\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i);
+    return !!cls && String(cls[1] ?? cls[2] ?? cls[3] ?? '').split(/\s+/).some(name => FRAME_ROOT.test(name));
+}
+/** 1.1.3 감사 S4: 붙여 넣은 로그 틀 바깥 상자 표시 · 코멘트 규칙의 범위(이 틀이 든 .content 만 — 댓글 칸 같은 다른 .content 에는 안 번져요) */
+export const LOG_MARK = 'blq-log';
+const SCOPE = `.content:has(>.${LOG_MARK})`;
+/** 여는 태그(앞 주석 포함 · 끝이 >)에 class 하나 더하기 — 이미 있으면 그대로 */
+function markOpenTag(open) {
+    const at = open.lastIndexOf('<'), tagText = open.slice(at);
+    const cls = tagText.match(/\sclass\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i);   // 따옴표 셋 다(같은 속성이 둘이면 브라우저는 앞 것만 읽어요)
+    let next;
+    const have = cls ? (cls[1] ?? cls[2] ?? cls[3] ?? '') : '';
+    if (cls) next = have.split(/\s+/).includes(LOG_MARK) ? tagText : tagText.replace(cls[0], ` class="${`${have} ${LOG_MARK}`.trim()}"`);
+    else next = tagText.replace(/\s*(\/?)>$/, (_, slash) => ` class="${LOG_MARK}"${slash}>`);
+    return open.slice(0, at) + next;
 }
 
 /** 1.1.2 틀 바깥 위아래의 사용자 코멘트(사이트 본문의 p · 스티커 줄 · 감싼 .blq-cm)를 틀과 같은 640 열에 왼쪽 맞춤으로 — 글꼴은 사이트 기본 그대로(꾸미지 않아요).
  *  간격은 위 · 아래 · 틀 사이 늘 16px: 편집기가 틀 옆에 붙이는 빈 문단 <p><br></p> 은 비어 있는 동안 숨겨요(사용자 「위랑 아래 중간 다 줄 간격 항상 똑같이」 · 실제 글 다섯 개와 같은 규칙) */
 export function commentCss(width = 640) {
     const w = Number(width) > 0 ? Math.round(Number(width)) : 640;
-    return `.content>p,.blq-cm{box-sizing:border-box;max-width:${w}px;margin-left:auto!important;margin-right:auto!important;padding-left:16px!important;padding-right:16px!important;text-align:left!important;text-indent:0}.blq-cm p{text-align:left!important}`
+    // 1.1.3 감사 S4: ① 범위를 로그 틀이 든 본문(SCOPE)으로 좁혀요(전엔 글 전체 · 글 밖 .content>p 에도 걸릴 수 있었어요)
+    //   ② 사용자가 가운데 · 오른쪽 맞춤으로 쓴 문단(편집기가 style="text-align:…" · align 을 적어요)은 왼쪽으로 덮지 않아요. 640 열 · 16px · 빈칸 숨김은 그대로
+    return (`.content>p,.blq-cm{box-sizing:border-box;max-width:${w}px;margin-left:auto!important;margin-right:auto!important;padding-left:16px!important;padding-right:16px!important;text-indent:0}`
+        + '.content>p:not([style*="text-align"]):not([align]),.blq-cm{text-align:left!important}.blq-cm p{text-align:left!important}'
         + '.content>div+p,.content>div+.blq-cm{margin-top:16px!important}.content>p+div,.content>.blq-cm+div{margin-top:16px!important}'
-        + '.content>div:not(.blq-cm)+p:has(>br:only-child),.content>p:has(>br:only-child):has(+div:not(.blq-cm)){display:none!important}.content>*+div:not(.blq-cm){margin-top:16px!important}.content>div:not(.blq-cm)+p:has(>br:only-child)+p,.content>div:not(.blq-cm)+p:has(>br:only-child)+.blq-cm{margin-top:16px!important}.blq-cm>p:first-child:has(>br:only-child),.blq-cm>p:last-child:has(>br:only-child){display:none!important}';
+        + '.content>div:not(.blq-cm)+p:has(>br:only-child),.content>p:has(>br:only-child):has(+div:not(.blq-cm)){display:none!important}.content>*+div:not(.blq-cm){margin-top:16px!important}.content>div:not(.blq-cm)+p:has(>br:only-child)+p,.content>div:not(.blq-cm)+p:has(>br:only-child)+.blq-cm{margin-top:16px!important}.blq-cm>p:first-child:has(>br:only-child),.blq-cm>p:last-child:has(>br:only-child){display:none!important}')
+        .replaceAll('.content>', `${SCOPE}>`);
 }
 /** 틀 위 · 아래 코멘트 빈칸(사용자 「바로 밑에 걍 적으면 저런 식으로 들어가게 · 밑이나 위에나 둘 다」) — 꼭 p 로(감싸지 않은 맨 글자는 정렬 규칙을 못 받아요) */
 export const COMMENT_SLOT = '<p><br></p>';
@@ -181,7 +213,7 @@ export function liftForCopy(html, motionHead = '', { comments = true, width = 64
  *  맨 앞 움직임 <style> 은 떼어 그림 규칙과 한 <style> 로 합치고 같은 길(liftForCopy)로 — 이미 다듬은 글이면 두 번 걸어도 같아요(코멘트 빈칸은 한 번만) */
 export function pasteReady(html) {
     let text = String(html ?? '');
-    if (!text.trim() || text.includes('.content>p,.blq-cm{')) return text;   // 이미 붙여 넣을 꼴
+    if (!text.trim() || text.includes('.content>p,.blq-cm{') || text.includes(`${SCOPE}>p,.blq-cm{`)) return text;   // 이미 붙여 넣을 꼴(1.1.2 꼴 · 1.1.3 꼴)
     text = text.replace(/^\s*<p><br><\/p>/, '').replace(/<p><br><\/p>\s*$/, '');   // 1.1.2 감사 3차 S8: 앞뒤 공백이 있어도 코멘트 빈칸을 떼요
     const lead = text.match(/^(\s*(?:<!--[\s\S]*?-->\s*)*)<style>((?:(?!<\/?style)[\s\S])*)<\/style>\s*/i);
     const motion = lead ? `<style>${lead[2]}</style>` : '';

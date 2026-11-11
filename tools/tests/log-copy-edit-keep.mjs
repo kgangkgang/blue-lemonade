@@ -16,8 +16,29 @@ async function test(name, fn) {
     catch (e) { fail++; console.log('  FAIL ' + name + '\n       ' + String(e.stack || e.message || e).split('\n').slice(0, 6).join('\n       ')); }
 }
 
-const { spoilerHtml, SPOILER_LABEL } = await import(url('src/log-copy-spoiler.js'));
+const { spoilerHtml, SPOILER_LABEL, paragraphTwin, unparagraphHtml, PARA_CLASS } = await import(url('src/log-copy-spoiler.js'));
 const { nodesHtml } = await import(url('src/log-copy-render.js'));
+
+await test('1.1.3 숨긴 글이 든 문단: <p> 안 <details> 는 복사 글에서 문단을 쪼개요 → div.blsp-p + 문단 규칙의 짝', () => {
+    assert.equal(PARA_CLASS, 'blsp-p');
+    // 짝 규칙: p 태그 선택자만 · 선언 그대로 · @media 안 · 구조 가상 · 목록 · class 이름 속 p(.cp · .ph · span)는 안 건드려요
+    const css = '.k p{margin:0 0 10px}.k.td p,.k .c{color:#eee}.k .lg>p:first-child{margin-top:0}.k .cp,.k .ph,.k span{x:1}@media (min-width:560px){\n.k p.mt b{y:2}\n}.k p+p{z:3}.k :is(p,div){w:4}';
+    const twin = paragraphTwin(css);
+    assert.equal(twin, '.k p,.k .blsp-p{margin:0 0 10px}.k.td p,.k .c,.k.td .blsp-p{color:#eee}.k .lg>p:first-child,.k .lg>.blsp-p:first-child{margin-top:0}.k .cp,.k .ph,.k span{x:1}@media (min-width:560px){\n.k p.mt b,.k .blsp-p.mt b{y:2}\n}.k p+p,.k .blsp-p+.blsp-p{z:3}.k :is(p,div),.k :is(.blsp-p,div){w:4}');
+    assert.equal(paragraphTwin(twin), twin, '두 번 걸어도 같아요');
+    assert.equal(paragraphTwin('.a{b:1}'), '.a{b:1}');
+    // HTML 글자: 숨긴 글이 든 <p> 만 div 로 · 다른 문단은 그대로 · 숨긴 글이 없으면 한 글자도 그대로
+    const sp = spoilerHtml('비밀', null, true);
+    const html = `<div class="gk k"><style>.k p{color:red}</style><p class="nm">이름</p><p class="nr">앞 ${sp}.</p><p>${sp}</p><p class="nr">뒤</p></div>`;
+    const out = unparagraphHtml(html);
+    assert.ok(out.includes(`<div class="nr blsp-p">앞 ${sp}.</div>`) && out.includes(`<div class="blsp-p">${sp}</div>`));
+    assert.ok(out.includes('<p class="nm">이름</p>') && out.includes('<p class="nr">뒤</p>'));
+    assert.ok(out.includes('<style>.k p,.k .blsp-p{color:red}</style>'));
+    assert.ok(!/<p\b[^>]*>(?:(?!<\/p>)[\s\S])*?<details/.test(out), '<p> 안에 <details> 가 남으면 안 돼요');
+    assert.equal(unparagraphHtml(out), out);
+    const plain = '<div class="gk k"><style>.k p{color:red}</style><p class="nr">글</p></div>';
+    assert.equal(unparagraphHtml(plain), plain);
+});
 
 await test('spoilerHtml: wrapSpoiler 와 같은 뼈대(details · summary 알약 · 흐린 사본 · 내용) · 글줄 안 / 블록', () => {
     const inline = spoilerHtml('비밀', { line: '#123', raised: '#fff', muted: '#555', family: 'Pretendard', tracking: '0' }, true);

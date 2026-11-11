@@ -40,7 +40,7 @@ export function parseHtml(html) {
         const top = stack[stack.length - 1], last = top.children[top.children.length - 1];
         if (last?.type === 'text') last.text += value; else add({ type: 'text', text: value });
     };
-    let i = 0;
+    let i = 0, lower = null;
     while (i < src.length) {
         const lt = src.indexOf('<', i);
         if (lt < 0) { text(src.slice(i)); break; }
@@ -81,7 +81,8 @@ export function parseHtml(html) {
         i = OPEN.lastIndex;
         if (VOID.has(tag) || open[3]) continue;
         if (RAW.has(tag)) {
-            const end = src.toLowerCase().indexOf(`</${tag}`, i);
+            lower ??= src.toLowerCase();   // 1.1.3 감사 G2: RAW 요소마다 글 전체를 소문자로 만들면 <style> 든 메시지 수의 제곱 — 한 번만(대소문자만 바뀌니 자리 번호는 같아요)
+            const end = lower.indexOf(`</${tag}`, i);
             if (end < 0) return null;
             if (end > i) node.children.push({ type: 'text', text: src.slice(i, end), parent: node, raw: true });
             CLOSE.lastIndex = end;

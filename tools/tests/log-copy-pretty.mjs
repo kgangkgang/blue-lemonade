@@ -136,6 +136,7 @@ await test('(b) 넣은 줄 나눔은 안 보이는 자리에만 — 인라인 �
 
 await test('(c) 메시지 수만큼 「▼ 메시지 N 시작 ~ ▲ 메시지 N 끝」 · 이름 · 본문 · 머리 칸 주석', () => {
     for (const c of ALL) {
+        if (PRESETS.find(p => p.id === c.id)?.basic) continue;   // 1.1.3 기본 글꾸 새 틀은 메시지가 한 요소로 묶이지 않는 시안 조판(지문 · 이름 · 대사 문단이 나란히)이라 메시지 주석이 없어요 — log-copy-basic.mjs 가 고치기 쉬운 꼴의 <style> 하나를 봐요
         const starts = [...c.pretty.matchAll(/<!-- ▼ 메시지 (\d+) 시작/g)].map(m => Number(m[1]));
         const ends = [...c.pretty.matchAll(/<!-- ▲ 메시지 (\d+) 끝 -->/g)].map(m => Number(m[1]));
         const want = Array.from({ length: c.n }, (_, i) => i + 1);
@@ -143,7 +144,9 @@ await test('(c) 메시지 수만큼 「▼ 메시지 N 시작 ~ ▲ 메시지 N 
         assert.deepEqual(ends, want, `${c.id}/${c.n}: 끝`);
         for (let i = 1; i <= c.n; i++) assert.ok(c.pretty.indexOf(`▼ 메시지 ${i} 시작`) < c.pretty.indexOf(`▲ 메시지 ${i} 끝`), `${c.id}: ${i} 차례`);
         assert.equal((c.pretty.match(/<!-- 본문 -->/g) ?? []).length, c.n, `${c.id}/${c.n}: 본문 주석`);
-        assert.ok((c.pretty.match(/<!-- 이름 -->/g) ?? []).length >= (c.id === 'messenger' ? 0 : 1), `${c.id}: 이름 주석`);
+        // 1.1.3 깡통 로그 틀 묶음은 말하는 사람이 한 명이면 이름표가 없어요(메시지 1개 표본) — 여럿이면(9개 표본 · 이름 셋) 있어요
+        const noNames = c.id === 'messenger' || (c.n === 1 && PRESETS.find(p => p.id === c.id)?.tone);
+        assert.ok((c.pretty.match(/<!-- 이름 -->/g) ?? []).length >= (noNames ? 0 : 1), `${c.id}/${c.n}: 이름 주석`);
         if (/data-f="title"/.test(c.html)) assert.ok(c.pretty.includes('<!-- 제목 (글자만 바꿔요) -->'), `${c.id}: 제목 주석`);
         if (/data-f="date"/.test(c.html)) assert.ok(c.pretty.includes('<!-- 날짜 (글자만 바꿔요) -->'), `${c.id}: 날짜 주석`);
         if (/data-f="from"/.test(c.html)) assert.ok(c.pretty.includes('<!-- 보낸 이 (글자만 바꿔요) -->'), `${c.id}: 보낸 이 주석`);
@@ -159,6 +162,7 @@ await test('(c) 메시지 수만큼 「▼ 메시지 N 시작 ~ ▲ 메시지 N 
 
 await test('(d) 「메시지 1 시작 ~ 끝」을 복사해 끝 바로 뒤에 붙이면 메시지 1 이 하나 더 든 HTML', () => {
     for (const c of ALL) {
+        if (PRESETS.find(p => p.id === c.id)?.basic) continue;   // 1.1.3 기본 글꾸 새 틀은 메시지가 한 요소로 묶이지 않는 시안 조판(지문 · 이름 · 대사 문단이 나란히)이라 메시지 주석이 없어요 — log-copy-basic.mjs 가 고치기 쉬운 꼴의 <style> 하나를 봐요
         const startAt = c.pretty.indexOf('<!-- ▼ 메시지 1 시작');
         const lineStart = c.pretty.lastIndexOf('\n', startAt) + 1;
         const endMark = '<!-- ▲ 메시지 1 끝 -->';

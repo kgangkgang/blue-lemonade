@@ -9,6 +9,9 @@ import { recolorLog } from './log-copy-words.js';
 import { box, font, hide, svgDoc, svgUrl } from './log-copy-concept-kit.js';   // 메시지 배치(유령 말풍선 꼬리 svg) · 컨셉 칸 공용 상자
 import { fillTemplate, templateColors, tidyType } from './log-copy-template.js';
 import { BUILTIN_TEMPLATES } from './log-copy-builtin.gen.js';
+import { drawTone } from './log-copy-tone.js';   // 1.1.3 「깡통 로그」 틀 묶음(대사색 하나로 틀 색 — 에이드 팔레트를 안 써요)
+import { SIMPLE, simplePresets, drawSimple } from './log-copy-simple.js';   // 1.1.3 「심플」 새 틀 28(클래스 + <style> 하나 · 깃발 SIMPLE_FRAMES_ENABLED 가 꺼져 있어 아직 PRESETS · 분류 칩에 안 들어가요)
+import { drawBasic } from './log-copy-basic.js';   // 1.1.3 「기본 글꾸」 새 틀 18(시안 생성기 그림 그대로 · 클래스 + <style> 하나 · 432 상태창은 보류라 옛 그림)
 import { LEMON_HOME } from './log-copy-lemon.js';   // 1.1.2 레몬 그림 링크 주소(레몬 틀 · 「레몬 바로가기」 칩이 같이 써요)   // 1.0.1(11-04) 테마 내장 심플 글꾸(틈 템플릿 · tools/mart/build-builtin.mjs 생성물)
 
 export { logMarkdown, logText };
@@ -485,6 +488,7 @@ function galleryFrame(model, o, kind) {
 /** 프리셋 분류 — 칩 줄 차례. 프리셋 데이터의 category 값 하나로 나뉘어요(분류를 더하려면 여기와 프리셋의 category 만). 저장한 내 글꾸는 'mine' */
 const ALL_CATEGORIES = [
     { id: 'basic', label: '기본' },
+    { id: SIMPLE.category, label: '심플' },   // 1.1.3 「심플」 새 틀(log-copy-simple.js SIMPLE_FRAMES) — PRESETS 에 틀이 없으면(깃발 꺼짐) 칩이 숨어요
     { id: 'talk', label: '대화' },
     { id: 'paper', label: '종이' },
     { id: 'event', label: '기념일' },
@@ -497,30 +501,40 @@ const ALL_CATEGORIES = [
     { id: 'mine', label: '내 글꾸' },
 ];
 
+// 1.1.3 「깡통 로그」 틀 묶음(tone) — 색은 에이드 팔레트가 아니라 로그 주인공의 대사색 하나에서(shared/char-tone.js) · 밝기만 받아요(o.mode)
+const toneFrame = id => (m, o) => drawTone(id, m, o).html;
+// 1.1.3 「기본 글꾸」 새 틀 — 그리기는 renderLog 의 basic 갈래가 drawBasic 으로(밝기 = mode · 화자 색 = lookup · 팔레트 색은 안 써요)
+const basicFrame = id => (m, o) => drawBasic(id, m, { mode: o.mode, lookup: o.lookup, fields: o.fields, names: o.names, info: o.info, height: o.basicHeight, images: o.images, lemonLink: o.lemonLink, marks: o.marks }).html;
+/** 1.1.3 새 그림으로 바꾼 기본 틀의 옛 그림(인라인 style 판) — 되돌릴 때 · 견줘 볼 때 쓰라고 남겨 둬요(PRESETS 에는 안 걸려요) */
+export const LEGACY_FRAMES = Object.freeze({ card, tab: tabs, window: windowFrame, mini, lemon, messenger, notify, script, record, note, letter, diary, article, book, 'gallery-strip': (m, o) => galleryFrame(m, o, 'strip'), 'gallery-strip-polaroid': (m, o) => galleryFrame(m, o, 'strip-polaroid'), 'gallery-grid': (m, o) => galleryFrame(m, o, 'grid'), 'gallery-grid-polaroid': (m, o) => galleryFrame(m, o, 'grid-polaroid') });
 export const PRESETS = [
+    { id: 'kkangtong', label: '깡통 로그', icon: 'fa-quote-left', render: toneFrame('kkangtong'), category: 'basic', tone: true },
+    { id: 'kkangtong-mini', label: '미니', icon: 'fa-grip-lines', render: toneFrame('kkangtong-mini'), category: 'basic', tone: true },
+    { id: 'kkangtong-deep', label: '진한 바탕', icon: 'fa-droplet', render: toneFrame('kkangtong-deep'), category: 'basic', tone: true },
     { id: 'plain', label: '그대로', icon: 'fa-align-left', category: 'basic' },
-    { id: 'card', label: '카드', icon: 'fa-square', render: card, category: 'basic' },
-    { id: 'tab', label: '탭', icon: 'fa-folder', render: tabs, category: 'basic' },
-    { id: 'window', label: '창', icon: 'fa-window-maximize', render: windowFrame, category: 'basic' },
+    { id: 'card', label: '카드', icon: 'fa-square', render: basicFrame('card'), category: 'basic', basic: true },
+    { id: 'tab', label: '탭', icon: 'fa-folder', render: basicFrame('tab'), category: 'basic', basic: true },
+    { id: 'window', label: '창', icon: 'fa-window-maximize', render: basicFrame('window'), category: 'basic', basic: true },
     { id: 'status', label: '상태창', icon: 'fa-table-cells-large', render: status, category: 'basic' },
-    { id: 'mini', label: '미니', icon: 'fa-minus', render: mini, category: 'basic' },
-    { id: 'lemon', label: '레몬', icon: 'fa-lemon', render: lemon, category: 'basic' },
-    { id: 'messenger', label: '메신저', icon: 'fa-comments', render: messenger, category: 'talk' },
-    { id: 'notify', label: '알림', icon: 'fa-bell', render: notify, category: 'talk' },
-    { id: 'script', label: '대본', icon: 'fa-clapperboard', render: script, category: 'talk' },
-    { id: 'record', label: '기록', icon: 'fa-list', render: record, category: 'talk' },
-    { id: 'note', label: '노트', icon: 'fa-book-open', render: note, category: 'paper' },
-    { id: 'letter', label: '편지', icon: 'fa-envelope', render: letter, category: 'paper' },
-    { id: 'diary', label: '일기', icon: 'fa-calendar-day', render: diary, category: 'paper' },
-    { id: 'article', label: '기사', icon: 'fa-newspaper', render: article, category: 'paper' },
-    { id: 'book', label: '책', icon: 'fa-book', render: book, category: 'paper' },
+    { id: 'mini', label: '미니', icon: 'fa-minus', render: basicFrame('mini'), category: 'basic', basic: true },
+    { id: 'lemon', label: '레몬', icon: 'fa-lemon', render: basicFrame('lemon'), category: 'basic', basic: true },
+    { id: 'messenger', label: '메신저', icon: 'fa-comments', render: basicFrame('messenger'), category: 'talk', basic: true },
+    { id: 'notify', label: '알림', icon: 'fa-bell', render: basicFrame('notify'), category: 'talk', basic: true },
+    { id: 'script', label: '대본', icon: 'fa-clapperboard', render: basicFrame('script'), category: 'talk', basic: true },
+    { id: 'record', label: '기록', icon: 'fa-list', render: basicFrame('record'), category: 'talk', basic: true },
+    { id: 'note', label: '노트', icon: 'fa-book-open', render: basicFrame('note'), category: 'paper', basic: true },
+    { id: 'letter', label: '편지', icon: 'fa-envelope', render: basicFrame('letter'), category: 'paper', basic: true },
+    { id: 'diary', label: '일기', icon: 'fa-calendar-day', render: basicFrame('diary'), category: 'paper', basic: true },
+    { id: 'article', label: '기사', icon: 'fa-newspaper', render: basicFrame('article'), category: 'paper', basic: true },
+    { id: 'book', label: '책', icon: 'fa-book', render: basicFrame('book'), category: 'paper', basic: true },
     // 내장 심플 글꾸(1.0.1 · 11-04): 글꾸 마트 「심플」 그림체와 같은 틈 템플릿 · 전용 색(own) — 에이드 색 칩은 숨겨요. 칩에는 이모지 + 짧은 이름.
     //   옛 내장 컨셉 30(오리지널 그림)은 글꾸 마트 「일러스트」로 옮겼어요(tools/mart/geulkku-concept30.mjs)
     ...BUILTIN_TEMPLATES.map(t => ({ id: t.id, label: t.label, emoji: t.emoji, category: t.category, own: t.id, template: t, render: (m, o) => drawTemplate(m, o, t) })),
-    { id: 'gallery-strip', label: '가로 넘김', icon: 'fa-images', render: (m, o) => galleryFrame(m, o, 'strip'), category: 'gallery', images: true },
-    { id: 'gallery-strip-polaroid', label: '가로 폴라로이드', icon: 'fa-camera-retro', render: (m, o) => galleryFrame(m, o, 'strip-polaroid'), category: 'gallery', images: true },
-    { id: 'gallery-grid', label: '격자', icon: 'fa-table-cells', render: (m, o) => galleryFrame(m, o, 'grid'), category: 'gallery', images: true },
-    { id: 'gallery-grid-polaroid', label: '격자 폴라로이드', icon: 'fa-camera', render: (m, o) => galleryFrame(m, o, 'grid-polaroid'), category: 'gallery', images: true },
+    { id: 'gallery-strip', label: '가로 넘김', icon: 'fa-images', render: basicFrame('gallery-strip'), category: 'gallery', images: true, basic: true },
+    { id: 'gallery-strip-polaroid', label: '가로 폴라로이드', icon: 'fa-camera-retro', render: basicFrame('gallery-strip-polaroid'), category: 'gallery', images: true, basic: true },
+    { id: 'gallery-grid', label: '격자', icon: 'fa-table-cells', render: basicFrame('gallery-grid'), category: 'gallery', images: true, basic: true },
+    { id: 'gallery-grid-polaroid', label: '격자 폴라로이드', icon: 'fa-camera', render: basicFrame('gallery-grid-polaroid'), category: 'gallery', images: true, basic: true },
+    ...simplePresets(),   // 1.1.3 「심플」 새 틀(맨 뒤 — 옛 틀 차례는 그대로 · 깃발이 꺼져 있으면 빈 목록)
 ];
 
 /** 분류 칩 — 틀이 하나라도 있는 분류만(내장 심플 글꾸가 아직 없는 기념일 · 장르 칩은 숨어요) · 내 글꾸는 늘 */
@@ -556,10 +570,26 @@ export function fixedWidth(html) {
         return `${open}${attrs} style="${add}"${end}`;
     });
 }
-export function renderLog(model, { shape = 'plain', colors = null, ui = null, fields = {}, size = 'm', names = true, gap: blank = true, images = [], screen = null, template = null, lemonLink = false } = {}) {
+export function renderLog(model, { shape = 'plain', colors = null, ui = null, fields = {}, size = 'm', names = true, gap: blank = true, images = [], screen = null, template = null, lemonLink = false, mode = null, lookup = null, info = 'off', height = '', marks = false } = {}) {
     if (!model?.messages?.length) return '';
     // 1.0.1 template: 글꾸 마트에서 받은 내 글꾸(틈 템플릿 · 전용 색) — 렌더 분기는 여기 한 곳
     const found = template?.template ? null : PRESETS.find(p => p.id === shape);
+    // 1.1.3 깡통 로그 틀 묶음: 밝기 = mode(시트는 고른 팔레트의 밝기 · 안 주면 받은 팔레트 바탕이 밝은지) · lookup(이름 → 정해 둔 대사색 — 인물표) · 팔레트 색(colors)은 안 써요
+    // 1.1.3 「심플」 새 틀: 깡통 로그 틀과 같이 밝기 = mode · lookup(정해 둔 대사색) · 팔레트 색은 안 써요. 글자색은 틀 <style> 이 맡아요(복사 때 시트 pinColors 가 인라인으로 굳혀요)
+    if (found?.simple) {
+        const light = mode ? mode === 'light' : !!colors?.bg && contrast(colors.bg, '#000000') > contrast(colors.bg, '#ffffff');
+        return fixedWidth(drawSimple(found.frame, model, { fields, names, mode: light ? 'light' : 'dark', lookup }).html);
+    }
+    // 1.1.3 「기본 글꾸」 새 틀: 밝기 = mode · 화자 색 = lookup(정해 둔 대사색) · 정보 칸 info · 높이 height(빈 값 = 글 길이만큼) — 틀 폭은 시안 그대로(400 · 480 · 520 틀이 있어 fixedWidth 를 안 걸어요)
+    if (found?.basic) {
+        const light = mode ? mode === 'light' : !!colors?.bg && contrast(colors.bg, '#000000') > contrast(colors.bg, '#ffffff');
+        return drawBasic(shape, model, { mode: light ? 'light' : 'dark', lookup, fields, names, info, height, images: [...(model.images ?? []), ...images], lemonLink, marks }).html;
+    }
+    if (found?.tone) {
+        const light = mode ? mode === 'light' : !!colors?.bg && contrast(colors.bg, '#000000') > contrast(colors.bg, '#ffffff');
+        const drawn = drawTone(shape, model, { ui: ui ?? undefined, fields, height: HEIGHTS[size] ?? HEIGHTS.m, names, gap: blank, mode: light ? 'light' : 'dark', lookup });
+        return fixedWidth(inkEverywhere(drawn.html, drawn.tone.text, { bg: shape === 'kkangtong-mini' ? drawn.tone.log : drawn.tone.card, candidates: [drawn.tone.dialogue] }));
+    }
     const tpl = template?.template ? template : found?.template ?? null;   // 받은 글꾸 · 내장 심플 글꾸(틈 템플릿)
     const preset = template?.template ? { own: 'template', render: (m, o) => drawTemplate(m, o, template) } : found;
     if (!preset?.render || (!colors && !preset.own)) return fixedWidth(inkEverywhere(logHtml(model, { names, gap: blank }), model.base.color, { bg: model.base.bg, candidates: [colors?.text] }));

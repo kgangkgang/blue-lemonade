@@ -39,7 +39,7 @@ const halloween = MART_HALLOWEEN_FRAMES.map((frame) => {
 });
 function cases(n) {
     const model = modelOf(n);
-    const out = PRESETS.map(p => ({ id: p.id, html: renderLog(model, { shape: p.id, colors: p.id === 'plain' ? null : colors, ui, fields, size: 'm' }) }));
+    const out = PRESETS.filter(p => !p.basic).map(p => ({ id: p.id, html: renderLog(model, { shape: p.id, colors: p.id === 'plain' ? null : colors, ui, fields, size: 'm' }) }));
     for (const f of MART_CONCEPT_FRAMES) out.push({ id: f.id, html: renderConcept(model, { id: f.id, ui, fields, size: 'm' }) });
     for (const h of halloween) out.push({ id: `mart:${h.label}`, html: renderLog(model, { template: h.item, ui, fields, size: 'm' }) });
     return out.map(c => ({ ...c, n }));

@@ -97,16 +97,18 @@ await t('정화기 맞춤도 복사 글에: overflow:hidden → clip(+flow-root 
 await t('코멘트 글줄 규칙(틀 밖 사용자 코멘트를 같은 640 열 · 왼쪽 맞춤 · 글꼴은 사이트 그대로 · 간격 늘 16px) · 위아래 코멘트 빈칸 p · <style> 은 감싸는 요소 안', async () => {
     const { commentCss, insertHead, COMMENT_SLOT, withCommentSlots } = await load('src/log-copy-lift.js');
     const css = commentCss();
-    assert.ok(css.startsWith('.content>p,.blq-cm{box-sizing:border-box;max-width:640px;margin-left:auto!important;margin-right:auto!important;padding-left:16px!important;padding-right:16px!important;text-align:left!important;text-indent:0}.blq-cm p{text-align:left!important}'));
+    // 1.1.3 감사 S4: 범위는 로그 틀이 든 본문(.content:has(>.blq-log))만 · 사용자가 정한 맞춤(style text-align · align)은 덮지 않아요 — 나머지 규칙은 1.1.2 그대로
+    const S = s => s.replaceAll('.content>', '.content:has(>.blq-log)>');
+    assert.ok(css.startsWith(S('.content>p,.blq-cm{box-sizing:border-box;max-width:640px;margin-left:auto!important;margin-right:auto!important;padding-left:16px!important;padding-right:16px!important;text-indent:0}.content>p:not([style*="text-align"]):not([align]),.blq-cm{text-align:left!important}.blq-cm p{text-align:left!important}')));
     assert.ok(!/font-family|font-size|letter-spacing|line-height/.test(css), '글꼴은 지정하지 않아요');
     for (const rule of ['.content>div+p,.content>div+.blq-cm{margin-top:16px!important}', '.content>p+div,.content>.blq-cm+div{margin-top:16px!important}',
         '.content>div:not(.blq-cm)+p:has(>br:only-child),.content>p:has(>br:only-child):has(+div:not(.blq-cm)){display:none!important}', '.content>*+div:not(.blq-cm){margin-top:16px!important}',
-        '.content>div:not(.blq-cm)+p:has(>br:only-child)+p,.content>div:not(.blq-cm)+p:has(>br:only-child)+.blq-cm{margin-top:16px!important}', '.blq-cm>p:first-child:has(>br:only-child),.blq-cm>p:last-child:has(>br:only-child){display:none!important}']) assert.ok(css.includes(rule), rule);
+        '.content>div:not(.blq-cm)+p:has(>br:only-child)+p,.content>div:not(.blq-cm)+p:has(>br:only-child)+.blq-cm{margin-top:16px!important}', '.blq-cm>p:first-child:has(>br:only-child),.blq-cm>p:last-child:has(>br:only-child){display:none!important}']) assert.ok(css.includes(S(rule)), rule);
     assert.equal(COMMENT_SLOT, '<p><br></p>');
     assert.equal(insertHead('<!-- x --><div style="a">b</div>', '<style>s</style>'), '<!-- x --><div style="a"><style>s</style>b</div>');
     assert.equal(insertHead('글<div>b</div>', '<style>s</style>'), '<style>s</style>글<div>b</div>');
     const { full } = liftForCopy('<div style="padding:1px">x</div>');
-    assert.match(full, /^<p><br><\/p><div style="padding:1px"><style>\.content>p,\.blq-cm\{/);
+    assert.match(full, /^<p><br><\/p><div style="padding:1px" class="blq-log"><style>\.content:has\(>\.blq-log\)>p,\.blq-cm\{/);
     assert.ok(full.endsWith('x</div><p><br></p>'));
     assert.equal(withCommentSlots('A'), '<p><br></p>A<p><br></p>');
     assert.equal(liftForCopy('<div>x</div>', '', { comments: false }).full, '<div>x</div>');
@@ -115,7 +117,7 @@ await t('pasteReady(글꾸 마트 시식 · 카드 HTML 복사): 맨 앞 움직�
     const { pasteReady } = await load('src/log-copy-lift.js');
     const once = pasteReady(`<!-- 안내 --><style>@keyframes x{}</style><div style="background:url(&quot;data:image/svg+xml,%3Csvg%3E&quot;) no-repeat;padding:1px">a</div>`);
     assert.equal((once.match(/<style>/g) || []).length, 1);
-    assert.match(once, /^<p><br><\/p><!-- 안내 --><div style="padding: 1px" class="blq-[0-9a-z]+"><style>@keyframes x\{\}\.blq-/);
+    assert.match(once, /^<p><br><\/p><!-- 안내 --><div style="padding: 1px" class="blq-[0-9a-z]+ blq-log"><style>@keyframes x\{\}\.blq-/);
     assert.ok(!/style="[^"]*url\(/.test(once));
     assert.equal(pasteReady(once), once);
     assert.equal(pasteReady(''), '');
@@ -128,7 +130,7 @@ await t('감사 3차: 범위 밖 숫자 참조(R2) · 작은따옴표 · 따옴�
     assert.equal(fixedWidth('<div data-a=1>a</div>'), '<div data-a=1 style="max-width:640px;margin-left:auto;margin-right:auto;box-sizing:border-box">a</div>');
     const { pasteReady } = await load('src/log-copy-lift.js');
     const spaced = pasteReady(`  <p><br></p><div style="background:${SVG}">a</div><p><br></p>  `);
-    assert.match(spaced, /^<p><br><\/p><div class="blq-[0-9a-z]+"><style>/, '빈 p 안에 <style> 이 들어가지 않아요');
+    assert.match(spaced, /^<p><br><\/p><div class="blq-[0-9a-z]+ blq-log"><style>/, '빈 p 안에 <style> 이 들어가지 않아요');
     const big = Array.from({ length: 400 }, (_, i) => `<div style="background:${SVG}"><style>.m${i}{color:red}</style>메시지 ${i}</div>`).join('');
     const t0 = Date.now(); const out = liftInlineUrls(big); const ms = Date.now() - t0;
     assert.equal((out.html.match(/class="blq-/g) || []).length, 400);
@@ -153,20 +155,22 @@ const bare = { title: '제목' };
 await t('레몬 틀: 「레몬 바로가기」를 켜면 레몬 그림이 소개 글 링크(새 창 · rel · title) · 끄면 링크 0개(감사 3차 R5) · 레몬 틀에만', () => {
     assert.equal(LEMON_HOME, 'https://kkangtong.xyz/posts/157369');
     assert.ok(!renderLog(model, { shape: 'lemon', colors: night, ui, fields: full }).includes('posts/157369'), '끄면 링크 없음');
-    assert.match(renderLog(model, { shape: 'lemon', colors: night, ui, fields: full }), /<span style="[^"]*FFE23C[^"]*"><\/span>/, '레몬 그림은 그대로');
+    // 1.1.3 레몬 틀은 기본 글꾸 새 틀(434): 레몬 그림은 <style> 의 .lmi 규칙 · 켜면 <a class="lm"> 로 감싸요
+    assert.match(renderLog(model, { shape: 'lemon', colors: night, ui, fields: full }), /<span class="lm" title="블루레몬에이드"><span class="lmi"><\/span><\/span>[\s\S]*$/, '레몬 그림은 그대로');
     const html = renderLog(model, { shape: 'lemon', colors: night, ui, fields: full, lemonLink: true });
-    const a = html.match(/<a href="https:\/\/kkangtong\.xyz\/posts\/157369" target="_blank" rel="noopener noreferrer" title="블루레몬에이드" style="[^"]*">(<span style="[^"]*FFE23C[^"]*"><\/span>)<\/a>/i);
-    assert.ok(a, '레몬 그림을 감싼 링크');
+    assert.ok(html.includes('<a class="lm" href="https://kkangtong.xyz/posts/157369" target="_blank" rel="noopener noreferrer" title="블루레몬에이드" aria-label="블루레몬에이드"><span class="lmi"></span></a>'), '레몬 그림을 감싼 링크');
+    // 기본 글꾸 새 틀 18 은 머리에 레몬이 늘 있어요(시안) — 켜면 그 레몬이 링크 · 그 밖 틀은 링크 없음(시트가 빈 모서리에 따로 놓아요)
     for (const p of PRESETS.filter(x => x.id !== 'lemon')) {
         const other = renderLog(model, { shape: p.id, colors: night, ui, fields: full, images: [], lemonLink: true });
-        assert.ok(!other.includes('posts/157369'), `${p.label}: 링크 없음`);
+        assert.equal(other.includes('posts/157369'), !!p.basic, `${p.label}: 링크 ${p.basic ? '있음(틀 레몬)' : '없음'}`);
     }
 });
 
 await t('레몬 틀: 아래 칸(추가 정보 · 꼬리)을 꺼도 글 칸 아래 12px — 빈 사이 칸이 아니라 글 칸 자신의 margin · overflow:clip', () => {
     for (const fields of [bare, full]) {
+        // 1.1.3 레몬 틀은 기본 글꾸 새 틀(434) — 글 칸 여백은 <style> 의 .lg 규칙(빈 사이 칸 없음)
         const html = renderLog(model, { shape: 'lemon', colors: night, ui, fields });
-        assert.match(html, /<div style="(?:color:[^;"]*;)?display:flow-root;margin:0 12px 12px;border-radius:8px;overflow:clip"/);
+        assert.match(html, /\.kb434 \.lg\{margin-top:16px;padding:16px 18px;border-radius:8px;/);
         assert.ok(!/<div style="height:\d+px;?[^"]*"><\/div>/.test(html), '빈 사이 칸 없음');
     }
 });
@@ -190,7 +194,7 @@ await t('모든 기본 틀 · 내장 글꾸: 옮긴 뒤 인라인에 url 0 · �
         assert.equal(kkangtong(out), out, '깡통이 지울 것이 없어요');
         const classes = new Set([...out.matchAll(/class="[^"]*?(blq-[0-9a-z]+)/g)].map(m => m[1]));
         for (const c of classes) assert.ok(head.includes(`.${c}.${c}.${c}{`), `${c} 규칙`);
-        if (/url\(/.test(dom)) { assert.ok(classes.size && /url\('data:image\/svg\+xml,/.test(head), `${s.shape ?? s.template.id}: 그림 규칙`); lifted++; }
+        if (/url\(/.test(dom.replace(/<style>[\s\S]*?<\/style>/g, ''))) { assert.ok(classes.size && /url\('data:image\/svg\+xml,/.test(head), `${s.shape ?? s.template.id}: 그림 규칙`); lifted++; }
     }
     assert.ok(lifted >= 2, `그림이 있는 틀 ${lifted}개`);
 });
@@ -222,13 +226,13 @@ await t('레몬 바로가기: 빈 모서리 고르기(좌상 → 우상 → 좌�
     const { html, head } = liftForCopy(`<div style="position:relative">${a}<p>글</p></div>`);
     assert.ok(!/url\(/.test(html) && /url\('data:image\/svg\+xml,/.test(head), '레몬 그림도 <style> 로 옮겨요');
 });
-await t('레몬 바로가기: 설정 기본 꺼짐 · 자리 기본 자동 · 칩 · 미리보기에서 넣기', () => {
+await t('레몬 바로가기: 새 설정은 켠 채(1.1.3 — 틀이 저장된 설정은 그대로) · 자리 기본 자동 · 칩 · 미리보기에서 넣기', () => {
     const settings = read('src/settings.js');
-    assert.match(settings, /blank: \[\], lemonLink: false, lemonAt: 'auto' \}/);
-    assert.match(settings, /lemonLink: v\.lemonLink === true, lemonAt: \['tl', 'tr', 'bl', 'br'\]\.includes\(v\.lemonAt\) \? v\.lemonAt : 'auto'/);
+    assert.match(settings, /blank: \[\], lemonLink: true, lemonAt: 'auto'(?:, basicInfo: 'off', basicHeight: '')? \}/);   // 1.1.3 새 설정은 켠 채(틀이 저장된 설정은 그대로 — log-copy-connect-113.mjs)
+    assert.match(settings, /lemonLink: v\.lemonLink === true \|\| \(v\.lemonLink === undefined && v\.shape === undefined\), lemonAt: \['tl', 'tr', 'bl', 'br'\]\.includes\(v\.lemonAt\) \? v\.lemonAt : 'auto'/);
     const sheet = read('src/log-copy-sheet.js');
     assert.match(sheet, /data-lc-lemon aria-pressed="false"/);
-    assert.match(sheet, /if \(store\(\)\.lemonLink\) \{ try \{ placeLemon\(doc, normCorner\(store\(\)\.lemonAt\)\); \}/);
+    assert.match(sheet, /if \(store\(\)\.lemonLink && !basicOn\(\)\) \{ try \{ placeLemon\(doc, normCorner\(store\(\)\.lemonAt\)\); \}/);   // 1.1.3 기본 글꾸 새 틀은 레몬이 틀 안 제자리
     assert.match(sheet, /s2\.lemonLink = !s2\.lemonLink/);
 });
 await t('연결: 「HTML 복사」 · 「내려받기」가 옮긴 HTML 을 쓰고 CI 에 등록돼 있어요', () => {

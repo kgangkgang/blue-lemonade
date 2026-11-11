@@ -75,7 +75,8 @@ await test('30종이 마트 도구에 다 있어요: 분류 기념일 7 · 사�
     for (const id of IDS) assert.ok(!PRESETS.some(p => p.id === id), `${id}: 테마 PRESETS 에 없어요`);
     const theme = read('src/log-copy-presets.js').replace(/\/\/.*$/gm, '');
     assert.ok(!/CONCEPT_SHAPES|CONCEPT_PALETTES|CONCEPT_FRAMES|drawConcept|geulkku-concept30/.test(theme), '테마는 컨셉 30 그림 코드를 싣지 않아요');
-    assert.equal(PRESETS.filter(p => !p.template).length, 20, '기본 틀 20(그대로 · 기본 6 · 대화 4 · 종이 5 · 갤러리 4)');
+    assert.equal(PRESETS.filter(p => !p.template && !p.tone).length, 20, '기본 틀 20(그대로 · 기본 6 · 대화 4 · 종이 5 · 갤러리 4)');
+    assert.equal(PRESETS.filter(p => p.tone).length, 3, '1.1.3 깡통 로그 틀 묶음 3(깡통 로그 · 미니 · 진한 바탕)');
     assert.deepEqual(PRESETS.filter(p => p.template).map(p => p.id), BUILTIN_TEMPLATES.map(t => t.id));
     for (const t of BUILTIN_TEMPLATES) {
         const preset = PRESETS.find(p => p.id === t.id);
