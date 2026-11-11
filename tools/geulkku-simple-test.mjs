@@ -969,5 +969,21 @@ await test('도구 — 이름 숨김 · 단어 바꾸기(테마 transformLog 사
     assert.deepEqual(wd.cleanWords({ names: [' a ', 'a', ''], rules: [{ from: '', to: 'x' }, { from: 'b', to: '' }], mask: 'nope', word: '' }), { hide: false, names: ['a'], off: [], mask: 'auto', word: '○○', rules: [{ from: 'b', to: '' }] });
 });
 
+await test('숨기기(스포일러 · 테마 블록 숨김 꼴): 지문 · 대사 줄(p)을 통째로 눌러야 보이는 글로 · p 안에 details 를 안 넣어요(HTML 이 p 를 닫아요) · 28틀 · 꾸밈 규칙은 틀 <style> 한 곳 · 알약 무테 · fill 짝 · 복사 글 <style> 하나 · 정적 검사 · 제목 · 이름은 안 숨김 · 견본 글과 내 글 따로', () => {
+    for (const row of six.items) {
+        const p = sfx[row.id].preview, eds = tu.editables(p), nr = eds.find(e => e.cls === 'gk-nr'), dl = eds.find(e => e.cls === 'gk-d'), tt = eds.find(e => e.cls === 'gk-tt'), nm = eds.find(e => e.cls === 'gk-nm');
+        const out = tu.applyTune(p, { spoilers: [nr, dl, tt, nm].filter(Boolean).map(e => ({ i: e.i })) });
+        assert.equal((out.match(/data-bl-spoiler=""/g) || []).length, 2, row.id);
+        assert.equal((out.match(/\.blsp-s>summary\{/g) || []).length, 1, `${row.id} 꾸밈 규칙 한 번`);
+        assert.doesNotMatch(out, /<p\b[^>]*>(?:(?!<\/p>)[\s\S])*<details/, `${row.id} p 안에 details 없음`);
+        assert.match(out, /<details class="blsp-s blsp-k" data-bl-spoiler=""[^>]*><summary[^>]*><span class="blsp-l"[^>]*>[^<]+<\/span><div class="blsp-b"[^>]*><p class="gk-nr">/, `${row.id} 지문 줄 통째로`);
+        assert.match(out, /class="blsp-l" style="[^"]*border:1px solid transparent;[^"]*color:#8b8e96;-webkit-text-fill-color:#8b8e96;/, `${row.id} 무테 · fill`);
+        const ready = sf.simpleReady(shutPeek(out));
+        assert.equal((ready.match(/<style>/g) || []).length, 1, row.id); assert.ok(tg.readyReport(ready).ok, row.id);
+        assert.equal(tu.applyTune(p, { mineSpoilers: [{ i: nr.i }] }), p, `${row.id} 내 글 숨김은 견본에 안 걸려요`);
+    }
+    assert.deepEqual(tu.cleanTune({ spoilers: [{ i: 1 }, { i: 1 }, { i: -1 }, { i: 'x' }] }), { spoilers: [{ i: 1 }] });
+});
+
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

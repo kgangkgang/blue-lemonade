@@ -600,3 +600,5 @@ html.mart-cart-on{overflow:hidden}
 .mart-words-form{flex-wrap:nowrap}
 .mart-words-form .field-wrap{flex:1 1 0}
 @media (max-width:639px){.mart-words-form .field{font-size:16px}.mart-words-rules li{min-height:44px}}
+/* 11-11 줄 숨기기 · 풀기 — 「글 고치기」 중에만(hidden 이 칩 display 에 지지 않게) */
+.mart-tune-line [data-spoiler][hidden]{display:none}

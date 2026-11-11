@@ -5,7 +5,8 @@
 //   - 깡통 · 깡캐 색은 목록 위 두 칸(tone-state.js)과 같은 값이라 여기에 안 들어 있어요.
 export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(탭을 닫으면 사라져요 — sessionStorage)
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
-import { cleanLook } from './look.js?v=20261111p';
+import { spoilerHtml, spoilerStyle, SPOILER_LABEL } from './lib/log-copy/log-copy-spoiler.js';
+import { cleanLook } from './look.js?v=20261111q';
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** 역할별 글자색 — 이름은 inks.js(테마 글자색 칩)와 같아요. 새 틀에 그 글자가 있는 역할만 칸이 떠요(속마음 · 강조 · 형광펜은 그 클래스를 쓰는 틀이 생기면 한 줄 더해요) */
@@ -65,6 +66,11 @@ export function cleanTune(t) {
     if (t.own === false) out.own = false;
     if (t.hideTitle === true) out.hideTitle = true;   // 보일 것: 제목 끔(제목이 누름 칸 안인 틀은 화면이 이 칸을 안 줘요)
     if (t.hideNames === true) out.hideNames = true;   // 보일 것: 이름 줄 끔
+    // 숨긴 줄(스포일러): [{ i: 글 칸 번호 }] — 견본 글 · 내 글 따로(번호가 달라요) · 20줄까지
+    for (const key of ['spoilers', 'mineSpoilers']) {
+        const list = [...new Set((Array.isArray(t[key]) ? t[key] : []).map(x => Number(x?.i)).filter(i => Number.isInteger(i) && i >= 0))].slice(0, 20).map(i => ({ i }));   // 숨긴 줄: 그 줄의 글 칸 번호
+        if (list.length) out[key] = list;
+    }
     const lines = Number(t.lines); if (Number.isInteger(lines) && lines !== 0 && lines >= LINES_RANGE[0] && lines <= LINES_RANGE[1]) out.lines = lines;   // 대사 줄(견본 글일 때만)   // 「기본 색」이 있는 틀: false = 소품을 캐릭터 색으로 덮어써요(없으면 기본 색 그대로)
     const texts = {};
     for (const [i, v] of Object.entries(t.texts || {})) if (/^\d+$/.test(i) && typeof v === 'string') texts[i] = cleanRich(v);
@@ -155,6 +161,35 @@ export function applyLines(html, n) {
     for (let i = 0; i < k; i++) add += `${gap.includes('\n') ? '\n' : gap}${pairs[pairs.length - 2 + (i % 2)][0]}`;
     return text.slice(0, end) + add + text.slice(end);
 }
+// ── 숨긴 글(스포일러) — 테마와 같은 마크업(spoilerHtml · 스크립트 없이 눌러 펼치는 details) · 꾸밈 규칙은 틀 <style> 한 곳에 ──
+//   마트는 무테라 「숨겨진 글 보기」 알약의 테두리는 투명 · 옅은 바탕(테마는 1px 선) · 글자색은 fill 짝(깡통이 color 를 눌러요)
+const SPOILER_LOOK = { line: 'transparent', raised: 'rgba(127,127,127,.16)', muted: '#8b8e96' };
+const spoilerOf = inner => spoilerHtml(inner, SPOILER_LOOK, false).replace('color:#8b8e96;', 'color:#8b8e96;-webkit-text-fill-color:#8b8e96;');
+const SPOILER_RULES = spoilerStyle().replace(/^<style>|<\/style>$/g, '');
+const escAttr = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+/**
+ * 글 칸 i 가 든 글 줄(p — 지문 · 대사 줄)을 통째로 눌러야 보이는 글로(테마 블록 숨김 꼴).
+ *   글줄 안 일부만 숨기는 꼴은 못 써요 — <details> 는 <p> 안에 들어가면 HTML 이 p 를 닫아 버려 틀이 깨져요(깡통에서도 같아요).
+ *   제목 · 화자 이름 칸(p 가 아닌 칸 · 이름표)은 안 숨겨요. 못 찾으면 그대로.
+ */
+export function applySpoilers(html, list) {
+    let text = String(html ?? '');
+    if (!Array.isArray(list) || !list.length) return text;
+    const cells = editables(text), spans = [];
+    for (const sp of list) {
+        const cell = cells[sp.i]; if (!cell || !['gk-nr', 'gk-d'].includes(cell.cls)) continue;
+        const open = text.lastIndexOf('<p', cell.start); if (open < 0) continue;
+        const close = text.indexOf('</p>', cell.end); if (close < 0) continue;
+        const end = close + 4;
+        if (!spans.some(x => x.start === open)) spans.push({ start: open, end });
+    }
+    if (!spans.length) return text;
+    spans.sort((x, y) => y.start - x.start);
+    for (const x of spans) text = text.slice(0, x.start) + spoilerOf(text.slice(x.start, x.end)) + text.slice(x.end);
+    if (!text.includes('.blsp-s>summary{')) { const at = text.indexOf('\n</style>'); if (at >= 0) text = `${text.slice(0, at)}\n${SPOILER_RULES}${text.slice(at)}`; }
+    return text;
+}
+export { SPOILER_LABEL };
 export function applyTune(html, tune, { mine = false } = {}) {
     const t = cleanTune(tune);
     let text = String(html ?? '');
@@ -162,7 +197,7 @@ export function applyTune(html, tune, { mine = false } = {}) {
     if (!mine && t.lines) text = applyLines(text, t.lines);
     const rules = [...inkRules(text, t.inks), ...showRules(text, t)];
     if (rules.length) { const at = text.indexOf('\n</style>'); if (at >= 0) text = `${text.slice(0, at)}\n${rules.join('\n')}${text.slice(at)}`; }
-    return applyTexts(text, mine ? t.mineTexts : t.texts);
+    return applySpoilers(applyTexts(text, mine ? t.mineTexts : t.texts), mine ? t.mineSpoilers : t.spoilers);
 }
 
 // ── 「내 글꾸」: 틀 + 깡통 · 깡캐 · 낮밤 + 조절 값을 이름 붙여 기억 ──

@@ -3,12 +3,12 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone } from './tone-state.js?v=20261111p';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111p';
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111p';
-import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111p';
-import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111p';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111p';
+import { toneState, setTone } from './tone-state.js?v=20261111q';
+import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111q';
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111q';
+import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111q';
+import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111q';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111q';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -127,7 +127,7 @@ export function tuneHtml(item) {
     if (!item?.simple || !item.preview) return '';
     return `<section class="mart-tune" aria-label="조절"><div class="mart-tune-tabs mart-seg mart-hscroll" role="group" aria-label="조절 묶음">${[LOOK_TABS[0], ['head', '머리'], ...LOOK_TABS.slice(1), ['tools', '도구']].map(([id, l]) => `<button type="button" class="chip" data-tune-tab="${id}" aria-pressed="${id === tab}">${esc(l)}</button>`).join('')}</div>
         <div class="mart-tune-body">${tabBody(item)}</div>
-        <div class="mart-tune-line"><button type="button" class="chip mart-tune-edit" data-tune-edit aria-pressed="false">글 고치기</button><button type="button" class="chip" data-hist="undo" title="되돌리기(Ctrl+Z)" disabled>되돌리기</button><button type="button" class="chip" data-hist="redo" title="다시하기(Ctrl+Y)" disabled>다시하기</button><button type="button" class="chip mart-tune-all" data-tune-reset="all" hidden>전부 처음으로</button></div>
+        <div class="mart-tune-line"><button type="button" class="chip mart-tune-edit" data-tune-edit aria-pressed="false">글 고치기</button><button type="button" class="chip" data-hist="undo" title="되돌리기(Ctrl+Z)" disabled>되돌리기</button><button type="button" class="chip" data-hist="redo" title="다시하기(Ctrl+Y)" disabled>다시하기</button><button type="button" class="chip" data-spoiler="wrap" hidden title="커서가 든 지문 · 대사 줄을 눌러야 보이는 글로">줄 숨기기</button><button type="button" class="chip" data-spoiler="unwrap" hidden title="커서가 든 숨긴 줄을 다시 보이게">풀기</button><button type="button" class="chip mart-tune-all" data-tune-reset="all" hidden>전부 처음으로</button></div>
         <p class="mart-tune-hint" data-edit-hint hidden>미리보기의 글자를 눌러 바로 고쳐 써요 · 고치는 동안은 소품이 안 눌려요</p></section>`;
 }
 const dotOf = p => (p.tone.on && p.tone.k ? p.tone.k : NEUTRAL);
@@ -234,6 +234,7 @@ export function syncTune(sheet, item) {
         }
     }
     box.querySelector('[data-tune-edit]')?.setAttribute('aria-pressed', String(editing));
+    for (const sb of box.querySelectorAll('[data-spoiler]')) sb.hidden = !editing;
     const hint = box.querySelector('[data-edit-hint]'); if (hint) hint.hidden = !editing;
     const all = box.querySelector('[data-tune-reset="all"]'); if (all) all.hidden = !(t || toneState.on || toneState.k2 || lookNow());
     const laid = box.clientWidth > 0;   // 창이 뜨기 전(폭 0)에는 건너뛰고, 뜬 뒤 다시 맞춰요
@@ -252,10 +253,11 @@ export function armEdit(previewRoot, item) {
     if (!previewRoot || !item?.simple) return;
     const root = previewRoot.querySelector('.gk'); if (!root) return;
     let i = 0, inside = null;
-    const rich = el => [...el.querySelectorAll('*')].every(c => (RICH_TAGS.includes(c.tagName.toLowerCase()) && !c.attributes.length) || c.hasAttribute('data-bl-mask'));   // 안에 꾸밈 태그만(tune.js LEAF 와 같은 뜻)
+    const rich = el => [...el.querySelectorAll('*')].every(c => (RICH_TAGS.includes(c.tagName.toLowerCase()) && !c.attributes.length) || c.hasAttribute('data-bl-mask') || !!c.closest('[data-bl-spoiler]'));   // 숨긴 글 · 테이프 칸이 든 칸도 한 칸   // 안에 꾸밈 태그만(tune.js LEAF 와 같은 뜻)
     const walk = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
     for (let el = walk.nextNode(); el; el = walk.nextNode()) {
         if (inside?.contains(el)) { el.removeAttribute('contenteditable'); delete el.dataset.blEd; continue; }   // 한 칸 안의 꾸밈은 따로 칸이 아니에요
+        if (el.closest('.blsp-h')) continue;   // 숨긴 줄의 흐린 사본(알약 쪽)은 글 칸이 아니에요 — 칸 번호는 숨기기 전과 같아요
         if (!rich(el) || ['STYLE', 'SCRIPT', 'AUDIO', 'BR'].includes(el.tagName) || [...el.childNodes].some(n => n.nodeType === 8)) continue;
         let prev = el.previousSibling; while (prev && prev.nodeType === 3 && !prev.data.trim()) prev = prev.previousSibling;
         const marked = prev?.nodeType === 8 && /^\s*✎/.test(prev.data);
@@ -266,6 +268,7 @@ export function armEdit(previewRoot, item) {
         else { el.removeAttribute('contenteditable'); el.removeAttribute('spellcheck'); }
     }
     previewRoot.classList.toggle('is-editing', editing);
+    for (const d of root.querySelectorAll('details[data-bl-spoiler]')) d.open = editing;   // 고치는 동안은 숨긴 줄도 펼쳐 보여요(그래야 고쳐 쓰고 풀 수 있어요)
     for (const d of root.querySelectorAll('details')) { if (editing) d.dataset.blHold = String(d.open); else delete d.dataset.blHold; }   // 켤 때의 열림 상태를 붙잡아 둬요
 }
 
@@ -332,7 +335,8 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if (ed && editing) {   // 글 고치기: 원래 글과 같아지면 그 자리 값은 지워요
             const key = mineOn() ? 'mineTexts' : 'texts', cur = clone(tuneOf(item.id)), texts = cur[key] ??= {}, i = ed.dataset.blEd;
             const base = editables(applyMine(item.preview)).map(x => x.text);   // 내 글이 켜져 있으면 내 글이 본
-            const now = cleanRich(ed.innerHTML);   // 꾸밈(줄바꿈 · 굵게 · 기울임 …)은 남기고 나머지는 글자만
+            const copy = ed.cloneNode(true); for (const s of copy.querySelectorAll('[data-bl-spoiler]')) s.replaceWith(...(s.querySelector(':scope > .blsp-c')?.childNodes || []));
+            const now = cleanRich(copy.innerHTML);   // 꾸밈(줄바꿈 · 굵게 · 기울임 …)은 남기고 나머지는 글자만
             if (now === cleanRich(base[i])) delete texts[i]; else texts[i] = now;
             setTune(item.id, cur, { textOnly: true });
         }
@@ -363,6 +367,16 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         document.execCommand('insertText', false, text);
     });
     // 되돌리기 · 다시하기: 값이 바뀔 때마다 0.5초 묶어 한 칸 · Ctrl+Z / Ctrl+Y(Ctrl+Shift+Z) — 글칸 · 입력칸 안에서는 그 칸의 되돌리기를 그대로 둬요(고쳐 쓰는 글 칸은 마트 되돌리기)
+    // 숨기기 · 풀기에 쓸 마지막 고른 자리(단추를 누르면 고른 것이 풀리는 브라우저가 있어 미리 적어 둬요)
+    let lastSel = null;
+    document.addEventListener('selectionchange', () => {
+        if (!editing || !sheet.open) return;
+        const s = getSelection(), n = s?.anchorNode, ed = (n?.nodeType === 1 ? n : n?.parentElement)?.closest?.('.mart-sheet-preview [data-bl-ed]');
+        if (!ed) return;
+        const spEl = ed.closest('[data-bl-spoiler]');
+        const text = s.rangeCount && ed.contains(s.getRangeAt(0).endContainer) ? s.toString().replace(/\s+/g, ' ').trim().slice(0, 200) : '';
+        lastSel = { i: Number(ed.dataset.blEd), text, spoiler: !!spEl };
+    });
     const onChange = () => { const item = current()?.item; if (sheet.open && item?.simple) { histRecord(item, sheet); syncHist(sheet); } };
     document.addEventListener('bl-tune-change', onChange);
     document.addEventListener('bl-tone-change', onChange);
@@ -386,6 +400,19 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         const q = sel => e.target.closest?.(sel);
         let b;
         if ((b = q('[data-hist]'))) { undo(b.dataset.hist === 'redo' ? 1 : -1); return; }
+        if ((b = q('[data-spoiler]'))) {   // 숨기기: 「글 고치기」 중 고른 글(한 칸 안) · 풀기: 커서가 든 숨긴 글
+            const key = mineOn() ? 'mineSpoilers' : 'spoilers', cur = clone(tuneOf(item.id)), list = cur[key] ??= [], sel = lastSel;
+            const okCell = sel && ['gk-nr', 'gk-d'].some(c => sheet.querySelector(`.mart-sheet-preview [data-bl-ed="${sel.i}"]`)?.classList.contains(c));
+            if (b.dataset.spoiler === 'wrap') {
+                if (!okCell) { say('숨길 지문 · 대사 줄에 커서를 두세요', 2600); return; }
+                if (list.some(x => x.i === sel.i)) return;
+                list.push({ i: sel.i }); setTune(item.id, cur); say('그 줄을 눌러야 보이는 글로 숨겼어요', 2000);
+            } else {
+                if (!sel?.spoiler) { say('풀 숨긴 줄에 커서를 두세요', 2400); return; }
+                cur[key] = list.filter(x => x.i !== sel.i); setTune(item.id, cur); say('숨긴 줄을 풀었어요', 2000);
+            }
+            return;
+        }
         if ((b = q('[data-tune-tab]'))) { tab = b.dataset.tuneTab; redraw(item); return; }
         if ((b = q('[data-tune-mode]'))) { setTone({ mode: b.dataset.tuneMode }); return; }
         if ((b = q('[data-words-hide]'))) { setWords({ hide: b.dataset.wordsHide === '1' }); redraw(item); return; }
