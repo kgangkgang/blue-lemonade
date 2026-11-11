@@ -213,7 +213,7 @@ await test('실제 틀 스물여덟: 이식판 원래 판과 한 글자도 안 �
     assert.deepEqual(six.items.map(x => x.id), Object.keys(WANT).map(k => `simple-${k}`));
     assert.equal(six.count, 28);
     assert.deepEqual(six.categories.map(c => c.label), ['눌러서 열어요', '누르면 바뀌어요', '소리 카드', '가만히 보기']);
-    const isik = ISIKS.filter(f => fs.existsSync(f)).map(f => fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n')).join('\n');
+    const isik = gen.sampleNames(ISIKS.filter(f => fs.existsSync(f)).map(f => fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n')).join('\n'));   // 견본 화자 이름(깡통 · 깡캐)만 마트가 바꿔요
     for (const row of six.items) {
         const k = row.id.slice(7), [name, cat, peek] = WANT[k], p = sfx[row.id].preview;
         assert.equal(row.name, name); assert.equal(row.category, `simple-${cat}`, k); assert.ok(row.simple && row.copyOnly && row.photo && row.style === '심플');
@@ -497,6 +497,98 @@ await test('캐릭터 줄: 「원래 색(틀마다 정해 둔 색)」이 첫 항
     assert.match(cast, /const paperPanel = PAPER_ENABLED && paperOpen \?/);
     const rig = fs.readFileSync(path.join(ROOT, 'tools/site-rig/site-rig.mjs'), 'utf8');
     assert.ok(!rig.split('\n').filter(l => /^\s*\{ group:/.test(l)).some(l => l.includes("'글꾸 · 바탕 펼침'")));
+});
+
+// ── 11-11 깡통 · 깡캐 두 칸(둘째 화자 색) · 견본 화자 이름 · 색 단추 ──
+await test('깡캐(둘째 화자) 색: 안 고르면 한 글자도 안 달라요 · 고르면 스물여덟 틀 × (원래 색 · 다른 색 · 캐릭터 없음) × 낮밤에서 상대의 옛 색이 화자 규칙 · 소품에 안 남고 새 색으로 · 기본 규칙 그대로 · <style> 하나 · 뿌리 이름에 상대 색 · 되풀이', () => {
+    const K2 = '#7fe03c', rgb2 = '127,224,60';
+    const rgbOf = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(',');
+    const noScheme = h => h.slice(h.indexOf('</style>')).replace(/color-scheme:(light|dark)/g, '');
+    for (const row of six.items) {
+        const p = sfx[row.id].preview, info = sf.simpleFrameInfo(p);
+        const otherOld = info.K0 === '#3aa7ff' ? '#ff5fa2' : '#3aa7ff';
+        for (const mode of ['dark', 'light']) for (const K of [sf.ORIGINAL, '#d19cff', null]) {
+            const plain = sf.toneSimple(p, K, { mode });
+            for (const none of [undefined, null, '', 'nope']) assert.equal(sf.toneSimple(p, K, { mode, other: none }), plain, `${row.id} 상대 안 고름`);
+            const out = sf.toneSimple(p, K, { mode, other: K2 }), css = styleOf(out), tag = `${row.id} ${mode} ${String(K)}`;
+            assert.equal((out.match(/<style>/g) || []).length, 1, tag);
+            assert.equal(partsOf(out)[0], partsOf(p)[0], `${tag} 기본 규칙`);
+            assert.equal(noScheme(out), noScheme(plain), `${tag} 본문 그대로`);
+            assert.match(rootOf(out), /gk-cv-\w+-7fe03c(\s|$)/, tag);
+            assert.ok(css.includes(rgb2), `${tag} 새 띠 색`);
+            // 화자 규칙(이름 · 띠 · 밑줄 · 이름표)에는 상대의 옛 색이 없어요
+            for (const r of css.split('\n')) if (/\.gk-[a-z]+[A-Z](?![\w-])/.test(r.slice(0, r.indexOf('{')))) assert.ok(!r.includes(rgbOf(otherOld)) && !r.toLowerCase().includes(otherOld), `${tag} 화자 규칙에 옛 색 ${r.slice(0, 70)}`);
+            // 주인공 색까지 바꾼 판은 어디에도 옛 상대 색이 없어요(소품 · 키프레임 포함)
+            if (K !== sf.ORIGINAL) { const bare = css.replace(/gk-cv-[\w-]+/g, '').toLowerCase(); assert.ok(!bare.includes(otherOld) && !bare.includes(rgbOf(otherOld)), `${tag} 옛 상대 색`); }
+            // 상대 이름 글자 규칙이 두 판 다 있어요
+            const X = info.speakers.find(x => new RegExp(`gk-n${x}">깡캐`).test(p));
+            assert.ok([...css.matchAll(new RegExp(`\\.gk-nm\\.gk-n${X}\\{color:#[0-9a-f]{6}`, 'g'))].length >= 2, `${tag} 상대 이름 규칙 두 판`);
+            if (K) assert.equal(sf.toneSimple(out, K, { mode, other: K2 }), out, `${tag} 되풀이`);
+        }
+    }
+    // 주인공이 원래 색이면 주인공 · 소품 규칙은 시안 그대로(상대 규칙만 바뀜 — 뿌리 이름 꼬리만 다름)
+    const p = sfx['simple-k1'].preview, a = styleOf(sf.toneSimple(p, sf.ORIGINAL, { mode: 'light' })).split('\n'), b = styleOf(sf.toneSimple(p, sf.ORIGINAL, { mode: 'light', other: K2 })).split('\n').map(l => l.split('-7fe03c').join(''));
+    for (const l of a) if (!/\.gk-[a-z]+B(?![\w-])/.test(l.slice(0, l.indexOf('{')))) assert.ok(b.includes(l), `k1 주인공 · 소품 규칙 그대로: ${l.slice(0, 80)}`);
+});
+
+await test('깡캐 기억: k2 · name2 를 깡통과 같은 저장소에 기억하고 다시 읽어요 · 안 골랐으면 저장 꼴이 예전과 같아요 · 복사 글 길(toneOut)과 다시 칠하기 열쇠에 들어가요', async () => {
+    const store = {};
+    globalThis.localStorage = { getItem: k => store[k] ?? null, setItem(k, v) { store[k] = v; }, removeItem(k) { delete store[k]; } };
+    const href = pathToFileURL(path.join(MART, 'tone-state.js')).href;
+    const m = await import(`${href}?k2=a`);
+    const it = { ...six.items[0], ...sfx[six.items[0].id], kind: 'geulkku' };
+    assert.equal(m.toneState.k2, null);
+    m.setTone({ mode: 'light' });
+    const saved = () => JSON.parse(store['bl-mart-tone-v1']);
+    assert.ok(!('k2' in saved()) && !('name2' in saved()), '안 골랐으면 k2 칸 없음');
+    const base = m.toneOut(it, it.preview), key0 = m.toneKey();
+    m.setTone({ k2: '#7fe03c', name2: '우리엘' });
+    assert.notEqual(m.toneKey(), key0);
+    assert.equal(m.toneOut(it, it.preview), sf.toneSimple(it.preview, sf.ORIGINAL, { mode: 'light', other: '#7fe03c' }));
+    assert.deepEqual([saved().k2, saved().name2], ['#7fe03c', '우리엘']);
+    const again = await import(`${href}?k2=b`);
+    assert.deepEqual([again.toneState.k2, again.toneState.name2, again.toneState.on], ['#7fe03c', '우리엘', false]);
+    m.setTone({ on: true, k: '#d19cff', name: '백시우' });
+    assert.equal(m.toneOut(it, it.preview), sf.toneSimple(it.preview, '#d19cff', { mode: 'light', other: '#7fe03c' }));
+    m.setTone({ k2: null }); m.setTone({ on: false });
+    assert.equal(m.toneState.name2, '');
+    assert.equal(m.toneOut(it, it.preview), base, '둘 다 원래 색으로 돌리면 처음과 같아요');
+    assert.equal(m.toneKey().replace('"#d19cff"', 'null'), key0);
+    delete globalThis.localStorage;
+});
+
+await test('견본 화자 이름: 스물여덟 틀의 이름표 · 소리 이름표 · 지문이 「깡통」 · 「깡캐」(옛 견본 이름 0) · 주석 속 「가게 이름」 같은 낱말은 그대로 · 두 번 걸어도 같아요', () => {
+    for (const row of six.items) {
+        const p = sfx[row.id].preview, body = p.slice(p.indexOf('</style>')), text = body.replace(/<!--[\s\S]*?-->/g, '');
+        assert.ok(!/이름|친구/.test(text), `${row.id} 옛 견본 이름`);
+        assert.equal((body.match(/<p class="gk-nm gk-n[A-Z]">깡통<\/p>/g) || []).length, 1, row.id);
+        assert.equal((body.match(/<p class="gk-nm gk-n[A-Z]">깡캐<\/p>/g) || []).length, 1, row.id);
+        assert.ok(body.includes('깡통은 난간에 기대어') && body.includes('<p class="gk-nr">깡캐는 대답 대신'), `${row.id} 지문`);
+        assert.equal(gen.sampleNames(p), p);
+        if (row.audio) assert.match(body, /<span class="gk-sn gk-s[A-Z]">깡통<\/span>/, `${row.id} 소리 이름표`);
+    }
+    assert.equal(sfx['simple-q09'].preview.split('<!-- ✎ 가게 이름 -->').length - 1, 1);
+});
+
+await test('캐릭터 목록: 묶음 넷(천지합동청 13 · D&H 6 · 무협시뮬 7 · 센티넬버스 11 = 37명) · 「기타」 묶음 없음', async () => {
+    const m = await imp(path.join(MART, 'tone-state.js'));
+    assert.deepEqual(m.CAST_GROUPS.map(g => [g.id, g.label, g.cast.length]), [['halo', '천지합동청', 13], ['dh', 'D&H · 아드리안', 6], ['gangho', '무협시뮬', 7], ['sentinel', '센티넬버스', 11]]);
+    assert.equal(m.CAST.length, 37);
+    for (const f of ['tone-state.js', 'cast.js']) assert.ok(!fs.readFileSync(path.join(MART, f), 'utf8').includes('기타'), f);
+});
+
+await test('깡통 · 깡캐 두 칸 · 색 단추: 머리 줄에 칸 둘(펼친 칸 표시) · 기억한 캐릭터는 두 칸이 같이 써요 · 색 칸은 색 원 + 색 값 단추(기본 색 칸은 덮는 투명 칸)', () => {
+    const cast = fs.readFileSync(path.join(MART, 'cast.js'), 'utf8'), css = fs.readFileSync(path.join(MART, 'mart.css'), 'utf8');
+    assert.ok(cast.includes("${toggle('main', '깡통', now)}${toggle('other', '깡캐', now2)}"));
+    assert.ok(!cast.includes('<span>캐릭터:</span>'));
+    assert.ok(cast.includes('aria-expanded="${who === id}"') && cast.includes('name="bl-cast2" value="off"'));
+    assert.ok(cast.includes('setTone(other ? { k2: saved.color, name2: saved.name } : { on: true, k: saved.color, name: saved.name })'));
+    assert.equal(cast.split('<input type="color"').length - 1, 1, '색 칸은 colorField 한 곳');
+    assert.ok(cast.includes('<label class="mart-cast-color"') && cast.includes('class="mart-cast-swatch"') && cast.includes('class="mart-cast-hex"'));
+    assert.ok(css.includes('.mart-cast-color input[type=color]{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;'));
+    assert.ok(css.includes('.mart-cast-color:focus-within{outline:2px solid var(--blue);outline-offset:2px}'));
+    assert.ok(!css.includes('.mart-cast-form input[type=color]{width:40px'));
+    assert.ok(css.includes('.mart-cast-toggle[data-toggle][aria-expanded=true]{border-color:var(--ink)'));
 });
 
 console.log(`\n${pass} 통과 · ${fail} 실패`);

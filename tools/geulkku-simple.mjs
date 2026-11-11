@@ -112,6 +112,12 @@ const focusRing = (html) => {
   const end = html.indexOf('\n', at);
   return `${html.slice(0, end)}\n${FOCUS_RULE(key)}${html.slice(end)}`;
 };
+/** 11-11 견본 글의 화자 이름: 「이름」 → 「깡통」 · 「친구」 → 「깡캐」(사용자 지시 — 이름표 · 소리 이름표 · 지문 속 같은 낱말까지 · 받침이 같아 조사는 그대로) */
+export const sampleNames = html => String(html)
+  .replace(/(<(?:p|span) class="gk-(?:nm gk-n|sn gk-s)[A-Z]">)이름(?=<\/)/g, '$1깡통')
+  .replace(/(<(?:p|span) class="gk-(?:nm gk-n|sn gk-s)[A-Z]">)친구(?=<\/)/g, '$1깡캐')
+  .replace(/이름은 난간에 기대어/g, '깡통은 난간에 기대어')
+  .replace(/(<p class="gk-nr">)친구는 대답 대신/g, '$1깡캐는 대답 대신');
 /** 붙이면 지워지거나 쓰면 안 되는 것 */
 function problems(html) {
   const bad = [];
@@ -142,7 +148,7 @@ export function frameHtml(d) {
   const file = fileOf(d);
   if (!file) throw new Error(`${d.id}: 틀 파일이 없어요`);
   const raw = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
-  const html = focusRing(fillSlots(martAudio(stripAlias(raw.trim())), d.values));
+  const html = sampleNames(focusRing(fillSlots(martAudio(stripAlias(raw.trim())), d.values)));
   const bad = problems(html);
   if (bad.length) throw new Error(`${d.id}: ${bad.join(' · ')}`);
   const info = sf.simpleFrameInfo(html);

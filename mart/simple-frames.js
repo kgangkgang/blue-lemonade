@@ -120,7 +120,9 @@ export function simpleFrameInfo(html) {
     const base = classes.find(c => BASES.includes(c)) || null;
     const cvClass = classes.find(c => /^gk-cv-[\w-]+$/.test(c)) || null;
     const cvName = cvClass ? cvClass.slice(6) : null;
-    const K0 = cvName == null ? undefined : cvName === 'none' ? null : SIMPLE_CONTRACT.cv[cvName] || (/^[0-9a-f]{6}$/.test(cvName) ? `#${cvName}` : undefined);
+    // 상대 색을 따로 칠한 판은 이름 끝에 「-<상대 색 6자>」가 붙어요(gk-cv-bl-d19cff) — 주인공 색은 그 앞부분
+    const cvMain = cvName == null ? null : cvName.replace(/-[0-9a-f]{6}$/, '');
+    const K0 = cvName == null ? undefined : cvMain === 'none' ? null : SIMPLE_CONTRACT.cv[cvMain] || (/^[0-9a-f]{6}$/.test(cvMain) ? `#${cvMain}` : undefined);
     const css = m[6].replace(/^\n/, '').replace(/\n$/, '');
     const parts = css.split(SIMPLE_CONTRACT.blockSep);
     const rest = text.slice(m.index + m[0].length);
@@ -202,12 +204,12 @@ function originalBase(info) {
  * 심플 새 틀을 캐릭터 색 K 로 다시 칠해요(낮 · 밤은 뿌리 클래스만 바꿔요).
  * @param {string} html 틀 HTML(조각의 preview — 원래 판)
  * @param {string|null} K 캐릭터 대사색(없으면 무채 사다리)
- * @param {{ mode?: 'light'|'dark', main?: string }} [options] main: 주인공 화자 글자(없으면 M → A)
+ * @param {{ mode?: 'light'|'dark', main?: string, other?: string|null }} [options] main: 주인공 화자 글자(없으면 M → A) · other: 상대(주인공이 아닌 화자) 대사색 — 없으면 틀이 정해 둔 색 그대로
  * @returns {string} 꼴이 아니면 받은 그대로
  */
 /** 「원래 색」 표시 — toneSimple(html, ORIGINAL, { mode }) 는 틀을 만든 색 그대로(캐릭터 색 클래스 이름까지 이식판 글자 그대로) 낮 · 밤만 바꿔요 */
 export const ORIGINAL = Symbol('원래 색');
-export function toneSimple(html, K, { mode = 'dark', main } = {}) {
+export function toneSimple(html, K, { mode = 'dark', main, other } = {}) {
     const info = simpleFrameInfo(html);
     if (!info || !info.key || !info.base || info.K0 === undefined) return html;
     const original = K === ORIGINAL;
@@ -217,7 +219,10 @@ export function toneSimple(html, K, { mode = 'dark', main } = {}) {
     const alt = origBase === 'gk-tl' ? 'gk-td' : 'gk-tl';
     const nowBase = want === origMode ? origBase : alt;
     const nowTn = want === origMode ? null : (want === 'dark' ? 'gk-tn-n' : 'gk-tn-d');
-    const cv = original && info.cvClass ? info.cvClass : `gk-cv-${cvNameOf(k)}`;
+    // 11-11 상대 색(사용자 「왜 친구 글자색은 안바뀜?」): 고르면 주인공이 아닌 화자를 그 색으로 — 주인공과 같은 식(이름 · 띠 · 밑줄 · 이름표). 안 고르면 한 글자도 안 달라져요
+    const k2 = speakerColor(other) || null;
+    const cvBase = original && info.cvClass ? info.cvClass.replace(/-[0-9a-f]{6}$/, '') : `gk-cv-${cvNameOf(k)}`;
+    const cv = k2 ? `${cvBase}-${k2.slice(1)}` : cvBase;   // 같은 틀을 상대 색만 달리해 한 글에 둘 붙여도 안 부딪혀요
     const renameCv = s => (info.cvClass ? s.split(`.${info.cvClass}`).join(`.${cv}`) : s);
     // ① 뿌리 클래스: gk 바로 뒤에 바탕 · 낮밤, 캐릭터 색 클래스는 새 색 이름
     const kept = info.classes.filter(c => c !== 'gk' && !BASES.includes(c) && !TN.includes(c)).map(c => (c === info.cvClass ? cv : c));
@@ -226,7 +231,7 @@ export function toneSimple(html, K, { mode = 'dark', main } = {}) {
     const colors0 = speakerColorsOf(info.color_css);
     // 주인공 = 틀을 만든 캐릭터 색(gk-cv-…)과 같은 색인 화자(03 바인더는 분홍 B) → 없으면 M → A
     const mainX = main || info.speakers.find(X => info.K0 && colors0[X] === info.K0) || SIMPLE_CONTRACT.mainOrder.find(x => info.speakers.includes(x)) || info.speakers[0];
-    const colors = Object.fromEntries(info.speakers.map(X => [X, X === mainX ? k : (colors0[X] ?? null)]));
+    const colors = Object.fromEntries(info.speakers.map(X => [X, X === mainX ? k : (k2 || (colors0[X] ?? null))]));
     const same = X => X !== '?' && (colors[X] ?? null) === (colors0[X] ?? null);
     const soundX = info.soundBy[0];
     const keepSpeaker = (r) => {   // 화자 규칙 하나 → 그대로 둘 선택자만 남긴 규칙(없으면 null)
@@ -251,6 +256,12 @@ export function toneSimple(html, K, { mode = 'dark', main } = {}) {
     const seed0 = info.K0 || NEUTRAL_LADDER.c500, seed1 = k || NEUTRAL_LADDER.c500;
     for (const { s, l } of SIMPLE_CONTRACT.extraSteps) { const [h0, s0, l0] = toHsl(seed0), [h1, s1, l1] = toHsl(seed1); put(fromHsl(h0, s0 * s, l0 * l), fromHsl(h1, s1 * s, l1 * l)); }
     for (const bg of [...faces.orig, ...faces.alt, '#ffffff']) put(sianFit(seed0, bg), sianFit(seed1, bg));
+    // 상대 색을 골랐으면 상대의 옛 색 그대로 칠한 소품(15 요람 공 · 17 바람개비 날개처럼)과 바탕별 글자 맞춤 값도 새 상대 색으로
+    if (k2) for (const X of info.speakers) {
+        if (X === mainX || !colors0[X] || colors0[X] === k2) continue;
+        put(colors0[X], k2);
+        for (const bg of [...faces.orig, ...faces.alt, '#ffffff']) put(sianFit(colors0[X], bg), sianFit(k2, bg));
+    }
     const rgbOf = K0 => h2rgb(K0 || NEUTRAL_LADDER.c500).join(',');
     const swapRgb = body => changed.reduce((b, X) => (colors0[X] ? b.split(`(${rgbOf(colors0[X])},`).join(`(${rgbOf(colors[X])},`).split(`rgb%28${rgbOf(colors0[X])}%29`).join(`rgb%28${rgbOf(colors[X])}%29`) : b), body);
     const swapHex = body => body.replace(HEX6, (h) => { const pre = h[0] === '#' ? '#' : '%23', v = swap.get(`#${h.slice(pre.length).toLowerCase()}`); return v ? pre + v.slice(1) : h; });

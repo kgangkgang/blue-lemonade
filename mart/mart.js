@@ -853,7 +853,7 @@ async function main() {
     const rank = x => (x.builtin ? -1 : STYLE_ORDER.includes(styleOf(x)) ? STYLE_ORDER.indexOf(styleOf(x)) : STYLE_ORDER.length);
     for (const a of byName.values()) { a.sort((p, q) => rank(p) - rank(q)); for (const x of a) x._sibs = a; }
     { const want = decodeURIComponent(location.hash.slice(1)), it = want && items.find(x => x.id === want); if (it) conceptPick.set(it.name, it.id); }   // #글꾸id 로 오면 그 디자인이 카드에 보여요
-    mountCast(document.querySelector('.mart-cast'), { say });   // 11-10 목록 위 「캐릭터: 없음 ▾」
+    mountCast(document.querySelector('.mart-cast'), { say });   // 11-10 목록 위 「깡통: … ▾ · 깡캐: … ▾」
     cards = lazyGrid(grid, cardEl);
     applyFilter();
     grid.setAttribute('aria-busy', 'false');
