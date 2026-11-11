@@ -6,8 +6,8 @@
 export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(탭을 닫으면 사라져요 — sessionStorage)
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
 import { spoilerHtml, spoilerStyle, SPOILER_LABEL } from './lib/log-copy/log-copy-spoiler.js';
-import { cleanLook } from './look.js?v=20261111w';
-import { applyVals } from './custom.js?v=20261111w';   // 11-11 틀별 값(점수 · 개수 · 별 · 날짜 · 소품 글자)
+import { cleanLook } from './look.js?v=20261111x';
+import { applyVals } from './custom.js?v=20261111x';   // 11-11 틀별 값(점수 · 개수 · 별 · 날짜 · 소품 글자)
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** 역할별 글자색 — 이름은 inks.js(테마 글자색 칩)와 같아요. 새 틀에 그 글자가 있는 역할만 칸이 떠요(속마음 · 강조 · 형광펜은 그 클래스를 쓰는 틀이 생기면 한 줄 더해요) */
@@ -93,6 +93,18 @@ export const tuneOf = id => tunes[id] || null;
 /** 조절 값이 바뀔 때마다 올라가는 번호(카드가 그려 둔 것을 다시 쓸지 알아보는 열쇠에 들어가요) */
 export const tuneRev = () => rev;
 /** 조절 값을 통째로 바꿔요(null 이면 처음으로) · 'bl-tune-change' 를 알려요 — textOnly: 글만 고친 것(크게 보기 미리보기는 다시 안 그려요 · 글 쓰는 자리가 안 날아가게) */
+/** 11-11 독립 점검 1 — 내 글이 바뀌면 옛 내 글에서 고친 줄 · 숨긴 줄(칸 번호가 옛 글 것)을 모든 틀에서 비워요 */
+export function dropMineEdits() {
+    let n = 0;
+    for (const [id, t] of Object.entries(tunes)) {
+        if (!t.mineTexts && !t.mineSpoilers) continue;
+        const { mineTexts, mineSpoilers, ...rest } = t, c = cleanTune(rest);
+        if (c) tunes[id] = c; else delete tunes[id];
+        n++;
+    }
+    if (n) { rev++; write('session', TUNE_KEY, tunes); try { document.dispatchEvent(new CustomEvent('bl-tune-change', { detail: { id: null } })); } catch { /* 시험 */ } }
+    return n;
+}
 export function setTune(id, next, { textOnly = false } = {}) {
     const c = cleanTune(next);
     if (c) tunes[id] = c; else delete tunes[id];

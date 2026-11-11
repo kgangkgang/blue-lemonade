@@ -611,3 +611,14 @@ html.mart-cart-on{overflow:hidden}
 /* 11-11 화자 배정 바꾸기 ⇄ — 깡통 · 깡캐 칸 사이 아이콘 단추(.ibtn 34 · 면 없음 · 잉크 16) */
 .mart-cast-swap{align-self:center;font-size:0}
 .mart-cast-swap::after{content:"";position:absolute;inset:0;margin:auto;width:16px;height:16px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4'/%3E%3C/svg%3E") center/contain no-repeat;pointer-events:none}   /* 화살표 둘(마스크 · 위아래 맞대칭이라 가운데 맞춤) */
+/* 11-11 독립 점검 — 5 글 고치기 줄은 한 줄 가로 스크롤 · 7 미리보기는 페이지 자간을 물려받지 않게(복사 글과 같게) · 8 「HTML 복사로 써요」는 안내 글 꼴 · 9 PC 크게 보기는 미리보기를 위에 붙박이 */
+.mart-tune-edits{flex-wrap:nowrap}
+.mart-tune-edits>*{flex:none}
+.mart-tune-edits [data-tune-reset="all"]{margin-left:auto}
+.mart-preview-in,.mart-sheet-preview{letter-spacing:normal;word-spacing:normal}
+.mart-builtin{background:transparent;padding:0 4px;color:var(--muted)}
+@media (min-width:640px){
+  .mart-sheet:not(.mart-taste) .mart-sheet-body{display:flex;flex-direction:column;scroll-padding-top:calc(52vh + 12px)}   /* 칸으로 굴러갈 때 붙박이 미리보기 밑으로 */
+  .mart-sheet:not(.mart-taste) .mart-sheet-body>*{flex:none}
+  .mart-sheet:not(.mart-taste) .mart-sheet-body>.mart-sheet-preview{order:-1;flex:none;position:sticky;top:-12px;z-index:2;max-height:52vh;overflow:auto;margin:-12px -12px 12px;padding:12px;background:var(--tint);box-shadow:0 1px 0 var(--line);scrollbar-width:thin}
+}

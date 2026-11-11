@@ -50,7 +50,7 @@ export function mineModel(text) {
         const mine = lines.filter(l => l.turn === undefined);
         for (const l of mine) l.turn = turn;
         if (parsed.mode !== 'alternate' && mine.length === 1 && mine[0].type === 'nr' && mine[0].html.replace(/<[^>]+>/g, '').length <= 80 && turn.who >= 0) {
-            for (const l of mine) { l.type = 'dl'; l.who = turn.who; l.text = l.html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&'); delete l.html; }
+            for (const l of mine) { l.type = 'dl'; l.who = turn.who; l.rich = l.html; l.text = l.html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&'); delete l.html; }
         }
     }
     for (const l of lines) delete l.turn;
@@ -112,7 +112,7 @@ export function fillMine(html, model) {
     for (const l of model.lines) {
         if (l.type === 'nr') { pieces.push({ html: `${nrOpen}${l.html}</p>`, dl: false }); prevWho = null; continue; }
         const t = tplOf(l.who), withName = prevWho !== l.who;
-        pieces.push({ html: `${withName ? `<p class="gk-nm gk-n${t.X}">${esc(nameOf(l.who))}</p>${t.gap}` : ''}${t.open}${esc(l.text)}${t.close}`, dl: true, head: withName });
+        pieces.push({ html: `${withName ? `<p class="gk-nm gk-n${t.X}">${esc(nameOf(l.who))}</p>${t.gap}` : ''}${t.open}${l.rich || esc(l.text)}${t.close}`, dl: true, head: withName });
         prevWho = l.who;
     }
     // 글 자리를 「사이에 낀 것」(소리 카드 · 쪽 넘김)으로 가른 묶음들 — 내 글도 그만큼 나눠 넣어요

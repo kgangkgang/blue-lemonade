@@ -3,13 +3,13 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone, ownOf } from './tone-state.js?v=20261111w';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111w';
-import { fieldsOf, valsHtml } from './custom.js?v=20261111w';   // 11-11 「이 틀」 값 칸
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111w';
-import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111w';
-import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111w';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111w';
+import { toneState, setTone, ownOf } from './tone-state.js?v=20261111x';
+import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111x';
+import { fieldsOf, valsHtml } from './custom.js?v=20261111x';   // 11-11 「이 틀」 값 칸
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111x';
+import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111x';
+import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111x';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111x';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -75,7 +75,7 @@ function fieldHtml(f) {
     if (f.kind === 'font') return `<div class="mart-look-row is-wrap"${when}>${lab}<span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="${esc(f.label)}"><button type="button" class="chip" data-look-pick="${p}" data-v="null" aria-pressed="true">틀 그대로</button>${FONT_STACKS.map(s => `<button type="button" class="chip" data-look-pick="${p}" data-v="${esc(JSON.stringify(s.id))}" aria-pressed="false">${esc(s.label)}</button>`).join('')}</span></div><p class="mart-tune-hint">깡통 글에서는 기기 글꼴만 먹어요 · 읽는 사람 기기에 없는 글꼴은 기본 글꼴로 보여요</p>`;
     if (f.kind === 'toggle') return `<div class="mart-look-row"${when}>${lab}<button type="button" class="chip" data-look-toggle="${p}" aria-pressed="false">켬</button></div>`;
     if (f.kind === 'targets') return `<div class="mart-look-row is-wrap"${when}>${lab}<span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="${esc(f.label)}">${f.options.map(([id, l]) => `<button type="button" class="chip" data-look-target="${id}" aria-pressed="false">${esc(l)}</button>`).join('')}</span></div>`;
-    if (f.kind === 'color') return `<div class="mart-look-row"${when}>${lab}<label class="mart-ink" title="${esc(f.label)} 바꾸기"><input type="color" data-look-color="${p}" value="${f.def}" aria-label="${esc(f.label)}"><span class="mart-ink-dot" style="background-color:${f.def}" aria-hidden="true"></span>${esc(f.label)}</label></div>`;
+    if (f.kind === 'color') return `<div class="mart-look-row"${when}>${lab}<label class="mart-ink" title="${esc(f.label)} 바꾸기"><input type="color" data-look-color="${p}" value="${f.def}" aria-label="${esc(f.label)}"><span class="mart-ink-dot" style="background-color:${f.def}" aria-hidden="true"></span>${esc(f.label)}</label>${undoBtn('data-look-reset', p, f.label)}</div>`;   // 11-11 점검 6 — 색 칸도 칸별 ↺
     return '';
 }
 /** 「머리」 묶음(테마 머리 칸 글칸 · 보일 것) — 제목 · 숨은 한 줄 글칸(글 고치기와 같은 자리) · 제목 · 이름 줄 켬끔 */
@@ -133,7 +133,7 @@ export function tuneHtml(item) {
     if (!item?.simple || !item.preview) return '';
     return `<section class="mart-tune" aria-label="조절"><div class="mart-tune-tabs mart-seg mart-hscroll" role="group" aria-label="조절 묶음">${[LOOK_TABS[0], ...(fieldsOf(item.preview).length ? [['vals', '이 틀']] : []), ['head', '머리'], ...LOOK_TABS.slice(1), ['tools', '도구']].map(([id, l]) => `<button type="button" class="chip" data-tune-tab="${id}" aria-pressed="${id === tab}">${esc(l)}</button>`).join('')}</div>
         <div class="mart-tune-body">${tabBody(item)}</div>
-        <div class="mart-tune-line"><button type="button" class="chip mart-tune-edit" data-tune-edit aria-pressed="false">글 고치기</button><button type="button" class="chip" data-hist="undo" title="되돌리기(Ctrl+Z)" disabled>되돌리기</button><button type="button" class="chip" data-hist="redo" title="다시하기(Ctrl+Y)" disabled>다시하기</button><button type="button" class="chip" data-spoiler="wrap" hidden title="커서가 든 지문 · 대사 줄을 눌러야 보이는 글로">줄 숨기기</button><button type="button" class="chip" data-spoiler="unwrap" hidden title="커서가 든 숨긴 줄을 다시 보이게">풀기</button><button type="button" class="chip mart-tune-all" data-tune-reset="all" hidden>전부 처음으로</button></div>
+        <div class="mart-tune-line mart-hscroll mart-tune-edits"><button type="button" class="chip mart-tune-edit" data-tune-edit aria-pressed="false">글 고치기</button><button type="button" class="chip" data-hist="undo" title="되돌리기(Ctrl+Z)" disabled>되돌리기</button><button type="button" class="chip" data-hist="redo" title="다시하기(Ctrl+Y)" disabled>다시하기</button><button type="button" class="chip" data-spoiler="wrap" hidden title="커서가 든 지문 · 대사 줄을 눌러야 보이는 글로">줄 숨기기</button><button type="button" class="chip" data-spoiler="unwrap" hidden title="커서가 든 숨긴 줄을 다시 보이게">풀기</button><button type="button" class="chip mart-tune-all" data-tune-reset="all" hidden>전부 처음으로</button></div>
         <p class="mart-tune-hint" data-edit-hint hidden>미리보기의 글자를 눌러 바로 고쳐 써요 · 고치는 동안은 소품이 안 눌려요</p></section>`;
 }
 const dotOf = p => (p.tone.on && p.tone.k ? p.tone.k : NEUTRAL);
@@ -238,6 +238,7 @@ export function syncTune(sheet, item) {
             const input = box.querySelector(`input[data-look-color="${f.path}"]`); if (!input) continue;
             if (document.activeElement !== input && !input.dataset.busy) input.value = cur || f.def;
             const dot = input.parentElement.querySelector('.mart-ink-dot'); if (dot) dot.style.backgroundColor = input.value;
+            const undo = box.querySelector(`[data-look-reset="${f.path}"]`); if (undo) undo.hidden = cur == null;
         }
     }
     box.querySelector('[data-tune-edit]')?.setAttribute('aria-pressed', String(editing));

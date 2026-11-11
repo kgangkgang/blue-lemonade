@@ -371,7 +371,8 @@ await test('HTML 복사: <style> 하나(감싸는 div 첫 자식 · 틀 규칙 +
         assert.ok(tg.readyReport(out).ok);
         assert.equal(sf.simpleReady(out), out);
         // 주석을 빼면 글은 주석 달기 전과 같아요(화면에 보이는 것은 안 바뀌어요)
-        assert.equal(out.replace(/<!-- ✎ [^>]*-->/g, '').replace(/\n<!-- ▲[^\n]*-->\n/, ''), tg.kkangtongReady(sf.hoistStyle(h)));
+        assert.equal(out.replace(/<!-- ✎ [^>]*-->/g, '').replace(/\n<!-- ▲[^\n]*-->\n/, '').replace(/\ndiv\.gk-\w+ details(?:>summary~:not\(\[class\]\)\{display:none\}|\{margin:0\})/g, ''), tg.kkangtongReady(sf.hoistStyle(h)));
+        if (/<details\b/.test(h)) assert.match(out, /details>summary~:not\(\[class\]\)\{display:none/, '11-11 점검 2 — 깡통 빈 줄 숨김(틀에 없으면 마트가 붙여요)');
         // 예전 길(kkangtongReady 바로)이었다면 <style> 이 둘이 돼요 — 걸림돌 3
         assert.equal((tg.kkangtongReady(h).match(/<style>/g) || []).length, 2);
     }
@@ -1100,6 +1101,23 @@ await test('이름 글자색 따로 · 대사 · 이름 글꼴(기기 글꼴) ·
     assert.equal((o.match(/<style>/g) || []).length, 1);
     assert.match(cu.valsHtml(fs2, {}), /class="mart-param is-wide"[\s\S]*data-val="stars"[\s\S]*type="date"/);
     assert.deepEqual(tu.cleanTune({ vals: { stars: 3, 'bad key': 1, t: '<b>' } }), { vals: { stars: 3, t: 'b' } });
+});
+
+await test('독립 점검 1 · 3 · 4: 새 내 글이면 옛 글에서 고친 줄 · 숨긴 줄을 비워요(견본 글에서 고친 것은 그대로) · 실리태번 생성 시간 줄(34.2s)은 빼요 · 「이름: 글」 대사의 *속마음* 은 em', () => {
+    const m1 = mt.mineModel('하린: *믿어도 되나* 그래, 알았어.\n도윤: 응.');
+    const d = m1.lines.find(l => l.type === 'dl' && l.who === 0);
+    const p = sfx[six.items[0].id].preview, out = mt.fillMine(p, m1);
+    assert.match(out, /<em>믿어도 되나<\/em> 그래, 알았어\./);
+    assert.ok(d && d.text.startsWith('믿어도 되나'), '글만 꼴(마크다운 · 이름 숨김)은 그대로');
+    const st = '하린\n2026년 11월 11일 오후 9:12\n#12\n34.2s\n오늘 정말 늦었네.\n\n도윤\n2026년 11월 11일 오후 9:13\n#13\n12.0s\n"그러게."';
+    const m2 = mt.mineModel(st);
+    assert.ok(!m2.lines.some(l => /\d+\.\d+s/.test(l.html || l.text || '')), JSON.stringify(m2.lines));
+    tu.setTune('drop-test', { texts: { 0: '견본 고침' }, mineTexts: { 0: '옛 내 글 고침' }, mineSpoilers: [{ i: 1 }] });
+    tu.setTune('drop-test2', { mineTexts: { 2: '옛' } });
+    assert.equal(tu.dropMineEdits(), 2);
+    assert.deepEqual(tu.tuneOf('drop-test'), { texts: { 0: '견본 고침' } }); assert.equal(tu.tuneOf('drop-test2'), null);
+    tu.setTune('drop-test', null);
+    assert.match(fs.readFileSync(path.join(MART, 'cast.js'), 'utf8'), /if \('text' in next && String\(next\.text \?\? ''\) !== mineText\(\)\) dropMineEdits\(\)/);
 });
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

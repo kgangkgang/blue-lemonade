@@ -218,6 +218,18 @@ function originalBase(info) {
  */
 /** 「원래 색」 표시 — toneSimple(html, ORIGINAL, { mode }) 는 틀을 만든 색 그대로(캐릭터 색 클래스 이름까지 이식판 글자 그대로) 낮 · 밤만 바꿔요 */
 export const ORIGINAL = Symbol('원래 색');
+/**
+ * 11-11 독립 점검 2 — 깡통은 summary 뒤마다 <div><br></div> 를 끼우고 사이트 details 에 여백을 줘요. 그 막는 규칙이 없는 틀(첫 심플 26틀)에만
+ *   div.gk-키 details>summary~:not([class]){display:none} · div.gk-키 details{margin:0} 을 붙여요(div. 붙인 낮은 우선 — 틀이 제 여백을 정해 두었으면 그쪽이 이겨요).
+ */
+function kkGuard(html, key) {
+    const text = String(html ?? '');
+    if (!key || !/<details\b/.test(text)) return '';
+    const css = text.slice(0, text.indexOf('</style>')), out = [];
+    if (!/details>summary~:not\(\[class\]\)\{display:none/.test(css)) out.push(`div.gk-${key} details>summary~:not([class]){display:none}`);
+    if (!/details\{margin:0/.test(css)) out.push(`div.gk-${key} details{margin:0}`);
+    return out.length ? `\n${out.join('\n')}` : '';
+}
 export function toneSimple(html, K, { mode = 'dark', main, other, prop, own } = {}) {
     const info = simpleFrameInfo(html);
     if (!info || !info.key || !info.base || info.K0 === undefined) return html;
@@ -355,4 +367,6 @@ export function markEdits(html, { skip = [] } = {}) {
 }
 
 /** 심플 새 틀 「HTML 복사」 글: 틀 <style> + 그림 규칙 + 코멘트 빈칸 · 16px 간격 규칙을 <style> 하나로(감싸는 div 첫 자식) · 위아래 코멘트 빈칸 · 글자색 fill · 고칠 자리 주석 */
-export const simpleReady = html => markEdits(kkangtongReady(hoistStyle(html)), { skip: HIDDEN_LINE_FRAMES.includes(frameKeyOf(html)) ? [] : ['gk-hl'] });
+/** 복사 글에만: 깡통 빈 줄 · details 여백 막기(kkGuard)를 틀 <style> 끝에 — 마트 미리보기에는 깡통이 끼우는 줄이 없어 안 걸어요 */
+const withGuard = (html) => { const g = kkGuard(html, frameKeyOf(html)); if (!g) return html; const at = html.indexOf('\n</style>'); return at < 0 ? html : html.slice(0, at) + g + html.slice(at); };
+export const simpleReady = html => markEdits(kkangtongReady(hoistStyle(withGuard(html))), { skip: HIDDEN_LINE_FRAMES.includes(frameKeyOf(html)) ? [] : ['gk-hl'] });
