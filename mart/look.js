@@ -28,14 +28,36 @@ export const LOOK_FIELDS = Object.freeze([
     { tab: 'text', path: 'type.letterSpacing', label: '자간', kind: 'range', min: -5, max: 8, step: 1, def: -1, scale: 100, unit: 'em' },
     { tab: 'text', path: 'type.lineHeight', label: '줄 간격', kind: 'range', min: 1.4, max: 2.2, step: 0.01, def: 1.8 },
     { tab: 'dialogue', path: 'dialogue.style', label: '표시', kind: 'pick', options: [['marker', '형광펜'], ['full', '전체 칠'], ['bold', '굵게'], ['plain', '없음']] },
+    { tab: 'dialogue', path: 'dialogue.markerShape', label: '형광펜 모양', kind: 'pick', options: [['stroke', '펜 자국'], ['rectangle', '직사각형'], ['pill', '알약']], when: 'marker' },
+    { tab: 'dialogue', path: 'dialogue.tilt', label: '형광펜 기울기', kind: 'pick', options: [['flat', '일직선'], ['slant', '대각선'], ['steep', '완전 대각선']], when: 'pen' },
     { tab: 'dialogue', path: 'dialogue.markerPos', label: '형광펜 위치', kind: 'pick', options: [['center', '가운데'], ['bottom', '아래']], when: 'marker' },
     { tab: 'dialogue', path: 'dialogue.markerThick', label: '형광펜 굵기', kind: 'range', min: 10, max: 100, step: 1, def: 54, unit: '%', when: 'marker' },
     { tab: 'dialogue', path: 'type.dialogueSize', label: '크기', kind: 'range', min: 12, max: 24, step: 1, def: 16, unit: 'px' },
     { tab: 'dialogue', path: 'dialogue.weight', label: '굵기', kind: 'range', min: 300, max: 800, step: 1, def: 400 },
     { tab: 'dialogue', path: 'dialogue.letterSpacing', label: '자간', kind: 'range', min: -10, max: 20, step: 1, def: 0, scale: 100, unit: 'em' },
+    // 테마 「글자 › 속마음」(em) · 「취소선」(s) · 「강조」(strong) — 견본 글 한 줄 · 「내 글 넣기」의 *속마음* · ~~취소~~ · **강조** 에 걸려요
+    { tab: 'em', path: 'em.italic', label: '기울여 쓰기', kind: 'pick', options: [[true, '켬'], [false, '끔']] },
+    { tab: 'em', path: 'em.color', label: '글자 색', kind: 'color', def: '#6b4fa0' },
+    { tab: 'em', path: 'em.size', label: '크기', kind: 'range', min: 12, max: 24, step: 1, def: 16, unit: 'px' },
+    { tab: 'em', path: 'em.weight', label: '굵기', kind: 'range', min: 300, max: 700, step: 1, def: 400 },
+    { tab: 'em', path: 'em.letterSpacing', label: '자간', kind: 'range', min: -10, max: 20, step: 1, def: 0, scale: 100, unit: 'em' },
+    { tab: 'strike', path: 'strike.line', label: '선', kind: 'pick', options: [['text', '글자 색'], ['own', '직접 색'], ['none', '없음']] },
+    { tab: 'strike', path: 'strike.color', label: '선 색', kind: 'color', def: '#ff7a7a', when: 'strikeOwn' },
+    { tab: 'strike', path: 'strike.italic', label: '기울이기', kind: 'pick', options: [[true, '켬'], [false, '끔']] },
+    { tab: 'strike', path: 'strike.thickness', label: '선 굵기', kind: 'range', min: 1, max: 4, step: 0.5, def: 2, unit: 'px' },
+    { tab: 'strike', path: 'strike.fade', label: '흐리기', kind: 'range', min: 20, max: 100, step: 5, def: 55, unit: '%' },
+    { tab: 'strong', path: 'strong.color', label: '글자 색', kind: 'color', def: '#9a2f4a' },
+    { tab: 'strong', path: 'strong.gold', label: '강조 형광펜 색', kind: 'color', def: '#ffe23c' },
+    { tab: 'strong', path: 'strong.size', label: '크기', kind: 'range', min: 12, max: 24, step: 1, def: 16, unit: 'px' },
+    { tab: 'strong', path: 'strong.weight', label: '굵기', kind: 'range', min: 400, max: 900, step: 1, def: 650 },
+    { tab: 'strong', path: 'strong.letterSpacing', label: '자간', kind: 'range', min: -10, max: 20, step: 1, def: 0, scale: 100, unit: 'em' },
     { tab: 'para', path: 'type.align', label: '정렬', kind: 'pick', options: [['left', '왼쪽'], ['justify-word', '양쪽']] },
     { tab: 'para', path: 'type.indent', label: '첫 줄 들여쓰기', kind: 'pick', options: [[true, '켬'], [false, '끔']] },
     { tab: 'para', path: 'type.para', label: '문단 사이', kind: 'range', min: 0, max: 2, step: 0.01, def: 0.9, unit: '줄' },
+    // 테마 「채팅 › 캐릭터 이름」의 이름 글자(profile.name*) — 크기는 틀이 버티는 10~24 로 좁혔어요(테마 10~60)
+    { tab: 'name', path: 'profile.nameSize', label: '크기', kind: 'range', min: 10, max: 24, step: 1, def: 13, unit: 'px' },
+    { tab: 'name', path: 'profile.nameWeight', label: '굵기', kind: 'range', min: 100, max: 900, step: 50, def: 700 },
+    { tab: 'name', path: 'profile.nameSpacing', label: '자간', kind: 'range', min: -10, max: 30, step: 1, def: 0, scale: 100, unit: 'em' },
     { tab: 'shadow', path: 'shadow.on', label: '그림자', kind: 'toggle' },
     { tab: 'shadow', path: 'shadow.targets', label: '어디에', kind: 'targets', options: [['text', '본문'], ['dialogue', '대사'], ['title', '제목'], ['name', '이름']], when: 'shadow' },
     { tab: 'shadow', path: 'shadow.color', label: '색', kind: 'color', def: '#000000', when: 'shadow' },
@@ -49,7 +71,7 @@ export const LOOK_FIELDS = Object.freeze([
     { tab: 'outline', path: 'outline.alpha', label: '진하기', kind: 'range', min: 0, max: 100, step: 1, def: 100, unit: '%', when: 'outline' },
 ].map(Object.freeze));
 /** 묶음 칩 — 테마 「글자」 탭 순서(본문 → 대사 → … → 문단 → … → 그림자 · 외곽선)에서 가져온 것만 · 맨 앞 「색」은 마트 것 */
-export const LOOK_TABS = Object.freeze([['color', '색'], ['text', '본문'], ['dialogue', '대사'], ['para', '문단'], ['shadow', '그림자'], ['outline', '외곽선']]);
+export const LOOK_TABS = Object.freeze([['color', '색'], ['text', '본문'], ['dialogue', '대사'], ['em', '속마음'], ['strike', '취소선'], ['strong', '강조'], ['para', '문단'], ['name', '이름'], ['shadow', '그림자'], ['outline', '외곽선']]);
 const SHADOW_TARGETS = ['text', 'dialogue', 'title', 'name'];
 
 const get = (o, path) => path.split('.').reduce((a, k) => (a == null ? undefined : a[k]), o);
@@ -100,7 +122,40 @@ export function shadowValue(s = {}) {
     const a = ((s.angle ?? 135) * Math.PI) / 180, d = s.distance ?? 2;
     return `${px(Math.cos(a) * d)} ${px(Math.sin(a) * d)} ${px(s.blur ?? 3)} ${rgba(s.color || '#000000', s.alpha ?? 45)}`;
 }
-/** 형광펜 띠: 그 화자 띠 색을 줄 높이의 일부에만(가운데 · 아래) — 테마 「형광펜 굵기」 % */
+// ── 형광펜 — 테마 src/apply.js markerGeometry · markerBackground 와 같은 식(SVG data URL · 줄마다 한 획 · 깡통 글에서 data:svg 배경은 살아요 — 11-11 시험 162329) ──
+const MARKER_TILT = { flat: { rise: 0, mid: 57 }, slant: { rise: 18, mid: 56 }, steep: { rise: 48, mid: 50 } };
+const MARKER_POS = { center: {}, bottom: { tiltK: 0.5, base: 96 } };
+const MIN_THICK = 10;
+export function markerGeometry(d) {
+    const tilt = MARKER_TILT[d.tilt] || MARKER_TILT.flat, pos = MARKER_POS[d.markerPos] || MARKER_POS.center;
+    const thick = Number(d.markerThick) > 0 ? Number(d.markerThick) : 54, T = Math.min(100, Math.max(MIN_THICK, thick));
+    const rise = Math.max(0, Math.min(tilt.rise * (pos.tiltK || 1), 100 - T)), half = (rise + T) / 2;
+    const mid = Math.min(100 - half, Math.max(half, pos.base ? pos.base - T / 2 : tilt.mid));
+    return { T, l: mid + rise / 2 - T / 2, r: mid - rise / 2 - T / 2 };
+}
+const parseColor = (c) => { const m = String(c).match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?/); if (m) return [+m[1], +m[2], +m[3], m[4] == null ? 1 : +m[4]]; const h = /^#?([0-9a-f]{6})/i.exec(c || ''); return h ? [0, 2, 4].map(i => parseInt(h[1].slice(i, i + 2), 16)).concat(1) : [0, 0, 0, 1]; };
+/** 형광펜 배경(테마와 같은 값) — d: { markerShape, tilt, markerPos, markerThick } · color: 그 화자 띠 색 */
+export function markerBackground(d, color) {
+    const shape = d.markerShape || 'stroke';
+    const { T, l, r } = markerGeometry(['rectangle', 'pill'].includes(shape) ? { ...d, tilt: 'flat' } : d);
+    const lb = l + T, rb = r + T, w = Math.min(1.8, T * 0.07);
+    const [cr, cg, cb, ca] = parseColor(color), rgb = `rgb(${cr},${cg},${cb})`, op = Math.min(1, ca);
+    const n = v => Number(v.toFixed(2));
+    if (shape === 'pill') {
+        const half = right => `<svg x='${right ? 49 : 0}%' width='51%' height='100%'><svg width='100%' height='100%' viewBox='0 0 50 100' preserveAspectRatio='${right ? 'xMaxYMid' : 'xMinYMid'} meet' overflow='visible'><circle cx='${right ? 0 : 50}' cy='50' r='50' fill='#fff'/><rect x='${right ? -100000 : 50}' y='0' width='100000' height='100' fill='#fff'/></svg></svg>`;
+        const y = T === 100 ? 50 : n(l / (100 - T) * 100);
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><defs><mask id='m' maskUnits='userSpaceOnUse' x='0' y='0' width='100%' height='100%'>${half(false)}${half(true)}</mask></defs><rect width='100%' height='100%' fill='${rgb}' fill-opacity='${n(op)}' mask='url(#m)'/></svg>`;
+        return `url("data:image/svg+xml,${encodeURIComponent(svg)}") center ${y}% / 100% ${n(T)}% no-repeat`;
+    }
+    if (shape === 'rectangle') {
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><rect x='0' y='${n(l)}' width='100' height='${n(T)}' fill='${rgb}' fill-opacity='${n(op)}'/></svg>`;
+        return `url("data:image/svg+xml,${encodeURIComponent(svg)}") center / 100% 100% no-repeat`;
+    }
+    const stroke = [`M0,${n(l + T * 0.22)}`, `L2.2,${n(l)}`, `Q25,${n(l - w + (r - l) * 0.25)} 50,${n((l + r) / 2)}`, `T98.6,${n(r)}`, `L100,${n(r + T * 0.5)}`, `L97.2,${n(rb)}`, `Q75,${n(rb + w - (rb - lb) * 0.25)} 50,${n((lb + rb) / 2)}`, `T0.8,${n(lb)}`, 'Z'].join(' ');
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><defs><linearGradient id='p' x1='0' x2='1' y1='0' y2='0'><stop offset='0' stop-color='${rgb}' stop-opacity='${n(op * 0.45)}'/><stop offset='0.14' stop-color='${rgb}' stop-opacity='0'/></linearGradient></defs><path d='${stroke}' fill='${rgb}' fill-opacity='${n(op)}'/><path d='${stroke}' fill='url(#p)'/></svg>`;
+    return `url("data:image/svg+xml,${encodeURIComponent(svg)}") center / 100% 100% no-repeat`;
+}
+/** (예전 꼴 — 지금은 안 써요) 형광펜 띠: 그 화자 띠 색을 줄 높이의 일부에만(가운데 · 아래) */
 const markerImage = (color, pos, thick) => {
     const t = Math.min(100, Math.max(10, thick ?? 54));
     if (pos === 'bottom') return `linear-gradient(transparent ${100 - t}%,${color} ${100 - t}%)`;
@@ -140,9 +195,36 @@ export function lookRules(html, value) {
         for (const m of css.matchAll(/(?:^|\n)(\.gk-[^{}\n]*\.gk-d[A-Z])\{background-color:([^;}]+)\}/g)) {
             if (seen.has(m[1])) continue; seen.add(m[1]);
             const sel = `.gk-${key}.gk-${key}${m[1]}`;
-            out.push(d.style === 'marker' ? `${sel}{background-color:transparent;background-image:${markerImage(m[2].trim(), d.markerPos || 'center', d.markerThick)}}` : `${sel}{background-color:transparent}`);
+            out.push(d.style === 'marker' ? `${sel}{background:${markerBackground(d, m[2].trim())}}` : `${sel}{background-color:transparent}`);
         }
     }
+    const ink = c => `color:${c};-webkit-text-fill-color:${c}`;   // 깡통이 color 를 !important 로 눌러도 fill 은 살아요
+    const em = L.em || {}, emr = [];
+    if (em.italic != null) emr.push(`font-style:${em.italic ? 'italic' : 'normal'}`);
+    if (em.color) emr.push(ink(em.color));
+    if (em.size != null) emr.push(`font-size:${em.size}px`);
+    if (em.weight != null) emr.push(`font-weight:${em.weight}`);
+    if (em.letterSpacing != null) emr.push(`letter-spacing:${em.letterSpacing / 100}em`);
+    if (emr.length) out.push(`${K} em{${emr.join(';')}}`);
+    const st = L.strong || {}, str = [];
+    if (st.color) str.push(ink(st.color));
+    if (st.gold) str.push(`box-shadow:inset 0 -0.36em ${rgba(st.gold, 62)}`);
+    if (st.size != null) str.push(`font-size:${st.size}px`);
+    if (st.weight != null) str.push(`font-weight:${st.weight}`);
+    if (st.letterSpacing != null) str.push(`letter-spacing:${st.letterSpacing / 100}em`);
+    if (str.length) out.push(`${K} strong{${str.join(';')}}`);
+    const sk = L.strike || {}, skr = [];
+    if (sk.line === 'none') skr.push('text-decoration-line:none');
+    else if (sk.line) skr.push(`text-decoration-line:line-through;text-decoration-color:${sk.line === 'own' ? sk.color || '#ff7a7a' : 'currentColor'}`);
+    if (sk.thickness != null && sk.line !== 'none') skr.push(`text-decoration-thickness:${sk.thickness}px`);
+    if (sk.italic != null) skr.push(`font-style:${sk.italic ? 'italic' : 'normal'}`);
+    if (sk.fade != null) skr.push(`opacity:${sk.fade / 100}`);
+    if (skr.length) out.push(`${K} s{${skr.join(';')}}`);
+    const pf = L.profile || {}, nm = [];
+    if (pf.nameSize != null) nm.push(`font-size:${pf.nameSize}px`);
+    if (pf.nameWeight != null) nm.push(`font-weight:${pf.nameWeight}`);
+    if (pf.nameSpacing != null) nm.push(`letter-spacing:${pf.nameSpacing / 100}em`);
+    if (nm.length) out.push(`${SEL.name}{${nm.join(';')}}`);
     if (L.shadow?.on) {
         const targets = L.shadow.targets || { dialogue: true }, sels = SHADOW_TARGETS.filter(k => targets[k]).map(k => SEL[k]);
         if (sels.length) out.push(`${sels.join(',')}{text-shadow:${shadowValue(L.shadow)}}`);
@@ -165,11 +247,11 @@ export function lookFromTheme(obj) {
     let src = obj.style || obj.settings || null;
     if (!src && obj.groups && typeof obj.groups === 'object') {   // 점 경로로 펴진 프리셋 파일
         src = {};
-        for (const g of Object.values(obj.groups)) for (const [path, v] of Object.entries(g || {})) if (/^(type|dialogue|shadow|outline)\./.test(path)) put(src, path, v);
+        for (const g of Object.values(obj.groups)) for (const [path, v] of Object.entries(g || {})) if (/^(type|dialogue|shadow|outline|em|strong|strike|profile)\./.test(path)) put(src, path, v);
     }
     if (!src) return null;
     const pick = {};
-    for (const f of LOOK_FIELDS) { if (f.kind === 'font') continue; const v = get(src, f.path); if (v != null) put(pick, f.path, v); }
+    for (const f of LOOK_FIELDS) { if (f.kind === 'font' || f.kind === 'color' && /^(em|strong)\./.test(f.path)) continue; let v = get(src, f.path); if (f.path === 'strike.line' && v != null) v = v === false ? 'none' : get(src, 'strike.own') ? 'own' : 'text'; if (v != null) put(pick, f.path, v); }
     if (pick.dialogue?.style && !['marker', 'full', 'bold', 'plain'].includes(pick.dialogue.style)) delete pick.dialogue.style;   // 「색」(tint)은 마트에 없어요
     return cleanLook(pick);
 }

@@ -222,7 +222,8 @@ await test('실제 틀 스물여덟: 이식판 원래 판과 한 글자도 안 �
         assert.ok(row.desc && !/심플 새 틀$/.test(row.desc), `${k} 설명`);
         if (isik) {   // 소리 카드 src · class · preload 와 미리보기 열림만 빼면 이식판 그 틀과 같아요
             // (첫 묶음 포커스 테 숨김 한 줄은 11-11 원본 make-isik.cjs 에도 들어가 이제 차이가 아니에요)
-            const orig = shutPeek(p).replace(/<audio class="uploaded-audio" src="[^"]*" controls preload="metadata"/g, '<audio controls preload="none"');
+            const fit = (gen.FIT_RULES[k] || []).reduce((h, r) => h.replace(`\n${r}`, ''), shutPeek(p));   // 틀 넘침 손봄 줄은 마트가 더한 것
+            const orig = fit.replace(/<audio class="uploaded-audio" src="[^"]*" controls preload="metadata"/g, '<audio controls preload="none"');
             assert.ok(isik.includes(orig), `${k} 이식판과 다름`);
         }
     }
@@ -362,7 +363,7 @@ await test('HTML 복사: <style> 하나(감싸는 div 첫 자식 · 틀 규칙 +
         assert.ok(css.includes('.content>p,.blq-cm{') && css.includes('margin-top:16px!important'), '코멘트 · 16px 규칙');
         assert.ok(css.includes(partsOf(h)[2].split('\n')[0]), '색 블록도 그대로 들어감');
         assert.match(out, /<\/style>\n<!-- ▲ 위 스타일 칸은 틀 모양 · 색이에요[^\n]*-->\n/);
-        for (const [mark, n] of [['제목', 1], ['지문', 2], ['화자 이름', 2], ['대사', 2], ['소리 카드', 1]]) assert.equal(out.split(`<!-- ✎ ${mark}`).length - 1, n, mark);
+        for (const [mark, n] of [['제목', 1], ['지문', 3], ['화자 이름', 2], ['대사', 2], ['소리 카드', 1]]) assert.equal(out.split(`<!-- ✎ ${mark}`).length - 1, n, mark);
         assert.match(out, /<!-- ✎ 제목 --><span class="gk-tt">/);
         assert.match(out, /\n<!-- ✎ 지문 --><p class="gk-nr">/);
         assert.ok(tg.readyReport(out).ok);
@@ -565,6 +566,7 @@ await test('견본 화자 이름: 스물여덟 틀의 이름표 · 소리 이름
         assert.equal((body.match(/<p class="gk-nm gk-n[A-Z]">깡캐<\/p>/g) || []).length, 1, row.id);
         assert.ok(body.includes('깡통은 난간에 기대어') && body.includes('<p class="gk-nr">깡캐는 대답 대신'), `${row.id} 지문`);
         assert.equal(gen.sampleNames(p), p);
+        assert.equal(body.split(gen.SAMPLE_INNER).length - 1, 1, `${row.id} 속마음 · 강조 · 취소 견본 한 줄`);
         if (row.audio) assert.match(body, /<span class="gk-sn gk-s[A-Z]">깡통<\/span>/, `${row.id} 소리 이름표`);
     }
     assert.equal(sfx['simple-q09'].preview.split('<!-- ✎ 가게 이름 -->').length - 1, 1);
@@ -688,7 +690,7 @@ await test('글 모양: 값이 없으면 한 글자도 안 달라요 · 테마�
     assert.equal(lk.shadowValue({}), '-1.41px 1.41px 3px rgba(0,0,0,0.45)');   // 테마 기본(135° · 2px · 3px · 45%)
     assert.equal(lk.shadowValue(FULL_LOOK.shadow), '0px 3px 4px rgba(17,34,51,0.6)');
     for (const f of lk.LOOK_FIELDS) if (f.kind === 'range') assert.ok(f.min < f.max && f.def >= f.min && f.def <= f.max, f.path);
-    assert.deepEqual(lk.LOOK_TABS.map(x => x[1]), ['색', '본문', '대사', '문단', '그림자', '외곽선']);
+    assert.deepEqual(lk.LOOK_TABS.map(x => x[1]), ['색', '본문', '대사', '속마음', '취소선', '강조', '문단', '이름', '그림자', '외곽선']);
     for (const s of lk.FONT_STACKS) assert.ok(/,(sans-serif|serif|cursive|monospace)$/.test(s.family) && !/url\(|@import/.test(s.family), s.id);
     for (const row of six.items) {
         const it = { ...row, ...sfx[row.id], kind: 'geulkku' }, p = it.preview, key = sf.simpleFrameInfo(p).key, K = `.gk-${key}`.repeat(3);
@@ -702,9 +704,9 @@ await test('글 모양: 값이 없으면 한 글자도 안 달라요 · 테마�
         assert.ok(add.includes(`${K} .gk-d{font-size:17px;font-weight:700;letter-spacing:-0.02em}`), `${row.id} 대사 규칙`);
         assert.ok(add.includes(`${K} p:not(.gk-nm),${K} .gk-d,${K} .gk-tt{text-shadow:0px 3px 4px rgba(17,34,51,0.6)}`), `${row.id} 그림자`);
         assert.ok(add.includes('-webkit-text-stroke:0.6px rgba(255,255,255,0.8);paint-order:stroke fill'), `${row.id} 외곽선`);
-        assert.ok(!/url\(|@import|@font-face|filter:|opacity:/.test(add), `${row.id} 웹폰트 · filter · opacity 없음`);
+        assert.ok(!/url\(|@import|@font-face|filter:|opacity:/.test(add.replace(/url\("data:image\/svg\+xml,[^"]+"\)/g, '')), `${row.id} 웹폰트 · filter · opacity 없음(형광펜 SVG 만)`);
         const bands = [...base.slice(0, base.indexOf('</style>')).matchAll(/\n(\.gk-[^{}\n]*\.gk-d[A-Z])\{background-color:/g)].length;
-        const marks = (add.match(/\{background-color:transparent;background-image:linear-gradient\(transparent 60%,rgba\(/g) || []).length;
+        const marks = (add.match(/\{background:url\("data:image\/svg\+xml,[^"]+"\) center \/ 100% 100% no-repeat\}/g) || []).length;   // 형광펜 = 테마와 같은 펜 자국 SVG
         if (row.id === 'simple-k13') assert.equal(marks, 0, '13 형광펜은 띠가 그림이라 그대로'); else assert.ok(marks >= 2 && marks <= bands, `${row.id} 형광펜 띠 ${marks}/${bands}`);
         assert.ok(tg.readyReport(sf.simpleReady(shutPeek(out))).ok, `${row.id} 정적 검사`);
         // toneOut 길
@@ -844,6 +846,58 @@ await test('내 글 넣기 상태: 켬 · 글을 이 브라우저에 기억 · �
     assert.equal(mt.mineText(), ''); assert.equal(mt.mineOn(), false);
     assert.equal(mt.setMine({ text: '   ', on: true }), null, '빈 글은 안 켜져요');
     delete globalThis.localStorage;
+});
+
+// ── 11-11 남은 칸(Opus 5.5): 형광펜 모양 · 속마음 · 강조 · 취소선 · 이름 글자 · 대사 줄 · 틀 넘침 손봄 ──
+await test('남은 칸: 형광펜 모양 · 기울기 = 테마 markerGeometry 와 같은 값(펜 자국 · 직사각형 · 알약) · 속마음 · 강조 · 취소선 · 이름 글자 규칙(fill 짝) · 테마 스타일에서 속마음 · 강조 · 취소선 · 이름도 읽기 · 견본 글 한 줄 em · strong · s 가 글 칸', () => {
+    // 테마 apply.js 값(두께 54 · 일직선 → 30~84 · 대각선 → 왼 38 오른 20 · 아래 → 띠 아랫변 96)
+    const svgOf = t => [...String(t).matchAll(/data:image\/svg\+xml,([^"]+)/g)].map(m => decodeURIComponent(m[1])).join('\n');
+    assert.deepEqual(lk.markerGeometry({}), { T: 54, l: 30, r: 30 });
+    assert.deepEqual(lk.markerGeometry({ tilt: 'slant' }), { T: 54, l: 38, r: 20 });
+    assert.deepEqual(lk.markerGeometry({ markerPos: 'bottom', markerThick: 40 }), { T: 40, l: 56, r: 56 });
+    for (const shape of ['stroke', 'rectangle', 'pill']) { const bg = lk.markerBackground({ markerShape: shape }, 'rgba(58,167,255,.18)'); assert.match(bg, /^url\("data:image\/svg\+xml,[^"]+"\) center /, shape); assert.ok(svgOf(bg).includes("fill='rgb(58,167,255)'") && svgOf(bg).includes("fill-opacity='0.18'"), shape); }
+    const p = sfx['simple-k1'].preview, K = '.gk-k1.gk-k1.gk-k1';
+    const L = { em: { italic: false, color: '#6b4fa0', size: 17, weight: 500, letterSpacing: 2 }, strong: { color: '#9a2f4a', gold: '#ffe23c', size: 18, weight: 800, letterSpacing: -1 }, strike: { line: 'own', color: '#ff7a7a', italic: true, thickness: 2.5, fade: 60 }, profile: { nameSize: 15, nameWeight: 800, nameSpacing: 5 }, dialogue: { style: 'marker', markerShape: 'pill' } };
+    assert.deepEqual(lk.cleanLook(L), L);
+    const r = lk.lookRules(p, L).join('\n');
+    assert.ok(r.includes(`${K} em{font-style:normal;color:#6b4fa0;-webkit-text-fill-color:#6b4fa0;font-size:17px;font-weight:500;letter-spacing:0.02em}`));
+    assert.ok(r.includes(`${K} strong{color:#9a2f4a;-webkit-text-fill-color:#9a2f4a;box-shadow:inset 0 -0.36em rgba(255,226,60,0.62);font-size:18px;font-weight:800;letter-spacing:-0.01em}`));
+    assert.ok(r.includes(`${K} s{text-decoration-line:line-through;text-decoration-color:#ff7a7a;text-decoration-thickness:2.5px;font-style:italic;opacity:0.6}`));
+    assert.ok(r.includes(`${K} p.gk-nm{font-size:15px;font-weight:800;letter-spacing:0.05em}`));
+    assert.ok(svgOf(r).includes('<mask id=\'m\''), '알약 형광펜');
+    assert.deepEqual(lk.lookRules(p, { strike: { line: 'none', thickness: 3 } }), [`${K} s{text-decoration-line:none}`]);
+    // 테마 스타일 → 글 모양(속마음 · 강조 · 취소선 · 이름 · 형광펜 모양)
+    const style = { saltyStyle: 1, name: 'x', style: { em: { italic: false, size: 18, weight: 500 }, strong: { weight: 700 }, strike: { line: true, own: true, color: '#112233', thickness: 3 }, profile: { nameSize: 30, nameWeight: 650 }, dialogue: { style: 'marker', markerShape: 'rectangle', tilt: 'steep' } } };
+    assert.deepEqual(lk.lookFromTheme(style), { dialogue: { style: 'marker', markerShape: 'rectangle', tilt: 'steep' }, em: { italic: false, size: 18, weight: 500 }, strike: { line: 'own', color: '#112233', thickness: 3 }, strong: { weight: 700 }, profile: { nameSize: 24, nameWeight: 650 } });
+    assert.deepEqual(lk.lookFromTheme({ saltyStyle: 1, style: { strike: { line: false } } }), { strike: { line: 'none' } });
+    // 견본 글 한 줄의 em · strong · s 는 글 칸
+    const ed = tu.editables(p).filter(e => ['em', 'strong', 's'].includes(e.cls)).map(e => e.text);
+    assert.deepEqual(ed, ['또 기다렸구나.', '따뜻한 쪽', '화난 척']);
+});
+
+await test('대사 줄 늘리기 · 줄이기: 28틀에서 견본 대사 쌍을 번갈아 붙이거나(+1 · +2) 마지막 쌍을 빼요(-1) · 지문 · 소리 카드 · 쪽 넘김 · <style> 그대로 · 태그 짝 · 복사 글 정적 검사 · 범위 밖은 버려요 · 내 글이면 안 걸어요', () => {
+    for (const row of six.items) {
+        const p = sfx[row.id].preview, nDl = h => (h.match(/<p class="gk-dl"/g) || []).length, n0 = nDl(p);
+        for (const k of [-1, 1, 2]) {
+            const out = tu.applyLines(p, k), tag = `${row.id} ${k}`;
+            assert.equal(nDl(out), n0 + k, tag);
+            assert.equal(out.slice(0, out.indexOf('</style>')), p.slice(0, p.indexOf('</style>')), tag);
+            for (const x of ['class="gk-sd"', 'gk-p2', 'class="gk-nr"', '<details', '<summary']) assert.equal((out.match(new RegExp(x, 'g')) || []).length, (p.match(new RegExp(x, 'g')) || []).length, `${tag} ${x}`);
+            for (const t of ['div', 'p', 'span']) { const bal = h => (h.match(new RegExp(`<${t}\\b`, 'g')) || []).length - (h.match(new RegExp(`</${t}>`, 'g')) || []).length; assert.equal(bal(out), bal(p), `${tag} ${t}`); }
+            assert.ok(tg.readyReport(sf.simpleReady(shutPeek(out))).ok, tag);
+            assert.equal(tu.applyTune(p, { lines: k }), out, `${tag} applyTune`);
+            assert.equal(tu.applyTune(p, { lines: k }, { mine: true }), p, `${tag} 내 글이면 안 걸어요`);
+        }
+        if (n0 >= 2) { const o = tu.applyLines(p, 2); const names = [...o.matchAll(/<p class="gk-nm gk-n([A-Z])">/g)].map(m => m[1]); assert.notEqual(names.at(-1), names.at(-2), `${row.id} 번갈아`); }
+    }
+    for (const bad of [3, -2, 1.5, 'x']) assert.equal(tu.cleanTune({ lines: bad }), null, String(bad));
+});
+
+await test('틀 넘침 손봄: k14 쥘부채 · q10 RPG 스탯에만 · 기본 규칙 덩이 끝에 한 번씩 · 다른 틀은 그대로', () => {
+    for (const row of six.items) {
+        const k = row.id.slice(7), base = partsOf(sfx[row.id].preview)[0];
+        for (const [key, rules] of Object.entries(gen.FIT_RULES)) for (const r of rules) assert.equal(base.split(r).length - 1, key === k ? 1 : 0, `${k} ${r}`);
+    }
 });
 
 console.log(`\n${pass} 통과 · ${fail} 실패`);

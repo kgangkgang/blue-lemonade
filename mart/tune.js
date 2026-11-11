@@ -5,7 +5,7 @@
 //   - 깡통 · 깡캐 색은 목록 위 두 칸(tone-state.js)과 같은 값이라 여기에 안 들어 있어요.
 export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(탭을 닫으면 사라져요 — sessionStorage)
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
-import { cleanLook } from './look.js?v=20261111k';
+import { cleanLook } from './look.js?v=20261111l';
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** 역할별 글자색 — 이름은 inks.js(테마 글자색 칩)와 같아요. 새 틀에 그 글자가 있는 역할만 칸이 떠요(속마음 · 강조 · 형광펜은 그 클래스를 쓰는 틀이 생기면 한 줄 더해요) */
@@ -16,6 +16,10 @@ export const TUNE_ROLES = Object.freeze([
 ]);
 /** 미리보기에서 고쳐 쓸 수 있는 글 자리 — 이 클래스가 붙은(또는 틀이 「✎」 주석을 달아 둔) 글자만 든 요소 */
 export const EDIT_CLASSES = Object.freeze(['gk-tt', 'gk-nr', 'gk-nm', 'gk-d', 'gk-sn']);
+/** 지문 안의 속마음 · 강조 · 취소 글자도 고쳐 쓸 수 있어요(클래스 없이 태그로) */
+export const EDIT_TAGS = Object.freeze(['em', 'strong', 's']);
+/** 대사 줄 늘리기 · 줄이기 범위(틀이 버티는 만큼 — 견본 대사 둘에서 하나 ~ 넷) */
+export const LINES_RANGE = Object.freeze([-1, 2]);
 const MODES = ['light', 'dark'];
 const DARK_BASES = ['gk-td', 'gk-tx'];
 
@@ -37,7 +41,8 @@ export function cleanTune(t) {
     }
     if (Object.keys(inks).length) out.inks = inks;
     if (HEX.test(t.prop || '')) out.prop = t.prop.toLowerCase();   // 소품 색: 없으면 깡통 색을 따라가요(나중에 「기본 색」 켬끔이 들어올 자리 — 값 'own')
-    if (t.own === false) out.own = false;   // 「기본 색」이 있는 틀: false = 소품을 캐릭터 색으로 덮어써요(없으면 기본 색 그대로)
+    if (t.own === false) out.own = false;
+    const lines = Number(t.lines); if (Number.isInteger(lines) && lines !== 0 && lines >= LINES_RANGE[0] && lines <= LINES_RANGE[1]) out.lines = lines;   // 대사 줄(견본 글일 때만)   // 「기본 색」이 있는 틀: false = 소품을 캐릭터 색으로 덮어써요(없으면 기본 색 그대로)
     const texts = {};
     for (const [i, v] of Object.entries(t.texts || {})) if (/^\d+$/.test(i) && typeof v === 'string') texts[i] = oneLine(v);
     if (Object.keys(texts).length) out.texts = texts;
@@ -72,10 +77,10 @@ export function editables(html) {
     for (let m; (m = LEAF.exec(text));) {
         const cls = ((m[3].match(/\sclass="([^"]*)"/) || [])[1] || '').split(/\s+/);
         const hit = EDIT_CLASSES.find(c => cls.includes(c));
-        if (!hit && !m[1]) continue;
+        if (!hit && !m[1] && !EDIT_TAGS.includes(m[2])) continue;
         if (m[2] === 'style' || m[2] === 'script' || m[2] === 'audio') continue;
         const end = m.index + m[0].length - (`</${m[2]}>`).length;
-        out.push({ i: out.length, cls: hit || 'mark', text: m[4], start: end - m[4].length, end });
+        out.push({ i: out.length, cls: hit || (EDIT_TAGS.includes(m[2]) ? m[2] : 'mark'), text: m[4], start: end - m[4].length, end });
     }
     return out;
 }
@@ -101,10 +106,25 @@ export function inkRules(html, inks) {
     return out;
 }
 /** 다 칠한 틀 HTML 에 조절 값을 얹어요(글자색 규칙 + 고쳐 쓴 글) — 값이 없으면 받은 그대로 */
+/** 대사 줄 늘리기 · 줄이기 — 견본 대사 쌍(이름 + 대사)을 마지막 쌍 뒤에 번갈아 붙이거나 마지막 쌍을 빼요(지문 · 소리 카드 · 쪽 넘김은 그대로) */
+const PAIR_G = /<p class="gk-nm gk-n([A-Z])">[^<]*<\/p>\s*<p class="gk-dl"[^>]*><span class="gk-d gk-d[A-Z]">(?:(?!<\/p>)[\s\S])*?<\/span><\/p>/g;
+export function applyLines(html, n) {
+    const text = String(html ?? ''), k = Number(n);
+    if (!Number.isInteger(k) || !k) return text;
+    const at = text.indexOf('</style>'), pairs = [...text.matchAll(PAIR_G)].filter(m => m.index > at);
+    if (pairs.length < 2) return text;
+    const last = pairs.at(-1), end = last.index + last[0].length;
+    if (k < 0) { const cut = Math.max(-k, 0), keep = pairs.length - cut; if (keep < 1) return text; const from = pairs[keep].index; return text.slice(0, from).replace(/\s*$/, '') + text.slice(end); }
+    const gap = (text.slice(pairs.at(-2).index + pairs.at(-2)[0].length, last.index).match(/^\s*/) || [''])[0] || '\n';
+    let add = '';
+    for (let i = 0; i < k; i++) add += `${gap.includes('\n') ? '\n' : gap}${pairs[pairs.length - 2 + (i % 2)][0]}`;
+    return text.slice(0, end) + add + text.slice(end);
+}
 export function applyTune(html, tune, { mine = false } = {}) {
     const t = cleanTune(tune);
     let text = String(html ?? '');
     if (!t) return text;
+    if (!mine && t.lines) text = applyLines(text, t.lines);
     const rules = inkRules(text, t.inks);
     if (rules.length) { const at = text.indexOf('\n</style>'); if (at >= 0) text = `${text.slice(0, at)}\n${rules.join('\n')}${text.slice(at)}`; }
     return applyTexts(text, mine ? t.mineTexts : t.texts);

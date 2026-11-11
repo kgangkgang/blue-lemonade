@@ -117,7 +117,23 @@ export const sampleNames = html => String(html)
   .replace(/(<(?:p|span) class="gk-(?:nm gk-n|sn gk-s)[A-Z]">)이름(?=<\/)/g, '$1깡통')
   .replace(/(<(?:p|span) class="gk-(?:nm gk-n|sn gk-s)[A-Z]">)친구(?=<\/)/g, '$1깡캐')
   .replace(/이름은 난간에 기대어/g, '깡통은 난간에 기대어')
-  .replace(/(<p class="gk-nr">)친구는 대답 대신/g, '$1깡캐는 대답 대신');
+  .replace(/(<p class="gk-nr">)친구는 대답 대신/g, '$1깡캐는 대답 대신')
+  .replace(/(하나는 아직 따뜻했다\.<\/p>)(?!\s*<p class="gk-nr"><em>)(\s*)/g, (all, a, gap) => `${a}${gap || '\n'}${SAMPLE_INNER}${gap || '\n'}`);
+/** 11-11 견본 글에 속마음 · 강조 · 취소 한 줄(조절 칸의 속마음 · 강조 · 취소선 칸이 보이게 — 조정자 결정) · 둘째 지문 바로 뒤 */
+export const SAMPLE_INNER = '<p class="gk-nr"><em>또 기다렸구나.</em> 깡통은 <strong>따뜻한 쪽</strong>을 받아 들고 <s>화난 척</s>을 그만두었다.</p>';
+/** 11-11 틀 넘침 손봄(조절 전 처음 값부터 넘치던 둘 — 모양은 그대로) · 기본 규칙 덩이 끝에 더해요
+ *   k14 쥘부채: 접힌 살을 돌린 상자의 바깥 테두리가 틀 안쪽을 0.8px 넘어 재는 값만 넘침(보이는 잉크는 소품 칸 116×76 안) → 소품 칸에서 잘라요
+ *   q10 RPG 스탯: 게이지 줄(아이콘 · 이름 · 막대 178 · 숫자 76)이 폰 320 글 칸보다 넓어요 → 막대만 줄어요(칸 열 개가 같이 · 칠한 칸은 px 라 줄어든 만큼만 덜 보여요) */
+export const FIT_RULES = Object.freeze({
+  k14: ['.gk-k14 .gk-fn{overflow:clip}'],
+  q10: ['.gk-q10 .gk-gb{flex:0 1 178px;min-width:0;width:auto;grid-template-columns:minmax(0,178px)}', '.gk-q10 .gk-g0,.gk-q10 .gk-g1{min-width:0}', '.gk-q10 .gk-gb i{flex:0 1 16px;min-width:0;width:auto}'],
+});
+const fitFix = (html) => {
+  const key = (html.match(/^\s*<div\b[^>]*\sclass="gk [^"]*\bgk-((?:k|q)\d+)\b/) || [])[1], add = (FIT_RULES[key] || []).filter(r => !html.includes(r));
+  if (!add.length) return html;
+  const at = html.indexOf('<style>') + 7, end = html.indexOf('\n\n', at);   // 기본 규칙 덩이 끝(빈 줄 앞)
+  return end < 0 ? html : `${html.slice(0, end)}\n${add.join('\n')}${html.slice(end)}`;
+};
 /** 붙이면 지워지거나 쓰면 안 되는 것 */
 function problems(html) {
   const bad = [];
@@ -148,7 +164,7 @@ export function frameHtml(d) {
   const file = fileOf(d);
   if (!file) throw new Error(`${d.id}: 틀 파일이 없어요`);
   const raw = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
-  const html = sampleNames(focusRing(fillSlots(martAudio(stripAlias(raw.trim())), d.values)));
+  const html = fitFix(sampleNames(focusRing(fillSlots(martAudio(stripAlias(raw.trim())), d.values))));
   const bad = problems(html);
   if (bad.length) throw new Error(`${d.id}: ${bad.join(' · ')}`);
   const info = sf.simpleFrameInfo(html);

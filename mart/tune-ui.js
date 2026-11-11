@@ -3,11 +3,11 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone } from './tone-state.js?v=20261111k';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111k';
-import { TUNE_ROLES, EDIT_CLASSES, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111k';
-import { mineOn, applyMine } from './mine-text.js?v=20261111k';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111k';
+import { toneState, setTone } from './tone-state.js?v=20261111l';
+import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111l';
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, LINES_RANGE, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111l';
+import { mineOn, applyMine } from './mine-text.js?v=20261111l';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111l';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -59,7 +59,8 @@ function valuesOf(item, previewRoot) {
 /** 숫자칸에 보일 글자(자간은 테마처럼 em 으로) · 값이 없으면 빈칸(자리 글자 「틀」 = 틀 그대로) */
 const numText = (f, v) => (v == null ? '' : String(f.scale ? Number((v / f.scale).toFixed(2)) : Number(Number(v).toFixed(2))));
 const fillOf = (f, v) => `${Number((((v ?? f.def) - f.min) / (f.max - f.min) * 100).toFixed(1))}%`;
-const whenOk = (f) => !f.when || (f.when === 'marker' ? lookValue('dialogue.style') === 'marker' : f.when === 'shadow' ? lookValue('shadow.on') === true : lookValue('outline.on') === true);
+const WHEN = { marker: () => lookValue('dialogue.style') === 'marker', pen: () => lookValue('dialogue.style') === 'marker' && (lookValue('dialogue.markerShape') ?? 'stroke') === 'stroke', shadow: () => lookValue('shadow.on') === true, outline: () => lookValue('outline.on') === true, strikeOwn: () => lookValue('strike.line') === 'own' };
+const whenOk = (f) => !f.when || WHEN[f.when]?.() === true;
 const undoBtn = (attr, key, label) => `<button type="button" class="mart-tune-undo" ${attr}="${key}" title="${esc(label)} · 틀 그대로" aria-label="${esc(label)} · 틀 그대로" hidden>↺</button>`;
 
 /** 글 모양 한 칸 */
@@ -88,6 +89,8 @@ function tabBody(item) {
         for (let k = i; k < j; k++) html.push(fieldHtml({ ...fields[k], wide: (j - i) % 2 === 1 && k === j - 1 }));
         i = j - 1;
     }
+    // 대사 줄 늘리기 · 줄이기(이 틀 하나 · 견본 글일 때만 — 내 글은 글이 정해요)
+    if (tab === 'dialogue' && !mineOn()) html.push(`<div class="mart-look-row is-wrap"><span class="mart-look-label">대사 줄</span><span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="대사 줄">${[[-1, '하나 줄이기'], [0, '견본 그대로'], [1, '하나 더'], [2, '둘 더']].filter(([n]) => n >= LINES_RANGE[0] && n <= LINES_RANGE[1]).map(([n, l]) => `<button type="button" class="chip" data-tune-lines="${n}" aria-pressed="${(tuneOf(item.id)?.lines || 0) === n}">${l}</button>`).join('')}</span></div>`);
     return `<div class="mart-look">${html.join('')}</div>`;
 }
 
@@ -181,7 +184,7 @@ export function armEdit(previewRoot, item) {
         if (el.childElementCount || ['STYLE', 'SCRIPT', 'AUDIO'].includes(el.tagName) || [...el.childNodes].some(n => n.nodeType === 8)) continue;
         let prev = el.previousSibling; while (prev && prev.nodeType === 3 && !prev.data.trim()) prev = prev.previousSibling;
         const marked = prev?.nodeType === 8 && /^\s*✎/.test(prev.data);
-        if (!marked && !EDIT_CLASSES.some(c => el.classList.contains(c))) continue;
+        if (!marked && !EDIT_CLASSES.some(c => el.classList.contains(c)) && !EDIT_TAGS.includes(el.tagName.toLowerCase())) continue;
         el.dataset.blEd = String(i++);
         if (editing) { el.setAttribute('contenteditable', 'plaintext-only'); if (el.contentEditable !== 'plaintext-only') el.setAttribute('contenteditable', 'true'); el.setAttribute('spellcheck', 'false'); }
         else { el.removeAttribute('contenteditable'); el.removeAttribute('spellcheck'); }
@@ -273,6 +276,7 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         let b;
         if ((b = q('[data-tune-tab]'))) { tab = b.dataset.tuneTab; redraw(item); return; }
         if ((b = q('[data-tune-mode]'))) { setTone({ mode: b.dataset.tuneMode }); return; }
+        if ((b = q('[data-tune-lines]'))) { const t = clone(tuneOf(item.id)), n = Number(b.dataset.tuneLines); if (n) t.lines = n; else delete t.lines; setTune(item.id, t); redraw(item); return; }
         if ((b = q('[data-tune-own]'))) { const t = clone(tuneOf(item.id)); if (b.dataset.tuneOwn === '0') t.own = false; else delete t.own; setTune(item.id, t); return; }
         if (q('[data-tune-edit]')) { editing = !editing; armEdit(sheet.querySelector('.mart-sheet-preview'), item); syncTune(sheet, item); return; }
         if ((b = q('[data-look-reset]'))) { setLookValue(b.dataset.lookReset, null); return; }
