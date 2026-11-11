@@ -5,7 +5,7 @@
 //   - 깡통 · 깡캐 색은 목록 위 두 칸(tone-state.js)과 같은 값이라 여기에 안 들어 있어요.
 export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(탭을 닫으면 사라져요 — sessionStorage)
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
-import { cleanLook } from './look.js?v=20261111n';
+import { cleanLook } from './look.js?v=20261111o';
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** 역할별 글자색 — 이름은 inks.js(테마 글자색 칩)와 같아요. 새 틀에 그 글자가 있는 역할만 칸이 떠요(속마음 · 강조 · 형광펜은 그 클래스를 쓰는 틀이 생기면 한 줄 더해요) */
@@ -15,7 +15,7 @@ export const TUNE_ROLES = Object.freeze([
     Object.freeze({ role: 'dialogue', label: '대사', cls: 'gk-d', sel: '.gk-d' }),
 ]);
 /** 미리보기에서 고쳐 쓸 수 있는 글 자리 — 이 클래스가 붙은(또는 틀이 「✎」 주석을 달아 둔) 글자만 든 요소 */
-export const EDIT_CLASSES = Object.freeze(['gk-tt', 'gk-nr', 'gk-nm', 'gk-d', 'gk-sn']);
+export const EDIT_CLASSES = Object.freeze(['gk-tt', 'gk-nr', 'gk-nm', 'gk-d', 'gk-sn', 'gk-hl']);   // gk-hl: 05 티백 숨은 한 줄(15 요람의 빈 공 빛 조각은 글이 없어 칸이 아니에요)
 /** 지문 안의 속마음 · 강조 · 취소 글자도 고쳐 쓸 수 있어요(클래스 없이 태그로) */
 export const EDIT_TAGS = Object.freeze(['em', 'strong', 's']);
 /** 대사 줄 늘리기 · 줄이기 범위(틀이 버티는 만큼 — 견본 대사 둘에서 하나 ~ 넷) */
@@ -63,6 +63,8 @@ export function cleanTune(t) {
     if (Object.keys(inks).length) out.inks = inks;
     if (HEX.test(t.prop || '')) out.prop = t.prop.toLowerCase();   // 소품 색: 없으면 깡통 색을 따라가요(나중에 「기본 색」 켬끔이 들어올 자리 — 값 'own')
     if (t.own === false) out.own = false;
+    if (t.hideTitle === true) out.hideTitle = true;   // 보일 것: 제목 끔(제목이 누름 칸 안인 틀은 화면이 이 칸을 안 줘요)
+    if (t.hideNames === true) out.hideNames = true;   // 보일 것: 이름 줄 끔
     const lines = Number(t.lines); if (Number.isInteger(lines) && lines !== 0 && lines >= LINES_RANGE[0] && lines <= LINES_RANGE[1]) out.lines = lines;   // 대사 줄(견본 글일 때만)   // 「기본 색」이 있는 틀: false = 소품을 캐릭터 색으로 덮어써요(없으면 기본 색 그대로)
     const texts = {};
     for (const [i, v] of Object.entries(t.texts || {})) if (/^\d+$/.test(i) && typeof v === 'string') texts[i] = cleanRich(v);
@@ -99,6 +101,7 @@ export function editables(html) {
         const cls = ((m[3].match(/\sclass="([^"]*)"/) || [])[1] || '').split(/\s+/);
         const hit = EDIT_CLASSES.find(c => cls.includes(c));
         if (!hit && !m[1] && !EDIT_TAGS.includes(m[2])) continue;
+        if (hit === 'gk-hl' && !m[4].trim()) continue;
         if (m[2] === 'style' || m[2] === 'script' || m[2] === 'audio') continue;
         const end = m.index + m[0].length - (`</${m[2]}>`).length;
         out.push({ i: out.length, cls: hit || (EDIT_TAGS.includes(m[2]) ? m[2] : 'mark'), text: m[4], start: end - m[4].length, end });
@@ -126,6 +129,17 @@ export function inkRules(html, inks) {
     }
     return out;
 }
+/** 제목이 누름 칸(summary · label) 안인 틀 — 제목을 끄면 소품을 누를 자리가 없어져서 「제목 끄기」를 안 줘요 */
+export const titleInPress = html => [...String(html ?? '').matchAll(/<(summary|label)\b[\s\S]*?<\/\1>/g)].some(m => /class="(?:[^"]*\s)?gk-tt(?:\s[^"]*)?"/.test(m[0]));
+/** 보일 것(테마 SHOWS 꼴) — 제목 · 이름 줄을 끄는 규칙(틀 <style> 끝에) */
+export function showRules(html, t) {
+    const key = (String(html ?? '').match(/^\s*<div\b[^>]*\sclass="gk\s(?:[^"]*\s)?gk-((?:k|q)\d+)(?=[\s"])/) || [])[1];
+    if (!key || !t) return [];
+    const K = `.gk-${key}`.repeat(3), out = [];
+    if (t.hideTitle && !titleInPress(html)) out.push(`${K} .gk-tt,${K} .gk-ul{display:none}`);
+    if (t.hideNames) out.push(`${K} p.gk-nm{display:none}`);
+    return out;
+}
 /** 다 칠한 틀 HTML 에 조절 값을 얹어요(글자색 규칙 + 고쳐 쓴 글) — 값이 없으면 받은 그대로 */
 /** 대사 줄 늘리기 · 줄이기 — 견본 대사 쌍(이름 + 대사)을 마지막 쌍 뒤에 번갈아 붙이거나 마지막 쌍을 빼요(지문 · 소리 카드 · 쪽 넘김은 그대로) */
 const PAIR_G = /<p class="gk-nm gk-n([A-Z])">[^<]*<\/p>\s*<p class="gk-dl"[^>]*><span class="gk-d gk-d[A-Z]">(?:(?!<\/p>)[\s\S])*?<\/span><\/p>/g;
@@ -146,7 +160,7 @@ export function applyTune(html, tune, { mine = false } = {}) {
     let text = String(html ?? '');
     if (!t) return text;
     if (!mine && t.lines) text = applyLines(text, t.lines);
-    const rules = inkRules(text, t.inks);
+    const rules = [...inkRules(text, t.inks), ...showRules(text, t)];
     if (rules.length) { const at = text.indexOf('\n</style>'); if (at >= 0) text = `${text.slice(0, at)}\n${rules.join('\n')}${text.slice(at)}`; }
     return applyTexts(text, mine ? t.mineTexts : t.texts);
 }

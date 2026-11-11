@@ -587,3 +587,7 @@ html.mart-cart-on{overflow:hidden}
 @media (max-width:639px){.mart-mine-text{font-size:16px}}
 /* 11-11 되돌리기 · 다시하기 — 못 쓸 때는 흐리게(테 없이) */
 .mart-tune-line [data-hist]:disabled{opacity:.45;cursor:default}
+/* 11-11 「머리」 묶음 글칸 — 남는 폭을 다 써요 */
+.mart-head-field{flex:1 1 160px;min-width:0}
+.mart-head-field .field{width:100%}
+@media (max-width:639px){.mart-head-field .field{font-size:16px}}

@@ -3,11 +3,11 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone } from './tone-state.js?v=20261111n';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111n';
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111n';
-import { mineOn, applyMine } from './mine-text.js?v=20261111n';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111n';
+import { toneState, setTone } from './tone-state.js?v=20261111o';
+import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111o';
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111o';
+import { mineOn, applyMine } from './mine-text.js?v=20261111o';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111o';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -75,7 +75,18 @@ function fieldHtml(f) {
     if (f.kind === 'color') return `<div class="mart-look-row"${when}>${lab}<label class="mart-ink" title="${esc(f.label)} 바꾸기"><input type="color" data-look-color="${p}" value="${f.def}" aria-label="${esc(f.label)}"><span class="mart-ink-dot" style="background-color:${f.def}" aria-hidden="true"></span>${esc(f.label)}</label></div>`;
     return '';
 }
+/** 「머리」 묶음(테마 머리 칸 글칸 · 보일 것) — 제목 · 숨은 한 줄 글칸(글 고치기와 같은 자리) · 제목 · 이름 줄 켬끔 */
+const headSlots = item => { const eds = editables(applyMine(item.preview)); return { title: eds.find(e => e.cls === 'gk-tt'), hl: eds.find(e => e.cls === 'gk-hl') }; };
+const plainOf = h => String(h ?? '').replace(/<br>/g, ' ').replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+function headBody(item) {
+    const t = tuneOf(item.id) || {}, key = mineOn() ? 'mineTexts' : 'texts', slots = headSlots(item);
+    const val = s => (s ? plainOf(t[key]?.[s.i] ?? s.text) : '');
+    const inp = (id, label, s) => s ? `<div class="mart-look-row is-wrap"><span class="mart-look-label">${label}</span><label class="field-wrap mart-head-field"><input type="text" class="field" data-head="${id}" maxlength="200" value="${esc(val(s))}" aria-label="${label}"></label></div>` : '';
+    const chip = (path, label, on) => `<div class="mart-look-row is-wrap"><span class="mart-look-label">${label}</span><span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="${label}"><button type="button" class="chip" data-head-show="${path}" data-v="1" aria-pressed="${!on}">보임</button><button type="button" class="chip" data-head-show="${path}" data-v="0" aria-pressed="${on}">숨김</button></span></div>`;
+    return `<div class="mart-look">${inp('title', '제목', slots.title)}${inp('hl', '숨은 한 줄', slots.hl)}${titleInPress(item.preview) ? '' : chip('hideTitle', '보일 것 · 제목', !!t.hideTitle)}${chip('hideNames', '보일 것 · 이름 줄', !!t.hideNames)}<p class="mart-tune-hint">${titleInPress(item.preview) ? '이 틀은 제목 줄을 눌러 소품을 열어서 제목은 끌 수 없어요 · ' : ''}여기서 고친 글은 「글 고치기」와 같은 자리예요</p></div>`;
+}
 function tabBody(item) {
+    if (tab === 'head') return headBody(item);
     if (tab === 'color') {
         const chips = chipsOf(item).map(c => `<span class="mart-tune-chip"><label class="mart-ink" title="${esc(c.title)}"><input type="color" data-tune="${c.key}" value="${NEUTRAL}" aria-label="${esc(c.label)} 색"><span class="mart-ink-dot" aria-hidden="true"></span>${esc(c.label)}</label>${undoBtn('data-tune-reset', c.key, c.label)}</span>`).join('');
         return `<div class="mart-inks mart-tune-colors mart-hscroll" role="group" aria-label="색 — 눌러서 바꿔요">${chips}</div>
@@ -97,7 +108,7 @@ function tabBody(item) {
 /** 조절 칸(미리보기 위) — 묶음 칩 + 펼친 묶음의 칸 + 글 고치기 · 전부 처음으로 */
 export function tuneHtml(item) {
     if (!item?.simple || !item.preview) return '';
-    return `<section class="mart-tune" aria-label="조절"><div class="mart-tune-tabs mart-seg mart-hscroll" role="group" aria-label="조절 묶음">${LOOK_TABS.map(([id, l]) => `<button type="button" class="chip" data-tune-tab="${id}" aria-pressed="${id === tab}">${esc(l)}</button>`).join('')}</div>
+    return `<section class="mart-tune" aria-label="조절"><div class="mart-tune-tabs mart-seg mart-hscroll" role="group" aria-label="조절 묶음">${[LOOK_TABS[0], ['head', '머리'], ...LOOK_TABS.slice(1)].map(([id, l]) => `<button type="button" class="chip" data-tune-tab="${id}" aria-pressed="${id === tab}">${esc(l)}</button>`).join('')}</div>
         <div class="mart-tune-body">${tabBody(item)}</div>
         <div class="mart-tune-line"><button type="button" class="chip mart-tune-edit" data-tune-edit aria-pressed="false">글 고치기</button><button type="button" class="chip" data-hist="undo" title="되돌리기(Ctrl+Z)" disabled>되돌리기</button><button type="button" class="chip" data-hist="redo" title="다시하기(Ctrl+Y)" disabled>다시하기</button><button type="button" class="chip mart-tune-all" data-tune-reset="all" hidden>전부 처음으로</button></div>
         <p class="mart-tune-hint" data-edit-hint hidden>미리보기의 글자를 눌러 바로 고쳐 써요 · 고치는 동안은 소품이 안 눌려요</p></section>`;
@@ -180,6 +191,7 @@ export function syncTune(sheet, item) {
         const undo = input.closest('.mart-tune-chip')?.querySelector('[data-tune-reset]'); if (undo) undo.hidden = !cur.changed;
     }
     for (const b of box.querySelectorAll('[data-tune-mode]')) b.setAttribute('aria-pressed', String(b.dataset.tuneMode === toneState.mode));
+    if (tab === 'head') { const slots = headSlots(item), key = mineOn() ? 'mineTexts' : 'texts'; for (const inp of box.querySelectorAll('input[data-head]')) { const s = slots[inp.dataset.head]; if (s && document.activeElement !== inp) inp.value = plainOf(t?.[key]?.[s.i] ?? s.text); } }
     for (const b of box.querySelectorAll('[data-tune-own]')) b.setAttribute('aria-pressed', String((b.dataset.tuneOwn === '0') === (t?.own === false)));
     // 글 모양 칸
     for (const f of LOOK_FIELDS) {
@@ -230,6 +242,7 @@ export function armEdit(previewRoot, item) {
         let prev = el.previousSibling; while (prev && prev.nodeType === 3 && !prev.data.trim()) prev = prev.previousSibling;
         const marked = prev?.nodeType === 8 && /^\s*✎/.test(prev.data);
         if (!marked && !EDIT_CLASSES.some(c => el.classList.contains(c)) && !EDIT_TAGS.includes(el.tagName.toLowerCase())) continue;
+        if (el.classList.contains('gk-hl') && !el.textContent.trim()) continue;   // 15 요람 공 빛 조각(빈 칸)은 글 칸이 아니에요
         el.dataset.blEd = String(i++); inside = el;
         if (editing) { el.setAttribute('contenteditable', 'true'); el.setAttribute('spellcheck', 'false'); }   // 굵게 · 기울임 · 줄바꿈을 받으려고 plaintext-only 대신 true(붙여 넣기는 아래에서 글만)
         else { el.removeAttribute('contenteditable'); el.removeAttribute('spellcheck'); }
@@ -273,6 +286,15 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
             t.dataset.busy = '1';
             const dot = t.parentElement.querySelector('.mart-ink-dot'); if (dot) dot.style.backgroundColor = t.value;
             clearTimeout(timer); timer = setTimeout(() => applyColor(item, t.dataset.tune, t.value), 150);
+            return;
+        }
+        if (t.matches?.('input[data-head]')) {   // 머리 칸 글칸: 글 고치기와 같은 자리(tune.texts · 내 글이면 mineTexts) · 원래 글과 같으면 지워요
+            const slots = headSlots(item), s = slots[t.dataset.head]; if (!s) return;
+            clearTimeout(lookTimer); lookTimer = setTimeout(() => {
+                const key = mineOn() ? 'mineTexts' : 'texts', cur = clone(tuneOf(item.id)), texts = cur[key] ??= {}, now = cleanRich(t.value);
+                if (now === cleanRich(s.text) || !t.value.trim()) delete texts[s.i]; else texts[s.i] = now;
+                setTune(item.id, cur);
+            }, 250);
             return;
         }
         if (t.matches?.('input[data-look]')) {   // 슬라이더: 숫자는 바로 · 다시 칠하기는 0.12초 묶음
@@ -347,6 +369,7 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if ((b = q('[data-hist]'))) { undo(b.dataset.hist === 'redo' ? 1 : -1); return; }
         if ((b = q('[data-tune-tab]'))) { tab = b.dataset.tuneTab; redraw(item); return; }
         if ((b = q('[data-tune-mode]'))) { setTone({ mode: b.dataset.tuneMode }); return; }
+        if ((b = q('[data-head-show]'))) { const t = clone(tuneOf(item.id)); if (b.dataset.v === '0') t[b.dataset.headShow] = true; else delete t[b.dataset.headShow]; setTune(item.id, t); redraw(item); return; }
         if ((b = q('[data-tune-lines]'))) { const t = clone(tuneOf(item.id)), n = Number(b.dataset.tuneLines); if (n) t.lines = n; else delete t.lines; setTune(item.id, t); redraw(item); return; }
         if ((b = q('[data-tune-own]'))) { const t = clone(tuneOf(item.id)); if (b.dataset.tuneOwn === '0') t.own = false; else delete t.own; setTune(item.id, t); return; }
         if (q('[data-tune-edit]')) { editing = !editing; armEdit(sheet.querySelector('.mart-sheet-preview'), item); syncTune(sheet, item); return; }

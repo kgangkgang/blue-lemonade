@@ -926,5 +926,20 @@ await test('바로 고치기 넓히기: 고쳐 쓴 글에 줄바꿈 · 굵게 ·
     for (const s of ["document.execCommand('insertLineBreak')", "document.execCommand(e.key.toLowerCase() === 'b' ? 'bold' : 'italic')", "document.execCommand('insertText', false, text)", "const ONE_LINE = '.gk-tt, .gk-nm, .gk-sn';"]) assert.ok(ui.includes(s), s);
 });
 
+await test('머리 칸 · 보일 것: 제목이 누름 칸 안인 틀(01 · 02 · 08 · 14)은 제목 끄기 없음 · 나머지는 제목 · 밑줄을 끄는 규칙 · 이름 줄 끄기 · 05 숨은 한 줄은 글 칸(15 요람 빈 조각은 아님) · 값 없으면 그대로', () => {
+    assert.deepEqual(six.items.filter(r => tu.titleInPress(sfx[r.id].preview)).map(r => r.id.slice(7)), ['k1', 'k2', 'k8', 'k14']);
+    for (const row of six.items) {
+        const p = sfx[row.id].preview, K = `.gk-${sf.simpleFrameInfo(p).key}`.repeat(3), press = tu.titleInPress(p);
+        assert.deepEqual(tu.showRules(p, {}), []);
+        assert.deepEqual(tu.showRules(p, { hideTitle: true }), press ? [] : [`${K} .gk-tt,${K} .gk-ul{display:none}`], row.id);
+        assert.deepEqual(tu.showRules(p, { hideNames: true }), [`${K} p.gk-nm{display:none}`]);
+        const out = tu.applyTune(p, { hideTitle: true, hideNames: true });
+        assert.ok(out.includes(`${K} p.gk-nm{display:none}`) && (press ? !out.includes('.gk-tt,') : out.includes(`${K} .gk-tt,${K} .gk-ul{display:none}`)), row.id);
+        assert.ok(tg.readyReport(sf.simpleReady(shutPeek(out))).ok, row.id);
+        assert.equal(tu.editables(p).filter(e => e.cls === 'gk-hl').length, row.id === 'simple-k5' ? 1 : 0, `${row.id} 숨은 한 줄 칸`);
+    }
+    assert.deepEqual(tu.cleanTune({ hideTitle: true, hideNames: false, x: 1 }), { hideTitle: true });
+});
+
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
