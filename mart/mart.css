@@ -510,8 +510,11 @@ html.mart-cart-on{overflow:hidden}
 .mart-tune-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .mart-tune-line .mart-tune-all{margin-left:auto}
 .mart-tune-hint,.mart-tune-empty{margin:0;color:var(--muted);font-size:var(--ts-meta);line-height:1.5;text-align:left}
-.mart-sheet-preview.is-editing [contenteditable]{cursor:text;border-radius:3px;outline:1px dashed color-mix(in srgb,var(--blue) 55%,transparent);outline-offset:1px}
-.mart-sheet-preview.is-editing [contenteditable]:focus{outline:1.5px solid var(--blue)}
+/* 11-11 「글 고치기」: 테 없이 아주 옅은 바탕으로 고칠 칸만 알려요(사용자는 테 · 선을 싫어해요 — 테마 로그 복사 편집기도 테가 없어요) · 고르는 칸은 조금 더 진하게
+   켠 동안 미리보기 안은 글 칸만 눌려요(소품 · summary · 누름 칸은 pointer-events:none — 터치도 같아요) */
+.mart-sheet-preview.is-editing .gk *{pointer-events:none}
+.mart-sheet-preview.is-editing .gk [contenteditable]{pointer-events:auto;cursor:text;border-radius:3px;outline:0;background-color:color-mix(in srgb,var(--blue) 7%,transparent);-webkit-tap-highlight-color:transparent}
+.mart-sheet-preview.is-editing .gk [contenteditable]:focus{outline:0;background-color:color-mix(in srgb,var(--blue) 14%,transparent)}
 .mart-sheet-mine:not(:empty){margin:12px 0 0}
 .mart-tune-save{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
 .mart-tune-h{margin:0;font-size:16px;font-weight:650;color:var(--ink)}

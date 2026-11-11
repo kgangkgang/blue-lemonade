@@ -15,7 +15,7 @@ import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261111i'
 import { simpleReady } from './simple-frames.js?v=20261111i';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
 import { mountCast } from './cast.js?v=20261111i';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit } from './tune-ui.js?v=20261111i';   // 11-11 크게 보기 「조절」 칸(색 칩 · 글 고치기 · 내 글꾸)
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit } from './tune-ui.js?v=20261111j';   // 11-11 크게 보기 「조절」 칸(색 칩 · 글 고치기 · 내 글꾸)
 let styleActive = 'all', drawPreset = null, picker = null;
 const states = [];   // 만든 카드만(글꾸) — 늦게 만들기(lazyGrid)라 처음엔 첫 화면 몫뿐이에요
 const stateById = new Map();

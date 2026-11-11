@@ -186,6 +186,7 @@ export function armEdit(previewRoot, item) {
         else { el.removeAttribute('contenteditable'); el.removeAttribute('spellcheck'); }
     }
     previewRoot.classList.toggle('is-editing', editing);
+    for (const d of root.querySelectorAll('details')) { if (editing) d.dataset.blHold = String(d.open); else delete d.dataset.blHold; }   // 켤 때의 열림 상태를 붙잡아 둬요
 }
 
 /** 압축된 테마 스타일 코드(BLS1. — deflate-raw)를 풀어 JSON 글자로 */
@@ -259,7 +260,12 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
     });
     sheet.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.closest?.('.mart-sheet-preview [data-bl-ed]')) e.preventDefault(); });
     // 고치는 동안 글자를 눌러도 소품(summary)이 열리고 닫히지 않게
-    sheet.addEventListener('click', (e) => { if (editing && e.target.closest?.('.mart-sheet-preview [data-bl-ed]') && e.target.closest('summary')) e.preventDefault(); }, true);
+    // 11-11 「글 고치기」 켠 동안은 소품이 안 눌려요(사용자 「글 고치는중에도 소품 눌림」): 미리보기 안 누름은 CSS(pointer-events)로 글 칸만 받고,
+    //   그래도 들어온 누름(summary · label · 링크 · 단추)의 기본 동작은 막아요 — 제목 줄이 곧 누름 칸인 틀(견출지 · 낫표)에서 제목을 고쳐 써도 안 열리고 안 닫혀요
+    const inPreview = e => editing && e.target.closest?.('.mart-sheet-preview');
+    sheet.addEventListener('click', (e) => { if (inPreview(e) && e.target.closest('summary, label, a, button, input, audio')) e.preventDefault(); }, true);
+    // 그래도 열림 상태가 바뀌면(키보드 · 브라우저 차이) 되돌려요
+    sheet.addEventListener('toggle', (e) => { const d = e.target; if (!editing || !d?.matches?.('.mart-sheet-preview details') || d.dataset.blHold === String(d.open)) return; d.dataset.blHold = String(!d.open); d.open = !d.open; }, true);
     sheet.addEventListener('click', async (e) => {
         const item = current()?.item; if (!item) return;
         const q = sel => e.target.closest?.(sel);
