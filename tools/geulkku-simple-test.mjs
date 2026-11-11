@@ -907,7 +907,7 @@ await test('틀 넘침 손봄: k14 쥘부채 · q10 RPG 스탯에만 · 기본 �
 await test('되돌리기 · 다시하기(테마 hist 꼴): 단추 둘 · 스냅샷 50 · 0.5초 묶음 · Ctrl+Z / Ctrl+Y · Ctrl+Shift+Z · 입력칸 안에서는 그 칸 것 · 되돌리는 동안은 기록 안 함 · 다른 틀은 새로', () => {
     const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
     for (const s of ['data-hist="undo"', 'data-hist="redo"', 'const HIST_MAX = 50;', 'setTimeout(() => { histPush(item); syncHist(sheet); }, 500)', "if (e.target.closest?.('input, textarea, select')) return;", "undo(k === 'y' || e.shiftKey ? 1 : -1)", 'if (hist.restoring || hist.id !== item.id) return;', 'if (item && hist.id !== item.id) histStart(item);']) assert.ok(ui.includes(s), s);
-    assert.ok(/const snapOf = item => JSON\.stringify\(\{ tune: tuneOf\(item\.id\), look: lookNow\(\), motion: motionNow\(\), words: wordsNow\(\), tone: \{/.test(ui), '한 칸 = 조절 값 + 글 모양 + 이름 숨김 · 단어 바꾸기 + 깡통 · 깡캐 · 밤낮');
+    assert.ok(/const snapOf = item => JSON\.stringify\(\{ tune: tuneOf\(item\.id\), look: lookNow\(\), motion: motionNow\(\), tex: texNow\(\), words: wordsNow\(\), tone: \{/.test(ui), '한 칸 = 조절 값 + 글 모양 + 이름 숨김 · 단어 바꾸기 + 깡통 · 깡캐 · 밤낮');
 });
 
 await test('바로 고치기 넓히기: 고쳐 쓴 글에 줄바꿈 · 굵게 · 기울임 · 강조 · 속마음 · 취소만 남기고(속성 없이) 나머지는 글자 · 붙여 넣은 줄 · 문단은 줄바꿈 · 안 닫힌 꾸밈은 닫아요 · 28틀에 넣어도 태그 짝 · 복사 글 정적 검사 · 다시 고쳐 쓸 때도 그 칸', () => {
@@ -1299,6 +1299,39 @@ await test('설정 꼴 blGeulkku 2(geulkku-set.js) · 테마로 담기 꾸러미
     assert.deepEqual(Object.keys(pack), ['bl-mart', 'items']); assert.equal(pack['bl-mart'], 1);
     assert.deepEqual(Object.keys(pack.items[0]), ['kind', 'v', 'id', 'key', 'name', 'emoji', 'html', 'set']);
     assert.equal(pack.items[0].kind, 'geulkku-simple'); assert.equal(pack.items[0].key, 'k1079');
+});
+await test('바탕 질감(11-12 · 글꾸-질감/마트-연결.md): 끔이면 그대로 · 410틀 × 낮밤에 걸고 떼면 처음과 같음 · 걸지 않는 틀 16 · <style> 하나 · 정적 검사 · 인스타 세 틀 + #222 즉석카메라 목록', async () => {
+    const tx = await import(pathToFileURL(path.join(MART, 'texture.js')).href + '?v=20261112a');
+    let n = 0; const blocked = new Set();
+    for (const [id, it] of Object.entries(allItems)) for (const mode of ['light', 'dark']) {
+        const p = sf.toneSimple(it.preview, sf.ORIGINAL, { mode });
+        assert.equal(tx.applyTex(p, null), p, id);
+        const o = tx.applyTex(p, { tex: 'rough', on: 'c', level: 1 });
+        if (o === p) { blocked.add(id); continue; }
+        n++; assert.equal(tx.stripTex(o), p, id + ' 떼기'); assert.equal((o.match(/<style>/g) || []).length, 1, id);
+        assert.match(o.match(/^<div[^>]*>/)[0], /gk-tx-rough gk-tx-on-c gk-tx-1/);
+        if (n % 40 === 1) assert.ok(tg.readyReport(sf.simpleReady(shutPeek(o))).ok, id + ' 정적 검사');
+    }
+    assert.ok(n > 780, '건 판 ' + n);
+    for (const k of Object.keys(tx.NO_TEX_MART)) assert.ok(blocked.has('simple-' + k), k + ' 막음');
+    assert.ok(blocked.size <= 17, '막은 틀 ' + [...blocked]);
+    assert.deepEqual(tx.cleanTex({ tex: 'line', on: 'x', level: 9, margin: true }), { tex: 'line', on: 'b', level: 2, margin: true });
+    assert.equal(tx.cleanTex({ tex: 'none' }), null);
+    for (const k of ['k1371', 'k1372', 'k1373']) assert.ok(sixAll.items.some(x => x.id === 'simple-' + k), k);
+    assert.equal(sixAll.items.find(x => x.id === 'simple-k1222').name, '즉석카메라');
+    assert.ok(!sixAll.items.some(x => x.name === '인스타 스토리' && x.id !== 'simple-k1373'));
+});
+await test('움직임 끔(세기 모듈 gm-0 · gp-0): 칩 넷 · 끔이면 뿌리 gk-gm-0 / gk-gp-0 · 되돌림 · 끔이 없는 틀은 그대로', async () => {
+    const ms = await import(pathToFileURL(path.join(MART, 'motion-state.js')).href + '?v=20261112a');
+    const mo = await import(pathToFileURL(path.join(MART, 'lib/motion/motion.js')).href);
+    assert.deepEqual(ms.MOTION_LEVELS.map(x => x[1]), ['끔', '약', '중', '강']);
+    let off = 0;
+    for (const it of Object.values(allItems)) {
+        const p = it.preview, c = ms.motionCaps(p), o = ms.applyMotion(p, { text: '0', prop: '0' });
+        if (!c.text[0] && !c.prop[0]) { assert.equal(o, p); continue; }
+        off++; assert.match(o.match(/^<div[^>]*>/)[0], /gk-g[mp]-0/); assert.equal(mo.applyLevel(o, {}), p);
+    }
+    assert.ok(off > 300, '끔 되는 틀 ' + off);
 });
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

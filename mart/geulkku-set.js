@@ -3,6 +3,7 @@
 //   없는 키 = 틀 그대로 → 아무것도 안 고친 설정은 { blGeulkku: 2 } 이에요. 새 조절(띠 진하기 · 모양 · 질감 …)은 그 칸이 생기면 여기에 더해요.
 import { cleanLook } from './look.js?v=20261112a';
 import { cleanTune } from './tune.js?v=20261112a';
+import { cleanTex } from './texture.js?v=20261112a';
 
 export const SET_V = 2;
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -12,7 +13,7 @@ const lv = v => (v === 's' || v === 'l' ? v : 'm');
 const frameKeyOf = id => (String(id || '').match(/(?:^|-)((?:k|q)\d+)$/) || [])[1] || '';
 
 /** 지금 값 → 설정(꼴 2) · frame: 그 틀 열쇠(주면 완성 프리셋 꼴 — 틀 값까지) */
-export function makeSet({ tone = {}, look = null, motion = null, tune = null, frame = '', label = '' } = {}) {
+export function makeSet({ tone = {}, look = null, motion = null, tex = null, tune = null, frame = '', label = '' } = {}) {
     const out = { blGeulkku: SET_V, from: 'mart' };
     if (name(label)) out.name = name(label);
     const style = {}, cast = {};
@@ -25,6 +26,7 @@ export function makeSet({ tone = {}, look = null, motion = null, tune = null, fr
     const L = cleanLook(look);
     if (L) { const { lemon, ...rest } = L; if (Object.keys(rest).length) style.look = rest; if (lemon?.off) style.show = { lemon: false }; }
     if (motion && (lv(motion.text) !== 'm' || lv(motion.prop) !== 'm')) style.motion = { text: lv(motion.text), prop: lv(motion.prop) };
+    const tx = cleanTex(tex); if (tx) style.shape = { texture: tx };   // 바탕 질감(N27) — { tex, on, level, margin }
     if (Object.keys(style).length) out.style = style;
     const key = frameKeyOf(frame);
     if (key) {
@@ -60,8 +62,8 @@ export function readSet(raw) {
     tone.k2 = hex(c.other?.color); tone.name2 = tone.k2 ? name(c.other.name) : '';
     tone.k3 = hex(c.third?.color); tone.name3 = tone.k3 ? name(c.third.name) : '';
     const look = cleanLook({ ...(s.look || {}), ...(s.show?.lemon === false ? { lemon: { off: true } } : {}) });
-    const motion = { text: lv(s.motion?.text), prop: lv(s.motion?.prop) };
+    const motion = { text: lv(s.motion?.text), prop: lv(s.motion?.prop) }, tex = cleanTex(s.shape?.texture);
     const frame = frameKeyOf(v.frame), f = (frame && v.frames?.[frame]) || {};
     const tune = cleanTune({ vals: f.vals, lines: f.lines, texts: f.texts, spoilers: f.spoilers, inks: f.colors, prop: f.prop?.tone === 'pick' ? f.prop.color : undefined, own: f.prop?.tone === 'own' ? true : f.prop?.tone === 'cast' ? false : undefined, hideTitle: f.show?.title === false, hideNames: f.show?.names === false });
-    return { tone, look, motion, frame, tune, name: name(v.name) };
+    return { tone, look, motion, tex, frame, tune, name: name(v.name) };
 }

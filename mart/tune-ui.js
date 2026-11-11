@@ -8,6 +8,7 @@ import { speakerPair, hasPropTone, hasOwnTone, simpleFrameInfo } from './simple-
 import { fieldsOf, valsHtml, valOk } from './custom.js?v=20261112a';
 import { LOOKS, sameLook } from './looks.js?v=20261112a';   // 11-12 간편 — 추천 스타일 여섯 벌
 import { motionNow, setMotion, motionCaps, MOTION_LEVELS } from './motion-state.js?v=20261112a';   // 11-12 움직임 세기
+import { texNow, setTex, texInfo, TEX_ORDER, TEX_NAMES } from './texture.js?v=20261112a';   // 11-12 바탕 질감
 import { swapSpeakers } from './cast.js?v=20261112a';
 import { castPicked } from './tone-state.js?v=20261112a';   // 11-11 「이 틀」 값 칸
 import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine, setsFile, readSets, addSets } from './tune.js?v=20261112a';
@@ -123,6 +124,7 @@ function tabBody(item) {
     if (tab === 'head') return headBody(item);
     if (tab === 'tools') return toolsBody();
     if (tab === 'motion') return motionBody(item);
+    if (tab === 'texture') return textureBody(item);
     if (tab === 'vals' && !fieldsOf(item.preview).length) tab = 'color';   // 값 칸이 없는 틀로 넘어오면 「색」으로
     if (tab === 'vals') return valsHtml(fieldsOf(item.preview), tuneOf(item.id)?.vals || {});
     if (tab === 'color') {
@@ -190,8 +192,8 @@ function simpleInner(item) {
     const cards = [own ? card('data-view', 'detail', '직접 조절', true, ' is-own') : '', ...LOOKS.map(x => card('data-simple-style', x.id, x.label, !own && !last && hit?.id === x.id)), ...mine.map(x => card('data-preset-load', x.id, x.name, x.id === last, ' is-mine'))].join('');
     const colorChip = (key, label) => `<span class="mart-tune-chip"><label class="mart-ink" title="${label} 색 — 목록 위 「${label}」 칸과 같은 값이에요"><input type="color" data-tune="${key}" value="${NEUTRAL}" aria-label="${label} 색"><span class="mart-ink-dot" aria-hidden="true"></span>${label}</label>${undoBtn('data-tune-reset', key, label)}</span>`;
     const cover = castPicked() ? `<div class="mart-simple-cover"><span class="mart-simple-h">소품도 캐릭터 색 <small>끄면 소품은 기본 색</small></span><span class="mart-seg" role="group" aria-label="소품도 캐릭터 색"><button type="button" class="chip" data-simple-cover="1" aria-pressed="${toneState.cover}">켬</button><button type="button" class="chip" data-simple-cover="0" aria-pressed="${!toneState.cover}">끔</button></span></div>` : '';
-    const caps = motionCaps(item.preview), can = caps.text.s || caps.text.l || caps.prop.s || caps.prop.l, apart = m.text !== m.prop;
-    const motionRow = segRow('움직임', MOTION_LEVELS.map(([v, l]) => `<button type="button" class="chip" data-simple-motion="${v}" aria-pressed="${!apart && m.text === v}"${can || v === 'm' ? '' : ' disabled'}>${l}</button>`).join('') + (apart ? '<button type="button" class="chip" data-view="detail" aria-pressed="true">따로</button>' : ''), apart ? `글 ${MOTION_LABEL[m.text]} · 소품 ${MOTION_LABEL[m.prop]}` : can ? '글 · 소품 같이' : '이 틀은 세기를 못 바꿔요');
+    const caps = motionCaps(item.preview), can = ['0', 's', 'l'].some(v => caps.text[v] || caps.prop[v]), apart = m.text !== m.prop;
+    const motionRow = segRow('움직임', MOTION_LEVELS.map(([v, l]) => `<button type="button" class="chip" data-simple-motion="${v}" aria-pressed="${!apart && m.text === v}"${v === 'm' || caps.text[v] || caps.prop[v] ? '' : ' disabled'}>${l}</button>`).join('') + (apart ? '<button type="button" class="chip" data-view="detail" aria-pressed="true">따로</button>' : ''), apart ? `글 ${MOTION_LABEL[m.text]} · 소품 ${MOTION_LABEL[m.prop]}` : can ? '글 · 소품 같이' : '이 틀은 세기를 못 바꿔요');
     const fixed = lookValue('type.size'), step = stepOf(lookNow());
     const sizeRow = segRow('글 크기', SIZE_STEPS.map(([v, l]) => `<button type="button" class="chip" data-simple-size="${v}" aria-pressed="${fixed == null && step === v}">${l}</button>`).join(''), fixed != null ? `직접 ${fixed}px` : '');
     return `<div class="mart-simple-row"><p class="mart-simple-h">스타일 <small>한 번에 입혀요</small></p><div class="mart-style-cards mart-hscroll" role="group" aria-label="스타일">${cards}</div></div>
@@ -202,6 +204,19 @@ function simpleInner(item) {
         <button type="button" class="btn mart-simple-more" data-view="detail" title="색 · 글 · 움직임 · 이 틀 · 도구 · 저장">더 조절하기</button>`;
 }
 const viewSegHtml = (item) => { const n = detailChanges(item).length; return `<div class="mart-view mart-seg" role="group" aria-label="간편 · 세밀"><button type="button" class="chip" data-view="simple" aria-pressed="${view === 'simple'}">간편</button><button type="button" class="chip" data-view="detail" aria-pressed="${view === 'detail'}">세밀${n ? ` <b class="mart-view-n">${n}</b>` : ''}</button></div>`; };
+/** 세밀 「바탕」 묶음 — 질감 여덟 + 끔 · 얹는 곳 · 진하기 · 줄 노트 세로줄(연결 설명서 1절) · 걸지 않는 틀은 질감 줄을 흐리게 하고 까닭 한 줄 */
+function textureBody(item) {
+    const t = texNow(), i = texInfo(item.preview), off = !t;
+    const chip = (attr, v, l, on, dis = false) => `<button type="button" class="chip" ${attr}="${v}" aria-pressed="${on}"${dis ? ' disabled' : ''}>${l}</button>`;
+    const row = (label, inner, hide = false) => (hide ? '' : `<div class="mart-look-row is-wrap"><span class="mart-look-label">${label}</span><span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="${label}">${inner}</span></div>`);
+    const blocked = i.blocked ? `<p class="mart-tune-hint">이 틀에는 질감을 얹지 않아요 — ${esc(i.why || '')} · 고른 값은 다른 틀에서 그대로 걸려요</p>` : '';
+    return `<div class="mart-look${i.blocked ? ' is-dim' : ''}">${row('바탕 질감', [chip('data-tex', 'none', '끔', off, i.blocked), ...TEX_ORDER.map(k => chip('data-tex', k, TEX_NAMES[k], t?.tex === k, i.blocked))].join(''))}${blocked}
+        ${row('얹는 곳', chip('data-tex-on', 'b', '글 칸만', t?.on === 'b') + chip('data-tex-on', 'c', '카드 전체', t?.on === 'c'), off)}
+        ${!off && !i.blocked && !i.pane ? '<p class="mart-tune-hint">이 틀은 글 칸이 따로 없어서 카드 전체에 얹혀요</p>' : ''}
+        ${row('진하기', [[1, '옅게'], [2, '보통'], [3, '진하게']].map(([v, l]) => chip('data-tex-level', v, l, t?.level === v)).join(''), off)}
+        ${row('빨간 세로줄', chip('data-tex-mg', '1', '켬', !!t?.margin) + chip('data-tex-mg', '0', '끔', !t?.margin), off || t.tex !== 'line')}
+        <p class="mart-tune-hint">모든 틀에 같이 기억해요 · 낮밤을 바꾸면 그 판 무늬로 다시 얹어요</p></div>`;
+}
 /** 세밀 「움직임」 묶음 — 글 · 소품 따로(설계 4-4 ③ · 끔 · 빠르기 · 열어 두기는 세기 모듈이 나오면) */
 function motionBody(item) {
     const m = motionNow(), caps = motionCaps(item.preview);
@@ -214,7 +229,7 @@ export function tuneHtml(item) {
     if (!item?.simple || !item.preview) return '';
     if (view === 'simple') return `<section class="mart-tune is-simple" aria-label="조절">${viewSegHtml(item)}<div class="mart-simple">${simpleInner(item)}</div>
         ${EDITS_HTML}</section>`;
-    return `<section class="mart-tune" aria-label="조절">${viewSegHtml(item)}<div class="mart-tune-tabs mart-seg mart-hscroll" role="group" aria-label="조절 묶음">${[LOOK_TABS[0], ['motion', '움직임'], ...(fieldsOf(item.preview).length ? [['vals', '이 틀']] : []), ['head', '머리'], ...LOOK_TABS.slice(1), ['tools', '도구']].map(([id, l]) => `<button type="button" class="chip" data-tune-tab="${id}" aria-pressed="${id === tab}">${esc(l)}</button>`).join('')}</div>
+    return `<section class="mart-tune" aria-label="조절">${viewSegHtml(item)}<div class="mart-tune-tabs mart-seg mart-hscroll" role="group" aria-label="조절 묶음">${[LOOK_TABS[0], ['motion', '움직임'], ...(fieldsOf(item.preview).length ? [['vals', '이 틀']] : []), ['head', '머리'], ...LOOK_TABS.slice(1), ['texture', '바탕'], ['tools', '도구']].map(([id, l]) => `<button type="button" class="chip" data-tune-tab="${id}" aria-pressed="${id === tab}">${esc(l)}</button>`).join('')}</div>
         <div class="mart-tune-body">${tabBody(item)}</div>
         <div class="mart-tune-line mart-hscroll mart-tune-edits"><button type="button" class="chip mart-tune-edit" data-tune-edit aria-pressed="false">글 고치기</button><button type="button" class="chip" data-hist="undo" title="되돌리기(Ctrl+Z)" disabled>되돌리기</button><button type="button" class="chip" data-hist="redo" title="다시하기(Ctrl+Y)" disabled>다시하기</button><button type="button" class="chip" data-spoiler="wrap" hidden title="커서가 든 지문 · 대사 줄을 눌러야 보이는 글로">줄 숨기기</button><button type="button" class="chip" data-spoiler="unwrap" hidden title="커서가 든 숨긴 줄을 다시 보이게">풀기</button><button type="button" class="chip mart-tune-all" data-tune-reset="all" hidden>전부 처음으로</button></div>
         <p class="mart-tune-hint" data-edit-hint hidden>미리보기의 글자를 눌러 바로 고쳐 써요 · 고치는 동안은 소품이 안 눌려요</p></section>`;
@@ -256,7 +271,7 @@ export function mineBoxHtml(item) {
 //   한 칸 = 이 틀의 조절 값(색 · 고쳐 쓴 글 · 대사 줄) + 글 모양 + 깡통 · 깡캐 · 밤낮. 크게 보기를 다른 틀로 열면 새로 시작해요
 const HIST_MAX = 50;
 const hist = { id: null, stack: [], at: -1, timer: 0, restoring: false };
-const snapOf = item => JSON.stringify({ tune: tuneOf(item.id), look: lookNow(), motion: motionNow(), words: wordsNow(), tone: { on: toneState.on, k: toneState.k, name: toneState.name, k2: toneState.k2, name2: toneState.name2, k3: toneState.k3, name3: toneState.name3, mode: toneState.mode } });
+const snapOf = item => JSON.stringify({ tune: tuneOf(item.id), look: lookNow(), motion: motionNow(), tex: texNow(), words: wordsNow(), tone: { on: toneState.on, k: toneState.k, name: toneState.name, k2: toneState.k2, name2: toneState.name2, k3: toneState.k3, name3: toneState.name3, mode: toneState.mode } });
 function histPush(item) {
     clearTimeout(hist.timer); hist.timer = 0;
     const s = snapOf(item);
@@ -289,6 +304,7 @@ function histMove(item, step) {
         setTune(item.id, s.tune);
         setLook(s.look);
         if (s.motion) setMotion(s.motion);
+        if ('tex' in s) setTex(s.tex);
         if (s.words) setWords(s.words);
         setTone({ ...(s.tone.on ? { on: true, k: s.tone.k, name: s.tone.name } : { on: false }), k2: s.tone.k2, name2: s.tone.name2, k3: s.tone.k3 ?? null, name3: s.tone.name3 ?? '', mode: s.tone.mode });
     } finally { hist.restoring = false; }
@@ -527,6 +543,10 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
             say(`스타일 「${x.label}」을 입혔어요`, 1800); return;
         }
         if ((b = q('[data-simple-motion]'))) { setMotion({ text: b.dataset.simpleMotion, prop: b.dataset.simpleMotion }); return; }
+        if ((b = q('[data-tex]'))) { const v = b.dataset.tex, t = texNow() || { on: 'b', level: 2 }; setTex(v === 'none' ? null : { ...t, tex: v }); redraw(item); return; }
+        if ((b = q('[data-tex-on]'))) { setTex({ ...texNow(), on: b.dataset.texOn }); redraw(item); return; }
+        if ((b = q('[data-tex-level]'))) { setTex({ ...texNow(), level: Number(b.dataset.texLevel) }); redraw(item); return; }
+        if ((b = q('[data-tex-mg]'))) { setTex({ ...texNow(), margin: b.dataset.texMg === '1' }); redraw(item); return; }
         if ((b = q('[data-motion-text]'))) { setMotion({ text: b.dataset.motionText }); redraw(item); return; }
         if ((b = q('[data-motion-prop]'))) { setMotion({ prop: b.dataset.motionProp }); redraw(item); return; }
         if ((b = q('[data-simple-size]'))) { const v = Number(b.dataset.simpleSize); const L = clone(lookNow()); if (L.type) delete L.type.size; setLook(L); setLookValue('type.sizeStep', v || null); return; }
@@ -574,7 +594,7 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if ((b = q('[data-look-target]'))) { const cur = { ...(lookValue('shadow.targets') || { dialogue: true }) }; if (cur[b.dataset.lookTarget]) delete cur[b.dataset.lookTarget]; else cur[b.dataset.lookTarget] = true; setLookValue('shadow.targets', Object.keys(cur).length ? cur : null); return; }
         if ((b = q('[data-tune-reset]'))) {
             const key = b.dataset.tuneReset;
-            if (key === 'all') { setTune(item.id, null); setLook(null); setMotion({ text: 'm', prop: 'm' }); setTone({ on: false, k2: null, k3: null }); markPreset(''); syncMine(sheet, item); return; }
+            if (key === 'all') { setTune(item.id, null); setLook(null); setMotion({ text: 'm', prop: 'm' }); setTex(null); setTone({ on: false, k2: null, k3: null }); markPreset(''); syncMine(sheet, item); return; }
             if (key === 'k') { setTone({ on: false }); return; }
             if (key === 'k2') { setTone({ k2: null }); return; }
             if (key === 'k3') { setTone({ k3: null }); return; }

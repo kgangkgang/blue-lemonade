@@ -1889,7 +1889,7 @@
  },
  {
   "frame": "k1222",
-  "name": "인스타 스토리",
+  "name": "즉석카메라",
   "emoji": "📷",
   "open": false,
   "peek": false,
@@ -3030,5 +3030,32 @@
   "open": false,
   "peek": false,
   "desc": "소품을 누르면 — 물속으로"
+ },
+ {
+  "frame": "k1371",
+  "tong": 371,
+  "name": "인스타 DM",
+  "emoji": "💬",
+  "open": false,
+  "peek": false,
+  "desc": "누르면 — 하트 보내기"
+ },
+ {
+  "frame": "k1372",
+  "tong": 372,
+  "name": "인스타 피드",
+  "emoji": "🖼️",
+  "open": false,
+  "peek": false,
+  "desc": "누르면 — 좋아요"
+ },
+ {
+  "frame": "k1373",
+  "tong": 373,
+  "name": "인스타 스토리",
+  "emoji": "📸",
+  "open": false,
+  "peek": false,
+  "desc": "누르면 — 답장 보내기"
  }
 ]

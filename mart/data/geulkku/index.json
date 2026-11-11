@@ -1,6 +1,6 @@
 {
  "_": "글꾸 마트 목록 — tools/geulkku-simple.mjs 산출물(심플 새 틀 · 고치지 말고 다시 만들어요) · 옛 글꾸는 11-11 에 마트에서 뺐어요(되살리는 법은 W/outputs/지시-1110/심플-새틀-이식/마트-길닦기.md 12절)",
- "count": 407,
+ "count": 410,
  "categories": [
   {
    "id": "simple-open",
@@ -75,9 +75,9 @@
    "bytes": 778929
   },
   "sp-pass-9": {
-   "file": "sp-pass-9.cd9b27b7.json",
-   "n": 19,
-   "bytes": 338717
+   "file": "sp-pass-9.5c80b1ea.json",
+   "n": 22,
+   "bytes": 389720
   }
  },
  "items": [
@@ -345,7 +345,7 @@
   {"id":"simple-k1219","name":"흑백 TV","emoji":"🌧️","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 안테나 맞추기","c":"sp-pass-5","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":20272,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k1220","name":"레트로 게임","emoji":"🎮","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 단추 누르기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":20512,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1221","name":"자드키엘 · 라이브 방송","emoji":"✨","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 방송 시작","c":"sp-pass-5","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":14116,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
-  {"id":"simple-k1222","name":"인스타 스토리","emoji":"📷","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 사진 찍기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":13387,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
+  {"id":"simple-k1222","name":"즉석카메라","emoji":"📷","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 사진 찍기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":13387,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k1223","name":"블로그 글","emoji":"💻","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 공감","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":17391,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1224","name":"통화 기록","emoji":"📞","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 전화 걸기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":14941,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1225","name":"유튜브 댓글","emoji":"✨","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 좋아요","c":"sp-pass-5","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":15407,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
@@ -487,6 +487,9 @@
   {"id":"simple-k1367","name":"수영 · 레인","emoji":"🏊","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 물살 보내기","c":"sp-pass-9","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":24077,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1368","name":"수영 · 오리발","emoji":"🏊","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 물장구 치기","c":"sp-pass-9","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":20363,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1369","name":"수영 · 튜브","emoji":"🏊","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 튜브 띄우기","c":"sp-pass-9","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":17137,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
-  {"id":"simple-k1370","name":"수영 · 물안경 속 수면","emoji":"🏊","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 물속으로","c":"sp-pass-9","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":19458,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"}
+  {"id":"simple-k1370","name":"수영 · 물안경 속 수면","emoji":"🏊","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 물속으로","c":"sp-pass-9","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":19458,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k1371","name":"인스타 DM","emoji":"💬","category":"simple-tap","style":"심플","desc":"누르면 — 하트 보내기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":17637,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k1372","name":"인스타 피드","emoji":"🖼️","category":"simple-tap","style":"심플","desc":"누르면 — 좋아요","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":19509,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k1373","name":"인스타 스토리","emoji":"📸","category":"simple-tap","style":"심플","desc":"누르면 — 답장 보내기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":13095,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"}
  ]
 }

@@ -1,18 +1,20 @@
-// 사본(11-12) — 원본 outputs/지시-1110/심플-기존틀-새방식/글움직임-세기.cjs · CommonJS → ESM · 상한 표 열쇠만 마트 열쇠로(설명서 지시-1111/글움직임-세기/마트-연결.md)
-// 움직임 세기(11-11 · 지시-1111 글움직임-세기 · Fable 5.2) — 틀을 쓰는 사람이 「글 움직임」과 「소품(위쪽 일러스트) 움직임」 세기를 따로 약 · 중 · 강으로 골라요.
-//   사용자 말: 「글자애니메이션 강도 강 중 약 고를수있게해줘」 · 「모바일에서 보니까 좀 강한거같아서」 · 「그 글자 애니메이션도 그렇고 위에 일러스트 애니메이션도 그렇고 말야 둘이 따로 선택가능하게 해줘」
+// 사본(11-12 · 끔 들어온 판) — 원본 outputs/지시-1110/심플-기존틀-새방식/글움직임-세기.cjs · CommonJS → ESM · 상한 표 열쇠만 마트 열쇠로(설명서 지시-1111/글움직임-세기/마트-연결.md)
+// 움직임 세기(11-11 · 지시-1111 글움직임-세기 · Fable 5.2) — 틀을 쓰는 사람이 「글 움직임」과 「소품(위쪽 일러스트) 움직임」을 따로 끔 · 약 · 중 · 강으로 골라요.
+//   사용자 말: 「글자애니메이션 강도 강 중 약 고를수있게해줘」 · 「모바일에서 보니까 좀 강한거같아서」 · 「그 글자 애니메이션도 그렇고 위에 일러스트 애니메이션도 그렇고 말야 둘이 따로 선택가능하게 해줘」 · 「글꾸들도 애니메이션 on off 기능 주자」
 //   설명서: outputs/지시-1111/글움직임-세기/보고.md · 마트-연결.md
-// 방식 — 뿌리 class + 세기별 키프레임(깡통 정화에서 이미 사는 것만: class · <style> 규칙 · @keyframes):
-//   글 움직임  약 = 뿌리 class `gm-s` · 중 = 없음(또는 `gm-m`) · 강 = `gm-l`
-//   소품 움직임 약 = 뿌리 class `gp-s` · 중 = 없음(또는 `gp-m`) · 강 = `gp-l`      (마트 꼴이면 `gk-gm-s` … 머리를 저절로 붙여요)
-//   「중」은 지금 출력에서 한 글자도 안 바꿔요(사용자가 합격한 세기). 약 · 강은 ① 기본 덩이 끝에 그 class 에만 걸리는 규칙을 덧붙여요.
+// 방식 — 뿌리 class + 그 class 에만 걸리는 규칙(깡통 정화에서 이미 사는 것만: class · <style> 규칙 · @keyframes):
+//   글 움직임  끔 = 뿌리 class `gm-0` · 약 = `gm-s` · 중 = 없음(또는 `gm-m`) · 강 = `gm-l`
+//   소품 움직임 끔 = 뿌리 class `gp-0` · 약 = `gp-s` · 중 = 없음(또는 `gp-m`) · 강 = `gp-l`      (마트 꼴이면 `gk-gm-s` … 머리를 저절로 붙여요)
+//   「중」은 지금 출력에서 한 글자도 안 바꿔요(사용자가 합격한 세기). 끔 · 약 · 강은 ① 기본 덩이 끝에 그 class 에만 걸리는 규칙을 덧붙여요.
 //   CSS 변수 곱(calc(var(--gm,1)*6px))은 안 써요 — var() · calc 가 따로는 사는 것이 확인됐지만 @keyframes 안 곱은 깡통 실측이 없어요(보고 2절).
-// 바꾸는 것(생성 뒤 문자열 변환 — 틀 본문 · 고리 모듈은 안 건드려요):
-//   ① @keyframes 의 「도중」 값만: 처음(0%)과 끝(100%)을 잇는 곧은 길에서 벗어난 만큼에 세기를 곱해요(translate · rotate · skew · scale).
-//      0% · 100% 값 · 쉬는 상태 · 열린 상태 값은 그대로 → 멎은 뒤 모습 · 자리는 세기와 상관없이 같아요. 소품 자리(소품자리.cjs) 규칙은 키프레임이 아니라서 안 닿아요.
-//   ② 튀는 곡선(cubic-bezier 의 y 가 0~1 밖)의 넘침: 약은 줄이고 강은 키워요(전환 · 키프레임 둘 다).
-//   ③ 글 쪽만: 옅어졌다 돌아오는 깊이(opacity) · 변형이 없는 가림 · 긋기 꼴은 길이(약 0.75배 · 강 1.25배 · 늦춤 + 길이 3.5초 안).
-//   안 바꾸는 것: 반 바퀴 넘는 돌기(60도 이상) · 납작하게 접힘(scale 0.3 이하) · 멀리 날아감(120px 이상) · 색 · 가림 꼴 · 인라인 style 의 움직임.
+// 약 · 강이 바꾸는 것(생성 뒤 문자열 변환 — 틀 본문 · 고리 모듈은 안 건드려요):
+//   ① @keyframes 의 값: 끝(100%) 값에서 벗어난 만큼에 세기를 곱해요(translate · rotate · skew · scale). 끝 값에 닿기 전의 「가는 길」과 0% · 100% 값은 그대로
+//      (글이 숨은 채 들어오는 꼴만 처음 값도 곱해요) → 멎은 뒤 모습 · 자리는 세기와 상관없이 같아요. 소품 자리(소품자리.cjs) 규칙은 키프레임이 아니라서 안 닿아요.
+//   ② 튀는 곡선(cubic-bezier 의 y 가 0~1 밖)의 넘침: 약은 줄이고 강은 키워요(변형 전환 · 키프레임).
+//   ③ 글 쪽만: 옅어졌다 돌아오는 깊이(opacity) · 변형이 없는 가림 · 긋기 꼴은 길이(약 0.75배 · 강 1.25배 · 늦춤 + 길이 3.5초 안) · 숨은 채 비켜 있는 시작 자리.
+//   안 바꾸는 것: 뜻이 있는 큰 이동이 한 번이라도 있는 축(소품 32px · 30도 · 크기 0.5 이상 / 글 120px · 60도 — 도장이 내려오는 거리 · 펜이 긋는 길이) · 납작하게 접힘(scale 0.3 이하) · 색 · 가림 꼴.
+// 끔이 하는 것: 그 묶음(글 / 소품)의 animation · transition 을 다 none 으로. 끝 모습이 채움(forwards · both)에 기대는 움직임은 끝(100%) 값을 !important 로 직접 박아요. 인라인 style 의 움직임도 class 로 잡아 꺼요.
+//   열고 닫히는 것은 details 라서 그대로 살아요. 계속 도는 반복은 멈춘(움직임이 안 걸린) 모습이 돼요.
 // 굳은 규칙(약 · 강에서도): 한 번만 · 3.5초 안 · 멎은 뒤 변형 0 · 지문 위 공백 변화 0 · 흐림 0 · 번쩍임 0 · 글은 위로 3px 까지 · 세로 오므림 70% 아래 없음.
 const F = { s: 0.5, l: 1.4 };          // 키프레임 도중 값 곱
 const G = { s: 0.35, l: 1.5 };         // 전환 곡선 넘침 곱
@@ -121,13 +123,14 @@ function frameInfo(html) {
   const k = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0]; if (!k) return null;
   const pre = /^gk-/.test(k) ? 'gk-' : '';
   // 글 칸(.lg) · 제목 칸(.tc) 안 class 와 소품(.kx) 안 class
-  const body = html.slice(se); const inLg = new Set(), inKx = new Set(), stack = []; const re = /<\/([a-zA-Z0-9]+)\s*>|<([a-zA-Z0-9]+)([^>]*)>/g; let t;
+  const body = html.slice(se); const inLg = new Set(), inKx = new Set(), stack = [], pcls = [], inline = []; const re = /<\/([a-zA-Z0-9]+)\s*>|<([a-zA-Z0-9]+)([^>]*)>/g; let t;
   const VOID = new Set(['br', 'img', 'input', 'hr', 'source', 'wbr', 'audio-x']);
-  while ((t = re.exec(body))) { if (t[1]) { stack.pop(); continue; } const tag = t[2].toLowerCase(); const cs = ((t[3].match(/\sclass="([^"]*)"/) || [, ''])[1]).split(/\s+/).filter(Boolean);
+  while ((t = re.exec(body))) { if (t[1]) { stack.pop(); pcls.pop(); continue; } const tag = t[2].toLowerCase(); const cs = ((t[3].match(/\sclass="([^"]*)"/) || [, ''])[1]).split(/\s+/).filter(Boolean);
     const zone = cs.includes(pre + 'kx') ? 'kx' : (cs.includes(pre + 'lg') || cs.includes(pre + 'tc') || cs.includes(pre + 'sd')) ? 'lg' : (stack.length ? stack[stack.length - 1] : '');
     for (const c of cs) { if (zone === 'kx') inKx.add(c); else if (zone === 'lg') inLg.add(c); }
-    if (!VOID.has(tag) && !/\/$/.test(t[3])) stack.push(zone); }
-  return { k, pre, rootCls, si, se, css, inLg, inKx, rootAt: m.index }; }
+    const ia = (t[3].match(/\sstyle="([^"]*)"/) || [, ''])[1].match(/(?:^|;)\s*animation:([^;]*)/); if (ia && !/^\s*none/.test(ia[1])) inline.push({ zone, cls: cs[0] || (pcls[pcls.length - 1] ? pcls[pcls.length - 1] + '>' + tag : ''), tag, v: ia[1].trim() });
+    if (!VOID.has(tag) && !/\/$/.test(t[3])) { stack.push(zone); pcls.push(cs[0] || ''); } }
+  return { k, pre, rootCls, si, se, css, inLg, inKx, inline, rootAt: m.index }; }
 function groupOf(sel, info) {   // 'text' | 'prop' | 'both'
   const P = info.pre, bare = sel.replace(/:has\([^()]*(?:\([^()]*\)[^()]*)*\)/g, '').replace(/::?[a-z-]+(\([^)]*\))?/g, (x) => (/^:(not|is|where|nth)/.test(x) ? x : ''));
   const cls = (bare.match(/\.[\w-]+/g) || []).map((x) => x.slice(1));
@@ -191,38 +194,56 @@ function build(html, opt = {}) { const capB = Object.assign({}, opt.key && CAP[o
       const sels = splitTop(r.head, ',').map((s, i) => (r._g[i] === grp || r._g[i] === 'both' ? addRoot(s.trim(), k, rootCls) : null)).filter(Boolean); if (!sels.length) continue;
       const line = sels.join(',') + '{' + keep.map((x) => x[0] + ':' + x[1]).join(';') + '}'; lines.push(r.media ? r.media + '{' + line + '}' : line); }
     out[grp][lv] = lines.join('\n'); }
+  // 끔(gm-0 · gp-0): 그 묶음의 움직임 · 전환을 다 꺼요 — 누르면 바로 끝 모습. 끝 모습이 채움(forwards · both)에 기대는 움직임은 끝(100%) 값을 직접 박아요
+  const endOf = (name, tok) => { const want = tok.includes('reverse') || tok.includes('alternate-reverse') ? 0 : 100, o = []; for (const b of blocks(kf[name] || '')) { const ps = b.head.split(',').map((x) => { x = x.trim(); return x === 'from' ? 0 : x === 'to' ? 100 : parseFloat(x); }); if (!ps.includes(want)) continue; for (const [pp, vv] of decls(b.body)) if (pp !== 'animation-timing-function') o.push(pp + ':' + vv.replace(/\s*!important\s*$/, '') + '!important'); } return o; };
+  for (const grp of ['text', 'prop']) { const rootCls = '.' + pre + 'g' + (grp === 'text' ? 'm' : 'p') + '-0'; const lines = []; let pins = 0;
+    for (const r of rules) { const g = splitTop(r.head, ',').map((s) => groupOf(s, info)); if (!g.some((x) => x === grp || x === 'both')) continue;
+      const A = r.d.filter(([p]) => /^animation/.test(p)), T = r.d.filter(([p]) => /^transition/.test(p)); if (!A.length && !T.length) continue;
+      const dd = []; if (A.length) dd.push('animation:none' + (A.some(([, v]) => /!important/.test(v)) ? '!important' : '')); if (T.length) dd.push('transition:none' + (T.some(([, v]) => /!important/.test(v)) ? '!important' : ''));
+      const fillD = A.some(([p, v]) => p === 'animation-fill-mode' && /forwards|both/.test(v));
+      for (const [p, v] of A) if (p === 'animation') for (const part of splitTop(v.replace(/\s*!important\s*$/, ''), ',')) { const tok = part.trim().split(/\s+/), name = tok.find((t) => kf[t] !== undefined); if (!name || tok.includes('infinite') || !(fillD || tok.includes('forwards') || tok.includes('both'))) continue; const e = endOf(name, tok); if (e.length) { dd.push(...e); pins++; } }
+      const sels = splitTop(r.head, ',').map((s, i) => (g[i] === grp || g[i] === 'both' ? addRoot(s.trim(), k, rootCls) : null)).filter(Boolean); if (!sels.length) continue;
+      const line = sels.join(',') + '{' + dd.join(';') + '}'; lines.push(r.media ? r.media + '{' + line + '}' : line); }
+    // 인라인 style 로 박힌 움직임(새 틀 일부) — class 로 잡아 끄고, 채움에 기대면 끝 값을 박아요
+    const seen = new Set(); for (const it of info.inline) { const zg = it.zone === 'lg' ? 'text' : 'prop'; if (zg !== grp || !it.cls || seen.has(it.cls)) continue; seen.add(it.cls);
+      const dd = ['animation:none!important']; for (const part of splitTop(it.v, ',')) { const tok = part.trim().split(/\s+/), name = tok.find((t) => kf[t] !== undefined); if (name && !tok.includes('infinite') && (tok.includes('forwards') || tok.includes('both'))) { dd.push(...endOf(name, tok)); pins++; } }
+      lines.push('.' + k + rootCls + ' .' + it.cls + '{' + dd.join(';') + '}'); }
+    out[grp]['0'] = lines.join('\n'); stat[grp].pins = pins; stat[grp].inlineNoCls = info.inline.filter((it) => (it.zone === 'lg' ? 'text' : 'prop') === grp && !it.cls).length; }
   return { info, css, add: out, stat }; }
 // 앞서 넣은 세기 규칙을 걷어요(두 번 걸어도 같은 결과)
-function stripOld(css, info) { const P = info.pre; const re = new RegExp('\\.' + P.replace(/-/g, '\\-') + 'g[mp]\\-[sml](?![\\w-])');
+function stripOld(css, info) { const P = info.pre; const re = new RegExp('\\.' + P.replace(/-/g, '\\-') + 'g[mp]\\-[sml0](?![\\w-])');
   let out = '', last = 0; for (const b of blocks(css)) { const old = /^@keyframes\s+\S+-g[mp][sl]a?$/.test(b.head) || (re.test(b.head) && !/^@keyframes/.test(b.head)) || (/^@(media|supports)/.test(b.head) && re.test(b.body) && /\bg[mp]-/.test(b.body) && blocks(b.body).every((x) => re.test(x.head)));
     if (old) { out += css.slice(last, b.start).replace(/\n$/, ''); last = b.end; } }
   return out + css.slice(last); }
 
 /** 틀 HTML 에 세기를 걸어요.
- *  opt.text · opt.prop : 's' | 'm' | 'l' (빼면 'm')
+ *  opt.text · opt.prop : '0'(끔 · 'off' 도 됨) | 's' | 'm' | 'l' (빼면 'm')
  *  opt.emit  : 'chosen'(기본 — 고른 세기의 규칙만 넣어요 · 마트 「HTML 복사」용) | 'all'(약 · 강 규칙을 다 넣고 class 만 고름 — 테마 설정 · 시험용)
  *  opt.cap   : { textL:false, propL:false } — 강을 중과 같게 묶을 때(틀별 상한 표 세기-상한.json 의 값). opt.key('30:k119')를 주면 표에서 저절로 찾아요
  *  opt.phone : true 면 폰 폭(480px 이하)에서 「아무 것도 안 고른 틀」의 기본을 약으로(미디어 쿼리) — 꺼 둔 스위치예요. 이때 중을 굳히려면 class gm-m · gp-m
  *  opt.mark  : false 면 뿌리 class 를 안 붙이고 규칙만 넣어요 */
 function applyLevel(html, opt = {}) {
   const b = build(html, opt); if (!b) return html; const { info, css, add } = b; const P = info.pre;
-  const cap = Object.assign({}, opt.key && CAP[opt.key], opt.cap); const lv = { text: opt.text || 'm', prop: opt.prop || 'm' };
+  const cap = Object.assign({}, opt.key && CAP[opt.key], opt.cap); const LV = (v) => (v === 'off' || v === 0 || v === '0' ? '0' : v === 's' || v === 'l' ? v : 'm'); const lv = { text: LV(opt.text), prop: LV(opt.prop) };
   if (cap.textL === false) { add.text.l = ''; } if (cap.propL === false) { add.prop.l = ''; }
-  const want = []; for (const g of ['text', 'prop']) for (const l of ['s', 'l']) if (add[g][l] && (opt.emit === 'all' || lv[g] === l)) want.push(add[g][l]);
+  const want = []; for (const g of ['text', 'prop']) for (const l of ['0', 's', 'l']) if (add[g][l] && (opt.emit === 'all' || lv[g] === l)) want.push(add[g][l]);
   if (opt.phone) for (const g of ['text', 'prop']) { if (!add[g].s) continue; const c = P + 'g' + (g === 'text' ? 'm' : 'p'); const not = ':not(.' + c + '-m):not(.' + c + '-l)';
     const body = add[g].s.split('.' + c + '-s').join(not); want.push('@media (max-width:480px){' + body.split('\n').filter((x) => !x.startsWith('@keyframes')).join('\n') + '}');
     const kfs = add[g].s.split('\n').filter((x) => x.startsWith('@keyframes')); if (kfs.length && !(opt.emit === 'all' || lv[g] === 's')) want.push(kfs.join('\n')); }
   let ncss = css; if (want.length) { const cut = ncss.indexOf('\n\n'); const at = cut < 0 ? ncss.length : cut; ncss = ncss.slice(0, at).replace(/\n$/, '') + '\n' + want.join('\n') + ncss.slice(at); }
   let out = html.slice(0, info.si) + ncss + html.slice(info.se);
-  if (opt.mark !== false) { const keep = info.rootCls.filter((c) => !new RegExp('^' + P + 'g[mp]-[sml]$').test(c)); const extra = [];
-    if (lv.text !== 'm' && (add.text[lv.text] || opt.emit === 'all')) extra.push(P + 'gm-' + lv.text); else if (opt.phone && opt.text === 'm') extra.push(P + 'gm-m');
-    if (lv.prop !== 'm' && (add.prop[lv.prop] || opt.emit === 'all')) extra.push(P + 'gp-' + lv.prop); else if (opt.phone && opt.prop === 'm') extra.push(P + 'gp-m');
+  if (opt.mark !== false) { const keep = info.rootCls.filter((c) => !new RegExp('^' + P + 'g[mp]-[sml0]$').test(c)); const extra = [];
+    if (lv.text !== 'm' && (add.text[lv.text] || opt.emit === 'all')) extra.push(P + 'gm-' + lv.text); else if (opt.phone && lv.text === 'm' && opt.text) extra.push(P + 'gm-m');
+    if (lv.prop !== 'm' && (add.prop[lv.prop] || opt.emit === 'all')) extra.push(P + 'gp-' + lv.prop); else if (opt.phone && lv.prop === 'm' && opt.prop) extra.push(P + 'gp-m');
     out = out.slice(0, info.rootAt) + '<div class="' + keep.concat(extra).join(' ') + '"><style>' + out.slice(info.si); }
   return out; }
 /** 여러 틀이 든 HTML(이식판 · 시험 글)의 틀마다 걸어요 */
 function applyAll(html, opt = {}) { const parts = html.split(/(?=<div class="gk [^"]*"><style>)/); return parts.map((p) => (/^<div class="gk [^"]*"><style>/.test(p) ? applyLevel(p, opt) : p)).join(''); }
 /** 이 틀에서 고를 수 있는 것 — 마트 칩을 보일지 정할 때: { text:{s:bool,l:bool}, prop:{s:bool,l:bool} } */
 function describe(html, opt = {}) { const b = build(html, opt); if (!b) return null; const cap = Object.assign({}, opt.key && CAP[opt.key], opt.cap);
-  return { k: b.info.k, pre: b.info.pre, text: { s: !!b.add.text.s, l: !!b.add.text.l && cap.textL !== false }, prop: { s: !!b.add.prop.s, l: !!b.add.prop.l && cap.propL !== false }, stat: b.stat, bytes: { textS: b.add.text.s.length, textL: b.add.text.l.length, propS: b.add.prop.s.length, propL: b.add.prop.l.length } }; }
-const CAP = {"k1209":{"textL":false},"k1197":{"textSf":0.65},"k1218":{"textL":false},"k1179":{"textL":false},"k1180":{"textL":false},"k1119":{"textL":false},"k1326":{"textL":false},"k1328":{"textL":false},"k1330":{"textL":false}};   // 세기-상한.json 을 마트 열쇠(k1NNN)로 옮긴 것
-export { applyLevel, applyAll, describe, build, scaleKf, bez, F, G, CAP };
+  return { k: b.info.k, pre: b.info.pre, text: { off: !!b.add.text['0'], s: !!b.add.text.s, l: !!b.add.text.l && cap.textL !== false }, prop: { off: !!b.add.prop['0'], s: !!b.add.prop.s, l: !!b.add.prop.l && cap.propL !== false }, stat: b.stat, bytes: { textS: b.add.text.s.length, textL: b.add.text.l.length, propS: b.add.prop.s.length, propL: b.add.prop.l.length, textOff: b.add.text['0'].length, propOff: b.add.prop['0'].length } }; }
+/** 생성기 끝 한 줄용(커스텀 고리와 같은 꼴 — 아직 생성기에는 안 걸었어요): const GMW = require('../글움직임-세기.cjs').wrap('30'), BF = module.exports.buildFrame; module.exports.buildFrame = (no, opt) => GMW(no, BF(no, opt), opt);
+ *  buildFrame(no, { gm: 's', gp: 'l' }) 일 때만 걸어요 — gm · gp 를 안 주면 받은 HTML 을 그대로 돌려줘요 */
+function wrap(nn) { return (no, html, opt = {}) => { if (!opt || (!opt.gm && !opt.gp)) return html; try { const info = frameInfo(html); return applyLevel(html, { text: opt.gm, prop: opt.gp, key: nn + ':' + (info ? info.k : ''), phone: !!opt.gmPhone }); } catch (e) { return html; } }; }
+const CAP = {"k1266":{"propL":false},"k1209":{"textL":false},"k1197":{"textSf":0.65},"k1218":{"textL":false},"k1081":{"propL":false},"k1179":{"textL":false},"k1180":{"textL":false},"k1165":{"propL":false},"k1119":{"textL":false},"k1005":{"propL":false},"k1326":{"textL":false},"k1328":{"textL":false},"k1330":{"textL":false}};   // 세기-상한.json 을 마트 열쇠(k1NNN)로 옮긴 것
+export { applyLevel, applyAll, describe, wrap, build, scaleKf, bez, F, G, CAP };

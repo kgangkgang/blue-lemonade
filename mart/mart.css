@@ -690,3 +690,5 @@ html.mart-cart-on{overflow:hidden}
 .mart-simple-diff{display:flex;flex-direction:column;gap:8px;min-width:0}
 .mart-simple-diff>p{margin:0;color:var(--text);font-size:var(--ts-meta);overflow-wrap:anywhere}
 .mart-simple-more{width:100%}
+/* 11-12 바탕 질감 — 걸지 않는 틀은 질감 칩 줄을 흐리게(칸은 그대로 · 다른 틀에서 다시 걸려요) */
+.mart-look.is-dim .chip:disabled{opacity:.45}
