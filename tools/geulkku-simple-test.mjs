@@ -584,11 +584,11 @@ await test('깡통 · 깡캐 두 칸 · 색 단추: 머리 줄에 칸 둘(펼친
     assert.ok(cast.includes('aria-expanded="${who === id}"') && cast.includes('name="bl-cast2" value="off"'));
     assert.ok(cast.includes('setTone(other ? { k2: saved.color, name2: saved.name } : { on: true, k: saved.color, name: saved.name })'));
     assert.equal(cast.split('<input type="color"').length - 1, 1, '색 칸은 colorField 한 곳');
-    assert.ok(cast.includes('<label class="mart-cast-color"') && cast.includes('class="mart-cast-swatch"') && cast.includes('class="mart-cast-hex"'));
+    assert.ok(cast.includes('<label class="mart-cast-color"') && cast.includes('class="mart-ink-dot mart-cast-swatch"') && cast.includes('class="mart-cast-hex"'));
     assert.ok(css.includes('.mart-cast-color input[type=color]{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;'));
     assert.ok(css.includes('.mart-cast-color:focus-within{outline:2px solid var(--blue);outline-offset:2px}'));
     assert.ok(!css.includes('.mart-cast-form input[type=color]{width:40px'));
-    assert.ok(css.includes('.mart-cast-toggle[data-toggle][aria-expanded=true]{border-color:var(--ink)'));
+    assert.ok(css.includes('.mart-cast-toggle[data-toggle][aria-expanded=true]::after{content:"";position:absolute;'));
 });
 
 console.log(`\n${pass} 통과 · ${fail} 실패`);

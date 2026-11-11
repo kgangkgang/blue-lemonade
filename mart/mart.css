@@ -456,7 +456,7 @@ html.mart-cart-on{overflow:hidden}
 .mart-cast-color:hover{background:var(--tint)}
 .mart-cast-color:focus-within{outline:2px solid var(--blue);outline-offset:2px}
 .mart-cast-color input[type=color]{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;appearance:none;-webkit-appearance:none;cursor:pointer}
-.mart-cast-swatch{display:inline-block;flex:none;width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 22%,transparent)}
+.mart-cast-swatch{display:inline-block;width:18px;height:18px}   /* 색 원은 글자색 칩과 같은 점(.mart-ink-dot) */
 .mart-cast-hex{text-transform:lowercase}
 /* 같은 종류: 액자 조절 칸의 색 네모도 기본 꼴의 안쪽 틈 · 회색 테를 없애요(크기 · 자리는 그대로) */
 .mart-params input[type=color],.room-color input[type=color]{appearance:none;-webkit-appearance:none;overflow:hidden}
@@ -488,7 +488,7 @@ html.mart-cart-on{overflow:hidden}
 .mart-cast-slots .mart-cast-toggle{min-width:0;max-width:100%}
 .mart-cast-slots .mart-cast-toggle b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mart-cast-slots .mart-cast-toggle>span:first-child{flex:none}
-.mart-cast-toggle[data-toggle][aria-expanded=true]{border-color:var(--ink);color:var(--ink)}
+.mart-cast-toggle[data-toggle][aria-expanded=true]::after{content:"";position:absolute;left:12px;right:12px;bottom:-5px;height:2px;border-radius:1px;background:var(--ink)}   /* 펼친 칸: 단추 모양은 그대로 두고 밑줄 하나 */
 .mart-cast-who{margin:0 0 8px;font-size:var(--ts-meta);line-height:1.5;color:var(--muted);text-align:left}
 .mart-cast-who b{color:var(--ink)}
 .mart-cast-r.is-wide{grid-column:1/-1}   /* 「원래 색(틀마다 정해 둔 색)」처럼 긴 줄은 한 줄을 다 써요(좁은 칸에서 글이 잘리지 않게) */
