@@ -6,7 +6,8 @@
 export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(탭을 닫으면 사라져요 — sessionStorage)
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
 import { spoilerHtml, spoilerStyle, SPOILER_LABEL } from './lib/log-copy/log-copy-spoiler.js';
-import { cleanLook } from './look.js?v=20261111v';
+import { cleanLook } from './look.js?v=20261111w';
+import { applyVals } from './custom.js?v=20261111w';   // 11-11 틀별 값(점수 · 개수 · 별 · 날짜 · 소품 글자)
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** 역할별 글자색 — 이름은 inks.js(테마 글자색 칩)와 같아요. 새 틀에 그 글자가 있는 역할만 칸이 떠요(속마음 · 강조 · 형광펜은 그 클래스를 쓰는 틀이 생기면 한 줄 더해요) */
@@ -14,6 +15,7 @@ export const TUNE_ROLES = Object.freeze([
     Object.freeze({ role: 'title', label: '제목', cls: 'gk-tt', sel: '.gk-tt' }),
     Object.freeze({ role: 'text', label: '본문', cls: 'gk-nr', sel: 'p.gk-nr' }),
     Object.freeze({ role: 'dialogue', label: '대사', cls: 'gk-d', sel: '.gk-d' }),
+    Object.freeze({ role: 'name', label: '이름', cls: 'gk-nm', sel: 'p.gk-nm' }),   // 11-11 F5 — 이름표 색을 깡통 · 깡캐 색과 따로(두 화자 이름 모두)
 ]);
 /** 미리보기에서 고쳐 쓸 수 있는 글 자리 — 이 클래스가 붙은(또는 틀이 「✎」 주석을 달아 둔) 글자만 든 요소 */
 export const EDIT_CLASSES = Object.freeze(['gk-tt', 'gk-nr', 'gk-nm', 'gk-d', 'gk-sn', 'gk-hl']);   // gk-hl: 05 티백 숨은 한 줄(15 요람의 빈 공 빛 조각은 글이 없어 칸이 아니에요)
@@ -78,6 +80,9 @@ export function cleanTune(t) {
     const mineTexts = {};   // 11-11 「내 글 넣기」로 넣은 글에서 고쳐 쓴 것(견본 글 자리와 번호가 달라 따로 둬요)
     for (const [i, v] of Object.entries(t.mineTexts || {})) if (/^\d+$/.test(i) && typeof v === 'string') mineTexts[i] = cleanRich(v);
     if (Object.keys(mineTexts).length) out.mineTexts = mineTexts;
+    const vals = {};   // 11-11 틀별 값: 칸 꼴은 틀이 알아요(custom.js fieldsOf) — 여기서는 짧은 숫자 · 글자만 남겨요
+    for (const [k, v] of Object.entries(t.vals && typeof t.vals === 'object' ? t.vals : {}).slice(0, 12)) if (/^[a-z][\w-]{0,23}$/i.test(k) && (Number.isFinite(v) || (typeof v === 'string' && v.length <= 80))) vals[k] = typeof v === 'string' ? v.replace(/[<>]/g, '') : v;
+    if (Object.keys(vals).length) out.vals = vals;
     return Object.keys(out).length ? out : null;
 }
 
@@ -195,6 +200,7 @@ export function applyTune(html, tune, { mine = false } = {}) {
     let text = String(html ?? '');
     if (!t) return text;
     if (!mine && t.lines) text = applyLines(text, t.lines);
+    if (t.vals) text = applyVals(text, t.vals);
     const rules = [...inkRules(text, t.inks), ...showRules(text, t)];
     if (rules.length) { const at = text.indexOf('\n</style>'); if (at >= 0) text = `${text.slice(0, at)}\n${rules.join('\n')}${text.slice(at)}`; }
     return applySpoilers(applyTexts(text, mine ? t.mineTexts : t.texts), mine ? t.mineSpoilers : t.spoilers);

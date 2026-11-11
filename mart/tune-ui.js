@@ -3,12 +3,13 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone, ownOf } from './tone-state.js?v=20261111v';
-import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111v';
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111v';
-import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111v';
-import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111v';
-import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111v';
+import { toneState, setTone, ownOf } from './tone-state.js?v=20261111w';
+import { speakerPair, hasPropTone, hasOwnTone } from './simple-frames.js?v=20261111w';
+import { fieldsOf, valsHtml } from './custom.js?v=20261111w';   // 11-11 「이 틀」 값 칸
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine } from './tune.js?v=20261111w';
+import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261111w';
+import { mineOn, mineInfo, applyMine } from './mine-text.js?v=20261111w';
+import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261111w';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -16,6 +17,7 @@ const NEUTRAL = '#8b8e96';
 const hexOf = (rgb) => { const m = String(rgb || '').match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/); return m ? '#' + m.slice(1, 4).map(v => Number(v).toString(16).padStart(2, '0')).join('') : null; };
 const clone = t => JSON.parse(JSON.stringify(t || {}));
 let editing = false;   // 「글 고치기」 켬 — 켜 둔 동안만 미리보기 글자를 고쳐 쓸 수 있어요(꺼져 있으면 소품 누르기 그대로)
+let valPending = {}, valTimer = 0;   // 11-11 「이 틀」 값 칸 묶어 저장
 let tab = 'color';     // 펼친 묶음
 
 // ── 가로로 미는 칩 줄(.mart-hscroll) — 테마 설정 창의 칩 줄(panel.js fadeTags · showTag)과 같은 식 ──
@@ -106,6 +108,8 @@ function toolsBody() {
 function tabBody(item) {
     if (tab === 'head') return headBody(item);
     if (tab === 'tools') return toolsBody();
+    if (tab === 'vals' && !fieldsOf(item.preview).length) tab = 'color';   // 값 칸이 없는 틀로 넘어오면 「색」으로
+    if (tab === 'vals') return valsHtml(fieldsOf(item.preview), tuneOf(item.id)?.vals || {});
     if (tab === 'color') {
         const chips = chipsOf(item).map(c => `<span class="mart-tune-chip"><label class="mart-ink" title="${esc(c.title)}"><input type="color" data-tune="${c.key}" value="${NEUTRAL}" aria-label="${esc(c.label)} 색"><span class="mart-ink-dot" aria-hidden="true"></span>${esc(c.label)}</label>${undoBtn('data-tune-reset', c.key, c.label)}</span>`).join('');
         return `<div class="mart-inks mart-tune-colors mart-hscroll" role="group" aria-label="색 — 눌러서 바꿔요">${chips}</div>
@@ -127,7 +131,7 @@ function tabBody(item) {
 /** 조절 칸(미리보기 위) — 묶음 칩 + 펼친 묶음의 칸 + 글 고치기 · 전부 처음으로 */
 export function tuneHtml(item) {
     if (!item?.simple || !item.preview) return '';
-    return `<section class="mart-tune" aria-label="조절"><div class="mart-tune-tabs mart-seg mart-hscroll" role="group" aria-label="조절 묶음">${[LOOK_TABS[0], ['head', '머리'], ...LOOK_TABS.slice(1), ['tools', '도구']].map(([id, l]) => `<button type="button" class="chip" data-tune-tab="${id}" aria-pressed="${id === tab}">${esc(l)}</button>`).join('')}</div>
+    return `<section class="mart-tune" aria-label="조절"><div class="mart-tune-tabs mart-seg mart-hscroll" role="group" aria-label="조절 묶음">${[LOOK_TABS[0], ...(fieldsOf(item.preview).length ? [['vals', '이 틀']] : []), ['head', '머리'], ...LOOK_TABS.slice(1), ['tools', '도구']].map(([id, l]) => `<button type="button" class="chip" data-tune-tab="${id}" aria-pressed="${id === tab}">${esc(l)}</button>`).join('')}</div>
         <div class="mart-tune-body">${tabBody(item)}</div>
         <div class="mart-tune-line"><button type="button" class="chip mart-tune-edit" data-tune-edit aria-pressed="false">글 고치기</button><button type="button" class="chip" data-hist="undo" title="되돌리기(Ctrl+Z)" disabled>되돌리기</button><button type="button" class="chip" data-hist="redo" title="다시하기(Ctrl+Y)" disabled>다시하기</button><button type="button" class="chip" data-spoiler="wrap" hidden title="커서가 든 지문 · 대사 줄을 눌러야 보이는 글로">줄 숨기기</button><button type="button" class="chip" data-spoiler="unwrap" hidden title="커서가 든 숨긴 줄을 다시 보이게">풀기</button><button type="button" class="chip mart-tune-all" data-tune-reset="all" hidden>전부 처음으로</button></div>
         <p class="mart-tune-hint" data-edit-hint hidden>미리보기의 글자를 눌러 바로 고쳐 써요 · 고치는 동안은 소품이 안 눌려요</p></section>`;
@@ -320,6 +324,14 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
                 if (now === cleanRich(s.text) || !t.value.trim()) delete texts[s.i]; else texts[s.i] = now;
                 setTune(item.id, cur);
             }, 250);
+            return;
+        }
+        if (t.matches?.('[data-val], input[data-val-num]')) {   // 11-11 「이 틀」 값: 슬라이더 · 숫자 · 글자 · 날짜 — 틀 값과 같으면 지워요
+            const key = t.dataset.val || t.dataset.valNum, f = fieldsOf(item.preview).find(x => x.key === key); if (!f) return;
+            const isNum = f.kind === 'range' || f.kind === 'stars', v = isNum ? Number(t.value) : t.value;
+            if (isNum) { const r = sheet.querySelector(`input[type=range][data-val="${key}"]`), n = sheet.querySelector(`input[data-val-num="${key}"]`); if (r && t !== r) r.value = v; if (n && t !== n) n.value = v; if (r) r.style.setProperty('--fill', `${Number((((Number(r.value) - f.min) / (f.max - f.min)) * 100).toFixed(1))}%`); }
+            valPending[key] = { v, def: f.def };   // 칸마다 모아 두었다가 한 번에(다른 칸을 바로 이어 바꿔도 안 잃어요)
+            clearTimeout(valTimer); valTimer = setTimeout(() => { const cur = clone(tuneOf(item.id)), vals = cur.vals ??= {}; for (const [k, x] of Object.entries(valPending)) { if (x.v === x.def || x.v === '') delete vals[k]; else vals[k] = x.v; } valPending = {}; if (!Object.keys(vals).length) delete cur.vals; setTune(item.id, cur); }, 150);
             return;
         }
         if (t.matches?.('input[data-look]')) {   // 슬라이더: 숫자는 바로 · 다시 칠하기는 0.12초 묶음

@@ -27,6 +27,7 @@ export const LOOK_FIELDS = Object.freeze([
     { tab: 'text', path: 'type.weight', label: '굵기', kind: 'range', min: 300, max: 600, step: 1, def: 400 },
     { tab: 'text', path: 'type.letterSpacing', label: '자간', kind: 'range', min: -5, max: 8, step: 1, def: -1, scale: 100, unit: 'em' },
     { tab: 'text', path: 'type.lineHeight', label: '줄 간격', kind: 'range', min: 1.4, max: 2.2, step: 0.01, def: 1.8 },
+    { tab: 'dialogue', path: 'fonts.dialogue', label: '대사 글꼴', kind: 'font' },   // 11-11 G8 — 기기 글꼴만(깡통은 웹폰트를 막아요)
     { tab: 'dialogue', path: 'dialogue.style', label: '표시', kind: 'pick', options: [['marker', '형광펜'], ['full', '전체 칠'], ['bold', '굵게'], ['plain', '없음']] },
     { tab: 'dialogue', path: 'dialogue.markerShape', label: '형광펜 모양', kind: 'pick', options: [['stroke', '펜 자국'], ['rectangle', '직사각형'], ['pill', '알약']], when: 'marker' },
     { tab: 'dialogue', path: 'dialogue.tilt', label: '형광펜 기울기', kind: 'pick', options: [['flat', '일직선'], ['slant', '대각선'], ['steep', '완전 대각선']], when: 'pen' },
@@ -55,6 +56,7 @@ export const LOOK_FIELDS = Object.freeze([
     { tab: 'para', path: 'type.indent', label: '첫 줄 들여쓰기', kind: 'pick', options: [[true, '켬'], [false, '끔']] },
     { tab: 'para', path: 'type.para', label: '문단 사이', kind: 'range', min: 0, max: 2, step: 0.01, def: 0.9, unit: '줄' },
     // 테마 「채팅 › 캐릭터 이름」의 이름 글자(profile.name*) — 크기는 틀이 버티는 10~24 로 좁혔어요(테마 10~60)
+    { tab: 'name', path: 'fonts.name', label: '이름 글꼴', kind: 'font' },   // 11-11 이름표(p.gk-nm)만
     { tab: 'name', path: 'profile.nameSize', label: '크기', kind: 'range', min: 10, max: 24, step: 1, def: 13, unit: 'px' },
     { tab: 'name', path: 'profile.nameWeight', label: '굵기', kind: 'range', min: 100, max: 900, step: 50, def: 700 },
     { tab: 'name', path: 'profile.nameSpacing', label: '자간', kind: 'range', min: -10, max: 30, step: 1, def: 0, scale: 100, unit: 'em' },
@@ -186,6 +188,7 @@ export function lookRules(html, value) {
     if (body.length) out.push(`${SEL.text}{${body.join(';')}}`);
     if (t.para != null) out.push(`${K} .gk-lg>p:last-child{margin-bottom:0}`);
     const dl = [];
+    if (L.fonts?.dialogue) dl.push(`font-family:${stackOf(L.fonts.dialogue).family}`);
     if (t.dialogueSize != null) dl.push(`font-size:${t.dialogueSize}px`);
     if (d.weight != null) dl.push(`font-weight:${d.weight}`); else if (d.style === 'bold') dl.push('font-weight:650');
     if (d.letterSpacing != null) dl.push(`letter-spacing:${d.letterSpacing / 100}em`);
@@ -223,6 +226,7 @@ export function lookRules(html, value) {
     if (sk.fade != null) skr.push(`opacity:${sk.fade / 100}`);
     if (skr.length) out.push(`${K} s{${skr.join(';')}}`);
     const pf = L.profile || {}, nm = [];
+    if (L.fonts?.name) nm.push(`font-family:${stackOf(L.fonts.name).family}`);
     if (pf.nameSize != null) nm.push(`font-size:${pf.nameSize}px`);
     if (pf.nameWeight != null) nm.push(`font-weight:${pf.nameWeight}`);
     if (pf.nameSpacing != null) nm.push(`letter-spacing:${pf.nameSpacing / 100}em`);

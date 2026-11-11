@@ -1077,5 +1077,29 @@ await test('기본 색 잇기(sk-own): 원래 색이면 기본 색 · 캐릭터�
     ts.setTone({ on: false, k: null, k2: null });
     assert.deepEqual(tu.cleanTune({ own: true }), { own: true }); assert.deepEqual(tu.cleanTune({ own: false }), { own: false }); assert.equal(tu.cleanTune({ own: 'x' }), null);
 });
+
+await test('이름 글자색 따로 · 대사 · 이름 글꼴(기기 글꼴) · 「이 틀」 값 칸 틀(custom.js — 고리 주석이 있는 틀에만 · var 는 뿌리 변수 · cls 는 그 글자만 · 범위로 다듬기 · 2열 칸)', async () => {
+    const cu = await import(pathToFileURL(path.join(MART, 'custom.js')).href);
+    for (const row of six.items) {
+        const p = sfx[row.id].preview, key = sf.simpleFrameInfo(p).key, K = `.gk-${key}`.repeat(3);
+        const out = tu.applyTune(p, { inks: { light: { name: '#123456' } } });
+        assert.ok(out.includes(`${K}.gk-tl p.gk-nm{color:#123456;-webkit-text-fill-color:#123456}`), row.id + ' 이름색');
+        const lo = lk.applyLook(p, { fonts: { dialogue: lk.FONT_STACKS[1].id, name: lk.FONT_STACKS[1].id } });
+        assert.ok(lo.includes(`${K} .gk-d{font-family:`) && lo.includes(`${K} p.gk-nm{font-family:`), row.id + ' 글꼴');
+        assert.deepEqual(cu.fieldsOf(p), [], row.id + ' 고리 없으면 칸 없음');
+    }
+    const p = sfx[six.items[0].id].preview, key = sf.simpleFrameInfo(p).key;
+    const hook = '<!-- bl-vals: [{"key":"stars","label":"별 개수","kind":"stars","var":"--gk-stars","def":5},{"key":"day","label":"날짜","kind":"date","cls":"gk-tt"},{"key":"bad","kind":"x","var":"--a"}] -->';
+    const q = p.replace('</style>', '</style>' + hook);
+    const fs2 = cu.fieldsOf(q);
+    assert.deepEqual(fs2.map(f => [f.key, f.kind, f.min, f.max, f.step]), [['stars', 'stars', 0, 5, 0.5], ['day', 'date', undefined, 40, undefined]]);
+    assert.deepEqual(cu.cleanVals({ stars: 3.3, day: '2026-11-11', x: 1 }, fs2), { stars: 3.5, day: '2026-11-11' });
+    const o = tu.applyTune(q, { vals: { stars: 9, day: '2026-11-11' } });
+    assert.ok(o.includes(`${`.gk-${key}`.repeat(3)}{--gk-stars:5}`), '범위 안으로 ' + (o.match(/.{0,40}--gk-stars:.{0,10}/) || [''])[0] + ' ' + key);
+    assert.match(o, /class="gk-tt">2026-11-11</);
+    assert.equal((o.match(/<style>/g) || []).length, 1);
+    assert.match(cu.valsHtml(fs2, {}), /class="mart-param is-wide"[\s\S]*data-val="stars"[\s\S]*type="date"/);
+    assert.deepEqual(tu.cleanTune({ vals: { stars: 3, 'bad key': 1, t: '<b>' } }), { vals: { stars: 3, t: 'b' } });
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
