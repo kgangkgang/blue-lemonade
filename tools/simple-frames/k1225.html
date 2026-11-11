@@ -48,6 +48,10 @@
 .gk-k1225 .gk-ry{opacity:0;transform:scale(.5);transform-origin:38px 32px}
 @keyframes gk-k1225-k280-ry{0%{opacity:0;transform:scale(.5)}35%{opacity:1;transform:scale(1)}65%{opacity:1;transform:scale(1.06)}100%{opacity:0;transform:scale(1.16)}}
 .gk-k1225:has(.gk-kx[open]) .gk-ry{animation:gk-k1225-k280-ry .55s ease-out .16s 1}
+.gk-k1225 .gk-lg>.gk-dl{transform-origin:0 100%}
+@keyframes gk-k1225-k280-ra{0%{transform:none;animation-timing-function:ease-in}18%{transform:translate(0px,2px) rotate(0.8deg);animation-timing-function:cubic-bezier(.3,1.5,.5,1)}55%{transform:translate(0px,-6px) rotate(-2.6deg);animation-timing-function:ease-in-out}100%{transform:none}}
+.gk-k1225:has(.gk-kx[open]) .gk-lg>.gk-dl{animation:gk-k1225-k280-ra .6s linear .05s 1}
+.gk-k1225:has(.gk-kx[open]) .gk-lg>.gk-dl~.gk-dl{animation-delay:.17s}
 @media (prefers-reduced-motion:reduce){.gk-k1225 *{animation:none!important;transition:none!important}}
 
 .gk-k1225.gk-tl .gk-nm.gk-nA{color:#0a69ae;-webkit-text-fill-color:#0a69ae}

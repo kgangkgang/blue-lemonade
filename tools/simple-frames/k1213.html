@@ -50,6 +50,12 @@
 .gk-k1213 .gk-ok{width:24px;height:24px;block-size:24px;margin:8px 0 0 32px;border:2px solid;border-radius:50%;font:700 8px/20px Pretendard,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;text-align:center}
 .gk-k1213:has(.gk-kx[open]) .gk-cv{transform:scaleX(0);transition:transform .2s cubic-bezier(.5,0,.9,.5) 0s}
 .gk-k1213:has(.gk-kx[open]) .gk-pl{transform:scaleX(1);transition:transform .3s cubic-bezier(.3,1.4,.5,1) .2s}
+.gk-k1213 .gk-pr{clip-path:inset(2px);transition:clip-path 0s linear .44s}
+.gk-k1213:has(.gk-kx[open]) .gk-pr{clip-path:inset(0);transition:clip-path 0s}
+.gk-k1213:has(.gk-kx[open]) .gk-lg>.gk-dl .gk-d{-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+@keyframes gk-k1213-g323-ra{0%{-webkit-mask-image:none;mask-image:none}0.67%{-webkit-mask-image:linear-gradient(#000,#000);mask-image:linear-gradient(#000,#000);-webkit-mask-size:100% 100%;mask-size:100% 100%;animation-timing-function:ease-in-out}16.67%{-webkit-mask-image:linear-gradient(#000,#000);mask-image:linear-gradient(#000,#000);-webkit-mask-size:22% 100%;mask-size:22% 100%}33.33%{-webkit-mask-image:linear-gradient(#000,#000);mask-image:linear-gradient(#000,#000);-webkit-mask-size:22% 100%;mask-size:22% 100%;animation-timing-function:ease-in-out}48%{-webkit-mask-image:linear-gradient(#000,#000);mask-image:linear-gradient(#000,#000);-webkit-mask-size:48% 100%;mask-size:48% 100%}63.33%{-webkit-mask-image:linear-gradient(#000,#000);mask-image:linear-gradient(#000,#000);-webkit-mask-size:48% 100%;mask-size:48% 100%;animation-timing-function:cubic-bezier(.3,0,.2,1)}98.67%{-webkit-mask-image:linear-gradient(#000,#000);mask-image:linear-gradient(#000,#000);-webkit-mask-size:100% 100%;mask-size:100% 100%}100%{-webkit-mask-image:none;mask-image:none}}
+.gk-k1213:has(.gk-kx[open]) .gk-lg>.gk-dl .gk-d{animation:gk-k1213-g323-ra 1.5s linear .2s 1}
+.gk-k1213:has(.gk-kx[open]) .gk-lg>.gk-dl~.gk-dl .gk-d{animation-delay:.38s}
 @media (prefers-reduced-motion:reduce){.gk-k1213 *{animation:none!important;transition:none!important}}
 
 .gk-k1213.gk-tl .gk-nm.gk-nA{color:#0a69ae;-webkit-text-fill-color:#0a69ae}

@@ -62,6 +62,10 @@
 .gk-k1234:has(.gk-kx[open]) .gk-sk{transform:scale(1);transition:transform .35s cubic-bezier(.3,1.5,.5,1) .3s}
 .gk-k1234:has(.gk-kx[open]) .gk-x2{transition-delay:.42s}
 .gk-k1234:has(.gk-kx[open]) .gk-x3{transition-delay:.54s}
+.gk-k1234 .gk-lg>.gk-nm{transform-origin:0 100%}
+@keyframes gk-k1234-k292-ra{0%{transform:none;animation-timing-function:cubic-bezier(.3,1.4,.5,1)}30%{transform:translate(0px,-10px) scale(1.22,1.22)}65%{transform:translate(0px,-10px) scale(1.22,1.22);animation-timing-function:ease-in-out}100%{transform:none}}
+.gk-k1234:has(.gk-kx[open]) .gk-lg>.gk-nm{animation:gk-k1234-k292-ra .9s linear .1s 1}
+.gk-k1234:has(.gk-kx[open]) .gk-lg>.gk-nm~.gk-nm{animation-delay:.25s}
 @media (prefers-reduced-motion:reduce){.gk-k1234 *{animation:none!important;transition:none!important}}
 
 .gk-k1234.gk-tl .gk-nm.gk-nA{color:#0a69ae;-webkit-text-fill-color:#0a69ae}

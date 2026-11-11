@@ -50,7 +50,13 @@
 .gk-k1214 .gk-ig{display:block;height:72px;block-size:72px;padding-top:28px;border-radius:0 0 4px 4px;background-color:#ffffff;text-align:center}
 .gk-k1214 .gk-ig span{display:block;font:400 12px/18px "RIDIBatang","Noto Serif KR",serif;color:#1f1f1f;-webkit-text-fill-color:#1f1f1f;white-space:nowrap;opacity:0;transition:opacity .1s ease 0s}
 .gk-k1214:has(.gk-kx[open]) .gk-ig span{opacity:1;transition:opacity .22s ease .42s}
+.gk-k1214 .gk-ib{clip-path:inset(2px);transition:clip-path 0s linear .58s}
+.gk-k1214:has(.gk-kx[open]) .gk-ib{clip-path:none;transition:clip-path 0s}
 .gk-k1214 .gk-ig a,.gk-k1214 .gk-ig b,.gk-k1214 .gk-ig strong,.gk-k1214 .gk-ig em{color:inherit!important;-webkit-text-fill-color:inherit!important;font-weight:inherit;font-style:normal;text-decoration:none;pointer-events:none}
+.gk-k1214 .gk-lg>.gk-dl{transform-origin:50% 100%}
+@keyframes gk-k1214-g269-ra{0%{transform:none;animation-timing-function:ease-in}24%{transform:scale(1,.45);animation-timing-function:cubic-bezier(.3,1.5,.5,1)}100%{transform:none}}
+.gk-k1214:has(.gk-kx[open]) .gk-lg>.gk-dl{animation:gk-k1214-g269-ra .46s linear .38s 1}
+.gk-k1214:has(.gk-kx[open]) .gk-lg>.gk-dl~.gk-dl{animation-delay:.5s}
 @media (prefers-reduced-motion:reduce){.gk-k1214 *{animation:none!important;transition:none!important}}
 
 .gk-k1214.gk-tl .gk-nm.gk-nA{color:#0a69ae;-webkit-text-fill-color:#0a69ae}

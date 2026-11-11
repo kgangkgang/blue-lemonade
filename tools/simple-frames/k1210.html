@@ -56,6 +56,10 @@
 .gk-k1210 .gk-r.gk-tt2 .gk-t{font-weight:700;font-size:12px;line-height:18px}
 @keyframes gk-k1210-g369-tr{0%{transform:translateY(0px) rotate(0deg);animation-timing-function:cubic-bezier(.5,0,.8,.5)}35%{transform:translateY(0px) rotate(-4deg);animation-timing-function:cubic-bezier(.4,0,.6,1)}68%{transform:translateY(14px) rotate(1deg);animation-timing-function:ease-in-out}100%{transform:translateY(12px) rotate(0deg)}}
 .gk-k1210:has(.gk-kx[open]) .gk-sw{transform:translateY(12px) rotate(0deg);transition:none;animation:gk-k1210-g369-tr .7s linear 0s 1}
+.gk-k1210 .gk-lg>.gk-dl{transform-origin:50% 100%}
+@keyframes gk-k1210-g369-ra{0%{transform:none;animation-timing-function:ease-out}30%{transform:translate(0px,-9px);animation-timing-function:cubic-bezier(.6,0,.9,.5)}58%{transform:scale(1.03,.84);animation-timing-function:ease-out}100%{transform:none}}
+.gk-k1210:has(.gk-kx[open]) .gk-lg>.gk-dl{animation:gk-k1210-g369-ra .5s linear .2s 1}
+.gk-k1210:has(.gk-kx[open]) .gk-lg>.gk-dl~.gk-dl{animation-delay:.32s}
 @media (prefers-reduced-motion:reduce){.gk-k1210 *{animation:none!important;transition:none!important}}
 
 .gk-k1210.gk-tl .gk-nm.gk-nA{color:#0a69ae;-webkit-text-fill-color:#0a69ae}

@@ -49,6 +49,10 @@
 .gk-k1052 .gk-g3{transform-origin:10px 8px;transform:scale(0);transition:transform .2s ease-in}
 .gk-k1052:has(.gk-kx[open]) .gk-g2{transform:scale(1);transition:transform .35s cubic-bezier(.3,1.4,.5,1) .6s}
 .gk-k1052:has(.gk-kx[open]) .gk-g3{transform:scale(1);transition:transform .35s cubic-bezier(.3,1.4,.5,1) .85s}
+@keyframes gk-k1052-k21-ra{0%{opacity:1;clip-path:circle(160% at 0% 50%);animation-timing-function:ease-in}16.36%{opacity:0;clip-path:circle(160% at 0% 50%)}21.64%{opacity:0;clip-path:circle(0% at 0% 50%)}22.73%{opacity:1;clip-path:circle(0% at 0% 50%);animation-timing-function:cubic-bezier(.4,0,.2,1)}100%{opacity:1;clip-path:circle(160% at 0% 50%)}}
+.gk-k1052:has(.gk-kx[open]) .gk-lg>.gk-dl:nth-child(3){animation:gk-k1052-k21-ra 1.10s linear 0s 1}
+@keyframes gk-k1052-k21-rb{0%{opacity:1;clip-path:circle(160% at 0% 50%)}20.74%{opacity:1;clip-path:circle(160% at 0% 50%);animation-timing-function:ease-in}34.07%{opacity:0;clip-path:circle(160% at 0% 50%)}36.15%{opacity:0;clip-path:circle(0% at 0% 50%)}37.04%{opacity:1;clip-path:circle(0% at 0% 50%);animation-timing-function:cubic-bezier(.4,0,.2,1)}100%{opacity:1;clip-path:circle(160% at 0% 50%)}}
+.gk-k1052:has(.gk-kx[open]) .gk-lg>.gk-dl~.gk-dl{animation:gk-k1052-k21-rb 1.35s linear 0s 1}
 @media (prefers-reduced-motion:reduce){.gk-k1052 *{animation:none!important;transition:none!important}}
 
 .gk-k1052.gk-tl .gk-nm.gk-nA{color:#0a69ae;-webkit-text-fill-color:#0a69ae}
