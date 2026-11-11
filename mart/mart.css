@@ -692,3 +692,47 @@ html.mart-cart-on{overflow:hidden}
 .mart-simple-more{width:100%}
 /* 11-12 바탕 질감 — 걸지 않는 틀은 질감 칩 줄을 흐리게(칸은 그대로 · 다른 틀에서 다시 걸려요) */
 .mart-look.is-dim .chip:disabled{opacity:.45}
+.mart-simple .mart-simple-h,.mart-simple-diff>p{text-align:left}
+/* 11-12 세밀 = 갈래 여덟 접힘(설계 4-4 · 목업-마트-세밀) — 카드 한 장씩 · 머리 줄 이름 · 요약 · 바꾼 것 n · 마트 꺾쇠 */
+.mart-sheet-viewbox:empty{display:none}
+.mart-sheet-viewbox .mart-view{margin:12px 0 0}
+.mart-detail-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:var(--ctl);margin:0 0 12px;color:var(--muted);font-size:var(--ts-meta)}
+.mart-detail-head b{color:var(--ink);font-weight:650}
+.mart-groups{display:flex;flex-direction:column;gap:12px;min-width:0}
+.mart-group{min-width:0;border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
+.mart-group>summary{list-style:none;cursor:pointer;gap:8px;padding:0 12px;min-height:44px}
+.mart-group>summary::-webkit-details-marker{display:none}
+.mart-group[open]>summary.chev::after{transform:rotate(180deg)}
+.mart-group-name{flex:none;color:var(--ink);font-weight:650}
+.mart-group-sum{flex:1 1 auto;min-width:0;overflow:clip;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:var(--ts-meta)}
+.mart-group-n{flex:none;color:var(--pick-ink);font-size:var(--ts-meta);font-weight:650}
+.mart-group-n[hidden]{display:none}
+.mart-group-body{display:flex;flex-direction:column;gap:12px;min-width:0;padding:0 12px 12px}
+.mart-group-body>.mart-tune-line:last-child:has(> [hidden]:only-child){display:none}
+.mart-group-body .mart-tune-save{padding:0;border:0;background:none}
+.mart-text-tabs{flex-wrap:nowrap}
+.mart-sheet:has(.mart-tune.is-detail) .mart-sheet-mine{display:none}
+/* 폰도 미리보기를 위로(설계 4-8 — 붙박이 · 높이 최대 40dvh · 넘치면 안에서 굴러요) */
+@media (max-width:639px){
+  .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune){display:flex;flex-direction:column}
+  .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune)>*{flex:none}
+  .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune)>.mart-sheet-preview{order:-2;position:sticky;top:-12px;z-index:2;max-height:40dvh;overflow:auto;margin:-12px -12px 0;padding:12px;background:var(--tint);box-shadow:0 1px 0 var(--line);scrollbar-width:thin}
+  .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune)>.mart-sheet-site{order:-1}
+}
+.mart-sheet-tune,.mart-tune.is-detail,.mart-groups{min-width:0;max-width:100%}
+.mart-group{box-sizing:border-box;width:100%;max-width:100%;overflow:clip}
+.mart-group>summary,.mart-group-body{min-width:0;max-width:100%;box-sizing:border-box}
+.mart-sheet-viewbox{width:100%}
+/* 갈래 안 숫자 칸 2열이 폰 320 까지 한 줄 머리(이름 · ↺ · 숫자 · 단위)로 들어가게 — 갈래 안쪽 여백 · 칸 사이 · 숫자칸 폭만 줄여요 */
+@media (max-width:639px){
+  .mart-group>summary{padding:0 10px}
+  .mart-group-body{padding:0 8px 10px}
+  .mart-group .mart-look{column-gap:8px}
+  .mart-group .mart-num{gap:3px}
+  .mart-group .mart-num input{width:calc(3.6ch + 12px);padding:0 4px}
+}
+.mart-sheet-viewbox:has(.mart-view){display:flex;align-items:center;gap:8px;margin:12px 0 0}
+.mart-sheet-viewbox .mart-view{flex:1 1 auto;margin:0}
+.mart-pv-fold{flex:none}
+.mart-sheet.is-pv-folded .mart-sheet-body>.mart-sheet-preview,.mart-sheet.is-pv-folded .mart-sheet-body>.mart-sheet-site{display:none}
+.mart-group>summary{font-size:var(--ts-ctl);border-radius:var(--r-ctl)}

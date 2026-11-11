@@ -46,8 +46,10 @@ export function texInfo(html) {
     const mode = cls.find(c => c === 'gk-tl' || c === 'gk-td' || c === 'gk-tx') || 'gk-tl', tn = cls.find(c => c === 'gk-tn-d' || c === 'gk-tn-n');
     // 그 판에 걸리는 규칙의 바탕색(뒤 것이 이겨요): 뒤집힌 판이면 .키.gk-tn-X · 아니면 .키 / .키.<바탕>
     const rules = [...head.matchAll(/(^|[\n}])([^{}\n]+)\{([^{}]*)\}/g)].map(x => [x[2].trim(), x[3]]);
-    const quals = tn ? [`.${key}.${tn}`] : [`.${key}`, `.${key}.${mode}`];
-    const bgOf = (tail) => { let v = null, img = false; for (const [sel, body] of rules) for (const s of sel.split(',')) { if (!quals.some(q => s.trim() === q + tail)) continue; const c = body.match(/background-color:([^;}]+)/); if (c) v = c[1].trim(); if (/background(?:-image)?:[^;}]*(?:url\(|gradient)/.test(body)) img = true; } return { v, img }; };
+    // 11-12 캐릭터 색 class(gk-cv-…)가 낀 판 규칙도(예 k8 블라인드 `.gk-k8.gk-cv-bl.gk-tx{background-color}`) — 지금 뿌리에 있는 cv 만
+    const cv = cls.find(c => /^gk-cv-/.test(c)), nowQ = tn || mode;
+    const okQual = (q) => { const t = q.split('.').filter(Boolean); return t.every(c => c === cv || c === nowQ || (!tn && c === mode)) && (tn ? t.includes(tn) : true); };
+    const bgOf = (tail) => { let v = null, img = false; for (const [sel, body] of rules) for (const s of sel.split(',')) { const st = s.trim(); if (!st.startsWith(`.${key}`) || !st.endsWith(tail)) continue; const q = st.slice(key.length + 1, st.length - tail.length); if (tail && q.includes(' ')) continue; if (!tail && /\s/.test(q)) continue; if (!okQual(q)) continue; const c = body.match(/background-color:([^;}]+)/); if (c) v = c[1].trim(); if (/background(?:-image)?:[^;}]*(?:url\(|gradient)/.test(body)) img = true; } return { v, img }; };
     const card = bgOf(''), lg = bgOf(' .gk-lg'), pane = !!lg.v;
     // 화자 띠(.gk-d<화자>{background-color}) — 그 판에 걸리는 것
     const speak = new Map();

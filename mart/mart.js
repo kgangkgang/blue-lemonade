@@ -26,7 +26,7 @@ import { lookNow } from './look.js?v=20261112a';
 import { motionNow } from './motion-state.js?v=20261112a';
 import { texNow } from './texture.js?v=20261112a';
 import { tuneOf } from './tune.js?v=20261112a';
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit } from './tune-ui.js?v=20261112a';
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112a';
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
 import { sanitizeHtml, guessSlot, fromPath, slotPath } from './lib/log-copy/log-copy-sanitize.js';
 import { mineModelNow } from './mine-text.js?v=20261112a';
@@ -751,6 +751,10 @@ document.addEventListener('bl-taste-change', () => { if (mylog.on) repaintMylog(
 const TASTE_TITLE = '내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고, 완성 HTML 을 복사 · 내려받아요';
 const tasteHtml = item => (item.kind === 'geulkku' && !item.photo ? `<button type="button" class="btn mart-taste-open" data-act="taste" title="${TASTE_TITLE}"><span class="em" aria-hidden="true">🍽️</span>시식하기<small>내 로그를 넣어 봐요</small></button>` : '');
 /** 11-09 화보 갤러리(photo): 상세 창 미리보기는 체크박스 id · label for 에 꼬리를 붙여요 — 같은 틀이 카드에도 있어 for= 가 카드(inert) 쪽 체크박스를 가리키지 않게. 복사 글은 원래 id 그대로 */
+// 11-12 미리보기 접기(설계 4-8 — 폰에서 조절 칸을 넓게) · 이 기기에 기억
+const PV_KEY = 'bl-mart-pv-fold-v1';
+let pvFolded = (() => { try { return localStorage.getItem(PV_KEY) === '1'; } catch { return false; } })();
+const pvFoldHtml = () => `<button type="button" class="ibtn chev mart-pv-fold" data-pv-fold aria-expanded="${!pvFolded}" aria-label="${pvFolded ? '미리보기 펼치기' : '미리보기 접기'}" title="${pvFolded ? '미리보기 펼치기' : '미리보기 접기'}"></button>`;
 // ── 11-12 붙일 곳 흉내(테마 1.1.3 log-copy-site-sim.js 꼴) — 크게 보기 미리보기를 깡통 · 깡캐 글 화면처럼: 사이트 바탕 · 본문 글자색(밤낮) · 글 폭(PC 640 · 폰 360) · 위아래 코멘트 자리 ·
 //   깡통이 붙이는 것(summary 뒤 빈 줄 <div><br></div> · .content details 여백 · 문단 줄 간격 · id · for · name 지움)을 복사 글 그대로 위에 흉내 내요. 흉내 중에는 「글 고치기」가 꺼져요 ──
 const SITE_KEY = 'bl-mart-site-v1';
@@ -784,13 +788,14 @@ function openSheet(state) {
         sheet = document.createElement('dialog');
         sheet.className = 'mart-sheet';
         sheet.setAttribute('aria-labelledby', 'mart-sheet-title');
-        sheet.innerHTML = '<header class="mart-sheet-head"><span class="mart-sheet-grip" aria-hidden="true"></span><div class="mart-sheet-name"><h2 id="mart-sheet-title"></h2><div class="mart-sheet-meta"></div></div><button type="button" class="ibtn x mart-sheet-x" data-sheet="close" aria-label="닫기"></button></header><div class="mart-sheet-body"></div><footer class="mart-sheet-foot"></footer>';
+        sheet.innerHTML = '<header class="mart-sheet-head"><span class="mart-sheet-grip" aria-hidden="true"></span><div class="mart-sheet-name"><h2 id="mart-sheet-title"></h2><div class="mart-sheet-meta"></div><div class="mart-sheet-viewbox"></div></div><button type="button" class="ibtn x mart-sheet-x" data-sheet="close" aria-label="닫기"></button></header><div class="mart-sheet-body"></div><footer class="mart-sheet-foot"></footer>';
         document.body.append(sheet);
         sheet.addEventListener('click', (e) => {
             if (e.target === sheet) { sheet.close(); return; }   // 바깥(배경) 누르기
             const b = e.target.closest('button'); if (!b) return;
             if (b.dataset.sheet === 'close') sheet.close();
             else if (b.dataset.site) setSite(b.dataset.site);
+            else if (b.matches('[data-pv-fold]')) { pvFolded = !pvFolded; try { localStorage.setItem(PV_KEY, pvFolded ? '1' : ''); } catch { /* 이번 화면에서만 */ } sheet.classList.toggle('is-pv-folded', pvFolded); b.setAttribute('aria-expanded', String(!pvFolded)); b.title = b.ariaLabel = pvFolded ? '미리보기 펼치기' : '미리보기 접기'; }
             else if (b.matches('[data-tune-edit]') && site.mode !== 'mart') setSite('mart');   // 글 고치기는 마트 미리보기에서(흉내 글에는 칸 번호가 달라요)
             else if (b.dataset.act && sheetState) doAct(sheetState, b.dataset.act, b);
         });
@@ -815,10 +820,12 @@ function openSheet(state) {
         sheet.addEventListener('close', () => { const st = sheetState; sheetState = null; sheet.querySelector('.mart-sheet-body').replaceChildren(); st?.el.querySelector('.mart-preview')?.focus({ preventScroll: true }); });
     }
     sheetState = state;
+    sheet.classList.toggle('is-pv-folded', pvFolded && !!state.item.simple);
     const { item } = state;
     sheet.querySelector('#mart-sheet-title').innerHTML = `${glyphHtml(item)}<span>${esc(item.name || item.label)}</span>${favHtml(item)}`;
     if (item.accent) sheet.style.setProperty('--accent', item.accent); else sheet.style.removeProperty('--accent');   // 담기 단추 색 = 그 글꾸 강조색
     sheet.querySelector('.mart-sheet-meta').innerHTML = `${tagsHtml(item)}${designsHtml(item)}<p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}${item.own && item.warn.length ? `<details class="mart-own-check"><summary>깡통에 올리면</summary>${ownWarnHtml(item.warn)}</details>` : ''}`;   // 11-10 디자인 넘기기 · 11-12 내 글꾸 점검
+    sheet.querySelector('.mart-sheet-viewbox').innerHTML = item.simple ? viewSegHtml(item) + pvFoldHtml() : '';   // 11-12 간편 | 세밀 — 창 머리(설계 4-8)
     const body = sheet.querySelector('.mart-sheet-body');
     body.innerHTML = `<div class="mart-sheet-tune">${tuneHtml(item)}</div><div class="mart-sheet-preview${site.mode !== 'mart' && (item.simple || item.own) ? ' is-site' : ''}">${item.preview ? sheetPreview(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div>${siteRowHtml(item)}<div class="mart-sheet-inks">${item.preview && !toned(item) ? inksHtml(item) : ''}</div><div class="mart-sheet-mine">${mineBoxHtml(item)}</div>`;
     paintTune();   // 11-08 글자색 칩 · 11-10 캐릭터 대사색으로 칠할 땐 칩 대신 그 색 하나
@@ -828,7 +835,7 @@ function openSheet(state) {
             fillCard(state);
             if (sheetState !== state) return;
             body.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(state);
-            body.querySelector('.mart-sheet-tune').innerHTML = tuneHtml(item); body.querySelector('.mart-sheet-mine').innerHTML = mineBoxHtml(item); paintTune();
+            body.querySelector('.mart-sheet-tune').innerHTML = tuneHtml(item); sheet.querySelector('.mart-sheet-viewbox').innerHTML = item.simple ? viewSegHtml(item) + pvFoldHtml() : ''; body.querySelector('.mart-sheet-mine').innerHTML = mineBoxHtml(item); paintTune();
             if (toned(item)) body.querySelector('.mart-sheet-inks').innerHTML = ''; else syncInks(body.querySelector('.mart-sheet-inks'), item);
             body.scrollTop = 0;
         }, () => { if (sheetState === state) body.querySelector('.mart-sheet-preview').innerHTML = `<p class="mart-sheet-wait">${LOAD_FAIL}</p>`; })

@@ -1314,7 +1314,7 @@ await test('바탕 질감(11-12 · 글꾸-질감/마트-연결.md): 끔이면 �
     }
     assert.ok(n > 780, '건 판 ' + n);
     for (const k of Object.keys(tx.NO_TEX_MART)) assert.ok(blocked.has('simple-' + k), k + ' 막음');
-    assert.ok(blocked.size <= 17, '막은 틀 ' + [...blocked]);
+    assert.equal(blocked.size, 16, '막은 틀 ' + [...blocked]);
     assert.deepEqual(tx.cleanTex({ tex: 'line', on: 'x', level: 9, margin: true }), { tex: 'line', on: 'b', level: 2, margin: true });
     assert.equal(tx.cleanTex({ tex: 'none' }), null);
     for (const k of ['k1371', 'k1372', 'k1373']) assert.ok(sixAll.items.some(x => x.id === 'simple-' + k), k);
