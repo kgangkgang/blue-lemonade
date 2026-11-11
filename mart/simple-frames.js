@@ -43,6 +43,11 @@ export const SIMPLE_CONTRACT = Object.freeze({
     ink: Object.freeze({ 'gk-tl': '#26272b', 'gk-td': '#e1e1e5', 'gk-tx': '#e4e9f0' }),
 });
 const BASES = ['gk-tl', 'gk-td', 'gk-tx'];
+// 「기본 색」 틀: 뿌리에 이 class 가 있으면 소품이 고정 기본 색 · 없으면 화자 색 톤(묶음 틀 sk-own · 마트 접두 gk-own 둘 다 받아요)
+const OWN_CLASS = /^(?:sk|gk)-own$/;
+const OWN_SEL = /\.(?:sk|gk)-own(?![\w-])/;
+/** 그 틀에 「기본 색」 판이 있는가(뿌리 class) */
+export const hasOwnTone = html => /^\s*<div\b[^>]*\sclass="gk\s[^"]*\b(?:sk|gk)-own\b/.test(String(html ?? ''));
 const TN = ['gk-tn-d', 'gk-tn-n'];
 const FRAME_KEY = /^gk-((?:k|q)\d+)$/;
 // 화자 표시 클래스 = gk-<소문자><대문자 한 글자>: nA 이름 · dA 띠 · sA 소리 이름표 · uA 밑줄 · 그 밖의 것(04 의 cA 커서처럼)은 「그 화자 색 포인트」
@@ -87,6 +92,8 @@ export function sianFit(C, bg, want = 4.6) {
 const mix = (K, bg, a) => { const k = h2rgb(K), b = h2rgb(bg); return rgb2h(k.map((v, i) => v * a + b[i] * (1 - a))); };
 const sianBand = K => `rgba(${h2rgb(K).join(',')},.18)`;
 
+// 뿌리 캐릭터 색 클래스의 꼬리: gk-cv-<깡통>[-<깡캐 색 6자 | x>[-<소품 색 6자>]] — 깡캐 · 소품 색을 따로 고른 판끼리 한 글에서 안 부딪히게
+const CV_TAIL = /(?:-(?:[0-9a-f]{6}|x)){1,2}$/;
 // 뿌리 div 여는 태그 + 바로 안 첫 <style>
 const ROOT_RE = /^(\s*)<div\b([^>]*?)\sclass="(gk(?:\s[^"]*)?)"([^>]*)>(\s*)<style>((?:(?!<\/?style)[\s\S])*)<\/style>/;
 
@@ -121,7 +128,7 @@ export function simpleFrameInfo(html) {
     const cvClass = classes.find(c => /^gk-cv-[\w-]+$/.test(c)) || null;
     const cvName = cvClass ? cvClass.slice(6) : null;
     // 상대 색을 따로 칠한 판은 이름 끝에 「-<상대 색 6자>」가 붙어요(gk-cv-bl-d19cff) — 주인공 색은 그 앞부분
-    const cvMain = cvName == null ? null : cvName.replace(/-[0-9a-f]{6}$/, '');
+    const cvMain = cvName == null ? null : cvName.replace(CV_TAIL, '');
     const K0 = cvName == null ? undefined : cvMain === 'none' ? null : SIMPLE_CONTRACT.cv[cvMain] || (/^[0-9a-f]{6}$/.test(cvMain) ? `#${cvMain}` : undefined);
     const css = m[6].replace(/^\n/, '').replace(/\n$/, '');
     const parts = css.split(SIMPLE_CONTRACT.blockSep);
@@ -204,12 +211,14 @@ function originalBase(info) {
  * 심플 새 틀을 캐릭터 색 K 로 다시 칠해요(낮 · 밤은 뿌리 클래스만 바꿔요).
  * @param {string} html 틀 HTML(조각의 preview — 원래 판)
  * @param {string|null} K 캐릭터 대사색(없으면 무채 사다리)
- * @param {{ mode?: 'light'|'dark', main?: string, other?: string|null }} [options] main: 주인공 화자 글자(없으면 M → A) · other: 상대(주인공이 아닌 화자) 대사색 — 없으면 틀이 정해 둔 색 그대로
+ * @param {{ mode?: 'light'|'dark', main?: string, other?: string|null, prop?: string|null }} [options] main: 주인공 화자 글자(없으면 M → A) · other: 상대(주인공이 아닌 화자) 대사색 — 없으면 틀이 정해 둔 색 그대로
+ *   prop: 소품 색(톤 사다리의 씨앗)을 깡통 색과 따로 — 없으면 깡통 색을 따라가요(11-11 조절 칸)
+ *   own: 「기본 색」이 있는 틀(뿌리 class sk-own · gk-own — 소품이 제 색)에서 false 면 그 class 를 떼어 소품을 캐릭터 색 톤으로 · 그 밖에는 틀 그대로(기본 색 먼저)
  * @returns {string} 꼴이 아니면 받은 그대로
  */
 /** 「원래 색」 표시 — toneSimple(html, ORIGINAL, { mode }) 는 틀을 만든 색 그대로(캐릭터 색 클래스 이름까지 이식판 글자 그대로) 낮 · 밤만 바꿔요 */
 export const ORIGINAL = Symbol('원래 색');
-export function toneSimple(html, K, { mode = 'dark', main, other } = {}) {
+export function toneSimple(html, K, { mode = 'dark', main, other, prop, own } = {}) {
     const info = simpleFrameInfo(html);
     if (!info || !info.key || !info.base || info.K0 === undefined) return html;
     const original = K === ORIGINAL;
@@ -221,11 +230,12 @@ export function toneSimple(html, K, { mode = 'dark', main, other } = {}) {
     const nowTn = want === origMode ? null : (want === 'dark' ? 'gk-tn-n' : 'gk-tn-d');
     // 11-11 상대 색(사용자 「왜 친구 글자색은 안바뀜?」): 고르면 주인공이 아닌 화자를 그 색으로 — 주인공과 같은 식(이름 · 띠 · 밑줄 · 이름표). 안 고르면 한 글자도 안 달라져요
     const k2 = speakerColor(other) || null;
-    const cvBase = original && info.cvClass ? info.cvClass.replace(/-[0-9a-f]{6}$/, '') : `gk-cv-${cvNameOf(k)}`;
-    const cv = k2 ? `${cvBase}-${k2.slice(1)}` : cvBase;   // 같은 틀을 상대 색만 달리해 한 글에 둘 붙여도 안 부딪혀요
+    const kp = speakerColor(prop) || null;   // 소품 색을 따로 골랐을 때만
+    const cvBase = original && info.cvClass ? info.cvClass.replace(CV_TAIL, '') : `gk-cv-${cvNameOf(k)}`;
+    const cv = kp ? `${cvBase}-${k2 ? k2.slice(1) : 'x'}-${kp.slice(1)}` : k2 ? `${cvBase}-${k2.slice(1)}` : cvBase;   // 같은 틀을 상대 색만 달리해 한 글에 둘 붙여도 안 부딪혀요
     const renameCv = s => (info.cvClass ? s.split(`.${info.cvClass}`).join(`.${cv}`) : s);
     // ① 뿌리 클래스: gk 바로 뒤에 바탕 · 낮밤, 캐릭터 색 클래스는 새 색 이름
-    const kept = info.classes.filter(c => c !== 'gk' && !BASES.includes(c) && !TN.includes(c)).map(c => (c === info.cvClass ? cv : c));
+    const kept = info.classes.filter(c => c !== 'gk' && !BASES.includes(c) && !TN.includes(c) && !(own === false && OWN_CLASS.test(c))).map(c => (c === info.cvClass ? cv : c));
     const rootClass = ['gk', nowBase, nowTn, ...kept].filter(Boolean).join(' ');
     // ② 화자 색: 색이 그대로인 화자는 시안 규칙 그대로 · 바뀐 화자만 새로
     const colors0 = speakerColorsOf(info.color_css);
@@ -251,9 +261,9 @@ export function toneSimple(html, K, { mode = 'dark', main, other } = {}) {
     //    바꾸는 값: 톤 사다리 다섯 · 사다리 밖 단계(SIMPLE_CONTRACT.extraSteps — 09 밤 안감) · 바탕별 글자 맞춤 값(q10 레벨 글자) — #rrggbb 와 그림 안 %23rrggbb 둘 다
     //    + 바뀐 화자 색의 rgb 셋(키프레임 · 그림 안 — 15 요람 띠 번쩍임 · 13 형광 띠)
     const swap = new Map(), put = (a, b) => { if (a && b && !swap.has(a.toLowerCase())) swap.set(a.toLowerCase(), b.toLowerCase()); };
-    const from = toneLadder(info.K0), to = toneLadder(k);
+    const from = toneLadder(info.K0), to = toneLadder(kp || k);
     for (const step of Object.keys(from)) put(from[step], to[step]);
-    const seed0 = info.K0 || NEUTRAL_LADDER.c500, seed1 = k || NEUTRAL_LADDER.c500;
+    const seed0 = info.K0 || NEUTRAL_LADDER.c500, seed1 = kp || k || NEUTRAL_LADDER.c500;
     for (const { s, l } of SIMPLE_CONTRACT.extraSteps) { const [h0, s0, l0] = toHsl(seed0), [h1, s1, l1] = toHsl(seed1); put(fromHsl(h0, s0 * s, l0 * l), fromHsl(h1, s1 * s, l1 * l)); }
     for (const bg of [...faces.orig, ...faces.alt, '#ffffff']) put(sianFit(seed0, bg), sianFit(seed1, bg));
     // 상대 색을 골랐으면 상대의 옛 색 그대로 칠한 소품(15 요람 공 · 17 바람개비 날개처럼)과 바탕별 글자 맞춤 값도 새 상대 색으로
@@ -269,16 +279,31 @@ export function toneSimple(html, K, { mode = 'dark', main, other } = {}) {
     const chunk = css => rulesOf(css).map((r) => {
         if (imageBand(r)) return renameCv(selOf(r)) + swapRgb(bodyOf(r));   // 그림으로 그은 띠(13 형광펜): 색만 바꿔 남겨요(긋는 움직임 그대로)
         if (SPEAKER_SEL.test(selOf(r))) return keepSpeaker(r);
+        if (OWN_SEL.test(selOf(r))) return renameCv(selOf(r)) + bodyOf(r);   // 기본 색 줄(뿌리 sk-own 일 때만 걸리는 고정값)은 값이 사다리 값과 우연히 같아도 안 바꿔요
         return renameCv(selOf(r)) + swapRgb(swapHex(bodyOf(r)));
     }).filter(Boolean);
     const spk = [...chunk(info.parts[1] || ''), ...fresh];
-    const prop = info.parts.slice(2).flatMap(chunk);
-    const css = [info.base_css, spk.join('\n'), prop.join('\n')].filter(Boolean).join(SIMPLE_CONTRACT.blockSep);
+    const propCss = info.parts.slice(2).flatMap(chunk);
+    const css = [info.base_css, spk.join('\n'), propCss.join('\n')].filter(Boolean).join(SIMPLE_CONTRACT.blockSep);
     const m = info.match;
     let out = `${m[1]}<div${m[2]} class="${rootClass}"${m[4]}>${m[5]}<style>\n${css}\n</style>` + html.slice(m.index + m[0].length);
     // ④ 소리 카드 단추 색(깡통 기본은 어두운 판 — 밝은 판은 light 를 꼭 적어요)
     out = out.replace(/(<audio\b[^>]*\sstyle="[^"]*color-scheme:)(light|dark)/g, `$1${want}`);
     return out;
+}
+
+/** 그 틀의 화자 색 한 쌍 — { main: 깡통(틀 캐릭터 색 · 없으면 null), other: 깡캐(틀이 정해 둔 상대 색 · 없으면 null) } */
+export function speakerPair(html) {
+    const info = simpleFrameInfo(html);
+    if (!info || info.K0 === undefined) return { main: null, other: null };
+    const colors0 = speakerColorsOf(info.color_css);
+    const mainX = info.speakers.find(X => info.K0 && colors0[X] === info.K0) || SIMPLE_CONTRACT.mainOrder.find(x => info.speakers.includes(x)) || info.speakers[0];
+    return { main: info.K0 || null, other: colors0[info.speakers.find(X => X !== mainX)] || null };
+}
+/** 소품 색을 따로 줄 수 있는 틀인가 — 소품 톤(사다리 값)이 하나라도 있는 틀만(없으면 조절 칸에 「소품」 칸을 안 보여요) */
+export function hasPropTone(html) {
+    const bare = s => s.slice(0, s.indexOf('</style>')).replace(/gk-cv-[\w-]+/g, '');
+    return bare(toneSimple(html, ORIGINAL, { mode: 'light' })) !== bare(toneSimple(html, ORIGINAL, { mode: 'light', prop: '#00c853' }));
 }
 
 /** 카드 미리보기용: 처음엔 닫힌 틀의 첫 details 를 열어 둬요(open 을 안 주면 SIMPLE_CONTRACT.peek) — data-bl-peek 표시라 복사 글은 mart.js shutPeek 가 다시 닫아요 */

@@ -592,5 +592,89 @@ await test('깡통 · 깡캐 두 칸 · 색 단추: 머리 줄에 칸 둘(펼친
     assert.ok(css.includes('.mart-cast-toggle[data-toggle][aria-expanded=true]::after{content:"";position:absolute;'));
 });
 
+// ── 11-11 크게 보기 「조절」(tune.js) ──
+// tone-state.js 가 부르는 것과 같은 주소(판 꼬리까지)로 불러요 — 꼬리가 다르면 다른 모듈로 떠서 조절 값이 안 이어져요
+const tuneTail = fs.readFileSync(path.join(MART, 'tone-state.js'), 'utf8').match(/'\.\/tune\.js(\?v=\w+)'/)[1];
+const tu = await import(pathToFileURL(path.join(MART, 'tune.js')).href + tuneTail);
+await test('조절: 값이 없으면 한 글자도 안 달라요 · 글자색은 틀 <style> 끝 덮는 규칙(그 판에만 · fill 짝 · <style> 하나) · 고쳐 쓴 글은 그 자리 글자만(이스케이프) · 소품 색은 깡통 색과 따로 · 28틀 복사 글 정적 검사 통과', async () => {
+    const ts = await import(`${pathToFileURL(path.join(MART, 'tone-state.js')).href}?tune=1`);
+    for (const row of six.items) {
+        const it = { ...row, ...sfx[row.id], kind: 'geulkku' }, p = it.preview, key = sf.simpleFrameInfo(p).key;
+        assert.equal(tu.applyTune(p, null), p); assert.equal(tu.applyTune(p, {}), p); assert.equal(tu.applyTune(p, { inks: { light: { title: 'red' } }, texts: { x: 'a' } }), p, `${row.id} 틀린 값은 버려요`);
+        const ed = tu.editables(p);
+        assert.ok(ed.length >= 6, `${row.id} 글 자리 ${ed.length}`);
+        assert.ok(ed.some(e => e.cls === 'gk-nr') && ed.some(e => e.cls === 'gk-nm') && ed.some(e => e.cls === 'gk-d'), row.id);
+        for (const e of ed) assert.equal(p.slice(e.start, e.end), e.text);
+        const last = ed.length - 1, tune = { inks: { light: { title: '#7a3cc8', dialogue: '#b3261e' }, dark: { text: '#ddeeff' } }, prop: '#e0780a', texts: { 0: '고친 <글> & 제목', [last]: '끝 줄' } };
+        const base = sf.toneSimple(p, sf.ORIGINAL, { mode: 'light', prop: tune.prop }), out = tu.applyTune(base, tune);
+        assert.equal((out.match(/<style>/g) || []).length, 1, row.id);
+        const K = `.gk-${key}`.repeat(3);
+        assert.ok(out.includes(`${K}.gk-tl .gk-tt{color:#7a3cc8;-webkit-text-fill-color:#7a3cc8}`) && out.includes(`${K}.gk-tl .gk-d{color:#b3261e;-webkit-text-fill-color:#b3261e}`), `${row.id} 낮 판 규칙`);
+        assert.ok(out.includes(`${K}.gk-td p.gk-nr,${K}.gk-tx p.gk-nr{color:#ddeeff;-webkit-text-fill-color:#ddeeff}`), `${row.id} 밤 판 규칙`);
+        const ed2 = tu.editables(out);
+        assert.equal(ed2.length, ed.length);
+        assert.equal(ed2[0].text, '고친 &lt;글&gt; &amp; 제목'); assert.equal(ed2[last].text, '끝 줄');
+        for (let i = 1; i < last; i++) assert.equal(ed2[i].text, ed[i].text, `${row.id} 다른 자리 그대로`);
+        // 글 · 덮는 규칙을 빼면 칠한 판 그대로
+        const strip = h => { const e = tu.editables(h); let s = h; for (const x of [...e].reverse()) s = s.slice(0, x.start) + s.slice(x.end); return s.split('\n').filter(l => !l.startsWith(K)).join('\n'); };
+        assert.equal(strip(out), strip(base), `${row.id} 뼈대 그대로`);
+        const ready = sf.simpleReady(shutPeek(out)), rep = tg.readyReport(ready);
+        assert.ok(rep.ok, `${row.id} 정적 검사 ${JSON.stringify(rep)}`);
+        assert.equal((ready.match(/<style>/g) || []).length, 1);
+        // toneOut 길: 조절 값이 없으면 예전과 같고, 있으면 같은 결과
+        ts.setTone({ mode: 'light' });
+        const before = ts.toneOut(it, p), key0 = ts.toneKey();
+        tu.setTune(row.id, tune);
+        assert.notEqual(ts.toneKey(), key0);
+        assert.equal(ts.toneOut(it, p), out, `${row.id} toneOut`);
+        tu.setTune(row.id, null);
+        assert.equal(tu.tuneOf(row.id), null);
+        assert.equal(ts.toneOut(it, p), before, `${row.id} 처음으로`);
+    }
+    // 소품 색: 깡통 색은 그대로 · 소품 톤만 그 색 사다리로(뿌리 이름 꼬리 -x-<소품 색>)
+    const p = sfx['simple-k3'].preview, a = sf.toneSimple(p, sf.ORIGINAL, { mode: 'light' }), b = sf.toneSimple(p, sf.ORIGINAL, { mode: 'light', prop: '#3ccfbf' });
+    assert.match(rootOf(b), /gk-cv-pk-x-3ccfbf(\s|$)/);
+    assert.equal(partsOf(b)[1].split('-x-3ccfbf').join(''), partsOf(a)[1], '화자 색 덩이는 그대로');
+    assert.ok(Object.values(ct.toneLadder('#3ccfbf')).some(v => styleOf(b).includes(v)) && sf.hasPropTone(p) && !sf.hasPropTone(sfx['simple-k1'].preview));
+    assert.equal(sf.simpleFrameInfo(b).K0, '#ff5fa2');
+    assert.deepEqual(sf.speakerPair(p), { main: '#ff5fa2', other: '#3aa7ff' });
+});
+
+await test('기본 색 판(뿌리 sk-own): 기본 색 줄은 값이 사다리 값과 같아도 안 바뀌어요 · own:false 면 뿌리 class 만 떼요 · 그 밖에는 틀 그대로', () => {
+    const p0 = sfx['simple-k3'].preview, c300 = ct.toneLadder('#ff5fa2').c300;
+    const p = p0.replace('<div class="gk ', '<div class="gk sk-own ').replace('\n</style>', `\n.gk-k3.sk-own .gk-zz{background-color:${c300}}\n</style>`);
+    assert.ok(sf.hasOwnTone(p) && !sf.hasOwnTone(p0));
+    for (const K of [sf.ORIGINAL, '#3ccfbf', null]) {
+        const out = sf.toneSimple(p, K, { mode: 'light' });
+        assert.ok(styleOf(out).includes(`.sk-own .gk-zz{background-color:${c300}}`), `기본 색 줄 그대로 ${String(K)}`);
+        assert.match(rootOf(out), /(^|\s)sk-own(\s|$)/);
+        const off = sf.toneSimple(p, K, { mode: 'light', own: false });
+        assert.doesNotMatch(rootOf(off), /sk-own/);
+        assert.equal(styleOf(off), styleOf(out), '<style> 은 같고 뿌리 class 만 달라요');
+    }
+    assert.deepEqual(tu.cleanTune({ own: false }), { own: false });
+    assert.equal(tu.cleanTune({ own: true }), null);
+});
+
+await test('내 글꾸: 틀 + 깡통 · 깡캐 · 낮밤 + 조절 값을 이름 붙여 기억 · 같은 틀 같은 이름은 덮어써요 · 지우기 · 틀린 값은 버려요', () => {
+    const store = {};
+    globalThis.localStorage = { getItem: k => store[k] ?? null, setItem(k, v) { store[k] = v; }, removeItem(k) { delete store[k]; } };
+    assert.deepEqual(tu.mineList(), []);
+    const tone = { on: true, k: '#D19CFF', name: '백시우', k2: '#7fe03c', name2: '우리엘', mode: 'light' };
+    const a = tu.saveMine({ frame: 'simple-k1', frameName: '낫표', name: '보라 낫표', tone, tune: { inks: { light: { title: '#7a3cc8' } }, texts: { 0: '제목' } } });
+    assert.equal(a.tone.k, '#d19cff');
+    tu.saveMine({ frame: 'simple-k6', frameName: '음성 메모', name: '둘째', tone: { on: false }, tune: null });
+    tu.saveMine({ frame: 'simple-k1', frameName: '낫표', name: '보라 낫표', tone, tune: { prop: '#e0780a' } });
+    const list = tu.mineList();
+    assert.deepEqual(list.map(x => [x.frame, x.name]), [['simple-k1', '보라 낫표'], ['simple-k6', '둘째']]);
+    assert.deepEqual(list[0].tune, { prop: '#e0780a' });
+    assert.equal(tu.saveMine({ frame: 'simple-k1', name: '   ', tone }), null);
+    tu.forgetMine(list[1].id);
+    assert.equal(tu.mineList().length, 1);
+    store['bl-mart-mine-v1'] = JSON.stringify([{ frame: '<x>', name: 'a' }, { frame: 'simple-k1', name: 'ok', tone: { k: 'red' }, tune: { inks: { light: { title: 'x' } } } }]);
+    assert.deepEqual(tu.mineList().map(x => [x.name, x.tone.k, x.tune]), [['ok', null, null]]);
+    delete globalThis.localStorage;
+});
+
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

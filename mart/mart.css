@@ -497,3 +497,32 @@ html.mart-cart-on{overflow:hidden}
 #mart-paper-panel .mart-cast-list{margin-top:4px}
 /* 폰 누름 44 — 보이는 칸은 36 그대로(위 .btn 과 같은 투명 상자) */
 @media (pointer:coarse){.mart-cast-toggle::before,.mart-cast-g::before{content:"";position:absolute;left:50%;top:50%;width:max(100%,var(--touch));height:max(100%,var(--touch));transform:translate(-50%,-50%);background:none;border:0}}
+
+/* 11-11 크게 보기 「조절」 칸(tune-ui.js) — 색 칩(글자색 칩과 같은 부품) · 밤/낮 · 글 고치기 · 내 글꾸. 바꾼 칸에만 ↺ */
+.mart-sheet-tune:not(:empty){margin:0 0 12px}
+.mart-tune{display:flex;flex-direction:column;gap:8px;min-width:0}
+.mart-tune-colors{gap:6px 8px}
+.mart-tune-chip{display:inline-flex;align-items:center;min-width:0}
+.mart-tune-undo{display:inline-grid;place-items:center;flex:none;width:28px;height:28px;margin:0 0 0 2px;padding:0;border:0;border-radius:999px;background:none;color:var(--muted);font:inherit;font-size:15px;line-height:1;cursor:pointer}
+.mart-tune-undo:hover{background:var(--tint-2);color:var(--ink)}
+.mart-tune-undo:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.mart-tune-undo[hidden],.mart-tune-all[hidden]{display:none}
+.mart-tune-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.mart-tune-line .mart-tune-all{margin-left:auto}
+.mart-tune-hint,.mart-tune-empty{margin:0;color:var(--muted);font-size:var(--ts-meta);line-height:1.5;text-align:left}
+.mart-sheet-preview.is-editing [contenteditable]{cursor:text;border-radius:3px;outline:1px dashed color-mix(in srgb,var(--blue) 55%,transparent);outline-offset:1px}
+.mart-sheet-preview.is-editing [contenteditable]:focus{outline:1.5px solid var(--blue)}
+.mart-sheet-mine:not(:empty){margin:12px 0 0}
+.mart-tune-save{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
+.mart-tune-h{margin:0;font-size:var(--ts-ctl);font-weight:var(--strong);color:var(--ink)}
+.mart-tune-form{display:flex;flex-wrap:wrap;gap:6px}
+.mart-tune-form .field-wrap{flex:1 1 140px;min-width:0}
+.mart-tune-mine{display:flex;flex-direction:column;gap:2px;margin:0;padding:0;list-style:none}
+.mart-tune-mine li{display:flex;align-items:center;gap:4px;min-width:0}
+.mart-tune-load{display:flex;flex:1 1 auto;align-items:center;gap:8px;min-width:0;min-height:var(--ctl);padding:0 8px;border:0;border-radius:var(--r-ctl);background:none;color:var(--ink);font:inherit;font-size:var(--ts-ctl);text-align:left;cursor:pointer}
+.mart-tune-load:hover{background:var(--tint)}
+.mart-tune-load:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+.mart-tune-load b{flex:none;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:var(--strong)}
+.mart-tune-load span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:var(--ts-meta)}
+.mart-tune-load .mart-ink-dot{width:14px;height:14px}
+@media (max-width:639px){.mart-tune-load{min-height:44px}.mart-tune-form .field{font-size:16px}}

@@ -15,6 +15,7 @@ import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261111g'
 import { simpleReady } from './simple-frames.js?v=20261111e';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
 import { mountCast } from './cast.js?v=20261111g';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit } from './tune-ui.js?v=20261111f';   // 11-11 크게 보기 「조절」 칸(색 칩 · 글 고치기 · 내 글꾸)
 let styleActive = 'all', drawPreset = null, picker = null;
 const states = [];   // 만든 카드만(글꾸) — 늦게 만들기(lazyGrid)라 처음엔 첫 화면 몫뿐이에요
 const stateById = new Map();
@@ -586,8 +587,16 @@ document.addEventListener('bl-inks-change', e => repaintInks(e.detail?.id));
 // 11-10 캐릭터 · 밤낮을 바꾸면 만든 카드 · 크게 보기를 다시 칠해요
 function repaintTone() {
     for (const s of states) { delete s.toneKey; delete s.toneHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = previewOf(s); } syncCard(s); }
-    if (sheet?.open && sheetState?.item.preview) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); const inks = sheet.querySelector('.mart-sheet-inks'); if (inks) inks.innerHTML = toned(sheetState.item) ? '' : inksHtml(sheetState.item); syncSheet(); }
+    if (sheet?.open && sheetState?.item.preview) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); const inks = sheet.querySelector('.mart-sheet-inks'); if (inks) inks.innerHTML = toned(sheetState.item) ? '' : inksHtml(sheetState.item); syncSheet(); paintTune(); }
 }
+// 11-11 조절 값(글자색 · 소품 색 · 고쳐 쓴 글)이 바뀌면 그 틀의 카드와 크게 보기를 다시 그려요 — 글만 고친 것이면 크게 보기 미리보기는 그대로(글 쓰는 자리가 안 날아가게)
+document.addEventListener('bl-tune-change', (e) => {
+    const id = e.detail?.id;
+    for (const s of states) { if (s.item.id !== id) continue; delete s.toneKey; delete s.toneHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = previewOf(s); } }
+    if (!sheet?.open || sheetState?.item.id !== id || !sheetState.item.preview) return;
+    if (!e.detail.textOnly) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); paintTune(); } else syncTune(sheet, sheetState.item);
+    syncMine(sheet, sheetState.item);
+});
 document.addEventListener('bl-tone-change', repaintTone);
 // 11-10 컨셉 하나 = 카드 하나 — 같은 이름의 디자인(심플 · 일러스트 · 다꾸 · 무테 · 내장)은 카드 · 크게 보기 안에서 넘겨 봐요(사용자 「한 컨셉 들어가서 디자인 바꾸는식」)
 const conceptPick = new Map();   // 컨셉 이름 → 고른 디자인 id
@@ -657,6 +666,7 @@ function openSheet(state) {
         let inkTimer = 0;   // 11-08 글자색: 색 고르기를 움직이는 동안 칩 점은 바로 · 다시 그리기는 0.15초 묶음
         sheet.addEventListener('input', (e) => { const t = e.target; if (!t.matches?.('[data-ink]') || !sheetState) return; paintDot(t); clearTimeout(inkTimer); const item = sheetState.item; inkTimer = setTimeout(() => setInk(item, t.dataset.ink, t.value), 150); });
         sheet.addEventListener('click', (e) => { if (e.target.closest?.('[data-ink-reset]') && sheetState) resetInks(sheetState.item); });
+        wireTune(sheet, { current: () => sheetState, openItem: (id) => { const s = states.find(x => x.item.id === id); if (s) openSheet(s); }, say });
         sheet.addEventListener('close', () => { const st = sheetState; sheetState = null; sheet.querySelector('.mart-sheet-body').replaceChildren(); st?.el.querySelector('.mart-preview')?.focus({ preventScroll: true }); });
     }
     sheetState = state;
@@ -665,13 +675,15 @@ function openSheet(state) {
     if (item.accent) sheet.style.setProperty('--accent', item.accent); else sheet.style.removeProperty('--accent');   // 담기 단추 색 = 그 글꾸 강조색
     sheet.querySelector('.mart-sheet-meta').innerHTML = `${tagsHtml(item)}${designsHtml(item)}<p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}`;   // 11-10 디자인 넘기기
     const body = sheet.querySelector('.mart-sheet-body');
-    body.innerHTML = `<div class="mart-sheet-preview">${item.preview ? sheetPreview(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div><div class="mart-sheet-inks">${item.preview && !toned(item) ? inksHtml(item) : ''}</div>`;   // 11-08 글자색 칩 · 11-10 캐릭터 대사색으로 칠할 땐 칩 대신 그 색 하나
+    body.innerHTML = `<div class="mart-sheet-tune">${tuneHtml(item)}</div><div class="mart-sheet-preview">${item.preview ? sheetPreview(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div><div class="mart-sheet-inks">${item.preview && !toned(item) ? inksHtml(item) : ''}</div><div class="mart-sheet-mine">${mineBoxHtml(item)}</div>`;
+    paintTune();   // 11-08 글자색 칩 · 11-10 캐릭터 대사색으로 칠할 땐 칩 대신 그 색 하나
     if (!item.preview) {
         body.setAttribute('aria-busy', 'true');
         ensureItem(item).then(() => {
             fillCard(state);
             if (sheetState !== state) return;
             body.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(state);
+            body.querySelector('.mart-sheet-tune').innerHTML = tuneHtml(item); body.querySelector('.mart-sheet-mine').innerHTML = mineBoxHtml(item); paintTune();
             if (toned(item)) body.querySelector('.mart-sheet-inks').innerHTML = ''; else syncInks(body.querySelector('.mart-sheet-inks'), item);
             body.scrollTop = 0;
         }, () => { if (sheetState === state) body.querySelector('.mart-sheet-preview').innerHTML = `<p class="mart-sheet-wait">${LOAD_FAIL}</p>`; })
@@ -682,6 +694,12 @@ function openSheet(state) {
     if (!sheet.open) sheet.showModal();
     body.scrollTop = 0;
     sheet.querySelector('.mart-sheet-x').focus({ preventScroll: true });
+}
+/** 11-11 조절 칸을 지금 값으로 맞추고 미리보기의 글 자리를 다시 걸어요(미리보기를 새로 그린 뒤마다) */
+function paintTune() {
+    if (!sheet || !sheetState?.item.simple || !sheetState.item.preview) return;
+    armEdit(sheet.querySelector('.mart-sheet-preview'), sheetState.item);
+    syncTune(sheet, sheetState.item);
 }
 function syncSheet() {
     const b = sheetState && sheet?.querySelector('.mart-sheet-foot .mart-pick');
