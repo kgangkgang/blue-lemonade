@@ -5,7 +5,7 @@
 //   - 깡통 · 깡캐 색은 목록 위 두 칸(tone-state.js)과 같은 값이라 여기에 안 들어 있어요.
 export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(탭을 닫으면 사라져요 — sessionStorage)
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
-import { spoilerHtml, spoilerStyle, SPOILER_LABEL } from './lib/log-copy/log-copy-spoiler.js';
+import { spoilerHtml, spoilerStyle, SPOILER_LABEL, unparagraphHtml } from './lib/log-copy/log-copy-spoiler.js?v=20261112a';
 import { cleanLook } from './look.js?v=20261112a';
 import { applyVals } from './custom.js?v=20261112a';
 import { PAINT_ROLES } from './shape.js?v=20261112a';   // 11-12 낱낱 바탕 색(카드 바탕 · 깡통 띠 · 깡캐 띠 · 제목 밑줄) — 같은 inks 칸에 기억 · 규칙은 shape.js 가 내요
@@ -187,8 +187,11 @@ const spoilerOf = inner => spoilerHtml(inner, SPOILER_LOOK, false).replace('colo
 const SPOILER_RULES = spoilerStyle().replace(/^<style>|<\/style>$/g, '');
 const escAttr = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 /**
- * 글 칸 i 가 든 글 줄(p — 지문 · 대사 줄)을 통째로 눌러야 보이는 글로(테마 블록 숨김 꼴).
- *   글줄 안 일부만 숨기는 꼴은 못 써요 — <details> 는 <p> 안에 들어가면 HTML 이 p 를 닫아 버려 틀이 깨져요(깡통에서도 같아요).
+ * 글 칸 i 가 든 글 줄(p — 지문 · 대사 줄)의 글을 통째로 눌러야 보이는 글로(테마 블록 숨김 꼴).
+ *   11-12(테마 1.1.3 c3528bad7 과 같은 고침): 예전에는 <p> 를 통째로 <details> 안에 넣어서 틀의 「.gk-lg>p…」 · 「:first-child」 같은 자리 규칙이 숨긴 줄에 안 먹었어요
+ *   (k1372 인스타 피드 첫 줄 사진 글 · k1437 들여쓰기). 이제 줄 자리는 그대로 두고 그 안 글만 <details> 로 감싸요 — <p> 안에는 <details> 를 둘 수 없으니
+ *   그 <p> 를 <div class="… blsp-p"> 로 바꾸고 틀 <style> 의 문단(p) 규칙마다 같은 선언의 .blsp-p 짝 선택자를 더해요(테마 unparagraphHtml · paragraphTwin 사본).
+ *   짝은 한 번만 붙어요 — 그래서 마트는 숨기기를 복사 글 길 맨 끝(toneOut 의 움직임 · 도구 · 질감 뒤)에 걸어요(applyTune 의 nospoil).
  *   제목 · 화자 이름 칸(p 가 아닌 칸 · 이름표)은 안 숨겨요. 못 찾으면 그대로.
  */
 export function applySpoilers(html, list) {
@@ -198,18 +201,18 @@ export function applySpoilers(html, list) {
     for (const sp of list) {
         const cell = cells[sp.i]; if (!cell || !['gk-nr', 'gk-d'].includes(cell.cls)) continue;
         const open = text.lastIndexOf('<p', cell.start); if (open < 0) continue;
-        const close = text.indexOf('</p>', cell.end); if (close < 0) continue;
-        const end = close + 4;
-        if (!spans.some(x => x.start === open)) spans.push({ start: open, end });
+        const inner = text.indexOf('>', open) + 1, close = text.indexOf('</p>', cell.end); if (!inner || close < 0) continue;
+        if (!spans.some(x => x.start === inner)) spans.push({ start: inner, end: close });
     }
     if (!spans.length) return text;
     spans.sort((x, y) => y.start - x.start);
     for (const x of spans) text = text.slice(0, x.start) + spoilerOf(text.slice(x.start, x.end)) + text.slice(x.end);
     if (!text.includes('.blsp-s>summary{')) { const at = text.indexOf('\n</style>'); if (at >= 0) text = `${text.slice(0, at)}\n${SPOILER_RULES}${text.slice(at)}`; }
-    return text;
+    return unparagraphHtml(text);
 }
 export { SPOILER_LABEL };
-export function applyTune(html, tune, { mine = false } = {}) {
+export const spoilersOf = (tune, { mine = false } = {}) => { const t = cleanTune(tune); return (t && (mine ? t.mineSpoilers : t.spoilers)) || null; };
+export function applyTune(html, tune, { mine = false, nospoil = false } = {}) {
     const t = cleanTune(tune);
     let text = String(html ?? '');
     if (!t) return text;
@@ -217,7 +220,8 @@ export function applyTune(html, tune, { mine = false } = {}) {
     if (t.vals) text = applyVals(text, t.vals);
     const rules = [...inkRules(text, t.inks), ...showRules(text, t)];
     if (rules.length) { const at = text.indexOf('\n</style>'); if (at >= 0) text = `${text.slice(0, at)}\n${rules.join('\n')}${text.slice(at)}`; }
-    return applySpoilers(applyTexts(text, mine ? t.mineTexts : t.texts), mine ? t.mineSpoilers : t.spoilers);
+    const texted = applyTexts(text, mine ? t.mineTexts : t.texts);
+    return nospoil ? texted : applySpoilers(texted, mine ? t.mineSpoilers : t.spoilers);
 }
 
 // ── 「내 글꾸」: 틀 + 깡통 · 깡캐 · 낮밤 + 조절 값을 이름 붙여 기억 ──

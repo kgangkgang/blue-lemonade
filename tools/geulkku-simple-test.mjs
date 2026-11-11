@@ -973,14 +973,15 @@ await test('도구 — 이름 숨김 · 단어 바꾸기(테마 transformLog 사
     assert.deepEqual(wd.cleanWords({ names: [' a ', 'a', ''], rules: [{ from: '', to: 'x' }, { from: 'b', to: '' }], mask: 'nope', word: '' }), { hide: false, names: ['a'], off: [], mask: 'auto', word: '○○', rules: [{ from: 'b', to: '' }] });
 });
 
-await test('숨기기(스포일러 · 테마 블록 숨김 꼴): 지문 · 대사 줄(p)을 통째로 눌러야 보이는 글로 · p 안에 details 를 안 넣어요(HTML 이 p 를 닫아요) · 28틀 · 꾸밈 규칙은 틀 <style> 한 곳 · 알약 무테 · fill 짝 · 복사 글 <style> 하나 · 정적 검사 · 제목 · 이름은 안 숨김 · 견본 글과 내 글 따로', () => {
+await test('숨기기(스포일러 · 테마 블록 숨김 꼴): 지문 · 대사 줄의 글을 통째로 눌러야 보이는 글로 · 그 줄 p 는 div.blsp-p(p 안에 details 를 안 넣어요 — HTML 이 p 를 닫아요) · 28틀 · 꾸밈 규칙은 틀 <style> 한 곳 · 알약 무테 · fill 짝 · 복사 글 <style> 하나 · 정적 검사 · 제목 · 이름은 안 숨김 · 견본 글과 내 글 따로', () => {
     for (const row of six.items) {
         const p = sfx[row.id].preview, eds = tu.editables(p), nr = eds.find(e => e.cls === 'gk-nr'), dl = eds.find(e => e.cls === 'gk-d'), tt = eds.find(e => e.cls === 'gk-tt'), nm = eds.find(e => e.cls === 'gk-nm');
         const out = tu.applyTune(p, { spoilers: [nr, dl, tt, nm].filter(Boolean).map(e => ({ i: e.i })) });
         assert.equal((out.match(/data-bl-spoiler=""/g) || []).length, 2, row.id);
         assert.equal((out.match(/\.blsp-s>summary\{/g) || []).length, 1, `${row.id} 꾸밈 규칙 한 번`);
         assert.doesNotMatch(out, /<p\b[^>]*>(?:(?!<\/p>)[\s\S])*<details/, `${row.id} p 안에 details 없음`);
-        assert.match(out, /<details class="blsp-s blsp-k" data-bl-spoiler=""[^>]*><summary[^>]*><span class="blsp-l"[^>]*>[^<]+<\/span><div class="blsp-b"[^>]*><p class="gk-nr">/, `${row.id} 지문 줄 통째로`);
+        // 11-12(테마 c3528bad7 꼴): 줄 자리는 그대로 · 그 줄 글만 숨김 — p 는 div.blsp-p(원래 class 그대로)로 바뀌고 틀의 p 규칙에 짝 선택자
+        assert.match(out, /<div class="gk-nr blsp-p"><details class="blsp-s blsp-k" data-bl-spoiler=""[^>]*><summary[^>]*><span class="blsp-l"[^>]*>[^<]+<\/span><div class="blsp-b"/, `${row.id} 지문 줄 자리 그대로 · 글만 숨김`);
         assert.match(out, /class="blsp-l" style="[^"]*border:1px solid transparent;[^"]*color:#8b8e96;-webkit-text-fill-color:#8b8e96;/, `${row.id} 무테 · fill`);
         const ready = sf.simpleReady(shutPeek(out));
         assert.equal((ready.match(/<style>/g) || []).length, 1, row.id); assert.ok(tg.readyReport(ready).ok, row.id);
@@ -1341,6 +1342,32 @@ await test('움직임 끔(세기 모듈 gm-0 · gp-0): 칩 넷 · 끔이면 뿌�
     }
     assert.ok(off > 300, '끔 되는 틀 ' + off);
 });
+// 11-12 테마 1.1.3 c3528bad7(기본 글꾸 새 틀 숨긴 글이 <p> 안 <details> 라 붙인 글에서 문단이 쪼개지고 글자색을 잃던 것)과 같은 결함 확인 — 410틀 × 낮밤
+await test('숨긴 줄 410틀: 지문 · 대사 첫 줄을 숨겨도 복사 글에 <p> 안 <details> 0 · 숨긴 줄은 div.blsp-p · 틀 <style> 의 p 규칙마다 .blsp-p 짝(선언 그대로) · <style> 하나 · 정적 검사 · 숨길 것이 없으면 한 글자도 안 달라요 · 글만 복사에 숨긴 줄 한 번', () => {
+    const P_SEL = /(^|[\s>+~(,])p(?=$|[\s>+~.:#[),])/, P_ALL = new RegExp(P_SEL.source, 'g');
+    let n = 0;
+    for (const [id, it] of Object.entries(allItems)) for (const mode of ['light', 'dark']) {
+        const base = sf.toneSimple(it.preview, sf.ORIGINAL, { mode }), ed = tu.editables(base), tag = `${id} ${mode}`;
+        assert.equal(tu.applySpoilers(base, []), base, tag);
+        const lines = [ed.find(e => e.cls === 'gk-nr'), ed.find(e => e.cls === 'gk-d')].filter(Boolean);
+        if (!lines.length) continue;
+        const out = tu.applySpoilers(base, lines.map(e => ({ i: e.i }))), ready = sf.simpleReady(shutPeek(out));
+        assert.doesNotMatch(ready, /<p\b[^>]*>(?:(?!<\/p>)[\s\S])*<details/, `${tag} p 안 details`);
+        assert.match(ready, /<div class="[^"]*\bblsp-p\b[^"]*"><details class="blsp-s/, `${tag} div.blsp-p`);
+        assert.equal((ready.match(/<style>/g) || []).length, 1, tag);
+        const css = styleOf(out);
+        for (const r of styleOf(base).match(/[^{}]+\{/g) || []) {
+            const sel = r.slice(0, -1).trim(); if (sel.startsWith('@') || !P_SEL.test(sel)) continue;
+            const twin = sel.split(',').map(x => x.trim()).filter(x => P_SEL.test(x)).map(x => x.replace(P_ALL, (m, b) => `${b}.blsp-p`)).join(',');
+            assert.ok(css.includes(`,${twin}{`), `${tag} 짝 ${sel.slice(0, 60)}`);
+        }
+        assert.ok(tg.readyReport(ready).ok, `${tag} 정적 검사`);
+        const md = mt.frameMarkdown(ready), first = tu.editables(base).find(e => e.cls === 'gk-nr');
+        if (first) { const w = first.text.replace(/<[^>]+>/g, '').trim().slice(0, 6); if (w && !/[&*~]/.test(w)) assert.equal(md.split(w).length >= 2, true, `${tag} 글만 복사에 숨긴 줄`); }
+        n++;
+    }
+    assert.ok(n > 800, '잰 판 ' + n);
+});
 await test('능력표 G4(11-12 · tools/geulkku-caps.mjs → caps.json): 410틀 모두 한 줄 · 정적 칸이 지금 틀과 같음(띠는 화면에서 그림 띠로 내릴 수만) · 범위 칸 꼴 · 표에 없는 틀은 정적 검사', async () => {
     const cp = await import(pathToFileURL(path.join(MART, 'caps.js')).href + '?v=20261112a');
     const caps = JSON.parse(fs.readFileSync(path.join(DIR, 'caps.json'), 'utf8'));
@@ -1358,7 +1385,7 @@ await test('능력표 G4(11-12 · tools/geulkku-caps.mjs → caps.json): 410틀 
         assert.equal(row.motion.speed, !!st.motion.speed, k + ' 빠르기');
     }
     const cnt = f => Object.values(caps.frames).filter(f).length;
-    assert.ok(cnt(x => x.band === 'color') > 350 && cnt(x => x.pad) > 390 && cnt(x => x.hideProp) > 300, '되는 틀 수');
+    assert.ok(cnt(x => x.band === 'color') > 350 && cnt(x => x.pad) > 360 && cnt(x => x.hideProp) > 300, '되는 틀 수');   // 11-12 다시 뽑기: 소품 자리 (나) 뒤 여백 범위를 못 받는 틀이 늘어 404 → 369
     cp.setCapsTable(caps.frames);
     assert.equal(cp.capsOf({ simple: true, preview: allItems['simple-k1079'].preview }), caps.frames.k1079);
     assert.equal(cp.capsOf({ simple: true, own: true, preview: allItems['simple-k1079'].preview }).unmeasured, true, '내 글꾸는 정적');

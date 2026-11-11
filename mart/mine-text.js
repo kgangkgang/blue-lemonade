@@ -175,11 +175,24 @@ const mdInline = h => decodeHtml(String(h ?? '')
     .replace(/<s>([\s\S]*?)<\/s>/g, '~~$1~~')
     .replace(/<span class="blsp-l"[\s\S]*?<\/span>/g, '')
     .replace(/<[^>]+>/g, '')).replace(/[ \t]+\n/g, '\n').trim();
+/** 11-12 숨긴 글이 든 문단은 <div class="… blsp-p">(테마 unparagraphHtml 꼴) — 글만 읽을 때는 그 div 를 짝 맞는 닫는 태그까지 <p> 로 되돌려요(안 div 는 태그만 빠져요) */
+function unDivPara(html) {
+    let text = html, guard = 0;
+    for (let m; (m = /<div\b([^>]*\sclass="[^"]*\bblsp-p\b[^"]*"[^>]*)>/.exec(text)) && guard++ < 200;) {
+        const re = /<(\/?)div\b[^>]*>/g; re.lastIndex = m.index + m[0].length;
+        let depth = 1, end = -1;
+        for (let t; (t = re.exec(text));) { depth += t[1] ? -1 : 1; if (!depth) { end = t.index; break; } }
+        if (end < 0) break;
+        text = `${text.slice(0, m.index)}<p${m[1].replace(/\s*\bblsp-p\b/, '')}>${text.slice(m.index + m[0].length, end).replace(/<\/?div\b[^>]*>/g, '')}</p>${text.slice(end + 6)}`;
+    }
+    return text;
+}
 /** 다 그린 틀 HTML → 글만(마크다운). 숨긴 줄의 흐린 사본 · 소품 · 소리 카드는 빼요 */
 export function frameMarkdown(html) {
     let text = String(html ?? '');
     const at = text.indexOf('</style>'); if (at >= 0) text = text.slice(at + 8);
     text = text.replace(/<!--[\s\S]*?-->/g, '').replace(/<div class="blsp-b"[\s\S]*?<\/div><\/summary>/g, '</summary>');
+    text = unDivPara(text);
     const out = [];
     // 제목은 틀마다 div · span · p 로 달라요 — 처음 하나만 따로 찾아요(div 를 아래 줄 찾기에 넣으면 글줄을 삼켜요)
     const tm = text.match(/<(div|span|p|h[1-6])\b[^>]*class="(?:[^"]*\s)?gk-tt(?:\s[^"]*)?"[^>]*>((?:(?!<\/\1>)[\s\S])*)<\/\1>/);

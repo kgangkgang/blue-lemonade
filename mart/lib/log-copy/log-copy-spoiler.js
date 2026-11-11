@@ -1,4 +1,4 @@
-// 원본 omni-next 953c439a 의 src/log-copy-spoiler.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」가 테마 로그 복사와 같은 모양으로 그리려고 써요)
+// 원본 omni-next codex/rel113b c3528bad7 의 src/log-copy-spoiler.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 숨기기가 테마 로그 복사와 같은 모양으로 그리려고 써요 · 11-12 숨긴 글 문단 div.blsp-p 고침까지)
 // 로그 복사 — 숨긴 글(눌러야 보이는 글)과 미리보기 → 마크다운 (시트의 미리보기 iframe 문서에서 돌아요 · 시작 그래프 밖)
 // 숨긴 글은 스크립트 없이 손 · 마우스로 동작하는 <details><summary> 예요. 문장 일부는 글줄 안(inline), 문단 여러 개는 블록.
 // 꾸밈 블록(<style>, 클래스 blsp-*)이 살아 있으면: 접힌 동안 그 글을 흐리게 보여 주고 누르면 드러나요.
@@ -16,6 +16,72 @@ const STYLE = '.blsp-s>summary{list-style:none}'
     + '.blsp-s[open]>summary{display:none!important}';
 /** 꾸밈 블록 글 (복사 결과 맨 앞에 하나) */
 export const spoilerStyle = () => `<style>${STYLE}</style>`;
+
+/** 1.1.3 숨긴 글이 든 문단의 표시 — <p> 안에는 <details> 를 둘 수 없어요(HTML 글자로 옮기면 브라우저가 <details> 앞에서 <p> 를 닫아 문단이 쪼개지고,
+ *  숨긴 글 · 뒤 글자가 문단 밖으로 나가 틀의 글자색 · 글꼴을 잃어요 — 밤 틀을 밝은 게시판에 붙이면 검은 글자가 어두운 칸 위에 놓여 안 보였어요).
+ *  그래서 숨긴 글이 든 <p> 는 <div class="… blsp-p"> 로 바꾸고, 틀 <style> 의 문단(p) 규칙마다 같은 선언의 .blsp-p 짝을 붙여요(paragraphTwin).
+ *  문단이 <p> 인 틀은 1.1.3 기본 글꾸 새 틀(과 꺼 둔 심플 새 틀)뿐이에요 — 그 밖의 틀은 문단이 div 라 그대로예요. */
+export const PARA_CLASS = 'blsp-p';
+const P_TYPE = /(^|[\s>+~(,])p(?=$|[\s>+~.:#[),])/;   // 선택자 안의 p 태그(앞: 처음 · 빈칸 · 결합자 · 괄호 / 뒤: 끝 · 빈칸 · 결합자 · class · 가상 · 속성)
+const P_TYPE_ALL = new RegExp(P_TYPE.source, 'g');
+/** 선택자 목록을 맨 바깥 쉼표로 나눠요(:is( ) · :not( ) 안의 쉼표는 그대로) */
+function splitSelectors(list) {
+    const out = [];
+    let depth = 0, start = 0;
+    for (let i = 0; i < list.length; i++) {
+        const ch = list[i];
+        if (ch === '(' || ch === '[') depth++;
+        else if (ch === ')' || ch === ']') depth = Math.max(0, depth - 1);
+        else if (ch === ',' && depth === 0) { out.push(list.slice(start, i)); start = i + 1; }
+    }
+    out.push(list.slice(start));
+    return out;
+}
+/**
+ * 틀 <style> 글의 문단(p 태그) 규칙마다 .blsp-p 짝 선택자를 더해요 — 선언은 그대로, 그 규칙의 선택자 목록 끝에 붙여요(규칙 수 · 차례 그대로).
+ * p 태그 선택자가 없거나 이미 짝이 있으면 그대로 돌려줘요(두 번 걸어도 같아요). 순수 함수.
+ */
+export function paragraphTwin(css) {
+    const text = String(css ?? '');
+    if (text.includes(`.${PARA_CLASS}`)) return text;
+    return text.replace(/([^{}]+)\{/g, (all, prelude) => {
+        if (prelude.trim().startsWith('@') || !P_TYPE.test(prelude.trim())) return all;
+        const lead = prelude.match(/^\s*/)[0], body = prelude.slice(lead.length).replace(/\s+$/, '');
+        const twins = splitSelectors(body).map(s => s.trim()).filter(s => P_TYPE.test(s)).map(s => s.replace(P_TYPE_ALL, (m, before) => `${before}.${PARA_CLASS}`));
+        return twins.length ? `${lead}${body},${twins.join(',')}{` : all;
+    });
+}
+/** HTML 글자(틀이 그린 글)에서: 숨긴 글이 든 <p …> … </p> 를 <div class="… blsp-p"> 로 — 바꾼 것이 있으면 맨 앞 <style> 에 짝 규칙도. 순수 함수 */
+export function unparagraphHtml(html) {
+    const text = String(html ?? '');
+    if (!text.includes('data-bl-spoiler')) return text;
+    let changed = false;
+    const out = text.replace(/<p\b([^>]*)>((?:(?!<\/?p\b)[\s\S])*?)<\/p>/g, (all, attrs, inner) => {
+        if (!inner.includes('data-bl-spoiler')) return all;
+        changed = true;
+        const cls = attrs.match(/\sclass="([^"]*)"/);
+        const next = cls ? attrs.replace(cls[0], ` class="${`${cls[1]} ${PARA_CLASS}`.trim()}"`) : ` class="${PARA_CLASS}"${attrs}`;
+        return `<div${next}>${inner}</div>`;
+    });
+    return changed ? out.replace(/(<style>)([\s\S]*?)(<\/style>)/, (all, open, css, close) => open + paragraphTwin(css) + close) : text;
+}
+/** 미리보기 문서에서: 막 넣은 숨긴 글(details)이 <p> 안이면 그 <p> 를 div.blsp-p 로 바꾸고(속성 · 자식 그대로) 틀 <style> 에 짝 규칙을 더해요 */
+function unparagraph(doc, details) {
+    let swapped = false;
+    for (let p = details.parentElement?.closest('p'); p; p = details.parentElement?.closest('p')) {
+        const div = doc.createElement('div');
+        for (const a of [...p.attributes]) div.setAttribute(a.name, a.value);
+        div.classList.add(PARA_CLASS);
+        div.append(...p.childNodes);
+        p.replaceWith(div);
+        swapped = true;
+    }
+    if (!swapped) return;
+    for (const style of doc.body.querySelectorAll('style:not([data-bl-sp])')) {
+        const next = paragraphTwin(style.textContent);
+        if (next !== style.textContent) style.textContent = next;
+    }
+}
 
 const blockOf = (doc, node) => {
     for (let el = node?.nodeType === 1 ? node : node?.parentElement; el && el !== doc.body; el = el.parentElement) {
@@ -63,6 +129,7 @@ export function wrapSpoiler(doc, range, c, ui) {
     content.append(frag);
     details.append(summary, content);
     range.insertNode(details);
+    unparagraph(doc, details);   // 1.1.3 기본 글꾸 새 틀은 문단이 <p> — 그 안의 <details> 는 복사 글에서 문단을 쪼개요
     ensureStyle(doc);
     return details;
 }

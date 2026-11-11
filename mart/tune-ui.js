@@ -662,7 +662,7 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
         if (!editing || !sheet.open) return;
         const s = getSelection(), n = s?.anchorNode, ed = (n?.nodeType === 1 ? n : n?.parentElement)?.closest?.('.mart-sheet-preview [data-bl-ed]');
         if (!ed) return;
-        const spEl = ed.closest('[data-bl-spoiler]');
+        const spEl = ed.closest('[data-bl-spoiler]') || ed.querySelector(':scope > [data-bl-spoiler]');   // 11-12 지문 줄은 칸(div.blsp-p) 안에 숨긴 글이 있어요
         const text = s.rangeCount && ed.contains(s.getRangeAt(0).endContainer) ? s.toString().replace(/\s+/g, ' ').trim().slice(0, 200) : '';
         lastSel = { i: Number(ed.dataset.blEd), text, spoiler: !!spEl };
     });

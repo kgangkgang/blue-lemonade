@@ -8,7 +8,7 @@
 import { toneHtml, toneMixHtml, speakerColor, PAPER_COLORS, TEXTURES } from './tone-geulkku.js?v=20261110v';
 import { toneSimple, ORIGINAL } from './simple-frames.js?v=20261112a';
 import { applyLook, lookRev, lookNow } from './look.js?v=20261112a';   // 11-11 글 모양(테마 「글자」 탭 축소판 — 글꼴 · 크기 · 자간 · 그림자 …) — 값이 없으면 그대로
-import { tuneOf, tuneRev, applyTune } from './tune.js?v=20261112a';
+import { tuneOf, tuneRev, applyTune, applySpoilers, spoilersOf } from './tune.js?v=20261112a';
 import { applyWords, wordsRev } from './words.js?v=20261112a';
 import { applyMotion, motionRev } from './motion-state.js?v=20261112a';
 import { applyTex, texRev } from './texture.js?v=20261112a';   // 11-12 바탕 질감 — 맨 마지막   // 11-12 움직임 세기(글 · 소품) — 중이면 그대로   // 11-11 「도구」 — 이름 숨김 · 단어 바꾸기(모든 틀 · 글자만)
@@ -129,7 +129,7 @@ export const toned = item => item?.kind === 'geulkku' && (item.simple ? true : t
 /** 다 그린 글꾸 HTML 을 고른 대사색으로(꺼져 있으면 그대로) */
 export const toneOut = (item, html) => {
     if (!html || !toned(item)) return html;
-    if (item.simple) { const t = tuneOf(item.id), sp = shapeFor(item), out = applyShape(toneSimple(applyMine(html), toneState.on ? toneState.k : ORIGINAL, { mode: toneState.mode, other: toneState.k2, third: toneState.k3, prop: t?.prop, own: ownOf(t) }), sp.value, t?.inks?.[toneState.mode], sp.gate); const shaped = applyLook(out, lookFor(sp.caps)), tuned = applyMotion(t ? applyTune(shaped, t, { mine: mineOn() }) : shaped); return applyTex(applyWords(tuned, { auto: mineOn() ? mineInfo()?.names || [] : ['깡통', '깡캐'], mode: toneState.mode })); }   // 종이 색 · 질감은 심플 새 틀에 안 걸어요(이식-설계 1-3 「처음엔 종이 고르기에서 빼요」)
+    if (item.simple) { const t = tuneOf(item.id), sp = shapeFor(item), out = applyShape(toneSimple(applyMine(html), toneState.on ? toneState.k : ORIGINAL, { mode: toneState.mode, other: toneState.k2, third: toneState.k3, prop: t?.prop, own: ownOf(t) }), sp.value, t?.inks?.[toneState.mode], sp.gate); const shaped = applyLook(out, lookFor(sp.caps)), tuned = applyMotion(t ? applyTune(shaped, t, { mine: mineOn(), nospoil: true }) : shaped); const done = applyTex(applyWords(tuned, { auto: mineOn() ? mineInfo()?.names || [] : ['깡통', '깡캐'], mode: toneState.mode })); return t ? applySpoilers(done, spoilersOf(t, { mine: mineOn() })) : done; }   // 11-12 숨기기는 맨 끝 — 문단 짝 선택자(.blsp-p)가 앞서 붙은 움직임 · 질감 규칙까지 받게   // 종이 색 · 질감은 심플 새 틀에 안 걸어요(이식-설계 1-3 「처음엔 종이 고르기에서 빼요」)
     const roles = item.colors || item.palette || null, opt = { mode: toneState.mode, paper: toneState.paper, texture: toneState.texture };
     const ks = toneState.mix ? toneState.picks.map(x => x.color) : [];
     return ks.length >= 2 ? toneMixHtml(html, roles, ks, opt) : toneHtml(html, roles, toneState.k, opt);
