@@ -2,7 +2,7 @@
 // PC 는 단추 아래 작은 메뉴, 폰(640 이하)은 아래에서 올라오는 시트. 바깥 누르기 · Esc · 고르기로 닫혀요.
 (() => {
     // 마트 자료 항목 수(mart/data/frames.json · geulkku/index.json) — 홈이 큰 자료를 받지 않게 여기 적어 두고, 마트 검사(martux.mjs)가 자료와 같은지 확인해요
-    const COUNTS = { frames: 1448, geulkku: 389 };   // 11-11 글꾸 = 심플 새 틀 수(data/geulkku/index.json count · 옛 글꾸는 뺐어요)
+    const COUNTS = { frames: 1448, geulkku: 407 };   // 11-11 글꾸 = 심플 새 틀 수(data/geulkku/index.json count · 옛 글꾸는 뺐어요)
     const btn = document.querySelector('.top-mart');
     if (!btn) return;
     const base = btn.dataset.martBase || 'mart/';

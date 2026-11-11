@@ -1,5 +1,149 @@
 [
  {
+  "frame": "k1429",
+  "name": "기본 글꾸 · 카드",
+  "emoji": "🗒️",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「카드」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1430",
+  "name": "기본 글꾸 · 탭",
+  "emoji": "🗂️",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「탭」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1431",
+  "name": "기본 글꾸 · 창",
+  "emoji": "🪟",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「창」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1433",
+  "name": "기본 글꾸 · 미니",
+  "emoji": "🔖",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「미니」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1434",
+  "name": "기본 글꾸 · 레몬",
+  "emoji": "🍋",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「레몬」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1435",
+  "name": "기본 글꾸 · 메신저",
+  "emoji": "💬",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「메신저」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1436",
+  "name": "기본 글꾸 · 알림",
+  "emoji": "🔔",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「알림」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1437",
+  "name": "기본 글꾸 · 대본",
+  "emoji": "🎬",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「대본」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1438",
+  "name": "기본 글꾸 · 기록",
+  "emoji": "🕰️",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「기록」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1439",
+  "name": "기본 글꾸 · 노트",
+  "emoji": "📓",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「노트」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1440",
+  "name": "기본 글꾸 · 편지",
+  "emoji": "✉️",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「편지」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1441",
+  "name": "기본 글꾸 · 일기",
+  "emoji": "📔",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「일기」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1442",
+  "name": "기본 글꾸 · 기사",
+  "emoji": "📰",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「기사」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1443",
+  "name": "기본 글꾸 · 책",
+  "emoji": "📖",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「책」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1444",
+  "name": "기본 글꾸 · 가로 넘김",
+  "emoji": "🎞️",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「가로 넘김」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1445",
+  "name": "기본 글꾸 · 가로 폴라로이드",
+  "emoji": "📸",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「가로 폴라로이드」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1446",
+  "name": "기본 글꾸 · 격자",
+  "emoji": "🧩",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「격자」 새 판 — 누르면 바뀌어요"
+ },
+ {
+  "frame": "k1447",
+  "name": "기본 글꾸 · 격자 폴라로이드",
+  "emoji": "🖼️",
+  "open": false,
+  "peek": false,
+  "desc": "블루레몬 로그 복사 기본 틀 「격자 폴라로이드」 새 판 — 누르면 바뀌어요"
+ },
+ {
   "frame": "k1001",
   "name": "서미란 · 길고양이 급식 기록장",
   "emoji": "🐈",
