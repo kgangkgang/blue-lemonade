@@ -26,7 +26,7 @@ export function saveArt(href, name) {
 async function artOf(entry) {
     if (entry.kind === 'frame' && entry.art) return { href: asset(entry.art), name: artName([entry.name], 'webp') };   // 이름이 「콘셉트 · 디자인 · 세로」라 상세 창 이름과 같아져요
     if (entry.kind === 'frame-preset' && entry.receipt) {
-        drawPreset ||= (await import('./frame-presets.js')).drawPreset;
+        drawPreset ||= (await import('./frame-presets.js?v=20261112b')).drawPreset;
         const r = entry.receipt;
         return { href: drawPreset(r.presetId, { ...r }).art, name: artName(['심플', entry.name], 'png') };
     }
@@ -96,7 +96,7 @@ function syncBadge() {
 async function thumb(entry) {
     if (entry.kind === 'frame') return `<span class="mart-cart-thumb is-frame"><img alt="" src="${esc(asset(entry.thumb))}"></span>`;
     if (entry.kind === 'frame-preset') {
-        try { drawPreset ||= (await import('./frame-presets.js')).drawPreset; const r = entry.receipt; const out = drawPreset(r.presetId, { ...r }); return `<span class="mart-cart-thumb is-frame"><img alt="" src="${out.art}"></span>`; } catch { return '<span class="mart-cart-thumb">🖼️</span>'; }
+        try { drawPreset ||= (await import('./frame-presets.js?v=20261112b')).drawPreset; const r = entry.receipt; const out = drawPreset(r.presetId, { ...r }); return `<span class="mart-cart-thumb is-frame"><img alt="" src="${out.art}"></span>`; } catch { return '<span class="mart-cart-thumb">🖼️</span>'; }
     }
     // 글꾸: 그 틀 바탕색 위에 틀의 우리 아이콘(없으면 이모지)
     return `<span class="mart-cart-thumb"${entry.bg ? ` style="background:${esc(entry.bg)}"` : ''}>${entry.icon ? `<img class="mart-ico" alt="" src="${esc(asset(entry.icon))}">` : `<span class="em">${lemonize(esc(entry.emoji || '📝'))}</span>`}</span>`;

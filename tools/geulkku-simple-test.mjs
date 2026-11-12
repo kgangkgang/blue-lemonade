@@ -405,12 +405,65 @@ await test('옛 글꾸 없음 · 화면: 「옛날 버전」 단추 · 돌아가
     assert.ok(!page.includes('mart-mylog'), '「내 로그로 보기」 단추 없음');
     assert.ok(!/447|1512|1483/.test(page.replace(/\?v=\d+\w*/g, '')) && !/글꾸 1483종|1512/.test(home), '옛 숫자 없음');
     const top = fs.readFileSync(path.join(MART, 'top-mart.js'), 'utf8');
-    assert.match(top, new RegExp(`const COUNTS = \\{ frames: 1448, geulkku: ${sixAll.count} \\};`));
+    assert.match(top, new RegExp(`const COUNTS = \\{ frames: 1458, geulkku: ${sixAll.count} \\};`));   // 11-12 심플 액자 20 → 30(그림 액자 1428 그대로)
     assert.ok(!top.includes('geulkkuAll'));
     assert.match(home, new RegExp(`<b>글꾸 마트</b><p>새 글꾸 틀 ${sixAll.count}종`));
     assert.match(page, new RegExp(`<p class="mart-lede">새 글꾸 틀 ${sixAll.count}개예요\\.`));
-    // 다른 마트(액자) 목록 · 숫자는 그대로
-    assert.equal(fs.readFileSync(path.join(MART, 'data/frames.json'), 'utf8'), git('show', `${BASE}:mart/data/frames.json`).toString());
+    // 다른 마트(액자) 목록은 그대로 — 11-12 심플 액자만 테마 판 8(30종)로 바꿨어요(아래 「심플 액자 30」 시험)
+    const framesNow = JSON.parse(fs.readFileSync(path.join(MART, 'data/frames.json'), 'utf8')), framesBase = JSON.parse(git('show', `${BASE}:mart/data/frames.json`).toString());
+    const notSimple = d => ({ ...d, items: d.items.filter(x => x.kind !== 'frame-preset') });
+    assert.deepEqual(notSimple(framesNow), notSimple(framesBase));
+});
+// ── 11-12 액자 마트 심플 액자 30 — 테마(1.1.4 · 판 8)가 넣은 10종(gallery … calendar)까지 · frame-presets.js 는 테마 사본 그대로 · 항목은 테마 mart-build.mjs simpleFrames() 꼴 ──
+await test('심플 액자 30 ① 자료 frames.json = 테마 FRAME_PRESETS 30 · 기본 색 · 칩 글자 · 설명 · 그림 액자 1428 그대로', async () => {
+    const fp = await imp(path.join(MART, 'frame-presets.js'));
+    const data = JSON.parse(fs.readFileSync(path.join(MART, 'data/frames.json'), 'utf8'));
+    const simple = data.items.filter(x => x.kind === 'frame-preset');
+    assert.equal(data.items.length, 1458); assert.equal(data.items.length - simple.length, 1428);
+    assert.equal(fp.FRAME_PRESET_VERSION, 8);
+    assert.deepEqual(simple.map(x => x.presetId), fp.FRAME_PRESETS.map(([id]) => id));
+    for (const id of ['gallery', 'corners', 'peg', 'phone', 'petal', 'comic', 'airmail', 'tarot', 'vinyl', 'calendar']) assert.ok(simple.some(x => x.presetId === id), id);
+    for (const [i, [id, name, group]] of fp.FRAME_PRESETS.entries()) {
+        const x = simple[i], [color, accent] = fp.presetColors(id);
+        assert.equal(group, 'simple');
+        const want = { kind: 'frame-preset', id: `simple-${id}`, name, desc: x.desc, category: 'simple', categoryLabel: '심플', presetId: id, presetColor: color, presetAccent: accent, frameWidth: 100, frameHeight: 100, ...(Object.hasOwn(fp.PRESET_LABELS, id) ? { presetLabel: fp.PRESET_LABELS[id] } : {}) };
+        assert.deepEqual(x, want, id);
+        assert.ok(x.desc && !/[<>]/.test(x.desc), `${id} 설명`);
+    }
+    assert.ok(data.categories.some(c => c.id === 'simple'));
+    // 테마 사본이 이 PC 에 있으면 파일 글자까지(mart-build.mjs 가 하는 것처럼 src/frame-presets.js 를 그대로 옮겨요)
+    const themeDir = process.env.GK_THEME_DIR || path.resolve(ROOT, '../builtin-out-review');
+    if (fs.existsSync(path.join(themeDir, 'src/frame-presets.js'))) assert.equal(fs.readFileSync(path.join(MART, 'frame-presets.js'), 'utf8'), fs.readFileSync(path.join(themeDir, 'src/frame-presets.js'), 'utf8'));
+    // 액자 마트 머리 · 홈 숫자
+    assert.match(fs.readFileSync(path.join(MART, 'frames/index.html'), 'utf8'), /심플 액자 30종은 테마에 이미/);
+    assert.match(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), /그림 액자 1428종과, 테마에 이미 들어 있는 심플 액자 30종/);
+    for (const f of ['mart/geulkku', 'mart/frames', 'mart/genie', 'mart/kara', '.']) assert.match(fs.readFileSync(path.join(ROOT, f, 'index.html'), 'utf8'), /top-mart\.js\?v=20261112b/, f);
+});
+await test('심플 액자 30 ② 가짜 캔버스로 30종 전부 기본값 · 색 · 50 % · 200 % 그려지고 사진 창을 채워요 · 모르는 id 는 던져요(테마 frame-presets-simple.mjs ② 와 같은 셈)', async () => {
+    const calls = [];
+    const fake = tag => new Proxy({}, { get: (_, key) => {
+        if (key === 'canvas') return { width: 1, height: 1 };
+        if (key === 'measureText') return s => ({ width: String(s).length * 7 });
+        if (key === 'createLinearGradient' || key === 'createRadialGradient') return () => ({ addColorStop() {} });
+        if (key === 'getImageData') return () => ({ data: new Uint8ClampedArray(4) });
+        return (...args) => { calls.push([tag, key, args]); };
+    }, set: () => true });
+    const had = Object.hasOwn(globalThis, 'document'), keep = globalThis.document;
+    let made = 0;
+    globalThis.document = { createElement(tag) { assert.equal(tag, 'canvas'); const id = made++ % 2 === 0 ? 'art' : 'mask'; return { width: 0, height: 0, getContext: () => fake(id), toDataURL: () => `data:image/png;base64,${id === 'art' ? 'QUFB' : 'QkJC'}` }; } };
+    try {
+        const { FRAME_PRESETS, FRAME_PRESET_VERSION, drawPreset } = await imp(path.join(MART, 'frame-presets.js'));
+        for (const [id] of FRAME_PRESETS) for (const options of [{}, { presetColor: '#111111', presetAccent: '#eeeeee', frameWidth: 50, frameHeight: 200 }, { frameWidth: 200, frameHeight: 50 }]) {
+            calls.length = 0;
+            const r = drawPreset(id, options);
+            assert.equal(r.presetId, id); assert.equal(r.presetVersion, FRAME_PRESET_VERSION);
+            assert.ok(calls.some(([t, k]) => t === 'mask' && k === 'fill'), `${id}: 사진 창`);
+            assert.ok(calls.some(([t, k]) => t === 'art' && /^(fill|stroke|fillRect|strokeRect|fillText)$/.test(k)), `${id}: 그림`);
+            assert.ok(calls.some(([t, k]) => t === 'art' && k === 'drawImage'), `${id}: 창 뚫기`);
+            assert.equal(r.frameWidth, options.frameWidth ?? 100); assert.equal(r.frameHeight, options.frameHeight ?? 100);
+        }
+        assert.throws(() => drawPreset('nope'), /알 수 없는 액자예요/);
+    } finally { if (had) globalThis.document = keep; else delete globalThis.document; }
 });
 
 // 지니: 글꾸 질문표를 글 그대로 꺼내 새 틀 28개에 돌려 봐요(genie.js 의 score · candidates 와 같은 셈)

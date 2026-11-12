@@ -1,4 +1,4 @@
-// 액자 마트 — 그림 액자 수백 종 + 심플 20종 · 「내 사진 넣어 보기」 · 거르기(분류 · 찾기 · 가로/세로 · 그림체) · 조금씩 그리기 · 크게 보기.
+// 액자 마트 — 그림 액자 수백 종 + 심플 30종 · 「내 사진 넣어 보기」 · 거르기(분류 · 찾기 · 가로/세로 · 그림체) · 조금씩 그리기 · 크게 보기.
 // 크게 보기의 조절 칸은 테마 장식 액자 설정과 같은 이름 · 범위 · 기본값(data/frames.json 의 decor — tools/mart-build.mjs 가 테마 src/decor.js · panel.js · frames.js 에서 옮겨 와요)이고,
 // 그리는 규칙도 테마 css/41-decor.css 와 같아요(액자 그림을 사진 위에 100% 100% · 사진은 마스크 + 사진창 clip-path(round 모서리) 안에서 object-fit · object-position · scale · 기울기 rotate · 그림자 SVG 필터).
 // 사진은 이 브라우저 안에서만 써요(object URL · 캔버스) — 서버로 보내지 않아요. 「이 기기에 기억」을 켜면 작게 줄여 localStorage 에만 둬요.
@@ -675,7 +675,7 @@ function wireStage(stage) {
 /** 목록 · 맞춤 값(테마와 같은 칸) · 심플 액자 그림 도구 받기 — 액자 마트(start)와 지니(kit)가 같이 써요 */
 async function load(a) {
     api = a;
-    try { ({ drawPreset } = await import('./frame-presets.js')); } catch { drawPreset = null; }
+    try { ({ drawPreset } = await import('./frame-presets.js?v=20261112b')); } catch { drawPreset = null; }
     const res = await fetch(new URL('./data/frames.json', import.meta.url), { cache: 'no-cache' });
     if (!res.ok) throw new Error(`목록 ${res.status}`);
     data = await res.json();

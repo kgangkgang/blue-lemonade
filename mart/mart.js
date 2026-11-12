@@ -252,7 +252,7 @@ wireHead();
 const GEULKKU_GROUPS = [{ id: 'series', label: '시리즈' }, { id: 'world', label: '세계관' }, { id: 'char', label: '인물' }, { id: 'concept', label: '컨셉' }, { id: 'halloween', label: '할로윈' }, { id: 'christmas', label: '크리스마스' }, { id: 'builtin', label: '내장' }, { id: 'etc', label: '기타' }];
 // 「내장」 묶음의 가짜 칩 — 기념일 · 사물 · 장르 분류에 섞인 테마 내장 심플 글꾸 30종을 한데 모아요(분류 id 가 아니라 항목의 builtin 으로 걸러요)
 const BUILTIN_MORE = 'builtin-more';
-/** 테마(1.0.1)에 이미 들어 있는 것 — 글꾸는 자료의 builtin(내장 심플 30 · 로그 복사 기본 틀 19 · tools/geulkku-builtin.mjs), 액자는 심플 액자(frame-preset) 20 전부(테마 src/frame-presets.js FRAME_PRESETS 와 같아요) */
+/** 테마(1.0.1)에 이미 들어 있는 것 — 글꾸는 자료의 builtin(내장 심플 30 · 로그 복사 기본 틀 19 · tools/geulkku-builtin.mjs), 액자는 심플 액자(frame-preset) 30 전부(1.1.4 부터 30 · 판 8)(테마 src/frame-presets.js FRAME_PRESETS 와 같아요) */
 const isBuiltin = item => !!(item?.builtin || item?.kind === 'frame-preset');
 const BUILTIN_TAG = '<span class="mart-tag tag is-builtin" title="블루레몬에이드 테마에 이미 들어 있어요 · 마트에서 가져오지 않아도 돼요">' + lemonHtml() + ' 테마 내장</span>';
 const ID_GROUP = { s: 'series', c: 'concept', concept: 'concept', world: 'world', char: 'char', halloween: 'halloween' };
@@ -1090,7 +1090,7 @@ function applyFilter() {
 export const hashId = (hash = location.hash) => { try { return decodeURIComponent(String(hash).slice(1)); } catch { return ''; } };
 async function main() {
     if (kind === 'frames') {
-        try { ({ drawPreset } = await import('./frame-presets.js')); } catch { drawPreset = null; }
+        try { ({ drawPreset } = await import('./frame-presets.js?v=20261112b')); } catch { drawPreset = null; }
     }
     // 글꾸: 가벼운 목록(index.json)만 — 미리보기 · 받기 칸은 조각(chunks)에서 나중에
     const res = await fetch(new URL(kind === 'geulkku' ? './data/geulkku/index.json' : `./data/${kind}.json`, import.meta.url), { cache: 'no-cache' });
