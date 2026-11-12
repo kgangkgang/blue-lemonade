@@ -1,0 +1,21 @@
+{
+  "_": "리그 fixture 'full' — 데이터가 찬 화면으로 찍기 위한 합성 자료. 이름은 전부 지어낸 것(아린 · 에이드 · 나이트 · Mina · Rex). 사용자 데이터 · 실제 채팅 문장은 넣지 않는다.",
+  "today": "auto",
+  "attendanceDays": 23,
+  "bestStreak": 31,
+  "letters": 6,
+  "messages": 12,
+  "receipts": 9,
+  "extras": ["편의점 직원", "카페 사장", "택시 기사", "사서", "경비원"],
+  "longList": 40,
+  "chats": [
+    { "character": "Arin", "name": "아린", "turns": 18, "title": "fixture-arin" },
+    { "character": "Arin", "name": "아린", "turns": 60, "title": "fixture-arin-long" }
+  ],
+  "characters": [
+    { "name": "아린", "avatar": "Arin.png" },
+    { "name": "에이드", "avatar": "Ade.png" },
+    { "name": "나이트", "avatar": "Night.png" }
+  ],
+  "world": { "name": "fixture-world", "entries": 30 }
+}

@@ -1,0 +1,88 @@
+name: UI gate (screen checks)
+# 화면 검사 — 검사용 분기(ui-gate/…)에 올라온 묶음(.ui-gate/)만 돌려요. main · 태그 · 게시에서는 안 돌고, 저장소에 아무것도 안 써요(contents: read).
+# 묶음은 출시 도구가 만들어 올려요. 결과는 아티팩트로 올리고, 판정(기준선 대비 새 실패)은 출시 도구가 받아서 해요.
+on:
+  push:
+    branches: ['ui-gate/**', 'codex/ui-gate-actions']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ui-gate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      st: ${{ steps.plan.outputs.st }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          sparse-checkout: .ui-gate/plan.json
+          sparse-checkout-cone-mode: false
+      - id: plan
+        name: Read the check plan
+        run: |
+          node -e '
+            const fs = require("fs");
+            const p = JSON.parse(fs.readFileSync(".ui-gate/plan.json", "utf8"));
+            const commit = String(p.st && p.st.commit || "");
+            if (!/^[0-9a-f]{40}$/.test(commit)) throw new Error("plan.json: st.commit must be a full commit sha");
+            const shards = (p.matrix && p.matrix.shard) || [];
+            if (!Array.isArray(shards) || !shards.length || shards.length > 20 || !shards.every(n => Number.isInteger(n) && n >= 0 && n < 20)) throw new Error("plan.json: bad shard list");
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, "matrix=" + JSON.stringify({ shard: shards }) + "\n" + "st=" + commit + "\n");
+          '
+  check:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      ST_COMMIT: ${{ needs.plan.outputs.st }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          path: theme
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Restore SillyTavern
+        id: st-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/st
+          key: st-${{ env.ST_COMMIT }}-node22-${{ runner.os }}-v1
+      - name: Install SillyTavern (pinned commit)
+        if: steps.st-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          git init -q "$RUNNER_TEMP/st"
+          cd "$RUNNER_TEMP/st"
+          git remote add origin https://github.com/SillyTavern/SillyTavern
+          git fetch -q --depth 1 origin "$ST_COMMIT"
+          git checkout -q FETCH_HEAD
+          npm ci --omit=dev --no-audit --no-fund
+      - name: Korean fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends fonts-noto-cjk >/dev/null
+      - name: Run checks (shard ${{ matrix.shard }})
+        run: >-
+          node theme/.ui-gate/bundle/work/automation/actions/runner/run-shard.mjs
+          --plan theme/.ui-gate/plan.json --shard ${{ matrix.shard }}
+          --st "$RUNNER_TEMP/st" --theme theme
+          --out "$RUNNER_TEMP/ui-gate-out" --work "$RUNNER_TEMP/ui-gate-work"
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-gate-shard-${{ matrix.shard }}
+          path: ${{ runner.temp }}/ui-gate-out
+          retention-days: 14
+          if-no-files-found: warn

@@ -1,0 +1,52 @@
+{
+ "version": 1,
+ "theme": {
+  "version": "1.1.3",
+  "sha": "85e71afac4f9011b15f55d74e8f8764cb237592b"
+ },
+ "st": {
+  "repo": "https://github.com/SillyTavern/SillyTavern",
+  "commit": "7e8663cd9c184a550b37238218bdd32c6efc68e9"
+ },
+ "node": "22",
+ "ids": [
+  "pills",
+  "pt-toolbar-gap"
+ ],
+ "matrix": {
+  "shard": [
+   0,
+   1
+  ]
+ },
+ "shards": [
+  {
+   "index": 0,
+   "ids": [
+    "pills"
+   ],
+   "sec": 59
+  },
+  {
+   "index": 1,
+   "ids": [
+    "pt-toolbar-gap"
+   ],
+   "sec": 48
+  }
+ ],
+ "checks": {
+  "pills": {
+   "script": "checks/rig/pills-scale.mjs",
+   "args": [],
+   "minutes": 10
+  },
+  "pt-toolbar-gap": {
+   "script": "checks/rig/pt-toolbar-gap.mjs",
+   "args": [],
+   "minutes": 10
+  }
+ },
+ "fixtureToday": "2026-10-24T03:00:00.000Z",
+ "files": 18
+}
