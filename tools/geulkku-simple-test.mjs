@@ -1712,7 +1712,7 @@ await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-u
     const files = ['mart.js', 'genie.js', 'geulkku/index.html', 'frames/index.html', 'genie/index.html'].map(f => [f, srcOf(f)]);
     for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room', 'genie']) {
         const tails = new Set(files.flatMap(([, s]) => [...s.matchAll(new RegExp(`[./]${mod}\\.js\\?v=(\\w+)`, 'g'))].map(m => m[1])));
-        assert.deepEqual([...tails], [['mart', 'genie'].includes(mod) ? '20261112c' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 만 c 로
+        assert.deepEqual([...tails], [['mart', 'genie', 'cart', 'tune-ui'].includes(mod) ? '20261112d' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
     }
 });
 await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬리가 다르면 브라우저가 같은 모듈을 두 벌 받아요 — char-tone · spoiler · bare · presets 가 그랬어요 · 꼬리 없는 쪽은 옛 캐시가 남아요)', () => {
@@ -1792,7 +1792,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
         assert.match(ui, /data-act="theme-file"\$\{no\}/);
         for (const [n, t] of [['mart.js', mart], ['genie.js', genie]]) assert.doesNotMatch(t, /테마로 받기는 준비 중/, n);
         assert.match(fs.readFileSync(path.join(MART, 'mart.css'), 'utf8'), /\.tag\.is-notake\{/);
-        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112b/, f);
+        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112d/, f);
     });
 }
 console.log(`\n${pass} 통과 · ${fail} 실패`);

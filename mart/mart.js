@@ -11,7 +11,7 @@ const LIKE_KEY = 'bl-mart-geulkku-like-v1';
 const like = (() => { let v = null; try { v = JSON.parse(localStorage.getItem(LIKE_KEY) || 'null'); } catch { /* 저장이 막힌 창 */ } const ids = a => (Array.isArray(a) ? [...new Set(a.filter(x => typeof x === 'string' && x && x.length < 80))] : []); return { fav: ids(v?.fav).slice(0, 96), recent: ids(v?.recent).slice(0, 5) }; })();
 const saveLike = () => { try { localStorage.setItem(LIKE_KEY, JSON.stringify(like)); } catch { /* 이 화면에서만 */ } };
 const LIKE_CHIPS = { fav: '★ 즐겨찾기', recent: '최근' };
-import { cart, say, onCheckout, artName, saveArt, layerHost } from './cart.js?v=20261112b';
+import { cart, say, onCheckout, artName, saveArt, layerHost } from './cart.js?v=20261112d';
 import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
@@ -27,7 +27,7 @@ import { motionNow } from './motion-state.js?v=20261112a';
 import { texNow } from './texture.js?v=20261112a';
 import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
 import { tuneOf } from './tune.js?v=20261112a';
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112b';
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112d';
 import { themeTakeable } from './theme-take.js?v=20261112c';   // 11-12 테마가 이 틀을 받는지(테마 받기 검사를 옮긴 것 · 목록 틀은 index.json nt · 내 글꾸는 여기서)
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
 import { sanitizeHtml, guessSlot, fromPath, slotPath } from './lib/log-copy/log-copy-sanitize.js';
