@@ -45,3 +45,27 @@
     addEventListener('resize', () => { if (!menu.hidden) { scrim.hidden = !phone.matches; place(); } });
     addEventListener('scroll', () => { if (!menu.hidden && !phone.matches) place(); }, { passive: true });
 })();
+
+// 11-12 밤 PC 가로 넘김 줄: 세로 휠만 돌려도 옆으로 넘겨요(사용자 「걍 스크롤 마우스 휠 돌리면 되는 걸로 해 줘 … 쉬프트 누르고 해야 함 PC」) — 홈 · 글꾸 마트 · 액자 마트 · 지니 공용.
+//   가로로 넘치는 줄(overflow-x auto · scroll — .mart-hscroll · 분류 칩 · 묶음 탭 · 거르기 줄 · 표본 사진 줄 · 홈 주제 탭 …) 위에서 세로 휠 → 그 줄을 옆으로.
+//   줄 끝에 닿았거나 넘칠 것이 없으면 막지 않아요(페이지 · 창이 그대로 내려가요 — 갇히지 않게). 트랙패드 가로 제스처 · Shift+휠 · Ctrl+휠(확대) · 폰 터치는 그대로.
+//   안 건드리는 것: 세로로도 넘기는 칸(그 칸의 세로 스크롤이 먼저) · 한 장씩 딱 멈추는 넘김(scroll-snap — 홈 큰 사진 띠: 페이지를 내리다 갇혀요) · 글꾸 틀 안(.gk — 복사 글 그대로).
+(() => {
+    const over = (el, axis) => { const o = getComputedStyle(el)[axis === 'x' ? 'overflowX' : 'overflowY']; return o === 'auto' || o === 'scroll'; };
+    document.addEventListener('wheel', (e) => {
+        if (e.defaultPrevented || e.ctrlKey || e.shiftKey || e.metaKey || e.altKey) return;
+        if (!e.deltaY || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+        const step = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaMode === 2 ? e.deltaY * innerWidth : e.deltaY;
+        for (let el = e.target instanceof Element ? e.target : e.target?.parentElement; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+            if (el.scrollHeight > el.clientHeight + 1 && over(el, 'y')) {   // 세로로 넘기는 칸: 그쪽으로 더 갈 수 있으면 그 칸 몫
+                if (step > 0 ? el.scrollTop + el.clientHeight < el.scrollHeight - 1 : el.scrollTop > 0) return;
+                continue;
+            }
+            if (el.scrollWidth <= el.clientWidth + 1 || !over(el, 'x')) continue;
+            if (el.closest('.gk') || getComputedStyle(el).scrollSnapType !== 'none') return;
+            const before = el.scrollLeft; el.scrollLeft += step;
+            if (el.scrollLeft !== before) e.preventDefault();
+            return;
+        }
+    }, { passive: false });
+})();

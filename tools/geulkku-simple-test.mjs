@@ -437,7 +437,7 @@ await test('심플 액자 30 ① 자료 frames.json = 테마 FRAME_PRESETS 30 ·
     // 액자 마트 머리 · 홈 숫자
     assert.match(fs.readFileSync(path.join(MART, 'frames/index.html'), 'utf8'), /심플 액자 30종은 테마에 이미/);
     assert.match(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), /그림 액자 1428종과, 테마에 이미 들어 있는 심플 액자 30종/);
-    for (const f of ['mart/geulkku', 'mart/frames', 'mart/genie', 'mart/kara', '.']) assert.match(fs.readFileSync(path.join(ROOT, f, 'index.html'), 'utf8'), /top-mart\.js\?v=20261112c/, f);
+    for (const f of ['mart/geulkku', 'mart/frames', 'mart/genie', 'mart/kara', '.']) assert.match(fs.readFileSync(path.join(ROOT, f, 'index.html'), 'utf8'), /top-mart\.js\?v=20261112d/, f);
 });
 await test('심플 액자 30 ② 가짜 캔버스로 30종 전부 기본값 · 색 · 50 % · 200 % 그려지고 사진 창을 채워요 · 모르는 id 는 던져요(테마 frame-presets-simple.mjs ② 와 같은 셈)', async () => {
     const calls = [];
