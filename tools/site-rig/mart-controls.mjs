@@ -69,7 +69,7 @@ async function boot(clear) {
 async function openTpl(id) {
     await b.eval(`document.querySelector('.mart-sheet[open]')?.close(); true`); await b.sleep(200);
     await b.eval(`history.replaceState(null,'',location.pathname+'#'+${J(id)}); dispatchEvent(new HashChangeEvent('hashchange')); true`);
-    if (!(await b.until(`document.querySelector('.mart-sheet[open]')`, 3000).catch(() => false))) { await b.goto(srv.url + 'mart/geulkku/#' + id); await b.eval(PROBE); }   // 해시 바뀜을 안 받는 옛 판(공개판)은 주소로 다시
+    if (!(await b.until(`document.querySelector('.mart-sheet[open]')`, 3000).catch(() => false))) { await b.goto(srv.url + 'mart/geulkku/?view=1#' + id); await b.eval(PROBE); }   // 해시 바뀜을 안 받는 옛 판(공개판)은 주소로 다시
     await b.until(`document.querySelector('.mart-sheet[open] .mart-sheet-preview .gk') && document.querySelector('.mart-sheet[open] .mart-tune')`, 25000);
     await b.sleep(500); await b.eval(PROBE);
 }
