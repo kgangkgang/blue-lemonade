@@ -893,3 +893,6 @@ html.mart-cart-on{overflow:hidden}
 @media (pointer:coarse){.mart-dn-b::before{content:"";position:absolute;left:50%;top:50%;width:max(100%,var(--touch));height:var(--touch);transform:translate(-50%,-50%)}}
 @media (prefers-reduced-motion:reduce){.mart-dn-b{transition:none}}
 .mart-seg>.mart-dn{align-self:center}
+/* 11-13 「낮 · 밤 전환 넣기」 켬끔 옆 한 줄 알림(얼마나 커지는지 · 못 다는 까닭) */
+.mart-flip-note{flex:none;align-self:center;color:var(--muted);font-size:12px;line-height:1.3;white-space:nowrap}
+.mart-flip-note[hidden]{display:none}

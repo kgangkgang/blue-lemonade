@@ -7,7 +7,7 @@ import { parseLog, buildModel, DEFAULT_NAMES } from './taste-parse.js';
 import { tasteHtml, tasteDocument, canTaste, isConcept, conceptReady, loadConcept, shutPeek } from './taste-render.js?v=20261111c';
 import { withInks, setInk, resetInks, paintDot, syncInks } from './inks.js?v=20261108a';
 import { kkangtongReady } from './tone-geulkku.js?v=20261110v';   // 11-10 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
-import { toneOut } from './tone-state.js?v=20261112f';
+import { toneOut } from './tone-state.js?v=20261113a';
 import { useColors } from './cast.js?v=20261112j';                 // 11-10 붙여 넣은 채팅 HTML 의 대사색으로 캐릭터 고르기             // 11-10 고른 대사색으로 다시 칠하기   // 11-08 글자색 팔레트   // 11-07 판 꼬리표: 옛 캐시와 섞이지 않게
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

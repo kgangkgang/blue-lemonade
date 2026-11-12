@@ -16,19 +16,21 @@ import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
 import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110v';   // 11-10 대사색 하나로 다시 칠하기 · 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
-import { toneState, toned, toneOut, toneKey, CAST_GROUPS } from './tone-state.js?v=20261112f';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
+import { toneState, toned, toneOut, toneKey, CAST_GROUPS } from './tone-state.js?v=20261113a';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
 import { simpleReady } from './simple-frames.js?v=20261112b';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
 import { WORKS, CHAR_WORKS, ADRIAN_WORKS, workByTitle, sourceHtml, creditsHtml, itemSources, worldOf, WORLDS, worldSources } from './sources.js?v=20261112c';   // 11-12 밤 원작(출처) 자료 한 곳
 import { mountCast, pickedCreditHtml } from './cast.js?v=20261112j';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
 import { frameMarkdown } from './mine-text.js?v=20261112f';   // 11-11 글만 복사(마크다운)
 import { makeSet } from './geulkku-set.js?v=20261112e';   // 11-12 설정 꼴 blGeulkku 2
+import { addToggle } from './day-night.js?v=20261113a';   // 11-13 낮 · 밤 전환(허브 지시-1112/낮밤-전환-마트/전환.mjs 와 글자까지 같은 사본)
 import { lookNow } from './look.js?v=20261112a';
 import { motionNow } from './motion-state.js?v=20261112a';
 import { texNow } from './texture.js?v=20261112a';
 import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
 import { tuneOf } from './tune.js?v=20261112f';
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112k';
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml, setFlipInfo } from './tune-ui.js?v=20261113a';
+setFlipInfo(item => flipInfo(item));
 import { wireSelectHide } from './select-hide.js?v=20261112e';   // 11-12 미리보기에서 글을 고르면 옆에 뜨는 막대(눌러야 보이게 · 숨김 풀기 · 굵게 · 기울임)
 import { themeTakeable } from './theme-take.js?v=20261112c';   // 11-12 테마가 이 틀을 받는지(테마 받기 검사를 옮긴 것 · 목록 틀은 index.json nt · 내 글꾸는 여기서)
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
@@ -493,13 +495,25 @@ function readyHtml(state) {
     return ensureItem(item).then(() => (inkChanged(item) && !tasteLoaded ? loadTaste().then(() => { delete state.inkHtml; return previewOf(state); }) : previewOf(state))).then(shutPeek).then(h => finishHtml(item, h));
 }
 /** 11-12 복사 글 마지막 손질 — 심플 새 틀은 <style> 하나 · 내 글꾸(own)는 마트 복사 글이면 이미 다듬은 꼴 그대로(코멘트 빈칸 · ✎ 만 다시) */
+/** 11-13 「낮 · 밤 전환 넣기」 — 켜져 있으면 복사 글(simpleReady 뒤) · 크게 보기 미리보기에 해 · 달 전환을 달아요(day-night.js addToggle). 꼴이 아니면(내 글꾸 등) 원래 글 그대로 */
+const flipOf = (html) => { try { return addToggle(html).html; } catch { return html; } };
+const withFlip = html => (toneState.flip ? flipOf(html) : html);
+/** 크게 보기 미리보기용 — 전환을 단 뒤 뿌리의 낮/밤 class(gk-tl · gk-td · gk-tx · gk-tn-*)를 떼요. 마트 화면에는 목록 카드의 틀 규칙(.gk-tl p · .gk-k8.gk-tl.gk-tn-d … — 미리보기와 한 문서)이 같이 있어서,
+ *  뿌리에 그 class 가 남으면 밤으로 바꿔도 카드의 낮 규칙이 미리보기 글에 걸려요(블라인드 등). 전환을 단 글은 규칙이 모두 전환 조건으로 바뀌어 있어 떼어도 모습이 같아요(417틀 화면 대본). 복사 글은 그대로 둬요 */
+const previewFlip = (html) => { if (!toneState.flip) return html; const out = flipOf(html); return out === html ? html : out.replace(/(<div class="gk )([^"]*)"/, (all, head, cls) => `${head}${cls.split(' ').filter(c => !/^gk-(?:tl|td|tx|tn-d|tn-n)$/.test(c)).join(' ')}"`); };
+/** 깡통 한 글 상한(약 240KB) — 전환을 달면 이 틀 하나로 넘는지 · 얼마나 느는지(조절 칸 「밝기」 줄 알림) */
+export const KK_POST_MAX = 240000;
+function flipInfo(item) {
+    const st = stateById.get(item.id); if (!st || !item.preview || !item.simple) return null;
+    try { const base = simpleReady(shutPeek(previewOf(st))), added = addToggle(base).html; const size = s => new TextEncoder().encode(s).length; return { add: size(added) - size(base), total: size(added), over: size(added) > KK_POST_MAX }; } catch { return { fail: true }; }
+}
 function finishHtml(item, h) {
     if (item.own) {
-        if (!item.simple || !/\.content>p,\.blq-cm\{/.test(h)) return item.simple ? simpleReady(h) : kkangtongReady(h);
+        if (!item.simple || !/\.content>p,\.blq-cm\{/.test(h)) return item.simple ? withFlip(simpleReady(h)) : kkangtongReady(h);
         const key = simpleFrameInfo(h)?.key || '';
         return withCommentSlots(markEdits(kkangtongReady(h), { skip: HIDDEN_LINE_FRAMES.includes(key) ? [] : ['gk-hl'] }));
     }
-    return item.simple ? simpleReady(h) : item.photo ? h : kkangtongReady(h);
+    return item.simple ? withFlip(simpleReady(h)) : item.photo ? h : kkangtongReady(h);
 }
 /** 내려받기(.html) — 복사 글과 같은 HTML 을 파일로(앞에 doctype · charset 두 줄만).
  *  doctype 이 없으면 브라우저가 옛 방식(quirks)으로 열어 클래스 이름 대소문자를 안 가려요 — gk-nb(소품 막대)가 gk-nB(깡캐 이름표)에도 걸려 이름표가 막대가 돼요(k4 · k5 · k7 · k10 · k15 · q05) */
@@ -906,7 +920,7 @@ function setSite(mode) {
     if (mode !== 'mart') stopEdit();
     const pv = sheet.querySelector('.mart-sheet-preview'); pv.classList.toggle('is-site', mode !== 'mart'); pv.innerHTML = sheetPreview(sheetState); paintTune();
 }
-const sheetPreview = state => (site.mode !== 'mart' && (state.item.simple || state.item.own) ? siteHtml(state) : state.item.photo || state.item.own ? viewOf(state).replace(/ (id|for)="([^"]+)"/g, ' $1="$2-view"') : previewOf(state));
+const sheetPreview = state => (site.mode !== 'mart' && (state.item.simple || state.item.own) ? siteHtml(state) : state.item.simple && !state.item.own ? previewFlip(previewOf(state)) : state.item.photo || state.item.own ? viewOf(state).replace(/ (id|for)="([^"]+)"/g, ' $1="$2-view"') : previewOf(state));   // 11-13 전환 넣기를 켜면 미리보기에도 해 · 달 단추(눌러 볼 수 있어요)
 // ── 글꾸 크게 보기 시트(폰은 아래에서 올라오고 PC 는 가운데) — 전체 미리보기 · 장식 누르기 · 스크롤은 여기서만 ──
 let sheet = null, sheetState = null;
 function openSheet(state) {

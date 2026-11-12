@@ -7,6 +7,7 @@
 //   --fast: (예전에 쓰던 꼬리 — 지금은 같은 시험을 다 돌려요)
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -400,7 +401,7 @@ await test('옛 글꾸 없음 · 화면: 「옛날 버전」 단추 · 돌아가
     const mart = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), page = fs.readFileSync(path.join(MART, 'geulkku/index.html'), 'utf8'), home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
     for (const s of ['옛날 버전 글꾸 보기', '새 틀로 돌아가기', 'wireOld', 'splitView', 'withSimpleFrames', 'keepIds']) assert.ok(!mart.includes(s), s);
     assert.match(mart, /if \(h && !hit && kind === 'geulkku'\) \{ say\('이 글꾸는 새 틀로 바뀌었어요/);
-    assert.match(mart, /item\.simple \? simpleReady\(h\) : item\.photo \? h : kkangtongReady\(h\)/);
+    assert.match(mart, /item\.simple \? withFlip\(simpleReady\(h\)\) : item\.photo \? h : kkangtongReady\(h\)/);
     assert.ok(!/옛날 버전/.test(page) && !/옛날 버전/.test(home), '머리말 · 홈에 옛날 버전 말 없음');
     assert.ok(!page.includes('mart-mylog'), '「내 로그로 보기」 단추 없음');
     assert.ok(!/447|1512|1483/.test(page.replace(/\?v=\d+\w*/g, '')) && !/글꾸 1483종|1512/.test(home), '옛 숫자 없음');
@@ -1077,6 +1078,44 @@ await test('액자 마트 고침(11-12 밤 전수조사 고침 안 3 · 4 · 5):
     for (const k of ["restore() { if (!undo) return false;", 'data-cart="undo"', 'data-cart-got', "got = act === 'copy' ? '복사했어요 ✓' : '받았어요 ✓'", "clear() { if (entries.length) undo = [...entries];"]) assert.ok(cartSrc.includes(k), `cart.js ${k}`);
     // 작은 고장: 담기 알림 · 심플에서 방향/디자인 숨김 · 빈 결과 풀기 · 표본일 때 기억 숨김 · 개수 한 줄
     for (const k of ['담았어요 · 장바구니 ${api.cart.count()}개', "const simpleOnly = () => picker?.sel.group === 'simple' || picker?.sel.cat === 'simple';", 'data-act="clear-filters"', "document.querySelectorAll('.mart-tryon-keep')) k.hidden = !own;", "count.classList.add('is-line'); api.grid.before(count);"]) assert.ok(room.includes(k), `frame-room.js ${k}`);
+});
+
+// ── 11-13 「낮 · 밤 전환 넣기」 — 사용자 「어떤 깡은 라이트 어떤 깡은 나이트로 올리니까 밤에 보기 불편할 때가 있었음 … 나이트 라이트 선택 가능하면 해결」 ──
+await test('낮 · 밤 전환 넣기: 공용 함수 사본은 허브 원본과 글자까지 같아요 · 복사 길(simpleReady 뒤)에만 걸어요 · 기본 끔 · 테마로 담기 값에는 안 실어요 · 417틀 모두 달려요', async () => {
+    const dn = await imp(path.join(MART, 'day-night.js'));
+    const copy = fs.readFileSync(path.join(MART, 'day-night.js'));
+    assert.equal(crypto.createHash('sha256').update(copy).digest('hex'), '50b2bed434d6261994d43d83e817318455bbc34c4034bbddfe21254d7d8a99d7', '마트 사본(mart/day-night.js)이 바뀌었어요 — 허브 지시-1112/낮밤-전환-마트/전환.mjs 를 고친 뒤 다시 복사하고 이 값을 맞춰요');
+    const hub = process.env.GK_TOGGLE_SRC || path.resolve(ROOT, '../../../../2026-10-24/w/outputs/지시-1112/낮밤-전환-마트/전환.mjs');
+    if (fs.existsSync(hub)) assert.ok(copy.equals(fs.readFileSync(hub)), '허브 원본과 마트 사본이 달라요');
+    const martSrc = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), ts = fs.readFileSync(path.join(MART, 'tone-state.js'), 'utf8'), ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
+    for (const k of ["const withFlip = html => (toneState.flip ? flipOf(html) : html);", "return item.simple ? withFlip(simpleReady(h)) : item.photo ? h : kkangtongReady(h);", "state.item.simple && !state.item.own ? previewFlip(previewOf(state)) :"]) assert.ok(martSrc.includes(k), `mart.js ${k}`);
+    assert.ok(ts.includes("const flip = saved.flip === true;") && ts.includes("...(toneState.flip ? { flip: true } : {})"), '기본 끔 · 켠 것만 기억');
+    assert.ok(/html: item\.preview \|\| '', set \}\] \};/.test(martSrc) && !/themePack[\s\S]{0,400}withFlip/.test(martSrc), '테마로 담기 값은 틀 원래 판 그대로(전환 0)');
+    assert.equal((ui.match(/\$\{flipChip\(item\)\}/g) || []).length, 2, '간편 · 세밀 밝기 줄 둘 다');
+    assert.ok(ui.includes('data-tune-flip aria-pressed="${toneState.flip && !no}" aria-label="낮 · 밤 전환 넣기"'));
+    // 417틀 × (낮 판 · 밤 판 · 캐릭터 색) — 달리고 · 뿌리 하나 · <style> 하나 · 두 번은 거절 · 지퍼의 조각 .gk-td 는 그대로 · 블라인드 빈 줄 규칙
+    const all = {}; for (const c of Object.values(sixAll.chunks)) Object.assign(all, JSON.parse(fs.readFileSync(path.join(DIR, c.file), 'utf8')).items);
+    const adds = [];
+    for (const it of sixAll.items) {
+        const key = sf.simpleFrameInfo(all[it.id].preview).key;
+        for (const [name, h] of [['낮', sf.toneSimple(all[it.id].preview, sf.ORIGINAL, { mode: 'light' })], ['밤', sf.toneSimple(all[it.id].preview, sf.ORIGINAL, { mode: 'dark' })], ['색', sf.toneSimple(all[it.id].preview, '#8a5cf6', { mode: 'light', other: '#22a06b' })]]) {
+            const ready = sf.simpleReady(shutPeek(h)), out = dn.addToggle(ready).html;
+            assert.equal(out.split(`class="gkt gkt-${key}"`).length - 1, 1, `${it.id} ${name} 뿌리 하나`);
+            assert.equal((out.match(/<style\b/g) || []).length, 1, `${it.id} ${name} <style> 하나`);
+            assert.ok(/<details class="gkt-k"/.test(out) && !/>낮<|>밤</.test(out.replace(ready, '')), `${it.id} ${name} 해 · 달 단추(글자 0)`);
+            assert.throws(() => dn.addToggle(out), /이미 전환/, `${it.id} 두 번은 거절`);
+            if (name === '낮') adds.push(Buffer.byteLength(out) - Buffer.byteLength(ready));
+        }
+    }
+    adds.sort((a, b) => a - b);
+    assert.ok(adds[0] > 4000 && adds.at(-1) < 12000, `늘어난 바이트 ${adds[0]} ~ ${adds.at(-1)}`);
+    assert.ok(Math.max(...sixAll.items.map(it => Buffer.byteLength(dn.addToggle(sf.simpleReady(shutPeek(all[it.id].preview))).html))) < 240000, '전환을 달아도 깡통 한 글(240KB)에 들어가요');
+    const zip = dn.addToggle(sf.simpleReady(shutPeek(all['simple-k09'].preview))).html;
+    assert.ok(/\.gk-k09 \.gk-td\b/.test(zip) || !/\.gk-k09 \.gk-td\b/.test(all['simple-k09'].preview), '지퍼의 조각 .gk-td 규칙은 안 바뀌어요');
+    const blind = dn.addToggle(sf.simpleReady(shutPeek(all['simple-k8'].preview))).html;
+    assert.ok(blind.includes('details>summary~:not([class]):not(:has([class])){display:none}') && !blind.includes('details>summary~:not([class]){display:none}'), '블라인드 빈 줄 규칙');
+    assert.throws(() => dn.addToggle('<div><p>틀이 아님</p></div>'));
+    assert.ok(fs.readFileSync(path.join(MART, 'geulkku/index.html'), 'utf8').includes('<b>전환 넣기</b>를 켜 두면 글에 해 · 달 단추가 붙어'));
 });
 
 // ── 11-12 밤 원작(출처) — 사용자 「글꾸 마트는 왜 출처가 없냐 … 링크 다 어디 감」: 다시 사라지지 않게 잠가요 ──
@@ -1819,7 +1858,7 @@ await test('제목 글 모양(N19) · 대사 줄 간격 · 들여쓰기(N20 · N
 await test('새 조절 잇기(⑥): 다시 칠하기 → 모양 → 글 모양 차례 · 능력표로 못 받는 칸은 건너뜀 · 낱낱 바탕 색 넷은 tune.inks 에 · 추천 스타일 모양 · 내 스타일 · 완성 프리셋에 모양 · 움직임 · 세밀 칸(띠 · 테두리 · 카드 · 이름표 · 밑줄 · 소품 숨김 · 빠르기 · 열어 두기 · 자동 · 제목)', async () => {
     const ts = fs.readFileSync(path.join(MART, 'tone-state.js'), 'utf8'), ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
     assert.ok(/applyShape\(toneSimple\(applyMine\(html\)[\s\S]*?sp\.gate\); const shaped = applyLook\(out, lookFor\(sp\.caps\)\)/.test(ts), '다시 칠하기 → 모양 → 글 모양');
-    assert.ok(ts.includes('shapeRev(), toneState.auto, capsRev()]'), '다시 그리기 열쇠');
+    assert.ok(ts.includes('shapeRev(), toneState.auto, capsRev(), toneState.flip]'), '다시 그리기 열쇠');
     assert.deepEqual(tu.cleanTune({ inks: { light: { card: '#ABCDEF', bandMain: '#112233', bandOther: 'x', underline: '#00ff00' } } }), { inks: { light: { card: '#abcdef', bandMain: '#112233', underline: '#00ff00' } } });
     const sh = await import(pathToFileURL(path.join(MART, 'shape.js')).href + '?v=20261112a');
     const { LOOKS } = await import(pathToFileURL(path.join(MART, 'looks.js')).href + '?v=20261112a');
@@ -2007,7 +2046,7 @@ await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-u
     const files = ['mart.js', 'genie.js', 'geulkku/index.html', 'frames/index.html', 'genie/index.html'].map(f => [f, srcOf(f)]);
     for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room', 'genie']) {
         const tails = new Set(files.flatMap(([, s]) => [...s.matchAll(new RegExp(`[./]${mod}\\.js\\?v=(\\w+)`, 'g'))].map(m => m[1])));
-        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? (mod === 'tune-ui' ? '20261112k' : '20261112l') : mod === 'frame-room' ? '20261112g' : mod === 'cart' ? '20261112f' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
+        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? '20261113a' : mod === 'frame-room' ? '20261112g' : mod === 'cart' ? '20261112f' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
     }
 });
 await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬리가 다르면 브라우저가 같은 모듈을 두 벌 받아요 — char-tone · spoiler · bare · presets 가 그랬어요 · 꼬리 없는 쪽은 옛 캐시가 남아요)', () => {
@@ -2086,7 +2125,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
         assert.match(ui, /data-act="theme-file"\$\{no\}/);
         for (const [n, t] of [['mart.js', mart], ['genie.js', genie]]) assert.doesNotMatch(t, /테마로 받기는 준비 중/, n);
         assert.match(fs.readFileSync(path.join(MART, 'mart.css'), 'utf8'), /\.tag\.is-notake\{/);
-        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112k/, f);
+        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261113a/, f);
     });
 }
 console.log(`\n${pass} 통과 · ${fail} 실패`);

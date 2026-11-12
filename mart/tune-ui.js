@@ -3,7 +3,7 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone, ownOf } from './tone-state.js?v=20261112f';
+import { toneState, setTone, ownOf } from './tone-state.js?v=20261113a';
 import { speakerPair, hasPropTone, hasOwnTone, simpleFrameInfo } from './simple-frames.js?v=20261112b';
 import { fieldsOf, valsHtml, valOk } from './custom.js?v=20261112e';
 import { LOOKS, sameLook } from './looks.js?v=20261112a';   // 11-12 간편 — 추천 스타일 여섯 벌
@@ -13,7 +13,7 @@ import { capsOf, capWhy } from './caps.js?v=20261112a';
 import { makeSet, readSet, encodeSet, readAny, setFile, SET_EXT } from './geulkku-set.js?v=20261112e';   // 11-12 설정 파일 .bl-geulkku.json · 코드 BLG1.   // 11-12 틀 능력표 — 못 받는 칸은 흐리게 + 까닭 한 줄   // 11-12 움직임 세기
 import { texNow, setTex, texInfo, TEX_ORDER, TEX_NAMES } from './texture.js?v=20261112a';   // 11-12 바탕 질감
 import { swapSpeakers, dayNightHtml } from './cast.js?v=20261112j';
-import { castPicked } from './tone-state.js?v=20261112f';   // 11-11 「이 틀」 값 칸
+import { castPicked } from './tone-state.js?v=20261113a';   // 11-11 「이 틀」 값 칸
 import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine, setsFile, readSets, addSets } from './tune.js?v=20261112f';
 import { createEditBlocks } from './edit-blocks.js?v=20261112e';   // 11-12 글 고치기 공용 편집 모듈(테마 로그 복사 창도 같이)
 import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261112a';
@@ -172,7 +172,7 @@ function tabBody(item) {
         const seat = thirdOn() ? thirdSeat(item) : '';
         const hint3 = seat === 'none' ? '<p class="mart-tune-hint">이 틀은 내 글을 넣을 자리를 몰라서 셋째 화자 색이 안 보여요 · 견본 글 그대로예요</p>' : seat === 'band' ? '<p class="mart-tune-hint">이 틀은 대사 띠를 그림으로 그어서 셋째 화자는 이름 · 글자 색만 바뀌고 띠는 깡캐 색이에요</p>' : '';
         return `<div class="mart-inks mart-tune-colors mart-hscroll" role="group" aria-label="색 — 눌러서 바꿔요">${chips}</div>${hint3}${dimWhy.length ? `<p class="mart-tune-hint">흐린 칸 — ${esc(dimWhy.join(' · '))}</p>` : ''}
-            <div class="mart-tune-line mart-hscroll"><span class="mart-seg" role="group" aria-label="밝기">${dayNightHtml('data-tune-mode', '')}<button type="button" class="chip" data-tune-mode="auto" aria-pressed="false" title="이 기기 밝기를 따라요(나가는 글은 그때 판 하나)">자동</button></span>${hasOwnTone(item.preview) && !noProp ? '<span class="mart-seg mart-tune-own" role="group" aria-label="소품 색"><button type="button" class="chip" data-tune-own="1" aria-pressed="true">소품 기본 색</button><button type="button" class="chip" data-tune-own="0" aria-pressed="false">소품 캐릭터 색</button></span>' : ''}</div>${noProp ? shapeBlock(['bandAlpha', 'borderAlpha'], capsOf(item), '', new Set(byWhy.keys())) : ''}`;
+            <div class="mart-tune-line mart-hscroll"><span class="mart-seg" role="group" aria-label="밝기">${dayNightHtml('data-tune-mode', '')}<button type="button" class="chip" data-tune-mode="auto" aria-pressed="false" title="이 기기 밝기를 따라요(나가는 글은 그때 판 하나)">자동</button>${flipChip(item)}</span>${flipNoteHtml(item)}${hasOwnTone(item.preview) && !noProp ? '<span class="mart-seg mart-tune-own" role="group" aria-label="소품 색"><button type="button" class="chip" data-tune-own="1" aria-pressed="true">소품 기본 색</button><button type="button" class="chip" data-tune-own="0" aria-pressed="false">소품 캐릭터 색</button></span>' : ''}</div>${noProp ? shapeBlock(['bandAlpha', 'borderAlpha'], capsOf(item), '', new Set(byWhy.keys())) : ''}`;
     }
     const caps = capsOf(item), capped = f => (f.cap !== 'title' ? f : caps?.title ? { ...f, max: Math.min(f.max, caps.title.max) } : { ...f, dim: capWhy(caps, 'title') });
     const fields = LOOK_FIELDS.filter(f => f.tab === tab && whenOk(f)).map(capped), html = [];
@@ -228,6 +228,13 @@ function detailChanges(item) {
     if (t.hideNames) out.push('이름 줄 숨김');
     return [...new Set(out)];
 }
+/** 11-13 「낮 · 밤 전환 넣기」 켬끔(밝기 줄 옆 · 기본 끔) — 켜면 복사 글과 미리보기에 해 · 달 전환 단추가 붙어요. 얼마나 커지는지 · 못 다는 틀인지는 mart.js 가 알려 줘요(setFlipInfo) */
+let flipInfoOf = () => null;
+export const setFlipInfo = (fn) => { flipInfoOf = fn; };
+const kb = n => `${(n / 1024).toFixed(1)}KB`;
+const flipNote = (item) => { const f = flipInfoOf(item); return !f ? '' : f.fail ? '이 틀에는 전환을 달 수 없어요' : f.over ? `전환을 달면 ${kb(f.total)} — 깡통 한 글(약 240KB)에 안 들어가요` : `복사 글 +${kb(f.add)}(모두 ${kb(f.total)})`; };
+const flipChip = (item) => { const f = flipInfoOf(item), no = !!(f && (f.fail || f.over)); return `<button type="button" class="chip mart-flip" data-tune-flip aria-pressed="${toneState.flip && !no}" aria-label="낮 · 밤 전환 넣기"${no ? ' disabled' : ''} title="${esc(no ? flipNote(item) : `복사 글에 해 · 달 전환 단추를 넣어요 — 읽는 사람이 깡통에서 밝은 판 · 어두운 판을 바꿔 볼 수 있어요 · ${flipNote(item)}`)}">전환 넣기</button>`; };
+const flipNoteHtml = (item) => { const f = flipInfoOf(item), no = !!(f && (f.fail || f.over)); return `<small class="mart-flip-note"${toneState.flip || no ? '' : ' hidden'}>${esc(flipNote(item))}</small>`; };
 const segRow = (label, inner, extra = '') => `<div class="mart-simple-row"><p class="mart-simple-h">${label}${extra ? ` <small>${esc(extra)}</small>` : ''}</p><div class="mart-seg mart-simple-seg" role="group" aria-label="${label}">${inner}</div></div>`;
 /** 11-12 스타일 카드 그림 — 이름표 · 대사 띠 · 지문 한 줄을 그 스타일 값으로 작게 그려요(전엔 빈 회색 칸이라 무엇이 바뀌는지 안 보였어요) · x 가 null 이면 「직접 조절」 */
 const PIC_FONT = { serif: '"AppleMyungjo","Batang","Noto Serif KR",serif', gothic: '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif' };
@@ -258,7 +265,7 @@ function simpleInner(item) {
     const sizeRow = segRow('글 크기', SIZE_STEPS.map(([v, l]) => `<button type="button" class="chip" data-simple-size="${v}" aria-pressed="${fixed == null && step === v}">${l}</button>`).join(''), fixed != null ? `직접 ${fixed}px` : '');
     return `<div class="mart-simple-row"><p class="mart-simple-h">스타일 <small>한 번에 입혀요</small></p><div class="mart-style-cards mart-hscroll" role="group" aria-label="스타일">${cards}</div></div>
         <div class="mart-simple-row"><p class="mart-simple-h">색</p><div class="mart-simple-cast mart-hscroll">${colorChip('k', '깡통')}<button type="button" class="ibtn mart-cast-swap" data-simple-swap aria-label="깡통 · 깡캐 바꾸기" title="깡통 · 깡캐 바꾸기"></button>${colorChip('k2', '깡캐')}${thirdOn() ? colorChip('k3', '셋째') : ''}</div>${cover}</div>
-        ${segRow('밝기', `${dayNightHtml('data-tune-mode', '')}<button type="button" class="chip" data-tune-mode="auto" aria-pressed="false" title="이 기기 밝기를 따라요(나가는 글은 그때 판 하나)">자동</button>`)}
+        <div class="mart-simple-row"><p class="mart-simple-h">밝기 ${flipNoteHtml(item)}</p><div class="mart-seg mart-simple-seg" role="group" aria-label="밝기">${dayNightHtml('data-tune-mode', '')}<button type="button" class="chip" data-tune-mode="auto" aria-pressed="false" title="이 기기 밝기를 따라요(나가는 글은 그때 판 하나)">자동</button>${flipChip(item)}</div></div>
         ${motionRow}${sizeRow}
         ${changes.length ? `<div class="mart-simple-diff"><p><b>세밀에서 바꾼 것 ${changes.length}</b> · ${esc(changes.slice(0, 5).join(' · '))}${changes.length > 5 ? ' · …' : ''}</p><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-view="detail">세밀에서 보기</button><button type="button" class="chip" data-simple-reset title="세밀에서 바꾼 것만 처음으로(캐릭터 · 밤낮 · 고친 글은 그대로)">세밀 것만 처음으로</button></div></div>` : ''}
         <button type="button" class="btn mart-simple-more" data-view="detail" title="색 · 글 · 움직임 · 이 틀 · 도구 · 저장">더 조절하기</button>`;
@@ -497,6 +504,8 @@ export function syncTune(sheet, item) {
         const undo = input.closest('.mart-tune-chip')?.querySelector('[data-tune-reset]'); if (undo) undo.hidden = !cur.changed;
     }
     for (const b of box.querySelectorAll('[data-tune-mode]')) b.setAttribute('aria-pressed', String(b.dataset.tuneMode === (toneState.auto ? 'auto' : toneState.mode)));
+    for (const b of box.querySelectorAll('[data-tune-flip]')) b.setAttribute('aria-pressed', String(toneState.flip && !b.disabled));
+    for (const n of box.querySelectorAll('.mart-flip-note')) { n.hidden = !(toneState.flip || !!box.querySelector('[data-tune-flip]:disabled')); n.textContent = flipNote(item); }
     { const mo = motionNow(); for (const b of box.querySelectorAll('[data-motion-speed]')) b.setAttribute('aria-pressed', String(b.dataset.motionSpeed === mo.speed)); for (const b of box.querySelectorAll('[data-motion-open]')) b.setAttribute('aria-pressed', String((b.dataset.motionOpen === '1') === mo.open)); }
     for (const f of SHAPE_FIELDS) {
         const cur = shapeValue(f.path);
@@ -779,6 +788,7 @@ export function wireTune(sheet, { current, openItem, say = () => {}, clip = null
         if ((b = q('[data-tune-tab]'))) { tab = b.dataset.tuneTab; if (TEXT_TABS.some(([id]) => id === tab)) textTab = tab; redraw(item); return; }
         if ((b = q('[data-group-reset]'))) { groupReset(item, b.dataset.groupReset); redraw(item); say('그 갈래를 처음으로 돌렸어요', 1800); return; }
         if (q('[data-detail-reset]')) { detailReset(item); redraw(item); say('세밀에서 바꾼 것을 처음으로 돌렸어요(캐릭터 · 밤낮 · 고친 글은 그대로)', 2400); return; }
+        if ((b = q('[data-tune-flip]'))) { setTone({ flip: !toneState.flip }); redraw(item); return; }   // 11-13 낮 · 밤 전환 넣기
         if ((b = q('[data-tune-mode]'))) { setTone({ mode: b.dataset.tuneMode }); return; }   // 'auto' 면 기기 밝기를 따라요(tone-state.js)
         if ((b = q('[data-words-hide]'))) { setWords({ hide: b.dataset.wordsHide === '1' }); redraw(item); return; }
         if ((b = q('[data-words-name]'))) { const n = b.dataset.wordsName, off = wordsNow().off; setWords({ off: off.includes(n) ? off.filter(x => x !== n) : [...off, n] }); redraw(item); return; }

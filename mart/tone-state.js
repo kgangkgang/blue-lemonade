@@ -83,7 +83,9 @@ export const toneState = (() => {
     // 11-12 밤낮 「자동」(N10) — 이 기기 밝기(prefers-color-scheme)를 따라 한 판을 내요(나가는 글은 늘 한 판) · 밤 · 낮을 고르면 꺼져요
     const auto = saved.auto === true && !q.has('tone');
     if (auto) mode = systemMode();
-    return { on, k, mode, name, mix, picks, paper, texture, none, k2, name2, cover, k3, name3, auto };
+    // 11-13 「낮 · 밤 전환 넣기」(기본 끔) — 켜면 복사 글에 해 · 달 전환 단추를 달아요(day-night.js addToggle · 틀당 약 +6 ~ 9KB)
+    const flip = saved.flip === true;
+    return { on, k, mode, name, mix, picks, paper, texture, none, k2, name2, cover, k3, name3, auto, flip };
 })();
 /** 캐릭터 · 밤낮 · 켬을 바꿔요(기억하고 'bl-tone-change' 를 알려요) */
 export function setTone(next = {}) {
@@ -104,7 +106,8 @@ export function setTone(next = {}) {
     if ('paper' in next && Object.hasOwn(PAPER_COLORS, next.paper)) toneState.paper = next.paper;
     if ('texture' in next && Object.hasOwn(TEXTURES, next.texture) && !TEXTURES[next.texture].hidden) toneState.texture = next.texture;
     if ('cover' in next) toneState.cover = next.cover !== false;
-    write(TONE_KEY, { ...(toneState.cover ? {} : { cover: false }), ...(toneState.auto ? { auto: true } : {}), k: toneState.k, name: toneState.name, mode: toneState.mode, on: toneState.on, none: toneState.none, mix: toneState.mix, picks: toneState.picks, paper: toneState.paper, texture: toneState.texture, ...(toneState.k2 ? { k2: toneState.k2, name2: toneState.name2 } : {}), ...(toneState.k3 ? { k3: toneState.k3, name3: toneState.name3 } : {}) });
+    if ('flip' in next) toneState.flip = next.flip === true;
+    write(TONE_KEY, { ...(toneState.cover ? {} : { cover: false }), ...(toneState.auto ? { auto: true } : {}), ...(toneState.flip ? { flip: true } : {}), k: toneState.k, name: toneState.name, mode: toneState.mode, on: toneState.on, none: toneState.none, mix: toneState.mix, picks: toneState.picks, paper: toneState.paper, texture: toneState.texture, ...(toneState.k2 ? { k2: toneState.k2, name2: toneState.name2 } : {}), ...(toneState.k3 ? { k3: toneState.k3, name3: toneState.name3 } : {}) });
     try { document.dispatchEvent(new CustomEvent('bl-tone-change', { detail: { ...toneState } })); } catch { /* 시험 */ }
 }
 /** 다시 칠할 글꾸인가(로그 글꾸만 — 게시글 틀 photo 는 자기 색 그대로 · 단 심플 새 틀 simple 은 게시글 틀이어도 캐릭터 색으로) */
@@ -135,4 +138,4 @@ export const toneOut = (item, html) => {
     return ks.length >= 2 ? toneMixHtml(html, roles, ks, opt) : toneHtml(html, roles, toneState.k, opt);
 };
 /** 다시 칠하기 값이 바뀌었는지 알아보는 열쇠(카드마다 그린 것을 다시 쓸지) */
-export const toneKey = () => JSON.stringify([toneState.cover, toneState.on, toneState.k, toneState.mode, toneState.mix, toneState.picks.map(x => x.color), toneState.paper, toneState.texture, toneState.k2, toneState.k3, tuneRev(), lookRev(), mineRev(), wordsRev(), motionRev(), texRev(), shapeRev(), toneState.auto, capsRev()]);
+export const toneKey = () => JSON.stringify([toneState.cover, toneState.on, toneState.k, toneState.mode, toneState.mix, toneState.picks.map(x => x.color), toneState.paper, toneState.texture, toneState.k2, toneState.k3, tuneRev(), lookRev(), mineRev(), wordsRev(), motionRev(), texRev(), shapeRev(), toneState.auto, capsRev(), toneState.flip]);
