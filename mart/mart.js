@@ -1050,6 +1050,8 @@ function applyFilter() {
     if (ownCat && !shown) grid.insertAdjacentHTML('beforeend', `<p class="mart-empty">${q ? '맞는 내 글꾸가 없어요' : '아직 없어요 · 위 칸에 글꾸 HTML 을 붙여 넣어요'}</p>`);
     else if (!shown) grid.insertAdjacentHTML('beforeend', `<p class="mart-empty">${likeCat === 'fav' && !q ? '아직 없어요 · 카드 이름 옆 ☆ 를 누르면 여기 모여요' : likeCat === 'recent' && !q ? '아직 없어요 · HTML 복사 · 내려받기 · 글만 복사한 틀이 5개까지 여기 남아요' : `맞는 것이 없어요${narrowed ? ' · 거르기를 풀어 보세요' : ''}`}</p>`);
 }
+/** 11-12 주소 #뒤 글꾸 id — 깨진 % 글자(#% · #100% · 잘린 #%E0%A4)면 빈 글(전엔 decodeURIComponent 가 던져 다 그린 목록이 「목록을 못 불러왔어요」로 덮였어요) */
+export const hashId = (hash = location.hash) => { try { return decodeURIComponent(String(hash).slice(1)); } catch { return ''; } };
 async function main() {
     if (kind === 'frames') {
         try { ({ drawPreset } = await import('./frame-presets.js')); } catch { drawPreset = null; }
@@ -1104,12 +1106,12 @@ async function main() {
     for (const x of items) { const k = x.simple ? `\u0000새 틀\u0000${x.name}` : x.name; const a = byName.get(k) ?? []; a.push(x); byName.set(k, a); }
     const rank = x => (x.builtin ? -1 : STYLE_ORDER.includes(styleOf(x)) ? STYLE_ORDER.indexOf(styleOf(x)) : STYLE_ORDER.length);
     for (const a of byName.values()) { a.sort((p, q) => rank(p) - rank(q)); for (const x of a) x._sibs = a; }
-    { const want = decodeURIComponent(location.hash.slice(1)), it = want && items.find(x => x.id === want); if (it) conceptPick.set(it.name, it.id); }   // #글꾸id 로 오면 그 디자인이 카드에 보여요
+    { const want = hashId(), it = want && items.find(x => x.id === want); if (it) conceptPick.set(it.name, it.id); }   // #글꾸id 로 오면 그 디자인이 카드에 보여요
     mountCast(document.querySelector('.mart-cast'), { say });   // 11-10 목록 위 「깡통: … ▾ · 깡캐: … ▾」
     cards = lazyGrid(grid, cardEl);
     applyFilter();
     grid.setAttribute('aria-busy', 'false');
-    const h = decodeURIComponent(location.hash.slice(1));
+    const h = hashId();
     const hit = h && items.find(x => x.id === h);
     // 11-11 옛 글꾸 주소(공유 링크 · 지니 ?view=1#id · 장바구니에 남은 것)로 오면 새 틀 목록을 그대로 보여 주고 한 줄만 알려요
     if (h && !hit && kind === 'geulkku') { say('이 글꾸는 새 틀로 바뀌었어요 · 새 글꾸 틀에서 골라 보세요', 3600); history.replaceState(null, '', location.pathname + location.search.replace(/([?&])view=1(&|$)/, '$1').replace(/[?&]$/, '')); }

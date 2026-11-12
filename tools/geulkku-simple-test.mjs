@@ -1539,5 +1539,16 @@ await test('깡통 118 뒤 고침: ① 빠르기가 인라인 움직임 · 계�
     assert.ok(o.includes('<figure class="gk-kx gk-det"') && o.includes('<figcaption class="gk-pb"') && o.includes('\n.gk figure{margin:0}') && !/\[open\]/.test(o.slice(0, o.indexOf('</style>')).replace(/details\[open\]|details:not\(\[open\]\)/g, '')), 'figure 꼴 · .gk-kx[open] 없음');
     assert.ok(fs.readFileSync(path.join(ROOT, 'tools/geulkku-open-check.mjs'), 'utf8').includes('open 속성을 다 지움'), '깡통 흉내 화면 재기 도구');
 });
+// ── 11-12 AI 점검(지시-1112/마트-AI-점검/보고.md) — 결함 하나에 시험 하나 ──
+const srcOf = f => fs.readFileSync(path.join(MART, f), 'utf8');
+await test('AI 점검 ① 깨진 주소 해시(#% · #100% · 잘린 #%E0%A4%A)에도 목록이 안 덮여요 — 글꾸 마트 · 액자 마트 hashId', () => {
+    for (const f of ['mart.js', 'frame-room.js']) {
+        const s = srcOf(f);
+        assert.ok(!/decodeURIComponent\(location\.hash/.test(s), `${f}: 해시를 바로 풀지 않아요`);
+        const fn = (0, eval)(s.match(/const hashId = (\(hash = location\.hash\) => \{[^\n]+\});/)[1].replace('location.hash', "''"));
+        for (const bad of ['#%', '#100%', '#%E0%A4%A', '#%zz']) assert.equal(fn(bad), '', `${f} ${bad}`);
+        assert.equal(fn('#simple-k1'), 'simple-k1'); assert.equal(fn('#%ED%95%9C'), '한'); assert.equal(fn(''), '');
+    }
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

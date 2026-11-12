@@ -25,6 +25,8 @@ const states = new Map();
 let view = {}, shadow = {}, photo = { url: '', label: '', own: false, file: null };
 const root = document.documentElement;
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+/** 11-12 주소 #뒤 액자 id — 깨진 % 글자(#% · #100%)면 빈 글(전엔 던져서 목록이 「목록을 못 불러왔어요」로 덮이고 랜덤 · ← → 가 안 붙었어요) */
+const hashId = (hash = location.hash) => { try { return decodeURIComponent(String(hash).slice(1)); } catch { return ''; } };
 const store = {
     get(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } },
     set(key, value) { try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; } },
@@ -725,7 +727,7 @@ export async function start(a) {
     cards = api.lazyGrid(api.grid, card, { first: CHUNK, step: CHUNK });
     applyFilter();
     api.grid.setAttribute('aria-busy', 'false');
-    const h = decodeURIComponent(location.hash.slice(1));
+    const h = hashId();
     const hit = h && items.find(x => x.id === h);
     if (hit) openRoom(stateOf(hit));
     document.querySelector('.mart-random')?.addEventListener('click', pickRandom);
