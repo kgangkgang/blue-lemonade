@@ -185,7 +185,7 @@ export function goTo(href, loc = location, win = globalThis) {
 
 // ── 계산 ──
 /** @param {(entries) => Promise<boolean>} copy · save — mart.js 의 복사 · 파일 받기 */
-let pay = null;
+let pay = null, payBusy = false;
 export function onCheckout(fn) { pay = fn; }
 drawer.addEventListener('click', async (e) => {
     const del = e.target.closest('[data-cart-del]');
@@ -196,8 +196,13 @@ drawer.addEventListener('click', async (e) => {
     if (act === 'close') close();
     else if (act === 'clear') cart.clear();
     else if (act === 'art' && !artBusy) saveAllArt(e.target.closest('[data-cart]'));
-    else if ((act === 'copy' || act === 'file') && pay && entries.length) {
-        const ok = await pay(act, [...entries]);
+    else if ((act === 'copy' || act === 'file') && pay && entries.length && !payBusy) {
+        // 11-12 그림 액자는 누르는 순간 PNG 를 하나씩 만들어 폰에서 몇 초 걸려요 — 그동안 단추를 막고 한 줄 알려요(다시 누르면 같은 일이 겹쳐 돌았어요)
+        payBusy = true;
+        for (const b of drawer.querySelectorAll('.mart-cart-foot button')) b.disabled = true;
+        if (entries.some(hasArt)) say('그림을 담는 중이에요 · 잠시만요', 8000);
+        let ok = false;
+        try { ok = await pay(act, [...entries]); } finally { payBusy = false; render(); }
         if (ok) { close(); cart.clear(); setTimeout(() => say(act === 'copy' ? '담아 갔어요 🍋 · 테마에 붙여 넣어요' : '담아 갔어요 🍋 · 받은 파일을 테마에서 골라요', 3200), calm() ? 0 : 280); }
     }
 });

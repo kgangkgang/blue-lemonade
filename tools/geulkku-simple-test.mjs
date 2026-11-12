@@ -1636,5 +1636,13 @@ await test('AI 점검 ⑥ 액자 내 사진을 빠르게 두 번 고르거나 �
     const c = k.usePhotoFile({ name: 'c.jpg', type: 'image/jpeg' }); k.pickSample('표본'); gate['c.jpg'](); await c;
     assert.deepEqual(shown, ['b.jpg', '표본'], '줄이는 동안 고른 표본 사진이 남아요');
 });
+await test('AI 점검 ⑦ 장바구니 계산하기 · 받기는 만드는 동안 다시 안 눌려요(그림 액자 PNG 를 만드는 몇 초 동안 겹쳐 돌았어요)', () => {
+    const s = srcOf('cart.js');
+    assert.match(s, /let pay = null, payBusy = false;/);
+    const blk = s.match(/else if \(\(act === 'copy' \|\| act === 'file'\) && pay && entries\.length && !payBusy\) \{[\s\S]*?\n {4}\}/)[0];
+    assert.ok(blk.indexOf('payBusy = true') < blk.indexOf('await pay('), '누르자마자 막아요');
+    assert.match(blk, /b\.disabled = true/); assert.match(blk, /finally \{ payBusy = false; render\(\); \}/);
+    assert.ok(srcOf('mart.js').includes("onCheckout((act, entries) => (act === 'copy' ? copyEntries(entries, true)"), '복사는 첫 await 전에 클립보드를 열어요(사파리)');
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
