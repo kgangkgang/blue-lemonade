@@ -25,14 +25,14 @@
  ],
  "chunks": {
   "sp-simple": {
-   "file": "sp-simple.3b2227ca.json",
+   "file": "sp-simple.a5265079.json",
    "n": 28,
-   "bytes": 376760
+   "bytes": 376820
   },
   "sp-pass-0": {
-   "file": "sp-pass-0.e304d9b4.json",
+   "file": "sp-pass-0.552a90f8.json",
    "n": 40,
-   "bytes": 718440
+   "bytes": 718492
   },
   "sp-pass-1": {
    "file": "sp-pass-1.bfb42624.json",
@@ -40,29 +40,29 @@
    "bytes": 678777
   },
   "sp-pass-2": {
-   "file": "sp-pass-2.dd4723f5.json",
+   "file": "sp-pass-2.db2050e0.json",
    "n": 40,
-   "bytes": 733895
+   "bytes": 733921
   },
   "sp-pass-3": {
-   "file": "sp-pass-3.d26b3460.json",
+   "file": "sp-pass-3.6d4e41d3.json",
    "n": 40,
-   "bytes": 667733
+   "bytes": 667759
   },
   "sp-pass-4": {
-   "file": "sp-pass-4.87d1b28a.json",
+   "file": "sp-pass-4.ade38e8b.json",
    "n": 40,
-   "bytes": 798230
+   "bytes": 797322
   },
   "sp-pass-5": {
-   "file": "sp-pass-5.9527e726.json",
+   "file": "sp-pass-5.c17e1167.json",
    "n": 40,
-   "bytes": 714516
+   "bytes": 714581
   },
   "sp-pass-6": {
-   "file": "sp-pass-6.7a9ca7e7.json",
+   "file": "sp-pass-6.cea2baef.json",
    "n": 40,
-   "bytes": 732348
+   "bytes": 732478
   },
   "sp-pass-7": {
    "file": "sp-pass-7.e973fd21.json",
@@ -75,16 +75,16 @@
    "bytes": 789703
   },
   "sp-pass-9": {
-   "file": "sp-pass-9.8dbe361f.json",
+   "file": "sp-pass-9.c13fe988.json",
    "n": 22,
-   "bytes": 392842
+   "bytes": 393011
   }
  },
  "items": [
   {"id":"simple-k1","name":"낫표","emoji":"💬","category":"simple-open","style":"심플","desc":"제목 줄을 누르면 가운데 붙어 있던 「 」가 모서리로 벌어지며 글이 드러나요 · 다시 누르면 닫혀요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":7117,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k2","name":"견출지","emoji":"🏷️","category":"simple-sound","style":"심플","desc":"제목이 견출지 한 장 — 누르면 오른쪽 아래부터 스티커처럼 뜯기고, 점선 자리를 누르면 다시 붙어요 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":13617,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k3","name":"바인더","emoji":"🗂️","category":"simple-tap","style":"심플","desc":"바인더 등 · 금속 고리 셋 · 여백 줄 — 오른쪽 아래 「1 / 2」를 누르면 종이가 옆으로 밀리며 다음 장","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":8858,"fx":"e","bg":"#f8f9fa","ink":"#26272b","accent":"#e90061"},
-  {"id":"simple-k4","name":"줄자","emoji":"📏","category":"simple-tap","style":"심플","desc":"위에 0~30cm 자 · 제목 끝 커서 — 자 위에서 휠(폰은 옆으로 밀기) · 세모 줄을 누르면 첫 줄 들여쓰기 켬/끔","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":16994,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k4","name":"줄자","emoji":"📏","category":"simple-tap","style":"심플","desc":"위에 0~30cm 자 · 제목 끝 커서 — 자 위에서 휠(폰은 옆으로 밀기) · 세모 줄을 누르면 첫 줄 들여쓰기 켬/끔","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":17051,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k5","name":"티백","emoji":"🍵","category":"simple-tap","style":"심플","desc":"옆에서 본 찻잔 · 흔들리는 꼬리표 · 김 — 찻잔을 누르면 캐릭터 색 찻물이 차오르고 숨은 한 줄이 나와요","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":16223,"fx":"e","bg":"#fbfaf7","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k6","name":"음성 메모","emoji":"🎙️","category":"simple-sound","style":"심플","desc":"말소리처럼 오르내리는 음파 막대 · 흐르는 녹음 시간 · 소리 카드 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":14751,"fx":"e","bg":"#25272b","ink":"#e1e1e5","accent":"#0075d3"},
   {"id":"simple-k7","name":"성냥","emoji":"🔥","category":"simple-tap","style":"심플","desc":"성냥 한 개비 — 누르면 불씨가 「탁」 붙고 테두리 · 가로줄이 캐릭터 색으로, 지문 글자가 또렷해져요 · 다시 누르면 연기 한 줄","c":"sp-simple","copyOnly":true,"photo":true,"simple":true,"bytes":15295,"fx":"e","bg":"#1f2124","ink":"#e1e1e5","accent":"#e90061"},
@@ -119,9 +119,9 @@
   {"id":"simple-k1437","name":"기본 글꾸 · 대본","emoji":"🎬","category":"simple-tap","style":"심플","desc":"블루레몬 로그 복사 기본 틀 「대본」 새 판 — 누르면 바뀌어요","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":14890,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"상대 화자 색을 찾지 못했어요"},
   {"id":"simple-k1438","name":"기본 글꾸 · 기록","emoji":"🕰️","category":"simple-tap","style":"심플","desc":"블루레몬 로그 복사 기본 틀 「기록」 새 판 — 누르면 바뀌어요","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":15773,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"상대 화자 색을 찾지 못했어요"},
   {"id":"simple-k1439","name":"기본 글꾸 · 노트","emoji":"📓","category":"simple-tap","style":"심플","desc":"블루레몬 로그 복사 기본 틀 「노트」 새 판 — 누르면 바뀌어요","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":15136,"fx":"e","bg":"#f5f5f6","ink":"#26272b","accent":"#0075d3","nt":"상대 화자 색을 찾지 못했어요"},
-  {"id":"simple-k1440","name":"기본 글꾸 · 편지","emoji":"✉️","category":"simple-tap","style":"심플","desc":"블루레몬 로그 복사 기본 틀 「편지」 새 판 — 누르면 바뀌어요","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":21344,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"제목 자리를 찾지 못했어요"},
+  {"id":"simple-k1440","name":"기본 글꾸 · 편지","emoji":"✉️","category":"simple-tap","style":"심플","desc":"블루레몬 로그 복사 기본 틀 「편지」 새 판 — 누르면 바뀌어요","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":21370,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"제목 자리를 찾지 못했어요"},
   {"id":"simple-k1441","name":"기본 글꾸 · 일기","emoji":"📔","category":"simple-tap","style":"심플","desc":"블루레몬 로그 복사 기본 틀 「일기」 새 판 — 누르면 바뀌어요","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":20104,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"제목 자리를 찾지 못했어요"},
-  {"id":"simple-k1442","name":"기본 글꾸 · 기사","emoji":"📰","category":"simple-tap","style":"심플","desc":"블루레몬 로그 복사 기본 틀 「기사」 새 판 — 누르면 바뀌어요","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":15376,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"상대 화자 색을 찾지 못했어요"},
+  {"id":"simple-k1442","name":"기본 글꾸 · 기사","emoji":"📰","category":"simple-tap","style":"심플","desc":"블루레몬 로그 복사 기본 틀 「기사」 새 판 — 누르면 바뀌어요","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":15402,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"상대 화자 색을 찾지 못했어요"},
   {"id":"simple-k1443","name":"기본 글꾸 · 책","emoji":"📖","category":"simple-tap","style":"심플","desc":"블루레몬 로그 복사 기본 틀 「책」 새 판 — 누르면 바뀌어요","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":17753,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"제목 자리를 찾지 못했어요"},
   {"id":"simple-k1444","name":"기본 글꾸 · 가로 넘김","emoji":"🎞️","category":"simple-tap","style":"심플","desc":"블루레몬 로그 복사 기본 틀 「가로 넘김」 새 판 — 누르면 바뀌어요","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":17121,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"상대 화자 색을 찾지 못했어요"},
   {"id":"simple-k1445","name":"기본 글꾸 · 가로 폴라로이드","emoji":"📸","category":"simple-tap","style":"심플","desc":"블루레몬 로그 복사 기본 틀 「가로 폴라로이드」 새 판 — 누르면 바뀌어요","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":17325,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"상대 화자 색을 찾지 못했어요"},
@@ -227,9 +227,9 @@
   {"id":"simple-k1098","name":"까마귀와 달","emoji":"🐦","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 까마귀 울리기","c":"sp-pass-2","copyOnly":true,"photo":true,"simple":true,"bytes":19148,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1099","name":"초밥","emoji":"✨","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 레일 돌리기","c":"sp-pass-2","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":23320,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k1100","name":"쪽 넘기기","emoji":"📖","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 쪽 넘기기","c":"sp-pass-2","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":14167,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
-  {"id":"simple-k1101","name":"디스코드","emoji":"💬","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 메시지 보내기","c":"sp-pass-2","copyOnly":true,"photo":true,"simple":true,"bytes":9640,"fx":"e","bg":"#313338","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
+  {"id":"simple-k1101","name":"디스코드","emoji":"💬","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 메시지 보내기","c":"sp-pass-2","copyOnly":true,"photo":true,"simple":true,"bytes":9666,"fx":"e","bg":"#313338","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
   {"id":"simple-k1102","name":"익명 게시판","emoji":"📌","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 익명으로 바꾸기","c":"sp-pass-2","copyOnly":true,"photo":true,"simple":true,"bytes":14532,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
-  {"id":"simple-k1103","name":"비주얼노벨 선택지","emoji":"🌧️","category":"simple-open","style":"심플","desc":"누른 단추가 고른 선택지로 칠해지고 다른 쪽은 접혀 사라지며 글이 열림 — 닫힌 채 시작 → 고른 선택지로 칠해지며 글이 열림","c":"sp-pass-3","copyOnly":true,"photo":true,"simple":true,"bytes":9828,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
+  {"id":"simple-k1103","name":"비주얼노벨 선택지","emoji":"🌧️","category":"simple-open","style":"심플","desc":"누른 단추가 고른 선택지로 칠해지고 다른 쪽은 접혀 사라지며 글이 열림 — 닫힌 채 시작 → 고른 선택지로 칠해지며 글이 열림","c":"sp-pass-3","copyOnly":true,"photo":true,"simple":true,"bytes":9854,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k1104","name":"터미널","emoji":"📜","category":"simple-open","style":"심플","desc":"소품을 누르면 — 명령 실행","c":"sp-pass-3","copyOnly":true,"photo":true,"simple":true,"bytes":9651,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1105","name":"해골","emoji":"💀","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 뼈대만 남기기","c":"sp-pass-3","copyOnly":true,"photo":true,"simple":true,"bytes":20037,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
   {"id":"simple-k1106","name":"놀이공원","emoji":"✨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 관람차 돌리기","c":"sp-pass-3","copyOnly":true,"photo":true,"simple":true,"bytes":27683,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
@@ -304,7 +304,7 @@
   {"id":"simple-k1177","name":"마법 거울","emoji":"🪄","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 거울 비춰 보기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":16140,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1178","name":"호텔","emoji":"🚪","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 걸이표 뒤집기","c":"sp-pass-4","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":12815,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k1179","name":"자동차","emoji":"🚗","category":"simple-open","style":"심플","desc":"소품을 누르면 — 차 출발시키기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":19830,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061"},
-  {"id":"simple-k1180","name":"묘비","emoji":"🌧️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 담쟁이 키우기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":49581,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k1180","name":"묘비","emoji":"🌧️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 담쟁이 키우기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":48660,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1181","name":"제야의 종","emoji":"🔔","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 종 치기","c":"sp-pass-4","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":27665,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1182","name":"사주 명식","emoji":"🔮","category":"simple-open","style":"심플","desc":"소품을 누르면 — 사주 뽑기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":14805,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1183","name":"교내 인트라넷 · 대나무숲","emoji":"🌲","category":"simple-open","style":"심플","desc":"소품을 누르면 — 대숲 흔들기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":13781,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
@@ -346,11 +346,11 @@
   {"id":"simple-k1220","name":"레트로 게임","emoji":"🎮","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 단추 누르기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":20614,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1221","name":"자드키엘 · 라이브 방송","emoji":"✨","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 방송 시작","c":"sp-pass-5","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":14218,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k1222","name":"즉석카메라","emoji":"📷","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 사진 찍기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":13734,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
-  {"id":"simple-k1223","name":"블로그 글","emoji":"💻","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 공감","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":17391,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
-  {"id":"simple-k1224","name":"통화 기록","emoji":"📞","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 전화 걸기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":14941,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"줄마다 꾸밈이 다른 틀이에요"},
+  {"id":"simple-k1223","name":"블로그 글","emoji":"💻","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 공감","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":17404,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
+  {"id":"simple-k1224","name":"통화 기록","emoji":"📞","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 전화 걸기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":14993,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"줄마다 꾸밈이 다른 틀이에요"},
   {"id":"simple-k1225","name":"유튜브 댓글","emoji":"✨","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 좋아요","c":"sp-pass-5","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":15510,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k1226","name":"가브리엘 · 스마트 헤븐 알림","emoji":"🔔","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 알림 종","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":12596,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
-  {"id":"simple-k1228","name":"X 타래","emoji":"🐦","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 답글 게시하기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":14966,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
+  {"id":"simple-k1228","name":"X 타래","emoji":"🐦","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 답글 게시하기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":15057,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
   {"id":"simple-k1229","name":"야신 · 섭정 결재 · 천위대 명패","emoji":"🗂️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 명패 걸기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":10678,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k1230","name":"이시온 · 백팩 키링 이름표","emoji":"🧸","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 키링 하나 더 달기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":23191,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1231","name":"길드 의뢰서","emoji":"📌","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 의뢰서 고정","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":13118,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
@@ -358,7 +358,7 @@
   {"id":"simple-k1233","name":"유니온 시민게시판","emoji":"📌","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 새 글 붙이기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":11668,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1234","name":"업적 달성 알림","emoji":"🌙","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 업적 달성","c":"sp-pass-6","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":24308,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1235","name":"이시온 · 냄새 추적 경로도","emoji":"✨","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 흔적 따라가기","c":"sp-pass-6","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":15122,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
-  {"id":"simple-k1236","name":"가브리엘 · 아침 루틴 체크리스트","emoji":"🎄","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 체크하기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":12986,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k1236","name":"가브리엘 · 아침 루틴 체크리스트","emoji":"🎄","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 체크하기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":13025,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1237","name":"미카엘 · 감사 통보서","emoji":"✨","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 지적 표시하기","c":"sp-pass-6","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":14095,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k1238","name":"진 강 · 포장마차 외상 장부","emoji":"🌧️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 외상 긋기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":16890,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k1239","name":"서미란 · 출연 계약서 검토본","emoji":"🗡️","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 조항 긋기","c":"sp-pass-6","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":18496,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
@@ -479,11 +479,11 @@
   {"id":"simple-k1359","name":"VIP 라운지 · 칵테일","emoji":"📜","category":"simple-open","style":"심플","desc":"소품을 누르면 — 칵테일 만들기","c":"sp-pass-9","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":16981,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1360","name":"VIP 라운지 · 소파와 스탠드","emoji":"📜","category":"simple-open","style":"심플","desc":"소품을 누르면 — 스탠드 켜기","c":"sp-pass-9","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":14131,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1361","name":"블로그 글 · 노트북과 블로그 꼴 글","emoji":"📓","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 글 쓰기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":13481,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
-  {"id":"simple-k1362","name":"통화 기록 · 접힌 통화 목록","emoji":"📞","category":"simple-open","style":"심플","desc":"소품을 누르면 — 통화 내용 펼치기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":13360,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"줄마다 꾸밈이 다른 틀이에요"},
-  {"id":"simple-k1363","name":"X 타래 · 빈 타래","emoji":"🐦","category":"simple-open","style":"심플","desc":"소품을 누르면 — 타래 더 보기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":15790,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
+  {"id":"simple-k1362","name":"통화 기록 · 접힌 통화 목록","emoji":"📞","category":"simple-open","style":"심플","desc":"소품을 누르면 — 통화 내용 펼치기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":13399,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"줄마다 꾸밈이 다른 틀이에요"},
+  {"id":"simple-k1363","name":"X 타래 · 빈 타래","emoji":"🐦","category":"simple-open","style":"심플","desc":"소품을 누르면 — 타래 더 보기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":15894,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
   {"id":"simple-k1364","name":"X 타래 · 줄에 건 쪽지와 타래 꼴 글","emoji":"🐦","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 쪽지 이어 걸기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":17881,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
   {"id":"simple-k1365","name":"미니홈피 · 다이어리 탭","emoji":"💻","category":"simple-open","style":"심플","desc":"소품을 누르면 — 다이어리 보기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":28132,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
-  {"id":"simple-k1366","name":"미니홈피 · 미니룸과 방명록","emoji":"💻","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 놀러 가기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":23340,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
+  {"id":"simple-k1366","name":"미니홈피 · 미니룸과 방명록","emoji":"💻","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 놀러 가기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":23366,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요"},
   {"id":"simple-k1367","name":"수영 · 레인","emoji":"🏊","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 물살 보내기","c":"sp-pass-9","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":24179,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1368","name":"수영 · 오리발","emoji":"🏊","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 물장구 치기","c":"sp-pass-9","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":20467,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1369","name":"수영 · 튜브","emoji":"🏊","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 튜브 띄우기","c":"sp-pass-9","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":17239,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},

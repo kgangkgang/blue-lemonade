@@ -155,6 +155,39 @@ export const uniqInner = (html) => {
   }
   return head + body;
 };
+/** 11-12 글자와 요소가 섞인 칸의 맨 글자 덩이를 <span> 으로 감싸요 — 「보이는 글자는 모두 고칠 칸」(tune.js editables 덧칸은 글자만 든 잎 요소만 칸이에요).
+ *  예: 줄자 제목(.gk-tt 안에 꾸밈 span) · 선택지 단추(summary 안 표시 + 글) · 체크리스트 줄 · 통화 기록 · X 반응 수. 감싸는 것은 글자(문자 · 숫자)가 든 덩이만, 앞뒤 공백은 밖에 둬요 */
+const INLINE = /^(?:b|i|strong|em|s|br)$/;
+export const wrapLoose = (html) => {
+  const toks = [], re = /<!--[\s\S]*?-->|<\/?([a-zA-Z][\w-]*)\b[^>]*>|[^<]+|</g;
+  for (let m; (m = re.exec(html));) toks.push({ raw: m[0], name: m[1]?.toLowerCase() || null, close: m[0][1] === '/', comment: m[0].startsWith('<!--') });
+  const VOID = /^(?:area|base|br|col|embed|hr|img|input|link|meta|source|track|wbr)$/;
+  // 나무로: 노드 = { tok, kids, end }
+  const root = { kids: [] }, stack = [root];
+  for (const t of toks) {
+    const top = stack[stack.length - 1];
+    if (t.comment || !t.name) { top.kids.push({ text: !t.comment && !t.raw.startsWith('<') , tok: t }); continue; }
+    if (t.close) { for (let k = stack.length - 1; k > 0; k--) if (stack[k].tok.name === t.name) { stack[k].end = t; stack.length = k; break; } continue; }
+    const n = { tok: t, kids: [] }; top.kids.push(n);
+    if (!VOID.test(t.name) && !t.raw.endsWith('/>')) stack.push(n);
+  }
+  const letters = s => /[\p{L}\p{N}]/u.test(s.replace(/<[^>]*>/g, '').replace(/&[a-z]+;|&#\d+;/gi, ''));
+  const plainInline = n => n.tok && INLINE.test(n.tok.name || '') && !/\s[\w-]+=/.test(n.tok.raw) && n.kids.every(k => k.text || plainInline(k));
+  const ser = n => (n.text !== undefined && !n.kids ? n.tok.raw : (n.tok ? n.tok.raw : '') + body(n) + (n.end ? n.end.raw : ''));
+  const body = (n) => {
+    const kids = n.kids, name = n.tok?.name;
+    if (['style', 'script', 'audio', 'textarea', 'title'].includes(name)) return kids.map(ser).join('');
+    const mixed = kids.some(k => !k.text && k.tok && !k.tok.comment && !plainInline(k)) && kids.some(k => k.text && letters(k.tok.raw));
+    // 제목(gk-tt)은 안 감싸요 — 테마가 class="gk-tt">제목 을 바로 찾아요(줄자 제목은 틀에서 따로 손봐요)
+    if (!mixed || !n.tok || /\bclass="[^"]*\bgk-tt\b/.test(n.tok.raw)) return kids.map(ser).join('');
+    let out = '', run = [];
+    const flush = () => { if (!run.length) return; const s = run.map(ser).join(''); if (letters(s)) { const lead = s.match(/^\s*/)[0], tail = s.slice(lead.length).match(/\s*$/)[0]; out += `${lead}<span>${s.slice(lead.length, s.length - tail.length)}</span>${tail}`; } else out += s; run = []; };
+    for (const k of kids) { if (k.text || plainInline(k)) run.push(k); else { flush(); out += ser(k); } }
+    flush();
+    return out;
+  };
+  return root.kids.map(ser).join('');
+};
 const fitFix = (html) => {
   const key = (html.match(/^\s*<div\b[^>]*\sclass="gk [^"]*\bgk-((?:k|q)\d+)\b/) || [])[1], add = (FIT_RULES[key] || []).filter(r => !html.includes(r));
   if (!add.length) return html;
@@ -191,7 +224,7 @@ export function frameHtml(d) {
   const file = fileOf(d);
   if (!file) throw new Error(`${d.id}: 틀 파일이 없어요`);
   const raw = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
-  const html = fitFix(sampleNames(focusRing(fillSlots(martAudio(uniqInner(stripAlias(raw.trim()))), d.values))));
+  const html = fitFix(sampleNames(focusRing(fillSlots(martAudio(wrapLoose(uniqInner(stripAlias(raw.trim())))), d.values))));
   const bad = problems(html);
   if (bad.length) throw new Error(`${d.id}: ${bad.join(' · ')}`);
   const info = sf.simpleFrameInfo(html);
