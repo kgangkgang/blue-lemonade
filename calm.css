@@ -175,7 +175,7 @@
 .showcase-footer{margin-top:0}
 .top .brand,.hero h1,.hero .mark{color:var(--blue-strong)}
 .hero .actions .primary{background:var(--blue);color:var(--on-blue)}
-.hero .actions .primary:hover{background:var(--blue-strong)}
+.hero .actions .primary:hover{background:var(--blue-hover)}
 .hero .actions .ghost{color:var(--blue-strong);border-color:var(--line-strong)}
 .hero .release-chip,.hero .device-pick button[aria-pressed=true]{color:var(--blue-strong)}
 .showcase-screen[data-screen=weather]{background:var(--band);color:var(--band-text);border-color:var(--band)}
@@ -199,3 +199,9 @@
 
 /* Mixed portrait and landscape recordings keep independent card heights. */
 .gallery-block .track{align-items:flex-start}
+/* 11-12 주 단추 다듬기 — 보통은 아주 옅은 그림자, 마우스 올림은 어둡게 말고 같은 블루가 살짝 밝아지고(#1E74E0 · 흰 글자 대비 4.5) 1px 떠요. 공지 시안(공지-짧게/가2)과 같은 값 */
+.button.primary{box-shadow:0 1px 2px rgba(36,119,211,.18)}
+.button.citrus{box-shadow:0 1px 2px rgba(150,118,0,.16)}
+@media (hover:hover){.button.primary:hover,.hero .actions .button.primary:hover{background:var(--blue-hover);transform:translateY(-1px);box-shadow:0 3px 8px rgba(36,119,211,.22)}
+.button.citrus:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(150,118,0,.18)}}
+.button.primary:active,.button.citrus:active{transform:none}

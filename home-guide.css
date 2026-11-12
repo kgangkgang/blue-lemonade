@@ -5,7 +5,7 @@
 .home-guide .top-inner{max-width:1264px;height:72px}
 .home-guide .top nav{margin-left:auto}
 .home-guide .top .brand{font-size:17px}
-.home-guide .top-actions .button.small{border-radius:999px;box-shadow:0 10px 24px -12px var(--blue)}
+.home-guide .top-actions .button.small{border-radius:999px}
 .home-guide .section{max-width:1200px;padding:76px 32px}
 .home-guide .section-head{margin-bottom:30px}
 .home-guide .section-head h2{font-size:clamp(28px,3.1vw,38px);line-height:1.35;letter-spacing:-.045em}
