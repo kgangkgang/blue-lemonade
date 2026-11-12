@@ -425,14 +425,15 @@ function isDarkTheme(style = null) {
 // 읽은 값으로 syncOnColor 의 서명도 맞춰 둔다 — 부팅 1.5초 뒤의 첫 syncOnColor 가 같은 색이면 다시 칠하지 않게.
 function applyOnColor() {
     const style = getComputedStyle(document.documentElement);
-    const onInk = contrastInk(effectiveOnColor(style)), base = isDarkTheme(style) ? '#141318' : '#fbf9f6';
+    const dark = isDarkTheme(style);   // 1.2.2 아래 쓰기 뒤에 다시 읽으면(예전 --jj-stroke 줄) 방금 쓴 :root 변수 때문에 문서 스타일 계산을 한 번 더 강제한다 — 읽기는 쓰기 앞에서 끝낸다
+    const onInk = contrastInk(effectiveOnColor(style)), base = dark ? '#141318' : '#fbf9f6';
     onColorSignature = colorSignature(style);
     const rootStyle = document.documentElement.style;
     if (settings().onColor) rootStyle.setProperty('--jj-on-color', settings().onColor);
     else rootStyle.removeProperty('--jj-on-color');
     rootStyle.setProperty('--jj-on-ink', onInk);
     rootStyle.setProperty('--jj-base', base);
-    rootStyle.setProperty('--jj-stroke', isDarkTheme(style) ? 'var(--jj-on)' : 'color-mix(in srgb, var(--jj-on) 80%, #b08000)');   // 1.3.1 테두리 단계 (밝은 테마는 조금 진하게)
+    rootStyle.setProperty('--jj-stroke', dark ? 'var(--jj-on)' : 'color-mix(in srgb, var(--jj-on) 80%, #b08000)');   // 1.3.1 테두리 단계 (밝은 테마는 조금 진하게)
     rootStyle.removeProperty('--jj-grad-a');   // 1.3.1 그라데이션은 없앴다 (예전 판이 남긴 값 치우기)
     rootStyle.removeProperty('--jj-grad-b');
     // 1.1.5 설정 카드가 열려 있으면(팔레트 · 에이드를 바꾼 때) 색 견본도 다시 — 닫혀 있으면(부팅 포함) 계산 스타일을 더 읽지 않아요

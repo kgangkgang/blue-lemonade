@@ -257,6 +257,7 @@ jobs:
           node tools/tests/direction-migrate.mjs .
           node tools/tests/direction-saved-list.mjs .
           node tools/tests/direction-typing.mjs .
+          node tools/tests/direction-read-before-write.mjs .
           node tools/tests/chat-light.mjs .
           node tools/tests/review-825-fixes.mjs .
           node tools/tests/persona-defer.mjs .
