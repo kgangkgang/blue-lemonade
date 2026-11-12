@@ -34,3 +34,5 @@
 @media(prefers-reduced-motion:reduce){.pet-sleep,.pet-help{animation:none!important;transition:none!important}}
 @media(max-width:760px){.pet-controls button.pet-label{display:inline-flex;min-height:44px}.pet-controls button{min-height:44px;font-size:12px}.pet-controls.expanded{max-width:280px}.pet-options{justify-content:flex-start}.pet-help{max-width:210px}.pet-controls{bottom:calc(10px + env(safe-area-inset-bottom))}}
 @media(prefers-reduced-motion:reduce){.pet-mood,.pet-pose{animation:none!important;transition:none!important}}
+/* 11-12 폰: 레몬을 눌러 부를 때 「에이드와 나이트가 놀러 왔어요」 알림이 알약 자리에 잠깐 대신 떠요(겹쳐서 알약 글자가 가려지던 것) — 알림이 사라지면 알약이 다시 보여요 */
+.bl-pets-toast .pet-controls{visibility:hidden}

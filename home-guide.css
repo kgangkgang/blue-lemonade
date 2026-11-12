@@ -168,3 +168,5 @@ html.device-mobile .home-guide .showcase-screen video{aspect-ratio:9/19.5}
  .home-guide .note summary .span{display:none}.home-guide footer{padding-bottom:105px}
 }
 @media(prefers-reduced-motion:reduce){.home-guide html{scroll-behavior:auto}.home-guide .more-section>summary>span{transition:none}}
+/* 11-12 폰 360 폭 아래: 머리줄(레몬 · 기능 찾기 · 마트 · 설치)이 320 에서 11px 넘쳐 페이지가 옆으로 밀리고 바닥 고정 알약이 잘렸어요 — 여백과 틈만 줄여요(누름 칸 크기는 그대로) */
+@media (max-width:360px){.home-guide .top-inner{padding:0 10px;gap:6px}.home-guide .top nav a[href="#features"]{padding:0 6px}}
