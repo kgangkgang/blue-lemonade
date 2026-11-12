@@ -37,7 +37,8 @@ export const RICH_TAGS = Object.freeze(['br', 'b', 'i', 'strong', 'em', 's']);
  *   옛 꼴(꾸밈 없는 글)도 그대로 받아요
  */
 export function cleanRich(v) {
-    let s = String(v ?? '').slice(0, 4000).replace(/\r\n?/g, '\n');
+    // 11-12 밤 끊기지 않는 빈칸(&nbsp; · U+00A0)은 보통 빈칸으로 — 글 고치기에서 꾸민 낱말 사이를 띄우면 브라우저가 &nbsp; 를 넣는데, 아래 & 이스케이프가 그것을 「&amp;nbsp;」 글자로 바꿔 복사 글에 그대로 보였어요
+    let s = String(v ?? '').slice(0, 4000).replace(/\r\n?/g, '\n').replace(/&nbsp;|&#160;|&#xa0;|\u00a0/gi, ' ');
     const out = [], stack = [];
     for (const m of s.matchAll(/<(\/?)([a-z][a-z0-9]*)\b[^>]*>|([^<]+)|(<)/gi)) {
         if (m[3] != null || m[4] != null) { out.push(String(m[3] ?? m[4]).replace(/&(?!(?:amp|lt|gt|quot|#39|#x?[0-9a-f]+);)/gi, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')); continue; }

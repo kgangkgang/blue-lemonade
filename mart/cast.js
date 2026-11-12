@@ -9,8 +9,8 @@ import { toneState, setTone, castPicked, savedCast, CAST_GROUPS, castList, remem
 const PAPER_ENABLED = false;
 import { dialogueColors } from './tone-geulkku.js?v=20261110v';
 import { castSources, groupSources, sourceHtml } from './sources.js?v=20261112c';   // 11-12 밤 원작(출처) — 캐릭터 묶음 · 고른 캐릭터 줄
-import { mineOn, mineText, mineInfo, setMine as setMineRaw } from './mine-text.js?v=20261112e';
-import { dropMineEdits } from './tune.js?v=20261112e';
+import { mineOn, mineText, mineInfo, setMine as setMineRaw } from './mine-text.js?v=20261112f';
+import { dropMineEdits } from './tune.js?v=20261112f';
 /** 11-11 독립 점검 1 — 내 글이 바뀌면 옛 글에서 고친 줄 · 숨긴 줄을 먼저 비우고(칸 번호가 옛 글 것) 바꿔요 */
 const setMine = (next = {}) => { if ('text' in next && String(next.text ?? '') !== mineText()) dropMineEdits(); return setMineRaw(next); };   // 11-11 「내 글 넣기」 — 붙여 넣은 내 글로 모든 카드를 그려요
 

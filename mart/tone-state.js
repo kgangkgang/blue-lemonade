@@ -6,15 +6,15 @@
 //   - 11-11 「상대」(둘째 화자 · 견본 글의 「친구」) 색 k2 · name2 — 안 고르면 틀이 정해 둔 색 그대로예요.
 //   목록 · 상세 창(mart.js) · 시식 창(taste.js) · 캐릭터 줄(cast.js)이 같이 읽고, 바뀌면 'bl-tone-change' 를 알려요.
 import { toneHtml, toneMixHtml, speakerColor, PAPER_COLORS, TEXTURES } from './tone-geulkku.js?v=20261110v';
-import { toneSimple, ORIGINAL } from './simple-frames.js?v=20261112a';
+import { toneSimple, ORIGINAL } from './simple-frames.js?v=20261112b';
 import { applyLook, lookRev, lookNow } from './look.js?v=20261112a';   // 11-11 글 모양(테마 「글자」 탭 축소판 — 글꼴 · 크기 · 자간 · 그림자 …) — 값이 없으면 그대로
-import { tuneOf, tuneRev, applyTune, applySpoilers, spoilersOf } from './tune.js?v=20261112e';
+import { tuneOf, tuneRev, applyTune, applySpoilers, spoilersOf } from './tune.js?v=20261112f';
 import { applyWords, wordsRev } from './words.js?v=20261112a';
 import { applyMotion, motionRev } from './motion-state.js?v=20261112a';
 import { applyTex, texRev } from './texture.js?v=20261112a';   // 11-12 바탕 질감 — 맨 마지막   // 11-12 움직임 세기(글 · 소품) — 중이면 그대로   // 11-11 「도구」 — 이름 숨김 · 단어 바꾸기(모든 틀 · 글자만)
 import { applyShape, shapeNow, shapeRev } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기(띠 진하기 · 카드 · 이름표 · 소품 숨김 · 낱낱 바탕 색) — 다시 칠하기 바로 뒤
 import { capsOf, capsRev, shapeGate, padIn, titleIn, loadCaps } from './caps.js?v=20261112a';   // 11-12 틀 능력표 — 못 받는 칸은 건너뛰어요
-import { applyMine, mineOn, mineRev, mineInfo } from './mine-text.js?v=20261112e';   // 11-11 「내 글 넣기」 — 켜져 있으면 견본 글 대신 내 글   // 11-11 조절 칸(틀 하나의 글자색 · 소품 색 · 고쳐 쓴 글) — 값이 없으면 그대로   // 11-11 심플 새 틀(클래스 + 틀 안 <style>) — 색 블록만 갈아 끼우고 낮 · 밤은 뿌리 클래스
+import { applyMine, mineOn, mineRev, mineInfo } from './mine-text.js?v=20261112f';   // 11-11 「내 글 넣기」 — 켜져 있으면 견본 글 대신 내 글   // 11-11 조절 칸(틀 하나의 글자색 · 소품 색 · 고쳐 쓴 글) — 값이 없으면 그대로   // 11-11 심플 새 틀(클래스 + 틀 안 <style>) — 색 블록만 갈아 끼우고 낮 · 밤은 뿌리 클래스
 export { PAPER_COLORS, TEXTURES };
 
 /** 11-10 밤 사용자 「음 그라데이션 과감하게 빼자... 구리다...」 — 혼합(2~3색 그라데이션)은 꺼 두고 스위치도 안 보여요. 코드는 남겨 둬요(true 로 바꾸면 돌아와요) */

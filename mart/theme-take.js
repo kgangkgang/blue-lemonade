@@ -5,7 +5,7 @@
 //   테마 쪽 규칙이 바뀌면(받는 틀이 늘면) 여기 · 고정 자료를 같이 고쳐요.
 //   쓰는 곳: tools/geulkku-simple.mjs(목록 index.json 의 nt — 못 받는 까닭) · mart.js(내 글꾸 · 크게 보기 「테마로 담기」 칸).
 // DOM 없는 순수 모듈.
-import { simpleFrameInfo, facesOf, SIMPLE_CONTRACT } from './simple-frames.js?v=20261112a';
+import { simpleFrameInfo, facesOf, SIMPLE_CONTRACT } from './simple-frames.js?v=20261112b';
 import { speakerColor } from './lib/log-copy/shared/char-tone.js?v=20261111a';
 
 export const SAMPLE_TITLE = '비 그친 뒤, 옥상에서';   // 마트 · 테마 공통 견본 제목

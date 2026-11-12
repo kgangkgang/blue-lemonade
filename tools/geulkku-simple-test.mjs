@@ -372,8 +372,8 @@ await test('HTML 복사: <style> 하나(감싸는 div 첫 자식 · 틀 규칙 +
         assert.ok(tg.readyReport(out).ok);
         assert.equal(sf.simpleReady(out), out);
         // 주석을 빼면 글은 주석 달기 전과 같아요(화면에 보이는 것은 안 바뀌어요)
-        assert.equal(out.replace(/<!-- ✎ [^>]*-->/g, '').replace(/\n<!-- ▲[^\n]*-->\n/, '').replace(/\ndiv\.gk-\w+ details(?:>summary~:not\(\[class\]\)\{display:none\}|\{margin:0\})/g, ''), tg.kkangtongReady(sf.hoistStyle(h)));
-        if (/<details\b/.test(h)) assert.match(out, /details>summary~:not\(\[class\]\)\{display:none/, '11-11 점검 2 — 깡통 빈 줄 숨김(틀에 없으면 마트가 붙여요)');
+        assert.equal(out.replace(/<!-- ✎ [^>]*-->/g, '').replace(/\n<!-- ▲[^\n]*-->\n/, '').replace(/\ndiv\.gk-\w+ details(?:>summary~:not\(\[class\]\):not\(:has\(\[class\]\)\)\{display:none\}|\{margin:0\})/g, ''), tg.kkangtongReady(sf.hoistStyle(h)));
+        if (/<details\b/.test(h)) assert.match(out, /details>summary~:not\(\[class\]\)(?::not\(:has\(\[class\]\)\))?\{display:none/, '11-11 점검 2 — 깡통 빈 줄 숨김(틀에 없으면 마트가 붙여요 · 11-12 밤 class 없는 div 로 감싼 내용은 안 숨겨요)');
         // 예전 길(kkangtongReady 바로)이었다면 <style> 이 둘이 돼요 — 걸림돌 3
         assert.equal((tg.kkangtongReady(h).match(/<style>/g) || []).length, 2);
     }
@@ -999,6 +999,48 @@ await test('소리 줄 정리(11-12 밤 「mp3 에 효과 들어간 특이한 �
     const html = '<div class="gk gk-k1"><style>\n.gk-k1 p{margin:0}\n.gk-k1 .gk-sd{display:flex}\n.gk-k1 .gk-nm.gk-nA,.gk-k1 .gk-sn.gk-sA{color:red}\n.gk-k1 audio{display:block}\n\n.gk-k1.gk-tl .gk-sc{color:blue}\n</style><p>가</p>\n<div class="gk-sd"><span class="gk-sn gk-sA">이름</span><audio controls></audio></div>\n<p>나</p></div>';
     assert.equal(gen.dropSound(html), '<div class="gk gk-k1"><style>\n.gk-k1 p{margin:0}\n.gk-k1 .gk-nm.gk-nA{color:red}\n\n.gk-k1.gk-tl .gk-sc{color:blue}\n</style><p>가</p>\n<p>나</p></div>');
     assert.equal(gen.dropSound('<div><p>소리 없음</p></div>'), '<div><p>소리 없음</p></div>');
+});
+
+// ── 11-12 밤 급한 고침 셋(사용자가 깡통에 올린 글 163534 에서 봄) — 다시 깨지지 않게 잠가요 ──
+await test('꾸민 낱말 + 빈칸 · 엔티티 든 글: 끊기지 않는 빈칸(&nbsp; · U+00A0)은 보통 빈칸으로 · 다른 엔티티는 두 번 이스케이프하지 않아요 · 두 번 걸어도 같아요', async () => {
+    const tun = await import(pathToFileURL(path.join(MART, 'tune.js')).href + '?nbsp');
+    // 글 고치기(contenteditable innerHTML)가 내놓는 꼴 그대로
+    assert.equal(tun.cleanRich('<em>기울임</em>&nbsp;<strong>굵게</strong>&nbsp;<s>취소</s>'), '<em>기울임</em> <strong>굵게</strong> <s>취소</s>');
+    assert.equal(tun.cleanRich('<em>기울임</em> <strong>굵게</strong>'), '<em>기울임</em> <strong>굵게</strong>');
+    assert.equal(tun.cleanRich('가&#160;나&#xA0;다'), '가 나 다');
+    assert.equal(tun.cleanRich('톰 &amp; 제리 &lt;3 &gt; &quot;따옴&quot; &#39;작은&#39; &#8212; &#x2014;'), '톰 &amp; 제리 &lt;3 &gt; &quot;따옴&quot; &#39;작은&#39; &#8212; &#x2014;', '이미 이스케이프된 엔티티는 그대로(두 번 이스케이프 0)');
+    assert.equal(tun.cleanRich('톰 & 제리 < 3'), '톰 &amp; 제리 &lt; 3', '맨 & · < 는 한 번만');
+    for (const v of ['<em>기울임</em>&nbsp;<strong>굵게</strong>', '톰 &amp; 제리', 'A &amp;amp; B', '&amp;nbsp;']) assert.equal(tun.cleanRich(tun.cleanRich(v)), tun.cleanRich(v), `두 번 걸어도 같아요: ${v}`);
+    assert.ok(!tun.cleanRich('<b>가</b>&nbsp;<i>나</i>').includes('nbsp'));
+    // 틀에 넣은 결과 HTML 한 줄: 고친 글에 &amp;nbsp; 가 안 남아요
+    const html = '<style>\n.gk p{margin:0}\n</style><div class="gk"><p class="gk-nr">하나 둘 셋 넷</p></div>';
+    const i = tun.editables(html).find(e => e.cls === 'gk-nr').i;
+    const out = tun.applyTune(html, { texts: { [i]: '<em>기울임</em>&nbsp;<strong>굵게</strong>&nbsp;<s>취소</s>' } });
+    assert.ok(out.includes('<p class="gk-nr"><em>기울임</em> <strong>굵게</strong> <s>취소</s></p>') && !/&amp;nbsp;|&nbsp;| /.test(out), out.slice(-90));
+    // 내 글(붙여 넣은 글)도
+    const mt = await import(pathToFileURL(path.join(MART, 'mine-text.js')).href + '?nbsp');
+    const model = mt.mineModel('깡통: 여기 있을 줄 알았어.\n깡캐: 그래&nbsp;맞아.');
+    assert.ok(model.lines.length >= 2 && model.lines.every(l => !/ |&nbsp;|&amp;nbsp;/.test(JSON.stringify(l))), JSON.stringify(model.lines));
+});
+await test('가짜 굵게: 본문 글꼴이 명조 계열(한 굵기)인 틀에만 굵게 = 고딕 700 규칙 하나 · 고딕 본문 틀 13 은 그대로 · 기본 규칙 덩이 안', async () => {
+    const all = {}; for (const c of Object.values(sixAll.chunks)) Object.assign(all, JSON.parse(fs.readFileSync(path.join(DIR, c.file), 'utf8')).items);
+    let serif = 0, sans = 0;
+    for (const it of sixAll.items) {
+        const p = all[it.id].preview, key = sf.simpleFrameInfo(p).key, font = (p.match(new RegExp(`\\.gk-${key} p\\{[^}]*?font:([^;}]*)`)) || [])[1] || '';
+        const rule = gen.BOLD_RULE(key), n = p.split(rule).length - 1;
+        if (/(?:^|,)\s*serif\s*$/.test(font)) { serif++; assert.equal(n, 1, `${it.id} 명조 본문인데 굵게 규칙이 ${n}개`); assert.ok(partsOf(p)[0].includes(rule), `${it.id} 기본 규칙 덩이 안`); }
+        else { sans++; assert.match(font, /sans-serif\s*$/, `${it.id} 본문 글꼴 ${font}`); assert.equal(n, 0, `${it.id} 고딕 본문 틀은 그대로`); }
+    }
+    assert.equal(serif, 404); assert.equal(sans, 13);
+    assert.equal(gen.BOLD_RULE('k1'), '.gk-k1 p strong,.gk-k1 p b{font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;font-weight:700}');
+});
+await test('블라인드(details 안에 글이 든 틀): 깡통이 내용을 class 없는 div 로 감싸도 숨기지 않아요 — 빈 줄(class 없는 · class 든 것이 안 든 칸)만 숨김', () => {
+    const p = sfx['simple-k8'].preview, out = sf.simpleReady(shutPeek(p));
+    assert.ok(out.includes('div.gk-k8 details>summary~:not([class]):not(:has([class])){display:none}'), '새 규칙');
+    assert.ok(!out.includes('details>summary~:not([class]){display:none}'), '옛 규칙(내용 칸까지 숨김)이 남았어요');
+    assert.match(p, /<details\b[^>]*>\s*<summary[\s\S]*?<\/summary>[\s\S]*class="gk-(?:nr|dl|nm)/, '블라인드는 details 안에 글 줄이 들어 있어요');
+    const src = fs.readFileSync(path.join(MART, 'simple-frames.js'), 'utf8');
+    assert.ok(src.includes('details>summary~:not([class]):not(:has([class])){display:none}`'));
 });
 
 // ── 11-12 밤 원작(출처) — 사용자 「글꾸 마트는 왜 출처가 없냐 … 링크 다 어디 감」: 다시 사라지지 않게 잠가요 ──

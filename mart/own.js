@@ -5,7 +5,7 @@
 //   - 깡통 정화기에서 죽거나 바뀌는 것은 넣을 때 알려 줘요(kkLint — 허브 글꾸 0-3 · 0-6 규칙).
 //   - 미리보기에서는 붙인 글의 <style> 을 그 카드 안에만 걸리게 고쳐요(scopeCss — 마트 화면을 덮지 않게). 복사 글은 소독한 원래 글 그대로예요.
 //   소독(cleanOwn) · 글 자리(fillSlot)만 브라우저 DOM 을 쓰고 나머지는 순수 함수(node 시험 — tools/geulkku-simple-test.mjs).
-import { simpleFrameInfo } from './simple-frames.js?v=20261112a';
+import { simpleFrameInfo } from './simple-frames.js?v=20261112b';
 
 export const OWN_KEY = 'bl-mart-own-v1';
 export const OWN_MAX = 20;          // 테마와 같아요

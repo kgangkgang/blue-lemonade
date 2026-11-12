@@ -5,7 +5,7 @@
 //   ④ 칸 단위 되돌리기 · 다시하기(한 칸을 고치고 끝낼 때마다 한 칸)
 //   이 모듈은 DOM 만 만져요. 고친 글 저장은 부르는 쪽이 칸의 'input' 이벤트(contenteditable)로 받아요 — 되돌리기 · 다시하기도 칸 글을 바꾼 뒤 'input' 을 내요.
 //   쓰는 법(API)은 맨 아래 createEditBlocks 주석과 W/outputs/글꾸/편집-모드-공용-모듈.md 에 있어요.
-import { EDIT_CLASSES, EDIT_TAGS, hasLetters } from './tune.js?v=20261112e';
+import { EDIT_CLASSES, EDIT_TAGS, hasLetters } from './tune.js?v=20261112f';
 
 const RICH = ['B', 'I', 'STRONG', 'EM', 'S', 'BR'];   // tune.js LEAF 와 같은 「꾸밈 태그」(속성 없는 것만)
 const SKIP = ['STYLE', 'SCRIPT', 'AUDIO', 'BR', 'TITLE'];

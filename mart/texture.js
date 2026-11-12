@@ -6,7 +6,7 @@
 //   - 걸지 않는 틀 16(화면 꼴 · 제 바탕 그림) + 뿌리 바탕색이 없는 틀 · 얹을 면에 그림이 있는 틀은 그대로(blocked)
 //   맨 마지막(조절 · 도구 뒤 · 「HTML 복사」 앞)에 걸어요. DOM 없는 순수 모듈.
 import { TEX, ORDER } from './lib/texture/tex.js';
-import { simpleFrameInfo } from './simple-frames.js?v=20261112a';
+import { simpleFrameInfo } from './simple-frames.js?v=20261112b';
 
 export const TEX_KEY = 'bl-mart-texture-v1';
 export { ORDER as TEX_ORDER };

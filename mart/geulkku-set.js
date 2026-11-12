@@ -2,7 +2,7 @@
 //   쓰는 곳: 「테마로 담기」 꾸러미의 set · 설정 파일 `.bl-geulkku.json`. DOM 없는 순수 모듈(값은 부르는 쪽이 넘겨요 — node 시험).
 //   없는 키 = 틀 그대로 → 아무것도 안 고친 설정은 { blGeulkku: 2 } 이에요. 새 조절(띠 진하기 · 모양 · 질감 …)은 그 칸이 생기면 여기에 더해요.
 import { cleanLook, importPreset, codeBytes } from './look.js?v=20261112a';
-import { cleanTune, readSets } from './tune.js?v=20261112e';
+import { cleanTune, readSets } from './tune.js?v=20261112f';
 import { cleanTex } from './texture.js?v=20261112a';
 import { cleanShape } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기(띠 진하기 · 테두리 진하기 · 모서리 · 여백 · 폭 · 테두리 · 이름표 · 제목 밑줄 · 소품 숨김)
 

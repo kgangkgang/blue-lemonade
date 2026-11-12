@@ -4,7 +4,7 @@
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
 import { toneState, setTone, ownOf } from './tone-state.js?v=20261112e';
-import { speakerPair, hasPropTone, hasOwnTone, simpleFrameInfo } from './simple-frames.js?v=20261112a';
+import { speakerPair, hasPropTone, hasOwnTone, simpleFrameInfo } from './simple-frames.js?v=20261112b';
 import { fieldsOf, valsHtml, valOk } from './custom.js?v=20261112e';
 import { LOOKS, sameLook } from './looks.js?v=20261112a';   // 11-12 간편 — 추천 스타일 여섯 벌
 import { motionNow, setMotion, motionCaps, MOTION_LEVELS, SPEEDS } from './motion-state.js?v=20261112a';   // 11-12 빠르기 · 열어 두기
@@ -14,10 +14,10 @@ import { makeSet, readSet, encodeSet, readAny, setFile, SET_EXT } from './geulkk
 import { texNow, setTex, texInfo, TEX_ORDER, TEX_NAMES } from './texture.js?v=20261112a';   // 11-12 바탕 질감
 import { swapSpeakers } from './cast.js?v=20261112i';
 import { castPicked } from './tone-state.js?v=20261112e';   // 11-11 「이 틀」 값 칸
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine, setsFile, readSets, addSets } from './tune.js?v=20261112e';
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine, setsFile, readSets, addSets } from './tune.js?v=20261112f';
 import { createEditBlocks } from './edit-blocks.js?v=20261112e';   // 11-12 글 고치기 공용 편집 모듈(테마 로그 복사 창도 같이)
 import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261112a';
-import { mineOn, mineInfo, applyMine, storyOf } from './mine-text.js?v=20261112e';
+import { mineOn, mineInfo, applyMine, storyOf } from './mine-text.js?v=20261112f';
 import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261112a';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

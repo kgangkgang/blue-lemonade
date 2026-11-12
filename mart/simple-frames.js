@@ -220,13 +220,14 @@ function originalBase(info) {
 export const ORIGINAL = Symbol('원래 색');
 /**
  * 11-11 독립 점검 2 — 깡통은 summary 뒤마다 <div><br></div> 를 끼우고 사이트 details 에 여백을 줘요. 그 막는 규칙이 없는 틀(첫 심플 26틀)에만
- *   div.gk-키 details>summary~:not([class]){display:none} · div.gk-키 details{margin:0} 을 붙여요(div. 붙인 낮은 우선 — 틀이 제 여백을 정해 두었으면 그쪽이 이겨요).
+ *   div.gk-키 details>summary~:not([class]):not(:has([class])){display:none} · div.gk-키 details{margin:0} 을 붙여요(div. 붙인 낮은 우선 — 틀이 제 여백을 정해 두었으면 그쪽이 이겨요).
  */
 function kkGuard(html, key) {
     const text = String(html ?? '');
     if (!key || !/<details\b/.test(text)) return '';
     const css = text.slice(0, text.indexOf('</style>')), out = [];
-    if (!/details>summary~:not\(\[class\]\)\{display:none/.test(css)) out.push(`div.gk-${key} details>summary~:not([class]){display:none}`);
+    // 11-12 밤 :not(:has([class])) — 깡통은 details 안 내용을 class 없는 <div> 로 감싸요. 전에는 그 칸까지 숨겨져 블라인드(k8 — details 안에 글이 든 틀)가 눌러도 글이 안 나왔어요. 빈 줄(<div><br></div>)만 숨겨요
+    if (!/details>summary~:not\(\[class\]\)[^{]*\{display:none/.test(css)) out.push(`div.gk-${key} details>summary~:not([class]):not(:has([class])){display:none}`);
     if (!/details\{margin:0/.test(css)) out.push(`div.gk-${key} details{margin:0}`);
     return out.length ? `\n${out.join('\n')}` : '';
 }

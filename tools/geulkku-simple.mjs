@@ -240,6 +240,19 @@ export const wrapLoose = (html) => {
   };
   return root.kids.map(ser).join('');
 };
+/** 11-12 밤 가짜 굵게 고침 — 본문 글꼴이 명조 계열("RIDIBatang","Noto Serif KR",serif · 400 한 굵기)인 틀은 <strong> · <b> 가 브라우저가 번지게 그린 가짜 굵게로 뭉개져요(사용자가 깡통에 올린 글에서 봄).
+ *   그런 틀에만 굵게 낱말을 고딕 700 으로 그리는 규칙을 기본 규칙 덩이 끝에 더해요. 본문이 고딕(Pretendard — 진짜 700 이 있어요)인 틀과 이미 굵게 규칙이 있는 틀은 그대로예요 */
+export const BOLD_RULE = key => `.gk-${key} p strong,.gk-${key} p b{font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;font-weight:700}`;
+export const fakeBold = (html) => {
+  const key = (html.match(/^\s*<div\b[^>]*\sclass="gk [^"]*\bgk-((?:k|q)\d+)\b/) || [])[1]; if (!key) return false;
+  const font = (html.match(new RegExp(`\\.gk-${key} p\\{[^}]*?font:([^;}]*)`)) || [])[1] || '';
+  return /(?:^|,)\s*serif\s*$/.test(font) && !new RegExp(`\\.gk-${key} p (?:strong|b)[,{]`).test(html.slice(0, html.indexOf('</style>')));
+};
+const boldFix = (html) => {
+  if (!fakeBold(html)) return html;
+  const key = html.match(/\bgk-((?:k|q)\d+)\b/)[1], at = html.indexOf('<style>') + 7, end = html.indexOf('\n\n', at);
+  return end < 0 ? html : `${html.slice(0, end)}\n${BOLD_RULE(key)}${html.slice(end)}`;
+};
 const fitFix = (html) => {
   const key = (html.match(/^\s*<div\b[^>]*\sclass="gk [^"]*\bgk-((?:k|q)\d+)\b/) || [])[1], add = (FIT_RULES[key] || []).filter(r => !html.includes(r));
   if (!add.length) return html;
@@ -276,7 +289,7 @@ export function frameHtml(d) {
   const file = fileOf(d);
   if (!file) throw new Error(`${d.id}: 틀 파일이 없어요`);
   const raw = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
-  const html = fitFix(sampleNames(focusRing(fillSlots(martAudio(wrapLoose(uniqInner((src0 => (d.sample || keepsSound(d) ? src0 : dropSound(src0)))(stripAlias(raw.trim()))))), d.values))));
+  const html = boldFix(fitFix(sampleNames(focusRing(fillSlots(martAudio(wrapLoose(uniqInner((src0 => (d.sample || keepsSound(d) ? src0 : dropSound(src0)))(stripAlias(raw.trim()))))), d.values)))));
   const bad = problems(html);
   if (bad.length) throw new Error(`${d.id}: ${bad.join(' · ')}`);
   const info = sf.simpleFrameInfo(html);

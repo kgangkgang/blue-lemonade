@@ -5,8 +5,8 @@
 //   「숨김 풀기」: 고른 자리가 숨긴 글 안(알약 · 펼친 글)이면. 「굵게 · 기울임」: 「글 고치기」를 켠 동안 한 칸 안을 골랐을 때만(Ctrl+B · I 와 같은 명령).
 //   값은 tune.js(spoilers · mineSpoilers)에 들어가 카드 · 「HTML 복사」 · 내 글꾸 · 설정 파일에 같은 길로 가요. 「글 고치기」를 안 켜도 숨기기 · 풀기는 돼요.
 import { createSelectBar } from './lib/log-copy/log-copy-select-bar.js?v=20261112e';
-import { tuneOf, setTune, spanIn } from './tune.js?v=20261112e';
-import { mineOn } from './mine-text.js?v=20261112e';
+import { tuneOf, setTune, spanIn } from './tune.js?v=20261112f';
+import { mineOn } from './mine-text.js?v=20261112f';
 
 const HIDE_CELLS = ['gk-nr', 'gk-d'];
 const FMT = 'b, i, strong, em, s';

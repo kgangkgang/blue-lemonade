@@ -5,7 +5,7 @@
 //     소리 카드 · 바인더 쪽 넘김처럼 글 사이에 낀 것은 제자리에 둬요(앞 묶음 · 뒤 묶음으로 나눠 넣어요). 제목 · 소품은 그대로예요.
 //   DOM 없는 순수 모듈(node 시험). 넣은 글은 이 브라우저에 기억(localStorage) · 켬끔도 기억.
 import { parseLog } from './taste-parse.js';
-import { THIRD } from './simple-frames.js?v=20261112a';
+import { THIRD } from './simple-frames.js?v=20261112b';
 
 export const MINE_TEXT_KEY = 'bl-mart-mine-text-v1';
 /** 한 틀에 넣는 줄 수 상한(지문 · 이름 · 대사 줄을 합쳐) — 넘으면 앞부분만 */
@@ -39,7 +39,7 @@ function splitBlock(block, who, out) {
 }
 /** 붙여 넣은 글 → { names, lines: [{ type:'nr', html } | { type:'dl', who, text }], cut } */
 export function mineModel(text) {
-    const parsed = parseLog(text);
+    const parsed = parseLog(String(text ?? '').replace(/&nbsp;|\u00a0/gi, ' '));   // 11-12 밤 끊기지 않는 빈칸은 보통 빈칸으로(붙여 넣은 글에 섞여 와요)
     const lines = [];
     for (const turn of parsed.turns) {
         for (const b of turn.nodes) {
