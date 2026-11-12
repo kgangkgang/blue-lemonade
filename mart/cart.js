@@ -149,7 +149,7 @@ function fly(from, entry) {
     else if (emoji.includes('🍋')) dot.innerHTML = lemonHtml();   // 레몬은 테마 레몬 그림으로
     dot.setAttribute('aria-hidden', 'true');
     dot.style.left = `${a.left + a.width / 2}px`; dot.style.top = `${a.top + a.height / 2}px`;
-    document.body.append(dot);
+    layerHost().append(dot);   // 11-12 창 안에서 담으면 창 위로 날아가요(body 면 창에 가려요)
     const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
     const anim = dot.animate([
         { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
@@ -158,7 +158,17 @@ function fly(from, entry) {
     ], { duration: 620, easing: 'cubic-bezier(.4,.1,.3,1)' });
     anim.onfinish = () => { dot.remove(); bump(); };
 }
+/** 11-12 말풍선 · 날아가는 그림을 띄울 자리 — 모달 창(<dialog> showModal: 글꾸 크게 보기 · 액자 맞춰 보기 · 시식)이 열려 있으면 그 창 안, 아니면 body.
+ *  모달 창은 맨 위 층(top layer)이라 body 의 말풍선은 z-index 와 상관없이 그 아래에 깔려 안 보이고(창 밖은 inert 라 읽어 주기도 안 돼요) — 「복사됐어요」 · 「읽을 수 없는 코드예요」 같은 알림이 창 안에서 하나도 안 보였어요 */
+const isModal = d => { try { return d.matches(':modal'); } catch { return true; } };
+export function layerHost(doc = document) {
+    const near = doc.activeElement?.closest?.('dialog[open]');
+    if (near && isModal(near)) return near;
+    const open = [...doc.querySelectorAll('dialog[open]')].filter(isModal);
+    return open[open.length - 1] || doc.body;
+}
 export function say(text, ms = 2400) {
+    const host = layerHost(); if (bubble.parentNode !== host) host.append(bubble);   // 11-12 열린 창 위에 보이게
     setLemonText(bubble, text);   // 「담아 갔어요 🍋」의 레몬도 테마 레몬 그림으로
     if (btn) { const b = btn.getBoundingClientRect(); bubble.style.top = `${b.bottom + 10}px`; bubble.style.right = `${Math.max(12, innerWidth - b.right - 6)}px`; }
     bubble.classList.remove('show'); void bubble.offsetWidth; bubble.classList.add('show');

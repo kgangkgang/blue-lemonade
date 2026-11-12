@@ -1550,5 +1550,20 @@ await test('AI 점검 ① 깨진 주소 해시(#% · #100% · 잘린 #%E0%A4%A)�
         assert.equal(fn('#simple-k1'), 'simple-k1'); assert.equal(fn('#%ED%95%9C'), '한'); assert.equal(fn(''), '');
     }
 });
+await test('AI 점검 ② 말풍선 · 날아가는 그림은 열린 모달 창(크게 보기 · 맞춰 보기 · 시식) 안에 띄워요 — body 면 맨 위 층 창에 가려요', () => {
+    const s = srcOf('cart.js');
+    const isModal = (0, eval)(s.match(/const isModal = (d => \{[^\n]+\});/)[1]);
+    const layerHost = (0, eval)(`(isModal => ${s.match(/export (function layerHost\(doc = document\) \{[\s\S]*?\n\})/)[1].replace('doc = document', 'doc')})`)(isModal);
+    const dlg = (name, modal = true) => ({ name, matches: q => (q === ':modal' ? modal : false), closest: () => null });
+    const doc = (open, active = null) => ({ body: { name: 'body' }, activeElement: active, querySelectorAll: () => open });
+    assert.equal(layerHost(doc([])).name, 'body', '창이 없으면 body');
+    const a = dlg('sheet'), b = dlg('taste'), loose = dlg('loose', false);
+    assert.equal(layerHost(doc([a])).name, 'sheet');
+    assert.equal(layerHost(doc([a, b])).name, 'taste', '여럿이면 뒤에 연 것(문서 차례 끝)');
+    assert.equal(layerHost(doc([loose])).name, 'body', '모달 아닌 창은 맨 위 층이 아니에요');
+    assert.equal(layerHost(doc([a, b], { closest: () => a })).name, 'sheet', '누른 단추가 든 창이 먼저');
+    assert.match(s, /export function say\(text, ms = 2400\) \{\n\s+const host = layerHost\(\); if \(bubble\.parentNode !== host\) host\.append\(bubble\);/);
+    assert.ok(s.includes('layerHost().append(dot);') && !s.includes('document.body.append(dot)'), '날아가는 그림도');
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
