@@ -1792,7 +1792,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
         assert.match(ui, /data-act="theme-file"\$\{no\}/);
         for (const [n, t] of [['mart.js', mart], ['genie.js', genie]]) assert.doesNotMatch(t, /테마로 받기는 준비 중/, n);
         assert.match(fs.readFileSync(path.join(MART, 'mart.css'), 'utf8'), /\.tag\.is-notake\{/);
-        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112d/, f);
+        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112e/, f);
     });
 }
 console.log(`\n${pass} 통과 · ${fail} 실패`);

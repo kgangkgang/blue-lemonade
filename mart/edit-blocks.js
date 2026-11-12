@@ -55,9 +55,9 @@ function settle(root) {
     for (const a of root.getAnimations?.({ subtree: true }) || []) { try { a.finish(); } catch { try { a.pause(); } catch { /* 그대로 */ } } }
 }
 
-const CSS = `.bl-eb-on [data-bl-ed]{outline:1.5px dashed color-mix(in srgb,var(--bl-eb-c,#2477d3) 75%,transparent);outline-offset:2px;border-radius:2px;cursor:text;min-width:.6em;min-height:1em}
-.bl-eb-on [data-bl-ed]:hover{outline-style:solid;position:relative;z-index:3}
-.bl-eb-on [data-bl-ed]:focus{outline:2px solid var(--bl-eb-c,#2477d3);outline-offset:2px;background-color:color-mix(in srgb,var(--bl-eb-c,#2477d3) 12%,transparent);position:relative;z-index:4}
+const CSS = `.bl-eb-on [data-bl-ed]{outline:1.5px dashed color-mix(in srgb,var(--bl-eb-c,#2477d3) 85%,transparent)!important;outline-offset:2px!important;border-radius:2px;cursor:text;min-width:.6em;min-height:1em}
+.bl-eb-on [data-bl-ed]:hover{outline-style:solid!important;position:relative;z-index:3}
+.bl-eb-on [data-bl-ed]:focus{outline:2px solid var(--bl-eb-c,#2477d3)!important;outline-offset:2px!important;background-color:color-mix(in srgb,var(--bl-eb-c,#2477d3) 12%,transparent);position:relative;z-index:4}
 .bl-eb-freeze,.bl-eb-freeze *{transition:none!important}
 .bl-eb-steps{display:flex;gap:6px;align-items:center;margin:0 0 10px;font:600 13px/1.2 system-ui,sans-serif}
 .bl-eb-steps>span{opacity:.7;margin-right:2px}
