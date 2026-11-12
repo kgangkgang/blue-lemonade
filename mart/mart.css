@@ -754,7 +754,7 @@ html.mart-cart-on{overflow:hidden}
 @media (max-width:639px){
   .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune){display:flex;flex-direction:column}
   .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune)>*{flex:none}
-  .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune)>.mart-sheet-preview{order:-2;position:sticky;top:-12px;z-index:2;max-height:40dvh;overflow:auto;margin:-12px -12px 0;padding:12px;background:var(--tint);box-shadow:0 1px 0 var(--line);scrollbar-width:thin}
+  .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune)>.mart-sheet-preview{order:-2;position:sticky;top:-12px;z-index:2;max-height:40dvh;overflow:auto;margin:-12px -12px 12px;padding:12px;background:var(--tint);box-shadow:0 1px 0 var(--line);scrollbar-width:thin}
   .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune)>.mart-sheet-site{order:-1}
 }
 .mart-sheet-tune,.mart-tune.is-detail,.mart-gr-list{min-width:0;max-width:100%}
@@ -896,3 +896,7 @@ html.mart-cart-on{overflow:hidden}
 /* 11-13 「낮 · 밤 전환 넣기」 켬끔 옆 한 줄 알림(얼마나 커지는지 · 못 다는 까닭) */
 .mart-flip-note{flex:none;align-self:center;color:var(--muted);font-size:12px;line-height:1.3;white-space:nowrap}
 .mart-flip-note[hidden]{display:none}
+/* 11-13 크게 보기 미리보기 칸 숨 — 사용자 「붙일 곳 흉내랑 미리보기랑 너무 딱 붙지 않았니」: 폰에서 미리보기 칸(높이 40dvh 로 잘려 안에서 굴러요)이 「붙일 곳 흉내」 줄과 틈 0 으로 맞닿아 틀이 그 줄에 잘린 것처럼 보였어요.
+   ① 미리보기 칸 아래 12(위 폰 규칙의 margin) ② 잘린 미리보기 아래 끝에 흐림 띠 — 아래로 더 있다는 표시(끝까지 굴리면 칸 안쪽 여백 위라 안 보여요) */
+.mart-sheet:not(.mart-taste) .mart-sheet-body>.mart-sheet-preview::after{content:"";position:sticky;bottom:-12px;z-index:3;display:block;height:28px;margin:0 0 -28px;background:linear-gradient(to bottom,transparent,var(--tint) 58%);pointer-events:none}   /* 아래 12 는 칸 안쪽 여백 자리(바탕색으로 덮고) · 그 위 16 이 흐림 */
+.mart-sheet:not(.mart-taste) .mart-sheet-body>.mart-sheet-preview.is-site::after{display:none}
