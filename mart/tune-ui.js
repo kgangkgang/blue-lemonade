@@ -5,7 +5,7 @@
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
 import { toneState, setTone, ownOf } from './tone-state.js?v=20261112e';
 import { speakerPair, hasPropTone, hasOwnTone, simpleFrameInfo } from './simple-frames.js?v=20261112a';
-import { fieldsOf, valsHtml, valOk } from './custom.js?v=20261112a';
+import { fieldsOf, valsHtml, valOk } from './custom.js?v=20261112e';
 import { LOOKS, sameLook } from './looks.js?v=20261112a';   // 11-12 간편 — 추천 스타일 여섯 벌
 import { motionNow, setMotion, motionCaps, MOTION_LEVELS, SPEEDS } from './motion-state.js?v=20261112a';   // 11-12 빠르기 · 열어 두기
 import { SHAPE_FIELDS, PAINT_ROLES, shapeNow, shapeValue, setShape, setShapeValue, shapeInfo } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기

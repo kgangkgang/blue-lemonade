@@ -4,8 +4,8 @@
 //   소품 글자: 이름 고리가 안 쓰는 자리만 접힌 「소품 글자」 안에(칸 이름 = 기본 글자 · 비우면 기본).
 //   값은 조절 값(tune.js) 의 vals = { 고리 이름 | t<번호>: 값 } — 틀마다 · 되돌리기 · 내 글꾸에 같이 · 복사 글 · 내려받기에도 같은 길(applyTune → applyVals).
 //   거는 차례: 다시 칠하기(toneSimple) 뒤 · 숨긴 줄(스포일러) 앞 · 복사 글(simpleReady) 앞. 틀린 값이면 cust.js 가 throw → 바꾸지 않은 HTML 을 써요.
-import { applyCust, wid } from './lib/cust/cust.js?v=20261112a';
-import { CUST } from './lib/cust/cust-table.js?v=20261112a';
+import { applyCust, wid } from './lib/cust/cust.js?v=20261112e';
+import { CUST } from './lib/cust/cust-table.js?v=20261112e';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const keyOf = html => (String(html ?? '').match(/^\s*<div\b[^>]*\sclass="gk\s(?:[^"]*\s)?gk-(k\d+)(?=[\s"])/) || [])[1] || '';

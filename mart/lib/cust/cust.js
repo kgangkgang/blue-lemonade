@@ -44,6 +44,7 @@ function slots(html, pre = '') {
    각 고리 apply(v, k) → { cls, css, text: { 자리번호: 글자 } } — k = 틀 class(예 'k290'), 규칙 선택자는 '.' + k + '.' + cls 로 시작해요 */
 const ON = (k, cls) => '.' + k + '.' + cls + ':has(.kx[open])';
 const R = (k, cls) => '.' + k + '.' + cls;
+const cssStr = v => String(v).replace(/[\\"\n\r<>]/g, '');   // CSS 글자 안에 못 들어갈 것(역슬래시 · 따옴표 · 줄바꿈 · 꺾쇠)은 빼요
 const comma = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 const num = (s) => +String(s).replace(/[^\d]/g, '') || 0;
 // 손 계수기 숫자(칸 6×14 · 굵기 3 — 원래 0 · 1 · 9 와 같은 꼴, 나머지는 같은 획으로 새로 그림)
@@ -87,6 +88,11 @@ const HOOKS = {
     const [m, d] = String(v).split('-').map(Number); if (!(m >= 1 && m <= 12 && d >= 1 && d <= 31)) throw new Error('날짜는 월-일(예 12-31)');
     const [m2, d2] = MD(m, d); return { text: { 1: m2 + '월', 2: String(d2), 3: m + '월', 4: String(d) } };
   } } },
+  // 11-12 익명 게시판 — 펼치면 이름 줄마다 CSS(::after)로 붙는 「익명1 · 익명2」(이름 줄 수가 글마다 달라 글 칸으로 못 박아요 → 이 고리로 바꿔요)
+  'bl:k1102': {
+    익명1: { kind: 'text', def: '익명1', label: '익명 이름 1(첫째 화자)', apply: (v, k) => ({ cls: 'gk-an1', css: R(k, 'gk-an1') + ' p.gk-nA::after{content:"' + cssStr(v) + '"}' }) },
+    익명2: { kind: 'text', def: '익명2', label: '익명 이름 2(둘째 화자)', apply: (v, k) => ({ cls: 'gk-an2', css: R(k, 'gk-an2') + ' p.gk-nB::after{content:"' + cssStr(v) + '"}' }) },
+  },
   '10:k292': { 업적: { kind: 'text', slot: '옥상 문을 열었다', label: '업적 이름' } },
   '10:k289': { 선택지1: { kind: 'text', slot: '옥상 문을 연다', label: '첫째 선택지' }, 선택지2: { kind: 'text', slot: '전화를 한 번 더 건다', label: '둘째 선택지' } },
   // 7 펀치 점수 — 숫자 띠 셋의 마지막 줄(000 → 점수)
@@ -157,7 +163,7 @@ function applyCust(html, key, cust, o = {}) {
     const tm = name.match(/^t(\d+)$/);
     if (tm) { text[+tm[1]] = String(v); continue; }
     const h = H[name]; if (!h || name[0] === '_') throw new Error(key + ' 에 없는 고리: ' + name);
-    if (h.kind === 'text') { text[slotOf(h.slot)] = String(v); continue; }
+    if (h.kind === 'text' && !h.apply) { text[slotOf(h.slot)] = String(v); continue; }   // 11-12 apply 가 있는 글자 고리는 아래에서(CSS 로 그린 글자 — 익명 게시판)
     if (h.kind === 'chars') { const cs = [...String(v)]; if (cs.length !== h.slots.length) throw new Error(key + ' ' + name + ' 는 ' + h.slots.length + '글자'); h.slots.forEach((n, i) => { text[n] = cs[i]; }); continue; }
     if (h.kind === 'num') { const n = +v; if (!Number.isFinite(n) || n < h.min || n > h.max || Math.round(n) !== n) throw new Error(key + ' ' + name + ' 범위 ' + h.min + '~' + h.max + ': ' + v); }
     if (h.kind === 'pick' && !h.options.map(String).includes(String(v))) throw new Error(key + ' ' + name + ' 고르기: ' + h.options.join(' · '));
