@@ -107,7 +107,7 @@ let renderId = 0;
 async function render() {
     syncBadge();
     const id = ++renderId;
-    const rows = await Promise.all(entries.map(async e => `<li><button type="button" class="mart-cart-row" data-href="${esc(e.href || '')}">${await thumb(e)}<span class="mart-cart-name"><b>${esc(e.name)}</b><small>${esc(e.label || '')} · ${sizeText(e.bytes || 0)}</small></span></button>${srcHtml(e)}<button type="button" class="ibtn x quiet mart-cart-del" data-cart-del="${esc(e.key)}" aria-label="${esc(e.name)} 빼기"></button></li>`));
+    const rows = await Promise.all(entries.map(async e => `<li><button type="button" class="mart-cart-row" data-href="${esc(e.href || '')}">${await thumb(e)}<span class="mart-cart-name"><b>${esc(e.name)}</b><small>${esc(e.label || '')} · ${sizeText(e.bytes || 0)}</small></span></button><button type="button" class="ibtn x quiet mart-cart-del" data-cart-del="${esc(e.key)}" aria-label="${esc(e.name)} 빼기"></button>${srcHtml(e)}</li>`));
     if (id !== renderId) return;
     list.innerHTML = rows.join('');
     const empty = !entries.length;

@@ -142,7 +142,8 @@ async function castPart(vp) {
     await tapText(vp, '.mart-cast-tabs button', '센티넬버스');
     row(vp, '「센티넬버스」 탭 → 인물 칩 11 · 묶음은 여전히 하나', (await b.eval(`document.querySelectorAll('.mart-cast-pane').length===1 && document.querySelectorAll('.mart-cast-pane [data-color]').length`)) === 11, '');
     const h = await b.eval(`Math.min(...[...document.querySelectorAll('.mart-cast-pane [data-color], .mart-cast-foot [data-pick]')].map(e=>e.getBoundingClientRect().height))`);
-    row(vp, vp === 'phone' ? '폰: 인물 칩 높이 36 이상(줄 사이 10)' : '인물 칩 높이 34', vp === 'phone' ? h >= 36 : h >= 34, `${h}px`);
+    const pitch = await b.eval(`(()=>{const ys=[...new Set([...document.querySelectorAll('.mart-cast-pane [data-color]')].map(e=>Math.round(e.getBoundingClientRect().top)))].sort((a,b)=>a-b);return ys.length>1?ys[1]-ys[0]:99})()`);
+    row(vp, vp === 'phone' ? '폰: 인물 칩 34 · 줄과 줄 사이 44 이상(손가락 자리)' : '인물 칩 높이 34', h >= 34 && (vp !== 'phone' || pitch >= 44), `${h}px · 줄 간격 ${pitch}px`);
     await tapText(vp, '.mart-cast-pane [data-color]', '은설');
     const picked = await b.eval(`({head:document.querySelector('.mart-cast [data-toggle="main"]').textContent.replace(/\\s+/g,' ').trim(),links:[...document.querySelectorAll('.mart-cast .mart-cast-credit a.mart-source')].map(a=>a.href),on:[...document.querySelectorAll('.mart-cast-pane [data-color][aria-pressed="true"]')].map(x=>x.dataset.name)})`);
     const t1 = await tone();
