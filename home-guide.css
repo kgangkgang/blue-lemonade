@@ -255,4 +255,182 @@ html.device-pc .home-guide .hero-art.showcase .showcase-screen video{aspect-rati
  .home-guide .mart-section .section-head{margin-bottom:32px}
  .home-guide .install .section-head{margin-bottom:0}
 }
+/* ── 2단계: 접힌 줄 안(옛 부품) — 종류별로 한 번에 */
+/* 확장 사용법 줄 */
+.home-guide .extension-list{gap:16px}
+.home-guide .extension-entry>.extension-body{margin-top:8px}
+.home-guide .guide-columns h4{margin-bottom:16px}
+.home-guide .guide-steps li:last-child{padding-bottom:0}
+.home-guide .guide-steps li,.home-guide .guide-media-toolbar>span{line-height:1.7}
+/* 기능 카드: 영상 · 활용 · 여는 곳 → 바로가기 줄 24(한 곳에서만) */
+.home-guide .feature-card>.feature-example,.home-guide .feature-card>.feature-how{margin-bottom:0}
+.home-guide .feature-card>.feature-route{margin:4px 0 16px}
+.home-guide .feature-card>.feature-route:has(+.feature-card-links){margin-bottom:0}
+.home-guide .feature-card-links{padding-top:24px}
+.home-guide .feature-group>summary+*{margin-top:8px}
+.home-guide .feature-group>article+article,.home-guide .feature-group>article+.feature-grid{margin-top:16px}
+.home-guide .features-section .feature-grid{gap:16px}
+/* 한눈에 카드 */
+.home-guide .glance-body ul{margin-bottom:12px}
+/* 다섯 단계 */
+.home-guide .start-choices{margin:12px 0}
+.home-guide .start-body p{line-height:1.7}
+/* 사용 모드 */
+.home-guide .bundle-mode-preview h3{margin-top:16px}
+.home-guide .bundle-mode-preview p{line-height:1.7}
+.home-guide .bundle-start li,.home-guide .bundle-start p{margin-bottom:11px}
+.home-guide .bundle-start{padding-bottom:4px}
+/* 직접 꾸며보기 */
+.home-guide #color-controls .palette-mix+.palette-help{margin-top:16px}
+/* 화면으로 보기 */
+.tour-view>div{gap:4px}
+.home-guide .tour-route,.home-guide #tour-description{line-height:1.7}
+/* 접는 칸 머리 → 몸통 40 · ZIP 안내 */
+.home-guide .more-body{padding-top:6px}
+.home-guide .zip-install>summary+p{margin-top:8px}
+@media(max-width:760px){
+ .home-guide .extension-list{gap:12px}
+ .home-guide .features-section .feature-grid{gap:12px}
+ .home-guide .feature-group>article+article,.home-guide .feature-group>article+.feature-grid{margin-top:12px}
+ .home-guide .guide-route{margin-bottom:27px}
+ .home-guide .guide-columns{gap:16px}
+ .home-guide .guide-filters{gap:8px}
+ .home-guide .guide-start ol{margin-top:19px}
+ .home-guide .guide-media figcaption{padding-top:12px}
+ .home-guide .glance-body{padding-top:16px}
+ .home-guide .start-steps{gap:12px}
+ .home-guide .start-gallery-head{margin-bottom:20px}
+ .home-guide .playground-tabs{margin-bottom:18px}
+ .home-guide .tour-view{margin-bottom:12px}
+}
+/* ── 2단계 둘째 묶음 */
+/* 줄 높이: 본문 1.7 로 모음 */
+.home-guide .extension-body,.home-guide .guide-start ol,.home-guide .guide-start p,.home-guide .guide-media figcaption,.home-guide .bundle-start ol,.home-guide .bundle-start li,.home-guide .bundle-start p,.home-guide .zip-install p,.home-guide .feature-how dd,.home-guide .feature-card>p,.home-guide .note ul,.home-guide .start-gallery-head p,.home-guide .start-shot-card figcaption,.home-guide .start-shot-card figcaption span,.home-guide .bundle-source-links,.home-guide .menu-route,.home-guide .guide-result{line-height:1.7}
+.home-guide .feature-media-note{line-height:1.7!important}
+.home-guide .glance-no{line-height:1.75}
+.home-guide .glance-tiles i{line-height:1.7;padding-block:4px}
+.home-guide .palette-label{line-height:1.65}
+.home-guide .st-row>span,.home-guide .st-row>span small{line-height:1.5}
+.home-guide .start-gallery-head h3{line-height:1.4}
+.home-guide .start-body h3{line-height:1.4;margin-bottom:8px}
+.home-guide .start-no{line-height:1.45}
+/* 다섯 단계 */
+.home-guide .start-copy{margin-top:12px;gap:8px}
+.home-guide .start-body p{margin-bottom:8px}
+.home-guide .start-figure{margin-top:16px}
+.home-guide .start-route{margin-top:12px!important}
+.home-guide .start-choices{gap:8px}
+.home-guide .start-choices li b{margin-bottom:1px}
+.home-guide .start-choices li span b{margin:0}
+.home-guide .start-shot-card{gap:8px}
+.home-guide #fold-start .more-body,.home-guide #fold-colors .more-body{padding-top:4px}
+.home-guide #features .more-body{padding-top:2px}
+/* 사용 모드 */
+.home-guide .bundle-modes{margin-bottom:12px;gap:4px}
+.home-guide .mode-help{margin-top:4px}
+/* 직접 꾸며보기 */
+.home-guide .reading-note{margin-top:4px}
+.home-guide .palette-mix{margin-top:24px}
+/* 한눈에 */
+.home-guide .glance-body{padding-top:16px}
+.home-guide .glance-body ul{gap:8px;margin-bottom:11px}
+/* 확장 사용법 */
+.home-guide .guide-start{margin-bottom:29px}
+.home-guide .guide-search-row{margin-bottom:16px}
+.home-guide .guide-result{margin:16px 0}
+.home-guide .guide-start ol{margin-bottom:16px}
+.home-guide .guide-example{margin-bottom:12px}
+.home-guide .guide-note{margin:12px 0 16px}
+.home-guide .guide-options dt{margin-bottom:4px}
+.home-guide .guide-options dd{margin-bottom:16px}
+.home-guide .guide-columns+.guide-columns{margin-top:16px}
+/* 기능 카드 */
+.home-guide .feature-card>.feature-example:has(+.feature-how){margin-bottom:16px}
+.home-guide .feature-card-links{padding-top:26px}
+.home-guide .feature-card>.feature-route{margin-top:0}
+.home-guide .feature-media-toolbar{gap:4px}
+.home-guide .feature-media-toolbar [role=group]{gap:4px}
+.home-guide .feature-how dt{margin:16px 0 4px}
+/* 소식 */
+.home-guide #updates .notice-guide{margin-bottom:24px}
+.home-guide .notes-more{margin-top:24px}
+.home-guide .note .ver:first-of-type{margin-top:4px}
+.home-guide .note li{padding-bottom:8px}
+@media(max-width:760px){
+ .home-guide .start-body h3{line-height:1.45}
+ .home-guide .start-no{line-height:1.6}
+ .home-guide .start-split .start-body{gap:24px}
+ .home-guide .start-split .start-figure{margin-top:0}
+ .home-guide .start-split .start-body>div>:last-child{margin-bottom:0}
+ .home-guide .start-gallery-head{margin-bottom:0}
+ .home-guide .start-gallery .start-shots{padding-top:16px}
+ .home-guide .menu-route{margin-top:13px}
+ .home-guide #colors .palette-layout{gap:14px}
+ .home-guide #colors .playground-tabs{margin-bottom:16px}
+ .home-guide .tour-tabs{gap:8px}
+ .home-guide .tour-copy h3{margin-bottom:8px}
+ .home-guide .tour-copy>p{margin-bottom:16px}
+ .home-guide .tour-directions{margin-top:16px;margin-bottom:3px}
+ .home-guide #fold-glance .more-body{padding-top:4px}
+ .home-guide .guide-start ol{gap:8px}
+}
+@media(min-width:761px){
+ .home-guide .start-steps{gap:16px}
+ .home-guide .start-gallery-head{margin-bottom:16px}
+ .home-guide .playground-tabs{margin-bottom:16px}
+ .home-guide .tour-view{margin-bottom:16px}
+ .home-guide .tour-tabs{margin-bottom:24px}
+ .home-guide .tour-copy h3{margin-top:19px}
+ .home-guide .tour-directions{margin:24px 0 20px;padding-bottom:4px}
+ .home-guide .tour-copy .text-link{margin-top:0}
+ .home-guide .guide-start ol{row-gap:12px}
+ .home-guide .feature-example figcaption{padding-top:12px}
+}
+/* ── 2단계 셋째 묶음 */
+.install-steps p{line-height:1.7}
+.home-guide .bundle-start ol,.home-guide .bundle-start p{margin:12px 0}
+.home-guide .bundle-start li{margin-bottom:12px}
+.home-guide .feature-card>.feature-example:not(:has(+.feature-card-links)){margin-bottom:16px}
+.home-guide #playground-save-status{margin-top:16px}
+.home-guide #fold-tour .more-body{padding-top:4px}
+.home-guide #natural-commands .more-body{padding-top:2px}
+.home-guide .tour-route{margin:7px 0}
+.home-guide .guide-end,.home-guide #extension-empty{margin-top:24px;line-height:1.7}
+.home-guide .tour-footnote,.home-guide .mode-help{line-height:1.7}
+.home-guide .menu-route b{line-height:1.75}
+.home-guide .glance-body h3{line-height:1.45}
+.home-guide .features-section .feature-card>p{line-height:1.7}
+.home-guide .guide-search-row label{line-height:1.65}
+.home-guide .guide-columns>*>:last-child,.home-guide .extension-body>section>:last-child{margin-bottom:0}
+.home-guide .guide-columns+.guide-note{margin-top:0}
+.home-guide .extension-body>section+.guide-media{margin-top:16px}
+.home-guide .extension-body>section{margin-top:32px}
+.home-guide .extension-body>section>h4{margin:0 0 16px}
+.home-guide .extension-body section>p{margin:16px 0}
+.home-guide .note ul:has(+.ver){padding-bottom:0}
+.home-guide .note ul:has(+.ver) li:last-child{padding-bottom:0}
+.home-guide .note .ver{margin-top:32px}
+.home-guide .note .ver:first-of-type{margin-top:4px}
+@media(max-width:760px){
+ .home-guide #colors .palette-layout{gap:6px}
+ .home-guide .guide-media figcaption{padding-top:13.5px}
+}
+@media(min-width:761px){
+ .home-guide .start-shots{gap:19px 16px}
+ .home-guide .tour-directions{margin-bottom:14px}
+ .home-guide .guide-start ol{margin-top:18.5px}
+ .home-guide .guide-route{margin-bottom:27.5px}
+ .home-guide .guide-media figcaption{padding-top:13px}
+}
+/* ── 2단계 넷째 묶음 */
+.step-number,.step-menu{line-height:1.7}
+.home-guide .tour-route{margin-bottom:8px}
+.home-guide #tour-tip{margin-top:8px}
+.home-guide #fold-ext .more-body{padding-top:4px}
+.home-guide #updates .more-body{padding-top:2px}
+.home-guide .note .ver{line-height:1.65}
+#copy-help{line-height:1.7}
+.home-guide .tour-route{line-height:1.65}
+.step-menu b{line-height:1.75}
+@media(max-width:760px){.home-guide .tour-route{line-height:1.7}}
 /* GAP-HOME:END */
