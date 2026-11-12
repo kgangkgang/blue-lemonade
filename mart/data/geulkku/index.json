@@ -50,9 +50,9 @@
    "bytes": 667759
   },
   "sp-pass-4": {
-   "file": "sp-pass-4.ade38e8b.json",
+   "file": "sp-pass-4.26d5bad1.json",
    "n": 40,
-   "bytes": 797322
+   "bytes": 797340
   },
   "sp-pass-5": {
    "file": "sp-pass-5.c17e1167.json",
@@ -304,7 +304,7 @@
   {"id":"simple-k1177","name":"마법 거울","emoji":"🪄","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 거울 비춰 보기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":16140,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1178","name":"호텔","emoji":"🚪","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 걸이표 뒤집기","c":"sp-pass-4","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":12815,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
   {"id":"simple-k1179","name":"자동차","emoji":"🚗","category":"simple-open","style":"심플","desc":"소품을 누르면 — 차 출발시키기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":19830,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061"},
-  {"id":"simple-k1180","name":"묘비","emoji":"🌧️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 담쟁이 키우기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":48660,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k1180","name":"묘비","emoji":"🌧️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 담쟁이 키우기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":48678,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1181","name":"제야의 종","emoji":"🔔","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 종 치기","c":"sp-pass-4","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":27665,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1182","name":"사주 명식","emoji":"🔮","category":"simple-open","style":"심플","desc":"소품을 누르면 — 사주 뽑기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":14805,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1183","name":"교내 인트라넷 · 대나무숲","emoji":"🌲","category":"simple-open","style":"심플","desc":"소품을 누르면 — 대숲 흔들기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":13781,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
