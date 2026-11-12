@@ -57,4 +57,11 @@ ok(/button\.className = 'bl-help-btn'; button\.dataset\.act = 'group-help'/.test
 ok(/openFoldsFor\(root, entry\.words\)/.test(panel), '키 없는 검색 항목도 고급 안 줄이면 펼쳐요');
 // ⑦ 1.1.1: ? 가 든 설정창 묶음 제목은 칠하기 격리(contain: paint)로 한 덩어리 — 화면 자리(소수 px)에 따라 원이 1px 가까이 처지던 것
 ok(/:is\(\.bl-editor-group-head, \.bl-help-head\):has\(> \.bl-help-btn\) \{ contain: paint; overflow-clip-margin: 8px; \}/.test(strip(read('css/56-control-consistency.css'))), '? 든 묶음 제목은 contain: paint + overflow-clip-margin 8px');
+// ⑧ 1.1.5: 월드 인포 전역 설정 체크 줄 · 「삽입 방식」 이름은 글 줄 칸 — flex gap 만큼 당기는 음수 여백을 받으면 ? 가 마지막 글자를 덮어요(폰 「삽입 방스?」)
+{
+    const c = strip(read('css/56-control-consistency.css'));
+    const i = c.indexOf('#WorldInfo :is(#wiCheckboxes label.checkbox_label > small, #wiSliders > .flex-container:where([data-bl-row~="wics"]):is(#bl-s, *) > small) > .bl-wi-help { margin-left:var(--bl-help-gap)!important; }');
+    const j = c.indexOf('> :is(.bl-wi-help, .fa-comments, .fa-circle-info, .fa-info-circle) { margin-left:calc(var(--bl-help-gap) - 8px)!important; }');
+    ok(i > 0 && j > 0 && i > j && /^html body\.salty:not\(#bl-h1\):not\(#bl-h2\) $/.test(c.slice(c.lastIndexOf('\n', i) + 1, i)), '월드 인포 체크 줄 · 삽입 방식 ? 는 음수 여백 뒤에서 간격 그대로(글자를 덮지 않음)');
+}
 console.log(`도움말 ? · ⓘ 한 모양 검사를 통과했어요(${n}건).`);
