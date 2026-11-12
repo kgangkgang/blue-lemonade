@@ -646,5 +646,5 @@ const tuck=hidden=>{tail.classList.toggle('is-in',!hidden);tail.setAttribute('ar
 const load=from=>{if(on)return;on=true;document.documentElement.classList.add('bl-pets-out');if(from){const r=tail.getBoundingClientRect();window.__blPetOrigin={x:r.left+r.width/2,y:r.top+r.height/2}}
 const l=document.createElement('link');l.rel='stylesheet';l.href='mascots.css?v=20261112d';document.head.append(l);const sc=document.createElement('script');sc.src='mascots.js?v=20261113a';document.body.append(sc)};
 document.addEventListener('bl-pets',e=>tuck(e.detail.hidden));
-tail.addEventListener('click',()=>{tuck(false);if(!on){try{if(!saved())localStorage.setItem(KEY,JSON.stringify({hidden:false,frozen:false}))}catch{}load(true)}else window.__blPets?.show()});
+tail.addEventListener('click',()=>{tuck(false);if(!on){try{localStorage.setItem(KEY,JSON.stringify({hidden:false,frozen:saved()?.frozen===true}))}catch{}load(true)}else window.__blPets?.show()});
 const s=saved();if(s&&s.hidden!==true){tuck(false);load(false)}})();</script></body></html>
