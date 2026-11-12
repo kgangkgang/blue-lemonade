@@ -19,8 +19,8 @@ import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110
 import { toneState, toned, toneOut, toneKey, CAST_GROUPS } from './tone-state.js?v=20261112e';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
 import { simpleReady } from './simple-frames.js?v=20261112a';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
-import { WORKS, CHAR_WORKS, workByTitle, sourceHtml, creditsHtml } from './sources.js?v=20261112a';   // 11-12 밤 원작(출처) 자료 한 곳
-import { mountCast, pickedCreditHtml } from './cast.js?v=20261112f';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
+import { WORKS, CHAR_WORKS, ADRIAN_WORKS, workByTitle, sourceHtml, creditsHtml } from './sources.js?v=20261112b';   // 11-12 밤 원작(출처) 자료 한 곳
+import { mountCast, pickedCreditHtml } from './cast.js?v=20261112g';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
 import { frameMarkdown } from './mine-text.js?v=20261112e';   // 11-11 글만 복사(마크다운)
 import { makeSet } from './geulkku-set.js?v=20261112e';   // 11-12 설정 꼴 blGeulkku 2
 import { lookNow } from './look.js?v=20261112a';
@@ -28,7 +28,7 @@ import { motionNow } from './motion-state.js?v=20261112a';
 import { texNow } from './texture.js?v=20261112a';
 import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
 import { tuneOf } from './tune.js?v=20261112e';
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112f';
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112g';
 import { wireSelectHide } from './select-hide.js?v=20261112e';   // 11-12 미리보기에서 글을 고르면 옆에 뜨는 막대(눌러야 보이게 · 숨김 풀기 · 굵게 · 기울임)
 import { themeTakeable } from './theme-take.js?v=20261112c';   // 11-12 테마가 이 틀을 받는지(테마 받기 검사를 옮긴 것 · 목록 틀은 index.json nt · 내 글꾸는 여기서)
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
@@ -554,7 +554,7 @@ function paintFrame(state) {
 const SOURCES = {
     'halo': WORKS.halo, 'halo-char': WORKS.halo,
     'hunter': WORKS.hunter, 'hunter-char': WORKS.hunter,
-    'adrian': WORKS.adrian, 'adrian-char': WORKS.adrian,
+    'adrian': ADRIAN_WORKS, 'adrian-char': ADRIAN_WORKS,   // 아드리안은 원작 글이 둘
     'gangho': WORKS.gangho, 'gangho-char': WORKS.gangho,
 };
 // 캐릭터마다 따로 공유된 깡캐 글 — id 앞부분(char-이름)으로 묶어요
@@ -574,13 +574,14 @@ const sourceLinks = item => {
     const id = String(item.id || '');
     const ch = CHAR_SOURCES[Object.keys(CHAR_SOURCES).find(key => id === key || id.startsWith(key + '-'))];
     let w = item.kind === 'frame' ? FRAME_SOURCES[item.concept] : SOURCES[item.category];
-    if (w && !w.url) w = null;   // 자리만 있는 원작
+    const ws = [].concat(w || []).filter(x => x && x.url);   // 원작이 둘인 분류(아드리안)는 나란히 · 자리만 있는 원작은 빼요
+    w = ws.length ? ws : null;
     const a = (src, kind) => `<a class="mart-source" href="${esc(src.url)}" target="_blank" rel="noopener noreferrer" title="원작 깡싸 글">🔗 ${kind} · ${esc(src.title)}</a>`;
     // 틀마다 출처 봇이 다른 분류(11-06 센티넬버스 — 센가시뮬 · 센가 아카데미)는 목록의 source(봇 정식 이름)를 글로만 보여요(깡싸 글 주소는 아직 없어요)
     const own = !w && item.source ? sourceHtml(workByTitle(item.source) || { title: item.source }, '원작') : '';   // 11-12 밤 주소를 받은 봇(센티넬버스 둘)은 링크로
     // 11-09 노래방 글꾸(kara): 견본 대신 내 mp3 · 가사로 만드는 화면(mart/kara/)으로 — 카드 · 상세 창 둘 다
     const kara = item.category === 'kara' ? `<a class="mart-source" href="${esc(asset(`kara/?theme=${String(id).replace(/^kara-/, '')}`))}" title="mp3 주소 · 제목 · 이름 · 색 · [분:초] 가사를 넣으면 이 테마의 HTML 이 바로 나와요">🎤 내 곡으로 만들기 · 노래방 글꾸</a>` : '';
-    return (ch ? a(ch, '깡캐') : '') + (w ? a(w, '원작') : own) + kara;
+    return (ch ? a(ch, '깡캐') : '') + (w ? w.map(x => a(x, '원작')).join('') : own) + kara;
 };
 
 // ── 카드 한 줄 정보 · 단추(카드와 크게 보기 시트가 같이 써요) ──
@@ -656,7 +657,7 @@ function doAct(state, act, b) {
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
 let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261112f').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261112g').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
@@ -1185,7 +1186,7 @@ async function main() {
 }
 // 액자 마트: 수백 종 · 내 사진 넣어 보기 · 거르기 · 조금씩 그리기(frame-room.js) — 받기 · 장바구니는 여기 것을 그대로 써요
 const start = kind === 'frames'
-    ? import('./frame-room.js?v=20261112c').then(m => m.start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
+    ? import('./frame-room.js?v=20261112d').then(m => m.start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
     : kind === 'geulkku' ? main() : null;   // 그 밖의 페이지(지니)는 아래 부품만 빌려 써요
 start?.catch(e => { grid.innerHTML = `<p class="mart-empty">목록을 못 불러왔어요 · ${esc(e.message)}</p>`; });
 
@@ -1204,6 +1205,6 @@ export async function geulkkuList() {
     return data;
 }
 /** 프레임 방(frame-room.js)의 지니용 준비 — 마트 액자 카드와 같은 그림 · 같은 담기 값 */
-export const frameKit = () => import('./frame-room.js?v=20261112c').then(m => m.kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
+export const frameKit = () => import('./frame-room.js?v=20261112d').then(m => m.kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
 export const mylogOn = () => mylog.on;
 export { isBuiltin, BUILTIN_TAG, cart, say, esc, asset, ensureItem, previewOf, tagsHtml, glyphHtml, iconSrc, descOf, catLabel, styleOf, entryOf, receipt, doAct, copyEntries, copyHtml, sourceLinks, LOAD_FAIL };

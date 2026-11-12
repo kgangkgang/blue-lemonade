@@ -903,15 +903,16 @@ await test('내 글 넣기: 이름만 있는 줄 + 다음 줄 따옴표 대사(1
 // ── 11-12 밤 원작(출처) — 사용자 「글꾸 마트는 왜 출처가 없냐 … 링크 다 어디 감」: 다시 사라지지 않게 잠가요 ──
 await test('원작(출처): 캐릭터 묶음의 모든 캐릭터가 원작 줄을 가져요 · 아홉 글 주소가 전부 자료에 있고 묶음마다 하나 이상 · 캐릭터 칸 · 고른 캐릭터 줄 · 크게 보기 · 「원작」 칸 · 액자 마트가 같은 자료(sources.js)를 읽어요', async () => {
     const so = await imp(path.join(MART, 'sources.js')), ts = await import(pathToFileURL(path.join(MART, 'tone-state.js')).href + '?src-test');
-    const NINE = [54677, 5150, 78795, 78569, 127563, 155899, 81234, 29037, 99019].map(n => 'https://kkangtong.xyz/posts/' + n);
-    assert.deepEqual(so.ALL_SOURCES.map(x => x.url).sort(), [...NINE].sort(), '아홉 글 주소');
+    const NINE = [54677, 5150, 78795, 78569, 127563, 155899, 81234, 29037, 99019, 43794].map(n => 'https://kkangtong.xyz/posts/' + n);   // 아홉 + 아드리안 둘째 글 = 열
+    assert.deepEqual(so.ALL_SOURCES.map(x => x.url).sort(), [...NINE].sort(), '열 글 주소');
     for (const x of so.ALL_SOURCES) assert.ok(x.title && /^https:\/\/kkangtong\.xyz\/posts\/\d+$/.test(x.url), x.title);
     for (const g of ts.CAST_GROUPS) {
         assert.ok(so.groupSources(g.id, g.cast.map(x => x.name)).some(s => s.url), `묶음 ${g.label} 원작`);
         for (const x of g.cast) { const src = so.castSources(x.name, x.group); assert.ok(src.length && src.every(s => s.url && s.title), `${g.label} · ${x.name} 원작 없음`); }
     }
     assert.deepEqual(so.castSources('은설', 'sentinel').map(s => s.url), [NINE[7], NINE[8]]);
-    assert.deepEqual(so.castSources('아드리안 폰 아이젠베르크', 'dh').map(s => s.url), [NINE[6]]);
+    assert.deepEqual(so.castSources('아드리안 폰 아이젠베르크', 'dh').map(s => s.url), [NINE[6], NINE[9]], '아드리안은 원작 글이 둘');
+    assert.ok(/'adrian': ADRIAN_WORKS, 'adrian-char': ADRIAN_WORKS/.test(fs.readFileSync(path.join(MART, 'mart.js'), 'utf8')), '액자 마트 아드리안 액자도 둘');
     assert.deepEqual(so.castSources('백영현', 'dh').map(s => s.url), [NINE[1]]);
     assert.deepEqual(so.castSources('우지엘', 'halo').map(s => [s.kind, s.url]), [['깡캐', NINE[4]], ['원작', NINE[0]]]);
     assert.deepEqual(so.castSources('내가 만든 이름', 'mine'), []);
@@ -924,7 +925,7 @@ await test('원작(출처): 캐릭터 묶음의 모든 캐릭터가 원작 줄�
     const castSrc = fs.readFileSync(path.join(MART, 'cast.js'), 'utf8'), martSrc = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), roomSrc = fs.readFileSync(path.join(MART, 'frame-room.js'), 'utf8');
     for (const k of ['class="mart-cast-src"', 'groupSources(g.id', 'export function pickedCreditHtml', 'class="mart-cast-credit"']) assert.ok(castSrc.includes(k), `cast.js ${k}`);
     for (const k of ['creditsHtml(CAST_GROUPS)', 'mart-sheet-credit', "workByTitle(item.source)"]) assert.ok(martSrc.includes(k), `mart.js ${k}`);
-    assert.doesNotMatch(martSrc, /kkangtong\.xyz\/posts\/(54677|5150|78795|81234|127563|78569|155899)/, 'mart.js 에 주소를 따로 적지 않아요(sources.js 한 곳)');
+    assert.doesNotMatch(martSrc, /kkangtong\.xyz\/posts\/(54677|5150|78795|81234|127563|78569|155899|43794)/, 'mart.js 에 주소를 따로 적지 않아요(sources.js 한 곳)');
     assert.ok(roomSrc.includes('workByTitle(b)'), 'frame-room.js 봇 링크');
     assert.match(fs.readFileSync(path.join(MART, 'geulkku/index.html'), 'utf8'), /<section class="mart-credits" aria-label="캐릭터 원작"><\/section>/);
     for (const b of ['[실리/1차] 센티넬버스 시뮬레이션(센가시뮬) v1.3', '[실리/1차] 센티넬버스 아카데미']) assert.ok(so.workByTitle(b)?.url && roomSrc.includes(b), `액자 마트 봇 이름 ${b}`);
@@ -1823,7 +1824,7 @@ await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-u
     const files = ['mart.js', 'genie.js', 'geulkku/index.html', 'frames/index.html', 'genie/index.html'].map(f => [f, srcOf(f)]);
     for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room', 'genie']) {
         const tails = new Set(files.flatMap(([, s]) => [...s.matchAll(new RegExp(`[./]${mod}\\.js\\?v=(\\w+)`, 'g'))].map(m => m[1])));
-        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? '20261112f' : mod === 'cart' ? '20261112d' : mod === 'frame-room' ? '20261112c' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
+        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? '20261112g' : ['cart', 'frame-room'].includes(mod) ? '20261112d' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
     }
 });
 await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬리가 다르면 브라우저가 같은 모듈을 두 벌 받아요 — char-tone · spoiler · bare · presets 가 그랬어요 · 꼬리 없는 쪽은 옛 캐시가 남아요)', () => {

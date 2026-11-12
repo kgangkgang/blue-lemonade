@@ -8,7 +8,7 @@ import { tasteHtml, tasteDocument, canTaste, isConcept, conceptReady, loadConcep
 import { withInks, setInk, resetInks, paintDot, syncInks } from './inks.js?v=20261108a';
 import { kkangtongReady } from './tone-geulkku.js?v=20261110v';   // 11-10 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
 import { toneOut } from './tone-state.js?v=20261112e';
-import { useColors } from './cast.js?v=20261112f';                 // 11-10 붙여 넣은 채팅 HTML 의 대사색으로 캐릭터 고르기             // 11-10 고른 대사색으로 다시 칠하기   // 11-08 글자색 팔레트   // 11-07 판 꼬리표: 옛 캐시와 섞이지 않게
+import { useColors } from './cast.js?v=20261112g';                 // 11-10 붙여 넣은 채팅 HTML 의 대사색으로 캐릭터 고르기             // 11-10 고른 대사색으로 다시 칠하기   // 11-08 글자색 팔레트   // 11-07 판 꼬리표: 옛 캐시와 섞이지 않게
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 /** 그릴 수 있는 틀인지 — 받은 글꾸(틈 템플릿 template) · 테마 로그 복사 기본 틀(shape · 내장) · 11-07 받아 둔 일러스트 컨셉(concept-*) */

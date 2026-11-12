@@ -12,7 +12,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const live = /^https?:/.test(SRC), srv = live ? { url: SRC.replace(/\/?$/, '/'), close: async () => { } } : await serve(path.resolve(SRC), Number(opt('--port', 18995)));
 const b = await launch(path.join(HERE, 'out', '_source-prof'), Number(opt('--cdp', 19471)));
 const rows = [], row = (vp, op, ok, actual) => rows.push({ vp, op, ok: !!ok, actual: String(actual).slice(0, 300) });
-const NINE = [54677, 5150, 78795, 78569, 127563, 155899, 81234, 29037, 99019];
+const NINE = [54677, 5150, 78795, 78569, 127563, 155899, 81234, 29037, 99019, 43794];   // 아홉 + 아드리안 둘째 글
 const over = () => b.eval(`document.documentElement.scrollWidth - innerWidth`);
 const hrefs = sel => b.eval(`[...document.querySelectorAll(${JSON.stringify(sel)})].map(a=>a.getAttribute('href')||('글:'+a.textContent))`);
 const clipOut = sel => b.eval(`[...document.querySelectorAll(${JSON.stringify(sel)})].filter(e=>e.checkVisibility()&&(e.getBoundingClientRect().right>innerWidth+1||e.getBoundingClientRect().left<-1)).length`);
@@ -46,6 +46,15 @@ try {
         await b.eval(`document.querySelector('.mart-cast').scrollIntoView({block:'start'}); true`); await b.sleep(250);
         await b.shot(path.join(OUT, `${vp}-3-은설-고름.png`));
         row(vp, '고른 뒤 가로 넘침 0', (await over()) <= 0, `페이지 넘침 ${await over()}`);
+        // 깡캐에 아드리안을 고르면 원작 글 둘이 나란히
+        await b.eval(`document.querySelector('.mart-cast [data-toggle="other"]').click(); true`); await b.sleep(400);
+        if (!(await b.eval(`document.querySelector('.mart-cast .mart-cast-g[data-group="dh"]').getAttribute('aria-expanded')==='true'`))) { await b.eval(`document.querySelector('.mart-cast .mart-cast-g[data-group="dh"]').click(); true`); await b.sleep(300); }
+        await b.eval(`(()=>{const r=[...document.querySelectorAll('.mart-cast input[name="bl-cast2"]')].find(i=>i.dataset.name==='아드리안 폰 아이젠베르크');r.click();return true})()`); await b.sleep(700);
+        const adr = await b.eval(`[...document.querySelectorAll('.mart-cast .mart-cast-credit .mart-cast-credit-row')].filter(r=>/아드리안/.test(r.textContent)).flatMap(r=>[...r.querySelectorAll('a.mart-source')].map(a=>a.href))`);
+        row(vp, '아드리안을 고르면 원작 글 둘(81234 · 43794)', [81234, 43794].every(n => adr.some(u => u.endsWith('/posts/' + n))) && adr.length === 2, adr.join(' · ') || '줄 없음');
+        await b.eval(`document.querySelector('.mart-cast').scrollIntoView({block:'start'}); true`); await b.sleep(250);
+        await b.shot(path.join(OUT, `${vp}-3b-아드리안-고름.png`));
+        row(vp, '아드리안 고른 뒤 가로 넘침 0', (await over()) <= 0, `페이지 넘침 ${await over()}`);
         // 크게 보기 머리에도
         await b.goto(srv.url + 'mart/geulkku/?view=1#simple-k2'); await b.until(`document.querySelector('.mart-sheet[open] .mart-sheet-preview .gk')`, 30000); await b.sleep(700);
         const sheet = await b.eval(`(()=>{const c=document.querySelector('.mart-sheet[open] .mart-sheet-credit');const s=document.querySelector('.mart-sheet[open]');return c?{text:c.textContent.replace(/\\s+/g,' ').trim(),links:[...c.querySelectorAll('a.mart-source')].map(a=>a.href),out:[...c.querySelectorAll('a')].filter(a=>a.getBoundingClientRect().right>s.getBoundingClientRect().right+1).length}:null})()`);
@@ -54,6 +63,13 @@ try {
         // 액자 마트: 센티넬버스 인물 액자 크게 보기 — 봇 이름이 링크
         await b.goto('about:blank'); await b.goto(srv.url + 'mart/frames/'); await b.until(`document.querySelectorAll('.mart-card').length > 3`, 30000); await b.sleep(600);
         const fr = await b.eval(`(async()=>{const d=await (await fetch('../data/frames.json')).json();const it=d.items.find(x=>x.category==='sentinel-char');return it?it.id:null})()`);
+        const ad = await b.eval(`(async()=>{const d=await (await fetch('../data/frames.json')).json();const it=d.items.find(x=>x.concept==='adrian');return it?it.id:null})()`);
+        if (ad) {
+            await b.goto('about:blank'); await b.goto(srv.url + 'mart/frames/#' + encodeURIComponent(ad)); await b.sleep(2500);
+            const as = await b.eval(`[...document.querySelectorAll('dialog[open] a.mart-source, .room-source a.mart-source')].map(a=>a.getAttribute('href'))`);
+            row(vp, '액자 마트 아드리안 액자: 원작 글 둘', [81234, 43794].every(n => as.some(u => u.endsWith('/posts/' + n))), as.join(' · ') || '창이 안 열림');
+            await b.shot(path.join(OUT, `${vp}-6-액자-아드리안.png`));
+        } else row(vp, '액자 마트 아드리안 액자', false, '자료에서 못 찾음');
         if (!fr) row(vp, '액자 마트 센티넬버스 액자', false, '자료에서 못 찾음');
         else {
             await b.goto('about:blank'); await b.goto(srv.url + 'mart/frames/#' + encodeURIComponent(fr)); await b.sleep(2500);
