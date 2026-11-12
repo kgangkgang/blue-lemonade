@@ -61,6 +61,8 @@
 /* 정보 꼬리표(분류 · 디자인 · 크게 보기 힌트) — 누르는 것 아님: 24 알약 · 1px 선 · 12/400 · 보조색 하나(디자인만 파란 글자) */
 .tag{display:inline-flex;align-items:center;gap:4px;flex:none;height:24px;padding:0 8px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);font-size:12px;font-weight:400;line-height:1;white-space:nowrap}
 .tag.is-style{color:var(--pick-ink)}
+/* 11-12 「테마 아직 못 받음」 — 정보 꼬리표 그대로 · 점선으로만 가려요(누르는 것 아님) */
+.tag.is-notake{border-style:dashed}
 /* 입력칸 · 고르기 칸: 36 · 모서리 8 · 1px 선 · 14 — 고르기는 공용 ⌄ 그림 */
 .field{box-sizing:border-box;height:var(--ctl);min-width:0;max-width:100%;padding:0 12px;border:1px solid var(--line-strong);border-radius:var(--r-ctl);background:var(--surface);color:var(--text);font:inherit;font-size:var(--ts-ctl);line-height:1}
 .field:focus-visible{outline:2px solid var(--blue);outline-offset:-1px}
@@ -587,6 +589,9 @@ html.mart-cart-on{overflow:hidden}
 @media (max-width:639px){.mart-mine-text{font-size:16px}}
 /* 11-11 되돌리기 · 다시하기 — 못 쓸 때는 흐리게(테 없이) */
 .mart-tune-line [data-hist]:disabled{opacity:.45;cursor:default}
+.mart-tune-line [data-act^=theme-]:disabled{opacity:.45;cursor:not-allowed}
+.mart-tune-line [data-act^=theme-]:disabled:hover{background:var(--surface)}
+.mart-tune-hint.is-notake b{color:var(--text);font-weight:var(--strong)}
 /* 11-11 「머리」 묶음 글칸 — 남는 폭을 다 써요 */
 .mart-head-field{flex:1 1 160px;min-width:0}
 .mart-head-field .field{width:100%}

@@ -22,6 +22,7 @@ const SRC = path.join(ROOT, 'tools', 'simple-frames');
 const CHECK = process.argv.includes('--check');
 const { AUD } = createRequire(import.meta.url)('./song-templates.cjs');
 const sf = await import(pathToFileURL(path.join(ROOT, 'mart', 'simple-frames.js')).href);
+const { themeTakeable } = await import(pathToFileURL(path.join(ROOT, 'mart', 'theme-take.js')).href);   // 11-12 테마가 못 받는 틀 → 목록 nt(짧은 까닭)
 const OUT = path.join(DIR, 'index.json');   // 11-11 옛 글꾸를 뺀 뒤로 글꾸 마트 목록은 이 도구가 써요
 const KEY = 'sp-simple';
 // 분류(새 틀이 스물여덟 개뿐이라 동작으로 넷만):
@@ -208,7 +209,8 @@ export function build() {
     const { html, preview, info } = frameHtml(d);
     const ck = d.chunk || KEY; (heavy[ck] = heavy[ck] || {})[d.id] = { preview };
     const card = sf.facesOf(info, info.base).orig[0];
-    rows.push({ id: d.id, name: d.name, emoji: d.emoji, category: catOf(d, html), style: '심플', desc: d.desc, c: d.chunk || KEY, copyOnly: true, photo: true, ...(/<audio\b/.test(html) ? { audio: true } : {}), simple: true, bytes: Buffer.byteLength(html), fx: 'e', bg: card, ink: sf.SIMPLE_CONTRACT.ink[info.base], accent: sf.sianFit(info.K0 || '#8b8e96', '#ffffff', 4.5) });
+    const take = themeTakeable(preview, { id: d.id, key: sf.simpleFrameInfo(preview)?.key || '' });   // mart.js themePack 과 같은 html · 열쇠
+    rows.push({ id: d.id, name: d.name, emoji: d.emoji, category: catOf(d, html), style: '심플', desc: d.desc, c: d.chunk || KEY, copyOnly: true, photo: true, ...(/<audio\b/.test(html) ? { audio: true } : {}), simple: true, bytes: Buffer.byteLength(html), fx: 'e', bg: card, ink: sf.SIMPLE_CONTRACT.ink[info.base], accent: sf.sianFit(info.K0 || '#8b8e96', '#ffffff', 4.5), ...(take.ok ? {} : { nt: take.why }) });
   }
   const used = new Set(rows.map(x => x.category));
   const files = {}, chunks = {};

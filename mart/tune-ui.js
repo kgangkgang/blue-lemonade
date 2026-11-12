@@ -382,11 +382,22 @@ function downloadSets(rows, name) {
     const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `완성프리셋-${String(name || '모두').replace(/[\\/:*?"<>|]+/g, ' ').trim()}.bl-mart-set.json`, hidden: true });
     document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
+/**
+ * 11-12 「테마로 담기」 칸 — 테마가 못 받는 틀(item.nt · 테마 받기 검사를 옮긴 theme-take.js 의 까닭)은 단추를 막고 까닭 · 다른 길을 알려요
+ *   (예전에는 53틀도 단추가 살아 있어 담으면 테마가 「이 틀은 아직 테마 로그 복사가 받지 못해요」로 건너뛰었어요)
+ */
+function themeBoxHtml(item) {
+    const no = item.nt ? ' disabled aria-describedby="mart-notake-why"' : '';
+    const hint = item.nt
+        ? `<p class="mart-tune-hint is-notake" id="mart-notake-why"><b>테마 아직 못 받음</b> — 블루레몬 로그 복사가 아직 이 틀을 받지 못해요(${esc(item.nt)}) · 위 「HTML 복사」 · 「파일로 내려받기」로 커뮤니티 글에 붙여 써요</p>`
+        : '<p class="mart-tune-hint">테마에서 받는 것은 블루레몬 1.1.4 부터예요</p>';
+    return `<h3 class="mart-tune-h">테마로 담기 <small>블루레몬 로그 복사에 이 틀 + 지금 조절 값 그대로</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-act="theme-copy"${no} title="테마 「마트에서 가져오기」에 붙여 넣는 글(bl-mart 꾸러미)을 복사해요">테마용 복사</button><button type="button" class="chip" data-act="theme-file"${no} title="같은 꾸러미를 .bl-mart.json 파일로 받아요">테마용 파일 받기</button></div>${hint}`;
+}
 /** 「내 프리셋」 · 「완성 프리셋」 칸(미리보기 아래) */
 export function mineBoxHtml(item) {
     if (!item?.simple || !item.preview) return '';
     return `<section class="mart-tune-save" aria-label="가져가기 · 내 스타일"><h3 class="mart-tune-h">가져가기 <small>HTML 복사 말고도</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip mart-dl-chip" data-act="download" title="복사 글과 같은 HTML 을 .html 파일로">파일로 내려받기</button><button type="button" class="chip" data-act="text" title="틀 없이 글만(마크다운) 복사">글만 복사</button></div>
-        <h3 class="mart-tune-h">테마로 담기 <small>블루레몬 로그 복사에 이 틀 + 지금 조절 값 그대로</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-act="theme-copy" title="테마 「마트에서 가져오기」에 붙여 넣는 글(bl-mart 꾸러미)을 복사해요">테마용 복사</button><button type="button" class="chip" data-act="theme-file" title="같은 꾸러미를 .bl-mart.json 파일로 받아요">테마용 파일 받기</button></div><p class="mart-tune-hint">테마에서 받는 것은 블루레몬 1.1.4 부터예요</p>
+        ${themeBoxHtml(item)}
         <h3 class="mart-tune-h">설정 파일 · 코드 <small>이 틀 + 지금 조절 값 · 마트와 테마가 같은 꼴</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-setx="file" title="지금 값을 ${SET_EXT} 파일로">설정 파일 받기</button><button type="button" class="chip" data-setx="pick" title="받아 둔 ${SET_EXT} 파일(예전 완성 프리셋 파일도)을 골라 입혀요">파일 가져오기</button><button type="button" class="chip" data-setx="code" title="짧은 코드(BLG1.…)를 복사해요">코드 복사</button><button type="button" class="chip" data-setx="paste" aria-expanded="false">코드 붙여 넣기</button><input type="file" class="mart-setx-file" accept=".json,application/json" hidden></div>
         <div class="mart-setx-io" hidden><textarea class="field" rows="2" placeholder="BLG1.… 코드나 ${SET_EXT} 내용을 붙여 넣어요 · 예전 프리셋 글자(BLM1.) · 테마 스타일 코드(BLS1.)도 돼요" aria-label="설정 코드 붙여 넣기"></textarea><button type="button" class="btn" data-setx="apply">가져와서 입히기</button></div>
         <p class="mart-tune-hint">캐릭터 이름이 받는 쪽 인물표에 없으면 색만 써요 · 「내 글 넣기」 글은 담지 않아요</p>

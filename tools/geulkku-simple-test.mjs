@@ -1691,5 +1691,56 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
     assert.equal(pick('#start'), 'start'); assert.equal(pick('#' + encodeURIComponent('한눈에')), '한눈에');
     assert.match(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), /home-guide\.js\?v=20261112k/);
 });
+// ── 11-12 「테마 아직 못 받음」 — 마트 판정(mart/theme-take.js · 목록 nt)이 테마 받기 검사(src/mart-import.js checkItem)와 410틀 모두 같아요 ──
+{
+    const tt = await imp(path.join(MART, 'theme-take.js'));
+    const fixture = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools/theme-takeable.json'), 'utf8'));
+    const previews = {};
+    for (const c of Object.values(sixAll.chunks)) Object.assign(previews, JSON.parse(fs.readFileSync(path.join(DIR, c.file), 'utf8')).items);
+    const keyOf = html => sf.simpleFrameInfo(html)?.key || '';   // mart.js themeKey 와 같아요(조각 preview 뿌리 class)
+    const judge = it => tt.themeTakeable(previews[it.id].preview, { id: it.id, key: keyOf(previews[it.id].preview) });
+    await test('테마 못 받음 ① 410틀 모두 마트 판정 = 테마 판정(고정 자료 tools/theme-takeable.json · 까닭 글자까지)', () => {
+        assert.equal(sixAll.items.length, fixture.total);
+        const ok = new Set(fixture.ok), diff = [];
+        for (const it of sixAll.items) {
+            const r = judge(it);
+            if (r.ok !== ok.has(it.id) || (!r.ok && r.reason !== fixture.no[it.id])) diff.push(`${it.id}: 마트 ${r.ok ? '받음' : r.reason} · 테마 ${ok.has(it.id) ? '받음' : fixture.no[it.id]}`);
+        }
+        assert.deepEqual(diff, []);
+        assert.equal(sixAll.items.filter(it => judge(it).ok).length, 357);
+    });
+    await test('테마 못 받음 ② 목록 index.json 의 nt = 판정 까닭(받는 틀엔 nt 없음 · 53틀)', () => {
+        const bad = sixAll.items.filter((it) => { const r = judge(it); return r.ok ? 'nt' in it : it.nt !== r.why; }).map(it => it.id);
+        assert.deepEqual(bad, []);
+        assert.equal(sixAll.items.filter(it => it.nt).length, 53);
+    });
+    // 테마 사본이 이 PC 에 있으면 테마 코드를 바로 돌려서도 맞대요(GK_THEME_DIR 또는 옆 worktree builtin-out-review)
+    const themeDir = process.env.GK_THEME_DIR || path.resolve(ROOT, '../builtin-out-review');
+    if (fs.existsSync(path.join(themeDir, 'src/mart-import.js'))) {
+        await test('테마 못 받음 ③ 테마 사본 checkItem 을 바로 돌려도 410틀 같아요', async () => {
+            const { checkItem } = await imp(path.join(themeDir, 'src/mart-import.js'));
+            const diff = [];
+            for (const it of sixAll.items) {
+                const html = previews[it.id].preview;
+                const t = checkItem({ kind: 'geulkku-simple', v: 1, id: it.id, key: keyOf(html), name: it.name, emoji: it.emoji, html, set: { blGeulkku: 2 } });
+                const r = judge(it);
+                if (!!t.item !== r.ok || (!r.ok && t.reason !== r.reason)) diff.push(`${it.id}: 마트 ${r.reason || '받음'} · 테마 ${t.reason || '받음'}`);
+            }
+            assert.deepEqual(diff, []);
+        });
+    } else console.log('건너뜀  테마 못 받음 ③ 테마 사본 바로 대조 — GK_THEME_DIR 가 없어요(고정 자료 대조 ①이 대신 지켜요)');
+    await test('테마 못 받음 ④ 화면: 카드 꼬리표 · 크게 보기 「테마로 담기」 단추 막음 · 담기 함수도 막음 · 내 글꾸도 판정 · 지니 낡은 글 없음', () => {
+        const mart = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8'), genie = fs.readFileSync(path.join(MART, 'genie.js'), 'utf8');
+        assert.match(mart, /\$\{own\}\$\{nt\}<\/span>/);
+        assert.match(mart, /테마 아직 못 받음/);
+        assert.match(mart, /async function themeTake\(state, file\) \{\n {4}const item = state\.item;\n {4}if \(item\.nt\)/);
+        assert.match(mart, /themeTakeable\(x\.preview, \{ id: x\.id, key: themeKey\(x\) \}\)/);
+        assert.match(ui, /data-act="theme-copy"\$\{no\}/);
+        assert.match(ui, /data-act="theme-file"\$\{no\}/);
+        for (const [n, t] of [['mart.js', mart], ['genie.js', genie]]) assert.doesNotMatch(t, /테마로 받기는 준비 중/, n);
+        assert.match(fs.readFileSync(path.join(MART, 'mart.css'), 'utf8'), /\.tag\.is-notake\{/);
+        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112b/, f);
+    });
+}
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

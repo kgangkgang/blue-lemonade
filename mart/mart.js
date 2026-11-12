@@ -28,6 +28,7 @@ import { texNow } from './texture.js?v=20261112a';
 import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
 import { tuneOf } from './tune.js?v=20261112a';
 import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112b';
+import { themeTakeable } from './theme-take.js?v=20261112c';   // 11-12 테마가 이 틀을 받는지(테마 받기 검사를 옮긴 것 · 목록 틀은 index.json nt · 내 글꾸는 여기서)
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
 import { sanitizeHtml, guessSlot, fromPath, slotPath } from './lib/log-copy/log-copy-sanitize.js';
 import { mineModelNow } from './mine-text.js?v=20261112a';
@@ -467,6 +468,7 @@ async function clipText(text) {
 export const THEME_SET_MAX = 16 * 1024;
 async function themeTake(state, file) {
     const item = state.item;
+    if (item.nt) { say(`${NOT_TAKE_HINT}(${item.nt}) · 「HTML 복사」로 써요`, 4200); return; }   // 단추는 막혀 있지만 다른 길(키보드 · 옛 칸)로 와도
     try {
         const set = makeSet({ tone: toneState, look: lookNow(), motion: motionNow(), tex: texNow(), shape: shapeNow(), tune: tuneOf(item.id), frame: item.own ? themeKey(item) : item.id });   // 내 글꾸도 틀 값(frames[열쇠])까지
         const text = ensureItem(item).then(() => JSON.stringify(themePack(item, set)));
@@ -600,9 +602,13 @@ const glyphHtml = (item, fallback = '') => { const src = iconSrc(item); const em
 function tagsHtml(item) {
     const style = item.kind === 'geulkku' && (showStyle || styleOf(item) !== STYLE_DEFAULT) ? `<span class="mart-tag tag is-style" title="디자인">${esc(styleOf(item))}</span>` : '';
     const own = item.kind === 'geulkku' && item.builtin ? BUILTIN_TAG : '';
+    const nt = item.kind === 'geulkku' && item.simple && item.nt ? notTakeTag(item) : '';   // 11-12 테마 로그 복사가 아직 못 받는 틀(53 / 410)
     const fx = '';   // 916 중 913 이 움직이고 915 가 반응해서(2026-11-05 셈) 「✨ 움직임 · 👆 반응」 꼬리표는 정보가 없어 뺐어요
-    return `<span class="mart-tags"><span class="mart-tag tag">${esc(catLabel(item.category, item.categoryLabel))}</span>${style}${fx}${own}</span>`;
+    return `<span class="mart-tags"><span class="mart-tag tag">${esc(catLabel(item.category, item.categoryLabel))}</span>${style}${fx}${own}${nt}</span>`;
 }
+/** 11-12 「테마 아직 못 받음」 꼬리표 — item.nt = 테마 받기 검사가 건너뛰는 까닭(theme-take.js why) */
+export const NOT_TAKE_HINT = '블루레몬 로그 복사가 아직 이 틀을 받지 못해요';
+const notTakeTag = item => `<span class="mart-tag tag is-notake" title="${esc(`${NOT_TAKE_HINT}(${item.nt}) · 「HTML 복사」로 커뮤니티 글에 붙여 써요`)}">테마 아직 못 받음</span>`;
 const descOf = item => (LABEL_FIX[item.category] ? String(item.desc || '').replace(/강호유람록/g, '무협시뮬') : (item.desc || ''));
 function actionsHtml(item) {
     const html = item.kind === 'geulkku' ? `<button type="button" class="btn" data-act="html" title="${HTML_TITLE}"><span class="em" aria-hidden="true">📋</span>HTML 복사</button>` : '';
@@ -610,7 +616,7 @@ function actionsHtml(item) {
     if (item.builtin) return `<div class="mart-actions is-geulkku is-builtin"><span class="mart-builtin" title="블루레몬에이드 로그 복사에 이미 있어요 · 마트에서 가져오지 않아도 돼요">✓ 이미 테마에 들어 있어요</span>${html}</div>`;
     if (item.own) return `<div class="mart-actions is-geulkku is-builtin is-copyonly is-own"><button type="button" class="btn mart-own-del" data-act="own-del" title="이 브라우저에서 지워요(두 번 눌러요)">지우기</button>${html}</div>`;   // 11-12 내 글꾸
     // 오리지널 컨셉 30 · 화보 갤러리 · 노래 앨범(copyOnly): 테마로 받지 않는 틀 — 「담기」 · 「테마용 복사」 없이 HTML 복사만
-    if (item.copyOnly) return `<div class="mart-actions is-geulkku is-builtin is-copyonly"><span class="mart-builtin" title="${item.simple ? '커뮤니티 글에 붙이는 심플 글꾸예요 · 제목 · 이름 · 글을 바꿔 HTML 칸에 붙여요' : item.photo ? (item.category === 'kara' ? '커뮤니티 글에 붙이는 노래방 글꾸예요 · 「내 곡으로 만들기」에서 mp3 · 가사를 넣으면 완성 HTML 이 나와요' : item.category === 'song' || item.audio ? '커뮤니티 글에 붙이는 노래 앨범 틀이에요 · 그림 · mp3 주소와 글을 바꿔 HTML 칸에 붙여요' : '커뮤니티 글에 붙이는 사진 화보 틀이에요 · 사진 주소 · 글을 바꿔 HTML 칸에 붙여요') : '테마로 받기는 준비 중이에요 · 커뮤니티 글에 HTML 로 붙여 써요'}">HTML 복사로 써요</span>${html}</div>`;
+    if (item.copyOnly) return `<div class="mart-actions is-geulkku is-builtin is-copyonly"><span class="mart-builtin" title="${item.simple ? '커뮤니티 글에 붙이는 심플 글꾸예요 · 제목 · 이름 · 글을 바꿔 HTML 칸에 붙여요' : item.photo ? (item.category === 'kara' ? '커뮤니티 글에 붙이는 노래방 글꾸예요 · 「내 곡으로 만들기」에서 mp3 · 가사를 넣으면 완성 HTML 이 나와요' : item.category === 'song' || item.audio ? '커뮤니티 글에 붙이는 노래 앨범 틀이에요 · 그림 · mp3 주소와 글을 바꿔 HTML 칸에 붙여요' : '커뮤니티 글에 붙이는 사진 화보 틀이에요 · 사진 주소 · 글을 바꿔 HTML 칸에 붙여요') : '테마로는 받지 않는 틀이에요 · 커뮤니티 글에 HTML 로 붙여 써요'}">HTML 복사로 써요</span>${html}</div>`;
     return `<div class="mart-actions${item.kind === 'geulkku' ? ' is-geulkku' : ''}"><button type="button" class="btn mart-pick" data-act="pick" aria-pressed="false"><span class="em" aria-hidden="true">🛒</span>담기</button><button type="button" class="btn" data-act="copy" title="이것 하나만 바로 복사(테마 「마트에서 가져오기」용)">${item.kind === 'geulkku' ? '테마용 복사' : '바로 복사'}</button>${html}</div>`;
 }
 /** 11-11 즐겨찾기 ☆ · ★(무테 아이콘) — 카드 이름 줄 · 크게 보기 제목 옆 */
@@ -990,6 +996,7 @@ cart.onChange(() => { states.forEach(syncCard); syncSheet(); });
 let ownItems = [], ownBox = null;
 function refreshOwn() {
     ownItems = ownList().map(ownItem);
+    for (const x of ownItems) if (x.simple && x.preview) { const r = themeTakeable(x.preview, { id: x.id, key: themeKey(x) }); if (!r.ok) x.nt = r.why; }   // 11-12 「테마 아직 못 받음」(목록 틀은 index.json nt)
     for (const x of ownItems) x._text = textOf(x);
     for (let i = states.length - 1; i >= 0; i--) if (states[i].item.own) { stateById.delete(states[i].item.id); states.splice(i, 1); }   // 이름 · 자리가 바뀌면 카드를 새로
     picker?.count(OWN_CAT, ownItems.length);
