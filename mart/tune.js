@@ -5,7 +5,7 @@
 //   - 깡통 · 깡캐 색은 목록 위 두 칸(tone-state.js)과 같은 값이라 여기에 안 들어 있어요.
 export const TUNE_KEY = 'bl-mart-tune-v1';     // 지금 고치는 중인 값(탭을 닫으면 사라져요 — sessionStorage)
 export const MINE_KEY = 'bl-mart-mine-v1';     // 「내 글꾸」(이 브라우저에 기억 — localStorage)
-import { spoilerHtml, spoilerStyle, SPOILER_LABEL, unparagraphHtml } from './lib/log-copy/log-copy-spoiler.js?v=20261112a';
+import { spoilerHtml, spoilerStyle, SPOILER_LABEL, unparagraphHtml } from './lib/log-copy/log-copy-spoiler.js?v=20261112b';
 import { cleanLook } from './look.js?v=20261112a';
 import { applyVals } from './custom.js?v=20261112e';
 import { PAINT_ROLES } from './shape.js?v=20261112a';   // 11-12 낱낱 바탕 색(카드 바탕 · 깡통 띠 · 깡캐 띠 · 제목 밑줄) — 같은 inks 칸에 기억 · 규칙은 shape.js 가 내요

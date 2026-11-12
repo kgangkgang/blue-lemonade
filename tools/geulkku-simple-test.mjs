@@ -1580,6 +1580,10 @@ await test('고른 글만 숨기기 값: cleanTune 이 { i, a, b, t } 를 지키
     const one = tun.applySpoilers(html, [{ i: 0, a: 3, b: 4, t: '둘' }]);
     assert.match(one, /<div class="gk-nr blsp-p">하나 <details class="blsp-s" data-bl-spoiler="[^"]*"[^>]*>[\s\S]*<span class="blsp-c">둘<\/span><\/details> 셋 넷<\/div>/);
     assert.equal(tun.applySpoilers(html, [{ i: 0, a: 3, b: 4, t: '열' }]), html, '못 찾으면 그대로');
+    // 11-12 밤 글줄 안 숨긴 글은 문단 첫 줄 들여쓰기를 물려받지 않아요(낫표처럼 text-indent 가 있는 틀에서 숨긴 글 앞에 빈칸이 생겼어요 · 테마 f158b579c 와 같은 고침 · 화면은 tools/site-rig/spoiler-indent-check.mjs)
+    assert.match(one, /<details class="blsp-s" data-bl-spoiler="[^"]*" style="display:inline-block;max-width:100%;vertical-align:baseline;text-indent:0">/);
+    assert.match(tun.applySpoilers(html, [{ i: 0 }]), /<details class="blsp-s blsp-k" data-bl-spoiler="[^"]*" style="display:block;margin:8px 0">/, '줄 숨기기는 문단 꼴 그대로');
+    assert.equal((fs.readFileSync(path.join(MART, 'lib/log-copy/log-copy-spoiler.js'), 'utf8').match(/vertical-align:baseline;text-indent:0'/g) || []).length, 2, '미리보기 · 고른 글 감싸기 둘 다');
     const two = tun.applySpoilers(html, [{ i: 0, a: 0, b: 4, t: '하나 둘' }, { i: 0, a: 3, b: 6, t: '둘 셋' }]);
     assert.equal((two.match(/<details/g) || []).length, 1, '겹치면 하나만');
     assert.equal(tun.applySpoilers('<style>\n</style><div class="gk"><p class="gk-nr">가<b>나다</b>라</p></div>', [{ i: 0, a: 0, b: 2, t: '가나' }]).includes('<details'), false, '꾸밈을 가로지르면 안 감싸요(화면이 줄째로 바꿔 넣어요)');

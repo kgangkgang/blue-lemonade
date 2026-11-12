@@ -3,7 +3,7 @@
 // HTML 은 전부 인라인 style 만: class · <style> · <script> · CSS 변수 · 외부 파일 없이 (커뮤니티 편집기가 지워도 모양이 남게).
 // 틀(글꾸 모양)은 log-copy-presets.js — 여기는 로그 본문(「그대로」)과 마크다운 · 글.
 import { contrast, parseColor, compose } from './shared/ink-paint.js';
-import { spoilerHtml } from './log-copy-spoiler.js?v=20261112a';   // 1.0.1 미리보기에서 숨긴 글을 틀을 바꿔 다시 그릴 때
+import { spoilerHtml } from './log-copy-spoiler.js?v=20261112b';   // 1.0.1 미리보기에서 숨긴 글을 틀을 바꿔 다시 그릴 때
 
 export const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
 const cleanValue = value => String(value ?? '').replace(/"/g, "'").replace(/[<>{};\\]/g, '').trim();

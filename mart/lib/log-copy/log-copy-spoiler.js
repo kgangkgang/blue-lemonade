@@ -103,7 +103,7 @@ const escText = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '
 /** 1.0.1 숨긴 글 마크업을 글자로 — 미리보기에서 숨긴 글을 틀 · 색을 바꿔 다시 그릴 때(log-copy-render.js nodesHtml · kind 'spoiler'). wrapSpoiler 와 같은 모양 */
 export function spoilerHtml(inner, sp, inline = true) {
     const c = { line: sp?.line || '#8884', raised: sp?.raised || 'transparent', muted: sp?.muted || 'inherit' }, ui = { family: sp?.family || 'inherit', tracking: sp?.tracking || '0' };
-    const details = `display:${inline ? 'inline-block;max-width:100%;vertical-align:baseline' : 'block;margin:8px 0'}`;
+    const details = `display:${inline ? 'inline-block;max-width:100%;vertical-align:baseline;text-indent:0' : 'block;margin:8px 0'}`;
     const blur = inline ? 'span' : 'div', content = inline ? 'span' : 'div';
     return `<details class="${inline ? 'blsp-s' : 'blsp-s blsp-k'}" data-bl-spoiler="" style="${details}"><summary class="blsp-h" style="display:${inline ? 'inline' : 'block'};list-style:none;cursor:pointer"><span class="blsp-l" style="${escText(labelStyle(c, ui))}">${SPOILER_LABEL}</span><${blur} class="blsp-b" aria-hidden="true" style="display:none">${inner}</${blur}></summary><${content} class="blsp-c">${inner}</${content}></details>`;
 }
@@ -116,7 +116,7 @@ export function wrapSpoiler(doc, range, c, ui) {
     const piece = range.cloneContents();
     if (!piece.textContent.trim()) return null;
     const frag = range.extractContents();
-    const details = make(doc, 'details', inline ? 'blsp-s' : 'blsp-s blsp-k', inline ? 'display:inline-block;max-width:100%;vertical-align:baseline' : 'display:block;margin:8px 0');   // 글줄 안 숨긴 글: 펼침 칸(details 내용 칸)이 블록이라 inline 이면 줄이 끊겨요 → 인라인 블록
+    const details = make(doc, 'details', inline ? 'blsp-s' : 'blsp-s blsp-k', inline ? 'display:inline-block;max-width:100%;vertical-align:baseline;text-indent:0' : 'display:block;margin:8px 0');   // 글줄 안 숨긴 글: 펼침 칸(details 내용 칸)이 블록이라 inline 이면 줄이 끊겨요 → 인라인 블록
     details.setAttribute('data-bl-spoiler', '');
     const summary = make(doc, 'summary', 'blsp-h', `display:${inline ? 'inline' : 'block'};list-style:none;cursor:pointer`);
     const label = make(doc, 'span', 'blsp-l', labelStyle(c, ui));
