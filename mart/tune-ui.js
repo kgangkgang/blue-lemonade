@@ -461,7 +461,15 @@ export function syncTune(sheet, item) {
     if (item && hist.id !== item.id) histStart(item);
     syncHist(sheet);
     const box = sheet?.querySelector('.mart-tune'); if (!box || !item) return;
-    if (view === 'simple') { const sp = box.querySelector('.mart-simple'); if (sp && !sp.contains(document.activeElement)) { const x = sp.querySelector('.mart-style-cards')?.scrollLeft || 0; sp.innerHTML = simpleInner(item); const c = sp.querySelector('.mart-style-cards'); if (c) c.scrollLeft = x; } }
+    // 11-12 방금 누른 단추(스타일 카드 · 움직임 · 글 크기 …)에 초점이 남아 있어도 다시 그려요 — 전엔 초점이 칸 안이면 건너뛰어 눌림 표시가 그대로였어요. 다시 그린 뒤 같은 단추에 초점을 돌려줘요(색 칸 · 글칸에 있을 땐 그대로)
+    if (view === 'simple') {
+        const sp = box.querySelector('.mart-simple'), a = document.activeElement, inSp = !!sp?.contains(a);
+        if (sp && (!inSp || a.tagName === 'BUTTON')) {
+            const key = inSp ? [...a.attributes].find(x => x.name.startsWith('data-'))?.name : null, val = key ? a.getAttribute(key) : null;
+            const x = sp.querySelector('.mart-style-cards')?.scrollLeft || 0; sp.innerHTML = simpleInner(item); const c = sp.querySelector('.mart-style-cards'); if (c) c.scrollLeft = x;
+            if (key) [...sp.querySelectorAll(`[${key}]`)].find(e => e.getAttribute(key) === val)?.focus({ preventScroll: true });
+        }
+    }
     { const vs = sheet.querySelector('.mart-view'); if (vs) vs.outerHTML = viewSegHtml(item); }
     if (view === 'detail') { for (const g of box.querySelectorAll('.mart-group')) { const c = groupCount(item, g.dataset.group), n = g.querySelector('.mart-group-n'); if (n) { n.textContent = c ? `바꾼 것 ${c}` : ''; n.hidden = !c; } const sm = g.querySelector('.mart-group-sum'); if (sm) sm.textContent = groupSum(item, g.dataset.group); const rs = g.querySelector('[data-group-reset]'); if (rs) rs.hidden = !c; } const dh = box.querySelector('.mart-detail-head'); if (dh && !dh.contains(document.activeElement)) dh.outerHTML = detailHead(item); }
     const root = sheet.querySelector('.mart-sheet-preview'), v = valuesOf(item, root), t = tuneOf(item.id);
