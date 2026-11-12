@@ -71,7 +71,7 @@ export function mountCast(box, { say = () => {}, worlds = () => [], openWorld = 
             <div class="mart-tune-line mart-hscroll mart-mine-btns"><button type="button" class="btn" data-mine="apply">내 글로 보기</button><button type="button" class="chip" data-mine="sample" aria-pressed="${!on}">견본 글로</button><button type="button" class="chip" data-mine="clear">지우기</button></div>
             <p class="mart-mine-info" role="status">${status}</p></div>`;
     };
-    const dot = (color, cls = '') => `<i class="mart-cast-dot${cls ? ` ${cls}` : ''}"${color ? ` style="background:${esc(color)}"` : ''} aria-hidden="true"></i>`;
+    const dot = (color, cls = '') => `<i class="mart-ink-dot mart-cast-dot${cls ? ` ${cls}` : ''}"${color ? ` style="background:${esc(color)}"` : ''} aria-hidden="true"></i>`;
     const draw = () => {
         const panel = !!who, w = who === 'text' ? 'main' : who || 'main', other = w === 'other', on = onOf(w);
         if (panel && who !== 'text' && !tab[w]) tab[w] = startTab(w);
@@ -89,7 +89,7 @@ export function mountCast(box, { say = () => {}, worlds = () => [], openWorld = 
             const g = CAST_GROUPS.find(x => x.id === id); if (!g) return '';
             const src = groupSources(g.id, g.cast.map(x => x.name));   // 11-12 밤 묶음마다 원작 글 전부(주소 있으면 링크) — 「원작 N ⌄」을 누르면 펼쳐져요
             const ws = worlds().filter(x => x.group === g.id);
-            const go = ws.map(x => `<button type="button" class="mart-cast-go" data-world="${esc(x.id)}">${ws.length > 1 ? `${esc(x.label)} ` : '이 세계관 '}틀 ${x.n} 보기 →</button>`).join('');
+            const go = ws.map(x => `<a class="mart-cast-go" href="#mart-band" data-world="${esc(x.id)}">${ws.length > 1 ? `${esc(x.label)} ` : '이 세계관 '}틀 ${x.n} 보기 →</a>`).join('');
             return `<div class="mart-cast-pane" id="mart-cast-${g.id}">
                 <div class="mart-cast-wh"><b>${esc(g.label)}</b>${src.length ? `<button type="button" class="mart-cast-more chev" data-src-toggle aria-expanded="${srcOpen[w]}" aria-controls="mart-cast-src-${g.id}">원작 ${src.length}</button>` : ''}${go ? `<span class="mart-cast-gos">${go}</span>` : ''}</div>
                 ${src.length ? `<p class="mart-cast-src" id="mart-cast-src-${g.id}" data-src-group="${g.id}"${srcOpen[w] ? '' : ' hidden'}>${src.map(s => sourceHtml(s)).join('')}</p>` : ''}
@@ -97,7 +97,7 @@ export function mountCast(box, { say = () => {}, worlds = () => [], openWorld = 
         };
         const tabs = () => [...CAST_GROUPS.map(g => [g.id, g.label, g.cast.length]), ['direct', '직접', saved.length || '']].map(([id, label, n]) => `<button type="button" class="tab" data-tab="${id}" aria-pressed="${tab[w] === id}" aria-controls="mart-cast-${id}"><span class="tab-t">${esc(label)}</span>${n === '' ? '' : `<span class="mart-n n">${n}</span>`}</button>`).join('');
         /** 맨 아래 한 줄: 원래 색 · (깡통만) 캐릭터 없음 · 소품까지 캐릭터 색 */
-        const foot = () => `<div class="mart-cast-foot"><button type="button" class="chip mart-cast-p" data-pick="off" aria-pressed="${other ? !toneState.k2 : !toneState.on}" title="틀마다 정해 둔 색 그대로">${dot('', 'is-off')}<span>원래 색</span></button>${other ? '' : `<button type="button" class="chip mart-cast-p" data-pick="none" aria-pressed="${toneState.on && !toneState.k}" title="무채 — 캐릭터 색 없이">${dot('', 'is-none')}<span>캐릭터 없음</span></button>`}<label class="mart-cast-cover" title="켜면 기본 색 틀의 소품(그림)까지 고른 캐릭터 색으로 덮어요 · 끄면 소품은 기본 색 그대로 글 쪽만 캐릭터 색"><input type="checkbox" data-cover${toneState.cover ? ' checked' : ''}${castPicked() ? '' : ' disabled'}><span>소품까지 캐릭터 색</span></label></div>`;
+        const foot = () => `<div class="mart-cast-foot"><button type="button" class="chip mart-cast-p" data-pick="off" aria-pressed="${other ? !toneState.k2 : !toneState.on}" title="틀마다 정해 둔 색 그대로">${dot('', 'is-off')}<span>원래 색</span></button>${other ? '' : `<button type="button" class="chip mart-cast-p" data-pick="none" aria-pressed="${toneState.on && !toneState.k}" title="무채 — 캐릭터 색 없이">${dot('', 'is-none')}<span>캐릭터 없음</span></button>`}${castPicked() ? `<label class="check mart-cast-cover" title="켜면 기본 색 틀의 소품(그림)까지 고른 캐릭터 색으로 덮어요 · 끄면 소품은 기본 색 그대로 글 쪽만 캐릭터 색"><input type="checkbox" data-cover${toneState.cover ? ' checked' : ''}><span>소품까지 캐릭터 색</span></label>` : ''}</div>`;   // 「소품까지 캐릭터 색」은 캐릭터를 골랐을 때만(원래 색이면 덮을 색이 없어요 — 예전 머리 줄 칩과 같아요)
         const picks = toneState.mix ? toneState.picks : [];
         const now = !toneState.on ? { name: '원래 색' } : picks.length >= 2 ? { name: picks.map(p => p.name || p.color).join(' + '), dots: picks.map(p => p.color) } : toneState.k ? { name: toneState.name || toneState.k, dots: [toneState.k] } : { name: '없음', dots: [] };
         const now2 = toneState.k2 ? { name: toneState.name2 || toneState.k2, dots: [toneState.k2] } : { name: '원래 색' };
@@ -136,7 +136,7 @@ export function mountCast(box, { say = () => {}, worlds = () => [], openWorld = 
         const tb = e.target.closest('[data-tab]');
         if (tb) { tab[who] = tb.dataset.tab; srcOpen[who] = false; draw(); const el = box.querySelector(`[data-tab="${tb.dataset.tab}"]`); el?.focus({ preventScroll: true }); el?.scrollIntoView({ inline: 'nearest', block: 'nearest' }); return; }
         if (e.target.closest('[data-src-toggle]')) { srcOpen[who] = !srcOpen[who]; draw(); box.querySelector('[data-src-toggle]')?.focus(); return; }
-        const go = e.target.closest('[data-world]'); if (go) { openWorld?.(go.dataset.world); return; }
+        const go = e.target.closest('[data-world]'); if (go) { e.preventDefault(); openWorld?.(go.dataset.world); return; }
         const off = e.target.closest('[data-pick]');
         if (off) { pick(who, off.dataset.pick); draw(); box.querySelector(`[data-pick="${off.dataset.pick}"]`)?.focus(); return; }
         const p = e.target.closest('[data-color]');

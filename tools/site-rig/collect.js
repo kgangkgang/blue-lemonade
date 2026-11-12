@@ -122,7 +122,7 @@
         continue;
       }
       // ── 접힘 머리(summary · 「자세히」 · 칩 접기 ▾) ──
-      if (tag === 'summary' || el.matches('.mart-head-more, .mart-chips-fold, .mart-bar-fold')) {
+      if (tag === 'summary' || el.matches('.mart-head-more, .mart-chips-fold, .mart-bar-fold, .mart-cast-more')) {
         const gl = el.querySelector('svg');
         const pe = ['::before', '::after'].map(p => getComputedStyle(el, p)).find(p => p.content && p.content !== 'none' && p.content !== 'normal' && (p.content !== '""' || (p.maskImage && p.maskImage !== 'none') || (p.webkitMaskImage && p.webkitMaskImage !== 'none')));
         const mk = tag === 'summary' && cs.listStyleType !== 'none' && cs.display === 'list-item' ? '기본▸' : '';

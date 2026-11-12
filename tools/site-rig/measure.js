@@ -99,7 +99,7 @@
     /** 아이콘 잉크(계산값): 마스크 · 선 꺾쇠 가상 요소의 색 ↔ 그 칸 바탕 3:1 · 이모지는 여러 색이라 빼요 */
     iconInk(rootSel) {
       const root = rootOf(rootSel), out = [];
-      for (const el of root.querySelectorAll('.ibtn, .x, .chev, .top-mart, .mart-chips-fold, .mart-head-more, .mart-menu-arrow, select, .check input')) {
+      for (const el of root.querySelectorAll('.ibtn, .x, .chev, .top-mart, .mart-chips-fold, .mart-head-more, .mart-cast-more, .mart-menu-arrow, select, .check input')) {
         if (!vis(el) || el.closest(SKIP_IN)) continue;
         const r = el.getBoundingClientRect(); if (!inView(r)) continue;
         const bg = bgOf(el);
@@ -118,7 +118,7 @@
     centerList(rootSel, max = 120) {
       const root = rootOf(rootSel), out = [];
       let n = Number(document.body.dataset.pxN || 0);
-      const SEL = '.btn, .chip, .tab, .ibtn, .pill, .button.small, .top-mart, .top nav a, .mart-head-more, .mart-chips-fold, .mart-bar-fold, .tag, .mart-tag, .mart-actions button, .mart-tabs > a, .mart-tabs > button, .mart-chips > button, .mart-groups > button, .mart-seg > button, .room-seg > button, .mart-cart-x, .mart-sheet-x, .room-x, .mart-cart-del, .mart-cart-btn, .mart-cart-pay, .mart-cart-get, .mart-taste-open, .mart-random-more, .mart-tryon-pick, .mart-tryon-clear, .room-stage-bar button, .room-actions button, .mart-taste-bar button, .mart-taste-swap, .mart-taste-sample, .mart-taste-names, .mart-reset, .mart-cart-empty nav a, .mart-random-links a, .mart-mylog-off, .gn-seg button';
+      const SEL = '.btn, .chip, .tab, .ibtn, .pill, .button.small, .top-mart, .top nav a, .mart-head-more, .mart-cast-more, .mart-chips-fold, .mart-bar-fold, .tag, .mart-tag, .mart-actions button, .mart-tabs > a, .mart-tabs > button, .mart-chips > button, .mart-groups > button, .mart-seg > button, .room-seg > button, .mart-cart-x, .mart-sheet-x, .room-x, .mart-cart-del, .mart-cart-btn, .mart-cart-pay, .mart-cart-get, .mart-taste-open, .mart-random-more, .mart-tryon-pick, .mart-tryon-clear, .room-stage-bar button, .room-actions button, .mart-taste-bar button, .mart-taste-swap, .mart-taste-sample, .mart-taste-names, .mart-reset, .mart-cart-empty nav a, .mart-random-links a, .mart-mylog-off, .gn-seg button';
       for (const el of root.querySelectorAll(SEL)) {
         if (el.dataset.px || !vis(el) || el.closest(SKIP_IN) || el.matches(':disabled')) continue;
         const r = el.getBoundingClientRect(); if (!inView(r) || r.height < 12 || r.height > 64 || r.width > 420) continue;

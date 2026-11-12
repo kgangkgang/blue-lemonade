@@ -164,7 +164,7 @@ function topicPicker({ groupsEl, topicsEl, chipsEl, bandEl, items, groups, cats,
     const inWho = x => sel.who === null || (sel.who === '' ? !x.who : x.who === sel.who);
     const inCat = (x, cat = sel.cat) => cat === 'all' || cat in LIKE_CHIPS || cat === OWN_CAT || (cat === SOUND_CAT ? !!x.audio : x.category === cat);
     const count = f => items.reduce((n, x) => n + (f(x) ? 1 : 0), 0);
-    const btn = (cls, attr, id, label, n, on, color = '') => `<button type="button" class="${cls}" data-${attr}="${esc(id)}" aria-pressed="${on}">${color ? `<i class="mart-cast-dot" style="background:${esc(color)}" aria-hidden="true"></i>` : ''}${cls === 'tab' ? `<span class="tab-t">${esc(label)}</span>` : esc(label)}${numHtml(n)}</button>`;
+    const btn = (cls, attr, id, label, n, on, color = '') => `<button type="button" class="${cls}" data-${attr}="${esc(id)}" aria-pressed="${on}">${color ? `<i class="mart-ink-dot mart-cast-dot" style="background:${esc(color)}" aria-hidden="true"></i>` : ''}${cls === 'tab' ? `<span class="tab-t">${esc(label)}</span>` : esc(label)}${numHtml(n)}</button>`;
     const world = () => (sel.group === 'world' && sel.topic !== 'all' ? WORLDS.find(w => w.label === sel.topic) || null : null);
     const paintGroups = () => { groupsEl.innerHTML = [btn('tab', 'group', 'all', '전체', items.length, sel.group === 'all'), ...groups.map(g => btn('tab', 'group', g.id, g.label, count(x => groupOf.get(x.topic) === g.id), sel.group === g.id))].join(''); };
     const paintTopics = () => {

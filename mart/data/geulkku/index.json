@@ -99,9 +99,9 @@
    "bytes": 353653
   },
   "sp-pass-0": {
-   "file": "sp-pass-0.24984bf8.json",
+   "file": "sp-pass-0.2236e348.json",
    "n": 40,
-   "bytes": 710752
+   "bytes": 708170
   },
   "sp-pass-1": {
    "file": "sp-pass-1.4ed6ccb0.json",
@@ -119,14 +119,14 @@
    "bytes": 662601
   },
   "sp-pass-4": {
-   "file": "sp-pass-4.5da43096.json",
+   "file": "sp-pass-4.0930eccd.json",
    "n": 40,
-   "bytes": 779267
+   "bytes": 776685
   },
   "sp-pass-5": {
-   "file": "sp-pass-5.c61ccb6e.json",
+   "file": "sp-pass-5.46cf19c8.json",
    "n": 40,
-   "bytes": 691364
+   "bytes": 686200
   },
   "sp-pass-6": {
    "file": "sp-pass-6.15459a93.json",
@@ -134,9 +134,9 @@
    "bytes": 678289
   },
   "sp-pass-7": {
-   "file": "sp-pass-7.fee3c261.json",
+   "file": "sp-pass-7.6123ad34.json",
    "n": 40,
-   "bytes": 612941
+   "bytes": 607780
   },
   "sp-pass-8": {
    "file": "sp-pass-8.59e96126.json",
@@ -206,7 +206,7 @@
   {"id":"simple-k1008","name":"토끼","emoji":"📜","category":"simple-open","style":"심플","desc":"소품을 누르면 — 당근 뽑기","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":19211,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"동물"},
   {"id":"simple-k1009","name":"박쥐 달밤","emoji":"🦇","category":"simple-open","style":"심플","desc":"소품을 누르면 — 박쥐 깨우기","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":14736,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"할로윈"},
   {"id":"simple-k1010","name":"사물함","emoji":"📜","category":"simple-open","style":"심플","desc":"소품을 누르면 — 사물함 열기","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":17235,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"학교 · 청춘"},
-  {"id":"simple-k1011","name":"피처폰 문자함","emoji":"🚪","category":"simple-open","style":"심플","desc":"소품을 누르면 — 문자 열기","c":"sp-pass-0","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":25726,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"시대 레트로"},
+  {"id":"simple-k1011","name":"피처폰 문자함","emoji":"🚪","category":"simple-open","style":"심플","desc":"소품을 누르면 — 문자 열기","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":23173,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"시대 레트로"},
   {"id":"simple-k1012","name":"케이크","emoji":"🍰","category":"simple-open","style":"심플","desc":"소품을 누르면 — 케이크 상자 열기","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":20700,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"음식"},
   {"id":"simple-k1013","name":"인벤토리","emoji":"📦","category":"simple-open","style":"심플","desc":"소품을 누르면 — 보물 상자 열기","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":16929,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"상태창"},
   {"id":"simple-k1014","name":"택배 상자","emoji":"📦","category":"simple-open","style":"심플","desc":"소품을 누르면 — 테이프 뜯기","c":"sp-pass-0","copyOnly":true,"photo":true,"simple":true,"bytes":14879,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"사물"},
@@ -358,7 +358,7 @@
   {"id":"simple-k1162","name":"분노","emoji":"💢","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 화내기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":17762,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","topic":"감정"},
   {"id":"simple-k1163","name":"기타","emoji":"🎸","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 줄 튕기기","c":"sp-pass-4","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":25352,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"취미"},
   {"id":"simple-k1164","name":"우울 · 비 오는 날","emoji":"🌧️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 웅덩이 첨벙 밟기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":16423,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"감정"},
-  {"id":"simple-k1165","name":"응원봉","emoji":"✨","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 응원봉 켜기","c":"sp-pass-4","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":21962,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","topic":"덕질 · 아이돌"},
+  {"id":"simple-k1165","name":"응원봉","emoji":"✨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 응원봉 켜기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":19409,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","topic":"덕질 · 아이돌"},
   {"id":"simple-k1166","name":"게이트 관측 레이더","emoji":"✨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 관측 시작","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":14931,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"센티넬버스","world":"sentinel","src":["sengaSim"]},
   {"id":"simple-k1167","name":"아드리안 · 음악실 피아노 조율 기록","emoji":"🎵","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 음차 울리기","c":"sp-pass-4","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":21420,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","nt":"줄마다 꾸밈이 다른 틀이에요","topic":"아드리안","world":"adrian","who":"아드리안 폰 아이젠베르크","src":["adrian","adrianMod"]},
   {"id":"simple-k1168","name":"진저브레드 집","emoji":"🍪","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 아이싱 올리기","c":"sp-pass-4","copyOnly":true,"photo":true,"simple":true,"bytes":20021,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","nt":"줄마다 꾸밈이 다른 틀이에요","topic":"크리스마스 · 연말"},
@@ -403,7 +403,7 @@
   {"id":"simple-k1208","name":"겨울 기차표","emoji":"❄️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 표 뜯기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":14833,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"크리스마스 · 연말"},
   {"id":"simple-k1209","name":"기차","emoji":"🚂","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 개찰","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":12542,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"교통"},
   {"id":"simple-k1210","name":"백시우 · 시설 손해 청구서","emoji":"✨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 청구서 뜯기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":18735,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"센티넬버스","world":"sentinel","who":"백시우","src":["sengaSim"]},
-  {"id":"simple-k1211","name":"레온 · 음악부 부원 모집 전단","emoji":"🎵","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 쪽지 뜯기","c":"sp-pass-5","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":13213,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"센티넬버스","world":"sentinel","who":"레온 체하르","src":["sengaAcademy"]},
+  {"id":"simple-k1211","name":"레온 · 음악부 부원 모집 전단","emoji":"🎵","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 쪽지 뜯기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":10660,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"센티넬버스","world":"sentinel","who":"레온 체하르","src":["sengaAcademy"]},
   {"id":"simple-k1212","name":"콘서트 프로그램","emoji":"📖","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 프로그램 펼치기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":11992,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","topic":"아드리안","world":"adrian","src":["adrian","adrianMod"]},
   {"id":"simple-k1213","name":"성적표","emoji":"✨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 통지표 펴기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":12415,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"학교 · 청춘"},
   {"id":"simple-k1214","name":"성탄 카드","emoji":"✨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 카드 펼치기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":14373,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","topic":"크리스마스 · 연말"},
@@ -417,7 +417,7 @@
   {"id":"simple-k1222","name":"즉석카메라","emoji":"📷","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 사진 찍기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":13734,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"앱 · SNS"},
   {"id":"simple-k1223","name":"블로그 글","emoji":"💻","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 공감","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":17404,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요","topic":"앱 · SNS"},
   {"id":"simple-k1224","name":"통화 기록","emoji":"📞","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 전화 걸기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":14993,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"줄마다 꾸밈이 다른 틀이에요","topic":"앱 · SNS"},
-  {"id":"simple-k1225","name":"유튜브 댓글","emoji":"✨","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 좋아요","c":"sp-pass-5","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":15510,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"앱 · SNS"},
+  {"id":"simple-k1225","name":"유튜브 댓글","emoji":"✨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 좋아요","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":12957,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"앱 · SNS"},
   {"id":"simple-k1226","name":"가브리엘 · 스마트 헤븐 알림","emoji":"🔔","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 알림 종","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":12596,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"천지합동청","world":"halo","who":"가브리엘","src":["halo"]},
   {"id":"simple-k1228","name":"X 타래","emoji":"🐦","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 답글 게시하기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":15057,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","nt":"로그 칸이 여러 곳으로 나뉜 틀이에요","topic":"앱 · SNS"},
   {"id":"simple-k1229","name":"야신 · 섭정 결재 · 천위대 명패","emoji":"🗂️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 명패 걸기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":10678,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"무협시뮬","world":"gangho","who":"야신","src":["gangho"]},
@@ -458,7 +458,7 @@
   {"id":"simple-k1265","name":"류서휘 · 분 단위 일정표","emoji":"📅","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 일 분 넘기기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":10238,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"센티넬버스","world":"sentinel","who":"류서휘","src":["sengaSim"]},
   {"id":"simple-k1266","name":"졸업","emoji":"🎓","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 학사모 던지기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":15169,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"기념일"},
   {"id":"simple-k1267","name":"명함","emoji":"✨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 명함 뒤집기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":11914,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"종이"},
-  {"id":"simple-k1268","name":"아델스타인 · 오페라 초대권","emoji":"💌","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 막 열기","c":"sp-pass-7","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":12501,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"천지합동청","world":"halo","who":"아델스타인","src":["halo"]},
+  {"id":"simple-k1268","name":"아델스타인 · 오페라 초대권","emoji":"💌","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 막 열기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":9948,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"천지합동청","world":"halo","who":"아델스타인","src":["halo"]},
   {"id":"simple-k1269","name":"매점 가격판","emoji":"🛒","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 매점 열기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":14738,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"센티넬버스","world":"sentinel","src":["sengaAcademy"]},
   {"id":"simple-k1270","name":"던전 지도","emoji":"🗺️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 다음 방으로","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":13986,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"상태창"},
   {"id":"simple-k1271","name":"궁합표","emoji":"✨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 이름 궁합 보기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":15192,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","topic":"점 · 별자리"},
@@ -466,7 +466,7 @@
   {"id":"simple-k1273","name":"신재이 · 타르타로스 경고장","emoji":"✨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 경고 표지판 세우기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":13136,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"센티넬버스","world":"sentinel","who":"신재이","src":["sengaSim"]},
   {"id":"simple-k1274","name":"칠판","emoji":"🏫","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 칠판 지우기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":19425,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"학교 · 청춘"},
   {"id":"simple-k1275","name":"전보","emoji":"📨","category":"simple-open","style":"심플","desc":"소품을 누르면 — 전보 치기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":13752,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"장면 글꾸"},
-  {"id":"simple-k1276","name":"전보 · 전신 키","emoji":"📨","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 전신 치기","c":"sp-pass-7","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":26400,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"옛날 매체"},
+  {"id":"simple-k1276","name":"전보 · 전신 키","emoji":"📨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 전신 치기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":23850,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"옛날 매체"},
   {"id":"simple-k1277","name":"접은 쪽지","emoji":"📜","category":"simple-open","style":"심플","desc":"소품을 누르면 — 쪽지 펴기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":13571,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"학교 · 청춘"},
   {"id":"simple-k1278","name":"학원 교칙","emoji":"📒","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 학생 수첩 펴기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":12191,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","topic":"판타지"},
   {"id":"simple-k1279","name":"라파엘 · 애프터눈 티 초대장","emoji":"❄️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 티백 봉지 뜯기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":11724,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"천지합동청","world":"halo","who":"라파엘","src":["halo"]},
