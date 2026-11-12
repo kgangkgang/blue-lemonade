@@ -18,11 +18,10 @@
   <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:type" content="website"><meta property="og:url" content="https://kgangkgang.github.io/blue-lemonade/"><meta property="og:locale" content="ko_KR"><meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="site.css?v=20261112i"><link rel="stylesheet" href="start-guide.css?v=20261019b"><script src="start-guide.js?v=20261019b" defer></script><link rel="stylesheet" href="palette-preview.css?v=484"><link rel="stylesheet" href="features.css?v=484"><script src="features.js?v=20261010e" defer></script><script src="playground-state.js?v=521" defer></script><script src="reading.js?v=20261109f" defer></script><script src="site.js?v=20261112i" defer></script><script src="palette-preview.js?v=20261109f" defer></script>
-<link rel="stylesheet" href="atmosphere.css?v=20261109g"><link rel="stylesheet" href="glance.css?v=20261112j"><script src="showcase.js?v=20261020a" defer></script>
+<link rel="stylesheet" href="atmosphere.css?v=20261109g"><link rel="stylesheet" href="glance.css?v=20261113a"><script src="showcase.js?v=20261113a" defer></script>
 <link rel="stylesheet" href="calm.css?v=20261112i">
 <link rel="stylesheet" href="mart/home.css?v=20261108a"><link rel="stylesheet" href="mart/top-mart.css?v=20261108a"><script src="mart/top-mart.js?v=20261112d" defer></script>
-<style>.brand .lemon{position:relative;cursor:pointer}.brand .lemon::before{content:"";position:absolute;inset:-9px;border-radius:50%;background:radial-gradient(circle,rgba(47,124,246,.5),rgba(47,124,246,0) 70%);filter:blur(5px);opacity:.6;animation:bl-lemon-glow 3.2s ease-in-out infinite;pointer-events:none;z-index:-1}.brand:hover .lemon::before{opacity:1}@keyframes bl-lemon-glow{0%,100%{transform:scale(.9);opacity:.35}50%{transform:scale(1.25);opacity:.85}}html.bl-pets-out .brand .lemon::before{animation:none;opacity:0}@media (prefers-reduced-motion:reduce){.brand .lemon::before{animation:none;opacity:.5}}</style>
-<script type="module" src="preset-export.mjs?v=545"></script><link rel="stylesheet" href="bundled-tools.css?v=590"><script src="bundled-tools.js?v=20261112i" defer></script><link rel="stylesheet" href="home-guide.css?v=20261112m"><script src="home-guide.js?v=20261112n" defer></script><link rel="stylesheet" href="extension-guide.css?v=20261010c"><script src="extension-guide.js?v=20261103" defer></script><link rel="stylesheet" href="feature-examples.css?v=20261010e"><script src="feature-examples.js?v=20261103" defer></script></head>
+<script type="module" src="preset-export.mjs?v=545"></script><link rel="stylesheet" href="bundled-tools.css?v=590"><script src="bundled-tools.js?v=20261112i" defer></script><link rel="stylesheet" href="home-guide.css?v=20261113a"><script src="home-guide.js?v=20261112n" defer></script><link rel="stylesheet" href="extension-guide.css?v=20261010c"><script src="extension-guide.js?v=20261103" defer></script><link rel="stylesheet" href="feature-examples.css?v=20261010e"><script src="feature-examples.js?v=20261103" defer></script></head>
 <body class="home-guide">
 <a class="skip-link" href="#main">본문으로 건너뛰기</a>
   <header class="top"><div class="top-inner"><a class="brand" href="#"><span class="lemon" aria-hidden="true"><img src="lemon.svg?v=20261109a" alt="" width="24" height="24"></span>Blue Lemonade</a><nav aria-label="바로가기"><a href="#glance">한눈에</a><a href="#tour">화면으로 보기</a><a href="#colors">직접 꾸며보기</a><a href="#extension-guide">확장 사용법</a><a href="#features">기능 찾기</a><button type="button" class="top-mart" data-mart-base="mart/">마트</button></nav><div class="top-actions"><a class="button primary small" href="#start">설치</a></div></div><span class="progress" aria-hidden="true"></span></header>
@@ -31,7 +30,7 @@
 
       <div class="hero-copy">
         <p class="intro-kicker">SillyTavern을 위한 테마와 도구</p>
-        <a class="release-chip" href="#updates"><span class="pulse" aria-hidden="true"></span><b>1.2.0</b></a>
+        <a class="release-chip" href="#updates"><b>1.2.0</b></a>
         <h1 id="intro-heading">내 채팅을,<br><span class="mark">읽기 편하게.</span></h1>
         <p class="lead">색과 글꼴은 내 취향으로.<br>번역, 메모, 북마크는 필요한 것만.</p>
         <p class="intro-context">실리태번에 설치해서 쓰는 확장이에요.<br>PC에서도, 모바일에서도 같은 취향으로.</p><div class="actions"><a class="button primary" href="#tour">어떻게 달라지나요? <span aria-hidden="true">↓</span></a><a class="button ghost" href="#start">설치 · 처음이면 이것만</a></div>
@@ -40,6 +39,7 @@
       <div class="hero-art showcase" id="showcase" data-front="reading">
  <div class="showcase-top"><span>같은 대화, 두 가지 분위기</span><div class="showcase-switch" role="group" aria-label="첫 화면 밝기"><button type="button" data-screen="reading" aria-pressed="true">화이트</button><button type="button" data-screen="weather" aria-pressed="false">나이트</button></div></div>
  <div class="showcase-stage">
+  <button type="button" class="bl-tail" id="bl-tail" aria-label="꼬리" aria-pressed="false"><img src="media/mascots/night-tail-up.webp?v=20261113a" alt="" width="132" height="91" decoding="async"></button>
   <div class="showcase-screen" data-preview-screen="reading"><video id="reading-film" muted loop playsinline preload="none" aria-label="밝은 테마에서 글자 크기와 간격을 바꾸는 시연" data-poster="media/tour-20261104-pc-reading.jpg" data-src="media/tour-20261104-pc-reading.mp4"></video></div>
   <div class="showcase-screen" data-preview-screen="weather" hidden><video id="weather-film" muted loop playsinline preload="none" aria-label="어두운 테마에서 글자 크기와 간격을 바꾸는 시연" data-poster="media/tour-20261104-pc-reading-dark.jpg" data-src="media/tour-20261104-pc-reading-dark.mp4"></video></div>
  </div>
@@ -639,4 +639,12 @@
 <dialog id="atmosphere-lightbox" aria-label="움직이는 테마 화면"><button type="button" aria-label="시연 닫기">닫기 ×</button><video muted loop playsinline controls></video></dialog><div id="view-dock" aria-label="화면 보기"><button type="button" data-view-device></button></div>
 
 <script src="view-controls.js?v=20261010c" defer></script>
-<script>(()=>{let n=0,t=0,on=false;const load=()=>{if(on)return;on=true;document.documentElement.classList.add('bl-pets-out');const l=document.createElement('link');l.rel='stylesheet';l.href='mascots.css?v=20261112d';document.head.append(l);const s=document.createElement('script');s.src='mascots.js?v=20261103';document.body.append(s);const m=document.createElement('div');const i=new Image();i.className='bl-lemon';i.src='lemon.svg?v=20261109a';i.alt='';m.append(i,' 에이드와 나이트가 놀러 왔어요');const ph=matchMedia('(max-width:760px)').matches;m.style.cssText=(ph?'position:fixed;left:10px;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:6px;min-height:44px;box-sizing:border-box;max-width:calc(100vw - 20px);':'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);')+'padding:10px 16px;border-radius:999px;background:#0b1f3a;color:#ffd84d;font-weight:700;font-size:14px;white-space:nowrap;z-index:9999;box-shadow:0 10px 30px -10px rgba(0,0,0,.5);transition:opacity .4s';const root=document.documentElement;if(ph)root.classList.add('bl-pets-toast');document.body.append(m);setTimeout(()=>{m.style.opacity='0';setTimeout(()=>{m.remove();root.classList.remove('bl-pets-toast')},500)},2600);};document.addEventListener('click',e=>{const b=e.target.closest('.brand');if(!b)return;if(e.target.closest('.lemon')){e.preventDefault();load();return;}const now=Date.now();n=now-t<1500?n+1:1;t=now;if(n>=7){n=0;load();}});})();</script></body></html>
+<script>/* 에이드와 나이트는 꼬리를 누르면 나와요(스프라이트 · 대본은 그때 받아요). 한 번 부른 뒤에는 다음 방문에도 나와 있고, 「사라지기」를 누르면 꼬리가 다시 삐져나와요 */
+(()=>{const KEY='bl-page-pets-v1',tail=document.getElementById('bl-tail');if(!tail)return;let on=false;
+const saved=()=>{try{return JSON.parse(localStorage.getItem(KEY))}catch{return null}};
+const tuck=hidden=>{tail.classList.toggle('is-in',!hidden);tail.setAttribute('aria-pressed',String(!hidden));tail.tabIndex=hidden?0:-1};
+const load=from=>{if(on)return;on=true;document.documentElement.classList.add('bl-pets-out');if(from){const r=tail.getBoundingClientRect();window.__blPetOrigin={x:r.left+r.width/2,y:r.top+r.height/2}}
+const l=document.createElement('link');l.rel='stylesheet';l.href='mascots.css?v=20261112d';document.head.append(l);const sc=document.createElement('script');sc.src='mascots.js?v=20261113a';document.body.append(sc)};
+document.addEventListener('bl-pets',e=>tuck(e.detail.hidden));
+tail.addEventListener('click',()=>{tuck(false);if(!on){try{if(!saved())localStorage.setItem(KEY,JSON.stringify({hidden:false,frozen:false}))}catch{}load(true)}else window.__blPets?.show()});
+const s=saved();if(s&&s.hidden!==true){tuck(false);load(false)}})();</script></body></html>

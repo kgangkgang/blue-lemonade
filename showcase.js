@@ -33,7 +33,7 @@
  }
  root.querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>front(b.dataset.screen)));
  play.addEventListener('click',()=>{const active=root.dataset.front==='weather'?weather:reading;if(active.paused){consent=true;paused=false;}else paused=true;sync();});
- new IntersectionObserver(([e])=>{visible=e.isIntersecting;sync();},{threshold:.08}).observe(root);
+ new IntersectionObserver(([e])=>{visible=e.isIntersecting;root.classList.toggle('is-seen',visible);sync();},{threshold:.08}).observe(root);
  document.addEventListener('visibilitychange',sync);reduced.addEventListener('change',sync);
  for(const dialog of document.querySelectorAll('dialog'))new MutationObserver(sync).observe(dialog,{attributes:true,attributeFilter:['open']});
  document.addEventListener('bl-theme',sources);document.addEventListener('bl-device',sources);document.addEventListener('bl-guideclose',sync);sources();describe();

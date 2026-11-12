@@ -170,3 +170,22 @@ html.device-mobile .home-guide .showcase-screen video{aspect-ratio:9/19.5}
 @media(prefers-reduced-motion:reduce){.home-guide html{scroll-behavior:auto}.home-guide .more-section>summary>span{transition:none}}
 /* 11-12 폰 360 폭 아래: 머리줄(레몬 · 기능 찾기 · 마트 · 설치)이 320 에서 11px 넘쳐 페이지가 옆으로 밀리고 바닥 고정 알약이 잘렸어요 — 여백과 틈만 줄여요(누름 칸 크기는 그대로) */
 @media (max-width:360px){.home-guide .top-inner{padding:0 10px;gap:6px}.home-guide .top nav a[href="#features"]{padding:0 6px}}
+
+/* 11-13 첫 화면: 화면을 두른 옅은 파랑 판 없이 화면만(사용자 지시). 밝기 알약 · 재생 줄은 화면 위아래 그대로 */
+.home-guide .hero-art.showcase{padding:0;background:none;border:0;border-radius:0}
+/* 모바일을 고르면 알약 · 재생 줄이 폰 화면 폭에 붙게 칸 자체를 좁혀 가운데로 */
+html.device-mobile .home-guide .hero-art.showcase{max-width:264px;justify-self:center;margin-inline:auto}
+html.device-mobile .home-guide .showcase .showcase-screen{width:100%;max-width:none}
+html.device-mobile .home-guide .showcase-top>span{display:none}
+html.device-mobile .home-guide .showcase-top{justify-content:center}
+/* 11-04 PC 영상은 설정 창 둘레에 어둑한 채팅 바탕(푸른 회색 띠)이 같이 찍혀 있어요 — 새로 찍기 전까지 그 띠만큼 키워 잘라요 */
+html.device-pc .home-guide .hero-art.showcase .showcase-screen video{aspect-ratio:1213/732;object-fit:cover;transform:scale(1.052)}
+
+/* 11-13 나이트 꼬리 — 첫 화면 화면 칸 위쪽 가장자리 뒤에서 삐져나와요. 누르면 쏙 들어가고 에이드 · 나이트가 나와요(그림은 나이트 스프라이트의 꼬리를 그대로 자른 것) */
+.bl-tail{position:absolute;z-index:-1;left:9%;top:-27px;width:44px;height:44px;padding:0;border:0;background:none;cursor:pointer;transform-origin:50% 100%;transition:transform .24s ease,opacity .2s ease}
+.bl-tail img{position:absolute;left:3px;bottom:13px;width:40px;height:auto;display:block;pointer-events:none;transform-origin:20% 100%}
+.bl-tail.is-in{transform:translateY(34px);opacity:0;pointer-events:none}
+.bl-tail:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:10px}
+.showcase.is-seen .bl-tail:not(.is-in) img{animation:bl-tail-wag 9s ease-in-out infinite}
+@keyframes bl-tail-wag{0%,86%,100%{transform:rotate(0)}90%{transform:rotate(-9deg)}94%{transform:rotate(6deg)}97%{transform:rotate(-3deg)}}
+@media (prefers-reduced-motion:reduce){.showcase .bl-tail img{animation:none !important}.bl-tail{transition:none}}

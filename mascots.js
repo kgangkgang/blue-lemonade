@@ -221,7 +221,7 @@
     prefs.hidden=!prefs.hidden;help.hidden=true;layer.hidden=false;lastActivity=performance.now();
     for(const p of pets){clearFood(p);cancelDrag(p);p.y=clamp(p.y,0,floor(p));state(p,prefs.hidden?'hide':'show');if(reduced.matches){state(p,prefs.frozen?'stone':'idle');draw(p);}}
     if(reduced.matches)layer.hidden=prefs.hidden;
-    transitionUntil=performance.now()+(reduced.matches?0:1200);labels();save();start();
+    transitionUntil=performance.now()+(reduced.matches?0:1200);labels();save();start();document.dispatchEvent(new CustomEvent('bl-pets',{detail:{hidden:prefs.hidden}}));
     announcement.textContent=prefs.hidden?'에이드와 나이트가 들어갔어요.':'에이드와 나이트가 나타났어요.';
   });
   function grab(p,e){
@@ -283,6 +283,7 @@
   // A modal should remain the only interactive layer while it is open.
   const modalObserver=new MutationObserver(()=>{const modal=!!document.querySelector('dialog[open]');layer.inert=modal;controls.inert=modal;layer.style.opacity=modal?'0':'1';controls.style.opacity=modal?'0':'1';if(!modal)start();});
   document.querySelectorAll('dialog').forEach(d=>modalObserver.observe(d,{attributes:true,attributeFilter:['open']}));
+  window.__blPets={show(){if(prefs.hidden)visibility.click();}};document.dispatchEvent(new CustomEvent('bl-pets',{detail:{hidden:prefs.hidden}}));
   layer.hidden=true;help.hidden=true;labels();
-  ready.then(results=>{if(results.some(ok=>!ok)){controls.hidden=true;return;}loaded=true;labels();resize();for(const p of pets){p.y=floor(p);state(p,prefs.frozen?'stone':'show');draw(p);}layer.hidden=prefs.hidden;let hint=true;try{hint=!sessionStorage.getItem('bl-page-pets-hint');sessionStorage.setItem('bl-page-pets-hint','1');}catch{}help.hidden=prefs.hidden||!hint;start();setTimeout(()=>help.hidden=true,5000);}).catch(()=>{controls.hidden=true;layer.hidden=true;help.hidden=true;});
+  ready.then(results=>{if(results.some(ok=>!ok)){controls.hidden=true;return;}loaded=true;labels();resize();const from=window.__blPetOrigin;window.__blPetOrigin=null;pets.forEach((p,i)=>{p.y=floor(p);if(from&&!prefs.frozen&&!prefs.hidden&&!reduced.matches){p.x=clamp(from.x-p.size/2,0,width-p.size);p.y=clamp(from.y-p.size*.6,0,floor(p));p.dir=i?1:-1;p.vx=p.dir*(i?150:110);p.vy=-360;state(p,'leap');}else state(p,prefs.frozen?'stone':'show');draw(p);});layer.hidden=prefs.hidden;let hint=true;try{hint=!sessionStorage.getItem('bl-page-pets-hint');sessionStorage.setItem('bl-page-pets-hint','1');}catch{}help.hidden=prefs.hidden||!hint;start();setTimeout(()=>help.hidden=true,5000);}).catch(()=>{controls.hidden=true;layer.hidden=true;help.hidden=true;});
 })();
