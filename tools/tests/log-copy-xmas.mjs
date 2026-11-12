@@ -13,8 +13,10 @@ const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 let passed = 0, failed = 0;
 async function test(name, fn) { try { await fn(); passed++; console.log('PASS ' + name); } catch (e) { failed++; console.error('FAIL ' + name + '\n' + (e.stack || e)); } }
 
-const { renderLog, PRESETS, CATEGORIES, OWN_COLORS, presetsIn, shutPeek, dateLabel } = await load('src/log-copy-presets.js');
-const { BUILTIN_TEMPLATES } = await load('src/log-copy-builtin.gen.js');
+const { retiredShape } = await load('src/log-copy-retired.js');
+const { renderLog, PRESETS, CATEGORIES, presetsIn, shutPeek, dateLabel } = await load('src/log-copy-presets.js');
+// 1.1.7 테마 내장에서 빠졌어요 — 마트에서 받은 「내 글꾸」(틈 템플릿)와 같은 길로 그려 봐요
+const asMine = f => ({ ...f, messages: f.messages || 'box', tail: f.tail || '' });
 const { checkTemplate, withoutSvgData, TEMPLATE_MESSAGES } = await load('src/log-copy-template.js');
 const { checkItem } = await load('src/mart-import.js');
 const { safeCss } = await load('src/log-copy-sanitize.js');
@@ -72,27 +74,20 @@ await test('주제가 다른 내장 틀(기본 · 대화 · 종이 · 심플 30 
     for (const f of XMAS_FRAMES) for (const label of others) assert.ok(f.label !== label && !(label.length >= 3 && f.label.includes(label)) && !(f.label.length >= 3 && label.includes(f.label)), `${f.label} ↔ ${label}`);   // 「카드」 · 「기록」 같은 두 글자 낱말은 주제가 아니에요
     assert.equal(new Set(XMAS_FRAMES.map(f => f.template)).size, 6, '모양이 틀마다 달라요');
     assert.equal(new Set(XMAS_FRAMES.map(f => f.colors.bg)).size, 6, '바탕색이 틀마다 달라요');
-    for (const f of XMAS_FRAMES) assert.ok(!PRESETS.some(p => !IDS.includes(p.id) && p.own && OWN_COLORS[p.id]?.bg === f.colors.bg), `${f.id}: 다른 내장 틀과 바탕색이 같아요`);
     const dark = XMAS_FRAMES.filter(f => contrast(parseColor(f.colors.bg), parseColor('#000000')) < 3).map(f => f.label);
     assert.deepEqual(dark, ['스노우볼', '오너먼트 대화'], '다크 둘 · 라이트 넷');
     const all = [...REACT_FRAMES, ...SCENE_FRAMES, ...XMAS_FRAMES];
     for (const f of all) assert.equal(all.filter(x => x.id === f.id).length, 1, `${f.id} 겹침`);
 });
 
-await test('내장: build-builtin 이 6종을 「연말」(xmas) 분류로 생성물에 실어요 · 칩은 장면 다음 · 전용 색 · 원본과 같은 틀', () => {
-    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'react', 'scene', 'xmas', 'gallery', 'mine']);
-    assert.equal(CATEGORIES.find(c => c.id === 'xmas').label, '연말');
-    assert.deepEqual(presetsIn('xmas', []), IDS, '칩 안 차례 = 원본 차례');
+await test('1.1.7 테마 내장에서 빠졌어요: 「연말」 칩 · 틀 없음 · 생성기 없음 · 옛 id 는 이름표로 읽기만', () => {
+    assert.ok(!CATEGORIES.some(c => c.id === 'xmas'));
+    assert.deepEqual(presetsIn('xmas', []), []);
     for (const f of XMAS_FRAMES) {
-        const t = BUILTIN_TEMPLATES.find(x => x.id === f.id);
-        assert.ok(t, `${f.id} 생성물에 있음`);
-        assert.equal(t.category, 'xmas');
-        assert.equal(t.template, f.template, `${f.id}: 생성물 = 원본 (node tools/mart/build-builtin.mjs 로 다시 만들어요)`);
-        assert.equal(t.messages, f.messages);
-        const p = PRESETS.find(x => x.id === f.id);
-        assert.ok(p && p.own === f.id && OWN_COLORS[f.id]?.bg === f.colors.bg && p.template, `${f.id}: 내장 심플 글꾸와 같은 길(전용 색 · 틈 템플릿)`);
+        assert.ok(!PRESETS.some(x => x.id === f.id), `${f.id}: PRESETS 에 없음`);
+        assert.equal(retiredShape(f.id)?.name, f.label, `${f.id}: 이름표`);
     }
-    assert.match(read('tools/mart/build-builtin.mjs'), /XMAS_FRAMES/);
+    assert.ok(!fs.existsSync(path.join(root, 'tools/mart/build-builtin.mjs')));
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/log-copy-xmas\.mjs \./, '공개 CI 에 이 시험');
 });
 
@@ -153,7 +148,7 @@ await test('그리기: 로그 · 제목 · 꼬리 · 추가 정보가 들어가�
     const failures = [];
     for (const f of XMAS_FRAMES) {
         for (const screen of [nightT, null]) {
-            const html = renderLog(model, { shape: f.id, ui, fields, screen });
+            const html = renderLog(model, { template: asMine(f), ui, fields, screen });
             for (const text of ['어서 와요, 숲의 손님.', 'Seraphina', '#세라피나 #숲', '숲속 오두막에서', '고마워']) assert.ok(html.includes(text), `${f.id}: 「${text}」`);
             assert.ok(!/\{\{(head|body|info|tail)\}\}/.test(html), `${f.id}: 빈 자리 없음`);
             const bare = html.replace(/ data-f="[a-z]+"/g, '').replace(/ data-bl-[a-z]+(?:="[^"]*")?/g, '').replace(/ aria-hidden="true"/g, '');
@@ -167,7 +162,7 @@ await test('그리기: 로그 · 제목 · 꼬리 · 추가 정보가 들어가�
             for (const host of hosts) { const bad = audit(html, host); if (bad.length) failures.push(`${f.label}/${screen ? '밤' : '화면 없음'}/${host.id}: ${bad.slice(0, 3).join(' · ')}`); }
         }
         // 꼬리말을 비우면 틀 기본 꼬리말
-        assert.ok(renderLog(model, { shape: f.id, ui, fields: { ...fields, tail: '' } }).includes(f.tail), `${f.id}: 기본 꼬리말 「${f.tail}」`);
+        assert.ok(renderLog(model, { template: asMine(f), ui, fields: { ...fields, tail: '' } }).includes(f.tail), `${f.id}: 기본 꼬리말 「${f.tail}」`);
     }
     assert.deepEqual(failures, [], `안 보이는(대비 낮은) 글자 ${failures.length}건`);
 });

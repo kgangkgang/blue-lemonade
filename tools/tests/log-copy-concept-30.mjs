@@ -13,9 +13,9 @@ const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 let passed = 0, failed = 0;
 async function test(name, fn) { try { await fn(); passed++; console.log('PASS ' + name); } catch (e) { failed++; console.error('FAIL ' + name + '\n' + (e.stack || e)); } }
 
-const { renderLog: themeRender, PRESETS, CATEGORIES, OWN_COLORS, movedShape, presetsIn, dateLabel } = await load('src/log-copy-presets.js');
+const { renderLog: themeRender, PRESETS, CATEGORIES, presetsIn, dateLabel } = await load('src/log-copy-presets.js');
 const { MART_CONCEPT_FRAMES: CONCEPT_FRAMES, MART_CONCEPT_COLORS: CONCEPT_COLORS, MART_CONCEPT_SHAPES: SHAPES, renderConcept } = await load('tools/mart/geulkku-concept30.mjs');
-const { BUILTIN_TEMPLATES } = await load('src/log-copy-builtin.gen.js');
+const { retiredShape } = await load('src/log-copy-retired.js');   // 1.1.7 뺀 내장 글꾸 이름표
 // 옛 테마 renderLog(model, { shape: 컨셉 id, … }) 자리 — 이제 마트 도구가 그려요(같은 길)
 const renderLog = (m, { shape, ...o }) => renderConcept(m, { id: shape, ...o });
 const { withoutSvgData } = await load('src/log-copy-template.js');   // 1.0.1 그림 부품 url('data:image/svg+xml,…')(그림만)은 허용
@@ -60,7 +60,7 @@ function inlineOnly(html, label) {
     return bare;
 }
 
-await test('30종이 마트 도구에 다 있어요: 분류 기념일 7 · 사물 11 · 장르 12 · 모양 조각과 색 묶음이 틀마다 · 테마 내장은 기본 틀 + 심플 글꾸뿐', () => {
+await test('30종이 마트 도구에 다 있어요: 분류 기념일 7 · 사물 11 · 장르 12 · 모양 조각과 색 묶음이 틀마다 · 테마 내장은 기본 틀뿐', () => {
     assert.deepEqual(CONCEPT_FRAMES.map(f => f.id), IDS);
     assert.deepEqual(CONCEPT_FRAMES.filter(f => f.category === 'event').map(f => f.id), IDS.slice(0, 7));
     assert.deepEqual(CONCEPT_FRAMES.filter(f => f.category === 'thing').map(f => f.id), IDS.slice(7, 18));
@@ -77,22 +77,18 @@ await test('30종이 마트 도구에 다 있어요: 분류 기념일 7 · 사�
     assert.ok(!/CONCEPT_SHAPES|CONCEPT_PALETTES|CONCEPT_FRAMES|drawConcept|geulkku-concept30/.test(theme), '테마는 컨셉 30 그림 코드를 싣지 않아요');
     assert.equal(PRESETS.filter(p => !p.template && !p.tone).length, 20, '기본 틀 20(그대로 · 기본 6 · 대화 4 · 종이 5 · 갤러리 4)');
     assert.equal(PRESETS.filter(p => p.tone).length, 3, '1.1.3 깡통 로그 틀 묶음 3(깡통 로그 · 미니 · 진한 바탕)');
-    assert.deepEqual(PRESETS.filter(p => p.template).map(p => p.id), BUILTIN_TEMPLATES.map(t => t.id));
-    for (const t of BUILTIN_TEMPLATES) {
-        const preset = PRESETS.find(p => p.id === t.id);
-        assert.ok(preset.own === t.id && OWN_COLORS[t.id]?.bg && preset.emoji && preset.label, `${t.id}: 내장 심플 글꾸 · 전용 색`);
-        if (!['react', 'scene', 'xmas'].includes(t.category)) assert.equal(movedShape(t.was), t.id, `${t.was} → ${t.id}`);   // 1.0.9 반응 글꾸 4종 · 1.1.0 장면 글꾸 8종 · 1.1.1 연말 글꾸 6종은 옮겨 온 옛 id 가 없어요
-        const html = themeRender(model, { shape: t.id, colors: null, ui, fields, screen: nightT });
-        for (const text of ['어서 와요, 숲의 손님.', 'Seraphina', '#세라피나 #숲', '숲속 오두막에서']) assert.ok(html.includes(text), `${t.id}: 「${text}」`);
-    }
-    // 11-04 내장 심플 30: 옛 내장 컨셉 30 은 빠짐없이 같은 주제 · 같은 차례의 심플 틀(concept-sp-<원본 열쇠>)로 옮겨져요 · 기본 틀 id 는 그대로
-    assert.deepEqual(IDS.map(movedShape), IDS.map(id => id.replace(/^concept-/, 'concept-sp-')));
-    assert.deepEqual(BUILTIN_TEMPLATES.filter(t => !['react', 'scene', 'xmas'].includes(t.category)).map(t => [t.label, t.category]), CONCEPT_FRAMES.map(f => [f.label, f.category]), '내장 심플 30 은 옛 내장 30 과 같은 차례 · 이름 · 분류');
-    for (const id of ['card', 'plain', 'concept-nope']) assert.equal(movedShape(id), id);
-    // 분류 칩은 틀이 있는 것만 — 내장 심플 30 으로 기념일 · 사물 · 장르가 모두 서요
-    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'react', 'scene', 'xmas', 'gallery', 'mine']);   // 1.0.9 반응 글꾸 칩
-    // 즐겨찾기 · 최근에 남은 옛 id 도 시트가 처음 열릴 때 같은 길로 옮겨요(시작 그래프 밖 — settings.js 는 모양 표를 몰라요)
-    assert.match(read('src/log-copy-sheet.js'), /s\.fav = moved\(s\.fav\)/);
+    // 1.1.7 내장 심플 글꾸 48종은 뺐어요(사용자 「내장 빼고 마트만」) — 테마 내장은 기본 틀뿐 · 옛 id 는 이름표(log-copy-retired.js)로 읽기만
+    assert.equal(PRESETS.filter(p => p.template || p.own).length, 0, '내장 틈 템플릿 글꾸 없음');
+    assert.ok(!fs.existsSync(path.join(root, 'src/log-copy-builtin.gen.js')), '내장 글꾸 생성물 없음');
+    assert.ok(!/log-copy-builtin/.test(theme), '테마가 내장 글꾸 생성물을 불러오지 않아요');
+    for (const id of IDS) { const row = retiredShape(id); assert.ok(row && row.id === id.replace(/^concept-/, 'concept-sp-'), `${id}: 옛 id 도 이름표로 읽어요`); }
+    for (const id of ['card', 'plain', 'kkangtong', 'concept-nope']) assert.equal(retiredShape(id), null);
+    // 분류 칩은 틀이 있는 것만 — 기념일 · 사물 · 장르 · 반응 · 장면 · 연말 칩은 사라져요(저장된 분류는 시트가 「기본」으로 읽어요)
+    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'gallery', 'mine']);
+    // 저장된 모양 · 즐겨찾기 · 최근은 지우거나 옮겨 쓰지 않아요(읽기만) — 1.0.1 의 「옮겨 저장」 길도 없어요
+    const sheet = read('src/log-copy-sheet.js');
+    assert.ok(!/s\.fav = moved\(s\.fav\)|movedShape/.test(sheet));
+    assert.match(sheet, /readShape\(state\.shape, s\.custom\)/);
     // 1.0.1 2단계: 할로윈 13종은 PRESETS 에서 빠지고 글꾸 마트(tools/mart)로 — 받으면 「내 글꾸」 틈 템플릿
     assert.equal(presetsIn('halloween').length, 0);
     assert.match(read('tools/mart/geulkku-halloween.mjs'), /export const MART_HALLOWEEN_SHAPES = \{/);

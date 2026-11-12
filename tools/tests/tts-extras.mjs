@@ -143,7 +143,7 @@ await test('목소리를 정한 이름 · 성별 모름 · 엑스트라 끔 · �
     store.clear();
     settings().extra_map['점원'].v = {};
     assert.equal(uid(V.voiceFor('점원')), 'minimax:cj_pip01', '기본 목소리 목록이 아직 없으면 이번 줄은 기본 목소리');
-    await new Promise(r => setTimeout(r, 20));
+    for (let i = 0; i < 100 && fetches < 1; i++) await new Promise(r => setTimeout(r, 20));   // 1.1.6 노드 22: 로더 훅이 따로 도는 스레드라 받으러 가기까지 20ms 보다 걸릴 수 있어요(최대 2초)
     assert.ok(fetches >= 1, '목록을 받으러 감 (실패하면 조용히)');
 });
 

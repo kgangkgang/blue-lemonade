@@ -40,6 +40,7 @@ const { ctx, eventSource, chat: chatEl } = dom.installBrowser({ settings: struct
 dom.installHost(ctx);
 const { register } = await import('node:module');
 register(pathToFileURL(path.join(root, 'tools/tests/leak-loader.mjs')).href, { data: { root } });
+dom.realYield(5);   // 1.1.6 노드 22: 로더 훅 스레드가 동적 import 를 풀 진짜 시간(leak-dom.mjs realYield)
 const say = (...args) => process.stdout.write(args.join(' ') + '\n');
 const quiet = (...args) => { if (process.env.LEAK_VERBOSE) say('[log]', ...args.map(a => a?.stack ? a.stack.split('\n').slice(0, 3).join(' | ') : a)); };
 console.warn = quiet; console.error = quiet; console.info = quiet; console.debug = quiet; console.log = quiet;   // 테마 · 애드온이 찍는 줄은 LEAK_VERBOSE=1 일 때만

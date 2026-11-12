@@ -267,7 +267,7 @@ await test('분류: 칩 하나에 그 분류 모양만 · 할로윈은 1.0.1 에
     const { CATEGORIES, presetsIn, categoryOf } = await load('src/log-copy-presets.js');
     // 1.0.1(11-04): 틀이 있는 분류만 칩 — 내장 심플 30(기념일 7 · 사물 11 · 장르 12)이라 세 칩이 모두 서요
     // 1.0.9: 반응 글꾸 4종(봉투 열기 · 초대장 · 쪽 넘기기 · 통통 카드)이 「반응」 칩으로
-    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'event', 'thing', 'genre', 'react', 'scene', 'xmas', 'gallery', 'mine']);
+    assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'gallery', 'mine']);   // 1.1.7 내장 글꾸 분류(기념일 · 사물 · 장르 · 반응 · 장면 · 연말)는 틀이 없어 사라져요
     for (const p of PRESETS) assert.ok(CATEGORIES.some(c => c.id === p.category && c.id !== 'mine'), `${p.id} 분류`);
     assert.deepEqual(presetsIn('halloween'), [], '할로윈 13종은 테마 기본에서 빠졌어요(글꾸 마트 → 내 글꾸)');
     for (const c of CATEGORIES) assert.ok(!presetsIn(c.id, []).some(id => id.startsWith('halloween')), `${c.label} 에는 할로윈 없음`);
@@ -295,8 +295,7 @@ await test('할로윈 31종(1.0.1 글꾸 마트 · 10월 31일 · 틈 템플릿�
     const hw = CONCEPT_FRAMES.map(f => ({ id: f.id, own: f.colors }));
     assert.equal(hw.length, 31, '할로윈 31종(10월 31일)');
     assert.equal(new Set(hw.map(f => f.id)).size, 31, '할로윈 id 겹침 없음');
-    assert.ok(PRESETS.filter(p => !['event', 'thing', 'genre', 'react', 'scene', 'xmas'].includes(p.category)).every(p => !p.own), '컨셉 분류(+ 1.0.9 반응 · 1.1.0 장면 · 1.1.1 연말) 밖은 전용 색 없음');
-    assert.ok(PRESETS.filter(p => p.own).every(p => p.template), '전용 색 틀은 내장 심플 글꾸(틈 템플릿)뿐');
+    assert.ok(PRESETS.every(p => !p.own && !p.template), '1.1.7 테마 내장에 전용 색 · 틈 템플릿 글꾸 없음(마트에서 받은 것만)');
     const L = (hex) => { const n = hex.replace('#', ''); const v = [0, 2, 4].map(i => Number.parseInt(n.slice(i, i + 2), 16) / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
     const ratio = (a, b) => { const [h, l] = [L(a), L(b)].sort((x, y) => y - x); return (h + 0.05) / (l + 0.05); };
     for (const [name, k] of Object.entries(CONCEPT_COLORS)) {
@@ -344,7 +343,7 @@ await test('할로윈 31종(1.0.1 글꾸 마트 · 10월 31일 · 틈 템플릿�
     inlineOnly(drawn.replace(/ aria-hidden="true"/g, ''), 'x-test');
     assert.ok(drawn.includes('polygon(0 0, 100% 35%') && drawn.includes('어서 와요'), '데이터 한 줄로 생일 모양 · 사탕 포장 메시지');
     assert.equal(conceptModel(model, CONCEPT_COLORS.mummy, null).base.bg, CONCEPT_COLORS.mummy.panel, '메시지 칸 바탕 = 컨셉 칸 색');
-    assert.match(read('src/log-copy-sheet.js'), /const plain = \(!!custom\(\) && !simpleOn\(\)\) \|\| !!ownColors\(state\.shape\)/, '할로윈 틀에서는 에이드 색 칩을 숨겨요(1.1.4 받은 심플 글꾸는 밝기 칩이 남아요)');
+    assert.match(read('src/log-copy-sheet.js'), /const plain = !!custom\(\) && !simpleOn\(\);/, '받은 글꾸(할로윈 등)에서는 에이드 색 칩을 숨겨요(1.1.4 받은 심플 글꾸는 밝기 칩이 남아요)');
 });
 
 await test('갤러리 넷: 가로 넘김(overflow-x) · 폴라로이드 · 격자 · 격자 폴라로이드(부제목 · 기록 날짜) · 사진 없으면 안내', () => {
@@ -457,20 +456,22 @@ await test('1.0.9 「레몬」 틀 제목 앞은 🍋 이모지가 아니라 테
 });
 await test('11-09 닫힌 채 시작하는 반응 글꾸(봉투 · 초대장): 틀 원본은 닫힘 · 미리보기만 펼침(data-bl-peek) · 복사 글(shutPeek · 소독)은 다시 닫힘', async () => {
     const { shutPeek, peekTemplate } = await load('src/log-copy-presets.js');
-    const { BUILTIN_TEMPLATES } = await load('src/log-copy-builtin.gen.js');
+    const { REACT_FRAMES } = await load('tools/mart/react-geulkku.mjs');   // 1.1.7 테마 내장에서 빠졌어요 — 마트에서 받은 글꾸(틈 템플릿)로 그려 봐요
+    const SIAN = JSON.parse(read('tools/mart/geulkku-sian.json')).frames;
+    const mine = f => ({ ...f, messages: f.messages || 'box', tail: f.tail || '' });
     const { checkTemplate } = await load('src/log-copy-template.js');
     for (const id of ['c-react-sp-1', 'c-react-sp-2']) {
-        const t = BUILTIN_TEMPLATES.find(x => x.id === id);
+        const t = mine(REACT_FRAMES.find(x => x.id === id));
         assert.ok(t && /<details style="/.test(t.template) && !/<details[^>]*\sopen=/.test(t.template), `${id}: 원본(복사 · 테마용 · 담기)은 닫힌 채`);
         assert.ok(checkTemplate(t.template).ok, `${id}: 받은 글꾸 규칙 그대로`);
-        const html = renderLog(model, { shape: id, ui, fields });
+        const html = renderLog(model, { template: t, ui, fields });
         assert.equal((html.match(/<details open="" data-bl-peek=""/g) ?? []).length, 1, `${id}: 미리보기는 펼침`);
         const out = shutPeek(html);
         assert.ok(!shutPeek(html.replace('<details open="" data-bl-peek=""', '<details data-bl-peek=""')).includes('data-bl-peek'), `${id}: 미리보기에서 닫은 뒤 복사해도 표시가 안 남아요`);
         assert.ok(!/<details[^>]*\sopen=/.test(out) && !out.includes('data-bl-peek'), `${id}: 복사 글은 닫힘`);
     }
     // 처음부터 펼친 틀(편지 · 소포)과 자리에 끼운 부품은 그대로
-    for (const id of ['concept-sp-letter', 'concept-sp-parcel']) assert.ok(!renderLog(model, { shape: id, ui, fields }).includes('data-bl-peek'), `${id}: 펼친 채 그대로`);
+    for (const id of ['concept-sp-letter', 'concept-sp-parcel']) assert.ok(!renderLog(model, { template: mine(SIAN.find(f => f.id === id)), ui, fields }).includes('data-bl-peek'), `${id}: 펼친 채 그대로`);
     assert.equal(peekTemplate('<div>{{info}}</div>'), '<div>{{info}}</div>');
     assert.equal(peekTemplate('<details open="" style="a">'), '<details open="" style="a">');
     // 1.1.0 값 없는 open(이미 열린 상자)에는 표시를 붙이지 않아요 — 붙이면 복사(result · shutPeek)에서 원래 열린 상자가 닫혔어요 · data-open 은 open 이 아니에요

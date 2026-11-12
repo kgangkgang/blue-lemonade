@@ -6,6 +6,7 @@
 //   (b) 틀 검사(checkTemplate)가 속성 값의 $ 와 같은 속성 두 번을 거절해요 — 글 자리의 $ 와 내장 글꾸는 그대로 통과
 //   (c) 「보일 것」 빼기 뒤 측정 칸(iframe)은 스크립트가 꺼진 채(sandbox="allow-same-origin") 문서에 붙어요
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -20,7 +21,12 @@ const { renderLog } = await load('src/log-copy-presets.js');
 const { bareLog, bareRoundTrip } = await load('src/log-copy-bare.js');
 const { fitBare } = await load('src/log-copy-bare-fit.js');
 const { readMart } = await load('src/mart-import.js');
-const { BUILTIN_TEMPLATES } = await load('src/log-copy-builtin.gen.js');
+// 1.1.7 옛 내장 글꾸 48종은 테마에서 뺐어요 — 같은 틀은 마트 자료(심플 시안 · 반응 · 장면 · 연말)로 남아 받을 수 있으니 그 틀로 봐요
+const SIAN = JSON.parse(fs.readFileSync(path.join(root, 'tools/mart/geulkku-sian.json'), 'utf8')).frames.filter(f => f.id.startsWith('concept-sp-'));
+const { REACT_FRAMES } = await load('tools/mart/react-geulkku.mjs');
+const { SCENE_FRAMES } = await load('tools/mart/scene-geulkku.mjs');
+const { XMAS_FRAMES } = await load('tools/mart/xmas-geulkku.mjs');
+const OLD_BUILTIN = [...SIAN, ...REACT_FRAMES, ...SCENE_FRAMES, ...XMAS_FRAMES];
 
 /** HTML 규격대로 시작 태그의 속성을 읽어요 — [이름, 값] 목록 */
 function attrsOf(tag) {
@@ -100,9 +106,9 @@ await test('틀 검사: 속성 값의 $ 와 같은 속성 두 번은 거절 · �
     assert.equal(mart.items.length, 0, '받은 글꾸 묶음에서도 걸러져요');
 });
 
-await test('내장 글꾸 틀은 새 거절에 걸리지 않아요', () => {
-    assert.ok(BUILTIN_TEMPLATES.length > 0);
-    for (const item of BUILTIN_TEMPLATES) {
+await test('옛 내장 글꾸 틀(이제 마트에서 받는 것)은 새 거절에 걸리지 않아요', () => {
+    assert.equal(OLD_BUILTIN.length, 48);
+    for (const item of OLD_BUILTIN) {
         const checked = checkTemplate(item.template);
         assert.equal(checked.ok, true, `${item.id}: ${checked.reason}`);
     }

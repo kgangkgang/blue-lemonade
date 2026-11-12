@@ -8,12 +8,11 @@ import { contrast, parseColor, cssColor } from './shared/ink-paint.js';
 import { recolorLog } from './log-copy-words.js';
 import { box, font, hide, svgDoc, svgUrl } from './log-copy-concept-kit.js';   // 메시지 배치(유령 말풍선 꼬리 svg) · 컨셉 칸 공용 상자
 import { fillTemplate, templateColors, tidyType } from './log-copy-template.js';
-import { BUILTIN_TEMPLATES } from './log-copy-builtin.gen.js';
 import { drawTone } from './log-copy-tone.js';   // 1.1.3 「깡통 로그」 틀 묶음(대사색 하나로 틀 색 — 에이드 팔레트를 안 써요)
 import { SIMPLE, simplePresets, drawSimple, speakerLetters, castLetters } from './log-copy-simple.js';
 import { markEdits } from './log-copy-simple-tone.js';   // 1.1.4 받은 심플 글꾸: 조절 값을 입힌 뒤에 고칠 자리 「✎」   // 1.1.3 「심플」 새 틀 28(클래스 + <style> 하나 · 깃발 SIMPLE_FRAMES_ENABLED 가 꺼져 있어 아직 PRESETS · 분류 칩에 안 들어가요)
 import { drawBasic } from './log-copy-basic.js';   // 1.1.3 「기본 글꾸」 새 틀 18(시안 생성기 그림 그대로 · 클래스 + <style> 하나 · 432 상태창은 보류라 옛 그림)
-import { LEMON_HOME } from './log-copy-lemon.js';   // 1.1.2 레몬 그림 링크 주소(레몬 틀 · 「레몬 바로가기」 칩이 같이 써요)   // 1.0.1(11-04) 테마 내장 심플 글꾸(틈 템플릿 · tools/mart/build-builtin.mjs 생성물)
+import { LEMON_HOME } from './log-copy-lemon.js';   // 1.1.2 레몬 그림 링크 주소(레몬 틀 · 「레몬 바로가기」 칩이 같이 써요)
 
 export { logMarkdown, logText };
 export const HEIGHTS = { s: 280, m: 420, l: 600 };
@@ -300,7 +299,7 @@ function lemon(model, o) {
 }
 
 // ── 컨셉 틀 30종(기념일 · 사물 · 장르)은 11-04 글꾸 마트 그림체 「일러스트」로 옮겼어요(tools/mart/geulkku-concept30.mjs — 테마에는 안 실려요).
-//    테마 내장은 기본 틀(이 파일 위) + 심플 그림체 내장 글꾸(log-copy-builtin.gen.js · 틈 템플릿 · drawTemplate)만이에요. 아래 conceptParts 는 받은 글꾸 · 내장 심플 글꾸가 함께 써요.
+//    1.1.7 심플 그림체 내장 글꾸 48종도 테마에서 뺐어요(사용자 「내장 빼고 마트만」 · 옛 id 는 log-copy-retired.js). 테마 내장은 기본 틀(이 파일 위)뿐 · 아래 conceptParts 는 마트에서 받은 틈 템플릿 글꾸가 써요.
 
 // ── 안쪽 색: 화면 역할 색 → 컨셉 역할 색 (그 밖의 색 · 직접 고른 고정 색도 컨셉 색으로) ──
 /** @param {object} model @param {object} k 컨셉 색 묶음 @param {Record<string,string>|null} screen 화면 팔레트 역할 색 (sheet tokensOf) */
@@ -492,12 +491,6 @@ const ALL_CATEGORIES = [
     { id: SIMPLE.category, label: '심플' },   // 1.1.3 「심플」 새 틀(log-copy-simple.js SIMPLE_FRAMES) — PRESETS 에 틀이 없으면(깃발 꺼짐) 칩이 숨어요
     { id: 'talk', label: '대화' },
     { id: 'paper', label: '종이' },
-    { id: 'event', label: '기념일' },
-    { id: 'thing', label: '사물' },
-    { id: 'genre', label: '장르' },
-    { id: 'react', label: '반응' },
-    { id: 'scene', label: '장면' },   // 1.1.0 장면 글꾸 8종(사랑 재판 · 속보 방송 · 탑승권 · 레시피 카드 · 타로 리딩 · 터미널 · 학적부 · 전보 — tools/mart/scene-geulkku.mjs)   // 1.0.9 누르면 반응하는 글꾸(봉투 열기 · 초대장 · 쪽 넘기기 · 통통 카드 — tools/mart/react-geulkku.mjs)
-    { id: 'xmas', label: '연말' },   // 1.1.1 연말 글꾸 6종(스노우볼 · 성탄 카드 · 오너먼트 대화 · 겨울 기차표 · 연말 정산 · 소원 부적 — tools/mart/xmas-geulkku.mjs)
     { id: 'gallery', label: '갤러리' },
     { id: 'mine', label: '내 글꾸' },
 ];
@@ -528,9 +521,7 @@ export const PRESETS = [
     { id: 'diary', label: '일기', icon: 'fa-calendar-day', render: basicFrame('diary'), category: 'paper', basic: true },
     { id: 'article', label: '기사', icon: 'fa-newspaper', render: basicFrame('article'), category: 'paper', basic: true },
     { id: 'book', label: '책', icon: 'fa-book', render: basicFrame('book'), category: 'paper', basic: true },
-    // 내장 심플 글꾸(1.0.1 · 11-04): 글꾸 마트 「심플」 그림체와 같은 틈 템플릿 · 전용 색(own) — 에이드 색 칩은 숨겨요. 칩에는 이모지 + 짧은 이름.
-    //   옛 내장 컨셉 30(오리지널 그림)은 글꾸 마트 「일러스트」로 옮겼어요(tools/mart/geulkku-concept30.mjs)
-    ...BUILTIN_TEMPLATES.map(t => ({ id: t.id, label: t.label, emoji: t.emoji, category: t.category, own: t.id, template: t, render: (m, o) => drawTemplate(m, o, t) })),
+    // 1.1.7 내장 심플 글꾸 48종(기념일 · 사물 · 장르 · 반응 · 장면 · 연말)은 뺐어요 — 글꾸는 마트에서 받은 것만(「내 글꾸」) · 옛 id 읽기는 log-copy-retired.js
     { id: 'gallery-strip', label: '가로 넘김', icon: 'fa-images', render: basicFrame('gallery-strip'), category: 'gallery', images: true, basic: true },
     { id: 'gallery-strip-polaroid', label: '가로 폴라로이드', icon: 'fa-camera-retro', render: basicFrame('gallery-strip-polaroid'), category: 'gallery', images: true, basic: true },
     { id: 'gallery-grid', label: '격자', icon: 'fa-table-cells', render: basicFrame('gallery-grid'), category: 'gallery', images: true, basic: true },
@@ -538,12 +529,8 @@ export const PRESETS = [
     ...simplePresets(),   // 1.1.3 「심플」 새 틀(맨 뒤 — 옛 틀 차례는 그대로 · 깃발이 꺼져 있으면 빈 목록)
 ];
 
-/** 분류 칩 — 틀이 하나라도 있는 분류만(내장 심플 글꾸가 아직 없는 기념일 · 장르 칩은 숨어요) · 내 글꾸는 늘 */
+/** 분류 칩 — 틀이 하나라도 있는 분류만 · 내 글꾸는 늘 */
 export const CATEGORIES = ALL_CATEGORIES.filter(c => c.id === 'mine' || PRESETS.some(p => (p.category || 'basic') === c.id));
-/** 내장 글꾸 전용 색(own) — 시트가 미리보기 바탕 · 숨긴 글 색에 써요 */
-export const OWN_COLORS = Object.fromEntries(BUILTIN_TEMPLATES.map(t => [t.id, templateColors(t.colors)]));
-/** 1.0.1 시험판에서 고른 옛 내장 컨셉 id(컨셉 30 은 1.0.1 에 처음 들어와 게시 전에 마트로 옮겼어요) → 같은 주제의 내장 심플 글꾸 id (없으면 그대로 — 시트가 모르는 id 는 카드로) */
-export const movedShape = id => BUILTIN_TEMPLATES.find(t => t.was === id)?.id ?? id;
 
 /** 그 분류의 모양 id (프리셋 차례 그대로) — 내 글꾸는 분류가 없어도 'mine' 으로 모아요 */
 export function presetsIn(category, customs = []) {
@@ -603,8 +590,8 @@ export function renderLog(model, { shape = 'plain', colors = null, ui = null, fi
         const drawn = drawTone(shape, model, { ui: ui ?? undefined, fields, height: HEIGHTS[size] ?? HEIGHTS.m, names, gap: blank, mode: light ? 'light' : 'dark', lookup });
         return fixedWidth(inkEverywhere(drawn.html, drawn.tone.text, { bg: shape === 'kkangtong-mini' ? drawn.tone.log : drawn.tone.card, candidates: [drawn.tone.dialogue] }));
     }
-    const tpl = template?.template ? template : found?.template ?? null;   // 받은 글꾸 · 내장 심플 글꾸(틈 템플릿)
-    const preset = template?.template ? { own: 'template', render: (m, o) => drawTemplate(m, o, template) } : found;
+    const tpl = template?.template ? template : null;   // 마트에서 받은 글꾸(틈 템플릿)
+    const preset = tpl ? { own: 'template', render: (m, o) => drawTemplate(m, o, tpl) } : found;
     if (!preset?.render || (!colors && !preset.own)) return fixedWidth(inkEverywhere(logHtml(model, { names, gap: blank }), model.base.color, { bg: model.base.bg, candidates: [colors?.text] }));
     const font = ui ?? { family: model.base['font-family'], tracking: 'normal' };
     const c = tpl ? templateColors(tpl.colors) : colors;

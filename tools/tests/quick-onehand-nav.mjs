@@ -29,6 +29,8 @@ const { ctx } = dom.installBrowser({ settings: { enabled: true, onehand: { on: t
 dom.installHost(ctx);
 const { register } = await import('node:module');
 register(url('tools/tests/leak-loader.mjs'), { data: { root } });
+dom.realYield(5);   // 1.1.6 노드 22: 로더 훅 스레드가 동적 import 를 풀 진짜 시간(leak-dom.mjs realYield)
+const { setTimeout: realWait } = await import('node:timers/promises');
 console.warn = () => {};
 const toasts = [];
 globalThis.toastr = { info: m => toasts.push(m), success() {}, warning: m => toasts.push(m), error: m => toasts.push(m), clear() {} };
@@ -43,7 +45,7 @@ chat.scrollTo = opts => scrolls.push(opts);
 const { syncOneHand } = await import(url('src/onehand.js'));
 const defaults = { swipe: true, imp: true, cont: true, regen: true, top: true, bottom: true, jump: true, delLast: true };
 const acts = () => [...document.querySelectorAll('#bl-onehand .bl-onehand-group')].map(g => [...g.querySelectorAll('.bl-onehand-btn')].map(b => b.dataset.act));
-const press = async act => { document.querySelector(`#bl-onehand [data-act="${act}"]`).click(); for (let i = 0; i < 30; i++) await new Promise(r => setImmediate(r)); };
+const press = async act => { document.querySelector(`#bl-onehand [data-act="${act}"]`).click(); for (let i = 0; i < 30; i++) await new Promise(r => setImmediate(r)); for (let i = 0; i < 20; i++) { await realWait(10); await new Promise(r => setImmediate(r)); } };   // 1.1.6 노드 22: 누름이 받는 모듈이 로더 훅 스레드에서 풀릴 진짜 시간
 
 await test('세 묶음 차례 · 9개면 is-many · 이름표', () => {
     syncOneHand(true, defaults);

@@ -1,5 +1,5 @@
 // 반응 글꾸 4종(11-09) — 누르면 반응하는 틈 템플릿: 봉투 열기 · 초대장 · 쪽 넘기기 · 통통 카드.
-//   테마 내장(tools/mart/build-builtin.mjs → src/log-copy-builtin.gen.js, 분류 「반응」)과 글꾸 마트(사이트 tools/geulkku-react.mjs)가 같이 써요.
+//   옛 테마 내장(1.1.7 에 뺐어요 · 분류 「반응」)과 글꾸 마트(사이트 tools/geulkku-react.mjs)가 같이 써요.
 //   받은 글꾸와 같은 규칙(src/log-copy-template.js checkTemplate)만 써요: 인라인 style · details/summary · data-bl-egg · bl- 키프레임.
 //   11-09 봉투 · 초대장은 닫힌 채로 시작해요(복사한 글 · 테마용 · 내려받기 모두 — 사용자 「처음엔 닫혀 있는 게 맞을 것 같음」). 겉면을 누르면 열려요.
 //     미리보기(테마 로그 복사 창 · 마트 카드 · 상세 · 시식)만 로그가 보이게 펼쳐 보여요: drawTemplate 이 닫힌 details 에 open + data-bl-peek 를 붙이고,

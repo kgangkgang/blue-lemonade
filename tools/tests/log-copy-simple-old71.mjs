@@ -37,14 +37,19 @@ if (WRITE > 0) {
 } else {
     const { test, done } = suite('log-copy-simple-old71');
     const want = JSON.parse(fs.readFileSync(path.join(root, 'tools/tests/fixtures/log-copy-old71.json'), 'utf8'));
-    await test(`옛 틀 ${want.count}종 × 팔레트 있음 · 없음 = ${Object.keys(want.outputs).length}벌의 그린 글 · 복사 글 · 틀 목록 · 분류가 바탕 ${want.base} 과 한 글자도 같아요(심플 새 틀 깃발은 꺼져 있어요)`, () => {
-        assert.equal(now.count, want.count);
-        assert.equal(now.list, want.list, '틀 목록 · 분류 · 분류별 틀 목록');
-        assert.deepEqual(Object.keys(now.outputs), Object.keys(want.outputs));
+    await test(`옛 틀 ${want.count}종 × 팔레트 있음 · 없음 = ${Object.keys(want.outputs).length}벌의 그린 글 · 복사 글 · 틀 목록 · 분류가 바탕 ${want.base} 과 한 글자도 같아요(심플 새 틀 깃발은 꺼져 있어요 · 1.1.7 뺀 내장 글꾸 48종은 빼고)`, async () => {
+        // 1.1.7 옛 내장 글꾸 48종을 뺐어요(사용자 「내장 빼고 마트만」) — 남은 틀 23종은 바탕과 한 글자도 같고 · 빠진 것은 정확히 그 48종(이름표 log-copy-retired.js)
+        const { retiredShape } = await load('src/log-copy-retired.js');
+        const gone = Object.keys(want.outputs).filter(key => !(key in now.outputs));
+        assert.deepEqual([...new Set(gone.map(key => key.split('/')[0]))].filter(id => !retiredShape(id)), [], '기본 틀은 하나도 안 빠져요');
+        assert.equal(gone.length / 2, 48);
+        assert.equal(now.count, want.count - 48);
+        assert.deepEqual(Object.keys(now.outputs), Object.keys(want.outputs).filter(key => key in now.outputs));
         // 1.1.3 「기본 글꾸」 새 틀 18(src/log-copy-basic.js — 시안 생성기 그림)은 새 그림이라 바탕과 달라야 해요 · 그 시험은 log-copy-basic.mjs 가 해요
         const basic = new Set(P.PRESETS.filter(p => p.basic).map(p => p.id));
         assert.equal(basic.size, 18);
         for (const [key, value] of Object.entries(want.outputs)) {
+            if (!(key in now.outputs)) continue;
             if (basic.has(key.split('/')[0])) assert.notEqual(now.outputs[key], value, `${key} 새 그림`);
             else assert.equal(now.outputs[key], value, key);
         }

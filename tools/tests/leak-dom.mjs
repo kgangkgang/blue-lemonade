@@ -22,6 +22,8 @@ export const clock = {
     clear(id) { queue.delete(id); stats.intervals.delete(id); },
     /** ms 만큼 시간을 보내며 그 사이 차례가 된 것을 모두 돌린다 (마이크로태스크도 사이사이) */
     async advance(ms) {
+        // 1.1.6 realYield 를 켠 시험: 100ms 씩 나눠 보내며 사이마다 진짜로 쉬어요(타이머가 없는 구간에도 로더 훅 스레드가 동적 import 를 풀 수 있게)
+        if (realYieldMs && ms > 100) { const stop = now + ms; while (now < stop) await clock.advance(Math.min(100, stop - now)); return; }
         const end = now + ms;
         for (let guard = 0; guard < 100000; guard++) {
             await flushMicro();
@@ -39,7 +41,13 @@ export const clock = {
     pending: () => queue.size,
 };
 export const errors = [];
-async function flushMicro() { for (let i = 0; i < 20; i++) await null; }
+// 1.1.6(11-12) 노드 22: module.register 로더 훅은 따로 도는 스레드라 동적 import 가 진짜 이벤트 루프 차례를 받아야 풀려요 — 로더를 거는 시험은 realYield(ms) 로
+//   가짜 시간을 보내는 사이사이 진짜로 ms 만큼 쉬게 해요(기본 0 = 예전 그대로). 노드 24 는 쉬지 않아도 풀려 GitHub Actions(노드 22)에서만 깨졌어요.
+import { setTimeout as realWait } from 'node:timers/promises';
+let realYieldMs = 0;
+export function realYield(ms = 5) { realYieldMs = NODE_MAJOR >= 23 ? 0 : Math.max(0, Number(ms) || 0); }   // 노드 23 이상은 쉬지 않아도 풀려요(쉬면 chat-switch-leak 이 110초 → 690초)
+const NODE_MAJOR = Number(String(process.versions?.node || '0').split('.')[0]) || 0;
+async function flushMicro() { for (let i = 0; i < 20; i++) await null; if (realYieldMs) { await realWait(realYieldMs); for (let i = 0; i < 20; i++) await null; } }
 
 // ── 노드 ──
 class EventTargetLite {

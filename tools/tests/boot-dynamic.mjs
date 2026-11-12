@@ -17,6 +17,7 @@ const { ctx, eventSource, chat: chatEl } = dom.installBrowser({ settings: { enab
 dom.installHost(ctx);
 const { register } = await import('node:module');
 register(pathToFileURL(path.join(root, 'tools/tests/leak-loader.mjs')).href, { data: { root } });
+dom.realYield(5);   // 1.1.6 노드 22: 로더 훅 스레드가 동적 import 를 풀 진짜 시간(leak-dom.mjs realYield)
 const say = (...a) => process.stdout.write(a.join(' ') + '\n');
 for (const k of ['warn', 'error', 'info', 'debug', 'log']) console[k] = () => {};
 const T = ctx.event_types, settle = ms => dom.clock.advance(ms);

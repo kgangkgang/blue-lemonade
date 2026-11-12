@@ -1,5 +1,5 @@
 // 연말 글꾸 6종(11-09) — 크리스마스 · 연말 · 새해 한 장면 틈 템플릿: 스노우볼 · 성탄 카드 · 오너먼트 대화 · 겨울 기차표 · 연말 정산 · 소원 부적.
-//   테마 내장(tools/mart/build-builtin.mjs → src/log-copy-builtin.gen.js, 분류 「연말」 xmas)과 글꾸 마트(사이트 tools/geulkku-xmas.mjs)가 같이 써요.
+//   옛 테마 내장(1.1.7 에 뺐어요 · 분류 「연말」 xmas)과 글꾸 마트(사이트 tools/geulkku-xmas.mjs)가 같이 써요.
 //   장면 글꾸(scene-geulkku.mjs)와 같은 규칙만 써요(src/log-copy-template.js checkTemplate): 인라인 style · details/summary · data-bl-egg · bl- 키프레임 — input · class · <style> 없음.
 //   읽기 규칙(시험 tools/tests/log-copy-xmas.mjs)
 //     - 글이 든 칸은 모두 제 글자색 · 제 바탕색(background-color)을 적어요 — 어두운 · 밝은 게시판 어디에 붙여도 글자 대비 4.5(장식 기호 3) 이상.

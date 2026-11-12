@@ -5,7 +5,7 @@
 //   ② 그림 액자: 팩(manifest.json · assets/*.json · images/*.webp|png) → PNG 썸네일 + 받기 JSON(decor art · mask 는 data:image/png · 3/4 크기)
 //      그림 변환은 Python Pillow(python -I) 로 해요. 팩이 없으면 그림 액자는 건너뛰고 알려요.
 //   ③ 글꾸: 옛 내장 컨셉 30종(1.0.1 · 11-04 테마에서 빼서 마트에만 · 그림체 「일러스트」 · 미리보기 · HTML 복사만) · tools/mart/geulkku-*.mjs 의 모양 조각을 고정 색 묶음 + 네 자리 표시로 한 번 돌려 「틈 템플릿」 + 정적 미리보기 HTML(인라인 style 만)
-//      테마에 내장된 심플 글꾸(src/log-copy-builtin.gen.js)와 같은 마트 항목은 「내장됨」(builtin) 표시만 — 받기 없이 미리보기 · HTML 복사
+//      1.1.7 테마 내장 심플 글꾸는 뺐어요(「내장됨」 표시도 없어요 — 글꾸는 마트에서 받은 것만)
 //      템플릿은 테마의 가져오기 검사(src/log-copy-template.js checkTemplate)를 그대로 통과해야 해요 — 못 통과하면 빌드가 멈춰요.
 //   --check: 쓰지 않고 만들 수 있는지만 봐요(시험 · CI).
 import fs from 'node:fs';
@@ -21,8 +21,6 @@ const CHECK = process.argv.includes('--check');
 
 const { FRAME_PRESETS, PRESET_LABELS, presetColors } = await load('src/frame-presets.js');
 const { renderLog, conceptParts } = await load('src/log-copy-presets.js');
-const { BUILTIN_TEMPLATES } = await load('src/log-copy-builtin.gen.js');   // 테마 내장 심플 글꾸(마트에선 「내장됨」)
-const BUILTIN_IDS = new Set(BUILTIN_TEMPLATES.map(t => t.id));
 const { checkTemplate, fillTemplate, TEMPLATE_ROLES, withoutSvgData } = await load('src/log-copy-template.js');
 const { checkItem, readMart } = await load('src/mart-import.js');
 const { dateLabel } = await load('src/log-copy-presets.js');
@@ -206,8 +204,7 @@ function sianItems() {
         const { item, reason } = checkItem(entry);
         if (!item) throw new Error(`${frame.id}: ${reason}`);
         const preview = previewOf(renderLog(SAMPLE, { template: item, ui: UI, fields: FIELDS, size: 'm', screen: SAMPLE_SCREEN }), frame.id, frame.label);
-        const builtin = BUILTIN_IDS.has(frame.id);   // 테마에 내장된 심플 글꾸 — 받을 것 없이 「내장됨」
-        items.push({ ...entry, ...(builtin ? { builtin: true } : {}), name: frame.label, category: frame.category, categoryLabel: frame.categoryLabel, style: styleOf(frame), ...(frame.labels ? { labels: frame.labels } : {}), desc: `${builtin ? '테마에 들어 있어요 · ' : ''}${SIAN_DESC[frame.category] || `${frame.categoryLabel} 글꾸`} · 꼬리 「${frame.tail}」${/<details/.test(frame.template) ? ' · 겉면을 누르면 접혀요' : ''}`, bytes: Buffer.byteLength(JSON.stringify({ 'bl-mart': 1, items: [entry] })), preview });
+        items.push({ ...entry, name: frame.label, category: frame.category, categoryLabel: frame.categoryLabel, style: styleOf(frame), ...(frame.labels ? { labels: frame.labels } : {}), desc: `${SIAN_DESC[frame.category] || `${frame.categoryLabel} 글꾸`} · 꼬리 「${frame.tail}」${/<details/.test(frame.template) ? ' · 겉면을 누르면 접혀요' : ''}`, bytes: Buffer.byteLength(JSON.stringify({ 'bl-mart': 1, items: [entry] })), preview });
     }
     return { items, categories };
 }

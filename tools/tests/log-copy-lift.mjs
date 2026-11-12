@@ -142,7 +142,10 @@ await t('<style> 블록을 깨뜨릴 수 있는 값은 옮기지 않아요', () 
 });
 
 const { renderLog, PRESETS, LEMON_HOME } = await load('src/log-copy-presets.js');
-const { BUILTIN_TEMPLATES } = await load('src/log-copy-builtin.gen.js');
+// 1.1.7 옛 내장 글꾸 48종(이제 마트에서 받는 틈 템플릿 글꾸)
+const mine = f => ({ ...f, messages: f.messages || 'box', tail: f.tail || '' });
+const marts = [...JSON.parse(read('tools/mart/geulkku-sian.json')).frames.filter(f => f.id.startsWith('concept-sp-')),
+    ...(await load('tools/mart/react-geulkku.mjs')).REACT_FRAMES, ...(await load('tools/mart/scene-geulkku.mjs')).SCENE_FRAMES, ...(await load('tools/mart/xmas-geulkku.mjs')).XMAS_FRAMES];
 const font = { color: 'rgb(219, 226, 235)', 'font-family': "'Pretendard', sans-serif", 'font-size': '15px', 'font-weight': '400', 'font-style': 'normal', 'letter-spacing': '0px', 'line-height': '26px' };
 const model = { chatName: 'A', userName: 'B', base: { bg: 'rgb(20, 31, 46)', ...font },
     messages: [{ index: 0, user: false, name: 'A', nameStyle: { color: 'rgb(147, 201, 255)' }, font, nodes: [{ t: 'el', block: true, tag: 'div', kind: 'p', style: { ...font }, children: [{ t: 'text', text: '안녕' }] }] },
@@ -185,7 +188,8 @@ await t('기본 틀 전부: 빈 사이 칸(height 만 있는 빈 div) 없음 —
 
 await t('모든 기본 틀 · 내장 글꾸: 옮긴 뒤 인라인에 url 0 · 깡통 흉내(url(&quot; 지움)를 지나도 그림 규칙은 <style> 에 남아요', () => {
     let lifted = 0;
-    const shapes = [...PRESETS.map(p => ({ shape: p.id })), ...BUILTIN_TEMPLATES.map(item => ({ template: item }))];
+    // 1.1.7 내장 글꾸 48종은 뺐어요 — 같은 틀을 마트에서 받은 글꾸(틈 템플릿 · 내 글꾸)로 그려 봐요
+    const shapes = [...PRESETS.map(p => ({ shape: p.id })), ...marts.map(f => ({ template: mine(f) }))];
     for (const s of shapes) {
         const html = renderLog(model, { ...s, colors: night, ui, fields: full, images: [] });
         // 실제 복사는 미리보기 DOM 을 다시 써서 url('…') 이 url("…") 가 돼요(속성 안에서는 &quot;)

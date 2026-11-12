@@ -14,9 +14,11 @@
 import { getSettings, saveSettings } from './settings.js';
 import { showThemeModal } from './modal.js';
 import { PALETTES, PALETTE_FAMILIES, isPaletteId, ensurePalettes, paletteColors, paletteFamily, paletteVariant, safeColor, onColor } from './palettes.js';
-import { PRESETS, CATEGORIES, OWN_COLORS, movedShape, presetsIn, categoryOf, renderLog, logMarkdown, dateLabel } from './log-copy-presets.js';
+import { PRESETS, CATEGORIES, presetsIn, categoryOf, renderLog, logMarkdown, dateLabel } from './log-copy-presets.js';
 import { logHtml } from './log-copy-render.js';
 import { templateColors } from './log-copy-template.js';   // 1.0.1 글꾸 마트에서 받은 내 글꾸
+import { readShape } from './log-copy-retired.js';   // 1.1.7 뺀 옛 내장 글꾸 48종의 이름표(저장된 id 읽기만)
+import { PAGES } from './repo.js';   // 1.1.7 뺀 내장 글꾸의 마트 새 판 바로가기
 import { motionCss, motionStyleFor } from './log-copy-motion.js';   // 1.0.1 글꾸 움직임 · 누르면 반응(미리보기 칸 · HTML 복사 맨 앞 <style>)
 import { sanitizeHtml, sanitizeTree, slotPath, fromPath, guessSlot, imagesFromCode } from './log-copy-sanitize.js';
 import { applyFade, revealTab } from './tab-scroll.js';
@@ -97,8 +99,6 @@ export function colorsOf(id) {
 const nowPalette = () => getSettings().palette || 'salt';
 /** 모양이 쓸 팔레트 — 할로윈처럼 dark 표시가 있는 틀은 고른 에이드의 밤 판 */
 const paletteFor = (shape, id) => (PRESETS.find(p => p.id === shape)?.dark ? paletteVariant(paletteFamily(id), 'dark') : id);
-/** 전용 색 틀(할로윈 — 사용자 결정 「할로윈만 할로윈색」)의 색 묶음, 아니면 null */
-const ownColors = (shape) => { const k = OWN_COLORS[PRESETS.find(p => p.id === shape)?.own]; return k ? { ...k, raised: k.panel2 } : null; };
 const modeOf = id => PALETTES[id]?.mode || (/night|^black$/.test(id) ? 'dark' : 'light');
 
 function chipOrder(s) {
@@ -111,6 +111,9 @@ function chipOrder(s) {
 // ── 시트 ─────────────────────────────────────────────────────
 
 let open = null;
+let stageBig = false;   // 1.1.6 폰 화면 미리보기 크기 — 작게(화면 약 30%)로 시작 · 크게로 바꾸면 이 탭이 열려 있는 동안 기억해요(설정에는 안 남겨요 — 시작 묶음 0바이트)
+const PHONE = '(max-width: 600px)';   // 1.1.6 폰 화면 규칙이 걸리는 폭(STYLE 의 @media 와 같아요)
+const toldRetired = new Set();   // 1.1.7 뺀 옛 글꾸 마트 안내는 페이지를 연 동안 글꾸마다 한 번(복사 없이 창만 여닫으면 열 때마다 9초 안내가 떴어요)
 
 /** @param {object} model captureLog() 결과 */
 export async function openLogSheet(model) {
@@ -119,13 +122,10 @@ export async function openLogSheet(model) {
     ensureStyle();
     await ensurePalettes();
     const s = store();
-    // 1.0.1 옛 내장 컨셉 30(일러스트 · 마트로 옮김)을 즐겨찾기 · 최근에 둔 것 → 같은 주제의 내장 심플 30(concept-sp-*)으로 한 번 옮겨 저장
-    const moved = list => [...new Set(list.map(movedShape))];
-    if ([s.shape, ...s.fav, ...s.recent].some(id => movedShape(id) !== id)) { s.shape = movedShape(s.shape); s.fav = moved(s.fav); s.recent = moved(s.recent); saveSettings(); }
     const names = connectionNames();
     const first = model.messages.find(m => m.time)?.time ?? Date.now();
     const state = {
-        shape: movedShape(s.shape),   // 1.0.1 시험판에서 고른 옛 내장 컨셉 id → 같은 주제의 내장 심플 글꾸
+        shape: s.shape,
         palette: isPaletteId(s.palette) && modeOf(s.palette) === modeOf(nowPalette()) ? s.palette : nowPalette(),
         fields: { title: model.chatTitle || 'Title', mark: 'LOG', char: model.charName || model.chatName, model: names.model, prompt: names.prompt, date: dateLabel(first), from: model.userName, tail: '', info: '', page: '1', subtitle: model.chatName ? `${model.chatName}의 기록` : '' },
         category: CATEGORIES.some(c => c.id === s.category) ? s.category : 'basic',   // 분류 칩 — 처음은 「기본」, 마지막에 고른 것을 기억
@@ -141,9 +141,14 @@ export async function openLogSheet(model) {
         toneTitle: '',   // 1.1.3 깡통 로그 틀 묶음의 제목 — 늘 빈 채로 시작해요(레몬만) · 다른 틀의 제목 · 「비워 둔 머리 칸」 기억과 따로(서로 안 건드려요)
         tone: null,   // 1.1.3 막 그린 깡통 로그 틀의 색 묶음(숨긴 글 알약 · 미리보기 바탕)
         more: true,   // 1.1.3 「더 보기」 펼침 — 아래에서 모양이 정해진 뒤 정해요
+        folds: {}, allCats: false, allShapes: false,   // 1.1.6 폰 화면: 펼친 갈래 · 분류 · 틀 줄 전부 보기(이번 창에만)
     };
     // 1.0.8 비워 둔 머리 칸(깡통 · 모델 · 프롬프트 알약 · 날짜 · 제목)은 다음에 열어도 빈 채로 — 전엔 열 때마다 지금 연결 이름으로 다시 채워 지운 알약이 돌아왔어요(사용자 「없애 뒀으면 없는 상태로 시작」)
     for (const key of s.blank || []) state.fields[key] = '';
+    // 1.1.7 뺀 옛 내장 글꾸(빼빼로데이 등)를 고른 채였으면 — 저장 값은 그대로 두고 읽기만 바꿔요: 마트 새 판을 받아 뒀으면 그 글꾸로 이어서 · 아니면 기본 틀(깡통 로그)로
+    const read = readShape(state.shape, s.custom);
+    if (read.retired) { state.shape = read.shape; state.category = categoryOf(read.shape); }
+    if (read.tell && !toldRetired.has(read.tell) && toldRetired.add(read.tell)) toastr.info(`「${read.retired.name}」 글꾸는 이제 테마에 들어 있지 않아요 — 눌러서 글꾸 마트의 새 판을 「테마로 담기」로 받아요. 지금은 기본 틀로 보여 드려요`, '로그 복사', { timeOut: 9000, onclick: () => window.open(`${PAGES}/mart/geulkku/?view#${encodeURIComponent(read.tell)}`, '_blank', 'noopener') });
     if (!PRESETS.some(p => p.id === state.shape) && !s.custom.some(c => c.id === state.shape)) state.shape = 'card';
     // 깡통 로그 틀이면 접힌 채 · 다른 틀을 쓰던 설정이면 예전 그대로 펼친 채. 접힌 줄에서 켜 둔 것이 지금 글을 바꾸고 있으면(이름 숨김 · 바꾸기 · 이름 줄 끔) 펼쳐서 보여요
     { const ct = getSettings().captureTools; state.more = s.custom.some(c => c.id === state.shape) || !isToneShape(state.shape) || !!(ct?.redact || ct?.replace || s.namesOff); }
@@ -152,26 +157,32 @@ export async function openLogSheet(model) {
     const dialog = document.createElement('dialog');
     dialog.className = 'bl-tool-dialog bl-lc';
     dialog.setAttribute('aria-labelledby', 'bl-lc-title');
-    dialog.innerHTML = `<header class="bl-lc-head"><h3 id="bl-lc-title"><i class="fa-solid fa-copy" aria-hidden="true"></i><span>로그 복사</span><small>메시지 ${model.messages.length}개</small></h3><button type="button" class="salty-btn bl-lc-icon" data-lc="close" aria-label="닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>
+    dialog.innerHTML = `<header class="bl-lc-head"><h3 id="bl-lc-title"><i class="fa-solid fa-copy" aria-hidden="true"></i><span>로그 복사</span><small>메시지 ${model.messages.length}개</small></h3><div class="bl-lc-mode bl-lc-hd-mode" role="group" aria-label="밝기" data-lc-hd-mode>${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><button type="button" class="salty-btn bl-lc-icon" data-lc="close" aria-label="닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>
         <div class="bl-lc-scroll">
-            <div class="salty-seg bl-screen-chips bl-lc-cats" role="group" aria-label="분류" data-lc-cats></div>
-            <div class="bl-lc-chips bl-chip-row" role="radiogroup" aria-label="모양" data-lc-shapes></div>
+            <div class="bl-lc-tl" data-lc-tl><div class="salty-seg bl-screen-chips bl-lc-cats" role="group" aria-label="분류" data-lc-cats></div><button type="button" class="salty-btn bl-lc-icon bl-lc-tl-all" data-lc="cats-all" aria-expanded="false" aria-label="분류 전부 보기"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button></div>
+            <div class="bl-lc-cr" data-lc-cr><div class="bl-lc-chips bl-chip-row" role="radiogroup" aria-label="모양" data-lc-shapes></div><button type="button" class="bl-lc-cr-more" data-lc="shapes-all" aria-expanded="false" aria-label="틀 전부 보기" hidden></button></div>
             <div class="bl-lc-gallery" data-lc-gallery hidden><textarea rows="3" placeholder="이미지 코드(&lt;img …&gt;)나 이미지 주소를 붙여 넣어요" aria-label="갤러리 사진 코드" data-lc-images></textarea><span class="bl-lc-note" data-lc-images-count></span></div>
             <div class="bl-lc-colors" data-lc-colors><div class="bl-lc-mode" role="group" aria-label="밝기">${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><div class="bl-lc-pals bl-chip-row" role="radiogroup" aria-label="색" data-lc-pals></div></div>
             <div class="bl-lc-easy" role="group" aria-label="조절 — 간편 · 세밀" data-lc-easy hidden></div>
             <div class="bl-lc-inks bl-chip-row" role="group" aria-label="글자색 — 눌러서 바꿔요" data-lc-inks hidden></div>
             <div class="bl-lc-tools bl-chip-row" role="group" aria-label="이름 숨김 · 바꾸기"><button type="button" class="bl-lc-chip" data-lc="hide" aria-pressed="false"><i class="fa-solid fa-user-secret" aria-hidden="true"></i><span>이름 숨김</span></button><button type="button" class="bl-lc-chip" data-lc="words" aria-pressed="false"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>바꾸기</span><small data-lc-words-count></small></button><button type="button" class="bl-lc-chip" data-lc="fields" aria-pressed="false" title="제목 · 날짜 · 깡통 · 모델 · 프롬프트 칸을 글칸으로 고쳐요"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>머리 칸</span></button><button type="button" class="bl-lc-chip" data-lc="spoiler" disabled title="미리보기에서 글을 고르면 눌러요"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>숨기기</span></button></div>
-            <div class="bl-lc-shows bl-chip-row" role="group" aria-label="보일 것 — 끄면 빼요" data-lc-shows>${SHOWS.map(([key, icon, label, title]) => `<button type="button" class="bl-lc-chip" data-lc-show="${key}" aria-pressed="true" title="${esc(title)}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${esc(label)}</span></button>`).join('')}<button type="button" class="bl-lc-chip" data-lc-lemon aria-pressed="false" title="켜면 틀의 빈 모서리에 작은 레몬을 넣어요 — 누르면 블루레몬에이드 소개 글이 새 창으로 열려요"><i class="fa-solid fa-lemon" aria-hidden="true"></i><span>레몬 바로가기</span></button><button type="button" class="bl-lc-chip" data-lc-lemon-at hidden title="레몬 자리 — 누를 때마다 자동 · 왼쪽 위 · 오른쪽 위 · 왼쪽 아래 · 오른쪽 아래"><i class="fa-solid fa-up-down-left-right" aria-hidden="true"></i><span>자동</span></button><button type="button" class="bl-lc-chip" data-lc-height hidden title="틀 높이 — 누를 때마다 자동(글 길이만큼) · 작게 · 중간 · 크게(틀 안에서 넘겨요)"><i class="fa-solid fa-up-down" aria-hidden="true"></i><span>높이 · 자동</span></button></div>
-            <div class="bl-lc-fields" data-lc-fields hidden>${FIELD_INPUTS.map(([key, label, hint]) => `<label class="bl-lc-field"><span>${esc(label)}</span><input type="text" maxlength="${key === 'title' ? 80 : 60}" placeholder="${esc(hint)}" data-lc-field="${key}"></label>`).join('')}</div>
-            <div class="bl-lc-names" data-lc-names hidden><div class="bl-lc-name-list" data-lc-name-list></div><div class="bl-lc-row2"><input type="text" maxlength="40" placeholder="더 가릴 이름" aria-label="더 가릴 이름" data-lc-name-input><button type="button" class="salty-btn bl-lc-icon" data-lc="name-add" aria-label="가릴 이름 더하기"><i class="fa-solid fa-plus" aria-hidden="true"></i></button></div></div>
-            <div class="bl-lc-words" data-lc-words hidden><div data-lc-rules></div><button type="button" class="salty-btn bl-lc-add-rule" data-lc="rule-add"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>줄 더하기</span></button></div>
+            <div class="bl-lc-sep" aria-hidden="true">로그 꾸밈</div>
+            <div class="bl-lc-folds" data-lc-folds>
+                <section class="bl-lc-fd" data-lc-fd="shows"><button type="button" class="bl-lc-fd-h" data-lc-fold="shows" aria-expanded="false"><b>보일 것</b><span data-lc-fd-sum></span><mark data-lc-fd-mark hidden></mark><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button><div class="bl-lc-shows bl-chip-row" role="group" aria-label="보일 것 — 끄면 빼요" data-lc-shows>${SHOWS.map(([key, icon, label, title]) => `<button type="button" class="bl-lc-chip" data-lc-show="${key}" aria-pressed="true" title="${esc(title)}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${esc(label)}</span></button>`).join('')}<button type="button" class="bl-lc-chip" data-lc-lemon aria-pressed="false" title="켜면 틀의 빈 모서리에 작은 레몬을 넣어요 — 누르면 블루레몬에이드 소개 글이 새 창으로 열려요"><i class="fa-solid fa-lemon" aria-hidden="true"></i><span>레몬 바로가기</span></button><button type="button" class="bl-lc-chip" data-lc-lemon-at hidden title="레몬 자리 — 누를 때마다 자동 · 왼쪽 위 · 오른쪽 위 · 왼쪽 아래 · 오른쪽 아래"><i class="fa-solid fa-up-down-left-right" aria-hidden="true"></i><span>자동</span></button><button type="button" class="bl-lc-chip" data-lc-height hidden title="틀 높이 — 누를 때마다 자동(글 길이만큼) · 작게 · 중간 · 크게(틀 안에서 넘겨요)"><i class="fa-solid fa-up-down" aria-hidden="true"></i><span>높이 · 자동</span></button></div></section>
+                <section class="bl-lc-fd" data-lc-fd="fields"><button type="button" class="bl-lc-fd-h" data-lc-fold="fields" aria-expanded="false"><b>머리 칸</b><span data-lc-fd-sum></span><mark data-lc-fd-mark hidden></mark><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button><div class="bl-lc-fields" data-lc-fields hidden>${FIELD_INPUTS.map(([key, label, hint]) => `<label class="bl-lc-field"><span>${esc(label)}</span><input type="text" maxlength="${key === 'title' ? 80 : 60}" placeholder="${esc(hint)}" data-lc-field="${key}"></label>`).join('')}</div></section>
+                <section class="bl-lc-fd" data-lc-fd="names"><button type="button" class="bl-lc-fd-h" data-lc-fold="names" aria-expanded="false"><b>이름 가리기</b><span data-lc-fd-sum></span><mark data-lc-fd-mark hidden></mark><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button><button type="button" class="bl-lc-sw" role="switch" data-lc-sw="hide" aria-checked="false"><span>이름 숨김<small>채팅 캡처의 이름 가림과 같은 목록이에요</small></span><i aria-hidden="true"></i></button><div class="bl-lc-names" data-lc-names hidden><div class="bl-lc-np-r" role="group" aria-label="가릴 이름"><span class="bl-lc-np-h">가릴 이름</span><div class="bl-lc-np-list"><div class="bl-lc-name-list" data-lc-name-list></div><span class="bl-lc-np-add"><input type="text" maxlength="40" placeholder="이름 더하기" aria-label="더 가릴 이름" data-lc-name-input><button type="button" class="salty-btn bl-lc-icon" data-lc="name-add" aria-label="가릴 이름 더하기"><i class="fa-solid fa-plus" aria-hidden="true"></i></button></span></div></div><div class="bl-lc-np-r" role="group" aria-label="대신 보일 말" data-lc-mask-row></div></div></section>
+                <section class="bl-lc-fd" data-lc-fd="words"><button type="button" class="bl-lc-fd-h" data-lc-fold="words" aria-expanded="false"><b>글자 바꾸기</b><span data-lc-fd-sum></span><mark data-lc-fd-mark hidden></mark><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button><button type="button" class="bl-lc-sw" role="switch" data-lc-sw="words" aria-checked="false"><span>바꾸기<small>본문의 말을 다른 말로 바꿔 복사해요</small></span><i aria-hidden="true"></i></button><div class="bl-lc-words" data-lc-words hidden><div data-lc-rules></div><button type="button" class="salty-btn bl-lc-add-rule" data-lc="rule-add"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>줄 더하기</span></button></div></section>
+            </div>
+            <div class="bl-lc-hint" data-lc-hint><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>눌러야 보이는 글은 미리보기에서 글을 고른 뒤 <b>숨기기</b></span><button type="button" class="bl-lc-chip" data-lc-sw="spoiler" aria-pressed="false" disabled title="미리보기에서 글을 고르면 눌러요"><span>숨기기</span></button></div>
             <div class="bl-lc-more"><button type="button" class="bl-lc-chip" data-lc="more" aria-expanded="false"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span>더 보기</span></button></div>
             <div class="bl-lc-pick" data-lc-pick hidden><span>로그 넣을 곳을 눌러요</span><button type="button" class="salty-btn" data-lc="auto">자동으로</button></div>
-            <div class="bl-lc-bar" data-lc-bar><span class="bl-lc-note"><i class="fa-solid fa-pen" aria-hidden="true"></i> 미리보기 글씨를 눌러 바로 고쳐요</span><button type="button" class="salty-btn bl-lc-icon" data-lc="undo" aria-label="되돌리기" title="되돌리기 (지운 블록도 돌아와요)" disabled><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon" data-lc="redo" aria-label="다시하기" title="다시하기" disabled><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button></div>
+            <div class="bl-lc-stk" data-lc-stk>
+            <div class="bl-lc-bar" data-lc-bar><b class="bl-lc-ph">미리보기</b><span class="bl-lc-ph bl-lc-bar-name" data-lc-stage-name></span><span class="bl-lc-note"><i class="fa-solid fa-pen" aria-hidden="true"></i> 미리보기 글씨를 눌러 바로 고쳐요</span><button type="button" class="salty-btn bl-lc-icon" data-lc="undo" aria-label="되돌리기" title="되돌리기 (지운 블록도 돌아와요)" disabled><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon" data-lc="redo" aria-label="다시하기" title="다시하기" disabled><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon bl-lc-ph" data-lc="stage-size" aria-pressed="false" aria-label="미리보기 크게" title="미리보기 크게"><i class="fa-solid fa-up-right-and-down-left-from-center" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon bl-lc-ph" data-lc="stage-fold" aria-expanded="true" aria-label="미리보기 접기" title="미리보기 접기"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button></div>
             <div class="bl-lc-stage" data-lc-stage><div class="bl-lc-egg" data-lc-egg hidden>✨ 장식을 눌러 보세요</div><iframe sandbox="allow-same-origin" title="미리보기 — 글자를 눌러 바로 고쳐요" data-lc-frame></iframe></div>
+            </div>
             <div class="bl-lc-paste" data-lc-paste hidden><button type="button" class="salty-btn bl-lc-mart" data-lc="mart"><i class="fa-solid fa-store" aria-hidden="true"></i><span>마트에서 가져오기</span></button><textarea rows="8" placeholder="공유받은 글꾸 HTML 이나 글꾸 마트에서 복사한 글을 붙여 넣어요" aria-label="글꾸 HTML"></textarea><div class="bl-lc-row"><button type="button" class="salty-btn" data-lc="paste-cancel">취소</button><button type="button" class="salty-btn bl-tool-primary" data-lc="paste-save">저장</button></div></div>
         </div>
-        <footer class="bl-lc-foot"><button type="button" class="salty-btn" data-lc="md" title="틀 · 색 없이 글만 마크다운으로">글만 복사</button><button type="button" class="salty-btn" data-lc="download" title="보이는 모양 그대로 .html 파일로 받아요">내려받기</button><button type="button" class="salty-btn bl-tool-primary" data-lc="copy" title="보이는 모양 그대로(틀 · 색 · 글꼴) HTML 로"><i class="fa-solid fa-copy" aria-hidden="true"></i> HTML 복사</button></footer>`;
+        <footer class="bl-lc-foot"><button type="button" class="salty-btn" data-lc="md" title="틀 · 색 없이 글만 마크다운으로"><i class="fa-solid fa-align-left bl-lc-ph" aria-hidden="true"></i><span class="bl-lc-long">글만 복사</span><span class="bl-lc-ph">글만</span></button><button type="button" class="salty-btn" data-lc="download" title="보이는 모양 그대로 .html 파일로 받아요"><i class="fa-solid fa-download bl-lc-ph" aria-hidden="true"></i><span class="bl-lc-long">내려받기</span><span class="bl-lc-ph">파일로</span></button><button type="button" class="salty-btn bl-tool-primary" data-lc="copy" title="보이는 모양 그대로(틀 · 색 · 글꼴) HTML 로"><i class="fa-solid fa-copy" aria-hidden="true"></i> HTML 복사</button></footer>`;
     document.body.append(dialog);
     const $ = selector => dialog.querySelector(selector);
     const frame = $('[data-lc-frame]');
@@ -227,13 +238,14 @@ export async function openLogSheet(model) {
     const own = () => {
         if (toneOn() && state.tone) { const t = state.tone; return { bg: SITE[t.mode].bg, line: t.line, raised: t.card, muted: t.text, text: t.text }; }   // 1.1.3 틀이 쓰는 색만(새 색 없음) · 미리보기 바탕은 붙일 곳 바탕
         if (basicOn() || simpleOn()) return modeOf(state.palette) === 'light' ? { bg: SITE.light.bg, line: 'rgba(20, 20, 24, 0.1)', raised: '#f5f5f6', muted: '#5f6168', text: '#26272b' } : { bg: SITE.dark.bg, line: 'rgba(224, 224, 228, 0.09)', raised: '#1c1e21', muted: '#9a9da6', text: '#e1e1e5' };   // 1.1.3 기본 글꾸 새 틀의 무채(시안 값) · 미리보기 바탕은 붙일 곳 바탕
-        const mine = custom(); if (!mine?.template) return ownColors(state.shape); const k = templateColors(mine.colors); return { ...k, raised: k.panel2 };
+        const mine = custom(); if (!mine?.template) return null; const k = templateColors(mine.colors); return { ...k, raised: k.panel2 };
     };
     // 1.1.4 「간편」(설계 4-2) — 받은 심플 글꾸에서만: 스타일(추천 여섯) · 움직임(끔 · 약 · 중 · 강) · 글 크기(작게 · 보통 · 크게). 밤낮은 밝기 칩 · 색은 인물표 색.
     //   값은 그 글꾸의 set 하나(설정에 남아요) · 조절 모듈(needSet)을 받은 뒤에 보여요.
     const drawEasy = keepFocus(() => {
         const box = $('[data-lc-easy]'), mine = custom(), on = !!mine?.frame && !!setMod;
         box.hidden = !on;
+        dialog.classList.toggle('bl-lc-tuned', on);   // 1.1.6 폰: 조절 칸 아래 「로그 꾸밈」 나눔 줄
         if (!on) { box.replaceChildren(); return; }
         const e = setMod.easyOf(mine.set), level = Object.fromEntries(setMod.EASY_MOTION);
         const chip = (key, label, pressed) => `<button type="button" class="bl-lc-chip" data-lc-easy="${esc(key)}" aria-pressed="${pressed}"><span>${esc(label)}</span></button>`;
@@ -325,6 +337,10 @@ export async function openLogSheet(model) {
     // 이름 숨김 · 바꾸기 — 채팅 캡처 설정 그대로
     const tools = () => getSettings().captureTools;
     const hideList = () => withNameAliases([model.chatName, ...model.messages.map(m => m.name), model.userName, ...tools().names].filter(Boolean));
+    /** 1.1.6 저절로 가리는 이름(내 이름 먼저 · 말한 사람 · 대화 이름 — 더한 이름 · 별명 빼고) — 이름 가림 상자에 보여요 */
+    const autoNames = () => { const added = new Set(tools().names); return [...new Set([model.userName, ...model.messages.map(m => m.name), model.chatName].map(n => String(n ?? '').trim()).filter(Boolean))].filter(n => !added.has(n)); };
+    /** 가린 이름 대신 보일 말(가림 글자 · 모자이크 · 색 칸) */
+    const maskLabel = () => { const ct = tools(); return ct.mask === 'auto' ? ct.maskWord || '○○' : ct.mask === 'mosaic' ? '▒▒' : '색 칸'; };
     // 1.0.1 미리보기에서 고친 글 거두기: 메시지 수가 같을 때만, 글이 실제로 달라진 메시지의 노드만 바꿔요(안 고친 메시지는 그림 · 링크 · 글자 꾸밈이 있는 원래 노드)
     const textOf = nodes => (nodes || []).map(n => n.t === 'text' ? n.text : n.t === 'br' ? '\n' : textOf(n.children)).join('');
     const harvest = () => {
@@ -376,6 +392,7 @@ export async function openLogSheet(model) {
         for (const element of doc.querySelectorAll('[data-f]')) if (!basicOn() || element.getClientRects().length) setField(element.getAttribute('data-f'), element.textContent);   // 1.1.3 기본 글꾸 새 틀은 같은 칸이 칩 · 정보 줄 두 곳에 있어요 — 보이는 쪽만 읽어요
         for (const input of dialog.querySelectorAll('[data-lc-field]')) if (document.activeElement !== input) input.value = fieldOf(input.dataset.lcField);
         rememberBlank();
+        drawFolds();
     };
     /** 1.0.8 비운 머리 칸을 설정에 적어요(다시 채우면 빼요) — 바뀐 게 있을 때만 저장 */
     const rememberBlank = () => {
@@ -388,7 +405,7 @@ export async function openLogSheet(model) {
     const view = () => {
         const ct = tools();
         const out = transformLog(state.edited ?? model, { rules: ct.replace ? ct.replaceRules : [], hide: ct.redact ? { names: hideList(), mask: ct.mask, style: ct.maskStyles?.[ct.mask], word: ct.maskWord } : null });
-        const target = custom() || ownColors(state.shape) || toneOn() || basicOn() ? null : paletteFor(state.shape, state.palette);   // 1.1.3 기본 글꾸 새 틀도 대사색을 그대로 읽어요   // 1.1.3 깡통 로그 틀 묶음은 로그의 대사색을 그대로 읽어요(에이드 색으로 다시 칠하지 않아요)
+        const target = custom() || toneOn() || basicOn() ? null : paletteFor(state.shape, state.palette);   // 1.1.3 기본 글꾸 새 틀도 대사색을 그대로 읽어요   // 1.1.3 깡통 로그 틀 묶음은 로그의 대사색을 그대로 읽어요(에이드 색으로 다시 칠하지 않아요)
         if (target && target !== nowPalette()) out.model = recolorLog(out.model, tokensOf(nowPalette()), tokensOf(target));
         return out;
     };
@@ -413,16 +430,44 @@ export async function openLogSheet(model) {
             if (document.activeElement !== input) input.value = fieldOf(key);
         }
         $('[data-lc="fields"]').setAttribute('aria-pressed', String(!$('[data-lc-fields]').hidden));
+        drawFolds();
+    };
+    // 1.1.6 폰 화면(시안 (나)): 「보일 것 · 이름 가리기 · 글자 바꾸기 · 머리 칸」 접는 갈래 — 접힌 머리에 지금 상태를 적어요(펴지 않아도 무엇이 켜졌는지 보여요).
+    //   PC 에서는 갈래 상자가 없어 줄이 예전 그대로예요(.bl-lc-fd 는 display:contents · 머리는 숨김). 펼침은 이번 창에만 기억해요.
+    const drawFolds = () => {
+        const ct = tools(), head = id => $(`[data-lc-fd="${id}"]`);
+        const put = (id, sum, mark = '', on = false) => {
+            const fd = head(id), m = fd.querySelector('[data-lc-fd-mark]');
+            fd.querySelector('[data-lc-fd-sum]').textContent = sum;
+            m.textContent = mark; m.hidden = !mark; m.classList.toggle('is-on', on);
+        };
+        const off = [...dialog.querySelectorAll('[data-lc-show]')].filter(c => !c.disabled && !c.hidden && c.getAttribute('aria-pressed') === 'false' && !(basicOn() && c.dataset.lcShow === 'tagsOff')).map(c => c.querySelector('span').textContent);
+        put('shows', off.length ? `뺀 것 ${off.join(' · ')}` : '전부 보여요', off.length ? `뺌 ${off.length}` : '');
+        const autos = autoNames(), all = autos.length + ct.names.length;
+        put('names', ct.redact ? `${autos[0] || ct.names[0] || '이름'}${all > 1 ? ` 외 ${all - 1}` : ''} → ${maskLabel()}` : '꺼짐', ct.redact ? '켬' : '', true);
+        const rules = ct.replaceRules.filter(r => r.from.trim());
+        put('words', ct.replace ? (rules.map(r => `${r.from} → ${r.to}`).join(' · ') || '줄 없음') : '꺼짐', ct.replace ? '켬' : '', true);
+        put('fields', ['title', 'date', 'char'].map(fieldOf).map(v => String(v).trim()).filter(Boolean).join(' · ') || '비어 있어요');
+        for (const fd of dialog.querySelectorAll('[data-lc-fd]')) { const on = !!state.folds[fd.dataset.lcFd]; fd.classList.toggle('is-open', on); fd.querySelector('[data-lc-fold]').setAttribute('aria-expanded', String(on)); }
     };
     const drawTools = keepFocus(() => {
         const ct = tools();
         $('[data-lc="hide"]').setAttribute('aria-pressed', String(ct.redact));
         $('[data-lc="words"]').setAttribute('aria-pressed', String(ct.replace));
+        $('[data-lc-sw="hide"]').setAttribute('aria-checked', String(ct.redact));
+        $('[data-lc-sw="words"]').setAttribute('aria-checked', String(ct.replace));
         const rules = ct.replaceRules.filter(r => r.from.trim()).length;
         $('[data-lc-words-count]').textContent = rules ? String(rules) : '';
         $('[data-lc-names]').hidden = !ct.redact;
         $('[data-lc-words]').hidden = !ct.replace;
-        $('[data-lc-name-list]').innerHTML = (ct.mask === 'auto' ? `<span class="bl-lc-note bl-lc-maskword-row"><input type="text" class="bl-lc-maskword" maxlength="12" value="${esc(ct.maskWord || '○○')}" aria-label="가릴 글자" title="본문 속 이름을 이 글자로 가려요" data-lc-maskword>으로 가려요</span>` : `<span class="bl-lc-note">${esc(ct.mask === 'mosaic' ? '▒▒' : '색 칸')}으로 가려요</span>`) + ct.names.map((name, i) => `<button type="button" class="bl-lc-chip bl-lc-name" data-lc-name-remove="${i}" aria-label="${esc(name)} 빼기"><span>${esc(name)}</span><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>`).join('');
+        // 1.1.6 이름 가림 상자(11-12 사용자가 고른 폰 시안 (나) — PC 도 같이): 「가릴 이름」 = 저절로 가리는 이름(말한 사람 · 내 이름) + 더한 이름 · 「대신 보일 말」 = 가림 글자 칸 + 보기.
+        //   전엔 「[깡캐] 으로 가려요」 — 받침 없는 말 뒤에도 「으로」였고, 무엇을 가리는지는 안 보였어요
+        const autos = autoNames(), more = autos.length > 6 ? autos.length - 6 : 0;
+        $('[data-lc-name-list]').innerHTML = autos.slice(0, 6).map(name => `<span class="bl-lc-tag">${esc(name)}${name === model.userName ? '<small>내 이름</small>' : ''}</span>`).join('') + (more ? `<span class="bl-lc-tag">외 ${more}</span>` : '')
+            + ct.names.map((name, i) => `<button type="button" class="bl-lc-chip bl-lc-name" data-lc-name-remove="${i}" aria-label="${esc(name)} 빼기"><span>${esc(name)}</span><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>`).join('');
+        const maskRow = $('[data-lc-mask-row]');
+        if (!maskRow.querySelector('input:focus')) maskRow.innerHTML = `<span class="bl-lc-np-h">대신 보일 말</span>${ct.mask === 'auto' ? `<input type="text" class="bl-lc-maskword" maxlength="12" value="${esc(ct.maskWord || '○○')}" aria-label="가린 이름 대신 보일 말" title="본문 속 이름을 이 글자로 가려요" data-lc-maskword>` : `<span class="bl-lc-tag">${esc(maskLabel())}</span>`}<span class="bl-lc-np-ex">${esc(autos[0] || '이름')} → <b data-lc-mask-ex>${esc(maskLabel())}</b></span>`;
+        drawFolds();
         const box = $('[data-lc-rules]');
         if (box.querySelector('input:focus')) return;   // 치는 중에는 줄을 다시 그리지 않아요
         const rows = ct.replaceRules.length ? ct.replaceRules : [{ from: '', to: '' }];
@@ -457,13 +502,30 @@ export async function openLogSheet(model) {
             return `<button type="button" class="bl-lc-chip${armed ? ' is-armed' : ''}" role="radio" aria-checked="${on}" data-shape="${esc(c.id)}">${c.emoji && !armed ? `<span class="bl-lc-emoji" aria-hidden="true">${esc(c.emoji)}</span>` : `<i class="fa-solid ${armed ? 'fa-trash' : 'fa-shapes'}" aria-hidden="true"></i>`}<span>${armed ? '지우기' : esc(c.name)}</span>${armed ? '' : mart}</button>`
                 + `<button type="button" class="bl-lc-chip bl-lc-x${armed ? ' is-armed' : ''}" data-lc-del="${esc(c.id)}" aria-label="${esc(c.name)} ${armed ? '정말 지우기' : '지우기'}" title="${armed ? '한 번 더 누르면 지워요' : '지우기'}"><i class="fa-solid ${armed ? 'fa-trash' : 'fa-xmark'}" aria-hidden="true"></i></button>`;
         }).join('');
-        $('[data-lc-shapes]').innerHTML = presetChips + customChips + (less ? '' : '<button type="button" class="bl-lc-chip bl-lc-add" data-lc="paste"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>내 글꾸</span></button>');
+        $('[data-lc-shapes]').innerHTML = presetChips + customChips + (less ? '' : '<button type="button" class="bl-lc-chip bl-lc-add" data-lc="paste"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>내 글꾸</span></button>')
+            + (state.allShapes ? '<button type="button" class="bl-lc-chip bl-lc-ghost" data-lc="shapes-all" aria-expanded="true"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i><span>접기</span></button>' : '');   // 1.1.6 폰: 전부 펼친 틀 줄 끝 「접기」
         const strip = $('[data-lc-shapes]'), cats = $('[data-lc-cats]');
-        requestAnimationFrame(() => { revealTab(strip, strip.querySelector('[aria-checked="true"]')); applyFade(strip); revealTab(cats, cats.querySelector('.on')); applyFade(cats); });
+        $('[data-lc-cr]').classList.toggle('is-all', state.allShapes);
+        $('[data-lc-tl]').classList.toggle('is-all', state.allCats);
+        { const b = $('[data-lc="cats-all"]'); b.setAttribute('aria-expanded', String(state.allCats)); b.setAttribute('aria-label', state.allCats ? '분류 접기' : '분류 전부 보기'); b.querySelector('i').className = `fa-solid fa-chevron-${state.allCats ? 'up' : 'down'}`; }
+        requestAnimationFrame(() => { revealTab(strip, strip.querySelector('[aria-checked="true"]')); applyFade(strip); revealTab(cats, cats.querySelector('.on')); applyFade(cats); fitShapes(); });
         const preset = PRESETS.find(x => x.id === state.shape);
         $('[data-lc-gallery]').hidden = !preset?.images;
         $('[data-lc-images-count]').textContent = preset?.images ? `사진 ${(model.images?.length ?? 0) + state.images.length}장` : '';
     });
+    // 1.1.6 폰: 옆으로 넘치는 틀 줄에 「+n」(줄 밖에 남은 칩 수 · 누르면 감싸 펼침) — 줄을 다시 그릴 때 한 번만 재요(스크롤마다 재지 않아요)
+    const fitShapes = () => {
+        const row = $('[data-lc-cr]'), strip = $('[data-lc-shapes]'), pill = $('.bl-lc-cr-more');
+        const phone = !!globalThis.matchMedia?.(PHONE).matches;
+        row.classList.remove('is-over');   // 검토 11-12: 지난번 넘침 여백(오른쪽 64px)을 빼고 재요 — 그대로 재면 들어맞는 줄도 계속 넘친다고 봤어요
+        const over = phone && state.more && !state.allShapes && strip.scrollWidth > strip.clientWidth + 2;
+        row.classList.toggle('is-over', over);
+        pill.hidden = !over;
+        if (!over) return;
+        const edge = strip.getBoundingClientRect().right - 64;
+        const n = [...strip.querySelectorAll(':scope > [data-shape], :scope > [data-lc="paste"]')].filter(c => c.getBoundingClientRect().right > edge).length;   // 틀 칩만(내 글꾸 옆 ✕ 는 그 칩의 일부)
+        pill.textContent = n ? `+${n}` : '전부';
+    };
     // 1.1.3 「더 보기」: 접힘은 창 class 하나(bl-lc-less)로 — 접힌 줄은 그대로 그려 두고 숨기기만 해요(펼치면 고르던 것 그대로)
     const drawMore = () => {
         dialog.classList.toggle('bl-lc-less', !state.more);
@@ -475,8 +537,10 @@ export async function openLogSheet(model) {
     // ② 색 칩 — 테마 「색」 화면의 에이드 카드(.salty-pal) 그대로, 작게
     const drawColors = keepFocus(() => {
         const mode = modeOf(state.palette);
-        const plain = (!!custom() && !simpleOn()) || !!ownColors(state.shape);   // 내 글꾸 · 전용 색 틀(할로윈)은 에이드 색 칩이 없어요(1.1.4 받은 심플 글꾸는 밝기만)
+        const plain = !!custom() && !simpleOn();   // 내 글꾸는 에이드 색 칩이 없어요(1.1.4 받은 심플 글꾸는 밝기만)
         $('[data-lc-colors]').hidden = plain;
+        $('[data-lc-hd-mode]').hidden = plain;   // 1.1.6 폰: 밝기는 머리 줄로(색 칩 줄에는 에이드 카드만)
+        $('[data-lc-colors]').classList.toggle('bl-lc-pal-off', toneOn() || basicOn() || simpleOn());
         if (plain) return;
         for (const button of dialog.querySelectorAll('[data-lc-mode]')) button.setAttribute('aria-pressed', String(button.dataset.lcMode === mode));
         // 1.1.3 깡통 로그 틀 묶음은 색 칩을 숨기고 밝기(화이트 · 나이트)만 남겨요 — 틀 색은 대사색에서 나와요
@@ -496,10 +560,25 @@ export async function openLogSheet(model) {
         applyFade(pals);
     });
 
+    /** 「숨기기」 칩 둘(도구 줄 · 1.1.6 폰 안내 줄)을 같이 — 미리보기에서 글을 골라야 켜져요 · 숨긴 글 안이면 「풀기」 */
+    const spoilerChips = (off, inside) => {
+        for (const chip of dialog.querySelectorAll('[data-lc="spoiler"], [data-lc-sw="spoiler"]')) { chip.disabled = off; chip.setAttribute('aria-pressed', String(inside)); chip.querySelector('span').textContent = inside ? '풀기' : '숨기기'; }
+    };
+    // 1.1.6 폰: 미리보기 크게 · 작게(이 탭 동안 기억) · 접기(이번 창만)
+    const drawStage = () => {
+        dialog.classList.toggle('bl-lc-big', stageBig);
+        const size = $('[data-lc="stage-size"]'), fold = $('[data-lc="stage-fold"]'), shut = dialog.classList.contains('bl-lc-shut');
+        size.setAttribute('aria-pressed', String(stageBig)); size.setAttribute('aria-label', stageBig ? '미리보기 작게' : '미리보기 크게'); size.title = size.getAttribute('aria-label');
+        size.querySelector('i').className = `fa-solid fa-${stageBig ? 'down-left-and-up-right-to-center' : 'up-right-and-down-left-from-center'}`;
+        size.disabled = shut;
+        fold.setAttribute('aria-expanded', String(!shut)); fold.setAttribute('aria-label', shut ? '미리보기 펴기' : '미리보기 접기'); fold.title = fold.getAttribute('aria-label');
+        fold.querySelector('i').className = `fa-solid fa-chevron-${shut ? 'down' : 'up'}`;
+    };
     // ③ 미리보기 (눌러서 고침)
     const pageBg = () => (own()?.bg ?? (custom() || (state.shape === 'plain' && state.palette === nowPalette()) ? getComputedStyle(dialog).backgroundColor : colorsOf(paletteFor(state.shape, state.palette)).bg));
     const draw = () => {
         harvest();
+        $('[data-lc-stage-name]').textContent = PRESETS.find(p => p.id === state.shape)?.label ?? custom()?.name ?? '';   // 1.1.6 폰: 미리보기 머리에 틀 이름
         drawShows();
         drawInks();
         drawEasy();
@@ -557,15 +636,13 @@ export async function openLogSheet(model) {
                 state.spoilerRange = range && (inside || !range.collapsed) ? range.cloneRange() : null;
                 const chip = $('[data-lc="spoiler"]');
                 const wasOff = chip.disabled;
-                chip.disabled = !state.spoilerRange;
+                spoilerChips(!state.spoilerRange, !!inside);
                 // 폰(384)은 칩 줄이 가로로 넘쳐 「숨기기」가 줄 밖에 있어요(1.0.1 「깡통 · 모델 · 프롬프트」 칩이 앞에 들어옴) — 켜질 때 칩 줄만 옆으로 밀어 보여요(본문 세로 스크롤은 그대로)
                 if (wasOff && !chip.disabled) {
                     const row = chip.parentElement, r = chip.getBoundingClientRect(), box = row.getBoundingClientRect();
                     if (r.right > box.right) row.scrollLeft += r.right - box.right + 16;
                     else if (r.left < box.left) row.scrollLeft -= box.left - r.left + 16;
                 }
-                chip.setAttribute('aria-pressed', String(!!inside));
-                chip.querySelector('span').textContent = inside ? '풀기' : '숨기기';
             };
             doc.addEventListener('selectionchange', syncSpoiler);
             syncSpoiler();
@@ -673,6 +750,14 @@ export async function openLogSheet(model) {
     dialog.addEventListener('click', async (event) => {
         const target = event.target.closest('button');
         if (!target || !dialog.contains(target)) return;
+        if (target.dataset.lcFold) {   // 1.1.6 폰: 접는 갈래 — 「머리 칸」 갈래는 펴면 칸이 보여요(PC 의 「머리 칸」 칩과 같은 상태)
+            const id = target.dataset.lcFold;
+            state.folds[id] = !state.folds[id];
+            if (id === 'fields') { $('[data-lc-fields]').hidden = !state.folds[id]; drawShows(); } else drawFolds();
+            return;
+        }
+        if (target.dataset.lcSw === 'spoiler') { $('[data-lc="spoiler"]').click(); return; }   // 1.1.6 폰 안내 줄의 「숨기기」 = 도구 줄 칩
+        if (target.dataset.lcSw) { $(`[data-lc="${target.dataset.lcSw}"]`).click(); return; }   // 1.1.6 폰 갈래 스위치(이름 숨김 · 바꾸기) = 도구 줄 칩
         if (target.dataset.lcView) {   // 1.1.5 간편 | 세밀 · 「따로」(세밀의 움직임 갈래로) · 더 조절하기
             if (!fineMod) return;
             if (target.dataset.lcView === 'motion') fine.open.add('motion');
@@ -734,6 +819,16 @@ export async function openLogSheet(model) {
         if (target.dataset.lcMode) { state.palette = paletteVariant(paletteFamily(state.palette), target.dataset.lcMode); state.picked = true; drawColors(); draw(); return; }
         switch (target.dataset.lc) {
             case 'close': dialog.close(); break;
+            case 'cats-all': state.allCats = !state.allCats; drawShapes(); break;   // 1.1.6 폰: 분류 탭 전부 보기
+            case 'shapes-all': {   // 1.1.6 폰: 틀 줄 「+n」 · 「접기」
+                const held = document.activeElement === target;
+                state.allShapes = !state.allShapes; drawShapes(); if (!state.allShapes) $('[data-lc-shapes]').scrollLeft = 0;
+                // 검토 11-12: 누른 단추가 숨어(알약) · 다시 그려져(「접기」) 초점이 body 로 떨어졌어요 — 키보드 · 화면 읽기로 누른 것이면 짝 단추로(넘침을 다 잰 다음 프레임)
+                if (held) requestAnimationFrame(() => (state.allShapes ? $('[data-lc-shapes] .bl-lc-ghost') : $('.bl-lc-cr-more:not([hidden])') ?? $('[data-lc-shapes] [aria-checked="true"]'))?.focus({ preventScroll: true }));
+                break;
+            }
+            case 'stage-size': stageBig = !stageBig; drawStage(); break;
+            case 'stage-fold': dialog.classList.toggle('bl-lc-shut'); drawStage(); break;
             case 'more': state.more = !state.more; drawMore(); drawShapes(); drawColors(); for (const strip of dialog.querySelectorAll('.bl-chip-row')) applyFade(strip); break;   // 1.1.3 더 보기 · 접기(미리보기는 다시 그리지 않아요)
             case 'ink-reset': state.inks = {}; draw(); break;
             case 'ink-save': saveInks(); break;
@@ -794,11 +889,11 @@ export async function openLogSheet(model) {
                 state.spoilerRange = null;
                 state.dirty = true;   // 1.0.1 숨긴 글도 틀을 바꿔 다시 그릴 때 그대로
                 snapNow();   // 1.0.7 숨기기 · 풀기도 되돌리기 한 칸
-                target.disabled = true; target.setAttribute('aria-pressed', 'false'); target.querySelector('span').textContent = '숨기기';
+                spoilerChips(true, false);
                 break;
             }
             case 'hide': { const ct = tools(); ct.redact = !ct.redact; saveSettings(); drawTools(); draw(); break; }
-            case 'fields': { const box = $('[data-lc-fields]'); box.hidden = !box.hidden; drawShows(); if (!box.hidden) box.querySelector('input:not(:disabled)')?.focus(); break; }
+            case 'fields': { const box = $('[data-lc-fields]'); box.hidden = !box.hidden; state.folds.fields = !box.hidden; drawShows(); if (!box.hidden) box.querySelector('input:not(:disabled)')?.focus(); break; }
             case 'undo': travel(-1); break;
             case 'redo': travel(1); break;
             case 'download': {
@@ -846,6 +941,20 @@ export async function openLogSheet(model) {
         if (done) { clearTimeout(fine.timer); drawEasy(); }
         return true;
     };
+    // 1.1.7 폰: 브라우저가 누른 칸을 화면 안으로 끌어올 때 붙박이 미리보기(.bl-lc-stk) 자리를 빼지 않아, 「가릴 이름」 같은 칸이 미리보기 밑에 깔렸어요(자판이 뜨면 더) — 끌어온 뒤 미리보기 아래로 내려 줘요
+    const unhide = (el) => {
+        if (!el?.isConnected || !globalThis.matchMedia?.(PHONE).matches) return;
+        const box = el.closest('.bl-lc-scroll'), stk = box?.querySelector('.bl-lc-stk'); if (!stk) return;
+        const r = el.getBoundingClientRect(), top = stk.getBoundingClientRect().bottom + 8, bottom = Math.min(box.getBoundingClientRect().bottom, globalThis.visualViewport ? visualViewport.offsetTop + visualViewport.height : Infinity) - 8;
+        // 「크게」 미리보기에 자판까지 뜨면 미리보기 아래 · 보이는 바닥 사이에 칸이 들어갈 자리가 없어요 — 치는 동안만 미리보기를 작게(칸에서 손을 떼면 그대로 돌아와요)
+        if (r.height > bottom - top && dialog.classList.contains('bl-lc-big') && !dialog.classList.contains('bl-lc-typing')) { dialog.classList.add('bl-lc-typing'); setTimeout(() => unhide(el), 50); return; }
+        if (r.top < top) box.scrollTop -= top - r.top;   // 위에서 미리보기가 덮으면 내리고
+        else if (r.bottom > bottom) box.scrollTop += Math.min(r.bottom - bottom, r.top - top);   // 보이는 바닥 아래로 밀렸으면 올려요(미리보기 밑으로는 안 넘게)
+    };
+    dialog.addEventListener('focusout', () => setTimeout(() => { if (!dialog.contains(dialog.ownerDocument.activeElement)) dialog.classList.remove('bl-lc-typing'); }, 0));
+    dialog.addEventListener('focusin', (event) => { const el = event.target; if (!el?.matches?.('input:not([type=checkbox]):not([type=radio]):not([type=range]), textarea')) return; setTimeout(() => unhide(el), 300); });
+    const onVv = () => { const el = dialog.ownerDocument.activeElement; if (dialog.contains(el)) setTimeout(() => unhide(el), 100); };
+    globalThis.visualViewport?.addEventListener('resize', onVv);
     dialog.addEventListener('change', (event) => { tuneInput(event, true); });
     dialog.addEventListener('toggle', (event) => { const g = event.target?.dataset?.ltG; if (!g) return; const was = fine.open.has(g); if (event.target.open) fine.open.add(g); else fine.open.delete(g); if (was !== event.target.open) drawEasy(); }, true);
     dialog.addEventListener('input', (event) => {
@@ -861,6 +970,7 @@ export async function openLogSheet(model) {
         }
         if (event.target.matches?.('[data-lc-maskword]')) {   // 11-03: 가림 글자(기본 ○○)를 직접 정해요 — 치는 동안 칸은 다시 그리지 않고 미리보기만
             const ct = tools(); ct.maskWord = event.target.value.trim().slice(0, 12) || '○○'; saveSettings();
+            const ex = $('[data-lc-mask-ex]'); if (ex) ex.textContent = ct.maskWord;   // 1.1.6 「하루 → ○○」 보기도 치는 대로
             clearTimeout(ruleTimer); ruleTimer = setTimeout(draw, 300); return;
         }
         if (!event.target.closest?.('.bl-lc-rule')) return;
@@ -871,8 +981,9 @@ export async function openLogSheet(model) {
         if (event.key === 'Enter' && event.target.matches?.('[data-lc-name-input]')) { event.preventDefault(); $('[data-lc="name-add"]').click(); }
     });
     // 1.1.0: 닫을 때 남은 대기(규칙 · 그림 주소 · 글자색 · 되돌리기 묶음 · 길게 누르기)를 모두 걷어요 — 닫힌 직후 떨어진 창을 다시 그리지 않게
-    dialog.addEventListener('close', () => { clearTimeout(ruleTimer); clearTimeout(imageTimer); clearTimeout(inkTimer); clearTimeout(fine.timer); clearTimeout(hist.timer); clearTimeout(hold); hist.timer = 0; if (open === dialog) open = null; dialog.remove(); }, { once: true });
+    dialog.addEventListener('close', () => { globalThis.visualViewport?.removeEventListener('resize', onVv); clearTimeout(ruleTimer); clearTimeout(imageTimer); clearTimeout(inkTimer); clearTimeout(fine.timer); clearTimeout(hist.timer); clearTimeout(hold); hist.timer = 0; if (open === dialog) open = null; dialog.remove(); }, { once: true });
     open = dialog;
+    drawStage();
     drawMore();
     drawShapes();
     drawColors();
@@ -1033,8 +1144,21 @@ const STYLE = `
 .bl-lc-rule > i { font-size:12px; color:var(--salty-muted); }
 .bl-lc-names input, .bl-lc-rule input { box-sizing:border-box; width:100%; min-width:0; min-height:36px; padding:0 10px; border:1px solid var(--salty-line); border-radius:8px; background:var(--salty-field, var(--salty-raised)); color:var(--salty-text); font:inherit; font-size:14px; letter-spacing:inherit; box-shadow:none; }
 .bl-lc-names input:focus, .bl-lc-rule input:focus { outline:1px solid var(--salty-accent); }
-.bl-lc-maskword-row { display:inline-flex; align-items:center; gap:4px; }
-.bl-lc-names input.bl-lc-maskword { width:6em; min-height:30px; padding:0 8px; text-align:center; font-size:13px; }
+.bl-lc-names { padding:10px 12px; border-radius:12px; background:var(--salty-shade, var(--salty-raised)); }   /* 1.1.6 이름 가림 상자: 「가릴 이름」 · 「대신 보일 말」 두 줄 */
+.bl-lc-np-r { display:flex; align-items:center; flex-wrap:wrap; gap:6px; min-width:0; }
+.bl-lc-np-h { flex:none; width:64px; color:var(--salty-muted); font-size:12px; line-height:1.3; }
+.bl-lc-np-r:first-child { align-items:flex-start; }
+.bl-lc-np-r:first-child > .bl-lc-np-h { padding-top:8px; }
+.bl-lc-np-list { flex:1; display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
+.bl-lc-np-list > .bl-lc-name-list { display:contents; }
+.bl-lc-tag { box-sizing:border-box; display:inline-flex; align-items:center; gap:4px; min-height:30px; padding:0 10px; border:1px solid var(--salty-line); border-radius:999px; background:var(--salty-surface); color:var(--salty-text); font-size:13px; line-height:1.2; white-space:nowrap; }
+.bl-lc-tag > small { color:var(--salty-muted); font-size:11px; }
+.bl-lc-names .bl-lc-chip.bl-lc-name { min-height:30px; border-radius:999px; }
+.bl-lc-np-add { flex:1 1 120px; display:flex; align-items:center; gap:2px; min-width:120px; }
+.bl-lc-names .bl-lc-np-add input { min-height:32px; font-size:13px; }
+.bl-lc-np-ex { min-width:0; color:var(--salty-muted); font-size:12px; overflow-wrap:anywhere; }
+.bl-lc-np-ex > b { color:var(--salty-accent-ink, var(--salty-accent)); font-weight:650; }
+.bl-lc-names input.bl-lc-maskword { flex:none; width:6.5em; min-height:32px; padding:0 8px; text-align:center; font-size:13px; }
 .bl-lc .bl-lc-add-rule { justify-self:start; min-height:36px; }
 @media (min-width: 769px) and (pointer: fine) { .bl-lc-names input, .bl-lc-rule input, .bl-lc .bl-lc-add-rule, .bl-lc-field input { min-height:34px; } }
 .bl-lc-more { display:flex; padding:0 16px; }
@@ -1045,6 +1169,133 @@ const STYLE = `
 .bl-lc-foot .bl-tool-primary { border-color:var(--salty-accent); background:var(--salty-accent); color:var(--salty-on-accent, #fff); font-weight:650; padding:0 16px; border-radius:12px; }   /* 화면당 하나 큰 주요 단추 = 포인트 면 (볼록 · 그림자 없음) · 1.0.7 크기표 큰 주요 단추(여백 16 · 모서리 12 — 새 판 확인 창 · 입력 창 큰 단추와 같은 모양) */
 @media (min-width: 769px) and (pointer: fine) { .bl-lc-chip { min-height:32px; } .bl-lc-foot .salty-btn { min-height:44px; } }
 @media (pointer: coarse) { .bl-lc .salty-seg.bl-lc-cats > button { position:relative; } .bl-lc-chip::before, .bl-lc-mode button::before, .bl-lc .salty-seg.bl-lc-cats > button::before { content:''; position:absolute; left:50%; top:50%; width:max(100%, 44px); height:max(100%, 44px); transform:translate(-50%, -50%); } .bl-lc-mode button { position:relative; } }   /* 누르는 칸 44 (철칙 §1 투명 ::before) */
+/* 1.1.6 폰 화면(11-12 사용자가 고른 시안 (나) 「미리보기 위」) — 넓은 창(PC)에서는 감싸는 칸이 없는 듯(display:contents) · 폰 부품은 숨겨 예전 그대로예요 */
+.bl-lc-tl, .bl-lc-cr, .bl-lc-folds, .bl-lc-fd, .bl-lc-stk { display:contents; }
+.bl-lc .bl-lc-hd-mode, .bl-lc .bl-lc-tl-all, .bl-lc-cr-more, .bl-lc-fd-h, .bl-lc-sw, .bl-lc-hint, .bl-lc-sep, .bl-lc .bl-lc-ph, .bl-lc-chip.bl-lc-ghost { display:none; }
+@media (max-width: 600px) {
+  /* 머리 줄: 제목 · 밝기(작은 둘 칸) · 닫기 */
+  .bl-lc-head { gap:4px; padding:6px 6px 6px 16px; }
+  .bl-lc-head h3 { flex:1; }
+  .bl-lc .bl-lc-mode.bl-lc-hd-mode { display:flex; gap:2px; padding:3px; border-radius:10px; }
+  .bl-lc .bl-lc-mode.bl-lc-hd-mode[hidden], .bl-lc-colors > .bl-lc-mode, .bl-lc-colors.bl-lc-pal-off { display:none; }
+  .bl-lc-hd-mode button { width:30px; height:28px; border-radius:7px; font-size:13px; }
+  .bl-lc-hd-mode button[aria-pressed="true"] { box-shadow:0 1px 2px rgba(0, 0, 0, .14); }
+  .bl-lc-hd-mode button[aria-pressed="true"] > .fa-sun { color:var(--salty-lemon, #E9BE00); }
+  .bl-lc-colors { padding-left:0; }
+  .bl-lc-colors .bl-lc-pals { padding-left:16px; }
+  /* 차례: 분류 → 틀 → 미리보기(붙박이) → 색 · 조절 → 「로그 꾸밈」 갈래 → 숨기기 안내 */
+  .bl-lc-scroll { gap:8px; padding:0 0 14px; }
+  .bl-lc-tl { order:1; } .bl-lc-cr { order:2; } .bl-lc-gallery { order:3; } .bl-lc-pick { order:4; } .bl-lc-stk { order:5; } .bl-lc-paste { order:5; }
+  .bl-lc-colors { order:6; } .bl-lc-easy { order:7; } .bl-lc-inks { order:8; } .bl-lc-sep { order:9; } .bl-lc-folds { order:10; } .bl-lc-hint { order:11; } .bl-lc-scroll > .bl-lc-more { order:12; }
+  .bl-lc-tools { display:none; }
+  .bl-lc:not(.bl-lc-less) .bl-lc-scroll > .bl-lc-more { display:none; }
+  .bl-lc.bl-lc-less :is(.bl-lc-tl, .bl-lc-cr-more, .bl-lc-sep, .bl-lc-folds, .bl-lc-hint) { display:none; }
+  .bl-lc.bl-lc-less .bl-lc-cr { padding-top:8px; }
+  /* 분류: 밑줄 글 탭 + 오른쪽 끝 「전부」 */
+  .bl-lc-tl { display:block; position:relative; min-width:0; border-bottom:1px solid var(--salty-line); }
+  .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats { gap:2px; margin:0; padding:0 48px 0 10px; border:0; border-radius:0; background:transparent; box-shadow:none; --bl-tab-reveal-inset:96px !important; }
+  .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats > button { position:relative; flex:none; min-width:0; min-height:42px; padding:0 9px; border:0; border-radius:0; background:transparent; box-shadow:none; color:var(--salty-muted); font-size:14px; font-weight:400; }
+  .bl-lc:not(#bl-lc-a) .salty-seg.bl-lc-cats > button.on { isolation:isolate; color:var(--salty-text) !important; font-weight:700 !important; }
+  .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats > button.on::before { content:''; position:absolute; inset:0; width:auto; height:auto; transform:none; z-index:-1; background:var(--salty-bg); }   /* 테마 칩 「고름」 면(층 안 !important 라 덮어쓰지 못해요)을 창 바탕으로 가려 밑줄 탭만 보여요 */
+  .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats > button.on::after { content:''; position:absolute; left:9px; right:9px; bottom:0; height:2.5px; border-radius:2px 2px 0 0; background:var(--salty-accent); }
+  .bl-lc-tl:not(.is-all) > .bl-lc-cats[data-bl-fade="right"] { -webkit-mask-image:linear-gradient(to right, #000 calc(100% - 92px), transparent calc(100% - 48px)) !important; mask-image:linear-gradient(to right, #000 calc(100% - 92px), transparent calc(100% - 48px)) !important; }
+  .bl-lc-tl:not(.is-all) > .bl-lc-cats[data-bl-fade="both"] { -webkit-mask-image:linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 92px), transparent calc(100% - 48px)) !important; mask-image:linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 92px), transparent calc(100% - 48px)) !important; }
+  .bl-tool-dialog.bl-lc .bl-lc-tl.is-all > .salty-seg.bl-lc-cats { flex-wrap:wrap; overflow:visible; -webkit-mask-image:none !important; mask-image:none !important; }
+  .bl-lc .bl-lc-tl-all { display:grid; place-items:center; position:absolute; right:6px; top:4px; color:var(--salty-text); }
+  .bl-lc:not(#bl-lc-a):not(#bl-lc-b) :is(.bl-lc-tl-all, .bl-lc-bar .bl-lc-icon, .bl-lc-foot .salty-btn:not(.bl-tool-primary)) { border-color:transparent !important; }   /* 테마 단추 테두리(밀도 규칙 !important)를 이 둘에서만 걷어요 — 시안처럼 맨 아이콘 */
+  /* 틀 줄: 넘치면 오른쪽이 흐려지고 「+n」 알약(누르면 감싸 펼침 · 끝에 「접기」) */
+  .bl-lc-cr { display:block; position:relative; min-width:0; }
+  .bl-lc-cr > .bl-lc-chips { gap:6px; padding:4px 16px; --bl-tab-reveal-inset:112px !important; }
+  .bl-lc-cr.is-over > .bl-lc-chips { padding-right:64px; }
+  .bl-lc-cr.is-over > .bl-lc-chips[data-bl-fade="right"] { -webkit-mask-image:linear-gradient(to right, #000 calc(100% - 112px), transparent calc(100% - 64px)) !important; mask-image:linear-gradient(to right, #000 calc(100% - 112px), transparent calc(100% - 64px)) !important; }
+  .bl-lc-cr.is-over > .bl-lc-chips[data-bl-fade="both"] { -webkit-mask-image:linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 112px), transparent calc(100% - 64px)) !important; mask-image:linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 112px), transparent calc(100% - 64px)) !important; }
+  .bl-lc-cr.is-all > .bl-lc-chips { flex-wrap:wrap; overflow:visible; -webkit-mask-image:none !important; mask-image:none !important; }
+  .bl-lc-cr-more { display:inline-flex; align-items:center; position:absolute; right:10px; top:50%; min-height:28px; margin:0; padding:0 9px; translate:0 -50%; border:1px solid var(--salty-line); border-radius:999px; background:var(--salty-bg); color:var(--salty-accent-ink, var(--salty-accent)); font:inherit; font-size:12px; font-weight:650; box-shadow:0 1px 2px rgba(0, 0, 0, .08), 0 4px 14px -6px rgba(0, 0, 0, .22); cursor:pointer; }
+  .bl-lc-cr-more::before { content:''; position:absolute; inset:-8px; }
+  .bl-lc-cr-more[hidden] { display:none; }
+  .bl-lc-chip.bl-lc-ghost { display:inline-flex; border-style:dashed; background:transparent; color:var(--salty-accent-ink, var(--salty-accent)); }
+  .bl-lc-chip.bl-lc-ghost > i { color:inherit; }
+  /* 미리보기: 틀 줄 바로 아래 · 내려도 맨 위에 붙어 있어요 · 작게(약 30%) / 크게(52%) / 접기 */
+  .bl-lc-stk { display:block; position:sticky; top:0; z-index:3; padding:2px 16px 8px; background:var(--salty-bg); }
+  .bl-lc-stk::after { content:''; position:absolute; left:0; right:0; bottom:-10px; height:10px; background:linear-gradient(var(--salty-bg), transparent); pointer-events:none; }
+  .bl-lc-bar { gap:2px; min-height:38px; margin:0; padding:0 4px 0 12px; border:1px solid var(--salty-line); border-radius:12px 12px 0 0; background:var(--salty-surface); }
+  .bl-lc-bar > .bl-lc-note { display:none; }
+  .bl-lc .bl-lc-bar > b.bl-lc-ph { display:block; flex:none; color:var(--salty-text); font-size:13px; font-weight:650; }
+  .bl-lc .bl-lc-bar > .bl-lc-bar-name { display:block; flex:1; min-width:0; margin-left:6px; overflow:hidden; color:var(--salty-muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+  .bl-lc .bl-lc-bar .bl-lc-icon { display:grid; place-items:center; background:transparent; width:32px; min-width:32px; height:32px; min-height:32px; color:var(--salty-muted); font-size:13px; }
+  .bl-lc .bl-lc-bar .bl-lc-icon:disabled { opacity:.35; }
+  .bl-lc-stage { margin:0; border-top:0; border-radius:0 0 12px 12px; }
+  .bl-lc-stage iframe { height:clamp(150px, 30dvh, 270px); }
+  .bl-lc.bl-lc-big .bl-lc-stage iframe { height:52dvh; }
+  .bl-lc.bl-lc-big.bl-lc-typing .bl-lc-stage iframe { height:clamp(150px, 30dvh, 270px); }   /* 1.1.7 「크게」에 자판이 뜬 채 칸에 치는 동안만 작게 */
+  .bl-lc.bl-lc-shut .bl-lc-stage { height:0; border-width:0; }   /* 접어도 미리보기 문서는 그대로 그려 둬요(높이만 0 — 칸 읽기 · 되돌리기가 그대로) */
+  .bl-lc.bl-lc-shut .bl-lc-bar { border-radius:12px; }
+  .bl-lc-paste { margin:6px 16px 0; }
+  /* 조절(받은 글꾸): 줄 이름을 위로 · 그 아래 「로그 꾸밈」 나눔 줄 */
+  .bl-lc-easy { gap:8px; padding:4px 0 0; }
+  .bl-lc-easy-row { display:grid; gap:2px; padding-left:0; }
+  .bl-lc-easy-h { display:flex; align-items:baseline; gap:6px; min-width:0; padding:0 16px; color:var(--salty-text); font-size:14px; font-weight:650; }
+  .bl-lc-easy-h small { color:var(--salty-muted); font-size:12px; font-weight:400; }
+  .bl-lc-easy-chips { padding:4px 16px; }
+  .bl-lc .bl-lc-easy-note { margin:0 16px 2px; }
+  .bl-lc.bl-lc-tuned .bl-lc-sep { display:flex; align-items:center; gap:8px; margin:6px 16px 0; color:var(--salty-faint, var(--salty-muted)); font-size:12px; font-weight:600; }
+  .bl-lc-sep::after { content:''; flex:1; height:1px; background:var(--salty-line); }
+  /* 접는 갈래 넷 — 접힌 머리에 지금 상태 · 켠 것은 노란 「켬」 */
+  .bl-lc-folds { display:grid; gap:8px; margin:0 16px; }
+  .bl-lc-fd { display:grid; gap:10px; min-width:0; border:1px solid var(--salty-line); border-radius:12px; background:var(--salty-surface); }
+  .bl-lc-fd.is-open { padding-bottom:14px; }
+  .bl-lc-fd:not(.is-open) > :not(.bl-lc-fd-h) { display:none; }
+  .bl-lc-fd[data-lc-fd="shows"] { order:1; } .bl-lc-fd[data-lc-fd="names"] { order:2; } .bl-lc-fd[data-lc-fd="words"] { order:3; } .bl-lc-fd[data-lc-fd="fields"] { order:4; }
+  .bl-lc-fd-h { box-sizing:border-box; display:flex; align-items:center; gap:8px; width:100%; min-width:0; min-height:48px; margin:0; padding:0 12px 0 14px; border:0; border-radius:12px; background:transparent; color:var(--salty-text); font:inherit; text-align:left; cursor:pointer; }
+  .bl-lc-fd.is-open > .bl-lc-fd-h { margin-bottom:-6px; }
+  .bl-lc-fd-h > b { flex:none; font-size:15px; font-weight:650; }
+  .bl-lc-fd-h > span { flex:1; min-width:0; overflow:hidden; color:var(--salty-muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+  .bl-lc-fd-h > mark { flex:none; padding:1px 8px; border-radius:999px; background:var(--salty-accent-10, var(--salty-raised)); color:var(--salty-accent-ink, var(--salty-accent)); font-size:12px; font-weight:650; }
+  .bl-lc-fd-h > mark.is-on { background:color-mix(in srgb, #FFE23C 24%, var(--salty-surface)); color:color-mix(in srgb, #FFD60A 42%, var(--salty-text)); }
+  .bl-lc-fd-h > mark[hidden] { display:none; }
+  .bl-lc-fd-h > i { flex:none; color:var(--salty-muted); font-size:12px; transition:transform .15s; }
+  .bl-lc-fd.is-open > .bl-lc-fd-h > i { transform:rotate(180deg); }
+  .bl-lc-fd-h:focus-visible, .bl-lc-sw:focus-visible, .bl-lc-cr-more:focus-visible { outline:1px solid var(--salty-accent); outline-offset:-1px; }
+  .bl-lc-fd > :is(.bl-lc-shows, .bl-lc-names, .bl-lc-words, .bl-lc-fields, .bl-lc-sw) { margin:0 14px; }
+  .bl-lc-fd > .bl-lc-names { margin-top:-4px; }
+  /* 「보일 것」: 감싸는 칩 · 켬 = 채운 동그라미 + 체크 · 끔 = 빈 동그라미(글자를 긋지 않아요) */
+  .bl-lc-fd > .bl-lc-shows { flex-wrap:wrap; gap:6px; padding:0; overflow:visible; }
+  .bl-lc-fd .bl-lc-shows .bl-lc-chip { gap:6px; padding:0 11px; }
+  .bl-lc-fd .bl-lc-shows .bl-lc-chip[aria-pressed] > i:first-child { box-sizing:border-box; display:grid; place-items:center; width:15px; height:15px; border:1.5px solid var(--salty-faint, var(--salty-muted)); border-radius:50%; font-size:0; }
+  .bl-lc-fd .bl-lc-shows .bl-lc-chip[aria-pressed] > i:first-child::before { content:none; }
+  .bl-lc-fd .bl-lc-shows .bl-lc-chip[aria-pressed="true"] { font-weight:500; --bl-ui-pick-check-position:absolute; --bl-ui-pick-check-inset:13px auto auto 14px; --bl-ui-pick-check-margin:0; }   /* 테마의 「고름」 체크를 칩 끝이 아니라 동그라미 안으로 옮겨요 */
+  .bl-lc-fd .bl-lc-shows .bl-lc-chip[aria-pressed="true"]::after { color:var(--salty-on-accent, #fff); }
+  .bl-lc-fd .bl-lc-shows .bl-lc-chip[aria-pressed="true"] > i:first-child { border-color:var(--salty-accent); background:var(--salty-accent); }
+  .bl-lc-fd .bl-lc-shows .bl-lc-chip[aria-pressed="false"] { background:transparent; color:var(--salty-muted); }
+  .bl-lc-fd .bl-lc-shows .bl-lc-chip[aria-pressed="false"] > span { color:inherit; text-decoration:none; }
+  /* 스위치 줄(이름 숨김 · 바꾸기) */
+  .bl-lc .bl-lc-sw { box-sizing:border-box; display:flex; align-items:center; gap:10px; min-width:0; min-height:44px; padding:0; border:0; background:transparent; color:var(--salty-text); font:inherit; font-size:14px; text-align:left; cursor:pointer; }
+  .bl-lc-sw > span { flex:1; min-width:0; }
+  .bl-lc-sw > span > small { display:block; color:var(--salty-muted); font-size:12px; line-height:1.35; }
+  .bl-lc-sw > i { flex:none; position:relative; width:40px; height:24px; border-radius:999px; background:var(--salty-shade-2, var(--salty-raised)); box-shadow:inset 0 0 0 1px var(--salty-line); transition:background .15s; }
+  .bl-lc-sw > i::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:var(--salty-surface); box-shadow:0 1px 2px rgba(0, 0, 0, .25); transition:left .15s; }
+  .bl-lc-sw[aria-checked="true"] > i { background:var(--salty-accent); box-shadow:none; }
+  .bl-lc-sw[aria-checked="true"] > i::after { left:19px; background:#fff; }
+  /* 머리 칸: 이름 위 · 2열(제목은 한 줄 전체) */
+  .bl-lc-fd > .bl-lc-fields { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
+  .bl-lc-fd .bl-lc-field { display:grid; gap:3px; font-size:12px; }
+  .bl-lc-fd .bl-lc-field:first-child { grid-column:1 / -1; }
+  /* 숨기기 안내 한 줄 */
+  .bl-lc-hint { display:flex; align-items:center; gap:8px; min-height:44px; margin:0 16px; padding:4px 6px 4px 12px; border:1px dashed var(--salty-line); border-radius:12px; color:var(--salty-muted); font-size:12px; line-height:1.4; }
+  .bl-lc-hint > span { flex:1; min-width:0; }
+  .bl-lc-hint > i { flex:none; color:var(--salty-faint, var(--salty-muted)); font-size:13px; }
+  .bl-lc-hint b { color:var(--salty-text); font-weight:650; }
+  .bl-lc-hint > .bl-lc-chip:disabled { opacity:.6; }
+  /* 바닥 줄: 「글만 · 파일로 · HTML 복사」(320 에서도 안 잘려요) */
+  .bl-lc-foot { grid-template-columns:auto auto minmax(0, 1fr); gap:6px; padding:10px 12px 12px; }
+  .bl-lc-foot .salty-btn { min-width:0; min-height:44px; }
+  .bl-lc-foot .salty-btn:not(.bl-tool-primary) { display:inline-flex; align-items:center; justify-content:center; gap:5px; padding:0 11px; border-color:transparent; background:var(--salty-shade-2, var(--salty-raised)); font-size:13px; }
+  .bl-lc-foot .salty-btn:not(.bl-tool-primary) > i { font-size:13px; color:var(--salty-muted); }
+  .bl-lc-foot .bl-lc-long { display:none; }
+  .bl-lc .bl-lc-foot .bl-lc-ph { display:inline; }
+  .bl-lc .bl-lc-foot i.bl-lc-ph { display:inline-block; }
+  .bl-lc-foot .bl-tool-primary { font-size:15px; white-space:nowrap; }
+}
 `;
 function ensureStyle() {
     if (document.getElementById('bl-lc-style')) return;

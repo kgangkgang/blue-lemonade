@@ -20,6 +20,8 @@ const { fitBare } = await load('src/log-copy-bare-fit.js');
 const { MART_HALLOWEEN_COLORS, MART_HALLOWEEN_SHAPES, MART_HALLOWEEN_FRAMES } = await load('tools/mart/geulkku-halloween.mjs');
 const { MART_CONCEPT_FRAMES, renderConcept } = await load('tools/mart/geulkku-concept30.mjs');
 const { TEMPLATE_ROLES } = await load('src/log-copy-template.js');
+// 1.1.7 내장 심플 글꾸 48종을 테마에서 뺐어요 — 같은 틈 템플릿(마트 시안 concept-sp-*)을 받은 글꾸로 그려 계속 봐요
+const SIAN = JSON.parse((await import('node:fs')).readFileSync(path.join(root, 'tools/mart/geulkku-sian.json'), 'utf8')).frames.filter(f => f.id.startsWith('concept-sp-')).map(f => ({ ...f, messages: f.messages || 'box', tail: f.tail || '' }));
 
 const font = { color: 'rgb(219, 226, 235)', 'font-family': "'RIDIBatang', serif", 'font-size': '15.5px', 'font-weight': '400', 'letter-spacing': '-0.39px', 'line-height': '27.13px' };
 const T = text => ({ t: 'text', text });
@@ -41,6 +43,7 @@ function cases(n) {
     const model = modelOf(n);
     const out = PRESETS.filter(p => !p.basic).map(p => ({ id: p.id, html: renderLog(model, { shape: p.id, colors: p.id === 'plain' ? null : colors, ui, fields, size: 'm' }) }));
     for (const f of MART_CONCEPT_FRAMES) out.push({ id: f.id, html: renderConcept(model, { id: f.id, ui, fields, size: 'm' }) });
+    for (const t of SIAN) out.push({ id: t.id, html: renderLog(model, { template: t, ui, fields, size: 'm', screen: colors }) });
     for (const h of halloween) out.push({ id: `mart:${h.label}`, html: renderLog(model, { template: h.item, ui, fields, size: 'm' }) });
     return out.map(c => ({ ...c, n }));
 }
@@ -99,7 +102,7 @@ for (const cut of [{ top: true }, { bottom: true }, { top: true, bottom: true }]
     });
 }
 await test('알약은 앞 낱말과 값이 한 덩어리 · 추가 정보는 접힘 상자째 남아요', () => {
-    const html = renderLog(modelOf(2), { shape: PRESETS.find(p => p.template)?.id ?? 'card', colors, ui, fields, size: 'm' });
+    const html = renderLog(modelOf(2), { template: SIAN[0], ui, fields, size: 'm', screen: colors });
     const out = bareLog(html, { top: true, bottom: true });
     for (const [, label] of HEAD_TAGS) if (html.includes(`>${label}</span>`)) assert.ok(out.includes(`>${label}</span>`), label);
     if (html.includes('<details')) assert.ok(out.includes('추가 정보'), '추가 정보');
