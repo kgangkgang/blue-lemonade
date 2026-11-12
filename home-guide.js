@@ -7,7 +7,7 @@
   const panel = root.querySelector('#tour-panel');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const examples = {
-    logcopy: { title:'드래그 한 번이면,\n로그가 글꾸로.', description:'채팅 글을 드래그하면 「로그 복사」 줄이 떠요. 틀을 고르면 미리보기가 바로 바뀌고, HTML 복사로 커뮤니티에 그대로 붙여요.', route:'채팅에서 글 드래그 › 「로그 복사」', tip:'끄는 곳은 Blue Lemonade › 채팅 › 기타 › 「로그 복사」예요. 글꾸 틀은 글꾸 마트에서 더 받아요.', pc:'tour-20261104-pc-logcopy', mobile:'tour-20261104-mobile-logcopy', link:'#feature-142', more:'로그 복사 자세히 보기' },
+    logcopy: { title:'드래그 한 번이면,\n로그가 글꾸로.', description:'채팅 글을 드래그하면 「로그 복사」 줄이 떠요. 틀을 고르면 미리보기가 바로 바뀌고, HTML 복사로 커뮤니티에 그대로 붙여요.', route:'채팅에서 글 드래그 › 「로그 복사」', tip:'기본 글꾸 18틀과 「깡통 로그」가 들어 있어요. 글꾸 마트에서 「테마로 담기」로 받은 틀은 간편 · 세밀 조절로 색 · 움직임 · 바탕 질감을 바꿔요. 끄는 곳은 Blue Lemonade › 채팅 › 기타 › 「로그 복사」예요.', pc:'tour-20261104-pc-logcopy', mobile:'tour-20261104-mobile-logcopy', link:'#feature-142', more:'로그 복사 자세히 보기' },
     color: { title:'좋아하는 색으로,\n화면 전체를 한 번에.', description:'팔레트를 고르거나, 최대 세 가지 색을 섞어요. 화이트와 나이트도 바꿀 수 있어요.', route:'테마 › 색', tip:'색을 고르면 미리보기에 바로 보여요.', pc:'tour-20261104-pc-color', mobile:'tour-20261104-mobile-color', link:'#colors', more:'여기서 색을 바꿔보기' },
     reading: { title:'글자는 또렷하게,\n간격은 편안하게.', description:'글꼴, 크기, 굵기를 내 눈에 맞춰요. 본문과 대사도 서로 다르게 꾸밀 수 있어요.', route:'글자 › 본문', tip:'줄 간격은 본문에서, 문단 사이 여백은 글자 › 문단에서 조절해요.', pc:'tour-20261104-pc-reading', mobile:'tour-20261104-mobile-reading', link:'#colors', more:'글꼴과 간격을 직접 만져보기' },
     profile: { title:'사진은 크게, 작게.\n없이 읽어도 좋아요.', description:'캐릭터 사진의 크기와 위치를 바꿔요. 글을 넓게 읽고 싶다면 사진을 숨겨 보세요.', route:'채팅 › 캐릭터 프로필', tip:'내 사진은 채팅 › 내 프로필에서 따로 바꿔요.', pc:'tour-20261104-pc-profile', mobile:'tour-20261104-mobile-profile', link:'#feature-061', more:'프로필 예시 더 보기' },
