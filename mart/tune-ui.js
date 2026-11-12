@@ -448,9 +448,9 @@ function histRecord(item, sheet) {
 function histStart(item) { clearTimeout(hist.timer); hist.id = item.id; hist.stack = []; hist.at = -1; histPush(item); }
 function syncHist(sheet) {
     const u = sheet?.querySelector('[data-hist="undo"]'), r = sheet?.querySelector('[data-hist="redo"]');
-    const pending = !!hist.timer, pv = sheet?.querySelector('.mart-sheet-preview'), cb = editing && pv ? blocksOf(pv) : null;   // 11-12 글 고치기 중이면 칸 단위 되돌리기도
-    if (u) u.disabled = !(hist.at > 0 || pending || cb?.canUndo());
-    if (r) r.disabled = !cb?.canRedo() && (pending || hist.at >= hist.stack.length - 1);
+    const pending = !!hist.timer;   // 11-12 밤: 고친 글도 조절 값과 한 차례표(칸 단위 따로 되돌리기는 차례가 섞여서 뺐어요)
+    if (u) u.disabled = !(hist.at > 0 || pending);
+    if (r) r.disabled = pending || hist.at >= hist.stack.length - 1;
 }
 /** 한 칸 앞 · 뒤로 — 칠하기 · 글 모양 · 깡통 · 깡캐를 그 칸으로 되돌려요 */
 function histMove(item, step) {
@@ -690,17 +690,28 @@ export function wireTune(sheet, { current, openItem, say = () => {}, clip = null
     const onChange = () => { const item = current()?.item; if (sheet.open && item?.simple) { histRecord(item, sheet); syncHist(sheet); } };
     document.addEventListener('bl-tune-change', onChange);
     document.addEventListener('bl-tone-change', onChange);
-    sheet.addEventListener('focusout', () => setTimeout(() => syncHist(sheet)));   // 11-12 칸 하나를 다 고치면(바깥 누르기 · Enter) 칸 단위 되돌리기가 켜져요
+    sheet.addEventListener('focusout', () => setTimeout(() => syncHist(sheet)));   // 11-12 칸 하나를 다 고치면(바깥 누르기 · Enter) 되돌리기 단추를 다시 맞춰요
     const undo = (step) => {
         const item = current()?.item; if (!item) return;
-        const pv = sheet.querySelector('.mart-sheet-preview'), cb = editing && pv ? blocksOf(pv) : null;   // 11-12 글 고치기 중이면 칸 단위(고친 칸 하나씩)
-        if (cb && (step < 0 ? cb.canUndo() : cb.canRedo())) { if (step < 0) cb.undo(); else cb.redo(); syncHist(sheet); return; }
-        if (histMove(item, step)) { redraw(item); syncMine(sheet, item); say(step < 0 ? '되돌렸어요' : '다시 했어요', 1400); } syncHist(sheet);
+        // 11-12 밤(사용자 「되돌리기가 한 번밖에 안 돼」): 고친 글 · 조절 값을 한 차례표(hist)로 고친 차례대로 끝까지 되돌려요 — 글자를 치면 0.5초 묶음마다 한 칸
+        const was = editing ? document.activeElement?.closest?.('.mart-sheet-preview [data-bl-ed]')?.dataset.blEd : null;
+        if (histMove(item, step)) {
+            redraw(item); syncMine(sheet, item); say(step < 0 ? '되돌렸어요' : '다시 했어요', 1400);
+            // 미리보기는 새로 그려져요(캐릭터 색 다시 칠하기는 한 박자 뒤) — 고치던 칸이 있었으면 그 칸 끝에 커서를 다시 놓아요
+            if (was != null) setTimeout(() => {
+                const el = editing && sheet.open ? sheet.querySelector(`.mart-sheet-preview [data-bl-ed="${was}"]`) : null; if (!el || !el.isContentEditable) return;
+                el.focus({ preventScroll: true });
+                try { const r = document.createRange(); r.selectNodeContents(el); r.collapse(false); const g = getSelection(); g.removeAllRanges(); g.addRange(r); } catch { /* 커서 자리는 없어도 돼요 */ }
+            });
+        }
+        syncHist(sheet);
     };
-    sheet.addEventListener('keydown', (e) => {
-        if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    document.addEventListener('keydown', (e) => {
+        if (!sheet.open || !current()?.item?.simple) return;
+        if (!(e.ctrlKey || e.metaKey) || e.altKey || e.isComposing) return;
         const k = e.key.toLowerCase(); if (k !== 'z' && k !== 'y') return;
         if (e.target.closest?.('input, textarea, select')) return;
+        if (e.target.closest?.('dialog') && !sheet.contains(e.target)) return;   // 다른 창(장바구니 등) 안이면 그 창 몫
         e.preventDefault();
         undo(k === 'y' || e.shiftKey ? 1 : -1);
     });
