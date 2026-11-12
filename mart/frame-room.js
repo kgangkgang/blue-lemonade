@@ -205,7 +205,9 @@ async function shrink(blob, side, type = 'image/webp', quality = 0.85) {
     c.width = c.height = 1;
     return out;
 }
+let photoSeq = 0;   // 11-12 사진을 빠르게 두 번 고르면(또는 줄이는 동안 표본 사진 · 지우기를 누르면) 늦게 끝난 앞 사진이 덮었어요 — 마지막에 고른 것만 넣어요
 function setPhoto(url, label, own) {
+    photoSeq++;   // 줄이는 중인 내 사진은 버려요
     if (photo.own && photo.url && photo.url !== url && photo.url.startsWith('blob:')) URL.revokeObjectURL(photo.url);
     photo = { ...photo, url, label, own };
     root.style.setProperty('--mart-photo', `url("${url}")`);
@@ -234,8 +236,10 @@ function toggleSampleList(open) {
 }
 async function usePhotoFile(file) {
     if (!file || !/^image\//.test(file.type)) { api.say('그림 파일만 넣을 수 있어요'); return; }
+    const my = ++photoSeq;
     try {
         const small = await shrink(file, 1600);   // 큰 폰 사진도 가볍게(방향 정보는 브라우저가 맞춰 줘요)
+        if (my !== photoSeq) return;
         photo.file = small;
         setPhoto(URL.createObjectURL(small), (file.name || '붙여 넣은 그림').slice(0, 40), true);
         api.say('내 사진을 모든 액자에 넣었어요 · 사진은 이 브라우저 안에서만 써요', 3200);

@@ -1623,5 +1623,18 @@ await test('AI 점검 ⑤ 액자 맞춰 보기 두 손가락 확대: 둘째 손�
     on.pointerdown(ev(3, 10, 10, false)); on.pointermove(ev(3, 60, 10, false));
     assert.equal(view.zoom, 200); assert.equal(view.x, 50, '첫 손가락이 액자 밖이면 그대로(빈 무대 끌기 없음)');
 });
+await test('AI 점검 ⑥ 액자 내 사진을 빠르게 두 번 고르거나 줄이는 동안 표본 사진을 고르면 마지막 것만 남아요', async () => {
+    const s = srcOf('frame-room.js');
+    assert.match(s, /let photoSeq = 0;[^\n]*\nfunction setPhoto\(url, label, own\) \{\n {4}photoSeq\+\+;/);
+    const use = s.match(/\nasync function usePhotoFile\(file\) \{[\s\S]*?\n\}/)[0];
+    const make = (0, eval)(`(shrink, api, document, URL, photo, shown) => { let photoSeq = 0; const setPhoto = (url, label) => { photoSeq++; shown.push(label); }; ${use}; return { usePhotoFile, pickSample: l => setPhoto('', l) }; }`);
+    const gate = {}, shrink = f => new Promise(r => { gate[f.name] = () => r({ name: f.name }); });
+    const shown = [], k = make(shrink, { say() {} }, { querySelector: () => null }, { createObjectURL: b => b.name }, {}, shown);
+    const a = k.usePhotoFile({ name: 'a.jpg', type: 'image/jpeg' }), b = k.usePhotoFile({ name: 'b.jpg', type: 'image/jpeg' });
+    gate['b.jpg'](); await b; gate['a.jpg'](); await a;
+    assert.deepEqual(shown, ['b.jpg'], '늦게 끝난 앞 사진이 덮지 않아요');
+    const c = k.usePhotoFile({ name: 'c.jpg', type: 'image/jpeg' }); k.pickSample('표본'); gate['c.jpg'](); await c;
+    assert.deepEqual(shown, ['b.jpg', '표본'], '줄이는 동안 고른 표본 사진이 남아요');
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
