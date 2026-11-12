@@ -8,7 +8,7 @@
 //     ③ 따옴표로 시작하는 대사 조각은 대사 글자(무채) + 그 사람 색 띠로
 //   깡통에 붙일 꼴(kkangtongReady): 인라인 url( 을 <style> 클래스 규칙으로(log-copy-lift.js pasteReady) + 모든 글자색에 -webkit-text-fill-color.
 // DOM 없는 순수 모듈(node 로 시험 — tools/geulkku-tone.mjs).
-import { tone, fitInk, bandColor, oklchOf, oklchHex, over, speakerColor, INK_TARGET } from './lib/log-copy/shared/char-tone.js';
+import { tone, fitInk, bandColor, oklchOf, oklchHex, over, speakerColor, INK_TARGET } from './lib/log-copy/shared/char-tone.js?v=20261111a';
 import { parseColor, contrast } from './lib/log-copy/shared/ink-paint.js';
 import { pasteReady } from './lib/log-copy/log-copy-lift.js';
 

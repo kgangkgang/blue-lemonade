@@ -4,7 +4,7 @@
 // 밑으로 글이 올라와 장식이 글자를 덮어요. 글자만 보고는 알 수 없어 실제로 그려 봐요:
 //   폰 · 태블릿 · PC 폭 여러 개에서 빼기 전에는 글을 안 덮던 장식이 빼고 나서 글자 위를 덮으면 그 장식을 걷어요(글자가 장식 위에 오면 읽히니 그대로).
 // 메시지(data-bl-msg) 안은 손대지 않아요. 화면(DOM)이 없으면(시험 · node) 받은 그대로예요.
-import { dropPaths } from './log-copy-bare.js?v=20261110l';
+import { dropPaths } from './log-copy-bare.js?v=20261111c';
 
 const LETTER = /[\p{L}\p{N}]/u;
 const WIDTHS = [340, 384, 440, 560, 760];   // 폰 몇 가지 · 태블릿 · PC 채팅 폭 — 한 폭이라도 새로 덮으면 걷어요

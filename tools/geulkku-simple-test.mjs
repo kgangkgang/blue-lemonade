@@ -1662,5 +1662,24 @@ await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-u
         assert.deepEqual([...tails], ['20261112b'], `${mod}.js 꼬리 ${[...tails]}`);
     }
 });
+await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬리가 다르면 브라우저가 같은 모듈을 두 벌 받아요 — char-tone · spoiler · bare · presets 가 그랬어요 · 꼬리 없는 쪽은 옛 캐시가 남아요)', () => {
+    const uses = new Map();
+    const walk = (dir) => {
+        for (const d of fs.readdirSync(dir, { withFileTypes: true })) {
+            const p = path.join(dir, d.name);
+            if (d.isDirectory()) { if (d.name !== 'data') walk(p); continue; }
+            if (!/\.(?:js|html)$/.test(d.name)) continue;
+            const text = fs.readFileSync(p, 'utf8');
+            for (const m of text.matchAll(/(?:(?:import|export)\s[^;]*?from\s*|import\(\s*|<script[^>]*src=)(['"])(\.{1,2}\/[\w./-]+\.js)(\?[^'"]*)?\1/g)) {
+                const to = path.relative(MART, path.resolve(path.dirname(p), m[2])).split(path.sep).join('/');
+                if (!uses.has(to)) uses.set(to, new Set());
+                uses.get(to).add(m[3] || '(꼬리 없음)');
+            }
+        }
+    };
+    walk(MART);
+    const mixed = [...uses].filter(([, t]) => t.size > 1).map(([f, t]) => `${f}: ${[...t].join(' · ')}`);
+    assert.deepEqual(mixed, []);
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
