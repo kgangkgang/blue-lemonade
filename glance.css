@@ -10,8 +10,8 @@
 .glance-tiles i{font-style:normal;font-size:13px;font-weight:600;color:var(--blue-strong);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 13px;line-height:1.3}
 .glance-tiles i:nth-child(odd){background:color-mix(in srgb,var(--lemon) 55%,var(--surface))}
 .glance-body{display:flex;flex-direction:column;flex:1;padding:20px 20px 18px}
-.glance-no{font-size:12px;font-weight:650;color:#5485a9;letter-spacing:.04em}
-.glance-body h3{font-size:19px;line-height:1.35;margin:8px 0 4px;color:var(--ink)}
+.glance-no{font-size:12px;font-weight:650;color:var(--blue-strong);letter-spacing:.04em}
+.glance-body h3{font-size:20px;font-weight:650;line-height:1.35;margin:8px 0 4px;color:var(--ink)}
 .glance-body>p{font-size:14px;line-height:1.7;color:var(--muted);margin:0 0 12px}
 .glance-body ul{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:7px}
 .glance-body li{position:relative;padding-left:14px;font-size:13.5px;line-height:1.65;color:var(--text);word-break:keep-all;overflow-wrap:anywhere}
@@ -20,6 +20,6 @@
 .glance-go{margin-top:auto;align-self:flex-start;display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:600;color:var(--blue-strong);text-decoration:none}
 .glance-go:hover{text-decoration:underline;text-underline-offset:3px}
 @media(max-width:1000px){.glance-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:640px){.glance-grid{grid-template-columns:1fr;gap:12px;margin-top:20px}.glance-body{padding:17px 16px 12px}.glance-body h3{font-size:18px}.glance-shot{aspect-ratio:16/9}}
+@media(max-width:640px){.glance-grid{grid-template-columns:1fr;gap:12px;margin-top:20px}.glance-body{padding:17px 16px 12px}.glance-shot{aspect-ratio:16/9}}
 /* 첫 화면 판 칩 앞 「최신 판」 — 칩 줄(출시 도구가 판 숫자를 바꾸는 줄)은 글자를 그대로 두려고 CSS 로 붙여요 */
 .hero .release-chip b::before{content:"최신 판 ";font-weight:500;opacity:.75}
