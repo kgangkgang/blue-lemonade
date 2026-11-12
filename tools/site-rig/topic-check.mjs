@@ -248,6 +248,16 @@ async function extraPart(vp) {
         await b.shot(path.join(OUT, `phone320-50-캐릭터-칸.png`));
         await b.size(375, 812, true, 2);
     }
+    // 주소로 분류 열기(홈 진열대 칩이 써요)
+    await b.goto('about:blank'); await b.goto(srv.url + 'mart/geulkku/?g=event&t=' + encodeURIComponent('할로윈')); await b.until(`document.querySelectorAll('.mart-card').length > 3`, 30000); await b.sleep(600);
+    const d1 = await b.eval(`({n:parseInt(document.querySelector('.mart-count').textContent),g:document.querySelector('.mart-groups [aria-pressed="true"]')?.dataset.group,t:document.querySelector('.mart-topics [aria-pressed="true"]')?.dataset.topic})`);
+    await b.goto('about:blank'); await b.goto(srv.url + 'mart/geulkku/?g=world&t=' + encodeURIComponent('센티넬버스')); await b.until(`document.querySelectorAll('.mart-card').length > 3`, 30000); await b.sleep(600);
+    const d2 = await b.eval(`({n:parseInt(document.querySelector('.mart-count').textContent),band:document.querySelector('.mart-band h2')?.textContent})`);
+    await b.goto('about:blank'); await b.goto(srv.url + 'mart/geulkku/?g=' + encodeURIComponent('없는묶음')); await b.until(`document.querySelectorAll('.mart-card').length > 3`, 30000); await b.sleep(400);
+    const d3 = await b.eval(`parseInt(document.querySelector('.mart-count').textContent)`);
+    await b.goto('about:blank'); await b.goto(srv.url + 'mart/frames/?cat=halloween'); await b.until(`document.querySelectorAll('.mart-card').length > 3`, 30000); await b.sleep(700);
+    const d4 = await b.eval(`({n:parseInt(document.querySelector('.mart-count').textContent),c:document.querySelector('.mart-chips [aria-pressed="true"]')?.dataset.cat})`);
+    row(vp, '주소로 분류 열기: 글꾸 ?g=event&t=할로윈 32 · ?g=world&t=센티넬버스 머리 띠 32 · 모르는 묶음은 전부 · 액자 ?cat=halloween 96', d1.n === 32 && d1.g === 'event' && d1.t === '할로윈' && d2.n === 32 && d2.band === '센티넬버스' && d3 === 417 && d4.n === 96 && d4.c === 'halloween', J([d1, d2, d3, d4]));
     // 장바구니 줄의 원작(인물 액자를 담으면)
     await b.goto('about:blank'); await b.send('Storage.clearDataForOrigin', { origin: new URL(srv.url).origin, storageTypes: 'local_storage,session_storage' }).catch(() => { });
     await b.goto(srv.url + 'mart/frames/'); await b.until(`document.querySelectorAll('.mart-card').length > 3`, 30000); await b.sleep(500);

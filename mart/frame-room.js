@@ -759,6 +759,7 @@ export async function start(a) {
     // 조금씩 그리기 — 첫 화면 몫(CHUNK)만 만들고 빈 칸이 가까워지면 다음 CHUNK 개(mart.js lazyGrid)
     cards = api.lazyGrid(api.grid, card, { first: CHUNK, step: CHUNK });
     applyFilter();
+    { const cat = new URLSearchParams(location.search).get('cat'); if (cat) api.chips.querySelector(`[data-cat="${CSS.escape(cat)}"]`)?.click(); }   // 11-13 ?cat=분류 id(seasons · halloween · christmas · scenic · worlds · halo-char …) — 그 칩을 고른 채로 와요(홈 진열대)
     api.grid.setAttribute('aria-busy', 'false');
     const h = hashId();
     const hit = h && items.find(x => x.id === h);

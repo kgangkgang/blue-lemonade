@@ -214,6 +214,12 @@ function topicPicker({ groupsEl, topicsEl, chipsEl, bandEl, items, groups, cats,
             bandEl.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth' });
         },
         worlds: () => WORLDS.map(w => ({ id: w.id, label: w.label, group: w.group, n: count(x => x.world === w.id) })),
+        /** 주소로 분류 열기(홈 진열대 칩 → mart/geulkku/?g=event&t=할로윈) — g = 묶음 id(daily · event · screen · world · basic) · t = 하위 칩 이름(없거나 모르면 그 묶음 전부). 모르는 묶음이면 false */
+        open: (group, topic = 'all') => {
+            const g = groups.find(x => x.id === group); if (!g) return false;
+            Object.assign(sel, { group, topic: g.chips.includes(topic) ? topic : 'all', who: null });
+            paint(); onChange(); return true;
+        },
     };
 }
 /** PC 세부 칩 줄 접기 「▾」 — 위 분류 줄 오른쪽 끝(mart.css 가 자리를 잡고 폰에선 숨겨요) · 접힘은 이 기기에 기억해요 */
@@ -1239,6 +1245,7 @@ async function main() {
     mountCast(document.querySelector('.mart-cast'), { say, worlds: () => picker?.worlds?.() || [], openWorld: id => picker?.openWorld?.(id) });   // 11-10 목록 위 「깡통: … ▾ · 깡캐: … ▾」
     cards = lazyGrid(grid, cardEl);
     applyFilter();
+    { const p = new URLSearchParams(location.search); if (p.get('g')) picker?.open?.(p.get('g'), p.get('t') || 'all'); }   // 11-13 ?g=묶음&t=하위 칩 — 그 분류를 연 채로 와요(홈 진열대)
     grid.setAttribute('aria-busy', 'false');
     const h = hashId();
     const hit = h && items.find(x => x.id === h);

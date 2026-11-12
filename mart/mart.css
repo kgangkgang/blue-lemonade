@@ -886,6 +886,6 @@ html.mart-cart-on{overflow:hidden}
 .mart-dn-b.is-night[aria-pressed=true]{background:var(--blue-strong)}
 .mart-dn-b.is-night[aria-pressed=true]>i{background:var(--on-blue)}
 .mart-dn-b:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
-@media (pointer:coarse){.mart-dn-b::before{content:"";position:absolute;left:50%;top:50%;width:100%;height:var(--touch);transform:translate(-50%,-50%)}}
+@media (pointer:coarse){.mart-dn-b::before{content:"";position:absolute;left:50%;top:50%;width:max(100%,var(--touch));height:var(--touch);transform:translate(-50%,-50%)}}
 @media (prefers-reduced-motion:reduce){.mart-dn-b{transition:none}}
 .mart-seg>.mart-dn{align-self:center}
