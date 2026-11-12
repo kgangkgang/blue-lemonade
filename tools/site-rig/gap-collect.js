@@ -49,7 +49,10 @@
     let r = null;
     if (vis(e)) {
       const q = e.getBoundingClientRect(), p = paintOf(e), cs = csOf(e);
-      if (p.any) r = { t: q.top, b: q.bottom, l: q.left, r: q.right, painted: true };
+      if (p.any) {
+        r = { t: q.top, b: q.bottom, l: q.left, r: q.right, painted: true };
+        if (p.leaf && !p.bg && !p.bt && !p.bb && !p.shadow) { const neg = v => Math.min(0, px(v)); r.t -= neg(cs.marginTop); r.b += neg(cs.marginBottom); r.l -= neg(cs.marginLeft); r.r += neg(cs.marginRight); }   // 투명한 단추(별 · 닫기 같은 아이콘 단추)가 음수 margin 으로 누름 넓이만 넓힌 것은 보이는 것이 아니라서 자리 차지하는 상자로 줄여요
+      }
       else if (textBlock(e)) r = { t: q.top + px(cs.paddingTop), b: q.bottom - px(cs.paddingBottom), l: q.left + px(cs.paddingLeft), r: q.right - px(cs.paddingRight), painted: false, text: true };
       else {
         const rs = [];
@@ -106,9 +109,9 @@
       if (!vis(C) || C.matches(SKIP)) return;
       const cs = csOf(C);
       // 줄 높이: 글자가 바로 든 것(부품 안 글자는 한 줄짜리라 빼요 — 딱지는 봐요)
-      if ([...C.childNodes].some(n => n.nodeType === 3 && /[\p{L}\p{N}]/u.test(n.textContent)) && (!C.closest(CONTROL + ', ' + FIELD + ', option, a, nav, .brand') || C.closest(PILL))) {   // 한 줄짜리 단추 · 바로가기 · 머리줄 글자는 줄 높이가 틈을 만들지 않아 빼요
+      if ([...C.childNodes].some(n => n.nodeType === 3 && /[\p{L}\p{N}]/u.test(n.textContent)) && !/^inline$/.test(cs.display) && (!C.closest(CONTROL + ', ' + FIELD + ', option, a, nav, .brand') || C.closest(PILL))) {   // 한 줄짜리 단추 · 바로가기 · 머리줄 글자는 줄 높이가 틈을 만들지 않아 빼요
         const fs = R(px(cs.fontSize)), l = cs.lineHeight === 'normal' ? 'normal' : R(px(cs.lineHeight)), role = C.closest(PILL) ? '딱지' : (+cs.fontWeight >= 600 || /^h[1-6]$/i.test(C.tagName)) ? '머리' : '글';
-        add(lh, [role, fs, l].join('|'), { role, fs, lh: l, ratio: l === 'normal' ? 'normal' : Math.round(l / fs * 100) / 100, path: pathOf(C), text: textOf(C) });
+        add(lh, [role, fs, l, window.__gapLhByPath ? pathOf(C) : ''].join('|'), { role, fs, lh: l, ratio: l === 'normal' ? 'normal' : Math.round(l / fs * 100) / 100, path: pathOf(C), text: textOf(C) });
       }
       if (C.matches(LEAF) || textBlock(C)) return;
       const kids = flowKids(C); if (!kids.length) return;

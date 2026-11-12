@@ -6,7 +6,7 @@
 //     ③ 겹친 여백(double)   틈이 두 군데 이상(위 것의 안쪽+바깥 · 부모 gap · 아래 것의 바깥+안쪽)에서 4 이상씩 더해져 16 이상으로 벌어짐
 //     ④ 가장자리 닿음(pad)  칠해진 상자 안에서 글 · 부품이 위/아래 가장자리에서 4 미만
 //     ⑤ 빈 줄(empty-row)    오른쪽 끝에 부품 하나(폭 30% 이하)만 있는 줄이 세로 자리를 차지함
-//     ⑥ 줄 높이(line-height) 같은 구실(글 · 머리 · 딱지) · 같은 글자 크기인데 line-height 가 다름(다수 값이 기준)
+//     ⑥ 줄 높이(line-height) 글은 구실 둘(도움 글 · 카드 설명 1.5 · 본문 1.7) 중 하나가 아님 · 머리 · 딱지는 같은 글자 크기인데 다수와 다름
 //     ⑦ 같은 종류 같은 간격(kind) 허용 값 표(gap-allowed.json — 사람이 정한 뒤에만 있어요)에서 벗어난 틈. 표가 없으면 초안(가장 많이 쓰는 값)만 보고에 적어요.
 //   범위: ENFORCE 에 든 화면만 위반으로 세고(관문), 나머지는 목록(GAP.md · gap-census.json)에만 적어요 — 홈 · 액자 맞춰 보기는 다른 담당 · 리뉴얼 몫이라 목록만.
 //   일부러 어긴 견본에서 규칙마다 실패하는지는 tools/site-rig/gap-selftest.mjs 가 봐요(통과만 하는 규칙 금지).
@@ -16,6 +16,8 @@ import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const id = 'gap';
 export const title = '간격(맞닿음 0 · 사다리 · 겹친 여백 · 가장자리 · 빈 줄 · 줄 높이 · 같은 종류 같은 간격)';
+/** 줄 높이 구실(11-13 사용자 결정): 글은 도움 글 1.5 · 본문 1.7 둘 중 하나 · 머리는 글자 크기마다 한 값(다수) */
+export const LH_ROLES = [1.5, 1.7];
 export const STEPS = [4, 8, 12, 16, 24, 32, 40, 48, 56, 64, 80, 96];
 /** 관문으로 세는 화면(화면 이름에 이 글자가 들면) — 고침이 끝난 곳만 넣어요. 지금: 없음(먼저 얼마나 걸리는지 표부터) */
 export const ENFORCE = [];
@@ -31,7 +33,10 @@ export const kindKey = p => `${p.dir}|${p.ka} → ${p.kb}`;
 /** 한 화면에서 잰 것 → 걸린 곳 목록 [{ type, key, msg, now, want, n }] */
 export function judge(m, { allowed = null, scope = '마트' } = {}) {
     const out = [];
+    // 늘어난 칸: 같은 자리 쌍이 한 화면에서 여러 틈으로 나오고 가장 작은 틈이 사다리 위면, 더 큰 것은 높이를 맞추느라 벌어진 것(카드 높이 맞춤 · margin auto)이라 안 세요
+    const least = new Map(); for (const p of m.pairs || []) { const k = `${p.dir}|${p.pa}|${p.pb}`; if (p.gap > 0.5 && (!least.has(k) || p.gap < least.get(k))) least.set(k, p.gap); }
     for (const p of m.pairs || []) {
+        const lo = least.get(`${p.dir}|${p.pa}|${p.pb}`); if (lo !== undefined && p.gap > lo + 0.5 && onStep(lo)) continue;
         const at = `${tail(p.pa)}「${p.ta}」 ↔ ${tail(p.pb)}「${p.tb}」`;
         const touch = p.gap <= 0.5;
         if (touch) {
@@ -58,7 +63,8 @@ export function judgeLineHeight(list) {
     for (const [k, g] of groups) {
         const [scope, role, fs] = k.split('|'); const vals = [...g.entries()].sort((a, b) => b[1].n - a[1].n);
         table.push({ scope, role, fs: +fs, values: vals.map(([lh, v]) => ({ lh, ratio: v.ex.ratio, n: v.n, where: v.ex.where, path: tail(v.ex.path), text: v.ex.text })) });
-        for (const [lh, v] of vals.slice(1)) out.push({ type: 'line-height', scope, where: v.ex.where, cond: v.ex.cond, key: `line-height|${scope}|${role}|${fs}|${lh}`, msg: `줄 높이 ${scope} · ${role} ${fs}px 는 ${vals[0][0]}(${vals[0][1].ex.ratio}) 인데 ${lh}(${v.ex.ratio}) ×${v.n} · ${v.ex.where} · ${tail(v.ex.path)}「${v.ex.text}」`, now: `${lh}(${v.ex.ratio})`, want: `${vals[0][0]}(${vals[0][1].ex.ratio})`, n: v.n, at: `${tail(v.ex.path)}「${v.ex.text}」`, kind: `${role} ${fs}px` });
+        const body = role === '글', fits = lh => lh !== 'normal' && LH_ROLES.some(r => Math.abs(+lh - +fs * r) <= 0.6);
+        for (const [lh, v] of (body ? vals.filter(([lh]) => !fits(lh)) : vals.slice(1))) out.push({ type: 'line-height', scope, where: v.ex.where, cond: v.ex.cond, key: `line-height|${scope}|${role}|${fs}|${lh}`, msg: `줄 높이 ${scope} · ${role} ${fs}px 는 ${body ? '본문 1.7 · 도움 글 1.5 중 하나여야 하는데' : `${vals[0][0]}(${vals[0][1].ex.ratio}) 인데`} ${lh}(${v.ex.ratio}) ×${v.n} · ${v.ex.where} · ${tail(v.ex.path)}「${v.ex.text}」`, now: `${lh}(${v.ex.ratio})`, want: body ? LH_ROLES.map(r => `${Math.round(+fs * r * 2) / 2}(${r})`).join(' · ') : `${vals[0][0]}(${vals[0][1].ex.ratio})`, n: v.n, at: `${tail(v.ex.path)}「${v.ex.text}」`, kind: `${role} ${fs}px` });
     }
     return { out, table: table.sort((a, b) => a.scope.localeCompare(b.scope) || a.role.localeCompare(b.role) || a.fs - b.fs) };
 }

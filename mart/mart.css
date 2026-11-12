@@ -266,7 +266,7 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:32px;backgrou
 .mart-credits p{margin:0 0 8px;font-size:var(--ts-meta);line-height:1.5;color:var(--muted)}
 .mart-credits p b{color:var(--ink)}
 .mart-credits-list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
-.mart-credits-list li{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;min-width:0}
+.mart-credits-list li{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;min-width:0}
 .mart-credits-list b{flex:none;font-size:var(--ts-meta);font-weight:var(--strong);color:var(--ink)}
 .mart-credits-who{font-size:12px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
 .mart-credits-links{display:flex;flex-wrap:wrap;gap:4px 12px;min-width:0}
@@ -582,7 +582,7 @@ html.mart-cart-on{overflow:hidden}
 .mart-param>input[type=range]::-moz-range-progress{height:5px;border-radius:999px;background:var(--blue)}
 .mart-param>input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radius:50%;background:var(--surface);box-shadow:0 0 0 1px var(--line-strong),var(--shadow-sm)}
 .mart-param>input[type=range]:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:999px}
-.mart-look-row{display:flex;align-items:center;gap:8px;min-width:0;min-height:var(--ctl)}
+.mart-look-row{display:flex;align-items:center;gap:8px;min-width:0;min-height:34px}
 .mart-look-row.is-wrap{flex-wrap:wrap}
 .mart-look-label{flex:none;width:76px;color:var(--muted);font-size:var(--ts-meta)}
 .mart-look-seg{flex-wrap:wrap;gap:8px;min-width:0}
@@ -729,7 +729,7 @@ html.mart-cart-on{overflow:hidden}
 /* 11-12 세밀 = 갈래 여덟 접힘(설계 4-4 · 목업-마트-세밀) — 카드 한 장씩 · 머리 줄 이름 · 요약 · 바꾼 것 n · 마트 꺾쇠 */
 .mart-sheet-viewbox:empty{display:none}
 .mart-sheet-viewbox .mart-view{margin:12px 0 0}
-.mart-detail-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:var(--ctl);margin:0 0 12px;color:var(--muted);font-size:var(--ts-meta)}
+.mart-detail-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:34px;margin:0 0 4px;color:var(--muted);font-size:var(--ts-meta)}
 .mart-detail-head b{color:var(--ink);font-weight:650}
 .mart-gr-list{display:flex;flex-direction:column;gap:12px;min-width:0;padding:0}
 .mart-group{min-width:0;border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
@@ -794,7 +794,7 @@ html.mart-cart-on{overflow:hidden}
 /* 세계관 머리 띠 — 목록 바로 위 · 옅은 면(테두리 없음) */
 .mart-band{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin:0 0 12px;padding:10px 12px;border-radius:var(--r-card);background:var(--tint);scroll-margin-top:var(--mart-bar-gap,160px)}
 .mart-band[hidden]{display:none}
-.mart-band-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;min-width:0}
+.mart-band-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;min-width:0}
 .mart-band-h h2{margin:0;font-size:var(--ts-h);font-weight:var(--strong);line-height:1.5;color:var(--ink)}
 .mart-band-n{font-size:var(--ts-meta);color:var(--muted);font-variant-numeric:tabular-nums}
 .mart-band-people{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;margin:-4px -12px;padding:4px 12px}
@@ -915,3 +915,12 @@ html.mart-cart-on{overflow:hidden}
   .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune):has(>.mart-sheet-pvbar)>.mart-sheet-side{grid-column:2;grid-row:1/span 2}
 }
 @media (min-width:900px){.mart-sheet.is-pv-folded:not(.mart-taste) .mart-sheet-body:has(.mart-tune):has(>.mart-sheet-pvbar)>.mart-sheet-side{grid-column:1;grid-row:auto}}
+/* 11-13 줄 높이 구실(사용자 결정 · 간격 리그 rules/gap.mjs 가 잠가요): 본문 글 1.7 · 도움 글과 카드 설명 1.5 · 머리는 글자 크기마다 한 값(16 → 1.375(22px — 반 화소가 안 남게) · 14 → 1.75 · 13 → 1.5).
+   새 글을 넣을 때는 값을 직접 쓰지 말고 이 토큰을 써요 */
+:root{--lh-body:1.7;--lh-help:1.5;--lh-h16:1.375;--lh-h14:1.75;--lh-h13:1.5}
+.mart-head-help>p,.mart-head-help>ol,.mart-howto p,.mart-howto li{line-height:var(--lh-body)}
+.mart-head-help>.mart-help-more,.mart-param-name,.mart-cart-empty small,.mart-cart-note{line-height:var(--lh-help)}
+.mart-credits h2,.mart-howto h2,.mart-cart-empty b,.mart-tune-h,.mart-title b,.mart-band-h h2,.mart-cart-sum>b{line-height:var(--lh-h16)}
+.mart-cast-wh>b{line-height:var(--lh-h14)}
+.mart-credits-list b,.mart-look>.mart-sub{line-height:var(--lh-h13)}
+@media (min-width:640px){.mart-head-help>p,.mart-head-help>ol{line-height:var(--lh-body)}}

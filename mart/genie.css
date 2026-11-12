@@ -100,7 +100,7 @@
 .gn-choices button .ico{display:block;font-size:22px;line-height:1;margin-bottom:4px}
 .gn-choices button.gn-wide .ico{display:inline;font-size:18px;margin:0 6px 0 0;vertical-align:-2px}
 .gn .ico,.gn-bubble,.gn-why{font-family:var(--font),'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji'}
-.gn-hint{margin:0;padding:12px 16px 0;color:var(--muted);font-size:13px;text-align:center}
+.gn-hint{margin:0;padding:12px 16px 0;color:var(--muted);font-size:13px;line-height:var(--lh-help);text-align:center}
 .gn-hint button{border:0;background:none;color:var(--muted);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
 
 /* 결과 카드 — 마트 카드(.mart-card) 그대로 + 지니의 근거 */
@@ -116,7 +116,7 @@
 .gn-why{padding:8px 12px;border-radius:8px;background:var(--lemon-soft);color:var(--ink);font-size:13px;line-height:1.5}
 .gn-why b{font-weight:800}
 .gn-mylog{margin:0;color:var(--muted);font-size:12px}
-.gn-foot{padding:16px 16px 24px;color:var(--muted);font-size:12px;text-align:center;margin:auto 0 0}
+.gn-foot{padding:16px 16px 24px;color:var(--muted);font-size:12px;line-height:var(--lh-help);text-align:center;margin:auto 0 0}
 .gn-foot a{color:inherit}
 @media (max-width:639px){.gn-result .mart-preview.geulkku{height:220px}}
 @media (prefers-reduced-motion:reduce){.gn *{animation:none!important}}

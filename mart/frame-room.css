@@ -16,7 +16,7 @@ body[data-mart=frames] .mart-preview.frame{display:block;width:100%;padding:0;bo
 .mart-tryon-photo{flex:none;width:64px;height:64px;border-radius:var(--r-ctl);overflow:hidden;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
 .mart-tryon-photo img{display:block;width:100%;height:100%;object-fit:cover}
 .mart-tryon-body{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
-.mart-tryon-body>b{font-size:var(--ts-h);font-weight:var(--strong);line-height:1.4;color:var(--ink)}
+.mart-tryon-body>b{font-size:var(--ts-h);font-weight:var(--strong);line-height:var(--lh-h16);color:var(--ink)}
 .mart-tryon-body>small{font-size:var(--ts-meta);line-height:1.5;color:var(--muted)}
 .mart-tryon-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:4px}
 .mart-tryon-clear[hidden]{display:none}
