@@ -1681,5 +1681,15 @@ await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬�
     const mixed = [...uses].filter(([, t]) => t.size > 1).map(([f, t]) => `${f}: ${[...t].join(' · ')}`);
     assert.deepEqual(mixed, []);
 });
+await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 열기」가 던지지 않아요(마트 hashId 와 같은 꼴)', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'home-guide.js'), 'utf8');
+    const body = src.match(/function revealTarget\(hash\)\{[\s\S]*?\n {2}\}/)[0];
+    const calls = [...body.matchAll(/decodeURIComponent\(/g)].length, guarded = [...body.matchAll(/try\{return decodeURIComponent\(/g)].length;
+    assert.ok(calls >= 1 && calls === guarded, '감싸지 않은 decodeURIComponent');
+    const pick = (0, eval)(`(hash) => ${body.match(/hash==='#portraits'.*?\}\)\(\)(?=\);)/)[0]}`);
+    for (const h of ['#%', '#100%', '#%E0%A4%A']) assert.equal(pick(h), '', h);
+    assert.equal(pick('#start'), 'start'); assert.equal(pick('#' + encodeURIComponent('한눈에')), '한눈에');
+    assert.match(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), /home-guide\.js\?v=20261112k/);
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

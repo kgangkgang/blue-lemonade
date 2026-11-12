@@ -70,7 +70,7 @@
   // Deep links open the relevant reference without making visitors hunt for it.
   function revealTarget(hash){
     if(!hash||hash==='#')return;
-    const target=document.getElementById(hash==='#portraits'?'feature-061':hash==='#gallery'?'features':decodeURIComponent(hash.slice(1)));
+    const target=document.getElementById(hash==='#portraits'?'feature-061':hash==='#gallery'?'features':(()=>{try{return decodeURIComponent(hash.slice(1));}catch{return '';}})());
     if(!target)return;
     target.querySelector(':scope > .more-section')?.setAttribute('open','');
     let parent=target.closest('details');while(parent){parent.open=true;parent=parent.parentElement.closest('details');}
