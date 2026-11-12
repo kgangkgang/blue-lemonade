@@ -1,8 +1,8 @@
 {
- "_": "테마가 받는 글꾸 마트 틀 — 테마 분기 codex/builtin-out-review 24eec83f2 의 tools/tests/fixtures/mart-takeable.json 사본(테마 tools/mart/takeable-fixture.mjs 가 테마 받기 검사 src/mart-import.js checkItem 을 돌려 뜬 것). 고치지 말고 테마에서 다시 떠서 옮겨요",
- "theme": "24eec83f2",
- "site": "64f2ec8ba",
- "total": 410,
+ "_": "테마가 받는 글꾸 마트 틀 — 테마 분기 codex/builtin-out-geulkku7 596874520 의 tools/tests/fixtures/mart-takeable.json 사본(테마 tools/mart/takeable-fixture.mjs 가 테마 받기 검사 src/mart-import.js checkItem 을 돌려 뜬 것). 고치지 말고 테마에서 다시 떠서 옮겨요",
+ "theme": "596874520",
+ "site": "f41877118",
+ "total": 417,
  "ok": [
   "simple-k1",
   "simple-k2",
@@ -360,7 +360,14 @@
   "simple-k1370",
   "simple-k1371",
   "simple-k1372",
-  "simple-k1373"
+  "simple-k1373",
+  "simple-k1374",
+  "simple-k1375",
+  "simple-k1376",
+  "simple-k1377",
+  "simple-k1378",
+  "simple-k1379",
+  "simple-k1380"
  ],
  "no": {
   "simple-k1429": "이 틀은 아직 테마 로그 복사가 받지 못해요 — 상대 화자 색을 찾지 못했어요(마트 「HTML 복사」로 써요)",
