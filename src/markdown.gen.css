@@ -1,4 +1,4 @@
-/* src/markdown.gen.css — tools/build-css.cjs 가 css/61-markdown.css 에서 body.salty.salty-md-*(고른 마크다운 모양)가 있어야만 맞는 규칙 105개를 첫 시트에서 떼어 적은 것(고치지 말 것). src/lite.js syncMarkdownCss 가 고른 모양이 있을 때만 테마 시트 바로 뒤에 붙인다 (build c0ef8dd0877a) */
+/* src/markdown.gen.css — tools/build-css.cjs 가 css/61-markdown.css 에서 body.salty.salty-md-*(고른 마크다운 모양)가 있어야만 맞는 규칙 105개를 첫 시트에서 떼어 적은 것(고치지 말 것). src/lite.js syncMarkdownCss 가 고른 모양이 있을 때만 테마 시트 바로 뒤에 붙인다 (build c29afef7c199) */
 body.salty.salty-md-size-small
   :is(:is(#chat,.bl-chat-like) .mes .mes_text, .salty-preview .mes_text, .cg-mes, .cg-bubble-text, .cg-reasoning > .mes_text, .bl-md-preview)
   h1:not(:where(pre, pre *, code, code *, .custom-dem-track, .custom-dem-track *, .custom-dem-track-recovery, .custom-dem-track-recovery *, :is(.custom-dem-card, .custom-dem-card__body, .custom-dem-card__caret, .custom-dem-card__icon, .custom-dem-card__tag, .custom-dem-card__title), :is(.custom-dem-card, .custom-dem-card__body, .custom-dem-card__caret, .custom-dem-card__icon, .custom-dem-card__tag, .custom-dem-card__title) *)) {

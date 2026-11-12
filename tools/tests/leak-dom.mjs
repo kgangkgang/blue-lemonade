@@ -37,6 +37,7 @@ export const clock = {
         }
         now = end;
         await flushMicro();
+        if (realYieldMs) { await realWait(realYieldMs); await flushMicro(); }   // 1.1.8: 진짜 쉬기는 100ms 토막마다 한 번(타이머마다 쉬면 chat-switch-leak 이 노드 22 에서 설정당 240초를 넘었어요)
     },
     pending: () => queue.size,
 };
@@ -47,7 +48,7 @@ import { setTimeout as realWait } from 'node:timers/promises';
 let realYieldMs = 0;
 export function realYield(ms = 5) { realYieldMs = NODE_MAJOR >= 23 ? 0 : Math.max(0, Number(ms) || 0); }   // 노드 23 이상은 쉬지 않아도 풀려요(쉬면 chat-switch-leak 이 110초 → 690초)
 const NODE_MAJOR = Number(String(process.versions?.node || '0').split('.')[0]) || 0;
-async function flushMicro() { for (let i = 0; i < 20; i++) await null; if (realYieldMs) { await realWait(realYieldMs); for (let i = 0; i < 20; i++) await null; } }
+async function flushMicro() { for (let i = 0; i < 20; i++) await null; }
 
 // ── 노드 ──
 class EventTargetLite {

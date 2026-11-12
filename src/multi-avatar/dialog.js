@@ -151,6 +151,7 @@ export async function openCleanup() {
     let plan;
     try { plan = await cleanupPlan(s.chars, avatars); }
     catch (error) { toast('error', `정리할 파일을 살피지 못했어요. ${error?.message || error}`); return; }
+    if (plan.held) { toast('warning', `등록된 사진 목록이 비어 있는데 서버에 사진 ${plan.held}장이 남아 있어요. 목록이 잘못 비워졌을 수 있어 지우지 않았어요. 정말 필요 없다면 실리태번 user/images 의 bl-avatar 폴더에서 직접 지워 주세요.`); return; }
     if (!plan.total && !plan.gone.length) { toast('info', '남은 파일이 없어요. 깨끗해요.'); return; }
     const lines = [plan.gone.length ? `지운 캐릭터 ${plan.gone.length}명의 항목 · 사진 ${plan.goneFiles.length}장` : '', plan.orphanFiles.length ? `어느 캐릭터에도 안 적힌 사진 ${plan.orphanFiles.length}장` : ''].filter(Boolean).join('\n');
     if (!await ask(`${lines}\n\n서버에서 지울까요? 되돌릴 수 없어요. 지금 쓰는 캐릭터의 사진은 건드리지 않아요.`, { ok: plan.total ? `${plan.total}장 지우기` : '항목 정리', cancel: '취소', danger: true, title: '남은 파일 정리' })) return;

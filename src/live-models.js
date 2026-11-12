@@ -124,7 +124,10 @@ export const canList = (source) => STATUS.has(sourceOf(source));
 //   맨 앞은 저장된 모델이 없을 때의 기본(번역 · 다시 쓰기 · 한글화 연결의 ids[0])이라, 값이 훨씬 비싼 새 모델을 거기 두지 않는다.
 // 2026-11-10: gemini-4-carbon 미리 (10-28 발표 · 아직 일부 보안 협력사만 — 공개 API · 모델 문서 · 가격표에 없음, 출시 뒤 가격 · 문맥은 가격표 갱신이 채운다)
 //   근거: https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-carbon/ — Argon 바로 다음에.
-const GEMINI = Object.freeze(['gemini-3.8-flash', 'gemini-4-argon', 'gemini-4-carbon', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite',
+// 2026-11-12: gemini-4-hydrogen 임시(사용자 요청) — 공식 발표 · 모델 문서(ai.google.dev …/models/gemini-4-hydrogen 은 404) · 가격표 · OpenRouter 목록 어디에도 없음.
+//   10-27 유출 글의 「Gemini 4 Flash」 코드명이라 실제 API 이름이 아닐 수 있다 → 고르면 오류가 날 수 있고, 가격 · 문맥 · 출력 상한은 적지 않는다.
+//   공식 이름이 나오면 이 줄을 그 이름으로 바꾸거나 뺀다. Carbon 바로 다음, 맨 앞(기본)은 그대로.
+const GEMINI = Object.freeze(['gemini-3.8-flash', 'gemini-4-argon', 'gemini-4-carbon', 'gemini-4-hydrogen', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite',
     'gemini-3.1-pro-preview', 'gemini-3.1-flash-lite', 'gemini-3-flash-preview', 'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']);
 // 2026-11-10: claude-fable-5-2 (11-09 · platform.claude.com/docs/en/models/fable-5-2/overview) · gpt-6.1-terra (10-26 · developers.openai.com/api/docs/models/gpt-6.1-terra) ·
 //   OpenRouter anthropic/claude-fable-5.2 · openai/gpt-6.1-terra · moonshotai/kimi-k3.1-pro (10-23 · platform.kimi.ai/docs/pricing/chat) — 같은 줄의 앞 판 바로 앞 · 뒤에, 맨 앞(기본)은 그대로.
@@ -139,7 +142,7 @@ export const KNOWN = Object.freeze({
         'claude-fable-5', 'claude-haiku-4-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-4-6', 'claude-opus-4-5']),
     makersuite: GEMINI,
     vertexai: GEMINI,
-    openrouter: Object.freeze(['anthropic/claude-haiku-5.5', 'google/gemini-4-argon', 'google/gemini-4-carbon', 'mistralai/mistral-large-4-0', 'openai/gpt-6.1-sol', 'openai/gpt-6.1-terra', 'anthropic/claude-sonnet-5.5', 'z-ai/glm-5.3-prime',
+    openrouter: Object.freeze(['anthropic/claude-haiku-5.5', 'google/gemini-4-argon', 'google/gemini-4-carbon', 'google/gemini-4-hydrogen', 'mistralai/mistral-large-4-0', 'openai/gpt-6.1-sol', 'openai/gpt-6.1-terra', 'anthropic/claude-sonnet-5.5', 'z-ai/glm-5.3-prime',
         'qwen/qwen3.8-max-prime', 'anthropic/claude-opus-5.5', 'cohere/command-a-plus', 'openai/gpt-6-sol', 'openai/gpt-6-luna', 'x-ai/grok-4.7',
         'google/gemini-3.8-flash', 'anthropic/claude-fable-5.2', 'anthropic/claude-fable-5.1', 'openai/gpt-6-astra', 'google/gemini-3.7-flash', 'deepseek/deepseek-v4.1-flash',
         'anthropic/claude-opus-5', 'anthropic/claude-sonnet-5', 'moonshotai/kimi-k3.1-pro', 'moonshotai/kimi-k3', 'z-ai/glm-5.3', 'google/gemini-3.5-flash-lite',

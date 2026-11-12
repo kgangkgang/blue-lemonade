@@ -99,6 +99,7 @@ export async function listFolders(io = {}) {
  * @param {string[]} avatars 지금 있는 캐릭터 아바타 파일명들
  */
 export async function cleanupPlan(chars, avatars, io = {}) {
+    chars = chars && typeof chars === 'object' ? chars : {};
     const alive = new Set(avatars);
     const gone = Object.keys(chars).filter(a => !alive.has(a));
     const referenced = new Set(Object.values(chars).flatMap(r => r.files || []));
@@ -113,6 +114,9 @@ export async function cleanupPlan(chars, avatars, io = {}) {
         for (const name of await listFolder(folder, io)) orphanFiles.push(`user/images/${folder}/${name}`);
     }
     const goneFiles = gone.flatMap(a => chars[a].files || []);
-    return { gone, goneFiles, orphanFiles, total: goneFiles.length + orphanFiles.length };
+    // 1.1.7 안전장치: 사진 목록이 통째로 비었는데 서버에 bl-avatar-* 사진이 있으면, 목록이 잘못 비워진 것(예: 초기화 · 동기화 사고)일 수 있어
+    //   지울 대상으로 내놓지 않고 붙잡아 둬요(held). 화면은 경고만 보여요. 사진을 다시 등록하면 그때부터 정상으로 정리돼요
+    if (!Object.keys(chars || {}).length && orphanFiles.length) return { gone: [], goneFiles: [], orphanFiles: [], held: orphanFiles.length, total: 0 };
+    return { gone, goneFiles, orphanFiles, held: 0, total: goneFiles.length + orphanFiles.length };
 }
 export { MAX_FILES };

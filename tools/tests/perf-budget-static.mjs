@@ -23,7 +23,7 @@ const within = (now, max, what) => { console.log(`   ${what}: ${now.toLocaleStri
 
 // 1.1.4 시작 값(1.1.3 출시 후보 위 · 감사 고침 · 긴 채팅 2 · 유휴 타이머 정리 뒤)
 const BUDGET = {
-    firstSheetBytes: 713461,        // style.css — 1.1.2 · 1.1.3 과 같은 바이트
+    firstSheetBytes: 713461 + 162,  // style.css — 1.1.2 · 1.1.3 과 같은 바이트 + 162B: 여러 개 고르기의 실리태번 ▾ 그림 지우기(월드 인포 떠 있는 꺾쇠 제보 · 칠하기 선언이라 빌드가 다른 확장 원래 색 빼기 규칙으로 한 벌 더 써요 · 줄일 곳 없음)
     secondSheetBytes: 1617973,      // src/style-lazy.gen.css
     firstSheetHas: 149,             // 첫 장의 ':has(' 글자 수
     firstSheetBackdrop: 18,         // 첫 장의 'backdrop-filter' 글자 수

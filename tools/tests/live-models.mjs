@@ -451,6 +451,11 @@ await test('sourceOf · canList · STATUS_SOURCES · KNOWN (새것 먼저 · 중
     assert.deepEqual(LM.KNOWN.makersuite.slice(0, 3), ['gemini-3.8-flash', 'gemini-4-argon', 'gemini-4-carbon']);
     assert.deepEqual(LM.KNOWN.vertexai.slice(0, 3), ['gemini-3.8-flash', 'gemini-4-argon', 'gemini-4-carbon']);
     assert.equal(LM.KNOWN.openrouter[2], 'google/gemini-4-carbon');
+    // 2026-11-12 Hydrogen 임시(공식 이름 아님 · 유출 코드명) — Carbon 바로 다음 · 제공처 셋 모두 · 맨 앞(기본)은 그대로
+    assert.deepEqual(LM.KNOWN.makersuite.slice(0, 4), ['gemini-3.8-flash', 'gemini-4-argon', 'gemini-4-carbon', 'gemini-4-hydrogen']);
+    assert.deepEqual(LM.KNOWN.vertexai.slice(0, 4), ['gemini-3.8-flash', 'gemini-4-argon', 'gemini-4-carbon', 'gemini-4-hydrogen']);
+    assert.equal(LM.KNOWN.openrouter[3], 'google/gemini-4-hydrogen');
+    assert.equal(LM.lowEffort('google', 'gemini-4-hydrogen'), 'low');
     // 2026-11-10 새 모델 — 같은 줄 앞 판 바로 앞 · 뒤 · 맨 앞(기본)은 그대로
     const near = (s, id, next) => assert.equal(LM.KNOWN[s][LM.KNOWN[s].indexOf(id) + 1], next, `${s} ${id}`);
     near('claude', 'claude-fable-5-2', 'claude-fable-5-1'); near('openai', 'gpt-6.1-sol', 'gpt-6.1-terra');

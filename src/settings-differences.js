@@ -9,12 +9,12 @@ const read = (obj, path) => path.split('.').reduce((v, k) => v != null && Object
 // 날씨 양의 기본값 칸은 옛 세 단계 값을 이어받으려고 null 이고, 정리하면 100 이 돼요. 비교 · 복원은 정리된 값으로 해요
 const SETTLED_DEFAULTS = { 'chat.weatherAmount': 100, 'chat.weather2Amount': 100 };
 const equal = (a, b) => a === b || (!!a && !!b && typeof a === 'object' && typeof b === 'object' && Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(k => equal(a[k], b[k])));
-const omitted = new Set(['appearanceHistory',   /* 9.0.2 그라데이션 · 기기별 배치는 걷어 「변경한 설정」에서도 뺀다 */
+export const OMITTED_KEYS = new Set(['appearanceHistory',   /* 9.0.2 그라데이션 · 기기별 배치는 걷어 「변경한 설정」에서도 뺀다 */
     'version','noticeSeen','addonCarry','frameLibrary','customFonts','styles','charStyles','promptBinds','headSwitches','activeStyle','baseStyle','weatherImages','customPalettes','activeCustomPalette','wordTools','multiAvatar','extcheck']);   // extcheck: 1.0.3 확장 충돌 검사의 AI 전송 동의 · 고른 연결(기억)
 const omittedPaths = new Set(['promptFolders.presets','promptSaves.presets','presetFolders.folders','presetFolders.seen','chatOrganizer.folders','chatOrganizer.chats','qrShelf.items','qrShelf.recent','deviceLayouts.pc','deviceLayouts.mobile','image.masks','image.maskId','chat.weatherImageId','compat.cssAsked','logCopy.shape','logCopy.palette','logCopy.category','logCopy.recent','logCopy.fav','logCopy.custom','logCopy.tagsOff','logCopy.titleOff','logCopy.dateOff','logCopy.namesOff','logCopy.topOff','logCopy.bottomOff','logCopy.lemonLink','logCopy.lemonAt','logCopy.blank','logCopy.basicInfo','logCopy.basicHeight']);   // cssAsked: 「쓰던 테마가 있어요」에 답한 지문 (설정이 아니라 기억) · logCopy.*: 로그 복사 시트가 기억하는 마지막 모양 · 색 · 최근 · 즐겨찾기 · 내 글꾸 (켜기만 설정)
 const safe = path => typeof path === 'string' && !path.split('.').some(k => ['__proto__','constructor','prototype'].includes(k));
 export function settingDefault(settings, path) {
-    if (!safe(path) || omitted.has(path.split('.')[0]) || omittedPaths.has(path)) return { allowed: false };
+    if (!safe(path) || OMITTED_KEYS.has(path.split('.')[0]) || omittedPaths.has(path)) return { allowed: false };
     if (path === 'gradients.overrides' || path.startsWith('gradients.overrides.')) {
         const [, , palette, token, extra] = path.split('.');
         return {allowed: !extra && !!PALETTES[palette] && GRADIENT_KEYS.includes(token), value:undefined};
@@ -65,7 +65,7 @@ export function resetSetting(settings, path) {
 export function changedSettings(settings) {
     const result = [];
     function visit(defaults, value, path) {
-        if (omitted.has(path.split('.')[0]) || omittedPaths.has(path)) return;
+        if (OMITTED_KEYS.has(path.split('.')[0]) || omittedPaths.has(path)) return;
         // Uploaded frame artwork and its mask are an atomic pair; saved copies remain untouched.
         if (path === 'gradients.overrides') {
             for (const [palette, tokens] of Object.entries(value || {})) for (const [token, gradient] of Object.entries(tokens || {})) {

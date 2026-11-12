@@ -21,7 +21,7 @@ jobs:
           python-version: '3.12'
       - uses: actions/setup-node@v5
         with:
-          node-version: '22'
+          node-version: '24'   # 1.1.9: 시험 도구가 module.register 로더 훅을 써요 — 노드 22 는 훅이 따로 도는 스레드라 동적 import 를 기다리느라 chat-switch-leak 이 설정당 240초를 넘었어요(로컬 개발 · 사전 점검은 노드 24)
       - name: Check failure cases and settings preservation
         run: |
           node --test tools/tests/pull-to-refresh.mjs
@@ -438,6 +438,7 @@ jobs:
           node tools/tests/select-pick.mjs .
           node tools/tests/select-pick-longpress.mjs .
           node tools/tests/select-unify-static.mjs .
+          node tools/tests/select-multi-no-arrow.mjs .
           node --check tools/tests/select-unify-rig.mjs
           node tools/tests/assets-strip-chat.mjs .
           node tools/tests/assets-from-pictures.mjs .
@@ -772,6 +773,8 @@ jobs:
           node tools/tests/audit113-ledger.mjs .
           node tools/tests/audit113-misc.mjs .
           node tools/tests/audit113-ko-dead.mjs .
+          node tools/tests/gap-reset-multi-avatar.mjs .
+          node tools/tests/reset-keep-drift.mjs .
           node tools/tests/bundle-fresh.mjs
           node tools/build-integrity.mjs . --check
       - name: Check that generated files match their sources

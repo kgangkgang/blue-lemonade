@@ -137,6 +137,7 @@ await test('테마 설정 창을 20번 열고 닫아도 리스너 · 관찰자�
     const open = async () => {
         const done = globalThis.Salty.openPopup();
         await settle(1500);
+        for (let i = 0; i < 300 && !closeOpenPopup; i++) await settle(100);   // 1.1.8 노드 22: 창 모듈이 로더 훅 스레드에서 풀릴 때까지(노드 24 는 바로 열려 그대로)
         closeOpenPopup?.();
         await done;
         await settle(1500);

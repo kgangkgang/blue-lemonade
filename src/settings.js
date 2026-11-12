@@ -831,9 +831,13 @@ export function saveSettings() {
 
 // 4.7.0: 무엇을 되돌릴지 고른다 — look(테마 모습) · addons(애드온 켬 · 설정) · tools(단어 치환 · 캡처) · library(프레임 · 팔레트 · 날씨 그림 · 모양)
 // 내 글꼴 · 본 공지 · 내 스타일 · 캐릭터 연결은 늘 남긴다 (입혀 둔 캐릭터 스타일 상태는 비움)
-const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools', 'captureTools'], library: ['frameLibrary', 'customPalettes', 'weatherImages'] };
+export const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools', 'captureTools'], library: ['frameLibrary', 'customPalettes', 'weatherImages'] };
 // 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS)은 '테마 모습' 초기화에 남긴다
-const RESET_KEEP = ['appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'syncWatch', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'promptFolders', 'chatOrganizer', 'quick', 'promptSaves', 'presetFolders', 'qrShelf', 'apiStatus', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'searchAi', 'extcheck', 'logCopy', 'sceneSound'];
+// 1.1.7: multiAvatar(프로필 여러 개 사진 목록 — 지우면 서버 사진이 「안 쓰는 파일」이 돼요) · addonCarry(개인 확장 이어받기 단계) 도 자료라 남겨요.
+//   settings-differences.js 의 OMITTED_KEYS(모습이 아닌 자료)는 전부 RESET_KEEP · RESET_GROUPS · RESET_CLEARED 중 한 곳에 있어야 해요 (tools/tests/reset-keep-drift.mjs 가 지켜요)
+export const RESET_KEEP = ['multiAvatar', 'addonCarry', 'appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'syncWatch', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'promptFolders', 'chatOrganizer', 'quick', 'promptSaves', 'presetFolders', 'qrShelf', 'apiStatus', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'searchAi', 'extcheck', 'logCopy', 'sceneSound'];
+// 「테마 모습」 초기화에서 일부러 처음 값으로 돌리는 자료 칸 — 판 번호, 입혀 둔 스타일 상태, 고른 내 팔레트(팔레트 자체는 library 묶음)
+export const RESET_CLEARED = ['version', 'activeStyle', 'baseStyle', 'activeCustomPalette'];
 export function resetSettings(groups = { look: true }) {
     const ext = SillyTavern.getContext().extensionSettings;
     const old = ext[KEY] || {};

@@ -303,7 +303,7 @@ await test('catalogCount: 묶음 가격표의 모델 수, 모르는 제공처는
     assert.equal(R.catalogCount('no-such-provider'), 0);
 });
 
-await test('11-10 새 모델: 묶음 표의 Claude Fable 5.2 · Mythos 5.2 · GPT-6.1 Terra 공식 단가 (Gemini 4 Carbon 은 아직 없음)', async () => {
+await test('11-10 새 모델: 묶음 표의 Claude Fable 5.2 · Mythos 5.2 · GPT-6.1 Terra 공식 단가 (Gemini 4 Carbon · Hydrogen 은 아직 없음)', async () => {
     const L = await import(pathToFileURL(path.join(root, 'src/addons/perf/pricing-live.js')).href);
     const claude = L.priceSnapshot('anthropic').models, openai = L.priceSnapshot('openai').models;
     for (const id of ['claude-fable-5-2', 'claude-mythos-5-2']) assert.deepEqual([...claude[id]], [8, 40, 0.2, 10, 16], id);
@@ -311,7 +311,7 @@ await test('11-10 새 모델: 묶음 표의 Claude Fable 5.2 · Mythos 5.2 · GP
     const q = P.quoteRequest({ connection: { provider: 'anthropic' }, model: 'claude-fable-5-2', usage: { prompt: 1e6, completion: 1e6 }, priceData: { models: claude } });
     assert.equal(q.resolvedModel, 'claude-fable-5-2'); close(q.cost, 48, 'fable 5.2 100만 + 100만');
     for (const [prov, models] of Object.entries({ gemini: L.priceSnapshot('gemini')?.models, vertex: L.priceSnapshot('vertex')?.models, openrouter: L.priceSnapshot('openrouter')?.models }))
-        for (const id of ['gemini-4-carbon', 'google/gemini-4-carbon']) assert.equal(models?.[id], undefined, `${prov} ${id} 값을 지어내지 않음`);
+        for (const id of ['gemini-4-carbon', 'google/gemini-4-carbon', 'gemini-4-hydrogen', 'google/gemini-4-hydrogen']) assert.equal(models?.[id], undefined, `${prov} ${id} 값을 지어내지 않음`);
 });
 
 console.log(`pricing-quote-edges: ${pass} passed, ${fail} failed`);

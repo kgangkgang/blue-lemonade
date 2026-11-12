@@ -198,8 +198,13 @@ body.salty select option {
   color: var(--salty-text);
 }
 /* 여러 개 고르는 목록: 고른 줄은 옅은 포인트 면 (크롬은 배경색을 무시해서 한 색 그라데이션) */
+/* 여러 개 고르는 목록은 펼치는 칸이 아니라 ▾ 가 없어요. 테마 ▾ 규칙(위)은 이 칸을 빼 두었지만 실리태번 원래 select 규칙
+   (public/style.css select { background-image: url(/img/down-arrow.svg) })이 남아, 네 줄로 키운 「모든 채팅에 켤 월드 인포」(#world_info)
+   칸 가운데 오른쪽에 ▾ 가 떠 있었어요(폰 · 나이트 사용자 제보). 그림만 지우고 면 색(background-color)은 그대로 둬요.
+   테마 설정 창(.salty-panel)에는 여러 개 고르기가 없어요(select-unify-static ③) */
 body.salty select[multiple]:where(:not(.salty-panel *)) {
   padding: var(--bl-s1) !important;
+  background-image: none !important;
 }
 body.salty select[multiple]:where(:not(.salty-panel *)) option {
   padding: 6px 10px;
