@@ -1644,5 +1644,12 @@ await test('AI 점검 ⑦ 장바구니 계산하기 · 받기는 만드는 동�
     assert.match(blk, /b\.disabled = true/); assert.match(blk, /finally \{ payBusy = false; render\(\); \}/);
     assert.ok(srcOf('mart.js').includes("onCheckout((act, entries) => (act === 'copy' ? copyEntries(entries, true)"), '복사는 첫 await 전에 클립보드를 열어요(사파리)');
 });
+await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-ui · frame-room)을 부르는 곳은 모두 같은 새 꼬리예요(옛 캐시와 섞이지 않게 · 같은 모듈 두 벌 금지)', () => {
+    const files = ['mart.js', 'genie.js', 'geulkku/index.html', 'frames/index.html', 'genie/index.html'].map(f => [f, srcOf(f)]);
+    for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room', 'genie']) {
+        const tails = new Set(files.flatMap(([, s]) => [...s.matchAll(new RegExp(`[./]${mod}\\.js\\?v=(\\w+)`, 'g'))].map(m => m[1])));
+        assert.deepEqual([...tails], ['20261112b'], `${mod}.js 꼬리 ${[...tails]}`);
+    }
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
