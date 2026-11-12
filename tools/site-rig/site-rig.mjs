@@ -1,5 +1,5 @@
 // 사이트 디자인 리그(블루레몬에이드 홈페이지 마트) — 로컬 정적 서버로 사이트를 띄워 헤드리스 Chrome(CDP)으로 폰 390 · PC 1440 화면을 차례로 열고 규칙을 재요.
-//   node tools/site-rig/site-rig.mjs [--w 390|1440|all] [--only 글꾸,액자,…] [--no-pixel] [--port 8771] [--cdp 9351] [--out <폴더>] [--site <폴더>] [--prof <크롬 사용자 폴더>]
+//   node tools/site-rig/site-rig.mjs [--w 390|1440|all|375,320,1280(쉼표로 여러 폭)] [--rules gap(이 규칙만 · 부품 모으기는 건너뛰어요)] [--only 글꾸,액자,…] [--no-pixel] [--port 8771] [--cdp 9351] [--out <폴더>] [--site <폴더>] [--prof <크롬 사용자 폴더>]
 //   ① 화면 목록(SCREENS)을 열어 collect.js 로 부품 모양 서명을 모아요(굴려 가며) ② measure.js 로 넘침 · 누름 상자 · 간격 · 대비를 재요 ③ center 규칙은 사진 세 장으로 잉크 가운데를 재요
 //   ④ 규칙(rules/*.mjs — 테마 census 규칙 사본 + 사이트 전용)을 돌려 위반을 모으고, 기준선(baseline.json 의 known)과 견줘 새 것만 실패로 세요
 //   ⑤ 결과: tools/site-rig/out/<시각>/SITE-RIG.md + site-rig.json(+ shots/). 종료 코드 1 = 새 위반 · 못 연 화면 · 콘솔 오류가 있어요.
@@ -16,7 +16,8 @@ const arg = (k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] 
 const SITE = path.resolve(arg('--site', path.resolve(HERE, '../..')));   // --site <폴더>: 다른 판(예: 적용 전 git archive)을 같은 규칙으로 재요
 const WANT_W = String(arg('--w', 'all'));
 const ONLY = arg('--only', '') ? String(arg('--only')).split(',').map(s => s.trim()).filter(Boolean) : null;
-const PIXEL = !argv.includes('--no-pixel');
+const ONLY_RULES = arg('--rules', '') ? String(arg('--rules')).split(',').map(s => s.trim()).filter(Boolean) : null;   // 11-13 간격 리그처럼 한 규칙만 다른 폭(375 · 320 · 1280)에서 돌릴 때
+const PIXEL = !argv.includes('--no-pixel') && !ONLY_RULES;
 const PORT = Number(arg('--port', 8771)), CDP = Number(arg('--cdp', 9351));
 const stamp = new Date(); const pad2 = n => String(n).padStart(2, '0');
 const OUT = path.resolve(arg('--out', path.join(HERE, 'out', `${stamp.getFullYear()}${pad2(stamp.getMonth() + 1)}${pad2(stamp.getDate())}-${pad2(stamp.getHours())}${pad2(stamp.getMinutes())}${pad2(stamp.getSeconds())}`)));
@@ -33,6 +34,7 @@ for (const f of fs.readdirSync(path.join(HERE, 'rules')).filter(f => /\.mjs$/.te
     catch (e) { ruleErrors.push(`${f}: 불러오기 실패 ${String(e.message || e).slice(0, 120)}`); }
 }
 if (!PIXEL) { const i = rules.findIndex(r => r.id === 'center'); if (i >= 0) rules.splice(i, 1); }
+if (ONLY_RULES) for (let i = rules.length - 1; i >= 0; i--) if (!ONLY_RULES.includes(rules[i].id)) rules.splice(i, 1);
 const findings = [];
 const addFindings = (rule, list, cond) => { for (const x of list || []) if (x?.key) findings.push({ rule: rule.id, cond, key: `${rule.id}|${cond}|${x.key}`, msg: `${rule.title || rule.id}: ${x.msg || x.key}` }); };
 
@@ -72,6 +74,8 @@ const SCREENS = [
     // 11-13 홈 아래쪽을 다시 세움: 한눈에 카드는 접힌 줄 안이라 줄을 진짜로 눌러 연 뒤 재요 · 화면 영상 장면도 화면으로 봐요
     { group: '홈', where: '홈 · 한눈에', url: '', root: '#glance', open: async b => { await b.until(`document.querySelector('#glance')`); const t = await tapAll(b, [['#fold-glance summary', null, `document.querySelector('#fold-glance details[open]')`]]); if (t !== true) return t; await b.eval(`document.querySelector('#glance').scrollIntoView({block:'start'});window.scrollBy(0,-80);true`); await b.sleep(400); return true; } },
     { group: '홈', where: '홈 · 장면', url: '', root: '#scene-translate', open: async b => { await b.until(`document.querySelector('#scene-translate')`); await b.eval(`document.querySelector('#scene-translate').scrollIntoView({block:'start'});window.scrollBy(0,-80);true`); await b.sleep(600); return true; } },
+    { group: '홈', where: '홈 · 전체(간격만)', url: '', root: null, gapOnly: true, open: async b => { await b.until(`document.querySelector('#start')`); await b.sleep(800); return true; } },
+    { group: '홈', where: '홈 · 설치 안내(간격만)', url: '', root: '#start', gapOnly: true, open: async b => { await b.until(`document.querySelector('#start')`); await b.eval(`document.querySelector('#start').scrollIntoView({block:'start'});true`); await b.sleep(500); return true; } },
     { group: '홈', where: '홈 · 마트 메뉴', url: '', root: '.mart-menu', open: async b => { await b.until(`document.querySelector('.top-mart')`); return tapAll(b, [['.top-mart', null, `document.querySelector('.mart-menu:not([hidden])')`]]); } },
     { group: '글꾸', where: '글꾸 · 목록', url: 'mart/geulkku/', root: null, open: async b => { await b.until(READY_GRID, 20000); await b.until(READY_PREVIEWS(3), 25000).catch(() => { }); await b.sleep(600); return true; } },
     { group: '글꾸', where: '글꾸 · 자세히 펼침', url: 'mart/geulkku/', root: '.mart-head', open: async b => { await b.until(READY_GRID, 20000); return tapAll(b, [['.mart-head-more', null, `document.querySelector('.mart-head.is-open')`]]); } },
@@ -117,13 +121,13 @@ const scrollStep = (b, rootSel, first) => b.eval(`(()=>{const root=${rootSel ? `
  const sc=root===document.scrollingElement?root:[root,...root.querySelectorAll('*')].filter(e=>e.scrollHeight>e.clientHeight+20&&/(auto|scroll)/.test(getComputedStyle(e).overflowY)&&e.getClientRects().length&&e.clientHeight>120).sort((a,b)=>b.clientHeight*b.clientWidth-a.clientHeight*a.clientWidth)[0];
  if(!sc)return false;if(${first}){sc.scrollTop=0;return true}const before=sc.scrollTop;sc.scrollTop+=Math.max(1,sc.clientHeight*.75);return sc.scrollTop>before+1})()`);
 async function scan(b, cond, screen) {
-    const rootSel = screen.root, where = screen.where;
+    const rootSel = screen.root, where = screen.where, light = !!ONLY_RULES || !!screen.gapOnly;
     await b.eval(COLLECT); await b.eval(MEASURE);
     await b.eval(`(()=>{for(const e of document.querySelectorAll('[data-uic]'))delete e.dataset.uic;for(const e of document.querySelectorAll('[data-px]'))delete e.dataset.px;delete document.body.dataset.pxN;return true})()`);
     await scrollStep(b, rootSel, true); await b.sleep(150);
     let n = 0;
     const maxSteps = rootSel ? 12 : 6;   // 목록 화면은 같은 카드가 되풀이라 여섯 화면 높이까지만
-    for (let k = 0; k < maxSteps; k++) {
+    for (let k = 0; k < (light ? 0 : maxSteps); k++) {
         let r; try { r = JSON.parse(await b.eval(`JSON.stringify(window.__siteCollect(${JSON.stringify(rootSel)}, ${JSON.stringify(where)}))`, 60000)); } catch (e) { return { error: String(e.message || e).slice(0, 160) }; }
         if (r.error) return { error: r.error };
         for (const x of r.recs) {
@@ -138,7 +142,7 @@ async function scan(b, cond, screen) {
     }
     await scrollStep(b, rootSel, true); await b.sleep(120);
     recTotal += n;
-    for (const rule of rules) if (rule.perScreen) {
+    for (const rule of rules) if (rule.perScreen && (!screen.gapOnly || rule.id === 'gap')) {
         try { addFindings(rule, await rule.perScreen({ ev: (e, ms) => b.eval(e, ms), shot: clip => b.shot(null, { clip }), dpr: b.dpr, screen: { group: screen.group, where }, cond: { W: cond.W, DPR: cond.DPR, key: cond.key }, rootSel, out: OUT }), cond.key); }
         catch (e) { ruleErrors.push(`${rule.id} · ${cond.key} · ${where}: ${String(e.message || e).slice(0, 120)}`); }
     }
@@ -146,7 +150,8 @@ async function scan(b, cond, screen) {
 }
 
 // ---------------------------------------------------------------- 돌리기
-const CONDS = [{ W: 390, H: 844, DPR: 3, mobile: true, key: '390' }, { W: 1440, H: 900, DPR: 2, mobile: false, key: '1440' }].filter(c => WANT_W === 'all' || String(c.W) === WANT_W);
+const ALL_CONDS = [{ W: 390, H: 844, DPR: 3, mobile: true, key: '390' }, { W: 1440, H: 900, DPR: 2, mobile: false, key: '1440' }, { W: 375, H: 812, DPR: 2, mobile: true, key: '375' }, { W: 320, H: 640, DPR: 2, mobile: true, key: '320' }, { W: 1280, H: 900, DPR: 1, mobile: false, key: '1280' }];
+const CONDS = WANT_W === 'all' ? ALL_CONDS.slice(0, 2) : String(WANT_W).split(',').map(w => ALL_CONDS.find(c => c.key === w.trim())).filter(Boolean);
 const srv = await serve(SITE, PORT);
 log(`서버 ${srv.url} ← ${SITE}`);
 const b = await launch(path.resolve(arg('--prof', path.join(HERE, '_prof'))), CDP);   // --prof <폴더>: 크롬 사용자 폴더(짧은 경로로)
@@ -157,7 +162,7 @@ try {
         await b.size(cond.W, cond.H, cond.mobile, cond.DPR);
         for (const screen of SCREENS) {
             if (ONLY && !ONLY.some(o => screen.where.includes(o) || screen.group === o)) continue;
-            if (screen.widths && !screen.widths.includes(cond.W)) { screens.push({ cond: cond.key, group: screen.group, where: screen.where, absent: true }); continue; }
+            if ((screen.widths && !screen.widths.includes(cond.mobile ? 390 : 1440)) || (screen.gapOnly && !rules.some(r => r.id === 'gap'))) { screens.push({ cond: cond.key, group: screen.group, where: screen.where, absent: true }); continue; }
             const errAt = b.errors.length;
             const row = { cond: cond.key, group: screen.group, where: screen.where, opened: false };
             try {
@@ -184,7 +189,7 @@ try {
 // ---------------------------------------------------------------- 규칙(모은 뒤)
 const V = [...variants.values()], C = [...colorBad.values()];
 for (const rule of rules) if (rule.afterAll) { try { addFindings(rule, rule.afterAll({ variants: V, screens, colorBad: C, cond: { key: 'all' } }), 'all'); } catch (e) { ruleErrors.push(`${rule.id}: ${String(e.message || e).slice(0, 160)}`); } }
-for (const cond of CONDS) for (const w of REQUIRED) if (!ONLY && !screens.some(s => s.cond === cond.key && s.where === w && s.opened)) findings.push({ rule: 'screens', cond: cond.key, key: `screens|${cond.key}|${w}`, msg: `화면 목록 누락 ${cond.key} · ${w}(두 폭 모두 열어야 해요)` });
+for (const cond of CONDS) for (const w of REQUIRED) if (!ONLY && !ONLY_RULES && !screens.some(s => s.cond === cond.key && s.where === w && s.opened)) findings.push({ rule: 'screens', cond: cond.key, key: `screens|${cond.key}|${w}`, msg: `화면 목록 누락 ${cond.key} · ${w}(두 폭 모두 열어야 해요)` });
 for (const s of screens.filter(s => !s.absent && !s.opened)) findings.push({ rule: 'open', cond: s.cond, key: `open|${s.cond}|${s.where}`, msg: `못 연 화면 ${s.cond} · ${s.where} — ${s.why || '까닭 모름'}` });
 for (const e of ruleErrors) findings.push({ rule: 'rule-error', cond: 'all', key: `rule-error|${e.split(':')[0]}`, msg: `규칙 모듈 오류 ${e}` });
 
