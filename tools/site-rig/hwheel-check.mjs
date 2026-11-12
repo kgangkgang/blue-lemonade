@@ -44,6 +44,7 @@ async function sweep(page) {
 }
 try {
     await b.size(1280, 900, false, 1);
+    await b.goto('about:blank'); await b.send('Storage.clearDataForOrigin', { origin: new URL(srv.url).origin, storageTypes: 'local_storage,session_storage' }).catch(() => { });   // 기억한 간편 · 세밀 칸을 비워요
     await b.goto(srv.url + 'mart/geulkku/'); await b.until(`document.querySelectorAll('.mart-card').length > 3`, 30000); await b.sleep(800);
     await sweep('글꾸 마트 목록');
     await b.goto('about:blank'); await b.goto(srv.url + 'mart/geulkku/?view=1#simple-k2');
