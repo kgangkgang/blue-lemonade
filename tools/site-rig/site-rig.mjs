@@ -69,6 +69,7 @@ const barFold = async b => { for (let k = 0; k < 14; k++) { await b.eval('window
 const SCREENS = [
     { group: '홈', where: '홈 · 머리줄', url: '', root: '.top-inner', open: async b => { await b.until(`document.querySelector('.top-inner')`); return true; } },
     { group: '홈', where: '홈 · 마트 절', url: '', root: '#mart', open: async b => { await b.until(`document.querySelector('#mart')`); await b.eval(`document.querySelector('#mart').scrollIntoView({block:'start'});window.scrollBy(0,-80);true`); await b.sleep(400); return true; } },
+    { group: '홈', where: '홈 · 한눈에', url: '', root: '#glance', open: async b => { await b.until(`document.querySelector('#glance')`); await b.eval(`document.querySelector('#glance').scrollIntoView({block:'start'});window.scrollBy(0,-80);true`); await b.sleep(400); return true; } },
     { group: '홈', where: '홈 · 마트 메뉴', url: '', root: '.mart-menu', open: async b => { await b.until(`document.querySelector('.top-mart')`); return tapAll(b, [['.top-mart', null, `document.querySelector('.mart-menu:not([hidden])')`]]); } },
     { group: '글꾸', where: '글꾸 · 목록', url: 'mart/geulkku/', root: null, open: async b => { await b.until(READY_GRID, 20000); await b.until(READY_PREVIEWS(3), 25000).catch(() => { }); await b.sleep(600); return true; } },
     { group: '글꾸', where: '글꾸 · 자세히 펼침', url: 'mart/geulkku/', root: '.mart-head', open: async b => { await b.until(READY_GRID, 20000); return tapAll(b, [['.mart-head-more', null, `document.querySelector('.mart-head.is-open')`]]); } },

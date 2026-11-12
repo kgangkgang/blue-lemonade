@@ -21,3 +21,5 @@
 .glance-go:hover{text-decoration:underline;text-underline-offset:3px}
 @media(max-width:1000px){.glance-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.glance-grid{grid-template-columns:1fr;gap:12px;margin-top:20px}.glance-body{padding:17px 16px 12px}.glance-body h3{font-size:18px}.glance-shot{aspect-ratio:16/9}}
+/* 첫 화면 판 칩 앞 「최신 판」 — 칩 줄(출시 도구가 판 숫자를 바꾸는 줄)은 글자를 그대로 두려고 CSS 로 붙여요 */
+.hero .release-chip b::before{content:"최신 판 ";font-weight:500;opacity:.75}
