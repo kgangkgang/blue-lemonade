@@ -633,7 +633,7 @@ function wireStage(stage) {
     const dist = m => { const [a, b] = [...m.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
     const commit = () => { paintView(); saveView(); if (room.open) syncRoomControls(); };
     stage.addEventListener('pointerdown', (e) => {
-        if (!e.target.closest('.room-frame')) return;
+        if (!pts.size && !e.target.closest('.room-frame')) return;   // 11-12 첫 손가락만 액자 위면 돼요 — 둘째 손가락이 액자 옆 빈 무대에 닿으면 무시돼 확대가 안 되고 끌기만 됐어요
         stage.setPointerCapture(e.pointerId);
         pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
         start = snap();

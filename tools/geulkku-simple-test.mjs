@@ -1606,5 +1606,22 @@ await test('AI 점검 ④ 장바구니 줄을 지금 그 마트 페이지에서 
     assert.ok(s.includes('close(); goTo(row.dataset.href); return;'));
     for (const [f, open] of [['mart.js', 'openSheet'], ['frame-room.js', 'openRoom']]) assert.ok(srcOf(f).includes(`addEventListener('hashchange', () => { const id = hashId(), it = id && items.find(x => x.id === id); if (it) ${open}(stateOf(it)); });`), f);
 });
+await test('AI 점검 ⑤ 액자 맞춰 보기 두 손가락 확대: 둘째 손가락이 액자 옆 빈 무대에 닿아도 확대돼요(첫 손가락만 액자 위면)', () => {
+    const s = srcOf('frame-room.js');
+    const src = s.match(/\nfunction wireStage\(stage\) \{[\s\S]*?\n\}/)[0];
+    const make = (0, eval)(`(view, spec, clamp, paintView, saveView, room, syncRoomControls, slackOf) => { ${src}; return wireStage; }`);
+    const view = { x: 50, y: 50, zoom: 100 }, spec = { sliders: [{ key: 'zoom', min: 50, max: 400 }] };
+    const on = {}, frameEl = { getBoundingClientRect: () => ({ width: 200, height: 300 }) };
+    const stage = { addEventListener: (t, f) => { on[t] = f; }, setPointerCapture() {}, querySelector: () => frameEl };
+    make(view, spec, (n, lo, hi) => Math.max(lo, Math.min(hi, n)), () => {}, () => {}, { open: false }, () => {}, () => null)(stage);
+    const ev = (id, x, y, inFrame) => ({ pointerId: id, clientX: x, clientY: y, target: { closest: q => (q === '.room-frame' && inFrame ? frameEl : null) }, preventDefault() {} });
+    on.pointerdown(ev(1, 100, 100, true));
+    on.pointerdown(ev(2, 200, 100, false));   // 둘째 손가락은 액자 밖 빈 무대
+    on.pointermove(ev(2, 300, 100, false));   // 두 손가락 사이 100 → 200
+    assert.equal(view.zoom, 200, '두 배로 벌리면 확대 두 배');
+    on.pointerup(ev(1)); on.pointerup(ev(2));
+    on.pointerdown(ev(3, 10, 10, false)); on.pointermove(ev(3, 60, 10, false));
+    assert.equal(view.zoom, 200); assert.equal(view.x, 50, '첫 손가락이 액자 밖이면 그대로(빈 무대 끌기 없음)');
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
