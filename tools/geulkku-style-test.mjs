@@ -5,6 +5,7 @@
 //   ② 여러 틀(심플 · 소리 카드 · 합격 틀 · 테마 못 받음 · 움직임 있는 틀)에서 스타일마다 실제 규칙이 들어가요
 //   ③ 스타일 카드 그림이 비어 있지 않고 스타일마다 달라요
 //   ④ 움직임 단추: 「잔잔하게」(약)를 약이 없는 틀에 입혀도 막힌 단추가 눌림으로 안 보여요
+//   ⑥ 틀 속 클래스가 다른 틀 뿌리 이름과 안 겹침(카드끼리 CSS 가 새지 않게)
 //   ⑤ 같은 모듈은 한 꼬리로만 불러요(꼬리가 다르면 브라우저가 상태를 두 벌 들고 스타일이 미리보기에 안 닿아요)
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -99,6 +100,17 @@ await test('⑤ 마트 모듈은 파일마다 한 꼬리로만 불러요(두 벌
     walk(MART);
     const two = [...seen].filter(([, s]) => s.size > 1).map(([f, s]) => `${f}: ${[...s].join(', ')}`);
     assert.equal(two.length, 0, two.join('\n'));
+});
+
+await test('⑥ 틀 속 클래스가 다른 틀의 뿌리(gk-k<숫자> · gk-q<숫자>)와 안 겹쳐요 — 겹치면 한 화면의 다른 틀 CSS 가 소품에 붙어요(HUNTV 다이얼 · 덕질 일기 스티커)', () => {
+    const roots = new Set(), hits = [];
+    const rootOf = h => (h.match(/^\s*<div\b[^>]*\bclass="[^"]*?\bgk-((?:k|q)\d+)\b/) || [])[1];
+    for (const it of idx.items) roots.add(rootOf(itemOf(it).preview));
+    for (const it of idx.items) {
+        const h = itemOf(it).preview, root = rootOf(h), body = h.slice(h.indexOf('>') + 1);
+        for (const m of body.matchAll(/\sclass="([^"]*)"/g)) for (const c of m[1].split(/\s+/)) if (/^gk-[kq]\d+$/.test(c) && c !== `gk-${root}` && roots.has(c.slice(3))) hits.push(`${it.id} ${c}`);
+    }
+    assert.equal(hits.length, 0, [...new Set(hits)].slice(0, 10).join(' · '));
 });
 
 console.log(`\n통과 ${pass} · 실패 ${fail}`);

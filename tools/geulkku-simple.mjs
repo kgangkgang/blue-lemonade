@@ -136,6 +136,25 @@ export const FIT_RULES = Object.freeze({
   k14: ['.gk-k14 .gk-fn{overflow:clip}'],
   q10: ['.gk-q10 .gk-gb{flex:0 1 178px;min-width:0;width:auto;grid-template-columns:minmax(0,178px)}', '.gk-q10 .gk-g0,.gk-q10 .gk-g1{min-width:0}', '.gk-q10 .gk-gb i{flex:0 1 16px;min-width:0;width:auto}'],
 });
+/** 11-12 속 클래스가 다른 틀의 뿌리(gk-k<숫자> · gk-q<숫자>)와 같은 이름이면 gk-ik<숫자> · gk-iq<숫자> 로 바꿔요.
+ *  한 화면에 틀이 여럿이면(마트 목록 카드 · 크게 보기 뒤 목록 · 커뮤니티 글 여러 개) 견출지 뿌리 .gk-k2{padding · 테두리 · 흰 바탕} 같은 규칙이
+ *  HUNTV 속보 다이얼(.gk-kn.gk-k2) · 덕질 일기 스티커(.gk-k.gk-k1~3)에 붙어 「작은 흰 상자에 포개진 소품」이 됐어요(16틀). 뿌리 클래스(틀 열쇠)는 그대로예요 */
+export const uniqInner = (html) => {
+  const head = html.match(/^\s*<div\b[^>]*>/)?.[0] || '';
+  const root = (head.match(/\bgk-((?:k|q)\d+)\b/) || [])[1];
+  if (!root) return html;
+  let body = html.slice(head.length);
+  const inner = new Set();
+  for (const m of body.matchAll(/\sclass="([^"]*)"/g)) for (const c of m[1].split(/\s+/)) if (/^gk-[kq]\d+$/.test(c) && c !== `gk-${root}`) inner.add(c);
+  for (const c of inner) {
+    const to = `gk-i${c.slice(3)}`;
+    if (new RegExp(/[\s".]/.source + to + /(?![\w-])/.source).test(html)) throw new Error(`gk-${root}: 바꿀 이름 ${to} 이 이미 있어요`);
+    const sel = new RegExp(/\./.source + c + /(?![\w-])/.source, 'g');   // CSS 선택자 .gk-k2 만(뿌리 .gk-k1216 · 애니메이션 이름 gk-k1216-… 은 안 걸려요)
+    body = body.replace(/(<style>)([\s\S]*?)(<\/style>)/g, (all, a, css, b) => a + css.replace(sel, `.${to}`) + b)
+      .replace(/(\sclass=")([^"]*)"/g, (all, a, v) => `${a}${v.split(/\s+/).map(x => (x === c ? to : x)).join(' ')}"`);
+  }
+  return head + body;
+};
 const fitFix = (html) => {
   const key = (html.match(/^\s*<div\b[^>]*\sclass="gk [^"]*\bgk-((?:k|q)\d+)\b/) || [])[1], add = (FIT_RULES[key] || []).filter(r => !html.includes(r));
   if (!add.length) return html;
@@ -172,7 +191,7 @@ export function frameHtml(d) {
   const file = fileOf(d);
   if (!file) throw new Error(`${d.id}: 틀 파일이 없어요`);
   const raw = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
-  const html = fitFix(sampleNames(focusRing(fillSlots(martAudio(stripAlias(raw.trim())), d.values))));
+  const html = fitFix(sampleNames(focusRing(fillSlots(martAudio(uniqInner(stripAlias(raw.trim()))), d.values))));
   const bad = problems(html);
   if (bad.length) throw new Error(`${d.id}: ${bad.join(' · ')}`);
   const info = sf.simpleFrameInfo(html);
