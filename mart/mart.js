@@ -463,16 +463,21 @@ async function clipText(text) {
         return ok;
     }
 }
+/** 테마 mart-import.js SIMPLE_SET_MAX 와 같은 값 — 조절 값 JSON 이 이보다 길면 테마는 조절 값을 통째로 버리고 틀만 받아요(알림 없이) */
+export const THEME_SET_MAX = 16 * 1024;
 async function themeTake(state, file) {
     const item = state.item;
-    const text = ensureItem(item).then(() => JSON.stringify(themePack(item, makeSet({ tone: toneState, look: lookNow(), motion: motionNow(), tex: texNow(), shape: shapeNow(), tune: tuneOf(item.id), frame: item.own ? themeKey(item) : item.id }))));   // 내 글꾸도 틀 값(frames[열쇠])까지
     try {
+        const set = makeSet({ tone: toneState, look: lookNow(), motion: motionNow(), tex: texNow(), shape: shapeNow(), tune: tuneOf(item.id), frame: item.own ? themeKey(item) : item.id });   // 내 글꾸도 틀 값(frames[열쇠])까지
+        const text = ensureItem(item).then(() => JSON.stringify(themePack(item, set)));
+        // 11-12 고친 글(한 칸 2000자 안팎)이 아홉 칸쯤 넘으면 16KB 를 넘어요 — 그대로 담되 테마가 틀만 받는다는 걸 알려요
+        const big = JSON.stringify(set).length > THEME_SET_MAX, warn = big ? ' · 다만 조절 값(고친 글)이 16KB 를 넘어 테마는 틀만 받아요 — 고친 글을 줄이면 같이 받아요' : '', ms = big ? 6000 : 3200;
         if (file) {
             const blob = new Blob([await text], { type: 'application/json' }), name = String(item.name || '글꾸').replace(/[\\/:*?"<>|]+/g, ' ').trim();
             const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `글꾸-${name}.bl-mart.json`, hidden: true });
             document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-            say('테마용 파일을 받았어요 · 블루레몬 1.1.4 부터 「마트에서 가져오기」로 받아요', 3200);
-        } else if (await clipText(text)) say('테마용 글을 복사했어요 · 블루레몬 1.1.4 부터 「마트에서 가져오기」에 붙여 넣어요', 3200);
+            say(`테마용 파일을 받았어요 · 블루레몬 1.1.4 부터 「마트에서 가져오기」로 받아요${warn}`, ms);
+        } else if (await clipText(text)) say(`테마용 글을 복사했어요 · 블루레몬 1.1.4 부터 「마트에서 가져오기」에 붙여 넣어요${warn}`, ms);
         else say('복사가 막혔어요 · 「테마용 파일 받기」로 받아 주세요', 3200);
     } catch { say('담기가 막혔어요 · 잠시 뒤 다시 눌러 주세요', 3000); }
 }

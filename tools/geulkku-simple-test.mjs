@@ -1313,6 +1313,12 @@ await test('설정 꼴 blGeulkku 2(geulkku-set.js) · 테마로 담기 꾸러미
     const ownHtml = allItems['simple-k1079'].preview;
     for (const id of ['own-ab12cd34', 'own-zz9k3', 'own-q7']) assert.equal(themePack({ id, own: true, name: '내 글꾸 1', preview: ownHtml }, set).items[0].key, 'k1079', id);
     assert.match(ms, /frame: item\.own \? themeKey\(item\) : item\.id/);
+    // 11-12 점검 2-② 테마(1.1.5 mart-import.js SIMPLE_SET_MAX)는 조절 값이 16KB 를 넘으면 알림 없이 틀만 받아요 — 마트가 담을 때 알려요
+    assert.match(ms, /export const THEME_SET_MAX = 16 \* 1024;/);
+    const take = ms.match(/async function themeTake\(state, file\) \{[\s\S]*?\n\}/)[0];
+    assert.match(take, /JSON\.stringify\(set\)\.length > THEME_SET_MAX/); assert.ok(take.indexOf('makeSet(') < take.indexOf('clipText('), '조절 값은 클립보드를 열기 전에(기다림 없이) 만들어요');
+    const longTune = { texts: Object.fromEntries(Array.from({ length: 10 }, (_, i) => [i, '가'.repeat(3000)])) };
+    assert.ok(JSON.stringify(gs.makeSet({ tone: {}, tune: longTune, frame: 'simple-k1079' })).length > 16 * 1024, '고친 글 열 칸(한 칸 2000자 안팎)이면 넘어요');
 });
 await test('바탕 질감(11-12 · 글꾸-질감/마트-연결.md): 끔이면 그대로 · 410틀 × 낮밤에 걸고 떼면 처음과 같음 · 걸지 않는 틀 16 · <style> 하나 · 정적 검사 · 인스타 세 틀 + #222 즉석카메라 목록', async () => {
     const tx = await import(pathToFileURL(path.join(MART, 'texture.js')).href + '?v=20261112a');
