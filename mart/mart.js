@@ -20,7 +20,7 @@ import { toneState, toned, toneOut, toneKey, CAST_GROUPS } from './tone-state.js
 import { simpleReady } from './simple-frames.js?v=20261112b';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
 import { WORKS, CHAR_WORKS, ADRIAN_WORKS, workByTitle, sourceHtml, creditsHtml, itemSources, worldOf, WORLDS, worldSources } from './sources.js?v=20261112c';   // 11-12 밤 원작(출처) 자료 한 곳
-import { mountCast, pickedCreditHtml } from './cast.js?v=20261112j';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
+import { mountCast, pickedCreditHtml, dayNightHtml } from './cast.js?v=20261112j';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
 import { frameMarkdown } from './mine-text.js?v=20261112f';   // 11-11 글만 복사(마크다운)
 import { makeSet } from './geulkku-set.js?v=20261112e';   // 11-12 설정 꼴 blGeulkku 2
 import { addToggle } from './day-night.js?v=20261113a';   // 11-13 낮 · 밤 전환(허브 지시-1112/낮밤-전환-마트/전환.mjs 와 글자까지 같은 사본)
@@ -911,7 +911,21 @@ function siteHtml(state) {
     if (item.own) h = scopePreview(h, item.ownId);
     return `<div class="mart-site is-${site.mode} is-${toneState.mode === 'light' ? 'light' : 'dark'}"><div class="mart-site-page"><div class="content">${h}</div></div></div>`;
 }
-const siteRowHtml = item => (item.simple || item.own ? `<div class="mart-sheet-site"><span class="mart-look-label">붙일 곳 흉내</span><span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="붙일 곳 흉내">${SITE_MODES.map(([id, l]) => `<button type="button" class="chip" data-site="${id}" aria-pressed="${site.mode === id}">${l}</button>`).join('')}</span></div>` : '');
+/** 11-13 미리보기 바로 위 한 줄(.mart-sheet-pvbar) — 왼쪽 「붙일 곳 흉내」 칩 셋 · 오른쪽 끝 해 · 달(「전환 넣기」를 켰을 때만 · 켬끔과 상관없이 줄 높이는 같아요).
+ *   사용자 「어차피 위에 해랑 달 있는 칸에 공간 있는데 걍 위로 올려버리지 그래」 · 「지금 그러면 중복 여백만 많잖아」 — 전에는 미리보기 아래에 「붙일 곳 흉내」 줄이 따로 있었고 미리보기 안 위에 해 · 달만 든 빈 줄이 또 있었어요.
+ *   해 · 달은 복사 글에 실리는 전환 단추의 미리보기예요: 마트 미리보기에서는 틀 안의 진짜 단추 줄(.gkt-b)을 숨기고 이 줄의 해 · 달이 그 단추(details.gkt-k)를 대신 열고 닫아요. 「글 · PC | 글 · 폰」 흉내에서는 깡통에서처럼 틀 위에 진짜 단추가 보여서 이 줄의 것은 비워 둬요.
+ *   좁은 폰에서는 「글 · 」 머리를 접어 「마트 · PC · 폰」으로(뜻은 같아요 · 읽개에는 그대로) */
+const siteChipHtml = (id, l) => { const m = /^(글 · )(.+)$/.exec(l); return `<button type="button" class="chip" data-site="${id}" aria-pressed="${site.mode === id}">${m ? `<span class="mart-pvbar-long">${m[1]}</span>${m[2]}` : l}</button>`; };
+const pvBarHtml = item => (item.simple || item.own ? `<div class="mart-sheet-pvbar"><span class="mart-pvbar-label" aria-hidden="true">붙일 곳 흉내</span><span class="mart-seg mart-pvbar-site" role="group" aria-label="붙일 곳 흉내">${SITE_MODES.map(([id, l]) => siteChipHtml(id, l)).join('')}</span><span class="mart-pvbar-pill" data-pv-pill hidden title="복사 글에 들어가는 해 · 달 단추예요 — 눌러서 미리 봐요">${dayNightHtml('data-flip-pill', '')}</span></div>` : '');
+/** 미리보기 안 전환 단추(details.gkt-k)의 지금 상태를 줄의 해 · 달에 맞춰요 — 닫힘 = 처음 판(지금 밝기) · 열림 = 반대 판 */
+function syncPill() {
+    const wrap = sheet?.querySelector('[data-pv-pill]'); if (!wrap) return;
+    const k = site.mode === 'mart' ? sheet.querySelector('.mart-sheet-preview details.gkt-k') : null;
+    wrap.hidden = !k;
+    const now = !k ? '' : k.open ? (toneState.mode === 'light' ? 'dark' : 'light') : toneState.mode;
+    for (const b of wrap.querySelectorAll('[data-flip-pill]')) b.setAttribute('aria-pressed', String(b.dataset.flipPill === now));
+}
+let pillWatch = null;
 function setSite(mode) {
     if (!SITE_MODES.some(([id]) => id === mode)) return;
     site.mode = mode; try { localStorage.setItem(SITE_KEY, mode === 'mart' ? '' : mode); } catch { /* 이 화면에서만 */ }
@@ -935,6 +949,7 @@ function openSheet(state) {
             const b = e.target.closest('button'); if (!b) return;
             if (b.dataset.sheet === 'close') sheet.close();
             else if (b.dataset.site) setSite(b.dataset.site);
+            else if (b.dataset.flipPill) { const k = sheet.querySelector('.mart-sheet-preview details.gkt-k'); if (k) { k.open = b.dataset.flipPill !== toneState.mode; syncPill(); } }   // 줄의 해 · 달 → 미리보기 안 전환 단추
             else if (b.matches('[data-pv-fold]')) { pvFolded = !pvFolded; try { localStorage.setItem(PV_KEY, pvFolded ? '1' : ''); } catch { /* 이번 화면에서만 */ } sheet.classList.toggle('is-pv-folded', pvFolded); b.setAttribute('aria-expanded', String(!pvFolded)); b.title = b.ariaLabel = pvFolded ? '미리보기 펼치기' : '미리보기 접기'; }
             else if (b.matches('[data-tune-edit]') && site.mode !== 'mart') setSite('mart');   // 글 고치기는 마트 미리보기에서(흉내 글에는 칸 번호가 달라요)
             else if (b.dataset.act && sheetState) doAct(sheetState, b.dataset.act, b);
@@ -968,7 +983,8 @@ function openSheet(state) {
     sheet.querySelector('.mart-sheet-meta').innerHTML = `${tagsHtml(item)}${designsHtml(item)}<p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}<div class="mart-cast-credit mart-sheet-credit">${item.simple ? pickedCreditHtml() : ''}</div>${item.own && item.warn.length ? `<details class="mart-own-check"><summary>깡통에 올리면</summary>${ownWarnHtml(item.warn)}</details>` : ''}`;   // 11-10 디자인 넘기기 · 11-12 내 글꾸 점검
     sheet.querySelector('.mart-sheet-viewbox').innerHTML = item.simple ? viewSegHtml(item) + pvFoldHtml() : '';   // 11-12 간편 | 세밀 — 창 머리(설계 4-8)
     const body = sheet.querySelector('.mart-sheet-body');
-    body.innerHTML = `<div class="mart-sheet-preview${site.mode !== 'mart' && (item.simple || item.own) ? ' is-site' : ''}">${item.preview ? sheetPreview(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div><div class="mart-sheet-side">${siteRowHtml(item)}<div class="mart-sheet-tune">${tuneHtml(item)}</div><div class="mart-sheet-inks">${item.preview && !toned(item) ? inksHtml(item) : ''}</div><div class="mart-sheet-mine">${mineBoxHtml(item)}</div></div>`;   // 11-12 미리보기 · 옆 칸(PC 두 칸 · 폰은 미리보기 위)
+    body.innerHTML = `${pvBarHtml(item)}<div class="mart-sheet-preview${site.mode !== 'mart' && (item.simple || item.own) ? ' is-site' : ''}">${item.preview ? sheetPreview(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div><div class="mart-sheet-side"><div class="mart-sheet-tune">${tuneHtml(item)}</div><div class="mart-sheet-inks">${item.preview && !toned(item) ? inksHtml(item) : ''}</div><div class="mart-sheet-mine">${mineBoxHtml(item)}</div></div>`;   // 11-12 미리보기 · 옆 칸(PC 두 칸 · 폰은 미리보기 위)
+    pillWatch?.disconnect(); pillWatch = new MutationObserver(syncPill); pillWatch.observe(body.querySelector('.mart-sheet-preview'), { childList: true }); syncPill();
     paintTune();   // 11-08 글자색 칩 · 11-10 캐릭터 대사색으로 칠할 땐 칩 대신 그 색 하나
     if (!item.preview) {
         body.setAttribute('aria-busy', 'true');

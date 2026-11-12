@@ -732,7 +732,7 @@ export function wireTune(sheet, { current, openItem, say = () => {}, clip = null
     const inPreview = e => editing && e.target.closest?.('.mart-sheet-preview');
     sheet.addEventListener('click', (e) => { if (inPreview(e) && e.target.closest('summary, label, a, button, input, audio')) e.preventDefault(); }, true);
     // 그래도 열림 상태가 바뀌면(키보드 · 브라우저 차이) 되돌려요
-    sheet.addEventListener('toggle', (e) => { const d = e.target; if (!editing || !d?.matches?.('.mart-sheet-preview details') || d.dataset.blHold === String(d.open)) return; d.dataset.blHold = String(!d.open); d.open = !d.open; }, true);
+    sheet.addEventListener('toggle', (e) => { const d = e.target; if (!editing || !d?.matches?.('.mart-sheet-preview details') || d.classList.contains('gkt-k') || d.dataset.blHold === String(d.open)) return; d.dataset.blHold = String(!d.open); d.open = !d.open; }, true);
     sheet.addEventListener('click', async (e) => {
         const item = current()?.item; if (!item) return;
         const q = sel => e.target.closest?.(sel);
