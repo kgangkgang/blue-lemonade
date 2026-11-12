@@ -14,7 +14,7 @@
   const PILL = '.pill, .tag, .mart-tag, .badge';
   const px = v => parseFloat(v) || 0, R = v => Math.round(v * 2) / 2;
   const csOf = e => getComputedStyle(e);
-  const vis = e => { if (!e.getClientRects().length) return false; const cs = csOf(e); if (cs.visibility === 'hidden' || +cs.opacity === 0) return false; const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1; };
+  const vis = e => { if (!e.getClientRects().length) return false; if (e.checkVisibility && !e.checkVisibility()) return false;   /* 접힌 details 안(content-visibility:hidden)은 상자는 있어도 안 보여요 */ const cs = csOf(e); if (cs.visibility === 'hidden' || +cs.opacity === 0) return false; const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1; };
   const rgb = c => { const m = /rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)/.exec(c || ''); return m ? [+m[1], +m[2], +m[3], m[4] === undefined ? 1 : +m[4]] : null; };
   const behind = e => { for (let a = e.parentElement; a; a = a.parentElement) { const c = rgb(csOf(a).backgroundColor); if (c && c[3] >= 0.5) return c; } return [255, 255, 255, 1]; };
   const near = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) <= 6;

@@ -52,7 +52,9 @@ export async function launch(profile, port = 9351) {
         /** 진짜 누르기 — 요소를 화면 가운데로 굴린 뒤 그 자리의 맨 위 요소가 그 요소(또는 안쪽)인지 보고, CDP 마우스 눌렀다 떼기로 눌러요(사이트 JS 의 click 처리기가 그대로 돌아요).
          *  돌려주는 값: true 또는 못 누른 까닭 문자열 */
         async tap(sel, { nth = 0 } = {}) {
-            const at = await api.eval(`(()=>{const list=[...document.querySelectorAll(${JSON.stringify(sel)})].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden');const e=list[${nth}];if(!e)return '없음 ${sel.replace(/'/g, '')}';e.scrollIntoView({block:'center',inline:'nearest'});const r=e.getBoundingClientRect();const x=Math.min(innerWidth-2,Math.max(1,r.left+r.width/2)),y=Math.min(innerHeight-2,Math.max(1,r.top+r.height/2));const t=document.elementFromPoint(x,y);if(!t||!(t===e||e.contains(t)))return '가려짐 ${sel.replace(/'/g, '')} ← '+(t?t.tagName.toLowerCase()+'.'+String(t.className).split(' ')[0]:'없음');return {x,y}})()`);
+            const probe = () => api.eval(`(()=>{const list=[...document.querySelectorAll(${JSON.stringify(sel)})].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden');const e=list[${nth}];if(!e)return '없음 ${sel.replace(/'/g, '')}';e.scrollIntoView({block:'center',inline:'nearest'});const r=e.getBoundingClientRect();const x=Math.min(innerWidth-2,Math.max(1,r.left+r.width/2)),y=Math.min(innerHeight-2,Math.max(1,r.top+r.height/2));const t=document.elementFromPoint(x,y);if(!t||!(t===e||e.contains(t)))return '가려짐 ${sel.replace(/'/g, '')} ← '+(t?t.tagName.toLowerCase()+'.'+String(t.className).split(' ')[0]:'없음');return {x,y}})()`);
+            let at = await probe();
+            if (typeof at === 'string' && at.startsWith('가려짐')) { await api.sleep(600); at = await probe(); }   // 굴려 올린 직후 붙박이 띠가 접히며 자리가 밀리는 사이(320 처럼 낮은 화면)에는 한 번 더 봐요 — 자리 잡은 뒤에도 가려져 있으면 진짜 가려진 것
             if (typeof at === 'string') return at;
             const base = { x: at.x, y: at.y, button: 'left', clickCount: 1 };
             await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: at.x, y: at.y });

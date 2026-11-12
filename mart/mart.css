@@ -477,7 +477,7 @@ html.mart-cart-on{overflow:hidden}
 .mart-cast-r i.is-off{background:transparent;box-shadow:inset 0 0 0 2px var(--line-strong)}
 .mart-cast-x{margin-left:auto;width:24px;height:24px;border:0;border-radius:50%;background:transparent;color:var(--muted);font:inherit;cursor:pointer}
 .mart-cast-x:hover{background:var(--tint);color:var(--ink)}
-.mart-cast-form{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:4px 0 0}
+.mart-cast-form{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 0}
 .mart-cast-form .field-wrap{flex:1 1 120px;min-width:0}
 /* 11-11 색 고르기 단추(사용자 「저 컬러팔레트 네모 개구려」) — 브라우저 기본 색 칸은 단추를 덮는 투명 칸으로 두고 색 원 + 색 값만 보여요(누르면 colorpop.js 의 마트 색 고르기) */
 .mart-cast-color{position:relative;display:inline-flex;align-items:center;gap:6px;flex:none;height:var(--ctl);padding:0 10px 0 8px;border:1px solid var(--line-strong);border-radius:var(--r-ctl);background:var(--surface);color:var(--muted);font-size:var(--ts-meta);font-variant-numeric:tabular-nums;line-height:1;cursor:pointer}
@@ -509,10 +509,10 @@ html.mart-cart-on{overflow:hidden}
 .mart-cast{padding:8px 10px}
 
 /* 11-10 혼합 스위치 · 바탕(종이 색 · 질감) 줄 */
-.mart-cast-head{flex-wrap:wrap;gap:6px}
+.mart-cast-head{flex-wrap:wrap;gap:8px}
 .mart-cast-head .mart-cast-mode{margin-left:auto}
 /* 11-11 칸 둘 「깡통: ● 이름 ▾」 · 「깡캐: ● 이름 ▾」 — 좁으면 두 줄 · 펼친 칸은 진한 테 + 목록 위 한 줄 안내 */
-.mart-cast-slots{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.mart-cast-slots{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
 .mart-cast-slots .mart-cast-toggle{min-width:0;max-width:100%}
 .mart-cast-slots .mart-cast-toggle b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mart-cast-slots .mart-cast-toggle>span:first-child{flex:none}
@@ -528,7 +528,7 @@ html.mart-cart-on{overflow:hidden}
 /* 11-11 크게 보기 「조절」 칸(tune-ui.js) — 색 칩(글자색 칩과 같은 부품) · 밤/낮 · 글 고치기 · 내 글꾸. 바꾼 칸에만 ↺ */
 .mart-sheet-tune:not(:empty){margin:0 0 12px}
 .mart-tune{display:flex;flex-direction:column;gap:8px;min-width:0}
-.mart-tune-colors{gap:6px 8px}
+.mart-tune-colors{gap:8px}
 .mart-tune-chip{display:inline-flex;align-items:center;min-width:0}
 .mart-tune-undo{display:inline-grid;place-items:center;flex:none;width:28px;height:28px;margin:0 0 0 2px;padding:0;border:0;border-radius:999px;background:none;color:var(--muted);font:inherit;font-size:15px;line-height:1;cursor:pointer}
 .mart-tune-undo:hover{background:var(--tint-2);color:var(--ink)}
@@ -547,7 +547,7 @@ html.mart-cart-on{overflow:hidden}
 .mart-sheet-mine:not(:empty){margin:12px 0 0}
 .mart-tune-save{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
 .mart-tune-h{margin:0;font-size:16px;font-weight:650;color:var(--ink)}
-.mart-tune-form{display:flex;flex-wrap:wrap;gap:6px}
+.mart-tune-form{display:flex;flex-wrap:wrap;gap:8px}
 .mart-tune-form .field-wrap{flex:1 1 140px;min-width:0}
 .mart-tune-mine{display:flex;flex-direction:column;gap:2px;margin:0;padding:0;list-style:none}
 .mart-tune-mine li{display:flex;align-items:center;gap:4px;min-width:0}
@@ -588,7 +588,7 @@ html.mart-cart-on{overflow:hidden}
 .mart-look-seg{flex-wrap:wrap;gap:8px;min-width:0}
 .mart-tune-h small{margin-left:6px;color:var(--muted);font-size:var(--ts-meta);font-weight:400}
 .mart-tune-h:not(:first-child){margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
-.mart-preset-io{display:flex;flex-direction:column;gap:6px}
+.mart-preset-io{display:flex;flex-direction:column;gap:8px}
 .mart-preset-io[hidden]{display:none}
 .mart-preset-io textarea{height:auto;min-height:56px;padding:8px 12px;resize:vertical;font:inherit;font-size:var(--ts-meta);line-height:1.4;word-break:break-all}
 .mart-tune-mine li.is-here .mart-tune-load b{color:var(--blue-strong)}
@@ -763,7 +763,7 @@ html.mart-cart-on{overflow:hidden}
   .mart-group .mart-num{gap:3px}
   .mart-group .mart-num input{width:calc(3.6ch + 12px);padding:0 4px}
 }
-.mart-sheet-viewbox:has(.mart-view){display:flex;align-items:center;gap:8px;margin:12px 0 0}
+.mart-sheet-viewbox:has(.mart-view){display:flex;align-items:center;gap:8px;margin:8px 0 0}
 .mart-sheet-viewbox .mart-view{flex:1 1 auto;margin:0}
 .mart-pv-fold{flex:none}
 .mart-sheet.is-pv-folded .mart-sheet-body>.mart-sheet-preview,.mart-sheet.is-pv-folded .mart-sheet-pvbar{display:none}
@@ -834,7 +834,7 @@ html.mart-cart-on{overflow:hidden}
 .mart-cast-src[hidden]{display:none}
 .mart-cast-people{display:flex;flex-wrap:wrap;gap:8px}
 .mart-cast-mine{display:inline-flex;align-items:center;gap:0}
-.mart-cast-direct{display:grid;gap:10px}
+.mart-cast-direct{display:grid;gap:8px}
 .mart-cast-direct-in{display:grid;gap:8px}
 .mart-cast-direct .mart-cast-form{margin:0}
 .mart-cast-hint{margin:6px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
@@ -870,8 +870,8 @@ html.mart-cart-on{overflow:hidden}
 .mart-seg[hidden]{display:none}
 /* 11-12 밤 밝기 단추(해 · 달) — 띠 하나에 두 칸 · 고른 칸만 켜짐(색은 아래 11-13 줄) · 그림은 테마의 해 · 달 선 그림 */
 :root{--sun:#E8A100}   /* 해 아이콘 호박색(마트 토큰에 없는 색 하나) */
-.mart-dn{display:inline-flex;align-items:center;gap:2px;flex:none;box-sizing:border-box;height:var(--ctl);padding:3px;border-radius:10px;background:var(--tint-2)}
-.mart-dn-b{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;width:38px;height:30px;margin:0;padding:0;border:0;border-radius:7px;background:transparent;cursor:pointer;transition:background-color .2s,box-shadow .2s}
+.mart-dn{display:inline-flex;align-items:center;gap:2px;flex:none;box-sizing:border-box;height:34px;padding:3px;border-radius:10px;background:var(--tint-2)}
+.mart-dn-b{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;width:38px;height:28px;margin:0;padding:0;border:0;border-radius:7px;background:transparent;cursor:pointer;transition:background-color .2s,box-shadow .2s}
 .mart-dn-b>i{display:block;width:16px;height:16px;background:var(--muted);-webkit-mask:center/100% 100% no-repeat;mask:center/100% 100% no-repeat}
 .mart-dn-b.is-day>i{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4.5' fill='%23000' stroke='none'/%3E%3Cpath d='M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4.5' fill='%23000' stroke='none'/%3E%3Cpath d='M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41'/%3E%3C/svg%3E")}
 .mart-dn-b.is-night>i{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.9 13.5A9 9 0 0 1 10.5 3.1 9 9 0 1 0 20.9 13.5Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.9 13.5A9 9 0 0 1 10.5 3.1 9 9 0 1 0 20.9 13.5Z'/%3E%3C/svg%3E")}
@@ -893,9 +893,9 @@ html.mart-cart-on{overflow:hidden}
    ① 미리보기 칸 아래 12(위 폰 규칙의 margin) ② 잘린 미리보기 아래 끝에 흐림 띠 — 아래로 더 있다는 표시(끝까지 굴리면 칸 안쪽 여백 위라 안 보여요) */
 .mart-sheet:not(.mart-taste) .mart-sheet-body>.mart-sheet-preview::after{content:"";position:sticky;bottom:calc(-1*var(--pv-pad,12px));z-index:3;display:block;height:var(--pv-pad,12px);margin:0 0 calc(-1*var(--pv-pad,12px));background:linear-gradient(to bottom,transparent,var(--tint));pointer-events:none}   /* 칸 안쪽 아래 여백 12 자리에만 놓여요 — 더 굴릴 것이 있으면 아래 끝 12 가 흐려지고, 끝까지 내려가면(또는 안 잘리면) 틀을 가리지 않고 굴릴 거리도 늘리지 않아요(전에는 28 이라 안 잘린 틀의 아래 테두리를 가리고 굴릴 거리가 12~16 늘었어요) */
 .mart-sheet:not(.mart-taste) .mart-sheet-body>.mart-sheet-preview.is-site::after{display:none}
-/* 11-13 미리보기 바로 위 한 줄(.mart-sheet-pvbar): 왼쪽 「붙일 곳 흉내」 칩 셋 · 오른쪽 끝 해 · 달(전환 넣기를 켰을 때만) — 줄 높이는 늘 36.
+/* 11-13 미리보기 바로 위 한 줄(.mart-sheet-pvbar): 왼쪽 「붙일 곳 흉내」 칩 셋 · 오른쪽 끝 해 · 달(전환 넣기를 켰을 때만) — 줄 높이는 늘 34(칩 · 해 · 달 높이).
    「간편 | 세밀」 줄과 미리보기 사이에는 이 한 줄만 두고, 위 12(몸통 안쪽 여백) · 아래 8 · 미리보기 아래 12 로 여백을 한 단씩만 남겨요(전에는 미리보기 칸의 위 여백 12 + 해 · 달 줄 34 + 8 + 아래 「붙일 곳 흉내」 줄이 겹쳐 쌓였어요) */
-.mart-sheet-pvbar{display:flex;align-items:center;gap:8px;min-width:0;height:var(--ctl);box-sizing:content-box}
+.mart-sheet-pvbar{display:flex;align-items:center;gap:8px;min-width:0;height:34px;box-sizing:content-box}
 .mart-pvbar-label{flex:none;color:var(--muted);font-size:var(--ts-meta);white-space:nowrap}
 .mart-pvbar-site{flex:none;gap:8px}
 .mart-pvbar-pill{flex:none;display:inline-flex;margin-left:auto}
@@ -905,13 +905,13 @@ html.mart-cart-on{overflow:hidden}
 @media (max-width:359px){.mart-pvbar-long{display:none}}
 @media (max-width:899px){
   .mart-sheet:not(.mart-taste) .mart-sheet-body>.mart-sheet-pvbar{order:-3;position:sticky;top:-12px;z-index:3;margin:-12px -12px 0;padding:12px 12px 8px;background:var(--tint)}
-  .mart-sheet:not(.mart-taste) .mart-sheet-body:has(>.mart-sheet-pvbar)>.mart-sheet-preview{top:44px;margin:0 -12px 12px;padding:0 12px 12px}
+  .mart-sheet:not(.mart-taste) .mart-sheet-body:has(>.mart-sheet-pvbar)>.mart-sheet-preview{top:42px;margin:0 -12px 12px;padding:0 12px 12px}
 }
-@media (max-width:639px){.mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune):has(>.mart-sheet-pvbar)>.mart-sheet-preview{max-height:calc(40dvh - 8px)}}   /* 위 줄(56)이 옛 「붙일 곳 흉내」 줄 자리(48)보다 8 커서 그만큼 줄여요 — 「스타일」 머리 자리는 그대로 */
+@media (max-width:639px){.mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune):has(>.mart-sheet-pvbar)>.mart-sheet-preview{max-height:calc(40dvh - 6px)}}   /* 위 줄(54)이 옛 「붙일 곳 흉내」 줄 자리(48)보다 6 커서 그만큼 줄여요 — 「스타일」 머리 자리는 그대로 */
 @media (min-width:900px){
   .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune):has(>.mart-sheet-pvbar){grid-template-rows:auto 1fr}
   .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune)>.mart-sheet-pvbar{grid-column:1;grid-row:1;position:sticky;top:0;z-index:3;padding:0 0 8px;background:var(--tint)}
-  .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune):has(>.mart-sheet-pvbar)>.mart-sheet-preview{grid-column:1;grid-row:2;top:44px;max-height:calc(min(880px,100dvh - 40px) - 244px);--pv-pad:16px}
+  .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune):has(>.mart-sheet-pvbar)>.mart-sheet-preview{grid-column:1;grid-row:2;top:42px;max-height:calc(min(880px,100dvh - 40px) - 242px);--pv-pad:16px}
   .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune):has(>.mart-sheet-pvbar)>.mart-sheet-side{grid-column:2;grid-row:1/span 2}
 }
 @media (min-width:900px){.mart-sheet.is-pv-folded:not(.mart-taste) .mart-sheet-body:has(.mart-tune):has(>.mart-sheet-pvbar)>.mart-sheet-side{grid-column:1;grid-row:auto}}

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 11-13 크게 보기에서 「붙어 있는 칸」 사이 간격 재기 — 사용자 「붙일 곳 흉내랑 미리보기랑 너무 딱 붙지 않았니」.
 //   글꾸 마트 크게 보기(전환 끔 · 켬 · 낮 · 밤) · 액자 마트 맞춰 보기에서 창 몸통의 칸들을 위에서 아래로 늘어놓고 이웃한 칸 사이 틈(px)을 재요.
-//   판정(11-13 줄 올리기 뒤): 미리보기 바로 위에 한 줄(.mart-sheet-pvbar · 왼쪽 「붙일 곳 흉내」 칩 셋 · 오른쪽 해 · 달)이 있고 칩 셋이 한 줄 · 줄 높이가 전환 켬끔과 상관없이 36 · 칩 ↔ 미리보기 틈 8 · 미리보기 ↔ 아래 칸 틈 8 이상 · 미리보기 안에 해 · 달만 든 줄이 따로 없음 · 잘린 미리보기 아래 끝 흐림 · 가로 넘침 0. 보이는 미리보기 높이(pvH)도 적어요. 사진도 찍어요.
+//   판정(11-13 줄 올리기 뒤): 미리보기 바로 위에 한 줄(.mart-sheet-pvbar · 왼쪽 「붙일 곳 흉내」 칩 셋 · 오른쪽 해 · 달)이 있고 칩 셋이 한 줄 · 줄 높이가 전환 켬끔과 상관없이 34 · 칩 ↔ 미리보기 틈 8 · 미리보기 ↔ 아래 칸 틈 8 이상 · 미리보기 안에 해 · 달만 든 줄이 따로 없음 · 잘린 미리보기 아래 끝 흐림 · 가로 넘침 0. 보이는 미리보기 높이(pvH)도 적어요. 사진도 찍어요.
 //   node tools/site-rig/sheet-gap-check.mjs <사이트 폴더 | 주소> <결과 폴더> [--port 18989 --cdp 19479] [--loose]   (--loose: 판정 없이 값 · 사진만 — 고치기 전 판을 잴 때)
 import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import { launch } from './cdp.mjs';
@@ -40,7 +40,7 @@ try {
             await b.goto('about:blank'); await b.goto(srv.url + 'mart/kara/').catch(() => { }); await b.eval(`(()=>{localStorage.clear();sessionStorage.clear();localStorage.setItem('bl-mart-tone-v1',${J(J(tone))});return true})()`);
             await b.goto(srv.url + 'mart/geulkku/?view=1#simple-k3'); await b.until(`document.querySelector('.mart-sheet[open] .mart-sheet-preview .gk')`, 30000); await b.sleep(900);
             const m = await b.eval(MEASURE);
-            const k = m?.bar; row(vp, `글꾸 크게 보기 · ${name}: 미리보기 위 한 줄(칩 셋 한 줄 · 높이 36 · 칩 ↔ 미리보기 8 · 해 · 달은 전환 켰을 때만 오른쪽 끝 · 미리보기 안 따로 줄 0) · 미리보기 ↔ 아래 칸 8 이상 · 잘린 미리보기 흐림 · 넘침 0`, m && k && k.above && k.oneLine && k.h === 36 && k.toPv === 8 && k.pill === !!tone.flip && (!k.pill || Math.abs(k.pillRight) <= 1) && !k.innerRow && k.barOver <= 0 && (vp === 'pc' || m.below === 'mart-sheet-side' && m.pvGap === 12) && (m.more <= 2 || m.fade >= 12) && m.over <= 0, J(m));
+            const k = m?.bar; row(vp, `글꾸 크게 보기 · ${name}: 미리보기 위 한 줄(칩 셋 한 줄 · 높이 34 · 칩 ↔ 미리보기 8 · 해 · 달은 전환 켰을 때만 오른쪽 끝 · 미리보기 안 따로 줄 0) · 미리보기 ↔ 아래 칸 8 이상 · 잘린 미리보기 흐림 · 넘침 0`, m && k && k.above && k.oneLine && k.h === 34 && k.toPv === 8 && k.pill === !!tone.flip && (!k.pill || Math.abs(k.pillRight) <= 1) && !k.innerRow && k.barOver <= 0 && (vp === 'pc' || m.below === 'mart-sheet-side' && m.pvGap === 12) && (m.more <= 2 || m.fade >= 12) && m.over <= 0, J(m));
             await b.shot(path.join(OUT, `${vp}-글꾸-${name}.png`));
         }
         // 세밀 보기
