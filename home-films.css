@@ -1,5 +1,5 @@
 /* 아래쪽 장면(화면 영상이 주인공) — 지금 홈의 절 머리 · 화면 틀(.showcase-screen) · 기기 고르기(.device-pick)를 그대로 쓰고 놓는 법만 정해요 */
-.scene .section-head{margin-bottom:28px}
+.scene .section-head{margin-bottom:24px}
 .scene-film .showcase-duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.2885fr);gap:12px;align-items:end}
 .home-guide .showcase.scene-film .showcase-screen,html.device-mobile .home-guide .showcase.scene-film .showcase-screen{grid-area:auto;position:relative;width:100%;max-width:none;overflow:hidden}
 .home-guide .showcase.scene-film .showcase-wide video,html.device-mobile .home-guide .showcase.scene-film .showcase-wide video{aspect-ratio:1280/800;object-fit:contain;transform:none}
@@ -7,9 +7,8 @@
 .home-guide .showcase.scene-film .showcase-tall{border-radius:16px}
 /* 11-04 영상 가운데 설정 창을 찍은 것은 둘레에 푸른 회색 띠가 같이 찍혀 있어 새로 찍기 전까지 잘라요 */
 .home-guide .showcase.scene-film.crop .showcase-wide video,html.device-mobile .home-guide .showcase.scene-film.crop .showcase-wide video{aspect-ratio:1213/732;object-fit:cover;transform:scale(1.052)}
-.scene-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:48px}
+.scene-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:48px;align-items:start}
 .scene-two .section-head h2{font-size:clamp(22px,2.2vw,28px)}
-.home-fold{padding-block:0 !important}
 .more-body>section.section,.more-body>.install{max-width:none;padding:8px 0 0 !important}
 .more-body>section>.section-head{display:none}
 /* 변형: 장면마다 화면 하나만 크게 — 첫 화면의 「모바일 | PC」 고르기를 따라요 */
@@ -19,7 +18,7 @@ html.device-pc .scene-film.single .showcase-tall,html.device-mobile .scene-film.
 html.device-mobile .home-guide .showcase.scene-film.single .showcase-tall{width:min(300px,64%);margin:0 auto}
 .scene-pick{justify-content:center;margin-top:16px}
 @media (max-width:760px){
- .scene-two{grid-template-columns:1fr;gap:44px}
+ .scene-two{grid-template-columns:1fr;gap:48px}
  /* 나란히 판: 폰에서는 폰 화면만 크게(PC 화면은 줄이면 안 읽혀서 받지도 않아요) */
  .scene-film:not(.single) .showcase-duo{display:block}
  .scene-film:not(.single) .showcase-wide{display:none}

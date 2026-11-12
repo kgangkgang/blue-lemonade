@@ -189,3 +189,70 @@ html.device-pc .home-guide .hero-art.showcase .showcase-screen video{aspect-rati
 .showcase.is-seen .bl-tail:not(.is-in) img{animation:bl-tail-wag 9s ease-in-out infinite}
 @keyframes bl-tail-wag{0%,86%,100%{transform:rotate(0)}90%{transform:rotate(-9deg)}94%{transform:rotate(6deg)}97%{transform:rotate(-3deg)}}
 @media (prefers-reduced-motion:reduce){.showcase .bl-tail img{animation:none !important}.bl-tail{transition:none}}
+/* GAP-HOME:START */
+/* ── 11-13 홈 간격 맞춤(사용자 「여백이나 줄 사이 간격도 동일한 간격으로」 · 사이트 간격 리그의 사다리 4 · 8 · 12 · 16 · 24 · 32 · 40 · 48 · 56 · 64 · 80 · 96)
+   눈에 보이는 것 사이를 잰 값이 사다리에 서게만 맞춰요. 첫 화면은 1 ~ 3px 어긋남만 고쳤어요. */
+/* 접힌 줄 아홉은 한 묶음 — 선으로 나뉜 줄(전에는 여섯은 붙고 셋은 44 ~ 80 떨어져 있었어요) */
+.fold-list{max-width:1400px;margin:0 auto;padding:56px 32px}
+.home-guide .fold-list>section,.home-guide .fold-list>#features,.home-guide .fold-list>#updates{max-width:none;padding:0}
+.fold-list>section+section{margin-top:8px}
+.home-guide main>.mart-section{padding-bottom:80px}
+/* 작은 머리글 → 제목 12 */
+.home-guide .section-head .eyebrow+h2,.home-guide .section-head>div>.eyebrow+h2{margin-top:11px}
+/* 기기 고르기: 붙어 선 단추 4 */
+.device-pick{gap:4px}
+/* 설치 */
+.install-steps{gap:16px;margin:32px 0 40px}
+.install-steps h3{margin-bottom:8px;line-height:1.45}
+.step-menu{margin-top:16px;padding-block:16px 4px}
+.install-address{margin:0 0 32px}
+.install-address>span{display:block;line-height:1.75}
+.home-guide .copy-row{margin-top:12px}
+#copy-help{margin-top:8px}
+.home-guide .install .text-link{margin-top:19px}
+/* 꼬리말 */
+.home-guide footer .brand+p{margin-top:16px}
+.home-guide footer .site-credits{margin-top:19px}
+.home-guide footer p{line-height:1.7}
+.scene .section-head .eyebrow{display:block}
+.home-guide .scene .section-head .eyebrow+h2{margin-top:12px}
+.step-menu{line-height:1.75}
+/* 줄 높이: 본문 1.7 · 작은 설명 1.75(12px) 한 값씩 */
+.home-guide .bundle-kicker{line-height:1.75}
+.mart-random-links{line-height:1.7}
+.intro-kicker,.intro-context{line-height:1.7}
+.step-number{line-height:2}
+.scene-two .section-head h2{line-height:1.4}
+@media(max-width:1000px){.fold-list{padding-inline:24px}}
+@media(max-width:760px){
+ .fold-list{padding:40px 20px 32px}
+ .intro-kicker{line-height:21px}
+ .home-guide .section-head .bundle-kicker{line-height:21px}
+ /* 폰: 장면 사이 숨은 한쪽에서만(위 절 아래 44 + 아래 절 위 48 이 겹쳐 92 였어요 → 96 한 곳) · PC 는 152 그대로 */
+ .home-guide main>.scene{padding-top:40px;padding-bottom:0}
+ .home-guide .hero{padding-top:31px;padding-bottom:24px}
+ .home-guide main>.scene+.scene{padding-top:96px}
+ .home-guide main>.scene+.mart-section{padding-top:84px}
+ .home-guide .section-head p,.install-steps p{line-height:1.7}
+ .home-guide .hero .lead{line-height:1.7}
+ .step-menu,.home-guide .copy-row code,#copy-help{line-height:1.7}
+ .home-guide .install .text-link{margin-top:18px}
+ .home-guide main>.mart-section{padding-bottom:40px}
+ .home-guide .mart-section .section-head{margin-bottom:24px}
+ .home-guide .hero{gap:24px}
+ .home-guide .hero h1{margin:16px 0}
+ .home-guide .hero .actions{margin-top:24px;gap:8px}
+ .home-guide .essentials{gap:16px}
+ .install-steps{gap:12px;margin:24px 0}
+ .step-menu{margin-top:12px;padding-block:12px 4px}
+ .install-address{margin:24px 0}
+ .home-guide .copy-row{gap:8px}
+ .scene-two{gap:40px}
+}
+@media(min-width:761px){
+ .home-guide main>.essentials+.scene{padding-top:80px}
+ .home-guide .hero .actions{margin-top:24px}
+ .home-guide .mart-section .section-head{margin-bottom:32px}
+ .home-guide .install .section-head{margin-bottom:0}
+}
+/* GAP-HOME:END */
