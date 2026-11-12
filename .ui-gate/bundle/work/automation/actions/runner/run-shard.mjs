@@ -39,7 +39,7 @@ export async function main(argv = process.argv.slice(2)) {
     const env = { UI_GATE_OUT: outRoot, ST_DIR: path.resolve(a.st), BL_FIXTURE_TODAY: plan.fixtureToday || '' };
     const shard = { shard: Number(a.shard), startedAt: new Date().toISOString(), checks: [], template: null };
     try { shard.template = await prepareTemplate({ stDir: path.resolve(a.st), theme: path.resolve(a.theme), dir: template }); }
-    catch (e) { shard.error = `계정 틀을 못 만들었어요: ${String(e.message || e).slice(0, 600)}`; for (const c of list) { const o = path.join(outRoot, c.id); fs.mkdirSync(o, { recursive: true }); fs.writeFileSync(path.join(o, 'status.json'), JSON.stringify({ id: c.id, code: -2, ms: 0, toolError: true, error: shard.error })); } fs.writeFileSync(path.join(outRoot, 'shard.json'), JSON.stringify(shard, null, 2)); console.error(shard.error); return 1; }
+    catch (e) { shard.error = `계정 틀을 못 만들었어요: ${String(e.message || e).slice(0, 600)}`; for (const c of list) { const o = path.join(outRoot, c.id); fs.mkdirSync(o, { recursive: true }); fs.writeFileSync(path.join(o, 'status.json'), JSON.stringify({ id: c.id, code: -2, ms: 0, toolError: true, error: shard.error })); } fs.writeFileSync(path.join(outRoot, 'shard.json'), JSON.stringify(shard, null, 2)); console.error(shard.error); if (process.env.GITHUB_ACTIONS) console.log(`::error title=ui-gate shard ${a.shard} 계정 틀::${String(shard.error).replace(/%/g, '%25').split('\n').join('%0A').slice(0, 900)}`); return 1; }
     for (const c of list) {
         const o = path.join(outRoot, c.id); let st = null; const attempts = [];
         for (let k = 1; k <= 2; k++) {
@@ -60,7 +60,13 @@ export async function main(argv = process.argv.slice(2)) {
         let res = null; try { res = JSON.parse(fs.readFileSync(path.join(o, 'result.json'), 'utf8')); } catch { }
         shard.checks.push({ id: c.id, code: st.code, ms: st.ms, fails: res?.fails?.length ?? null, total: res?.total ?? null, toolError: st.toolError });
         console.log(`${c.id}: 코드 ${st.code} · ${Math.round(st.ms / 1000)}초 · 실패 ${res?.fails?.length ?? '?'}건${st.toolError ? ' · 도구 문제' : ''}`);
+        // 11-12 첫 실행: 아티팩트 · 로그는 로그인해야 받혀요 — 결과 요약을 잡 알림(annotation)으로도 남겨 공개 API 로 읽게 해요(검사마다 한 줄 · 지어낸 자료의 결과뿐)
+        if (process.env.GITHUB_ACTIONS) { const esc = s => String(s).replace(/%/g, '%25').replace(/\r/g, '').replace(/\n/g, '%0A'); const boot = st.bootMs ? ` · 리그 기동 ${Math.round((st.bootMs.ready || 0) / 1000)}초(실리태번 ${Math.round((st.bootMs.st || 0) / 1000)} · 크롬 ${Math.round(((st.bootMs.chrome || 0) - (st.bootMs.st || 0)) / 1000)} · 페이지 ${Math.round(((st.bootMs.page || 0) - (st.bootMs.chrome || 0)) / 1000)})` : '';
+            const body = `코드 ${st.code} · ${Math.round(st.ms / 1000)}초${boot} · 전체 ${res?.total ?? '?'} · 실패 ${res?.fails?.length ?? '?'}${res?.incomplete ? ' · 미완료 ' + JSON.stringify(res.completionProblems || []).slice(0, 300) : ''}${res?.fails?.length ? '\n실패 key: ' + res.fails.slice(0, 12).map(f => f.key).join(' / ') : ''}${st.error ? '\n오류: ' + String(st.error).slice(0, 600) : ''}${st.stLogTail ? '\n실리태번: ' + String(st.stLogTail).slice(-400) : ''}`;
+            console.log(`::${st.code === 0 || (st.code === 1 && res) ? 'notice' : 'error'} title=ui-gate ${c.id}::${esc(body)}`); }
     }
+    if (process.env.GITHUB_ACTIONS && shard.template) console.log(`::notice title=ui-gate shard ${a.shard} 계정 틀::${Math.round(shard.template.ms / 1000)}초 · 씨앗 칸 ${shard.template.seeded}`);
+    if (process.env.GITHUB_ACTIONS && shard.error) console.log(`::error title=ui-gate shard ${a.shard}::${String(shard.error).replace(/\n/g, '%0A').slice(0, 900)}`);
     shard.endedAt = new Date().toISOString(); fs.writeFileSync(path.join(outRoot, 'shard.json'), JSON.stringify(shard, null, 2));
     // 검사 스크립트 종료 코드: 0 통과 · 1 실패 있음(결과 있음 — 판정은 PC 가 기준선으로) · 2 미완료 · 그 밖 도구 문제. 칸(잡)은 결과를 못 만든 검사가 있을 때만 빨갛게
     return shard.checks.every(x => x.code === 0 || (x.code === 1 && x.fails != null)) ? 0 : 1;
