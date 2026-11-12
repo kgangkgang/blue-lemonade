@@ -146,6 +146,18 @@ function fruitHeartCode() {
     }
     if (Object.keys(hashed).length) data.hashed = hashed; else delete data.hashed;
     if (Object.keys(blocks).length) data.blocks = blocks; else delete data.blocks;
+    // 1.1.6 알림 · 확인 창 · 오류 문구 사전(toasts): 클릭 15초 창 없이 언제든 번역해요. 긴 원문은 위 hashed(o 알림 · n 확인 창)에만 두고
+    //   여기에는 짧은 원문(폭 30 이하)만 받아요. 긴 꼬리가 붙는 알림(tails)은 꼬리를 길이 + 지문으로만 적어요.
+    const toasts = additions.toasts;
+    if (toasts) {
+        const pairs = [...(toasts.exact || []), ...(toasts.patterns || []), ...(toasts.native || []), ...(toasts.nativePatterns || []), ...(toasts.lach?.exact || []), ...(toasts.lach?.patterns || []), ...(toasts.lach?.parts || [])];
+        const keys = [...pairs.map(x => x[0]), ...Object.keys(toasts.groups || {}), ...Object.keys(toasts.nativeWords || {}), ...(toasts.tails || []).map(x => x[2]), toasts.lach?.title?.[0] || ''];
+        const bad = keys.filter(zh => !keepPresetText(zh));
+        if (bad.length) throw Error(`fruit-heart-additions.json toasts 에 폭 ${SHORT_TEXT_WIDTH} 을 넘는 원문이 있어요: ${bad.join(' | ')}`);
+        if (pairs.some(x => !Array.isArray(x) || typeof x[0] !== 'string' || typeof x[1] !== 'string' || !x[1].trim())) throw Error('fruit-heart-additions.json toasts 짝 모양이 달라요');
+        for (const [len, id, head, ko] of toasts.tails || []) if (!Number.isInteger(len) || !ID.test(id) || !head || !ko) throw Error('fruit-heart-additions.json toasts.tails 모양이 달라요');
+        data.toasts = toasts;
+    } else delete data.toasts;
     // 원래 사전(모듈 안)에 있던 긴 원문도 걸러요 — 다시 만들어도 돌아오지 않게. 키 목록(알림 · 창 확인)도 같은 기준 (창 이름 titles 는 그대로)
     data.entries = data.entries.filter(x => keepPresetText(x.zh));
     for (const name of ['dialogKeys', 'nativeKeys', 'toastKeys', 'toastPatterns', 'toastAnytime']) if (Array.isArray(data[name])) data[name] = data[name].filter(keepPresetText);

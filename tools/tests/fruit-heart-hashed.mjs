@@ -119,9 +119,12 @@ check('묶음: 노드별 조각을 바꾸고 null 조각은 그대로 둬요', (
 check('코드 칸(code)은 지문이 맞아도 그대로예요', () => assert.equal(code1.text, LONG));
 
 const toast = add(toastBox, 'div', { class: 'toast-message' }, LONG_TOAST); e.mutate();
-check('알림은 패널을 누르기 전에는 바꾸지 않아요', () => assert.equal(toast.text, LONG_TOAST));
+// 1.1.6: 알림은 패널을 누르지 않아도(15초 창 없이) 지문(알림 종류)이 맞으면 바꿔요.
+check('알림은 패널을 누르기 전에도 지문(알림 종류)으로 바꿔요', () => assert.equal(toast.text, '시험 알림 번역'));
 e.click(panel); toast.children[0].nodeValue = LONG_TOAST; e.mutate();
-check('패널을 누른 뒤의 알림은 지문(알림 종류)으로 바꿔요', () => assert.equal(toast.text, '시험 알림 번역'));
+check('글이 원문으로 다시 바뀌어도 또 번역해요', () => assert.equal(toast.text, '시험 알림 번역'));
+const textToast = add(toastBox, 'div', { class: 'toast-message' }, LONG); e.mutate();
+check('글 종류(t) 지문은 알림 판정에 쓰지 않아요', () => assert.equal(textToast.text, LONG));
 e.host.confirm(LONG_CONFIRM);
 check('확인 창은 지문(확인 창 종류)으로 바꾸고 숫자를 채워요', () => assert.equal(e.calls.at(-1), '42번을 지울까요?'));
 e.host.confirm(LONG);

@@ -84,7 +84,7 @@ await test('p5: 과일 창은 한 번에 훑고 유휴 발견은 좁은 범위�
     assert.ok(!fh.includes('doc.querySelectorAll(DISCOVER_ALL)'));
     assert.ok(!fh.includes('[...doc.querySelectorAll(rootsSelector)]') && !fh.includes("doc.querySelectorAll('#toast-container .toast-message')"), 'old per-selector walks are gone');
     new Function('BlueLemonade', 'window', fh);
-    assert.match(read('src/scripts/catalog.js'), /\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.(?:0\.[89]|1\.[012])'/); // 1.0.8 에서 고친 뒤 사전만 바뀐 1.0.9(10-27 창 이름 한글 보강) · 긴 원문을 뺀 1.1.0 · 청과 2.1X 새 항목을 더한 1.1.1 · 긴 글 지문 사전을 더한 1.1.2 도 돼요
+    assert.match(read('src/scripts/catalog.js'), /\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.(?:0\.[89]|1\.[0-3])'/); // 1.0.8 에서 고친 뒤 사전만 바뀐 1.0.9(10-27 창 이름 한글 보강) · 긴 원문을 뺀 1.1.0 · 청과 2.1X 새 항목을 더한 1.1.1 · 긴 글 지문 사전을 더한 1.1.2 · 알림 · 확인 창 문구를 클릭 없이 바꾸는 1.1.3 도 돼요
 });
 
 await test('one copy: the old bundled copies are gone and every module takes (BlueLemonade, window)', async () => {

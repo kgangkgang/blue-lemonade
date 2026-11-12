@@ -61,6 +61,10 @@ await t('과일의 마음 사전: 문구 · 알림 · 창 확인 열쇠가 모�
 await t('원본: 손으로 더하는 짝(fruit-heart-additions.json)도 짧은 문구만이고, 만드는 도구가 같은 기준으로 걸러요', () => {
     const additions = JSON.parse(read('tools/scripts-src/fruit-family/fruit-heart-additions.json'));
     assert.deepEqual(long(additions.entries.map(x => x.zh)), []);
+    // 1.1.6 알림 · 확인 창 표(toasts)도 짧은 원문만 — 긴 알림은 hashed(o · n) 지문으로만
+    const toasts = additions.toasts || {};
+    const toastKeys = [...[...(toasts.exact || []), ...(toasts.patterns || []), ...(toasts.native || []), ...(toasts.nativePatterns || []), ...(toasts.lach?.exact || []), ...(toasts.lach?.patterns || []), ...(toasts.lach?.parts || [])].map(x => x[0]), ...Object.keys(toasts.groups || {}), ...(toasts.tails || []).map(x => x[2])];
+    assert.deepEqual(long(toastKeys), [], 'toasts');
     const build = read('tools/build-fruit-family.mjs');
     assert.match(build, /import \{ keepPresetText[^}]*\} from '\.\/preset-text-limit\.mjs'/);
     assert.match(build, /data\.entries = data\.entries\.filter\(x => keepPresetText\(x\.zh\)\)/);

@@ -149,16 +149,17 @@ check('Unknown renamed Helper names restore unchanged owned search fragments imm
 uMark.children[0].nodeValue='외부 표시';u.cleanups.at(-1)();
 check('Cleanup releases an out-of-scope name and preserves later external edits',()=>{assert.equal(uMark.text,'외부 표시');assert.equal(uSuffix.text,'之心丨사용자 이름')});
 // 7.0.4 model-tag notice: Fruit shows it when ST's own API / model selector changes (outside the Fruit panel), so it is
-// translated without the 15 s click window; other Fruit toasts still need a recent click in the panel.
+// translated without the 15 s click window. BL 1.1.6 (fruit-heart 1.1.3): every Fruit toast in the toast table now translates
+// without a click too (tools/tests/fruit-toast-ko.mjs covers the table itself).
 const tz=environment();tz.run();
 const toasts=add(tz.body,'div',{id:'toast-container'});
 const toastOf=text=>add(add(toasts,'div',{class:'toast toast-success'}),'div',{class:'toast-message'},text);
 const halfWidth=toastOf('已切换模型标签:#DS'),fullWidth=toastOf('已切换模型标签：#GEMINI'),localBuild=toastOf('已切换模型标签：# CLAUDE'),otherToast=toastOf('预设已切换，请重新打开面板');
 tz.mutate();
 check('model-tag toasts translate without a click in either colon width, keeping the #tag',()=>{assert.equal(halfWidth.text,'모델 태그를 바꿨어요: #DS');assert.equal(fullWidth.text,'모델 태그를 바꿨어요: #GEMINI');assert.equal(localBuild.text,'모델 태그를 바꿨어요: #CLAUDE')});
-check('other Fruit toasts still wait for a recent click in the panel',()=>{assert.equal(otherToast.text,'预设已切换，请重新打开面板')});
+check('other Fruit toasts also translate without a recent click in the panel (BL 1.1.6)',()=>{assert.equal(otherToast.text,'프리셋이 바뀌었어요. 창을 다시 열어 주세요')});
 check('the always-on toast list holds only the model-tag notices, each a toast pattern or entry',()=>{const data=JSON.parse('{'+codeOf('fruit-heart').split('installFruitHeartKorean(BlueLemonade,{')[1].trim().replace(/\);\s*$/,''));assert.deepEqual(data.toastAnytime,['已切换模型标签：# {0}','已切换模型标签:#{0}','已切换模型标签：#{0}']);for(const zh of data.toastAnytime)assert.ok(data.entries.some(e=>e.zh===zh&&e.kind==='pattern'&&e.ko==='모델 태그를 바꿨어요: #{0}'),zh)});
-check('catalog version moved with the dictionary change',()=>{assert.match(fs.readFileSync(path.join(root,'src/scripts/catalog.js'),'utf8'),/\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.1\.2'/)});
+check('catalog version moved with the dictionary change',()=>{assert.match(fs.readFileSync(path.join(root,'src/scripts/catalog.js'),'utf8'),/\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.1\.3'/)});
 // 8.0.7 후보(10-27 제보 「야한 과일 · 청과 한글화 안 됨」): 과일의 마음 창은 프롬프트 이름을 줄여 보여요(果实之心 창 스크립트의 규칙 그대로 옮김).
 //   선택 단추 · 목록 · 칩 · 항목 이름 = 「｜」 앞 제목에서 앞 이모지를 뗀 것, 항목 꼬리표 = 「｜」 뒤 칸들, 목록 풀이 = 택1·필수 칸을 뺀 칸을 「 · 」로, 분류 = 구분선 제목 · 풀이.
 //   과일 6.4 · 야한 과일 2.0 · 청과 2.0 의 모든 이름(사전 원본 = 공통 + 프리셋별)을 그 꼴로 창에 그려 한자가 남지 않는지 봐요.

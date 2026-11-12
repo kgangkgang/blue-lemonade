@@ -637,6 +637,8 @@ jobs:
           node tools/tests/fruit-localization.mjs
           # 1.1.4 과일의 마음 긴 글 지문 사전(원문 대신 지문 → 번역 · 노드별 묶음)
           node tools/tests/fruit-heart-hashed.mjs .
+          # 1.1.6 과일의 마음 알림 · 확인 창 · 오류 문구(클릭 15초 창 없이 표와 맞으면 언제든)
+          node tools/tests/fruit-toast-ko.mjs .
           node tools/tests/localization-override-tools.mjs .
           node tools/tests/diag-copy.mjs .
           node tools/tests/diag-file.mjs .
