@@ -1565,5 +1565,33 @@ await test('AI 점검 ② 말풍선 · 날아가는 그림은 열린 모달 창(
     assert.match(s, /export function say\(text, ms = 2400\) \{\n\s+const host = layerHost\(\); if \(bubble\.parentNode !== host\) host\.append\(bubble\);/);
     assert.ok(s.includes('layerHost().append(dot);') && !s.includes('document.body.append(dot)'), '날아가는 그림도');
 });
+await test('AI 점검 ③ 글만 복사 · 테마용 복사 · 설정 코드 복사는 누른 순간에 클립보드를 열어요(사파리) · 대체 복사 칸은 열린 창 안에', async () => {
+    const ms = srcOf('mart.js'), tu = srcOf('tune-ui.js');
+    const src = ms.match(/\nasync function clipText\(text\) \{[\s\S]*?\n\}/)[0];
+    const make = (0, eval)(`(navigator, document, layerHost) => { return ${src.trim()}; }`);
+    const had = globalThis.ClipboardItem;
+    try {
+        let wrote = null, order = [];
+        globalThis.ClipboardItem = class { constructor(o) { this.o = o; } };
+        const nav = { clipboard: { write: async ([it]) => { order.push('write'); wrote = await (await it.o['text/plain']).text(); } } };
+        const clip = make(nav, null, null);
+        let resolve; const job = new Promise(r => { resolve = r; });
+        const done = clip(job); order.push('after-call');
+        assert.deepEqual(order, ['write', 'after-call'], '글을 기다리기 전에 클립보드를 열어요');
+        resolve('글'); assert.equal(await done, true); assert.equal(wrote, '글');
+        // 막히면 숨은 글 칸 — 열린 창(layerHost) 안에 붙여요
+        const nav2 = { clipboard: { write: async () => { throw new Error('막힘'); } } };
+        let host = null; const area = { focus() {}, select() {}, setSelectionRange() {}, remove() {}, style: {} };
+        const doc = { createElement: () => area, execCommand: () => true };
+        assert.equal(await make(nav2, doc, () => ({ append: (a) => { host = a; } }))('x'), true); assert.equal(host, area);
+        // 글을 못 만들면 그 오류를 던져요
+        await assert.rejects(make(nav2, doc, () => ({ append() {} }))(Promise.reject(new Error('조각'))), /조각/);
+    } finally { globalThis.ClipboardItem = had; }
+    const body = name => ms.match(new RegExp(`\\nasync function ${name}\\([^)]*\\) \\{[\\s\\S]*?\\n\\}`))[0];
+    for (const f of ['copyText', 'themeTake']) { assert.ok(body(f).includes('clipText('), f); assert.ok(!body(f).includes('clipboard.writeText'), `${f}: await 뒤 writeText 없음`); }
+    assert.ok(!/document\.body\.append\(area\)/.test(ms), '대체 복사 칸은 layerHost 에');
+    assert.match(ms, /say, clip: clipText \}\);/); assert.match(tu, /const job = encodeSet\(setNow\(item\)\), copied = \(clip \? clip\(job\)/);
+    assert.match(ms, /layerHost \} from '\.\/cart\.js\?v=(\d+[a-z])'/); assert.notEqual(ms.match(/cart\.js\?v=(\w+)/)[1], '20261109a', 'cart.js 판 꼬리를 올려요(옛 캐시 cart.js 에는 layerHost 가 없어요)');
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

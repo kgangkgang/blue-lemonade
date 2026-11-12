@@ -557,7 +557,7 @@ function applyPreset(item, p) {
 }
 
 /** 크게 보기 창에 한 번만 걸어요 — current(): 지금 열린 카드 상태({ item }) · openItem(id): 그 틀의 크게 보기를 열어요 · say: 알림 */
-export function wireTune(sheet, { current, openItem, say = () => {} }) {
+export function wireTune(sheet, { current, openItem, say = () => {}, clip = null }) {
     let timer = 0, lookTimer = 0;
     const applyColor = (item, key, hex) => {
         if (!HEX.test(hex)) return;
@@ -796,8 +796,10 @@ export function wireTune(sheet, { current, openItem, say = () => {} }) {
             if (k === 'file') { const name = String(item.name || item.label || '글꾸').replace(/[\\/:*?"<>|]+/g, ' ').trim(); downloadText(setFile(setNow(item, name)), `글꾸-${name}${SET_EXT}`); say(`설정 파일을 받았어요(${SET_EXT}) · 다른 기기 · 테마에서 「파일 가져오기」`, 3000); return; }
             if (k === 'pick') { sheet.querySelector('.mart-setx-file')?.click(); return; }
             if (k === 'code') {
-                const code = await encodeSet(setNow(item)); if (io) { io.hidden = false; sheet.querySelector('[data-setx="paste"]')?.setAttribute('aria-expanded', 'true'); const ta = io.querySelector('textarea'); ta.value = code; ta.focus(); ta.select(); }
-                try { await navigator.clipboard.writeText(code); say('코드를 복사했어요 · 다른 기기나 테마의 「코드 붙여 넣기」에', 3000); } catch { say('아래 칸의 코드를 복사해 가요', 3000); }
+                // 11-12 클립보드는 누른 순간에 열어요(압축 encodeSet 을 기다린 뒤 writeText 면 사파리가 막아요) — 코드는 Promise 로 넘기고 아래 칸에도 채워요
+                const job = encodeSet(setNow(item)), copied = (clip ? clip(job) : job.then(c => navigator.clipboard.writeText(c)).then(() => true)).catch(() => false);
+                const code = await job; if (io) { io.hidden = false; sheet.querySelector('[data-setx="paste"]')?.setAttribute('aria-expanded', 'true'); const ta = io.querySelector('textarea'); ta.value = code; ta.focus(); ta.select(); }
+                say(await copied ? '코드를 복사했어요 · 다른 기기나 테마의 「코드 붙여 넣기」에' : '아래 칸의 코드를 복사해 가요', 3000);
                 return;
             }
             if (k === 'paste') { if (io) { io.hidden = !io.hidden; b.setAttribute('aria-expanded', String(!io.hidden)); if (!io.hidden) io.querySelector('textarea').focus(); } return; }

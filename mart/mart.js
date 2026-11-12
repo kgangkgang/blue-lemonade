@@ -11,7 +11,7 @@ const LIKE_KEY = 'bl-mart-geulkku-like-v1';
 const like = (() => { let v = null; try { v = JSON.parse(localStorage.getItem(LIKE_KEY) || 'null'); } catch { /* 저장이 막힌 창 */ } const ids = a => (Array.isArray(a) ? [...new Set(a.filter(x => typeof x === 'string' && x && x.length < 80))] : []); return { fav: ids(v?.fav).slice(0, 96), recent: ids(v?.recent).slice(0, 5) }; })();
 const saveLike = () => { try { localStorage.setItem(LIKE_KEY, JSON.stringify(like)); } catch { /* 이 화면에서만 */ } };
 const LIKE_CHIPS = { fav: '★ 즐겨찾기', recent: '최근' };
-import { cart, say, onCheckout, artName, saveArt } from './cart.js?v=20261109a';
+import { cart, say, onCheckout, artName, saveArt, layerHost } from './cart.js?v=20261112b';
 import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
@@ -393,7 +393,7 @@ async function copyEntries(entries, quiet = false, place = where) {
         try {
             const area = Object.assign(document.createElement('textarea'), { value: await text });
             area.style.cssText = 'position:fixed;opacity:0;top:0';
-            document.body.append(area); area.select();
+            layerHost().append(area); area.select();   // 11-12 열린 창 밖(body)은 inert 라 골라지지 않아요
             const ok = document.execCommand('copy'); area.remove();
             if (ok) { if (!quiet) say('복사했어요'); return true; }
         } catch { /* 아래 */ }
@@ -438,26 +438,47 @@ export function themePack(item, set) {
     const key = (String(item.id).match(/((?:k|q)\d+)$/) || [])[1] || '';
     return { 'bl-mart': 1, items: [{ kind: 'geulkku-simple', v: 1, id: item.id, key, name: item.name || item.label || '글꾸', ...(item.emoji ? { emoji: item.emoji } : {}), ...(item.own ? { own: true } : {}), html: item.preview || '', set }] };
 }
-async function themeTake(state, file) {
+/**
+ * 11-12 글자 복사(글만 복사 · 테마용 복사 · 설정 코드 복사가 같이) — 사파리(아이폰)는 누른 순간에 클립보드를 열어야 해요:
+ *   글을 만드는 동안(조각 받기 · 압축) await 한 뒤 writeText 를 부르면 막혀서 「복사가 막혔어요」만 떴어요 → 「HTML 복사」(copyHtml)처럼 글은 Promise 로 넘기고,
+ *   그래도 막히면 숨은 글 칸을 골라 복사. text: 글 또는 글 Promise · 글을 못 만들면 그 오류를 던져요 · 돌려주는 값 = 복사됐는지
+ */
+async function clipText(text) {
+    const job = Promise.resolve(text); job.catch(() => { /* 아래에서 던져요 */ });
     try {
-        await ensureItem(state.item);
-        const item = state.item, set = makeSet({ tone: toneState, look: lookNow(), motion: motionNow(), tex: texNow(), shape: shapeNow(), tune: tuneOf(item.id), frame: item.id });
-        const text = JSON.stringify(themePack(item, set));
+        if (globalThis.ClipboardItem && navigator.clipboard?.write) await navigator.clipboard.write([new ClipboardItem({ 'text/plain': job.then(t => new Blob([t], { type: 'text/plain' })) })]);
+        else await navigator.clipboard.writeText(await job);
+        return true;
+    } catch {
+        const value = await job;   // 글을 못 만들었으면 여기서 그 오류가 올라가요
+        const area = Object.assign(document.createElement('textarea'), { value, readOnly: true });
+        area.style.cssText = 'position:fixed;opacity:0;top:0;left:0;width:1px;height:1px;font-size:16px';
+        layerHost().append(area); area.focus(); area.select(); area.setSelectionRange(0, value.length);
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch { /* 아래 */ }
+        area.remove();
+        return ok;
+    }
+}
+async function themeTake(state, file) {
+    const item = state.item;
+    const text = ensureItem(item).then(() => JSON.stringify(themePack(item, makeSet({ tone: toneState, look: lookNow(), motion: motionNow(), tex: texNow(), shape: shapeNow(), tune: tuneOf(item.id), frame: item.id }))));
+    try {
         if (file) {
-            const blob = new Blob([text], { type: 'application/json' }), name = String(item.name || '글꾸').replace(/[\\/:*?"<>|]+/g, ' ').trim();
+            const blob = new Blob([await text], { type: 'application/json' }), name = String(item.name || '글꾸').replace(/[\\/:*?"<>|]+/g, ' ').trim();
             const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `글꾸-${name}.bl-mart.json`, hidden: true });
             document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
             say('테마용 파일을 받았어요 · 블루레몬 1.1.4 부터 「마트에서 가져오기」로 받아요', 3200);
-        } else { await navigator.clipboard.writeText(text); say('테마용 글을 복사했어요 · 블루레몬 1.1.4 부터 「마트에서 가져오기」에 붙여 넣어요', 3200); }
+        } else if (await clipText(text)) say('테마용 글을 복사했어요 · 블루레몬 1.1.4 부터 「마트에서 가져오기」에 붙여 넣어요', 3200);
+        else say('복사가 막혔어요 · 「테마용 파일 받기」로 받아 주세요', 3200);
     } catch { say('담기가 막혔어요 · 잠시 뒤 다시 눌러 주세요', 3000); }
 }
 /** 글만 복사(마크다운) — 틀 없이 글만 올릴 때(테마 「글만」) */
 async function copyText(state) {
     try {
-        const md = frameMarkdown(await readyHtml(state));
-        await navigator.clipboard.writeText(md);
+        if (!(await clipText(readyHtml(state).then(frameMarkdown)))) { say('복사가 막혔어요 · 미리보기를 길게 눌러 골라 복사해 주세요', 3200); return; }
         noteRecent(state.item.id); say('글만 복사했어요 · 서식 없는 칸에 붙여요', 2600);
-    } catch { say('복사가 막혔어요 · 잠시 뒤 다시 눌러 주세요', 3000); }
+    } catch { say(LOAD_FAIL, 3200); }
 }
 async function copyHtml(state) {
     const item = state.item;
@@ -475,7 +496,7 @@ async function copyHtml(state) {
         // 대체(오래된 폰 · 권한 막힘): 숨은 글 칸을 골라 복사 — iOS 는 readOnly + setSelectionRange 로 키보드 없이 골라져요
         const area = Object.assign(document.createElement('textarea'), { value: html, readOnly: true });
         area.style.cssText = 'position:fixed;opacity:0;top:0;left:0;width:1px;height:1px;font-size:16px';
-        document.body.append(area); area.focus(); area.select(); area.setSelectionRange(0, html.length);
+        layerHost().append(area); area.focus(); area.select(); area.setSelectionRange(0, html.length);   // 11-12 크게 보기 창이 열려 있으면 그 안에(창 밖 body 는 inert 라 골라지지 않아 대체 복사도 막혔어요)
         let ok = false;
         try { ok = document.execCommand('copy'); } catch { /* 아래 */ }
         area.remove();
@@ -817,7 +838,7 @@ function openSheet(state) {
         let inkTimer = 0;   // 11-08 글자색: 색 고르기를 움직이는 동안 칩 점은 바로 · 다시 그리기는 0.15초 묶음
         sheet.addEventListener('input', (e) => { const t = e.target; if (!t.matches?.('[data-ink]') || !sheetState) return; paintDot(t); clearTimeout(inkTimer); const item = sheetState.item; inkTimer = setTimeout(() => setInk(item, t.dataset.ink, t.value), 150); });
         sheet.addEventListener('click', (e) => { if (e.target.closest?.('[data-ink-reset]') && sheetState) resetInks(sheetState.item); });
-        wireTune(sheet, { current: () => sheetState, openItem: (id) => { const it = allItems.find(x => x.id === id) || ownItems.find(x => x.id === id); if (!it) return false; openSheet(stateOf(it)); return true; }, say });   // 11-12 아직 카드를 안 만든 틀도(완성 프리셋 파일에서 온 것)
+        wireTune(sheet, { current: () => sheetState, openItem: (id) => { const it = allItems.find(x => x.id === id) || ownItems.find(x => x.id === id); if (!it) return false; openSheet(stateOf(it)); return true; }, say, clip: clipText });   // 11-12 아직 카드를 안 만든 틀도(완성 프리셋 파일에서 온 것)
         sheet.addEventListener('close', () => { const st = sheetState; sheetState = null; sheet.querySelector('.mart-sheet-body').replaceChildren(); st?.el.querySelector('.mart-preview')?.focus({ preventScroll: true }); });
     }
     sheetState = state;
