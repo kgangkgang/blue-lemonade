@@ -228,12 +228,23 @@ function detailChanges(item) {
     return [...new Set(out)];
 }
 const segRow = (label, inner, extra = '') => `<div class="mart-simple-row"><p class="mart-simple-h">${label}${extra ? ` <small>${esc(extra)}</small>` : ''}</p><div class="mart-seg mart-simple-seg" role="group" aria-label="${label}">${inner}</div></div>`;
+/** 11-12 스타일 카드 그림 — 이름표 · 대사 띠 · 지문 한 줄을 그 스타일 값으로 작게 그려요(전엔 빈 회색 칸이라 무엇이 바뀌는지 안 보였어요) · x 가 null 이면 「직접 조절」 */
+const PIC_FONT = { serif: '"AppleMyungjo","Batang","Noto Serif KR",serif', gothic: '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif' };
+export function stylePic(x) {
+    if (!x) return '<b class="is-n">이름</b><span class="is-d">「대사」</span><span class="is-t">직접 고른 값</span>';
+    const L = x.look || {}, t = L.type || {}, d = L.dialogue || {}, s = x.shape || {};
+    const fam = PIC_FONT[L.fonts?.text] ? `font-family:${PIC_FONT[L.fonts.text]};` : '';
+    const text = `${fam}font-weight:${t.weight || 400};font-size:${t.sizeStep ? 12 : 10}px;line-height:${t.lineHeight ? 1.9 : 1.35};${t.indent ? 'text-indent:1em;' : ''}${t.align ? 'text-align:justify;' : ''}`;
+    const band = d.style === 'plain' ? 'background:transparent;' : `background:rgba(58,167,255,${((s.bandAlpha ?? 18) / 100).toFixed(2)});${d.style === 'full' ? 'display:block;' : ''}`;
+    const name = `font-weight:${L.profile?.nameWeight || 650};${s.nameTag === 'pill' ? 'padding:0 5px;border-radius:999px;background:rgba(58,167,255,.18);' : s.nameTag === 'line' ? 'border-bottom:1.5px solid currentColor;' : ''}`;
+    return `<b class="is-n" style="${name}">깡통</b><span class="is-d" style="${band}font-weight:${d.weight || 400}">「안녕」</span><span class="is-t" style="${text}">비가 그쳤다</span>`;
+}
 /** 간편 화면 칸들(스타일 · 색 · 밤낮 · 움직임 · 글 크기 · 세밀에서 바꾼 것 · 더 조절하기) */
 function simpleInner(item) {
     const hit = styleNow(), mine = presetList(), last = presetLast(), changes = detailChanges(item), m = motionNow();
-    const card = (attr, id, label, on, cls = '') => `<button type="button" class="mart-style-card${cls}" ${attr}="${esc(id)}" aria-pressed="${on}"><i class="mart-style-pic" aria-hidden="true"></i><span>${esc(label)}</span></button>`;
+    const card = (attr, id, label, on, cls = '', pic = '') => `<button type="button" class="mart-style-card${cls}" ${attr}="${esc(id)}" aria-pressed="${on}"><i class="mart-style-pic" aria-hidden="true">${pic}</i><span>${esc(label)}</span></button>`;
     const own = !hit && !last && (lookNoStep() || m.text !== 'm' || m.prop !== 'm' || shapeNow());
-    const cards = [own ? card('data-view', 'detail', '직접 조절', true, ' is-own') : '', ...LOOKS.map(x => card('data-simple-style', x.id, x.label, !own && !last && hit?.id === x.id)), ...mine.map(x => card('data-preset-load', x.id, x.name, x.id === last, ' is-mine'))].join('');
+    const cards = [own ? card('data-view', 'detail', '직접 조절', true, ' is-own', stylePic(null)) : '', ...LOOKS.map(x => card('data-simple-style', x.id, x.label, !own && !last && hit?.id === x.id, '', stylePic(x))), ...mine.map(x => card('data-preset-load', x.id, x.name, x.id === last, ' is-mine', stylePic({ look: x.look, shape: x.shape })))].join('');
     const colorChip = (key, label) => `<span class="mart-tune-chip"><label class="mart-ink" title="${label} 색 — 목록 위 「${label}」 칸과 같은 값이에요"><input type="color" data-tune="${key}" value="${NEUTRAL}" aria-label="${label} 색"><span class="mart-ink-dot" aria-hidden="true"></span>${label}</label>${undoBtn('data-tune-reset', key, label)}</span>`;
     const cover = castPicked() ? `<div class="mart-simple-cover"><span class="mart-simple-h">소품도 캐릭터 색 <small>끄면 소품은 기본 색</small></span><span class="mart-seg" role="group" aria-label="소품도 캐릭터 색"><button type="button" class="chip" data-simple-cover="1" aria-pressed="${toneState.cover}">켬</button><button type="button" class="chip" data-simple-cover="0" aria-pressed="${!toneState.cover}">끔</button></span></div>` : '';
     const caps = motionCaps(item.preview), can = ['0', 's', 'l'].some(v => caps.text[v] || caps.prop[v]), apart = m.text !== m.prop;
