@@ -1303,11 +1303,16 @@ await test('설정 꼴 blGeulkku 2(geulkku-set.js) · 테마로 담기 꾸러미
     assert.equal(gs.readSet('{"x":1}'), null); assert.equal(gs.readSet({ blGeulkku: 1 }), null);
     const ms = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8');
     const packSrc = ms.match(/export function themePack\(item, set\) \{[\s\S]*?\n\}/)[0].replace('export ', '');
-    const themePack = (0, eval)(`(${packSrc})`);
+    const keySrc = ms.match(/export const themeKey = [^\n]*/)[0].replace('export const themeKey = ', '');
+    const themePack = (0, eval)(`(simpleFrameInfo) => { const themeKey = ${keySrc}; return (${packSrc}); }`)(sf.simpleFrameInfo);
     const pack = themePack({ id: 'simple-k1079', name: '호감도 게이지', emoji: '💗', preview: '<div class="gk">x</div>' }, set);
     assert.deepEqual(Object.keys(pack), ['bl-mart', 'items']); assert.equal(pack['bl-mart'], 1);
     assert.deepEqual(Object.keys(pack.items[0]), ['kind', 'v', 'id', 'key', 'name', 'emoji', 'html', 'set']);
     assert.equal(pack.items[0].kind, 'geulkku-simple'); assert.equal(pack.items[0].key, 'k1079');
+    // 11-12 점검 2-① 내 글꾸(own-<무작위>)는 틀 HTML 뿌리 class 에서 열쇠를 읽어요(id 끝 k3 같은 우연에 안 속아요) · 담을 때 틀 값도 그 열쇠로
+    const ownHtml = allItems['simple-k1079'].preview;
+    for (const id of ['own-ab12cd34', 'own-zz9k3', 'own-q7']) assert.equal(themePack({ id, own: true, name: '내 글꾸 1', preview: ownHtml }, set).items[0].key, 'k1079', id);
+    assert.match(ms, /frame: item\.own \? themeKey\(item\) : item\.id/);
 });
 await test('바탕 질감(11-12 · 글꾸-질감/마트-연결.md): 끔이면 그대로 · 410틀 × 낮밤에 걸고 떼면 처음과 같음 · 걸지 않는 틀 16 · <style> 하나 · 정적 검사 · 인스타 세 틀 + #222 즉석카메라 목록', async () => {
     const tx = await import(pathToFileURL(path.join(MART, 'texture.js')).href + '?v=20261112a');

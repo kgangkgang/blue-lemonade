@@ -435,9 +435,12 @@ async function downloadHtml(state) {
  *   html = 틀 원래 판(조각의 preview — 색 · 조절 전) · set = 지금 조절 값(blGeulkku 2 · 이 틀 값까지). 테마가 제 인물표 색 · 로그로 다시 그려요.
  */
 export function themePack(item, set) {
-    const key = (String(item.id).match(/((?:k|q)\d+)$/) || [])[1] || '';
+    const key = themeKey(item);
     return { 'bl-mart': 1, items: [{ kind: 'geulkku-simple', v: 1, id: item.id, key, name: item.name || item.label || '글꾸', ...(item.emoji ? { emoji: item.emoji } : {}), ...(item.own ? { own: true } : {}), html: item.preview || '', set }] };
 }
+/** 11-12 틀 열쇠(k1079 · q05) — 내 글꾸(own-<무작위>)는 id 에 열쇠가 없어서 틀 HTML 뿌리 class(gk-k1079)에서 읽어요.
+ *  예전에는 id 끝만 봐서 내 글꾸를 담으면 테마가 늘 「틀 열쇠가 틀려요」로 건너뛰었어요(무작위 id 끝이 k3 같으면 「HTML 과 달라요」) */
+export const themeKey = item => simpleFrameInfo(item.preview)?.key || (String(item.id).match(/((?:k|q)\d+)$/) || [])[1] || '';
 /**
  * 11-12 글자 복사(글만 복사 · 테마용 복사 · 설정 코드 복사가 같이) — 사파리(아이폰)는 누른 순간에 클립보드를 열어야 해요:
  *   글을 만드는 동안(조각 받기 · 압축) await 한 뒤 writeText 를 부르면 막혀서 「복사가 막혔어요」만 떴어요 → 「HTML 복사」(copyHtml)처럼 글은 Promise 로 넘기고,
@@ -462,7 +465,7 @@ async function clipText(text) {
 }
 async function themeTake(state, file) {
     const item = state.item;
-    const text = ensureItem(item).then(() => JSON.stringify(themePack(item, makeSet({ tone: toneState, look: lookNow(), motion: motionNow(), tex: texNow(), shape: shapeNow(), tune: tuneOf(item.id), frame: item.id }))));
+    const text = ensureItem(item).then(() => JSON.stringify(themePack(item, makeSet({ tone: toneState, look: lookNow(), motion: motionNow(), tex: texNow(), shape: shapeNow(), tune: tuneOf(item.id), frame: item.own ? themeKey(item) : item.id }))));   // 내 글꾸도 틀 값(frames[열쇠])까지
     try {
         if (file) {
             const blob = new Blob([await text], { type: 'application/json' }), name = String(item.name || '글꾸').replace(/[\\/:*?"<>|]+/g, ' ').trim();
