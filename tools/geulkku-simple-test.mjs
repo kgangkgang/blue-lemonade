@@ -1432,6 +1432,61 @@ await test('숨긴 줄 410틀: 지문 · 대사 첫 줄을 숨겨도 복사 글�
     }
     assert.ok(n > 800, '잰 판 ' + n);
 });
+// 11-12 고른 글 옆 막대(mart/select-hide.js): 고른 글만 숨기기 { i, a, b, t } — 테마 미리보기 「숨기기」와 같은 글줄 안 꼴(details.blsp-s · blsp-k 없음)
+await test('고른 글만 숨기기 410틀 × 낮밤: 지문 첫 줄 가운데 글만 글줄 안 숨긴 글 · 나머지 글은 밖 · <p> 안 details 0 · 정적 검사 · 글만 복사에 숨긴 글 · 줄째 숨김이 있으면 그쪽', async () => {
+    const tun = await import(pathToFileURL(path.join(MART, 'tune.js')).href + '?v=20261112s');
+    let n = 0;
+    for (const [id, it] of Object.entries(allItems)) for (const mode of ['light', 'dark']) {
+        const base = sf.toneSimple(it.preview, sf.ORIGINAL, { mode }), tag = id + ' ' + mode;
+        const cell = tun.editables(base).find(e => e.cls === 'gk-nr' && !/<[a-z]/i.test(e.text) && tun.cellText(e.text).text.trim().length >= 9);
+        if (!cell) continue;
+        const { text } = tun.cellText(cell.text), a = Math.floor(text.length / 3), b = Math.floor(text.length * 2 / 3), t = text.slice(a, b);
+        if (!t.trim()) continue;
+        const out = tun.applySpoilers(base, [{ i: cell.i, a, b, t }]), ready = sf.simpleReady(shutPeek(out));
+        const det = ready.match(/<details class="([^"]*)" data-bl-spoiler="[^"]*"[^>]*>[\s\S]*?<\/details>/);
+        assert.ok(det, tag + ' 숨긴 글');
+        assert.equal(det[1], 'blsp-s', tag + ' 글줄 안 꼴');
+        const inner = det[0].match(/<span class="blsp-c">([\s\S]*?)<\/span><\/details>/);
+        assert.equal(tun.cellText(inner[1]).text, t, tag + ' 고른 글 그대로');
+        assert.doesNotMatch(ready, /<p\b[^>]*>(?:(?!<\/p>)[\s\S])*<details/, tag + ' p 안 details');
+        assert.equal((ready.match(/<style>/g) || []).length, 1, tag);
+        assert.ok(tg.readyReport(ready).ok, tag + ' 정적 검사');
+        const md = mt.frameMarkdown(ready), w = text.slice(0, a).trim().slice(-4);
+        if (w && !/[&*~_\\]/.test(w + t)) { assert.ok(md.includes(w), tag + ' 앞 글'); assert.ok(md.includes(t.trim().slice(0, 4)), tag + ' 숨긴 글도 글만 복사에'); }
+        assert.equal(tun.applySpoilers(base, [{ i: cell.i }, { i: cell.i, a, b, t }]), tun.applySpoilers(base, [{ i: cell.i }]), tag + ' 줄째가 이겨요');
+        n++;
+    }
+    assert.ok(n > 600, '잰 판 ' + n);
+});
+await test('고른 글만 숨기기 값: cleanTune 이 { i, a, b, t } 를 지키고 망가진 값은 줄째 { i } 로 · 글이 밀리면 t 로 다시 찾고 · 못 찾으면 그대로 · 겹치면 뒤의 것은 빼요', async () => {
+    const tun = await import(pathToFileURL(path.join(MART, 'tune.js')).href + '?v=20261112s');
+    assert.deepEqual(tun.cleanTune({ spoilers: [{ i: 1, a: 2, b: 5, t: 'abc' }, { i: 1, a: 2, b: 5, t: 'abc' }, { i: 2, a: 5, b: 2, t: 'x' }, { i: 3 }] }).spoilers, [{ i: 1, a: 2, b: 5, t: 'abc' }, { i: 2 }, { i: 3 }]);
+    assert.deepEqual(tun.cellText('가&amp;나<br>다<b>라</b>'), { text: '가&나다라', at: [0, 1, 6, 11, 15, 20] });
+    assert.deepEqual(tun.spanIn('그는 비를 맞았다', { a: 3, b: 4, t: '비' }), { a: 3, b: 4 });
+    assert.deepEqual(tun.spanIn('그 사람은 비를 맞았다', { a: 3, b: 4, t: '비' }), { a: 6, b: 7 });
+    assert.equal(tun.spanIn('그는 눈을 맞았다', { a: 3, b: 4, t: '비' }), null);
+    const html = '<style>\n.gk p{margin:0}\n</style><div class="gk"><p class="gk-nr">하나 둘 셋 넷</p></div>';
+    const one = tun.applySpoilers(html, [{ i: 0, a: 3, b: 4, t: '둘' }]);
+    assert.match(one, /<div class="gk-nr blsp-p">하나 <details class="blsp-s" data-bl-spoiler="[^"]*"[^>]*>[\s\S]*<span class="blsp-c">둘<\/span><\/details> 셋 넷<\/div>/);
+    assert.equal(tun.applySpoilers(html, [{ i: 0, a: 3, b: 4, t: '열' }]), html, '못 찾으면 그대로');
+    const two = tun.applySpoilers(html, [{ i: 0, a: 0, b: 4, t: '하나 둘' }, { i: 0, a: 3, b: 6, t: '둘 셋' }]);
+    assert.equal((two.match(/<details/g) || []).length, 1, '겹치면 하나만');
+    assert.equal(tun.applySpoilers('<style>\n</style><div class="gk"><p class="gk-nr">가<b>나다</b>라</p></div>', [{ i: 0, a: 0, b: 2, t: '가나' }]).includes('<details'), false, '꾸밈을 가로지르면 안 감싸요(화면이 줄째로 바꿔 넣어요)');
+});
+// 11-12 막대 단추 규칙(사용자 「굵게랑 기울임은 왜 있는 거임?」 · 「PC 는 없잖아」) — 테마 · 마트 · 폰 · PC 모두 같은 규칙
+await test('고른 글 막대 단추: 평소엔 「눌러야 보이게 / 숨김 풀기」만 · 굵게 · 기울임은 「글 고치기」 모드에서만 · 폰 · PC 갈림 없음', async () => {
+    const sh = await import(pathToFileURL(path.join(MART, 'select-hide.js')).href + '?v=20261112s');
+    assert.deepEqual(sh.barKinds({ hide: true }), ['hide']);
+    assert.deepEqual(sh.barKinds({ spoiler: true }), ['unhide']);
+    assert.deepEqual(sh.barKinds({ hide: true, editing: true }), ['hide', 'bold', 'italic']);
+    assert.deepEqual(sh.barKinds({ spoiler: true, editing: true }), ['unhide'], '숨긴 글 안에선 풀기만');
+    assert.deepEqual(sh.barKinds({}), []);
+    const src = fs.readFileSync(path.join(MART, 'select-hide.js'), 'utf8');
+    assert.doesNotMatch(src, /coarse|ontouchstart|matchMedia|innerWidth|userAgent/, '폰 · PC 로 단추를 가르지 않아요');
+    assert.ok(src.includes("barKinds({ hide: !!plan.add, editing: box.classList.contains('is-editing')"), '글 고치기 = 미리보기 is-editing');
+    assert.ok(src.includes("if (kinds.includes('bold'))"), '굵게 · 기울임은 규칙을 거쳐서만');
+    assert.equal((src.match(/execCommand\(/g) || []).length, 1, '굵게 · 기울임 명령은 규칙 안 한 곳뿐');
+});
 await test('능력표 G4(11-12 · tools/geulkku-caps.mjs → caps.json): 410틀 모두 한 줄 · 정적 칸이 지금 틀과 같음(띠는 화면에서 그림 띠로 내릴 수만) · 범위 칸 꼴 · 표에 없는 틀은 정적 검사', async () => {
     const cp = await import(pathToFileURL(path.join(MART, 'caps.js')).href + '?v=20261112a');
     const caps = JSON.parse(fs.readFileSync(path.join(DIR, 'caps.json'), 'utf8'));

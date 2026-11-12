@@ -70,9 +70,17 @@ export function cleanTune(t) {
     if (t.own === false || t.own === true) out.own = t.own;   // 11-11 이 틀만: true = 소품 기본 색 · false = 소품 캐릭터 색 · 없으면 마트 칸(원래 색 · 「소품도 캐릭터 색」)을 따라요
     if (t.hideTitle === true) out.hideTitle = true;   // 보일 것: 제목 끔(제목이 누름 칸 안인 틀은 화면이 이 칸을 안 줘요)
     if (t.hideNames === true) out.hideNames = true;   // 보일 것: 이름 줄 끔
-    // 숨긴 줄(스포일러): [{ i: 글 칸 번호 }] — 견본 글 · 내 글 따로(번호가 달라요) · 20줄까지
+    // 숨긴 줄(스포일러): [{ i: 글 칸 번호 }] — 견본 글 · 내 글 따로(번호가 달라요) · 20개까지
+    //   11-12 고른 글만 숨기기(고른 글 옆 막대): { i, a, b, t } — 그 칸 글자(태그 뺀 글) a ~ b 자리 · t = 그때 고른 글(글을 고쳐 자리가 밀리면 t 로 다시 찾아요)
     for (const key of ['spoilers', 'mineSpoilers']) {
-        const list = [...new Set((Array.isArray(t[key]) ? t[key] : []).map(x => Number(x?.i)).filter(i => Number.isInteger(i) && i >= 0))].slice(0, 20).map(i => ({ i }));   // 숨긴 줄: 그 줄의 글 칸 번호
+        const seen = new Set(), list = [];
+        for (const x of Array.isArray(t[key]) ? t[key] : []) {
+            const i = Number(x?.i); if (!Number.isInteger(i) || i < 0) continue;
+            const a = Number(x?.a), b = Number(x?.b), part = Number.isInteger(a) && Number.isInteger(b) && a >= 0 && b > a && typeof x?.t === 'string' && x.t.trim() && x.t.length <= 2000;
+            const k = part ? `${i}:${a}:${b}` : `${i}`; if (seen.has(k)) continue;
+            seen.add(k); list.push(part ? { i, a, b, t: x.t } : { i });
+            if (list.length >= 20) break;
+        }
         if (list.length) out[key] = list;
     }
     const lines = Number(t.lines); if (Number.isInteger(lines) && lines !== 0 && lines >= LINES_RANGE[0] && lines <= LINES_RANGE[1]) out.lines = lines;   // 대사 줄(견본 글일 때만)   // 「기본 색」이 있는 틀: false = 소품을 캐릭터 색으로 덮어써요(없으면 기본 색 그대로)
@@ -192,7 +200,43 @@ export function applyLines(html, n) {
 // ── 숨긴 글(스포일러) — 테마와 같은 마크업(spoilerHtml · 스크립트 없이 눌러 펼치는 details) · 꾸밈 규칙은 틀 <style> 한 곳에 ──
 //   마트는 무테라 「숨겨진 글 보기」 알약의 테두리는 투명 · 옅은 바탕(테마는 1px 선) · 글자색은 fill 짝(깡통이 color 를 눌러요)
 const SPOILER_LOOK = { line: 'transparent', raised: 'rgba(127,127,127,.16)', muted: '#8b8e96' };
-const spoilerOf = inner => spoilerHtml(inner, SPOILER_LOOK, false).replace('color:#8b8e96;', 'color:#8b8e96;-webkit-text-fill-color:#8b8e96;');
+const spoilerOf = (inner, inline = false) => spoilerHtml(inner, SPOILER_LOOK, inline).replace('color:#8b8e96;', 'color:#8b8e96;-webkit-text-fill-color:#8b8e96;');
+const CELL_ENT = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: '\u00a0' };
+/** 11-12 칸 HTML(글 · <br> · <b> 같은 꾸밈 태그) → 태그 뺀 글과, 글자마다 HTML 자리(at[k] = k번째 글자가 시작하는 자리 · at[길이] = 끝). &…; 은 한 글자 */
+export function cellText(html) {
+    const src = String(html ?? ''), at = [];
+    let text = '';
+    for (let k = 0; k < src.length;) {
+        if (src[k] === '<') { const e = src.indexOf('>', k); if (e < 0) break; k = e + 1; continue; }
+        const m = src[k] === '&' ? /^&(#\d+|#x[0-9a-f]+|[a-z]+);/i.exec(src.slice(k, k + 12)) : null;
+        if (m) {
+            const n = m[1];
+            const ch = n[0] === '#' ? String.fromCodePoint(n[1].toLowerCase() === 'x' ? parseInt(n.slice(2), 16) : Number(n.slice(1))) : (CELL_ENT[n.toLowerCase()] ?? m[0]);
+            for (let c = 0; c < ch.length; c++) { at.push(k); text += ch[c]; }
+            k += m[0].length; continue;
+        }
+        at.push(k); text += src[k]; k++;
+    }
+    at.push(src.length);
+    return { text, at };
+}
+/** 11-12 고른 글 숨김 { a, b, t } 가 지금 칸 글(text)의 어디인지 — a ~ b 가 t 그대로면 그 자리, 아니면 t 를 찾아(처음 나온 곳) · 못 찾으면 null */
+export function spanIn(text, sp) {
+    const s = String(text ?? ''), t = String(sp?.t ?? '');
+    if (!t) return null;
+    if (s.slice(sp.a, sp.b) === t) return { a: sp.a, b: sp.b };
+    const at = s.indexOf(t);
+    return at < 0 ? null : { a: at, b: at + t.length };
+}
+/** HTML 조각 안 꾸밈 태그가 짝이 맞는지(열고 닫는 차례) — 고른 글만 감쌀 때 태그를 가로지르면 안 돼요 */
+const balanced = (html) => {
+    const stack = [];
+    for (const m of String(html).matchAll(/<(\/?)([a-z][a-z0-9]*)(?:\s[^>]*?)?(\/?)>/gi)) {
+        const tag = m[2].toLowerCase(); if (m[3] || tag === 'br') continue;
+        if (!m[1]) stack.push(tag); else if (stack.pop() !== tag) return false;
+    }
+    return !stack.length;
+};
 const SPOILER_RULES = spoilerStyle().replace(/^<style>|<\/style>$/g, '');
 const escAttr = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 /**
@@ -206,16 +250,26 @@ const escAttr = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<'
 export function applySpoilers(html, list) {
     let text = String(html ?? '');
     if (!Array.isArray(list) || !list.length) return text;
-    const cells = editables(text), spans = [];
+    const cells = editables(text), spans = [], whole = new Set();
     for (const sp of list) {
+        if (sp.t != null) continue;   // 고른 글만 숨긴 것은 아래에서(같은 칸이 줄째 숨겨져 있으면 그쪽이 이겨요)
         const cell = cells[sp.i]; if (!cell || !['gk-nr', 'gk-d'].includes(cell.cls)) continue;
         const open = text.lastIndexOf('<p', cell.start); if (open < 0) continue;
         const inner = text.indexOf('>', open) + 1, close = text.indexOf('</p>', cell.end); if (!inner || close < 0) continue;
+        whole.add(sp.i);
         if (!spans.some(x => x.start === inner)) spans.push({ start: inner, end: close });
+    }
+    for (const sp of list) {   // 11-12 고른 글만: 그 칸 안 글줄 안 숨긴 글(테마 미리보기 「숨기기」와 같은 글줄 안 꼴)
+        if (sp.t == null || whole.has(sp.i)) continue;
+        const cell = cells[sp.i]; if (!cell || !['gk-nr', 'gk-d'].includes(cell.cls)) continue;
+        const map = cellText(cell.text), hit = spanIn(map.text, sp); if (!hit) continue;
+        const start = cell.start + map.at[hit.a], end = cell.start + map.at[hit.b];
+        if (!balanced(text.slice(start, end)) || spans.some(x => x.start < end && start < x.end)) continue;
+        spans.push({ start, end, inline: true });
     }
     if (!spans.length) return text;
     spans.sort((x, y) => y.start - x.start);
-    for (const x of spans) text = text.slice(0, x.start) + spoilerOf(text.slice(x.start, x.end)) + text.slice(x.end);
+    for (const x of spans) text = text.slice(0, x.start) + spoilerOf(text.slice(x.start, x.end), !!x.inline) + text.slice(x.end);
     if (!text.includes('.blsp-s>summary{')) { const at = text.indexOf('\n</style>'); if (at >= 0) text = `${text.slice(0, at)}\n${SPOILER_RULES}${text.slice(at)}`; }
     return unparagraphHtml(text);
 }

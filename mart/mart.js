@@ -28,6 +28,7 @@ import { texNow } from './texture.js?v=20261112a';
 import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
 import { tuneOf } from './tune.js?v=20261112e';
 import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112e';
+import { wireSelectHide } from './select-hide.js?v=20261112e';   // 11-12 미리보기에서 글을 고르면 옆에 뜨는 막대(눌러야 보이게 · 숨김 풀기 · 굵게 · 기울임)
 import { themeTakeable } from './theme-take.js?v=20261112c';   // 11-12 테마가 이 틀을 받는지(테마 받기 검사를 옮긴 것 · 목록 틀은 index.json nt · 내 글꾸는 여기서)
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
 import { sanitizeHtml, guessSlot, fromPath, slotPath } from './lib/log-copy/log-copy-sanitize.js';
@@ -866,6 +867,7 @@ function openSheet(state) {
         sheet.addEventListener('input', (e) => { const t = e.target; if (!t.matches?.('[data-ink]') || !sheetState) return; paintDot(t); clearTimeout(inkTimer); const item = sheetState.item; inkTimer = setTimeout(() => setInk(item, t.dataset.ink, t.value), 150); });
         sheet.addEventListener('click', (e) => { if (e.target.closest?.('[data-ink-reset]') && sheetState) resetInks(sheetState.item); });
         wireTune(sheet, { current: () => sheetState, openItem: (id) => { const it = allItems.find(x => x.id === id) || ownItems.find(x => x.id === id); if (!it) return false; openSheet(stateOf(it)); return true; }, say, clip: clipText });   // 11-12 아직 카드를 안 만든 틀도(완성 프리셋 파일에서 온 것)
+        wireSelectHide(sheet, { current: () => sheetState, say });
         sheet.addEventListener('close', () => { const st = sheetState; sheetState = null; sheet.querySelector('.mart-sheet-body').replaceChildren(); st?.el.querySelector('.mart-preview')?.focus({ preventScroll: true }); });
     }
     sheetState = state;
