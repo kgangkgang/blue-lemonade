@@ -729,7 +729,7 @@ export function wireTune(sheet, { current, openItem, say = () => {}, clip = null
             if (step) (next.type ??= {}).sizeStep = step;
             if (lookValue('lemon.off') === true) next.lemon = { off: true };
             setLook(Object.keys(next).length ? next : null); setMotion(x.motion); setShape(x.shape || null); markPreset('');
-            say(`스타일 「${x.label}」을 입혔어요`, 1800); return;
+            return;   // 11-12 알림 말풍선은 빼요 — 미리보기가 바로 바뀌고 잠깐 강조돼요(mart.js flashPreview)
         }
         if ((b = q('[data-simple-motion]'))) { setMotion({ text: b.dataset.simpleMotion, prop: b.dataset.simpleMotion }); return; }
         if ((b = q('[data-tex]'))) { const v = b.dataset.tex, t = texNow() || { on: 'b', level: 2 }; setTex(v === 'none' ? null : { ...t, tex: v }); redraw(item); return; }

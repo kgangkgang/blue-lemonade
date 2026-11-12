@@ -170,7 +170,11 @@ export function layerHost(doc = document) {
 export function say(text, ms = 2400) {
     const host = layerHost(); if (bubble.parentNode !== host) host.append(bubble);   // 11-12 열린 창 위에 보이게
     setLemonText(bubble, text);   // 「담아 갔어요 🍋」의 레몬도 테마 레몬 그림으로
-    if (btn) { const b = btn.getBoundingClientRect(); bubble.style.top = `${b.bottom + 10}px`; bubble.style.right = `${Math.max(12, innerWidth - b.right - 6)}px`; }
+    // 11-12 창 안이면 장바구니 단추(창 뒤 흐림 아래 오른쪽 위) 말고 창 아래 가운데 — 단추 줄(발) 바로 위에 붙여요(사용자 「뒤 화면 오른쪽 위에 떠서 안 보여요」)
+    const inSheet = host !== document.body;
+    bubble.classList.toggle('is-in', inSheet);
+    if (inSheet) { const foot = host.querySelector(':scope > footer, :scope > .mart-sheet-foot'); bubble.style.top = ''; bubble.style.right = ''; bubble.style.setProperty('--bub-bottom', `${(foot?.offsetHeight || 0) + 12}px`); }
+    else if (btn) { const b = btn.getBoundingClientRect(); bubble.style.top = `${b.bottom + 10}px`; bubble.style.right = `${Math.max(12, innerWidth - b.right - 6)}px`; }
     bubble.classList.remove('show'); void bubble.offsetWidth; bubble.classList.add('show');
     clearTimeout(say.t); say.t = setTimeout(() => bubble.classList.remove('show'), ms);
 }

@@ -725,6 +725,13 @@ function repaintInks(id) {
 }
 document.addEventListener('bl-inks-change', e => repaintInks(e.detail?.id));
 // 11-10 캐릭터 · 밤낮을 바꾸면 만든 카드 · 크게 보기를 다시 칠해요
+// 11-12 스타일 한 벌은 알림을 세 번(글 모양 · 움직임 · 모양) 내요 — 목록 카드 전부를 세 번 칠하지 않게 한 번으로 묶어요(누른 처리 끝 · 화면 그리기 전)
+let repaintQueued = false, flashQueued = false;
+function queueRepaint(flash) {
+    flashQueued ||= flash;
+    if (repaintQueued) return; repaintQueued = true;
+    queueMicrotask(() => { repaintQueued = false; const f = flashQueued; flashQueued = false; repaintTone(); if (f) flashPreview(); });
+}
 function repaintTone() {
     for (const s of states) { delete s.toneKey; delete s.toneHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = viewOf(s); } syncCard(s); }
     if (sheet?.open && sheetState?.item.preview) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); const inks = sheet.querySelector('.mart-sheet-inks'); if (inks) inks.innerHTML = toned(sheetState.item) ? '' : inksHtml(sheetState.item); syncSheet(); paintTune(); }
@@ -734,10 +741,16 @@ document.addEventListener('bl-tune-change', (e) => {
     const id = e.detail?.id;
     for (const s of states) { if (s.item.id !== id) continue; delete s.toneKey; delete s.toneHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = viewOf(s); } }
     if (!sheet?.open || sheetState?.item.id !== id || !sheetState.item.preview) return;
-    if (!e.detail.textOnly) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); paintTune(); } else syncTune(sheet, sheetState.item);
+    if (!e.detail.textOnly) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); paintTune(); flashPreview(); } else syncTune(sheet, sheetState.item);
     syncMine(sheet, sheetState.item);
 });
-document.addEventListener('bl-tone-change', repaintTone);
+// 11-12 크게 보기에서 조절을 누르면 미리보기를 잠깐 테두리로 강조해요(줄 간격처럼 작은 변화도 「바뀌었다」가 보이게 — 알림 말풍선 대신)
+function flashPreview() {
+    const pv = sheet?.open && sheet.querySelector('.mart-sheet-preview'); if (!pv) return;
+    pv.classList.remove('is-flash'); void pv.offsetWidth; pv.classList.add('is-flash');
+    clearTimeout(flashPreview.t); flashPreview.t = setTimeout(() => pv.classList.remove('is-flash'), 700);
+}
+document.addEventListener('bl-tone-change', e => queueRepaint(!e.detail?.caps));
 // 11-10 컨셉 하나 = 카드 하나 — 같은 이름의 디자인(심플 · 일러스트 · 다꾸 · 무테 · 내장)은 카드 · 크게 보기 안에서 넘겨 봐요(사용자 「한 컨셉 들어가서 디자인 바꾸는식」)
 const conceptPick = new Map();   // 컨셉 이름 → 고른 디자인 id
 // 11-10 사용자 「심플만 남기돼」 — 디자인 넘기기는 뺐어요(무테 · 일러스트 · 다꾸는 자료로만 남아요)
