@@ -447,6 +447,7 @@ jobs:
           node tools/tests/startup-730.mjs .
           node tools/tests/numcomma-fit.mjs .
           node tools/tests/ink-contrast.mjs .
+          node tools/tests/tag-ink-read-once.mjs .
           node tools/tests/style-break.mjs .
           node tools/tests/param-two-columns.mjs .
           node tools/tests/addon-unify.mjs .
