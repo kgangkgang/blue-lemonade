@@ -731,6 +731,7 @@ export async function start(a) {
     const hit = h && items.find(x => x.id === h);
     if (hit) openRoom(stateOf(hit));
     document.querySelector('.mart-random')?.addEventListener('click', pickRandom);
+    addEventListener('hashchange', () => { const id = hashId(), it = id && items.find(x => x.id === id); if (it) openRoom(stateOf(it)); });   // 11-12 장바구니 줄 · 주소 고침으로 해시만 바뀌면 그 액자 맞춰 보기(openRoom 은 replaceState 라 다시 안 불려요)
     if (new URLSearchParams(location.search).has('random')) { history.replaceState(null, '', location.pathname); pickRandom(); }   // 홈 「🎲 오늘의 액자」
     addEventListener('resize', () => { if (room?.open) syncSlack(); });
     addEventListener('keydown', (e) => { if (room?.open && !/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) { if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1); } });

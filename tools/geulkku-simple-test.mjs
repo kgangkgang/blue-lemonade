@@ -1593,5 +1593,18 @@ await test('AI 점검 ③ 글만 복사 · 테마용 복사 · 설정 코드 복
     assert.match(ms, /say, clip: clipText \}\);/); assert.match(tu, /const job = encodeSet\(setNow\(item\)\), copied = \(clip \? clip\(job\)/);
     assert.match(ms, /layerHost \} from '\.\/cart\.js\?v=(\d+[a-z])'/); assert.notEqual(ms.match(/cart\.js\?v=(\w+)/)[1], '20261109a', 'cart.js 판 꼬리를 올려요(옛 캐시 cart.js 에는 layerHost 가 없어요)');
 });
+await test('AI 점검 ④ 장바구니 줄을 지금 그 마트 페이지에서 누르면 창이 열려요(해시만 바뀌면 hashchange) · 다른 페이지면 넘어가요', () => {
+    const s = srcOf('cart.js');
+    const goTo = (0, eval)(`(${s.match(/export (function goTo\(href, loc = location, win = globalThis\) \{[\s\S]*?\n\})/)[1].replace('loc = location, win = globalThis', 'loc, win')})`);
+    const run = (href, at) => { const ev = []; const u = new URL(at), loc = { origin: u.origin, pathname: u.pathname, search: u.search, href: at }; const win = { history: { replaceState: (a, b, h) => ev.push(`hash ${h}`) }, dispatchEvent: e => ev.push(e.type) }; const r = goTo(href, loc, win); return { r, ev, href: loc.href }; };
+    const A = 'https://x.github.io/blue-lemonade/mart/';
+    let o = run(`${A}geulkku/#simple-k1`, `${A}geulkku/`);
+    assert.equal(o.r, 'same'); assert.deepEqual(o.ev, ['hash #simple-k1', 'hashchange']);
+    o = run(`${A}geulkku/#simple-k1`, `${A}geulkku/#simple-k1`); assert.deepEqual(o.ev, ['hash #simple-k1', 'hashchange'], '같은 해시여도 다시 열어요');
+    o = run(`${A}frames/#f1`, `${A}geulkku/`); assert.equal(o.r, 'go'); assert.equal(o.href, `${A}frames/#f1`); assert.deepEqual(o.ev, []);
+    o = run(`${A}geulkku/#simple-k1`, `${A}geulkku/?view=1`); assert.equal(o.r, 'go', '주소 꼬리가 다르면 넘어가요');
+    assert.ok(s.includes('close(); goTo(row.dataset.href); return;'));
+    for (const [f, open] of [['mart.js', 'openSheet'], ['frame-room.js', 'openRoom']]) assert.ok(srcOf(f).includes(`addEventListener('hashchange', () => { const id = hashId(), it = id && items.find(x => x.id === id); if (it) ${open}(stateOf(it)); });`), f);
+});
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

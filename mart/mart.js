@@ -1140,6 +1140,7 @@ async function main() {
     if (hit && new URLSearchParams(location.search).has('view')) openSheet(stateOf(hit));
     else if (hit && cards.reveal(hit)) stateOf(hit).el.scrollIntoView({ block: 'center' });   // #글꾸id: 그 카드까지 만들고 굴러 가요
     document.querySelector('.mart-random')?.addEventListener('click', pickRandom);
+    addEventListener('hashchange', () => { const id = hashId(), it = id && items.find(x => x.id === id); if (it) openSheet(stateOf(it)); });   // 11-12 장바구니 줄 · 주소 고침으로 해시만 바뀌면 그 글꾸 크게 보기
     if (new URLSearchParams(location.search).has('random')) pickRandom();   // 홈 「🎲 오늘의 글꾸」
     // 시험용(?mart-test&mylog-text=…): 로그를 넣고 내 로그로 보기를 켜요
     const testParams = new URLSearchParams(location.search);

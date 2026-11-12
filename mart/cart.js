@@ -175,6 +175,14 @@ export function say(text, ms = 2400) {
     clearTimeout(say.t); say.t = setTimeout(() => bubble.classList.remove('show'), ms);
 }
 
+/** 11-12 담은 것 줄 누르기 — 지금 그 마트 페이지면(글꾸 마트에서 글꾸 줄 · 액자 마트에서 액자 줄) 주소 해시만 바뀌어 창이 안 열렸어요(두 마트 모두 해시는 처음 한 번만 읽어요).
+ *  같은 페이지면 해시를 바꾸고 hashchange 를 알려요(받는 쪽: mart.js main · frame-room.js start) · 다른 페이지면 그대로 넘어가요 */
+export function goTo(href, loc = location, win = globalThis) {
+    const to = new URL(href, loc.href);
+    if (to.origin === loc.origin && to.pathname === loc.pathname && to.search === loc.search) { win.history.replaceState(null, '', to.hash); win.dispatchEvent(new Event('hashchange')); return 'same'; }
+    loc.href = to.href; return 'go';
+}
+
 // ── 계산 ──
 /** @param {(entries) => Promise<boolean>} copy · save — mart.js 의 복사 · 파일 받기 */
 let pay = null;
@@ -183,7 +191,7 @@ drawer.addEventListener('click', async (e) => {
     const del = e.target.closest('[data-cart-del]');
     if (del) { cart.remove(del.dataset.cartDel); return; }
     const row = e.target.closest('.mart-cart-row');
-    if (row?.dataset.href) { close(); location.href = row.dataset.href; return; }
+    if (row?.dataset.href) { close(); goTo(row.dataset.href); return; }
     const act = e.target.closest('[data-cart]')?.dataset.cart;
     if (act === 'close') close();
     else if (act === 'clear') cart.clear();
