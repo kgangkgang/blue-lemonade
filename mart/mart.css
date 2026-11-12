@@ -875,16 +875,20 @@ html.mart-cart-on{overflow:hidden}
 .mart-cart-undo{margin-top:12px}
 .mart-tryon-keep[hidden]{display:none}
 .mart-seg[hidden]{display:none}
-/* 11-12 밤 밝기 단추(해 · 달) — 띠 하나에 두 칸 · 고른 칸만 켜짐(해 = 레몬 + 짙은 그림 · 달 = 파랑 + 흰 그림 — 깡통 예시 글의 해 · 달 알약과 같은 결 · 색은 마트 토큰) · 그림은 테마의 해 · 달 선 그림 */
+/* 11-12 밤 밝기 단추(해 · 달) — 띠 하나에 두 칸 · 고른 칸만 켜짐(색은 아래 11-13 줄) · 그림은 테마의 해 · 달 선 그림 */
+:root{--sun:#E8A100}   /* 해 아이콘 호박색(마트 토큰에 없는 색 하나) */
 .mart-dn{display:inline-flex;align-items:center;gap:2px;flex:none;box-sizing:border-box;height:var(--ctl);padding:3px;border-radius:10px;background:var(--tint-2)}
-.mart-dn-b{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;width:38px;height:30px;margin:0;padding:0;border:0;border-radius:7px;background:transparent;cursor:pointer;transition:background-color .2s}
+.mart-dn-b{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;width:38px;height:30px;margin:0;padding:0;border:0;border-radius:7px;background:transparent;cursor:pointer;transition:background-color .2s,box-shadow .2s}
 .mart-dn-b>i{display:block;width:16px;height:16px;background:var(--muted);-webkit-mask:center/100% 100% no-repeat;mask:center/100% 100% no-repeat}
 .mart-dn-b.is-day>i{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4.5' fill='%23000' stroke='none'/%3E%3Cpath d='M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4.5' fill='%23000' stroke='none'/%3E%3Cpath d='M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41'/%3E%3C/svg%3E")}
 .mart-dn-b.is-night>i{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.9 13.5A9 9 0 0 1 10.5 3.1 9 9 0 1 0 20.9 13.5Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.9 13.5A9 9 0 0 1 10.5 3.1 9 9 0 1 0 20.9 13.5Z'/%3E%3C/svg%3E")}
-.mart-dn-b.is-day[aria-pressed=true]{background:var(--lemon-deep)}
-.mart-dn-b.is-day[aria-pressed=true]>i{background:var(--ink)}
-.mart-dn-b.is-night[aria-pressed=true]{background:var(--blue-strong)}
-.mart-dn-b.is-night[aria-pressed=true]>i{background:var(--on-blue)}
+/* 11-13 고른 칸 색(사용자가 고른 「섞은 안」 — 꽉 찬 레몬 · 파랑은 뺐어요): 해 = 흰 칸 + 호박색 해 + 가는 선 · 달 = 옅은 파랑 칸(고른 탭과 같은 --pick-face) + 파랑 달.
+   두 칸 모두 안쪽 1px 선(box-shadow inset)을 늘 두고 색만 바꿔요 — 번갈아 눌러도 크기 · 모서리가 한 화소도 안 달라져요(달 칸 선은 칸 색과 같아 안 보여요) */
+.mart-dn-b{box-shadow:inset 0 0 0 1px transparent}
+.mart-dn-b.is-day[aria-pressed=true]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.mart-dn-b.is-day[aria-pressed=true]>i{background:var(--sun)}
+.mart-dn-b.is-night[aria-pressed=true]{background:var(--pick-face);box-shadow:inset 0 0 0 1px var(--pick-face)}
+.mart-dn-b.is-night[aria-pressed=true]>i{background:var(--blue-strong)}
 .mart-dn-b:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 @media (pointer:coarse){.mart-dn-b::before{content:"";position:absolute;left:50%;top:50%;width:max(100%,var(--touch));height:var(--touch);transform:translate(-50%,-50%)}}
 @media (prefers-reduced-motion:reduce){.mart-dn-b{transition:none}}

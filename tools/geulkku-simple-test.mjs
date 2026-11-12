@@ -983,7 +983,9 @@ await test('분류 화면 · 캐릭터 칸 · 머리말(11-12 밤 시안 안 A):
       assert.ok(!/>밤<|>낮</.test(html) && !/>밤<\/button>|>낮<\/button>/.test(castSrc + ui), '글자 「밤」 「낮」 단추 0');
       assert.equal((ui.match(/dayNightHtml\('data-tune-mode', ''\)/g) || []).length, 2, '크게 보기 간편 · 세밀 색 갈래');
       assert.ok(ts.includes("mode = saved.mode === 'dark' ? 'dark' : 'light';"), '저장된 값이 없으면 낮');
-      for (const k of ['.mart-dn-b.is-day[aria-pressed=true]{background:var(--lemon-deep)}', '.mart-dn-b.is-night[aria-pressed=true]{background:var(--blue-strong)}', '.mart-dn-b.is-night[aria-pressed=true]>i{background:var(--on-blue)}']) assert.ok(css.includes(k), k); }
+      // 11-13 고른 칸 색 「섞은 안」: 해 = 흰 칸 + 호박색 해 + 가는 선 · 달 = 옅은 파랑 칸 + 파랑 달 · 두 칸 같은 꼴(안쪽 1px 선) · 꽉 찬 레몬 · 파랑 0
+      for (const k of ['.mart-dn-b{box-shadow:inset 0 0 0 1px transparent}', '.mart-dn-b.is-day[aria-pressed=true]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}', '.mart-dn-b.is-day[aria-pressed=true]>i{background:var(--sun)}', '.mart-dn-b.is-night[aria-pressed=true]{background:var(--pick-face);box-shadow:inset 0 0 0 1px var(--pick-face)}', '.mart-dn-b.is-night[aria-pressed=true]>i{background:var(--blue-strong)}', ':root{--sun:#E8A100}']) assert.ok(css.includes(k), k);
+      assert.ok(!/\.mart-dn-b(?:\.is-\w+)?(?:\[aria-pressed=true\])?\{[^}]*(?:--lemon|background:var\(--blue-strong\))/.test(css), '밝기 단추에 꽉 찬 레몬 · 파랑 면이 남았어요'); }
     // 간편 「움직임」 줄의 「소품만」 — 글 움직임 끔 · 소품 움직임은 지금 세기(끔이었으면 중) · 세밀과 같은 값
     { const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
       assert.ok(ui.includes('data-simple-motion="prop" aria-pressed="${propOnly}"') && ui.includes("setMotion(v === 'prop' ? { text: '0', prop: cur.prop === '0' ? 'm' : cur.prop } : { text: v, prop: v })") && ui.includes("const propOnly = m.text === '0' && m.prop !== '0', canPropOnly = !!caps.text['0'];")); }
@@ -2084,7 +2086,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
         assert.match(ui, /data-act="theme-file"\$\{no\}/);
         for (const [n, t] of [['mart.js', mart], ['genie.js', genie]]) assert.doesNotMatch(t, /테마로 받기는 준비 중/, n);
         assert.match(fs.readFileSync(path.join(MART, 'mart.css'), 'utf8'), /\.tag\.is-notake\{/);
-        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112j/, f);
+        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112k/, f);
     });
 }
 console.log(`\n${pass} 통과 · ${fail} 실패`);

@@ -206,6 +206,9 @@ async function castPart(vp) {
     await tapOk(vp, '잊기', '.mart-cast-direct [data-forget]');
     row(vp, '기억한 캐릭터 × 로 잊기', (await texts('.mart-cast-direct .mart-cast-mine [data-color]')).length === 0, '');
     await tapOk(vp, '낮', '.mart-cast [data-mode="light"]'); const m1 = (await tone()).mode; await tapOk(vp, '밤', '.mart-cast [data-mode="dark"]'); const m2 = (await tone()).mode;
+    { const box = await b.eval(`[...document.querySelectorAll('.mart-cast .mart-dn-b')].map(x=>{const r=x.getBoundingClientRect(),c=getComputedStyle(x);return [Math.round(r.width*2)/2,Math.round(r.height*2)/2,c.borderRadius,c.borderTopWidth].join('/')})`);
+      await b.eval(`document.querySelector('.mart-cast').scrollIntoView({block:'start'}); scrollBy(0,-90); true`); await b.sleep(500); await b.shot(path.join(OUT, `${vp}-34-밝기-달-고름.png`));
+      row(vp, '해 · 달 두 칸은 꼴이 같아요(크기 · 모서리 · 테두리 0 — 고른 표시는 안쪽 선과 색만)', box.length === 2 && box[0] === box[1] && /\/0px$/.test(box[0]), box.join(' | ')); }
     row(vp, '해 · 달 단추로 낮 · 밤 바꾸기', m1 === 'light' && m2 === 'dark', `${m1} → ${m2}`);
     await tapOk(vp, '내 글 칸', '.mart-cast [data-toggle="text"]');
     row(vp, '「내 글」 칸 그대로(붙여 넣는 칸 · 내 글로 보기)', await b.eval(`!!document.querySelector('.mart-mine-text')?.checkVisibility() && !!document.querySelector('[data-mine="apply"]')`), '');
