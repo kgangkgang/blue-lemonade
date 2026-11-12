@@ -240,9 +240,9 @@ function geulkkuCard(item) {
     const ph = `<div class="mart-ph" style="${item.bg ? `--ph-bg:${esc(item.bg)};` : ''}${item.ink ? `--ph-ink:${esc(item.ink)}` : ''}">${glyphHtml(item, '📝')}<b>${esc(item.name)}</b></div>`;
     const html = '<button type="button" class="btn" data-act="html" title="확장 없이 커뮤니티 글쓰기 HTML 칸에 바로 붙여 쓰는 완성 HTML(보이는 글씨는 전부 바꿔도 돼요)"><span class="em" aria-hidden="true">📋</span>HTML 복사</button>';
     const big = `<a class="btn" href="${href}" title="글꾸 마트의 크게 보기 창으로 가요"><span class="em" aria-hidden="true">🔍</span>크게 보기</a>`;
-    // 테마에 이미 든 심플(내장) · HTML 로만 쓰는 오리지널은 마트처럼 담기 대신 표시만
+    // 테마에 이미 든 심플(내장) · HTML 로만 쓰는 틀은 마트처럼 담기 대신 표시만 — 11-12 예전 「준비 중」 안내를 지금 길(크게 보기 「테마로 담기」 · 못 받는 틀은 꼬리표)로
     const first = item.builtin ? '<span class="mart-builtin" title="블루레몬에이드 로그 복사에 이미 있어요 · 마트에서 가져오지 않아도 돼요">✓ 이미 테마에 있어요</span>'
-        : item.copyOnly ? '<span class="mart-builtin" title="테마로 받기는 준비 중이에요 · 커뮤니티 글에 HTML 로 붙여 써요">HTML 복사로 써요</span>'
+        : item.copyOnly ? `<span class="mart-builtin" title="${item.simple ? (item.nt ? '블루레몬 로그 복사가 아직 이 틀을 받지 못해요 · 커뮤니티 글에 HTML 로 붙여 써요' : '커뮤니티 글에 HTML 로 붙여 써요 · 블루레몬 로그 복사로 받으려면 「크게 보기」의 「테마로 담기」') : '커뮤니티 글에 HTML 로 붙여 써요'}">HTML 복사로 써요</span>`
         : '<button type="button" class="btn mart-pick" data-act="pick" aria-pressed="false"><span class="em" aria-hidden="true">🛒</span>담기</button>';
     result.innerHTML = `<article class="mart-card" data-id="${esc(item.id)}"${item.accent ? ` style="--accent:${esc(item.accent)}"` : ''}>
         <a class="mart-preview geulkku${item.preview ? '' : ' is-wait'}" href="${href}" aria-label="${esc(item.name)} 크게 보기"><div class="mart-preview-in" inert>${item.preview ? previewOf(state) : ph}</div><span class="mart-zoom-hint tag" aria-hidden="true"><span class="em">🔍</span>크게 보기</span></a>
