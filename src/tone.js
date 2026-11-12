@@ -19,8 +19,19 @@ function enabled() {
     return themeEnabled(s) && s.chat?.toneInline && !s.chat?.unifyInline; // 5.5.6: 확장만 모드에서도 재지 않게 (s.enabled 만 보면 켜진 것으로 친다)
 }
 
+// 1.1.4 #rgb · #rgba · #rrggbb · #rrggbbaa 는 브라우저에 묻지 않고 바로 읽어요 — 숨은 요소에 색을 쓰고 계산 스타일을 읽으면 그 자리에서 문서의 밀린 스타일 계산이 한 번 강제돼요
+//   (채팅을 열어 메시지 수백 개가 막 붙은 프레임에 처음 보는 색마다). 16진 색은 계산값이 같은 숫자라 결과가 같아요. 이름 색 · rgb() · hsl() · var() 는 예전처럼 브라우저가 읽어요
+const HEX = /^#(?:([0-9a-f])([0-9a-f])([0-9a-f])[0-9a-f]?|([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})(?:[0-9a-f]{2})?)$/i;
+export function hexRgb(value) {
+    const m = HEX.exec(value);
+    if (!m) return null;
+    return m[1] !== undefined ? [parseInt(m[1] + m[1], 16), parseInt(m[2] + m[2], 16), parseInt(m[3] + m[3], 16)] : [parseInt(m[4], 16), parseInt(m[5], 16), parseInt(m[6], 16)];
+}
+
 function toRgb(value) {
     if (!value) return null;
+    const hex = hexRgb(value);
+    if (hex) return hex;
     if (!probe) {
         probe = document.createElement('span');
         probe.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;visibility:hidden';

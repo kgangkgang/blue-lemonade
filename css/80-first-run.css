@@ -88,10 +88,11 @@
 .bl-first-run .bl-fr-read-sample.is-indent { text-indent: 1em; }
 .bl-first-run .bl-fr-read-sample.is-bubble { padding: .45em .7em; border-radius: var(--bl-r-md, 12px); background: var(--salty-raised, var(--fr-control)); }
 .bl-first-run .bl-fr-read-sample q { color: var(--salty-dialogue, inherit); }
-.bl-first-run .bl-fr-read-sample q.is-marker { background: linear-gradient(transparent 52%, var(--salty-marker, var(--bl-fb-rgb-96-156-206-p28)) 52%); }
-.bl-first-run .bl-fr-read-sample q.is-full { background: var(--salty-marker, var(--bl-fb-rgb-96-156-206-p28)); }
+/* 1.1.5 형광펜 · 칠하기 · 색을 실제 채팅(css/06-chat-text.css)과 같은 변수로 — 예전엔 형광펜 = 52% 띠 · 색 = --salty-accent-ink 라 고른 뒤 모습과 달랐어요 */
+.bl-first-run .bl-fr-read-sample q.is-marker { background: var(--salty-marker-bg, linear-gradient(transparent 52%, var(--salty-marker, var(--bl-fb-rgb-96-156-206-p28)) 52%)); color: var(--salty-marker-ink, var(--salty-dialogue, inherit)); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.bl-first-run .bl-fr-read-sample q.is-full { background: var(--salty-fill-marker, var(--salty-marker, var(--bl-fb-rgb-96-156-206-p28))); border-radius: 5px; }
 .bl-first-run .bl-fr-read-sample q.is-bold { font-weight: 650; }
-.bl-first-run .bl-fr-read-sample q.is-tint { color: var(--salty-accent-ink, var(--fr-accent)); }
+.bl-first-run .bl-fr-read-sample q.is-tint { color: var(--salty-accent-dlg, var(--salty-accent-ink, var(--fr-accent))); }
 
 /* 7.2.6 쓰던 테마가 있어요: 설명 한 줄 · 켜진 다른 CSS 목록 · 큰 단추 둘(셋). 단추는 제목 + 한 줄 설명을 세로로, 폰에서도 한 손가락 크기 */
 .bl-first-run .bl-fr-css { display: flex; flex-direction: column; gap: 12px; padding-top: 4px; }

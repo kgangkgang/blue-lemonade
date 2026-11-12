@@ -4,6 +4,7 @@ import {optionFamily} from './scripts/fruit-option-help.js';
 // 1.0.0 극한 최적화: 글꼴 설정 창(fruit-type-ui → 표본 64KB · 전체 글꼴 목록 160KB · 미리보기)은 바로가기 단추를 누를 때 받아요 — 내장 스크립트 실행기가 이 모듈을 시작 때 끌어와 부팅 자원에 300KB 가 들어갔어요
 const openFruitTypography = id => import('./fruit-type-ui.js').then(m => m.openFruitTypography(id));
 import {watchWith} from './dom-watch.js';
+import {framePoll} from './frame-poll.js';   // 1.1.4 1.5초 폴링 · 서명 계산을 과일 계열 세 모듈이 하나로
 const leases=new WeakMap();
 export function installFruitTypeShortcuts(doc=document,host=window){
     let lease=leases.get(doc);if(!lease){lease={count:0,stop:startShortcuts(doc,host)};leases.set(doc,lease);}lease.count++;let released=false;return()=>{if(released)return;released=true;if(--lease.count===0){lease.stop();leases.delete(doc);}};
@@ -14,13 +15,9 @@ function startShortcuts(doc,host){
     // 채팅 뿌리 · iframe 문서(와 그 안 요소 수)가 바뀌었을 때만 훑는다 — iframe 안은 body 감시자가 못 보므로 요소 수까지 본다
     // 8.0.6 채팅 안 카드 옆 바로가기는 청과(iframe)만 — 데우스 카드는 class 앞 custom- 때문에 그동안 한 번도 안 붙었고, 이름을 고친 뒤에도 모든 메시지 트래커 아래 단추가 생기지 않게 그대로 둬요(데우스는 빠른 설정 창 줄에서).
     const DEUS=FRUIT_TYPES.filter(t=>t.owner==='qingguo'),DEUS_ROOT=DEUS.map(typeMatch).join(',');
-    const ids=new WeakMap();let nextId=1;const idOf=o=>{if(!o)return 0;let i=ids.get(o);if(!i)ids.set(o,i=nextId++);return i;};
-    // 8.2.2 1.5초마다 #chat 아래 전체를 querySelectorAll('iframe') 로 다시 훑었다(300메시지면 요소 10만 개 · 폰 4배 한 번에 약 7ms — iframe 이 하나도 없어도).
-    //   살아 있는 목록(getElementsByTagName)은 브라우저가 들고 있다가 DOM 이 바뀔 때만 다시 세서, 그대로면 거의 공짜예요. 고르는 iframe · 순서는 같아요(문서 순서)
-    const frameLists=new WeakMap();const framesOf=scope=>{if(typeof scope.getElementsByTagName!=='function')return scope.querySelectorAll('iframe');let list=frameLists.get(scope);if(!list){list=scope.getElementsByTagName('iframe');frameLists.set(scope,list);}return list;};
-    const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of framesOf(scope)){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(countOf(d));if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
-    // 8.2.6 iframe 문서의 요소 수도 살아 있는 목록(getElementsByTagName('*'))으로 — 1.5초마다 iframe 문서마다 querySelectorAll('*') 로 새 목록을 만들어 세던 것. 세는 요소는 같아요
-    const allLists=new WeakMap();const countOf=d=>{if(!d)return 0;if(typeof d.getElementsByTagName!=='function')return d.querySelectorAll?.('*').length||0;let list=allLists.get(d);if(!list){list=d.getElementsByTagName('*');allLists.set(d,list);}return list.length;};
+    // 8.2.2 · 8.2.6 iframe · iframe 문서의 요소 수는 살아 있는 목록(getElementsByTagName)으로 — 1.5초마다 #chat 전체를 querySelectorAll 로 다시 훑지 않아요(300메시지면 요소 10만 개 · 폰 4배 한 번에 약 7ms).
+    // 1.1.4 그 타이머 · 서명 계산은 과일 계열 세 모듈이 하나를 같이 써요(src/frame-poll.js — 가려진 동안 쉼). 이 모듈은 iframe 안 요소 수까지 보는 서명(counts)을 써요
+    const poll=framePoll(doc,host),frameSig=poll.sig;
     // 8.2.6 과일 창이 열렸나 · 데우스 빠른 설정 창이 있나를 아이디로 바로 — 쉼표 선택자 목록(querySelector)은 둘 다 없을 때(거의 늘) 1.5초마다 문서 끝까지 훑었어요. 결과는 같아요(아이디는 하나뿐)
     const windowOpen=()=>typeof doc.getElementById==='function'?!!doc.getElementById('fruit-heart-v6')?.classList?.contains('open')||!!doc.getElementById('bl-deus-popover'):!!doc.querySelector('#fruit-heart-v6.open,#bl-deus-popover');
     const schedule=()=>{if(!stopped&&!frame)frame=host.requestAnimationFrame(flush);};
@@ -57,6 +54,6 @@ function startShortcuts(doc,host){
     const WATCH=DEUS_ROOT+',iframe,#chat,#fruit-heart-v6,#bl-deus-popover',PANELS='#fruit-heart-v6,#bl-deus-popover';
     // 9.0.4 공용 감시 허브 구독(html 구역 — 과일의 마음 창은 body 밖 html 의 자식 · head 는 안 봐요) + body 자기 data-generating. 시험의 가짜 창은 그 창 감시자 하나
     const unwatch=watchWith(host,[[doc.documentElement||doc.body,{childList:true,subtree:true,exclude:'head',name:'과일 글자 바로가기'}],[doc.body,{attributes:['data-generating'],name:'과일 글자 바로가기 (답 끝)'}]],records=>{const streaming=!!doc.body.dataset.generating,skip=new Map(),left=[];for(const r of records){if(r.attributeName==='data-generating'){if(!streaming)schedule();continue;}const t=r.target;let out=skip.get(t);if(out===undefined){out=!!t.closest?.('.drawer-content,select')||(streaming&&!!t.closest?.('.mes_text'));skip.set(t,out);}if(!out)left.push(r);}if(left.length&&(fruitStructureChanged(left,WATCH,PANELS,false)||(left.some(r=>r.removedNodes?.length)&&orphaned())))schedule();});
-    const timer=host.setInterval(()=>{if(windowOpen()||frameSig(true)!==lastSig)schedule();},1500);flush();
-    return()=>{stopped=true;host.clearInterval(timer);doc.removeEventListener('click',click,true);unwatch();host.cancelAnimationFrame(frame);for(const b of buttons.values())b.remove();buttons.clear();};
+    const offPoll=poll.every(()=>{if(windowOpen()||frameSig(true)!==lastSig)schedule();},{counts:true});flush();
+    return()=>{stopped=true;offPoll();doc.removeEventListener('click',click,true);unwatch();host.cancelAnimationFrame(frame);for(const b of buttons.values())b.remove();buttons.clear();};
 }

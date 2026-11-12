@@ -351,7 +351,8 @@ export function buildPrompt(mes, opts = {}) {
         lines.push({ i, h, text, speaker: speakerOf(seg, mes, charName, userName), ask: !known && askSpeaker && speakerUnknown(seg, mes, charName, userName), known });
         const own = detectLang(text);
         const want = langs.filter(l => l !== own && !lineDone(opts.done, i, h, l));   // 1.7.0 보충 요청: 이미 옮긴 줄은 빼고
-        if (want.length) needs[i] = want;
+        // 1.1.3 known 줄은 묻지 않으니(composePrompt) 번역도 기다리지 않는다 — 남겨 두면 doAnalyze 가 「빠진 번역」으로 값 치른 답을 버렸다 (빠진 언어는 다음 보충 요청이 묻는다)
+        if (want.length && !known) needs[i] = want;
     }
     const context = clip(other.join('\n'), max);
     const italics = askItalics ? italicsToAsk(segs, Array.isArray(opts.italicsOnly) ? opts.italicsOnly : null) : [];
@@ -489,6 +490,14 @@ export function composePrompt(parts) {
 
 /** 모델 응답 → { segs: [...] } 또는 null (``` 울타리 · 앞뒤 잡글 · 깨진 JSON) */
 export function parseReply(text) {
+    let v = parseJsonReply(text);
+    if (!v) return null;
+    if (Array.isArray(v)) v = { segs: v };
+    if (!Array.isArray(v.segs)) return null;
+    return v;
+}
+/** 1.1.3 모델 응답에서 JSON 값(객체 · 배열)만 — 모양은 부르는 쪽이 본다 (듣는 언어 번역은 {"lines":[…]}) */
+function parseJsonReply(text) {
     let s = String(text ?? '').replace(/<(think|thinking|reasoning)>[\s\S]*?<\/\1>/gi, '').trim();   // 생각 블록 안의 { } 에 걸리지 않게
     if (!s) return null;
     s = s.replace(/^```[a-zA-Z]*\s*\n?/, '').replace(/\n?```\s*$/, '').trim();
@@ -512,10 +521,7 @@ export function parseReply(text) {
             }
         }
     }
-    if (!v) return null;
-    if (Array.isArray(v)) v = { segs: v };
-    if (!Array.isArray(v.segs)) return null;
-    return v;
+    return v || null;
 }
 
 const unquote = (t) => String(t ?? '').trim().replace(/^[“"「『«‘＂]+|[”"」』»’＂]+$/g, '').trim();
@@ -1101,8 +1107,9 @@ export async function translateLines(lines, target, { signal } = {}) {
     log('req', `듣는 언어 · 대사 분석 엔진으로 ${list.length}줄 → ${name}`);
     const r = await callerOf(engineOf(c), 'tts.translate')(c, system, user, signal);
     addAnalysisUsage(r.usage.in, r.usage.out, Math.max(1, Number(r.usage.calls) || 1));
-    const parsed = parseReply(r.text);
-    const arr = Array.isArray(parsed?.lines) ? parsed.lines : Array.isArray(parsed) ? parsed : [];
+    // 1.1.3 parseReply 는 {"segs":…} 만 받아서, 프롬프트가 요구한 {"lines":[…]} 도 맨 배열도 늘 못 읽었다 (요청은 나가고 전 줄 null)
+    const parsed = parseJsonReply(r.text);
+    const arr = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.lines) ? parsed.lines : [];
     const out = list.map((_, i) => (typeof arr[i] === 'string' && arr[i].trim() ? arr[i].trim() : null));
     const got = out.filter(Boolean).length;
     if (got < list.length) log('info', `듣는 언어 · 대사 분석 엔진이 ${list.length - got}줄을 못 옮김${r.truncated ? ' (길이 한도)' : ''}`);

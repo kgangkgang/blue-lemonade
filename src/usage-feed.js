@@ -25,10 +25,13 @@ export function ledgerEntryFromLog(log) {
     // 실패 · 중단도 적는다 (돈이 나갔을 수 있다) — 토큰이 하나도 없는 실패(HTTP 오류 등 과금 안 된 것)만 뺀다
     if (!log.ok && !input && !output) return null;
     const reported = log.pricing?.kind === 'reported' && Number.isFinite(log.pricing?.cost) ? log.pricing.cost : undefined;
+    // 1.1.3 공식 단가로 셈한 요청 로그 값도 넘긴다 (장부가 기본 단가로 다시 셈하지 않게). 중계 · 직접 지정 · 모름은 넘기지 않는다
+    const quoted = log.pricing?.kind === 'official' && Number.isFinite(log.pricing?.cost) ? log.pricing.cost : undefined;
     return {
         ext, feature, model: log.model || log.requestedModel || '', api: log.source || '', provider: log.connection?.provider || '', origin: log.connection?.origin || '',
         input, output, cachedInput: Number(log.cachedTokens) || 0, thinking: Number(log.reasoningTokens) || 0,
         estimated: !!log.estimated, ok: !!log.ok, at: log.at, chatId: log.chatId || '', requestId: log.id || '',
         ...(reported !== undefined ? { reportedUsd: reported } : {}),
+        ...(quoted !== undefined ? { quotedUsd: quoted } : {}),
     };
 }

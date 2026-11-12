@@ -1,4 +1,5 @@
 // Display-only fixed labels in the known Fruit status renderer. No preset or message writes.
+import {framePoll} from '../frame-poll.js';   // 1.1.4 1.5 s polling · frame signature shared by the three fruit modules
 const LABELS = new Map([['DATE','날짜'],['TIME','시간'],['LOC.','장소'],['WTHR','날씨']]);
 const FOOTER = new Map([['My heart found you,before my mind understood.','머리로 알기 전에, 마음이 먼저 너를 알아봤어.']]);
 const DECOR = new Map([['SCENE','장면'],['MOMENT','순간'],['SILENT','고요'],['FLOWING','흐름'],['WHISPER','속삭임'],['ECHO','메아리']]);
@@ -48,10 +49,8 @@ export function installFruitStatusKorean(doc = document, host = window) {
     const texts = new Map(), attributes = new Map(), cards = new Map(), documents = new Map(), frames = new Map(), dialogChanges = new Map(), fixes = new Map();
     let stopped = false, scheduled = 0, lastSig = '';
     // 7.0.3 long chats: the 1.5 s timer only rescans when the chat root or an iframe document changed (observers and iframe load report the rest)
-    const ids=new WeakMap();let nextId=1;const idOf=o=>{if(!o)return 0;let i=ids.get(o);if(!i)ids.set(o,i=nextId++);return i;};
-    // 8.2.2 1.5초 타이머가 #chat 아래 전체를 querySelectorAll('iframe') 로 다시 훑지 않게 — 살아 있는 목록(브라우저가 DOM 바뀔 때만 다시 셈) · 고르는 iframe · 순서는 같아요
-    const frameLists=new WeakMap();const framesOf=scope=>{if(typeof scope.getElementsByTagName!=='function')return scope.querySelectorAll('iframe');let list=frameLists.get(scope);if(!list){list=scope.getElementsByTagName('iframe');frameLists.set(scope,list);}return list;};
-    const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of framesOf(scope)){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
+    // 1.1.4 그 타이머 · 서명 계산은 과일 계열 세 모듈이 하나를 같이 써요(src/frame-poll.js — 살아 있는 iframe 목록 · 가려진 동안 쉼)
+    const poll=framePoll(doc,host),frameSig=poll.sig;
     const schedule = () => { if (!stopped && !scheduled) scheduled = host.requestAnimationFrame(flush); };
     function restoreText(node) {
         const old = texts.get(node);
@@ -176,11 +175,11 @@ export function installFruitStatusKorean(doc = document, host = window) {
         for (const [current, style] of fixes) if (![...liveCards].some(card=>card.ownerDocument===current&&card.matches('.fate-status-wrapper'))) { style.remove(); fixes.delete(current); }
         paint();
     }
-    const timer = host.setInterval(() => { if (frameSig() !== lastSig) schedule(); }, 1500); // discovers a replaced chat root without observing the whole page
+    const offPoll = poll.every(() => { if (frameSig() !== lastSig) schedule(); }); // discovers a replaced chat root without observing the whole page (1.5 s · shared timer)
     flush();
     return () => {
         if (stopped) return;
-        stopped = true; host.clearInterval(timer); host.cancelAnimationFrame(scheduled);
+        stopped = true; offPoll(); host.cancelAnimationFrame(scheduled);
         for (const entry of documents.values()) entry.observer.disconnect();
         for (const observer of cards.values()) observer.disconnect();
         for (const [frame, listener] of frames) frame.removeEventListener('load', listener);

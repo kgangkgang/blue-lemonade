@@ -23,7 +23,8 @@ await test('p1: the module and its dictionary are exactly what the build makes f
     const dropped = readPrune();
     const { code, dictionary, stats } = buildKorean(source, dropped);
     assert.equal(korean, code, 'node tools/build-korean-dict.mjs');
-    assert.deepEqual(stats, { exact: 5330, htmlExact: 255, patterns: 287, dropped: 613 });   // 10-31: ko-kr.json · FIX 에만 기대던 i18n 열쇠 706개를 되돌림(브라우저 언어 ko 에서 영어로 남던 것)
+    assert.deepEqual(stats, { exact: 5327, htmlExact: 255, patterns: 287, dropped: 604 });   // 10-31: ko-kr.json · FIX 에만 기대던 i18n 열쇠 706개를 되돌림(브라우저 언어 ko 에서 영어로 남던 것)
+    // 1.1.3 감사 G11: 실리태번 1.16 ~ 1.19 에 없는 옛 문구 12개를 원본에서 걷고 다듬기 목록을 다시 만듦 → 열쇠 5330 → 5327 · 지문 613 → 604 (사전이 작아진 것)
     // 1.0.0 극한 최적화: 한 장(ko-ui-text.gen.js) 대신 색인 + 조각 여섯 — 파일마다 빌드가 만든 것과 같고, 조각을 합치면 사전 전체
     assert.ok(!fs.existsSync(path.join(root, 'src/ko-ui-text.gen.js')), '옛 한 장짜리 사전은 없어요');
     const modules = dictionaryModules(dictionary, stats, readParts());
@@ -83,7 +84,7 @@ await test('p5: 과일 창은 한 번에 훑고 유휴 발견은 좁은 범위�
     assert.ok(!fh.includes('doc.querySelectorAll(DISCOVER_ALL)'));
     assert.ok(!fh.includes('[...doc.querySelectorAll(rootsSelector)]') && !fh.includes("doc.querySelectorAll('#toast-container .toast-message')"), 'old per-selector walks are gone');
     new Function('BlueLemonade', 'window', fh);
-    assert.match(read('src/scripts/catalog.js'), /\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.(?:0\.[89]|1\.[01])'/); // 1.0.8 에서 고친 뒤 사전만 바뀐 1.0.9(10-27 창 이름 한글 보강) · 긴 원문을 뺀 1.1.0 · 청과 2.1X 새 항목을 더한 1.1.1 도 돼요
+    assert.match(read('src/scripts/catalog.js'), /\{id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1\.(?:0\.[89]|1\.[012])'/); // 1.0.8 에서 고친 뒤 사전만 바뀐 1.0.9(10-27 창 이름 한글 보강) · 긴 원문을 뺀 1.1.0 · 청과 2.1X 새 항목을 더한 1.1.1 · 긴 글 지문 사전을 더한 1.1.2 도 돼요
 });
 
 await test('one copy: the old bundled copies are gone and every module takes (BlueLemonade, window)', async () => {

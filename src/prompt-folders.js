@@ -54,7 +54,17 @@ function bucket(create = false) {
     const box = store();
     const key = presetName();
     let slot = Object.hasOwn(box.presets, key) ? box.presets[key] : null;
-    if (slot && typeof slot === 'object') { slot.folders = tidyFolders(slot.folders); return slot; }
+    if (slot && typeof slot === 'object') {
+        slot.folders = tidyFolders(slot.folders);
+        // 1.1.3 다 푼 뒤 같은 이름의 새 판 프리셋 파일이 다른 폴더를 들고 오면 그 폴더를 받아요 — 예전엔 빈 칸이 남아 새 판 폴더를 못 읽었어요.
+        //   다 풀 때 그때 파일 폴더의 지문(seed)을 남겨 두고, 지문이 같으면(같은 파일) 예전처럼 안 되살려요. 지문이 없는 옛 빈 칸은 그대로 둬요
+        //   (기능 아이디어: SillyTavern-PromptFolders 1.4.2 「프리셋 파일 그룹 맞추기」 — 코드는 옮기지 않음)
+        if (!slot.folders.length && typeof slot.seed === 'string') {
+            const seed = presetSeed();
+            if (seed.length && seedPrint(seed) !== slot.seed) { slot.folders = seed; delete slot.seed; }
+        }
+        return slot;
+    }
     slot = { folders: presetSeed() };
     if (create) box.presets[key] = slot;
     return slot;
@@ -71,9 +81,19 @@ function importBoxFolders() {
     const imported = boxFolders();
     if (imported.length) openEditor({ imported });
 }
+/** 프리셋 파일 폴더의 짧은 지문 — 같은 파일인지만 봐요 */
+function seedPrint(seed) {
+    let h = 5381;
+    for (const ch of JSON.stringify(seed)) h = ((h * 33) ^ ch.charCodeAt(0)) >>> 0;
+    return `${seed.length}:${h.toString(36)}`;
+}
 function save(slot) {
-    // 다 푼 뒤에도 프리셋 초깃값이 되살아나지 않게, 프리셋에 폴더가 들어 있으면 빈 칸을 남겨요
-    if (slot && !slot.folders.length && !presetSeed().length) delete store().presets[presetName()];
+    // 다 푼 뒤에도 프리셋 초깃값이 되살아나지 않게, 프리셋에 폴더가 들어 있으면 빈 칸을 남겨요 (1.1.3 그 파일 폴더의 지문과 함께)
+    if (slot && !slot.folders.length) {
+        const seed = presetSeed();
+        if (!seed.length) delete store().presets[presetName()];
+        else slot.seed = seedPrint(seed);
+    } else if (slot) delete slot.seed;
     saveSettings();
 }
 

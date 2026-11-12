@@ -158,6 +158,7 @@ export async function openLogSheet(model) {
             <div class="bl-lc-chips bl-chip-row" role="radiogroup" aria-label="모양" data-lc-shapes></div>
             <div class="bl-lc-gallery" data-lc-gallery hidden><textarea rows="3" placeholder="이미지 코드(&lt;img …&gt;)나 이미지 주소를 붙여 넣어요" aria-label="갤러리 사진 코드" data-lc-images></textarea><span class="bl-lc-note" data-lc-images-count></span></div>
             <div class="bl-lc-colors" data-lc-colors><div class="bl-lc-mode" role="group" aria-label="밝기">${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><div class="bl-lc-pals bl-chip-row" role="radiogroup" aria-label="색" data-lc-pals></div></div>
+            <div class="bl-lc-easy" role="group" aria-label="간편 — 스타일 · 움직임 · 글 크기" data-lc-easy hidden></div>
             <div class="bl-lc-inks bl-chip-row" role="group" aria-label="글자색 — 눌러서 바꿔요" data-lc-inks hidden></div>
             <div class="bl-lc-tools bl-chip-row" role="group" aria-label="이름 숨김 · 바꾸기"><button type="button" class="bl-lc-chip" data-lc="hide" aria-pressed="false"><i class="fa-solid fa-user-secret" aria-hidden="true"></i><span>이름 숨김</span></button><button type="button" class="bl-lc-chip" data-lc="words" aria-pressed="false"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>바꾸기</span><small data-lc-words-count></small></button><button type="button" class="bl-lc-chip" data-lc="fields" aria-pressed="false" title="제목 · 날짜 · 깡통 · 모델 · 프롬프트 칸을 글칸으로 고쳐요"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>머리 칸</span></button><button type="button" class="bl-lc-chip" data-lc="spoiler" disabled title="미리보기에서 글을 고르면 눌러요"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>숨기기</span></button></div>
             <div class="bl-lc-shows bl-chip-row" role="group" aria-label="보일 것 — 끄면 빼요" data-lc-shows>${SHOWS.map(([key, icon, label, title]) => `<button type="button" class="bl-lc-chip" data-lc-show="${key}" aria-pressed="true" title="${esc(title)}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${esc(label)}</span></button>`).join('')}<button type="button" class="bl-lc-chip" data-lc-lemon aria-pressed="false" title="켜면 틀의 빈 모서리에 작은 레몬을 넣어요 — 누르면 블루레몬에이드 소개 글이 새 창으로 열려요"><i class="fa-solid fa-lemon" aria-hidden="true"></i><span>레몬 바로가기</span></button><button type="button" class="bl-lc-chip" data-lc-lemon-at hidden title="레몬 자리 — 누를 때마다 자동 · 왼쪽 위 · 오른쪽 위 · 왼쪽 아래 · 오른쪽 아래"><i class="fa-solid fa-up-down-left-right" aria-hidden="true"></i><span>자동</span></button><button type="button" class="bl-lc-chip" data-lc-height hidden title="틀 높이 — 누를 때마다 자동(글 길이만큼) · 작게 · 중간 · 크게(틀 안에서 넘겨요)"><i class="fa-solid fa-up-down" aria-hidden="true"></i><span>높이 · 자동</span></button></div>
@@ -177,8 +178,8 @@ export async function openLogSheet(model) {
     // 1.1.0 칩 줄(모양 · 분류 · 색 · 글자색 · 가릴 이름 · 바꾸기 줄)은 누를 때마다 innerHTML 로 다시 그려요 — 누른 칩에 있던 초점이 함께 사라져 body 로 떨어지면
     //   키보드 · 화면 읽기 사용자는 창 맨 앞부터 다시 Tab 해야 했어요. 다시 그린 줄에서 같은 열쇠(data-*)의 칩으로 초점을 돌려줘요 ·
     //   그 칩이 없어졌으면(지운 내 글꾸 · 뺀 이름 · 지운 줄) 같은 줄의 고른 칩이나 첫 단추로
-    const FOCUS_KEYS = ['data-shape', 'data-lc-del', 'data-cat', 'data-palette', 'data-lc-mode', 'data-lc-ink', 'data-lc-name-remove', 'data-lc-rule-remove', 'data-lc'];
-    const FOCUS_ROWS = '[data-lc-shapes], [data-lc-cats], [data-lc-pals], [data-lc-inks], [data-lc-name-list], [data-lc-rules]';
+    const FOCUS_KEYS = ['data-lc-easy', 'data-shape', 'data-lc-del', 'data-cat', 'data-palette', 'data-lc-mode', 'data-lc-ink', 'data-lc-name-remove', 'data-lc-rule-remove', 'data-lc'];
+    const FOCUS_ROWS = '[data-lc-easy], [data-lc-shapes], [data-lc-cats], [data-lc-pals], [data-lc-inks], [data-lc-name-list], [data-lc-rules]';
     function keepFocus(paint) {
         return (...args) => {
             const active = document.activeElement;
@@ -192,6 +193,15 @@ export async function openLogSheet(model) {
         };
     }
     const custom = () => store().custom.find(c => c.id === state.shape) ?? null;
+    // 1.1.4 글꾸 마트 「테마로 담기」로 받은 심플 글꾸(frame + set) · 직접 붙인 HTML 글꾸(틀 칸 없음 · 로그 자리 고르기)
+    const simpleOn = () => !!custom()?.frame;
+    const rawOf = mine => !!mine && !mine.template && !mine.frame;
+    // 담아 온 조절 값을 입히는 모듈(마트 사본 — 크니까 받은 심플 글꾸를 처음 그릴 때만 받아요 · 받는 동안은 틀만 그려요)
+    let setMod = null, setModLoading = null;
+    const needSet = () => {
+        if (setMod || setModLoading) return;
+        setModLoading = import('./log-copy-simple-set.js').then((m) => { setMod = m; if (dialog.isConnected && simpleOn()) draw(); }, (error) => { setModLoading = null; toastr.warning(`조절 값을 입히지 못했어요 — 틀만 그려요 (${error?.message || error})`, '로그 복사'); });
+    };
     // 1.1.3 깡통 로그 틀 묶음인가 — 색 칩 대신 밝기만 · 제목은 빈 채 · 알약 없음 · 이름표는 말하는 사람이 둘 이상일 때만(log-copy-tone.js)
     const toneOn = () => !custom() && isToneShape(state.shape);
     // 1.1.3 「기본 글꾸」 새 틀인가 — 색은 화자 대사색 · 틀은 무채(에이드 색 칩 없이 밝기만) · 레몬은 틀 안에 · 정보 칸 · 높이 칩
@@ -201,9 +211,23 @@ export async function openLogSheet(model) {
     // 1.0.1 마트 글꾸(template)는 받은 고정 색 — 전용 색 틀처럼 다뤄요(미리보기 바탕 · 숨긴 글 색)
     const own = () => {
         if (toneOn() && state.tone) { const t = state.tone; return { bg: SITE[t.mode].bg, line: t.line, raised: t.card, muted: t.text, text: t.text }; }   // 1.1.3 틀이 쓰는 색만(새 색 없음) · 미리보기 바탕은 붙일 곳 바탕
-        if (basicOn()) return modeOf(state.palette) === 'light' ? { bg: SITE.light.bg, line: 'rgba(20, 20, 24, 0.1)', raised: '#f5f5f6', muted: '#5f6168', text: '#26272b' } : { bg: SITE.dark.bg, line: 'rgba(224, 224, 228, 0.09)', raised: '#1c1e21', muted: '#9a9da6', text: '#e1e1e5' };   // 1.1.3 기본 글꾸 새 틀의 무채(시안 값) · 미리보기 바탕은 붙일 곳 바탕
+        if (basicOn() || simpleOn()) return modeOf(state.palette) === 'light' ? { bg: SITE.light.bg, line: 'rgba(20, 20, 24, 0.1)', raised: '#f5f5f6', muted: '#5f6168', text: '#26272b' } : { bg: SITE.dark.bg, line: 'rgba(224, 224, 228, 0.09)', raised: '#1c1e21', muted: '#9a9da6', text: '#e1e1e5' };   // 1.1.3 기본 글꾸 새 틀의 무채(시안 값) · 미리보기 바탕은 붙일 곳 바탕
         const mine = custom(); if (!mine?.template) return ownColors(state.shape); const k = templateColors(mine.colors); return { ...k, raised: k.panel2 };
     };
+    // 1.1.4 「간편」(설계 4-2) — 받은 심플 글꾸에서만: 스타일(추천 여섯) · 움직임(끔 · 약 · 중 · 강) · 글 크기(작게 · 보통 · 크게). 밤낮은 밝기 칩 · 색은 인물표 색.
+    //   값은 그 글꾸의 set 하나(설정에 남아요) · 조절 모듈(needSet)을 받은 뒤에 보여요.
+    const drawEasy = keepFocus(() => {
+        const box = $('[data-lc-easy]'), mine = custom(), on = !!mine?.frame && !!setMod;
+        box.hidden = !on;
+        if (!on) { box.replaceChildren(); return; }
+        const e = setMod.easyOf(mine.set), level = Object.fromEntries(setMod.EASY_MOTION);
+        const chip = (key, label, pressed) => `<button type="button" class="bl-lc-chip" data-lc-easy="${esc(key)}" aria-pressed="${pressed}"><span>${esc(label)}</span></button>`;
+        const row = (label, chips, note = '') => `<div class="bl-lc-easy-row" role="group" aria-label="${esc(label)}"><span class="bl-lc-easy-h">${esc(label)}${note ? `<small>${esc(note)}</small>` : ''}</span><div class="bl-lc-easy-chips">${chips}</div></div>`;
+        box.innerHTML = row('스타일', setMod.LOOKS.map(x => chip(`style:${x.id}`, x.label, e.style === x.id)).join(''), e.style ? '' : '직접 조절')
+            + row('움직임', setMod.EASY_MOTION.map(([v, l]) => chip(`motion:${v}`, l, e.motion === v)).join(''), e.apart ? `글 ${level[e.apart.text]} · 소품 ${level[e.apart.prop]}` : '')
+            + row('글 크기', setMod.EASY_SIZE.map(([v, l]) => chip(`size:${v}`, l, e.fixed == null && e.size === v)).join(''), e.fixed != null ? `직접 ${e.fixed}px` : '');
+        requestAnimationFrame(() => { for (const strip of box.querySelectorAll('.bl-lc-easy-chips')) { revealTab(strip, strip.querySelector('[aria-pressed="true"]')); applyFade(strip); } });
+    });
     // 1.0.8 글자색 — 바꿀 수 있는 글꾸(틈 템플릿)와 바꾼 색을 얹은 판
     const inkBase = () => { const mine = custom(); return mine ? (mine.template ? mine : null) : (PRESETS.find(p => p.id === state.shape)?.template ?? null); };
     const inkTemplate = () => { const base = inkBase(); return base && Object.keys(state.inks).length ? { ...base, colors: { ...templateColors(base.colors), ...state.inks } } : null; };
@@ -321,21 +345,22 @@ export async function openLogSheet(model) {
     };
     // 1.0.7 「보일 것」 칩 · 머리 칸 글칸 — 틀을 그릴 때마다(직접 붙인 글꾸는 틀 칸이 없어 이름 줄만)
     const drawShows = () => {
-        const s3 = store(), mine = custom(), raw = !!mine && !mine.template;   // 직접 붙인 글꾸(HTML)는 틀 칸이 없어요 — 이름 줄만
+        const s3 = store(), mine = custom(), raw = rawOf(mine);   // 직접 붙인 글꾸(HTML)는 틀 칸이 없어요 — 이름 줄만
+        const sn = simpleOn();   // 1.1.4 받은 심플 글꾸: 제목 · 이름 줄 · 레몬만(날짜 · 알약 · 위아래 틀 글이 없는 틀)
         const tn = toneOn();   // 1.1.3 깡통 로그 틀 묶음에는 날짜 · 알약 · 위아래 틀 글이 없어요 — 제목 · 이름 줄만
         const bn = basicOn();   // 1.1.3 기본 글꾸 새 틀: 「깡통 · 모델 · 프롬프트」 칩 자리가 정보 칸(끔 · 칩 · 탭) 고르기 · 위 글 · 아래 글은 없어요(틀 글이 곧 시안)
         for (const [key, , label, title] of SHOWS) {
             const chip = $(`[data-lc-show="${key}"]`), info = bn && key === 'tagsOff';
             chip.setAttribute('aria-pressed', String(info ? s3.basicInfo !== 'off' : !s3[key]));
-            chip.disabled = (raw && key !== 'namesOff') || (tn && key !== 'titleOff' && key !== 'namesOff') || (bn && (key === 'topOff' || key === 'bottomOff'));
+            chip.disabled = (raw && key !== 'namesOff') || ((tn || sn) && key !== 'titleOff' && key !== 'namesOff') || (bn && (key === 'topOff' || key === 'bottomOff'));
             chip.querySelector('span').textContent = info ? `정보 · ${BASIC_INFO_LABEL[s3.basicInfo] ?? '끔'}` : label;
             chip.title = info ? '모델 · 프롬프트 칸 — 누를 때마다 끔 · 칩(LOG · 모델 · 프롬프트) · 탭(LOG · 프롬프트). 칩 · 탭 글자는 미리보기에서 눌러 고쳐요(♥ · ★ 도 돼요)' : title;
         }
         { const chip = $('[data-lc-height]'); chip.hidden = !bn; chip.style.display = bn ? '' : 'none'; chip.setAttribute('aria-pressed', String(!!s3.basicHeight)); chip.querySelector('span').textContent = `높이 · ${BASIC_HEIGHT_LABEL[s3.basicHeight] ?? '자동'}`; }
-        { const chip = $('[data-lc-lemon]'), at = $('[data-lc-lemon-at]'), atOn = s3.lemonLink && !bn; chip.setAttribute('aria-pressed', String(!!s3.lemonLink)); at.hidden = !atOn; at.style.display = atOn ? "" : "none"; at.querySelector('span').textContent = `레몬 · ${CORNER_LABEL[normCorner(s3.lemonAt)]}`; }   // 1.1.2 레몬 바로가기(1.1.3 기본 글꾸 새 틀은 레몬이 틀 안 제자리라 자리 칩이 없어요)
+        { const chip = $('[data-lc-lemon]'), at = $('[data-lc-lemon-at]'), atOn = s3.lemonLink && !bn && !sn; chip.setAttribute('aria-pressed', String(!!s3.lemonLink)); at.hidden = !atOn; at.style.display = atOn ? "" : "none"; at.querySelector('span').textContent = `레몬 · ${CORNER_LABEL[normCorner(s3.lemonAt)]}`; }   // 1.1.2 레몬 바로가기(1.1.3 기본 글꾸 새 틀은 레몬이 틀 안 제자리라 자리 칩이 없어요)
         for (const input of dialog.querySelectorAll('[data-lc-field]')) {
             const key = input.dataset.lcField;
-            input.disabled = raw || (tn && key !== 'title') || (key === 'title' && s3.titleOff) || (key === 'date' && s3.dateOff) || (['char', 'model', 'prompt'].includes(key) && s3.tagsOff && !bn);
+            input.disabled = raw || ((tn || sn) && key !== 'title') || (key === 'title' && s3.titleOff) || (key === 'date' && s3.dateOff) || (['char', 'model', 'prompt'].includes(key) && s3.tagsOff && !bn);
             if (document.activeElement !== input) input.value = fieldOf(key);
         }
         $('[data-lc="fields"]').setAttribute('aria-pressed', String(!$('[data-lc-fields]').hidden));
@@ -379,7 +404,7 @@ export async function openLogSheet(model) {
         const customChips = s2.custom.filter(c => shown.has(c.id)).map((c) => {
             const on = state.shape === c.id, armed = state.armed === c.id;
             // 1.0.1: 마트에서 받은 글꾸(template)는 🛒 표시 · 칩 옆 ✕ 로도 지워요(누르면 지울 준비 → 칩이나 ✕ 를 한 번 더 · 길게 누르기와 같아요)
-            const mart = c.template ? '<span class="bl-lc-mart" aria-label="마트에서 받음" title="마트에서 받음">🛒</span>' : '';
+            const mart = c.template || c.frame ? '<span class="bl-lc-mart" aria-label="마트에서 받음" title="마트에서 받음">🛒</span>' : '';
             return `<button type="button" class="bl-lc-chip${armed ? ' is-armed' : ''}" role="radio" aria-checked="${on}" data-shape="${esc(c.id)}">${c.emoji && !armed ? `<span class="bl-lc-emoji" aria-hidden="true">${esc(c.emoji)}</span>` : `<i class="fa-solid ${armed ? 'fa-trash' : 'fa-shapes'}" aria-hidden="true"></i>`}<span>${armed ? '지우기' : esc(c.name)}</span>${armed ? '' : mart}</button>`
                 + `<button type="button" class="bl-lc-chip bl-lc-x${armed ? ' is-armed' : ''}" data-lc-del="${esc(c.id)}" aria-label="${esc(c.name)} ${armed ? '정말 지우기' : '지우기'}" title="${armed ? '한 번 더 누르면 지워요' : '지우기'}"><i class="fa-solid ${armed ? 'fa-trash' : 'fa-xmark'}" aria-hidden="true"></i></button>`;
         }).join('');
@@ -401,14 +426,14 @@ export async function openLogSheet(model) {
     // ② 색 칩 — 테마 「색」 화면의 에이드 카드(.salty-pal) 그대로, 작게
     const drawColors = keepFocus(() => {
         const mode = modeOf(state.palette);
-        const plain = !!custom() || !!ownColors(state.shape);   // 내 글꾸 · 전용 색 틀(할로윈)은 에이드 색 칩이 없어요
+        const plain = (!!custom() && !simpleOn()) || !!ownColors(state.shape);   // 내 글꾸 · 전용 색 틀(할로윈)은 에이드 색 칩이 없어요(1.1.4 받은 심플 글꾸는 밝기만)
         $('[data-lc-colors]').hidden = plain;
         if (plain) return;
         for (const button of dialog.querySelectorAll('[data-lc-mode]')) button.setAttribute('aria-pressed', String(button.dataset.lcMode === mode));
         // 1.1.3 깡통 로그 틀 묶음은 색 칩을 숨기고 밝기(화이트 · 나이트)만 남겨요 — 틀 색은 대사색에서 나와요
         const tn = toneOn();
-        $('[data-lc-pals]').hidden = tn || basicOn();   // 1.1.3 기본 글꾸 새 틀도 밝기만
-        if (tn || basicOn()) { $('[data-lc-pals]').replaceChildren(); return; }
+        $('[data-lc-pals]').hidden = tn || basicOn() || simpleOn();   // 1.1.3 기본 글꾸 새 틀도 밝기만
+        if (tn || basicOn() || simpleOn()) { $('[data-lc-pals]').replaceChildren(); return; }
         const settings = getSettings();
         const families = Object.entries(PALETTE_FAMILIES).filter(([family]) => family !== 'custom' || settings.customName || settings.colorOverrides?.['custom-light'] || settings.colorOverrides?.['custom-night']);
         const selected = paletteFamily(state.palette);
@@ -428,12 +453,13 @@ export async function openLogSheet(model) {
         harvest();
         drawShows();
         drawInks();
+        drawEasy();
         const mine = custom();
         let html;
         const shown = view();
         // 1.1.3 깡통 로그 틀 묶음: 인물표의 정해 둔 대사색을 먼저(이름 숨김 · 바꾸기로 이름이 바뀌어도 원래 이름으로 물어요) · 밝기는 고른 팔레트의 밝기
         const toneNow = toneOn(), toneMode = modeOf(state.palette);
-        const lookup = toneNow || basicOn() ? toneLookup(shown.model.messages, (state.edited ?? model).messages, name => people.get(name)) : null;
+        const lookup = toneNow || basicOn() || simpleOn() ? toneLookup(shown.model.messages, (state.edited ?? model).messages, name => people.get(name)) : null;
         state.tone = toneNow ? toneFor(state.shape, shown.model, { mode: toneMode, lookup }).tone : null;
         if (state.edited) { const c = own() ?? colorsOf(paletteFor(state.shape, state.palette)); for (const m of shown.model.messages) spoilerColors(m.nodes, { line: c.line, raised: c.raised, muted: c.muted, family: ui.family, tracking: ui.tracking }); }
         const fields = shown.rewriteFields(state.fields);
@@ -443,17 +469,18 @@ export async function openLogSheet(model) {
         // 1.0.1 「깡통 · 모델 · 프롬프트」 칩 · 1.0.7 「보일 것」 칩 — 칸을 비워 그리지 않고 그린 뒤 걷어요(log-copy-bare.js):
         // 칸만 비우면 그 칸을 담던 머리 박스 · 구분선이 빈 채로 남았어요(11-07 사용자 「제목 · 위 글 · 알약 다 빼면 가로 박스도 사라져야지」)
         const drop = [...(s3.titleOff ? ['title'] : []), ...(s3.dateOff ? ['date'] : []), ...(s3.tagsOff ? ['mark', 'char', 'model', 'prompt'] : [])];
-        if (mine && !mine.template) html = mine.html;
+        if (mine?.frame) { needSet(); html = renderLog(shown.model, { simple: mine, setMod, mode: toneMode, lookup, fields: { ...fields, ...(s3.titleOff ? { title: '' } : {}) }, names: !s3.namesOff, lemonLink: !!s3.lemonLink }); }   // 1.1.4 받은 심플 글꾸(제목 끄기는 칸을 비워서)
+        else if (rawOf(mine)) html = mine.html;
         else if (basicOn()) html = renderLog(shown.model, { shape: state.shape, fields: { ...fields, ...(s3.titleOff ? { title: '' } : {}), ...(s3.dateOff ? { date: '' } : {}) }, images: shown.rewriteImages(state.images), names: !s3.namesOff, lemonLink: !!s3.lemonLink, mode: toneMode, lookup, info: s3.basicInfo, height: s3.basicHeight, marks: true });   // 1.1.3 기본 글꾸 새 틀(제목 · 날짜 끄기는 칸을 비워서 — 틀이 그 줄째 빼요)
         else html = renderLog(shown.model, { shape: state.shape, colors: state.shape === 'plain' ? null : colorsOf(paletteFor(state.shape, state.palette)), ui, fields: drawFields, images: shown.rewriteImages(state.images), screen: tokensOf(nowPalette()), template: inkTemplate() ?? mine, names: !s3.namesOff, lemonLink: !!s3.lemonLink, mode: toneMode, lookup });
         if ((!mine || mine.template) && !toneNow && !basicOn()) { const full = html; html = fitBare(full, bareLog(full, { top: s3.topOff, bottom: s3.bottomOff, drop })); }   // 1.0.7 위 글 · 아래 글 · 칸 빼기 → 글을 덮게 된 장식 걷기
         // 1.1.3 깡통 로그 틀 묶음: 붙인 뒤 덮일 글자색(바탕 대비 4.6 아래)은 그릴 때 밝기만 맞춰요 — 미리보기와 복사 글이 같게
         if (toneNow) html = siteCheck(html, { mode: toneMode }).html;
-        $('[data-lc-pick]').hidden = !(mine && !mine.template && (state.picking || !mine.slot));
+        $('[data-lc-pick]').hidden = !(rawOf(mine) && (state.picking || !mine.slot));
         frame.onload = () => {
             const doc = frame.contentDocument;
             if (!doc) return;
-            if (mine && !mine.template) {   // 마트 글꾸(template)는 자리가 정해져 있어 고르지 않아요
+            if (rawOf(mine)) {   // 마트 글꾸(template · 1.1.4 심플 frame)는 자리가 정해져 있어 고르지 않아요
                 const slot = state.picking ? null : (Array.isArray(mine.slot) && fromPath(doc.body, mine.slot)) || guessSlot(doc.body);
                 if (slot) { slot.innerHTML = logHtml(shown.model, { frameless: false, names: !s3.namesOff }); slot.setAttribute('data-bl-slot', ''); }
                 if (state.picking) {
@@ -472,7 +499,7 @@ export async function openLogSheet(model) {
                 }
             }
             ensureSpoilerStyle(doc);
-            if (store().lemonLink && !basicOn()) { try { placeLemon(doc, normCorner(store().lemonAt)); } catch { /* 못 재면 레몬 없이 */ } }   // 1.1.2 레몬 바로가기: 그려진 모양을 재서 빈 모서리에(미리보기에 보이는 그대로 복사돼요)
+            if (store().lemonLink && !basicOn() && !simpleOn()) { try { placeLemon(doc, normCorner(store().lemonAt)); } catch { /* 못 재면 레몬 없이 */ } }   // 1.1.2 레몬 바로가기: 그려진 모양을 재서 빈 모서리에(미리보기에 보이는 그대로 복사돼요)
             state.drawnTexts = (previewModel(doc)?.messages ?? []).map(m => textOf(m.nodes).trim());   // 1.0.7 거둘 때 견줄 「막 그린 글」
             const syncSpoiler = () => {
                 const sel = doc.getSelection();
@@ -597,6 +624,14 @@ export async function openLogSheet(model) {
     dialog.addEventListener('click', async (event) => {
         const target = event.target.closest('button');
         if (!target || !dialog.contains(target)) return;
+        if (target.dataset.lcEasy) {   // 1.1.4 간편 칸 — 그 글꾸의 조절 값을 바꿔 저장하고 다시 그려요
+            const live = custom();
+            if (!live?.frame || !setMod) return;
+            const [kind, value] = target.dataset.lcEasy.split(':');
+            const next = kind === 'style' ? setMod.withStyle(live.set, value) : kind === 'motion' ? setMod.withMotion(live.set, value) : setMod.withSize(live.set, Number(value));
+            if (next !== live.set) { live.set = next; saveSettings(); draw(); }
+            return;
+        }
         if (target.dataset.lcDel) {   // 내 글꾸 칩 옆 ✕: 처음엔 지울 준비 · 준비된 것은 지우기
             const id = target.dataset.lcDel;
             if (state.armed === id) {
@@ -894,6 +929,13 @@ const STYLE = `
 .bl-lc-tools, .bl-lc-shows, .bl-lc-inks { display:flex; align-items:center; gap:8px; padding:5px 16px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
 .bl-lc-tools::-webkit-scrollbar, .bl-lc-shows::-webkit-scrollbar, .bl-lc-inks::-webkit-scrollbar { display:none; }
 /* 1.0.7 「보일 것」 칩: 끈 칩(뺀 것)은 흐린 글씨 + 가운데 줄 — 켬 = 보여요 */
+.bl-lc-easy { display:grid; gap:0; padding:2px 0; }
+.bl-lc-easy[hidden] { display:none; }
+.bl-lc-easy-row { display:flex; align-items:center; gap:4px; min-width:0; padding-left:16px; }   /* 1.1.4 간편: 줄 이름 + 가로로 미는 칩 줄(설계 4-8 — 칸이 셋 · 넷뿐인 줄도 칩 꼴 그대로) */
+.bl-lc-easy-h { flex:none; display:grid; min-width:52px; color:var(--salty-muted); font-size:12px; line-height:1.3; }
+.bl-lc-easy-h small { font-size:11px; color:var(--salty-muted); }
+.bl-lc-easy-chips { display:flex; flex:1; align-items:center; gap:8px; min-width:0; padding:5px 16px 5px 0; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
+.bl-lc-easy-chips::-webkit-scrollbar { display:none; }
 .bl-lc-shows .bl-lc-chip[aria-pressed="false"] > span { color:var(--salty-muted); text-decoration:line-through; }
 .bl-lc-fields[hidden], .bl-lc-bar[hidden] { display:none; }
 .bl-lc-fields { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap:8px; margin:0 16px; }

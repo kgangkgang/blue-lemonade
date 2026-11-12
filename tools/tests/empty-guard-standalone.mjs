@@ -185,7 +185,8 @@ await test('옛 설정 보정: 칸이 없으면 켬 · 직접 끈 값 · "false"
     globalThis.SillyTavern = { getContext: () => ctx };
     const { getSettings, DEFAULTS } = await import(url('src/settings.js'));
     assert.equal(DEFAULTS.chat.emptyGuard, true);
-    const load = (salty, extra = {}) => { ctx.extensionSettings = { ...extra, salty: structuredClone(salty) }; return getSettings(); };
+    // 1.1.4: 확장 설정 칸 객체를 통째로 갈 때는 문맥 주인도 새로 세워요 — 실리태번의 extension_settings 는 const 라 실제로는 안 바뀌고, getSettings 는 주인 · getContext 가 같으면 그 칸을 다시 묻지 않아요
+    const load = (salty, extra = {}) => { ctx.extensionSettings = { ...extra, salty: structuredClone(salty) }; globalThis.SillyTavern = { getContext: () => ctx }; return getSettings(); };
     const old = structuredClone(DEFAULTS); delete old.chat.emptyGuard;
     assert.equal(load(old).chat.emptyGuard, true, '8.2.5 설정 → 켬');
     assert.equal(load({ version: 1, chat: { user: 'line' } }).chat.emptyGuard, true, '아주 옛 설정 → 켬');

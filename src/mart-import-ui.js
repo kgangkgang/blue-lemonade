@@ -1,7 +1,7 @@
 // 1.0.1 「마트에서 가져오기」 창 — 설정 › 장식 액자 › 보관함 · 로그 복사 › 내 글꾸 두 곳에서 열어요.
 // 새 창으로 마트 열기 · 붙여넣기 칸 · 파일 고르기(.bl-mart.json) → 검사(mart-import.js) → 그림 한 번 디코드 → 이미 있으면 「덮어쓸까요?」 → 넣고 결과 요약(몇 개 · 거른 것 · 이유).
 // 코드 실행 없음 — JSON 데이터만 읽어요. 시작 그래프 밖(단추를 누를 때 받아요).
-import { readMart, findDupes, addMartItems, summary, MART_URL, MART_TEXT_MAX } from './mart-import.js';
+import { readMart, findDupes, addMartItems, summary, isGeulkku, dropCssComments, MART_URL, MART_TEXT_MAX } from './mart-import.js';
 import { drawPreset } from './frame-presets.js';
 import { showThemeModal } from './modal.js';
 import { ask } from './ask.js';
@@ -18,6 +18,13 @@ const decodes = src => new Promise((resolve) => {
     img.src = src;
 });
 
+/** 1.1.4 심플 글꾸: 테마 소독기(log-copy-sanitize.js)를 지나도 같은 틀인가 — 복사 글에서 무엇이 걷힐 틀은 받지 않아요 */
+async function sanitizedSame(html) {
+    const { sanitizeHtml } = await import('./log-copy-sanitize.js');
+    const plain = new DOMParser().parseFromString(`<!doctype html><html><head></head><body>${html}</body></html>`, 'text/html').body.innerHTML;
+    return sanitizeHtml(html, { keepPreviewMarks: true }) === dropCssComments(plain);
+}
+
 /**
  * @param {{ kind?: 'frames'|'geulkku', text?: string, apply: (mutator: (settings: object) => void) => void, done?: (result: object) => void }} options
  *   apply: 설정을 고치고 저장하는 쪽(설정 창은 update · 로그 복사 시트는 saveSettings) · text: 바로 가져올 글(시트 붙여넣기 칸에서 온 것)
@@ -30,7 +37,7 @@ export function openMartImport({ kind = 'frames', text = '', apply, done } = {})
     dialog.className = 'bl-tool-dialog bl-mart';
     dialog.setAttribute('aria-labelledby', 'bl-mart-title');
     dialog.innerHTML = `<header class="bl-mart-head"><h3 id="bl-mart-title"><i class="fa-solid fa-store" aria-hidden="true"></i><span>마트에서 가져오기</span></h3><button type="button" class="bl-mart-x" data-mart="close" aria-label="닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>
-        <p class="bl-mart-note">${where}에서 <b>복사</b>한 글을 붙여 넣거나 받은 파일(.bl-mart.json)을 골라요. 코드는 받지 않고 모양 데이터만 읽어요. ${geulkku ? '글꾸는 「내 글꾸」로' : '액자는 보관함으로'} 들어가요.</p>
+        <p class="bl-mart-note">${where}에서 <b>${geulkku ? '복사 · 테마로 담기' : '복사'}</b>한 글을 붙여 넣거나 받은 파일(.bl-mart.json)을 골라요. 코드는 받지 않고 모양 데이터만 읽어요. ${geulkku ? '글꾸는 「내 글꾸」로' : '액자는 보관함으로'} 들어가요.</p>
         <a class="salty-btn bl-mart-open" href="${esc(`${MART_URL}/${geulkku ? 'geulkku' : 'frames'}/`)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i><span>${where} 열기</span></a>
         <textarea rows="6" placeholder="{&quot;bl-mart&quot;: 1, … } 를 붙여 넣어요" aria-label="마트에서 복사한 글" spellcheck="false" data-mart-text></textarea>
         <div class="bl-mart-row"><button type="button" class="salty-btn" data-mart="file"><i class="fa-solid fa-file-import" aria-hidden="true"></i><span>파일 고르기</span></button><button type="button" class="salty-btn bl-tool-primary" data-mart="go">가져오기</button></div>
@@ -52,17 +59,18 @@ export function openMartImport({ kind = 'frames', text = '', apply, done } = {})
         try {
             const read = readMart(raw);
             if (read.error) { show(read.error); return; }
-            show('그림을 확인하는 중이에요…');
+            show(read.items.some(item => item.kind === 'frame') ? '그림을 확인하는 중이에요…' : '확인하는 중이에요…');
             const items = [], bad = [];
             for (const item of read.items) {
                 if (item.kind === 'frame' && !((await decodes(item.decor.art)) && (await decodes(item.decor.mask)))) { bad.push({ name: item.name, reason: '그림을 읽지 못했어요' }); continue; }
+                if (item.kind === 'geulkku-simple' && !(await sanitizedSame(item.frame.html))) { bad.push({ name: item.name, reason: '테마 복사 글에서 걷힐 것이 든 틀이에요' }); continue; }
                 items.push(item);
             }
             const dupes = findDupes(getSettings(), items);
             let replace = new Set();
             if (dupes.length && await ask(`이미 있어요: ${dupes.map(item => item.name).join(', ')}\n덮어쓸까요?`, { ok: '덮어쓰기', cancel: '건너뛰기', title: '마트에서 가져오기' })) replace = new Set(dupes.map(item => item.id));
-            const taken = items.some(item => item.kind === 'geulkku') ? new Set((await import('./log-copy-presets.js')).PRESETS.map(p => p.id)) : new Set();
-            let result = { frames: [], geulkku: [], replaced: [], skipped: [] };
+            const taken = items.some(isGeulkku) ? new Set((await import('./log-copy-presets.js')).PRESETS.map(p => p.id)) : new Set();
+            let result = { frames: [], geulkku: [], simple: [], replaced: [], skipped: [] };
             apply((settings) => { result = addMartItems(settings, items, { replace, taken, draw: item => drawPreset(item.presetId, item) }); });
             const { head, lines } = summary(result, [...read.skipped, ...bad]);
             show(head, lines);

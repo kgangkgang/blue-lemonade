@@ -7,7 +7,7 @@ export const SCRIPT_CATALOG = [
   // 과일 계열(과일 · 야한과일 · 청과)은 한글화 토글 하나(SCRIPT_FAMILIES)로 함께 켜고 꺼요. 아래 세 칸은 실행 단위예요.
   {id:'fruit',family:'fruit-family',name:'과일 계열 프롬프트 이름 한글화',version:'2.0.2',icon:'fa-leaf',description:'과일 6.4 · 야한과일 2.0 · 청과 1.75X2 · 청과 2.0XV3 · 청과 2.1X 의 프롬프트·정규식 이름을 한 사전(공통 + 프리셋별 추가)으로 한글로 보여요. 저장된 이름과 본문은 그대로예요.',match:['BlueLemonade.translate','果实之心控制配置'],file:'fruit'},
   {id:'qingguo',family:'fruit-family',name:'과일 계열 화면 보조 한글화',version:'2.0.1',icon:'fa-leaf',description:'과일의 마음 창 항목 이름과 청과 문장 점검 화면을 한글로 보여요. 원본과 선택은 그대로예요.',match:['__blueLemonadeQingguoKorean_v1'],file:'qingguo'},
-  {id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1.1.1',icon:'fa-heart',description:'과일의 마음 메뉴와 상태창의 고정 문구·버튼 설명을 한글로 보여요. 프리셋·대화·입력값·켜짐 상태는 그대로예요.',match:['__blueLemonadeFruitHeartKorean_v1'],file:'fruit-heart'},
+  {id:'fruit-heart',family:'fruit-family',name:'과일의 마음 한글화',version:'1.1.2',icon:'fa-heart',description:'과일의 마음 메뉴와 상태창의 고정 문구·버튼 설명을 한글로 보여요. 프리셋·대화·입력값·켜짐 상태는 그대로예요.',match:['__blueLemonadeFruitHeartKorean_v1'],file:'fruit-heart'},
   {id:'fruit-style',name:'과일의 마음 꾸미기',version:'1.0.7',kind:'tool',icon:'fa-palette',description:'과일 창의 색·글꼴·버튼을 블루레몬에이드에 맞추고, 빠른 답장 이름 바꾸기와 ? 도움말을 더해요. 프롬프트 → 과일에서 켤 수 있어요.',match:['__blueLemonadeFruitStyle_v1'],file:'fruit-style'},
   {id:'deus-qr',name:'데우스 빠른 설정',version:'1.0.8',kind:'tool',icon:'fa-sliders',description:'데우스 V3 · 2.5 · 솔라 프리셋의 옵션을 입력창 옆에서 바로 골라요. 지금 프리셋에 맞는 창이 열려요. 프롬프트 → 데우스 엑스 마키나에서 켤 수 있어요.',match:['__blueLemonadeDeusQuick_v1'],file:'deus-qr'},
 ];

@@ -198,20 +198,30 @@ function wordList(text) { return String(text ?? '').normalize('NFKC').toLowerCas
 const EXTRA_WORDS = { daily_rain: ['비가 내린', '비가 내렸', '비 내린', '비 내렸', '비가 온', '비가 왔'] };
 // Adapted from MultiCast's matchSfx: adjacent prefix matches, exact-match preference,
 // weak keywords, unsupported-sound blockers and deterministic variant selection.
+// 1.1.3 「못 내는 소리」 낱말은 그 낱말 자리만 (한 낱말 소리 이름에게만) 막는다 — 예전에는 하나만 걸려도(접두 일치라 carefully 의 car · laughed 의 laugh 도) 이미 찾은 소리까지 문장 전체를 버렸다
 function matchLibrary(words, library) {
+    const blocked = new Set();
+    for (const entry of library) {
+        if (entry.files.length) continue;
+        for (const raw of entry.words) {
+            const phrase = wordList(raw);
+            if (!phrase.length) continue;
+            for (let i = 0; i + phrase.length <= words.length; i++) if (phrase.every((part, j) => words[i + j].startsWith(part))) phrase.forEach((_, j) => blocked.add(i + j));
+        }
+    }
     let best = null, bestScore = 0;
     for (const entry of library) {
+        if (!entry.files.length) continue;
         for (const raw of entry.words) {
             const weak = raw.startsWith('~'), phrase = wordList(raw);
             if (!phrase.length) continue;
             let hit = false, exact = false;
             for (let i = 0; i + phrase.length <= words.length && !exact; i++) {
-                if (phrase.every((part, j) => words[i + j].startsWith(part))) {
+                if (phrase.every((part, j) => (phrase.length > 1 || !blocked.has(i + j)) && words[i + j].startsWith(part))) {   // 여러 낱말 구(phone vibrat)는 막힌 낱말도 쓴다
                     hit = true; exact = phrase.every((part, j) => words[i + j] === part);
                 }
             }
             if (!hit) continue;
-            if (!entry.files.length) return null;
             const score = phrase.length * (weak ? 0.5 : 1) + (exact ? 0.25 : 0);
             if (score > bestScore) { bestScore = score; best = entry; }
         }

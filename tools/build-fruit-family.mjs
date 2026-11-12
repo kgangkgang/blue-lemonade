@@ -3,7 +3,7 @@
 //   tools/scripts-src/fruit-family/prompts-<프리셋>.json  한 프리셋에만 있는 항목 (fruit · qingguo · sese)
 //   → src/scripts/plain/fruit.js   프롬프트·정규식 이름 사전 하나 (BlueLemonade.translate)
 //   tools/scripts-src/fruit-family/qingguo-ui.js · qingguo-ui.json → src/scripts/plain/qingguo.js (과일의 마음 창 항목 이름 · 청과 문장 점검 화면)
-//   tools/scripts-src/fruit-family/fruit-heart-additions.json → src/scripts/plain/fruit-heart.js 사전에 합침
+//   tools/scripts-src/fruit-family/fruit-heart-additions.json → src/scripts/plain/fruit-heart.js 사전에 합침(짧은 짝 entries · 창 이름 titles · 긴 글 지문 hashed · 묶음 blocks)
 // 새 프리셋 판이 나오면 빠진 이름만 해당 prompts-*.json 에 더하고 다시 만든다. (9.0.7 부터 내장 스크립트는 plain 모듈 하나 — 머리는 build-plain-scripts.mjs 의 wrapScript)
 // node tools/build-fruit-family.mjs [--check]
 import fs from 'node:fs';
@@ -134,6 +134,18 @@ function fruitHeartCode() {
     const merged = mergeDictionary(PRESET_SOURCES.map(name => read(`prompts-${name}.json`)));
     const manual = new Set((additions.titles || []).map(pair => pair[0]));
     for (const entry of merged.prompts) for (const [zh, ko] of panelTitlePairs(entry.name, entry.title)) if (!manual.has(zh)) setTitle(zh, ko, false);
+    // 1.1.4 긴 글 지문: 원문 없이 지문 → 번역(hashed) · 지문 → 노드별 조각(blocks). 번역 칸에 한자 원문이 길게 섞여 들어오지 않게 막아요(한자 7자 이상 연속 금지).
+    const LONG_HAN = /\p{Script=Han}{7,}/u, KINDS = new Set(['t', 'a', 'o', 'n']), ID = /^[0-9a-z]{1,12}$/;
+    const hashed = additions.hashed || {}, blocks = additions.blocks || {};
+    for (const [id, value] of Object.entries(hashed)) {
+        if (!ID.test(id) || !Array.isArray(value) || value.length !== 2 || typeof value[0] !== 'string' || !value[0].trim() || !KINDS.has(value[1])) throw Error(`fruit-heart-additions.json hashed ${id} 모양이 달라요`);
+        if (LONG_HAN.test(value[0])) throw Error(`fruit-heart-additions.json hashed ${id} 번역에 한자가 길게 들어 있어요`);
+    }
+    for (const [id, parts] of Object.entries(blocks)) {
+        if (!ID.test(id) || !Array.isArray(parts) || !parts.length || parts.some(x => x !== null && typeof x !== 'string') || parts.some(x => x && LONG_HAN.test(x))) throw Error(`fruit-heart-additions.json blocks ${id} 모양이 달라요`);
+    }
+    if (Object.keys(hashed).length) data.hashed = hashed; else delete data.hashed;
+    if (Object.keys(blocks).length) data.blocks = blocks; else delete data.blocks;
     // 원래 사전(모듈 안)에 있던 긴 원문도 걸러요 — 다시 만들어도 돌아오지 않게. 키 목록(알림 · 창 확인)도 같은 기준 (창 이름 titles 는 그대로)
     data.entries = data.entries.filter(x => keepPresetText(x.zh));
     for (const name of ['dialogKeys', 'nativeKeys', 'toastKeys', 'toastPatterns', 'toastAnytime']) if (Array.isArray(data[name])) data[name] = data[name].filter(keepPresetText);

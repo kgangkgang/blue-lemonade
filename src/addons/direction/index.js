@@ -396,6 +396,13 @@ function effectiveOnColor(style = null) {
     return parseColorCode((style ?? getComputedStyle(document.documentElement)).getPropertyValue('--SmartThemeQuoteColor')) ?? '#e18a24';
 }
 
+/** 1.1.5 설정 카드 색 견본: 실제 켜짐 색은 --jj-on 이에요(블루 레몬에이드를 켜면 css/04-send-form.css 가 팔레트 포인트색으로) — 견본 자리에서 그 값을 읽어요.
+ *  예전엔 고른 색이 없으면 --SmartThemeQuoteColor(대사 색)를 보여 실제 깃털 색과 달랐어요. 읽지 못하면 예전 값 */
+function shownOnColor(el) {
+    if (settings().onColor) return settings().onColor;
+    return (el && parseColorCode(getComputedStyle(el).getPropertyValue('--jj-on').trim())) || effectiveOnColor();
+}
+
 function contrastInk(hex) {
     const value = Number.parseInt(hex.slice(1), 16);
     const luminance = 0.299 * (value >> 16 & 255) + 0.587 * (value >> 8 & 255) + 0.114 * (value & 255);
@@ -426,6 +433,9 @@ function applyOnColor() {
     rootStyle.setProperty('--jj-stroke', isDarkTheme(style) ? 'var(--jj-on)' : 'color-mix(in srgb, var(--jj-on) 80%, #b08000)');   // 1.3.1 테두리 단계 (밝은 테마는 조금 진하게)
     rootStyle.removeProperty('--jj-grad-a');   // 1.3.1 그라데이션은 없앴다 (예전 판이 남긴 값 치우기)
     rootStyle.removeProperty('--jj-grad-b');
+    // 1.1.5 설정 카드가 열려 있으면(팔레트 · 에이드를 바꾼 때) 색 견본도 다시 — 닫혀 있으면(부팅 포함) 계산 스타일을 더 읽지 않아요
+    const swatch = settingsRoot?.isConnected ? settingsRoot.querySelector('#jj_on_color_swatch') : null;
+    if (swatch) swatch.value = shownOnColor(swatch);
 }
 const colorSignature = style => [settings().onColor, style.getPropertyValue('--SmartThemeQuoteColor').trim(), style.getPropertyValue('--SmartThemeBodyColor').trim(),
     style.getPropertyValue('--salty-pop').trim(), style.getPropertyValue('--salty-accent').trim(), document.body.classList.contains('salty-dark')].join('|');
@@ -2049,7 +2059,7 @@ function buildSettings() {
     const fill = () => {
         colorCode.value = store.onColor;
         colorCode.classList.remove('is-invalid');
-        swatch.value = effectiveOnColor();
+        swatch.value = shownOnColor(swatch);
         showPlaces();
         prompt.value = store.directionPrompt;
         showPromptState();
@@ -2078,7 +2088,7 @@ function buildSettings() {
     const setColor = (color) => {
         store.onColor = color;
         applyOnColor();
-        swatch.value = effectiveOnColor();
+        swatch.value = shownOnColor(swatch);
         save();
         refreshButton();
     };

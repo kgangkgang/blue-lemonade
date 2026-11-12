@@ -38,6 +38,9 @@
 .bl-mask-sample[data-mask=black], body.salty-dark .bl-mask-sample[data-mask=auto] { background:#111318; }
 .bl-mask-sample[data-mask=mosaic] { background:conic-gradient(#555b65 25%,#c3c8d1 0 50%,#8f99a8 0 75%,#e4e7eb 0) 0 0/9px 9px; }
 .bl-mask-sample[data-mask=tape] { background:#f7dc84; transform:rotate(-5deg); clip-path:polygon(0 8%,100% 0,96% 35%,100% 80%,97% 100%,2% 100%,4% 60%); }
+/* 1.1.5 나이트(body.salty-dark)에서 실제 가림은 테이프가 하늘색 · 모자이크가 어두운 칸이에요(capture-privacy.js paintMasks) — 칩도 같은 색으로 */
+body.salty-dark .bl-mask-sample[data-mask=tape] { background:#b5cfe5; }
+body.salty-dark .bl-mask-sample[data-mask=mosaic] { background:conic-gradient(#24272c 25%,#444952 0 50%,#343941 0 75%,#555b65 0) 0 0/9px 9px; }
 .bl-capture-dialog, .bl-tool-dialog { border:1px solid var(--salty-line, var(--bl-fb-777)); border-radius:var(--bl-r-lg,16px); padding:12px; background:var(--salty-bg, var(--bl-fb-fff)); color:var(--salty-text, var(--bl-fb-222)); max-width:calc(100vw - 24px); max-height:calc(100dvh - 24px); box-sizing:border-box; font-family:var(--salty-font-ui,inherit); font-size:var(--salty-ui-size,var(--mainFontSize,15px)); font-weight:var(--salty-ui-weight,normal); letter-spacing:var(--bl-settings-tracking,normal); }
 .bl-capture-dialog { width:1050px; }
 .bl-tool-dialog { width:520px; }

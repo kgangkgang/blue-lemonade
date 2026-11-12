@@ -50,13 +50,14 @@ const KEEP = [
     '.mes_buttons', '.mes_text', '.ch_name', '.name_text', '.timestamp', '.avatar', '.mes_block',
     '.custom-cac', '.salty-asset', '.salty-cutout', 'character-asset-rendered', 'eh-img', 'imageWrapper',
     '.mesIDDisplay', '.mes_timer', '.tokenCounterDisplay',
+    '.bl-pinned',   // 1.1.5 고정한 메시지 버튼 — 미리보기 무대도 panel.js prevMarks 가 그려요(예전엔 DENY 라 이름 줄에 안 보였어요). .bl-pinned.mes_media_gallery 처럼 DENY 이름과 섞인 갈래도 살려야 해서 남김 쪽
 ];
 // 표본에 아예 없는 노드만 뺀다 (스와이프 · 편집칸 · 생각칸 · ⋯메뉴 · 시작화면)
 const DENY = [
     '.extraMesButtons', '.mes_edit_buttons', '.mes_reasoning', '.reasoning_edit_textarea', '.edit_textarea',
     '#curEditTextarea', '.swipe_left', '.swipe_right', '.swipes-counter', '.swipeRightBlock', '.last_swipe',
     '.welcomePanel', '.mes_file', '.mes_media', '.mes_bias', '.mes_ghost', '.for_checkbox', '.del_checkbox',
-    'custom-dem-card', 'custom-dem-expressive', '.lastInContext', '.last_mes', '.mes.selected', '.smallSysMes', '.bl-pinned', '.bl-menu-empty',
+    'custom-dem-card', 'custom-dem-expressive', '.lastInContext', '.last_mes', '.mes.selected', '.smallSysMes', '.bl-menu-empty',
     // 5.3.4: 몰입 읽기(폰)의 채팅 칸 배치 — 위 바 · 입력판 높이만큼 위아래 여백을 준다. 미리보기 상자로 옮기면 그 여백이 표본을 거의 덮었다
     '.bl-reader',
     // 7.2.3 테마가 빠져 있을 때(확장만 · 테마 끔)만 채팅 칸을 불투명하게 까는 규칙 — 테마 미리보기에는 해당이 없다 (st-solid.js)

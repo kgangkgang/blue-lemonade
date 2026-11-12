@@ -1,10 +1,11 @@
-// 1.0.1 심플 액자 20종(src/frame-presets.js) — 브라우저 없이 가짜 캔버스(호출만 적는 2D 컨텍스트)로 심플 20종을 전부 그려 봐요(1.0.2 기본 6종은 걷었어요 — 옮김은 frame-presets-retired.mjs).
-//   ① FRAME_PRESETS 는 심플 20종뿐 · id · 한국어 라벨 · 팔레트가 다 있고 판은 7
-//   ② 20종 전부 기본값 · 밤 팔레트 색 · 가로세로 50 % · 200 % 로 예외 없이 그려지고 사진 창(mask)을 채워요
+// 심플 액자 30종(src/frame-presets.js · 1.0.1 의 20종 + 판 8 새 10종) — 브라우저 없이 가짜 캔버스(호출만 적는 2D 컨텍스트)로 전부 그려 봐요(1.0.2 기본 6종은 걷었어요 — 옮김은 frame-presets-retired.mjs).
+//   ① FRAME_PRESETS 는 심플 30종뿐 · id · 한국어 라벨 · 팔레트가 다 있고 판은 8
+//   ② 30종 전부 기본값 · 밤 팔레트 색 · 가로세로 50 % · 200 % 로 예외 없이 그려지고 사진 창(mask)을 채워요
 //   ③ 칩 글자(presetLabel): 칩이 있는 프리셋만 글자를 그리고 결과에 presetLabel 을 돌려줘요 · 12자에서 잘라요 · 비우면 글자를 안 그려요
 //   ④ 캐시: 같은 값이면 다시 그리지 않고, 글자가 다르면 다시 그려요 · 썸네일(기본값)은 편집 캐시와 따로
 //   ⑤ decor 정리(tidyDecor): presetTilt 는 -10~10 · 글자가 아닌 presetLabel 은 지움 · decorVars 가 기울기 변수를 내요
 //   ⑥ 보관함 상한 FRAME_LIMIT 30 · 오류 문구의 숫자도 상수를 따라요 · refreshPreset 이 칩 글자를 같이 옮겨요
+//   ⑦ 판 8 색 옮김(freshenPresetColors): 옛 기본 색 그대로인 액자만 새 기본 색으로 · 직접 고른 색 · 이미 판 8 인 액자는 그대로
 //   node tools/tests/frame-presets-simple.mjs <테마 루트>
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -39,15 +40,16 @@ const decorModule = await import(pathToFileURL(path.join(root, 'src/decor.js')).
 const library = await import(pathToFileURL(path.join(root, 'src/frame-library.js')).href);
 let pass = 0;
 const test = (name, fn) => { fn(); pass++; console.log('PASS ' + name); };
-const SIMPLE = { line: '얇은 선', corner: '모서리 괄호', stitch: '스티치', tape: '종이 테이프', chip: '라벨 칩', polaroid: '폴라로이드', bookmark: '책갈피 리본', window: '창문', clip: '클립 메모', film: '필름', sf: 'SF 패널', rec: 'REC 뷰파인더', stamp: '우표', fold: '접힌 쪽지', ticket: '티켓', neon: '네온 라인', browser2: '브라우저 창', bubble: '말풍선', double: '두 겹 선', sketch: '손그림' };
+const SIMPLE = { line: '얇은 선', corner: '모서리 괄호', stitch: '스티치', tape: '종이 테이프', chip: '라벨 칩', polaroid: '폴라로이드', bookmark: '책갈피 리본', window: '창문', clip: '클립 메모', film: '필름', sf: 'SF 패널', rec: 'REC 뷰파인더', stamp: '우표', fold: '접힌 쪽지', ticket: '티켓', neon: '네온 라인', browser2: '브라우저 창', bubble: '말풍선', double: '두 겹 선', sketch: '손그림',
+    gallery: '미술관 액자', corners: '사진 코너', peg: '빨래집게', phone: '폰 화면', petal: '꽃잎', comic: '만화 컷', airmail: '항공 우편', tarot: '타로 카드', vinyl: '레코드 재킷', calendar: '달력' };
 const drawn = (id, options) => { calls.length = 0; const result = drawPreset(id, options); return { result, calls: calls.slice() }; };
 
-test('① 심플 20종뿐 · id · 한국어 라벨 · 팔레트 · 판 7', () => {
-    assert.equal(FRAME_PRESETS.length, 20);
-    assert.equal(FRAME_PRESET_VERSION, 7, '1.0.2 기본 6종을 걷어 판을 올려요(켜 둔 액자를 다시 그려요)');
+test('① 심플 30종뿐 · id · 한국어 라벨 · 팔레트 · 판 8', () => {
+    assert.equal(FRAME_PRESETS.length, 30);
+    assert.equal(FRAME_PRESET_VERSION, 8, '20종을 다듬고 10종을 더해 판을 올려요(켜 둔 액자를 다시 그려요)');
     assert.deepEqual(FRAME_PRESETS.filter(([, , group]) => group !== 'simple'), [], '기본 프리셋 줄은 비어요 — 전부 심플');
     const simple = FRAME_PRESETS.filter(([, , group]) => group === 'simple');
-    assert.deepEqual(Object.fromEntries(simple.map(([id, name]) => [id, name])), SIMPLE, '심플 20종 id → 라벨');
+    assert.deepEqual(Object.fromEntries(simple.map(([id, name]) => [id, name])), SIMPLE, '심플 30종 id → 라벨');
     for (const [id, name] of FRAME_PRESETS) {
         assert.ok(!/[A-Za-z]{2,}(?!\s*(패널|뷰파인더))/.test(name.replace(/^(SF|REC)\s/, '')), `${id} 라벨은 한국어(${name})`);
         const [color, accent] = presetColors(id);
@@ -56,7 +58,7 @@ test('① 심플 20종뿐 · id · 한국어 라벨 · 팔레트 · 판 7', () =
     assert.notEqual(presetColors('nope'), undefined, '모르는 id 는 얇은 선 팔레트');
 });
 
-test('② 20종 전부 기본값 · 색 · 50 % · 200 % 로 예외 없이 그려지고 사진 창을 채워요', () => {
+test('② 30종 전부 기본값 · 색 · 50 % · 200 % 로 예외 없이 그려지고 사진 창을 채워요', () => {
     for (const [id] of FRAME_PRESETS) {
         for (const options of [{}, { presetColor: '#111111', presetAccent: '#eeeeee', frameWidth: 50, frameHeight: 200 }, { frameWidth: 200, frameHeight: 50 }]) {
             const { result, calls } = drawn(id, options);
@@ -73,11 +75,11 @@ test('② 20종 전부 기본값 · 색 · 50 % · 200 % 로 예외 없이 그�
 });
 
 test('③ 칩 글자: 칩이 있는 프리셋만 글자 · 결과 presetLabel · 12자 자름 · 비우면 안 그림', () => {
-    assert.deepEqual(Object.keys(PRESET_LABELS).sort(), ['browser2', 'chip', 'polaroid', 'rec', 'sf', 'ticket'].sort());
+    assert.deepEqual(Object.keys(PRESET_LABELS).sort(), ['browser2', 'chip', 'polaroid', 'rec', 'sf', 'ticket', 'film', 'gallery', 'phone', 'comic', 'tarot', 'vinyl', 'calendar'].sort());
     assert.equal(PRESET_LABEL_MAX, 12);
     assert.equal(presetLabelDefault('chip'), 'LOG'); assert.equal(presetLabelDefault('polaroid'), ''); assert.equal(presetLabelDefault('line'), undefined);
     const fresh = { presetAccent: '#abcdef' };   // ② 가 그린 기본값 캐시를 피해요
-    for (const id of ['chip', 'sf', 'rec', 'ticket', 'browser2']) {
+    for (const id of ['chip', 'sf', 'rec', 'ticket', 'browser2', 'gallery', 'phone', 'comic', 'tarot', 'vinyl', 'calendar']) {
         const { result, calls } = drawn(id, fresh);
         assert.equal(result.presetLabel, PRESET_LABELS[id], `${id} 기본 글자`);
         assert.ok(calls.some(([tag, key, args]) => tag === 'art' && key === 'fillText' && args[0] === PRESET_LABELS[id]), `${id}: 기본 글자를 그려요`);
@@ -87,6 +89,16 @@ test('③ 칩 글자: 칩이 있는 프리셋만 글자 · 결과 presetLabel ·
         const empty = drawn(id, { ...fresh, presetLabel: '' });
         assert.equal(empty.result.presetLabel, '');
         assert.ok(empty.calls.length > 0 && !empty.calls.some(([tag, key, args]) => key === 'fillText' && args[0] === PRESET_LABELS[id]), `${id}: 비우면 기본 글자를 안 그려요`);
+    }
+    // 필름 컷 번호: 글자 칸의 글자가 위(▸ 번호) · 아래(번호A) 두 곳에 찍혀요 · 비우면 안 찍어요
+    const cut = drawn('film', { ...fresh, presetLabel: '36' });
+    assert.ok(cut.calls.some(([, key, args]) => key === 'fillText' && args[0] === '▸ 36') && cut.calls.some(([, key, args]) => key === 'fillText' && args[0] === '36A'), '필름 컷 번호');
+    assert.ok(!drawn('film', { ...fresh, presetLabel: '' }).calls.some(([, key]) => key === 'fillText'), '필름: 비우면 번호를 안 찍어요');
+    // 긴 글자는 칸 폭 안으로 좁혀 그려요(fillText 넷째 값 = 최대 폭) — 좁은 액자(가로 50 %)에서도
+    for (const id of Object.keys(PRESET_LABELS)) for (const frameWidth of [100, 50]) {
+        const long = drawn(id, { ...fresh, frameWidth, presetLabel: 'WWWWWWWWWWWW' });
+        const w = 360 * frameWidth / 100;
+        for (const [, key, args] of long.calls) if (key === 'fillText' && String(args[0]).includes('WWWWWWWWWWWW')) assert.ok(args[3] >= 12 && args[3] <= w - 40, `${id} ${frameWidth}%: 글자 최대 폭(${args[3]})`);
     }
     const memo = drawn('polaroid', { ...fresh, presetLabel: '첫 나들이' });
     assert.ok(memo.calls.some(([, key, args]) => key === 'fillText' && args[0] === '첫 나들이'), '폴라로이드 메모 한 줄');
@@ -143,6 +155,26 @@ test('⑥ 보관함 상한 30 · 문구의 숫자도 상수 · refreshPreset 이
     refreshPreset(decor); assert.equal(decor.presetLabel, 'DIARY'); assert.equal(decor.presetTilt, 3, '기울기는 그림이 아니라 그대로');
     const plain = { ...drawPreset('line'), presetLabel: 'LOG' };
     refreshPreset(plain); assert.ok(!('presetLabel' in plain), '칩이 없는 프리셋으로 바꾸면 글자 키를 걷어요');
+});
+
+test('⑦ 판 8 색 옮김: 옛 기본 색 그대로면 새 기본 색 · 고른 색과 판 8 액자는 그대로', () => {
+    const { freshenPresetColors } = presets;
+    const old = { presetId: 'line', presetVersion: 7, presetColor: '#2a3140', presetAccent: '#86B5D5' };
+    assert.equal(freshenPresetColors(old), true);
+    assert.deepEqual([old.presetColor, old.presetAccent], presetColors('line'), '옛 기본 색(대소문자 무관) → 새 기본 색');
+    const picked = { presetId: 'line', presetVersion: 7, presetColor: '#ff0000', presetAccent: '#86b5d5' };
+    freshenPresetColors(picked);
+    assert.equal(picked.presetColor, '#ff0000', '직접 고른 색은 그대로'); assert.equal(picked.presetAccent, presetColors('line')[1]);
+    const current = { presetId: 'line', presetVersion: FRAME_PRESET_VERSION, presetColor: '#2a3140', presetAccent: '#86b5d5' };
+    assert.equal(freshenPresetColors(current), false, '이미 판 8 로 그린 액자는 건드리지 않아요'); assert.equal(current.presetColor, '#2a3140');
+    const same = { presetId: 'rec', presetVersion: 7, presetColor: '#0f1114', presetAccent: '#e8edf3' };
+    assert.equal(freshenPresetColors(same), false, '기본 색이 안 바뀐 액자');
+    assert.equal(freshenPresetColors(null), false); assert.equal(freshenPresetColors({ presetId: 'nope' }), false);
+    // 켜 둔 옛 액자는 다시 그릴 때(prepareDecor) 색도 같이 옮겨요
+    const settings = { enabled: true, image: { decor: { ...decorModule.DECOR_DEFAULTS, on: true, presetId: 'double', presetVersion: 7, presetColor: '#2a3140', presetAccent: '#e8edf3', art: 'data:image/png;base64,AAAA', mask: 'data:image/png;base64,AAAA' } } };
+    decorModule.prepareDecor(settings);
+    assert.equal(settings.image.decor.presetVersion, FRAME_PRESET_VERSION);
+    assert.deepEqual([settings.image.decor.presetColor, settings.image.decor.presetAccent], presetColors('double'));
 });
 
 console.log(`심플 액자: ${pass}개 통과했어요.`);

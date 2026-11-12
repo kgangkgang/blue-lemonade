@@ -259,6 +259,29 @@ await test('누르기: 창을 닫은 뒤 그 QR 의 execute() · 최근 칸 맨 
     assert.equal(settings.qrShelf.recent[0], K('세계 설정', 2));
     assert.equal(document.querySelector('.bl-qrs'), null);
 });
+await test('1.1.3 AI 정리 답을 기다리는 중 창을 닫았다 다시 열어도 두 번 보내지 않고, 옛 답이 새 창을 덮지 않아요(감사 G4)', async () => {
+    const keep = shelf._forTest.send.raw, before = sent.length, rejected = [];
+    const onReject = e => rejected.push(e);
+    process.on('unhandledRejection', onReject);
+    let release;
+    shelf._forTest.send.raw = async (messages, n) => { sent.push({ messages, n }); await new Promise(r => { release = r; }); return JSON.stringify({ items: [{ i: 1, name: '옛 답', desc: '옛', cat: '옛' }] }); };
+    try {
+        opening = shelf.openQrShelf(); await settle();
+        click(R().querySelector('[data-act="ai"]')); await settle();
+        assert.equal(sent.length, before + 1);
+        shelf.openQrShelf(); await opening; await settle();       // 닫기
+        assert.equal(R(), null);
+        opening = shelf.openQrShelf(); await settle();            // 다시 열고 또 누름
+        click(R().querySelector('[data-act="ai"]')); await settle();
+        assert.equal(sent.length, before + 1, '두 번째 유료 요청이 나가지 않아요');   // 고치기 전: 한 번 더
+        assert.match(toasts.at(-1)[1], /아직 기다리는 중/);
+        release(); await settle();
+        assert.equal(shelf._forTest.state.ai, null, '옛 답이 새 창을 덮지 않아요');
+        assert.equal(shelf._forTest.state.busy, false);
+        assert.deepEqual(rejected, [], '잡히지 않은 거부 없음');
+        shelf.openQrShelf(); await opening; await settle();
+    } finally { shelf._forTest.send.raw = keep; process.off('unhandledRejection', onReject); }
+});
 await test('보관함 창구가 열려 있으면: 고치기에 「답을 ○○으로」 · 표시한 QR 을 누르면 답 하나를 넘기고 채팅에서 뺌', async () => {
     const kept = [];
     globalThis[keepMod.KEEPER] = { label: '시험 상자', keep: async e => { kept.push(e.text); return { id: 'r1' }; } };

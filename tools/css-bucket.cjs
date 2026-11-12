@@ -135,7 +135,8 @@ function expandInner(sel, head, last, stats, depth, from = 0) {
         const open = i + m[0].length - 1;
         const close = lib.endParen(last, open);
         const args = lib.topSplit(last.slice(open + 1, close));
-        if (args.length < 2 || args.length > INNER_MAX_ARGS || args.some(a => hasCombinator(a) || risky(a) || /(^|[^\w\\-])\*/.test(a) || !hasName(a))) { i = close + 1; continue; }
+        // 1.1.3 태그로 시작하는 갈래(span.a)는 펼치지 않는다 — 앞에 다른 조각이 있으면 태그가 칸 가운데로 가 깨진 선택자(:not(.x)span.a · *i.a)가 검사 없이 나왔다
+        if (args.length < 2 || args.length > INNER_MAX_ARGS || args.some(a => hasCombinator(a) || risky(a) || /(^|[^\w\\-])\*/.test(a) || !hasName(a) || /^[A-Za-z]/.test(a.trim()))) { i = close + 1; continue; }
         const pre = last.slice(0, i), post = last.slice(close + 1);
         if (!pre) { i = close + 1; continue; }   // 맨 앞 :is 는 expandOne 이 맡는다
         if ((args.length - 1) * (head.length + last.length) > INNER_MAX_GROWTH) { stats.innerSkipped = (stats.innerSkipped || 0) + 1; i = close + 1; continue; }

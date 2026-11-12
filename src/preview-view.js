@@ -215,7 +215,9 @@ export function bindPreviewViews(root, section) {
             const limit = heightLimit();
             // A stacked preview leaves room for settings; an explicitly resized view keeps its height.
             const reading = sideBySide() && !!grip;
-            const next = reading ? limit : Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, limit)) : Math.min(height, limit, sideBySide() && grip ? limit : Math.min(window.innerHeight * .22, Number(box.dataset.pvMax) || 180)); // data-pv-max: 설정 사이에 끼는 작은 미리보기(상태창 글자)
+            // 1.1.5 줄 안 미리보기(QR · 폰 모형 — 손잡이 없는 칸)는 그림 전체를 보여요. 창 22% · 180 한계에 걸려 폰 모형의 입력창 · 한 손 버튼 줄과 QR 3~4줄의 아랫줄이 처음부터 잘려 있었어요
+            const inline = !grip && !box.dataset.pvMax && box.classList.contains('bl-inline-preview');
+            const next = reading ? limit : Number.isFinite(state.height) ? Math.max(48, Math.min(state.height, limit)) : Math.min(height, limit, (sideBySide() && grip) || inline ? limit : Math.min(window.innerHeight * .22, Number(box.dataset.pvMax) || 180)); // data-pv-max: 설정 사이에 끼는 작은 미리보기(상태창 글자)
             return { limit, next, cw: viewport.clientWidth };
         };
         // 쓰기 — 같은 높이면 쓰지 않는다

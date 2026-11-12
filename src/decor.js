@@ -1,5 +1,5 @@
-import { drawPreset, FRAME_PRESETS, FRAME_PRESET_VERSION, tidyPresetLabel, retirePreset } from './frame-presets.js';
-export const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100, presetTilt: 0, frameHue: 0, frameSat: 100, frameBright: 100 };
+import { drawPreset, FRAME_PRESETS, FRAME_PRESET_VERSION, LIFTED, tidyPresetLabel, retirePreset, freshenPresetColors } from './frame-presets.js';
+export const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100, presetTilt: 0, frameHue: 0, frameSat: 100, frameBright: 100, motion: false };   // motion: 액자 움직임(기본 끔 — 켠 액자만 src/frame-motion.js 를 받아요)
 const validated = new WeakMap();
 export function tidyDecor(owner) {
     const d = owner.decor;
@@ -7,6 +7,7 @@ export function tidyDecor(owner) {
     for (const [key, def] of Object.entries(DECOR_DEFAULTS)) if (d[key] === undefined) d[key] = def;
     retirePreset(d, !!d.libraryId);   // 1.0.2 걷은 기본 프리셋 6종 → 가장 가까운 심플 액자 (보관함에서 고른 액자는 그림 그대로)
     d.on = d.on === true || d.on === 'true';
+    d.motion = d.motion === true;
     const previous = validated.get(d);
     for (const key of ['art', 'mask']) if (d[key] !== previous?.[key] && (typeof d[key] !== 'string' || d[key].length > 4000000 || !/^data:image\/png;base64,[a-z\d+/=]+$/i.test(d[key]))) d[key] = '';
     if (!previous || previous.art !== d.art || previous.mask !== d.mask) validated.set(d, { art: d.art, mask: d.mask });
@@ -28,6 +29,9 @@ export function slimDecor(d) {
     if (!d || d.on || !isPresetFrame(d)) return;
     d.art = ''; d.mask = ''; delete d.presetVersion;
 }
+// 움직임을 켠 프리셋 액자의 id('' = 안 움직임) — 움직임이 있는 틀인지는 src/frame-motion.js 표가 정해요
+export const motionOf = d => d?.on && d.motion === true && isPresetFrame(d) ? d.presetId : '';
+const lifts = d => d.motion === true && LIFTED.has(d.presetId);
 export const hasDecor = d => !!(d?.on && d.art && d.mask);
 export const decorEnabled = settings => ({image:!!(settings.enabled && hasDecor(settings.image?.decor)),profile:!!(settings.enabled && settings.profile?.mode === 'banner' && hasDecor(settings.profile?.decor)),userProfile:!!(settings.enabled && settings.userProfile?.mode === 'banner' && hasDecor(settings.userProfile?.decor))});
 // 1.0.7 액자 색감 — 액자 그림만 · 기본값이면 none
@@ -47,9 +51,13 @@ export function prepareDecor(settings) {
         const d = settings[owner]?.decor;
         retirePreset(d, !!d?.libraryId);   // 정리를 거치지 않고 입힌 스타일(옛 id)도 여기서 옮겨요
         // 꺼진 프리셋은 그리지 않는다 (slimDecor 가 비워 둠). 켜졌는데 그림이 없거나 판이 바뀌었으면 다시 그린다 — 같은 모양은 drawPreset 캐시에서 바로 나온다
-        if (d?.on && (!d.art || !d.mask || d.presetVersion !== FRAME_PRESET_VERSION) && isPresetFrame(d)) {
+        // 움직임을 켜고 끄면 그림에서 떼는 조각(레코드 판)이 달라져 다시 그려요
+        if (d?.on && (!d.art || !d.mask || d.presetVersion !== FRAME_PRESET_VERSION || !!d.presetLifted !== lifts(d)) && isPresetFrame(d)) {
+            freshenPresetColors(d);   // 옛 판의 기본 색 그대로면 새 기본 색으로(직접 고른 색은 그대로)
             const next = drawPreset(d.presetId, d);
+            d.presetColor = next.presetColor; d.presetAccent = next.presetAccent;
             d.art = next.art; d.mask = next.mask; d.ratio = next.ratio; d.presetVersion = FRAME_PRESET_VERSION;
+            if (next.presetLifted) d.presetLifted = true; else delete d.presetLifted;
         }
     }
 }

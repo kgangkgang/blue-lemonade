@@ -46,16 +46,17 @@ export function syncFavicon(on) {
 
 // 5.5.1: 탭 아이콘 파일 자체도 레몬으로 (사용자: "새로고침 화면처럼 바로 할 수 있게"). 위의 링크 교체는 실리태번이 확장을 부를 때까지
 // (PC 약 3.7초 · 폰 10초 남짓) ST 로고가 먼저 보인다. 확장은 public/ 에 쓸 수 없으니 새로고침 화면처럼 사용자 파일에 레몬 아이콘을
-// 올려 두고, 한 번 실행하는 명령으로 public/favicon.ico 를 그 파일로 바꾼다. 되돌리기: git -C ~/SillyTavern checkout -- public/favicon.ico public/img
+// 올려 두고, 한 번 실행하는 명령으로 public/favicon.ico 를 그 파일로 바꾼다. 되돌리기: git -C ~/SillyTavern checkout -- public/favicon.ico public/img public/manifest.json
 export const FAVICON_FILE = 'blue-lemonade-favicon.ico';
 // 5.5.2: 같은 명령이 홈 화면 아이콘(public/img/apple-icon-*.png — index.html 의 apple-touch-icon · manifest.json)도 바꾼다.
 // 표식을 BLLEMON2 로 바꿔서 5.5.1 명령만 실행한 기기에도 버튼이 다시 뜬다.
 // 1.1.2 홈 화면 아이콘 모양(chat.homeIcon — 레몬만(투명 바탕) · 어두운 네모)을 표식에 담아요: BLLEMON3L · BLLEMON3S. 모양을 바꾸면(또는 옛 BLLEMON2 파일이면) 버튼이 다시 떠요.
-//   자동(기본)은 안드로이드 = 레몬만 · iOS = 어두운 네모(투명 PNG 는 iOS 가 검게 채워요).
-const markFor = shape => `BLLEMON3${shape === 'square' ? 'S' : 'L'}`;   // 파일 끝 표식 — 기기마다 PNG 바이트가 달라도 '이미 레몬' 을 알아본다
-const isIOS = () => { try { return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); } catch { return false; } };
-/** 실제로 쓸 모양: 'lemon' | 'square' (설정 'auto' 면 기기에 따라) */
-export const homeIconShape = value => (value === 'lemon' || value === 'square' ? value : isIOS() ? 'square' : 'lemon');
+// 1.1.4 흰 타일(tile · 표식 BLLEMON3T — 사용자 「뒤에 저 검정색 배경 좀 없애 줘」 · 시안 셋 가운데 흰색): 흰 판을 꽉 채우고 레몬은 가운데 안전 원(지름 80%) 안.
+//   실리태번 manifest.json 아이콘에는 purpose 가 없어서(= any) 삼성 · 안드로이드 런처가 둥근 네모로 못 잘라 네모 판이 그대로 보였어요.
+//   그래서 명령이 manifest.json 도 바꿔 192 · 512 를 maskable 로도 알려요. 자동(기본)은 모든 기기에서 흰 타일(iOS 는 꽉 찬 판을 스스로 둥글게 잘라요).
+const markFor = shape => `BLLEMON3${shape === 'square' ? 'S' : shape === 'tile' ? 'T' : 'L'}`;   // 파일 끝 표식 — 기기마다 PNG 바이트가 달라도 '이미 레몬' 을 알아본다
+/** 실제로 쓸 모양: 'tile' | 'lemon' | 'square' (설정 'auto' 면 흰 타일) */
+export const homeIconShape = value => (value === 'lemon' || value === 'square' || value === 'tile' ? value : 'tile');
 const HOME_SIZES = [57, 72, 114, 144, 192, 512];
 const homeFile = (n) => `blue-lemonade-apple-icon-${n}x${n}.png`;
 let faviconBuf, faviconChecking = null;   // faviconBuf: undefined 모름 · null 못 읽음 · ArrayBuffer
@@ -88,11 +89,14 @@ function lemonIcoBytes(shape) {
 }
 // 홈 화면 아이콘: 원래 ST 아이콘처럼 꽉 찬 어두운 네모(46,46,46) 위에 레몬 — 투명하면 iOS 가 검게 채우고, 안드로이드 원형 마스크에도 안 잘리게 가운데 62%
 // 1.1.2 lemon: 투명 바탕에 레몬만 크게(80%) — 테두리는 같은 그림 단위(18)라 크기에 맞춰 같이 커져요 · square: 위 설명 그대로
+// 1.1.4 tile: 흰(#FFFFFF → #F1F6FC — 아래쪽만 아주 옅은 하늘빛) 판을 꽉 채우고 레몬 58% — 레몬 끝이 가운데에서 0.35n 이라 안전 원(0.40n) 안이에요
+export const TILE_TOP = '#FFFFFF', TILE_BOTTOM = '#F1F6FC';
 function lemonHomePng(n, shape = 'square') {
     const c = document.createElement('canvas'); c.width = c.height = n;
     const g = c.getContext('2d'), p = new Path2D(LEMON_PATH);
-    const k = shape === 'lemon' ? 0.8 : 0.62, off = (1 - k) / 2;
-    if (shape !== 'lemon') { g.fillStyle = '#2E2E2E'; g.fillRect(0, 0, n, n); }
+    const k = shape === 'lemon' ? 0.8 : shape === 'tile' ? 0.58 : 0.62, off = (1 - k) / 2;
+    if (shape === 'tile') { const grad = g.createLinearGradient(0, 0, 0, n); grad.addColorStop(0, TILE_TOP); grad.addColorStop(1, TILE_BOTTOM); g.fillStyle = grad; g.fillRect(0, 0, n, n); }
+    else if (shape !== 'lemon') { g.fillStyle = '#2E2E2E'; g.fillRect(0, 0, n, n); }
     g.translate(n * off, n * off); g.scale(n * k / 472, n * k / 472);
     g.translate(12, -20); g.translate(0, 448); g.scale(1, -1);
     g.fillStyle = '#FFE23C'; g.fill(p, 'evenodd');
@@ -107,6 +111,19 @@ async function uploadUserFile(name, data) {
     });
     if (!res.ok) throw new Error(`아이콘 파일을 못 올림 (${res.status})`);
 }
+// 1.1.4 manifest.json: 지금 실리태번 것을 읽어 아이콘 목록만 고쳐요(다른 칸은 그대로). 우리가 더한 maskable 줄은 먼저 빼고,
+// tile 이면 192 · 512 를 maskable 로 한 번 더 적어요 — 다른 모양으로 바꾸면 maskable 줄이 빠져 원래 꼴로 돌아가요.
+export const MANIFEST_FILE = 'blue-lemonade-manifest.json';
+const MANIFEST_FALLBACK = { name: 'SillyTavern', short_name: 'SillyTavern', start_url: '/', display: 'standalone', theme_color: '#202124', background_color: '#202124' };
+export function homeManifest(base, shape) {
+    const m = base && typeof base === 'object' && !Array.isArray(base) ? { ...base } : { ...MANIFEST_FALLBACK };
+    const icons = (Array.isArray(m.icons) ? m.icons : []).filter(i => i && typeof i.src === 'string' && !/maskable/.test(String(i.purpose || '')));
+    for (const n of HOME_SIZES) if (!icons.some(i => i.src === `img/apple-icon-${n}x${n}.png`)) icons.push({ src: `img/apple-icon-${n}x${n}.png`, sizes: `${n}x${n}`, type: 'image/png' });
+    if (shape === 'tile') for (const n of [192, 512]) icons.push({ src: `img/apple-icon-${n}x${n}.png`, sizes: `${n}x${n}`, type: 'image/png', purpose: 'maskable' });
+    m.icons = icons;
+    return m;
+}
+const utf8Base64 = text => { let bin = ''; for (const x of new TextEncoder().encode(text)) bin += String.fromCharCode(x); return btoa(bin); };
 /** 명령 복사 전에: 사용자 파일에 레몬 아이콘(탭 + 홈 화면)을 올리고, 한 번 실행할 명령을 돌려준다 */
 export async function prepareFaviconCommand(shape = 'lemon') {
     const bytes = lemonIcoBytes(shape);
@@ -115,6 +132,9 @@ export async function prepareFaviconCommand(shape = 'lemon') {
     for (const x of bytes) bin += String.fromCharCode(x);
     // 하나라도 못 올리면 여기서 멈추고 명령을 복사하지 않는다
     for (const n of HOME_SIZES) await uploadUserFile(homeFile(n), lemonHomePng(n, shape));
+    let base = null;
+    try { const res = await fetch('/manifest.json', { cache: 'no-store', credentials: 'include' }); if (res.ok) base = await res.json(); } catch { /* 못 읽으면 기본 꼴 */ }
+    await uploadUserFile(MANIFEST_FILE, utf8Base64(JSON.stringify(homeManifest(base, shape), null, 4) + '\n'));
     await uploadUserFile(FAVICON_FILE, btoa(bin));
     let handle = 'default-user';
     try { handle = (await import('/scripts/user.js')).getCurrentUserHandle() || handle; } catch { /* 옛 실리태번 */ }
@@ -122,7 +142,7 @@ export async function prepareFaviconCommand(shape = 'lemon') {
     return {
         handle,
         // 하나라도 못 옮기면 탭 아이콘(표식)은 안 바꾼다 → 버튼이 남아 다시 할 수 있다. exit 는 Termux 창을 닫으니 안 쓴다
-        command: `d=~/SillyTavern/data/${handle}/user/files; ok=1; for n in ${HOME_SIZES.join(' ')}; do cp "$d/blue-lemonade-apple-icon-\${n}x\${n}.png" ~/SillyTavern/public/img/apple-icon-\${n}x\${n}.png || ok=; done; [ -n "$ok" ] && cp "$d/${FAVICON_FILE}" ~/SillyTavern/public/favicon.ico && echo OK`,
+        command: `d=~/SillyTavern/data/${handle}/user/files; ok=1; for n in ${HOME_SIZES.join(' ')}; do cp "$d/blue-lemonade-apple-icon-\${n}x\${n}.png" ~/SillyTavern/public/img/apple-icon-\${n}x\${n}.png || ok=; done; [ -n "$ok" ] && cp "$d/${MANIFEST_FILE}" ~/SillyTavern/public/manifest.json && cp "$d/${FAVICON_FILE}" ~/SillyTavern/public/favicon.ico && echo OK`,
     };
 }
 

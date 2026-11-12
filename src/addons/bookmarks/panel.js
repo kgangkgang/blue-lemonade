@@ -179,6 +179,8 @@ export async function openPanel({ keepState = false } = {}) {
         const owner = getOwner();
         if (!owner) {
             toastr.info('캐릭터나 그룹 채팅을 먼저 열어 주세요.', '북마크');
+            // 1.1.3 창을 안 열고 돌아갈 때는 위에서 잡은 미리보기 규칙도 놓는다 — 예전에는 다음에 제대로 열고 닫을 때까지 .salty-preview 사본 규칙이 켜진 채였다
+            if (!view.open && holdingPreviewRules) { holdingPreviewRules = false; releasePreviewRules(); }
             return;
         }
         view.session++;

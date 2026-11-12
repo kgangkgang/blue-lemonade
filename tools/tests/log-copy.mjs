@@ -344,7 +344,7 @@ await test('할로윈 31종(1.0.1 글꾸 마트 · 10월 31일 · 틈 템플릿�
     inlineOnly(drawn.replace(/ aria-hidden="true"/g, ''), 'x-test');
     assert.ok(drawn.includes('polygon(0 0, 100% 35%') && drawn.includes('어서 와요'), '데이터 한 줄로 생일 모양 · 사탕 포장 메시지');
     assert.equal(conceptModel(model, CONCEPT_COLORS.mummy, null).base.bg, CONCEPT_COLORS.mummy.panel, '메시지 칸 바탕 = 컨셉 칸 색');
-    assert.match(read('src/log-copy-sheet.js'), /const plain = !!custom\(\) \|\| !!ownColors\(state\.shape\)/, '할로윈 틀에서는 에이드 색 칩을 숨겨요');
+    assert.match(read('src/log-copy-sheet.js'), /const plain = \(!!custom\(\) && !simpleOn\(\)\) \|\| !!ownColors\(state\.shape\)/, '할로윈 틀에서는 에이드 색 칩을 숨겨요(1.1.4 받은 심플 글꾸는 밝기 칩이 남아요)');
 });
 
 await test('갤러리 넷: 가로 넘김(overflow-x) · 폴라로이드 · 격자 · 격자 폴라로이드(부제목 · 기록 날짜) · 사진 없으면 안내', () => {

@@ -162,21 +162,27 @@
 .salty-preset-sample.is-indent {
   text-indent: 1em;
 }
+/* 1.1.5 대사 표시를 실제 채팅(css/06-chat-text.css)과 같은 변수로 — 「없음」도 대사색 · 형광펜은 SVG 획(--salty-marker-bg)과 그 위 글자색 · 「색」은 --salty-accent-dlg.
+   예전엔 없음 = 본문색 · 형광펜 = 45~90% 띠 · 색 = --salty-accent 라 고른 뒤 모습과 달랐어요 */
 .salty-preset-sample q {
   quotes: none;
+  color: var(--salty-dialogue);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 .salty-preset-sample q.m-marker {
-  background: linear-gradient(transparent 45%, var(--salty-marker) 45%, var(--salty-marker) 90%, transparent 90%);
+  background: var(--salty-marker-bg, linear-gradient(transparent 45%, var(--salty-marker) 45%, var(--salty-marker) 90%, transparent 90%));
+  color: var(--salty-marker-ink, var(--salty-dialogue));
 }
 .salty-preset-sample q.m-full {
   background: var(--salty-fill-marker, var(--salty-marker));
+  border-radius: 5px;
 }
 .salty-preset-sample q.m-bold {
-  color: var(--salty-dialogue);
   font-weight: 650;
 }
 .salty-preset-sample q.m-tint {
-  color: var(--salty-accent);
+  color: var(--salty-accent-dlg, var(--salty-accent));
 }
 .salty-style-swatch {
   position: relative;
@@ -227,8 +233,9 @@
 
 /* ---------- 3.2.0 폰 화면 표본 (채팅 › 화면 › 폰) ----------
    작은 폰 그림. 몰입 읽기 켬(.is-reader)이면 위 바 · 입력창이 비켜났다가 돌아오는 것을 5.5초마다 되풀이 (transform 만 — 창이 열려 있을 때만 돔).
-   한 손 버튼 줄 켬(.is-onehand)이면 입력창 위에 알약 줄. 동작 줄이기면 멈춘 그림 */
-.salty-phonemock {
+   한 손 버튼 줄 켬(.is-onehand)이면 입력창 위에 알약 줄. 동작 줄이기면 멈춘 그림
+   1.1.5 표본은 설정 창 줄 안 미리보기(.bl-inline-preview) 안에만 있어요 — 그 안으로 좁혀 빌드가 설정 창을 열 때만 받는 src/preview.gen.css 로 떼어 둬요(쉴 때 모두가 받는 둘째 장에서 빠짐) */
+.bl-inline-preview .salty-phonemock {
   position: relative;
   width: 118px;
   height: 204px;
@@ -239,7 +246,7 @@
   box-shadow: 0 0 0 1px var(--shade-2);
   isolation: isolate;
 }
-.salty-phonemock .pm-top {
+.bl-inline-preview .salty-phonemock .pm-top {
   position: absolute;
   top: 0;
   left: 0;
@@ -253,37 +260,37 @@
   background: var(--salty-fill-surface, var(--salty-surface));
   box-shadow: var(--bl-e1, 0 1px 3px var(--salty-shadow-50));
 }
-.salty-phonemock .pm-top i {
+.bl-inline-preview .salty-phonemock .pm-top i {
   width: 6px;
   height: 6px;
   border-radius: 2px;
   background: var(--salty-muted);
   opacity: 0.55;
 }
-.salty-phonemock .pm-body {
+.bl-inline-preview .salty-phonemock .pm-body {
   position: absolute;
   inset: 0;
   overflow: hidden;
 }
-.salty-phonemock .pm-scroll {
+.bl-inline-preview .salty-phonemock .pm-scroll {
   padding: 28px 10px 68px;
 }
-.salty-phonemock .pm-scroll p {
+.bl-inline-preview .salty-phonemock .pm-scroll p {
   display: grid;
   gap: 4px;
   margin: 0 0 8px;
 }
-.salty-phonemock .pm-scroll i {
+.bl-inline-preview .salty-phonemock .pm-scroll i {
   display: block;
   height: 4px;
   border-radius: 2px;
   background: color-mix(in srgb, var(--salty-text) 38%, transparent);
 }
-.salty-phonemock .pm-scroll i.q {
+.bl-inline-preview .salty-phonemock .pm-scroll i.q {
   height: 5px;
   background: var(--salty-fill-marker, var(--salty-marker));
 }
-.salty-phonemock .pm-form {
+.bl-inline-preview .salty-phonemock .pm-form {
   position: absolute;
   left: 0;
   right: 0;
@@ -292,29 +299,29 @@
   padding: 8px 8px 8px;
   background: linear-gradient(to top, var(--salty-bg) calc(100% - 6px), transparent);
 }
-.salty-phonemock .pm-onehand {
+.bl-inline-preview .salty-phonemock .pm-onehand {
   display: flex;
   align-items: center;
   gap: 4px;
   margin-bottom: 4px;
 }
-.salty-phonemock .pm-onehand b {
+.bl-inline-preview .salty-phonemock .pm-onehand b {
   width: 14px;
   height: 11px;
   border-radius: 5px;
   background: var(--salty-fill-surface, var(--salty-surface));
   box-shadow: var(--bl-e1, 0 1px 2px var(--salty-shadow-50));
 }
-.salty-phonemock .pm-onehand span {
+.bl-inline-preview .salty-phonemock .pm-onehand span {
   flex: 1;
 }
-.salty-phonemock .pm-onehand.is-many {
+.bl-inline-preview .salty-phonemock .pm-onehand.is-many {
   gap: 3px;
 }
-.salty-phonemock .pm-onehand.is-many b {
+.bl-inline-preview .salty-phonemock .pm-onehand.is-many b {
   width: 10px;
 }
-.salty-phonemock .pm-input {
+.bl-inline-preview .salty-phonemock .pm-input {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -324,22 +331,22 @@
   background: var(--salty-fill-surface, var(--salty-surface));
   box-shadow: var(--bl-e2, 0 1px 3px var(--salty-shadow-50));
 }
-.salty-phonemock .pm-input i {
+.bl-inline-preview .salty-phonemock .pm-input i {
   width: 34px;
   height: 3px;
   border-radius: 2px;
   background: var(--salty-faint);
 }
-.salty-phonemock .pm-input u {
+.bl-inline-preview .salty-phonemock .pm-input u {
   width: 13px;
   height: 13px;
   border-radius: 50%;
   background: var(--salty-lemon);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .salty-phonemock.is-reader .pm-top { animation: salty-pm-top 5.5s ease-in-out infinite; }
-  .salty-phonemock.is-reader .pm-form { animation: salty-pm-form 5.5s ease-in-out infinite; }
-  .salty-phonemock.is-reader .pm-scroll { animation: salty-pm-scroll 5.5s ease-in-out infinite; }
+  .bl-inline-preview .salty-phonemock.is-reader .pm-top { animation: salty-pm-top 5.5s ease-in-out infinite; }
+  .bl-inline-preview .salty-phonemock.is-reader .pm-form { animation: salty-pm-form 5.5s ease-in-out infinite; }
+  .bl-inline-preview .salty-phonemock.is-reader .pm-scroll { animation: salty-pm-scroll 5.5s ease-in-out infinite; }
 }
 @keyframes salty-pm-top {
   0%, 22% { transform: none; }

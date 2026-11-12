@@ -234,7 +234,9 @@ function decide() {
 function onVisibility() {
     const hidden = !!host.doc()?.hidden;
     if (hidden) {
-        if (!cfg.background && active) { resting = true; fadeOut(active, FADE.hide); active = null; signal(); }
+        // 1.1.3 숨는 순간 들리는 소리가 없었어도 쉼 표시를 세운다 — 예전에는 안 서서, 숨은 탭에서 날씨가 바뀌면(트래커 답 · 다른 기기 설정) 소리가 새로 시작됐다
+        if (!cfg.background) resting = true;
+        if (!cfg.background && active) { fadeOut(active, FADE.hide); active = null; signal(); }
         if (!cfg.background && musicApi?.musicBusy?.()) { resting = true; musicApi.restMusic(true); }   // 7.0.1 분위기 음악도 같이 쉰다
         stopThunder();   // 계속 둘 때도 천둥 타이머는 쉰다 — 숨은 탭의 처리 줄이기
         signal();        // 천둥이 「들리는 종류」에서 빠졌다고 알린다

@@ -5,6 +5,7 @@
 //   ④ 'frame' 구독은 뿌리가 달라도 rAF 하나에 만든 순서대로 · 숨은 탭은 타이머로도
 //   ⑤ quiet(): 콜백 안에서 내가 바꾼 기록은 나만 버리고 다른 구독은 받아요
 //   ⑥ match · exclude(선택자) 거르개 ⑦ 다 끊으면 감시자 0 · 등록 0
+//   ⑧ (1.1.4) 묶음에 받을 종류가 없는 구독은 건너뛰어도 받는 기록 · 차례는 같아요 ⑨ (1.1.4) 구독별 · 허브 비용 통계와 묶음 밖에서 읽는 길
 //   node tools/tests/dom-watch-hub.mjs <테마 루트>   (가짜 브라우저 tools/tests/leak-dom.mjs)
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -164,6 +165,63 @@ await test('⑦ 다 끊으면 감시자 0 · 등록 0 (누수 없음)', async ()
     assert.equal(s.observers, 0, '감시자 0'); assert.equal(s.subscriptions, 0, '구독 0');
     assert.equal(dom.observerCounts().mo, baseline, '붙은 등록도 처음과 같아요');
     body.classList.remove('z');
+});
+
+await test('⑧ (1.1.4) 받을 종류가 없는 구독은 기록을 따지지 않고 건너뛰어요 — 받는 기록 · 차례는 예전과 같아요', async () => {
+    const got = { kids: [], cls: [], text: [], out: [], both: [] };
+    const offs = [
+        watchDom(chat, { childList: true, subtree: true, name: '자식만' }, r => got.kids.push(...r.map(x => x.type))),
+        watchDom(chat, { attributes: ['class'], subtree: true, name: '속성만' }, r => got.cls.push(...r.map(x => x.type + ':' + x.attributeName))),
+        watchDom(chat, { characterData: true, subtree: true, name: '글자만' }, r => got.text.push(...r.map(x => x.type))),
+        watchDom(body, { childList: true, subtree: true, attributes: ['class'], exclude: '#chat', name: '채팅 밖' }, r => got.out.push(...r.map(x => x.type))),
+        watchDom(body, { childList: true, subtree: true, attributes: ['class', 'id'], name: '채팅 포함' }, r => got.both.push(...r.map(x => x.type + '@' + (chat.contains(x.target) ? 'chat' : 'body')))),
+    ];
+    const mes = document.createElement('div'); mes.className = 'mes'; chat.append(mes);
+    await tick();
+    assert.deepEqual(got.kids, ['childList'], '자식 목록 묶음: 자식만 구독이 받아요');
+    assert.deepEqual(got.cls, [], '속성만 구독은 자식 목록 묶음을 안 받아요');
+    assert.deepEqual(got.text, [], '글자만 구독도');
+    assert.deepEqual(got.out, [], '채팅 밖 구독은 채팅 묶음을 안 받아요');
+    assert.deepEqual(got.both, ['childList@chat']);
+    mes.classList.add('last_mes'); mes.id = 'm1';
+    await tick();
+    assert.deepEqual(got.cls, ['attributes:class'], '속성 묶음: class 만(같은 묶음의 id 는 속성만 구독이 원하지 않았어요)');
+    assert.deepEqual(got.kids, ['childList'], '자식만 구독은 속성 묶음을 안 받아요');
+    assert.deepEqual(got.both, ['childList@chat', 'attributes@chat', 'attributes@chat']);
+    const text = document.createTextNode('가'); mes.append(text);
+    await tick();
+    text.data = '가나';
+    form.classList.add('busy');
+    mes.append(document.createElement('p'));
+    await tick();
+    assert.deepEqual(got.text, ['characterData'], '섞인 묶음에서도 글자 기록만');
+    assert.deepEqual(got.kids, ['childList', 'childList', 'childList'], '섞인 묶음에서도 자식 목록 기록만 · 차례 그대로');
+    assert.deepEqual(got.out, ['attributes'], '채팅 밖 구독은 섞인 묶음에서 채팅 밖 기록만');
+    assert.deepEqual(got.both.slice(3), ['childList@chat', 'attributes@body', 'childList@chat'], '둘 다 보는 구독은 기록 차례 그대로(글자 기록은 안 원함)');
+    for (const off of offs) off();
+    form.classList.remove('busy'); mes.remove();
+    await tick();
+});
+
+await test('⑨ (1.1.4) 비용 통계: 구독마다 이름 · 횟수 · 기록 수 · 콜백 시간, 허브의 묶음 수 · 기록 수 · 시간 — 묶음(dist) 밖에서는 전역 열쇠의 stats() 로 읽어요', async () => {
+    const before = domWatchStats().hub;
+    const off = watchDom(chat, { childList: true, subtree: true, name: '통계 보기' }, () => { let x = 0; for (let i = 0; i < 2e4; i++) x += i; return x; });
+    const offOut = watchDom(body, { childList: true, subtree: true, exclude: '#chat', name: '통계 밖' }, () => {});
+    chat.append(document.createElement('div')); chat.append(document.createElement('div'));
+    await tick();
+    const s = domWatchStats();
+    const mine = s.each.find(e => e.name === '통계 보기'), other = s.each.find(e => e.name === '통계 밖');
+    assert.ok(mine && other, '이름으로 찾아요');
+    assert.equal(mine.calls, 1); assert.equal(mine.records, 2); assert.equal(mine.where, 'chat'); assert.equal(typeof mine.ms, 'number');
+    assert.equal(other.calls, 0, '채팅 밖 구독은 불리지 않았어요'); assert.equal(other.where, 'body (#chat 밖)');
+    assert.equal(s.hub.batches - before.batches, 1, '허브 묶음 하나');
+    assert.equal(s.hub.records - before.records, 2);
+    assert.ok(s.hub.ms >= before.ms, '허브 시간은 쌓여요');
+    const viaGlobal = globalThis[Symbol.for('blue-lemonade.dom-watch.v2')].stats();
+    assert.deepEqual(viaGlobal.each.map(e => e.name).sort(), s.each.map(e => e.name).sort(), '전역 열쇠의 stats() 가 같은 표를 줘요');
+    assert.deepEqual(Object.keys(viaGlobal.hub), ['batches', 'records', 'ms']);
+    off(); offOut();
+    await tick();
 });
 
 console.log(`감시 허브 계약: ${pass}개 통과했어요.`);

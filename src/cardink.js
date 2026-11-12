@@ -19,8 +19,10 @@ const CANDIDATES = '[class*="custom-"], [style*="background"]';
 // 숫자 뜻이 달라서(0~1 · L/C/H) 1×1 캔버스에 칠해 sRGB 로 읽는다 — 같은 색 글자는 한 번만
 let ink2d = null;
 const seen = new Map();
+const CLEAR = Object.freeze({ r: 0, g: 0, b: 0, a: 0 });   // 1.1.4 바탕 없음(계산값 그대로의 글자) — 후보 대부분이 이 값이라 숫자를 뽑지 않고 바로
 const parse = (value) => {
     const s = String(value);
+    if (s === 'rgba(0, 0, 0, 0)') return CLEAR;
     if (/^rgba?\(/i.test(s)) {
         const n = s.match(/[\d.]+/g);
         if (!n) return null;
@@ -60,12 +62,21 @@ const hex = (value) => {
     return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16), a: 1 };
 };
 
+// 1.1.4 한 단계를 읽는 동안(쓰기 전)은 요소마다 바탕색을 한 번만 읽어요 — 같은 메시지 안 카드들은 조상(.mes_text → body)이 같아서 카드마다 그 줄을 다시 읽었어요.
+//   단계 사이에는 글자색을 쓰니(바탕이 currentColor 인 칸은 값이 달라질 수 있어요) 단계마다 새로 적어요. 단계 밖에서 부르면 예전처럼 매번 읽어요
+let bgMemo = null;
+function bgOf(el) {
+    if (!bgMemo) return parse(getComputedStyle(el).backgroundColor);
+    let c = bgMemo.get(el);
+    if (c === undefined) { c = parse(getComputedStyle(el).backgroundColor) || null; bgMemo.set(el, c); }
+    return c;
+}
 /** 조상까지 합쳐 실제로 보이는 바탕색 (반투명은 겹쳐 계산) */
 function paintedBg(el) {
     const stack = [];
     let p = el;
     while (p && p !== document.documentElement) {
-        const c = parse(getComputedStyle(p).backgroundColor);
+        const c = bgOf(p);
         if (c && c.a > 0) { stack.push(c); if (c.a === 1) break; }
         p = p.parentElement;
     }
@@ -84,7 +95,7 @@ function restoreOne(el) {
     delete el.dataset[MARK]; originalInk.delete(el);
 }
 function plannedInk(el) {
-    const own = parse(getComputedStyle(el).backgroundColor);
+    const own = bgOf(el);
     if (!own || own.a < 0.5) return;           // 제 배경이 없으면 물려받은 색 그대로가 맞다
     if (!el.textContent.trim()) return;
     const bg = paintedBg(el);
@@ -126,7 +137,9 @@ function inkByLevels(els) {
     }
     for (const level of levels) {
         if (!level) continue;
-        const plans = level.map(el => [el, plannedInk(el)]);
+        let plans;
+        bgMemo = new Map();
+        try { plans = level.map(el => [el, plannedInk(el)]); } finally { bgMemo = null; }
         for (const [el, ink] of plans) writeInk(el, ink);
     }
 }
@@ -139,6 +152,9 @@ function fixRoots(roots) {
     }
     inkByLevels(now);
 }
+
+/** 시험용: 단계별 읽기 · 쓰기 */
+export const _cardInk = { inkByLevels };
 
 let queued = false;
 let whole = false, started = false;

@@ -1,5 +1,5 @@
 import { watchDom } from './dom-watch.js';
-import { decorEnabled } from './decor.js';
+import { decorEnabled, motionOf } from './decor.js';
 const ASSET = '.mes_text :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img)';
 const PROFILE = '.mes:not([is_user="true"]):not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
 const USER_PROFILE = '.mes[is_user="true"]:not([is_system="true"]):not(.smallSysMes) > .mesAvatarWrapper > .avatar img';
@@ -10,6 +10,15 @@ const toggled = new Set();
 const isMes = node => node.nodeType === 1 && node.classList.contains('mes');
 let state = { image: false, profile: false, userProfile: false }, unwatch = [], roots = [], frame = 0;
 const dirty = new Set();
+// 액자 움직임(src/frame-motion.js)은 켠 액자가 있을 때만 받아요 — 끄면 모듈도 규칙도 감시도 없어요
+let motion = null, motionJob = null, motionIds = { image: '', profile: '', userProfile: '' }, motionDecors = {};
+function syncMotion(settings, enabled) {
+    for (const kind of Object.keys(motionIds)) { motionDecors[kind] = settings[kind]?.decor; motionIds[kind] = enabled[kind] ? motionOf(motionDecors[kind]) : ''; }
+    if (motion) { motion.syncFrameMotion(motionIds, motionDecors); return; }
+    if (motionJob || !Object.values(motionIds).some(Boolean)) return;
+    motionJob = import('./frame-motion.js').then(m => { motion = m; for (const info of wrapped.values()) m.noteFrame(info.host, info.kind); m.syncFrameMotion(motionIds, motionDecors); })
+        .catch(error => { motionJob = null; console.warn('[Blue Lemonade] 액자 움직임을 불러오지 못했어요', error); });
+}
 const hasImage = node => node.nodeType === 1 && (node.tagName === 'IMG' || node.querySelector('img'));
 const maskCache = new Map(), maskSources = {};
 function windowFor(mask) {
@@ -52,6 +61,7 @@ function syncWindows(settings, enabled) {
     }
 }
 function undo(img, info) {
+    motion?.dropFrame(info.host);
     if (info.kind !== 'image') { info.slot.replaceWith(img); info.host.classList.remove('bl-art-frame'); delete info.host.dataset.blFrame; }
     else info.host.replaceWith(img);
     wrapped.delete(img);
@@ -64,6 +74,7 @@ function wrap(img, kind) {
     host.classList.add('bl-art-frame'); host.dataset.blFrame = kind;
     if (kind !== 'image') img.replaceWith(slot); else host.append(slot);
     slot.append(img); wrapped.set(img, { host, slot, kind });
+    motion?.noteFrame(host, kind);
 }
 function scan(root) {
     if (root.nodeType !== 1 || !root.isConnected) return;
@@ -96,6 +107,7 @@ function flush() {
         if (!info.host.contains(img)) {
             // An extension may replace/remove the photo itself. Preserve its new
             // nodes and remove our empty shell instead of resurrecting the old image.
+            motion?.dropFrame(info.host);
             info.slot.replaceWith(...info.slot.childNodes);
             if (info.kind !== 'image') { info.host.classList.remove('bl-art-frame'); delete info.host.dataset.blFrame; }
             else info.host.replaceWith(...info.host.childNodes);
@@ -120,6 +132,7 @@ function flush() {
 export function syncDecorView(settings) {
     const next = decorEnabled(settings);
     syncWindows(settings, next);
+    syncMotion(settings, next);
     const nextRoots = [...document.querySelectorAll('#chat, .salty-preview')];
     if (unwatch.length && next.image === state.image && next.profile === state.profile && next.userProfile === state.userProfile && nextRoots.length === roots.length && nextRoots.every((root, i) => root === roots[i])) return;
     for (const off of unwatch.splice(0)) off();

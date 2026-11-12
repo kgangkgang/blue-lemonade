@@ -373,7 +373,8 @@ await test('[BL 중1] 센 수 열쇠 — 보호 블록이 든 메시지를 번�
     api.renderGlossarySuggestions();
     assert.equal(env.box.hidden, true);
     assert.match(js, /noteGlossarySuggestions\(isRetranslation \? compareText : text, translatedText, suggestPairs, options\.checkSource \?\? text\);/, '두 길 모두 보호 블록을 가리기 전 원문으로 열쇠');
-    assert.match(js, /retranslation = await translate\(textToRetranslate, \{ \.\.\.options, checkSource: originalText, collectNames: true,/);
+    // 1.1.3 감사 T12: 다시 번역은 메시지 번호(contextAt)도 넘겨요 — 그 앞뒤로 원문 열쇠 · 이름 모으기가 그대로인지 봐요
+    assert.match(js, /retranslation = await translate\(textToRetranslate, \{ \.\.\.options, (?:contextAt: Number\(messageId\), )?checkSource: originalText, collectNames: true,/);
     assert.match(js, /translation = await translate\(originalText, \{ segmentCache, collectNames: true,/);
 });
 

@@ -5,6 +5,9 @@ import { showThemeModal } from '../../../modal.js';
 import { allVoices } from './voices.js';
 import { normalizeRows, saveScript, clearScript, scriptIdentity, scriptFingerprint } from './script-store.js';
 import * as library from './sfx-library.js';
+import { settings } from './settings.js';
+// 1.1.5 효과음 듣기도 실제 재생과 같은 음량(전체 음량 × 효과음 음량 — player.js) — 예전엔 늘 0.75 였어요
+const sfxVolume = () => { const s = settings(); return Math.min(1, Math.max(0, Number(s.master_volume ?? 1))) * Math.min(1, Math.max(0, Number(s.sfx?.volume ?? 0.45))); };
 import { ttsCreditsHtml } from '../credits.js';
 import { sfxCreditElement } from './sfx-credits.js';
 
@@ -183,7 +186,7 @@ async function openEditor(mesId, { soundId } = {}) {
     async function previewSound(id) {
         stopPreview(); stopOwnedAudio();
         const request = previewRequest;
-        try { const blob = await library.sfxBlob(id); if (closed || request !== previewRequest) return; previewUrl = URL.createObjectURL(blob); preview = new Audio(previewUrl); preview.volume = .75; preview.addEventListener('ended', stopPreview, { once: true }); await preview.play(); if (closed || request !== previewRequest) return; previewTimer = setTimeout(stopPreview, 8000); notice('효과음 미리듣기 · 최대 8초'); }
+        try { const blob = await library.sfxBlob(id); if (closed || request !== previewRequest) return; previewUrl = URL.createObjectURL(blob); preview = new Audio(previewUrl); preview.volume = sfxVolume(); preview.addEventListener('ended', stopPreview, { once: true }); await preview.play(); if (closed || request !== previewRequest) return; previewTimer = setTimeout(stopPreview, 8000); notice('효과음 미리듣기 · 최대 8초'); }
         catch (error) { if (!closed && request === previewRequest) { stopPreview(); notice(error?.message || '효과음을 듣지 못했어요.', true); } }
     }
     function fileButton(text, accept, multiple, onFiles) {

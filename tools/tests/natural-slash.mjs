@@ -164,4 +164,17 @@ await test('new input typed during native message loading is not cleared', async
     type('new draft while loading'); finish(''); await tick();
     assert.equal(input.value, 'new draft while loading'); assert.equal(hint.hidden, true);
 });
+await test('1.1.4 보통 글을 칠 때는 설정 · 실리태번 문맥을 읽지 않아요(「/」로 시작할 때만) — 결과는 같아요', () => {
+    let contexts = 0;
+    const getContext = globalThis.SillyTavern.getContext;
+    globalThis.SillyTavern.getContext = () => { contexts++; return getContext(); };
+    type('/240으로'); const withSlash = contexts;
+    assert.ok(withSlash >= 1, '명령일 수 있는 글은 예전처럼 문맥을 읽어요');
+    assert.equal(hint.hidden, false);
+    for (const text of ['안녕', 'hello / world', '', '   글자', '1/2']) { type(text); assert.equal(hint.hidden, true, text); assert.equal(hint.textContent, ''); assert.equal(hint.disabled, true); }
+    assert.equal(contexts, withSlash, '보통 글 다섯 번에 getContext 0번');
+    type('  /240으로'); assert.ok(contexts > withSlash, '앞 공백 뒤 「/」도 명령으로 봐요(parseNaturalSlash 와 같은 판정)'); assert.equal(hint.hidden, false);
+    type('');
+    globalThis.SillyTavern.getContext = getContext;
+});
 console.log(`PASS ${passed} natural slash checks (${root})`);

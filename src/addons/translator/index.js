@@ -1229,7 +1229,8 @@ function updateModelList() {
 }
 
 // 커스텀 플레이스홀더 치환 함수
-function substituteCustomPlaceholders(prompt, isInputTranslation = false) {
+// 1.1.3 contextAt = 번역할 메시지 번호 — 주면 그 메시지 앞 N개를 문맥으로 (예전에는 늘 채팅 끝 N개라, 옛 메시지를 옮길 때 뒤 이야기가 가고 그 원문이 문맥에 한 번 더 갔다)
+function substituteCustomPlaceholders(prompt, isInputTranslation = false, contextAt = undefined) {
     if (!prompt.includes('{{llmContext}}')) {
         return prompt;
     }
@@ -1245,7 +1246,16 @@ function substituteCustomPlaceholders(prompt, isInputTranslation = false) {
     }
 
     let messages;
-    if (excludeLast) {
+    const at = Number(contextAt);
+    if (!isInputTranslation && contextAt !== undefined && contextAt !== null && Number.isInteger(at) && at >= 0 && at < context.chat.length) {
+        // 「마지막 메시지 제외」를 끈 사람은 예전처럼 번역할 메시지까지 (마지막 메시지를 옮길 때는 예전과 같은 문맥)
+        const end = excludeLast ? at : at + 1;
+        messages = context.chat
+            .slice(Math.max(0, end - count), end)
+            .filter(m => includeUser || !m.is_user)
+            .map(m => m.mes)
+            .join('\n\n');
+    } else if (excludeLast) {
         // 채팅 번역시 마지막 메시지 제외 (번역 대상과 중복 방지)
         messages = context.chat
             .slice(-count - 1, -1)
@@ -2012,7 +2022,10 @@ async function translate(text, options = {}) {
         // 6.5.4 한국어로 옮길 때 상태 카드의 고정 값(날짜 · 시각 · 날씨 낱말 · 전에 번역한 같은 값)은 보내지 않고 바로 채운다.
         //       기억 범위 = 채팅 번역 프롬프트 · 용어집(문단 캐시 서명과 같은 재료). 재번역은 기억을 읽지 않고 새 결과로 고친다.
         const cardChat = getContext(), chatPrompt = String(extensionSettings.llm_prompt_chat ?? '');
-        const cardLocal = !options.isInputTranslation && /korean|한국어|한국말/i.test(String(options.prompt ?? chatPrompt)) ? cardValues({
+        // 1.1.3 낱말 korean 만 보던 판정은 「from Korean」 · 「Keep Korean names」 프롬프트에서도 카드 값을 한국어로 채웠다 — 목표어가 한국어인 꼴만
+        //       (KOREAN_TARGET 과 같은 꼴 + 꾸밈말이 낀 「into natural, fluent Korean」 — 괄호 · 마침표를 건너 「to English (… Korean)」 까지는 안 잡는다)
+        //       감사 4차: 사이 낱말은 꾸밈말만 — 「into English and keep Korean names」 · 「into Japanese, not Korean」 은 아님 (rp-lines.js NOTICE_KOREAN_TARGET 과 글자까지 같은 정규식 · 시험이 같은지 봐요)
+        const cardLocal = !options.isInputTranslation && /\b(?:to|into)\s+(?:(?:natural|fluent|native|casual|formal|informal|polite|modern|standard|contemporary|colloquial|idiomatic|literary|proper|plain|simple|everyday|smooth|good|clear|accurate|correct|[a-z]+ly)(?:\s*,\s*(?:and\s+)?|\s+and\s+|\s+)){0,3}korean\b|한국어로|한글로/i.test(String(options.prompt ?? chatPrompt)) ? cardValues({
             scope: String(getStringHash(JSON.stringify([chatPrompt, ...(styleProfileSignature(cardChat?.chatMetadata).length ? ['speech-alias-v2',styleProfileSignature(cardChat?.chatMetadata)] : []), extensionSettings.glossary_enabled === false ? null
                 : [cardChat?.groupId ?? null, cardChat?.characters?.[cardChat?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries), ...chatGlossarySignature(cardChat?.chatMetadata)]]))),   // 2.7.5 updated 는 서명에서 뺀다
             remember: options.isRetranslation !== true,
@@ -2061,7 +2074,7 @@ async function translate(text, options = {}) {
         // ==================================================================================
         
         // 커스텀 플레이스홀더 치환 ({{llmContext}} 등)
-        finalPrompt = substituteCustomPlaceholders(finalPrompt, isInputTranslation);
+        finalPrompt = substituteCustomPlaceholders(finalPrompt, isInputTranslation, options.contextAt);
         if (hasAutoContext(finalPrompt)) autoContextGuard = captureAutoContextGuard(getContext, () => extensionSettings, autoRequestSignature);
 
         // 규칙 프롬프트 로드 (채팅별 메타데이터)
@@ -2127,9 +2140,9 @@ async function translate(text, options = {}) {
             if (sent?.changed) built = built.slice(0, built.length - body.length) + sent.text;
 
             // 플레이스홀더 치환 (커스텀 먼저, 기본 매크로 다음)
-            built = substituteCustomPlaceholders(built, isInputTranslation);
+            built = substituteCustomPlaceholders(built, isInputTranslation, options.contextAt);
             const full = substituteParams(built);
-            if (head !== null) { const fixed = substituteParams(substituteCustomPlaceholders(head, isInputTranslation)); if (full.startsWith(fixed)) cacheHeads.set(full, fixed); }
+            if (head !== null) { const fixed = substituteParams(substituteCustomPlaceholders(head, isInputTranslation, options.contextAt)); if (full.startsWith(fixed)) cacheHeads.set(full, fixed); }
             if (sent?.changed) tagRestores.set(full, sent.restore);
             return full;
         };
@@ -2591,6 +2604,12 @@ async function translate(text, options = {}) {
         const tagMarker = '\n\n[Translated Text]:\n';
         const tagSource = isRetranslation && text.startsWith('[Original Text]:\n') && text.includes(tagMarker)
             ? text.slice('[Original Text]:\n'.length, text.indexOf(tagMarker)) : text;
+        // 1.1.3 보호 블록 수보다 큰 번호 · 잘못 센 번호의 자리표는 위 고리가 못 풀어 번역문에 그대로 남아 저장됐다 — 원문에 그런 글이 없으면 여기서 걷는다
+        const placeholderFree = dropLeftoverPlaceholders(translatedText, tagSource);
+        if (placeholderFree !== translatedText) {
+            console.warn('[LLM Translator] 번역문에 풀리지 않고 남은 자리표시자를 걷었어요');
+            translatedText = placeholderFree;
+        }
         const tagFixed = repairTagPairs(tagSource, translatedText);
         if (tagFixed !== translatedText) {
             console.warn('[LLM Translator] 번역문의 태그 짝을 원문대로 맞췄어요 (빠진 닫는 태그 · 남는 태그)');
@@ -3050,7 +3069,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         const badge = progressBadge(messageId, message, sourceMes, chatId, runToken.guard);
         let retranslation;
         try {
-            retranslation = await translate(textToRetranslate, { ...options, checkSource: originalText, collectNames: true, assertValid: () => runToken.guard.assert(), onProgress: stage => badge.update(stage && typeof stage === 'object' ? { ...stage, edited: true } : stage), onStreamNote: badge.note, report });   // 3.0.0 다시 번역 길은 늘 「바뀐 문단」
+            retranslation = await translate(textToRetranslate, { ...options, contextAt: Number(messageId), checkSource: originalText, collectNames: true, assertValid: () => runToken.guard.assert(), onProgress: stage => badge.update(stage && typeof stage === 'object' ? { ...stage, edited: true } : stage), onStreamNote: badge.note, report });   // 3.0.0 다시 번역 길은 늘 「바뀐 문단」
         } finally {
             badge.remove();
         }
@@ -3357,7 +3376,8 @@ async function runCheckAction(kind, id, index, row, { auto = false, expectedStat
     };
     assertReview();
     const info = auto ? () => {} : (text, title) => toastr.info(text, title);
-    if (kind === 'whole') { await translateMessage(id, true, 'handleTranslateButtonClick_retranslate'); return; }
+    // 1.1.3 의심받은 번역을 다시 번역하는 길 — 캐시를 먼저 읽으면 그 의심받은 번역이 요청 없이 그대로 다시 붙었다 (번역 리모컨 「다시 번역」과 같은 fresh)
+    if (kind === 'whole') { await translateMessage(id, true, 'fresh'); return; }
     const state = checkStateOf(id);
     if (!message || !state) { info('번역문이 바뀌었어요. 표시가 다시 붙으면 그때 눌러 주세요.', '번역 점검'); return; }
     const { paragraphRange, replaceParagraph, insertAfterParagraph, cleanLeaks, standaloneParagraphs } = await loadCheckLib();
@@ -3384,7 +3404,7 @@ async function runCheckAction(kind, id, index, row, { auto = false, expectedStat
         await translate(srcText, { segmentCache: true, forget: true });
         assertReviewPolicy();
         const report = {};
-        let out = await translate(srcText, { segmentCache: true, assertValid: () => { runToken.guard.assert(); assertReviewPolicy(); }, onProgress: badge.update, onStreamNote: badge.note, report });
+        let out = await translate(srcText, { segmentCache: true, contextAt: Number(id), assertValid: () => { runToken.guard.assert(); assertReviewPolicy(); }, onProgress: badge.update, onStreamNote: badge.note, report });
         out = dropStrayWords(out, srcText);
         runToken.guard.assert();
         assertReviewPolicy();
@@ -3538,7 +3558,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 const onProgress = stage => { const info = stage && typeof stage === 'object' ? { ...stage, edited } : stage; if (startToast) { clearTimeout(startTimer); startToast(startNotice(info, messageId)); } badge.update(info); };   // 7.3.1
                 try {
                     // 6.5.2 같은 채팅을 다시 불러오는 사이(배열이 빈 순간)는 「바뀜」이 아니다 — 가라앉은 뒤에 판단한다
-                    translation = await translate(originalText, { segmentCache, collectNames: true, auto: source === 'auto', assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onStreamNote: badge.note, onProgress, onPreview: preview.show, report });
+                    translation = await translate(originalText, { segmentCache, collectNames: true, auto: source === 'auto', contextAt: Number(messageId), assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onStreamNote: badge.note, onProgress, onPreview: preview.show, report });
                 } finally {
                     clearTimeout(startTimer); startToast = null; preview.stop(); badge.remove();
                 }
@@ -4555,9 +4575,10 @@ async function onMessageSentTranslate(messageId) {
     if (event_types.GENERATION_STOPPED) eventSource.on(event_types.GENERATION_STOPPED, onStop);
     try {
         let prompt = (s.llm_prompt_send || defaultSettings.llm_prompt_send)
-            .replace(/\{\{languageRules\}\}/g, sendLanguageRules())
-            .replace(/\{\{targetLang\}\}/g, sendLang())
-            .replace(/\{\{dialogueLang\}\}/g, sendDialogueLang() || sendLang());
+            // 1.1.3 함수로 넣는다: 보낼 언어 · 대사 언어 칸 값 안의 $' · $& · $$ 가 치환 기호로 읽혀 프롬프트가 깨졌다
+            .replace(/\{\{languageRules\}\}/g, () => sendLanguageRules())
+            .replace(/\{\{targetLang\}\}/g, () => sendLang())
+            .replace(/\{\{dialogueLang\}\}/g, () => sendDialogueLang() || sendLang());
         const reference = await buildSendReference(text);
         assertSend();
         if (reference) prompt += `\n\n${reference}`;
@@ -8176,6 +8197,10 @@ function compileUserPattern(line, label) {
             const flags = match[2] || 'gi';
             return new RegExp(match[1], flags.includes('g') ? flags : `${flags}g`);
         }
+        // 1.1.3 슬래시 없는 줄은 안내대로 글자 그대로가 먼저 — `[OOC]` 가 글자 O · C 하나하나를, `(OOC: brb)` 가 괄호 빼고, `$5` 가 아무것도 못 가렸다.
+        //       예전(1.9.2 전) 정규식으로만 읽던 줄을 지키려고, 이스케이프(\) · 반복(* + ? 중괄호) · 갈래(|)가 있는 줄만 정규식으로 읽는다.
+        //       감사 4차: 줄 머리 ^ · 줄 끝 $ 도 정규식 표시로 본다 — `^OOC:` 처럼 닻만 쓴 옛 줄이 글자 그대로가 되어 조용히 아무것도 못 가렸다 (`$5` 처럼 머리 $ 는 글자)
+        if (!/[\\*+?\x7b|]/.test(trimmedStr) && !trimmedStr.startsWith('^') && !trimmedStr.endsWith('$')) return new RegExp(trimmedStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
         return new RegExp(trimmedStr, 'gi');
     } catch (e) {
         if (match) {
@@ -8617,6 +8642,8 @@ function restoreContent(html, transMap, origMap) {
         let hasChanged = false;
 
         currentHtml = currentHtml.replace(/__MASK_([A-Z]+)_([A-Z]+)_(\d+)__/g, (match, type, source, id) => {
+            // 1.1.3 글에 원래 있던 토큰 글자(PREEXIST)는 맨 마지막에 한 번만 되돌린다 — 여기서 되돌리면 다음 바퀴가 그 글자를 진짜 자리표로 읽어 숨긴 원문으로 바꿨다
+            if (type === 'PREEXIST') return match;
             let replacement = null;
 
             // 1. 제 짝(Map)에서 찾기
@@ -8644,7 +8671,11 @@ function restoreContent(html, transMap, origMap) {
         loopCount++;
     }
 
-    return currentHtml;
+    return currentHtml.replace(/__MASK_PREEXIST_([A-Z]+)_(\d+)__/g, (match, source) => {
+        const own = source === 'TRANS' ? transMap : origMap, other = source === 'TRANS' ? origMap : transMap;
+        const cross = source === 'TRANS' ? match.replace('_TRANS_', '_ORIG_') : match.replace('_ORIG_', '_TRANS_');
+        return own[match] ?? other[cross] ?? match;
+    });
 }
 
 
@@ -9720,7 +9751,14 @@ class PresetManager {
 
         // 1. 프리셋에서 데이터 추출
         const loadedSettings = simpleDeepClone(preset.settings);
-        const loadedCustomPrompts = simpleDeepClone(preset.customPrompts || []);
+        // 1.1.3 커스텀 프롬프트는 합친다 — 예전에는 저장 때 목록으로 통째로 바꿔, 그 뒤에 만든 프롬프트가 사라지고 customPrompts 가 없는 프리셋이면 0개가 됐다.
+        //       같은 id 는 프리셋 것으로 바꾸고, 지금 목록에만 있는 것은 그대로 두고, 프리셋에만 있는 것은 뒤에 붙인다.
+        const presetPrompts = simpleDeepClone(Array.isArray(preset.customPrompts) ? preset.customPrompts : []);
+        const presetPromptById = new Map(presetPrompts.filter(p => p && p.id != null).map(p => [p.id, p]));
+        const currentPrompts = Array.isArray(extensionSettings.customPrompts) ? extensionSettings.customPrompts : [];
+        const loadedCustomPrompts = currentPrompts.map(p => (p && presetPromptById.has(p.id) ? presetPromptById.get(p.id) : p));
+        const keptIds = new Set(currentPrompts.map(p => p?.id));
+        for (const p of presetPrompts) if (!p || p.id == null || !keptIds.has(p.id)) loadedCustomPrompts.push(p);
 
         // 2. 현재 내 프리셋 목록 백업 (설정 초기화 시 날아가지 않도록)
         const myCurrentPresets = this.presets;

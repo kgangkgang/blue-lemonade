@@ -2,6 +2,7 @@
 //   ① 솔라 화면 맨 위(제목 바로 아래)에 데우스 화면으로 가는 줄이 있고, 같은 스위치를 두 번 그리지 않아요(설정 중복 0)
 //   ② 솔라 화면에도 상태창 글자 편집기가 묶여요(스위치 묶음이 없는 화면에서도)
 //   ③ 설정 검색 「솔라 빠른 설정」이 솔라 화면의 그 줄로 가요
+//   ④ 솔라 화면에도 데우스 화면처럼 원작자 바로가기(호환 대상 프롬프트 · 솔라 원문 보기 → Sola Hub) 줄이 있어요
 //   node tools/tests/sola-quick-shortcut.mjs <테마 루트>
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -35,5 +36,10 @@ await test('③ 검색 「솔라 빠른 설정」 → 프롬프트 › 솔라의
     const hit = S.searchSettings('솔라 빠른 설정')[0];
     assert.deepEqual([hit?.tab, hit?.sub, hit?.title, hit?.anchor], ['prompt', 'sola', '솔라 빠른 설정', '솔라 빠른 설정']);
     assert.equal(S.searchSettings('솔라 빠른')[0]?.title, '솔라 빠른 설정');
+});
+await test('④ 솔라 화면의 원작자 바로가기 — 데우스와 같은 「호환 대상 프롬프트 · … 원문 보기 ↗」 꼴', () => {
+    const sola = panel.match(/if\(sub==='sola'\)return `([^`]*)`/)?.[1] || '';
+    assert.match(sola, /<p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https:\/\/pyrxpia\.github\.io\/sola-hub\/" target="_blank" rel="noopener noreferrer">솔라 원문 보기 ↗<\/a><\/p>/);
+    assert.match(panel, /<p class="bl-prompt-source">호환 대상 프롬프트 · <a href="[^"]+" target="_blank" rel="noopener noreferrer">데우스 원문 보기 ↗<\/a><\/p>/, '데우스 줄과 같은 꼴');
 });
 console.log(`솔라 빠른 설정 바로 가기 검사를 통과했어요(${passed}개).`);

@@ -14,7 +14,7 @@ const HINT_ID = /enable|enabled|activ|master|toggle|switch|^(on|use)([_-]|$)|(^|
 const HINT_TEXT = /enable|enabled|activ|사용|켜|활성|작동/i;
 export const ROW = 'bl-hs-row', SWITCH = 'bl-hs-switch', HEAD = 'bl-hs-head';
 export const ROW_LABEL = '확장 탭에 보이기';   // 6.1.8 모든 창에서 같은 이름 (확장 이름 · 켜기 이름 없이)
-let running = false, observer = null, timer = 0, ticker = 0;
+let running = false, observer = null, timer = 0, ticker = 0, drawerWatch = null;
 const masters = new WeakMap();   // 창 → { el, label } (창이 다시 그려져 떨어지면 다시 찾는다)
 
 /** 창의 열쇠: 확장 순서 애드온이 붙인 data-po-key → id → class → 태그 */
@@ -196,10 +196,21 @@ function start() {
     block.addEventListener('click', onChange, true);
     // 체크박스를 코드로 바꾸면 알림이 없다 — 확장 칸이 보이는 동안 2초마다 맞춘다
     // 6.4.5 서랍이 닫혀 있으면 offsetParent 를 읽지 않는다 — 읽을 때마다 렌더 중 문서 전체 스타일 계산을 강제했다 (닫힌 서랍은 원래도 null)
-    ticker = setInterval(() => { const b = document.getElementById('rm_extensions_block'); if (!b || b.closest('.drawer-content')?.classList.contains('openDrawer') === false) return; if (b.offsetParent !== null) sync(); }, 2000);
+    // 1.1.4 유휴 타이머 정리: 확장 서랍이 닫혀 있는 동안(거의 늘)은 타이머를 아예 걸지 않아요 — 2초마다 깨어 「닫혔네」만 보고 돌아가던 것.
+    //   서랍(.drawer-content)의 class 만 봐서(허브 · 자기 자신 구독) 열리면 걸고 닫히면 내려요. 서랍을 못 찾으면(확장 칸이 아직 없거나 서랍 밖) 예전처럼 늘 돌아요
+    const drawer = document.getElementById('rm_extensions_block')?.closest('.drawer-content') || null;
+    if (drawer) drawerWatch = watchDom(drawer, { attributes: ['class'], name: '머리 스위치 (확장 서랍 열림)' }, () => armTicker(drawer));
+    armTicker(drawer);
+}
+function tick() { const b = document.getElementById('rm_extensions_block'); if (!b || b.closest('.drawer-content')?.classList.contains('openDrawer') === false) return; if (b.offsetParent !== null) sync(); }
+/** 확장 서랍이 열려 있을 때만(서랍을 모르면 늘) 2초 타이머를 걸어요 */
+function armTicker(drawer) {
+    const want = running && (!drawer || drawer.classList.contains('openDrawer'));
+    if (want && !ticker) ticker = setInterval(tick, 2000);
+    else if (!want && ticker) { clearInterval(ticker); ticker = 0; }
 }
 function stop() {
-    observer?.(); observer = null;
+    observer?.(); observer = null; drawerWatch?.(); drawerWatch = null;
     clearTimeout(timer); clearInterval(ticker); timer = 0; ticker = 0;
     const block = document.getElementById('rm_extensions_block') || document.body;
     block.removeEventListener('change', onChange, true);

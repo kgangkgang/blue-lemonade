@@ -207,7 +207,10 @@ export function startNaturalSlash({ isEnabled = () => true } = {}) {
         if (hint.disabled !== disabled) hint.disabled = disabled;
     }
     function refresh() {
-        const state = current();
+        // 1.1.4 입력칸에 글자를 칠 때마다 · 초점이 옮겨질 때마다 불려요 — 「/」로 시작하지 않는 글은 명령이 아니라(parseNaturalSlash 가 바로 null)
+        //   설정과 실리태번 문맥(getContext 는 부를 때마다 큰 객체를 새로 만들어요)을 읽지 않고 「명령 없음」으로 가요. 결과(표시 지움 · 안내 숨김)는 같아요
+        const value = box()?.value;
+        const state = typeof value === 'string' && /^\s*\//.test(value) ? current() : null;
         const action = state?.action;
         // The host reports these valid Korean shortcuts as unknown slash commands.
         // Hide that one non-floating completion surface only while this input has focus.

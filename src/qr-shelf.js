@@ -165,8 +165,11 @@ export const send = { raw: async (messages, responseLength) => {
     if (typeof c?.generateRaw !== 'function') throw new Error('실리태번 생성 함수를 찾지 못했어요');
     return c.generateRaw({ prompt: messages, responseLength, trimNames: false });
 } };
+// 1.1.3 답을 기다리는 사이 창을 닫으면 finally 의 state.busy 가 TypeError 였고, 닫았다 다시 열면 새 창에서 유료 요청이 한 번 더 나가고 옛 답이 새 창을 덮었다
+let organizing = false;
 async function organize() {
     if (state.busy || state.ai) return;
+    if (organizing) { toast()?.info?.('앞서 보낸 AI 정리를 아직 기다리는 중이에요.', 'QR 책장'); return; }
     const st = store();
     const { list, rest } = core.aiTargets(st, items);
     if (!list.length) { toast()?.info?.('이름 · 설명 · 카테고리가 빈 QR 이 없어요.', 'QR 책장'); return; }
@@ -177,17 +180,18 @@ async function organize() {
     const reply = core.aiResponseTokens(list.length);
     const model = modelName(c);
     const ok = await ask(`이름 · 설명 · 카테고리가 빈 QR ${list.length}개를 ${model ? `지금 연결(${model})` : '지금 연결'}에 한 번 보내요.${rest ? `\n나머지 ${rest}개는 다음에 한 번 더 눌러요.` : ''}\n보내는 것: 세트 이름 · QR 이름표 · 내용 앞 ${core.AI_BODY}자 (대화 · 캐릭터는 안 보내요)\n대략 보내기 ${tokens.toLocaleString('ko-KR')} 토큰 + 답 최대 ${reply.toLocaleString('ko-KR')} 토큰 · 요금이 들 수 있어요.\n받은 답은 미리 보기에서 고치거나 버릴 수 있어요.`, { ok: '보내기', cancel: '취소', title: 'AI 한 번에 정리' });
-    if (!ok || !root) return;
-    state.busy = true; paint();
+    if (!ok || !root || !state || organizing) return;
+    const mine = state;
+    organizing = true; mine.busy = true; paint();
     try {
         const text = await send.raw(messages, reply);
-        if (!root) return;
+        if (!root || state !== mine) return;
         const parsed = core.aiParse(text, store(), list);
         state.ai = { rows: parsed.rows.map(r => ({ ...r, use: true })), dropped: parsed.dropped };
     } catch (error) {
         console.warn('[Blue Lemonade] QR 책장 AI 정리', error);
-        toast()?.warning?.(`정리를 받지 못했어요. ${error?.message || ''}`.trim(), 'QR 책장');
-    } finally { state.busy = false; paint(); }
+        if (state === mine) toast()?.warning?.(`정리를 받지 못했어요. ${error?.message || ''}`.trim(), 'QR 책장');
+    } finally { organizing = false; mine.busy = false; if (state === mine) paint(); }
 }
 function applyAi() {
     const st = store(), before = snapshot();

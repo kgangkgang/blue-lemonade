@@ -14,7 +14,8 @@
    ========================================================= */
 const lib = require('./css-lib.cjs');
 
-const PREVIEW = /#salty-nochat|\.salty-preview|\.salty-sample/;
+// 1.1.5 줄 안 미리보기(.bl-inline-preview — 채팅 › 화면의 퀵 리플라이 · 폰 모형)도 설정 창 안에만 있어요 — 그 안만 노리는 규칙은 같이 떼어 둬요
+const PREVIEW = /#salty-nochat|\.salty-preview|\.salty-sample|\.bl-inline-preview/;
 
 function previewOnly(selector) {
     if (!PREVIEW.test(selector)) return false;

@@ -437,3 +437,5 @@ export const _warm = {
     state: () => ({ timer: !!warm.timer, job: !!warm.job, look: !!warm.look, pending: warm.list ? warm.list.length - warm.i : null, k: warm.k, done: warm.done, slices: warm.slices, yielded: warm.yielded, cool: warm.cool }),
     stop: stopWarm, step: stepWarm, start: startWarm,
 };
+// 1.1.4 측정 도구가 묶음(dist) 밖에서 미리 그리기 상태를 읽는 길(감시 허브의 stats() 와 같은 꼴): globalThis[Symbol.for('blue-lemonade.diag.v1')].warm()
+try { (globalThis[Symbol.for('blue-lemonade.diag.v1')] ??= {}).warm = () => _warm.state(); } catch { /* 진단용 — 못 걸어도 동작은 같아요 */ }

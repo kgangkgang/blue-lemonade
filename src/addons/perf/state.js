@@ -144,8 +144,10 @@ export function priceFor(model) {
     const name = String(model ?? '');
     if (!name) return null;
     if (prices[name]) return prices[name];
+    // 1.1.3 앞부분이 같아도 남은 꼬리가 날짜 · 판 번호(-001 · -20250514 · -2024-08-06 · -latest) · 미리보기(-preview · -preview-05-20)일 때만 — 예전에는 gpt-4o-mini 가 gpt-4o, o3-mini · o3-pro 가 o3 의 값으로 셈됐다
+    const VERSION_TAIL = /^(?:[-@](?:\d{3,}|\d{4}-\d{2}-\d{2}|latest|preview(?:-\d{2}-\d{2})?))+$/i;
     const match = Object.keys(prices)
-        .filter(key => name.startsWith(key))
+        .filter(key => name.startsWith(key) && VERSION_TAIL.test(name.slice(key.length)))
         .sort((a, b) => b.length - a.length)[0];
     return match ? prices[match] : null;
 }

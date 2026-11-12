@@ -174,3 +174,5 @@ function stop() {
 export function messageDecorStats() {
     return { started: !!started, decorators: decorators.map(d => ({ name: d.name, calls: d.calls, ms: Math.round(d.ms * 10) / 10, pending: d.pending.size, settle: d.settle, live: d.live })) };
 }
+// 1.1.4 측정 도구가 묶음(dist) 밖에서 꾸미기별 횟수 · 시간 · 미룬 메시지 수를 읽는 길: globalThis[Symbol.for('blue-lemonade.diag.v1')].decor()
+try { (globalThis[Symbol.for('blue-lemonade.diag.v1')] ??= {}).decor = () => messageDecorStats(); } catch { /* 진단용 — 못 걸어도 동작은 같아요 */ }

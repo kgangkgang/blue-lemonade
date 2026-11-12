@@ -410,8 +410,21 @@ await test('프리셋 파일의 폴더: 내 폴더가 없으면 초깃값 · 없
     heads()[0].querySelector('.bl-pf-more').dispatchEvent(new Event('click', { bubbles: true }));
     [...document.querySelectorAll('.bl-pf-layer button')].find(b => b.textContent === '폴더 풀기').dispatchEvent(new Event('click', { bubbles: true })); await settle();
     assert.equal(heads().length, 0, '다 풀면 초깃값이 되살아나지 않아요');
-    assert.deepEqual(settings.promptFolders.presets.P3, { folders: [] });
+    assert.deepEqual(settings.promptFolders.presets.P3.folders, []);
+    assert.equal(typeof settings.promptFolders.presets.P3.seed, 'string', '1.1.3 그때 파일 폴더의 지문을 남겨요');
+    drawList(); await settle();
+    assert.equal(heads().length, 0, '같은 파일이면 다시 그려도 안 되살아나요');
     assert.equal(JSON.stringify(pmStub.serviceSettings.extensions), fileBefore, '프리셋 칸에 쓰지 않아요');
+    // 1.1.3 같은 이름의 새 판 프리셋 파일이 다른 폴더를 들고 오면 받아요 (예전엔 빈 칸이 막았어요)
+    pmStub.serviceSettings.extensions = { blPromptFolders: { version: 1, folders: [{ id: 's2', name: '새 판 폴더', ids: ['p30', 'p31'], open: true }] } };
+    drawList(); await settle();
+    assert.deepEqual(heads().map(h => h.dataset.pfId), ['s2'], '새 판 파일의 폴더');
+    assert.equal(settings.promptFolders.presets.P3.seed, undefined, '받으면 지문은 지워요');
+    // 지문이 없는 옛 빈 칸(1.1.2 까지 다 푼 것)은 예전처럼 그대로
+    settings.promptFolders.presets.P3 = { folders: [] };
+    drawList(); await settle();
+    assert.equal(heads().length, 0, '옛 빈 칸은 그대로');
+    delete settings.promptFolders.presets.P3;
     pmStub.serviceSettings.extensions = {}; preset = 'P1'; await eventSource.emit(ctx.event_types.OAI_PRESET_CHANGED_AFTER); drawList(); await settle();
 });
 // 1.0.2: 순서를 바꿔 쓰는 동작(한곳에 모으기 · 폴더째 옮기기)을 실제로 반영하는 가짜

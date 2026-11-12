@@ -1769,6 +1769,11 @@ async function previewRewrite() {
             await showDetection();
             return;
         }
+        // 1.1.5 실제 고쳐 쓰기처럼 「예외 캐릭터 특징만 있으면 건너뛰기」를 켜 두었고 찾은 곳이 모두 예외면 요청하지 않아요(예전엔 시험만 AI 에게 보냈어요)
+        if (settings.skipExemptOnly && spans.every(span => span.fullyExempt)) {
+            result.empty().append($('<div>').text('예외 캐릭터의 특징만 있어서 그대로 뒀어요.'));
+            return;
+        }
         result.empty().append($('<div>').text('AI에게 요청하는 중…'));
         const output = await rewriteText({ text, spans, exceptions, compiled: active, generate, maxAttempts: settings.maxAttempts, log });
         if (!stillCurrent()) return;

@@ -14,8 +14,11 @@ export const NOTICE_NOTE = '[Bracketed lines such as 【 … 】 or [ … ] are 
 /** 그래도 원문 그대로 온 줄을 다시 보낼 때의 머리말 */
 export const NOTICE_FIX_NOTE = '[The numbered lines below are from a Korean translation but were left untranslated: in-story notices, system messages, signs or game results in brackets, or words copied from the original. Translate their words fully into Korean, keep the brackets, markup, numbers and numbering unchanged, one line per number.]\n';
 
-/** 지시문이 한국어로 옮기라는 것인가 — 「into Korean」 · 「into natural, fluent Korean」 · 「한국어로」 (「from Korean into English」 는 아님) */
-export const NOTICE_KOREAN_TARGET = /\b(?:to|into)\b[^.\n]{0,40}?\bkorean\b|한국어로|한글로/i;
+/** 지시문이 한국어로 옮기라는 것인가 — 「into Korean」 · 「into natural, fluent Korean」 · 「한국어로」 (「from Korean into English」 는 아님)
+ *  1.1.3 감사 4차: 사이 낱말은 꾸밈말(문체 낱말 · -ly 낱말)만 셋까지 — 「into English and keep Korean names」 · 「to English, keeping Korean」 ·
+ *  「into Japanese, not Korean」 처럼 다른 언어 이름 · and · not · keep 이 끼면 한국어 목표가 아니에요. 카드 고정 값 판정(index.js cardLocal)도 이것 하나를 써요. */
+const TARGET_MOD = '(?:natural|fluent|native|casual|formal|informal|polite|modern|standard|contemporary|colloquial|idiomatic|literary|proper|plain|simple|everyday|smooth|good|clear|accurate|correct|[a-z]+ly)';
+export const NOTICE_KOREAN_TARGET = new RegExp(`\\b(?:to|into)\\s+(?:${TARGET_MOD}(?:\\s*,\\s*(?:and\\s+)?|\\s+and\\s+|\\s+)){0,3}korean\\b|한국어로|한글로`, 'i');
 
 const PAIRS ={ '【': '】', '〖': '〗', '〔': '〕', '［': '］', '[': ']' };
 // 줄 앞뒤의 꾸밈: 묶음 요청의 문단 표시 ⟦n⟧ · 인용 > · 굵게 · 기울임 · 취소선 기호 · 꾸밈 태그(<span …> · <b> · <center> …)

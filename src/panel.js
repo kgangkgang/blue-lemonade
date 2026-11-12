@@ -1,10 +1,10 @@
 import { deviceKind } from './device-layout-options.js';
 import { gradientControls, mixControls, gradientAction, bindGradientColors } from './gradient-ui.js';
 import { syncProfileClip } from './profile-clip.js';
-import { refreshPreset, FRAME_PRESETS, FRAME_LIMIT, PRESET_LABELS, PRESET_LABEL_MAX, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
-import { syncDecor, hasFrame } from './decor.js';
+import { refreshPreset, FRAME_PRESETS, FRAME_LIMIT, PRESET_LABELS, PRESET_LABEL_MAX, PRESET_MOTIONS, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
+import { syncDecor, hasFrame, frameFilter } from './decor.js';
 import './chat-appearance.js';
-import { addonsEnabled, themeEnabled, usageMode } from './usage-mode.js';
+import { addonsEnabled, themeEnabled, usageMode, zeroView } from './usage-mode.js';
 import {promptToolsMarkup,fruitPromptMarkup,fruitTypographyGroup,bindPromptTools,solaQuickShortcutMarkup} from './prompt-tools.js';
 import { saveAddonsNow } from './addon-save.js';
 import { readabilityReport, fixReadability } from './readability.js';
@@ -584,7 +584,9 @@ function extColorList(s) {
 }
 
 // 3.5.4 퀵 리플라이 줄 미리보기: 내 QR 이름(보이는 세트 세 개, 열 개씩)으로, 없으면 예시 이름. 입력판 줄과 같은 규칙 · 휠 · 끌기 · 스냅
-function qrSample(showFind = true, ctxNames = false) {
+// 1.1.5 실제 줄과 맞춤: 접기 « · 책장 단추 견본(보이기는 실제와 같은 body 클래스 — css/35-qr-bar.css), 세트 색 · 테두리만 · 아이콘 QR(라벨 숨김 포함)
+const QR_BLACK = /^(#000(000)?(ff)?|rgba?\(0,0,0(,1(\.0+)?)?\)|black)$/;   // layout.js 의 bl-qr-color-none 과 같은 판정
+function qrSample(showFind = true, ctxNames = false, s = null) {
     const MAX = 24;
     const EXAMPLES = ['인사', '상황 정리', '다음 장면', '요약해 줘', '속마음', '시간 흐름', '비 오는 밤', '카페', '회상', '전화', '편지 쓰기', '잠들기 전', '산책', '싸움', '화해', '고백'];
     const settings = globalThis.quickReplyApi?.settings;
@@ -594,17 +596,23 @@ function qrSample(showFind = true, ctxNames = false) {
     for (const link of settings ? [settings.config, settings.chatConfig, settings.charConfig].flatMap(c => c?.setList || []) : []) {
         if (count >= MAX || !link?.isVisible || !link.set) continue;
         // 7.9.7 하위 세트를 묶은 QR 은 실제 줄처럼 오른쪽 칸(⋮ 또는 세트 이름)까지 — 미리보기와 실제가 달라 보이던 것
-        const labels = (link.set.qrList || []).filter(q => !q.isHidden && q.label).slice(0, MAX - count).map(q => {
+        const labels = (link.set.qrList || []).filter(q => !q.isHidden && (q.label || q.icon)).slice(0, MAX - count).map(q => {
             const names = [...new Set((q.hasContext ? q.contextList || [] : []).map(c => c.set?.name).filter(Boolean))];
-            return names.length ? { label: q.label, ctx: ctxNames ? names.join(' · ') : '⋮' } : { label: q.label };
+            const item = { label: q.label || '', icon: q.icon || '', iconOnly: !!q.icon && !q.showLabel };
+            return names.length ? { ...item, ctx: ctxNames ? names.join(' · ') : '⋮' } : item;
         });
-        if (labels.length) { groups.push(labels); count += labels.length; }
+        const color = link.set.color && link.set.color !== 'transparent' ? String(link.set.color) : '';
+        if (labels.length) { labels.color = color; labels.border = !!link.set.onlyBorderColor; groups.push(labels); count += labels.length; }
     }
     // 모자라면 예시 이름으로 채움 — 줄이 넘쳐야 가로 · 세로 넘기기가 보임
     if (count < 16) groups.push(EXAMPLES.slice(0, 16 - count).map(label => ({ label })));
+    const groupClass = g => g.color ? ` qr--color${g.border ? ' qr--borderColor' : ''}${QR_BLACK.test(g.color.replace(/\s+/g, '').toLowerCase()) ? ' bl-qr-color-none' : ''}" style="--qr--color:${esc(g.color)}` : '';
+    const qrOn = settings?.isEnabled === true;
+    // 접기 « · 책장: 실제 줄(layout.js syncQrFold · syncQrShelf)처럼 QR 사용하기가 켜져 있을 때만. 끔 · 쉼 · 접힘은 실제와 같은 body 클래스가 정해요
+    const leads = qrOn ? `<span class="bl-qr-fold-sample" aria-hidden="true"><i class="fa-solid fa-angles-${s?.chat?.qrFolded === true ? 'right' : 'left'}"></i></span><span class="bl-qr-shelf-sample" aria-hidden="true"><i class="fa-solid fa-book-bookmark"></i></span>` : '';
     // 3.7.1 입력창 모형을 같이 그린다 — '자리'(입력창 아래 · 위)가 미리보기에서 바로 보이게. 모형은 body.salty-qr-top 에 따라 순서가 바뀐다 (css/36-qr-place.css)
     const inputMock = '<div class="bl-qr-inputmock" aria-hidden="true"><span class="bl-qr-inputmock-box">메시지를 입력하세요…</span><span class="bl-qr-inputmock-btn"><i class="fa-solid fa-paper-plane"></i></span></div>';
-    return `<div class="bl-qr-sample-wrap"><div class="bl-qr-sample" data-qr-sample tabindex="0" aria-label="퀵 리플라이 미리보기">${showFind ? '<span class="bl-qr-find-sample" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>' : ''}${groups.map(g => `<div class="qr--buttons" inert aria-hidden="true">${g.map(q => `<div class="qr--button${q.ctx ? ' qr--hasCtx' : ''}"><div class="qr--button-label">${esc(q.label)}</div>${q.ctx ? `<div class="qr--button-expander">${esc(q.ctx)}</div>` : ''}</div>`).join('')}</div>`).join('')}</div>${inputMock}</div>`;
+    return `<div class="bl-qr-sample-wrap"><div class="bl-qr-sample" data-qr-sample tabindex="0" aria-label="퀵 리플라이 미리보기">${showFind ? '<span class="bl-qr-find-sample" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>' : ''}${leads}${groups.map(g => `<div class="qr--buttons${groupClass(g)}" inert aria-hidden="true">${g.map(q => `<div class="qr--button${q.ctx ? ' qr--hasCtx' : ''}">${q.icon ? `<div class="qr--button-icon fa-solid ${esc(q.icon)}"></div>` : ''}${q.iconOnly ? '' : `<div class="qr--button-label">${esc(q.label)}</div>`}${q.ctx ? `<div class="qr--button-expander">${esc(q.ctx)}</div>` : ''}</div>`).join('')}</div>`).join('')}</div>${inputMock}</div>`;
 }
 
 /** 「가볍게」 줄: 같은 기능을 켠 다른 확장이 있어 쉬면 그 안내를 설명 끝에 붙인다 (토글 값은 그대로) */
@@ -632,7 +640,7 @@ function adeRows(s) {
         ${here ? '<div class="salty-btns"><button class="salty-btn" data-act="ade-forget">이 채팅방 기억 지우기</button></div>' : ''}
         ${q.adeChat === true ? adeListRows() : ''}
         ${q.adeChat === true || q.adeDaily === true ? row('기본 에이드', `<select data-ade-base aria-label="기본 에이드">${adeFamilies().map(f => `<option value="${f}"${f === (adeBase() || 'blue') ? ' selected' : ''}>${esc(PALETTE_FAMILIES[f]?.label || f)}</option>`).join('')}</select>`, '채팅방 기억이 없는 방에서 쓰는 에이드예요 · 오늘의 에이드를 켜 두면 날마다 이 값이 바뀌어요 · 캐릭터별 스타일이 입혀진 채팅은 그 스타일 그대로예요') : ''}
-        ${row('오늘의 에이드', toggle('quick.adeDaily', q.adeDaily === true), '날마다 에이드가 차례로 바뀌어요(11벌 순서대로 · 커스텀 제외 · 같은 날은 같은 에이드) · 채팅방이 기억한 에이드가 있으면 그쪽이 먼저예요 · 오늘 직접 고른 에이드는 내일까지 그대로예요')}
+        ${row('오늘의 에이드', toggle('quick.adeDaily', q.adeDaily === true), '날마다 에이드가 차례로 바뀌어요(12벌 순서대로 · 커스텀 제외 · 같은 날은 같은 에이드) · 채팅방이 기억한 에이드가 있으면 그쪽이 먼저예요 · 오늘 직접 고른 에이드는 내일까지 그대로예요')}
     </div>`;
 }
 function row(label, control, note = '') {
@@ -899,7 +907,8 @@ function regexStage() {
 
 // 폰 화면 표본 (3.2.0, 채팅 › 화면 › 폰): 작은 폰 그림 — 몰입 읽기를 켜면 위 바 · 입력창이 비켜났다 돌아오는 것을 되풀이해 보여 주고,
 // 한 손 버튼 줄을 켜면 입력창 위에 버튼 알약이 선다. 모양은 팔레트 변수만 (css/31-styles-panel.css)
-function phoneMock(s) {
+function phoneMock(saved) {
+    const s = zeroView(saved);   // 1.1.5 제로에서는 바 숨기기 · 한 손 줄이 실제로 쉬어요(usage-mode.js zeroView) — 모형도 같은 값으로
     const lines = widths => `<p>${widths.map(w => (w < 0 ? `<i class="q" style="width:${-w}%"></i>` : `<i style="width:${w}%"></i>`)).join('')}</p>`;
     const keys = ['swipe', 'swipe', '', 'top', 'bottom', 'jump', 'delLast', '', 'imp', 'cont', 'regen'].filter(key => !key || s.onehand?.[key] !== false);
     const buttons = s.onehand?.on ? keys.map(key => (key ? '<b></b>' : '<span></span>')).join('') : '';
@@ -963,6 +972,21 @@ function sampleCut() { return new URL('./preview-art/character.webp', import.met
 // 지금 채팅에 있는 아바타를 빌려 온다 (미리보기에 내 캐릭터가 나온다).
 // 큰 프로필을 꾸밀 때 채팅 사진이 없으면 같은 세라피나 표본으로 크기 · 자르기 · 액자를 확인해요.
 function panelAppearanceSettings() { const s = getSettings(); return themeEnabled(s) ? s : { ...s, enabled: false }; }
+// 1.1.5 이름 줄 단추를 실제처럼: 고정한 메뉴 단추(mes-pins.js — ⋯ 앞, 고른 차례)와 1.0.3 연필 앞 휴지통(quick/mes-delete.js).
+//   켜는 조건은 features.js 와 같아요(테마 켬 · 확장만 아님 · 제로는 zeroView 로 고정 0). 진짜 단추를 옮기지 않고 같은 class 의 빈 칸만 그려요(무대는 inert)
+function prevMarks(stage) {
+    const saved = getSettings(), s = zeroView(saved);
+    const on = s.enabled !== false;
+    const pins = on ? (s.chat?.mesPins || []) : [];
+    const del = on && s.usageMode !== 'extensions' && s.usageMode !== 'zero' && s.quick?.mesDelete === true && !restingFor('quickMesDelete');
+    for (const bar of stage.querySelectorAll('.mes_buttons')) {
+        bar.querySelectorAll(':scope > .bl-pinned, :scope > .bl_mes_del').forEach(el => el.remove());
+        const hint = bar.querySelector(':scope > .extraMesButtonsHint');
+        for (const key of pins) { const el = document.createElement('div'); el.className = `mes_button bl-pinned ${key.split('__')[0]} ${pinLabel(key).icon}`; bar.insertBefore(el, hint); }
+        if (del) { const el = document.createElement('div'); el.className = 'mes_button bl_mes_del fa-solid fa-trash-can'; bar.querySelector(':scope > .mes_edit')?.before(el); }
+    }
+}
+
 function prevFaces(stage) {
     for (const mes of stage.querySelectorAll('.mes')) {
         const mine = mes.getAttribute('is_user') === 'true';
@@ -1018,10 +1042,14 @@ function fillPreviews(root) {
             // 떨어졌다 다시 붙은 무대는 ResizeObserver 가 스스로 빠져 있으니 꽂을 때마다 한 번 더 부름
             if (kind === 'chat') {
                 prevFaces(stage);
+                prevMarks(stage);
                 const chatSettings = previewChat(getSettings());
                 if ((chatSettings.weather && chatSettings.weather !== 'off' && getSettings().enabled) || stage._blWeather) import('./weather.js').then(m => m.previewWeather(stage, chatSettings)).catch(() => {});
             }
             else if (!['regex', 'color', 'markdown'].includes(kind)) classifyAll(stage);
+            // 1.1.5 글자색 톤 맞추기(body.salty-tone)는 tone.js 가 색 글자마다 --bl-hue 를 심어야 걸려요. 표본은 처음 만들 때 · 「적힌 글자색」을 바꾼 뒤에 한 번도 안 재여
+            //   톤 슬라이더가 표본에 안 먹었어요 — 꽂을 때마다 다시 재요(이미 잰 색은 tone.js 가 건너뛰어요)
+            if (kind === 'regex' && document.body.classList.contains('salty-tone')) import('./tone.js').then(m => m.retoneAll()).catch(() => {});
             syncDecor(panelAppearanceSettings());
             syncProfileClip(panelAppearanceSettings());
         }
@@ -1068,13 +1096,14 @@ document.addEventListener('salty:font-blank', (e) => {
 });
 
 function fontItem(f, lang, current) {
+    // 1.1.5 영어 칸에 나오는 한국어 글꼴(라틴 글자를 품은 것)은 그 칸에서 영어 글자만 맡아요 — 견본 줄도 영어 문장으로(예전엔 한국어 문장이라 실제 쓰일 모습이 안 보였어요)
     const on = current === f.id;
     const blank = isPreviewBlank(f.id);
     const stack = esc(previewStack(f, f.lang || lang));
     const family = blank ? 'inherit' : (isPreviewReady(f.id) || f.group === 'custom' ? stack : 'inherit');
     return `<button class="salty-fontitem ${on ? 'on' : ''}${blank ? ' blank' : ''}" data-act="font" data-id="${esc(f.id)}" data-preview="${esc(f.id)}"${f.group === 'custom' ? ' aria-keyshortcuts="Delete"' : ''}>
         <span class="salty-fontinfo"><b>${esc(f.label)}${f.native ? ` <i>${esc(f.native)}</i>` : ''}${f.size ? `<em>${sizeBadge(f)}</em>` : ''}${f.single ? '<em>굵기 하나</em>' : ''}${blank ? BLANK_BADGE : ''}</b>
-        <small data-font="${stack}" style="font-family:${family}">${esc(SAMPLES[f.lang || lang] || SAMPLES.ko)}</small></span>
+        <small data-font="${stack}" style="font-family:${family}">${esc(SAMPLES[lang === 'en' ? 'en' : f.lang || lang] || SAMPLES.ko)}</small></span>
         ${on ? `<span class="salty-check-ic">${CHECK}</span>` : ''}
         ${f.group === 'custom' ? `<span class="salty-x" data-act="rmfont" data-id="${esc(f.id)}" aria-label="목록에서 지우기">✕</span>` : ''}
     </button>`;
@@ -1136,7 +1165,7 @@ function fontBlock(s, slot) {
 function tabTheme(s, sub) {
     if(sub==='etc')return `<div class="salty-group">${row('새 버전 자동 확인', toggle('updateCheck', s.updateCheck !== false), 'GitHub 에 6시간에 한 번 새 판이 있는지 물어요. 끄면 판 알약이 노랗게 빛나지 않아요')}</div><div class="bl-etc-grid"><details class="bl-usage-mode"><summary>사용 모드: <strong>${({both:'테마 + 확장',theme:'테마만',extensions:'확장만',zero:'블루레몬에이드 제로'})[usageMode(s)]}</strong></summary><div class="bl-usage-mode-body"><label>사용 모드<select data-usage-mode aria-label="사용 모드">${[['both','테마 + 확장'],['theme','테마만'],['extensions','확장만'],['zero','블루레몬에이드 제로 (모양만 · 빠르게)']].map(([v,label])=>`<option value="${v}" ${usageMode(s)===v?'selected':''}>${label}</option>`).join('')}</select></label><p>선택한 모드만 실행해요. 기존 설정은 보관해요.</p><p>제로는 색 · 글꼴 · 말풍선 같은 모양만 켜요. 내장 도구 · 확장 기능 · 성능 보조는 불러오지 않아 가장 가벼워요.</p><button type="button" class="salty-btn" data-usage-apply>저장하고 새로고침</button><span role="status" data-usage-status></span></div></details>
         <div class="salty-group bl-ext-colors">${row('다른 확장 색 유지', toggle('compat.preserveExtensionColors', !!s.compat?.preserveExtensionColors), '확장 설정창과 지원되는 팝업이 원래 색을 써요')}${s.compat?.preserveExtensionColors ? extColorList(s) : ''}</div>
-        <div class="salty-group bl-first-run-row" data-search-anchor="처음 설정 다시 보기">${row('처음 설정 다시 보기', '<button type="button" class="salty-btn salty-btn-icon" data-act="first-run" aria-label="처음 설정 다시 보기"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></button>', '팔레트 · 글꼴 · 읽기 방식')}</div></div>`;
+        <div class="salty-group bl-first-run-row" data-search-anchor="처음 설정 다시 보기">${row('처음 설정 다시 보기', '<button type="button" class="salty-btn salty-btn-icon" data-act="first-run" aria-label="처음 설정 다시 보기"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></button>', '팔레트 · 글꼴 · 읽기 방식 · 기기 알림 · 쓰는 방식')}</div></div>`;
     // 8.2.5 설치 · 충돌 점검 — 1.0.0 되살림: 무결성표(build-info.js)가 커서 그 화면을 열 때만 받아요(bindHealthSlot)
     // 1.0.1 테마 업데이트 상자(판 목록 · 업데이트 · 새로고침)를 설치 점검 위에 되살려요(bindUpdateSlot)
     if(sub==='update')return '<div data-update-slot aria-busy="true"></div><div data-health-slot aria-busy="true"></div>';
@@ -1248,7 +1277,8 @@ function styleSample(data, s) {
 /** 내 스타일 줄 앞 색 점 (3.2.0): 그 스타일의 바탕 · 글자 · 포인트 · 형광펜 */
 function styleSwatch(data) {
     const id = PALETTES[data?.palette] ? data.palette : 'salt';
-    const c = { ...PALETTES[id], ...(data?.colorOverrides?.[id] || {}) };
+    // 1.1.5 바탕은 그 스타일의 물들이기(lightTint · nightTint)까지 — 입었을 때와 같은 계산(palettes.js paletteColors). 예전엔 물들이기 없는 원래 바탕이었어요
+    const c = paletteColors({ palette: id, colorOverrides: data?.colorOverrides, lightTint: data?.lightTint, nightTint: data?.nightTint });
     return `<span class="salty-style-swatch" style="--sw-bg:${safeColor(c.bg)};--sw-text:${safeColor(c.text)};--sw-accent:${safeColor(c.accent)};--sw-marker:${safeColor(c.marker)}" aria-hidden="true"><i></i><i></i></span>`;
 }
 
@@ -1305,7 +1335,8 @@ function faviconRow() {
         ? '<span class="salty-splash-on"><i class="fa-solid fa-check" aria-hidden="true"></i></span>'
         : '<button class="salty-btn" data-act="favicon-copy">명령 복사</button>', state === 'on' ? '탭 · 홈 화면 모두 레몬' : '탭 · 홈 화면 아이콘을 처음부터 레몬으로 — 명령을 한 번 실행')
         // 1.1.2 홈 화면 아이콘 모양(사용자 「레몬만 남게 못 함?」) — 바꾸면 위 버튼이 다시 떠요(표식 BLLEMON3L · 3S)
-        + row('홈 화면 아이콘', seg('chat.homeIcon', [['auto', '자동'], ['lemon', '레몬만'], ['square', '어두운 네모']], 'auto'), `레몬만 = 투명 바탕 · 어두운 네모 = 지금 모양 · 자동은 이 기기에서 ${shape === 'lemon' ? '레몬만' : '어두운 네모'}. 홈 화면 아이콘은 지우고 다시 추가해야 바뀌어요`);
+        // 1.1.4 흰 타일(표식 BLLEMON3T · 자동의 새 값) — 흰 판 + 레몬, manifest 에 maskable 을 더해 런처가 다른 앱처럼 둥글게 잘라요
+        + row('홈 화면 아이콘', seg('chat.homeIcon', [['auto', '자동'], ['tile', '흰 타일'], ['lemon', '레몬만'], ['square', '어두운 네모']], 'auto'), `흰 타일 = 흰 판에 레몬 · 다른 앱처럼 둥글게 잘려요(자동) · 레몬만 = 투명 바탕 · 어두운 네모 = 옛 모양. 홈 화면 아이콘은 지우고 다시 추가해야 바뀌어요`);
 }
 
 async function copyDiagnosis() {
@@ -1476,7 +1507,8 @@ function decorControls(prefix, o) {
     const d = o.decor, settings = getSettings();
     const framed = hasFrame(d); // 꺼 둔 기본 프리셋은 그림을 비워 두어도(5.6.4) 액자가 있는 것으로 — 켜면 다시 그린다
     const selected = settings.frameLibrary.find(item => item.id === d.libraryId);
-    const thumb = (art, name) => `<img src="${esc(art)}" alt="" loading="lazy"><span>${esc(name)}</span>`;
+    // 1.1.5 보관함 액자 카드는 저장한 색감(색상 돌리기 · 채도 · 밝기 — 1.0.7)까지 실제 액자처럼(decor.js frameFilter). 예전엔 원래 색 그림이었어요
+    const thumb = (art, name, filter = 'none') => `<img src="${esc(art)}" alt="" loading="lazy"${filter !== 'none' ? ` style="filter:${esc(filter)}"` : ''}><span>${esc(name)}</span>`;
     return `${cap('장식 액자', '테두리 그림을 그대로 얹고 안쪽에만 사진을 넣어요')}<div class="salty-group bl-decor-controls">
         <span class="bl-frame-label">심플 액자</span>
         <div class="bl-frame-library" role="group" aria-label="심플 액자">${FRAME_PRESETS.map(([id, name]) => `<button type="button" data-act="frame-preset" data-owner="${prefix}" data-id="${id}" class="bl-pick-card ${d.on && d.presetId === id ? 'on' : ''}" aria-pressed="${d.on && d.presetId === id}">${thumb(presetFrame(id).art, name)}</button>`).join('')}</div>
@@ -1485,6 +1517,7 @@ function decorControls(prefix, o) {
         ${framed && d.on ? `${slider(`${prefix}.decor.opacity`, '액자 진하기 (%)', 0, 100, 1)}
             ${d.presetId ? frameColor(`${prefix}.decor.presetColor`, '액자 바탕색', d.presetColor) + frameColor(`${prefix}.decor.presetAccent`, '액자 포인트색', d.presetAccent) : ''}
             ${d.presetId && Object.hasOwn(PRESET_LABELS, d.presetId) ? `<div class="bl-frame-save-row"><input type="text" data-frame-label="${prefix}" aria-label="칩 글자" maxlength="${PRESET_LABEL_MAX}" placeholder="칩 글자 (비우면 없음)" value="${esc(d.presetLabel ?? PRESET_LABELS[d.presetId])}"><span class="bl-frame-label">칩 글자</span></div>` : ''}
+            ${d.presetId && !d.libraryId && Object.hasOwn(PRESET_MOTIONS, d.presetId) ? row('액자 움직임', toggle(`${prefix}.decor.motion`, d.motion === true), `${PRESET_MOTIONS[d.presetId]} · 화면에 보이는 액자만 움직이고 답을 받는 동안은 쉬어요`) : ''}
             ${slider(`${prefix}.decor.frameWidth`, '액자 가로 비율 (%)', 50, 200, 1)}
             ${slider(`${prefix}.decor.frameHeight`, '액자 세로 비율 (%)', 50, 200, 1)}
             ${slider(`${prefix}.decor.presetTilt`, '액자 기울기 (도)', -10, 10, 0.5)}
@@ -1501,7 +1534,7 @@ function decorControls(prefix, o) {
         <span class="bl-frame-label">내 액자 ${settings.frameLibrary.length} / ${FRAME_LIMIT}</span>
         <div class="bl-frame-upload-row"><button type="button" class="salty-btn" data-act="mart-import"><i class="fa-solid fa-store" aria-hidden="true"></i><span>마트에서 가져오기</span></button></div>
         <p class="salty-note">불러온 액자는 보관함에 저장돼요. 프로필과 에셋에서 함께 골라 쓸 수 있어요. 그림 액자 · 색을 바꾼 심플 액자는 액자 마트에서 받아요.</p>
-        ${settings.frameLibrary.length ? `<div class="bl-frame-library" role="group" aria-label="저장한 액자">${settings.frameLibrary.map(item => { const armed = frameArmed === item.id; return `<div class="bl-frame-item"><button type="button" data-act="frame-use" data-owner="${prefix}" data-id="${esc(item.id)}" class="bl-pick-card ${d.libraryId === item.id ? 'on' : ''}" aria-pressed="${d.libraryId === item.id}">${thumb(item.decor.art, (fromMart(item.id) ? '🛒 ' : '') + item.name)}</button><button type="button" class="bl-frame-x${armed ? ' is-armed' : ''}" data-act="frame-x" data-id="${esc(item.id)}" aria-label="${esc(item.name)} ${armed ? '정말 지우기' : '지우기'}" title="${armed ? '한 번 더 누르면 보관함에서 지워요' : '보관함에서 지우기'}">${armed ? '지우기' : '✕'}</button></div>`; }).join('')}</div>` : ''}
+        ${settings.frameLibrary.length ? `<div class="bl-frame-library" role="group" aria-label="저장한 액자">${settings.frameLibrary.map(item => { const armed = frameArmed === item.id; return `<div class="bl-frame-item"><button type="button" data-act="frame-use" data-owner="${prefix}" data-id="${esc(item.id)}" class="bl-pick-card ${d.libraryId === item.id ? 'on' : ''}" aria-pressed="${d.libraryId === item.id}">${thumb(item.decor.art, (fromMart(item.id) ? '🛒 ' : '') + item.name, frameFilter(item.decor))}</button><button type="button" class="bl-frame-x${armed ? ' is-armed' : ''}" data-act="frame-x" data-id="${esc(item.id)}" aria-label="${esc(item.name)} ${armed ? '정말 지우기' : '지우기'}" title="${armed ? '한 번 더 누르면 보관함에서 지워요' : '보관함에서 지우기'}">${armed ? '지우기' : '✕'}</button></div>`; }).join('')}</div>` : ''}
         ${selected ? `<div class="bl-frame-actions"><button type="button" class="salty-btn" data-act="frame-rename" data-owner="${prefix}" data-id="${esc(selected.id)}">이름 바꾸기</button><button type="button" class="salty-btn" data-act="frame-delete" data-id="${esc(selected.id)}">보관함에서 삭제</button></div>` : ''}
     </div>`;
 }
@@ -1699,7 +1732,7 @@ function tabChat(s, sub) {
             ${mesPinPicker(s)}
         </div>
         ${cap('퀵 리플라이')}<div class="salty-group bl-control-grid bl-qr-controls">
-            <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false && globalThis.quickReplyApi?.settings?.isEnabled === true, s.chat.qrCtxNames === true)}</div>
+            <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false && globalThis.quickReplyApi?.settings?.isEnabled === true, s.chat.qrCtxNames === true, s)}</div>
             ${row('하위 목록 단추에 세트 이름', toggle('chat.qrCtxNames', s.chat.qrCtxNames === true), '하위 세트를 묶은 QR 은 오른쪽 ⋮ 를 누르면 목록이 열려요. 켜면 ⋮ 대신 그 세트 이름을 보여요')}
             ${row('QR 검색 버튼', toggle('chat.qrFind', s.chat.qrFind !== false), '실리태번의 QR 사용하기를 켰을 때만 보여요. 과일·데우스 빠른 설정은 이 조건에 포함하지 않아요')}
             ${row('QR 접기 단추', toggle('chat.qrFold', s.chat.qrFold !== false), `${s.quick?.qrFold === true && s.usageMode !== 'zero' ? '<b class="bl-rest-note">요술봉 뒤 접기를 쓰는 동안 쉬어요</b> ' : ''}줄 앞에 접기 · 펴기 단추를 둬요. 접으면 단추만 남고 퀵 리플라이 버튼은 숨어요 · 접힌 상태는 기억해요`)}
@@ -1840,12 +1873,12 @@ function weatherSeg(s) {
 // ───────── 프롬프트 (3.4.0) ─────────
 // 프리셋마다 한 칸. 지금은 데우스 엑스 마키나 — 호환을 켜야 카드 표본 · 카드 설정 · 트래커 설정이 보이고 적용된다
 // 7.2.4 확장 탭 안내: 스위치가 꺼진 것과 사용 모드가 「테마만」인 것을 나눠 말한다 (1.0.0 사용 모드 되살림)
-function tabExtensions(s, sub) { if(!addonsEnabled(s))return s.enabled===false ? '<p class="salty-note">「블루레몬에이드 사용」 스위치가 꺼져 있어서 내장 확장도 쉬고 있어요. 이 창 맨 아래의 「블루레몬에이드 사용」을 켜면 저장한 설정 그대로 확장이 다시 켜져요. 사용 모드(테마 → 기타 설정)는 스위치를 켠 다음에 봐요.</p>' : '<p class="salty-note">사용 모드가 「테마만」이라 내장 확장을 실행하지 않아요. 테마 → 기타 설정 → 사용 모드에서 「테마 + 확장」이나 「확장만」을 고르면 저장한 설정으로 다시 사용할 수 있어요.</p>';  return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
+function tabExtensions(s, sub) { if(!addonsEnabled(s))return s.enabled===false ? '<p class="salty-note">「블루레몬에이드 사용」 스위치가 꺼져 있어서 내장 확장도 쉬고 있어요. 위쪽 「설정 선택」(☰) 목록 안의 「블루레몬에이드 사용」을 켜면 저장한 설정 그대로 확장이 다시 켜져요. 사용 모드(테마 → 기타 설정)는 스위치를 켠 다음에 봐요.</p>' : '<p class="salty-note">사용 모드가 「테마만」이라 내장 확장을 실행하지 않아요. 테마 → 기타 설정 → 사용 모드에서 「테마 + 확장」이나 「확장만」을 고르면 저장한 설정으로 다시 사용할 수 있어요.</p>';  return addonMarkup(s,sub) + (['words','capture'].includes(sub) && s.addons[sub] ? wordToolsMarkup(s,sub) : ''); }
 
 function tabPrompt(s,sub) {
     if(sub==='fruit')return fruitPromptMarkup();
     // 1.0.x 솔라 4 — 서랍 카드 · 쪽지 글자(상태창 글자와 같은 편집기). 프리셋 본문은 담지 않아요
-    if(sub==='sola')return `${cap('솔라')}${solaQuickShortcutMarkup()}<p class="salty-note">솔라 프리셋의 서랍 카드와 쪽지에 적용해요. 카드 스타일과 글자 조절을 따로 고를 수 있어요.</p>${fruitTypographyGroup('sola')}`;
+    if(sub==='sola')return `${cap('솔라')}${solaQuickShortcutMarkup()}<p class="bl-prompt-source">호환 대상 프롬프트 · <a href="https://pyrxpia.github.io/sola-hub/" target="_blank" rel="noopener noreferrer">솔라 원문 보기 ↗</a></p><p class="salty-note">솔라 프리셋의 서랍 카드와 쪽지에 적용해요. 카드 스타일과 글자 조절을 따로 고를 수 있어요.</p>${fruitTypographyGroup('sola')}`;
     const on = !!s.deus?.on;
     const ink = s.deus?.ink || {};
     const dio = ink.outline || { on: false, color: '#000000', width: 0.6, alpha: 100 };  // 데우스 대사 가독성: 외곽선
@@ -2235,6 +2268,9 @@ function render(root) {
     fillSearchAiTokens(root);
     fillSearchAiConnection(root);
     fillPreviews(root); // 미리보기 무대 다시 꽂기 (만들지 않고 옮겨 담기만)
+    // 1.1.5 글자 탭 PC 넓은 표본(readingPreview — data-pv 칸 밖)에도 아바타 · 고정 단추를 꽂고 액자 · 사진 자르기를 맞춰요(예전엔 한 번도 안 불려 사진 · 액자가 빈 채였어요)
+    const wideStages = root.querySelectorAll('.salty-preview.bl-preview-wide[data-prev="chat"]');
+    if (wideStages.length) { for (const st of wideStages) { prevFaces(st); prevMarks(st); } const ap = panelAppearanceSettings(); syncDecor(ap); syncProfileClip(ap); }
     for(const stage of Object.values(root._pv || {}))if(!stage.isConnected)stage._blWeather?.destroy();
     typesetRoot(root);
     bindAddons(root, refreshPanels);
@@ -2499,7 +2535,7 @@ function bind(root) {
                 case 'favicon-copy': {
                     try {
                         const { handle, command } = await prepareFaviconCommand(homeIconShape(getSettings().chat?.homeIcon));
-                        if (await copyText(command)) toastr.success(`Termux 에 붙여 넣고 새로고침해 주세요. 홈 화면 아이콘은 지우고 다시 추가. PC 는 data/${handle}/user/files 의 blue-lemonade-* 를 public/favicon.ico · public/img 로 복사`, 'Blue Lemonade', { timeOut: 10000 });
+                        if (await copyText(command)) toastr.success(`Termux 에 붙여 넣고 새로고침해 주세요. 홈 화면 아이콘은 지우고 다시 추가. PC 는 data/${handle}/user/files 의 blue-lemonade-* 를 public/favicon.ico · public/img · public/manifest.json 로 복사`, 'Blue Lemonade', { timeOut: 10000 });
                     } catch (error) { toastr.error(String(error.message || error), 'Blue Lemonade'); }
                     break;
                 }
@@ -3210,7 +3246,7 @@ function bind(root) {
             // 보였다 안 보였다 하는데 다시 그리지 않아, 끈 뒤에도 슬라이더가 남아 있었다
             // 폰에서 접어 두기(chat.demFold)는 줄이 늘거나 줄지 않으니 창을 다시 그리지 않는다 — 다시 그리면 데우스 화면 전체(표본 복제 · 상태창 글자 미리보기 iframe)가 다시 만들어져 폰 4배에서 2~3초가 들었다. 모양은 body 속성(apply.js) · CSS 가 바로 바꾼다
             // 감정 대사 효과(움직임 · 빛 · 색 흐름) · 백그라운드 버티는 방식 줄도 스위치를 따라 보였다 안 보였다 한다
-            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.qrCtxNames', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'image.cutEdge.outline.on', 'image.cutEdge.shadow.on', 'image.cutEdge.overflow', 'chat.streamFade', 'chat.hiddenFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors', 'searchAi.on'].includes(path));
+            update(st => setPath(st, path, target.checked), ['strike.line', 'strike.own', 'strike.italic', 'deviceLayouts.on', 'chat.weatherReadability', 'chat.weatherIllustrated', 'enabled', 'chat.qrFind', 'chat.qrCtxNames', 'chat.bgImage', 'em.italic', 'image.edgeAuto', 'profile.edgeAuto', 'userProfile.edgeAuto', 'userProfile.nameAuto', 'userProfile.nameShadow', 'userProfile.decor.on', 'userProfile.edgeShadow', 'profile.nameAuto', 'profile.nameShadow', 'profile.decor.on', 'image.decor.on', 'image.edgeShadow', 'profile.edgeShadow', 'shadow.on', 'chat.unifyInline', 'chat.toneInline', 'image.cutoutSame', 'image.cutEdge.outline.on', 'image.cutEdge.shadow.on', 'image.cutEdge.overflow', 'chat.streamFade', 'chat.hiddenFade', 'onehand.on', 'chat.demSkin', 'reader.autoHide', 'deus.on', 'outline.on', 'chat.demInk', 'deus.ink.outline.on', 'deus.ink.shadow.on', 'deus.fx.on', 'deus.fx.flow', 'deus.fx.force', 'bgWindow.on', 'compat.preserveExtensionColors', 'searchAi.on', 'quick.mesDelete', 'chat.weatherArtOutline'].includes(path));
             await syncChangedAddons([path]);
             // 5.5.6: 테마를 끄는 순간에도 '맞추기' 값이 남아 있으면 되돌릴지 묻는다
             if (path === 'enabled' && !target.checked && restoreState()) {

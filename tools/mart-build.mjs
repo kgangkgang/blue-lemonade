@@ -37,10 +37,13 @@ const SLOT = { head: '{{head}}', body: '{{body}}', info: '{{info}}', tail: '{{ta
 // ── ① 심플 액자 ──
 const SIMPLE_DESC = {
     line: '얇은 선 하나와 둥근 모서리', corner: '네 모서리에만 괄호 선', stitch: '바느질한 점선 테두리', tape: '위아래에 붙인 종이 테이프',
-    chip: '모서리에 작은 글자 칩', polaroid: '아래가 넓은 폴라로이드 · 메모 글자', bookmark: '위에서 늘어진 책갈피 리본', window: '창틀과 십자 살',
-    clip: '위를 집은 클립 메모', film: '양옆에 구멍이 난 필름', sf: 'SF 패널 · 번호 칩', rec: '뷰파인더 모서리 · REC 표시',
-    stamp: '톱니 가장자리 우표', fold: '한쪽 모서리가 접힌 쪽지', ticket: '홈이 파인 티켓 · 글자', neon: '빛나는 네온 선',
-    browser2: '창 단추가 달린 브라우저 창', bubble: '꼬리 달린 말풍선', double: '사이를 둔 두 겹 선', sketch: '손으로 그린 듯 어긋난 선',
+    chip: '모서리에 작은 글자 칩', polaroid: '아래가 넓은 폴라로이드 · 메모 글자', bookmark: '위에서 늘어진 책갈피 리본', window: '창틀과 창턱 · 유리에 비친 빛',
+    clip: '위를 집은 클립 메모', film: '양옆에 구멍이 난 필름 · 컷 번호', sf: 'SF 패널 · 번호 칩', rec: '뷰파인더 모서리 · REC 표시',
+    stamp: '톱니 가장자리 우표 · 소인', fold: '한쪽 모서리가 접힌 쪽지', ticket: '홈이 파인 티켓 · 글자', neon: '빛나는 네온 선',
+    browser2: '창 단추가 달린 브라우저 창', bubble: '꼬리 달린 말풍선', double: '굵은 선과 가는 선 두 겹', sketch: '손으로 그린 듯 어긋난 선',
+    gallery: '금테와 매트 · 아래 캡션 판', corners: '앨범 종이에 사진 코너 네 개', peg: '줄에 빨래집게로 건 사진', phone: '폰 화면 · 시계 글자',
+    petal: '모서리에 내려앉은 꽃잎', comic: '먹선 테와 망점 · 해설 칸', airmail: '두 색 빗금 봉투 테', tarot: '아치 창과 별 · 카드 이름',
+    vinyl: '재킷 뒤로 나온 레코드 · 제목 글자', calendar: '색 머리띠와 고리 달린 달력 한 장',
 };
 function simpleFrames() {
     return FRAME_PRESETS.filter(([, , group]) => group === 'simple').map(([id, name]) => {

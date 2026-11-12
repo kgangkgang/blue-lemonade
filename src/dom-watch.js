@@ -78,10 +78,19 @@ function passes(sub, r, memo) {
     return true;
 }
 const plain = sub => !sub.skip && !sub.exclude && !sub.match;
+// 1.1.4 기록 종류 비트(자식 목록 1 · 속성 2 · 글자 4) — 묶음에 그 구독이 받을 종류가 하나도 없으면 기록을 하나씩 따지지 않고 건너뛰어요
+const KIND = { childList: 1, attributes: 2, characterData: 4 };
+const kindsOf = spec => (spec.childList ? 1 : 0) | (spec.attributes === true || Array.isArray(spec.attributes) ? 2 : 0) | (spec.characterData ? 4 : 0);
+// 허브가 기록 묶음 하나를 나눠 주는 데 쓴 시간(거르기 + 바로 부른 콜백) — 구독별 콜백 시간(ms)과 따로 세요
+function tally(win, t0, count) { const c = hubsOf(win).cost; c.batches++; c.records += count; c.ms += now() - t0; }
 
 function hubsOf(win) {
     let h = win[HUBS];
-    if (!h) { h = win[HUBS] = { roots: new Map(), zones: new Map(), direct: null, frame: { subs: [], raf: 0, timer: 0 } }; }
+    if (!h) {
+        h = win[HUBS] = { roots: new Map(), zones: new Map(), direct: null, frame: { subs: [], raf: 0, timer: 0 }, cost: { batches: 0, records: 0, ms: 0 } };
+        // 1.1.4 측정 도구가 묶음(dist) 밖에서 읽는 길: globalThis[Symbol.for('blue-lemonade.dom-watch.v2')].stats() → domWatchStats() 와 같은 값
+        h.stats = () => domWatchStats(win);
+    }
     return h;
 }
 
@@ -176,7 +185,7 @@ function makeSub(spec, fn) {
     return {
         seq: ++seq, spec: s, fn, when: s.when || 'now', timeout: s.timeout ?? 200, skip: s.skip, name: s.name,
         excludeList: list(s.exclude), exclude: list(s.exclude).join(',') || '', match: list(s.match).join(',') || '',
-        pending: [], timer: null, queued: false, off: false, calls: 0, records: 0, ms: 0, full: false,
+        pending: [], timer: null, queued: false, off: false, calls: 0, records: 0, ms: 0, full: false, kinds: kindsOf(s),
     };
 }
 
@@ -208,6 +217,7 @@ function rootWatch(win, hubs, root, sub) {
         hub = { subs: new Set(), opts: null, mo: null, carry: [], dispatching: false };
         hub.handle = (records, except = null) => {
             hub.dispatching = true;
+            const t0 = now();
             try {
                 const memo = new Map();
                 for (const x of hub.subs) {
@@ -216,7 +226,7 @@ function rootWatch(win, hubs, root, sub) {
                     if (x.full && plain(x)) { deliver(win, x, records); continue; }
                     deliver(win, x, records.filter(r => wants(x, r, root) && passes(x, r, memo)));
                 }
-            } finally { hub.dispatching = false; }
+            } finally { hub.dispatching = false; tally(win, t0, records.length); }
             runCarried(win, hub);
         };
         hub.mo = new win.MutationObserver(records => hub.handle(records));
@@ -260,6 +270,7 @@ function directWatch(win, hubs, root, sub) {
         // 기록을 뿌리(target)별로 묶어 그 뿌리 구독에만 — 구독이 원한 것과 같으면(full) 묶음 그대로
         d.handle = (records, except = null) => {
             d.dispatching = true;
+            const t0 = now();
             try {
                 const groups = new Map(), memo = new Map();
                 for (const r of records) { if (!d.byRoot.has(r.target)) continue; let g = groups.get(r.target); if (!g) groups.set(r.target, g = []); g.push(r); }
@@ -268,7 +279,7 @@ function directWatch(win, hubs, root, sub) {
                     if (x.full && plain(x)) { deliver(win, x, list); continue; }
                     deliver(win, x, list.filter(r => wants(x, r, root) && passes(x, r, memo)));
                 }
-            } finally { d.dispatching = false; }
+            } finally { d.dispatching = false; tally(win, t0, records.length); }
             runCarried(win, d);
         };
         d.mo = new win.MutationObserver(records => d.handle(records));
@@ -417,11 +428,17 @@ function zoneFinder(z) {
 function zoneHandle(win, z, records, except) {
     z.dispatching = true;
     let again = false;
+    const t0 = now();
     try {
         const zoneOf = zoneFinder(z), zones = new Array(records.length);
+        // 1.1.4 구역마다 이 묶음에 든 기록 종류(비트 합) — 구독의 구역에 그 구독이 받을 종류가 하나도 없으면 아래에서 기록을 돌지 않아요.
+        //   스트리밍 · 채팅 열기처럼 #chat 기록만 든 묶음은 채팅 밖 구독(구독의 대부분)을 구독마다 한 번의 비교로 지나가요(예전: 구독 × 기록 수만큼 돌며 건너뜀). 받는 기록 · 차례는 같아요
+        const seen = { html: 0, head: 0, body: 0, chat: 0 };
+        let stray = 0;   // 문서에서 떨어진 노드의 기록 수(버려요) · 종류를 모르는 기록 수
         for (let i = 0; i < records.length; i++) {
             const r = records[i];
-            zones[i] = zoneOf(r.target);
+            const zone = zones[i] = zoneOf(r.target);
+            if (zone && KIND[r.type]) seen[zone] |= KIND[r.type]; else stray++;
             // body · #sheld · html 바로 아래 가지가 바뀌면 새 가지를 걸어요. 빠진 가지가 있으면 다 나눠 준 뒤 한 번 다시 걸어요(떨어진 가지의 등록을 떼려고)
             if (r.type === 'childList' && z.chain.has(r.target)) {
                 for (const n of r.addedNodes || []) {
@@ -437,7 +454,12 @@ function zoneHandle(win, z, records, except) {
         for (const x of z.subs) {
             if (x.off || x === except) continue;
             let list = null;
+            let here = 0;
+            for (const name of x.zones) here |= seen[name];
+            if (!(here & x.kinds)) continue;
             const fast = x.full && plain(x);
+            // 묶음의 기록이 전부 이 구독의 구역 안이고 걸러 낼 것이 없으면 새 목록을 만들지 않고 묶음 그대로 넘겨요(뿌리 구독과 같은 꼴 — 채팅 구독이 채팅 열기 묶음을 받을 때)
+            if (fast && !stray && (x.spec.childList || !(here & 1)) && ZONES.every(name => !seen[name] || x.zones.has(name))) { deliver(win, x, records); continue; }
             for (let i = 0; i < records.length; i++) {
                 const zone = zones[i];
                 if (!zone || !x.zones.has(zone)) continue;
@@ -448,7 +470,7 @@ function zoneHandle(win, z, records, except) {
             }
             if (list) deliver(win, x, list);
         }
-    } finally { z.dispatching = false; }
+    } finally { z.dispatching = false; tally(win, t0, records.length); }
     if (again && !z.rewireSoon) {
         z.rewireSoon = true;
         queueMicrotask(() => { z.rewireSoon = false; if (z.subs.length) { z.wiredKey = ''; rewire(z); } });
@@ -486,10 +508,14 @@ export function addedElements(records) {
     return out;
 }
 
-/** 진단 · 시험용: 문서에 걸린 공용 감시자 수와 구독 수 · 구독마다 이름 · 받은 횟수 · 기록 수 · 콜백 시간(ms) */
+/**
+ * 진단 · 시험용: 문서에 걸린 공용 감시자 수와 구독 수 · 구독마다 이름 · 받은 횟수 · 기록 수 · 콜백 시간(ms).
+ * 1.1.4: hub = 허브가 기록 묶음을 나눠 준 횟수 · 기록 수 · 시간(거르기 + 바로 부른 'now' 콜백 포함 · 'frame' · 'idle' 콜백은 each 의 ms 에만).
+ *   어느 구독이 비싼지는 each 를 ms 큰 차례로 보면 돼요. 측정 도구는 장면 앞뒤로 읽어 차이를 내요(값은 계속 쌓여요).
+ */
 export function domWatchStats(win = globalThis) {
     const h = win[HUBS];
-    if (!h) return { observers: 0, subscriptions: 0, roots: 0, zones: 0, each: [] };
+    if (!h) return { observers: 0, subscriptions: 0, roots: 0, zones: 0, hub: { batches: 0, records: 0, ms: 0 }, each: [] };
     const each = [];
     const row = (s, subtree, where) => ({ name: s.name || '(이름 없음)', subtree, where, when: s.when, calls: s.calls, records: s.records, ms: Math.round(s.ms * 10) / 10 });
     for (const hub of h.roots.values()) for (const s of hub.subs) each.push(row(s, true, 'root'));
@@ -503,6 +529,7 @@ export function domWatchStats(win = globalThis) {
         subscriptions: rootSubs + zoneSubs + direct,
         roots: h.roots.size + h.zones.size + (h.direct ? h.direct.byRoot.size : 0),
         zones: h.zones.size,
+        hub: { batches: h.cost?.batches || 0, records: h.cost?.records || 0, ms: Math.round((h.cost?.ms || 0) * 10) / 10 },
         each,
     };
 }

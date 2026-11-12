@@ -121,7 +121,12 @@ export async function readStream(response, { family, source, onText, onThinking 
             if (mode !== 'sse') {
                 // 첫 글자로 가른다: SSE(data: · event: · :) 가 아니면 통째로 온 본문 (실리태번은 흘려받기 답에 Content-Type 을 붙이지 않는다)
                 whole += chunk;
-                mode ??= whole.trimStart() ? (/^(?:data|event|id|retry)[ \t]*:|^:/.test(whole.trimStart()) ? 'sse' : 'raw') : null;
+                // 1.1.3 첫 조각이 「da」 처럼 이름 중간에서 끊겨 오면 통짜로 굳어 SSE 전체를 { raw } 로 돌려줬다 — 이름의 앞부분뿐이면 다음 조각까지 기다린다
+                const head = whole.trimStart();
+                mode ??= !head ? null
+                    : /^(?:data|event|id|retry)[ \t]*:|^:/.test(head) ? 'sse'
+                    : !done && /^(?:d(?:a(?:t(?:a)?)?)?|e(?:v(?:e(?:n(?:t)?)?)?)?|id?|r(?:e(?:t(?:r(?:y)?)?)?)?)[ \t]*$/.test(head) ? null
+                    : 'raw';
                 if (mode === 'raw' && done) return { raw: whole };
                 if (mode !== 'sse') { if (done) break; continue; }
                 chunk = whole; whole = '';

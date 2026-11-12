@@ -28,6 +28,14 @@ const str = (value, max) => {
     const text = String(value).replace(/\s+/g, ' ').trim().slice(0, max);
     return SECRET.test(text) ? '' : text;
 };
+// 1.1.3 모델 칸은 열쇠 모양만 본다 — 「긴 글자 덩이 48자」 규칙이 구분자(- _ /)까지 세어 가격표 모델 14개(예 cognitivecomputations/dolphin-mistral-24b-venice-edition)를
+//       비밀로 보고 지워 단가를 못 찾았다. 긴 덩이는 구분자 없는 48자만 (토큰 · 키)
+const KEY_SHAPE = /\b(?:sk|pk|rk)-[A-Za-z0-9_-]{8,}|\bAIza[0-9A-Za-z_-]{20,}|\bBearer\s+\S|\b(?:api[_-]?key|access[_-]?token|secret|password|authorization)\s*[:=]|\bey[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.|[A-Fa-f0-9]{40,}|[A-Za-z0-9+]{48,}/i;
+const modelStr = (value, max) => {
+    if (typeof value !== 'string' && typeof value !== 'number') return '';
+    const text = String(value).replace(/\s+/g, ' ').trim().slice(0, max);
+    return KEY_SHAPE.test(text) ? '' : text;
+};
 const int = value => { const n = Math.round(Number(value)); return Number.isFinite(n) && n > 0 ? Math.min(n, 1e10) : 0; };
 const money = value => { const n = typeof value === 'number' || (typeof value === 'string' && value.trim()) ? Number(value) : NaN; return Number.isFinite(n) && n >= 0 && n < 1e6 ? n : null; };   // 7.7.2 test-gaps: null · '' · false · [] 를 0 달러(응답이 알려 준 비용)로 적지 않는다
 
@@ -43,7 +51,7 @@ export function normalizeEntry(raw, now = Date.now()) {
     const at = Number(raw.at);
     const entry = {
         ext, feature,
-        model: str(raw.model, 120).replace(/^models\//, ''),
+        model: modelStr(raw.model, 120).replace(/^models\//, ''),
         api: str(raw.api, 40).toLowerCase().replace(/[^a-z0-9_.-]/g, ''),
         origin: originOf(raw.origin),
         input: int(raw.input), output: int(raw.output), cachedInput: int(raw.cachedInput), thinking: int(raw.thinking), characters: int(raw.characters),
@@ -55,6 +63,7 @@ export function normalizeEntry(raw, now = Date.now()) {
     const chatId = str(raw.chatId, 200); if (chatId) entry.chatId = chatId;
     const mesId = Number(raw.mesId); if (Number.isInteger(mesId) && mesId >= 0) entry.mesId = mesId;
     const reported = money(raw.reportedUsd); if (reported !== null) entry.reportedUsd = reported;
+    const quoted = money(raw.quotedUsd); if (quoted !== null) entry.quotedUsd = quoted;   // 1.1.3 요청 로그가 공식 단가로 셈한 값 (긴 문맥 · 비혼잡 · 캐시 저장 · Fast · priority 반영)
     const requestId = str(raw.requestId, 80); if (requestId) entry.requestId = requestId;
     const provider = str(raw.provider, 40); if (provider && (PROVIDERS[provider] || provider === 'other')) entry.provider = provider;
     return entry;
@@ -100,9 +109,13 @@ export function payMethodOf(conn, overrides = {}) {
  * 공식 단가 { input, output, cacheRead } (USD / 100만 토큰) + 출처. 날짜별 표(EFFECTIVE_PRICES)가 먼저, 그다음 BL 가격표(lookup).
  * lookup(provider, model, at) → { rates, source, date, note?, approx? } | null (usage-ledger.js 가 BL 가격표로 만든다)
  */
+function datedRate(provider, model, at) {
+    const id = String(model || '').replace(/^models\//, '').replace(/^google\//, '');
+    return EFFECTIVE_PRICES.filter(row => row.provider === provider && row.model === id && at >= dayStart(row.from)).sort((a, b) => b.from.localeCompare(a.from))[0];
+}
 export function officialRates(provider, model, at, lookup) {
     const id = String(model || '').replace(/^models\//, '').replace(/^google\//, '');
-    const dated = EFFECTIVE_PRICES.filter(row => row.provider === provider && row.model === id && at >= dayStart(row.from)).sort((a, b) => b.from.localeCompare(a.from))[0];
+    const dated = datedRate(provider, model, at);
     if (dated) return { rates: dated.rates, source: dated.source, date: dated.date, note: dated.note, approx: !!dated.approx };
     const found = lookup ? lookup(provider, id, at) : null;
     return found?.rates && Number.isFinite(found.rates.input) && Number.isFinite(found.rates.output) ? found : null;
@@ -152,6 +165,9 @@ export function costOf(entry, ctx = {}) {
         if (row && row.auto !== true && Number.isFinite(row.input) && Number.isFinite(row.output)) return finish((entry.input * row.input + entry.output * row.output) / 1e6, { priceSource: '직접 지정 가격표', approx: true, note: '요청 로그에 직접 적은 가격으로 어림했어요' });
         return finish(null, { note: '연결처 단가를 몰라요' });
     }
+    // 1.1.3 요청 로그가 셈한 값이 있으면 그것 — 기본 단가로 다시 셈하면 긴 문맥 단가 · 비혼잡 할인 · 캐시 저장 · Fast · priority 가 빠져 두 화면 값이 5% 넘게 달랐다
+    //       (날짜별 단가표 EFFECTIVE_PRICES 에 든 기간은 그 표가 먼저 — 요청 로그 가격표에 아직 없는 단가라서)
+    if (entry.quotedUsd !== undefined && !datedRate(conn.provider, entry.model, entry.at)) return finish(entry.quotedUsd, { priceSource: '요청 로그 (공식 단가 · 할증 · 할인 반영)' });
     const found = officialRates(conn.provider, entry.model, entry.at, ctx.lookup);
     if (!found) return finish(null, { note: '공식 가격표에서 이 모델 단가를 찾지 못했어요' });
     return finish(tokenCost(entry, found.rates), { priceSource: found.source || '', priceDate: found.date || '', approx: base.approx || !!found.approx, note: found.note || '' });

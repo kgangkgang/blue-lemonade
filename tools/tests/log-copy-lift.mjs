@@ -232,7 +232,7 @@ await t('레몬 바로가기: 새 설정은 켠 채(1.1.3 — 틀이 저장된 �
     assert.match(settings, /lemonLink: v\.lemonLink === true \|\| \(v\.lemonLink === undefined && v\.shape === undefined\), lemonAt: \['tl', 'tr', 'bl', 'br'\]\.includes\(v\.lemonAt\) \? v\.lemonAt : 'auto'/);
     const sheet = read('src/log-copy-sheet.js');
     assert.match(sheet, /data-lc-lemon aria-pressed="false"/);
-    assert.match(sheet, /if \(store\(\)\.lemonLink && !basicOn\(\)\) \{ try \{ placeLemon\(doc, normCorner\(store\(\)\.lemonAt\)\); \}/);   // 1.1.3 기본 글꾸 새 틀은 레몬이 틀 안 제자리
+    assert.match(sheet, /if \(store\(\)\.lemonLink && !basicOn\(\) && !simpleOn\(\)\) \{ try \{ placeLemon\(doc, normCorner\(store\(\)\.lemonAt\)\); \}/);   // 1.1.3 기본 글꾸 새 틀 · 1.1.4 받은 심플 글꾸는 레몬이 틀 안 제자리
     assert.match(sheet, /s2\.lemonLink = !s2\.lemonLink/);
 });
 await t('연결: 「HTML 복사」 · 「내려받기」가 옮긴 HTML 을 쓰고 CI 에 등록돼 있어요', () => {

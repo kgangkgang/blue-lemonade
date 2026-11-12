@@ -267,7 +267,8 @@ export function syncTypography(on) {
     if(!on){
         observer?.();observer=null;decor?.();decor=null;dirty.clear();
         for(const [node,value] of originals){
-            if(!node.isConnected)continue;
+            // 1.1.3 「 뒤 한자 · 가나 마디는 wrapCjkRuns 가 .bl-cjk 로 갈아 끼워 node 가 떨어져 있다 — 그래도 lead 는 풀고 걷은 공백까지 되돌린다 (예전에는 lead span · 공백이 남았다)
+            if(!node.isConnected){if(value.lead?.isConnected&&value.lead.textContent===value.prefix)value.lead.replaceWith(document.createTextNode(value.before.slice(0,value.before.length-value.after.length)));continue;}
             if(node.textContent===value.after&&(!value.lead||value.lead.textContent===value.prefix)){
                 value.lead?.remove();node.textContent=value.before;
             }else if(value.lead?.isConnected)value.lead.replaceWith(...value.lead.childNodes);

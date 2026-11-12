@@ -104,7 +104,7 @@ export function gradientFills(s,vars) {
 export function gradientTextCss(s,markerBackground) {
     const scope=':is(body.salty #chat .mes .mes_text,body.salty .salty-preview .mes .mes_text,.salty-sample)';
     const chat=':is(body.salty #chat,body.salty .salty-preview)';
-    const selectors={text:scope,dialogue:`${scope} q`,em:`${scope} em`,strong:`${scope} strong`,code:`${scope} :is(code,kbd,samp)`,muted:`${chat} :is(.timestamp,.mesIDDisplay,.mes_timer,.tokenCounterDisplay)`,faint:`${scope} hr::before`,name:`${chat} .mes:not([is_user="true"]) .name_text`,userName:`${chat} .mes[is_user="true"] .name_text`,ui:'.salty-ui-sample :is(label,span),body.salty :is(.inline-drawer-header h4,.drawer-content h3)'};
+    const selectors={text:scope,dialogue:`${scope} q`,em:`${scope} em`,strong:`${scope} strong`,code:`${scope} :is(code,kbd,samp)`,muted:`${chat} :is(.timestamp,.mesIDDisplay,.mes_timer,.tokenCounterDisplay)`,faint:`${scope} hr::before`,name:`${chat} .mes:not([is_user="true"]) .name_text`,userName:`${chat} .mes[is_user="true"] .name_text`,ui:'.salty-uisample :is(label,span),body.salty :is(.inline-drawer-header h4,.drawer-content h3)'};
     let css='';
     if(gradientFor(s,'text'))css+=`${scope} :is(q,em,strong,code,kbd,samp,a,span[style]){-webkit-text-fill-color:currentColor;}`;
     for(const key of TEXT_GRADIENT_KEYS) {

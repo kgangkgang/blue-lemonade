@@ -9,7 +9,7 @@ import { syncWeatherProfile } from './weather-profiles.js';
 import { tidySceneSound } from './scene-sound-keys.js';   // 6.9.8 장면 소리 설정 정리 (순수 모듈)
 import { tidyMultiAvatar } from './multi-avatar/pick-keys.js';   // 7.9.9 프로필 여러 개 (순수)
 // 추가 모양의 정리 코드는 첫 프레임 뒤에 연결하고 저장 키는 그대로 둬요.
-const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100, presetTilt: 0, frameHue: 0, frameSat: 100, frameBright: 100 };   // presetTilt: 1.0.1 액자 기울기(도, -10~10)
+const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100, presetTilt: 0, frameHue: 0, frameSat: 100, frameBright: 100, motion: false };   // presetTilt: 1.0.1 액자 기울기(도, -10~10) · motion: 액자 움직임(기본 끔)
 const MIX_DEFAULT = { on: false, families: ['blue', 'strawberry'], angle: 90, weights: [50, 50, 50], blend: 50 };
 import { FRAME_DEFAULTS, FRAME_RANGE, tidyFrame } from './frames.js';
 import { cutEdgeDefaults, tidyCutEdge } from './cutedge.js';
@@ -445,7 +445,7 @@ function tidyFlags(s) {
     if (isObj(s.chat)) {
         s.chat.demSkin = flag(s.chat.demSkin, false);
         s.chat.solaStyle = s.chat.solaStyle === 'lemon' ? 'lemon' : 'original';
-        s.chat.homeIcon = s.chat.homeIcon === 'lemon' || s.chat.homeIcon === 'square' ? s.chat.homeIcon : 'auto';   // 1.1.2 홈 화면 아이콘 모양(splash.js)
+        s.chat.homeIcon = s.chat.homeIcon === 'lemon' || s.chat.homeIcon === 'square' || s.chat.homeIcon === 'tile' ? s.chat.homeIcon : 'auto';   // 1.1.2 홈 화면 아이콘 모양(splash.js) · 1.1.4 흰 타일
         s.chat.demFold = flag(s.chat.demFold, true);
         s.chat.demGlow = Number.isFinite(Number(s.chat.demGlow)) ? Math.min(100, Math.max(0, Math.round(Number(s.chat.demGlow)))) : 35; // 8.0.9 데우스 V3 테두리 빛 (css/30-dem-skin.css --bl-dem-glow)
         s.chat.demPreviewVersion = s.chat.demPreviewVersion === '2.5' ? '2.5' : 'v3'; // 8.1.0 상태창 글자 미리보기의 데우스 표본 판 (fruit-type-ui.js, 데우스 전체에 하나)
@@ -620,6 +620,11 @@ function tidyFontSlot(fonts, slot) {
 //   돌려주는 것은 늘 저장 칸 그 객체라 제자리에서 고친 값은 바로 보이고, 늦어지는 것은 정리(범위 · 형식 맞추기)뿐이에요 —
 //   고친 뒤 정리된 값을 바로 받아야 하는 곳(설정 창 update · 스타일 입히기 · 여러 장 프로필)은 예전처럼 invalidateSettings() 를 불러요.
 let memo = null;
+// 1.1.4 메모가 살아 있는 동안에는 getContext() 도 다시 부르지 않아요 — 실리태번 getContext() 는 부를 때마다 190칸 안팎의 객체(bind · 화살표 함수 포함)를 새로 만들어요.
+//   getSettings() 는 290여 곳(감시 콜백 · 스크롤 · 키 입력 · 메시지 꾸미기)에서 불려 그때마다 그 객체가 쓰레기로 쌓였어요.
+//   확장 설정 칸(extension_settings)은 실리태번이 const 로 한 번 만든 객체라 참조가 바뀌지 않아요. 그래도 주인(SillyTavern) · getContext 함수가 바뀌면(다른 확장이 감쌈 · 시험) 다시 읽고,
+//   저장 칸이 통째로 바뀐 것(ext[KEY] !== memo)은 예전처럼 그 객체에서 바로 알아봐요. 설정 사건(invalidateSettings · 저장 · 초기화)은 메모와 같이 이 기억도 비워요.
+let extHost = null, extGet = null, extRef = null;
 /**
  * 1.1.3 로그 복사 새 기본(틀 「깡통 로그」 · 레몬 바로가기 켬)은 저장된 틀이 없는 설정에만 줘요 — 기본값 채우기(fill) 앞에서 불러요.
  * 틀이 저장돼 있으면(값이 깨졌어도) 옛 설정이에요: 틀은 그 값 그대로 두고, 레몬 바로가기 칸이 없던 판(1.1.1 까지)에서 온 설정은 끈 채로 채워요(새 기본이 덮지 않게).
@@ -635,15 +640,18 @@ function tidyLogCopy(value) {
     const id = x => typeof x === 'string' && /^[a-z0-9-]{1,24}$/i.test(x);
     const str = (x, n) => (typeof x === 'string' ? x.slice(0, n) : '');
     // 1.0.1 글꾸 마트에서 받은 것은 html 대신 template(네 자리 틈 템플릿 · 가져올 때 검사) + 색 묶음 · 메시지 배치 · 꼬리 · 이모지
-    const custom = (Array.isArray(v.custom) ? v.custom : []).filter(c => isObj(c) && id(c.id) && (typeof c.template === 'string' ? c.template.length <= 65536 : typeof c.html === 'string' && c.html.length <= 60000)).slice(0, 20)
+    // 1.1.4 「테마로 담기」 심플 글꾸: frame(등록 값 — 받을 때 검사) + set(조절 값 — 그릴 때 마트 readSet 이 다듬어요). 여기서는 꼴 · 크기만(시작 비용 없이)
+    const simple = c => isObj(c.frame) && typeof c.frame.html === 'string' && c.frame.html.length <= 60000 && isObj(c.frame.rows) && isObj(c.frame.roots) && isObj(c.frame.paper);
+    const custom = (Array.isArray(v.custom) ? v.custom : []).filter(c => isObj(c) && id(c.id) && (c.frame !== undefined ? simple(c) : typeof c.template === 'string' ? c.template.length <= 65536 : typeof c.html === 'string' && c.html.length <= 60000)).slice(0, 20)
         .map(c => ({ id: c.id, name: typeof c.name === 'string' && c.name.trim() ? c.name.trim().slice(0, 40) : '내 글꾸', html: str(c.html, 60000),
+            ...(c.frame !== undefined ? { frame: c.frame, set: isObj(c.set) ? c.set : { blGeulkku: 2 }, emoji: str(c.emoji, 8) } : {}),
             ...(typeof c.template === 'string' ? { template: c.template, colors: isObj(c.colors) ? c.colors : {}, messages: str(c.messages, 12) || 'box', tail: str(c.tail, 60), emoji: str(c.emoji, 8), ...(isObj(c.type) ? { type: c.type } : {}) } : {}),
             slot: c.slot === 'auto' ? 'auto' : Array.isArray(c.slot) && c.slot.length <= 64 && c.slot.every(n => Number.isInteger(n) && n >= 0 && n < 10000) ? c.slot : null }));
     const ids = (list, max = 24) => [...new Set((Array.isArray(list) ? list : []).filter(id))].slice(0, max);
     // 1.1.3 틀: 저장값이 없을 때만 새 기본 「깡통 로그」 — 저장된 값이 깨졌으면 예전처럼 「카드」(옛 설정의 틀을 새 기본으로 바꾸지 않아요)
     return { on: v.on !== false, shape: id(v.shape) ? v.shape : v.shape === undefined ? 'kkangtong' : 'card', palette: isPaletteId(v.palette) ? v.palette : '', category: id(v.category) ? v.category : 'basic', recent: ids(v.recent).slice(0, 5), fav: ids(v.fav, 96), custom, tagsOff: v.tagsOff === true, titleOff: v.titleOff === true, dateOff: v.dateOff === true, namesOff: v.namesOff === true, topOff: v.topOff === true, bottomOff: v.bottomOff === true, lemonLink: v.lemonLink === true || (v.lemonLink === undefined && v.shape === undefined), lemonAt: ['tl', 'tr', 'bl', 'br'].includes(v.lemonAt) ? v.lemonAt : 'auto', basicInfo: ['chip', 'tab'].includes(v.basicInfo) ? v.basicInfo : 'off', basicHeight: ['s', 'm', 'l'].includes(v.basicHeight) ? v.basicHeight : '', blank: Array.isArray(v.blank) ? [...new Set(v.blank)].filter(k => /^(title|date|char|model|prompt)$/.test(k)) : [] };   // 1.0.7 빼기 칩 · 1.0.8 비운 머리 칸
 }
-export function invalidateSettings() { memo = null; }
+export function invalidateSettings() { memo = null; extRef = null; }
 export const settingsStats = { tidy: 0 };   // 정리를 몇 번 했나 (시험 · 진단용)
 let bound = false;
 function bindInvalidation() {
@@ -658,7 +666,10 @@ function bindInvalidation() {
 export function readSettings() { return getSettings(); }
 
 export function getSettings() {
-    const ext = SillyTavern.getContext().extensionSettings;
+    const host = SillyTavern;
+    if (memo && extRef && host === extHost && host.getContext === extGet && extRef[KEY] === memo) return memo;
+    const ext = host.getContext().extensionSettings;
+    extHost = host; extGet = host.getContext; extRef = ext;
     if (memo && ext[KEY] === memo) return memo;
     settingsStats.tidy++;
     if (!isObj(ext[KEY])) ext[KEY] = structuredClone(DEFAULTS);
@@ -814,7 +825,7 @@ export function getSettings() {
 export function saveSettings() {
     const state = SillyTavern.getContext().extensionSettings[KEY];
     if (state) appearance?.saveDeviceLayout(state);
-    memo = null;   // 저장하는 값은 다음 읽기 때 한 번 다시 정리해요 (고친 값의 범위 · 형식)
+    memo = null; extRef = null;   // 저장하는 값은 다음 읽기 때 한 번 다시 정리해요 (고친 값의 범위 · 형식)
     SillyTavern.getContext().saveSettingsDebounced();
 }
 

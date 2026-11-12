@@ -134,6 +134,8 @@ function toastOnce(msg, kind = 'info', ms = 4000) {
     const now = Date.now();
     if ((toastSeen.get(msg) || 0) > now - ms) return;
     toastSeen.set(msg, now);
+    // 1.1.3 계속 커지던 모음 — 오래된 표시는 버린다 (같은 글을 4초 안에 다시 띄우지 않는 데만 쓴다)
+    if (toastSeen.size > 200) for (const [k, t] of toastSeen) if (t < now - 60000) toastSeen.delete(k);
     toast(msg, kind);
 }
 const sessionToasts = new Set();
@@ -1061,7 +1063,7 @@ function startEntry(job, pre, prep = true) {
         if (e.stale || e.moved) return { raw, lufs, hit: false, made: true, moved: e.moved, align };
         try { lufs = (e.sentPre ? await keepWarm(job, raw, null, e.prep, align) : await prepareInto(job, raw, null, settings(), align)).lufs ?? null; }
         catch { lufs = null; }
-        if (e.sentPre && !e.stale) premade.add(job.key);
+        if (e.sentPre && !e.stale) { premade.add(job.key); if (premade.size > 500) premade.delete(premade.values().next().value); }   // 1.1.3 상한 (가장 오래된 것부터)
         return { raw, lufs, hit: false, made: true, align };
     })();
     e.promise.then(async (r) => {
@@ -1505,7 +1507,7 @@ async function playAudio(a, job, ir) {
         setSession('playing', job);
         const how = await done;
         if (how === 'error') toastOnce('소리를 재생할 수 없어요', 'error');
-        return how !== 'cut';
+        return how === 'ended';   // 1.1.3 재생 오류도 「들었음」이라 이어 듣기가 다음 줄로 넘어가고 미리 만든 소리 사용으로 셌다
     } finally {
         audioActive = false;
         audio.removeEventListener('ended', onEnd);
@@ -1799,6 +1801,8 @@ export function stopForAddon() {
     for (const job of queue) job.ctrl?.abort();
     for (const e of inflight.values()) { e.stale = true; e.ctrl.abort(); }
     stop();
+    forgetClips();   // 1.1.3 끌 때 메모리 사본(warm 최대 12MB · prepared 최대 24MB)도 비운다 — IndexedDB 캐시는 그대로
+    toastSeen.clear();
 }
 export function stop({ keepStream = false, keepFx = false } = {}) {
     gen++;
@@ -1893,8 +1897,10 @@ export async function revertCurrent() {
     const j = current;
     if (!j || j.sceneKind || !j.key || inflight.has(j.key) || typeof cache.restoreTake !== 'function') return false;
     const ok = await Promise.resolve(cache.restoreTake(j.key)).catch(() => false);
-    if (!ok || current !== j) return !!ok;
+    // 1.1.3 기다리는 사이 줄이 넘어갔어도 바꾼 소리의 사본(warm · prepared)은 버린다 — 예전에는 그냥 돌아가 다음에 들을 때 되돌리기 전 소리가 났다
+    if (!ok) return false;
     forgetClip(j.key);
+    if (current !== j) { j.audio = null; j.ctrl = null; return true; }   // 이미 다음 줄: 그 줄로 돌아오면(◀) 바꾼 소리를 다시 받는다
     if (j.ctrl && !j.ctrl.signal.aborted) j.ctrl.abort();
     j.audio = null;
     j.ctrl = null;
@@ -1999,7 +2005,8 @@ function speakNow(mesId, mes, { swipe, text, from, exclude, force, fromStream, h
     readState.set(mesId, fromStream && prev && prev.swipe === swipe && typeof prev.streamed === 'boolean' ? { swipe, text, count: built.count, streamed: prev.streamed } : { swipe, text, count: built.count });
     if (!jobs.length) {
         if (built.missing) toastOnce('목소리를 먼저 정해요 (TTS 설정)', 'warning');
-        else if (built.missingUser && force) { void askPersonaVoice().then(ok => { if (ok) speakNow(mesId, mes, { swipe, text, from, exclude, force, fromStream }); }); }
+        // 1.1.3 묻는 사이(최대 30초) ■ · 다른 줄 누름 · 채팅 바뀜이 있었으면 옛 작업은 읽지 않는다 (예전에는 취소 뒤에 읽고, 채팅을 바꿨으면 새 채팅의 같은 번호에 묶였다)
+        else if (built.missingUser && force) { const asked = gen; void askPersonaVoice().then(ok => { if (ok && gen === asked && msg(mesId) === mes) speakNow(mesId, mes, { swipe, text, from, exclude, force, fromStream }); }); }
         else if (force) toastOnce('읽을 부분이 없어요', 'info');
         return false;
     }
@@ -2677,7 +2684,7 @@ export function speakSegments(mesId, segs, { expand = true } = {}) {
         const jobs = finishJobs(flat, s, { merge: false, join: true }).filter(t.keep);   // 6.4.2 줄마다 (자동 읽기 · 미리 만든 키와 같게) · 1.9.1 같은 문단 묶음은 이어서
         if (!jobs.length) {
             if (t.missing) toastOnce('목소리를 먼저 정해요 (TTS 설정)', 'warning');
-            else if (t.missingUser) { void askPersonaVoice().then(ok => { if (ok) run(); }); }
+            else if (t.missingUser) { const asked = gen; void askPersonaVoice().then(ok => { if (ok && gen === asked && msg(mesId) === mes) run(); }); }   // 1.1.3 묻는 사이 멈춤 · 채팅 바뀜이면 그만
             return false;
         }
         jobs[0].tapT0 = t0;
@@ -2921,9 +2928,21 @@ export async function downloadMessage(mesId) {
         .filter(j => j.provider.caps?.blob !== false);
     if (!jobs.length) { toast('내려받을 대화문이 없어요', 'warning'); return false; }
     toast(`${jobs.length}개 만드는 중…`, 'info');
-    let results;
-    try { results = await Promise.all(jobs.map(ensureAudio)); }
-    catch (e) { fail(e); return false; }
+    // 1.1.3 한꺼번에 사지 않는다 — 셋씩 차례로 만들고, ■(stop → exportJobs 취소) · 한 줄 실패면 남은 줄은 보내지 않는다 (예전에는 모든 줄을 Promise.all 로 한 번에 보내 멈출 수 없고, 한 줄이 실패해도 나머지 합성이 끝까지 과금됐다)
+    const results = new Array(jobs.length), my = gen;
+    let failed = null, next = 0;
+    const worker = async () => {
+        while (!failed && my === gen && next < jobs.length) {
+            const k = next++;
+            try { results[k] = await ensureAudio(jobs[k]); }
+            catch (e) { failed ??= e; for (const o of jobs) o.ctrl?.abort(); }
+        }
+    };
+    for (const j of jobs) exportJobs.add(j);
+    try { await Promise.all(Array.from({ length: Math.min(3, jobs.length) }, worker)); }
+    finally { for (const j of jobs) exportJobs.delete(j); }
+    if (!failed && my !== gen) failed = new Error('소리 저장을 멈췄어요.');
+    if (failed) { fail(failed); return false; }
     const blobs = results.map(r => r?.blob).filter(Boolean);
     if (!blobs.length) return false;
     const wav = await concatWav(blobs, s.gap_ms);
@@ -3407,7 +3426,9 @@ async function previewSfx(id) {
         if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = ''; }
         const url = previewUrl = URL.createObjectURL(blob);
         previewAudio = new Audio(url);
-        previewAudio.volume = Math.max(0, Math.min(1, Number(settings().sfx?.volume ?? 0.45)));
+        // 1.1.5 실제 효과음 재생과 같은 음량(전체 음량 × 효과음 음량 — 아래 sceneAudio.setVolume). 예전엔 효과음 음량만이라 전체 음량을 줄여도 미리 듣기만 컸어요
+        const s = settings();
+        previewAudio.volume = Math.min(1, Math.max(0, Number(s.master_volume ?? 1))) * Math.min(1, Math.max(0, Number(s.sfx?.volume ?? 0.45)));
         previewAudio.onended = () => { URL.revokeObjectURL(url); if (previewUrl === url) previewUrl = ''; };
         await previewAudio.play();
     } catch { /* 들려주기 실패는 조용히 — 넣는 건 이미 됐다 */ }
@@ -3698,7 +3719,7 @@ export function init() {
     document.addEventListener('pointerdown', onGesture, { capture: true, passive: true });
     document.addEventListener('visibilitychange', onHidden);   // 1.9.9 (7.0.2) 백그라운드 재생
     document.addEventListener('keydown', onGesture, { capture: true, passive: true });
-    eventSource.on(event_types.CHAT_CHANGED, () => { stop(); readState.clear(); stream = null; renderedAt.clear(); });
+    eventSource.on(event_types.CHAT_CHANGED, () => { stop(); readState.clear(); stream = null; renderedAt.clear(); premade.clear(); });   // 1.1.3 미리 만든 키 표도 채팅마다
     // 지운 메시지·스와이프의 읽은 자리를 잊음: 같은 번호로 다시 만든 답장을 옛 미룸 자리부터 읽지 않게 (2026-10-06)
     //   애드온이 꺼져 있을 때 지운 것도 잊도록 runtime 확인 없이 여기서 받는다. 스와이프를 지우면 그 위 번호 기록은 지워졌거나 밀린 것
     eventSource.on(event_types.MESSAGE_DELETED, () => { forgetFrom(chat.length); stopIfDeleted(); });

@@ -127,6 +127,15 @@ await test('숨은 탭에서는 프레임 대신 타이머로 한 번', async ()
     assert.equal(previewMeasureStats.measured - m, 6);
     document.hidden = false; rootEl._previewCleanup();
 });
+await test('1.1.5 줄 안 미리보기(손잡이 없음 · data-pv-max 없음)는 창 22% · 180 보다 커도 그림 전체 높이예요(폰 모형 224)', () => {
+    const { rootEl, boxes } = panel();
+    boxes[3].querySelector('.salty-sample').size = [300, 224];
+    boxes[4].querySelector('.salty-sample').size = [300, 224];
+    bindPreviewViews(rootEl, 'look'); runFrames();
+    assert.equal(boxes[3].querySelector('.bl-view-port').style.height, '224px', '줄 안 미리보기가 잘림');
+    assert.equal(boxes[4].querySelector('.bl-view-port').style.height, '120px', 'data-pv-max 칸은 그대로 작게');
+    rootEl._previewCleanup();
+});
 await test('CI 등록', () => {
     assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/preview-measure-batch\.mjs \./);
 });

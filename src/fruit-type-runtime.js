@@ -3,6 +3,7 @@ import {FRUIT_TYPES,tidyFruitType,fruitTypeCss,fruitDecorCss,decorFilterMarkup,t
 import {findFont,fontStack,loadFont} from './fonts.js';
 import {loadFullCatalog,catalogReady} from './catalog.js';   // 1.0.0 상태창 글자에 고른 글꼴 — 전체 목록(1,016개)은 시작 목록 밖 글꼴을 골랐을 때만 받아요(극한 최적화: 부팅 때 152KB 를 늘 받던 것)
 import {watchWith} from './dom-watch.js';   // 9.0.4 공용 감시 허브(시험의 가짜 창은 그 창 감시자 하나)
+import {framePoll} from './frame-poll.js';   // 1.1.4 1.5초 폴링 · 서명 계산을 과일 계열 세 모듈이 하나로
 let stop=null, latest={on:false};
 function family(id){const f=id==='original'?null:findFont(id);if(!f||f.unusable)return '';loadFont(f);return fontStack(f);}
 // 7.0.4 글꼴 설정을 안 켜도(anyTypeEnabled 아님) 테마가 켜져 있으면 감시한다 — 채팅 iframe 상태창의 한국어 낱말 꺾임 막기(wrapCss)는 늘 넣는다.
@@ -31,10 +32,8 @@ export const wrapCss=()=>{const roots=`:is(${FRUIT_TYPES.map(typeMatch).join(','
 export function watchFruitTypography(doc,host,getConfig,fontFamily=()=> ''){
     const scopes=new Map(),frames=new Map(),styles=new Map(),faces=new Map(),wraps=new Map(),WRAP=wrapCss();let stopped=false,frame=0,lastSig='';
     // 7.0.3 긴 채팅: 1.5초 타이머는 채팅 뿌리 · iframe 문서가 바뀌었을 때만 훑는다 (그 밖의 변화는 문서마다 건 감시자 · iframe load 가 알린다)
-    const ids=new WeakMap();let nextId=1;const idOf=o=>{if(!o)return 0;let i=ids.get(o);if(!i)ids.set(o,i=nextId++);return i;};
-    // 8.2.2 1.5초 타이머가 #chat 아래 전체를 querySelectorAll('iframe') 로 다시 훑지 않게 — 살아 있는 목록(브라우저가 DOM 바뀔 때만 다시 셈) · 고르는 iframe · 순서는 같아요
-    const frameLists=new WeakMap();const framesOf=scope=>{if(typeof scope.getElementsByTagName!=='function')return scope.querySelectorAll('iframe');let list=frameLists.get(scope);if(!list){list=scope.getElementsByTagName('iframe');frameLists.set(scope,list);}return list;};
-    const frameSig=(withCounts=false)=>{const out=[];const walk=(scope,depth)=>{out.push(idOf(scope));if(!scope||depth>3)return;for(const f of framesOf(scope)){let d=null;try{d=f.contentDocument;}catch{}out.push(idOf(d));if(withCounts)out.push(d?.querySelectorAll?.('*').length||0);if(d?.body)walk(d.body,depth+1);}};walk(doc.querySelector('#chat'),0);return out.join(',');};
+    // 1.1.4 그 타이머 · 서명 계산은 과일 계열 세 모듈이 하나를 같이 써요(src/frame-poll.js — 살아 있는 iframe 목록 · 가려진 동안 쉼)
+    const poll=framePoll(doc,host),frameSig=poll.sig;
     const schedule=()=>{if(!stopped&&!frame)frame=host.requestAnimationFrame(flush);};
     const rootSelector=FRUIT_TYPES.map(typeMatch).join(',');let mainWatch=rootSelector+',iframe';
     // 8.2.7 채팅 문서에서 떨어진 노드는 그 자손을 다 훑지 않고 결과로 봐요 — 채팅을 바꾸면 메시지 수백 개(요소 2만여 개)가 한 번에 떨어져, 떨어진 것마다 뿌리 선택자로 훑던 값이 컸어요.
@@ -77,7 +76,7 @@ export function watchFruitTypography(doc,host,getConfig,fontFamily=()=> ''){
         for(const [d,e]of scopes)if(!docs.has(d)){e.observer();scopes.delete(d);detach(d);unwrap(d);paintFrameDecor(d,'');}
         for(const [f,fn]of frames)if(!liveFrames.has(f)){f.removeEventListener('load',fn);frames.delete(f);}
     }
-    const timer=host.setInterval(()=>{if(frameSig()!==lastSig||(frameDecors.size&&readPalette()!==paletteSig))schedule();},1500);flush();
-    const cleanup=()=>{if(stopped)return;stopped=true;host.clearInterval(timer);host.cancelAnimationFrame(frame);for(const e of scopes.values())e.observer();for(const [f,fn]of frames)f.removeEventListener('load',fn);for(const d of styles.keys())detach(d);for(const d of [...wraps.keys()])unwrap(d);decor?.remove();decor=null;filters?.remove();filters=null;for(const d of [...frameDecors.keys()])paintFrameDecor(d,'');scopes.clear();frames.clear();};
+    const offPoll=poll.every(()=>{if(frameSig()!==lastSig||(frameDecors.size&&readPalette()!==paletteSig))schedule();});flush();
+    const cleanup=()=>{if(stopped)return;stopped=true;offPoll();host.cancelAnimationFrame(frame);for(const e of scopes.values())e.observer();for(const [f,fn]of frames)f.removeEventListener('load',fn);for(const d of styles.keys())detach(d);for(const d of [...wraps.keys()])unwrap(d);decor?.remove();decor=null;filters?.remove();filters=null;for(const d of [...frameDecors.keys()])paintFrameDecor(d,'');scopes.clear();frames.clear();};
     cleanup.refresh=schedule;return cleanup;
 }
