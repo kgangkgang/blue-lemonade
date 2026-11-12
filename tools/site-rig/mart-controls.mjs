@@ -242,7 +242,7 @@ try {
                 await b.eval(`(()=>{const b=document.querySelector('.mart-sheet [data-tune-reset="all"]');if(b){b.hidden=false;b.click()}return true})()`); await b.sleep(500);
                 await b.eval(`document.querySelector('.mart-sheet [data-detail-reset]')?.click(); true`); await b.sleep(400);
                 // 전부 처음으로는 캐릭터 색 · 밤낮 · 고친 글을 남겨요(설계 4-6) — 글 모양(글자 크기 · 줄 간격 · 글꼴 · 굵기 · 이름표)만 처음과 견줘요
-                const shapeOf = v => { const o = JSON.parse(v); return J({ p: o.p.split('|').slice(0, 7), n: o.n.split('|').slice(0, 1).concat(o.n.split('|').slice(2)), g: o.g }); };
+                const shapeOf = v => { const o = JSON.parse(v); return J({ p: o.p.split('|').slice(0, 7), n: o.n.split('|').slice(0, 1).concat(o.n.split('|').slice(2)), g: o.g.split('|').filter((_, k) => k !== 1) }); };   // 바탕색은 밤낮을 따라가요(남김)
                 const vR = await vis();
                 row(id, vp, '전부 처음으로', '글 모양이 처음과 같음(색 · 밤낮 · 고친 글은 남김)', shapeOf(vR) === shapeOf(base) ? '같음' : `다름 ${shapeOf(vR)} / ${shapeOf(base)}`, shapeOf(vR) === shapeOf(base));
             }
