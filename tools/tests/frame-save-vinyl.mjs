@@ -75,4 +75,16 @@ test('움직임이 없는 레코드 재킷 · 다른 액자는 저장해도 그�
     assert.equal(t.frameLibrary[0].decor.art, win.art, '판을 떼지 않는 액자는 다시 그리지 않아요');
 });
 
+// 1.1.4 점검: 저장이 실패하면(보관함 30개 가득 · 12MB) 지금 액자는 손대지 않아요 — 전엔 검사 전에 움직임을 끄고 판을 다시 그려 둔 채 남았어요
+test('보관함이 가득 차 저장이 실패하면 지금 레코드 재킷의 움직임 · 그림은 그대로예요', () => {
+    const lifted = drawPreset('vinyl', { motion: true });
+    const full = Array.from({ length: 30 }, (_, i) => ({ id: `frame-${i}`, name: `액자 ${i}`, decor: { art: 'a', mask: 'm' } }));
+    const s = { frameLibrary: full, image: { decor: { on: true, motion: true, opacity: 100, ...lifted } } };
+    const before = { ...s.image.decor };
+    assert.throws(() => saveFrame(s, 'image', '넘침'), /최대 30개/);
+    assert.deepEqual(s.image.decor, before, '실패한 저장은 지금 액자를 바꾸지 않아요');
+    assert.equal(motionOf(s.image.decor), 'vinyl', '판은 계속 돌아요');
+    assert.equal(s.frameLibrary.length, 30);
+});
+
 console.log(`frame-save-vinyl: ${pass} passed`);

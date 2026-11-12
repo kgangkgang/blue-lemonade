@@ -1,4 +1,4 @@
-/* src/compat-width.gen.css — tools/build-css.cjs 가 css/ 에서 폰 384 · PC 1280 밖 화면 폭 규칙 10개만 떼어 적은 것(고치지 말 것 · tools/css-compat.cjs). src/lite.js loadCompatCss 가 조건이 맞을 때만 테마 시트 뒤에 붙인다 (build e2801eb89f78) */
+/* src/compat-width.gen.css — tools/build-css.cjs 가 css/ 에서 폰 384 · PC 1280 밖 화면 폭 규칙 10개만 떼어 적은 것(고치지 말 것 · tools/css-compat.cjs). src/lite.js loadCompatCss 가 조건이 맞을 때만 테마 시트 뒤에 붙인다 (build 6733f1b0c16b) */
 @media screen and (max-width: 1000px) and (hover: hover) {
 body.salty .welcomePanel .welcomeShortcuts .menu_button.openTemporaryChat:hover {
     background: var(--bl-fill-hover, var(--bl-hover)) !important;

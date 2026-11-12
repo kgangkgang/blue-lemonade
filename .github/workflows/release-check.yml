@@ -47,10 +47,14 @@ jobs:
           node tools/tests/log-copy-simple-old71.mjs .
           node tools/mart/simple-frames.mjs --check
           node tools/tests/log-copy-basic.mjs .
+          # 1.1.5 「레몬 바로가기」를 끄면 기본 글꾸 18틀도 레몬이 그림째 사라지는지(켠 그림은 그대로)
+          node tools/tests/log-copy-lemon-off.mjs .
           node tools/mart/basic-frames.mjs --check
           # 1.1.4 글꾸 마트 「테마로 담기」 받기: 심플 틀 → 등록 값 · 꾸러미 검사 · 내 글꾸 · 조절 값(마트 사본 src/geulkku-mart/)이 마트 기대값과 같은지
           node tools/tests/log-copy-simple-import.mjs .
           node tools/tests/log-copy-simple-set.mjs .
+          node tools/tests/log-copy-tune.mjs .
+          node tools/tests/log-copy-tune-focus.mjs .
           node tools/tests/master-switch-reload.mjs .
           node tools/tests/perf-log-keep-blank.mjs .
           node tools/tests/perf-log-no-body.mjs .
@@ -202,6 +206,7 @@ jobs:
           node tools/tests/translator-fail-cache.mjs .
           node tools/tests/translator-status-card.mjs .
           node tools/tests/qr-swipe-guard.mjs .
+          node tools/tests/qr-swipe-guard-zero.mjs .
           node tools/tests/swipe-picker-translation.mjs .
           node tools/tests/scene-sound.mjs .
           node tools/tests/scene-music.mjs .
@@ -361,6 +366,7 @@ jobs:
           node tools/tests/websearch-no-macro-run.mjs .
           node tools/tests/send-textarea-hide.mjs .
           node tools/tests/qr-fold.mjs .
+          node tools/tests/qr-fold-zero.mjs .
           node tools/tests/log-copy-edit-keep.mjs .
           # 1.0.1 액자 마트 · 글꾸 마트: 받은 JSON 살균 · 중복 · 상한 · 잘못된 JSON 거절 · 틈 템플릿 렌더 · 마트 산출물을 만들 수 있나(그림 팩 없으면 건너뜀)
           node tools/tests/mart-import.mjs .
@@ -459,6 +465,7 @@ jobs:
           # 1.0.3 편의 기능(src/quick/*.js — 켤 때만 받음)
           node tools/tests/quick-sel-edit.mjs .
           node tools/tests/quick-mes-delete.mjs .
+          node tools/tests/quick-delete-editing.mjs .
           node tools/tests/quick-range-delete.mjs .
           node tools/tests/quick-onehand-nav.mjs .
           node tools/tests/quick-prompt-saves.mjs .
@@ -657,6 +664,7 @@ jobs:
           node tools/tests/fruit-watch-perf.mjs .
           node tools/tests/fruit-watch-scope.mjs .
           node tools/tests/fruit-watch-records.mjs .
+          node tools/tests/fruit-type-catalog-wait.mjs .
           node tools/tests/script-watch-records.mjs .
           node tools/tests/scripts-same-window.mjs .
           node tools/tests/fruit-option-help.mjs .

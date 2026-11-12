@@ -40,6 +40,12 @@ const BUDGET = {
     // dist 합계: 1.1.4 앞 상한 9,000,000B(그때 8,874,401B) + 위 마트 조각 상한. 체감 성능에 걸리는 것은 시작 묶음(위에서 그대로 잠금)이고, 합계는 모르게 불어나는 것을 막는 장치예요 —
     //   늦게 받는 마트 조각은 따로 상한을 걸어 그 구실을 지키고, 합계는 그만큼만 넓혀요(조정자 결정 11-12). 지금 9,051,989B(생성물 다시 만든 시험 빌드)
     distBytes: 9000000 + 125000,
+    // 1.1.5 조절 화면 조각(src/log-copy-tune-ui.js + src/log-copy-tune-set.js — 받은 심플 글꾸의 간편 줄을 처음 그릴 때만 import()) · 지금 21,333B.
+    //   마트 사본 조각(위 125,000B)은 1.1.5 에서도 그대로 잠가요(지금 124,105B) — 조절 값 함수를 이 조각으로 떼어 그리기만 할 때는 안 받게 했어요. dist 합계 상한도 안 올렸어요(지금 9,080,172B).
+    tuneChunkBytes: 22000,
+    // 1.1.5 틀별 능력표 조각(src/geulkku-mart/caps-table.js — 마트 측정표에서 정적 값과 다른 289틀의 제목 · 여백 · 띠 · 폭 상한 · 조절 모듈과 함께 import()) · 지금 2,367B.
+    //   마트 사본 · 조절 화면 조각에 넣으면 두 상한을 넘어 따로 떼었어요(조정자 결정 11-12 「(나)안」). 마트 표가 조금 바뀌어도 되게 작은 여유만 둬요 · dist 합계 상한은 그대로(지금 9,085,921B).
+    capsChunkBytes: 2600,
 };
 
 test('① 첫 장 · 둘째 장 CSS 크기와 첫 장의 :has( · backdrop-filter 수가 늘지 않았어요', () => {
@@ -101,6 +107,16 @@ test('④ 묶음(dist): 시작 정적 묶음 · 가장 큰 조각 · 합계가 �
     assert.equal(mart.length, 1, `마트 사본 조각은 하나여야 해요: ${mart.join(' · ') || '없음'}`);
     assert.ok(!seen.has(mart[0]), '마트 사본 조각이 시작 묶음에 들었어요 — import() 로만 받아야 해요');
     within(fs.statSync(path.join(dist, mart[0])).size, BUDGET.martChunkBytes, `늦게 받는 마트 사본 조각(${mart[0]}) 바이트`);
+    // 1.1.5 조절 화면 조각: 세밀 화면 격자 class 글자로 찾아요 — 하나여야 하고 시작 묶음 · 마트 사본 조각에 들면 안 돼요
+    const tune = fs.readdirSync(dist).filter(f => f.endsWith('.js') && fs.readFileSync(path.join(dist, f), 'utf8').includes('bl-lt-grid'));
+    assert.equal(tune.length, 1, `조절 화면 조각은 하나여야 해요: ${tune.join(' · ') || '없음'}`);
+    assert.ok(!seen.has(tune[0]) && tune[0] !== mart[0], '조절 화면 조각이 시작 묶음이나 마트 사본 조각에 들었어요 — import() 로만 받아야 해요');
+    within(fs.statSync(path.join(dist, tune[0])).size, BUDGET.tuneChunkBytes, `늦게 받는 조절 화면 조각(${tune[0]}) 바이트`);
+    // 1.1.5 틀별 능력표 조각: 표 글 머리표로 찾아요 — 하나여야 하고 시작 묶음 · 마트 사본 · 조절 화면 조각에 들면 안 돼요
+    const caps = fs.readdirSync(dist).filter(f => f.endsWith('.js') && fs.readFileSync(path.join(dist, f), 'utf8').includes('gk-caps-rows'));
+    assert.equal(caps.length, 1, `틀별 능력표 조각은 하나여야 해요: ${caps.join(' · ') || '없음'}`);
+    assert.ok(!seen.has(caps[0]) && caps[0] !== mart[0] && caps[0] !== tune[0], '틀별 능력표 조각이 다른 조각에 들었어요 — import() 로만 따로 받아야 해요');
+    within(fs.statSync(path.join(dist, caps[0])).size, BUDGET.capsChunkBytes, `늦게 받는 틀별 능력표 조각(${caps[0]}) 바이트`);
     within(total, BUDGET.distBytes, 'dist 합계 바이트');
 });
 

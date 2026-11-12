@@ -447,7 +447,7 @@ await test('붙인 곳 네 조건(어두운 바탕 + 흰 글자 · 밝은 바탕
 await test('1.0.9 「레몬」 틀 제목 앞은 🍋 이모지가 아니라 테마 레몬 그림(fa-lemon 윤곽 svg) — 소독을 지나도 남아요', async () => {
     const { safeCss } = await load('src/log-copy-sanitize.js');
     // 1.1.3 기본 글꾸 새 틀(레몬 434): 레몬 그림은 <style> 의 .lmi 규칙(테마 레몬 경로 그대로)
-    const html = renderLog(model, { shape: 'lemon', colors: night, ui, fields });
+    const html = renderLog(model, { shape: 'lemon', colors: night, ui, fields, lemonLink: true });   // 1.1.5 레몬 그림은 「레몬 바로가기」를 켰을 때만(끄면 그림째 빠져요)
     assert.ok(!html.includes('🍋'), '이모지 없음');
     const style = html.match(/\.kb434 \.lmi\{([^}]*FFE23C[^}]*)\}/i)?.[1];
     assert.ok(style, '레몬 그림 칸');

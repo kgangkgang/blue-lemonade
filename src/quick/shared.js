@@ -5,6 +5,12 @@ export const ctx = () => SillyTavern.getContext();
 export const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 /** 답을 만드는 중인가 (실리태번이 body 에 다는 표시) */
 export const generating = () => document.body?.dataset?.generating === 'true';
+/** 연필로 고치는 중인 메시지 번호(없으면 -1) — 실리태번 deleteMessage 는 지운 번호가 편집 번호와 같을 때만 편집 번호를 비워요.
+ *  그보다 앞을 지우면 편집 번호가 옛 번호로 남아 ✓ 를 누를 때 다른 메시지 글로 다시 그리고 그 번호로 사건을 내요(실리태번 자신의 지우기는 편집부터 닫아요) */
+export function editingId() {
+    const n = Number.parseInt(document.querySelector('#chat > .mes .edit_textarea')?.closest('.mes')?.getAttribute('mesid') ?? '', 10);
+    return Number.isInteger(n) ? n : -1;
+}
 
 export function ensureQuickCss() {
     if (document.getElementById('bl-quick-style')) return;

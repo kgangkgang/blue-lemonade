@@ -55,8 +55,46 @@ export function build(mart) {
         }
         out[name] = `${head}\n${name === 'lib/cust/cust-table.js' ? packCust(done) : done}`;
     }
+    out['caps-table.js'] = capsTable(mart, commit);
     return { commit, files: out };
 }
+
+// 1.1.5 틀별 능력표(마트 mart/data/geulkku/caps.json — 실제 화면에서 잰 제목 크기 · 여백 · 폭 · 띠 상한). 마트는 이 표로 칸 상한을 줄이고 내보내는 값을 잘라요.
+//   테마는 정적 능력표(capsStatic)만 있어 제목 28 · 여백 70~130 을 누구에게나 걸었어요 → 마트와 다른 결과(1.1.5 AI 점검 ①).
+//   139KB 를 다 싣지 않고, 테마가 쓰는 네 칸(title · pad · band · width) 가운데 정적 값과 다른 것만 「같은 값끼리 묶은 한 줄 글」로 실어요.
+//   테마는 조절 모듈과 함께 받아(import()) 정적 값 위에 덮어써요 — 덮어쓴 결과가 마트 표와 네 칸 모두 같은지 여기서 410틀 다 맞대 보고, 하나라도 다르면 멈춰요.
+export const CAPS_FIELDS = ['title', 'pad', 'band', 'width'];
+const CAPS_TAG = 'gk-caps-rows';
+const capCode = (f, v) => (v === false ? '0' : f === 'title' ? String(v.max) : f === 'pad' ? v.join('-') : f === 'band' ? { color: 'c', image: 'i' }[v] : v.join('.'));
+export function capsTable(mart, commit = commitOf(mart)) {
+    const dir = path.join(mart, 'mart', 'data', 'geulkku');
+    const table = JSON.parse(fs.readFileSync(path.join(dir, 'caps.json'), 'utf8')).frames;
+    const previews = {};
+    for (const f of fs.readdirSync(dir).filter(n => /^sp-.*\.json$/.test(n)).sort()) for (const [, it] of Object.entries(JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')).items || {})) if (typeof it?.preview === 'string') previews[keyOfHtml(it.preview)] = it.preview;
+    // 정적 값은 마트 caps.js 로(테마 사본과 같은 코드) — 따로 node 를 띄워 재요(이 도구는 동기 함수라)
+    const keys = Object.keys(table).filter(k => previews[k]).sort();
+    const stat = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', `import fs from 'node:fs'; const { capsStatic } = await import(${JSON.stringify(pathToFileURL(path.join(mart, 'mart', 'caps.js')).href)}); const list = JSON.parse(fs.readFileSync(0, 'utf8')); process.stdout.write(JSON.stringify(list.map(h => capsStatic(h))));`], { input: JSON.stringify(keys.map(k => previews[k])), encoding: 'utf8', maxBuffer: 64 << 20 }));
+    const groups = new Map();
+    keys.forEach((k, i) => {
+        const row = CAPS_FIELDS.map(f => (JSON.stringify(table[k][f]) === JSON.stringify(stat[i][f]) ? '' : capCode(f, table[k][f]))).join(',').replace(/,+$/, '');
+        if (row) groups.set(row, [...(groups.get(row) || []), k]);
+    });
+    const raw = [CAPS_TAG, ...[...groups].map(([row, ks]) => `${row}:${ks.join(' ')}`)].join(';');
+    const code = `const ROWS = {};\nfor (const g of ${JSON.stringify(raw)}.split(";").slice(1)) {\n  const [r, ks] = g.split(":"), [t, p, b, w] = r.split(","), o = {};\n  if (t) o.title = t !== "0" && { max: +t };\n  if (p) o.pad = p !== "0" && p.split("-").map(Number);\n  if (b) o.band = b === "c" ? "color" : b === "i" && "image";\n  if (w) o.width = w !== "0" && w.split(".").map(Number);\n  for (const k of ks.split(" ")) ROWS[k] = o;\n}\nconst capsRow = (k) => ROWS[k] || null;\nexport {\n  capsRow\n};\n`;
+    // 되살려 맞대기: 정적 값 + 표 한 줄 = 마트 표(네 칸)
+    const rows = {};
+    for (const g of raw.split(';').slice(1)) {
+        const [r, ks] = g.split(':'), [t, p, b, w] = r.split(','), o = {};
+        if (t) o.title = t !== '0' && { max: +t };
+        if (p) o.pad = p !== '0' && p.split('-').map(Number);
+        if (b) o.band = b === 'c' ? 'color' : b === 'i' && 'image';
+        if (w) o.width = w !== '0' && w.split('.').map(Number);
+        for (const k of ks.split(' ')) rows[k] = o;
+    }
+    keys.forEach((k, i) => { const got = { ...stat[i], ...rows[k] }; for (const f of CAPS_FIELDS) if (JSON.stringify(got[f]) !== JSON.stringify(table[k][f])) throw new Error(`능력표 ${k}.${f} 를 되살리지 못했어요`); });
+    return `// 생성물 — 글꾸 마트 mart/data/geulkku/caps.json 사본(마트 ${commit} · 주석만 뺐어요) — 테마가 쓰는 네 칸만 뽑은 틀별 능력표(${keys.length}틀 중 정적 값과 다른 ${Object.keys(rows).length}틀 · ${CAPS_FIELDS.join(' · ')}). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.\n${code}`;
+}
+const keyOfHtml = html => (String(html).match(/^\s*<div\b[^>]*\sclass="gk\s(?:[^"]*\s)?gk-((?:k|q)\d+)(?=[\s"])/) || [])[1] || '';
 
 // 1.1.4 dist 예산: 틀별 값 표(CUST)는 칸 514개가 모두 { t, def, max } 꼴이라 이름을 되풀이하지 않는 [t, def, max] 로 싣고,
 //   불러올 때 같은 차례 · 같은 값의 객체로 되살려요(늦게 받는 조각 약 −10KB). 되살린 표가 원래 표와 글자 하나 다르면(꼴이 바뀌면) 원래대로 둬요.

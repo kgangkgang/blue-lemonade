@@ -29,6 +29,44 @@ export const BASIC_HEIGHT_LABEL = Object.freeze({ '': '자동', s: '작게', m: 
 const GREY = '#8b8e96';   // 무채(생성기 tones(null) 의 500)
 const NAME_EMPTY = /<p class="nm n[A-Z](?: me)?"><\/p>\n?/g;
 const LEMON_A = `<a class="lm" href="${LEMON_HOME}" target="_blank" rel="noopener noreferrer" title="블루레몬에이드" aria-label="블루레몬에이드"><span class="lmi"></span></a>`;
+/** 끝 <div> 짝 찾기 — from 에서 여는 <div 부터 깊이를 세어 짝 </div> 의 끝 자리 */
+const divEnd = (html, from) => {
+    const re = /<div\b|<\/div>/g;
+    re.lastIndex = from;
+    for (let depth = 0, m; (m = re.exec(html));) { depth += m[0] === '</div>' ? -1 : 1; if (!depth) return m.index + 6; }
+    return -1;
+};
+/**
+ * 「레몬 바로가기」를 끈 그림 — 레몬을 그림째 빼요(1.1.5 · 사용자 「레몬 바로가기 껐다 켜도 안 사라지는데 미리보기에서?」).
+ * 1.1.3 ~ 1.1.4 는 링크만 빼고 그림을 남겨 켬 · 끔이 눈으로 똑같았어요. 켠 그림은 한 글자도 안 바뀌어요.
+ * - 레몬만 보이던 머리 줄(정보 칩이 꺼졌거나 비어 있음)은 통째로 빼요 — 빈 22px 띠가 남지 않게 · 바로 아래 제목은 위로 붙여요(마트 「레몬 빼기」와 같음)
+ * - 다른 것이 남는 머리 줄은 그것을 제자리에: 양끝 맞춤 줄(칩 · 우표)은 오른쪽 끝 그대로 · 책은 가운데 머리글이 안 밀리게 빈 자리만 · 미니는 제목 밑줄을 제목 시작에
+ */
+function dropLemon(html, id, key, info) {
+    const at = html.indexOf(LEMON_A);
+    if (at < 0) return html;
+    const rules = [];
+    const open = Math.max(html.lastIndexOf('<div class="hd"', at), html.lastIndexOf('<div class="wb"', at));
+    const end = open < 0 ? -1 : divEnd(html, open);
+    if (open < 0 || end < at) return html.split(LEMON_A).join('');
+    const box = html.slice(open, end);
+    const inner = box.slice(box.indexOf('>') + 1, -6).replace(LEMON_A, '');
+    const seen = (info === 'chip' ? inner : inner.replace(/<p class="cp\b[^"]*"[^>]*>[\s\S]*?<\/p>/g, '')).replace(/<p class="cp\b[^"]*"[^>]*><\/p>/g, '').trim();
+    let out;
+    if (!seen) {   // 레몬만 보이던 줄 — 통째로
+        const rest = html.slice(end).replace(/^\n/, '');
+        out = html.slice(0, open) + rest;
+        if (/^\s*<div class="tt"/.test(rest)) rules.push(`.${key}.${key} .tt{margin-top:0}`);
+    } else if (id === 'book') out = html.slice(0, at) + '<span class="lm" aria-hidden="true"></span>' + html.slice(at + LEMON_A.length);   // 가운데 머리글 · 가름끈 자리 그대로
+    else {
+        out = html.slice(0, at) + html.slice(at + LEMON_A.length);
+        if (box.startsWith('<div class="hd"') && box.indexOf(LEMON_A) === box.indexOf('>') + 1 && !/\.hd\{[^}]*justify-content:flex-start/.test(html.slice(0, html.indexOf('</style>')))) rules.push(`.${key}.${key} .hd{justify-content:flex-end}`);
+    }
+    if (id === 'mini') rules.push(`.${key}.${key} .ul{margin-left:0}`);
+    out = out.replace(new RegExp(`^\\.${key} \\.lmi\\{[^}]*\\}\\n?`, 'm'), '');   // 쓰지 않게 된 레몬 그림 규칙(그림 주소 ~0.9KB)도 복사 글에서 빼요
+    const css = out.indexOf('</style>');
+    return rules.length && css > 0 ? `${out.slice(0, css)}${rules.join('')}${out.slice(css)}` : out;
+}
 const two = n => String(n).padStart(2, '0');
 const clockOf = (ms) => { const d = new Date(ms); return ms != null && Number.isFinite(d.getTime()) ? `${two(d.getHours())}:${two(d.getMinutes())}` : ''; };
 /** CSS 설명 주석 걷기(앞 공백까지) */
@@ -169,7 +207,7 @@ export function drawBasic(id, model, o = {}) {
     }
     // 숨긴 글이 든 문단: <p> 안의 <details> 는 붙인 곳에서 문단을 쪼개요 → 그 문단만 div.blsp-p 로(틀 <style> 에 문단 규칙의 짝을 더해 모양은 그대로)
     html = unparagraphHtml(html);
-    if (!o.lemonLink) html = html.split(LEMON_A).join('<span class="lm" title="블루레몬에이드"><span class="lmi"></span></span>');
+    if (!o.lemonLink) html = dropLemon(html, id, frame.key, o.info);   // 1.1.5 끄면 레몬을 그림째 빼요(1.1.3 ~ 1.1.4 는 링크만 빼서 켬 · 끔이 같아 보였어요)
     if (o.marks) {
         for (const [cls, key] of GV) html = html.replace(new RegExp(`class="([^"]*\\b${cls}\\b[^"]*)"`, 'g'), (all) => `${all} data-f="${key}"`);
         if (fields.date || f.title) html = html.replace(/<div class="tt">([^<]*)<\/div>/, (all, inner) => (inner && inner === text(f.title) ? `<div class="tt" data-f="title">${inner}</div>` : all));

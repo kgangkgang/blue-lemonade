@@ -17,10 +17,17 @@ function needsFullCatalog(config){
 export function syncFruitTypography(value, enabled=true){
     latest=tidyFruitType(value);
     if(!enabled){stop?.();stop=null;catalogWait=null;return;}
+    // 1.1.4 점검: 받기를 기다리는 동안 온 새 값이 이겨요(끝나면 옛 value 가 아니라 latest 로) · 못 받으면 되풀이하지 않고 목록 없이 시작해요
+    //   (전엔 실패 → 다시 부름 → 또 받기를 끝없이 되풀이해 화면이 굳었어요. 없는 글꼴은 원래 글꼴로 남고, 설정 창을 열어 목록이 들어오면 다음 적용 때 칠해요)
     if(!stop&&needsFullCatalog(latest)){
-        const mine=catalogWait=Promise.resolve(loadFullCatalog()).then(()=>{if(catalogWait===mine){catalogWait=null;syncFruitTypography(value,enabled);}}).catch(()=>{});
+        if(catalogWait)return;
+        const mine=catalogWait=Promise.resolve(loadFullCatalog()).catch(()=>false).then(()=>{if(catalogWait!==mine)return;catalogWait=null;startFruitWatch();});
         return;
     }
+    catalogWait=null;
+    startFruitWatch();
+}
+function startFruitWatch(){
     if(!stop)stop=watchFruitTypography(document,window,()=>latest,family);
     stop.refresh();
 }

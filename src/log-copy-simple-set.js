@@ -15,7 +15,7 @@ import { applyMotion } from './geulkku-mart/motion-state.js';
 import { applyTex } from './geulkku-mart/texture.js';
 import { capsStatic, shapeGate, padIn, titleIn } from './geulkku-mart/caps.js';
 
-const OWN_ROOT = /^\s*<div\b[^>]*\sclass="gk\s(?:[^"]*\s)?gk-own[\s"]/;
+export const OWN_ROOT = /^\s*<div\b[^>]*\sclass="gk\s(?:[^"]*\s)?gk-own[\s"]/;
 const ROOT_CLASS = /^(\s*<div\b[^>]*\sclass=")([^"]*)"/;
 
 /** 설정 → 마트 값(못 읽으면 null) — 이 틀 값(frames[key])은 그 틀 열쇠일 때만 */
@@ -41,13 +41,13 @@ export function prepareFrame(frame, set, { castKnown = false } = {}) {
 /**
  * 칠하기 뒤 — 조절 값을 입혀요(아무것도 안 고친 설정이면 받은 글 그대로).
  * @param {string} html drawSimple 이 그린 글(고칠 자리 「✎」 표시 없이)
- * @param {object} set 조절 값 @param {{ mode?: 'light'|'dark', key?: string }} [o]
+ * @param {object} set 조절 값 @param {{ mode?: 'light'|'dark', key?: string, caps?: object }} [o] caps: 틀별 능력표 한 줄(1.1.5 · 마트 측정표에서 정적 값과 다른 칸만 — geulkku-mart/caps-table.js)
  */
-export function applySet(html, set, { mode = 'dark', key = '' } = {}) {
+export function applySet(html, set, { mode = 'dark', key = '', caps: row } = {}) {
     if (!html) return html;
     const r = readFor(set, key);
     if (!r) return html;
-    const t = r.tune, caps = capsStatic(html);
+    const t = r.tune, caps = { ...capsStatic(html), ...row };
     const value = r.shape && r.shape.pad != null ? { ...r.shape, pad: padIn(caps, r.shape.pad) } : r.shape;
     const shaped = applyShape(html, value, t?.inks?.[mode], shapeGate(caps, value));
     const L = r.look, ts = L?.title?.size;
@@ -79,26 +79,38 @@ export function dropLemon(html) {
 export { LOOKS };
 export const EASY_MOTION = Object.freeze([['0', '끔'], ['s', '약'], ['m', '중'], ['l', '강']]);
 export const EASY_SIZE = Object.freeze([[-1, '작게'], [0, '보통'], [2, '크게']]);
-const clone = v => (v == null ? v : JSON.parse(JSON.stringify(v)));
+export const clone = v => (v == null ? v : JSON.parse(JSON.stringify(v)));
+// 1.1.5 테마에서 고른 화자 색(깡통 · 깡캐) — 마트 꼴(style.cast)과 따로 set.themeCast 에 둬요: 담아 온 화자 색은 1.1.4 처럼 안 쓰고(인물표 색이 먼저), 테마 시트에서 고른 것만 써요.
+//   값: '#rrggbb'(직접 색) · 'orig'(틀을 만든 색) · 없음(인물표 색)
+const HEX6 = /^#[0-9a-f]{6}$/i;
+export function castOf(v) {
+    const pick = x => (x === 'orig' ? 'orig' : HEX6.test(x || '') ? x.toLowerCase() : null);
+    const main = pick(v?.main), other = pick(v?.other);
+    return main || other ? { ...(main ? { main } : {}), ...(other ? { other } : {}) } : null;
+}
+export const read = (set) => { const r = readSet(set); if (r) r.cast = castOf(set?.themeCast); return r; };
 const stepOf = l => l?.type?.sizeStep || 0;
 const noStep = (look) => { const L = clone(look) || {}; if (L.type) { delete L.type.sizeStep; if (!Object.keys(L.type).length) delete L.type; } delete L.lemon; return Object.keys(L).length ? L : null; };
-// 스타일이 다루는 모양 칸(마트 setShape 한 벌 — 질감은 따로)
-const styleShape = shape => { const s = { ...(shape || {}) }; return Object.keys(s).length ? s : null; };
 /** 설정 → 간편 칸 값 { style: 추천 스타일 id | null(직접 조절), motion: 세기 | null(글 · 소품 따로), apart: { text, prop } | null, size, fixed: 고정 px | null } */
 export function easyOf(set) {
-    const r = readSet(set) || readSet({ blGeulkku: 2 });
-    const L = noStep(r.look), m = r.motion, step = stepOf(r.look), shape = styleShape(r.shape);
+    const r = read(set) || read({ blGeulkku: 2 });
+    const L = noStep(r.look), m = r.motion, step = stepOf(r.look), shape = r.shape;   // 스타일이 다루는 모양 칸(마트 setShape 한 벌 — 질감은 따로) · 마트 cleanShape 가 빈 값은 null 로 줘요(1.1.5 마트 조각 바이트 맞추기)
     const hit = LOOKS.find((x) => {
         const xl = noStep(x.look), xs = x.look?.type?.sizeStep;
         return sameLook(xl, L) && sameLook(x.shape || null, shape) && x.motion.text === m.text && x.motion.prop === m.prop && (xs == null || xs === step);
     });
-    return { style: hit?.id ?? null, motion: m.text === m.prop ? m.text : null, apart: m.text === m.prop ? null : { text: m.text, prop: m.prop }, size: step, fixed: r.look?.type?.size ?? null };
+    return { style: hit?.id ?? null, motion: m.text === m.prop ? m.text : null, apart: m.text === m.prop ? null : { text: m.text, prop: m.prop }, size: step, fixed: r.look?.type?.size ?? null, tex: r.tex, cast: r.cast, cover: r.tone.cover !== false };
 }
 // 마트 값 → 설정(꼴 2) — 화자 · 밤낮 · 이 틀 값 · 질감 · 이름은 그대로
-const rebuild = (r, { look = r.look, motion = r.motion, shape = r.shape } = {}) => makeSet({ tone: r.tone, look, motion, tex: r.tex, shape, tune: r.tune, frame: r.frame, label: r.name });
+export const rebuild = (r, { look = r.look, motion = r.motion, shape = r.shape, tex = r.tex, tone = r.tone, tune = r.tune, frame = r.frame, cast = r.cast } = {}) => {
+    const out = makeSet({ tone, look, motion, tex, shape, tune, frame, label: r.name });
+    const c = castOf(cast);
+    if (c) out.themeCast = c;
+    return out;
+};
 /** 추천 스타일 한 벌을 입혀요(글 모양 · 움직임 세기 · 모양만 — 글 크기는 「큼직하게」만 정하고 나머지는 지금 값 그대로 · 레몬 빼기 그대로) */
 export function withStyle(set, id) {
-    const r = readSet(set), x = LOOKS.find(v => v.id === id);
+    const r = read(set), x = LOOKS.find(v => v.id === id);
     if (!r || !x) return set;
     const next = clone(x.look) || {}, step = x.look?.type?.sizeStep ?? stepOf(r.look);
     if (step) (next.type ??= {}).sizeStep = step;
@@ -107,13 +119,13 @@ export function withStyle(set, id) {
 }
 /** 움직임 세기(글 · 소품 같이) */
 export function withMotion(set, level) {
-    const r = readSet(set);
+    const r = read(set);
     if (!r || !EASY_MOTION.some(([v]) => v === level)) return set;
     return rebuild(r, { motion: { ...r.motion, text: level, prop: level } });
 }
 /** 글 크기(틀 값에 더하기 -1 · 0 · +2 — 고정 px 는 지워요) */
 export function withSize(set, step) {
-    const r = readSet(set);
+    const r = read(set);
     if (!r || !EASY_SIZE.some(([v]) => v === step)) return set;
     const L = clone(r.look) || {};
     if (L.type) { delete L.type.size; delete L.type.sizeStep; }

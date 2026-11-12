@@ -107,6 +107,18 @@ export function speakerLetters(model, { main = 'A', second = main === 'A' ? 'B' 
 }
 
 /**
+ * 1.1.5 시트에서 고른 화자 색을 얹어요 — cast: { main?, other? } 값은 '#rrggbb'(직접 색) · 'orig'(틀을 만든 색 = 색 모름과 같은 길) · 없으면 인물표 색 그대로.
+ * 깡캐(other)는 틀의 second 글자예요(로그에 둘째 화자가 없어도 틀 규칙의 색만 바뀌어요).
+ */
+export function castLetters(who, frame, cast) {
+    if (!cast || (!cast.main && !cast.other)) return who;
+    const colors = new Map(who.colors), second = frame.second ?? (frame.main === 'A' ? 'B' : 'A');
+    const put = (letter, v) => { if (v === 'orig') { if (colors.has(letter)) colors.set(letter, null); } else if (/^#[0-9a-f]{6}$/i.test(v || '')) colors.set(letter, v.toLowerCase()); };
+    put(frame.main, cast.main); put(second, cast.other);
+    return { ...who, colors, main: colors.get(frame.main) ?? null };
+}
+
+/**
  * 화자 색 → toneSimple 인자. 규칙(글꾸 마트와 같게):
  *   주인공: 색을 모르면 「원래 색」(시안 그대로) · 색이 있으면 그 색(틀을 만든 색과 같으면 시안 그대로, 다르면 시안 식)
  *   상대(second): 색을 모르면 틀이 정한 색 그대로 · 색이 있으면 그 색(같은 규칙)
@@ -196,7 +208,7 @@ export function drawSimple(frame, model, o = {}) {
     if (!model?.messages?.length) return empty;
     const parts = splitFrame(frame?.html);
     if (!parts || parts.blocks.length < 2) return empty;
-    const who = speakerLetters(model, { main: frame.main, second: frame.second, lookup: o.lookup });
+    const who = castLetters(speakerLetters(model, { main: frame.main, second: frame.second, lookup: o.lookup }), frame, o.cast);
     // 메시지 글: 깡통 로그 틀과 같은 다시 칠하기(띠 · 따옴표 색 글자 → 대사, 속마음 · 강조 색 → 본문) 뒤 문단으로 · 글꼴은 틀이 맡아요
     const t = tone(who.main, { mode, plan: 'B' });
     const painted = retintModel(model, t, { font: false });

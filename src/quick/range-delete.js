@@ -5,7 +5,7 @@
 // 입력줄 자리에 실리태번 삭제 줄과 같은 꼴의 「지우기 · 취소」 줄이 떠요(입력줄은 그동안 숨김). Esc · 채팅 바꿈 · 취소로 그냥 나와요.
 // 지우기 전에 늘 확인 창(몇 번부터 몇 번 · 몇 개 · 되돌릴 수 없음)을 거치고, 실리태번 deleteMessage 로 끝에서부터 하나씩 지워요(번호 다시 매기기 · 저장 · 알림은 실리태번 몫).
 // 비용: 켜 두면 메뉴 항목 하나 · 그 항목 누름 리스너 하나. 고르는 동안에만 #chat 누름 · Esc · 채팅 바뀜을 들어요.
-import { ctx, generating, ensureQuickCss } from './shared.js';
+import { ctx, generating, ensureQuickCss, editingId } from './shared.js';
 import { ask } from '../ask.js';
 
 const ITEM_ID = 'option_bl_range_delete';
@@ -152,6 +152,7 @@ async function confirmDelete() {
     const c = ctx();
     if ((c.getCurrentChatId?.() ?? c.chatId) !== chatId) { toastr.warning('그사이 채팅이 바뀌어 지우지 않았어요.', '범위 지우기'); return; }
     if (generating()) { toastr.info('답을 만드는 중이라 지우지 않았어요.', '범위 지우기'); return; }
+    if (editingId() > hi) { toastr.info('아래 메시지를 고치는 중이라 지우지 않았어요. 편집을 끝내거나 취소한 뒤에 다시 골라 주세요.', '범위 지우기'); return; }   // 편집 번호가 밀리지 않게(shared.js editingId)
     if (hi >= (c.chat?.length ?? 0)) { toastr.warning('그사이 메시지가 줄어 지우지 않았어요. 다시 골라 주세요.', '범위 지우기'); return; }
     // 끝에서부터 — 앞 번호가 그대로라 하나씩 지워도 범위가 어긋나지 않아요. 도구 호출 메시지 묶음은 건드리지 않아요(범위 밖을 지우지 않게)
     let done = 0;

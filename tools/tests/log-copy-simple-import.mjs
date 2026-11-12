@@ -23,6 +23,8 @@ const tool = await load('tools/mart/simple-frames.mjs');
 const fixture = JSON.parse(read('tools/tests/fixtures/geulkku-set-mart.json'));
 const packOf = id => structuredClone(fixture.packs[id]);
 const itemOf = id => packOf(id).items[0];
+// 1.1.5 줄 차례 class(gk-q1 · gk-q2)를 틀 규칙이 실제로 쓰는 판 — 줄마다 꾸밈이 달라서 여전히 못 받는 틀의 견본(#1004 원래 판은 그 class 를 규칙이 안 써서 받아요)
+const busy1004 = () => { const it = itemOf('simple-k1004'); it.html = it.html.replace('\n</style>', '\n.gk-k1004 .gk-q2{margin-left:8px}\n</style>'); return it; };
 
 await test('등록 값 바꾸기: 내장 심플 28틀 원래 판 → 생성기(frameEntry)와 같은 등록 값', () => {
     for (const d of tool.DEFS) {
@@ -45,14 +47,22 @@ await test('등록 값 바꾸기: 마트 견본 글(<em> · <strong> · <s> 든 
 });
 
 await test('등록 값 바꾸기: 로그 칸이 한 꼴로 안 늘어나는 틀은 까닭과 함께 던져요', () => {
-    assert.throws(() => frameFromHtml(itemOf('simple-k1004').html, { id: 'simple-k1004' }), /줄마다 꾸밈이 다른 틀/);
+    assert.throws(() => frameFromHtml(busy1004().html, { id: 'simple-k1004' }), /줄마다 꾸밈이 다른 틀/);
+    // 1.1.5 줄 머리의 덤 class 를 틀 규칙이 한 번도 안 쓰면 떼고 받아요(모양은 그대로 · 줄 꼴이 하나로)
+    const raw = itemOf('simple-k1004').html;
+    assert.match(raw, /<p class="gk-dl gk-q1">/); assert.match(raw, /<p class="gk-dl gk-q2">/); assert.doesNotMatch(raw.slice(0, raw.indexOf('</style>')), /\.gk-q[12](?![\w-])/);
+    const f = frameFromHtml(raw, { id: 'simple-k1004' });
+    assert.equal(f.key, 'k1004'); assert.equal(f.rows.대사, '<p class="gk-dl"><span class="gk-d gk-d{{화자}}">{{대사}}</span></p>'); assert.equal(f.rows.이름, '<p class="gk-nm gk-n{{화자}}">{{이름}}</p>');
+    assert.deepEqual(checkFrame(f), []); assert.doesNotMatch(f.html, /gk-q[12]"/);
+    const styleOf = html => html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
+    assert.equal(styleOf(f.html), styleOf(raw.replace(/\r\n/g, '\n')), '틀 규칙은 건드리지 않아요');
     assert.throws(() => frameFromHtml('<div class="gk gk-tl gk-k9"><style>.gk-k9{}</style><p>x</p></div>', { id: 'x' }), /꼴이 아니에요|찾지 못했어요/);
     const noTitle = itemOf('simple-k1').html.replace(SAMPLE_TITLE, '다른 제목');
     assert.throws(() => frameFromHtml(noTitle, { id: 'simple-k1' }), /제목 자리/);
 });
 
 await test('꾸러미 읽기: 마트가 낸 꾸러미 → 심플 글꾸 항목(등록 값 + 조절 값) · 못 받는 틀은 건너뛴 것으로', () => {
-    const mixed = { 'bl-mart': 1, items: [itemOf('simple-k1'), itemOf('simple-k1120'), itemOf('simple-k1004')] };
+    const mixed = { 'bl-mart': 1, items: [itemOf('simple-k1'), itemOf('simple-k1120'), busy1004()] };
     const read1 = readMart(JSON.stringify(mixed));
     assert.equal(read1.error, '');
     assert.deepEqual(read1.items.map(x => x.id), ['simple-k1', 'simple-k1120']);

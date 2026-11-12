@@ -14,6 +14,17 @@ const SOUND_LINE = /^<div class="gk-sd">.*<\/div>$/;
 const NR = /^<p class="gk-nr">(?:(?!<\/?p\b).)+<\/p>$/;
 const NM = /^<p class="gk-nm gk-n[A-Z]">[^<]+<\/p>$/;
 const DL = /^(<p class="gk-dl"[^>]*>)<span class="gk-d gk-d[A-Z]">(?:(?!<\/?(?:p|span)\b).)+<\/span><\/p>$/;
+const ROW_HEAD = /^<p class="(gk-(?:nr|nm|dl)(?: [\w-]+)*)"/;
+/**
+ * 1.1.5 줄 머리의 덤 class 가운데 틀 <style> 이 한 번도 안 쓰는 것은 떼요(모양에 아무 일도 안 하는 이름표 — 줄 차례 gk-q1 · gk-w1, 화자 gk-lA 따위).
+ * 줄 꼴이 하나로 모여 로그 길이만큼 늘릴 수 있어요. 규칙이 쓰는 class 는 그대로 두고 꼴 검사에 맡겨요(줄마다 꾸밈이 다른 틀은 여전히 못 받아요).
+ */
+function plainRow(line, css) {
+    const m = line.match(ROW_HEAD);
+    if (!m) return line;
+    const kept = m[1].split(' ').filter((c, i) => i === 0 || /^gk-n[A-Z]$/.test(c) || new RegExp(`\\.${c}(?![\\w-])`).test(css));
+    return `<p class="${kept.join(' ')}"${line.slice(m[0].length)}`;
+}
 
 /** 뽑기용 별칭(접두 없는 class)을 뿌리에서 떼요 — 생성기 stripAlias 와 같아요 */
 const stripAlias = html => html.replace(/^(\s*<div\b[^>]*\sclass=")([^"]*)"/, (all, a, v) => `${a}${v.split(/\s+/).filter(c => c === 'gk' || c.startsWith('gk-')).join(' ')}"`);
@@ -36,7 +47,8 @@ export function frameFromHtml(raw, meta) {
     const quiet = quietFrame(stripAlias(shutPeek(String(raw ?? '').replace(/\r\n/g, '\n').trim())));
     const info = tone.simpleFrameInfo(quiet);
     if (!info?.key || !info.base || info.K0 === undefined) throw new Error('심플 틀 꼴이 아니에요');
-    const lines = quiet.split('\n');
+    const css = quiet.slice(0, Math.max(0, quiet.indexOf('</style>')));
+    const lines = quiet.split('\n').map(line => (ROW.test(line) ? plainRow(line, css) : line));
     const groups = [];
     lines.forEach((line, i) => { if (!ROW.test(line)) return; const g = groups[groups.length - 1]; if (g && g.end === i) g.end = i + 1; else groups.push({ start: i, end: i + 1 }); });
     if (groups.length < 1 || groups.length > 2) throw new Error('로그 칸이 여러 곳으로 나뉜 틀이에요');

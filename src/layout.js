@@ -33,6 +33,10 @@ let favoritesStarted = false;
 export function startFavoritesHeading() {
     if (favoritesStarted) return;
     favoritesStarted = true;
+    // 8.2.3 가로 줄 스와이프 가드(아래 startCompactLayout 의 설명) — 제로는 입력판 배치를 돌리지 않지만 테마 CSS 가 QR 줄을 가로로 넘기는 줄로 만들어,
+    //   줄을 옆으로 밀면 실리태번 손짓이 다음 답 · 새 답 만들기로 읽었어요(제로 · 폰). 두 모드가 다 부르는 여기서 한 번 걸어요
+    document.body.addEventListener('touchstart', event => { stripGesture = !!swipeStripOf(event.target); if (stripGesture && event.target.closest?.('#qr--bar')) event.stopPropagation(); }, { passive: true });
+    for (const type of ['touchmove', 'touchend', 'touchcancel']) document.body.addEventListener(type, event => { if (stripGesture) event.stopPropagation(); if (type !== 'touchmove') stripGesture = false; }, { passive: true });
     const favorites = document.querySelector('#HotSwapWrapper');
     function refreshFavorites() {
         if (!favorites) return;
@@ -361,8 +365,7 @@ export function startCompactLayout() {
     //   QR 줄이 #send_form 밖에 있는 판 · 팝아웃(#qr--popout)과, 캐릭터 즐겨찾기 줄 · 탭 줄([data-bl-fade]) · 글꼴 묶음 줄 · QR 미리보기 줄처럼 가로로 넘치는 줄 전부.
     //   QR 줄은 예전처럼 touchstart 부터 막고, 다른 줄은 7.0.2 와 같이 touchstart 는 올리고(바깥 누르면 서랍 닫기) touchmove · touchend 만 막는다 — 스크롤은 브라우저 몫이라 그대로.
     //   리그(폰 384px · 빠른 끌기)에서 QR 줄 · 입력창 위 스와이프 0회 확인(10-29).
-    document.body.addEventListener('touchstart', event => { stripGesture = !!swipeStripOf(event.target); if (stripGesture && event.target.closest?.('#qr--bar')) event.stopPropagation(); }, { passive: true });
-    for (const type of ['touchmove', 'touchend', 'touchcancel']) document.body.addEventListener(type, event => { if (stripGesture) event.stopPropagation(); if (type !== 'touchmove') stripGesture = false; }, { passive: true });
+    // (가드 두 줄은 startFavoritesHeading 으로 옮겼어요 — 제로도 같은 가로 줄을 쓰니 그쪽에서도 걸려요)
     // 7.0.2 채팅 속 넓은 표 · 코드 · 상태창(칸 안 가로 스크롤)을 손가락으로 가로로 밀어도 같은 손짓이 걸려 마지막 답이 넘어가거나 새 답이 생성됐다.
     // 누르기 시작한 곳이 실제로 넘치는 가로 스크롤 칸 안이면 그 손짓의 touchmove · touchend 만 문서까지 올리지 않는다 —
     // touchstart 는 그대로 올려 실리태번의 바깥 누르면 서랍 닫기가 돈다(touchend 가 안 가면 swiped-events 가 손짓을 끝내지 못하고 다음 touchstart 가 새로 잡는다)

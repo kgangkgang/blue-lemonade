@@ -4,7 +4,7 @@
 // 단추는 실리태번 메시지 틀(#message_template)에 한 번 넣어 두면 새로 그리는 메시지마다 따라와요 — 메시지마다 감시하지 않아요.
 //   켤 때 이미 그려진 메시지에 한 번 붙이고, 끄면 틀 · 채팅에서 모두 떼요. 누름은 #chat 에 리스너 하나.
 // 한 손 버튼 줄의 「마지막 메시지 지우기」도 여기 deleteWithAsk 를 써요(누를 때 받음).
-import { ctx, generating } from './shared.js';
+import { ctx, generating, editingId } from './shared.js';
 
 const CLS = 'bl_mes_del';
 let wanted = false, chatEl = null;
@@ -41,6 +41,7 @@ export async function deleteWithAsk(id) {
     const message = c.chat?.[id];
     if (!Number.isInteger(id) || id < 0 || !message) return false;
     if (generating()) { toastr.info('답을 만드는 중에는 지울 수 없어요. 멈춘 뒤에 지워 주세요.', '메시지 지우기'); return false; }
+    if (editingId() > id) { toastr.info('아래 메시지를 고치는 중이에요. 편집을 끝내거나 취소한 뒤에 지워 주세요.', '메시지 지우기'); return false; }   // 편집 번호가 밀리지 않게(shared.js editingId)
     if (typeof c.deleteMessage !== 'function') { toastr.warning('이 실리태번 판에서는 바로 지우기를 쓸 수 없어요. 연필 → 휴지통으로 지워 주세요.', '메시지 지우기'); return false; }
     // 실리태번 편집 중 휴지통과 같은 판단: 다른 답이 여럿인 마지막 AI 메시지면 지금 스와이프만 지울지도 물어요
     const swipeCount = Array.isArray(message.swipes) ? message.swipes.length : 0;

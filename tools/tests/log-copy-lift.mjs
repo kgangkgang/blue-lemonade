@@ -156,7 +156,8 @@ await t('레몬 틀: 「레몬 바로가기」를 켜면 레몬 그림이 소개
     assert.equal(LEMON_HOME, 'https://kkangtong.xyz/posts/157369');
     assert.ok(!renderLog(model, { shape: 'lemon', colors: night, ui, fields: full }).includes('posts/157369'), '끄면 링크 없음');
     // 1.1.3 레몬 틀은 기본 글꾸 새 틀(434): 레몬 그림은 <style> 의 .lmi 규칙 · 켜면 <a class="lm"> 로 감싸요
-    assert.match(renderLog(model, { shape: 'lemon', colors: night, ui, fields: full }), /<span class="lm" title="블루레몬에이드"><span class="lmi"><\/span><\/span>[\s\S]*$/, '레몬 그림은 그대로');
+    // 1.1.5 끄면 그림째 빠져요(1.1.4 까지는 링크만 빼고 그림을 남겨 켬 · 끔이 같아 보였어요 — log-copy-lemon-off.mjs)
+    assert.doesNotMatch(renderLog(model, { shape: 'lemon', colors: night, ui, fields: full }), /class="lmi?"|\.lmi\{/, '끄면 레몬 그림도 없음');
     const html = renderLog(model, { shape: 'lemon', colors: night, ui, fields: full, lemonLink: true });
     assert.ok(html.includes('<a class="lm" href="https://kkangtong.xyz/posts/157369" target="_blank" rel="noopener noreferrer" title="블루레몬에이드" aria-label="블루레몬에이드"><span class="lmi"></span></a>'), '레몬 그림을 감싼 링크');
     // 기본 글꾸 새 틀 18 은 머리에 레몬이 늘 있어요(시안) — 켜면 그 레몬이 링크 · 그 밖 틀은 링크 없음(시트가 빈 모서리에 따로 놓아요)

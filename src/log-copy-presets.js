@@ -10,7 +10,7 @@ import { box, font, hide, svgDoc, svgUrl } from './log-copy-concept-kit.js';   /
 import { fillTemplate, templateColors, tidyType } from './log-copy-template.js';
 import { BUILTIN_TEMPLATES } from './log-copy-builtin.gen.js';
 import { drawTone } from './log-copy-tone.js';   // 1.1.3 「깡통 로그」 틀 묶음(대사색 하나로 틀 색 — 에이드 팔레트를 안 써요)
-import { SIMPLE, simplePresets, drawSimple, speakerLetters } from './log-copy-simple.js';
+import { SIMPLE, simplePresets, drawSimple, speakerLetters, castLetters } from './log-copy-simple.js';
 import { markEdits } from './log-copy-simple-tone.js';   // 1.1.4 받은 심플 글꾸: 조절 값을 입힌 뒤에 고칠 자리 「✎」   // 1.1.3 「심플」 새 틀 28(클래스 + <style> 하나 · 깃발 SIMPLE_FRAMES_ENABLED 가 꺼져 있어 아직 PRESETS · 분류 칩에 안 들어가요)
 import { drawBasic } from './log-copy-basic.js';   // 1.1.3 「기본 글꾸」 새 틀 18(시안 생성기 그림 그대로 · 클래스 + <style> 하나 · 432 상태창은 보류라 옛 그림)
 import { LEMON_HOME } from './log-copy-lemon.js';   // 1.1.2 레몬 그림 링크 주소(레몬 틀 · 「레몬 바로가기」 칩이 같이 써요)   // 1.0.1(11-04) 테마 내장 심플 글꾸(틈 템플릿 · tools/mart/build-builtin.mjs 생성물)
@@ -571,16 +571,17 @@ export function fixedWidth(html) {
         return `${open}${attrs} style="${add}"${end}`;
     });
 }
-export function renderLog(model, { shape = 'plain', colors = null, ui = null, fields = {}, size = 'm', names = true, gap: blank = true, images = [], screen = null, template = null, lemonLink = false, mode = null, lookup = null, info = 'off', height = '', marks = false, simple = null, setMod = null } = {}) {
+export function renderLog(model, { shape = 'plain', colors = null, ui = null, fields = {}, size = 'm', names = true, gap: blank = true, images = [], screen = null, template = null, lemonLink = false, mode = null, lookup = null, info = 'off', height = '', marks = false, simple = null, setMod = null, caps = null } = {}) {
     if (!model?.messages?.length) return '';
     // 1.1.4 글꾸 마트 「테마로 담기」로 받은 심플 글꾸(내 글꾸 { frame, set }) — 내장 심플 틀과 같은 그리기(drawSimple) + 담아 온 조절 값(setMod = log-copy-simple-set.js · 아직 못 받았으면 틀만)
     if (simple?.frame) {
         const light = mode ? mode === 'light' : !!colors?.bg && contrast(colors.bg, '#000000') > contrast(colors.bg, '#ffffff');
         const md = light ? 'light' : 'dark';
-        const castKnown = speakerLetters(model, { main: simple.frame.main, second: simple.frame.second, lookup }).main != null;
+        const cast = simple.set?.themeCast;   // 1.1.5 시트에서 고른 화자 색(없으면 인물표 색)
+        const castKnown = castLetters(speakerLetters(model, { main: simple.frame.main, second: simple.frame.second, lookup }), simple.frame, cast).main != null;
         const f = setMod ? setMod.prepareFrame(simple.frame, simple.set, { castKnown }) : simple.frame;
-        let html = drawSimple(f, model, { fields, names, mode: md, lookup, marks: false }).html;
-        if (setMod && html) html = setMod.applySet(html, simple.set, { mode: md, key: f.key });
+        let html = drawSimple(f, model, { fields, names, mode: md, lookup, cast, marks: false }).html;
+        if (setMod && html) html = setMod.applySet(html, simple.set, { mode: md, key: f.key, caps });   // 1.1.5 caps: 틀별 능력표 한 줄(마트와 같은 상한)
         if (setMod && html && !lemonLink) html = setMod.dropLemon(html);   // 시트 「레몬」 칩을 끄면 틀 안 레몬도 빼요
         return fixedWidth(html ? markEdits(html, { skip: f.hidden ? [] : ['gk-hl'] }) : html);
     }

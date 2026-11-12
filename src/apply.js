@@ -701,6 +701,7 @@ export function applyAll() {
         if (s.chat.qrFold === false) want.add('salty-qr-fold-off');   // 1.0.1 QR 줄 접기 단추 끔 (layout.js syncQrFold)
         if (s.chat.qrFolded === true) want.add('salty-qr-folded');   // 1.0.1 QR 줄 접힘 — 접기 단추만 남고 버튼은 숨김 (css/35-qr-bar.css)
         if (s.quick?.qrFold === true && s.usageMode !== 'zero') { want.add('salty-qr-fold-off'); want.delete('salty-qr-folded'); }   // 1.1.2 요술봉 뒤 접기를 쓰는 동안 줄 앞 단추는 쉬어요(저장값은 그대로)
+        if (s.usageMode === 'zero') want.delete('salty-qr-folded');   // 제로는 줄 앞 « 를 넣지 않아요(입력판 배치는 실리태번 그대로) — 접어 둔 채 오면 펼 길 없이 QR 이 다 숨었어요(저장값은 그대로)
         if (s.chat.qrCtxNames === true) want.add('salty-qr-ctx-names');   // 7.9.7 QR ⋮ 자리에 하위 세트 이름 (layout.js syncQrTitles)
         if (s.qrShelf?.on === true && s.usageMode !== 'extensions' && !restingFor('qrShelf')) want.add('salty-qr-shelf');   // 1.0.3 QR 책장 (layout.js syncQrShelf)
         if (s.chat.personaTall) want.add('salty-persona-tall');

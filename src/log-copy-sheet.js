@@ -158,7 +158,7 @@ export async function openLogSheet(model) {
             <div class="bl-lc-chips bl-chip-row" role="radiogroup" aria-label="모양" data-lc-shapes></div>
             <div class="bl-lc-gallery" data-lc-gallery hidden><textarea rows="3" placeholder="이미지 코드(&lt;img …&gt;)나 이미지 주소를 붙여 넣어요" aria-label="갤러리 사진 코드" data-lc-images></textarea><span class="bl-lc-note" data-lc-images-count></span></div>
             <div class="bl-lc-colors" data-lc-colors><div class="bl-lc-mode" role="group" aria-label="밝기">${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><div class="bl-lc-pals bl-chip-row" role="radiogroup" aria-label="색" data-lc-pals></div></div>
-            <div class="bl-lc-easy" role="group" aria-label="간편 — 스타일 · 움직임 · 글 크기" data-lc-easy hidden></div>
+            <div class="bl-lc-easy" role="group" aria-label="조절 — 간편 · 세밀" data-lc-easy hidden></div>
             <div class="bl-lc-inks bl-chip-row" role="group" aria-label="글자색 — 눌러서 바꿔요" data-lc-inks hidden></div>
             <div class="bl-lc-tools bl-chip-row" role="group" aria-label="이름 숨김 · 바꾸기"><button type="button" class="bl-lc-chip" data-lc="hide" aria-pressed="false"><i class="fa-solid fa-user-secret" aria-hidden="true"></i><span>이름 숨김</span></button><button type="button" class="bl-lc-chip" data-lc="words" aria-pressed="false"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>바꾸기</span><small data-lc-words-count></small></button><button type="button" class="bl-lc-chip" data-lc="fields" aria-pressed="false" title="제목 · 날짜 · 깡통 · 모델 · 프롬프트 칸을 글칸으로 고쳐요"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>머리 칸</span></button><button type="button" class="bl-lc-chip" data-lc="spoiler" disabled title="미리보기에서 글을 고르면 눌러요"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>숨기기</span></button></div>
             <div class="bl-lc-shows bl-chip-row" role="group" aria-label="보일 것 — 끄면 빼요" data-lc-shows>${SHOWS.map(([key, icon, label, title]) => `<button type="button" class="bl-lc-chip" data-lc-show="${key}" aria-pressed="true" title="${esc(title)}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${esc(label)}</span></button>`).join('')}<button type="button" class="bl-lc-chip" data-lc-lemon aria-pressed="false" title="켜면 틀의 빈 모서리에 작은 레몬을 넣어요 — 누르면 블루레몬에이드 소개 글이 새 창으로 열려요"><i class="fa-solid fa-lemon" aria-hidden="true"></i><span>레몬 바로가기</span></button><button type="button" class="bl-lc-chip" data-lc-lemon-at hidden title="레몬 자리 — 누를 때마다 자동 · 왼쪽 위 · 오른쪽 위 · 왼쪽 아래 · 오른쪽 아래"><i class="fa-solid fa-up-down-left-right" aria-hidden="true"></i><span>자동</span></button><button type="button" class="bl-lc-chip" data-lc-height hidden title="틀 높이 — 누를 때마다 자동(글 길이만큼) · 작게 · 중간 · 크게(틀 안에서 넘겨요)"><i class="fa-solid fa-up-down" aria-hidden="true"></i><span>높이 · 자동</span></button></div>
@@ -178,17 +178,19 @@ export async function openLogSheet(model) {
     // 1.1.0 칩 줄(모양 · 분류 · 색 · 글자색 · 가릴 이름 · 바꾸기 줄)은 누를 때마다 innerHTML 로 다시 그려요 — 누른 칩에 있던 초점이 함께 사라져 body 로 떨어지면
     //   키보드 · 화면 읽기 사용자는 창 맨 앞부터 다시 Tab 해야 했어요. 다시 그린 줄에서 같은 열쇠(data-*)의 칩으로 초점을 돌려줘요 ·
     //   그 칩이 없어졌으면(지운 내 글꾸 · 뺀 이름 · 지운 줄) 같은 줄의 고른 칩이나 첫 단추로
-    const FOCUS_KEYS = ['data-lc-easy', 'data-shape', 'data-lc-del', 'data-cat', 'data-palette', 'data-lc-mode', 'data-lc-ink', 'data-lc-name-remove', 'data-lc-rule-remove', 'data-lc'];
-    const FOCUS_ROWS = '[data-lc-easy], [data-lc-shapes], [data-lc-cats], [data-lc-pals], [data-lc-inks], [data-lc-name-list], [data-lc-rules]';
+    const FOCUS_KEYS = ['data-lc-easy', 'data-lt', 'data-lt-i', 'data-lt-color', 'data-lt-tab', 'data-lt-sum', 'data-lc-view', 'data-shape', 'data-lc-del', 'data-cat', 'data-palette', 'data-lc-mode', 'data-lc-ink', 'data-lc-name-remove', 'data-lc-rule-remove', 'data-lc'];
+    const FOCUS_ROWS = '.bl-lt-chips, .bl-lc-easy-chips, [data-lc-easy], [data-lc-shapes], [data-lc-cats], [data-lc-pals], [data-lc-inks], [data-lc-name-list], [data-lc-rules]';
     function keepFocus(paint) {
         return (...args) => {
             const active = document.activeElement;
             if (!active || active === dialog || !dialog.contains(active)) return paint(...args);
             const attr = FOCUS_KEYS.find(name => active.hasAttribute(name));
             const key = attr ? `[${attr}="${CSS.escape(active.getAttribute(attr))}"]` : null;
-            const row = active.closest(FOCUS_ROWS);
+            // 1.1.5 조절 화면: 켬/끔 칩은 누르면 열쇠 끝(값)이 바뀌어 같은 칸(갈래|칸|)의 칩으로 · 칩 줄은 통째로 새로 그려지니 붙어 있는 줄(조절 칸 상자)로
+            const near = attr === 'data-lt' ? `[data-lt^="${CSS.escape(active.getAttribute(attr).replace(/[^|]*$/, ''))}"]` : null;
+            const rows = [active.closest(FOCUS_ROWS), active.closest('[data-lc-easy]')];
             const out = paint(...args);
-            if (!active.isConnected) ((key && dialog.querySelector(key)) || row?.querySelector('[aria-checked="true"], button:not(:disabled)'))?.focus({ preventScroll: true });
+            if (!active.isConnected) ((key && dialog.querySelector(key)) || (near && dialog.querySelector(near)) || rows.find(r => r?.isConnected)?.querySelector('[aria-checked="true"], button:not(:disabled)'))?.focus({ preventScroll: true });
             return out;
         };
     }
@@ -197,11 +199,24 @@ export async function openLogSheet(model) {
     const simpleOn = () => !!custom()?.frame;
     const rawOf = mine => !!mine && !mine.template && !mine.frame;
     // 담아 온 조절 값을 입히는 모듈(마트 사본 — 크니까 받은 심플 글꾸를 처음 그릴 때만 받아요 · 받는 동안은 틀만 그려요)
-    let setMod = null, setModLoading = null;
+    // 1.1.5 틀별 능력표(마트 측정 상한 — geulkku-mart/caps-table.js)도 같이 받아요: 조절 모듈과 함께 오니 칸 · 그림이 일괄 상한으로 한 번 그려졌다가 바뀌는 일이 없어요.
+    //   표를 못 받으면 예전처럼 일괄 상한(정적 능력표)으로 그려요.
+    let setMod = null, setModLoading = null, capRow = () => null;
     const needSet = () => {
         if (setMod || setModLoading) return;
-        setModLoading = import('./log-copy-simple-set.js').then((m) => { setMod = m; if (dialog.isConnected && simpleOn()) draw(); }, (error) => { setModLoading = null; toastr.warning(`조절 값을 입히지 못했어요 — 틀만 그려요 (${error?.message || error})`, '로그 복사'); });
+        setModLoading = Promise.all([import('./log-copy-simple-set.js'), import('./geulkku-mart/caps-table.js').catch(() => null)]).then(([m, c]) => { if (c) capRow = c.capsRow; setMod = m; if (dialog.isConnected && simpleOn()) draw(); }, (error) => { setModLoading = null; toastr.warning(`조절 값을 입히지 못했어요 — 틀만 그려요 (${error?.message || error})`, '로그 복사'); });
     };
+    // 1.1.5 조절 화면(간편의 색 · 질감 줄 · 「세밀」 갈래) — 받은 심플 글꾸의 간편 줄을 처음 그릴 때만 받아요(시작 그래프 밖 · 못 받으면 1.1.4 간편 줄 셋만)
+    let fineMod = null, fineLoading = null;
+    const needFine = () => {
+        if (fineMod || fineLoading) return;
+        fineLoading = import('./log-copy-tune-ui.js').then((m) => {
+            fineMod = m;
+            if (!document.getElementById('bl-lt-style')) { const style = document.createElement('style'); style.id = 'bl-lt-style'; style.textContent = m.FINE_STYLE; document.head.append(style); }
+            if (dialog.isConnected && simpleOn()) drawEasy();
+        }, () => { fineLoading = null; });
+    };
+    const fine = { view: 'easy', open: new Set(['motion']), tab: 'text', hold: false, timer: 0 };   // 이번 시트에만 기억해요
     // 1.1.3 깡통 로그 틀 묶음인가 — 색 칩 대신 밝기만 · 제목은 빈 채 · 알약 없음 · 이름표는 말하는 사람이 둘 이상일 때만(log-copy-tone.js)
     const toneOn = () => !custom() && isToneShape(state.shape);
     // 1.1.3 「기본 글꾸」 새 틀인가 — 색은 화자 대사색 · 틀은 무채(에이드 색 칩 없이 밝기만) · 레몬은 틀 안에 · 정보 칸 · 높이 칩
@@ -223,9 +238,23 @@ export async function openLogSheet(model) {
         const e = setMod.easyOf(mine.set), level = Object.fromEntries(setMod.EASY_MOTION);
         const chip = (key, label, pressed) => `<button type="button" class="bl-lc-chip" data-lc-easy="${esc(key)}" aria-pressed="${pressed}"><span>${esc(label)}</span></button>`;
         const row = (label, chips, note = '') => `<div class="bl-lc-easy-row" role="group" aria-label="${esc(label)}"><span class="bl-lc-easy-h">${esc(label)}${note ? `<small>${esc(note)}</small>` : ''}</span><div class="bl-lc-easy-chips">${chips}</div></div>`;
-        box.innerHTML = row('스타일', setMod.LOOKS.map(x => chip(`style:${x.id}`, x.label, e.style === x.id)).join(''), e.style ? '' : '직접 조절')
-            + row('움직임', setMod.EASY_MOTION.map(([v, l]) => chip(`motion:${v}`, l, e.motion === v)).join(''), e.apart ? `글 ${level[e.apart.text]} · 소품 ${level[e.apart.prop]}` : '')
-            + row('글 크기', setMod.EASY_SIZE.map(([v, l]) => chip(`size:${v}`, l, e.fixed == null && e.size === v)).join(''), e.fixed != null ? `직접 ${e.fixed}px` : '');
+        needFine();
+        if (fine.hold) return;   // 슬라이더를 끄는 동안은 칸을 다시 그리지 않아요(미리보기만)
+        // 1.1.5 간편 | 세밀 — 색 · 질감 줄과 세밀 갈래는 조절 화면 모듈(fineMod)이 그려요. 값은 같은 set 하나
+        const mode = modeOf(state.palette), caps = capRow(mine.frame.key), more = fineMod ? fineMod.easyExtra(mine.set, mine.frame, mode, caps) : null;
+        const view = fineMod && fine.view === 'fine' ? 'fine' : 'easy';
+        const tabs = more ? `<div class="bl-lc-view" role="group" aria-label="조절 단계"><button type="button" data-lc-view="easy" aria-pressed="${view === 'easy'}">간편</button><button type="button" data-lc-view="fine" aria-pressed="${view === 'fine'}">세밀${more.total ? `<b>${more.total}</b>` : ''}</button></div>` : '';
+        if (view === 'fine') {
+            const at = new Map([...box.querySelectorAll('.bl-lt-chips')].map((strip, i) => [i, strip.scrollLeft]));
+            box.innerHTML = tabs + fineMod.fineHtml(mine.set, mine.frame, { mode, open: fine.open, tab: fine.tab, caps });
+            [...box.querySelectorAll('.bl-lt-chips')].forEach((strip, i) => { if (at.get(i)) strip.scrollLeft = at.get(i); });
+            return;
+        }
+        box.innerHTML = tabs + row('스타일', setMod.LOOKS.map(x => chip(`style:${x.id}`, x.label, e.style === x.id)).join(''), e.style ? '' : '직접 조절')
+            + (more?.color ?? '')
+            + row('움직임', setMod.EASY_MOTION.map(([v, l]) => chip(`motion:${v}`, l, e.motion === v)).join('') + (more ? `<button type="button" class="bl-lc-chip" data-lc-view="motion" aria-pressed="${!!e.apart}" title="글 움직임과 소품 움직임을 따로 골라요"><span>따로</span></button>` : ''), e.apart ? `글 ${level[e.apart.text]} · 소품 ${level[e.apart.prop]}` : '')
+            + row('글 크기', setMod.EASY_SIZE.map(([v, l]) => chip(`size:${v}`, l, e.fixed == null && e.size === v)).join(''), e.fixed != null ? `직접 ${e.fixed}px` : '')
+            + (more ? more.texture + more.tail : '');
         requestAnimationFrame(() => { for (const strip of box.querySelectorAll('.bl-lc-easy-chips')) { revealTab(strip, strip.querySelector('[aria-pressed="true"]')); applyFade(strip); } });
     });
     // 1.0.8 글자색 — 바꿀 수 있는 글꾸(틈 템플릿)와 바꾼 색을 얹은 판
@@ -244,6 +273,26 @@ export async function openLogSheet(model) {
         const save = custom() ? '내 글꾸 색 저장' : '내 글꾸에 저장', off = changed ? '' : ' disabled';
         row.innerHTML = `<i class="fa-solid fa-palette bl-lc-ink-title" aria-hidden="true" title="글자색"></i><button type="button" class="bl-lc-chip bl-lc-ink-act" data-lc="ink-reset" aria-label="원래 색" title="원래 색"${off}><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button><button type="button" class="bl-lc-chip bl-lc-ink-act" data-lc="ink-save" aria-label="${save}" title="${save}"${off}><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button><i class="bl-lc-ink-sep" aria-hidden="true"></i>${INK_ROLES.map(([role, label]) => `<button type="button" class="bl-lc-chip bl-lc-ink" data-lc-ink="${role}" style="--ink:${esc(k[role])}" aria-label="${esc(label)} 색 바꾸기"><i class="bl-lc-ink-dot" aria-hidden="true"></i><span>${esc(label)}</span></button>`).join('')}`;
     });
+    // 1.1.5 세밀 칸 · 간편의 색 · 질감 칩 — 그 글꾸의 조절 값을 바꿔 저장하고 다시 그려요(값 다듬기는 조절 화면 모듈 → 마트 사본)
+    const tuneAct = (action, { redraw = true } = {}) => {
+        const live = custom();
+        if (!live?.frame || !fineMod || !action) return;
+        const next = fineMod.fineAct(live.set, live.frame.key, action, modeOf(state.palette));
+        if (next === live.set) return;
+        live.set = next; saveSettings();
+        if (redraw) draw(); else { clearTimeout(fine.timer); fine.timer = setTimeout(draw, 120); }
+    };
+    const pickTune = async (button) => {
+        const id = button.dataset.ltColor;
+        const { openColorPick } = await import('./colorpick.js');
+        fine.hold = true;
+        openColorPick({ anchor: button, value: button.dataset.value || '#888888', onInput: (css) => {
+            const hex = String(css).toLowerCase();
+            if (!/^#[0-9a-f]{6}$/.test(hex)) return;
+            button.style.setProperty('--ink', hex); button.classList.remove('is-unset');
+            tuneAct(`${id}|${JSON.stringify(hex)}`, { redraw: false });
+        }, onClose: () => { fine.hold = false; clearTimeout(fine.timer); draw(); } });
+    };
     let inkTimer = 0;
     const pickInk = async (button) => {
         const role = button.dataset.lcInk, base = inkBase();
@@ -469,7 +518,7 @@ export async function openLogSheet(model) {
         // 1.0.1 「깡통 · 모델 · 프롬프트」 칩 · 1.0.7 「보일 것」 칩 — 칸을 비워 그리지 않고 그린 뒤 걷어요(log-copy-bare.js):
         // 칸만 비우면 그 칸을 담던 머리 박스 · 구분선이 빈 채로 남았어요(11-07 사용자 「제목 · 위 글 · 알약 다 빼면 가로 박스도 사라져야지」)
         const drop = [...(s3.titleOff ? ['title'] : []), ...(s3.dateOff ? ['date'] : []), ...(s3.tagsOff ? ['mark', 'char', 'model', 'prompt'] : [])];
-        if (mine?.frame) { needSet(); html = renderLog(shown.model, { simple: mine, setMod, mode: toneMode, lookup, fields: { ...fields, ...(s3.titleOff ? { title: '' } : {}) }, names: !s3.namesOff, lemonLink: !!s3.lemonLink }); }   // 1.1.4 받은 심플 글꾸(제목 끄기는 칸을 비워서)
+        if (mine?.frame) { needSet(); html = renderLog(shown.model, { simple: mine, setMod, caps: capRow(mine.frame.key), mode: toneMode, lookup, fields: { ...fields, ...(s3.titleOff ? { title: '' } : {}) }, names: !s3.namesOff, lemonLink: !!s3.lemonLink }); }   // 1.1.4 받은 심플 글꾸(제목 끄기는 칸을 비워서)
         else if (rawOf(mine)) html = mine.html;
         else if (basicOn()) html = renderLog(shown.model, { shape: state.shape, fields: { ...fields, ...(s3.titleOff ? { title: '' } : {}), ...(s3.dateOff ? { date: '' } : {}) }, images: shown.rewriteImages(state.images), names: !s3.namesOff, lemonLink: !!s3.lemonLink, mode: toneMode, lookup, info: s3.basicInfo, height: s3.basicHeight, marks: true });   // 1.1.3 기본 글꾸 새 틀(제목 · 날짜 끄기는 칸을 비워서 — 틀이 그 줄째 빼요)
         else html = renderLog(shown.model, { shape: state.shape, colors: state.shape === 'plain' ? null : colorsOf(paletteFor(state.shape, state.palette)), ui, fields: drawFields, images: shown.rewriteImages(state.images), screen: tokensOf(nowPalette()), template: inkTemplate() ?? mine, names: !s3.namesOff, lemonLink: !!s3.lemonLink, mode: toneMode, lookup });
@@ -624,6 +673,17 @@ export async function openLogSheet(model) {
     dialog.addEventListener('click', async (event) => {
         const target = event.target.closest('button');
         if (!target || !dialog.contains(target)) return;
+        if (target.dataset.lcView) {   // 1.1.5 간편 | 세밀 · 「따로」(세밀의 움직임 갈래로) · 더 조절하기
+            if (!fineMod) return;
+            if (target.dataset.lcView === 'motion') fine.open.add('motion');
+            fine.view = target.dataset.lcView === 'easy' ? 'easy' : 'fine';
+            drawEasy();
+            if (target.dataset.lcView === 'motion') $('[data-lt-g="motion"]')?.scrollIntoView({ block: 'nearest' });
+            return;
+        }
+        if (target.dataset.ltTab) { fine.tab = target.dataset.ltTab; drawEasy(); return; }   // 「글」 갈래의 작은 칩
+        if (target.dataset.lt) { tuneAct(target.dataset.lt); return; }   // 세밀 칸 · 간편의 색 · 질감 칩
+        if (target.dataset.ltColor) { pickTune(target); return; }
         if (target.dataset.lcEasy) {   // 1.1.4 간편 칸 — 그 글꾸의 조절 값을 바꿔 저장하고 다시 그려요
             const live = custom();
             if (!live?.frame || !setMod) return;
@@ -774,7 +834,22 @@ export async function openLogSheet(model) {
         }
     });
     let imageTimer = 0;
+    // 1.1.5 세밀 숫자 조절칸 — 끄는 동안은 미리보기만(칸은 그대로) · 놓으면 칸까지 다시 그려요
+    const tuneInput = (event, done) => {
+        const input = event.target, cell = input.closest?.('[data-lt-f]');
+        if (!cell || !fineMod) return false;
+        if (input.type === 'number' && !done) return true;   // 숫자칸은 다 적은 뒤(change)에만
+        const action = fineMod.inputAction(cell.dataset.ltF, cell.dataset.scale, input.type, input.value);
+        if (input.type === 'range') { const box = cell.querySelector('input[type="number"]'); if (box) box.value = String(Number((Number(input.value) / (Number(cell.dataset.scale) || 1)).toFixed(4))); input.classList.remove('is-unset'); }
+        fine.hold = !done;
+        tuneAct(action, { redraw: done });
+        if (done) { clearTimeout(fine.timer); drawEasy(); }
+        return true;
+    };
+    dialog.addEventListener('change', (event) => { tuneInput(event, true); });
+    dialog.addEventListener('toggle', (event) => { const g = event.target?.dataset?.ltG; if (!g) return; const was = fine.open.has(g); if (event.target.open) fine.open.add(g); else fine.open.delete(g); if (was !== event.target.open) drawEasy(); }, true);
     dialog.addEventListener('input', (event) => {
+        if (tuneInput(event, false)) return;
         if (event.target.matches?.('[data-lc-images]')) {
             clearTimeout(imageTimer);
             imageTimer = setTimeout(() => { state.images = imagesFromCode(event.target.value); drawShapes(); draw(); }, 300);
@@ -796,7 +871,7 @@ export async function openLogSheet(model) {
         if (event.key === 'Enter' && event.target.matches?.('[data-lc-name-input]')) { event.preventDefault(); $('[data-lc="name-add"]').click(); }
     });
     // 1.1.0: 닫을 때 남은 대기(규칙 · 그림 주소 · 글자색 · 되돌리기 묶음 · 길게 누르기)를 모두 걷어요 — 닫힌 직후 떨어진 창을 다시 그리지 않게
-    dialog.addEventListener('close', () => { clearTimeout(ruleTimer); clearTimeout(imageTimer); clearTimeout(inkTimer); clearTimeout(hist.timer); clearTimeout(hold); hist.timer = 0; if (open === dialog) open = null; dialog.remove(); }, { once: true });
+    dialog.addEventListener('close', () => { clearTimeout(ruleTimer); clearTimeout(imageTimer); clearTimeout(inkTimer); clearTimeout(fine.timer); clearTimeout(hist.timer); clearTimeout(hold); hist.timer = 0; if (open === dialog) open = null; dialog.remove(); }, { once: true });
     open = dialog;
     drawMore();
     drawShapes();

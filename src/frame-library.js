@@ -17,7 +17,10 @@ export function tidyFrameLibrary(s) {
     });
 }
 export function saveFrame(s, owner, name) {
-    const decor = s[owner]?.decor;
+    const live = s[owner]?.decor;
+    // 1.1.4 점검: 다시 그리기 · 움직임 끄기는 사본에 먼저 하고, 개수 · 용량 검사를 통과한 뒤에만 지금 액자에 옮겨요
+    //   (전엔 보관함이 가득 차 저장이 실패해도 지금 액자의 움직임이 꺼진 채 남았어요)
+    const decor = live ? { ...live } : null;
     // 꺼 둔 기본 프리셋은 그림을 비워 둔다 (decor.js slimDecor) — 보관함 액자는 그림을 그대로 가지므로 넣기 전에 다시 그린다
     if (decor && (!decor.art || !decor.mask) && isPresetFrame(decor)) refreshPreset(decor);
     // 1.1.4 움직임을 켠 레코드 재킷은 판을 그림에서 떼고 frame-motion.js 가 따로 그려요 — 보관함 액자(지금 액자도 저장하면 그렇게 돼요)에는 그게 안 붙어
@@ -31,7 +34,8 @@ export function saveFrame(s, owner, name) {
     const id = `frame-${unique}`;
     const copy = { ...decor, on: true }; delete copy.libraryId;
     s.frameLibrary.push({ id, name: String(name || `내 액자 ${s.frameLibrary.length + 1}`).trim().slice(0, 40), decor: copy });
-    decor.libraryId = id; return id;
+    for (const key of Object.keys(live)) if (!(key in decor)) delete live[key];   // 다시 그리며 뗀 표시(presetLifted · presetLabel)도 같이
+    Object.assign(live, decor); live.libraryId = id; return id;
 }
 export function useFrame(s, owner, id) {
     const item = s.frameLibrary.find(x => x.id === id);
