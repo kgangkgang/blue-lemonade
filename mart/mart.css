@@ -234,6 +234,9 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:32px;backgrou
 .mart-actions.is-geulkku{grid-template-columns:1.1fr 1fr 1fr}
 .mart-actions.is-builtin{grid-template-columns:1.6fr 1fr;align-items:center}
 .mart-actions.is-copyonly .mart-builtin{justify-content:center}
+/* 11-12 밤 단추가 하나뿐인 줄(HTML 복사) — 오른쪽 끝에 제 너비로 */
+.mart-card .mart-actions.is-solo{display:flex;justify-content:flex-end}
+.mart-card .mart-actions.is-solo .btn{padding:0 12px}
 /* 폰 액자 마트(두 칸 카드): 내장 심플 액자 카드는 안내 · 그림 받기를 위아래로(좁은 칸에서 안내가 세 줄로 접히지 않게) */
 @media (max-width:639px){.mart-card.is-frame .mart-actions.is-builtin{grid-template-columns:1fr}.mart-card.is-frame .mart-actions .mart-builtin{justify-content:center}}
 .mart-actions .btn{padding:0 4px}
@@ -259,7 +262,7 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:32px;backgrou
 .mart-cast-credit-who b{color:var(--ink);font-weight:var(--strong)}
 .mart-cast-credit-who .mart-ink-dot{width:10px;height:10px}
 .mart-sheet-credit{margin:4px 0 0}
-.mart-credits{margin:0 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
+.mart-credits{margin:24px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
 .mart-credits:empty{display:none}
 .mart-credits h2{margin:0 0 4px;font-size:var(--ts-h);font-weight:var(--strong);line-height:1.4;color:var(--ink)}
 .mart-credits p{margin:0 0 8px;font-size:var(--ts-meta);line-height:1.5;color:var(--muted)}

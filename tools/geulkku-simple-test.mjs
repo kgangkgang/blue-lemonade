@@ -900,6 +900,60 @@ await test('내 글 넣기: 이름만 있는 줄 + 다음 줄 따옴표 대사(1
     assert.deepEqual(l.names, ['레몬', '에이드']);
 });
 
+// ── 11-12 밤 분류 · 세계관 · 카드 원작 되살리기 — 사용자 「글꾸 카테고리에 뭐 일상 이벤트 예전에 있던 카테고리 가져오고 지금은 인물 출처도 빠지고 그 세계관 인물들 한꺼번에 보는 것도 없잖아」: 다시 빠지지 않게 잠가요 ──
+await test('분류: 모든 틀이 주제 분류를 하나 갖고(묶음 다섯 · 하위 칩) 자료는 생성기에서 나와요 · 누름 방식(category)은 그대로', async () => {
+    const groups = sixAll.topics;
+    assert.deepEqual(groups.map(g => [g.id, g.label]), [['daily', '일상'], ['event', '이벤트'], ['screen', '화면 · 장르'], ['world', '세계관 · 인물'], ['basic', '기본 · 심플']]);
+    const chipGroup = new Map();
+    for (const g of groups) for (const c of g.chips) { assert.ok(!chipGroup.has(c), `칩 「${c}」가 두 묶음에`); chipGroup.set(c, g.id); }
+    const n = {};
+    for (const x of sixAll.items) { assert.ok(typeof x.topic === 'string' && chipGroup.has(x.topic), `${x.id} 분류 없음`); n[chipGroup.get(x.topic)] = (n[chipGroup.get(x.topic)] || 0) + 1; assert.match(x.category, /^simple-(open|tap|sound|still)$/, `${x.id} 누름 방식`); }
+    assert.deepEqual(n, { basic: 36, daily: 122, event: 68, screen: 87, world: 104 }, '묶음 수(일상 122 · 이벤트 68 · 화면 · 장르 87 · 세계관 · 인물 104 · 기본 · 심플 36)');
+    assert.equal(Object.values(n).reduce((a, b) => a + b, 0), sixAll.items.length);
+    for (const g of groups) for (const c of g.chips) assert.ok(sixAll.items.some(x => x.topic === c), `빈 칩 「${c}」`);
+    // 생성기가 쓴 값 = 분류 자료(tools/simple-frames/topics.json) · 자료에 없는 틀이면 생성기가 멈춰요
+    for (const d of [...gen.DEFS, ...gen.PASS_DEFS]) assert.equal(sixAll.items.find(x => x.id === d.id).topic, gen.TOPICS.frames[d.frame].topic, d.id);
+    assert.throws(() => gen.topicOf({ id: 'simple-zz', frame: 'zz' }), /분류가 없어요/);
+    assert.doesNotMatch(fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), /simple-k1\d{3}/, 'mart.js 에 틀 id 를 박아 분류하지 않아요');
+});
+await test('세계관: 세계관 · 인물 틀 104개가 세계관 다섯에 다 들고(30 · 17 · 12 · 13 · 32) 인물은 캐릭터 묶음의 그 사람이에요', async () => {
+    const so = await imp(path.join(MART, 'sources.js')), ts = await import(pathToFileURL(path.join(MART, 'tone-state.js')).href + '?world-test');
+    const ws = sixAll.items.filter(x => sixAll.topics.find(g => g.id === 'world').chips.includes(x.topic));
+    assert.equal(ws.length, 104);
+    const n = {};
+    for (const x of ws) {
+        const w = so.worldOf(x.world); assert.ok(w, `${x.id} 세계관 없음`); assert.equal(w.label, x.topic, x.id); n[w.id] = (n[w.id] || 0) + 1;
+        if (x.who) assert.ok(ts.CAST_GROUPS.find(g => g.id === w.group).cast.some(c => c.name === x.who), `${x.id} 인물 「${x.who}」가 ${w.label} 묶음에 없어요`);
+    }
+    assert.deepEqual(n, { halo: 30, hunter: 17, adrian: 12, gangho: 13, sentinel: 32 });
+    for (const x of sixAll.items) if (!ws.includes(x)) assert.ok(!x.world && !x.who && !x.src, `${x.id} 는 세계관 틀이 아닌데 world · who · src 가 있어요`);
+    assert.deepEqual(so.WORLDS.map(w => w.id), ['halo', 'hunter', 'adrian', 'gangho', 'sentinel']);
+    for (const g of ts.CAST_GROUPS) assert.ok(so.WORLDS.some(w => w.group === g.id), `캐릭터 묶음 ${g.label} 에 세계관이 없어요`);
+    assert.equal(ws.filter(x => x.world === 'sentinel' && x.who).map(x => x.who).filter((v, i, a) => a.indexOf(v) === i).length, 11, '센티넬버스 인물 11');
+    assert.equal(ws.filter(x => x.who === '은설').length, 2);
+    for (const x of sixAll.items) assert.doesNotMatch(x.name, /세라프/, `${x.id} 공개 표기는 라파엘`);
+});
+await test('카드 원작: 세계관 · 인물 틀 104장이 모두 원작 줄을 갖고(주소 있는 글) 열 글이 모두 어느 카드에든 걸려요 · 「HTML 복사로 써요」는 0개', async () => {
+    const so = await imp(path.join(MART, 'sources.js'));
+    const urls = new Set();
+    for (const x of sixAll.items.filter(i => i.world)) {
+        const src = so.itemSources(x); assert.ok(src.length && src.length === x.src.length && src.every(s => /^https:\/\/kkangtong\.xyz\/posts\/\d+$/.test(s.url) && s.title), `${x.id} 원작 없음`);
+        const w = so.worldOf(x.world); assert.ok(w.works.every(k => x.src.includes(k)) || x.world === 'sentinel', `${x.id} 그 세계관 원작 글이 빠졌어요`);
+        if (x.world === 'sentinel') assert.ok(x.src.length === 1 && w.works.includes(x.src[0]), `${x.id} 센티넬버스는 봇 둘 중 하나`);
+        for (const c of w.chars) if (so.CHAR_WORKS[c].name === x.who) assert.ok(x.src.includes(c), `${x.id} 캐릭터 글`);
+        for (const s of src) urls.add(s.url);
+    }
+    assert.deepEqual([...urls].sort(), so.ALL_SOURCES.map(s => s.url).sort(), '열 글이 모두 카드에 걸려요');
+    assert.equal(so.ALL_SOURCES.length, 10, '원작 주소 열 개');
+    for (const w of so.WORLDS) assert.ok(so.worldSources(w.id).length >= 1 && so.worldSources(w.id).every(s => s.url), `${w.label} 머리 띠 원작`);
+    assert.deepEqual(so.itemSources(sixAll.items.find(x => x.id === 'simple-k1042')).map(s => s.url.split('/').pop()), ['5150', '81234', '43794'], 'D&H 쪽 아드리안 틀은 세 글 다');
+    assert.deepEqual(so.itemSources(sixAll.items.find(x => x.id === 'simple-k1049')).map(s => s.url.split('/').pop()), ['29037']);
+    const martSrc = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), genieSrc = fs.readFileSync(path.join(MART, 'genie.js'), 'utf8');
+    assert.ok(martSrc.includes("if (Array.isArray(item.src)) return itemSources(item).map(x => sourceHtml(x)).join('');"), '카드 · 크게 보기가 같은 줄(sourceLinks)');
+    for (const [f, t] of [['mart.js', martSrc], ['genie.js', genieSrc]]) assert.ok(!t.includes('>HTML 복사로 써요<'), `${f} 에 「HTML 복사로 써요」 글이 남았어요`);
+    assert.ok(so.creditsHtml([]).includes('세계관 · 인물'), '「원작」 칸 설명에 세계관 틀');
+});
+
 // ── 11-12 밤 원작(출처) — 사용자 「글꾸 마트는 왜 출처가 없냐 … 링크 다 어디 감」: 다시 사라지지 않게 잠가요 ──
 await test('원작(출처): 캐릭터 묶음의 모든 캐릭터가 원작 줄을 가져요 · 아홉 글 주소가 전부 자료에 있고 묶음마다 하나 이상 · 캐릭터 칸 · 고른 캐릭터 줄 · 크게 보기 · 「원작」 칸 · 액자 마트가 같은 자료(sources.js)를 읽어요', async () => {
     const so = await imp(path.join(MART, 'sources.js')), ts = await import(pathToFileURL(path.join(MART, 'tone-state.js')).href + '?src-test');
@@ -1824,7 +1878,7 @@ await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-u
     const files = ['mart.js', 'genie.js', 'geulkku/index.html', 'frames/index.html', 'genie/index.html'].map(f => [f, srcOf(f)]);
     for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room', 'genie']) {
         const tails = new Set(files.flatMap(([, s]) => [...s.matchAll(new RegExp(`[./]${mod}\\.js\\?v=(\\w+)`, 'g'))].map(m => m[1])));
-        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? '20261112g' : ['cart', 'frame-room'].includes(mod) ? '20261112d' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
+        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? '20261112h' : mod === 'frame-room' ? '20261112e' : mod === 'cart' ? '20261112d' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
     }
 });
 await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬리가 다르면 브라우저가 같은 모듈을 두 벌 받아요 — char-tone · spoiler · bare · presets 가 그랬어요 · 꼬리 없는 쪽은 옛 캐시가 남아요)', () => {
@@ -1904,7 +1958,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
         assert.match(ui, /data-act="theme-file"\$\{no\}/);
         for (const [n, t] of [['mart.js', mart], ['genie.js', genie]]) assert.doesNotMatch(t, /테마로 받기는 준비 중/, n);
         assert.match(fs.readFileSync(path.join(MART, 'mart.css'), 'utf8'), /\.tag\.is-notake\{/);
-        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112f/, f);
+        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112g/, f);
     });
 }
 console.log(`\n${pass} 통과 · ${fail} 실패`);

@@ -1,4 +1,4 @@
-import { workByTitle, sourceHtml } from './sources.js?v=20261112b';   // 11-12 밤 원작(출처) 자료 한 곳
+import { workByTitle, sourceHtml } from './sources.js?v=20261112c';   // 11-12 밤 원작(출처) 자료 한 곳
 // 액자 마트 — 그림 액자 수백 종 + 심플 30종 · 「내 사진 넣어 보기」 · 거르기(분류 · 찾기 · 가로/세로 · 그림체) · 조금씩 그리기 · 크게 보기.
 // 크게 보기의 조절 칸은 테마 장식 액자 설정과 같은 이름 · 범위 · 기본값(data/frames.json 의 decor — tools/mart-build.mjs 가 테마 src/decor.js · panel.js · frames.js 에서 옮겨 와요)이고,
 // 그리는 규칙도 테마 css/41-decor.css 와 같아요(액자 그림을 사진 위에 100% 100% · 사진은 마스크 + 사진창 clip-path(round 모서리) 안에서 object-fit · object-position · scale · 기울기 rotate · 그림자 SVG 필터).

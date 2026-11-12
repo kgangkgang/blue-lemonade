@@ -2,7 +2,7 @@
 // 자료는 마트가 읽는 파일 그대로예요: 글꾸 data/geulkku/index.json(가벼운 목록 · 미리보기는 그 틀의 조각만 나중에) · 액자 data/frames.json. 고른 쪽만 받아요.
 // 결과 카드는 마트 부품을 빌려 써요(mart.js 의 조각 받기 · 미리보기 · 담기 · HTML 복사, frame-room.js 의 액자 그림 · 담기) — 그래서 담기 · 복사 내용이 마트와 똑같아요.
 // 주소: ?kind=frames 면 액자부터 · 캡처용 ?scene=hello|ask|guess|result|party&seed=숫자&answers=0,1,0,0,0
-import { geulkkuList, frameKit, mylogOn, cart, esc, ensureItem, previewOf, tagsHtml, glyphHtml, descOf, entryOf, doAct, sourceLinks, LOAD_FAIL, isBuiltin, BUILTIN_TAG } from './mart.js?v=20261112g';
+import { geulkkuList, frameKit, mylogOn, cart, esc, ensureItem, previewOf, tagsHtml, glyphHtml, descOf, entryOf, doAct, sourceLinks, LOAD_FAIL, isBuiltin, BUILTIN_TAG } from './mart.js?v=20261112h';
 import { lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
 
 const Q = new URLSearchParams(location.search);
@@ -242,7 +242,7 @@ function geulkkuCard(item) {
     const big = `<a class="btn" href="${href}" title="글꾸 마트의 크게 보기 창으로 가요"><span class="em" aria-hidden="true">🔍</span>크게 보기</a>`;
     // 테마에 이미 든 심플(내장) · HTML 로만 쓰는 틀은 마트처럼 담기 대신 표시만 — 11-12 예전 「준비 중」 안내를 지금 길(크게 보기 「테마로 담기」 · 못 받는 틀은 꼬리표)로
     const first = item.builtin ? '<span class="mart-builtin" title="블루레몬에이드 로그 복사에 이미 있어요 · 마트에서 가져오지 않아도 돼요">✓ 이미 테마에 있어요</span>'
-        : item.copyOnly ? `<span class="mart-builtin" title="${item.simple ? (item.nt ? '블루레몬 로그 복사가 아직 이 틀을 받지 못해요 · 커뮤니티 글에 HTML 로 붙여 써요' : '커뮤니티 글에 HTML 로 붙여 써요 · 블루레몬 로그 복사로 받으려면 「크게 보기」의 「테마로 담기」') : '커뮤니티 글에 HTML 로 붙여 써요'}">HTML 복사로 써요</span>`
+        : item.copyOnly ? ''   // 11-12 밤 「HTML 복사로 써요」 안내 글은 뺐어요(단추와 같은 말)
         : '<button type="button" class="btn mart-pick" data-act="pick" aria-pressed="false"><span class="em" aria-hidden="true">🛒</span>담기</button>';
     result.innerHTML = `<article class="mart-card" data-id="${esc(item.id)}"${item.accent ? ` style="--accent:${esc(item.accent)}"` : ''}>
         <a class="mart-preview geulkku${item.preview ? '' : ' is-wait'}" href="${href}" aria-label="${esc(item.name)} 크게 보기"><div class="mart-preview-in" inert>${item.preview ? previewOf(state) : ph}</div><span class="mart-zoom-hint tag" aria-hidden="true"><span class="em">🔍</span>크게 보기</span></a>
@@ -250,7 +250,7 @@ function geulkkuCard(item) {
         <p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}
         ${whyHtml()}
         ${mylogOn() ? '<p class="gn-mylog">📝 「내 로그로 보기」가 켜져 있어 내 로그로 그렸어요 · HTML 복사도 내 로그로 돼요</p>' : ''}
-        <div class="mart-actions gn-acts is-geulkku">${first}${html}${big}</div>
+        <div class="mart-actions gn-acts is-geulkku${first ? '' : ' is-two'}">${first}${html}${big}</div>
     </article>`;
     const el = state.el = result.firstElementChild;
     el.addEventListener('click', (e) => { const b = e.target.closest('button[data-act]'); if (b) doAct(state, b.dataset.act, b); });

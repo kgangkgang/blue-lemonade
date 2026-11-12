@@ -23,6 +23,7 @@ const CHECK = process.argv.includes('--check');
 const { AUD } = createRequire(import.meta.url)('./song-templates.cjs');
 const sf = await import(pathToFileURL(path.join(ROOT, 'mart', 'simple-frames.js')).href);
 const { themeTakeable } = await import(pathToFileURL(path.join(ROOT, 'mart', 'theme-take.js')).href);   // 11-12 테마가 못 받는 틀 → 목록 nt(짧은 까닭)
+const src = await import(pathToFileURL(path.join(ROOT, 'mart', 'sources.js')).href);   // 11-12 밤 세계관 · 원작 열쇠(분류 자료 topics.json 이 맞는지 봐요)
 const OUT = path.join(DIR, 'index.json');   // 11-11 옛 글꾸를 뺀 뒤로 글꾸 마트 목록은 이 도구가 써요
 const KEY = 'sp-simple';
 // 분류(새 틀이 스물여덟 개뿐이라 동작으로 넷만):
@@ -81,6 +82,24 @@ const PASS_FILE = path.join(SRC, 'pass-defs.json');
 export const PASS_DEFS = (fs.existsSync(PASS_FILE) ? JSON.parse(fs.readFileSync(PASS_FILE, 'utf8')) : [])
   .map((d, i) => ({ id: `simple-${d.frame}`, values: SOUND, name: d.name, emoji: d.emoji, desc: d.desc, frame: d.frame, open: !!d.open, peek: !!d.peek, chunk: `sp-pass-${Math.floor(i / PASS_STEP)}` }));
 
+
+// 11-12 밤 주제 분류 · 세계관 · 인물 · 원작 — tools/simple-frames/topics.json(틀마다 한 줄 · 손으로 화면에 박지 않고 여기서 목록 자료로 나가요)
+//   사용자 「글꾸 카테고리에 뭐 일상 이벤트 예전에 있던 카테고리 가져오고 … 인물 출처도 빠지고 그 세계관 인물들 한꺼번에 보는 것도 없잖아」
+//   누름 방식(category)은 그대로 두고(지니 · 시험 · site-rig 가 봐요) topic(하위 칩) · world · who · src 를 더해요. 한 줄이라도 없거나 어긋나면 멈춰요.
+const TOPIC_FILE = path.join(SRC, 'topics.json');
+export const TOPICS = JSON.parse(fs.readFileSync(TOPIC_FILE, 'utf8'));
+export function topicOf(d) {
+  const t = TOPICS.frames[d.frame];
+  if (!t) throw new Error(`${d.id}: 분류가 없어요 — tools/simple-frames/topics.json 에 한 줄 더해요`);
+  const group = TOPICS.groups.find(g => g.chips.includes(t.topic));
+  if (!group) throw new Error(`${d.id}: 모르는 분류 「${t.topic}」`);
+  if ((group.id === 'world') !== !!t.world) throw new Error(`${d.id}: 세계관 묶음과 world 칸이 어긋나요`);
+  if (!t.world) return { topic: t.topic };
+  const w = src.worldOf(t.world);
+  if (!w || w.label !== t.topic) throw new Error(`${d.id}: 세계관 ${t.world} 와 분류 「${t.topic}」가 어긋나요`);
+  if (!Array.isArray(t.src) || !t.src.length || !t.src.every(k => src.sourceByKey(k))) throw new Error(`${d.id}: 원작(src)이 없거나 모르는 열쇠예요`);
+  return { topic: t.topic, world: t.world, ...(t.who ? { who: t.who } : {}), src: t.src };
+}
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 /** 견본 글 자리표를 값으로 채워요(글 자리는 HTML 이스케이프 · 소리는 견본 mp3 주소) */
@@ -262,7 +281,7 @@ export function build() {
     const ck = d.chunk || KEY; (heavy[ck] = heavy[ck] || {})[d.id] = { preview };
     const card = sf.facesOf(info, info.base).orig[0];
     const take = themeTakeable(preview, { id: d.id, key: sf.simpleFrameInfo(preview)?.key || '' });   // mart.js themePack 과 같은 html · 열쇠
-    rows.push({ id: d.id, name: d.name, emoji: d.emoji, category: catOf(d, html), style: '심플', desc: d.desc, c: d.chunk || KEY, copyOnly: true, photo: true, ...(/<audio\b/.test(html) ? { audio: true } : {}), simple: true, bytes: Buffer.byteLength(html), fx: 'e', bg: card, ink: sf.SIMPLE_CONTRACT.ink[info.base], accent: sf.sianFit(info.K0 || '#8b8e96', '#ffffff', 4.5), ...(take.ok ? {} : { nt: take.why }) });
+    rows.push({ id: d.id, name: d.name, emoji: d.emoji, category: catOf(d, html), style: '심플', desc: d.desc, c: d.chunk || KEY, copyOnly: true, photo: true, ...(/<audio\b/.test(html) ? { audio: true } : {}), simple: true, bytes: Buffer.byteLength(html), fx: 'e', bg: card, ink: sf.SIMPLE_CONTRACT.ink[info.base], accent: sf.sianFit(info.K0 || '#8b8e96', '#ffffff', 4.5), ...(take.ok ? {} : { nt: take.why }), ...topicOf(d) });
   }
   const used = new Set(rows.map(x => x.category));
   const files = {}, chunks = {};
@@ -271,7 +290,7 @@ export function build() {
     files[f] = t; chunks[ck] = { file: f, n: Object.keys(items).length, bytes: Buffer.byteLength(t) };
   }
   const file = chunks[KEY].file, text = files[file];
-  const index = { _: '글꾸 마트 목록 — tools/geulkku-simple.mjs 산출물(심플 새 틀 · 고치지 말고 다시 만들어요) · 옛 글꾸는 11-11 에 마트에서 뺐어요(되살리는 법은 W/outputs/지시-1110/심플-새틀-이식/마트-길닦기.md 12절)', count: rows.length, categories: CATS.filter(c => used.has(c.id)), chunks };
+  const index = { _: '글꾸 마트 목록 — tools/geulkku-simple.mjs 산출물(심플 새 틀 · 고치지 말고 다시 만들어요) · 옛 글꾸는 11-11 에 마트에서 뺐어요(되살리는 법은 W/outputs/지시-1110/심플-새틀-이식/마트-길닦기.md 12절)', count: rows.length, categories: CATS.filter(c => used.has(c.id)), topics: TOPICS.groups.map(g => ({ id: g.id, label: g.label, chips: g.chips.filter(c => rows.some(x => x.topic === c)) })).filter(g => g.chips.length), chunks };
   const indexText = `${JSON.stringify(index, null, 1).replace(/\n}$/, '')},\n "items": [\n${rows.map(x => `  ${JSON.stringify(x)}`).join(',\n')}\n ]\n}\n`;
   return { rows, heavy, text, file, files, chunks, indexText, missing };
 }

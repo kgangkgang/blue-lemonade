@@ -19,8 +19,8 @@ import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110
 import { toneState, toned, toneOut, toneKey, CAST_GROUPS } from './tone-state.js?v=20261112e';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
 import { simpleReady } from './simple-frames.js?v=20261112a';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
-import { WORKS, CHAR_WORKS, ADRIAN_WORKS, workByTitle, sourceHtml, creditsHtml } from './sources.js?v=20261112b';   // 11-12 밤 원작(출처) 자료 한 곳
-import { mountCast, pickedCreditHtml } from './cast.js?v=20261112g';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
+import { WORKS, CHAR_WORKS, ADRIAN_WORKS, workByTitle, sourceHtml, creditsHtml, itemSources, worldOf } from './sources.js?v=20261112c';   // 11-12 밤 원작(출처) 자료 한 곳
+import { mountCast, pickedCreditHtml } from './cast.js?v=20261112h';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
 import { frameMarkdown } from './mine-text.js?v=20261112e';   // 11-11 글만 복사(마크다운)
 import { makeSet } from './geulkku-set.js?v=20261112e';   // 11-12 설정 꼴 blGeulkku 2
 import { lookNow } from './look.js?v=20261112a';
@@ -28,7 +28,7 @@ import { motionNow } from './motion-state.js?v=20261112a';
 import { texNow } from './texture.js?v=20261112a';
 import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
 import { tuneOf } from './tune.js?v=20261112e';
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112g';
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112h';
 import { wireSelectHide } from './select-hide.js?v=20261112e';   // 11-12 미리보기에서 글을 고르면 옆에 뜨는 막대(눌러야 보이게 · 숨김 풀기 · 굵게 · 기울임)
 import { themeTakeable } from './theme-take.js?v=20261112c';   // 11-12 테마가 이 틀을 받는지(테마 받기 검사를 옮긴 것 · 목록 틀은 index.json nt · 내 글꾸는 여기서)
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
@@ -578,6 +578,8 @@ const sourceLinks = item => {
     w = ws.length ? ws : null;
     const a = (src, kind) => `<a class="mart-source" href="${esc(src.url)}" target="_blank" rel="noopener noreferrer" title="원작 깡싸 글">🔗 ${kind} · ${esc(src.title)}</a>`;
     // 틀마다 출처 봇이 다른 분류(11-06 센티넬버스 — 센가시뮬 · 센가 아카데미)는 목록의 source(봇 정식 이름)를 글로만 보여요(깡싸 글 주소는 아직 없어요)
+    // 11-12 밤 새 틀(세계관 · 인물 104): 목록 자료의 src(sources.js 열쇠) 그대로 — 깡캐 글 먼저 · 원작 글 전부
+    if (Array.isArray(item.src)) return itemSources(item).map(x => sourceHtml(x)).join('');
     const own = !w && item.source ? sourceHtml(workByTitle(item.source) || { title: item.source }, '원작') : '';   // 11-12 밤 주소를 받은 봇(센티넬버스 둘)은 링크로
     // 11-09 노래방 글꾸(kara): 견본 대신 내 mp3 · 가사로 만드는 화면(mart/kara/)으로 — 카드 · 상세 창 둘 다
     const kara = item.category === 'kara' ? `<a class="mart-source" href="${esc(asset(`kara/?theme=${String(id).replace(/^kara-/, '')}`))}" title="mp3 주소 · 제목 · 이름 · 색 · [분:초] 가사를 넣으면 이 테마의 HTML 이 바로 나와요">🎤 내 곡으로 만들기 · 노래방 글꾸</a>` : '';
@@ -611,7 +613,8 @@ function actionsHtml(item) {
     if (item.builtin) return `<div class="mart-actions is-geulkku is-builtin"><span class="mart-builtin" title="블루레몬에이드 로그 복사에 이미 있어요 · 마트에서 가져오지 않아도 돼요">✓ 이미 테마에 들어 있어요</span>${html}</div>`;
     if (item.own) return `<div class="mart-actions is-geulkku is-builtin is-copyonly is-own"><button type="button" class="btn mart-own-del" data-act="own-del" title="이 브라우저에서 지워요(두 번 눌러요)">지우기</button>${html}</div>`;   // 11-12 내 글꾸
     // 오리지널 컨셉 30 · 화보 갤러리 · 노래 앨범(copyOnly): 테마로 받지 않는 틀 — 「담기」 · 「테마용 복사」 없이 HTML 복사만
-    if (item.copyOnly) return `<div class="mart-actions is-geulkku is-builtin is-copyonly"><span class="mart-builtin" title="${item.simple ? '커뮤니티 글에 붙이는 심플 글꾸예요 · 제목 · 이름 · 글을 바꿔 HTML 칸에 붙여요' : item.photo ? (item.category === 'kara' ? '커뮤니티 글에 붙이는 노래방 글꾸예요 · 「내 곡으로 만들기」에서 mp3 · 가사를 넣으면 완성 HTML 이 나와요' : item.category === 'song' || item.audio ? '커뮤니티 글에 붙이는 노래 앨범 틀이에요 · 그림 · mp3 주소와 글을 바꿔 HTML 칸에 붙여요' : '커뮤니티 글에 붙이는 사진 화보 틀이에요 · 사진 주소 · 글을 바꿔 HTML 칸에 붙여요') : '테마로는 받지 않는 틀이에요 · 커뮤니티 글에 HTML 로 붙여 써요'}">HTML 복사로 써요</span>${html}</div>`;
+    // 11-12 밤 사용자 「왜 둘 다 html 복사로 써요 html 복사 이거임? 같은 말 아냐?」 — 왼쪽 안내 글을 뺐어요(0개). 테마가 못 받는 틀은 이름 줄 꼬리표 「테마 아직 못 받음」이 말해요
+    if (item.copyOnly) return `<div class="mart-actions is-geulkku is-solo">${html}</div>`;
     return `<div class="mart-actions${item.kind === 'geulkku' ? ' is-geulkku' : ''}"><button type="button" class="btn mart-pick" data-act="pick" aria-pressed="false"><span class="em" aria-hidden="true">🛒</span>담기</button><button type="button" class="btn" data-act="copy" title="이것 하나만 바로 복사(테마 「마트에서 가져오기」용)">${item.kind === 'geulkku' ? '테마용 복사' : '바로 복사'}</button>${html}</div>`;
 }
 /** 11-11 즐겨찾기 ☆ · ★(무테 아이콘) — 카드 이름 줄 · 크게 보기 제목 옆 */
@@ -657,7 +660,7 @@ function doAct(state, act, b) {
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
 let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261112g').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261112h').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
@@ -965,7 +968,9 @@ function card(item) {
     return el;
 }
 /** 찾기 글(이름 · 설명 · 분류 · 묶음 · 그림체 · 꼬리표) — 목록을 받을 때 한 번만 */
-function textOf(item) { return [item.name || item.label, item.desc, item.source || '', item.categoryLabel, catLabel(item.category, item.categoryLabel), SEARCH_ALSO[item.category] || '', picker?.groupLabel(item.category) || '', item.builtin ? '내장 테마 내장 블루레몬' : '', kind === 'geulkku' ? styleOf(item) : '', ...(item.tags || [])].join(' ').toLowerCase(); }
+let topicGroups = [];   // 목록 자료 topics — [{ id, label, chips }]
+const topicGroupLabel = topic => topicGroups.find(g => g.chips.includes(topic))?.label || '';
+function textOf(item) { return [item.name || item.label, item.desc, item.source || '', item.topic || '', topicGroupLabel(item.topic), item.world ? `${worldOf(item.world)?.label || ''} 세계관 인물` : '', item.who || '', itemSources(item).map(x => x.title).join(' '), item.categoryLabel, catLabel(item.category, item.categoryLabel), SEARCH_ALSO[item.category] || '', picker?.groupLabel(item.category) || '', item.builtin ? '내장 테마 내장 블루레몬' : '', kind === 'geulkku' ? styleOf(item) : '', ...(item.tags || [])].join(' ').toLowerCase(); }
 
 // ── 글꾸 카드 미리보기 늦게 채우기 — 화면 가까이(위아래 한 화면쯤) 온 카드만 조각을 받고 틀 HTML 을 그려요(이미 받은 조각이어도 그리기는 보일 때). 걸러져 빠진 카드는 그리지 않아요 ──
 const cardOf = new WeakMap();
@@ -1108,6 +1113,7 @@ async function main() {
     const items = data.items || [];
     if (kind === 'geulkku') {
         chunkFiles = data.chunks || {};
+        topicGroups = Array.isArray(data.topics) ? data.topics : [];
         const labels = new Map((data.categories || []).map(c => [c.id, c.label]));
         for (const x of items) Object.assign(x, { kind: 'geulkku', label: x.label || x.name, categoryLabel: x.categoryLabel || labels.get(x.category) || '' });
     }
@@ -1186,7 +1192,7 @@ async function main() {
 }
 // 액자 마트: 수백 종 · 내 사진 넣어 보기 · 거르기 · 조금씩 그리기(frame-room.js) — 받기 · 장바구니는 여기 것을 그대로 써요
 const start = kind === 'frames'
-    ? import('./frame-room.js?v=20261112d').then(m => m.start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
+    ? import('./frame-room.js?v=20261112e').then(m => m.start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
     : kind === 'geulkku' ? main() : null;   // 그 밖의 페이지(지니)는 아래 부품만 빌려 써요
 start?.catch(e => { grid.innerHTML = `<p class="mart-empty">목록을 못 불러왔어요 · ${esc(e.message)}</p>`; });
 
@@ -1205,6 +1211,6 @@ export async function geulkkuList() {
     return data;
 }
 /** 프레임 방(frame-room.js)의 지니용 준비 — 마트 액자 카드와 같은 그림 · 같은 담기 값 */
-export const frameKit = () => import('./frame-room.js?v=20261112d').then(m => m.kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
+export const frameKit = () => import('./frame-room.js?v=20261112e').then(m => m.kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
 export const mylogOn = () => mylog.on;
 export { isBuiltin, BUILTIN_TAG, cart, say, esc, asset, ensureItem, previewOf, tagsHtml, glyphHtml, iconSrc, descOf, catLabel, styleOf, entryOf, receipt, doAct, copyEntries, copyHtml, sourceLinks, LOAD_FAIL };

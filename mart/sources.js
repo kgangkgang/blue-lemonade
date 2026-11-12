@@ -25,6 +25,21 @@ export const GROUP_WORKS = Object.freeze({ halo: ['halo'], dh: ['hunter', 'adria
 /** 아드리안의 원작 글은 둘(봇 글 + 헌시뮬 추가모드 글) — 어디서든 둘을 나란히 걸어요 */
 const ADRIAN = Object.freeze(['adrian', 'adrianMod']);
 export const ADRIAN_WORKS = Object.freeze(ADRIAN.map(k => WORKS[k]));
+/** 11-12 밤 세계관(글꾸 틀 분류 「세계관 · 인물」의 하위 칩) — id 는 목록 자료(index.json 항목 world) · group 은 캐릭터 묶음(tone-state.js CAST_GROUPS) · works 는 그 세계관의 원작 글 전부 · chars 는 그 세계관 인물의 캐릭터 글 */
+export const WORLDS = Object.freeze([
+    Object.freeze({ id: 'halo', label: '천지합동청', group: 'halo', works: Object.freeze(['halo']), chars: Object.freeze(['uziel', 'lucifer', 'asmodeus']) }),
+    Object.freeze({ id: 'hunter', label: 'D&H', group: 'dh', works: Object.freeze(['hunter']), chars: Object.freeze([]) }),
+    Object.freeze({ id: 'adrian', label: '아드리안', group: 'dh', works: ADRIAN, chars: Object.freeze([]) }),
+    Object.freeze({ id: 'gangho', label: '무협시뮬', group: 'gangho', works: Object.freeze(['gangho']), chars: Object.freeze([]) }),
+    Object.freeze({ id: 'sentinel', label: '센티넬버스', group: 'sentinel', works: Object.freeze(['sengaSim', 'sengaAcademy']), chars: Object.freeze([]) }),
+]);
+export const worldOf = id => WORLDS.find(w => w.id === id) || null;
+/** 원작 열쇠(WORKS · CHAR_WORKS 의 이름) → 원작 줄 { kind, title, url } · 모르는 열쇠는 null */
+export const sourceByKey = key => (WORKS[key] ? { kind: '원작', ...WORKS[key] } : CHAR_WORKS[key] ? { kind: '깡캐', title: CHAR_WORKS[key].title, url: CHAR_WORKS[key].url } : null);
+/** 글꾸 틀 한 장의 원작 줄들(목록 자료의 src — 열쇠 배열) */
+export const itemSources = item => (Array.isArray(item?.src) ? item.src.map(sourceByKey).filter(Boolean) : []);
+/** 세계관 하나의 원작 줄 전부(원작 글 + 그 세계관 인물의 캐릭터 글) */
+export const worldSources = id => { const w = worldOf(id); return w ? [...w.works, ...w.chars].map(sourceByKey).filter(Boolean) : []; };
 /** 한 묶음 안에서 원작이 갈리는 캐릭터(D&H · 아드리안 묶음) */
 const ONLY = Object.freeze({ dh: name => (name === '아드리안 폰 아이젠베르크' ? ADRIAN : ['hunter']) });
 /** 묶음 이름표(「원작」 칸) */
@@ -54,5 +69,5 @@ export const sourceHtml = (src, kind = src.kind || '원작') => (src.url
 /** 「원작」 칸 — 캐릭터를 안 골라도 보이는 묶음별 목록. groups: tone-state.js CAST_GROUPS */
 export function creditsHtml(groups) {
     const rows = groups.filter(g => GROUP_WORKS[g.id]).map(g => `<li><b>${esc(GROUP_LABELS[g.id] || g.label)}</b><span class="mart-credits-who">${esc(g.cast.map(x => x.name).join(' · '))}</span><span class="mart-credits-links">${groupSources(g.id, g.cast.map(x => x.name)).map(s => sourceHtml(s)).join('')}</span></li>`).join('');
-    return `<h2>원작</h2><p>목록 위 <b>깡통 · 깡캐</b> 칸의 캐릭터 이름과 대사색은 아래 원작 봇에서 왔어요. 원작 글을 누르면 깡통에서 열려요.</p><ul class="mart-credits-list">${rows}</ul>`;
+    return `<h2>원작</h2><p><b>깡통 · 깡캐</b> 칸의 캐릭터 이름 · 대사색과 <b>세계관 · 인물</b> 틀은 아래 원작 봇에서 왔어요. 원작 글을 누르면 깡통에서 열려요.</p><ul class="mart-credits-list">${rows}</ul>`;
 }
