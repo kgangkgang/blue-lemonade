@@ -8,7 +8,7 @@
 import { toneHtml, toneMixHtml, speakerColor, PAPER_COLORS, TEXTURES } from './tone-geulkku.js?v=20261110v';
 import { toneSimple, ORIGINAL } from './simple-frames.js?v=20261112a';
 import { applyLook, lookRev, lookNow } from './look.js?v=20261112a';   // 11-11 글 모양(테마 「글자」 탭 축소판 — 글꼴 · 크기 · 자간 · 그림자 …) — 값이 없으면 그대로
-import { tuneOf, tuneRev, applyTune, applySpoilers, spoilersOf } from './tune.js?v=20261112a';
+import { tuneOf, tuneRev, applyTune, applySpoilers, spoilersOf } from './tune.js?v=20261112e';
 import { applyWords, wordsRev } from './words.js?v=20261112a';
 import { applyMotion, motionRev } from './motion-state.js?v=20261112a';
 import { applyTex, texRev } from './texture.js?v=20261112a';   // 11-12 바탕 질감 — 맨 마지막   // 11-12 움직임 세기(글 · 소품) — 중이면 그대로   // 11-11 「도구」 — 이름 숨김 · 단어 바꾸기(모든 틀 · 글자만)

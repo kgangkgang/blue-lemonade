@@ -3,18 +3,19 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone, ownOf } from './tone-state.js?v=20261112a';
+import { toneState, setTone, ownOf } from './tone-state.js?v=20261112e';
 import { speakerPair, hasPropTone, hasOwnTone, simpleFrameInfo } from './simple-frames.js?v=20261112a';
 import { fieldsOf, valsHtml, valOk } from './custom.js?v=20261112a';
 import { LOOKS, sameLook } from './looks.js?v=20261112a';   // 11-12 간편 — 추천 스타일 여섯 벌
 import { motionNow, setMotion, motionCaps, MOTION_LEVELS, SPEEDS } from './motion-state.js?v=20261112a';   // 11-12 빠르기 · 열어 두기
 import { SHAPE_FIELDS, PAINT_ROLES, shapeNow, shapeValue, setShape, setShapeValue, shapeInfo } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기
 import { capsOf, capWhy } from './caps.js?v=20261112a';
-import { makeSet, readSet, encodeSet, readAny, setFile, SET_EXT } from './geulkku-set.js?v=20261112a';   // 11-12 설정 파일 .bl-geulkku.json · 코드 BLG1.   // 11-12 틀 능력표 — 못 받는 칸은 흐리게 + 까닭 한 줄   // 11-12 움직임 세기
+import { makeSet, readSet, encodeSet, readAny, setFile, SET_EXT } from './geulkku-set.js?v=20261112e';   // 11-12 설정 파일 .bl-geulkku.json · 코드 BLG1.   // 11-12 틀 능력표 — 못 받는 칸은 흐리게 + 까닭 한 줄   // 11-12 움직임 세기
 import { texNow, setTex, texInfo, TEX_ORDER, TEX_NAMES } from './texture.js?v=20261112a';   // 11-12 바탕 질감
-import { swapSpeakers } from './cast.js?v=20261112a';
-import { castPicked } from './tone-state.js?v=20261112a';   // 11-11 「이 틀」 값 칸
-import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine, setsFile, readSets, addSets } from './tune.js?v=20261112a';
+import { swapSpeakers } from './cast.js?v=20261112e';
+import { castPicked } from './tone-state.js?v=20261112e';   // 11-11 「이 틀」 값 칸
+import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine, setsFile, readSets, addSets } from './tune.js?v=20261112e';
+import { createEditBlocks } from './edit-blocks.js?v=20261112e';   // 11-12 글 고치기 공용 편집 모듈(테마 로그 복사 창도 같이)
 import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261112a';
 import { mineOn, mineInfo, applyMine, storyOf } from './mine-text.js?v=20261112a';
 import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261112a';
@@ -447,9 +448,9 @@ function histRecord(item, sheet) {
 function histStart(item) { clearTimeout(hist.timer); hist.id = item.id; hist.stack = []; hist.at = -1; histPush(item); }
 function syncHist(sheet) {
     const u = sheet?.querySelector('[data-hist="undo"]'), r = sheet?.querySelector('[data-hist="redo"]');
-    const pending = !!hist.timer;
-    if (u) u.disabled = !(hist.at > 0 || pending);
-    if (r) r.disabled = pending || hist.at >= hist.stack.length - 1;
+    const pending = !!hist.timer, pv = sheet?.querySelector('.mart-sheet-preview'), cb = editing && pv ? blocksOf(pv) : null;   // 11-12 글 고치기 중이면 칸 단위 되돌리기도
+    if (u) u.disabled = !(hist.at > 0 || pending || cb?.canUndo());
+    if (r) r.disabled = !cb?.canRedo() && (pending || hist.at >= hist.stack.length - 1);
 }
 /** 한 칸 앞 · 뒤로 — 칠하기 · 글 모양 · 깡통 · 깡캐를 그 칸으로 되돌려요 */
 function histMove(item, step) {
@@ -548,28 +549,16 @@ export const syncMine = (sheet, item) => {
 
 /** 11-12 「글 고치기」 끄기(붙일 곳 흉내로 바꿀 때 — 흉내 글은 칸 번호가 달라요) */
 export function stopEdit() { editing = false; }
-/** 미리보기의 글 자리를 고쳐 쓸 수 있게(「글 고치기」가 켜져 있을 때만) — 자리 번호는 tune.js editables 와 같은 차례 */
+/** 미리보기의 글 자리를 고쳐 쓸 수 있게(「글 고치기」가 켜져 있을 때만) — 11-12 공용 편집 모듈(edit-blocks.js): 점선 블록 · 그 자리 고치기 · 소품 전 · 후 · 칸 단위 되돌리기
+ *  자리 번호는 tune.js editables 와 같은 차례(바탕 칸 뒤에 소품 글자 덧칸) */
+const blocks = new WeakMap();
+export const blocksOf = host => { let c = blocks.get(host); if (!c) { c = createEditBlocks(host, { label: '소품' }); blocks.set(host, c); } return c; };
 export function armEdit(previewRoot, item) {
     if (!previewRoot || !item?.simple) return;
     const root = previewRoot.querySelector('.gk'); if (!root) return;
-    let i = 0, inside = null;
-    const rich = el => [...el.querySelectorAll('*')].every(c => (RICH_TAGS.includes(c.tagName.toLowerCase()) && !c.attributes.length) || c.hasAttribute('data-bl-mask') || !!c.closest('[data-bl-spoiler]'));   // 숨긴 글 · 테이프 칸이 든 칸도 한 칸   // 안에 꾸밈 태그만(tune.js LEAF 와 같은 뜻)
-    const walk = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
-    for (let el = walk.nextNode(); el; el = walk.nextNode()) {
-        if (inside?.contains(el)) { el.removeAttribute('contenteditable'); delete el.dataset.blEd; continue; }   // 한 칸 안의 꾸밈은 따로 칸이 아니에요
-        if (el.closest('.blsp-h')) continue;   // 숨긴 줄의 흐린 사본(알약 쪽)은 글 칸이 아니에요 — 칸 번호는 숨기기 전과 같아요
-        if (!rich(el) || ['STYLE', 'SCRIPT', 'AUDIO', 'BR'].includes(el.tagName) || [...el.childNodes].some(n => n.nodeType === 8)) continue;
-        let prev = el.previousSibling; while (prev && prev.nodeType === 3 && !prev.data.trim()) prev = prev.previousSibling;
-        const marked = prev?.nodeType === 8 && /^\s*✎/.test(prev.data);
-        if (!marked && !EDIT_CLASSES.some(c => el.classList.contains(c)) && !EDIT_TAGS.includes(el.tagName.toLowerCase())) continue;
-        if (el.classList.contains('gk-hl') && !el.textContent.trim()) continue;   // 15 요람 공 빛 조각(빈 칸)은 글 칸이 아니에요
-        el.dataset.blEd = String(i++); inside = el;
-        if (editing) { el.setAttribute('contenteditable', 'true'); el.setAttribute('spellcheck', 'false'); }   // 굵게 · 기울임 · 줄바꿈을 받으려고 plaintext-only 대신 true(붙여 넣기는 아래에서 글만)
-        else { el.removeAttribute('contenteditable'); el.removeAttribute('spellcheck'); }
-    }
+    for (const d of root.querySelectorAll('details[data-bl-spoiler]')) { d.open = editing; if (editing) d.dataset.blHold = 'true'; else delete d.dataset.blHold; }   // 고치는 동안은 숨긴 줄도 펼쳐 보여요(그래야 고쳐 쓰고 풀 수 있어요)
+    blocksOf(previewRoot).setOn(editing);
     previewRoot.classList.toggle('is-editing', editing);
-    for (const d of root.querySelectorAll('details[data-bl-spoiler]')) d.open = editing;   // 고치는 동안은 숨긴 줄도 펼쳐 보여요(그래야 고쳐 쓰고 풀 수 있어요)
-    for (const d of root.querySelectorAll('details')) { if (editing) d.dataset.blHold = String(d.open); else delete d.dataset.blHold; }   // 켤 때의 열림 상태를 붙잡아 둬요
 }
 
 /** 압축된 테마 스타일 코드(BLS1. — deflate-raw)를 풀어 JSON 글자로 */
@@ -701,7 +690,13 @@ export function wireTune(sheet, { current, openItem, say = () => {}, clip = null
     const onChange = () => { const item = current()?.item; if (sheet.open && item?.simple) { histRecord(item, sheet); syncHist(sheet); } };
     document.addEventListener('bl-tune-change', onChange);
     document.addEventListener('bl-tone-change', onChange);
-    const undo = (step) => { const item = current()?.item; if (!item) return; if (histMove(item, step)) { redraw(item); syncMine(sheet, item); say(step < 0 ? '되돌렸어요' : '다시 했어요', 1400); } syncHist(sheet); };
+    sheet.addEventListener('focusout', () => setTimeout(() => syncHist(sheet)));   // 11-12 칸 하나를 다 고치면(바깥 누르기 · Enter) 칸 단위 되돌리기가 켜져요
+    const undo = (step) => {
+        const item = current()?.item; if (!item) return;
+        const pv = sheet.querySelector('.mart-sheet-preview'), cb = editing && pv ? blocksOf(pv) : null;   // 11-12 글 고치기 중이면 칸 단위(고친 칸 하나씩)
+        if (cb && (step < 0 ? cb.canUndo() : cb.canRedo())) { if (step < 0) cb.undo(); else cb.redo(); syncHist(sheet); return; }
+        if (histMove(item, step)) { redraw(item); syncMine(sheet, item); say(step < 0 ? '되돌렸어요' : '다시 했어요', 1400); } syncHist(sheet);
+    };
     sheet.addEventListener('keydown', (e) => {
         if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
         const k = e.key.toLowerCase(); if (k !== 'z' && k !== 'y') return;

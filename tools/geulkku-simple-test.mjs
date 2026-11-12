@@ -675,7 +675,7 @@ await test('조절: 값이 없으면 한 글자도 안 달라요 · 글자색은
         assert.equal(ed2[0].text, '고친 &lt;글&gt; &amp; 제목'); assert.equal(ed2[last].text, '끝 줄');
         for (let i = 1; i < last; i++) assert.equal(ed2[i].text, ed[i].text, `${row.id} 다른 자리 그대로`);
         // 글 · 덮는 규칙을 빼면 칠한 판 그대로
-        const strip = h => { const e = tu.editables(h); let s = h; for (const x of [...e].reverse()) s = s.slice(0, x.start) + s.slice(x.end); return s.split('\n').filter(l => !l.startsWith(K)).join('\n'); };
+        const strip = h => { const e = tu.editables(h); let s = h; for (const x of [...e].sort((a, b) => b.start - a.start)) s = s.slice(0, x.start) + s.slice(x.end); return s.split('\n').filter(l => !l.startsWith(K)).join('\n'); };
         assert.equal(strip(out), strip(base), `${row.id} 뼈대 그대로`);
         const ready = sf.simpleReady(shutPeek(out)), rep = tg.readyReport(ready);
         assert.ok(rep.ok, `${row.id} 정적 검사 ${JSON.stringify(rep)}`);
@@ -1712,7 +1712,7 @@ await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-u
     const files = ['mart.js', 'genie.js', 'geulkku/index.html', 'frames/index.html', 'genie/index.html'].map(f => [f, srcOf(f)]);
     for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room', 'genie']) {
         const tails = new Set(files.flatMap(([, s]) => [...s.matchAll(new RegExp(`[./]${mod}\\.js\\?v=(\\w+)`, 'g'))].map(m => m[1])));
-        assert.deepEqual([...tails], [['mart', 'genie', 'cart', 'tune-ui'].includes(mod) ? '20261112d' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
+        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? '20261112e' : mod === 'cart' ? '20261112d' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
     }
 });
 await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬리가 다르면 브라우저가 같은 모듈을 두 벌 받아요 — char-tone · spoiler · bare · presets 가 그랬어요 · 꼬리 없는 쪽은 옛 캐시가 남아요)', () => {

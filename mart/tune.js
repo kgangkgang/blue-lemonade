@@ -118,19 +118,27 @@ export function setTune(id, next, { textOnly = false } = {}) {
 
 /** 틀 HTML 의 글 자리 목록(문서 차례) — [{ i, cls, text(HTML 이스케이프된 원래 글), start, end }] */
 const LEAF = /(<!--\s*✎[^>]*-->\s*)?<([a-z][a-z0-9]*)\b([^>]*)>((?:[^<]|<br\s*\/?>|<\/?(?:b|i|strong|em|s)>)*)<\/\2>/g;
+/** 글자(문자 · 숫자)가 하나라도 있나 — 태그 · 엔티티를 풀고 봐요(edit-blocks.js markSlots 가 DOM 글로 같은 것을 봐요) */
+const ENT = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+export const hasLetters = s => /[\p{L}\p{N}]/u.test(String(s ?? '').replace(/<[^>]*>/g, '').replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (all, e) => (e[0] === '#' ? String.fromCodePoint(e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENT[e.toLowerCase()] ?? '')));
+/**
+ * 11-12 덧칸: 바탕 칸(EDIT_CLASSES · ✎ · em/strong/s) 말고도 글자가 든 잎 요소(소품 위 글자 — 영수증 · 도장 · 신문 머리 · 선택지 …)는 모두 칸이에요.
+ *   번호는 바탕 칸 뒤에 이어 붙여요(예전에 고친 글 번호가 안 밀려요) — 그래서 돌려주는 배열은 번호 차례(문서 차례가 아닐 수 있어요 · 자리 차례가 필요하면 start 로 정렬)
+ */
 export function editables(html) {
     const text = String(html ?? ''), at = text.indexOf('</style>');
-    const from = at < 0 ? 0 : at + 8, out = [];
+    const from = at < 0 ? 0 : at + 8, out = [], extra = [];
     LEAF.lastIndex = from;
     for (let m; (m = LEAF.exec(text));) {
+        if (['style', 'script', 'audio', 'title'].includes(m[2])) continue;
         const cls = ((m[3].match(/\sclass="([^"]*)"/) || [])[1] || '').split(/\s+/);
         const hit = EDIT_CLASSES.find(c => cls.includes(c));
-        if (!hit && !m[1] && !EDIT_TAGS.includes(m[2])) continue;
-        if (hit === 'gk-hl' && !m[4].trim()) continue;
-        if (m[2] === 'style' || m[2] === 'script' || m[2] === 'audio') continue;
         const end = m.index + m[0].length - (`</${m[2]}>`).length;
-        out.push({ i: out.length, cls: hit || (EDIT_TAGS.includes(m[2]) ? m[2] : 'mark'), text: m[4], start: end - m[4].length, end });
+        const cell = { cls: hit || (EDIT_TAGS.includes(m[2]) ? m[2] : m[1] ? 'mark' : 'prop'), text: m[4], start: end - m[4].length, end };
+        if (hit || m[1] || EDIT_TAGS.includes(m[2])) { if (!(hit === 'gk-hl' && !m[4].trim())) out.push({ i: out.length, ...cell }); continue; }
+        if (hasLetters(m[4])) extra.push(cell);
     }
+    for (const c of extra) out.push({ i: out.length, ...c });
     return out;
 }
 /** 고쳐 쓴 글을 넣어요 — texts: { 자리 번호: 글(이스케이프 전) } */
@@ -138,7 +146,8 @@ export function applyTexts(html, texts) {
     const keys = Object.keys(texts || {});
     if (!keys.length) return String(html ?? '');
     let text = String(html ?? '');
-    for (const e of editables(text).reverse()) if (Object.hasOwn(texts, e.i)) text = text.slice(0, e.start) + cleanRich(texts[e.i]) + text.slice(e.end);
+    // 자리 뒤에서부터(덧칸은 번호 차례와 자리 차례가 달라요)
+    for (const e of editables(text).sort((a, b) => b.start - a.start)) if (Object.hasOwn(texts, e.i)) text = text.slice(0, e.start) + cleanRich(texts[e.i]) + text.slice(e.end);
     return text;
 }
 /** 역할별 글자색 덮는 규칙 — 틀 <style> 끝에(그 판 뿌리 클래스에만 걸려요 · 글자색마다 fill 짝) */

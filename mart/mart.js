@@ -16,18 +16,18 @@ import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
 import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110v';   // 11-10 대사색 하나로 다시 칠하기 · 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
-import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261112a';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
+import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261112e';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
 import { simpleReady } from './simple-frames.js?v=20261112a';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
-import { mountCast } from './cast.js?v=20261112a';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
+import { mountCast } from './cast.js?v=20261112e';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
 import { frameMarkdown } from './mine-text.js?v=20261112a';   // 11-11 글만 복사(마크다운)
-import { makeSet } from './geulkku-set.js?v=20261112a';   // 11-12 설정 꼴 blGeulkku 2
+import { makeSet } from './geulkku-set.js?v=20261112e';   // 11-12 설정 꼴 blGeulkku 2
 import { lookNow } from './look.js?v=20261112a';
 import { motionNow } from './motion-state.js?v=20261112a';
 import { texNow } from './texture.js?v=20261112a';
 import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
-import { tuneOf } from './tune.js?v=20261112a';
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112d';
+import { tuneOf } from './tune.js?v=20261112e';
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112e';
 import { themeTakeable } from './theme-take.js?v=20261112c';   // 11-12 테마가 이 틀을 받는지(테마 받기 검사를 옮긴 것 · 목록 틀은 index.json nt · 내 글꾸는 여기서)
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
 import { sanitizeHtml, guessSlot, fromPath, slotPath } from './lib/log-copy/log-copy-sanitize.js';
@@ -662,7 +662,7 @@ function doAct(state, act, b) {
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
 let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261112a').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261112e').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
