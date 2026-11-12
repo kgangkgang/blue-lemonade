@@ -73,3 +73,5 @@ document.querySelectorAll('.fresh,.section-head,.palette-layout,.reading-layout,
   set(html.classList.contains('device-pc') ? 'pc' : 'mobile');
   pick.addEventListener('click', e => { const b = e.target.closest('button[data-device]'); if (!b||b.getAttribute('aria-pressed')==='true') return; set(b.dataset.device); try { localStorage.setItem('bl-site-device', b.dataset.device); } catch {} });
 })();
+// 판 번호는 맨 위 「최신 판」 칩 한 곳만 고쳐요(출시 도구가 그 칩을 바꿔요) — 다른 곳의 [data-bl-version] 은 여기서 따라 적어요
+(() => { const v = document.querySelector('.release-chip b')?.textContent.trim(); if (v) document.querySelectorAll('[data-bl-version]').forEach(e => { e.textContent = v; }); })();
