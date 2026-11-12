@@ -268,7 +268,9 @@ function annotate(root, label, fields = true) {
     for (const el of decoText) insertBefore(el, `꾸밈 글 「${safeComment(decode(textOf(el))).slice(0, 24)}」 (글자만 바꿔요)`);
     const title = safeComment(label);
     const where = fields ? '그 주석 바로 아래 data-f="title" · "date" · "from" · "tail" 칸' : '그 주석 바로 아래 칸';
-    root.children.unshift(commentNode(`블루레몬에이드 로그 복사${title ? ` · 「${title}」` : ''} — 보이는 글씨(제목 · 꼬리말 · 이름 · 본문 · 날짜 · 꾸밈 글)는 전부 바꿔도 돼요 · 제목 · 날짜 · 보낸 이 · 꼬리말은 ${where}의 글자만 바꿔요 · ${LEGEND_HINT} · 본문 줄바꿈은 <br> · 이런 주석은 지워도 모양이 그대로예요`, root));
+    // 메시지 표시가 없는 글(심플 · 추천 글꾸 · 마트 글꾸)에는 data-f 칸도 「▼ 메시지 N 시작」도 없어요 — 없는 것은 가리키지 않아요
+    const how = messages.length ? ` · 제목 · 날짜 · 보낸 이 · 꼬리말은 ${where}의 글자만 바꿔요 · ${LEGEND_HINT}` : '';
+    root.children.unshift(commentNode(`블루레몬에이드 로그 복사${title ? ` · 「${title}」` : ''} — 보이는 글씨(제목 · 꼬리말 · 이름 · 본문 · 날짜 · 꾸밈 글)는 전부 바꿔도 돼요${how} · 본문 줄바꿈은 <br> · 이런 주석은 지워도 모양이 그대로예요`, root));
     return messages.length;
 }
 

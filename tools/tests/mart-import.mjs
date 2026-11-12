@@ -68,11 +68,11 @@ await test('그림 부품(1.0.1 · 11-04): url(\'data:image/svg+xml,…\') 만 �
 
 await test('readMart: 잘못된 JSON · 표시 없음 · 빈 꾸러미 거절 · 항목마다 이유 · 같은 id 두 번 · 상한', () => {
     assert.match(readMart('').error, /없어요/);
-    assert.match(readMart('{bad').error, /JSON/);
-    assert.match(readMart('{"items":[]}').error, /bl-mart/);
-    assert.match(readMart('{"bl-mart":2,"items":[1]}').error, /bl-mart/);
+    assert.match(readMart('{bad').error, /복사가 덜 된 것 같아요/);   // 1.1.8 개발자 말(JSON) 대신
+    assert.match(readMart('{"items":[]}').error, /마트에서 복사한 글이 아니에요/);
+    assert.match(readMart('{"bl-mart":2,"items":[1]}').error, /테마용 복사/);
     assert.match(readMart('{"bl-mart":1,"items":[]}').error, /없어요/);
-    assert.match(readMart('<div>내 글꾸</div>').error, /JSON/, 'HTML 은 마트 글이 아니에요');
+    assert.match(readMart('<div>내 글꾸</div>').error, /복사가 덜 된/, 'HTML 은 마트 글이 아니에요');
     const r = readMart(pack(geulkku(), geulkku(), frame(), { kind: 'script', id: 'x' }, frame({ id: 'bad id!' }), frame({ id: 'f2', decor: { art: 'data:image/svg+xml;base64,AAAA', mask: PNG, ratio: 1 } }),
         frame({ id: 'f3', decor: { art: 'https://example.com/a.png', mask: PNG, ratio: 1 } }), frame({ id: 'f4', decor: { art: PNG, mask: PNG, ratio: 99 } }), geulkku({ id: 'g2', template: '<img src=x onerror=alert(1)>' }),
         geulkku({ id: 'g3', colors: { bg: '#000000' } }), geulkku({ id: 'g4', colors: { ...colors, text: 'red; background:url(x)' } })));
@@ -85,6 +85,16 @@ await test('readMart: 잘못된 JSON · 표시 없음 · 빈 꾸러미 거절 ·
     assert.equal(checkItem(frame({ decor: { art: 'data:image/png;base64,' + 'A'.repeat(ART_MAX), mask: PNG, ratio: 1 } })).reason.includes('너무 커요'), true);
     const g = readMart(pack(geulkku({ label: '<b>관</b>', tail: '<script>', messages: 'evil' }))).items[0];
     assert.ok(!/[<>]/.test(g.name + g.tail), '이름 · 꼬리의 꺾쇠는 걷어요'); assert.equal(g.messages, 'box');
+});
+
+await test('id 는 글자만(검토 4): 숫자 · 배열 id 는 글자로 바뀌어 통과하지 않아요 — 받았다가 설정 정리에서 조용히 사라지지 않게', () => {
+    for (const id of [123, ['ab'], true, null, undefined]) {
+        assert.match(checkItem(geulkku({ id })).reason ?? '', /글꾸 id 가 틀려요/, String(id));
+        assert.match(checkItem(frame({ id })).reason ?? '', /액자 id 가 틀려요/, String(id));
+        assert.match(checkItem({ kind: 'frame-preset', id, name: '얇은 선', presetId: 'line', presetColor: '#2a3140', presetAccent: '#86b5d5' }).reason ?? '', /액자 id 가 틀려요/, String(id));
+        assert.match(checkItem({ kind: 'geulkku-simple', v: 1, id, key: 'k1', html: '<div class="gk gk-k1"><style></style></div>' }).reason ?? '', /글꾸 id 가 틀려요/, String(id));
+    }
+    assert.ok(checkItem(geulkku({ id: '123' })).item, '글자 id 는 그대로 받아요');
 });
 
 await test('프리셋 액자: 이 테마에 있는 프리셋 · 색 #rrggbb · 글자 12자 · 비율 50~200', () => {
@@ -114,7 +124,7 @@ await test('넣기: 중복은 덮어쓸 때만 · 보관함 30개 · 12MB · 내
     // 상한
     const full = { frameLibrary: Array.from({ length: FRAME_LIMIT }, (_, i) => ({ id: `f${i}`, decor: { art: PNG, mask: PNG } })), logCopy: { custom: Array.from({ length: CUSTOM_MAX }, (_, i) => ({ id: `c${i}` })) } };
     r = addMartItems(full, readMart(pack(frame({ id: 'z1' }), geulkku({ id: 'z2' }))).items);
-    assert.deepEqual(r.skipped.map(x => x.reason), [`보관함은 ${FRAME_LIMIT}개까지예요`, `내 글꾸는 ${CUSTOM_MAX}개까지예요`]);
+    assert.deepEqual(r.skipped.map(x => x.reason), [`보관함은 ${FRAME_LIMIT}개까지예요`, `내 글꾸는 ${CUSTOM_MAX}개까지예요(지금 ${CUSTOM_MAX}/${CUSTOM_MAX}) — 「내 글꾸」에서 칩 옆 ✕ 로 하나 지우고 다시 받아요`]);   // 1.1.8 지우는 길까지
     const big = 'data:image/png;base64,' + 'A'.repeat(3_500_000);
     const heavy = { frameLibrary: [1, 2, 3].map(i => ({ id: `h${i}`, decor: { art: big, mask: PNG } })) };
     r = addMartItems(heavy, [{ kind: 'frame', id: 'h4', name: '큰 것', decor: { art: big, mask: PNG, ratio: 1 } }]);
@@ -160,7 +170,7 @@ await test('설정 정리: 마트 글꾸(template)는 html 없이도 남고 · �
 await test('화면: 보관함 · 내 글꾸 두 곳의 「마트에서 가져오기」 · 새 창 마트 · 붙여넣기 · 파일 · 덮어쓰기 묻기 · 결과 요약', () => {
     const panel = read('src/panel.js'), sheet = read('src/log-copy-sheet.js'), ui = read('src/mart-import-ui.js');
     assert.match(panel, /data-act="mart-import"/); assert.match(panel, /case 'mart-import':[\s\S]{0,200}import\('\.\/mart-import-ui\.js'\)/, '설정 창은 누를 때 받아요');
-    assert.match(sheet, /data-lc="mart"/); assert.match(sheet, /if \(\/\^\\\{\[\\s\\S\]\*"bl-mart"\/\.test\(raw\)\) \{ openMart\(raw\); return; \}/, '붙여넣기 칸에 마트 글을 넣어도 알아서');
+    assert.match(sheet, /data-lc="mart"/); assert.match(sheet, /if \(\/\^\\\{\/\.test\(raw\)\) \{ await takeHere\(raw\); return; \}/, '붙여넣기 칸에 마트 글을 넣어도 알아서(1.1.8 창 없이 그 칸에서 바로 받아요)'); assert.match(ui, /export async function takeMart\(/);
     assert.match(sheet, /else if \(rawOf\(mine\)\) html = mine\.html;/); assert.match(sheet, /const rawOf = mine => !!mine && !mine\.template && !mine\.frame;/);   // 1.1.4 받은 심플 글꾸(frame)는 직접 붙인 HTML 갈래가 아니에요
 assert.match(sheet, /template: (?:inkTemplate\(\) \?\? )?mine(?:, names: !s3\.namesOff)?(?:, lemonLink: !!s3\.lemonLink)?(?:, mode: toneMode, lookup)? \}\)/);   // 1.0.7 이름 줄 칩
     assert.match(ui, /target="_blank" rel="noopener noreferrer"/); assert.match(ui, /accept="\.json,application\/json"/);

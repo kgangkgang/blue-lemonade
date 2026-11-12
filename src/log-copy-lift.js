@@ -150,8 +150,16 @@ export function copyBody(html) {
 
 /** <style> 을 글 전체를 감싸는 첫 요소 안 첫 자식으로(U11 — 커뮤니티 글꾸 정본 「<style> 은 감싸는 div 안에 하나」) · 감싸는 요소가 없으면 맨 앞 */
 export function insertHead(html, head) {
-    const text = String(html ?? '');
+    let text = String(html ?? '');
     if (!head) return text;
+    // 1.1.8 본문 맨 앞 <style>(미리보기에서 숨긴 글을 넣으면 꾸밈 블록이 body 첫 자식 — log-copy-spoiler.js ensureStyle)은 head 뒤에 합쳐요:
+    //   전엔 감싸는 요소를 못 찾아 「head + 그 <style> + 틀」로 <style> 둘이 감싸는 div 밖에 놓였어요(점검 1112 #3 · 정본 「<style> 은 div 안에 하나」). 규칙 차례는 그대로(head → 숨긴 글 → 틀)
+    const headOne = head.match(/^\s*<style>((?:(?!<\/?style)[\s\S])*)<\/style>\s*$/i);
+    if (headOne) {
+        let rest = text, lead = '';
+        for (let s; (s = rest.match(/^\s*<style\b[^>]*>((?:(?!<\/?style)[\s\S])*)<\/style>/i));) { lead += s[1]; rest = rest.slice(s[0].length); }
+        if (lead && /^(?:\s*<!--[\s\S]*?-->)*\s*<(?!style\b|script\b|br\b|img\b|hr\b|input\b)[a-zA-Z]/.test(rest)) { head = `<style>${headOne[1]}${lead}</style>`; text = rest; }
+    }
     const m = text.match(/^((?:\s*<!--[\s\S]*?-->)*\s*<(?!style\b|script\b|br\b|img\b|hr\b|input\b)[a-zA-Z][\w-]*(?:\s+[^\s=>]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*\s*>)/);
     if (!m) return head + text;
     // 1.1.3 감사 S4: 코멘트 글줄 규칙이 든 head 면 감싸는 요소에 로그 틀 표시(blq-log)를 달아요 — 규칙이 그 틀이 든 본문에만 걸리게
@@ -182,6 +190,17 @@ function markOpenTag(open) {
     if (cls) next = have.split(/\s+/).includes(LOG_MARK) ? tagText : tagText.replace(cls[0], ` class="${`${have} ${LOG_MARK}`.trim()}"`);
     else next = tagText.replace(/\s*(\/?)>$/, (_, slash) => ` class="${LOG_MARK}"${slash}>`);
     return open.slice(0, at) + next;
+}
+
+/** 1.1.8 게시글 하나 크기 — 한계는 240KB 쯤(인수인계-커뮤니티-글꾸 0-4 실측) · 200KB 부터 알려요(점검 1112 #8) */
+export const POST_LIMIT = 240 * 1024, POST_WARN = 200 * 1024;
+/** 글 → UTF-8 바이트 수 */
+export const byteSize = text => { const s = String(text ?? ''); let n = 0; for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); n += c < 0x80 ? 1 : c < 0x800 ? 2 : c >= 0xd800 && c < 0xdc00 ? (i++, 4) : 3; } return n; };
+/** 복사 글 크기 알림(200KB 아래면 빈 글) — bytes: 붙일 글(서식 · 코드 가운데 큰 쪽) · count: 고른 메시지 수 */
+export function sizeNote(bytes, count = 0) {
+    if (!(bytes >= POST_WARN)) return '';
+    const kb = Math.round(bytes / 1024), fit = count > 1 ? Math.max(1, Math.floor(count * POST_WARN / bytes)) : 0;
+    return `복사 글이 약 ${kb}KB 예요 — 게시글 하나 한계(약 240KB)${bytes >= POST_LIMIT ? '를 넘어 올라가지 않을 수 있어요' : '에 가까워요'}.${fit ? ` 메시지를 ${count}개 → ${fit}개 안팎으로 줄여 두 글로 나눠 올려요` : ' 글을 줄여 두 글로 나눠 올려요'}`;
 }
 
 /** 1.1.2 틀 바깥 위아래의 사용자 코멘트(사이트 본문의 p · 스티커 줄 · 감싼 .blq-cm)를 틀과 같은 640 열에 왼쪽 맞춤으로 — 글꼴은 사이트 기본 그대로(꾸미지 않아요).

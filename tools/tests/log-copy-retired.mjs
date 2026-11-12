@@ -36,12 +36,13 @@ await test('이름표: 옛 내장 48종 모두 · 이름은 옛 칩 이름 · �
 
 await test('안내하는 마트 새 판은 모두 테마가 실제로 받는 틀이에요(마트 자료에 테마 받기 검사를 돌린 목록 fixtures/mart-takeable.json 과 대조)', () => {
     const take = JSON.parse(read('tools/tests/fixtures/mart-takeable.json'));
-    assert.equal(take.ok.length, 357, `마트 ${take.site} 받는 틀 수`);
+    assert.equal(take.ok.length, 399, `마트 ${take.site} 받는 틀 수`);   // 1.2.0 공개 마트 417틀 중 399(줄 갈래 · 칸 묶음 392 + 11-12 새 판 일곱 k1374 ~ k1380 · 못 받는 18틀은 테마에 남은 기본 글꾸)
     const ok = new Set(take.ok);
     const told = OLD.map(f => retiredShape(f.id)).filter(r => r.mart);
-    assert.equal(told.length, 38, '안내 38종(41 에서 못 받는 라디오 · 영화 자막 · 봄 벚꽃을 뺐어요)');
+    assert.equal(told.length, 48, '안내 48종 전부(새 판이 없던 일곱 — 추석 · 화이트데이 · 발렌타인 · 메뉴판 · 실험 노트 · 사랑 재판 · 스노우볼 — 도 마트 새 판 k1374 ~ k1380 으로 이어요)');
+    for (const [id, mart] of [['concept-sp-chuseok', 'simple-k1374'], ['concept-sp-white', 'simple-k1375'], ['concept-sp-valentine', 'simple-k1376'], ['concept-sp-menu', 'simple-k1377'], ['concept-sp-lab', 'simple-k1378'], ['c-scene-sp-1', 'simple-k1379'], ['c-xmas-sp-1', 'simple-k1380']]) assert.equal(readShape(id, []).tell, mart, id);
     for (const r of told) assert.ok(ok.has(r.mart), `${r.id} → ${r.mart}: ${take.no[r.mart] || '마트에 없음'}`);
-    for (const id of ['concept-sp-radio', 'concept-sp-cinema', 'concept-sp-spring']) assert.deepEqual([readShape(id, []).shape, readShape(id, []).tell], ['kkangtong', null], `${id}: 조용히 기본 틀`);
+    for (const [id, mart] of [['concept-sp-radio', 'simple-k1107'], ['concept-sp-cinema', 'simple-k1174'], ['concept-sp-spring', 'simple-k1087']]) assert.deepEqual([readShape(id, []).shape, readShape(id, []).tell], ['kkangtong', mart], `${id}: 기본 틀 + 마트 새 판 안내`);
 });
 
 await test('읽기: 마트 새 판을 받아 뒀으면 그 글꾸로 · 아니면 기본 틀 + 받는 곳 안내 · 새 판이 없으면 조용히 · 다른 id 는 그대로', () => {
@@ -54,8 +55,10 @@ await test('읽기: 마트 새 판을 받아 뒀으면 그 글꾸로 · 아니�
     const kept = readShape('concept-sp-pepero', [{ id: 'x' }, { id: 'simple-k1317', frame: {}, set: {} }]);
     assert.deepEqual([kept.shape, kept.tell], ['simple-k1317', null], '받아 둔 새 판으로 이어서 · 안내 없음');
     assert.deepEqual(readShape('concept-pepero', [{ id: 'concept-pepero', template: '<div></div>' }]), { shape: 'concept-pepero', retired: null, tell: null }, '같은 id 의 내 글꾸가 먼저');
-    const quiet = readShape('c-scene-sp-1', []);   // 사랑 재판 — 마트에 새 판 없음
-    assert.deepEqual([quiet.shape, quiet.tell], ['kkangtong', null], '조용히 기본 틀');
+    const radio = readShape('concept-sp-radio', []);   // 라디오 — 1.1.8 부터 소리 칸을 뺀 판(k1107)으로 받아요 · 1.2.0: 새 판이 없는 옛 글꾸는 이제 없어요(48종 전부 이어요)
+    assert.deepEqual([radio.shape, radio.tell], ['kkangtong', 'simple-k1107'], '기본 틀 + 마트 새 판 안내');
+    const court = readShape('c-scene-sp-1', []);   // 사랑 재판 — 11-12 마트 새 판 k1379
+    assert.deepEqual([court.shape, court.tell], ['kkangtong', 'simple-k1379'], '새 판 일곱도 안내');
 });
 
 await test('이어 쓰기: 마트에서 「테마로 담기」로 받은 새 판(simple-k1317)은 id 그대로 내 글꾸에 들어가요(기본 틀 id 와 안 겹침)', () => {
@@ -68,10 +71,11 @@ await test('이어 쓰기: 마트에서 「테마로 담기」로 받은 새 판
 
 await test('시트: 저장 값은 안 바꾸고 읽기만 · 옛 「옮겨 저장」 길 없음 · 분류도 읽은 틀에 맞춰요 · 안내는 마트 #id 로', () => {
     const sheet = read('src/log-copy-sheet.js');
-    assert.match(sheet, /const read = readShape\(state\.shape, s\.custom\);/);
-    assert.match(sheet, /if \(read\.retired\) \{ state\.shape = read\.shape; state\.category = categoryOf\(read\.shape\); \}/);
-    assert.match(sheet, /mart\/geulkku\/\?view#\$\{encodeURIComponent\(read\.tell\)\}/);
-    const at = sheet.indexOf('const read = readShape(');
+    assert.match(sheet, /const read = readSaved\(s, pk\.mod \? pk\.mod\.pickIds\(pk\.picks, s\.custom\)\.map\(id => \(\{ id \}\)\) : \[\]\);/);   // 1.1.8 복사 뒤에도 옛 id 기억(retiredFrom) · 내 글꾸 + 보이는 추천 글꾸 — 모양 · 즐겨찾기 · 최근은 그대로
+    assert.match(sheet, /if \(read\.retired\) \{ state\.shape = read\.shape; state\.category = catOf\(read\.shape\); \}/);   // 1.1.8 추천 글꾸면 「블루레몬 추천」 분류
+    assert.match(sheet, /mart\/geulkku\/\?view#\$\{encodeURIComponent\(retired\.tell\)\}/);   // 1.1.8 9초 알림 대신 시트 안 띠
+    assert.ok(!/toldRetired|timeOut: 9000/.test(sheet), '옛 9초 알림 없음');
+    const at = sheet.indexOf('const read = readSaved(');
     assert.ok(!/s\.shape = |s\.fav = |s\.recent = /.test(sheet.slice(sheet.indexOf('const s = store();'), at)), '열 때 저장 값을 다시 쓰지 않아요');
     assert.ok(!/OWN_COLORS|ownColors|movedShape/.test(sheet));
     assert.deepEqual(CATEGORIES.map(c => c.id), ['basic', 'talk', 'paper', 'gallery', 'mine']);

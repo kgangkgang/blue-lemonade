@@ -13,6 +13,7 @@ import { speakersOf, retintModel } from './log-copy-tone.js';
 import { tone, speakerColor } from './shared/char-tone.js';
 import { toneSimple, ORIGINAL, markEdits, simpleFrameInfo, speakerColorsOf } from './log-copy-simple-tone.js';
 import { SIMPLE_FRAMES as REGISTERED } from './log-copy-simple.gen.js';
+import { spoilerHtml, unparagraphHtml } from './log-copy-spoiler.js';   // 1.1.8 거둔 숨긴 글 다시 그리기 · 그 글이 든 <p> 줄은 div.blsp-p 로
 
 export const SIMPLE = Object.freeze({
     category: 'simple',                 // 프리셋 분류 id(log-copy-presets.js ALL_CATEGORIES)
@@ -49,7 +50,8 @@ export function checkFrame(frame) {
     }
     if ((html.match(/<style\b/gi) ?? []).length !== 1) bad.push('<style> 하나');
     if (html.split(SIMPLE.log).length !== 2) bad.push(`${SIMPLE.log} 하나`);
-    if (html.split(SIMPLE.log2).length !== (f.pages === 2 ? 2 : 1)) bad.push(`${SIMPLE.log2} 는 pages: 2 일 때 하나`);
+    if (html.split(SIMPLE.log2).length !== (f.pages === 2 || f.units ? 2 : 1)) bad.push(`${SIMPLE.log2} 는 pages: 2 일 때 하나`);
+    if (f.vary !== undefined || f.units !== undefined || f.nameFill !== undefined || f.colors0 !== undefined) bad.push(...checkMore(f));
     if (html.split(SIMPLE.title).length > 2) bad.push(`${SIMPLE.title} 하나 이하`);
     if (html.split(SIMPLE.hidden).length !== (f.hidden ? 2 : 1)) bad.push(`${SIMPLE.hidden} 는 hidden 일 때 하나`);
     if (/<(input|audio|video|source|script|svg)\b/i.test(html) || /\{\{소리/.test(html)) bad.push('테마 복사 글이 지우는 요소(input · audio …) · 소리 자리 없음');
@@ -62,8 +64,35 @@ export function checkFrame(frame) {
     if (!speakerColor(f.sample)) bad.push('sample');
     if (!SIMPLE.letters.includes(f.main ?? '') || !f.main) bad.push('main');
     if (!SIMPLE.letters.includes(f.second ?? '') || !f.second || f.second === f.main) bad.push('second');
-    const colors0 = parts ? speakerColorsOf(parts.blocks.slice(1).join('\n')) : {};
+    const colors0 = f.colors0 ?? (parts ? speakerColorsOf(parts.blocks.slice(1).join('\n')) : {});
     if (f.main && f.second && !(f.main in colors0 && f.second in colors0)) bad.push('② 에 주인공 · 상대 띠 색');
+    return bad;
+}
+
+/** 1.1.8 줄 갈래(vary) · 칸 묶음(units · nameFill) 점검 — 문제 글 목록 */
+const BAD_TAG = /<(input|audio|video|source|script|svg|style|iframe|img)\b|\{\{소리/i;
+function checkMore(f) {
+    const bad = [];
+    const form = (kind, v) => typeof v === 'string' && v.includes(`{{${kind}}}`) && (kind === '지문' || v.includes(SIMPLE.who)) && !BAD_TAG.test(v);
+    if (f.vary !== undefined) {
+        if (!f.vary || typeof f.vary !== 'object' || f.units) bad.push('vary');
+        else for (const [kind, v] of Object.entries(f.vary)) {
+            const ok = SIMPLE.rows.includes(kind) && (v?.forms ? Array.isArray(v.forms) && v.forms.length >= 2 && v.forms.length <= 12 && v.forms.every(x => form(kind, x))
+                : form(kind, v?.base) && form(kind, v?.accent) && ['first', 'last'].includes(v?.at));
+            if (!ok) bad.push(`vary.${kind}`);
+        }
+    }
+    if (f.units !== undefined) {
+        const u = f.units;
+        if (!Array.isArray(u) || u.length !== 2 || f.pages) bad.push('units');
+        else u.forEach((x, i) => {
+            const has = (s, k) => typeof s === 'string' && s.split(k).length === 2 && !BAD_TAG.test(s);
+            if (!has(x?.both, '{{지문들}}') || !has(x.both, '{{대사들}}') || !has(x.nr, '{{지문들}}') || x.nr.includes('{{대사들}}') || !has(x.dl, '{{대사들}}') || x.dl.includes('{{지문들}}')) bad.push(`units.${i}`);
+            if (!form('지문', x?.rows?.지문) || !form('대사', x?.rows?.대사)) bad.push(`units.${i}.rows`);
+        });
+    }
+    if (f.colors0 !== undefined && (!f.units || !f.colors0 || typeof f.colors0 !== 'object' || Object.entries(f.colors0).some(([k, v]) => k.length !== 1 || !SIMPLE.letters.includes(k) || !/^#[0-9a-f]{6}$/.test(v)))) bad.push('colors0');
+    if (f.nameFill !== undefined &&(!f.nameFill || typeof f.nameFill !== 'object' || Object.entries(f.nameFill).some(([k, v]) => !SIMPLE.letters.includes(k) || k.length !== 1 || typeof v !== 'string' || v.length > 40 || /[<>{}]/.test(v)))) bad.push('nameFill');
     return bad;
 }
 
@@ -125,7 +154,7 @@ export function castLetters(who, frame, cast) {
  *   셋째부터: 틀에 색이 없어서 그 사람 색(모르면 무채)으로 시안 식 — 색 묶음 이름에 꼬리를 달아 한 글에 다른 로그와 붙여도 안 부딪혀요
  */
 export function simpleTone(frame, colors) {
-    const colors0 = speakerColorsOf(simpleFrameInfo(frame.html)?.color_css ?? '');
+    const colors0 = frame.colors0 ?? speakerColorsOf(simpleFrameInfo(frame.html)?.color_css ?? '');
     const K = colors.get(frame.main) ?? ORIGINAL;
     const others = {};
     for (const [letter, color] of colors) {
@@ -136,7 +165,7 @@ export function simpleTone(frame, colors) {
     return { K, others, cvTail: tail.length ? hash(tail.join('|')) : '' };
 }
 
-/** 문단 나누기: 다시 칠한 메시지 노드 → [[{ dlg, html, text }]] (대사 = 띠를 단 조각 · 굵게 · 기울임은 b · i 로) */
+/** 문단 나누기: 다시 칠한 메시지 노드 → [[{ dlg, html, text }]] (대사 = 띠를 단 조각 · 굵게 · 기울임 · 취소선은 strong · em · s 로 — 마트 견본과 같게) */
 function paragraphs(nodes) {
     const out = [];
     let cur = [];
@@ -146,27 +175,38 @@ function paragraphs(nodes) {
         if (cur.some(p => p.text.trim())) out.push(cur);
         cur = [];
     };
+    const inline = (list, ctx) => (list ?? []).map((node) => {   // 숨긴 글 속 글만
+        if (node.t === 'text') { let h = esc(node.text); if (ctx.s) h = `<s>${h}</s>`; if (ctx.i) h = `<em>${h}</em>`; if (ctx.b) h = `<strong>${h}</strong>`; return h; }   // 11-12 바깥 글과 같은 태그(마트 견본 · 세밀 규칙)
+        return node.t === 'br' ? '<br>' : node.t === 'el' ? inline(node.children, ctx) + (node.block ? '<br>' : '') : '';   // 여러 줄을 숨겼으면 줄마다 줄바꿈
+    }).join('');
     const walk = (list, ctx) => {
         for (const node of list ?? []) {
             if (node.t === 'text') {
                 let html = esc(node.text);
-                if (ctx.i) html = `<i>${html}</i>`;
-                if (ctx.b) html = `<b>${html}</b>`;
+                // 11-12: 마트 견본 글과 같은 태그(<em> · <strong> · <s>) — 받은 심플 글꾸의 세밀 「속마음 · 강조 · 취소선」 규칙(마트 look.js)이 em · strong · s 를 겨눠요.
+                //   전엔 <i> · <b> 로 그리고 취소선은 빼서 그 갈래 칸(색 · 크기 · 굵기 · 자간 · 형광펜 · 선)을 눌러도 미리보기 · 복사 글이 그대로였어요
+                if (ctx.s) html = `<s>${html}</s>`;
+                if (ctx.i) html = `<em>${html}</em>`;
+                if (ctx.b) html = `<strong>${html}</strong>`;
                 cur.push({ dlg: ctx.dlg, html, text: node.text });
             } else if (node.t === 'br') cur.push({ dlg: ctx.dlg, html: '<br>', text: '', br: true });
             else if (node.t === 'hr') flush();
-            else if (node.t === 'el') {
+            else if (node.t === 'el' && node.kind === 'spoiler') {   // 1.1.8 미리보기에서 숨긴 글(거둔 모델에만 있어요 — log-copy-basic.js 와 같은 길)
+                const html = spoilerHtml(inline(node.children, ctx).replace(/^(<br>)+|(<br>)+$/g, ''), node.sp, !node.block);
+                if (node.block) { flush(); cur.push({ dlg: false, html, text: '숨긴 글' }); flush(); } else cur.push({ dlg: false, html, text: '숨긴 글' });
+            } else if (node.t === 'el') {
                 const s = node.style ?? {};
                 const next = {
                     dlg: ctx.dlg || (!node.block && /gradient\(/i.test(String(s['background-image'] ?? ''))),
                     b: ctx.b || /^(bold|bolder|[6-9]\d\d)$/.test(String(s['font-weight'] ?? '').trim()),
                     i: ctx.i || /italic|oblique/.test(String(s['font-style'] ?? '')),
+                    s: ctx.s || /line-through/.test(String(s['text-decoration'] ?? s['text-decoration-line'] ?? '')),
                 };
                 if (node.block) { flush(); walk(node.children, next); flush(); } else walk(node.children, next);
             }
         }
     };
-    walk(nodes, { dlg: false, b: false, i: false });
+    walk(nodes, { dlg: false, b: false, i: false, s: false });
     flush();
     return out;
 }
@@ -194,6 +234,77 @@ export function splitPages(blocks) {
     return cut(lines, best(lines, from));
 }
 
+// ── 1.1.8 미리보기 표지(받은 심플 글꾸도 고친 글 · 숨긴 글 · 제목이 다시 그려도 남게) ──
+//   줄 꼴(<p class="gk-nr|nm|dl">)은 메시지 하나가 여러 줄이라 감쌀 수 없고, 마트 조절 코드가 줄 머리 글자를 그대로 맞대요(tune.js PAIR_G 등) —
+//   그래서 줄 사이에 주석 한 줄만 끼워요. 복사 글에서는 log-copy-spoiler.js stripRowMarks 가 걷어 고치기 전과 한 글자도 같아요(시험 log-copy-simple-rows.mjs).
+/** 쪽마다 메시지가 바뀌는 줄 앞에 <!--blm:n-->, 쪽 끝에 <!--blm:e-->(로그 칸 뒤 틀 글이 마지막 메시지에 안 섞이게) · 빈 메시지도 자리 표지 하나 — 메시지 수가 그대로여야 거둘 수 있어요 */
+function markRows(counts, page1, page2) {
+    const items = counts.flatMap((n, i) => (n ? Array.from({ length: n }, () => i) : [-1 - i]));
+    const pages = [[], []];
+    let page = 0, used = 0, last = null;
+    for (const it of items) {
+        if (it >= 0 && page === 0 && used >= page1.length) { page = 1; last = null; }
+        const i = it >= 0 ? it : -1 - it, out = pages[page];
+        if (it < 0 || i !== last) out.push(`<!--blm:${i}-->`);
+        last = i;
+        if (it >= 0) { out.push(page ? page2[used - page1.length] : page1[used]); used++; }
+    }
+    for (const out of pages) if (out.length) out.push('<!--blm:e-->');
+    return pages;
+}
+/** 다 그린 글의 제목 · 숨은 줄 표지 → 그 칸 여는 태그의 data-f(미리보기에서 눌러 고친 글을 시트가 읽어요) · 못 붙이면 표지만 걷어요 */
+export const rowMarks = html => String(html ?? '')
+    .replace(/(<[a-zA-Z][\w-]*\b(?:[^<>"']|"[^"]*"|'[^']*')*?)(\s*)><!--blf:(title|hidden)-->([^<]*)<!--\/blf-->(?=<\/)/g, (all, open, sp, key, text) => `${open} data-f="${key}"${sp}>${text}`)
+    .replace(/<!--\/?blf(?::\w+)?-->/g, '');
+
+/**
+ * 1.1.8 줄 꼴 고르기 — 줄 갈래(frame.vary)가 없으면 늘 rows 그대로. 갈래가 있으면 종류마다 몇 번째 줄인지 세어
+ *   forms: 견본 차례대로 돌려 써요 · accent: 끝 꾸밈은 한 줄에만(첫 줄 · 끝 줄) 나머지는 base.
+ * @returns {(kind: string) => string} 부를 때마다 그 종류 다음 줄의 꼴
+ */
+function rowForm(frame, said, showNames) {
+    const vary = frame.vary;
+    if (!vary) return kind => frame.rows[kind];
+    const total = { 이름: said.filter(m => showNames && m.name).length, 대사: 0, 지문: 0 };
+    for (const m of said) for (const b of m.body) total[b.kind]++;
+    const seen = { 이름: 0, 대사: 0, 지문: 0 };
+    return (kind) => {
+        const i = seen[kind]++, v = vary[kind];
+        if (!v) return frame.rows[kind];
+        if (v.forms) return v.forms[i % v.forms.length];
+        return i === (v.at === 'last' ? total[kind] - 1 : 0) ? v.accent : v.base;
+    };
+}
+
+/**
+ * 1.1.8 칸 묶음 틀 — 메시지를 [지문 … 대사 …] 묶음으로 나눠 첫 묶음은 첫 칸(units[0])에, 나머지는 둘째 칸(units[1])에 하나씩 담아요.
+ *   칸마다 세 판(both · nr · dl) 가운데 묶음에 맞는 것 · 이름 칸은 이름을 숨기면 비워서 빼요.
+ * @returns {[string[], string[], number[]]} {{로그}} 자리 · {{로그:2}} 자리 · 메시지마다 묶음 수(미리보기 표지 markRows 가 써요)
+ */
+function unitPages(frame, said, showNames) {
+    const pages = [[], []], counts = [];
+    let n = 0;
+    for (const m of said) {
+        const chunks = [];
+        for (const b of m.body) {
+            const last = chunks[chunks.length - 1];
+            if (!last || (b.kind === '지문' && last.dl.length)) chunks.push({ nr: [], dl: [] });
+            chunks[chunks.length - 1][b.kind === '대사' ? 'dl' : 'nr'].push(b.vals);
+        }
+        for (const c of chunks) {
+            const unit = frame.units[n++ ? 1 : 0];
+            const map = {
+                '{{화자}}': m.letter, '{{이름}}': showNames && m.name ? esc(m.name) : '',
+                '{{지문들}}': c.nr.map(v => fill(unit.rows.지문, v)).join('\n'), '{{대사들}}': c.dl.map(v => fill(unit.rows.대사, v)).join('\n'),
+            };
+            const html = (c.nr.length && c.dl.length ? unit.both : c.nr.length ? unit.nr : unit.dl).replace(/\{\{(?:화자|이름|지문들|대사들)\}\}/g, k => map[k]);
+            pages[n === 1 ? 0 : 1].push(html.replace(/<(p|span) class="gk-nm\b[^"]*"><\/\1>\n?/g, ''));
+        }
+        counts.push(chunks.length);
+    }
+    return [pages[0], pages[1], counts];
+}
+
 /**
  * 틀 그리기.
  * @param {object} frame 등록 값(checkFrame 통과)
@@ -215,15 +326,15 @@ export function drawSimple(frame, model, o = {}) {
     const showNames = o.names !== false && who.count > 1;
     const bandForm = frame.rows.띠 ?? SIMPLE.band;
     let lines = 0;
-    const blocks = painted.messages.map((message) => {
+    // 메시지마다 { name, letter, body: [{ kind: '대사'|'지문', vals }] } — 줄 꼴은 아래에서 골라 채워요(1.1.8 줄 갈래 · 칸 묶음)
+    const said = painted.messages.map((message) => {
         const name = String(message.name ?? '').trim();
         const letter = who.letterOf.get(name) ?? frame.main;
-        const head = showNames && name ? [fill(frame.rows.이름, { [SIMPLE.who]: letter, '{{이름}}': esc(name) })] : [];
         const body = paragraphs(message.nodes).map((list) => {
             const talk = list.filter(p => p.text.trim());
             if (talk.every(p => p.dlg) || SIMPLE.quoted.test(list.map(p => p.text).join(''))) {
                 const delay = seconds(Math.min(SIMPLE.delayStart + SIMPLE.delayStep * lines++, SIMPLE.delayMax));
-                return fill(frame.rows.대사, { [SIMPLE.who]: letter, [SIMPLE.delay]: delay, '{{대사}}': list.map(p => p.html).join('').trim() });
+                return { kind: '대사', vals: { [SIMPLE.who]: letter, [SIMPLE.delay]: delay, '{{대사}}': list.map(p => p.html).join('').trim() } };
             }
             let html = '', run = null;
             const close = () => { if (run) html += fill(bandForm, { [SIMPLE.who]: letter, '{{대사}}': run }); run = null; };
@@ -232,19 +343,38 @@ export function drawSimple(frame, model, o = {}) {
                 else { close(); html += p.html; }
             }
             close();
-            return fill(frame.rows.지문, { '{{지문}}': html.trim() });
+            return { kind: '지문', vals: { '{{지문}}': html.trim() } };
         });
-        return body.length ? [...head, ...body] : [];
-    }).filter(b => b.length);
-    const [page1, page2] = frame.pages === 2 ? splitPages(blocks) : [blocks.flat(), []];
+        return { name, letter, body };
+    });
+    // 쪽에 들어갈 줄(칸 묶음 틀은 묶음 하나가 한 줄) · rowCount = 메시지마다 그 줄 수(빈 메시지는 0 — markRows 가 자리 표지만 남겨요)
+    const live = said.filter(m => m.body.length);
+    let page1, page2, rowCount;
+    if (frame.units) {
+        let counts, k = 0;
+        [page1, page2, counts] = unitPages(frame, live, showNames);
+        rowCount = said.map(m => (m.body.length ? counts[k++] : 0));
+    } else {
+        const form = rowForm(frame, live, showNames);
+        const perMessage = said.map(m => (m.body.length ? [...(showNames && m.name ? [fill(form('이름'), { [SIMPLE.who]: m.letter, '{{이름}}': esc(m.name) })] : []), ...m.body.map(b => fill(form(b.kind), b.vals))] : []));
+        rowCount = perMessage.map(b => b.length);
+        const blocks = perMessage.filter(b => b.length);
+        [page1, page2] = frame.pages === 2 ? splitPages(blocks) : [blocks.flat(), []];
+    }
+    // 1.1.8 o.rows(시트 미리보기만): 메시지마다 첫 줄 앞에 표지 주석 <!--blm:n--> 한 줄 · 제목 · 숨은 줄은 표지로 감싸요(rowMarks 가 칸 표시 data-f 로) — 복사할 때 stripRowMarks 가 걷어 바이트가 같아요
+    if (o.rows) [page1, page2] = markRows(rowCount, page1, page2);
+    const field = (key, v) => (o.rows ? `<!--blf:${key}-->${v}<!--/blf-->` : v);
     const title = esc(String(o.fields?.title ?? '').trim());
-    let filled = fill(frame.html, { [SIMPLE.title]: title, [SIMPLE.hidden]: esc(String(o.fields?.hidden ?? '').trim()) });
+    let filled = fill(frame.html, { [SIMPLE.title]: field('title', title), [SIMPLE.hidden]: field('hidden', esc(String(o.fields?.hidden ?? '').trim())) });
+    if (frame.nameFill) filled = filled.replace(/\{\{이름:([A-Z])\}\}/g, (all, x) => { const name = o.names !== false && [...who.letterOf].find(([, l]) => l === x)?.[0]; return esc(name || frame.nameFill[x] || ''); });
     filled = filled.split(`\n${SIMPLE.log2}\n`).join(page2.length ? `\n${page2.join('\n')}\n` : '\n');
     filled = filled.split(`\n${SIMPLE.log}\n`).join(page1.length ? `\n${page1.join('\n')}\n` : '\n');
     // 색: 글꾸 마트와 같은 다시 칠하기(화자 글자마다 그 사람 색 — 규칙은 simpleTone)
     const { K, others, cvTail } = simpleTone(frame, who.colors);
-    let html = toneSimple(filled, K, { mode, main: frame.main, others, cvTail });
+    let html = toneSimple(filled, K, { mode, main: frame.main, others, cvTail, colors0: frame.colors0 });
+    if (o.marks !== false) html = unparagraphHtml(html);   // 숨긴 글이 없으면 그대로 · marks: false(받은 글꾸)면 renderLog 가 조절 값을 입힌 뒤에
     if (o.marks !== false) html = markEdits(html, { skip: frame.hidden ? [] : ['gk-hl'] });
+    if (o.rows && o.marks !== false) html = rowMarks(html);   // marks: false(받은 글꾸 — 조절 값을 입힌 뒤 표시)면 renderLog 가 마지막에 걸어요
     const cv = (html.match(/^<div class="[^"]*\b(gk-cv-[\w-]+)/) || [])[1] ?? '';
     return { html, mode, cv, letters: who.letterOf, colors: who.colors, main: who.main };
 }

@@ -30,14 +30,18 @@ function badAnimation(style) {
 }
 // 그림 부품 주소: url('data:image/svg+xml,…') — 작은따옴표로 감싸고 안은 퍼센트 인코딩(%3Csvg …)
 export const SVG_DATA_URL = /url\(\s*'data:image\/svg\+xml,([^'"()\\<>&\u0000-\u001f]*)'\s*\)/gi;
-const SVG_BAD = /<script|<style|<foreignobject|<iframe|<image|<use|<a[\s>]|<!|<\?|\son[a-z]+\s*=|href|xlink|javascript:|vbscript:|data:|@import|url\((?!#[a-z0-9_-]+\))/i;
+// 1.1.8 큰따옴표 꼴 url("data:image/svg+xml,…") — 글꾸 마트 조절 코드(geulkku-mart/look.js 형광펜 무늬)가 이 꼴로 <style> 에 써요.
+//   encodeURIComponent 는 ' ( ) 를 그대로 두어서 안에 홑따옴표 · 괄호가 있어요(CSS 큰따옴표 글 안이라 안전 — " \ 줄바꿈 · 조절 문자 · < > & 만 막아요).
+//   로그 복사 소독(log-copy-sanitize.js)만 써요 — 틈 템플릿 가져오기 검사(withoutSvgData)는 그대로 작은따옴표 꼴 하나예요.
+export const SVG_DATA_URL_DQ = /url\(\s*"data:image\/svg\+xml,([^"\\<>&\u0000-\u001f]*)"\s*\)/gi;
+const SVG_BAD = /<script|<style|<foreignobject|<iframe|<image|<use|<a[\s>]|<!|<\?|[\s/"']on[a-z]+\s*=|href|xlink|javascript:|vbscript:|data:|@import|url\((?!#[a-z0-9_-]+\))/i;
 export const SVG_DATA_MAX = 8192;
-/** 데이터 주소 안 svg(퍼센트 인코딩 그대로)가 그림만인가 */
-export function safeSvgData(payload) {
+/** 데이터 주소 안 svg(퍼센트 인코딩 그대로)가 그림만인가 · anyQuote: xmlns 값을 홑따옴표로 쓴 svg 도(1.1.8 큰따옴표 꼴 주소 — 마트 형광펜 무늬) */
+export function safeSvgData(payload, { anyQuote = false } = {}) {
     let svg;
     try { svg = decodeURIComponent(String(payload ?? '')).trim(); } catch { return false; }
     if (svg.length > SVG_DATA_MAX || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(svg)) return false;
-    if (!/^<svg\s[^>]*xmlns="http:\/\/www\.w3\.org\/2000\/svg"[^>]*>[\s\S]*<\/svg>$/.test(svg)) return false;
+    if (!(anyQuote ? /^<svg\s[^>]*xmlns=(["'])http:\/\/www\.w3\.org\/2000\/svg\1[^>]*>[\s\S]*<\/svg>$/ : /^<svg\s[^>]*xmlns="http:\/\/www\.w3\.org\/2000\/svg"[^>]*>[\s\S]*<\/svg>$/).test(svg)) return false;
     return !SVG_BAD.test(svg);
 }
 /** style 글에서 그림 부품 주소를 none 으로 바꾼 글(나머지 검사용) — 그림이 나쁘면 null */

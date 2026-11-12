@@ -6,6 +6,7 @@
 // DOM 없는 순수 모듈 — 마트에서 가져오기(mart-import.js)가 받을 때 한 번만 불러요. 시험 tools/tests/log-copy-simple-import.mjs.
 import * as tone from './log-copy-simple-tone.js';
 import { checkFrame } from './log-copy-simple.js';
+import * as more from './log-copy-simple-more.js';   // 1.1.8 줄 갈래 · 칸 묶음(한 꼴로 안 늘어나는 틀)
 
 export const SAMPLE_TITLE = '비 그친 뒤, 옥상에서';   // 마트 · 이식판 공통 견본 제목(생성기와 같은 글)
 const LOG = '{{로그}}', LOG2 = '{{로그:2}}', HIDDEN = '{{숨은줄}}', TITLE = '{{제목}}';
@@ -47,44 +48,86 @@ export function frameFromHtml(raw, meta) {
     const quiet = quietFrame(stripAlias(shutPeek(String(raw ?? '').replace(/\r\n/g, '\n').trim())));
     const info = tone.simpleFrameInfo(quiet);
     if (!info?.key || !info.base || info.K0 === undefined) throw new Error('심플 틀 꼴이 아니에요');
+    try { return rowsFrame(quiet, info, meta, false); }
+    catch (error) {
+        // 1.1.8 한 꼴로 안 늘어나는 틀: 줄 갈래(vary) → 칸 묶음(units) 차례로 · 둘 다 안 되면 처음 까닭 그대로
+        if (!/줄마다 꾸밈이 다른 틀|로그 칸이 여러 곳|소리 자리 없음/.test(error.message)) throw error;
+        const lines = quiet.split('\n'), kept = lines.filter(line => !more.SOUND_WRAP.test(line));
+        const calm = kept.length === lines.length ? quiet : kept.join('\n').replace(/^(<div class="gk [^"]*?)(?: gk-noaud)?"/, '$1 gk-noaud"');
+        const calmInfo = calm === quiet ? info : tone.simpleFrameInfo(calm);
+        // 줄 갈래는 줄 머리 class 차례를 맞춰 봐요(gk-t1 gk-nr → gk-nr gk-t1 — 모양은 같아요)
+        const ordered = calm.replace(/^<p class="([^"]*)"/gm, (all, v) => { const c = v.split(' '), i = c.findIndex(x => /^gk-(?:nr|nm|dl)$/.test(x)); return i > 0 ? `<p class="${[c[i], ...c.filter((x, j) => j !== i)].join(' ')}"` : all; });
+        try { return rowsFrame(ordered, calmInfo, meta, true); } catch { /* 칸 묶음으로 */ }
+        try { return unitsFrame(calm, calmInfo, meta); } catch { throw error; }
+    }
+}
+
+/** 줄 꼴로 늘리는 틀(로그 줄이 한두 덩이) — vary: 1.1.8 줄 갈래(줄마다 덤 class · 끝 꾸밈)까지 받아요(false 면 1.1.5 그대로) */
+function rowsFrame(quiet, info, meta, vary) {
     const css = quiet.slice(0, Math.max(0, quiet.indexOf('</style>')));
     const lines = quiet.split('\n').map(line => (ROW.test(line) ? plainRow(line, css) : line));
     const groups = [];
     lines.forEach((line, i) => { if (!ROW.test(line)) return; const g = groups[groups.length - 1]; if (g && g.end === i) g.end = i + 1; else groups.push({ start: i, end: i + 1 }); });
     if (groups.length < 1 || groups.length > 2) throw new Error('로그 칸이 여러 곳으로 나뉜 틀이에요');
-    const forms = { 지문: new Set(), 이름: new Set(), 대사: new Set() };
-    for (const line of groups.flatMap(g => lines.slice(g.start, g.end))) {
-        let m;
-        if (NR.test(line)) forms.지문.add('<p class="gk-nr">{{지문}}</p>');
-        else if (NM.test(line)) forms.이름.add('<p class="gk-nm gk-n{{화자}}">{{이름}}</p>');
-        else if ((m = line.match(DL))) forms.대사.add(`${m[1].replace(/ease-out [\d.]+s both/, 'ease-out {{지연}} both')}<span class="gk-d gk-d{{화자}}">{{대사}}</span></p>`);
-        else throw new Error('줄마다 꾸밈이 다른 틀이에요');
+    let rows, varied = null;
+    if (vary) {
+        const found = groups.flatMap(g => lines.slice(g.start, g.end)).map(more.varyRow);
+        if (found.some(r => !r)) throw new Error('줄마다 꾸밈이 다른 틀이에요');
+        ({ rows, vary: varied } = more.varyForms(found));
+    } else {
+        const forms = { 지문: new Set(), 이름: new Set(), 대사: new Set() };
+        for (const line of groups.flatMap(g => lines.slice(g.start, g.end))) {
+            let m;
+            if (NR.test(line)) forms.지문.add('<p class="gk-nr">{{지문}}</p>');
+            else if (NM.test(line)) forms.이름.add('<p class="gk-nm gk-n{{화자}}">{{이름}}</p>');
+            else if ((m = line.match(DL))) forms.대사.add(`${m[1].replace(/ease-out [\d.]+s both/, 'ease-out {{지연}} both')}<span class="gk-d gk-d{{화자}}">{{대사}}</span></p>`);
+            else throw new Error('줄마다 꾸밈이 다른 틀이에요');
+        }
+        for (const set of Object.values(forms)) if (set.size !== 1) throw new Error('줄마다 꾸밈이 다른 틀이에요');
+        rows = { 지문: [...forms.지문][0], 이름: [...forms.이름][0], 대사: [...forms.대사][0] };
     }
-    for (const set of Object.values(forms)) if (set.size !== 1) throw new Error('줄마다 꾸밈이 다른 틀이에요');
     const out = [...lines];
     [...groups].reverse().forEach((g, i) => out.splice(g.start, g.end - g.start, groups.length - 1 - i === 0 ? LOG : LOG2));
-    let html = out.join('\n');
+    return finish(out.join('\n'), info, meta, { rows, ...(groups.length === 2 ? { pages: 2 } : {}), ...(varied && Object.keys(varied).length ? { vary: varied } : {}) });
+}
+
+/** 1.1.8 칸 묶음 틀(메시지마다 감싸는 칸 — log-copy-simple-more.js unitsOf) */
+function unitsFrame(quiet, info, meta) {
+    const u = more.unitsOf(quiet);
+    return finish(u.html, info, meta, { rows: u.rows, units: u.units, ...(Object.keys(u.nameFill).length ? { nameFill: u.nameFill } : {}) });
+}
+
+/** 제목 · 숨은 줄 자리표 · 화자 · 종이 색 · 낮밤 → 등록 값(checkFrame 통과) — extra: pages(둘째 쪽) · vary(줄 갈래) · units · nameFill(칸 묶음) */
+function finish(html, info, meta, { rows, ...extra }) {
     if (html.split(`class="gk-tt">${SAMPLE_TITLE}`).length !== 2) throw new Error('제목 자리를 찾지 못했어요');
     html = html.replace(`class="gk-tt">${SAMPLE_TITLE}`, `class="gk-tt">${TITLE}`);
     const hidden = html.match(/<span class="gk-hl">[^<]+<\/span>/g) ?? [];
     if (hidden.length > 1) throw new Error('숨은 한 줄이 여러 곳이에요');
     if (hidden.length) html = html.replace(hidden[0], `<span class="gk-hl">${HIDDEN}</span>`);
-    const main = tone.mainLetterOf(info);
-    const second = Object.keys(tone.speakerColorsOf(info.color_css)).find(x => x !== main);
+    // 1.1.8 칸 묶음 틀 가운데 대사 띠 색이 없는 틀(채팅 화면 꼴)은 화자 색을 얼굴 동그라미(gk-aX) 색으로 읽어 둬요(colors0 — 다시 칠할 때 「원래 색」 기준)
+    let colors0 = tone.speakerColorsOf(info.color_css), own = null;
+    if (extra.units && Object.keys(colors0).length < 2) {
+        own = {};
+        for (const m of info.color_css.matchAll(/\.gk-k\d+ \.gk-a([A-Z])\{background-color:(#[0-9a-f]{6})\}/gi)) own[m[1]] ??= m[2].toLowerCase();
+        colors0 = own;
+    }
+    const main = own ? info.speakers.find(X => info.K0 && own[X] === info.K0) || tone.SIMPLE_CONTRACT.mainOrder.find(x => info.speakers.includes(x)) || info.speakers[0] : tone.mainLetterOf(info);
+    const second = Object.keys(colors0).find(x => x !== main);
     if (!second) throw new Error('상대 화자 색을 찾지 못했어요');
     const base = tone.originalBase(info), faces = tone.facesOf(info, base), light = base === 'gk-tl';
     const ink = tone.SIMPLE_CONTRACT.ink;
     const frame = {
         id: meta.id, label: meta.label || '글꾸', ...(meta.emoji ? { emoji: meta.emoji } : {}), key: info.key,
-        ...(groups.length === 2 ? { pages: 2 } : {}), ...(hidden.length ? { hidden: true } : {}),
+        ...(extra.pages ? { pages: 2 } : {}), ...(hidden.length ? { hidden: true } : {}),
         main, second, sample: info.K0,
         roots: { light: light ? base : 'gk-tl gk-tn-d', dark: light ? 'gk-td gk-tn-n' : base },
         paper: {
             light: { card: (light ? faces.orig : faces.alt)[0], log: (light ? faces.orig : faces.alt)[1], text: ink['gk-tl'] },
             dark: { card: (light ? faces.alt : faces.orig)[0], log: (light ? faces.alt : faces.orig)[1], text: ink[light ? 'gk-td' : base] },
         },
-        rows: { 지문: [...forms.지문][0], 이름: [...forms.이름][0], 대사: [...forms.대사][0] },
+        rows: { 지문: rows.지문, 이름: rows.이름, 대사: rows.대사 },
         html,
+        ...(extra.vary ? { vary: extra.vary } : {}), ...(extra.units ? { units: extra.units } : {}), ...(extra.nameFill ? { nameFill: extra.nameFill } : {}), ...(own ? { colors0: own } : {}),
     };
     const bad = checkFrame(frame);
     if (bad.length) throw new Error(`틀 꼴이 맞지 않아요(${bad.slice(0, 2).join(' · ')})`);

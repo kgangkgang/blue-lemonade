@@ -1,4 +1,4 @@
-// 1.1.7 뺀 옛 내장 글꾸 48종 — 로그 복사 창을 가짜 브라우저(leak-dom)로 실제로 열어 봐요(검토 11-12)
+// 1.1.7 뺀 옛 내장 글꾸 48종 — 로그 복사 창을 가짜 브라우저(leak-dom)로 실제로 열어 봐요(검토 11-12) · 1.1.8 9초 알림 → 시트 안 띠 · 복사 뒤에도 옛 id 기억(retiredFrom)
 //   저장된 모양 · 즐겨찾기 · 최근 · 분류에 옛 id 가 남아 있어도 창이 뜨고, 고른 틀 · 안내 · 저장 값이 맞는지.
 //   node tools/tests/log-copy-retired-sheet.mjs .
 import assert from 'node:assert/strict';
@@ -21,6 +21,8 @@ globalThis.toastr = { info(...a) { toasts.push(a); }, success() {}, warning() {}
 const opened = [];
 window.open = (...a) => { opened.push(a); return null; };
 globalThis.open = window.open;
+globalThis.isSecureContext = true;
+try { Object.defineProperty(globalThis.navigator, 'clipboard', { value: { writeText: async () => {} }, configurable: true }); } catch { globalThis.navigator.clipboard = { writeText: async () => {} }; }
 
 const S = await import(url('src/settings.js'));
 const sheet = await import(url('src/log-copy-sheet.js'));
@@ -47,37 +49,94 @@ async function open(logCopy) {
     return { dialog, on, store: () => S.getSettings().logCopy, chips: () => [...dialog.querySelectorAll('[data-shape]')].map(b => b.dataset.shape) };
 }
 
-await test('옛 내장 빼빼로데이(새 판 안 받음): 창이 뜨고 깡통 로그 · 안내 한 번 · 누르면 마트 #simple-k1317 · 저장 값은 그대로', async () => {
+const band = w => w.dialog.querySelector('[data-lc-retired]');
+const bandOn = w => !band(w).hidden;
+const copyText = async (w) => { w.dialog.querySelector('[data-lc="md"]').click(); await settle(); };
+
+await test('옛 내장 빼빼로데이(새 판 안 받음): 창이 뜨고 깡통 로그 · 1.1.8 알림 대신 시트 안 띠(이름 · 마트 #simple-k1317 · 붙여 넣기) · 저장 값은 그대로', async () => {
     const w = await open({ shape: 'concept-sp-pepero', category: 'event', fav: ['concept-sp-pepero', 'c-xmas-sp-1', 'card'], recent: ['concept-sp-pepero', 'c-react-sp-2'] });
     assert.equal(w.on(), 'kkangtong');
-    assert.equal(toasts.length, 1);
-    assert.match(toasts[0][0], /빼빼로데이/);
-    toasts[0][2].onclick();
-    assert.equal(opened[0][0], `${PAGES}/mart/geulkku/?view#simple-k1317`);
+    assert.equal(toasts.length, 0, '9초 알림은 없어요');
+    assert.ok(bandOn(w), '띠가 보여요');
+    assert.match(band(w).textContent, /빼빼로데이/);
+    assert.equal(band(w).querySelector('a[href]').getAttribute('href'), `${PAGES}/mart/geulkku/?view#simple-k1317`);
+    assert.equal(band(w).querySelector('a[href]').getAttribute('target'), '_blank');
+    band(w).querySelector('[data-lc="paste"]').click();
+    assert.equal(w.dialog.querySelector('[data-lc-paste]').hidden, false, '띠의 「붙여 넣기」 → 붙여 넣기 칸');
     assert.equal(w.store().shape, 'concept-sp-pepero', '열기만 해서는 저장 값이 안 바뀌어요');
+    assert.equal(w.store().retiredFrom, 'concept-sp-pepero', '옛 id 를 기억해요');
     assert.ok(!w.chips().some(id => /-sp-/.test(id)), '옛 id 칩은 안 보여요');
 });
 
-await test('옛 장면 사랑 재판(마트 새 판 없음): 조용히 깡통 로그', async () => {
+await test('옛 장면 사랑 재판(11-12 마트 새 판 k1379): 깡통 로그 · 띠에 마트 바로가기 #simple-k1379', async () => {
     const w = await open({ shape: 'c-scene-sp-1', category: 'scene' });
     assert.equal(w.on(), 'kkangtong');
     assert.equal(toasts.length, 0);
+    assert.ok(bandOn(w));
+    assert.match(band(w).textContent, /사랑 재판/);
+    assert.doesNotMatch(band(w).textContent, /이제 없어요/);
+    assert.equal(band(w).querySelector('a[href]').getAttribute('href'), `${PAGES}/mart/geulkku/?view#simple-k1379`);
 });
 
-await test('1.0.1 시험판의 더 옛 id(concept-xmas)도 같은 안내 · 마트 #simple-k1091', async () => {
+await test('1.0.1 시험판의 더 옛 id(concept-xmas)도 같은 띠 · 마트 #simple-k1091', async () => {
     const w = await open({ shape: 'concept-xmas' });
     assert.equal(w.on(), 'kkangtong');
-    assert.equal(toasts.length, 1);
-    toasts[0][2].onclick();
-    assert.equal(opened[0][0], `${PAGES}/mart/geulkku/?view#simple-k1091`);
+    assert.equal(band(w).querySelector('a[href]').getAttribute('href'), `${PAGES}/mart/geulkku/?view#simple-k1091`);
 });
 
-await test('복사 없이 창만 다시 열면 — 같은 글꾸 안내는 페이지를 연 동안 한 번만(열 때마다 9초 안내가 다시 뜨지 않아요)', async () => {
+await test('띠는 처리될 때까지 남아요 — 다시 열어도 그대로 · ✕ 로 닫으면 저장돼 다음에도 닫힌 채(옛 id 기억은 그대로)', async () => {
+    let w = await open({ shape: 'concept-sp-pepero' });
+    assert.ok(bandOn(w));
+    w.dialog.close(); w.dialog.remove(); await settle();
+    await sheet.openLogSheet(model); await settle();
+    let d = document.querySelector('dialog.bl-lc');
+    assert.equal(d.querySelector('[data-lc-retired]').hidden, false, '다시 열어도 띠');
+    d.querySelector('[data-lc="retired-x"]').click(); await settle();
+    assert.equal(d.querySelector('[data-lc-retired]').hidden, true, '✕ 로 닫혀요');
+    assert.equal(S.getSettings().logCopy.retiredOff, true);
+    d.close(); d.remove(); await settle();
+    await sheet.openLogSheet(model); await settle();
+    d = document.querySelector('dialog.bl-lc');
+    assert.equal(d.querySelector('[data-lc-retired]').hidden, true, '닫은 띠는 다음에도 닫힌 채');
+    assert.equal(S.getSettings().logCopy.retiredFrom, 'concept-sp-pepero', '옛 id 는 그대로 기억');
+    toasts.length = 0;
+});
+
+await test('깡통 로그로 복사해 모양이 바뀌어도 옛 id 를 기억 → 나중에 마트 새 판을 받으면 이어 그려요 · 그 판으로 복사하면 기억을 지워요', async () => {
     const w = await open({ shape: 'concept-sp-pepero' });
-    assert.equal(w.on(), 'kkangtong');
-    assert.equal(toasts.length, 0);
-    await open({ shape: 'concept-pepero' });
-    assert.equal(toasts.length, 0, '1.0.1 옛 id 도 같은 새 판이면 한 번');
+    await copyText(w);
+    let lc = S.getSettings().logCopy;
+    assert.equal(lc.shape, 'kkangtong', '복사하면 저장 모양은 깡통 로그');
+    assert.equal(lc.retiredFrom, 'concept-sp-pepero', '옛 id 는 남아요(전엔 사라져 나중에 새 판을 받아도 안 이어졌어요)');
+    // 설정 정리를 거쳐도 남아요
+    S.invalidateSettings();
+    assert.equal(S.getSettings().logCopy.retiredFrom, 'concept-sp-pepero');
+    // 나중에 마트 새 판을 받음
+    const frame = { key: 'k1317', html: '<div class="gk"></div>', rows: {}, roots: {}, paper: {} };
+    S.getSettings().logCopy.custom.push({ id: 'simple-k1317', name: '빼빼로데이', html: '', emoji: '🥢', frame, set: { blGeulkku: 2 }, slot: null });
+    await sheet.openLogSheet(model); await settle();
+    const d = document.querySelector('dialog.bl-lc');
+    assert.equal(d.querySelector('[data-shape][aria-checked="true"]')?.dataset.shape, 'simple-k1317', '새 판으로 이어 그려요');
+    assert.equal(d.querySelector('[data-lc-retired]').hidden, true, '이어졌으면 띠 없음');
+    d.querySelector('[data-lc="md"]').click(); await settle();
+    lc = S.getSettings().logCopy;
+    assert.equal(lc.shape, 'simple-k1317');
+    assert.ok(!lc.retiredFrom, '다 끝났으면 기억을 지워요');
+    S.invalidateSettings();
+    assert.ok(!('retiredFrom' in S.getSettings().logCopy), '설정 정리는 빈 기억을 남기지 않아요');
+});
+
+await test('깡통 로그가 아닌 다른 틀을 골라 복사하면 — 다 끝난 일로 봐요(띠 · 기억 없음)', async () => {
+    const w = await open({ shape: 'concept-sp-pepero' });
+    w.dialog.querySelector('[data-lc="more"]').click(); await settle();
+    w.dialog.querySelector('[data-cat="basic"]')?.click(); await settle();
+    const other = w.chips().find(id => id !== 'kkangtong' && !id.startsWith('simple-'));
+    w.dialog.querySelector(`[data-shape="${other}"]`).click(); await settle();
+    assert.equal(bandOn(w), false, '다른 틀로 바꾸면 띠는 숨어요');
+    await copyText(w);
+    const lc = S.getSettings().logCopy;
+    assert.equal(lc.shape, other);
+    assert.ok(!lc.retiredFrom);
 });
 
 await test('내 글꾸의 id 가 옛 내장 id 와 같으면 — 내 글꾸가 먼저예요(기본 틀로 바꾸거나 「테마에 없어요」 안내를 띄우지 않아요)', async () => {
@@ -91,6 +150,7 @@ await test('마트 새 판(simple-k1317)을 받아 뒀으면 그 글꾸로 이�
     const frame = { key: 'k1317', html: '<div class="gk"></div>', rows: {}, roots: {}, paper: {} };
     const w = await open({ shape: 'concept-sp-pepero', custom: [{ id: 'simple-k1317', name: '빼빼로데이', html: '', emoji: '🥢', frame, set: { blGeulkku: 2 }, slot: null }] });
     assert.equal(toasts.length, 0);
+    assert.equal(bandOn(w), false);
     assert.equal(w.on(), 'simple-k1317');
 });
 

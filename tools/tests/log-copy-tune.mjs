@@ -228,7 +228,7 @@ await test('늦게 받기: 조절 화면 · 조절 모듈은 import() 로만 —
     assert.doesNotMatch(read('src/log-copy-sheet.js'), /log-copy-tune-set/, '시트는 조절 화면 모듈만 불러요');
     assert.match(sheet, /if \(fine\.hold\) return;/, '슬라이더를 끄는 동안은 칸을 다시 그리지 않아요');
     assert.match(sheet, /fineMod\.fineAct\(live\.set, live\.frame\.key, action, modeOf\(state\.palette\)\)/);
-    assert.match(sheet, /fineMod\.fineHtml\(mine\.set, mine\.frame, \{ mode, open: fine\.open, tab: fine\.tab, caps \}\)/);
+    assert.match(sheet, /fineMod\.fineHtml\(mine\.set, mine\.frame, \{ mode, open: fine\.open, tab: fine\.tab, caps(?:, castKnown: state\.castKnown !== false)? \}\)/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/log-copy-tune\.mjs \./);
 });
 
@@ -281,7 +281,7 @@ await test('틀별 능력표(마트 측정 상한 · 1.1.5): 제목 · 여백 �
     const sheet = read('src/log-copy-sheet.js');
     assert.match(sheet, /Promise\.all\(\[import\('\.\/log-copy-simple-set\.js'\), import\('\.\/geulkku-mart\/caps-table\.js'\)\.catch\(\(\) => null\)\]\)/);
     assert.match(sheet, /renderLog\(shown\.model, \{ simple: mine, setMod, caps: capRow\(mine\.frame\.key\)/);
-    assert.match(sheet, /fineMod\.easyExtra\(mine\.set, mine\.frame, mode, caps\)/);
+    assert.match(sheet, /fineMod\.easyExtra\(mine\.set, mine\.frame, mode, caps(?:, \{ castKnown: state\.castKnown !== false \})?\)/);
     for (const f of ['src/log-copy-presets.js', 'src/log-copy-simple-set.js', 'src/log-copy-tune-ui.js', 'src/log-copy-tune-set.js', 'src/log-copy.js', 'index.js']) assert.doesNotMatch(read(f), /^\s*(?:import|export)\b[^;\n]*caps-table/m, `${f} 가 표를 정적으로 끌어오지 않아요`);
 });
 

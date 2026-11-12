@@ -17,7 +17,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const OUT = path.join(ROOT, 'src', 'geulkku-mart');
 const FIXTURE = path.join(ROOT, 'tools', 'tests', 'fixtures', 'geulkku-set-mart.json');
 // 들머리 — 이 다섯이 가져오는 파일까지 모두 떠요(설정 읽기 · 모양 · 글 모양 · 틀 값 · 움직임 · 질감 · 능력표)
-export const ENTRIES = ['mart/geulkku-set.js', 'mart/motion-state.js', 'mart/caps.js', 'mart/texture.js', 'mart/looks.js'];   // looks.js: 간편 추천 스타일 여섯 벌
+export const ENTRIES = ['mart/geulkku-set.js', 'mart/motion-state.js', 'mart/caps.js', 'mart/texture.js', 'mart/looks.js', 'mart/edit-blocks.js'];   // looks.js: 간편 추천 스타일 여섯 벌 · edit-blocks.js: 11-12 「글 고치기」 공용 편집 모듈(점선 칸 · 소품 전 · 후)
 const IMPORT = /((?:^|[\s;])(?:import|export)\s[^;]*?from\s+|import\(\s*)(['"])(\.{1,2}\/[^'"]+)\2/gm;
 
 const tidySpec = spec => spec.replace(/\?[^'"]*$/, '');

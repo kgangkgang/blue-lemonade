@@ -160,7 +160,7 @@ await test('연결: 시작 그래프 밖 · 도구 줄 · 설정 · 검색 사�
     assert.match(index, /\['startLogCopy', \(\) => import\('\.\/src\/log-copy\.js'\)/, '3층(유휴)에서 받아요');
     assert.match(read('src/log-copy.js'), /import\('\.\/log-copy-sheet\.js'\)/, '시트는 처음 쓸 때');
     assert.match(read('src/log-copy-sheet.js'), /sandbox="allow-same-origin"/, '미리보기는 스크립트 없는 sandbox');
-    assert.match(read('src/log-copy-sheet.js'), /writeClipboard\(html, withCommentSlots\(prettyLogHtml\(insertHead\(copyBody\(result\(\{ marks: true \}\)\)\.html, lifted\.head\)/, '복사 = 서식 + 그 HTML 코드 글자(1.0.1 사람이 고치기 쉬운 꼴 — log-copy-pretty.mjs · 1.1.2 그림 주소는 맨 앞 <style> 로 — log-copy-lift.mjs)');
+    assert.match(read('src/log-copy-sheet.js'), /const code = withCommentSlots\(prettyLogHtml\(insertHead\(copyBody\(result\(\{ marks: true \}\)\)\.html, lifted\.head\)[\s\S]*?writeClipboard\(html, code\)/, '복사 = 서식 + 그 HTML 코드 글자(1.0.1 사람이 고치기 쉬운 꼴 — log-copy-pretty.mjs · 1.1.2 그림 주소는 맨 앞 <style> 로 — log-copy-lift.mjs)');
     assert.match(read('src/settings.js'), /logCopy: \{ on: true, shape: 'kkangtong'/);   // 1.1.3 새 설정의 기본 틀(틀이 저장된 설정은 그대로 — log-copy-connect-113.mjs)
     assert.match(read('src/panel.js'), /toggle\('logCopy\.on'/);
     assert.match(read('src/settings-search.js'), /'로그 복사','로그 복사 서식 복사 그대로 복사/);

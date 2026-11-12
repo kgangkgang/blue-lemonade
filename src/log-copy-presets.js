@@ -9,7 +9,8 @@ import { recolorLog } from './log-copy-words.js';
 import { box, font, hide, svgDoc, svgUrl } from './log-copy-concept-kit.js';   // 메시지 배치(유령 말풍선 꼬리 svg) · 컨셉 칸 공용 상자
 import { fillTemplate, templateColors, tidyType } from './log-copy-template.js';
 import { drawTone } from './log-copy-tone.js';   // 1.1.3 「깡통 로그」 틀 묶음(대사색 하나로 틀 색 — 에이드 팔레트를 안 써요)
-import { SIMPLE, simplePresets, drawSimple, speakerLetters, castLetters } from './log-copy-simple.js';
+import { SIMPLE, simplePresets, drawSimple, speakerLetters, castLetters, rowMarks } from './log-copy-simple.js';
+import { unparagraphHtml } from './log-copy-spoiler.js';   // 1.1.8 받은 심플 글꾸에 거둔 숨긴 글
 import { markEdits } from './log-copy-simple-tone.js';   // 1.1.4 받은 심플 글꾸: 조절 값을 입힌 뒤에 고칠 자리 「✎」   // 1.1.3 「심플」 새 틀 28(클래스 + <style> 하나 · 깃발 SIMPLE_FRAMES_ENABLED 가 꺼져 있어 아직 PRESETS · 분류 칩에 안 들어가요)
 import { drawBasic } from './log-copy-basic.js';   // 1.1.3 「기본 글꾸」 새 틀 18(시안 생성기 그림 그대로 · 클래스 + <style> 하나 · 432 상태창은 보류라 옛 그림)
 import { LEMON_HOME } from './log-copy-lemon.js';   // 1.1.2 레몬 그림 링크 주소(레몬 틀 · 「레몬 바로가기」 칩이 같이 써요)
@@ -558,7 +559,7 @@ export function fixedWidth(html) {
         return `${open}${attrs} style="${add}"${end}`;
     });
 }
-export function renderLog(model, { shape = 'plain', colors = null, ui = null, fields = {}, size = 'm', names = true, gap: blank = true, images = [], screen = null, template = null, lemonLink = false, mode = null, lookup = null, info = 'off', height = '', marks = false, simple = null, setMod = null, caps = null } = {}) {
+export function renderLog(model, { shape = 'plain', colors = null, ui = null, fields = {}, size = 'm', names = true, gap: blank = true, images = [], screen = null, template = null, lemonLink = false, mode = null, lookup = null, info = 'off', height = '', marks = false, simple = null, setMod = null, caps = null, rows = false } = {}) {
     if (!model?.messages?.length) return '';
     // 1.1.4 글꾸 마트 「테마로 담기」로 받은 심플 글꾸(내 글꾸 { frame, set }) — 내장 심플 틀과 같은 그리기(drawSimple) + 담아 온 조절 값(setMod = log-copy-simple-set.js · 아직 못 받았으면 틀만)
     if (simple?.frame) {
@@ -567,10 +568,11 @@ export function renderLog(model, { shape = 'plain', colors = null, ui = null, fi
         const cast = simple.set?.themeCast;   // 1.1.5 시트에서 고른 화자 색(없으면 인물표 색)
         const castKnown = castLetters(speakerLetters(model, { main: simple.frame.main, second: simple.frame.second, lookup }), simple.frame, cast).main != null;
         const f = setMod ? setMod.prepareFrame(simple.frame, simple.set, { castKnown }) : simple.frame;
-        let html = drawSimple(f, model, { fields, names, mode: md, lookup, cast, marks: false }).html;
+        let html = drawSimple(f, model, { fields, names, mode: md, lookup, cast, marks: false, rows }).html;
         if (setMod && html) html = setMod.applySet(html, simple.set, { mode: md, key: f.key, caps });   // 1.1.5 caps: 틀별 능력표 한 줄(마트와 같은 상한)
         if (setMod && html && !lemonLink) html = setMod.dropLemon(html);   // 시트 「레몬」 칩을 끄면 틀 안 레몬도 빼요
-        return fixedWidth(html ? markEdits(html, { skip: f.hidden ? [] : ['gk-hl'] }) : html);
+        if (html) html = markEdits(unparagraphHtml(html), { skip: f.hidden ? [] : ['gk-hl'] });   // 1.1.8 거둔 숨긴 글이 든 <p> 줄 → div.blsp-p(없으면 그대로)
+        return fixedWidth(html && rows ? rowMarks(html) : html);   // 1.1.8 rows: 시트 미리보기 표지(고친 글 거두기 · 복사 때 stripRowMarks)
     }
     // 1.0.1 template: 글꾸 마트에서 받은 내 글꾸(틈 템플릿 · 전용 색) — 렌더 분기는 여기 한 곳
     const found = template?.template ? null : PRESETS.find(p => p.id === shape);
@@ -578,7 +580,7 @@ export function renderLog(model, { shape = 'plain', colors = null, ui = null, fi
     // 1.1.3 「심플」 새 틀: 깡통 로그 틀과 같이 밝기 = mode · lookup(정해 둔 대사색) · 팔레트 색은 안 써요. 글자색은 틀 <style> 이 맡아요(복사 때 시트 pinColors 가 인라인으로 굳혀요)
     if (found?.simple) {
         const light = mode ? mode === 'light' : !!colors?.bg && contrast(colors.bg, '#000000') > contrast(colors.bg, '#ffffff');
-        return fixedWidth(drawSimple(found.frame, model, { fields, names, mode: light ? 'light' : 'dark', lookup }).html);
+        return fixedWidth(drawSimple(found.frame, model, { fields, names, mode: light ? 'light' : 'dark', lookup, rows }).html);
     }
     // 1.1.3 「기본 글꾸」 새 틀: 밝기 = mode · 화자 색 = lookup(정해 둔 대사색) · 정보 칸 info · 높이 height(빈 값 = 글 길이만큼) — 틀 폭은 시안 그대로(400 · 480 · 520 틀이 있어 fixedWidth 를 안 걸어요)
     if (found?.basic) {

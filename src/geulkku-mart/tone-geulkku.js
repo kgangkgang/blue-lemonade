@@ -1,4 +1,4 @@
-// 생성물 — 글꾸 마트 mart/tone-geulkku.js 사본(마트 97a96f7a · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
+// 생성물 — 글꾸 마트 mart/tone-geulkku.js 사본(마트 1466d38b · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
 import { tone, fitInk, bandColor, oklchOf, oklchHex, over, speakerColor, INK_TARGET } from "./lib/log-copy/shared/char-tone.js";
 import { parseColor, contrast } from "./lib/log-copy/shared/ink-paint.js";
 import { pasteReady } from "./lib/log-copy/log-copy-lift.js";

@@ -573,9 +573,11 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
 }
 
 /* ---------- 탭 · 인물 칩 = 테마 칩(34 · 1px 선 · 모서리 8). 고름 = 옅은 면 + 색 글자 650(칩은 + 체크) ---------- */
+/* 1.2.0: 탭 줄 아래 간격 12 = 탭 줄 아래 11 + 본문 칸이 잘라 내는 맨 윗줄 1(아래 「묶음 본문」) — 본문 칸 위 여백이 0 이라
+   인물 칩 줄이 없으면 탭이 바로 아래 카드 윗선 · 인물 머리에 붙었어요(원작은 본문 위 12 · 폰 10) */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-tabs {
   margin: 0 !important;
-  padding: 12px 16px 0 !important;
+  padding: 12px 16px 11px !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -686,17 +688,28 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   background: transparent !important;
   box-shadow: none !important;
 }
+/* 1.2.0: 인물 칩 줄이 탭 바로 아래 오는 묶음(인물 쪽 머리가 없는 판)에서는 위 간격을 탭 줄이 맡아요(둘이 겹치면 24) — 위 1 은 본문 칸이 잘라 내는 줄 몫.
+   원작이 스크롤 때 붙는 자리(top -12 = 위 여백 12 몫)도 0 으로 — 그대로 두면 붙은 칩 윗부분이 잘려요. 인물 쪽(머리 다음에 칩 줄)은 그대로 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules > .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-cast {
+  top: 0 !important;
+  padding-top: 1px !important;
+}
 
 /* ---------- 묶음 본문 ---------- */
+/* 1.2.0: 맨 윗줄 1px 을 잘라 내요 — 탭 줄 바로 아래 오는 카드(탭마다 다른 카드)의 윗선이 그 줄이라, 어느 탭에서도 탭 아래에 판 끝까지 가는 선이 없어요.
+   탭 칩(안쪽 16)과 그 선(판 끝)의 좌우가 어긋나 탭이 「네모 상자에 붙은」 듯 보였어요. 탭을 보는 :has 없이(주어 아닌 :has 를 늘리지 않게) 자리로 풀어요 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-modules__body {
+  clip-path: inset(1px 0 0);
   margin: 0 !important;
   padding: 0 16px 8px !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
 }
-/* 묶음 안 상자 카드(갈래 · 줄거리 · 모멘텀 · 메모 …): 상자 대신 판 끝까지 1px 나눔 선 */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) {
+/* 묶음 안 상자 카드(갈래 · 줄거리 · 모멘텀 · 메모 …): 상자 대신 판 끝까지 1px 나눔 선.
+   1.2.0: :not(#salty-none) — 88-ui-parts 의 「묶음 안 카드 네 변 1px 선」(아이디 둘 · 스킨을 끈 원작 카드 몫)이 이 규칙을 이겨, 스킨을 켠 판에서도 카드가
+   판 끝에 붙은 네모 상자로 그려졌어요(탭이 그 상자 윗변에 붙어 보이던 것). 스킨을 켠 판은 정한 대로 평평한 카드(위 나눔 선 하나) */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)):not(#salty-none) {
   margin: 0 -16px !important;
   border: 0 !important;
   border-top: 1px solid var(--salty-line) !important;
@@ -706,6 +719,10 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
 }
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > details.custom-dem-card::before {
   display: none !important;
+}
+/* 1.2.0: 인물 칩 줄 다음에 오는 첫 카드도 윗선 없이(원작 약속: 첫 카드는 위 선 0) — 위 나눔 선 규칙과 같은 무게라 그 뒤에 둬요 */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules > .custom-dem-modules__body > details.custom-dem-card:first-of-type:not(#salty-none) {
+  border-top: 0 !important;
 }
 /* 원작 묶음 규칙(summary ~ *)이 카드 본문의 좌우 여백을 0 으로 덮어요 — 본문 칸은 16 */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) > :is(.custom-dem-status__body, .custom-dem-relationships__body, .custom-dem-psychological-states__body, .custom-dem-undercurrents__body, .custom-dem-threads__body, .custom-dem-momentum-engine__body, .custom-dem-plotlines__body, .custom-dem-scratchpad__body, .custom-dem-card__body, .custom-dem-meanwhile__body, .custom-dem-hidden-truths__body) {

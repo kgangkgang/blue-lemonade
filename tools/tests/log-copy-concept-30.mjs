@@ -88,7 +88,7 @@ await test('30종이 마트 도구에 다 있어요: 분류 기념일 7 · 사�
     // 저장된 모양 · 즐겨찾기 · 최근은 지우거나 옮겨 쓰지 않아요(읽기만) — 1.0.1 의 「옮겨 저장」 길도 없어요
     const sheet = read('src/log-copy-sheet.js');
     assert.ok(!/s\.fav = moved\(s\.fav\)|movedShape/.test(sheet));
-    assert.match(sheet, /readShape\(state\.shape, s\.custom\)/);
+    assert.match(sheet, /const read = readSaved\(s, pk\.mod \? pk\.mod\.pickIds\(pk\.picks, s\.custom\)/);   // 1.1.8 readShape 를 감싼 readSaved(복사 뒤에도 옛 id 기억) · 내 글꾸 + 보이는 추천 글꾸
     // 1.0.1 2단계: 할로윈 13종은 PRESETS 에서 빠지고 글꾸 마트(tools/mart)로 — 받으면 「내 글꾸」 틈 템플릿
     assert.equal(presetsIn('halloween').length, 0);
     assert.match(read('tools/mart/geulkku-halloween.mjs'), /export const MART_HALLOWEEN_SHAPES = \{/);

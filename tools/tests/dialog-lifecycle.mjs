@@ -157,7 +157,7 @@ await test('마트에서 가져오기: 열고 닫기 반복에 남는 창 · 등
     d.querySelector('[data-mart-text]').value = '{ 마트 아님';
     d.querySelector('[data-mart="go"]').click();
     await settle();
-    assert.match(out.textContent, /JSON/, '잘못된 글');
+    assert.match(out.textContent, /복사가 덜 된 것 같아요/, '잘못된 글(1.1.8 사람 말)');
     d.close();
 });
 

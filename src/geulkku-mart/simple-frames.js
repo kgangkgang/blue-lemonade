@@ -1,4 +1,4 @@
-// 생성물 — 글꾸 마트 mart/simple-frames.js 사본(마트 97a96f7a · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
+// 생성물 — 글꾸 마트 mart/simple-frames.js 사본(마트 1466d38b · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
 import { toneLadder, bandColor, speakerColor, tone, NEUTRAL_LADDER } from "./lib/log-copy/shared/char-tone.js";
 import { kkangtongReady } from "./tone-geulkku.js";
 const SIMPLE_CONTRACT = Object.freeze({

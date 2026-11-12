@@ -297,7 +297,7 @@ await test('검토 ③「+n」 · 「접기」를 키보드로 누르면 초점�
     }
 });
 
-await test('바닥 줄: 폰에서는 「글만 · 파일로 · HTML 복사」(아이콘 + 짧은 이름) · PC 는 「글만 복사 · 내려받기」 그대로', async () => {
+await test('바닥 줄: 폰에서는 아이콘 + 짧은 이름(「글만」 · 1.2.0 「파일로」 자리는 「코드」 — log-copy-paste-manage.mjs) · PC 는 「글만 복사 · 내려받기」 그대로', async () => {
     const w = await open();
     const md = w.pick('[data-lc="md"]'), dl = w.pick('[data-lc="download"]');
     assert.equal(md.querySelector('.bl-lc-long').textContent, '글만 복사'); assert.equal(md.querySelector('span.bl-lc-ph').textContent, '글만');

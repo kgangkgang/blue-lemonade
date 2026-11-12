@@ -66,7 +66,25 @@ const ADAPT = {
     ].reduce((text, [find, to]) => must(text, find, to), code),
     'src/chat-appearance.js': code => must(code, "new URL('./chat-appearance.css', import.meta.url)", "new URL('./chat-appearance.gen.css', import.meta.url)"),
     'src/addons.js': code => must(code, "await import(id==='order'?'./addons/order/panel.js':'./addons/perf/hub.js')", "await(id==='order'?import('./addons/order/panel.js'):import('./addons/perf/hub.js'))"),
+    // 1.1.8 늦게 받는 창 CSS 글(const STYLE = `…`)의 주석 · 들여쓰기 · 띄어쓰기를 묶음에서만 걷어요(원본은 읽기 쉬운 그대로 · 모양은 같아요) — dist 여유를 되찾아요(로그 복사 시트 약 5.4KB)
+    'src/log-copy-sheet.js': code => minStyle(code, 'STYLE'),
+    'src/mart-import-ui.js': code => minStyle(code, 'STYLE'),
+    'src/log-copy-tune-ui.js': code => minStyle(code, 'FINE_STYLE'),
+    'src/log-copy-handoff.js': code => minStyle(code, 'STYLE'),   // 1.2.0 붙이는 길 · 다시 받기 창
+    'src/mart-retake.js': code => minStyle(code, 'STYLE'),
 };
+/** const <name> = `css`; 한 곳의 CSS 를 줄여요 — 글 끼우기(${…}) · 거꾸로 빗금이 든 글은 건드리지 않고 멈춰요(조용히 깨지지 않게).
+ *  따옴표 글(url("data:image/svg+xml,…") 같은 것)은 떼어 두었다가 그대로 되돌려요 — 그 안의 띄어쓰기 · 쉼표 · 「>」 는 뜻이 있어요 */
+export function minStyle(code, name) {
+    const head = `const ${name} = \``, at = code.indexOf(head), end = at < 0 ? -1 : code.indexOf('`;', at + head.length);
+    if (at < 0 || end < 0) throw new Error(`묶음 표의 CSS 글을 src 에서 못 찾았어요: ${name}`);
+    const css = code.slice(at + head.length, end);
+    if (css.includes('${') || css.includes('\\') || css.includes('`') || /[\uE000\uE001]/.test(css)) throw new Error(`${name} 에 글 끼우기 · 거꾸로 빗금이 있어 줄이지 않아요`);
+    const kept = [];
+    const masked = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/"[^"\n]*"|'[^'\n]*'/g, (s) => { kept.push(s); return `\uE000${kept.length - 1}\uE001`; });
+    const small = masked.replace(/\s+/g, ' ').replace(/\s*([{};,>])\s*/g, '$1').replace(/;}/g, '}').trim().replace(/\uE000(\d+)\uE001/g, (all, i) => kept[i]);
+    return code.slice(0, at + head.length) + small + code.slice(end);
+}
 function must(code, find, to) {
     if (!code.includes(find)) throw new Error(`묶음 표의 글을 src 에서 못 찾았어요: ${find}`);
     return code.split(find).join(to);

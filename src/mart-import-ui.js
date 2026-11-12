@@ -4,7 +4,7 @@
 import { readMart, findDupes, addMartItems, summary, isGeulkku, dropCssComments, MART_URL, MART_TEXT_MAX } from './mart-import.js';
 import { drawPreset } from './frame-presets.js';
 import { showThemeModal } from './modal.js';
-import { ask } from './ask.js';
+import { askRetake } from './mart-retake.js';   // 1.2.0 다시 받기 창
 import { getSettings } from './settings.js';
 import { imageWidth, imageHeight } from './imagedecode.js';
 
@@ -23,6 +23,41 @@ async function sanitizedSame(html) {
     const { sanitizeHtml } = await import('./log-copy-sanitize.js');
     const plain = new DOMParser().parseFromString(`<!doctype html><html><head></head><body>${html}</body></html>`, 'text/html').body.innerHTML;
     return sanitizeHtml(html, { keepPreviewMarks: true }) === dropCssComments(plain);
+}
+// 1.1.8 줄 갈래 꼴 · 칸 묶음 조각도 같은 소독기로(틀 글 밖에 따로 들어 있어요)
+async function sanitizedAll(frame) {
+    const parts = [frame.html, ...Object.values(frame.vary ?? {}).flatMap(v => v.forms ?? [v.base, v.accent]), ...(frame.units ?? []).flatMap(u => [u.both, u.nr, u.dl, u.rows.지문, u.rows.대사])];
+    for (const part of parts) if (!(await sanitizedSame(part.split('{{지연}}').join('0.2s')))) return false;
+    return true;
+}
+
+/**
+ * 1.1.8 붙여 넣은 글 → 검사 · 그림 디코드 · 덮어쓸지 묻기 · 넣기 — 창 없이도 써요(로그 복사 시트 붙여 넣기 칸이 바로 받아요 · 이 창의 「가져오기」도 같은 길)
+ * @param {string} raw
+ * @param {{ apply: (mutator: (settings: object) => void) => void, progress?: (head: string) => void }} options
+ * @returns {Promise<{ head: string, lines: string[], result: object|null }>} result 가 null 이면 아무것도 안 넣었어요(head 가 까닭)
+ */
+export async function takeMart(raw, { apply, progress = () => {} }) {
+    try {
+        const read = readMart(raw);
+        if (read.error) return { head: read.error, lines: [], result: null };
+        progress(read.items.some(item => item.kind === 'frame') ? '그림을 확인하는 중이에요…' : '확인하는 중이에요…');
+        const items = [], bad = [];
+        for (const item of read.items) {
+            if (item.kind === 'frame' && !((await decodes(item.decor.art)) && (await decodes(item.decor.mask)))) { bad.push({ name: item.name, reason: '그림을 읽지 못했어요' }); continue; }
+            if (item.kind === 'geulkku-simple' && !(await sanitizedAll(item.frame))) { bad.push({ name: item.name, reason: '테마 복사 글에서 지워질 꾸밈이 든 틀이라 받지 않았어요 — 이 틀은 마트의 「HTML 복사」로 게시글에 바로 붙여 써요' }); continue; }
+            items.push(item);
+        }
+        const dupes = findDupes(getSettings(), items);
+        const { replace, keep } = await askRetake(getSettings(), dupes, items.length > dupes.length);   // 1.2.0 테마에서 바꾼 조절 값이 있으면 셋 중에(덮어쓰기 · 조절 값 지키고 틀만 새로 · 그만두기)
+        const taken = items.some(isGeulkku) ? new Set((await import('./log-copy-presets.js')).PRESETS.map(p => p.id)) : new Set();
+        let result = { frames: [], geulkku: [], simple: [], replaced: [], kept: [], skipped: [], warned: [] };
+        apply((settings) => { result = addMartItems(settings, items, { replace, keep, taken, draw: item => drawPreset(item.presetId, item) }); });
+        return { ...summary(result, [...read.skipped, ...bad]), result };
+    } catch (error) {
+        console.warn('[Blue Lemonade] 마트에서 가져오기', error);   // 영어 오류 글은 화면 대신 콘솔에
+        return { head: '가져오지 못했어요 — 마트에서 다시 복사해 한 번 더 해 봐요', lines: [], result: null };
+    }
 }
 
 /**
@@ -57,26 +92,9 @@ export function openMartImport({ kind = 'frames', text = '', apply, done } = {})
         busy = true;
         $('[data-mart="go"]').disabled = true;
         try {
-            const read = readMart(raw);
-            if (read.error) { show(read.error); return; }
-            show(read.items.some(item => item.kind === 'frame') ? '그림을 확인하는 중이에요…' : '확인하는 중이에요…');
-            const items = [], bad = [];
-            for (const item of read.items) {
-                if (item.kind === 'frame' && !((await decodes(item.decor.art)) && (await decodes(item.decor.mask)))) { bad.push({ name: item.name, reason: '그림을 읽지 못했어요' }); continue; }
-                if (item.kind === 'geulkku-simple' && !(await sanitizedSame(item.frame.html))) { bad.push({ name: item.name, reason: '테마 복사 글에서 걷힐 것이 든 틀이에요' }); continue; }
-                items.push(item);
-            }
-            const dupes = findDupes(getSettings(), items);
-            let replace = new Set();
-            if (dupes.length && await ask(`이미 있어요: ${dupes.map(item => item.name).join(', ')}\n덮어쓸까요?`, { ok: '덮어쓰기', cancel: '건너뛰기', title: '마트에서 가져오기' })) replace = new Set(dupes.map(item => item.id));
-            const taken = items.some(isGeulkku) ? new Set((await import('./log-copy-presets.js')).PRESETS.map(p => p.id)) : new Set();
-            let result = { frames: [], geulkku: [], simple: [], replaced: [], skipped: [] };
-            apply((settings) => { result = addMartItems(settings, items, { replace, taken, draw: item => drawPreset(item.presetId, item) }); });
-            const { head, lines } = summary(result, [...read.skipped, ...bad]);
+            const { head, lines, result } = await takeMart(raw, { apply, progress: show });
             show(head, lines);
-            if (result.frames.length || result.geulkku.length) { box.value = ''; done?.(result); }
-        } catch (error) {
-            show(`가져오지 못했어요 — ${error?.message || error}`);
+            if (result && (result.frames.length || result.geulkku.length)) { box.value = ''; done?.(result); if (geulkku && !lines.length) dialog.close(); }   // 1.1.8 글꾸를 다 받았으면 창을 닫아요(✕ 를 한 번 더 누르지 않게 · 덜 받은 것이 있으면 남겨 보여요)
         } finally {
             busy = false;
             $('[data-mart="go"]').disabled = false;
@@ -95,7 +113,7 @@ export function openMartImport({ kind = 'frames', text = '', apply, done } = {})
         if (file.size > MART_TEXT_MAX) { show('파일이 너무 커요(40MB 까지)'); return; }
         // 1.1.0 읽기가 막히면(지워진 파일 · 권한) 처리 안 된 거절로 조용히 끝났어요 — 결과 칸에 알려요
         let raw;
-        try { raw = await file.text(); } catch (error) { show(`파일을 읽지 못했어요 — ${error?.message || error}`); return; }
+        try { raw = await file.text(); } catch (error) { console.warn('[Blue Lemonade] 마트 파일', error); show('파일을 읽지 못했어요 — 파일을 다시 골라 봐요'); return; }
         run(raw);
     });
     dialog.addEventListener('close', () => dialog.remove());

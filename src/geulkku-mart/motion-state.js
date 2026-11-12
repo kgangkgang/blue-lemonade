@@ -1,4 +1,4 @@
-// 생성물 — 글꾸 마트 mart/motion-state.js 사본(마트 97a96f7a · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
+// 생성물 — 글꾸 마트 mart/motion-state.js 사본(마트 1466d38b · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
 import { applyLevel, describe, FELT } from "./lib/motion/motion.js";
 const MOTION_KEY = "bl-mart-motion-v1";
 const MOTION_LEVELS = Object.freeze([["0", "끔"], ["s", "약"], ["m", "중"], ["l", "강"]]);

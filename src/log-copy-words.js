@@ -157,7 +157,18 @@ export function transformLog(model, { rules = [], hide = null } = {}) {
     }
     // 틀 칸 · 그림 alt 도 같은 말로 — 부제목 · 꼬리 · 추가 정보나 그림 설명에 이름이 남지 않게요
     const rewriteFields = fields => Object.fromEntries(Object.entries(fields ?? {}).map(([key, value]) => [key, typeof value === 'string' ? rewriteText(value) : value]));
-    const rewriteImages = images => (images ?? []).map(image => ({ ...image, alt: rewriteText(image.alt) }));
+    // 1.1.8 이름 숨김이 켜져 있으면 주소에 가린 이름이 든 그림은 빼요(실리태번 그림 주소는 /user/images/<캐릭터 이름>/… — 설명만 가리고 주소로 이름이 새던 것 · 점검 1112 「새는 이름」)
+    const leaks = (src) => {
+        if (!names?.size) return false;
+        let text = String(src ?? '');
+        if (/^\s*data:/i.test(text)) return false;   // 그림 자료(base64) 글자가 우연히 이름과 맞아 빠지던 것
+        try { text = decodeURIComponent(text); } catch { /* 반쯤 인코딩된 주소는 그대로 */ }
+        text = text.normalize('NFKC');   // 풀린 한글(맥 파일 이름) · 전각 글자도 같은 글자로
+        // 주소 조각(폴더 · 파일 이름 · 물음표 뒤 값)이 이름과 통째로 같을 때만 — 전엔 글자 일부만 맞아도 빠져서 내 이름이 「User」 면 /user/images/… 그림이 전부 사라졌어요
+        const parts = text.toLowerCase().replace(/(^|\/)user\/images\//, '$1').split(/[/\\?#&=]+/).flatMap(p => [p.trim(), p.replace(/\.[a-z0-9]{1,5}$/, '').trim()]);
+        return [...names].some((raw) => { const n = raw.normalize('NFKC'); return [...n].length >= 2 && parts.some(p => p === n || (p.startsWith(n) && /^[\s_\-(.]/.test(p.slice(n.length)))); });   // 이름 + 덧말(「세라피나 겨울」 · 「세라피나_2026」 · 「세라피나 (2)」)도
+    };
+    const rewriteImages = images => (images ?? []).filter(image => !leaks(image.src)).map(image => ({ ...image, alt: rewriteText(image.alt) }));
     const dropOrRewrite = value => (names?.has(String(value ?? '').trim().toLowerCase()) ? '' : rewriteText(value));   // 제목 · 보낸 이 칸이 숨긴 이름 그 자체면 비움
     if (replace || mask) { out.chatName = dropOrRewrite(out.chatName); out.userName = dropOrRewrite(out.userName); if (Array.isArray(out.images)) out.images = rewriteImages(out.images); }
     return { model: out, replaced, hidden, rewriteText, rewriteFields, rewriteImages };

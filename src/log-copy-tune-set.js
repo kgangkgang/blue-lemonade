@@ -85,7 +85,10 @@ export function withCast(set, who, value) {
 /** 지금 글 모양 값(없으면 null) */
 export const lookOf = set => read(set)?.look ?? null;
 /** 능력표를 잴 글 — 등록 값의 로그 자리에 이름 · 대사 · 지문 줄을 한 줄씩 넣은 것(이름표 · 띠 같은 줄 규칙이 걸리는지 보려면 줄이 있어야 해요) */
-export const probeOf = frame => String(frame?.html ?? '').split('{{로그}}').join(['이름', '대사', '지문'].map(k => frame?.rows?.[k] ?? '').join('\n'));
+//   1.1.8 칸 묶음 틀은 로그 자리 둘에 칸 둘(지문 · 대사 줄을 넣은 both)
+const unitProbe = u => u.both.split('{{지문들}}').join(u.rows.지문).split('{{대사들}}').join(u.rows.대사);
+export const probeOf = frame => (frame?.units ? String(frame.html).split('{{로그}}').join(unitProbe(frame.units[0])).split('{{로그:2}}').join(unitProbe(frame.units[1]))
+    : String(frame?.html ?? '').split('{{로그}}').join(['이름', '대사', '지문'].map(k => frame?.rows?.[k] ?? '').join('\n')));
 /** 소품도 캐릭터 색(기본 켬 — 「기본 색」 틀에서만 뜻이 있어요) */
 export function withCover(set, on) {
     const r = read(set);

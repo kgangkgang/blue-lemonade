@@ -92,7 +92,7 @@ await test('문단 나누기: 다 대사면 대사 줄 · 지문과 섞이면 �
     assert.deepEqual(logOf(html).split('\n'), [
         '<p class="gk-nr">그가 말했다. <span class="gk-d gk-dA">「가자.」</span> 그리고 걸었다.</p>',
         '<p class="gk-dl" style="animation:gk-dl .35s ease-out 0.2s both"><span class="gk-d gk-dA">「색 없는 대사.」</span></p>',
-        '<p class="gk-nr"><b>굵게</b> · <i>기울임</i></p>',
+        '<p class="gk-nr"><strong>굵게</strong> · <em>기울임</em></p>',   // 11-12 마트 견본과 같은 태그(세밀 강조 · 속마음 규칙이 겨눠요)
         '<p class="gk-nr">윗줄<br>아랫줄</p>',
     ], '이름 줄은 화자가 한 명이라 없어요 · 빈 문단은 빼요');
 });

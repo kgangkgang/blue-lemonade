@@ -1,4 +1,4 @@
-// 생성물 — 글꾸 마트 mart/lib/texture/tex.js 사본(마트 97a96f7a · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
+// 생성물 — 글꾸 마트 mart/lib/texture/tex.js 사본(마트 1466d38b · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
 const enc = (svg) => "url('data:image/svg+xml," + String(svg).replace(/\s*\n\s*/g, " ").replace(/>\s+</g, "><").trim().replace(/[%#<>"'()&;{}\\]/g, (ch) => "%" + ch.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0")) + "')";
 const NS = 'xmlns="http://www.w3.org/2000/svg"';
 const r3 = (n) => String(Math.round(n * 1e3) / 1e3).replace(/^0\./, ".");

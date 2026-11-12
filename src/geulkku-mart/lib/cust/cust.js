@@ -1,4 +1,4 @@
-// 생성물 — 글꾸 마트 mart/lib/cust/cust.js 사본(마트 97a96f7a · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
+// 생성물 — 글꾸 마트 mart/lib/cust/cust.js 사본(마트 1466d38b · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
 import { px as PX } from "./edge-px.js";
 const svgUrl = (svg) => "url('data:image/svg+xml," + PX(String(svg).replace(/\s*\n\s*/g, " ").replace(/>\s+</g, "><").trim()).replace(/[%#<>"'()&;{}\\]/g, (ch) => "%" + ch.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0")) + "')";
 const mask = (sel, w, h, inner) => {
@@ -42,6 +42,7 @@ function slots(html, pre = "") {
 }
 const ON = (k, cls) => "." + k + "." + cls + ":has(.kx[open])";
 const R = (k, cls) => "." + k + "." + cls;
+const cssStr = (v) => String(v).replace(/[\\"\n\r<>]/g, "");
 const comma = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 const num = (s) => +String(s).replace(/[^\d]/g, "") || 0;
 const DIG = {
@@ -84,6 +85,10 @@ ${ON(k, cls)} .lq{${T(E, 0)};animation-name:${kf}}` };
     const [m2, d2] = MD(m, d);
     return { text: { 1: m2 + "월", 2: String(d2), 3: m + "월", 4: String(d) } };
   } } },
+  "bl:k1102": {
+    익명1: { kind: "text", def: "익명1", label: "익명 이름 1(첫째 화자)", apply: (v, k) => ({ cls: "gk-an1", css: R(k, "gk-an1") + ' p.gk-nA::after{content:"' + cssStr(v) + '"}' }) },
+    익명2: { kind: "text", def: "익명2", label: "익명 이름 2(둘째 화자)", apply: (v, k) => ({ cls: "gk-an2", css: R(k, "gk-an2") + ' p.gk-nB::after{content:"' + cssStr(v) + '"}' }) }
+  },
   "10:k292": { 업적: { kind: "text", slot: "옥상 문을 열었다", label: "업적 이름" } },
   "10:k289": { 선택지1: { kind: "text", slot: "옥상 문을 연다", label: "첫째 선택지" }, 선택지2: { kind: "text", slot: "전화를 한 번 더 건다", label: "둘째 선택지" } },
   "36:k342": { 점수: { kind: "num", min: 0, max: 999, step: 1, def: 999, label: "펀치 점수", apply: (v) => {
@@ -184,7 +189,7 @@ function applyCust(html, key, cust, o = {}) {
     }
     const h = H[name];
     if (!h || name[0] === "_") throw new Error(key + " 에 없는 고리: " + name);
-    if (h.kind === "text") {
+    if (h.kind === "text" && !h.apply) {
       text[slotOf(h.slot)] = String(v);
       continue;
     }

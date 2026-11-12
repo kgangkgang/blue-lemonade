@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 588개 (230.6KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 590개 (231.1KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -1385,7 +1385,7 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .cus
 }
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-tabs {
   margin: 0 !important;
-  padding: 12px 16px 0 !important;
+  padding: 12px 16px 11px !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -1493,14 +1493,19 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .cus
   background: transparent !important;
   box-shadow: none !important;
 }
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules > .custom-dem-modules__body:not(.custom-dem-charpage) > .custom-dem-cast {
+  top: 0 !important;
+  padding-top: 1px !important;
+}
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-modules__body {
+  clip-path: inset(1px 0 0);
   margin: 0 !important;
   padding: 0 16px 8px !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
 }
-body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) {
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)):not(#salty-none) {
   margin: 0 -16px !important;
   border: 0 !important;
   border-top: 1px solid var(--salty-line) !important;
@@ -1510,6 +1515,9 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .cus
 }
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules__body > details.custom-dem-card::before {
   display: none !important;
+}
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules > .custom-dem-modules__body > details.custom-dem-card:first-of-type:not(#salty-none) {
+  border-top: 0 !important;
 }
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) > :is(.custom-dem-status__body, .custom-dem-relationships__body, .custom-dem-psychological-states__body, .custom-dem-undercurrents__body, .custom-dem-threads__body, .custom-dem-momentum-engine__body, .custom-dem-plotlines__body, .custom-dem-scratchpad__body, .custom-dem-card__body, .custom-dem-meanwhile__body, .custom-dem-hidden-truths__body) {
   margin: 0 !important;

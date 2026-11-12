@@ -212,7 +212,7 @@ export const ORIGINAL = Symbol('원래 색');
  *   cvTail: 캐릭터 색 클래스 이름 꼬리(다른 화자 색이 바뀐 로그 — 한 글에 붙여도 안 부딪히게)
  * @returns {string} 꼴이 아니면 받은 그대로
  */
-export function toneSimple(html, K, { mode = 'dark', main, others = {}, cvTail = '' } = {}) {
+export function toneSimple(html, K, { mode = 'dark', main, others = {}, cvTail = '', colors0: given } = {}) {
     const info = simpleFrameInfo(html);
     if (!info || !info.key || !info.base || info.K0 === undefined) return html;
     const original = K === ORIGINAL;
@@ -228,7 +228,7 @@ export function toneSimple(html, K, { mode = 'dark', main, others = {}, cvTail =
     const kept = info.classes.filter(c => c !== 'gk' && !BASES.includes(c) && !TN.includes(c)).map(c => (c === info.cvClass ? cv : c));
     const rootClass = ['gk', nowBase, nowTn, ...kept].filter(Boolean).join(' ');
     // ② 화자 색: 색이 그대로인 화자는 시안 규칙 그대로 · 바뀐 화자만 새로
-    const colors0 = speakerColorsOf(info.color_css);
+    const colors0 = given ? { ...given } : speakerColorsOf(info.color_css);   // (테마 1.1.8) 대사 띠 색이 없는 칸 묶음 틀은 받을 때 읽어 둔 화자 색
     const mainX = main || mainLetterOf(info);
     // (테마) 로그에 안 나온 틀 화자(화자 한 명 로그의 상대 B)도 색 규칙은 그대로 남겨요 — 마트 원래 판은 틀 화자가 다 나와서 결과가 같아요
     for (const X of Object.keys(colors0)) if (!info.speakers.includes(X)) info.speakers.push(X);

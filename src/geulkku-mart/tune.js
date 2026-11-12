@@ -1,4 +1,4 @@
-// 생성물 — 글꾸 마트 mart/tune.js 사본(마트 97a96f7a · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
+// 생성물 — 글꾸 마트 mart/tune.js 사본(마트 1466d38b · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
 const TUNE_KEY = "bl-mart-tune-v1";
 const MINE_KEY = "bl-mart-mine-v1";
 import { spoilerHtml, spoilerStyle, SPOILER_LABEL, unparagraphHtml } from "./lib/log-copy/log-copy-spoiler.js";
@@ -150,26 +150,32 @@ function setTune(id, next, { textOnly = false } = {}) {
   return c;
 }
 const LEAF = /(<!--\s*✎[^>]*-->\s*)?<([a-z][a-z0-9]*)\b([^>]*)>((?:[^<]|<br\s*\/?>|<\/?(?:b|i|strong|em|s)>)*)<\/\2>/g;
+const ENT = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+const hasLetters = (s) => /[\p{L}\p{N}]/u.test(String(s ?? "").replace(/<[^>]*>/g, "").replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (all, e) => e[0] === "#" ? String.fromCodePoint(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENT[e.toLowerCase()] ?? ""));
 function editables(html) {
   const text = String(html ?? ""), at = text.indexOf("</style>");
-  const from = at < 0 ? 0 : at + 8, out = [];
+  const from = at < 0 ? 0 : at + 8, out = [], extra = [];
   LEAF.lastIndex = from;
   for (let m; m = LEAF.exec(text); ) {
+    if (["style", "script", "audio", "title"].includes(m[2])) continue;
     const cls = ((m[3].match(/\sclass="([^"]*)"/) || [])[1] || "").split(/\s+/);
     const hit = EDIT_CLASSES.find((c) => cls.includes(c));
-    if (!hit && !m[1] && !EDIT_TAGS.includes(m[2])) continue;
-    if (hit === "gk-hl" && !m[4].trim()) continue;
-    if (m[2] === "style" || m[2] === "script" || m[2] === "audio") continue;
     const end = m.index + m[0].length - `</${m[2]}>`.length;
-    out.push({ i: out.length, cls: hit || (EDIT_TAGS.includes(m[2]) ? m[2] : "mark"), text: m[4], start: end - m[4].length, end });
+    const cell = { cls: hit || (EDIT_TAGS.includes(m[2]) ? m[2] : m[1] ? "mark" : "prop"), text: m[4], start: end - m[4].length, end };
+    if (hit || m[1] || EDIT_TAGS.includes(m[2])) {
+      if (!(hit === "gk-hl" && !m[4].trim())) out.push({ i: out.length, ...cell });
+      continue;
+    }
+    if (hasLetters(m[4])) extra.push(cell);
   }
+  for (const c of extra) out.push({ i: out.length, ...c });
   return out;
 }
 function applyTexts(html, texts) {
   const keys = Object.keys(texts || {});
   if (!keys.length) return String(html ?? "");
   let text = String(html ?? "");
-  for (const e of editables(text).reverse()) if (Object.hasOwn(texts, e.i)) text = text.slice(0, e.start) + cleanRich(texts[e.i]) + text.slice(e.end);
+  for (const e of editables(text).sort((a, b) => b.start - a.start)) if (Object.hasOwn(texts, e.i)) text = text.slice(0, e.start) + cleanRich(texts[e.i]) + text.slice(e.end);
   return text;
 }
 function inkRules(html, inks) {
@@ -342,6 +348,7 @@ export {
   dropMineEdits,
   editables,
   forgetMine,
+  hasLetters,
   inkRules,
   mineList,
   readSets,

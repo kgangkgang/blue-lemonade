@@ -1,4 +1,4 @@
-// 생성물 — 글꾸 마트 mart/texture.js 사본(마트 97a96f7a · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
+// 생성물 — 글꾸 마트 mart/texture.js 사본(마트 1466d38b · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
 import { TEX, ORDER } from "./lib/texture/tex.js";
 import { simpleFrameInfo } from "./simple-frames.js";
 const TEX_KEY = "bl-mart-texture-v1";

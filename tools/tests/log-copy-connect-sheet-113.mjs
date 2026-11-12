@@ -209,7 +209,7 @@ await test('깡통 로그 미리보기는 붙일 곳 흉내: 밤 · 낮 바탕 �
 await test('그릴 때와 복사 · 내려받기 직전에 점검을 거쳐요(깡통 로그 틀 묶음만)', () => {
     const src = read('src/log-copy-sheet.js');
     assert.match(src, /if \(toneNow\) html = siteCheck\(html, \{ mode: toneMode \}\)\.html;/, '그릴 때 — 미리보기와 복사 글이 같게');
-    assert.match(src, /const html = body\.innerHTML\.trim\(\);\s*return toneOn\(\) \? siteCheck\(html, \{ mode: modeOf\(state\.palette\) \}\)\.html : html;/, '복사 글(result) — 미리보기에서 고친 글까지');
+    assert.match(src, /const html = simpleOn\(\) \? stripRowMarks\(body\.innerHTML\.trim\(\)\) : body\.innerHTML\.trim\(\);[^\n]*\s*return toneOn\(\) \? siteCheck\(html, \{ mode: modeOf\(state\.palette\) \}\)\.html : html;/, '복사 글(result) — 미리보기에서 고친 글까지');
     assert.match(src, /\$\{motionCss\(\)\}\$\{toneNow \? sitePreviewCss\(toneMode\) : ''\}<\/style>/);
 });
 

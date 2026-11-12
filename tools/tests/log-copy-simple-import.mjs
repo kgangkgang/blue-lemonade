@@ -25,6 +25,8 @@ const packOf = id => structuredClone(fixture.packs[id]);
 const itemOf = id => packOf(id).items[0];
 // 1.1.5 줄 차례 class(gk-q1 · gk-q2)를 틀 규칙이 실제로 쓰는 판 — 줄마다 꾸밈이 달라서 여전히 못 받는 틀의 견본(#1004 원래 판은 그 class 를 규칙이 안 써서 받아요)
 const busy1004 = () => { const it = itemOf('simple-k1004'); it.html = it.html.replace('\n</style>', '\n.gk-k1004 .gk-q2{margin-left:8px}\n</style>'); return it; };
+// 1.1.8 줄 갈래로도 칸 묶음으로도 못 읽는 틀 — 대사 줄 안에 띠가 아닌 글(<b>)만 든 줄을 하나 더(여전히 못 받아요)
+const stuck1004 = () => { const it = busy1004(); it.html = it.html.replace(/(<p class="gk-dl gk-q1">.*<\/p>)/, '$1\n<p class="gk-dl"><b>띠 없는 줄</b></p>'); return it; };
 
 await test('등록 값 바꾸기: 내장 심플 28틀 원래 판 → 생성기(frameEntry)와 같은 등록 값', () => {
     for (const d of tool.DEFS) {
@@ -47,7 +49,11 @@ await test('등록 값 바꾸기: 마트 견본 글(<em> · <strong> · <s> 든 
 });
 
 await test('등록 값 바꾸기: 로그 칸이 한 꼴로 안 늘어나는 틀은 까닭과 함께 던져요', () => {
-    assert.throws(() => frameFromHtml(busy1004().html, { id: 'simple-k1004' }), /줄마다 꾸밈이 다른 틀/);
+    assert.throws(() => frameFromHtml(stuck1004().html, { id: 'simple-k1004' }), /줄마다 꾸밈이 다른 틀/);
+    // 1.1.8 줄 차례 class 를 규칙이 쓰는 틀은 줄 갈래(vary)로 받아요 — 대사 줄 꼴 둘을 차례대로 돌려 써요
+    const busy = frameFromHtml(busy1004().html, { id: 'simple-k1004' });
+    assert.deepEqual(busy.vary.대사.forms, ['<p class="gk-dl"><span class="gk-d gk-d{{화자}}">{{대사}}</span></p>', '<p class="gk-dl gk-q2"><span class="gk-d gk-d{{화자}}">{{대사}}</span></p>']);
+    assert.equal(busy.rows.대사, busy.vary.대사.forms[0]); assert.deepEqual(checkFrame(busy), []);
     // 1.1.5 줄 머리의 덤 class 를 틀 규칙이 한 번도 안 쓰면 떼고 받아요(모양은 그대로 · 줄 꼴이 하나로)
     const raw = itemOf('simple-k1004').html;
     assert.match(raw, /<p class="gk-dl gk-q1">/); assert.match(raw, /<p class="gk-dl gk-q2">/); assert.doesNotMatch(raw.slice(0, raw.indexOf('</style>')), /\.gk-q[12](?![\w-])/);
@@ -62,11 +68,11 @@ await test('등록 값 바꾸기: 로그 칸이 한 꼴로 안 늘어나는 틀�
 });
 
 await test('꾸러미 읽기: 마트가 낸 꾸러미 → 심플 글꾸 항목(등록 값 + 조절 값) · 못 받는 틀은 건너뛴 것으로', () => {
-    const mixed = { 'bl-mart': 1, items: [itemOf('simple-k1'), itemOf('simple-k1120'), busy1004()] };
+    const mixed = { 'bl-mart': 1, items: [itemOf('simple-k1'), itemOf('simple-k1120'), stuck1004()] };
     const read1 = readMart(JSON.stringify(mixed));
     assert.equal(read1.error, '');
     assert.deepEqual(read1.items.map(x => x.id), ['simple-k1', 'simple-k1120']);
-    assert.equal(read1.skipped.length, 1); assert.match(read1.skipped[0].reason, /아직 테마 로그 복사가 받지 못해요 — 줄마다 꾸밈이 다른 틀이에요/);
+    assert.equal(read1.skipped.length, 1); assert.match(read1.skipped[0].reason, /줄마다 꾸밈이 달라서 로그 길이에 맞춰 늘릴 수 없어요 — 이 틀은 마트의 「HTML 복사」로/);   // 1.1.8 사람 말
     const it = read1.items[1];
     assert.equal(it.kind, 'geulkku-simple'); assert.equal(it.name, '비급 두루마리'); assert.equal(it.frame.key, 'k1120');
     assert.equal(it.set.blGeulkku, 2); assert.equal(it.set.frame, 'k1120');
@@ -76,7 +82,7 @@ await test('꾸러미 검사: 꼴 · 크기 · 위험한 것 · 열쇠가 어긋
     const base = itemOf('simple-k1');
     const bad = (patch, re) => { const r = checkItem({ ...base, ...patch }); assert.ok(r.reason, JSON.stringify(Object.keys(patch))); assert.match(r.reason, re); };
     bad({ id: 'Bad id!' }, /id/); bad({ id: 'a'.repeat(25) }, /id/);
-    bad({ key: 'x1' }, /열쇠/); bad({ key: 'k2' }, /열쇠가 HTML 과 달라요/);
+    bad({ key: 'x1' }, /열쇠/); bad({ key: 'k2' }, /이 글꾸는 아직 테마가 받지 못해요/);
     bad({ v: 2 }, /새 꼴/);
     bad({ html: '' }, /없어요/); bad({ html: base.html + ' '.repeat(SIMPLE_HTML_MAX) }, /너무 커요/);
     bad({ html: base.html.replace('<style>', '<style>.x{}</style><style>') }, /꼴이 아니에요/);
@@ -105,7 +111,7 @@ await test('내 글꾸에 넣기: { id, name, emoji, frame, set } · 같은 id �
     const r1 = addMartItems(settings, items);
     assert.deepEqual(r1.simple, ['simple-k1120']); assert.deepEqual(r1.geulkku, ['simple-k1120']);
     const e = settings.logCopy.custom[0];
-    assert.deepEqual(Object.keys(e).sort(), ['emoji', 'frame', 'html', 'id', 'name', 'set', 'slot']);
+    assert.deepEqual(Object.keys(e).sort(), ['emoji', 'frame', 'html', 'id', 'info', 'name', 'set', 'slot']);   // 1.2.0 info: 받은 날 · 틀 지문(log-copy-mine.mjs)
     assert.equal(e.html, ''); assert.equal(e.frame.key, 'k1120');
     assert.equal(summary(r1).head, '심플 글꾸 1개를 넣었어요');
     assert.deepEqual(findDupes(settings, items).map(x => x.id), ['simple-k1120']);

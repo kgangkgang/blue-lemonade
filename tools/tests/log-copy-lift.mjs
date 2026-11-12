@@ -242,7 +242,7 @@ await t('레몬 바로가기: 새 설정은 켠 채(1.1.3 — 틀이 저장된 �
 });
 await t('연결: 「HTML 복사」 · 「내려받기」가 옮긴 HTML 을 쓰고 CI 에 등록돼 있어요', () => {
     const sheet = read('src/log-copy-sheet.js');
-    assert.match(sheet, /import \{ liftForCopy, copyBody, insertHead, withCommentSlots \} from '\.\/log-copy-lift\.js'/);
+    assert.match(sheet, /import \{ liftForCopy, copyBody, insertHead, withCommentSlots(?:, byteSize, sizeNote)? \} from '\.\/log-copy-lift\.js'/);
     assert.match(sheet, /const lifted = liftForCopy\(shown, motionStyleFor\(shown\)\);[^\n]*\n\s*const html = lifted\.full;/);
     assert.match(sheet, /withCommentSlots\(prettyLogHtml\(insertHead\(copyBody\(result\(\{ marks: true \}\)\)\.html, lifted\.head\)/);
     assert.match(sheet, /\$\{liftForCopy\(shown, motionStyleFor\(shown\)\)\.full\}/, '내려받기');

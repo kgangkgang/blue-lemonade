@@ -17,16 +17,16 @@ import { PALETTES, PALETTE_FAMILIES, isPaletteId, ensurePalettes, paletteColors,
 import { PRESETS, CATEGORIES, presetsIn, categoryOf, renderLog, logMarkdown, dateLabel } from './log-copy-presets.js';
 import { logHtml } from './log-copy-render.js';
 import { templateColors } from './log-copy-template.js';   // 1.0.1 글꾸 마트에서 받은 내 글꾸
-import { readShape } from './log-copy-retired.js';   // 1.1.7 뺀 옛 내장 글꾸 48종의 이름표(저장된 id 읽기만)
-import { PAGES } from './repo.js';   // 1.1.7 뺀 내장 글꾸의 마트 새 판 바로가기
+import { readSaved, RETIRED_FALLBACK } from './log-copy-retired.js';   // 1.1.7 뺀 옛 내장 글꾸 48종의 이름표(저장된 id 읽기만) · 1.1.8 복사 뒤에도 옛 id 기억
+import { PAGES } from './repo.js';   // 1.1.7 뺀 내장 글꾸의 마트 새 판 바로가기 · 1.1.8 빈 「내 글꾸」 · 붙여 넣기 칸의 마트 열기
 import { motionCss, motionStyleFor } from './log-copy-motion.js';   // 1.0.1 글꾸 움직임 · 누르면 반응(미리보기 칸 · HTML 복사 맨 앞 <style>)
 import { sanitizeHtml, sanitizeTree, slotPath, fromPath, guessSlot, imagesFromCode } from './log-copy-sanitize.js';
 import { applyFade, revealTab } from './tab-scroll.js';
 import { transformLog, recolorLog } from './log-copy-words.js';   // 이름 숨김 · 단어 바꾸기 (채팅 캡처 「로그 공유 · 이름 가림」 설정을 같이 써요) · 고른 에이드로 역할 색 다시 계산
 import { withNameAliases } from './name-aliases.js';
-import { wrapSpoiler, unwrapSpoiler, spoilerAt, ensureStyle as ensureSpoilerStyle, previewModel } from './log-copy-spoiler.js';   // 숨긴 글 · 미리보기에서 고친 글로 마크다운
+import { wrapSpoiler, unwrapSpoiler, spoilerAt, ensureStyle as ensureSpoilerStyle, previewModel, harvestEdits, nodesMark, stripRowMarks } from './log-copy-spoiler.js';   // 숨긴 글 · 미리보기에서 고친 글로 마크다운
 import { prettyLogHtml } from './log-copy-pretty.js';
-import { liftForCopy, copyBody, insertHead, withCommentSlots } from './log-copy-lift.js';   // 1.1.2 인라인 그림 주소 → 맨 앞 <style> 클래스 · 정화기 맞춤(overflow:clip · block-size · 스크롤바 숨김)
+import { liftForCopy, copyBody, insertHead, withCommentSlots, byteSize, sizeNote } from './log-copy-lift.js';   // 1.1.2 인라인 그림 주소 → 맨 앞 <style> 클래스 · 정화기 맞춤(overflow:clip · block-size · 스크롤바 숨김)
 import { placeLemon, normCorner, CORNER_LABEL } from './log-copy-lemon.js';   // 1.1.2 「레몬 바로가기」(기본 꺼짐) — 빈 모서리에 레몬 · 누르면 블루레몬에이드 소개 글
 import { bareLog } from './log-copy-bare.js';   // 1.0.7 위 글 · 아래 글 빼기(틀에 박힌 머리 표 · 꼬리말 …)   // 1.0.1 「HTML 복사」 코드를 사람이 고치기 쉬운 꼴로 (줄 나눔 · 주석 — 모양은 그대로)
 import { fitBare } from './log-copy-bare-fit.js';   // 1.0.7 빼고 나서 글을 덮게 된 떠 있는 장식 걷기(11-07 사용자 「컴퓨터가 내려와 글을 덮어」)
@@ -34,7 +34,12 @@ import { TOKEN_KEYS } from './palettes.js';   // 가로 칩 줄: 넘치는 쪽 �
 import { TONE_SHAPES, isToneShape, toneFor, toneLookup } from './log-copy-tone.js';   // 1.1.3 「깡통 로그」 틀 묶음(깡통 로그 · 미니 · 진한 바탕) — 색은 대사색 하나에서 · 에이드 색 칩 없이 밝기만
 import { people } from './people.js';   // 1.1.3 인물표의 정해 둔 대사색(없으면 화면에서 읽은 색)
 import { SITE, sitePreviewCss, siteCheck } from './log-copy-site-sim.js';
+import { speakerLetters, castLetters } from './log-copy-simple.js';   // 11-12 받은 심플 글꾸: 캐릭터 색을 아는지(「소품도 캐릭터 색」 칩이 쓸모 있는지) — renderLog 와 같은 판정
+import { GUIDE_HTML, CODE_HTML, CODE_BUTTON, STYLE as HANDOFF_STYLE, guide, showCode, selectAll, copyArea } from './log-copy-handoff.js';   // 1.2.0 붙이는 길 — 바닥 줄 위 안내 · 「코드 보기」 칸 · 복사 뒤 창 유지
+import { mineOrder, removeMine, restoreMine, countLine, infoLabel, MINE_MAX } from './log-copy-mine.js';   // 1.2.0 받은 글꾸 관리 — 즐겨찾기 · 최근 · 되돌리는 지우기 · n/20
+import { attachUndo } from './ask.js';
 import { isBasicShape, BASIC_INFO, BASIC_HEIGHT, BASIC_INFO_LABEL, BASIC_HEIGHT_LABEL } from './log-copy-basic.js';   // 1.1.3 「기본 글꾸」 새 틀 18 — 밝기만 · 정보 칸(끔 · 칩 · 탭) · 높이(자동 · 작게 · 중간 · 크게)   // 1.1.3 붙일 곳 흉내(바탕 · 코멘트 자리) · 복사 직전 점검
+import { createSelectBar } from './log-copy-select-bar.js';   // 11-12 고른 글 옆 막대(눌러야 보이게 · 숨김 풀기)
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
 const HOLD_MS = 520;
@@ -113,7 +118,7 @@ function chipOrder(s) {
 let open = null;
 let stageBig = false;   // 1.1.6 폰 화면 미리보기 크기 — 작게(화면 약 30%)로 시작 · 크게로 바꾸면 이 탭이 열려 있는 동안 기억해요(설정에는 안 남겨요 — 시작 묶음 0바이트)
 const PHONE = '(max-width: 600px)';   // 1.1.6 폰 화면 규칙이 걸리는 폭(STYLE 의 @media 와 같아요)
-const toldRetired = new Set();   // 1.1.7 뺀 옛 글꾸 마트 안내는 페이지를 연 동안 글꾸마다 한 번(복사 없이 창만 여닫으면 열 때마다 9초 안내가 떴어요)
+const MART_GEULKKU = `${PAGES}/mart/geulkku/`;   // 1.1.8 글꾸를 얻는 곳(1.1.7 부터 내장 글꾸 없이 마트 → 「테마용 복사」 → 여기 붙여 넣기 하나)
 
 /** @param {object} model captureLog() 결과 */
 export async function openLogSheet(model) {
@@ -122,17 +127,22 @@ export async function openLogSheet(model) {
     ensureStyle();
     await ensurePalettes();
     const s = store();
+    // 1.1.8 「블루레몬 추천」 기본 글꾸(log-copy-picks.js) — 창을 열 때만 받아요(따로 조각 · 못 받거나 못 풀면 추천 줄 없이 예전 그대로)
+    let pk = { picks: [], mod: null };
+    try { const mod = await import('./log-copy-picks.js'); pk = { picks: await mod.loadPicks(), mod }; } catch { /* 추천 없이 */ }
+    const pickOn = id => !!pk.mod && pk.mod.pickIds(pk.picks, store().custom).includes(id);   // 보이는 추천 글꾸인가(마트에서 같은 틀을 받아 뒀으면 받은 쪽이 이겨요)
+    const catOf = id => (pickOn(id) ? pk.mod.PICK_CATEGORY.id : categoryOf(id));
+    const catList = pk.picks.length ? [CATEGORIES[0], pk.mod.PICK_CATEGORY, ...CATEGORIES.slice(1)] : CATEGORIES;   // 「기본」 바로 뒤
     const names = connectionNames();
     const first = model.messages.find(m => m.time)?.time ?? Date.now();
     const state = {
         shape: s.shape,
         palette: isPaletteId(s.palette) && modeOf(s.palette) === modeOf(nowPalette()) ? s.palette : nowPalette(),
         fields: { title: model.chatTitle || 'Title', mark: 'LOG', char: model.charName || model.chatName, model: names.model, prompt: names.prompt, date: dateLabel(first), from: model.userName, tail: '', info: '', page: '1', subtitle: model.chatName ? `${model.chatName}의 기록` : '' },
-        category: CATEGORIES.some(c => c.id === s.category) ? s.category : 'basic',   // 분류 칩 — 처음은 「기본」, 마지막에 고른 것을 기억
+        category: catList.some(c => c.id === s.category) ? s.category : 'basic',   // 분류 칩 — 처음은 「기본」, 마지막에 고른 것을 기억
         images: [],   // 갤러리: 붙여 넣은 이미지 코드 · 주소 (이번 시트에만)
         picking: false,
         picked: false,   // 이번에 색 칩을 직접 눌렀나 — 누른 것만 기억해요(안 누르면 다음에도 지금 팔레트)
-        armed: null,   // 길게 눌러 지울 준비가 된 내 글꾸 id
         edited: null,   // 1.0.1 미리보기에서 고친 글(메시지 노드만 바꾼 모델) — 틀 · 색을 바꿔 다시 그려도 그대로
         dirty: false,   // 마지막으로 그린 뒤 미리보기 글을 고쳤나 (고쳤을 때만 거둬요 — 안 고친 메시지는 그림 · 링크가 있는 원래 노드 그대로)
         drawnTexts: null,   // 1.0.7 막 그린 미리보기의 메시지별 글 — 거둘 때 이것과 달라진 메시지만 「고친 것」(이름 숨김 · 바꾸기 · 틀이 바꾼 글자는 고친 것이 아니에요)
@@ -142,16 +152,20 @@ export async function openLogSheet(model) {
         tone: null,   // 1.1.3 막 그린 깡통 로그 틀의 색 묶음(숨긴 글 알약 · 미리보기 바탕)
         more: true,   // 1.1.3 「더 보기」 펼침 — 아래에서 모양이 정해진 뒤 정해요
         folds: {}, allCats: false, allShapes: false,   // 1.1.6 폰 화면: 펼친 갈래 · 분류 · 틀 줄 전부 보기(이번 창에만)
+        pickOpen: null,   // 1.1.8 판 고르기를 펼친 추천 묶음(이번 창에만)
+        ed: { on: false, shape: null, texts: new Map(), orig: new Map(), step: null },   // 11-12 「글 고치기」 켬 · 소품 안 고친 글(그 틀에만) · 고른 소품 단계(이번 창에만)
     };
     // 1.0.8 비워 둔 머리 칸(깡통 · 모델 · 프롬프트 알약 · 날짜 · 제목)은 다음에 열어도 빈 채로 — 전엔 열 때마다 지금 연결 이름으로 다시 채워 지운 알약이 돌아왔어요(사용자 「없애 뒀으면 없는 상태로 시작」)
     for (const key of s.blank || []) state.fields[key] = '';
     // 1.1.7 뺀 옛 내장 글꾸(빼빼로데이 등)를 고른 채였으면 — 저장 값은 그대로 두고 읽기만 바꿔요: 마트 새 판을 받아 뒀으면 그 글꾸로 이어서 · 아니면 기본 틀(깡통 로그)로
-    const read = readShape(state.shape, s.custom);
-    if (read.retired) { state.shape = read.shape; state.category = categoryOf(read.shape); }
-    if (read.tell && !toldRetired.has(read.tell) && toldRetired.add(read.tell)) toastr.info(`「${read.retired.name}」 글꾸는 이제 테마에 들어 있지 않아요 — 눌러서 글꾸 마트의 새 판을 「테마로 담기」로 받아요. 지금은 기본 틀로 보여 드려요`, '로그 복사', { timeOut: 9000, onclick: () => window.open(`${PAGES}/mart/geulkku/?view#${encodeURIComponent(read.tell)}`, '_blank', 'noopener') });
-    if (!PRESETS.some(p => p.id === state.shape) && !s.custom.some(c => c.id === state.shape)) state.shape = 'card';
+    //   1.1.8 옛 id 는 retiredFrom 에 남겨요 — 깡통 로그로 복사해 모양이 바뀌어도 나중에 새 판을 받으면 이어져요. 안내는 9초 알림 대신 시트 안 띠(닫을 때까지 · drawRetired)
+    const read = readSaved(s, pk.mod ? pk.mod.pickIds(pk.picks, s.custom).map(id => ({ id })) : []);   // 1.1.8 추천 글꾸에 마트 새 판이 있으면 그 판으로(택배 상자 · 속보 방송)
+    if (read.from && s.retiredFrom !== read.from) s.retiredFrom = read.from;
+    if (read.retired) { state.shape = read.shape; state.category = catOf(read.shape); }
+    const retired = read.retired && read.shape === RETIRED_FALLBACK ? read : null;   // 띠에 쓸 것(새 판으로 이어 그렸으면 없음)
+    if (!PRESETS.some(p => p.id === state.shape) && !s.custom.some(c => c.id === state.shape) && !pickOn(state.shape)) state.shape = 'card';
     // 깡통 로그 틀이면 접힌 채 · 다른 틀을 쓰던 설정이면 예전 그대로 펼친 채. 접힌 줄에서 켜 둔 것이 지금 글을 바꾸고 있으면(이름 숨김 · 바꾸기 · 이름 줄 끔) 펼쳐서 보여요
-    { const ct = getSettings().captureTools; state.more = s.custom.some(c => c.id === state.shape) || !isToneShape(state.shape) || !!(ct?.redact || ct?.replace || s.namesOff); }
+    { const ct = getSettings().captureTools; state.more = s.custom.some(c => c.id === state.shape) || pickOn(state.shape) || !isToneShape(state.shape) || !!(ct?.redact || ct?.replace || s.namesOff); }
     const ui = uiFont();
 
     const dialog = document.createElement('dialog');
@@ -159,8 +173,11 @@ export async function openLogSheet(model) {
     dialog.setAttribute('aria-labelledby', 'bl-lc-title');
     dialog.innerHTML = `<header class="bl-lc-head"><h3 id="bl-lc-title"><i class="fa-solid fa-copy" aria-hidden="true"></i><span>로그 복사</span><small>메시지 ${model.messages.length}개</small></h3><div class="bl-lc-mode bl-lc-hd-mode" role="group" aria-label="밝기" data-lc-hd-mode>${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><button type="button" class="salty-btn bl-lc-icon" data-lc="close" aria-label="닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>
         <div class="bl-lc-scroll">
+            <div class="bl-lc-band" role="status" data-lc-retired hidden></div>
             <div class="bl-lc-tl" data-lc-tl><div class="salty-seg bl-screen-chips bl-lc-cats" role="group" aria-label="분류" data-lc-cats></div><button type="button" class="salty-btn bl-lc-icon bl-lc-tl-all" data-lc="cats-all" aria-expanded="false" aria-label="분류 전부 보기"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button></div>
             <div class="bl-lc-cr" data-lc-cr><div class="bl-lc-chips bl-chip-row" role="radiogroup" aria-label="모양" data-lc-shapes></div><button type="button" class="bl-lc-cr-more" data-lc="shapes-all" aria-expanded="false" aria-label="틀 전부 보기" hidden></button></div>
+            <div class="bl-lc-band bl-lc-empty" data-lc-empty hidden><span>아직 받은 글꾸가 없어요. <b>글꾸 마트</b>에서 마음에 드는 틀을 크게 보고 <b>테마용 복사</b>를 누른 뒤, 여기에 붙여 넣어 받아요.</span><span class="bl-lc-band-go"><a class="salty-btn" href="${esc(MART_GEULKKU)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-store" aria-hidden="true"></i><span>마트 열기</span></a><button type="button" class="salty-btn" data-lc="paste"><i class="fa-solid fa-paste" aria-hidden="true"></i><span>붙여 넣기</span></button></span></div>
+            <div class="bl-lc-mine" data-lc-mine hidden></div>
             <div class="bl-lc-gallery" data-lc-gallery hidden><textarea rows="3" placeholder="이미지 코드(&lt;img …&gt;)나 이미지 주소를 붙여 넣어요" aria-label="갤러리 사진 코드" data-lc-images></textarea><span class="bl-lc-note" data-lc-images-count></span></div>
             <div class="bl-lc-colors" data-lc-colors><div class="bl-lc-mode" role="group" aria-label="밝기">${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><div class="bl-lc-pals bl-chip-row" role="radiogroup" aria-label="색" data-lc-pals></div></div>
             <div class="bl-lc-easy" role="group" aria-label="조절 — 간편 · 세밀" data-lc-easy hidden></div>
@@ -173,23 +190,25 @@ export async function openLogSheet(model) {
                 <section class="bl-lc-fd" data-lc-fd="names"><button type="button" class="bl-lc-fd-h" data-lc-fold="names" aria-expanded="false"><b>이름 가리기</b><span data-lc-fd-sum></span><mark data-lc-fd-mark hidden></mark><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button><button type="button" class="bl-lc-sw" role="switch" data-lc-sw="hide" aria-checked="false"><span>이름 숨김<small>채팅 캡처의 이름 가림과 같은 목록이에요</small></span><i aria-hidden="true"></i></button><div class="bl-lc-names" data-lc-names hidden><div class="bl-lc-np-r" role="group" aria-label="가릴 이름"><span class="bl-lc-np-h">가릴 이름</span><div class="bl-lc-np-list"><div class="bl-lc-name-list" data-lc-name-list></div><span class="bl-lc-np-add"><input type="text" maxlength="40" placeholder="이름 더하기" aria-label="더 가릴 이름" data-lc-name-input><button type="button" class="salty-btn bl-lc-icon" data-lc="name-add" aria-label="가릴 이름 더하기"><i class="fa-solid fa-plus" aria-hidden="true"></i></button></span></div></div><div class="bl-lc-np-r" role="group" aria-label="대신 보일 말" data-lc-mask-row></div></div></section>
                 <section class="bl-lc-fd" data-lc-fd="words"><button type="button" class="bl-lc-fd-h" data-lc-fold="words" aria-expanded="false"><b>글자 바꾸기</b><span data-lc-fd-sum></span><mark data-lc-fd-mark hidden></mark><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button><button type="button" class="bl-lc-sw" role="switch" data-lc-sw="words" aria-checked="false"><span>바꾸기<small>본문의 말을 다른 말로 바꿔 복사해요</small></span><i aria-hidden="true"></i></button><div class="bl-lc-words" data-lc-words hidden><div data-lc-rules></div><button type="button" class="salty-btn bl-lc-add-rule" data-lc="rule-add"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>줄 더하기</span></button></div></section>
             </div>
-            <div class="bl-lc-hint" data-lc-hint><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>눌러야 보이는 글은 미리보기에서 글을 고른 뒤 <b>숨기기</b></span><button type="button" class="bl-lc-chip" data-lc-sw="spoiler" aria-pressed="false" disabled title="미리보기에서 글을 고르면 눌러요"><span>숨기기</span></button></div>
+            <div class="bl-lc-hint" data-lc-hint><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>눌러야 보이는 글: 미리보기에서 글을 끌어 고르면 바로 옆에 <b>눌러야 보이게</b>가 떠요</span><button type="button" class="bl-lc-chip" data-lc-sw="spoiler" aria-pressed="false" disabled title="미리보기에서 글을 고르면 눌러요"><span>숨기기</span></button></div>
             <div class="bl-lc-more"><button type="button" class="bl-lc-chip" data-lc="more" aria-expanded="false"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span>더 보기</span></button></div>
             <div class="bl-lc-pick" data-lc-pick hidden><span>로그 넣을 곳을 눌러요</span><button type="button" class="salty-btn" data-lc="auto">자동으로</button></div>
             <div class="bl-lc-stk" data-lc-stk>
-            <div class="bl-lc-bar" data-lc-bar><b class="bl-lc-ph">미리보기</b><span class="bl-lc-ph bl-lc-bar-name" data-lc-stage-name></span><span class="bl-lc-note"><i class="fa-solid fa-pen" aria-hidden="true"></i> 미리보기 글씨를 눌러 바로 고쳐요</span><button type="button" class="salty-btn bl-lc-icon" data-lc="undo" aria-label="되돌리기" title="되돌리기 (지운 블록도 돌아와요)" disabled><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon" data-lc="redo" aria-label="다시하기" title="다시하기" disabled><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon bl-lc-ph" data-lc="stage-size" aria-pressed="false" aria-label="미리보기 크게" title="미리보기 크게"><i class="fa-solid fa-up-right-and-down-left-from-center" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon bl-lc-ph" data-lc="stage-fold" aria-expanded="true" aria-label="미리보기 접기" title="미리보기 접기"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button></div>
+            <div class="bl-lc-bar" data-lc-bar><b class="bl-lc-ph">미리보기</b><span class="bl-lc-ph bl-lc-bar-name" data-lc-stage-name></span><span class="bl-lc-note"><i class="fa-solid fa-pen" aria-hidden="true"></i> 미리보기 글씨를 눌러 바로 고쳐요</span><button type="button" class="salty-btn bl-lc-icon bl-lc-edit" data-lc="edit" aria-pressed="false" aria-label="글 고치기" title="글 고치기 — 고칠 수 있는 글을 점선 칸으로 보여요(소품 안 글자까지)" hidden><i class="fa-solid fa-i-cursor" aria-hidden="true"></i><span>글 고치기</span></button><button type="button" class="salty-btn bl-lc-icon" data-lc="undo" aria-label="되돌리기" title="되돌리기 (지운 블록도 돌아와요)" disabled><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon" data-lc="redo" aria-label="다시하기" title="다시하기" disabled><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon bl-lc-ph" data-lc="stage-size" aria-pressed="false" aria-label="미리보기 크게" title="미리보기 크게"><i class="fa-solid fa-up-right-and-down-left-from-center" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon bl-lc-ph" data-lc="stage-fold" aria-expanded="true" aria-label="미리보기 접기" title="미리보기 접기"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button></div>
             <div class="bl-lc-stage" data-lc-stage><div class="bl-lc-egg" data-lc-egg hidden>✨ 장식을 눌러 보세요</div><iframe sandbox="allow-same-origin" title="미리보기 — 글자를 눌러 바로 고쳐요" data-lc-frame></iframe></div>
             </div>
-            <div class="bl-lc-paste" data-lc-paste hidden><button type="button" class="salty-btn bl-lc-mart" data-lc="mart"><i class="fa-solid fa-store" aria-hidden="true"></i><span>마트에서 가져오기</span></button><textarea rows="8" placeholder="공유받은 글꾸 HTML 이나 글꾸 마트에서 복사한 글을 붙여 넣어요" aria-label="글꾸 HTML"></textarea><div class="bl-lc-row"><button type="button" class="salty-btn" data-lc="paste-cancel">취소</button><button type="button" class="salty-btn bl-tool-primary" data-lc="paste-save">저장</button></div></div>
+            <div class="bl-lc-paste" data-lc-paste hidden><p class="bl-lc-note">글꾸 마트에서 틀을 크게 보고 <b>테마용 복사</b>를 누른 뒤 여기에 붙여 넣고 <b>받기</b>를 눌러요. 공유받은 글꾸 HTML 도 돼요.</p><div class="bl-lc-row"><a class="salty-btn" href="${esc(MART_GEULKKU)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-store" aria-hidden="true"></i><span>글꾸 마트 열기</span></a><button type="button" class="salty-btn bl-lc-mart" data-lc="mart"><i class="fa-solid fa-file-import" aria-hidden="true"></i><span>파일로 받기</span></button></div><textarea rows="8" placeholder="글꾸 마트에서 「테마용 복사」한 글이나 공유받은 글꾸 HTML 을 붙여 넣어요" aria-label="글꾸 HTML"></textarea><div class="bl-lc-msg" role="status" aria-live="polite" data-lc-paste-msg hidden></div><div class="bl-lc-row"><button type="button" class="salty-btn" data-lc="paste-cancel">취소</button><button type="button" class="salty-btn bl-tool-primary" data-lc="paste-save">받기</button></div></div>
+            ${CODE_HTML}
         </div>
-        <footer class="bl-lc-foot"><button type="button" class="salty-btn" data-lc="md" title="틀 · 색 없이 글만 마크다운으로"><i class="fa-solid fa-align-left bl-lc-ph" aria-hidden="true"></i><span class="bl-lc-long">글만 복사</span><span class="bl-lc-ph">글만</span></button><button type="button" class="salty-btn" data-lc="download" title="보이는 모양 그대로 .html 파일로 받아요"><i class="fa-solid fa-download bl-lc-ph" aria-hidden="true"></i><span class="bl-lc-long">내려받기</span><span class="bl-lc-ph">파일로</span></button><button type="button" class="salty-btn bl-tool-primary" data-lc="copy" title="보이는 모양 그대로(틀 · 색 · 글꼴) HTML 로"><i class="fa-solid fa-copy" aria-hidden="true"></i> HTML 복사</button></footer>`;
+        <footer class="bl-lc-foot">${GUIDE_HTML}<button type="button" class="salty-btn" data-lc="md" title="틀 · 색 없이 글만 마크다운으로"><i class="fa-solid fa-align-left bl-lc-ph" aria-hidden="true"></i><span class="bl-lc-long">글만 복사</span><span class="bl-lc-ph">글만</span></button><button type="button" class="salty-btn" data-lc="download" title="보이는 모양 그대로 .html 파일로 받아요"><i class="fa-solid fa-download bl-lc-ph" aria-hidden="true"></i><span class="bl-lc-long">내려받기</span><span class="bl-lc-ph">파일로</span></button>${CODE_BUTTON}<button type="button" class="salty-btn bl-tool-primary" data-lc="copy" title="보이는 모양 그대로(틀 · 색 · 글꼴) HTML 로"><i class="fa-solid fa-copy" aria-hidden="true"></i> HTML 복사</button></footer>`;
     document.body.append(dialog);
     const $ = selector => dialog.querySelector(selector);
     const frame = $('[data-lc-frame]');
+    const selBar = createSelectBar({ host: dialog });   // 11-12 미리보기에서 글을 고르면 바로 옆에 뜨는 막대 — 버튼은 아래 frame.onload 의 selBar.watch
     // 1.1.0 칩 줄(모양 · 분류 · 색 · 글자색 · 가릴 이름 · 바꾸기 줄)은 누를 때마다 innerHTML 로 다시 그려요 — 누른 칩에 있던 초점이 함께 사라져 body 로 떨어지면
     //   키보드 · 화면 읽기 사용자는 창 맨 앞부터 다시 Tab 해야 했어요. 다시 그린 줄에서 같은 열쇠(data-*)의 칩으로 초점을 돌려줘요 ·
     //   그 칩이 없어졌으면(지운 내 글꾸 · 뺀 이름 · 지운 줄) 같은 줄의 고른 칩이나 첫 단추로
-    const FOCUS_KEYS = ['data-lc-easy', 'data-lt', 'data-lt-i', 'data-lt-color', 'data-lt-tab', 'data-lt-sum', 'data-lc-view', 'data-shape', 'data-lc-del', 'data-cat', 'data-palette', 'data-lc-mode', 'data-lc-ink', 'data-lc-name-remove', 'data-lc-rule-remove', 'data-lc'];
+    const FOCUS_KEYS = ['data-lc-easy', 'data-lt', 'data-lt-i', 'data-lt-color', 'data-lt-tab', 'data-lt-sum', 'data-lc-view', 'data-shape', 'data-lc-del', 'data-cat', 'data-palette', 'data-lc-mode', 'data-lc-ink', 'data-lc-name-remove', 'data-lc-rule-remove', 'data-lc-pv', 'data-lc-pvar', 'data-lc'];
     const FOCUS_ROWS = '.bl-lt-chips, .bl-lc-easy-chips, [data-lc-easy], [data-lc-shapes], [data-lc-cats], [data-lc-pals], [data-lc-inks], [data-lc-name-list], [data-lc-rules]';
     function keepFocus(paint) {
         return (...args) => {
@@ -205,7 +224,7 @@ export async function openLogSheet(model) {
             return out;
         };
     }
-    const custom = () => store().custom.find(c => c.id === state.shape) ?? null;
+    const custom = () => store().custom.find(c => c.id === state.shape) ?? (pk.mod ? pk.mod.pickEntry(pk.picks, store().custom, state.shape, store) : null);   // 1.1.8 추천 글꾸도 받은 글꾸와 같은 꼴(조절 값은 logCopy.pickSet)
     // 1.1.4 글꾸 마트 「테마로 담기」로 받은 심플 글꾸(frame + set) · 직접 붙인 HTML 글꾸(틀 칸 없음 · 로그 자리 고르기)
     const simpleOn = () => !!custom()?.frame;
     const rawOf = mine => !!mine && !mine.template && !mine.frame;
@@ -248,23 +267,24 @@ export async function openLogSheet(model) {
         dialog.classList.toggle('bl-lc-tuned', on);   // 1.1.6 폰: 조절 칸 아래 「로그 꾸밈」 나눔 줄
         if (!on) { box.replaceChildren(); return; }
         const e = setMod.easyOf(mine.set), level = Object.fromEntries(setMod.EASY_MOTION);
-        const chip = (key, label, pressed) => `<button type="button" class="bl-lc-chip" data-lc-easy="${esc(key)}" aria-pressed="${pressed}"><span>${esc(label)}</span></button>`;
+        const chip = (key, label, pressed, off = false) => `<button type="button" class="bl-lc-chip" data-lc-easy="${esc(key)}" aria-pressed="${pressed}"${off ? ' disabled' : ''}><span>${esc(label)}</span></button>`;
         const row = (label, chips, note = '') => `<div class="bl-lc-easy-row" role="group" aria-label="${esc(label)}"><span class="bl-lc-easy-h">${esc(label)}${note ? `<small>${esc(note)}</small>` : ''}</span><div class="bl-lc-easy-chips">${chips}</div></div>`;
         needFine();
         if (fine.hold) return;   // 슬라이더를 끄는 동안은 칸을 다시 그리지 않아요(미리보기만)
         // 1.1.5 간편 | 세밀 — 색 · 질감 줄과 세밀 갈래는 조절 화면 모듈(fineMod)이 그려요. 값은 같은 set 하나
-        const mode = modeOf(state.palette), caps = capRow(mine.frame.key), more = fineMod ? fineMod.easyExtra(mine.set, mine.frame, mode, caps) : null;
+        const mode = modeOf(state.palette), caps = capRow(mine.frame.key), more = fineMod ? fineMod.easyExtra(mine.set, mine.frame, mode, caps, { castKnown: state.castKnown !== false }) : null;
         const view = fineMod && fine.view === 'fine' ? 'fine' : 'easy';
         const tabs = more ? `<div class="bl-lc-view" role="group" aria-label="조절 단계"><button type="button" data-lc-view="easy" aria-pressed="${view === 'easy'}">간편</button><button type="button" data-lc-view="fine" aria-pressed="${view === 'fine'}">세밀${more.total ? `<b>${more.total}</b>` : ''}</button></div>` : '';
         if (view === 'fine') {
             const at = new Map([...box.querySelectorAll('.bl-lt-chips')].map((strip, i) => [i, strip.scrollLeft]));
-            box.innerHTML = tabs + fineMod.fineHtml(mine.set, mine.frame, { mode, open: fine.open, tab: fine.tab, caps });
+            box.innerHTML = tabs + fineMod.fineHtml(mine.set, mine.frame, { mode, open: fine.open, tab: fine.tab, caps, castKnown: state.castKnown !== false });
             [...box.querySelectorAll('.bl-lt-chips')].forEach((strip, i) => { if (at.get(i)) strip.scrollLeft = at.get(i); });
             return;
         }
         box.innerHTML = tabs + row('스타일', setMod.LOOKS.map(x => chip(`style:${x.id}`, x.label, e.style === x.id)).join(''), e.style ? '' : '직접 조절')
             + (more?.color ?? '')
-            + row('움직임', setMod.EASY_MOTION.map(([v, l]) => chip(`motion:${v}`, l, e.motion === v)).join('') + (more ? `<button type="button" class="bl-lc-chip" data-lc-view="motion" aria-pressed="${!!e.apart}" title="글 움직임과 소품 움직임을 따로 골라요"><span>따로</span></button>` : ''), e.apart ? `글 ${level[e.apart.text]} · 소품 ${level[e.apart.prop]}` : '')
+            // 11-12: 이 틀이 못 받는 세기는 흐려요(마트 간편 줄과 같게) — 전엔 약 · 중 · 강이 늘 켜져 있어 눌러도 미리보기 · 복사 글이 그대로인 틀이 28틀 중 20틀이었어요
+            + (({ can, note }) => row('움직임', setMod.EASY_MOTION.map(([v, l]) => chip(`motion:${v}`, l, e.motion === v, !can(v))).join('') + (more ? `<button type="button" class="bl-lc-chip" data-lc-view="motion" aria-pressed="${!!e.apart}" title="글 움직임과 소품 움직임을 따로 골라요"><span>따로</span></button>` : ''), e.apart ? `글 ${level[e.apart.text]} · 소품 ${level[e.apart.prop]}` : note))(fineMod ? fineMod.easyMotion(more?.motion) : { can: () => true, note: '' })
             + row('글 크기', setMod.EASY_SIZE.map(([v, l]) => chip(`size:${v}`, l, e.fixed == null && e.size === v)).join(''), e.fixed != null ? `직접 ${e.fixed}px` : '')
             + (more ? more.texture + more.tail : '');
         requestAnimationFrame(() => { for (const strip of box.querySelectorAll('.bl-lc-easy-chips')) { revealTab(strip, strip.querySelector('[aria-pressed="true"]')); applyFade(strip); } });
@@ -322,7 +342,7 @@ export async function openLogSheet(model) {
         if (!base || !Object.keys(state.inks).length) return;
         const colors = { ...templateColors(base.colors), ...state.inks };
         if (mine?.template) { mine.colors = colors; state.inks = {}; saveSettings(); toastr.success('내 글꾸 색을 저장했어요', '', { timeOut: 1600 }); draw(); return; }
-        if (s2.custom.length >= CUSTOM_MAX) { toastr.warning(`내 글꾸는 ${CUSTOM_MAX}개까지예요 — 칩 옆 ✕ 나 길게 눌러 지워요`, '', { timeOut: 2500 }); return; }
+        if (s2.custom.length >= CUSTOM_MAX) { toastr.warning(`내 글꾸는 ${CUSTOM_MAX}개까지예요 — 칩 옆 ✕ 로 하나 지우고 다시 눌러요`, '', { timeOut: 2500 }); return; }
         const label = PRESETS.find(p => p.id === state.shape)?.label || '글꾸', used = new Set(s2.custom.map(c => c.name));
         let name = `${label} · 내 색`.slice(0, 40), n = 2;
         while (used.has(name)) name = `${label} · 내 색 ${n++}`.slice(0, 40);
@@ -336,7 +356,7 @@ export async function openLogSheet(model) {
 
     // 이름 숨김 · 바꾸기 — 채팅 캡처 설정 그대로
     const tools = () => getSettings().captureTools;
-    const hideList = () => withNameAliases([model.chatName, ...model.messages.map(m => m.name), model.userName, ...tools().names].filter(Boolean));
+    const hideList = () => withNameAliases([model.chatName, model.charName, ...model.messages.map(m => m.name), model.userName, ...tools().names].filter(Boolean));   // 1.1.8 캐릭터 카드 이름(charName — 「깡통」 칸 기본값)도
     /** 1.1.6 저절로 가리는 이름(내 이름 먼저 · 말한 사람 · 대화 이름 — 더한 이름 · 별명 빼고) — 이름 가림 상자에 보여요 */
     const autoNames = () => { const added = new Set(tools().names); return [...new Set([model.userName, ...model.messages.map(m => m.name), model.chatName].map(n => String(n ?? '').trim()).filter(Boolean))].filter(n => !added.has(n)); };
     /** 가린 이름 대신 보일 말(가림 글자 · 모자이크 · 색 칸) */
@@ -347,22 +367,16 @@ export async function openLogSheet(model) {
         if (!state.dirty) return;
         state.dirty = false;
         const doc = frame.contentDocument;
-        if (!doc?.querySelector('[data-bl-msg]')) return;
-        const got = previewModel(doc);
-        const base = state.edited ?? model;
-        const drawn = state.drawnTexts;
-        if (!got || got.messages.length !== base.messages.length) return;   // 틀이 메시지를 합치거나 나눴으면 못 잇기 — 원래 글로
+        if (!doc?.body) return;
         // 1.0.7: 원래 글이 아니라 막 그린 미리보기 글과 견줘요 — 이름 숨김 · 바꾸기가 켜져 있거나 틀이 글자를 바꾸면
         // 손대지 않은 메시지도 원래 글과 달라 서식 없는 미리보기 노드로 갈아 끼워졌어요(분류 · 모양 칩을 누르면 대사 색 · 기울임이 사라짐)
-        const edited = (m, i) => {
-            const now = textOf(got.messages[i].nodes).trim();
-            return drawn?.length === got.messages.length ? now !== drawn[i] : now !== textOf(m.nodes).trim();
-        };
-        if (!base.messages.some((m, i) => edited(m, i))) return;
-        state.edited = { ...base, messages: base.messages.map((m, i) => edited(m, i) ? { ...m, nodes: got.messages[i].nodes } : m) };
+        // 1.1.8 받은 심플 글꾸도: [data-bl-msg] 대신 줄 표지 주석으로 묶어요(log-copy-spoiler.js harvestEdits · previewModel)
+        const next = harvestEdits(previewModel(doc), state.edited ?? model, state.drawnTexts, state.drawnMarks);
+        if (next) state.edited = next;
     };
     // 1.0.7 「↶ 되돌리기 · ↷ 다시하기」(글꾸 마트 시식 창과 같은 길) — 미리보기 HTML 스냅샷 · 다시 그리면 새로 시작(그 전에 고친 것은 거둬 이어져요)
     const hist = { stack: [], at: -1, timer: 0 };
+    // 1.2.0 글 고치기 중에도 되돌리기는 이 한 줄(고친 차례 그대로)만 써요 — 편집 모듈의 칸 단위 되돌리기와 섞으면 차례가 뒤바뀌고 「되돌린 것」이 새 칸으로 쌓여 세 번째부터 거꾸로 갔어요
     const drawHist = () => { $('[data-lc="undo"]').disabled = hist.at <= 0; $('[data-lc="redo"]').disabled = hist.at >= hist.stack.length - 1; };
     const snapNow = () => {
         const body = frame.contentDocument?.body;
@@ -381,7 +395,10 @@ export async function openLogSheet(model) {
         const next = hist.at + dir, doc = frame.contentDocument;
         if (!doc?.body || next < 0 || next >= hist.stack.length) return;
         hist.at = next;
+        const opened = [...doc.body.querySelectorAll('details:not([data-bl-spoiler])')].map(d => d.open);   // 눌러 연 소품은 되돌려도 연 채(고치던 글이 도로 접히지 않게)
         doc.body.innerHTML = hist.stack[next];
+        [...doc.body.querySelectorAll('details:not([data-bl-spoiler])')].forEach((d, i, all) => { if (all.length === opened.length && opened[i]) d.open = true; });
+        if (eb) { eb.refresh(); syncProps(); }   // 11-12 되돌린 문서에 칸 번호 · 점선 칸을 다시 · 소품 고친 글도 그 글로
         state.dirty = true;
         state.spoilerRange = null;
         readFields(doc);
@@ -389,10 +406,73 @@ export async function openLogSheet(model) {
     };
     /** 미리보기의 칸(data-f) → state.fields · 머리 칸 글칸 */
     const readFields = (doc) => {
-        for (const element of doc.querySelectorAll('[data-f]')) if (!basicOn() || element.getClientRects().length) setField(element.getAttribute('data-f'), element.textContent);   // 1.1.3 기본 글꾸 새 틀은 같은 칸이 칩 · 정보 줄 두 곳에 있어요 — 보이는 쪽만 읽어요
+        // 1.2.0 꺼 둔 제목 칸은 안 읽어요(빈 글이 제목으로 저장돼 다시 켜도 · 다른 틀에서도 비었어요) · 칸 안 숨긴 글은 알약 글 · 흐린 사본을 빼고 읽어요
+        const off = store().titleOff;
+        const words = (el) => { if (!el.querySelector('[data-bl-spoiler]')) return el.textContent; const c = el.cloneNode(true); for (const x of c.querySelectorAll('summary')) x.remove(); return c.textContent; };
+        for (const element of doc.querySelectorAll('[data-f]')) if ((!basicOn() || element.getClientRects().length) && !(off && element.getAttribute('data-f') === 'title')) setField(element.getAttribute('data-f'), words(element));   // 1.1.3 기본 글꾸 새 틀은 같은 칸이 칩 · 정보 줄 두 곳에 있어요 — 보이는 쪽만 읽어요
         for (const input of dialog.querySelectorAll('[data-lc-field]')) if (document.activeElement !== input) input.value = fieldOf(input.dataset.lcField);
         rememberBlank();
         drawFolds();
+    };
+    // 11-12 「글 고치기」 — 글꾸 마트와 같은 공용 편집 모듈(geulkku-mart/edit-blocks.js — 마트 사본): 고칠 칸을 점선 칸으로 한꺼번에 · 누르면 그 자리에서 · 소품 전 · 후.
+    //   틀 뿌리(.gk — 받은 심플 글꾸 · 기본 글꾸 새 틀)가 있는 미리보기에서만 단추가 보여요. 켜면 문서 전체 편집(designMode)을 끄고 칸만 고쳐요 · 끄면 예전처럼.
+    //   나눠 맡기: 메시지 줄(로그 칸 .gk-lg · .lg · data-bl-msg)과 제목 · 숨은 줄(data-f)은 「고친 글 거두기」(harvest · readFields)가,
+    //   그 밖의 소품 안 글(견출지 · 도장 · 영수증 · 팻말 …)은 여기 state.ed.texts 가 맡아요 — 다시 그려도 넣고, 복사 글은 미리보기 그대로라 같이 들어가요.
+    //   소품 글 열쇠 = 그 틀의 소품 칸 차례(p0 · p1 …) — 로그 글 길이 · 이름 숨김이 바뀌어도 같아요. 틀을 바꾸면 비워요(이번 창에만).
+    let edMod = null, edLoading = null, eb = null;
+    const needEd = () => (edMod ? Promise.resolve(edMod) : (edLoading ??= import('./geulkku-mart/edit-blocks.js').then(m => (edMod = m), () => { edLoading = null; return null; })));
+    const editRoot = doc => doc?.body?.querySelector(':scope > .gk, :scope > * > .gk') ?? null;
+    const OWNED = '.gk-lg, .lg, [data-f], [data-bl-msg], [data-bl-slot]';   // 고친 글 거두기 몫(메시지 · 제목 · 숨은 줄)
+    const propCells = () => [...(eb ? frame.contentDocument?.body?.querySelectorAll('[data-bl-pk]') ?? [] : [])].map(el => [el.dataset.blPk, el]);   // 열쇠는 막 그렸을 때 붙여요(armEdit) — 글을 다 지운 칸이 칸 목록에서 빠져도 뒤 칸 열쇠가 안 밀려요(되돌린 문서에도 그대로 · 복사 글에서는 걷어요)
+    /** 소품 칸 글을 원래(그린 그대로)와 견줘 기억 — 같아지면(되돌림) 지워요 */
+    const syncProps = () => { for (const [key, el] of propCells()) { const now = el.innerHTML, orig = state.ed.orig.get(key); if (now === orig) { if ((state.ed.texts.get(key)?.was ?? orig) === orig) state.ed.texts.delete(key); } else state.ed.texts.set(key, { html: now, was: state.ed.texts.get(key)?.was ?? orig }); } };   // was: 고치기 전 그 칸 글 — 다시 그렸을 때 같은 칸인지 봐요
+    const drawEdit = () => { const b = $('[data-lc="edit"]'); b.setAttribute('aria-pressed', String(!!state.ed.on && !!eb)); b.setAttribute('aria-label', state.ed.on ? '글 고치기 끝내기' : '글 고치기'); b.title = state.ed.on ? '글 고치기 끝내기 — 점선 칸을 거둬요' : '글 고치기 — 고칠 수 있는 글을 점선 칸으로 보여요(소품 안 글자까지)'; };
+    /** 막 그린 미리보기에 편집 모듈을 걸어요: 칸 번호 → 소품 고친 글 다시 넣기 → (켜 둔 채면) 점선 칸 · 고른 소품 단계 */
+    const armEdit = (doc) => {
+        eb = null;
+        const root = editRoot(doc), button = $('[data-lc="edit"]');
+        button.hidden = !root;
+        if (!root) { drawEdit(); return; }
+        if (!edMod) { needEd().then(m => { if (m && frame.contentDocument === doc && !eb) { armEdit(doc); resetHist(doc); } }); drawEdit(); return; }
+        if (state.ed.shape !== state.shape) { state.ed.shape = state.shape; state.ed.texts = new Map(); state.ed.step = null; }
+        eb = edMod.createEditBlocks(doc.body, { label: '소품', onStep: (k) => { state.ed.step = k; } });
+        eb.refresh();
+        eb.slots().filter(el => !el.closest(OWNED)).forEach((el, k) => { el.dataset.blPk = `p${k}`; });
+        const cells = propCells();
+        state.ed.orig = new Map(cells.map(([key, el]) => [key, el.innerHTML]));
+        // 고친 글은 「고치기 전 글이 같은 칸」에만 다시 넣어요 — 보일 것 · 이름 숨김으로 소품 칸 수가 달라져 차례가 밀려도 다른 칸에 들어가지 않게(같은 차례가 아니면 그 글을 가진 칸이 하나일 때만 옮겨요)
+        const elOf = new Map(cells), placed = new Map();
+        for (const [key, t] of state.ed.texts) {
+            let at = state.ed.orig.get(key) === t.was ? key : null;
+            if (!at) { const same = cells.filter(([k]) => state.ed.orig.get(k) === t.was && !state.ed.texts.has(k) && !placed.has(k)); if (same.length === 1) at = same[0][0]; }
+            if (at) { elOf.get(at).innerHTML = t.html; placed.set(at, t); } else if (!placed.has(key)) placed.set(key, t);
+        }
+        state.ed.texts = placed;
+        if (!doc.getElementById('bl-lc-ed-css')) { const s = doc.createElement('style'); s.id = 'bl-lc-ed-css'; s.textContent = '.bl-eb-on summary [data-bl-ed],.bl-eb-on figcaption [data-bl-ed]{-webkit-user-select:text!important;user-select:text!important}'; doc.head.append(s); }   // 틀이 소품 요약 칸(summary)의 글 고르기를 막아 둬요(누르면 소품이 움직이게) — 고치는 동안만 풀어요(head 라 복사 글에 안 가요)
+        if (state.ed.on) editOn(doc);
+        drawEdit();
+    };
+    /** 점선 칸 켜기: 문서 전체 편집을 끄고 칸만 · 고른 소품 단계 그대로 */
+    const editOn = (doc) => { doc.designMode = 'off'; eb.setOn(true); if (state.ed.step != null) eb.setStep(state.ed.step); };
+    /** 고른 자리가 든 「글 고치기」 칸(한 칸 안일 때만 · 머리 칸 빼고) — 굵게 · 기울임은 이 칸 안에서만(테마 · 마트 같은 규칙) */
+    const edCell = (range) => {
+        if (!(eb && state.ed.on) || !range) return null;
+        const at = range.startContainer, cell = (at.nodeType === 1 ? at : at.parentElement)?.closest?.('[data-bl-ed][contenteditable="true"]');
+        return cell && cell.contains(range.endContainer) && !cell.closest('[data-f]') ? cell : null;   // 제목 · 머리 칸(data-f)은 글자만 기억해요 — 꾸밈을 넣어도 다시 그리면 풀리니 단추를 안 내요
+    };
+    /** 칸 안 굵게 · 기울임 — 마트처럼 태그(<b> · <i>)로 넣어요(style 을 단 span 이면 그 칸이 고칠 칸 규칙에서 빠져요) */
+    const edFormat = (doc, cell, cmd) => {
+        try { doc.execCommand('styleWithCSS', false, false); } catch { /* 옛 브라우저 */ }
+        doc.execCommand(cmd);
+        // 이미 굵은(기울인) 글에 누르면 브라우저가 풀려고 style 을 단 span 을 넣어요 — 칸 규칙(속성 없는 꾸밈 태그만)을 지키게 그런 껍데기는 벗겨요(가린 이름 · 숨긴 글은 그대로)
+        for (const el of [...cell.querySelectorAll('*')]) if (!(['B', 'I', 'STRONG', 'EM', 'S', 'BR'].includes(el.tagName) && !el.attributes.length) && !el.hasAttribute('data-bl-mask') && !el.closest('[data-bl-spoiler]')) el.replaceWith(...el.childNodes);
+        cell.dispatchEvent(new InputEvent('input', { bubbles: true }));
+    };
+    /** 복사 · 내려받기 직전: 점선 칸 · 전 · 후 막대 · 멈춘 소품 단계를 걷은 채로 fn — 끝나면 다시 켜요 */
+    const editOffFor = (fn) => {
+        const on = !!(eb && state.ed.on), step = eb?.step;
+        if (on) eb.setOn(false);
+        try { return fn(); } finally { if (on && frame.contentDocument) { eb.setOn(true); if (step != null) eb.setStep(step); } }
     };
     /** 1.0.8 비운 머리 칸을 설정에 적어요(다시 채우면 빼요) — 바뀐 게 있을 때만 저장 */
     const rememberBlank = () => {
@@ -488,31 +568,74 @@ export async function openLogSheet(model) {
         const less = !state.more;
         const shown = new Set(less ? [...TONE_SHAPES, state.shape] : presetsIn(state.category, s2.custom));
         const order = less ? [...TONE_SHAPES, ...(PRESETS.some(p => p.id === state.shape) && !isToneShape(state.shape) ? [state.shape] : [])] : state.order.filter(id => shown.has(id));
-        $('[data-lc-cats]').innerHTML = CATEGORIES.map(c => `<button type="button" class="${state.category === c.id ? 'on' : ''}" aria-pressed="${state.category === c.id}" data-cat="${c.id}">${esc(c.label)}</button>`).join('');
+        $('[data-lc-cats]').innerHTML = catList.map(c => `<button type="button" class="${state.category === c.id ? 'on' : ''}" aria-pressed="${state.category === c.id}" data-cat="${c.id}">${esc(c.label)}</button>`).join('');
         const presetChips = order.map((id) => {
             const p = PRESETS.find(x => x.id === id);
             const on = state.shape === id;
             const mark = p.emoji ? `<span class="bl-lc-emoji" aria-hidden="true">${p.emoji}</span>` : `<i class="fa-solid ${p.icon}" aria-hidden="true"></i>`;
             return `<button type="button" class="bl-lc-chip" role="radio" aria-checked="${on}" data-shape="${id}">${mark}<span>${esc(p.label)}</span>${s2.fav.includes(id) ? '<i class="fa-solid fa-star bl-lc-fav" aria-label="즐겨찾기"></i>' : ''}</button>`;
         }).join('');
-        const customChips = s2.custom.filter(c => shown.has(c.id)).map((c) => {
-            const on = state.shape === c.id, armed = state.armed === c.id;
-            // 1.0.1: 마트에서 받은 글꾸(template)는 🛒 표시 · 칩 옆 ✕ 로도 지워요(누르면 지울 준비 → 칩이나 ✕ 를 한 번 더 · 길게 누르기와 같아요)
-            const mart = c.template || c.frame ? '<span class="bl-lc-mart" aria-label="마트에서 받음" title="마트에서 받음">🛒</span>' : '';
-            return `<button type="button" class="bl-lc-chip${armed ? ' is-armed' : ''}" role="radio" aria-checked="${on}" data-shape="${esc(c.id)}">${c.emoji && !armed ? `<span class="bl-lc-emoji" aria-hidden="true">${esc(c.emoji)}</span>` : `<i class="fa-solid ${armed ? 'fa-trash' : 'fa-shapes'}" aria-hidden="true"></i>`}<span>${armed ? '지우기' : esc(c.name)}</span>${armed ? '' : mart}</button>`
-                + `<button type="button" class="bl-lc-chip bl-lc-x${armed ? ' is-armed' : ''}" data-lc-del="${esc(c.id)}" aria-label="${esc(c.name)} ${armed ? '정말 지우기' : '지우기'}" title="${armed ? '한 번 더 누르면 지워요' : '지우기'}"><i class="fa-solid ${armed ? 'fa-trash' : 'fa-xmark'}" aria-hidden="true"></i></button>`;
+        // 1.1.8 「블루레몬 추천」: 묶음마다 칩 하나 · 같은 이름 판이 여럿이면 옆 둥근 꺾쇠로 판 고르기(펼치면 판 칩이 칩 바로 뒤에) · 접힌 줄에서는 지금 고른 추천 칩만
+        const pickRow = !pk.mod ? '' : pk.mod.pickChips(pk.picks, s2.custom, s2.pickVar).filter(g => (less ? g.ids.includes(state.shape) : state.category === pk.mod.PICK_CATEGORY.id)).map((g) => {
+            const cur = g.ids.includes(state.shape) ? state.shape : g.current, label = g.labels[g.ids.indexOf(cur)], many = g.ids.length > 1, open = many && state.pickOpen === g.group;
+            return `<button type="button" class="bl-lc-chip" role="radio" aria-checked="${state.shape === cur}" data-shape="${esc(cur)}"><span class="bl-lc-emoji" aria-hidden="true">${esc(g.emoji)}</span><span>${esc(g.name)}</span>${many && label !== g.name ? `<small>${esc(label)}</small>` : ''}</button>`
+                + (many ? `<button type="button" class="bl-lc-chip bl-lc-pv" data-lc-pv="${esc(g.group)}" aria-expanded="${open}" aria-label="${esc(g.name)} 판 고르기 — ${g.ids.length}가지" title="판 고르기"><i class="bl-lc-chev" aria-hidden="true"></i></button>` : '')
+                + (open ? g.ids.map((id, i) => `<button type="button" class="bl-lc-chip bl-lc-pvi" aria-pressed="${id === cur}" data-lc-pvar="${esc(id)}">${esc(g.labels[i])}</button>`).join('') : '');
         }).join('');
-        $('[data-lc-shapes]').innerHTML = presetChips + customChips + (less ? '' : '<button type="button" class="bl-lc-chip bl-lc-add" data-lc="paste"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>내 글꾸</span></button>')
+        // 1.2.0 내 글꾸도 즐겨찾기 → 최근 → 받은 차례 · 별 표시. 길게 누르기는 모든 칩에서 즐겨찾기(전엔 내 글꾸만 「지울 준비」) · 지우기는 칩 옆 ✕ 로 바로(알림의 ↶ 로 되돌려요)
+        const customChips = mineOrder(s2.custom, s2.fav, s2.recent).filter(c => shown.has(c.id)).map((c) => {
+            const on = state.shape === c.id;
+            // 1.0.1: 마트에서 받은 글꾸(template)는 🛒 표시
+            const mart = c.template || c.frame ? '<span class="bl-lc-mart" aria-label="마트에서 받음" title="마트에서 받음">🛒</span>' : '';
+            return `<button type="button" class="bl-lc-chip" role="radio" aria-checked="${on}" data-shape="${esc(c.id)}">${c.emoji ? `<span class="bl-lc-emoji" aria-hidden="true">${esc(c.emoji)}</span>` : '<i class="fa-solid fa-shapes" aria-hidden="true"></i>'}<span>${esc(c.name)}</span>${mart}${s2.fav.includes(c.id) ? '<i class="fa-solid fa-star bl-lc-fav" aria-label="즐겨찾기"></i>' : ''}</button>`
+                + `<button type="button" class="bl-lc-chip bl-lc-x" data-lc-del="${esc(c.id)}" aria-label="${esc(c.name)} 지우기" title="지우기 — 지운 뒤 알림의 ↶ 로 되돌려요"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>`;
+        }).join('');
+        // 1.1.8 접힌 줄에도 내 글꾸 입구 — 받은 것이 없으면 붙여 넣기 칸(안내 · 마트 열기)으로 · 있으면 펼쳐 「내 글꾸」 분류로(전엔 접힌 줄에 글꾸를 얻는 길이 없었어요)
+        const mineN = s2.custom.length;
+        const take = `<button type="button" class="bl-lc-chip bl-lc-add" data-lc="take" title="${mineN ? '받은 글꾸 보기' : '글꾸 마트에서 받은 글꾸를 붙여 넣어요'}"><i class="fa-solid fa-${mineN ? 'shapes' : 'plus'}" aria-hidden="true"></i><span>내 글꾸</span>${mineN ? `<small>${mineN}</small>` : ''}</button>`;
+        const room = s2.custom.length >= MINE_MAX ? ' is-full' : '';   // 1.2.0 「+ 내 글꾸 n/20」
+        $('[data-lc-shapes]').innerHTML = presetChips + pickRow + customChips + (less ? take : `<button type="button" class="bl-lc-chip bl-lc-add${room}" data-lc="paste" title="${room ? '꽉 찼어요 — 칩 옆 ✕ 로 하나 지우면 새로 받아요' : '글꾸 마트에서 받은 글꾸를 붙여 넣어요'}"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>내 글꾸</span><small>${s2.custom.length}/${MINE_MAX}</small></button>`)
             + (state.allShapes ? '<button type="button" class="bl-lc-chip bl-lc-ghost" data-lc="shapes-all" aria-expanded="true"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i><span>접기</span></button>' : '');   // 1.1.6 폰: 전부 펼친 틀 줄 끝 「접기」
         const strip = $('[data-lc-shapes]'), cats = $('[data-lc-cats]');
         $('[data-lc-cr]').classList.toggle('is-all', state.allShapes);
         $('[data-lc-tl]').classList.toggle('is-all', state.allCats);
         { const b = $('[data-lc="cats-all"]'); b.setAttribute('aria-expanded', String(state.allCats)); b.setAttribute('aria-label', state.allCats ? '분류 접기' : '분류 전부 보기'); b.querySelector('i').className = `fa-solid fa-chevron-${state.allCats ? 'up' : 'down'}`; }
         requestAnimationFrame(() => { revealTab(strip, strip.querySelector('[aria-checked="true"]')); applyFade(strip); revealTab(cats, cats.querySelector('.on')); applyFade(cats); fitShapes(); });
+        drawRetired();
+        $('[data-lc-empty]').hidden = less || state.category !== 'mine' || mineN > 0;   // 1.1.8 빈 「내 글꾸」 안내
+        drawMine(less);
         const preset = PRESETS.find(x => x.id === state.shape);
         $('[data-lc-gallery]').hidden = !preset?.images;
         $('[data-lc-images-count]').textContent = preset?.images ? `사진 ${(model.images?.length ?? 0) + state.images.length}장` : '';
     });
+    // 1.2.0 「내 글꾸」 분류 줄 아래 한 줄: 「내 글꾸 n/20」(꽉 차면 할 일) · 고른 글꾸의 받은 날 · 판 · 손길 안내
+    const drawMine = (less) => {
+        const row = $('[data-lc-mine]'), s2 = store(), n = s2.custom.length;
+        row.hidden = less || state.category !== 'mine' || !n;
+        if (row.hidden) { row.replaceChildren(); return; }
+        const count = countLine(n), mine = custom(), info = mine ? infoLabel(mine) : '';
+        row.classList.toggle('is-full', count.full);
+        row.innerHTML = `<b>${esc(count.text)}</b>${info ? `<span>「${esc(mine.name)}」 ${esc(info)}</span>` : ''}${count.full ? '' : '<span>길게 누르면 즐겨찾기 · ✕ 는 지우기</span>'}`;
+    };
+    // 1.2.0 내 글꾸 지우기(칩 옆 ✕) — 바로 지우고 알림의 ↶ 로 되돌려요. 고른 글꾸였으면 깡통 로그로
+    const dropMine = (id) => {
+        const s2 = store(), name = s2.custom.find(c => c.id === id)?.name ?? '내 글꾸', was = state.shape === id;
+        const undo = removeMine(s2, id);
+        if (!undo) return;
+        if (was) { state.shape = TONE_SHAPES[0]; state.picking = false; }
+        saveSettings();
+        drawShapes(); drawColors(); if (was) draw();
+        const note = toastr.info(`「${name}」를 지웠어요 — ↶ 를 누르면 되돌려요`, '내 글꾸', { timeOut: 8000 });
+        attachUndo(note, () => {
+            const s3 = store();
+            if (!restoreMine(s3, undo)) { toastr.warning(s3.custom.length >= MINE_MAX ? `내 글꾸가 꽉 차서(${MINE_MAX}/${MINE_MAX}) 되돌리지 못했어요` : '같은 글꾸를 그새 다시 받아서 되돌릴 것이 없어요', '내 글꾸', { timeOut: 4000 }); return; }
+            saveSettings();
+            if (!dialog.isConnected) return;
+            const back = was && state.shape === TONE_SHAPES[0];   // 그새 다른 틀을 골랐으면 그 틀 그대로
+            if (back) { state.shape = id; state.category = 'mine'; }
+            drawShapes(); drawColors(); if (back) draw();
+        });
+    };
     // 1.1.6 폰: 옆으로 넘치는 틀 줄에 「+n」(줄 밖에 남은 칩 수 · 누르면 감싸 펼침) — 줄을 다시 그릴 때 한 번만 재요(스크롤마다 재지 않아요)
     const fitShapes = () => {
         const row = $('[data-lc-cr]'), strip = $('[data-lc-shapes]'), pill = $('.bl-lc-cr-more');
@@ -533,6 +656,17 @@ export async function openLogSheet(model) {
         button.setAttribute('aria-expanded', String(state.more));
         button.querySelector('i').className = `fa-solid fa-chevron-${state.more ? 'up' : 'down'}`;
         button.querySelector('span').textContent = state.more ? '접기' : '더 보기';
+    };
+    // 1.1.8 뺀 옛 내장 글꾸 띠 — 깡통 로그로 그리는 동안 · 닫거나(✕ — 저장해요) 새 판을 받거나 다른 틀로 복사할 때까지 남아요
+    const drawRetired = () => {
+        const band = $('[data-lc-retired]'), on = !!retired && state.shape === RETIRED_FALLBACK && !store().retiredOff;
+        band.hidden = !on;
+        if (!on) { band.replaceChildren(); return; }
+        const name = esc(retired.retired.name);
+        band.innerHTML = retired.tell
+            ? `<span><b>「${name}」 글꾸는 이제 글꾸 마트에 있어요.</b> 마트에서 새 판을 <b>테마용 복사</b>로 복사해 붙여 넣으면 이어서 써요. 지금은 깡통 로그로 보여 드려요.</span><span class="bl-lc-band-go"><a class="salty-btn" href="${esc(`${PAGES}/mart/geulkku/?view#${encodeURIComponent(retired.tell)}`)}" target="_blank" rel="noopener noreferrer" data-lc-retired-go><i class="fa-solid fa-store" aria-hidden="true"></i><span>새 판 보기</span></a><button type="button" class="salty-btn" data-lc="paste"><i class="fa-solid fa-paste" aria-hidden="true"></i><span>붙여 넣기</span></button></span>`
+            : `<span><b>「${name}」 글꾸는 이제 없어요.</b> 마트에도 새 판이 없어 깡통 로그로 보여 드려요.</span>`;
+        band.insertAdjacentHTML('beforeend', '<button type="button" class="salty-btn bl-lc-icon bl-lc-band-x" data-lc="retired-x" aria-label="안내 닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>');
     };
     // ② 색 칩 — 테마 「색」 화면의 에이드 카드(.salty-pal) 그대로, 작게
     const drawColors = keepFocus(() => {
@@ -578,6 +712,7 @@ export async function openLogSheet(model) {
     const pageBg = () => (own()?.bg ?? (custom() || (state.shape === 'plain' && state.palette === nowPalette()) ? getComputedStyle(dialog).backgroundColor : colorsOf(paletteFor(state.shape, state.palette)).bg));
     const draw = () => {
         harvest();
+        handoffReset();   // 1.2.0 복사한 글 · 보던 코드는 바꾸기 전 모양이에요
         $('[data-lc-stage-name]').textContent = PRESETS.find(p => p.id === state.shape)?.label ?? custom()?.name ?? '';   // 1.1.6 폰: 미리보기 머리에 틀 이름
         drawShows();
         drawInks();
@@ -597,7 +732,11 @@ export async function openLogSheet(model) {
         // 1.0.1 「깡통 · 모델 · 프롬프트」 칩 · 1.0.7 「보일 것」 칩 — 칸을 비워 그리지 않고 그린 뒤 걷어요(log-copy-bare.js):
         // 칸만 비우면 그 칸을 담던 머리 박스 · 구분선이 빈 채로 남았어요(11-07 사용자 「제목 · 위 글 · 알약 다 빼면 가로 박스도 사라져야지」)
         const drop = [...(s3.titleOff ? ['title'] : []), ...(s3.dateOff ? ['date'] : []), ...(s3.tagsOff ? ['mark', 'char', 'model', 'prompt'] : [])];
-        if (mine?.frame) { needSet(); html = renderLog(shown.model, { simple: mine, setMod, caps: capRow(mine.frame.key), mode: toneMode, lookup, fields: { ...fields, ...(s3.titleOff ? { title: '' } : {}) }, names: !s3.namesOff, lemonLink: !!s3.lemonLink }); }   // 1.1.4 받은 심플 글꾸(제목 끄기는 칸을 비워서)
+        if (mine?.frame) {   // 11-12 캐릭터 색(인물표 · 화면 대사색 · 고른 화자 색)을 모르면 「소품도 캐릭터 색」은 그림을 안 바꿔요 — 칩을 흐려요(바뀌면 조절 칸만 다시)
+            const known = castLetters(speakerLetters(shown.model, { main: mine.frame.main, second: mine.frame.second, lookup }), mine.frame, mine.set?.themeCast).main != null;
+            if (known !== (state.castKnown !== false)) { state.castKnown = known; drawEasy(); }
+        }
+        if (mine?.frame) { needSet(); html = renderLog(shown.model, { simple: mine, setMod, caps: capRow(mine.frame.key), mode: toneMode, lookup, fields: { ...fields, ...(s3.titleOff ? { title: '' } : {}) }, names: !s3.namesOff, lemonLink: !!s3.lemonLink, rows: true }); }   // 1.1.4 받은 심플 글꾸(제목 끄기는 칸을 비워서) · 1.1.8 rows: 고친 글을 거둘 줄 표지(복사 때 걷어요)
         else if (rawOf(mine)) html = mine.html;
         else if (basicOn()) html = renderLog(shown.model, { shape: state.shape, fields: { ...fields, ...(s3.titleOff ? { title: '' } : {}), ...(s3.dateOff ? { date: '' } : {}) }, images: shown.rewriteImages(state.images), names: !s3.namesOff, lemonLink: !!s3.lemonLink, mode: toneMode, lookup, info: s3.basicInfo, height: s3.basicHeight, marks: true });   // 1.1.3 기본 글꾸 새 틀(제목 · 날짜 끄기는 칸을 비워서 — 틀이 그 줄째 빼요)
         else html = renderLog(shown.model, { shape: state.shape, colors: state.shape === 'plain' ? null : colorsOf(paletteFor(state.shape, state.palette)), ui, fields: drawFields, images: shown.rewriteImages(state.images), screen: tokensOf(nowPalette()), template: inkTemplate() ?? mine, names: !s3.namesOff, lemonLink: !!s3.lemonLink, mode: toneMode, lookup });
@@ -605,9 +744,15 @@ export async function openLogSheet(model) {
         // 1.1.3 깡통 로그 틀 묶음: 붙인 뒤 덮일 글자색(바탕 대비 4.6 아래)은 그릴 때 밝기만 맞춰요 — 미리보기와 복사 글이 같게
         if (toneNow) html = siteCheck(html, { mode: toneMode }).html;
         $('[data-lc-pick]').hidden = !(rawOf(mine) && (state.picking || !mine.slot));
+        // 1.2.0 눌러야 글이 나오는 소품(닫힌 채 시작하는 details): 미리보기에서 눌러 연 것은 「미리보기로만 연 것」(data-bl-peek)이라 복사 글에서는 닫힌 채로 가고,
+        //   조절 · 밝기로 다시 그려도 같은 틀이면 연 채로 둬요(전엔 칩을 누를 때마다 글이 도로 접혀 소품을 또 눌러야 했고, 연 채 복사하면 붙인 글이 열린 채 시작했어요)
+        const PROP = 'details:not([data-bl-spoiler])';
+        const held = state.propShape === state.shape && frame.contentDocument?.body ? [...frame.contentDocument.body.querySelectorAll(PROP)].map(d => d.open) : null;
+        state.propShape = state.shape;
         frame.onload = () => {
             const doc = frame.contentDocument;
             if (!doc) return;
+            [...doc.body.querySelectorAll(PROP)].forEach((d, i, all) => { if (d.open) return; d.setAttribute('data-bl-peek', ''); if (held?.length === all.length && held[i]) d.open = true; });
             if (rawOf(mine)) {   // 마트 글꾸(template · 1.1.4 심플 frame)는 자리가 정해져 있어 고르지 않아요
                 const slot = state.picking ? null : (Array.isArray(mine.slot) && fromPath(doc.body, mine.slot)) || guessSlot(doc.body);
                 if (slot) { slot.innerHTML = logHtml(shown.model, { frameless: false, names: !s3.namesOff }); slot.setAttribute('data-bl-slot', ''); }
@@ -628,7 +773,9 @@ export async function openLogSheet(model) {
             }
             ensureSpoilerStyle(doc);
             if (store().lemonLink && !basicOn() && !simpleOn()) { try { placeLemon(doc, normCorner(store().lemonAt)); } catch { /* 못 재면 레몬 없이 */ } }   // 1.1.2 레몬 바로가기: 그려진 모양을 재서 빈 모서리에(미리보기에 보이는 그대로 복사돼요)
-            state.drawnTexts = (previewModel(doc)?.messages ?? []).map(m => textOf(m.nodes).trim());   // 1.0.7 거둘 때 견줄 「막 그린 글」
+            const fresh = previewModel(doc)?.messages ?? [];
+            state.drawnMarks = fresh.map(m => nodesMark(m.nodes));   // 1.2.0 글자는 그대로 두고 굵게 · 기울임만 바꿔도 다시 그릴 때 남게
+            state.drawnTexts = fresh.map(m => textOf(m.nodes).trim());   // 1.0.7 거둘 때 견줄 「막 그린 글」
             const syncSpoiler = () => {
                 const sel = doc.getSelection();
                 const range = sel?.rangeCount ? sel.getRangeAt(0) : null;
@@ -646,6 +793,17 @@ export async function openLogSheet(model) {
             };
             doc.addEventListener('selectionchange', syncSpoiler);
             syncSpoiler();
+            // 11-12 고른 글 옆 막대: 「숨기기」 칩과 같은 길(칩을 눌러요 — 되돌리기 한 칸 · 다시 그릴 때 이어짐 그대로)
+            //   평소엔 「눌러야 보이게 / 숨김 풀기」 하나만(사용자 「굵게랑 기울임은 왜 있는 거임?」) — 굵게 · 기울임은 「글 고치기」 모드에서 한 칸 안을 골랐을 때만(edCell · 테마 · 마트 · 폰 · PC 같은 규칙)
+            const reselect = (range) => { const sel = doc.getSelection(); sel.removeAllRanges(); sel.addRange(range); };
+            selBar.watch(doc, {
+                frame,
+                caret: range => !!spoilerAt(range),   // 숨긴 글을 누르기만 해도 「숨김 풀기」
+                buttons: (range) => (spoilerAt(range)
+                    ? [{ id: 'unhide', label: '숨김 풀기', main: true, title: '숨김 풀기 — 다시 바로 보이는 글로', run: (r) => { reselect(r); syncSpoiler(); $('[data-lc="spoiler"]').click(); } }]
+                    : [{ id: 'hide', label: '눌러야 보이게', main: true, title: '숨기기 — 고른 글을 눌러야 보이는 글로', run: (r) => { reselect(r); syncSpoiler(); $('[data-lc="spoiler"]').click(); } },
+                        ...(edCell(range) ? [['bold', '굵게', '굵게(Ctrl+B)'], ['italic', '기울임', '기울임(Ctrl+I)']].map(([id, label, title]) => ({ id, label, title, run: (r) => { const cell = edCell(r); if (cell) { reselect(r); edFormat(doc, cell, id); } } })) : [])]),
+            });
             doc.designMode = 'on';
             try { doc.execCommand('styleWithCSS', false, true); } catch { /* 옛 브라우저 */ }
             // 1.0.8 장식(data-bl-egg)을 누를 땐 편집을 잠깐 꺼요 — 문서 전체가 편집 모드라 폰에서 장식을 눌러도 자판이 올라오고 편집으로 넘어가 움직임이 안 보였어요(사용자 제보)
@@ -654,10 +812,11 @@ export async function openLogSheet(model) {
                 if (!event.target?.closest?.('[data-bl-egg]')) return;
                 doc.designMode = 'off';
                 clearTimeout(eggTimer);
-                eggTimer = setTimeout(() => { doc.designMode = 'on'; try { doc.execCommand('styleWithCSS', false, true); } catch { /* 옛 브라우저 */ } }, 900);
+                eggTimer = setTimeout(() => { if (eb && state.ed.on) return; doc.designMode = 'on'; try { doc.execCommand('styleWithCSS', false, true); } catch { /* 옛 브라우저 */ } }, 900);
             }, true);
             doc.addEventListener('input', () => {
                 state.dirty = true;   // 1.0.1 고친 글은 다음 그리기 전에 거둬 틀을 바꿔도 이어요
+                if (eb) syncProps();   // 11-12 소품 안 고친 글(글 고치기 칸 · 문서 편집 둘 다 — 칸 단위 되돌리기도 input 을 내요)
                 readFields(doc);
                 clearTimeout(hist.timer); hist.timer = setTimeout(() => { hist.timer = 0; snapNow(); }, SNAP_WAIT);   // 1.0.7 연속 타자는 0.5초 묶음
             });
@@ -668,12 +827,27 @@ export async function openLogSheet(model) {
                 if (text) doc.execCommand('insertText', false, text.replace(/\r\n?/g, '\n'));
             });
             doc.addEventListener('keydown', (event) => {   // 미리보기 안 Esc 도 창 닫기
-                if (event.key === 'Escape') { dialog.close(); return; }
+                if (event.key === 'Escape') { if (state.ed.on && event.target?.closest?.('[data-bl-ed]')) return; dialog.close(); return; }   // 11-12 글 고치기 칸 안 Esc 는 그 칸만 고치기 전으로(편집 모듈)
                 const key = event.key.toLowerCase();
-                if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); if (!doc.execCommand('insertLineBreak')) doc.execCommand('insertHTML', false, '<br>'); }
-                else if ((event.ctrlKey || event.metaKey) && !event.shiftKey && key === 'z') { event.preventDefault(); travel(-1); }
-                else if ((event.ctrlKey || event.metaKey) && (key === 'y' || (event.shiftKey && key === 'z'))) { event.preventDefault(); travel(1); }
+                const ed = !!(eb && state.ed.on);
+                if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { if (ed) return; event.preventDefault(); if (!doc.execCommand('insertLineBreak')) doc.execCommand('insertHTML', false, '<br>'); }   // 글 고치기 중 Enter = 칸 끝내기(편집 모듈)
+                else if (ed && (event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && (key === 'b' || key === 'i')) { const cell = edCell(doc.getSelection()?.rangeCount ? doc.getSelection().getRangeAt(0) : null); if (cell) { event.preventDefault(); edFormat(doc, cell, key === 'b' ? 'bold' : 'italic'); } }
+                else if ((event.ctrlKey || event.metaKey) && !event.shiftKey && key === 'z') { event.preventDefault(); travel(-1); drawHist(); }
+                else if ((event.ctrlKey || event.metaKey) && (key === 'y' || (event.shiftKey && key === 'z'))) { event.preventDefault(); travel(1); drawHist(); }
             });
+            // 11-12 글 고치기: 소품 요약 칸(summary) 안 칸을 눌러도 소품이 열리고 닫히지 않게(고른 전 · 후 단계 그대로) · 칸을 끝내면 되돌리기 단추를 다시
+            doc.addEventListener('click', (event) => { if (state.ed.on && eb && event.target?.closest?.('summary:not(.blsp-h)')) event.preventDefault(); }, true);
+            //   소품 덮개(견출지 접힌 귀 · 겉면 …)가 칸 위에 떠 있으면 누름이 덮개에 닿아요 — 누른 자리 아래의 고칠 칸을 찾아 그 칸에 커서를 놓아요
+            doc.addEventListener('mousedown', (event) => {
+                if (!(state.ed.on && eb) || event.button !== 0 || event.target?.closest?.('[data-bl-ed], .bl-eb-steps')) return;
+                const cell = doc.elementsFromPoint(event.clientX, event.clientY).map(el => el.closest('[data-bl-ed][contenteditable="true"]')).find(Boolean);
+                if (!cell) return;
+                event.preventDefault();
+                cell.focus();
+                const sel = doc.getSelection(); sel.selectAllChildren(cell); sel.collapseToEnd();
+            }, true);
+            doc.addEventListener('focusout', () => setTimeout(drawHist, 0));
+            armEdit(doc);
             resetHist(doc);
         };
         $('[data-lc-egg]').hidden = !/\sdata-bl-egg="/.test(html);   // 1.0.1 누르면 반응하는 장식이 있는 틀: 미리보기 머리에 한 줄
@@ -681,52 +855,118 @@ export async function openLogSheet(model) {
     };
 
     /** 미리보기에 보이는 그대로(고친 것 포함) — 소독하고 고치기 표시를 걷은 HTML (marks: 표시를 남겨요 — 편집용 꼴이 메시지 · 이름 · 칸 자리를 찾아요) */
-    const result = ({ marks = false } = {}) => {
+    const result = (opts = {}) => editOffFor(() => resultNow(opts));   // 11-12 글 고치기 점선 칸 · 전 · 후 막대 · 멈춘 소품은 걷고(소품은 켜기 전 열림으로) 읽어요
+    const resultNow = ({ marks = false } = {}) => {
         const doc = frame.contentDocument;
         if (!doc?.body) return '';
         // 글자색 굳히기: 미리보기에서 고친 글 · 숨긴 글 · 내 글꾸까지 (붙인 곳의 바탕 · 글자색 · <style> 이 무엇이든 안 보이는 글자 0 — 사용자 규칙) — pinColors
+        const live = basicOn() ? null : [...doc.body.querySelectorAll('[style], strong, em, b, i, s, span')].map(el => [el, el.getAttribute('style')]);   // 1.2.0 굳힌 색은 사본에만 남겨요 — 살아 있는 미리보기에 남으면 「글 고치기」가 굵게 · 기울임 든 줄을 칸으로 못 잡았어요
         if (!basicOn()) pinColors(doc.body, frame.contentWindow);   // 1.1.3 기본 글꾸 새 틀은 글자색을 틀 <style> 이 color + fill 로 맡아요(인라인으로 굳히면 탭 · 도장 누름의 글자색 바뀜이 멈춰요)
         const body = doc.body.cloneNode(true);
+        if (live) { const had = new Map(live); for (const el of doc.body.querySelectorAll('[style]')) { const was = had.get(el); if (was === undefined || was === null) el.removeAttribute('style'); else if (el.getAttribute('style') !== was) el.setAttribute('style', was); } }
         // 1.0.9+ 미리보기로만 펼친 상자(닫힌 채 시작하는 틀 · data-bl-peek)는 복사 글에서 다시 닫아요 — 붙인 곳에서는 닫힌 채 시작해 누르면 열려요
         for (const box of body.querySelectorAll('details[data-bl-peek]')) { box.removeAttribute('open'); box.removeAttribute('data-bl-peek'); }
+        for (const el of body.querySelectorAll('[data-bl-ed], [data-bl-pk]')) { el.removeAttribute('data-bl-ed'); el.removeAttribute('data-bl-pk'); }   // 11-12 글 고치기 칸 번호 · 소품 칸 열쇠는 편집용 꼴(marks)에도 안 가요
         sanitizeTree(body, { keepPreviewMarks: marks });
         // 1.1.3 복사 직전 점검(깡통 로그 틀 묶음): 미리보기에서 고친 글 · 숨긴 글까지 덮일 글자색을 한 번 더 봐요(인라인 그림 주소 · overflow 는 원래 길 liftForCopy 가 옮기고 바꿔요)
-        const html = body.innerHTML.trim();
+        const html = simpleOn() ? stripRowMarks(body.innerHTML.trim()) : body.innerHTML.trim();   // 1.1.8 받은 심플 글꾸의 미리보기 표지(줄 주석 · 칸 표시)는 복사 글에 안 가요
         return toneOn() ? siteCheck(html, { mode: modeOf(state.palette) }).html : html;
+    };
+
+    /** 1.2.0 붙일 글 한 벌 — html: 서식(text/html) · code: 글(text/plain · 「HTML」 칸 · 「코드 보기」 칸) · 「HTML 복사」와 「코드 보기」가 같은 글을 써요 */
+    const copyPack = () => {
+        const shown = result();
+        if (!shown) return null;
+        // 1.0.1 글꾸 움직임 · 누르면 반응: 붙인 곳엔 테마 CSS 가 없어서 그 글꾸가 쓰는 키프레임만 맨 앞 <style> 로
+        // 1.1.2 인라인 style 의 그림 주소(url)는 같은 <style> 의 클래스 규칙으로 — 커뮤니티 사이트가 인라인 url(&quot; 를 지워 그림이 사라졌어요(log-copy-lift.js)
+        const lifted = liftForCopy(shown, motionStyleFor(shown));   // 1.1.2 위아래 코멘트 빈칸 · 코멘트 글줄 규칙까지
+        const html = lifted.full;   // <style> 은 감싸는 요소 안 첫 자식
+        // 1.0.1 서식(text/html)은 한 줄 그대로, 글(text/plain — HTML 칸 · 코드 편집기에 붙는 쪽)은 사람이 고치기 쉬운 꼴(줄 나눔 · 주석, 모양은 같아요 — log-copy-pretty.js) · 맨 앞 <style> 은 안내 주석 바로 아래
+        const code = withCommentSlots(prettyLogHtml(insertHead(copyBody(result({ marks: true })).html, lifted.head), { label: PRESETS.find(p => p.id === state.shape)?.label ?? custom()?.name ?? '', head: '' }));
+        return { html, code };
+    };
+    const mdText = () => {
+        const fromPreview = frame.contentDocument ? previewModel(frame.contentDocument) : null;   // 미리보기에서 고친 글 · 숨긴 글까지
+        return logMarkdown(fromPreview ?? view().model, { names: !store().namesOff });
+    };
+    // 1.2.0 붙이는 길(log-copy-handoff.js): 바닥 줄 안내 · 「코드 보기」 칸 — 모양을 바꿔 다시 그리면 평소로
+    let handoff = 'idle';
+    const tell = (kind) => { handoff = kind; guide(dialog, kind); };
+    const codeBox = () => $('[data-lc-code]');
+    const openCode = (text, options) => { handoff = 'code'; showCode(dialog, true, { text, ...options }); codeBox().scrollIntoView?.({ block: 'nearest' }); };
+    const handoffReset = () => {
+        if (handoff === 'idle') return;
+        if (!codeBox().hidden) showCode(dialog, false);
+        tell('idle');
     };
 
     const remember = () => {
         const s2 = store();
         s2.shape = state.shape;
+        if (s2.retiredFrom && state.shape !== RETIRED_FALLBACK) { s2.retiredFrom = ''; s2.retiredOff = false; }   // 1.1.8 새 판이나 다른 틀로 복사했으면 옛 id 이어짐은 끝 · 깡통 로그로 복사했으면 기억해 둬요
         if (state.picked) s2.palette = state.palette;
         s2.category = state.category;
-        if (PRESETS.some(p => p.id === state.shape)) s2.recent = [state.shape, ...s2.recent.filter(id => id !== state.shape)].slice(0, 5);
+        if (PRESETS.some(p => p.id === state.shape) || s2.custom.some(c => c.id === state.shape)) s2.recent = [state.shape, ...s2.recent.filter(id => id !== state.shape)].slice(0, 5);   // 1.2.0 내 글꾸도 최근에
         saveSettings();
     };
 
     // 1.0.1 마트에서 가져오기 — 새 창으로 글꾸 마트 열기 · 붙여넣기 · 파일 (받은 글꾸는 「내 글꾸」로, 액자는 보관함으로)
+    //   1.1.8 붙여 넣은 마트 글은 이 칸에서 바로 받아요(창을 하나 더 띄우지 않고 · 결과는 칸 안 글 · 받으면 알림). 마트 창은 「파일로 받기」에만 써요
+    const apply = (fn) => { fn(getSettings()); saveSettings(); };
+    /** 받은 글꾸 고르기 — 옛 내장 글꾸의 새 판이 들어 있으면 그것으로 이어요(띠도 끝) · @returns 이어 준 옛 이름 | '' */
+    const received = (result) => {
+        const back = retired?.retired.mart && result.geulkku.includes(retired.retired.mart) ? retired.retired.mart : '';
+        const first = back || result.geulkku[0];
+        if (!first) return '';
+        if (back) { const s2 = store(); s2.retiredFrom = ''; s2.retiredOff = false; saveSettings(); }
+        $('[data-lc-paste] textarea').value = '';
+        showPaste(false);
+        state.shape = first; state.category = 'mine'; state.picking = false; state.more = true;
+        drawMore(); drawShapes(); drawColors(); draw();
+        return back ? retired.retired.name : '';
+    };
+    const tellTaken = (head, lines, back) => {
+        toastr.success(back ? `「${back}」 새 판으로 이어서 써요` : head, '내 글꾸', { timeOut: 4000 });
+        if (lines.length) toastr.warning(lines.join(' · '), '덜 받은 것', { timeOut: 8000 });
+    };
     const openMart = async (text) => {
         // 1.1.0 창 모듈을 못 받으면(연결 끊김 · 새 판 올라온 뒤 옛 조각) 누른 것이 조용히 끝났어요 — 설정 창 쪽처럼 알려요
         let openMartImport;
         try { ({ openMartImport } = await import('./mart-import-ui.js')); }
         catch (error) { toastr.error(`마트 창을 열지 못했어요 — ${error?.message || error}`, '마트에서 가져오기'); return; }
-        openMartImport({ kind: 'geulkku', text, apply: (fn) => { fn(getSettings()); saveSettings(); }, done: (result) => {
-            const first = result.geulkku[0];
-            if (!first) return;
-            $('[data-lc-paste] textarea').value = '';
-            showPaste(false);
-            state.shape = first; state.category = 'mine'; state.picking = false;
-            drawShapes(); drawColors(); draw();
-        } });
+        openMartImport({ kind: 'geulkku', text, apply, done: (result) => { const back = received(result); if (result.geulkku.length) tellTaken(`글꾸 ${result.geulkku.length}개를 「내 글꾸」에 받았어요`, [], back); } });
+    };
+    /** 붙여 넣기 칸 안 결과 글(받지 못한 까닭 · 확인하는 중) */
+    const pasteMsg = (head = '', bad = false, lines = []) => {
+        const box = $('[data-lc-paste-msg]');
+        box.hidden = !head;
+        box.classList.toggle('is-bad', bad);
+        box.innerHTML = head ? `<b>${esc(head)}</b>${lines.length ? `<ul>${lines.map(line => `<li>${esc(line)}</li>`).join('')}</ul>` : ''}` : '';
+    };
+    const takeHere = async (raw) => {
+        let takeMart;
+        try { ({ takeMart } = await import('./mart-import-ui.js')); }
+        catch (error) { console.warn('[Blue Lemonade] 글꾸 받기', error); pasteMsg('받는 기능을 불러오지 못했어요 — 연결을 확인하고 다시 눌러요', true); return; }
+        const button = $('[data-lc="paste-save"]');
+        button.disabled = true;
+        try {
+            const { head, lines, result } = await takeMart(raw, { apply, progress: line => pasteMsg(line) });
+            if (!dialog.isConnected) return;
+            if (result?.geulkku.length) { tellTaken(head, lines, received(result)); return; }
+            if (result?.frames.length) { $('[data-lc-paste] textarea').value = ''; pasteMsg(`${head} — 설정 › 장식 액자 보관함에서 써요`, false, lines); return; }
+            pasteMsg(head, true, lines);
+        } finally { button.disabled = false; }
     };
     const showPaste = (on) => {
+        if (on) handoffReset();
         $('[data-lc-paste]').hidden = !on;
         $('[data-lc-stage]').hidden = on;
         $('.bl-lc-foot').hidden = on;
+        pasteMsg('');
         if (on) $('[data-lc-paste] textarea').focus();
     };
 
-    // 길게 누르기: 프리셋 칩 = 즐겨찾기 별, 내 글꾸 칩 = 지우기 준비
+    // 길게 누르기: 모든 칩 = 즐겨찾기 별(1.2.0 내 글꾸도 — 전엔 내 글꾸만 「지울 준비」라 같은 손길이 칩마다 달랐어요)
     let hold = 0, held = false;
     $('[data-lc-shapes]').addEventListener('pointerdown', (event) => {
         const chip = event.target.closest('[data-shape]');
@@ -734,18 +974,26 @@ export async function openLogSheet(model) {
         clearTimeout(hold);
         if (!chip) return;
         hold = setTimeout(() => {
-            held = true;
             const id = chip.dataset.shape, s2 = store();
-            if (PRESETS.some(p => p.id === id)) {
-                s2.fav = s2.fav.includes(id) ? s2.fav.filter(x => x !== id) : [...s2.fav, id];
-                saveSettings();
-                toastr.info(s2.fav.includes(id) ? '즐겨찾기에 넣었어요' : '즐겨찾기에서 뺐어요', '', { timeOut: 1200 });
-            } else state.armed = state.armed === id ? null : id;
+            if (!PRESETS.some(p => p.id === id) && !s2.custom.some(c => c.id === id)) return;   // 추천 판은 즐겨찾기가 없어요 — 누름을 먹지 않고 평소처럼 골라요
+            held = true;
+            s2.fav = s2.fav.includes(id) ? s2.fav.filter(x => x !== id) : [...s2.fav, id];
+            saveSettings();
+            toastr.info(s2.fav.includes(id) ? '즐겨찾기에 넣었어요 — 그 분류 맨 앞에 와요' : '즐겨찾기에서 뺐어요', '', { timeOut: 1600 });
             drawShapes();
         }, HOLD_MS);
     });
     for (const type of ['pointerup', 'pointercancel', 'pointerleave']) $('[data-lc-shapes]').addEventListener(type, () => clearTimeout(hold));
     $('[data-lc-shapes]').addEventListener('contextmenu', event => event.preventDefault());
+    // 1.2.0 PC: 옆으로 넘기는 칩 줄(분류 · 틀 · 색 · 간편 칩) 위에서는 Shift 없이 휠로도 옆으로 넘어가요 — 줄 끝에 닿으면 평소처럼 창이 위아래로 굴러요
+    dialog.addEventListener('wheel', (event) => {
+        if (event.shiftKey || event.ctrlKey || !event.deltaY || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+        const row = event.target.closest?.('.bl-chip-row, [data-lc-shapes], [data-lc-cats]');
+        if (!row || row.scrollWidth <= row.clientWidth + 1) return;
+        const before = row.scrollLeft;
+        row.scrollLeft += event.deltaY;
+        if (row.scrollLeft !== before) event.preventDefault();
+    }, { passive: false });
 
     dialog.addEventListener('click', async (event) => {
         const target = event.target.closest('button');
@@ -777,34 +1025,23 @@ export async function openLogSheet(model) {
             if (next !== live.set) { live.set = next; saveSettings(); draw(); }
             return;
         }
-        if (target.dataset.lcDel) {   // 내 글꾸 칩 옆 ✕: 처음엔 지울 준비 · 준비된 것은 지우기
-            const id = target.dataset.lcDel;
-            if (state.armed === id) {
-                const s2 = store();
-                s2.custom = s2.custom.filter(c => c.id !== id);
-                if (state.shape === id) state.shape = 'card';
-                state.armed = null;
-                saveSettings();
-                toastr.info('내 글꾸를 지웠어요', '', { timeOut: 1200 });
-                drawShapes(); drawColors(); draw();
-            } else { state.armed = id; drawShapes(); }
+        if (target.dataset.lcPv) { state.pickOpen = state.pickOpen === target.dataset.lcPv ? null : target.dataset.lcPv; drawShapes(); return; }   // 1.1.8 추천 묶음 옆 꺾쇠: 판 칩 펴기 · 접기
+        if (target.dataset.lcPvar) {   // 1.1.8 판 고르기 — 고른 판을 기억하고(logCopy.pickVar) 그 판으로 그려요 · 판 칩은 접어요
+            const id = target.dataset.lcPvar;
+            if (!pk.mod?.choosePick(store, id)) return;
+            state.shape = id; state.picking = false; state.pickOpen = null; state.category = catOf(id);
+            saveSettings();
+            drawShapes(); drawColors(); draw();
+            requestAnimationFrame(() => $(`[data-shape="${CSS.escape(id)}"]`)?.focus({ preventScroll: true }));
             return;
         }
+        if (target.dataset.lcDel) { dropMine(target.dataset.lcDel); return; }   // 1.2.0 내 글꾸 칩 옆 ✕: 바로 지우고 알림의 ↶ 로 되돌려요(전엔 두 번 눌러 지우고 되돌릴 수 없었어요)
         if (target.dataset.shape) {
             if (held) { held = false; return; }
             const id = target.dataset.shape;
-            if (state.armed === id) {
-                const s2 = store();
-                s2.custom = s2.custom.filter(c => c.id !== id);
-                if (state.shape === id) state.shape = 'card';
-                state.armed = null;
-                saveSettings();
-            } else {
-                state.armed = null;
-                state.shape = id;
-                state.picking = false;
-                state.category = categoryOf(id);
-            }
+            state.shape = id;
+            state.picking = false;
+            state.category = catOf(id);
             drawShapes(); drawColors(); draw();
             return;
         }
@@ -834,17 +1071,19 @@ export async function openLogSheet(model) {
             case 'ink-save': saveInks(); break;
             case 'auto': { const mine = custom(); if (mine) { mine.slot = 'auto'; state.picking = false; saveSettings(); draw(); } break; }   // 'auto' = 고르지 않고 guessSlot 으로
             case 'paste': showPaste(true); break;
+            case 'take': if (store().custom.length) { state.more = true; state.category = 'mine'; drawMore(); drawShapes(); drawColors(); } else showPaste(true); break;   // 1.1.8 접힌 줄의 「내 글꾸」
+            case 'retired-x': { const s2 = store(); s2.retiredOff = true; saveSettings(); drawRetired(); $('[data-lc-shapes] [aria-checked="true"]')?.focus({ preventScroll: true }); break; }   // 1.1.8 띠 닫기(다음에 열어도 닫힌 채 · 옛 id 이어짐은 그대로)
             case 'paste-cancel': showPaste(false); break;
             case 'mart': openMart(''); break;
             case 'paste-save': {
                 const raw = $('[data-lc-paste] textarea').value.trim();
-                if (!raw) return;
-                if (/^\{[\s\S]*"bl-mart"/.test(raw)) { openMart(raw); return; }   // 1.0.1 마트에서 복사한 글(JSON)은 마트 가져오기로
-                const html = sanitizeHtml(raw);
-                if (!html.trim()) { toastr.warning('글꾸로 쓸 HTML 이 없어요.', '', { timeOut: 2000 }); return; }
-                if (html.length > CUSTOM_BYTES) { toastr.warning(`글꾸가 너무 커요 (${Math.round(CUSTOM_BYTES / 1000)}KB 까지)`, '', { timeOut: 2500 }); return; }
+                if (!raw) { pasteMsg('붙여 넣은 글이 없어요 — 글꾸 마트에서 「테마용 복사」를 누른 뒤 여기에 붙여 넣어요', true); return; }
+                if (/^\{/.test(raw)) { await takeHere(raw); return; }   // 1.0.1 마트에서 복사한 글(JSON) · 1.1.8 이 칸에서 바로 받아요(덜 복사돼 끊긴 글도 같은 길 — 「복사가 덜 된 것 같아요」)
                 const s2 = store();
-                if (s2.custom.length >= CUSTOM_MAX) { toastr.warning(`내 글꾸는 ${CUSTOM_MAX}개까지예요 — 칩 옆 ✕ 나 길게 눌러 지워요`, '', { timeOut: 2500 }); return; }
+                if (s2.custom.length >= CUSTOM_MAX) { pasteMsg(`내 글꾸가 꽉 찼어요(지금 ${s2.custom.length}/${CUSTOM_MAX}) — 「내 글꾸」에서 칩 옆 ✕ 로 하나 지우고 다시 받아요`, true); return; }   // 1.1.8 소독 전에(헛일 없이)
+                const html = sanitizeHtml(raw);
+                if (!html.trim()) { pasteMsg('글꾸로 쓸 HTML 이 없어요 — 글꾸 마트의 「테마용 복사」나 글꾸 HTML 을 붙여 넣어요', true); return; }
+                if (html.length > CUSTOM_BYTES) { pasteMsg(`글꾸가 너무 커요(${Math.round(CUSTOM_BYTES / 1000)}KB 까지)`, true); return; }
                 const used = new Set(s2.custom.map(c => c.name));
                 let n = s2.custom.length + 1;
                 while (used.has(`내 글꾸 ${n}`)) n++;
@@ -854,28 +1093,39 @@ export async function openLogSheet(model) {
                 $('[data-lc-paste] textarea').value = '';
                 state.shape = item.id;
                 state.picking = true;
+                state.category = 'mine'; state.more = true;
                 showPaste(false);
-                drawShapes(); drawColors(); draw();
+                drawMore(); drawShapes(); drawColors(); draw();
                 break;
             }
+            // 1.2.0 복사해도 창은 열린 채(다시 복사 · 「글만」도 바로 · 채팅 글을 다시 고르지 않게) — 붙일 곳은 바닥 줄 안내에 남아요. 클립보드가 막히면 「코드 보기」 칸을 열어 직접 복사해요
             case 'md': {
-                const fromPreview = frame.contentDocument ? previewModel(frame.contentDocument) : null;   // 미리보기에서 고친 글 · 숨긴 글까지
-                const ok = await writeClipboard(null, logMarkdown(fromPreview ?? view().model, { names: !store().namesOff }));
-                toast(ok, '글만 마크다운으로 복사했어요');
-                if (ok) { remember(); dialog.close(); }
+                const text = mdText();
+                const ok = await writeClipboard(null, text);
+                if (!dialog.isConnected) return;
+                if (ok) { remember(); tell('md'); } else openCode(text, { why: 'fail', plain: true });
                 break;
             }
             case 'copy': {
-                const shown = result();
-                if (!shown) return;
-                // 1.0.1 글꾸 움직임 · 누르면 반응: 붙인 곳엔 테마 CSS 가 없어서 그 글꾸가 쓰는 키프레임만 맨 앞 <style> 로
-                // 1.1.2 인라인 style 의 그림 주소(url)는 같은 <style> 의 클래스 규칙으로 — 커뮤니티 사이트가 인라인 url(&quot; 를 지워 그림이 사라졌어요(log-copy-lift.js)
-                const lifted = liftForCopy(shown, motionStyleFor(shown));   // 1.1.2 위아래 코멘트 빈칸 · 코멘트 글줄 규칙까지
-                const html = lifted.full;   // <style> 은 감싸는 요소 안 첫 자식
-                // 1.0.1 서식(text/html)은 한 줄 그대로, 글(text/plain — HTML 칸 · 코드 편집기에 붙는 쪽)은 사람이 고치기 쉬운 꼴(줄 나눔 · 주석, 모양은 같아요 — log-copy-pretty.js) · 맨 앞 <style> 은 안내 주석 바로 아래
-                const ok = await writeClipboard(html, withCommentSlots(prettyLogHtml(insertHead(copyBody(result({ marks: true })).html, lifted.head), { label: PRESETS.find(p => p.id === state.shape)?.label ?? custom()?.name ?? '', head: '' })));
-                toast(ok, 'HTML 로 복사했어요 — 글 쓰기 창에 붙이면 모양 그대로, HTML 칸에 붙이면 주석 달린 고치기 쉬운 코드예요');
-                if (ok) { remember(); dialog.close(); }
+                const pack = copyPack();
+                if (!pack) return;
+                const { html, code } = pack;
+                const big = sizeNote(Math.max(byteSize(html), byteSize(code)), model.messages.length);   // 1.1.8 게시글 하나 한계(약 240KB) — 복사는 그대로 하고 크기를 알려요
+                if (big) toastr.warning(big, '로그 복사', { timeOut: 8000 });
+                const ok = await writeClipboard(html, code);
+                if (!dialog.isConnected) return;
+                if (ok) { remember(); tell('html'); } else openCode(code, { why: 'fail' });
+                break;
+            }
+            case 'code': { const pack = copyPack(); if (!pack) break; const big = sizeNote(byteSize(pack.code), model.messages.length); if (big) toastr.warning(big, '로그 복사', { timeOut: 8000 }); openCode(pack.code); break; }   // 바닥 줄 「코드」(폰) · 복사 뒤 안내의 「코드 보기」
+            case 'code-back': showCode(dialog, false); tell('idle'); break;
+            case 'code-all': selectAll($('[data-lc-code-text]')); break;
+            case 'code-copy': {
+                const kind = codeBox().dataset.kind === 'md' ? 'md' : 'html';
+                const ok = await copyArea($('[data-lc-code-text]'));
+                if (!dialog.isConnected) return;
+                if (ok) { remember(); showCode(dialog, false); tell(kind); }
+                else toastr.warning('이 브라우저가 복사를 막았어요 — 글칸을 길게 눌러 「전부 선택 › 복사」해요', '로그 복사', { timeOut: 6000 });
                 break;
             }
             case 'spoiler': {
@@ -883,7 +1133,8 @@ export async function openLogSheet(model) {
                 if (!doc || !range) break;
                 const inside = spoilerAt(range);
                 if (inside) unwrapSpoiler(inside);
-                else wrapSpoiler(doc, range, own() ?? colorsOf(paletteFor(state.shape, state.palette)), ui);
+                else if (!wrapSpoiler(doc, range, own() ?? colorsOf(paletteFor(state.shape, state.palette)), ui)) toastr.info('여기는 숨길 수 없어요 — 한 메시지 안의 글을 골라요', '로그 복사', { timeOut: 3000 });
+                if (eb) syncProps();   // 소품 칸 안에서 숨긴 글도 소품 고친 글로(다시 그리면 사라졌어요)
                 ensureSpoilerStyle(doc);
                 doc.getSelection()?.removeAllRanges();
                 state.spoilerRange = null;
@@ -894,14 +1145,27 @@ export async function openLogSheet(model) {
             }
             case 'hide': { const ct = tools(); ct.redact = !ct.redact; saveSettings(); drawTools(); draw(); break; }
             case 'fields': { const box = $('[data-lc-fields]'); box.hidden = !box.hidden; state.folds.fields = !box.hidden; drawShows(); if (!box.hidden) box.querySelector('input:not(:disabled)')?.focus(); break; }
-            case 'undo': travel(-1); break;
-            case 'redo': travel(1); break;
+            case 'undo': travel(-1); drawHist(); break;   // 글 고치기 중에도 같은 한 줄(고친 차례 거꾸로 하나씩)
+            case 'redo': travel(1); drawHist(); break;
+            case 'edit': {   // 11-12 「글 고치기」 켬 · 끔 — 켜면 문서 전체 편집을 끄고 점선 칸만 · 끄면 예전처럼 문서 편집
+                state.ed.on = !state.ed.on;
+                const doc = frame.contentDocument;
+                if (!eb) { if (doc) needEd().then(m => { if (m && frame.contentDocument === doc && !eb) { armEdit(doc); drawHist(); } }); drawEdit(); break; }
+                if (doc) {
+                    doc.getSelection()?.removeAllRanges();
+                    if (state.ed.on) editOn(doc);
+                    else { eb.setOn(false); doc.designMode = 'on'; try { doc.execCommand('styleWithCSS', false, true); } catch { /* 옛 브라우저 */ } }
+                }
+                drawEdit(); drawHist();
+                break;
+            }
             case 'download': {
                 const shown = result();
                 if (!shown) return;
                 const name = PRESETS.find(p => p.id === state.shape)?.label ?? custom()?.name ?? '로그';
                 // 1.0.7 「⬇ 내려받기」(글꾸 마트 시식 창과 같은 꼴) — 복사한 HTML 을 따로 열어도 같은 모양
-                const doc = `<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${esc(fieldOf('title') || name)}</title>\n</head>\n<body style="margin:0;padding:16px;background:${esc(pageBg())};-webkit-text-size-adjust:100%">\n${liftForCopy(shown, motionStyleFor(shown)).full}\n</body>\n</html>\n`;
+                const heading = store().titleOff ? '' : view().rewriteFields({ title: fieldOf('title') }).title;   // 1.1.8 이름 숨김 · 바꾸기를 거친 제목(전엔 채팅 제목 그대로라 이름이 문서 제목으로 샜어요) · 제목을 껐으면 틀 이름
+                const doc = `<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${esc(String(heading ?? '').trim() || name)}</title>\n</head>\n<body style="margin:0;padding:16px;background:${esc(pageBg())};-webkit-text-size-adjust:100%">\n${liftForCopy(shown, motionStyleFor(shown)).full}\n</body>\n</html>\n`;
                 const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([doc], { type: 'text/html' })), download: `로그-${String(name).replace(/[\\/:*?"<>|#%]+/g, '').replace(/\s+/g, '-')}.html`, hidden: true });
                 document.body.append(a); a.click();
                 setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
@@ -952,9 +1216,13 @@ export async function openLogSheet(model) {
         else if (r.bottom > bottom) box.scrollTop += Math.min(r.bottom - bottom, r.top - top);   // 보이는 바닥 아래로 밀렸으면 올려요(미리보기 밑으로는 안 넘게)
     };
     dialog.addEventListener('focusout', () => setTimeout(() => { if (!dialog.contains(dialog.ownerDocument.activeElement)) dialog.classList.remove('bl-lc-typing'); }, 0));
-    dialog.addEventListener('focusin', (event) => { const el = event.target; if (!el?.matches?.('input:not([type=checkbox]):not([type=radio]):not([type=range]), textarea')) return; setTimeout(() => unhide(el), 300); });
+    const TYPING = 'input:not([type=checkbox]):not([type=radio]):not([type=range]), textarea:not([readonly])';   // 자판이 올라오는 칸(「코드 보기」 글칸은 읽기 전용)
+    dialog.addEventListener('focusin', (event) => { const el = event.target; if (!el?.matches?.(TYPING)) return; setTimeout(() => unhide(el), 300); });
     const onVv = () => { const el = dialog.ownerDocument.activeElement; if (dialog.contains(el)) setTimeout(() => unhide(el), 100); };
     globalThis.visualViewport?.addEventListener('resize', onVv);
+    // 1.2.0 칸을 누른 뒤 자판이 올라오는데 브라우저가 칸을 끌어오지 않으면 칸이 바닥 단추 줄 밑에 남았어요 — 창 배치가 다 줄어들기 전에 잰 「보이는 바닥」이 옛 값일 수 있어요. 스크롤 칸 높이가 실제로 바뀐 뒤에 한 번 더 재요
+    const boxWatch = globalThis.ResizeObserver ? new ResizeObserver(() => { const el = dialog.ownerDocument.activeElement; if (el && dialog.contains(el) && el.matches(TYPING)) unhide(el); }) : null;
+    boxWatch?.observe($('.bl-lc-scroll'));
     dialog.addEventListener('change', (event) => { tuneInput(event, true); });
     dialog.addEventListener('toggle', (event) => { const g = event.target?.dataset?.ltG; if (!g) return; const was = fine.open.has(g); if (event.target.open) fine.open.add(g); else fine.open.delete(g); if (was !== event.target.open) drawEasy(); }, true);
     dialog.addEventListener('input', (event) => {
@@ -981,8 +1249,9 @@ export async function openLogSheet(model) {
         if (event.key === 'Enter' && event.target.matches?.('[data-lc-name-input]')) { event.preventDefault(); $('[data-lc="name-add"]').click(); }
     });
     // 1.1.0: 닫을 때 남은 대기(규칙 · 그림 주소 · 글자색 · 되돌리기 묶음 · 길게 누르기)를 모두 걷어요 — 닫힌 직후 떨어진 창을 다시 그리지 않게
-    dialog.addEventListener('close', () => { globalThis.visualViewport?.removeEventListener('resize', onVv); clearTimeout(ruleTimer); clearTimeout(imageTimer); clearTimeout(inkTimer); clearTimeout(fine.timer); clearTimeout(hist.timer); clearTimeout(hold); hist.timer = 0; if (open === dialog) open = null; dialog.remove(); }, { once: true });
+    dialog.addEventListener('close', () => { selBar.destroy(); boxWatch?.disconnect(); globalThis.visualViewport?.removeEventListener('resize', onVv); clearTimeout(ruleTimer); clearTimeout(imageTimer); clearTimeout(inkTimer); clearTimeout(fine.timer); clearTimeout(hist.timer); clearTimeout(hold); hist.timer = 0; if (open === dialog) open = null; dialog.remove(); }, { once: true });
     open = dialog;
+    guide(dialog, 'idle');
     drawStage();
     drawMore();
     drawShapes();
@@ -1018,11 +1287,6 @@ export function pinColors(body, win) {
         if (color !== null) el.style.color = color;
         if (fill !== null) el.style.webkitTextFillColor = /^(transparent|rgba\(0, 0, 0, 0\))$/.test(fill || '') ? fill : el.style.color;
     }
-}
-
-function toast(ok, message) {
-    if (ok) toastr.success(message, '', { timeOut: 1600 });
-    else toastr.error('클립보드에 넣지 못했어요. 다시 눌러 주세요.', '로그 복사');
 }
 
 /** 클립보드: text/html(있으면) + text/plain. 안전한 주소가 아니어서 Clipboard API 가 없으면 copy 사건으로 */
@@ -1086,8 +1350,16 @@ const STYLE = `
 .bl-lc-ink-sep { flex:none; width:1px; height:18px; background:var(--salty-line); }
 .bl-lc-chip[aria-checked="true"] > i:first-child { color:var(--salty-accent-ink, var(--salty-accent)); }
 .bl-lc-chip .bl-lc-fav { font-size:10px; color:var(--salty-accent-ink, var(--salty-accent)); }
-.bl-lc-chip.is-armed { border-color:var(--salty-danger, currentColor); color:var(--salty-danger, inherit); }
-.bl-lc-chip.is-armed > i { color:inherit; }
+.bl-lc-add.is-full { opacity:.6; }
+.bl-lc-mine { display:flex; flex-wrap:wrap; gap:2px 10px; margin:-2px 16px 0; color:var(--salty-muted); font-size:12px; line-height:1.5; }
+.bl-lc-mine[hidden] { display:none; }
+.bl-lc-mine > b { font-weight:650; color:var(--salty-text); }
+.bl-lc-mine.is-full > b { color:var(--salty-danger, var(--salty-text)); }
+.bl-lc-chip.bl-lc-pv { justify-content:center; min-width:var(--bl-ui-chip, 34px); margin-left:-6px; padding:0 8px; }
+.bl-lc-chev { display:inline-block; flex:none; width:14px; height:14px; background:currentColor; -webkit-mask:var(--bl-ui-glyph-chev, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 5.5L7 9L11.5 5.5'/%3E%3C/svg%3E")) center / contain no-repeat; mask:var(--bl-ui-glyph-chev, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 5.5L7 9L11.5 5.5'/%3E%3C/svg%3E")) center / contain no-repeat; transition:transform .15s ease; }
+.bl-lc-pv[aria-expanded="true"] > .bl-lc-chev { transform:rotate(180deg); }
+.bl-lc-chip.bl-lc-pvi { min-height:30px; padding:0 9px; font-size:12px; border-style:dashed; }
+.bl-lc-chip.bl-lc-pvi[aria-pressed="true"] { border-style:solid; }
 .bl-lc-chip.bl-lc-x { justify-content:center; min-width:var(--bl-ui-chip, 34px); margin-left:-6px; padding:0 8px; }
 .bl-lc-chip > .bl-lc-mart { font-size:11px; line-height:1; }
 .bl-lc-chip:focus-visible, .bl-lc .salty-pal:focus-visible { outline:1px solid var(--salty-accent); outline-offset:1px; }
@@ -1134,6 +1406,9 @@ const STYLE = `
 .bl-lc-bar > .bl-lc-note { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
 .bl-lc-bar > .bl-lc-note > i { font-size:11px; }
 .bl-lc .bl-lc-bar .bl-lc-icon:disabled { opacity:.4; }
+.bl-lc .bl-lc-bar .bl-lc-edit { width:auto; gap:6px; padding:0 10px; font-size:13px; }   /* 11-12 「글 고치기」(공용 편집 모듈 — 점선 칸 · 소품 전 · 후) — PC 는 글자까지 · 폰은 아이콘만 */
+.bl-lc .bl-lc-bar .bl-lc-edit[hidden] { display:none; }
+.bl-lc .bl-lc-bar .bl-lc-edit[aria-pressed="true"] { color:var(--salty-accent-ink, var(--salty-accent)); background:var(--salty-accent-10, var(--salty-raised)); }
 .bl-lc-names[hidden], .bl-lc-words[hidden] { display:none; }
 .bl-lc-names, .bl-lc-words { display:grid; gap:8px; margin:0 16px; }
 .bl-lc-name-list { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; }
@@ -1169,6 +1444,18 @@ const STYLE = `
 .bl-lc-foot .bl-tool-primary { border-color:var(--salty-accent); background:var(--salty-accent); color:var(--salty-on-accent, #fff); font-weight:650; padding:0 16px; border-radius:12px; }   /* 화면당 하나 큰 주요 단추 = 포인트 면 (볼록 · 그림자 없음) · 1.0.7 크기표 큰 주요 단추(여백 16 · 모서리 12 — 새 판 확인 창 · 입력 창 큰 단추와 같은 모양) */
 @media (min-width: 769px) and (pointer: fine) { .bl-lc-chip { min-height:32px; } .bl-lc-foot .salty-btn { min-height:44px; } }
 @media (pointer: coarse) { .bl-lc .salty-seg.bl-lc-cats > button { position:relative; } .bl-lc-chip::before, .bl-lc-mode button::before, .bl-lc .salty-seg.bl-lc-cats > button::before { content:''; position:absolute; left:50%; top:50%; width:max(100%, 44px); height:max(100%, 44px); transform:translate(-50%, -50%); } .bl-lc-mode button { position:relative; } }   /* 누르는 칸 44 (철칙 §1 투명 ::before) */
+/* 1.1.8 띠(뺀 옛 글꾸 안내 · 빈 「내 글꾸」) · 붙여 넣기 칸 안내 · 결과 글 */
+.bl-lc-band[hidden], .bl-lc-msg[hidden] { display:none; }
+.bl-lc-band { display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; margin:0 16px; padding:8px 6px 8px 12px; border:1px solid var(--salty-accent); border-radius:12px; background:var(--salty-accent-10, var(--salty-raised)); color:var(--salty-text); font-size:13px; line-height:1.5; }
+.bl-lc-band > span:first-child { flex:1 1 220px; min-width:0; }
+.bl-lc-band b { font-weight:650; }
+.bl-lc-band-go { display:flex; flex-wrap:wrap; gap:6px; }
+.bl-lc-band .salty-btn, .bl-lc-paste a.salty-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:34px; padding:0 10px; color:var(--salty-text); font-size:13px; text-decoration:none; }
+.bl-lc-band.bl-lc-empty { border-style:dashed; border-color:var(--salty-line); background:transparent; color:var(--salty-muted); }
+.bl-lc-paste > .bl-lc-note { margin:0; line-height:1.6; }
+.bl-lc-msg { padding:8px 12px; border-radius:8px; background:var(--salty-raised); font-size:13px; line-height:1.6; overflow-wrap:anywhere; }
+.bl-lc-msg.is-bad { color:var(--salty-danger, var(--salty-text)); }
+.bl-lc-msg ul { margin:4px 0 0; padding-left:18px; color:var(--salty-muted); }
 /* 1.1.6 폰 화면(11-12 사용자가 고른 시안 (나) 「미리보기 위」) — 넓은 창(PC)에서는 감싸는 칸이 없는 듯(display:contents) · 폰 부품은 숨겨 예전 그대로예요 */
 .bl-lc-tl, .bl-lc-cr, .bl-lc-folds, .bl-lc-fd, .bl-lc-stk { display:contents; }
 .bl-lc .bl-lc-hd-mode, .bl-lc .bl-lc-tl-all, .bl-lc-cr-more, .bl-lc-fd-h, .bl-lc-sw, .bl-lc-hint, .bl-lc-sep, .bl-lc .bl-lc-ph, .bl-lc-chip.bl-lc-ghost { display:none; }
@@ -1185,7 +1472,8 @@ const STYLE = `
   .bl-lc-colors .bl-lc-pals { padding-left:16px; }
   /* 차례: 분류 → 틀 → 미리보기(붙박이) → 색 · 조절 → 「로그 꾸밈」 갈래 → 숨기기 안내 */
   .bl-lc-scroll { gap:8px; padding:0 0 14px; }
-  .bl-lc-tl { order:1; } .bl-lc-cr { order:2; } .bl-lc-gallery { order:3; } .bl-lc-pick { order:4; } .bl-lc-stk { order:5; } .bl-lc-paste { order:5; }
+  .bl-lc-tl { order:1; } .bl-lc-cr { order:2; } .bl-lc-mine { order:2; } .bl-lc-gallery { order:3; } .bl-lc-pick { order:4; } .bl-lc-stk { order:5; } .bl-lc-paste { order:5; }
+  .bl-lc-band.bl-lc-empty { order:2; } .bl-lc-band[data-lc-retired] { margin-top:8px; }   /* 1.1.8 빈 안내는 틀 줄 바로 아래 · 옛 글꾸 띠는 맨 위 */
   .bl-lc-colors { order:6; } .bl-lc-easy { order:7; } .bl-lc-inks { order:8; } .bl-lc-sep { order:9; } .bl-lc-folds { order:10; } .bl-lc-hint { order:11; } .bl-lc-scroll > .bl-lc-more { order:12; }
   .bl-lc-tools { display:none; }
   .bl-lc:not(.bl-lc-less) .bl-lc-scroll > .bl-lc-more { display:none; }
@@ -1224,6 +1512,8 @@ const STYLE = `
   .bl-lc .bl-lc-bar > .bl-lc-bar-name { display:block; flex:1; min-width:0; margin-left:6px; overflow:hidden; color:var(--salty-muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
   .bl-lc .bl-lc-bar .bl-lc-icon { display:grid; place-items:center; background:transparent; width:32px; min-width:32px; height:32px; min-height:32px; color:var(--salty-muted); font-size:13px; }
   .bl-lc .bl-lc-bar .bl-lc-icon:disabled { opacity:.35; }
+  .bl-lc .bl-lc-bar .bl-lc-edit { width:32px; padding:0; }
+  .bl-lc .bl-lc-bar .bl-lc-edit > span { display:none; }
   .bl-lc-stage { margin:0; border-top:0; border-radius:0 0 12px 12px; }
   .bl-lc-stage iframe { height:clamp(150px, 30dvh, 270px); }
   .bl-lc.bl-lc-big .bl-lc-stage iframe { height:52dvh; }
@@ -1280,6 +1570,7 @@ const STYLE = `
   .bl-lc-fd > .bl-lc-fields { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
   .bl-lc-fd .bl-lc-field { display:grid; gap:3px; font-size:12px; }
   .bl-lc-fd .bl-lc-field:first-child { grid-column:1 / -1; }
+  @media (max-width: 359px) { .bl-lc-fd .bl-lc-field:nth-child(2) { grid-column:1 / -1; } }   /* 1.2.0 폭 320: 반 칸에서는 날짜(「2026년 11월 12일」)가 잘려요 — 날짜 칸도 한 줄을 다 써요 */
   /* 숨기기 안내 한 줄 */
   .bl-lc-hint { display:flex; align-items:center; gap:8px; min-height:44px; margin:0 16px; padding:4px 6px 4px 12px; border:1px dashed var(--salty-line); border-radius:12px; color:var(--salty-muted); font-size:12px; line-height:1.4; }
   .bl-lc-hint > span { flex:1; min-width:0; }
@@ -1301,6 +1592,6 @@ function ensureStyle() {
     if (document.getElementById('bl-lc-style')) return;
     const style = document.createElement('style');
     style.id = 'bl-lc-style';
-    style.textContent = STYLE;
+    style.textContent = STYLE + HANDOFF_STYLE;
     document.head.append(style);
 }

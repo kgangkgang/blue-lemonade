@@ -1,4 +1,4 @@
-// 생성물 — 글꾸 마트 mart/lib/motion/motion.js 사본(마트 97a96f7a · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
+// 생성물 — 글꾸 마트 mart/lib/motion/motion.js 사본(마트 1466d38b · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
 if ((globalThis.process?.env || {}).GM_BLOCK) throw new Error("GM_BLOCK — 세기 고리를 막은 판(고리가 있을 때 ↔ 없을 때 대조용)");
 const F = { s: 0.5, l: 1.4 };
 const G = { s: 0.35, l: 1.5 };

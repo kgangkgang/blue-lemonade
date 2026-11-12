@@ -101,23 +101,36 @@ export function texRows(tex, texture, mode = 'dark', row = note) {
 const easyRow = (label, chips, small = '') => `<div class="bl-lc-easy-row" role="group" aria-label="${esc(label)}"><span class="bl-lc-easy-h">${esc(label)}${small ? `<small>${esc(small)}</small>` : ''}</span><div class="bl-lc-easy-chips">${chips}</div></div>`;
 /**
  * 간편 화면에 더하는 줄 — 색(깡통 · 깡캐 · 소품도 캐릭터 색) · 바탕 질감(고르면 얹는 곳 · 진하기) · 바꾼 것 요약 · 더 조절하기.
- * @returns {{ color: string, texture: string, tail: string, total: number }}
+ * @returns {{ color: string, texture: string, tail: string, total: number, motion: object|null }} motion: 이 틀이 받는 움직임 세기(세밀 「움직임」 갈래와 같은 능력표 — 간편 움직임 칩도 이걸로 흐려요)
  */
-export function easyExtra(set, frame, mode = 'dark', caps = null) {
+export function easyExtra(set, frame, mode = 'dark', caps = null, { castKnown = true } = {}) {
     const f = fineOf(set, probeOf(frame), frame.key, mode, caps), c = f.cast || {};
     const who = (id, label) => { const v = c[id], hex = v && v !== 'orig' ? v : ''; return `<button type="button" class="bl-lc-chip bl-lt-ink${hex ? '' : ' is-unset'}" data-lt-color="cast|${id}" data-value="${esc(hex)}" aria-pressed="${!!hex}"${hex ? ` style="--ink:${esc(hex)}"` : ''}><i aria-hidden="true"></i><span>${label}</span></button>`; };
     const orig = c.main === 'orig' && c.other === 'orig';
     const color = easyRow('색', chip(act('cast', 'all', null), '인물표 색', !f.cast) + chip(act('cast', 'all', 'orig'), '원래 색', orig) + who('main', '깡통') + who('other', '깡캐')
-        + (f.own ? `<i class="bl-lt-sep" aria-hidden="true"></i>${chip(act('cover', '', !f.cover), '소품도 캐릭터 색', f.cover)}` : ''), !f.cast || orig ? '' : '직접 색');
+        + (f.own ? `<i class="bl-lt-sep" aria-hidden="true"></i>${chip(act('cover', '', !f.cover), '소품도 캐릭터 색', f.cover, { off: !castKnown })}` : ''), !f.cast || orig ? (f.own && !castKnown ? COVER_WHY : '') : '직접 색');
     const texture = texRows(f.tex, f.texture, mode, (label, chips, why) => (why ? `${easyRow(label, chips)}<p class="bl-lt-note bl-lc-easy-note">${esc(why)}.</p>` : easyRow(label === '바탕 질감' ? '질감' : label, chips)));
     const words = f.words.slice(0, 5).join(' · ') + (f.words.length > 5 ? ' …' : '');
     const tail = (f.total ? `<div class="bl-lc-easy-sum"><span><b>바꾼 것 ${f.total}</b>${words ? ` · ${esc(words)}` : ''}</span><button type="button" class="bl-lt-undo" data-lt="${act('reset', 'all', null)}" aria-label="바꾼 것 전부 처음으로" title="전부 처음으로"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button></div>` : '')
         + '<button type="button" class="bl-lc-more" data-lc-view="fine"><b>더 조절하기</b><small>색 · 글 · 움직임 · 소품 · 모양</small></button>';
-    return { color, texture, tail, total: f.total };
+    return { color, texture, tail, total: f.total, motion: f.caps.motion || null };
 }
-function colorBody(f, mode) {
+/**
+ * 간편 「움직임」 칩 — 마트 간편 줄과 같은 규칙: 「중」은 늘 · 끔 · 약 · 강은 글 · 소품 중 하나라도 그 세기를 받을 때만(못 받는 세기는 흐리게).
+ *   11-12 사용자 「누르면 칩만 바뀌고 미리보기는 그대로」 — 심플 28틀 가운데 20틀은 약 · 중 · 강이 똑같이 그려졌어요(받은 세기만 마트 applyMotion 이 입혀요).
+ * @param {object|null} caps easyExtra().motion(아직 못 받았으면 null — 다 켜 둬요) @returns {{ can: (v: string) => boolean, note: string }}
+ */
+export function easyMotion(caps) {
+    if (!caps) return { can: () => true, note: '' };
+    const has = v => !!(caps.text?.[v] || caps.prop?.[v]);
+    const any = ['0', 's', 'l'].some(has), only = has('0') && !has('s') && !has('l');
+    return { can: v => v === 'm' || has(v), note: only ? '이 틀은 끔과 중만' : any ? '' : '이 틀은 세기를 못 바꿔요' };
+}
+/** 11-12 캐릭터 색을 모를 때(인물표 · 화면 대사색 · 고른 화자 색 없음) 「소품도 캐릭터 색」 까닭 — 그땐 소품이 늘 기본 색이라 눌러도 그대로였어요 */
+export const COVER_WHY = '캐릭터 색을 알 때만';
+function colorBody(f, mode, castKnown = true) {
     const inks = [...PAINT_ROLES.filter(r => !r.cap || !capWhy(f.caps, r.cap)), ...TUNE_ROLES].map(r => colorField('ink', r.role, r.label, f.inks[r.role])).join('');
-    return (f.own ? strip('소품도 캐릭터 색', chip(act('cover', '', !f.cover), f.cover ? '켬' : '끔', f.cover)) : '')
+    return (f.own ? strip('소품도 캐릭터 색', chip(act('cover', '', !f.cover), f.cover ? '켬' : '끔', f.cover, { off: !castKnown }), castKnown ? '' : COVER_WHY) : '')
         + `<div class="bl-lt-row" role="group" aria-label="낱낱 색">${head('낱낱 색', `${mode === 'light' ? '낮' : '밤'} 판에만 기억해요`)}<div class="bl-lt-chips">${inks}</div></div>`
         + shapeFields('color', f);
 }
@@ -127,11 +140,11 @@ function colorBody(f, mode) {
  * @param {object} set 조절 값 @param {{ html: string, key: string }} frame 등록 값
  * @param {{ mode?: 'light'|'dark', open?: Set<string>|string[], tab?: string }} [ui] open: 펼친 갈래 · tab: 「글」 갈래의 고른 칩
  */
-export function fineHtml(set, frame, { mode = 'dark', open = [], tab = 'text', caps = null } = {}) {
+export function fineHtml(set, frame, { mode = 'dark', open = [], tab = 'text', caps = null, castKnown = true } = {}) {
     const f = fineOf(set, probeOf(frame), frame.key, mode, caps), opened = new Set(open), level = Object.fromEntries(EASY_MOTION);
     const nowTab = TEXT_TABS.some(([id]) => id === tab) ? tab : 'text';
     const body = {
-        color: () => colorBody(f, mode),
+        color: () => colorBody(f, mode, castKnown),
         text: () => `<div class="bl-lt-chips bl-lt-tabs" role="tablist" aria-label="글 갈래">${TEXT_TABS.map(([id, label]) => `<button type="button" class="bl-lc-chip" role="tab" data-lt-tab="${id}" aria-selected="${id === nowTab}" aria-pressed="${id === nowTab}"><span>${esc(label)}</span></button>`).join('')}</div>${lookFields(nowTab, f)}`,
         motion: () => motionBody(f),
         prop: () => shapeFields('prop', f),

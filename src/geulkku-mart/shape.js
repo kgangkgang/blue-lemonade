@@ -1,4 +1,4 @@
-// 생성물 — 글꾸 마트 mart/shape.js 사본(마트 97a96f7a · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
+// 생성물 — 글꾸 마트 mart/shape.js 사본(마트 1466d38b · 주석만 뺐어요). 고치지 말고 tools/mart/geulkku-mart-copy.mjs 로 다시 떠요.
 const SHAPE_KEY = "bl-mart-shape-v1";
 const HEX = /^#[0-9a-f]{6}$/i;
 const SHAPE_FIELDS = Object.freeze([

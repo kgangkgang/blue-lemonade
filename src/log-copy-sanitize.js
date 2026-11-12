@@ -3,7 +3,8 @@
 //   javascript: · vbscript: · data:(그림 말고) 주소, style 의 expression() · behavior · -moz-binding · @import · 나쁜 url().
 // 미리보기용 표시(data-f · data-bl-slot · contenteditable)도 복사 결과에서는 걷는다.
 // 1.0.1 그림 부품: style 의 url('data:image/svg+xml,…') 은 svg 가 그림만일 때(log-copy-template.js safeSvgData) 남기고, 아니면 통째로 none.
-import { SVG_DATA_URL, safeSvgData } from './log-copy-template.js';
+//   1.1.8 큰따옴표 꼴 url("data:image/svg+xml,…")도 같은 검사로(글꾸 마트 형광펜 무늬 · 점검 1112 #3 — 전엔 140 → 88 로 지워졌어요).
+import { SVG_DATA_URL, SVG_DATA_URL_DQ, safeSvgData } from './log-copy-template.js';
 
 const DROP = 'script, iframe, frame, frameset, object, embed, applet, form, input, button, textarea, select, option, optgroup, datalist, keygen, meta, link, base, noscript, template, portal, param, audio, video, source, track, foreignObject, set, dialog';
 const URL_ATTRS = new Set(['href', 'src', 'xlink:href', 'action', 'background', 'poster', 'cite', 'longdesc', 'lowsrc', 'dynsrc', 'data', 'codebase', 'manifest', 'ping']);
@@ -25,9 +26,13 @@ export function safeUrl(value) {
 export function safeCss(text) {
     const keep = [];
     let out = String(text ?? '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\u0001/g, '')
-        .replace(SVG_DATA_URL, (all, data) => (safeSvgData(data) ? `\u0001${keep.push(all) - 1}\u0001` : 'none'));   // 그림 부품은 잠시 맡겨 두기
-    for (let i = 0; i < 3 && BAD_CSS.test(out); i++) out = out.replace(BAD_CSS, '');   // 걷은 뒤 다시 붙는 조각까지
-    BAD_CSS.lastIndex = 0;
+        .replace(SVG_DATA_URL, (all, data) => (safeSvgData(data) ? `\u0001${keep.push(all) - 1}\u0001` : 'none'))   // 그림 부품은 잠시 맡겨 두기
+        .replace(SVG_DATA_URL_DQ, (all, data) => (safeSvgData(data, { anyQuote: true }) ? `\u0001${keep.push(all) - 1}\u0001` : 'none'));   // 1.1.8 큰따옴표 꼴(마트 형광펜 무늬) — 전엔 url(" 만 지워져 선언이 깨지고 무늬가 사라졌어요
+    // 걷은 뒤 다시 붙는 조각까지 — 더 걷을 게 없을 때까지(전엔 세 번만 돌아 네 겹 끼우기 @im@im@im@importportportport 가 남았어요)
+    const strip = () => { for (let prev; prev !== out;) { prev = out; out = out.replace(BAD_CSS, ''); } };
+    strip();
+    // CSS 이스케이프로 가린 낱말(@\69mport · \75rl( …): 풀어 본 글이 걸리면 거꾸로 빗금을 전부 걷고 다시 걷어요
+    if (out.includes('\\') && out.replace(/\\([0-9a-f]{1,6})\s?/gi, (all, hex) => String.fromCodePoint(Math.min(Number.parseInt(hex, 16), 0x10ffff) || 0xfffd)).replace(/\\/g, '').search(BAD_CSS) >= 0) { out = out.replace(/\\/g, ''); strip(); }
     return out.replace(/<\/?\s*style/gi, '').replace(/\u0001(\d+)\u0001/g, (_, i) => keep[Number(i)] ?? '');
 }
 
@@ -50,7 +55,7 @@ export function sanitizeTree(root, { keepPreviewMarks = false } = {}) {
             }
             if (name === 'http-equiv') element.removeAttribute(attr.name);
         }
-        if (element.tagName === 'STYLE') element.textContent = safeCss(element.textContent);
+        if (element.tagName.toLowerCase() === 'style') element.textContent = safeCss(element.textContent);
         if (element.tagName === 'A' && element.getAttribute('target')) element.setAttribute('rel', 'noopener noreferrer');
     }
     return root;

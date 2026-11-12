@@ -102,20 +102,28 @@ const escText = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '
 /** 1.0.1 숨긴 글 마크업을 글자로 — 미리보기에서 숨긴 글을 틀 · 색을 바꿔 다시 그릴 때(log-copy-render.js nodesHtml · kind 'spoiler'). wrapSpoiler 와 같은 모양 */
 export function spoilerHtml(inner, sp, inline = true) {
     const c = { line: sp?.line || '#8884', raised: sp?.raised || 'transparent', muted: sp?.muted || 'inherit' }, ui = { family: sp?.family || 'inherit', tracking: sp?.tracking || '0' };
-    const details = `display:${inline ? 'inline-block;max-width:100%;vertical-align:baseline' : 'block;margin:8px 0'}`;
+    const details = `display:${inline ? 'inline-block;max-width:100%;vertical-align:baseline;text-indent:0' : 'block;margin:8px 0'}`;
     const blur = inline ? 'span' : 'div', content = inline ? 'span' : 'div';
     return `<details class="${inline ? 'blsp-s' : 'blsp-s blsp-k'}" data-bl-spoiler="" style="${details}"><summary class="blsp-h" style="display:${inline ? 'inline' : 'block'};list-style:none;cursor:pointer"><span class="blsp-l" style="${escText(labelStyle(c, ui))}">${SPOILER_LABEL}</span><${blur} class="blsp-b" aria-hidden="true" style="display:none">${inner}</${blur}></summary><${content} class="blsp-c">${inner}</${content}></details>`;
 }
 
+const crosses = n => [...n.childNodes].some(c => (c.nodeType === 8 ? ROW_NOTE.test(c.data) : c.nodeType === 1 && (c.hasAttribute('data-bl-msg') || crosses(c))));
 /** 고른 글 → 숨긴 글. c = 팔레트 값(line · raised · muted), ui = { family, tracking }. 감싼 <details> 또는 null */
 export function wrapSpoiler(doc, range, c, ui) {
     if (!range || range.collapsed) return null;
     if (range.startContainer.parentElement?.closest('[data-bl-spoiler]') || range.endContainer.parentElement?.closest('[data-bl-spoiler]')) return null;
+    // 끝이 다음 줄 · 다음 메시지 맨 앞(세 번 눌러 고르기 등)이면 고른 글의 끝으로 당겨요 — 빈 껍데기 · 메시지 표지가 따라 들어가지 않게
+    for (let c, o, prev; !range.collapsed;) {
+        c = range.endContainer; o = range.endOffset; prev = c.childNodes[o - 1];
+        if (!o) range.setEndBefore(c);
+        else if (prev && (prev.nodeType === 8 || (prev.nodeType === 3 && !prev.data.trim()))) range.setEnd(c, o - 1);
+        else break;
+    }
     const inline = blockOf(doc, range.startContainer) === blockOf(doc, range.endContainer);
     const piece = range.cloneContents();
-    if (!piece.textContent.trim()) return null;
+    if (!piece.textContent.trim() || crosses(piece)) return null;   // 메시지 둘에 걸친 글은 못 숨겨요(메시지 표지가 숨긴 글 안으로 들어가 거둘 때 글이 겹쳐요)
     const frag = range.extractContents();
-    const details = make(doc, 'details', inline ? 'blsp-s' : 'blsp-s blsp-k', inline ? 'display:inline-block;max-width:100%;vertical-align:baseline' : 'display:block;margin:8px 0');   // 글줄 안 숨긴 글: 펼침 칸(details 내용 칸)이 블록이라 inline 이면 줄이 끊겨요 → 인라인 블록
+    const details = make(doc, 'details', inline ? 'blsp-s' : 'blsp-s blsp-k', inline ? 'display:inline-block;max-width:100%;vertical-align:baseline;text-indent:0' : 'display:block;margin:8px 0');   // 글줄 안 숨긴 글: 펼침 칸(details 내용 칸)이 블록이라 inline 이면 줄이 끊겨요 → 인라인 블록
     details.setAttribute('data-bl-spoiler', '');
     const summary = make(doc, 'summary', 'blsp-h', `display:${inline ? 'inline' : 'block'};list-style:none;cursor:pointer`);
     const label = make(doc, 'span', 'blsp-l', labelStyle(c, ui));
@@ -153,22 +161,64 @@ export function ensureStyle(doc) {
 }
 
 // ── 미리보기 → 로그 자료 (마크다운이 고친 글 · 숨긴 글까지 따라가게) ──
-/** 미리보기 문서의 [data-bl-msg] 메시지들을 log-copy-render.js 의 노드 나무로 */
+// 1.1.8 받은 심플 글꾸(줄 꼴 틀)는 메시지 하나가 여러 줄이라 [data-bl-msg] 로 감싸지 않고 줄 사이 표지 주석(<!--blm:n-->)으로 묶어요(log-copy-simple.js markRows)
+const ROW_NOTE = /^blm:(\d+|e)$/;
+// 다시 그릴 때 대사 줄로 읽히게 띠 조각에 다는 형광펜(log-copy-simple.js paragraphs 가 gradient 로 대사를 알아봐요 · 색은 다시 칠하기가 화자 색으로)
+const ROW_BAND = 'linear-gradient(transparent 5%, rgba(128, 128, 128, 0.35) 5%, rgba(128, 128, 128, 0.35) 100%, transparent 100%)';
+/** 표지 뒤 형제 요소들 → 메시지 번호마다 줄 요소 목록(두 쪽으로 나뉜 메시지는 이어 붙여요 · 빈 메시지는 빈 목록) */
+function rowGroups(root) {
+    const out = [];
+    const walk = (node) => {
+        for (let n = node.firstChild; n; n = n.nextSibling) {
+            if (n.nodeType === 1) { if (!n.hasAttribute('data-bl-spoiler')) walk(n); continue; }
+            const m = n.nodeType === 8 ? ROW_NOTE.exec(n.data) : null;
+            if (!m || m[1] === 'e') continue;
+            const list = (out[Number(m[1])] ??= []);
+            for (let s = n.nextSibling; s && !(s.nodeType === 8 && ROW_NOTE.test(s.data)); s = s.nextSibling) if (s.nodeType === 1) list.push(s);
+        }
+    };
+    walk(root);
+    return Array.from(out, list => list ?? []);
+}
+/** 고친 글 거두기(시트 harvest) — 메시지 수가 같을 때만, 막 그린 글(drawn)과 견줘 글이 달라진 메시지의 노드만 갈아 끼운 새 모델 · 바뀐 게 없으면 null */
+export function harvestEdits(got, base, drawn, marks) {
+    if (!got || !base || got.messages.length !== base.messages.length) return null;   // 틀이 메시지를 합치거나 나눴으면 못 잇기 — 원래 글로
+    // 숨긴 자리: 글자는 그대로 두고 숨기기 · 풀기만 해도 고친 것이에요(막 그린 글 drawn 은 글자뿐이라 지금까지 거둔 모델 base 의 숨긴 글과 견줘요)
+    const hid = nodes => (nodes || []).map(n => (n.t !== 'el' ? '' : n.kind === 'spoiler' ? `\x01${nodesText(n.children).replace(/\s/g, '')}` : hid(n.children))).join('');
+    const edited = (m, i) => {
+        const now = nodesText(got.messages[i].nodes).trim();
+        return (drawn?.length === got.messages.length ? now !== drawn[i] : now !== nodesText(m.nodes).trim()) || hid(got.messages[i].nodes) !== hid(m.nodes)
+            || (marks?.length === got.messages.length && nodesMark(got.messages[i].nodes) !== marks[i]);   // 글자는 그대로 두고 굵게 · 기울임 · 취소선만 바꾼 것(막 그린 미리보기의 꾸밈 자리 marks 와 견줘요)
+    };
+    if (!base.messages.some((m, i) => edited(m, i))) return null;
+    return { ...base, messages: base.messages.map((m, i) => (edited(m, i) ? { ...m, nodes: got.messages[i].nodes } : m)) };
+}
+/** 미리보기 표지 걷기(받은 심플 글꾸의 복사 글) — 줄 표지 주석 · 제목 · 숨은 줄 칸 표시(log-copy-simple.js rowMarks) */
+export const stripRowMarks = html => String(html ?? '').replace(/<!--blm:(?:\d+|e)-->\n?/g, '').replace(/(<[a-zA-Z][\w-]*\b(?:[^<>"']|"[^"]*"|'[^']*')*?)\sdata-f="(?:title|hidden)"/g, '$1');
+/** 노드 나무 → 굵게 · 기울임 · 취소선 자리를 적은 글(거둘 때 견주는 값 — 시트가 막 그린 미리보기에서 한 번, harvestEdits 가 거둘 때 한 번) */
+export const nodesMark = nodes => (nodes || []).map(n => (n.t === 'text' ? n.text.replace(/\s+/g, '') : n.t !== 'el' ? '' : /strong|em|del/.test(n.kind ?? '') ? `\x02${n.kind}\x03${nodesMark(n.children)}\x02` : nodesMark(n.children))).join('');
+/** 노드 나무 → 글(줄바꿈은 \n) */
+export const nodesText = nodes => (nodes || []).map(n => (n.t === 'text' ? n.text : n.t === 'br' ? '\n' : nodesText(n.children))).join('');
+
+/** 미리보기 문서의 [data-bl-msg] 메시지들(없으면 1.1.8 줄 표지 <!--blm:n--> 묶음)을 log-copy-render.js 의 노드 나무로 */
 export function previewModel(doc) {
     const view = doc.defaultView;
-    const messages = [...doc.querySelectorAll('[data-bl-msg]')];
-    if (!messages.length) return null;
-    const convert = (parent, base) => {
+    const messages = [...doc.querySelectorAll('[data-bl-msg]')].filter(el => !el.closest?.('[data-bl-spoiler]'));
+    const groups = messages.length ? null : rowGroups(doc.body);
+    if (!messages.length && !groups.length) return null;
+    const convert = (parent, base, rows = false) => {
         const out = [];
+        // 줄 묶음의 대사 줄: 대사 조각(.gk-d) 옆 틀 장식(시각 · 꼬리 조각)은 글이 아니에요
+        const dl = rows && parent.classList?.contains('gk-dl') && [...parent.childNodes].some(n => n.classList?.contains('gk-d'));
         for (const node of parent.childNodes) {
-            if (node.nodeType === 3) { const text = node.data.replace(/[ \t\r\n\f]+/g, ' '); if (text.trim() || text === ' ') out.push({ t: 'text', text }); continue; }
+            if (node.nodeType === 3) { if (rows && /^[\u2060\u200b]+$/.test(node.data)) continue; const text = node.data.replace(/[ \t\r\n\f]+/g, ' '); if (text.trim() || text === ' ') out.push({ t: 'text', text }); continue; }
             if (node.nodeType !== 1) continue;
-            if (node.matches('style, script, summary, [data-bl-name], .blsp-b')) continue;
+            if (node.matches('style, script, summary, [data-bl-name], .blsp-b') || (rows && node.classList.contains('gk-nm')) || (dl && !node.matches('.gk-d, [data-bl-spoiler]'))) continue;
             if (node.tagName === 'BR') { out.push({ t: 'br' }); continue; }
             if (node.matches('[data-bl-spoiler]')) {
                 const content = node.querySelector(':scope > .blsp-c');
                 const blockSp = node.classList.contains('blsp-k');   // 1.0.1 문단 여러 개를 숨긴 블록 숨김은 블록으로
-                out.push({ t: 'el', block: blockSp, tag: blockSp ? 'div' : 'span', kind: 'spoiler', style: {}, children: content ? convert(content, base) : [] });
+                out.push({ t: 'el', block: blockSp, tag: blockSp ? 'div' : 'span', kind: 'spoiler', style: {}, children: content ? convert(content, base, rows) : [] });
                 continue;
             }
             const style = view.getComputedStyle(node);
@@ -187,10 +237,30 @@ export function previewModel(doc) {
                 if (/line-through/.test(style.textDecorationLine) || node.matches('s, del, strike')) kinds.push('del');
                 kind = kinds.join(' ') || null;
             }
-            out.push({ t: 'el', block, tag: block ? 'div' : 'span', kind, style: {}, children: convert(node, base) });
+            // 1.1.8 줄 표지 묶음: 다시 그리는 심플 틀이 글자 모양(style)으로 대사 띠 · 굵게 · 기울임을 읽어요 — 그 셋만 적어요(다른 틀은 그대로 {})
+            const look = !rows || block ? {} : {
+                ...(node.classList?.contains('gk-d') ? { 'background-image': ROW_BAND } : {}),
+                ...(/\bstrong\b/.test(kind ?? '') ? { 'font-weight': '700' } : {}),
+                ...(/\bem\b/.test(kind ?? '') ? { 'font-style': 'italic' } : {}),
+            };
+            out.push({ t: 'el', block, tag: block ? 'div' : 'span', kind, style: look, children: convert(node, base, rows) });
         }
         return out;
     };
+    const baseOf = (el) => { const style = view.getComputedStyle(el); return { weight: Number.parseInt(style.fontWeight, 10) || 400, italic: style.fontStyle !== 'normal' }; };
+    // 칸 묶음 틀: 한 줄이 칸이고 지문 · 대사 · 이름 줄은 그 안에 있어요 — 칸 장식은 버리고 그 줄들만(통째로 숨긴 줄은 숨긴 글 블록으로)
+    const SP = '[data-bl-spoiler]', ROW = `.gk-nm, .gk-nr, .gk-dl, ${SP}`;
+    const flat = (el, inside) => (el.matches(ROW) ? [el] : el.querySelector('.gk-nr, .gk-dl') ? [...el.childNodes].flatMap(c => (c.nodeType === 1 ? flat(c, 1) : [])) : inside ? [] : [el]);
+    if (groups) {
+        return {
+            messages: groups.map((list) => {
+                const rows = list.flatMap(el => flat(el));
+                const nm = rows.find(el => el.classList.contains('gk-nm'));
+                const name = nm ? ([...nm.childNodes].map(n => (n.nodeType === 3 ? n.data : n.nodeType === 1 && !n.getAttribute('class') ? n.textContent : '')).join('').trim() || nm.textContent.trim()) : '';   // 이름 줄 안 장식(시각)은 빼요
+                return { name, nodes: rows.filter(el => !el.classList.contains('gk-nm')).map(el => (el.matches(SP) ? convert({ childNodes: [el] }, baseOf(el), true)[0] : { t: 'el', block: true, tag: 'div', kind: 'p', style: {}, children: convert(el, baseOf(el), true) })) };
+            }),
+        };
+    }
     return {
         messages: messages.map((el) => {
             const style = view.getComputedStyle(el);
