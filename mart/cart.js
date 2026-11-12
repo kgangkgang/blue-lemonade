@@ -41,6 +41,7 @@ function load() {
     } catch { return []; }
 }
 let entries = load();
+let undo = null, got = '';   // 11-12 밤 undo = 방금 비운 것(되살리기 한 번) · got = 받은 뒤 표시 글(담긴 것이 바뀌면 지워요)
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(entries)); } catch { /* 저장이 막힌 창(사생활 보호) — 이 화면에서만 */ } };
 const listeners = new Set();
 const changed = () => { for (const fn of listeners) fn(); render(); };
@@ -53,12 +54,14 @@ export const cart = {
     add(entry, from) {
         if (entries.some(e => e.key === entry.key)) return 'dupe';
         if (entries.length >= MAX) return 'full';
-        entries = [...entries, entry]; save(); changed();
+        entries = [...entries, entry]; undo = null; got = ''; save(); changed();
         fly(from, entry);
         return 'added';
     },
-    remove(key) { entries = entries.filter(e => e.key !== key); save(); changed(); },
-    clear() { entries = []; save(); changed(); },
+    remove(key) { entries = entries.filter(e => e.key !== key); undo = null; got = ''; save(); changed(); },
+    /** 비우기 — 묻지 않는 대신 방금 비운 것을 한 번 되살릴 수 있어요(restore) */
+    clear() { if (entries.length) undo = [...entries]; entries = []; got = ''; save(); changed(); },
+    restore() { if (!undo) return false; entries = undo.slice(0, MAX); undo = null; save(); changed(); return true; },
 };
 addEventListener('storage', (e) => { if (e.key === KEY) { entries = load(); changed(); } });   // 다른 탭(액자 ↔ 글꾸)에서 담은 것
 
@@ -69,9 +72,9 @@ document.body.insertAdjacentHTML('beforeend', `<div class="mart-cart-scrim" hidd
 <aside class="mart-cart" role="dialog" aria-modal="true" aria-labelledby="mart-cart-title" hidden>
   <header class="mart-cart-head"><span class="mart-cart-grip" aria-hidden="true"></span><h2 id="mart-cart-title"><span class="em" aria-hidden="true">🛒</span>장바구니</h2><button type="button" class="ibtn x mart-cart-x" data-cart="close" aria-label="장바구니 닫기"></button></header>
   <ul class="mart-cart-list" aria-label="담은 것"></ul>
-  <div class="mart-cart-empty"><span class="em" aria-hidden="true">🧺</span><b>장바구니가 비었어요</b><small>마음에 드는 액자 · 글꾸의 「담기」를 눌러요. 액자와 글꾸를 한 바구니에 같이 담을 수 있어요.</small><nav><a class="btn" href="../frames/">액자 구경</a><a class="btn" href="../geulkku/">글꾸 구경</a></nav></div>
+  <div class="mart-cart-empty"><span class="em" aria-hidden="true">🧺</span><b>장바구니가 비었어요</b><small>마음에 드는 액자 · 글꾸의 「담기」를 눌러요. 액자와 글꾸를 한 바구니에 같이 담을 수 있어요.</small><nav><a class="btn" href="../frames/">액자 구경</a><a class="btn" href="../geulkku/">글꾸 구경</a></nav><button type="button" class="btn mart-cart-undo" data-cart="undo" hidden>↶ 되살리기</button></div>
   <footer class="mart-cart-foot">
-    <div class="mart-cart-sum"><span data-cart-sum>0개</span><b data-cart-size></b></div>
+    <div class="mart-cart-sum"><span data-cart-sum>0개</span><span class="mart-cart-got" data-cart-got hidden></span><b data-cart-size></b></div>
     <button type="button" class="btn primary mart-cart-pay" data-cart="copy"><span class="em" aria-hidden="true">🧾</span>계산하기 — 복사</button>
     <button type="button" class="btn mart-cart-get" data-cart="file"><span class="em" aria-hidden="true">📦</span>받기<small>.bl-mart.json</small></button>
     <button type="button" class="btn mart-cart-get mart-cart-art" data-cart="art" hidden title="테마 없이 쓸 액자 그림 파일을 하나씩 받아요"><span class="em" aria-hidden="true">🖼️</span>그림만 받기<small data-cart-art-n></small></button>
@@ -113,6 +116,8 @@ async function render() {
     const empty = !entries.length;
     drawer.classList.toggle('is-empty', empty);
     drawer.querySelector('[data-cart-sum]').textContent = `${entries.length}개`;
+    { const g = drawer.querySelector('[data-cart-got]'); g.textContent = got; g.hidden = !got || empty; }
+    { const u = drawer.querySelector('[data-cart="undo"]'); if (u) u.hidden = !(empty && undo); }
     drawer.querySelector('[data-cart-size]').textContent = empty ? '' : `약 ${sizeText(entries.reduce((n, e) => n + (e.bytes || 0), 0))}`;
     for (const b of drawer.querySelectorAll('.mart-cart-foot button')) b.disabled = empty || (b.dataset.cart === 'art' && artBusy);
     const arts = entries.filter(hasArt).length;
@@ -200,7 +205,8 @@ drawer.addEventListener('click', async (e) => {
     if (row?.dataset.href) { close(); goTo(row.dataset.href); return; }
     const act = e.target.closest('[data-cart]')?.dataset.cart;
     if (act === 'close') close();
-    else if (act === 'clear') cart.clear();
+    else if (act === 'clear') { const n = entries.length; cart.clear(); if (n) { say(`${n}개를 비웠어요 · 「↶ 되살리기」로 되돌려요`, 3600); drawer.querySelector('[data-cart="undo"]')?.focus({ preventScroll: true }); } }
+    else if (act === 'undo') { if (cart.restore()) say('비운 것을 되살렸어요', 2400); }
     else if (act === 'art' && !artBusy) saveAllArt(e.target.closest('[data-cart]'));
     else if ((act === 'copy' || act === 'file') && pay && entries.length && !payBusy) {
         // 11-12 그림 액자는 누르는 순간 PNG 를 하나씩 만들어 폰에서 몇 초 걸려요 — 그동안 단추를 막고 한 줄 알려요(다시 누르면 같은 일이 겹쳐 돌았어요)
@@ -209,7 +215,8 @@ drawer.addEventListener('click', async (e) => {
         if (entries.some(hasArt)) say('그림을 담는 중이에요 · 잠시만요', 8000);
         let ok = false;
         try { ok = await pay(act, [...entries]); } finally { payBusy = false; render(); }
-        if (ok) { close(); cart.clear(); setTimeout(() => say(act === 'copy' ? '담아 갔어요 🍋 · 테마에 붙여 넣어요' : '담아 갔어요 🍋 · 받은 파일을 테마에서 골라요', 3200), calm() ? 0 : 280); }
+        // 11-12 밤 받은 뒤에도 담긴 것은 그대로 둬요(전엔 통째로 비워져 「그림만 받기」를 이어서 못 했어요) — 「받았어요 ✓」 표시만 · 비우기는 「비우기」로
+        if (ok) { got = act === 'copy' ? '복사했어요 ✓' : '받았어요 ✓'; render(); say(act === 'copy' ? '담아 갔어요 🍋 · 테마에 붙여 넣어요 · 장바구니는 그대로예요' : '담아 갔어요 🍋 · 받은 파일을 테마에서 골라요 · 장바구니는 그대로예요', 3600); }
     }
 });
 /** 담긴 액자 그림을 0.4초 간격으로 차례로 받아요(한꺼번에 누르면 브라우저가 몇 개를 막아요) · 바구니는 그대로 둬요 */

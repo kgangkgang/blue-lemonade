@@ -868,3 +868,10 @@ html.mart-cart-on{overflow:hidden}
   .mart-head-more{width:auto;height:var(--ctl);padding:0 4px 0 6px;font-size:var(--ts-ctl);gap:4px}
   .mart-head-more::after{position:static;margin:0}
 }
+/* 11-12 밤 액자 마트 작은 고침: 개수 한 줄(목록 바로 위) · 빈 결과 「거르기 풀기」 · 장바구니 받은 표시 · 되살리기 */
+.mart-count.is-line{display:block;margin:0 0 8px;text-align:left}
+.mart-empty .btn{margin-left:8px;vertical-align:middle}
+.mart-cart-got{margin:0 auto 0 8px;font-size:var(--ts-meta);font-weight:var(--strong);color:var(--blue-strong)}
+.mart-cart-undo{margin-top:12px}
+.mart-tryon-keep[hidden]{display:none}
+.mart-seg[hidden]{display:none}

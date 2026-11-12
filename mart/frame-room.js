@@ -12,6 +12,8 @@ const filters = { style: 'all', orient: 'all', q: '' };
 const FRAME_GROUPS = [{ id: 'art', label: '그림 액자' }, { id: 'simple', label: '심플 · 내장' }];   // 심플 20 = 테마에 들어 있는 액자(「내장」으로 모아 봐요)
 // 11-05 인물 액자(천지합동청 13 · 강호유람록 7) — 글꾸 마트(mart.js LABEL_FIX · SEARCH_ALSO · SOURCES)와 같은 보이는 이름 · 찾기 말 · 원작 링크
 const CAT_SHOW = { 'gangho-char': '무협시뮬 · 인물' };   // 「강호유람록」은 실제 봇 이름 「무협시뮬」로 보여요(자료 이름은 그대로라 옛 이름으로도 찾아져요)
+/** 보이는 이름 고침(자료의 옛 이름 → 지금 이름) */
+export const showName = s => String(s).replace(/세라프(?= · 천지합동청)/g, '라파엘').replace(/강호유람록/g, '무협시뮬').replace(/^헌시뮬(?= · |$)/, 'D&H');
 const catShow = (id, label) => CAT_SHOW[id] || label || '';
 const CAT_SEARCH = { 'halo-char': '천지합동청 천악 halo 인물 캐릭터', 'gangho-char': '강호유람록 무협 시뮬 무협시뮬 인물 캐릭터', scenic: '감성 풍경 분위기 참고',
     'sentinel-world': '센티넬버스 센가 센가시뮬 센가 아카데미 ksa 세계관', 'sentinel-char': '센티넬버스 센가 센가시뮬 센가 아카데미 센티넬 가이드 인물 캐릭터' };
@@ -174,15 +176,20 @@ function pick(st, from) {
     if (api.isBuiltin(st.item)) { api.say(BUILTIN_SAY, 3200); return; }   // 지니 결과 카드 등 담기 단추가 남은 곳에서 눌러도
     const entry = api.entryOf(st);
     if (api.cart.has(entry.key)) { api.cart.remove(entry.key); api.say('장바구니에서 뺐어요'); return; }
-    if (api.cart.add(entry, from) === 'full') api.say('장바구니는 60개까지예요');
+    const got = api.cart.add(entry, from);
+    if (got === 'full') api.say('장바구니는 60개까지예요');
+    else if (got === 'added') api.say(`담았어요 · 장바구니 ${api.cart.count()}개`, 2400);   // 11-12 밤 맞춰 보기 창 안에서는 머리줄 배지가 가려져 담겼는지 몰랐어요
 }
 
 // ── 거르기 · 조금씩 그리기 ──
 let picker = null;   // 분류 두 단계(공용 부품 mart.js chipGroups)
+/** 11-12 밤 「심플 · 내장」만 볼 때 — 심플 액자에는 방향 · 디자인이 없어 그 거르기를 누르면 0개가 됐어요 → 그 묶음에서는 두 칸을 숨기고 안 걸어요 */
+const simpleOnly = () => picker?.sel.group === 'simple' || picker?.sel.cat === 'simple';
 function matches(item) {
     if (picker && !picker.match(item.category)) return false;
-    if (filters.style !== 'all' && item.style !== filters.style) return false;
-    if (filters.orient !== 'all' && item.orientation !== filters.orient) return false;
+    const plain = simpleOnly();
+    if (!plain && filters.style !== 'all' && item.style !== filters.style) return false;
+    if (!plain && filters.orient !== 'all' && item.orientation !== filters.orient) return false;
     return !filters.q || item._text.includes(filters.q);
 }
 // 카드 늦게 만들기(mart.js lazyGrid · 글꾸 마트와 같은 부품): 첫 화면 몫만 만들고 남은 자리는 빈 칸 높이로 잡아 둬요 — 스크롤이 가까이 오면 다음 묶음
@@ -192,7 +199,8 @@ function applyFilter() {
     cards.set(list);
     const count = document.querySelector('.mart-count');
     if (count) count.textContent = `${list.length}개`;
-    if (!list.length) api.grid.insertAdjacentHTML('beforeend', '<p class="mart-empty">맞는 것이 없어요 · 거르기를 풀어 보세요</p>');
+    for (const seg of document.querySelectorAll('[data-filter="orient"], [data-filter="style"]')) seg.hidden = simpleOnly();
+    if (!list.length) api.grid.insertAdjacentHTML('beforeend', '<p class="mart-empty">맞는 것이 없어요 <button type="button" class="btn" data-act="clear-filters">거르기 풀기</button></p>');
 }
 // 세그(방향 · 그림체)는 공용 부품(mart.js segHtml · wireSeg) — 글꾸 마트 그림체와 같은 모양 · 같은 동작
 const segHtml = (options, active) => api.segHtml(options, active);
@@ -218,6 +226,7 @@ function setPhoto(url, label, own) {
     const name = document.querySelector('[data-photo-label]');
     if (name) name.textContent = own ? `내 사진 · ${label}` : `표본 사진 · ${label}`;
     for (const b of document.querySelectorAll('[data-photo="clear"]')) b.hidden = !own;
+    for (const k of document.querySelectorAll('.mart-tryon-keep')) k.hidden = !own;   // 11-12 밤 「이 기기에 기억」은 내 사진을 넣었을 때만(표본 사진일 땐 체크만 되고 아무 일도 없었어요)
     for (const s of document.querySelectorAll('select[data-photo="sample"]')) if (own) s.value = '';
     syncSampleBtn();
 }
@@ -689,6 +698,14 @@ async function load(a) {
     shadow = tidyShadow({ ...spec.shadow.defaults, ...(saved?.shadow || {}) });
     paintView();
     items = data.items || [];
+    // 11-12 밤 보이는 이름 하나로 — frames.json 은 테마 저장소 산출물이라 자료는 그대로 두고 읽자마자 바꿔 보여요(카드 · 맞춰 보기 · 장바구니 · 받는 파일 이름 · 지니가 모두 이 값을 써요).
+    //   세라프 → 라파엘(공개 이름 규칙) · 강호유람록 → 무협시뮬 · 헌시뮬 → D&H. 옛 이름은 _old 에 남겨 찾기 말에 넣어요(옛 이름으로도 찾아져요). id · concept 는 그대로.
+    for (const x of items) {
+        const old = [x.name, x.conceptLabel, x.categoryLabel].filter(Boolean).join(' ');
+        for (const k of ['name', 'conceptLabel', 'categoryLabel']) if (typeof x[k] === 'string') x[k] = showName(x[k]);
+        x._old = old === [x.name, x.conceptLabel, x.categoryLabel].filter(Boolean).join(' ') ? '' : old;
+    }
+    for (const c of data.categories || []) if (typeof c.label === 'string') c.label = showName(c.label);
 }
 /** 지니(genie/) 결과 카드용 — 마트 카드와 같은 그림(frameHtml) · 같은 담기 값(stateOf → entryOf · 맞춰 둔 사진 값 그대로) */
 export async function kit(a) {
@@ -709,7 +726,7 @@ export async function start(a) {
     await load(a);
     for (const item of items) {
         const extra = item.kind === 'frame' && item.concept === 'halo-office' ? '천지합동청 천악 halo' : item.concept === 'hunter-sim' ? '헌시뮬 dungeons hunters 던전' : '';
-        item._text = [item.name, item.desc, item.categoryLabel, item.conceptLabel, item.styleLabel, item.style, item.concept, item.orientation === 'landscape' ? '가로' : item.orientation ? '세로' : '', extra, CAT_SEARCH[item.category] || '', ...botsOf(item), catShow(item.category, ''), api.isBuiltin(item) ? '내장 테마 내장 블루레몬' : ''].join(' ').toLowerCase();
+        item._text = [item.name, item.desc, item.categoryLabel, item.conceptLabel, item.styleLabel, item.style, item.concept, item.orientation === 'landscape' ? '가로' : item.orientation ? '세로' : '', extra, item._old || '', CAT_SEARCH[item.category] || '', ...botsOf(item), catShow(item.category, ''), api.isBuiltin(item) ? '내장 테마 내장 블루레몬' : ''].join(' ').toLowerCase();
     }
     // 분류 두 단계(글꾸 마트와 같은 부품): 묶음 탭 「그림 액자 · 심플」 + 하위 칩 · 방향 · 그림체
     const cats = (data.categories || []).map(c => ({ id: c.id, label: catShow(c.id, c.label), n: items.filter(x => x.category === c.id).length, group: c.group || (c.id === 'simple' ? 'simple' : 'art') })).filter(c => c.n);
@@ -719,11 +736,18 @@ export async function start(a) {
     style.innerHTML = segHtml([['all', '모든 디자인'], ...(data.styles || []).map(s => [s.id, s.label])], 'all');
     api.wireSeg(orient, (v) => { filters.orient = v; applyFilter(); });
     api.wireSeg(style, (v) => { filters.style = v; applyFilter(); });
+    { const count = document.querySelector('.mart-count'); if (count) { count.classList.add('is-line'); api.grid.before(count); } }   // 11-12 밤 개수는 목록 바로 위 왼쪽 한 줄(폰에서는 거르기 줄을 옆으로 밀어야 보였어요)
     let qt = 0;
     api.search.addEventListener('input', () => { clearTimeout(qt); qt = setTimeout(() => { filters.q = api.search.value.trim().toLowerCase(); applyFilter(); }, 120); });
     // 카드 누르기
     api.grid.addEventListener('click', (e) => {
         const b = e.target.closest('button[data-act]'); if (!b) return;
+        if (b.dataset.act === 'clear-filters') {   // 빈 결과에서 한 번에 풀기: 찾기 · 방향 · 디자인 · 분류
+            api.search.value = ''; filters.q = ''; filters.orient = filters.style = 'all';
+            for (const seg of [orient, style]) for (const x of seg.children) x.setAttribute('aria-pressed', String(x === seg.firstElementChild));
+            (document.querySelector('.mart-groups:not([hidden]) [data-group="all"]') || api.chips.querySelector('[data-cat="all"]'))?.click();
+            applyFilter(); api.search.focus({ preventScroll: true }); return;
+        }
         const st = states.get(b.closest('.mart-card')?.dataset.id); if (!st) return;
         if (b.dataset.act === 'open') openRoom(st);
         else if (b.dataset.act === 'pick') pick(st, b);

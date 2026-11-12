@@ -1042,6 +1042,25 @@ await test('블라인드(details 안에 글이 든 틀): 깡통이 내용을 cla
     const src = fs.readFileSync(path.join(MART, 'simple-frames.js'), 'utf8');
     assert.ok(src.includes('details>summary~:not([class]):not(:has([class])){display:none}`'));
 });
+await test('액자 마트 고침(11-12 밤 전수조사 고침 안 3 · 4 · 5): 보이는 이름 하나(라파엘 · 무협시뮬 · D&H · 옛 이름으로도 찾아짐) · 장바구니는 받은 뒤에도 그대로 · 비우기 되살리기 · 작은 고장 다섯', async () => {
+    const room = fs.readFileSync(path.join(MART, 'frame-room.js'), 'utf8'), cartSrc = fs.readFileSync(path.join(MART, 'cart.js'), 'utf8'), martSrc = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8');
+    const showName = (0, eval)(room.match(/export const showName = (s => [^\n]+);\n/)[1]);
+    assert.equal(showName('세라프 · 천지합동청 · 2D · 세로'), '라파엘 · 천지합동청 · 2D · 세로');
+    assert.equal(showName('구야 · 강호유람록 · 3D · 가로'), '구야 · 무협시뮬 · 3D · 가로'); assert.equal(showName('강호유람록 · 인물'), '무협시뮬 · 인물');
+    assert.equal(showName('헌시뮬 · 유리 · 가로'), 'D&H · 유리 · 가로'); assert.equal(showName('헌시뮬'), 'D&H');
+    assert.equal(showName('MZ가 되고 싶은 최초의 세라프(우지엘)'), 'MZ가 되고 싶은 최초의 세라프(우지엘)', '원작 글 제목 속 세라프는 그대로');
+    const frames = JSON.parse(fs.readFileSync(path.join(MART, 'data/frames.json'), 'utf8')).items;
+    const shown = frames.map(x => [x.name, x.conceptLabel, x.categoryLabel].filter(Boolean).map(showName).join(' '));
+    assert.ok(!shown.some(t => /세라프|강호유람록|헌시뮬/.test(t)), '보이는 이름에 옛 이름이 남았어요');
+    assert.equal(shown.filter(t => /라파엘/.test(t)).length, 12); assert.equal(shown.filter(t => /무협시뮬/.test(t)).length, 84); assert.equal(shown.filter(t => /^D&H/.test(t)).length, 12);
+    assert.ok(room.includes("extra, item._old || '', CAT_SEARCH[item.category] || '',"), '옛 이름은 찾기 말에 남겨요');
+    assert.ok(martSrc.includes("'hunter-sim': SOURCES.hunter,") && !martSrc.includes("title: 'Dungeons & Hunters'"), '원작 제목은 sources.js 한 곳');
+    // 장바구니: 받은 뒤 비우지 않아요 · 비우기는 되살릴 수 있어요
+    assert.ok(!/if \(ok\) \{[^\n]*cart\.clear\(\)/.test(cartSrc), '받은 뒤 cart.clear() 금지');
+    for (const k of ["restore() { if (!undo) return false;", 'data-cart="undo"', 'data-cart-got', "got = act === 'copy' ? '복사했어요 ✓' : '받았어요 ✓'", "clear() { if (entries.length) undo = [...entries];"]) assert.ok(cartSrc.includes(k), `cart.js ${k}`);
+    // 작은 고장: 담기 알림 · 심플에서 방향/디자인 숨김 · 빈 결과 풀기 · 표본일 때 기억 숨김 · 개수 한 줄
+    for (const k of ['담았어요 · 장바구니 ${api.cart.count()}개', "const simpleOnly = () => picker?.sel.group === 'simple' || picker?.sel.cat === 'simple';", 'data-act="clear-filters"', "document.querySelectorAll('.mart-tryon-keep')) k.hidden = !own;", "count.classList.add('is-line'); api.grid.before(count);"]) assert.ok(room.includes(k), `frame-room.js ${k}`);
+});
 
 // ── 11-12 밤 원작(출처) — 사용자 「글꾸 마트는 왜 출처가 없냐 … 링크 다 어디 감」: 다시 사라지지 않게 잠가요 ──
 await test('원작(출처): 캐릭터 묶음의 모든 캐릭터가 원작 줄을 가져요 · 아홉 글 주소가 전부 자료에 있고 묶음마다 하나 이상 · 캐릭터 칸 · 고른 캐릭터 줄 · 크게 보기 · 「원작」 칸 · 액자 마트가 같은 자료(sources.js)를 읽어요', async () => {
@@ -1971,7 +1990,7 @@ await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-u
     const files = ['mart.js', 'genie.js', 'geulkku/index.html', 'frames/index.html', 'genie/index.html'].map(f => [f, srcOf(f)]);
     for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room', 'genie']) {
         const tails = new Set(files.flatMap(([, s]) => [...s.matchAll(new RegExp(`[./]${mod}\\.js\\?v=(\\w+)`, 'g'))].map(m => m[1])));
-        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? '20261112i' : mod === 'frame-room' ? '20261112f' : mod === 'cart' ? '20261112e' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
+        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? (mod === 'tune-ui' ? '20261112i' : '20261112j') : mod === 'frame-room' ? '20261112g' : mod === 'cart' ? '20261112f' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
     }
 });
 await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬리가 다르면 브라우저가 같은 모듈을 두 벌 받아요 — char-tone · spoiler · bare · presets 가 그랬어요 · 꼬리 없는 쪽은 옛 캐시가 남아요)', () => {
@@ -2051,7 +2070,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
         assert.match(ui, /data-act="theme-file"\$\{no\}/);
         for (const [n, t] of [['mart.js', mart], ['genie.js', genie]]) assert.doesNotMatch(t, /테마로 받기는 준비 중/, n);
         assert.match(fs.readFileSync(path.join(MART, 'mart.css'), 'utf8'), /\.tag\.is-notake\{/);
-        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112h/, f);
+        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112i/, f);
     });
 }
 console.log(`\n${pass} 통과 · ${fail} 실패`);
