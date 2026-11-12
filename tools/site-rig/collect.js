@@ -132,6 +132,8 @@
       }
       if (/^h[1-6]$/.test(tag) || tag === 'legend') { rec(el, 'heading', `${tag} · 글자 ${fsz(cs)}/${cs.fontWeight} · 색 ${cname(cs.color, el)}`); }
       if (tag === 'hr' || el.matches('.vr')) rec(el, 'divider', `두께 ${R(Math.min(r.width, r.height))} · 색 ${cname(cs.backgroundColor, el)} · 선 ${border(cs, el)}`);
+      // ── 밝기 단추(해 · 달 두 칸) — 11-12 밤 사용자가 모양을 정한 부품(고른 칸 = 레몬 · 파랑 꽉 찬 면): 아이콘 단추 · 고른 표시 규칙 대신 제 갈래로 세요 ──
+      if (el.matches('.mart-dn-b')) { rec(el, 'daynight', `${R(r.width)}×${R(r.height)} · 모서리 ${rad(cs, r.height)} · 면 ${cname(cs.backgroundColor, el)} · 선 ${border(cs, el)} (${pressed(el) ? '고름' : '안고름'})`); continue; }
       // ── 닫기 ✕ ──
       if (el.matches(CLICK) && r.width <= 56 && r.height <= 56 && isClose(el)) {
         const g = glyphOf(el);

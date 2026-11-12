@@ -135,6 +135,10 @@ async function worldPart(vp) {
 
 async function castPart(vp) {
     await fresh();
+    // 밝기 단추: 해 먼저 · 달 다음 · 글자 없이 아이콘 · 처음 온 사람은 낮
+    const dn = await b.eval(`(()=>{const g=document.querySelector('.mart-cast .mart-dn');const bs=[...g.querySelectorAll('button')];return {order:bs.map(x=>x.dataset.mode),labels:bs.map(x=>x.getAttribute('aria-label')),titles:bs.map(x=>x.title),text:g.textContent.trim(),pressed:bs.filter(x=>x.getAttribute('aria-pressed')==='true').map(x=>x.dataset.mode),sizes:bs.map(x=>{const r=x.getBoundingClientRect();return [Math.round(r.width),Math.round(r.height)]}),touch:bs.map(x=>{const p=getComputedStyle(x,'::before');return p.content!=='none'?Math.round(parseFloat(p.height)):0}),saved:localStorage.getItem('bl-mart-tone-v1'),bg:bs.map(x=>getComputedStyle(x).backgroundColor)}})()`);
+    row(vp, '밝기 단추: 해(낮) 먼저 · 달(밤) 다음 · 글자 없이 아이콘(aria-label 낮 · 밤) · 저장된 값이 없으면 낮', J(dn.order) === J(['light', 'dark']) && J(dn.labels) === J(['낮', '밤']) && J(dn.titles) === J(['낮', '밤']) && dn.text === '' && J(dn.pressed) === J(['light']) && !dn.saved && (vp !== 'phone' || dn.touch.every(t => t >= 44)), J(dn));
+    await b.shot(path.join(OUT, `${vp}-33-밝기-단추.png`));
     const tone = () => b.eval(`JSON.parse(localStorage.getItem('bl-mart-tone-v1')||'{}')`);
     await tapOk(vp, '깡통 칸', '.mart-cast [data-toggle="main"]');
     const st = await b.eval(`(()=>{const p=document.querySelector('#mart-cast-panel');return {on:p.checkVisibility(),tabs:[...p.querySelectorAll('.mart-cast-tabs button')].map(x=>x.textContent.replace(/\\s+/g,' ').trim()),panes:p.querySelectorAll('.mart-cast-pane').length,people:p.querySelectorAll('.mart-cast-pane [data-color]').length,radios:p.querySelectorAll('input[type=radio]').length,guide:p.querySelectorAll('.mart-cast-who').length}})()`);
@@ -202,7 +206,7 @@ async function castPart(vp) {
     await tapOk(vp, '잊기', '.mart-cast-direct [data-forget]');
     row(vp, '기억한 캐릭터 × 로 잊기', (await texts('.mart-cast-direct .mart-cast-mine [data-color]')).length === 0, '');
     await tapOk(vp, '낮', '.mart-cast [data-mode="light"]'); const m1 = (await tone()).mode; await tapOk(vp, '밤', '.mart-cast [data-mode="dark"]'); const m2 = (await tone()).mode;
-    row(vp, '밤 · 낮 그대로', m1 === 'light' && m2 === 'dark', `${m1} → ${m2}`);
+    row(vp, '해 · 달 단추로 낮 · 밤 바꾸기', m1 === 'light' && m2 === 'dark', `${m1} → ${m2}`);
     await tapOk(vp, '내 글 칸', '.mart-cast [data-toggle="text"]');
     row(vp, '「내 글」 칸 그대로(붙여 넣는 칸 · 내 글로 보기)', await b.eval(`!!document.querySelector('.mart-mine-text')?.checkVisibility() && !!document.querySelector('[data-mine="apply"]')`), '');
     await tapOk(vp, '내 글 칸', '.mart-cast [data-toggle="text"]');

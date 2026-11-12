@@ -62,7 +62,7 @@ export const toneState = (() => {
     let q = new URLSearchParams('');
     try { q = new URLSearchParams(location.search); } catch { /* 주소 없음(시험) */ }
     const saved = read(TONE_KEY, {}) || {};
-    let k = speakerColor(saved.k), name = cleanName(saved.name), on = saved.on !== false && (!!speakerColor(saved.k) || saved.none === true), none = saved.none === true, mode = saved.mode === 'light' ? 'light' : 'dark';
+    let k = speakerColor(saved.k), name = cleanName(saved.name), on = saved.on !== false && (!!speakerColor(saved.k) || saved.none === true), none = saved.none === true, mode = saved.mode === 'dark' ? 'dark' : 'light';   // 11-12 밤 사용자 「낮 기본으로 ㄱㄱ」 — 저장된 값이 없으면 낮(밤을 골라 둔 사람은 그대로 밤)
     // 11-10 혼합(최대 3색) · 종이 색 · 질감
     let mix = MIX_ENABLED && saved.mix === true;
     let picks = Array.isArray(saved.picks) ? saved.picks.map(x => ({ name: cleanName(x?.name), color: speakerColor(x?.color) })).filter(x => x.color).slice(0, 3) : [];
@@ -72,7 +72,7 @@ export const toneState = (() => {
         name = cleanName(q.get('name')) || name;
         if (k && q.get('name')) rememberCast(q.get('name'), k);
     }
-    if (q.has('tone')) { mode = q.get('tone') === 'light' ? 'light' : 'dark'; on = q.get('tone') !== 'off'; }
+    if (q.has('tone')) { mode = q.get('tone') === 'dark' ? 'dark' : q.get('tone') === 'light' ? 'light' : mode; on = q.get('tone') !== 'off'; }
     // 11-11 상대(둘째 화자) 색 — 없으면 틀이 정해 둔 색 그대로
     let k2 = speakerColor(saved.k2) || null, name2 = k2 ? cleanName(saved.name2) : '';
     if (q.has('k2')) { k2 = speakerColor(`#${String(q.get('k2')).replace(/^#/, '')}`) || null; name2 = k2 ? cleanName(q.get('name2')) : ''; }

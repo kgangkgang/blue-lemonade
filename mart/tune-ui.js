@@ -3,7 +3,7 @@
 //   「색」: 색 칩(깡통 · 깡캐 · 소품 · 제목 · 본문 · 대사) · 밤/낮 · 소품 기본 색/캐릭터 색. 바꾼 칸에만 ↺(그 칸만 「틀 그대로」).
 //   「글 고치기」: 켠 동안 미리보기의 글자를 바로 고쳐 써요. 「내 프리셋」(틀과 따로 — 색 + 글 모양) · 「내 글꾸」(틀 + 고쳐 쓴 글까지).
 //   값: 틀마다 = tune.js · 글 모양(모든 틀) = look.js · 깡통 · 깡캐 · 밤낮 = tone-state.js. 고친 것은 카드 미리보기 · 「HTML 복사」에 같은 길(toneOut)로 들어가요.
-import { toneState, setTone, ownOf } from './tone-state.js?v=20261112e';
+import { toneState, setTone, ownOf } from './tone-state.js?v=20261112f';
 import { speakerPair, hasPropTone, hasOwnTone, simpleFrameInfo } from './simple-frames.js?v=20261112b';
 import { fieldsOf, valsHtml, valOk } from './custom.js?v=20261112e';
 import { LOOKS, sameLook } from './looks.js?v=20261112a';   // 11-12 간편 — 추천 스타일 여섯 벌
@@ -12,8 +12,8 @@ import { SHAPE_FIELDS, PAINT_ROLES, shapeNow, shapeValue, setShape, setShapeValu
 import { capsOf, capWhy } from './caps.js?v=20261112a';
 import { makeSet, readSet, encodeSet, readAny, setFile, SET_EXT } from './geulkku-set.js?v=20261112e';   // 11-12 설정 파일 .bl-geulkku.json · 코드 BLG1.   // 11-12 틀 능력표 — 못 받는 칸은 흐리게 + 까닭 한 줄   // 11-12 움직임 세기
 import { texNow, setTex, texInfo, TEX_ORDER, TEX_NAMES } from './texture.js?v=20261112a';   // 11-12 바탕 질감
-import { swapSpeakers } from './cast.js?v=20261112i';
-import { castPicked } from './tone-state.js?v=20261112e';   // 11-11 「이 틀」 값 칸
+import { swapSpeakers, dayNightHtml } from './cast.js?v=20261112j';
+import { castPicked } from './tone-state.js?v=20261112f';   // 11-11 「이 틀」 값 칸
 import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine, setsFile, readSets, addSets } from './tune.js?v=20261112f';
 import { createEditBlocks } from './edit-blocks.js?v=20261112e';   // 11-12 글 고치기 공용 편집 모듈(테마 로그 복사 창도 같이)
 import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261112a';
@@ -172,7 +172,7 @@ function tabBody(item) {
         const seat = thirdOn() ? thirdSeat(item) : '';
         const hint3 = seat === 'none' ? '<p class="mart-tune-hint">이 틀은 내 글을 넣을 자리를 몰라서 셋째 화자 색이 안 보여요 · 견본 글 그대로예요</p>' : seat === 'band' ? '<p class="mart-tune-hint">이 틀은 대사 띠를 그림으로 그어서 셋째 화자는 이름 · 글자 색만 바뀌고 띠는 깡캐 색이에요</p>' : '';
         return `<div class="mart-inks mart-tune-colors mart-hscroll" role="group" aria-label="색 — 눌러서 바꿔요">${chips}</div>${hint3}${dimWhy.length ? `<p class="mart-tune-hint">흐린 칸 — ${esc(dimWhy.join(' · '))}</p>` : ''}
-            <div class="mart-tune-line mart-hscroll"><span class="mart-seg" role="group" aria-label="밤낮"><button type="button" class="chip" data-tune-mode="dark" aria-pressed="false">밤</button><button type="button" class="chip" data-tune-mode="light" aria-pressed="false">낮</button><button type="button" class="chip" data-tune-mode="auto" aria-pressed="false" title="이 기기 밝기를 따라요(나가는 글은 그때 판 하나)">자동</button></span>${hasOwnTone(item.preview) && !noProp ? '<span class="mart-seg mart-tune-own" role="group" aria-label="소품 색"><button type="button" class="chip" data-tune-own="1" aria-pressed="true">소품 기본 색</button><button type="button" class="chip" data-tune-own="0" aria-pressed="false">소품 캐릭터 색</button></span>' : ''}</div>${noProp ? shapeBlock(['bandAlpha', 'borderAlpha'], capsOf(item), '', new Set(byWhy.keys())) : ''}`;
+            <div class="mart-tune-line mart-hscroll"><span class="mart-seg" role="group" aria-label="밝기">${dayNightHtml('data-tune-mode', '')}<button type="button" class="chip" data-tune-mode="auto" aria-pressed="false" title="이 기기 밝기를 따라요(나가는 글은 그때 판 하나)">자동</button></span>${hasOwnTone(item.preview) && !noProp ? '<span class="mart-seg mart-tune-own" role="group" aria-label="소품 색"><button type="button" class="chip" data-tune-own="1" aria-pressed="true">소품 기본 색</button><button type="button" class="chip" data-tune-own="0" aria-pressed="false">소품 캐릭터 색</button></span>' : ''}</div>${noProp ? shapeBlock(['bandAlpha', 'borderAlpha'], capsOf(item), '', new Set(byWhy.keys())) : ''}`;
     }
     const caps = capsOf(item), capped = f => (f.cap !== 'title' ? f : caps?.title ? { ...f, max: Math.min(f.max, caps.title.max) } : { ...f, dim: capWhy(caps, 'title') });
     const fields = LOOK_FIELDS.filter(f => f.tab === tab && whenOk(f)).map(capped), html = [];
@@ -258,7 +258,7 @@ function simpleInner(item) {
     const sizeRow = segRow('글 크기', SIZE_STEPS.map(([v, l]) => `<button type="button" class="chip" data-simple-size="${v}" aria-pressed="${fixed == null && step === v}">${l}</button>`).join(''), fixed != null ? `직접 ${fixed}px` : '');
     return `<div class="mart-simple-row"><p class="mart-simple-h">스타일 <small>한 번에 입혀요</small></p><div class="mart-style-cards mart-hscroll" role="group" aria-label="스타일">${cards}</div></div>
         <div class="mart-simple-row"><p class="mart-simple-h">색</p><div class="mart-simple-cast mart-hscroll">${colorChip('k', '깡통')}<button type="button" class="ibtn mart-cast-swap" data-simple-swap aria-label="깡통 · 깡캐 바꾸기" title="깡통 · 깡캐 바꾸기"></button>${colorChip('k2', '깡캐')}${thirdOn() ? colorChip('k3', '셋째') : ''}</div>${cover}</div>
-        ${segRow('밤낮', '<button type="button" class="chip" data-tune-mode="dark" aria-pressed="false">밤</button><button type="button" class="chip" data-tune-mode="light" aria-pressed="false">낮</button><button type="button" class="chip" data-tune-mode="auto" aria-pressed="false" title="이 기기 밝기를 따라요(나가는 글은 그때 판 하나)">자동</button>')}
+        ${segRow('밝기', `${dayNightHtml('data-tune-mode', '')}<button type="button" class="chip" data-tune-mode="auto" aria-pressed="false" title="이 기기 밝기를 따라요(나가는 글은 그때 판 하나)">자동</button>`)}
         ${motionRow}${sizeRow}
         ${changes.length ? `<div class="mart-simple-diff"><p><b>세밀에서 바꾼 것 ${changes.length}</b> · ${esc(changes.slice(0, 5).join(' · '))}${changes.length > 5 ? ' · …' : ''}</p><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-view="detail">세밀에서 보기</button><button type="button" class="chip" data-simple-reset title="세밀에서 바꾼 것만 처음으로(캐릭터 · 밤낮 · 고친 글은 그대로)">세밀 것만 처음으로</button></div></div>` : ''}
         <button type="button" class="btn mart-simple-more" data-view="detail" title="색 · 글 · 움직임 · 이 틀 · 도구 · 저장">더 조절하기</button>`;

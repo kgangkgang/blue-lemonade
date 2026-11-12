@@ -4,7 +4,7 @@
 //     인물은 색 점 칩 · 묶음 머리에 「원작 N ⌄」(누르면 그 묶음 원작 글 전부) + 「이 세계관 틀 N 보기 →」 · 이름 / 색 / 기억하고 고르기 / 채팅 붙여 넣기는 「직접」 탭 · 「원래 색 · 캐릭터 없음 · 소품까지 캐릭터 색」은 맨 아래 한 줄.
 //   - 「채팅 붙여 넣어 대사색 찾기」: 실리태번 화면에서 복사한 채팅을 붙이면 대사 글자색(인라인 color)을 읽어 그 캐릭터를 골라요.
 //   - 밤 · 낮: 틀 바탕.
-import { toneState, setTone, castPicked, savedCast, CAST_GROUPS, castList, rememberCast, forgetCast, PAPER_COLORS, TEXTURES } from './tone-state.js?v=20261112e';
+import { toneState, setTone, castPicked, savedCast, CAST_GROUPS, castList, rememberCast, forgetCast, PAPER_COLORS, TEXTURES } from './tone-state.js?v=20261112f';
 /** 11-11 「바탕(종이 색 · 질감)」 칸은 화면에서 숨겨요 — 새 글꾸 틀에는 안 걸려 눌러도 바뀌는 게 없어서요(코드 · 자료는 그대로 · 나중에 격자 · 질감을 한꺼번에 되살릴 때 true) */
 const PAPER_ENABLED = false;
 import { dialogueColors } from './tone-geulkku.js?v=20261110v';
@@ -49,6 +49,9 @@ export function pickedCreditHtml() {
 }
 const colorField = value => `<label class="mart-cast-color" title="색 고르기"><input type="color" name="color" value="${esc(value)}" aria-label="대사색"><i class="mart-ink-dot mart-cast-swatch" style="background:${esc(value)}" aria-hidden="true"></i><span class="mart-cast-hex">${esc(value)}</span></label>`;
 
+/** 11-12 밤 밝기 단추 — 글자 「밤 | 낮」 대신 해 · 달 아이콘 두 칸(해 먼저 · 띠 하나 · 고른 칸만 켜짐: 해 = 레몬 + 짙은 그림 · 달 = 파랑 + 흰 그림). 사용자 「밤 낮 위치 바꿔주고 낮 기본으로」 · 「밤 낮이라고 하지 말고 저기도 걍 아이콘 넣어」
+ *  attr: 단추에 달 속성 이름(data-mode · data-tune-mode) · mode: 지금 고른 값('light' | 'dark' | 그 밖 = 둘 다 꺼짐) · 글자가 없어도 읽히게 aria-label · title 에 낮 · 밤 */
+export const dayNightHtml = (attr, mode) => `<span class="mart-dn" role="group" aria-label="밝기">${[['light', '낮', 'is-day'], ['dark', '밤', 'is-night']].map(([v, l, c]) => `<button type="button" class="mart-dn-b ${c}" ${attr}="${v}" aria-pressed="${mode === v}" aria-label="${l}" title="${l}"><i aria-hidden="true"></i></button>`).join('')}</span>`;
 export function mountCast(box, { say = () => {}, worlds = () => [], openWorld = null } = {}) {
     if (!box) return;
     // 11-11 칸이 둘이에요 — 「깡통 ● 이름」(첫째 화자 색) · 「깡캐 ● 이름」(둘째 화자 색). 칸을 누르면 그 칸의 목록이 펼쳐져요(한 번에 하나)
@@ -107,7 +110,7 @@ export function mountCast(box, { say = () => {}, worlds = () => [], openWorld = 
         const pc = PAPER_COLORS[toneState.paper] || PAPER_COLORS.white, tx = TEXTURES[toneState.texture] || TEXTURES.plain;
         const sw = id => { const p = PAPER_COLORS[id][toneState.mode === 'light' ? 'light' : 'dark']; return `background:${p[0]};box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)`; };
         const paperPanel = PAPER_ENABLED && paperOpen ? `<div class="mart-cast-panel" id="mart-paper-panel"><div class="mart-cast-sub2">종이 색</div><div class="mart-cast-list" role="radiogroup" aria-label="종이 색">${Object.entries(PAPER_COLORS).map(([id, p]) => `<label class="mart-cast-r"><input type="radio" name="bl-paper" value="${id}"${id === toneState.paper ? ' checked' : ''}><i class="mart-ink-dot" style="${sw(id)}" aria-hidden="true"></i><span>${esc(p.label)}</span></label>`).join('')}</div><div class="mart-cast-sub2">질감</div><div class="mart-cast-list" role="radiogroup" aria-label="질감">${Object.entries(TEXTURES).filter(([, t]) => !t.hidden).map(([id, t]) => `<label class="mart-cast-r"><input type="radio" name="bl-texture" value="${id}"${id === toneState.texture ? ' checked' : ''}><span>${esc(t.label)}</span></label>`).join('')}</div></div>` : '';
-        box.innerHTML = `<div class="mart-cast-head"><span class="mart-cast-slots">${toggle('main', '깡통', now)}<button type="button" class="ibtn mart-cast-swap" data-swap aria-label="깡통 · 깡캐 바꾸기" title="깡통 · 깡캐 바꾸기 — 두 칸의 캐릭터 · 색을 맞바꿔요"></button>${toggle('other', '깡캐', now2)}${toggle('text', '내 글', { name: mineOn() ? '넣음' : '견본' })}</span>${PAPER_ENABLED ? `<button type="button" class="mart-cast-toggle" data-paper aria-expanded="${paperOpen}" aria-controls="mart-paper-panel"><span>바탕:</span><i class="mart-ink-dot" style="${sw(toneState.paper)}" aria-hidden="true"></i><b>${esc(pc.label)} · ${esc(tx.label)}</b></button>` : ''}<span class="mart-seg mart-cast-mode" role="group" aria-label="밤낮"><button type="button" class="chip" data-mode="dark" aria-pressed="${toneState.mode === 'dark'}">밤</button><button type="button" class="chip" data-mode="light" aria-pressed="${toneState.mode === 'light'}">낮</button></span></div>
+        box.innerHTML = `<div class="mart-cast-head"><span class="mart-cast-slots">${toggle('main', '깡통', now)}<button type="button" class="ibtn mart-cast-swap" data-swap aria-label="깡통 · 깡캐 바꾸기" title="깡통 · 깡캐 바꾸기 — 두 칸의 캐릭터 · 색을 맞바꿔요"></button>${toggle('other', '깡캐', now2)}${toggle('text', '내 글', { name: mineOn() ? '넣음' : '견본' })}</span>${PAPER_ENABLED ? `<button type="button" class="mart-cast-toggle" data-paper aria-expanded="${paperOpen}" aria-controls="mart-paper-panel"><span>바탕:</span><i class="mart-ink-dot" style="${sw(toneState.paper)}" aria-hidden="true"></i><b>${esc(pc.label)} · ${esc(tx.label)}</b></button>` : ''}<span class="mart-cast-mode">${dayNightHtml('data-mode', toneState.mode)}</span></div>
             ${(c => (c ? `<p class="mart-cast-credit">${c}</p>` : ''))(pickedCreditHtml())}
             ${who === 'text' ? textPanel() : `<div class="mart-cast-panel" id="mart-cast-panel" data-who="${w}"${panel ? '' : ' hidden'}>${panel ? `<p class="mart-cast-who">${other ? '<b>깡캐 색</b> 둘째 화자의 대사색이에요 · 안 고르면 틀마다 정해 둔 색 그대로예요' : '<b>깡통 색</b> 첫째 화자의 대사색이에요 · 소품 색도 따라가요'}</p><div class="mart-cast-tabs mart-hscroll" role="group" aria-label="캐릭터 묶음">${tabs()}</div>${pane(tab[w])}${foot()}` : ''}</div>${paperPanel}`}`;
     };

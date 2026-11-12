@@ -961,7 +961,7 @@ await test('분류 화면 · 캐릭터 칸 · 머리말(11-12 밤 시안 안 A):
     assert.ok(page.indexOf('class="mart-groups"') < page.indexOf('class="mart-topics"') && page.indexOf('class="mart-topics"') < page.indexOf('class="mart-chips"') && page.indexOf('class="mart-band"') < page.indexOf('class="mart-grid"'), '탭 → 하위 칩 → 보조 거르기 → 머리 띠 → 목록');
     for (const k of ['function topicPicker(', 'picker.match(item.category, !!item.builtin, item)', 'worldSources(w.id).map(s => sourceHtml(s))', "openWorld: id => picker?.openWorld?.(id)", 'sel.who = sel.who === id ? null : id', "sel.cat = sel.cat === id ? 'all' : id"]) assert.ok(martSrc.includes(k), `mart.js ${k}`);
     // 캐릭터 칸: 탭 하나 · 색 점 칩 · 원작 N · 세계관 틀 보기 · 직접 탭 · 맨 아래 한 줄 · 라디오 목록 0
-    for (const k of ['data-tab="${id}"', 'class="chip mart-cast-p" data-color=', 'data-src-toggle', 'class="mart-cast-src"', 'data-world="${esc(x.id)}"', "틀 ${x.n} 보기 →", 'id="mart-cast-direct"', 'class="mart-cast-foot"', '<label class="check mart-cast-cover"', '기억하고 고르기', 'class="mart-cast-paste"', 'data-swap', 'data-mode="dark"', 'data-mine="apply"']) assert.ok(castSrc.includes(k), `cast.js ${k}`);
+    for (const k of ['data-tab="${id}"', 'class="chip mart-cast-p" data-color=', 'data-src-toggle', 'class="mart-cast-src"', 'data-world="${esc(x.id)}"', "틀 ${x.n} 보기 →", 'id="mart-cast-direct"', 'class="mart-cast-foot"', '<label class="check mart-cast-cover"', '기억하고 고르기', 'class="mart-cast-paste"', 'data-swap', "dayNightHtml('data-mode', toneState.mode)", 'data-mine="apply"']) assert.ok(castSrc.includes(k), `cast.js ${k}`);
     assert.ok(!/name="bl-cast2?"|mart-cast-g"|type="\$\{toneState\.mix/.test(castSrc), '라디오 목록 · 꺽쇠 묶음은 없어요');
     assert.ok(castSrc.includes('${pane(tab[w])}'), '펼친 칸에는 묶음 하나만');
     // 머리말: 접힌 동안 제목 + 단추만 · 쓰는 법은 그 안(번호 넷) · 맨 아래 칸 0 · 액자 마트도
@@ -969,9 +969,20 @@ await test('분류 화면 · 캐릭터 칸 · 머리말(11-12 밤 시안 안 A):
         assert.ok(t.includes(`<div class="mart-head-help" data-label="${label}">`) && !t.includes('class="mart-howto"') && !t.includes('class="mart-lede"'), f);
         assert.ok((t.match(/<div class="mart-head-help"[\s\S]*?<\/div>/)[0].match(/<li>/g) || []).length >= 4, `${f} 번호 줄`);
     }
-    for (const w of ['내 글로 보기', '깡통 · 깡캐', '밤 · 낮', '글 고치기', 'HTML 복사', '테마로 담기', '테마용 복사']) assert.ok(page.match(/<div class="mart-head-help"[\s\S]*?<\/div>/)[0].includes(w), `쓰는 법에 실제 단추 이름 「${w}」`);
+    for (const w of ['내 글로 보기', '깡통 · 깡캐', '해 · 달', '글 고치기', 'HTML 복사', '테마로 담기', '테마용 복사']) assert.ok(page.match(/<div class="mart-head-help"[\s\S]*?<\/div>/)[0].includes(w), `쓰는 법에 실제 단추 이름 「${w}」`);
     assert.ok(css.includes('.mart-head-help{flex:0 0 100%;display:none;') && css.includes('.mart-head.is-open .mart-head-help{display:block}') && !css.includes('-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}\n.mart-head .mart-note-line'));
     assert.ok(martSrc.includes("textContent: help.dataset.label || '쓰는 법'"));
+    // 밝기 단추(11-12 밤 「밤 낮 위치 바꿔주고 낮 기본으로」 · 「밤 낮이라고 하지 말고 … 아이콘 넣어」): 해 먼저 · 달 다음 · 글자 없이 아이콘(aria-label · title 에 낮 · 밤) · 기본은 낮
+    { const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8'), ts = fs.readFileSync(path.join(MART, 'tone-state.js'), 'utf8');
+      const dn = (0, eval)(castSrc.match(/export const dayNightHtml = (\(attr, mode\) => `[^\n]+`);\n/)[1]);
+      const html = dn('data-mode', 'light');
+      assert.ok(html.indexOf('data-mode="light"') < html.indexOf('data-mode="dark"'), '해(낮) 먼저');
+      assert.match(html, /data-mode="light" aria-pressed="true" aria-label="낮" title="낮"><i aria-hidden="true"><\/i><\/button>/);
+      assert.match(html, /data-mode="dark" aria-pressed="false" aria-label="밤" title="밤"><i aria-hidden="true"><\/i><\/button>/);
+      assert.ok(!/>밤<|>낮</.test(html) && !/>밤<\/button>|>낮<\/button>/.test(castSrc + ui), '글자 「밤」 「낮」 단추 0');
+      assert.equal((ui.match(/dayNightHtml\('data-tune-mode', ''\)/g) || []).length, 2, '크게 보기 간편 · 세밀 색 갈래');
+      assert.ok(ts.includes("mode = saved.mode === 'dark' ? 'dark' : 'light';"), '저장된 값이 없으면 낮');
+      for (const k of ['.mart-dn-b.is-day[aria-pressed=true]{background:var(--lemon-deep)}', '.mart-dn-b.is-night[aria-pressed=true]{background:var(--blue-strong)}', '.mart-dn-b.is-night[aria-pressed=true]>i{background:var(--on-blue)}']) assert.ok(css.includes(k), k); }
     // 간편 「움직임」 줄의 「소품만」 — 글 움직임 끔 · 소품 움직임은 지금 세기(끔이었으면 중) · 세밀과 같은 값
     { const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
       assert.ok(ui.includes('data-simple-motion="prop" aria-pressed="${propOnly}"') && ui.includes("setMotion(v === 'prop' ? { text: '0', prop: cur.prop === '0' ? 'm' : cur.prop } : { text: v, prop: v })") && ui.includes("const propOnly = m.text === '0' && m.prop !== '0', canPropOnly = !!caps.text['0'];")); }
@@ -1993,7 +2004,7 @@ await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-u
     const files = ['mart.js', 'genie.js', 'geulkku/index.html', 'frames/index.html', 'genie/index.html'].map(f => [f, srcOf(f)]);
     for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room', 'genie']) {
         const tails = new Set(files.flatMap(([, s]) => [...s.matchAll(new RegExp(`[./]${mod}\\.js\\?v=(\\w+)`, 'g'))].map(m => m[1])));
-        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? (mod === 'tune-ui' ? '20261112j' : '20261112k') : mod === 'frame-room' ? '20261112g' : mod === 'cart' ? '20261112f' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
+        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? (mod === 'tune-ui' ? '20261112k' : '20261112l') : mod === 'frame-room' ? '20261112g' : mod === 'cart' ? '20261112f' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
     }
 });
 await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬리가 다르면 브라우저가 같은 모듈을 두 벌 받아요 — char-tone · spoiler · bare · presets 가 그랬어요 · 꼬리 없는 쪽은 옛 캐시가 남아요)', () => {
@@ -2072,7 +2083,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
         assert.match(ui, /data-act="theme-file"\$\{no\}/);
         for (const [n, t] of [['mart.js', mart], ['genie.js', genie]]) assert.doesNotMatch(t, /테마로 받기는 준비 중/, n);
         assert.match(fs.readFileSync(path.join(MART, 'mart.css'), 'utf8'), /\.tag\.is-notake\{/);
-        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112i/, f);
+        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261112j/, f);
     });
 }
 console.log(`\n${pass} 통과 · ${fail} 실패`);
