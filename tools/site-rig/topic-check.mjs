@@ -28,8 +28,8 @@ async function cardPart(vp) {
     const word = await b.eval(`({old:[...document.querySelectorAll('.mart-card *')].filter(e=>!e.children.length&&e.textContent.trim()==='HTML 복사로 써요').length, btn:document.querySelectorAll('.mart-card [data-act="html"]').length, cards:document.querySelectorAll('.mart-card').length})`);
     row(vp, '카드 「HTML 복사로 써요」 0개 · 단추 「HTML 복사」는 카드마다', word.old === 0 && word.btn === word.cards && word.cards > 3, J(word));
     // 「원작」 칸: 목록 아래 · 펼친 채 · 열 글
-    const cr = await b.eval(`(()=>{const c=document.querySelector('.mart-credits'),g=document.querySelector('.mart-grid'),h=document.querySelector('.mart-howto');return {after:!!(g.compareDocumentPosition(c)&4),before:!!(c.compareDocumentPosition(h)&4),open:c.checkVisibility()&&c.querySelectorAll('a.mart-source').length&&[...c.querySelectorAll('a.mart-source')].every(a=>a.checkVisibility()),links:[...c.querySelectorAll('a.mart-source')].map(a=>a.href),text:c.querySelector('p')?.textContent||''}})()`);
-    row(vp, '「원작」 칸: 목록 아래 · 쓰는 법 위 · 펼친 채 · 열 글 · 설명에 세계관 틀', cr.after && cr.before && cr.open && TEN.every(n => cr.links.some(u => u.endsWith('/posts/' + n))) && /세계관/.test(cr.text), `아래 ${cr.after} · 위 ${cr.before} · 펼침 ${!!cr.open} · ${new Set(cr.links).size}곳`);
+    const cr = await b.eval(`(()=>{const c=document.querySelector('.mart-credits'),g=document.querySelector('.mart-grid'),h=document.querySelector('.mart-howto');return {after:!!(g.compareDocumentPosition(c)&4),before:!h||!!(c.compareDocumentPosition(h)&4),open:c.checkVisibility()&&c.querySelectorAll('a.mart-source').length&&[...c.querySelectorAll('a.mart-source')].every(a=>a.checkVisibility()),links:[...c.querySelectorAll('a.mart-source')].map(a=>a.href),text:c.querySelector('p')?.textContent||''}})()`);
+    row(vp, '「원작」 칸: 목록 아래 · 펼친 채 · 열 글 · 설명에 세계관 틀', cr.after && cr.before && cr.open && TEN.every(n => cr.links.some(u => u.endsWith('/posts/' + n))) && /세계관/.test(cr.text), `아래 ${cr.after} · 위 ${cr.before} · 펼침 ${!!cr.open} · ${new Set(cr.links).size}곳`);
     await b.eval(`document.querySelector('.mart-credits').scrollIntoView({block:'center'}); true`); await b.sleep(300);
     row(vp, '「원작」 칸 가로 넘침 0', (await over()) <= 0, `넘침 ${await over()}`);
     await b.shot(path.join(OUT, `${vp}-1-원작-칸.png`));
@@ -60,10 +60,211 @@ async function cardPart(vp) {
     row(vp, '지니 결과 카드에도 「HTML 복사로 써요」 없음', genie === false, String(genie));
 }
 
+const idx = async () => b.eval(`fetch(${J(srv.url + 'mart/data/geulkku/index.json')},{cache:'no-store'}).then(r=>r.json()).then(d=>d.items.map(x=>({id:x.id,topic:x.topic,world:x.world||'',who:x.who||'',cat:x.category,audio:!!x.audio})))`);
+const texts = sel => b.eval(`[...document.querySelectorAll(${J(sel)})].filter(e=>e.checkVisibility()).map(e=>e.textContent.replace(/\\s+/g,' ').trim())`);
+const countNow = () => b.eval(`parseInt(document.querySelector('.mart-count')?.textContent)||0`);
+const pressed = sel => b.eval(`[...document.querySelectorAll(${J(sel)})].filter(e=>e.getAttribute('aria-pressed')==='true').map(e=>e.textContent.replace(/\\s+/g,' ').trim())`);
+const VIS = `e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'`;
+const tapText = async (vp, sel, text) => {
+    const n = await b.eval(`[...document.querySelectorAll(${J(sel)})].filter(${VIS}).findIndex(e=>e.textContent.replace(/\\s+/g,' ').trim().startsWith(${J(text)}))`);
+    if (n < 0) { row(vp, `누르기: ${text}`, false, '없음'); return false; }
+    await b.eval(`[...document.querySelectorAll(${J(sel)})].filter(${VIS})[${n}].scrollIntoView({block:'center',inline:'center'}); true`);
+    return tapOk(vp, text, sel, { nth: n });
+};
+
+async function topicPart(vp) {
+    await fresh(); const all = await idx();
+    const tabs = await texts('.mart-groups button');
+    row(vp, '분류 묶음 탭: 전체 · 일상 · 이벤트 · 화면 · 장르 · 세계관 · 인물 · 기본 · 심플(수 그대로)', J(tabs) === J(['전체417', '일상122', '이벤트68', '화면 · 장르87', '세계관 · 인물104', '기본 · 심플36']), tabs.join(' / '));
+    const aux = await texts('.mart-chips button');
+    row(vp, '보조 거르기 줄: 예전 칩 그대로(★ 즐겨찾기 · 최근 · 내 글꾸 · 눌러서 열어요 · 누르면 바뀌어요 · 가만히 보기) · 「소리 카드」는 0개', ['★ 즐겨찾기', '최근', '내 글꾸', '눌러서 열어요', '누르면 바뀌어요', '가만히 보기'].every(t => aux.some(a => a.startsWith(t))) && !aux.some(a => /소리 카드/.test(a)) && !(await b.eval(`document.body.innerText.includes('소리 카드')`)), aux.join(' / '));
+    row(vp, '「전체」에서는 하위 칩 줄이 숨어요', (await texts('.mart-topics button')).length === 0, '');
+    await b.shot(path.join(OUT, `${vp}-10-분류-전체.png`));
+    if (!(await tapText(vp, '.mart-groups button', '이벤트'))) return;
+    const sub = await texts('.mart-topics button');
+    row(vp, '「이벤트」 하위 칩: 모두 68 · 기념일 13 · 할로윈 32 · 크리스마스 · 연말 23', J(sub) === J(['모두68', '기념일13', '할로윈32', '크리스마스 · 연말23']) && (await countNow()) === 68, `${sub.join(' / ')} · 목록 ${await countNow()}개`);
+    await tapText(vp, '.mart-topics button', '할로윈');
+    const ids = await cardsNow(), want = all.filter(x => x.topic === '할로윈');
+    row(vp, '「할로윈」 → 32틀 · 보이는 카드가 모두 할로윈 틀', (await countNow()) === 32 && ids.length && ids.every(id => want.some(x => x.id === id)), `목록 ${await countNow()}개 · 카드 ${ids.length}`);
+    await tapText(vp, '.mart-chips button', '눌러서 열어요');
+    const both = want.filter(x => x.cat === 'simple-open').length;
+    row(vp, '분류 × 누름 방식을 같이: 할로윈 + 눌러서 열어요', (await countNow()) === both && both > 0 && both < 32 && (await pressed('.mart-topics button, .mart-chips button')).length === 2, `목록 ${await countNow()}개(자료 ${both}) · 고른 칩 ${(await pressed('.mart-topics button, .mart-chips button')).join(' + ')}`);
+    await b.eval('scrollTo(0,0)'); await b.sleep(300); await b.shot(path.join(OUT, `${vp}-11-분류-할로윈-열어요.png`));
+    await tapText(vp, '.mart-chips button', '눌러서 열어요');
+    row(vp, '고른 누름 방식 칩을 다시 누르면 풀려요', (await countNow()) === 32 && (await pressed('.mart-chips button')).length === 0, `목록 ${await countNow()}개`);
+    await tapText(vp, '.mart-chips button', '소리 · 음악');
+    row(vp, '「소리 · 음악」: 소리 줄이 남은 틀만(할로윈 안)', (await countNow()) === want.filter(x => x.audio).length, `목록 ${await countNow()}개(자료 ${want.filter(x => x.audio).length})`);
+    await tapText(vp, '.mart-chips button', '소리 · 음악');
+    for (const [g, n] of [['일상', 122], ['화면 · 장르', 87], ['기본 · 심플', 36], ['전체', 417]]) {
+        await tapText(vp, '.mart-groups button', g);
+        row(vp, `묶음 「${g}」 → ${n}틀`, (await countNow()) === n, `목록 ${await countNow()}개 · 하위 칩 ${(await texts('.mart-topics button')).length}`);
+        if (g === '일상') { await b.eval('scrollTo(0,0)'); await b.sleep(250); await b.shot(path.join(OUT, `${vp}-12-분류-일상.png`)); row(vp, '「일상」 가로 넘침 0', (await over()) <= 0, `넘침 ${await over()}`); }
+    }
+    await tapText(vp, '.mart-chips button', '소리 · 음악');
+    row(vp, '전체 × 「소리 · 음악」 = 소리 줄이 남은 틀 수', (await countNow()) === all.filter(x => x.audio).length, `목록 ${await countNow()}개(자료 ${all.filter(x => x.audio).length})`);
+}
+
+async function worldPart(vp) {
+    await fresh(); const all = await idx();
+    await tapText(vp, '.mart-groups button', '세계관 · 인물');
+    const sub = await texts('.mart-topics button');
+    row(vp, '「세계관 · 인물」 하위 칩: 모두 104 · 천지합동청 30 · D&H 17 · 아드리안 12 · 무협시뮬 13 · 센티넬버스 32', J(sub) === J(['모두104', '천지합동청30', 'D&H17', '아드리안12', '무협시뮬13', '센티넬버스32']), sub.join(' / '));
+    row(vp, '세계관을 고르기 전에는 머리 띠가 없어요', !(await b.eval(`document.querySelector('.mart-band').checkVisibility()`)), '');
+    const urls = new Set();
+    for (const [label, id, n] of [['천지합동청', 'halo', 30], ['D&H', 'hunter', 17], ['아드리안', 'adrian', 12], ['무협시뮬', 'gangho', 13], ['센티넬버스', 'sentinel', 32]]) {
+        await tapText(vp, '.mart-topics button', label);
+        const band = await b.eval(`(()=>{const e=document.querySelector('.mart-band');return {on:e.checkVisibility(),h:e.querySelector('h2')?.textContent,n:e.querySelector('.mart-band-n')?.textContent,links:[...e.querySelectorAll('a.mart-source')].map(a=>a.href),chips:[...e.querySelectorAll('.mart-band-people button')].map(x=>x.textContent.replace(/\\s+/g,' ').trim()),dots:e.querySelectorAll('.mart-band-people .mart-cast-dot').length}})()`);
+        const list = all.filter(x => x.world === id), people = [...new Set(list.filter(x => x.who).map(x => x.who))];
+        for (const u of band.links) urls.add(u);
+        row(vp, `「${label}」 머리 띠: 이름 · 틀 ${n} · 인물 ${people.length} · 원작 링크 · 인물 칩(색 점 · 틀 수) · 그 틀만`, band.on && band.h === label && band.n === `틀 ${n} · 인물 ${people.length}` && band.links.length >= 1 && band.dots === people.length && band.chips.length === people.length + (list.some(x => !x.who) ? 1 : 0) && (await countNow()) === n, `${band.n} · 원작 ${band.links.map(u => u.split('/').pop()).join(' · ')} · 칩 ${band.chips.length} · 목록 ${await countNow()}개`);
+    }
+    row(vp, '다섯 세계관 머리 띠에 원작 글 열 개가 모두', TEN.every(n => [...urls].some(u => u.endsWith('/posts/' + n))), `${urls.size}곳`);
+    await b.eval(`document.querySelector('.mart-band').scrollIntoView({block:'center'}); true`); await b.sleep(300);
+    row(vp, '센티넬버스 머리 띠 가로 넘침 0 · 링크가 띠 밖으로 안 나가요', (await over()) <= 0 && (await b.eval(`(()=>{const e=document.querySelector('.mart-band'),r=e.getBoundingClientRect();return [...e.querySelectorAll('a.mart-source')].filter(a=>a.getBoundingClientRect().right>r.right+1).length})()`)) === 0, `넘침 ${await over()}`);
+    await tapText(vp, '.mart-band-people button', '은설');
+    const ids = await cardsNow();
+    row(vp, '인물 칩 「은설」 → 은설 틀 둘만', J([...ids].sort()) === J(['simple-k1049', 'simple-k1320']) && (await pressed('.mart-band-people button')).length === 1, `${ids.join(' · ')} · 목록 ${await countNow()}개`);
+    await b.eval(`scrollTo(0, Math.max(0, document.querySelector('.mart-tools').getBoundingClientRect().top + scrollY - 70)); true`); await b.sleep(900); await b.shot(path.join(OUT, `${vp}-20-세계관-센티넬버스-은설.png`));
+    await tapText(vp, '.mart-band-people button', '은설');
+    row(vp, '인물 칩을 다시 누르면 그 세계관 전부로', (await countNow()) === 32, `목록 ${await countNow()}개`);
+    await tapText(vp, '.mart-band-people button', '세계관');
+    row(vp, '「세계관」 칩 → 인물 없는 세계관 틀만', (await countNow()) === all.filter(x => x.world === 'sentinel' && !x.who).length, `목록 ${await countNow()}개`);
+    await tapText(vp, '.mart-topics button', '모두');
+    row(vp, '「모두」 → 104틀 · 머리 띠는 접혀요', (await countNow()) === 104 && !(await b.eval(`document.querySelector('.mart-band').checkVisibility()`)), `목록 ${await countNow()}개`);
+}
+
+async function castPart(vp) {
+    await fresh();
+    const tone = () => b.eval(`JSON.parse(localStorage.getItem('bl-mart-tone-v1')||'{}')`);
+    await tapOk(vp, '깡통 칸', '.mart-cast [data-toggle="main"]');
+    const st = await b.eval(`(()=>{const p=document.querySelector('#mart-cast-panel');return {on:p.checkVisibility(),tabs:[...p.querySelectorAll('.mart-cast-tabs button')].map(x=>x.textContent.replace(/\\s+/g,' ').trim()),panes:p.querySelectorAll('.mart-cast-pane').length,people:p.querySelectorAll('.mart-cast-pane [data-color]').length,radios:p.querySelectorAll('input[type=radio]').length,guide:p.querySelectorAll('.mart-cast-who').length}})()`);
+    row(vp, '깡통 칸: 묶음 탭 한 줄(천지합동청 13 · D&H · 아드리안 8 · 무협시뮬 7 · 센티넬버스 11 · 직접) · 묶음 하나만 · 인물은 색 점 칩(라디오 0) · 안내 한 줄', st.on && J(st.tabs) === J(['천지합동청13', 'D&H · 아드리안8', '무협시뮬7', '센티넬버스11', '직접']) && st.panes === 1 && st.people === 13 && st.radios === 0 && st.guide === 1, J(st));
+    await tapText(vp, '.mart-cast-tabs button', '센티넬버스');
+    row(vp, '「센티넬버스」 탭 → 인물 칩 11 · 묶음은 여전히 하나', (await b.eval(`document.querySelectorAll('.mart-cast-pane').length===1 && document.querySelectorAll('.mart-cast-pane [data-color]').length`)) === 11, '');
+    const h = await b.eval(`Math.min(...[...document.querySelectorAll('.mart-cast-pane [data-color], .mart-cast-foot [data-pick]')].map(e=>e.getBoundingClientRect().height))`);
+    row(vp, vp === 'phone' ? '폰: 인물 칩 높이 36 이상(줄 사이 10)' : '인물 칩 높이 34', vp === 'phone' ? h >= 36 : h >= 34, `${h}px`);
+    await tapText(vp, '.mart-cast-pane [data-color]', '은설');
+    const picked = await b.eval(`({head:document.querySelector('.mart-cast [data-toggle="main"]').textContent.replace(/\\s+/g,' ').trim(),links:[...document.querySelectorAll('.mart-cast .mart-cast-credit a.mart-source')].map(a=>a.href),on:[...document.querySelectorAll('.mart-cast-pane [data-color][aria-pressed="true"]')].map(x=>x.dataset.name)})`);
+    const t1 = await tone();
+    row(vp, '은설을 고르면: 머리 줄 「깡통 은설」 · 원작 줄 전부(29037 · 99019) · 색이 입혀져요(#e8e4f2)', /깡통\s*은설/.test(picked.head) && [29037, 99019].every(n => picked.links.some(u => u.endsWith('/posts/' + n))) && J(picked.on) === J(['은설']) && String(t1.k).toLowerCase() === '#e8e4f2' && t1.on === true, `${picked.head} · ${picked.links.map(u => u.split('/').pop()).join(' · ')} · k ${t1.k}`);
+    await tapOk(vp, '원작 2', '.mart-cast [data-src-toggle]');
+    const src = await b.eval(`[...document.querySelectorAll('.mart-cast .mart-cast-src a.mart-source')].filter(a=>a.checkVisibility()).map(a=>a.href)`);
+    row(vp, '묶음 머리 「원작 2 ⌄」을 누르면 그 묶음 원작 글 전부', src.length === 2 && [29037, 99019].every(n => src.some(u => u.endsWith('/posts/' + n))), src.map(u => u.split('/').pop()).join(' · '));
+    await b.eval(`document.querySelector('.mart-cast').scrollIntoView({block:'start'}); scrollBy(0,-70); true`); await b.sleep(900);
+    row(vp, '캐릭터 칸 가로 넘침 0', (await over()) <= 0, `넘침 ${await over()}`);
+    await b.shot(path.join(OUT, `${vp}-30-캐릭터-칸-은설.png`));
+    const all = new Set();
+    for (const [tab, n] of [['천지합동청', 4], ['D&H', 3], ['무협시뮬', 1], ['센티넬버스', 2]]) {
+        await tapText(vp, '.mart-cast-tabs button', tab);
+        const more = await b.eval(`document.querySelector('.mart-cast [data-src-toggle]')?.textContent.trim()`);
+        await tapOk(vp, `${tab} 원작`, '.mart-cast [data-src-toggle]');
+        const got = await b.eval(`[...document.querySelectorAll('.mart-cast .mart-cast-src a.mart-source')].filter(a=>a.checkVisibility()).map(a=>a.href)`);
+        for (const u of got) all.add(u);
+        row(vp, `「${tab}」 묶음 머리: 「원작 ${n}」 → 링크 ${n}`, more === `원작 ${n}` && got.length === n, `${more} · ${got.map(u => u.split('/').pop()).join(' · ')}`);
+    }
+    row(vp, '캐릭터 칸 묶음 머리에 원작 글 열 개가 모두', TEN.every(n => [...all].some(u => u.endsWith('/posts/' + n))), `${all.size}곳`);
+    const go = await b.eval(`document.querySelector('.mart-cast [data-world="sentinel"]')?.textContent.trim()`);
+    await tapOk(vp, '이 세계관 틀 보기', '.mart-cast [data-world="sentinel"]'); await b.sleep(900);
+    const band = await b.eval(`(()=>{const e=document.querySelector('.mart-band'),r=e.getBoundingClientRect();return {on:e.checkVisibility(),h:e.querySelector('h2')?.textContent,top:Math.round(r.top),inView:r.top>=0&&r.top<innerHeight}})()`);
+    row(vp, '「이 세계관 틀 32 보기 →」 → 센티넬버스 머리 띠로 이어져요(화면 안 · 32틀)', go === '이 세계관 틀 32 보기 →' && band.on && band.h === '센티넬버스' && band.inView && (await countNow()) === 32, `${go} · 띠 위치 ${band.top}px · 목록 ${await countNow()}개`);
+    await b.shot(path.join(OUT, `${vp}-31-세계관-틀-보기.png`));
+    await b.eval('scrollTo(0,0)'); await b.sleep(300);
+    await tapOk(vp, '깡캐 칸', '.mart-cast [data-toggle="other"]');
+    await tapText(vp, '.mart-cast-tabs button', 'D&H');
+    const gos = await texts('.mart-cast [data-world]');
+    row(vp, '「D&H · 아드리안」 묶음: 세계관 둘로 가는 줄(D&H 틀 17 · 아드리안 틀 12)', J(gos) === J(['D&H 틀 17 보기 →', '아드리안 틀 12 보기 →']), gos.join(' / '));
+    await tapText(vp, '.mart-cast-pane [data-color]', '아드리안');
+    const adr = await b.eval(`[...document.querySelectorAll('.mart-cast .mart-cast-credit .mart-cast-credit-row')].filter(r=>/아드리안/.test(r.textContent)).flatMap(r=>[...r.querySelectorAll('a.mart-source')].map(a=>a.href))`);
+    const t2 = await tone();
+    row(vp, '깡캐에 아드리안: 원작 글 둘(81234 · 43794) · 깡통은 그대로 은설', adr.length === 2 && [81234, 43794].every(n => adr.some(u => u.endsWith('/posts/' + n))) && t2.name2 === '아드리안 폰 아이젠베르크' && t2.name === '은설', `${adr.map(u => u.split('/').pop()).join(' · ')} · 깡통 ${t2.name} · 깡캐 ${t2.name2}`);
+    await b.eval(`document.querySelector('.mart-cast [data-swap]').scrollIntoView({block:'center'}); true`); await b.sleep(300); await tapOk(vp, '⇄', '.mart-cast [data-swap]');
+    const t3 = await tone();
+    row(vp, '⇄ 화자 바꾸기: 깡통 아드리안 · 깡캐 은설', t3.name === '아드리안 폰 아이젠베르크' && t3.name2 === '은설', `깡통 ${t3.name} · 깡캐 ${t3.name2}`);
+    if (!(await b.eval(`document.querySelector('.mart-cast [data-toggle="main"]').getAttribute('aria-expanded')==='true'`))) await tapOk(vp, '깡통 칸', '.mart-cast [data-toggle="main"]');
+    const foot = await texts('.mart-cast-foot > *');
+    row(vp, '맨 아래 한 줄: 원래 색 · 캐릭터 없음 · 소품까지 캐릭터 색', J(foot) === J(['원래 색', '캐릭터 없음', '소품까지 캐릭터 색']), foot.join(' / '));
+    await tapOk(vp, '소품까지 캐릭터 색', '.mart-cast-cover'); const c1 = (await tone()).cover;
+    await tapOk(vp, '소품까지 캐릭터 색', '.mart-cast-cover'); const c2 = (await tone()).cover;
+    row(vp, '「소품까지 캐릭터 색」 끄고 켜기', c1 === false && c2 !== false, `끔 ${c1} · 켬 ${c2 ?? '기본'}`);
+    await tapText(vp, '.mart-cast-foot button', '캐릭터 없음'); const t4 = await tone();
+    await tapText(vp, '.mart-cast-foot button', '원래 색'); const t5 = await tone();
+    row(vp, '「캐릭터 없음」 → 무채 · 「원래 색」 → 틀 색 그대로', t4.on === true && !t4.k && t5.on === false, `없음 on ${t4.on} k ${t4.k} · 원래 색 on ${t5.on}`);
+    await tapText(vp, '.mart-cast-tabs button', '직접');
+    const dir = await b.eval(`(()=>{const p=document.querySelector('.mart-cast-direct');return p?{form:!!p.querySelector('.mart-cast-form input[name=name]'),color:!!p.querySelector('.mart-cast-color input[type=color]'),btn:p.querySelector('.mart-cast-form button')?.textContent,paste:!!p.querySelector('.mart-cast-paste textarea')}:null})()`);
+    row(vp, '「직접」 탭: 이름 · 색 · 「기억하고 고르기」 · 채팅 붙여 넣기', dir && dir.form && dir.color && dir.btn === '기억하고 고르기' && dir.paste, J(dir));
+    await b.eval(`(()=>{const f=document.querySelector('.mart-cast-form');f.name.value='시험이';f.requestSubmit();return true})()`); await b.sleep(500);
+    const t6 = await tone(), mine = await texts('.mart-cast-direct .mart-cast-mine [data-color]');
+    row(vp, '기억하고 고르기: 「직접」 탭 맨 위에 칩으로 · 깡통에 입혀져요', t6.name === '시험이' && mine.includes('시험이'), `깡통 ${t6.name} · 칩 ${mine.join(' / ')}`);
+    await b.eval(`document.querySelector('.mart-cast').scrollIntoView({block:'start'}); scrollBy(0,-70); true`); await b.sleep(400);
+    await b.shot(path.join(OUT, `${vp}-32-캐릭터-칸-직접.png`));
+    row(vp, '「직접」 탭 가로 넘침 0', (await over()) <= 0, `넘침 ${await over()}`);
+    await tapOk(vp, '잊기', '.mart-cast-direct [data-forget]');
+    row(vp, '기억한 캐릭터 × 로 잊기', (await texts('.mart-cast-direct .mart-cast-mine [data-color]')).length === 0, '');
+    await tapOk(vp, '낮', '.mart-cast [data-mode="light"]'); const m1 = (await tone()).mode; await tapOk(vp, '밤', '.mart-cast [data-mode="dark"]'); const m2 = (await tone()).mode;
+    row(vp, '밤 · 낮 그대로', m1 === 'light' && m2 === 'dark', `${m1} → ${m2}`);
+    await tapOk(vp, '내 글 칸', '.mart-cast [data-toggle="text"]');
+    row(vp, '「내 글」 칸 그대로(붙여 넣는 칸 · 내 글로 보기)', await b.eval(`!!document.querySelector('.mart-mine-text')?.checkVisibility() && !!document.querySelector('[data-mine="apply"]')`), '');
+    await tapOk(vp, '내 글 칸', '.mart-cast [data-toggle="text"]');
+    row(vp, '칸을 다시 누르면 접혀요(머리 줄만)', !(await b.eval(`document.querySelector('#mart-cast-panel')?.checkVisibility()`)), '');
+}
+
+async function headPart(vp) {
+    for (const [page, label, word] of [['geulkku', '쓰는 법', '내 글로 보기'], ['frames', '받는 법', '마트에서 가져오기']]) {
+        await b.goto('about:blank'); await b.goto(srv.url + `mart/${page}/`); await b.until(`document.querySelectorAll('.mart-card').length > 3 && document.querySelector('.mart-head-more')`, 30000); await b.sleep(500);
+        const shut = await b.eval(`(()=>{const h=document.querySelector('.mart-head'),h1e=h.querySelector('h1'),h1=h1e.getBoundingClientRect(),m=h.querySelector('.mart-head-more'),mr=m.getBoundingClientRect(),help=h.querySelector('.mart-head-help');return {btn:m.textContent.trim(),sameLine:Math.abs((mr.top+mr.bottom)/2-(h1.top+h1.bottom)/2)<8,helpShown:help.checkVisibility(),ps:[...h.querySelectorAll('p')].filter(p=>p.checkVisibility()).length,howto:document.querySelectorAll('.mart-howto').length,h1lines:Math.round(h1.height/parseFloat(getComputedStyle(h1e).lineHeight))}})()`);
+        row(vp, `${page}: 접힌 머리말은 제목 + 「${label} ⌄」만(설명 0줄 · 제목 한 줄) · 맨 아래 「쓰는 법」 칸 없음`, shut.btn === label && shut.sameLine && !shut.helpShown && shut.ps === 0 && shut.howto === 0 && shut.h1lines === 1, J(shut));
+        if (page === 'geulkku') await b.shot(path.join(OUT, `${vp}-40-머리말-접힘.png`));
+        await tapOk(vp, label, '.mart-head-more');
+        const open = await b.eval(`(()=>{const help=document.querySelector('.mart-head-help');return {shown:help.checkVisibility(),li:help.querySelectorAll('ol>li').length,has:help.textContent.includes(${J(word)}),clip:[...help.querySelectorAll('p,li')].filter(e=>e.scrollHeight>e.clientHeight+1||e.scrollWidth>e.clientWidth+1).length,exp:document.querySelector('.mart-head-more').getAttribute('aria-expanded')}})()`);
+        row(vp, `${page}: 「${label}」를 누르면 설명 · 번호 줄이 말줄임 없이 펼쳐져요`, open.shown && open.li >= 4 && open.has && open.clip === 0 && open.exp === 'true' && (await over()) <= 0, `번호 줄 ${open.li} · 잘린 줄 ${open.clip} · 넘침 ${await over()}`);
+        await b.shot(path.join(OUT, `${vp}-41-머리말-펼침-${page}.png`));
+        await tapOk(vp, label, '.mart-head-more');
+        row(vp, `${page}: 다시 누르면 접혀요`, !(await b.eval(`document.querySelector('.mart-head-help').checkVisibility()`)), '');
+    }
+}
+
+async function extraPart(vp) {
+    // PC: 세로 휠로 새 가로 줄(하위 칩)을 옆으로 — 공용 처리(top-mart.js)에 걸려요
+    if (vp === 'pc') {
+        await fresh(); await tapText(vp, '.mart-groups button', '일상');
+        const at = await b.eval(`(()=>{const e=document.querySelector('.mart-topics');e.scrollLeft=0;const r=e.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2,over:e.scrollWidth-e.clientWidth}})()`);
+        await b.send('Input.dispatchMouseEvent', { type: 'mouseWheel', x: at.x, y: at.y, deltaX: 0, deltaY: 240 }); await b.sleep(400);
+        const moved = await b.eval(`[document.querySelector('.mart-topics').scrollLeft, scrollY]`);
+        row(vp, '세로 휠 → 하위 칩 줄이 옆으로(페이지는 그대로)', at.over > 0 ? moved[0] > 0 && moved[1] === 0 : true, `넘치는 폭 ${at.over} · 줄 ${moved[0]} · 페이지 ${moved[1]}`);
+    }
+    // 320 폭 넘침 0(분류 줄 · 세계관 머리 띠 · 캐릭터 칸 펼침)
+    if (vp === 'phone') {
+        await b.size(320, 640, true, 2); await fresh();
+        await tapText(vp, '.mart-groups button', '세계관 · 인물'); await tapText(vp, '.mart-topics button', '센티넬버스');
+        const o1 = await over();
+        await b.eval('scrollTo(0,0)'); await tapOk(vp, '깡통 칸', '.mart-cast [data-toggle="main"]'); await tapText(vp, '.mart-cast-tabs button', '천지합동청');
+        const o2 = await over(), out = await b.eval(`[...document.querySelectorAll('.mart-cast *, .mart-band *, .mart-tools *')].filter(e=>e.checkVisibility()&&!e.closest('.mart-cast-tabs, .mart-groups, .mart-topics, .mart-chips, .mart-band-people, .mart-filters')&&e.getBoundingClientRect().right>innerWidth+1).length`);
+        row(vp, '폭 320: 분류 · 머리 띠 · 캐릭터 칸 가로 넘침 0', o1 <= 0 && o2 <= 0 && out === 0, `넘침 ${o1} · ${o2} · 밖으로 나간 요소 ${out}`);
+        await b.shot(path.join(OUT, `phone320-50-캐릭터-칸.png`));
+        await b.size(375, 812, true, 2);
+    }
+    // 장바구니 줄의 원작(인물 액자를 담으면)
+    await b.goto('about:blank'); await b.send('Storage.clearDataForOrigin', { origin: new URL(srv.url).origin, storageTypes: 'local_storage,session_storage' }).catch(() => { });
+    await b.goto(srv.url + 'mart/frames/'); await b.until(`document.querySelectorAll('.mart-card').length > 3`, 30000); await b.sleep(500);
+    await b.eval(`(()=>{const i=document.querySelector('.mart-tools input[type=search]');i.value='은설';i.dispatchEvent(new Event('input',{bubbles:true}));return true})()`); await b.sleep(900);
+    if (await b.eval(`(()=>{const p=document.querySelector('.mart-card [data-act="pick"], .mart-card .mart-pick');if(!p)return false;p.click();return true})()`)) {
+        await b.sleep(500); await tapOk(vp, '장바구니', '.mart-cart-btn'); await b.sleep(700);
+        const cart = await b.eval(`[...document.querySelectorAll('.mart-cart-list .mart-cart-src a.mart-source')].filter(a=>a.checkVisibility()).map(a=>a.href)`);
+        row(vp, '장바구니 줄: 은설 액자를 담으면 원작 줄(29037 · 99019)', [29037, 99019].every(n => cart.some(u => u.endsWith('/posts/' + n))) && (await over()) <= 0, cart.map(u => u.split('/').pop()).join(' · ') || '줄 없음');
+        await b.shot(path.join(OUT, `${vp}-51-장바구니-원작.png`));
+    }
+    await b.send('Storage.clearDataForOrigin', { origin: new URL(srv.url).origin, storageTypes: 'local_storage,session_storage' }).catch(() => { });
+}
+
 try {
-    for (const [vp, w, h, mobile, dpr] of [['pc', 1280, 900, false, 1], ['phone', 375, 812, true, 2]]) {
+    for (const [vp, w, h, mobile, dpr] of [['pc', 1280, 900, false, 1], ['phone', 375, 812, true, 2]].filter(v => !opt('--vp') || opt('--vp').split(',').includes(v[0]))) {
         await b.size(w, h, mobile, dpr);
-        if (!ONLY || ONLY === 'card') await cardPart(vp);
+        if (!ONLY || ONLY.includes('card')) await cardPart(vp);
+        if (!ONLY || ONLY.includes('topic')) await topicPart(vp);
+        if (!ONLY || ONLY.includes('world')) await worldPart(vp);
+        if (!ONLY || ONLY.includes('cast')) await castPart(vp);
+        if (!ONLY || ONLY.includes('head')) await headPart(vp);
+        if (!ONLY || ONLY.includes('extra')) await extraPart(vp);
     }
     const errs = b.errors.filter(e => !/favicon|mp3|ERR_ABORTED|net::/.test(e));
     row('-', '콘솔 오류 0', !errs.length, errs.slice(0, 3).join(' / ') || '0');

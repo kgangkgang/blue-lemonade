@@ -20,6 +20,8 @@ const SENGA_SIM = '[실리/1차] 센티넬버스 시뮬레이션(센가시뮬) v
 const botsOf = item => item.kind !== 'frame' ? [] : item.concept === 'sentinel-ksa' ? [SENGA_SIM] : item.concept === 'sentinel-academy' ? [SENGA_ACADEMY] : item.category === 'sentinel-char' ? [SENGA_SIM, SENGA_ACADEMY] : [];
 const botText = item => botsOf(item).map(b => sourceHtml(workByTitle(b) || { title: b }, '원작')).join('');   // 11-12 밤 주소를 받아 링크로(sources.js — 글꾸 마트 캐릭터 칸과 같은 자료)
 // 인물 액자의 원작 링크는 글꾸 인물과 같은 길(분류 SOURCES + 「char-이름」 깡캐 글)로 — mart.js sourceLinks 를 그대로 빌려요
+/** 그 액자의 원작 줄 HTML — 액자 방 · 지니 · 장바구니가 같이 써요(mart.js 가 frameSourceLinks 로 내보내요) */
+export const frameLinks = item => links(item);
 const links = item => item.kind === 'frame' && /^(halo|gangho)-char$/.test(item.category)
     ? api.sourceLinks({ kind: 'frame-char', category: item.category, id: `char-${String(item.concept).replace(/^(halo|gangho)-/, '')}` }) : api.sourceLinks(item) + botText(item);
 const states = new Map();
@@ -695,6 +697,8 @@ export async function kit(a) {
     api.cart.onChange(() => { for (const st of states.values()) syncCard(st); });
     return {
         data, items,
+        /** 11-12 밤 그 액자의 원작 줄(인물 · 센티넬버스 봇 포함) — 지니 결과 카드도 액자 방과 같은 줄을 써요 */
+        links,
         /** 카드 요소(.mart-stage · .mart-pick 이 든)에 그 액자를 그려요 */
         paint(item, el) { const st = stateOf(item); st.el = el; paintCard(st); syncCard(st); return st; },
         pick: (st, from) => pick(st, from),

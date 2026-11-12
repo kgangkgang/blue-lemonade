@@ -27,20 +27,21 @@ try {
         await b.eval(`document.querySelector('.mart-credits').scrollIntoView({block:'center'}); true`); await b.sleep(300);
         row(vp, '「원작」 칸 가로 넘침 0', (await over()) <= 0 && (await clipOut('.mart-credits a.mart-source')) === 0, `페이지 넘침 ${await over()} · 밖으로 나간 링크 ${await clipOut('.mart-credits a.mart-source')}`);
         await b.shot(path.join(OUT, `${vp}-1-원작-칸.png`));
-        // 캐릭터 칸: 깡통 → 묶음마다 원작 줄
+        // 캐릭터 칸(11-12 밤 한 번에 한 묶음): 깡통 → 묶음 탭마다 「원작 N ⌄」을 펼치면 그 묶음 원작 글 전부
         await b.eval(`scrollTo(0,0); document.querySelector('.mart-cast [data-toggle="main"]').click(); true`); await b.sleep(400);
-        const groups = await b.eval(`[...document.querySelectorAll('.mart-cast .mart-cast-g')].map(x=>x.dataset.group).filter(g=>g!=='none'&&g!=='mine')`);
+        const groups = await b.eval(`[...document.querySelectorAll('.mart-cast .mart-cast-tabs [data-tab]')].map(x=>x.dataset.tab).filter(g=>g!=='direct')`);
         const got = {};
         for (const g of groups) {
-            if (!(await b.eval(`document.querySelector('.mart-cast .mart-cast-g[data-group="${g}"]').getAttribute('aria-expanded')==='true'`))) { await b.eval(`document.querySelector('.mart-cast .mart-cast-g[data-group="${g}"]').click(); true`); await b.sleep(300); }
-            got[g] = await hrefs(`.mart-cast .mart-cast-src[data-src-group="${g}"] a.mart-source`);
+            await b.eval(`document.querySelector('.mart-cast [data-tab="${g}"]').click(); true`); await b.sleep(250);
+            await b.eval(`document.querySelector('.mart-cast [data-src-toggle]')?.click(); true`); await b.sleep(250);
+            got[g] = await b.eval(`[...document.querySelectorAll('.mart-cast .mart-cast-src[data-src-group="${g}"] a.mart-source')].filter(a=>a.checkVisibility()).map(a=>a.getAttribute('href'))`);
         }
-        row(vp, '캐릭터 칸: 묶음마다 원작 링크', groups.length >= 4 && groups.every(g => got[g].length > 0), groups.map(g => `${g} ${got[g].length}`).join(' · '));
+        row(vp, '캐릭터 칸: 묶음마다 원작 링크(「원작 N」 펼침)', groups.length >= 4 && groups.every(g => got[g].length > 0) && NINE.every(n => Object.values(got).flat().some(u => u.endsWith('/posts/' + n))), groups.map(g => `${g} ${got[g].length}`).join(' · '));
         row(vp, '캐릭터 칸 가로 넘침 0', (await over()) <= 0 && (await clipOut('.mart-cast a.mart-source')) === 0, `페이지 넘침 ${await over()}`);
         await b.eval(`document.querySelector('.mart-cast').scrollIntoView({block:'start'}); true`); await b.sleep(250);
         await b.shot(path.join(OUT, `${vp}-2-캐릭터-칸-묶음.png`));
         // 은설을 고르면 목록 위 줄에 원작
-        await b.eval(`(()=>{const r=[...document.querySelectorAll('.mart-cast input[name="bl-cast"]')].find(i=>i.dataset.name==='은설');r.click();return true})()`); await b.sleep(700);
+        await b.eval(`(()=>{document.querySelector('.mart-cast [data-tab="sentinel"]').click();const r=[...document.querySelectorAll('.mart-cast .mart-cast-pane [data-color]')].find(i=>i.dataset.name==='은설');r.click();return true})()`); await b.sleep(700);
         const picked = await b.eval(`(()=>{const c=document.querySelector('.mart-cast .mart-cast-credit');return c?{text:c.textContent.replace(/\\s+/g,' ').trim(),links:[...c.querySelectorAll('a.mart-source')].map(a=>a.href)}:null})()`);
         row(vp, '은설을 고르면 목록 위에 원작 줄(센티넬버스 두 봇 링크)', picked && /은설/.test(picked.text) && [29037, 99019].every(n => picked.links.some(u => u.endsWith('/posts/' + n))), picked ? picked.text : '줄 없음');
         await b.eval(`document.querySelector('.mart-cast').scrollIntoView({block:'start'}); true`); await b.sleep(250);
@@ -48,8 +49,7 @@ try {
         row(vp, '고른 뒤 가로 넘침 0', (await over()) <= 0, `페이지 넘침 ${await over()}`);
         // 깡캐에 아드리안을 고르면 원작 글 둘이 나란히
         await b.eval(`document.querySelector('.mart-cast [data-toggle="other"]').click(); true`); await b.sleep(400);
-        if (!(await b.eval(`document.querySelector('.mart-cast .mart-cast-g[data-group="dh"]').getAttribute('aria-expanded')==='true'`))) { await b.eval(`document.querySelector('.mart-cast .mart-cast-g[data-group="dh"]').click(); true`); await b.sleep(300); }
-        await b.eval(`(()=>{const r=[...document.querySelectorAll('.mart-cast input[name="bl-cast2"]')].find(i=>i.dataset.name==='아드리안 폰 아이젠베르크');r.click();return true})()`); await b.sleep(700);
+        await b.eval(`(()=>{document.querySelector('.mart-cast [data-tab="dh"]').click();const r=[...document.querySelectorAll('.mart-cast .mart-cast-pane [data-color]')].find(i=>i.dataset.name==='아드리안 폰 아이젠베르크');r.click();return true})()`); await b.sleep(700);
         const adr = await b.eval(`[...document.querySelectorAll('.mart-cast .mart-cast-credit .mart-cast-credit-row')].filter(r=>/아드리안/.test(r.textContent)).flatMap(r=>[...r.querySelectorAll('a.mart-source')].map(a=>a.href))`);
         row(vp, '아드리안을 고르면 원작 글 둘(81234 · 43794)', [81234, 43794].every(n => adr.some(u => u.endsWith('/posts/' + n))) && adr.length === 2, adr.join(' · ') || '줄 없음');
         await b.eval(`document.querySelector('.mart-cast').scrollIntoView({block:'start'}); true`); await b.sleep(250);

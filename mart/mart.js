@@ -11,7 +11,7 @@ const LIKE_KEY = 'bl-mart-geulkku-like-v1';
 const like = (() => { let v = null; try { v = JSON.parse(localStorage.getItem(LIKE_KEY) || 'null'); } catch { /* 저장이 막힌 창 */ } const ids = a => (Array.isArray(a) ? [...new Set(a.filter(x => typeof x === 'string' && x && x.length < 80))] : []); return { fav: ids(v?.fav).slice(0, 96), recent: ids(v?.recent).slice(0, 5) }; })();
 const saveLike = () => { try { localStorage.setItem(LIKE_KEY, JSON.stringify(like)); } catch { /* 이 화면에서만 */ } };
 const LIKE_CHIPS = { fav: '★ 즐겨찾기', recent: '최근' };
-import { cart, say, onCheckout, artName, saveArt, layerHost } from './cart.js?v=20261112d';
+import { cart, say, onCheckout, artName, saveArt, layerHost } from './cart.js?v=20261112e';
 import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
@@ -19,8 +19,8 @@ import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110
 import { toneState, toned, toneOut, toneKey, CAST_GROUPS } from './tone-state.js?v=20261112e';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
 import { simpleReady } from './simple-frames.js?v=20261112a';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
-import { WORKS, CHAR_WORKS, ADRIAN_WORKS, workByTitle, sourceHtml, creditsHtml, itemSources, worldOf } from './sources.js?v=20261112c';   // 11-12 밤 원작(출처) 자료 한 곳
-import { mountCast, pickedCreditHtml } from './cast.js?v=20261112h';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
+import { WORKS, CHAR_WORKS, ADRIAN_WORKS, workByTitle, sourceHtml, creditsHtml, itemSources, worldOf, WORLDS, worldSources } from './sources.js?v=20261112c';   // 11-12 밤 원작(출처) 자료 한 곳
+import { mountCast, pickedCreditHtml } from './cast.js?v=20261112i';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
 import { frameMarkdown } from './mine-text.js?v=20261112e';   // 11-11 글만 복사(마크다운)
 import { makeSet } from './geulkku-set.js?v=20261112e';   // 11-12 설정 꼴 blGeulkku 2
 import { lookNow } from './look.js?v=20261112a';
@@ -28,7 +28,7 @@ import { motionNow } from './motion-state.js?v=20261112a';
 import { texNow } from './texture.js?v=20261112a';
 import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
 import { tuneOf } from './tune.js?v=20261112e';
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112h';
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112i';
 import { wireSelectHide } from './select-hide.js?v=20261112e';   // 11-12 미리보기에서 글을 고르면 옆에 뜨는 막대(눌러야 보이게 · 숨김 풀기 · 굵게 · 기울임)
 import { themeTakeable } from './theme-take.js?v=20261112c';   // 11-12 테마가 이 틀을 받는지(테마 받기 검사를 옮긴 것 · 목록 틀은 index.json nt · 내 글꾸는 여기서)
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
@@ -152,6 +152,70 @@ function chipGroups({ groupsEl, chipsEl, cats, groups = [], total, onChange, ext
         },
     };
 }
+// ── 11-12 밤 글꾸 분류: 주제 묶음 탭(.mart-groups) + 하위 칩(.mart-topics) + 세계관 머리 띠(.mart-band) + 보조 거르기 줄(.mart-chips — 즐겨찾기 · 최근 · 내 글꾸 · 누름 방식) ──
+//   사용자 「글꾸 카테고리에 뭐 일상 이벤트 예전에 있던 카테고리 가져오고 지금은 인물 출처도 빠지고 그 세계관 인물들 한꺼번에 보는 것도 없잖아」
+//   분류 값은 목록 자료(index.json 항목 topic · world · who · 묶음은 topics)에서 와요 — 여기에 틀 id 를 박지 않아요. 주제 × 보조 거르기를 같이 걸 수 있어요.
+//   「세계관 · 인물」에서 세계관 하나를 고르면 목록 머리에 띠(이름 · 틀/인물 수 · 원작 글 전부 · 인물 칩)가 뜨고, 인물 칩을 누르면 그 인물 틀만 남아요.
+const SOUND_CAT = 'simple-sound';   // 보조 거르기 「소리 · 음악」 — 소리 줄이 든 틀(item.audio · 닫힌 채 시작하는 틀도 같이)
+function topicPicker({ groupsEl, topicsEl, chipsEl, bandEl, items, groups, cats, onChange, extra }) {
+    const sel = { group: 'all', topic: 'all', who: null, cat: 'all' };   // who: null 전부 · '' 인물 없는 세계관 틀 · 이름
+    const groupOf = new Map(groups.flatMap(g => g.chips.map(c => [c, g.id])));
+    const inTopic = x => sel.group === 'all' || (groupOf.get(x.topic) === sel.group && (sel.topic === 'all' || x.topic === sel.topic));
+    const inWho = x => sel.who === null || (sel.who === '' ? !x.who : x.who === sel.who);
+    const inCat = (x, cat = sel.cat) => cat === 'all' || cat in LIKE_CHIPS || cat === OWN_CAT || (cat === SOUND_CAT ? !!x.audio : x.category === cat);
+    const count = f => items.reduce((n, x) => n + (f(x) ? 1 : 0), 0);
+    const btn = (cls, attr, id, label, n, on, color = '') => `<button type="button" class="${cls}" data-${attr}="${esc(id)}" aria-pressed="${on}">${color ? `<i class="mart-cast-dot" style="background:${esc(color)}" aria-hidden="true"></i>` : ''}${cls === 'tab' ? `<span class="tab-t">${esc(label)}</span>` : esc(label)}${numHtml(n)}</button>`;
+    const world = () => (sel.group === 'world' && sel.topic !== 'all' ? WORLDS.find(w => w.label === sel.topic) || null : null);
+    const paintGroups = () => { groupsEl.innerHTML = [btn('tab', 'group', 'all', '전체', items.length, sel.group === 'all'), ...groups.map(g => btn('tab', 'group', g.id, g.label, count(x => groupOf.get(x.topic) === g.id), sel.group === g.id))].join(''); };
+    const paintTopics = () => {
+        const g = groups.find(x => x.id === sel.group);
+        topicsEl.hidden = !g;
+        topicsEl.innerHTML = g ? [btn('chip', 'topic', 'all', '모두', count(x => groupOf.get(x.topic) === g.id), sel.topic === 'all'), ...g.chips.map(c => btn('chip', 'topic', c, c, count(x => x.topic === c), sel.topic === c))].join('') : '';
+        topicsEl.scrollLeft = 0;
+    };
+    /** 보조 거르기 줄 — 숫자는 지금 고른 주제 안에서 센 값(즐겨찾기 · 최근 · 내 글꾸는 전체) · 고른 칩을 다시 누르면 풀려요 */
+    const paintCats = () => {
+        const base = items.filter(x => inTopic(x) && inWho(x));
+        chipsEl.innerHTML = [...extra().map(([id, label, n]) => btn('chip', 'cat', id, label, n, sel.cat === id)), '<span class="mart-chips-sep" aria-hidden="true"></span>', ...cats.map(c => btn('chip', 'cat', c.id, c.label, base.filter(x => inCat(x, c.id)).length, sel.cat === c.id))].join('');
+    };
+    const paintBand = () => {
+        const w = world();
+        bandEl.hidden = !w;
+        if (!w) { bandEl.innerHTML = ''; return; }
+        const list = items.filter(x => x.world === w.id), cast = CAST_GROUPS.find(g => g.id === w.group)?.cast || [];
+        const people = cast.map(c => ({ ...c, n: list.filter(x => x.who === c.name).length })).filter(c => c.n);
+        const plain = list.filter(x => !x.who).length;
+        bandEl.innerHTML = `<div class="mart-band-h"><h2>${esc(w.label)}</h2><span class="mart-band-n">틀 ${list.length} · 인물 ${people.length}</span>${worldSources(w.id).map(s => sourceHtml(s)).join('')}</div>
+            <div class="mart-band-people" role="group" aria-label="${esc(w.label)} 인물">${plain ? btn('chip', 'who', '', '세계관', plain, sel.who === '') : ''}${people.map(c => btn('chip', 'who', c.name, c.name, c.n, sel.who === c.name, c.color)).join('')}</div>`;
+    };
+    const edge = () => { for (const el of [groupsEl, topicsEl, chipsEl]) el.classList.toggle('has-more', el.scrollLeft + el.clientWidth < el.scrollWidth - 2); };
+    const paint = () => { paintGroups(); paintTopics(); paintBand(); paintCats(); edge(); };
+    const keep = (el, q) => { const b = el.querySelector(q); b?.focus({ preventScroll: true }); b?.scrollIntoView({ inline: 'nearest', block: 'nearest' }); };
+    groupsEl.addEventListener('click', (e) => { const b = e.target.closest('button[data-group]'); if (!b) return; Object.assign(sel, { group: b.dataset.group, topic: 'all', who: null }); paint(); keep(groupsEl, '[aria-pressed="true"]'); onChange(); });
+    topicsEl.addEventListener('click', (e) => { const b = e.target.closest('button[data-topic]'); if (!b) return; Object.assign(sel, { topic: b.dataset.topic, who: null }); paint(); keep(topicsEl, '[aria-pressed="true"]'); onChange(); });
+    bandEl.addEventListener('click', (e) => { const b = e.target.closest('button[data-who]'); if (!b) return; const id = b.dataset.who; sel.who = sel.who === id ? null : id; paintBand(); paintCats(); keep(bandEl, `[data-who="${CSS.escape(id)}"]`); onChange(); });
+    chipsEl.addEventListener('click', (e) => { const b = e.target.closest('button[data-cat]'); if (!b) return; const id = b.dataset.cat; sel.cat = sel.cat === id ? 'all' : id; paintCats(); keep(chipsEl, `[data-cat="${CSS.escape(id)}"]`); onChange(); });
+    for (const el of [groupsEl, topicsEl, chipsEl]) el.addEventListener('scroll', edge, { passive: true });
+    addEventListener('resize', edge);
+    paint();
+    foldChips(chipsEl, groupsEl);
+    foldBar(chipsEl.closest('.mart-tools'));
+    return {
+        sel,
+        groupLabel: () => '',
+        count: (id, n) => { const el = chipsEl.querySelector(`[data-cat="${id}"] .mart-n`); if (el) el.textContent = n; },
+        /** 그 항목이 지금 거르기에 맞는지 — 내 글꾸(남의 HTML)는 주제가 없어 주제 거르기를 안 타요 */
+        match: (category, builtin, item) => sel.cat === OWN_CAT || !item || (inTopic(item) && inWho(item) && inCat(item)),
+        /** 세계관 하나 한꺼번에 보기(캐릭터 칸 「이 세계관 틀 N 보기 →」) */
+        openWorld: (id) => {
+            const w = worldOf(id); if (!w) return;
+            Object.assign(sel, { group: 'world', topic: w.label, who: null, cat: sel.cat === OWN_CAT ? 'all' : sel.cat });
+            paint(); onChange();
+            bandEl.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth' });
+        },
+        worlds: () => WORLDS.map(w => ({ id: w.id, label: w.label, group: w.group, n: count(x => x.world === w.id) })),
+    };
+}
 /** PC 세부 칩 줄 접기 「▾」 — 위 분류 줄 오른쪽 끝(mart.css 가 자리를 잡고 폰에선 숨겨요) · 접힘은 이 기기에 기억해요 */
 const FOLD_KEY = 'bl-mart-chips-folded';
 function foldChips(chipsEl, groupsEl) {
@@ -179,7 +243,7 @@ const BAR_CALM = matchMedia('(prefers-reduced-motion:reduce)');
 function foldBar(tools) {
     const row = tools?.querySelector('.mart-search-row');
     if (!row || row.querySelector('.mart-bar-fold')) return;
-    const parts = [...tools.querySelectorAll('.mart-groups, .mart-chips, .mart-filters')];
+    const parts = [...tools.querySelectorAll('.mart-groups, .mart-topics, .mart-chips, .mart-filters')];
     const b = Object.assign(document.createElement('button'), { type: 'button', className: 'mart-bar-fold chev' });   // 접힘 머리(「자세히」와 같은 모양 · ⌄ 선 그림 마스크 14)
     b.setAttribute('aria-controls', parts.map(el => el.id).filter(Boolean).join(' '));   // 이미 있는 id(세부 칩 줄 #mart-chips)만 — 새 id 를 붙이면 리그 기준선 열쇠(요소 경로)가 바뀌어요
     b.innerHTML = '<span class="mart-bar-t">필터</span><span class="mart-bar-sum"></span>';
@@ -191,7 +255,9 @@ function foldBar(tools) {
         const out = [];
         for (const seg of tools.querySelectorAll('[data-filter]')) { const on = seg.querySelector('[aria-pressed="true"]'); if (on && on !== seg.firstElementChild && !seg.closest('[hidden]')) out.push(labelOf(on)); }
         const cat = tools.querySelector('.mart-chips [aria-pressed="true"]'), grp = tools.querySelector('.mart-groups:not([hidden]) [aria-pressed="true"]');
-        if (cat && cat.dataset.cat !== 'all') out.push(labelOf(cat));
+        const top = tools.querySelector('.mart-topics:not([hidden]) [aria-pressed="true"]');   // 11-12 밤 글꾸: 주제 묶음 → 하위 칩(고른 것) + 보조 거르기
+        if (top) { out.push(labelOf(top.dataset.topic !== 'all' ? top : grp)); if (cat) out.push(labelOf(cat)); }
+        else if (cat && cat.dataset.cat !== 'all') out.push(labelOf(cat));
         else if (grp && grp.dataset.group !== 'all') out.push(labelOf(grp));
         return out;
     };
@@ -216,7 +282,7 @@ function foldBar(tools) {
     };
     tools.addEventListener('animationend', () => tools.classList.remove('is-opening'));
     b.addEventListener('click', () => { manual = true; set(!collapsed); });
-    tools.addEventListener('click', (e) => { if (e.target.closest('[data-filter] button, .mart-groups button, .mart-chips button')) paint(); });
+    tools.addEventListener('click', (e) => { if (e.target.closest('[data-filter] button, .mart-groups button, .mart-topics button, .mart-chips button')) paint(); });
     // 띠가 붙기 시작하는 자리(문서 기준) = 띠 바로 앞 표시의 위치 − 붙는 높이
     const mark = Object.assign(document.createElement('div'), { className: 'mart-bar-mark' });
     mark.setAttribute('aria-hidden', 'true');
@@ -240,13 +306,14 @@ function foldBar(tools) {
     new ResizeObserver(gap).observe(tools);
     gap(); paint();
 }
-/** 머리말: 설명은 폰 두 줄 · PC 한 줄만 보이고 「자세히」로 펼쳐요(640~899 태블릿은 늘 펼침) */
+/** 머리말: 접힌 동안은 제목 + 「쓰는 법 ⌄」(액자 마트는 「받는 법」)만 — 누르면 설명 · 쓰는 법 칸(.mart-head-help)이 펼쳐져요(11-12 밤 사용자 「차라리 글을 없애고 자세히 누르면 설명 나오게」 · 「쓰는 법이 제일 밑에 있는 것도 의아함」) */
 function wireHead() {
-    const head = document.querySelector('.mart-head'), h1 = head?.querySelector('h1');
-    if (!h1 || head.querySelector('.mart-head-more')) return;
-    const b = Object.assign(document.createElement('button'), { type: 'button', className: 'mart-head-more chev', textContent: '자세히' });
-    b.setAttribute('aria-expanded', 'false');
-    b.addEventListener('click', () => { const on = head.classList.toggle('is-open'); b.setAttribute('aria-expanded', String(on)); b.textContent = on ? '접기' : '자세히'; });
+    const head = document.querySelector('.mart-head'), h1 = head?.querySelector('h1'), help = head?.querySelector('.mart-head-help');
+    if (!h1 || !help || head.querySelector('.mart-head-more')) return;
+    help.id ||= 'mart-head-help';
+    const b = Object.assign(document.createElement('button'), { type: 'button', className: 'mart-head-more chev', textContent: help.dataset.label || '쓰는 법' });
+    b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-controls', help.id);
+    b.addEventListener('click', () => { const on = head.classList.toggle('is-open'); b.setAttribute('aria-expanded', String(on)); });
     h1.after(b);
 }
 wireHead();
@@ -328,9 +395,15 @@ function receipt(state) {
     return null;   // 그림 액자: 받기 파일을 그대로
 }
 /** 장바구니 한 줄 — 받을 데이터(receipt) 또는 그림 액자 받기 파일 주소, 서랍에 보일 이름 · 크기 */
+let frameMod = null;   // 액자 방 모듈(받은 뒤) — 장바구니 줄의 액자 원작 줄에 써요
+/** 11-12 밤 장바구니 줄에 실을 원작: [{ kind, title, url }] — 카드에 뜨는 원작 줄(글꾸 sourceLinks · 액자 frameLinks)을 그대로 읽어요 */
+const sourcesOf = (item) => {
+    const html = item.kind === 'geulkku' ? sourceLinks(item) : (frameMod?.frameLinks ? frameMod.frameLinks(item) : sourceLinks(item));
+    return [...html.matchAll(/<a class="mart-source" href="(https:\/\/kkangtong\.xyz\/posts\/\d+)"[^>]*>🔗 ([^<·]+) · ([^<]*)<\/a>/g)].map(m => ({ kind: m[2].trim(), title: m[3].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"), url: m[1] }));
+};
 function entryOf(state) {
     const item = state.item, own = receipt(state);
-    const base = { kind: item.kind, id: own?.id || item.id, key: `${item.kind}:${own?.id || item.id}`, name: own?.name || item.name || item.label, label: KIND_LABEL[item.kind], emoji: item.emoji || (item.kind === 'geulkku' ? '📝' : '🖼️'), ...(item.kind === 'geulkku' && item.icon && !String(item.icon).startsWith('data:') ? { icon: `data/geulkku/${item.icon}` } : {}), href: asset(`${item.kind === 'geulkku' ? 'geulkku' : 'frames'}/#${item.id}`) };   // 마트 밖(지니)에서 담아도 제 마트로 돌아가요
+    const base = { kind: item.kind, id: own?.id || item.id, key: `${item.kind}:${own?.id || item.id}`, name: own?.name || item.name || item.label, label: KIND_LABEL[item.kind], emoji: item.emoji || (item.kind === 'geulkku' ? '📝' : '🖼️'), ...((src => (src.length ? { src } : {}))(sourcesOf(item))), ...(item.kind === 'geulkku' && item.icon && !String(item.icon).startsWith('data:') ? { icon: `data/geulkku/${item.icon}` } : {}), href: asset(`${item.kind === 'geulkku' ? 'geulkku' : 'frames'}/#${item.id}`) };   // 마트 밖(지니)에서 담아도 제 마트로 돌아가요
     if (own) return { ...base, receipt: own, bytes: JSON.stringify(own).length, bg: item.colors?.bg };
     // 그림 액자(코덱스 컬렉션): 받기 그림 주소만 두고 받는 순간 PNG 로 만들어요(frameReceipt)
     if (item.full) return { ...base, art: item.full, mask: item.mask, ratio: item.ratio, thumb: item.thumb, bytes: item.bytes || 0, ...(state.view ? { view: { ...state.view } } : {}) };
@@ -660,7 +733,7 @@ function doAct(state, act, b) {
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
 let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261112h').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261112i').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
@@ -1081,7 +1154,7 @@ function ownPick(state, b) {
 function applyFilter() {
     const q = (search.value || '').trim().toLowerCase();
     const ownCat = picker?.sel.cat === OWN_CAT;
-    let list = (ownCat ? ownItems : allItems).filter(item => (!picker || picker.match(item.category, !!item.builtin)) && (ownCat || styleActive === 'all' || styleOf(item) === styleActive) && (!q || item._text.includes(q)));
+    let list = (ownCat ? ownItems : allItems).filter(item => (!picker || picker.match(item.category, !!item.builtin, item)) && (ownCat || styleActive === 'all' || styleOf(item) === styleActive) && (!q || item._text.includes(q)));
     const likeCat = picker?.sel.cat in LIKE_CHIPS ? picker.sel.cat : '';   // 11-11 즐겨찾기(누른 차례) · 최근(마지막에 쓴 것부터)
     if (likeCat) list = like[likeCat].map(id => list.find(x => x.id === id)).filter(Boolean);
     // 11-10 「모든 디자인」이면 컨셉(같은 이름) 하나에 카드 하나 — 고른 디자인이 걸러진 안에 있으면 그것, 아니면 처음 것
@@ -1126,7 +1199,11 @@ async function main() {
     const moreBuiltin = shownItems.filter(x => x.builtin && !builtinCats.has(x.category)).length;
     if (moreBuiltin) cats.push({ id: BUILTIN_MORE, label: '내장 심플', n: moreBuiltin, group: 'builtin' });
     if (kind === 'geulkku') refreshOwn();
-    picker = chipGroups({ groupsEl: document.querySelector('.mart-groups'), chipsEl: chips, cats, groups: GEULKKU_GROUPS, total: shownItems.length, onChange: applyFilter, extra: kind === 'geulkku' ? () => [...likeRows(shownItems), [OWN_CAT, '내 글꾸', ownItems.length]] : null });
+    // 11-12 밤 글꾸: 주제 묶음 탭 + 하위 칩 + 세계관 머리 띠 · 예전 칩(즐겨찾기 · 최근 · 내 글꾸 · 누름 방식)은 보조 거르기 줄로 같이 걸어요(목록 자료에 topics 가 없으면 예전 칩 줄 그대로)
+    const topicsEl = document.querySelector('.mart-topics'), bandEl = document.querySelector('.mart-band');
+    picker = kind === 'geulkku' && topicGroups.length && topicsEl && bandEl
+        ? topicPicker({ groupsEl: document.querySelector('.mart-groups'), topicsEl, chipsEl: chips, bandEl, items: shownItems, groups: topicGroups, cats, onChange: applyFilter, extra: () => [...likeRows(shownItems), [OWN_CAT, '내 글꾸', ownItems.length]] })
+        : chipGroups({ groupsEl: document.querySelector('.mart-groups'), chipsEl: chips, cats, groups: GEULKKU_GROUPS, total: shownItems.length, onChange: applyFilter, extra: kind === 'geulkku' ? () => [...likeRows(shownItems), [OWN_CAT, '내 글꾸', ownItems.length]] : null });
     // 그림체(글꾸): 둘 이상일 때만 칩 줄을 보여요 — 하나뿐(지금은 기본만)이면 줄째 숨겨요
     const styleSeg = document.querySelector('[data-filter="style"]');
     if (styleSeg) {
@@ -1159,7 +1236,7 @@ async function main() {
     for (const a of byName.values()) { a.sort((p, q) => rank(p) - rank(q)); for (const x of a) x._sibs = a; }
     { const want = hashId(), it = want && items.find(x => x.id === want); if (it) conceptPick.set(it.name, it.id); }   // #글꾸id 로 오면 그 디자인이 카드에 보여요
     { const cr = document.querySelector('.mart-credits'); if (cr) cr.innerHTML = creditsHtml(CAST_GROUPS); }   // 11-12 밤 「원작」 칸 — 캐릭터를 안 골라도 보여요
-    mountCast(document.querySelector('.mart-cast'), { say });   // 11-10 목록 위 「깡통: … ▾ · 깡캐: … ▾」
+    mountCast(document.querySelector('.mart-cast'), { say, worlds: () => picker?.worlds?.() || [], openWorld: id => picker?.openWorld?.(id) });   // 11-10 목록 위 「깡통: … ▾ · 깡캐: … ▾」
     cards = lazyGrid(grid, cardEl);
     applyFilter();
     grid.setAttribute('aria-busy', 'false');
@@ -1192,7 +1269,7 @@ async function main() {
 }
 // 액자 마트: 수백 종 · 내 사진 넣어 보기 · 거르기 · 조금씩 그리기(frame-room.js) — 받기 · 장바구니는 여기 것을 그대로 써요
 const start = kind === 'frames'
-    ? import('./frame-room.js?v=20261112e').then(m => m.start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
+    ? import('./frame-room.js?v=20261112f').then(m => (frameMod = m).start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
     : kind === 'geulkku' ? main() : null;   // 그 밖의 페이지(지니)는 아래 부품만 빌려 써요
 start?.catch(e => { grid.innerHTML = `<p class="mart-empty">목록을 못 불러왔어요 · ${esc(e.message)}</p>`; });
 
@@ -1211,6 +1288,6 @@ export async function geulkkuList() {
     return data;
 }
 /** 프레임 방(frame-room.js)의 지니용 준비 — 마트 액자 카드와 같은 그림 · 같은 담기 값 */
-export const frameKit = () => import('./frame-room.js?v=20261112e').then(m => m.kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
+export const frameKit = () => import('./frame-room.js?v=20261112f').then(m => (frameMod = m).kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
 export const mylogOn = () => mylog.on;
 export { isBuiltin, BUILTIN_TAG, cart, say, esc, asset, ensureItem, previewOf, tagsHtml, glyphHtml, iconSrc, descOf, catLabel, styleOf, entryOf, receipt, doAct, copyEntries, copyHtml, sourceLinks, LOAD_FAIL };

@@ -101,11 +101,13 @@ async function thumb(entry) {
     // 글꾸: 그 틀 바탕색 위에 틀의 우리 아이콘(없으면 이모지)
     return `<span class="mart-cart-thumb"${entry.bg ? ` style="background:${esc(entry.bg)}"` : ''}>${entry.icon ? `<img class="mart-ico" alt="" src="${esc(asset(entry.icon))}">` : `<span class="em">${lemonize(esc(entry.emoji || '📝'))}</span>`}</span>`;
 }
+/** 11-12 밤 담은 것의 원작 줄(세계관 · 인물 액자 / 글꾸) — 줄 아래 작은 링크 · 담을 때 entry.src 로 같이 기억해요 */
+const srcHtml = e => (Array.isArray(e.src) && e.src.length ? `<span class="mart-cart-src">${e.src.filter(x => /^https:\/\/kkangtong\.xyz\/posts\/\d+$/.test(x?.url || '')).map(x => `<a class="mart-source" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" title="원작 깡싸 글">🔗 ${esc(x.kind || '원작')} · ${esc(x.title)}</a>`).join('')}</span>` : '');
 let renderId = 0;
 async function render() {
     syncBadge();
     const id = ++renderId;
-    const rows = await Promise.all(entries.map(async e => `<li><button type="button" class="mart-cart-row" data-href="${esc(e.href || '')}">${await thumb(e)}<span class="mart-cart-name"><b>${esc(e.name)}</b><small>${esc(e.label || '')} · ${sizeText(e.bytes || 0)}</small></span></button><button type="button" class="ibtn x quiet mart-cart-del" data-cart-del="${esc(e.key)}" aria-label="${esc(e.name)} 빼기"></button></li>`));
+    const rows = await Promise.all(entries.map(async e => `<li><button type="button" class="mart-cart-row" data-href="${esc(e.href || '')}">${await thumb(e)}<span class="mart-cart-name"><b>${esc(e.name)}</b><small>${esc(e.label || '')} · ${sizeText(e.bytes || 0)}</small></span></button>${srcHtml(e)}<button type="button" class="ibtn x quiet mart-cart-del" data-cart-del="${esc(e.key)}" aria-label="${esc(e.name)} 빼기"></button></li>`));
     if (id !== renderId) return;
     list.innerHTML = rows.join('');
     const empty = !entries.length;

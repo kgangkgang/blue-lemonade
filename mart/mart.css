@@ -92,10 +92,7 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:32px;backgrou
 .mart-head-more:hover,.mart-bar-fold:hover{background:var(--tint);color:var(--ink)}
 .mart-head-more:focus-visible,.mart-bar-fold:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .mart-head>p{flex:0 0 100%;margin:0;padding-right:max(0px,calc(100% - 66ch));color:var(--muted);font-size:var(--ts-body);line-height:1.6}   /* 글은 66ch 까지 · 상자는 한 줄 가득(탭 묶음 옆에 끼지 않게) */
-.mart-head .mart-lede{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
-.mart-head .mart-note-line{display:none;padding:8px 12px;border-radius:var(--r-ctl);background:var(--tint-2);color:var(--ink);font-size:var(--ts-ctl)}
-.mart-head.is-open .mart-lede{display:block}
-.mart-head.is-open .mart-note-line{display:block}
+.mart-head .mart-note-line{padding:8px 12px;border-radius:var(--r-ctl);background:var(--tint-2);color:var(--ink);font-size:var(--ts-ctl)}
 /* 제목 줄 오른쪽: [액자|글꾸] 탭 묶음 · 세로 선 · 📝 🎲 🧞 글자 단추(탭과 다른 부품이라 다르게 보여요) */
 .mart-tabs{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:nowrap}
 .mart-tabs .tool .t{white-space:nowrap}
@@ -282,7 +279,6 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:32px;backgrou
   .mart-head-more{position:relative;width:var(--icon);height:var(--icon);padding:0;font-size:0;gap:0}
   .mart-head-more::after{position:absolute;inset:0;margin:auto}
   .mart-head>p{font-size:var(--ts-meta);line-height:1.55}
-  .mart-head .mart-lede{-webkit-line-clamp:2}
   .mart-tabs{gap:4px}
   .mart-tabs .tab{padding:0 8px}
   .mart-tabs .tool{width:var(--icon);height:var(--icon);padding:0;border:0;border-radius:var(--r-ctl);background:transparent;gap:0}
@@ -332,6 +328,9 @@ html.mart-cart-on{overflow:hidden}
 .mart-cart-thumb img.mart-ico{width:28px;height:28px}
 .mart-cart-name{display:flex;flex-direction:column;gap:4px;min-width:0}
 .mart-cart-name b{font-size:var(--ts-ctl);font-weight:var(--strong);line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mart-cart-list li:has(>.mart-cart-src){flex-wrap:wrap}
+.mart-cart-list li:has(>.mart-cart-src)>.mart-cart-row{flex:1 1 0}
+.mart-cart-src{flex:0 0 100%;display:flex;flex-wrap:wrap;gap:2px 12px;min-width:0;padding:0 4px 2px}
 .mart-cart-name small{color:var(--muted);font-size:12px;line-height:1.3}
 .mart-cart-empty{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px;text-align:center}
 .mart-cart-empty>.em{font-size:44px;animation:mart-bounce 1.6s ease-in-out infinite}
@@ -516,7 +515,6 @@ html.mart-cart-on{overflow:hidden}
 .mart-cast-slots .mart-cast-toggle{min-width:0;max-width:100%}
 .mart-cast-slots .mart-cast-toggle b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mart-cast-slots .mart-cast-toggle>span:first-child{flex:none}
-.mart-cast-toggle[data-toggle][aria-expanded=true]::after{content:"";position:absolute;left:12px;right:12px;bottom:-5px;height:2px;border-radius:1px;background:var(--ink)}   /* 펼친 칸: 단추 모양은 그대로 두고 밑줄 하나 */
 .mart-cast-who{margin:0 0 8px;font-size:var(--ts-meta);line-height:1.5;color:var(--muted);text-align:left}
 .mart-cast-who b{color:var(--ink)}
 .mart-cast-r.is-wide{grid-column:1/-1}   /* 「원래 색(틀마다 정해 둔 색)」처럼 긴 줄은 한 줄을 다 써요(좁은 칸에서 글이 잘리지 않게) */
@@ -790,3 +788,87 @@ html.mart-cart-on{overflow:hidden}
 .mart-sheet-preview.is-flash{animation:mart-pv-flash .7s ease-out}
 @keyframes mart-pv-flash{0%{box-shadow:inset 0 0 0 2px var(--blue)}100%{box-shadow:inset 0 0 0 2px transparent}}
 @media (prefers-reduced-motion:reduce){.mart-sheet-preview.is-flash{animation:none;box-shadow:inset 0 0 0 2px var(--blue)}}
+
+/* ── 11-12 밤 글꾸 분류(주제 묶음 탭 · 하위 칩 · 세계관 머리 띠 · 보조 거르기 줄) + 캐릭터 칸 「한 번에 한 묶음」(시안 안 A) ── */
+.mart-topics{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:-4px -16px;padding:4px 16px}
+.mart-topics::-webkit-scrollbar,.mart-band-people::-webkit-scrollbar{display:none}
+.mart-topics[hidden]{display:none}
+.mart-chips-sep{flex:none;align-self:center;width:1px;height:18px;background:var(--line)}
+.mart-cast-dot{display:inline-block;flex:none;width:12px;height:12px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.mart-cast-dot.is-off{background:transparent;box-shadow:inset 0 0 0 2px var(--line-strong)}
+.mart-cast-dot.is-none{background:var(--muted)}
+.chip>.mart-cast-dot{margin-right:2px}
+/* 세계관 머리 띠 — 목록 바로 위 · 옅은 면(테두리 없음) */
+.mart-band{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin:0 0 12px;padding:10px 12px;border-radius:var(--r-card);background:var(--tint);scroll-margin-top:var(--mart-bar-gap,160px)}
+.mart-band[hidden]{display:none}
+.mart-band-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;min-width:0}
+.mart-band-h h2{margin:0;font-size:var(--ts-h);font-weight:var(--strong);line-height:1.5;color:var(--ink)}
+.mart-band-n{font-size:var(--ts-meta);color:var(--muted);font-variant-numeric:tabular-nums}
+.mart-band-people{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;margin:-4px -12px;padding:4px 12px}
+@media (min-width:640px){
+  body[data-mart=geulkku] .mart-topics{grid-row:3;grid-column:1/-1;margin:-4px 0;padding:4px 0}
+  body[data-mart=geulkku] .mart-chips{grid-row:4}
+  .mart-tools.is-folded .mart-topics{display:none}
+  .mart-topics.has-more{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 56px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 56px),transparent)}
+  .mart-band-people{flex-wrap:wrap;margin:0;padding:0;overflow:visible}
+}
+@media (max-width:639px){
+  .mart-tools.is-collapsed .mart-topics{display:none}
+  .mart-tools.is-opening .mart-topics{animation:mart-bar-in .18s ease-out}
+}
+@media (prefers-reduced-motion:reduce){.mart-tools.is-opening .mart-topics{animation:none}}
+/* 캐릭터 칸 머리 줄: 「깡통 ● 이름 ⌄」 — 꺾쇠는 기준 모양(.chev) · 펼친 칸은 옅은 파랑 면 */
+.mart-cast{padding:0}
+.mart-cast-head{padding:8px 10px}
+.mart-cast-slots{display:contents}   /* 칸 셋 · 밤낮이 한 흐름(폰: 「내 글」 옆에 밤 · 낮) */
+.mart-cast-toggle small{font-size:var(--ts-meta);color:var(--muted)}
+.mart-cast-toggle[data-toggle][aria-expanded=true]{background:var(--pick-face)}
+.mart-cast-credit{margin:0;padding:0 12px 8px}
+.mart-cast-panel{margin:0;padding:10px 12px 12px;border-top:1px solid var(--line)}
+.mart-cast-who{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px}
+.mart-cast-who b{flex:none;font-size:var(--ts-ctl);font-weight:var(--strong)}
+.mart-cast-panel[data-who=text] .mart-cast-who{display:block}
+.mart-cast-tabs{gap:6px;margin-bottom:6px}
+.mart-cast-wh{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;min-height:34px;margin:0 0 6px}
+.mart-cast-wh>b{font-size:var(--ts-ctl);font-weight:var(--strong);color:var(--ink)}
+.mart-cast-more{position:relative;display:inline-flex;align-items:center;gap:2px;height:28px;margin:0;padding:0 4px;border:0;border-radius:var(--r-ctl);background:transparent;color:var(--blue-strong);font:inherit;font-size:12px;font-weight:var(--strong);line-height:1;cursor:pointer}
+.mart-cast-more::after{background:var(--blue-strong)}
+.mart-cast-gos{display:flex;flex-wrap:wrap;gap:2px 12px;margin-left:auto}
+.mart-cast-go{position:relative;height:28px;margin:0;padding:0 2px;border:0;border-radius:var(--r-ctl);background:transparent;color:var(--blue-strong);font:inherit;font-size:12px;font-weight:var(--strong);line-height:1;white-space:nowrap;cursor:pointer}
+.mart-cast-go:hover,.mart-cast-more:hover{text-decoration:underline;text-underline-offset:3px}
+.mart-cast-go:focus-visible,.mart-cast-more:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.mart-cast-src{margin:0 0 10px}
+.mart-cast-src[hidden]{display:none}
+.mart-cast-people{display:flex;flex-wrap:wrap;gap:6px}
+.mart-cast-p{gap:6px;padding:0 10px}
+.mart-cast-mine{display:inline-flex;align-items:center;gap:0}
+.mart-cast-direct{display:grid;gap:10px}
+.mart-cast-direct-in{display:grid;gap:8px}
+.mart-cast-direct .mart-cast-form{margin:0}
+.mart-cast-hint{margin:6px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
+.mart-cast-direct .mart-cast-paste{margin:0}
+.mart-cast-direct .mart-cast-paste textarea{min-height:64px}
+.mart-cast-foot{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:12px 0 0;padding:10px 0 0;border-top:1px solid var(--line)}
+.mart-cast-cover{position:relative;display:inline-flex;align-items:center;gap:6px;min-height:var(--chip);margin-left:auto;font-size:var(--ts-meta);color:var(--muted);cursor:pointer}
+.mart-cast-cover input{width:16px;height:16px;margin:0;accent-color:var(--blue)}
+.mart-cast-cover:has(input:disabled){opacity:.55;cursor:default}
+@media (min-width:640px){.mart-cast-direct-in{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;gap:12px}}
+@media (max-width:639px){
+  .mart-cast-head{padding:8px 10px}
+  .mart-cast-people{gap:10px 6px}   /* 폰: 칩 36 + 줄 사이 10 — 손가락 자리 */
+  .mart-cast-people .mart-cast-p,.mart-cast-foot .mart-cast-p{height:36px}
+  .mart-cast-tabs{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px;max-width:none}
+}
+@media (pointer:coarse){.mart-cast-more::before,.mart-cast-go::before,.mart-cast-cover::before{content:"";position:absolute;left:50%;top:50%;width:max(100%,var(--touch));height:var(--touch);transform:translate(-50%,-50%)}}
+/* 머리말: 접힌 동안은 제목 + 「쓰는 법 ⌄」만 — 설명 · 쓰는 법은 펼쳐야 보여요(사용자 「차라리 글을 없애고 자세히 누르면 설명 나오게」 · 「쓰는 법이 제일 밑에 있는 것도 의아함」) */
+.mart-head-help{flex:0 0 100%;display:none;margin:4px 0 0;padding:12px 16px;border-radius:var(--r-card);background:var(--tint)}
+.mart-head.is-open .mart-head-help{display:block}
+.mart-head-help>p{margin:0 0 8px;font-size:var(--ts-body);line-height:1.6;color:var(--text)}
+.mart-head-help>ol{margin:0;padding-left:20px;font-size:var(--ts-body);line-height:1.7;color:var(--text)}
+.mart-head-help>.mart-help-more{margin:8px 0 0;font-size:var(--ts-meta);line-height:1.6;color:var(--muted)}
+@media (max-width:639px){
+  .mart-head-help{padding:10px 12px}
+  .mart-head-help>p,.mart-head-help>ol{font-size:var(--ts-ctl);line-height:1.65}
+  .mart-head-more{width:auto;height:var(--ctl);padding:0 4px 0 6px;font-size:var(--ts-ctl);gap:4px}
+  .mart-head-more::after{position:static;margin:0}
+}

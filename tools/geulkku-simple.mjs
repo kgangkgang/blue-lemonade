@@ -27,11 +27,11 @@ const src = await import(pathToFileURL(path.join(ROOT, 'mart', 'sources.js')).hr
 const OUT = path.join(DIR, 'index.json');   // 11-11 옛 글꾸를 뺀 뒤로 글꾸 마트 목록은 이 도구가 써요
 const KEY = 'sp-simple';
 // 분류(새 틀이 스물여덟 개뿐이라 동작으로 넷만):
-//   「눌러서 열어요」 = 닫힌 채 시작해 눌러야 글이 나오는 틀(DEFS 의 open) · 「소리 카드」 = 소리 카드가 든 틀 · 「누르면 바뀌어요」 = 그 밖에 누름이 있는 틀 · 「가만히 보기」 = 누름이 없는 틀
+//   「눌러서 열어요」 = 닫힌 채 시작해 눌러야 글이 나오는 틀(DEFS 의 open) · 「소리 · 음악」 = 소리 줄이 남은 틀(소리가 연출인 틀 · 11-12 밤부터) · 「누르면 바뀌어요」 = 그 밖에 누름이 있는 틀 · 「가만히 보기」 = 누름이 없는 틀
 export const CATS = [
   { id: 'simple-open', label: '눌러서 열어요', group: 'concept' },
   { id: 'simple-tap', label: '누르면 바뀌어요', group: 'concept' },
-  { id: 'simple-sound', label: '소리 카드', group: 'concept' },
+  { id: 'simple-sound', label: '소리 · 음악', group: 'concept' },   // 11-12 밤 「소리 카드」 이름은 뺐어요 — 소리가 그 틀의 연출인 틀(라디오 · 악기 · 노래방 …)만 소리 줄이 남아요
   { id: 'simple-still', label: '가만히 보기', group: 'concept' },
 ];
 const catOf = (d, html) => (d.open ? 'simple-open' : /<audio\b/.test(html) ? 'simple-sound' : /<details\b/.test(html) ? 'simple-tap' : 'simple-still');
@@ -40,6 +40,10 @@ const catOf = (d, html) => (d.open ? 'simple-open' : /<audio\b/.test(html) ? 'si
 //   peek: 카드 미리보기에서 열어 둘지(없으면 SIMPLE_CONTRACT.peek — 첫 묶음 01 · 05 · 07 · 08) · open: 닫힌 채 시작해 눌러야 글이 나오는 틀(분류) · values: 자리표 값
 //   id 는 simple-<틀>(15자 이하 — 테마로 받을 때 대사색 꼬리 9자가 붙어도 24자 안) · 색 칸(bg · ink · accent)은 틀에서 계산해요
 //   열어 보일지 · 설명은 각 이식판 설명서(시안 설명.md 1절 · 9-1 / 시안-2 설명.md 1 · 8-1절 / 시안-3 이식판-설명.md 2절 / 기존틀-새방식 이식판-설명.md 1절)의 표를 따랐어요
+// 분류 자료(주제 · 세계관 · 원작 · 소리 줄 판정) — 아래 「주제 분류」 · 「소리 줄 빼기」가 읽어요
+const TOPIC_FILE = path.join(SRC, 'topics.json');
+export const TOPICS = JSON.parse(fs.readFileSync(TOPIC_FILE, 'utf8'));
+export const keepsSound = d => ['keep', 'ask'].includes(TOPICS.frames[d.frame]?.sound);
 const SOUND = { 소리: ['s1.mp3', 's2.mp3', 's3.mp3'] };
 export const DEFS = [
   // 첫 묶음 8(심플-새틀-시안/이식판.html · 11-10 23:56 판)
@@ -74,7 +78,7 @@ export const DEFS = [
   { frame: 'q08', name: '라면', emoji: '🍜', desc: '김이 오르는 냄비 — 누르면 젓가락이 면발을 들어 올려요' },
   { frame: 'q09', name: '카페 영수증', emoji: '🧾', peek: true, desc: '출력기를 누르면 흰 영수증이 다 밀려 나와요 — 가게 이름 · 품목 · 합계 줄을 바꿔 써요(종이는 캐릭터 색을 안 따라요)' },
   { frame: 'q10', name: 'RPG 스탯', emoji: '🎮', desc: 'HP · MP · EXP 게이지 — 누르면 EXP 가 가득 차 레벨이 오르고 HP · MP 가 회복돼요 · 소리 카드 한 줄' },
-].map(d => ({ id: `simple-${d.frame}`, values: SOUND, ...d }));
+].map(d => ({ id: `simple-${d.frame}`, values: SOUND, ...d, desc: d.desc.replace(/ · 소리 카드 한 줄$/, keepsSound(d) ? ' · 소리 한 줄' : '') }));
 // 11-11 전수조사 합격 틀(묶음 생성기 01 ~ 46 · 사용자가 깡통에서 본 판) — 목록 줄은 tools/simple-frames/pass-defs.json(허브 지시-1111/출시-1111 의 변환기가 써요)
 //   틀 파일은 tools/simple-frames/k1001.html ~ (뿌리 gk-k<1000 + 통번호> — 첫 묶음 k1 ~ k18 과 안 겹쳐요) · 조각은 PASS_STEP 틀씩 나눠 sp-pass-<n> 으로(한 번에 다 받지 않게)
 export const PASS_STEP = 40;
@@ -86,8 +90,6 @@ export const PASS_DEFS = (fs.existsSync(PASS_FILE) ? JSON.parse(fs.readFileSync(
 // 11-12 밤 주제 분류 · 세계관 · 인물 · 원작 — tools/simple-frames/topics.json(틀마다 한 줄 · 손으로 화면에 박지 않고 여기서 목록 자료로 나가요)
 //   사용자 「글꾸 카테고리에 뭐 일상 이벤트 예전에 있던 카테고리 가져오고 … 인물 출처도 빠지고 그 세계관 인물들 한꺼번에 보는 것도 없잖아」
 //   누름 방식(category)은 그대로 두고(지니 · 시험 · site-rig 가 봐요) topic(하위 칩) · world · who · src 를 더해요. 한 줄이라도 없거나 어긋나면 멈춰요.
-const TOPIC_FILE = path.join(SRC, 'topics.json');
-export const TOPICS = JSON.parse(fs.readFileSync(TOPIC_FILE, 'utf8'));
 export function topicOf(d) {
   const t = TOPICS.frames[d.frame];
   if (!t) throw new Error(`${d.id}: 분류가 없어요 — tools/simple-frames/topics.json 에 한 줄 더해요`);
@@ -100,6 +102,37 @@ export function topicOf(d) {
   if (!Array.isArray(t.src) || !t.src.length || !t.src.every(k => src.sourceByKey(k))) throw new Error(`${d.id}: 원작(src)이 없거나 모르는 열쇠예요`);
   return { topic: t.topic, world: t.world, ...(t.who ? { who: t.who } : {}), src: t.src };
 }
+
+// 11-12 밤 「소리 카드 한 줄」 빼기 — 사용자 「mp3 에 효과 들어간 특이한 글꾸들 아니면 솔직히 나머지 글꾸들에 mp3 가 들어가야 할 이유도 없고」
+//   틀 파일(이식판 그대로)에는 대사 사이에 <div class="gk-sd">이름표 + <audio></div> 한 줄이 들어 있어요. 소리가 그 틀의 연출인 틀(topics.json sound: keep)과
+//   애매해 사용자 결정을 기다리는 틀(sound: ask)만 그대로 두고, 나머지는 그 줄과 딸린 규칙(.gk-sd · .gk-sn · .gk-sA… · audio)을 통째로 빼요(다른 규칙 · 덩이 나눔은 그대로).
+const SOUND_SEL = /\.gk-sd(?![\w-])|\.gk-sn(?![\w-])|\.gk-s[A-Z](?![\w-])|(?:^|[\s>+~)\]])audio(?![\w-])/;
+const splitSel = (sel) => { const out = []; let depth = 0, cur = ''; for (const ch of sel) { if (ch === '(' || ch === '[') depth++; else if (ch === ')' || ch === ']') depth--; if (ch === ',' && !depth) { out.push(cur); cur = ''; } else cur += ch; } out.push(cur); return out; };
+function stripRules(css, bad) {
+  let out = '', i = 0;
+  while (i < css.length) {
+    const open = css.indexOf('{', i);
+    if (open < 0) { out += css.slice(i); break; }
+    let depth = 1, j = open + 1;
+    while (j < css.length && depth) { if (css[j] === '{') depth++; else if (css[j] === '}') depth--; j++; }
+    const pre = css.slice(i, open), lead = pre.match(/^\s*/)[0], sel = pre.slice(lead.length), body = css.slice(open, j);
+    if (sel.startsWith('@')) out += pre + (/^@media|^@supports|^@container/.test(sel) ? `{${stripRules(body.slice(1, -1), bad)}}` : body);
+    else {
+      const keepSel = splitSel(sel).filter(s => !bad.test(s));
+      out += keepSel.length ? lead + keepSel.join(',') + body : lead.replace(/\n[ \t]*$/, '');
+    }
+    i = j;
+  }
+  return out;
+}
+export function dropSound(html) {
+  if (!/<audio\b/.test(html)) return html;
+  let out = html.replace(/\n?<div class="gk-sd">(?:(?!<\/div>)[\s\S])*<\/div>/g, '');
+  if (/<audio\b/.test(out)) throw new Error('소리 줄 꼴이 달라요(<div class="gk-sd"> 밖의 audio)');
+  out = out.replace(/(<style>)([\s\S]*?)(<\/style>)/, (all, a, css, b) => a + stripRules(css, SOUND_SEL) + b);
+  return out;
+}
+
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 /** 견본 글 자리표를 값으로 채워요(글 자리는 HTML 이스케이프 · 소리는 견본 mp3 주소) */
@@ -243,7 +276,7 @@ export function frameHtml(d) {
   const file = fileOf(d);
   if (!file) throw new Error(`${d.id}: 틀 파일이 없어요`);
   const raw = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
-  const html = fitFix(sampleNames(focusRing(fillSlots(martAudio(wrapLoose(uniqInner(stripAlias(raw.trim())))), d.values))));
+  const html = fitFix(sampleNames(focusRing(fillSlots(martAudio(wrapLoose(uniqInner((src0 => (d.sample || keepsSound(d) ? src0 : dropSound(src0)))(stripAlias(raw.trim()))))), d.values))));
   const bad = problems(html);
   if (bad.length) throw new Error(`${d.id}: ${bad.join(' · ')}`);
   const info = sf.simpleFrameInfo(html);

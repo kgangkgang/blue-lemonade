@@ -9,7 +9,7 @@
   <link rel="icon" href="../../lemon.svg?v=20261109a" type="image/svg+xml"><link rel="apple-touch-icon" href="../../lemon-touch.png?v=20261109a">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="../../site.css?v=20261112i">
-  <link rel="stylesheet" href="../mart.css?v=20261112g">
+  <link rel="stylesheet" href="../mart.css?v=20261112h">
   <link rel="stylesheet" href="../top-mart.css?v=20261108a">
 </head>
 <body data-mart="geulkku">
@@ -18,7 +18,16 @@
     <div class="mart-head">
       <h1>글꾸 마트</h1>
       <div class="mart-tabs"><span class="tabset" role="group" aria-label="마트"><a class="tab" href="../frames/">액자</a><a class="tab" href="./" aria-current="page">글꾸</a></span><span class="vr" aria-hidden="true"></span><button type="button" class="btn tool mart-random" data-random title="지금 거르기(디자인 · 분류 · 찾기) 안에서 하나를 무작위로 골라 열어요" aria-label="랜덤 추천"><span class="em" aria-hidden="true">🎲</span><span class="t mart-random-text">랜덤 추천</span></button><a class="btn tool mart-genie" href="../genie/" title="질문 몇 개에 답하면 레몬 지니가 글꾸 하나를 맞혀 추천해요" aria-label="지니"><span class="em" aria-hidden="true">🧞</span><span class="t mart-genie-text">지니</span></a></div>
-      <p class="mart-lede">새 글꾸 틀 417개예요. 소품을 눌러 보세요 — 열리고 바뀌어요. 목록 위 <b>깡통 · 깡캐</b> 칸에서 캐릭터를 고르면 그 대사색으로 칠해지고, 카드의 <b>📋 HTML 복사</b> → 커뮤니티 글쓰기 HTML 칸에 붙이면 끝이에요.</p><p class="mart-note-line"><b>확장 없이도 써요</b> — 복사한 글에서 「✎」 주석 바로 뒤 글자(제목 · 이름 · 대사 …)만 바꾸면 돼요.</p>
+      <div class="mart-head-help" data-label="쓰는 법">
+        <p>새 글꾸 틀 417개예요. 소품을 누르면 열리고 바뀌어요.</p>
+        <ol>
+          <li><b>내 글</b> 칸에 내 채팅을 붙여 넣고 <b>내 글로 보기</b> — 모든 카드가 내 글로 바뀌어요. 「이름: 대사」 줄 · 이름 줄 다음에 "대사" · 실리태번에서 복사한 채팅 모두 돼요.</li>
+          <li><b>깡통 · 깡캐</b> 칸에서 캐릭터 색을, 오른쪽에서 <b>밤 · 낮</b>을 골라요.</li>
+          <li>카드를 누르면 크게 보기 — 소품을 눌러 보고, <b>글 고치기</b>로 그 자리에서 글을 고치고, 색 · 글 · 모양을 조절해요.</li>
+          <li><b>📋 HTML 복사</b> → 깡통 글쓰기의 「HTML」 칸에 붙여요. 블루레몬을 쓰면 크게 보기의 <b>테마로 담기</b> → <b>테마용 복사</b> → 테마 「마트에서 가져오기」에 붙여 넣어요.</li>
+        </ol>
+        <p class="mart-help-more">더 알고 싶다면 — 확장 없이도 써요. 복사한 글에서 「✎」 주석 바로 뒤 글자만 손으로 바꿔도 돼요. 미리보기의 글은 지어낸 표본이고, 스크립트 없이 스타일만 들어 있어요.</p>
+      </div>
     </div>
     <section class="mart-cast" aria-label="캐릭터 대사색"></section>
     <div class="mart-tools">
@@ -29,19 +38,15 @@
           <span class="mart-count" aria-live="polite"></span>
         </div>
       </div>
-      <div class="mart-groups" role="group" aria-label="분류 묶음" hidden></div>
-      <div class="mart-chips" role="group" aria-label="분류"></div>
+      <div class="mart-groups" role="group" aria-label="분류 묶음"></div>
+      <div class="mart-topics" role="group" aria-label="분류" hidden></div>
+      <div class="mart-chips" role="group" aria-label="모아 보기 · 누름 방식"></div>
     </div>
+    <section class="mart-band" aria-label="세계관 한꺼번에 보기" hidden></section>
     <div class="mart-grid" aria-busy="true"><p class="mart-empty">불러오는 중이에요…</p></div>
     <section class="mart-credits" aria-label="캐릭터 원작"></section>
-    <section class="mart-howto"><h2>쓰는 법</h2><ol>
-      <li>목록 위 <b>깡통</b>(첫째 화자) · <b>깡캐</b>(둘째 화자) 칸을 펼쳐 캐릭터를 고르면 글꾸가 그 대사색으로 칠해져요. <b>밤 · 낮</b>도 골라요.</li>
-      <li>카드를 누르면 크게 보기 — 소품을 눌러 열고 닫아 봐요.</li>
-      <li><b>📋 HTML 복사</b> → 커뮤니티 글쓰기 HTML 칸에 붙여요.</li>
-      <li>붙인 글에서 「✎」 주석 바로 뒤 글자(제목 · 지문 · 이름 · 대사 …)만 내 로그로 바꿔요. 대사 · 지문 줄은 복사해 늘리거나 지워도 돼요.</li>
-    </ol><p>미리보기의 글은 지어낸 표본이에요. 스크립트 없이 스타일만 들어 있어요.</p></section>
   </main>
-  <script type="module" src="../mart.js?v=20261112h"></script>
+  <script type="module" src="../mart.js?v=20261112i"></script>
   <script src="../top-mart.js?v=20261112d" defer></script>
 </body>
 </html>

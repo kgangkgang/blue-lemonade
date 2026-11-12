@@ -2,7 +2,7 @@
 // 자료는 마트가 읽는 파일 그대로예요: 글꾸 data/geulkku/index.json(가벼운 목록 · 미리보기는 그 틀의 조각만 나중에) · 액자 data/frames.json. 고른 쪽만 받아요.
 // 결과 카드는 마트 부품을 빌려 써요(mart.js 의 조각 받기 · 미리보기 · 담기 · HTML 복사, frame-room.js 의 액자 그림 · 담기) — 그래서 담기 · 복사 내용이 마트와 똑같아요.
 // 주소: ?kind=frames 면 액자부터 · 캡처용 ?scene=hello|ask|guess|result|party&seed=숫자&answers=0,1,0,0,0
-import { geulkkuList, frameKit, mylogOn, cart, esc, ensureItem, previewOf, tagsHtml, glyphHtml, descOf, entryOf, doAct, sourceLinks, LOAD_FAIL, isBuiltin, BUILTIN_TAG } from './mart.js?v=20261112h';
+import { geulkkuList, frameKit, mylogOn, cart, esc, ensureItem, previewOf, tagsHtml, glyphHtml, descOf, entryOf, doAct, sourceLinks, LOAD_FAIL, isBuiltin, BUILTIN_TAG } from './mart.js?v=20261112i';
 import { lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
 
 const Q = new URLSearchParams(location.search);
@@ -17,12 +17,12 @@ const pick = arr => arr[Math.floor(rnd() * arr.length)];
    react = 고른 직후 지니가 넘겨짚는 한마디(다음 질문 위에 붙어요) */
 // 11-11 글꾸 마트가 심플 새 틀 28개만 남아서(사용자 「마트에 옛날것들 다 없애라」) 글꾸 질문을 새 틀에 맞춰 줄였어요.
 //   그림 결(심플 · 일러스트 · 다꾸 · 무테) · 세계관 · 인물 질문은 뺐어요(새 틀은 전부 심플이고 세계관 틀이 없어요).
-//   점수는 새 틀 이름(name)과 분류(cat — simple-open 눌러서 열어요 · simple-tap 누르면 바뀌어요 · simple-sound 소리 카드 · simple-still 가만히 보기)로만 줘요.
+//   점수는 새 틀 이름(name)과 분류(cat — simple-open 눌러서 열어요 · simple-tap 누르면 바뀌어요 · simple-sound 소리 · 음악 · simple-still 가만히 보기)로만 줘요.
 //   옛 질문표는 git 이력(되살릴 자리 — 마트-길닦기.md 12절)에 있어요.
 const GEULKKU_STEPS = [
     { id: 'mood', q: '먼저… 오늘 분위기가 어때요?', opts: [
-        { t: '상큼', i: '🍋', react: '탄산 터지는 소리가 들려요. 밝은 쪽이군요.', w: { name: { '여름 바다': 3, '바람개비': 3, '형광펜': 3, '토스터': 2, '메신저': 2, '견출지': 2, '지퍼': 3, '줄자': 3, 'RPG 스탯': 1 } } },
-        { t: '차분', i: '🌙', react: '흠… 밤에 로그를 올리는 깡이군요.', w: { name: { '새벽': 3, '흐림': 3, '티백': 3, '모래시계': 2, '음성 메모': 2, '블라인드': 2, '바인더': 3, '돋보기': 3, '뉴턴의 요람': 1, '라면': 1 } } },
+        { t: '상큼', i: '🍋', react: '탄산 터지는 소리가 들려요. 밝은 쪽이군요.', w: { name: { '여름 바다': 3, '바람개비': 3, '형광펜': 3, '토스터': 2, '메신저': 3, '견출지': 3, '지퍼': 3, '줄자': 3, 'RPG 스탯': 3 } } },
+        { t: '차분', i: '🌙', react: '흠… 밤에 로그를 올리는 깡이군요.', w: { name: { '새벽': 3, '흐림': 3, '티백': 3, '모래시계': 2, '음성 메모': 2, '블라인드': 2, '바인더': 3, '돋보기': 3, '뉴턴의 요람': 3, '라면': 1 } } },
         { t: '달달', i: '🎀', react: '입꼬리가 벌써 올라갔네요.', w: { name: { '편지 봉투': 3, '실 전화': 3, '낫표': 3, '쥘부채': 3, '새해 첫날': 2, '카페 영수증': 3, '라면': 3 } } },
         { t: '으스스', i: '👻', react: '촛불이 흔들려요… 이쪽이군요.', w: { name: { '호박': 3, '성냥': 3, '새벽': 2, '지우개': 3, '블라인드': 1, '모래시계': 1 } } },
     ] },
@@ -271,7 +271,7 @@ function frameCard(item) {
     result.innerHTML = `<article class="mart-card is-frame${item.kind === 'frame-preset' ? ' is-simple' : ''}" data-id="${esc(item.id)}">
         <a class="mart-preview frame" href="${href}" aria-label="${esc(item.name)} — 액자 방에서 크게 보고 맞춰 보기"><span class="mart-stage"></span><span class="mart-zoom-hint tag" aria-hidden="true"><span class="em">🔍</span>맞춰 보기</span></a>
         <div class="mart-title"><b><span class="t">${esc(item.conceptLabel || item.name)}</span></b><span class="mart-tags"><span class="mart-tag tag">${esc(item.categoryLabel || catLabel(item.category))}</span>${own ? BUILTIN_TAG : ''}</span></div>
-        <p class="mart-desc">${esc(desc)}</p>${sourceLinks(item)}
+        <p class="mart-desc">${esc(desc)}</p>${frames?.links ? frames.links(item) : sourceLinks(item)}
         ${whyHtml()}
         <div class="mart-actions gn-acts is-two">${own ? '<span class="mart-builtin" title="블루레몬에이드 테마 설정 › 장식 액자에 이미 있어요">✓ 이미 테마에 있어요</span>' : '<button type="button" class="btn mart-pick" data-act="pick" aria-pressed="false"><span class="em" aria-hidden="true">🛒</span>담기</button>'}<a class="btn" href="${href}" title="액자 마트의 액자 방에서 이 액자를 바로 열어요"><span class="em" aria-hidden="true">🖼️</span>액자 방에서 보기</a></div>
     </article>`;
