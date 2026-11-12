@@ -249,6 +249,26 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:32px;backgrou
 .mart-source{display:block;width:fit-content;max-width:100%;margin:0;font-size:12px;font-weight:var(--strong);color:var(--blue-strong);text-decoration:none;border-bottom:1px dashed currentColor;overflow-wrap:anywhere}
 .mart-source:hover{border-bottom-style:solid}
 .mart-source.is-plain{border-bottom:0}
+/* 11-12 밤 원작(출처) — 캐릭터 묶음 한 줄 · 고른 캐릭터 줄(목록 위 · 크게 보기 머리) · 「원작」 칸(캐릭터를 안 골라도 보여요) */
+.mart-cast-src,.mart-cast-credit{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin:0 0 8px;font-size:12px;line-height:1.5;color:var(--muted)}
+.mart-cast-src b{color:var(--ink);font-weight:var(--strong)}
+.mart-cast-credit{margin:8px 0 0}
+.mart-cast-credit:empty{display:none}
+.mart-cast-credit-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;min-width:0}
+.mart-cast-credit-who{display:inline-flex;align-items:center;gap:4px;flex:none}
+.mart-cast-credit-who b{color:var(--ink);font-weight:var(--strong)}
+.mart-cast-credit-who .mart-ink-dot{width:10px;height:10px}
+.mart-sheet-credit{margin:4px 0 0}
+.mart-credits{margin:0 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
+.mart-credits:empty{display:none}
+.mart-credits h2{margin:0 0 4px;font-size:var(--ts-h);font-weight:var(--strong);line-height:1.4;color:var(--ink)}
+.mart-credits p{margin:0 0 8px;font-size:var(--ts-meta);line-height:1.5;color:var(--muted)}
+.mart-credits p b{color:var(--ink)}
+.mart-credits-list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.mart-credits-list li{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;min-width:0}
+.mart-credits-list b{flex:none;font-size:var(--ts-meta);font-weight:var(--strong);color:var(--ink)}
+.mart-credits-who{font-size:12px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+.mart-credits-links{display:flex;flex-wrap:wrap;gap:4px 12px;min-width:0}
 @media (max-width:600px){.mart-tools{top:56px}}
 /* 폰: 제목 줄(제목 ⌄ ｜ 탭 ‖ 📝 🎲 🧞) + 설명 두 줄 · 탭은 36 · 도구는 아이콘만 34 · 카드 여백 12 */
 @media (max-width:639px){

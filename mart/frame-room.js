@@ -1,3 +1,4 @@
+import { workByTitle, sourceHtml } from './sources.js?v=20261112a';   // 11-12 밤 원작(출처) 자료 한 곳
 // 액자 마트 — 그림 액자 수백 종 + 심플 30종 · 「내 사진 넣어 보기」 · 거르기(분류 · 찾기 · 가로/세로 · 그림체) · 조금씩 그리기 · 크게 보기.
 // 크게 보기의 조절 칸은 테마 장식 액자 설정과 같은 이름 · 범위 · 기본값(data/frames.json 의 decor — tools/mart-build.mjs 가 테마 src/decor.js · panel.js · frames.js 에서 옮겨 와요)이고,
 // 그리는 규칙도 테마 css/41-decor.css 와 같아요(액자 그림을 사진 위에 100% 100% · 사진은 마스크 + 사진창 clip-path(round 모서리) 안에서 object-fit · object-position · scale · 기울기 rotate · 그림자 SVG 필터).
@@ -17,7 +18,7 @@ const CAT_SEARCH = { 'halo-char': '천지합동청 천악 halo 인물 캐릭터'
 // 11-06 센티넬버스(세계관 2 · 인물 11) — 깡싸 글 주소가 아직 없어 원작 봇 정식 이름을 글로만 보여요(글꾸 마트 목록 source 와 같은 이름 · 인물은 두 봇에 다 나와요)
 const SENGA_SIM = '[실리/1차] 센티넬버스 시뮬레이션(센가시뮬) v1.3', SENGA_ACADEMY = '[실리/1차] 센티넬버스 아카데미';
 const botsOf = item => item.kind !== 'frame' ? [] : item.concept === 'sentinel-ksa' ? [SENGA_SIM] : item.concept === 'sentinel-academy' ? [SENGA_ACADEMY] : item.category === 'sentinel-char' ? [SENGA_SIM, SENGA_ACADEMY] : [];
-const botText = item => botsOf(item).map(b => `<span class="mart-source is-plain" title="원작 봇">원작 · ${api.esc(b)}</span>`).join('');
+const botText = item => botsOf(item).map(b => sourceHtml(workByTitle(b) || { title: b }, '원작')).join('');   // 11-12 밤 주소를 받아 링크로(sources.js — 글꾸 마트 캐릭터 칸과 같은 자료)
 // 인물 액자의 원작 링크는 글꾸 인물과 같은 길(분류 SOURCES + 「char-이름」 깡캐 글)로 — mart.js sourceLinks 를 그대로 빌려요
 const links = item => item.kind === 'frame' && /^(halo|gangho)-char$/.test(item.category)
     ? api.sourceLinks({ kind: 'frame-char', category: item.category, id: `char-${String(item.concept).replace(/^(halo|gangho)-/, '')}` }) : api.sourceLinks(item) + botText(item);

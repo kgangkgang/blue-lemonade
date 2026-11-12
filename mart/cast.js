@@ -8,6 +8,7 @@ import { toneState, setTone, castPicked, savedCast, CAST_GROUPS, castList, remem
 /** 11-11 「바탕(종이 색 · 질감)」 칸은 화면에서 숨겨요 — 새 글꾸 틀에는 안 걸려 눌러도 바뀌는 게 없어서요(코드 · 자료는 그대로 · 나중에 격자 · 질감을 한꺼번에 되살릴 때 true) */
 const PAPER_ENABLED = false;
 import { dialogueColors } from './tone-geulkku.js?v=20261110v';
+import { castSources, groupSources, sourceHtml } from './sources.js?v=20261112a';   // 11-12 밤 원작(출처) — 캐릭터 묶음 · 고른 캐릭터 줄
 import { mineOn, mineText, mineInfo, setMine as setMineRaw } from './mine-text.js?v=20261112e';
 import { dropMineEdits } from './tune.js?v=20261112e';
 /** 11-11 독립 점검 1 — 내 글이 바뀌면 옛 글에서 고친 줄 · 숨긴 줄을 먼저 비우고(칸 번호가 옛 글 것) 바꿔요 */
@@ -36,6 +37,16 @@ const groupOfSelection = (list, who = 'main') => {
     return (list.find(g => g.cast.some(isOn)) || list.find(g => g.cast.some(x => same(x.color, toneState.k))))?.id || 'none';
 };
 /** 색 고르기 단추 — 브라우저 기본 색 칸은 단추 전체를 덮는 투명 칸으로 두고(누르면 colorpop.js 가 마트 색 고르기를 띄워요) 색 원 + 색 값만 보여요 */
+/** 11-12 밤 고른 캐릭터의 원작 줄(깡통 · 깡캐) — 묶음에 든 캐릭터일 때만(직접 고른 색 · 내 캐릭터는 원작이 없어요). 목록 위 줄과 크게 보기 머리가 같이 써요 */
+export function pickedCreditHtml() {
+    const row = (label, name, color) => {
+        if (!name) return '';
+        const x = castList().find(c => c.name === name && c.group && (!color || same(c.color, color))); if (!x) return '';
+        const src = castSources(x.name, x.group); if (!src.length) return '';
+        return `<span class="mart-cast-credit-row"><span class="mart-cast-credit-who">${label} <i class="mart-ink-dot" style="background:${esc(x.color)}" aria-hidden="true"></i><b>${esc(x.name)}</b></span>${src.map(s => sourceHtml(s)).join('')}</span>`;
+    };
+    return (toneState.on && toneState.k ? row('깡통', toneState.name, toneState.k) : '') + (toneState.k2 ? row('깡캐', toneState.name2, toneState.k2) : '');
+}
 const colorField = value => `<label class="mart-cast-color" title="색 고르기"><input type="color" name="color" value="${esc(value)}" aria-label="대사색"><i class="mart-ink-dot mart-cast-swatch" style="background:${esc(value)}" aria-hidden="true"></i><span class="mart-cast-hex">${esc(value)}</span></label>`;
 
 export function mountCast(box, { say = () => {} } = {}) {
@@ -77,7 +88,8 @@ export function mountCast(box, { say = () => {} } = {}) {
                     ${form(toneState.k || '#3aa7ff')}
                     <label class="mart-cast-paste"><span>채팅 붙여 넣어 대사색 찾기 · 대사색이 둘이면 둘째는 깡캐로</span><textarea class="field" rows="1" placeholder="실리태번 화면에서 복사한 채팅을 붙여 넣어요" aria-label="채팅 붙여 넣기"></textarea></label></div>`;
             }
-            return `<div class="mart-cast-list" id="mart-cast-${g.id}" role="radiogroup" aria-label="${esc(g.label)}">${g.cast.map(x => radio(g, x)).join('')}</div>`;
+            const src = groupSources(g.id, g.cast.map(x => x.name));   // 11-12 밤 묶음마다 원작 한 줄(주소 있으면 링크)
+            return `${src.length ? `<p class="mart-cast-src" data-src-group="${g.id}"><b>${esc(g.label)}</b>${src.map(s => sourceHtml(s)).join('')}</p>` : ''}<div class="mart-cast-list" id="mart-cast-${g.id}" role="radiogroup" aria-label="${esc(g.label)}">${g.cast.map(x => radio(g, x)).join('')}</div>`;
         };
         const opened = list.filter(g => opened0.has(g.id));
         const picks = toneState.mix ? toneState.picks : [];
@@ -89,6 +101,7 @@ export function mountCast(box, { say = () => {} } = {}) {
         const sw = id => { const p = PAPER_COLORS[id][toneState.mode === 'light' ? 'light' : 'dark']; return `background:${p[0]};box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)`; };
         const paperPanel = PAPER_ENABLED && paperOpen ? `<div class="mart-cast-panel" id="mart-paper-panel"><div class="mart-cast-sub2">종이 색</div><div class="mart-cast-list" role="radiogroup" aria-label="종이 색">${Object.entries(PAPER_COLORS).map(([id, p]) => `<label class="mart-cast-r"><input type="radio" name="bl-paper" value="${id}"${id === toneState.paper ? ' checked' : ''}><i class="mart-ink-dot" style="${sw(id)}" aria-hidden="true"></i><span>${esc(p.label)}</span></label>`).join('')}</div><div class="mart-cast-sub2">질감</div><div class="mart-cast-list" role="radiogroup" aria-label="질감">${Object.entries(TEXTURES).filter(([, t]) => !t.hidden).map(([id, t]) => `<label class="mart-cast-r"><input type="radio" name="bl-texture" value="${id}"${id === toneState.texture ? ' checked' : ''}><span>${esc(t.label)}</span></label>`).join('')}</div></div>` : '';
         box.innerHTML = `<div class="mart-cast-head"><span class="mart-cast-slots">${toggle('main', '깡통', now)}<button type="button" class="ibtn mart-cast-swap" data-swap aria-label="깡통 · 깡캐 바꾸기" title="깡통 · 깡캐 바꾸기 — 두 칸의 캐릭터 · 색을 맞바꿔요"></button>${toggle('other', '깡캐', now2)}${toggle('text', '내 글', { name: mineOn() ? '넣음' : '견본', dots: [] })}</span>${MIX_ENABLED ? `<button type="button" class="chip mart-cast-mix" data-mix aria-pressed="${toneState.mix}" title="캐릭터를 2~3명 골라 포인트 색을 그라데이션으로 섞어요">혼합</button>` : ''}${PAPER_ENABLED ? `<button type="button" class="mart-cast-toggle" data-paper aria-expanded="${paperOpen}" aria-controls="mart-paper-panel"><span>바탕:</span><i class="mart-ink-dot" style="${sw(toneState.paper)}" aria-hidden="true"></i><b>${esc(pc.label)} · ${esc(tx.label)}</b><span class="mart-cast-caret" aria-hidden="true">${paperOpen ? '▴' : '▾'}</span></button>` : ''}${castPicked() ? `<button type="button" class="chip mart-cast-cover" data-cover aria-pressed="${toneState.cover}" title="켜면 기본 색 틀의 소품(그림)까지 고른 캐릭터 색으로 덮어요 · 끄면 소품은 기본 색 그대로 글 쪽만 캐릭터 색">캐릭터 색 덮어쓰기</button>` : ''}<span class="mart-seg mart-cast-mode" role="group" aria-label="밤낮"><button type="button" class="chip" data-mode="dark" aria-pressed="${toneState.mode === 'dark'}">밤</button><button type="button" class="chip" data-mode="light" aria-pressed="${toneState.mode === 'light'}">낮</button></span></div>
+            ${(c => (c ? `<p class="mart-cast-credit">${c}</p>` : ''))(pickedCreditHtml())}
             ${who === 'text' ? textPanel() : `<div class="mart-cast-panel" id="mart-cast-panel" data-who="${w}"${panel ? '' : ' hidden'}><p class="mart-cast-who">${other ? '<b>깡캐</b>(둘째 화자) 색을 골라요 · 안 고르면 틀마다 정해 둔 색 그대로예요' : '<b>깡통</b>(첫째 화자) 색을 골라요 · 소품 색도 이 색을 따라가요'}</p><div class="mart-cast-groups">${list.map(head).join('')}</div>${opened.map(body).join('')}</div>${paperPanel}`}`;
     };
     box.addEventListener('click', (e) => {

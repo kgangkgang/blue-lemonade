@@ -12,7 +12,7 @@ import { SHAPE_FIELDS, PAINT_ROLES, shapeNow, shapeValue, setShape, setShapeValu
 import { capsOf, capWhy } from './caps.js?v=20261112a';
 import { makeSet, readSet, encodeSet, readAny, setFile, SET_EXT } from './geulkku-set.js?v=20261112e';   // 11-12 설정 파일 .bl-geulkku.json · 코드 BLG1.   // 11-12 틀 능력표 — 못 받는 칸은 흐리게 + 까닭 한 줄   // 11-12 움직임 세기
 import { texNow, setTex, texInfo, TEX_ORDER, TEX_NAMES } from './texture.js?v=20261112a';   // 11-12 바탕 질감
-import { swapSpeakers } from './cast.js?v=20261112e';
+import { swapSpeakers } from './cast.js?v=20261112f';
 import { castPicked } from './tone-state.js?v=20261112e';   // 11-11 「이 틀」 값 칸
 import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine, setsFile, readSets, addSets } from './tune.js?v=20261112e';
 import { createEditBlocks } from './edit-blocks.js?v=20261112e';   // 11-12 글 고치기 공용 편집 모듈(테마 로그 복사 창도 같이)

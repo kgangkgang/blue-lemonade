@@ -16,10 +16,11 @@ import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
 import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110v';   // 11-10 대사색 하나로 다시 칠하기 · 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
-import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261112e';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
+import { toneState, toned, toneOut, toneKey, CAST_GROUPS } from './tone-state.js?v=20261112e';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
 import { simpleReady } from './simple-frames.js?v=20261112a';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
-import { mountCast } from './cast.js?v=20261112e';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
+import { WORKS, CHAR_WORKS, workByTitle, sourceHtml, creditsHtml } from './sources.js?v=20261112a';   // 11-12 밤 원작(출처) 자료 한 곳
+import { mountCast, pickedCreditHtml } from './cast.js?v=20261112f';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
 import { frameMarkdown } from './mine-text.js?v=20261112e';   // 11-11 글만 복사(마크다운)
 import { makeSet } from './geulkku-set.js?v=20261112e';   // 11-12 설정 꼴 blGeulkku 2
 import { lookNow } from './look.js?v=20261112a';
@@ -27,7 +28,7 @@ import { motionNow } from './motion-state.js?v=20261112a';
 import { texNow } from './texture.js?v=20261112a';
 import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
 import { tuneOf } from './tune.js?v=20261112e';
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112e';
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112f';
 import { wireSelectHide } from './select-hide.js?v=20261112e';   // 11-12 미리보기에서 글을 고르면 옆에 뜨는 막대(눌러야 보이게 · 숨김 풀기 · 굵게 · 기울임)
 import { themeTakeable } from './theme-take.js?v=20261112c';   // 11-12 테마가 이 틀을 받는지(테마 받기 검사를 옮긴 것 · 목록 틀은 index.json nt · 내 글꾸는 여기서)
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
@@ -549,23 +550,15 @@ function paintFrame(state) {
     } catch (e) { box.innerHTML = `<small class="mart-fail">${esc(e.message)}</small>`; }
 }
 
-// 세계관 · 캐릭터 글꾸의 원작 봇(깡싸 글) — 분류 id 로 묶어요
+// 세계관 · 캐릭터 글꾸의 원작 봇(깡싸 글) — 분류 id 로 묶어요 · 11-12 밤 자료는 sources.js 한 곳(글꾸 캐릭터 칸 · 액자 마트와 같이 읽어요)
 const SOURCES = {
-    'halo': { title: '천악 오피스물 ~천지합동청 H.A.L.O~', url: 'https://kkangtong.xyz/posts/54677' },
-    'halo-char': { title: '천악 오피스물 ~천지합동청 H.A.L.O~', url: 'https://kkangtong.xyz/posts/54677' },
-    'hunter': { title: '헌터물 시뮬봇 「Dungeons & Hunters」', url: 'https://kkangtong.xyz/posts/5150' },
-    'adrian': { title: '독일 출생 수석 지휘자', url: 'https://kkangtong.xyz/posts/81234' },
-    'gangho': { title: '미완성인 무협 시뮬레이션', url: 'https://kkangtong.xyz/posts/78795' },
-    'gangho-char': { title: '미완성인 무협 시뮬레이션', url: 'https://kkangtong.xyz/posts/78795' },
-    'hunter-char': { title: '헌터물 시뮬봇 「Dungeons & Hunters」', url: 'https://kkangtong.xyz/posts/5150' },
-    'adrian-char': { title: '독일 출생 수석 지휘자', url: 'https://kkangtong.xyz/posts/81234' },
+    'halo': WORKS.halo, 'halo-char': WORKS.halo,
+    'hunter': WORKS.hunter, 'hunter-char': WORKS.hunter,
+    'adrian': WORKS.adrian, 'adrian-char': WORKS.adrian,
+    'gangho': WORKS.gangho, 'gangho-char': WORKS.gangho,
 };
 // 캐릭터마다 따로 공유된 깡캐 글 — id 앞부분(char-이름)으로 묶어요
-const CHAR_SOURCES = {
-    'char-uziel': { title: 'MZ가 되고 싶은 최초의 세라프(우지엘)', url: 'https://kkangtong.xyz/posts/127563' },
-    'char-lucifer': { title: '미카엘 쌍둥이 친형 · 칠죄종 타락천사 루시퍼', url: 'https://kkangtong.xyz/posts/78569' },
-    'char-asmodeus': { title: '나 때찌해줘 갸루오지상(아스모데우스)', url: 'https://kkangtong.xyz/posts/155899' },
-};
+const CHAR_SOURCES = { 'char-uziel': CHAR_WORKS.uziel, 'char-lucifer': CHAR_WORKS.lucifer, 'char-asmodeus': CHAR_WORKS.asmodeus };
 // 보이는 분류 이름 — 「강호유람록」은 실제 봇 이름 「무협시뮬」로 보여 주되, 옛 이름으로도 찾아지게 검색어에 남겨요
 const LABEL_FIX = { 'gangho': '무협시뮬', 'gangho-char': '무협시뮬 · 인물' };
 const SEARCH_ALSO = { 'song': '노래 앨범 mp3 음악 오디오 플레이리스트 트랙 싱글 깡싸 커뮤니티 게시글 글꾸', 'hwabo': '화보 사진 갤러리 사진첩 앨범 깡싸 커뮤니티 게시글 글꾸', 'gangho': '강호유람록 무협 시뮬 무협시뮬', 'gangho-char': '강호유람록 무협 시뮬 무협시뮬' };
@@ -573,7 +566,7 @@ const catLabel = (id, label) => LABEL_FIX[id] || label || '';
 // 세계관 액자의 원작 봇 — 콘셉트 id 로 묶어요(url 이 빈 칸이면 링크를 안 보여요)
 const FRAME_SOURCES = {
     'halo-office': SOURCES.halo,
-    'hunter-sim': { title: 'Dungeons & Hunters', url: 'https://kkangtong.xyz/posts/5150' },
+    'hunter-sim': { title: 'Dungeons & Hunters', url: WORKS.hunter.url },
     'adrian': SOURCES.adrian,
 };
 const sourceLinks = item => {
@@ -584,7 +577,7 @@ const sourceLinks = item => {
     if (w && !w.url) w = null;   // 자리만 있는 원작
     const a = (src, kind) => `<a class="mart-source" href="${esc(src.url)}" target="_blank" rel="noopener noreferrer" title="원작 깡싸 글">🔗 ${kind} · ${esc(src.title)}</a>`;
     // 틀마다 출처 봇이 다른 분류(11-06 센티넬버스 — 센가시뮬 · 센가 아카데미)는 목록의 source(봇 정식 이름)를 글로만 보여요(깡싸 글 주소는 아직 없어요)
-    const own = !w && item.source ? `<span class="mart-source is-plain" title="원작 봇">원작 · ${esc(item.source)}</span>` : '';
+    const own = !w && item.source ? sourceHtml(workByTitle(item.source) || { title: item.source }, '원작') : '';   // 11-12 밤 주소를 받은 봇(센티넬버스 둘)은 링크로
     // 11-09 노래방 글꾸(kara): 견본 대신 내 mp3 · 가사로 만드는 화면(mart/kara/)으로 — 카드 · 상세 창 둘 다
     const kara = item.category === 'kara' ? `<a class="mart-source" href="${esc(asset(`kara/?theme=${String(id).replace(/^kara-/, '')}`))}" title="mp3 주소 · 제목 · 이름 · 색 · [분:초] 가사를 넣으면 이 테마의 HTML 이 바로 나와요">🎤 내 곡으로 만들기 · 노래방 글꾸</a>` : '';
     return (ch ? a(ch, '깡캐') : '') + (w ? a(w, '원작') : own) + kara;
@@ -663,7 +656,7 @@ function doAct(state, act, b) {
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
 let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261112e').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261112f').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
@@ -735,7 +728,7 @@ function queueRepaint(flash) {
 }
 function repaintTone() {
     for (const s of states) { delete s.toneKey; delete s.toneHtml; if (s.filled) { const box = s.el.querySelector('.mart-preview-in'); if (box) box.innerHTML = viewOf(s); } syncCard(s); }
-    if (sheet?.open && sheetState?.item.preview) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); const inks = sheet.querySelector('.mart-sheet-inks'); if (inks) inks.innerHTML = toned(sheetState.item) ? '' : inksHtml(sheetState.item); syncSheet(); paintTune(); }
+    if (sheet?.open && sheetState?.item.preview) { sheet.querySelector('.mart-sheet-preview').innerHTML = sheetPreview(sheetState); const inks = sheet.querySelector('.mart-sheet-inks'); if (inks) inks.innerHTML = toned(sheetState.item) ? '' : inksHtml(sheetState.item); const cr = sheet.querySelector('.mart-sheet-credit'); if (cr) cr.innerHTML = sheetState.item.simple ? pickedCreditHtml() : ''; syncSheet(); paintTune(); }
 }
 // 11-11 조절 값(글자색 · 소품 색 · 고쳐 쓴 글)이 바뀌면 그 틀의 카드와 크게 보기를 다시 그려요 — 글만 고친 것이면 크게 보기 미리보기는 그대로(글 쓰는 자리가 안 날아가게)
 document.addEventListener('bl-tune-change', (e) => {
@@ -875,7 +868,7 @@ function openSheet(state) {
     const { item } = state;
     sheet.querySelector('#mart-sheet-title').innerHTML = `${glyphHtml(item)}<span>${esc(item.name || item.label)}</span>${favHtml(item)}`;
     if (item.accent) sheet.style.setProperty('--accent', item.accent); else sheet.style.removeProperty('--accent');   // 담기 단추 색 = 그 글꾸 강조색
-    sheet.querySelector('.mart-sheet-meta').innerHTML = `${tagsHtml(item)}${designsHtml(item)}<p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}${item.own && item.warn.length ? `<details class="mart-own-check"><summary>깡통에 올리면</summary>${ownWarnHtml(item.warn)}</details>` : ''}`;   // 11-10 디자인 넘기기 · 11-12 내 글꾸 점검
+    sheet.querySelector('.mart-sheet-meta').innerHTML = `${tagsHtml(item)}${designsHtml(item)}<p class="mart-desc">${esc(descOf(item))}</p>${sourceLinks(item)}<div class="mart-cast-credit mart-sheet-credit">${item.simple ? pickedCreditHtml() : ''}</div>${item.own && item.warn.length ? `<details class="mart-own-check"><summary>깡통에 올리면</summary>${ownWarnHtml(item.warn)}</details>` : ''}`;   // 11-10 디자인 넘기기 · 11-12 내 글꾸 점검
     sheet.querySelector('.mart-sheet-viewbox').innerHTML = item.simple ? viewSegHtml(item) + pvFoldHtml() : '';   // 11-12 간편 | 세밀 — 창 머리(설계 4-8)
     const body = sheet.querySelector('.mart-sheet-body');
     body.innerHTML = `<div class="mart-sheet-preview${site.mode !== 'mart' && (item.simple || item.own) ? ' is-site' : ''}">${item.preview ? sheetPreview(state) : '<p class="mart-sheet-wait">불러오는 중이에요…</p>'}</div><div class="mart-sheet-side">${siteRowHtml(item)}<div class="mart-sheet-tune">${tuneHtml(item)}</div><div class="mart-sheet-inks">${item.preview && !toned(item) ? inksHtml(item) : ''}</div><div class="mart-sheet-mine">${mineBoxHtml(item)}</div></div>`;   // 11-12 미리보기 · 옆 칸(PC 두 칸 · 폰은 미리보기 위)
@@ -1158,6 +1151,7 @@ async function main() {
     const rank = x => (x.builtin ? -1 : STYLE_ORDER.includes(styleOf(x)) ? STYLE_ORDER.indexOf(styleOf(x)) : STYLE_ORDER.length);
     for (const a of byName.values()) { a.sort((p, q) => rank(p) - rank(q)); for (const x of a) x._sibs = a; }
     { const want = hashId(), it = want && items.find(x => x.id === want); if (it) conceptPick.set(it.name, it.id); }   // #글꾸id 로 오면 그 디자인이 카드에 보여요
+    { const cr = document.querySelector('.mart-credits'); if (cr) cr.innerHTML = creditsHtml(CAST_GROUPS); }   // 11-12 밤 「원작」 칸 — 캐릭터를 안 골라도 보여요
     mountCast(document.querySelector('.mart-cast'), { say });   // 11-10 목록 위 「깡통: … ▾ · 깡캐: … ▾」
     cards = lazyGrid(grid, cardEl);
     applyFilter();
@@ -1191,7 +1185,7 @@ async function main() {
 }
 // 액자 마트: 수백 종 · 내 사진 넣어 보기 · 거르기 · 조금씩 그리기(frame-room.js) — 받기 · 장바구니는 여기 것을 그대로 써요
 const start = kind === 'frames'
-    ? import('./frame-room.js?v=20261112b').then(m => m.start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
+    ? import('./frame-room.js?v=20261112c').then(m => m.start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
     : kind === 'geulkku' ? main() : null;   // 그 밖의 페이지(지니)는 아래 부품만 빌려 써요
 start?.catch(e => { grid.innerHTML = `<p class="mart-empty">목록을 못 불러왔어요 · ${esc(e.message)}</p>`; });
 
@@ -1210,6 +1204,6 @@ export async function geulkkuList() {
     return data;
 }
 /** 프레임 방(frame-room.js)의 지니용 준비 — 마트 액자 카드와 같은 그림 · 같은 담기 값 */
-export const frameKit = () => import('./frame-room.js?v=20261112b').then(m => m.kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
+export const frameKit = () => import('./frame-room.js?v=20261112c').then(m => m.kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
 export const mylogOn = () => mylog.on;
 export { isBuiltin, BUILTIN_TAG, cart, say, esc, asset, ensureItem, previewOf, tagsHtml, glyphHtml, iconSrc, descOf, catLabel, styleOf, entryOf, receipt, doAct, copyEntries, copyHtml, sourceLinks, LOAD_FAIL };
