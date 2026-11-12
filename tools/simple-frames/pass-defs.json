@@ -3057,5 +3057,61 @@
   "open": false,
   "peek": false,
   "desc": "누르면 — 답장 보내기"
+ },
+ {
+  "frame": "k1374",
+  "name": "추석",
+  "emoji": "🌕",
+  "open": false,
+  "peek": false,
+  "desc": "소품을 누르면 — 보름달 채우기"
+ },
+ {
+  "frame": "k1375",
+  "name": "화이트데이",
+  "emoji": "🍬",
+  "open": true,
+  "peek": true,
+  "desc": "소품을 누르면 — 사탕 꺼내기"
+ },
+ {
+  "frame": "k1376",
+  "name": "발렌타인",
+  "emoji": "🍫",
+  "open": true,
+  "peek": true,
+  "desc": "소품을 누르면 — 초코 붓기"
+ },
+ {
+  "frame": "k1377",
+  "name": "메뉴판",
+  "emoji": "☕",
+  "open": true,
+  "peek": true,
+  "desc": "소품을 누르면 — 메뉴 쓰기"
+ },
+ {
+  "frame": "k1378",
+  "name": "실험 노트",
+  "emoji": "🧪",
+  "open": false,
+  "peek": false,
+  "desc": "소품을 누르면 — 한 방울 떨어뜨리기"
+ },
+ {
+  "frame": "k1379",
+  "name": "사랑 재판",
+  "emoji": "⚖️",
+  "open": false,
+  "peek": false,
+  "desc": "소품을 누르면 — 법봉 치기"
+ },
+ {
+  "frame": "k1380",
+  "name": "스노우볼",
+  "emoji": "❄️",
+  "open": false,
+  "peek": false,
+  "desc": "소품을 누르면 — 흔들기"
  }
 ]

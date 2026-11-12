@@ -437,7 +437,7 @@ await test('심플 액자 30 ① 자료 frames.json = 테마 FRAME_PRESETS 30 ·
     // 액자 마트 머리 · 홈 숫자
     assert.match(fs.readFileSync(path.join(MART, 'frames/index.html'), 'utf8'), /심플 액자 30종은 테마에 이미/);
     assert.match(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), /그림 액자 1428종과, 테마에 이미 들어 있는 심플 액자 30종/);
-    for (const f of ['mart/geulkku', 'mart/frames', 'mart/genie', 'mart/kara', '.']) assert.match(fs.readFileSync(path.join(ROOT, f, 'index.html'), 'utf8'), /top-mart\.js\?v=20261112b/, f);
+    for (const f of ['mart/geulkku', 'mart/frames', 'mart/genie', 'mart/kara', '.']) assert.match(fs.readFileSync(path.join(ROOT, f, 'index.html'), 'utf8'), /top-mart\.js\?v=20261112c/, f);
 });
 await test('심플 액자 30 ② 가짜 캔버스로 30종 전부 기본값 · 색 · 50 % · 200 % 그려지고 사진 창을 채워요 · 모르는 id 는 던져요(테마 frame-presets-simple.mjs ② 와 같은 셈)', async () => {
     const calls = [];
@@ -1373,7 +1373,7 @@ await test('설정 꼴 blGeulkku 2(geulkku-set.js) · 테마로 담기 꾸러미
     const longTune = { texts: Object.fromEntries(Array.from({ length: 10 }, (_, i) => [i, '가'.repeat(3000)])) };
     assert.ok(JSON.stringify(gs.makeSet({ tone: {}, tune: longTune, frame: 'simple-k1079' })).length > 16 * 1024, '고친 글 열 칸(한 칸 2000자 안팎)이면 넘어요');
 });
-await test('바탕 질감(11-12 · 글꾸-질감/마트-연결.md): 끔이면 그대로 · 410틀 × 낮밤에 걸고 떼면 처음과 같음 · 걸지 않는 틀 16 · <style> 하나 · 정적 검사 · 인스타 세 틀 + #222 즉석카메라 목록', async () => {
+await test('바탕 질감(11-12 · 글꾸-질감/마트-연결.md): 끔이면 그대로 · 417틀 × 낮밤에 걸고 떼면 처음과 같음 · 걸지 않는 틀 16 · <style> 하나 · 정적 검사 · 인스타 세 틀 + #222 즉석카메라 목록', async () => {
     const tx = await import(pathToFileURL(path.join(MART, 'texture.js')).href + '?v=20261112a');
     let n = 0; const blocked = new Set();
     for (const [id, it] of Object.entries(allItems)) for (const mode of ['light', 'dark']) {
@@ -1406,8 +1406,8 @@ await test('움직임 끔(세기 모듈 gm-0 · gp-0): 칩 넷 · 끔이면 뿌�
     }
     assert.ok(off > 300, '끔 되는 틀 ' + off);
 });
-// 11-12 테마 1.1.3 c3528bad7(기본 글꾸 새 틀 숨긴 글이 <p> 안 <details> 라 붙인 글에서 문단이 쪼개지고 글자색을 잃던 것)과 같은 결함 확인 — 410틀 × 낮밤
-await test('숨긴 줄 410틀: 지문 · 대사 첫 줄을 숨겨도 복사 글에 <p> 안 <details> 0 · 숨긴 줄은 div.blsp-p · 틀 <style> 의 p 규칙마다 .blsp-p 짝(선언 그대로) · <style> 하나 · 정적 검사 · 숨길 것이 없으면 한 글자도 안 달라요 · 글만 복사에 숨긴 줄 한 번', () => {
+// 11-12 테마 1.1.3 c3528bad7(기본 글꾸 새 틀 숨긴 글이 <p> 안 <details> 라 붙인 글에서 문단이 쪼개지고 글자색을 잃던 것)과 같은 결함 확인 — 417틀 × 낮밤
+await test('숨긴 줄 417틀: 지문 · 대사 첫 줄을 숨겨도 복사 글에 <p> 안 <details> 0 · 숨긴 줄은 div.blsp-p · 틀 <style> 의 p 규칙마다 .blsp-p 짝(선언 그대로) · <style> 하나 · 정적 검사 · 숨길 것이 없으면 한 글자도 안 달라요 · 글만 복사에 숨긴 줄 한 번', () => {
     const P_SEL = /(^|[\s>+~(,])p(?=$|[\s>+~.:#[),])/, P_ALL = new RegExp(P_SEL.source, 'g');
     let n = 0;
     for (const [id, it] of Object.entries(allItems)) for (const mode of ['light', 'dark']) {
@@ -1433,7 +1433,7 @@ await test('숨긴 줄 410틀: 지문 · 대사 첫 줄을 숨겨도 복사 글�
     assert.ok(n > 800, '잰 판 ' + n);
 });
 // 11-12 고른 글 옆 막대(mart/select-hide.js): 고른 글만 숨기기 { i, a, b, t } — 테마 미리보기 「숨기기」와 같은 글줄 안 꼴(details.blsp-s · blsp-k 없음)
-await test('고른 글만 숨기기 410틀 × 낮밤: 지문 첫 줄 가운데 글만 글줄 안 숨긴 글 · 나머지 글은 밖 · <p> 안 details 0 · 정적 검사 · 글만 복사에 숨긴 글 · 줄째 숨김이 있으면 그쪽', async () => {
+await test('고른 글만 숨기기 417틀 × 낮밤: 지문 첫 줄 가운데 글만 글줄 안 숨긴 글 · 나머지 글은 밖 · <p> 안 details 0 · 정적 검사 · 글만 복사에 숨긴 글 · 줄째 숨김이 있으면 그쪽', async () => {
     const tun = await import(pathToFileURL(path.join(MART, 'tune.js')).href + '?v=20261112s');
     let n = 0;
     for (const [id, it] of Object.entries(allItems)) for (const mode of ['light', 'dark']) {
@@ -1487,7 +1487,7 @@ await test('고른 글 막대 단추: 평소엔 「눌러야 보이게 / 숨김 
     assert.ok(src.includes("if (kinds.includes('bold'))"), '굵게 · 기울임은 규칙을 거쳐서만');
     assert.equal((src.match(/execCommand\(/g) || []).length, 1, '굵게 · 기울임 명령은 규칙 안 한 곳뿐');
 });
-await test('능력표 G4(11-12 · tools/geulkku-caps.mjs → caps.json): 410틀 모두 한 줄 · 정적 칸이 지금 틀과 같음(띠는 화면에서 그림 띠로 내릴 수만) · 범위 칸 꼴 · 표에 없는 틀은 정적 검사', async () => {
+await test('능력표 G4(11-12 · tools/geulkku-caps.mjs → caps.json): 417틀 모두 한 줄 · 정적 칸이 지금 틀과 같음(띠는 화면에서 그림 띠로 내릴 수만) · 범위 칸 꼴 · 표에 없는 틀은 정적 검사', async () => {
     const cp = await import(pathToFileURL(path.join(MART, 'caps.js')).href + '?v=20261112a');
     const caps = JSON.parse(fs.readFileSync(path.join(DIR, 'caps.json'), 'utf8'));
     assert.equal(caps.v, 1); assert.deepEqual(caps.widths, [640, 375, 320]);
@@ -1511,7 +1511,7 @@ await test('능력표 G4(11-12 · tools/geulkku-caps.mjs → caps.json): 410틀 
     assert.equal(cp.capWhy(caps.frames.k13, 'band'), '이 틀은 대사 띠를 그림으로 그어요');
     assert.equal(cp.capWhy(caps.frames.k1079, 'band'), '');
 });
-await test('모양 · 색 더하기(N5 · N8 · N12 ~ N18 · N23 · shape.js): 값이 없으면 한 글자도 안 달라요 · 410틀 × 낮밤 가장 큰 값 → 덮는 규칙만(<style> 하나 · 뼈대 그대로 · 정적 검사) · 띠 진하기는 알파만 · 화자별 띠 색 · 못 받는 칸은 건너뜀', async () => {
+await test('모양 · 색 더하기(N5 · N8 · N12 ~ N18 · N23 · shape.js): 값이 없으면 한 글자도 안 달라요 · 417틀 × 낮밤 가장 큰 값 → 덮는 규칙만(<style> 하나 · 뼈대 그대로 · 정적 검사) · 띠 진하기는 알파만 · 화자별 띠 색 · 못 받는 칸은 건너뜀', async () => {
     const sh = await import(pathToFileURL(path.join(MART, 'shape.js')).href + '?v=20261112a');
     const MAX = { bandAlpha: 40, borderAlpha: 30, radius: 24, pad: 130, width: 480, nameTag: 'pill', nameAlign: 'right', hideUl: true, hideProp: true };
     assert.deepEqual(sh.cleanShape({ bandAlpha: 99, pad: 133, width: 640, nameTag: 'plain', hideProp: false, x: 1 }), { bandAlpha: 40, pad: 130 });
@@ -1636,7 +1636,7 @@ await test('설정 파일 .bl-geulkku.json · 코드 BLG1.(⑦ · 설계 4-7 · 
     const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
     for (const w of ['data-setx="file"', 'data-setx="pick"', 'data-setx="code"', 'data-setx="paste"', 'data-setx="apply"', 'mart-setx-file', 'takeSet(item, got)', 'encodeSet(setNow(item))']) assert.ok(ui.includes(w), w);
 });
-await test('움직임 세기 사본(⑧ · 정본 22:20 판): 브라우저에서 돌아요(맨 위 줄에 process · require · module 없음 · 노드 전용 줄은 globalThis.process?.) · 상한 표 17줄 마트 열쇠 · 중은 410틀 그대로', async () => {
+await test('움직임 세기 사본(⑧ · 정본 22:20 판): 브라우저에서 돌아요(맨 위 줄에 process · require · module 없음 · 노드 전용 줄은 globalThis.process?.) · 상한 표 17줄 마트 열쇠 · 중은 417틀 그대로', async () => {
     const src = fs.readFileSync(path.join(MART, 'lib/motion/motion.js'), 'utf8');
     const code = src.split('\n').filter(l => !/^\s*(\/\/|\/\*\*|\*)/.test(l));
     assert.ok(!code.some(l => /(?<![\w.?])process\.|\brequire\(|module\.exports/.test(l)), '노드 전용 이름');
@@ -1799,7 +1799,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
     assert.equal(pick('#start'), 'start'); assert.equal(pick('#' + encodeURIComponent('한눈에')), '한눈에');
     assert.match(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), /home-guide\.js\?v=20261112k/);
 });
-// ── 11-12 「테마 아직 못 받음」 — 마트 판정(mart/theme-take.js · 목록 nt)이 테마 받기 검사(src/mart-import.js checkItem)와 410틀 모두 같아요 ──
+// ── 11-12 「테마 아직 못 받음」 — 마트 판정(mart/theme-take.js · 목록 nt)이 테마 받기 검사(src/mart-import.js checkItem)와 417틀 모두 같아요 ──
 {
     const tt = await imp(path.join(MART, 'theme-take.js'));
     const fixture = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools/theme-takeable.json'), 'utf8'));
@@ -1807,7 +1807,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
     for (const c of Object.values(sixAll.chunks)) Object.assign(previews, JSON.parse(fs.readFileSync(path.join(DIR, c.file), 'utf8')).items);
     const keyOf = html => sf.simpleFrameInfo(html)?.key || '';   // mart.js themeKey 와 같아요(조각 preview 뿌리 class)
     const judge = it => tt.themeTakeable(previews[it.id].preview, { id: it.id, key: keyOf(previews[it.id].preview) });
-    await test('테마 못 받음 ① 410틀 모두 마트 판정 = 테마 판정(고정 자료 tools/theme-takeable.json · 까닭 글자까지)', () => {
+    await test('테마 못 받음 ① 417틀 모두 마트 판정 = 테마 판정(고정 자료 tools/theme-takeable.json · 까닭 글자까지)', () => {
         assert.equal(sixAll.items.length, fixture.total);
         const ok = new Set(fixture.ok), diff = [];
         for (const it of sixAll.items) {
@@ -1815,7 +1815,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
             if (r.ok !== ok.has(it.id) || (!r.ok && r.reason !== fixture.no[it.id])) diff.push(`${it.id}: 마트 ${r.ok ? '받음' : r.reason} · 테마 ${ok.has(it.id) ? '받음' : fixture.no[it.id]}`);
         }
         assert.deepEqual(diff, []);
-        assert.equal(sixAll.items.filter(it => judge(it).ok).length, 357);
+        assert.equal(sixAll.items.filter(it => judge(it).ok).length, 364);
     });
     await test('테마 못 받음 ② 목록 index.json 의 nt = 판정 까닭(받는 틀엔 nt 없음 · 53틀)', () => {
         const bad = sixAll.items.filter((it) => { const r = judge(it); return r.ok ? 'nt' in it : it.nt !== r.why; }).map(it => it.id);
@@ -1825,7 +1825,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
     // 테마 사본이 이 PC 에 있으면 테마 코드를 바로 돌려서도 맞대요(GK_THEME_DIR 또는 옆 worktree builtin-out-review)
     const themeDir = process.env.GK_THEME_DIR || path.resolve(ROOT, '../builtin-out-review');
     if (fs.existsSync(path.join(themeDir, 'src/mart-import.js'))) {
-        await test('테마 못 받음 ③ 테마 사본 checkItem 을 바로 돌려도 410틀 같아요', async () => {
+        await test('테마 못 받음 ③ 테마 사본 checkItem 을 바로 돌려도 417틀 같아요', async () => {
             const { checkItem } = await imp(path.join(themeDir, 'src/mart-import.js'));
             const diff = [];
             for (const it of sixAll.items) {

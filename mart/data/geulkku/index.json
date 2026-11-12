@@ -1,6 +1,6 @@
 {
  "_": "글꾸 마트 목록 — tools/geulkku-simple.mjs 산출물(심플 새 틀 · 고치지 말고 다시 만들어요) · 옛 글꾸는 11-11 에 마트에서 뺐어요(되살리는 법은 W/outputs/지시-1110/심플-새틀-이식/마트-길닦기.md 12절)",
- "count": 410,
+ "count": 417,
  "categories": [
   {
    "id": "simple-open",
@@ -75,9 +75,9 @@
    "bytes": 789703
   },
   "sp-pass-9": {
-   "file": "sp-pass-9.c13fe988.json",
-   "n": 22,
-   "bytes": 393011
+   "file": "sp-pass-9.fbb3830a.json",
+   "n": 29,
+   "bytes": 505839
   }
  },
  "items": [
@@ -490,6 +490,13 @@
   {"id":"simple-k1370","name":"수영 · 물안경 속 수면","emoji":"🏊","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 물속으로","c":"sp-pass-9","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":19561,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1371","name":"인스타 DM","emoji":"💬","category":"simple-tap","style":"심플","desc":"누르면 — 하트 보내기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":17637,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
   {"id":"simple-k1372","name":"인스타 피드","emoji":"🖼️","category":"simple-tap","style":"심플","desc":"누르면 — 좋아요","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":19509,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
-  {"id":"simple-k1373","name":"인스타 스토리","emoji":"📸","category":"simple-tap","style":"심플","desc":"누르면 — 답장 보내기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":13095,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"}
+  {"id":"simple-k1373","name":"인스타 스토리","emoji":"📸","category":"simple-tap","style":"심플","desc":"누르면 — 답장 보내기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":13095,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k1374","name":"추석","emoji":"🌕","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 보름달 채우기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":14693,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k1375","name":"화이트데이","emoji":"🍬","category":"simple-open","style":"심플","desc":"소품을 누르면 — 사탕 꺼내기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":19916,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061"},
+  {"id":"simple-k1376","name":"발렌타인","emoji":"🍫","category":"simple-open","style":"심플","desc":"소품을 누르면 — 초코 붓기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":12998,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061"},
+  {"id":"simple-k1377","name":"메뉴판","emoji":"☕","category":"simple-open","style":"심플","desc":"소품을 누르면 — 메뉴 쓰기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":16346,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k1378","name":"실험 노트","emoji":"🧪","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 한 방울 떨어뜨리기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":16005,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"},
+  {"id":"simple-k1379","name":"사랑 재판","emoji":"⚖️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 법봉 치기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":13104,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061"},
+  {"id":"simple-k1380","name":"스노우볼","emoji":"❄️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 흔들기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":18104,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3"}
  ]
 }

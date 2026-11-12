@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 11-12 글꾸 마트 「스타일 · 한 번에 입혀요」 시험(DOM 없음 · node 24 · 외부 의존 없음)
 //   node tools/geulkku-style-test.mjs
-//   ① 추천 스타일 여섯 벌이 410틀 모두에서 복사 글 · 미리보기(toneOut)를 서로 다르게 바꿔요(「틀 그대로」 = 처음 그대로)
+//   ① 추천 스타일 여섯 벌이 417틀 모두에서 복사 글 · 미리보기(toneOut)를 서로 다르게 바꿔요(「틀 그대로」 = 처음 그대로)
 //   ② 여러 틀(심플 · 소리 카드 · 합격 틀 · 테마 못 받음 · 움직임 있는 틀)에서 스타일마다 실제 규칙이 들어가요
 //   ③ 스타일 카드 그림이 비어 있지 않고 스타일마다 달라요
 //   ④ 움직임 단추: 「잔잔하게」(약)를 약이 없는 틀에 입혀도 막힌 단추가 눌림으로 안 보여요
@@ -44,7 +44,7 @@ async function test(name, fn) {
     catch (e) { fail++; console.log(`실패  ${name}\n      ${String(e.message).split('\n').slice(0, 6).join('\n      ')}`); }
 }
 
-await test('① 스타일 여섯 벌 × 410틀 — 「틀 그대로」는 처음 그대로 · 나머지는 서로 다르게 바뀌어요', () => {
+await test('① 스타일 여섯 벌 × 417틀 — 「틀 그대로」는 처음 그대로 · 나머지는 서로 다르게 바뀌어요', () => {
     const same = [], dup = [], thrown = [];
     for (const it of idx.items) {
         const item = itemOf(it), out = {};
