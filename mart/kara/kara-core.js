@@ -89,10 +89,41 @@ export function parseLyrics(text) {
 }
 
 // ── 효과 층 ──
+// 빗줄기 타일(SVG data 주소 · <style> 규칙 안의 url(data:) 는 깡싸에서 살아요). W×H 타일에 n 줄기 — deg 만큼 기울고 위는 투명 · 아래로 갈수록 진해요(조각 6개로 계단). 가장자리에 걸친 줄기는 맞은편에도 그려 이음매가 없어요.
+const mulberry = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const f1 = v => String(Math.round(v * 10) / 10);
+function rainTile({ W, H, n, seed, rgb, h: [h0, h1], a: [a0, a1], deg }) {
+  const R = mulberry(seed), sin = Math.sin(deg * Math.PI / 180), cos = Math.cos(deg * Math.PI / 180), SEG = 6;
+  let p = '';
+  for (let i = 0; i < n; i++) {
+    const x = (i + 0.15 + R() * 0.7) * W / n, y = (((i * 0.618 + R() * 0.35) % 1)) * H, h = h0 + R() * (h1 - h0), a = a0 + R() * (a1 - a0);
+    for (const [ox, oy] of [[0, 0], [W, 0], [0, -H], [W, -H]]) {
+      if (ox && x - h * sin >= 0) continue; if (oy && y + h * cos <= H) continue;
+      for (let s = 0; s < SEG; s++) {
+        const t0 = s / SEG, t1 = (s + 1) / SEG;
+        p += `%3Cpath d='M${f1(x + ox - h * sin * t0)} ${f1(y + oy + h * cos * t0)}L${f1(x + ox - h * sin * t1)} ${f1(y + oy + h * cos * t1)}' stroke-opacity='${(a * (s + 0.5) / SEG).toFixed(3).replace(/^0/, '')}'/%3E`;
+      }
+    }
+  }
+  return `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${W}' height='${H}' viewBox='0 0 ${W} ${H}'%3E%3Cg fill='none' stroke='rgb(${rgb})' stroke-width='1'%3E${p}%3C/g%3E%3C/svg%3E")`;
+}
+/** 비 두 겹: 타일을 한 장만큼 transform 으로 흘려요(다시 그리지 않아요). 넓은 화면(640px 이상)은 한 겹만 — 낱개 줄기 때도 넓으면 성겼어요. slope = 가로/세로 흐름 비 */
+function rainCss({ box, kf, slope, rgb, h, a, deg, durA, durB, seed = 7 }) {
+  const A = { H: 750, n: 5 }, B = { H: 600, n: 3 }; A.W = Math.round(A.H * slope); B.W = Math.round(B.H * slope);
+  const one = (pseudo, T, nm, dur, delay, sd) => `${box}::${pseudo}{content:'';position:absolute;left:0;right:-${T.W}px;top:-${T.H}px;bottom:0;pointer-events:none;background-image:${rainTile({ W: T.W, H: T.H, n: T.n, seed: sd, rgb, h, a, deg })};background-size:${T.W}px ${T.H}px;background-repeat:repeat;animation:${nm} ${dur}s linear ${delay}s infinite}`;
+  return `@keyframes ${kf}a{to{transform:translate3d(-${A.W}px,${A.H}px,0)}}
+@keyframes ${kf}b{to{transform:translate3d(-${B.W}px,${B.H}px,0)}}
+${one('before', A, kf + 'a', durA, 0, seed)}
+${one('after', B, kf + 'b', durB, -0.31, seed + 11)}
+@media (min-width:640px){
+${box}::after{display:none}
+}`;
+}
+// 11-13 가볍게: 비 줄기는 낱개 요소(곡마다 42개 · 각자 infinite 움직임)를 만들지 않고 타일 무늬 두 겹(.kb-rain::before · ::after)으로 흘려요. RAIN_N 은 난수 차례를 지키려고만 남겨요(물방울 · 색종이 · 파편 · 눈 자리가 예전과 같게).
 const RAIN_N = 42, DROP_N = 7, CF_N = 30, SH_N = 12, FLK_N = 34;
 const many = (tag, cls, n) => Array.from({ length: n }, (_, k) => `<${tag} class="${cls}${k}"></${tag}>`).join('');
 const FX = {
-  ign: `<div class="kb-fx kb-rain" aria-hidden="true">${many('i', 'r', RAIN_N)}${many('b', 'd', DROP_N)}<em></em></div>`,
+  ign: `<div class="kb-fx kb-rain" aria-hidden="true">${many('b', 'd', DROP_N)}<em></em></div>`,
   mes: `<div class="kb-fx kb-cf" aria-hidden="true">${many('i', 'p', CF_N)}</div>`,
   tale: `<div class="kb-fx kb-shard" aria-hidden="true">${many('b', 'l', 5)}${many('i', 's', SH_N)}</div>`,
   snow: `<div class="kb-fx kb-flk" aria-hidden="true">${many('i', 'f', FLK_N)}</div>`,
@@ -108,7 +139,8 @@ const MOTIF = {
 };
 const fxCss = (() => {
   const rnd = seeded(11), out = {};
-  out.ign = Array.from({ length: RAIN_N }, (_, k) => { const h = 34 + Math.round(rnd() * 46), dur = 0.9 + rnd() * 0.9, a = (0.22 + rnd() * 0.3).toFixed(2); return `.kr .kb-rain .r${k}{left:${(k / RAIN_N * 130 + rnd() * 3).toFixed(1)}%;height:${h}px;block-size:${h}px;background-image:linear-gradient(rgba(190,215,255,0),rgba(190,215,255,${a}));animation:kb-rain ${dur.toFixed(2)}s linear ${(-rnd() * dur).toFixed(2)}s infinite}`; }).join('\n')
+  for (let k = 0; k < RAIN_N * 5; k++) rnd();   // 예전 줄기 42개가 쓰던 난수 5개씩을 그대로 흘려보내요
+  out.ign = rainCss({ box: '.kr .kb-rain', kf: 'kb-rn', slope: 330 / 1500, rgb: '190,215,255', h: [34, 72], a: [0.25, 0.5], deg: 16, durA: 0.55, durB: 0.62 })
     + '\n' + Array.from({ length: DROP_N }, (_, k) => { const z = 5 + Math.round(rnd() * 5), dur = 9 + rnd() * 8; return `.kr .kb-rain .d${k}{left:${(6 + rnd() * 88).toFixed(1)}%;top:${(4 + rnd() * 40).toFixed(1)}%;width:${z}px;height:${z + 2}px;block-size:${z + 2}px;animation:kb-drop ${dur.toFixed(1)}s ease-in ${(-rnd() * dur).toFixed(1)}s infinite}`; }).join('\n');
   out.snow = Array.from({ length: FLK_N }, (_, k) => { const z = 3 + Math.round(rnd() * 6), dur = 7 + rnd() * 8; return `.kr .kb-flk .f${k}{left:${(k / FLK_N * 100 + rnd() * 3).toFixed(1)}%;width:${z}px;height:${z}px;block-size:${z}px;opacity:${(0.55 + rnd() * 0.4).toFixed(2)};animation:kb-flake${k % 2} ${dur.toFixed(1)}s linear ${(-rnd() * dur).toFixed(1)}s infinite}`; }).join('\n');
   const CF_COL = ['#ff3b3b', '#ffd400', '#2ed158', '#2f6bff', '#ff2fb4', '#19d9ff'];
@@ -130,7 +162,7 @@ const winCss = th => `.kr.kt-${th} .kr-win{height:${TH[th].WIN}px;block-size:${T
 const SNOWCAP = 'background-image:radial-gradient(24% 90% at 12% 100%,#ffffff 97%,rgba(255,255,255,0) 100%),radial-gradient(30% 112% at 40% 100%,#ffffff 97%,rgba(255,255,255,0) 100%),radial-gradient(26% 100% at 68% 100%,#ffffff 97%,rgba(255,255,255,0) 100%),radial-gradient(22% 86% at 90% 100%,#ffffff 97%,rgba(255,255,255,0) 100%),linear-gradient(180deg,rgba(214,228,246,0) 60%,#d6e4f6 100%),linear-gradient(#ffffff,#ffffff);background-size:100% 100%,100% 100%,100% 100%,100% 100%,100% 100%,100% 55%;background-position:0 0,0 0,0 0,0 0,0 0,0 100%;background-repeat:no-repeat;filter:drop-shadow(0 1px 1.5px rgba(60,95,140,.55))';
 
 const COMMON_CSS = `
-@keyframes kr-on{0%,100%{opacity:1}}
+@keyframes kr-on{0%,100%{--kr-o:1}}
 @keyframes kr-bar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes kr-min{${minK}}
 @keyframes kr-sec{${secK}}
@@ -142,6 +174,10 @@ const COMMON_CSS = `
 .kr .kr-card{position:relative;padding:16px 14px 18px;border-radius:24px;clip-path:inset(0 round 24px);color:#e8ecf5}
 .kr .kb-fx{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden!important;overflow-x:clip!important;clip-path:inset(0)!important}
 .kr .kb-fx *{position:absolute;display:block;pointer-events:none}
+/* 가볍게(11-13): 화면 밖 효과 칸 · 춤추는 막대 칸은 쉬어요(크기가 정해진 칸만이라 글 높이는 안 바뀌어요). 가사 줄은 opacity 를 직접 움직이지 않고 --kr-o 를 움직여요(줄마다 겹이 생기지 않게 — kr-on). 카드의 overflow-x:clip 은 도는 레코드판 모서리가 문서 폭을 늘리지 않게. */
+.kr .kb-fx,.kr .kb-play{content-visibility:auto}
+.kr .kb-eq{content-visibility:auto;contain-intrinsic-size:18px 14px}
+.kr .kr-card{overflow-x:clip}
 .kr .kb-hero{position:relative;z-index:0;margin:2px 0 14px}
 .kr .kb-head,.kr .kb-np{position:relative;z-index:2}
 .kr .kb-cv{position:relative;z-index:1;width:76%;line-height:0}
@@ -169,7 +205,7 @@ const COMMON_CSS = `
 .kr .kr-win::before{content:'';position:absolute;left:4px;right:4px;top:32px;height:40px;block-size:40px;border-radius:13px;z-index:0}
 .kr .kr-win::after{content:'';position:absolute;inset:0;z-index:2;pointer-events:none}
 .kr .kr-strip{position:relative;z-index:1}
-.kr .kr-l{display:flex;align-items:center;justify-content:center;text-align:center;padding:0 14px;opacity:.38}
+.kr .kr-l{display:flex;align-items:center;justify-content:center;text-align:center;padding:0 14px;opacity:var(--kr-o,.38)}
 .kr .kr-tx{display:block;max-width:100%;line-height:1.22;word-break:keep-all;overflow-wrap:anywhere}
 .kr .kr-ko{font-size:13.5px;font-weight:700}
 .kr .kr-jp{font-size:10.5px;font-weight:500;margin-left:4px;letter-spacing:.02em}
@@ -229,7 +265,6 @@ const COMMON_CSS = `
 
 const THEME_CSS = {
   ign: `/* ── 비 오는 밤의 방 · 폰 알림 ── */
-@keyframes kb-rain{from{transform:translate3d(0,0,0) rotate(16deg)}to{transform:translate3d(-330px,1500px,0) rotate(16deg)}}
 @keyframes kb-drop{0%{transform:translate3d(0,0,0);opacity:0}8%{opacity:.9}70%{opacity:.8}100%{transform:translate3d(0,420px,0);opacity:0}}
 @keyframes kb-shim{0%,62%{transform:translate3d(-120%,0,0)}100%{transform:translate3d(120%,0,0)}}
 .kr .kb-ign{background-color:#08101f;background-image:radial-gradient(38% 22% at 86% 4%,rgba(205,222,255,.30),rgba(205,222,255,0) 70%),radial-gradient(55% 28% at 6% 98%,rgba(255,170,90,.16),rgba(255,170,90,0) 70%),linear-gradient(180deg,#0d1834 0%,#070c19 100%)}
@@ -249,7 +284,6 @@ const THEME_CSS = {
 .kr .kb-ign .kr-win::before{background-color:#1a2a4b;box-shadow:inset 0 0 0 1px rgba(140,170,240,.18)}
 .kr .kb-ign .kr-win::after{background-image:linear-gradient(#0b1426,rgba(11,20,38,0) 26%,rgba(11,20,38,0) 74%,#0b1426)}
 .kr .kb-ign .kr-ps{background-color:#16223b}
-.kr .kb-rain i{top:-90px;width:1px;transform:rotate(16deg)}
 .kr .kb-rain b{border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background-color:rgba(190,215,255,.08);background-image:radial-gradient(circle at 35% 30%,rgba(255,255,255,.75) 0 12%,rgba(200,220,255,.18) 30%,rgba(200,220,255,0) 70%);box-shadow:0 1px 2px rgba(0,0,0,.35)}
 .kr .kb-rain em{top:0;left:0;right:0;bottom:0;background-image:linear-gradient(110deg,rgba(170,200,255,0) 40%,rgba(170,200,255,.08) 50%,rgba(170,200,255,0) 60%);animation:kb-shim 11s ease-in-out infinite}
 ${fxCss.ign}`,
@@ -322,7 +356,7 @@ ${fxCss.tale}`,
 .kr .kb-meme .kr-bar{background-color:${TR.meme.rail}}
 .kr .kb-meme .kr-win{background-color:#000000;border-radius:0}
 .kr .kb-meme .kr-win::before{display:none}
-.kr .kb-meme .kr-l{opacity:0}
+.kr .kb-meme .kr-l{opacity:var(--kr-o,0)}
 .kr .kb-meme .kr-ko{font-size:15px;font-weight:800;text-shadow:1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000}
 .kr .kb-meme .kr-ps{background-color:#1a1a1a}`,
   snow: `/* ── 첫눈: 밝은 눈 오후 · 눈 쌓인 통통 글자 · 서리 유리 플레이어 ── */
@@ -356,7 +390,7 @@ ${fxCss.snow}
 .kr .kb-snow .kr-win{background-color:#ffffff}
 .kr .kb-snow .kr-win::before{background-color:#eef5ff;box-shadow:inset 0 0 0 1px #d6e5f7}
 .kr .kb-snow .kr-win::after{inset:auto;left:9px;right:9px;top:26px;height:11px;block-size:11px;${SNOWCAP}}
-.kr .kb-snow .kr-l{opacity:.5}
+.kr .kb-snow .kr-l{opacity:var(--kr-o,.5)}
 .kr .kb-snow .kr-ko{font-weight:800}
 .kr .kb-snow .kr-ps{background-color:#e9f2fc}`,
   tom: `/* ── 따뜻한 물방울 무늬 · 스티커 ── */
@@ -377,7 +411,7 @@ ${fxCss.snow}
 .kr .kb-tom .kr-win{background-color:#fffaf2}
 .kr .kb-tom .kr-win::before{background-color:#ffe2d4}
 .kr .kb-tom .kr-win::after{background-image:linear-gradient(#fffaf2,rgba(255,250,242,0) 26%,rgba(255,250,242,0) 74%,#fffaf2)}
-.kr .kb-tom .kr-l{opacity:.45}
+.kr .kb-tom .kr-l{opacity:var(--kr-o,.45)}
 .kr .kb-tom .kr-ps{background-color:#ffe3d3}`,
 };
 const TAIL_CSS = `

@@ -1,5 +1,5 @@
 // 노래방 글꾸 만들기 화면 — 곡 칸(테마 · mp3 · 제목 · 이름 · 색 · 표지 · 길이 · 가사) 여러 개 → kara-core.buildPost → HTML 복사 · 사이트 흉내 미리보기. 전부 브라우저 안(서버 없음).
-import { THEMES, THEME_IDS, buildPost, checkPost, parseLyrics, mmss, isHex } from './kara-core.js?v=20261110a';
+import { THEMES, THEME_IDS, buildPost, checkPost, parseLyrics, mmss, isHex } from './kara-core.js?v=20261113a';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
