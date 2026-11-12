@@ -972,6 +972,9 @@ await test('분류 화면 · 캐릭터 칸 · 머리말(11-12 밤 시안 안 A):
     for (const w of ['내 글로 보기', '깡통 · 깡캐', '밤 · 낮', '글 고치기', 'HTML 복사', '테마로 담기', '테마용 복사']) assert.ok(page.match(/<div class="mart-head-help"[\s\S]*?<\/div>/)[0].includes(w), `쓰는 법에 실제 단추 이름 「${w}」`);
     assert.ok(css.includes('.mart-head-help{flex:0 0 100%;display:none;') && css.includes('.mart-head.is-open .mart-head-help{display:block}') && !css.includes('-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}\n.mart-head .mart-note-line'));
     assert.ok(martSrc.includes("textContent: help.dataset.label || '쓰는 법'"));
+    // 간편 「움직임」 줄의 「소품만」 — 글 움직임 끔 · 소품 움직임은 지금 세기(끔이었으면 중) · 세밀과 같은 값
+    { const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
+      assert.ok(ui.includes('data-simple-motion="prop" aria-pressed="${propOnly}"') && ui.includes("setMotion(v === 'prop' ? { text: '0', prop: cur.prop === '0' ? 'm' : cur.prop } : { text: v, prop: v })") && ui.includes("const propOnly = m.text === '0' && m.prop !== '0', canPropOnly = !!caps.text['0'];")); }
     // 지니 액자 결과 카드 · 장바구니 줄에도 원작 줄(액자 방과 같은 줄 · 담을 때 같이 기억)
     assert.ok(fs.readFileSync(path.join(MART, 'genie.js'), 'utf8').includes('${frames?.links ? frames.links(item) : sourceLinks(item)}') && fs.readFileSync(path.join(MART, 'frame-room.js'), 'utf8').includes('export const frameLinks = item => links(item);'));
     assert.ok(martSrc.includes("...((src => (src.length ? { src } : {}))(sourcesOf(item)))") && fs.readFileSync(path.join(MART, 'cart.js'), 'utf8').includes('${srcHtml(e)}'));
@@ -1990,7 +1993,7 @@ await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-u
     const files = ['mart.js', 'genie.js', 'geulkku/index.html', 'frames/index.html', 'genie/index.html'].map(f => [f, srcOf(f)]);
     for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room', 'genie']) {
         const tails = new Set(files.flatMap(([, s]) => [...s.matchAll(new RegExp(`[./]${mod}\\.js\\?v=(\\w+)`, 'g'))].map(m => m[1])));
-        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? (mod === 'tune-ui' ? '20261112i' : '20261112j') : mod === 'frame-room' ? '20261112g' : mod === 'cart' ? '20261112f' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
+        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? (mod === 'tune-ui' ? '20261112j' : '20261112k') : mod === 'frame-room' ? '20261112g' : mod === 'cart' ? '20261112f' : '20261112b'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
     }
 });
 await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬리가 다르면 브라우저가 같은 모듈을 두 벌 받아요 — char-tone · spoiler · bare · presets 가 그랬어요 · 꼬리 없는 쪽은 옛 캐시가 남아요)', () => {
@@ -2030,32 +2033,31 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
     for (const c of Object.values(sixAll.chunks)) Object.assign(previews, JSON.parse(fs.readFileSync(path.join(DIR, c.file), 'utf8')).items);
     const keyOf = html => sf.simpleFrameInfo(html)?.key || '';   // mart.js themeKey 와 같아요(조각 preview 뿌리 class)
     const judge = it => tt.themeTakeable(previews[it.id].preview, { id: it.id, key: keyOf(previews[it.id].preview) });
-    await test('테마 못 받음 ① 417틀 모두 마트 판정 = 테마 판정(고정 자료 tools/theme-takeable.json · 까닭 글자까지)', () => {
-        assert.equal(sixAll.items.length, fixture.total);
-        const ok = new Set(fixture.ok), diff = [];
-        for (const it of sixAll.items) {
-            const r = judge(it);
-            if (r.ok !== ok.has(it.id) || (!r.ok && r.reason !== fixture.no[it.id])) diff.push(`${it.id}: 마트 ${r.ok ? '받음' : r.reason} · 테마 ${ok.has(it.id) ? '받음' : fixture.no[it.id]}`);
-        }
-        assert.deepEqual(diff, []);
-        assert.equal(sixAll.items.filter(it => judge(it).ok).length, 364);
+    await test('테마 못 받음 ① 고정 자료(tools/theme-takeable.json — 테마 1.2.0 받기 검사를 직접 돌려 뜬 것): 417틀 · 받음 399 · 못 받음 18 · 마트 사본 판정은 테마보다 깐깐한 쪽(받는다고 한 틀은 테마도 받아요)', () => {
+        assert.equal(sixAll.items.length, fixture.total); assert.equal(fixture.total, 417);
+        assert.equal(fixture.ok.length, 399); assert.equal(Object.keys(fixture.no).length, 18);
+        assert.deepEqual([...fixture.ok, ...Object.keys(fixture.no)].sort(), sixAll.items.map(x => x.id).sort());
+        const ok = new Set(fixture.ok);
+        const loose = sixAll.items.filter(it => judge(it).ok && !ok.has(it.id)).map(it => it.id);
+        assert.deepEqual(loose, [], '마트 사본이 받는다고 한 틀을 테마가 못 받아요');
+        assert.ok(sixAll.items.filter(it => judge(it).ok).length <= 399);
     });
-    await test('테마 못 받음 ② 목록 index.json 의 nt = 판정 까닭(받는 틀엔 nt 없음 · 53틀)', () => {
-        const bad = sixAll.items.filter((it) => { const r = judge(it); return r.ok ? 'nt' in it : it.nt !== r.why; }).map(it => it.id);
+    await test('테마 못 받음 ② 목록 index.json 의 nt = 고정 자료의 까닭(받는 틀엔 nt 없음 · 18틀) · 생성기가 고정 자료에서 써요', () => {
+        const bad = sixAll.items.filter(it => (fixture.ok.includes(it.id) ? 'nt' in it : it.nt !== gen.shortWhy(fixture.no[it.id]))).map(it => it.id);
         assert.deepEqual(bad, []);
-        assert.equal(sixAll.items.filter(it => it.nt).length, 53);
+        assert.equal(sixAll.items.filter(it => it.nt).length, 18);
+        for (const it of sixAll.items.filter(x => x.nt)) assert.ok(it.nt.length > 4 && !/마트의 「HTML 복사」/.test(it.nt), `${it.id} 짧은 까닭`);
+        assert.equal(gen.takeOf('simple-없는틀', sample, 'k8').ok, tt.themeTakeable(sample, { id: 'simple-없는틀', key: 'k8' }).ok, '고정 자료에 없는 새 틀은 마트 사본 판정');
     });
-    // 테마 사본이 이 PC 에 있으면 테마 코드를 바로 돌려서도 맞대요(GK_THEME_DIR 또는 옆 worktree builtin-out-review)
-    const themeDir = process.env.GK_THEME_DIR || path.resolve(ROOT, '../builtin-out-review');
+    const themeDir = process.env.GK_THEME_DIR || path.resolve(ROOT, '../int-120');   // 테마 1.2.0 통합 분기(읽기만)
     if (fs.existsSync(path.join(themeDir, 'src/mart-import.js'))) {
-        await test('테마 못 받음 ③ 테마 사본 checkItem 을 바로 돌려도 417틀 같아요', async () => {
+        await test('테마 못 받음 ③ 테마 사본 checkItem 을 바로 돌려도 고정 자료와 417틀 같아요(받음 · 까닭 글자까지)', async () => {
             const { checkItem } = await imp(path.join(themeDir, 'src/mart-import.js'));
-            const diff = [];
+            const diff = [], ok = new Set(fixture.ok);
             for (const it of sixAll.items) {
                 const html = previews[it.id].preview;
                 const t = checkItem({ kind: 'geulkku-simple', v: 1, id: it.id, key: keyOf(html), name: it.name, emoji: it.emoji, html, set: { blGeulkku: 2 } });
-                const r = judge(it);
-                if (!!t.item !== r.ok || (!r.ok && t.reason !== r.reason)) diff.push(`${it.id}: 마트 ${r.reason || '받음'} · 테마 ${t.reason || '받음'}`);
+                if (!!t.item !== ok.has(it.id) || (!t.item && t.reason !== fixture.no[it.id])) diff.push(`${it.id}: 고정 자료 ${ok.has(it.id) ? '받음' : fixture.no[it.id]} · 테마 ${t.reason || '받음'}`);
             }
             assert.deepEqual(diff, []);
         });

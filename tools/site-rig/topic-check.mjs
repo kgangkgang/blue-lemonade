@@ -257,6 +257,33 @@ async function extraPart(vp) {
     await b.send('Storage.clearDataForOrigin', { origin: new URL(srv.url).origin, storageTypes: 'local_storage,session_storage' }).catch(() => { });
 }
 
+async function motionPart(vp) {
+    // 간편 「움직임」 줄의 「소품만」 — 글은 가만히 · 소품은 움직임(음성 메모: 늘 오르내리는 음파 막대 + 대사 줄 등장 움직임)
+    await b.goto('about:blank'); await b.send('Storage.clearDataForOrigin', { origin: new URL(srv.url).origin, storageTypes: 'local_storage,session_storage' }).catch(() => { });
+    await b.goto(srv.url + 'mart/geulkku/?view=1#simple-k6'); await b.until(`document.querySelector('.mart-sheet[open] .mart-sheet-preview .gk') && document.querySelector('.mart-sheet[open] [data-simple-motion]')`, 30000); await b.sleep(800);
+    const anim = () => b.eval(`(()=>{const g=document.querySelector('.mart-sheet[open] .mart-sheet-preview .gk');const on=e=>getComputedStyle(e).animationName!=='none';const all=[...g.querySelectorAll('*')];const text=all.filter(e=>e.matches('p, p *')&&on(e)).length,prop=all.filter(e=>!e.matches('p, p *, style')&&on(e)).length;return {text,prop}})()`);
+    const mo = () => b.eval(`JSON.parse(localStorage.getItem('bl-mart-motion-v1')||'{}')`);
+    const before = await anim();
+    const chips = await b.eval(`[...document.querySelectorAll('.mart-sheet[open] [data-simple-motion]')].map(x=>x.textContent.trim())`);
+    const row1 = await b.eval(`(()=>{const c=[...document.querySelectorAll('.mart-sheet[open] [data-simple-motion]')];const ys=new Set(c.map(x=>Math.round(x.getBoundingClientRect().top)));return ys.size})()`);
+    row(vp, '간편 「움직임」 줄: 끔 · 약 · 중 · 강 · 소품만(한 줄)', J(chips) === J(['끔', '약', '중', '강', '소품만']) && row1 === 1, `${chips.join(' · ')} · 줄 ${row1}`);
+    await b.eval(`document.querySelector('.mart-sheet[open] [data-simple-motion="prop"]').click(); true`); await b.sleep(900);   // 폰은 붙박이 미리보기가 칩 줄을 덮을 수 있어 그 단추의 click 을 바로
+    const after = await anim(), m1 = await mo(), on = await b.eval(`document.querySelector('.mart-sheet[open] [data-simple-motion="prop"]')?.getAttribute('aria-pressed')`);
+    row(vp, '「소품만」 → 미리보기에서 글은 안 움직이고 소품은 움직여요(글 움직임 끔 · 소품 움직임 그대로)', before.text > 0 && before.prop > 0 && after.text === 0 && after.prop > 0 && m1.text === '0' && (m1.prop ?? 'm') !== '0' && on === 'true', `전 글 ${before.text} · 소품 ${before.prop} → 후 글 ${after.text} · 소품 ${after.prop} · 값 ${J(m1)}`);
+    await b.shot(path.join(OUT, `${vp}-60-소품만.png`));
+    // 복사 글 · 테마로 담기 꾸러미에 그대로(세밀 「글 움직임 끔」과 같은 값)
+    const set = await b.eval(`(async()=>{const m=await import(new URL('../motion-state.js', location.href).href+'?v=20261112a');return m.motionNow()})()`);
+    row(vp, '세밀과 같은 값을 읽고 써요(글 0 · 소품 m)', set.text === '0' && set.prop !== '0', J(set));
+    await b.eval(`document.querySelector('.mart-sheet[open] [data-simple-motion="m"]').click(); true`); await b.sleep(900);
+    const back = await anim(), m2 = await mo();
+    row(vp, '「중」을 누르면 글 · 소품 같이 틀 그대로로 돌아와요', back.text === before.text && (m2.text ?? 'm') === 'm' && (m2.prop ?? 'm') === 'm', `글 ${back.text} · 값 ${J(m2)}`);
+    // 글 움직임을 끌 수 없는 틀(여름 바다)은 「소품만」이 흐려요 + 까닭
+    await b.goto('about:blank'); await b.goto(srv.url + 'mart/geulkku/?view=1#simple-q01'); await b.until(`document.querySelector('.mart-sheet[open] [data-simple-motion="prop"]')`, 30000); await b.sleep(500);
+    const off = await b.eval(`(()=>{const c=document.querySelector('.mart-sheet[open] [data-simple-motion="prop"]');return {disabled:c.disabled,title:c.title}})()`);
+    row(vp, '글 움직임을 끌 수 없는 틀은 「소품만」이 흐리고 까닭이 있어요', off.disabled && /끌 수 없어요/.test(off.title), J(off));
+    await b.send('Storage.clearDataForOrigin', { origin: new URL(srv.url).origin, storageTypes: 'local_storage,session_storage' }).catch(() => { });
+}
+
 try {
     for (const [vp, w, h, mobile, dpr] of [['pc', 1280, 900, false, 1], ['phone', 375, 812, true, 2]].filter(v => !opt('--vp') || opt('--vp').split(',').includes(v[0]))) {
         await b.size(w, h, mobile, dpr);
@@ -266,6 +293,7 @@ try {
         if (!ONLY || ONLY.includes('cast')) await castPart(vp);
         if (!ONLY || ONLY.includes('head')) await headPart(vp);
         if (!ONLY || ONLY.includes('extra')) await extraPart(vp);
+        if (!ONLY || ONLY.includes('motion')) await motionPart(vp);
     }
     const errs = b.errors.filter(e => !/favicon|mp3|ERR_ABORTED|net::/.test(e));
     row('-', '콘솔 오류 0', !errs.length, errs.slice(0, 3).join(' / ') || '0');

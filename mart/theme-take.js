@@ -3,6 +3,8 @@
 //   + src/log-copy-simple.js checkFrame(등록 값 점검). 테마 분기 codex/builtin-out-review(24eec83f2) 기준 · 받는 틀 357 / 410.
 //   시험 tools/geulkku-simple-test.mjs 가 410틀 모두 테마 판정(tools/fixtures/theme-takeable.json · 테마 사본이 있으면 테마 코드를 바로 돌려서도)과 맞대요.
 //   테마 쪽 규칙이 바뀌면(받는 틀이 늘면) 여기 · 고정 자료를 같이 고쳐요.
+//   11-12 밤: 테마 1.2.0 이 받는 틀을 늘렸어요(417 중 399 — 줄 갈래 · 칸 묶음 틀). 목록 틀의 꼬리표(nt)는 이제 테마 받기 검사를 직접 돌려 뜬 고정 자료(tools/theme-takeable.json ·
+//   tools/theme-takeable-pull.mjs)에서 오고, 이 사본은 1.1.x 판정 그대로라 「테마보다 깐깐한 쪽」이에요(받는다고 한 틀은 테마도 받아요 — 시험이 잠가요). 내 글꾸(붙여 넣은 HTML)에만 써요 · 1.2.0 판정으로 다시 옮기는 일은 남아 있어요.
 //   쓰는 곳: tools/geulkku-simple.mjs(목록 index.json 의 nt — 못 받는 까닭) · mart.js(내 글꾸 · 크게 보기 「테마로 담기」 칸).
 // DOM 없는 순수 모듈.
 import { simpleFrameInfo, facesOf, SIMPLE_CONTRACT } from './simple-frames.js?v=20261112b';

@@ -28,7 +28,7 @@ import { motionNow } from './motion-state.js?v=20261112a';
 import { texNow } from './texture.js?v=20261112a';
 import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
 import { tuneOf } from './tune.js?v=20261112f';
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112i';
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml } from './tune-ui.js?v=20261112j';
 import { wireSelectHide } from './select-hide.js?v=20261112e';   // 11-12 미리보기에서 글을 고르면 옆에 뜨는 막대(눌러야 보이게 · 숨김 풀기 · 굵게 · 기울임)
 import { themeTakeable } from './theme-take.js?v=20261112c';   // 11-12 테마가 이 틀을 받는지(테마 받기 검사를 옮긴 것 · 목록 틀은 index.json nt · 내 글꾸는 여기서)
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
@@ -672,7 +672,7 @@ const glyphHtml = (item, fallback = '') => { const src = iconSrc(item); const em
 function tagsHtml(item) {
     const style = item.kind === 'geulkku' && (showStyle || styleOf(item) !== STYLE_DEFAULT) ? `<span class="mart-tag tag is-style" title="디자인">${esc(styleOf(item))}</span>` : '';
     const own = item.kind === 'geulkku' && item.builtin ? BUILTIN_TAG : '';
-    const nt = item.kind === 'geulkku' && item.simple && item.nt ? notTakeTag(item) : '';   // 11-12 테마 로그 복사가 아직 못 받는 틀(53 / 410)
+    const nt = item.kind === 'geulkku' && item.simple && item.nt ? notTakeTag(item) : '';   // 테마 로그 복사가 아직 못 받는 틀(11-12 밤 테마 1.2.0 기준 18 / 417 — tools/theme-takeable.json)
     const fx = '';   // 916 중 913 이 움직이고 915 가 반응해서(2026-11-05 셈) 「✨ 움직임 · 👆 반응」 꼬리표는 정보가 없어 뺐어요
     return `<span class="mart-tags"><span class="mart-tag tag">${esc(catLabel(item.category, item.categoryLabel))}</span>${style}${fx}${own}${nt}</span>`;
 }

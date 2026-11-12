@@ -251,7 +251,9 @@ function simpleInner(item) {
     const caps = motionCaps(item.preview), can = ['0', 's', 'l'].some(v => caps.text[v] || caps.prop[v]), apart = m.text !== m.prop;
     // 11-12 이 틀에 없는 세기(예: 「잔잔하게」의 약을 끔 · 중만 있는 틀에)는 applyMotion 이 중으로 그려요 — 단추도 그린 대로 중을 눌림으로(막힌 단추가 눌림으로 보이던 것 고침)
     const hasLv = v => v === 'm' || !!(caps.text[v] || caps.prop[v]), shown = !apart && hasLv(m.text) ? m.text : 'm', fell = !apart && !hasLv(m.text);
-    const motionRow = segRow('움직임', MOTION_LEVELS.map(([v, l]) => `<button type="button" class="chip" data-simple-motion="${v}" aria-pressed="${!apart && shown === v}"${hasLv(v) ? '' : ' disabled'}>${l}</button>`).join('') + (apart ? '<button type="button" class="chip" data-view="detail" aria-pressed="true">따로</button>' : ''), apart ? `글 ${MOTION_LABEL[m.text]} · 소품 ${MOTION_LABEL[m.prop]}` : fell ? `${MOTION_LABEL[m.text]}이 없는 틀이라 중으로 보여요` : onlyOff(caps) ? '이 틀은 끔과 중만' : can ? '글 · 소품 같이' : '이 틀은 세기를 못 바꿔요');
+    // 11-12 밤 「소품만」 — 글은 가만히 · 소품만 움직이게(사용자 「글은 애니메이션 없고 일러스트만 애니메이션 주고 싶을 수도 있잖아」). 세밀 「글 움직임 끔 · 소품 움직임 그대로」와 같은 값(text '0' · prop 은 지금 세기 — 끔이었으면 중)
+    const propOnly = m.text === '0' && m.prop !== '0', canPropOnly = !!caps.text['0'];
+    const motionRow = segRow('움직임', MOTION_LEVELS.map(([v, l]) => `<button type="button" class="chip" data-simple-motion="${v}" aria-pressed="${!apart && shown === v}"${hasLv(v) ? '' : ' disabled'}>${l}</button>`).join('') + `<button type="button" class="chip" data-simple-motion="prop" aria-pressed="${propOnly}"${canPropOnly ? ' title="글은 가만히 두고 소품만 움직여요"' : ' disabled title="이 틀은 글 움직임을 끌 수 없어요"'}>소품만</button>` + (apart && !propOnly ? '<button type="button" class="chip" data-view="detail" aria-pressed="true">따로</button>' : ''), propOnly ? `글은 가만히 · 소품 ${MOTION_LABEL[m.prop]}` : apart ? `글 ${MOTION_LABEL[m.text]} · 소품 ${MOTION_LABEL[m.prop]}` : fell ? `${MOTION_LABEL[m.text]}이 없는 틀이라 중으로 보여요` : onlyOff(caps) ? '이 틀은 끔과 중만' : can ? '글 · 소품 같이' : '이 틀은 세기를 못 바꿔요');
     const fixed = lookValue('type.size'), step = stepOf(lookNow());
     const sizeRow = segRow('글 크기', SIZE_STEPS.map(([v, l]) => `<button type="button" class="chip" data-simple-size="${v}" aria-pressed="${fixed == null && step === v}">${l}</button>`).join(''), fixed != null ? `직접 ${fixed}px` : '');
     return `<div class="mart-simple-row"><p class="mart-simple-h">스타일 <small>한 번에 입혀요</small></p><div class="mart-style-cards mart-hscroll" role="group" aria-label="스타일">${cards}</div></div>
@@ -404,7 +406,7 @@ function themeBoxHtml(item) {
     const no = item.nt ? ' disabled aria-describedby="mart-notake-why"' : '';
     const hint = item.nt
         ? `<p class="mart-tune-hint is-notake" id="mart-notake-why"><b>테마 아직 못 받음</b> — 블루레몬 로그 복사가 아직 이 틀을 받지 못해요(${esc(item.nt)}) · 위 「HTML 복사」 · 「파일로 내려받기」로 커뮤니티 글에 붙여 써요</p>`
-        : '<p class="mart-tune-hint">테마에서 받는 것은 블루레몬 1.1.4 부터예요</p>';
+        : '<p class="mart-tune-hint">블루레몬 1.2.0 부터 이 틀을 받아요 · 1.1.9 까지는 일부 틀을 못 받아요(테마를 최신 판으로 올려요)</p>';
     return `<h3 class="mart-tune-h">테마로 담기 <small>블루레몬 로그 복사에 이 틀 + 지금 조절 값 그대로</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-act="theme-copy"${no} title="테마 「마트에서 가져오기」에 붙여 넣는 글(bl-mart 꾸러미)을 복사해요">테마용 복사</button><button type="button" class="chip" data-act="theme-file"${no} title="같은 꾸러미를 .bl-mart.json 파일로 받아요">테마용 파일 받기</button></div>${hint}`;
 }
 /** 「내 프리셋」 · 「완성 프리셋」 칸(미리보기 아래) */
@@ -737,7 +739,7 @@ export function wireTune(sheet, { current, openItem, say = () => {}, clip = null
             setLook(Object.keys(next).length ? next : null); setMotion(x.motion); setShape(x.shape || null); markPreset('');
             return;   // 11-12 알림 말풍선은 빼요 — 미리보기가 바로 바뀌고 잠깐 강조돼요(mart.js flashPreview)
         }
-        if ((b = q('[data-simple-motion]'))) { setMotion({ text: b.dataset.simpleMotion, prop: b.dataset.simpleMotion }); return; }
+        if ((b = q('[data-simple-motion]'))) { const v = b.dataset.simpleMotion, cur = motionNow(); setMotion(v === 'prop' ? { text: '0', prop: cur.prop === '0' ? 'm' : cur.prop } : { text: v, prop: v }); return; }
         if ((b = q('[data-tex]'))) { const v = b.dataset.tex, t = texNow() || { on: 'b', level: 2 }; setTex(v === 'none' ? null : { ...t, tex: v }); redraw(item); return; }
         if ((b = q('[data-tex-on]'))) { setTex({ ...texNow(), on: b.dataset.texOn }); redraw(item); return; }
         if ((b = q('[data-tex-level]'))) { setTex({ ...texNow(), level: Number(b.dataset.texLevel) }); redraw(item); return; }

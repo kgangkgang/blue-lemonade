@@ -23,6 +23,17 @@ const CHECK = process.argv.includes('--check');
 const { AUD } = createRequire(import.meta.url)('./song-templates.cjs');
 const sf = await import(pathToFileURL(path.join(ROOT, 'mart', 'simple-frames.js')).href);
 const { themeTakeable } = await import(pathToFileURL(path.join(ROOT, 'mart', 'theme-take.js')).href);   // 11-12 테마가 못 받는 틀 → 목록 nt(짧은 까닭)
+// 11-12 밤 테마 1.2.0 이 받는 틀을 늘려서(417 중 399) 목록의 nt 는 테마 받기 검사를 직접 돌려 뜬 고정 자료에서 써요(tools/theme-takeable-pull.mjs <테마 폴더> 로 다시 떠요).
+//   마트 사본(mart/theme-take.js — 1.1.x 때 옮긴 판정)은 내 글꾸(붙여 넣은 남의 HTML)와 고정 자료에 아직 없는 새 틀에만 써요.
+const TAKE_FILE = path.join(ROOT, 'tools', 'theme-takeable.json');
+export const TAKE = fs.existsSync(TAKE_FILE) ? JSON.parse(fs.readFileSync(TAKE_FILE, 'utf8')) : { ok: [], no: {} };
+/** 테마가 건너뛸 때 보여 주는 글 → 마트 꼬리표에 적는 짧은 까닭 */
+export const shortWhy = reason => String(reason).replace(/^이 틀은 아직 테마 로그 복사가 받지 못해요 — /, '').replace(/\(마트 「HTML 복사」로 써요\)$/, '').replace(/ — 이 틀은 마트의 「HTML 복사」로 게시글에 바로 붙여 써요$/, '');
+export function takeOf(id, preview, key) {
+  if (TAKE.ok.includes(id)) return { ok: true };
+  if (TAKE.no[id]) return { ok: false, why: shortWhy(TAKE.no[id]) };
+  return themeTakeable(preview, { id, key });   // 고정 자료에 아직 없는 새 틀: 마트 사본 판정(자료를 다시 뜨면 테마 판정으로 바뀌어요)
+}
 const src = await import(pathToFileURL(path.join(ROOT, 'mart', 'sources.js')).href);   // 11-12 밤 세계관 · 원작 열쇠(분류 자료 topics.json 이 맞는지 봐요)
 const OUT = path.join(DIR, 'index.json');   // 11-11 옛 글꾸를 뺀 뒤로 글꾸 마트 목록은 이 도구가 써요
 const KEY = 'sp-simple';
@@ -326,7 +337,7 @@ export function build() {
     const { html, preview, info } = frameHtml(d);
     const ck = d.chunk || KEY; (heavy[ck] = heavy[ck] || {})[d.id] = { preview };
     const card = sf.facesOf(info, info.base).orig[0];
-    const take = themeTakeable(preview, { id: d.id, key: sf.simpleFrameInfo(preview)?.key || '' });   // mart.js themePack 과 같은 html · 열쇠
+    const take = takeOf(d.id, preview, sf.simpleFrameInfo(preview)?.key || '');   // 테마 받기 판정(고정 자료 · mart.js themePack 과 같은 html · 열쇠)
     rows.push({ id: d.id, name: d.name, emoji: d.emoji, category: catOf(d, html), style: '심플', desc: d.desc, c: d.chunk || KEY, copyOnly: true, photo: true, ...(/<audio\b/.test(html) ? { audio: true } : {}), simple: true, bytes: Buffer.byteLength(html), fx: 'e', bg: card, ink: sf.SIMPLE_CONTRACT.ink[info.base], accent: sf.sianFit(info.K0 || '#8b8e96', '#ffffff', 4.5), ...(take.ok ? {} : { nt: take.why }), ...topicOf(d) });
   }
   const used = new Set(rows.map(x => x.category));
