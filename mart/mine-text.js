@@ -1,6 +1,6 @@
 // 11-11 글꾸 마트 「내 글 넣기」 — 붙여 넣은 내 글(실리태번에서 복사한 로그 · 아무 글)을 새 틀(심플 · 게시글 틀)의 글 자리에 나눠 넣어요.
 //   사용자 「내 글 넣어서 자동으로 글꾸보여주는 기능 어디감」. 예전 「📝 내 로그로 보기」(옛 글꾸 전용 — 11-11 c02f2e1f 에서 뺌)를 새 틀 길로 되살린 것.
-//   나누기는 시식 파서(taste-parse.js parseLog — 「이름:」 줄 · 실리태번 화면 복사 · 빈 줄 번갈아)를 그대로 써요.
+//   나누기는 시식 파서(taste-parse.js parseLog — 「이름:」 줄 · 실리태번 화면 복사 · 이름 줄 + 다음 줄 따옴표 대사 · 빈 줄 번갈아)를 그대로 써요.
 //   그리기: 틀의 견본 글 자리(지문 p.gk-nr · 화자 이름 p.gk-nm.gk-n<화자> · 대사 p.gk-dl > span.gk-d.gk-d<화자>)를 본으로 줄마다 다시 만들어요.
 //     소리 카드 · 바인더 쪽 넘김처럼 글 사이에 낀 것은 제자리에 둬요(앞 묶음 · 뒤 묶음으로 나눠 넣어요). 제목 · 소품은 그대로예요.
 //   DOM 없는 순수 모듈(node 시험). 넣은 글은 이 브라우저에 기억(localStorage) · 켬끔도 기억.
@@ -48,9 +48,10 @@ export function mineModel(text) {
             else splitBlock(b, turn.who, lines);
         }
         // 대사 표기 없이 이름 붙은 짧은 메시지(「이름: 안녕」 같은 채팅 꼴 — 한 줄 · 80자 이하)는 그 화자 대사로 · 긴 서술(롤플 지문)은 지문 그대로
+        //   11-12 밤(사용자 「왜 글꾸 예시로 소주 좀 한다도 나깡 대사에 들어간 거임?」): 첫 이름 앞 머리글(turn.lead — 이름이 안 붙은 글)은 짧아도 지문이에요
         const mine = lines.filter(l => l.turn === undefined);
         for (const l of mine) l.turn = turn;
-        if (parsed.mode !== 'alternate' && mine.length === 1 && mine[0].type === 'nr' && mine[0].html.replace(/<[^>]+>/g, '').length <= 80 && turn.who >= 0) {
+        if (parsed.mode !== 'alternate' && !turn.lead && mine.length === 1 && mine[0].type === 'nr' && mine[0].html.replace(/<[^>]+>/g, '').length <= 80 && turn.who >= 0) {
             for (const l of mine) { l.type = 'dl'; l.who = turn.who; l.rich = l.html; l.text = l.html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&'); delete l.html; }
         }
     }

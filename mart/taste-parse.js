@@ -3,6 +3,7 @@
 // 나누는 규칙:
 //   ① 줄 앞에 「이름:」(전각 「：」 도)이 있으면 그 이름으로 메시지를 나눠요 — 같은 이름이 두 번 이상 나오거나, 이름 줄이 둘 이상이면 이 길이에요.
 //   ② 실리태번 화면에서 그대로 복사한 글(이름 한 줄 · 시간 한 줄 · 본문)도 받아요 — 짧은 줄이 혼자 두 번 이상 나오면 이름으로 보고, 시간 줄은 시각으로 읽고 본문에서 빼요.
+//      (11-12 밤) 이름만 있는 짧은 줄 바로 다음 줄이 따옴표 · 낫표 대사면 한 번만 나와도 이름이에요(「나깡 ⏎ "대사"」 — 지문 줄 바로 뒤에 붙어 있어도 따로 떼어 읽어요).
 //   ③ 이름이 없으면 빈 줄로 문단을 나누고 번갈아 깡통 · 나로 봐요(빈 줄 두 개 이상으로 나뉜 덩이가 있으면 그 덩이가 메시지 · 한 줄 빈 줄은 문단).
 //   처음 나온 이름 둘을 깡통 · 나로 추정하고(셋 이상이면 나머지는 깡통 쪽), 「바꾸기」(swap)로 뒤집어요.
 // 글 안 표기: "대사" · “대사” · 「대사」 → 대사 색, *행동* · 『속마음』 → 속마음(기울임), **강조** · ~~취소~~ · `코드`, 줄 앞 # 제목 · > 인용 · - 목록 · 1. 목록 · --- 구분선.
@@ -38,6 +39,9 @@ const NAME_LINE = /^([^\s"“「『*#>\-:：/\\][^:：\n]{0,23}?)\s*[:：]\s*(.*
 const nameOk = name => !TIME_LINE.test(name) && !/https?$|^\d+$|[\\/]/.test(name) && /[\p{L}\p{N}]/u.test(name);
 /** 혼자 선 짧은 줄(실리태번 화면 복사의 이름 줄 후보) — 20자 이하, 문장 끝 기호 없음, 글자 있음 */
 const standalone = line => line.length <= 20 && /[\p{L}\p{N}]/u.test(line) && !/[.!?。…」"』)\]:：,]$/u.test(line) && !/[:：]/.test(line) && !TIME_LINE.test(line) && !JUNK_LINE.test(line) && !HR_LINE.test(line) && line.split(/\s+/).length <= 3;
+
+/** 대사 줄 머리(따옴표 · 낫표) */
+const QUOTE_START = /^["“”「『'‘]/;
 
 const EN_MONTH = Object.fromEntries('jan feb mar apr may jun jul aug sep oct nov dec'.split(' ').map((m, i) => [m, i]));
 /** 시간 줄 → ms(날짜가 없으면 오늘) · 못 읽으면 null */
@@ -162,6 +166,8 @@ export function parseLog(source) {
         // 한 번만 나왔어도 바로 아래가 시간 줄이면 이름이에요
         trimmed.forEach((line, i) => { if (line && !speakers.includes(line) && standalone(line) && TIME_LINE.test(trimmed[i + 1] ?? '')) speakers.push(line); });
     }
+    // 11-12 밤(사용자 「왜 이름으로 치환 안 되냐」): 이름만 있는 짧은 줄 + 바로 다음 줄이 따옴표 · 낫표로 시작하는 대사 → 한 번만 나와도 화자 이름(긴 문장 · 문장 끝 기호로 끝나는 줄은 standalone 이 걸러요)
+    trimmed.forEach((line, i) => { if (line && !speakers.includes(line) && standalone(line) && !QUOTE_START.test(line) && QUOTE_START.test(trimmed[i + 1] ?? '')) speakers.push(line); });
     if (speakers.length && speakers.length <= 8) return finish('screen', splitByHeads(lines, trimmed, new Set(speakers)));
 
     // ③ 이름 없음: 빈 줄로 나누고 번갈아
@@ -184,7 +190,7 @@ function cleanBody(lines, turn) {
     return out;
 }
 /** 본문을 읽어(시간 줄은 시각으로) 노드로 — 시각은 본문을 읽은 뒤에 적혀요 */
-const finishTurn = (t) => { const nodes = bodyNodes(cleanBody(t.lines, t)); return { who: t.who, time: t.time, nodes }; };
+const finishTurn = (t) => { const nodes = bodyNodes(cleanBody(t.lines, t)); return { who: t.who, time: t.time, nodes, ...(t.lead ? { lead: true } : {}) }; };
 function nameIndex(names, name) { let i = names.indexOf(name); if (i < 0) { names.push(name); i = names.length - 1; } return i; }
 
 function splitByLabels(lines, trimmed, known, labelOf) {
@@ -197,7 +203,7 @@ function splitByLabels(lines, trimmed, known, labelOf) {
         if (!cur) { if (!line) return; open(''); }
         cur.lines.push(lines[i]);
     });
-    if (names[0] === '' && names.length > 1) { /* 이름 없이 시작한 머리글은 첫 이름 쪽으로 */ const first = turns.find(t => t.who === 0); if (first) first.who = 1; names.shift(); for (const t of turns) if (t.who > 0) t.who--; }
+    if (names[0] === '' && names.length > 1) { /* 이름 없이 시작한 머리글은 첫 이름 쪽으로(lead — 누가 한 말은 아니에요) */ const first = turns.find(t => t.who === 0); if (first) { first.who = 1; first.lead = true; } names.shift(); for (const t of turns) if (t.who > 0) t.who--; }
     return { names: names.map(n => n || DEFAULT_NAMES[0]), turns: turns.map(finishTurn) };
 }
 function splitByHeads(lines, trimmed, known) {
@@ -209,7 +215,7 @@ function splitByHeads(lines, trimmed, known) {
         if (!cur) { if (!line) return; open(''); }
         cur.lines.push(lines[i]);
     });
-    if (names[0] === '' && names.length > 1) { const first = turns.find(t => t.who === 0); if (first) first.who = 1; names.shift(); for (const t of turns) if (t.who > 0) t.who--; }
+    if (names[0] === '' && names.length > 1) { const first = turns.find(t => t.who === 0); if (first) { first.who = 1; first.lead = true; } names.shift(); for (const t of turns) if (t.who > 0) t.who--; }   // lead: 첫 이름 앞 머리글(누가 한 말이 아니에요 — 내 글 넣기는 지문으로 둬요)
     return { names: names.map(n => n || DEFAULT_NAMES[0]), turns: turns.map(finishTurn) };
 }
 function splitAlternate(lines, trimmed) {

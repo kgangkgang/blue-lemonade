@@ -47,7 +47,7 @@ export function mountCast(box, { say = () => {} } = {}) {
     const textPanel = () => {
         const info = mineInfo(), on = mineOn();
         const status = on ? `내 글로 보는 중 · 화자 ${esc(info.names.slice(0, 3).join(' · '))}${info.names.length > 3 ? ` 외 ${info.names.length - 3}` : ''} · 대사 ${info.dialogue}줄${info.cut ? ' · 길어서 앞부분만 넣었어요' : ''}${!info.generic && info.names.length >= 3 ? ' · 셋째 화자 색은 크게 보기 「색」의 「셋째」에서 골라요' : ''}` : mineText().trim() ? '넣어 둔 글이 있어요 · 「내 글로 보기」를 누르면 카드가 바뀌어요' : '견본 글로 보는 중';
-        return `<div class="mart-cast-panel" id="mart-cast-panel" data-who="text"><p class="mart-cast-who"><b>내 글</b>을 붙여 넣으면 모든 카드가 내 글로 바뀌어요 · 「이름: 대사」 줄 · 실리태번 화면에서 복사한 채팅 · 그냥 글 모두 돼요 · 대사색이 있으면 깡통 · 깡캐 색도 찾아요</p>
+        return `<div class="mart-cast-panel" id="mart-cast-panel" data-who="text"><p class="mart-cast-who"><b>내 글</b>을 붙여 넣으면 모든 카드가 내 글로 바뀌어요 · 「이름: 대사」 줄 · 이름만 한 줄 쓰고 다음 줄에 "대사" · 실리태번 화면에서 복사한 채팅 · 그냥 글 모두 돼요 · 대사색이 있으면 깡통 · 깡캐 색도 찾아요</p>
             <textarea class="field mart-mine-text" rows="4" maxlength="200000" placeholder="여기에 붙여 넣어요" aria-label="내 글">${esc(mineText())}</textarea>
             <div class="mart-tune-line mart-hscroll mart-mine-btns"><button type="button" class="btn" data-mine="apply">내 글로 보기</button><button type="button" class="chip" data-mine="sample" aria-pressed="${!on}">견본 글로</button><button type="button" class="chip" data-mine="clear">지우기</button></div>
             <p class="mart-mine-info" role="status">${status}</p></div>`;

@@ -874,6 +874,32 @@ await test('내 글 넣기: 붙여 넣은 글을 28틀의 글 자리(지문 · �
     }
 });
 
+await test('내 글 넣기: 이름만 있는 줄 + 다음 줄 따옴표 대사(11-12 밤 사용자 글 그대로) — 첫 화자 나깡 · 둘째 벨포드 · 지문 1줄 · 대사 2줄 · 긴 줄 · 마침표 줄은 이름이 아님 · 「이름:」 꼴은 그대로', () => {
+    const m = mt.mineModel('글꾸 예시로 소주 좀 한다\n나깡\n"벨포드 내 남편"\n\n벨포드\n"ㅇㅈ"');
+    assert.deepEqual(m.names, ['나깡', '벨포드']); assert.equal(m.generic, false);
+    assert.deepEqual(m.lines.map(l => l.type), ['nr', 'dl', 'dl']);
+    assert.equal(m.lines[0].html, '글꾸 예시로 소주 좀 한다');
+    assert.deepEqual(m.lines.slice(1).map(l => [l.who, l.text.replace(/["“”]/g, '')]), [[0, '벨포드 내 남편'], [1, 'ㅇㅈ']]);
+    const row = six.items.find(r => r.id === 'simple-k2') || six.items[0], out = mt.fillMine(sfx[row.id].preview, m), body = out.slice(out.indexOf('</style>'));
+    assert.match(body, />나깡<\/p>/); assert.match(body, />벨포드<\/p>/); assert.doesNotMatch(body, />깡통<\/p>|>깡캐<\/p>/);
+    assert.equal((body.match(/<p class="gk-nr">/g) || []).length, 1);
+    const g = mt.mineModel('비가 그쳤다.\n"……정말 올 줄은 몰랐어."\n\n그는 한참 동안 말없이 서 있다가 겨우 입을 열었다\n"들어가자."');
+    assert.equal(g.generic, true, '마침표로 끝나는 줄 · 긴 줄은 이름이 아니에요');
+    assert.deepEqual(mt.mineModel(MINE_LOGS.짧은).names, ['하린', '도윤']);
+    // 이름 없는 첫 줄 + 빈 줄 + 「이름: "대사"」(사용자 글 그대로) — 첫 줄은 지문 · 대사 2줄
+    const h = mt.mineModel('글꾸 예시로 소주 좀 한다\n\n나깡: "벨포드 내 남편"\n벨포드: "ㅇㅈ"');
+    assert.deepEqual(h.names, ['나깡', '벨포드']);
+    assert.deepEqual(h.lines.map(x => x.type), ['nr', 'dl', 'dl']); assert.equal(h.lines[0].html, '글꾸 예시로 소주 좀 한다');
+    assert.deepEqual(h.lines.slice(1).map(x => x.who), [0, 1]);
+    const hb = mt.fillMine(sfx[row.id].preview, h); assert.ok(hb.indexOf('<p class="gk-nr">글꾸 예시로 소주 좀 한다</p>') > 0 && hb.indexOf('<p class="gk-nr">글꾸 예시로 소주 좀 한다</p>') < hb.indexOf('>나깡</p>'), '지문이 이름표 위');
+    // 그대로여야 하는 꼴: 「이름: 따옴표 없는 짧은 말」은 그 화자 대사 · 실리태번 화면 복사(이름 줄 · 시간 줄 · 본문)
+    assert.deepEqual(mt.mineModel('하린: 안녕\n도윤: 왔어?').lines.map(x => [x.type, x.who]), [['dl', 0], ['dl', 1]]);
+    const st = mt.mineModel('하린\n오후 9:00\n"왔어?"\n도윤\n오후 9:01\n문이 닫혔다. "응."\n하린\n오후 9:02\n"앉아."');
+    assert.deepEqual(st.names, ['하린', '도윤']); assert.deepEqual(st.lines.map(x => x.type), ['dl', 'nr', 'dl', 'dl']);
+    const l = mt.mineModel(' 「낫표」도 돼요 처음 글\n레몬\n「안녕」\n에이드\n『속으로』 "응"');
+    assert.deepEqual(l.names, ['레몬', '에이드']);
+});
+
 await test('내 글 넣기 상태: 켬 · 글을 이 브라우저에 기억 · 다시 읽어요 · 「견본 글로」는 글을 남기고 끄기 · 「지우기」 · toneOut 길과 다시 칠하기 열쇠 · 내 글에서 고쳐 쓴 글은 따로(mineTexts)', async () => {
     const store = {};
     globalThis.localStorage = { getItem: k => store[k] ?? null, setItem(k, v) { store[k] = v; }, removeItem(k) { delete store[k]; } };
