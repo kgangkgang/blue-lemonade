@@ -6,7 +6,7 @@
 //   값은 tune.js(spoilers · mineSpoilers)에 들어가 카드 · 「HTML 복사」 · 내 글꾸 · 설정 파일에 같은 길로 가요. 「글 고치기」를 안 켜도 숨기기 · 풀기는 돼요.
 import { createSelectBar } from './lib/log-copy/log-copy-select-bar.js?v=20261112e';
 import { tuneOf, setTune, spanIn } from './tune.js?v=20261112e';
-import { mineOn } from './mine-text.js?v=20261112a';
+import { mineOn } from './mine-text.js?v=20261112e';
 
 const HIDE_CELLS = ['gk-nr', 'gk-d'];
 const FMT = 'b, i, strong, em, s';

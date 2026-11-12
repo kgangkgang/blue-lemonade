@@ -17,7 +17,7 @@ import { castPicked } from './tone-state.js?v=20261112e';   // 11-11 「이 틀�
 import { TUNE_ROLES, EDIT_CLASSES, EDIT_TAGS, RICH_TAGS, cleanRich, LINES_RANGE, titleInPress, tuneOf, setTune, editables, mineList, saveMine, forgetMine, setsFile, readSets, addSets } from './tune.js?v=20261112e';
 import { createEditBlocks } from './edit-blocks.js?v=20261112e';   // 11-12 글 고치기 공용 편집 모듈(테마 로그 복사 창도 같이)
 import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261112a';
-import { mineOn, mineInfo, applyMine, storyOf } from './mine-text.js?v=20261112a';
+import { mineOn, mineInfo, applyMine, storyOf } from './mine-text.js?v=20261112e';
 import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261112a';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

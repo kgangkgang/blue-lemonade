@@ -20,7 +20,7 @@ import { toneState, toned, toneOut, toneKey } from './tone-state.js?v=20261112e'
 import { simpleReady } from './simple-frames.js?v=20261112a';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
 import { mountCast } from './cast.js?v=20261112e';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
-import { frameMarkdown } from './mine-text.js?v=20261112a';   // 11-11 글만 복사(마크다운)
+import { frameMarkdown } from './mine-text.js?v=20261112e';   // 11-11 글만 복사(마크다운)
 import { makeSet } from './geulkku-set.js?v=20261112e';   // 11-12 설정 꼴 blGeulkku 2
 import { lookNow } from './look.js?v=20261112a';
 import { motionNow } from './motion-state.js?v=20261112a';
@@ -32,7 +32,7 @@ import { wireSelectHide } from './select-hide.js?v=20261112e';   // 11-12 미리
 import { themeTakeable } from './theme-take.js?v=20261112c';   // 11-12 테마가 이 틀을 받는지(테마 받기 검사를 옮긴 것 · 목록 틀은 index.json nt · 내 글꾸는 여기서)
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
 import { sanitizeHtml, guessSlot, fromPath, slotPath } from './lib/log-copy/log-copy-sanitize.js';
-import { mineModelNow } from './mine-text.js?v=20261112a';
+import { mineModelNow } from './mine-text.js?v=20261112e';
 import { markEdits, HIDDEN_LINE_FRAMES, simpleFrameInfo } from './simple-frames.js?v=20261112a';
 import { withCommentSlots } from './lib/log-copy/log-copy-lift.js';   // 11-11 크게 보기 「조절」 칸(색 칩 · 글 고치기 · 내 글꾸)
 let styleActive = 'all', drawPreset = null, picker = null;

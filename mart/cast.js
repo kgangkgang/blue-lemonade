@@ -8,7 +8,7 @@ import { toneState, setTone, castPicked, savedCast, CAST_GROUPS, castList, remem
 /** 11-11 「바탕(종이 색 · 질감)」 칸은 화면에서 숨겨요 — 새 글꾸 틀에는 안 걸려 눌러도 바뀌는 게 없어서요(코드 · 자료는 그대로 · 나중에 격자 · 질감을 한꺼번에 되살릴 때 true) */
 const PAPER_ENABLED = false;
 import { dialogueColors } from './tone-geulkku.js?v=20261110v';
-import { mineOn, mineText, mineInfo, setMine as setMineRaw } from './mine-text.js?v=20261112a';
+import { mineOn, mineText, mineInfo, setMine as setMineRaw } from './mine-text.js?v=20261112e';
 import { dropMineEdits } from './tune.js?v=20261112e';
 /** 11-11 독립 점검 1 — 내 글이 바뀌면 옛 글에서 고친 줄 · 숨긴 줄을 먼저 비우고(칸 번호가 옛 글 것) 바꿔요 */
 const setMine = (next = {}) => { if ('text' in next && String(next.text ?? '') !== mineText()) dropMineEdits(); return setMineRaw(next); };   // 11-11 「내 글 넣기」 — 붙여 넣은 내 글로 모든 카드를 그려요
