@@ -97,6 +97,7 @@ const env = { ...KOREAN_KEEP_ENV, ...card, ...seg, ...resume, ...auto, ...notify
     // 6.9.6 바뀐 문단만 · 넣은 문단 조판 (자세한 것은 translator-preview-steady.mjs)
     PREVIEW_GAP_MS: Number(/\nconst PREVIEW_GAP_MS = (\d+);/.exec(source)?.[1] ?? 250), livePreviews: new Set(), typesetRoot: () => {}, dressBody: () => {},
     isProgressBadge: node => node.nodeType === 1 && node.classList.contains('llmt-progress'),
+    keepInPreview: node => node.nodeType === 1 && (node.classList.contains('llmt-progress') || node.classList.contains('ss-slot')),
 };
 function install(name) { env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env); return env[name]; }
 for (const name of ['compileUserPattern', 'runtimeRegexes', 'getCombinedRegexes', 'getNoFoldRegexes', 'protectedBlockRegexes', 'isProtectedBlock', 'withoutProtectedBlocks', 'fixMalformedPlaceholders',

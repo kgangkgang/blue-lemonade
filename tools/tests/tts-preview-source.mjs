@@ -110,6 +110,7 @@ const tx = {
     ...frames, extensionSettings: {}, getContext: () => ({ chat: T.ctx.chat, chatId: 'chat-A', messageFormatting: format }),
     document: { querySelector: s => D.dom.get(s) ?? null }, processTranslationText: (_o, t) => t, refreshMessageBlock: (id, m, o) => D.refreshed.push([id, o]),
     PREVIEW_GAP_MS: 0, livePreviews: new Set(), typesetRoot: () => {}, dressBody: () => {}, isProgressBadge: node => node.nodeType === 1 && node.classList.contains('llmt-progress'),
+    keepInPreview: node => node.nodeType === 1 && (node.classList.contains('llmt-progress') || node.classList.contains('ss-slot')),
     resolveTranslationTarget: (message) => T.ctx.chat.indexOf(message),
 };
 for (const name of ['dressPainted', 'previewText', 'translationPreview']) tx[name] = new Function('env', `with(env){return (${cut(name)});}`)(tx);

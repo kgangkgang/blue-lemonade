@@ -22,7 +22,7 @@ export function adoptPainted(host, html, { keep = () => false } = {}) {
     if (host.querySelector('.TH-render')) return 0;
     const template = host.ownerDocument.createElement('template');
     template.innerHTML = html;
-    const next = [...(template.content ?? template).childNodes], old = [...host.childNodes].filter(node => !keep(node));
+    const next = [...(template.content ?? template).childNodes].filter(node => !keep(node)), old = [...host.childNodes].filter(node => !keep(node));
     if (next.length !== old.length) return 0;
     const letters = node => String(node.textContent ?? node.data ?? '').replace(/\s+/g, '');
     let adopted = 0;
@@ -44,6 +44,7 @@ const codeOf = node => String(node?.textContent ?? '').replace(/\s+/g, '');
 
 /**
  * host(.mes_text)를 html 로 다시 그리되 바뀐 맨 위 노드만 바꾼다. keep(node) 이 참인 노드(진행 표시)는 건드리지 않고 그 자리에 둔다.
+ * keep 노드가 글 뒤에 있으면(미트볼 칩 칸) 끝에 붙는 새 문단은 그 앞에 넣는다 — 전에는 칩 칸을 지웠다가 미트볼이 80ms 뒤 다시 붙여 미리 보기 동안 칩이 깜빡였다.
  * helper 틀(.TH-render)이 있으면 그 노드는 그대로 두고 틀 사이 구간마다 따로 견준다.
  * final(끝 그림 — 번역이 끝남 · 되돌림): 그릴 코드가 바뀐 틀만 새 코드 블록으로 바꾼다 (6.9.7). 미리 보기 동안은 원문 코드로 그린 틀을 그대로 두는데,
  *   6.9.6 끝 그림도 틀을 그대로 둬서 번역이 끝나도 상태창이 원문으로 남았다 — 틀 밖 코드 블록이 없으니 다시 그리기 알림(rerender-notify)도 안 갔다.
@@ -56,12 +57,14 @@ export function paintPreview(host, html, { keep = () => false, final = false } =
     const template = doc.createElement('template');
     template.innerHTML = html;
     const box = template.content ?? template;   // template: 넣기 전에는 그림 · 글꼴을 불러오지 않는다
-    const next = [...box.childNodes];
+    const next = [...box.childNodes].filter(node => !keep(node));   // 새 글에 든 keep 노드(빈 칩 칸)는 넣지 않는다 — 화면에 있는 것을 그대로 쓴다
     const frames = [...host.querySelectorAll('.TH-render')];
     const codes = frames.length ? [...box.querySelectorAll('pre')].filter(pre => frontendCode(pre.textContent)) : [];
     if (frames.length && (frames.length !== codes.length || frames.some(frame => frame.parentNode !== host) || codes.some(code => code.parentNode !== box))) return false;
     const raws = new Map(next.map(node => [node, rawOf(node)]));   // 넣기 전 모양 (테마가 손대기 전)
-    const old = [...host.childNodes].filter(node => !keep(node));
+    const kids = [...host.childNodes], old = kids.filter(node => !keep(node));
+    // 끝에 남겨 둔 keep 노드(미트볼 칩 칸 .ss-slot)가 있으면 맨 끝에 붙일 새 문단은 그 앞에 — 칩이 글 아래에 그대로 남는다 (없으면 예전처럼 맨 끝)
+    const lastOld = kids.lastIndexOf(old.at(-1)), tailKept = old.length && lastOld + 1 < kids.length ? kids[lastOld + 1] : null;
     const split = (list, marks) => list.reduce((parts, node) => { if (marks.includes(node)) parts.push([]); else parts.at(-1).push(node); return parts; }, [[]]);
     const before = split(old, frames), after = split(next, codes);
     for (let p = 0; p < after.length; p++) {
@@ -72,7 +75,7 @@ export function paintPreview(host, html, { keep = () => false, final = false } =
         while (tail < a.length - head && tail < b.length - head && same(a[a.length - 1 - tail], b[b.length - 1 - tail])) tail++;
         // 가운데: 새 노드를 차례로 보며 옛 노드 가운데 같은 것(요소만 — 문단 사이 빈 줄 글은 바로 앞 것만)을 찾으면 그 앞의 옛 노드를 떼고 그대로 쓴다.
         //   못 찾은 새 노드는 지금 옛 노드 앞에 넣는다 (가운데 문단이 바뀌면서 끝에 문단이 붙거나 · 그린 적 없는 문단이 섞여도 같은 문단은 그대로)
-        const end = a.length - tail, anchor = tail ? a[end] : frames[p] ?? null;
+        const end = a.length - tail, anchor = tail ? a[end] : frames[p] ?? tailKept;
         let i = head;
         for (const node of b.slice(head, b.length - tail)) {
             let k = i;

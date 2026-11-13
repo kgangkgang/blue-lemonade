@@ -2771,6 +2771,8 @@ function progressBadge(messageId, message = null, sourceMes = message?.mes, chat
 const PREVIEW_GAP_MS = 250;
 const livePreviews = new Set();   // 6.9.6 그려 둔 미리 보기 (previewText) — 끝나면(done) · 되돌리면(revert) 뺀다
 const isProgressBadge = node => node.nodeType === 1 && node.classList.contains('llmt-progress');
+/** 미리 보기가 건드리지 않고 그 자리에 둘 노드 — 진행 표시 · 미트볼 상태창이 글 끝에 단 칩 칸(.ss-slot · 지우면 그 확장이 80ms 뒤 다시 붙여 칩이 깜빡였다) */
+const keepInPreview = node => node.nodeType === 1 && (node.classList.contains('llmt-progress') || node.classList.contains('ss-slot'));
 /** 6.9.6 미리 보기 · 끝 그림이 넣은 문단을 그 자리에서 조판하고 감정 대사 칸을 입힌다 — 테마가 0.12 · 0.4초 뒤에 하면 넣은 문단이 한 번 더 움직였다 (이미 한 문단은 건너뛴다) */
 function dressPainted(host, message) {
     try { dressBody(host, message); } catch { /* 감정 대사 효과가 꺼져 있으면 아무것도 안 한다 */ }
@@ -2805,7 +2807,7 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
             const index = display === null ? -1 : target();
             if (index < 0 || getContext().chat?.[index] !== mes) return null;
             const host = document.querySelector(`#chat .mes[mesid="${index}"] .mes_text`);
-            return host && previewShown(host, { keep: isProgressBadge }) ? display : null;   // 실리태번이 다시 그렸으면 화면은 이미 저장된 글
+            return host && previewShown(host, { keep: keepInPreview }) ? display : null;   // 실리태번이 다시 그렸으면 화면은 이미 저장된 글
         },
     };
     const paint = () => {
@@ -2824,7 +2826,7 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
         if (!adopted) {   // 처음 한 번: 실리태번이 그려 둔 문단 중 그대로인 것은 그대로 둔다 (그때 그린 글 = display_text ?? mes, updateMessageBlock 과 같게)
             adopted = true;
             const now = getContext().chat[index];
-            try { adoptPainted(host, getContext().messageFormatting(now?.extra?.display_text ?? now?.mes, message.name, message.is_system, message.is_user, index), { keep: isProgressBadge }); } catch { /* 못 맞추면 전부 새로 */ }
+            try { adoptPainted(host, getContext().messageFormatting(now?.extra?.display_text ?? now?.mes, message.name, message.is_system, message.is_user, index), { keep: keepInPreview }); } catch { /* 못 맞추면 전부 새로 */ }
         }
         // 3.1.4 상태창 틀(헬퍼 iframe)의 코드가 번역으로 바뀌었으면 번역 중에도 그 틀만 새 코드 블록으로 바꾸고 헬퍼에 한 번 알린다 (끝 그림과 같은 길 · 알림이 갈 때만).
         //   전엔 틀을 끝까지 원문으로 둬, 긴 답(문단 134개)은 본문이 다 한국어가 될 때까지 상태창 값이 영어로 남았다 (10-27 제보). 바뀐 뒤에는 코드가 같아 다시 바꾸지 않는다 — 문단마다 다시 불러오지 않음
@@ -2832,7 +2834,7 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
         let swapped = false;
         keepChatReadingPosition(host, () => {
             const frames = swap ? host.querySelectorAll('.TH-render').length : 0;
-            if (!paintPreview(host, html, { keep: isProgressBadge, final: swap })) return;   // 2.5.5 헬퍼가 그린 상태창 틀(iframe)은 제자리에 두고 글만 — 못 지키면 지금 화면 그대로 · 6.9.6 진행 표시도 제자리
+            if (!paintPreview(host, html, { keep: keepInPreview, final: swap })) return;   // 2.5.5 헬퍼가 그린 상태창 틀(iframe)은 제자리에 두고 글만 — 못 지키면 지금 화면 그대로 · 6.9.6 진행 표시도 제자리
             swapped = frames > host.querySelectorAll('.TH-render').length;
             lastPaint = Date.now();
             dressPainted(host, { ...message, extra: { ...message.extra, display_text: text } });   // 감정 대사는 이 글(미리 보기)에서 찾는다
@@ -2847,7 +2849,7 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
         if (swapped && typeof notifyRerender === 'function') Promise.resolve(notifyRerender(index, { element: host.closest?.('.mes') ?? null })).then(notified => {
             if (stopped) return;
             const now = target(), view = now < 0 ? null : hostOf(now);
-            if (!frameGuard.settled({ notified, shown: view ? previewShown(view, { keep: isProgressBadge }) : null })) return;
+            if (!frameGuard.settled({ notified, shown: view ? previewShown(view, { keep: keepInPreview }) : null })) return;
             try { if (badge && view && badge.parentNode !== view && ![...view.childNodes].some(isProgressBadge)) { keepChatReadingPosition(view, () => { const first = view.childNodes[0]; if (first) view.insertBefore(badge, first); else view.appendChild(badge); }); } } catch { /* 진행 줄은 1초 타이머가 다시 붙인다 */ }   // 진행 줄도 1초 기다리지 않고 제자리에 (줄이 한 번 더 들썩이지 않게)
             paint();
         }).catch(() => {});
@@ -2868,7 +2870,7 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
             latest = String(text ?? '');
             schedule();
             // 실리태번이 그 사이 다시 그려 미리 보기가 지워졌으면 다시 (6.9.6 그린 노드가 하나도 안 남았을 때 — 전엔 표시가 남아 다시 그리지 못했다)
-            timer ??= setInterval(() => { const index = target(), host = index < 0 ? null : hostOf(index); if (host && display !== null && !previewShown(host, { keep: isProgressBadge })) paint(); }, 1000);
+            timer ??= setInterval(() => { const index = target(), host = index < 0 ? null : hostOf(index); if (host && display !== null && !previewShown(host, { keep: keepInPreview })) paint(); }, 1000);
         },
         stop,
         /** 6.9.6 최종본을 그렸다 — TTS 는 이제 저장된 번역문으로 */
@@ -2879,7 +2881,7 @@ function translationPreview(messageId, message, sourceMes, chatId, originalText,
             if (!shown) return;
             const index = target();
             const host = index < 0 ? null : document.querySelector(`#chat .mes[mesid="${index}"] .mes_text`);
-            if (host && previewShown(host, { keep: isProgressBadge })) refreshMessageBlock(index, getContext().chat[index], { gently: true });
+            if (host && previewShown(host, { keep: keepInPreview })) refreshMessageBlock(index, getContext().chat[index], { gently: true });
         },
     };
 }
@@ -2965,8 +2967,8 @@ function refreshMessageBlock(messageId, message, { gently = false } = {}) {
         //       실리태번에 맡긴다 — 끝날 때 통째로 다시 그려 이미 보인 문단까지 한 번 더 움직였다. 미리 보기가 지워졌거나 못 하면 예전처럼 통째로
         const host = gently ? element.querySelector('.mes_text') : null;
         let kept = false;
-        if (host && previewShown(host, { keep: isProgressBadge })) {
-            try { kept = paintPreview(host, getContext().messageFormatting(message?.extra?.display_text ?? message.mes, message.name, message.is_system, message.is_user, messageId), { keep: isProgressBadge, final: canNotifyRerender(messageId) }); }   // 6.9.7 코드가 바뀐 상태창 틀은 새 코드 블록으로 → 아래 알림으로 helper 가 번역된 글로 다시 그림 (알림이 못 가는 환경이면 틀 그대로)
+        if (host && previewShown(host, { keep: keepInPreview })) {
+            try { kept = paintPreview(host, getContext().messageFormatting(message?.extra?.display_text ?? message.mes, message.name, message.is_system, message.is_user, messageId), { keep: keepInPreview, final: canNotifyRerender(messageId) }); }   // 6.9.7 코드가 바뀐 상태창 틀은 새 코드 블록으로 → 아래 알림으로 helper 가 번역된 글로 다시 그림 (알림이 못 가는 환경이면 틀 그대로)
             catch { kept = false; }
             if (kept) dressPainted(host, message);
         }

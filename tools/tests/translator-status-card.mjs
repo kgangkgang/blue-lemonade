@@ -168,7 +168,7 @@ const env = {
     updateMessageBlock: (id, message, options) => { T.updates.push(options ?? null); if (!options || options.rerenderMessage !== false) T.dom.get(`#chat .mes[mesid="${id}"]`).querySelector('.mes_text').innerHTML = format(message.extra?.display_text ?? message.mes); },
     notifyRerender: (id, options) => { T.notified.push(id); return notifier.notify(id, options); },
     canNotifyRerender: () => T.ready,
-    typesetRoot: () => {}, dressBody: () => {}, isProgressBadge: isBadge,
+    typesetRoot: () => {}, dressBody: () => {}, isProgressBadge: isBadge, keepInPreview: node => node.nodeType === 1 && (node.classList.contains('llmt-progress') || node.classList.contains('ss-slot')),
 };
 for (const name of ['dressPainted', 'refreshMessageBlock']) env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env);
 /** 원문 → helper 틀 → 미리 보기(마지막 문단은 아직 원문) → 번역이 붙은 메시지 */
@@ -208,10 +208,10 @@ await check('끝 그림: 알림이 못 가는 환경(canNotifyRerender 거짓)�
 });
 await check('연결: 끝 그림 final(알림이 갈 때) · 3.1.4 미리 보기도 알림이 갈 때만 final (코드가 바뀐 틀만 — 바뀐 뒤엔 코드가 같아 다시 안 바꿈)', () => {
     const refresh = cut('refreshMessageBlock');
-    assert.match(refresh, /paintPreview\(host, [^\n]*\{ keep: isProgressBadge, final: canNotifyRerender\(messageId\) \}\)/);
+    assert.match(refresh, /paintPreview\(host, [^\n]*\{ keep: keepInPreview, final: canNotifyRerender\(messageId\) \}\)/);
     assert.match(source, /import \{ notifyRerender, isRerenderNotify, canNotifyRerender \} from '\.\.\/\.\.\/rerender-notify\.js';/);
     const preview = cut('translationPreview');
-    assert.match(preview, /if \(!paintPreview\(host, html, \{ keep: isProgressBadge, final: swap \}\)\) return;/);
+    assert.match(preview, /if \(!paintPreview\(host, html, \{ keep: keepInPreview, final: swap \}\)\) return;/);
     assert.match(preview, /const swap = frameGuard\.allowed\(\) && typeof canNotifyRerender === 'function' && canNotifyRerender\(index\);/);   // 8.1.3 다시 그리기 고리 가드 (translator-preview-rerender-loop.mjs)
 });
 
@@ -221,7 +221,7 @@ const penv = {
     ...frames, extensionSettings: {}, getContext: () => ({ chat: T.chat, chatId: 'chat-A', messageFormatting: format }), processTranslationText: (_o, t) => t,
     document: { querySelector: s => T.dom.get(s) ?? null, dispatchEvent() {} }, resolveTranslationTarget: message => T.chat.indexOf(message),
     notifyRerender: id => { PV.notified.push(id); return Promise.resolve(true); }, canNotifyRerender: () => T.ready, readerRestsIn: () => 0, performance: { now: () => Date.now() },
-    keepChatReadingPosition: globalThis.keepChatReadingPosition, typesetRoot: () => {}, dressBody: () => {}, isProgressBadge: isBadge,
+    keepChatReadingPosition: globalThis.keepChatReadingPosition, typesetRoot: () => {}, dressBody: () => {}, isProgressBadge: isBadge, keepInPreview: node => node.nodeType === 1 && (node.classList.contains('llmt-progress') || node.classList.contains('ss-slot')),
     PREVIEW_GAP_MS: Number(/\nconst PREVIEW_GAP_MS = (\d+);/.exec(source)?.[1]), livePreviews: new Set(),
 };
 for (const name of ['dressPainted', 'previewText', 'translationPreview']) penv[name] = new Function('env', `with(env){return (${cut(name)});}`)(penv);

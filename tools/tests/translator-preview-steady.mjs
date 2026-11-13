@@ -130,6 +130,34 @@ await check('previewShown: 그린 노드가 남아 있을 때만 — 실리태�
     assert.equal(previewShown(host, { keep: isBadge }), false, '진행 표시는 세지 않는다');
 });
 
+await check('paintPreview: 글 끝의 미트볼 칩 칸(.ss-slot)은 같은 노드로 맨 끝 그대로 — 늘어난 문단은 그 앞에 · 새 글의 빈 칩 칸은 넣지 않음', () => {
+    const keepSlot = node => node.nodeType === 1 && (node.classList.contains('llmt-progress') || node.classList.contains('ss-slot'));
+    const host = new El('div', ' class="mes_text"', doc);
+    host.innerHTML = P(JA[0], JA[1]);
+    const badge = host.prepend(new El('div', ' class="llmt-progress"', doc));
+    const slot = host.appendChild(new El('div', ' class="ss-slot"', doc));
+    slot.appendChild(new El('span', ' class="chip"', doc));
+    paintPreview(host, P(KO[0], JA[1]), { keep: keepSlot });
+    moved.length = 0;
+    assert.equal(paintPreview(host, `${P(KO[0], KO[1], '덧붙은 문단')}\n<div class="ss-slot"></div>`, { keep: keepSlot }), true);
+    assert.equal(host.childNodes[0], badge, '진행 표시는 맨 앞');
+    assert.equal(host.childNodes.at(-1), slot, '칩 칸은 맨 끝 그대로');
+    assert.equal(slot.children.length, 1, '칩 칸 안의 칩도 그대로');
+    assert.ok(!moved.includes(slot), '칩 칸을 떼지 않음 (그 확장이 다시 붙이며 깜빡이던 것)');
+    assert.equal(host.querySelectorAll('.ss-slot').length, 1, '새 글의 빈 칩 칸은 넣지 않음');
+    assert.deepEqual(host.children.filter(x => x.tagName === 'P').map(x => x.textContent), [KO[0], KO[1], '덧붙은 문단']);
+    assert.equal(previewShown(host, { keep: keepSlot }), true);
+    // 칩 칸이 없으면 예전처럼 맨 끝에
+    const bare = new El('div', '', doc);
+    paintPreview(bare, P(KO[0]), { keep: keepSlot });
+    paintPreview(bare, P(KO[0], KO[1]), { keep: keepSlot });
+    assert.equal(bare.innerHTML, P(KO[0], KO[1]));
+});
+await check('index.js: 미리 보기 keep 은 진행 표시 · 미트볼 칩 칸 둘만 (시험의 흉내와 같은 정의)', () => {
+    assert.match(source, /\nconst keepInPreview = node => node\.nodeType === 1 && \(node\.classList\.contains\('llmt-progress'\) \|\| node\.classList\.contains\('ss-slot'\)\);\n/);
+    assert.equal((source.match(/\{ keep: isProgressBadge/g) ?? []).length, 0, '미리 보기 호출은 모두 keepInPreview');
+});
+
 // ── ② adoptPainted ──
 await check('adoptPainted: 실리태번이 그린 문단도 글이 같으면 그대로 (테마가 안에 칸을 넣었어도) · 글이 다르거나 수가 다르면 새로', () => {
     const host = new El('div', '', doc);
@@ -163,7 +191,7 @@ const env = {
     resolveTranslationTarget: message => T.chat.indexOf(message), notifyRerender: () => Promise.resolve(), canNotifyRerender: () => true,
     updateMessageBlock: (id, message, options) => { T.updates.push(options ?? null); if (!options || options.rerenderMessage !== false) T.dom.get(`#chat .mes[mesid="${id}"] .mes_text`).innerHTML = format(message.extra?.display_text ?? message.mes); },
     typesetRoot: () => { T.typeset++; }, dressBody: (body, message) => T.dressed.push(message.extra?.display_text ?? ''),
-    PREVIEW_GAP_MS: Number(/\nconst PREVIEW_GAP_MS = (\d+);/.exec(source)?.[1]), livePreviews: new Set(), isProgressBadge: isBadge, refreshMessageBlock: null,
+    PREVIEW_GAP_MS: Number(/\nconst PREVIEW_GAP_MS = (\d+);/.exec(source)?.[1]), livePreviews: new Set(), isProgressBadge: isBadge, keepInPreview: node => node.nodeType === 1 && (node.classList.contains('llmt-progress') || node.classList.contains('ss-slot')), refreshMessageBlock: null,
 };
 for (const name of ['dressPainted', 'previewText', 'translationPreview', 'refreshMessageBlock']) env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env);
 function screen(id, text) {
