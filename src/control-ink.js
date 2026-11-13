@@ -232,9 +232,13 @@ function queue(root) {
     pending.add(root);
     if (frame) return;
     // 1.0.0 극한 최적화: 읽기(getBoundingClientRect · getClientRects)는 그 프레임 배치가 끝난 뒤(setTimeout 0)에 — rAF 안에서 읽으면 문서 전체 배치를 강제했어요
-    const afterLayout = fn => (typeof globalThis.setTimeout === 'function' ? globalThis.setTimeout(fn, 0) : fn());   // 시험의 가짜 창에는 setTimeout 이 없어요
+    // 1.4.x opt-chat-open(고침안 6): 그 뒤로도 페이지가 바쁘면(채팅을 여는 도중 — 실리태번이 메시지 · 서랍을 잇달아 바꿔요) 한가해질 때까지 기다려요(최대 0.3초).
+    //   바쁜 틈에 읽으면 그 사이 쌓인 변화의 배치를 이 읽기가 대신 치렀어요(진단 dc-140 · 폰 4배 짧은 채팅 열기: 맞추기 읽기 넷이 약 130ms). 한가하면 바로 와서 평소와 같아요
+    const afterLayout = fn => (typeof globalThis.requestIdleCallback === 'function' ? globalThis.requestIdleCallback(fn, { timeout: 300 })
+        : typeof globalThis.setTimeout === 'function' ? globalThis.setTimeout(fn, 0) : fn());   // 시험의 가짜 창에는 setTimeout 이 없어요
     frame = requestAnimationFrame(() => afterLayout(() => {
         frame = 0;
+        if (!enabled) { pending.clear(); return; }   // 기다리는 사이 꺼졌으면 재지 않아요
         alignRoots([...pending].filter(el => el.isConnected));
         pending.clear(); observer?.quiet();   // 맞추면서 바꾼 padding 기록은 이 구독만 버려요(예전: 끊고 다시 걸기)
     }));
