@@ -3,7 +3,7 @@ import {pathToFileURL} from 'node:url';
 import path from 'node:path';
 const root=pathToFileURL(path.resolve(process.argv[2]||'.')+'/');
 const {getSettings,DEFAULTS}=await import(new URL('src/settings.js',root));
-const {addonMarkup}=await import(new URL('src/addons.js',root));
+const {addonMarkup}=await import(new URL('src/addons-panel.js',root));
 const {settingRoute}=await import(new URL('src/settings-differences.js',root));
 const saved={enabled:true,addons:{models:true,modelswitch:true,regexlink:true,zipinstall:true},addonUI:{modelswitchMenu:false,zipinstallMenu:false}};
 globalThis.SillyTavern={getContext:()=>({extensionSettings:{salty:saved}})};

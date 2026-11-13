@@ -44,6 +44,15 @@ if(mode==='other-wrapper'){
  assert.equal(callbacks,2,'같은 입력의 두 번째 치환은 결과 캐시를 써요');
  assert.equal('일반 본문'.replace(re,()=>{throw Error('매치가 없는 입력에서 치환을 불렀어요')}),'일반 본문');
  assert.ok(mod.regexPerfState().report);
+ // 원본 0.5.5 고침 일부(업스트림 1112): 생성자로 만든 사본 · 이름만 바꾼 스크립트
+ const copy=new re.constructor(re.source,re.flags);
+ assert.equal('status'.replace(copy,'사본'),'사본','감싼 식을 생성자로 복사해도 보통 정규식처럼 바꿔요');
+ globalThis.__regexScripts[0].scriptName='바뀐 이름';
+ mod.notifyScriptsChanged();
+ globalThis.__regexProvider.get('/status/g');
+ assert.ok(mod.regexPerfState().report.rows.some(r=>r.name==='바뀐 이름'),'이름만 바꿔도 표 · 보고에 새 이름이 보여요');
+ globalThis.__regexScripts[0].scriptName='합성 규칙';
+ mod.notifyScriptsChanged();
  const {t,translate}=await import(pathToFileURL(path.join(root,'src/addons/regexlink/regexperf-locale.js')));
  assert.equal(t`Since ${'오늘'}`,'오늘부터 측정');
  assert.equal(translate('Features'),'기능');

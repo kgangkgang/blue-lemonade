@@ -144,9 +144,14 @@ function inkByLevels(els) {
     }
 }
 const hidden = hiddenQueue(els => inkByLevels(els), { enabled: () => document.body.classList.contains('salty') });
-function fixRoots(roots) {
+// 1.1.6 더 보기: 이미 본 본문(.mes_text)은 적어 두고, 「더 보기」로 위에 붙은 메시지만 봐요(예전엔 이미 칠한 아래 메시지까지 채팅 전체를 다시 읽었어요).
+//   메시지가 바뀌면 실리태번 이벤트(고침 · 스와이프 …)가 그 메시지를 따로 다시 보니(fresh 아님) 결과는 같아요
+const inked = new WeakSet();
+function fixRoots(roots, fresh = false) {
     const now = [];
     for (const text of textsOf(roots)) {
+        if (fresh && inked.has(text)) continue;
+        inked.add(text);
         const check = mayHide(text);
         for (const el of text.querySelectorAll(CANDIDATES)) { restoreOne(el); if (!check || !hidden.defer(el)) now.push(el); }
     }
@@ -154,24 +159,26 @@ function fixRoots(roots) {
 }
 
 /** 시험용: 단계별 읽기 · 쓰기 */
-export const _cardInk = { inkByLevels };
+export const _cardInk = { inkByLevels, fixRoots, schedule };
 
 let queued = false;
-let whole = false, started = false;
+let whole = false, more = false, started = false;
 const pending = new Set();
-function schedule(root) {
-    if (root) pending.add(root); else whole = true;
+function schedule(root, fresh = false) {
+    if (root) pending.add(root); else if (fresh) more = true; else whole = true;
     if (queued) return;
     queued = true;
     // rAF 가 아니라 타이머 — 탭이 숨어 있으면 rAF 는 멈춘다(실측: hidden 인 탭에서 한 번도 안 불림).
     // 백그라운드에서 답이 와도 돌아 있어야 탭을 다시 열었을 때 이미 읽히는 상태다.
     setTimeout(() => {
         queued = false;
-        const roots = whole || !pending.size ? [document.getElementById('chat'),...pending] : [...pending];
-        whole = false;
+        const all = whole || (!pending.size && !more), fresh = more && !all;
+        const roots = all ? [document.getElementById('chat'),...pending] : [...pending];
+        whole = more = false;
         pending.clear();
         if (!document.body.classList.contains('salty')) return;
         fixRoots(roots);
+        if (fresh) fixRoots([document.getElementById('chat')], true);
     });
 }
 
@@ -193,7 +200,7 @@ export function startCardInk() {
     // 채팅을 열면 통째로. 답이 끝나면 방금 끝난 답(마지막 메시지)만 — 4.7.8: 채팅 전체를 다시 재면 답마다 카드 수백 개의
     // 계산 스타일을 강제로 읽어 답 끝의 긴 작업에 얹혔다(폰 리그 답 끝 forced style·layout 41ms@4x). 스트리밍 도중에는 카드가 아직 덜 그려져 있다.
     on('CHAT_CHANGED', () => schedule(null));
-    on('MORE_MESSAGES_LOADED', () => schedule(null));
+    on('MORE_MESSAGES_LOADED', () => schedule(null, true));
     on('GENERATION_ENDED', () => schedule(document.querySelector('#chat > .mes:last-of-type') || document.getElementById('chat')));
     // 북마크 창이 메시지를 다시 그릴 때도 (테마의 다른 모듈과 같은 신호)
     document.addEventListener('chat-bookmarks:render', (event) => {

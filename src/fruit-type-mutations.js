@@ -34,26 +34,49 @@ function keysOf(sel){
     keySets.set(whole,k);return k;
 }
 // 요소 자신이 sel 에 맞을 수 있나(거짓이면 확실히 안 맞음). 모르면 참
+// 1.2.1 목록에 class 가 하나도 없으면(예: 'iframe') classList 를 열지 않아요 — 붙은 요소마다 DOMTokenList 를 만들던 값(채팅 300 열기에 요소 수천 개)
 function mayMatch(node,sel){
-    const k=keysOf(sel),list=node.classList;if(!k||!list||node.ownerDocument?.compatMode!=='CSS1Compat')return true;
-    if(k.tags.has(node.localName)||(node.id&&k.ids.has(node.id)))return true;
+    const k=keysOf(sel);if(!k)return true;
+    if(k.tags.has(node.localName))return true;
+    if(node.ownerDocument?.compatMode!=='CSS1Compat')return true;
+    if(k.ids.size&&node.id&&k.ids.has(node.id))return true;
+    if(!k.cls.size)return !('classList' in node);
+    const list=node.classList;if(!list)return true;
     for(let i=0;i<list.length;i++)if(k.cls.has(list[i]))return true;
     return false;
 }
 // removed=false 면 떨어진 노드는 보지 않아요(부르는 쪽이 떨어짐을 제 상태로 따로 판정할 때 — 떨어진 메시지 수백 개의 자손을 다 훑지 않게)
+// 1.2.1 같은 답을 더 적은 일로(폰 4배 · 허브 구독 「과일 글자 (상태창)」 406.9ms · 「과일 글자 바로가기」 190.5ms):
+//   ① 붙은 요소를 이미 훑어 「뿌리 없음」으로 본 요소의 자손이면 다시 훑지 않아요 — 그 요소의 querySelector 가 지금 자손 전부를 이미 봤어요
+//      (채팅을 열면 메시지가 붙은 뒤 꾸미기가 그 안에 또 붙여, 같은 가지를 기록마다 다시 훑었어요). 「바로가기 단추라 뺌」은 훑은 답이 아니라 적지 않아요
+//   ② 바로가기 단추인지(classList)는 뿌리가 맞은 요소만 봐요 — 뿌리가 안 맞으면 답이 어차피 거짓이에요
+//   ③ panels 가 없으면 기록 자리(바로가기 단추 안인가)는 맞은 노드가 있을 때만 거슬러 올라가 봐요. panels 가 있으면 단추 · 창을 closest 한 번으로 같이 봐요
+const SHORTCUT='.bl-ft-shortcut';
 export function fruitStructureChanged(records, roots, panels='', removed=true) {
     const pre=looseOf(roots);
+    const clean=new Set();
+    const covered=node=>{if(!clean.size)return false;for(let n=node.parentElement;n;n=n.parentElement)if(clean.has(n))return true;return false;};
     const hit=(node,sel)=>(mayMatch(node,sel)&&!!node.matches?.(sel))||(node.firstElementChild!==null&&!!node.querySelector?.(sel));
-    const contains=node=>node?.nodeType===1&&!(mayMatch(node,'.bl-ft-shortcut')&&node.matches?.('.bl-ft-shortcut'))&&(pre?hit(node,pre)&&hit(node,roots):hit(node,roots));
+    const contains=node=>{
+        if(node?.nodeType!==1||covered(node))return false;
+        if(!(pre?hit(node,pre)&&hit(node,roots):hit(node,roots))){clean.add(node);return false;}
+        return !(mayMatch(node,SHORTCUT)&&node.matches?.(SHORTCUT));
+    };
+    const around=panels?SHORTCUT+','+panels:SHORTCUT;
     // 8.2.7 기록 수천 개가 같은 부모 몇백 개에 몰려요(메시지마다 단추 줄) — 부모마다 조상 거슬러 오르기는 한 번만(이 판정은 읽기만 해서 답이 같아요). 기록마다 새 배열도 안 만들어요
     const where=new Map();
+    const place=target=>{
+        let at=where.get(target);if(at!==undefined)return at;
+        const near=target?.closest?.(around);
+        at=!near?0:(mayMatch(near,SHORTCUT)&&near.matches?.(SHORTCUT))||near.parentElement?.closest?.(SHORTCUT)?1:2;
+        where.set(target,at);return at;
+    };
     return records.some(record=>{
         const target=record.target?.nodeType===1?record.target:record.target?.parentElement;
-        let at=where.get(target);if(at===undefined){at=target?.closest?.('.bl-ft-shortcut')?1:panels&&target?.closest?.(panels)?2:0;where.set(target,at);}
-        if(at===1)return false;
-        if(at===2)return true;
-        for(const node of record.addedNodes||[])if(contains(node))return true;
-        if(removed)for(const node of record.removedNodes||[])if(contains(node))return true;
-        return false;
+        if(panels){const at=place(target);if(at===1)return false;if(at===2)return true;}
+        let found=false;
+        for(const node of record.addedNodes||[])if(contains(node)){found=true;break;}
+        if(!found&&removed)for(const node of record.removedNodes||[])if(contains(node)){found=true;break;}
+        return found&&(!!panels||place(target)!==1);
     });
 }

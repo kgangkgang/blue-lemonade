@@ -1,5 +1,5 @@
 import { appearance } from './device-layouts.js';
-import { tidyRoleIcons, tidyPickedIcons } from './role-icons-core.js';
+import { tidyRoleIcons, tidyPickedIcons } from './role-icons-tidy.js';
 import { tidyFruitType } from './fruit-type-tidy.js';   // 1.0.x 시작에는 설정 고르기만(종류 전체 목록 · 선택자는 상태창 글자를 쓸 때 받아요)
 import { entryDisplay, entryIcon } from './scripts/fruit-entry-icons.js';
 import { MASK_STYLES, normalizeMaskStyle, FILTER_RANGES, FILTER_PRESET_IDS, FILTER_PRESETS } from './capture-style.js';

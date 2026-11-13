@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Penterson
-// 원본: st-regex-perf e21e666bface5dca6c0ea83bcbce0c6e8fe03824. 라이선스 전문은 THIRD-PARTY-NOTICES.md에 보존해요.
+// 원본: st-regex-perf e21e666bface5dca6c0ea83bcbce0c6e8fe03824(0.3.0) · 0.5.5(f652757d5c856f1855502eb55814337e1544efef)의 고침 일부를 더함. 라이선스 전문은 THIRD-PARTY-NOTICES.md에 보존해요.
 // 블루레몬 변경: 프롬프트 연동 정규식·늦은 화면 생성·한국어 지역 사전·다른 엔진 패치에 양보를 연결해요.
 /**
  * Regex Perf Kit — speeds up SillyTavern's built-in Regex extension without touching any regex script.
@@ -983,6 +983,14 @@ function buildInfo(groups) {
     }
     const version = fnv1a(versionParts.join('\u0003'));
     if (version !== infoCache?.version) clearLitCache(); // other scripts, other literals
+    // 원본 0.5.5: 이름만 바꾸면 판(version)이 그대로라 감싼 식이 다시 이어지지 않아요 — 표 · 보고의 이름은 여기서 받아요.
+    for (const info of map.values()) {
+        const stat = stats.get(info.statKey);
+        if (!stat) continue;
+        stat.name = info.name;
+        stat.ids = info.ids;
+        for (const id of info.ids) statById.set(id, stat);
+    }
     return { map, dynamic, invalid, counts, depthRules, version, displayVersion: fnv1a(displayParts.join('\u0003')), fp: fingerprint(groups), checkedAt: Date.now(), builtAt: Date.now() };
 }
 
@@ -1130,6 +1138,7 @@ class PerfRegExp extends RegExp {
             const out = RegExp.prototype[Symbol.replace].call(native, str, replacer);
             this.lastIndex = native.lastIndex; return out;
         }
+        if (!this._meta) return super[Symbol.replace](str, replacer); // 원본 0.5.5: 이 생성자로 만든 사본(new re.constructor(...))은 보통 RegExp 처럼
         const { stat, markdownOnly, test, memoPrefix, memoStatic } = this._meta;
 
         if (stat === skipStat) return str;
@@ -1365,14 +1374,18 @@ function patchProvider() {
         // Script info is re-read whenever it changes, so an edited script takes effect without RegexProvider.clear().
         if (w._version !== version) {
             const key = keyOf(base);
-            const info = map.get(key) ?? resolveDynamic(regexString, dynamic);
+            let info = map.get(key);
+            // 원본 0.5.5: 스크립트 정보와 다른 매크로 값({{user}} 등 — 페르소나 이름을 바꾼 뒤)으로 만든 식이면 문자 거르개는
+            //   이 식의 것으로 · ⑥ 빠른 길은 꺼요(옛 이름으로 거르면 스크립트가 건너뛰어졌어요)
+            const form = !info;
+            if (form) info = resolveDynamic(regexString, dynamic);
             const stat = getStat(info?.statKey ?? key, base);
             if (info) stat.name = info.name;
             if (info?.raw) stat.src = info.raw;
             stat.ids = info?.ids ?? [];
             for (const id of stat.ids) statById.set(id, stat);
-            stat.needle = info?.needle ?? needleOf(base);
-            stat.redos = info?.redos ?? redosOf(base);
+            stat.needle = (form ? null : info.needle) ?? needleOf(base);
+            stat.redos = (form ? null : info.redos) ?? redosOf(base);
             stat.tripped = false; // ⑧ an edit resets the breaker
             stat.slowRuns = 0;
             w._meta = {
@@ -1381,7 +1394,7 @@ function patchProvider() {
                 test: stat.needle.test,
                 memoPrefix: info?.pure || info?.semiPure ? key + '\u0001' + info.replaceSig + (info.pure ? '\u0001' : '\u0002') : null,
                 memoStatic: info?.semiPure ? (info.semiPureTrims ? 2 : 1) : 0, // 1: static macros in the replacement, 2: in a trim string too
-                fast: info?.fast ?? null,
+                fast: form ? null : info.fast ?? null,
             };
             w._version = version;
         }
@@ -1785,9 +1798,10 @@ function buildReportCsv() {
 async function turnOffByName(name) {
     const want = name.trim().toLowerCase();
     if (!want) return t`Usage: /regexperf off <script name>`;
-    const infos = [...ensureInfo().map.values()];
-    const found = infos.filter(r => r.name.toLowerCase() === want);
-    const hits = found.length ? found : infos.filter(r => r.name.toLowerCase().includes(want));
+    // 원본 0.5.5: 스크립트마다 제 이름으로 — 같은 식을 쓰는 스크립트는 표의 한 줄을 나눌 뿐, 이 명령으로 같이 꺼지지 않아요
+    const scripts = readGroups().flatMap(([, list]) => list).filter(s => s?.findRegex && !s.disabled).map(s => ({ ids: [s.id], name: s.scriptName || t`(no name)` }));
+    const found = scripts.filter(r => r.name.toLowerCase() === want);
+    const hits = found.length ? found : scripts.filter(r => r.name.toLowerCase().includes(want));
     if (hits.length !== 1) return hits.length ? t`"${name}" matches several scripts: ${hits.map(r => r.name).join(', ')}` : t`"${name}" is not in the Regex extension's list.`;
     await scriptAction(hits[0], true);
     renderPanel();
@@ -1809,13 +1823,24 @@ async function saveScript(ids, patch) {
     let saved = false;
     for (const type of Object.values(SCRIPT_TYPES)) {
         const list = getScriptsByType(type, { allowedOnly: false }) ?? [];
-        if (!list.some(s => ids.includes(s?.id))) continue;
+        const mine = list.filter(s => ids.includes(s?.id));
+        if (!mine.length) continue;
         scriptChangeListener?.(ids, patch);
-        await engine.saveScriptsByType(list.map(s => (ids.includes(s?.id) ? { ...s, ...patch } : s)), type);
+        // 원본 0.5.5: 스크립트 객체를 제자리에서 고쳐요 — 정규식 서랍의 줄이 그 객체를 쥐고 있다가 그대로 다시 저장해서,
+        //   사본으로 저장하면 서랍을 한 번 더 누를 때 고침이 되돌아갔어요
+        for (const s of mine) Object.assign(s, patch);
+        await engine.saveScriptsByType(list, type);
         saved = true;
     }
-    if (saved) markDirty();
-    return saved;
+    if (!saved) return false;
+    if ('disabled' in patch) { // 서랍의 켜기 칸도 제 손으로 누른 것처럼 맞춰요
+        for (const id of ids) {
+            const box = document.getElementById(id)?.querySelector('.disable_regex');
+            if (box) box.checked = !!patch.disabled;
+        }
+    }
+    markDirty();
+    return true;
 }
 
 /** The lint findings for every active script: {rule, info, text, fix}, fix = {label, patch} where it is mechanical. */
@@ -2034,7 +2059,7 @@ const feature = (id, name, desc, { labelId = '', sub = false } = {}) => `
         </label>`;
 
 /** A row of the Limits grid: a number field for LIMITS[key] or a checkbox for TOGGLES; bindUi() finds it as #rpk_<key>. */
-const limit = (key, name, title, type = 'number') => `<label${title ? ` title="${title}"` : ''}><span>${name}</span><input type="${type}"${type === 'number' ? ' class="text_pole"' : ''} id="rpk_${key}"></label>`;
+const limit = (key, name, title, type = 'number') => `<label${title ? ` title="${esc(title)}"` : ''}><span>${name}</span><input type="${type}"${type === 'number' ? ' class="text_pole"' : ''} id="rpk_${key}"></label>`;
 
 // Sorting and the name filter are per session (not saved). Clicking a header sorts by it, again flips the direction.
 const SORT_KEYS = {
@@ -2067,20 +2092,20 @@ const settingsHtml = () => `
       <div class="rpk-summary" id="rpk_summary">${t`Measuring...`}</div>
 
       <div class="rpk-buttons">
-        <div class="menu_button rpk-primary" id="rpk_measure" title="${t`Re-renders this chat twice, with the features off and on, and shows the real difference. Runs in small steps, so the page stays usable.`}">${t`Measure on this chat`}</div>
+        <div class="menu_button rpk-primary" id="rpk_measure" title="${esc(t`Re-renders this chat twice, with the features off and on, and shows the real difference. Runs in small steps, so the page stays usable.`)}">${t`Measure on this chat`}</div>
         <div class="menu_button" id="rpk_copy">${t`Copy report`}</div>
-        <div class="menu_button rpk-minor" id="rpk_copy_json" title="${t`Copy the report as JSON`}">JSON</div>
-        <div class="menu_button rpk-minor" id="rpk_copy_csv" title="${t`Copy the table as CSV`}">CSV</div>
+        <div class="menu_button rpk-minor" id="rpk_copy_json" title="${esc(t`Copy the report as JSON`)}">JSON</div>
+        <div class="menu_button rpk-minor" id="rpk_copy_csv" title="${esc(t`Copy the table as CSV`)}">CSV</div>
         <div class="menu_button" id="rpk_reset">${t`Reset stats`}</div>
         <div class="menu_button" id="rpk_refresh">${translate('Refresh', 'rpk_refresh')}</div>
         <div class="menu_button" id="rpk_clear_persist">${t`Clear saved results (this chat)`}</div>
-        <div class="menu_button" id="rpk_reset_settings" title="${t`Turns every feature and limit back to its default.`}">${t`Reset settings`}</div>
+        <div class="menu_button" id="rpk_reset_settings" title="${esc(t`Turns every feature and limit back to its default.`)}">${t`Reset settings`}</div>
       </div>
       <div class="rpk-note rpk-measured" id="rpk_measure_result"></div>
 
       <div class="rpk-table-head">
         <h4 class="rpk-section">${t`Per-script measurements (slowest first)`}</h4>
-        <input type="text" class="text_pole" id="rpk_filter" placeholder="${t`Filter by name`}" title="${t`Shows only the scripts whose name contains this. Click a column header to sort by it, again to flip the direction.`}">
+        <input type="text" class="text_pole" id="rpk_filter" placeholder="${esc(t`Filter by name`)}" title="${esc(t`Shows only the scripts whose name contains this. Click a column header to sort by it, again to flip the direction.`)}">
       </div>
       <div class="rpk-table-wrap">
         <table class="rpk-table" id="rpk_table">
@@ -2237,9 +2262,9 @@ function renderPanel() {
         const lit = fmtNeedles(r);
         const m = rowMeasures.get(r);
         const actions = (m ? `<span class="rpk-row-ms" title="${esc(t`Without this script the chat renders in ${fmtMs(m.without)} ms instead of ${fmtMs(m.with)} ms (③ and ⑤ off)`)}">${m.with >= m.without ? '−' : '+'}${fmtMs(Math.abs(m.with - m.without))} ms</span>` : '')
-            + `<span class="rpk-measure-row fa-solid fa-stopwatch" title="${t`Measure this chat without this script`}"></span>`
-            + (r.spike ? ` <span class="rpk-repro fa-solid fa-copy" title="${t`Copy a repro of the newest spike (pattern, input length and head) for a bug report`}"></span>` : '')
-            + (r.ids.length ? ` <span class="rpk-edit fa-solid fa-pencil" title="${t`Open in the Regex extension`}"></span> <span class="rpk-off fa-solid fa-power-off" title="${t`Turn this script off`}"></span>` : '');
+            + `<span class="rpk-measure-row fa-solid fa-stopwatch" title="${esc(t`Measure this chat without this script`)}"></span>`
+            + (r.spike ? ` <span class="rpk-repro fa-solid fa-copy" title="${esc(t`Copy a repro of the newest spike (pattern, input length and head) for a bug report`)}"></span>` : '')
+            + (r.ids.length ? ` <span class="rpk-edit fa-solid fa-pencil" title="${esc(t`Open in the Regex extension`)}"></span> <span class="rpk-off fa-solid fa-power-off" title="${esc(t`Turn this script off`)}"></span>` : '');
         return `<tr class="${cls}${r.ids.length ? ' rpk-script' : ''}" title="${esc(r.src)}" data-i="${i}">
           ${td('rank', ranks.get(r))}${td('name', esc(r.name) + warnings(r, true).join(''))}
           ${td('runs', r.calls)}${td('total', fmtMs(r.totalMs))}${td('avg', fmtMs(avgMs(r)))}${td('max', fmtMs(r.maxMs))}
@@ -2260,7 +2285,7 @@ function renderPanel() {
     setContent(ui.lintCount, lint.length ? `(${lint.length})` : '', 'textContent');
     setContent(ui.lintList, lint.length ? lint.map((row, i) => `<li data-rule="${row.rule}" data-script="${esc(row.info.name)}" data-i="${i}"><b>${esc(row.info.name)}</b>: ${esc(row.text)}`
         + (row.fix ? ` <span class="menu_button rpk-fix" title="${esc(t`Shows the change and saves it through the regex engine when you confirm`)}">${esc(row.fix.label)}</span>` : '')
-        + (row.info.ids.length ? ` <span class="rpk-edit fa-solid fa-pencil" title="${t`Open in the Regex extension`}"></span>` : '') + '</li>').join('')
+        + (row.info.ids.length ? ` <span class="rpk-edit fa-solid fa-pencil" title="${esc(t`Open in the Regex extension`)}"></span>` : '') + '</li>').join('')
         : `<li class="rpk-dim">${settings.lint ? t`Nothing to report` : t`Lint is off (Limits)`}</li>`);
 }
 

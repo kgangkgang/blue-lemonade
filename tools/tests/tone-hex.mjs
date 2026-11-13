@@ -29,7 +29,10 @@ const colored = [];   // 채팅 안 색 글자 모형
 const el = (src, viaStyle = false) => {
     const node = { dataset: {}, added: [], hue: undefined,
         getAttribute: name => (name === 'color' ? (viaStyle ? null : src) : name === 'style' ? (viaStyle ? `font-weight:700; color: ${src}` : '') : null),
-        classList: { add: c => node.added.push(c), remove: c => { node.added = node.added.filter(x => x !== c); } },
+        // 브라우저처럼: add · remove 는 class 가 그대로여도 속성을 다시 써요(기록 하나) · toggle(c, 힘) 은 바뀔 때만 써요
+        writes: 0,
+        classList: { contains: c => node.added.includes(c), add: c => { node.writes++; if (!node.added.includes(c)) node.added.push(c); }, remove: c => { node.writes++; node.added = node.added.filter(x => x !== c); },
+            toggle: (c, force) => { const has = node.added.includes(c), want = force ?? !has; if (want !== has) { node.writes++; node.added = want ? [...node.added, c] : node.added.filter(x => x !== c); } return want; } },
         style: { setProperty: (k, v) => { if (k === '--bl-hue') node.hue = v; }, removeProperty: () => { node.hue = undefined; } } };
     return node;
 };
@@ -70,6 +73,19 @@ await test('색 글자 재기: 16진 색은 숨은 요소 · 계산 스타일 0�
     T.retoneAll();
     assert.equal(probes, 1); assert.equal(computed, 1);
     assert.equal(named.hue, '0');
+});
+await test('1.2.1 class 는 바뀔 때만 써요 — 색 글자(회색 아님)는 처음 잴 때 class 기록 0 · 회색은 1, 색이 바뀌어 다시 재도 그대로면 0', () => {
+    colored.length = 0;
+    const red = el('#ff0000'), grey = el('#808080');
+    colored.push(red, grey);
+    T.retoneAll();
+    assert.equal(red.writes, 0, '없는 bl-tone-grey 를 지우느라 class 를 다시 쓰지 않아요');
+    assert.equal(grey.writes, 1); assert.deepEqual(grey.added, ['bl-tone-grey']);
+    // 색이 바뀐 것처럼(다른 확장이 다시 그림) 표식만 지우고 다시 재요 — class 가 같으면 다시 쓰지 않아요
+    delete red.dataset.blToned; delete grey.dataset.blToned;
+    T.retoneAll();
+    assert.equal(red.writes, 0); assert.equal(grey.writes, 1); assert.deepEqual(grey.added, ['bl-tone-grey']);
+    assert.equal(red.hue, '0'); assert.equal(grey.hue, undefined);
 });
 await test('소스: toRgb 는 16진 판정을 숨은 요소보다 먼저 · CI 등록', () => {
     const src = fs.readFileSync(path.join(root, 'src/tone.js'), 'utf8');

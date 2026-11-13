@@ -53,8 +53,11 @@ const COMPAT_WIDTH_OUT = path.join(ROOT, 'src', 'compat-width.gen.css');
 const DEM_DATA_OUT = path.join(ROOT, 'src', 'dem-style-data.gen.js');
 // 1.1.1 가볍게: css/61-markdown.css 가운데 body 에 마크다운 모양 클래스(body.salty.salty-md-*)가 있어야만 맞는 규칙은 첫 시트에 싣지 않고 이 파일로 —
 //   기본값(고른 모양 없음)에서는 하나도 맞지 않아요. src/lite.js syncMarkdownCss 가 고른 모양이 있을 때만 테마 시트 바로 뒤에 붙이고, 전체 시트(둘째 장)에는 제자리에 그대로 있어요
+// 1.1.6: 이 분리는 tools/css-gates.cjs(켜짐 규칙 일반화 · 전체 장에서도 뗌)의 md 시트로 합쳤어요 — 파일 이름(MD_OUT)은 그대로예요. markdownSplit · markdownGated 는 옛 시험 · 비교용으로만 남겨 둬요
 const MD_OUT = path.join(ROOT, 'src', 'markdown.gen.css');
 const MD_MODULE = '61-markdown.css';
+// 1.1.6 뗀 규칙 시트를 언제 붙일지 적은 실행 중 표(src/lite.js 가 읽어요) — 켜짐 시트 · 설정 창 시트 파일은 tools/css-gates.json 에
+const GATE_TABLE = 'src/css-gates.gen.js';
 const DEM_FALLBACK_OUT = path.join(ROOT, 'src', 'dem-style-data.fallback.gen.css');
 const LAZY_SENTINEL = '#salty-lazy-panel-start';
 const HASH_SLOT = '@@HASH@@';
@@ -190,7 +193,8 @@ function build(dir = CSS_DIR, { bucket = true, key = true, split = true } = {}) 
         const compatKey = t => (key ? require('./css-key.cjs').keyize(aliasChat(t)).text : aliasChat(t));
         // 1.0.0: :has() 앞 지킴(tools/css-has-guard.cjs) — 앞 칸이 안 맞는 요소는 :has() 를 견주지 않아요
         keyed.text = require('./css-has-guard.cjs').guardHas(keyed.text).text;
-        return { parked, keyed, previewText: previewKeyed.text, compat: { ...compat, browser: compat.browser && compatKey(compat.browser), width: compat.width && compatKey(compat.width) } };
+        // 1.1.6 css-gates 가 차례를 따질 때 쓰는 글: 미리보기 · 호환을 떼기 전(expanded) · 미리보기만 뗀 글 · 둘 다 뗀 글
+        return { parked, keyed, previewText: previewKeyed.text, compat: { ...compat, browser: compat.browser && compatKey(compat.browser), width: compat.width && compatKey(compat.width) }, order: { expanded, parkText: previewParked.text, compatText: compat.text } };
     };
     // 1.0.0: 둘째 장 모듈에 든 문서 뿌리 변수 규칙(body.salty · :root · html 에 --변수만)은 첫 장에도 같은 자리(모듈 차례)에 둬요 —
     //   빼 두면 서랍을 열기 전까지 폰의 --bl-gutter · --bl-inset 같은 값이 전체 시트와 달랐어요(21-witidy 의 폰 여백 · 사진 비교 「새 판 확인 창」 1px)
@@ -218,10 +222,15 @@ function build(dir = CSS_DIR, { bucket = true, key = true, split = true } = {}) 
         const out = require('./css-scope-defer.cjs').deferScoped(head, require('./css-scope-defer.cjs').scopeTokens(ROOT));
         return { text: out.text + tail, stats: out.stats };
     })();
-    const dem = require('./css-dem-slots.cjs').compileDemSheets(scoped.text, rest ? whole.keyed.text.replace(/^[ \t]+$/gm, '') : null);
+    // 1.1.6 CSS 줄이기 첫 걸음(tools/css-gates.cjs · 기준 tools/css-gates.json): 기본값에서 하나도 안 맞는 규칙(글자 외곽선 · 고른 마크다운 모양 …)과
+    //   테마 설정 창(.salty-panel) 안에서만 맞는 규칙을 첫 장 · 전체 장 둘 다에서 떼어 작은 시트로 — src/lite.js 가 그 설정을 켤 때 · 설정 창을 만들기 전에 붙여요.
+    //   덮어쓰기 차례가 바뀔 수 있는 규칙은 도구가 제자리에 남겨요(tools/tests/css-gates-order.mjs). 두 장 빌드만 — 한 장이면 그대로예요(1.1.1 마크다운 분리도 이리로 합쳤어요)
+    const gates = rest ? gatePlan(whole) : null;
+    const firstText = gates ? require('./css-gates.cjs').strip(scoped.text, gates.moved).text : scoped.text;
+    const fullText = gates ? require('./css-gates.cjs').strip(whole.keyed.text, gates.moved).text : whole.keyed.text;
+    const dem = require('./css-dem-slots.cjs').compileDemSheets(firstText, rest ? fullText.replace(/^[ \t]+$/gm, '') : null);
     if (dem.count) marks.push(`--bl-dem-style-key:"${dem.key}"`);
-    const mdSplit = rest ? markdownSplit(dem.boot) : { text: dem.boot, md: '', rules: 0 };   // 1.1.1 두 장 빌드만 — 한 장이면 제자리
-    const body = (marks.length ? `:root{${marks.join(';')}}\n` : '') + mdSplit.text;
+    const body = (marks.length ? `:root{${marks.join(';')}}\n` : '') + dem.boot;
     const head = `/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 ${names.length - lazyNames.length}개를 이어 붙여 만든 파일(설명 주석은 css/ 에만${rest ? ` · --split: 나머지 ${lazyNames.length}개는 src/style-lazy.gen.css` : ''}). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ${HASH_SLOT}) */\n`;
     const draft = head + body;
     const digest = hashOf(draft);
@@ -230,11 +239,38 @@ function build(dir = CSS_DIR, { bucket = true, key = true, split = true } = {}) 
     // 처음 사용할 때 lite.js가 원문에서99꼬리를 나눈 뒤 이 전체 시트로 첫 시트를 교체해요.
     const lazyText = rest ? `/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build ${digest}) */\n${marks.length ? `:root{${marks.join(';')}}\n` : ''}${dem.full}` : null;
     if (lazyText) assertInlineSafe(lazyText);
-    const markdown = mdSplit.rules ? `/* src/markdown.gen.css — tools/build-css.cjs 가 css/${MD_MODULE} 에서 body.salty.salty-md-*(고른 마크다운 모양)가 있어야만 맞는 규칙 ${mdSplit.rules}개를 첫 시트에서 떼어 적은 것(고치지 말 것). src/lite.js syncMarkdownCss 가 고른 모양이 있을 때만 테마 시트 바로 뒤에 붙인다 (build ${digest}) */\n${mdSplit.md}\n` : null;
+    const gateFiles = gateOutputs(gates, digest);
     const compatHead = (file, what) => `/* ${file} — tools/build-css.cjs 가 css/ 에서 ${what}만 떼어 적은 것(고치지 말 것 · tools/css-compat.cjs). src/lite.js loadCompatCss 가 조건이 맞을 때만 테마 시트 뒤에 붙인다 (build ${digest}) */\n`;
     const compatBrowser = compatHead('src/compat-browser.gen.css', `크로미움 밖 브라우저 · 강제 색 · 옛 크로미움용 규칙 ${compat.rules.browser}개`) + (compat.browser ? `${compat.browser}\n` : '');
     const compatWidth = compatHead('src/compat-width.gen.css', `폰 384 · PC 1280 밖 화면 폭 규칙 ${compat.rules.width}개`) + (compat.width ? `${compat.width}\n` : '');
-    return { text: draft.replace(HASH_SLOT, digest), preview, markdown, lazyText, compatBrowser, compatWidth, compat, dem, names, digest, kept, parked, extensionColors, keyed: keyed.stats, scoped: scoped.stats };
+    return { text: draft.replace(HASH_SLOT, digest), preview, gateFiles, gates, gateInput: rest ? { order: whole.order, full: whole.keyed.text, first: scoped.text } : null, lazyText, compatBrowser, compatWidth, compat, dem, names, digest, kept, parked, extensionColors, keyed: keyed.stats, scoped: scoped.stats };
+}
+/** 1.1.6 뗄 규칙 정하기 — 차례는 미리보기 · 호환을 떼기 전 글로(tools/css-gates.cjs plan) */
+function gatePlan(whole) {
+    const G = require('./css-gates.cjs'), lib = require('./css-lib.cjs');
+    const keys = text => { const cut = text.lastIndexOf(`${LAZY_SENTINEL} {}`); const head = cut >= 0 ? text.slice(0, cut) : text; return lib.flatRules(lib.parse(head)).map(r => G.keyOf(head, r)); };
+    const left = new Map();
+    for (const k of keys(whole.order.compatText)) left.set(k, (left.get(k) || 0) + 1);
+    const compatKeys = [];
+    for (const k of keys(whole.order.parkText)) { if (left.get(k)) left.set(k, left.get(k) - 1); else compatKeys.push(k); }
+    return G.plan({ order: whole.order.expanded, previewOnly: require('./css-park.cjs').previewOnly, compatKeys, final: whole.keyed.text });
+}
+/** 켜짐 시트 · 설정 창 시트 글과 실행 중 표(src/css-gates.gen.js) — { 파일 경로: 글 | null(지움) } */
+function gateOutputs(gates, digest) {
+    const G = require('./css-gates.cjs');
+    const cfg = G.loadConfig();
+    const out = {};
+    const all = [...cfg.sheets.map(s => s.out), cfg.panel.out];
+    for (const file of all) out[file] = null;
+    if (gates) for (const g of gates.groups) {
+        if (!g.rules.length) continue;
+        assertInlineSafe(g.text);   // 전체 장(상대 URL 없음)에서 온 규칙이라 src/ 에 두어도 주소 뜻이 같아요
+        const when = g.kind === 'panel' ? '테마 설정 창을 만들기 전에(index.js loadPanel · first-run.js)' : `body 에 ${[...g.trig].sort().slice(0, 6).join(' · ')}${g.trig.size > 6 ? ` 외 ${g.trig.size - 6}개` : ''} 가 붙기 전에`;
+        out[g.out] = `/* ${g.out} — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 ${g.rules.length}개(${g.what || g.id}) — 고치지 말 것. src/lite.js 가 ${when} 테마 시트 뒤에 붙여요 (build ${digest}) */\n${g.text}\n`;
+    }
+    const table = gates ? G.runtimeTable(gates.groups, cfg) : { gates: [], panel: null };
+    out[GATE_TABLE] = `// 생성 파일 — tools/build-css.cjs (tools/css-gates.cjs · tools/css-gates.json). 고치지 말 것.\n// 켜짐 시트: body 에 클래스(classes) 나 접두사(prefixes) 로 시작하는 클래스가 하나라도 붙을 때 필요해요(src/lite.js syncGateCss). 차례 = 붙는 차례.\nexport const GATE_SHEETS = ${JSON.stringify(table.gates)};\n// 테마 설정 창(.salty-panel) 안에서만 맞는 규칙 시트(src/lite.js panelCssReady) — 없으면 null\nexport const PANEL_SHEET = ${JSON.stringify(table.panel)};\n`;
+    return out;
 }
 /**
  * 1.1.1 가볍게: 첫 시트 글에서 css/61-markdown.css 칸의 맨 위 규칙 가운데 모든 갈래가 body.salty.salty-md-* 를 요구하는 것만 떼어요(차례 그대로).
@@ -341,14 +377,22 @@ function main(argv) {
             fs.writeFileSync(APPEARANCE_OUT, want, 'utf8'); console.log(`[씀] src/chat-appearance.gen.css (${(Buffer.byteLength(want) / 1024).toFixed(1)}KB)`);
         }
     }
-    const { text, preview, markdown, lazyText, compatBrowser, compatWidth, compat, dem, names, parked, keyed } = build(CSS_DIR, { split });
+    const { text, preview, gateFiles, gates, lazyText, compatBrowser, compatWidth, compat, dem, names, parked, keyed } = build(CSS_DIR, { split });
     const readOr = file => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null);
     const demOk = () => readOr(DEM_DATA_OUT) === dem.data && readOr(DEM_FALLBACK_OUT) === dem.fallback;
     const writeDem = () => { fs.writeFileSync(DEM_DATA_OUT, dem.data, 'utf8'); fs.writeFileSync(DEM_FALLBACK_OUT, dem.fallback, 'utf8'); console.log(`[씀] 데우스 분리 규칙 ${dem.count}칸과 대체 파일을 만들었어요`); };
     const compatOk = () => readOr(COMPAT_BROWSER_OUT) === compatBrowser && readOr(COMPAT_WIDTH_OUT) === compatWidth;
     const writeCompat = () => { fs.writeFileSync(COMPAT_BROWSER_OUT, compatBrowser, 'utf8'); fs.writeFileSync(COMPAT_WIDTH_OUT, compatWidth, 'utf8'); console.log(`[씀] src/compat-browser.gen.css ${(Buffer.byteLength(compatBrowser) / 1024).toFixed(1)}KB(규칙 ${compat.rules.browser}) · src/compat-width.gen.css ${(Buffer.byteLength(compatWidth) / 1024).toFixed(1)}KB(규칙 ${compat.rules.width})`); };
-    const mdOk = () => readOr(MD_OUT) === markdown;
-    const writeMd = () => { if (markdown != null) { fs.writeFileSync(MD_OUT, markdown, 'utf8'); console.log(`[씀] src/markdown.gen.css (${(Buffer.byteLength(markdown) / 1024).toFixed(1)}KB)`); } else if (fs.existsSync(MD_OUT)) { fs.unlinkSync(MD_OUT); console.log('[지움] src/markdown.gen.css (한 장 빌드)'); } };
+    // 1.1.6 뗀 규칙 시트들(1.1.1 마크다운 시트 포함) · 실행 중 표 — 내용이 없으면(한 장 빌드 · 뗀 규칙 없음) 파일을 지워요
+    const mdOk = () => Object.entries(gateFiles).every(([file, want]) => readOr(path.join(ROOT, file)) === want);
+    const writeMd = () => {
+        for (const [file, want] of Object.entries(gateFiles)) {
+            const abs = path.join(ROOT, file);
+            if (want != null) { if (readOr(abs) !== want) { fs.writeFileSync(abs, want, 'utf8'); console.log(`[씀] ${file} (${(Buffer.byteLength(want) / 1024).toFixed(1)}KB)`); } }
+            else if (fs.existsSync(abs)) { fs.unlinkSync(abs); console.log(`[지움] ${file}`); }
+        }
+        if (gates) console.log(`[css-gates] ${gates.groups.filter(g => g.rules.length).map(g => `${g.id} ${g.rules.length}`).join(' · ')} · 차례 때문에 제자리에 남긴 규칙 ${gates.kept.length}개`);
+    };
     const splitOk = () => (fs.existsSync(SPLIT_OUT) ? fs.readFileSync(SPLIT_OUT, 'utf8') : null) === lazyText;
     const writeSplit = () => { if (lazyText != null) { fs.writeFileSync(SPLIT_OUT, lazyText, 'utf8'); console.log(`[씀] src/style-lazy.gen.css (${(Buffer.byteLength(lazyText) / 1024).toFixed(1)}KB, --split)`); } else if (fs.existsSync(SPLIT_OUT)) { fs.unlinkSync(SPLIT_OUT); console.log('[지움] src/style-lazy.gen.css (한 장 빌드)'); } };
     const ext = extText(text, lazyText);
@@ -362,7 +406,7 @@ function main(argv) {
             const hadPreview = fs.existsSync(PREVIEW_OUT) ? fs.readFileSync(PREVIEW_OUT, 'utf8') : null;
             if (hadPreview !== preview) { console.error('[다름] src/preview.gen.css 가 css/ 의 미리보기 전용 규칙과 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
             if (!compatOk()) { console.error('[다름] src/compat-browser.gen.css · src/compat-width.gen.css 가 css/ 의 크로미움 밖 · 다른 폭 규칙과 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
-            if (!mdOk()) { console.error('[다름] src/markdown.gen.css 가 css/61-markdown.css 의 마크다운 모양 규칙과 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
+            if (!mdOk()) { console.error('[다름] 뗀 규칙 시트(src/markdown.gen.css · src/gate-*.gen.css · src/panel.gen.css) · src/css-gates.gen.js 가 css/ 와 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
             if (!splitOk()) { console.error(`[다름] src/style-lazy.gen.css 가 ${split ? '--split 빌드와 어긋났다' : '한 장 빌드인데 남아 있다'} — node tools/build-css.cjs${split ? ' --split' : ''} 로 다시 만들 것`); return 1; }
             if (!extOk()) { console.error('[다름] style-ext.css 가 style.css 와 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
             console.log(`[같음] style.css = css/ 모듈 ${names.length}개`); return 0;
@@ -471,4 +515,4 @@ function assertInlineSafe(text) {
     }
 }
 
-module.exports = { build, modules, untouched, LAZY, LAZY_SENTINEL, CSS_DIR, lazyTail, LAZY_OUT, PREVIEW_OUT, MD_OUT, markdownSplit, markdownGated, SPLIT_LAZY, SPLIT_OUT, COMPAT_BROWSER_OUT, COMPAT_WIDTH_OUT, extText, EXT_OUT, assertInlineSafe };
+module.exports = { build, modules, untouched, LAZY, LAZY_SENTINEL, CSS_DIR, lazyTail, LAZY_OUT, PREVIEW_OUT, MD_OUT, markdownSplit, markdownGated, SPLIT_LAZY, SPLIT_OUT, COMPAT_BROWSER_OUT, COMPAT_WIDTH_OUT, extText, EXT_OUT, assertInlineSafe, GATE_TABLE };

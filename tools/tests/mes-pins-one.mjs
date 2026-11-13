@@ -108,6 +108,31 @@ await test('번호가 없거나 · 그 메시지를 못 찾거나 · 20개 넘�
         assert.ok(visits > 300 * 20, `전체 — ${visits}`);
     }
 });
+await test('1.2.1 고를 수 없는 단추는 동작 속성을 읽지 않아요 · 동작 속성으로 나뉜 열쇠(base__해시)는 예전처럼 골라요', () => {
+    // 한 class 로 여러 동작을 하는 확장 단추(data-action 으로 나뉨) — 하나는 고르고 하나는 안 골라요
+    const ext = (act, extra = '') => new El('div', `mes_button ext_btn${extra} interactable`, { 'data-action': act });
+    const addExt = () => { for (const mes of chat.children) { const extra = mes.children.find(c => c._cls.has('mes_buttons')).children.find(c => c._cls.has('extraMesButtons')); extra.append(ext('read'), ext('write')); } };
+    freshChat(300); addExt();
+    // 고를 열쇠: 확장 단추 「read」의 열쇠(base__해시) — pinKey 규칙 그대로 손으로 만들어요
+    let hash = 2166136261; for (const ch of 'read') hash = Math.imul(hash ^ ch.charCodeAt(0), 16777619);
+    const readKey = `ext_btn__${(hash >>> 0).toString(36)}`;
+    const reads = { n: 0 }; const get = El.prototype.getAttribute;
+    El.prototype.getAttribute = function (k) { if (/^data-(action|act|stbs|event)$/.test(k)) reads.n++; return get.call(this, k); };
+    try {
+        reads.n = 0; syncMesPins(true, ['mes_translate', 'mes_copy'], false);
+        console.log(`        동작 속성 읽기 ${reads.n}번`); assert.ok(reads.n <= 300 * 4 * 3, `고를 수 없는 단추의 동작 속성은 읽지 않아요 — 꺼낸 단추(메시지마다 둘)만 ${reads.n} (예전: 메뉴 단추마다 넷)`);
+        const lines = snapshot().split('\n');
+        assert.ok(lines.every(l => l.startsWith('mes_translate@0,mes_copy@1,')), lines[0]);
+        syncMesPins(false, [], false);
+        freshChat(300); addExt();
+        syncMesPins(true, ['mes_translate', readKey], false);
+        const bars = chat.children.map(mes => mes.children.find(c => c._cls.has('mes_buttons')));
+        assert.ok(bars.every(bar => bar.children.filter(c => c._cls.has('bl-pinned')).map(c => (c._cls.has('ext_btn') ? c.getAttribute('data-action') : [...c._cls].find(x => /^mes_(?!button)/.test(x)))).join(',') === 'mes_translate,read'), '확장 단추는 그 동작(read)만 꺼내요');
+        assert.ok(reads.n > 0 && reads.n < 300 * 16 * 4, `같은 이름표(ext_btn)일 때만 동작 속성을 읽어요(예전: 메뉴 단추 16개마다 넷 = 19200 넘게) — ${reads.n}`);
+        syncMesPins(false, [], false);
+    } finally { El.prototype.getAttribute = get; }
+    freshChat(300); syncMesPins(true, PINS, false);
+});
 await test('끄면 단추를 메뉴 제자리로 돌려놓고 이벤트 리스너를 모두 떼요', () => {
     syncMesPins(false, [], false);
     assert.ok(snapshot().split('\n').every(line => line.startsWith('extraMesButtonsHint,extraMesButtons,mes_edit|mes_translate,mes_narrate,mes_copy,')), snapshot().split('\n')[0]);

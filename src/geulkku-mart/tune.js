@@ -22,7 +22,7 @@ const escText = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;",
 const oneLine = (s) => String(s ?? "").replace(/[\r\n\t]+/g, " ").slice(0, 600);
 const RICH_TAGS = Object.freeze(["br", "b", "i", "strong", "em", "s"]);
 function cleanRich(v) {
-  let s = String(v ?? "").slice(0, 4e3).replace(/\r\n?/g, "\n");
+  let s = String(v ?? "").slice(0, 4e3).replace(/\r\n?/g, "\n").replace(/&nbsp;|&#160;|&#xa0;| /gi, " ");
   const out = [], stack = [];
   for (const m of s.matchAll(/<(\/?)([a-z][a-z0-9]*)\b[^>]*>|([^<]+)|(<)/gi)) {
     if (m[3] != null || m[4] != null) {

@@ -12,7 +12,7 @@ let passed = 0;
 const test = async (name, fn) => { await fn(); passed++; console.log(`  PASS  ${name}`); };
 
 // ---------------------------------------------------------------- 가짜 DOM(이 시험에 필요한 만큼: 단순 선택자 목록 · closest · 클래스 · 태그 모으기)
-const counts = { editing: 0, matches: 0, contains: 0 };
+const counts = { editing: 0, matches: 0, contains: 0, closest: 0 };
 class El {
     constructor(tag, cls = '', attrs = {}) {
         this.localName = tag; this.nodeType = 1; this.isConnected = true; this.parentElement = null; this.children = []; this.attrs = { ...attrs };
@@ -33,7 +33,7 @@ class El {
     removeAttribute(a) { delete this.attrs[a]; }
     one(sel) { sel = sel.trim(); if (sel.startsWith('#')) return this.id === sel.slice(1); if (sel.startsWith('.')) return this.cls.includes(sel.slice(1)); if (sel.startsWith('[')) return this.hasAttribute(sel.slice(1, -1)); return this.localName === sel; }
     matches(sel) { counts.matches++; return sel.split(',').some(s => this.one(s)); }
-    closest(sel) { for (let p = this; p; p = p.parentElement) if (sel.split(',').some(s => p.one(s))) return p; return null; }
+    closest(sel) { counts.closest++; for (let p = this; p; p = p.parentElement) if (sel.split(',').some(s => p.one(s))) return p; return null; }
     *walk() { for (const k of this.children) { yield k; yield* k.walk(); } }
     querySelectorAll(sel) { const list = sel.split(','); return [...this.walk()].filter(e => list.some(s => e.one(s))); }
     querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
@@ -137,6 +137,33 @@ await test('팝업 표식 조상 오르기는 기록 1,000개여도 한 요소�
     counts.matches = 0;
     refreshPopupMarks(kids.map(k => ({ type: 'attributes', target: k, addedNodes: [] })));
     assert.ok(counts.matches <= 1000 + 25, `조상 확인 ${counts.matches}번 — 예전엔 약 ${1000 * 22}번`);
+});
+
+await test('1.2.1 scanRows 는 뿌리 아래 svg · 메시지가 없으면 후보마다 조상을 오르지 않고, 끝 표식은 예전과 같아요(무작위 나무 400개)', () => {
+    assert.equal(typeof mod.scanRows, 'function', 'scanRows 를 내보내요');
+    let oldClosest = 0, newClosest = 0, plainTrees = 0, plainOld = 0, plainNew = 0;
+    for (let t = 0; t < 400; t++) {
+        const a = new El('div', 'drawer-content').append(tree(5)); const b = clone(a);
+        counts.closest = 0;
+        const hosts = inMessage(a) ? [] : [...rowHosts(a)].filter(el => isRowHost(el) && !inMessage(el));
+        for (const el of hosts) checkRow(el);
+        oldClosest += counts.closest;
+        counts.closest = 0; mod.scanRows(b); newClosest += counts.closest;
+        assert.equal(snapshot(b), snapshot(a), `나무 ${t} 의 표식이 예전과 달라요`);
+    }
+    // svg · .mes · #chat 이 없는 나무(설정 서랍 꼴)
+    for (let t = 0; t < 200; t++) {
+        const a = new El('div', 'drawer-content').append(tree(5));
+        for (const el of [a, ...a.walk()]) { if (el.localName === 'svg' || el.localName === 'g') el.localName = 'div'; el.cls = el.cls.filter(c => c !== 'mes'); if (el.id === 'chat') { el.id = ''; delete el.attrs.id; } }
+        const b = clone(a);
+        counts.closest = 0; const hosts = [...rowHosts(a)].filter(el => isRowHost(el) && !inMessage(el)); for (const el of hosts) checkRow(el); plainOld += counts.closest;
+        counts.closest = 0; mod.scanRows(b); plainNew += counts.closest;
+        assert.equal(snapshot(b), snapshot(a));
+        assert.ok(counts.closest <= 2, `svg · 메시지 없는 나무에서 closest ${counts.closest}번 — 뿌리에서 한 번이어야 해요`);
+        if (hosts.length > 2) plainTrees++;
+    }
+    assert.ok(plainTrees > 50);
+    console.log(`        closest 호출: 무작위 나무 400개 예전 ${oldClosest} → ${newClosest} · svg · 메시지 없는 나무 200개 예전 ${plainOld} → ${plainNew}`);
 });
 
 console.log(`icon-text-hosts: ${passed}개 통과`);

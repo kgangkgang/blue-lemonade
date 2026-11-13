@@ -10,7 +10,14 @@ let phase = 'idle', loading = null, timer = 0, rendering = false, requested = fa
 
 // A separate webpack namespace keeps an official extension loaded later from
 // receiving our chunks. Its presence also hands future unclaimed blocks to it.
-const foreign = () => !!globalThis.webpackChunkextension_mermaid || Array.from(document.scripts || []).some(script => /\/Extension-Mermaid\/dist\/index\.js(?:[?#]|$)/i.test(script.src));
+// 1.1.6 문서의 script 목록은 개수가 바뀔 때만 다시 훑어요 — 메시지 이벤트(더 보기 · 새 답)마다 두세 번 script 전부를 정규식으로 보던 것(리그 프로필에서 더 보기 100 동안 이 모듈 함수 하나가 약 11ms · 폰 4배)
+let scriptCount = -1, scriptHit = false;
+const foreign = () => {
+    if (globalThis.webpackChunkextension_mermaid) return true;
+    const list = document.scripts, n = list?.length ?? 0;
+    if (n !== scriptCount) { scriptCount = n; scriptHit = Array.from(list || []).some(script => /\/Extension-Mermaid\/dist\/index\.js(?:[?#]|$)/i.test(script.src)); }
+    return scriptHit;
+};
 export const duplicate = foreign();
 const blocks = () => Array.from(document.querySelectorAll(BLOCK));
 

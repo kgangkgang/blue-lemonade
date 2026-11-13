@@ -21,7 +21,12 @@ const hydrate = (text, output) => text.replace(/@media not all \{#bl-dem-slot-([
     assert.ok(output.dem.slots[id], `분리 내용에 ${id}가 있어요`);
     return output.dem.slots[id].rules.join('\n');
 });
-const oneReady = hydrate(one.text, one), twoReady = hydrate(two.lazyText, two);
+// 1.1.6 두 장 빌드는 켜짐 · 설정 창 규칙을 첫 장 · 전체 장 둘 다에서 떼어 작은 시트로 둬요(tools/css-gates.cjs) — 한 장 빌드에서 같은 규칙을 지운 것과 견줘요.
+//   뗀 규칙이 제자리였을 때와 차례가 바뀌어도 덮어쓰기가 같은지는 tools/tests/css-gates-order.mjs 가 봐요
+const G = require(path.join(root, 'tools/css-gates.cjs'));
+const oneAll = hydrate(one.text, one);
+const oneReady = two.gates ? G.strip(oneAll, two.gates.moved).text : oneAll, twoReady = hydrate(two.lazyText, two);
+ok(one.gates === null && two.gates && two.gates.moved.size > 0, '두 장 빌드만 규칙을 떼요');
 ok(one.lazyText === null, '--one 빌드는 한 장');
 ok(!one.text.includes('--bl-css-split'), '한 장 빌드에는 표시 변수가 없어요');
 ok(typeof two.lazyText === 'string' && /^:root\{--bl-css-split:1[;}]/m.test(two.text), '두 장이면 첫 장 맨 앞 :root 에 표시 변수(같은 규칙에 호환 시트 표식도)');

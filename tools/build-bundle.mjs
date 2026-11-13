@@ -85,6 +85,52 @@ export function minStyle(code, name) {
     const small = masked.replace(/\s+/g, ' ').replace(/\s*([{};,>])\s*/g, '$1').replace(/;}/g, '}').trim().replace(/\uE000(\d+)\uE001/g, (all, i) => kept[i]);
     return code.slice(0, at + head.length) + small + code.slice(end);
 }
+// 1.2.1 dist 되줄이기: 설정 · 창 HTML 글(템플릿 · 따옴표 글)에서 「태그 > 줄바꿈 + 들여쓰기 < 태그」의 들여쓰기만 묶음에서 걷어요(원본은 읽기 쉬운 그대로).
+//   줄바꿈 하나는 남겨요 — 보통 글(white-space: normal · nowrap · pre-line)은 줄바꿈 + 공백 묶음을 공백 하나로 모으니 화면이 같아요.
+//   공백이 그대로 보이는 곳(pre · textarea · code · samp · white-space:pre* · 실리태번 .multiline 등) 안쪽과, 앞뒤가 HTML 태그가 아닌 곳(프롬프트 XML 같은 글)은 건드리지 않아요.
+export const HTML_GAP_FILES = [
+    'src/addons/rewrite/settings-html.js', 'src/addons/assets/panel.js', 'src/addons/perf/panel.js', 'src/panel.js', 'src/addons/prompt/index.js',
+    'src/addons/bookmarks/panel.js', 'src/addons/bookmarks/settings-view.js', 'src/addons/direction/index.js', 'src/addons/tts/guide.js',
+    'src/addons/customstyle/index.js', 'src/addons/rewrite/guide.js', 'src/addons/models/panel.js', 'src/addons/regexlink/regexperf.js',
+];
+const HTML_TAG = new Set(('a abbr article aside b blockquote br datalist button caption col colgroup dd del details div dl dt em fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 header hr i img input '
+    + 'ins kbd label legend li main mark meter nav ol optgroup option output p picture progress q s section select small source span strong sub summary sup table tbody td '
+    + 'tfoot th thead time tr u ul svg path g circle rect line polyline polygon defs use symbol ellipse').split(' '));
+const KEEP_TAG = /^(pre|textarea|code|samp|script|style)$/i;   // 안쪽 공백이 그대로 보이거나 HTML 이 아닌 곳
+const KEEP_ATTR = /white-space\s*:\s*(?:pre|break-spaces)|\bclass\s*=\s*\\?["'][^"']*\b(?:multiline|pt-original-text|pt-translated-text|bl-note-body|info-block)\b/i;
+const GAP = /(>)(\r?\n|\\n)([ \t]+)(<)/g;
+/** 위 표의 파일 하나: 걷은 글과 걷은 바이트 · 남긴 자리 수를 돌려줘요 */
+export function htmlGapStats(code) {
+    let saved = 0, kept = 0;
+    const out = code.replace(GAP, (all, gt, nl, pad, lt, at) => {
+        if (!htmlGapOk(code, at, at + all.length - 1)) { kept++; return all; }
+        saved += pad.length;
+        return gt + nl + lt;
+    });
+    return { code: out, saved, kept };
+}
+export function minHtmlGaps(code, name = '') {
+    const r = htmlGapStats(code);
+    if (!r.saved) throw new Error(`HTML 들여쓰기 걷기 표의 파일에 걷을 곳이 없어요 — 표를 다시 봐요: ${name}`);
+    return r.code;
+}
+export function htmlGapOk(code, gt, lt) {
+    // 앞 태그(… >)와 뒤 태그(< …) 둘 다 HTML 태그(또는 주석)여야 해요
+    const open = code.lastIndexOf('<', gt);
+    const prev = open < 0 ? '' : code.slice(open, gt + 1);
+    const prevName = prev.startsWith('<!--') && prev.endsWith('-->') ? '!' : (/^<\/?([a-zA-Z][\w-]*)(?:\s[^<>`]*)?\/?>$/.exec(prev) || [])[1];
+    const nextName = code.startsWith('<!--', lt) ? '!' : (/^<\/?([a-zA-Z][\w-]*)[\s>/]/.exec(code.slice(lt, lt + 40)) || [])[1];
+    if (!prevName || !nextName || ![prevName, nextName].every(n => n === '!' || HTML_TAG.has(n.toLowerCase()))) return false;
+    // 공백이 보이는 요소 안쪽이면 그대로 — 가장 가까운 여는 태그부터 이 자리까지 같은 이름의 열고 닫기를 세요
+    const before = code.slice(Math.max(0, gt - 20000), gt + 1);
+    for (const m of before.matchAll(/<([a-zA-Z][\w-]*)\b[^<>]*>/g)) {
+        if (!KEEP_TAG.test(m[1]) && !KEEP_ATTR.test(m[0])) continue;
+        const rest = before.slice(m.index + m[0].length), name = m[1].toLowerCase();
+        const opens = (rest.match(new RegExp(`<${name}\\b`, 'gi')) || []).length, closes = (rest.match(new RegExp(`</${name}\\s*>`, 'gi')) || []).length;
+        if (1 + opens - closes > 0) return false;
+    }
+    return true;
+}
 function must(code, find, to) {
     if (!code.includes(find)) throw new Error(`묶음 표의 글을 src 에서 못 찾았어요: ${find}`);
     return code.split(find).join(to);
@@ -99,7 +145,7 @@ const REAL_META = {
     'src/scripts/runtime.js': ['new URL(`./plain/${item.file}.js${bust?`?r=${Date.now().toString(36)}`:\'\'}`,import.meta.url)', 'new URL(`./titles/${item.file}.gen.js${bust?`?r=${Date.now().toString(36)}`:\'\'}`,import.meta.url)'],
 };
 
-function plugin() {
+function plugin(bootModules = new Set()) {
     const refs = new Map();   // 원본 경로 → 참조 id
     const external = id => /[\\/]vendor[\\/]/.test(id) || /[\\/]src[\\/]build-info\.js$/.test(id);
     const fromDist = abs => {
@@ -122,6 +168,7 @@ function plugin() {
         transform(code, id) {
             const name = rel(id);
             if (ADAPT[name]) code = ADAPT[name](code);
+            if (HTML_GAP_FILES.includes(name)) code = minHtmlGaps(code, name);
             for (const [find, target] of CHUNK_URL[name] || []) {
                 if (!refs.has(target)) refs.set(target, this.emitFile({ type: 'chunk', id: path.join(ROOT, target), preserveSignature: 'strict' }));
                 code = must(code, find, `new URL(import.meta.ROLLUP_FILE_URL_${refs.get(target)})`);
@@ -137,6 +184,17 @@ function plugin() {
             if (code.includes('import.meta.url')) code = code.split('import.meta.url').join(`new globalThis.URL(${JSON.stringify(`../${name}`)},import.meta.url).href`);
             held.forEach((text, i) => { code = code.split(`__BL_REAL_META_${i}__`).join(text); });
             return { code, map: null };
+        },
+        // 시작 그래프(index.js 에서 정적 import 로만 닿는 모듈) — 아래 「작은 조각 합치기」가 늦게 받는 모듈을 시작 조각에 끼우지 못하게 쓰는 표
+        buildEnd() {
+            const walkStatic = id => {
+                if (bootModules.has(id)) return;
+                const info = this.getModuleInfo(id);
+                if (!info || info.isExternal) return;
+                bootModules.add(id);
+                for (const next of info.importedIds) walkStatic(next);
+            };
+            walkStatic(path.join(ROOT, 'index.js'));
         },
         async renderChunk(code) {
             const esbuild = need('esbuild');
@@ -158,17 +216,25 @@ function need(name) {
 export async function buildBundle() {
     const { rollup } = need('rollup');
     const warnings = [];
+    const bootModules = new Set();
     const bundle = await rollup({
-        input: { index: path.join(ROOT, 'index.js') }, plugins: [plugin()], treeshake: 'safest', preserveEntrySignatures: false, makeAbsoluteExternalsRelative: false,
+        input: { index: path.join(ROOT, 'index.js') }, plugins: [plugin(bootModules)], treeshake: 'safest', preserveEntrySignatures: false, makeAbsoluteExternalsRelative: false,
         onwarn: w => warnings.push(w),
     });
+    // 1.1.5 시작 묶음 다이어트: experimentalMinChunkSize 는 작은 조각을 「늘 받아 둔 조각」에 합쳐요 — 시작 조각은 모든 길이 받아 두니
+    //   늦게 받는(import()) 작은 모듈이 시작 조각으로 끌려 들어와 첫 화면 전에 받는 글이 늘었어요(1.1.4 에서 18개 · 약 15KB).
+    //   시작 그래프(index.js 까지)를 수동 조각 하나로 묶으면 합치기 대상에서 빠져요(수동 조각은 합치지 않아요) — 늦게 받는 작은 조각은 늦게 받는 조각끼리만 합쳐져요.
+    //   그래서 시작 때 받는 것은 dist/index.js 한 조각이에요(전에는 13조각 — 받는 길도 한 번에 끝나요).
     fs.rmSync(DIST, { recursive: true, force: true });
-    const { output } = await bundle.write({ dir: DIST, format: 'es', entryFileNames: '[name].js', chunkFileNames: 'c-[hash].js', generatedCode: 'es2015', hoistTransitiveImports: false, experimentalMinChunkSize: 2500 });
+    const { output } = await bundle.write({ dir: DIST, format: 'es', entryFileNames: '[name].js', chunkFileNames: 'c-[hash].js', generatedCode: 'es2015', hoistTransitiveImports: false, experimentalMinChunkSize: 2500,
+        manualChunks: id => (bootModules.has(id) ? 'boot' : undefined), onlyExplicitManualChunks: true });
     await bundle.close();
     const chunks = output.filter(o => o.type === 'chunk');
     const bad = warnings.filter(w => !['EMPTY_BUNDLE'].includes(w.code));
     for (const w of bad.slice(0, 20)) console.log(`[경고] ${w.code}: ${String(w.message).slice(0, 200)}`);
     // 맨 위 await 모듈이 다른 모듈과 한 조각에 들면 그 모듈들까지 기다려요 — 혼자 있어야 해요
+    const strays = chunks.filter(c => c.fileName === 'index.js').flatMap(c => Object.entries(c.modules)).filter(([id, m]) => m.renderedLength > 0 && !bootModules.has(id.replace(/^ /, ''))).map(([id]) => rel(id));
+    if (strays.length) throw new Error(`늦게 받는 모듈이 시작 조각(dist/index.js)에 들었어요: ${strays.slice(0, 5).join(' · ')}`);
     for (const name of ['src/live-models.js']) {   // word-tools.js 는 설정 창 정적 그래프 안이라 예전에도 창이 기다렸어요
         const c = chunks.find(x => Object.keys(x.modules).some(k => rel(k) === name));
         const others = c ? Object.entries(c.modules).filter(([k, v]) => rel(k) !== name && v.renderedLength > 0).map(([k]) => rel(k)) : [];

@@ -63,7 +63,7 @@ ok(/link\.rel = 'stylesheet'/.test(lite) && /link\.media = restored \? 'all' : '
 ok(/function turnOn\(\) \{\s*restored = true;\s*preloadPreviewCss\(\)\.media = 'all';/.test(lite), '켤 때 <link> 의 media 만');
 ok(/if \(previewLink\) previewLink\.media = 'not all';/.test(lite), '끌 때도 <link> 의 media 만');
 ok(/sheet\.ownerNode\.after\(link\)/.test(read('src/split-css.js')), '전체 테마 시트는 첫 시트 바로 뒤(서랍 전용 <style> 앞)에 붙여요');
-ok(/\(previewLink\?\.isConnected \? previewLink : sheetTail\(sheet\)\)\.after\(style\)/.test(lite), '서랍 전용 <style> 은 미리보기 <link> 뒤에');
+ok(/sheetTail\(sheet\)\.after\(style\)/.test(lite) && /link\.dataset\.blGate = '-1';/.test(lite), '서랍 전용 <style> 은 미리보기 <link> 뒤에(1.1.6 미리보기는 테마 시트 뒤 줄 안이라 줄 끝 뒤)');
 ok(!/deferPreviewRules|collectParked|parkRule/.test(lite + index), '시작할 때 시트를 훑어 꺼 두는 코드는 없어요');
 ok(/preloadPreviewCss\(\)/.test(index), '서랍 · ✦ 메뉴를 누르는 순간 미리 받아요');
 ok(!/fetch\(|preview\.gen\.css['"`]/.test(index) && /for \(const type of \['pointerdown', 'click'\]\).*addEventListener\(type, \(\) => \{ loadPanel\(\)\.catch\(\(\) => \{\}\); preloadPreviewCss\(\);/.test(index), 'index.js 는 시작할 때 미리보기 CSS 를 받지 않고, 터치·키보드 활성화 순간에만 받아요');

@@ -31,7 +31,8 @@ const splitTop=text=>{const out=[];let depth=0,start=0;for(let i=0;i<text.length
 const selectors=[...css.matchAll(/([^{}]+)\{/g)].flatMap(m=>splitTop(m[1])).map(x=>x.trim()).filter(Boolean);
 assert.ok(selectors.length>10);
 for(const sel of selectors)assert.match(sel,/salty-(?:user-)?namerow-|salty-user-meta-center/,'every rule needs an opt-in class: '+sel.slice(0,80));
-assert.ok(fs.readFileSync(path.join(root,'style.css'),'utf8').includes('salty-user-namerow-right'),'style.css is built with the module');
+// 1.1.6 정보 정렬(가운데 · 오른쪽)은 기본값(왼쪽)에서 안 맞아 src/gate-type.gen.css 로 떼어 둬요(tools/css-gates.cjs) — 첫 장 · 그 시트 어디든 빌드에 들어 있으면 돼요
+assert.ok(['style.css','src/gate-type.gen.css'].some(f=>fs.existsSync(path.join(root,f))&&fs.readFileSync(path.join(root,f),'utf8').includes('salty-user-namerow-right')),'built with the module');
 // 5.8.4 메신저 스타일: 내 정보 정렬만 오른쪽으로 (다른 내 프로필 칸 · 캐릭터 쪽은 그대로, 프로필 잠금이면 그대로, 되돌리기 · 코드 왕복)
 const {PRESETS,applyStyleData,captureStyle,sharePayload,encodeStyle,decodeStyle}=await import(pathToFileURL(path.join(root,'src/styles.js')));
 const messenger=PRESETS.find(p=>p.id==='messenger');

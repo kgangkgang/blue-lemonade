@@ -2,7 +2,7 @@
 // 아직 안 본 버전이면 알약이 포인트색으로 은은히 빛나고(is-new), 한 번 열어 보면 보통 버전 알약으로 돌아간다.
 // 본 버전은 설정(noticeSeen)에 적는다 — 새로고침해도 유지되고, 다음 업데이트에서 다시 빛난다.
 //
-// 본문 표는 src/notice-data.js 에 있다 — 팝업을 열 때만 읽는다(4.5.0, 부팅 JS 에서 뺌).
+// 본문 표는 src/notice-data.js 에 있다 — 팝업을 열 때만 읽는다(4.5.0, 부팅 JS 에서 뺌). 1.0.0 앞 판은 눌러 담은 src/notice-old.gen.js(1.2.1 · 아래 loadOldNotices).
 // 1.0.0 바탕: 9.0.0 정리에서 걷었던 것을 되살리며 시작 그래프 밖으로 — 이 모듈은 판 알약(version-pill.js, 3층 유휴)이 받는다.
 //   판 비교는 (계열, 판) 짝(src/version-series.js): 1.0.0(계열 2)은 저장값 「8.2.4」(계열 1)보다 새 판이에요. 저장은 releaseString(계열 2 부터 「s2:1.0.0」).
 import { getSettings, saveSettings } from './settings.js';
@@ -65,9 +65,9 @@ function groupByDate(list) {
     return groups.map(g => ({ date: g.date, items: g.items, actions:noticeActions(g.actions), version: g.count > 1 ? `${g.first} ~ v${g.version}` : g.version, note: g.count > 1 ? ` · 업데이트 ${g.count}번` : '' }));
 }
 
-async function noticeHtml() {
-    const { NOTICES } = await import('./notice-data.js');
-    const rows = groupByDate(NOTICES).map((notice, i) => `
+/** 날짜 장 목록 → 장 HTML. start = 앞에 이미 그린 장 수(맨 첫 장만 펼친 채로) */
+export function noticeRowsHtml(list, start = 0) {
+    return groupByDate(list).map((notice, n) => { const i = start + n; return `
         <div class="salty-notice-item${i === 0 ? ' open' : ''}">
             <button type="button" class="salty-notice-toggle" aria-expanded="${i === 0}">
                 <span class="salty-notice-ver">v${escapeHtml(notice.version)}</span>
@@ -76,11 +76,40 @@ async function noticeHtml() {
             </button>
             <ul>${notice.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
             <div class="bl-notice-actions">${notice.actions.map(({id,label})=>`<button type="button" class="salty-btn" data-notice-action="${id}">${label}</button>`).join('')}</div>
-        </div>`).join('');
-    return `<div class="salty-notice">
+        </div>`; }).join('');
+}
+export const noticeFrameHtml = rows => `<div class="salty-notice">
         <div class="salty-notice-head"><b>공지사항</b><span>Blue Lemonade</span></div>
         ${rows}
     </div>`;
+
+// 1.2.1 옛 판(1.0.0 앞 · 465판) 공지는 눌러 담은 생성물(notice-old.gen.js · tools/notice-old-gen.mjs)이에요. 창을 열 때 받아 풀어요 — 창은 최근 구간
+//   (notice-data.js)을 먼저 그리고 풀리면 맨 끝 장 바로 뒤에 이어 붙여요(한꺼번에 그리던 1.2.0 과 끝난 DOM 이 같아요 · 경계는 다른 날이라 날짜 장이 안 쪼개져요).
+//   풀 수 없는 브라우저(DecompressionStream 없음 · 크롬 103 · 사파리 16.4 · 파이어폭스 113 앞)는 옛 구간 없이 최근 구간만이에요.
+let oldCache = null;
+async function unpackOld() {
+    if (typeof DecompressionStream !== 'function' || typeof atob !== 'function') return [];
+    const { OLD_NOTICES_Z } = await import('./notice-old.gen.js');
+    const bytes = Uint8Array.from(atob(OLD_NOTICES_Z), ch => ch.charCodeAt(0));
+    return JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text());
+}
+/** 옛 판 공지 목록(한 번 풀어 두고 다시 써요) — 못 풀면 빈 목록 */
+export const loadOldNotices = () => (oldCache ??= unpackOld().catch(() => { oldCache = null; return []; }));
+
+async function noticeHtml() {
+    const { NOTICES } = await import('./notice-data.js');
+    return noticeFrameHtml(noticeRowsHtml(NOTICES));
+}
+
+/** 풀린 옛 구간 장을 최근 구간 맨 끝 장 바로 뒤에(닫는 줄바꿈 앞) — 창이 이미 닫혔으면 안 붙여요 */
+export async function appendOldNotices(dlg) {
+    const old = await loadOldNotices();
+    if (!old.length || !dlg.isConnected) return false;
+    const items = dlg.querySelectorAll('.salty-notice > .salty-notice-item');
+    const last = items[items.length - 1];
+    if (!last) return false;
+    last.insertAdjacentHTML('afterend', noticeRowsHtml(old, items.length));
+    return true;
 }
 
 /**
@@ -121,6 +150,7 @@ export async function openNotice(onSeen) {
     openDlg = dlg;
     dlg.showModal();
     dlg.querySelector('.bl-notice-body')?.scrollTo?.(0, 0);
+    appendOldNotices(dlg).catch(() => {});   // 1.2.1 옛 판 공지는 창을 띄운 뒤 풀어 이어 붙여요(첫 화면은 최근 구간 · 위 맨 첫 장)
     await closed;
     if (pending) try { await openNoticeAction(pending); } catch (error) { globalThis.toastr?.error(error.message || '기능을 열지 못했어요.', 'Blue Lemonade'); }
 }

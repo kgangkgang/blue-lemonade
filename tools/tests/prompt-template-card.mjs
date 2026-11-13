@@ -62,7 +62,7 @@ await test('카드 「설치」 단추는 안쪽 단추와 같은 act(\'install\
     const src = read('src/addons/prompt-template/index.js');
     assert.match(src, /\[data-pt-card-install\]'\)\?\.addEventListener\('click', \(\) => act\('install'\)\)/);
     assert.match(src, /export function mountCard\(host\)/);
-    const addons = read('src/addons.js');
+    const addons = (read('src/addons.js') + read('src/addons-panel.js'));
     assert.match(addons, /<\/header>\$\{ptCard\}`/);
     assert.match(addons, /const ptCard=id==='prompt-template'&&on&&running\.has\(id\)&&!needsReload&&addonsEnabled\(s\)\?'<div class="blpt-card" data-pt-card><\/div>':''/);
     assert.match(addons, /\[data-pt-card\]'\)\.forEach\(async host=>\{try\{\(await import\('\.\/addons\/prompt-template\/index\.js'\)\)\.mountCard\(host\)/);

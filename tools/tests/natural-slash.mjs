@@ -142,7 +142,8 @@ await test('native newline/IME/modifiers and disabled theme never get intercepte
         const event = key(extra); listeners.keydown[0](event); assert.equal(event.stopped, undefined);
     }
     sendOnEnter = false; const event = key(); listeners.keydown[0](event); assert.equal(event.stopped, undefined); sendOnEnter = true;
-    enabled = false; observer(); assert.equal(hint.hidden, true);
+    // 1.1.6 body class 감시는 공용 감시 허브 구독이에요 — 허브 감시자에 body 자기 class 기록 하나를 넘겨요
+    enabled = false; observer([{ type: 'attributes', target: document.body, attributeName: 'class' }]); assert.equal(hint.hidden, true);
     const disabled = key(); listeners.keydown[0](disabled); assert.equal(disabled.stopped, undefined); enabled = true;
 });
 await test('send button blocks unknown Korean commands locally and preserves text', async () => {

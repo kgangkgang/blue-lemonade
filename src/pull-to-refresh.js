@@ -1,5 +1,6 @@
 import { preserveDraftForReload } from './draft.js';
 import { installedTouchMode } from './device-layouts.js';
+import { watchWith } from './dom-watch.js';
 
 const EXCLUDE = 'input,textarea,select,button,a,label,summary,[contenteditable]:not([contenteditable="false"]),[draggable="true"],[role="button"],[role="slider"],[role="tab"],[role="tablist"],canvas,iframe,video,audio,.mes_buttons,.mes_button,.swipe_left,.swipe_right,.mes_edit,.edit_textarea,.ui-draggable-handle';
 const OVERLAYS = 'dialog[open],.drawer-content.openDrawer,#cg-panel:not([hidden]),#pt-panel:not(.pt-hidden)';
@@ -184,14 +185,15 @@ export function installPullToRefresh({ host, isEnabled, doc = document, win = wi
     listen(doc, 'input', changed, true); listen(doc, 'change', changed, true);
     listen(doc, 'visibilitychange', reset); listen(win, 'pagehide', reset);
     const syncMode = () => { doc.documentElement.toggleAttribute('data-bl-pull-refresh', enabled()); if (!enabled()) reset(); };
-    const observer = new win.MutationObserver(syncMode); observer.observe(doc.body, { attributes: true, attributeFilter: ['class'] }); syncMode();
+    // 1.1.6 body class 감시는 공용 감시 허브 구독(가짜 창이면 그 창의 감시자 — watchWith)
+    const unwatch = watchWith(win, [[doc.body, { attributes: ['class'], name: '당겨 새로고침 (테마 켜고 끔)' }]], () => syncMode()); syncMode();
     const ctx = win.SillyTavern?.getContext(), types = ctx?.eventTypes || ctx?.event_types;
     if (types && ctx.eventSource) for (const type of ['GENERATION_STARTED', 'GENERATION_ENDED', 'CHAT_CHANGED']) {
         if (!types[type]) continue;
         const fn = () => { writes.changed(); reset(); };
         ctx.eventSource.on(types[type], fn); subscriptions.push(() => ctx.eventSource.removeListener(types[type], fn));
     }
-    return { dispose() { disposed = true; reloading = false; reset(); win.clearTimeout(resetTimer); listeners.forEach(f => f()); subscriptions.forEach(f => f()); observer.disconnect(); writes.dispose(); indicator.remove(); doc.documentElement.removeAttribute('data-bl-pull-refresh'); } };
+    return { dispose() { disposed = true; reloading = false; reset(); win.clearTimeout(resetTimer); listeners.forEach(f => f()); subscriptions.forEach(f => f()); unwatch(); writes.dispose(); indicator.remove(); doc.documentElement.removeAttribute('data-bl-pull-refresh'); } };
 }
 
 let running = null;

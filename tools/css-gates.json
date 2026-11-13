@@ -1,0 +1,217 @@
+{
+  "설명": "1.1.6 CSS 줄이기 첫 걸음(tools/css-gates.cjs) — 기본값에서 하나도 안 맞는 규칙과 테마 설정 창 규칙을 늘 붙는 두 시트(style.css · src/style-lazy.gen.css)에서 떼어, 쓸 때만 붙이는 작은 시트로 옮겨요. 고르는 것은 도구가 선택자를 읽어 해요: 규칙의 모든 갈래가 아래 gates 의 클래스(괄호 밖 칸에 꼭 있어야 하는 클래스, 또는 괄호 밖 :is(.a, .b) 의 갈래가 모두 gates 클래스)를 요구하면 그 규칙은 그 설정을 켜야만 맞아요. gates 에는 기본값에서 꺼진 설정의 클래스만 적고, 각 줄의 proof 가 정말 꺼짐 · 그 설정일 때만 붙는지를 tools/tests/css-gates-order.mjs 가 매번 원본 글로 확인해요. 덮어쓰기 차례가 바뀔 수 있는 규칙(같은 요소 · 같은 속성 묶음 · 같은 !important · 같은 특이도로 뒤 규칙과 겨룸)은 도구가 자동으로 제자리에 남겨요(예외).",
+  "gates": [
+    {
+      "prefix": "salty-md-",
+      "setting": "markdown (고른 마크다운 모양)",
+      "proof": [
+        [
+          "src/markdown.js",
+          "selected !== options\\[0\\]\\[0\\]"
+        ],
+        [
+          "src/apply.js",
+          "for \\(const name of markdownClasses\\(s\\.markdown\\)\\) want\\.add\\(name\\);"
+        ]
+      ]
+    },
+    {
+      "class": "salty-outline",
+      "setting": "outline.on (글자 외곽선)",
+      "proof": [
+        [
+          "src/settings.js",
+          "outline: \\{ on: false, color: '#000000', alpha: 100, width: 1 \\}"
+        ],
+        [
+          "src/apply.js",
+          "if \\(s\\.outline\\?\\.on\\) want\\.add\\('salty-outline'\\);"
+        ]
+      ],
+      "alsoOn": [
+        "src/apply.js: 설정 창 표본 .salty-sample 에도 같은 조건으로 붙어요(규칙도 body.salty 를 요구해요)"
+      ]
+    },
+    {
+      "class": "salty-demink-outline",
+      "setting": "deus.on + deus.ink.outline.on (데우스 대사 외곽선)",
+      "proof": [
+        [
+          "src/settings.js",
+          "deus: \\{\\s+on: false,\\s+ink: \\{\\s+outline: \\{ on: false"
+        ],
+        [
+          "src/apply.js",
+          "if \\(deus && s\\.deus\\?\\.ink\\?\\.outline\\?\\.on\\) want\\.add\\('salty-demink-outline'\\);"
+        ]
+      ]
+    },
+    {
+      "class": "salty-indent",
+      "setting": "type.indent (첫 줄 들여쓰기)",
+      "proof": [
+        [
+          "src/settings.js",
+          "indent: false,"
+        ],
+        [
+          "src/apply.js",
+          "if \\(s\\.type\\.indent\\) want\\.add\\('salty-indent'\\);"
+        ]
+      ]
+    },
+    {
+      "class": "salty-namerow-center",
+      "setting": "profile.nameRowAlign (정보 정렬 · 기본 왼쪽은 클래스 없음)",
+      "proof": [
+        [
+          "src/settings.js",
+          "nameRowAlign: 'left'"
+        ],
+        [
+          "src/apply.js",
+          "if \\(charRow !== 'left'\\) want\\.add\\(`salty-namerow-\\$\\{charRow\\}`\\);"
+        ]
+      ]
+    },
+    {
+      "class": "salty-namerow-right",
+      "setting": "profile.nameRowAlign",
+      "proof": [
+        [
+          "src/settings.js",
+          "nameRowAlign: 'left'"
+        ],
+        [
+          "src/apply.js",
+          "if \\(charRow !== 'left'\\) want\\.add\\(`salty-namerow-\\$\\{charRow\\}`\\);"
+        ]
+      ]
+    },
+    {
+      "class": "salty-user-namerow-center",
+      "setting": "userProfile.nameRowAlign",
+      "proof": [
+        [
+          "src/settings.js",
+          "s\\[owner\\]\\.nameRowAlign = 'left'"
+        ],
+        [
+          "src/apply.js",
+          "if \\(userRow !== 'left'\\) want\\.add\\(`salty-user-namerow-\\$\\{userRow\\}`\\);"
+        ]
+      ]
+    },
+    {
+      "class": "salty-user-namerow-right",
+      "setting": "userProfile.nameRowAlign",
+      "proof": [
+        [
+          "src/settings.js",
+          "s\\[owner\\]\\.nameRowAlign = 'left'"
+        ],
+        [
+          "src/apply.js",
+          "if \\(userRow !== 'left'\\) want\\.add\\(`salty-user-namerow-\\$\\{userRow\\}`\\);"
+        ]
+      ]
+    }
+  ],
+  "sheets": [
+    {
+      "id": "md",
+      "out": "src/markdown.gen.css",
+      "prefixes": [
+        "salty-md-"
+      ],
+      "classes": [],
+      "what": "고른 마크다운 모양(1.1.1 첫 장에서만 떼던 것을 전체 장에서도)"
+    },
+    {
+      "id": "outline",
+      "out": "src/gate-outline.gen.css",
+      "prefixes": [],
+      "classes": [
+        "salty-outline",
+        "salty-demink-outline"
+      ],
+      "what": "글자 외곽선 · 데우스 대사 외곽선"
+    },
+    {
+      "id": "type",
+      "out": "src/gate-type.gen.css",
+      "prefixes": [],
+      "classes": [
+        "salty-indent",
+        "salty-namerow-center",
+        "salty-namerow-right",
+        "salty-user-namerow-center",
+        "salty-user-namerow-right"
+      ],
+      "what": "첫 줄 들여쓰기 · 정보 정렬(가운데 · 오른쪽)"
+    },
+    {
+      "id": "mixed",
+      "out": "src/gate-mixed.gen.css",
+      "prefixes": [
+        "*"
+      ],
+      "classes": [],
+      "what": "위 묶음 둘 넘게 걸친 규칙(켜는 클래스 아무거나)"
+    }
+  ],
+  "panel": {
+    "out": "src/panel.gen.css",
+    "root": "salty-panel",
+    "what": "테마 설정 창(.salty-panel — src/panel.js mountPanel 만 만들어요) 안에서만 맞는 규칙. index.js loadPanel · first-run.js 가 창을 만들기 전에 이 시트를 받아요"
+  },
+  "roots": {
+    "설명": "서로 안에 들어가지 않는 화면 뿌리. 갈래의 괄호 밖 칸(:is 를 펼친 뒤 · :not 밖)에 뿌리 이름이 있으면 그 화면 안에서만 맞아요 — 실리태번 채팅(#chat · 다른 확장의 채팅 모양 틀 .bl-chat-like)과 테마 설정 창(.salty-panel)·그 안 미리보기는 늘 다른 곳이라(설정 창은 dialog · 확장 서랍 안), 한쪽 뿌리 갈래와 다른 쪽 뿌리 갈래는 같은 요소에 맞을 수 없어요. 차례 겨루기에서만 써요.",
+    "chat": [
+      "#chat",
+      ".bl-chat-like"
+    ],
+    "preview": [
+      "#salty-nochat",
+      ".salty-preview",
+      ".salty-sample",
+      ".bl-inline-preview"
+    ],
+    "panel": [
+      ".salty-panel"
+    ],
+    "apart": [
+      [
+        "chat",
+        "preview"
+      ],
+      [
+        "chat",
+        "panel"
+      ]
+    ]
+  },
+  "keep": [],
+  "exclusive": {
+    "설명": "한 번에 하나만 붙는 body 클래스 묶음 — 패턴의 첫 괄호가 같고 클래스가 다르면 두 갈래는 같은 때 맞을 수 없어요(차례 겨루기에서만 써요). 마크다운은 src/markdown.js markdownClasses 가 항목(key)마다 고른 값 하나만 달아요(tune- · custom- 은 따로따로라 빼요). 정보 정렬은 apply.js 가 캐릭터 · 사용자마다 하나만 달아요.",
+    "patterns": [
+      "^salty-md-(?!tune-|custom-)([A-Za-z]+)-",
+      "^salty-(namerow)-",
+      "^salty-(user-namerow)-"
+    ],
+    "proof": [
+      [
+        "src/markdown.js",
+        "\\[`salty-md-\\$\\{key\\}-\\$\\{selected\\}`\\]"
+      ],
+      [
+        "src/apply.js",
+        "if \\(charRow !== 'left'\\) want\\.add\\(`salty-namerow-\\$\\{charRow\\}`\\);"
+      ],
+      [
+        "src/apply.js",
+        "if \\(userRow !== 'left'\\) want\\.add\\(`salty-user-namerow-\\$\\{userRow\\}`\\);"
+      ]
+    ]
+  }
+}

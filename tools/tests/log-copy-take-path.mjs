@@ -187,13 +187,13 @@ await test('④ 받지 못하는 틀 까닭 다섯(줄마다 꾸밈 · 로그 �
     for (const [raw, want] of cases) {
         const out = simpleWhy(raw);
         assert.match(out, want, raw);
-        assert.match(out, /마트의 「HTML 복사」로 게시글에 바로 붙여 써요$/, raw);
+        assert.match(out, /마트의 「HTML 복사」로 깡통 글쓰기에 바로 붙여 써요$/, raw);
     }
     // 검토 12: 모르는 까닭(class 이름 · roots. 같은 속말)은 화면 대신 콘솔에
     const warn = console.warn, said = []; console.warn = (...a) => said.push(a.join(' '));
     try {
         const out = simpleWhy('틀 꼴이 맞지 않아요(뿌리 class gk gk-k12 · roots.light 없음)');
-        assert.equal(out, '테마가 아직 모르는 꼴의 틀이에요 — 이 틀은 마트의 「HTML 복사」로 게시글에 바로 붙여 써요');
+        assert.equal(out, '테마가 아직 모르는 꼴의 틀이에요 — 이 틀은 마트의 「HTML 복사」로 깡통 글쓰기에 바로 붙여 써요');
         assert.equal(said.length, 1); assert.match(said[0], /roots\.light/, '원래 말은 콘솔에 남겨요');
         simpleWhy('제목 자리를 찾지 못했어요');
         assert.equal(said.length, 1, '아는 까닭은 콘솔에 안 적어요');

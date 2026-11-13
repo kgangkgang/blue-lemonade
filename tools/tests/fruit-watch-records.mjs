@@ -173,6 +173,41 @@ await test('상태창 판정: 같은 부모에 몰린 기록 수백 개는 조�
     assert.equal(asked.query.length + asked.matches.filter(([, s]) => s.length > 100).length, 0, '떨어진 메시지를 훑음');
     assert.equal(fruitStructureChanged([{ type: 'childList', target: chat, addedNodes: [], removedNodes: [gone] }], ROOTS + ',iframe'), true, '기본은 예전처럼 떨어진 노드도 봐요');
 });
+// 1.2.1 같은 답을 더 적은 일로: 메시지가 붙은 뒤 그 안에 또 붙은 기록은 다시 훑지 않아요 · 맞은 게 없으면 기록 자리(closest)를 묻지 않아요 · class 없는 목록('iframe')은 classList 를 안 열어요
+await test('1.2.1 상태창 판정: 훑어 본 메시지 안에 또 붙은 노드는 다시 훑지 않고 · 맞은 노드가 없으면 closest 를 안 해요 — 답은 예전과 같아요(안쪽에 iframe · 상태창이 붙은 묶음 포함)', async () => {
+    const { fruitStructureChanged } = await imp('src/fruit-type-mutations.js');
+    const doc = new Doc(); const chat = h(doc, 'div', { id: 'chat' }); doc.body.append(chat);
+    const mes = () => h(doc, 'div', { class: 'mes' }, [h(doc, 'div', { class: 'mes_buttons' }, [h(doc, 'div', { class: 'mes_button' })]), h(doc, 'div', { class: 'mes_text' }, [h(doc, 'p', {}, [h(doc, 'span')]), h(doc, 'p')])]);
+    const build = () => { const list = Array.from({ length: 20 }, mes); const records = []; for (const m of list) { chat.append(m); records.push({ type: 'childList', target: chat, addedNodes: [m], removedNodes: [] }); }
+        for (const m of list) for (const p of m.children[1].children) { const s = h(doc, 'span', { class: 'bl-mark' }, [h(doc, 'i')]); p.append(s); records.push({ type: 'childList', target: p, addedNodes: [s], removedNodes: [] }); }
+        return { list, records }; };
+    const { list, records } = build();
+    for (const sel of ['iframe', ROOTS + ',iframe']) {
+        resetAsked(); assert.equal(fruitStructureChanged(records, sel, '', false), false);
+        const inner = asked.query.filter(([n]) => !list.includes(n)).length;
+        assert.equal(inner, 0, `${sel.slice(0, 20)}: 훑어 본 메시지 안을 ${inner}번 다시 훑음`);
+        assert.equal(asked.closest.length, 0, `${sel.slice(0, 20)}: 맞은 게 없는데 closest ${asked.closest.length}번`);
+    }
+    // 같은 묶음에서 메시지 안쪽에 나중에 붙은 iframe · 상태창도 놓치지 않아요(그 메시지를 훑을 때 이미 그 안에 있어요)
+    for (const [sel, late] of [['iframe', () => h(doc, 'iframe')], [ROOTS + ',iframe', () => h(doc, 'div', { class: 'fate-status-wrapper' })]]) {
+        const m = mes(); chat.append(m); const x = late(); m.children[1].children[0].append(x);
+        const batch = [{ type: 'childList', target: chat, addedNodes: [m], removedNodes: [] }, { type: 'childList', target: m.children[1].children[0], addedNodes: [x], removedNodes: [] }];
+        assert.equal(fruitStructureChanged(batch, sel, '', false), true); assert.equal(legacyChanged(batch, sel), true);
+        // 안쪽에 붙었다가 빠진 것(지금 메시지 안에 없음): 예전처럼 그 노드 자체를 봐요
+        x.remove(); assert.equal(fruitStructureChanged(batch, sel, '', false), legacyChanged(batch, sel));
+        // 바로가기 단추 안에 붙은 것은 예전처럼 빼요
+        const button = h(doc, 'button', { class: 'bl-ft-shortcut' }); m.append(button); const y = late(); button.append(y);
+        assert.equal(fruitStructureChanged([{ type: 'childList', target: button, addedNodes: [y], removedNodes: [] }], sel, '', false), false);
+    }
+    // 섞은 묶음 수백 개: 예전 판정과 같아요
+    const pool = chat.all(); let rnd = 7; const pick = () => { rnd = (rnd * 1103515245 + 12345) % 2147483648; return pool[rnd % pool.length]; };
+    for (let i = 0; i < 300; i++) { const batch = Array.from({ length: 12 }, () => { const n = pick(); return { type: 'childList', target: n.parentElement, addedNodes: [n], removedNodes: [] }; });
+        for (const [sel, panels] of [['iframe', ''], [ROOTS + ',iframe', ''], [SHORTCUT_WATCH, PANELS]]) assert.equal(fruitStructureChanged(batch, sel, panels), legacyChanged(batch, sel, panels)); }
+    // class 없는 목록은 classList 를 열지 않아요
+    let opened = 0; const spy = h(doc, 'div', { class: 'mes' }); Object.defineProperty(spy, 'classList', { get() { opened++; return { length: 1, 0: 'mes', contains: c => c === 'mes' }; } }); chat.append(spy);
+    assert.equal(fruitStructureChanged([{ type: 'childList', target: chat, addedNodes: [spy], removedNodes: [] }], 'iframe', '', false), false);
+    assert.equal(opened, 0, `iframe 만 볼 때 classList 를 ${opened}번 열었어요`);
+});
 await test('글자 설정: 채팅을 바꾸며 메시지가 떨어지면 그 아래를 뿌리 선택자로 훑지 않아요 — 마지막 상태창이 빠지거나 지켜보던 iframe 이 빠지면 다시 봐요', async () => {
     const { watchFruitTypography } = await imp('src/fruit-type-runtime.js');
     const doc = new Doc(), H = fakeHost(); const chat = h(doc, 'div', { id: 'chat' }); doc.body.append(chat);
@@ -220,6 +255,23 @@ await test('바로가기: 떨어진 메시지 아래를 훑지 않고, 단추를
     assert.equal(H.frames.size, 1, '단추를 단 카드가 빠졌는데 다시 안 봄'); H.settle();
     assert.ok(!button.isConnected, '남은 단추를 떼요(예전과 같음)');
     stop();
+});
+await test('1.2.1 바로가기: 답이 이어지는 동안에도 기록 자리(서랍 · 본문 · 단추 · 창)를 부모마다 closest 두 번으로 — 예전엔 네 번', async () => {
+    const { installFruitTypeShortcuts } = await imp('src/fruit-type-shortcuts.js');
+    const doc = new Doc(), H = fakeHost(); const chat = h(doc, 'div', { id: 'chat' }); doc.body.append(chat);
+    const text = h(doc, 'div', { class: 'mes_text' }), other = h(doc, 'div', { class: 'mes_buttons' }); chat.append(h(doc, 'div', { class: 'mes' }, [text, other]));
+    const stop = installFruitTypeShortcuts(doc, H.host); H.settle();
+    const watcher = H.observers.find(o => o.node === doc.documentElement);
+    doc.body.dataset.generating = '1';
+    resetAsked(); watcher.fn(Array.from({ length: 50 }, (_, i) => ({ type: 'childList', target: i % 2 ? text : other, addedNodes: [h(doc, 'span')], removedNodes: [] })));
+    assert.equal(H.frames.size, 0);
+    const per = n => asked.closest.filter(([x]) => x === n).length;
+    assert.equal(per(text), 1, `본문 안 기록: closest ${per(text)}번`);
+    assert.equal(per(other), 2, `단추 줄 기록: closest ${per(other)}번(서랍 · 본문 한 번 + 단추 · 창 한 번)`);
+    // 본문 밖 청과 카드는 답이 이어지는 동안에도 예전처럼 다시 봐요
+    const card = h(doc, 'div', { class: 'custom-rumor-board' }); other.append(card);
+    watcher.fn([{ type: 'childList', target: other, addedNodes: [card], removedNodes: [] }]); assert.equal(H.frames.size, 1);
+    delete doc.body.dataset.generating; stop();
 });
 await test('CI 등록', () => {
     assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/fruit-watch-records\.mjs \./);

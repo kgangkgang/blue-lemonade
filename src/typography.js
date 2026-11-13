@@ -3,7 +3,7 @@ import { normalizeTrackerSpacing } from './addons/bookmarks/tracker-spacing.js';
 import { restoreDialogueTildes, resetDialogueTildes } from './dialogue-tildes.js';
 import { wrapSpanningQuotes, resetSpanningQuotes } from './dialogue-span.js';
 import { watchDom } from './dom-watch.js';
-import { addMessageDecorator } from './message-decor.js';
+import { addMessageDecorator, recordPlaceMemo } from './message-decor.js';
 let active=false, observer=null, decor=null;
 // 6.6.9 조판이 메시지를 다시 볼 때 같이 할 일 (글자색 대비 맞추기 ink-contrast.js 가 건다 — 감시자를 따로 두지 않게)
 let typesetHook=null;
@@ -231,7 +231,7 @@ function writeRoot({root,quotes,starts}){
         const q=quotes[i],{line,mark}=starts[i];
         // 형광펜 칸이 줄 머리면 들여쓰기는 그 칸에 (q 에 주면 칸 배경이 들여 쓴 빈자리까지 칠해진다)
         q.classList.toggle('bl-line-dialogue',line&&!mark);
-        if(line&&mark){mark.classList.add('bl-line-dialogue');marks.add(mark);}
+        if(line&&mark){if(!mark.classList.contains('bl-line-dialogue'))mark.classList.add('bl-line-dialogue');marks.add(mark);}   // 1.2.1 이미 붙은 표시는 다시 쓰지 않아요 — 브라우저는 같은 class 를 add 해도 속성 기록을 만들어 실리태번 keyboard.js 가 그 요소를 다시 훑어요
         if(line){
             // q의 margin은 box-decoration-break:clone 때문에 자동으로 접힌 줄에도 반복된다.
             // 대사/형광펜 바깥에 빈 칸 하나만 두고 CSS가 들여쓰기 설정을 따른다. 원문 글자는 그대로.
@@ -292,12 +292,13 @@ export function syncTypography(on) {
     // 그리기 전 일만 #chat 구독(공용 감시 허브 · when 'now')에 남겨요: 생성 중 표시줄 뒤 빈 줄 · 그림 옆 <br> · <style> 뒤 빈 줄 · 색 글자 훅
     observer=watchDom(chat,{childList:true,subtree:true,characterData:true,name:'조판 (그리기 전)'},records=>{
         const generating=document.body.dataset.generating==='true',now=new Set(),touched=new Set();
+        const place=recordPlaceMemo();   // 1.2.1 요소마다 조상을 한 번만 올라가요(기록마다 closest 두 번 → 묶음 안 요소마다 한 번) — 답은 같아요
         for(const record of records){
-            const element=record.target.nodeType===1?record.target:record.target.parentElement;
+            const at=place(record.target.nodeType===1?record.target:record.target.parentElement);
             // 8.2.7 번역 진행 표시(.llmt-progress)는 번역하는 동안 1초마다 글을 새로 쓴다 — 그 안에는 조판할 것(대사 · 그림 · 색 글자 · 한자 줄)이 없으니 메시지를 다시 조판하지 않는다
             //   (표시를 붙이고 떼는 기록은 .mes_text 의 자식 목록이라 그대로 본다)
-            if(element?.closest('.llmt-progress'))continue;
-            const mes=element?.closest('.mes');if(mes){touched.add(mes);if(generating)now.add(mes);continue;}
+            if(at.skip)continue;
+            const mes=at.mes;if(mes){touched.add(mes);if(generating)now.add(mes);continue;}
             // 5.3.4: #chat 에 새 메시지가 붙은 기록 — 붙은 메시지만(채팅 전체가 아니라)
             for(const node of record.addedNodes)if(node.nodeType===1&&(node.matches('.mes')||node.querySelector('.mes')))touched.add(node);
         }

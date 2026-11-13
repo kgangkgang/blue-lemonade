@@ -8,6 +8,7 @@ const root=path.resolve(process.argv[2]||path.join(path.dirname(fileURLToPath(im
 const codes={};for(const name of ['fruit','fruit-heart','qingguo','fruit-style','deus','deus-qr','helper','korean'])codes[name]=await scriptCode(root,name);
 const codeOf=name=>codes[name];
 let passed=0;function check(name,fn){fn();passed++;console.log('ok',name)}
+const classWalk=[];
 class Element {
   constructor(tag='div',attrs={},text=''){this.nodeType=1;this.tagName=tag.toUpperCase();this.attrs=new Map(Object.entries(attrs));this.children=[];this.dataset={};this.value='';if(text)this.append({nodeType:3,nodeValue:text});}
   get id(){return this.getAttribute('id')||''}get className(){return this.getAttribute('class')||''}
@@ -27,6 +28,8 @@ class Element {
   })}
   closest(s){for(let n=this;n;n=n.parentElement)if(n.matches(s))return n;return null}
   querySelectorAll(s){const out=[];for(const c of this.children)if(c.nodeType===1){if(c.matches(s))out.push(c);out.push(...c.querySelectorAll(s))}return out}
+  // 1.2.1 살아 있는 class 목록 흉내: 돌 때마다 그 가지를 다 훑어요(가장 나쁜 경우 — 기억을 버린 목록) · 훑은 요소를 classWalk 에 적어요
+  getElementsByClassName(name){const root=this;return{[Symbol.iterator]:function*(){const walk=function*(n){for(const c of n.children)if(c.nodeType===1){classWalk.push(c);if(c.className.split(/\s+/).includes(name))yield c;yield* walk(c)}};yield* walk(root)}}}
   get text(){return this.children.filter(x=>x.nodeType===3).map(x=>x.nodeValue).join('')}
 }
 function environment(){
@@ -222,6 +225,23 @@ check('유휴 발견은 문서 전체를 훑지 않고 늦게 들어온 창과 �
   const entry=add(holder,'button',{class:'qr--button','data-fh-cat':'1'},'保存');
   tick();env.settle();assert.equal(entry.text,'저장','살아 있는 입구 목록을 못 봤어요');
   broad=0;for(let i=0;i<20;i++)tick();assert.equal(broad,0,'알던 창을 다시 전체로 훑었어요');
+  env.cleanups.at(-1)();
+});
+// 1.2.1 (폰 4배 · rootAppeared 가 모든 장면에서 12 ~ 94ms): 문서 전체의 살아 있는 목록은 채팅이 바뀔 때마다 기억을 버려 1.5초마다 문서 전체를 다시 셌어요.
+//   이제 #chat 밖 가지마다 목록을 둬요 — 유휴 발견이 #chat 안 요소를 하나도 세지 않고, 문서 자리 목록(doc.getElementsByClassName)도 안 써요. QR 줄 · 다른 가지에 늦게 붙은 입구는 예전처럼 찾아요.
+check('1.2.1 유휴 발견은 #chat 안을 세지 않고 #chat 밖 가지에서 입구를 찾아요',()=>{
+  const env=environment();let docWide=0;env.doc.getElementsByClassName=()=>{docWide++;return[]};
+  const sheld=add(env.body,'div',{id:'sheld'}),chat=add(sheld,'div',{id:'chat'});
+  for(let i=0;i<40;i++){const mes=add(chat,'div',{class:'mes'});add(add(mes,'div',{class:'mes_text'}),'p',{},'首页');add(mes,'div',{class:'qr--button'},'x');}
+  const form=add(sheld,'div',{id:'form_sheld'}),bar=add(form,'div',{id:'qr--bar'}),set=add(bar,'div',{class:'qr--buttons'});add(set,'div',{class:'qr--button'},'普通');
+  env.run();const tick=()=>{for(const fn of env.intervals.values())fn()};
+  classWalk.length=0;for(let i=0;i<20;i++)tick();
+  const inChat=classWalk.filter(el=>{for(let n=el;n;n=n.parentElement)if(n===chat)return true;return false}).length;
+  assert.equal(inChat,0,`유휴 발견이 #chat 안 요소를 ${inChat}번 셌어요`);assert.equal(docWide,0,'문서 자리 목록을 썼어요');
+  assert.ok(classWalk.length>0,'#chat 밖 가지를 세지 않았어요');
+  const entry=add(set,'div',{class:'qr--button','data-fh-cat':'1'},'保存');tick();env.settle();assert.equal(entry.text,'저장','QR 줄에 늦게 붙은 입구를 못 찾았어요');
+  const away=add(add(env.body,'section',{}),'button',{class:'qr--button','data-fh-cat':'1'},'保存');tick();env.settle();assert.equal(away.text,'저장','다른 가지의 입구를 못 찾았어요');
+  const deep=add(add(add(sheld,'div',{id:'sheldheader'}),'div',{class:'qr--buttons'}),'span',{'data-fh-cat':'1'},'保存');tick();env.settle();assert.equal(deep.text,'저장','QR 묶음 안 입구를 못 찾았어요');
   env.cleanups.at(-1)();
 });
 check('닫힌 창은 번역을 미루고 열리는 변화에서는 다음 화면 전에 바로 번역해요',()=>{

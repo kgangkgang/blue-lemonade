@@ -83,7 +83,7 @@ await test('출처 창: 기반 · 번역 · 패널 · 리모컨 · 전개 지시
 });
 
 await test('애드온 카드 꼬리 출처 줄 · 한글화 패널 출처 장', () => {
-    const a = read('src/addons.js'), c = read('src/addon-credits.js');
+    const a = (read('src/addons.js') + read('src/addons-panel.js')), c = read('src/addon-credits.js');
     for (const id of ['direction', 'assets', 'translator', 'prompt', 'mermaid']) assert.match(c, new RegExp(`${id}:\\['`), id);
     assert.match(a, /\$\{credit\}<\/div>`;/, '카드 끝에 출처 줄');
     assert.match(c, /ttsCreditsSummaryHtml\(\)/);
@@ -113,8 +113,9 @@ await test('공지 데이터: 맨 앞 판 · 계열 = manifest · 감사 · 팬 
     const head = data.match(/NOTICES\s*=\s*\[\s*\{([^{}[]*)/)?.[1] || '';
     assert.equal(head.match(/"version"\s*:\s*"([^"]+)"/)?.[1], manifest.version);
     assert.equal(Number(head.match(/"series"\s*:\s*(\d+)/)?.[1] || 1), manifest.bl_series || 1);
-    for (const s of ['팬이 만들어', '고마워', '💙', '흔쾌', '공유봇', '제보에 대한 조치', '그동안 제보로', '사용자의 ▲']) assert.ok(!data.includes(s), s);
-    assert.ok(data.includes('원작자의 허락을 받아 번역 애드온에 넣었어요'), '원작 허락 근거는 남김');
+    const full = data + read('tools/notice-old.src.mjs');   // 1.2.1 1.0.0 앞 판 공지 원문은 tools/notice-old.src.mjs(묶음에는 눌러 담은 src/notice-old.gen.js)
+    for (const s of ['팬이 만들어', '고마워', '💙', '흔쾌', '공유봇', '제보에 대한 조치', '그동안 제보로', '사용자의 ▲']) assert.ok(!full.includes(s), s);
+    assert.ok(full.includes('원작자의 허락을 받아 번역 애드온에 넣었어요'), '원작 허락 근거는 남김');
 });
 
 console.log(`\nnotice-credits-restore: ${pass} passed, ${fail} failed`);

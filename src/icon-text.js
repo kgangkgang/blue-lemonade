@@ -170,17 +170,39 @@ const DEEP_IDS = [['oai-ctx-unl', 'oai_max_context_unlocked'], ['stream', 'strea
 const ROW_CHILD_CLASSES = new Set(['neo-range-slider', 'range-block-title', 'checkbox_label', 'inline-drawer', 'standoutHeader', 'oneline-dropdown', 'api_button', 'prompt_manager_prompt_controls', 'bl-copyright', 'salty-slider', 'menu_button_icon', 'flex-container', 'flex1', 'editor_maximize']);
 const ROW_CHILD_TAGS = new Set(['select', 'input', 'h4']);
 const ROW_CHILD_IDS = new Set(['instruct_names_behavior', 'bl-response-range', 'world_info_character_strategy', 'regex_presets', 'movingUIModeCheckBlock']);
-export function rowCandidate(el) {
+// 1.2.1 opt: 자식 특징은 글자 묶음(Set) 대신 비트로 모아요 — 줄 후보마다 Set 하나 · 「'.' + 클래스」 글자를 만들던 것(부팅 · 토글 장면 rowFeatures 자기 시간 1위).
+//   자식 클래스는 className 글자 한 번 읽고 정규식으로 찾아요(classList 를 되풀이로 꺼내면 클래스마다 브라우저 바인딩 호출이 한 번씩 나요).
+//   className 이 글자가 아닌 요소(svg 의 SVGAnimatedString · 시험 흉내)는 예전처럼 classList 로. 토큰은 같은 class 속성을 ASCII 공백으로 나눈 것이라 답이 같아요
+//   (tools/tests/icon-text-row-bits.mjs 가 예전 Set 판정과 견줘요).
+// 특징 열쇠(ROW_NEED 의 값과 같은 꼴: 태그 · '#아이디' · '.클래스')마다 비트 하나 — 22개라 32비트 안이에요
+const FEATURE_BIT = new Map();
+for (const key of [...ROW_CHILD_TAGS, ...[...ROW_CHILD_IDS].map(id => '#' + id), ...[...ROW_CHILD_CLASSES].map(c => '.' + c)]) FEATURE_BIT.set(key, 1 << FEATURE_BIT.size);
+const TAG_BIT = new Map([...ROW_CHILD_TAGS].map(t => [t, FEATURE_BIT.get(t)]));
+const ID_BIT = new Map([...ROW_CHILD_IDS].map(id => [id, FEATURE_BIT.get('#' + id)]));
+const CLASS_BIT = new Map([...ROW_CHILD_CLASSES].map(c => [c, FEATURE_BIT.get('.' + c)]));
+const reEscape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// class 속성 안 토큰 경계 = ASCII 공백(classList 가 나누는 것과 같은 다섯 글자 — \s 는 더 넓어서 안 써요)
+const ROW_CLASS_RE = new RegExp(`(?:^|[ \\t\\n\\f\\r])(${[...ROW_CHILD_CLASSES].map(reEscape).join('|')})(?=[ \\t\\n\\f\\r]|$)`, 'g');
+export function rowFeatureBits(el) {
+    let bits = 0;
     for (const c of el.children) {
-        if (ROW_CHILD_TAGS.has(c.localName) || (c.id && ROW_CHILD_IDS.has(c.id))) return true;
+        bits |= TAG_BIT.get(c.localName) || 0;
+        const id = c.id; if (id) bits |= ID_BIT.get(id) || 0;
+        const cn = c.className;
+        if (typeof cn === 'string') {
+            if (!cn) continue;
+            ROW_CLASS_RE.lastIndex = 0;
+            for (let m = ROW_CLASS_RE.exec(cn); m; m = ROW_CLASS_RE.exec(cn)) bits |= CLASS_BIT.get(m[1]);
+            continue;
+        }
         const list = c.classList;
-        if (list.length === 0) continue;
-        // 자식의 클래스 몇 개만 표에서 찾아요(표 14개를 자식마다 contains 로 묻지 않게). 되풀이할 수 없는 흉내(시험)는 contains 로
-        if (typeof list[Symbol.iterator] === 'function') { for (const name of list) if (ROW_CHILD_CLASSES.has(name)) return true; }
-        else for (const name of ROW_CHILD_CLASSES) if (list.contains(name)) return true;
+        if (!list || list.length === 0) continue;
+        if (typeof list[Symbol.iterator] === 'function') { for (const name of list) bits |= CLASS_BIT.get(name) || 0; }
+        else for (const [name, bit] of CLASS_BIT) if (list.contains(name)) bits |= bit;
     }
-    return false;
+    return bits;
 }
+export function rowCandidate(el) { return rowFeatureBits(el) !== 0; }
 // 10-30 perf-icon: 걸릴 자식이 있는 요소(설정 서랍의 input · select · flex-container 를 품은 줄 수천 개)도 예전에는 35가지 검사를 다 돌렸어요(부팅 폰 4배 0.25~0.33초).
 //   검사마다 꼭 필요한 자식 특징은 하나씩 정해져 있어서(ROW_NEED — 위 표의 조건을 하나씩 옮긴 것), 자식을 한 번 훑어 있는 특징을 모으고
 //   그 특징이 있는 검사만 돌려요. 특징이 없으면 그 검사는 어차피 거짓이라 결과는 같아요(tools/tests/icon-text-scope.mjs · drawer-marks.mjs 가 옛 표와 견줘요).
@@ -191,22 +213,18 @@ const ROW_NEED = {
     lsel: 'select', lsel2: 'select', sel2: '.flex-container', f1sel: '.flex1', numin: 'input', smax: '.editor_maximize', peer: 'input', h4: 'h4', h4dep: 'h4',
     instr: '#instruct_names_behavior', resp: '#bl-response-range', wics: '#world_info_character_strategy', rxp: '#regex_presets', mui: '#movingUIModeCheckBlock',
 };
+/** 자식 특징 열쇠 묶음(진단 · 시험용 — 판정은 rowFeatureBits 비트로 해요) */
 export function rowFeatures(el) {
-    const found = new Set();
-    for (const c of el.children) {
-        if (ROW_CHILD_TAGS.has(c.localName)) found.add(c.localName);
-        if (c.id && ROW_CHILD_IDS.has(c.id)) found.add('#' + c.id);
-        const list = c.classList;
-        if (!list || list.length === 0) continue;
-        if (typeof list[Symbol.iterator] === 'function') { for (const name of list) if (ROW_CHILD_CLASSES.has(name)) found.add('.' + name); }
-        else for (const name of ROW_CHILD_CLASSES) if (list.contains(name)) found.add('.' + name);
-    }
+    const bits = rowFeatureBits(el), found = new Set();
+    for (const [key, bit] of FEATURE_BIT) if (bits & bit) found.add(key);
     return found;
 }
+// 검사마다 꼭 필요한 특징 비트(ROW_NEED 를 비트로) — 표에 없는 검사는 undefined(늘 돌려요) · 특징 표에 없는 열쇠면 0(예전 found.has 처럼 늘 거짓)
+const NEED_BIT = Object.fromEntries(Object.entries(ROW_NEED).map(([name, need]) => [name, FEATURE_BIT.get(need) ?? 0]));
 export function rowTokens(el) {
     const tokens = [];
-    const found = rowFeatures(el);
-    if (found.size) { const k = [...el.children]; for (const [name, test] of ROW_TOKENS) { const need = ROW_NEED[name]; if ((need === undefined || found.has(need)) && test(k, el)) tokens.push(name); } }   // 표에 없는 검사는 늘 돌려요
+    const bits = rowFeatureBits(el);
+    if (bits) { const k = [...el.children]; for (const [name, test] of ROW_TOKENS) { const need = NEED_BIT[name]; if ((need === undefined || (bits & need)) && test(k, el)) tokens.push(name); } }   // 표에 없는 검사는 늘 돌려요
     if (tag(el, 'label') && el.querySelector('select')) tokens.push('dsel');
     if (has(el, 'range-block')) for (const [name, id] of DEEP_IDS) if (el.querySelector('#' + id)) tokens.push(name);
     return tokens.join(' ');
@@ -263,9 +281,15 @@ export function rowHosts(root) {
     for (const el of root.querySelectorAll('[' + ROW + ']')) hosts.add(el);
     return hosts;
 }
-function scanRows(root, skip = null) {
+// 1.2.1 opt: 후보마다 closest('svg') · closest('#chat, .mes') 로 문서 꼭대기까지 오르던 것을 뿌리에서 한 번 물어요 —
+//   뿌리 자신 · 조상이 svg · 메시지가 아니고 뿌리 아래에도 없으면 뿌리 안 후보는 모두 거짓이에요(있으면 예전처럼 후보마다). 판정은 같아요(tools/tests/icon-text-row-bits.mjs)
+export function scanRows(root, skip = null) {
     if (inMessage(root)) return;
-    for (const el of rowHosts(root)) if (isRowHost(el) && !inMessage(el) && !(skip && skip(el))) checkRow(el);
+    const hosts = rowHosts(root);
+    if (!hosts.size) return;
+    const noSvg = !root.closest('svg') && !root.querySelector('svg');
+    const noMes = !root.querySelector('#chat, .mes');
+    for (const el of hosts) if ((noSvg ? !NOT_HOST.has(el.localName) : isRowHost(el)) && (noMes || !inMessage(el)) && !(skip && skip(el))) checkRow(el);
 }
 
 // 바뀐 요소들 — .menu_button 이면 단추 표식, label 이면 체크 줄 표식, input 이 바뀌었으면 그 부모 label

@@ -12,7 +12,7 @@ import {installFruitEntry} from './fruit-entry.js';
 import {allFonts,findFont,fontStack,loadFont} from '../fonts.js';
 import {loadFullCatalog} from '../catalog.js';
 import {createRealm} from './realm.js';
-import {schedulerStats} from './scheduler.js';
+import {schedulerStats,every,cancel} from './scheduler.js';
 import {onGate,gateFired} from '../boot-layers.js';
 // 1.0.0 극한 최적화: 프롬프트 · 정규식 이름 번역(데우스 · 솔라 · 과일) · 과일 창 보조 · 과일 창 꾸미기는 서랍 · 창 안에서만 보여요 — 서랍 · ✦ 메뉴를 처음 쓸 때(문 drawer) 시작해요
 const LATE_SCRIPTS=new Set(['deus','sola','fruit','qingguo','fruit-style']);const LATE_STATUS='처음 쓸 때 시작해요';
@@ -74,7 +74,7 @@ function promptDictionary(file){
 function apiFor(id,cleanups){
     return Object.freeze({fonts,koreanDictionary,
         deusOptionHelp:(read,describe)=>{const help=installDeusOptionHelp(document,window,read,describe),links=installFruitTypeShortcuts(document,window);return()=>{help();links();};},
-        fruitOptionHelp:()=>{const help=installFruitOptionHelp(document,window),links=installFruitTypeShortcuts(document,window),entry=installFruitEntry(document,window);return()=>{help();links();entry();};},
+        fruitOptionHelp:()=>{const help=installFruitOptionHelp(document,window),links=installFruitTypeShortcuts(document,window),entry=installFruitEntry(document,window,{every:(fn,ms)=>every(fn,ms,{owner:'fruit-entry'}),cancel});return()=>{help();links();entry();};},
         localizeFruitStatus:()=>installFruitStatusKorean(document,window),
         promptTitle:(promptId,name)=>translations.titleExact('prompts',promptId??null,name),
         promptDictionary,

@@ -95,7 +95,8 @@ t('current swipe follows swipe_id',()=>{const m=msg();m.swipe_id=1;m.extra={disp
 const srcText=fs.readFileSync(path.join(root,'src/swipe-picker-translation.js'),'utf8');
 t('light hook',()=>{
   assert.doesNotMatch(srcText,/subtree\s*:\s*true/,'no subtree observer');
-  assert.match(srcText,/bodyWatch\.observe\(document\.body, \{ childList: true \}\)/,'body children only, while looking');
+  assert.match(srcText,/bodyWatch = watchDom\(document\.body, \{ childList: true, name: /,'body children only, while looking (1.1.6 공용 감시 허브 구독)');
+  assert.match(srcText,/bodyWatch\?\.\(\); bodyWatch = null;/,'찾으면 · 15초면 구독을 끊어요');
   assert.match(srcText,/stopTimer = setTimeout\(stopLooking, WATCH_MS\)/);
   assert.match(srcText,/if \(found\) stopLooking\(\)/);
   assert.match(srcText,/\.swipes-counter\.swipe-picker-enabled, \.mes_swipe_picker/);

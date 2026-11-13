@@ -90,7 +90,7 @@ await test('판: manifest = 코드 VERSION = 업데이트 탭 판 표(앞 4KB) �
 });
 
 await test('addons.js · settings.js · panel.js · 검색 색인 · addon-off-cost · release_gate 가 같은 id 를 알아요', async () => {
-    const addons = read('src/addons.js'), settings = await import(url('src/settings.js'));
+    const addons = (read('src/addons.js') + read('src/addons-panel.js')), settings = await import(url('src/settings.js'));
     assert.equal(settings.DEFAULTS.addonCarry, 0);
     assert.match(addons, /const \{extensionNames,extension_settings\}=await import\('\.\.\/\.\.\/\.\.\/\.\.\/extensions\.js'\);\n[^\n]*\n\s*return legacyFolders\(DUPLICATES\[id\]\?\?\[\],extensionNames,extension_settings\.disabledExtensions\)\.length>0;/, 'conflict() 가 legacyFolders 를 써요');
     assert.match(addons, /export async function disableLegacy\(ids=EMBEDDED_PRIVATE\)/);

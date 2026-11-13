@@ -122,6 +122,7 @@ zonde306 · [ST-Prompt-Template](https://github.com/zonde306/ST-Prompt-Template)
 
 - 원본: https://github.com/Penterson/st-regex-perf
 - 원본 판/커밋: 0.3.0 / e21e666bface5dca6c0ea83bcbce0c6e8fe03824
+- 더한 고침: 0.5.5 / f652757d5c856f1855502eb55814337e1544efef 의 고침 중 0.3.0 바탕에 해당하는 것만(이름만 바꾼 스크립트의 표 이름 · 이름으로 끄기는 그 스크립트만 · 고친 스크립트를 제자리에서 저장 · 매크로 값이 바뀐 식의 문자 거르개 · 생성자로 만든 사본 · 창 도움말 글 이스케이프). 0.4.0~0.5.x 의 새 기능(HTML 캐시 · 문단 캐시 · IndexedDB 저장)은 넣지 않았어요
 - 저작권자: Copyright (c) 2026 Penterson
 - 사용 범위: 정규식 계측·사전 검사·캐시·분석 및 화면 코드와 한국어 사전예요. 프롬프트 연동 정규식·초기 꺼짐·스타일·엔진 중복 적용 방지와 원상 복구를 연결했어요.
 - 원본 MIT 허가문을 그대로 보존해요.

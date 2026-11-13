@@ -28,7 +28,9 @@ export function loadFullCss(sheet, readyPanel, themeOn) {
         let panel = document.getElementById('salty-panel-css');
         if (!panel) {
             panel = document.createElement('style'); panel.id = 'salty-panel-css'; panel.media = 'not all';
-            (document.getElementById('salty-preview-css') || link).after(panel);
+            // 1.1.6 미리보기 · 뗀 규칙 시트들(data-bl-gate) 뒤 — 원래 차례: 본문 → 미리보기 → 뗀 규칙 → 서랍 전용 (src/lite.js themeRunEnd 와 같은 줄 · 이 모듈은 lite.js 를 부르지 않아요)
+            let end = link; for (let n = link.nextElementSibling; n && (n.id === 'salty-ext-css' || n.dataset?.blGate != null); n = n.nextElementSibling) end = n;
+            end.after(panel);
         }
         const tail = text.slice(at + MARK.length);
         if (panel.textContent !== tail) panel.textContent = tail;

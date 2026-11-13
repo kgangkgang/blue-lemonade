@@ -42,9 +42,8 @@ const lazyLink = () => document.getElementById('salty-lazy-css');
 const fullReady = () => { const l = lazyLink(); return l?.dataset?.blFullTheme === 'ready' && !!l.sheet?.cssRules.length; };
 const setLazy = disabled => { const l = lazyLink(); const off = disabled || !fullReady(); if (l?.sheet && l.sheet.disabled !== off) l.sheet.disabled = off; };
 // 전체 시트가 준비되면 첫 시트는 메타/99꼬리의 원본으로만 남고 다시 켜지 않아요.
-// 1.1.1 마크다운 모양 시트(src/lite.js syncMarkdownCss)는 첫 시트를 돕는 것이라 전체 시트가 켜지면 · 테마를 끄면 꺼요(규칙이 전체 시트 제자리에 있어요)
-const setMarkdown = off => { const md = document.getElementById('salty-md-css'); if (md && off && md.media !== 'not all') md.media = 'not all'; };
-const enableTheme = main => { main.sheet.disabled = fullReady(); setLazy(false); setMarkdown(fullReady()); };
+// 1.1.6 뗀 규칙 시트(src/lite.js syncGateCss — 1.1.1 마크다운 시트 포함)는 첫 장 · 전체 장 둘 다에서 뗀 규칙이라 전체 시트가 켜져도 그대로 켜 둬요(켜고 끄는 것은 syncGateCss)
+const enableTheme = main => { main.sheet.disabled = fullReady(); setLazy(false); };
 
 /** 실리태번이 manifest 로 붙인 테마 style.css 의 <link> (폴더 이름이 달라도 이 파일 기준 주소가 먼저) */
 function mainLink() {

@@ -1,9 +1,7 @@
-// 1.1.1 가볍게: 마크다운 모양 규칙 떼어 두기 (tools/build-css.cjs markdownSplit · src/lite.js syncMarkdownCss)
-//   css/61-markdown.css 가운데 body.salty.salty-md-*(고른 마크다운 모양)가 있어야만 맞는 규칙은 첫 시트(style.css)에서 빼 src/markdown.gen.css 로 —
-//   기본값(고른 모양 없음)이면 받지 않아요. 고르면 테마 시트 바로 뒤에 붙는데, 그러면 그 규칙이 첫 시트의 뒤 모듈(62 ~ 99)보다 뒤가 돼요.
-//   그래도 화면이 같은 까닭을 여기서 매번 확인해요: 같은 요소 · 같은 속성 · 같은 !important · 같은 특이도로 겨루는 뒤 규칙이 없어요
-//   (떼어 낸 규칙은 모두 마크다운 요소(h1 · hr · blockquote · table …)가 대상이고, 겨룰 수 있는 뒤 규칙은 단추 · 설정 칸처럼 클래스가 달린 다른 요소예요).
-//   전체 시트(style-lazy.gen.css)에는 같은 규칙이 제자리에 그대로 있어요.
+// 1.1.1 가볍게: 마크다운 모양 규칙 떼어 두기 → 1.1.6 tools/css-gates.cjs 의 md 시트로 합쳤어요(src/lite.js syncGateCss · src/gate-css.js)
+//   body.salty.salty-md-*(고른 마크다운 모양)가 있어야만 맞는 규칙은 첫 장(style.css)과 전체 장(style-lazy.gen.css) 둘 다에서 빼 src/markdown.gen.css 로 —
+//   기본값(고른 모양 없음)이면 받지 않아요. 고르면 테마 시트 뒤 줄(전체 장 뒤)에 붙고, 클래스는 시트를 받은 뒤에 달아요.
+//   뒤 규칙과 덮어쓰기를 겨루는 규칙은 떼지 않고 제자리에 둬요 — 차례 확인은 tools/tests/css-gates-order.mjs 가 규칙마다 해요.
 //   node tools/tests/markdown-css-split.mjs [테마 뿌리]
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -13,29 +11,27 @@ import { createRequire } from 'node:module';
 const root = path.resolve(process.argv[2] || '.');
 const require = createRequire(path.join(root, 'tools/'));
 const lib = require(path.join(root, 'tools/css-lib.cjs'));
-const { markdownGated, markdownSplit } = require(path.join(root, 'tools/build-css.cjs'));
+const B = require(path.join(root, 'tools/build-css.cjs'));
+const G = require(path.join(root, 'tools/css-gates.cjs'));
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 let pass = 0, fail = 0;
 const test = (name, fn) => { try { fn(); pass++; console.log('  ok  ' + name); } catch (e) { fail++; console.log('  FAIL ' + name + '\n       ' + String(e.stack || e).split('\n').slice(0, 8).join('\n       ')); } };
 
-const style = read('style.css'), md = read('src/markdown.gen.css'), full = read('src/style-lazy.gen.css');
-const section = (text, name) => { const a = text.indexOf(`/* css/${name} */\n`); assert.ok(a >= 0, `${name} 칸`); const b = text.indexOf('\n/* css/', a + 10); return [a, b < 0 ? text.length : b]; };
+const out = B.build(B.CSS_DIR);
+const md = read('src/markdown.gen.css'), style = read('style.css'), full = read('src/style-lazy.gen.css');
 const rulesOf = text => lib.flatRules(lib.parse(text));
-const gatedRule = r => !r.ctx.length && lib.topSplit(r.selector).every(markdownGated);
+const gatedRule = r => lib.topSplit(r.selector).every(B.markdownGated);
 const mdRules = rulesOf(md);
+const kept = new Set(out.gates.kept.map(k => k.selector));
 
-test('첫 시트에는 고른 마크다운 모양 규칙이 없고, 떼어 낸 시트가 전체 시트의 그 규칙과 글 · 차례까지 같아요', () => {
-    const [a, b] = section(style, '61-markdown.css');
-    const firstText = style.slice(a, b), first = rulesOf(firstText);
-    assert.equal(first.filter(gatedRule).length, 0, '첫 시트 61 칸에 남은 고른 모양 규칙');
-    assert.ok(mdRules.length >= 100, `떼어 낸 규칙 ${mdRules.length}개`);
+test('마크다운 시트는 고른 모양 규칙만 · 첫 장 · 전체 장에는 차례 때문에 남긴 것 말고는 없어요', () => {
+    assert.ok(mdRules.length >= 60, `떼어 낸 규칙 ${mdRules.length}개`);
     assert.ok(mdRules.every(gatedRule), '떼어 낸 규칙은 모두 body.salty.salty-md-* 를 요구해요');
-    const [fa, fb] = section(full, '61-markdown.css');
-    const fullText = full.slice(fa, fb), fullRules = rulesOf(fullText).filter(gatedRule);
-    assert.deepEqual(mdRules.map(r => md.slice(r.start, r.end)), fullRules.map(r => fullText.slice(r.start, r.end)));
-    // 남은 규칙(설정 창 표본 · 요소 클래스)은 전체 시트와 같은 차례로 첫 시트에 그대로
-    const rest = rulesOf(fullText).filter(r => !gatedRule(r)).map(r => fullText.slice(r.start, r.end));
-    assert.deepEqual(first.map(r => firstText.slice(r.start, r.end)), rest);
+    for (const [name, text] of [['style.css', style], ['style-lazy.gen.css', full]]) {
+        const left = rulesOf(text).filter(r => gatedRule(r) && !kept.has(r.selector));
+        assert.deepEqual(left.map(r => r.selector.slice(0, 80)), [], `${name} 에 남은 고른 모양 규칙`);
+    }
+    assert.equal(md, out.gateFiles['src/markdown.gen.css']);
 });
 
 test('기본값(고른 모양 없음)에서는 떼어 낸 규칙이 하나도 맞지 않아요 — 기본값은 body 에 salty-md-* 를 달지 않아요', () => {
@@ -43,49 +39,25 @@ test('기본값(고른 모양 없음)에서는 떼어 낸 규칙이 하나도 �
     for (const r of mdRules) for (const sel of lib.topSplit(r.selector)) assert.match(sel, /^body\.salty(?:[.:][\w-]+|\([^)]*\))*\.salty-md-[\w-]+/, sel.slice(0, 80));
 });
 
-test('떼어 낸 규칙은 첫 시트의 뒤 규칙과 같은 요소를 같은 특이도로 겨루지 않아요', () => {
-    const [, b] = section(style, '61-markdown.css');
-    const later = rulesOf(style.slice(b));
-    const named = compound => /[.#][\w-]/.test(compound);   // 클래스 · id 가 달린 칸(단추 · 설정 칸) — 마크다운이 그리는 맨 요소가 아니에요
-    const contentTag = /^(h[1-6]|hr|blockquote|ul|ol|li|table|thead|tbody|tr|th|td|details|summary|a|mark|u|ins|strong|b|em|i|code|pre|p)$/;
-    const bad = [];
-    let checked = 0;
-    for (const r of mdRules) {
-        const rs = lib.topSplit(r.selector);
-        for (const x of rs) assert.match(lib.subjectKeys(x).tag || '', contentTag, `대상이 마크다운 요소예요: ${x.slice(0, 80)}`);
-        for (const L of later) for (const d of r.decls) for (const e of L.decls) {
-            if (d.nested || e.nested || d.important !== e.important || !lib.overlaps(d.lname, e.lname)) continue;
-            for (const x of rs) for (const y of lib.topSplit(L.selector)) {
-                if (lib.cmpSpec(lib.spec(x), lib.spec(y)) !== 0 || lib.disjoint(x, y)) continue;
-                checked++;
-                const ky = lib.subjectKeys(y);
-                if (ky.tag || !named(ky.compound)) bad.push(`${x.slice(0, 90)} [${d.lname}] ↔ ${y.slice(0, 120)} [${e.lname}]`);
-            }
-        }
-    }
-    console.log(`       (같은 특이도 · 같은 속성 짝 ${checked}개 — 모두 클래스 · id 가 달린 다른 요소)`);
-    assert.deepEqual(bad, []);
-});
-
-test('한 장 빌드(--one)면 떼지 않아요 · 떼는 함수는 칸이 없으면 그대로', () => {
-    assert.deepEqual(markdownSplit('a{}'), { text: 'a{}', md: '', rules: 0 });
+test('옛 떼는 함수(markdownSplit)는 비교용으로 그대로 — 칸이 없으면 그대로', () => {
+    assert.deepEqual(B.markdownSplit('a{}'), { text: 'a{}', md: '', rules: 0 });
     const sample = '/* css/60-x.css */\nb{c:d}\n/* css/61-markdown.css */\nbody.salty.salty-md-size-small h1 {e:f}\n.bl-markdown-stage x {g:h}\n/* css/62-y.css */\ni{j:k}\n';
-    const out = markdownSplit(sample);
-    assert.equal(out.rules, 1);
-    assert.equal(out.md, 'body.salty.salty-md-size-small h1 {e:f}');
-    assert.equal(out.text, '/* css/60-x.css */\nb{c:d}\n/* css/61-markdown.css */\n.bl-markdown-stage x {g:h}\n/* css/62-y.css */\ni{j:k}\n');
-    assert.match(read('tools/build-css.cjs'), /const mdSplit = rest \? markdownSplit\(dem\.boot\)/);
+    const o = B.markdownSplit(sample);
+    assert.equal(o.rules, 1);
+    assert.equal(o.md, 'body.salty.salty-md-size-small h1 {e:f}');
+    // 새 기준도 같은 규칙을 골라요(요소 클래스 .salty-md-i 같은 것은 body 칸이 아니라 안 골라요)
+    const cfg = G.loadConfig(path.join(root, 'tools/css-gates.json'));
+    assert.deepEqual([...G.ruleTriggers('body.salty.salty-md-size-small h1', cfg.eligible)], ['salty-md-size-small']);
+    assert.equal(G.ruleTriggers('.salty-md-i', cfg.eligible), null);
+    assert.equal(G.ruleTriggers('body.salty .mes .salty-md-mark', cfg.eligible), null);
 });
 
-test('붙이는 코드: 고른 모양이 있을 때만 · 테마 시트 바로 뒤 · 전체 시트가 켜지면 꺼요 · 뒤에 붙는 시트는 그 뒤로', () => {
-    const lite = read('src/lite.js'), apply = read('src/apply.js'), sheet = read('src/theme-sheet.js'), compat = read('src/compat-css.js');
-    assert.match(apply, /syncMarkdownCss\(\[\.\.\.want\]\.some\(c => c\.startsWith\('salty-md-'\)\)\);\n[^\n]*\n\s+const cls = document\.body\.classList;/, '클래스를 바꾸기 전에');
-    assert.match(lite, /const want = !!on && !\(full\?\.isConnected && full\.dataset\.blFullTheme === 'ready'\);/);
-    assert.match(lite, /if \(sheet\?\.ownerNode\?\.isConnected\) sheet\.ownerNode\.after\(link\);/);
-    assert.match(lite, /const sheetTail = sheet => \{ const split = document\.getElementById\('salty-lazy-css'\); if \(split\?\.isConnected\) return split; const md = markdownAfter\(sheet\); if \(md\) return md;/);
-    assert.match(lite, /: markdownAfter\(sheet\) \|\| sheet\.ownerNode\)\.after\(link\);/, '미리보기 시트도 그 뒤');
-    assert.match(sheet, /const enableTheme = main => \{ main\.sheet\.disabled = fullReady\(\); setLazy\(false\); setMarkdown\(fullReady\(\)\); \};/);
-    assert.match(compat, /md\?\.isConnected && md\.previousElementSibling === theme \? md : theme/);
+test('붙이는 코드: 고른 모양이 있을 때만 · 클래스보다 먼저 · 전체 장이 켜져도 켜 둬요', () => {
+    const lite = read('src/lite.js'), apply = read('src/apply.js'), sheet = read('src/theme-sheet.js'), table = read('src/css-gates.gen.js');
+    assert.match(apply, /const held = syncGateCss\(want\);/);
+    assert.match(table, /"id":"md","file":".\/markdown\.gen\.css","prefixes":\["salty-md-"\]/);
+    assert.match(lite, /export function syncGateCss\(want\)/);
+    assert.doesNotMatch(sheet, /setMarkdown/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/markdown-css-split\.mjs \./);
 });
 

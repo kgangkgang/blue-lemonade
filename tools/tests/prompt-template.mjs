@@ -200,7 +200,7 @@ await test('삭제: /remove-preview → 확인 → /remove · 취소면 /remove 
 });
 
 await test('배선: 애드온 목록 · 시작 · 세부 설정 · 판 표 · 기본값 · 검색 · 출처 · 고지 · README · CI · 공개 ZIP 목록 · 코어 한 줄', () => {
-    const addons = read('src/addons.js');
+    const addons = (read('src/addons.js') + read('src/addons-panel.js'));
     assert.match(addons, /'prompt-template':'프롬프트 템플릿'/);
     assert.match(addons, /'prompt-template':'fa-code'/);
     assert.match(addons, /id==='prompt-template'\)\{\n\s+module=await import\('\.\/addons\/prompt-template\/index\.js'\);/);

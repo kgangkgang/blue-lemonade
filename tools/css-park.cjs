@@ -93,7 +93,7 @@ function extract(css) {
     return { text, preview, rules, blocks: found.length };
 }
 
-module.exports = { extract, previewOnly, PREVIEW };
+module.exports = { extract, previewOnly, PREVIEW, dropEmptyGroups };
 
 if (require.main === module) {
     const fs = require('fs');

@@ -44,7 +44,7 @@ function runFrame() {
     for (const deliver of ioQ.splice(0)) deliver();
 }
 /** 그릴 것이 있으면 지난 프레임 뒤 16ms 에 다음 프레임(작업이 길어 넘겼으면 그 작업이 끝나자마자) */
-const nextFrameAt = () => Math.max(lastFrame + 16, Math.floor(clock / 16) * 16);
+let nextFrameAt = () => Math.max(lastFrame + 16, Math.floor(clock / 16) * 16);
 /** 타이머 · 낮은 우선순위 작업 · 프레임을 ms 동안(가짜 시계) 돌린다 — 다음 프레임 차례 전에는 작업이 더 돌 수 있다(짧은 묶음 여럿이 한 프레임을 나눠 씀) */
 function advance(ms) {
     const end = clock + ms;
@@ -232,7 +232,9 @@ test('(1.0.0 scroll-919) 처리를 기다리는 입력이 있으면(isInputPendi
 });
 test('(1.0.0 scroll-919) 답장(토큰)을 받은 뒤 글을 치다 바로 굴려도 풀려 있다 — 키 · 입력 · 누름 · 클릭 · 휠 · 터치로 시간을 두고 쉬지 않는다', () => {
     // 9.0.3 은 키 · 누름 · 클릭 · 휠 · 터치 뒤 1초를 쉬어, 관문(스트리밍 → 타이핑 → 0.3초 뒤 스크롤)에서 145개 중 0개가 풀린 채 굴렸어요(폰 50ms 넘는 프레임 0 → 22)
-    for (const type of ['keydown', 'input', 'pointerdown', 'click', 'wheel', 'touchstart']) assert.equal(docListeners.has(type), false, type + ' 로 쉬는 리스너가 없다');
+    for (const type of ['click', 'wheel', 'touchstart']) assert.equal(docListeners.has(type), false, type + ' 로 쉬는 리스너가 없다');
+    // (1.2.1 opt121-warm) 키 · 입력 · 누름은 「그 프레임까지」만 미루는 문(시간으로 쉬지 않아요) — 수동 · 캡처 리스너
+    for (const type of ['keydown', 'input', 'pointerdown']) assert.deepEqual(docListeners.get(type)?.opts, { capture: true, passive: true }, type + ' 는 프레임 문만');
     setMessages(100); M._warm.stop(); M.kickWarm(0); settle();
     assert.equal(warmCount(), 90);
     es.emit('tok', '답장');   // 답장을 받는 동안 화면 밖을 다시 건너뛰게
@@ -241,6 +243,42 @@ test('(1.0.0 scroll-919) 답장(토큰)을 받은 뒤 글을 치다 바로 굴�
     for (let i = 0; i < 40; i++) { press('keydown'); press('input'); advance(60); }   // 2.4초 동안 친다(관문 타이핑 꼴)
     advance(300);   // 0.3초 뒤 굴린다
     assert.equal(warmCount(), 90, `굴리기 전에 다 풀려 있다(${warmCount()}/90)`);
+});
+test('(1.2.1 opt121-warm) 키 · 입력 · 누름을 처리한 뒤 그 프레임이 칠해지기 전에는 묶음을 시작하지 않는다 — 프레임 뒤 바로 이어 끝 결과 · 차례는 같다', () => {
+    // 관문 타이핑 꼴: 키(keydown · input · keyup) → 다음 프레임 + 0ms 까지가 입력 지연 → 30ms 쉼. 그 사이(입력 → 프레임)에 묶음이 끼면 지연이 묶음만큼 늘어요.
+    setMessages(100); M._warm.stop();
+    const order = trackOrder(), startedAt = [];
+    let keyAt = -Infinity;
+    for (const m of mes) { const set = m.setAttribute; m.setAttribute = (a, v) => { if (a === 'data-bl-warm' && !m.attrs.has(a)) startedAt.push({ keyAt, frameSinceKey: lastFrame >= keyAt }); set(a, v); }; }
+    FIXED = 20; PER = 5;
+    const gridFrame = nextFrameAt; nextFrameAt = () => Math.max(lastFrame + 16, Math.ceil((clock + 1) / 16) * 16);   // 프레임은 다음 16ms 칸에서만(입력 → 프레임 사이에 빈틈이 있게)
+    try {
+    M.kickWarm(0);
+    for (let g = 0; g < 400 && !M._warm.state().job; g++) advance(1);
+    const g0 = M._warm.state().gated;
+    for (let k = 0; k < 60 && warmCount() < 90; k++) {
+        advance(7 + (k * 13) % 23);   // 키 사이 간격을 흔들어 묶음이 여러 자리에 걸리게
+        keyAt = clock; press('keydown'); press('input');
+        if (k === 0) assert.equal(M._warm.state().gate, true, '미리 그리는 중이면 프레임 문이 닫힌다');
+        advance(1);   // 프레임 전(입력 처리 직후) — 잡혀 있던 묶음이 여기 끼지 않아야 해요
+    }
+    settle();
+    const early = startedAt.filter(s => s.keyAt > -Infinity && !s.frameSinceKey);
+    assert.deepEqual(early, [], `입력 뒤 프레임 전에 시작한 묶음 ${early.length}개`);
+    assert.ok(M._warm.state().gated > g0, '미룬 적이 있다(시험이 빈 것을 통과시키지 않게)');
+    assert.equal(order.length, 90, '끝 결과는 같다(다 풀림)');
+    assert.deepEqual(order.slice(0, 4), [89, 88, 87, 86], '차례도 같다');
+    assert.equal(M._warm.state().gate, false, '문은 프레임에서 풀린다');
+    } finally { nextFrameAt = gridFrame; }
+    // 미리 그릴 일이 없으면 문을 닫지 않는다(평소 타이핑에 프레임을 잡지 않아요)
+    const raf0 = rafCalls; press('keydown'); assert.equal(rafCalls, raf0); assert.equal(M._warm.state().gate, false);
+    // 그리지 않는 탭(rAF 가 안 옴)이어도 늦게라도 풀린다
+    setMessages(100); M._warm.stop(); M.kickWarm(0);
+    for (let g = 0; g < 400 && !M._warm.state().job; g++) advance(1);
+    const realRaf = globalThis.requestAnimationFrame; globalThis.requestAnimationFrame = () => 0;
+    try { press('keydown'); assert.equal(M._warm.state().gate, true); advance(150); assert.equal(M._warm.state().gate, false, 'INPUT_GATE_MAX_MS 뒤 풀림'); }
+    finally { globalThis.requestAnimationFrame = realRaf; }
+    settle(); assert.equal(warmCount(), 90);
 });
 test('답장 토큰이 오면 표식을 다 떼고(자리를 재지 않음) 토큰이 STREAM_QUIET_MS 끊긴 뒤에야 다시 푼다', () => {
     assert.equal(warmCount(), 90);

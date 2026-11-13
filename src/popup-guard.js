@@ -5,6 +5,8 @@
 // (2) 전역 감시: 새로 뜬 dialog.popup 의 확인 글자가 「닫기」인데 취소가 보이면(입력칸 없음) 같은 처리 — 호출 경로를 못 고친 판에서도 「닫기」 하나.
 // (3) 확인 단추에는 bl-info-ok 를 붙여 03-menus 가 테마 포인트 색을 !important 로 고정한다(실리태번 기본 crimson 이 안 보이게).
 // 또 시작 때 실리태번 판(/version)을 콘솔에 한 번 남겨 다음에 그 실리태번 판을 알 수 있게 한다.
+// 1.1.6 감시는 공용 감시 허브 구독이에요 — body 자식은 뿌리 자신 감시 하나, 창 안 2초 지켜보기는 창마다 감시자 하나(숫자칸 폭 · 단추 묶음 격자와 같이 씀)
+import { watchDom } from './dom-watch.js';
 const INFO_OK = /^(닫기|close)$/i;   // 7.8.3: 「확인 · OK」 까지 잡으면 남의 확장 확인 창의 취소까지 숨길 수 있어 「닫기」 만
 let observer = null, logged = false;
 const popupHooks = new Set();   // 8.2.3 새 dialog.popup 이 붙었을 때 부르는 콜백(scroll-fade.js 가 세로 흐림 칸을 묶는다) — body 자식 감시자는 이것 하나로 나눠 쓴다
@@ -22,9 +24,8 @@ export function hardenInfoPopup(popup) {
     for (const cancel of dlg.querySelectorAll('.popup-button-cancel')) { cancel.style.display = 'none'; cancel.hidden = true; cancel.setAttribute('aria-hidden', 'true'); cancel.tabIndex = -1; }
     for (const ok of dlg.querySelectorAll('.popup-button-ok')) { ok.classList.add('bl-info-ok'); ok.classList.remove('redWarningBG'); }
     // 판에 따라 show() 뒤에 단추를 다시 그리는 경우 — 잠깐 지켜보고 한 번 더
-    const again = new MutationObserver(() => { for (const c of dlg.querySelectorAll('.popup-button-cancel')) if (visible(c)) { c.style.display = 'none'; c.hidden = true; } });
-    again.observe(dlg, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
-    setTimeout(() => again.disconnect(), 2000);
+    const again = watchDom(dlg, { childList: true, subtree: true, attributes: ['style', 'class', 'hidden'], name: '안내 팝업 취소 숨김 (2초)' }, () => { for (const c of dlg.querySelectorAll('.popup-button-cancel')) if (visible(c)) { c.style.display = 'none'; c.hidden = true; } });
+    setTimeout(() => again(), 2000);
     return dlg;
 }
 
@@ -43,14 +44,13 @@ function check(dlg, tries = 0) {
 export function startPopupGuard() {
     globalThis.BlueLemonadeHardenPopup = hardenInfoPopup;
     if (observer) return;
-    observer = new MutationObserver(records => {
+    observer = watchDom(document.body, { childList: true, name: '안내 팝업 지킴이 (새 팝업)' }, records => {
         for (const r of records) for (const node of r.addedNodes) {
             if (!(node instanceof Element)) continue;
             if (node.matches('dialog.popup')) { queueMicrotask(() => check(node)); announce(node); }
             else for (const d of node.querySelectorAll?.('dialog.popup') || []) { queueMicrotask(() => check(d)); announce(d); }
         }
     });
-    observer.observe(document.body, { childList: true, subtree: false });
     if (!logged) {
         logged = true;
         fetch('/version').then(r => r.ok ? r.json() : null).then(v => { if (v) { globalThis.BlueLemonadeHost = v; console.info('[Blue Lemonade] SillyTavern', v.pkgVersion || '?', v.gitBranch || '', String(v.gitRevision || '').slice(0, 7)); } }).catch(() => {});

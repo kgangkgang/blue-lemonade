@@ -135,6 +135,26 @@ await test('과일 입구: 그대로면 1.5초 타이머가 다시 훑지 않고
     stop(); assert.equal(H.timers.size, 0); assert.equal(proxy(), null);
     salty.fruitEntryMode = 'qr';
 });
+await test('(1.2.1 opt121-warm) 실행기는 과일 입구의 1.5초 안전망을 공용 스케줄러로 넘겨요 — 진짜 setInterval 을 따로 만들지 않고 과일의 마음 발견 박자와 하나로', async () => {
+    const S = await imp('src/scripts/scheduler.js');
+    const { installFruitEntry } = await imp('src/scripts/fruit-entry.js');
+    S.resetScheduler();
+    const real = globalThis.setInterval, realClear = globalThis.clearInterval; let made = 0;
+    globalThis.setInterval = () => ++made; globalThis.clearInterval = () => { };
+    try {
+        const doc = fakeDoc(), H = fakeHost(); entryFixture(doc);
+        const heart = S.every(() => { }, 1500, { owner: 'fruit-heart' });   // 과일의 마음 발견(realm → 스케줄러)
+        const stop = installFruitEntry(doc, H.host, { every: (fn, ms) => S.every(fn, ms, { owner: 'fruit-entry' }), cancel: S.cancel });
+        assert.equal(H.timers.size, 0, 'host.setInterval 을 쓰지 않는다');
+        const st = S.schedulerStats();
+        assert.equal(st.intervals, 1, '진짜 타이머는 하나'); assert.equal(st.period, 1500); assert.equal(st.owners['fruit-entry'], 1);
+        assert.equal(made, 1, 'setInterval 은 스케줄러의 하나뿐');
+        stop(); assert.equal(S.schedulerStats().owners['fruit-entry'], undefined, '끄면 일을 내린다');
+        S.cancel(heart); assert.equal(S.schedulerStats().intervals, 0);
+    } finally { globalThis.setInterval = real; globalThis.clearInterval = realClear; S.resetScheduler(); }
+    const runtime = fs.readFileSync(path.join(root, 'src/scripts/runtime.js'), 'utf8');
+    assert.match(runtime, /installFruitEntry\(document,window,\{every:\(fn,ms\)=>every\(fn,ms,\{owner:'fruit-entry'\}\),cancel\}\)/, '실행기가 스케줄러를 넘긴다');
+});
 await test('CI 등록', () => {
     assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/fruit-watch-perf\.mjs \./);
 });

@@ -810,7 +810,7 @@ body.salty .llmt-rsn-bar .menu_button.llmt-rsn-btn { min-height: 32px; }
 body.salty .llmt-rsn-bar .menu_button.llmt-rsn-btn:disabled { opacity: .6 !important; cursor: default; }
 .llmt-rsn-note { min-width: 0; color: var(--salty-faint, color-mix(in srgb, currentColor 60%, transparent)); font-size: var(--bl-fs-micro, 11.5px); line-height: 1.4; }
 
-/* ── 번역 리모컨 (translate-remote · remote.js) — 커뮤니티 공유 스크립트 「✨️번역 리모컨」을 원작자의 허락으로 고쳐 넣은 것 ──
+/* ── 번역 리모컨 (translate-remote · remote.js) — 깡통 공유 스크립트 「✨️번역 리모컨」을 원작자의 허락으로 고쳐 넣은 것 ──
    입력줄에 있을 땐 옆 단추와 같은 칸 · 잉크(테마 04-send-form 규칙이 그대로 칠함), 켜짐은 보내기 번역 💬 · 깃털과 같은 켜짐 색 + 빛.
    플로팅은 제목 번역 떠 있는 단추(.ppt-ta-fab)와 같은 꼴: 둥근 면 + 1px 선, 그림자 없음. 메뉴는 ✦ 메뉴와 같은 줄(아이콘 20 + 글자, 줄 높이 메뉴 토큰). */
 #llmt_remote_button {

@@ -1,0 +1,13 @@
+{
+ "_": "11-12 밤 사용자가 깡통에 올린 글에서 본 고장 — 본문이 명조 계열(\"RIDIBatang\",\"Noto Serif KR\",serif · 400 한 굵기)인 심플 틀에서 굵게 낱말이 굵은 글꼴 파일 없이 브라우저가 번지게 그린 가짜 굵게로 뭉개졌어요(마트 고침 ce06d4f8b — 명조 본문 404틀에 「굵게 = 고딕 700」 한 줄 · 고딕 본문 13틀은 그대로). 아래는 그 글 꼴(지문 안 꾸민 낱말 셋 — 이름은 뺐어요)과 마트 규칙 글 그대로예요.",
+ "rule": ".gk-k1 p strong,.gk-k1 p b{font-family:Pretendard,\"Apple SD Gothic Neo\",\"Noto Sans KR\",\"Malgun Gothic\",sans-serif;font-weight:700}",
+ "serifFont": "400 14.5px/1.6 \"RIDIBatang\",\"Noto Serif KR\",serif",
+ "sansFont": "400 14.5px/1.6 Pretendard,\"Apple SD Gothic Neo\",\"Noto Sans KR\",sans-serif",
+ "line": [
+  { "t": "el", "style": { "font-style": "italic" }, "text": "기울임" },
+  { "t": "text", "text": " " },
+  { "t": "el", "style": { "font-weight": "700" }, "text": "굵게" },
+  { "t": "text", "text": " " },
+  { "t": "el", "style": { "text-decoration": "line-through" }, "text": "취소" }
+ ]
+}

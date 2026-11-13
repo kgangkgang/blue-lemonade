@@ -154,6 +154,25 @@ export function swipeMarkOnly(record) {
 export function unchangedAttr(record) {
     return record.type === 'attributes' && record.oldValue !== undefined && typeof record.target?.getAttribute === 'function' && record.oldValue === record.target.getAttribute(record.attributeName);
 }
+/** 1.2.1 opt: 기록 하나를 어떻게 다룰지 — 'html'(html 자기 class) · 'perf'(테마 성능 표식만) · 'gen'(data-generating) · 'skip'(같은 값 · 스와이프 표시만 · 그 밖 무시)
+ *  · 'child'(붙은 노드를 봄) · 'target'(그 요소를 봄).
+ *  예전에는 class 기록마다 perfMarkOnly(앞뒤 클래스를 Set 둘 · 합 Set 하나로)를 먼저 돌렸어요 — 실리태번 refreshSwipeButtons 처럼 같은 값을 다시 쓴 기록이
+ *  메시지마다 나는 장면에서 그 Set 만들기가 대부분이었어요. 같은 값이면 perfMarkOnly · swipeMarkOnly 도 늘 거짓이라, 싼 비교(unchangedAttr)를 먼저 해요.
+ *  data-generating 은 class 가 아니라 perfMarkOnly 가 늘 거짓이었으니 먼저 봐도 같아요. 갈래는 예전 차례와 같아요(tools/tests/squared-record-kind.mjs) */
+export function recordKind(r, htmlEl) {
+    if (r.target === htmlEl) return 'html';
+    if (r.type === 'attributes') {
+        if (r.attributeName === 'data-generating') return 'gen';
+        if (unchangedAttr(r)) return 'skip';
+        if (r.attributeName === 'class') {
+            if (perfMarkOnly(r)) return 'perf';
+            if (swipeMarkOnly(r)) return 'skip';
+        }
+        return paddingOnly(r) ? 'skip' : 'target';
+    }
+    if (r.type === 'childList') return 'child';
+    return 'target';
+}
 // 10-30 perf-gaps: 긴 채팅 가볍게(chat-light.js)는 화면 밖 메시지(#chat > .mes)에 content-visibility:auto 를 걸어 안쪽 계산을 건너뛰어요.
 //   그 안의 후보에 offsetParent 를 물으면 크롬이 그 메시지만 그 자리에서 풀어 계산해요 — 메시지 하나마다 스타일 · 배치 한 번씩이라
 //   긴 채팅 300 열기(폰 4배)에서 배치 300번 · 약 5초, body class 가 바뀐 뒤 훑기(스크롤 중 데우스 하늘 표시 등)에서 0.5~6초였어요.
@@ -256,11 +275,12 @@ export function watchSquaredButtons(doc, host) {
     }
     const queueMany = nodes => {
         const ready = new Set();
+        const generating = doc.body.dataset.generating;   // 1.2.1: 이 고리는 DOM 을 바꾸지 않아요 — 노드마다 body 속성을 다시 읽지 않게 한 번
         for (const node of nodes) {
             const el = node?.nodeType === 1 ? node : node?.parentElement;
             if (!el || !el.isConnected || el.closest?.('style,script')) continue;
             // Streaming changes a message repeatedly; inspect it once generation ends.
-            if (doc.body.dataset.generating && el.closest?.('#chat')) { waiting.add(el.closest('.mes') || el); continue; }
+            if (generating && el.closest?.('#chat')) { waiting.add(el.closest('.mes') || el); continue; }
             // (perf-persona) 서랍이 덮어 건너뛰는 채팅 안은 보이지 않는다 — 덮개가 걷힌 뒤에 잰다(건너뛴 내용을 재면 그 자리에서 계산을 강제한다)
             if (el.closest?.(COVERED)) { waiting.add(el.closest('.mes') || el); continue; }
             // Opening a closed drawer re-checks that subtree.
@@ -279,13 +299,16 @@ export function watchSquaredButtons(doc, host) {
     const onRecords = records => {
         const pending = new Set();
         for (const r of records) {
+            // 갈래는 recordKind — 10-30 perf-icon: 같은 값을 다시 쓴 기록 · 스와이프 표시만 바뀐 메시지는 다시 재지 않아요(skip)
+            const kind = recordKind(r, htmlEl);
+            if (kind === 'skip') continue;
+            if (kind === 'child') { r.addedNodes.forEach(node => pending.add(node)); continue; }
+            if (kind === 'target') { pending.add(r.target); continue; }
             // 긴 채팅 가볍게가 꺼지면(메시지가 줄어 bl-chat-light 가 빠짐) 건너뛰던 메시지는 사건 없이 그려져요 — 적어 둔 것을 다시 재요
             //   8.2.7 lean-perf: 그 표식은 이제 #chat 이 아니라 html 에 달려요(perf-fade) — html 자기 class 기록만 따로 받아 보고, 다른 html 기록은 훑지 않아요
-            if (r.target === htmlEl) { if (skippedMes.size && String(r.oldValue || '').split(' ').includes('bl-chat-light') && !htmlEl.classList?.contains('bl-chat-light')) { for (const mes of skippedMes) pending.add(mes); skippedMes.clear(); } continue; }
-            if (perfMarkOnly(r)) { if (!r.target.classList?.contains('bl-chat-covered') && !doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
-            if (r.attributeName === 'data-generating') { if (!doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
-            if (unchangedAttr(r) || swipeMarkOnly(r)) continue;   // 10-30 perf-icon: 같은 값을 다시 쓴 기록 · 스와이프 표시만 바뀐 메시지는 다시 재지 않아요
-            if (r.type === 'childList') r.addedNodes.forEach(node => pending.add(node)); else if (!paddingOnly(r)) pending.add(r.target);
+            if (kind === 'html') { if (skippedMes.size && String(r.oldValue || '').split(' ').includes('bl-chat-light') && !htmlEl.classList?.contains('bl-chat-light')) { for (const mes of skippedMes) pending.add(mes); skippedMes.clear(); } continue; }
+            if (kind === 'perf') { if (!r.target.classList?.contains('bl-chat-covered') && !doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
+            if (!doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); }   // 'gen'
         }
         queueMany(pending);
     };

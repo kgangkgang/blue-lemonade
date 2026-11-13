@@ -27,7 +27,7 @@ for(const folder of ['char-assets','character-assets','esetham']){
 const {DEFAULTS,getSettings}=await import(new URL('src/settings.js',url));
 globalThis.SillyTavern={getContext:()=>({extensionSettings:{salty:{addons:{assets:true},usageMode:'extensions'}}})};
 assert.equal(DEFAULTS.addons.assets,false);assert.equal(getSettings().addons.assets,true);
-const {addonMarkup}=await import(new URL('src/addons.js',url));
+const {addonMarkup}=await import(new URL('src/addons-panel.js',url));
 assert.match(addonMarkup(getSettings(),'assets'),/data-addon-toggle="assets"/);
 const notice=await fs.readFile(path.join(root,'src/addons/assets/NOTICE.md'),'utf8');
 assert.match(notice,/github.com\/tincansimagine\/character-assets/);assert.match(notice,/comment-7bd0d60e-f2f9-4c2c-9f42-4f395873fa17/);

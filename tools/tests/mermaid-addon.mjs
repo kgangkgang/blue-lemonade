@@ -93,7 +93,7 @@ await test('AGPL source, MIT/dependency notices and public source UI links',()=>
 });
 
 await test('등록 배선 — 이름 · 아이콘 · 시작 · 목록 · 새로고침 · 세부 설정 · 출처', async () => {
-    const src = text('src/addons.js');
+    const src = text('src/addons.js') + text('src/addons-panel.js');   // 1.1.5 애드온 카드는 addons-panel.js
     for (const part of ["mermaid:'Mermaid 도표'", "mermaid:'fa-diagram-project'", "}else if(id==='mermaid'){\n            module=await import('./addons/mermaid/index.js');",
         "'mermaid','tts',...EMBEDDED_PRIVATE]){", "'mermaid','tts',...EMBEDDED_PRIVATE];", "addonOpen==='mermaid'){(await import('./addons/mermaid/index.js')).openPanel();return;}",
         "id==='mermaid'?import('./addons/mermaid/index.js'):", 'instructions.mermaid=']) assert.ok(src.includes(part), part);
@@ -103,7 +103,7 @@ await test('등록 배선 — 이름 · 아이콘 · 시작 · 목록 · 새로�
     assert.equal(DEFAULTS.addons.mermaid, false, '기본은 꺼짐');
     const s = getSettings();
     assert.equal(s.addons.mermaid, true);
-    const { addonMarkup } = await import(new URL('src/addons.js', rootUrl));
+    const { addonMarkup } = await import(new URL('src/addons-panel.js', rootUrl));
     const html = addonMarkup(s, 'mermaid');
     for (const part of ['fa-diagram-project', 'Mermaid 도표', 'data-addon-toggle="mermaid" checked', '도표가 있을 때만', '기존 단독 확장과는 둘 중 하나만 켜 주세요.', 'data-addon-inline="mermaid"', 'data-addon-open="mermaid"']) assert.ok(html.includes(part), part);
     s.addons.mermaid = false;
@@ -176,6 +176,14 @@ await test('Official script pending is detected before its webpack global exists
 });
 await test('Detached messages cannot receive stale render output',async()=>{
  const w=world({initial:['flowchart TD; A-->B']});await loadAddon();let release;w.delay=new Promise(r=>release=r);w.execute(w.scripts[0]);await sleep(10);w.codes[0].isConnected=false;release();await settle();assert.equal(w.codes[0].parentElement.children.length,1);
+});
+await test('1.1.6 script list is rescanned only when its count changes; a later official script is still noticed',async()=>{
+ const w=world({initial:['flowchart TD; A-->B']});await loadAddon();w.execute(w.scripts[0]);await settle();
+ const list=[...w.scripts];let scans=0;const counted={get length(){return list.length},[Symbol.iterator](){scans++;return list[Symbol.iterator]()}};globalThis.document.scripts=counted;
+ await w.fire('mml','cmr','mu','mml','cc');await settle();assert.equal(scans,0,'same script count: no regex pass over every script');
+ const before=w.renders.length;w.add('sequenceDiagram; A->>B: later');
+ list.push({src:'http://localhost/scripts/extensions/third-party/Extension-Mermaid/dist/index.js'});await w.fire('mml');await settle();
+ assert.equal(scans,1,'count changed: one rescan');assert.equal(w.renders.length,before,'official extension found by the rescan takes over new blocks');
 });
 for(const key of ['document','SillyTavern','webpackChunkextension_mermaid','webpackChunkblue_lemonade_mermaid','__blMermaidEngine','__blMermaidBase'])delete globalThis[key];
 console.log(`${failed?'FAIL':'PASS'} mermaid add-on: ${passed} passed, ${failed} failed`);if(failed)process.exit(1);

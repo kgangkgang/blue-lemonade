@@ -115,7 +115,8 @@ await t('내 글꼴 「목록에서 지우기」: 받은 스타일 · 가져온 
     try {
         const fonts = await import(pathToFileURL(path.join(root, 'src/fonts.js')).href);
         assert.equal(fonts.allFonts().filter(f => f.group === 'custom' && !f.unusable).length, 4, '네 항목 모두 목록에 보이는 글꼴(검사를 통과)이에요');
-        for (const id of ['f-1', 'f-2', 'f-3', 'f-4']) await fonts.removeCustomFont(id);
+        const { removeCustomFont } = await import(pathToFileURL(path.join(root, 'src/fonts-ui.js')).href);   // 1.1.5 내 글꼴 지우기는 fonts-ui.js
+        for (const id of ['f-1', 'f-2', 'f-3', 'f-4']) await removeCustomFont(id);
         assert.deepEqual(ext.salty.customFonts, [], '목록에서는 넷 다 빠져요');
         assert.deepEqual(posts, [['/api/files/delete', { path: 'user/files/salty-font-1700000000000.woff2' }]], '서버 파일은 이 테마가 올린 내 글꼴 하나만 지워요');
     } finally { Object.assign(globalThis, saved); }

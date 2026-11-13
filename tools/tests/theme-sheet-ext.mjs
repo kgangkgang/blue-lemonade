@@ -62,7 +62,9 @@ assert.doesNotMatch(apply, /^import [^\n]*theme-sheet\.js/m, 'theme-sheet.js sta
 const lite = fs.readFileSync(path.join(root, 'src/lite.js'), 'utf8');
 // 1.0.0: 미리보기는 따로 받는 <link>(9.0.1) — 게으른 칸 <style> 만 sheetTail 로 사본 뒤에 붙어요
 assert.ok((lite.match(/sheetTail\(sheet\)/g) || []).length >= 1, 'lazy <style> goes after the copy');
-assert.match(lite, /const ext = document\.getElementById\('salty-ext-css'\)/, 'sheetTail knows the light copy');
+// 1.1.6 sheetTail 은 테마 시트 뒤 줄 끝(themeRunEnd) — 그 줄에 가벼운 사본 · 전체 시트 · 뗀 규칙 시트가 있어요
+assert.match(lite, /const sheetTail = sheet => themeRunEnd\(sheet\.ownerNode\);/, 'sheetTail goes to the end of the theme run');
+assert.match(lite, /n && \(n\.id === 'salty-lazy-css' \|\| n\.id === 'salty-ext-css' \|\| n\.dataset\?\.blGate != null\)/, 'the theme run knows the light copy');
 console.log('PASS sheet switching keeps the screen covered and the cascade order');
 
 // 5) 가짜 문서로 실제로 돌려 보기

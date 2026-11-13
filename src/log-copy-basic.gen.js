@@ -262,7 +262,7 @@ ${p} p.mt b{font-weight:700}
 ${p} .kx{display:block;margin:0}
 ${p} summary{display:grid;list-style:none;line-height:0;cursor:pointer;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 ${p} summary::-webkit-details-marker{display:none}
-${p} details>summary~:not([class]){display:none}
+${p} details>summary~:not([class]):not(:has([class])){display:none}
 ${p} summary:focus:not(:focus-visible){outline:none}
 ${p} summary:focus-visible{outline:2px solid #7aa7d8;outline-offset:2px}
 ${p}.tl .tt{${tc(INK.l.title)}}

@@ -381,7 +381,7 @@ await test('열기 전에는 받는 모듈 0 · 리스너 0: 정적 import 없�
     assert.match(idx, /\['registerExtcheckCommand', \(\) => import\('\.\/src\/natural-slash\.js'\), m => \{ m\.registerExtcheckCommand\(\); \}, 'input'\]/, '입력칸을 처음 쓸 때(이미 받는 모듈)');
     assert.match(panel, /button\.onclick = async \(\) => \{ try \{ \(await import\('\.\/extcheck\/index\.js'\)\)\.openExtCheck\(\);/);
     assert.match(panel, /data-search-anchor="확장 충돌 검사"/);
-    assert.match(read('src/addons.js'), /\$\{addonMarkup\(s,'regexlink',true\)\}\$\{perfTail\}<\/div>/, '카드 글은 설정 창(panel.js)이 넘겨요 — 시작 그래프 밖');
+    assert.match((read('src/addons.js') + read('src/addons-panel.js')), /\$\{addonMarkup\(s,'regexlink',true\)\}\$\{perfTail\}<\/div>/, '카드 글은 설정 창(panel.js)이 넘겨요 — 시작 그래프 밖');
     assert.match(read('src/settings-search.js'), /\['extensions','perf','확장 충돌 검사',.*'확장 충돌 검사'\]/);
 });
 await test('설정: 전송 동의 · 연결은 기억(변경한 설정 · 초기화에서 빠짐)', async () => {

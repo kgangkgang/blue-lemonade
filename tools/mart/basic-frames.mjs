@@ -51,6 +51,9 @@ export function build(genText, pxText, lemonText) {
     // 셋째 화자부터: ② 화자 색 블록을 S 에 든 글자 모두에(견본은 A · B 둘 그대로)
     code = once(code, "  for (const x of ['A', 'B']) {\n    const s = S[x];", "  for (const x of Object.keys(S)) {\n    const s = S[x];", 'speakerCss 화자 글자');
     code = once(code, "const spk435 = (k, S) => ['A', 'B'].map(", 'const spk435 = (k, S) => Object.keys(S).map(', 'spk435 화자 글자');
+    // 1.2.1 결함 고침: 깡통은 <details> 안 내용을 class 없는 <div> 로 감싸요. 빈 줄 숨김이 그 칸까지 숨겨 펼쳐도 글(숨긴 글 · blsp-c)이 안 나왔어요
+    //   — 빈 줄(<div><br></div> · 안에 class 든 것이 없는 칸)만 숨겨요(글꾸 마트 고침 ce06d4f8b kkGuard 와 같은 선택자)
+    code = once(code, '${p} details>summary~:not([class]){display:none}', '${p} details>summary~:not([class]):not(:has([class])){display:none}', '깡통 빈 줄 숨김');
     const sLine = code.match(/^  const S = aide \? .*$/m)?.[0];
     if (!sLine) throw new Error('frameStyle 의 화자 줄을 못 찾았어요');
     code = once(code, sLine, `${sLine}\n  if (!aide) for (const [x, c] of Object.entries(opt.extra || {})) if (!S[x]) S[x] = speaker(c);   // 테마: 셋째 화자부터`, 'frameStyle 화자');

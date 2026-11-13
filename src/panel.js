@@ -16,7 +16,8 @@ import { bindAddonLayout } from './addon-layout.js';
 import { markPopup } from './popup-marks.js';
 import { titleBadgesHtml } from './version-pill.js';   // 1.0.0 바탕: 제목 옆 판 알약 · ⓒ (공지 · 새 판 · 출처 창)
 import { typesetRoot } from './typography.js';
-import { addonMarkup, addonsNeedReload, bindAddons, syncRegexlinkFlag, syncAddonIcons, setAddonCredits, setNotesVersion, setPerfTail } from './addons.js';
+import { syncAddonIcons } from './addons.js';
+import { addonMarkup, addonsNeedReload, bindAddons, syncRegexlinkFlag, setAddonCredits, setNotesVersion, setPerfTail } from './addons-panel.js';   // 1.1.5 애드온 카드는 설정 창을 열 때만
 import { NOTES_VERSION } from './addons/notes/version.js';   // 1.0.0 되살림: 메모 카드 판 알약
 setNotesVersion(NOTES_VERSION);
 import { addonCreditHtml } from './addon-credits.js';   // 1.0.0 바탕: 애드온 카드 꼬리 출처 줄
@@ -43,7 +44,8 @@ import './palette-data.js';   // 1.0.0 에이드 11벌 · 커스텀 (설정 창�
 import { markZeroOff } from './zero-panel.js';   // 1.0.2 제로: 제로가 받지 않는 기능 칸은 회색 + 「제로 모드에서 꺼짐」
 import './catalog-full.js';   // 1.0.0 글꼴 목록 전체(8.2.5 와 같은 1,016개) — 설정 창과 함께 받아요
 import { customLibrary, newCustomPalette, useCustomPalette, openCustomBuilder, customBuilder, bindCustomBuilder, setCustomMode, seedCustom, saveCustomPalette, saveCurrentPalette, deleteCustomPalette } from './custompalette.js';
-import { GROUPS, LANGS, SAMPLES, fontsFor, findFont, previewStack, queuePreview, isPreviewReady, isPreviewBlank, addGoogleFont, addCssFont, uploadFont, removeCustomFont } from './fonts.js';
+import { GROUPS, LANGS, SAMPLES, fontsFor, findFont } from './fonts.js';
+import { previewStack, queuePreview, isPreviewReady, isPreviewBlank, addGoogleFont, addCssFont, uploadFont, removeCustomFont } from './fonts-ui.js';   // 1.1.5 목록 미리보기 · 내 글꼴은 설정 창을 열 때만
 import { applyAll, syncSamples } from './apply.js';
 import { setDemGlowPreview, demGlowPreviewing } from './dem-glow.js';   // 「테두리 빛」을 끄는 동안은 설정 창 표본만, 채팅은 손을 뗄 때
 import { getIssues } from './checks.js';

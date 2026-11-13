@@ -50,12 +50,13 @@ const retoneAll = () => lazy.tone?.retoneAll();   // 서랍 · 팝업 미리보�
 // 4.1.2: 설정 창(panel.js 와 거기에만 딸린 모듈 24개 · 310KB)은 설정 창을 처음 열 때 불러온다 — 시작할 때 읽는 모듈 64 → 40개.
 let panelApi = null, panelLoading = null;
 // 못 불러오면 기억을 지워 다음에 누를 때 다시 부른다 (실패한 약속을 붙들고 있으면 새로고침 전까지 서랍이 빈 채였다)
-const loadPanel = () => panelLoading ||= import('./src/panel.js').then(api => (panelApi = api), (error) => { panelLoading = null; throw error; });
+// 1.1.6 설정 창(.salty-panel) 규칙은 첫 장 · 전체 장에 없고 src/panel.gen.css 에만 있어요 — 창을 만들기 전에 그 시트까지 받아요(못 받아도 창은 열어요)
+const loadPanel = () => panelLoading ||= Promise.all([import('./src/panel.js'), panelCssReady()]).then(([api]) => (panelApi = api), (error) => { panelLoading = null; throw error; });
 const panelFailed = () => toastr.warning('설정 창을 못 불러왔어요. 다시 누르거나 새로고침해 주세요.', 'Blue Lemonade');
 const refreshPanels = (changes) => panelApi?.refreshPanels(changes); // 아직 안 불러왔으면 그려진 창도 없다
 import { setFeatureHooks } from './src/features.js';
 import { startThemeSettingsSync } from './src/settings-sync.js';
-import { preloadPreviewCss, scheduleSplitCss, loadSplitCss, splitCssReady, loadCompatCss, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, startAnchorGate, widenSelectorCache, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
+import { preloadPreviewCss, panelCssReady, scheduleSplitCss, loadSplitCss, splitCssReady, loadCompatCss, restorePreviewRules, deferredPreviewRuleCount, startMenuOpenMark, startAnchorGate, widenSelectorCache, deferPanelHasRules, panelHasRuleCount, panelCssEnabled } from './src/lite.js';
 
 function mountDrawer() {
     const host = document.getElementById('extensions_settings2') || document.getElementById('extensions_settings');

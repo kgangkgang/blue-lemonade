@@ -7,7 +7,7 @@ import fs from 'node:fs';
 const rootPath = path.resolve(process.argv[2] || '.');
 const root = pathToFileURL(rootPath + '/');
 const { getSettings, DEFAULTS } = await import(new URL('src/settings.js', root));
-const { addonMarkup } = await import(new URL('src/addons.js', root));
+const { addonMarkup } = await import(new URL('src/addons-panel.js', root));
 const { settingRoute } = await import(new URL('src/settings-differences.js', root));
 const { knownConflicts, DUPLICATES } = await import(new URL('src/extension-folder.js', root));
 

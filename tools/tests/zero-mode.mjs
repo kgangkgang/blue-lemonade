@@ -67,7 +67,7 @@ await test('설정 창: 제로가 받지 않는 기능 칸만 회색(모양 칸 
     const panel = read('src/panel.js');
     assert.match(panel, /\['zero','블루레몬에이드 제로 \(모양만 · 빠르게\)'\]/, '사용 모드 고르기에 제로');
     assert.match(panel, /markZeroOff\(root, s\);/, '설정 창을 그릴 때마다 회색 칸 표시');
-    assert.match(read('src/addons.js'), /s\.usageMode==='zero'\?'제로 모드에서 꺼짐'/, '애드온 카드 상태 글');
+    assert.match((read('src/addons.js') + read('src/addons-panel.js')), /s\.usageMode==='zero'\?'제로 모드에서 꺼짐'/, '애드온 카드 상태 글');
     assert.match(read('css/20-panel.css'), /\.salty-panel \.bl-zero-off \{ opacity: \.55; \}/);
 });
 

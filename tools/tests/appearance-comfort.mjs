@@ -35,16 +35,18 @@ const source={on:(k,f)=>events.set(k,f),removeListener:k=>events.delete(k)};
 const ctx={eventSource:source,event_types:Object.fromEntries(['GENERATION_STARTED','GENERATION_ENDED','GENERATION_STOPPED','CHAT_CHANGED'].map(k=>[k,k]))};
 const {bindWeatherRest}=await import(new URL('src/weather-rest.js',root));let rest=false,enabled=true;
 const binding=bindWeatherRest({rest:v=>rest=v},()=>enabled,doc,ctx);
+// 1.1.6 생성 표시 감시는 공용 감시 허브 구독 — 허브 감시자에 body 자기 data-generating 기록을 넘겨요
+const generating=()=>observerCallback([{type:'attributes',target:doc.body,attributeName:'data-generating'}]);
 // 생성 중은 body[data-generating] 만 본다 — GENERATION_STARTED 로 켜면 /echo · ping 실패처럼 끝 이벤트 없이 빠지는 길에서 쉬기가 남았다
 assert.equal(events.has('GENERATION_STARTED'),false);
-doc.body.dataset.generating='true';observerCallback();assert.equal(rest,true);
+doc.body.dataset.generating='true';generating();assert.equal(rest,true);
 delete doc.body.dataset.generating;events.get('GENERATION_STOPPED')();assert.equal(rest,false);
 listeners.get('input')({target:{matches:()=>true}});assert.equal(rest,true);events.get('GENERATION_ENDED')();assert.equal(rest,false); // 끝 이벤트는 입력 중 표시를 푼다
-doc.body.dataset.generating='false';observerCallback();assert.equal(rest,false);
-doc.body.dataset.generating='true';observerCallback();assert.equal(rest,true);
-delete doc.body.dataset.generating;observerCallback();assert.equal(rest,false);
+doc.body.dataset.generating='false';generating();assert.equal(rest,false);
+doc.body.dataset.generating='true';generating();assert.equal(rest,true);
+delete doc.body.dataset.generating;generating();assert.equal(rest,false);
 doc.activeElement.matches=()=>true;binding.sync();assert.equal(rest,true);enabled=false;binding.sync();assert.equal(rest,false);enabled=true;doc.activeElement.matches=()=>false;
 listeners.get('input')({target:{matches:()=>true}});assert.equal(rest,true);
 await new Promise(r=>setTimeout(r,1250));assert.equal(rest,false);
-binding.dispose();assert(disconnected);assert.equal(events.size,0);assert.equal(listeners.size,0);
+binding.dispose();{const {domWatchStats}=await import(new URL('src/dom-watch.js',root));assert.equal(domWatchStats().subscriptions,0,'끊으면 허브 구독도 0');}const restBefore=rest;doc.body.dataset.generating='true';generating();assert.equal(rest,restBefore,'끊은 뒤에는 안 불러요');assert.equal(events.size,0);assert.equal(listeners.size,0);
 console.log('PASS persistent appearance recovery, lock override, bounded archive, contrast/alpha/mixed palettes, generation and typing rest lifecycle');

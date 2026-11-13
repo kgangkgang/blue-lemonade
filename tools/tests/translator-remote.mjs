@@ -746,7 +746,7 @@ await test('길게 누르기 설명: 리모컨 단추는 자기 길게 누르기
 await test('출처: THIRD-PARTY-NOTICES · 애드온 README · MODIFICATIONS 에 원작 스크립트 한 줄', () => {
     assert.match(read('THIRD-PARTY-NOTICES.md'), /번역 리모컨 — 태번 헬퍼 스크립트\(원작자의 허락으로 수정 · 통합\)/);
     assert.match(read('src/addons/translator/README.md'), /번역 리모컨 — 태번 헬퍼 스크립트\(원작자의 허락으로 수정 · 통합\)/);
-    assert.match(read('src/addons/translator/MODIFICATIONS.md'), /번역 리모컨\): 커뮤니티에 공유된 태번 헬퍼 스크립트/);
+    assert.match(read('src/addons/translator/MODIFICATIONS.md'), /번역 리모컨\): 깡통에 공유된 태번 헬퍼 스크립트/);
     assert.match(read('src/addons/translator/remote.js'), /원작자의 허락으로 고쳐/);
 });
 

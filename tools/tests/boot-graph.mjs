@@ -135,6 +135,14 @@ await test('시작 그래프 크기 상한 (모듈 수 · 바이트)', () => {
     assert.ok(bytes <= 671 * 1024, `${bytes} 바이트`);
 });
 
+await test('1.1.5 시작 묶음 다이어트: 설정 창에서만 쓰는 조각은 시작 그래프 밖이에요', () => {
+    notAtBoot('src/role-icons-core.js', '단추 아이콘 역할 표 · CSS 만들기 · 그림 파일 — 설정을 읽을 때 정리는 role-icons-tidy.js 만');
+    assert.ok(graph.has('src/role-icons-tidy.js'), 'settings.js 가 시작할 때 roleIcons · pickedIcons 를 정리해요');
+    notAtBoot('src/addons-panel.js', '설정 창 › 확장 탭의 애드온 카드 — panel.js 가 받아요');
+    notAtBoot('src/addon-layout.js', '애드온 카드의 접는 칸 — 카드와 같이 받아요');
+    notAtBoot('src/fonts-ui.js', '글꼴 고르기 목록 미리보기 · 내 글꼴 추가 · 지우기 — 설정 창 · 첫 설정 · 메모가 받아요');
+});
+
 await test('9.0.2 부팅 2 · 3층 모듈은 시작 그래프 밖이에요 (첫 프레임 뒤 · 유휴 · 처음 쓸 때 받아요)', () => {
     const LATER = {
         'src/assets.js': '그림 분류 — 2층', 'src/icon-text.js': '아이콘 단추 표식 — 2층', 'src/selects.js': '고르기 팝업 — 2층', 'src/tone.js': '글자색 맞춤 — 2층',

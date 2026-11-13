@@ -1,0 +1,23 @@
+{
+ "_": "11-12 밤 사용자가 찾은 고장 — 깡통은 글을 저장할 때 <details> 의 summary 바로 뒤에 빈 줄 <div><br></div> 를 끼우고, 나머지 내용을 class 없는 <div> 로 감싸요. 빈 줄 숨김 규칙 details>summary~:not([class]){display:none} 이 그 감싼 칸까지 숨겨 펼쳐도 글이 안 나왔어요(예시 글 161847 블라인드 · 마트 고침 ce06d4f8b). 아래는 깡통이 저장한 꼴(이름은 뺐어요): shown = 펼쳤을 때 보여야 할 글, spacers = 숨어야 할 끼운 빈 줄 수.",
+ "cases": [
+  {
+   "name": "기본 글꾸 안 숨긴 글(블록) — 깡통 저장 꼴",
+   "html": "<details class=\"blsp-s blsp-k\" data-bl-spoiler=\"\"><summary class=\"blsp-h\"><span class=\"blsp-l\">숨겨진 글 보기</span><div class=\"blsp-b\" aria-hidden=\"true\">가린 글</div></summary><div><br></div><div><div class=\"blsp-c\">「비가 그쳤네.」 그렇게 말하고 옥상 문을 닫았다.</div></div></details>",
+   "shown": ["「비가 그쳤네.」 그렇게 말하고 옥상 문을 닫았다."],
+   "spacers": 1
+  },
+  {
+   "name": "블라인드처럼 details 안에 글 줄이 든 틀 — 깡통 저장 꼴",
+   "html": "<details class=\"gk-bl\"><summary class=\"gk-sm\"><span class=\"gk-tt\">비 그친 뒤, 옥상에서</span></summary><div><br></div><div><p class=\"gk-nr\">옥상 문을 밀자 젖은 바닥 냄새가 먼저 올라왔다.</p><p class=\"gk-dl\"><span class=\"gk-d gk-dA\">「여기 있을 줄 알았어.」</span></p></div></details>",
+   "shown": ["옥상 문을 밀자 젖은 바닥 냄새가 먼저 올라왔다.", "「여기 있을 줄 알았어.」"],
+   "spacers": 1
+  },
+  {
+   "name": "빈 details(빈 줄만 끼움) — 빈 줄은 그대로 숨어요",
+   "html": "<details class=\"kx\"><summary class=\"wd\"><span class=\"dg\"></span></summary><div><br></div></details>",
+   "shown": [],
+   "spacers": 1
+  }
+ ]
+}

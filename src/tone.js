@@ -102,8 +102,12 @@ function retoneRoots(roots) {
     for (const [el, src, hs] of todo) { // 쓰기만
         el.dataset.blToned = src;
         if (!hs) continue;
-        if (hs.s < GREY) { el.classList.add('bl-tone-grey'); el.style.removeProperty('--bl-hue'); }
-        else { el.classList.remove('bl-tone-grey'); el.style.setProperty('--bl-hue', String(hs.h)); }
+        // 1.2.1 class 는 바뀔 때만 써요 — 브라우저는 이미 있는 class 를 add · 없는 class 를 remove 해도 속성 기록을 만들어(색 글자마다 처음 한 번)
+        //   실리태번 keyboard.js 감시자가 그 요소를 다시 훑고 #chat 감시 허브(lite 메시지 메뉴)도 깨워요. 결과 class 는 같아요
+        const grey = hs.s < GREY;
+        if (grey !== el.classList.contains('bl-tone-grey')) el.classList.toggle('bl-tone-grey', grey);
+        if (grey) el.style.removeProperty('--bl-hue');
+        else el.style.setProperty('--bl-hue', String(hs.h));
     }
 }
 

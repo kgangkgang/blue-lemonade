@@ -103,7 +103,7 @@ function checkSimple(raw) {
     return { item: { kind: 'geulkku-simple', id: raw.id, name: frame.label, emoji: text(raw.emoji, 8), frame, set, ...(warn ? { warn } : {}) } };
 }
 // 1.1.8 받지 못하는 틀의 까닭(frameFromHtml · checkFrame 의 짧은 말)을 사람 말로 — 마트의 13% 가 여기서 걸려요. 모르는 까닭(class 이름 같은 속말)은 화면 대신 콘솔에
-const HTML_WAY = ' — 이 틀은 마트의 「HTML 복사」로 게시글에 바로 붙여 써요';
+const HTML_WAY = ' — 이 틀은 마트의 「HTML 복사」로 깡통 글쓰기에 바로 붙여 써요';
 const SIMPLE_WHY = [
     [/소리 자리|audio/, '소리 카드가 든 틀이라 테마 복사 글에 담을 수 없어요'],
     [/줄마다 꾸밈/, '줄마다 꾸밈이 달라서 로그 길이에 맞춰 늘릴 수 없어요'],

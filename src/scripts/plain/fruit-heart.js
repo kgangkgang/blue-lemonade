@@ -381,15 +381,33 @@ function installFruitHeartKorean(BlueLemonade, data) {
   //   Helper 목록은 #tavern_helper 안에서만 찾아요. 열린 팝업은 보지 않아요: flush 는 최근 클릭(15초)이 있거나 이미 고른 팝업이 있을 때만 팝업을 칠하고, 그 둘은 discover 첫 줄이 맡아요.
   const ROOT_IDS = [rootsSelector, watchSelector].join(',').split(',').filter(s => /^#[\w-]+$/.test(s)).map(s => s.slice(1));
   const FRUIT_ENTRY = '[data-fh-cat="1"]', QR_SCOPES = ['qr--bar', 'qr--popout', 'quickReplies'];
-  const liveClass = name => typeof doc.getElementsByClassName === 'function' ? doc.getElementsByClassName(name) : null;
-  const qrButtons = liveClass('qr--button'), qrGroups = liveClass('qr--buttons');
+  // BL 1.2.1 (폰 4배 · 모든 장면에서 rootAppeared 12 ~ 94ms): 입구를 문서 전체의 살아 있는 목록(getElementsByClassName('qr--button') · ('qr--buttons'))에서 찾았는데,
+  //   문서 어디가 바뀌어도(답 이어 받기 · 타이핑 · 서랍 열기 · 채팅 열기) 브라우저가 그 목록의 기억을 버려 1.5초마다 문서 전체(요소 4만 ~ 10만 개)를 두 번 다시 셌어요.
+  //   이제 #chat 밖 가지(#chat 의 조상마다 #chat 쪽이 아닌 자식 — head 빼고)마다 살아 있는 목록을 둬요. 채팅이 바뀌어도 이 목록들은 기억을 그대로 써요(바뀐 가지만 다시 세요).
+  //   QR 단추(.qr--button · .qr--buttons)는 실리태번이 #chat 밖(#qr--bar · #qr--popout)에만 그려요. 고르는 입구 · 차례는 #chat 밖에서 예전과 같아요.
+  const branchLists = new WeakMap();
+  const listsOf = branch => { let lists = branchLists.get(branch); if (!lists) branchLists.set(branch, lists = [branch.getElementsByClassName('qr--button'), branch.getElementsByClassName('qr--buttons')]); return lists; };
+  const branchable = () => typeof doc.documentElement?.getElementsByClassName === 'function';
+  function outsideChat() {
+    const chat = doc.getElementById('chat');
+    if (!chat) return doc.documentElement ? [doc.documentElement] : [];
+    const path = new Set(), out = [];
+    for (let node = chat; node; node = node.parentElement) path.add(node);
+    for (let up = chat.parentElement; up; up = up.parentElement) for (const child of up.children) if (child.nodeType === 1 && !path.has(child) && child.localName !== 'head') out.push(child);
+    return out;
+  }
   function rootAppeared() {
     const unseen = el => el && !observed.has(el);
     for (const id of ROOT_IDS) if (unseen(doc.getElementById(id))) return true;
-    if (!qrButtons || !qrGroups) { for (const el of doc.querySelectorAll(FRUIT_ENTRY)) if (unseen(el)) return true; }
+    if (!branchable()) { for (const el of doc.querySelectorAll(FRUIT_ENTRY)) if (unseen(el)) return true; }
     else {
-      for (const el of qrButtons) if (el.getAttribute('data-fh-cat') === '1' && unseen(el)) return true;
-      for (const scope of [...QR_SCOPES.map(id => doc.getElementById(id)), ...qrGroups]) if (scope) for (const el of scope.querySelectorAll(FRUIT_ENTRY)) if (unseen(el)) return true;
+      const groups = [];
+      for (const branch of outsideChat()) {
+        const [buttons, sets] = listsOf(branch);
+        for (const el of buttons) if (el.getAttribute('data-fh-cat') === '1' && unseen(el)) return true;
+        for (const group of sets) groups.push(group);
+      }
+      for (const scope of [...QR_SCOPES.map(id => doc.getElementById(id)), ...groups]) if (scope) for (const el of scope.querySelectorAll(FRUIT_ENTRY)) if (unseen(el)) return true;
     }
     const helper = doc.getElementById('tavern_helper');
     if (helper) for (const el of helper.querySelectorAll(helperRootsSelector)) if (unseen(el)) return true;

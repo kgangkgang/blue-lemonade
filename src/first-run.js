@@ -10,7 +10,8 @@ import { getSettings, saveSettings, FONT_SET } from './settings.js';
 import { PALETTES, PALETTE_FAMILIES, paletteFamily, paletteVariant, paletteColors, safeColor, ensurePalettes } from './palettes.js';
 import { loadFullCatalog } from './catalog.js';   // 1.0.0 되살림: 팔레트 11벌 · 글꼴 전체 목록은 늦게 받는 데이터라 창을 열기 전에 받아요
 import { PRESETS, applyStyleData } from './styles.js';
-import { findFont, previewStack, queuePreview, isPreviewReady, isPreviewBlank } from './fonts.js';
+import { findFont } from './fonts.js';
+import { previewStack, queuePreview, isPreviewReady, isPreviewBlank } from './fonts-ui.js';
 import { rememberAppearance } from './appearance-archive.js';
 import { themeEnabled, usageMode } from './usage-mode.js';
 import { otherCssReport, otherCssFingerprint } from './diagnose.js';
@@ -125,7 +126,7 @@ export function openCssPromptWhenFree() {
 
 export async function openFirstRun({ auto = false, cssOnly = false } = {}) {
     if (open?.isConnected) { open.querySelector('[data-fr="next"]')?.focus(); return; }
-    await Promise.all([ensurePalettes(), Promise.resolve(loadFullCatalog()).catch(() => null), import('./lite.js').then(m => m.splitCssReady()).catch(() => null)]);   // 1.0.0 두 장 빌드: 첫 실행 창(80-first-run)은 둘째 장에 있어요 — 열기 전에 붙여 두고
+    await Promise.all([ensurePalettes(), Promise.resolve(loadFullCatalog()).catch(() => null), import('./lite.js').then(m => Promise.all([m.splitCssReady(), m.panelCssReady()])).catch(() => null)]);   // 1.0.0 두 장 빌드: 첫 실행 창(80-first-run)은 둘째 장에 있어요 — 열기 전에 붙여 두고
     const [{ showThemeModal }, panel] = await Promise.all([import('./modal.js'), import('./panel.js').catch(error => { console.warn('[Blue Lemonade] 처음 설정: 설정 창 모듈', error); return null; })]);
     if (open?.isConnected) return;
     if (auto) saveSettings();   // 첫 실행 표시는 테마 설정 칸이 생기는 것 — 저장해 두면 다음 새로고침엔 안 뜨고 (건너뛰어도) 다른 CSS 가 있으면 7.2.6 의 「쓰던 테마」 장만 한 번 더 묻는다
@@ -156,7 +157,7 @@ export async function openFirstRun({ auto = false, cssOnly = false } = {}) {
     // 「확장만」은 새로고침해야 바뀐다 — 설정 창의 「저장하고 새로고침」과 같은 길 (저장을 확인한 뒤 새로고침)
     const saveAndReload = async () => {
         try {
-            const [{ syncRegexlinkFlag }, { saveAddonsNow }] = await Promise.all([import('./addons.js'), import('./addon-save.js')]);
+            const [{ syncRegexlinkFlag }, { saveAddonsNow }] = await Promise.all([import('./addons-panel.js'), import('./addon-save.js')]);
             await syncRegexlinkFlag(); await saveAddonsNow();
             location.reload();
         } catch (error) {

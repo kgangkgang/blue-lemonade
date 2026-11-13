@@ -45,7 +45,7 @@ export async function takeMart(raw, { apply, progress = () => {} }) {
         const items = [], bad = [];
         for (const item of read.items) {
             if (item.kind === 'frame' && !((await decodes(item.decor.art)) && (await decodes(item.decor.mask)))) { bad.push({ name: item.name, reason: '그림을 읽지 못했어요' }); continue; }
-            if (item.kind === 'geulkku-simple' && !(await sanitizedAll(item.frame))) { bad.push({ name: item.name, reason: '테마 복사 글에서 지워질 꾸밈이 든 틀이라 받지 않았어요 — 이 틀은 마트의 「HTML 복사」로 게시글에 바로 붙여 써요' }); continue; }
+            if (item.kind === 'geulkku-simple' && !(await sanitizedAll(item.frame))) { bad.push({ name: item.name, reason: '테마 복사 글에서 지워질 꾸밈이 든 틀이라 받지 않았어요 — 이 틀은 마트의 「HTML 복사」로 깡통 글쓰기에 바로 붙여 써요' }); continue; }
             items.push(item);
         }
         const dupes = findDupes(getSettings(), items);

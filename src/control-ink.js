@@ -247,12 +247,17 @@ export function syncControlInk(active, key = '') {
     if (!onRecords) {
         onRecords = records => {
             if (!enabled) return;
+            // 1.2.1 opt: 한 묶음 안에서 같은 요소의 closest 답(채팅 안 · 단추 안 · 창 뿌리 — ROOTS 는 선택자 27개라 조상마다 27가지를 맞춰 봐요)은 한 번만 물어요.
+            //   이 고리는 DOM 을 바꾸지 않아요(queue 는 모아 두기만) — 답이 같아요(tools/tests/control-ink-batch.mjs)
+            const memo = new Map();
+            const facts = el => { let f = memo.get(el); if (!f) memo.set(el, f = { chat: !!el?.closest('#chat, .mes_text'), button: undefined, root: undefined }); return f; };
             for (const record of records) {
                 const target = record.target.nodeType === 1 ? record.target : record.target.parentElement;
-                if (target?.closest('#chat, .mes_text')) continue;
+                const f = facts(target);
+                if (f.chat) continue;
                 // Text or child changes outside any control (slider readouts, counters, notes) cannot move a label.
-                if (record.type !== 'attributes' && !target?.closest(BUTTONS) && ![...record.addedNodes || []].some(n => n.nodeType === 1 && (n.matches(BUTTONS) || n.querySelector(BUTTONS)))) continue;
-                const root = target?.closest(ROOTS);
+                if (record.type !== 'attributes' && !(f.button ??= !!target?.closest(BUTTONS)) && ![...record.addedNodes || []].some(n => n.nodeType === 1 && (n.matches(BUTTONS) || n.querySelector(BUTTONS)))) continue;
+                const root = f.root === undefined ? (f.root = target?.closest(ROOTS) || null) : f.root;
                 if (root) queue(root);
                 for (const node of record.addedNodes || []) if (node.nodeType === 1) {
                     if (node.matches(ROOTS)) queue(node);

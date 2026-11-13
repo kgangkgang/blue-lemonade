@@ -32,7 +32,9 @@ test('주소로 받는 모듈 · 워커 · 내장 스크립트가 묶음 조각�
 test('import.meta.url 은 원래 모듈 자리 주소로 바뀌어 CSS · 그림 · 소리 주소가 그대로예요', () => {
     const entry = fs.readFileSync(path.join(ROOT, 'dist/index.js'), 'utf8');
     assert.ok(/"\.\.\/src\/[\w/-]+\.js",import\.meta\.url/.test(all.map(([, t]) => t).join('\n')));
-    assert.ok(entry.length < 200 * 1024, `dist/index.js ${entry.length}`);
+    // 1.1.5 시작 묶음 다이어트: 시작 그래프 전체가 dist/index.js 한 조각이에요(전에는 입구 + 정적 조각 12개 · 합계 306KB → 지금 한 조각 약 255KB).
+    //   입구 크기가 곧 시작 묶음 크기라, 바이트 상한은 아래 시험과 perf-budget-static.mjs(307,200B)가 지켜요. 여기서는 글자 수가 그 상한을 넘지 않는지만 봐요
+    assert.ok(entry.length < 300 * 1024, `dist/index.js ${entry.length}`);
 });
 test('시작 때 바로 받는 정적 묶음(dist/index.js 와 그 정적 import)이 상한 안이에요', () => {
     const seen = new Set(); let bytes = 0;

@@ -22,7 +22,32 @@ const queued = new Map();   // mes → 'event' | 'chat' (다음 프레임)
 let chatAll = false;
 
 const generating = () => document.body?.dataset?.generating === 'true';
-const mesOf = node => { const el = node?.nodeType === 1 ? node : node?.parentElement; return el?.closest?.('.mes') || null; };
+const NOWHERE = Object.freeze({ skip: false, mes: null });
+/**
+ * 1.2.1 기록 묶음 하나를 나눠 받는 동안 「번역 진행 표시(.llmt-progress) 안인가 · 어느 메시지(.mes) 안인가」를 요소마다 한 번만 정해요.
+ *   예전에는 기록마다 closest 를 두 번(진행 표시 · 메시지) 해서, 같은 요소 · 같은 조상을 기록 수만큼 다시 올라갔어요(300개 열기 · 폰 4배 기록 8천여 개 × 구독 둘).
+ *   조상을 한 번 올라가며 지나간 조상의 답도 적어 두니 답은 closest 두 번과 같아요(quirks 문서는 class 대소문자를 안 가려 예전처럼 closest).
+ *   묶음 안에서만 쓰고 버려요 — 콜백 사이에 DOM 이 바뀌어도 옛 답이 남지 않게. 시험 tools/tests/record-place-memo.mjs
+ * @returns {(el: Element|null|undefined) => { skip: boolean, mes: Element|null }}
+ */
+export function recordPlaceMemo() {
+    const memo = new Map();
+    const quirks = typeof document !== 'undefined' && !!document?.compatMode && document.compatMode !== 'CSS1Compat';
+    const place = el => {
+        if (!el || el.nodeType !== 1) return NOWHERE;
+        let v = memo.get(el);
+        if (v) return v;
+        if (quirks || !el.classList) v = { skip: !!el.closest?.('.llmt-progress'), mes: el.closest?.('.mes') || null };
+        else {
+            const up = place(el.parentElement);
+            const mine = el.classList.contains('mes');
+            v = { skip: up.skip || el.classList.contains('llmt-progress'), mes: mine ? el : up.mes };
+        }
+        memo.set(el, v);
+        return v;
+    };
+    return place;
+}
 
 /**
  * 메시지 꾸미기를 등록해요. 돌려주는 값은 끊는 함수예요.
@@ -109,14 +134,13 @@ function settle(d) {
     decorateMessages(list, 'dom', [d]);
 }
 function onRecords(records) {
-    const memo = new Map();
-    const at = node => { let v = memo.get(node); if (v === undefined) { v = mesOf(node); memo.set(node, v); } return v; };
+    const place = recordPlaceMemo();
     const gen = generating();
     const touched = new Set();
     for (const r of records) {
-        const el = r.target?.nodeType === 1 ? r.target : r.target?.parentElement;
-        if (el?.closest?.('.llmt-progress')) continue;   // 번역 진행 표시의 초 · 문단 수 글
-        const mes = at(r.target);
+        const at = place(r.target?.nodeType === 1 ? r.target : r.target?.parentElement);
+        if (at.skip) continue;   // 번역 진행 표시의 초 · 문단 수 글
+        const mes = at.mes;
         const hits = [];
         if (mes) hits.push(mes);
         else for (const n of r.addedNodes || []) {

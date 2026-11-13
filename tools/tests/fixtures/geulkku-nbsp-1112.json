@@ -1,0 +1,14 @@
+{
+ "_": "11-12 밤 사용자가 깡통에 올린 글에서 본 고장 — 글꾸 마트 「글 고치기」로 꾸민 낱말 사이를 띄우면 브라우저(contenteditable)가 &nbsp; 를 넣고, cleanRich 의 & 이스케이프가 그것을 「&amp;nbsp;」 글자로 바꿔 복사 글에 「&nbsp;」가 그대로 보였어요. 마트 고침 ce06d4f8b 와 같은 규칙: &nbsp; · &#160; · &#xa0;(대소문자 무관 — 마트 /gi 그대로) · U+00A0 → 보통 빈칸 · 다른 엔티티는 두 번 이스케이프하지 않아요.",
+ "rich": [
+  ["<em>기울임</em>&nbsp;<strong>굵게</strong>&nbsp;<s>취소</s>", "<em>기울임</em> <strong>굵게</strong> <s>취소</s>"],
+  ["<em>기울임</em> <strong>굵게</strong>", "<em>기울임</em> <strong>굵게</strong>"],
+  ["가&#160;나&#xA0;다", "가 나 다"],
+  ["<b>가</b> <i>나</i>", "<b>가</b> <i>나</i>"],
+  ["톰 &amp; 제리 &lt;3 &gt; &quot;따옴&quot; &#39;작은&#39; &#8212; &#x2014;", "톰 &amp; 제리 &lt;3 &gt; &quot;따옴&quot; &#39;작은&#39; &#8212; &#x2014;"],
+  ["톰 & 제리 < 3", "톰 &amp; 제리 &lt; 3"]
+ ],
+ "frame": "simple-k1|dark",
+ "set": { "blGeulkku": 2, "frame": "k1", "frames": { "k1": { "texts": { "NR": "<em>기울임</em>&nbsp;<strong>굵게</strong>&nbsp;<s>취소</s>" } } } },
+ "expect": "<em>기울임</em> <strong>굵게</strong> <s>취소</s>"
+}

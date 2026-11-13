@@ -69,7 +69,7 @@ t('? 단추 · 예시 단추는 86 기준점 목록(테마가 꺼져도 걸리�
     for (const sel of ['.salty-panel .bl-word-help', '.salty-panel .bl-preview-samples > button']) assert.ok(list.includes(`html body ${sel}`), sel);
 });
 
-const addons = read('src/addons.js');
+const addons = (read('src/addons.js') + read('src/addons-panel.js'));
 t('성능 보조 카드: 「기능 켜기」 label 안은 글자 · 체크칸만, ? 단추는 label 밖', () => {
     const header = /const header=`([\s\S]*?)`;/.exec(addons)?.[1] || '';
     const power = /<label class="bl-addon-power">([\s\S]*?)<\/label>/.exec(header)?.[1];

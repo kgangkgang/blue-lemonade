@@ -192,7 +192,7 @@ function markOpenTag(open) {
     return open.slice(0, at) + next;
 }
 
-/** 1.1.8 게시글 하나 크기 — 한계는 240KB 쯤(인수인계-커뮤니티-글꾸 0-4 실측) · 200KB 부터 알려요(점검 1112 #8) */
+/** 1.1.8 깡통 사이트 글 하나 크기 — 한계는 240KB 쯤(인수인계-커뮤니티-글꾸 0-4 실측) · 200KB 부터 알려요(점검 1112 #8) */
 export const POST_LIMIT = 240 * 1024, POST_WARN = 200 * 1024;
 /** 글 → UTF-8 바이트 수 */
 export const byteSize = text => { const s = String(text ?? ''); let n = 0; for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); n += c < 0x80 ? 1 : c < 0x800 ? 2 : c >= 0xd800 && c < 0xdc00 ? (i++, 4) : 3; } return n; };
@@ -200,7 +200,7 @@ export const byteSize = text => { const s = String(text ?? ''); let n = 0; for (
 export function sizeNote(bytes, count = 0) {
     if (!(bytes >= POST_WARN)) return '';
     const kb = Math.round(bytes / 1024), fit = count > 1 ? Math.max(1, Math.floor(count * POST_WARN / bytes)) : 0;
-    return `복사 글이 약 ${kb}KB 예요 — 게시글 하나 한계(약 240KB)${bytes >= POST_LIMIT ? '를 넘어 올라가지 않을 수 있어요' : '에 가까워요'}.${fit ? ` 메시지를 ${count}개 → ${fit}개 안팎으로 줄여 두 글로 나눠 올려요` : ' 글을 줄여 두 글로 나눠 올려요'}`;
+    return `복사 글이 약 ${kb}KB 예요 — 깡통 사이트 글 하나 한계(약 240KB)${bytes >= POST_LIMIT ? '를 넘어 올라가지 않을 수 있어요' : '에 가까워요'}.${fit ? ` 메시지를 ${count}개 → ${fit}개 안팎으로 줄여 두 글로 나눠 올려요` : ' 글을 줄여 두 글로 나눠 올려요'}`;
 }
 
 /** 1.1.2 틀 바깥 위아래의 사용자 코멘트(사이트 본문의 p · 스티커 줄 · 감싼 .blq-cm)를 틀과 같은 640 열에 왼쪽 맞춤으로 — 글꼴은 사이트 기본 그대로(꾸미지 않아요).

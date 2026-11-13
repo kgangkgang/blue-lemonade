@@ -36,7 +36,22 @@ export function pinKey(el) {
     for (const char of action) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
     return `${base.slice(0, 50)}__${(hash >>> 0).toString(36)}`;
 }
-const wantedKey = (el, wanted) => wanted.has(pinKey(el)) || wanted.has(basePinKey(el));
+// 1.2.1 고를 단추인가: 이름표(base)가 바로 맞으면 끝. 아니면 pinKey 는 base 그대로이거나 「base 앞 50자__해시」라, 고른 열쇠 가운데 그 앞부분(마지막 __ 앞)이
+//   이 단추의 base 와 같은 것이 없으면 맞을 수가 없어요 — 그때는 동작 속성 넷을 읽고 이어 붙이는 pinKey 를 만들지 않아요(300개 채팅 × 메뉴 단추 십수 개를 두 번 훑어요).
+//   답은 예전(pinKey 가 맞거나 base 가 맞거나)과 같아요. 해시는 36진(밑줄 없음)이라 마지막 __ 가 base 와 해시의 경계예요. 시험 tools/tests/mes-pins-one.mjs
+let basesFor = null, wantedBases = null;
+function actionBases(wanted) {
+    if (basesFor === wanted) return wantedBases;
+    basesFor = wanted; wantedBases = new Set();
+    for (const key of wanted) { const i = key.lastIndexOf('__'); if (i > 0) wantedBases.add(key.slice(0, i)); }
+    return wantedBases;
+}
+const wantedKey = (el, wanted) => {
+    const base = basePinKey(el);
+    if (wanted.has(base)) return true;
+    if (!base || !actionBases(wanted).has(base.slice(0, 50))) return false;
+    return wanted.has(pinKey(el));
+};
 
 /** 설정 창의 고르기 목록: 메시지 틀과 지금 채팅의 마지막 메시지에서 메뉴 버튼을 모은다 (다른 확장이 메시지마다 붙이는 버튼 포함) */
 export function listMenuButtons() {
@@ -98,8 +113,9 @@ function pin(el) {
     const menu = el.parentElement;
     const bar = menu?.parentElement;
     if (!bar?.classList.contains('mes_buttons')) return;
-    if ([...bar.querySelectorAll(':scope > .bl-pinned')].some(other => pinKey(other) === pinKey(el))) return;
-    const ownRank = order.indexOf(pinKey(el));
+    const key = pinKey(el);   // 1.2.1 한 번만 만들어요(예전: 이미 꺼낸 단추마다 · 차례 찾기에 또) — 같은 요소 · 같은 속성이라 답이 같아요
+    if ([...bar.querySelectorAll(':scope > .bl-pinned')].some(other => pinKey(other) === key)) return;
+    const ownRank = order.indexOf(key);
     const rank = ownRank >= 0 ? ownRank : order.indexOf(basePinKey(el));
     const slot = document.createComment('bl-pin');
     menu.insertBefore(slot, el);

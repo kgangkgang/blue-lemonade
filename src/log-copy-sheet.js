@@ -1110,7 +1110,7 @@ export async function openLogSheet(model) {
                 const pack = copyPack();
                 if (!pack) return;
                 const { html, code } = pack;
-                const big = sizeNote(Math.max(byteSize(html), byteSize(code)), model.messages.length);   // 1.1.8 게시글 하나 한계(약 240KB) — 복사는 그대로 하고 크기를 알려요
+                const big = sizeNote(Math.max(byteSize(html), byteSize(code)), model.messages.length);   // 1.1.8 깡통 사이트 글 하나 한계(약 240KB) — 복사는 그대로 하고 크기를 알려요
                 if (big) toastr.warning(big, '로그 복사', { timeOut: 8000 });
                 const ok = await writeClipboard(html, code);
                 if (!dialog.isConnected) return;

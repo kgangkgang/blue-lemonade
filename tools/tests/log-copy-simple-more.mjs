@@ -115,7 +115,7 @@ await t.test('못 받는 틀은 그대로 못 받아요 — 첫 까닭을 돌려
     const html = sample.k1101.html.replace('<div class="gk-ms">', '<div class="gk-ms"><p class="gk-dl"><span class="gk-d gk-dA">「셋째 대사」</span></p>');
     const r = checkItem({ kind: 'geulkku-simple', v: 1, id: 'simple-k1101', key: 'k1101', name: 'x', html, set: { blGeulkku: 2 } });
     // 까닭 글은 1.2.0 「받는 길」(mart-import.js simpleWhy)에서 사람 말 + 「HTML 복사」 길로 바뀌었어요
-    assert.match(r.reason ?? '', /^로그 칸이 여러 곳으로 나뉜 틀이라 한 곳에 채울 수 없어요 — 이 틀은 마트의 「HTML 복사」로 게시글에 바로 붙여 써요$/);
+    assert.match(r.reason ?? '', /^로그 칸이 여러 곳으로 나뉜 틀이라 한 곳에 채울 수 없어요 — 이 틀은 마트의 「HTML 복사」로 깡통 글쓰기에 바로 붙여 써요$/);
     assert.equal(r.item, undefined, '받지 않아요');
 });
 

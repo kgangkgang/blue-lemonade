@@ -13,6 +13,7 @@
 import { getSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
 import { recordedSource } from './addons/translator/translation-source.js';
+import { watchDom } from './dom-watch.js';
 
 const OPENERS = '.swipes-counter.swipe-picker-enabled, .mes_swipe_picker';
 const WATCH_MS = 15000;
@@ -226,7 +227,7 @@ function watchDialog(dialog) {
 
 let bodyWatch = null, stopTimer = 0;
 function stopLooking() {
-    bodyWatch?.disconnect(); bodyWatch = null;
+    bodyWatch?.(); bodyWatch = null;
     clearTimeout(stopTimer); stopTimer = 0;
 }
 /** 창 찾기 — 여는 단추를 누를 때 (swipe-picker-launch.js 가 이 모듈을 받은 뒤 부른다) */
@@ -240,8 +241,8 @@ export function lookForPicker() {
     if (!hashFn) loadHash();
     if (scan()) return;
     if (!bodyWatch) {
-        bodyWatch = new MutationObserver(records => { if (records.some(r => [...r.addedNodes].some(n => n instanceof HTMLDialogElement))) scan(); });
-        bodyWatch.observe(document.body, { childList: true });
+        // 1.1.6 찾는 동안만 body 자식 — 공용 감시 허브 구독(뿌리 자신 감시 하나)
+        bodyWatch = watchDom(document.body, { childList: true, name: '스와이프 고르기 창 찾기' }, records => { if (records.some(r => [...r.addedNodes].some(n => n instanceof HTMLDialogElement))) scan(); });
     }
     clearTimeout(stopTimer);
     stopTimer = setTimeout(stopLooking, WATCH_MS);

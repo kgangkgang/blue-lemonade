@@ -86,6 +86,19 @@ await t.test('등록 값: 추천 글꾸 = 마트에서 받은 글꾸(id · 이�
     }
 });
 
+await t.test('가짜 굵게 막기: 본문이 명조인 추천 판은 전부 마트 굵게 규칙(BOLD_RULE — 굵게 = 고딕 700)을 담아요 · 견본도 같아요', async () => {
+    const { BOLD_RULE, fakeBold } = await load('tools/mart/simple-frames.mjs');
+    const serif = key => /(?:^|,)\s*serif\s*$/.test((sample.items[key].html.match(new RegExp(`\\.gk-${key} p\\{[^}]*?font:([^;}]*)`)) || [])[1] || '');
+    let n = 0;
+    for (const p of picks) {
+        const key = p.id.replace('simple-', '');
+        assert.equal(fakeBold(p.frame.html), false, `${key}: 굵게 낱말이 가짜 굵게로 그려져요(마트 ${sample.site} 자료 — 굵게 고침 뒤 마트로 다시 떠요)`);
+        assert.equal(fakeBold(sample.items[key].html), false, `${key}: 견본`);
+        if (serif(key)) { n++; assert.ok(p.frame.html.split('\n').includes(BOLD_RULE(key)), `${key}: 굵게 규칙 줄`); }
+    }
+    assert.equal(n, 32, '추천 32판은 전부 명조 본문 틀이에요(늘면 이 수를 고쳐요)');
+});
+
 await t.test('그리기: 32판 × 로그 3 × 낮밤 × 이름 보임/숨김 × 조절 값 3 — 받은 길로 그린 것과 바이트가 같아요 · 자리표 없음 · 소독기를 거쳐도 같음', () => {
     let n = 0;
     for (const p of picks) {

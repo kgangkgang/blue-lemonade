@@ -1,5 +1,7 @@
 // 7.7.9 단추 묶음 · 짧은 체크 항목 묶음의 2열 격자 자동 1열 — css/84-button-groups.css 가 2열로 그리는 묶음에서
 // 라벨이 한 줄에 안 들어가면(320 폭 등) 그 묶음에만 data-bl-cols="1" 을 붙여 1열로 떨어뜨린다. 창이 열리거나 크기가 바뀔 때 다시 잰다.
+// 1.1.6 감시는 공용 감시 허브 구독이에요 — body 자식은 뿌리 자신 감시 하나, 창 안은 창마다 감시자 하나(숫자칸 폭 · 안내 팝업 지킴이와 같이 씀)
+import { watchDom } from './dom-watch.js';
 const GROUPS = '.bl-btn-grid, .bl-check-grid, .llmt-card .translation-backup-buttons, .llmt-btn-group, .llmt-gl-actions, .llmt-check-actions, #lv_settings .lv-actions, .ms-fallback-actions, .bl-addon-actions:has(> button + button), .salty-panel .bl-mespins, .llmt-settings .llmt-checks--grid, .salty-panel :is(.salty-group, .bl-editor-group-body, .bl-tool-body, .bl-addon-config, .salty-sec) > .salty-btns, .salty-panel .bl-word-options';
 const ITEMS = ':scope > .menu_button, :scope > button, :scope > label, :scope > .salty-btn';
 let bodyObserver = null, resizeObserver = null;
@@ -26,24 +28,21 @@ function watchDialog(dlg) {
     let t = 0;
     const run = () => { clearTimeout(t); t = setTimeout(() => fitIn(dlg), 40); };
     run();
-    const ob = new MutationObserver(run);
-    ob.observe(dlg, { childList: true, subtree: true });
-    const done = new MutationObserver(() => { if (!dlg.isConnected) { ob.disconnect(); done.disconnect(); } });
-    done.observe(document.body, { childList: true });
+    const ob = watchDom(dlg, { childList: true, subtree: true, name: '단추 묶음 격자 (창 안)' }, () => run());
+    const done = watchDom(document.body, { childList: true, name: '단추 묶음 격자 (창 닫힘)' }, () => { if (!dlg.isConnected) { ob(); done(); } });
 }
 
 export function startGroupGrid() {
     if (bodyObserver) return;
     globalThis.BlueLemonadeFitGroups = root => fitIn(root || document);
     resizeObserver = new ResizeObserver(entries => { for (const e of entries) fitGroup(e.target); });
-    bodyObserver = new MutationObserver(records => {
+    bodyObserver = watchDom(document.body, { childList: true, name: '단추 묶음 격자 (새 창)' }, records => {
         for (const r of records) for (const node of r.addedNodes) {
             if (!(node instanceof Element)) continue;
             if (node.matches('dialog')) watchDialog(node);
             else for (const d of node.querySelectorAll?.('dialog') || []) watchDialog(d);
         }
     });
-    bodyObserver.observe(document.body, { childList: true, subtree: false });
     for (const d of document.querySelectorAll('dialog[open]')) watchDialog(d);
     // 확장 서랍 · 창 안 탭을 누르면 그려진 뒤 한 번
     document.addEventListener('click', e => {

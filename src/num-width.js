@@ -1,5 +1,7 @@
 // 7.7.9 숫자칸 유동 폭 — 애드온 창 · 팝업 · 확장 서랍의 input[type=number] 에 값 길이(최소 3자)를 --bl-num-ch 로 넣는다 (css/95-fields-i2.css 가 폭으로 씀).
 // 값이 바뀔 때(input · change)와 창이 열릴 때(dialog 추가 · 창 안 다시 그리기 · 확장 서랍 펼침) 한 번. 채팅(#chat)은 보지 않는다.
+// 1.1.6 감시는 공용 감시 허브 구독이에요 — body 자식은 뿌리 자신 감시 하나, 창 안은 창마다 감시자 하나(단추 묶음 격자 · 안내 팝업 지킴이와 같이 씀)
+import { watchDom } from './dom-watch.js';
 const ROOTS = 'dialog, #extensions_settings, #extensions_settings2, #pt-panel';
 let bodyObserver = null;
 const dialogObservers = new WeakMap();
@@ -18,7 +20,7 @@ function watchDialog(dlg) {
     if (!(dlg instanceof Element) || dialogObservers.has(dlg)) return;
     fitIn(dlg);
     let t = 0;const pending=new Set();
-    const ob = new MutationObserver(records => {
+    const ob = watchDom(dlg, { childList: true, subtree: true, name: '숫자칸 폭 (창 안)' }, records => {
         for(const record of records)for(const node of record.addedNodes){
             if(!(node instanceof Element))continue;
             if(node.matches('input[type="number"]'))pending.add(node);
@@ -27,11 +29,9 @@ function watchDialog(dlg) {
         if(!pending.size||t)return;
         t=setTimeout(()=>{t=0;for(const input of pending)if(input.isConnected)fitNumberInput(input);pending.clear();},30);
     });
-    ob.observe(dlg, { childList: true, subtree: true });
     dialogObservers.set(dlg, ob);
     // 닫혀서 떨어져 나가면 그만
-    const done = new MutationObserver(() => { if (!dlg.isConnected) { clearTimeout(t);pending.clear();ob.disconnect(); done.disconnect(); dialogObservers.delete(dlg); } });
-    done.observe(document.body, { childList: true });
+    const done = watchDom(document.body, { childList: true, name: '숫자칸 폭 (창 닫힘)' }, () => { if (!dlg.isConnected) { clearTimeout(t);pending.clear();ob(); done(); dialogObservers.delete(dlg); } });
 }
 
 export function startNumberWidth() {
@@ -45,14 +45,13 @@ export function startNumberWidth() {
         if (!head) return;
         setTimeout(() => fitIn(head.closest(ROOTS) || head.closest('.inline-drawer') || document.getElementById('extensions_settings')), 60);
     }, true);
-    bodyObserver = new MutationObserver(records => {
+    bodyObserver = watchDom(document.body, { childList: true, name: '숫자칸 폭 (새 창)' }, records => {
         for (const r of records) for (const node of r.addedNodes) {
             if (!(node instanceof Element)) continue;
             if (node.matches('dialog')) watchDialog(node);
             else for (const d of node.querySelectorAll?.('dialog') || []) watchDialog(d);
         }
     });
-    bodyObserver.observe(document.body, { childList: true, subtree: false });
     for (const d of document.querySelectorAll('dialog[open]')) watchDialog(d);
     fitIn(document.getElementById('extensions_settings'));
     fitIn(document.getElementById('extensions_settings2'));

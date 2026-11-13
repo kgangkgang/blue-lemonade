@@ -29,6 +29,28 @@ export function applyFade(bar) {
     return state;
 }
 
+/** 1.2.1 opt: 한 프레임 묶음에서 새로 붙은 요소 가운데 「조상이 같은 묶음에서 붙은 요소」는 빼요 — 그 조상을 훑을 때(querySelectorAll) 안쪽까지 다 봐요.
+ *  예전에는 붙은 요소마다 따로 훑어 같은 가지를 여러 번 querySelectorAll 했어요(서랍 · 창을 그리며 붙인 그릇 안에 또 붙인 줄).
+ *  조상이 메시지(.mes) 안이면 안쪽도 메시지 안이라 둘 다 건너뛰고, 조상이 메시지 밖이면 조상 훑기가 안쪽 줄을 모두 묶어요 — 묶이는 줄은 같아요(순서만 문서 차례).
+ *  조상 관계는 콜백 때의 DOM 으로 봐요(그 사이 옮겨진 요소는 따로 훑어요). 시험 tools/tests/tab-scroll-batch.mjs */
+export function outermostAdded(records) {
+    const added = new Set();
+    for (const r of records) for (const n of r.addedNodes) if (n.nodeType === 1) added.add(n);
+    if (added.size < 2) return [...added];
+    const memo = new Map();   // 요소 → 「그 요소나 조상이 added 안」(added 에 든 요소 자신은 적지 않아요)
+    const under = node => {
+        const path = []; let hit = false;
+        for (let p = node.parentElement; p; p = p.parentElement) {
+            const known = memo.get(p); if (known !== undefined) { hit = known; break; }
+            if (added.has(p)) { hit = true; break; }
+            path.push(p);
+        }
+        for (const p of path) memo.set(p, hit);
+        return hit;
+    };
+    return [...added].filter(n => !under(n));
+}
+
 export function installTabScroll(selectors, doc = globalThis.document) {
     if (!doc?.documentElement || !selectors?.length) return;
     // 1.0.9 공용 약속 v1: 등록부가 있으면 줄만 더함
@@ -125,10 +147,8 @@ export function installTabScroll(selectors, doc = globalThis.document) {
     // 9.0.4: 공용 감시 허브 구독(html 구역 — 채팅 · head 는 안 봐요: 탭 줄은 서랍 · 창 안이에요) · 다음 프레임에 한 번
     watchWith(win, [[doc.documentElement, { childList: true, subtree: true, exclude: ['#chat', 'head'], when: 'frame', name: '가로 탭 줄' }]], records => {
         let removed = false;
-        for (const r of records) {
-            r.addedNodes.forEach(scan);
-            if ([...r.removedNodes].some(n => n.nodeType === 1)) removed = true;
-        }
+        for (const r of records) if (!removed && [...r.removedNodes].some(n => n.nodeType === 1)) removed = true;
+        for (const node of outermostAdded(records)) scan(node);
         if (removed) cleanup();
     });
     // Existing tab handlers run first. Supply focus navigation only when they did not handle it; Enter/Space keep native activation.

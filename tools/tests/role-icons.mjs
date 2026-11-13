@@ -44,6 +44,17 @@ await t('역할: 창 도구 14(디자인 시스템 .ds-tool[data-role] 와 같�
     }
 });
 
+await t('1.1.5 시작 묶음: 설정 정리는 가벼운 role-icons-tidy.js — 역할 id 표가 ROLES 와 같고, settings.js 는 역할 표 · CSS 를 끌고 오지 않는다', async () => {
+    const tidy = await load('src/role-icons-tidy.js');
+    assert.deepEqual(tidy.ROLE_IDS, core.ROLES.map(r => r.id), 'role-icons-tidy.js 의 ROLE_IDS 와 role-icons-core.js 의 ROLES 가 같은 순서 · 같은 id');
+    assert.equal(core.ROLE_IDS, tidy.ROLE_IDS, 'core 는 같은 표를 다시 내보낸다');
+    for (const name of ['tidyRoleIcons', 'tidyPickedIcons', 'parseRoleIcon', 'sanitizeSvg', 'pickSlug']) assert.equal(core[name], tidy[name], name);
+    const settingsText = fs.readFileSync(path.join(root, 'src/settings.js'), 'utf8');
+    assert.match(settingsText, /from '\.\/role-icons-tidy\.js'/);
+    assert.doesNotMatch(settingsText, /from '\.\/role-icons-core\.js'/, 'settings.js 가 core 를 정적으로 받으면 역할 표 · CSS 가 시작 묶음에 다시 들어와요');
+    assert.doesNotMatch(fs.readFileSync(path.join(root, 'src/role-icons-tidy.js'), 'utf8'), /^import /m, '정리 조각은 아무것도 받지 않는다');
+});
+
 await t('아무것도 안 바꾸면: 기본값은 빈 칸, CSS 는 빈 글 (화면 · 문서 그대로)', () => {
     assert.deepEqual(DEFAULTS.roleIcons, {});
     assert.equal(core.buildRoleCss({}), '');

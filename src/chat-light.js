@@ -260,7 +260,27 @@ export const WARM_SLICE_MS = 50;
 export const WARM_BATCH_MAX = 12;   // 깨끗한 메시지(하나 1ms 남짓)로 키운 묶음이 처음 그리는 메시지(하나 4ms 안팎)를 만나도 한 묶음이 너무 길지 않게
 // css/05-chat.css 의 「긴 채팅 가볍게」 규칙과 같은 꼴(시험이 둘을 맞춰 봐요) — 이 선택자에 맞고 표식이 없는 메시지가 건너뛰는 메시지예요
 export const SKIP_SELECTOR = '.mes:not(.last_mes, .bl-menu-open, .selected):not([data-bl-tail])';
-let warm = { timer: 0, job: 0, look: null, list: null, i: 0, k: 4, done: 0, slices: 0, yielded: 0, cool: false };
+let warm = { timer: 0, job: 0, look: null, list: null, i: 0, k: 4, done: 0, slices: 0, yielded: 0, cool: false, gate: null, parked: false, gated: 0 };
+// (1.2.1 opt121-warm) 키 · 입력 · 누름 뒤 「그 입력의 프레임」이 칠해질 때까지는 새 묶음을 시작하지 않아요.
+//   isInputPending 은 아직 처리 안 된 입력만 알려 줘서, 입력 처리가 끝나고 그 화면이 그려지기 전 빈틈에 묶음(폰 4배 30~70ms)이 끼면
+//   글자가 화면에 나오는 것이 그만큼 늦었어요(관문 폰 타이핑: stepWarm 668ms · 입력 지연 최대 순정 27.7 → 53.8ms).
+//   시간을 두고 쉬지는 않아요(9.0.3 은 1초를 쉬어 치다 바로 굴리면 하나도 안 풀렸어요) — 다음 프레임(rAF) 첫머리에서 바로 풀고,
+//   미룬 묶음은 그때 낮은 우선순위 작업으로 다시 잡아 그 프레임이 칠해진 뒤에 돌아요. 한 묶음의 크기 · 차례 · 끝 결과는 그대로예요.
+//   그리지 않는 탭(rAF 가 안 옴)은 INPUT_GATE_MAX_MS 뒤 풀어요. 미리 그릴 일이 남아 있을 때만 프레임을 잡아요(평소 타이핑엔 아무것도 안 해요).
+const INPUT_GATE_EVENTS = ['keydown', 'input', 'pointerdown'];
+const INPUT_GATE_MAX_MS = 100;
+function releaseGate() {
+    const g = warm.gate;
+    if (!g) return;
+    warm.gate = null; cancelRaf(g.frame); clearTimeout(g.timer);
+    if (warm.parked) { warm.parked = false; if (warm.list && !warm.job) warm.job = bgTask(stepWarm); }
+}
+function onInputGate() {
+    if (warm.gate || !(warm.job || warm.list)) return;   // 미리 그리는 중일 때만
+    warm.gate = { frame: 0, timer: 0 };
+    warm.gate.frame = raf(releaseGate);
+    warm.gate.timer = setTimeout(releaseGate, INPUT_GATE_MAX_MS);
+}
 const bgTask = fn => {
     if (typeof scheduler !== 'undefined' && typeof scheduler?.postTask === 'function' && typeof AbortController === 'function') {
         const ctl = new AbortController(); scheduler.postTask(fn, { priority: 'background', signal: ctl.signal }).catch(() => { }); return ctl;
@@ -270,7 +290,7 @@ const bgTask = fn => {
 const cancelBg = job => { if (!job) return; if (typeof job.abort === 'function') job.abort(); else clearTimeout(job); };
 function stopWarm() {
     clearTimeout(warm.timer); cancelBg(warm.job); warm.look?.cancel();
-    warm.timer = 0; warm.job = 0; warm.look = null; warm.list = null; warm.i = 0;
+    warm.timer = 0; warm.job = 0; warm.look = null; warm.list = null; warm.i = 0; warm.parked = false;
 }
 /** 미리 그리기를 쉬어야 하나 — 꺼짐 · 시작 덮개(#preloader · boot-gate.js 와 같은 판정) · 생성 중 · (고정 아닌) 서랍이 열림 */
 export function warmPaused(doc = document) {
@@ -354,6 +374,7 @@ function stepWarm() {
     const el = document.getElementById('chat');
     if (!el || !warm.list || !lightNow(el)) { warm.list = null; return; }
     if (inputPending()) { warm.yielded++; warm.job = bgTask(stepWarm); return; }
+    if (warm.gate) { warm.gated++; warm.parked = true; return; }   // 막 처리한 입력의 프레임이 아직 — 그 프레임에서 다시 잡아요(releaseGate)
     const picked = [];
     while (warm.i < warm.list.length && picked.length < warm.k) {
         const mes = warm.list[warm.i++];
@@ -419,6 +440,7 @@ function listenWarm() {
     if (!revealOn && typeof document.addEventListener === 'function') {
         revealOn = true;
         document.addEventListener('contentvisibilityautostatechange', onReveal, true);
+        for (const type of INPUT_GATE_EVENTS) document.addEventListener(type, onInputGate, { capture: true, passive: true });
     }
     if (warmEvents) return;
     try {
@@ -434,7 +456,7 @@ function listenWarm() {
     } catch { }
 }
 export const _warm = {
-    state: () => ({ timer: !!warm.timer, job: !!warm.job, look: !!warm.look, pending: warm.list ? warm.list.length - warm.i : null, k: warm.k, done: warm.done, slices: warm.slices, yielded: warm.yielded, cool: warm.cool }),
+    state: () => ({ timer: !!warm.timer, job: !!warm.job, look: !!warm.look, pending: warm.list ? warm.list.length - warm.i : null, k: warm.k, done: warm.done, slices: warm.slices, yielded: warm.yielded, cool: warm.cool, gated: warm.gated, gate: !!warm.gate, parked: warm.parked }),
     stop: stopWarm, step: stepWarm, start: startWarm,
 };
 // 1.1.4 측정 도구가 묶음(dist) 밖에서 미리 그리기 상태를 읽는 길(감시 허브의 stats() 와 같은 꼴): globalThis[Symbol.for('blue-lemonade.diag.v1')].warm()

@@ -77,8 +77,22 @@ const focusRing = (html) => {
     const end = html.indexOf('\n', at);
     return `${html.slice(0, end)}\n${FOCUS_RULE(key)}${html.slice(end)}`;
 };
-/** 틀 파일 → 마트가 받는 꼴(별칭 떼기 · 포커스 테) — 마트 frameHtml 의 소리 카드 · 견본 자리표 채우기 앞 단계와 같아요 */
-export const rawFrame = d => focusRing(stripAlias(fs.readFileSync(path.join(SRC, `${d.frame}.html`), 'utf8').replace(/\r\n/g, '\n').trim()));
+/** 1.2.1 결함 고침 — 가짜 굵게(마트 tools/geulkku-simple.mjs BOLD_RULE · fakeBold · boldFix 와 같아요 · 마트 고침 ce06d4f8b).
+ *   본문 글꼴이 명조 계열("RIDIBatang","Noto Serif KR",serif — 400 한 굵기)인 틀은 <strong> · <b> 를 브라우저가 번지게 그린 가짜 굵게로 뭉개요.
+ *   그런 틀에만 굵게 낱말을 고딕 700 으로 그리는 규칙 한 줄을 기본 규칙 덩이 끝에 더해요. 본문이 고딕인 틀 · 이미 굵게 규칙이 있는 틀은 그대로예요 */
+export const BOLD_RULE = key => `.gk-${key} p strong,.gk-${key} p b{font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;font-weight:700}`;
+export const fakeBold = (html) => {
+    const key = (html.match(/^\s*<div\b[^>]*\sclass="gk [^"]*\bgk-((?:k|q)\d+)\b/) || [])[1]; if (!key) return false;
+    const font = (html.match(new RegExp(`\\.gk-${key} p\\{[^}]*?font:([^;}]*)`)) || [])[1] || '';
+    return /(?:^|,)\s*serif\s*$/.test(font) && !new RegExp(`\\.gk-${key} p (?:strong|b)[,{]`).test(html.slice(0, html.indexOf('</style>')));
+};
+const boldFix = (html) => {
+    if (!fakeBold(html)) return html;
+    const key = html.match(/\bgk-((?:k|q)\d+)\b/)[1], at = html.indexOf('<style>') + 7, end = html.indexOf('\n\n', at);
+    return end < 0 ? html : `${html.slice(0, end)}\n${BOLD_RULE(key)}${html.slice(end)}`;
+};
+/** 틀 파일 → 마트가 받는 꼴(별칭 떼기 · 포커스 테 · 가짜 굵게 막기) — 마트 frameHtml 의 소리 카드 · 견본 자리표 채우기 앞 단계와 같아요 */
+export const rawFrame = d => boldFix(focusRing(stripAlias(fs.readFileSync(path.join(SRC, `${d.frame}.html`), 'utf8').replace(/\r\n/g, '\n').trim())));
 /** 소리 카드 줄을 뺀 「소리 없는 판」(소리 카드가 있던 틀만 뿌리 끝에 gk-noaud — 이식판 소리 없는 판과 같은 꼴) */
 export function quietFrame(html) {
     const lines = html.split('\n');
@@ -145,15 +159,26 @@ export function frameEntry(d) {
 /** 등록 값 글(src/log-copy-simple.gen.js) */
 export function build() {
     const entries = DEFS.map(frameEntry);
+    // 1.2.1 dist 되줄이기: 여러 틀이 같은 그림(data:image/svg+xml — 레몬 그림은 28번)을 CSS 에 그대로 실어 같은 글이 되풀이됐어요.
+    //   두 번 넘게 나오는 긴 그림 글은 맨 위 표(U)에 한 번만 싣고 자리에는 표시( 번호 )를 둬요 — 모듈을 읽을 때 되채워 등록 값은 글자 하나 다르지 않아요.
+    const lines = entries.map(e => JSON.stringify(e));
+    if (lines.some(l => /[]/.test(l))) throw new Error('틀 글에 되채우기 표시 글자(\\uE000 · \\uE001)가 있어요');
+    const seen = new Map();
+    for (const l of lines) for (const m of l.matchAll(/data:image\/svg\+xml,[^'"()\\]{100,}/g)) seen.set(m[0], (seen.get(m[0]) || 0) + 1);
+    const pics = [...seen].filter(([, n]) => n > 1).map(([s]) => s).sort((a, b) => b.length - a.length);
+    const packed = lines.map(l => pics.reduce((t, s, i) => t.split(s).join(`${i}`), l));
     const text = [
         '// 생성물 — tools/mart/simple-frames.mjs 가 이식판에서 꺼낸 틀(tools/mart/simple-frames/<틀>.html)로 만들어요. 고치지 말고 다시 만들어요.',
         '// 1.1.3 로그 복사 「심플」 새 틀 28 — 글꾸 마트 새 틀과 같은 틀(소리 카드 줄만 뺀 판) · log-copy-simple.js 가 drawSimple 로 그려요.',
+        '// 되풀이되는 그림 글은 U 에 한 번만 — 읽을 때 \\uE000 번호 \\uE001 자리를 되채워요(tools/mart/simple-frames.mjs build).',
+        `const U = ${JSON.stringify(pics)};`,
+        "const fill = v => (typeof v === 'string' ? v.replace(/\\uE000(\\d+)\\uE001/g, (all, i) => U[i]) : Array.isArray(v) ? v.map(fill) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fill(x)])) : v);",
         'export const SIMPLE_FRAMES = Object.freeze([',
-        ...entries.map(e => `    ${JSON.stringify(e)},`),
-        ']);',
+        ...packed.map(l => `    ${l},`),
+        '].map(fill));',
         '',
     ].join('\n');
-    return { entries, text };
+    return { entries, text, pics };
 }
 
 /** --pull: 이식판에서 틀마다 원래 판 한 벌을 꺼내요(마트 pull 과 같아요) + 이식판 「소리 없는 판」과 quietFrame 이 같은지 맞대요 */
@@ -176,7 +201,7 @@ export function pull(file) {
     }
     for (const [key, html] of Object.entries(quiet)) {
         const d = DEFS.find(x => x.frame === key);
-        if (d && quietFrame(rawFrame(d)) !== focusRing(stripAlias(html.trim()))) throw new Error(`${key}: 소리 없는 판이 이식판과 달라요`);
+        if (d && quietFrame(rawFrame(d)) !== boldFix(focusRing(stripAlias(html.trim())))) throw new Error(`${key}: 소리 없는 판이 이식판과 달라요`);
     }
     return { got, quiet: Object.keys(quiet) };
 }
@@ -204,8 +229,9 @@ async function fixture(mart) {
             out.quiet[`${d.frame}|${name}|${mode}`] = sha(styleKey(sf.toneSimple(quiet, k, { mode })));   // 소리 없는 판 — 그리기 대조
         }
     }
-    // 마트 파일이 같은 원래 판인지(첫 묶음은 포커스 테 한 줄만 다름 — 마트 생성기가 넣는 한 줄)
-    out.sameFrames = DEFS.every(d => fs.readFileSync(path.join(mart, 'tools', 'simple-frames', `${d.frame}.html`), 'utf8').replace(/\r\n/g, '\n').trim().split('\n').filter(l => !l.includes('summary:focus:not(:focus-visible)')).join('\n') === rawFrame(d).split('\n').filter(l => !l.includes('summary:focus:not(:focus-visible)')).join('\n'));
+    // 마트 파일이 같은 원래 판인지(첫 묶음은 포커스 테 한 줄 · 명조 본문 틀은 굵게 규칙 한 줄만 다름 — 둘 다 마트 생성기가 넣는 줄)
+    const own = (d, l) => l.includes('summary:focus:not(:focus-visible)') || l === BOLD_RULE(d.frame);
+    out.sameFrames = DEFS.every(d => fs.readFileSync(path.join(mart, 'tools', 'simple-frames', `${d.frame}.html`), 'utf8').replace(/\r\n/g, '\n').trim().split('\n').filter(l => !own(d, l)).join('\n') === rawFrame(d).split('\n').filter(l => !own(d, l)).join('\n'));
     fs.mkdirSync(path.dirname(FIXTURE), { recursive: true });
     fs.writeFileSync(FIXTURE, `${JSON.stringify(out, null, 1)}\n`);
     return out;

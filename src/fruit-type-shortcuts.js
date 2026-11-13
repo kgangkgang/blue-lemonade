@@ -50,10 +50,11 @@ function startShortcuts(doc,host){
     // 8.2.7 채팅을 열면 기록 수천 개가 같은 부모 몇백 개에 몰려요 — 부모마다 서랍 · 본문 안인지는 한 번만 묻고, 남은 기록을 한 번에 넘겨 판정해요(고르는 기록 · 결과는 같아요)
     //   떨어진 노드는 자손을 다 훑지 않고 결과로 봐요: 떨어짐으로 flush 가 바꾸는 것은 단추를 단 자리가 문서에서 빠진 경우뿐이에요(단추는 그 자리 바로 뒤 형제라 조상이 빠지면 함께 빠져요).
     //   iframe 이 통째로 빠진 것은 1.5초 타이머(frameSig)가 예전처럼 알아채요
+    // 1.2.1 답이 이어지는 동안 서랍 · 본문 안인가를 closest 한 번으로(예전: 둘을 따로 — 같은 답)
     const orphaned=()=>{for(const [anchor,button]of buttons)if(!anchor.isConnected||!button.isConnected)return true;return false;};
     const WATCH=DEUS_ROOT+',iframe,#chat,#fruit-heart-v6,#bl-deus-popover',PANELS='#fruit-heart-v6,#bl-deus-popover';
     // 9.0.4 공용 감시 허브 구독(html 구역 — 과일의 마음 창은 body 밖 html 의 자식 · head 는 안 봐요) + body 자기 data-generating. 시험의 가짜 창은 그 창 감시자 하나
-    const unwatch=watchWith(host,[[doc.documentElement||doc.body,{childList:true,subtree:true,exclude:'head',name:'과일 글자 바로가기'}],[doc.body,{attributes:['data-generating'],name:'과일 글자 바로가기 (답 끝)'}]],records=>{const streaming=!!doc.body.dataset.generating,skip=new Map(),left=[];for(const r of records){if(r.attributeName==='data-generating'){if(!streaming)schedule();continue;}const t=r.target;let out=skip.get(t);if(out===undefined){out=!!t.closest?.('.drawer-content,select')||(streaming&&!!t.closest?.('.mes_text'));skip.set(t,out);}if(!out)left.push(r);}if(left.length&&(fruitStructureChanged(left,WATCH,PANELS,false)||(left.some(r=>r.removedNodes?.length)&&orphaned())))schedule();});
+    const unwatch=watchWith(host,[[doc.documentElement||doc.body,{childList:true,subtree:true,exclude:'head',name:'과일 글자 바로가기'}],[doc.body,{attributes:['data-generating'],name:'과일 글자 바로가기 (답 끝)'}]],records=>{const streaming=!!doc.body.dataset.generating,skip=new Map(),left=[];for(const r of records){if(r.attributeName==='data-generating'){if(!streaming)schedule();continue;}const t=r.target;let out=skip.get(t);if(out===undefined){out=!!t.closest?.(streaming?'.drawer-content,select,.mes_text':'.drawer-content,select');skip.set(t,out);}if(!out)left.push(r);}if(left.length&&(fruitStructureChanged(left,WATCH,PANELS,false)||(left.some(r=>r.removedNodes?.length)&&orphaned())))schedule();});
     const offPoll=poll.every(()=>{if(windowOpen()||frameSig(true)!==lastSig)schedule();},{counts:true});flush();
     return()=>{stopped=true;offPoll();doc.removeEventListener('click',click,true);unwatch();host.cancelAnimationFrame(frame);for(const b of buttons.values())b.remove();buttons.clear();};
 }

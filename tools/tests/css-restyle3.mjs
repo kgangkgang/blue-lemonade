@@ -54,7 +54,8 @@ function classAncestorSubject(sel, inNot = false) {
     }
     return undefined;
 }
-const SHEETS = ['style.css', 'src/style-lazy.gen.css', 'src/chat-appearance.gen.css', 'src/markdown.gen.css'].filter(f => fs.existsSync(path.join(root, f)));
+// 1.1.6 뗀 규칙 시트(tools/css-gates.cjs — 켜짐 · 설정 창)도 같은 규칙이라 함께 봐요
+const SHEETS = ['style.css', 'src/style-lazy.gen.css', 'src/chat-appearance.gen.css', 'src/markdown.gen.css', 'src/gate-outline.gen.css', 'src/gate-type.gen.css', 'src/gate-mixed.gen.css', 'src/panel.gen.css'].filter(f => fs.existsSync(path.join(root, f)));
 const wide = () => {
     const out = [];
     for (const f of SHEETS) {

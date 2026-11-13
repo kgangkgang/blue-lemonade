@@ -1,0 +1,503 @@
+/* src/panel.gen.css — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 163개(테마 설정 창(.salty-panel — src/panel.js mountPanel 만 만들어요) 안에서만 맞는 규칙. index.js loadPanel · first-run.js 가 창을 만들기 전에 이 시트를 받아요) — 고치지 말 것. src/lite.js 가 테마 설정 창을 만들기 전에(index.js loadPanel · first-run.js) 테마 시트 뒤에 붙여요 (build be9283ae55be) */
+body.salty-dark .salty-panel {
+  --danger: var(--salty-danger);
+}
+.salty-panel,
+.salty-panel * {
+  text-shadow: none !important;
+  box-sizing: border-box;
+}
+.salty-panel .salty-stack > .salty-seg.bl-seg-2col > button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.salty-panel .bl-addon-inline-content .text_pole:is(bl-s, *):not(textarea, .neo-range-input),
+.salty-panel .bl-addon-inline-content select:is(.bl-s, *):not(textarea, .neo-range-input),
+.salty-panel .bl-addon-inline-content input:is([type="text"], [type="number"], [type="search"], [type="password"], [type="url"], [type="email"]):not(textarea, .neo-range-input) { min-height: var(--bl-h-ctl, 36px); }
+@media (max-width: 1000px) {
+.salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks)[data-bl-row~="sl2"]:is(.bl-s, *) > :where(.salty-slider):is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider:where(.salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks)[data-bl-row~="sl2"]:is(.bl-s, *) > :where(.salty-slider):is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider):not(:has(+ .salty-slider)), .salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks)[data-bl-row~="sl2"]:is(.bl-s, *) > :where(.salty-slider):is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider + .salty-slider + .salty-slider:where(.salty-panel .salty-group:not(.bl-control-grid, .salty-sizes, .bl-setting-locks)[data-bl-row~="sl2"]:is(.bl-s, *) > :where(.salty-slider):is(:not(.salty-slider) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider + .salty-slider + .salty-slider):not(:has(+ .salty-slider)) {
+    grid-column: 1 / -1;
+  }
+}
+.salty-panel .bl-zero-off { opacity: .55; }
+body.salty .salty-panel:not(.bl-editor) .salty-sec[data-tab="image"] .salty-group { padding-inline: 10px; }
+@container bl-editor (min-width:800px) {
+body.salty .salty-panel .bl-image-reading .mes_text > p.bl-pc-detail { margin-block:16px !important; }
+}
+.salty-panel .salty-pal-create small { color: var(--salty-muted) !important; }
+.salty-panel .salty-custom-color input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.salty-panel .salty-custom-color input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 5px; }
+.salty-panel .salty-mask-item.on .salty-mask-thumb {
+  box-shadow: var(--bl-pick-ring-card);
+}
+.salty-panel input[type="color"][data-color-path]::-webkit-color-swatch-wrapper { padding: 0; }
+.salty-panel input[type="color"][data-color-path]::-webkit-color-swatch { border: 0; border-radius: 8px; box-shadow: 0 0 0 1px var(--salty-shade-2); }
+@media not all and (max-width: 1000px) {
+.salty-panel.in-popup .salty-group:where(.salty-panel.in-popup .salty-group):has(> :is(.salty-row, .salty-slider) + :is(.salty-row, .salty-slider)) > .salty-row {
+    align-self: start;
+  }
+}
+.salty-panel.bl-editor .salty-sec { container:bl-controls / inline-size; }
+.salty-panel.bl-editor .bl-control-grid > .salty-stack,
+.salty-panel.bl-editor .bl-control-grid > .salty-slider,
+.salty-panel.bl-editor .bl-control-grid > .salty-row,
+.salty-panel.bl-editor .bl-control-grid > .bl-color-field { min-width:0; }
+@container bl-controls (min-width:34em) {
+html body .salty-panel.bl-editor .salty-sec .salty-group:is(.bl-control-grid,.salty-sizes) > .salty-stack,
+html body .salty-panel.bl-editor .salty-sec .salty-group:is(.bl-control-grid,.salty-sizes) > .salty-sizeopt,
+html body .salty-panel.bl-editor .salty-sec .salty-group:is(.bl-control-grid,.salty-sizes) > .salty-slider,
+html body .salty-panel.bl-editor .salty-sec .salty-group:is(.bl-control-grid,.salty-sizes) > .salty-row { grid-column:auto; }
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-dialogue-controls > .salty-stack:first-child,
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-message-controls > .salty-row,
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-qr-controls > .bl-inline-preview,
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-qr-controls > .salty-row { grid-column:1 / -1; }
+}
+@container bl-controls (width < 22em) {
+html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) { display:block; }
+}
+html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider {
+  display:flex; flex-direction:column; align-self:stretch; min-width:0;
+}
+html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider > header {
+  display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; flex:1; gap:6px 10px;
+}
+html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider > header > .salty-num {
+  align-self:end; justify-self:end;
+}
+@container bl-controls (22em <= width < 44em) {
+html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider > header {
+    grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(min-content,1fr) auto;
+  }
+}
+.salty-panel .bl-qr-sample::-webkit-scrollbar {
+  display: none;
+}
+.salty-panel .bl-qr-sample .bl-qr-find-sample::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  right: 100%;
+  width: 8px;
+  background: var(--salty-fill-surface, var(--salty-surface));
+  pointer-events: none;
+}
+.salty-panel .bl-qr-sample .bl-qr-find-sample::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: 100%;
+  width: 29px;
+  background: linear-gradient(to right, var(--salty-surface) 5px, transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.salty-panel .bl-qr-sample.bl-qr-cut-left .bl-qr-find-sample::after {
+  opacity: 1;
+}
+.salty-panel .bl-qr-sample.bl-qr-more-right::after {
+  opacity: 1;
+}
+.salty-panel .bl-qr-sample.bl-qr-dragging {
+  scroll-snap-type: none;
+}
+body.salty.salty-qr-top .salty-panel .bl-qr-inputmock {
+  order: 1;
+}
+.salty-panel .bl-search-ai > .salty-btns > .salty-btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.salty-panel { --bl-settings-cover: var(--salty-panel-surface, var(--salty-surface)); }
+.salty-panel.in-popup { --bl-settings-cover: var(--salty-panel-card, var(--bl-card, var(--salty-surface))); }
+@container bl-editor (max-width:480px) {
+html body .salty-panel.bl-editor .bl-settings-toprow .bl-editor-actions .bl-settings-expand,
+html body .salty-panel.bl-editor .bl-settings-toprow .bl-editor-actions .bl-settings-close { width:32px; min-width:0; }
+}
+.salty-panel .bl-icontile[hidden] {
+  display: none !important;
+}
+.salty-panel .bl-iconempty[hidden] {
+  display: none !important;
+}
+html body .salty-panel.bl-editor .salty-sec .salty-seg.bl-screen-chips > button { flex:1 0 auto !important; min-width:max-content !important; white-space:nowrap; }
+@container bl-editor (min-width:340px) {
+html body .salty-panel.bl-editor .bl-editor-group-body > .salty-group.salty-sizes { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:4px 16px; }
+html body .salty-panel.bl-editor .bl-editor-group-body > .salty-group.salty-sizes > * { grid-column:auto; min-width:0; margin:0; }
+}
+html body.salty .salty-panel .bl-editor-directory .bl-editor-category button:hover { background:var(--salty-fill-shade, var(--salty-shade)); }
+html body.salty .salty-panel .bl-editor-directory .bl-editor-category button[hidden] { display:none; }
+html body.salty .salty-panel .bl-editor-directory .bl-editor-category button[aria-current="page"] { background:var(--salty-fill-accent-10, var(--salty-accent-10)); color:var(--salty-accent-ink, var(--salty-accent)); font-weight:650; box-shadow:inset 3px 0 0 var(--salty-accent); }
+.salty-panel .bl-editor-directory .bl-favorite-chip > .bl-favorite-toggle { flex:0 0 32px; width:32px; min-height:32px; }
+html body .salty-panel.bl-editor .bl-advanced .bl-advanced-body > .bl-editor-group:first-child > .bl-editor-group-head { margin-top:4px; }
+@container bl-editor (min-width:340px) {
+html body .salty-panel.bl-editor .bl-advanced-body > .salty-group.salty-sizes { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:4px 16px; }
+html body .salty-panel.bl-editor .bl-advanced-body > .salty-group.salty-sizes > * { grid-column:auto; min-width:0; margin:0; }
+}
+.salty-panel .bl-extension-page input[type="checkbox"]:where(:not(.bl-capture-options *)):checked { background-color:var(--salty-accent) !important; box-shadow:none !important; }
+.salty-panel .bl-extension-page input[type="checkbox"]:where(:not(.bl-capture-options *))::before { box-shadow:inset 1em 1em var(--salty-on-accent, var(--bl-fb-fff)) !important; }
+.salty-panel .bl-script-actions>[hidden] { display:none!important; }
+.salty-panel .bl-mespins button > i {
+  text-align: center;
+}
+html body .salty-panel .bl-mespins[data-bl-cols="1"] { grid-template-columns: minmax(0, 1fr); }
+.salty-panel .bl-mespins button.on::after {
+  border-color: var(--salty-accent);
+}
+@media (max-width: 760px), (pointer: coarse) {
+.salty-panel { --bl-settings-control: 36px; --bl-settings-chip: 34px; }
+}
+.salty-panel.bl-editor .salty-row > .salty-switch,
+.salty-panel.bl-editor .salty-row > .salty-seg,
+.salty-panel.bl-editor .salty-row > .salty-btn,
+.salty-panel.bl-editor .salty-row > .salty-btns,
+.salty-panel.bl-editor .salty-row > .salty-sizeopt-ctl,
+.salty-panel.bl-editor .salty-slider > header > .salty-num { margin-inline-start:auto; }
+.salty-panel .bl-install-health > [data-health-result]:empty { display:none; }
+.salty-panel .bl-usage-mode [role="status"]:empty { display:none; }
+.salty-panel .bl-settings-close, .salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"] { --bl-glyph-size:16px; }
+.salty-panel .bl-search-field > [data-settings-clear] { --bl-glyph-size:18px; }
+body.salty .salty-panel .bl-preview-samples > button {
+  --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12.5 5 7.5 10l5 5'/%3E%3C/svg%3E");
+  --bl-glyph-size:14px;
+}
+body.salty .salty-panel .bl-preview-samples > button[data-step="1"] {
+  --bl-glyph:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7.5 5l5 5-5 5'/%3E%3C/svg%3E");
+}
+html body .salty-panel.bl-editor :is(.bl-editor-group-head, .bl-help-head) > .bl-help-btn { --bl-help-y: 0em; top: var(--bl-help-y-line); }
+html body .salty-panel.bl-editor .bl-editor-group-head:where(html body .salty-panel.bl-editor .bl-editor-group-head):has(> .bl-help-btn), html body .salty-panel.bl-editor .bl-help-head:where(html body .salty-panel.bl-editor .bl-help-head):has(> .bl-help-btn) { contain: paint; overflow-clip-margin: 8px; }
+.salty-panel .bl-mix .bl-mix-heading > .salty-btn {
+  flex:none; width:auto; margin:0; align-self:center; min-height:var(--bl-settings-control, 34px); padding:8px 10px 4px; font-size:inherit; line-height:1.4;
+}
+@media(max-width:760px) {
+html body .salty-panel.bl-editor .salty-sec { padding-inline:var(--bl-editor-gutter,10px); }
+}
+.salty-panel .bl-md-group > summary::-webkit-details-marker { display:none; }
+.salty-panel .bl-md-group > summary::after { content:''; width:.4em; height:.4em; flex:none; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; transform:rotate(45deg); margin:0 .2em .2em .1em; }
+.salty-panel .bl-md-group[open] > summary::after { transform:rotate(225deg); margin-block:.2em 0; }
+.salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider { display:flex; flex-direction:column; align-self:stretch; min-width:0; }
+.salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider > header { flex:1 0 auto; flex-wrap:wrap; align-content:flex-start; row-gap:2px; }
+.salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider > header > .salty-num { margin-inline-start:auto; }
+.salty-panel .bl-installed-versions > div.is-off dt { color: var(--salty-muted); }
+.salty-panel .bl-mav-list .bl-mav-list-name b { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.salty-panel .bl-mav-list .bl-mav-list-name small { color:var(--salty-muted); font-size:11px; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title > .salty-ver.is-new { color: var(--salty-accent) !important; border-color: var(--salty-accent) !important; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] > .salty-ver { margin: 0 !important; }
+html:not(#bl-pill-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] > .bl-copyright { margin: 0 0 0 calc((18px - var(--bl-h-icon, 34px)) / 2) !important; padding-block: 0 !important; }
+html:not(#bl-pill-off):not(#bl-pill-gap-off) body.salty .salty-panel .salty-title[data-bl-row~="copy"] > .salty-ver { margin: 0 !important; top: 0 !important; }
+.salty-panel .bl-prompt-link .bl-link-head > b { min-width: 0; font-weight: 650; overflow-wrap: anywhere; }
+.salty-panel .bl-prompt-link .bl-link-field > input { width: 100%; min-width: 0; height: auto; min-height: var(--bl-h-ctl, 36px); margin: 0; padding: 4px 12px; line-height: 1.5; border: 1px solid var(--salty-line); border-radius: var(--bl-r-sm, 8px); background: var(--bl-field, var(--salty-field)); color: var(--salty-text); font: inherit; }
+.salty-panel .bl-prompt-link .bl-link-field > input:focus { background: var(--bl-field, var(--salty-field)); color: var(--salty-text); border-color: var(--salty-accent); outline: none; }
+.salty-panel .bl-prompt-link .bl-link-hint[hidden] { display: none; }
+.salty-panel .bl-ss-files {
+  margin: 2px 0 6px;
+}
+.salty-panel .bl-ss-files > summary::-webkit-details-marker {
+  display: none;
+}
+.salty-panel .bl-ss-files > summary small {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--salty-muted);
+}
+.salty-panel .bl-ss-files > summary::after {
+  content: "";
+  width: 0.4em;
+  height: 0.4em;
+  flex: none;
+  margin: 0 0.2em 0.2em 0.1em;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+.salty-panel .bl-ss-files[open] > summary::after {
+  transform: rotate(225deg);
+  margin-block: 0.2em 0;
+}
+.salty-panel .bl-ss-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--row-h);
+  padding: 4px 0;
+}
+.salty-panel .bl-ss-kind {
+  flex: none;
+  min-width: 4.5em;
+}
+.salty-panel .bl-ss-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-small);
+  color: var(--salty-muted);
+}
+.salty-panel .bl-ss-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--salty-fill-shade, var(--shade));
+  color: var(--salty-text);
+  font-size: 14px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.salty-panel .bl-ss-btn:active {
+  background: var(--shade-2);
+}
+@media (hover: hover) {
+.salty-panel .bl-ss-btn:hover {
+    background: var(--shade-2);
+  }
+}
+.salty-panel .bl-ss-btn[aria-pressed="true"] {
+  background: var(--salty-fill-accent, var(--salty-accent));
+  color: var(--salty-on-accent, var(--bl-fb-fff));
+}
+.salty-panel .bl-ss-btn:focus-visible {
+  outline: 2px solid var(--salty-accent);
+  outline-offset: 2px;
+}
+.salty-panel .salty-stack .salty-seg.bl-sm-moods {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+}
+.salty-panel .salty-stack .salty-seg.bl-sm-moods > button {
+  min-width: 0;
+  white-space: nowrap;
+}
+.salty-panel .bl-sm-now {
+  font-weight: 650;
+  color: var(--salty-accent);
+}
+html body:not(.salty) .salty-panel button,
+html body:not(.salty) .salty-panel small { color: inherit; }
+html body:not(.salty) .salty-panel {
+  --SmartThemeBodyColor: var(--salty-text);
+  --SmartThemeEmColor: var(--salty-muted, var(--salty-text));
+  --SmartThemeQuoteColor: var(--salty-accent, var(--salty-text));
+  --SmartThemeUnderlineColor: var(--salty-accent, var(--salty-text));
+  --SmartThemeBorderColor: var(--salty-line, var(--salty-muted));
+  --SmartThemeBlurTintColor: var(--salty-surface);
+  --SmartThemeChatTintColor: var(--salty-surface);
+}
+html body:not(.salty) .salty-panel .bl-preview-tools button[aria-pressed="true"] { background: var(--salty-accent-13, color-mix(in srgb, var(--salty-accent) 13%, transparent)); color: var(--salty-accent); }
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel :is(.bl-help-btn, .bl-word-help) > i::before { content: "\f128" !important; }
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel .bl-help-btn:focus-visible,
+html body:not(.salty):not(#bl-h1):not(#bl-h2) .salty-panel .bl-word-help:focus-visible { outline: 2px solid var(--salty-accent) !important; outline-offset: 2px !important; }
+html:not(#bl-groups-off) body.salty .salty-panel :is(.salty-group, .bl-editor-group-body, .bl-tool-body, .bl-addon-config, .salty-sec) > .salty-btns:where(html:not(#bl-groups-off) body.salty .salty-panel :is(.salty-group, .bl-editor-group-body, .bl-tool-body, .bl-addon-config, .salty-sec) > .salty-btns):has(> .salty-btn:nth-child(2)):not(:has(> .salty-btn-icon, > .bl-icon-btn, > .salty-icon-btn)) > .salty-btn {
+  width: 100% !important; min-width: 0 !important; margin: 0 !important; flex: none !important; justify-content: center !important; white-space: nowrap !important; word-break: keep-all !important;
+}
+html:not(#bl-groups-off) body.salty .salty-panel :is(.salty-group, .bl-editor-group-body, .bl-tool-body, .bl-addon-config, .salty-sec) > .salty-btns[data-bl-cols="1"] { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: var(--bl-s2, 8px) !important; }
+html:not(#bl-groups-off) body.salty .salty-panel :is(.salty-group, .bl-editor-group-body, .bl-tool-body, .bl-addon-config, .salty-sec) > .salty-btns[data-bl-cols="1"] > .salty-btn { white-space: normal !important; }
+html:not(#bl-groups-off) body.salty .salty-panel .bl-tool-grid.bl-word-options:not([data-bl-cols="1"]) { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: var(--bl-s2, 8px) var(--bl-s3, 12px) !important; }
+html:not(#bl-groups-off) body.salty .salty-panel .bl-tool-grid.bl-word-options[data-bl-cols="1"] { grid-template-columns: minmax(0, 1fr) !important; }
+@media (pointer: coarse) {
+html body .salty-panel label.salty-switch::before {
+    content: '';
+    position: absolute;
+    left: auto;
+    right: 0;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translateY(-50%);
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+html body .salty-panel .salty-slider > input[type="range"] {
+    height: 44px !important;
+    margin-block: calc((44px - 24px) / -2) !important;
+  }
+html body .salty-panel, html body .salty-panel.bl-editor { --num-h: max(var(--bl-ui-ctl, 36px), calc(1.5em + 12px)); }
+}
+.salty-panel .bl-pick-card {
+  position: relative;
+  --bl-ui-pick-direction: column;
+  --bl-ui-pick-check-position: absolute;
+  --bl-ui-pick-check-inset: 8px 8px auto auto;
+  --bl-ui-pick-check-margin: 0;
+}
+html body .salty-panel .bl-prompt-tools .bl-prompt-name-row {
+  padding-inline:0;
+  margin-block:0;
+}
+html body .salty-panel .bl-prompt-name-row > input,
+html body .salty-panel .bl-prompt-name-row > select {
+  margin:0;
+}
+html[data-bl-puffy] body.salty .salty-panel .salty-switch span::after {
+  box-shadow: var(--bl-knob);
+}
+html:root body .salty-panel :is(.salty-seg button).on:not(:disabled),
+html:root body .salty-panel :is(.salty-fonttags button).on:not(:disabled),
+html:root body .salty-panel :is(.salty-fontempty button).on:not(:disabled) { box-shadow:none!important; }
+html:not(#bl-density-off):not(#bl-density-off2) body .salty-panel .salty-btn.bl-tool-primary { border: 1px solid color-mix(in srgb, var(--salty-accent) 50%, transparent) !important; }
+html:not(#bl-density-off):not(#bl-density-off2) body .salty-panel :where(button):is(.salty-seg button),
+html:not(#bl-density-off):not(#bl-density-off2) body .salty-panel :where(button):is(.salty-fonttags button),
+html:not(#bl-density-off):not(#bl-density-off2) body .salty-panel :where(button):is(.salty-fontempty button) { box-shadow: none !important; }
+html:not(#bl-density-off):not(#bl-density-off2) body .salty-panel :is(.salty-seg button).on,
+html:not(#bl-density-off):not(#bl-density-off2) body .salty-panel :is(.salty-fonttags button).on,
+html:not(#bl-density-off):not(#bl-density-off2) body .salty-panel :is(.salty-fontempty button).on { font-weight: 650 !important; }
+html:not(#bl-i2-off) body.salty .salty-panel input:is([type="text"], [type="search"], [type="number"], [type="url"], [type="password"]):where(:not(.salty-switch input, .salty-reset-pick input, [type="color"], [type="range"])),
+html:not(#bl-i2-off) body.salty .salty-panel select:is(.bl-s, *):where(:not(.salty-switch input, .salty-reset-pick input, [type="color"], [type="range"])),
+html:not(#bl-i2-off) body.salty .salty-panel textarea:is(.bl-s, *):where(:not(.salty-switch input, .salty-reset-pick input, [type="color"], [type="range"])) {
+  background-color: var(--bl-field-face, var(--bl-control)) !important;
+  box-shadow: inset 0 0 0 1px var(--salty-line) !important;
+  border: 0 !important;
+}
+html:not(#bl-i2-off) body.salty .salty-panel input:is([type="text"], [type="search"], [type="number"], [type="url"], [type="password"]):where(:not(.salty-switch input, .salty-reset-pick input, [type="color"], [type="range"])):focus-visible,
+html:not(#bl-i2-off) body.salty .salty-panel select:is(.bl-s, *):where(:not(.salty-switch input, .salty-reset-pick input, [type="color"], [type="range"])):focus-visible,
+html:not(#bl-i2-off) body.salty .salty-panel textarea:is(.bl-s, *):where(:not(.salty-switch input, .salty-reset-pick input, [type="color"], [type="range"])):focus-visible {
+  box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
+}
+html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field { background: var(--bl-field-face, var(--bl-control)) !important; border: 0 !important; box-shadow: inset 0 0 0 1px var(--salty-line) !important; }
+html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field:focus-within { box-shadow: inset 0 0 0 1px var(--salty-accent) !important; }
+html:not(#bl-i2-off):not(#bl-i2-search-off) body.salty .salty-panel .bl-search-field input:is([type="search"], [type="text"]) { background: transparent !important; box-shadow: none !important; border: 0 !important; outline: none !important; }
+.salty-panel :is(.salty-row, .salty-stack) > .salty-seg:not(.salty-mini):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+.salty-panel :is(.salty-row, .salty-stack) > select:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *),
+.salty-panel :is(.salty-row, .salty-stack) > input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="color"]) {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+}
+.salty-panel .salty-stack:where(.salty-panel .salty-stack):has(> .salty-seg) {
+  grid-template-columns: minmax(0, 1fr) !important;
+  justify-items: stretch !important;
+  justify-content: stretch !important;
+}
+.salty-panel .salty-row:where(.salty-panel .salty-row):has(> .salty-sizeopt-ctl):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: var(--bl-s2) var(--bl-s2) !important;
+}
+.salty-panel .salty-sizeopt > .salty-row > span:first-child { grid-column: 1; grid-row: 1; min-width: 0; }
+.salty-panel .salty-row > .salty-sizeopt-ctl:not([hidden]):not([style*="display: none"]):not([style*="display:none"]) { display: contents !important; }
+.salty-panel .salty-sizeopt-ctl > .salty-num { grid-column: 2; grid-row: 1; }
+.salty-panel .salty-sizeopt-ctl > .salty-seg { grid-column: 1 / -1; grid-row: 2; width: 100% !important; }
+.salty-panel .salty-sec .salty-seg:not(.salty-shapes):not(.salty-mini):not([hidden]):not([style*="display: none"]):not([style*="display:none"]) {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box;
+}
+.salty-panel .salty-sec .salty-seg:not(.salty-shapes):not(.salty-mini):where(.salty-panel .salty-sec .salty-seg):has(> button:nth-child(5)) > button { flex: 1 1 auto !important; }
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-slider > header {
+  display: flex !important;
+  flex-wrap: wrap;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between;
+  grid-template-columns: none;
+  grid-template-rows: none;
+  gap: 2px var(--bl-param-col-gap) !important;
+  margin: 0 0 var(--bl-param-row-gap) !important;
+  min-height: 0;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-slider > header > span:first-child {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  word-break: keep-all;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-slider > header > .salty-num {
+  flex: none;
+  margin-inline-start: auto;
+  align-self: center;
+  justify-self: auto;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-slider {
+  padding: var(--bl-param-pad) !important;
+  margin: 0 !important;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt > .salty-slider.salty-slider-wide {
+  padding: 0 0 4px !important;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-num input[type="number"][data-num] {
+  width: calc(var(--num-ch, 3) * (1ch + max(0px, var(--bl-settings-tracking, 0px))) + 12px) !important;
+  min-width: 2.2em !important;
+  max-width: 8em;
+  padding: 0 6px !important;
+  text-align: center;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-num { gap: 4px; }
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-num i.salty-unit { width: auto; min-width: 0; }
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-num i.salty-unit:empty { display: none; }
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-slider > header > span > .bl-setting-reset,
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sizeopt > .salty-row > span > .bl-setting-reset { margin: 0 0 0 4px; }
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt {
+  padding: var(--bl-param-pad);
+  min-width: 0;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt > .salty-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: var(--bl-param-row-gap) var(--bl-param-col-gap) !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt > .salty-row > span:first-child {
+  grid-column: 1; grid-row: 1; min-width: 0; display: inline-flex; align-items: center; gap: 4px; word-break: keep-all;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt > .salty-row > .salty-seg.salty-mini,
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt > .salty-row > .salty-sizeopt-ctl > .salty-seg {
+  grid-column: 1 / -1 !important; grid-row: 2 !important; width: 100% !important; max-width: none !important; margin: 0 !important;
+}
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt > .salty-row > .salty-sizeopt-ctl > .salty-num { grid-column: 2; grid-row: 1; }
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group > .salty-sizeopt .salty-seg.salty-mini > button { flex: 1 1 auto !important; min-width: max-content !important; white-space: nowrap; }
+@container bl-controls (width >= 19em) {
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks, .bl-decor-controls) {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    column-gap: var(--bl-s3);
+    row-gap: 0;
+    align-items: start;
+  }
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .salty-row, html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .salty-stack, html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .bl-color-field, html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .salty-note, html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .salty-btns, html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .bl-gradient-control, html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .salty-label, html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .salty-chips, html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .salty-hint {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .salty-slider, html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .salty-sizeopt {
+    grid-column: auto;
+    min-width: 0;
+  }
+}
+@container bl-controls (width >= 19em) {
+@container bl-controls (width < 22em) {
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .salty-sizeopt, html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group):is(.salty-sizes, :has(> .salty-slider), :has(> .salty-sizeopt)):not(.bl-control-grid, .bl-setting-locks) > .salty-slider:not(.salty-slider + .salty-slider):not(:has(+ .salty-slider)) { grid-column: 1 / -1; }
+}
+}
+@container bl-controls (width >= 19em) {
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group.salty-sizes > .salty-slider:nth-child(odd):last-child, html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group.salty-sizes > .salty-sizeopt:nth-child(odd):last-child, html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.salty-sizes, .bl-control-grid, .bl-setting-locks) > .salty-slider:not(:is(.salty-slider, .salty-sizeopt) + *):where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.salty-sizes, .bl-control-grid, .bl-setting-locks) > .salty-slider):not(:has(+ :is(.salty-slider, .salty-sizeopt))), html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.salty-sizes, .bl-control-grid, .bl-setting-locks) > .salty-sizeopt:not(:is(.salty-slider, .salty-sizeopt) + *):where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.salty-sizes, .bl-control-grid, .bl-setting-locks) > .salty-sizeopt):not(:has(+ :is(.salty-slider, .salty-sizeopt))), html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.salty-sizes, .bl-control-grid, .bl-setting-locks) > :where(.salty-slider):is(:not(.salty-slider, .salty-sizeopt) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.salty-sizes, .bl-control-grid, .bl-setting-locks) > :where(.salty-slider):is(:not(.salty-slider, .salty-sizeopt) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider):not(:has(+ .salty-slider)), html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.salty-sizes, .bl-control-grid, .bl-setting-locks) > :where(.salty-slider):is(:not(.salty-slider, .salty-sizeopt) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider + .salty-slider + .salty-slider:where(html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.salty-sizes, .bl-control-grid, .bl-setting-locks) > :where(.salty-slider):is(:not(.salty-slider, .salty-sizeopt) + .salty-slider, .salty-slider:first-child) + .salty-slider + .salty-slider + .salty-slider + .salty-slider):not(:has(+ .salty-slider)) {
+    grid-column: 1 / -1;
+  }
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.bl-control-grid, .bl-setting-locks) > :where(details),
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.bl-control-grid, .bl-setting-locks) > :where(p),
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.bl-control-grid, .bl-setting-locks) > :where(.salty-note),
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.bl-control-grid, .bl-setting-locks) > :where(.bl-ss-files),
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group:not(.bl-control-grid, .bl-setting-locks) > :where(.bl-weather-skip-fold) {
+    grid-column: 1 / -1;
+  }
+}
+html body .salty-panel.bl-editor :is(.salty-row, .salty-stack, .salty-slider > header) > span:where(html body .salty-panel.bl-editor :is(.salty-row, .salty-stack, .salty-slider > header) > span):has(> .bl-setting-reset):not(:has(> :not(.bl-setting-reset))) { display: inline-flex; align-items: center; flex: none; min-width: max-content; column-gap: 0 !important; }
+html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { --bl-reset-optical-a: calc(6px - 8.36px - 0.7px); margin: 0 0 0 var(--bl-reset-optical-a) !important; align-self: center;}
+@media (max-width: 760px), (pointer: coarse) {
+html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { --bl-reset-optical-b: calc(6px - 10.36px - 0.7px); margin: 0 0 0 var(--bl-reset-optical-b) !important; }
+}
+html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { vertical-align: top; margin-top: calc((var(--bl-name-lh) - 28px) / 2) !important; margin-bottom: calc((var(--bl-name-lh) - 28px) / 2) !important; }
+@media (max-width: 760px), (pointer: coarse) {
+html body .salty-panel.bl-editor .bl-setting-reset:not(#bl-reset-gap-off) { margin-top: calc((var(--bl-name-lh) - 32px) / 2) !important; margin-bottom: calc((var(--bl-name-lh) - 32px) / 2) !important; }
+}
+html body .salty-panel.bl-editor .salty-row:where(html body .salty-panel.bl-editor .salty-row):has(> span > small):has(> .salty-switch, > .bl-ft-row-ctl > .salty-switch) { align-items: flex-start; }
+html body .salty-panel.bl-editor .salty-row:where(html body .salty-panel.bl-editor .salty-row):has(> span > small):has(> .salty-switch, > .bl-ft-row-ctl > .salty-switch) > .salty-switch, html body .salty-panel.bl-editor .salty-row:where(html body .salty-panel.bl-editor .salty-row):has(> span > small):has(> .salty-switch, > .bl-ft-row-ctl > .salty-switch) > .bl-ft-row-ctl { align-self: flex-start; translate: 0 calc(var(--bl-name-lh) / 2 - 50%); }

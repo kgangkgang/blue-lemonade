@@ -47,10 +47,15 @@ jobs:
           node tools/tests/log-copy-simple-frames.mjs .
           node tools/tests/log-copy-simple-old71.mjs .
           node tools/mart/simple-frames.mjs --check
+          node tools/tests/log-copy-simple-pack.mjs .
+          # 1.2.1 명조 본문 심플 틀의 굵게가 가짜 굵게로 뭉개지던 것(굵게 = 고딕 700 · 마트 고침 ce06d4f8b 와 같은 규칙)
+          node tools/tests/log-copy-simple-bold.mjs .
           node tools/tests/log-copy-basic.mjs .
           # 1.1.5 「레몬 바로가기」를 끄면 기본 글꾸 18틀도 레몬이 그림째 사라지는지(켠 그림은 그대로)
           node tools/tests/log-copy-lemon-off.mjs .
           node tools/mart/basic-frames.mjs --check
+          # 1.2.1 깡통이 <details> 안 내용을 class 없는 div 로 감싸도 펼친 글이 보이는지(빈 줄만 숨김 · 마트 고침 ce06d4f8b 와 같은 선택자)
+          node tools/tests/log-copy-kk-details-wrap.mjs .
           # 1.1.4 글꾸 마트 「테마로 담기」 받기: 심플 틀 → 등록 값 · 꾸러미 검사 · 내 글꾸 · 조절 값(마트 사본 src/geulkku-mart/)이 마트 기대값과 같은지
           node tools/tests/log-copy-simple-import.mjs .
           # 1.1.8 한 꼴로 안 늘던 마트 틀(줄마다 꾸밈 · 메시지 칸)을 줄 갈래 · 칸 묶음으로 받아 그리기
@@ -58,6 +63,8 @@ jobs:
           node tools/tests/log-copy-picks.mjs .
           node tools/tests/log-copy-picks-sheet.mjs .
           node tools/tests/log-copy-simple-set.mjs .
+          # 1.2.1 받은 글꾸의 고친 글에 「&nbsp;」 글자가 보이던 것(마트 고침 ce06d4f8b 와 같은 규칙)
+          node tools/tests/geulkku-mart-nbsp.mjs .
           node tools/tests/log-copy-simple-rows.mjs .
           node tools/tests/log-copy-copy-fidelity.mjs .
           node tools/tests/log-copy-tune.mjs .
@@ -103,6 +110,9 @@ jobs:
           # 1.0.1 테마 › 업데이트 상자 되살림 (판 목록 · 업데이트 확인 · 새로고침 · 시작 그래프 밖)
           node tools/tests/update-box.mjs .
           node tools/tests/notice-credits-restore.mjs .
+          # 1.2.1 1.0.0 앞 판 공지(465판)를 눌러 담아 공지 창을 열 때 풀어요 — 원본 = 생성물 · 풀린 글 · 끝난 창 DOM 이 한꺼번에 그린 것과 같은지
+          node tools/notice-old-gen.mjs --check
+          node tools/tests/notice-old-pack.mjs .
           node tools/pricing/test-client.mjs
           node tools/tests/settings-upgrade.mjs .
           node tools/tests/palettes-restored.mjs .
@@ -150,6 +160,7 @@ jobs:
           node tools/tests/perf-storage.mjs .
           node tools/tests/boot-graph.mjs .
           node tools/tests/markdown-css-split.mjs .
+          node tools/tests/css-gates-order.mjs .
           node tools/tests/gradients-core.mjs .
           node tools/tests/chat-appearance.mjs .
           node tools/tests/appearance-lifecycle.mjs .
@@ -428,8 +439,10 @@ jobs:
           node tools/tests/align-check.mjs .
           node tools/tests/check-mark-center.mjs .
           node tools/tests/control-ink.mjs .
+          node tools/tests/control-ink-batch.mjs .
           node tools/tests/fruit-deus-control-ink.mjs .
           node tools/tests/tab-scroll.mjs .
+          node tools/tests/tab-scroll-batch.mjs .
           node tools/tests/wheel-x.mjs .
           node tools/tests/wheel-x-nested.mjs .
           node tools/tests/scroll-fade.mjs .
@@ -437,13 +450,18 @@ jobs:
           node tools/tests/dom-watch-hub.mjs .
           node tools/tests/theme-look.mjs .
           node tools/tests/message-decor.mjs .
+          node tools/tests/record-place-memo.mjs .
+          node tools/tests/typeset-same-class.mjs .
           node tools/tests/hidden-details.mjs .
           node tools/tests/observer-budget.mjs .
+          node tools/tests/observer-roots.mjs .
           node tools/tests/perf-budget-static.mjs .
           node tools/tests/bundle-min-style.mjs .
+          node tools/tests/bundle-html-indent.mjs .
           node tools/tests/settings-ext-memo.mjs .
           node tools/tests/tone-hex.mjs .
           node tools/tests/card-ink-memo.mjs .
+          node tools/tests/card-ink-more.mjs .
           node tools/tests/apply-class-batch.mjs .
           node tools/tests/dem-streaming-root.mjs .
           node tools/tests/dem-skin-flat.mjs .
@@ -607,6 +625,7 @@ jobs:
           node tools/tests/squared-reader-bars.mjs .
           node tools/tests/squared-light-skip.mjs .
           node tools/tests/squared-noop-records.mjs .
+          node tools/tests/squared-record-kind.mjs .
           node tools/tests/squared-text-last.mjs .
           node tools/tests/squared-fast-select.mjs .
           node tools/tests/same-value-hidden.mjs .
@@ -676,6 +695,7 @@ jobs:
           node tools/tests/has-guard.mjs .
           node tools/tests/lite-forced-quiet.mjs .
           node tools/tests/lite-open-once.mjs .
+          node tools/tests/lite-panel-batch.mjs .
           node tools/tests/icon-only-mark.mjs .
           node tools/tests/mes-marks.mjs .
           node tools/tests/drawer-marks.mjs .
@@ -683,6 +703,7 @@ jobs:
           node tools/tests/mark-mutation-batch.mjs .
           node tools/tests/icon-text-scope.mjs .
           node tools/tests/icon-text-hosts.mjs .
+          node tools/tests/icon-text-row-bits.mjs .
           node tools/tests/mes-pins-one.mjs .
           node tools/tests/mes-pins-addon-late.mjs .
           node tools/tests/fruit-watch-perf.mjs .

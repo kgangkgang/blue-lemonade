@@ -4,7 +4,7 @@ import { DEFAULTS } from './settings.js';
 import { PALETTES, paletteColors } from './palettes.js';
 import './palette-data.js';   // 1.0.0 팔레트 11벌 · 커스텀 색 정의 (시작 그래프 밖 — 이 모듈은 지연으로 받아요)
 import { FILTER_KEYS } from './capture-style.js';
-import { ROLE_IDS } from './role-icons-core.js';
+import { ROLE_IDS } from './role-icons-tidy.js';
 const read = (obj, path) => path.split('.').reduce((v, k) => v != null && Object.hasOwn(v,k) ? v[k] : undefined, obj);
 // 날씨 양의 기본값 칸은 옛 세 단계 값을 이어받으려고 null 이고, 정리하면 100 이 돼요. 비교 · 복원은 정리된 값으로 해요
 const SETTLED_DEFAULTS = { 'chat.weatherAmount': 100, 'chat.weather2Amount': 100 };

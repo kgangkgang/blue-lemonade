@@ -195,7 +195,7 @@ function kkGuard(html, key) {
   const text = String(html ?? "");
   if (!key || !/<details\b/.test(text)) return "";
   const css = text.slice(0, text.indexOf("</style>")), out = [];
-  if (!/details>summary~:not\(\[class\]\)\{display:none/.test(css)) out.push(`div.gk-${key} details>summary~:not([class]){display:none}`);
+  if (!/details>summary~:not\(\[class\]\)[^{]*\{display:none/.test(css)) out.push(`div.gk-${key} details>summary~:not([class]):not(:has([class])){display:none}`);
   if (!/details\{margin:0/.test(css)) out.push(`div.gk-${key} details{margin:0}`);
   return out.length ? `
 ${out.join("\n")}` : "";

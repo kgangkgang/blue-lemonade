@@ -83,7 +83,7 @@ await test('배선: 성능 보조 시작 · 화면 줄 · 요술봉 · 설정 �
     assert.match(read('src/addons/perf/menu.js'), /bl-perf-menu-storage/);
     const settings = await import(url('src/settings.js'));
     assert.equal(settings.DEFAULTS.addonUI.perfMenu.storage, true);
-    assert.ok(read('src/addons.js').includes("['storage','저장 공간','hard-drive']"));
+    assert.ok((read('src/addons.js') + read('src/addons-panel.js')).includes("['storage','저장 공간','hard-drive']"));
     for (const rel of ['view.js', 'status.js']) {
         const src = read(`src/addons/perf/storage/${rel}`);
         assert.ok(src.includes("from '../../../../../../../extensions.js'"), `${rel}: 일곱 단계 위 scripts/extensions.js`);

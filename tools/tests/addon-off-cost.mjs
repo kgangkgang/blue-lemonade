@@ -26,7 +26,7 @@ function walk(dir, out = []) {
 }
 
 check('addons.js 가 「지금 도는지」를 내보내요 (설정 값과 따로)', () => {
-    const src = read('src/addons.js');
+    const src = (read('src/addons.js') + read('src/addons-panel.js'));
     assert.match(src, /export const addonRunning=id=>running\.has\(id\);/);
 });
 check('프롬프트 목록은 한글화 패널이 실제로 돌 때만 그 모듈을 불러요', () => {
@@ -38,7 +38,7 @@ check('프롬프트 목록은 한글화 패널이 실제로 돌 때만 그 모�
     assert.doesNotMatch(guard, /extensionSettings\?\.salty\?\.addons\?\.prompt\)/, '켜 둔 값만 보면 안 돼요');
 });
 check('애드온 밖(src · index.js)에서 시작 입구를 부르는 곳은 addonRunning 으로 지키거나 사용자 동작 목록에 있어요', () => {
-    const files = ['index.js', ...walk('src')].filter(rel => rel !== 'src/addons.js');
+    const files = ['index.js', ...walk('src')].filter(rel => rel !== 'src/addons.js' && rel !== 'src/addons-panel.js');   // 1.1.5 애드온 카드(addons-panel.js)는 addons.js 에서 떼어 낸 것
     const bad = [];
     let seen = 0;
     for (const rel of files) {

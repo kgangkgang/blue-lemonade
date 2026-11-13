@@ -13,7 +13,7 @@ assert.equal(switchNeedsReload({ enabled: true, addons: { perf: true } }, new Se
 assert.equal(switchNeedsReload({ enabled: true, addons: {} }, new Set(), ids), false, '애드온을 안 쓰면 새로고침 없이 켜고 꺼요');
 const panel = fs.readFileSync(path.join(dir, 'src/panel.js'), 'utf8');
 const save = fs.readFileSync(path.join(dir, 'src/addon-save.js'), 'utf8');
-const addons = fs.readFileSync(path.join(dir, 'src/addons.js'), 'utf8');
+const addons = fs.readFileSync(path.join(dir, 'src/addons.js'), 'utf8') + fs.readFileSync(path.join(dir, 'src/addons-panel.js'), 'utf8');   // 1.1.5 애드온 카드는 addons-panel.js
 assert.match(panel, /async function reloadForMasterSwitch\(\) \{[\s\S]{0,300}addonsNeedReload\(getSettings\(\)\)[\s\S]{0,300}await saveAddonsNow\(\);\s*location\.reload\(\)/, '저장을 확인한 뒤 새로고침해요');
 assert.match(panel, /path === 'enabled' && !target\.checked && restoreState\(\)[\s\S]{0,420}if \(path === 'enabled'\) await reloadForMasterSwitch\(\);/, '실리태번 모습 되돌리기 뒤에 새로고침해요');
 assert.match(panel, /changes\.some\(change => change\.path === 'enabled'\)\) await reloadForMasterSwitch\(\)/, '되돌리기로 바뀌어도 같아요');

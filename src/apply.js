@@ -15,7 +15,7 @@ import { syncFeatures, coolChatForRestyle } from './features.js';
 import { restingFor } from './ext-presence.js';
 import { markdownClasses, markdownVariables } from './markdown.js';
 import { frameReady, trackLate } from './boot-layers.js';
-import { syncMarkdownCss } from './lite.js';   // 1.1.1 마크다운 모양 시트(고른 게 있을 때만)
+import { syncGateCss } from './lite.js';   // 1.1.1 마크다운 모양 시트 → 1.1.6 뗀 규칙 시트 전부(켠 설정이 있을 때만)
 // 그리기 모듈은 첫 프레임 뒤에 받고, 도착하면 가장 최근 설정을 적용해요.
 const late = new Map();
 function lateSync(name, load, want, call) {
@@ -770,8 +770,9 @@ export function applyAll() {
     appearance?.syncDecor(s);
     appearance?.syncFrameShadows(s);
     syncCutEdge(s.image.cutEdge, !!s.enabled && !imageFrameOn(s.image), edgeTheme); // 외곽선 SVG 필터 정의 (값이 그대로면 손대지 않음)
-    // 1.1.1 가볍게: 고른 마크다운 모양이 있으면 그 규칙 시트를 클래스보다 먼저 붙여요(첫 시트에는 없어요 · lite.js syncMarkdownCss)
-    syncMarkdownCss([...want].some(c => c.startsWith('salty-md-')));
+    // 1.1.1 가볍게 → 1.1.6: 켠 설정(고른 마크다운 모양 · 글자 외곽선 · 들여쓰기 · 정보 정렬)의 규칙 시트를 클래스보다 먼저 붙여요(첫 장 · 전체 장에는 없어요 · lite.js syncGateCss).
+    //   시트가 아직 안 왔으면 그 클래스(held)는 지금 달지 않고, 시트가 오면 lite.js 가 달아요 — 켜는 순간 꾸밈 없는 한 프레임이 없게
+    const held = syncGateCss(want);
     // 바뀐 클래스만 만지기 (전부 뗐다 붙이면 매번 화면 전체를 다시 그림)
     const cls = document.body.classList;
     const cutoutBefore = cls.contains('salty-cutout-same');
@@ -779,7 +780,7 @@ export function applyAll() {
     //   기록마다 실리태번 keyboard.js 가 body 아래 전부(시작 때 요소 9천 개 남짓)를 선택자 31개로 다시 훑었어요(폰 리그 감사: 시작 한 번에 이 자리 기록 45번). 끝 상태는 같아요
     const stale = [...cls].filter(c => (c === 'salty' || c.startsWith('salty-')) && !want.has(c));
     if (stale.length) { restyleAhead(); cls.remove(...stale); }
-    const missing = [...want].filter(c => !cls.contains(c));
+    const missing = [...want].filter(c => !cls.contains(c) && !held.has(c));
     if (missing.length) { restyleAhead(); cls.add(...missing); }
     const fold = want.has('salty-dem-skin') && s.chat.demFold !== false;
     if (document.body.hasAttribute('data-bl-dem-fold') !== fold) { restyleAhead(); if (fold) document.body.setAttribute('data-bl-dem-fold', ''); else document.body.removeAttribute('data-bl-dem-fold'); }

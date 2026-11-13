@@ -6,6 +6,7 @@
 // 사용자가 직접 고른 투명 채팅(맞추기 흔적이 없음)은 건드리지 않고, 실리태번 값 자체도 바꾸지 않는다 (되돌리기는 기존 알림 · 설정에서).
 // 테마가 켜져 있으면(body.salty) 테마가 판을 칠하므로 둘 다 뗀다.
 import { parseColor } from './palettes.js';
+import { watchDom } from './dom-watch.js';
 
 const CLASS = 'bl-st-solid', CHAT = 'bl-st-solid-chat';
 let started = false, soon = () => {};
@@ -63,8 +64,9 @@ export function startStSolid() {
     let pending = 0;
     soon = () => { if (!pending) pending = requestAnimationFrame(() => { pending = 0; sync(); }); };
     // 실리태번은 테마 색을 html 의 인라인 style 로, 빠른 UI 를 body 클래스로 바꾼다 — 그 둘만 본다 (내가 쓰는 변수 하나는 값이 같으면 다시 안 쓴다)
-    new MutationObserver(soon).observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
-    new MutationObserver(soon).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    // 1.1.6 따로 감시자 둘 대신 공용 감시 허브(뿌리 자신 감시 하나)의 구독으로 — 받는 때 · 기록은 같아요
+    watchDom(document.documentElement, { attributes: ['style'], name: '실리태번 판 불투명 (html style)' }, soon);
+    watchDom(document.body, { attributes: ['class'], name: '실리태번 판 불투명 (body class)' }, soon);
     // 되돌리기 · 테마 고르기는 실리태번 설정 저장으로 끝난다 — 색이 같아도(맞추기 흔적만 사라져도) 다시 본다
     try { const { eventSource, event_types } = SillyTavern.getContext(); if (event_types?.SETTINGS_UPDATED) eventSource.on(event_types.SETTINGS_UPDATED, soon); } catch { /* 이벤트를 못 걸면 관찰만 */ }
     sync();

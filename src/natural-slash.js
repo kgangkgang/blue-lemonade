@@ -1,5 +1,6 @@
 // Korean chat-input shortcuts. No model call, script evaluation or chat mutation.
 // Numbers match SillyTavern's visible #messageId, starting at #0.
+import { watchDom } from './dom-watch.js';
 const EXAMPLE = '/240번 채팅으로 가기 · /맨 아래로 · /대화 검색 단어 · /생성 중지';
 const HELP = `${EXAMPLE} · 번호는 화면의 #0부터예요.`;
 const MOVE = '(?:가기|가|가줘|가주세요|이동|이동하기|이동해|이동해줘|이동해주세요|점프|보기|보여줘|보여주세요)?';
@@ -265,7 +266,8 @@ export function startNaturalSlash({ isEnabled = () => true } = {}) {
     const types = initial.eventTypes || initial.event_types;
     if (types?.CHAT_CHANGED) initial.eventSource.on(types.CHAT_CHANGED, () => { Object.keys(searchState).forEach(key => delete searchState[key]); refresh(); });
     // Changing Blue Lemonade's usage mode must hide its input helper immediately.
-    new MutationObserver(refresh).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    // 1.1.6 따로 감시자 대신 공용 감시 허브 구독(body 자기 class 만 · 같은 때)
+    watchDom(document.body, { attributes: ['class'], name: '자연어 명령 (테마 켜고 끔)' }, () => refresh());
     refresh();
 }
 

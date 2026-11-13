@@ -3,6 +3,7 @@ import { getSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
 import { booting, afterBoot } from './boot-gate.js';
 import { watchDom } from './dom-watch.js';
+import { GATE_SHEETS, PANEL_SHEET } from './css-gates.gen.js';   // 1.1.6 뗀 규칙 시트 표(tools/build-css.cjs 가 만들어요)
 // 9.0.1 설정 창 미리보기 CSS 는 따로 받는 시트(src/preview.gen.css)로만 — 설정 창 · 미리보기를 처음 쓸 때 <link> 로 붙인다.
 //
 // css/23-preview.gen.css 는 #chat 규칙을 :is(#salty-nochat, .salty-preview) · .salty-sample 용으로 복사한 것이고(tools/gen-preview-css.js),
@@ -15,40 +16,40 @@ const PREVIEW_URL = new URL('./preview.gen.css', import.meta.url).href;
 let previewLink = null;   // <link id="salty-preview-css">
 let restored = false;     // 켜져 있나 (media all)
 
-// 1.1.1 가볍게: css/61-markdown.css 가운데 body.salty.salty-md-*(고른 마크다운 모양)가 있어야만 맞는 규칙은 첫 시트(style.css)에서 빼 src/markdown.gen.css 로 —
-//   기본값(고른 모양 없음)이면 받지 않아요(0KB). 하나라도 고르면 테마 시트 바로 뒤(원래 style.css 안 자리처럼 미리보기 · 전체 · 호환 · 게으른 칸 시트보다 앞)에 붙여요.
-//   전체 시트(둘째 장 style-lazy.gen.css)에는 이 규칙이 제자리에 그대로 있어, 그 시트가 켜지면 이 시트는 꺼요(src/theme-sheet.js). 뒤 모듈과 같은 요소를 같은 특이도로 겨루는 규칙이 없어
-//   첫 시트 뒤로 옮겨도 화면이 같아요(tools/tests/markdown-css-split.mjs).
-const MD_URL = new URL('./markdown.gen.css', import.meta.url).href;
-export const MD_SHEET_ID = 'salty-md-css';
-/** 테마 시트 바로 뒤에 붙은 마크다운 모양 시트 (없으면 null) */
-function markdownAfter(sheet) {
-    const md = document.getElementById(MD_SHEET_ID);
-    return md?.isConnected && sheet?.ownerNode && md.previousElementSibling === sheet.ownerNode ? md : null;
+// 1.1.6 CSS 줄이기 첫 걸음: 기본값에서 하나도 안 맞는 규칙(글자 외곽선 · 고른 마크다운 모양 · 들여쓰기 · 정보 정렬)과 테마 설정 창(.salty-panel) 안에서만 맞는 규칙은
+//   첫 장(style.css) · 전체 장(style-lazy.gen.css) 둘 다에 싣지 않고 작은 시트(src/markdown.gen.css · src/gate-*.gen.css · src/panel.gen.css)로 떼어 둬요(tools/css-gates.cjs).
+//   기본값이면 받지도 않아요(0KB · 해석 없음). 1.1.1 마크다운 분리(첫 장에서만)를 일반화한 것이에요.
+//   · 켜짐 시트: 그 클래스가 body 에 붙기 전에 시트를 붙이고, 다 받은 뒤에 클래스를 켜요(syncGateCss 가 미룰 클래스를 돌려주면 apply.js 가 그 클래스만 늦게 달아요)
+//     — 켜는 순간 꾸밈 없는 한 프레임이 없어요. 부팅 때 이미 켜 둔 설정이면 applyAll 첫 번에 바로 붙어요(덮개가 걷히기 전).
+//   · 설정 창 시트: 설정 창을 만들기 전에(index.js loadPanel · first-run.js) panelCssReady() 를 기다려요. 서랍 · ✦ 메뉴를 누르는 순간 미리 받아요(preloadPreviewCss).
+//   · 자리: 테마 시트 뒤 줄(첫 장 → 가벼운 사본 · 전체 장 → 미리보기 → 켜짐 시트들(표 차례) → 설정 창 시트) — 그 뒤에 서랍 전용 칸 · 호환 시트가 와요.
+//     원래 이 규칙보다 뒤에 있던 규칙과 덮어쓰기를 겨루는 규칙은 빌드가 떼지 않아서 이 자리로 와도 화면이 같아요(tools/tests/css-gates-order.mjs).
+// 붙이고 기다리는 몸통은 src/gate-css.js(켤 때만 받아요) — 시작 묶음에는 표와 이 작은 입구만 둬요.
+/** 테마 시트 뒤 줄(가벼운 사본 · 전체 장 · 미리보기 · 뗀 규칙 시트들)의 마지막 노드 — 그 뒤에 서랍 전용 칸 · 호환 시트가 붙어요.
+ *  order 를 주면 data-bl-gate 가 그보다 큰 시트 앞에서 멈춰요(그 자리에 붙일 때 — 미리보기 -1 · 켜짐 시트 0.. · 설정 창 99) */
+export function themeRunEnd(node, order = Infinity) {
+    let end = node;
+    for (let n = node?.nextElementSibling; n && (n.id === 'salty-lazy-css' || n.id === 'salty-ext-css' || n.dataset?.blGate != null) && !(Number(n.dataset?.blGate) > order); n = n.nextElementSibling) end = n;
+    return end;
 }
-/** 고른 마크다운 모양이 있으면(on) 그 시트를 붙여 켜고, 없거나 전체 시트가 켜졌으면 꺼요. applyAll 마다 불려도 바뀐 게 없으면 아무것도 안 해요 */
-export function syncMarkdownCss(on) {
-    let link = document.getElementById(MD_SHEET_ID);
-    const full = document.getElementById('salty-lazy-css');
-    const want = !!on && !(full?.isConnected && full.dataset.blFullTheme === 'ready');
-    if (!want) { if (link && link.media !== 'not all') link.media = 'not all'; return link; }
-    if (link?.isConnected) {
-        // 테마를 껐다 켜는 사이 다른 시트가 테마 시트 바로 뒤에 들어왔으면 원래 자리로 되돌려요(가벼운 사본 뒤에 붙은 미리보기보다 앞)
-        const owner = themeSheet()?.ownerNode;
-        if (owner?.isConnected && link.previousElementSibling !== owner) owner.after(link);
-        if (link.media !== 'all') link.media = 'all';
-        return link;
-    }
-    link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.id = MD_SHEET_ID;
-    link.href = MD_URL;
-    link.media = 'all';
-    link.addEventListener('error', () => { console.info('[Blue Lemonade] 마크다운 모양 CSS 를 못 받았어요 — 다음에 바꿀 때 다시 받아요'); link.remove(); }, { once: true });
-    const sheet = themeSheet();
-    if (sheet?.ownerNode?.isConnected) sheet.ownerNode.after(link);   // 테마 시트 바로 뒤 — 가벼운 사본(salty-ext-css)은 테마를 끈 동안만이라 함께 켜지지 않아요
-    else document.head.append(link);
-    return link;
+let gateApi = null, gateWant = [];
+const gateLoad = () => import('./gate-css.js').then(m => (gateApi = m));
+/**
+ * applyAll 이 body 클래스를 바꾸기 직전에 불러요(want = 달 클래스 전부). 켠 설정의 시트를 붙이고, 시트가 아직 안 와서 지금 달면
+ * 꾸밈 없이 한 번 그려질 클래스 모음(held)을 돌려줘요 — apply.js 는 그 클래스만 빼고 달고, 시트가 오면 src/gate-css.js 가 달아요.
+ * 기본값(켠 것 없음)이면 아무것도 받지 않아요.
+ */
+export function syncGateCss(want) {
+    gateWant = [...want];
+    if (gateApi) return gateApi.syncGateCss(gateWant);
+    const held = new Set(gateWant.filter(c => !document.body.classList.contains(c) && GATE_SHEETS.some(s => s.classes.includes(c) || s.prefixes.some(p => c.startsWith(p)))));
+    if (held.size) gateLoad().then(m => m.syncGateCss(gateWant, true), () => { const add = [...held].filter(c => gateWant.includes(c)); if (add.length) document.body.classList.add(...add); });
+    return held;
+}
+/** 테마 설정 창 규칙 시트를 다 받았을 때(못 받았어도) 풀리는 약속 — 창(.salty-panel)을 만들기 전에 기다려요 */
+export function panelCssReady() {
+    if (!PANEL_SHEET) return Promise.resolve(true);
+    return gateApi ? gateApi.panelCssReady() : gateLoad().then(m => m.panelCssReady(), () => false);
 }
 
 // 폴더 이름이 blue-lemonade 가 아니어도(blue-lemonade-main …) 제 style.css 를 찾는다 — 이 파일 기준 상대 주소가 먼저, 옛 이름 규칙은 예비
@@ -66,16 +67,18 @@ function themeSheet() {
 
 /** 미리보기 시트를 꺼진 채(media="not all") 붙여 받아 둔다 — 서랍 · ✦ 메뉴를 누르는 순간(설정 창 코드를 미리 받는 그때) 부른다. 이미 있으면 그대로 */
 export function preloadPreviewCss() {
+    panelCssReady();   // 1.1.6 설정 창 규칙 시트도 같은 때 미리(붙는 자리는 미리보기 앞)
     if (previewLink?.isConnected) return previewLink;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.id = 'salty-preview-css';
+    link.dataset.blGate = '-1';   // 1.1.6 테마 시트 뒤 줄의 맨 앞 칸(뗀 규칙 시트들보다 앞 — 미리보기 사본은 원래 앞 모듈이에요)
     link.href = PREVIEW_URL;
     link.media = restored ? 'all' : 'not all';
     // 못 받으면 떼어 두고 다음에 다시 — 그동안 표본 칸은 폴백(숨김 · 안내 한 줄)이다
     link.addEventListener('error', () => { console.info('[Blue Lemonade] 미리보기 CSS 를 못 받았어요 — 다음에 열 때 다시 받아요 (실제 채팅은 그대로)'); link.remove(); if (previewLink === link) previewLink = null; }, { once: true });
     const sheet = themeSheet();
-    if (sheet?.ownerNode?.isConnected) (document.getElementById('salty-lazy-css')?.isConnected ? document.getElementById('salty-lazy-css') : markdownAfter(sheet) || sheet.ownerNode).after(link);   // 서랍 전용 <style id="salty-panel-css"> 가 이미 붙었으면 그 앞 — 원래 차례(본문 → 나머지(--split) → 미리보기 → 서랍 전용)
+    if (sheet?.ownerNode?.isConnected) themeRunEnd(sheet.ownerNode, -1).after(link);   // 서랍 전용 <style id="salty-panel-css"> 가 이미 붙었으면 그 앞 — 원래 차례(본문 → 나머지(--split) → 미리보기 → 1.1.6 뗀 규칙 시트들 → 서랍 전용)
     else document.head.append(link);
     previewLink = link;
     return link;
@@ -199,8 +202,9 @@ export function deferredPreviewRuleCount() {
 // 계산했다 (폰 리그 4배: 글 붙이기 한 번 35 → 180~210ms, 그중 테마 몫 = 다시 계산하는 요소 1,091 → 791).
 // 8.2.1 테마가 꺼진 모드면 큰 시트 바로 뒤에 가벼운 사본(<link id="salty-ext-css">)이 있어요 — 미리보기 · 게으른 칸 <style> 은 그 뒤에 붙여야 원래 차례(본문 → 미리보기 → 게으른 칸)예요
 // 전체 교체 시트(<style id="salty-lazy-css">)가 있으면 그 뒤 — 본문 → 미리보기 → 서랍 전용이에요.
-// 1.1.1 마크다운 모양 시트(<link id="salty-md-css">)가 테마 시트 바로 뒤에 있으면 그 뒤 — 본문(마크다운 포함) → 미리보기 → 게으른 칸이에요.
-const sheetTail = sheet => { const split = document.getElementById('salty-lazy-css'); if (split?.isConnected) return split; const md = markdownAfter(sheet); if (md) return md; const ext = document.getElementById('salty-ext-css'); return ext?.isConnected && ext.previousElementSibling === sheet.ownerNode ? ext : sheet.ownerNode; };
+// 1.1.1 마크다운 모양 시트 → 1.1.6 뗀 규칙 시트들(<link data-bl-gate>)이 테마 시트 뒤 줄에 있으면 그 뒤 — 본문 → 미리보기 → 뗀 규칙 → 게으른 칸이에요.
+// 1.1.6 뗀 규칙 시트(켜짐 · 설정 창, data-bl-gate)도 그 줄에 있어요 — 줄 끝(themeRunEnd: 가벼운 사본 salty-ext-css · 전체 시트 · 뗀 규칙 시트) 뒤예요.
+const sheetTail = sheet => themeRunEnd(sheet.ownerNode);
 const LAZY_SENTINEL = '#salty-lazy-panel-start';
 const LEGACY_POPUPS = '#character_popup, #world_popup, #select_chat_popup, #shadow_popup, #dialogue_popup, #export_format_popup';
 let panelStyle = null;  // 옮겨 둔 게으른 칸 규칙이 든 <style id="salty-panel-css">
@@ -320,7 +324,7 @@ export function deferPanelHasRules(tries = 25) {
             style.id = 'salty-panel-css';
             style.media = 'not all';
             style.textContent = tail;
-            (previewLink?.isConnected ? previewLink : sheetTail(sheet)).after(style); // 9.0.1 미리보기 <link> 가 먼저 붙었으면 그 뒤(원래 차례: 미리보기 → 게으른 칸). 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
+            sheetTail(sheet).after(style); // 1.1.6 테마 시트 뒤 줄(미리보기 · 뗀 규칙 시트 포함) 끝 뒤 · 9.0.1 미리보기 <link> 가 먼저 붙었으면 그 뒤(원래 차례: 미리보기 → 게으른 칸). 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
             for (let i = sheet.cssRules.length - 1; i > from; i--) sheet.deleteRule(i);
             panelCount = live.length;
             panelStyle = style;
@@ -345,31 +349,43 @@ function sameShape(a, b) {
     }
     return true;
 }
-function watchPanelOpen() {
-    // 2.9.2: 채팅 밖 변화마다 uiOpen() 을 불렀는데, 옛 팝업 검사의 getClientRects() 가 그때마다 문서 전체 강제 레이아웃이었다.
-    // 답변 생성 · 채팅 바꾸기 때 프롬프트 관리자 · 확장 칸이 다시 그려지며 여러 번 돌아서, 측정에서 테마 JS 가운데 가장 비쌌다
-    // (답변 한 번 169ms · 채팅 전환 156ms, PC). 이제 아무것도 안 열려 있을 때는 '무언가 열렸을 수 있는' 변화에만 다시 본다 —
-    // 서랍에 openDrawer 가 붙음 · dialog 의 open · 옛 팝업(이나 그 겉 칸)의 style/class · 그런 것이 새로 붙음. 열려 있을 때는 예전처럼.
-    const OPENERS = `.openDrawer, dialog, ${LEGACY_POPUPS}`;
+// 2.9.2: 채팅 밖 변화마다 uiOpen() 을 불렀는데, 옛 팝업 검사의 getClientRects() 가 그때마다 문서 전체 강제 레이아웃이었다.
+// 답변 생성 · 채팅 바꾸기 때 프롬프트 관리자 · 확장 칸이 다시 그려지며 여러 번 돌아서, 측정에서 테마 JS 가운데 가장 비쌌다
+// (답변 한 번 169ms · 채팅 전환 156ms, PC). 이제 아무것도 안 열려 있을 때는 '무언가 열렸을 수 있는' 변화에만 다시 본다 —
+// 서랍에 openDrawer 가 붙음 · dialog 의 open · 옛 팝업(이나 그 겉 칸)의 style/class · 그런 것이 새로 붙음. 열려 있을 때는 예전처럼.
+const OPENERS = `.openDrawer, dialog, ${LEGACY_POPUPS}`;
+/**
+ * 1.2.1 opt: 「서랍 · 팝업 열림」 구독이 받은 묶음 하나 — 숫자 쉼표(tap)에 기록을 넘기고, 무언가 열렸을 수 있으면 true.
+ *  · 속성 기록의 「옛 팝업이거나 품었나」(matches + 그 요소 아래 querySelector — 큰 서랍이면 가지 전체)는 한 묶음 안에서 같은 요소면 한 번만 물어요
+ *    (콜백 안에서 DOM 을 바꾸지 않아 답이 같아요 · 서랍 여닫는 애니메이션은 같은 요소의 style 기록이 묶음마다 여럿이에요). 결과 · tap 차례는 같아요(tools/tests/lite-panel-batch.mjs)
+ */
+export function panelBatch(list, { on, tap, body }) {
+    const popupMemo = new Map();
+    const holdsPopup = t => { let v = popupMemo.get(t); if (v === undefined) popupMemo.set(t, v = t.matches(LEGACY_POPUPS) || !!t.querySelector(LEGACY_POPUPS)); return v; };
     const mayOpen = (m) => {
         const t = m.target;
         if (m.type === 'childList') return [...m.addedNodes].some(n => n.nodeType === 1 && (n.matches(OPENERS) || !!n.querySelector(OPENERS)));
         if (m.attributeName === 'open' || t.classList.contains('openDrawer')) return true;
-        return t !== document.body && (t.matches(LEGACY_POPUPS) || !!t.querySelector(LEGACY_POPUPS));
+        return t !== body && holdsPopup(t);
     };
+    let hit = false;
+    for (const m of list) {
+        const t = m.target;
+        // 구독 거르개(구역 · exclude)가 이미 빼지만, 같은 나눠 주기에서 앞 구독이 노드를 옮겼을 때도 예전과 같게 콜백에서 한 번 더 봐요(싸요)
+        if (t.nodeType !== 1 || t.closest?.('#chat, #form_sheld')) continue;
+        if (tap) tap(m); // 5.3.7: 숫자 쉼표(numcomma.js)도 채팅 밖 변화만 받는다
+        if (hit || (!on && !mayOpen(m))) continue;
+        hit = true;
+        if (!tap) break;
+    }
+    return hit;
+}
+function watchPanelOpen() {
     panelObserving = true;
     // 8.2.7: body 전체 감시는 공용 감시자(dom-watch.js) 구독으로 — 같은 body 를 보는 다른 모듈과 감시자 하나를 나눠 써요(받는 기록 · 때는 같아요)
     // 9.0.4: 채팅 · 입력판은 콜백에서 건너뛰던 것을 구독 거르개로 — 채팅(#chat) 가지는 감시도 안 걸어요(body 구역)
     watchDom(document.body, { attributes: ['class', 'open', 'style'], subtree: true, childList: true, exclude: ['#chat', '#form_sheld'], name: 'lite 서랍 · 팝업 열림' }, (list) => {
-        let hit = false;
-        for (const m of list) {
-            const t = m.target;
-            if (t.nodeType !== 1 || t.closest?.('#chat, #form_sheld')) continue;
-            if (panelTap) panelTap(m); // 5.3.7: 숫자 쉼표(numcomma.js)도 채팅 밖 변화만 받는다
-            if (hit || (!panelOn && !mayOpen(m))) continue;
-            hit = true;
-            if (!panelTap) break;
-        }
+        const hit = panelBatch(list, { on: panelOn, tap: panelTap, body: document.body });
         if (!hit) return;
         // 4.1.2: 켜는 쪽은 그리기 전에(바로), 끄는 쪽은 0.1초에 한 번 — 열려 있는 동안(시작할 때의 로딩 팝업 포함)은 채팅 밖
         // 변화마다 문서를 훑었다 (폰 리그 시작 한 번에 0.2초). 늦게 꺼져도 서랍이 닫힌 뒤라 보이는 것이 없다.

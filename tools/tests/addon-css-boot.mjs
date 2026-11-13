@@ -9,7 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const require = createRequire(import.meta.url);
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const { ADDON_BOOT_CSS, ADDON_CSS_SENTINEL, LATE_STYLE_IDS, bootSheetOf } = await import(pathToFileURL(path.join(root, 'src/addon-style-bundle.js')).href);
-const LATE_ADDONS = new Set((/LATE_ADDONS=new Set\(\[([^\]]+)\]/.exec(read('src/addons.js'))[1].match(/'[\w-]+'/g) || []).map(x => x.slice(1, -1)));
+const LATE_ADDONS = new Set((/LATE_ADDONS=new Set\(\[([^\]]+)\]/.exec((read('src/addons.js') + read('src/addons-panel.js')))[1].match(/'[\w-]+'/g) || []).map(x => x.slice(1, -1)));
 const { outerChain } = require('../css-scope-defer.cjs');
 const { dropComments } = await import(pathToFileURL(path.join(root, 'tools/build-addon-css.mjs')).href);
 const test = (name, fn) => { fn(); console.log(`ok - ${name}`); };
@@ -60,7 +60,7 @@ for (const [id, spec] of Object.entries(ADDON_BOOT_CSS)) {
 }
 test('늦은 애드온 표가 addons.js 와 같아요', () => assert.deepEqual([...LATE_STYLE_IDS].sort(), [...LATE_ADDONS].sort()));
 test('전체 시트로 바꾸는 길: 처음 누름 · 전체 CSS · 표지 규칙 · 실패하면 첫 장 그대로 다시 시도', () => {
-    const addons = read('src/addons.js');
+    const addons = (read('src/addons.js') + read('src/addons-panel.js'));
     assert.match(addons, /onGate\('press',upgradeAddonStyles,'addon-css'\)/);
     assert.match(addons, /addEventListener\('bl:full-css',upgradeAddonStyles\)/);
     assert.match(addons, /addEventListener\('animationstart',event=>\{if\(event\.animationName===ADDON_CSS_SENTINEL\)upgradeAddonStyles\(\);\},true\)/);
@@ -69,6 +69,6 @@ test('전체 시트로 바꾸는 길: 처음 누름 · 전체 CSS · 표지 규�
     assert.match(read('src/lite.js'), /dispatchEvent\(new Event\('bl:full-css'\)\)/);
 });
 test('처음 쓸 때 시작하는 애드온은 시작 전에도 「새로고침 필요」로 세지 않아요', () => {
-    const addons = read('src/addons.js');
+    const addons = (read('src/addons.js') + read('src/addons-panel.js'));
     assert.match(addons, /switchNeedsReload\(s, new Set\(\[\.\.\.running, \.\.\.\(lateStarted \? \[\] : lateIds\)\]\), RELOAD_ADDONS\)/);
 });
